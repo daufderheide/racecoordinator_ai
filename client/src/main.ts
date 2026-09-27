@@ -6,21 +6,37 @@ import { provideRouter, withRouterConfig } from "@angular/router";
 import { authInterceptor } from "@app/services/auth.interceptor";
 import { LoggerService } from "@app/services/logger.service";
 import { RaceService } from "@app/services/race.service";
+import { initGlobalAudioUnlocker } from "@app/utils/audio";
+import {
+  isBrowserSupported,
+  renderUnsupportedBrowserBanner,
+} from "@app/utils/browser-compatibility";
+import { initGlobalFormSecurity } from "@app/utils/form-security";
+
+initGlobalFormSecurity();
+initGlobalAudioUnlocker();
 
 import { AppComponent } from "./app/app.component";
 import { routes } from "./app/app.routes";
 
-bootstrapApplication(AppComponent, {
-  providers: [
-    provideRouter(
-      routes,
-      withRouterConfig({
-        canceledNavigationResolution: "computed",
-      }),
-    ),
-    provideAnimations(),
-    provideHttpClient(withInterceptors([authInterceptor])),
-    RaceService,
-    LoggerService,
-  ],
-}).catch((err) => console.error(err));
+if (!isBrowserSupported()) {
+  renderUnsupportedBrowserBanner();
+} else {
+  bootstrapApplication(AppComponent, {
+    providers: [
+      provideRouter(
+        routes,
+        withRouterConfig({
+          canceledNavigationResolution: "computed",
+        }),
+      ),
+      provideAnimations(),
+      provideHttpClient(withInterceptors([authInterceptor])),
+      RaceService,
+      LoggerService,
+    ],
+  }).catch((err) => {
+    console.error(err);
+    renderUnsupportedBrowserBanner();
+  });
+}

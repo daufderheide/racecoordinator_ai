@@ -7,6 +7,7 @@ import com.antigravity.context.DatabaseContext;
 import com.antigravity.handlers.AssetTaskHandler;
 import com.antigravity.handlers.AuthTaskHandler;
 import com.antigravity.handlers.ClientCommandTaskHandler;
+import com.antigravity.handlers.CustomDirectoryTaskHandler;
 import com.antigravity.handlers.CustomUITaskHandler;
 import com.antigravity.handlers.DatabaseTaskHandler;
 import com.antigravity.handlers.SettingsTaskHandler;
@@ -20,6 +21,7 @@ import com.antigravity.service.UpdateService;
 import com.antigravity.util.NetworkUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.javalin.Javalin;
+import io.javalin.http.Context;
 import io.javalin.http.staticfiles.Location;
 import io.javalin.plugin.json.JavalinJackson;
 import java.awt.Color;
@@ -118,22 +120,6 @@ public class App {
     }
   }
 
-  private static void deleteDirectory(File dir) {
-    if (dir.exists()) {
-      File[] files = dir.listFiles();
-      if (files != null) {
-        for (File file : files) {
-          if (file.isDirectory()) {
-            deleteDirectory(file);
-          } else {
-            file.delete();
-          }
-        }
-      }
-      dir.delete();
-    }
-  }
-
   @SuppressWarnings("checkstyle:MethodLength")
   public static void main(String[] args) {
     triggerLogRollover();
@@ -160,22 +146,6 @@ public class App {
         if ("--headless".equals(arg)) {
           headless = true;
         }
-      }
-
-      // TODO(https://github.com/daufderheide/racecoordinator_ai/issues/581):
-      // Remove this mongodb code after it's been in a release for awhile.
-      // Legacy Mongo Data directory cleanup to reclaim disk space
-      File legacyMongoDir = new File(appDataDir, "mongodb_data");
-      if (legacyMongoDir.exists()) {
-        logger.info(
-            "Found legacy MongoDB data directory at {}. Deleting to reclaim disk space...",
-            legacyMongoDir.getAbsolutePath());
-        deleteDirectory(legacyMongoDir);
-        logger.info("Legacy MongoDB data directory deleted.");
-      }
-      File legacyTempDir = new File(appDataDir, "mongo_temp");
-      if (legacyTempDir.exists()) {
-        deleteDirectory(legacyTempDir);
       }
 
       Runtime.getRuntime()
@@ -248,14 +218,7 @@ public class App {
         logger.info("Migration imports completed.");
       }
 
-      logger.info("Starting database backfill loop...");
-      for (String dbName : databaseContext.listDatabases()) {
-        logger.info("Backfilling default assets for database: {}", dbName);
-        new AssetService(
-                databaseContext, appDataDir + File.separator + dbName + File.separator + "assets")
-            .backfillDefaults();
-        DatabaseService.getInstance().backfillRaces(databaseContext);
-      }
+      runStartupDatabaseBackfills(databaseContext, appDataDir, activeDb);
 
       String[] possiblePaths = {"client/dist/client", "../client/dist/client", "web", "server/web"};
       String resolvedClientPath = null;
@@ -365,6 +328,14 @@ public class App {
             ctx.status(500).result("Internal Server Error: " + e.getMessage());
           });
 
+      app.after(
+          ctx -> {
+            String path = ctx.path();
+            if (path.equals("/") || path.endsWith("/index.html") || path.endsWith("index.html")) {
+              applyNoCacheHeaders(ctx);
+            }
+          });
+
       app.error(
           404,
           ctx -> {
@@ -372,6 +343,7 @@ public class App {
             if (accept != null && accept.contains("text/html")) {
               Path indexPath = Paths.get(staticFilePath, "index.html");
               if (Files.exists(indexPath)) {
+                applyNoCacheHeaders(ctx);
                 ctx.contentType("text/html");
                 ctx.result(new String(Files.readAllBytes(indexPath)));
               } else {
@@ -423,6 +395,7 @@ public class App {
       new CustomUITaskHandler(databaseContext, app);
       new ThemeTaskHandler(databaseContext, app);
       new SettingsTaskHandler(app, configService);
+      new CustomDirectoryTaskHandler(app, configService);
 
       UpdateService updateService = new UpdateService(SERVER_VERSION, configService);
 
@@ -793,5 +766,27 @@ public class App {
       System.err.println("Failed to trigger log rollover: " + e.getMessage());
       e.printStackTrace();
     }
+  }
+
+  private static void runStartupDatabaseBackfills(
+      DatabaseContext databaseContext, String appDataDir, String activeDb) {
+    logger.info("Starting database backfill loop...");
+    for (String dbName : databaseContext.listDatabases()) {
+      logger.info("Backfilling default assets, races, and custom UIs for database: {}", dbName);
+      databaseContext.switchDatabase(dbName);
+      new AssetService(
+              databaseContext, appDataDir + File.separator + dbName + File.separator + "assets")
+          .backfillDefaults();
+      DatabaseService.getInstance().backfillRaces(databaseContext);
+      DatabaseService.getInstance().backfillCustomUIs(databaseContext);
+      DatabaseService.getInstance().backfillDrivers(databaseContext);
+    }
+    databaseContext.switchDatabase(activeDb);
+  }
+
+  static void applyNoCacheHeaders(Context ctx) {
+    ctx.header("Cache-Control", "no-cache, no-store, must-revalidate");
+    ctx.header("Pragma", "no-cache");
+    ctx.header("Expires", "0");
   }
 }

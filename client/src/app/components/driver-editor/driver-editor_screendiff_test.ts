@@ -16,6 +16,13 @@ test.describe("Driver Editor Visuals", () => {
     await TestSetupHelper.disableAnimations(page);
   });
 
+  async function enterEditMode(page: any) {
+    await page.locator("#edit-track-btn").click();
+    await expect(page.locator("#driver-name-input")).toBeEnabled();
+    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+    await TestSetupHelper.disableAnimations(page);
+  }
+
   test("should display driver editor with driver loaded", async ({ page }) => {
     await TestSetupHelper.waitForLocalization(
       page,
@@ -25,12 +32,77 @@ test.describe("Driver Editor Visuals", () => {
     await page.locator(".page-container").waitFor();
     await page.locator(".loader-overlay").waitFor({ state: "hidden" });
 
+    await enterEditMode(page);
+
     const container = page.locator(".page-container");
     const _harness = new DriverEditorHarnessE2e(container);
 
     // Driver name checked visually
 
     await expect(page).toHaveScreenshot("driver-editor-loaded.png", {
+      animations: "disabled",
+      maxDiffPixelRatio: 0.05,
+    });
+  });
+
+  test("should display driver editor in read-only mode", async ({ page }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/driver-editor?id=d1"),
+    );
+    await page.locator(".page-container").waitFor();
+    await page.locator(".loader-overlay").waitFor({ state: "hidden" });
+    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+    await TestSetupHelper.disableAnimations(page);
+
+    await expect(page).toHaveScreenshot("driver-editor-read-only.png", {
+      animations: "disabled",
+      maxDiffPixelRatio: 0.05,
+    });
+  });
+
+  test("should display driver editor with newly created driver", async ({
+    page,
+  }) => {
+    let currentDrivers = [...MOCK_DRIVERS];
+    await page.route("**/api/drivers", async (route) => {
+      if (route.request().method() === "POST") {
+        const postData = route.request().postDataJSON();
+        const newDriver = { ...postData, entity_id: "d-new" };
+        currentDrivers.push(newDriver);
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify(newDriver),
+        });
+      } else {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify(currentDrivers),
+        });
+      }
+    });
+
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/driver-editor?id=d1"),
+    );
+    await page.locator(".page-container").waitFor();
+    await page.locator(".loader-overlay").waitFor({ state: "hidden" });
+
+    await page.locator("#add-item-btn").click();
+    await page.waitForFunction(
+      () =>
+        (document.querySelector("#driver-name-input") as HTMLInputElement)
+          ?.value === "New Driver",
+    );
+    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+    await TestSetupHelper.disableAnimations(page);
+
+    await expect(page).toHaveScreenshot("driver-editor-new.png", {
       animations: "disabled",
       maxDiffPixelRatio: 0.05,
     });
@@ -45,6 +117,8 @@ test.describe("Driver Editor Visuals", () => {
     await page.locator(".page-container").waitFor();
     await page.locator(".loader-overlay").waitFor({ state: "hidden" });
 
+    await enterEditMode(page);
+
     const container = page.locator(".page-container");
     const harness = new DriverEditorHarnessE2e(container);
 
@@ -55,7 +129,6 @@ test.describe("Driver Editor Visuals", () => {
     // Wait for undo state (Undo button enabled)
     // We can just await a short time or check if harness can check disabled state
     // For now, let's wait a bit to ensure debounce
-    await page.waitForTimeout(300);
 
     // Name change checked visually
 
@@ -89,18 +162,82 @@ test.describe("Driver Editor Visuals", () => {
     await page.locator(".page-container").waitFor();
     await page.locator(".loader-overlay").waitFor({ state: "hidden" });
 
+    await enterEditMode(page);
+
     const container = page.locator(".page-container");
     const harness = new DriverEditorHarnessE2e(container);
 
     // 2. Set name to duplicate
     await harness.setName("Duplicate Name");
     await page.keyboard.press("Tab"); // Commit
-    await page.waitForTimeout(100);
 
     await expect(page).toHaveScreenshot("driver-editor-validation-error.png", {
       animations: "disabled",
       maxDiffPixelRatio: 0.05,
     });
+  });
+
+  test("should show validation error on blank nickname", async ({ page }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/driver-editor?id=d1"),
+    );
+    await page.locator(".page-container").waitFor();
+    await page.locator(".loader-overlay").waitFor({ state: "hidden" });
+
+    await enterEditMode(page);
+
+    const container = page.locator(".page-container");
+    const harness = new DriverEditorHarnessE2e(container);
+
+    await harness.setNickname("");
+    await page.keyboard.press("Tab");
+
+    await expect(page).toHaveScreenshot(
+      "driver-editor-blank-nickname-error.png",
+      {
+        animations: "disabled",
+        maxDiffPixelRatio: 0.05,
+      },
+    );
+  });
+
+  test("should show validation error on duplicate nickname", async ({
+    page,
+  }) => {
+    await page.route("**/api/drivers", async (route) => {
+      await route.fulfill({
+        json: [
+          MOCK_DRIVERS[0],
+          { ...MOCK_DRIVERS[1], nickname: "Duplicate Nickname" },
+        ],
+      });
+    });
+
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/driver-editor?id=d1"),
+    );
+    await page.locator(".page-container").waitFor();
+    await page.locator(".loader-overlay").waitFor({ state: "hidden" });
+
+    await enterEditMode(page);
+
+    const container = page.locator(".page-container");
+    const harness = new DriverEditorHarnessE2e(container);
+
+    await harness.setNickname("Duplicate Nickname");
+    await page.keyboard.press("Tab");
+
+    await expect(page).toHaveScreenshot(
+      "driver-editor-duplicate-nickname-error.png",
+      {
+        animations: "disabled",
+        maxDiffPixelRatio: 0.05,
+      },
+    );
   });
 
   test("should show guided help on first visit", async ({ page }) => {
@@ -138,7 +275,6 @@ test.describe("Driver Editor Visuals", () => {
 
     // Disable animations and wait for settling
     await TestSetupHelper.disableAnimations(page);
-    await page.waitForTimeout(100);
 
     await expect(popover).toHaveScreenshot("driver-editor-guided-help.png", {
       animations: "disabled",

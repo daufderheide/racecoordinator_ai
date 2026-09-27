@@ -25,40 +25,104 @@
       "step": 1
     },
     {
-      "key": "showTime",
-      "label": "Show Time Column",
-      "type": "boolean",
-      "default": true
+      "key": "col3Metric",
+      "label": "Column 3 Metric",
+      "type": "select",
+      "default": "totalTime",
+      "colorKey": "col3Color",
+      "colorDefault": "#ffffff",
+      "options": [
+        { "label": "Total Time", "value": "totalTime" },
+        { "label": "Total Laps", "value": "totalLaps" },
+        { "label": "Gap to Leader", "value": "gapLeader" },
+        { "label": "Gap to Position", "value": "gapPosition" },
+        { "label": "Best Lap Time", "value": "bestLapTime" },
+        { "label": "Last Lap Time", "value": "lastLapTime" },
+        { "label": "Average Lap Time", "value": "averageLapTime" },
+        { "label": "Median Lap Time", "value": "medianLapTime" },
+        { "label": "Lane", "value": "lane" },
+        { "label": "None (Hide Column)", "value": "none" }
+      ]
     },
     {
-      "key": "showGap",
-      "label": "Show Gap Column",
-      "type": "boolean",
-      "default": true
+      "key": "col4Metric",
+      "label": "Column 4 Metric",
+      "type": "select",
+      "default": "totalLaps",
+      "colorKey": "col4Color",
+      "colorDefault": "#ffffff",
+      "options": [
+        { "label": "Total Time", "value": "totalTime" },
+        { "label": "Total Laps", "value": "totalLaps" },
+        { "label": "Gap to Leader", "value": "gapLeader" },
+        { "label": "Gap to Position", "value": "gapPosition" },
+        { "label": "Best Lap Time", "value": "bestLapTime" },
+        { "label": "Last Lap Time", "value": "lastLapTime" },
+        { "label": "Average Lap Time", "value": "averageLapTime" },
+        { "label": "Median Lap Time", "value": "medianLapTime" },
+        { "label": "Lane", "value": "lane" },
+        { "label": "None (Hide Column)", "value": "none" }
+      ]
     },
     {
-      "key": "showBestLap",
-      "label": "Show Best Lap Column",
-      "type": "boolean",
-      "default": true
+      "key": "col5Metric",
+      "label": "Column 5 Metric",
+      "type": "select",
+      "default": "gapLeader",
+      "colorKey": "col5Color",
+      "colorDefault": "#ffffff",
+      "options": [
+        { "label": "Total Time", "value": "totalTime" },
+        { "label": "Total Laps", "value": "totalLaps" },
+        { "label": "Gap to Leader", "value": "gapLeader" },
+        { "label": "Gap to Position", "value": "gapPosition" },
+        { "label": "Best Lap Time", "value": "bestLapTime" },
+        { "label": "Last Lap Time", "value": "lastLapTime" },
+        { "label": "Average Lap Time", "value": "averageLapTime" },
+        { "label": "Median Lap Time", "value": "medianLapTime" },
+        { "label": "Lane", "value": "lane" },
+        { "label": "None (Hide Column)", "value": "none" }
+      ]
     },
     {
-      "key": "showAvgLap",
-      "label": "Show Avg Lap Column",
-      "type": "boolean",
-      "default": true
+      "key": "col6Metric",
+      "label": "Column 6 Metric",
+      "type": "select",
+      "default": "bestLapTime",
+      "colorKey": "col6Color",
+      "colorDefault": "#38bdf8",
+      "options": [
+        { "label": "Total Time", "value": "totalTime" },
+        { "label": "Total Laps", "value": "totalLaps" },
+        { "label": "Gap to Leader", "value": "gapLeader" },
+        { "label": "Gap to Position", "value": "gapPosition" },
+        { "label": "Best Lap Time", "value": "bestLapTime" },
+        { "label": "Last Lap Time", "value": "lastLapTime" },
+        { "label": "Average Lap Time", "value": "averageLapTime" },
+        { "label": "Median Lap Time", "value": "medianLapTime" },
+        { "label": "Lane", "value": "lane" },
+        { "label": "None (Hide Column)", "value": "none" }
+      ]
     },
     {
-      "key": "bestLapColor",
-      "label": "Best Lap Highlight Color",
-      "type": "color",
-      "default": "#38bdf8"
-    },
-    {
-      "key": "avgLapColor",
-      "label": "Avg Lap Highlight Color",
-      "type": "color",
-      "default": "#f59e0b"
+      "key": "col7Metric",
+      "label": "Column 7 Metric",
+      "type": "select",
+      "default": "averageLapTime",
+      "colorKey": "col7Color",
+      "colorDefault": "#f59e0b",
+      "options": [
+        { "label": "Total Time", "value": "totalTime" },
+        { "label": "Total Laps", "value": "totalLaps" },
+        { "label": "Gap to Leader", "value": "gapLeader" },
+        { "label": "Gap to Position", "value": "gapPosition" },
+        { "label": "Best Lap Time", "value": "bestLapTime" },
+        { "label": "Last Lap Time", "value": "lastLapTime" },
+        { "label": "Average Lap Time", "value": "averageLapTime" },
+        { "label": "Median Lap Time", "value": "medianLapTime" },
+        { "label": "Lane", "value": "lane" },
+        { "label": "None (Hide Column)", "value": "none" }
+      ]
     }
   ]
 }

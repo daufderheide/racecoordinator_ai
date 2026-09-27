@@ -19,6 +19,58 @@ test.describe("Raceday Menu Bar Visuals", () => {
 
     await page.locator(".dashboard-wrapper").waitFor();
 
+    const raceData = {
+      race: {
+        race: {
+          model: { entityId: "r1" },
+          name: "Viewer GP",
+          track: {
+            model: { entityId: "t1" },
+            name: "Test Track",
+            lanes: [
+              {
+                objectId: "l1",
+                length: 10,
+                backgroundColor: "#550000",
+                foregroundColor: "#ffffff",
+              },
+              {
+                objectId: "l2",
+                length: 10,
+                backgroundColor: "#005500",
+                foregroundColor: "#ffffff",
+              },
+            ],
+          },
+        },
+        drivers: [
+          {
+            objectId: "rp1",
+            driver: {
+              model: { entityId: "d1" },
+              name: "Solo Driver",
+            },
+          },
+        ],
+        currentHeat: {
+          objectId: "h1",
+          heatNumber: 1,
+          heatDrivers: [
+            {
+              objectId: "hd1",
+              driver: {
+                model: { entityId: "d1" },
+                name: "Solo Driver",
+              },
+              laneIndex: 0,
+            },
+          ],
+        },
+      },
+    };
+
+    await TestSetupHelper.mockRaceData(page, raceData);
+
     const menuBar = page.locator("app-raceday-menu-bar");
     await expect(menuBar).toBeVisible();
 
@@ -35,6 +87,58 @@ test.describe("Raceday Menu Bar Visuals", () => {
     );
 
     await page.locator(".dashboard-wrapper").waitFor();
+
+    const raceData = {
+      race: {
+        race: {
+          model: { entityId: "r1" },
+          name: "Viewer GP",
+          track: {
+            model: { entityId: "t1" },
+            name: "Test Track",
+            lanes: [
+              {
+                objectId: "l1",
+                length: 10,
+                backgroundColor: "#550000",
+                foregroundColor: "#ffffff",
+              },
+              {
+                objectId: "l2",
+                length: 10,
+                backgroundColor: "#005500",
+                foregroundColor: "#ffffff",
+              },
+            ],
+          },
+        },
+        drivers: [
+          {
+            objectId: "rp1",
+            driver: {
+              model: { entityId: "d1" },
+              name: "Solo Driver",
+            },
+          },
+        ],
+        currentHeat: {
+          objectId: "h1",
+          heatNumber: 1,
+          heatDrivers: [
+            {
+              objectId: "hd1",
+              driver: {
+                model: { entityId: "d1" },
+                name: "Solo Driver",
+              },
+              laneIndex: 0,
+            },
+          ],
+        },
+      },
+    };
+
+    await TestSetupHelper.mockRaceData(page, raceData);
 
     const menuBar = page.locator("app-raceday-menu-bar");
     await expect(menuBar).toBeVisible();
@@ -156,7 +260,6 @@ test.describe("Raceday Menu Bar Visuals", () => {
     await page.locator(".dashboard-wrapper").waitFor();
 
     await TestSetupHelper.mockRaceData(page, raceData);
-    await page.waitForTimeout(200);
 
     const menuBar = page.locator("app-raceday-menu-bar");
     await expect(menuBar).toBeVisible();
@@ -178,6 +281,56 @@ test.describe("Raceday Menu Bar Visuals", () => {
 
     await expect(page).toHaveScreenshot(
       "raceday-menu-bar-driver-view-open.png",
+    );
+  });
+
+  test("should display menu bar with File dropdown open", async ({ page }) => {
+    await page.addInitScript(() => {
+      window.history.replaceState({ appHistoryIndex: 1 }, "");
+    });
+
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/default-raceday"),
+    );
+
+    await page.locator(".dashboard-wrapper").waitFor();
+
+    const menuBar = page.locator("app-raceday-menu-bar");
+    await expect(menuBar).toBeVisible();
+
+    const fileBtn = menuBar.locator(".menu-button-top").first();
+    await fileBtn.click();
+
+    const dropdown = menuBar.locator(".menu-dropdown");
+    await expect(dropdown).toBeVisible();
+
+    await expect(page).toHaveScreenshot("raceday-menu-bar-file-open.png");
+  });
+
+  test("should display menu bar with File dropdown open and back disabled", async ({
+    page,
+  }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/default-raceday"),
+    );
+
+    await page.locator(".dashboard-wrapper").waitFor();
+
+    const menuBar = page.locator("app-raceday-menu-bar");
+    await expect(menuBar).toBeVisible();
+
+    const fileBtn = menuBar.locator(".menu-button-top").first();
+    await fileBtn.click();
+
+    const dropdown = menuBar.locator(".menu-dropdown");
+    await expect(dropdown).toBeVisible();
+
+    await expect(page).toHaveScreenshot(
+      "raceday-menu-bar-file-open-back-disabled.png",
     );
   });
 });

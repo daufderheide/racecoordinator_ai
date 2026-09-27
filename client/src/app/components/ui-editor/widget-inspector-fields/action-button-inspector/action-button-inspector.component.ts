@@ -1,6 +1,10 @@
 import { CommonModule } from "@angular/common";
 import { Component, inject, input, output } from "@angular/core";
 import { FormsModule } from "@angular/forms";
+import {
+  CustomOptionComponent,
+  CustomSelectComponent,
+} from "@app/components/shared/custom-select/custom-select.component";
 import { AbsoluteWidgetNode } from "@app/models/settings";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { FontService } from "@app/services/font.service";
@@ -10,7 +14,13 @@ import { FontService } from "@app/services/font.service";
   selector: "app-action-button-inspector",
   templateUrl: "./action-button-inspector.component.html",
   styleUrls: ["../../ui-editor.component.css"],
-  imports: [CommonModule, FormsModule, TranslatePipe],
+  imports: [
+    CommonModule,
+    FormsModule,
+    TranslatePipe,
+    CustomSelectComponent,
+    CustomOptionComponent,
+  ],
 })
 export class ActionButtonInspectorComponent {
   widget = input.required<AbsoluteWidgetNode>();
@@ -64,6 +74,8 @@ export class ActionButtonInspectorComponent {
         return "RD_MENU_MAIN_POWER_ON";
       case "action-master-power-off":
         return "RD_MENU_MAIN_POWER_OFF";
+      case "action-back":
+        return "RD_MENU_BACK";
       default:
         return "";
     }

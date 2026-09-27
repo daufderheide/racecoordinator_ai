@@ -3,12 +3,15 @@ package com.antigravity.converters;
 import static org.junit.Assert.assertEquals;
 
 import com.antigravity.models.AnalogFuelOptions;
+import com.antigravity.models.DigitalFuelOptions;
+import com.antigravity.models.FuelCurvePoint;
 import com.antigravity.models.HeatRotationType;
 import com.antigravity.models.HeatScoring;
 import com.antigravity.models.Race;
 import com.antigravity.models.Track;
 import com.antigravity.proto.RaceModel;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -110,6 +113,68 @@ public class RaceConverterTest {
   }
 
   @Test
+  public void testToProto_AllowFinish_NoneAutoSegments() {
+    HeatScoring heatScoring =
+        new HeatScoring(
+            HeatScoring.FinishMethod.Timed,
+            15,
+            HeatScoring.HeatRanking.LAP_COUNT,
+            HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME,
+            HeatScoring.AllowFinish.NoneAutoSegments);
+    Race race =
+        new Race.Builder()
+            .withName("Test Race")
+            .withTrackEntityId("track-id")
+            .withHeatScoring(heatScoring)
+            .build();
+    Track track =
+        new Track.Builder()
+            .name("Test Track")
+            .lanes(new ArrayList<>())
+            .arduinoConfigs(null)
+            .entityId("track-id")
+            .id(null)
+            .build();
+
+    RaceModel proto = RaceConverter.toProto(race, track, new HashSet<>());
+
+    assertEquals(
+        com.antigravity.proto.HeatScoring.AllowFinish.AF_NONE_AUTO_SEGMENTS,
+        proto.getHeatScoring().getAllowFinish());
+  }
+
+  @Test
+  public void testToProto_AllowFinish_SingleLapAutoSegments() {
+    HeatScoring heatScoring =
+        new HeatScoring(
+            HeatScoring.FinishMethod.Timed,
+            15,
+            HeatScoring.HeatRanking.LAP_COUNT,
+            HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME,
+            HeatScoring.AllowFinish.SingleLapAutoSegments);
+    Race race =
+        new Race.Builder()
+            .withName("Test Race")
+            .withTrackEntityId("track-id")
+            .withHeatScoring(heatScoring)
+            .build();
+    Track track =
+        new Track.Builder()
+            .name("Test Track")
+            .lanes(new ArrayList<>())
+            .arduinoConfigs(null)
+            .entityId("track-id")
+            .id(null)
+            .build();
+
+    RaceModel proto = RaceConverter.toProto(race, track, new HashSet<>());
+
+    assertEquals(
+        com.antigravity.proto.HeatScoring.AllowFinish.AF_SINGLE_LAP_AUTO_SEGMENTS,
+        proto.getHeatScoring().getAllowFinish());
+  }
+
+  @Test
   public void testToProto_AnalogFuelOptions() {
     HeatScoring heatScoring =
         new HeatScoring(
@@ -154,6 +219,66 @@ public class RaceConverterTest {
     assertEquals(true, proto.getFuelOptions().getEnabled());
     assertEquals(120.0, proto.getFuelOptions().getCapacity(), 0.001);
     assertEquals(5.0, proto.getFuelOptions().getUsageRate(), 0.001);
+    assertEquals(2.5, proto.getFuelOptions().getFastestTime(), 0.001);
+    assertEquals(6.25, proto.getFuelOptions().getMaxUsage(), 0.001);
+    assertEquals(7.5, proto.getFuelOptions().getSlowestTime(), 0.001);
+    assertEquals(3.75, proto.getFuelOptions().getMinUsage(), 0.001);
+  }
+
+  @Test
+  public void testToProto_AnalogFuelOptions_FourParameters() {
+    HeatScoring heatScoring =
+        new HeatScoring(
+            HeatScoring.FinishMethod.Timed,
+            15,
+            HeatScoring.HeatRanking.LAP_COUNT,
+            HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME,
+            HeatScoring.AllowFinish.None);
+    AnalogFuelOptions fuelOptions =
+        new AnalogFuelOptions(
+            true,
+            false,
+            false,
+            com.antigravity.models.FuelOptions.OutOfFuelAction.DO_NOT_COUNT_LAPS,
+            120.0,
+            AnalogFuelOptions.FuelUsageType.LINEAR,
+            5.0,
+            100.0,
+            8.0,
+            3.0,
+            5.0,
+            1.0,
+            1.0,
+            null,
+            2.0,
+            8.0,
+            6.0,
+            2.0);
+    Race race =
+        new Race.Builder()
+            .withName("Test Race")
+            .withTrackEntityId("track-id")
+            .withHeatRotationType(HeatRotationType.RoundRobin)
+            .withHeatScoring(heatScoring)
+            .withMinLapTime(0.0)
+            .withFuelOptions(fuelOptions)
+            .build();
+    Track track =
+        new Track.Builder()
+            .name("Test Track")
+            .lanes(new ArrayList<>())
+            .arduinoConfigs(null)
+            .entityId("track-id")
+            .id(null)
+            .build();
+
+    RaceModel proto = RaceConverter.toProto(race, track, new HashSet<>());
+
+    assertEquals(true, proto.getFuelOptions().getEnabled());
+    assertEquals(2.0, proto.getFuelOptions().getFastestTime(), 0.001);
+    assertEquals(8.0, proto.getFuelOptions().getMaxUsage(), 0.001);
+    assertEquals(6.0, proto.getFuelOptions().getSlowestTime(), 0.001);
+    assertEquals(2.0, proto.getFuelOptions().getMinUsage(), 0.001);
   }
 
   @Test
@@ -480,6 +605,117 @@ public class RaceConverterTest {
     com.antigravity.proto.Race proto = RaceConverter.toProto(race);
     assertNotNull(proto);
     assertEquals(testStartMillis, proto.getStartTimeMillis());
+  }
+
+  @Test
+  public void testToProto_PopulatesStateAndFlag() {
+    List<com.antigravity.models.Lane> lanes = new ArrayList<>();
+    lanes.add(new com.antigravity.models.Lane("red", "white", 10));
+    Track track =
+        new Track.Builder().name("Track").lanes(lanes).arduinoConfigs(null).entityId("t1").build();
+
+    List<com.antigravity.race.RaceParticipant> drivers = new ArrayList<>();
+    drivers.add(
+        new com.antigravity.race.RaceParticipant(
+            new com.antigravity.models.Driver("Driver 1", "D1", "d1", null)));
+
+    com.antigravity.race.Race race =
+        new com.antigravity.race.Race.Builder()
+            .model(new com.antigravity.models.Race.Builder().withName("Test Race").build())
+            .track(track)
+            .drivers(drivers)
+            .isDemoMode(true)
+            .stateClassName(com.antigravity.race.states.RaceOver.class.getName()) // fqn-collision
+            .build();
+
+    com.antigravity.proto.Race proto = RaceConverter.toProto(race);
+    assertNotNull(proto);
+    assertEquals(com.antigravity.proto.RaceState.RACE_OVER, proto.getState());
+    assertEquals(com.antigravity.proto.RaceFlag.CHECKERED, proto.getFlag());
+  }
+
+  @Test
+  public void testToProto_AnalogFuelOptions_CustomCurve() {
+    List<FuelCurvePoint> curve =
+        Arrays.asList(
+            new FuelCurvePoint(0.0, 4.0),
+            new FuelCurvePoint(0.5, 1.0),
+            new FuelCurvePoint(1.0, 0.0));
+    AnalogFuelOptions fuelOptions =
+        new AnalogFuelOptions(
+            true,
+            false,
+            null,
+            com.antigravity.models.FuelOptions.OutOfFuelAction.DO_NOT_COUNT_LAPS,
+            120.0,
+            com.antigravity.models.FuelOptions.FuelUsageType.CUSTOM_CURVE,
+            5.0,
+            100.0,
+            8.0,
+            3.0,
+            6.0,
+            1.0,
+            1.0,
+            curve);
+    Race race =
+        new Race.Builder()
+            .withName("Custom Analog Fuel Race")
+            .withTrackEntityId("track-1")
+            .withFuelOptions(fuelOptions)
+            .build();
+    Track track = new Track.Builder().entityId("track-1").name("Track").build();
+
+    RaceModel proto = RaceConverter.toProto(race, track, new HashSet<>());
+    assertEquals(
+        com.antigravity.proto.FuelUsageType.CUSTOM_CURVE, proto.getFuelOptions().getUsageType());
+    assertEquals(3, proto.getFuelOptions().getCustomCurveCount());
+    assertEquals(0.0, proto.getFuelOptions().getCustomCurve(0).getX(), 0.001);
+    assertEquals(4.0, proto.getFuelOptions().getCustomCurve(0).getY(), 0.001);
+    assertEquals(0.5, proto.getFuelOptions().getCustomCurve(1).getX(), 0.001);
+    assertEquals(1.0, proto.getFuelOptions().getCustomCurve(1).getY(), 0.001);
+    assertEquals(1.0, proto.getFuelOptions().getCustomCurve(2).getX(), 0.001);
+    assertEquals(0.0, proto.getFuelOptions().getCustomCurve(2).getY(), 0.001);
+  }
+
+  @Test
+  public void testToProto_DigitalFuelOptions_CustomCurve() {
+    List<FuelCurvePoint> curve =
+        Arrays.asList(
+            new FuelCurvePoint(0.0, 0.0),
+            new FuelCurvePoint(0.5, 0.4),
+            new FuelCurvePoint(1.0, 1.0));
+    DigitalFuelOptions digitalFuel =
+        new DigitalFuelOptions(
+            true,
+            false,
+            null,
+            com.antigravity.models.FuelOptions.OutOfFuelAction.DO_NOT_COUNT_LAPS,
+            100.0,
+            com.antigravity.models.FuelOptions.FuelUsageType.CUSTOM_CURVE,
+            4.0,
+            100.0,
+            10.0,
+            2.0,
+            curve);
+    Race race =
+        new Race.Builder()
+            .withName("Custom Digital Fuel Race")
+            .withTrackEntityId("track-1")
+            .withDigitalFuelOptions(digitalFuel)
+            .build();
+    Track track = new Track.Builder().entityId("track-1").name("Track").build();
+
+    RaceModel proto = RaceConverter.toProto(race, track, new HashSet<>());
+    assertEquals(
+        com.antigravity.proto.FuelUsageType.CUSTOM_CURVE,
+        proto.getDigitalFuelOptions().getUsageType());
+    assertEquals(3, proto.getDigitalFuelOptions().getCustomCurveCount());
+    assertEquals(0.0, proto.getDigitalFuelOptions().getCustomCurve(0).getX(), 0.001);
+    assertEquals(0.0, proto.getDigitalFuelOptions().getCustomCurve(0).getY(), 0.001);
+    assertEquals(0.5, proto.getDigitalFuelOptions().getCustomCurve(1).getX(), 0.001);
+    assertEquals(0.4, proto.getDigitalFuelOptions().getCustomCurve(1).getY(), 0.001);
+    assertEquals(1.0, proto.getDigitalFuelOptions().getCustomCurve(2).getX(), 0.001);
+    assertEquals(1.0, proto.getDigitalFuelOptions().getCustomCurve(2).getY(), 0.001);
   }
 
   private void assertNotNull(Object obj) {

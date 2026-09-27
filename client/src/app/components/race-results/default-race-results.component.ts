@@ -1,4 +1,4 @@
-import { CommonModule, DatePipe, DecimalPipe } from "@angular/common";
+import { CommonModule, DecimalPipe } from "@angular/common";
 import {
   ChangeDetectorRef,
   Component,
@@ -8,7 +8,8 @@ import {
   OnInit,
 } from "@angular/core";
 import { Router, RouterModule } from "@angular/router";
-import { Subscription } from "rxjs";
+import { firstValueFrom, Subscription } from "rxjs";
+import { AddLapSectionsDialogComponent } from "@app/components/raceday/components/add-lap-sections-dialog/add-lap-sections-dialog.component";
 import { AcknowledgementModalComponent } from "@app/components/shared/acknowledgement-modal/acknowledgement-modal.component";
 import { TwinGraphsComponent } from "@app/components/shared/twin-graphs/twin-graphs.component";
 import { DataService } from "@app/data.service";
@@ -21,6 +22,7 @@ import {
 import { getOverallScoreFormat } from "@app/models/overall_scoring";
 import { Race } from "@app/models/race";
 import { RaceParticipant } from "@app/models/race_participant";
+import { isAtLeast, Role } from "@app/models/role";
 import { AvatarUrlPipe } from "@app/pipes/avatar-url.pipe";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { IRecordData, IRecordEntry } from "@app/proto/antigravity";
@@ -29,7 +31,10 @@ import { AuthService } from "@app/services/auth.service";
 import { PrintService } from "@app/services/print.service";
 import { RaceService } from "@app/services/race.service";
 import { RaceConnectionService } from "@app/services/race-connection.service";
+import { RaceFlagService } from "@app/services/race-flag.service";
+import { RaceTimeService } from "@app/services/race-time.service";
 import { TranslationService } from "@app/services/translation.service";
+import { saveFileAs } from "@app/utils/file-download.utils";
 import { ViewerRaceEndedHandler } from "@app/utils/viewer-race-ended-handler";
 
 interface StandingsRow {
@@ -86,6 +91,7 @@ import {
   PdfExportDialogComponent,
   PdfExportOptions,
 } from "@app/components/shared/pdf-export-dialog/pdf-export-dialog.component";
+import { LocalDatePipe } from "@app/pipes/local-date.pipe";
 import { SettingsService } from "@app/services/settings.service";
 
 @Component({
@@ -96,14 +102,15 @@ import { SettingsService } from "@app/services/settings.service";
   imports: [
     TwinGraphsComponent,
     CommonModule,
-    DatePipe,
     DecimalPipe,
     TranslatePipe,
+    LocalDatePipe,
     AvatarUrlPipe,
     RouterModule,
     AcknowledgementModalComponent,
     PdfExportDialogComponent,
     BrowserNavigationComponent,
+    AddLapSectionsDialogComponent,
   ],
 })
 export class DefaultRaceResultsComponent implements OnInit, OnDestroy {
@@ -116,6 +123,86 @@ export class DefaultRaceResultsComponent implements OnInit, OnDestroy {
 
   showPdfExportDialog = false;
   defaultIncludeBackground = true;
+  showAddLapSectionsDialog = false;
+
+  get canEdit(): boolean {
+    return isAtLeast(this.authService.currentRole, Role.DIRECTOR);
+  }
+
+  get heats(): Heat[] {
+    return this.raceService.getHeats() || [];
+  }
+
+  get isReviewingPastRace(): boolean {
+    return Boolean((this.race as any)?.historyRecordId);
+  }
+
+  exitReview(): void {
+    sessionStorage.setItem("skipIntro", "true");
+    this.router.navigate(["/"]);
+  }
+
+  navigateToHeatResults(): void {
+    this.router.navigate(["/heat-results"]);
+  }
+
+  openAddLapSections(): void {
+    this.showAddLapSectionsDialog = true;
+    this.cdr.markForCheck();
+  }
+
+  onAddLapSectionsConfirm(event: any): void {
+    if (event?.isBatch && event.updates) {
+      const histId = (this.race as any)?.historyRecordId;
+      const isDemo = Boolean((this.race as any)?.is_demo);
+      if (histId) {
+        this.dataService
+          .updateHistoryLapSections(histId, event.updates, isDemo)
+          .subscribe(() => {
+            this.showAddLapSectionsDialog = false;
+            this.cdr.markForCheck();
+          });
+      } else {
+        this.dataService.updateBatchUserLaps(event.updates).subscribe(() => {
+          this.showAddLapSectionsDialog = false;
+          this.cdr.markForCheck();
+        });
+      }
+    } else {
+      this.showAddLapSectionsDialog = false;
+    }
+  }
+
+  async exportCsv(): Promise<void> {
+    try {
+      const histId = (this.race as any)?.historyRecordId;
+      const isDemo = Boolean((this.race as any)?.is_demo);
+      const csvData = histId
+        ? await firstValueFrom(
+            this.dataService.exportRaceHistoryToCsv(histId, isDemo),
+          )
+        : await firstValueFrom(this.dataService.exportRaceToCsv());
+
+      if (!csvData || csvData.trim().length === 0) return;
+
+      const timeStr = this.printService.formatExportTimestamp(new Date());
+      const raceName = (this.race?.name || "Race").replace(
+        /[^a-zA-Z0-9.-]/g,
+        "_",
+      );
+      const suggestedName = `${raceName}-RaceResults${timeStr}.csv`;
+
+      await saveFileAs({
+        suggestedName,
+        data: csvData,
+        mimeType: "text/csv;charset=utf-8",
+        description: "CSV Files",
+        extension: ".csv",
+      });
+    } catch (e) {
+      console.error("Failed to export CSV", e);
+    }
+  }
 
   protected getGridColumns(): string {
     const baseColumns =
@@ -273,12 +360,30 @@ export class DefaultRaceResultsComponent implements OnInit, OnDestroy {
     return (this.width - totalWidth) / 2;
   }
 
+  get currentFlagUrl(): string {
+    return this.raceFlagService.getCurrentFlagUrl();
+  }
+
+  get formattedTime(): string {
+    return this.raceTimeService.formattedTime;
+  }
+
+  get totalHeats(): number {
+    return this.raceService.getHeats()?.length || 0;
+  }
+
+  get currentHeatNumber(): number | undefined {
+    return this.raceService.getCurrentHeat()?.heatNumber;
+  }
+
   constructor(
     private raceConnectionService: RaceConnectionService,
     private raceService: RaceService,
     private translationService: TranslationService,
     private cdr: ChangeDetectorRef,
     private printService: PrintService,
+    private raceFlagService: RaceFlagService,
+    private raceTimeService: RaceTimeService,
   ) {}
 
   ngOnInit() {
@@ -296,6 +401,18 @@ export class DefaultRaceResultsComponent implements OnInit, OnDestroy {
     this.subscriptions.push(
       this.translationService.getCurrentLanguage().subscribe(() => {
         this.updateGraph();
+        this.cdr.detectChanges();
+      }),
+    );
+
+    this.subscriptions.push(
+      this.raceFlagService.currentFlagUrl$.subscribe(() => {
+        this.cdr.detectChanges();
+      }),
+    );
+
+    this.subscriptions.push(
+      this.raceTimeService.formattedTime$.subscribe(() => {
         this.cdr.detectChanges();
       }),
     );

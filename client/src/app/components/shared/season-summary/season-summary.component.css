@@ -30,6 +30,14 @@
   flex-shrink: 0;
 }
 
+.header-title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+}
+
 .detail-header h2 {
   font-size: 3rem;
   color: #f8fafc;
@@ -39,6 +47,28 @@
   overflow: hidden;
   text-overflow: ellipsis;
   min-width: 0;
+}
+
+.edit-season-btn {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border-radius: 4px;
+  background: rgba(30, 41, 59, 0.6);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  color: #94a3b8;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.edit-season-btn:hover {
+  background: rgba(56, 189, 248, 0.2);
+  border-color: #38bdf8;
+  color: #38bdf8;
 }
 
 .season-meta {
@@ -109,6 +139,7 @@
 .standings-body-container {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
   overscroll-behavior-y: contain;
   min-height: 0;
   padding-right: 8px;
@@ -119,18 +150,18 @@
 }
 
 .standings-body-container::-webkit-scrollbar-track {
-  background: rgba(15, 23, 42, 0.5);
-  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.4);
+  border-radius: 4px;
 }
 
 .standings-body-container::-webkit-scrollbar-thumb {
-  background: rgba(56, 189, 248, 0.3);
-  border-radius: 10px;
-  border: 2px solid rgba(15, 23, 42, 0.5);
+  background: rgba(56, 189, 248, 0.5);
+  border-radius: 4px;
+  border: 1px solid rgba(15, 23, 42, 0.2);
 }
 
 .standings-body-container::-webkit-scrollbar-thumb:hover {
-  background: rgba(56, 189, 248, 0.5);
+  background: rgba(56, 189, 248, 0.8);
 }
 
 .empty-standings {
@@ -234,11 +265,20 @@
   margin-bottom: 6px;
 }
 
+.season-summary-container.compact .header-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 8px;
+}
+
 .season-summary-container.compact .detail-header h2 {
   font-size: 1.25rem;
   font-weight: 700;
   color: #38bdf8;
-  width: 100%;
+  flex: 1;
+  min-width: 0;
 }
 
 .season-summary-container.compact .season-meta {
@@ -262,22 +302,24 @@
 
 .season-summary-container.compact .standings-table th,
 .season-summary-container.compact .standings-table td {
-  padding: 4px 6px;
+  padding: 4px 14px;
   font-size: 1.05rem;
 }
 
 .season-summary-container.compact .standings-table th {
-  font-size: 0.7rem;
-  letter-spacing: 0.2px;
+  font-size: 0.65rem;
+  letter-spacing: 0px;
   white-space: normal;
-  line-height: 1.15;
+  line-height: 1.1;
   vertical-align: bottom;
-  overflow: visible;
-  text-overflow: clip;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 .season-summary-container.compact .col-rank {
-  width: 55px;
+  width: 14%;
   text-align: center;
   padding-left: 2px;
   padding-right: 2px;
@@ -290,14 +332,14 @@
 }
 
 .season-summary-container.compact .col-pts {
-  width: 88px;
+  width: 16%;
   text-align: right;
   padding-right: 4px;
   padding-left: 2px;
 }
 
 .season-summary-container.compact .col-races {
-  width: 52px;
+  width: 10%;
   text-align: center;
   padding-left: 2px;
   padding-right: 2px;

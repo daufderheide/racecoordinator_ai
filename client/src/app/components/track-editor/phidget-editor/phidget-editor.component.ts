@@ -11,6 +11,10 @@ import {
 } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { Subscription } from "rxjs";
+import {
+  CustomOptionComponent,
+  CustomSelectComponent,
+} from "@app/components/shared/custom-select/custom-select.component";
 import { DataService } from "@app/data.service";
 import { PhidgetConfig } from "@app/models/track";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
@@ -47,13 +51,20 @@ export interface PhidgetEditorSections {
   templateUrl: "./phidget-editor.component.html",
   styleUrls: ["./phidget-editor.component.css"],
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslatePipe],
+  imports: [
+    CommonModule,
+    FormsModule,
+    TranslatePipe,
+    CustomSelectComponent,
+    CustomOptionComponent,
+  ],
 })
 export class PhidgetEditorComponent implements OnInit, OnDestroy {
   config = model.required<PhidgetConfig>();
   allPhidgetConfigs = input<PhidgetConfig[]>([]);
   interfaceIndex = input.required<number>();
   lanes = input.required<number>();
+  isEditMode = input<boolean>(true);
 
   change = output<void>();
   remove = output<void>();
@@ -239,6 +250,9 @@ export class PhidgetEditorComponent implements OnInit, OnDestroy {
   }
 
   onConfigChange() {
+    if (!this.isEditMode()) {
+      return;
+    }
     this.updateSelectedDeviceKey();
     const c = this.config();
     if (c) {
@@ -301,6 +315,9 @@ export class PhidgetEditorComponent implements OnInit, OnDestroy {
   }
 
   onDeviceSelectChange(key: string) {
+    if (!this.isEditMode()) {
+      return;
+    }
     this.status = "DISCONNECTED";
     const selected = this.devices.find((d) => this.getDeviceKey(d) === key);
     const c = this.config();
@@ -320,6 +337,9 @@ export class PhidgetEditorComponent implements OnInit, OnDestroy {
   }
 
   onRemove() {
+    if (!this.isEditMode()) {
+      return;
+    }
     this.remove.emit();
   }
 
@@ -788,6 +808,9 @@ export class PhidgetEditorComponent implements OnInit, OnDestroy {
     channel: number,
     action: string,
   ) {
+    if (!this.isEditMode()) {
+      return;
+    }
     let val = PinBehavior.BEHAVIOR_UNUSED;
     if (action === "master_call") {
       val = PinBehavior.BEHAVIOR_CALL_BUTTON;
@@ -866,6 +889,9 @@ export class PhidgetEditorComponent implements OnInit, OnDestroy {
 
   togglePinDropdown(dropdownId: string, event: MouseEvent) {
     event.stopPropagation();
+    if (!this.isEditMode()) {
+      return;
+    }
     if (this.openPinDropdown === dropdownId) {
       this.openPinDropdown = null;
     } else {
@@ -901,6 +927,9 @@ export class PhidgetEditorComponent implements OnInit, OnDestroy {
   }
 
   togglePinState(type: "in" | "out" | "analog", pin: number) {
+    if (!this.isEditMode()) {
+      return;
+    }
     if (type !== "out") return;
 
     const key = `${type}-${pin}`;

@@ -50,4 +50,30 @@ public class HeatScoringTest {
     HeatScoring nullTiebreaker = new HeatScoring(FinishMethod.Lap, 10, null, null);
     assertEquals(TiebreakerMethod.AVERAGE_LAP_TIME, nullTiebreaker.toTiebreakerMethod());
   }
+
+  @Test
+  public void testJacksonDeserializationSnakeCase() throws Exception {
+    com.fasterxml.jackson.databind.ObjectMapper mapper =
+        new com.fasterxml.jackson.databind.ObjectMapper();
+    String json =
+        "{\"finish_method\":\"Timed\",\"finish_value\":60,\"heat_ranking\":\"LAP_COUNT\",\"heat_ranking_tiebreaker\":\"FASTEST_LAP_TIME\",\"allow_finish\":\"SingleLapAutoSegments\"}";
+    HeatScoring scoring = mapper.readValue(json, HeatScoring.class);
+    assertEquals(HeatScoring.AllowFinish.SingleLapAutoSegments, scoring.getAllowFinish());
+    assertEquals(FinishMethod.Timed, scoring.getFinishMethod());
+    assertEquals(60L, scoring.getFinishValue());
+  }
+
+  @Test
+  public void testJacksonDeserializationCamelCase() throws Exception {
+    com.fasterxml.jackson.databind.ObjectMapper mapper =
+        new com.fasterxml.jackson.databind.ObjectMapper();
+    String json =
+        "{\"finishMethod\":\"Timed\",\"finishValue\":45,\"heatRanking\":\"FASTEST_LAP\",\"heatRankingTiebreaker\":\"MEDIAN_LAP_TIME\",\"allowFinish\":\"SingleLapAutoSegments\"}";
+    HeatScoring scoring = mapper.readValue(json, HeatScoring.class);
+    assertEquals(HeatScoring.AllowFinish.SingleLapAutoSegments, scoring.getAllowFinish());
+    assertEquals(FinishMethod.Timed, scoring.getFinishMethod());
+    assertEquals(45L, scoring.getFinishValue());
+    assertEquals(HeatRanking.FASTEST_LAP, scoring.getHeatRanking());
+    assertEquals(HeatRankingTiebreaker.MEDIAN_LAP_TIME, scoring.getHeatRankingTiebreaker());
+  }
 }

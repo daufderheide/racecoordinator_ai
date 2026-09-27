@@ -75,7 +75,11 @@ export class RaceService {
     this.currentHeatSubject.next(heat);
     const heats = this.getHeats();
     if (heats && heats.length > 0) {
-      const existing = heats.find((h) => h.objectId === heat.objectId);
+      const existing = heats.find(
+        (h) =>
+          (h.objectId && heat.objectId && h.objectId === heat.objectId) ||
+          h.heatNumber === heat.heatNumber,
+      );
       if (existing) {
         existing.started = heat.started;
         existing.heatDrivers = heat.heatDrivers;

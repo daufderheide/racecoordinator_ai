@@ -89,7 +89,7 @@ public class RaceConverter {
 
       if (race.getFuelOptions() != null) {
         AnalogFuelOptions fuel = race.getFuelOptions();
-        builder.setFuelOptions(
+        com.antigravity.proto.AnalogFuelOptions.Builder fuelBuilder = // fqn-collision
             com.antigravity.proto.AnalogFuelOptions.newBuilder() // fqn-collision
                 .setEnabled(fuel.isEnabled())
                 .setResetFuelAtHeatStart(fuel.isResetFuelAtHeatStart())
@@ -109,12 +109,26 @@ public class RaceConverter {
                 .setReferenceTime(fuel.getReferenceTime())
                 .setPowerStutterOnTime(fuel.getPowerStutterOnTime())
                 .setPowerStutterOffTime(fuel.getPowerStutterOffTime())
-                .build());
+                .setFastestTime(fuel.getFastestTime())
+                .setMaxUsage(fuel.getMaxUsage())
+                .setSlowestTime(fuel.getSlowestTime())
+                .setMinUsage(fuel.getMinUsage());
+        if (fuel.getCustomCurve() != null) {
+          fuel.getCustomCurve()
+              .forEach(
+                  p ->
+                      fuelBuilder.addCustomCurve(
+                          com.antigravity.proto.FuelCurvePoint.newBuilder() // fqn-collision
+                              .setX(p.getX())
+                              .setY(p.getY())
+                              .build()));
+        }
+        builder.setFuelOptions(fuelBuilder.build());
       }
 
       if (race.getDigitalFuelOptions() != null) {
         DigitalFuelOptions fuel = race.getDigitalFuelOptions();
-        builder.setDigitalFuelOptions(
+        com.antigravity.proto.DigitalFuelOptions.Builder digitalBuilder = // fqn-collision
             com.antigravity.proto.DigitalFuelOptions.newBuilder() // fqn-collision
                 .setEnabled(fuel.isEnabled())
                 .setResetFuelAtHeatStart(fuel.isResetFuelAtHeatStart())
@@ -130,8 +144,18 @@ public class RaceConverter {
                 .setUsageRate(fuel.getUsageRate())
                 .setStartLevel(fuel.getStartLevel())
                 .setRefuelRate(fuel.getRefuelRate())
-                .setPitStopDelay(fuel.getPitStopDelay())
-                .build());
+                .setPitStopDelay(fuel.getPitStopDelay());
+        if (fuel.getCustomCurve() != null) {
+          fuel.getCustomCurve()
+              .forEach(
+                  p ->
+                      digitalBuilder.addCustomCurve(
+                          com.antigravity.proto.FuelCurvePoint.newBuilder() // fqn-collision
+                              .setX(p.getX())
+                              .setY(p.getY())
+                              .build()));
+        }
+        builder.setDigitalFuelOptions(digitalBuilder.build());
       }
       if (race.getTeamOptions() != null) {
         TeamOptions options = race.getTeamOptions();
@@ -214,6 +238,11 @@ public class RaceConverter {
                     .collect(Collectors.toList()))
             .setCurrentHeat(HeatConverter.toProto(race.getCurrentHeat(), sentObjectIds))
             .setRecordData(race.getRecordData());
+
+    if (race.getState() != null) {
+      builder.setState(com.antigravity.race.Race.getProtoState(race.getState())); // fqn-collision
+      builder.setFlag(race.getState().getFlagType(race));
+    }
 
     com.antigravity.race.EventExecutionManager eventMgr = // fqn-collision
         com.antigravity.race.EventExecutionManager.getInstance(); // fqn-collision

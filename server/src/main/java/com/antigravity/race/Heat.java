@@ -3,6 +3,7 @@ package com.antigravity.race;
 import com.antigravity.models.HeatScoring;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class Heat extends ServerToClientObject {
@@ -13,12 +14,49 @@ public class Heat extends ServerToClientObject {
   @com.fasterxml.jackson.annotation.JsonIgnore private HeatStandings heatStandings;
   private boolean started = false;
   private int group = 0;
+  private int masterTrackCalls = 0;
+  private int trackCalls = 0;
+
+  public int getMasterTrackCalls() {
+    return masterTrackCalls;
+  }
+
+  public void setMasterTrackCalls(int masterTrackCalls) {
+    this.masterTrackCalls = masterTrackCalls;
+  }
+
+  public void incrementMasterTrackCalls() {
+    this.masterTrackCalls++;
+  }
+
+  public int getTrackCalls() {
+    return trackCalls;
+  }
+
+  public void setTrackCalls(int trackCalls) {
+    this.trackCalls = trackCalls;
+  }
+
+  public void incrementTrackCalls() {
+    this.trackCalls++;
+  }
+
+  public void resetTrackCalls() {
+    this.masterTrackCalls = 0;
+    this.trackCalls = 0;
+  }
 
   public Heat(int heatNumber, List<DriverHeatData> drivers, HeatScoring scoring, boolean practice) {
     super();
     this.heatNumber = heatNumber;
     this.drivers = drivers != null ? drivers : new ArrayList<>();
     if (this.drivers != null) {
+      for (int i = 0; i < this.drivers.size(); i++) {
+        DriverHeatData dhd = this.drivers.get(i);
+        if (dhd != null && dhd.getLane() < 0) {
+          dhd.setLane(i);
+        }
+      }
       HeatScoring safeScoring = scoring != null ? scoring : new HeatScoring();
       this.heatStandings = new HeatStandings(this.drivers, safeScoring, practice);
     }
@@ -142,5 +180,138 @@ public class Heat extends ServerToClientObject {
 
   public void setGroup(int group) {
     this.group = group;
+  }
+
+  public DriverHeatData getDriverOnLane(int laneIndex) {
+    if (drivers != null && laneIndex >= 0 && laneIndex < drivers.size()) {
+      return drivers.get(laneIndex);
+    }
+    return null;
+  }
+
+  public Double getLaneTotalLaps(int laneIndex) {
+    DriverHeatData dhd = getDriverOnLane(laneIndex);
+    if (dhd != null && !dhd.isEmptyParticipant()) {
+      return dhd.getAdjustedLapCount();
+    }
+    return null;
+  }
+
+  @JsonIgnore
+  public int getMaxSegments() {
+    if (drivers == null) {
+      return 0;
+    }
+    int max = 0;
+    for (DriverHeatData dhd : drivers) {
+      if (dhd != null && dhd.getLaps() != null) {
+        for (DriverHeatData.LapData lap : dhd.getLaps()) {
+          if (lap != null && lap.getSegments() != null) {
+            max = Math.max(max, lap.getSegments().size());
+          }
+        }
+      }
+    }
+    return max;
+  }
+
+  @JsonIgnore
+  public List<String> getColumnHeaders() {
+    List<String> headers = new ArrayList<>();
+    if (drivers == null || drivers.isEmpty()) {
+      return headers;
+    }
+    int maxSegs = getMaxSegments();
+    for (int i = 0; i < drivers.size(); i++) {
+      headers.add("Lane " + (i + 1));
+      if (maxSegs == 1) {
+        headers.add("Segments");
+      } else if (maxSegs > 1) {
+        for (int s = 0; s < maxSegs; s++) {
+          headers.add("Seg " + (s + 1));
+        }
+      }
+    }
+    return headers;
+  }
+
+  @JsonIgnore
+  public List<Object> getDriverHeaders() {
+    List<Object> headers = new ArrayList<>();
+    if (drivers == null || drivers.isEmpty()) {
+      return headers;
+    }
+    int maxSegs = getMaxSegments();
+    for (int i = 0; i < drivers.size(); i++) {
+      headers.add(getDriverNameOnLane(i));
+      for (int s = 0; s < maxSegs; s++) {
+        headers.add(null);
+      }
+    }
+    return headers;
+  }
+
+  @JsonIgnore
+  public List<Object> getTotalLapHeaders() {
+    List<Object> headers = new ArrayList<>();
+    if (drivers == null || drivers.isEmpty()) {
+      return headers;
+    }
+    int maxSegs = getMaxSegments();
+    for (int i = 0; i < drivers.size(); i++) {
+      headers.add(getLaneTotalLaps(i));
+      for (int s = 0; s < maxSegs; s++) {
+        headers.add(null);
+      }
+    }
+    return headers;
+  }
+
+  @JsonIgnore
+  public List<HeatLapRow> getLapRows() {
+    List<HeatLapRow> rows = new ArrayList<>();
+    if (drivers == null || drivers.isEmpty()) {
+      return rows;
+    }
+    int maxLaps = 0;
+    for (DriverHeatData dhd : drivers) {
+      if (dhd != null && dhd.getLaps() != null) {
+        maxLaps = Math.max(maxLaps, dhd.getLaps().size());
+      }
+    }
+    int laneCount = drivers.size();
+    int maxSegs = getMaxSegments();
+    for (int lapIdx = 0; lapIdx < maxLaps; lapIdx++) {
+      List<Double> laneLaps = new ArrayList<>(laneCount);
+      List<List<Double>> laneSegments = new ArrayList<>(laneCount);
+      for (int laneIdx = 0; laneIdx < laneCount; laneIdx++) {
+        DriverHeatData dhd = drivers.get(laneIdx);
+        if (dhd != null && dhd.getLaps() != null && lapIdx < dhd.getLaps().size()) {
+          DriverHeatData.LapData lapData = dhd.getLaps().get(lapIdx);
+          laneLaps.add(lapData != null ? lapData.getLapTime() : null);
+          if (lapData != null
+              && lapData.getSegments() != null
+              && !lapData.getSegments().isEmpty()) {
+            List<Double> roundedSegs = new ArrayList<>(lapData.getSegments().size());
+            for (Double s : lapData.getSegments()) {
+              roundedSegs.add(s != null ? RaceStatisticsUtils.roundToThreeDecimals(s) : null);
+            }
+            laneSegments.add(roundedSegs);
+          } else {
+            laneSegments.add(Collections.emptyList());
+          }
+        } else {
+          laneLaps.add(null);
+          laneSegments.add(Collections.emptyList());
+        }
+      }
+      rows.add(new HeatLapRow(lapIdx + 1, laneLaps, laneSegments, maxSegs));
+    }
+    return rows;
+  }
+
+  @JsonIgnore
+  public boolean hasSegments() {
+    return getMaxSegments() > 0;
   }
 }

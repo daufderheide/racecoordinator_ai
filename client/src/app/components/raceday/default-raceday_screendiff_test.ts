@@ -151,6 +151,7 @@ test.describe("Raceday Visuals for Fuel", () => {
     };
     await TestSetupHelper.mockRaceData(page, raceData);
     await page.locator(".table-row").first().waitFor({ state: "visible" });
+    await page.evaluate(() => new Promise(requestAnimationFrame));
     await TestSetupHelper.waitForImagesLoaded(
       page.locator(".dashboard-wrapper"),
     );
@@ -248,6 +249,7 @@ test.describe("Raceday Visuals for Fuel", () => {
     };
     await TestSetupHelper.mockRaceData(page, raceData);
     await page.locator(".table-row").first().waitFor({ state: "visible" });
+    await page.evaluate(() => new Promise(requestAnimationFrame));
     await TestSetupHelper.waitForImagesLoaded(
       page.locator(".dashboard-wrapper"),
     );
@@ -323,10 +325,9 @@ test.describe("Raceday Visuals for Fuel", () => {
     };
     await TestSetupHelper.mockRaceData(page, raceData);
 
-    await page.waitForTimeout(500);
-
     // Fuel column visibility checked visually
     await page.locator(".table-row").first().waitFor({ state: "visible" });
+    await page.evaluate(() => new Promise(requestAnimationFrame));
     await TestSetupHelper.waitForImagesLoaded(
       page.locator(".dashboard-wrapper"),
     );
@@ -435,6 +436,7 @@ test.describe("Raceday Visuals for Fuel", () => {
     };
     await TestSetupHelper.mockRaceData(page, raceData);
     await page.locator(".table-row").first().waitFor({ state: "visible" });
+    await page.evaluate(() => new Promise(requestAnimationFrame));
     await TestSetupHelper.waitForImagesLoaded(
       page.locator(".dashboard-wrapper"),
     );
@@ -530,6 +532,7 @@ test.describe("Raceday Visuals for Fuel", () => {
     };
     await TestSetupHelper.mockRaceData(page, raceData);
     await page.locator(".table-row").first().waitFor({ state: "visible" });
+    await page.evaluate(() => new Promise(requestAnimationFrame));
     await TestSetupHelper.waitForImagesLoaded(
       page.locator(".dashboard-wrapper"),
     );
@@ -659,10 +662,15 @@ test.describe("Raceday Visuals for Fuel", () => {
     }, dataArray);
 
     await TestSetupHelper.mockRaceData(page, raceData);
-    const select = page.locator(".scalable-content select").first();
+    const select = page
+      .locator(".scalable-content app-custom-select, .scalable-content select")
+      .first();
 
     // Wait until options are rendered async to avoid timing flakes (check options of the first select specifically)
-    await select.locator("option").nth(1).waitFor({ state: "attached" });
+    await select
+      .locator("app-custom-option, option")
+      .nth(1)
+      .waitFor({ state: "attached" });
 
     // To guarantee visibility in headless screenshots, extract options and render a floating debug overlay list
     await select.evaluate((node) => {
@@ -688,10 +696,14 @@ test.describe("Raceday Visuals for Fuel", () => {
       title.style.borderBottom = "1px solid #ddd";
       ul.appendChild(title);
 
-      const options = node.querySelectorAll("option");
+      const options = node.querySelectorAll("app-custom-option, option");
       let count = 0;
       options.forEach((opt) => {
-        const text = (opt as HTMLOptionElement).innerText.trim();
+        const text = (
+          (opt as HTMLElement).innerText ||
+          (opt as HTMLElement).textContent ||
+          ""
+        ).trim();
         if (text) {
           const li = document.createElement("li");
           li.innerText = `• ${text}`;
@@ -811,7 +823,7 @@ test.describe("Raceday Visuals for Fuel", () => {
 
     await TestSetupHelper.mockRaceData(page, raceData);
     await page.locator(".table-row").first().waitFor({ state: "visible" });
-    await page.waitForTimeout(500);
+    await page.evaluate(() => new Promise(requestAnimationFrame));
 
     await expect(page).toHaveScreenshot("raceday-connection-recovery.png", {
       maxDiffPixelRatio: 0.001,
@@ -878,7 +890,7 @@ test.describe("Raceday Visuals for Fuel", () => {
 
     await TestSetupHelper.mockRaceData(page, raceData);
     await page.locator(".table-row").first().waitFor({ state: "visible" });
-    await page.waitForTimeout(500);
+    await page.evaluate(() => new Promise(requestAnimationFrame));
 
     await expect(page).toHaveScreenshot("default-practice-layout.png", {
       maxDiffPixelRatio: 0.001,
@@ -937,6 +949,7 @@ test.describe("Raceday Visuals for Fuel", () => {
 
     await TestSetupHelper.mockRaceData(page, raceData);
     await page.locator(".table-row").first().waitFor({ state: "visible" });
+    await page.evaluate(() => new Promise(requestAnimationFrame));
 
     // Emulate print media and manually dispatch beforeprint
     await page.setViewportSize({ width: 1920, height: 1080 });
@@ -1012,6 +1025,7 @@ test.describe("Raceday Visuals for Fuel", () => {
 
     await TestSetupHelper.mockRaceData(page, raceData);
     await page.locator(".table-row").first().waitFor({ state: "visible" });
+    await page.evaluate(() => new Promise(requestAnimationFrame));
 
     // Emulate print media with no background and dispatch beforeprint
     await page.setViewportSize({ width: 1920, height: 1080 });
@@ -1037,9 +1051,7 @@ test.describe("Raceday Visuals for Fuel", () => {
     );
   });
 
-  test("should display raceday in fullscreen mode with navigation buttons", async ({
-    page,
-  }) => {
+  test("should display raceday in fullscreen mode", async ({ page }) => {
     await TestSetupHelper.waitForLocalization(
       page,
       "en",
@@ -1050,9 +1062,8 @@ test.describe("Raceday Visuals for Fuel", () => {
     await page.evaluate(() => {
       (window as any).fullscreenService?.setFullscreenOverride(true);
     });
-
-    const nav = page.locator("app-browser-navigation");
-    await nav.waitFor({ state: "visible" });
+    await page.evaluate(() => document.fonts.ready);
+    await page.mouse.move(0, 0);
 
     await expect(page).toHaveScreenshot("raceday-fullscreen.png", {
       maxDiffPixelRatio: 0.05,

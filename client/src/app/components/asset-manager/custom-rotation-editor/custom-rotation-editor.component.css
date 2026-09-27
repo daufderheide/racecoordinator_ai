@@ -59,21 +59,22 @@
 }
 
 .editor-panel::-webkit-scrollbar {
-  width: 6px;
+  width: 8px;
 }
 
 .editor-panel::-webkit-scrollbar-track {
-  background: rgba(15, 23, 42, 0.5);
-  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.4);
+  border-radius: 4px;
 }
 
 .editor-panel::-webkit-scrollbar-thumb {
-  background: rgba(56, 189, 248, 0.3);
-  border-radius: 10px;
+  background: rgba(56, 189, 248, 0.5);
+  border-radius: 4px;
+  border: 1px solid rgba(15, 23, 42, 0.2);
 }
 
 .editor-panel::-webkit-scrollbar-thumb:hover {
-  background: #38bdf8;
+  background: rgba(56, 189, 248, 0.8);
 }
 
 /* Configuration Selectors */
@@ -131,11 +132,7 @@
   color-scheme: dark;
 }
 
-.input-group select option,
-.input-group select optgroup {
-  background: #0f172a;
-  color: #f8fafc;
-}
+
 
 .input-group input:focus,
 .input-group select:focus {
@@ -247,21 +244,22 @@
 }
 
 .driver-pool::-webkit-scrollbar {
-  width: 6px;
+  width: 8px;
 }
 
 .driver-pool::-webkit-scrollbar-track {
-  background: rgba(15, 23, 42, 0.5);
-  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.4);
+  border-radius: 4px;
 }
 
 .driver-pool::-webkit-scrollbar-thumb {
-  background: rgba(56, 189, 248, 0.3);
-  border-radius: 10px;
+  background: rgba(56, 189, 248, 0.5);
+  border-radius: 4px;
+  border: 1px solid rgba(15, 23, 42, 0.2);
 }
 
 .driver-pool::-webkit-scrollbar-thumb:hover {
-  background: #38bdf8;
+  background: rgba(56, 189, 248, 0.8);
 }
 
 /* Driver Item cards styling */
@@ -327,21 +325,22 @@
 }
 
 .preview-panel::-webkit-scrollbar {
-  width: 6px;
+  width: 8px;
 }
 
 .preview-panel::-webkit-scrollbar-track {
-  background: rgba(15, 23, 42, 0.5);
-  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.4);
+  border-radius: 4px;
 }
 
 .preview-panel::-webkit-scrollbar-thumb {
-  background: rgba(56, 189, 248, 0.3);
-  border-radius: 10px;
+  background: rgba(56, 189, 248, 0.5);
+  border-radius: 4px;
+  border: 1px solid rgba(15, 23, 42, 0.2);
 }
 
 .preview-panel::-webkit-scrollbar-thumb:hover {
-  background: #38bdf8;
+  background: rgba(56, 189, 248, 0.8);
 }
 
 /* Expanders list container */
@@ -725,17 +724,22 @@
 }
 
 .report-content::-webkit-scrollbar {
-  width: 6px;
+  width: 8px;
 }
 
 .report-content::-webkit-scrollbar-track {
-  background: rgba(15, 23, 42, 0.5);
-  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.4);
+  border-radius: 4px;
 }
 
 .report-content::-webkit-scrollbar-thumb {
-  background: rgba(56, 189, 248, 0.3);
-  border-radius: 10px;
+  background: rgba(56, 189, 248, 0.5);
+  border-radius: 4px;
+  border: 1px solid rgba(15, 23, 42, 0.2);
+}
+
+.report-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(56, 189, 248, 0.8);
 }
 
 .report-list {

@@ -1,4 +1,5 @@
 import { ComponentHarness } from "@angular/cdk/testing";
+import { CustomSelectHarness } from "@app/components/shared/custom-select/testing/custom-select.harness";
 
 import { LeaderboardInspectorHarnessBase } from "./leaderboard-inspector.harness.base";
 
@@ -8,9 +9,7 @@ export class LeaderboardInspectorHarness
 {
   static hostSelector = LeaderboardInspectorHarnessBase.hostSelector;
 
-  protected getSelects = this.locatorForAll(
-    LeaderboardInspectorHarnessBase.selectors.selects,
-  );
+  protected getSelects = this.locatorForAll(CustomSelectHarness);
   protected getSliders = this.locatorForAll(
     LeaderboardInspectorHarnessBase.selectors.sliders,
   );
@@ -23,24 +22,22 @@ export class LeaderboardInspectorHarness
 
   async getDecimalPlaces(): Promise<number> {
     const selects = await this.getSelects();
-    return Number(await selects[0].getProperty("value"));
+    return Number(await selects[0].getValue());
   }
 
   async setDecimalPlaces(val: number): Promise<void> {
     const selects = await this.getSelects();
-    await selects[0].sendKeys(val.toString());
-    await selects[0].dispatchEvent("change");
+    await selects[0].selectOptionByValue(val.toString());
   }
 
   async getTitleFontFamily(): Promise<string> {
     const selects = await this.getSelects();
-    return await selects[1].getProperty("value");
+    return await selects[1].getValue();
   }
 
   async setTitleFontFamily(val: string): Promise<void> {
     const selects = await this.getSelects();
-    await selects[1].sendKeys(val);
-    await selects[1].dispatchEvent("change");
+    await selects[1].selectOptionByValue(val);
   }
 
   async getTitleFontSize(): Promise<number> {
@@ -75,13 +72,12 @@ export class LeaderboardInspectorHarness
 
   async getOverallLeaderFontFamily(): Promise<string> {
     const selects = await this.getSelects();
-    return await selects[2].getProperty("value");
+    return await selects[2].getValue();
   }
 
   async setOverallLeaderFontFamily(val: string): Promise<void> {
     const selects = await this.getSelects();
-    await selects[2].sendKeys(val);
-    await selects[2].dispatchEvent("change");
+    await selects[2].selectOptionByValue(val);
   }
 
   async getOverallLeaderFontSize(): Promise<number> {
@@ -118,13 +114,12 @@ export class LeaderboardInspectorHarness
 
   async getRestFontFamily(): Promise<string> {
     const selects = await this.getSelects();
-    return await selects[3].getProperty("value");
+    return await selects[3].getValue();
   }
 
   async setRestFontFamily(val: string): Promise<void> {
     const selects = await this.getSelects();
-    await selects[3].sendKeys(val);
-    await selects[3].dispatchEvent("change");
+    await selects[3].selectOptionByValue(val);
   }
 
   async getRestFontSize(): Promise<number> {
@@ -152,8 +147,10 @@ export class LeaderboardInspectorHarness
 
   async clickResetRestTextColor(): Promise<void> {
     const buttons = await this.getResetButtons();
-    if (buttons.length > 0) {
-      await buttons[buttons.length - 1].click();
+    if (buttons.length > 2) {
+      await buttons[2].click();
+    } else if (buttons.length > 0) {
+      await buttons[0].click();
     }
   }
 }

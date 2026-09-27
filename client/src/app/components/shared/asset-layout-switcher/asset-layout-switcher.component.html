@@ -1,0 +1,95 @@
+<div
+  class="layout-switcher-group"
+  role="group"
+  [attr.aria-label]="'AM_HELP_LAYOUT_TITLE' | translate"
+>
+  <button
+    type="button"
+    class="layout-btn layout-btn-list"
+    [class.active]="layout() === 'list'"
+    (click)="setLayout('list')"
+    [title]="'AM_VIEW_LIST' | translate"
+    [attr.aria-label]="'AM_VIEW_LIST' | translate"
+  >
+    <svg viewBox="0 0 24 24" class="layout-icon">
+      <rect x="3" y="5" width="4" height="3" rx="0.5" fill="currentColor" />
+      <rect x="9" y="5" width="12" height="3" rx="0.5" fill="currentColor" />
+      <rect x="3" y="10.5" width="4" height="3" rx="0.5" fill="currentColor" />
+      <rect x="9" y="10.5" width="12" height="3" rx="0.5" fill="currentColor" />
+      <rect x="3" y="16" width="4" height="3" rx="0.5" fill="currentColor" />
+      <rect x="9" y="16" width="12" height="3" rx="0.5" fill="currentColor" />
+    </svg>
+  </button>
+
+  <button
+    type="button"
+    class="layout-btn layout-btn-small"
+    [class.active]="layout() === 'small'"
+    (click)="setLayout('small')"
+    [title]="'AM_VIEW_SMALL' | translate"
+    [attr.aria-label]="'AM_VIEW_SMALL' | translate"
+  >
+    <svg viewBox="0 0 24 24" class="layout-icon">
+      <rect x="3" y="3" width="4" height="4" rx="0.5" fill="currentColor" />
+      <rect x="10" y="3" width="4" height="4" rx="0.5" fill="currentColor" />
+      <rect x="17" y="3" width="4" height="4" rx="0.5" fill="currentColor" />
+      <rect x="3" y="10" width="4" height="4" rx="0.5" fill="currentColor" />
+      <rect x="10" y="10" width="4" height="4" rx="0.5" fill="currentColor" />
+      <rect x="17" y="10" width="4" height="4" rx="0.5" fill="currentColor" />
+      <rect x="3" y="17" width="4" height="4" rx="0.5" fill="currentColor" />
+      <rect x="10" y="17" width="4" height="4" rx="0.5" fill="currentColor" />
+      <rect x="17" y="17" width="4" height="4" rx="0.5" fill="currentColor" />
+    </svg>
+  </button>
+
+  <button
+    type="button"
+    class="layout-btn layout-btn-medium"
+    [class.active]="layout() === 'medium'"
+    (click)="setLayout('medium')"
+    [title]="'AM_VIEW_MEDIUM' | translate"
+    [attr.aria-label]="'AM_VIEW_MEDIUM' | translate"
+  >
+    <svg viewBox="0 0 24 24" class="layout-icon">
+      <rect x="3" y="3" width="7.5" height="7.5" rx="1" fill="currentColor" />
+      <rect
+        x="13.5"
+        y="3"
+        width="7.5"
+        height="7.5"
+        rx="1"
+        fill="currentColor"
+      />
+      <rect
+        x="3"
+        y="13.5"
+        width="7.5"
+        height="7.5"
+        rx="1"
+        fill="currentColor"
+      />
+      <rect
+        x="13.5"
+        y="13.5"
+        width="7.5"
+        height="7.5"
+        rx="1"
+        fill="currentColor"
+      />
+    </svg>
+  </button>
+
+  <button
+    type="button"
+    class="layout-btn layout-btn-large"
+    [class.active]="layout() === 'large'"
+    (click)="setLayout('large')"
+    [title]="'AM_VIEW_LARGE' | translate"
+    [attr.aria-label]="'AM_VIEW_LARGE' | translate"
+  >
+    <svg viewBox="0 0 24 24" class="layout-icon">
+      <rect x="3" y="3" width="18" height="13" rx="1.5" fill="currentColor" />
+      <rect x="3" y="18" width="18" height="3" rx="0.8" fill="currentColor" />
+    </svg>
+  </button>
+</div>

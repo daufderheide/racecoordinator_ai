@@ -244,6 +244,44 @@ public class AssetDefaultsInitializer {
         new DefaultAsset("default_heat_over", "audio/english/woman/w_heatover.wav", "Heat Over"));
     DEFAULT_AUDIO_ASSETS.add(
         new DefaultAsset("default_race_over", "audio/english/woman/w_raceover.wav", "Race Over"));
+    DEFAULT_AUDIO_ASSETS.add(
+        new DefaultAsset(
+            "default_record_lap", "audio/english/woman/w_recordlap.wav", "Overall Record Lap"));
+    DEFAULT_AUDIO_ASSETS.add(
+        new DefaultAsset(
+            "default_record_lane_lap",
+            "audio/english/woman/w_recordlanelap.wav",
+            "Overall Lane Record Lap"));
+    DEFAULT_AUDIO_ASSETS.add(
+        new DefaultAsset(
+            "default_best_race_lap", "audio/english/woman/w_bestlap.wav", "Race Best Lap"));
+    DEFAULT_AUDIO_ASSETS.add(
+        new DefaultAsset(
+            "default_best_race_lane_lap",
+            "audio/english/woman/w_bestlanelap.wav",
+            "Race Lane Best Lap"));
+    DEFAULT_AUDIO_ASSETS.add(
+        new DefaultAsset(
+            "default_best_heat_lap", "audio/english/woman/w_bestheatlap.wav", "Heat Best Lap"));
+    DEFAULT_AUDIO_ASSETS.add(
+        new DefaultAsset(
+            "default_new_race_leader",
+            "audio/english/woman/w_newraceleader.wav",
+            "New Race Leader"));
+    DEFAULT_AUDIO_ASSETS.add(
+        new DefaultAsset(
+            "default_new_heat_leader",
+            "audio/english/woman/w_newheatleader.wav",
+            "New Heat Leader"));
+    DEFAULT_AUDIO_ASSETS.add(
+        new DefaultAsset("default_pit_in", "audio/english/woman/w_pitin.wav", "Pit In"));
+    DEFAULT_AUDIO_ASSETS.add(
+        new DefaultAsset(
+            "default_fuel_empty", "audio/english/woman/w_fuel_empty.wav", "Fuel Empty"));
+    DEFAULT_AUDIO_ASSETS.add(
+        new DefaultAsset("default_fuel_low", "audio/english/woman/w_fuel_low.wav", "Fuel Low"));
+    DEFAULT_AUDIO_ASSETS.add(
+        new DefaultAsset("default_fuel_full", "audio/english/woman/w_fuel_full.wav", "Fuel Full"));
   }
 
   private static final Map<String, String> RESOURCE_MAP = new HashMap<>();
@@ -280,6 +318,32 @@ public class AssetDefaultsInitializer {
     String directPath = "/defaults/" + nameOrId.trim();
     if (AssetDefaultsInitializer.class.getResource(directPath) != null) {
       return directPath;
+    }
+    return null;
+  }
+
+  public static String getDefaultFilename(String nameOrId) {
+    if (nameOrId == null || nameOrId.trim().isEmpty()) {
+      return null;
+    }
+    String key = nameOrId.trim().toLowerCase();
+    for (DefaultAsset asset : DEFAULT_IMAGE_ASSETS) {
+      if (asset.id.equalsIgnoreCase(key) || asset.filename.equalsIgnoreCase(key)) {
+        String safeName = asset.displayName.replaceAll("[^a-zA-Z0-9.-]", "_");
+        return asset.id + "_" + safeName;
+      }
+    }
+    for (FuelDefaultAsset asset : DEFAULT_FUEL_IMAGE_ASSETS) {
+      if (asset.id.equalsIgnoreCase(key) || asset.filename.equalsIgnoreCase(key)) {
+        String safeName = asset.displayName.replaceAll("[^a-zA-Z0-9.-]", "_");
+        return asset.id + "_" + safeName;
+      }
+    }
+    for (DefaultAsset asset : DEFAULT_AUDIO_ASSETS) {
+      if (asset.id.equalsIgnoreCase(key) || asset.filename.equalsIgnoreCase(key)) {
+        String safeName = asset.displayName.replaceAll("[^a-zA-Z0-9.-]", "_");
+        return asset.id + "_" + safeName;
+      }
     }
     return null;
   }
@@ -362,6 +426,7 @@ public class AssetDefaultsInitializer {
                 .setName(spec[1])
                 .setUrl(url)
                 .setType("preset")
+                .setTriggerMode("remaining")
                 .build());
       }
     }
@@ -397,6 +462,7 @@ public class AssetDefaultsInitializer {
                 .setName(spec[1])
                 .setUrl(url)
                 .setType("preset")
+                .setTriggerMode("remaining")
                 .build());
       }
     }
@@ -408,6 +474,135 @@ public class AssetDefaultsInitializer {
         logger.info("Backfilled default seconds left audio set with ID default_seconds_left");
       } catch (Exception e) {
         logger.error("Failed to backfill default seconds left audio set", e);
+      }
+    }
+
+    backfillLapsLeftAudioSetDefaults();
+    backfillAutoStartAudioSetDefaults();
+    backfillAutoAdvanceAudioSetDefaults();
+    backfillFuelLevelAudioSetDefaults(audioUrls);
+  }
+
+  private void backfillAutoStartAudioSetDefaults() {
+    String[][] autoStartSpec = {
+      {"600.0", "Heat starts in 10 minutes", "Heat starts in 10 minutes", "600"},
+      {"300.0", "Heat starts in 5 minutes", "Heat starts in 5 minutes", "300"},
+      {"180.0", "Heat starts in 3 minutes", "Heat starts in 3 minutes", "180"},
+      {"60.0", "Heat Starts in 1 minute", "Heat Starts in 1 minute", "60"},
+      {"30.0", "Heat Starts in 30 seconds", "Heat Starts in 30 seconds", "30"},
+      {"10.0", "Heat Starts in 10 seconds", "Heat Starts in 10 seconds", "10"}
+    };
+    List<SaveAudioSetEntry> autoStartEntries = new ArrayList<>();
+    for (String[] spec : autoStartSpec) {
+      autoStartEntries.add(
+          SaveAudioSetEntry.newBuilder()
+              .setTimeSeconds(Float.parseFloat(spec[0]))
+              .setName(spec[1])
+              .setType("tts")
+              .setText(spec[2])
+              .setPercentage(Integer.parseInt(spec[3]))
+              .setTriggerMode("remaining")
+              .build());
+    }
+    if (assetService.getAssetById("default_auto_start") == null && !autoStartEntries.isEmpty()) {
+      try {
+        assetService.saveAudioSet("default_auto_start", "Default Auto Start", autoStartEntries);
+        logger.info("Backfilled default auto start audio set with ID default_auto_start");
+      } catch (Exception e) {
+        logger.error("Failed to backfill default auto start audio set", e);
+      }
+    }
+  }
+
+  private void backfillAutoAdvanceAudioSetDefaults() {
+    String[][] autoAdvanceSpec = {
+      {"600.0", "Heat advances in 10 minutes", "Heat advances in 10 minutes", "600"},
+      {"300.0", "Heat advances in 5 minutes", "Heat advances in 5 minutes", "300"},
+      {"180.0", "Heat advances in 3 minutes", "Heat advances in 3 minutes", "180"},
+      {"60.0", "Heat advances in 1 minute", "Heat advances in 1 minute", "60"},
+      {"30.0", "Heat advances in 30 seconds", "Heat advances in 30 seconds", "30"},
+      {"10.0", "Heat advances in 10 seconds", "Heat advances in 10 seconds", "10"}
+    };
+    List<SaveAudioSetEntry> autoAdvanceEntries = new ArrayList<>();
+    for (String[] spec : autoAdvanceSpec) {
+      autoAdvanceEntries.add(
+          SaveAudioSetEntry.newBuilder()
+              .setTimeSeconds(Float.parseFloat(spec[0]))
+              .setName(spec[1])
+              .setType("tts")
+              .setText(spec[2])
+              .setPercentage(Integer.parseInt(spec[3]))
+              .setTriggerMode("remaining")
+              .build());
+    }
+    if (assetService.getAssetById("default_auto_advance") == null
+        && !autoAdvanceEntries.isEmpty()) {
+      try {
+        assetService.saveAudioSet(
+            "default_auto_advance", "Default Auto Advance", autoAdvanceEntries);
+        logger.info("Backfilled default auto advance audio set with ID default_auto_advance");
+      } catch (Exception e) {
+        logger.error("Failed to backfill default auto advance audio set", e);
+      }
+    }
+  }
+
+  private void backfillLapsLeftAudioSetDefaults() {
+    String[][] lapsSpec = {
+      {"20.0", "20 laps to go", "20 laps to go", "20"},
+      {"10.0", "10 laps to go", "10 laps to go", "10"},
+      {"5.0", "5 laps to go", "5 laps to go", "5"},
+      {"1.0", "Final Lap", "Final Lap", "1"}
+    };
+    List<SaveAudioSetEntry> lapsLeftEntries = new ArrayList<>();
+    for (String[] spec : lapsSpec) {
+      lapsLeftEntries.add(
+          SaveAudioSetEntry.newBuilder()
+              .setTimeSeconds(Float.parseFloat(spec[0]))
+              .setName(spec[1])
+              .setType("tts")
+              .setText(spec[2])
+              .setPercentage(Integer.parseInt(spec[3]))
+              .setTriggerMode("remaining")
+              .build());
+    }
+    if (assetService.getAssetById("default_laps_left") == null && !lapsLeftEntries.isEmpty()) {
+      try {
+        assetService.saveAudioSet("default_laps_left", "Default Laps Left", lapsLeftEntries);
+        logger.info("Backfilled default laps left audio set with ID default_laps_left");
+      } catch (Exception e) {
+        logger.error("Failed to backfill default laps left audio set", e);
+      }
+    }
+  }
+
+  private void backfillFuelLevelAudioSetDefaults(Map<String, String> audioUrls) {
+    String[][] fuelSpec = {
+      {"0.0", "Fuel Empty", "default_fuel_empty", "0"},
+      {"10.0", "Fuel Low", "default_fuel_low", "10"},
+      {"100.0", "Fuel Full", "default_fuel_full", "100"}
+    };
+    List<SaveAudioSetEntry> fuelEntries = new ArrayList<>();
+    for (String[] spec : fuelSpec) {
+      String url = audioUrls.get(spec[2]);
+      if (url != null) {
+        fuelEntries.add(
+            SaveAudioSetEntry.newBuilder()
+                .setTimeSeconds(Float.parseFloat(spec[0]))
+                .setName(spec[1])
+                .setUrl(url)
+                .setType("preset")
+                .setPercentage(Integer.parseInt(spec[3]))
+                .setTriggerMode("remaining")
+                .build());
+      }
+    }
+    if (assetService.getAssetById("default_fuel_level") == null && !fuelEntries.isEmpty()) {
+      try {
+        assetService.saveAudioSet("default_fuel_level", "Default Fuel Level", fuelEntries);
+        logger.info("Backfilled default fuel level audio set with ID default_fuel_level");
+      } catch (Exception e) {
+        logger.error("Failed to backfill default fuel level audio set", e);
       }
     }
   }
@@ -455,88 +650,121 @@ public class AssetDefaultsInitializer {
       SqliteRepository<Theme> themeRepo =
           new SqliteRepository<>(databaseContext, "themes", Theme.class);
       List<Theme> themes = themeRepo.findAll();
-      boolean hasDefault = false;
-      boolean hasPractice = false;
+      boolean[] foundFlags = new boolean[3]; // [default, practice, fuel]
       for (Theme t : themes) {
-        boolean updated = false;
-        Map<String, String> s = new HashMap<>(t.getSlots());
-        if (migrateThemeSlots(s, t.isDefault())) {
-          updated = true;
-        }
-        if (s.containsKey("audio.countdown")) {
-          s.remove("audio.countdown");
-          updated = true;
-        }
-        if (s.containsKey("audio.seconds_left")) {
-          s.remove("audio.seconds_left");
-          updated = true;
-        }
-
-        Map<String, AudioConfig> as =
-            t.getAudioSlots() != null ? new HashMap<>(t.getAudioSlots()) : new HashMap<>();
-        if (populateDefaultAudioSlots(as)) {
-          updated = true;
-        }
-
-        String uiId = t.getUiId();
-        if (Theme.DEFAULT_THEME_ID.equals(t.getEntityId())) {
-          hasDefault = true;
-          if (uiId == null) {
-            uiId = CustomUI.DEFAULT_UI_ID;
-            updated = true;
-          }
-        }
-        if (Theme.PRACTICE_THEME_ID.equals(t.getEntityId())) {
-          hasPractice = true;
-          if (uiId == null) {
-            uiId = CustomUI.PRACTICE_UI_ID;
-            updated = true;
-          }
-        }
-
-        if (updated) {
-          Theme newTheme =
-              new Theme(t.getName(), t.isDefault(), s, as, uiId, t.getEntityId(), t.getId());
-          themeRepo.save(newTheme);
-        }
+        backfillSingleTheme(t, themeRepo, foundFlags);
       }
-      if (!hasDefault) {
-        Map<String, String> slots = createDefaultSlots();
-        Map<String, AudioConfig> audioSlots = new HashMap<>();
-        populateDefaultAudioSlots(audioSlots);
-
-        Theme defaultTheme =
-            new Theme(
-                "Default Theme",
-                true,
-                slots,
-                audioSlots,
-                CustomUI.DEFAULT_UI_ID,
-                Theme.DEFAULT_THEME_ID,
-                null);
-        themeRepo.save(defaultTheme);
+      if (!foundFlags[0]) {
+        createAndSaveTheme(
+            themeRepo, Theme.DEFAULT_THEME_ID, Theme.DEFAULT_THEME_NAME, CustomUI.DEFAULT_UI_ID);
         logger.info("Backfilled default theme with ID {}", Theme.DEFAULT_THEME_ID);
       }
-      if (!hasPractice) {
-        Map<String, String> slots = createDefaultSlots();
-        Map<String, AudioConfig> audioSlots = new HashMap<>();
-        populateDefaultAudioSlots(audioSlots);
-
-        Theme practiceTheme =
-            new Theme(
-                "Practice Theme",
-                true,
-                slots,
-                audioSlots,
-                CustomUI.PRACTICE_UI_ID,
-                Theme.PRACTICE_THEME_ID,
-                null);
-        themeRepo.save(practiceTheme);
+      if (!foundFlags[1]) {
+        createAndSaveTheme(
+            themeRepo, Theme.PRACTICE_THEME_ID, Theme.PRACTICE_THEME_NAME, CustomUI.PRACTICE_UI_ID);
         logger.info("Backfilled practice theme with ID {}", Theme.PRACTICE_THEME_ID);
+      }
+      if (!foundFlags[2]) {
+        createAndSaveTheme(
+            themeRepo, Theme.FUEL_THEME_ID, Theme.FUEL_THEME_NAME, CustomUI.FUEL_UI_ID);
+        logger.info("Backfilled fuel theme with ID {}", Theme.FUEL_THEME_ID);
       }
     } catch (Exception e) {
       logger.error("Failed to backfill default theme", e);
     }
+  }
+
+  private void backfillSingleTheme(
+      Theme t, SqliteRepository<Theme> themeRepo, boolean[] foundFlags) {
+    boolean updated = false;
+    String entityId = t.getEntityId();
+    String name = t.getName();
+    String uiId = t.getUiId();
+
+    if ("2".equals(entityId)
+        && !foundFlags[2]
+        && (t.isDefault() || "Fuel Theme".equalsIgnoreCase(name))) {
+      themeRepo.delete("2");
+      entityId = Theme.FUEL_THEME_ID;
+      name = Theme.FUEL_THEME_NAME;
+      uiId = CustomUI.FUEL_UI_ID;
+      foundFlags[2] = true;
+      updated = true;
+    }
+
+    if (Theme.DEFAULT_THEME_ID.equals(entityId)) {
+      foundFlags[0] = true;
+      if (uiId == null) {
+        uiId = CustomUI.DEFAULT_UI_ID;
+        updated = true;
+      }
+      if (Theme.isLegacyDefaultName(name)) {
+        name = Theme.DEFAULT_THEME_NAME;
+        updated = true;
+      }
+    }
+    if (Theme.PRACTICE_THEME_ID.equals(entityId)) {
+      foundFlags[1] = true;
+      if (uiId == null) {
+        uiId = CustomUI.PRACTICE_UI_ID;
+        updated = true;
+      }
+      if (Theme.isLegacyPracticeName(name)) {
+        name = Theme.PRACTICE_THEME_NAME;
+        updated = true;
+      }
+    }
+    if (Theme.FUEL_THEME_ID.equals(entityId)) {
+      foundFlags[2] = true;
+      if (uiId == null) {
+        uiId = CustomUI.FUEL_UI_ID;
+        updated = true;
+      }
+      if (Theme.isLegacyFuelName(name)) {
+        name = Theme.FUEL_THEME_NAME;
+        updated = true;
+      }
+    }
+
+    Map<String, String> s = new HashMap<>(t.getSlots());
+    if (migrateThemeSlots(s, t.isDefault())) {
+      updated = true;
+    }
+    if (s.remove("audio.countdown") != null) {
+      updated = true;
+    }
+    if (s.remove("audio.seconds_left") != null) {
+      updated = true;
+    }
+    if (s.remove("audio.laps_left") != null) {
+      updated = true;
+    }
+    if (s.remove("audio.auto_start") != null) {
+      updated = true;
+    }
+    if (s.remove("audio.auto_advance") != null) {
+      updated = true;
+    }
+
+    Map<String, AudioConfig> as =
+        t.getAudioSlots() != null ? new HashMap<>(t.getAudioSlots()) : new HashMap<>();
+    if (populateDefaultAudioSlots(as)) {
+      updated = true;
+    }
+
+    if (updated) {
+      Theme newTheme = new Theme(name, t.isDefault(), s, as, uiId, entityId, t.getId());
+      themeRepo.save(newTheme);
+    }
+  }
+
+  private void createAndSaveTheme(
+      SqliteRepository<Theme> themeRepo, String entityId, String name, String uiId) {
+    Map<String, String> slots = createDefaultSlots();
+    Map<String, AudioConfig> audioSlots = new HashMap<>();
+    populateDefaultAudioSlots(audioSlots);
+    Theme theme = new Theme(name, true, slots, audioSlots, uiId, entityId, null);
+    themeRepo.save(theme);
   }
 
   private boolean migrateThemeSlots(Map<String, String> s, boolean isDefault) {
@@ -613,6 +841,18 @@ public class AssetDefaultsInitializer {
       as.put("audio.seconds_left", new AudioConfig("audio_set", "default_seconds_left", null));
       updated = true;
     }
+    if (!as.containsKey("audio.laps_left")) {
+      as.put("audio.laps_left", new AudioConfig("audio_set", "default_laps_left", null));
+      updated = true;
+    }
+    if (!as.containsKey("audio.auto_start")) {
+      as.put("audio.auto_start", new AudioConfig("audio_set", "default_auto_start", null));
+      updated = true;
+    }
+    if (!as.containsKey("audio.auto_advance")) {
+      as.put("audio.auto_advance", new AudioConfig("audio_set", "default_auto_advance", null));
+      updated = true;
+    }
     if (!as.containsKey("audio.yellowflag")) {
       as.put("audio.yellowflag", new AudioConfig("preset", "default_yellow_flag", null));
       updated = true;
@@ -629,23 +869,27 @@ public class AssetDefaultsInitializer {
       as.put("audio.race_over", new AudioConfig("preset", "default_race_over", null));
       updated = true;
     }
-    if (!as.containsKey("audio.penalty")) {
-      as.put("audio.penalty", new AudioConfig("preset", "default_penalty", null));
-      updated = true;
-    }
     if (!as.containsKey("audio.min_lap_time")
         || ("preset".equals(as.get("audio.min_lap_time").getType())
             && "default_beep".equals(as.get("audio.min_lap_time").getUrl()))) {
       as.put(
-          "audio.min_lap_time",
-          new AudioConfig("tts", null, "Min lap time for {{driver.nickname}}"));
+          "audio.min_lap_time", new AudioConfig("tts", null, "Min lap time for {driver.nickname}"));
       updated = true;
     }
     if (!as.containsKey("audio.drift_lap")
         || ("preset".equals(as.get("audio.drift_lap").getType())
             && "default_beep".equals(as.get("audio.drift_lap").getUrl()))) {
-      as.put("audio.drift_lap", new AudioConfig("tts", null, "Drift lap for {{driver.nickname}}"));
+      as.put("audio.drift_lap", new AudioConfig("tts", null, "Drift lap for {driver.nickname}"));
       updated = true;
+    }
+    for (Map.Entry<String, AudioConfig> entry : as.entrySet()) {
+      AudioConfig ac = entry.getValue();
+      if (ac != null && ac.getText() != null && ac.getText().contains("{{")) {
+        entry.setValue(
+            new AudioConfig(
+                ac.getType(), ac.getUrl(), ac.getText().replace("{{", "{").replace("}}", "}")));
+        updated = true;
+      }
     }
     return updated;
   }

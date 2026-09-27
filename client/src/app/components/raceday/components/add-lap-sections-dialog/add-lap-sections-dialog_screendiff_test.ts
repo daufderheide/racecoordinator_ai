@@ -91,7 +91,6 @@ test.describe("Add Lap Sections Dialog Visuals", () => {
 
     await TestSetupHelper.mockRaceData(page, raceData);
     await page.locator(".table-row").first().waitFor({ state: "visible" });
-    await page.waitForTimeout(500);
 
     // Click the lap count cell by its text content "1.50"
     const lapCell = page
@@ -179,7 +178,6 @@ test.describe("Add Lap Sections Dialog Visuals", () => {
 
     await TestSetupHelper.mockRaceData(page, raceData);
     await page.locator(".table-row").first().waitFor({ state: "visible" });
-    await page.waitForTimeout(500);
 
     // Click the lap count cell by its text content "1.50" (or 1.85 due to userLaps + autoCalculatedLaps)
     const lapCell = page
@@ -297,7 +295,6 @@ test.describe("Add Lap Sections Dialog Visuals", () => {
 
     await TestSetupHelper.mockRaceData(page, raceData);
     await page.locator(".table-row").first().waitFor({ state: "visible" });
-    await page.waitForTimeout(500);
 
     // 1. Open the Race Director menu dropdown (the second top-level menu button)
     const raceDirectorMenuButton = page.locator(".menu-button-top").nth(1);
@@ -386,7 +383,6 @@ test.describe("Add Lap Sections Dialog Visuals", () => {
       .locator(".dashboard-wrapper")
       .first()
       .waitFor({ state: "visible" });
-    await page.waitForTimeout(500);
 
     const raceDirectorMenuButton = page.locator(".menu-button-top").nth(1);
     await expect(raceDirectorMenuButton).toBeVisible();

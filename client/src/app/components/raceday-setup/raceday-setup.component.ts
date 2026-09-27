@@ -1,9 +1,9 @@
-import { ChangeDetectorRef } from "@angular/core";
 import {
+  ChangeDetectorRef,
   Compiler,
   Component,
   HostListener,
-  Inject,
+  inject,
   Injector,
   OnDestroy,
   OnInit,
@@ -12,10 +12,11 @@ import {
 } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { DomSanitizer } from "@angular/platform-browser";
-import { Router } from "@angular/router";
-import { interval, of, Subscription } from "rxjs";
+import { ActivatedRoute, Router } from "@angular/router";
+import { of, Subscription } from "rxjs";
 import { filter, take } from "rxjs/operators";
 import { AboutDialogComponent } from "@app/components/shared/about-dialog/about-dialog.component";
+import { AcknowledgementModalComponent } from "@app/components/shared/acknowledgement-modal/acknowledgement-modal.component";
 import { DataService } from "@app/data.service";
 import { Role } from "@app/models/role";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
@@ -26,13 +27,9 @@ import {
 } from "@app/services/connection-monitor.service";
 import { DynamicComponentService } from "@app/services/dynamic-component.service";
 import { FileSystemService } from "@app/services/file-system.service";
-import { HelpService } from "@app/services/help.service";
 import { LoggerService } from "@app/services/logger.service";
 import { NavigationService } from "@app/services/navigation.service";
-import { ParticipantValidationService } from "@app/services/participant-validation.service";
-import { RaceService } from "@app/services/race.service";
 import { SettingsService } from "@app/services/settings.service";
-import { ThemeService } from "@app/services/theme.service";
 import { TranslationService } from "@app/services/translation.service";
 import {
   UpdateCheckResult,
@@ -41,45 +38,21 @@ import {
 } from "@app/services/update.service";
 import { CLIENT_VERSION, getClientVersion } from "@app/version";
 
+import { CustomUiBaseComponent } from "./custom-ui-base.component";
 import { DefaultRacedaySetupComponent } from "./default-raceday-setup.component";
-
-class CustomUiBaseComponent extends DefaultRacedaySetupComponent {
-  constructor(
-    @Inject(DataService) dataService: DataService,
-    @Inject(ChangeDetectorRef) cdr: ChangeDetectorRef,
-    @Inject(RaceService) raceService: RaceService,
-    @Inject(Router) router: Router,
-    @Inject(TranslationService) translationService: TranslationService,
-    @Inject(SettingsService) settingsService: SettingsService,
-    @Inject(FileSystemService) fileSystem: FileSystemService,
-    @Inject(HelpService) helpService: HelpService,
-    @Inject(LoggerService) logger: LoggerService,
-    @Inject(ParticipantValidationService)
-    validationService: ParticipantValidationService,
-    @Inject(ThemeService) themeService: ThemeService,
-  ) {
-    super(
-      dataService,
-      cdr,
-      raceService,
-      router,
-      translationService,
-      settingsService,
-      fileSystem,
-      helpService,
-      logger,
-      validationService,
-      themeService,
-    );
-  }
-}
+import { RacedayUpdateCoordinator } from "./raceday-update-coordinator";
 
 @Component({
   standalone: true,
   selector: "app-raceday-setup",
   templateUrl: "./raceday-setup.component.html",
   styleUrl: "./raceday-setup.component.css",
-  imports: [FormsModule, AboutDialogComponent, TranslatePipe],
+  imports: [
+    FormsModule,
+    AboutDialogComponent,
+    AcknowledgementModalComponent,
+    TranslatePipe,
+  ],
 })
 export class RacedaySetupComponent implements OnInit, OnDestroy {
   @ViewChild("container", { read: ViewContainerRef, static: true })
@@ -121,16 +94,105 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
   public showPassword = false;
   private hasLoadedSetupComponent = false;
   private systemStateSubscription?: Subscription;
+  private route = inject(ActivatedRoute, { optional: true });
 
-  public updateResult: UpdateCheckResult | null = null;
-  public isUpdating = false;
-  public updateBannerDismissed = false;
-  public updateProgress: UpdateProgress | null = null;
-  private progressSubscription: Subscription | null = null;
+  private updateCoordinator: RacedayUpdateCoordinator;
+
+  public get updateResult(): UpdateCheckResult | null {
+    return this.updateCoordinator.updateResult;
+  }
+  public set updateResult(val: UpdateCheckResult | null) {
+    this.updateCoordinator.updateResult = val;
+  }
+
+  public get isUpdating(): boolean {
+    return this.updateCoordinator.isUpdating;
+  }
+  public set isUpdating(val: boolean) {
+    this.updateCoordinator.isUpdating = val;
+  }
+
+  public get updateBannerDismissed(): boolean {
+    return this.updateCoordinator.updateBannerDismissed;
+  }
+  public set updateBannerDismissed(val: boolean) {
+    this.updateCoordinator.updateBannerDismissed = val;
+  }
+
+  public get updateProgress(): UpdateProgress | null {
+    return this.updateCoordinator.updateProgress;
+  }
+  public set updateProgress(val: UpdateProgress | null) {
+    this.updateCoordinator.updateProgress = val;
+  }
+
+  public get showUpToDateModal(): boolean {
+    return this.updateCoordinator.showUpToDateModal;
+  }
+  public set showUpToDateModal(val: boolean) {
+    this.updateCoordinator.showUpToDateModal = val;
+  }
+
+  public get progressSubscription(): Subscription | null {
+    return this.updateCoordinator.progressSubscription;
+  }
+  public set progressSubscription(val: Subscription | null) {
+    this.updateCoordinator.progressSubscription = val;
+  }
+
+  public get restartPollSubscription(): Subscription | null {
+    return this.updateCoordinator.restartPollSubscription;
+  }
+  public set restartPollSubscription(val: Subscription | null) {
+    this.updateCoordinator.restartPollSubscription = val;
+  }
+
+  public get targetUpdateVersion(): string | null {
+    return this.updateCoordinator.targetUpdateVersion;
+  }
+  public set targetUpdateVersion(val: string | null) {
+    this.updateCoordinator.targetUpdateVersion = val;
+  }
+
+  public get preUpdateServerVersion(): string | null {
+    return this.updateCoordinator.preUpdateServerVersion;
+  }
+  public set preUpdateServerVersion(val: string | null) {
+    this.updateCoordinator.preUpdateServerVersion = val;
+  }
+
+  public get updateTimedOut(): boolean {
+    return this.updateCoordinator.updateTimedOut;
+  }
+  public set updateTimedOut(val: boolean) {
+    this.updateCoordinator.updateTimedOut = val;
+  }
+
+  public get reloadApp(): () => void {
+    return this.updateCoordinator.reloadApp;
+  }
+  public set reloadApp(val: () => void) {
+    this.updateCoordinator.reloadApp = val;
+  }
 
   public get updateVersionHtml(): string {
-    if (!this.updateResult) return "";
-    return `<a href="${this.updateResult.releaseUrl}" target="_blank" class="update-link">${this.updateResult.latestVersion}</a>`;
+    return this.updateCoordinator.updateVersionHtml;
+  }
+
+  public get updateSubtext(): string | null {
+    return this.updateCoordinator.updateSubtext;
+  }
+
+  public get isIndeterminateProgress(): boolean {
+    return this.updateCoordinator.isIndeterminateProgress;
+  }
+
+  public get updateTitleTextKey(): string {
+    return this.updateCoordinator.updateTitleTextKey;
+  }
+
+  public get showCancelInUpdate(): boolean {
+    return this.updateCoordinator.showCancelInUpdate;
   }
 
   constructor(
@@ -150,9 +212,38 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
     private updateService: UpdateService,
     private sanitizer: DomSanitizer,
   ) {
+    this.updateCoordinator = new RacedayUpdateCoordinator(
+      this.updateService,
+      this.dataService,
+      this.logger,
+      {
+        onStateChange: () => {
+          this.syncChildComponentState();
+          this.cdr.detectChanges();
+        },
+        onError: (msg: string) => {
+          this.error = msg;
+          setTimeout(() => {
+            this.error = null;
+            this.syncChildComponentState();
+            this.cdr.detectChanges();
+          }, 5000);
+        },
+        onStartRestartWatcher: () => {
+          this.startRestartWatcher();
+        },
+      },
+    );
+
     // Initialize quote keys
     for (let i = 1; i <= 29; i++) {
       this.quoteKeys.push(`RDS_QUOTE_${i}`);
+    }
+
+    if (this.shouldSkipIntro()) {
+      this.showSplash = false;
+      this.minTimeElapsed = true;
+      this.connectionVerified = true;
     }
   }
 
@@ -187,7 +278,36 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
     this.updateScale();
     this.isLoading = true;
     this.container.clear();
+    this.checkPendingUpdateSession();
 
+    const skipIntro = this.shouldSkipIntro();
+    if (skipIntro) {
+      this.showSplash = false;
+      this.minTimeElapsed = true;
+      this.connectionVerified = true;
+      sessionStorage.removeItem("skipIntro");
+      if (this.authService.currentRole !== Role.VIEWER) {
+        this.loadDefaultComponent();
+        this.hasLoadedSetupComponent = true;
+        this.isLoading = false;
+        this.cdr.detectChanges();
+      }
+    }
+
+    this.initSocketSubscriptions();
+    this.initTranslationSubscriptions();
+    this.loadServerSettings();
+
+    await this.processSplashScreen(skipIntro);
+
+    this.connectionMonitor.startMonitoring();
+    this.monitorConnection();
+
+    await this.waitForRole();
+    await this.handleRoleTransition(skipIntro);
+  }
+
+  private initSocketSubscriptions() {
     (this.dataService.socketConnected$ || of(true))
       .pipe(
         filter((connected) => connected),
@@ -195,11 +315,29 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
       )
       .subscribe(() => {
         this.refreshServerInfo();
-        this.checkForUpdates();
+        if (this.isUpdating) {
+          this.dataService.getServerVersion().subscribe({
+            next: (ver) => {
+              const cleanVer = ver?.replace(/^v/, "");
+              const cleanTarget = this.targetUpdateVersion?.replace(/^v/, "");
+              if (cleanVer && cleanTarget && cleanVer === cleanTarget) {
+                this.cleanupUpdateState();
+                this.checkForUpdates();
+              } else {
+                this.startRestartWatcher();
+              }
+            },
+            error: () => {
+              this.startRestartWatcher();
+            },
+          });
+        } else {
+          this.checkForUpdates();
+        }
       });
+  }
 
-    // Start Splash Screen Logic ONLY when translations are ready
-    // This prevents raw keys from showing
+  private initTranslationSubscriptions() {
     this.translationService.getTranslationsLoaded().subscribe((loaded) => {
       this.translationsLoaded = loaded;
       if (loaded && !this.quoteInterval && this.showSplash) {
@@ -207,19 +345,21 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
         this.cdr.detectChanges();
       }
     });
+  }
 
-    // Load Server Settings
+  private loadServerSettings() {
     const settings = this.settingsService.getSettings();
     if (settings.serverIp && settings.serverPort) {
       this.tempServerIp = settings.serverIp;
       this.tempServerPort = settings.serverPort;
       this.dataService.setServerAddress(settings.serverIp, settings.serverPort);
     }
+  }
 
-    // Check if we should skip the splash screen (e.g. after UI switch or when returning from a non-race manager/editor screen)
-    const prevUrl = this.navigationService.getPreviousUrl();
+  private shouldSkipIntro(): boolean {
+    const priorUrl = this.getPriorUrl();
     let isReturningFromNonRaceScreen = false;
-    if (prevUrl) {
+    if (priorUrl) {
       const raceScreens = [
         "/raceday",
         "/default-raceday",
@@ -228,56 +368,77 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
         "/race-results",
         "/driver-results",
       ];
-      const normalizedPrevUrl = prevUrl.split("?")[0];
-      const isRaceScreen = raceScreens.some((screen) =>
-        normalizedPrevUrl.startsWith(screen),
+      const normalizedPriorUrl = priorUrl.split("?")[0];
+      const isRaceScreen = raceScreens.some(
+        (screen) =>
+          normalizedPriorUrl === screen ||
+          normalizedPriorUrl.startsWith(screen + "/"),
       );
       if (!isRaceScreen) {
         isReturningFromNonRaceScreen = true;
       }
     }
 
-    const skipIntro =
+    const querySkipIntro =
+      this.route?.snapshot?.queryParamMap?.get("skipIntro") === "true";
+    return (
+      querySkipIntro ||
       sessionStorage.getItem("skipIntro") === "true" ||
-      isReturningFromNonRaceScreen;
+      isReturningFromNonRaceScreen
+    );
+  }
+
+  private getPriorUrl(): string | null {
+    const routerUrl = this.router?.url ? this.router.url.split("?")[0] : null;
+    if (routerUrl && routerUrl !== "/raceday-setup" && routerUrl !== "/") {
+      return routerUrl;
+    }
+
+    const lastHistory = this.navigationService?.getLastHistoryUrl?.()
+      ? this.navigationService.getLastHistoryUrl()!.split("?")[0]
+      : null;
+    if (
+      lastHistory &&
+      lastHistory !== "/raceday-setup" &&
+      lastHistory !== "/"
+    ) {
+      return lastHistory;
+    }
+
+    return this.navigationService?.getPreviousUrl?.() || null;
+  }
+
+  private async processSplashScreen(skipIntro: boolean): Promise<void> {
     if (skipIntro) {
       sessionStorage.removeItem("skipIntro");
       this.showSplash = false;
       this.minTimeElapsed = true;
-
-      // If skipping intro, we still assume connection attempts happen in background
       this.connectionVerified = true;
-    } else {
-      // Start Splash Screen Logic
-      this.startSplashTimeoutTimer();
-
-      const minTimePromise = new Promise<void>((resolve) =>
-        setTimeout(() => {
-          this.minTimeElapsed = true;
-          resolve();
-        }, 5000),
-      );
-
-      // Wait for connection service
-      await this.connectionMonitor.waitForConnection();
-      this.connectionVerified = true;
-      this.refreshServerInfo();
-
-      try {
-        await this.authService.fetchRoleFromServer().toPromise();
-      } catch (err) {
-        this.logger.warn("Failed to fetch role after connecting", err);
-      }
-
-      // Wait for the remainder of the 5s (if any)
-      await minTimePromise;
+      return;
     }
 
-    // Start global monitoring
-    this.connectionMonitor.startMonitoring();
-    this.monitorConnection();
+    this.startSplashTimeoutTimer();
+    const minTimePromise = new Promise<void>((resolve) =>
+      setTimeout(() => {
+        this.minTimeElapsed = true;
+        resolve();
+      }, 5000),
+    );
 
-    // Wait for role initialization
+    await this.connectionMonitor.waitForConnection();
+    this.connectionVerified = true;
+    this.refreshServerInfo();
+
+    try {
+      await this.authService.fetchRoleFromServer().toPromise();
+    } catch (err) {
+      this.logger.warn("Failed to fetch role after connecting", err);
+    }
+
+    await minTimePromise;
+  }
+
+  private async waitForRole(): Promise<void> {
     await new Promise<void>((resolve) => {
       let isDone = false;
       let sub: Subscription | null = null;
@@ -290,7 +451,6 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
           }
         }
       });
-      // In case it resolved synchronously and sub wasn't set yet during callback
       if (isDone && sub) {
         sub.unsubscribe();
       }
@@ -300,8 +460,6 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
       "Role initialization complete. Current role: " +
         this.authService.currentRole,
     );
-
-    await this.handleRoleTransition(skipIntro);
   }
 
   async handleRoleTransition(skipIntro: boolean = false) {
@@ -309,6 +467,26 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
 
     if (!isViewer) {
       if (this.hasLoadedSetupComponent) {
+        try {
+          if (
+            await this.fileSystem.hasCustomFiles(
+              "raceday-setup.component.html",
+              "raceday-setup",
+            )
+          ) {
+            this.container.clear();
+            await this.loadCustomComponent("raceday-setup");
+            this.cdr.detectChanges();
+          } else if (
+            await this.fileSystem.hasCustomFiles("raceday-setup.component.html")
+          ) {
+            this.container.clear();
+            await this.loadCustomComponent();
+            this.cdr.detectChanges();
+          }
+        } catch (e: any) {
+          this.logger.error("Failed to check custom component override", e);
+        }
         return;
       }
       this.hasLoadedSetupComponent = true;
@@ -384,17 +562,13 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
     if (this.systemStateSubscription) {
       this.systemStateSubscription.unsubscribe();
     }
-    if (this.progressSubscription) {
-      this.progressSubscription.unsubscribe();
-    }
+    this.updateCoordinator.destroy();
   }
 
   private activeChildComponentRef: any = null;
 
   public get isUpdateBannerVisible(): boolean {
-    return !!(
-      this.updateResult?.updateAvailable && !this.updateBannerDismissed
-    );
+    return this.updateCoordinator.isUpdateBannerVisible;
   }
 
   public syncChildComponentState() {
@@ -414,126 +588,72 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
   }
 
   public checkForUpdates(force: boolean = false) {
-    if (force) {
-      this.updateBannerDismissed = false;
-    }
-    this.updateService.checkForUpdates(force).subscribe({
-      next: (result) => {
-        this.updateResult = result;
-        this.syncChildComponentState();
-        this.cdr.detectChanges();
-      },
-      error: (err) => {
-        if (err.status !== 0) {
-          this.logger.warn("Failed to check for updates", err);
-        }
-      },
-    });
+    this.updateCoordinator.checkForUpdates(force);
+  }
+
+  public acknowledgeUpToDate() {
+    this.updateCoordinator.acknowledgeUpToDate();
   }
 
   public dismissUpdateBanner() {
-    const version = this.updateResult?.latestVersion;
-    this.updateBannerDismissed = true;
-    this.updateResult = null;
-    this.syncChildComponentState();
-    this.cdr.detectChanges();
-    if (version) {
-      this.updateService.snoozeUpdate(version, 7).subscribe({
-        next: () => {
-          this.logger.info(`Snoozed update version ${version} for 7 days`);
-        },
-        error: (err) => {
-          this.logger.warn("Failed to snooze update on server", err);
-        },
-      });
-    }
+    this.updateCoordinator.dismissUpdateBanner();
+  }
+
+  public get PENDING_UPDATE_KEY(): string {
+    return this.updateCoordinator.PENDING_UPDATE_KEY;
+  }
+
+  public savePendingUpdateSession(
+    targetVersion: string | null,
+    initialVersion: string | null,
+  ) {
+    this.updateCoordinator.savePendingUpdateSession(
+      targetVersion,
+      initialVersion,
+    );
+  }
+
+  public clearPendingUpdateSession() {
+    this.updateCoordinator.clearPendingUpdateSession();
+  }
+
+  public checkPendingUpdateSession() {
+    this.updateCoordinator.checkPendingUpdateSession();
+  }
+
+  public cleanupUpdateState() {
+    this.updateCoordinator.cleanupUpdateState();
+  }
+
+  public startRestartWatcher() {
+    this.updateCoordinator.doStartRestartWatcher();
   }
 
   public installUpdate() {
-    if (!this.updateResult || !this.updateResult.downloadUrl) return;
-    this.isUpdating = true;
-    this.updateProgress = {
-      progress: 0,
-      status: "RDS_UPDATE_STATUS_CONNECTING",
-    };
-    this.updateService.installUpdate(this.updateResult.downloadUrl).subscribe({
-      next: () => {
-        this.logger.info("Update started");
-        this.progressSubscription = interval(100).subscribe(() => {
-          this.updateService.getUpdateProgress().subscribe({
-            next: (prog) => {
-              this.updateProgress = prog;
-              if (
-                prog.progress === 100 &&
-                prog.status === "RDS_UPDATE_STATUS_LAUNCHING"
-              ) {
-                if (this.progressSubscription) {
-                  this.progressSubscription.unsubscribe();
-                }
-              } else if (prog.status === "RDS_UPDATE_STATUS_CANCELLED") {
-                if (this.progressSubscription) {
-                  this.progressSubscription.unsubscribe();
-                }
-                this.isUpdating = false;
-                this.updateProgress = null;
-              }
-              this.syncChildComponentState();
-              this.cdr.detectChanges();
-            },
-          });
-        });
-      },
-      error: (err) => {
-        this.logger.error("Failed to install update", err);
-        this.isUpdating = false;
-        this.updateProgress = null;
-        if (this.progressSubscription) {
-          this.progressSubscription.unsubscribe();
-        }
-        this.error = "Update installation failed";
-        setTimeout(() => {
-          this.error = null;
-          this.syncChildComponentState();
-          this.cdr.detectChanges();
-        }, 5000);
-        this.syncChildComponentState();
-        this.cdr.detectChanges();
-      },
-    });
+    this.updateCoordinator.installUpdate(this.serverVersion);
   }
 
   public cancelUpdate() {
-    this.updateService.cancelUpdate().subscribe({
-      next: () => {
-        this.logger.info("Update cancelled");
-        this.isUpdating = false;
-        this.updateProgress = null;
-        if (this.progressSubscription) {
-          this.progressSubscription.unsubscribe();
-        }
-        this.syncChildComponentState();
-        this.cdr.detectChanges();
-      },
-      error: (err) => {
-        this.logger.error("Failed to cancel update", err);
-      },
-    });
+    this.updateCoordinator.cancelUpdate();
+  }
+
+  public retryUpdate() {
+    this.cleanupUpdateState();
+    this.checkForUpdates(true);
+  }
+
+  public waitForServerRestartAndReload(
+    pollIntervalMs = 1000,
+    initialDelayMs = 2000,
+  ): void {
+    this.updateCoordinator.waitForServerRestartAndReload(
+      pollIntervalMs,
+      initialDelayMs,
+    );
   }
 
   public skipVersion() {
-    if (!this.updateResult || !this.updateResult.latestVersion) return;
-    const version = this.updateResult.latestVersion;
-    this.updateResult = null;
-    this.syncChildComponentState();
-    this.cdr.detectChanges();
-    this.updateService.skipUpdate(version).subscribe({
-      next: () => {
-        this.logger.info(`Skipped update version ${version}`);
-      },
-      error: (err) => {
-        this.logger.error("Failed to skip update", err);
-      },
-    });
+    this.updateCoordinator.skipVersion();
   }
 
   // Wrappers to match previous API if needed, or we implement logic directly
@@ -552,6 +672,20 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
   }
 
   handleConnectionLoss() {
+    if (this.isUpdating) {
+      this.logger.info(
+        "Connection lost during auto-update. Installer is updating the server.",
+      );
+      if (this.updateProgress?.status !== "RDS_UPDATE_STATUS_RESTARTING") {
+        this.updateProgress = {
+          progress: 100,
+          status: "RDS_UPDATE_STATUS_INSTALLING",
+        };
+      }
+      this.syncChildComponentState();
+      this.cdr.detectChanges();
+      return;
+    }
     this.logger.warn("Connection lost, starting retry sequence...");
     this.isConnectionLost = true;
     this.retryStartTime = Date.now();
@@ -565,6 +699,21 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
     this.logger.info("Connection restored!");
     this.isConnectionLost = false;
     this.refreshServerInfo();
+    if (this.isUpdating && this.targetUpdateVersion) {
+      this.dataService.getServerVersion().subscribe({
+        next: (ver) => {
+          const cleanVer = ver?.replace(/^v/, "");
+          const cleanTarget = this.targetUpdateVersion?.replace(/^v/, "");
+          if (cleanVer === cleanTarget) {
+            this.logger.info(
+              "Server restored with target update version! Reloading...",
+            );
+            this.cleanupUpdateState();
+            this.reloadApp();
+          }
+        },
+      });
+    }
     this.cdr.detectChanges();
   }
 
@@ -780,22 +929,24 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
     });
   }
 
-  // TODO(aufderheide): Remove this unused code.
-  // Old methods removed/replaced
-  waitForConnection() {
-    /* removed */
-  }
-  startConnectionMonitoring() {
-    /* removed */
-  }
-  stopConnectionMonitoring() {
-    /* removed */
-  }
-  checkConnection() {
-    /* removed */
-  }
-  retryConnection() {
-    /* removed */
+  private wireChildComponentEvents(instance: any) {
+    if (instance.requestServerConfig) {
+      instance.requestServerConfig.subscribe(() => {
+        this.openServerConfig();
+        this.cdr.detectChanges();
+      });
+    }
+    if (instance.requestAbout) {
+      instance.requestAbout.subscribe(() => {
+        this.showAboutDialog = true;
+        this.cdr.detectChanges();
+      });
+    }
+    if (instance.requestCheckForUpdates) {
+      instance.requestCheckForUpdates.subscribe(() => {
+        this.checkForUpdates(true);
+      });
+    }
   }
 
   loadDefaultComponent() {
@@ -804,19 +955,7 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
     );
     this.activeChildComponentRef = componentRef;
     this.syncChildComponentState();
-    componentRef.instance.requestServerConfig.subscribe(() => {
-      this.openServerConfig();
-      this.cdr.detectChanges();
-    });
-    componentRef.instance.requestAbout.subscribe(() => {
-      this.showAboutDialog = true;
-      this.cdr.detectChanges();
-    });
-    if (componentRef.instance.requestCheckForUpdates) {
-      componentRef.instance.requestCheckForUpdates.subscribe(() => {
-        this.checkForUpdates(true);
-      });
-    }
+    this.wireChildComponentEvents(componentRef.instance);
   }
 
   async loadCustomComponent(subfolder?: string) {
@@ -873,44 +1012,7 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
       const componentRef = this.container.createComponent(componentType);
       this.activeChildComponentRef = componentRef;
       this.syncChildComponentState();
-
-      // Subscribe to server config request
-      if (componentRef.instance instanceof DefaultRacedaySetupComponent) {
-        componentRef.instance.requestServerConfig.subscribe(() => {
-          this.openServerConfig();
-          this.cdr.detectChanges();
-        });
-        componentRef.instance.requestAbout.subscribe(() => {
-          this.showAboutDialog = true;
-          this.cdr.detectChanges();
-        });
-        if (componentRef.instance.requestCheckForUpdates) {
-          componentRef.instance.requestCheckForUpdates.subscribe(() => {
-            this.checkForUpdates(true);
-          });
-        }
-      } else {
-        // Fallback for dynamic types where instanceof might fail or if structure is different
-        // We know it extends CustomUiBaseComponent extends DefaultRacedaySetupComponent
-        const instance = componentRef.instance as any;
-        if (instance.requestServerConfig) {
-          instance.requestServerConfig.subscribe(() => {
-            this.openServerConfig();
-            this.cdr.detectChanges();
-          });
-        }
-        if (instance.requestAbout) {
-          instance.requestAbout.subscribe(() => {
-            this.showAboutDialog = true;
-            this.cdr.detectChanges();
-          });
-        }
-        if (instance.requestCheckForUpdates) {
-          instance.requestCheckForUpdates.subscribe(() => {
-            this.checkForUpdates(true);
-          });
-        }
-      }
+      this.wireChildComponentEvents(componentRef.instance);
     } catch (e: any) {
       // Propagate specific error message
       const errorMsg = e instanceof Error ? e.message : "Unknown error";

@@ -155,14 +155,60 @@ public class DatabaseContextTest {
         new SqliteRepository<>(databaseContext, "themes", com.antigravity.models.Theme.class);
     java.util.List<com.antigravity.models.Theme> themes = themeRepo.findAll();
     assertNotNull(themes);
-    org.junit.Assert.assertFalse(themes.isEmpty());
     com.antigravity.models.Theme defaultTheme =
-        themes.stream().filter(com.antigravity.models.Theme::isDefault).findFirst().orElse(null);
+        themes.stream()
+            .filter(t -> com.antigravity.models.Theme.DEFAULT_THEME_ID.equals(t.getEntityId()))
+            .findFirst()
+            .orElse(null);
     assertNotNull(defaultTheme);
-    assertEquals("tts", defaultTheme.getAudioSlots().get("audio.min_lap_time").getType());
-    assertEquals(
-        "Min lap time for {{driver.nickname}}",
-        defaultTheme.getAudioSlots().get("audio.min_lap_time").getText());
+    assertEquals("RaceCoordinator AI", defaultTheme.getName());
+
+    com.antigravity.models.Theme practiceTheme =
+        themes.stream()
+            .filter(t -> com.antigravity.models.Theme.PRACTICE_THEME_ID.equals(t.getEntityId()))
+            .findFirst()
+            .orElse(null);
+    assertNotNull(practiceTheme);
+    assertEquals("RaceCoordinator AI (Practice)", practiceTheme.getName());
+
+    com.antigravity.models.Theme fuelTheme =
+        themes.stream()
+            .filter(t -> com.antigravity.models.Theme.FUEL_THEME_ID.equals(t.getEntityId()))
+            .findFirst()
+            .orElse(null);
+    assertNotNull(fuelTheme);
+    assertEquals("RaceCoordinator AI (Fuel)", fuelTheme.getName());
+
+    SqliteRepository<com.antigravity.models.CustomUI> uiRepo =
+        new SqliteRepository<>(
+            databaseContext, "custom_uis", com.antigravity.models.CustomUI.class);
+    java.util.List<com.antigravity.models.CustomUI> uis = uiRepo.findAll();
+    assertNotNull(uis);
+    assertEquals(3, uis.size());
+
+    com.antigravity.models.CustomUI defaultUi =
+        uis.stream()
+            .filter(u -> com.antigravity.models.CustomUI.DEFAULT_UI_ID.equals(u.getEntityId()))
+            .findFirst()
+            .orElse(null);
+    assertNotNull(defaultUi);
+    assertEquals("RaceCoordinator AI", defaultUi.getName());
+
+    com.antigravity.models.CustomUI practiceUi =
+        uis.stream()
+            .filter(u -> com.antigravity.models.CustomUI.PRACTICE_UI_ID.equals(u.getEntityId()))
+            .findFirst()
+            .orElse(null);
+    assertNotNull(practiceUi);
+    assertEquals("RaceCoordinator AI (Practice)", practiceUi.getName());
+
+    com.antigravity.models.CustomUI fuelUi =
+        uis.stream()
+            .filter(u -> com.antigravity.models.CustomUI.FUEL_UI_ID.equals(u.getEntityId()))
+            .findFirst()
+            .orElse(null);
+    assertNotNull(fuelUi);
+    assertEquals("RaceCoordinator AI (Fuel)", fuelUi.getName());
   }
 
   @Test

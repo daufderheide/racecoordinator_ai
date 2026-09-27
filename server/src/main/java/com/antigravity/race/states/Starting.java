@@ -36,6 +36,7 @@ public class Starting implements IRaceState {
     this.race = race;
     logger.info("Starting state entered. Countdown initiating.");
     race.broadcastFlag(getFlagType(race));
+    syncDriverFlags(race);
 
     // Set auto-start fired to prevent re-triggering from NotStarted
     race.setAutoStartFired(true);
@@ -137,10 +138,10 @@ public class Starting implements IRaceState {
   @Override
   public void restartHeat(Race race) {
     logger.info("Starting.restartHeat() called. Resetting current heat.");
+    race.changeState(new NotStarted());
     race.resetCurrentHeat();
     race.setAutoStartFired(false);
     race.setAutoAdvanceFired(false);
-    race.changeState(new NotStarted());
   }
 
   @Override
@@ -206,6 +207,7 @@ public class Starting implements IRaceState {
             .setInterfaceId(interfaceId)
             .setType(Lap.LapType.FALSE_START)
             .setFlag(getLaneFlagType(race, lane))
+            .setFuelLevel(dhd.getDriver().getFuelLevel())
             .build();
     dhd.setFlag(falseStartMsg.getFlag());
 
@@ -230,6 +232,9 @@ public class Starting implements IRaceState {
   @Override
   public void onCallbutton(Race race, int lane) {
     logger.info("Callbutton pressed during starting. Pausing race.");
+    if (race.hasRacedInCurrentHeat()) {
+      race.recordTrackCall(lane);
+    }
     pause(race);
   }
 

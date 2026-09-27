@@ -8,6 +8,24 @@
   background-color: rgba(59, 130, 246, 0.02);
 }
 
+.widget-wrapper.countdown-ghost {
+  outline: 1px dashed rgba(255, 255, 255, 0.2) !important;
+  background-color: transparent !important;
+  pointer-events: none !important;
+}
+
+.widget-wrapper.countdown-widget {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+@media print {
+  .widget-wrapper.countdown-widget,
+  app-raceday-countdown {
+    display: none !important;
+  }
+}
+
 .widget-content {
   box-sizing: border-box;
   width: 100%;
@@ -52,12 +70,12 @@
   text-transform: uppercase;
   font-weight: bold;
   letter-spacing: 0.05em;
-  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 }
 
 .grab-icon {
   font-size: 14px;
-  color: #FFD700;
+  color: #ffd700;
 }
 
 .widget-remove-btn {
@@ -78,7 +96,7 @@
 /* Resize Handles */
 .resize-handle {
   position: absolute;
-  background-color: #FFD700;
+  background-color: #ffd700;
   border: 1px solid white;
   width: 8px;
   height: 8px;
@@ -86,18 +104,55 @@
   border-radius: 50%;
 }
 
-.resize-handle.n { top: -4px; left: calc(50% - 4px); cursor: n-resize; }
-.resize-handle.e { top: calc(50% - 4px); right: -4px; cursor: e-resize; }
-.resize-handle.s { bottom: -4px; left: calc(50% - 4px); cursor: s-resize; }
-.resize-handle.w { top: calc(50% - 4px); left: -4px; cursor: w-resize; }
-.resize-handle.ne { top: -4px; right: -4px; cursor: ne-resize; }
-.resize-handle.nw { top: -4px; left: -4px; cursor: nw-resize; }
-.resize-handle.se { bottom: -4px; right: -4px; cursor: se-resize; }
-.resize-handle.sw { bottom: -4px; left: -4px; cursor: sw-resize; }
+.resize-handle.n {
+  top: -4px;
+  left: calc(50% - 4px);
+  cursor: n-resize;
+}
+.resize-handle.e {
+  top: calc(50% - 4px);
+  right: -4px;
+  cursor: e-resize;
+}
+.resize-handle.s {
+  bottom: -4px;
+  left: calc(50% - 4px);
+  cursor: s-resize;
+}
+.resize-handle.w {
+  top: calc(50% - 4px);
+  left: -4px;
+  cursor: w-resize;
+}
+.resize-handle.ne {
+  top: -4px;
+  right: -4px;
+  cursor: ne-resize;
+}
+.resize-handle.nw {
+  top: -4px;
+  left: -4px;
+  cursor: nw-resize;
+}
+.resize-handle.se {
+  bottom: -4px;
+  right: -4px;
+  cursor: se-resize;
+}
+.resize-handle.sw {
+  bottom: -4px;
+  left: -4px;
+  cursor: sw-resize;
+}
 
 .widget-wrapper:has(app-raceday-menu-bar),
-.widget-content:has(app-raceday-menu-bar) {
+.widget-content:has(app-raceday-menu-bar),
+.widget-wrapper:has(app-custom-select.open),
+.widget-content:has(app-custom-select.open),
+.widget-wrapper:has(.custom-select-container.open),
+.widget-content:has(.custom-select-container.open) {
   overflow: visible !important;
+  z-index: 1000 !important;
 }
 
 /* Selected state outline */
@@ -118,10 +173,16 @@
 
 /* Auto-scale for simple headers: race-name, heat-info, track-name */
 .widget-wrapper.scale-auto .value-text {
-  font-size: var(--header-value-font-size, calc(80cqh * var(--widget-scale-factor, 1))) !important;
+  font-size: var(
+    --header-value-font-size,
+    calc(80cqh * var(--widget-scale-factor, 1))
+  ) !important;
 }
 .widget-wrapper.scale-auto .label-text {
-  font-size: var(--header-label-font-size, calc(55cqh * var(--widget-scale-factor, 1))) !important;
+  font-size: var(
+    --header-label-font-size,
+    calc(55cqh * var(--widget-scale-factor, 1))
+  ) !important;
 }
 
 /* Auto-scale for Timer component */
@@ -129,16 +190,37 @@
   padding: 4cqh 6cqw !important;
 }
 .widget-wrapper.scale-auto .timer-text {
-  font-size: var(--timer-font-size, calc(min(38cqh, 24cqw) * var(--widget-scale-factor, 1))) !important;
+  font-size: var(
+    --timer-font-size,
+    calc(min(38cqh, 24cqw) * var(--widget-scale-factor, 1))
+  ) !important;
   line-height: 1 !important;
   white-space: nowrap !important;
 }
 .widget-wrapper.scale-auto .status-label {
-  font-size: var(--timer-status-font-size, calc(0.16 * var(--timer-font-size, calc(min(38cqh, 24cqw) * var(--widget-scale-factor, 1))))) !important;
+  font-size: var(
+    --timer-status-font-size,
+    calc(
+      0.16 *
+        var(
+          --timer-font-size,
+          calc(min(38cqh, 24cqw) * var(--widget-scale-factor, 1))
+        )
+    )
+  ) !important;
   white-space: nowrap !important;
 }
 .widget-wrapper.scale-auto .warmup-label {
-  font-size: var(--timer-warmup-font-size, calc(0.2 * var(--timer-font-size, calc(min(38cqh, 24cqw) * var(--widget-scale-factor, 1))))) !important;
+  font-size: var(
+    --timer-warmup-font-size,
+    calc(
+      0.2 *
+        var(
+          --timer-font-size,
+          calc(min(38cqh, 24cqw) * var(--widget-scale-factor, 1))
+        )
+    )
+  ) !important;
   white-space: nowrap !important;
 }
 
@@ -232,7 +314,7 @@
 /* Auto scaling for records */
 .widget-wrapper.scale-auto .record-panel {
   display: grid !important;
-  grid-template-rows: repeat(4, 1fr) !important;
+  grid-template-rows: repeat(var(--record-count, 4), 1fr) !important;
   height: 100% !important;
   box-sizing: border-box !important;
 }
@@ -244,11 +326,17 @@
   box-sizing: border-box !important;
 }
 .widget-wrapper.scale-auto .record-val {
-  font-size: var(--record-value-font-size, calc(min(11cqh, 9cqw) * var(--widget-scale-factor, 1))) !important;
+  font-size: var(
+    --record-value-font-size,
+    calc(min(11cqh, 9cqw) * var(--widget-scale-factor, 1))
+  ) !important;
   line-height: 1.1 !important;
 }
 .widget-wrapper.scale-auto .record-header {
-  font-size: var(--record-header-font-size, calc(min(9cqh, 7.5cqw) * var(--widget-scale-factor, 1))) !important;
+  font-size: var(
+    --record-header-font-size,
+    calc(min(9cqh, 7.5cqw) * var(--widget-scale-factor, 1))
+  ) !important;
   padding-left: calc(1.5cqw * var(--widget-scale-factor, 1)) !important;
   line-height: 1.1 !important;
 }
@@ -323,7 +411,9 @@
 
 /* Auto scaling for branding */
 .widget-wrapper.scale-auto .logo-text {
-  font-size: calc(min(18cqh, 7.5cqw) * var(--widget-scale-factor, 1)) !important;
+  font-size: calc(
+    min(18cqh, 7.5cqw) * var(--widget-scale-factor, 1)
+  ) !important;
 }
 .widget-wrapper.scale-auto .branding-tagline {
   font-size: calc(min(8cqh, 3.2cqw) * var(--widget-scale-factor, 1)) !important;
@@ -335,22 +425,26 @@
 
 /* Fixed scaling for next-heat & on-deck */
 
-
 .widget-wrapper.scale-fixed .next-heat-title,
 .widget-wrapper.scale-fixed .on-deck-title {
   font-size: var(--custom-title-size, calc(1.125 * var(--widget-font-size)));
-  margin-bottom: calc(0.5 * var(--widget-font-size)) !important;
+  margin-bottom: calc(
+    0.5 * var(--custom-title-size, var(--widget-font-size))
+  ) !important;
 }
 
 .widget-wrapper.scale-fixed .next-heat-list,
 .widget-wrapper.scale-fixed .on-deck-list {
-  gap: calc(0.35 * var(--widget-font-size)) !important;
+  gap: calc(0.35 * var(--custom-lane-size, var(--widget-font-size))) !important;
 }
 
 .widget-wrapper.scale-fixed .next-heat-item,
 .widget-wrapper.scale-fixed .on-deck-item {
-  padding: calc(0.35 * var(--widget-font-size)) calc(0.5 * var(--widget-font-size)) !important;
-  border-left-width: calc(0.125 * var(--widget-font-size)) !important;
+  padding: calc(0.35 * var(--custom-lane-size, var(--widget-font-size)))
+    calc(0.5 * var(--custom-lane-size, var(--widget-font-size))) !important;
+  border-left-width: calc(
+    0.125 * var(--custom-lane-size, var(--widget-font-size))
+  ) !important;
 }
 
 .widget-wrapper.scale-fixed .driver-nickname,
@@ -361,30 +455,54 @@
 }
 
 .widget-wrapper.scale-fixed .lane-badge {
-  font-size: calc(0.875 * var(--widget-font-size));
-  min-width: calc(1.75 * var(--widget-font-size)) !important;
-  height: calc(1.5 * var(--widget-font-size)) !important;
-  padding: 0 calc(0.375 * var(--widget-font-size)) !important;
-  border-radius: calc(0.75 * var(--widget-font-size)) !important;
+  font-size: calc(
+    0.875 * var(--custom-lane-size, var(--widget-font-size))
+  ) !important;
+  min-width: calc(
+    1.75 * var(--custom-lane-size, var(--widget-font-size))
+  ) !important;
+  height: calc(
+    1.1 * var(--custom-lane-size, var(--widget-font-size))
+  ) !important;
+  padding: 0 calc(0.375 * var(--custom-lane-size, var(--widget-font-size))) !important;
+  border-radius: calc(
+    0.55 * var(--custom-lane-size, var(--widget-font-size))
+  ) !important;
+  box-sizing: border-box !important;
 }
 
 /* Auto scaling for next-heat & on-deck */
 
-
 .widget-wrapper.scale-auto .next-heat-title,
 .widget-wrapper.scale-auto .on-deck-title {
-  font-size: var(--heat-drivers-title-size, calc(8cqh * var(--widget-scale-factor, 1))) !important;
-  margin-bottom: var(--heat-drivers-title-margin, calc(3cqh * var(--widget-scale-factor, 1))) !important;
+  font-size: var(
+    --heat-drivers-title-size,
+    calc(8cqh * var(--widget-scale-factor, 1))
+  ) !important;
+  margin-bottom: var(
+    --heat-drivers-title-margin,
+    calc(3cqh * var(--widget-scale-factor, 1))
+  ) !important;
 }
 
 .widget-wrapper.scale-auto .next-heat-list,
 .widget-wrapper.scale-auto .on-deck-list {
-  gap: var(--heat-drivers-gap, calc(2.5cqh * var(--widget-scale-factor, 1))) !important;
+  gap: var(
+    --heat-drivers-gap,
+    calc(2.5cqh * var(--widget-scale-factor, 1))
+  ) !important;
 }
 
 .widget-wrapper.scale-auto .next-heat-item,
 .widget-wrapper.scale-auto .on-deck-item {
-  padding: var(--heat-drivers-item-padding-y, calc(2.5cqh * var(--widget-scale-factor, 1))) var(--heat-drivers-item-padding-x, calc(4cqh * var(--widget-scale-factor, 1))) !important;
+  padding: var(
+      --heat-drivers-item-padding-y,
+      calc(2.5cqh * var(--widget-scale-factor, 1))
+    )
+    var(
+      --heat-drivers-item-padding-x,
+      calc(4cqh * var(--widget-scale-factor, 1))
+    ) !important;
   border-left-width: calc(1cqh * var(--widget-scale-factor, 1)) !important;
 }
 
@@ -392,15 +510,43 @@
 .widget-wrapper.scale-auto .teammate-display-name,
 .widget-wrapper.scale-auto .next-heat-empty,
 .widget-wrapper.scale-auto .on-deck-empty {
-  font-size: var(--heat-drivers-font-size, calc(6.5cqh * var(--widget-scale-factor, 1))) !important;
+  font-size: var(
+    --heat-drivers-font-size,
+    calc(6.5cqh * var(--widget-scale-factor, 1))
+  ) !important;
 }
 
 .widget-wrapper.scale-auto .lane-badge {
-  font-size: calc(0.875 * var(--heat-drivers-font-size, calc(5.5cqh * var(--widget-scale-factor, 1)))) !important;
-  min-width: calc(1.75 * var(--heat-drivers-font-size, calc(11cqh * var(--widget-scale-factor, 1)))) !important;
-  height: calc(1.5 * var(--heat-drivers-font-size, calc(9cqh * var(--widget-scale-factor, 1)))) !important;
-  padding: 0 calc(0.375 * var(--heat-drivers-font-size, calc(2.5cqh * var(--widget-scale-factor, 1)))) !important;
-  border-radius: calc(0.75 * var(--heat-drivers-font-size, calc(4.5cqh * var(--widget-scale-factor, 1)))) !important;
+  font-size: calc(
+    0.875 *
+      var(
+        --heat-drivers-font-size,
+        calc(5.5cqh * var(--widget-scale-factor, 1))
+      )
+  ) !important;
+  min-width: calc(
+    1.75 *
+      var(--heat-drivers-font-size, calc(11cqh * var(--widget-scale-factor, 1)))
+  ) !important;
+  height: calc(
+    1.5 *
+      var(--heat-drivers-font-size, calc(9cqh * var(--widget-scale-factor, 1)))
+  ) !important;
+  padding: 0
+    calc(
+      0.375 *
+        var(
+          --heat-drivers-font-size,
+          calc(2.5cqh * var(--widget-scale-factor, 1))
+        )
+    ) !important;
+  border-radius: calc(
+    0.75 *
+      var(
+        --heat-drivers-font-size,
+        calc(4.5cqh * var(--widget-scale-factor, 1))
+      )
+  ) !important;
 }
 
 /* Custom color overrides for next-heat & on-deck */
@@ -415,6 +561,16 @@
   color: inherit !important;
 }
 
+.widget-wrapper.has-custom-color .heat-list-title,
+.widget-wrapper.has-custom-color .heat-card-header {
+  color: inherit !important;
+  text-shadow: none !important;
+}
+
+.widget-wrapper.has-custom-color .lane-driver-nickname,
+.widget-wrapper.has-custom-color .lane-team-name {
+  color: inherit !important;
+}
 
 /* Fixed scaling for menu-bar */
 .widget-wrapper.scale-fixed .menu-button-top,
@@ -489,4 +645,3 @@
   gap: 2px;
   font-size: 13px;
 }
-

@@ -4,12 +4,14 @@ import { Theme } from "@app/models/theme";
 import {
   applyAudioConfigUpdate,
   applyThemeSlotUpdate,
+  handleCreateTheme,
+  handleDuplicateTheme,
   removeThemeFromUndoHistory,
   sortThemesForDisplay,
 } from "./ui-editor-theme.helper";
 
 describe("ui-editor-theme.helper", () => {
-  it("should sort themes placing default classic first", () => {
+  it("should naturally alphabetize themes by name without pinning defaults", () => {
     const t1: Theme = {
       entity_id: "custom_theme",
       name: "Custom",
@@ -19,15 +21,215 @@ describe("ui-editor-theme.helper", () => {
     };
     const t2: Theme = {
       entity_id: "default_classic_rc_ai",
-      name: "Classic",
+      name: "Default",
       is_default: true,
       slots: {},
       audio_slots: {},
     };
 
-    const sorted = sortThemesForDisplay([t1, t2]);
-    expect(sorted[0].entity_id).toBe("default_classic_rc_ai");
-    expect(sorted[1].entity_id).toBe("custom_theme");
+    const sorted = sortThemesForDisplay([t2, t1]);
+    expect(sorted[0].entity_id).toBe("custom_theme");
+    expect(sorted[1].entity_id).toBe("default_classic_rc_ai");
+  });
+
+  it("should naturally alphabetize all themes together including numbers and defaults", () => {
+    const zebra: Theme = {
+      entity_id: "theme_z",
+      name: "Zebra Theme",
+      is_default: false,
+      slots: {},
+      audio_slots: {},
+    };
+    const alpha: Theme = {
+      entity_id: "theme_a",
+      name: "Alpha Theme",
+      is_default: false,
+      slots: {},
+      audio_slots: {},
+    };
+    const mid10: Theme = {
+      entity_id: "theme_m10",
+      name: "Theme 10",
+      is_default: false,
+      slots: {},
+      audio_slots: {},
+    };
+    const mid2: Theme = {
+      entity_id: "theme_m2",
+      name: "Theme 2",
+      is_default: false,
+      slots: {},
+      audio_slots: {},
+    };
+    const practice: Theme = {
+      entity_id: "practice_theme_rc_ai",
+      name: "Practice Theme",
+      is_default: true,
+      slots: {},
+      audio_slots: {},
+    };
+    const def: Theme = {
+      entity_id: "default_classic_rc_ai",
+      name: "Default Theme",
+      is_default: true,
+      slots: {},
+      audio_slots: {},
+    };
+
+    const sorted = sortThemesForDisplay([
+      zebra,
+      mid10,
+      practice,
+      alpha,
+      def,
+      mid2,
+    ]);
+    expect(sorted.map((t) => t.name)).toEqual([
+      "Alpha Theme",
+      "Default Theme",
+      "Practice Theme",
+      "Theme 2",
+      "Theme 10",
+      "Zebra Theme",
+    ]);
+  });
+
+  it("should tie-break identical theme names by entity_id and handle empty names", () => {
+    const tEmpty: Theme = {
+      entity_id: "theme_empty",
+      name: "",
+      is_default: false,
+      slots: {},
+      audio_slots: {},
+    };
+    const tSame2: Theme = {
+      entity_id: "theme_b",
+      name: "Same Name",
+      is_default: false,
+      slots: {},
+      audio_slots: {},
+    };
+    const tSame1: Theme = {
+      entity_id: "theme_a",
+      name: "Same Name",
+      is_default: false,
+      slots: {},
+      audio_slots: {},
+    };
+
+    const sorted = sortThemesForDisplay([tSame2, tEmpty, tSame1]);
+    expect(sorted[0].entity_id).toBe("theme_empty");
+    expect(sorted[1].entity_id).toBe("theme_a");
+    expect(sorted[2].entity_id).toBe("theme_b");
+  });
+
+  it("should alphabetize themes by translated display name when translationService is provided", () => {
+    const mockTranslationService = {
+      translate: jasmine.createSpy("translate").and.callFake((key: string) => {
+        const dict: Record<string, string> = {
+          UE_LABEL_DEFAULT_THEME: "RaceCoordinator AI",
+          UE_LABEL_FUEL_THEME: "RaceCoordinator AI (Fuel)",
+          UE_LABEL_PRACTICE_THEME: "RaceCoordinator AI (Practice)",
+        };
+        return dict[key] || key;
+      }),
+    } as any;
+
+    const practice: Theme = {
+      entity_id: "practice_theme_rc_ai",
+      name: "Practice Theme",
+      is_default: true,
+      slots: {},
+      audio_slots: {},
+    };
+    const def: Theme = {
+      entity_id: "default_classic_rc_ai",
+      name: "Default Theme",
+      is_default: true,
+      slots: {},
+      audio_slots: {},
+    };
+    const fuel: Theme = {
+      entity_id: "default_fuel_theme_rc_ai",
+      name: "Fuel Theme",
+      is_default: true,
+      slots: {},
+      audio_slots: {},
+    };
+    const zebra: Theme = {
+      entity_id: "theme_z",
+      name: "Zebra Custom",
+      is_default: false,
+      slots: {},
+      audio_slots: {},
+    };
+    const alpha: Theme = {
+      entity_id: "theme_a",
+      name: "Alpha Custom",
+      is_default: false,
+      slots: {},
+      audio_slots: {},
+    };
+
+    const sorted = sortThemesForDisplay(
+      [zebra, practice, def, alpha, fuel],
+      mockTranslationService,
+    );
+
+    expect(sorted.map((t) => t.entity_id)).toEqual([
+      "theme_a",
+      "default_classic_rc_ai",
+      "default_fuel_theme_rc_ai",
+      "practice_theme_rc_ai",
+      "theme_z",
+    ]);
+  });
+
+  it("should alphabetize themes according to localized display names", () => {
+    // In German: Fuel is Kraftstoff (starts with K), Practice is Training (starts with T)
+    const mockTranslationService = {
+      translate: jasmine.createSpy("translate").and.callFake((key: string) => {
+        const dict: Record<string, string> = {
+          UE_LABEL_DEFAULT_THEME: "RaceCoordinator AI",
+          UE_LABEL_FUEL_THEME: "RaceCoordinator AI (Kraftstoff)",
+          UE_LABEL_PRACTICE_THEME: "RaceCoordinator AI (Training)",
+        };
+        return dict[key] || key;
+      }),
+    } as any;
+
+    const practice: Theme = {
+      entity_id: "practice_theme_rc_ai",
+      name: "Practice Theme",
+      is_default: true,
+      slots: {},
+      audio_slots: {},
+    };
+    const def: Theme = {
+      entity_id: "default_classic_rc_ai",
+      name: "Default Theme",
+      is_default: true,
+      slots: {},
+      audio_slots: {},
+    };
+    const fuel: Theme = {
+      entity_id: "default_fuel_theme_rc_ai",
+      name: "Fuel Theme",
+      is_default: true,
+      slots: {},
+      audio_slots: {},
+    };
+
+    const sorted = sortThemesForDisplay(
+      [practice, fuel, def],
+      mockTranslationService,
+    );
+
+    expect(sorted.map((t) => t.entity_id)).toEqual([
+      "default_classic_rc_ai",
+      "default_fuel_theme_rc_ai",
+      "practice_theme_rc_ai",
+    ]);
   });
 
   it("should apply theme slot update and append asset if new", () => {
@@ -95,5 +297,78 @@ describe("ui-editor-theme.helper", () => {
       current.themes.some((t: any) => t.entity_id === "theme_1"),
     ).toBeFalse();
     expect(current.settings.activeThemeId).toBe("default_classic_rc_ai");
+  });
+
+  it("should track defaultThemeNames and open success modal with focusThemeId on create", async () => {
+    const defaultTheme: Theme = {
+      entity_id: "default_classic_rc_ai",
+      name: "Default Theme",
+      is_default: true,
+      slots: {},
+      audio_slots: {},
+    };
+    const comp: any = {
+      displayThemes: [defaultTheme],
+      editingState: { themes: [defaultTheme] },
+      defaultThemeNames: {},
+      translationService: { translate: (k: string) => k },
+      themeService: {
+        duplicateTheme: jasmine.createSpy("duplicateTheme").and.resolveTo({
+          entity_id: "new_theme_1",
+          name: "New Theme",
+        }),
+      },
+      logger: { error: jasmine.createSpy("error") },
+      refreshDisplayProperties: jasmine.createSpy("refreshDisplayProperties"),
+      toggleThemeSection: jasmine.createSpy("toggleThemeSection"),
+      captureState: jasmine.createSpy("captureState"),
+      openSuccessModal: jasmine.createSpy("openSuccessModal"),
+    };
+
+    await handleCreateTheme(comp);
+
+    expect(comp.defaultThemeNames["new_theme_1"]).toBe("New Theme");
+    expect(comp.openSuccessModal).toHaveBeenCalledWith(
+      jasmine.any(Object),
+      "default_classic_rc_ai",
+      "new_theme_1",
+    );
+  });
+
+  it("should track defaultThemeNames and open success modal with focusThemeId on duplicate", async () => {
+    const existingTheme: Theme = {
+      entity_id: "theme_1",
+      name: "My Theme",
+      is_default: false,
+      slots: {},
+      audio_slots: {},
+    };
+    const comp: any = {
+      editingState: { themes: [existingTheme] },
+      editingSettings: { activeThemeId: "theme_1" },
+      sectionsExpanded: {},
+      defaultThemeNames: {},
+      translationService: { translate: (k: string) => k },
+      themeService: {
+        duplicateTheme: jasmine.createSpy("duplicateTheme").and.resolveTo({
+          entity_id: "theme_1_copy",
+          name: "My Theme (1)",
+        }),
+      },
+      logger: { error: jasmine.createSpy("error") },
+      saveExpanderState: jasmine.createSpy("saveExpanderState"),
+      refreshDisplayProperties: jasmine.createSpy("refreshDisplayProperties"),
+      captureState: jasmine.createSpy("captureState"),
+      openSuccessModal: jasmine.createSpy("openSuccessModal"),
+    };
+
+    await handleDuplicateTheme(comp, existingTheme);
+
+    expect(comp.defaultThemeNames["theme_1_copy"]).toBe("My Theme (1)");
+    expect(comp.openSuccessModal).toHaveBeenCalledWith(
+      jasmine.any(Object),
+      "theme_1",
+      "theme_1_copy",
+    );
   });
 });

@@ -164,3 +164,7 @@ export function buildAutoSaveContext(comp: any): any {
     },
   };
 }
+
+export function handleAutoSaveState(comp: any): Promise<void> {
+  return executeAutoSaveState(buildAutoSaveContext(comp));
+}

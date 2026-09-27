@@ -2,12 +2,16 @@ package com.antigravity.service;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import com.antigravity.context.DatabaseContext;
+import com.antigravity.models.AnalogFuelOptions;
+import com.antigravity.models.CustomUI;
 import com.antigravity.models.Driver;
 import com.antigravity.models.Race;
 import com.antigravity.models.Team;
+import com.antigravity.models.Theme;
 import com.antigravity.models.Track;
 import com.antigravity.repository.SqliteRepository;
 import java.io.File;
@@ -55,29 +59,102 @@ public class DatabaseInitializerTest {
     List<Team> teams = teamRepo.findAll();
     assertEquals(2, teams.size());
 
-    SqliteRepository<com.antigravity.models.CustomUI> uiRepo =
-        new SqliteRepository<>(context, "custom_uis", com.antigravity.models.CustomUI.class);
-    List<com.antigravity.models.CustomUI> uis = uiRepo.findAll();
+    SqliteRepository<CustomUI> uiRepo =
+        new SqliteRepository<>(context, "custom_uis", CustomUI.class);
+    List<CustomUI> uis = uiRepo.findAll();
     assertEquals(3, uis.size());
+    for (CustomUI ui : uis) {
+      assertTrue(ui.getLayoutJson().contains("widget-countdown"));
+    }
 
-    SqliteRepository<com.antigravity.models.Theme> themeRepo =
-        new SqliteRepository<>(context, "themes", com.antigravity.models.Theme.class);
-    List<com.antigravity.models.Theme> themes = themeRepo.findAll();
+    SqliteRepository<Theme> themeRepo = new SqliteRepository<>(context, "themes", Theme.class);
+    List<Theme> themes = themeRepo.findAll();
     assertEquals(3, themes.size());
+
+    AssetService assetService = new AssetService(context, context.getDataRoot() + "test_db/assets");
+    assertNotNull(assetService.getAssetById("default_pit_in"));
+    assertNotNull(assetService.getAssetById("default_fuel_empty"));
+    assertNotNull(assetService.getAssetById("default_fuel_low"));
+    assertNotNull(assetService.getAssetById("default_fuel_full"));
+    assertNotNull(assetService.getAssetById("default_fuel_level"));
+    assertNotNull(assetService.getAssetById("default_laps_left"));
+    assertNotNull(assetService.getAssetById("default_auto_start"));
+    assertNotNull(assetService.getAssetById("default_auto_advance"));
+
+    for (Theme t : themes) {
+      assertNotNull("Theme should have audio.laps_left", t.getAudioSlots().get("audio.laps_left"));
+      assertEquals("default_laps_left", t.getAudioSlots().get("audio.laps_left").getUrl());
+      assertEquals("audio_set", t.getAudioSlots().get("audio.laps_left").getType());
+
+      assertNotNull(
+          "Theme should have audio.auto_start", t.getAudioSlots().get("audio.auto_start"));
+      assertEquals("default_auto_start", t.getAudioSlots().get("audio.auto_start").getUrl());
+      assertEquals("audio_set", t.getAudioSlots().get("audio.auto_start").getType());
+
+      assertNotNull(
+          "Theme should have audio.auto_advance", t.getAudioSlots().get("audio.auto_advance"));
+      assertEquals("default_auto_advance", t.getAudioSlots().get("audio.auto_advance").getUrl());
+      assertEquals("audio_set", t.getAudioSlots().get("audio.auto_advance").getType());
+    }
+
+    for (Driver d : drivers) {
+      assertNotNull("Driver should have lapAudio", d.getLapAudio());
+      assertTrue("Lap audio should be beep sound", d.getLapAudio().getUrl().contains("beep"));
+      assertNotNull("Driver should have bestLapAudio", d.getBestLapAudio());
+      assertTrue(
+          "Best lap audio should be driveby sound",
+          d.getBestLapAudio().getUrl().contains("driveby"));
+      assertNotNull("Driver should have penaltyAudio", d.getPenaltyAudio());
+      assertTrue(
+          "Penalty audio should be penalty sound",
+          d.getPenaltyAudio().getUrl().contains("penalty"));
+      assertNotNull("Driver should have overallBestLapAudio", d.getOverallBestLapAudio());
+      assertEquals("default_record_lap", d.getOverallBestLapAudio().getUrl());
+      assertNotNull("Driver should have newRaceLeaderAudio", d.getNewRaceLeaderAudio());
+      assertEquals("default_new_race_leader", d.getNewRaceLeaderAudio().getUrl());
+      assertNotNull("Driver should have newHeatLeaderAudio", d.getNewHeatLeaderAudio());
+      assertEquals("default_new_heat_leader", d.getNewHeatLeaderAudio().getUrl());
+      assertNotNull("Driver should have pitInAudio", d.getPitInAudio());
+      assertEquals("default_pit_in", d.getPitInAudio().getUrl());
+      assertEquals("preset", d.getPitInAudio().getType());
+      assertNotNull("Driver should have fuelAudio", d.getFuelAudio());
+      assertEquals("default_fuel_level", d.getFuelAudio().getUrl());
+      assertEquals("audio_set", d.getFuelAudio().getType());
+    }
+  }
+
+  @Test
+  public void testResetDriversDirectlySetsCanonicalPresetIds() {
+    initializer.resetDrivers(context);
+    SqliteRepository<Driver> driverRepo = new SqliteRepository<>(context, "drivers", Driver.class);
+    List<Driver> drivers = driverRepo.findAll();
+    assertTrue("Should initialize drivers", drivers.size() > 0);
+    for (Driver d : drivers) {
+      assertEquals("default_beep", d.getLapAudio().getUrl());
+      assertEquals("default_driveby", d.getBestLapAudio().getUrl());
+      assertEquals("default_penalty", d.getPenaltyAudio().getUrl());
+      assertEquals("default_record_lap", d.getOverallBestLapAudio().getUrl());
+      assertEquals("default_new_race_leader", d.getNewRaceLeaderAudio().getUrl());
+      assertEquals("default_new_heat_leader", d.getNewHeatLeaderAudio().getUrl());
+      assertEquals("default_pit_in", d.getPitInAudio().getUrl());
+      assertEquals("default_fuel_level", d.getFuelAudio().getUrl());
+    }
   }
 
   @Test
   public void testResetCustomUIsAndThemesDirectly() {
     initializer.resetCustomUIs(context);
-    SqliteRepository<com.antigravity.models.CustomUI> uiRepo =
-        new SqliteRepository<>(context, "custom_uis", com.antigravity.models.CustomUI.class);
-    List<com.antigravity.models.CustomUI> uis = uiRepo.findAll();
+    SqliteRepository<CustomUI> uiRepo =
+        new SqliteRepository<>(context, "custom_uis", CustomUI.class);
+    List<CustomUI> uis = uiRepo.findAll();
     assertEquals(3, uis.size());
+    for (CustomUI ui : uis) {
+      assertTrue(ui.getLayoutJson().contains("widget-countdown"));
+    }
 
     initializer.resetThemes(context);
-    SqliteRepository<com.antigravity.models.Theme> themeRepo =
-        new SqliteRepository<>(context, "themes", com.antigravity.models.Theme.class);
-    List<com.antigravity.models.Theme> themes = themeRepo.findAll();
+    SqliteRepository<Theme> themeRepo = new SqliteRepository<>(context, "themes", Theme.class);
+    List<Theme> themes = themeRepo.findAll();
     assertEquals(3, themes.size());
   }
 
@@ -134,6 +211,37 @@ public class DatabaseInitializerTest {
     Race backfilledLegacy = raceRepo.findByEntityId("legacy_r1");
     assertNotNull(backfilledLegacy);
     assertEquals(com.antigravity.models.Theme.DEFAULT_THEME_ID, backfilledLegacy.getThemeId());
+
+    // Test backfilling existing custom race with legacy fuel options
+    AnalogFuelOptions legacyFuel =
+        new AnalogFuelOptions(
+            true,
+            false,
+            false,
+            com.antigravity.models.FuelOptions.OutOfFuelAction.DO_NOT_COUNT_LAPS,
+            100.0,
+            AnalogFuelOptions.FuelUsageType.LINEAR,
+            4.0,
+            100.0,
+            10.0,
+            2.0,
+            6.0);
+    Race legacyFuelRace =
+        new Race.Builder()
+            .withName("Custom Legacy Fuel Race")
+            .withEntityId("legacy_fuel_r1")
+            .withFuelOptions(legacyFuel)
+            .build();
+    raceRepo.save(legacyFuelRace);
+
+    initializer.backfillRaces(context);
+    Race backfilledFuelRace = raceRepo.findByEntityId("legacy_fuel_r1");
+    assertNotNull(backfilledFuelRace);
+    assertNotNull(backfilledFuelRace.getFuelOptions());
+    assertEquals(3.0, backfilledFuelRace.getFuelOptions().getFastestTime(), 0.001);
+    assertEquals(5.0, backfilledFuelRace.getFuelOptions().getMaxUsage(), 0.001);
+    assertEquals(9.0, backfilledFuelRace.getFuelOptions().getSlowestTime(), 0.001);
+    assertEquals(3.0, backfilledFuelRace.getFuelOptions().getMinUsage(), 0.001);
   }
 
   @Test
@@ -160,5 +268,241 @@ public class DatabaseInitializerTest {
     List<Race> races = raceRepo.findAll();
     assertEquals(4, races.size());
     assertTrue(races.stream().anyMatch(r -> "Fuel Race".equals(r.getName())));
+  }
+
+  @Test
+  public void testBackfillCustomUIs() {
+    SqliteRepository<CustomUI> uiRepo =
+        new SqliteRepository<>(context, "custom_uis", CustomUI.class);
+    uiRepo.drop();
+
+    CustomUI legacyUi =
+        new CustomUI(
+            "Legacy UI",
+            false,
+            "{\"widgets\":[{\"id\":\"w1\",\"widgetType\":\"timer\"}]}",
+            "[]",
+            "{}",
+            "{}",
+            "{}",
+            "{}",
+            "legacy_ui_id",
+            null);
+    uiRepo.save(legacyUi);
+
+    initializer.backfillCustomUIs(context);
+
+    CustomUI updated = uiRepo.findByEntityId("legacy_ui_id");
+    assertNotNull(updated);
+    assertTrue(updated.getLayoutJson().contains("widget-countdown"));
+    assertTrue(updated.getLayoutJson().contains("\"widgetType\":\"countdown\""));
+  }
+
+  @Test
+  public void testBackfillCustomUIs_RenamesLegacyDefaultNames() {
+    SqliteRepository<CustomUI> uiRepo =
+        new SqliteRepository<>(context, "custom_uis", CustomUI.class);
+    uiRepo.drop();
+
+    uiRepo.save(
+        new CustomUI(
+            "Default UI Layout",
+            true,
+            "{\"widgets\":[]}",
+            "[]",
+            "{}",
+            "{}",
+            "{}",
+            "{}",
+            CustomUI.DEFAULT_UI_ID,
+            null));
+    uiRepo.save(
+        new CustomUI(
+            "Default Practice UI Layout",
+            true,
+            "{\"widgets\":[]}",
+            "[]",
+            "{}",
+            "{}",
+            "{}",
+            "{}",
+            CustomUI.PRACTICE_UI_ID,
+            null));
+    uiRepo.save(
+        new CustomUI(
+            "Default Fuel UI Layout",
+            true,
+            "{\"widgets\":[]}",
+            "[]",
+            "{}",
+            "{}",
+            "{}",
+            "{}",
+            CustomUI.FUEL_UI_ID,
+            null));
+    uiRepo.save(
+        new CustomUI(
+            "My Custom Layout",
+            false,
+            "{\"widgets\":[]}",
+            "[]",
+            "{}",
+            "{}",
+            "{}",
+            "{}",
+            "custom_ui_1",
+            null));
+
+    initializer.backfillCustomUIs(context);
+
+    CustomUI defaultUi = uiRepo.findByEntityId(CustomUI.DEFAULT_UI_ID);
+    assertNotNull(defaultUi);
+    assertEquals(CustomUI.DEFAULT_UI_NAME, defaultUi.getName());
+
+    CustomUI practiceUi = uiRepo.findByEntityId(CustomUI.PRACTICE_UI_ID);
+    assertNotNull(practiceUi);
+    assertEquals(CustomUI.PRACTICE_UI_NAME, practiceUi.getName());
+
+    CustomUI fuelUi = uiRepo.findByEntityId(CustomUI.FUEL_UI_ID);
+    assertNotNull(fuelUi);
+    assertEquals(CustomUI.FUEL_UI_NAME, fuelUi.getName());
+
+    CustomUI customUi = uiRepo.findByEntityId("custom_ui_1");
+    assertNotNull(customUi);
+    assertEquals("My Custom Layout", customUi.getName());
+  }
+
+  @Test
+  public void testBackfillCustomUIs_MigratesLegacyFuelId2() {
+    SqliteRepository<CustomUI> uiRepo =
+        new SqliteRepository<>(context, "custom_uis", CustomUI.class);
+    uiRepo.drop();
+
+    uiRepo.save(
+        new CustomUI(
+            "Fuel UI Layout", true, "{\"widgets\":[]}", "[]", "{}", "{}", "{}", "{}", "2", null));
+
+    initializer.backfillCustomUIs(context);
+
+    assertNull(uiRepo.findByEntityId("2"));
+    CustomUI fuelUi = uiRepo.findByEntityId(CustomUI.FUEL_UI_ID);
+    assertNotNull(fuelUi);
+    assertEquals(CustomUI.FUEL_UI_NAME, fuelUi.getName());
+  }
+
+  @Test
+  public void testBackfillCustomUIs_CreatesMissingDefaultUIs() {
+    SqliteRepository<CustomUI> uiRepo =
+        new SqliteRepository<>(context, "custom_uis", CustomUI.class);
+    uiRepo.drop();
+
+    initializer.backfillCustomUIs(context);
+
+    List<CustomUI> uis = uiRepo.findAll();
+    assertEquals(3, uis.size());
+    assertNotNull(uiRepo.findByEntityId(CustomUI.DEFAULT_UI_ID));
+    assertNotNull(uiRepo.findByEntityId(CustomUI.PRACTICE_UI_ID));
+    assertNotNull(uiRepo.findByEntityId(CustomUI.FUEL_UI_ID));
+  }
+
+  @Test
+  public void testResetDrivers_InitializesPitInAndFuelAudio() {
+    initializer.resetDrivers(context);
+    SqliteRepository<Driver> driverRepo = new SqliteRepository<>(context, "drivers", Driver.class);
+    List<Driver> drivers = driverRepo.findAll();
+    assertTrue("Should have initial drivers", drivers.size() > 0);
+    for (Driver driver : drivers) {
+      assertNotNull("Driver should have pit in audio", driver.getPitInAudio());
+      assertEquals("default_pit_in", driver.getPitInAudio().getUrl());
+      assertNotNull("Driver should have fuel audio", driver.getFuelAudio());
+      assertEquals("default_fuel_level", driver.getFuelAudio().getUrl());
+      assertEquals("audio_set", driver.getFuelAudio().getType());
+    }
+  }
+
+  @Test
+  public void testBackfillDrivers_PopulatesMissingPitInAndFuelAudio() {
+    SqliteRepository<Driver> driverRepo = new SqliteRepository<>(context, "drivers", Driver.class);
+    driverRepo.drop();
+
+    Driver legacyDriver =
+        new Driver.Builder()
+            .withName("OldDriver")
+            .withNickname("OldNick")
+            .withEntityId("d_old_1")
+            .withPitInAudio(null)
+            .withFuelAudio(null)
+            .build();
+    driverRepo.save(legacyDriver);
+
+    initializer.backfillDrivers(context);
+
+    Driver updated = driverRepo.findByEntityId("d_old_1");
+    assertNotNull(updated);
+    assertNotNull(updated.getPitInAudio());
+    assertEquals("default_pit_in", updated.getPitInAudio().getUrl());
+    assertNotNull(updated.getFuelAudio());
+    assertEquals("default_fuel_level", updated.getFuelAudio().getUrl());
+    assertEquals("audio_set", updated.getFuelAudio().getType());
+  }
+
+  @Test
+  public void testBackfillDrivers_UpdatesRawLegacyJsonInSqlite() throws Exception {
+    SqliteRepository<Driver> driverRepo = new SqliteRepository<>(context, "drivers", Driver.class);
+    driverRepo.drop();
+
+    String legacyJson =
+        "{\"@id\":1,\"entity_id\":\"d_legacy\",\"name\":\"Legacy\",\"nickname\":\"Leg\"}";
+    try (java.sql.PreparedStatement stmt =
+        context
+            .getConnection()
+            .prepareStatement("INSERT INTO drivers (entity_id, json_data) VALUES (?, ?)")) {
+      stmt.setString(1, "d_legacy");
+      stmt.setString(2, legacyJson);
+      stmt.executeUpdate();
+    }
+
+    initializer.backfillDrivers(context);
+
+    try (java.sql.Statement stmt = context.getConnection().createStatement();
+        java.sql.ResultSet rs =
+            stmt.executeQuery("SELECT json_data FROM drivers WHERE entity_id = 'd_legacy'")) {
+      assertTrue(rs.next());
+      String updatedJson = rs.getString("json_data");
+      assertTrue(updatedJson.contains("pitInAudio"));
+      assertTrue(updatedJson.contains("fuelAudio"));
+      assertTrue(updatedJson.contains("default_pit_in"));
+      assertTrue(updatedJson.contains("default_fuel_level"));
+    }
+  }
+
+  @Test
+  public void testBackfillDrivers_UpdatesFuelAudioPresetToAudioSetInSqlite() throws Exception {
+    SqliteRepository<Driver> driverRepo = new SqliteRepository<>(context, "drivers", Driver.class);
+    driverRepo.drop();
+
+    String corruptedJson =
+        "{\"@id\":1,\"entity_id\":\"d_corrupted\",\"name\":\"Corrupted\",\"nickname\":\"Corr\","
+            + "\"pitInAudio\":{\"type\":\"preset\",\"url\":\"default_pit_in\",\"text\":\"\"},"
+            + "\"overallBestLapAudio\":{\"type\":\"preset\",\"url\":\"default_record_lap\",\"text\":\"\"},"
+            + "\"fuelAudio\":{\"type\":\"preset\",\"url\":\"default_fuel_level\",\"text\":\"\"}}";
+    try (java.sql.PreparedStatement stmt =
+        context
+            .getConnection()
+            .prepareStatement("INSERT INTO drivers (entity_id, json_data) VALUES (?, ?)")) {
+      stmt.setString(1, "d_corrupted");
+      stmt.setString(2, corruptedJson);
+      stmt.executeUpdate();
+    }
+
+    initializer.backfillDrivers(context);
+
+    try (java.sql.Statement stmt = context.getConnection().createStatement();
+        java.sql.ResultSet rs =
+            stmt.executeQuery("SELECT json_data FROM drivers WHERE entity_id = 'd_corrupted'")) {
+      assertTrue(rs.next());
+      String updatedJson = rs.getString("json_data");
+      assertTrue(updatedJson.contains("\"fuelAudio\":{\"type\":\"audio_set\""));
+    }
   }
 }

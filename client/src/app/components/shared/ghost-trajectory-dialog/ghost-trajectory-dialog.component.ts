@@ -8,6 +8,10 @@ import {
   signal,
 } from "@angular/core";
 import { FormsModule } from "@angular/forms";
+import {
+  CustomOptionComponent,
+  CustomSelectComponent,
+} from "@app/components/shared/custom-select/custom-select.component";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import {
   GhostPacingService,
@@ -26,7 +30,13 @@ export interface TrajectoryReferenceOption {
   selector: "app-ghost-trajectory-dialog",
   templateUrl: "./ghost-trajectory-dialog.component.html",
   styleUrls: ["./ghost-trajectory-dialog.component.css"],
-  imports: [CommonModule, FormsModule, TranslatePipe],
+  imports: [
+    CommonModule,
+    FormsModule,
+    TranslatePipe,
+    CustomSelectComponent,
+    CustomOptionComponent,
+  ],
 })
 export class GhostTrajectoryDialogComponent {
   private ghostPacingService = inject(GhostPacingService);

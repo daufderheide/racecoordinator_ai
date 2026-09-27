@@ -13,6 +13,7 @@ import { ActivatedRoute, Router } from "@angular/router";
 import { BehaviorSubject as _BehaviorSubject, of } from "rxjs";
 import { AnalyticsService } from "@app/analytics.service";
 import { HelpOverlayComponent } from "@app/components/shared/help-overlay/help-overlay.component";
+import { RacingRosterDialogHarness } from "@app/components/shared/racing-roster-dialog/testing/racing-roster-dialog.harness";
 import { DataService } from "@app/data.service";
 import { Driver } from "@app/models/driver";
 import { Settings as _Settings } from "@app/models/settings";
@@ -301,19 +302,54 @@ describe("DefaultRacedaySetupComponent", () => {
   }));
 
   describe("Settings Export/Import", () => {
-    it("should export settings", () => {
-      const anchorSpy = jasmine.createSpyObj("a", ["setAttribute", "click"]);
-      spyOn(document, "createElement").and.returnValue(anchorSpy as any);
+    let originalShowSaveFilePicker: any;
+
+    beforeEach(() => {
+      originalShowSaveFilePicker = (window as any).showSaveFilePicker;
+    });
+
+    afterEach(() => {
+      (window as any).showSaveFilePicker = originalShowSaveFilePicker;
+    });
+
+    it("should export settings via showSaveFilePicker when available", async () => {
+      const mockWritable = {
+        write: jasmine.createSpy("write").and.returnValue(Promise.resolve()),
+        close: jasmine.createSpy("close").and.returnValue(Promise.resolve()),
+      };
+      const mockHandle = {
+        createWritable: jasmine
+          .createSpy("createWritable")
+          .and.returnValue(Promise.resolve(mockWritable)),
+      };
+      (window as any).showSaveFilePicker = jasmine
+        .createSpy("showSaveFilePicker")
+        .and.returnValue(Promise.resolve(mockHandle));
+
+      await component.exportSettings();
+
+      expect(mockSettingsService.getSettings).toHaveBeenCalled();
+      expect((window as any).showSaveFilePicker).toHaveBeenCalledWith({
+        suggestedName: "racecoordinator_settings.json",
+        types: [
+          {
+            description: "JSON Files",
+            accept: { "application/json": [".json"] },
+          },
+        ],
+      });
+      expect(mockWritable.write).toHaveBeenCalled();
+      expect(mockWritable.close).toHaveBeenCalled();
+    });
+
+    it("should fallback to anchor download when showSaveFilePicker is not available", () => {
+      delete (window as any).showSaveFilePicker;
+      const clickSpy = spyOn(HTMLAnchorElement.prototype, "click");
 
       component.exportSettings();
 
       expect(mockSettingsService.getSettings).toHaveBeenCalled();
-      expect(document.createElement).toHaveBeenCalledWith("a");
-      expect(anchorSpy.setAttribute).toHaveBeenCalledWith(
-        "download",
-        "racecoordinator_settings.json",
-      );
-      expect(anchorSpy.click).toHaveBeenCalled();
+      expect(clickSpy).toHaveBeenCalled();
     });
 
     it("should import settings", () => {
@@ -440,7 +476,10 @@ describe("DefaultRacedaySetupComponent", () => {
     flush();
 
     expect(component.showAutoSavePrompt).toBeFalse();
-    expect(mockDataService.loadRace).toHaveBeenCalledWith("autosave_r1.json");
+    expect(mockDataService.loadRace).toHaveBeenCalledWith(
+      "autosave_r1.json",
+      false,
+    );
     expect(mockRouter.navigate).toHaveBeenCalledWith(["/raceday"]);
     expect(mockDataService.initializeRace).not.toHaveBeenCalled();
   }));
@@ -470,6 +509,68 @@ describe("DefaultRacedaySetupComponent", () => {
     expect(component.showAutoSavePrompt).toBeFalse();
     expect(mockDataService.deleteSavedRace).toHaveBeenCalledWith(
       "autosave_r1.json",
+      false,
+    );
+    expect(mockDataService.initializeRace).toHaveBeenCalled();
+    expect(mockRouter.navigate).toHaveBeenCalledWith(["/raceday"]);
+  }));
+
+  it("should prompt to load autosave in demo mode and load it if confirmed", fakeAsync(() => {
+    component.selectedRace = component.races.find((r) => r.entity_id === "r1");
+    component.selectedParticipants = [component.unselectedParticipants[0]];
+    mockDataService.getSavedRaces.and.returnValue(
+      of([{ filename: "autosave_r1.json", corrupt: false }]),
+    );
+    mockDataService.loadRace.and.returnValue(of(Race.fromObject({})));
+
+    component.startRace(true);
+    tick();
+
+    expect(mockDataService.getSavedRaces).toHaveBeenCalledWith(true);
+    expect(component.showAutoSavePrompt).toBeTrue();
+    expect(component.autoSaveFileToLoad).toBe("autosave_r1.json");
+    expect(component.pendingIsDemo).toBeTrue();
+
+    component.onConfirmAutoSave();
+    flush();
+
+    expect(component.showAutoSavePrompt).toBeFalse();
+    expect(mockDataService.loadRace).toHaveBeenCalledWith(
+      "autosave_r1.json",
+      true,
+    );
+    expect(mockRouter.navigate).toHaveBeenCalledWith(["/raceday"]);
+    expect(mockDataService.initializeRace).not.toHaveBeenCalled();
+  }));
+
+  it("should prompt to load autosave in demo mode and delete it if canceled", fakeAsync(() => {
+    component.selectedRace = component.races.find((r) => r.entity_id === "r1");
+    component.selectedParticipants = [component.unselectedParticipants[0]];
+
+    mockDataService.getSavedRaces.and.returnValue(
+      of([{ filename: "autosave_r1.json", corrupt: false }]),
+    );
+    mockDataService.deleteSavedRace.and.returnValue(of("OK"));
+    const response = InitializeRaceResponse.fromObject({
+      success: true,
+    });
+    mockDataService.initializeRace.and.returnValue(of(response));
+
+    component.startRace(true);
+    tick();
+
+    expect(mockDataService.getSavedRaces).toHaveBeenCalledWith(true);
+    expect(component.showAutoSavePrompt).toBeTrue();
+    expect(component.autoSaveFileToLoad).toBe("autosave_r1.json");
+    expect(component.pendingIsDemo).toBeTrue();
+
+    component.onCancelAutoSave();
+    tick();
+
+    expect(component.showAutoSavePrompt).toBeFalse();
+    expect(mockDataService.deleteSavedRace).toHaveBeenCalledWith(
+      "autosave_r1.json",
+      true,
     );
     expect(mockDataService.initializeRace).toHaveBeenCalled();
     expect(mockRouter.navigate).toHaveBeenCalledWith(["/raceday"]);
@@ -625,11 +726,20 @@ describe("DefaultRacedaySetupComponent", () => {
   });
 
   it("should preserve scroll position during refresh", fakeAsync(() => {
-    const mockElement = { scrollTop: 150 };
-    const mockViewChild = { nativeElement: mockElement };
+    const mockAvailElement = { scrollTop: 150 };
+    const mockAvailViewChild = { nativeElement: mockAvailElement };
 
-    Object.defineProperty(component, "scrollContainer", {
-      get: () => mockViewChild,
+    const mockRacingElement = { scrollTop: 250 };
+    const mockRacingViewChild = { nativeElement: mockRacingElement };
+
+    Object.defineProperty(component, "availScrollContainer", {
+      get: () => mockAvailViewChild,
+      set: () => {},
+      configurable: true,
+    });
+
+    Object.defineProperty(component, "racingScrollContainer", {
+      get: () => mockRacingViewChild,
       set: () => {},
       configurable: true,
     });
@@ -637,15 +747,168 @@ describe("DefaultRacedaySetupComponent", () => {
     let _actionCalled = false;
     component["updateListWithRefresh"](() => {
       _actionCalled = true;
-      mockElement.scrollTop = 0;
+      mockAvailElement.scrollTop = 0;
+      mockRacingElement.scrollTop = 0;
     });
 
     flush();
     fixture.detectChanges();
 
     expect(component.isRefreshingList).toBeFalse();
-    expect(mockElement.scrollTop).toBe(150);
+    expect(mockAvailElement.scrollTop).toBe(150);
+    expect(mockRacingElement.scrollTop).toBe(250);
   }));
+
+  describe("scrolling racing list on participant addition", () => {
+    it("should scroll racing list to newly added driver when selecting a participant", fakeAsync(() => {
+      flush();
+      fixture.detectChanges();
+
+      spyOn(component, "scrollRacingParticipantIntoView").and.callThrough();
+      const scrollIntoViewSpy = spyOn(Element.prototype, "scrollIntoView");
+
+      const driverToSelect = component.unselectedParticipants.find(
+        (d: any) => d.entity_id === "d2",
+      )!;
+
+      component.toggleParticipantSelection(driverToSelect, false);
+      flush();
+      fixture.detectChanges();
+
+      expect(component.scrollRacingParticipantIntoView).toHaveBeenCalledWith(
+        driverToSelect,
+      );
+      expect(scrollIntoViewSpy).toHaveBeenCalledWith({
+        block: "nearest",
+        behavior: "smooth",
+      });
+    }));
+
+    it("should not scroll racing list when unselecting a participant", fakeAsync(() => {
+      flush();
+      fixture.detectChanges();
+
+      const driverToSelect = component.unselectedParticipants.find(
+        (d: any) => d.entity_id === "d2",
+      )!;
+      component.toggleParticipantSelection(driverToSelect, false);
+      flush();
+      fixture.detectChanges();
+
+      spyOn(component, "scrollRacingParticipantIntoView");
+      component.toggleParticipantSelection(driverToSelect, true);
+      flush();
+      fixture.detectChanges();
+
+      expect(component.scrollRacingParticipantIntoView).not.toHaveBeenCalled();
+    }));
+
+    it("should scroll racing list when dragging participant from available to racing", fakeAsync(() => {
+      flush();
+      fixture.detectChanges();
+
+      spyOn(component, "scrollRacingParticipantIntoView");
+      const driverToDrop = component.unselectedParticipants[0];
+
+      const dropEvent: any = {
+        previousIndex: 0,
+        currentIndex: 0,
+        isPointerOverContainer: true,
+        container: { id: "selected-list" },
+        previousContainer: { id: "available-list", data: [driverToDrop] },
+      };
+
+      component.drop(dropEvent);
+      flush();
+      fixture.detectChanges();
+
+      expect(component.scrollRacingParticipantIntoView).toHaveBeenCalledWith(
+        driverToDrop,
+      );
+    }));
+
+    it("should scroll racing list when adding active available participant via keyboard", fakeAsync(() => {
+      flush();
+      fixture.detectChanges();
+
+      spyOn(component, "scrollRacingParticipantIntoView");
+      const activeDriver = component.filteredAvailableParticipants[0];
+      component.availableActiveIndex = 0;
+
+      component.addActiveAvailableParticipant();
+      flush();
+      fixture.detectChanges();
+
+      expect(component.scrollRacingParticipantIntoView).toHaveBeenCalledWith(
+        activeDriver,
+      );
+    }));
+
+    it("should not scroll racing list if participant validation fails", fakeAsync(() => {
+      flush();
+      fixture.detectChanges();
+
+      const validationService = TestBed.inject(ParticipantValidationService);
+      (validationService.validate as jasmine.Spy).and.returnValue({
+        isValid: false,
+        conflicts: ["Validation failed"],
+      });
+
+      spyOn(component, "scrollRacingParticipantIntoView");
+      const driverToSelect = component.unselectedParticipants[0];
+      component.toggleParticipantSelection(driverToSelect, false);
+      flush();
+      fixture.detectChanges();
+
+      expect(component.scrollRacingParticipantIntoView).not.toHaveBeenCalled();
+    }));
+
+    it("should query by data-participant-id in container and scroll into view", fakeAsync(() => {
+      const scrollIntoViewSpy = jasmine.createSpy("scrollIntoView");
+      const mockElement = { scrollIntoView: scrollIntoViewSpy } as any;
+      const mockContainer = {
+        querySelector: jasmine
+          .createSpy("querySelector")
+          .and.returnValue(mockElement),
+      };
+      Object.defineProperty(component, "racingScrollContainer", {
+        get: () => ({ nativeElement: mockContainer }),
+        configurable: true,
+      });
+
+      const participant = component.allDrivers[0];
+      component.selectedParticipants = [participant];
+
+      component.scrollRacingParticipantIntoView(participant);
+      flush();
+
+      expect(mockContainer.querySelector).toHaveBeenCalledWith(
+        `[data-participant-id="${component.getParticipantUniqueId(participant)}"]`,
+      );
+      expect(scrollIntoViewSpy).toHaveBeenCalledWith({
+        block: "nearest",
+        behavior: "smooth",
+      });
+    }));
+
+    it("should do nothing when participant is not in filteredRacingParticipants", fakeAsync(() => {
+      const mockContainer = {
+        querySelector: jasmine.createSpy("querySelector"),
+      };
+      Object.defineProperty(component, "racingScrollContainer", {
+        get: () => ({ nativeElement: mockContainer }),
+        configurable: true,
+      });
+
+      const participant = new Driver("missing", "Missing", "M");
+      component.selectedParticipants = [];
+
+      component.scrollRacingParticipantIntoView(participant);
+      flush();
+
+      expect(mockContainer.querySelector).not.toHaveBeenCalled();
+    }));
+  });
 
   it("should toggle help dropdown", () => {
     component.toggleHelpDropdown(new MouseEvent("click"));
@@ -693,10 +956,82 @@ describe("DefaultRacedaySetupComponent", () => {
       expect(component.closeWindow).toHaveBeenCalled();
     });
 
-    it("should call window.close in closeWindow", () => {
+    it("should call window.close in closeWindow and trigger fallback modal after timeout", fakeAsync(() => {
       spyOn(window, "close");
+      spyOn(component, "handleQuitBlockedFallback").and.callThrough();
       component.closeWindow();
       expect(window.close).toHaveBeenCalled();
+      expect(component.showQuitBlockedModal).toBeFalse();
+
+      tick(150);
+      expect(component.handleQuitBlockedFallback).toHaveBeenCalled();
+      expect(component.showQuitBlockedModal).toBeTrue();
+    }));
+
+    it("should exit fullscreen if active when closeWindow is called", fakeAsync(() => {
+      spyOn(window, "close");
+      spyOnProperty(document, "fullscreenElement", "get").and.returnValue(
+        document.body,
+      );
+      spyOn(document, "exitFullscreen").and.returnValue(Promise.resolve());
+
+      component.closeWindow();
+      expect(document.exitFullscreen).toHaveBeenCalled();
+      expect(window.close).toHaveBeenCalled();
+      tick(150);
+    }));
+
+    it("should gracefully handle errors when document.exitFullscreen throws", fakeAsync(() => {
+      spyOn(window, "close");
+      spyOnProperty(document, "fullscreenElement", "get").and.returnValue(
+        document.body,
+      );
+      spyOn(document, "exitFullscreen").and.throwError("Fullscreen error");
+
+      expect(() => component.closeWindow()).not.toThrow();
+      expect(window.close).toHaveBeenCalled();
+      tick(150);
+    }));
+
+    it("should gracefully handle errors when window.close throws", fakeAsync(() => {
+      spyOn(window, "close").and.throwError("Close blocked");
+
+      expect(() => component.closeWindow()).not.toThrow();
+      tick(150);
+      expect(component.showQuitBlockedModal).toBeTrue();
+    }));
+
+    it("should hide quit fallback modal and redirect to blank when acknowledged", () => {
+      component.showQuitBlockedModal = true;
+      spyOn(component, "redirectToBlank");
+      component.onAcknowledgeQuitModal();
+      expect(component.showQuitBlockedModal).toBeFalse();
+      expect(component.redirectToBlank).toHaveBeenCalled();
+    });
+
+    it("should replace window.location with about:blank in redirectToBlank", () => {
+      const mockLocation = { replace: jasmine.createSpy("replace") };
+      spyOn(component, "getWindowLocation").and.returnValue(
+        mockLocation as any,
+      );
+      component.redirectToBlank();
+      expect(mockLocation.replace).toHaveBeenCalledWith("about:blank");
+    });
+
+    it("should return window.location in getWindowLocation", () => {
+      expect(component.getWindowLocation()).toBe(window.location);
+    });
+
+    it("should gracefully handle errors in redirectToBlank", () => {
+      const mockLocation = {
+        replace: jasmine
+          .createSpy("replace")
+          .and.throwError("Navigation blocked"),
+      };
+      spyOn(component, "getWindowLocation").and.returnValue(
+        mockLocation as any,
+      );
+      expect(() => component.redirectToBlank()).not.toThrow();
     });
 
     it("should detect Mac and set quitShortcut to Cmd+Q", () => {
@@ -730,8 +1065,9 @@ describe("DefaultRacedaySetupComponent", () => {
       expect(component.quit).toHaveBeenCalled();
     });
 
-    it("should trigger quit on Alt+F4 on Windows", () => {
+    it("should allow native Alt+F4 on Windows without preventing default and close file dropdown", () => {
       component.isMac = false;
+      component.isFileDropdownOpen = true;
       spyOn(component, "quit");
       const event = new KeyboardEvent("keydown", {
         key: "F4",
@@ -740,8 +1076,9 @@ describe("DefaultRacedaySetupComponent", () => {
       });
       spyOn(event, "preventDefault");
       component.onKeyDown(event);
-      expect(event.preventDefault).toHaveBeenCalled();
-      expect(component.quit).toHaveBeenCalled();
+      expect(event.preventDefault).not.toHaveBeenCalled();
+      expect(component.quit).not.toHaveBeenCalled();
+      expect(component.isFileDropdownOpen).toBeFalse();
     });
 
     it("should trigger quit on Ctrl+Q on Windows", () => {
@@ -952,7 +1289,7 @@ describe("DefaultRacedaySetupComponent", () => {
       } as any),
     );
 
-    component.startRace();
+    component.startRace(false);
     flush();
 
     expect(component.showErrorModal).toBeTrue();
@@ -977,7 +1314,7 @@ describe("DefaultRacedaySetupComponent", () => {
       } as any),
     );
 
-    component.startRace();
+    component.startRace(false);
     flush();
 
     expect(component.showErrorModal).toBeTrue();
@@ -1000,7 +1337,7 @@ describe("DefaultRacedaySetupComponent", () => {
       } as any),
     );
 
-    component.startRace();
+    component.startRace(false);
     flush();
 
     expect(component.showErrorModal).toBeTrue();
@@ -1024,7 +1361,7 @@ describe("DefaultRacedaySetupComponent", () => {
       } as any),
     );
 
-    component.startRace();
+    component.startRace(false);
     flush();
 
     expect(component.showErrorModal).toBeTrue();
@@ -1048,7 +1385,7 @@ describe("DefaultRacedaySetupComponent", () => {
       } as any),
     );
 
-    component.startRace();
+    component.startRace(false);
     flush();
 
     expect(component.showErrorModal).toBeTrue();
@@ -1266,10 +1603,10 @@ describe("DefaultRacedaySetupComponent", () => {
       expect(selector).toBeTruthy();
     });
 
-    it("should navigate to event manager on openEventManager", () => {
+    it("should navigate to event editor on openEventManager", () => {
       component.openEventManager();
       expect(mockRouter.navigate).toHaveBeenCalledWith(
-        ["/event-manager"],
+        ["/event-editor"],
         jasmine.any(Object),
       );
     });
@@ -1296,7 +1633,7 @@ describe("DefaultRacedaySetupComponent", () => {
       expect(label).toBeFalsy();
 
       const select = fixture.nativeElement.querySelector(
-        ".season-selection-wrapper select.season-select-input",
+        ".season-selection-wrapper app-custom-select.season-select-input",
       );
       expect(select).toBeTruthy();
     });
@@ -1416,7 +1753,7 @@ describe("DefaultRacedaySetupComponent", () => {
       const summaryGrid = raceSummaryCard.querySelector(".summary-grid");
       expect(summaryGrid).toBeTruthy();
       const items = summaryGrid.querySelectorAll(".summary-item");
-      expect(items.length).toBe(7);
+      expect(items.length).toBe(9);
 
       const labels = Array.from(items).map((item: any) =>
         item.querySelector(".summary-label")?.textContent?.trim(),
@@ -1427,7 +1764,125 @@ describe("DefaultRacedaySetupComponent", () => {
       expect(labels[3]).toBe("RM_LABEL_FINISH_VALUE:");
       expect(labels[4]).toBe("RM_LABEL_HEAT_ROTATION:");
       expect(labels[5]).toBe("RM_LABEL_FUEL_RACE:");
-      expect(labels[6]).toBe("RM_LABEL_THEME:");
+      expect(labels[6]).toBe("RM_LABEL_HANDS_FREE:");
+      expect(labels[7]).toBe("RM_LABEL_WARMUP_TIME:");
+      expect(labels[8]).toBe("RM_LABEL_THEME:");
+    });
+
+    it("should render edit race button on race summary and invoke editSelectedRace when clicked", () => {
+      component.selectedRace = {
+        entity_id: "r1",
+        name: "Test Race",
+      } as any;
+      component.selectedEvent = undefined;
+      fixture.detectChanges();
+
+      const editBtn: HTMLButtonElement | null =
+        fixture.nativeElement.querySelector("#edit-selected-race-btn");
+      expect(editBtn).toBeTruthy();
+
+      spyOn(component, "editSelectedRace");
+      editBtn?.click();
+      expect(component.editSelectedRace).toHaveBeenCalled();
+    });
+
+    it("should correctly evaluate isHandsFree", () => {
+      expect(component.isHandsFree(undefined)).toBeFalse();
+      expect(component.isHandsFree(null)).toBeFalse();
+      expect(component.isHandsFree({} as any)).toBeFalse();
+      expect(
+        component.isHandsFree({
+          auto_advance_time: 5,
+          auto_start_time: 0,
+        } as any),
+      ).toBeFalse();
+      expect(
+        component.isHandsFree({
+          auto_advance_time: 0,
+          auto_start_time: 5,
+        } as any),
+      ).toBeFalse();
+      expect(
+        component.isHandsFree({
+          auto_advance_time: 5,
+          auto_start_time: 5,
+        } as any),
+      ).toBeTrue();
+    });
+
+    it("should correctly evaluate hasWarmup", () => {
+      expect(component.hasWarmup(undefined)).toBeFalse();
+      expect(component.hasWarmup(null)).toBeFalse();
+      expect(component.hasWarmup({} as any)).toBeFalse();
+      expect(
+        component.hasWarmup({
+          auto_advance_warmup_time: 0,
+          auto_start_warmup_time: 0,
+        } as any),
+      ).toBeFalse();
+      expect(
+        component.hasWarmup({
+          auto_advance_warmup_time: 3,
+          auto_start_warmup_time: 0,
+        } as any),
+      ).toBeTrue();
+      expect(
+        component.hasWarmup({
+          auto_advance_warmup_time: 0,
+          auto_start_warmup_time: 4,
+        } as any),
+      ).toBeTrue();
+      expect(
+        component.hasWarmup({
+          auto_advance_warmup_time: 2,
+          auto_start_warmup_time: 3,
+        } as any),
+      ).toBeTrue();
+    });
+
+    it("should render YES and NO for hands free and warmup time values on race summary card", () => {
+      component.selectedEvent = undefined;
+      component.selectedRace = {
+        name: "Test Race",
+        auto_advance_time: 5,
+        auto_start_time: 5,
+        auto_advance_warmup_time: 2,
+        auto_start_warmup_time: 0,
+      } as any;
+      fixture.detectChanges();
+
+      let items = fixture.nativeElement.querySelectorAll(
+        ".race-summary-card .summary-item",
+      );
+      expect(items.length).toBe(9);
+      let handsFreeVal = items[6]
+        .querySelector(".summary-value")
+        ?.textContent?.trim();
+      let warmupVal = items[7]
+        .querySelector(".summary-value")
+        ?.textContent?.trim();
+      expect(handsFreeVal).toBe("GEN_YES");
+      expect(warmupVal).toBe("GEN_YES");
+
+      // Now set both to inactive
+      component.selectedRace = {
+        name: "Test Race 2",
+        auto_advance_time: 0,
+        auto_start_time: 5,
+        auto_advance_warmup_time: 0,
+        auto_start_warmup_time: 0,
+      } as any;
+      fixture.detectChanges();
+
+      items = fixture.nativeElement.querySelectorAll(
+        ".race-summary-card .summary-item",
+      );
+      handsFreeVal = items[6]
+        .querySelector(".summary-value")
+        ?.textContent?.trim();
+      warmupVal = items[7].querySelector(".summary-value")?.textContent?.trim();
+      expect(handsFreeVal).toBe("GEN_NO");
+      expect(warmupVal).toBe("GEN_NO");
     });
 
     it("should correctly return theme display name in getThemeDisplay", () => {
@@ -1708,7 +2163,7 @@ describe("DefaultRacedaySetupComponent", () => {
         previousIndex: 0,
         currentIndex: 0,
         container: { id: "selected-list" },
-        previousContainer: { id: "available-list" },
+        previousContainer: { id: "available-list", data: [d2] },
       };
       component.drop(addEvent);
       tick(50);
@@ -1789,14 +2244,14 @@ describe("DefaultRacedaySetupComponent", () => {
       expect(mockRouter.navigate).toHaveBeenCalledWith(["/asset-manager"]);
 
       component.openDriverManager();
-      expect(mockRouter.navigate).toHaveBeenCalledWith(["/driver-manager"]);
+      expect(mockRouter.navigate).toHaveBeenCalledWith(["/driver-editor"]);
 
       component.openTeamManager();
-      expect(mockRouter.navigate).toHaveBeenCalledWith(["/team-manager"]);
+      expect(mockRouter.navigate).toHaveBeenCalledWith(["/team-editor"]);
 
       (component as any).isRaceRunning = false;
       component.openTrackManager();
-      expect(mockRouter.navigate).toHaveBeenCalledWith(["/track-manager"]);
+      expect(mockRouter.navigate).toHaveBeenCalledWith(["/track-editor"]);
 
       (component as any).isRaceRunning = true;
       component.openTrackManager();
@@ -1806,7 +2261,7 @@ describe("DefaultRacedaySetupComponent", () => {
         .createSpy("endRace")
         .and.returnValue(of(true));
       component.onConfirmTrackEditor();
-      expect(mockRouter.navigate).toHaveBeenCalledWith(["/track-manager"]);
+      expect(mockRouter.navigate).toHaveBeenCalledWith(["/track-editor"]);
 
       component.onCancelTrackEditor();
       expect(component.showTrackEditorPrompt).toBeFalse();
@@ -1814,15 +2269,66 @@ describe("DefaultRacedaySetupComponent", () => {
       component.selectedRace = { entity_id: "r1" } as any;
       component.selectedParticipants = [{} as any];
       component.openRaceManager();
-      expect(mockRouter.navigate).toHaveBeenCalledWith(
-        ["/race-manager"],
-        jasmine.any(Object),
-      );
+      expect(mockRouter.navigate).toHaveBeenCalledWith(["/race-editor"], {
+        queryParams: { id: "r1", driverCount: 1 },
+      });
+
+      component.selectedParticipants = [];
+      component.openRaceManager();
+      expect(mockRouter.navigate).toHaveBeenCalledWith(["/race-editor"], {
+        queryParams: { id: "r1" },
+      });
+
+      component.selectedParticipants = [{} as any];
+      component.editSelectedRace();
+      expect(sessionStorage.getItem("skipIntro")).toBe("true");
+      expect(mockRouter.navigate).toHaveBeenCalledWith(["/race-editor"], {
+        queryParams: {
+          id: "r1",
+          driverCount: 1,
+          from: "raceday-setup",
+          returnUrl: "/raceday-setup",
+        },
+      });
+
+      sessionStorage.clear();
+      component.selectedParticipants = [];
+      component.editSelectedRace();
+      expect(sessionStorage.getItem("skipIntro")).toBe("true");
+      expect(mockRouter.navigate).toHaveBeenCalledWith(["/race-editor"], {
+        queryParams: {
+          id: "r1",
+          from: "raceday-setup",
+          returnUrl: "/raceday-setup",
+        },
+      });
+
+      sessionStorage.clear();
+      component.selectedRace = undefined;
+      component.editSelectedRace();
+      expect(sessionStorage.getItem("skipIntro")).toBeNull();
+
+      sessionStorage.clear();
+      component.selectedSeason = { entity_id: "s1", name: "Season 1" } as any;
+      component.editSelectedSeason();
+      expect(sessionStorage.getItem("skipIntro")).toBe("true");
+      expect(mockRouter.navigate).toHaveBeenCalledWith(["/season-editor"], {
+        queryParams: {
+          id: "s1",
+          from: "raceday-setup",
+          returnUrl: "/raceday-setup",
+        },
+      });
+
+      sessionStorage.clear();
+      component.selectedSeason = undefined;
+      component.editSelectedSeason();
+      expect(sessionStorage.getItem("skipIntro")).toBeNull();
 
       component.selectedEvent = { entity_id: "e1" } as any;
       component.openEventManager();
       expect(mockRouter.navigate).toHaveBeenCalledWith(
-        ["/event-manager"],
+        ["/event-editor"],
         jasmine.any(Object),
       );
 
@@ -1836,7 +2342,7 @@ describe("DefaultRacedaySetupComponent", () => {
 
       component.openSeasonManager();
       expect(mockRouter.navigate).toHaveBeenCalledWith(
-        ["/season-manager"],
+        ["/season-editor"],
         jasmine.any(Object),
       );
     });
@@ -1868,7 +2374,7 @@ describe("DefaultRacedaySetupComponent", () => {
   describe("getHelpSteps", () => {
     it("should return the complete list of guide steps in correct order", () => {
       const steps = component.getHelpSteps();
-      expect(steps.length).toBe(13);
+      expect(steps.length).toBe(15);
 
       expect(steps[0]).toEqual({
         title: "RDS_HELP_WELCOME_TITLE",
@@ -1890,69 +2396,83 @@ describe("DefaultRacedaySetupComponent", () => {
       });
 
       expect(steps[3]).toEqual({
+        selector: "#available-drivers-section .list-search",
+        title: "RDS_HELP_SEARCH_AVAILABLE_DRIVERS_TITLE",
+        content: "RDS_HELP_SEARCH_AVAILABLE_DRIVERS_CONTENT",
+        position: "bottom",
+      });
+
+      expect(steps[4]).toEqual({
         targetId: "racing-drivers-section",
         title: "RDS_HELP_DRIVER_RACING_TITLE",
         content: "RDS_HELP_DRIVER_RACING_CONTENT",
         position: "right",
       });
 
-      expect(steps[4]).toEqual({
+      expect(steps[5]).toEqual({
         selector: "#racing-drivers-section .section-header",
         title: "RDS_HELP_DRIVER_ACTIONS_TITLE",
         content: "RDS_HELP_DRIVER_ACTIONS_CONTENT",
         position: "bottom",
       });
 
-      expect(steps[5]).toEqual({
+      expect(steps[6]).toEqual({
+        selector: "#racing-drivers-section .list-search",
+        title: "RDS_HELP_SEARCH_DRIVERS_TITLE",
+        content: "RDS_HELP_SEARCH_DRIVERS_CONTENT",
+        position: "bottom",
+      });
+
+      expect(steps[7]).toEqual({
         selector: ".custom-dropdown-container",
         title: "RDS_HELP_RACE_SELECTION_TITLE",
         content: "RDS_HELP_RACE_SELECTION_CONTENT",
         position: "top",
       });
 
-      expect(steps[6]).toEqual({
+      expect(steps[8]).toEqual({
         selector: ".event-details-card",
         title: "RDS_HELP_SELECTION_SUMMARY_TITLE",
         content: "RDS_HELP_SELECTION_SUMMARY_CONTENT",
         position: "top",
       });
 
-      expect(steps[7]).toEqual({
-        selector: ".search-wrapper",
+      expect(steps[9]).toEqual({
+        selector: ".preview-panel .search-wrapper",
         title: "RDS_HELP_SEARCH_TITLE",
         content: "RDS_HELP_SEARCH_CONTENT",
         position: "top",
       });
 
-      expect(steps[8]).toEqual({
+      expect(steps[10]).toEqual({
         selector: ".season-selection-wrapper",
         title: "RDS_HELP_SEASON_TITLE",
         content: "RDS_HELP_SEASON_CONTENT",
         position: "top",
       });
 
-      expect(steps[9]).toEqual({
+      expect(steps[11]).toEqual({
         targetId: "race-card-0",
         title: "RDS_HELP_RECENT_RACE_TITLE",
         content: "RDS_HELP_RECENT_RACE_MOST_RECENT_CONTENT",
         position: "bottom",
       });
 
-      expect(steps[10]).toEqual({
+      expect(steps[12]).toEqual({
         targetId: "race-card-1",
         title: "RDS_HELP_RECENT_RACE_TITLE",
         content: "RDS_HELP_RECENT_RACE_CONTENT",
         position: "bottom",
       });
 
-      expect(steps[11]).toEqual({
+      expect(steps[13]).toEqual({
         selector: ".btn-start",
         title: "RDS_HELP_START_RACE_TITLE",
         content: "RDS_HELP_START_RACE_CONTENT",
         position: "top",
       });
 
-      expect(steps[12]).toEqual({
+      expect(steps[14]).toEqual({
         selector: ".btn-demo",
         title: "RDS_HELP_START_DEMO_TITLE",
         content: "RDS_HELP_START_DEMO_CONTENT",
@@ -2080,6 +2600,636 @@ describe("DefaultRacedaySetupComponent", () => {
       fixture.detectChanges();
 
       expect(component.showRacingRosterDialog).toBeTrue();
+    });
+
+    it("should display newly dragged drivers in racing roster dialog when opened, closed, dragged, and reopened", async () => {
+      const d1 = new Driver("d1", "Driver One", "D1");
+      const d2 = new Driver("d2", "Driver Two", "D2");
+      const d3 = new Driver("d3", "Driver Three", "D3");
+
+      component.selectedParticipants = [d1, d2];
+      component.unselectedParticipants = [d3];
+      fixture.detectChanges();
+
+      // Open roster dialog initially
+      component.openRacingRosterDialog();
+      fixture.detectChanges();
+      expect(component.showRacingRosterDialog).toBeTrue();
+
+      const loader = TestbedHarnessEnvironment.loader(fixture);
+      const rosterHarness = await loader.getHarness(RacingRosterDialogHarness);
+      expect(await rosterHarness.isVisible()).toBeTrue();
+      expect(await rosterHarness.getItemCount()).toBe(2);
+
+      // Close roster dialog
+      component.closeRacingRosterDialog();
+      fixture.detectChanges();
+      expect(component.showRacingRosterDialog).toBeFalse();
+      expect(await rosterHarness.isVisible()).toBeFalse();
+
+      const initialRef = component.selectedParticipants;
+
+      // Drag d3 from available to selected
+      const addEvent: any = {
+        previousIndex: 0,
+        currentIndex: 2,
+        container: { id: "selected-list" },
+        previousContainer: { id: "available-list", data: [d3] },
+      };
+      component.drop(addEvent);
+      fixture.detectChanges();
+
+      expect(component.selectedParticipants.length).toBe(3);
+      expect(component.selectedParticipants).not.toBe(initialRef);
+
+      // Reopen roster dialog
+      component.openRacingRosterDialog();
+      fixture.detectChanges();
+      expect(component.showRacingRosterDialog).toBeTrue();
+
+      // Verify that all 3 drivers are visible in the roster dialog immediately
+      expect(await rosterHarness.isVisible()).toBeTrue();
+      expect(await rosterHarness.getItemCount()).toBe(3);
+      expect(await rosterHarness.getItemName(2)).toBe("D3");
+    });
+
+    it("should render all config menu items with setup-menu-dropdown-item and not suppress even items", () => {
+      component.isConfigDropdownOpen = true;
+      fixture.detectChanges();
+
+      const items = fixture.nativeElement.querySelectorAll(
+        ".setup-menu-dropdown-item",
+      );
+      expect(items.length).toBeGreaterThanOrEqual(8);
+      const itemTexts = Array.from(items).map((el: any) =>
+        el.textContent.trim(),
+      );
+      expect(
+        itemTexts.some((text: string) =>
+          text.includes("RDS_MENU_TEAM_MANAGER"),
+        ),
+      ).toBeTrue();
+      expect(
+        itemTexts.some((text: string) => text.includes("RDS_MENU_EVENT")),
+      ).toBeTrue();
+      expect(
+        itemTexts.some((text: string) => text.includes("RDS_MENU_DATABASES")),
+      ).toBeTrue();
+      expect(
+        itemTexts.some((text: string) => text.includes("RDS_MENU_TRACK")),
+      ).toBeTrue();
+
+      // Ensure no stylesheet contains an nth-of-type(even) rule that suppresses background
+      const styleSheets = Array.from(document.styleSheets);
+      let foundEvenRule = false;
+      for (const sheet of styleSheets) {
+        try {
+          const rules = Array.from(sheet.cssRules || []);
+          for (const rule of rules) {
+            if (
+              rule.cssText &&
+              rule.cssText.includes(
+                ".setup-menu-dropdown-item:nth-of-type(even)",
+              )
+            ) {
+              foundEvenRule = true;
+            }
+          }
+        } catch {
+          // Ignore external/CORS restricted stylesheets
+        }
+      }
+      expect(foundEvenRule).toBeFalse();
+    });
+
+    it("should render file, options, and help dropdown items with setup-menu-dropdown-item class", () => {
+      component.isFileDropdownOpen = true;
+      fixture.detectChanges();
+      let items = fixture.nativeElement.querySelectorAll(
+        ".setup-menu-dropdown-item",
+      );
+      expect(items.length).toBeGreaterThanOrEqual(5);
+
+      component.isFileDropdownOpen = false;
+      component.isOptionsDropdownOpen = true;
+      fixture.detectChanges();
+      items = fixture.nativeElement.querySelectorAll(
+        ".setup-menu-dropdown-item",
+      );
+      expect(items.length).toBeGreaterThanOrEqual(2);
+
+      component.isOptionsDropdownOpen = false;
+      component.isHelpDropdownOpen = true;
+      fixture.detectChanges();
+      items = fixture.nativeElement.querySelectorAll(
+        ".setup-menu-dropdown-item",
+      );
+      expect(items.length).toBeGreaterThanOrEqual(3);
+    });
+  });
+
+  describe("Keyboard-only driver selection and search navigation", () => {
+    let d1: Driver;
+    let d2: Driver;
+    let d10: Driver;
+    let d100: Driver;
+
+    beforeEach(() => {
+      d1 = new Driver("d1", "Driver 1", "Ace");
+      d2 = new Driver("d2", "Driver 2", "Deuce");
+      d10 = new Driver("d10", "Driver 10", "Ten");
+      d100 = new Driver("d100", "Driver 100", "Cent");
+      component.allDrivers = [d1, d2, d10, d100];
+      component.unselectedParticipants = [d10, d1, d100, d2];
+      component.selectedParticipants = [];
+      component.availableSearchQuery = "";
+      component.racingSearchQuery = "";
+      component.availableActiveIndex = 0;
+      component.racingActiveIndex = 0;
+      fixture.detectChanges();
+    });
+
+    it("should prioritize exact match in filteredAvailableParticipants", () => {
+      component.availableSearchQuery = "Driver 1";
+      const filtered = component.filteredAvailableParticipants;
+      expect(filtered.length).toBe(3); // Driver 1, Driver 10, Driver 100
+      expect(filtered[0]).toBe(d1); // Exact match "Driver 1" is prioritized first!
+    });
+
+    it("should prioritize exact nickname match in filteredAvailableParticipants", () => {
+      component.availableSearchQuery = "Ace";
+      const filtered = component.filteredAvailableParticipants;
+      expect(filtered[0]).toBe(d1);
+    });
+
+    it("should prioritize prefix match over substring match", () => {
+      const mid = new Driver("d_mid", "Other Driver 1", "Mid");
+      component.unselectedParticipants = [mid, d10, d1];
+      component.availableSearchQuery = "Driver 1";
+      const filtered = component.filteredAvailableParticipants;
+      expect(filtered[0]).toBe(d1); // Exact
+      expect(filtered[1]).toBe(d10); // Starts with "Driver 1"
+      expect(filtered[2]).toBe(mid); // Contains "Driver 1" in middle
+    });
+
+    it("should handle empty or whitespace query gracefully", () => {
+      component.availableSearchQuery = "   ";
+      expect(component.filteredAvailableParticipants).toEqual(
+        component.unselectedParticipants,
+      );
+    });
+
+    it("should reset active index when search query changes", () => {
+      component.availableActiveIndex = 2;
+      component.onAvailableSearchQueryChange();
+      expect(component.availableActiveIndex).toBe(0);
+
+      component.racingActiveIndex = 3;
+      component.onRacingSearchQueryChange();
+      expect(component.racingActiveIndex).toBe(0);
+    });
+
+    it("should navigate available items using ArrowDown and ArrowUp", () => {
+      component.availableSearchQuery = "Driver";
+      const list = component.filteredAvailableParticipants;
+      expect(list.length).toBe(4);
+
+      const downEvent = new KeyboardEvent("keydown", { key: "ArrowDown" });
+      spyOn(downEvent, "preventDefault");
+      component.onAvailableSearchKeydown(downEvent);
+      expect(downEvent.preventDefault).toHaveBeenCalled();
+      expect(component.availableActiveIndex).toBe(1);
+
+      component.onAvailableSearchKeydown(downEvent);
+      expect(component.availableActiveIndex).toBe(2);
+
+      component.onAvailableSearchKeydown(downEvent);
+      expect(component.availableActiveIndex).toBe(3);
+
+      // Clamped at end
+      component.onAvailableSearchKeydown(downEvent);
+      expect(component.availableActiveIndex).toBe(3);
+
+      const upEvent = new KeyboardEvent("keydown", { key: "ArrowUp" });
+      spyOn(upEvent, "preventDefault");
+      component.onAvailableSearchKeydown(upEvent);
+      expect(upEvent.preventDefault).toHaveBeenCalled();
+      expect(component.availableActiveIndex).toBe(2);
+
+      component.onAvailableSearchKeydown(upEvent);
+      component.onAvailableSearchKeydown(upEvent);
+      expect(component.availableActiveIndex).toBe(0);
+
+      // Clamped at 0
+      component.onAvailableSearchKeydown(upEvent);
+      expect(component.availableActiveIndex).toBe(0);
+    });
+
+    it("should clear available search on Escape", () => {
+      component.availableSearchQuery = "Driver 1";
+      component.availableActiveIndex = 2;
+
+      const escEvent = new KeyboardEvent("keydown", { key: "Escape" });
+      spyOn(escEvent, "preventDefault");
+      component.onAvailableSearchKeydown(escEvent);
+
+      expect(escEvent.preventDefault).toHaveBeenCalled();
+      expect(component.availableSearchQuery).toBe("");
+      expect(component.availableActiveIndex).toBe(0);
+    });
+
+    it("should add ONLY the active driver on Enter without Shift/Ctrl", fakeAsync(() => {
+      component.availableSearchQuery = "Driver 1";
+      expect(component.filteredAvailableParticipants[0]).toBe(d1);
+
+      const enterEvent = new KeyboardEvent("keydown", {
+        key: "Enter",
+        shiftKey: false,
+        ctrlKey: false,
+      });
+      spyOn(enterEvent, "preventDefault");
+      component.onAvailableSearchKeydown(enterEvent);
+      tick(50);
+
+      expect(enterEvent.preventDefault).toHaveBeenCalled();
+      expect(component.selectedParticipants).toEqual([d1]);
+      expect(component.selectedParticipants).not.toContain(d10);
+      expect(component.selectedParticipants).not.toContain(d100);
+    }));
+
+    it("should add all filtered drivers on Shift+Enter or Ctrl+Enter", fakeAsync(() => {
+      component.availableSearchQuery = "Driver 1";
+      expect(component.filteredAvailableParticipants.length).toBe(3);
+
+      const shiftEnter = new KeyboardEvent("keydown", {
+        key: "Enter",
+        shiftKey: true,
+      });
+      spyOn(shiftEnter, "preventDefault");
+      component.onAvailableSearchKeydown(shiftEnter);
+      tick(50);
+
+      expect(shiftEnter.preventDefault).toHaveBeenCalled();
+      expect(component.selectedParticipants.length).toBe(3);
+      expect(component.selectedParticipants).toContain(d1);
+      expect(component.selectedParticipants).toContain(d10);
+      expect(component.selectedParticipants).toContain(d100);
+    }));
+
+    it("should navigate and remove racing drivers using keyboard", fakeAsync(() => {
+      component.selectedParticipants = [d1, d2, d10];
+      component.racingSearchQuery = "Driver";
+      fixture.detectChanges();
+
+      const downEvent = new KeyboardEvent("keydown", { key: "ArrowDown" });
+      component.onRacingSearchKeydown(downEvent);
+      expect(component.racingActiveIndex).toBe(1);
+
+      // Enter removes active participant (d2)
+      const enterEvent = new KeyboardEvent("keydown", { key: "Enter" });
+      component.onRacingSearchKeydown(enterEvent);
+      tick(50);
+
+      expect(component.selectedParticipants).toEqual([d1, d10]);
+      expect(component.selectedParticipants).not.toContain(d2);
+
+      // Escape clears racing query
+      const escEvent = new KeyboardEvent("keydown", { key: "Escape" });
+      component.onRacingSearchKeydown(escEvent);
+      expect(component.racingSearchQuery).toBe("");
+      expect(component.racingActiveIndex).toBe(0);
+    }));
+
+    it("should bulk remove racing drivers on Shift+Enter", fakeAsync(() => {
+      component.selectedParticipants = [d1, d2, d10];
+      component.racingSearchQuery = "Driver 1";
+      fixture.detectChanges();
+
+      const shiftEnter = new KeyboardEvent("keydown", {
+        key: "Enter",
+        shiftKey: true,
+      });
+      component.onRacingSearchKeydown(shiftEnter);
+      tick(50);
+
+      expect(component.selectedParticipants).toEqual([d2]);
+    }));
+
+    it("should do nothing when adding/removing from empty filtered list", () => {
+      component.availableSearchQuery = "NonExistentDriver";
+      expect(component.filteredAvailableParticipants.length).toBe(0);
+
+      component.addActiveAvailableParticipant();
+      expect(component.selectedParticipants.length).toBe(0);
+
+      component.removeActiveRacingParticipant();
+      expect(component.selectedParticipants.length).toBe(0);
+    });
+  });
+
+  describe("Participant Selection & Editor Navigation", () => {
+    it("should select participant and report isParticipantSelected accurately", () => {
+      const driver = new Driver("d1", "Dave", "D");
+      const team = new Team("t1", "Ferrari", undefined, ["d1"]);
+
+      expect(component.selectedParticipantItem).toBeNull();
+      expect(component.isParticipantSelected(driver)).toBeFalse();
+
+      component.selectParticipant(driver);
+      expect(component.selectedParticipantItem).toBe(driver);
+      expect(component.isParticipantSelected(driver)).toBeTrue();
+      expect(
+        component.isParticipantSelected(new Driver("d2", "Other", "O")),
+      ).toBeFalse();
+      expect(component.isParticipantSelected(team)).toBeFalse();
+
+      component.selectParticipant(team);
+      expect(component.selectedParticipantItem).toBe(team);
+      expect(component.isParticipantSelected(team)).toBeTrue();
+      expect(component.isParticipantSelected(driver)).toBeFalse();
+    });
+
+    it("should ensure only one driver/team is selected across available and racing lists, undoing previous selection on click", () => {
+      const d1 = new Driver("d1", "Dave", "D");
+      const d2 = new Driver("d2", "Dan", "D");
+      component.unselectedParticipants = [d1];
+      component.selectedParticipants = [d2];
+
+      component.selectParticipant(d1);
+      expect(component.selectedParticipantItem).toBe(d1);
+      expect(component.isParticipantSelected(d1)).toBeTrue();
+      expect(component.isParticipantSelected(d2)).toBeFalse();
+
+      component.selectParticipant(d2);
+      expect(component.selectedParticipantItem).toBe(d2);
+      expect(component.isParticipantSelected(d2)).toBeTrue();
+      expect(component.isParticipantSelected(d1)).toBeFalse();
+    });
+
+    it("should update selection and undo previous selection when hovering over a driver in available or racing list", () => {
+      const d1 = new Driver("d1", "Dave", "D");
+      const d2 = new Driver("d2", "Dan", "D");
+      component.unselectedParticipants = [d1];
+      component.selectedParticipants = [d2];
+
+      component.onAvailableItemMouseEnter(d1, 0);
+      expect(component.selectedParticipantItem).toBe(d1);
+      expect(component.availableActiveIndex).toBe(0);
+      expect(component.isParticipantSelected(d1)).toBeTrue();
+      expect(component.isParticipantSelected(d2)).toBeFalse();
+
+      component.onRacingItemMouseEnter(d2, 0);
+      expect(component.selectedParticipantItem).toBe(d2);
+      expect(component.racingActiveIndex).toBe(0);
+      expect(component.isParticipantSelected(d2)).toBeTrue();
+      expect(component.isParticipantSelected(d1)).toBeFalse();
+    });
+
+    describe("mouse leave behavior on list boxes", () => {
+      it("should remove selection when mouse leaves available list box if there is no search string", () => {
+        const d1 = new Driver("d1", "Dave", "D");
+        component.unselectedParticipants = [d1];
+        component.availableSearchQuery = "";
+        component.onAvailableItemMouseEnter(d1, 0);
+
+        expect(component.selectedParticipantItem).toBe(d1);
+        expect(component.isParticipantSelected(d1)).toBeTrue();
+
+        component.onAvailableListMouseLeave();
+
+        expect(component.selectedParticipantItem).toBeNull();
+        expect(component.availableActiveIndex).toBe(-1);
+        expect(component.isParticipantSelected(d1)).toBeFalse();
+      });
+
+      it("should retain selection when mouse leaves available list box if there is a search string", () => {
+        const d1 = new Driver("d1", "Dave", "D");
+        component.unselectedParticipants = [d1];
+        component.availableSearchQuery = "Dave";
+        component.onAvailableItemMouseEnter(d1, 0);
+
+        component.onAvailableListMouseLeave();
+
+        expect(component.selectedParticipantItem).toBe(d1);
+        expect(component.availableActiveIndex).toBe(0);
+        expect(component.isParticipantSelected(d1)).toBeTrue();
+      });
+
+      it("should remove selection when mouse leaves available list box if search string is whitespace only", () => {
+        const d1 = new Driver("d1", "Dave", "D");
+        component.unselectedParticipants = [d1];
+        component.availableSearchQuery = "   ";
+        component.onAvailableItemMouseEnter(d1, 0);
+
+        component.onAvailableListMouseLeave();
+
+        expect(component.selectedParticipantItem).toBeNull();
+        expect(component.availableActiveIndex).toBe(-1);
+        expect(component.isParticipantSelected(d1)).toBeFalse();
+      });
+
+      it("should remove selection when mouse leaves racing list box if there is no search string", () => {
+        const d2 = new Driver("d2", "Dan", "D");
+        component.selectedParticipants = [d2];
+        component.racingSearchQuery = "";
+        component.onRacingItemMouseEnter(d2, 0);
+
+        expect(component.selectedParticipantItem).toBe(d2);
+        expect(component.isParticipantSelected(d2)).toBeTrue();
+
+        component.onRacingListMouseLeave();
+
+        expect(component.selectedParticipantItem).toBeNull();
+        expect(component.racingActiveIndex).toBe(-1);
+        expect(component.isParticipantSelected(d2)).toBeFalse();
+      });
+
+      it("should retain selection when mouse leaves racing list box if there is a search string", () => {
+        const d2 = new Driver("d2", "Dan", "D");
+        component.selectedParticipants = [d2];
+        component.racingSearchQuery = "Dan";
+        component.onRacingItemMouseEnter(d2, 0);
+
+        component.onRacingListMouseLeave();
+
+        expect(component.selectedParticipantItem).toBe(d2);
+        expect(component.racingActiveIndex).toBe(0);
+        expect(component.isParticipantSelected(d2)).toBeTrue();
+      });
+
+      it("should remove selection when mouse leaves racing list box if search string is whitespace only", () => {
+        const d2 = new Driver("d2", "Dan", "D");
+        component.selectedParticipants = [d2];
+        component.racingSearchQuery = "   ";
+        component.onRacingItemMouseEnter(d2, 0);
+
+        component.onRacingListMouseLeave();
+
+        expect(component.selectedParticipantItem).toBeNull();
+        expect(component.racingActiveIndex).toBe(-1);
+        expect(component.isParticipantSelected(d2)).toBeFalse();
+      });
+
+      it("should remove selection in template when mouseleave event is dispatched on available-list with no search query", () => {
+        const driver = new Driver("d1", "Dave", "D");
+        component.unselectedParticipants = [driver];
+        component.availableSearchQuery = "";
+        fixture.detectChanges();
+
+        const availItem = fixture.nativeElement.querySelector("#avail-item-0");
+        expect(availItem).toBeTruthy();
+        availItem.dispatchEvent(new MouseEvent("mouseenter"));
+        fixture.detectChanges();
+
+        expect(component.selectedParticipantItem).toBe(driver);
+        expect(availItem.classList.contains("active")).toBeTrue();
+
+        const availableList =
+          fixture.nativeElement.querySelector("#available-list");
+        expect(availableList).toBeTruthy();
+        availableList.dispatchEvent(new MouseEvent("mouseleave"));
+        fixture.detectChanges();
+
+        expect(component.selectedParticipantItem).toBeNull();
+        expect(availItem.classList.contains("active")).toBeFalse();
+      });
+
+      it("should remove selection in template when mouseleave event is dispatched on selected-list with no search query", () => {
+        const driver = new Driver("d2", "Dan", "D");
+        component.selectedParticipants = [driver];
+        component.racingSearchQuery = "";
+        fixture.detectChanges();
+
+        const racingItem =
+          fixture.nativeElement.querySelector("#racing-item-0");
+        expect(racingItem).toBeTruthy();
+        racingItem.dispatchEvent(new MouseEvent("mouseenter"));
+        fixture.detectChanges();
+
+        expect(component.selectedParticipantItem).toBe(driver);
+        expect(racingItem.classList.contains("active")).toBeTrue();
+
+        const selectedList =
+          fixture.nativeElement.querySelector("#selected-list");
+        expect(selectedList).toBeTruthy();
+        selectedList.dispatchEvent(new MouseEvent("mouseleave"));
+        fixture.detectChanges();
+
+        expect(component.selectedParticipantItem).toBeNull();
+        expect(racingItem.classList.contains("active")).toBeFalse();
+      });
+    });
+
+    it("should navigate to driver-editor with query param when participant is selected", () => {
+      const driver = new Driver("d1", "Dave", "D");
+      component.selectParticipant(driver);
+
+      component.openDriverManager();
+      expect(mockRouter.navigate).toHaveBeenCalledWith(["/driver-editor"], {
+        queryParams: { id: "d1" },
+      });
+    });
+
+    it("should navigate to team-editor with query param when participant is selected", () => {
+      const team = new Team("t1", "Ferrari", undefined, ["d1"]);
+      component.selectParticipant(team);
+
+      component.openTeamManager();
+      expect(mockRouter.navigate).toHaveBeenCalledWith(["/team-editor"], {
+        queryParams: { id: "t1" },
+      });
+    });
+
+    it("should navigate without query params when no participant is selected", () => {
+      component.selectedParticipantItem = null;
+
+      component.openDriverManager();
+      expect(mockRouter.navigate).toHaveBeenCalledWith(["/driver-editor"]);
+
+      component.openTeamManager();
+      expect(mockRouter.navigate).toHaveBeenCalledWith(["/team-editor"]);
+    });
+
+    it("should select participant on clicking driver-item in template", () => {
+      const driver = new Driver("d1", "Dave", "D");
+      component.unselectedParticipants = [driver];
+      fixture.detectChanges();
+
+      const availItem = fixture.nativeElement.querySelector("#avail-item-0");
+      expect(availItem).toBeTruthy();
+      availItem.click();
+      fixture.detectChanges();
+
+      expect(component.selectedParticipantItem).toBe(driver);
+      expect(availItem.classList.contains("active")).toBeTrue();
+    });
+
+    it("should select participant when typing into available search query", () => {
+      const d1 = new Driver("d1", "Dave", "D");
+      const d2 = new Driver("d2", "Dan", "D");
+      component.unselectedParticipants = [d1, d2];
+      (component as any).selectedParticipantItem = null;
+
+      component.availableSearchQuery = "Dan";
+      component.onAvailableSearchQueryChange();
+
+      expect(component.selectedParticipantItem).toBe(d2);
+      expect(component.isParticipantSelected(d2)).toBeTrue();
+    });
+
+    it("should update selected participant when arrowing up/down in available search", () => {
+      const d1 = new Driver("d1", "Dave", "D");
+      const d2 = new Driver("d2", "Dan", "D");
+      component.unselectedParticipants = [d1, d2];
+      component.availableSearchQuery = "D";
+      component.onAvailableSearchQueryChange();
+      expect(component.selectedParticipantItem).toBe(d1);
+
+      const downEvent = new KeyboardEvent("keydown", { key: "ArrowDown" });
+      component.onAvailableSearchKeydown(downEvent);
+      expect(component.selectedParticipantItem).toBe(d2);
+
+      const upEvent = new KeyboardEvent("keydown", { key: "ArrowUp" });
+      component.onAvailableSearchKeydown(upEvent);
+      expect(component.selectedParticipantItem).toBe(d1);
+    });
+
+    it("should select participant when addActiveAvailableParticipant is invoked", () => {
+      const d1 = new Driver("d1", "Dave", "D");
+      component.unselectedParticipants = [d1];
+      component.selectedParticipants = [];
+      component.availableActiveIndex = 0;
+
+      component.addActiveAvailableParticipant();
+      expect(component.selectedParticipantItem).toBe(d1);
+    });
+
+    it("should select participant when typing into racing search query and navigating", () => {
+      const d1 = new Driver("d1", "Dave", "D");
+      const d2 = new Driver("d2", "Dan", "D");
+      component.selectedParticipants = [d1, d2];
+      (component as any).selectedParticipantItem = null;
+
+      component.racingSearchQuery = "Dan";
+      component.onRacingSearchQueryChange();
+      expect(component.selectedParticipantItem).toBe(d2);
+
+      const downEvent = new KeyboardEvent("keydown", { key: "ArrowDown" });
+      component.onRacingSearchKeydown(downEvent);
+      expect(component.selectedParticipantItem).toBe(d2);
+    });
+
+    it("should navigate to driver-editor with searched participant", () => {
+      const d1 = new Driver("d1", "Dave", "D");
+      const d2 = new Driver("d2", "Dan", "D");
+      component.unselectedParticipants = [d1, d2];
+      component.availableSearchQuery = "Dan";
+      component.onAvailableSearchQueryChange();
+
+      component.openDriverManager();
+      expect(mockRouter.navigate).toHaveBeenCalledWith(["/driver-editor"], {
+        queryParams: { id: "d2" },
+      });
     });
   });
 });

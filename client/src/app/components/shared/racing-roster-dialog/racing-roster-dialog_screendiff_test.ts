@@ -103,7 +103,6 @@ test.describe("Racing Roster Dialog Visuals", () => {
 
     await TestSetupHelper.disableAnimations(page);
     await expect(page.getByText("Alice")).toBeVisible();
-    await page.waitForTimeout(100);
   });
 
   async function openRosterDialog(
@@ -121,7 +120,6 @@ test.describe("Racing Roster Dialog Visuals", () => {
     }).toPass();
     await page.mouse.move(0, 0);
 
-    await page.waitForTimeout(200);
     return rosterHarness;
   }
 
@@ -192,7 +190,9 @@ test.describe("Racing Roster Dialog Visuals", () => {
   }) => {
     await setupLargeRoster(page);
 
-    await openRosterDialog(page);
+    const rosterHarness = await openRosterDialog(page);
+    await rosterHarness.clickSortBySeed();
+    await page.mouse.move(0, 0);
 
     await expect(page).toHaveScreenshot(
       "racing-roster-dialog-all-drivers.png",
@@ -209,12 +209,29 @@ test.describe("Racing Roster Dialog Visuals", () => {
   }) => {
     await setupLargeRoster(page);
     const rosterHarness = await openRosterDialog(page);
-    await rosterHarness.clickSortByName();
+    await rosterHarness.clickSortByNickname();
     await page.mouse.move(0, 0);
-    await page.waitForTimeout(150);
 
     await expect(page).toHaveScreenshot(
       "racing-roster-dialog-all-drivers-alphabetical.png",
+      {
+        maxDiffPixelRatio: 0.05,
+        animations: "disabled",
+        timeout: 10000,
+      },
+    );
+  });
+
+  test("should display racing roster dialog with all drivers sorted by driver name", async ({
+    page,
+  }) => {
+    await setupLargeRoster(page);
+    const rosterHarness = await openRosterDialog(page);
+    await rosterHarness.clickSortByDriver();
+    await page.mouse.move(0, 0);
+
+    await expect(page).toHaveScreenshot(
+      "racing-roster-dialog-all-drivers-driver-name.png",
       {
         maxDiffPixelRatio: 0.05,
         animations: "disabled",

@@ -8,4 +8,9 @@ export interface DirtyComponent {
    * Set to true when navigation has been manually confirmed (e.g. by a shared modal).
    */
   isNavigationApproved: boolean;
+
+  /**
+   * Optional method returning translation keys for reasons why changes could not be saved.
+   */
+  getUnsavedReasons?(): string[];
 }

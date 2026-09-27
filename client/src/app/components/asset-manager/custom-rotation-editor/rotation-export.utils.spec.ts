@@ -6,6 +6,7 @@ import {
   buildSingleRotationExportJson,
   checkRotationLaneEqualityDirect,
   cloneCustomRotationState,
+  downloadJsonFile,
   driverHasGroupConflict,
   getDriverGroupConflicts,
   getRotationSignature,
@@ -130,5 +131,54 @@ describe("rotation-export.utils", () => {
     };
     expect(heatHasError(rotWithDupDriversInHeat, 0)).toBeTrue();
     expect(hasValidationErrors([rotWithDupDriversInHeat])).toBeTrue();
+  });
+
+  describe("downloadJsonFile", () => {
+    let originalShowSaveFilePicker: any;
+
+    beforeEach(() => {
+      originalShowSaveFilePicker = (window as any).showSaveFilePicker;
+    });
+
+    afterEach(() => {
+      (window as any).showSaveFilePicker = originalShowSaveFilePicker;
+    });
+
+    it("should call showSaveFilePicker with suggested name and write content", async () => {
+      const mockWritable = {
+        write: jasmine.createSpy("write").and.returnValue(Promise.resolve()),
+        close: jasmine.createSpy("close").and.returnValue(Promise.resolve()),
+      };
+      const mockHandle = {
+        createWritable: jasmine
+          .createSpy("createWritable")
+          .and.returnValue(Promise.resolve(mockWritable)),
+      };
+      (window as any).showSaveFilePicker = jasmine
+        .createSpy("showSaveFilePicker")
+        .and.returnValue(Promise.resolve(mockHandle));
+
+      const result = await downloadJsonFile("rot.json", '{"test":1}');
+      expect(result).toBeTrue();
+      expect((window as any).showSaveFilePicker).toHaveBeenCalledWith({
+        suggestedName: "rot.json",
+        types: [
+          {
+            description: "JSON Files",
+            accept: { "application/json": [".json"] },
+          },
+        ],
+      });
+      expect(mockWritable.write).toHaveBeenCalledWith('{"test":1}');
+      expect(mockWritable.close).toHaveBeenCalled();
+    });
+
+    it("should fallback to anchor download when showSaveFilePicker is unavailable", async () => {
+      delete (window as any).showSaveFilePicker;
+      const clickSpy = spyOn(HTMLAnchorElement.prototype, "click");
+      const result = await downloadJsonFile("rot.json", '{"test":1}');
+      expect(result).toBeTrue();
+      expect(clickSpy).toHaveBeenCalled();
+    });
   });
 });

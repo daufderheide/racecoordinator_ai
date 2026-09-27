@@ -11,6 +11,13 @@ test.describe("Season Editor Visuals", () => {
     await TestSetupHelper.disableAnimations(page);
   });
 
+  async function enterEditMode(page: any) {
+    await page.locator("#edit-track-btn").click();
+    await expect(page.locator("#season-name")).toBeEnabled();
+    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+    await TestSetupHelper.disableAnimations(page);
+  }
+
   test("should display season editor with no races run in season", async ({
     page,
   }) => {
@@ -25,10 +32,29 @@ test.describe("Season Editor Visuals", () => {
     await expect(page.locator(".editor-panel-left")).toBeVisible();
     await expect(page.locator(".editor-panel-right")).toBeVisible();
 
+    await enterEditMode(page);
+
     await TestSetupHelper.disableAnimations(page);
-    await page.waitForTimeout(200);
 
     await expect(page).toHaveScreenshot("season-editor-no-races.png", {
+      animations: "disabled",
+      maxDiffPixelRatio: 0.05,
+    });
+  });
+
+  test("should display season editor in read-only mode", async ({ page }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/season-editor?id=s_empty"),
+    );
+
+    await page.locator(".page-container").waitFor();
+    await page.locator(".loader-overlay").waitFor({ state: "hidden" });
+    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+    await TestSetupHelper.disableAnimations(page);
+
+    await expect(page).toHaveScreenshot("season-editor-read-only.png", {
       animations: "disabled",
       maxDiffPixelRatio: 0.05,
     });
@@ -48,8 +74,9 @@ test.describe("Season Editor Visuals", () => {
     await expect(page.locator(".editor-panel-left")).toBeVisible();
     await expect(page.locator(".editor-panel-right")).toBeVisible();
 
+    await enterEditMode(page);
+
     await TestSetupHelper.disableAnimations(page);
-    await page.waitForTimeout(200);
 
     await expect(page).toHaveScreenshot("season-editor-races-run.png", {
       animations: "disabled",
@@ -70,6 +97,8 @@ test.describe("Season Editor Visuals", () => {
     await page.locator(".page-container").waitFor();
     await expect(page.locator(".editor-panel-left")).toBeVisible();
 
+    await enterEditMode(page);
+
     await harness.clickAddRace();
 
     await expect(page.locator(".modal-overlay")).toBeVisible();
@@ -77,7 +106,6 @@ test.describe("Season Editor Visuals", () => {
     await expect(page.locator(".modal-race-item").first()).toBeVisible();
 
     await TestSetupHelper.disableAnimations(page);
-    await page.waitForTimeout(200);
 
     await expect(page).toHaveScreenshot(
       "season-editor-add-finished-race-modal.png",

@@ -192,8 +192,8 @@ public class TrackmateProtocol extends AbstractSerialProtocol {
         }
       } else if (data == 0x57) { // 'W' Call button
         logger.info("Trackmate hardware sent call button signal (0x57 / 'W')");
-        handleCallButton(0, 1, 0); // Reset to unpressed state
-        handleCallButton(0, 0, 0); // Fire a state 0 (pressed) transition
+        handleCallButton(-1, 1, 0); // Reset to unpressed state
+        handleCallButton(-1, 0, 0); // Fire a state 0 (pressed) transition
       } else if (data >= 0x30 && data <= 0x39) { // '0' through '9'
         handleTimeDigit(data);
       } else {

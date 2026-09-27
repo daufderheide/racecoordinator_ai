@@ -214,4 +214,37 @@ public class NotStartedTest {
   public void testNextHeat_Throws() {
     notStarted.nextHeat(race);
   }
+
+  @Test
+  public void testEnter_SyncsDriverFlags() {
+    com.antigravity.race.Heat currentHeat = mock(com.antigravity.race.Heat.class);
+    com.antigravity.race.DriverHeatData dhd =
+        new com.antigravity.race.DriverHeatData(
+            new com.antigravity.race.RaceParticipant(
+                new com.antigravity.models.Driver("d1", "Driver 1", "id1", "1"), "id1"));
+    when(currentHeat.getDrivers()).thenReturn(Collections.singletonList(dhd));
+    when(currentHeat.getActiveDriverCount()).thenReturn(1);
+    when(race.getCurrentHeat()).thenReturn(currentHeat);
+    when(race.isAutoStartFired()).thenReturn(true);
+
+    notStarted.enter(race);
+
+    assertEquals(RaceFlag.RED, dhd.getFlag());
+  }
+
+  @Test
+  public void testPause_SyncsDriverFlags() {
+    com.antigravity.race.Heat currentHeat = mock(com.antigravity.race.Heat.class);
+    com.antigravity.race.DriverHeatData dhd =
+        new com.antigravity.race.DriverHeatData(
+            new com.antigravity.race.RaceParticipant(
+                new com.antigravity.models.Driver("d1", "Driver 1", "id1", "1"), "id1"));
+    when(currentHeat.getDrivers()).thenReturn(Collections.singletonList(dhd));
+    when(race.getCurrentHeat()).thenReturn(currentHeat);
+    when(race.getAutoStartRemaining()).thenReturn(0.0);
+
+    notStarted.pause(race);
+
+    assertEquals(RaceFlag.RED, dhd.getFlag());
+  }
 }

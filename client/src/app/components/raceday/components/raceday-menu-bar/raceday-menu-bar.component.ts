@@ -10,15 +10,21 @@ import {
   output,
   ViewEncapsulation,
 } from "@angular/core";
+import { toSignal } from "@angular/core/rxjs-interop";
+import { of } from "rxjs";
 import { LanguageSelectorComponent } from "@app/components/shared/language-selector/language-selector.component";
 import { UpdateSelectorComponent } from "@app/components/shared/update-selector/update-selector.component";
+import { getThemeDisplayNameKey } from "@app/components/ui-editor/ui-editor-crud.helper";
+import { sortThemesForDisplay } from "@app/components/ui-editor/ui-editor-theme.helper";
 import { DataService } from "@app/data.service";
 import { Role } from "@app/models/role";
 import { Theme } from "@app/models/theme";
 import { Track } from "@app/models/track";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { AuthService } from "@app/services/auth.service";
+import { NavigationService } from "@app/services/navigation.service";
 import { ThemeService } from "@app/services/theme.service";
+import { TranslationService } from "@app/services/translation.service";
 
 @Component({
   standalone: true,
@@ -51,6 +57,20 @@ export class RacedayMenuBarComponent implements OnInit, OnDestroy {
   isSkipRaceDisabled = input<boolean>(false);
   isAddLapDisabled = input<boolean>(false);
   isModifyDisabled = input<boolean>(false);
+  isDisallowLapRecordsDisabled = input<boolean>(false);
+  isBackDisabled = input<boolean | undefined>(undefined);
+
+  private navigationService = inject(NavigationService, { optional: true });
+  public canGoBack = toSignal(this.navigationService?.canGoBack$ || of(false), {
+    initialValue: this.navigationService?.canGoBack?.() ?? false,
+  });
+  public isBackActionDisabled = computed(() => {
+    const override = this.isBackDisabled();
+    if (override !== undefined) {
+      return override;
+    }
+    return !this.canGoBack();
+  });
 
   startResumeShortcut = input<string>("");
   pauseShortcut = input<string>("");
@@ -136,9 +156,14 @@ export class RacedayMenuBarComponent implements OnInit, OnDestroy {
     public authService: AuthService,
     public dataService: DataService,
     private themeService?: ThemeService,
+    private translationService?: TranslationService,
   ) {
     if (!this.themeService) {
       this.themeService = inject(ThemeService, { optional: true }) ?? undefined;
+    }
+    if (!this.translationService) {
+      this.translationService =
+        inject(TranslationService, { optional: true }) ?? undefined;
     }
   }
 
@@ -148,6 +173,18 @@ export class RacedayMenuBarComponent implements OnInit, OnDestroy {
         this.allDrivers = drivers || [];
       }),
     );
+    if (this.translationService?.getTranslationsLoaded) {
+      this.subscriptions.push(
+        this.translationService.getTranslationsLoaded().subscribe((loaded) => {
+          if (loaded && this.themes.length > 0) {
+            this.themes = sortThemesForDisplay(
+              this.themes,
+              this.translationService,
+            );
+          }
+        }),
+      );
+    }
     this.loadThemes();
   }
 
@@ -155,12 +192,22 @@ export class RacedayMenuBarComponent implements OnInit, OnDestroy {
     this.subscriptions.forEach((s) => s.unsubscribe());
   }
 
+  getThemeDisplayNameKey(theme: Theme): string {
+    return getThemeDisplayNameKey(theme, this.translationService);
+  }
+
   async loadThemes() {
-    this.themes = this.themeService?.getThemes?.() || [];
+    this.themes = sortThemesForDisplay(
+      this.themeService?.getThemes?.() || [],
+      this.translationService,
+    );
     if (this.themes.length === 0 && this.themeService?.initialize) {
       try {
         await this.themeService.initialize();
-        this.themes = this.themeService?.getThemes?.() || [];
+        this.themes = sortThemesForDisplay(
+          this.themeService?.getThemes?.() || [],
+          this.translationService,
+        );
       } catch {
         // Fallback to dataService if initialize fails
       }
@@ -169,7 +216,7 @@ export class RacedayMenuBarComponent implements OnInit, OnDestroy {
       this.subscriptions.push(
         this.dataService.getThemes().subscribe((themes) => {
           if (themes && themes.length > 0) {
-            this.themes = themes;
+            this.themes = sortThemesForDisplay(themes, this.translationService);
           }
         }),
       );
@@ -230,6 +277,11 @@ export class RacedayMenuBarComponent implements OnInit, OnDestroy {
       this.isDriversViewOpen = false;
       if (this.themes.length === 0) {
         this.loadThemes();
+      } else {
+        this.themes = sortThemesForDisplay(
+          this.themes,
+          this.translationService,
+        );
       }
     }
   }
@@ -274,6 +326,7 @@ export class RacedayMenuBarComponent implements OnInit, OnDestroy {
   }
 
   onFileMenuSelect(action: string) {
+    if (action === "BACK" && this.isBackActionDisabled()) return;
     this.fileMenuSelect.emit(action);
     this.closeAll();
   }

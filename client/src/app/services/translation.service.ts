@@ -97,7 +97,7 @@ export class TranslationService {
     if (params) {
       Object.keys(params).forEach((paramKey) => {
         translation = translation.replace(
-          new RegExp(`{{${paramKey}}}`, "g"),
+          new RegExp(`{{\\s*${paramKey}\\s*}}`, "g"),
           params[paramKey],
         );
       });

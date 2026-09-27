@@ -14,6 +14,15 @@ test.describe("Audio Selector Visuals", () => {
     await TestSetupHelper.disableAnimations(page);
   });
 
+  async function enterEditMode(page: any) {
+    await page.locator(".page-container").waitFor();
+    await page.locator(".loader-overlay").waitFor({ state: "hidden" });
+    await page.locator("#edit-track-btn").click();
+    await expect(page.locator("#driver-name-input")).toBeEnabled();
+    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+    await TestSetupHelper.disableAnimations(page);
+  }
+
   test("should display audio selector", async ({ page }) => {
     // Navigate to Driver Editor which uses Audio Selector
     await TestSetupHelper.waitForLocalization(
@@ -22,6 +31,8 @@ test.describe("Audio Selector Visuals", () => {
       page.goto("/driver-editor?id=d1"),
     );
     await page.locator(".page-container").waitFor();
+
+    await enterEditMode(page);
 
     // Locate an audio selector (e.g. Lap Sound)
     // We might need to target a specific one if there are multiple, or just taking the first one
@@ -61,6 +72,8 @@ test.describe("Audio Selector Visuals", () => {
       page.goto("/driver-editor?id=d1"),
     );
     await page.locator(".page-container").waitFor();
+
+    await enterEditMode(page);
 
     // Open the audio selector for one of the sounds
     // Driver Editor has multiple audio selectors, use .first() to target one specifically

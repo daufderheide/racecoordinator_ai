@@ -11,6 +11,9 @@ export class EditorTitleHarness
   protected getTitleElement = this.locatorForOptional(
     EditorTitleHarnessBase.selectors.title,
   );
+  protected getItemNameElement = this.locatorForOptional(
+    EditorTitleHarnessBase.selectors.itemName,
+  );
   protected getUndoButtonElement = this.locatorForOptional(
     EditorTitleHarnessBase.selectors.undoButton,
   );
@@ -20,9 +23,23 @@ export class EditorTitleHarness
   protected getHelpButtonElement = this.locatorForOptional(
     EditorTitleHarnessBase.selectors.helpButton,
   );
+  protected getPrevButtonElement = this.locatorForOptional(
+    EditorTitleHarnessBase.selectors.prevButton,
+  );
+  protected getNextButtonElement = this.locatorForOptional(
+    EditorTitleHarnessBase.selectors.nextButton,
+  );
+  protected getItemCounterElement = this.locatorForOptional(
+    EditorTitleHarnessBase.selectors.itemCounter,
+  );
 
   async getTitle(): Promise<string | null> {
     const el = await this.getTitleElement();
+    return el ? await el.text() : null;
+  }
+
+  async getItemName(): Promise<string | null> {
+    const el = await this.getItemNameElement();
     return el ? await el.text() : null;
   }
 
@@ -51,5 +68,32 @@ export class EditorTitleHarness
     const btn = await this.getRedoButtonElement();
     if (!btn) return true;
     return (await btn.getAttribute("disabled")) !== null;
+  }
+
+  async clickPrevious(): Promise<void> {
+    const btn = await this.getPrevButtonElement();
+    if (btn) await btn.click();
+  }
+
+  async clickNext(): Promise<void> {
+    const btn = await this.getNextButtonElement();
+    if (btn) await btn.click();
+  }
+
+  async isPreviousDisabled(): Promise<boolean> {
+    const btn = await this.getPrevButtonElement();
+    if (!btn) return true;
+    return (await btn.getAttribute("disabled")) !== null;
+  }
+
+  async isNextDisabled(): Promise<boolean> {
+    const btn = await this.getNextButtonElement();
+    if (!btn) return true;
+    return (await btn.getAttribute("disabled")) !== null;
+  }
+
+  async getItemCounter(): Promise<string | null> {
+    const el = await this.getItemCounterElement();
+    return el ? await el.text() : null;
   }
 }

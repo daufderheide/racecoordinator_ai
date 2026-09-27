@@ -197,9 +197,7 @@ describe("BartEditorComponent", () => {
     expect(component.detectedBleDevices).toContain("BART_0001");
     expect(component.detectedBleDevices).toContain("BART_0002");
 
-    const deviceSelect: HTMLSelectElement = fixture.nativeElement.querySelector(
-      `select[id="deviceName-0"]`,
-    );
+    const deviceSelect = fixture.nativeElement.querySelector("#deviceName-0");
     expect(deviceSelect).toBeTruthy();
   }));
 
@@ -266,5 +264,30 @@ describe("BartEditorComponent", () => {
     component.sectionsExpanded.rw = false;
     steps[5].onEnter!();
     expect(component.sectionsExpanded.rw).toBeTrue();
+  });
+
+  describe("Read-Only Mode", () => {
+    beforeEach(() => {
+      fixture.componentRef.setInput("isEditMode", false);
+      fixture.detectChanges();
+    });
+
+    it("should not change deviceName in read-only mode", () => {
+      const orig = component.config().deviceName;
+      component.onDeviceSelect("NEW_DEVICE");
+      expect(component.config().deviceName).toBe(orig);
+    });
+
+    it("should not emit change on onConfigChange in read-only mode", () => {
+      spyOn(component.change, "emit");
+      component.onConfigChange();
+      expect(component.change.emit).not.toHaveBeenCalled();
+    });
+
+    it("should not emit remove on onRemove in read-only mode", () => {
+      spyOn(component.remove, "emit");
+      component.onRemove();
+      expect(component.remove.emit).not.toHaveBeenCalled();
+    });
   });
 });

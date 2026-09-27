@@ -73,6 +73,10 @@ public class NotStarted implements IRaceState {
     race.initializeHardwareState();
     this.executionManager = race.getHeatExecutionManager();
 
+    RaceFlag initialFlag = getFlagType(race);
+    race.broadcastFlag(initialFlag);
+    syncDriverFlags(race);
+
     if (autoStartTime > 0 && !race.isAutoStartFired()) {
       startAutoStartTimer(race);
     } else {
@@ -128,6 +132,7 @@ public class NotStarted implements IRaceState {
     race.clearAutoTimers();
     RaceFlag flag = getFlagType(race);
     race.broadcastFlag(flag);
+    syncDriverFlags(race);
     race.updatePowerForFlag(flag);
     race.setRaceState(RaceState.NOT_STARTED, flag, 0);
     race.resetRaceTime();
@@ -137,11 +142,11 @@ public class NotStarted implements IRaceState {
   @Override
   public void restartHeat(Race race) {
     logger.info("NotStarted.restartHeat() called. Resetting current heat.");
+    // Re-enter NotStarted state to restart the auto-start timer if configured
+    race.changeState(new NotStarted());
     race.resetCurrentHeat();
     race.setAutoStartFired(false);
     race.setAutoAdvanceFired(false);
-    // Re-enter NotStarted state to restart the auto-start timer if configured
-    race.changeState(new NotStarted());
   }
 
   @Override

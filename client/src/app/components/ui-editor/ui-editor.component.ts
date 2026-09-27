@@ -18,17 +18,28 @@ import { DefaultRacedayComponent } from "@app/components/raceday/default-raceday
 import { AcknowledgementModalComponent } from "@app/components/shared/acknowledgement-modal/acknowledgement-modal.component";
 import { AudioSelectorComponent } from "@app/components/shared/audio-selector/audio-selector.component";
 import { ConfirmationModalComponent } from "@app/components/shared/confirmation-modal/confirmation-modal.component";
+import {
+  CustomOptionComponent,
+  CustomSelectComponent,
+} from "@app/components/shared/custom-select/custom-select.component";
 import { EditorTitleComponent } from "@app/components/shared/editor-title/editor-title.component";
 import { ImageSelectorComponent } from "@app/components/shared/image-selector/image-selector.component";
 import { ToolbarComponent } from "@app/components/shared/toolbar/toolbar.component";
 import { UndoManager } from "@app/components/shared/undo-redo-controls/undo-manager";
 import { DataService } from "@app/data.service";
+import { AutoSelectDefaultDirective } from "@app/directives/auto-select-default.directive";
 import { DirtyComponent } from "@app/interfaces/dirty-component";
 import { CustomUI } from "@app/models/custom-ui";
 import { AudioConfig } from "@app/models/driver";
-import { LayoutConfig, Settings } from "@app/models/settings";
+import {
+  AbsoluteWidgetNode,
+  LayoutConfig,
+  LayoutScaleMode,
+  Settings,
+} from "@app/models/settings";
 import { Theme } from "@app/models/theme";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
+import { AudioService } from "@app/services/audio.service";
 import { ChildWindowManagerService } from "@app/services/child-window-manager.service";
 import { CustomUiService } from "@app/services/custom-ui.service";
 import { CustomWidgetService } from "@app/services/custom-widget.service";
@@ -40,67 +51,118 @@ import { SettingsService } from "@app/services/settings.service";
 import { ThemeService } from "@app/services/theme.service";
 import { TranslationService } from "@app/services/translation.service";
 import { mockTTSContext } from "@app/utils/audio";
-import { deepCopy } from "@app/utils/clone.utils";
+import { EditorLifecycleHelper } from "@app/utils/editor-lifecycle.helper";
 
+import { EnterPathModalComponent } from "./components/enter-path-modal/enter-path-modal";
+import { TemplateVariablesModalComponent } from "./components/template-variables-modal/template-variables-modal.component";
 import {
   ThemeTemplateModalComponent,
   ThemeTemplateType,
 } from "./components/theme-template-modal/theme-template-modal";
 import {
+  acknowledgeSuccessModal,
   applyLoadedUiEditorData,
   areSettingsEqual,
   areUIEditorStatesEqual,
+  AspectRatioOption,
   AVAILABLE_TRANSITIONS,
   BASE_AVAILABLE_COLUMNS,
-  buildAutoSaveContext,
   buildDisplayColumnSlots,
-  buildLayoutExport,
   buildUiEditorHelpContext,
-  calculatePreviewScaleNumber,
-  cloneSettings,
+  cancelDeleteCustomUiModal,
+  cancelDeleteThemeModal,
   cloneUIEditorState,
   DEFAULT_SECTIONS_EXPANDED,
+  DirectoryController,
   downloadJsonFile,
-  executeAutoSaveState,
-  executeClearFolder,
-  executeClearWidgetFolder,
-  executeImportLayout,
-  executeResetLayout,
-  executeSelectFolder,
-  executeSelectWidgetFolder,
+  ensureWidgetSelectedHelper,
+  executeCaptureState,
   executeTemplateFileSelected,
+  executeTestTtsVoice,
   extractAssetId,
   fetchUiEditorData,
-  findDefaultWidgetId,
+  focusUiEditorElement,
+  getCanvasViewportMaxHeightHelper,
+  getComponentPreviewContainerHeight,
+  getComponentPreviewContainerWidth,
+  getComponentPreviewScaleNumber,
   getCustomUiDisplayNameKey,
+  getDefaultAspectRatioOptions,
   getDefaultLayoutResetData,
+  getLayoutAspectRatio,
+  getLayoutAspectRatioOptions,
+  getLayoutScaleMode,
   getThemeAudioConfigForSlot,
   getThemeAudioUrl,
   getThemeDisplayNameKey,
   getUiEditorHelpSteps,
+  getUnsavedReasonsHelper,
+  handleAutoSaveState,
+  handleCalloutSpacingChange,
+  handleClearCurrentLayout,
+  handleClearCustomTemplate,
+  handleClearLayout,
   handleConfirmDeleteCustomUi,
   handleConfirmDeleteTheme,
+  handleConfirmDiscard,
   handleCreateCustomUi,
   handleCreateTheme,
   handleCustomUiSelection,
+  handleDetachTheme,
+  handleDownloadTemplate,
   handleDuplicateCustomUi,
   handleDuplicateTheme,
+  handleExportCurrentLayout,
+  handleExportLayout,
+  handleExportPracticeRacedayLayout,
+  handleExportRacedayLayout,
+  handleImportCurrentLayout,
+  handleImportLayout,
+  handleImportPracticeRacedayLayout,
+  handleImportRacedayLayout,
+  handleLayoutChanged,
+  handleMasterVolumeChange,
+  handleNudgeSelectedWidget,
+  handlePageTransitionChange,
+  handleRemoveSelectedWidget,
+  handleResetCurrentLayout,
+  handleResetLayout,
+  handleResetPracticeRacedayLayout,
+  handleResetRacedayLayout,
+  handleSetLayoutAspectRatio,
+  handleSetLayoutScaleMode,
+  handleTestExport,
   handleThemeAudioChange,
   handleThemeSlotChange,
+  handleTtsPitchChange,
+  handleTtsRateChange,
+  handleTtsVoiceChange,
+  handleTtsVolumeChange,
   handleUiEditorDataLoadError,
   handleUiEditorDestroy,
   handleUiEditorHelpStep,
   handleUiEditorKeyboardShortcut,
+  handleUrgentQueueTtlChange,
   handleWidgetColorChange,
+  handleWidgetHeightChange,
+  handleWidgetInspectorChange,
   handleWidgetSelection,
+  handleWidgetWidthChange,
+  handleWidgetXChange,
+  handleWidgetYChange,
+  initAvailableVoices,
   isCustomUiDefault,
   isCustomUiNameInvalid,
   isThemeDefault,
   isThemeNameDuplicate,
   isThemeNameInvalid,
+  LayoutZoomController,
   loadExpanderStateFromStorage,
   MAIN_AUDIO_SLOTS,
   MOCK_RACEDAY_PROPERTIES,
+  openDeleteCustomUiModal,
+  openDeleteThemeModal,
+  openSuccessModal,
   resolveActiveLayout,
   resolveTargetCustomUi,
   resolveThemeAsset,
@@ -108,13 +170,14 @@ import {
   resolveThemeFuelGauge,
   resolveThemeLamp,
   saveExpanderStateToStorage,
+  scrollToThemeElement,
+  sortAvailableColumnsList,
   sortCustomUisForDisplay,
   sortThemesForDisplay,
   syncEditorCoordinates,
   toggleThemeExpander,
   toggleUiExpander,
   UIEditorState,
-  updateLayoutOnModel,
 } from "./ui-editor-helpers";
 import { WidgetInspectorFieldsComponent } from "./widget-inspector-fields/widget-inspector-fields.component";
 
@@ -138,12 +201,18 @@ export { BASE_AVAILABLE_COLUMNS, UIEditorState } from "./ui-editor-constants";
     DefaultRacedayComponent,
     WidgetInspectorFieldsComponent,
     ThemeTemplateModalComponent,
+    TemplateVariablesModalComponent,
+    EnterPathModalComponent,
+    CustomSelectComponent,
+    CustomOptionComponent,
+    AutoSelectDefaultDirective,
   ],
   schemas: [NO_ERRORS_SCHEMA],
 })
 export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   private isDestroyed = false;
   private dataSubscription: Subscription | null = null;
+  private translationSubscription: Subscription | null = null;
   private helpSubscription: Subscription | null = null;
   isLoading = true;
   isSaving = false;
@@ -186,6 +255,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   }
 
   showThemeTemplateModal = false;
+  showTemplateVariablesModal = false;
   displayColumnSlots: any[] = [];
   get isCurrentLayoutPractice() {
     return this.activeCustomUiId === "practice_ui_layout_rc_ai";
@@ -205,6 +275,12 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     return this.editingState?.settings;
   }
   customDirectoryName: string | null = null;
+  customDirectoryPath: string | null = null;
+  customWidgetDirectoryPath: string | null = null;
+  showEnterPathModal = false;
+  enterPathType: "ui" | "widgets" | null = null;
+  manualPathInput = "";
+  enterPathError: string | null = null;
   isNavigationApproved = false;
   get hasLaneViewWidget() {
     return !!this.getLayout(this.activeCustomUi)?.widgets?.some(
@@ -223,9 +299,26 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   showDeleteUiConfirm = false;
   uiToDelete: CustomUI | null = null;
   deleteUiParams: any = {};
-  showDiscardConfirm = false;
-  private pendingDeactivate: ((result: boolean) => void) | null = null;
+  defaultThemeNames: { [id: string]: string } = {};
+  defaultUiNames: { [id: string]: string } = {};
+  lifecycle!: EditorLifecycleHelper;
 
+  get showDiscardConfirm(): boolean {
+    return this.lifecycle.showDiscardConfirm;
+  }
+  set showDiscardConfirm(val: boolean) {
+    this.lifecycle.showDiscardConfirm = val;
+  }
+
+  get pendingDeactivate(): ((result: boolean) => void) | null {
+    return this.lifecycle.pendingDeactivate;
+  }
+  set pendingDeactivate(val: ((result: boolean) => void) | null) {
+    this.lifecycle.pendingDeactivate = val;
+  }
+
+  layoutAspectRatioOptions: AspectRatioOption[] =
+    getDefaultAspectRatioOptions();
   availableColumns: { key: string; label: string }[] = [
     ...BASE_AVAILABLE_COLUMNS,
   ];
@@ -241,8 +334,10 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   soundAssets: any[] = [];
   previewTTSContext: any = mockTTSContext();
   customWidgetDirectoryName: string | null = null;
+  availableVoices: SpeechSynthesisVoice[] = [];
   private pendingNavigationUrl = "";
   private childWindowManagerService: ChildWindowManagerService;
+  private audioService?: AudioService;
 
   constructor(
     private settingsService: SettingsService,
@@ -260,6 +355,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     private ngZone: NgZone,
     childWindowManagerService?: ChildWindowManagerService,
     public customWidgetService?: CustomWidgetService,
+    audioService?: AudioService,
   ) {
     this.childWindowManagerService =
       childWindowManagerService ?? inject(ChildWindowManagerService);
@@ -267,6 +363,8 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       customWidgetService ??
       inject(CustomWidgetService, { optional: true }) ??
       undefined;
+    this.audioService =
+      audioService ?? inject(AudioService, { optional: true }) ?? undefined;
     this.router.events.subscribe((event) => {
       if (event instanceof NavigationStart)
         this.pendingNavigationUrl = event.url;
@@ -274,8 +372,8 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
 
     this.undoManager = new UndoManager<UIEditorState>(
       {
-        clonner: (s) => this.cloneState(s),
-        equalizer: (a, b) => this.areStatesEqual(a, b),
+        clonner: (s) => cloneUIEditorState(s),
+        equalizer: (a, b) => areUIEditorStatesEqual(a, b),
         applier: (s) => {
           syncEditorCoordinates(s.settings, this.editingState?.settings);
           this.editingState = s;
@@ -284,17 +382,30 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       },
       () => this.editingState,
     );
+
+    this.lifecycle = new EditorLifecycleHelper({
+      cdr: this.cdr,
+      translationService: this.translationService,
+      getUnsavedReasons: () => this.getUnsavedReasons(),
+    });
   }
 
   ngOnInit() {
+    this.loadAvailableVoices();
     this.sortAvailableColumns();
     this.updateScale();
     this.loadExpanderState();
     this.loadData();
+    if (
+      this.customWidgetService &&
+      this.customWidgetService.getCustomWidgets().length === 0
+    ) {
+      this.customWidgetService.reloadCustomWidgets().catch(() => {});
+    }
     this.raceConnectionService.connect();
 
     this.undoManager?.stateCommitted$.subscribe(() => this.autoSaveState());
-    this.dataSubscription = this.translationService
+    this.translationSubscription = this.translationService
       .getTranslationsLoaded()
       .subscribe((loaded) => {
         if (loaded) {
@@ -312,6 +423,9 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   }
 
   ngOnDestroy() {
+    if (typeof window !== "undefined" && window.speechSynthesis) {
+      window.speechSynthesis.onvoiceschanged = null;
+    }
     handleUiEditorDestroy(this);
   }
 
@@ -324,6 +438,13 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   @HostListener("window:resize")
   onResize() {
     this.updateScale();
+    const opt = this.layoutAspectRatioOptions.find(
+      (o) => o.ratio === "current",
+    );
+    if (opt) {
+      opt.width = window.innerWidth;
+      opt.height = window.innerHeight;
+    }
   }
 
   @HostListener("window:keydown", ["$event"])
@@ -332,6 +453,8 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       event,
       () => this.undo(),
       () => this.redo(),
+      () => this.removeSelectedWidget(),
+      (dx, dy) => this.nudgeSelectedWidget(dx, dy),
     );
   }
 
@@ -386,6 +509,40 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     handleWidgetSelection(this, id, ui);
   }
 
+  countdownPreviewActiveByUi: Record<string, boolean> = {};
+
+  isCountdownPreviewActive(ui?: CustomUI): boolean {
+    const id = ui?.entity_id || this.activeCustomUiId;
+    return id ? !!this.countdownPreviewActiveByUi[id] : false;
+  }
+
+  toggleCountdownPreview(ui?: CustomUI) {
+    const id = ui?.entity_id || this.activeCustomUiId;
+    if (id) {
+      this.countdownPreviewActiveByUi[id] = !this.isCountdownPreviewActive(ui);
+      this.cdr.markForCheck();
+    }
+  }
+
+  getLayoutWidgets(ui?: CustomUI): AbsoluteWidgetNode[] {
+    const layout = this.getLayout(ui);
+    return layout?.widgets || [];
+  }
+
+  getWidgetDisplayName(widget: AbsoluteWidgetNode): string {
+    const key = this.getWidgetTypeLabelKey(widget.widgetType);
+    const translated = this.translationService.translate(key);
+    return translated || widget.widgetType;
+  }
+
+  onWidgetDropdownSelect(widgetId: string, ui?: CustomUI) {
+    if (widgetId) {
+      this.onWidgetSelected(widgetId, ui);
+    } else {
+      this.onWidgetSelected(null, ui);
+    }
+  }
+
   onTextColorChange(event: Event) {
     handleWidgetColorChange(this, "textColor", event);
   }
@@ -394,9 +551,6 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     handleWidgetColorChange(this, "backgroundColor", event);
   }
 
-  getCurrentFlagUrl() {
-    return "";
-  }
   isCustomUiPractice(ui?: CustomUI) {
     if (!ui) return this.isCurrentLayoutPractice;
     return (
@@ -421,48 +575,35 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   }
 
   onLayoutChanged(newLayout: any, ui?: CustomUI) {
-    if (this.isSaving) return;
-    updateLayoutOnModel(
-      newLayout,
-      ui,
-      this.editingSettings,
-      this.isCurrentLayoutPractice,
-      this.parsedLayouts,
-    );
-    const widgets = newLayout?.widgets || [];
-    if (
-      widgets.length > 0 &&
-      (!this.selectedWidgetId ||
-        !widgets.some((w: any) => w.id === this.selectedWidgetId))
-    ) {
-      this.selectedWidgetId = findDefaultWidgetId(newLayout);
-    }
-    this.captureState();
-    this.cdr.markForCheck();
+    handleLayoutChanged(this, newLayout, ui);
   }
 
   onWidgetInspectorChange(widget?: any, ui?: CustomUI) {
-    if (this.isSaving) return;
-    const targetUi = ui || this.activeCustomUi;
-    const targetWidget = widget || this.currentSelectedWidget;
-    const layout = this.getLayout(targetUi);
-    if (layout && targetWidget && layout.widgets) {
-      const idx = layout.widgets.findIndex(
-        (w: any) => w.id === targetWidget.id,
-      );
-      if (idx !== -1) {
-        layout.widgets[idx] = targetWidget;
-      }
-      updateLayoutOnModel(
-        layout,
-        targetUi,
-        this.editingSettings,
-        this.isCurrentLayoutPractice,
-        this.parsedLayouts,
-      );
-    }
-    this.captureState();
-    this.cdr.markForCheck();
+    handleWidgetInspectorChange(this, widget, ui);
+  }
+
+  removeSelectedWidget(ui?: CustomUI) {
+    handleRemoveSelectedWidget(this, ui);
+  }
+
+  nudgeSelectedWidget(dx: number, dy: number, ui?: CustomUI) {
+    handleNudgeSelectedWidget(this, dx, dy, ui);
+  }
+
+  onWidgetXChange(value: any, widget: any, ui?: CustomUI) {
+    handleWidgetXChange(this, value, widget, ui);
+  }
+
+  onWidgetYChange(value: any, widget: any, ui?: CustomUI) {
+    handleWidgetYChange(this, value, widget, ui);
+  }
+
+  onWidgetWidthChange(value: any, widget: any, ui?: CustomUI) {
+    handleWidgetWidthChange(this, value, widget, ui);
+  }
+
+  onWidgetHeightChange(value: any, widget: any, ui?: CustomUI) {
+    handleWidgetHeightChange(this, value, widget, ui);
   }
 
   onRacedayLayoutChanged(newLayout: any) {
@@ -497,33 +638,15 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   }
 
   resetCurrentLayout() {
-    if (this.isCurrentLayoutPractice) {
-      this.resetPracticeRacedayLayout();
-    } else if (this.activeCustomUiId === "default_ui_layout_rc_ai") {
-      this.resetRacedayLayout();
-    } else if (this.activeCustomUi) {
-      this.resetLayout(this.activeCustomUi);
-    }
+    handleResetCurrentLayout(this);
   }
 
   exportCurrentLayout() {
-    if (this.isCurrentLayoutPractice) {
-      this.exportPracticeRacedayLayout();
-    } else if (this.activeCustomUiId === "default_ui_layout_rc_ai") {
-      this.exportRacedayLayout();
-    } else if (this.activeCustomUi) {
-      this.exportLayout(this.activeCustomUi);
-    }
+    handleExportCurrentLayout(this);
   }
 
   onImportCurrentLayout(event: Event) {
-    if (this.isCurrentLayoutPractice) {
-      this.onImportPracticeRacedayLayout(event);
-    } else if (this.activeCustomUiId === "default_ui_layout_rc_ai") {
-      this.onImportRacedayLayout(event);
-    } else if (this.activeCustomUi) {
-      this.onImportLayout(event, this.activeCustomUi);
-    }
+    handleImportCurrentLayout(this, event);
   }
 
   onColumnsChanged(_ui?: CustomUI) {
@@ -531,144 +654,60 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   }
 
   resetLayout(ui: CustomUI) {
-    executeResetLayout(ui, this.editingSettings);
-    if (this.editingState?.settings)
-      this.editingState.settings = deepCopy(this.editingSettings);
-    this.undoManager.captureState();
-    this.refreshDisplayProperties();
-    this.cdr.detectChanges();
+    handleResetLayout(this, ui);
   }
-
+  clearLayout(ui: CustomUI) {
+    handleClearLayout(this, ui);
+  }
+  clearCurrentLayout() {
+    handleClearCurrentLayout(this);
+  }
   resetRacedayLayout() {
-    const u = this.getTargetCustomUi("raceday");
-    if (u) this.resetLayout(u);
+    handleResetRacedayLayout(this);
   }
-
   resetPracticeRacedayLayout() {
-    this.selectedWidgetId = "widget-lane-view";
-    const u = this.getTargetCustomUi("practice");
-    if (u) this.resetLayout(u);
+    handleResetPracticeRacedayLayout(this);
   }
-
   exportLayout(ui: CustomUI) {
-    const { layoutExport, fileName } = buildLayoutExport(
-      ui,
-      this.editingSettings,
-    );
-    this.downloadJson(layoutExport, fileName);
+    handleExportLayout(this, ui);
   }
-
   downloadJson(data: any, filename: string) {
     downloadJsonFile(data, filename);
   }
-
   exportRacedayLayout() {
-    const u = this.getTargetCustomUi("raceday");
-    if (u) this.exportLayout(u);
+    handleExportRacedayLayout(this);
   }
-
   exportPracticeRacedayLayout() {
-    const u = this.getTargetCustomUi("practice");
-    if (u) this.exportLayout(u);
+    handleExportPracticeRacedayLayout(this);
   }
-
   onImportLayout(event: Event, ui: CustomUI) {
-    executeImportLayout(event, ui, this.editingSettings, this.logger, () => {
-      if (this.editingState?.settings)
-        this.editingState.settings = deepCopy(this.editingSettings);
-      this.undoManager.captureState();
-      this.refreshDisplayProperties();
-      this.cdr.detectChanges();
-    });
+    handleImportLayout(this, event, ui);
   }
-
   onImportRacedayLayout(event: Event) {
-    const u = this.getTargetCustomUi("raceday");
-    if (u) this.onImportLayout(event, u);
+    handleImportRacedayLayout(this, event);
   }
-
   onImportPracticeRacedayLayout(event: Event) {
-    const u = this.getTargetCustomUi("practice");
-    if (u) this.onImportLayout(event, u);
+    handleImportPracticeRacedayLayout(this, event);
   }
 
-  cloneSettings(s: Settings) {
-    return cloneSettings(s);
-  }
-  isColumnSelected(key: string) {
-    return this.editingSettings.racedayColumns.some(
-      (k) => k === key || k.split("_").includes(key),
-    );
-  }
-  cloneState(s: UIEditorState) {
-    return cloneUIEditorState(s);
-  }
-  areStatesEqual(a: UIEditorState, b: UIEditorState) {
-    return areUIEditorStatesEqual(a, b);
-  }
   areSettingsEqual(a: Settings, b: Settings) {
     return areSettingsEqual(a, b);
   }
 
-  async selectDirectory() {
-    const name = await executeSelectFolder(this.fileSystem);
-    if (name) {
-      this.customDirectoryName = name;
-      this.cdr.markForCheck();
-    }
-  }
+  directoryController = new DirectoryController(this);
 
-  async resetDefault() {
-    await executeClearFolder(this.fileSystem);
-    this.customDirectoryName = null;
-    this.cdr.markForCheck();
-  }
-
-  async selectWidgetDirectory() {
-    const name = await executeSelectWidgetFolder(this.fileSystem);
-    if (name) {
-      this.customWidgetDirectoryName = name;
-      if (this.customWidgetService) {
-        await this.customWidgetService.reloadCustomWidgets();
-      }
-      this.cdr.markForCheck();
-    }
-  }
-
-  async resetWidgetDefault() {
-    await executeClearWidgetFolder(this.fileSystem);
-    this.customWidgetDirectoryName = null;
-    if (this.customWidgetService) {
-      await this.customWidgetService.reloadCustomWidgets();
-    }
-    this.cdr.markForCheck();
-  }
-
-  async exportStarterWidgets() {
-    await this.updateSampleWidgets();
-  }
-
-  async updateSampleWidgets() {
-    if (this.customWidgetService) {
-      try {
-        const result = await this.customWidgetService.exportStarterWidgets();
-        if (result && result.success) {
-          this.openSuccessModal({
-            title: "UE_UPDATE_SAMPLE_WIDGETS_SUCCESS_TITLE",
-            message: "UE_UPDATE_SAMPLE_WIDGETS_SUCCESS_MSG",
-            params: {
-              count: result.count,
-              directory:
-                result.directory || this.customWidgetDirectoryName || "",
-            },
-          });
-        }
-        this.cdr.markForCheck();
-      } catch (e) {
-        this.logger.error("Failed to update sample widgets", e);
-      }
-    }
-  }
+  selectDirectory = () => this.directoryController.selectDirectory();
+  resetDefault = () => this.directoryController.resetDefault();
+  selectWidgetDirectory = () =>
+    this.directoryController.selectWidgetDirectory();
+  resetWidgetDefault = () => this.directoryController.resetWidgetDefault();
+  exportStarterWidgets = () => this.directoryController.exportStarterWidgets();
+  updateSampleWidgets = () => this.directoryController.updateSampleWidgets();
+  promptEnterPath = (type: "ui" | "widgets") =>
+    this.directoryController.promptEnterPath(type);
+  cancelEnterPathModal = () => this.directoryController.cancelEnterPathModal();
+  confirmEnterPath = (path?: string) =>
+    this.directoryController.confirmEnterPath(path);
 
   save() {
     this.isSaving = true;
@@ -681,41 +720,27 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   }
 
   private autoSaveState(): Promise<void> {
-    return executeAutoSaveState(buildAutoSaveContext(this));
+    return handleAutoSaveState(this);
+  }
+
+  getUnsavedReasons(): string[] {
+    return getUnsavedReasonsHelper(this);
+  }
+
+  get discardMessage(): string {
+    return this.lifecycle.discardMessage;
   }
 
   async confirmDiscard(): Promise<boolean> {
-    this.undoManager.commitState();
-    if (!this.hasChanges()) return true;
-    if (!this.isAnyThemeNameInvalid() && !this.isAnyCustomUiNameInvalid()) {
-      try {
-        await this.autoSaveState();
-        if (!this.hasChanges()) return true;
-      } catch (e) {
-        this.logger.error("Final auto-save failed before navigation", e);
-      }
-    }
-    this.showDiscardConfirm = true;
-    this.cdr.markForCheck();
-    return new Promise((resolve) => {
-      this.pendingDeactivate = resolve;
-    });
+    return handleConfirmDiscard(this);
   }
 
   onConfirmDiscard() {
-    this.showDiscardConfirm = false;
-    if (this.pendingDeactivate) {
-      this.pendingDeactivate(true);
-      this.pendingDeactivate = null;
-    }
+    this.lifecycle.onConfirmDiscard();
   }
 
   onCancelDiscard() {
-    this.showDiscardConfirm = false;
-    if (this.pendingDeactivate) {
-      this.pendingDeactivate(false);
-      this.pendingDeactivate = null;
-    }
+    this.lifecycle.onCancelDiscard();
   }
 
   onBack() {
@@ -735,11 +760,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     this.undoManager.redo();
   }
   captureState() {
-    this.editingState.settings = cloneSettings(this.editingState.settings);
-    if (this.displayCustomUIs?.length) {
-      this.editingState.customUIs = deepCopy(this.displayCustomUIs);
-    }
-    this.undoManager.captureState();
+    executeCaptureState(this);
   }
 
   toggleSection(section: keyof typeof this.sectionsExpanded) {
@@ -748,6 +769,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   }
 
   toggleThemeSection(themeId: string, activate = false) {
+    const isExpanding = !this.sectionsExpanded[`theme_${themeId}`];
     toggleThemeExpander(
       themeId,
       this.displayThemes,
@@ -756,6 +778,13 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       this.editingSettings.activeThemeId,
       (id) => this.onThemeSelected(id),
     );
+    if (isExpanding) {
+      this.scrollToTheme(themeId);
+    }
+  }
+
+  scrollToTheme(themeId: string) {
+    scrollToThemeElement(themeId, this.cdr);
   }
 
   saveExpanderState() {
@@ -791,11 +820,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   }
 
   private sortAvailableColumns() {
-    this.availableColumns.sort((a, b) => {
-      const labelA = this.translationService.translate(a.label) || a.label;
-      const labelB = this.translationService.translate(b.label) || b.label;
-      return labelA.localeCompare(labelB);
-    });
+    sortAvailableColumnsList(this.availableColumns, this.translationService);
   }
 
   async loadThemes() {
@@ -832,18 +857,59 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   }
 
   clearCustomTemplate() {
-    if (this.editingSettings) {
-      delete this.editingSettings.customExportTemplateBase64;
-      this.captureState();
-      this.cdr.markForCheck();
-    }
+    handleClearCustomTemplate(this);
+  }
+
+  openTemplateVariablesModal() {
+    this.showTemplateVariablesModal = true;
+  }
+
+  downloadTemplate() {
+    handleDownloadTemplate(this);
+  }
+
+  testExport() {
+    handleTestExport(this);
   }
 
   onPageTransitionChange(transition: string) {
-    if (this.editingSettings) {
-      this.editingSettings.pageTransition = transition;
-      this.captureState();
-    }
+    handlePageTransitionChange(this, transition);
+  }
+
+  onMasterVolumeChange(volume: number | string) {
+    handleMasterVolumeChange(this, volume);
+  }
+
+  onUrgentQueueTtlChange(ttl: number) {
+    handleUrgentQueueTtlChange(this, ttl);
+  }
+
+  onCalloutSpacingChange(spacing: number) {
+    handleCalloutSpacingChange(this, spacing);
+  }
+
+  loadAvailableVoices(): void {
+    initAvailableVoices(this);
+  }
+
+  onTtsVoiceChange(voice: string) {
+    handleTtsVoiceChange(this, voice);
+  }
+
+  onTtsRateChange(rate: number | string) {
+    handleTtsRateChange(this, rate);
+  }
+
+  onTtsPitchChange(pitch: number | string) {
+    handleTtsPitchChange(this, pitch);
+  }
+
+  onTtsVolumeChange(volume: number | string) {
+    handleTtsVolumeChange(this, volume);
+  }
+
+  testTtsVoice(): void {
+    executeTestTtsVoice(this);
   }
 
   async onThemeSlotChanged(theme: Theme, slot: string, asset: any) {
@@ -868,15 +934,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   }
 
   ensureWidgetSelected(ui?: CustomUI) {
-    const layout = this.getLayout(ui || this.activeCustomUi);
-    const widgets = layout?.widgets || [];
-    if (
-      widgets.length > 0 &&
-      (!this.selectedWidgetId ||
-        !widgets.some((w: any) => w.id === this.selectedWidgetId))
-    ) {
-      this.selectedWidgetId = findDefaultWidgetId(layout);
-    }
+    ensureWidgetSelectedHelper(this, ui);
   }
 
   onCustomUiSelected(uiId: string) {
@@ -884,7 +942,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   }
 
   getCustomUiDisplayNameKey(ui: CustomUI) {
-    return getCustomUiDisplayNameKey(ui);
+    return getCustomUiDisplayNameKey(ui, this.translationService);
   }
   isCustomUiDefault(ui: CustomUI) {
     return isCustomUiDefault(ui);
@@ -898,30 +956,21 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   async createNewCustomUi() {
     await handleCreateCustomUi(this);
   }
-
   async onDuplicateCustomUi(ui: CustomUI) {
     await handleDuplicateCustomUi(this, ui);
   }
-
   onDeleteCustomUi(ui: CustomUI) {
-    this.uiToDelete = ui;
-    this.deleteUiParams = { name: ui.name };
-    this.showDeleteUiConfirm = true;
-    this.cdr.markForCheck();
+    openDeleteCustomUiModal(this, ui);
   }
-
   cancelDeleteCustomUi() {
-    this.showDeleteUiConfirm = false;
-    this.uiToDelete = null;
-    this.cdr.markForCheck();
+    cancelDeleteCustomUiModal(this);
   }
-
   async confirmDeleteCustomUi() {
     await handleConfirmDeleteCustomUi(this);
   }
-
   onCustomUiNameChanged(_ui: CustomUI) {
     this.captureState();
+    this.refreshDisplayProperties();
     this.cdr.markForCheck();
   }
   isCustomUiNameInvalid(ui: CustomUI) {
@@ -931,97 +980,115 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     return this.displayCustomUIs.some((ui) => this.isCustomUiNameInvalid(ui));
   }
   getThemeDisplayNameKey(theme: Theme) {
-    return getThemeDisplayNameKey(theme);
+    return getThemeDisplayNameKey(theme, this.translationService);
   }
   isThemeDefault(theme: Theme) {
     return isThemeDefault(theme);
   }
 
+  focusUiNameInput(entityId: string): void {
+    focusUiEditorElement(`custom-ui-name-input-${entityId}`);
+  }
+
+  focusThemeNameInput(entityId: string): void {
+    focusUiEditorElement(`theme-name-input-${entityId}`);
+  }
+
   private openSuccessModal(
     params?: { title?: string; message?: string; params?: any },
     collapseThemeId: string | null = null,
+    focusThemeId: string | null = null,
   ) {
-    this.themeToCollapseAfterSuccess = collapseThemeId;
-    this.successModalTitle = params?.title || "";
-    this.successModalMessage = params?.message || "";
-    this.successModalParams = params?.params || {};
-    this.showSuccessModal = true;
+    openSuccessModal(this, params, collapseThemeId, focusThemeId);
   }
 
   async createNewTheme() {
     await handleCreateTheme(this);
   }
-
   async onConfirmThemeTemplate(_templateType: ThemeTemplateType) {
     this.showThemeTemplateModal = false;
     await this.createNewTheme();
   }
-
-  async onThemeNameChanged(_theme: Theme) {
+  onThemeNameChanged(_theme: Theme) {
     this.captureState();
+    this.refreshDisplayProperties();
+    this.cdr.markForCheck();
   }
-
   async onDuplicateTheme(theme: Theme) {
     await handleDuplicateTheme(this, theme);
   }
-
   onDeleteTheme(theme: Theme) {
-    this.themeToDelete = theme;
-    this.deleteThemeParams = { name: theme.name };
-    this.showDeleteConfirm = true;
-    this.cdr.markForCheck();
+    openDeleteThemeModal(this, theme);
   }
-
   async onConfirmDeleteTheme() {
     await handleConfirmDeleteTheme(this);
   }
-
   onCancelDeleteTheme() {
-    this.showDeleteConfirm = false;
-    this.themeToDelete = null;
-    this.deleteThemeParams = {};
+    cancelDeleteThemeModal(this);
   }
-
   onSuccessModalAcknowledge() {
-    this.showSuccessModal = false;
-    this.successModalTitle = "";
-    this.successModalMessage = "";
-    this.successModalParams = {};
-    this.themeToCollapseAfterSuccess = null;
-    this.editingState.themes.forEach((t) => {
-      this.sectionsExpanded[`theme_${t.entity_id}`] = false;
-    });
-    this.saveExpanderState();
+    acknowledgeSuccessModal(this);
   }
-
   onDetachTheme() {
-    this.themeService.detachToSettings(this.assets);
-    this.editingState.settings = cloneSettings(
-      this.settingsService.getSettings(),
-    );
-    this.captureState();
-    if (!this.isDestroyed) this.cdr.markForCheck();
+    handleDetachTheme(this);
   }
 
-  getPreviewScale(ui?: CustomUI) {
-    return `scale(${this.getPreviewScaleNumber(ui)})`;
+  getLayoutAspectRatio(ui?: CustomUI): string {
+    return getLayoutAspectRatio(this.getLayout(ui));
   }
-  getPreviewScaleNumber(ui?: CustomUI) {
-    return calculatePreviewScaleNumber(
-      this.getLayout(ui || this.activeCustomUi)?.baseWidth || 1920,
-      !!this.currentSelectedWidget,
-      window.innerWidth,
+  getLayoutAspectRatioOptions(ui?: CustomUI): AspectRatioOption[] {
+    return getLayoutAspectRatioOptions(
+      this.layoutAspectRatioOptions,
+      this.getLayout(ui),
     );
   }
-  getPreviewContainerWidth(ui?: CustomUI) {
-    return (
-      (this.getLayout(ui)?.baseWidth || 1920) * this.getPreviewScaleNumber(ui)
-    );
+  setLayoutAspectRatio(ratio: string, ui?: CustomUI): void {
+    handleSetLayoutAspectRatio(this, ratio, ui);
   }
-  getPreviewContainerHeight(ui?: CustomUI) {
-    return (
-      (this.getLayout(ui)?.baseHeight || 1080) * this.getPreviewScaleNumber(ui)
-    );
+  getLayoutScaleMode(ui?: CustomUI): LayoutScaleMode {
+    return getLayoutScaleMode(this.getLayout(ui));
+  }
+  setLayoutScaleMode(mode: LayoutScaleMode, ui?: CustomUI): void {
+    handleSetLayoutScaleMode(this, mode, ui);
+  }
+
+  zoomController = new LayoutZoomController(this);
+
+  get layoutZoomMap(): Map<string, number> {
+    return this.zoomController.layoutZoomMap;
+  }
+  getLayoutZoom(ui?: CustomUI): number {
+    return this.zoomController.getZoom(ui);
+  }
+  setLayoutZoom(zoom: number, ui?: CustomUI): void {
+    this.zoomController.setZoom(zoom, ui);
+  }
+  stepZoom(delta: number, ui?: CustomUI): void {
+    this.zoomController.step(delta, ui);
+  }
+  resetLayoutZoom(ui?: CustomUI): void {
+    this.zoomController.reset(ui);
+  }
+  onZoomInput(event: Event, ui?: CustomUI): void {
+    this.zoomController.onInput(event, ui);
+  }
+  getCanvasViewportMaxHeight(_ui?: CustomUI): number {
+    return getCanvasViewportMaxHeightHelper();
+  }
+  getInspectorHeight(ui?: CustomUI): number {
+    return this.zoomController.getInspectorHeight(ui);
+  }
+  getPreviewScale(ui?: CustomUI): string {
+    return this.zoomController.getPreviewScale(ui);
+  }
+  getPreviewScaleNumber(ui?: CustomUI): number {
+    return getComponentPreviewScaleNumber(this, ui);
+  }
+  getPreviewContainerWidth(ui?: CustomUI): number {
+    return getComponentPreviewContainerWidth(this, ui);
+  }
+  getPreviewContainerHeight(ui?: CustomUI): number {
+    return getComponentPreviewContainerHeight(this, ui);
   }
 
   getHelpSteps(): GuideStep[] {

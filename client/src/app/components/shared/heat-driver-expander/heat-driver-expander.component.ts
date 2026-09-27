@@ -166,80 +166,34 @@ export class HeatDriverExpanderComponent {
   }
 
   get validLaps(): number[] {
-    if (!this.heatData?.heatDriver?.lapsWithDetails) return [];
-    return this.heatData.heatDriver.lapsWithDetails
-      .map((l) => l.time)
-      .filter((t) => t > 0);
+    return this.heatData?.heatDriver?.validLaps ?? [];
   }
 
   get standardDeviation(): number | null {
-    const laps = this.validLaps;
-    if (laps.length <= 1) return null;
-    const mean = laps.reduce((a, b) => a + b, 0) / laps.length;
-    const variance =
-      laps.reduce((sum, t) => sum + Math.pow(t - mean, 2), 0) /
-      (laps.length - 1);
-    return Math.sqrt(variance);
+    return this.heatData?.heatDriver?.standardDeviation ?? null;
   }
 
   get consistencyScore(): number | null {
-    const laps = this.validLaps;
-    if (laps.length === 0) return null;
-    const mean = laps.reduce((a, b) => a + b, 0) / laps.length;
-    if (mean <= 0) return null;
-    const std = laps.length <= 1 ? 0 : (this.standardDeviation ?? 0);
-    const cons = Math.max(0, 1 - std / mean);
-    return cons * 100;
+    return this.heatData?.heatDriver?.consistencyScore ?? null;
   }
 
   get averageTop5(): number | null {
-    return this.calculateAverageTopN(5);
+    return this.heatData?.heatDriver?.averageTop5 ?? null;
   }
 
   get averageTop10(): number | null {
-    return this.calculateAverageTopN(10);
+    return this.heatData?.heatDriver?.averageTop10 ?? null;
   }
 
   get averageTop15(): number | null {
-    return this.calculateAverageTopN(15);
+    return this.heatData?.heatDriver?.averageTop15 ?? null;
   }
 
   get top2Consecutive(): number | null {
-    return this.calculateTopKConsecutive(2);
+    return this.heatData?.heatDriver?.top2Consecutive ?? null;
   }
 
   get top3Consecutive(): number | null {
-    return this.calculateTopKConsecutive(3);
-  }
-
-  private calculateAverageTopN(n: number): number | null {
-    const laps = this.validLaps;
-    if (laps.length === 0) return null;
-    const sorted = [...laps].sort((a, b) => a - b);
-    const topN = sorted.slice(0, n);
-    return topN.reduce((a, b) => a + b, 0) / topN.length;
-  }
-
-  private calculateTopKConsecutive(k: number): number | null {
-    const lapsWithDetails = this.heatData?.heatDriver?.lapsWithDetails;
-    if (!lapsWithDetails || lapsWithDetails.length < k) return null;
-    const times = lapsWithDetails.map((l) => l.time);
-    let minSum = Infinity;
-    for (let i = 0; i <= times.length - k; i++) {
-      let valid = true;
-      let sum = 0;
-      for (let j = 0; j < k; j++) {
-        const t = times[i + j];
-        if (!t || t <= 0) {
-          valid = false;
-          break;
-        }
-        sum += t;
-      }
-      if (valid && sum < minSum) {
-        minSum = sum;
-      }
-    }
-    return minSum === Infinity ? null : minSum;
+    return this.heatData?.heatDriver?.top3Consecutive ?? null;
   }
 }

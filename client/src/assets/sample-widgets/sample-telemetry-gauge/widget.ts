@@ -27,12 +27,12 @@ export class TelemetryGaugeComponent extends CustomWidgetBaseComponent {
 
   get bestLapTime(): number | null {
     const leader = this.driverStandings?.[0];
-    return leader?.best_lap_time || null;
+    return leader?.bestLapTime || null;
   }
 
   get lastLapTime(): number | null {
     const leader = this.driverStandings?.[0];
-    return leader?.last_lap_time || null;
+    return leader?.lastLapTime || null;
   }
 
   get simulatedSpeed(): number {

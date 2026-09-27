@@ -85,6 +85,7 @@ public class HeatConverterTest {
     dhd.setPenaltyLaps(-1.0);
     dhd.setAutoCalculatedLaps(0.5);
     dhd.setFinished(true);
+    dhd.setTrackCalls(3);
 
     Set<String> sentObjectIds = new HashSet<>();
 
@@ -107,5 +108,33 @@ public class HeatConverterTest {
     assertEquals(-1.0, proto.getPenaltyLaps(), 0.001);
     assertEquals(0.5, proto.getAutoCalculatedLaps(), 0.001);
     assertEquals(6.5, proto.getAdjustedLapCount(), 0.001); // 3 (laps) + 2 - (-1) + 0.5 = 6.5
+    assertEquals(3, proto.getTrackCalls());
+    assertEquals(84.324, proto.getConsistencyScore(), 0.01);
+    assertEquals(1.803, proto.getStandardDeviation(), 0.01);
+    assertEquals(11.5, proto.getAverageTop5(), 0.001);
+    assertEquals(21.0, proto.getTop2Consecutive(), 0.001);
+    assertEquals(34.5, proto.getTop3Consecutive(), 0.001);
+  }
+
+  @Test
+  public void testToProto_HeatPopulatesTrackCalls() {
+    HeatScoring scoring = new HeatScoring();
+    List<com.antigravity.race.DriverHeatData> heatDrivers = new ArrayList<>();
+    com.antigravity.models.Team team =
+        new com.antigravity.models.Team("Team", null, new ArrayList<>(), "t1", null);
+    com.antigravity.race.RaceParticipant participant =
+        new com.antigravity.race.RaceParticipant(team);
+    com.antigravity.race.DriverHeatData dhd = new com.antigravity.race.DriverHeatData(participant);
+    dhd.setTrackCalls(2);
+    heatDrivers.add(dhd);
+
+    com.antigravity.race.Heat heat = new com.antigravity.race.Heat(1, heatDrivers, scoring, false);
+    heat.setMasterTrackCalls(1);
+    heat.setTrackCalls(3);
+
+    Heat proto = HeatConverter.toProto(heat, new HashSet<>());
+    assertEquals(1, proto.getMasterTrackCalls());
+    assertEquals(3, proto.getTrackCalls());
+    assertEquals(2, proto.getHeatDrivers(0).getTrackCalls());
   }
 }

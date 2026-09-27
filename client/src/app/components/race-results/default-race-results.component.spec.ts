@@ -14,6 +14,8 @@ import { AuthService } from "@app/services/auth.service";
 import { PrintService } from "@app/services/print.service";
 import { RaceService } from "@app/services/race.service";
 import { RaceConnectionService } from "@app/services/race-connection.service";
+import { RaceFlagService } from "@app/services/race-flag.service";
+import { RaceTimeService } from "@app/services/race-time.service";
 import { TranslationService } from "@app/services/translation.service";
 
 import { DefaultRaceResultsComponent } from "./default-race-results.component";
@@ -27,13 +29,20 @@ describe("DefaultRaceResultsComponent", () => {
   let mockRaceService: any;
   let mockPrintService: any;
   let mockTranslationService: any;
+  let mockRaceFlagService: any;
+  let mockRaceTimeService: any;
+  let currentFlagUrlSubject: BehaviorSubject<string>;
+  let formattedTimeSubject: BehaviorSubject<string>;
   let participantsSubject: BehaviorSubject<RaceParticipant[]>;
   let heatsSubject: BehaviorSubject<Heat[]>;
   let selectedRaceSubject: BehaviorSubject<Race | undefined>;
   let standingsUpdateSubject: Subject<any>;
   let overallStandingsUpdateSubject: Subject<any>;
   let lapsSubject: Subject<any>;
+  let recordDataSubject: BehaviorSubject<any>;
   let mockRouter: any;
+  let mockDataService: any;
+  let mockAuthService: any;
 
   // Reusable test helpers
   const createDriver = (id: string, name: string, nickname: string): Driver => {
@@ -106,6 +115,7 @@ describe("DefaultRaceResultsComponent", () => {
     standingsUpdateSubject = new Subject<any>();
     overallStandingsUpdateSubject = new Subject<any>();
     lapsSubject = new Subject<any>();
+    recordDataSubject = new BehaviorSubject<any>(null);
     mockRouter = {
       navigate: jasmine.createSpy("navigate"),
     };
@@ -116,7 +126,9 @@ describe("DefaultRaceResultsComponent", () => {
       standingsUpdate$: standingsUpdateSubject.asObservable(),
       overallStandingsUpdate$: overallStandingsUpdateSubject.asObservable(),
       laps$: lapsSubject.asObservable(),
-      recordData$: new BehaviorSubject(null).asObservable(),
+      recordData$: recordDataSubject.asObservable(),
+      raceState$: new BehaviorSubject<any>(0),
+      raceTime$: new BehaviorSubject<any>({ time: 0 }),
     };
 
     mockRaceService = {
@@ -129,7 +141,11 @@ describe("DefaultRaceResultsComponent", () => {
         .and.returnValue(undefined),
     };
 
-    mockPrintService = jasmine.createSpyObj("PrintService", ["print"]);
+    mockPrintService = jasmine.createSpyObj("PrintService", [
+      "print",
+      "formatExportTimestamp",
+    ]);
+    mockPrintService.formatExportTimestamp.and.returnValue("_20260908");
 
     mockTranslationService = {
       translate: jasmine
@@ -140,10 +156,57 @@ describe("DefaultRaceResultsComponent", () => {
         .and.returnValue(new BehaviorSubject<string>("en")),
     };
 
+    currentFlagUrlSubject = new BehaviorSubject<string>("test-flag-url");
+    formattedTimeSubject = new BehaviorSubject<string>("01:23");
+
+    mockRaceFlagService = {
+      getFlagUrl: jasmine
+        .createSpy("getFlagUrl")
+        .and.returnValue("test-flag-url"),
+      getCurrentFlagUrl: jasmine
+        .createSpy("getCurrentFlagUrl")
+        .and.callFake(() => currentFlagUrlSubject.value),
+      currentFlagUrl$: currentFlagUrlSubject.asObservable(),
+    };
+
+    mockRaceTimeService = {
+      get formattedTime() {
+        return formattedTimeSubject.value;
+      },
+      formattedTime$: formattedTimeSubject.asObservable(),
+      autoStatusLabel: "",
+      isWarmup: false,
+      time: 83,
+    };
+
+    mockDataService = {
+      serverUrl: "http://localhost:8080",
+      getSystemState: () => of(null),
+      updateRaceSubscription: jasmine.createSpy("updateRaceSubscription"),
+      updateBatchUserLaps: jasmine
+        .createSpy("updateBatchUserLaps")
+        .and.returnValue(of({})),
+      updateHistoryLapSections: jasmine
+        .createSpy("updateHistoryLapSections")
+        .and.returnValue(of({})),
+      exportRaceToCsv: jasmine
+        .createSpy("exportRaceToCsv")
+        .and.returnValue(of("csv data")),
+      exportRaceHistoryToCsv: jasmine
+        .createSpy("exportRaceHistoryToCsv")
+        .and.returnValue(of("history csv data")),
+    };
+
+    mockAuthService = {
+      currentRole: Role.VIEWER,
+    };
+
     await TestBed.configureTestingModule({
       imports: [DefaultRaceResultsComponent],
       providers: [
         { provide: RaceConnectionService, useValue: mockRaceConnectionService },
+        { provide: RaceFlagService, useValue: mockRaceFlagService },
+        { provide: RaceTimeService, useValue: mockRaceTimeService },
         { provide: RaceService, useValue: mockRaceService },
         { provide: PrintService, useValue: mockPrintService },
         { provide: TranslationService, useValue: mockTranslationService },
@@ -163,15 +226,11 @@ describe("DefaultRaceResultsComponent", () => {
         },
         {
           provide: DataService,
-          useValue: {
-            serverUrl: "http://localhost:8080",
-            getSystemState: () => of(null),
-            updateRaceSubscription: () => {},
-          },
+          useValue: mockDataService,
         },
         {
           provide: AuthService,
-          useValue: { currentRole: Role.VIEWER },
+          useValue: mockAuthService,
         },
         { provide: Router, useValue: mockRouter },
       ],
@@ -1091,6 +1150,194 @@ describe("DefaultRaceResultsComponent", () => {
         // uniform scale = min(0.5, 1.0) = 0.5
         expect(component.scale).toBeCloseTo(0.5, 3);
         expect(component.currentScale).toBeCloseTo(0.5, 3);
+      });
+    });
+
+    describe("Race Flag and Race Time Integration", () => {
+      it("should initialize currentFlagUrl and formattedTime from services", () => {
+        expect(component.currentFlagUrl).toBe("test-flag-url");
+        expect(component.formattedTime).toBe("01:23");
+      });
+
+      it("should update currentFlagUrl when raceFlagService emits", () => {
+        currentFlagUrlSubject.next("updated-flag-url");
+        expect(component.currentFlagUrl).toBe("updated-flag-url");
+      });
+
+      it("should update formattedTime when raceTimeService emits", () => {
+        formattedTimeSubject.next("05:43.2");
+        expect(component.formattedTime).toBe("05:43.2");
+      });
+    });
+
+    describe("Track Records Dashboard", () => {
+      it("should not render records dashboard when recordData is null", () => {
+        fixture.detectChanges();
+        const recordsDashboard =
+          fixture.nativeElement.querySelector(".records-dashboard");
+        expect(recordsDashboard).toBeNull();
+      });
+
+      it("should render records dashboard at the bottom of results container when recordData is present", () => {
+        const mockRecords = {
+          overall: {
+            fastestLap: {
+              value: 4.123,
+              driverName: "Alice",
+              date: "2026-09-01T12:00:00Z",
+            },
+            highestScore: {
+              value: 50,
+              driverName: "Bob",
+              date: "2026-09-01T12:00:00Z",
+            },
+            laneFastestLap: [
+              { value: 4.2, driverName: "Alice" },
+              { value: 4.3, driverName: "Bob" },
+            ],
+          },
+        };
+
+        recordDataSubject.next(mockRecords);
+        fixture.detectChanges();
+
+        const resultsContainer =
+          fixture.nativeElement.querySelector(".results-container");
+        expect(resultsContainer).toBeTruthy();
+
+        const recordsDashboard =
+          resultsContainer.querySelector(".records-dashboard");
+        expect(recordsDashboard).toBeTruthy();
+
+        const tableWrapper = resultsContainer.querySelector(
+          ".results-table-wrapper",
+        );
+        expect(tableWrapper).toBeTruthy();
+
+        // Verify that records-dashboard is placed after results-table-wrapper at the bottom
+        const children = Array.from(resultsContainer.children);
+        const tableWrapperIndex = children.indexOf(tableWrapper);
+        const recordsDashboardIndex = children.indexOf(recordsDashboard);
+
+        expect(recordsDashboardIndex).toBeGreaterThan(tableWrapperIndex);
+        expect(resultsContainer.lastElementChild).toBe(recordsDashboard);
+      });
+    });
+  });
+
+  describe("Past Race Review, Lap Sections, and CSV Export", () => {
+    it("should detect whether reviewing a past race based on historyRecordId", () => {
+      expect(component.isReviewingPastRace).toBeFalse();
+
+      (component as any).race = { historyRecordId: "hist_123" };
+      expect(component.isReviewingPastRace).toBeTrue();
+    });
+
+    it("should navigate to root on exitReview and set skipIntro in sessionStorage", () => {
+      sessionStorage.removeItem("skipIntro");
+      component.exitReview();
+      expect(mockRouter.navigate).toHaveBeenCalledWith(["/"]);
+      expect(sessionStorage.getItem("skipIntro")).toBe("true");
+    });
+
+    it("should navigate to heat results on navigateToHeatResults", () => {
+      component.navigateToHeatResults();
+      expect(mockRouter.navigate).toHaveBeenCalledWith(["/heat-results"]);
+    });
+
+    it("should open and close add lap sections dialog", () => {
+      expect(component.showAddLapSectionsDialog).toBeFalse();
+      component.openAddLapSections();
+      expect(component.showAddLapSectionsDialog).toBeTrue();
+
+      component.onAddLapSectionsConfirm(null);
+      expect(component.showAddLapSectionsDialog).toBeFalse();
+    });
+
+    it("should call updateHistoryLapSections when confirming batch update on a past race", () => {
+      (component as any).race = { historyRecordId: "hist_123", is_demo: false };
+      component.showAddLapSectionsDialog = true;
+
+      const updates = [{ heatIndex: 0, laneIndex: 1, sections: 25 }];
+      component.onAddLapSectionsConfirm({ isBatch: true, updates });
+
+      expect(mockDataService.updateHistoryLapSections).toHaveBeenCalledWith(
+        "hist_123",
+        updates,
+        false,
+      );
+      expect(component.showAddLapSectionsDialog).toBeFalse();
+    });
+
+    it("should call updateBatchUserLaps when confirming batch update on a live race", () => {
+      (component as any).race = {};
+      component.showAddLapSectionsDialog = true;
+
+      const updates = [{ heatIndex: 0, laneIndex: 1, sections: 25 }];
+      component.onAddLapSectionsConfirm({ isBatch: true, updates });
+
+      expect(mockDataService.updateBatchUserLaps).toHaveBeenCalledWith(updates);
+      expect(component.showAddLapSectionsDialog).toBeFalse();
+    });
+
+    describe("exportCsv", () => {
+      let originalShowSaveFilePicker: any;
+      let mockWritable: any;
+      let mockHandle: any;
+
+      beforeEach(() => {
+        originalShowSaveFilePicker = (window as any).showSaveFilePicker;
+        mockWritable = {
+          write: jasmine.createSpy("write").and.returnValue(Promise.resolve()),
+          close: jasmine.createSpy("close").and.returnValue(Promise.resolve()),
+        };
+        mockHandle = {
+          createWritable: jasmine
+            .createSpy("createWritable")
+            .and.returnValue(Promise.resolve(mockWritable)),
+        };
+        (window as any).showSaveFilePicker = jasmine
+          .createSpy("showSaveFilePicker")
+          .and.returnValue(Promise.resolve(mockHandle));
+      });
+
+      afterEach(() => {
+        (window as any).showSaveFilePicker = originalShowSaveFilePicker;
+      });
+
+      it("should export CSV for past race using exportRaceHistoryToCsv", async () => {
+        (component as any).race = {
+          historyRecordId: "hist_123",
+          is_demo: true,
+        };
+        await component.exportCsv();
+        expect(mockDataService.exportRaceHistoryToCsv).toHaveBeenCalledWith(
+          "hist_123",
+          true,
+        );
+        expect((window as any).showSaveFilePicker).toHaveBeenCalled();
+        expect(mockWritable.write).toHaveBeenCalledWith("history csv data");
+        expect(mockWritable.close).toHaveBeenCalled();
+      });
+
+      it("should export CSV for live race using exportRaceToCsv", async () => {
+        (component as any).race = {};
+        await component.exportCsv();
+        expect(mockDataService.exportRaceToCsv).toHaveBeenCalled();
+        expect((window as any).showSaveFilePicker).toHaveBeenCalled();
+        expect(mockWritable.write).toHaveBeenCalled();
+        expect(mockWritable.close).toHaveBeenCalled();
+      });
+
+      it("should fallback to anchor download when showSaveFilePicker is not available", async () => {
+        delete (window as any).showSaveFilePicker;
+        const clickSpy = spyOn(HTMLAnchorElement.prototype, "click");
+
+        (component as any).race = {};
+        await component.exportCsv();
+
+        expect(mockDataService.exportRaceToCsv).toHaveBeenCalled();
+        expect(clickSpy).toHaveBeenCalled();
       });
     });
   });

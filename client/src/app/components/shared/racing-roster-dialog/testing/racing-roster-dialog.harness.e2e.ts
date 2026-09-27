@@ -21,6 +21,12 @@ export class RacingRosterDialogHarnessE2e implements RacingRosterDialogHarnessBa
   private get sortSeedBtn() {
     return this.locator.locator(this.base.selectors.sortSeedBtn);
   }
+  private get sortNicknameBtn() {
+    return this.locator.locator(this.base.selectors.sortNicknameBtn);
+  }
+  private get sortDriverBtn() {
+    return this.locator.locator(this.base.selectors.sortDriverBtn);
+  }
   private get sortNameBtn() {
     return this.locator.locator(this.base.selectors.sortNameBtn);
   }
@@ -82,12 +88,37 @@ export class RacingRosterDialogHarnessE2e implements RacingRosterDialogHarnessBa
     );
   }
 
+  async getItemPrimaryName(index: number): Promise<string> {
+    return this.getItemName(index);
+  }
+
+  async getItemSecondaryName(index: number): Promise<string> {
+    return this.getItemNickname(index);
+  }
+
+  async getItemTeam(index: number): Promise<string> {
+    const card = this.cards.nth(index);
+    const teamEl = card.locator(this.base.selectors.teamName);
+    if ((await teamEl.count()) > 0) {
+      return (await teamEl.textContent())?.trim() || "";
+    }
+    return "";
+  }
+
   async clickSortBySeed(): Promise<void> {
     await this.sortSeedBtn.click();
   }
 
   async clickSortByName(): Promise<void> {
     await this.sortNameBtn.click();
+  }
+
+  async clickSortByNickname(): Promise<void> {
+    await this.sortNicknameBtn.click();
+  }
+
+  async clickSortByDriver(): Promise<void> {
+    await this.sortDriverBtn.click();
   }
 
   async isSortBySeedActive(): Promise<boolean> {
@@ -97,6 +128,16 @@ export class RacingRosterDialogHarnessE2e implements RacingRosterDialogHarnessBa
 
   async isSortByNameActive(): Promise<boolean> {
     const classAttr = (await this.sortNameBtn.getAttribute("class")) || "";
+    return classAttr.includes("active");
+  }
+
+  async isSortByNicknameActive(): Promise<boolean> {
+    const classAttr = (await this.sortNicknameBtn.getAttribute("class")) || "";
+    return classAttr.includes("active");
+  }
+
+  async isSortByDriverActive(): Promise<boolean> {
+    const classAttr = (await this.sortDriverBtn.getAttribute("class")) || "";
     return classAttr.includes("active");
   }
 

@@ -115,8 +115,6 @@ test.describe("Raceday Visuals for Sorting", () => {
 
     await TestSetupHelper.mockRaceData(page, raceData);
 
-    await page.waitForTimeout(500);
-
     // Verify visually that Driver 2 is listed first
     // Screenshot will show the visual order
     await expect(page).toHaveScreenshot("raceday-sorted-by-standings.png", {

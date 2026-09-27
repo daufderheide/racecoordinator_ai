@@ -298,4 +298,31 @@ public class StandingsComparatorTest {
 
     Assert.assertEquals(0, comparator.compare(p1, p2));
   }
+
+  @Test
+  public void testFallbackTiebreakerFastestLap() {
+    // Both 10 laps, both avg 5.0, both seed 0, but p1 has faster best lap
+    MockParticipant p1 = new MockParticipant("p1", 10, 50.0, 4.0, 5.0, 5.0, false, 0);
+    MockParticipant p2 = new MockParticipant("p2", 10, 50.0, 4.5, 5.0, 5.0, false, 0);
+
+    StandingsComparator<StandingsParticipant> comparator =
+        new StandingsComparator<>(RankingMethod.LAP_COUNT, TiebreakerMethod.AVERAGE_LAP_TIME);
+
+    Assert.assertTrue("p1 with faster best lap should rank higher", comparator.compare(p1, p2) < 0);
+    Assert.assertTrue("p2 should rank lower", comparator.compare(p2, p1) > 0);
+  }
+
+  @Test
+  public void testFallbackTiebreakerTotalTime() {
+    // Both 10 laps, both avg 5.0, both best lap 4.0, both seed 0, but p1 has lower total time
+    MockParticipant p1 = new MockParticipant("p1", 10, 48.0, 4.0, 5.0, 5.0, false, 0);
+    MockParticipant p2 = new MockParticipant("p2", 10, 50.0, 4.0, 5.0, 5.0, false, 0);
+
+    StandingsComparator<StandingsParticipant> comparator =
+        new StandingsComparator<>(RankingMethod.LAP_COUNT, TiebreakerMethod.AVERAGE_LAP_TIME);
+
+    Assert.assertTrue(
+        "p1 with lower total time should rank higher", comparator.compare(p1, p2) < 0);
+    Assert.assertTrue("p2 should rank lower", comparator.compare(p2, p1) > 0);
+  }
 }

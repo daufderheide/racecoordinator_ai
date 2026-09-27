@@ -14,6 +14,7 @@
         <div class="spacer"></div>
         <button
           class="action-btn danger small"
+          [disabled]="!isEditMode()"
           (click)="removeInterface($event)"
         >
           X
@@ -39,36 +40,38 @@
                       <div class="board-controls">
                         <div class="control-group">
                           <label>{{ "AE_BOARD_TYPE" | translate }}</label>
-                          <select
+                          <app-custom-select
                             [id]="'arduino-board-type-' + index()"
+                            [disabled]="!isEditMode()"
                             [ngModel]="config()?.hardwareType?.toString()"
                             (ngModelChange)="onHardwareTypeChange(+$event)"
                           >
-                            <option value="0">
+                            <app-custom-option value="0">
                               {{ "AE_BOARD_UNO" | translate }}
-                            </option>
-                            <option value="1">
+                            </app-custom-option>
+                            <app-custom-option value="1">
                               {{ "AE_BOARD_MEGA" | translate }}
-                            </option>
-                          </select>
+                            </app-custom-option>
+                          </app-custom-select>
                         </div>
                         <div class="control-group">
                           <label>{{ "AE_COM_PORT" | translate }}</label>
                           <div class="com-port-row">
-                            <select
+                            <app-custom-select
                               [id]="'arduino-com-port-' + index()"
+                              [disabled]="!isEditMode()"
                               [(ngModel)]="config()!.commPort"
                               (change)="updateArduinoConfig()"
                             >
-                              <option value="" disabled>
+                              <app-custom-option value="" [disabled]="true">
                                 {{ "AE_SELECT_PORT" | translate }}
-                              </option>
+                              </app-custom-option>
                               @for (port of availablePorts; track port) {
-                                <option [value]="port">
+                                <app-custom-option [value]="port">
                                   {{ port }}
-                                </option>
+                                </app-custom-option>
                               }
-                            </select>
+                            </app-custom-select>
                             <button
                               type="button"
                               [id]="'arduino-status-badge-' + index()"
@@ -94,6 +97,7 @@
                           <input
                             [id]="'arduino-debounce-' + index()"
                             type="number"
+                            [disabled]="!isEditMode()"
                             [ngModel]="config()?.debounceUs"
                             (ngModelChange)="onDebounceChange($event)"
                             min="0"
@@ -105,24 +109,25 @@
                             "AE_LAP_PIN_PIT_BEHAVIOR" | translate
                           }}</label>
                           <div class="com-port-row">
-                            <select
+                            <app-custom-select
                               [id]="'arduino-pit-behavior-' + index()"
+                              [disabled]="!isEditMode()"
                               [(ngModel)]="config()!.lapPinPitBehavior"
                               (change)="updateArduinoConfig()"
                             >
-                              <option [value]="0">
+                              <app-custom-option [value]="0">
                                 {{ "AE_LAP_PIN_PIT_NONE" | translate }}
-                              </option>
-                              <option [value]="1">
+                              </app-custom-option>
+                              <app-custom-option [value]="1">
                                 {{ "AE_LAP_PIN_PIT_IN" | translate }}
-                              </option>
-                              <option [value]="2">
+                              </app-custom-option>
+                              <app-custom-option [value]="2">
                                 {{ "AE_LAP_PIN_PIT_OUT" | translate }}
-                              </option>
-                              <option [value]="3">
+                              </app-custom-option>
+                              <app-custom-option [value]="3">
                                 {{ "AE_LAP_PIN_PIT_IN_OUT" | translate }}
-                              </option>
-                            </select>
+                              </app-custom-option>
+                            </app-custom-select>
                             <div
                               class="status-badge"
                               style="visibility: hidden"
@@ -137,6 +142,7 @@
                             <input
                               [id]="'arduino-nc-sensors-' + index()"
                               type="checkbox"
+                              [disabled]="!isEditMode()"
                               [(ngModel)]="config()!.normallyClosedLaneSensors"
                               (change)="updateArduinoConfig()"
                             />
@@ -148,6 +154,7 @@
                             <input
                               [id]="'arduino-nc-relays-' + index()"
                               type="checkbox"
+                              [disabled]="!isEditMode()"
                               [(ngModel)]="config()!.normallyClosedRelays"
                               (change)="updateArduinoConfig()"
                             />
@@ -212,6 +219,7 @@
                               <div
                                 [id]="'arduino-digital-selector-' + pin"
                                 class="dropdown-trigger"
+                                [class.disabled]="!isEditMode()"
                                 [class.open]="
                                   isPinDropdownOpen('digital-' + pin)
                                 "
@@ -372,6 +380,7 @@
                               <div
                                 [id]="'arduino-analog-selector-' + pin"
                                 class="dropdown-trigger"
+                                [class.disabled]="!isEditMode()"
                                 [class.open]="
                                   isPinDropdownOpen('analog-' + pin)
                                 "
@@ -534,6 +543,7 @@
                           <button
                             [id]="'arduino-voltage-reset-' + index()"
                             class="link-toggle-btn"
+                            [disabled]="!isEditMode()"
                             (click)="resetMaxSeenAll()"
                             title="Reset all tracked max voltage values"
                           >
@@ -561,6 +571,7 @@
                                     lane
                                   "
                                   class="material-icons clickable-link-icon"
+                                  [class.disabled]="!isEditMode()"
                                   [class.linked]="isVoltageLinked"
                                   (click)="toggleVoltageLink()"
                                   [title]="
@@ -593,6 +604,7 @@
                                     lane
                                   "
                                   type="number"
+                                  [disabled]="!isEditMode()"
                                   [ngModel]="getVoltageMax(lane)"
                                   (ngModelChange)="setVoltageMax(lane, $event)"
                                   min="0"
@@ -633,7 +645,10 @@
                                 "
                                 class="set-max-btn"
                                 (click)="setMaxToSeen(lane)"
-                                [disabled]="(maxVoltagesSeen[lane] ?? 0) === 0"
+                                [disabled]="
+                                  !isEditMode() ||
+                                  (maxVoltagesSeen[lane] ?? 0) === 0
+                                "
                               >
                                 <span
                                   class="material-icons"
@@ -697,6 +712,7 @@
                               <span
                                 [id]="'arduino-led-link-' + index() + '-' + i"
                                 class="material-icons clickable-link-icon"
+                                [class.disabled]="!isEditMode()"
                                 [class.linked]="isLedStringsLinked"
                                 (click)="
                                   toggleLedStringsLink();
@@ -715,6 +731,7 @@
                               <div class="ls-actions">
                                 <button
                                   class="icon-button delete"
+                                  [disabled]="!isEditMode()"
                                   (click)="removeLedString(i, $event)"
                                   [title]="'GEN_DELETE' | translate"
                                 >
@@ -734,6 +751,7 @@
                                         'arduino-led-count-' + index() + '-' + i
                                       "
                                       type="number"
+                                      [disabled]="!isEditMode()"
                                       [ngModel]="ls.leds.length"
                                       min="0"
                                       max="255"
@@ -757,6 +775,7 @@
                                         i
                                       "
                                       type="number"
+                                      [disabled]="!isEditMode()"
                                       [ngModel]="ls.brightness"
                                       min="0"
                                       max="255"
@@ -780,6 +799,7 @@
                                         i
                                       "
                                       type="number"
+                                      [disabled]="!isEditMode()"
                                       [ngModel]="ls.flagFlashRate"
                                       min="0"
                                       step="0.1"
@@ -792,44 +812,48 @@
                                     <label>{{
                                       "AE_LED_TYPE" | translate
                                     }}</label>
-                                    <select
+                                    <app-custom-select
                                       [id]="
                                         'arduino-led-type-' + index() + '-' + i
                                       "
+                                      [disabled]="!isEditMode()"
                                       [ngModel]="ls.ledType.toString()"
                                       (ngModelChange)="
                                         onLedStringLedTypeChange(i, $event)
                                       "
                                     >
                                       @for (type of ledTypes; track type) {
-                                        <option [value]="type.value">
+                                        <app-custom-option [value]="type.value">
                                           {{ type.label }}
-                                        </option>
+                                        </app-custom-option>
                                       }
-                                    </select>
+                                    </app-custom-select>
                                   </div>
                                   <div class="control-group">
                                     <label>{{
                                       "AE_COLOR_ORDER" | translate
                                     }}</label>
-                                    <select
+                                    <app-custom-select
                                       [id]="
                                         'arduino-led-color-order-' +
                                         index() +
                                         '-' +
                                         i
                                       "
+                                      [disabled]="!isEditMode()"
                                       [ngModel]="ls.colorOrder.toString()"
                                       (ngModelChange)="
                                         onLedStringColorOrderChange(i, $event)
                                       "
                                     >
                                       @for (order of colorOrders; track order) {
-                                        <option [value]="order.value">
+                                        <app-custom-option
+                                          [value]="order.value"
+                                        >
                                           {{ order.label }}
-                                        </option>
+                                        </app-custom-option>
                                       }
-                                    </select>
+                                    </app-custom-select>
                                   </div>
                                 </div>
                                 <div
@@ -862,6 +886,7 @@
                                         </div>
                                         <input
                                           type="color"
+                                          [disabled]="!isEditMode()"
                                           [ngModel]="
                                             ls.ledLaneColorOverrides[laneIdx]
                                           "
@@ -906,6 +931,7 @@
                                             ledIdx
                                           "
                                           class="status-badge small"
+                                          [class.disabled]="!isEditMode()"
                                           [class.active]="
                                             isRgbLedActive(i, ledIdx)
                                           "
@@ -937,6 +963,7 @@
                                             ledIdx
                                           "
                                           class="dropdown-trigger"
+                                          [class.disabled]="!isEditMode()"
                                           [class.open]="
                                             isPinDropdownOpen(
                                               'led-' + i + '-' + ledIdx

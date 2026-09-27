@@ -7,6 +7,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -16,7 +17,10 @@ import com.antigravity.proto.RaceData;
 import com.antigravity.proto.RaceSubscriptionRequest;
 import com.antigravity.protocols.DefaultProtocol;
 import com.antigravity.protocols.ProtocolDelegate;
+import com.antigravity.race.states.HeatOver;
 import com.antigravity.race.states.IRaceState;
+import com.antigravity.race.states.Paused;
+import com.antigravity.race.states.RaceOver;
 import io.javalin.websocket.WsContext;
 import java.io.File;
 import java.lang.reflect.Field;
@@ -164,7 +168,8 @@ public class ClientSubscriptionManagerTest {
   public void testDeleteAutoSaveRemovesFile() throws Exception {
     DatabaseContext dc = new DatabaseContext("test_db", null, System.getProperty("java.io.tmpdir"));
     manager.setDatabaseContext(dc);
-    manager.deleteAutoSave("testRaceId");
+    manager.deleteAutoSave("testRaceId", false);
+    manager.deleteAutoSave("testRaceId", true);
     org.junit.Assert.assertNotNull(dc);
   }
 
@@ -677,5 +682,103 @@ public class ClientSubscriptionManagerTest {
         .sendBytesByFuture(org.mockito.ArgumentMatchers.any(ByteBuffer.class));
     verify(mockRemote, org.mockito.Mockito.never())
         .sendStringByFuture(org.mockito.ArgumentMatchers.anyString());
+  }
+
+  @Test
+  public void testAddInterfaceSessionDoesNotSendStatusWhenRaceOver() throws Exception {
+    Race mockRace = mock(Race.class);
+    RaceHardwareManager mockHwManager = mock(RaceHardwareManager.class);
+    ProtocolDelegate mockDelegate = mock(ProtocolDelegate.class);
+    DefaultProtocol mockProtocol = mock(DefaultProtocol.class);
+    RaceOver mockRaceOver = mock(RaceOver.class);
+
+    when(mockRace.getHardwareManager()).thenReturn(mockHwManager);
+    when(mockHwManager.getProtocols()).thenReturn(mockDelegate);
+    when(mockDelegate.getProtocols()).thenReturn(Collections.singletonList(mockProtocol));
+    when(mockRace.getState()).thenReturn(mockRaceOver);
+
+    manager.setRace(mockRace);
+
+    WsContext mockContext = mock(WsContext.class);
+    org.eclipse.jetty.websocket.api.Session mockSession =
+        mock(org.eclipse.jetty.websocket.api.Session.class);
+    Field sessionField = WsContext.class.getDeclaredField("session");
+    sessionField.setAccessible(true);
+    sessionField.set(mockContext, mockSession);
+
+    manager.addInterfaceSession(mockContext);
+
+    verify(mockContext, never()).send(org.mockito.ArgumentMatchers.any(ByteBuffer.class));
+    verify(mockContext, never()).send(org.mockito.ArgumentMatchers.any(byte[].class));
+  }
+
+  @Test
+  public void testBroadcastInterfaceEventSuppressedWhenRaceOver() {
+    org.eclipse.jetty.websocket.api.RemoteEndpoint mockRemote =
+        mock(org.eclipse.jetty.websocket.api.RemoteEndpoint.class);
+    WsContext context = createMockWsContext(mockRemote);
+
+    Race mockRace = mock(Race.class);
+    RaceOver mockRaceOver = mock(RaceOver.class);
+    when(mockRace.getState()).thenReturn(mockRaceOver);
+    manager.setRace(mockRace);
+
+    manager.addInterfaceSession(context);
+    org.mockito.Mockito.reset(mockRemote);
+
+    com.antigravity.proto.InterfaceEvent event =
+        com.antigravity.proto.InterfaceEvent.newBuilder().build();
+    manager.broadcastInterfaceEvent(event);
+
+    verify(mockRemote, never())
+        .sendBytesByFuture(org.mockito.ArgumentMatchers.any(ByteBuffer.class));
+  }
+
+  @Test
+  public void testRaceChangeStateToPausedAndHeatOverAutoSaves() throws Exception {
+    Race mockRace = mock(Race.class);
+    com.antigravity.models.Race realModel =
+        new com.antigravity.models.Race.Builder()
+            .withName("Race")
+            .withEntityId("testRaceId")
+            .build();
+    when(mockRace.getRaceModel()).thenReturn(realModel);
+    when(mockRace.getStatistics()).thenReturn(new RaceStatistics());
+    when(mockRace.getTrack())
+        .thenReturn(
+            new Track.Builder()
+                .name("Track")
+                .lanes(Collections.emptyList())
+                .entityId("track1")
+                .id(null)
+                .build());
+    when(mockRace.getHeats()).thenReturn(Collections.emptyList());
+
+    Paused paused = new Paused();
+    when(mockRace.getState()).thenReturn(paused);
+
+    DatabaseContext dc = new DatabaseContext("test_db", null, System.getProperty("java.io.tmpdir"));
+    manager.setDatabaseContext(dc);
+    manager.setShuttingDown(false);
+
+    manager.autoSave(mockRace);
+
+    RaceSaveData saved =
+        com.antigravity.service.DatabaseService.getInstance()
+            .getSavedRace(
+                dc, "autosave_testRaceId.json", com.antigravity.context.RaceScope.PRODUCTION);
+    org.junit.Assert.assertNotNull(saved);
+    org.junit.Assert.assertEquals(Paused.class.getName(), saved.getStateClassName());
+
+    HeatOver heatOver = new HeatOver();
+    when(mockRace.getState()).thenReturn(heatOver);
+    manager.autoSave(mockRace);
+
+    saved =
+        com.antigravity.service.DatabaseService.getInstance()
+            .getSavedRace(
+                dc, "autosave_testRaceId.json", com.antigravity.context.RaceScope.PRODUCTION);
+    org.junit.Assert.assertNotNull(saved);
+    org.junit.Assert.assertEquals(HeatOver.class.getName(), saved.getStateClassName());
   }
 }

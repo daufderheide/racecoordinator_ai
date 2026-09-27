@@ -8,16 +8,25 @@ import com.antigravity.models.GlobalStatistics;
 import com.antigravity.models.PredictionEvaluationRecord;
 import com.antigravity.models.RaceHistoryRecord;
 import com.antigravity.models.RacePredictionRecord;
+import com.antigravity.models.SeasonRaceRecord.SeasonDriverResult;
 import com.antigravity.race.ClientSubscriptionManager;
+import com.antigravity.race.DriverHeatData;
+import com.antigravity.race.Heat;
 import com.antigravity.race.HeatExecutionManager;
+import com.antigravity.race.Race;
 import com.antigravity.race.RaceParticipant;
 import com.antigravity.race.prediction.PredictionEngine;
+import com.antigravity.race.states.Paused;
+import com.antigravity.race.states.Racing;
 import com.antigravity.service.DatabaseService;
 import com.antigravity.service.RacePredictionService;
 import com.antigravity.util.CsvExporter;
 import com.antigravity.util.RequestContextUtils;
+import com.antigravity.util.SeasonPointsCalculator;
 import io.javalin.Javalin;
 import io.javalin.http.Context;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -36,6 +45,12 @@ public class HistoryPredictionTaskHandler {
     app.get("/api/history/races", this::getRaceHistoryList, Role.VIEWER);
     app.get("/api/history/races/{id}", this::getRaceHistoryById, Role.VIEWER);
     app.get("/api/history/races/{id}/export", this::exportRaceHistoryCsv, Role.VIEWER);
+    app.post("/api/history/races/{id}/load", this::loadRaceHistory, Role.DIRECTOR);
+    app.post("/api/history/races/{id}/lap-sections", this::updateHistoryLapSections, Role.DIRECTOR);
+    app.put(
+        "/api/history/races/{id}/heats/{heatNumber}/drivers/{lane}/laps/{lapIndex}/record-status",
+        this::updateHistoryLapRecordStatus,
+        Role.DIRECTOR);
     app.get("/api/history/stats", this::getGlobalStatistics, Role.VIEWER);
     app.get("/api/history/drivers/{driverId}/stats", this::getDriverStatistics, Role.VIEWER);
     app.get("/api/predictions/races/{id}", this::getRacePredictionRecord, Role.VIEWER);
@@ -47,9 +62,14 @@ public class HistoryPredictionTaskHandler {
       RaceScope scope = RequestContextUtils.getRaceScope(ctx);
       DatabaseService dbService = DatabaseService.getInstance();
       List<RaceHistoryRecord> history = dbService.getRaceHistory(databaseContext, scope);
-      if (scope == RaceScope.DEMO && history != null) {
+      if (history != null) {
         for (RaceHistoryRecord rec : history) {
-          rec.setDemo(true);
+          if (scope == RaceScope.DEMO) {
+            rec.setDemo(true);
+          }
+          if (rec.getTimestamp() != null) {
+            rec.setTimestamp(rec.getTimestamp());
+          }
         }
       }
       ctx.json(history);
@@ -65,6 +85,10 @@ public class HistoryPredictionTaskHandler {
       RaceScope scope = RequestContextUtils.getRaceScope(ctx);
       DatabaseService dbService = DatabaseService.getInstance();
       RaceHistoryRecord history = dbService.getRaceHistoryById(databaseContext, id, scope);
+      if (history == null) {
+        RaceScope altScope = (scope == RaceScope.DEMO) ? RaceScope.PRODUCTION : RaceScope.DEMO;
+        history = dbService.getRaceHistoryById(databaseContext, id, altScope);
+      }
       if (history == null) {
         ctx.status(404).result("Race history not found");
         return;
@@ -82,6 +106,10 @@ public class HistoryPredictionTaskHandler {
       RaceScope scope = RequestContextUtils.getRaceScope(ctx);
       DatabaseService dbService = DatabaseService.getInstance();
       RaceHistoryRecord history = dbService.getRaceHistoryById(databaseContext, id, scope);
+      if (history == null) {
+        RaceScope altScope = (scope == RaceScope.DEMO) ? RaceScope.PRODUCTION : RaceScope.DEMO;
+        history = dbService.getRaceHistoryById(databaseContext, id, altScope);
+      }
       if (history == null) {
         ctx.status(404).result("Race history not found");
         return;
@@ -111,6 +139,271 @@ public class HistoryPredictionTaskHandler {
       logger.error("Error exporting race history", e);
       ctx.status(500).result("Error exporting race history: " + e.getMessage());
     }
+  }
+
+  public void loadRaceHistory(Context ctx) {
+    try {
+      String id = ctx.pathParam("id");
+      RaceScope scope = RequestContextUtils.getRaceScope(ctx);
+      Race currentRace = ClientSubscriptionManager.getInstance().getRace();
+      if (currentRace != null
+          && (currentRace.getState() instanceof Racing
+              || currentRace.getState() instanceof Paused)) {
+        ctx.status(409)
+            .result(
+                "A live race is currently in progress. Please pause and save or finish it first.");
+        return;
+      }
+
+      DatabaseService dbService = DatabaseService.getInstance();
+      RaceHistoryRecord history = findHistoryRecord(id, scope, dbService);
+      if (history == null) {
+        ctx.status(404).result("Race history not found");
+        return;
+      }
+
+      Race race = dbService.buildRuntimeRaceFromHistory(databaseContext, history);
+      if (race == null) {
+        ctx.status(500).result("Failed to build race from history");
+        return;
+      }
+
+      ClientSubscriptionManager.getInstance().setRace(race);
+      if (!race.isFinished()) {
+        race.init();
+      }
+      ClientSubscriptionManager.getInstance().broadcast(race.createSnapshot());
+
+      ctx.status(200).result("Race history loaded successfully");
+    } catch (Exception e) {
+      logger.error("Error loading race history", e);
+      ctx.status(500).result("Error loading race history: " + e.getMessage());
+    }
+  }
+
+  @SuppressWarnings("unchecked")
+  public void updateHistoryLapSections(Context ctx) {
+    try {
+      String id = ctx.pathParam("id");
+      RaceScope scope = RequestContextUtils.getRaceScope(ctx);
+      List<Map<String, Object>> updates = ctx.bodyAsClass(List.class);
+      if (updates == null || updates.isEmpty()) {
+        ctx.status(400).result("Updates cannot be empty");
+        return;
+      }
+
+      DatabaseService dbService = DatabaseService.getInstance();
+      Race targetRace = resolveTargetRaceForEdit(id, scope, dbService);
+      if (targetRace == null) {
+        ctx.status(404).result("Race history not found");
+        return;
+      }
+
+      String applyError = applyLapSectionUpdates(targetRace, updates);
+      if (applyError != null) {
+        ctx.status(400).result(applyError);
+        return;
+      }
+
+      postProcessHistoricalSectionUpdates(targetRace, dbService);
+
+      Race currentRace = ClientSubscriptionManager.getInstance().getRace();
+      if (currentRace != null && id.equals(currentRace.getHistoryRecordId())) {
+        ClientSubscriptionManager.getInstance().broadcast(targetRace.createSnapshot());
+      }
+
+      ctx.status(200).result("History lap sections updated successfully");
+    } catch (Exception e) {
+      logger.error("Error updating history lap sections", e);
+      ctx.status(500).result("Error updating history lap sections: " + e.getMessage());
+    }
+  }
+
+  private RaceHistoryRecord findHistoryRecord(
+      String id, RaceScope scope, DatabaseService dbService) {
+    RaceHistoryRecord history = dbService.getRaceHistoryById(databaseContext, id, scope);
+    if (history == null) {
+      RaceScope altScope = (scope == RaceScope.DEMO) ? RaceScope.PRODUCTION : RaceScope.DEMO;
+      history = dbService.getRaceHistoryById(databaseContext, id, altScope);
+      if (history != null) {
+        history.setDemo(altScope.isDemo());
+      }
+    }
+    return history;
+  }
+
+  private Race resolveTargetRaceForEdit(String id, RaceScope scope, DatabaseService dbService) {
+    Race currentRace = ClientSubscriptionManager.getInstance().getRace();
+    if (currentRace != null && id.equals(currentRace.getHistoryRecordId())) {
+      return currentRace;
+    }
+    RaceHistoryRecord history = findHistoryRecord(id, scope, dbService);
+    if (history == null) {
+      return null;
+    }
+    Race reconstructed = dbService.buildRuntimeRaceFromHistory(databaseContext, history);
+    if (reconstructed != null) {
+      reconstructed.init();
+    }
+    return reconstructed;
+  }
+
+  private String applyLapSectionUpdates(Race race, List<Map<String, Object>> updates) {
+    Set<Heat> heatsToRecalc = new HashSet<>();
+    for (Map<String, Object> u : updates) {
+      int heatNumber = ((Number) u.get("heatNumber")).intValue();
+      int lane =
+          u.containsKey("laneIndex")
+              ? ((Number) u.get("laneIndex")).intValue()
+              : ((Number) u.get("lane")).intValue();
+      double userLaps = ((Number) u.get("userLaps")).doubleValue();
+
+      Heat targetHeat = null;
+      for (Heat h : race.getHeats()) {
+        if (h.getHeatNumber() == heatNumber) {
+          targetHeat = h;
+          break;
+        }
+      }
+      if (targetHeat == null) {
+        return "Heat not found: " + heatNumber;
+      }
+      if (lane < 0 || lane >= targetHeat.getDrivers().size()) {
+        return "Invalid lane index: " + lane;
+      }
+      targetHeat.getDrivers().get(lane).setUserLaps(userLaps);
+      heatsToRecalc.add(targetHeat);
+    }
+
+    for (Heat h : heatsToRecalc) {
+      h.initializeStandings(race.getRaceModel().getHeatScoring(), race.getRaceModel().isPractice());
+    }
+    race.updateAndBroadcastOverallStandings();
+    race.updateScoreRecords();
+    return null;
+  }
+
+  private void postProcessHistoricalSectionUpdates(Race race, DatabaseService dbService) {
+    dbService.saveRaceHistory(databaseContext, race);
+    String seasonEntityId = race.getSeasonEntityId();
+    String raceName = race.getRaceModel() != null ? race.getRaceModel().getName() : "Race";
+    long raceStart = race.getStatistics() != null ? race.getStatistics().getStartMillis() : 0L;
+    if (seasonEntityId == null || seasonEntityId.isEmpty()) {
+      seasonEntityId =
+          dbService.findSeasonIdForHistoryRecord(
+              databaseContext, race.getHistoryRecordId(), raceStart, raceName, race.isDemoMode());
+      if (seasonEntityId != null) {
+        race.setSeasonEntityId(seasonEntityId);
+      }
+    }
+
+    if (seasonEntityId != null && !seasonEntityId.isEmpty()) {
+      List<SeasonDriverResult> newSeasonResults =
+          SeasonPointsCalculator.calculateDriverResultsForRace(race);
+      dbService.updateSeasonRaceResults(
+          databaseContext,
+          seasonEntityId,
+          race.getHistoryRecordId(),
+          raceStart,
+          raceName,
+          race.isDemoMode(),
+          newSeasonResults);
+    }
+
+    String raceEntityId = race.getRaceModel() != null ? race.getRaceModel().getEntityId() : null;
+    if (raceEntityId != null && !raceEntityId.isEmpty()) {
+      dbService.recalculateStatisticsAfterHistoryEdit(
+          databaseContext, raceEntityId, race.isDemoMode());
+    }
+    dbService.updateDriverTrackStats(databaseContext, race, race.isDemoMode());
+    dbService.saveRaceRecords(databaseContext, race);
+  }
+
+  @SuppressWarnings("unchecked")
+  public void updateHistoryLapRecordStatus(Context ctx) {
+    try {
+      String id = ctx.pathParam("id");
+      int heatNumber = Integer.parseInt(ctx.pathParam("heatNumber"));
+      int lane = Integer.parseInt(ctx.pathParam("lane"));
+      int lapIndex = Integer.parseInt(ctx.pathParam("lapIndex"));
+      Map<String, Object> body = ctx.bodyAsClass(HashMap.class);
+      boolean countTowardsRecords =
+          body.containsKey("countTowardsRecords")
+              ? (Boolean) body.get("countTowardsRecords")
+              : true;
+
+      RaceScope scope = RequestContextUtils.getRaceScope(ctx);
+      DatabaseService dbService = DatabaseService.getInstance();
+      RaceHistoryRecord history = dbService.getRaceHistoryById(databaseContext, id, scope);
+      if (history == null) {
+        RaceScope altScope = (scope == RaceScope.DEMO) ? RaceScope.PRODUCTION : RaceScope.DEMO;
+        history = dbService.getRaceHistoryById(databaseContext, id, altScope);
+        if (history != null) {
+          scope = altScope;
+          history.setDemo(altScope.isDemo());
+        }
+      }
+      if (history == null) {
+        ctx.status(404).result("Race history not found");
+        return;
+      }
+
+      DriverHeatData dhd = findHistoryDriverHeatData(history, heatNumber, lane);
+      if (dhd == null) {
+        ctx.status(400).result("Heat or lane not found");
+        return;
+      }
+      if (lapIndex < 0 || lapIndex >= dhd.getLaps().size()) {
+        ctx.status(400).result("Invalid lap index: " + lapIndex);
+        return;
+      }
+
+      DriverHeatData.LapData targetLap = dhd.getLaps().get(lapIndex);
+      targetLap.setCountTowardsRecords(countTowardsRecords);
+      dhd.recalculateBestLapTime();
+
+      dbService.saveRawRaceHistoryRecord(databaseContext, history);
+
+      String raceEntityId = history.getOriginalEntityId();
+      if (raceEntityId == null && history.getModel() != null) {
+        raceEntityId = history.getModel().getEntityId();
+      }
+      if (raceEntityId != null && !raceEntityId.isEmpty()) {
+        dbService.recalculateStatisticsAfterHistoryEdit(
+            databaseContext, raceEntityId, scope.isDemo());
+      }
+
+      ctx.status(200).json(Collections.singletonMap("bestLapTime", dhd.getBestLapTime()));
+    } catch (Exception e) {
+      logger.error("Error updating history lap record status", e);
+      ctx.status(500).result("Error updating history lap record status: " + e.getMessage());
+    }
+  }
+
+  private DriverHeatData findHistoryDriverHeatData(
+      RaceHistoryRecord history, int heatNumber, int lane) {
+    if (history.getHeats() == null) return null;
+    for (Heat h : history.getHeats()) {
+      if (h.getHeatNumber() == heatNumber) {
+        if (h.getDrivers() == null) return null;
+        if (lane >= 0 && lane < h.getDrivers().size()) {
+          DriverHeatData direct = h.getDrivers().get(lane);
+          if (direct != null && (direct.getLane() == lane || direct.getLane() == 0)) {
+            return direct;
+          }
+        }
+        for (DriverHeatData d : h.getDrivers()) {
+          if (d.getLane() == lane) {
+            return d;
+          }
+        }
+        if (lane >= 0 && lane < h.getDrivers().size()) {
+          return h.getDrivers().get(lane);
+        }
+        return null;
+      }
+    }
+    return null;
   }
 
   public void getGlobalStatistics(Context ctx) {

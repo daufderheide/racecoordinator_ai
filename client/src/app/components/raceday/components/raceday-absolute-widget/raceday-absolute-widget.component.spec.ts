@@ -4,6 +4,13 @@ import { AbsoluteWidgetNode } from "@app/models/settings";
 import { TranslationService } from "@app/services/translation.service";
 import { mockTranslationService } from "@app/testing/unit-test-mocks";
 
+import deJson from "../../../../../assets/i18n/de.json";
+import enJson from "../../../../../assets/i18n/en.json";
+import esJson from "../../../../../assets/i18n/es.json";
+import frJson from "../../../../../assets/i18n/fr.json";
+import itJson from "../../../../../assets/i18n/it.json";
+import nlJson from "../../../../../assets/i18n/nl.json";
+import ptJson from "../../../../../assets/i18n/pt.json";
 import { RacedayAbsoluteWidgetComponent } from "./raceday-absolute-widget.component";
 import { RacedayAbsoluteWidgetHarness } from "./testing/raceday-absolute-widget.harness";
 
@@ -181,6 +188,73 @@ describe("RacedayAbsoluteWidgetComponent", () => {
     expect(mockParent.layoutChanged.emit).toHaveBeenCalled();
   });
 
+  it("should clamp widget dragging so it cannot be dragged off the top or left of canvas (y >= 0, x >= 0)", () => {
+    const target = document.createElement("div");
+    const fakeStartEvent = new PointerEvent("pointerdown", {
+      clientX: 200,
+      clientY: 200,
+    });
+    Object.defineProperty(fakeStartEvent, "target", { value: target });
+
+    component.onDragStart(fakeStartEvent);
+
+    // Drag way off the top-left (-500, -500)
+    const fakeMoveEvent = new PointerEvent("pointermove", {
+      clientX: -500,
+      clientY: -500,
+    });
+    document.dispatchEvent(fakeMoveEvent);
+
+    expect(component.widget().x).toBe(0);
+    expect(component.widget().y).toBe(0);
+
+    document.dispatchEvent(new PointerEvent("pointerup"));
+  });
+
+  it("should clamp widget dragging so it cannot exceed maximum canvas dimensions", () => {
+    const target = document.createElement("div");
+    const fakeStartEvent = new PointerEvent("pointerdown", {
+      clientX: 50,
+      clientY: 50,
+    });
+    Object.defineProperty(fakeStartEvent, "target", { value: target });
+
+    component.onDragStart(fakeStartEvent);
+
+    // Drag far beyond canvas boundaries
+    const fakeMoveEvent = new PointerEvent("pointermove", {
+      clientX: 5000,
+      clientY: 5000,
+    });
+    document.dispatchEvent(fakeMoveEvent);
+
+    expect(component.widget().x).toBe(1920 - component.widget().width);
+    expect(component.widget().y).toBe(1080 - component.widget().height);
+
+    document.dispatchEvent(new PointerEvent("pointerup"));
+  });
+
+  it("should clamp North handle resizing so y does not become negative", () => {
+    const fakeStartEvent = new PointerEvent("pointerdown", {
+      clientX: 100,
+      clientY: 100,
+    });
+
+    component.onResizeStart(fakeStartEvent, "n");
+
+    // Move pointer way upwards (-500)
+    const fakeMoveEvent = new PointerEvent("pointermove", {
+      clientX: 100,
+      clientY: -500,
+    });
+    document.dispatchEvent(fakeMoveEvent);
+
+    expect(component.widget().y).toBeGreaterThanOrEqual(0);
+    expect(component.widget().height).toBeGreaterThanOrEqual(50);
+
+    document.dispatchEvent(new PointerEvent("pointerup"));
+  });
+
   it("should not start dragging if clicking resize handle or button", () => {
     const resizeHandle = document.createElement("div");
     resizeHandle.className = "resize-handle";
@@ -336,5 +410,230 @@ describe("RacedayAbsoluteWidgetComponent", () => {
     fixture.componentRef.setInput("isCustomizing", false);
     fixture.detectChanges();
     expect(wrapper.style.zIndex).toBe("120");
+  });
+
+  it("should always apply top zIndex (>= 10000) for countdown widget in both customizing and live modes", () => {
+    mockWidget.widgetType = "countdown";
+    mockWidget.zIndex = 105;
+    fixture.componentRef.setInput("widget", { ...mockWidget });
+    fixture.componentRef.setInput("isCustomizing", true);
+    fixture.detectChanges();
+
+    const wrapper = fixture.nativeElement.querySelector(".widget-wrapper");
+    expect(parseInt(wrapper.style.zIndex, 10)).toBeGreaterThanOrEqual(10000);
+
+    fixture.componentRef.setInput("isCustomizing", false);
+    fixture.detectChanges();
+    expect(parseInt(wrapper.style.zIndex, 10)).toBeGreaterThanOrEqual(10000);
+  });
+
+  it("should render next-heat widget with custom settings in fixed scale mode", () => {
+    mockWidget.widgetType = "next-heat";
+    mockWidget.scaleMode = "fixed";
+    mockWidget.customSettings = {
+      titleFontSize: 24,
+      laneFontSize: 12,
+    };
+    fixture.componentRef.setInput("widget", { ...mockWidget });
+    fixture.detectChanges();
+
+    const wrapper = fixture.nativeElement.querySelector(".widget-wrapper");
+    expect(wrapper.classList.contains("scale-fixed")).toBeTrue();
+    const nextHeat = fixture.nativeElement.querySelector(
+      "app-raceday-next-heat",
+    );
+    expect(nextHeat).toBeTruthy();
+  });
+
+  it("should render on-deck widget with custom settings in fixed scale mode", () => {
+    mockWidget.widgetType = "on-deck";
+    mockWidget.scaleMode = "fixed";
+    mockWidget.customSettings = {
+      titleFontSize: 20,
+      laneFontSize: 10,
+    };
+    fixture.componentRef.setInput("widget", { ...mockWidget });
+    fixture.detectChanges();
+
+    const wrapper = fixture.nativeElement.querySelector(".widget-wrapper");
+    expect(wrapper.classList.contains("scale-fixed")).toBeTrue();
+    const onDeck = fixture.nativeElement.querySelector("app-raceday-on-deck");
+    expect(onDeck).toBeTruthy();
+  });
+
+  it("should render heat-list widget with custom settings in auto and fixed scale modes", () => {
+    mockWidget.widgetType = "heat-list";
+    mockWidget.scaleMode = "auto";
+    mockWidget.customSettings = {
+      showHeader: true,
+      autoScrollToCurrent: true,
+      highlightCurrentHeat: true,
+      heatColumns: "auto",
+      laneColumns: "auto",
+    };
+    fixture.componentRef.setInput("widget", { ...mockWidget });
+    fixture.detectChanges();
+
+    const heatList = fixture.nativeElement.querySelector(
+      "app-raceday-heat-list",
+    );
+    expect(heatList).toBeTruthy();
+  });
+
+  it("should apply countdown-ghost class and pointer-events none when countdown is unselected in edit mode", () => {
+    mockWidget.widgetType = "countdown";
+    mockWidget.id = "widget-countdown";
+    fixture.componentRef.setInput("widget", { ...mockWidget });
+    fixture.componentRef.setInput("isCustomizing", true);
+    fixture.componentRef.setInput("selectedWidgetId", "widget-other");
+    fixture.componentRef.setInput("isCountdownPreviewActive", false);
+    fixture.detectChanges();
+
+    expect(component.isCountdownGhost).toBeTrue();
+    const wrapper = fixture.nativeElement.querySelector(".widget-wrapper");
+    expect(wrapper.classList.contains("countdown-ghost")).toBeTrue();
+    expect(wrapper.style.pointerEvents).toBe("none");
+
+    // When countdown is selected
+    fixture.componentRef.setInput("selectedWidgetId", "widget-countdown");
+    fixture.detectChanges();
+
+    expect(component.isCountdownGhost).toBeFalse();
+    expect(wrapper.classList.contains("countdown-ghost")).toBeFalse();
+    expect(wrapper.style.pointerEvents).not.toBe("none");
+
+    // When unselected but preview active
+    fixture.componentRef.setInput("selectedWidgetId", "widget-other");
+    fixture.componentRef.setInput("isCountdownPreviewActive", true);
+    fixture.detectChanges();
+
+    expect(component.isCountdownGhost).toBeFalse();
+    expect(wrapper.classList.contains("countdown-ghost")).toBeFalse();
+  });
+
+  it("should toggle countdown preview display even when countdown widget is selected", () => {
+    mockWidget.widgetType = "countdown";
+    mockWidget.id = "widget-countdown";
+    fixture.componentRef.setInput("widget", { ...mockWidget });
+    fixture.componentRef.setInput("isCustomizing", true);
+    fixture.componentRef.setInput("selectedWidgetId", "widget-countdown");
+    fixture.componentRef.setInput("isCountdownPreviewActive", false);
+    fixture.detectChanges();
+
+    // When countdown is selected and preview is inactive, lamps/blur overlay should NOT render
+    let overlay = fixture.nativeElement.querySelector(
+      "app-raceday-countdown .countdown-overlay",
+    );
+    expect(overlay).toBeNull();
+
+    // When preview is toggled to active, lamps/blur overlay should render
+    fixture.componentRef.setInput("isCountdownPreviewActive", true);
+    fixture.detectChanges();
+
+    overlay = fixture.nativeElement.querySelector(
+      "app-raceday-countdown .countdown-overlay",
+    );
+    expect(overlay).toBeTruthy();
+
+    // When preview is toggled back to inactive, lamps/blur overlay should hide again
+    fixture.componentRef.setInput("isCountdownPreviewActive", false);
+    fixture.detectChanges();
+
+    overlay = fixture.nativeElement.querySelector(
+      "app-raceday-countdown .countdown-overlay",
+    );
+    expect(overlay).toBeNull();
+  });
+
+  it("should hide countdown widget and set display none when inactive in live raceday", () => {
+    mockWidget.widgetType = "countdown";
+    mockWidget.id = "widget-countdown";
+    fixture.componentRef.setInput("widget", { ...mockWidget });
+    fixture.componentRef.setInput("isCustomizing", false);
+    mockParent.showCountdownOverlay = false;
+    fixture.detectChanges();
+
+    expect(component.isCountdownWidget).toBeTrue();
+    expect(component.isCountdownActive).toBeFalse();
+    const wrapper = fixture.nativeElement.querySelector(".widget-wrapper");
+    expect(wrapper.classList.contains("countdown-widget")).toBeTrue();
+    expect(wrapper.classList.contains("no-print")).toBeTrue();
+    expect(wrapper.style.display).toBe("none");
+
+    // When countdown starts in live mode
+    mockParent.showCountdownOverlay = true;
+    fixture.detectChanges();
+    expect(component.isCountdownActive).toBeTrue();
+    expect(wrapper.style.display).toBe("");
+  });
+
+  describe("UE_LABEL_CUSTOM_WIDGET_UNAVAILABLE localization", () => {
+    const i18nFiles = [
+      { lang: "en", json: enJson },
+      { lang: "de", json: deJson },
+      { lang: "es", json: esJson },
+      { lang: "fr", json: frJson },
+      { lang: "it", json: itJson },
+      { lang: "nl", json: nlJson },
+      { lang: "pt", json: ptJson },
+    ];
+
+    it("should be defined and non-empty in all 7 supported language files", () => {
+      i18nFiles.forEach(({ lang, json }) => {
+        const val = (json as Record<string, string>)[
+          "UE_LABEL_CUSTOM_WIDGET_UNAVAILABLE"
+        ];
+        expect(val)
+          .withContext(
+            `Missing UE_LABEL_CUSTOM_WIDGET_UNAVAILABLE in ${lang}.json`,
+          )
+          .toBeDefined();
+        expect(val.trim().length)
+          .withContext(
+            `Empty UE_LABEL_CUSTOM_WIDGET_UNAVAILABLE in ${lang}.json`,
+          )
+          .toBeGreaterThan(0);
+      });
+    });
+  });
+
+  describe("Custom widget rendering", () => {
+    it("should render missing placeholder with translated fallback when custom widget component is unavailable", () => {
+      mockWidget.widgetType = "custom:missing-widget";
+      mockWidget.id = "custom-1";
+      fixture.componentRef.setInput("widget", { ...mockWidget });
+      fixture.detectChanges();
+
+      const placeholder = fixture.nativeElement.querySelector(
+        ".custom-widget-missing-placeholder",
+      );
+      expect(placeholder).toBeTruthy();
+
+      const title = placeholder.querySelector("strong");
+      expect(title?.textContent?.trim()).toBe("missing-widget");
+
+      const message = placeholder.querySelector("span:not(.material-icons)");
+      expect(message?.textContent?.trim()).toBe(
+        "UE_LABEL_CUSTOM_WIDGET_UNAVAILABLE",
+      );
+    });
+
+    it("should render custom widget error message when error is present", () => {
+      mockWidget.widgetType = "custom:broken-widget";
+      mockWidget.id = "custom-2";
+      spyOn(component, "getCustomWidgetError").and.returnValue(
+        "Syntax error in template",
+      );
+      fixture.componentRef.setInput("widget", { ...mockWidget });
+      fixture.detectChanges();
+
+      const placeholder = fixture.nativeElement.querySelector(
+        ".custom-widget-missing-placeholder",
+      );
+      expect(placeholder).toBeTruthy();
+
+      const message = placeholder.querySelector("span:not(.material-icons)");
+      expect(message?.textContent?.trim()).toBe("Syntax error in template");
+    });
   });
 });

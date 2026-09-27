@@ -48,6 +48,7 @@ export class NavigationService implements OnDestroy {
       ) {
         this.currentIndex = window.history.state.appHistoryIndex;
         this.maxIndex = this.currentIndex;
+        this.updateCanNavigateState();
       } else if (window.history && window.history.replaceState) {
         window.history.replaceState(
           { ...window.history.state, appHistoryIndex: 0 },
@@ -118,8 +119,12 @@ export class NavigationService implements OnDestroy {
         this.currentIndex++;
         this.maxIndex = this.currentIndex;
       } else {
-        this.currentIndex = 0;
-        this.maxIndex = 0;
+        this.currentIndex =
+          typeof window !== "undefined" &&
+          typeof window.history?.state?.appHistoryIndex === "number"
+            ? window.history.state.appHistoryIndex
+            : 0;
+        this.maxIndex = this.currentIndex;
       }
       if (typeof window !== "undefined" && window.history?.replaceState) {
         window.history.replaceState(
@@ -145,6 +150,12 @@ export class NavigationService implements OnDestroy {
 
   public getPreviousUrl(): string | null {
     return this.previousUrl;
+  }
+
+  public getLastHistoryUrl(): string | null {
+    return this.history.length > 0
+      ? this.history[this.history.length - 1]
+      : null;
   }
 
   public canGoBack(): boolean {
@@ -173,6 +184,12 @@ export class NavigationService implements OnDestroy {
     this.maxIndex = 0;
     this.previousUrl = null;
     this.direction = "forward";
+    if (typeof window !== "undefined" && window.history?.replaceState) {
+      window.history.replaceState(
+        { ...window.history.state, appHistoryIndex: 0 },
+        "",
+      );
+    }
     this.updateCanNavigateState();
   }
 

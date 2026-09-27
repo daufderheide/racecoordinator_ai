@@ -1,7 +1,6 @@
 package com.antigravity.race.states;
 
 import com.antigravity.context.DatabaseContext;
-import com.antigravity.models.HeatScoring;
 import com.antigravity.models.RacePredictionRecord.DriverProjection;
 import com.antigravity.models.SeasonRaceRecord.SeasonDriverResult;
 import com.antigravity.proto.RaceFlag;
@@ -28,22 +27,11 @@ public class RaceOver implements IRaceState {
 
   @Override
   public RaceFlag getFlagType(Race race) {
-    if (race == null) return RaceFlag.RED;
-    // Show checkered flag at the end of the last heat when finish is not allowed
-    if (race.isLastHeat()
-        && race.getRaceModel() != null
-        && race.getRaceModel().getHeatScoring() != null
-        && (race.getRaceModel().getHeatScoring().getAllowFinish() == HeatScoring.AllowFinish.None
-            || race.getRaceModel().getHeatScoring().getAllowFinish()
-                == HeatScoring.AllowFinish.NoneAutoSegments)) {
-      return race.getTheme() != null
-          ? race.getTheme()
-              .resolveFlag("flag.race_over", RaceFlag.CHECKERED, race.getDatabaseContext())
-          : RaceFlag.CHECKERED;
-    }
+    if (race == null) return RaceFlag.CHECKERED;
     return race.getTheme() != null
-        ? race.getTheme().resolveFlag("flag.heat_over", RaceFlag.RED, race.getDatabaseContext())
-        : RaceFlag.RED;
+        ? race.getTheme()
+            .resolveFlag("flag.race_over", RaceFlag.CHECKERED, race.getDatabaseContext())
+        : RaceFlag.CHECKERED;
   }
 
   @Override
@@ -52,6 +40,7 @@ public class RaceOver implements IRaceState {
     this.race = race;
     this.raceOverStartTimeMillis = System.currentTimeMillis();
     race.broadcastFlag(getFlagType(race));
+    syncDriverFlags(race);
 
     race.getStatistics().setEndTime(OffsetDateTime.now().toString());
     long raceStart = race.getStatistics().getStartMillis();
@@ -75,6 +64,10 @@ public class RaceOver implements IRaceState {
 
     race.broadcast(race.createSnapshot());
 
+    if (race.getHistoryRecordId() != null && !race.getHistoryRecordId().isEmpty()) {
+      return;
+    }
+
     // Notify EventExecutionManager if running as part of an Event
     try {
       EventExecutionManager.getInstance().onRaceOver(race);
@@ -86,6 +79,9 @@ public class RaceOver implements IRaceState {
   }
 
   private void savePostRaceData(Race race) {
+    if (race.getHistoryRecordId() != null && !race.getHistoryRecordId().isEmpty()) {
+      return;
+    }
     // Save history and update stats (separately if in demo mode)
     try {
       DatabaseContext dbCtx = ClientSubscriptionManager.getInstance().getDatabaseContext();
@@ -114,7 +110,8 @@ public class RaceOver implements IRaceState {
                   raceName,
                   raceStart,
                   race.isDemoMode(),
-                  seasonResults);
+                  seasonResults,
+                  race.getHistoryRecordId());
             }
 
             List<DriverProjection> actuals = new ArrayList<>();

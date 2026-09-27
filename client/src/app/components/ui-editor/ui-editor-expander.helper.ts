@@ -77,3 +77,28 @@ export function toggleUiExpander(
   }
   saveExpanderStateToStorage(sectionsExpanded);
 }
+
+export function scrollToThemeElement(themeId: string, cdr?: any): void {
+  cdr?.detectChanges();
+  setTimeout(() => {
+    const container = document.querySelector(
+      ".sections-wrapper",
+    ) as HTMLElement;
+    const element = document.querySelector(
+      `[data-theme-id="${themeId}"]`,
+    ) as HTMLElement;
+    if (element && container) {
+      const topPos =
+        element.getBoundingClientRect().top -
+        container.getBoundingClientRect().top +
+        container.scrollTop;
+
+      container.scrollTo({
+        top: Math.max(0, topPos - 15),
+        behavior: "smooth",
+      });
+    } else if (element) {
+      element.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  });
+}

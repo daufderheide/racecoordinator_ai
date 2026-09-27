@@ -102,9 +102,14 @@ function auditServer() {
     }
   }
 
+  // Permitted cross-system integration or parity tests that don't have a 1:1 source file
+  const allowedParityTests = new Set([
+    'com/antigravity/race/TemplateVariableParityTest.java',
+  ]);
+
   // Find orphaned or scenario test files that don't match standard Foo.java -> FooTest.java
   const orphanedOrScenarioTests = testFiles.filter(
-    t => !matchedTestRelPaths.has(t.relPath)
+    t => !matchedTestRelPaths.has(t.relPath) && !allowedParityTests.has(t.relPath.replace(/\\/g, '/'))
   );
 
   return {
@@ -270,6 +275,14 @@ function run() {
       if (missingScreendiff.length > 15) console.log(`    ... and ${missingScreendiff.length - 15} more`);
       console.log('');
     }
+
+    const missingHarness = client.components.filter(c => !c.hasHarness);
+    if (missingHarness.length > 0) {
+      console.log(`${colors.yellow}  Components Missing Test Harnesses:${colors.reset}`);
+      missingHarness.slice(0, 15).forEach(c => console.log(`    - ${c.component.relPath}`));
+      if (missingHarness.length > 15) console.log(`    ... and ${missingHarness.length - 15} more`);
+      console.log('');
+    }
   }
 
   console.log(`${colors.gray}Run with --verbose to view individual file paths.${colors.reset}\n`);
@@ -303,6 +316,8 @@ function run() {
       console.log(
         `${colors.red}❌ Audit check failed: Client component test harness coverage regressed (${compWithHarness}/100 components with harnesses).${colors.reset}`
       );
+      const missingHarness = client.components.filter(c => !c.hasHarness);
+      missingHarness.forEach(c => console.log(`   - ${c.component.relPath}`));
       failed = true;
     }
 

@@ -17,12 +17,17 @@ describe("CustomWidgetService", () => {
 
   beforeEach(() => {
     mockFileSystem = jasmine.createSpyObj("FileSystemService", [
+      "ensureServerDirectoriesInitialized",
       "getCustomWidgetDirectoryHandle",
       "getCustomWidgetDirectories",
       "hasWidgetFile",
       "getWidgetFile",
       "writeWidgetFile",
+      "deleteWidgetDirectory",
     ]);
+    mockFileSystem.ensureServerDirectoriesInitialized.and.returnValue(
+      Promise.resolve(),
+    );
 
     mockDynamicComp = jasmine.createSpyObj("DynamicComponentService", [
       "createDynamicComponent",
@@ -89,6 +94,14 @@ describe("CustomWidgetService", () => {
         defaultSettings: { showSpeed: true },
         settingsSchema: [
           { key: "threshold", label: "Threshold", type: "number", default: 50 },
+          {
+            key: "col3",
+            label: "Col 3",
+            type: "select",
+            default: "time",
+            colorKey: "col3Color",
+            colorDefault: "#ffffff",
+          },
         ],
       };
 
@@ -125,6 +138,8 @@ describe("CustomWidgetService", () => {
       expect(registryEntry.defaultSettings!()).toEqual({
         showSpeed: true,
         threshold: 50,
+        col3: "time",
+        col3Color: "#ffffff",
       });
     });
 
@@ -193,7 +208,7 @@ describe("CustomWidgetService", () => {
       expect(result.error).toContain("No custom widget directory");
     });
 
-    it("should download sample files and write to widget directory", async () => {
+    it("should download sample files and write to sample folder in custom widget directory", async () => {
       const mockHandle = { name: "custom-widgets" } as any;
       mockFileSystem.getCustomWidgetDirectoryHandle.and.returnValue(
         Promise.resolve(mockHandle),
@@ -209,7 +224,24 @@ describe("CustomWidgetService", () => {
       expect(result.success).toBeTrue();
       expect(result.count).toBeGreaterThan(0);
       expect(result.directory).toBe("custom-widgets");
-      expect(mockFileSystem.writeWidgetFile).toHaveBeenCalled();
+      expect(mockFileSystem.deleteWidgetDirectory).toHaveBeenCalledWith(
+        "sample",
+        true,
+      );
+      expect(mockFileSystem.deleteWidgetDirectory).toHaveBeenCalledWith(
+        "sample-detailed-leaderboard",
+        true,
+      );
+      expect(mockFileSystem.writeWidgetFile).toHaveBeenCalledWith(
+        "sample/sample-telemetry-gauge",
+        "widget.json",
+        "sample file content",
+      );
+      expect(mockFileSystem.writeWidgetFile).toHaveBeenCalledWith(
+        "sample",
+        "README.md",
+        "sample file content",
+      );
     });
 
     it("should delegate updateSampleWidgets to exportStarterWidgets", async () => {
@@ -227,6 +259,108 @@ describe("CustomWidgetService", () => {
       expect(result.success).toBeTrue();
       expect(result.count).toBeGreaterThan(0);
       expect(result.directory).toBe("custom-widgets");
+      expect(mockFileSystem.deleteWidgetDirectory).toHaveBeenCalledWith(
+        "sample",
+        true,
+      );
+      expect(mockFileSystem.writeWidgetFile).toHaveBeenCalledWith(
+        "sample/sample-telemetry-gauge",
+        "widget.json",
+        "sample file content",
+      );
+    });
+
+    it("should populate group and subgroup when reloading widgets", async () => {
+      const mockHandle = {} as any;
+      mockFileSystem.getCustomWidgetDirectoryHandle.and.returnValue(
+        Promise.resolve(mockHandle),
+      );
+      mockFileSystem.getCustomWidgetDirectories.and.returnValue(
+        Promise.resolve([
+          {
+            name: "speedo",
+            relativePath: "sample/gauges/speedo",
+            group: "sample",
+            subgroup: "gauges",
+            handle: {} as any,
+          },
+        ]),
+      );
+      mockFileSystem.hasWidgetFile.and.returnValue(Promise.resolve(true));
+      mockFileSystem.getWidgetFile.and.callFake((path, file) => {
+        if (file === "widget.json")
+          return Promise.resolve(
+            JSON.stringify({ id: "speedo", name: "Speedo" }),
+          );
+        if (file === "widget.html") return Promise.resolve("<div>Gauge</div>");
+        return Promise.reject("not found");
+      });
+      mockDynamicComp.createDynamicComponent.and.returnValue(
+        Promise.resolve(class {} as any),
+      );
+
+      await service.reloadCustomWidgets();
+
+      const def = service.getWidgetDefinition("custom:speedo");
+      expect(def).toBeDefined();
+      expect(def?.group).toBe("sample");
+      expect(def?.subgroup).toBe("gauges");
+      expect(def?.relativePath).toBe("sample/gauges/speedo");
+    });
+
+    it("should log error and skip widget when widget.json contains invalid JSON", async () => {
+      const mockHandle = {} as any;
+      mockFileSystem.getCustomWidgetDirectoryHandle.and.returnValue(
+        Promise.resolve(mockHandle),
+      );
+      mockFileSystem.getCustomWidgetDirectories.and.returnValue(
+        Promise.resolve([{ name: "broken-widget", handle: {} as any }]),
+      );
+      mockFileSystem.hasWidgetFile.and.returnValue(Promise.resolve(true));
+      mockFileSystem.getWidgetFile.and.returnValue(
+        Promise.resolve("{ broken json: "),
+      );
+
+      await service.reloadCustomWidgets();
+      expect(mockLogger.error).toHaveBeenCalled();
+      expect(service.getCustomWidgets().length).toBe(0);
+    });
+
+    it("should deduplicate concurrent calls to reloadCustomWidgets", async () => {
+      mockFileSystem.getCustomWidgetDirectoryHandle.and.returnValue(
+        Promise.resolve(undefined),
+      );
+
+      const p1 = service.reloadCustomWidgets();
+      const p2 = service.reloadCustomWidgets();
+      expect(p1).toBe(p2);
+      await Promise.all([p1, p2]);
+    });
+  });
+
+  describe("getWidgetDefinition diagnostics", () => {
+    it("should log warn when requesting a widget definition that is not registered", () => {
+      const def = service.getWidgetDefinition("custom:non-existent");
+      expect(def).toBeUndefined();
+      expect(mockLogger.warn).toHaveBeenCalledWith(
+        jasmine.stringMatching(
+          /non-existent.*requested but is not in registered definitions/,
+        ),
+      );
+    });
+
+    it("should log warn when getWidgetComponent is called on a widget with error and no componentType", () => {
+      (service as any).widgetDefinitions.set("custom:err-widget", {
+        manifest: { id: "err-widget" },
+        error: "Compilation failed",
+        componentType: undefined,
+      });
+
+      const comp = service.getWidgetComponent("custom:err-widget");
+      expect(comp).toBeUndefined();
+      expect(mockLogger.warn).toHaveBeenCalledWith(
+        jasmine.stringMatching(/has no compiled componentType/),
+      );
     });
   });
 });

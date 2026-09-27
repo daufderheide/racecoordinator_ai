@@ -24,6 +24,16 @@ describe("ConverterCache", () => {
     expect(refItem.name).toBe("Item 1");
   });
 
+  it("should not cache fallback stubs when isReference is true", () => {
+    const refItem = cache.process("1", true, () => ({
+      id: "1",
+      name: "Fallback",
+    }));
+    expect(refItem.name).toBe("Fallback");
+    expect(cache.has("1")).toBeFalse();
+    expect(cache.getKeys().length).toBe(0);
+  });
+
   it("should clear the cache", () => {
     cache.process("1", false, () => ({ id: "1", name: "Item 1" }));
     expect(cache.has("1")).toBeTrue();

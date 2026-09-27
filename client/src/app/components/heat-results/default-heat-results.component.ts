@@ -6,10 +6,21 @@ import {
   OnDestroy,
   OnInit,
 } from "@angular/core";
+import { FormsModule } from "@angular/forms";
 import { Router } from "@angular/router";
 import { Subscription } from "rxjs";
+import { AddLapSectionsDialogComponent } from "@app/components/raceday/components/add-lap-sections-dialog/add-lap-sections-dialog.component";
 import { AcknowledgementModalComponent } from "@app/components/shared/acknowledgement-modal/acknowledgement-modal.component";
 import { BrowserNavigationComponent } from "@app/components/shared/browser-navigation/browser-navigation.component";
+import {
+  CustomOptionComponent,
+  CustomSelectComponent,
+} from "@app/components/shared/custom-select/custom-select.component";
+import {
+  GhostTrajectoryDialogComponent,
+  TrajectoryReferenceOption,
+} from "@app/components/shared/ghost-trajectory-dialog/ghost-trajectory-dialog.component";
+import { TrajectoryReferenceHelper } from "@app/components/shared/ghost-trajectory-dialog/trajectory-reference.helper";
 import {
   HeatDriverExpanderComponent,
   HeatExpanderData,
@@ -26,12 +37,16 @@ import {
 import { DataService } from "@app/data.service";
 import { Race } from "@app/models/race";
 import { RaceParticipant } from "@app/models/race_participant";
+import { isAtLeast, Role } from "@app/models/role";
+import { LocalDatePipe } from "@app/pipes/local-date.pipe";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { Heat } from "@app/race/heat";
 import { AuthService } from "@app/services/auth.service";
 import { PrintService } from "@app/services/print.service";
 import { RaceService } from "@app/services/race.service";
 import { RaceConnectionService } from "@app/services/race-connection.service";
+import { RaceFlagService } from "@app/services/race-flag.service";
+import { RaceTimeService } from "@app/services/race-time.service";
 import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
 import { ViewerRaceEndedHandler } from "@app/utils/viewer-race-ended-handler";
@@ -42,12 +57,18 @@ import { ViewerRaceEndedHandler } from "@app/utils/viewer-race-ended-handler";
   templateUrl: "./default-heat-results.component.html",
   styleUrls: ["./default-heat-results.component.css"],
   imports: [
+    FormsModule,
     TranslatePipe,
+    LocalDatePipe,
     AcknowledgementModalComponent,
     HeatDriverExpanderComponent,
     TwinGraphsComponent,
     PdfExportDialogComponent,
     BrowserNavigationComponent,
+    GhostTrajectoryDialogComponent,
+    CustomSelectComponent,
+    CustomOptionComponent,
+    AddLapSectionsDialogComponent,
   ],
 })
 export class DefaultHeatResultsComponent implements OnInit, OnDestroy {
@@ -59,6 +80,66 @@ export class DefaultHeatResultsComponent implements OnInit, OnDestroy {
 
   showPdfExportDialog = false;
   defaultIncludeBackground = true;
+  showAddLapSectionsDialog = false;
+  selectedHeatIndex = 0;
+
+  get canEdit(): boolean {
+    return isAtLeast(this.authService.currentRole, Role.DIRECTOR);
+  }
+
+  get heats(): Heat[] {
+    return this.raceService.getHeats() || [];
+  }
+
+  get isReviewingPastRace(): boolean {
+    return Boolean((this.race as any)?.historyRecordId);
+  }
+
+  exitReview(): void {
+    sessionStorage.setItem("skipIntro", "true");
+    this.router.navigate(["/"]);
+  }
+
+  navigateToRaceResults(): void {
+    this.router.navigate(["/race-results"]);
+  }
+
+  onHeatSelected(index: number): void {
+    this.selectedHeatIndex = index;
+    if (this.heats && this.heats[index]) {
+      this.heat = this.heats[index];
+      this.updateGraph();
+      this.calculateHeatStandings();
+      this.cdr.markForCheck();
+    }
+  }
+
+  openAddLapSections(): void {
+    this.showAddLapSectionsDialog = true;
+    this.cdr.markForCheck();
+  }
+
+  onAddLapSectionsConfirm(event: any): void {
+    if (event?.isBatch && event.updates) {
+      const histId = (this.race as any)?.historyRecordId;
+      const isDemo = Boolean((this.race as any)?.is_demo);
+      if (histId) {
+        this.dataService
+          .updateHistoryLapSections(histId, event.updates, isDemo)
+          .subscribe(() => {
+            this.showAddLapSectionsDialog = false;
+            this.cdr.markForCheck();
+          });
+      } else {
+        this.dataService.updateBatchUserLaps(event.updates).subscribe(() => {
+          this.showAddLapSectionsDialog = false;
+          this.cdr.markForCheck();
+        });
+      }
+    } else {
+      this.showAddLapSectionsDialog = false;
+    }
+  }
 
   get showAckModal(): boolean {
     return this.viewerRaceEndedHandler?.showAckModal ?? false;
@@ -124,8 +205,27 @@ export class DefaultHeatResultsComponent implements OnInit, OnDestroy {
     return this.participants.some((p) => !!p.team);
   }
   protected race?: Race;
+  private fallbackRaceStartTime: Date = new Date();
+
+  get raceStartTime(): Date {
+    const millis =
+      (this.race as any)?.start_time_millis ||
+      (this.race as any)?.startTimeMillis;
+    if (millis && Number(millis) > 0) {
+      return new Date(Number(millis));
+    }
+    return this.fallbackRaceStartTime;
+  }
+
   protected driverLines: DriverLine[] = [];
   private driverResultsWindows: Window[] = [];
+
+  protected showTrajectoryModal = false;
+  protected trajectoryDriverAName = "";
+  protected trajectoryDriverALapTimes: number[] = [];
+  protected trajectoryReferenceOptions: TrajectoryReferenceOption[] = [];
+  protected trajectoryInitialReferenceId = "";
+  protected trajectoryBenchmarkLapTime = 0;
 
   // SVG Dimensions
   protected width = 1400;
@@ -139,6 +239,18 @@ export class DefaultHeatResultsComponent implements OnInit, OnDestroy {
 
   protected legendItemWidth = 180;
 
+  get formattedTime(): string {
+    return this.raceTimeService.formattedTime;
+  }
+
+  get currentFlagUrl(): string {
+    return this.raceFlagService.getCurrentFlagUrl();
+  }
+
+  get totalHeats(): number {
+    return this.raceService.getHeats()?.length || 0;
+  }
+
   get legendStartX(): number {
     const totalWidth = this.driverLines.length * this.legendItemWidth;
     return (this.width - totalWidth) / 2;
@@ -150,6 +262,8 @@ export class DefaultHeatResultsComponent implements OnInit, OnDestroy {
     private translationService: TranslationService,
     private cdr: ChangeDetectorRef,
     private printService: PrintService,
+    private raceFlagService: RaceFlagService,
+    private raceTimeService: RaceTimeService,
   ) {}
 
   ngOnInit() {
@@ -172,7 +286,17 @@ export class DefaultHeatResultsComponent implements OnInit, OnDestroy {
     );
 
     this.subscriptions.push(
-      this.raceService.currentHeat$.subscribe(() => {
+      this.raceService.currentHeat$.subscribe((currHeat) => {
+        if (!this.isReviewingPastRace && currHeat) {
+          const idx = this.heats.findIndex(
+            (h) =>
+              h.heatNumber === currHeat.heatNumber ||
+              h.objectId === currHeat.objectId,
+          );
+          if (idx >= 0) {
+            this.selectedHeatIndex = idx;
+          }
+        }
         this.loadRaceData();
         this.updateGraph();
         this.calculateHeatStandings();
@@ -188,7 +312,16 @@ export class DefaultHeatResultsComponent implements OnInit, OnDestroy {
 
     this.subscriptions.push(
       this.raceService.participants$.subscribe((participants) => {
+        const hadNoParticipants =
+          !this.participants || this.participants.length === 0;
         this.participants = participants;
+        if (
+          hadNoParticipants &&
+          this.participants &&
+          this.participants.length > 0
+        ) {
+          this.fallbackRaceStartTime = new Date();
+        }
       }),
     );
 
@@ -197,6 +330,18 @@ export class DefaultHeatResultsComponent implements OnInit, OnDestroy {
         this.updateGraph();
         this.calculateHeatStandings();
         this.cdr.markForCheck();
+      }),
+    );
+
+    this.subscriptions.push(
+      this.raceFlagService.currentFlagUrl$.subscribe(() => {
+        this.cdr.detectChanges();
+      }),
+    );
+
+    this.subscriptions.push(
+      this.raceTimeService.formattedTime$.subscribe(() => {
+        this.cdr.detectChanges();
       }),
     );
 
@@ -263,6 +408,36 @@ export class DefaultHeatResultsComponent implements OnInit, OnDestroy {
 
   onPdfExportCancel() {
     this.showPdfExportDialog = false;
+  }
+
+  openHeatTrajectory(data: HeatExpanderData) {
+    const heat = data.heat;
+    const heatDriver = data.heatDriver;
+    this.trajectoryDriverAName = data.driverName || "Driver";
+    this.trajectoryDriverALapTimes =
+      heatDriver?.lapTimes || (heatDriver as any)?.laps || [];
+
+    const liveIds = new Set<string>();
+    TrajectoryReferenceHelper.addHeatDriverEntityIds(heatDriver, liveIds);
+
+    this.trajectoryReferenceOptions =
+      TrajectoryReferenceHelper.buildHeatReferenceOptions(
+        heat,
+        heatDriver,
+        liveIds,
+      );
+    this.trajectoryInitialReferenceId =
+      this.trajectoryReferenceOptions.length > 0
+        ? this.trajectoryReferenceOptions[0].id
+        : "";
+    this.trajectoryBenchmarkLapTime = 0;
+    this.showTrajectoryModal = true;
+    this.cdr.detectChanges();
+  }
+
+  closeTrajectoryDialog() {
+    this.showTrajectoryModal = false;
+    this.cdr.detectChanges();
   }
 
   // TODO(aufderheide): This shouldn't be done on the client, the server should be sending us the standings already sorted.
@@ -404,7 +579,24 @@ export class DefaultHeatResultsComponent implements OnInit, OnDestroy {
 
   private loadRaceData() {
     this.race = this.raceService.getRace();
-    this.heat = this.raceService.getCurrentHeat();
+    if (
+      this.selectedHeatIndex >= 0 &&
+      this.heats.length > this.selectedHeatIndex
+    ) {
+      this.heat = this.heats[this.selectedHeatIndex];
+    } else {
+      this.heat = this.raceService.getCurrentHeat();
+      if (this.heat && this.heats.length > 0) {
+        const idx = this.heats.findIndex(
+          (h) =>
+            h.heatNumber === this.heat?.heatNumber ||
+            h.objectId === this.heat?.objectId,
+        );
+        if (idx >= 0) {
+          this.selectedHeatIndex = idx;
+        }
+      }
+    }
   }
 
   /* eslint-disable max-lines-per-function */

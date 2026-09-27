@@ -101,17 +101,23 @@ describe("CustomWidgetBaseComponent", () => {
       const standings = component.driverStandings;
       expect(standings.length).toBe(2);
       expect(standings[0].name).toBe("Sports Mode");
-      expect(standings[0].best_lap_time).toBe(3.154);
-      expect(standings[0].last_lap_time).toBe(3.65);
+      expect(standings[0].bestLapTime).toBe(3.154);
+      expect(standings[0].lastLapTime).toBe(3.65);
       expect(standings[0].lapCount).toBe(7);
-      expect(standings[0].total_laps).toBe(7);
-      expect(standings[0].total_time).toBe(25.5);
-      expect(standings[0].avg_lap_time).toBe(3.65);
+      expect(standings[0].totalLaps).toBe(7);
+      expect(standings[0].totalTime).toBe(25.5);
+      expect(standings[0].averageLapTime).toBe(3.65);
+      expect(standings[0].medianLapTime).toBe(3.65);
+      expect(standings[0].gapLeader).toBe(0);
+      expect(standings[0].gapPosition).toBe(0);
 
       expect(standings[1].name).toBe("Bad Cheese");
-      expect(standings[1].best_lap_time).toBe(3.05);
-      expect(standings[1].total_time).toBe(27.1);
-      expect(standings[1].avg_lap_time).toBe(3.8);
+      expect(standings[1].bestLapTime).toBe(3.05);
+      expect(standings[1].totalTime).toBe(27.1);
+      expect(standings[1].averageLapTime).toBe(3.8);
+      expect(standings[1].medianLapTime).toBe(3.8);
+      expect(standings[1].gapLeader).toBe(0);
+      expect(standings[1].gapPosition).toBe(0);
     });
 
     it("should fallback to heatDrivers when participants list is empty", () => {
@@ -273,6 +279,61 @@ describe("CustomWidgetBaseComponent", () => {
 
       const standings = component.driverStandings;
       expect(standings.length).toBe(3);
+    });
+  });
+
+  describe("interpolate", () => {
+    it("should interpolate expressions using both {...} and ${...} syntax", () => {
+      const driver = new Driver("d1", "Mario", "Mario");
+      const p1 = new RaceParticipant(
+        "p1",
+        driver,
+        1,
+        10,
+        30.0,
+        3.0,
+        3.0,
+        3.0,
+        10,
+        1,
+        100,
+      );
+      fixture.componentRef.setInput("parent", {
+        race: { name: "Grand Prix" },
+        track: { name: "Monaco" },
+        participants: [p1],
+      });
+      fixture.detectChanges();
+
+      const context = {
+        driver: { name: "Mario", bestLapTime: 3.14 },
+        heat: { number: 2 },
+      };
+
+      expect(
+        component.interpolate(
+          "Driver: {driver.name}, Best: {driver.bestLapTime}",
+          context,
+        ),
+      ).toBe("Driver: Mario, Best: 3.140");
+      expect(
+        component.interpolate(
+          "Driver: ${driver.name}, Best: ${driver.bestLapTime}",
+          context,
+        ),
+      ).toBe("Driver: Mario, Best: 3.140");
+      expect(
+        component.interpolate("Heat ${heat.number} at {track.name}", context),
+      ).toBe("Heat 2 at Monaco");
+    });
+
+    it("should gracefully handle missing or undefined properties", () => {
+      expect(component.interpolate("Unknown: {unknown.field}")).toBe(
+        "Unknown: {unknown.field}",
+      );
+      expect(component.interpolate("Unknown: ${unknown.field}")).toBe(
+        "Unknown: ${unknown.field}",
+      );
     });
   });
 });

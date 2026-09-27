@@ -120,7 +120,6 @@ test.describe("Driver Results Visuals", () => {
       document.body.classList.add("print-full-scroll");
       document.body.classList.add("print-no-background");
     });
-    await page.waitForTimeout(200);
 
     await expect(page).toHaveScreenshot("driver-results-no-background.png", {
       maxDiffPixelRatio: 0.05,

@@ -16,7 +16,10 @@ export class HeatResultsHelper {
               { backgroundColor: "#10b981", foregroundColor: "#ffffff" },
             ],
           },
+          start_time_millis: 1788920640000,
         },
+        startTimeMillis: 1788920640000,
+        start_time_millis: 1788920640000,
         drivers: [
           {
             objectId: "rp1",
@@ -255,6 +258,12 @@ export class HeatResultsHelper {
             },
           ],
         },
+      },
+      raceState: 2, // RACING
+      raceTime: {
+        time: 123456,
+        showTime: true,
+        durationMode: false,
       },
       heat: {
         objectId: "h1",

@@ -38,4 +38,9 @@ export class RacedayRecordsHarness
     }
     return { nickname: "", score: "" };
   }
+
+  async getRowCount(): Promise<number> {
+    const rows = await this.getRows();
+    return rows.length;
+  }
 }

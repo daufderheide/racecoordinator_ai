@@ -300,8 +300,9 @@ public class RaceHeatManager {
   private com.antigravity.race.Heat createNewHeat( // fqn-collision
       ModifyHeatsRequest request, com.antigravity.proto.Heat protoHeat) { // fqn-collision
     List<DriverHeatData> newHeatDrivers = new ArrayList<>();
-    for (com.antigravity.proto.DriverHeatData protoDhd : // fqn-collision
-        protoHeat.getHeatDriversList()) {
+    for (int i = 0; i < protoHeat.getHeatDriversCount(); i++) {
+      com.antigravity.proto.DriverHeatData protoDhd = // fqn-collision
+          protoHeat.getHeatDrivers(i);
       RaceParticipant p = findParticipantByObjectId(protoDhd.getDriver().getObjectId());
       if (p == null) {
         p = findParticipantInProtoRequest(request, protoDhd.getDriver().getObjectId());
@@ -313,6 +314,7 @@ public class RaceHeatManager {
         p = new RaceParticipant(Driver.EMPTY_DRIVER);
       }
       DriverHeatData dhd = new DriverHeatData(p);
+      dhd.setLane(i);
       dhd.setObjectId(protoDhd.getObjectId());
       newHeatDrivers.add(dhd);
     }

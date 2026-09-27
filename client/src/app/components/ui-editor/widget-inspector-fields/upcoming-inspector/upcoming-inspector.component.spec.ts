@@ -68,7 +68,7 @@ describe("UpcomingInspectorComponent", () => {
   });
 
   it("should trigger loadLocalFonts on font service when select element is focused", () => {
-    const selectEl = fixture.nativeElement.querySelector("select");
+    const selectEl = fixture.nativeElement.querySelector("app-custom-select");
     selectEl.dispatchEvent(new Event("focus"));
     expect(fontServiceSpy.loadLocalFonts).toHaveBeenCalled();
   });

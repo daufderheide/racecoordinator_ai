@@ -40,7 +40,6 @@ for (const lang of allLanguages) {
       await TestSetupHelper.disableAnimations(page);
 
       await expect(page.getByText("Alice")).toBeVisible();
-      await page.waitForTimeout(100);
     });
 
     test("Initial state", async ({ page }) => {
@@ -91,7 +90,6 @@ test.describe("Raceday Setup Functional - en", () => {
     await TestSetupHelper.disableAnimations(page);
 
     await expect(page.getByText("Alice")).toBeVisible();
-    await page.waitForTimeout(100);
   });
 
   test("No drivers selected", async ({ page }) => {
@@ -101,7 +99,6 @@ test.describe("Raceday Setup Functional - en", () => {
     await harness.clickRemoveAll();
 
     await expect(page.locator(".editor-panel")).toBeVisible();
-    await page.waitForTimeout(300);
 
     await expect(page).toHaveScreenshot(`no-drivers-en.png`, {
       maxDiffPixelRatio: 0.05,
@@ -118,8 +115,6 @@ test.describe("Raceday Setup Functional - en", () => {
     const dropdownMenu = page.locator(".dropdown-menu");
     await expect(dropdownMenu).toBeVisible();
 
-    await page.waitForTimeout(300);
-
     await expect(page).toHaveScreenshot(`race-selector-open-size-en.png`, {
       maxDiffPixelRatio: 0.05,
       animations: "disabled",
@@ -134,8 +129,6 @@ test.describe("Raceday Setup Functional - en", () => {
     await harness.doubleClickUnselectedDriver(0);
 
     await expect(page.locator(".editor-panel")).toBeVisible();
-
-    await page.waitForTimeout(500);
 
     await expect(page).toHaveScreenshot(`driver-added-en.png`, {
       maxDiffPixelRatio: 0.05,
@@ -167,8 +160,6 @@ test.describe("Raceday Setup Functional - en", () => {
       page.locator('[data-testid="submenu-localization"]'),
     ).toBeVisible();
 
-    await page.waitForTimeout(500);
-
     await expect(page).toHaveScreenshot(`localization-menu-en.png`, {
       maxDiffPixelRatio: 0.05,
       animations: "disabled",
@@ -188,13 +179,55 @@ test.describe("Raceday Setup Functional - en", () => {
       page.locator('[data-testid="submenu-automatic-updates"]'),
     ).toBeVisible();
 
-    await page.waitForTimeout(500);
-
     await expect(page).toHaveScreenshot(`automatic-updates-menu-en.png`, {
       maxDiffPixelRatio: 0.05,
       animations: "disabled",
       timeout: 10000,
     });
+  });
+
+  test("Check for updates up-to-date acknowledgement modal", async ({
+    page,
+  }) => {
+    await page.route("**/api/update/check*", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          updateAvailable: false,
+          latestVersion: "",
+          releaseNotes: "",
+          downloadUrl: "",
+          releaseUrl: "",
+          isWindows: true,
+        }),
+      });
+    });
+
+    const container = page.locator(".setup-container");
+    const harness = new DefaultRacedaySetupHarnessE2e(container);
+
+    await harness.openOptionsMenu();
+    await expect(page.locator(".setup-menu-dropdown")).toBeVisible();
+
+    await harness.openAutomaticUpdatesSubMenu();
+    const checkItem = page.locator('[data-testid="item-check-updates"]');
+    await expect(checkItem).toBeVisible();
+    await checkItem.click();
+
+    const modalContent = page.locator(
+      "app-acknowledgement-modal .modal-content",
+    );
+    await modalContent.waitFor({ state: "visible" });
+
+    await expect(modalContent).toHaveScreenshot(
+      "raceday-setup-up-to-date-modal-en.png",
+      {
+        maxDiffPixelRatio: 0.05,
+        animations: "disabled",
+        timeout: 10000,
+      },
+    );
   });
 
   test("Event selected", async ({ page }) => {
@@ -205,8 +238,6 @@ test.describe("Raceday Setup Functional - en", () => {
     const eventItem = page.locator(".dropdown-item.event-item").first();
     await expect(eventItem).toBeVisible();
     await eventItem.click();
-
-    await page.waitForTimeout(300);
 
     await expect(page).toHaveScreenshot(`event-selected-en.png`, {
       maxDiffPixelRatio: 0.05,
@@ -226,7 +257,6 @@ test.describe("Raceday Setup Functional - en", () => {
 
     const modal = page.locator(".modal-overlay .modal-content");
     await modal.waitFor({ state: "visible" });
-    await page.waitForTimeout(300);
 
     await expect(modal).toHaveScreenshot("load-saved-race-modal-en.png", {
       maxDiffPixelRatio: 0.05,
@@ -253,7 +283,6 @@ test.describe("Raceday Setup Functional - en", () => {
 
     const inlineInput = modal.locator(".inline-rename-input");
     await inlineInput.waitFor({ state: "visible" });
-    await page.waitForTimeout(300);
 
     await expect(modal).toHaveScreenshot(
       "load-saved-race-inline-rename-en.png",
@@ -276,8 +305,6 @@ test.describe("Raceday Setup Functional - en", () => {
     await seasonCard
       .locator(".standings-wrapper")
       .waitFor({ state: "visible" });
-
-    await page.waitForTimeout(300);
 
     await expect(page).toHaveScreenshot(
       "season-selected-with-standings-en.png",

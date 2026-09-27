@@ -378,4 +378,31 @@ describe("RaceFlagService", () => {
       expect(customService.getFlagUrl(RaceFlag.GREEN)).toContain("green.png");
     });
   });
+
+  describe("getCurrentFlagUrl and currentFlagUrl$", () => {
+    it("should return the behavioral flag url via getCurrentFlagUrl", () => {
+      spyOn(service, "getFlagUrl").and.returnValue(
+        "http://localhost:7070/assets/flag.png",
+      );
+      expect(service.getCurrentFlagUrl()).toBe(
+        "http://localhost:7070/assets/flag.png",
+      );
+      expect(service.getFlagUrl).toHaveBeenCalledWith(service.getFlagType());
+    });
+
+    it("should emit on currentFlagUrl$ when race flag or race state changes", (done) => {
+      spyOn(service, "getFlagUrl").and.returnValue(
+        "http://localhost:7070/assets/green.png",
+      );
+
+      service.currentFlagUrl$.subscribe((url) => {
+        if (url === "http://localhost:7070/assets/green.png") {
+          expect(url).toBe("http://localhost:7070/assets/green.png");
+          done();
+        }
+      });
+
+      raceFlagSubject.next(RaceFlag.GREEN);
+    });
+  });
 });

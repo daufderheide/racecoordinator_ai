@@ -73,4 +73,30 @@ describe("WidgetInspectorFieldsComponent", () => {
     component.onSettingsChange();
     expect(component.change.emit).toHaveBeenCalled();
   });
+
+  it("should render heat-list inspector when widget is heat-list", () => {
+    const heatListWidget: AbsoluteWidgetNode = {
+      id: "w-heat-list",
+      widgetType: "heat-list",
+      x: 0,
+      y: 0,
+      width: 384,
+      height: 400,
+      zIndex: 1,
+      customSettings: {
+        showHeader: true,
+        autoScrollToCurrent: true,
+        highlightCurrentHeat: true,
+        heatColumns: "auto",
+        laneColumns: "auto",
+      },
+    };
+    fixture.componentRef.setInput("widget", heatListWidget);
+    fixture.detectChanges();
+
+    const inspectorEl = fixture.nativeElement.querySelector(
+      "app-heat-list-inspector",
+    );
+    expect(inspectorEl).toBeTruthy();
+  });
 });

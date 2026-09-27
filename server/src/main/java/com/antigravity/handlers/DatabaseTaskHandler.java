@@ -10,6 +10,7 @@ import com.antigravity.models.Season;
 import com.antigravity.models.SeasonStandingItem;
 import com.antigravity.models.Team;
 import com.antigravity.models.Track;
+import com.antigravity.race.ClientSubscriptionManager;
 import com.antigravity.race.SeasonStandingsCalculator;
 import com.antigravity.repository.SqliteRepository;
 import com.antigravity.service.DatabaseService;
@@ -103,15 +104,26 @@ public class DatabaseTaskHandler {
     try {
       Driver driver = DatabaseHandlerUtils.bodyAsClassWithId(ctx.body(), Driver.class);
 
-      final String driverName = driver.getName();
-      final String driverNick = driver.getNickname();
+      if (driver.getName() == null || driver.getName().trim().isEmpty()) {
+        ctx.status(400).result("Driver name cannot be empty");
+        return;
+      }
+
+      if (driver.getNickname() == null || driver.getNickname().trim().isEmpty()) {
+        ctx.status(400).result("Driver nickname cannot be empty");
+        return;
+      }
+
+      final String driverName = driver.getName().trim();
+      final String driverNick = driver.getNickname().trim();
       List<Driver> allDrivers = driverRepository.findAll();
       boolean existing =
           allDrivers.stream()
               .anyMatch(
                   d ->
-                      (driverName != null && driverName.equalsIgnoreCase(d.getName()))
-                          || (driverNick != null && driverNick.equalsIgnoreCase(d.getNickname())));
+                      (d.getName() != null && driverName.equalsIgnoreCase(d.getName().trim()))
+                          || (d.getNickname() != null
+                              && driverNick.equalsIgnoreCase(d.getNickname().trim())));
 
       if (existing) {
         ctx.status(409).result("Driver name or nickname already exists");
@@ -122,25 +134,7 @@ public class DatabaseTaskHandler {
           || driver.getEntityId().isEmpty()
           || "new".equals(driver.getEntityId())) {
         String nextId = getNextSequence("drivers");
-        driver =
-            new Driver(
-                driver.getName(),
-                driver.getNickname(),
-                driver.getAvatarUrl(),
-                driver.getLapAudio(),
-                driver.getBestLapAudio(),
-                driver.getPenaltyAudio(),
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                nextId,
-                null);
+        driver = Driver.Builder.from(driver).withEntityId(nextId).build();
       }
       driverRepository.insert(driver);
       ctx.status(201).json(driver);
@@ -155,16 +149,28 @@ public class DatabaseTaskHandler {
       String id = ctx.pathParam("id");
       Driver driver = DatabaseHandlerUtils.bodyAsClassWithId(ctx.body(), Driver.class);
 
+      if (driver.getName() == null || driver.getName().trim().isEmpty()) {
+        ctx.status(400).result("Driver name cannot be empty");
+        return;
+      }
+
+      if (driver.getNickname() == null || driver.getNickname().trim().isEmpty()) {
+        ctx.status(400).result("Driver nickname cannot be empty");
+        return;
+      }
+
+      final String updateDriverName = driver.getName().trim();
+      final String updateDriverNick = driver.getNickname().trim();
       List<Driver> allDrivers = driverRepository.findAll();
       boolean existing =
           allDrivers.stream()
               .anyMatch(
                   d ->
                       !id.equals(d.getEntityId())
-                          && ((driver.getName() != null
-                                  && driver.getName().equalsIgnoreCase(d.getName()))
-                              || (driver.getNickname() != null
-                                  && driver.getNickname().equalsIgnoreCase(d.getNickname()))));
+                          && ((d.getName() != null
+                                  && updateDriverName.equalsIgnoreCase(d.getName().trim()))
+                              || (d.getNickname() != null
+                                  && updateDriverNick.equalsIgnoreCase(d.getNickname().trim()))));
 
       if (existing) {
         ctx.status(409).result("Driver name or nickname already exists");
@@ -172,6 +178,11 @@ public class DatabaseTaskHandler {
       }
 
       driverRepository.replace(id, driver);
+      com.antigravity.race.Race activeRace = // fqn-collision
+          ClientSubscriptionManager.getInstance().getRace();
+      if (activeRace != null) {
+        activeRace.updateDriver(driver);
+      }
       ctx.json(driver);
     } catch (Exception e) {
       logger.error("Error updating driver", e);

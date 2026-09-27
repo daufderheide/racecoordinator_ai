@@ -88,6 +88,11 @@ public class HeatOver implements IRaceState {
     double autoAdvanceTime = race.getRaceModel().getAutoAdvanceTime();
     if (autoAdvanceTime > 0 && !race.isAutoAdvanceFired()) {
       race.setAutoAdvanceRemaining(autoAdvanceTime);
+
+      RaceFlag initialFlag = getFlagType(race);
+      race.broadcastFlag(initialFlag);
+      syncDriverFlags(race);
+
       startAutoAdvanceTimer(race);
     } else {
       race.setAutoAdvanceRemaining(0);
@@ -127,18 +132,20 @@ public class HeatOver implements IRaceState {
     race.clearAutoTimers();
     RaceFlag flag = getFlagType(race);
     race.broadcastFlag(flag);
+    syncDriverFlags(race);
     race.setRaceState(RaceState.HEAT_OVER, flag, 0);
     race.resetRaceTime();
     broadcastTime(race);
+    ClientSubscriptionManager.getInstance().autoSave(race);
   }
 
   @Override
   public void restartHeat(Race race) {
     logger.info("HeatOver.restartHeat() called. Resetting current heat.");
+    race.changeState(new NotStarted());
     race.resetCurrentHeat();
     race.setAutoStartFired(false);
     race.setAutoAdvanceFired(false);
-    race.changeState(new NotStarted());
   }
 
   @Override

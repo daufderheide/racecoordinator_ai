@@ -4,15 +4,26 @@
 >
   <app-editor-title
     titleKey="TEM_TITLE"
-    [undoManager]="undoManager"
+    [items]="teamSelectItems"
+    [selectedId]="selectedTeamId"
+    [isEditMode]="isEditMode"
+    [showEdit]="true"
+    [showAdd]="true"
     [showCopy]="true"
-    [disabledCopy]="!isConfigValid()"
+    [showDelete]="true"
+    [disabledCopy]="!isConfigValid() || isSaving"
+    [disabledDelete]="!selectedTeam || isSaving"
     [copyDisabledTooltipKey]="'TEM_TOOLTIP_COPY_DISABLED'"
     [showHelp]="true"
     [helpSteps]="getHelpSteps()"
     [helpRecordName]="'teamEditorHelpShown'"
     [isSaving]="isSaving"
-    (copy)="saveAsNew()"
+    [undoManager]="undoManager"
+    (selectedIdChange)="onSelectTeamById($event)"
+    (edit)="onToggleEditMode()"
+    (add)="onAddNewTeam()"
+    (copy)="onCopyTeam()"
+    (delete)="onDeleteTeam()"
   >
   </app-editor-title>
 
@@ -20,9 +31,6 @@
     <div class="content-split">
       <!-- LEFT PANEL: TEAM CONFIGURATION -->
       <div class="editor-panel">
-        <div class="editor-section fixed-header">
-          <h1>{{ "TEM_HEADER_CONFIG" | translate }}</h1>
-        </div>
         <div class="sections-wrapper">
           <div class="config-section">
             <div class="config-form">
@@ -32,6 +40,7 @@
                   [(imageUrl)]="editingTeam.avatarUrl"
                   (imageUrlChange)="captureState()"
                   [assets]="avatarAssets"
+                  [disabled]="!isEditMode"
                 >
                 </app-image-selector>
               </div>
@@ -43,11 +52,19 @@
                 <input
                   id="team-name-input"
                   type="text"
+                  [disabled]="!isEditMode"
                   [(ngModel)]="editingTeam.name"
+                  [appAutoSelectDefault]="defaultTeamName"
                   (ngModelChange)="onInputChange()"
                   class="dm-input"
                   (focus)="onInputFocus()"
                   (blur)="onInputBlur()"
+                  autocomplete="off"
+                  data-dashlane-ignore="true"
+                  data-1p-ignore="true"
+                  data-lpignore="true"
+                  data-bwignore="true"
+                  data-form-type="other"
                 />
               </div>
             </div>
@@ -73,6 +90,7 @@
               id="assigned-drivers-list"
               class="driver-list assigned-list"
               cdkDropList
+              [cdkDropListDisabled]="!isEditMode"
               (cdkDropListDropped)="onDriverDrop($any($event))"
             >
               @if (assignedDrivers.length === 0) {
@@ -81,8 +99,16 @@
                 </div>
               }
               @for (driver of assignedDrivers; track driver) {
-                <div class="driver-item draggable" cdkDrag>
-                  <div class="drag-handle">☰</div>
+                <div
+                  class="driver-item"
+                  [class.draggable]="isEditMode"
+                  [class.disabled]="!isEditMode"
+                  cdkDrag
+                  [cdkDragDisabled]="!isEditMode"
+                >
+                  @if (isEditMode) {
+                    <div class="drag-handle">☰</div>
+                  }
                   <div class="driver-avatar-mini">
                     <img [src]="getAvatarUrl(driver.avatarUrl)" alt="Avatar" />
                   </div>
@@ -101,12 +127,14 @@
                     }
                   </div>
                   <div class="spacer"></div>
-                  <button
-                    class="action-btn danger small"
-                    (click)="removeDriver(driver)"
-                  >
-                    X
-                  </button>
+                  @if (isEditMode) {
+                    <button
+                      class="action-btn danger small"
+                      (click)="removeDriver(driver)"
+                    >
+                      X
+                    </button>
+                  }
                 </div>
               }
             </div>
@@ -125,8 +153,10 @@
             <div id="available-drivers-list" class="driver-grid">
               @for (driver of availableDrivers; track driver) {
                 <div
-                  class="driver-item click-assign"
-                  (click)="addDriver(driver)"
+                  class="driver-item"
+                  [class.click-assign]="isEditMode"
+                  [class.disabled]="!isEditMode"
+                  (click)="isEditMode && addDriver(driver)"
                 >
                   <div class="driver-avatar-mini">
                     <img [src]="getAvatarUrl(driver.avatarUrl)" alt="Avatar" />
@@ -146,7 +176,9 @@
                     }
                   </div>
                   <div class="spacer"></div>
-                  <button class="action-btn small add-list-btn">+</button>
+                  @if (isEditMode) {
+                    <button class="action-btn small add-list-btn">+</button>
+                  }
                 </div>
               }
             </div>
@@ -168,7 +200,7 @@
 <app-confirmation-modal
   [visible]="showDiscardConfirm"
   title="UE_CONFIRM_DISCARD_TITLE"
-  message="UE_CONFIRM_DISCARD_MESSAGE"
+  [message]="discardMessage"
   (confirm)="onConfirmDiscard()"
   (cancel)="onCancelDiscard()"
 >

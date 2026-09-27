@@ -1,18 +1,25 @@
 param(
-    [switch]$Headless
+    [switch]$Headless,
+    [string]$ReplayLog
 )
 $ErrorActionPreference = "Stop"
 
-# Parse dynamic ports
+# Parse dynamic ports and replay log
 $ServerPort = 7070
 $ClientPort = 4200
 
 for ($i = 0; $i -lt $args.Count; $i++) {
     if ($args[$i] -eq "--port" -and ($i + 1) -lt $args.Count) { $ServerPort = [int]$args[$i+1] }
     elseif ($args[$i] -like "--port=*") { $ServerPort = [int]($args[$i] -replace "--port=", "") }
+    elseif (($args[$i] -eq "--replay" -or $args[$i] -eq "-r") -and ($i + 1) -lt $args.Count) { $ReplayLog = $args[$i+1] }
+    elseif ($args[$i] -like "--replay=*") { $ReplayLog = ($args[$i] -replace "--replay=", "") }
 }
 
 if ($env:SERVER_PORT) { $ServerPort = [int]$env:SERVER_PORT }
+if ($env:REPLAY_LOG) { $ReplayLog = $env:REPLAY_LOG }
+if (-not [string]::IsNullOrEmpty($ReplayLog) -and -not [System.IO.Path]::IsPathRooted($ReplayLog)) {
+    $ReplayLog = Join-Path $PSScriptRoot $ReplayLog
+}
 
 function Test-PortInUse($Port) {
     $conn = Get-NetTCPConnection -LocalPort $Port -ErrorAction SilentlyContinue
@@ -186,16 +193,19 @@ if ($null -eq $MvnCmd) {
 
 $DATA_DIR = Join-Path $PSScriptRoot "data"
 
+$NativeLibOpt = "-Djava.library.path=$(Join-Path $SERVER_DIR 'lib\windows\x64')"
 if ($env:PROCESSOR_ARCHITECTURE -eq "ARM64" -or $env:PROCESSOR_ARCHITEW6432 -eq "ARM64") {
-    $env:MAVEN_OPTS = "-Djava.library.path=$(Join-Path $SERVER_DIR 'lib\windows\arm64')"
-} elseif ([Environment]::Is64BitProcess) {
-    $env:MAVEN_OPTS = "-Djava.library.path=$(Join-Path $SERVER_DIR 'lib\windows\x64')"
-} else {
-    $env:MAVEN_OPTS = "-Djava.library.path=$(Join-Path $SERVER_DIR 'lib\windows\x86')"
+    $NativeLibOpt = "-Djava.library.path=$(Join-Path $SERVER_DIR 'lib\windows\arm64')"
+} elseif (-not [Environment]::Is64BitProcess) {
+    $NativeLibOpt = "-Djava.library.path=$(Join-Path $SERVER_DIR 'lib\windows\x86')"
 }
+$env:MAVEN_OPTS = "$NativeLibOpt $env:MAVEN_OPTS".Trim()
 
 # Use BUILD_DIR for both proto generation and maven build to avoid conflicts
 $MvnArgs = @("compile", "exec:java", "-Dbuild.dist.dir=$BUILD_DIR", "-Dexec.mainClass=com.antigravity.App", "-Dexec.args=--headless", "-Dapp.data.dir=$DATA_DIR", "-DskipProtobuf=true")
+if (-not [string]::IsNullOrEmpty($ReplayLog)) {
+    $MvnArgs += "-DenableLogReplay=$ReplayLog"
+}
 if ($env:PROCESSOR_ARCHITECTURE -eq "ARM64" -or $env:PROCESSOR_ARCHITEW6432 -eq "ARM64") {
     $MvnArgs += '-Dde.flapdoodle.os.override="Windows|X86_64||"'
 }

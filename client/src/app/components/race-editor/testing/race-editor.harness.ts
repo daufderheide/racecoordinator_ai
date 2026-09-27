@@ -77,8 +77,8 @@ export class RaceEditorHarness
 
   async setHeatTimesThrough(count: number): Promise<void> {
     const input = await this.getHeatTimesThroughEl();
-    await input.clear();
-    await input.sendKeys(String(count));
+    await input.setInputValue(String(count));
+    await input.dispatchEvent("input");
   }
 
   async getReverseHeats(): Promise<boolean> {

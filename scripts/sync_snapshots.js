@@ -46,8 +46,7 @@ for (const spec of failedSpecs) {
 
     const snapshotDir = path.join(PROJECT_ROOT, 'src', 'app', `${relativeTestFile}-snapshots`);
     if (!fs.existsSync(snapshotDir)) {
-         console.log(`Warning: Snapshot directory not found: ${snapshotDir}`);
-         continue;
+         fs.mkdirSync(snapshotDir, { recursive: true });
     }
 
     for (const test of spec.tests) {
@@ -72,10 +71,18 @@ for (const spec of failedSpecs) {
                     const snapshotBaseName = attachment.name.replace('-actual.png', '');
                     // Find matching expected file in snapshot folder
                     const files = fs.readdirSync(snapshotDir);
-                    const matchingFiles = files.filter(f => f.startsWith(snapshotBaseName) && f.includes(projectName) && f.endsWith('.png'));
+                    const matchingFiles = files.filter(f =>
+                        (f === `${snapshotBaseName}-${projectName}-linux.png` ||
+                         f === `${snapshotBaseName}-${projectName}.png` ||
+                         f.startsWith(`${snapshotBaseName}-${projectName}-`)) &&
+                        f.endsWith('.png')
+                    );
 
                     if (matchingFiles.length === 0) {
-                        console.log(`Could not find expected file for snapshot: ${snapshotBaseName} in ${snapshotDir}`);
+                        const targetName = `${snapshotBaseName}-${projectName}-linux.png`;
+                        const destPath = path.join(snapshotDir, targetName);
+                        fs.copyFileSync(actualPath, destPath);
+                        console.log(`✅ Created new snapshot: ${targetName}`);
                         continue;
                     }
 

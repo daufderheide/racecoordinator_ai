@@ -79,22 +79,181 @@ test.describe("Raceday Action Button Visuals", () => {
             lanes: [{ objectId: "l1", length: 10 }],
           },
         },
-        drivers: [],
+        drivers: [
+          {
+            objectId: "rp1",
+            driver: {
+              model: { entityId: "d1" },
+              name: "Apex Hunter",
+              nickname: "Apex",
+            },
+          },
+        ],
+        heats: [
+          {
+            objectId: "h1",
+            heatNumber: 1,
+            heatDrivers: [
+              {
+                objectId: "hd1",
+                driver: {
+                  model: { entityId: "d1" },
+                  name: "Apex Hunter",
+                  nickname: "Apex",
+                },
+                laneIndex: 0,
+              },
+            ],
+          },
+        ],
         currentHeat: {
           objectId: "h1",
           heatNumber: 1,
-          heatDrivers: [],
+          heatDrivers: [
+            {
+              objectId: "hd1",
+              driver: {
+                model: { entityId: "d1" },
+                name: "Apex Hunter",
+                nickname: "Apex",
+              },
+              laneIndex: 0,
+            },
+          ],
         },
+      },
+      raceTime: {
         time: 15.0,
+        heatTime: 15.0,
       },
     };
 
     await TestSetupHelper.mockRaceData(page, raceData);
-    await page.waitForTimeout(500);
 
     const dashboard = page.locator(".dashboard-wrapper");
     await expect(dashboard).toHaveScreenshot("raceday-action-buttons.png", {
       maxDiffPixelRatio: 0.05,
     });
+  });
+
+  test("should display action back button widget", async ({ page }) => {
+    await TestSetupHelper.setupSettings(page, {
+      racedayLayout: {
+        widgets: [
+          {
+            id: "w-back",
+            widgetType: "action-back",
+            x: 50,
+            y: 50,
+            width: 36,
+            height: 36,
+            scaleMode: "auto",
+            customSettings: { backgroundColor: "", fontSize: 24 },
+          },
+        ],
+      },
+    });
+
+    await page.addInitScript(() => {
+      window.history.replaceState({ appHistoryIndex: 1 }, "");
+    });
+
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/default-raceday"),
+    );
+
+    await page.locator(".dashboard-wrapper").waitFor();
+    const backBtn = page.locator("app-raceday-action-button button");
+    await backBtn.waitFor({ state: "visible" });
+    await page.evaluate(() => document.fonts.ready);
+    await page.mouse.move(0, 0);
+
+    await expect(backBtn).toHaveScreenshot("raceday-action-back-button.png", {
+      maxDiffPixelRatio: 0.05,
+    });
+  });
+
+  test("should display action back button widget hovered", async ({ page }) => {
+    await TestSetupHelper.setupSettings(page, {
+      racedayLayout: {
+        widgets: [
+          {
+            id: "w-back",
+            widgetType: "action-back",
+            x: 50,
+            y: 50,
+            width: 36,
+            height: 36,
+            scaleMode: "auto",
+            customSettings: { backgroundColor: "", fontSize: 24 },
+          },
+        ],
+      },
+    });
+
+    await page.addInitScript(() => {
+      window.history.replaceState({ appHistoryIndex: 1 }, "");
+    });
+
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/default-raceday"),
+    );
+
+    await page.locator(".dashboard-wrapper").waitFor();
+    const backBtn = page.locator("app-raceday-action-button button");
+    await backBtn.waitFor({ state: "visible" });
+    await page.evaluate(() => document.fonts.ready);
+    await backBtn.hover();
+
+    await expect(backBtn).toHaveScreenshot(
+      "raceday-action-back-button-hover.png",
+      {
+        maxDiffPixelRatio: 0.05,
+      },
+    );
+  });
+
+  test("should display action back button widget disabled", async ({
+    page,
+  }) => {
+    await TestSetupHelper.setupSettings(page, {
+      racedayLayout: {
+        widgets: [
+          {
+            id: "w-back",
+            widgetType: "action-back",
+            x: 50,
+            y: 50,
+            width: 36,
+            height: 36,
+            scaleMode: "auto",
+            customSettings: { backgroundColor: "", fontSize: 24 },
+          },
+        ],
+      },
+    });
+
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/default-raceday"),
+    );
+
+    await page.locator(".dashboard-wrapper").waitFor();
+    const backBtn = page.locator("app-raceday-action-button button");
+    await backBtn.waitFor({ state: "visible" });
+    await page.evaluate(() => document.fonts.ready);
+    await page.mouse.move(0, 0);
+
+    await expect(backBtn).toHaveScreenshot(
+      "raceday-action-back-button-disabled.png",
+      {
+        maxDiffPixelRatio: 0.05,
+      },
+    );
   });
 });

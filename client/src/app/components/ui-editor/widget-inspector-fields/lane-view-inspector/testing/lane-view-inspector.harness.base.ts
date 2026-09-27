@@ -2,7 +2,7 @@ export abstract class LaneViewInspectorHarnessBase {
   static readonly hostSelector = "app-lane-view-inspector";
 
   static readonly selectors = {
-    selects: "select",
+    selects: "app-custom-select",
     columnWidthInputs: ".col-width-input",
   };
 

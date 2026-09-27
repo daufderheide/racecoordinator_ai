@@ -223,4 +223,108 @@ describe("RacedayRecordsComponent", () => {
       done();
     }, 50);
   });
+
+  it("should not render records that are disabled in customSettings", async () => {
+    fixture.componentRef.setInput("widget", {
+      id: "widget-records",
+      widgetType: "records",
+      x: 0,
+      y: 0,
+      width: 400,
+      height: 300,
+      zIndex: 100,
+      customSettings: {
+        showRaceRecordLap: false,
+        showCurrentRaceBest: false,
+      },
+    });
+    fixture.componentRef.setInput("raceRecordScoreNickname", "Bob");
+    fixture.componentRef.setInput("raceRecordScore", 15);
+    fixture.componentRef.setInput("heatBestNickname", "Dave");
+    fixture.componentRef.setInput("heatBestTime", 10.5);
+    fixture.detectChanges();
+
+    expect(await harness.getRowCount()).toBe(2);
+
+    const firstVisible = await harness.getRecordRowValues(0);
+    expect(firstVisible.nickname).toBe("Bob");
+
+    const secondVisible = await harness.getRecordRowValues(1);
+    expect(secondVisible.nickname).toBe("Dave");
+
+    const headers = fixture.nativeElement.querySelectorAll(".record-header");
+    expect(headers.length).toBe(2);
+    expect(headers[0].textContent.trim()).toBe("RD_RECORD_RACE_SCORE");
+    expect(headers[1].textContent.trim()).toBe("RD_RECORD_HEAT_BEST");
+  });
+
+  it("should render no records when all are disabled in customSettings", async () => {
+    fixture.componentRef.setInput("widget", {
+      id: "widget-records",
+      widgetType: "records",
+      x: 0,
+      y: 0,
+      width: 400,
+      height: 300,
+      zIndex: 100,
+      customSettings: {
+        showRaceRecordLap: false,
+        showRaceRecordScore: false,
+        showCurrentRaceBest: false,
+        showHeatBest: false,
+      },
+    });
+    fixture.detectChanges();
+
+    expect(await harness.getRowCount()).toBe(0);
+    const headers = fixture.nativeElement.querySelectorAll(".record-header");
+    expect(headers.length).toBe(0);
+  });
+
+  it("should set --record-count and calculate proportional font sizes when 2 records are visible", (done) => {
+    fixture.componentRef.setInput("widget", {
+      id: "widget-records",
+      widgetType: "records",
+      x: 1152,
+      y: 90,
+      width: 384,
+      height: 239,
+      zIndex: 100,
+      scaleMode: "auto",
+      customSettings: {
+        showCurrentRaceBest: false,
+        showHeatBest: false,
+      },
+    });
+    fixture.componentRef.setInput("raceRecordLapNickname", "Mario");
+    fixture.componentRef.setInput("raceRecordLapTime", 1.842);
+    fixture.componentRef.setInput("raceRecordScoreNickname", "Luigi");
+    fixture.componentRef.setInput("raceRecordScore", 24.5);
+    fixture.detectChanges();
+
+    const panel = fixture.nativeElement.querySelector(
+      ".record-panel",
+    ) as HTMLElement;
+    Object.defineProperty(panel, "clientWidth", { value: 384 });
+    Object.defineProperty(panel, "clientHeight", { value: 239 });
+
+    setTimeout(() => {
+      (component as any).fitText();
+      const valSize = panel.style.getPropertyValue("--record-value-font-size");
+      const headerSize = panel.style.getPropertyValue(
+        "--record-header-font-size",
+      );
+      const recordCount = panel.style.getPropertyValue("--record-count");
+
+      expect(recordCount).toBe("2");
+      expect(valSize).toBeTruthy();
+      expect(headerSize).toBeTruthy();
+      // Ensure font sizes remain proportional and do not blow up past standard widget limits
+      const valPx = parseInt(valSize, 10);
+      const headerPx = parseInt(headerSize, 10);
+      expect(valPx).toBeLessThanOrEqual(25);
+      expect(headerPx).toBeLessThanOrEqual(20);
+      done();
+    }, 50);
+  });
 });

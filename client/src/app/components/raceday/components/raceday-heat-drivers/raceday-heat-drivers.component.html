@@ -71,8 +71,9 @@
                 widget()?.customSettings?.['laneTextColor'] || null
               "
               [style.padding-right]="
-                widget()?.scaleMode === 'auto' ? '2.75em' : '44px'
+                widget()?.scaleMode === 'auto' ? '2.75em' : '28px'
               "
+              [style.background-image]="getDropdownArrowBg(hd)"
               style="
                 display: flex;
                 flex-direction: column;
@@ -80,6 +81,8 @@
                 min-width: 0;
                 line-height: 1.1;
                 align-items: flex-start;
+                background-repeat: no-repeat;
+                background-position: right 4px center;
               "
             >
               <span
@@ -110,46 +113,22 @@
                 </span>
               }
             </div>
-            <select
+            <app-custom-select
               class="teammate-select"
-              [style.background-image]="getDropdownArrowBg(hd)"
               (change)="onTeammateChange(hd, $event)"
               [disabled]="isEditMode()"
-              style="
-                position: absolute;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                cursor: pointer;
-                z-index: 2;
-                color: transparent;
-                background-color: transparent;
-                border: none;
-                appearance: none;
-                outline: none;
-                background-repeat: no-repeat;
-                background-position: right center;
-              "
+              [ngModel]="hd.actualDriver?.entity_id || hd.driver.entity_id"
             >
-              @for (tm of getTeammates(hd); track tm) {
-                <option
-                  [value]="$any(tm).entity_id || $any(tm).id"
-                  [selected]="
-                    ($any(tm).entity_id || $any(tm).id) ===
-                    (hd.actualDriver?.entity_id || $any(hd.driver).entity_id)
-                  "
-                  style="
-                    background-color: #1a2332;
-                    color: #fff;
-                    font-size: 16px;
-                  "
-                >
+              @for (
+                tm of getTeammates(hd);
+                track $any(tm).entity_id || $any(tm).id
+              ) {
+                <app-custom-option [value]="$any(tm).entity_id || $any(tm).id">
                   {{ tm.nickname || tm.name }}
                   {{ getDriverStats(hd, $any(tm).entity_id || $any(tm).id) }}
-                </option>
+                </app-custom-option>
               }
-            </select>
+            </app-custom-select>
           </div>
         } @else {
           <div

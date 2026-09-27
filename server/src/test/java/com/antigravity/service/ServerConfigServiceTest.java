@@ -49,7 +49,7 @@ public class ServerConfigServiceTest {
     service.setSkippedUpdateVersion("2.0.0");
     assertEquals("2.0.0", service.getSkippedUpdateVersion());
 
-    assertEquals("ALPHA", service.getUpdateChannel());
+    assertEquals("BETA", service.getUpdateChannel());
     service.setUpdateChannel("PRODUCTION");
     assertEquals("PRODUCTION", service.getUpdateChannel());
 
@@ -61,13 +61,20 @@ public class ServerConfigServiceTest {
     assertEquals(null, service.getSnoozedUpdateVersion());
     assertEquals(0L, service.getSnoozedUpdateUntil());
 
-    assertEquals("ALPHA", ServerConfigService.getDefaultUpdateChannel("0.0.0_dev"));
-    assertEquals("ALPHA", ServerConfigService.getDefaultUpdateChannel("1.0.0-alpha.20260819"));
-    assertEquals("ALPHA", ServerConfigService.getDefaultUpdateChannel("v0.0.0-alpha.20260815"));
+    service.setCustomUiDirectory("/path/to/custom_ui");
+    assertEquals("/path/to/custom_ui", service.getCustomUiDirectory());
+
+    service.setCustomWidgetDirectory("/path/to/widgets");
+    assertEquals("/path/to/widgets", service.getCustomWidgetDirectory());
+
+    assertEquals("BETA", ServerConfigService.getDefaultUpdateChannel());
+    assertEquals("BETA", ServerConfigService.getDefaultUpdateChannel("0.0.0_dev"));
+    assertEquals("BETA", ServerConfigService.getDefaultUpdateChannel("1.0.0-alpha.20260819"));
+    assertEquals("BETA", ServerConfigService.getDefaultUpdateChannel("v0.0.0-alpha.20260815"));
     assertEquals("BETA", ServerConfigService.getDefaultUpdateChannel("1.0.0-beta.1"));
     assertEquals("BETA", ServerConfigService.getDefaultUpdateChannel("v1.0.0-beta.6"));
-    assertEquals("PRODUCTION", ServerConfigService.getDefaultUpdateChannel("1.0.0"));
-    assertEquals("PRODUCTION", ServerConfigService.getDefaultUpdateChannel("v1.0.1"));
-    assertEquals("PRODUCTION", ServerConfigService.getDefaultUpdateChannel(null));
+    assertEquals("BETA", ServerConfigService.getDefaultUpdateChannel("1.0.0"));
+    assertEquals("BETA", ServerConfigService.getDefaultUpdateChannel("v1.0.1"));
+    assertEquals("BETA", ServerConfigService.getDefaultUpdateChannel(null));
   }
 }

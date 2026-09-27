@@ -14,6 +14,8 @@ import { LoggerService } from "@app/services/logger.service";
 import { PrintService } from "@app/services/print.service";
 import { RaceService } from "@app/services/race.service";
 import { RaceConnectionService } from "@app/services/race-connection.service";
+import { RaceFlagService } from "@app/services/race-flag.service";
+import { RaceTimeService } from "@app/services/race-time.service";
 import { TranslationService } from "@app/services/translation.service";
 
 import { DefaultHeatResultsComponent } from "./default-heat-results.component";
@@ -26,6 +28,8 @@ export class CustomHeatResultsBaseComponent extends DefaultHeatResultsComponent 
     @Inject(TranslationService) translationService: TranslationService,
     @Inject(ChangeDetectorRef) cdr: ChangeDetectorRef,
     @Inject(PrintService) printService: PrintService,
+    @Inject(RaceFlagService) raceFlagService: RaceFlagService,
+    @Inject(RaceTimeService) raceTimeService: RaceTimeService,
   ) {
     super(
       raceConnectionService,
@@ -33,6 +37,8 @@ export class CustomHeatResultsBaseComponent extends DefaultHeatResultsComponent 
       translationService,
       cdr,
       printService,
+      raceFlagService,
+      raceTimeService,
     );
   }
 }

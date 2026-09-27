@@ -2,7 +2,7 @@ export abstract class TextInfoInspectorHarnessBase {
   static readonly hostSelector = "app-text-info-inspector";
 
   static readonly selectors = {
-    selects: "select",
+    selects: "app-custom-select",
     sliders: "input[type='range']",
     colorPickers: "input[type='color']",
     resetButtons: ".color-reset-btn",

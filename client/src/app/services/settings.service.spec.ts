@@ -46,6 +46,12 @@ describe("SettingsService", () => {
     expect(settings.columnLayouts["lapCount"][AnchorPoint.BottomLeft]).toBe(
       "flag",
     );
+
+    // Verify default TTS settings
+    expect(settings.ttsVoice).toBe("");
+    expect(settings.ttsRate).toBe(1.0);
+    expect(settings.ttsPitch).toBe(1.0);
+    expect(settings.ttsVolume).toBe(100);
   });
 
   it("should save and retrieve language and selectedSeasonId settings", () => {
@@ -155,5 +161,80 @@ describe("SettingsService", () => {
       }
     });
     service.saveSettings(settings);
+  });
+
+  it("should save, retrieve and emit audio callout settings via settings$", (done) => {
+    const settings = Object.assign(new Settings(), {
+      urgentQueueTtl: 10000,
+      calloutSpacing: 1000,
+    });
+    service.settings$.subscribe((emitted) => {
+      if (emitted.urgentQueueTtl === 10000 && emitted.calloutSpacing === 1000) {
+        expect(emitted.urgentQueueTtl).toBe(10000);
+        expect(emitted.calloutSpacing).toBe(1000);
+        expect(service.getSettings().urgentQueueTtl).toBe(10000);
+        expect(service.getSettings().calloutSpacing).toBe(1000);
+        done();
+      }
+    });
+    service.saveSettings(settings);
+  });
+
+  it("should save, retrieve and emit TTS settings via settings$", (done) => {
+    const settings = Object.assign(new Settings(), {
+      ttsVoice: "Alex",
+      ttsRate: 1.25,
+      ttsPitch: 0.8,
+      ttsVolume: 90,
+    });
+    service.settings$.subscribe((emitted) => {
+      if (emitted.ttsVoice === "Alex") {
+        expect(emitted.ttsVoice).toBe("Alex");
+        expect(emitted.ttsRate).toBe(1.25);
+        expect(emitted.ttsPitch).toBe(0.8);
+        expect(emitted.ttsVolume).toBe(90);
+        expect(service.getSettings().ttsVoice).toBe("Alex");
+        expect(service.getSettings().ttsRate).toBe(1.25);
+        expect(service.getSettings().ttsPitch).toBe(0.8);
+        expect(service.getSettings().ttsVolume).toBe(90);
+        done();
+      }
+    });
+    service.saveSettings(settings);
+  });
+
+  it("should backfill custom template filename if base64 template exists without filename", () => {
+    const legacySettings = {
+      language: "en",
+      customExportTemplateBase64:
+        "data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,ABC",
+    };
+    localStorage.setItem(
+      "racecoordinator_settings",
+      JSON.stringify(legacySettings),
+    );
+
+    const retrieved = service.getSettings();
+    expect(retrieved.customExportTemplateName).toBe(
+      "custom_export_template.xlsx",
+    );
+    expect(retrieved.customExportTemplatePath).toBe(
+      "custom_export_template.xlsx",
+    );
+  });
+
+  it("should preserve custom template filename and path if already present", () => {
+    const settings = {
+      language: "en",
+      customExportTemplateBase64:
+        "data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,ABC",
+      customExportTemplateName: "my_results.xlsx",
+      customExportTemplatePath: "/docs/my_results.xlsx",
+    };
+    localStorage.setItem("racecoordinator_settings", JSON.stringify(settings));
+
+    const retrieved = service.getSettings();
+    expect(retrieved.customExportTemplateName).toBe("my_results.xlsx");
+    expect(retrieved.customExportTemplatePath).toBe("/docs/my_results.xlsx");
   });
 });

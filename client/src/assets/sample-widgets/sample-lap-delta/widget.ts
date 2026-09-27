@@ -25,8 +25,8 @@ export class LapDeltaComponent extends CustomWidgetBaseComponent {
 
   get deltaSeconds(): number | null {
     if (!this.leader || !this.runnerUp) return null;
-    const t1 = this.leader.best_lap_time;
-    const t2 = this.runnerUp.best_lap_time;
+    const t1 = this.leader.bestLapTime;
+    const t2 = this.runnerUp.bestLapTime;
     if (!t1 || !t2 || t1 <= 0 || t2 <= 0) return null;
     return t2 - t1;
   }

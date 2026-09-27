@@ -26,11 +26,13 @@ export class TextInfoInspectorHarnessE2e implements TextInfoInspectorHarnessBase
   }
 
   async getLabelFontFamily(): Promise<string> {
-    return await this.selects.nth(0).inputValue();
+    return (await this.selects.nth(0).getAttribute("data-value")) || "";
   }
 
   async setLabelFontFamily(val: string): Promise<void> {
-    await this.selects.nth(0).selectOption({ label: val });
+    const sel = this.selects.nth(0);
+    await sel.locator(".custom-select-trigger").click();
+    await sel.locator(`.custom-select-option:has-text("${val}")`).click();
   }
 
   async getLabelFontSize(): Promise<number> {
@@ -56,11 +58,13 @@ export class TextInfoInspectorHarnessE2e implements TextInfoInspectorHarnessBase
   }
 
   async getValueFontFamily(): Promise<string> {
-    return await this.selects.nth(1).inputValue();
+    return (await this.selects.nth(1).getAttribute("data-value")) || "";
   }
 
   async setValueFontFamily(val: string): Promise<void> {
-    await this.selects.nth(1).selectOption({ label: val });
+    const sel = this.selects.nth(1);
+    await sel.locator(".custom-select-trigger").click();
+    await sel.locator(`.custom-select-option:has-text("${val}")`).click();
   }
 
   async getValueFontSize(): Promise<number> {

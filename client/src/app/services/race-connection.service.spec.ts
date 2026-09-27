@@ -1,6 +1,7 @@
 import { fakeAsync, flush, TestBed, tick } from "@angular/core/testing";
 import { of, Subject } from "rxjs";
 import { DataService } from "@app/data.service";
+import { Driver } from "@app/models/driver";
 import {
   IInterfaceEvent,
   ILap,
@@ -8,6 +9,8 @@ import {
   RaceFlag,
   RaceState,
 } from "@app/proto/antigravity";
+import { DriverHeatData } from "@app/race/driver_heat_data";
+import { RaceParticipant } from "@app/race/race_participant";
 
 import { ChildWindowManagerService } from "./child-window-manager.service";
 import { RaceService } from "./race.service";
@@ -79,8 +82,10 @@ describe("RaceConnectionService", () => {
       "getRace",
       "getCurrentHeat",
       "setCurrentHeat",
+      "getHeats",
       "clear",
     ]);
+    mockRaceService.getHeats.and.returnValue([]);
     mockRaceService.getCurrentHeat.and.returnValue({
       heatDrivers: [
         { objectId: "d1", addLapTime: jasmine.createSpy("addLapTime") },
@@ -136,6 +141,12 @@ describe("RaceConnectionService", () => {
       // Should be called immediately without ticking
       expect((service as any).stopConnection).toHaveBeenCalledTimes(1);
     }));
+
+    it("should not decrement connectionCount below 0 on excessive disconnect calls", () => {
+      service.disconnect();
+      service.disconnect();
+      expect((service as any).connectionCount).toBe(0);
+    });
 
     it("should call closeAllWindows on childWindowManagerService when stopConnection runs", () => {
       const childWindowManager = TestBed.inject(ChildWindowManagerService);
@@ -405,6 +416,65 @@ describe("RaceConnectionService", () => {
       sub.unsubscribe();
       flush();
     }));
+
+    it("should suppress watchdog alerts and not connect to interface socket if raceState is RACE_OVER", fakeAsync(() => {
+      mockDataService.getRaceState.and.returnValue(of(RaceState.RACE_OVER));
+
+      let emittedAlert: any = null;
+      const sub = service.interfaceAlert$.subscribe(
+        (alert) => (emittedAlert = alert),
+      );
+
+      service.connect();
+
+      expect(
+        mockDataService.connectToInterfaceDataSocket,
+      ).not.toHaveBeenCalled();
+
+      // Tick watchdog timeout
+      tick(30000);
+      expect(emittedAlert).toBeNull();
+
+      // Even if an interface event arrives, alert is suppressed
+      interfaceEventsSubject.next({
+        status: { status: InterfaceStatus.DISCONNECTED },
+      });
+      tick(30000);
+      expect(emittedAlert).toBeNull();
+
+      sub.unsubscribe();
+      flush();
+    }));
+
+    it("should disconnect from interface socket and suppress alerts when race transitions to RACE_OVER", fakeAsync(() => {
+      const raceStateSubject = new Subject<RaceState>();
+      mockDataService.getRaceState.and.returnValue(
+        raceStateSubject.asObservable(),
+      );
+
+      let emittedAlert: any = null;
+      const sub = service.interfaceAlert$.subscribe(
+        (alert) => (emittedAlert = alert),
+      );
+
+      service.connect();
+
+      // Transition to RACE_OVER
+      raceStateSubject.next(RaceState.RACE_OVER);
+      expect(
+        mockDataService.disconnectFromInterfaceDataSocket,
+      ).toHaveBeenCalled();
+
+      // Interface events after RACE_OVER should not emit alerts
+      interfaceEventsSubject.next({
+        status: { status: InterfaceStatus.DISCONNECTED },
+      });
+      tick(30000);
+      expect(emittedAlert).toBeNull();
+
+      sub.unsubscribe();
+      flush();
+    }));
   });
 
   describe("Data Stream Forwarding", () => {
@@ -420,6 +490,46 @@ describe("RaceConnectionService", () => {
       });
 
       lapsSubject.next(lapData);
+    });
+
+    it("should route lap to Lane 2 without affecting Lane 1 in solo practice mode", () => {
+      const driver = new Driver("d_solo", "McLaren Red", "MR");
+      const participant = new RaceParticipant("p_solo", driver);
+      const lane0Driver = new DriverHeatData(
+        "dhd_lane0",
+        participant,
+        0,
+        driver,
+      );
+      const lane1Driver = new DriverHeatData(
+        "dhd_lane1",
+        participant,
+        1,
+        driver,
+      );
+
+      spyOn(lane0Driver, "addLapTime");
+      spyOn(lane1Driver, "addLapTime");
+
+      mockRaceService.getCurrentHeat.and.returnValue({
+        objectId: "heat_solo",
+        heatDrivers: [lane0Driver, lane1Driver],
+      });
+
+      service.connect();
+
+      // Lap occurs on Lane 2 (lane index 1)
+      const lapOnLane2: ILap = {
+        objectId: "dhd_lane1",
+        interfaceId: 1,
+        driverId: "d_solo",
+        lapNumber: 1,
+        lapTime: 3.456,
+      };
+      lapsSubject.next(lapOnLane2);
+
+      expect(lane1Driver.addLapTime).toHaveBeenCalled();
+      expect(lane0Driver.addLapTime).not.toHaveBeenCalled();
     });
 
     it("should pipe flags to raceFlag$", (done) => {
@@ -627,6 +737,45 @@ describe("RaceConnectionService", () => {
       expect(mockRaceService.setParticipants).toHaveBeenCalled();
       expect(mockRaceService.setHeats).toHaveBeenCalled();
       expect(mockRaceService.setCurrentHeat).toHaveBeenCalled();
+
+      const participantsOrder =
+        mockRaceService.setParticipants.calls.first().invocationOrder;
+      const heatsOrder = mockRaceService.setHeats.calls.first().invocationOrder;
+      const raceOrder = mockRaceService.setRace.calls.first().invocationOrder;
+      const currentHeatOrder =
+        mockRaceService.setCurrentHeat.calls.first().invocationOrder;
+
+      expect(participantsOrder).toBeLessThan(raceOrder);
+      expect(heatsOrder).toBeLessThan(raceOrder);
+      expect(raceOrder).toBeLessThan(currentHeatOrder);
+    }));
+
+    it("should buffer heat updates when drivers are not loaded and flush once hydrated", fakeAsync(() => {
+      const heatsSubject = new Subject<any>();
+      const driversSubject = new Subject<any>();
+      mockDataService.getHeats.and.returnValue(heatsSubject.asObservable());
+      mockDataService.getDrivers.and.returnValue(driversSubject.asObservable());
+
+      service.connect();
+      (service as any).driversLoaded = false;
+
+      const mockHeatProto = {
+        heatNumber: 1,
+        heatDrivers: [],
+      };
+
+      heatsSubject.next(mockHeatProto);
+      tick();
+
+      expect((service as any).pendingHeat).toBe(mockHeatProto);
+      expect(mockRaceService.setCurrentHeat).not.toHaveBeenCalled();
+
+      driversSubject.next([]);
+      tick();
+
+      expect((service as any).driversLoaded).toBeTrue();
+      expect((service as any).pendingHeat).toBeNull();
+      expect(mockRaceService.setCurrentHeat).toHaveBeenCalled();
     }));
 
     it("should handle error in driver loading gracefully and flush pendingUpdate", fakeAsync(() => {
@@ -649,5 +798,98 @@ describe("RaceConnectionService", () => {
       });
       expect((service as any).pendingUpdate).toBeNull();
     }));
+
+    it("should update driver participant fuelLevel using laneIndex when carData is received", () => {
+      const carDataSubject = new Subject<any>();
+      mockDataService.getCarData.and.returnValue(carDataSubject.asObservable());
+
+      const mockHeat = {
+        heatDrivers: [
+          {
+            laneIndex: 2,
+            participant: { fuelLevel: 100 },
+          },
+        ],
+      } as any;
+      mockRaceService.getCurrentHeat.and.returnValue(mockHeat);
+
+      service.connect();
+
+      carDataSubject.next({
+        lane: 2,
+        fuelLevel: 45.5,
+        isRefueling: true,
+      });
+
+      expect(mockHeat.heatDrivers[0].participant.fuelLevel).toBe(45.5);
+      expect(mockHeat.heatDrivers[0].isRefueling).toBeTrue();
+    });
+
+    it("should merge pending race updates when drivers are not loaded rather than overwriting", fakeAsync(() => {
+      const driversSubject = new Subject<any>();
+      mockDataService.getDrivers.and.returnValue(driversSubject.asObservable());
+
+      service.connect();
+      (service as any).driversLoaded = false;
+
+      const fullUpdate = {
+        race: { name: "Full Grand Prix", model: { entityId: "r1" } },
+        drivers: [{ name: "Driver 1" }],
+        heats: [{ heatNumber: 1 }],
+      };
+
+      const partialUpdate = {
+        currentHeat: { heatNumber: 2 },
+        state: RaceState.RACING,
+      };
+
+      raceUpdateSubject.next(fullUpdate);
+      tick();
+
+      expect((service as any).pendingUpdate.race).toBeDefined();
+      expect((service as any).pendingUpdate.drivers.length).toBe(1);
+
+      raceUpdateSubject.next(partialUpdate);
+      tick();
+
+      expect((service as any).pendingUpdate.race).toBeDefined();
+      expect((service as any).pendingUpdate.drivers.length).toBe(1);
+      expect((service as any).pendingUpdate.heats.length).toBe(1);
+      expect((service as any).pendingUpdate.currentHeat.heatNumber).toBe(2);
+      expect((service as any).pendingUpdate.state).toBe(RaceState.RACING);
+    }));
+
+    it("should trigger updateRaceSubscription(true) when heat arrives but race track is missing", () => {
+      const heatsSubject = new Subject<any>();
+      mockDataService.getHeats.and.returnValue(heatsSubject.asObservable());
+      mockRaceService.getRace.and.returnValue(null);
+
+      service.connect();
+      (service as any).driversLoaded = true;
+
+      mockDataService.updateRaceSubscription.calls.reset();
+
+      heatsSubject.next({
+        heatNumber: 1,
+        heatDrivers: [],
+      });
+
+      expect(mockDataService.updateRaceSubscription).toHaveBeenCalledWith(true);
+    });
+
+    it("should trigger updateRaceSubscription(true) when partial race update arrives but race track is missing", () => {
+      mockRaceService.getRace.and.returnValue(null);
+
+      service.connect();
+      (service as any).driversLoaded = true;
+
+      mockDataService.updateRaceSubscription.calls.reset();
+
+      raceUpdateSubject.next({
+        currentHeat: { heatNumber: 1 },
+      });
+
+      expect(mockDataService.updateRaceSubscription).toHaveBeenCalledWith(true);
+    });
   });
 });

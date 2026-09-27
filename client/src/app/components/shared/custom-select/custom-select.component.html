@@ -1,0 +1,44 @@
+<div
+  class="custom-select-container"
+  [class.disabled]="disabled()"
+  [class.open]="isOpen"
+>
+  <div class="custom-select-trigger" (click)="toggleOpen()">
+    <span class="selected-text" [title]="selectedLabel || ''">
+      @if (selectedLabel) {
+        {{ selectedLabel }}
+      } @else {
+        <span class="placeholder">&nbsp;</span>
+      }
+    </span>
+    <span class="dropdown-icon">▼</span>
+  </div>
+
+  @if (isOpen) {
+    <div
+      class="custom-select-dropdown"
+      [class.open-upward]="openUpward"
+      [class.align-right]="openRightAligned"
+    >
+      @for (option of customOptions; track option.value() ?? $index) {
+        <div
+          class="custom-select-option"
+          [attr.data-value]="option.value()"
+          [class.selected]="isSelected(option.value())"
+          [class.disabled]="option.disabled()"
+          (click)="!option.disabled() && selectOption(option, $event)"
+        >
+          {{ option.label }}
+        </div>
+        @if (option.hasSeparator) {
+          <div class="custom-select-separator" role="separator"></div>
+        }
+      }
+    </div>
+  }
+
+  <!-- Hide projected content visually -->
+  <div style="display: none">
+    <ng-content></ng-content>
+  </div>
+</div>

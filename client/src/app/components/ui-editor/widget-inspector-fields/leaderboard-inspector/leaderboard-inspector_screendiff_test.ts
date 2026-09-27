@@ -49,11 +49,12 @@ test.describe("Leaderboard Inspector Visuals", () => {
     await inspectorFields.waitFor({ state: "visible" });
 
     // Switch to custom scaling mode to enable font size sliders
-    await page
+    const scaleSelect1 = page
       .locator(".inspector-section")
       .filter({ hasText: "Scaling Mode" })
-      .locator("select")
-      .selectOption("");
+      .locator("app-custom-select");
+    await scaleSelect1.locator(".custom-select-trigger").click();
+    await scaleSelect1.locator('.custom-select-option[data-value=""]').click();
 
     const harness = new LeaderboardInspectorHarnessE2e(inspectorFields);
     // Interact with options to show they work and are displayed properly
@@ -65,7 +66,6 @@ test.describe("Leaderboard Inspector Visuals", () => {
     // Blur any active element and move mouse to remove hover states
     await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
     await page.mouse.move(0, 0);
-    await page.waitForTimeout(500);
 
     // Scroll the inspector panel back to the top to ensure consistent screenshot
     await inspectorPanel.evaluate((el) => el.scrollTo(0, 0));
@@ -136,11 +136,12 @@ test.describe("Leaderboard Inspector Visuals", () => {
     await inspectorFields.waitFor({ state: "visible" });
 
     // Switch to custom scaling mode to enable font size sliders
-    await page
+    const scaleSelect2 = page
       .locator(".inspector-section")
       .filter({ hasText: "Scaling Mode" })
-      .locator("select")
-      .selectOption("");
+      .locator("app-custom-select");
+    await scaleSelect2.locator(".custom-select-trigger").click();
+    await scaleSelect2.locator('.custom-select-option[data-value=""]').click();
 
     // Verify subtitle fields are present in the inspector (since it's a group leaderboard)
     const subtitleTitle = inspectorFields.locator(
@@ -149,14 +150,15 @@ test.describe("Leaderboard Inspector Visuals", () => {
     );
     await expect(subtitleTitle).toBeVisible();
 
-    const selects = inspectorFields.locator("select");
+    const selects = inspectorFields.locator("app-custom-select");
     const sliders = inspectorFields.locator("input[type='range']");
     const colorPickers = inspectorFields.locator("input[type='color']");
 
-    await selects.nth(0).evaluate((el: HTMLSelectElement) => {
-      el.value = "2";
-      el.dispatchEvent(new Event("change", { bubbles: true }));
-    });
+    await selects.nth(0).locator(".custom-select-trigger").click();
+    await selects
+      .nth(0)
+      .locator('.custom-select-option[data-value="2"]')
+      .click();
 
     await sliders.nth(0).evaluate((el: HTMLInputElement) => {
       el.value = "28";
@@ -193,7 +195,6 @@ test.describe("Leaderboard Inspector Visuals", () => {
     await page.mouse.move(0, 0);
 
     // Ensure the DOM and Angular have settled
-    await page.waitForTimeout(1000);
 
     // Scroll the inspector panel back to the top to ensure consistent screenshot
     await inspectorPanel.evaluate((el) => el.scrollTo(0, 0));

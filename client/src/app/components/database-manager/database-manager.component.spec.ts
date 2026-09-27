@@ -77,6 +77,9 @@ describe("DatabaseManagerComponent", () => {
       }),
     );
     mockDataService.deleteDatabase.and.returnValue(of(null));
+    mockDataService.exportDatabaseBlob.and.returnValue(
+      of(new Blob(["mock zip"], { type: "application/zip" })),
+    );
     mockDataService.importDatabase.and.returnValue(
       of({
         name: "importedDB",
@@ -382,12 +385,69 @@ describe("DatabaseManagerComponent", () => {
   });
 
   describe("exportDatabase", () => {
-    it("should call exportDatabase with selected database name", () => {
+    let originalShowSaveFilePicker: any;
+
+    beforeEach(() => {
+      originalShowSaveFilePicker = (window as any).showSaveFilePicker;
+    });
+
+    afterEach(() => {
+      (window as any).showSaveFilePicker = originalShowSaveFilePicker;
+    });
+
+    it("should call exportDatabaseBlob and showSaveFilePicker with selected database", async () => {
+      const mockWritable = {
+        write: jasmine.createSpy("write").and.returnValue(Promise.resolve()),
+        close: jasmine.createSpy("close").and.returnValue(Promise.resolve()),
+      };
+      const mockHandle = {
+        createWritable: jasmine
+          .createSpy("createWritable")
+          .and.returnValue(Promise.resolve(mockWritable)),
+      };
+      (window as any).showSaveFilePicker = jasmine
+        .createSpy("showSaveFilePicker")
+        .and.returnValue(Promise.resolve(mockHandle));
+
       component.selectedDatabase = MOCK_DATABASES[1];
-      component.exportDatabase();
-      expect(dataService.exportDatabase).toHaveBeenCalledWith(
+      await component.exportDatabase();
+
+      expect(dataService.exportDatabaseBlob).toHaveBeenCalledWith(
         MOCK_DATABASES[1].name,
       );
+      expect((window as any).showSaveFilePicker).toHaveBeenCalledWith({
+        suggestedName: `${MOCK_DATABASES[1].name}.zip`,
+        types: [
+          {
+            description: "ZIP Files",
+            accept: { "application/zip": [".zip"] },
+          },
+        ],
+      });
+      expect(mockWritable.write).toHaveBeenCalled();
+      expect(mockWritable.close).toHaveBeenCalled();
+    });
+
+    it("should handle error when export fails", async () => {
+      dataService.exportDatabaseBlob.and.returnValue(
+        throwError(() => new Error("Network error")),
+      );
+      component.selectedDatabase = MOCK_DATABASES[1];
+      await component.exportDatabase();
+      expect(component.showAckModal).toBeTrue();
+      expect(component.ackModalMessage).toBe("DBM_ERR_EXPORT");
+    });
+
+    it("should ignore cancellation when user cancels showSaveFilePicker", async () => {
+      const abortErr = new Error("User cancelled");
+      abortErr.name = "AbortError";
+      (window as any).showSaveFilePicker = jasmine
+        .createSpy("showSaveFilePicker")
+        .and.returnValue(Promise.reject(abortErr));
+
+      component.selectedDatabase = MOCK_DATABASES[1];
+      await component.exportDatabase();
+      expect(component.showAckModal).toBeFalse();
     });
   });
 

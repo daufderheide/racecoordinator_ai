@@ -19,6 +19,10 @@ export class RacedayAbsoluteWidgetHarness
     RacedayAbsoluteWidgetHarnessBase.selectors.dragHeader,
   );
 
+  async isVisible(): Promise<boolean> {
+    return (await this.host()) !== null;
+  }
+
   async getWidgetTypeLabel(): Promise<string> {
     const el = await this.getLabelEl();
     return el ? await el.text() : "";

@@ -101,6 +101,9 @@ test.describe("Unified Widgets Visuals", () => {
         drivers: [
           {
             objectId: "rp1",
+            rank: 1,
+            rankValue: 12.345,
+            score: 12.345,
             driver: {
               model: { entityId: "d1" },
               name: "Alice",
@@ -109,6 +112,9 @@ test.describe("Unified Widgets Visuals", () => {
           },
           {
             objectId: "rp2",
+            rank: 2,
+            rankValue: 14.567,
+            score: 14.567,
             driver: {
               model: { entityId: "d2" },
               name: "Bob",
@@ -117,6 +123,9 @@ test.describe("Unified Widgets Visuals", () => {
           },
           {
             objectId: "rp3",
+            rank: 3,
+            rankValue: 16.789,
+            score: 16.789,
             driver: {
               model: { entityId: "d3" },
               name: "Charlie",

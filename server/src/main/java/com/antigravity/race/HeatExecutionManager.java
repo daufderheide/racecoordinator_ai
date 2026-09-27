@@ -1,6 +1,7 @@
 package com.antigravity.race;
 
 import com.antigravity.context.DatabaseContext;
+import com.antigravity.converters.HeatConverter;
 import com.antigravity.models.AnalogFuelOptions;
 import com.antigravity.models.DigitalFuelOptions;
 import com.antigravity.models.Driver;
@@ -21,6 +22,7 @@ import com.antigravity.race.states.HeatOver;
 import com.antigravity.race.states.RaceOver;
 import com.antigravity.service.RacePredictionService;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -42,6 +44,8 @@ public class HeatExecutionManager {
   private double[] timeSinceLastLap;
   private double[] excludedPendingLapTime;
   private double[] stutterAccumulatedTime;
+  private double[] partialLapTimes;
+  private boolean partialLapTimesCaptured = false;
 
   public HeatExecutionManager(Race race) {
     this.race = race;
@@ -58,7 +62,9 @@ public class HeatExecutionManager {
       return false;
     }
     AllowFinish allowFinish = race.getRaceModel().getHeatScoring().getAllowFinish();
-    return allowFinish == AllowFinish.Allow || allowFinish == AllowFinish.SingleLap;
+    return allowFinish == AllowFinish.Allow
+        || allowFinish == AllowFinish.SingleLap
+        || allowFinish == AllowFinish.SingleLapAutoSegments;
   }
 
   public void initialize(int laneCount) {
@@ -69,6 +75,8 @@ public class HeatExecutionManager {
     this.timeSinceLastLap = new double[laneCount];
     this.excludedPendingLapTime = new double[laneCount];
     this.stutterAccumulatedTime = new double[laneCount];
+    this.partialLapTimes = new double[laneCount];
+    this.partialLapTimesCaptured = false;
     for (int i = 0; i < laneCount; i++) {
       this.refuelDelayRemaining[i] = -1.0;
       this.isRefueling[i] = false;
@@ -76,7 +84,7 @@ public class HeatExecutionManager {
       this.timeSinceLastLap[i] = 0.0;
       this.excludedPendingLapTime[i] = 0.0;
       this.stutterAccumulatedTime[i] = 0.0;
-      this.stutterAccumulatedTime[i] = 0.0;
+      this.partialLapTimes[i] = 0.0;
 
       if (race.getRaceModel().isStartAtCurrent() && race.getCurrentHeat() != null) {
         List<DriverHeatData> drivers = race.getCurrentHeat().getDrivers();
@@ -232,6 +240,7 @@ public class HeatExecutionManager {
                 .setInterfaceId(interfaceId)
                 .setType(Lap.LapType.MIN_LAP_TIME)
                 .setFlag(race.getState().getLaneFlagType(race, lane))
+                .setFuelLevel(driverData.getDriver().getFuelLevel())
                 .build();
         driverData.setFlag(minLapMsg.getFlag());
         race.broadcast(RaceData.newBuilder().setLap(minLapMsg).build());
@@ -272,6 +281,10 @@ public class HeatExecutionManager {
           lane,
           driverData.getLapCount());
 
+      if (allowFinish == AllowFinish.SingleLapAutoSegments) {
+        capturePartialLapTimes();
+      }
+
       if (allowFinish == AllowFinish.None
           || allowFinish == AllowFinish.NoneAutoSegments
           || finishedLanes.size() >= race.getCurrentHeat().getActiveDriverCount()) {
@@ -284,6 +297,12 @@ public class HeatExecutionManager {
       } else {
         // Other drivers still racing so turn off power to this lane
         race.setLanePower(false, lane);
+        if (race.getCurrentHeat() != null) {
+          race.broadcast(
+              RaceData.newBuilder()
+                  .setHeat(HeatConverter.toProto(race.getCurrentHeat(), new HashSet<>()))
+                  .build());
+        }
       }
     }
   }
@@ -332,6 +351,13 @@ public class HeatExecutionManager {
     boolean lapCounted = false;
     double finalLapTime = lapTime + driverData.getPendingLapTime();
     driverData.setPendingLapTime(0.0);
+
+    HeatScoring scoring = this.race.getRaceModel().getHeatScoring();
+    if (isSingleLapAutoSegmentsFinish(scoring)) {
+      handleSingleLapAutoSegments(driverData, finalLapTime, lane);
+      return false;
+    }
+
     lapCounted = handleLapTime(driverData, finalLapTime, lane, interfaceId, isDrift);
 
     if (lapCounted) {
@@ -520,7 +546,49 @@ public class HeatExecutionManager {
     stutterAccumulatedTime[from] = stutterAccumulatedTime[to];
     stutterAccumulatedTime[to] = tempStutter;
 
+    if (partialLapTimes != null) {
+      double tempPartial = partialLapTimes[from];
+      partialLapTimes[from] = partialLapTimes[to];
+      partialLapTimes[to] = tempPartial;
+    }
+
     logger.info("Swapped transient lane state for lanes {} and {}", from, to);
+  }
+
+  public void resetLane(int lane) {
+    if (lane >= 0) {
+      if (refuelDelayRemaining != null && lane < refuelDelayRemaining.length) {
+        refuelDelayRemaining[lane] = -1.0;
+      }
+      if (isRefueling != null && lane < isRefueling.length) {
+        isRefueling[lane] = false;
+      }
+      if (accumulatedRefuelTime != null && lane < accumulatedRefuelTime.length) {
+        accumulatedRefuelTime[lane] = 0.0;
+      }
+      if (timeSinceLastLap != null && lane < timeSinceLastLap.length) {
+        timeSinceLastLap[lane] = 0.0;
+      }
+      if (excludedPendingLapTime != null && lane < excludedPendingLapTime.length) {
+        excludedPendingLapTime[lane] = 0.0;
+      }
+      if (stutterAccumulatedTime != null && lane < stutterAccumulatedTime.length) {
+        stutterAccumulatedTime[lane] = 0.0;
+      }
+      if (partialLapTimes != null && lane < partialLapTimes.length) {
+        partialLapTimes[lane] = 0.0;
+      }
+      finishedLanes.remove(lane);
+      logger.info("Reset transient lane execution state for lane {}", lane);
+    }
+  }
+
+  public void resetAllLanes() {
+    if (timeSinceLastLap != null) {
+      for (int i = 0; i < timeSinceLastLap.length; i++) {
+        resetLane(i);
+      }
+    }
   }
 
   public void handlePitDetection(com.antigravity.protocols.CarData carData) { // fqn-collision
@@ -606,6 +674,12 @@ public class HeatExecutionManager {
         break;
       case CUBIC:
         val *= (1.0 + (1.0 - tRatio) * (1.0 + (1.0 - tRatio)));
+        break;
+      case CUSTOM_CURVE:
+      case CUSTOM:
+        val =
+            usageRate
+                * FuelCalculationUtils.interpolateFuelCurve(fuelOptions.getCustomCurve(), tRatio);
         break;
       default:
         break;
@@ -763,6 +837,7 @@ public class HeatExecutionManager {
               .setInterfaceId(interfaceId)
               .setType(Lap.LapType.REACTION_TIME)
               .setFlag(race.getState().getLaneFlagType(race, lane))
+              .setFuelLevel(driverData.getDriver().getFuelLevel())
               .build();
       driverData.setFlag(rtMsg.getFlag());
 
@@ -817,8 +892,20 @@ public class HeatExecutionManager {
       effectiveLapTime += driverData.getReactionTime();
     }
 
+    double previousDriverBestLap = driverData.getBestLapTime();
     boolean driftInvolved = isDrift || driverData.consumeDriftTime();
     boolean countTowardsRecords = !(race.getRaceModel().isAdjustDriftLaps() && driftInvolved);
+
+    Lap.RecordTier recordTier = Lap.RecordTier.RECORD_TIER_NONE;
+    if (race.getRecordsManager() != null) {
+      recordTier =
+          race.getRecordsManager()
+              .determineRecordTier(
+                  driverData, effectiveLapTime, lane, countTowardsRecords, previousDriverBestLap);
+    }
+
+    String previousRaceLeaderId = getRaceLeaderParticipantId();
+    String previousHeatLeaderId = getHeatLeaderParticipantId();
 
     driverData.addLap(effectiveLapTime, isDrift, countTowardsRecords);
     updateRealtimePredictionOnLap();
@@ -829,6 +916,19 @@ public class HeatExecutionManager {
     double fuelLapTime = Math.max(0.0, lapTime - excludedPendingLapTime[lane]);
     excludedPendingLapTime[lane] = 0.0;
     handleAnalogFuelLapTime(driverData, fuelLapTime, lane);
+
+    StandingsUpdate standingsUpdate = null;
+    if (this.race.getCurrentHeat() != null
+        && this.race.getCurrentHeat().getHeatStandings() != null) {
+      standingsUpdate = this.race.getCurrentHeat().getHeatStandings().onLap(lane, effectiveLapTime);
+    }
+    this.race.recalculateOverallStandings();
+
+    boolean[] leaderChange =
+        evaluateLeaderChange(
+            previousRaceLeaderId, previousHeatLeaderId, driverData.getParticipantId());
+    boolean isNewRaceLeader = leaderChange[0];
+    boolean isNewHeatLeader = leaderChange[1];
 
     Lap lapMsg =
         Lap.newBuilder()
@@ -848,6 +948,10 @@ public class HeatExecutionManager {
             .setAdjustedLapCount(driverData.getAdjustedLapCount())
             .setType(Lap.LapType.LAP)
             .setFlag(race.getState().getLaneFlagType(race, lane))
+            .setCountTowardsRecords(countTowardsRecords)
+            .setRecordTier(recordTier)
+            .setIsNewRaceLeader(isNewRaceLeader)
+            .setIsNewHeatLeader(isNewHeatLeader)
             .build();
     driverData.setFlag(lapMsg.getFlag());
 
@@ -855,8 +959,6 @@ public class HeatExecutionManager {
 
     this.race.broadcast(lapDataMsg);
 
-    StandingsUpdate standingsUpdate =
-        this.race.getCurrentHeat().getHeatStandings().onLap(lane, effectiveLapTime);
     if (standingsUpdate != null) {
       RaceData standingsDataMsg = RaceData.newBuilder().setStandingsUpdate(standingsUpdate).build();
       this.race.broadcast(standingsDataMsg);
@@ -867,6 +969,74 @@ public class HeatExecutionManager {
     return true;
   }
 
+  boolean[] evaluateLeaderChange(
+      String previousRaceLeaderId, String previousHeatLeaderId, String myParticipantId) {
+    String newRaceLeaderId = getRaceLeaderParticipantId();
+    String newHeatLeaderId = getHeatLeaderParticipantId();
+
+    boolean isNewRaceLeader = false;
+    boolean isNewHeatLeader = false;
+
+    if (!race.isPractice() && myParticipantId != null && !myParticipantId.isEmpty()) {
+      if (myParticipantId.equals(newRaceLeaderId)
+          && !myParticipantId.equals(previousRaceLeaderId)) {
+        isNewRaceLeader = true;
+      }
+      if (myParticipantId.equals(newHeatLeaderId)
+          && !myParticipantId.equals(previousHeatLeaderId)) {
+        isNewHeatLeader = true;
+      }
+    }
+    return new boolean[] {isNewRaceLeader, isNewHeatLeader};
+  }
+
+  String getHeatLeaderParticipantId() {
+    if (race == null
+        || race.getCurrentHeat() == null
+        || race.getCurrentHeat().getHeatStandings() == null) {
+      return null;
+    }
+    List<String> standings = race.getCurrentHeat().getStandings();
+    if (standings == null || standings.isEmpty()) {
+      return null;
+    }
+    List<DriverHeatData> heatDrivers = race.getCurrentHeat().getDrivers();
+    if (heatDrivers == null) {
+      return null;
+    }
+    for (String objectId : standings) {
+      for (DriverHeatData dhd : heatDrivers) {
+        if (dhd.getObjectId().equals(objectId)) {
+          if (dhd.getActualDriver() != null
+              && !dhd.getActualDriver().isEmpty()
+              && dhd.getLapCount() > 0) {
+            return dhd.getParticipantId();
+          }
+          break;
+        }
+      }
+    }
+    return null;
+  }
+
+  String getRaceLeaderParticipantId() {
+    if (race == null || race.getDrivers() == null) {
+      return null;
+    }
+    List<RaceParticipant> participants = new ArrayList<>(race.getDrivers());
+    participants.sort(Comparator.comparingInt(RaceParticipant::getRank));
+    for (RaceParticipant participant : participants) {
+      if (participant.getRank() < 99
+          && !participant.isEmptyParticipant()
+          && (participant.getTotalLaps() > 0
+              || (participant.getAllScoringLaps() != null
+                  && !participant.getAllScoringLaps().isEmpty()))) {
+        return participant.getParticipantId();
+      }
+    }
+    return null;
+  }
+
   private void handleAnalogFuelLapTime(DriverHeatData driverData, double lapTime, int lane) {
     if (!isAnalogFuelEnabled()) {
       return;
@@ -874,37 +1044,49 @@ public class HeatExecutionManager {
 
     AnalogFuelOptions fuelOptions = this.race.getRaceModel().getFuelOptions();
     double lapFuelUsed = 0.0;
-    double usageRate = fuelOptions.getUsageRate();
+    double fastestTime = Math.max(0.1, fuelOptions.getFastestTime());
+    double slowestTime = Math.max(fastestTime + 0.001, fuelOptions.getSlowestTime());
+    double maxUsage = Math.max(0.0, fuelOptions.getMaxUsage());
+    double minUsage = Math.max(0.0, fuelOptions.getMinUsage());
 
     double racingTime = Math.max(0.1, lapTime - accumulatedRefuelTime[lane]);
     accumulatedRefuelTime[lane] = 0.0; // reset for next lap
 
-    // Fuel usage is proportional to the lap time. Faster laps use more
-    // fuel than slower laps. And quadratic and cubic usage use more
-    // the faster the lap is.
-    switch (fuelOptions.getUsageType()) {
-      case LINEAR:
-        double refL = Math.max(0.1, fuelOptions.getReferenceTime());
-        double x1 = refL * 2.0;
-        double y1 = usageRate / 2.0;
-        double x2 = refL;
-        double y2 = usageRate;
-        double m = (y2 - y1) / (x2 - x1);
-        double b = y1 - m * x1;
-        lapFuelUsed = m * racingTime + b;
-        break;
-      case QUADRATIC:
-        double refQ = Math.max(0.1, fuelOptions.getReferenceTime());
-        double safeTimeQ = Math.max(0.1, racingTime);
-        lapFuelUsed = usageRate * (refQ * refQ) / (safeTimeQ * safeTimeQ);
-        break;
-      case CUBIC:
-        double refC = Math.max(0.1, fuelOptions.getReferenceTime());
-        double safeTimeC = Math.max(0.1, racingTime);
-        lapFuelUsed = usageRate * (refC * refC * refC) / (safeTimeC * safeTimeC * safeTimeC);
-        break;
-      default:
-        break;
+    if (racingTime <= fastestTime) {
+      lapFuelUsed = maxUsage;
+    } else if (racingTime >= slowestTime) {
+      lapFuelUsed = minUsage;
+    } else {
+      switch (fuelOptions.getUsageType()) {
+        case LINEAR:
+          double progressL = (racingTime - fastestTime) / (slowestTime - fastestTime);
+          lapFuelUsed = maxUsage - progressL * (maxUsage - minUsage);
+          break;
+        case QUADRATIC:
+          double invT2 = 1.0 / (racingTime * racingTime);
+          double invFast2 = 1.0 / (fastestTime * fastestTime);
+          double invSlow2 = 1.0 / (slowestTime * slowestTime);
+          double progressQ = (invT2 - invSlow2) / (invFast2 - invSlow2);
+          lapFuelUsed = minUsage + progressQ * (maxUsage - minUsage);
+          break;
+        case CUBIC:
+          double invT3 = 1.0 / (racingTime * racingTime * racingTime);
+          double invFast3 = 1.0 / (fastestTime * fastestTime * fastestTime);
+          double invSlow3 = 1.0 / (slowestTime * slowestTime * slowestTime);
+          double progressC = (invT3 - invSlow3) / (invFast3 - invSlow3);
+          lapFuelUsed = minUsage + progressC * (maxUsage - minUsage);
+          break;
+        case CUSTOM_CURVE:
+        case CUSTOM:
+          double xNorm = (racingTime - fastestTime) / (slowestTime - fastestTime);
+          xNorm = Math.max(0.0, Math.min(1.0, xNorm));
+          double mult =
+              FuelCalculationUtils.interpolateFuelCurve(fuelOptions.getCustomCurve(), xNorm);
+          lapFuelUsed = minUsage + mult * (maxUsage - minUsage);
+          break;
+        default:
+          break;
+      }
     }
 
     if (Double.isNaN(lapFuelUsed) || Double.isInfinite(lapFuelUsed)) {
@@ -971,6 +1153,111 @@ public class HeatExecutionManager {
 
   public double[] getTimeSinceLastLap() {
     return timeSinceLastLap;
+  }
+
+  public double[] getPartialLapTimes() {
+    return partialLapTimes;
+  }
+
+  public void setPartialLapTime(int lane, double time) {
+    if (partialLapTimes != null && lane >= 0 && lane < partialLapTimes.length) {
+      partialLapTimes[lane] = time;
+      partialLapTimesCaptured = true;
+    }
+  }
+
+  public void capturePartialLapTimes() {
+    if (partialLapTimesCaptured) {
+      return;
+    }
+    partialLapTimesCaptured = true;
+    if (timeSinceLastLap != null && partialLapTimes != null) {
+      double overshoot = 0.0;
+      if (race != null
+          && race.getRaceModel() != null
+          && race.getRaceModel().getHeatScoring() != null
+          && race.getRaceModel().getHeatScoring().getFinishMethod() == FinishMethod.Timed
+          && race.getRaceTime() < 0) {
+        overshoot = -race.getRaceTime();
+      }
+      for (int i = 0; i < timeSinceLastLap.length; i++) {
+        if (!finishedLanes.contains(i)) {
+          partialLapTimes[i] = Math.max(0.0, timeSinceLastLap[i] - overshoot);
+        }
+      }
+    }
+  }
+
+  private boolean isSingleLapAutoSegmentsFinish(HeatScoring scoring) {
+    if (scoring == null || scoring.getAllowFinish() != AllowFinish.SingleLapAutoSegments) {
+      return false;
+    }
+    if (scoring.getFinishMethod() == FinishMethod.Timed) {
+      return race.getRaceTime() <= 0;
+    } else {
+      return !finishedLanes.isEmpty();
+    }
+  }
+
+  private void handleSingleLapAutoSegments(
+      DriverHeatData driverData, double finalLapTime, int lane) {
+    if (!partialLapTimesCaptured) {
+      capturePartialLapTimes();
+    }
+    double partial =
+        (partialLapTimes != null && lane < partialLapTimes.length) ? partialLapTimes[lane] : 0.0;
+    double median = driverData.getMedianLapTime();
+    double pctTraveled = 0.0;
+    if (median > 0) {
+      pctTraveled = partial / median;
+    }
+    if (pctTraveled >= 1.0) {
+      pctTraveled = 0.99;
+    } else if (pctTraveled < 0.0) {
+      pctTraveled = 0.0;
+    }
+
+    driverData.setAutoCalculatedLaps(pctTraveled);
+    finishedLanes.add(lane);
+    driverData.setFinished(true);
+    driverData.setFlag(race.getState().getLaneFlagType(race, lane));
+    logger.info(
+        "Driver {} finished single lap (auto segments) on lane {}: partial={}s, lap={}s, median={}s, autoLaps={}",
+        driverData.getDriver().getDriver().getName(),
+        lane,
+        partial,
+        finalLapTime,
+        median,
+        pctTraveled);
+
+    race.setLanePower(false, lane);
+
+    StandingsUpdate standingsUpdate = null;
+    if (this.race.getCurrentHeat() != null
+        && this.race.getCurrentHeat().getHeatStandings() != null) {
+      standingsUpdate = this.race.getCurrentHeat().getHeatStandings().updateStandings();
+    }
+    this.race.recalculateOverallStandings();
+
+    if (standingsUpdate != null) {
+      RaceData standingsDataMsg = RaceData.newBuilder().setStandingsUpdate(standingsUpdate).build();
+      this.race.broadcast(standingsDataMsg);
+    }
+    this.race.updateAndBroadcastOverallStandings();
+    if (this.race.getCurrentHeat() != null) {
+      this.race.broadcast(
+          RaceData.newBuilder()
+              .setHeat(HeatConverter.toProto(this.race.getCurrentHeat(), new HashSet<>()))
+              .build());
+    }
+
+    if (finishedLanes.size() >= race.getCurrentHeat().getActiveDriverCount()) {
+      if (race.isLastHeat()) {
+        race.changeState(new RaceOver());
+      } else {
+        race.changeState(new HeatOver());
+      }
+    }
   }
 
   public static Map<String, DriverHeatState> buildDriverHeatStates(Race race) {

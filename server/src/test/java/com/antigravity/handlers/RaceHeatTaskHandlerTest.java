@@ -193,4 +193,70 @@ public class RaceHeatTaskHandlerTest {
       }
     }
   }
+
+  @SuppressWarnings("unchecked")
+  @Test
+  public void testPreviewHeats_CustomRoundRobin_FewerDriversThanTrackLanes() throws Exception {
+    String rootDir =
+        tempFolder.newFolder("db_root_preview").getAbsolutePath() + java.io.File.separator;
+    DatabaseContext dbCtx = new DatabaseContext("test_preview_db", null, rootDir);
+    Javalin app = mock(Javalin.class);
+    RaceHeatTaskHandler realHandler = new RaceHeatTaskHandler(dbCtx, app);
+
+    try {
+      com.antigravity.repository.SqliteRepository<com.antigravity.models.Track> trackRepo =
+          new com.antigravity.repository.SqliteRepository<>(
+              dbCtx, "tracks", com.antigravity.models.Track.class);
+      List<com.antigravity.models.Lane> sixLanes = new ArrayList<>();
+      for (int i = 1; i <= 6; i++) {
+        sixLanes.add(new com.antigravity.models.Lane("#FFFFFF", "#000000", i));
+      }
+      com.antigravity.models.Track track =
+          new com.antigravity.models.Track.Builder()
+              .name("6-Lane Track")
+              .entityId("t6")
+              .lanes(sixLanes)
+              .build();
+      trackRepo.insert(track);
+
+      Context ctxPreview = mock(Context.class);
+      Map<String, Object> prevBody = new HashMap<>();
+      prevBody.put("driverCount", 4);
+      prevBody.put("trackId", "t6");
+      prevBody.put("rotationType", "CustomRoundRobin");
+      prevBody.put("customRotationSequence", java.util.Arrays.asList(2, 3, 4, 5));
+      when(ctxPreview.bodyAsClass(Map.class)).thenReturn(prevBody);
+
+      org.mockito.ArgumentCaptor<Map> captor = org.mockito.ArgumentCaptor.forClass(Map.class);
+      realHandler.previewHeats(ctxPreview);
+      verify(ctxPreview).json(captor.capture());
+
+      Map response = captor.getValue();
+      assertNotNull(response);
+      List<Map<String, Object>> heats = (List<Map<String, Object>>) response.get("heats");
+      org.junit.Assert.assertEquals(4, heats.size());
+
+      // Heat 1: L1=0, L2=1, L3=2, L4=3, L5=4, L6=0
+      List<Map<String, Object>> h1Lanes = (List<Map<String, Object>>) heats.get(0).get("lanes");
+      org.junit.Assert.assertEquals(0, h1Lanes.get(0).get("driverNumber"));
+      org.junit.Assert.assertEquals(1, h1Lanes.get(1).get("driverNumber"));
+      org.junit.Assert.assertEquals(2, h1Lanes.get(2).get("driverNumber"));
+      org.junit.Assert.assertEquals(3, h1Lanes.get(3).get("driverNumber"));
+      org.junit.Assert.assertEquals(4, h1Lanes.get(4).get("driverNumber"));
+      org.junit.Assert.assertEquals(0, h1Lanes.get(5).get("driverNumber"));
+
+      // Heat 2: L1=0, L2=4, L3=1, L4=2, L5=3, L6=0
+      List<Map<String, Object>> h2Lanes = (List<Map<String, Object>>) heats.get(1).get("lanes");
+      org.junit.Assert.assertEquals(0, h2Lanes.get(0).get("driverNumber"));
+      org.junit.Assert.assertEquals(4, h2Lanes.get(1).get("driverNumber"));
+      org.junit.Assert.assertEquals(1, h2Lanes.get(2).get("driverNumber"));
+      org.junit.Assert.assertEquals(2, h2Lanes.get(3).get("driverNumber"));
+      org.junit.Assert.assertEquals(3, h2Lanes.get(4).get("driverNumber"));
+      org.junit.Assert.assertEquals(0, h2Lanes.get(5).get("driverNumber"));
+    } finally {
+      if (dbCtx.getConnection() != null) {
+        dbCtx.getConnection().close();
+      }
+    }
+  }
 }

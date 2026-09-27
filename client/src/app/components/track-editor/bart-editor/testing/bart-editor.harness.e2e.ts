@@ -48,11 +48,14 @@ export class BartEditorHarnessE2e implements BartEditorHarnessBase {
   }
 
   async getDeviceName(): Promise<string> {
-    return await this.deviceNameInput.inputValue();
+    return (await this.deviceNameInput.getAttribute("data-value")) || "";
   }
 
   async setDeviceName(name: string): Promise<void> {
-    await this.deviceNameInput.selectOption(name);
+    await this.deviceNameInput.locator(".custom-select-trigger").click();
+    await this.deviceNameInput
+      .locator(`.custom-select-option[data-value="${name}"]`)
+      .click();
   }
 
   async getMinLapMs(): Promise<number> {
@@ -65,12 +68,18 @@ export class BartEditorHarnessE2e implements BartEditorHarnessBase {
   }
 
   async getLapPinPitBehavior(): Promise<number> {
-    const val = await this.lapPinPitBehaviorSelect.inputValue();
+    const val =
+      (await this.lapPinPitBehaviorSelect.getAttribute("data-value")) || "0";
     return parseInt(val, 10) || 0;
   }
 
   async setLapPinPitBehavior(value: number): Promise<void> {
-    await this.lapPinPitBehaviorSelect.selectOption({ index: value });
+    await this.lapPinPitBehaviorSelect
+      .locator(".custom-select-trigger")
+      .click();
+    await this.lapPinPitBehaviorSelect
+      .locator(`.custom-select-option[data-value="${value}"]`)
+      .click();
   }
 
   async removeInterface(): Promise<void> {

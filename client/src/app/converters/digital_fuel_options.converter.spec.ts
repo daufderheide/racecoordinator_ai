@@ -49,4 +49,31 @@ describe("DigitalFuelOptionsConverter", () => {
     const result = DigitalFuelOptionsConverter.fromProto(mockProto as any);
     expect(result.out_of_fuel_action).toBe(OutOfFuelAction.DO_NOT_COUNT_LAPS);
   });
+
+  it("should map CUSTOM_CURVE and custom_curve points", () => {
+    const mockProto = {
+      usageType: 3, // CUSTOM_CURVE
+      customCurve: [
+        { x: 0, y: 0 },
+        { x: 0.5, y: 0.3 },
+        { x: 1, y: 1 },
+      ],
+    };
+    const result = DigitalFuelOptionsConverter.fromProto(mockProto as any);
+    expect(result.usage_type).toBe(FuelUsageType.CUSTOM_CURVE);
+    expect(result.custom_curve.length).toBe(3);
+    expect(result.custom_curve[0]).toEqual({ x: 0, y: 0 });
+    expect(result.custom_curve[1]).toEqual({ x: 0.5, y: 0.3 });
+    expect(result.custom_curve[2]).toEqual({ x: 1, y: 1 });
+  });
+
+  it("should handle snake_case custom_curve and string CUSTOM", () => {
+    const mockProto = {
+      usageType: "CUSTOM",
+      custom_curve: [{ x: 0.8, y: 0.9 }],
+    };
+    const result = DigitalFuelOptionsConverter.fromProto(mockProto as any);
+    expect(result.usage_type).toBe(FuelUsageType.CUSTOM_CURVE);
+    expect(result.custom_curve).toEqual([{ x: 0.8, y: 0.9 }]);
+  });
 });

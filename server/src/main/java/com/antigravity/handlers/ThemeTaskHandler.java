@@ -45,14 +45,16 @@ public class ThemeTaskHandler {
       }
 
       if (!foundFlags[0]) {
-        createAndSaveFactoryTheme(Theme.DEFAULT_THEME_ID, "Default Theme", CustomUI.DEFAULT_UI_ID);
+        createAndSaveFactoryTheme(
+            Theme.DEFAULT_THEME_ID, "RaceCoordinator AI", CustomUI.DEFAULT_UI_ID);
       }
       if (!foundFlags[1]) {
         createAndSaveFactoryTheme(
-            Theme.PRACTICE_THEME_ID, "Practice Theme", CustomUI.PRACTICE_UI_ID);
+            Theme.PRACTICE_THEME_ID, "RaceCoordinator AI (Practice)", CustomUI.PRACTICE_UI_ID);
       }
       if (!foundFlags[2]) {
-        createAndSaveFactoryTheme(Theme.FUEL_THEME_ID, "Fuel Theme", CustomUI.FUEL_UI_ID);
+        createAndSaveFactoryTheme(
+            Theme.FUEL_THEME_ID, "RaceCoordinator AI (Fuel)", CustomUI.FUEL_UI_ID);
       }
     } catch (Exception e) {
       logger.error("Failed to ensure default theme", e);
@@ -62,6 +64,17 @@ public class ThemeTaskHandler {
   private void migrateAndCheckTheme(Theme t, boolean[] foundFlags) {
     boolean updated = false;
     String entityId = t.getEntityId();
+    String name = t.getName();
+
+    if ("2".equals(entityId)
+        && !foundFlags[2]
+        && (t.isDefault() || "Fuel Theme".equalsIgnoreCase(name))) {
+      themeRepository.delete("2");
+      entityId = Theme.FUEL_THEME_ID;
+      name = Theme.FUEL_THEME_NAME;
+      foundFlags[2] = true;
+      updated = true;
+    }
 
     if (Theme.DEFAULT_THEME_ID.equals(entityId)) {
       foundFlags[0] = true;
@@ -73,15 +86,6 @@ public class ThemeTaskHandler {
       foundFlags[2] = true;
     }
 
-    if ("2".equals(entityId)
-        && !foundFlags[2]
-        && (t.isDefault() || "Fuel Theme".equalsIgnoreCase(t.getName()))) {
-      themeRepository.delete("2");
-      entityId = Theme.FUEL_THEME_ID;
-      foundFlags[2] = true;
-      updated = true;
-    }
-
     Map<String, String> s = new HashMap<>(t.getSlots());
     if (migrateThemeSlots(s, t.isDefault())) {
       updated = true;
@@ -90,6 +94,15 @@ public class ThemeTaskHandler {
       updated = true;
     }
     if (s.remove("audio.seconds_left") != null) {
+      updated = true;
+    }
+    if (s.remove("audio.laps_left") != null) {
+      updated = true;
+    }
+    if (s.remove("audio.auto_start") != null) {
+      updated = true;
+    }
+    if (s.remove("audio.auto_advance") != null) {
       updated = true;
     }
 
@@ -111,11 +124,19 @@ public class ThemeTaskHandler {
         uiId = CustomUI.DEFAULT_UI_ID;
         updated = true;
       }
+      if (Theme.isLegacyDefaultName(name)) {
+        name = Theme.DEFAULT_THEME_NAME;
+        updated = true;
+      }
     }
     if (Theme.PRACTICE_THEME_ID.equals(entityId)) {
       foundFlags[1] = true;
       if (uiId == null) {
         uiId = CustomUI.PRACTICE_UI_ID;
+        updated = true;
+      }
+      if (Theme.isLegacyPracticeName(name)) {
+        name = Theme.PRACTICE_THEME_NAME;
         updated = true;
       }
     }
@@ -125,6 +146,10 @@ public class ThemeTaskHandler {
         uiId = CustomUI.FUEL_UI_ID;
         updated = true;
       }
+      if (Theme.isLegacyFuelName(name)) {
+        name = Theme.FUEL_THEME_NAME;
+        updated = true;
+      }
     }
     if (uiId == null || uiId.trim().isEmpty()) {
       uiId = CustomUI.DEFAULT_UI_ID;
@@ -132,7 +157,7 @@ public class ThemeTaskHandler {
     }
 
     if (updated) {
-      Theme newTheme = new Theme(t.getName(), t.isDefault(), s, as, uiId, entityId, t.getId());
+      Theme newTheme = new Theme(name, t.isDefault(), s, as, uiId, entityId, t.getId());
       themeRepository.save(newTheme);
     }
   }
@@ -221,6 +246,18 @@ public class ThemeTaskHandler {
       as.put("audio.seconds_left", new AudioConfig("audio_set", "default_seconds_left", null));
       updated = true;
     }
+    if (!as.containsKey("audio.laps_left")) {
+      as.put("audio.laps_left", new AudioConfig("audio_set", "default_laps_left", null));
+      updated = true;
+    }
+    if (!as.containsKey("audio.auto_start")) {
+      as.put("audio.auto_start", new AudioConfig("audio_set", "default_auto_start", null));
+      updated = true;
+    }
+    if (!as.containsKey("audio.auto_advance")) {
+      as.put("audio.auto_advance", new AudioConfig("audio_set", "default_auto_advance", null));
+      updated = true;
+    }
     if (!as.containsKey("audio.yellowflag")) {
       as.put("audio.yellowflag", new AudioConfig("preset", "default_yellow_flag", null));
       updated = true;
@@ -237,22 +274,17 @@ public class ThemeTaskHandler {
       as.put("audio.race_over", new AudioConfig("preset", "default_race_over", null));
       updated = true;
     }
-    if (!as.containsKey("audio.penalty")) {
-      as.put("audio.penalty", new AudioConfig("preset", "default_penalty", null));
-      updated = true;
-    }
     if (!as.containsKey("audio.min_lap_time")
         || ("preset".equals(as.get("audio.min_lap_time").getType())
             && "default_beep".equals(as.get("audio.min_lap_time").getUrl()))) {
       as.put(
-          "audio.min_lap_time",
-          new AudioConfig("tts", null, "Min lap time for {{driver.nickname}}"));
+          "audio.min_lap_time", new AudioConfig("tts", null, "Min lap time for {driver.nickname}"));
       updated = true;
     }
     if (!as.containsKey("audio.drift_lap")
         || ("preset".equals(as.get("audio.drift_lap").getType())
             && "default_beep".equals(as.get("audio.drift_lap").getUrl()))) {
-      as.put("audio.drift_lap", new AudioConfig("tts", null, "Drift lap for {{driver.nickname}}"));
+      as.put("audio.drift_lap", new AudioConfig("tts", null, "Drift lap for {driver.nickname}"));
       updated = true;
     }
     return updated;

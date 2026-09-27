@@ -381,6 +381,49 @@ describe("DataService", () => {
     req.flush("Driver,Laps,Time\nRacer1,10,12.34");
   });
 
+  it("should call loadRaceHistory endpoint", (done) => {
+    service.loadRaceHistory("hist_1", false).subscribe((res) => {
+      expect(res).toBe("Race history loaded successfully");
+      done();
+    });
+
+    const req = httpMock.expectOne((r) =>
+      r.url.endsWith("/api/history/races/hist_1/load"),
+    );
+    expect(req.request.method).toBe("POST");
+    req.flush("Race history loaded successfully");
+  });
+
+  it("should call exportRaceHistoryToCsv endpoint", (done) => {
+    service.exportRaceHistoryToCsv("hist_1", true).subscribe((csv) => {
+      expect(csv).toBe("col1,col2");
+      done();
+    });
+
+    const req = httpMock.expectOne((r) =>
+      r.url.includes("/api/history/races/hist_1/export?demo=true"),
+    );
+    expect(req.request.method).toBe("GET");
+    req.flush("col1,col2");
+  });
+
+  it("should call updateHistoryLapSections endpoint", (done) => {
+    const updates = [{ heatNumber: 1, laneIndex: 0, userLaps: 1.5 }];
+    service
+      .updateHistoryLapSections("hist_1", updates, false)
+      .subscribe((res) => {
+        expect(res).toBe("ok");
+        done();
+      });
+
+    const req = httpMock.expectOne((r) =>
+      r.url.endsWith("/api/history/races/hist_1/lap-sections"),
+    );
+    expect(req.request.method).toBe("POST");
+    expect(req.request.body).toEqual(updates);
+    req.flush("ok");
+  });
+
   it("should call initialize-interface endpoint with configs", (done) => {
     const arduinoConfigs: ArduinoConfig[] = [
       {
@@ -577,6 +620,35 @@ describe("DataService", () => {
     expect(req.request.method).toBe("POST");
     expect(req.request.responseType).toBe("blob");
     req.flush(new Blob(["mock data"]));
+  });
+
+  it("should call downloadDefaultExportTemplate endpoint", (done) => {
+    service.downloadDefaultExportTemplate().subscribe((response: any) => {
+      expect(response).toBeTruthy();
+      done();
+    });
+
+    const req = httpMock.expectOne((request) =>
+      request.url.endsWith("/api/races/export-template/default"),
+    );
+    expect(req.request.method).toBe("GET");
+    expect(req.request.responseType).toBe("blob");
+    req.flush(new Blob(["mock template"]));
+  });
+
+  it("should call testExportXls endpoint with and without template", (done) => {
+    service.testExportXls("base64data").subscribe((response: any) => {
+      expect(response).toBeTruthy();
+      done();
+    });
+
+    const req = httpMock.expectOne((request) =>
+      request.url.endsWith("/api/races/test-export-xls"),
+    );
+    expect(req.request.method).toBe("POST");
+    expect(req.request.body).toEqual({ templateBase64: "base64data" });
+    expect(req.request.responseType).toBe("blob");
+    req.flush(new Blob(["mock export"]));
   });
 
   it("should call getBleDevices endpoint", (done) => {
@@ -830,6 +902,24 @@ describe("DataService", () => {
       expect(req.request.method).toBe("POST");
       req.flush({ success: true });
     });
+
+    it("should handle database export blob", (done) => {
+      const mockBlob = new Blob(["mock zip content"], {
+        type: "application/zip",
+      });
+
+      service.exportDatabaseBlob("test_db").subscribe((blob) => {
+        expect(blob).toBeTruthy();
+        expect(blob.size).toBe(mockBlob.size);
+        done();
+      });
+
+      const req = httpMock.expectOne((r) =>
+        r.url.endsWith("/api/databases/test_db/export"),
+      );
+      expect(req.request.method).toBe("GET");
+      req.flush(mockBlob);
+    });
   });
 
   describe("Asset Management API", () => {
@@ -902,6 +992,60 @@ describe("DataService", () => {
         r.url.endsWith("/api/assets/upload"),
       );
       reqUp.flush(uploadProto.slice().buffer);
+    });
+
+    it("should compute SHA-256 file hash accurately", async () => {
+      const file = new File(["test data for hash calculation"], "test.png", {
+        type: "image/png",
+      });
+      const hash = await service.computeFileHash(file);
+      expect(hash).toBeTruthy();
+      expect(hash.length).toBe(64);
+      const emptyHash = await service.computeFileHash(null as any);
+      expect(emptyHash).toBe("");
+    });
+
+    it("should register, update, and find assets by hash and type", () => {
+      const asset1 = {
+        model: { entityId: "asset-1" },
+        name: "car.png",
+        type: "image",
+        hash: "abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
+      };
+      const asset2 = {
+        model: { entityId: "asset-2" },
+        name: "beep.mp3",
+        type: "audio",
+        hash: "1122334455667788990011223344556677889900112233445566778899001122",
+      };
+
+      service.registerAsset(asset1);
+      service.registerAsset(asset2);
+
+      const foundImage = service.findAssetByHash(
+        "ABCDEF1234567890ABCDEF1234567890ABCDEF1234567890ABCDEF1234567890",
+        "image",
+      );
+      expect(foundImage).toBeDefined();
+      expect(foundImage?.name).toBe("car.png");
+
+      const mismatch = service.findAssetByHash(
+        "abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
+        "audio",
+      );
+      expect(mismatch).toBeUndefined();
+
+      expect(service.findAssetByHash("")).toBeUndefined();
+
+      const updatedAsset1 = {
+        ...asset1,
+        name: "car_updated.png",
+      };
+      service.registerAsset(updatedAsset1);
+      const reFound = service.findAssetByHash(asset1.hash);
+      expect(reFound?.name).toBe("car_updated.png");
+
+      service.registerAsset(null as any);
     });
 
     it("should handle saveImageSet and saveAudioSet", (done) => {
@@ -1326,6 +1470,27 @@ describe("DataService", () => {
       );
     });
 
+    it("should dispatch currentHeat from race update to heatSubject observable", (done) => {
+      const mockRaceData = RaceData.encode({
+        race: {
+          currentHeat: {
+            heatNumber: 5,
+          },
+        },
+      }).finish();
+
+      service.getHeats().subscribe((h) => {
+        if (h && h.heatNumber === 5) {
+          expect(h.heatNumber).toBe(5);
+          done();
+        }
+      });
+
+      (service as any).handleRaceDataMessage({
+        data: mockRaceData.slice().buffer,
+      });
+    });
+
     it("should handle connectToRaceDataSocket life cycle and reconnection", () => {
       // Mock WebSocket
       const mockWs: any = {
@@ -1505,6 +1670,63 @@ describe("DataService", () => {
       expect(req.request.body instanceof Blob).toBeTrue();
 
       req.flush(respBuffer.slice().buffer);
+    });
+
+    it("should update live lap record status", (done) => {
+      service.updateLiveLapRecordStatus(1, 0, 3, false).subscribe((res) => {
+        expect(res.bestLapTime).toBe(4.25);
+        done();
+      });
+
+      const req = httpMock.expectOne(
+        (r) =>
+          r.url.endsWith("/api/races/heats/1/drivers/0/laps/3/record-status") &&
+          r.method === "POST",
+      );
+      expect(req.request.body).toEqual({ countTowardsRecords: false });
+      req.flush({ bestLapTime: 4.25 });
+    });
+
+    it("should update history lap record status with demo flag", (done) => {
+      service
+        .updateHistoryLapRecordStatus("race-hist-1", 1, 0, 3, false, true)
+        .subscribe((res) => {
+          expect(res.bestLapTime).toBe(4.25);
+          done();
+        });
+
+      const req = httpMock.expectOne(
+        (r) =>
+          r.url.endsWith(
+            "/api/history/races/race-hist-1/heats/1/drivers/0/laps/3/record-status?demo=true",
+          ) && r.method === "PUT",
+      );
+      expect(req.request.body).toEqual({
+        countTowardsRecords: false,
+        isDemo: true,
+      });
+      req.flush({ bestLapTime: 4.25 });
+    });
+
+    it("should update history lap record status without demo flag", (done) => {
+      service
+        .updateHistoryLapRecordStatus("race-hist-2", 2, 1, 0, true, false)
+        .subscribe((res) => {
+          expect(res.bestLapTime).toBe(3.1);
+          done();
+        });
+
+      const req = httpMock.expectOne(
+        (r) =>
+          r.url.endsWith(
+            "/api/history/races/race-hist-2/heats/2/drivers/1/laps/0/record-status",
+          ) && r.method === "PUT",
+      );
+      expect(req.request.body).toEqual({
+        countTowardsRecords: true,
+        isDemo: false,
+      });
+      req.flush({ bestLapTime: 3.1 });
     });
   });
 });

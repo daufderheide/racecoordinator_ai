@@ -17,12 +17,17 @@ import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, Router } from "@angular/router";
 import { Subscription } from "rxjs";
 import { ConfirmationModalComponent } from "@app/components/shared/confirmation-modal/confirmation-modal.component";
+import {
+  CustomOptionComponent,
+  CustomSelectComponent,
+} from "@app/components/shared/custom-select/custom-select.component";
 import { EditorTitleComponent } from "@app/components/shared/editor-title/editor-title.component";
 import {
   UndoEventType,
   UndoManager,
 } from "@app/components/shared/undo-redo-controls/undo-manager";
 import { DataService } from "@app/data.service";
+import { AutoSelectDefaultDirective } from "@app/directives/auto-select-default.directive";
 import { DirtyComponent } from "@app/interfaces/dirty-component";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import {
@@ -35,6 +40,7 @@ import { LoggerService } from "@app/services/logger.service";
 import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
 import { deepCopy } from "@app/utils/clone.utils";
+import { EditorLifecycleHelper } from "@app/utils/editor-lifecycle.helper";
 import { LaneEqualityResult } from "@app/utils/lane-equality";
 
 import {
@@ -67,14 +73,36 @@ import { parseAndValidateImportFile } from "./rotation-import.utils";
     DragDropModule,
     EditorTitleComponent,
     ConfirmationModalComponent,
+    CustomSelectComponent,
+    CustomOptionComponent,
+    AutoSelectDefaultDirective,
   ],
 })
 export class CustomRotationEditorComponent
   implements OnInit, OnDestroy, DirtyComponent
 {
-  isNavigationApproved = false;
-  showDiscardConfirm = false;
-  private pendingDeactivate: ((value: boolean) => void) | null = null;
+  lifecycle!: EditorLifecycleHelper;
+
+  get showDiscardConfirm(): boolean {
+    return this.lifecycle.showDiscardConfirm;
+  }
+  set showDiscardConfirm(val: boolean) {
+    this.lifecycle.showDiscardConfirm = val;
+  }
+
+  get isNavigationApproved(): boolean {
+    return this.lifecycle.isNavigationApproved;
+  }
+  set isNavigationApproved(val: boolean) {
+    this.lifecycle.isNavigationApproved = val;
+  }
+
+  get pendingDeactivate(): ((value: boolean) => void) | null {
+    return this.lifecycle.pendingDeactivate;
+  }
+  set pendingDeactivate(val: ((value: boolean) => void) | null) {
+    this.lifecycle.pendingDeactivate = val;
+  }
   private isReverting = false;
   readonly assetId = input<string>();
   readonly assetName = input<string>("");
@@ -100,6 +128,19 @@ export class CustomRotationEditorComponent
 
   readonly saved = output<IAssetMessage>();
   readonly cancelled = output<void>();
+  defaultRotationName: string = "";
+
+  focusNameInput() {
+    setTimeout(() => {
+      const el = document.getElementById(
+        "custom-rotation-name-input",
+      ) as HTMLInputElement;
+      if (el) {
+        el.focus();
+        el.select();
+      }
+    }, 0);
+  }
 
   savingCount = 0;
   private pendingSave = false;
@@ -116,6 +157,8 @@ export class CustomRotationEditorComponent
   scale = 1;
   virtualDrivers: { id: number; name: string }[] = [];
   numVirtualDrivers: number = 10;
+
+  zoomLevel = 100;
 
   updateVirtualDriversList() {
     this.virtualDrivers = [];
@@ -195,6 +238,12 @@ export class CustomRotationEditorComponent
         rotations: this.internalRotations,
       }),
     );
+
+    this.lifecycle = new EditorLifecycleHelper({
+      cdr: this.cdr,
+      translationService: this.translationService,
+      getUnsavedReasons: () => this.getUnsavedReasons(),
+    });
   }
 
   @HostListener("window:resize")
@@ -321,6 +370,14 @@ export class CustomRotationEditorComponent
         }
         this.isLoading = false;
         this.initEditorState();
+        const isNew =
+          this.route.snapshot.queryParamMap?.get("isNew") === "true" ||
+          !idParam ||
+          idParam === "new";
+        if (isNew) {
+          this.defaultRotationName = this.internalAssetName;
+          this.focusNameInput();
+        }
       },
       error: (err) => {
         this.logger.error("Failed to load custom rotation asset", err);
@@ -342,9 +399,11 @@ export class CustomRotationEditorComponent
     }));
   }
 
-  generateUniqueName(): string {
+  generateUniqueName(baseName: string = "New Custom Rotation"): string {
+    const pattern = /(_\d+|\s+\d+)$/;
+    const base = baseName.replace(pattern, "");
     let index = 1;
-    let candidate = `New Custom Rotation ${index}`;
+    let candidate = `${base} ${index}`;
     while (
       this.allAssets.some(
         (a) =>
@@ -354,9 +413,19 @@ export class CustomRotationEditorComponent
       )
     ) {
       index++;
-      candidate = `New Custom Rotation ${index}`;
+      candidate = `${base} ${index}`;
     }
     return candidate;
+  }
+
+  saveAsNew() {
+    const base = this.internalAssetName || "New Custom Rotation";
+    const newName = this.generateUniqueName(base);
+    this.internalAssetId = undefined;
+    this.internalAssetName = newName;
+    this.defaultRotationName = newName;
+    this.save();
+    this.focusNameInput();
   }
 
   isNameUnique(): boolean {
@@ -393,30 +462,44 @@ export class CustomRotationEditorComponent
     return this.isDirtyState();
   }
 
+  getUnsavedReasons(): string[] {
+    const reasons: string[] = [];
+    const nameTrimmed = (this.internalAssetName || "").trim();
+    if (!nameTrimmed) {
+      reasons.push("DISCARD_REASON_ROTATION_NAME_EMPTY");
+    } else if (!this.isNameUnique()) {
+      reasons.push("DISCARD_REASON_ROTATION_NAME_DUPLICATE");
+    }
+
+    if (this.internalRotations.length === 0) {
+      reasons.push("DISCARD_REASON_ROTATION_EMPTY");
+    } else if (this.hasValidationErrors()) {
+      reasons.push("DISCARD_REASON_ROTATION_ERRORS");
+    }
+
+    if (this.isSaving) {
+      reasons.push("DISCARD_REASON_SAVING");
+    } else if (reasons.length === 0 && this.isDirtyState()) {
+      reasons.push("DISCARD_REASON_EXIT_TOO_QUICKLY");
+    }
+
+    return reasons;
+  }
+
+  get discardMessage(): string {
+    return this.lifecycle.discardMessage;
+  }
+
   confirmDiscard(): Promise<boolean> {
-    this.showDiscardConfirm = true;
-    this.cdr.markForCheck();
-    this.cdr.detectChanges();
-    return new Promise((resolve) => {
-      this.pendingDeactivate = resolve;
-    });
+    return this.lifecycle.confirmDiscard();
   }
 
   onConfirmDiscard() {
-    this.showDiscardConfirm = false;
-    this.isNavigationApproved = true;
-    if (this.pendingDeactivate) {
-      this.pendingDeactivate(true);
-      this.pendingDeactivate = null;
-    }
+    this.lifecycle.onConfirmDiscard();
   }
 
   onCancelDiscard() {
-    this.showDiscardConfirm = false;
-    if (this.pendingDeactivate) {
-      this.pendingDeactivate(false);
-      this.pendingDeactivate = null;
-    }
+    this.lifecycle.onCancelDiscard();
   }
 
   private initEditorState() {
@@ -960,7 +1043,7 @@ export class CustomRotationEditorComponent
       this.internalNumLanes,
       rotation,
     );
-    downloadJsonFile(fileName, jsonContent);
+    await downloadJsonFile(fileName, jsonContent);
     this.logger.info(
       `Exported rotation for ${rotation.numDrivers || 0} drivers completed`,
     );
@@ -972,7 +1055,7 @@ export class CustomRotationEditorComponent
       this.internalNumLanes,
       this.internalRotations,
     );
-    downloadJsonFile(fileName, jsonContent);
+    await downloadJsonFile(fileName, jsonContent);
     this.logger.info("Export asset process completed");
   }
 }

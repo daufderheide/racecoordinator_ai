@@ -12,11 +12,16 @@ import { toSignal } from "@angular/core/rxjs-interop";
 import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, Router } from "@angular/router";
 import { forkJoin, Subscription } from "rxjs";
+import { AssetLayoutSwitcherComponent } from "@app/components/shared/asset-layout-switcher/asset-layout-switcher.component";
 import { ConfirmationModalComponent } from "@app/components/shared/confirmation-modal/confirmation-modal.component";
 import { ManagerHeaderComponent } from "@app/components/shared/manager-header/manager-header.component";
-import { ManagerHeaderComponent as ManagerHeaderComponent_1 } from "@app/components/shared/manager-header/manager-header.component";
 import { DataService } from "@app/data.service";
-import { AssetType, normalizeAssetType } from "@app/models/asset";
+import {
+  AssetLayoutMode,
+  AssetType,
+  compareAssetsByTypeThenName,
+  normalizeAssetType,
+} from "@app/models/asset";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import {
   IAssetMessage,
@@ -26,6 +31,7 @@ import {
   ISaveAudioSetEntry,
   ISaveImageSetEntry,
 } from "@app/proto/antigravity";
+import { AudioService } from "@app/services/audio.service";
 import {
   ConnectionMonitorService,
   ConnectionState,
@@ -35,8 +41,15 @@ import { LoggerService } from "@app/services/logger.service";
 import { RaceConnectionService } from "@app/services/race-connection.service";
 import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
-import { interpolate, mockTTSContext, resolveAudioUrl } from "@app/utils/audio";
+import {
+  interpolate,
+  mockTTSContext,
+  releaseUtterance,
+  resolveAudioUrl,
+  retainUtterance,
+} from "@app/utils/audio";
 
+import { getAssetManagerHelpSteps } from "./asset-manager-help";
 import { AudioSetEditorComponent } from "./audio-set-editor/audio-set-editor.component";
 import { ImageSetEditorComponent } from "./image-set-editor/image-set-editor.component";
 
@@ -68,11 +81,12 @@ export interface AssetView {
   templateUrl: "./asset-manager.component.html",
   styleUrls: ["./asset-manager.component.css"],
   imports: [
-    ManagerHeaderComponent_1,
+    ManagerHeaderComponent,
     FormsModule,
     ImageSetEditorComponent,
     AudioSetEditorComponent,
     ConfirmationModalComponent,
+    AssetLayoutSwitcherComponent,
     TranslatePipe,
   ],
 })
@@ -80,8 +94,11 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
   @ViewChild(ManagerHeaderComponent) header!: ManagerHeaderComponent;
   // Data
   assets: AssetView[] = [];
+  layoutMode: AssetLayoutMode = "medium";
   currentlyPlayingAsset: AssetView | null = null;
   private currentAudio: HTMLAudioElement | null = null;
+  private activeUtterance: SpeechSynthesisUtterance | null = null;
+  private ttsSafetyTimeout: any = null;
 
   // Filtering
   filterType:
@@ -115,6 +132,7 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
 
   scale: number = 1;
   private route = inject(ActivatedRoute);
+  private audioService = inject(AudioService, { optional: true });
   private params = toSignal(this.route.queryParams);
 
   backTargetUrl = computed(() => {
@@ -154,6 +172,19 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
 
   /* eslint-disable max-lines-per-function */
   ngOnInit() {
+    try {
+      const saved = localStorage.getItem("am_layout_mode") as AssetLayoutMode;
+      if (
+        saved === "list" ||
+        saved === "small" ||
+        saved === "medium" ||
+        saved === "large"
+      ) {
+        this.layoutMode = saved;
+      }
+    } catch {
+      // Ignore localStorage errors
+    }
     this.updateScale();
     this.connectionMonitor.startMonitoring();
     this.monitorConnection();
@@ -259,7 +290,7 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
     }, 1000);
   }
 
-  loadAssets() {
+  loadAssets(onLoaded?: () => void) {
     this.isLoading = true;
     this.dataService.listAssets().subscribe({
       next: (serverAssets) => {
@@ -300,12 +331,18 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
         if (!this.isDestroyed) {
           this.cdr.detectChanges(); // Force update
         }
+        if (onLoaded) {
+          onLoaded();
+        }
       },
       error: (err) => {
         this.logger.error("Failed to list assets", err);
         this.isLoading = false;
         if (!this.isDestroyed) {
           this.cdr.detectChanges(); // Force update
+        }
+        if (onLoaded) {
+          onLoaded();
         }
       },
     });
@@ -321,34 +358,38 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
   }
 
   get filteredAssets(): AssetView[] {
-    return this.assets.filter((asset) => {
-      const normalizedFilter = normalizeAssetType(this.filterType);
-      const normalizedAsset = normalizeAssetType(asset.type);
+    return this.assets
+      .filter((asset) => {
+        const normalizedFilter = normalizeAssetType(this.filterType);
+        const normalizedAsset = normalizeAssetType(asset.type);
 
-      const typeMatch =
-        this.filterType === "all" ||
-        asset.type === this.filterType ||
-        normalizedAsset === normalizedFilter;
-      const nameMatch =
-        !this.filterName ||
-        asset.name.toLowerCase().includes(this.filterName.toLowerCase());
+        const typeMatch =
+          this.filterType === "all" ||
+          asset.type === this.filterType ||
+          normalizedAsset === normalizedFilter;
+        const nameMatch =
+          !this.filterName ||
+          asset.name.toLowerCase().includes(this.filterName.toLowerCase());
 
-      return typeMatch && nameMatch;
-    });
+        return typeMatch && nameMatch;
+      })
+      .sort(compareAssetsByTypeThenName);
   }
 
   get allImages(): AssetView[] {
-    return this.assets.filter(
-      (a) => a.type === "image" || a.type === "image_set",
-    );
+    return this.assets
+      .filter((a) => a.type === "image" || a.type === "image_set")
+      .sort(compareAssetsByTypeThenName);
   }
 
   get allAudio(): AssetView[] {
-    return this.assets.filter(
-      (a) =>
-        normalizeAssetType(a.type) === AssetType.AUDIO ||
-        a.type === "audio_set",
-    );
+    return this.assets
+      .filter(
+        (a) =>
+          normalizeAssetType(a.type) === AssetType.AUDIO ||
+          a.type === "audio_set",
+      )
+      .sort(compareAssetsByTypeThenName);
   }
 
   get totalSize(): string {
@@ -619,9 +660,19 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
         );
 
         forkJoin(uploadObservables).subscribe({
-          next: () => {
+          next: (results) => {
             this.logger.info("All uploads successful");
-            this.loadAssets();
+            const isSingleAudioUpload =
+              fileDataList.length === 1 &&
+              normalizeAssetType(fileDataList[0].type) === AssetType.AUDIO;
+            const singleResult: any =
+              results && results.length === 1 ? results[0] : null;
+
+            this.loadAssets(() => {
+              if (isSingleAudioUpload && !this.isDestroyed) {
+                this.playSingleUploadedAudio(fileDataList[0], singleResult);
+              }
+            });
             this.isUploading = false;
             this.cdr.detectChanges();
           },
@@ -635,6 +686,40 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
     }
   }
 
+  private playSingleUploadedAudio(
+    fileData: { name: string; type: string },
+    uploadedResult: any,
+  ) {
+    if (this.isDestroyed) {
+      return;
+    }
+
+    const uploadedId =
+      uploadedResult?.model?.entityId ||
+      uploadedResult?.entity_id ||
+      uploadedResult?.id;
+
+    let targetAsset = this.assets.find(
+      (a) =>
+        (uploadedId && a.id === uploadedId) ||
+        (uploadedResult?.name && a.name === uploadedResult.name) ||
+        a.name === fileData.name,
+    );
+
+    if (!targetAsset) {
+      const url = uploadedResult?.url ? this.getAssetUrl(uploadedResult) : "";
+      targetAsset = {
+        id: uploadedId || "",
+        name: uploadedResult?.name || fileData.name,
+        type: "audio",
+        size: uploadedResult?.size || "0 B",
+        url,
+      };
+    }
+
+    this.playAsset(targetAsset);
+  }
+
   readFile(
     file: File,
   ): Promise<{ name: string; type: string; data: Uint8Array }> {
@@ -643,7 +728,10 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
       reader.onload = (e: any) => {
         const arrayBuffer = e.target.result;
         const bytes = new Uint8Array(arrayBuffer);
-        const type = file.type.startsWith("image/") ? "image" : "audio";
+        const isImage =
+          (file.type && file.type.startsWith("image/")) ||
+          /\.(png|jpe?g|gif|webp|svg)$/i.test(file.name);
+        const type = isImage ? "image" : "audio";
         resolve({ name: file.name, type, data: bytes });
       };
       reader.onerror = (e) => reject(e);
@@ -746,8 +834,25 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
       this.currentAudio.pause();
       this.currentAudio = null;
     }
-    if (window.speechSynthesis) {
-      window.speechSynthesis.cancel();
+    if (this.ttsSafetyTimeout) {
+      clearTimeout(this.ttsSafetyTimeout);
+      this.ttsSafetyTimeout = null;
+    }
+    if (this.activeUtterance) {
+      this.activeUtterance.onend = null;
+      this.activeUtterance.onerror = null;
+      releaseUtterance(this.activeUtterance);
+      this.activeUtterance = null;
+    }
+    if (typeof window !== "undefined" && window.speechSynthesis) {
+      try {
+        window.speechSynthesis.cancel();
+        if (window.speechSynthesis.paused) {
+          window.speechSynthesis.resume();
+        }
+      } catch {
+        // ignore
+      }
     }
     this.cdr.detectChanges();
   }
@@ -757,6 +862,8 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
     return new Promise((resolve, reject) => {
       const playableUrl = resolveAudioUrl(url, this.dataService.serverUrl);
       const audio = new Audio(playableUrl);
+      const masterVol = this.audioService?.getMasterVolume() ?? 100;
+      audio.volume = Math.max(0, Math.min(1, masterVol / 100));
       this.currentAudio = audio;
       audio.onended = () => {
         this.currentAudio = null;
@@ -770,18 +877,59 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
     });
   }
 
-  private playTTSPromise(text: string | undefined): Promise<void> {
+  private playTTSPromise(
+    text: string | undefined,
+    skipCancel = false,
+  ): Promise<void> {
     return new Promise((resolve) => {
-      if (!text || !window.speechSynthesis) {
+      if (!text || typeof window === "undefined" || !window.speechSynthesis) {
         resolve();
         return;
       }
-      window.speechSynthesis.cancel();
+      if (
+        !skipCancel &&
+        (window.speechSynthesis.speaking || window.speechSynthesis.pending)
+      ) {
+        try {
+          window.speechSynthesis.cancel();
+        } catch {
+          // ignore
+        }
+      }
       const playContext = mockTTSContext();
       const interpolatedText = interpolate(text, playContext);
       const utterance = new SpeechSynthesisUtterance(interpolatedText);
-      utterance.onend = () => resolve();
-      utterance.onerror = () => resolve();
+      this.activeUtterance = utterance;
+      retainUtterance(utterance);
+      if (this.audioService) {
+        this.audioService.applyTtsSettingsToUtterance(utterance);
+      }
+
+      let finished = false;
+      const done = () => {
+        if (finished) return;
+        finished = true;
+        releaseUtterance(utterance);
+        if (this.ttsSafetyTimeout) {
+          clearTimeout(this.ttsSafetyTimeout);
+          this.ttsSafetyTimeout = null;
+        }
+        if (this.activeUtterance === utterance) {
+          this.activeUtterance = null;
+        }
+        resolve();
+      };
+
+      utterance.onend = () => done();
+      utterance.onerror = () => done();
+
+      const wordCount = interpolatedText.trim().split(/\s+/).length;
+      const dynamicTimeout = Math.max(3000, wordCount * 500 + 2000);
+      this.ttsSafetyTimeout = setTimeout(() => done(), dynamicTimeout);
+
+      if (window.speechSynthesis.paused) {
+        window.speechSynthesis.resume();
+      }
       window.speechSynthesis.speak(utterance);
     });
   }
@@ -794,14 +942,28 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
     this.currentlyPlayingAsset = asset;
     this.cdr.detectChanges();
 
-    for (const entry of asset.audioEntries) {
+    // Natural order: elapsed ascending first, then remaining descending
+    const sortedEntries = [...asset.audioEntries].sort((a, b) => {
+      const modeA = a.triggerMode || (a as any).trigger_mode || "remaining";
+      const modeB = b.triggerMode || (b as any).trigger_mode || "remaining";
+      if (modeA !== modeB) {
+        return modeA === "elapsed" ? -1 : 1;
+      }
+      const valA =
+        Number(a.timeSeconds != null ? a.timeSeconds : a.percentage) || 0;
+      const valB =
+        Number(b.timeSeconds != null ? b.timeSeconds : b.percentage) || 0;
+      return modeA === "elapsed" ? valA - valB : valB - valA;
+    });
+
+    for (const entry of sortedEntries) {
       if (this.currentlyPlayingAsset !== asset) break;
       try {
         const entryType = entry.type || "preset";
         if (entryType === "preset") {
           await this.playUrl(entry.url || undefined);
         } else if (entryType === "tts") {
-          await this.playTTSPromise(entry.text || undefined);
+          await this.playTTSPromise(entry.text || undefined, true);
         }
       } catch (e) {
         this.logger.error("Error playing audio set entry", e);
@@ -908,6 +1070,12 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
       data: new Uint8Array(),
       type: entry.type || "preset",
       text: entry.text || "",
+      percentage:
+        (entry as any).percentage != null
+          ? (entry as any).percentage
+          : Math.round(entry.timeSeconds || 0),
+      triggerMode:
+        entry.triggerMode || (entry as any).trigger_mode || "remaining",
     }));
     this.showAudioSetEditor = true;
     this.cdr.detectChanges();
@@ -918,11 +1086,11 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
     this.loadAssets();
   }
 
-  // Custom Rotation Editor Methods
   openNewCustomRotationEditor() {
     this.router.navigate(["/custom-rotation-editor"], {
       queryParams: {
         id: "new",
+        isNew: "true",
         from: this.route.snapshot.queryParamMap.get("from"),
         returnUrl: this.route.snapshot.queryParamMap.get("returnUrl"),
       },
@@ -943,116 +1111,7 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
     this.loadAssets();
   }
 
-  /* eslint-disable max-lines-per-function */
   getHelpSteps(): GuideStep[] {
-    return [
-      {
-        title: this.translationService.translate("AM_HELP_WELCOME_TITLE"),
-        content: this.translationService.translate("AM_HELP_WELCOME_CONTENT"),
-        position: "center",
-      },
-      {
-        selector: ".stats-content",
-        title: this.translationService.translate("AM_HELP_STATS_TITLE"),
-        content: this.translationService.translate("AM_HELP_STATS_CONTENT"),
-        position: "right",
-      },
-      {
-        selector: ".upload-zone",
-        title: this.translationService.translate("AM_HELP_UPLOAD_TITLE"),
-        content: this.translationService.translate("AM_HELP_UPLOAD_CONTENT"),
-        position: "right",
-      },
-      {
-        selector: ".btn-image-set",
-        title: this.translationService.translate("AM_HELP_IMAGE_SET_TITLE"),
-        content: this.translationService.translate("AM_HELP_IMAGE_SET_CONTENT"),
-        position: "right",
-      },
-      {
-        selector: ".btn-audio-set",
-        title: this.translationService.translate("AM_HELP_AUDIO_SET_TITLE"),
-        content: this.translationService.translate("AM_HELP_AUDIO_SET_CONTENT"),
-        position: "right",
-      },
-      {
-        selector: ".btn-custom-rotation",
-        title: this.translationService.translate(
-          "AM_HELP_CUSTOM_ROTATION_TITLE",
-        ),
-        content: this.translationService.translate(
-          "AM_HELP_CUSTOM_ROTATION_CONTENT",
-        ),
-        position: "right",
-      },
-      {
-        selector: ".library-panel",
-        title: this.translationService.translate("AM_HELP_LIBRARY_TITLE"),
-        content: this.translationService.translate("AM_HELP_LIBRARY_CONTENT"),
-        position: "left",
-      },
-      {
-        selector: ".filter-all",
-        title: this.translationService.translate("AM_HELP_FILTER_ALL_TITLE"),
-        content: this.translationService.translate(
-          "AM_HELP_FILTER_ALL_CONTENT",
-        ),
-        position: "bottom",
-      },
-      {
-        selector: ".filter-images",
-        title: this.translationService.translate("AM_HELP_FILTER_IMAGES_TITLE"),
-        content: this.translationService.translate(
-          "AM_HELP_FILTER_IMAGES_CONTENT",
-        ),
-        position: "bottom",
-      },
-      {
-        selector: ".filter-image-sets",
-        title: this.translationService.translate(
-          "AM_HELP_FILTER_IMAGE_SETS_TITLE",
-        ),
-        content: this.translationService.translate(
-          "AM_HELP_FILTER_IMAGE_SETS_CONTENT",
-        ),
-        position: "bottom",
-      },
-      {
-        selector: ".filter-sounds",
-        title: this.translationService.translate("AM_HELP_FILTER_SOUNDS_TITLE"),
-        content: this.translationService.translate(
-          "AM_HELP_FILTER_SOUNDS_CONTENT",
-        ),
-        position: "bottom",
-      },
-      {
-        selector: ".filter-audio-sets",
-        title: this.translationService.translate(
-          "AM_HELP_FILTER_AUDIO_SETS_TITLE",
-        ),
-        content: this.translationService.translate(
-          "AM_HELP_FILTER_AUDIO_SETS_CONTENT",
-        ),
-        position: "bottom",
-      },
-      {
-        selector: ".filter-custom-rotations",
-        title: this.translationService.translate(
-          "AM_HELP_FILTER_CUSTOM_ROTATIONS_TITLE",
-        ),
-        content: this.translationService.translate(
-          "AM_HELP_FILTER_CUSTOM_ROTATIONS_CONTENT",
-        ),
-        position: "bottom",
-      },
-      {
-        selector: ".filter-input",
-        title: this.translationService.translate("AM_HELP_FILTER_NAME_TITLE"),
-        content: this.translationService.translate(
-          "AM_HELP_FILTER_NAME_CONTENT",
-        ),
-        position: "bottom",
-      },
-    ];
+    return getAssetManagerHelpSteps(this.translationService);
   }
 }

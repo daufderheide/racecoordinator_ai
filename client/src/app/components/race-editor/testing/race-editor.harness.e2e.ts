@@ -53,11 +53,15 @@ export class RaceEditorHarnessE2e implements RaceEditorHarnessBase {
   }
 
   async getTrack(): Promise<string> {
-    return await this.trackSelect.inputValue();
+    const val = await this.trackSelect.getAttribute("data-value");
+    return val || "";
   }
 
   async setTrack(trackId: string): Promise<void> {
-    await this.trackSelect.selectOption(trackId);
+    await this.trackSelect.click();
+    await this.locator
+      .locator(`.custom-select-option[data-value='${trackId}']`)
+      .click();
   }
 
   async getHeatTimesThrough(): Promise<number> {

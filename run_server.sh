@@ -3,6 +3,7 @@
 HEADLESS=false
 SERVER_PORT=7070
 CLIENT_PORT=4200
+REPLAY_LOG=""
 
 for ((i=1; i<=$#; i++)); do
   arg="${!i}"
@@ -13,11 +14,23 @@ for ((i=1; i<=$#; i++)); do
     SERVER_PORT="${!next_idx}"
   elif [[ "$arg" == --port=* ]]; then
     SERVER_PORT="${arg#*=}"
+  elif [ "$arg" = "--replay" ] || [ "$arg" = "-r" ]; then
+    next_idx=$((i+1))
+    REPLAY_LOG="${!next_idx}"
+  elif [[ "$arg" == --replay=* ]]; then
+    REPLAY_LOG="${arg#*=}"
   fi
 done
 
 if [ -n "$PORT" ]; then SERVER_PORT="$PORT"; fi
 if [ -n "$SERVER_PORT_ENV" ]; then SERVER_PORT="$SERVER_PORT_ENV"; fi
+if [ -n "$REPLAY_LOG_ENV" ]; then REPLAY_LOG="$REPLAY_LOG_ENV"; fi
+
+if [ -n "$REPLAY_LOG" ]; then
+  if [[ "$REPLAY_LOG" != /* ]]; then
+    REPLAY_LOG="$(pwd)/$REPLAY_LOG"
+  fi
+fi
 
 is_port_in_use() {
   local port=$1
@@ -92,5 +105,9 @@ mkdir -p "$PROTO_DEST_DIR"
 mvn clean -Dbuild.dist.dir="$PROTO_DEST_DIR" -Dmaven.repo.local="$(pwd)/.m2/repository" || true
 ./generate_protos.sh --server-only
 
-export MAVEN_OPTS="-Djava.library.path=$(pwd)/lib/macos"
-mvn compile exec:java -Dbuild.dist.dir="$PROTO_DEST_DIR" -Dexec.mainClass="com.antigravity.App" -Dexec.args="--headless" -DLOG_DIR="$(pwd)/../data_v3" -Dapp.data.dir="$(pwd)/../data_v3" -Dde.flapdoodle.embed.io.tmpdir="$(pwd)/../data_v3/server_temp" -Dmaven.repo.local="$(pwd)/.m2/repository"
+export MAVEN_OPTS="-Djava.library.path=$(pwd)/lib/macos ${MAVEN_OPTS:-}"
+REPLAY_FLAG=""
+if [ -n "$REPLAY_LOG" ]; then
+  REPLAY_FLAG="-DenableLogReplay=$REPLAY_LOG"
+fi
+mvn compile exec:java -Dbuild.dist.dir="$PROTO_DEST_DIR" -Dexec.mainClass="com.antigravity.App" -Dexec.args="--headless" -DLOG_DIR="$(pwd)/../data_v3" -Dapp.data.dir="$(pwd)/../data_v3" -Dde.flapdoodle.embed.io.tmpdir="$(pwd)/../data_v3/server_temp" -Dmaven.repo.local="$(pwd)/.m2/repository" $REPLAY_FLAG

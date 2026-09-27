@@ -1,4 +1,5 @@
 import { ComponentHarness } from "@angular/cdk/testing";
+import { CustomSelectHarness } from "@app/components/shared/custom-select/testing/custom-select.harness";
 
 import { BartEditorHarnessBase } from "./bart-editor.harness.base";
 
@@ -8,67 +9,49 @@ export class BartEditorHarness
 {
   static hostSelector = BartEditorHarnessBase.hostSelector;
 
-  protected getSectionHeaders = this.locatorForAll(
-    BartEditorHarnessBase.selectors.sectionHeader,
-  );
-  protected getDeviceNameInput = this.locatorFor(
-    BartEditorHarnessBase.selectors.deviceNameInput,
+  protected getDeviceNameSelect = this.locatorFor(
+    CustomSelectHarness.with({
+      selector: BartEditorHarnessBase.selectors.deviceNameInput,
+    }),
   );
   protected getMinLapMsInput = this.locatorFor(
     BartEditorHarnessBase.selectors.minLapMsInput,
   );
   protected getLapPinPitBehaviorSelect = this.locatorFor(
-    BartEditorHarnessBase.selectors.lapPinPitBehaviorSelect,
+    CustomSelectHarness.with({
+      selector: BartEditorHarnessBase.selectors.lapPinPitBehaviorSelect,
+    }),
   );
   protected getRemoveButton = this.locatorFor(
     BartEditorHarnessBase.selectors.removeButton,
   );
 
-  private getSectionIndex(name: "bart" | "main" | "rw"): number {
-    switch (name) {
-      case "bart":
-        return 0;
-      case "main":
-        return 1;
-      case "rw":
-        return 2;
-    }
-  }
-
   async toggleSection(name: "bart" | "main" | "rw"): Promise<void> {
-    const headers = await this.getSectionHeaders();
-    const idx = this.getSectionIndex(name);
-    if (headers[idx]) {
+    const headers = await this.locatorForAll(
+      BartEditorHarnessBase.selectors.sectionHeader,
+    )();
+    const idx = name === "bart" ? 0 : name === "main" ? 1 : 2;
+    if (headers.length > idx) {
       await headers[idx].click();
     }
   }
 
   async isSectionExpanded(name: "bart" | "main" | "rw"): Promise<boolean> {
-    const idx = this.getSectionIndex(name);
+    const idx = name === "bart" ? 0 : name === "main" ? 1 : 2;
     const sections = await this.locatorForAll(
-      BartEditorHarnessBase.selectors.sectionContent,
+      `${BartEditorHarnessBase.selectors.section}.expanded`,
     )();
     return sections.length > idx;
   }
 
   async getDeviceName(): Promise<string> {
-    const input = await this.getDeviceNameInput();
-    return await input.getProperty("value");
+    const select = await this.getDeviceNameSelect();
+    return await select.getValue();
   }
 
   async setDeviceName(name: string): Promise<void> {
-    const select = await this.getDeviceNameInput();
-    const options = await this.locatorForAll(
-      "select[id^='deviceName-'] option",
-    )();
-    for (let i = 0; i < options.length; i++) {
-      const text = await options[i].text();
-      const val = await options[i].getProperty("value");
-      if (text.trim() === name.trim() || val === name) {
-        await select.selectOptions(i);
-        return;
-      }
-    }
+    const select = await this.getDeviceNameSelect();
+    await select.selectOptionByValue(name);
   }
 
   async getMinLapMs(): Promise<number> {
@@ -85,13 +68,13 @@ export class BartEditorHarness
 
   async getLapPinPitBehavior(): Promise<number> {
     const select = await this.getLapPinPitBehaviorSelect();
-    const val = await select.getProperty("value");
+    const val = (await select.getValue()) || "0";
     return parseInt(val, 10) || 0;
   }
 
   async setLapPinPitBehavior(value: number): Promise<void> {
     const select = await this.getLapPinPitBehaviorSelect();
-    await select.selectOptions(value);
+    await select.selectOptionByValue(value.toString());
   }
 
   async removeInterface(): Promise<void> {

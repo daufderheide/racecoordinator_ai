@@ -33,6 +33,8 @@ class MockItemSelectorComponent {
   itemType = input<string>("image");
   backButtonRoute = input<string | null>(null);
   backButtonQueryParams = input<any>({});
+  allowBrowse = input<boolean>(true);
+  filePicked = output<File>();
   select = output<any>();
   close = output<void>();
 }
@@ -72,7 +74,15 @@ describe("ImageSelectorComponent", () => {
   let mockDataService: any;
 
   beforeEach(async () => {
-    mockDataService = jasmine.createSpyObj("DataService", ["uploadAsset"]);
+    mockDataService = jasmine.createSpyObj("DataService", [
+      "uploadAsset",
+      "computeFileHash",
+      "findAssetByHash",
+    ]);
+    mockDataService.computeFileHash.and.returnValue(
+      Promise.resolve("hash-1234"),
+    );
+    mockDataService.findAssetByHash.and.returnValue(undefined);
 
     await TestBed.configureTestingModule({
       imports: [
@@ -234,4 +244,185 @@ describe("ImageSelectorComponent", () => {
     expect(component.imageUrl()).toBe(asset.url);
     expect(component.showSelector).toBeFalse();
   });
+
+  it("should deduplicate dropped image and reuse existing asset without network upload", fakeAsync(() => {
+    const existingAsset = {
+      model: { entityId: "existing-img-1" },
+      url: "/assets/existing.png",
+      hash: "hash-duplicate",
+      name: "Existing Image",
+    };
+    mockDataService.computeFileHash.and.returnValue(
+      Promise.resolve("hash-duplicate"),
+    );
+    mockDataService.findAssetByHash.and.returnValue(existingAsset);
+
+    const file = new File(["duplicate-content"], "duplicate.png", {
+      type: "image/png",
+    });
+    const dataTransfer = new DataTransfer();
+    dataTransfer.items.add(file);
+    const dropEvent = new DragEvent("drop", { dataTransfer });
+
+    let urlEmitted: string | undefined;
+    (component as any).imageUrlChange.subscribe(
+      (val: any) => (urlEmitted = val),
+    );
+    spyOn(component.assetSelected, "emit");
+
+    component.onDrop(dropEvent);
+    tick();
+
+    expect(mockDataService.computeFileHash).toHaveBeenCalledWith(file);
+    expect(mockDataService.findAssetByHash).toHaveBeenCalledWith(
+      "hash-duplicate",
+      "image",
+    );
+    expect(mockDataService.uploadAsset).not.toHaveBeenCalled();
+    expect(urlEmitted).toBe("/assets/existing.png");
+    expect(component.assetSelected.emit).toHaveBeenCalledWith(existingAsset);
+  }));
+
+  it("should reject invalid file format with transient error and clear after 4 seconds", fakeAsync(() => {
+    const file = new File(["text-content"], "notes.txt", {
+      type: "text/plain",
+    });
+    const dataTransfer = new DataTransfer();
+    dataTransfer.items.add(file);
+    const dropEvent = new DragEvent("drop", { dataTransfer });
+
+    component.onDrop(dropEvent);
+    tick();
+
+    expect(component.errorMessage).toBe("IS_ERR_INVALID_IMAGE");
+    expect(mockDataService.uploadAsset).not.toHaveBeenCalled();
+
+    tick(4000);
+    expect(component.errorMessage).toBeNull();
+  }));
+
+  it("should handle onFilePicked from file browsing", fakeAsync(() => {
+    component.showSelector = true;
+    const file = new File(["picked-content"], "picked.jpg", {
+      type: "image/jpeg",
+    });
+    const mockAsset = { url: "/assets/picked.jpg" };
+    mockDataService.uploadAsset.and.returnValue(of(mockAsset));
+
+    spyOn(window as any, "FileReader").and.callFake(function () {
+      return {
+        readAsDataURL: jasmine
+          .createSpy("readAsDataURL")
+          .and.callFake(function (this: any) {
+            setTimeout(() => {
+              if (this.onload) this.onload({ target: { result: "data:img" } });
+            });
+          }),
+        readAsArrayBuffer: jasmine
+          .createSpy("readAsArrayBuffer")
+          .and.callFake(function (this: any) {
+            setTimeout(() => {
+              if (this.onload)
+                this.onload({ target: { result: new ArrayBuffer(0) } });
+            });
+          }),
+        onload: null,
+      };
+    });
+
+    component.onFilePicked(file);
+    expect(component.showSelector).toBeFalse();
+    tick();
+
+    expect(mockDataService.uploadAsset).toHaveBeenCalled();
+  }));
+
+  it("should track dragCounter on dragenter, dragover, and dragleave without child element flickering", () => {
+    const enterEvent1 = new DragEvent("dragenter", { cancelable: true });
+    spyOn(enterEvent1, "preventDefault");
+    spyOn(enterEvent1, "stopPropagation");
+
+    component.onDragEnter(enterEvent1);
+    expect(enterEvent1.preventDefault).toHaveBeenCalled();
+    expect(enterEvent1.stopPropagation).toHaveBeenCalled();
+    expect(component.dragCounter).toBe(1);
+    expect(component.isDragging).toBeTrue();
+
+    // Enter child element
+    const enterEvent2 = new DragEvent("dragenter", { cancelable: true });
+    component.onDragEnter(enterEvent2);
+    expect(component.dragCounter).toBe(2);
+    expect(component.isDragging).toBeTrue();
+
+    // Drag over
+    const overEvent = new DragEvent("dragover", { cancelable: true });
+    spyOn(overEvent, "preventDefault");
+    spyOn(overEvent, "stopPropagation");
+    component.onDragOver(overEvent);
+    expect(overEvent.preventDefault).toHaveBeenCalled();
+    expect(component.isDragging).toBeTrue();
+
+    // Leave child element
+    const leaveEvent1 = new DragEvent("dragleave", { cancelable: true });
+    component.onDragLeave(leaveEvent1);
+    expect(component.dragCounter).toBe(1);
+    expect(component.isDragging).toBeTrue();
+
+    // Leave container
+    const leaveEvent2 = new DragEvent("dragleave", { cancelable: true });
+    component.onDragLeave(leaveEvent2);
+    expect(component.dragCounter).toBe(0);
+    expect(component.isDragging).toBeFalse();
+  });
+
+  it("should close the dialog and assume the dropped file as the selection when dropped while dialog is open", fakeAsync(() => {
+    component.openSelector();
+    expect(component.showSelector).toBeTrue();
+
+    const newAsset = {
+      model: { entityId: "dialog-drop-img" },
+      name: "avatar.png",
+      type: "image",
+      url: "/assets/avatar.png",
+    };
+    mockDataService.uploadAsset.and.returnValue(of(newAsset));
+
+    spyOn(window as any, "FileReader").and.callFake(function () {
+      return {
+        readAsDataURL: jasmine
+          .createSpy("readAsDataURL")
+          .and.callFake(function (this: any) {
+            setTimeout(() => {
+              if (this.onload) this.onload({ target: { result: "data:img" } });
+            });
+          }),
+        readAsArrayBuffer: jasmine
+          .createSpy("readAsArrayBuffer")
+          .and.callFake(function (this: any) {
+            setTimeout(() => {
+              if (this.onload)
+                this.onload({ target: { result: new ArrayBuffer(4) } });
+            });
+          }),
+        onload: null,
+      };
+    });
+
+    const file = new File(["avatar-data"], "avatar.png", {
+      type: "image/png",
+    });
+    const dataTransfer = new DataTransfer();
+    dataTransfer.items.add(file);
+    const dropEvent = new DragEvent("drop", { dataTransfer });
+
+    let emittedUrl: string | undefined;
+    component.imageUrlChange.subscribe((u) => (emittedUrl = u));
+
+    component.onDrop(dropEvent);
+    tick();
+
+    expect(component.showSelector).toBeFalse();
+    expect(emittedUrl).toBe("/assets/avatar.png");
+    expect(component.effectiveImageUrl()).toBe("/assets/avatar.png");
+  }));
 });

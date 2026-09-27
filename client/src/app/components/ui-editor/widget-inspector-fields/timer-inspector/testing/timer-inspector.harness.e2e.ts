@@ -26,11 +26,13 @@ export class TimerInspectorHarnessE2e implements TimerInspectorHarnessBase {
   }
 
   async getTimeFontFamily(): Promise<string> {
-    return await this.selects.nth(0).inputValue();
+    return (await this.selects.nth(0).getAttribute("data-value")) || "";
   }
 
   async setTimeFontFamily(val: string): Promise<void> {
-    await this.selects.nth(0).selectOption({ label: val });
+    const sel = this.selects.nth(0);
+    await sel.locator(".custom-select-trigger").click();
+    await sel.locator(`.custom-select-option:has-text("${val}")`).click();
   }
 
   async getTimeFontSize(): Promise<number> {

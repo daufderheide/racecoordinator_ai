@@ -1,12 +1,19 @@
 import { TestbedHarnessEnvironment } from "@angular/cdk/testing/testbed";
 import { DatePipe, DecimalPipe } from "@angular/common";
 import { Component, input, NO_ERRORS_SCHEMA, output } from "@angular/core";
-import { ComponentFixture, TestBed } from "@angular/core/testing";
+import {
+  ComponentFixture,
+  fakeAsync,
+  TestBed,
+  tick,
+} from "@angular/core/testing";
 import { FormsModule } from "@angular/forms";
 import { By } from "@angular/platform-browser";
 import { ActivatedRoute, Router } from "@angular/router";
 import { of } from "rxjs";
 import { DataService } from "@app/data.service";
+import { Season } from "@app/models/season";
+import { LocalDatePipe } from "@app/pipes/local-date.pipe";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { LoggerService } from "@app/services/logger.service";
 import { NavigationService } from "@app/services/navigation.service";
@@ -24,7 +31,36 @@ import { SeasonEditorHarness } from "./testing/season-editor.harness";
   selector: "app-editor-title",
   template: "",
 })
-class MockEditorTitleComponent {}
+class MockEditorTitleComponent {
+  titleKey = input<string>("");
+  itemName = input<string | undefined>(undefined);
+  items = input<{ id: string; name: string }[]>([]);
+  selectedId = input<string | undefined>(undefined);
+  isEditMode = input<boolean>(false);
+  showEdit = input<boolean>(false);
+  disabledEdit = input<boolean>(false);
+  undoManager = input<any>();
+  showUndo = input<boolean>(true);
+  showRedo = input<boolean>(true);
+  showHelp = input<boolean>(true);
+  showCopy = input<boolean>(false);
+  disabledCopy = input<boolean>(false);
+  copyDisabledTooltipKey = input<string>("");
+  showAdd = input<boolean>(false);
+  showDelete = input<boolean>(false);
+  disabledDelete = input<boolean>(false);
+  isSaving = input<boolean>(false);
+  helpSteps = input<any[]>([]);
+  helpTitle = input<string>("");
+  helpRecordName = input<string | undefined>();
+  help = output<void>();
+  copy = output<void>();
+  add = output<void>();
+  delete = output<void>();
+  selectedIdChange = output<string>();
+  edit = output<void>();
+  back = output<void>();
+}
 
 @Component({
   standalone: true,
@@ -57,6 +93,7 @@ describe("SeasonEditorComponent", () => {
       getAllFinishedRaceHistory: () => of([]),
       createSeason: (s: any) => of({ ...s, entity_id: "s1" }),
       updateSeason: (id: string, s: any) => of({ ...s, entity_id: id }),
+      deleteSeason: (_id: string) => of({}),
     };
 
     const mockNavigationService = {
@@ -70,12 +107,24 @@ describe("SeasonEditorComponent", () => {
         SeasonEditorComponent,
         FormsModule,
         TranslatePipe,
+        LocalDatePipe,
         DatePipe,
         DecimalPipe,
       ],
       providers: [
         { provide: DataService, useValue: mockDataService },
-        { provide: TranslationService, useValue: mockTranslationService },
+        {
+          provide: TranslationService,
+          useValue: {
+            ...mockTranslationService,
+            translate: jasmine
+              .createSpy("translate")
+              .and.callFake((key: string) => {
+                if (key === "SM_DEFAULT_SEASON_NAME") return "New Season";
+                return mockTranslationService.translate(key);
+              }),
+          },
+        },
         { provide: LoggerService, useValue: mockLoggerService },
         { provide: NavigationService, useValue: mockNavigationService },
         {
@@ -94,6 +143,7 @@ describe("SeasonEditorComponent", () => {
             MockEditorTitleComponent,
             MockConfirmationModalComponent,
             TranslatePipe,
+            LocalDatePipe,
             FormsModule,
             DatePipe,
             DecimalPipe,
@@ -112,13 +162,34 @@ describe("SeasonEditorComponent", () => {
     expect(component).toBeTruthy();
   });
 
+  it("should configure editor title with SE_TITLE and update itemName reactively", () => {
+    const editorTitle = fixture.debugElement.query(
+      By.directive(MockEditorTitleComponent),
+    );
+    expect(editorTitle).toBeTruthy();
+    expect(editorTitle.componentInstance.titleKey()).toBe("SE_TITLE");
+    expect(editorTitle.componentInstance.itemName()).toBe(
+      component.editingSeason.name,
+    );
+
+    component.editingSeason.name = "Updated Championship";
+    fixture.detectChanges();
+    expect(editorTitle.componentInstance.itemName()).toBe(
+      "Updated Championship",
+    );
+  });
+
   it("should auto-save season on state commit if valid and reset hasChanges() to false", () => {
     const dataService = TestBed.inject(DataService);
     const router = TestBed.inject(Router);
+    (router.navigate as jasmine.Spy).calls.reset();
     spyOn(dataService, "createSeason").and.callThrough();
 
-    component.editingSeason.name = "New Auto-Saved Season";
-    component.editingSeason.drops = 2;
+    component.editingSeason = {
+      name: "New Auto-Saved Season",
+      drops: 2,
+      races: [],
+    };
     component.captureState();
 
     expect(dataService.createSeason).toHaveBeenCalled();
@@ -186,6 +257,55 @@ describe("SeasonEditorComponent", () => {
     expect(router.navigate).not.toHaveBeenCalled();
   });
 
+  it("should preserve trailing whitespace in season name and not clobber editingSeason on autoSave", () => {
+    const dataService = TestBed.inject(DataService);
+    spyOn(dataService, "updateSeason").and.returnValue(
+      of({
+        entity_id: "s1",
+        name: "Winter Championship ",
+        drops: 0,
+        races: [],
+      }),
+    );
+
+    component.editingSeason = {
+      entity_id: "s1",
+      name: "Winter Championship ",
+      drops: 0,
+      races: [],
+    };
+
+    component.autoSaveSeason();
+
+    expect(dataService.updateSeason).toHaveBeenCalledWith(
+      "s1",
+      jasmine.objectContaining({ name: "Winter Championship " }),
+    );
+    expect(component.editingSeason.name).toBe("Winter Championship ");
+  });
+
+  it("should handle onInputFocus, onInputChange, and onInputBlur via undoManager", fakeAsync(() => {
+    const dataService = TestBed.inject(DataService);
+    spyOn(dataService, "updateSeason").and.callThrough();
+
+    component.editingSeason.entity_id = "s1";
+    component.onInputFocus();
+    component.editingSeason.name = "Season Typing ";
+    component.onInputChange();
+
+    // Debounced - should not have committed yet
+    tick(50);
+    expect(dataService.updateSeason).not.toHaveBeenCalled();
+
+    // On blur - commits immediately
+    component.onInputBlur();
+    expect(dataService.updateSeason).toHaveBeenCalledWith(
+      "s1",
+      jasmine.objectContaining({ name: "Season Typing " }),
+    );
+    expect(component.editingSeason.name).toBe("Season Typing ");
+  }));
+
   it("should handle confirmDiscard modal confirm event via template binding", async () => {
     const promise = component.confirmDiscard();
     fixture.detectChanges();
@@ -218,6 +338,52 @@ describe("SeasonEditorComponent", () => {
     expect(result).toBeFalse();
     expect(component.showDiscardConfirm).toBeFalse();
     expect(component.isNavigationApproved).toBeFalse();
+  });
+
+  it("should identify reasons why season changes could not be saved", () => {
+    component.editingSeason = {
+      entity_id: "s1",
+      name: "Season 1",
+      drops: 1,
+    } as any;
+    component.existingSeasons = [
+      { entity_id: "s1", name: "Season 1" } as any,
+      { entity_id: "s2", name: "Existing Season" } as any,
+    ];
+
+    // Empty name
+    component.editingSeason.name = "";
+    expect(component.getUnsavedReasons()).toContain(
+      "DISCARD_REASON_SEASON_NAME_EMPTY",
+    );
+
+    // Duplicate name
+    component.editingSeason.name = "Existing Season";
+    expect(component.getUnsavedReasons()).toContain(
+      "DISCARD_REASON_SEASON_NAME_DUPLICATE",
+    );
+
+    // Invalid drops
+    component.editingSeason.name = "Unique Season";
+    component.editingSeason.drops = -1;
+    expect(component.getUnsavedReasons()).toContain(
+      "DISCARD_REASON_SEASON_DROPS_INVALID",
+    );
+    component.editingSeason.drops = 0;
+
+    // Saving
+    component.isSaving = true;
+    expect(component.getUnsavedReasons()).toContain("DISCARD_REASON_SAVING");
+    component.isSaving = false;
+
+    // Exit too quickly
+    spyOnProperty(component, "isDirty", "get").and.returnValue(true);
+    expect(component.getUnsavedReasons()).toContain(
+      "DISCARD_REASON_EXIT_TOO_QUICKLY",
+    );
+
+    // Formatted discard message
+    expect(component.discardMessage).toContain("•");
   });
 
   it("should generate unique default name for new season", () => {
@@ -255,11 +421,74 @@ describe("SeasonEditorComponent", () => {
     expect(component.standings.length).toBe(2);
     expect(component.standings[0].driver_name).toBe("Speedy");
     expect(component.standings[0].net_points).toBe(15);
+    expect(component.standings[0].dropped_points).toBe(0);
+    expect(component.standings[0].gross_points).toBe(15);
+    expect(component.standings[1].driver_name).toBe("Racer");
+    expect(component.standings[1].net_points).toBe(11);
+    expect(component.standings[1].dropped_points).toBe(0);
+    expect(component.standings[1].gross_points).toBe(11);
 
     // Remove race and recalculate
     component.removeRaceFromSeason(0);
     expect(component.editingSeason.races.length).toBe(0);
     expect(component.standings.length).toBe(0);
+  });
+
+  it("should calculate dropped points correctly when season drops is greater than 0", () => {
+    component.editingSeason = {
+      name: "Season With Drops",
+      drops: 1,
+      races: [
+        {
+          race_id: "r1",
+          race_name: "Race 1",
+          timestamp: 1000,
+          driver_results: [
+            {
+              driver_id: "d1",
+              driver_name: "Speedy",
+              overall_rank: 1,
+              overall_points: 25,
+              heat_points: 0,
+              total_points: 25,
+            },
+          ],
+        },
+        {
+          race_id: "r2",
+          race_name: "Race 2",
+          timestamp: 2000,
+          driver_results: [
+            {
+              driver_id: "d1",
+              driver_name: "Speedy",
+              overall_rank: 2,
+              overall_points: 10,
+              heat_points: 0,
+              total_points: 10,
+            },
+          ],
+        },
+      ],
+    };
+
+    component.calculateStandings();
+
+    expect(component.standings.length).toBe(1);
+    expect(component.standings[0].driver_name).toBe("Speedy");
+    expect(component.standings[0].gross_points).toBe(35);
+    expect(component.standings[0].dropped_points).toBe(10);
+    expect(component.standings[0].net_points).toBe(25);
+    expect(component.getDroppedPoints(component.standings[0])).toBe(10);
+    expect(
+      component.getDroppedPoints({
+        driver_id: "d9",
+        driver_name: "Fallback",
+        net_points: 20,
+        gross_points: 30,
+        races_run: 2,
+      }),
+    ).toBe(10);
   });
 
   it("should open add race modal, sort available finished races most recent to oldest, and add selected race", () => {
@@ -682,6 +911,56 @@ describe("SeasonEditorComponent", () => {
     );
   });
 
+  it("should navigate to /raceday-setup with skipIntro when canceling if from raceday-setup", () => {
+    sessionStorage.clear();
+    const router = TestBed.inject(Router);
+    const route = TestBed.inject(ActivatedRoute);
+    (route.snapshot.queryParams as any) = {
+      from: "raceday-setup",
+      returnUrl: "/raceday-setup",
+    };
+
+    component.editingSeason = {
+      entity_id: "season_123",
+      name: "Winter 2026",
+      drops: 0,
+    };
+    component.onCancel();
+
+    expect(sessionStorage.getItem("skipIntro")).toBe("true");
+    expect(router.navigate).toHaveBeenCalledWith(["/raceday-setup"], {
+      queryParams: { skipIntro: "true" },
+    });
+  });
+
+  it("should delegate onBack to onCancel", () => {
+    spyOn(component, "onCancel");
+    component.onBack();
+    expect(component.onCancel).toHaveBeenCalled();
+  });
+
+  it("should navigate to /raceday-setup with skipIntro when saving if from raceday-setup", () => {
+    sessionStorage.clear();
+    const router = TestBed.inject(Router);
+    const route = TestBed.inject(ActivatedRoute);
+    (route.snapshot.queryParams as any) = {
+      from: "raceday-setup",
+      returnUrl: "/raceday-setup",
+    };
+
+    component.editingSeason = {
+      entity_id: "season_123",
+      name: "Winter 2026",
+      drops: 0,
+    };
+    component.onSave();
+
+    expect(sessionStorage.getItem("skipIntro")).toBe("true");
+    expect(router.navigate).toHaveBeenCalledWith(["/raceday-setup"], {
+      queryParams: { skipIntro: "true" },
+    });
+  });
+
   it("should interact via SeasonEditorHarness", async () => {
     component.isLoading = false;
     component.editingSeason = {
@@ -908,6 +1187,17 @@ describe("SeasonEditorComponent", () => {
     ];
     fixture.detectChanges();
 
+    const headers = fixture.nativeElement.querySelectorAll(
+      ".standings-table thead tr th",
+    );
+    expect(headers.length).toBe(6);
+    expect(headers[0].textContent.trim()).toBe("SM_RANK");
+    expect(headers[1].textContent.trim()).toBe("SM_DRIVER");
+    expect(headers[2].textContent.trim()).toBe("SM_NET_POINTS");
+    expect(headers[3].textContent.trim()).toBe("SM_DROPPED_POINTS");
+    expect(headers[4].textContent.trim()).toBe("SM_GROSS_POINTS");
+    expect(headers[5].textContent.trim()).toBe("SM_RACES");
+
     const rows = fixture.nativeElement.querySelectorAll(
       ".standings-table tbody tr",
     );
@@ -915,11 +1205,13 @@ describe("SeasonEditorComponent", () => {
 
     const firstRowCols = rows[0].querySelectorAll("td");
     expect(firstRowCols[2].textContent.trim()).toBe("33.33");
-    expect(firstRowCols[3].textContent.trim()).toBe("50.13");
+    expect(firstRowCols[3].textContent.trim()).toBe("16.79");
+    expect(firstRowCols[4].textContent.trim()).toBe("50.13");
 
     const secondRowCols = rows[1].querySelectorAll("td");
     expect(secondRowCols[2].textContent.trim()).toBe("25");
-    expect(secondRowCols[3].textContent.trim()).toBe("25.5");
+    expect(secondRowCols[3].textContent.trim()).toBe("0.5");
+    expect(secondRowCols[4].textContent.trim()).toBe("25.5");
   });
 
   it("should format decimal points in race breakdown table to at most 2 decimal places", () => {
@@ -973,12 +1265,10 @@ describe("SeasonEditorComponent", () => {
     const headerGroup = fixture.nativeElement.querySelector(
       ".header-title-group",
     );
-    const title = headerGroup.querySelector("h3");
     const meta = headerGroup.querySelector(".season-meta");
     const demoBadge = meta.querySelector(".demo-badge");
     const metaPill = meta.querySelector(".meta-pill");
 
-    expect(title.textContent.trim()).toBe("Summer Cup 2026");
     expect(demoBadge).toBeTruthy();
     expect(metaPill.textContent).toContain("1");
   });
@@ -1045,6 +1335,357 @@ describe("SeasonEditorComponent", () => {
       expect(steps[4].title).toBe("SE_HELP_DEMO_BADGE_TITLE");
       expect(steps[4].content).toBe("SE_HELP_DEMO_BADGE_PRESENT_CONTENT");
       expect(steps[4].position).toBe("bottom");
+    });
+  });
+
+  describe("default name auto-select and focus", () => {
+    it("should set defaultSeasonName and focus name input when isNew is true", fakeAsync(() => {
+      const dataService = TestBed.inject(DataService);
+      spyOn(dataService, "getSeasons").and.returnValue(
+        of([{ entity_id: "s1", name: "Season 1", drops: 0, races: [] }]),
+      );
+      const route = TestBed.inject(ActivatedRoute);
+      (route.snapshot.queryParams as any) = { id: "s1", isNew: "true" };
+      spyOn(component, "focusNameInput").and.callThrough();
+
+      component.loadData("s1");
+      tick(200);
+
+      expect(component.defaultSeasonName).toBe("Season 1");
+      expect(component.focusNameInput).toHaveBeenCalled();
+    }));
+
+    it("should update defaultSeasonName and focus name input on saveAsNew", fakeAsync(() => {
+      const dataService = TestBed.inject(DataService);
+      spyOn(dataService, "createSeason").and.returnValue(
+        of({ entity_id: "s_new", name: "Season 1_1", drops: 0, races: [] }),
+      );
+      spyOn(component, "focusNameInput").and.callThrough();
+      component.editingSeason = {
+        entity_id: "s1",
+        name: "Season 1",
+        drops: 0,
+        races: [],
+      };
+
+      component.saveAsNew();
+      tick(200);
+
+      expect(component.defaultSeasonName).toBe("Season 1_1");
+      expect(component.focusNameInput).toHaveBeenCalled();
+    }));
+  });
+
+  describe("Unified Editor Architecture & Read-Only vs Edit Mode", () => {
+    it("should be in read-only mode by default when loading existing season", fakeAsync(() => {
+      const dataService = TestBed.inject(DataService);
+      spyOn(dataService, "getSeasons").and.returnValue(
+        of([{ entity_id: "s1", name: "Winter 2026", drops: 0, races: [] }]),
+      );
+      component.loadData("s1");
+      tick();
+      fixture.detectChanges();
+      expect(component.isEditMode).toBeFalse();
+
+      const nameInput = fixture.nativeElement.querySelector("#season-name");
+      expect(nameInput.disabled).toBeTrue();
+
+      const dropsInput = fixture.nativeElement.querySelector("#season-drops");
+      expect(dropsInput.disabled).toBeTrue();
+
+      const addBtn = fixture.nativeElement.querySelector("#btn-add-race");
+      expect(addBtn).toBeNull();
+
+      const removeBtn = fixture.nativeElement.querySelector(".btn-remove-race");
+      expect(removeBtn).toBeNull();
+    }));
+
+    it("should keep race expanders open/closable even in read-only mode", () => {
+      component.isEditMode = false;
+      component.editingSeason = {
+        entity_id: "s1",
+        name: "Winter 2026",
+        drops: 0,
+        races: [
+          {
+            race_id: "r1",
+            race_name: "Race 1",
+            timestamp: 1000,
+            driver_results: [
+              {
+                driver_id: "d1",
+                driver_name: "Driver 1",
+                overall_rank: 1,
+                overall_points: 25,
+                heat_points: 0,
+                total_points: 25,
+              },
+            ],
+          },
+        ],
+      };
+      fixture.detectChanges();
+
+      const expanderKey = component.getRaceExpanderKey(
+        component.editingSeason.races![0],
+        0,
+      );
+      expect(component.isRaceExpanded(expanderKey)).toBeFalse();
+
+      const expanderTitle = fixture.nativeElement.querySelector(
+        ".expander-title-bar",
+      );
+      expect(expanderTitle).toBeTruthy();
+      expanderTitle.click();
+      fixture.detectChanges();
+
+      expect(
+        component.isRaceExpanded(component.editingSeason.races![0], 0),
+      ).toBeTrue();
+      const breakdownTable = fixture.nativeElement.querySelector(
+        ".race-breakdown-table",
+      );
+      expect(breakdownTable).toBeTruthy();
+
+      // Collapse it back
+      expanderTitle.click();
+      fixture.detectChanges();
+      expect(
+        component.isRaceExpanded(component.editingSeason.races![0], 0),
+      ).toBeFalse();
+    });
+
+    it("should toggle edit mode on, enable inputs, and focus name input", () => {
+      component.isEditMode = false;
+      fixture.detectChanges();
+      spyOn(component, "focusNameInput").and.callThrough();
+
+      component.onToggleEditMode();
+      fixture.detectChanges();
+
+      expect(component.isEditMode).toBeTrue();
+      expect(component.focusNameInput).toHaveBeenCalled();
+
+      const nameInput = fixture.nativeElement.querySelector("#season-name");
+      expect(nameInput.disabled).toBeFalse();
+
+      const dropsInput = fixture.nativeElement.querySelector("#season-drops");
+      expect(dropsInput.disabled).toBeFalse();
+
+      const addBtn = fixture.nativeElement.querySelector("#btn-add-race");
+      expect(addBtn).not.toBeNull();
+    });
+
+    it("should toggle edit mode off when there are no unsaved changes", () => {
+      fixture.detectChanges();
+      component.isEditMode = true;
+      spyOn(component, "hasChanges").and.returnValue(false);
+
+      component.onToggleEditMode();
+      expect(component.isEditMode).toBeFalse();
+    });
+
+    it("should select season by id from dropdown when not in edit mode", () => {
+      const router = TestBed.inject(Router);
+      (router.navigate as jasmine.Spy).calls.reset();
+      component.isEditMode = false;
+      component.selectedSeasonId = "s1";
+      fixture.detectChanges();
+
+      const s2: Season = {
+        entity_id: "s2",
+        name: "Second Season",
+        drops: 0,
+        races: [],
+      };
+      component.existingSeasons.push(s2);
+      component.updateSeasonSelectItems();
+
+      component.onSelectSeasonById("s2");
+      expect(component.selectedSeasonId).toBe("s2");
+      expect(component.editingSeason.name).toBe("Second Season");
+      expect(router.navigate).toHaveBeenCalledWith([], {
+        relativeTo: jasmine.any(Object),
+        queryParams: { id: "s2" },
+        queryParamsHandling: "merge",
+        replaceUrl: true,
+      });
+    });
+
+    it("should not switch selection via onSelectSeasonById when in edit mode", () => {
+      fixture.detectChanges();
+      component.selectedSeasonId = "s1";
+      component.isEditMode = true;
+      component.onSelectSeasonById("s2");
+      expect(component.selectedSeasonId).toBe("s1");
+    });
+
+    it("should immediately create season in DB, activate edit mode, and focus on startNewSeason", fakeAsync(() => {
+      const dataService = TestBed.inject(DataService);
+      spyOn(dataService, "createSeason").and.returnValue(
+        of({
+          entity_id: "s_new_db",
+          name: "New Season",
+          drops: 0,
+          races: [],
+        }),
+      );
+      fixture.detectChanges();
+      spyOn(component, "focusNameInput").and.callThrough();
+
+      component.startNewSeason();
+      tick(200);
+
+      expect(dataService.createSeason).toHaveBeenCalled();
+      expect(component.isEditMode).toBeTrue();
+      expect(component.focusNameInput).toHaveBeenCalled();
+      expect(component.selectedSeasonId).toBe("s_new_db");
+    }));
+
+    it("should create duplicate in DB, activate edit mode, and focus on saveAsNew", fakeAsync(() => {
+      const dataService = TestBed.inject(DataService);
+      spyOn(dataService, "createSeason").and.returnValue(
+        of({
+          entity_id: "s_copy_db",
+          name: "Winter Championship_1",
+          drops: 1,
+          races: [],
+        }),
+      );
+      fixture.detectChanges();
+      spyOn(component, "focusNameInput").and.callThrough();
+      component.editingSeason = {
+        entity_id: "s1",
+        name: "Winter Championship",
+        drops: 1,
+        races: [],
+      };
+
+      component.saveAsNew();
+      tick(200);
+
+      expect(dataService.createSeason).toHaveBeenCalledWith(
+        jasmine.objectContaining({ name: "Winter Championship_1" }),
+      );
+      expect(component.isEditMode).toBeTrue();
+      expect(component.focusNameInput).toHaveBeenCalled();
+      expect(component.selectedSeasonId).toBe("s_copy_db");
+    }));
+
+    it("should prompt confirmation and delete season on onDeleteSeason", fakeAsync(() => {
+      const dataService = TestBed.inject(DataService);
+      spyOn(dataService, "deleteSeason").and.returnValue(of({}));
+      spyOn(window, "confirm").and.returnValue(true);
+
+      const s1: Season = {
+        entity_id: "s1",
+        name: "Season One",
+        drops: 0,
+        races: [],
+      };
+      const s2: Season = {
+        entity_id: "s2",
+        name: "Season Two",
+        drops: 0,
+        races: [],
+      };
+      component.existingSeasons = [s1, s2];
+      component.editingSeason = { ...s1 };
+      component.updateSeasonSelectItems();
+
+      component.onDeleteSeason();
+      tick(200);
+
+      expect(dataService.deleteSeason).toHaveBeenCalledWith("s1");
+      expect(
+        component.existingSeasons.find((s) => s.entity_id === "s1"),
+      ).toBeUndefined();
+      expect(component.selectedSeasonId).toBe("s2");
+    }));
+
+    it("should auto-select next season in alphabetical order, or previous if last was deleted", fakeAsync(() => {
+      const dataService = TestBed.inject(DataService);
+      const sA: Season = {
+        entity_id: "s1",
+        name: "Season A",
+        drops: 0,
+        races: [],
+      };
+      const sB: Season = {
+        entity_id: "s2",
+        name: "Season B",
+        drops: 0,
+        races: [],
+      };
+      const sC: Season = {
+        entity_id: "s3",
+        name: "Season C",
+        drops: 0,
+        races: [],
+      };
+
+      component.existingSeasons = [sA, sB, sC];
+      component.selectSeason(sB);
+      spyOn(window, "confirm").and.returnValue(true);
+      spyOn(dataService, "deleteSeason").and.returnValue(of({}));
+
+      // Delete B -> C is selected
+      component.onDeleteSeason();
+      tick(200);
+      expect(dataService.deleteSeason).toHaveBeenCalledWith("s2");
+      expect(component.selectedSeasonId).toBe("s3");
+      expect(component.editingSeason?.name).toBe("Season C");
+
+      // Delete C -> A is selected
+      component.onDeleteSeason();
+      tick(200);
+      expect(dataService.deleteSeason).toHaveBeenCalledWith("s3");
+      expect(component.selectedSeasonId).toBe("s1");
+      expect(component.editingSeason?.name).toBe("Season A");
+    }));
+
+    it("should disable undo/redo and keyboard shortcuts in read-only mode, and enable in edit mode", () => {
+      const s1: Season = {
+        entity_id: "s1",
+        name: "Season One",
+        drops: 0,
+        races: [],
+      };
+      component.editingSeason = { ...s1 };
+      component.undoManager.initialize(component.editingSeason);
+      component.isEditMode = true;
+
+      component.editingSeason.name = "Modified Season";
+      component.undoManager.captureState();
+      expect(component.undoManager.canUndo()).toBeTrue();
+
+      // Read-only mode
+      component.isEditMode = false;
+
+      // onUndo does nothing in read-only mode
+      component.onUndo();
+      expect(component.editingSeason.name).toBe("Modified Season");
+
+      // onRedo does nothing in read-only mode
+      component.onRedo();
+      expect(component.editingSeason.name).toBe("Modified Season");
+
+      // Keydown does nothing in read-only mode
+      const zEvent = new KeyboardEvent("keydown", { key: "z", ctrlKey: true });
+      component.handleKeyboardEvent(zEvent);
+      expect(component.editingSeason.name).toBe("Modified Season");
+
+      // Re-enter edit mode: undo is restored
+      component.isEditMode = true;
+      component.onUndo();
+      expect(component.editingSeason.name).toBe("Season One");
+
+      component.onRedo();
+      expect(component.editingSeason.name).toBe("Modified Season");
+
+      // Keydown works in edit mode
+      component.handleKeyboardEvent(zEvent);
+      expect(component.editingSeason.name).toBe("Season One");
     });
   });
 });

@@ -66,12 +66,16 @@
                   >
                     <input
                       type="text"
+                      [id]="'custom-ui-name-input-' + ui.entity_id"
                       [(ngModel)]="ui.name"
                       (change)="onCustomUiNameChanged(ui)"
                       class="custom-ui-name-input"
+                      [appAutoSelectDefault]="defaultUiNames[ui.entity_id]"
                       autocomplete="one-time-code"
                       data-dashlane-ignore="true"
+                      data-1p-ignore="true"
                       data-lpignore="true"
+                      data-bwignore="true"
                       data-form-type="other"
                       spellcheck="false"
                       autocorrect="off"
@@ -116,116 +120,289 @@
                               align-items: center;
                             "
                           >
-                            @if (isCustomUiPractice(ui)) {
+                            <div
+                              id="help-raceday-zoom"
+                              style="
+                                display: flex;
+                                align-items: center;
+                                gap: 6px;
+                              "
+                            >
                               <label
-                                id="help-raceday-highlight"
-                                class="checkbox-container"
-                                style="margin: 0; white-space: nowrap"
+                                style="
+                                  color: #94a3b8;
+                                  font-size: 14px;
+                                  white-space: nowrap;
+                                "
+                                >{{ "UE_LABEL_ZOOM" | translate }}</label
                               >
-                                <input
-                                  type="checkbox"
-                                  [(ngModel)]="
-                                    editingSettings.highlightPracticeRowOnLap
-                                  "
-                                  (change)="captureState()"
-                                />
-                                <span class="checkmark"></span>
-                                {{ "UE_LABEL_HIGHLIGHT_LAP" | translate }}
-                              </label>
-                            } @else {
+                              <span
+                                class="material-icons zoom-icon-btn"
+                                (click)="stepZoom(-10, ui)"
+                                [title]="'UE_BTN_ZOOM_OUT' | translate"
+                                style="
+                                  font-size: 18px;
+                                  color: #94a3b8;
+                                  cursor: pointer;
+                                  user-select: none;
+                                "
+                                >remove</span
+                              >
+                              <input
+                                type="range"
+                                class="zoom-slider"
+                                min="75"
+                                max="500"
+                                step="5"
+                                [value]="getLayoutZoom(ui)"
+                                (input)="onZoomInput($event, ui)"
+                                style="width: 90px; cursor: pointer"
+                              />
+                              <span
+                                class="material-icons zoom-icon-btn"
+                                (click)="stepZoom(10, ui)"
+                                [title]="'UE_BTN_ZOOM_IN' | translate"
+                                style="
+                                  font-size: 18px;
+                                  color: #94a3b8;
+                                  cursor: pointer;
+                                  user-select: none;
+                                "
+                                >add</span
+                              >
+                              <button
+                                type="button"
+                                class="zoom-value-btn"
+                                (click)="resetLayoutZoom(ui)"
+                                [title]="'UE_BTN_RESET_ZOOM' | translate"
+                                style="
+                                  background: rgba(56, 189, 248, 0.1);
+                                  border: 1px solid rgba(56, 189, 248, 0.3);
+                                  color: #38bdf8;
+                                  font-size: 12px;
+                                  font-weight: 600;
+                                  border-radius: 4px;
+                                  padding: 2px 6px;
+                                  cursor: pointer;
+                                  min-width: 48px;
+                                  text-align: center;
+                                "
+                              >
+                                {{ getLayoutZoom(ui) }}%
+                              </button>
+                            </div>
+
+                            <div
+                              id="help-raceday-aspect-ratio"
+                              style="
+                                display: flex;
+                                align-items: center;
+                                gap: 8px;
+                              "
+                            >
                               <label
-                                id="help-raceday-sort"
-                                class="checkbox-container"
-                                style="margin: 0; white-space: nowrap"
+                                style="
+                                  color: #94a3b8;
+                                  font-size: 14px;
+                                  white-space: nowrap;
+                                "
+                                >{{
+                                  "UI_EDITOR_LAYOUT_ASPECT_RATIO" | translate
+                                }}</label
                               >
-                                <input
-                                  type="checkbox"
-                                  [(ngModel)]="editingSettings.sortByStandings"
-                                  (change)="captureState()"
-                                />
-                                <span class="checkmark"></span>
-                                {{ "UE_LABEL_SORT_STANDINGS" | translate }}
-                              </label>
+                              <div style="width: 175px">
+                                <app-custom-select
+                                  [value]="getLayoutAspectRatio(ui)"
+                                  (change)="setLayoutAspectRatio($event, ui)"
+                                >
+                                  @for (
+                                    option of getLayoutAspectRatioOptions(ui);
+                                    track option.ratio
+                                  ) {
+                                    <app-custom-option
+                                      [value]="option.ratio"
+                                      [separator]="!!option.separator"
+                                    >
+                                      {{ option.label | translate }}
+                                    </app-custom-option>
+                                  }
+                                </app-custom-select>
+                              </div>
+                            </div>
+
+                            <div
+                              id="help-raceday-scale-mode"
+                              style="
+                                display: flex;
+                                align-items: center;
+                                gap: 8px;
+                                margin-left: 10px;
+                              "
+                            >
                               <label
-                                id="help-raceday-highlight"
-                                class="checkbox-container"
-                                style="margin: 0; white-space: nowrap"
+                                style="
+                                  color: #94a3b8;
+                                  font-size: 14px;
+                                  white-space: nowrap;
+                                "
+                                >{{
+                                  "UI_EDITOR_LAYOUT_SCALE_MODE" | translate
+                                }}</label
                               >
-                                <input
-                                  type="checkbox"
-                                  [(ngModel)]="
-                                    editingSettings.highlightRowOnLap
-                                  "
-                                  (change)="captureState()"
-                                />
-                                <span class="checkmark"></span>
-                                {{ "UE_LABEL_HIGHLIGHT_LAP" | translate }}
-                              </label>
-                            }
+                              <div style="width: 155px">
+                                <app-custom-select
+                                  [value]="getLayoutScaleMode(ui)"
+                                  (change)="setLayoutScaleMode($event, ui)"
+                                >
+                                  <app-custom-option value="letterbox">
+                                    {{
+                                      "UI_EDITOR_SCALE_MODE_LETTERBOX"
+                                        | translate
+                                    }}
+                                  </app-custom-option>
+                                  <app-custom-option value="stretch">
+                                    {{
+                                      "UI_EDITOR_SCALE_MODE_STRETCH" | translate
+                                    }}
+                                  </app-custom-option>
+                                </app-custom-select>
+                              </div>
+                            </div>
+
+                            <div
+                              id="help-raceday-widget-selector"
+                              style="
+                                display: flex;
+                                align-items: center;
+                                gap: 8px;
+                                margin-left: 10px;
+                              "
+                            >
+                              <label
+                                style="
+                                  color: #94a3b8;
+                                  font-size: 14px;
+                                  white-space: nowrap;
+                                "
+                                >{{
+                                  "UE_LABEL_SELECT_WIDGET" | translate
+                                }}</label
+                              >
+                              <div style="width: 175px">
+                                <app-custom-select
+                                  [value]="getSelectedWidgetId(ui) || ''"
+                                  (change)="onWidgetDropdownSelect($event, ui)"
+                                >
+                                  <app-custom-option value="">
+                                    --
+                                    {{
+                                      "UE_SELECT_WIDGET_PLACEHOLDER" | translate
+                                    }}
+                                    --
+                                  </app-custom-option>
+                                  @for (w of getLayoutWidgets(ui); track w.id) {
+                                    <app-custom-option [value]="w.id">
+                                      {{ getWidgetDisplayName(w) }}
+                                    </app-custom-option>
+                                  }
+                                </app-custom-select>
+                              </div>
+                            </div>
                           </div>
 
-                          <button
-                            id="help-raceday-reset"
-                            class="btn btn-danger"
-                            (click)="resetLayout(ui)"
+                          <div
+                            class="canvas-header-actions"
                             style="
                               display: flex;
                               align-items: center;
-                              justify-content: center;
-                              gap: 8px;
+                              gap: 6px;
+                              margin-left: auto;
                             "
-                          >
-                            <span class="material-icons">refresh</span>
-                            {{ "UI_EDITOR_RESET_LAYOUT_DEFAULTS" | translate }}
-                          </button>
-
-                          <div
-                            id="help-raceday-import-export"
-                            class="expander-actions"
-                            style="display: flex; gap: 8px; margin-left: 10px"
                             (click)="$event.stopPropagation()"
                           >
                             <button
-                              class="icon-btn"
-                              (click)="layoutFileInput.click()"
-                              [title]="'UE_BTN_IMPORT_LAYOUT' | translate"
-                              style="
-                                background: none;
-                                border: none;
-                                color: #38bdf8;
-                                cursor: pointer;
-                                display: flex;
-                                align-items: center;
-                                justify-content: center;
-                                padding: 4px;
+                              id="help-raceday-countdown-preview"
+                              class="icon-btn canvas-action-icon-btn"
+                              [class.active]="isCountdownPreviewActive(ui)"
+                              (click)="toggleCountdownPreview(ui)"
+                              [title]="
+                                (isCountdownPreviewActive(ui)
+                                  ? 'UE_TOOLTIP_HIDE_COUNTDOWN_PREVIEW'
+                                  : 'UE_TOOLTIP_SHOW_COUNTDOWN_PREVIEW'
+                                ) | translate
+                              "
+                              [attr.aria-label]="
+                                (isCountdownPreviewActive(ui)
+                                  ? 'UE_TOOLTIP_HIDE_COUNTDOWN_PREVIEW'
+                                  : 'UE_TOOLTIP_SHOW_COUNTDOWN_PREVIEW'
+                                ) | translate
                               "
                             >
-                              <span class="material-icons">download</span>
+                              <span class="material-icons">{{
+                                isCountdownPreviewActive(ui)
+                                  ? "visibility"
+                                  : "visibility_off"
+                              }}</span>
                             </button>
                             <button
-                              class="icon-btn"
-                              (click)="exportLayout(ui)"
-                              [title]="'UE_BTN_EXPORT_LAYOUT' | translate"
-                              style="
-                                background: none;
-                                border: none;
-                                color: #38bdf8;
-                                cursor: pointer;
-                                display: flex;
-                                align-items: center;
-                                justify-content: center;
-                                padding: 4px;
+                              id="help-raceday-reset"
+                              class="icon-btn canvas-action-icon-btn reset-icon-btn"
+                              (click)="resetLayout(ui)"
+                              [title]="
+                                'UI_EDITOR_RESET_LAYOUT_DEFAULTS' | translate
+                              "
+                              [attr.aria-label]="
+                                'UI_EDITOR_RESET_LAYOUT_DEFAULTS' | translate
                               "
                             >
-                              <span class="material-icons">upload</span>
+                              <span class="material-icons">refresh</span>
                             </button>
-                            <input
-                              #layoutFileInput
-                              type="file"
-                              accept=".json,.txt"
-                              style="display: none"
-                              (change)="onImportLayout($event, ui)"
-                            />
+
+                            <button
+                              id="help-raceday-clear"
+                              class="icon-btn canvas-action-icon-btn clear-icon-btn"
+                              (click)="clearLayout(ui)"
+                              [title]="'UI_EDITOR_CLEAR_LAYOUT' | translate"
+                              [attr.aria-label]="
+                                'UI_EDITOR_CLEAR_LAYOUT' | translate
+                              "
+                            >
+                              <span class="material-icons">delete_sweep</span>
+                            </button>
+
+                            <div
+                              id="help-raceday-import-export"
+                              class="expander-actions"
+                              style="display: flex; gap: 6px"
+                            >
+                              <button
+                                class="icon-btn canvas-action-icon-btn"
+                                (click)="layoutFileInput.click()"
+                                [title]="'UE_BTN_IMPORT_LAYOUT' | translate"
+                                [attr.aria-label]="
+                                  'UE_BTN_IMPORT_LAYOUT' | translate
+                                "
+                              >
+                                <span class="material-icons">download</span>
+                              </button>
+                              <button
+                                class="icon-btn canvas-action-icon-btn"
+                                (click)="exportLayout(ui)"
+                                [title]="'UE_BTN_EXPORT_LAYOUT' | translate"
+                                [attr.aria-label]="
+                                  'UE_BTN_EXPORT_LAYOUT' | translate
+                                "
+                              >
+                                <span class="material-icons">upload</span>
+                              </button>
+                              <input
+                                #layoutFileInput
+                                type="file"
+                                accept=".json,.txt"
+                                style="display: none"
+                                (change)="onImportLayout($event, ui)"
+                              />
+                            </div>
                           </div>
                         </div>
 
@@ -233,27 +410,43 @@
                           <!-- Raceday Full Integration -->
                           <div
                             id="help-raceday-canvas"
-                            class="raceday-preview-container"
-                            [style.width.px]="getPreviewContainerWidth(ui)"
-                            [style.height.px]="getPreviewContainerHeight(ui)"
+                            class="raceday-canvas-viewport"
+                            [style.overflow]="
+                              getLayoutZoom(ui) > 100 ? 'auto' : 'hidden'
+                            "
+                            [style.max-height.px]="
+                              getCanvasViewportMaxHeight(ui)
+                            "
                           >
                             <div
-                              class="raceday-preview-scaler"
-                              [style.width.px]="getLayoutBaseWidth(ui)"
-                              [style.height.px]="getLayoutBaseHeight(ui)"
-                              [style.transform]="getPreviewScale(ui)"
+                              class="raceday-preview-container"
+                              [style.width.px]="getPreviewContainerWidth(ui)"
+                              [style.height.px]="getPreviewContainerHeight(ui)"
                             >
-                              <app-default-raceday
-                                [isUIEditorMode]="true"
-                                [isPracticeLayoutEditor]="false"
-                                [editingSettings]="editingSettings"
-                                [activeCustomUi]="ui"
-                                [uiScale]="getPreviewScaleNumber(ui)"
-                                [selectedWidgetId]="getSelectedWidgetId(ui)"
-                                (widgetSelected)="onWidgetSelected($event, ui)"
-                                (layoutChanged)="onLayoutChanged($event, ui)"
-                                (columnsChanged)="onColumnsChanged(ui)"
-                              ></app-default-raceday>
+                              <div
+                                class="raceday-preview-scaler"
+                                [style.width.px]="getLayoutBaseWidth(ui)"
+                                [style.height.px]="getLayoutBaseHeight(ui)"
+                                [style.transform]="getPreviewScale(ui)"
+                              >
+                                <app-default-raceday
+                                  #racedayComp
+                                  [isUIEditorMode]="true"
+                                  [isPracticeLayoutEditor]="false"
+                                  [editingSettings]="editingSettings"
+                                  [activeCustomUi]="ui"
+                                  [uiScale]="getPreviewScaleNumber(ui)"
+                                  [selectedWidgetId]="getSelectedWidgetId(ui)"
+                                  [isCountdownPreviewActive]="
+                                    isCountdownPreviewActive(ui)
+                                  "
+                                  (widgetSelected)="
+                                    onWidgetSelected($event, ui)
+                                  "
+                                  (layoutChanged)="onLayoutChanged($event, ui)"
+                                  (columnsChanged)="onColumnsChanged(ui)"
+                                ></app-default-raceday>
+                              </div>
                             </div>
                           </div>
 
@@ -268,10 +461,21 @@
                               [class.lane-view-inspector-panel]="
                                 currentSelectedWidget.widgetType === 'lane-view'
                               "
-                              [style.height.px]="getPreviewContainerHeight(ui)"
+                              [style.height.px]="getInspectorHeight(ui)"
                             >
                               <div class="inspector-header">
                                 <h2>{{ "UE_INSPECTOR_TITLE" | translate }}</h2>
+                                <button
+                                  type="button"
+                                  class="inspector-delete-btn"
+                                  (click)="removeSelectedWidget(ui)"
+                                  [title]="'UE_BTN_DELETE_WIDGET' | translate"
+                                  [attr.aria-label]="
+                                    'UE_BTN_DELETE_WIDGET' | translate
+                                  "
+                                >
+                                  <span class="material-icons">delete</span>
+                                </button>
                               </div>
 
                               <div class="inspector-body">
@@ -301,14 +505,16 @@
                                   currentSelectedWidget.widgetType !==
                                     "branding" &&
                                   currentSelectedWidget.widgetType !== "qr" &&
-                                  currentSelectedWidget.widgetType !== "flag"
+                                  currentSelectedWidget.widgetType !== "flag" &&
+                                  currentSelectedWidget.widgetType !==
+                                    "countdown"
                                 ) {
                                   <div class="inspector-section">
                                     <label class="inspector-label">{{
                                       "UE_INSPECTOR_SCALING_MODE" | translate
                                     }}</label>
                                     <div class="select-container select-sm">
-                                      <select
+                                      <app-custom-select
                                         [(ngModel)]="
                                           currentSelectedWidget.scaleMode
                                         "
@@ -319,22 +525,156 @@
                                           )
                                         "
                                       >
-                                        <option value="">
+                                        <app-custom-option value="">
                                           {{
                                             "UE_INSPECTOR_SCALING_DEFAULT"
                                               | translate
                                           }}
-                                        </option>
-                                        <option value="auto">
+                                        </app-custom-option>
+                                        <app-custom-option value="auto">
                                           {{
                                             "UE_INSPECTOR_SCALING_AUTO"
                                               | translate
                                           }}
-                                        </option>
-                                      </select>
+                                        </app-custom-option>
+                                      </app-custom-select>
                                     </div>
                                   </div>
                                 }
+
+                                <!-- Position & Size Section -->
+                                <div class="inspector-geometry-title">
+                                  {{ "UE_INSPECTOR_GEOMETRY" | translate }}
+                                </div>
+                                <div class="inspector-row-grid">
+                                  <div class="inspector-section">
+                                    <label class="inspector-label">{{
+                                      "UE_INSPECTOR_POS_X" | translate
+                                    }}</label>
+                                    <input
+                                      id="inspector-pos-x"
+                                      type="number"
+                                      class="inspector-input"
+                                      [ngModel]="currentSelectedWidget.x"
+                                      (ngModelChange)="
+                                        onWidgetXChange(
+                                          $event,
+                                          currentSelectedWidget,
+                                          ui
+                                        )
+                                      "
+                                      min="0"
+                                      [max]="
+                                        getLayoutBaseWidth(ui) -
+                                        currentSelectedWidget.width
+                                      "
+                                      autocomplete="off"
+                                      data-dashlane-ignore="true"
+                                      data-1p-ignore="true"
+                                      data-lpignore="true"
+                                      data-bwignore="true"
+                                      data-form-type="other"
+                                    />
+                                  </div>
+                                  <div class="inspector-section">
+                                    <label class="inspector-label">{{
+                                      "UE_INSPECTOR_POS_Y" | translate
+                                    }}</label>
+                                    <input
+                                      id="inspector-pos-y"
+                                      type="number"
+                                      class="inspector-input"
+                                      [ngModel]="currentSelectedWidget.y"
+                                      (ngModelChange)="
+                                        onWidgetYChange(
+                                          $event,
+                                          currentSelectedWidget,
+                                          ui
+                                        )
+                                      "
+                                      min="0"
+                                      [max]="
+                                        getLayoutBaseHeight(ui) -
+                                        currentSelectedWidget.height
+                                      "
+                                      autocomplete="off"
+                                      data-dashlane-ignore="true"
+                                      data-1p-ignore="true"
+                                      data-lpignore="true"
+                                      data-bwignore="true"
+                                      data-form-type="other"
+                                    />
+                                  </div>
+                                </div>
+                                <div class="inspector-row-grid">
+                                  <div class="inspector-section">
+                                    <label class="inspector-label">{{
+                                      "UE_INSPECTOR_WIDTH" | translate
+                                    }}</label>
+                                    <input
+                                      id="inspector-pos-w"
+                                      type="number"
+                                      class="inspector-input"
+                                      [ngModel]="currentSelectedWidget.width"
+                                      (ngModelChange)="
+                                        onWidgetWidthChange(
+                                          $event,
+                                          currentSelectedWidget,
+                                          ui
+                                        )
+                                      "
+                                      min="50"
+                                      [max]="getLayoutBaseWidth(ui)"
+                                      autocomplete="off"
+                                      data-dashlane-ignore="true"
+                                      data-1p-ignore="true"
+                                      data-lpignore="true"
+                                      data-bwignore="true"
+                                      data-form-type="other"
+                                    />
+                                  </div>
+                                  <div class="inspector-section">
+                                    <label class="inspector-label">{{
+                                      "UE_INSPECTOR_HEIGHT" | translate
+                                    }}</label>
+                                    <input
+                                      id="inspector-pos-h"
+                                      type="number"
+                                      class="inspector-input"
+                                      [ngModel]="currentSelectedWidget.height"
+                                      (ngModelChange)="
+                                        onWidgetHeightChange(
+                                          $event,
+                                          currentSelectedWidget,
+                                          ui
+                                        )
+                                      "
+                                      min="20"
+                                      [max]="getLayoutBaseHeight(ui)"
+                                      autocomplete="off"
+                                      data-dashlane-ignore="true"
+                                      data-1p-ignore="true"
+                                      data-lpignore="true"
+                                      data-bwignore="true"
+                                      data-form-type="other"
+                                    />
+                                  </div>
+                                </div>
+
+                                <div
+                                  class="inspector-section"
+                                  style="margin-top: 4px"
+                                >
+                                  <button
+                                    type="button"
+                                    class="delete-widget-btn"
+                                    (click)="removeSelectedWidget(ui)"
+                                    [title]="'UE_BTN_DELETE_WIDGET' | translate"
+                                  >
+                                    <span class="material-icons">delete</span>
+                                    {{ "UE_BTN_DELETE_WIDGET" | translate }}
+                                  </button>
+                                </div>
 
                                 <hr class="inspector-divider" />
 
@@ -349,6 +689,11 @@
                               </div>
                             </div>
                           }
+
+                          <!-- Widget Toolbox: Rendered at workspace level to always be on top of canvas and inspector -->
+                          <ng-container
+                            *ngTemplateOutlet="racedayComp?.toolboxTemplate"
+                          ></ng-container>
                         </div>
                       </div>
                     </div>
@@ -420,12 +765,18 @@
                   >
                     <input
                       type="text"
+                      [id]="'theme-name-input-' + theme.entity_id"
                       [(ngModel)]="theme.name"
                       (change)="onThemeNameChanged(theme)"
                       class="theme-name-input"
+                      [appAutoSelectDefault]="
+                        defaultThemeNames[theme.entity_id]
+                      "
                       autocomplete="one-time-code"
                       data-dashlane-ignore="true"
+                      data-1p-ignore="true"
                       data-lpignore="true"
+                      data-bwignore="true"
                       data-form-type="other"
                       spellcheck="false"
                       autocorrect="off"
@@ -457,16 +808,16 @@
                       id="help-theme-ui-selector"
                     >
                       <label>{{ "UE_LABEL_CUSTOM_UI" | translate }}</label>
-                      <select
+                      <app-custom-select
                         [(ngModel)]="theme.uiId"
                         (ngModelChange)="captureState()"
                       >
                         @for (ui of displayCustomUIs; track ui.entity_id) {
-                          <option [value]="ui.entity_id">
+                          <app-custom-option [value]="ui.entity_id">
                             {{ getCustomUiDisplayNameKey(ui) | translate }}
-                          </option>
+                          </app-custom-option>
                         }
-                      </select>
+                      </app-custom-select>
                     </div>
 
                     <!-- Nested Flag Image Settings -->
@@ -960,6 +1311,11 @@
                                     )
                                   "
                                   [context]="previewTTSContext"
+                                  [ttsVoice]="editingSettings.ttsVoice"
+                                  [ttsRate]="editingSettings.ttsRate"
+                                  [ttsPitch]="editingSettings.ttsPitch"
+                                  [ttsVolume]="editingSettings.ttsVolume"
+                                  [masterVolume]="editingSettings.masterVolume"
                                 >
                                 </app-audio-selector>
                               }
@@ -978,7 +1334,7 @@
       <!-- Settings Grid Section -->
       <div class="config-row single-column">
         <!-- UI Editor Setting Section -->
-        <div class="config-section">
+        <div class="config-section" data-section="config">
           <div
             class="section-header"
             id="help-custom-ui"
@@ -999,9 +1355,11 @@
                     <label>{{ "UE_DIRECTORY_LABEL" | translate }}</label>
                     <div class="directory-info">
                       @if (customDirectoryName) {
-                        <span class="directory-path">{{
-                          customDirectoryName
-                        }}</span>
+                        <span
+                          class="directory-path"
+                          [title]="customDirectoryPath || customDirectoryName"
+                          >{{ customDirectoryName }}</span
+                        >
                       }
                       @if (!customDirectoryName) {
                         <span class="directory-path placeholder">{{
@@ -1018,6 +1376,13 @@
                       </button>
 
                       <button
+                        class="btn btn-secondary"
+                        (click)="promptEnterPath('ui')"
+                      >
+                        {{ "UE_BTN_ENTER_PATH" | translate }}
+                      </button>
+
+                      <button
                         class="btn btn-danger"
                         (click)="resetDefault()"
                         [disabled]="!customDirectoryName"
@@ -1030,9 +1395,14 @@
                     <label>{{ "UE_WIDGET_DIRECTORY_LABEL" | translate }}</label>
                     <div class="directory-info">
                       @if (customWidgetDirectoryName) {
-                        <span class="directory-path">{{
-                          customWidgetDirectoryName
-                        }}</span>
+                        <span
+                          class="directory-path"
+                          [title]="
+                            customWidgetDirectoryPath ||
+                            customWidgetDirectoryName
+                          "
+                          >{{ customWidgetDirectoryName }}</span
+                        >
                       }
                       @if (!customWidgetDirectoryName) {
                         <span class="directory-path placeholder">{{
@@ -1046,6 +1416,13 @@
                         (click)="selectWidgetDirectory()"
                       >
                         {{ "UE_BTN_SELECT_WIDGET_DIRECTORY" | translate }}
+                      </button>
+
+                      <button
+                        class="btn btn-secondary"
+                        (click)="promptEnterPath('widgets')"
+                      >
+                        {{ "UE_BTN_ENTER_PATH" | translate }}
                       </button>
 
                       <button
@@ -1071,11 +1448,29 @@
                     id="help-export-template"
                   >
                     <label>{{ "UE_LABEL_EXPORT_TEMPLATE" | translate }}</label>
-                    <div class="directory-info">
+                    <div
+                      class="directory-info"
+                      [title]="
+                        editingSettings.customExportTemplateBase64
+                          ? editingSettings.customExportTemplatePath ||
+                            editingSettings.customExportTemplateName ||
+                            'custom_export_template.xlsx'
+                          : ''
+                      "
+                    >
                       @if (editingSettings.customExportTemplateBase64) {
-                        <span class="directory-path">{{
-                          "UE_TEMPLATE_CUSTOM_UPLOADED" | translate
-                        }}</span>
+                        <span
+                          class="directory-path"
+                          [title]="
+                            editingSettings.customExportTemplatePath ||
+                            editingSettings.customExportTemplateName ||
+                            'custom_export_template.xlsx'
+                          "
+                          >{{
+                            editingSettings.customExportTemplateName ||
+                              "custom_export_template.xlsx"
+                          }}</span
+                        >
                       }
                       @if (!editingSettings.customExportTemplateBase64) {
                         <span class="directory-path placeholder">{{
@@ -1098,6 +1493,29 @@
                         {{ "UE_BTN_SELECT_TEMPLATE" | translate }}
                       </button>
                       <button
+                        class="btn btn-secondary"
+                        (click)="downloadTemplate()"
+                        [title]="'UE_BTN_DOWNLOAD_TEMPLATE_TOOLTIP' | translate"
+                      >
+                        {{ "UE_BTN_DOWNLOAD_TEMPLATE" | translate }}
+                      </button>
+                      <button
+                        class="btn btn-secondary"
+                        (click)="testExport()"
+                        [title]="'UE_BTN_TEST_EXPORT_TOOLTIP' | translate"
+                      >
+                        {{ "UE_BTN_TEST_EXPORT" | translate }}
+                      </button>
+                      <button
+                        class="btn btn-secondary"
+                        (click)="openTemplateVariablesModal()"
+                        [title]="
+                          'UE_BTN_TEMPLATE_VARIABLES_TOOLTIP' | translate
+                        "
+                      >
+                        {{ "UE_BTN_TEMPLATE_VARIABLES" | translate }}
+                      </button>
+                      <button
                         class="btn btn-danger"
                         (click)="clearCustomTemplate()"
                         [disabled]="!editingSettings.customExportTemplateBase64"
@@ -1105,21 +1523,192 @@
                         {{ "UE_BTN_RESET_DEFAULT" | translate }}
                       </button>
                     </div>
+                    <div class="template-reupload-hint">
+                      <span class="material-icons info-icon">info</span>
+                      <span>{{ "UE_TEMPLATE_REUPLOAD_HINT" | translate }}</span>
+                    </div>
                   </div>
                   <div class="transition-selector" id="help-page-transition">
                     <label>{{ "UE_LABEL_PAGE_TRANSITION" | translate }}</label>
                     <div class="select-container">
-                      <select
+                      <app-custom-select
                         [ngModel]="editingSettings.pageTransition || 'slide'"
                         (ngModelChange)="onPageTransitionChange($event)"
                       >
                         @for (trans of availableTransitions; track trans) {
-                          <option [value]="trans.key">
+                          <app-custom-option [value]="trans.key">
                             {{ trans.label | translate }}
-                          </option>
+                          </app-custom-option>
                         }
-                      </select>
+                      </app-custom-select>
                     </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+
+        <!-- Audio Settings Section -->
+        <div class="config-section" data-section="audioSettings">
+          <div
+            class="section-header"
+            id="help-audio-settings"
+            (click)="toggleSection('audioSettings')"
+          >
+            <span
+              class="expander-icon"
+              [class.collapsed]="!sectionsExpanded['audioSettings']"
+              >▼</span
+            >
+            <h1>{{ "UE_HEADER_AUDIO_SETTINGS" | translate }}</h1>
+          </div>
+          @if (sectionsExpanded["audioSettings"]) {
+            <div class="section-content">
+              <div class="panel config-panel">
+                <div class="panel-content">
+                  <div
+                    class="transition-selector"
+                    id="help-audio-master-volume"
+                  >
+                    <div class="slider-label-row">
+                      <label>{{ "UE_LABEL_MASTER_VOLUME" | translate }}</label>
+                      <span class="slider-val-badge"
+                        >{{ editingSettings.masterVolume }}%</span
+                      >
+                    </div>
+                    <input
+                      type="range"
+                      min="0"
+                      max="100"
+                      step="1"
+                      class="audio-slider"
+                      [ngModel]="editingSettings.masterVolume"
+                      (ngModelChange)="onMasterVolumeChange($event)"
+                    />
+                  </div>
+                  <div
+                    class="transition-selector"
+                    id="help-audio-urgent-timeout"
+                  >
+                    <label>{{
+                      "UE_LABEL_URGENT_QUEUE_TIMEOUT" | translate
+                    }}</label>
+                    <div class="select-container">
+                      <app-custom-select
+                        [ngModel]="editingSettings.urgentQueueTtl"
+                        (ngModelChange)="onUrgentQueueTtlChange($event)"
+                      >
+                        <app-custom-option [value]="3000">
+                          {{ "UE_OPTION_3_SECONDS" | translate }}
+                        </app-custom-option>
+                        <app-custom-option [value]="5000">
+                          {{ "UE_OPTION_5_SECONDS_DEFAULT" | translate }}
+                        </app-custom-option>
+                        <app-custom-option [value]="10000">
+                          {{ "UE_OPTION_10_SECONDS" | translate }}
+                        </app-custom-option>
+                      </app-custom-select>
+                    </div>
+                  </div>
+                  <div
+                    class="transition-selector"
+                    id="help-audio-callout-spacing"
+                  >
+                    <label>{{ "UE_LABEL_CALLOUT_SPACING" | translate }}</label>
+                    <div class="select-container">
+                      <app-custom-select
+                        [ngModel]="editingSettings.calloutSpacing"
+                        (ngModelChange)="onCalloutSpacingChange($event)"
+                      >
+                        <app-custom-option [value]="0">
+                          {{ "UE_OPTION_SPACING_NONE" | translate }}
+                        </app-custom-option>
+                        <app-custom-option [value]="500">
+                          {{ "UE_OPTION_SPACING_SHORT_DEFAULT" | translate }}
+                        </app-custom-option>
+                        <app-custom-option [value]="1000">
+                          {{ "UE_OPTION_SPACING_NORMAL" | translate }}
+                        </app-custom-option>
+                        <app-custom-option [value]="1500">
+                          {{ "UE_OPTION_SPACING_RELAXED" | translate }}
+                        </app-custom-option>
+                      </app-custom-select>
+                    </div>
+                  </div>
+                  <div class="transition-selector" id="help-tts-voice">
+                    <label>{{ "UE_LABEL_TTS_VOICE" | translate }}</label>
+                    <div class="select-container">
+                      <app-custom-select
+                        [ngModel]="editingSettings.ttsVoice || ''"
+                        (ngModelChange)="onTtsVoiceChange($event)"
+                      >
+                        <app-custom-option [value]="''">
+                          {{ "UE_OPTION_TTS_VOICE_DEFAULT" | translate }}
+                        </app-custom-option>
+                        @for (voice of availableVoices; track voice.name) {
+                          <app-custom-option [value]="voice.name">
+                            {{ voice.name }} ({{ voice.lang }})
+                          </app-custom-option>
+                        }
+                      </app-custom-select>
+                    </div>
+                  </div>
+                  <div class="transition-selector" id="help-tts-rate">
+                    <div class="slider-label-row">
+                      <label>{{ "UE_LABEL_TTS_RATE" | translate }}</label>
+                      <span class="slider-val-badge"
+                        >{{ editingSettings.ttsRate }}x</span
+                      >
+                    </div>
+                    <input
+                      type="range"
+                      min="0.1"
+                      max="2.0"
+                      step="0.05"
+                      class="audio-slider"
+                      [ngModel]="editingSettings.ttsRate"
+                      (ngModelChange)="onTtsRateChange($event)"
+                    />
+                  </div>
+                  <div class="transition-selector" id="help-tts-pitch">
+                    <div class="slider-label-row">
+                      <label>{{ "UE_LABEL_TTS_PITCH" | translate }}</label>
+                      <span class="slider-val-badge"
+                        >{{ editingSettings.ttsPitch }}x</span
+                      >
+                    </div>
+                    <input
+                      type="range"
+                      min="0"
+                      max="2"
+                      step="0.05"
+                      class="audio-slider"
+                      [ngModel]="editingSettings.ttsPitch"
+                      (ngModelChange)="onTtsPitchChange($event)"
+                    />
+                  </div>
+                  <div class="transition-selector" id="help-tts-volume">
+                    <div class="slider-label-row">
+                      <label>{{ "UE_LABEL_TTS_VOLUME" | translate }}</label>
+                      <span class="slider-val-badge"
+                        >{{ editingSettings.ttsVolume }}%</span
+                      >
+                    </div>
+                    <input
+                      type="range"
+                      min="0"
+                      max="100"
+                      step="1"
+                      class="audio-slider"
+                      [ngModel]="editingSettings.ttsVolume"
+                      (ngModelChange)="onTtsVolumeChange($event)"
+                    />
+                  </div>
+                  <div class="tts-preview-container" id="help-tts-preview">
+                    <button class="btn btn-secondary" (click)="testTtsVoice()">
+                      {{ "UE_BTN_TEST_TTS" | translate }}
+                    </button>
                   </div>
                 </div>
               </div>
@@ -1163,7 +1752,7 @@
   <app-confirmation-modal
     [visible]="showDiscardConfirm"
     title="UE_CONFIRM_DISCARD_TITLE"
-    message="UE_CONFIRM_DISCARD_MESSAGE"
+    [message]="discardMessage"
     (confirm)="onConfirmDiscard()"
     (cancel)="onCancelDiscard()"
   >
@@ -1185,4 +1774,23 @@
     (confirm)="onConfirmThemeTemplate($event)"
     (cancel)="showThemeTemplateModal = false"
   ></app-theme-template-modal>
+
+  <!-- Export Template Variables Modal -->
+  <app-template-variables-modal
+    [visible]="showTemplateVariablesModal"
+    (close)="showTemplateVariablesModal = false"
+  ></app-template-variables-modal>
+
+  <!-- Enter Path Modal -->
+  <app-enter-path-modal
+    [visible]="showEnterPathModal"
+    [initialPath]="
+      enterPathType === 'ui'
+        ? customDirectoryPath || ''
+        : customWidgetDirectoryPath || ''
+    "
+    [errorMessage]="enterPathError"
+    (confirm)="confirmEnterPath($event)"
+    (cancel)="cancelEnterPathModal()"
+  ></app-enter-path-modal>
 </div>

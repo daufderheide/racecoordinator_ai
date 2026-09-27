@@ -124,7 +124,29 @@
                 </span>
               </div>
             } @else {
-              {{ getColumnLabel(col) }}
+              <div
+                #fitTextTarget
+                style="
+                  width: 100%;
+                  height: 100%;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  overflow: hidden;
+                  padding: 0 4px;
+                  box-sizing: border-box;
+                "
+              >
+                <span
+                  style="
+                    font-size: calc(1em * var(--text-fit-scale, 1));
+                    white-space: nowrap;
+                    line-height: 1.1;
+                  "
+                >
+                  {{ getColumnLabel(col) }}
+                </span>
+              </div>
             }
             @if (
               (parent().isNameProperty(col.propertyName) ||
@@ -158,7 +180,9 @@
     <div
       class="table-body"
       style="flex: 1"
-      [style.--num-lanes]="parent().track?.lanes?.length || 1"
+      [style.--num-lanes]="
+        parent().track?.lanes?.length || parent().sortedHeatDrivers?.length || 1
+      "
       cdkDropList
       [cdkDropListData]="parent().sortedHeatDrivers"
       (cdkDropListDropped)="parent().onDrop($event)"
@@ -327,12 +351,24 @@
                               : widget()?.customSettings?.['insetTextColor']) ||
                             parent().getLaneColor(hd, 'foreground_color')
                           "
+                          [style.background-image]="
+                            (parent().authService.currentRole$ | async) ===
+                            parent().Role.VIEWER
+                              ? 'none'
+                              : parent().getDropdownArrowBg(hd)
+                          "
+                          [style.background-position]="
+                            parent().race?.practice
+                              ? 'right 4px top 4px'
+                              : 'right 4px center'
+                          "
                           [style.padding-right]="
                             (parent().authService.currentRole$ | async) ===
                             parent().Role.VIEWER
                               ? '0px'
-                              : '44px'
+                              : '28px'
                           "
+                          style="background-repeat: no-repeat"
                         >
                           {{
                             entry.property === "driver.nickname"
@@ -347,33 +383,22 @@
                           (parent().authService.currentRole$ | async) !==
                           parent().Role.VIEWER
                         ) {
-                          <select
+                          <app-custom-select
                             class="teammate-select"
-                            [style.background-image]="
-                              parent().getDropdownArrowBg(hd)
-                            "
-                            [style.background-position]="
-                              parent().race?.practice
-                                ? 'right top'
-                                : 'right center'
-                            "
                             [disabled]="parent().isDriverSwapDisabled(hd)"
-                            (change)="
-                              parent().onTeammateChange(hd, $event);
-                              $any($event.target)?.blur()
+                            [ngModel]="
+                              hd.actualDriver?.entity_id ||
+                              hd.driver?.entity_id ||
+                              $any(hd.driver)?.entity_id
                             "
+                            (change)="parent().onTeammateChange(hd, $event)"
                           >
                             @for (
                               tm of parent().getTeammates(hd);
                               track $any(tm).entity_id || $any(tm).id
                             ) {
-                              <option
+                              <app-custom-option
                                 [value]="$any(tm).entity_id || $any(tm).id"
-                                [selected]="
-                                  ($any(tm).entity_id || $any(tm).id) ===
-                                  (hd.actualDriver?.entity_id ||
-                                    $any(hd.driver).entity_id)
-                                "
                               >
                                 {{
                                   entry.property === "driver.nickname"
@@ -388,9 +413,9 @@
                                     )
                                   }}
                                 }
-                              </option>
+                              </app-custom-option>
                             }
-                          </select>
+                          </app-custom-select>
                           @if (parent().race?.practice) {
                             <button
                               class="material-icons reset-lane-btn"
@@ -565,20 +590,36 @@
                           </div>
                         </div>
                       }
+                    } @else if (entry.property === "bestRaceLapTime") {
+                      @if (isLaneEmpty(hd)) {
+                        <span>--</span>
+                      } @else {
+                        <div class="record-lap-content best-race-lap-content">
+                          <div class="record-lap-time best-race-lap-time">
+                            {{ parent().getBestRaceLapTime(hd, entry.anchor) }}
+                          </div>
+                          <div class="record-lap-sub best-race-lap-sub">
+                            <span
+                              class="record-lap-holder best-race-lap-holder"
+                              [title]="parent().getBestRaceLapHolder(hd)"
+                            >
+                              {{ parent().getBestRaceLapHolder(hd) }}
+                            </span>
+                            <span class="record-lap-date best-race-lap-heat">
+                              {{ parent().getBestRaceLapHeat(hd) }}
+                            </span>
+                          </div>
+                        </div>
+                      }
                     } @else if (
                       !parent().isNameProperty(entry.property) ||
                       !parent().isTeam(hd)
                     ) {
                       <span
                         [style.white-space]="
-                          [
-                            'gapLeader',
-                            'gapPosition',
-                            'gapLeaderF1',
-                            'gapPositionF1',
-                          ].includes(entry.property)
-                            ? 'nowrap'
-                            : 'normal'
+                          parent().isNameProperty(entry.property)
+                            ? 'normal'
+                            : 'nowrap'
                         "
                         [style.padding-right]="
                           parent().race?.practice &&

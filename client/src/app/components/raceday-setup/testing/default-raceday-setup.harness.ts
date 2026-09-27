@@ -194,6 +194,36 @@ export class DefaultRacedaySetupHarness
     }
   }
 
+  async clickUnselectedDriver(index: number): Promise<void> {
+    const drivers = await this.locatorForAll(DriverItemHarness)();
+    let unselectedCount = 0;
+    for (const d of drivers) {
+      if (!(await d.isSelected())) {
+        if (unselectedCount === index) {
+          const host = await d.host();
+          await host.click();
+          return;
+        }
+        unselectedCount++;
+      }
+    }
+  }
+
+  async clickSelectedDriver(index: number): Promise<void> {
+    const drivers = await this.locatorForAll(DriverItemHarness)();
+    let selectedCount = 0;
+    for (const d of drivers) {
+      if (await d.isSelected()) {
+        if (selectedCount === index) {
+          const host = await d.host();
+          await host.click();
+          return;
+        }
+        selectedCount++;
+      }
+    }
+  }
+
   async getRaceCardCount(): Promise<number> {
     return (await this.getRaceCards()).length;
   }

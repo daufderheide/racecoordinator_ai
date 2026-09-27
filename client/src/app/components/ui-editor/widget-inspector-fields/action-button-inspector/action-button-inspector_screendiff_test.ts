@@ -62,4 +62,56 @@ test.describe("Action Button Inspector Visuals", () => {
       },
     );
   });
+
+  test("should display action button inspector for action back button", async ({
+    page,
+  }) => {
+    await TestSetupHelper.setupSettings(page, {
+      racedayLayout: {
+        widgets: [
+          {
+            id: "test-back-widget",
+            widgetType: "action-back",
+            x: 100,
+            y: 100,
+            width: 36,
+            height: 36,
+            scaleMode: "auto",
+            customSettings: {
+              backgroundColor: "",
+              fontSize: 24,
+            },
+          },
+        ],
+      },
+    });
+
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/ui-editor"),
+    );
+    await page.locator(".ue-container").waitFor({ state: "visible" });
+
+    // Select the action button widget by dispatching pointerdown
+    const actionButtonWidget = page
+      .locator("app-raceday-action-button")
+      .first();
+    await actionButtonWidget.dispatchEvent("pointerdown");
+
+    // Wait for the inspector panel to be visible
+    const inspectorPanel = page.locator(".widget-inspector-panel");
+    await inspectorPanel.waitFor({ state: "visible" });
+
+    // Verify inspector contains action-button-specific fields
+    const inspectorFields = page.locator("app-action-button-inspector");
+    await inspectorFields.waitFor({ state: "visible" });
+
+    await expect(inspectorFields).toHaveScreenshot(
+      "action-back-button-inspector.png",
+      {
+        maxDiffPixelRatio: 0.05,
+      },
+    );
+  });
 });

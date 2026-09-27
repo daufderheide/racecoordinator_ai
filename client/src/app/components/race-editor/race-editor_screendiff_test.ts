@@ -57,12 +57,17 @@ test.describe("Race Editor Visuals", () => {
     if (expand && isCollapsed) {
       await header.scrollIntoViewIfNeeded();
       await header.click();
-      await page.waitForTimeout(50);
     } else if (!expand && !isCollapsed) {
       await header.scrollIntoViewIfNeeded();
       await header.click();
-      await page.waitForTimeout(50);
     }
+  }
+
+  async function enterEditMode(page: any) {
+    await page.locator("#edit-track-btn").click();
+    await expect(page.locator("#race-name-input")).toBeEnabled();
+    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+    await TestSetupHelper.disableAnimations(page);
   }
 
   test("should display race editor for existing race", async ({ page }) => {
@@ -75,7 +80,6 @@ test.describe("Race Editor Visuals", () => {
     const _harness = new RaceEditorHarnessE2e(page.locator("body"));
 
     // Verify Editor Form is attached
-    await page.waitForTimeout(200);
     await expect(page.locator(".editor-panel")).toBeAttached({
       timeout: 10000,
     });
@@ -91,11 +95,30 @@ test.describe("Race Editor Visuals", () => {
     await minLapInput.waitFor({ state: "visible", timeout: 10000 });
     await driftTimeInput.waitFor({ state: "visible", timeout: 10000 });
 
+    await enterEditMode(page);
+
     // Disable animations
     await TestSetupHelper.disableAnimations(page);
 
     // Screenshot the entire editor
     await expect(page).toHaveScreenshot("race-editor.png", {
+      timeout: 15000,
+      maxDiffPixelRatio: 0.05,
+    });
+  });
+
+  test("should display race editor in read-only mode", async ({ page }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/race-editor?id=r1&driverCount=4"),
+    );
+    await page.locator(".page-container").waitFor();
+    await page.locator(".loader-overlay").waitFor({ state: "hidden" });
+    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+    await TestSetupHelper.disableAnimations(page);
+
+    await expect(page).toHaveScreenshot("race-editor-read-only.png", {
       timeout: 15000,
       maxDiffPixelRatio: 0.05,
     });
@@ -112,12 +135,13 @@ test.describe("Race Editor Visuals", () => {
     );
     const harness = new RaceEditorHarnessE2e(page.locator("body"));
 
+    await enterEditMode(page);
+
     // Change name to a duplicate
     await harness.setName("Endurance Challenge");
     await page.keyboard.press("Tab"); // Trigger blur/commit
 
     // With auto-saving, duplicate name triggers an 'invalid' class highlighting
-    await page.waitForTimeout(100);
 
     // Disable animations
     await TestSetupHelper.disableAnimations(page);
@@ -139,17 +163,19 @@ test.describe("Race Editor Visuals", () => {
       page.goto("/race-editor?id=r1&driverCount=4"),
     );
 
+    await enterEditMode(page);
+
     // Select Custom Round Robin
-    await page.selectOption(".editor-section select", "CustomRoundRobin");
+    await page.locator(".editor-section app-custom-select").first().click();
+    await page
+      .locator(".custom-select-option[data-value='CustomRoundRobin']")
+      .click();
 
     // Enter an invalid sequence (e.g. duplicate lane 1)
-    const customSeqInput = page
-      .locator('.editor-section input[type="text"]')
-      .last();
+    const customSeqInput = page.locator("#custom-sequence-input");
+    await customSeqInput.waitFor({ state: "visible" });
     await customSeqInput.fill("1, 1, 2, 3");
     await page.keyboard.press("Tab"); // Trigger blur/commit
-
-    await page.waitForTimeout(200);
 
     // Disable animations
     await TestSetupHelper.disableAnimations(page);
@@ -189,9 +215,10 @@ test.describe("Race Editor Visuals", () => {
       timeout: 10000,
     });
 
+    await enterEditMode(page);
+
     // Click details - Duplication
     await harness.clickCopy();
-    await page.waitForTimeout(100);
 
     // Wait for Error Modal (app-acknowledgement-modal .modal-backdrop)
     await page.waitForSelector("app-acknowledgement-modal .modal-backdrop", {
@@ -219,10 +246,11 @@ test.describe("Race Editor Visuals", () => {
     );
 
     // Verify Editor Form is attached
-    await page.waitForTimeout(200);
     await expect(page.locator(".editor-panel")).toBeAttached({
       timeout: 10000,
     });
+
+    await enterEditMode(page);
 
     // Ensure Fuel section is expanded
     await ensureSectionState(page, "Analog Fuel", true);
@@ -234,7 +262,6 @@ test.describe("Race Editor Visuals", () => {
     await fuelLabel.scrollIntoViewIfNeeded();
     await fuelLabel.waitFor({ state: "visible", timeout: 5000 });
     await fuelLabel.click();
-    await page.waitForTimeout(50);
 
     // Wait for charts to render before screenshotting
     const fuelContainer = page.locator(".fuel-graphs-container");
@@ -250,6 +277,60 @@ test.describe("Race Editor Visuals", () => {
     );
   });
 
+  test("should display analog fuel options with custom curve graph", async ({
+    page,
+  }) => {
+    // Navigate to Race Editor
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/race-editor?id=r1&driverCount=4"),
+    );
+
+    // Verify Editor Form is attached
+    await expect(page.locator(".editor-panel")).toBeAttached({
+      timeout: 10000,
+    });
+
+    await enterEditMode(page);
+
+    // Ensure Fuel section is expanded
+    await ensureSectionState(page, "Analog Fuel", true);
+
+    // Toggle fuel enabled checkbox by label for reliability
+    const fuelLabel = page
+      .locator('.fuel-config-section label:has-text("Enable Analog Fuel")')
+      .first();
+    await fuelLabel.scrollIntoViewIfNeeded();
+    await fuelLabel.waitFor({ state: "visible", timeout: 5000 });
+    await fuelLabel.click();
+
+    // Select CUSTOM_CURVE in the fuel usage type dropdown
+    const usageSelect = page.locator("#fuel-usage-type-select");
+    await usageSelect.click();
+    await page
+      .locator(".custom-select-option[data-value='CUSTOM_CURVE']")
+      .click();
+
+    // Wait for custom curve handles to be visible
+    const fuelContainer = page.locator(".fuel-graphs-container");
+    await fuelContainer.waitFor({ state: "visible", timeout: 10000 });
+    const curveHandle = page
+      .locator("#analog-fuel-usage-svg .curve-handle")
+      .first();
+    await curveHandle.waitFor({ state: "visible", timeout: 10000 });
+    await fuelContainer.scrollIntoViewIfNeeded();
+
+    // Disable animations
+    await TestSetupHelper.disableAnimations(page);
+
+    // Screenshot the fuel graphs container showing custom curve graph
+    await expect(fuelContainer).toHaveScreenshot(
+      "race-editor-analog-custom-curve.png",
+      { timeout: 15000, maxDiffPixelRatio: 0.05 },
+    );
+  });
+
   test("should hide fuel graphs when analog fuel is disabled", async ({
     page,
   }) => {
@@ -261,13 +342,13 @@ test.describe("Race Editor Visuals", () => {
     );
 
     // Verify Editor Form is attached
-    await page.waitForTimeout(200);
     await expect(page.locator(".editor-panel")).toBeAttached({
       timeout: 10000,
     });
 
+    await enterEditMode(page);
+
     // Wait for loading to complete
-    await page.waitForTimeout(100);
 
     // Ensure Fuel section is expanded
     await ensureSectionState(page, "Analog Fuel", true);
@@ -296,9 +377,8 @@ test.describe("Race Editor Visuals", () => {
     );
     const harness = new RaceEditorHarnessE2e(page.locator("body"));
 
-    // Wait for the track options to load in the select
     await page.waitForSelector(
-      '#track-select option:has-text("Digital Haven")',
+      '#track-select app-custom-option:has-text("Digital Haven")',
       { state: "attached", timeout: 10000 },
     );
 
@@ -312,11 +392,9 @@ test.describe("Race Editor Visuals", () => {
     await page
       .locator('.section-header:has-text("Digital Fuel")')
       .scrollIntoViewIfNeeded();
-    await page.waitForTimeout(50);
 
     // Enable digital fuel - click the label since the native checkbox is hidden (0x0)
     await page.locator("#digital-fuel-enabled-label").click();
-    await page.waitForTimeout(50);
 
     // Wait for digital charts to render
     const fuelContainer = page.locator(".fuel-graphs-container");
@@ -332,23 +410,82 @@ test.describe("Race Editor Visuals", () => {
     );
   });
 
+  test("should display digital fuel options with custom curve graph", async ({
+    page,
+  }) => {
+    // Setup digital track mocks
+    await TestSetupHelper.setupDigitalTrackMocks(page);
+
+    // Navigate to Race Editor for a new race with the digital track
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/race-editor?id=new&driverCount=4"),
+    );
+    const harness = new RaceEditorHarnessE2e(page.locator("body"));
+
+    await page.waitForSelector(
+      '#track-select app-custom-option:has-text("Digital Haven")',
+      { state: "attached", timeout: 10000 },
+    );
+
+    // Select the digital track using the harness
+    await harness.setTrack("t_digital");
+
+    // Ensure section is expanded
+    await ensureSectionState(page, "Digital Fuel", true);
+
+    // Scroll down to ensure digital fuel section is visible in the panel
+    await page
+      .locator('.section-header:has-text("Digital Fuel")')
+      .scrollIntoViewIfNeeded();
+
+    // Enable digital fuel - click the label since the native checkbox is hidden (0x0)
+    await page.locator("#digital-fuel-enabled-label").click();
+
+    // Select CUSTOM_CURVE in the digital fuel usage type dropdown
+    const usageSelect = page.locator("#digital-fuel-usage-type-select");
+    await usageSelect.click();
+    await page
+      .locator(".custom-select-option[data-value='CUSTOM_CURVE']")
+      .click();
+
+    // Wait for custom curve handles to be visible
+    const fuelContainer = page.locator(".fuel-graphs-container");
+    await fuelContainer.waitFor({ state: "visible", timeout: 10000 });
+    const curveHandle = page
+      .locator("#digital-fuel-usage-svg .curve-handle")
+      .first();
+    await curveHandle.waitFor({ state: "visible", timeout: 10000 });
+    await fuelContainer.scrollIntoViewIfNeeded();
+
+    // Disable animations
+    await TestSetupHelper.disableAnimations(page);
+
+    // Screenshot the fuel graphs container showing custom curve graph
+    await expect(fuelContainer).toHaveScreenshot(
+      "race-editor-digital-custom-curve.png",
+      { timeout: 15000, maxDiffPixelRatio: 0.05 },
+    );
+  });
+
   test("should display Scoring section expanded", async ({ page }) => {
     await TestSetupHelper.waitForLocalization(
       page,
       "en",
       page.goto("/race-editor?id=r1&driverCount=4"),
     );
-    await page.waitForTimeout(200);
     await expect(page.locator(".editor-panel")).toBeAttached({
       timeout: 10000,
     });
+
+    await enterEditMode(page);
 
     // Collapse sections to isolate Scoring
     await ensureSectionState(page, "General", false);
     await ensureSectionState(page, "Analog Fuel", false);
     await ensureSectionState(page, "Digital Fuel", false);
     await ensureSectionState(page, "Teams", false);
-    await page.waitForTimeout(50);
 
     await TestSetupHelper.disableAnimations(page);
     await expect(page.locator("#scoring-section")).toHaveScreenshot(
@@ -363,17 +500,17 @@ test.describe("Race Editor Visuals", () => {
       "en",
       page.goto("/race-editor?id=r1&driverCount=4"),
     );
-    await page.waitForTimeout(200);
     await expect(page.locator(".editor-panel")).toBeAttached({
       timeout: 10000,
     });
+
+    await enterEditMode(page);
 
     // Collapse sections to isolate Analog Fuel
     await ensureSectionState(page, "General", false);
     await ensureSectionState(page, "Scoring", false);
     await ensureSectionState(page, "Digital Fuel", false);
     await ensureSectionState(page, "Teams", false);
-    await page.waitForTimeout(50);
 
     await TestSetupHelper.disableAnimations(page);
     await expect(page.locator("#analog-fuel-section")).toHaveScreenshot(
@@ -396,10 +533,11 @@ test.describe("Race Editor Visuals", () => {
     );
 
     // Verify Editor Form is attached
-    await page.waitForTimeout(200);
     await expect(page.locator(".editor-panel")).toBeAttached({
       timeout: 10000,
     });
+
+    await enterEditMode(page);
 
     // Ensure Fuel section is expanded
     await ensureSectionState(page, "Analog Fuel", true);
@@ -416,8 +554,11 @@ test.describe("Race Editor Visuals", () => {
     const outOfFuelSelect = page
       .locator("#analog-fuel-section .config-section")
       .filter({ hasText: "Out of Fuel Action" })
-      .locator("select");
-    await outOfFuelSelect.selectOption("POWER_STUTTER");
+      .locator("app-custom-select");
+    await outOfFuelSelect.click();
+    await page
+      .locator(".custom-select-option[data-value='POWER_STUTTER']")
+      .click();
 
     // Wait for the Power Stutter inputs to appear
     await page
@@ -451,10 +592,11 @@ test.describe("Race Editor Visuals", () => {
     );
 
     // Verify Editor Form is attached
-    await page.waitForTimeout(200);
     await expect(page.locator(".editor-panel")).toBeAttached({
       timeout: 10000,
     });
+
+    await enterEditMode(page);
 
     // Ensure Fuel section is expanded
     await ensureSectionState(page, "Analog Fuel", true);
@@ -505,17 +647,17 @@ test.describe("Race Editor Visuals", () => {
       "en",
       page.goto("/race-editor?id=r1&driverCount=4"),
     );
-    await page.waitForTimeout(200);
     await expect(page.locator(".editor-panel")).toBeAttached({
       timeout: 10000,
     });
+
+    await enterEditMode(page);
 
     // Collapse sections to isolate Teams
     await ensureSectionState(page, "General", false);
     await ensureSectionState(page, "Scoring", false);
     await ensureSectionState(page, "Analog Fuel", false);
     await ensureSectionState(page, "Digital Fuel", false);
-    await page.waitForTimeout(50);
 
     await TestSetupHelper.disableAnimations(page);
     await expect(page.locator("#team-options-section")).toHaveScreenshot(
@@ -530,10 +672,11 @@ test.describe("Race Editor Visuals", () => {
       "en",
       page.goto("/race-editor?id=r1&driverCount=4"),
     );
-    await page.waitForTimeout(200);
     await expect(page.locator(".editor-panel")).toBeAttached({
       timeout: 10000,
     });
+
+    await enterEditMode(page);
 
     // Collapse other sections to isolate Heats
     await ensureSectionState(page, "General", false);
@@ -544,7 +687,6 @@ test.describe("Race Editor Visuals", () => {
 
     // Expand Heats
     await ensureSectionState(page, "Heats", true);
-    await page.waitForTimeout(50);
 
     await TestSetupHelper.disableAnimations(page);
     await expect(page.locator("#heats-section")).toHaveScreenshot(
@@ -559,10 +701,11 @@ test.describe("Race Editor Visuals", () => {
       "en",
       page.goto("/race-editor?id=r1&driverCount=4"),
     );
-    await page.waitForTimeout(200);
     await expect(page.locator(".editor-panel")).toBeAttached({
       timeout: 10000,
     });
+
+    await enterEditMode(page);
 
     // Collapse sections to isolate Groups
     await ensureSectionState(page, "General", false);
@@ -571,11 +714,9 @@ test.describe("Race Editor Visuals", () => {
     await ensureSectionState(page, "Digital Fuel", false);
     await ensureSectionState(page, "Teams", false);
     await ensureSectionState(page, "Heats", false);
-    await page.waitForTimeout(50);
 
     // Expand Groups
     await ensureSectionState(page, "Groups", true);
-    await page.waitForTimeout(50);
 
     // Enable groups to show all options - find the first checkbox in the section
     const groupEnabledLabel = page
@@ -583,7 +724,6 @@ test.describe("Race Editor Visuals", () => {
       .first();
     await groupEnabledLabel.scrollIntoViewIfNeeded();
     await groupEnabledLabel.click();
-    await page.waitForTimeout(50);
 
     await TestSetupHelper.disableAnimations(page);
     await expect(page.locator("#group-section")).toHaveScreenshot(
@@ -598,10 +738,11 @@ test.describe("Race Editor Visuals", () => {
       "en",
       page.goto("/race-editor?id=r1&driverCount=4"),
     );
-    await page.waitForTimeout(200);
     await expect(page.locator(".editor-panel")).toBeAttached({
       timeout: 10000,
     });
+
+    await enterEditMode(page);
 
     // Collapse other sections to isolate Season Points
     await ensureSectionState(page, "General", false);
@@ -614,7 +755,6 @@ test.describe("Race Editor Visuals", () => {
 
     // Expand Season Points
     await ensureSectionState(page, "Season Points", true);
-    await page.waitForTimeout(50);
 
     await TestSetupHelper.disableAnimations(page);
     await expect(page.locator("#season-points-section")).toHaveScreenshot(
@@ -631,6 +771,9 @@ test.describe("Race Editor Visuals", () => {
       "en",
       page.goto("/race-editor?id=r1&driverCount=4"),
     );
+
+    await enterEditMode(page);
+
     await TestSetupHelper.disableAnimations(page);
 
     await page.evaluate(() => {

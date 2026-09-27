@@ -26,20 +26,24 @@ export class LeaderboardInspectorHarnessE2e implements LeaderboardInspectorHarne
   }
 
   async getDecimalPlaces(): Promise<number> {
-    const val = await this.selects.nth(0).inputValue();
+    const val = await this.selects.nth(0).getAttribute("data-value");
     return Number(val);
   }
 
   async setDecimalPlaces(val: number): Promise<void> {
-    await this.selects.nth(0).selectOption({ value: val.toString() });
+    const sel = this.selects.nth(0);
+    await sel.locator(".custom-select-trigger").click();
+    await sel.locator(`.custom-select-option[data-value="${val}"]`).click();
   }
 
   async getTitleFontFamily(): Promise<string> {
-    return await this.selects.nth(1).inputValue();
+    return (await this.selects.nth(1).getAttribute("data-value")) || "";
   }
 
   async setTitleFontFamily(val: string): Promise<void> {
-    await this.selects.nth(1).selectOption({ label: val });
+    const sel = this.selects.nth(1);
+    await sel.locator(".custom-select-trigger").click();
+    await sel.locator(`.custom-select-option:has-text("${val}")`).click();
   }
 
   async getTitleFontSize(): Promise<number> {
@@ -64,11 +68,13 @@ export class LeaderboardInspectorHarnessE2e implements LeaderboardInspectorHarne
   }
 
   async getOverallLeaderFontFamily(): Promise<string> {
-    return await this.selects.nth(2).inputValue();
+    return (await this.selects.nth(2).getAttribute("data-value")) || "";
   }
 
   async setOverallLeaderFontFamily(val: string): Promise<void> {
-    await this.selects.nth(2).selectOption({ label: val });
+    const sel = this.selects.nth(2);
+    await sel.locator(".custom-select-trigger").click();
+    await sel.locator(`.custom-select-option:has-text("${val}")`).click();
   }
 
   async getOverallLeaderFontSize(): Promise<number> {
@@ -98,11 +104,13 @@ export class LeaderboardInspectorHarnessE2e implements LeaderboardInspectorHarne
   }
 
   async getRestFontFamily(): Promise<string> {
-    return await this.selects.nth(3).inputValue();
+    return (await this.selects.nth(3).getAttribute("data-value")) || "";
   }
 
   async setRestFontFamily(val: string): Promise<void> {
-    await this.selects.nth(3).selectOption({ label: val });
+    const sel = this.selects.nth(3);
+    await sel.locator(".custom-select-trigger").click();
+    await sel.locator(`.custom-select-option:has-text("${val}")`).click();
   }
 
   async getRestFontSize(): Promise<number> {

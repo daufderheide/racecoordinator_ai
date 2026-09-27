@@ -2,11 +2,21 @@ export abstract class RecordsInspectorHarnessBase {
   static readonly hostSelector = "app-records-inspector";
 
   static readonly selectors = {
-    selects: "select",
+    checkboxes: "input[type='checkbox']",
+    selects: "app-custom-select",
     sliders: "input[type='range']",
     colorPickers: "input[type='color']",
     resetButtons: ".color-reset-btn",
   };
+
+  abstract getShowRaceRecordLap(): Promise<boolean>;
+  abstract setShowRaceRecordLap(val: boolean): Promise<void>;
+  abstract getShowRaceRecordScore(): Promise<boolean>;
+  abstract setShowRaceRecordScore(val: boolean): Promise<void>;
+  abstract getShowCurrentRaceBest(): Promise<boolean>;
+  abstract setShowCurrentRaceBest(val: boolean): Promise<void>;
+  abstract getShowHeatBest(): Promise<boolean>;
+  abstract setShowHeatBest(val: boolean): Promise<void>;
 
   abstract getHeaderFontFamily(): Promise<string>;
   abstract setHeaderFontFamily(val: string): Promise<void>;

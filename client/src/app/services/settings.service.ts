@@ -36,6 +36,16 @@ export class SettingsService {
           settings.driverStateBackfilled = true;
         }
 
+        // Backfill: Add default custom template filename if base64 exists without a filename
+        if (
+          settings.customExportTemplateBase64 &&
+          !settings.customExportTemplateName
+        ) {
+          settings.customExportTemplateName = "custom_export_template.xlsx";
+          settings.customExportTemplatePath =
+            settings.customExportTemplatePath || "custom_export_template.xlsx";
+        }
+
         return settings;
       } catch (e) {
         this.logger.error("Error parsing settings from localStorage", e);

@@ -12,6 +12,19 @@ export function findDefaultWidgetId(
   return laneView ? laneView.id : widgets[0].id;
 }
 
+export function ensureWidgetSelectedHelper(comp: any, ui?: CustomUI): void {
+  const layout = comp.getLayout(ui || comp.activeCustomUi);
+  const widgets = layout?.widgets || [];
+  if (widgets.length === 0) {
+    comp.selectedWidgetId = null;
+  } else if (
+    !comp.selectedWidgetId ||
+    !widgets.some((w: any) => w.id === comp.selectedWidgetId)
+  ) {
+    comp.selectedWidgetId = findDefaultWidgetId(layout);
+  }
+}
+
 export function applyWidgetDefaultSettings(widget: any): boolean {
   if (!widget) return false;
   let mutated = false;
@@ -161,4 +174,169 @@ export function handleWidgetColorChange(
     comp.captureState();
     comp.cdr.markForCheck();
   }
+}
+
+export function handleWidgetInspectorChange(
+  comp: any,
+  widget?: any,
+  ui?: CustomUI,
+): void {
+  if (comp.isSaving) return;
+  const targetUi = ui || comp.activeCustomUi;
+  const targetWidget = widget || comp.currentSelectedWidget;
+  const layout = comp.getLayout(targetUi);
+  if (layout && targetWidget && layout.widgets) {
+    const idx = layout.widgets.findIndex((w: any) => w.id === targetWidget.id);
+    if (idx !== -1) {
+      layout.widgets[idx] = targetWidget;
+    }
+    updateLayoutOnModel(
+      layout,
+      targetUi,
+      comp.editingSettings,
+      comp.isCurrentLayoutPractice,
+      comp.parsedLayouts,
+    );
+  }
+  comp.captureState();
+  comp.cdr.markForCheck();
+}
+
+export function handleRemoveSelectedWidget(comp: any, ui?: CustomUI): void {
+  if (!comp.selectedWidgetId) return;
+  const targetUi = ui || comp.activeCustomUi;
+  const layout = comp.getLayout(targetUi);
+  if (!layout?.widgets) return;
+
+  const idToRemove = comp.selectedWidgetId;
+  const newWidgets = layout.widgets.filter((w: any) => w.id !== idToRemove);
+  const updatedLayout = { ...layout, widgets: newWidgets };
+
+  const laneView = newWidgets.find((w: any) => w.widgetType === "lane-view");
+  const nextWidget = laneView || newWidgets[0];
+  comp.selectedWidgetId = nextWidget ? nextWidget.id : null;
+
+  comp.onLayoutChanged(updatedLayout, targetUi);
+}
+
+export function handleNudgeSelectedWidget(
+  comp: any,
+  dx: number,
+  dy: number,
+  ui?: CustomUI,
+): void {
+  if (!comp.selectedWidgetId) return;
+  const targetUi = ui || comp.activeCustomUi;
+  const layout = comp.getLayout(targetUi);
+  if (!layout?.widgets) return;
+
+  const widget = layout.widgets.find(
+    (w: any) => w.id === comp.selectedWidgetId,
+  );
+  if (!widget) return;
+
+  const baseWidth = comp.getLayoutBaseWidth(targetUi);
+  const baseHeight = comp.getLayoutBaseHeight(targetUi);
+
+  const newX = Math.max(0, Math.min(baseWidth - widget.width, widget.x + dx));
+  const newY = Math.max(0, Math.min(baseHeight - widget.height, widget.y + dy));
+
+  if (newX !== widget.x || newY !== widget.y) {
+    widget.x = newX;
+    widget.y = newY;
+    comp.onWidgetInspectorChange(widget, targetUi);
+  }
+}
+
+export function handleWidgetXChange(
+  comp: any,
+  value: any,
+  widget: any,
+  ui?: CustomUI,
+): void {
+  if (!widget) return;
+  const baseWidth = comp.getLayoutBaseWidth(ui);
+  const num = Number(value);
+  const val = isNaN(num) ? 0 : num;
+  widget.x = Math.max(
+    0,
+    Math.min(baseWidth - (widget.width || 50), Math.round(val)),
+  );
+  comp.onWidgetInspectorChange(widget, ui);
+}
+
+export function handleWidgetYChange(
+  comp: any,
+  value: any,
+  widget: any,
+  ui?: CustomUI,
+): void {
+  if (!widget) return;
+  const baseHeight = comp.getLayoutBaseHeight(ui);
+  const num = Number(value);
+  const val = isNaN(num) ? 0 : num;
+  widget.y = Math.max(
+    0,
+    Math.min(baseHeight - (widget.height || 50), Math.round(val)),
+  );
+  comp.onWidgetInspectorChange(widget, ui);
+}
+
+export function handleWidgetWidthChange(
+  comp: any,
+  value: any,
+  widget: any,
+  ui?: CustomUI,
+): void {
+  if (!widget) return;
+  const baseWidth = comp.getLayoutBaseWidth(ui);
+  const num = Number(value);
+  const val = isNaN(num) ? 50 : num;
+  widget.width = Math.max(
+    50,
+    Math.min(baseWidth - (widget.x || 0), Math.round(val)),
+  );
+  comp.onWidgetInspectorChange(widget, ui);
+}
+
+export function handleWidgetHeightChange(
+  comp: any,
+  value: any,
+  widget: any,
+  ui?: CustomUI,
+): void {
+  if (!widget) return;
+  const baseHeight = comp.getLayoutBaseHeight(ui);
+  const num = Number(value);
+  const val = isNaN(num) ? 50 : num;
+  widget.height = Math.max(
+    20,
+    Math.min(baseHeight - (widget.y || 0), Math.round(val)),
+  );
+  comp.onWidgetInspectorChange(widget, ui);
+}
+
+export function handleLayoutChanged(
+  comp: any,
+  newLayout: any,
+  ui?: CustomUI,
+): void {
+  if (comp.isSaving) return;
+  updateLayoutOnModel(
+    newLayout,
+    ui,
+    comp.editingSettings,
+    comp.isCurrentLayoutPractice,
+    comp.parsedLayouts,
+  );
+  const widgets = newLayout?.widgets || [];
+  if (
+    widgets.length > 0 &&
+    (!comp.selectedWidgetId ||
+      !widgets.some((w: any) => w.id === comp.selectedWidgetId))
+  ) {
+    comp.selectedWidgetId = findDefaultWidgetId(newLayout);
+  }
+  comp.captureState();
+  comp.cdr.markForCheck();
 }

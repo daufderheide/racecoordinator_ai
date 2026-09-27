@@ -60,7 +60,6 @@ test.describe("Splash Screen Visuals", () => {
     await page.locator(".server-version").waitFor({ state: "visible" });
 
     await page.clock.runFor(2000);
-    await page.waitForTimeout(500);
     await Promise.race([
       page.evaluate(() => document.fonts.ready),
       new Promise<void>((resolve) => setTimeout(resolve, 2000)),
@@ -93,9 +92,14 @@ test.describe("Splash Screen Visuals", () => {
     await harness.clickServerConfig();
 
     await page.clock.runFor(1000);
-    await page.waitForTimeout(500);
 
     await page.locator(".server-config-modal").waitFor({ state: "visible" });
+    await page
+      .locator(".server-config-modal input")
+      .first()
+      .waitFor({ state: "visible" });
+    await page.evaluate(() => document.fonts.ready);
+    await page.evaluate(() => new Promise((f) => requestAnimationFrame(f)));
 
     await expect(page).toHaveScreenshot("server-config-modal.png", {
       maxDiffPixels: 500,
@@ -164,7 +168,6 @@ test.describe("Splash Screen Visuals", () => {
     await page.locator(".update-banner").waitFor({ state: "visible" });
 
     await page.clock.runFor(2000);
-    await page.waitForTimeout(500);
     await Promise.race([
       page.evaluate(() => document.fonts.ready),
       new Promise<void>((resolve) => setTimeout(resolve, 2000)),

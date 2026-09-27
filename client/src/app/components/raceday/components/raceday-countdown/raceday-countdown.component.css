@@ -1,0 +1,121 @@
+.countdown-widget-root {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.countdown-widget-root.edit-mode {
+  pointer-events: auto;
+}
+
+/* Blur Backdrop */
+.countdown-blur-backdrop {
+  position: absolute;
+  z-index: 1;
+  pointer-events: none;
+  animation: countdownFadeIn 0.3s ease-out;
+  border-radius: 12px;
+}
+
+.countdown-blur-backdrop.fullscreen {
+  border-radius: 0;
+}
+
+/* Countdown Overlay */
+.countdown-overlay {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+  pointer-events: none;
+  animation: countdownFadeIn 0.3s ease-out;
+}
+
+@keyframes countdownFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.lamps-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 30px;
+  padding: 40px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+  transform: translateZ(0);
+  max-width: 100%;
+  max-height: 100%;
+  box-sizing: border-box;
+}
+
+.lamps-container.vertical,
+.countdown-overlay.portrait .lamps-container {
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(12px, 2.5vh, 24px);
+  padding: clamp(24px, 4vh, 40px) clamp(20px, 4vw, 36px);
+  margin-bottom: 0;
+}
+
+.start-lamp {
+  width: 120px;
+  height: 120px;
+  object-fit: contain;
+  flex-shrink: 1;
+  min-width: 0;
+  min-height: 0;
+  transition:
+    transform 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+    filter 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  opacity: 1;
+  filter: none;
+  transform: none;
+  position: relative;
+  z-index: 1;
+}
+
+.countdown-overlay.portrait .start-lamp,
+.lamps-container.vertical .start-lamp {
+  width: clamp(60px, 11vh, 120px);
+  height: clamp(60px, 11vh, 120px);
+}
+
+/* Glow Effect Enabled: Red Light illuminated */
+.start-lamp.has-glow.on {
+  transform: scale(1.25);
+  filter: drop-shadow(0 0 16px rgba(255, 30, 30, 0.85))
+    drop-shadow(0 0 30px rgba(255, 0, 0, 0.5));
+  z-index: 2;
+}
+
+/* Glow Effect Enabled: Green Lights illuminated */
+.start-lamp.has-glow.go {
+  transform: scale(1.4);
+  filter: drop-shadow(0 0 20px rgba(0, 255, 70, 0.9))
+    drop-shadow(0 0 40px rgba(0, 255, 50, 0.6));
+  z-index: 3;
+}
+
+/* Glow Effect Disabled: Lights appear unmodified */
+.start-lamp:not(.has-glow).on,
+.start-lamp:not(.has-glow).go {
+  transform: none;
+  filter: none;
+  z-index: 1;
+}

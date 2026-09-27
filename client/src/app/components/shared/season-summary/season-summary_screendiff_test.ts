@@ -17,14 +17,13 @@ test.describe("Season Summary Visuals", () => {
     await TestSetupHelper.waitForLocalization(
       page,
       "en",
-      page.goto("/season-manager?id=s_empty"),
+      page.goto("/season-results?id=s_empty"),
     );
 
     const summaryHost = page.locator(SeasonSummaryHarnessBase.hostSelector);
     await summaryHost.waitFor();
 
     await TestSetupHelper.disableAnimations(page);
-    await page.waitForTimeout(200);
 
     await expect(summaryHost).toHaveScreenshot("season-summary-no-races.png", {
       animations: "disabled",
@@ -38,14 +37,13 @@ test.describe("Season Summary Visuals", () => {
     await TestSetupHelper.waitForLocalization(
       page,
       "en",
-      page.goto("/season-manager?id=s_active"),
+      page.goto("/season-results?id=s_active"),
     );
 
     const summaryHost = page.locator(SeasonSummaryHarnessBase.hostSelector);
     await summaryHost.waitFor();
 
     await TestSetupHelper.disableAnimations(page);
-    await page.waitForTimeout(200);
 
     await expect(summaryHost).toHaveScreenshot("season-summary-races-run.png", {
       animations: "disabled",

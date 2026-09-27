@@ -13,10 +13,12 @@ import {
 import { Subscription } from "rxjs";
 import { RacedayActionButtonComponent } from "@app/components/raceday/components/raceday-action-button/raceday-action-button.component";
 import { RacedayBrandingComponent } from "@app/components/raceday/components/raceday-branding/raceday-branding.component";
+import { RacedayCountdownComponent } from "@app/components/raceday/components/raceday-countdown/raceday-countdown.component";
 import { RacedayEventNameComponent } from "@app/components/raceday/components/raceday-event-name/raceday-event-name.component";
 import { RacedayFlagComponent } from "@app/components/raceday/components/raceday-flag/raceday-flag.component";
 import { RacedayGroupLeaderboardComponent } from "@app/components/raceday/components/raceday-group-leaderboard/raceday-group-leaderboard.component";
 import { RacedayHeatInfoComponent } from "@app/components/raceday/components/raceday-heat-info/raceday-heat-info.component";
+import { RacedayHeatListComponent } from "@app/components/raceday/components/raceday-heat-list/raceday-heat-list.component";
 import { RacedayImageComponent } from "@app/components/raceday/components/raceday-image/raceday-image.component";
 import { RacedayLaneViewComponent } from "@app/components/raceday/components/raceday-lane-view/raceday-lane-view.component";
 import { RacedayLeaderboardComponent } from "@app/components/raceday/components/raceday-leaderboard/raceday-leaderboard.component";
@@ -34,6 +36,7 @@ import { RacedayTrackNameComponent } from "@app/components/raceday/components/ra
 import { AbsoluteWidgetNode } from "@app/models/settings";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { CustomWidgetService } from "@app/services/custom-widget.service";
+import { LoggerService } from "@app/services/logger.service";
 
 @Component({
   standalone: true,
@@ -64,8 +67,10 @@ import { CustomWidgetService } from "@app/services/custom-widget.service";
     RacedayLaneViewComponent,
     RacedayOnDeckComponent,
     RacedayNextHeatComponent,
+    RacedayHeatListComponent,
     RacedayImageComponent,
     RacedayActionButtonComponent,
+    RacedayCountdownComponent,
   ],
 })
 export class RacedayAbsoluteWidgetComponent implements OnInit, OnDestroy {
@@ -73,12 +78,46 @@ export class RacedayAbsoluteWidgetComponent implements OnInit, OnDestroy {
   parentComponent = input<any>(undefined);
   isCustomizing = input<boolean>(false);
   selectedWidgetId = input<string | null>(null);
+  isCountdownPreviewActive = input<boolean>(false);
 
-  private customWidgetService = inject(CustomWidgetService);
+  private customWidgetService = inject(CustomWidgetService, { optional: true });
+  private logger = inject(LoggerService, { optional: true });
   private widgetSub?: Subscription;
 
   get isSelected(): boolean {
     return this.selectedWidgetId() === this.widget().id;
+  }
+
+  get isCountdownWidget(): boolean {
+    return this.widget().widgetType === "countdown";
+  }
+
+  get isCountdownActive(): boolean {
+    if (!this.isCountdownWidget) {
+      return true;
+    }
+    if (this.isCustomizing()) {
+      return true;
+    }
+    return !!this.parentComponent()?.showCountdownOverlay;
+  }
+
+  get isCountdownGhost(): boolean {
+    if (!this.isCustomizing() || !this.isCountdownWidget) {
+      return false;
+    }
+    return !this.isSelected && !this.isCountdownPreviewActive();
+  }
+
+  get computedZIndex(): number {
+    const w = this.widget();
+    if (!this.isCustomizing() && w.widgetType === "menu-bar") {
+      return 99999;
+    }
+    if (w.widgetType === "countdown") {
+      return Math.max(10000, (w.zIndex || 2000) + 10000);
+    }
+    return w.zIndex || 100;
   }
 
   private isResizing = false;
@@ -95,6 +134,22 @@ export class RacedayAbsoluteWidgetComponent implements OnInit, OnDestroy {
     if (this.customWidgetService?.customWidgets$) {
       this.widgetSub = this.customWidgetService.customWidgets$.subscribe(() => {
         this.cdr.markForCheck();
+      });
+    }
+    const type = this.widget()?.widgetType;
+    if (
+      this.isCustomWidget(type) &&
+      this.customWidgetService &&
+      this.customWidgetService.getCustomWidgets().length === 0
+    ) {
+      this.logger?.info(
+        `RacedayAbsoluteWidget: Custom widget '${type}' requested but 0 widgets currently loaded in CustomWidgetService. Triggering reload...`,
+      );
+      this.customWidgetService.reloadCustomWidgets().catch((err) => {
+        this.logger?.warn(
+          "RacedayAbsoluteWidget: Error reloading custom widgets",
+          err,
+        );
       });
     }
   }
@@ -148,6 +203,33 @@ export class RacedayAbsoluteWidgetComponent implements OnInit, OnDestroy {
         newH = 50;
       }
 
+      const baseWidth = this.parentComponent().layout?.baseWidth || 1920;
+      const baseHeight = this.parentComponent().layout?.baseHeight || 1080;
+
+      if (newX < 0) {
+        if (handle.includes("w")) newW += newX;
+        newX = 0;
+      }
+      if (newY < 0) {
+        if (handle.includes("n")) newH += newY;
+        newY = 0;
+      }
+      if (newX + newW > baseWidth) {
+        newW = baseWidth - newX;
+      }
+      if (newY + newH > baseHeight) {
+        newH = baseHeight - newY;
+      }
+
+      if (newW < 50) {
+        if (handle.includes("w")) newX -= 50 - newW;
+        newW = 50;
+      }
+      if (newH < 50) {
+        if (handle.includes("n")) newY -= 50 - newH;
+        newH = 50;
+      }
+
       let snapped = { x: newX, y: newY, w: newW, h: newH };
       if (this.parentComponent().snapToEdges) {
         snapped = this.parentComponent().snapToEdges(
@@ -157,15 +239,20 @@ export class RacedayAbsoluteWidgetComponent implements OnInit, OnDestroy {
           newH,
           this.widget().id,
           handle,
-          this.parentComponent().layout?.baseWidth || 1920,
-          this.parentComponent().layout?.baseHeight || 1080,
+          baseWidth,
+          baseHeight,
         );
       }
 
-      this.widget().x = snapped.x;
-      this.widget().y = snapped.y;
-      this.widget().width = snapped.w;
-      this.widget().height = snapped.h;
+      const clampedX = Math.max(0, Math.min(baseWidth - 50, snapped.x));
+      const clampedY = Math.max(0, Math.min(baseHeight - 50, snapped.y));
+      const clampedW = Math.max(50, Math.min(baseWidth - clampedX, snapped.w));
+      const clampedH = Math.max(50, Math.min(baseHeight - clampedY, snapped.h));
+
+      this.widget().x = clampedX;
+      this.widget().y = clampedY;
+      this.widget().width = clampedW;
+      this.widget().height = clampedH;
 
       this.cdr.detectChanges();
     };
@@ -211,27 +298,32 @@ export class RacedayAbsoluteWidgetComponent implements OnInit, OnDestroy {
       let newX = initialWidgetX + deltaX;
       let newY = initialWidgetY + deltaY;
 
+      const baseWidth = this.parentComponent().layout?.baseWidth || 1920;
+      const baseHeight = this.parentComponent().layout?.baseHeight || 1080;
+      const w = this.widget().width;
+      const h = this.widget().height;
+
       let snapped = {
         x: newX,
         y: newY,
-        w: this.widget().width,
-        h: this.widget().height,
+        w: w,
+        h: h,
       };
       if (this.parentComponent().snapToEdges) {
         snapped = this.parentComponent().snapToEdges(
           newX,
           newY,
-          this.widget().width,
-          this.widget().height,
+          w,
+          h,
           this.widget().id,
           "all",
-          this.parentComponent().layout?.baseWidth || 1920,
-          this.parentComponent().layout?.baseHeight || 1080,
+          baseWidth,
+          baseHeight,
         );
       }
 
-      this.widget().x = snapped.x;
-      this.widget().y = snapped.y;
+      this.widget().x = Math.max(0, Math.min(baseWidth - w, snapped.x));
+      this.widget().y = Math.max(0, Math.min(baseHeight - h, snapped.y));
       this.cdr.detectChanges();
     };
 

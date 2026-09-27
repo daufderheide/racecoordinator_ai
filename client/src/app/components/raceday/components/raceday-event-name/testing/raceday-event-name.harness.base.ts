@@ -6,6 +6,7 @@ export abstract class RacedayEventNameHarnessBase {
     eventName: ".info-section .value-text",
   };
 
+  abstract isVisible(): Promise<boolean>;
   abstract getLabel(): Promise<string>;
   abstract getEventName(): Promise<string>;
 }

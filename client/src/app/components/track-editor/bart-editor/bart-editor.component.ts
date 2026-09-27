@@ -12,6 +12,10 @@ import {
 import { FormsModule } from "@angular/forms";
 import { of, Subscription, timer } from "rxjs";
 import { catchError, switchMap } from "rxjs/operators";
+import {
+  CustomOptionComponent,
+  CustomSelectComponent,
+} from "@app/components/shared/custom-select/custom-select.component";
 import { DataService } from "@app/data.service";
 import { BartConfig } from "@app/models/bart_config";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
@@ -24,12 +28,19 @@ import { LoggerService } from "@app/services/logger.service";
   templateUrl: "./bart-editor.component.html",
   styleUrls: ["./bart-editor.component.css"],
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslatePipe],
+  imports: [
+    CommonModule,
+    FormsModule,
+    TranslatePipe,
+    CustomSelectComponent,
+    CustomOptionComponent,
+  ],
 })
 export class BartEditorComponent implements OnInit, OnDestroy, OnChanges {
   config = input.required<BartConfig>();
   lanes = input.required<number>();
   interfaceIndex = input.required<number>();
+  isEditMode = input<boolean>(true);
 
   change = output<void>();
   remove = output<void>();
@@ -231,15 +242,24 @@ export class BartEditorComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   onDeviceSelect(newDevice: string): void {
+    if (!this.isEditMode()) {
+      return;
+    }
     this.config().deviceName = newDevice;
     this.onConfigChange();
   }
 
   onConfigChange(): void {
+    if (!this.isEditMode()) {
+      return;
+    }
     this.change.emit();
   }
 
   onRemove(): void {
+    if (!this.isEditMode()) {
+      return;
+    }
     this.remove.emit();
   }
 

@@ -6,6 +6,7 @@ import {
   OnInit,
   output,
 } from "@angular/core";
+import { FormsModule } from "@angular/forms";
 import { ActivatedRoute } from "@angular/router";
 import { AnalyticsService } from "@app/analytics.service";
 import { AcknowledgementModalComponent } from "@app/components/shared/acknowledgement-modal/acknowledgement-modal.component";
@@ -23,11 +24,14 @@ import { TranslationService } from "@app/services/translation.service";
   selector: "app-toolbar",
   templateUrl: "./toolbar.component.html",
   styleUrls: ["./toolbar.component.css"],
-  imports: [AcknowledgementModalComponent, TranslatePipe],
+  imports: [AcknowledgementModalComponent, TranslatePipe, FormsModule],
 })
 export class ToolbarComponent implements OnInit {
   showAdd = input(false);
   showEdit = input(false);
+  isEditMode = input(false);
+  showExpandCollapse = input(false);
+  allExpanded = input(false);
   showHelp = input(false);
   showDelete = input(false);
   showCopy = input(false);
@@ -80,6 +84,9 @@ export class ToolbarComponent implements OnInit {
   disabledLaneCheck = input(false);
   isHeatsEqual = input<boolean | undefined>(undefined);
 
+  showZoom = input(false);
+  zoomLevel = input(100);
+
   showAnalyticsModal = false;
   analyticsModalTitle = "";
   analyticsModalMessage = "";
@@ -97,7 +104,7 @@ export class ToolbarComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    this.route.queryParams.subscribe((params) => {
+    this.route?.queryParams?.subscribe((params) => {
       const forceHelp = params["help"] === "true";
       const settings = this.settingsService.getSettings();
       const helpRecName = this.helpRecordName();
@@ -121,6 +128,7 @@ export class ToolbarComponent implements OnInit {
 
   add = output<void>();
   edit = output<void>();
+  expandCollapse = output<void>();
   copy = output<void>();
   help = output<void>();
   delete = output<void>();
@@ -132,9 +140,30 @@ export class ToolbarComponent implements OnInit {
   reset = output<void>();
   regenerate = output<void>();
   laneCheck = output<void>();
+  zoomLevelChange = output<number>();
+
+  onZoomIn() {
+    if (this.zoomLevel() < 150) {
+      this.zoomLevelChange.emit(this.zoomLevel() + 10);
+    }
+  }
+
+  onZoomOut() {
+    if (this.zoomLevel() > 50) {
+      this.zoomLevelChange.emit(this.zoomLevel() - 10);
+    }
+  }
+
+  onZoomSliderChange(event: any) {
+    this.zoomLevelChange.emit(Number(event));
+  }
 
   onActivate() {
     this.activate.emit();
+  }
+
+  onExpandCollapse() {
+    this.expandCollapse.emit();
   }
 
   onImport() {
@@ -169,133 +198,148 @@ export class ToolbarComponent implements OnInit {
     this.edit.emit();
   }
 
-  // eslint-disable-next-line max-lines-per-function
-  getToolbarHelpSteps(): GuideStep[] {
-    const defaultSteps: GuideStep[] = [];
+  private createGuideStep(
+    targetId: string,
+    titleKey: string,
+    contentKey: string,
+  ): GuideStep {
+    return {
+      targetId,
+      title: this.translationService.translate(titleKey),
+      content: this.translationService.translate(contentKey),
+      position: "bottom",
+    };
+  }
 
+  private getActionHelpSteps(): GuideStep[] {
+    const steps: GuideStep[] = [];
     if (this.showActivate()) {
-      defaultSteps.push({
-        targetId: "activate-item-btn",
-        title: this.translationService.translate("TOOLBAR_HELP_ACTIVATE_TITLE"),
-        content: this.translationService.translate(
+      steps.push(
+        this.createGuideStep(
+          "activate-item-btn",
+          "TOOLBAR_HELP_ACTIVATE_TITLE",
           "TOOLBAR_HELP_ACTIVATE_CONTENT",
         ),
-        position: "bottom",
-      });
+      );
     }
-
     if (this.showUndo()) {
-      defaultSteps.push({
-        targetId: "undo-btn",
-        title: this.translationService.translate("TOOLBAR_HELP_UNDO_TITLE"),
-        content: this.translationService.translate("TOOLBAR_HELP_UNDO_CONTENT"),
-        position: "bottom",
-      });
+      steps.push(
+        this.createGuideStep(
+          "undo-btn",
+          "TOOLBAR_HELP_UNDO_TITLE",
+          "TOOLBAR_HELP_UNDO_CONTENT",
+        ),
+      );
     }
-
     if (this.showRedo()) {
-      defaultSteps.push({
-        targetId: "redo-btn",
-        title: this.translationService.translate("TOOLBAR_HELP_REDO_TITLE"),
-        content: this.translationService.translate("TOOLBAR_HELP_REDO_CONTENT"),
-        position: "bottom",
-      });
+      steps.push(
+        this.createGuideStep(
+          "redo-btn",
+          "TOOLBAR_HELP_REDO_TITLE",
+          "TOOLBAR_HELP_REDO_CONTENT",
+        ),
+      );
     }
-
     if (this.showEdit()) {
-      defaultSteps.push({
-        targetId: "edit-track-btn",
-        title: this.translationService.translate("TOOLBAR_HELP_EDIT_TITLE"),
-        content: this.translationService.translate("TOOLBAR_HELP_EDIT_CONTENT"),
-        position: "bottom",
-      });
+      steps.push(
+        this.createGuideStep(
+          "edit-track-btn",
+          "TOOLBAR_HELP_EDIT_TITLE",
+          "TOOLBAR_HELP_EDIT_CONTENT",
+        ),
+      );
     }
-
+    if (this.showExpandCollapse()) {
+      steps.push(
+        this.createGuideStep(
+          "expand-collapse-all-btn",
+          "TOOLBAR_HELP_EXPAND_COLLAPSE_TITLE",
+          "TOOLBAR_HELP_EXPAND_COLLAPSE_CONTENT",
+        ),
+      );
+    }
     if (this.showCopy()) {
-      defaultSteps.push({
-        targetId: "copy-item-btn",
-        title: this.translationService.translate("TOOLBAR_HELP_COPY_TITLE"),
-        content: this.translationService.translate("TOOLBAR_HELP_COPY_CONTENT"),
-        position: "bottom",
-      });
+      steps.push(
+        this.createGuideStep(
+          "copy-item-btn",
+          "TOOLBAR_HELP_COPY_TITLE",
+          "TOOLBAR_HELP_COPY_CONTENT",
+        ),
+      );
     }
-
     if (this.showAdd()) {
-      defaultSteps.push({
-        targetId: "add-item-btn",
-        title: this.translationService.translate("TOOLBAR_HELP_ADD_TITLE"),
-        content: this.translationService.translate("TOOLBAR_HELP_ADD_CONTENT"),
-        position: "bottom",
-      });
+      steps.push(
+        this.createGuideStep(
+          "add-item-btn",
+          "TOOLBAR_HELP_ADD_TITLE",
+          "TOOLBAR_HELP_ADD_CONTENT",
+        ),
+      );
     }
-
     if (this.showDelete()) {
-      defaultSteps.push({
-        targetId: "delete-track-btn",
-        title: this.translationService.translate("TOOLBAR_HELP_DELETE_TITLE"),
-        content: this.translationService.translate(
+      steps.push(
+        this.createGuideStep(
+          "delete-track-btn",
+          "TOOLBAR_HELP_DELETE_TITLE",
           "TOOLBAR_HELP_DELETE_CONTENT",
         ),
-        position: "bottom",
-      });
+      );
     }
+    return steps;
+  }
 
+  private getDataAndUtilityHelpSteps(): GuideStep[] {
+    const steps: GuideStep[] = [];
     if (this.showImport()) {
-      defaultSteps.push({
-        targetId: "import-btn",
-        title: this.translationService.translate("TOOLBAR_HELP_IMPORT_TITLE"),
-        content: this.translationService.translate(
+      steps.push(
+        this.createGuideStep(
+          "import-btn",
+          "TOOLBAR_HELP_IMPORT_TITLE",
           "TOOLBAR_HELP_IMPORT_CONTENT",
         ),
-        position: "bottom",
-      });
+      );
     }
-
     if (this.showExport()) {
-      defaultSteps.push({
-        targetId: "export-btn",
-        title: this.translationService.translate("TOOLBAR_HELP_EXPORT_TITLE"),
-        content: this.translationService.translate(
+      steps.push(
+        this.createGuideStep(
+          "export-btn",
+          "TOOLBAR_HELP_EXPORT_TITLE",
           "TOOLBAR_HELP_EXPORT_CONTENT",
         ),
-        position: "bottom",
-      });
+      );
     }
-
     if (this.showReset()) {
-      defaultSteps.push({
-        targetId: "reset-btn",
-        title: this.translationService.translate("TOOLBAR_HELP_RESET_TITLE"),
-        content: this.translationService.translate(
+      steps.push(
+        this.createGuideStep(
+          "reset-btn",
+          "TOOLBAR_HELP_RESET_TITLE",
           "TOOLBAR_HELP_RESET_CONTENT",
         ),
-        position: "bottom",
-      });
+      );
     }
-
     if (this.showAnalytics()) {
-      defaultSteps.push({
-        targetId: "analytics-btn",
-        title: this.translationService.translate(
+      steps.push(
+        this.createGuideStep(
+          "analytics-btn",
           "TOOLBAR_HELP_ANALYTICS_TITLE",
-        ),
-        content: this.translationService.translate(
           "TOOLBAR_HELP_ANALYTICS_CONTENT",
         ),
-        position: "bottom",
-      });
+      );
     }
-
     if (this.showHelp()) {
-      defaultSteps.push({
-        targetId: "help-track-btn",
-        title: this.translationService.translate("TOOLBAR_HELP_HELP_TITLE"),
-        content: this.translationService.translate("TOOLBAR_HELP_HELP_CONTENT"),
-        position: "bottom",
-      });
+      steps.push(
+        this.createGuideStep(
+          "help-track-btn",
+          "TOOLBAR_HELP_HELP_TITLE",
+          "TOOLBAR_HELP_HELP_CONTENT",
+        ),
+      );
     }
+    return steps;
+  }
 
-    return defaultSteps;
+  getToolbarHelpSteps(): GuideStep[] {
+    return [...this.getActionHelpSteps(), ...this.getDataAndUtilityHelpSteps()];
   }
 
   onHelp() {
@@ -337,18 +381,30 @@ export class ToolbarComponent implements OnInit {
   }
 
   undo() {
+    if (!this.canUndo) {
+      return;
+    }
     this.undoManager()?.undo();
   }
 
   redo() {
+    if (!this.canRedo) {
+      return;
+    }
     this.undoManager()?.redo();
   }
 
   get canUndo(): boolean {
+    if (this.showEdit() && !this.isEditMode()) {
+      return false;
+    }
     return (this.undoManager()?.undoStackCount ?? 0) > 0;
   }
 
   get canRedo(): boolean {
+    if (this.showEdit() && !this.isEditMode()) {
+      return false;
+    }
     return (this.undoManager()?.redoStackCount ?? 0) > 0;
   }
 }

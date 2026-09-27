@@ -221,4 +221,26 @@ public class RacingTest {
     d1.addLap(10.0, false, true); // 5 laps
     assertEquals(RaceFlag.RED, racing.getFlagType(race));
   }
+
+  @Test
+  public void testEnter_SyncsDriverFlags() {
+    when(race.getRaceTime()).thenReturn(60.0f);
+    Racing newRacing = new Racing();
+    newRacing.enter(race);
+
+    assertEquals(RaceFlag.GREEN, drivers.get(0).getFlag());
+    assertEquals(RaceFlag.GREEN, drivers.get(1).getFlag());
+  }
+
+  @Test
+  public void testEnter_TimedScoring_AddsRaceTimeWhenZero() {
+    org.mockito.Mockito.clearInvocations(race);
+    when(race.getRaceTime()).thenReturn(0.0f, 60.0f);
+    Racing newRacing = new Racing();
+    newRacing.enter(race);
+
+    verify(race).addRaceTime(60.0f);
+    verify(race).broadcastFlag(RaceFlag.GREEN);
+    assertEquals(RaceFlag.GREEN, drivers.get(0).getFlag());
+  }
 }

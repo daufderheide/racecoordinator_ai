@@ -2,6 +2,10 @@ import { CommonModule } from "@angular/common";
 import { Component, inject, input, output } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import {
+  CustomOptionComponent,
+  CustomSelectComponent,
+} from "@app/components/shared/custom-select/custom-select.component";
+import {
   CustomWidgetDefinition,
   CustomWidgetSettingField,
 } from "@app/models/custom-widget.model";
@@ -14,7 +18,13 @@ import { CustomWidgetService } from "@app/services/custom-widget.service";
   selector: "app-custom-widget-inspector",
   templateUrl: "./custom-widget-inspector.component.html",
   styleUrls: ["../../ui-editor.component.css"],
-  imports: [CommonModule, FormsModule, TranslatePipe],
+  imports: [
+    CommonModule,
+    FormsModule,
+    TranslatePipe,
+    CustomSelectComponent,
+    CustomOptionComponent,
+  ],
 })
 export class CustomWidgetInspectorComponent {
   widget = input.required<AbsoluteWidgetNode>();
@@ -81,8 +91,11 @@ export class CustomWidgetInspectorComponent {
     this.onSettingChanged(key, val);
   }
 
-  onSelectChange(key: string, event: Event) {
-    const val = (event.target as HTMLSelectElement).value;
+  onSelectChange(key: string, valueOrEvent: any) {
+    const val =
+      typeof valueOrEvent === "string"
+        ? valueOrEvent
+        : ((valueOrEvent?.target as HTMLSelectElement)?.value ?? valueOrEvent);
     this.onSettingChanged(key, val);
   }
 

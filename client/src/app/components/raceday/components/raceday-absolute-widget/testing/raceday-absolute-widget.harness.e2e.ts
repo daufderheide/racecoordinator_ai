@@ -21,6 +21,14 @@ export class RacedayAbsoluteWidgetHarnessE2e implements RacedayAbsoluteWidgetHar
     return this.locator.locator(this.base.selectors.dragHeader).first();
   }
 
+  private get widgetWrapper() {
+    return this.locator.locator(this.base.selectors.widgetWrapper).first();
+  }
+
+  async isVisible(): Promise<boolean> {
+    return await this.widgetWrapper.isVisible();
+  }
+
   async getWidgetTypeLabel(): Promise<string> {
     return (await this.label.isVisible()) ? await this.label.innerText() : "";
   }

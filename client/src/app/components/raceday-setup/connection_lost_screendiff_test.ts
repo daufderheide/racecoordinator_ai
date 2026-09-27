@@ -69,7 +69,6 @@ test.describe("Connection Loss Visuals", () => {
     const _harness = new RacedaySetupHarnessE2e(container);
 
     // Wait for images to load before freezing time
-    await page.waitForTimeout(2000);
 
     // Install clock after initial page load to trigger connection loss reliably
     await page.clock.install();
@@ -84,8 +83,6 @@ test.describe("Connection Loss Visuals", () => {
     await expect(page.locator(".connection-lost-overlay")).toBeVisible({
       timeout: 10000,
     });
-
-    await page.waitForTimeout(500);
 
     await expect(page).toHaveScreenshot("connection-lost-overlay.png", {
       mask: [

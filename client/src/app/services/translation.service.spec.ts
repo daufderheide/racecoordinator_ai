@@ -97,12 +97,22 @@ describe("TranslationService", () => {
     const req = httpMock.expectOne((request) =>
       request.url.startsWith("assets/i18n/en.json"),
     );
-    req.flush({ HELLO: "Hello World" });
+    req.flush({
+      HELLO: "Hello World",
+      GREET_PARAM: "Hello {{name}}!",
+      SPACED_PARAM: "Count: {{ count }} items",
+    });
 
     service.getTranslationsLoaded().subscribe((loaded) => {
       if (loaded) {
         expect(service.translate("HELLO")).toBe("Hello World");
         expect(service.translate("UNKNOWN")).toBe("UNKNOWN");
+        expect(service.translate("GREET_PARAM", { name: "Alice" })).toBe(
+          "Hello Alice!",
+        );
+        expect(service.translate("SPACED_PARAM", { count: 5 })).toBe(
+          "Count: 5 items",
+        );
         done();
       }
     });

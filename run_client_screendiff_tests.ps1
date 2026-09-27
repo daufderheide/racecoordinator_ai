@@ -156,7 +156,9 @@ if ($TestExitCode -eq 0 -and ($args -contains "--update-snapshots" -or $Playwrig
 if ($TestExitCode -ne 0) {
     Write-Host "`nTests failed. Opening report..." -ForegroundColor Yellow
     Set-Location $ClientDir
-    npx playwright show-report (Join-Path $IsolatedDir "playwright-report")
+    if ([Environment]::UserInteractive -and -not $env:CI) {
+        npx playwright show-report (Join-Path $IsolatedDir "playwright-report")
+    }
 }
 
 exit $TestExitCode

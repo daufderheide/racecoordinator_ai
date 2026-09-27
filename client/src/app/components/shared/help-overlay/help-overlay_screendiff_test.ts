@@ -48,7 +48,6 @@ test.describe("Help Overlay Visuals", () => {
 
     // Wait for Step 1 content to appear (Welcome)
     await harness.waitForStable();
-    await page.waitForTimeout(200); // Allow focus/render to settle
     await expect(page).toHaveScreenshot("help-step-1-welcome.png", {
       maxDiffPixels: 1000,
     });
@@ -66,7 +65,6 @@ test.describe("Help Overlay Visuals", () => {
     await harness.waitForStable();
 
     // Capture Step 2
-    await page.waitForTimeout(200); // Allow focus/render to settle
     await expect(page).toHaveScreenshot("help-step-2-icon-target.png", {
       maxDiffPixels: 1000,
     });
@@ -85,7 +83,6 @@ test.describe("Help Overlay Visuals", () => {
     await harness.waitForStable();
 
     // Capture Step 3
-    await page.waitForTimeout(200); // Allow focus/render to settle
     await expect(page).toHaveScreenshot("help-step-3-analytics.png", {
       maxDiffPixels: 1000,
     });
@@ -105,7 +102,6 @@ test.describe("Help Overlay Visuals", () => {
     await harness.waitForStable();
 
     // Capture Step 4
-    await page.waitForTimeout(200); // Allow focus/render to settle
     await expect(page).toHaveScreenshot("help-step-4-driver-panel.png", {
       maxDiffPixels: 1000,
     });
@@ -126,7 +122,6 @@ test.describe("Help Overlay Visuals", () => {
     await harness.waitForStable();
 
     // Verify visual match
-    await page.waitForTimeout(500); // Allow focus/render to settle
     await expect(page).toHaveScreenshot("help-step-3-analytics.png", {
       maxDiffPixels: 1000,
     });

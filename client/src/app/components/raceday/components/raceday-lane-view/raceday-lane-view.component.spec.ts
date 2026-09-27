@@ -42,16 +42,16 @@ describe("RacedayLaneViewComponent", () => {
           objectId: "hd1",
           laneIndex: 0,
           isLastLapDrift: false,
-          driver: { name: "Alice", nickname: "Rocket" },
-          actualDriver: { name: "Alice", nickname: "Rocket" },
+          driver: { entity_id: "d1", name: "Alice", nickname: "Rocket" },
+          actualDriver: { entity_id: "d1", name: "Alice", nickname: "Rocket" },
           laps: [],
         },
         {
           objectId: "hd2",
           laneIndex: 1,
           isLastLapDrift: true,
-          driver: { name: "Bob", nickname: "Drifter" },
-          actualDriver: { name: "Bob", nickname: "Drifter" },
+          driver: { entity_id: "d2", name: "Bob", nickname: "Drifter" },
+          actualDriver: { entity_id: "d2", name: "Bob", nickname: "Drifter" },
           laps: [],
         },
       ],
@@ -100,7 +100,8 @@ describe("RacedayLaneViewComponent", () => {
       isDriverSwapDisabled: (_hd: any) => false,
       onTeammateChange: jasmine.createSpy("onTeammateChange"),
       getTeammates: (_hd: any) => teammates,
-      getDropdownArrowBg: (_hd: any) => "",
+      getDropdownArrowBg: (_hd: any) =>
+        'url("data:image/svg+xml;utf8,<svg></svg>")',
       getDriverStats: (_hd: any, _id: string) => " (Heat: 0 Laps)",
       formatColumnValue: (hd: any, col: any, prop: string) => {
         if (prop === "driver.nickname") return hd.driver.nickname;
@@ -113,6 +114,10 @@ describe("RacedayLaneViewComponent", () => {
       getLaneRecordHolder: (hd: any) => (hd.laneIndex === 0 ? "Speedy" : "---"),
       getLaneRecordDate: (hd: any) =>
         hd.laneIndex === 0 ? "2026-08-21" : "---",
+      getBestRaceLapTime: (hd: any) =>
+        hd.laneIndex === 0 ? "4.950" : "--.---",
+      getBestRaceLapHolder: (hd: any) => (hd.laneIndex === 0 ? "Flash" : "---"),
+      getBestRaceLapHeat: (hd: any) => (hd.laneIndex === 0 ? "Heat 2" : "---"),
       heatBestTime: 4.9,
       trackByLayout: (idx: number, entry: any) => entry.property,
     };
@@ -156,6 +161,50 @@ describe("RacedayLaneViewComponent", () => {
 
     await harness.setTeammateSelectValue(0, "d2");
     expect(mockParent.onTeammateChange).toHaveBeenCalled();
+  });
+
+  it("should open teammate dropdown and display options with driver stats", () => {
+    const rowEl = fixture.nativeElement.querySelector(".table-row");
+    const selectEl = rowEl.querySelector(
+      "app-custom-select.teammate-select",
+    ) as HTMLElement;
+    expect(selectEl).toBeTruthy();
+
+    const trigger = selectEl.querySelector(
+      ".custom-select-trigger",
+    ) as HTMLElement;
+    trigger.click();
+    fixture.detectChanges();
+
+    expect(selectEl.classList.contains("open")).toBeTrue();
+    const dropdown = selectEl.querySelector(
+      ".custom-select-dropdown",
+    ) as HTMLElement;
+    expect(dropdown).toBeTruthy();
+
+    const options = selectEl.querySelectorAll(".custom-select-option");
+    expect(options.length).toBe(2);
+    expect(options[0].textContent).toContain("Rocket");
+    expect(options[0].textContent).toContain("(Heat: 0 Laps)");
+    expect(options[1].textContent).toContain("Chuck");
+    expect(options[1].textContent).toContain("(Heat: 0 Laps)");
+
+    (options[1] as HTMLElement).click();
+    fixture.detectChanges();
+    expect(mockParent.onTeammateChange).toHaveBeenCalled();
+    expect(selectEl.classList.contains("open")).toBeFalse();
+  });
+
+  it("should display pulldown marker background image on teammate display name in resting state", () => {
+    const rowEl = fixture.nativeElement.querySelector(".table-row");
+    const nameEl = rowEl.querySelector(".teammate-display-name") as HTMLElement;
+    expect(nameEl).toBeTruthy();
+    expect(nameEl.style.backgroundImage).toContain("url(");
+
+    const selectEl = rowEl.querySelector(
+      "app-custom-select.teammate-select",
+    ) as HTMLElement;
+    expect(selectEl.style.backgroundImage).toBeFalsy();
   });
 
   it("should trigger parent onCellClick on cell click", async () => {
@@ -541,6 +590,99 @@ describe("RacedayLaneViewComponent", () => {
     expect(cells[1].textContent.trim()).toBe("--");
   });
 
+  it("should render bestRaceLapTime column with time, nickname, and heat on separate lines", () => {
+    mockParent.columns = [
+      {
+        propertyName: "bestRaceLapTime",
+        labelKey: "RD_COL_BEST_RACE_LAP_TIME",
+        layout: {
+          [AnchorPoint.CenterCenter]: "bestRaceLapTime",
+        },
+      } as any,
+    ];
+    fixture.detectChanges();
+
+    const recordContentEls = fixture.nativeElement.querySelectorAll(
+      ".best-race-lap-content",
+    );
+    expect(recordContentEls.length).toBe(2);
+
+    const firstRowSub = recordContentEls[0].querySelector(".best-race-lap-sub");
+    expect(firstRowSub).toBeTruthy();
+
+    const firstRowTime = recordContentEls[0].querySelector(
+      ".best-race-lap-time",
+    );
+    const firstRowHolder = recordContentEls[0].querySelector(
+      ".best-race-lap-holder",
+    );
+    const firstRowHeat = recordContentEls[0].querySelector(
+      ".best-race-lap-heat",
+    );
+
+    expect(firstRowTime.textContent.trim()).toBe("4.950");
+    expect(firstRowHolder.textContent.trim()).toBe("Flash");
+    expect(firstRowHeat.textContent.trim()).toBe("Heat 2");
+    expect(firstRowHolder.compareDocumentPosition(firstRowHeat)).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
+
+    const secondRowTime = recordContentEls[1].querySelector(
+      ".best-race-lap-time",
+    );
+    const secondRowHolder = recordContentEls[1].querySelector(
+      ".best-race-lap-holder",
+    );
+    const secondRowHeat = recordContentEls[1].querySelector(
+      ".best-race-lap-heat",
+    );
+
+    expect(secondRowTime.textContent.trim()).toBe("--.---");
+    expect(secondRowHolder.textContent.trim()).toBe("---");
+    expect(secondRowHeat.textContent.trim()).toBe("---");
+  });
+
+  it("should render -- for empty lanes when bestRaceLapTime column is configured", () => {
+    mockParent.sortedHeatDrivers = [
+      {
+        objectId: "hd1",
+        laneIndex: 0,
+        driver: { name: "Alice", nickname: "Rocket" },
+        actualDriver: { name: "Alice", nickname: "Rocket" },
+        isEmpty: false,
+        laps: [],
+      },
+      {
+        objectId: "hd2",
+        laneIndex: 1,
+        driver: { name: "", nickname: "" },
+        isEmpty: true,
+        laps: [],
+      },
+    ];
+    mockParent.columns = [
+      {
+        propertyName: "bestRaceLapTime",
+        labelKey: "RD_COL_BEST_RACE_LAP_TIME",
+        layout: {
+          [AnchorPoint.CenterCenter]: "bestRaceLapTime",
+        },
+      } as any,
+    ];
+    fixture.detectChanges();
+
+    const recordContentEls = fixture.nativeElement.querySelectorAll(
+      ".best-race-lap-content",
+    );
+    expect(recordContentEls.length).toBe(1);
+
+    const cells = fixture.nativeElement.querySelectorAll(".body-cell");
+    expect(cells.length).toBe(2);
+    expect(cells[0].querySelector(".best-race-lap-content")).toBeTruthy();
+    expect(cells[1].querySelector(".best-race-lap-content")).toBeFalsy();
+    expect(cells[1].textContent.trim()).toBe("--");
+  });
+
   it("should render laneNumber column in practice race with centered span and reset buttons", () => {
     mockParent.race = { practice: true };
     mockParent.isNameProperty = (prop: string) =>
@@ -705,5 +847,110 @@ describe("RacedayLaneViewComponent", () => {
     expect(secondCellFit.querySelector("app-raceday-ghost-pacing")).toBeFalsy();
     expect(secondCellFit.textContent.trim()).toBe("--");
     expect(secondCellFit.style.padding).toBe("10px");
+  });
+
+  it("should render header cells with fit-text containers and nowrap spans", () => {
+    mockParent.columns = [
+      {
+        propertyName: "driver.nickname",
+        labelKey: "RD_COL_NICKNAME",
+        width: 300,
+      },
+      { propertyName: "lapCount", labelKey: "RD_COL_LAP", width: 100 },
+      { propertyName: "lastLapTime", labelKey: "RD_COL_LAP_TIME", width: 150 },
+    ];
+    fixture.detectChanges();
+
+    const headerCells = fixture.nativeElement.querySelectorAll(".header-cell");
+    expect(headerCells.length).toBe(3);
+
+    headerCells.forEach((hc: HTMLElement) => {
+      const fitTextSpan = hc.querySelector("span");
+      expect(fitTextSpan).toBeTruthy();
+      expect(fitTextSpan?.style.whiteSpace).toBe("nowrap");
+    });
+  });
+
+  it("should apply nowrap to numeric and lap body cell data", () => {
+    mockParent.columns = [
+      {
+        propertyName: "lapCount",
+        labelKey: "RD_COL_LAP",
+        layout: { [AnchorPoint.CenterCenter]: "lapCount" },
+      },
+    ];
+    mockParent.getLayoutEntries = (_c: any) => [
+      { anchor: "center-center", property: "lapCount" },
+    ];
+    mockParent.isNameProperty = () => false;
+    fixture.detectChanges();
+
+    const dataSpan = fixture.nativeElement.querySelector(".body-cell span");
+    expect(dataSpan).toBeTruthy();
+    expect(dataSpan.style.whiteSpace).toBe("nowrap");
+  });
+
+  it("should render driver analysis columns and format their values", () => {
+    mockParent.columns = [
+      {
+        propertyName: "standardDeviation",
+        labelKey: "RD_COL_STD_DEV",
+      },
+      {
+        propertyName: "consistencyScore",
+        labelKey: "RD_COL_CONSISTENCY",
+      },
+      {
+        propertyName: "averageTop5",
+        labelKey: "RD_COL_AVG_TOP_5",
+      },
+    ];
+    mockParent.formatColumnValue = (_hd: any, _col: any, prop: string) => {
+      if (prop === "standardDeviation") return "0.145";
+      if (prop === "consistencyScore") return "97.8%";
+      if (prop === "averageTop5") return "5.120";
+      return "";
+    };
+    mockParent.isNameProperty = () => false;
+    fixture.detectChanges();
+
+    const headerCells = fixture.nativeElement.querySelectorAll(".header-cell");
+    expect(headerCells.length).toBe(3);
+    expect(headerCells[0].textContent.trim()).toBe("RD_COL_STD_DEV");
+    expect(headerCells[1].textContent.trim()).toBe("RD_COL_CONSISTENCY");
+    expect(headerCells[2].textContent.trim()).toBe("RD_COL_AVG_TOP_5");
+
+    const firstRowCells = fixture.nativeElement.querySelectorAll(
+      ".table-row:first-of-type .body-cell",
+    );
+    expect(firstRowCells.length).toBe(3);
+    expect(firstRowCells[0].textContent.trim()).toBe("0.145");
+    expect(firstRowCells[1].textContent.trim()).toBe("97.8%");
+    expect(firstRowCells[2].textContent.trim()).toBe("5.120");
+  });
+
+  it("should render trackCalls column header and formatted value", () => {
+    mockParent.columns = [
+      {
+        propertyName: "trackCalls",
+        labelKey: "RD_COL_TRACK_CALLS",
+      },
+    ];
+    mockParent.formatColumnValue = (hd: any, _col: any, prop: string) => {
+      if (prop === "trackCalls") return hd.objectId === "hd1" ? "3" : "0";
+      return "";
+    };
+    mockParent.isNameProperty = () => false;
+    fixture.detectChanges();
+
+    const headerCells = fixture.nativeElement.querySelectorAll(".header-cell");
+    expect(headerCells.length).toBe(1);
+    expect(headerCells[0].textContent.trim()).toBe("RD_COL_TRACK_CALLS");
+
+    const firstRowCells = fixture.nativeElement.querySelectorAll(
+      ".table-row:first-of-type .body-cell",
+    );
+    expect(firstRowCells.length).toBe(1);
+    expect(firstRowCells[0].textContent.trim()).toBe("3");
   });
 });

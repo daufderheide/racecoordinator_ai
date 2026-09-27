@@ -114,31 +114,50 @@
 }
 
 .col-time {
-  width: 70px;
+  width: 78px;
   text-align: right !important;
   padding-right: 10px !important;
 }
 
 .col-laps {
-  width: 50px;
+  width: 58px;
   text-align: center !important;
 }
 
 .col-gap {
-  width: 72px;
+  width: 78px;
   text-align: right !important;
   padding-right: 10px !important;
 }
 
 .col-best {
-  width: 75px;
+  width: 78px;
   text-align: right !important;
   padding-right: 10px !important;
 }
 
 .col-avg {
-  width: 75px;
+  width: 78px;
   text-align: right !important;
   padding-right: 10px !important;
   font-weight: 600;
 }
+
+.col-last {
+  width: 78px;
+  text-align: right !important;
+  padding-right: 10px !important;
+}
+
+.col-median {
+  width: 78px;
+  text-align: right !important;
+  padding-right: 10px !important;
+  font-weight: 600;
+}
+
+.col-lane {
+  width: 48px;
+  text-align: center !important;
+}
+

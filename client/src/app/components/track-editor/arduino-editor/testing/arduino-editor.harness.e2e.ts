@@ -98,13 +98,14 @@ export class ArduinoEditorHarnessE2e implements ArduinoEditorHarnessBase {
   }
 
   async getBoardType(): Promise<string> {
-    return await this.boardSelect.evaluate(
-      (select: HTMLSelectElement) => select.value,
-    );
+    return (await this.boardSelect.getAttribute("data-value")) || "";
   }
 
   async setBoardType(type: string): Promise<void> {
-    await this.boardSelect.selectOption(type);
+    await this.boardSelect.locator(".custom-select-trigger").click();
+    await this.boardSelect
+      .locator(`.custom-select-option[data-value="${type}"]`)
+      .click();
   }
 
   async getSelectedPinAction(isDigital: boolean, pin: number): Promise<string> {
@@ -116,7 +117,10 @@ export class ArduinoEditorHarnessE2e implements ArduinoEditorHarnessBase {
         .locator(this.base.selectors.pinHeaderLabel)
         .innerText();
       if (label === `${prefix}${pin}`) {
-        return await check.locator("select option:checked").innerText();
+        const textEl = check.locator(
+          ".custom-select-trigger .selected-text, select option:checked",
+        );
+        return (await textEl.innerText()).trim();
       }
     }
     return "";

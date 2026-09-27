@@ -1,0 +1,197 @@
+.custom-select-container {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+  font-family: var(--font-family, inherit);
+  user-select: none;
+}
+
+.custom-select-trigger {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+  background-color: #0f172a;
+  color: #f1f5f9;
+  border: 1px solid #334155;
+  border-radius: 4px;
+  cursor: pointer;
+  min-height: 38px;
+  box-sizing: border-box;
+}
+
+.custom-select-trigger:hover {
+  border-color: #475569;
+}
+
+.custom-select-container.open .custom-select-trigger {
+  border-color: #2563eb;
+  outline: 1px solid #2563eb;
+}
+
+.custom-select-container.disabled .custom-select-trigger {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.dropdown-icon {
+  font-size: 0.8em;
+  color: #94a3b8;
+  margin-left: 8px;
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+}
+
+.custom-select-container.open .dropdown-icon {
+  transform: rotate(180deg);
+}
+
+.selected-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+}
+
+.custom-select-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  width: 100%;
+  background-color: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 4px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+  max-height: 250px;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+.custom-select-dropdown.open-upward {
+  top: auto;
+  bottom: calc(100% + 4px);
+  box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.5), 0 -2px 4px -1px rgba(0, 0, 0, 0.3);
+}
+
+.custom-select-dropdown.align-right {
+  left: auto;
+  right: 0;
+}
+
+/* Scrollbar styles for the dropdown */
+.custom-select-dropdown::-webkit-scrollbar {
+  width: 8px;
+}
+.custom-select-dropdown::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.4);
+  border-radius: 4px;
+}
+.custom-select-dropdown::-webkit-scrollbar-thumb {
+  background: rgba(56, 189, 248, 0.5);
+  border-radius: 4px;
+  border: 1px solid rgba(15, 23, 42, 0.2);
+}
+.custom-select-dropdown::-webkit-scrollbar-thumb:hover {
+  background: rgba(56, 189, 248, 0.8);
+}
+
+.custom-select-option {
+  padding: 0.5rem 0.75rem;
+  color: #f1f5f9;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.custom-select-option:hover {
+  background-color: #2563eb; /* Vibrant blue hover */
+  color: #ffffff;
+}
+
+.custom-select-option.selected {
+  background-color: #1e40af; /* Darker blue for selected state */
+  color: #ffffff;
+}
+
+.custom-select-option.selected:hover {
+  background-color: #2563eb;
+}
+
+.custom-select-option.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.custom-select-option.disabled:hover {
+  background-color: transparent;
+}
+
+.custom-select-separator {
+  height: 1px;
+  background-color: #334155;
+  margin: 4px 0;
+  pointer-events: none;
+}
+
+/* Teammate select overlay mode */
+:host(.teammate-select) {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  max-width: 100%;
+  height: 100%;
+  z-index: 2;
+  box-sizing: border-box;
+}
+
+:host(.teammate-select.open),
+:host(.teammate-select[data-open="true"]) {
+  z-index: 10000;
+}
+
+:host(.teammate-select) .custom-select-container {
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+:host(.teammate-select) .custom-select-trigger {
+  width: 100%;
+  height: 100%;
+  min-height: unset;
+  padding: 0;
+  opacity: 0;
+  border: none !important;
+  outline: none !important;
+  background: transparent;
+  box-sizing: border-box;
+}
+
+:host(.teammate-select) .dropdown-icon {
+  display: none !important;
+}
+
+:host(.teammate-select) .custom-select-dropdown {
+  min-width: 100%;
+  width: max-content;
+  max-width: 480px;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: #f1f5f9;
+  text-align: left;
+  white-space: nowrap;
+  z-index: 10000;
+}
+
+:host(.teammate-select) .custom-select-option {
+  font-size: 16px;
+  font-weight: 500;
+  color: #f1f5f9;
+  text-align: left;
+  white-space: nowrap;
+  padding: 8px 12px;
+}
+

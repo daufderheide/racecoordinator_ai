@@ -15,6 +15,10 @@ import {
 import { FormsModule } from "@angular/forms";
 import { RacedayGhostPacingComponent } from "@app/components/raceday/components/raceday-ghost-pacing/raceday-ghost-pacing.component";
 import { RacedayLayoutUtils } from "@app/components/raceday/utils/raceday-layout.utils";
+import {
+  CustomOptionComponent,
+  CustomSelectComponent,
+} from "@app/components/shared/custom-select/custom-select.component";
 import { AbsoluteWidgetNode } from "@app/models/settings";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { GhostBenchmarkType } from "@app/services/ghost-pacing.service";
@@ -33,6 +37,8 @@ import { GhostBenchmarkType } from "@app/services/ghost-pacing.service";
     TranslatePipe,
     FormsModule,
     RacedayGhostPacingComponent,
+    CustomSelectComponent,
+    CustomOptionComponent,
   ],
 })
 export class RacedayLaneViewComponent implements AfterViewInit, OnDestroy {

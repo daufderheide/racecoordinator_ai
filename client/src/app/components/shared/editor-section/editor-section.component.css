@@ -1,0 +1,18 @@
+:host {
+  display: block;
+  width: 100%;
+}
+
+@import '../shared-editor-layout.css';
+
+.header-spacer {
+  flex: 1;
+}
+
+.section-header.collapsible {
+  cursor: pointer;
+}
+
+.section-header:not(.collapsible) {
+  cursor: default;
+}

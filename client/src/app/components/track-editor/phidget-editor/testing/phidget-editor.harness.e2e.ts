@@ -83,11 +83,15 @@ export class PhidgetEditorHarnessE2e implements PhidgetEditorHarnessBase {
   }
 
   async getLapPinPitBehavior(): Promise<number> {
-    const value = await this.pitBehaviorSelect.inputValue();
+    const value =
+      (await this.pitBehaviorSelect.getAttribute("data-value")) || "0";
     return Number(value);
   }
 
   async setLapPinPitBehavior(value: number): Promise<void> {
-    await this.pitBehaviorSelect.selectOption(value.toString());
+    await this.pitBehaviorSelect.locator(".custom-select-trigger").click();
+    await this.pitBehaviorSelect
+      .locator(`.custom-select-option[data-value="${value}"]`)
+      .click();
   }
 }

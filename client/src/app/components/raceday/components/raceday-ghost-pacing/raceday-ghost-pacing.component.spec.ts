@@ -1,13 +1,16 @@
+import { TestbedHarnessEnvironment } from "@angular/cdk/testing/testbed";
 import { ComponentFixture, TestBed } from "@angular/core/testing";
 import { DriverHeatData } from "@app/race/driver_heat_data";
 import { GhostPacingService } from "@app/services/ghost-pacing.service";
 import { TranslationService } from "@app/services/translation.service";
 
 import { RacedayGhostPacingComponent } from "./raceday-ghost-pacing.component";
+import { RacedayGhostPacingHarness } from "./testing/raceday-ghost-pacing.harness";
 
 describe("RacedayGhostPacingComponent", () => {
   let component: RacedayGhostPacingComponent;
   let fixture: ComponentFixture<RacedayGhostPacingComponent>;
+  let harness: RacedayGhostPacingHarness;
 
   beforeEach(async () => {
     const mockTranslationService = {
@@ -38,20 +41,24 @@ describe("RacedayGhostPacingComponent", () => {
 
     fixture = TestBed.createComponent(RacedayGhostPacingComponent);
     component = fixture.componentInstance;
+    harness = await TestbedHarnessEnvironment.harnessForFixture(
+      fixture,
+      RacedayGhostPacingHarness,
+    );
   });
 
-  it("should create", () => {
+  it("should create", async () => {
     expect(component).toBeTruthy();
+    expect(await harness.isVisible()).toBeTrue();
   });
 
-  it("should render empty state when targetGhostLapTime is 0", () => {
+  it("should render empty state when targetGhostLapTime is 0", async () => {
     fixture.componentRef.setInput("laneRecord", 0);
     fixture.componentRef.setInput("personalBest", 0);
     fixture.detectChanges();
 
     expect(component.targetGhostLapTime()).toBe(0);
-    const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector(".pacing-empty")).toBeTruthy();
+    expect(await harness.isEmpty()).toBeTrue();
   });
 
   it("should compute ghost gap and format ahead delta correctly", () => {
@@ -76,7 +83,7 @@ describe("RacedayGhostPacingComponent", () => {
     expect(compiled.querySelector(".ghost-marker")).toBeNull();
   });
 
-  it("should render ahead badge with green formatting when delta is positive", () => {
+  it("should render ahead badge with green formatting when delta is positive", async () => {
     // Current lap elapsed is 1.5s out of expected 2.5s (50% of 5.0s ghost)
     const mockHd = {
       laneIndex: 0,
@@ -90,12 +97,11 @@ describe("RacedayGhostPacingComponent", () => {
     fixture.detectChanges();
 
     expect(component.ghostGap().isAhead).toBeTrue();
-    const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector(".delta-badge.ahead")).toBeTruthy();
-    expect(component.formattedDelta()).toContain("+");
+    expect(await harness.isAhead()).toBeTrue();
+    expect(await harness.getDeltaText()).toContain("+");
   });
 
-  it("should format behind delta when driver is slower than ghost", () => {
+  it("should format behind delta when driver is slower than ghost", async () => {
     // Current lap elapsed is 4.0s out of expected 3.0s (60% of 5.0s ghost)
     const mockHd = {
       laneIndex: 0,
@@ -109,10 +115,11 @@ describe("RacedayGhostPacingComponent", () => {
     fixture.detectChanges();
 
     expect(component.ghostGap().isAhead).toBeFalse();
-    expect(component.formattedDelta()).toContain("-");
+    expect(await harness.isBehind()).toBeTrue();
+    expect(await harness.getDeltaText()).toContain("-");
   });
 
-  it("should render -- for empty driver lanes", () => {
+  it("should render -- for empty driver lanes", async () => {
     const mockEmptyHd = {
       laneIndex: 0,
       isEmpty: true,
@@ -124,9 +131,7 @@ describe("RacedayGhostPacingComponent", () => {
 
     expect(component.isEmptyDriver()).toBeTrue();
     expect(component.targetGhostLapTime()).toBe(0);
-    expect(component.formattedDelta()).toBe("--");
-    const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.textContent).toContain("--");
+    expect(await harness.isEmpty()).toBeTrue();
   });
 
   it("should support Personal Best and Leader benchmarks", () => {
@@ -173,7 +178,7 @@ describe("RacedayGhostPacingComponent", () => {
     expect(component.targetGhostLapTime()).toBe(4.1);
   });
 
-  it("should render 3-row stacked view when stacked is true with benchmark data", () => {
+  it("should render 3-row stacked view when stacked is true with benchmark data", async () => {
     const mockHd = {
       laneIndex: 0,
       currentLapTime: 2.0,
@@ -187,22 +192,12 @@ describe("RacedayGhostPacingComponent", () => {
     fixture.componentRef.setInput("stacked", true);
     fixture.detectChanges();
 
-    const compiled = fixture.nativeElement as HTMLElement;
-    const stackedContent = compiled.querySelector(".pacing-stacked-content");
-    expect(stackedContent).toBeTruthy();
-
-    const labelEl = compiled.querySelector(".pacing-benchmark-label");
-    expect(labelEl?.textContent?.trim()).toBe("Lane Record");
-
-    const timeEl = compiled.querySelector(".pacing-target-time");
-    expect(timeEl?.textContent?.trim()).toBe("5.20s");
-
-    const badgeEl = compiled.querySelector(".delta-badge");
-    expect(badgeEl).toBeTruthy();
-    expect(badgeEl?.classList.contains("ahead")).toBeTrue();
+    expect(await harness.getBenchmarkName()).toBe("Lane Record");
+    expect(await harness.getTargetTimeText()).toBe("5.20s");
+    expect(await harness.isAhead()).toBeTrue();
   });
 
-  it("should render stacked placeholder when stacked is true and targetGhostLapTime is 0", () => {
+  it("should render stacked placeholder when stacked is true and targetGhostLapTime is 0", async () => {
     const mockHd = {
       laneIndex: 0,
       driver: { name: "Driver 1" },
@@ -214,11 +209,7 @@ describe("RacedayGhostPacingComponent", () => {
     fixture.componentRef.setInput("stacked", true);
     fixture.detectChanges();
 
-    const compiled = fixture.nativeElement as HTMLElement;
-    const stackedContent = compiled.querySelector(".pacing-stacked-content");
-    expect(stackedContent).toBeTruthy();
-
-    const timeEl = compiled.querySelector(".pacing-target-time");
-    expect(timeEl?.textContent?.trim()).toBe("--.--s");
+    expect(await harness.getBenchmarkName()).toBe("Lane Record");
+    expect(await harness.getTargetTimeText()).toBe("--.--s");
   });
 });

@@ -42,16 +42,26 @@ app-raceday-season-race-leaderboard {
 
   /* Custom scrollbar */
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+  scrollbar-color: rgba(56, 189, 248, 0.5) rgba(15, 23, 42, 0.4);
 }
 
 .leaderboard-scroll-content::-webkit-scrollbar {
-  width: 4px;
+  width: 8px;
+}
+
+.leaderboard-scroll-content::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.4);
+  border-radius: 4px;
 }
 
 .leaderboard-scroll-content::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 2px;
+  background: rgba(56, 189, 248, 0.5);
+  border-radius: 4px;
+  border: 1px solid rgba(15, 23, 42, 0.2);
+}
+
+.leaderboard-scroll-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(56, 189, 248, 0.8);
 }
 
 .leaderboard-item {

@@ -1,0 +1,248 @@
+/* ==========================================================================
+   Shared Editor Layout & Styling
+   Used across all primary editors (Track, Race, Driver, Team, Season, Event, UI)
+   and hardware sub-editors.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. Content Split Layout
+   -------------------------------------------------------------------------- */
+.content-split {
+  flex: 1;
+  display: flex;
+  gap: 20px;
+  overflow: hidden;
+  margin: 0;
+  padding: 0 30px 24px 30px;
+  border-top: 1px solid rgba(56, 189, 248, 0.3);
+  box-shadow: inset 0 15px 15px -15px rgba(0, 0, 0, 0.8);
+}
+
+/* --------------------------------------------------------------------------
+   2. Left & Right Panels
+   -------------------------------------------------------------------------- */
+.editor-panel,
+.editor-panel-left {
+  width: 300px;
+  min-width: 300px;
+  height: calc(100% + 15px);
+  display: flex;
+  flex-direction: column;
+  background-color: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  padding-top: 0;
+  margin-top: 0;
+  margin-left: 0;
+  overflow: visible;
+  scroll-behavior: smooth;
+  overscroll-behavior: contain;
+}
+
+.preview-panel,
+.preview-panel-right {
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overflow-x: hidden;
+  position: relative;
+  background-color: transparent;
+  padding: 15px 10px 0 20px;
+  border-left: 1px solid rgba(56, 189, 248, 0.15);
+}
+
+/* --------------------------------------------------------------------------
+   3. Sections & Wrapper
+   -------------------------------------------------------------------------- */
+.sections-wrapper {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden !important;
+  padding-right: 5px;
+  margin-right: 5px;
+}
+
+.config-section {
+  margin-bottom: 10px;
+  width: 100%;
+}
+
+.section-content {
+  padding: 10px 0;
+}
+
+/* --------------------------------------------------------------------------
+   4. Section Headers & Expanders
+   -------------------------------------------------------------------------- */
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  padding: 10px 0;
+  user-select: none;
+  transition: background-color 0.2s;
+  border-radius: 4px;
+  pointer-events: auto !important;
+}
+
+.section-header:hover {
+  background: rgba(148, 163, 184, 0.05);
+}
+
+.section-header h1,
+.section-header h2,
+.section-header h3,
+.section-header h4 {
+  margin: 0;
+  color: #ffffff;
+  font-weight: 300;
+  letter-spacing: 1px;
+}
+
+.section-header h1 {
+  font-size: 1.8rem;
+}
+
+.section-header h2 {
+  font-size: 1.5rem;
+}
+
+.section-header h3 {
+  font-size: 1.3rem;
+}
+
+.section-header h4 {
+  font-size: 1.15rem;
+}
+
+.expander-icon {
+  font-size: 0.8rem;
+  color: #38bdf8;
+  transition: transform 0.2s;
+  width: 14px;
+  text-align: center;
+  display: inline-block;
+  pointer-events: auto !important;
+}
+
+.expander-icon.collapsed {
+  transform: rotate(-90deg);
+}
+
+/* --------------------------------------------------------------------------
+   5. Form Controls & Validation
+   -------------------------------------------------------------------------- */
+.editor-section {
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.editor-section label,
+.control-group label {
+  color: #94a3b8;
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.editor-section.invalid label,
+.editor-section.invalid .section-label {
+  color: #ef4444;
+}
+
+.editor-section.invalid input,
+.editor-section.invalid select,
+.editor-section.invalid app-custom-select {
+  border-color: #ef4444 !important;
+}
+
+.required {
+  color: #ef4444;
+  margin-left: 2px;
+}
+
+.error-text {
+  color: #ef4444;
+  font-size: 0.85rem;
+  margin-top: 4px;
+}
+
+/* --------------------------------------------------------------------------
+   6. Read-Only Mode Overlays & Interactivity
+   Inputs and action buttons disabled; expanders remain clickable
+   -------------------------------------------------------------------------- */
+.preview-panel.read-only input:not([type="button"]):not([type="submit"]),
+.preview-panel.read-only select,
+.preview-panel.read-only app-custom-select,
+.preview-panel.read-only button:not(.section-header):not(.expander-toggle),
+.editor-panel.read-only input:not([type="button"]):not([type="submit"]),
+.editor-panel.read-only select,
+.editor-panel.read-only app-custom-select,
+.editor-panel.read-only button:not(.section-header):not(.expander-toggle),
+.editor-panel.read-only label.checkbox-container {
+  pointer-events: none !important;
+  opacity: 0.75;
+  cursor: not-allowed !important;
+}
+
+.preview-panel.read-only .section-header,
+.editor-panel.read-only .section-header,
+.preview-panel.read-only ::ng-deep .section-header,
+.editor-panel.read-only ::ng-deep .section-header,
+.preview-panel.read-only ::ng-deep .led-string-header {
+  pointer-events: auto !important;
+  cursor: pointer !important;
+}
+
+.preview-panel.read-only ::ng-deep .section-header button,
+.preview-panel.read-only ::ng-deep .led-string-header button,
+.preview-panel.read-only ::ng-deep .led-string-header .clickable-link-icon {
+  pointer-events: auto !important;
+  opacity: 0.5;
+  cursor: not-allowed !important;
+}
+
+/* --------------------------------------------------------------------------
+   7. Custom Cyan WebKit Scrollbars
+   -------------------------------------------------------------------------- */
+.sections-wrapper::-webkit-scrollbar,
+.editor-panel::-webkit-scrollbar,
+.editor-panel-left::-webkit-scrollbar,
+.preview-panel::-webkit-scrollbar,
+.preview-panel-right::-webkit-scrollbar {
+  width: 8px;
+}
+
+.sections-wrapper::-webkit-scrollbar-track,
+.editor-panel::-webkit-scrollbar-track,
+.editor-panel-left::-webkit-scrollbar-track,
+.preview-panel::-webkit-scrollbar-track,
+.preview-panel-right::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.4);
+  border-radius: 4px;
+}
+
+.sections-wrapper::-webkit-scrollbar-thumb,
+.editor-panel::-webkit-scrollbar-thumb,
+.editor-panel-left::-webkit-scrollbar-thumb,
+.preview-panel::-webkit-scrollbar-thumb,
+.preview-panel-right::-webkit-scrollbar-thumb {
+  background: rgba(56, 189, 248, 0.5);
+  border-radius: 4px;
+  border: 1px solid rgba(15, 23, 42, 0.2);
+}
+
+.sections-wrapper::-webkit-scrollbar-thumb:hover,
+.editor-panel::-webkit-scrollbar-thumb:hover,
+.editor-panel-left::-webkit-scrollbar-thumb:hover,
+.preview-panel::-webkit-scrollbar-thumb:hover,
+.preview-panel-right::-webkit-scrollbar-thumb:hover {
+  background: rgba(56, 189, 248, 0.8);
+}

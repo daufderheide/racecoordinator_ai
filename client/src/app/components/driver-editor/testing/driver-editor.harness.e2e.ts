@@ -16,6 +16,9 @@ export class DriverEditorHarnessE2e implements DriverEditorHarnessBase {
   private get nicknameInput() {
     return this.locator.locator(this.base.selectors.nicknameInput);
   }
+  private get linkToggleBtn() {
+    return this.locator.locator(this.base.selectors.linkToggleBtn);
+  }
   private get undoBtn() {
     return this.locator.locator(this.base.selectors.undoBtn);
   }
@@ -40,6 +43,15 @@ export class DriverEditorHarnessE2e implements DriverEditorHarnessBase {
 
   async setNickname(nickname: string): Promise<void> {
     await this.nicknameInput.fill(nickname);
+  }
+
+  async isNameNicknameLinked(): Promise<boolean> {
+    const classes = (await this.linkToggleBtn.getAttribute("class")) || "";
+    return classes.split(/\s+/).includes("linked");
+  }
+
+  async toggleNameNicknameLink(): Promise<void> {
+    await this.linkToggleBtn.click();
   }
 
   async clickUndo(): Promise<void> {

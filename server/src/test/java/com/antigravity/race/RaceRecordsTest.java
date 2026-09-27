@@ -7,6 +7,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.antigravity.context.DatabaseContext;
@@ -17,6 +19,7 @@ import com.antigravity.models.Lane;
 import com.antigravity.models.OverallScoring;
 import com.antigravity.models.Track;
 import com.antigravity.proto.CurrentRecords;
+import com.antigravity.proto.OverallRecords;
 import com.antigravity.proto.RecordData;
 import com.antigravity.proto.RecordEntry;
 import com.antigravity.protocols.ProtocolDelegate;
@@ -124,8 +127,8 @@ public class RaceRecordsTest {
                     .build())
             .build();
 
-    com.antigravity.proto.OverallRecords overallRecords =
-        com.antigravity.proto.OverallRecords.newBuilder()
+    OverallRecords overallRecords =
+        OverallRecords.newBuilder()
             .setFastestLap(
                 RecordEntry.newBuilder()
                     .setValue(4.123)
@@ -174,7 +177,7 @@ public class RaceRecordsTest {
     CurrentRecords current = exported.getCurrent();
     assertEquals(0.0, current.getFastestLap().getValue(), 0.001);
 
-    com.antigravity.proto.OverallRecords overall = exported.getOverall();
+    OverallRecords overall = exported.getOverall();
     assertEquals(4.123, overall.getFastestLap().getValue(), 0.001);
     assertEquals("Sonic", overall.getFastestLap().getHolderName());
     assertEquals("BlueBlur", overall.getFastestLap().getHolderNickname());
@@ -214,7 +217,8 @@ public class RaceRecordsTest {
     race.onLap(0, 5.0, 0, 0);
 
     RecordData recordData = race.getRecordData();
-    assertEquals(0.0, recordData.getOverall().getLaneFastestLap(0).getValue(), 0.001);
+    assertEquals(6.0, recordData.getOverall().getLaneFastestLap(0).getValue(), 0.001);
+    assertEquals("D0", recordData.getOverall().getLaneFastestLap(0).getHolderName());
     assertEquals(6.0, recordData.getCurrent().getLaneFastestLap(0).getValue(), 0.001);
     assertEquals("D0", recordData.getCurrent().getLaneFastestLap(0).getHolderName());
 
@@ -222,11 +226,12 @@ public class RaceRecordsTest {
     race.onLap(1, 6.0, 0, 0);
     recordData = race.getRecordData();
     assertEquals(7.0, recordData.getCurrent().getLaneFastestLap(1).getValue(), 0.001);
+    assertEquals(7.0, recordData.getOverall().getLaneFastestLap(1).getValue(), 0.001);
 
     race.onLap(0, 4.5, 0, 0);
     recordData = race.getRecordData();
     assertEquals(4.5, recordData.getCurrent().getLaneFastestLap(0).getValue(), 0.001);
-    assertEquals(0.0, recordData.getOverall().getLaneFastestLap(0).getValue(), 0.001);
+    assertEquals(4.5, recordData.getOverall().getLaneFastestLap(0).getValue(), 0.001);
 
     race.changeState(new RaceOver());
     recordData = race.getRecordData();
@@ -455,7 +460,8 @@ public class RaceRecordsTest {
     RecordData recordData = race.getRecordData();
     assertEquals(5.0, recordData.getCurrent().getHighestScore().getValue(), 0.001);
     assertEquals("D0", recordData.getCurrent().getHighestScore().getHolderName());
-    assertEquals(0.0, recordData.getOverall().getHighestScore().getValue(), 0.001);
+    assertEquals(5.0, recordData.getOverall().getHighestScore().getValue(), 0.001);
+    assertEquals("D0", recordData.getOverall().getHighestScore().getHolderName());
 
     race.changeState(new RaceOver());
     recordData = race.getRecordData();
@@ -516,11 +522,13 @@ public class RaceRecordsTest {
     RecordData recordData = timeRace.getRecordData();
     assertEquals(4.5, recordData.getCurrent().getFastestLap().getValue(), 0.001);
     assertEquals("D0", recordData.getCurrent().getFastestLap().getHolderName());
-    assertEquals(0.0, recordData.getOverall().getFastestLap().getValue(), 0.001);
+    assertEquals(4.5, recordData.getOverall().getFastestLap().getValue(), 0.001);
+    assertEquals("D0", recordData.getOverall().getFastestLap().getHolderName());
 
     assertEquals(4.5, recordData.getCurrent().getHighestScore().getValue(), 0.001);
     assertEquals("D0", recordData.getCurrent().getHighestScore().getHolderName());
-    assertEquals(0.0, recordData.getOverall().getHighestScore().getValue(), 0.001);
+    assertEquals(4.5, recordData.getOverall().getHighestScore().getValue(), 0.001);
+    assertEquals("D0", recordData.getOverall().getHighestScore().getHolderName());
 
     timeRace.changeState(new RaceOver());
 
@@ -552,5 +560,226 @@ public class RaceRecordsTest {
     race.changeState(new RaceOver());
     RecordData finalData = race.getRecordData();
     assertEquals(4.2, finalData.getOverall().getLaneFastestLap(0).getValue(), 0.001);
+  }
+
+  @Test
+  public void testHeatNumberTrackingInRecords() {
+    race.changeState(new Racing());
+    int currentHeat = race.getCurrentHeat().getHeatNumber();
+
+    DriverHeatData dhd0 = race.getCurrentHeat().getDrivers().get(0);
+    dhd0.addLap(3.85, false, true);
+    race.getRecordsManager().onLap(dhd0, 3.85, 0);
+
+    DriverHeatData dhd1 = race.getCurrentHeat().getDrivers().get(1);
+    dhd1.addLap(4.15, false, true);
+    race.getRecordsManager().onLap(dhd1, 4.15, 1);
+
+    RecordData data = race.getRecordData();
+    assertEquals(3.85, data.getCurrent().getFastestLap().getValue(), 0.001);
+    assertEquals(currentHeat, data.getCurrent().getFastestLap().getHeatNumber());
+    assertEquals(currentHeat, data.getCurrent().getHeatFastestLap().getHeatNumber());
+    assertEquals(3.85, data.getCurrent().getLaneFastestLap(0).getValue(), 0.001);
+    assertEquals(currentHeat, data.getCurrent().getLaneFastestLap(0).getHeatNumber());
+    assertEquals(4.15, data.getCurrent().getLaneFastestLap(1).getValue(), 0.001);
+    assertEquals(currentHeat, data.getCurrent().getLaneFastestLap(1).getHeatNumber());
+
+    // Verify recalculation preserves heat numbers
+    race.getRecordsManager().recalculateScoreRecords();
+    RecordData recalculated = race.getRecordData();
+    assertEquals(currentHeat, recalculated.getCurrent().getFastestLap().getHeatNumber());
+    assertEquals(currentHeat, recalculated.getCurrent().getLaneFastestLap(0).getHeatNumber());
+    assertEquals(currentHeat, recalculated.getCurrent().getLaneFastestLap(1).getHeatNumber());
+
+    // Verify loadCurrentRaceRecords preserves heat numbers
+    RaceRecords newRecords = new RaceRecords(race);
+    newRecords.loadCurrentRaceRecords(data.getCurrent());
+    RecordData loaded = newRecords.getRecordData();
+    assertEquals(currentHeat, loaded.getCurrent().getFastestLap().getHeatNumber());
+    assertEquals(currentHeat, loaded.getCurrent().getHeatFastestLap().getHeatNumber());
+    assertEquals(currentHeat, loaded.getCurrent().getLaneFastestLap(0).getHeatNumber());
+  }
+
+  @Test
+  public void testDisallowLapRecalculatesHeatRaceAndOverallRecords() {
+    race.changeState(new Racing());
+
+    // Inject baseline overall records of 5.0s
+    RecordEntry baselineEntry =
+        RecordEntry.newBuilder()
+            .setValue(5.0)
+            .setHolderName("Old Legend")
+            .setHolderNickname("Legend")
+            .setDate(1000L)
+            .build();
+    OverallRecords baselineOverall =
+        OverallRecords.newBuilder().setFastestLap(baselineEntry).build();
+    race.getRecordsManager().loadOverallRaceRecords(baselineOverall);
+
+    DriverHeatData dhd0 = race.getCurrentHeat().getDrivers().get(0);
+    // Erroneous lap glitch of 2.0s
+    dhd0.addLap(2.0, false, true);
+    race.getRecordsManager().onLap(dhd0, 2.0, 0);
+
+    DriverHeatData dhd1 = race.getCurrentHeat().getDrivers().get(1);
+    // Legitimate fast lap of 4.5s
+    dhd1.addLap(4.5, false, true);
+    race.getRecordsManager().onLap(dhd1, 4.5, 1);
+
+    RecordData dataWithGlitch = race.getRecordData();
+    assertEquals(2.0, dataWithGlitch.getCurrent().getFastestLap().getValue(), 0.001);
+    assertEquals(2.0, dataWithGlitch.getCurrent().getHeatFastestLap().getValue(), 0.001);
+    assertEquals(2.0, dataWithGlitch.getCurrent().getLaneFastestLap(0).getValue(), 0.001);
+
+    // Disallow the 2.0s glitch lap
+    dhd0.getLaps().get(0).setCountTowardsRecords(false);
+    dhd0.recalculateBestLapTime();
+
+    // Recalculate records
+    race.getRecordsManager().recalculateScoreRecords();
+
+    RecordData dataAfterDisallow = race.getRecordData();
+    // Fastest race & heat lap should now be 4.5s
+    assertEquals(4.5, dataAfterDisallow.getCurrent().getFastestLap().getValue(), 0.001);
+    assertEquals(4.5, dataAfterDisallow.getCurrent().getHeatFastestLap().getValue(), 0.001);
+    // Lane 0 should no longer have 2.0s
+    assertEquals(0.0, dataAfterDisallow.getCurrent().getLaneFastestLap(0).getValue(), 0.001);
+    // Lane 1 should be 4.5s
+    assertEquals(4.5, dataAfterDisallow.getCurrent().getLaneFastestLap(1).getValue(), 0.001);
+
+    // After race over, overall record should be 4.5s (beats baseline 5.0s)
+    race.changeState(new RaceOver());
+    RecordData finalData = race.getRecordData();
+    assertEquals(4.5, finalData.getOverall().getFastestLap().getValue(), 0.001);
+
+    // If we now also disallow the 4.5s lap, overall record should cleanly revert to baseline 5.0s
+    dhd1.getLaps().get(0).setCountTowardsRecords(false);
+    dhd1.recalculateBestLapTime();
+    race.getRecordsManager().recalculateScoreRecords();
+
+    RecordData revertedData = race.getRecordData();
+    assertEquals(5.0, revertedData.getOverall().getFastestLap().getValue(), 0.001);
+    assertEquals("Old Legend", revertedData.getOverall().getFastestLap().getHolderName());
+  }
+
+  @Test
+  public void testOverallRecordsUpdateImmediatelyDuringRace() {
+    race.changeState(new Racing());
+
+    RecordEntry baselineLap =
+        RecordEntry.newBuilder()
+            .setValue(5.0)
+            .setHolderName("Baseline Driver")
+            .setHolderNickname("Base")
+            .setDate(1000L)
+            .build();
+    RecordEntry baselineScore =
+        RecordEntry.newBuilder()
+            .setValue(50.0)
+            .setHolderName("Baseline Driver")
+            .setHolderNickname("Base")
+            .setDate(1000L)
+            .build();
+    List<RecordEntry> baselineLaneLaps =
+        Arrays.asList(
+            RecordEntry.newBuilder().setValue(5.2).setDate(1000L).build(),
+            RecordEntry.newBuilder().setValue(5.4).setDate(1000L).build());
+    List<RecordEntry> baselineLaneScores =
+        Arrays.asList(
+            RecordEntry.newBuilder().setValue(45.0).setDate(1000L).build(),
+            RecordEntry.newBuilder().setValue(48.0).setDate(1000L).build());
+
+    OverallRecords baselineOverall =
+        OverallRecords.newBuilder()
+            .setFastestLap(baselineLap)
+            .setHighestScore(baselineScore)
+            .addAllLaneFastestLap(baselineLaneLaps)
+            .addAllLaneHighestScore(baselineLaneScores)
+            .build();
+    race.getRecordsManager().loadOverallRaceRecords(baselineOverall);
+
+    RecordData initialData = race.getRecordData();
+    assertEquals(5.0, initialData.getOverall().getFastestLap().getValue(), 0.001);
+    assertEquals(50.0, initialData.getOverall().getHighestScore().getValue(), 0.001);
+    assertEquals(5.2, initialData.getOverall().getLaneFastestLap(0).getValue(), 0.001);
+
+    DriverHeatData dhd0 = race.getCurrentHeat().getDrivers().get(0);
+    dhd0.addLap(4.2, false, true);
+    race.getRecordsManager().onLap(dhd0, 4.2, 0);
+
+    dhd0.setUserLaps(60.0);
+    race.updateAndBroadcastOverallStandings();
+
+    assertTrue(race.getState() instanceof Racing);
+    RecordData runningData = race.getRecordData();
+
+    assertEquals(4.2, runningData.getOverall().getFastestLap().getValue(), 0.001);
+    assertEquals("D0", runningData.getOverall().getFastestLap().getHolderName());
+    assertTrue(runningData.getOverall().getFastestLap().getDate() >= 1000L);
+    assertEquals(
+        race.getCurrentHeat().getHeatNumber(),
+        runningData.getCurrent().getFastestLap().getHeatNumber());
+
+    assertEquals(4.2, runningData.getOverall().getLaneFastestLap(0).getValue(), 0.001);
+    assertEquals("D0", runningData.getOverall().getLaneFastestLap(0).getHolderName());
+
+    assertEquals(61.0, runningData.getOverall().getHighestScore().getValue(), 0.001);
+    assertEquals("D0", runningData.getOverall().getHighestScore().getHolderName());
+
+    assertEquals(61.0, runningData.getOverall().getLaneHighestScore(0).getValue(), 0.001);
+    assertEquals("D0", runningData.getOverall().getLaneHighestScore(0).getHolderName());
+  }
+
+  @Test
+  public void testOverallRecordsRevertToBaselineWhenLapDisallowedDuringRace() {
+    race.changeState(new Racing());
+
+    RecordEntry baselineLap =
+        RecordEntry.newBuilder()
+            .setValue(5.0)
+            .setHolderName("Baseline Champ")
+            .setHolderNickname("Champ")
+            .setDate(12345L)
+            .build();
+    OverallRecords baselineOverall = OverallRecords.newBuilder().setFastestLap(baselineLap).build();
+    race.getRecordsManager().loadOverallRaceRecords(baselineOverall);
+
+    DriverHeatData dhd0 = race.getCurrentHeat().getDrivers().get(0);
+    dhd0.addLap(3.5, false, true);
+    race.getRecordsManager().onLap(dhd0, 3.5, 0);
+
+    RecordData dataWithRecord = race.getRecordData();
+    assertEquals(3.5, dataWithRecord.getOverall().getFastestLap().getValue(), 0.001);
+    assertEquals("D0", dataWithRecord.getOverall().getFastestLap().getHolderName());
+
+    assertTrue(race.getState() instanceof Racing);
+    dhd0.getLaps().get(0).setCountTowardsRecords(false);
+    dhd0.recalculateBestLapTime();
+    race.getRecordsManager().recalculateScoreRecords();
+
+    RecordData dataReverted = race.getRecordData();
+    assertEquals(5.0, dataReverted.getOverall().getFastestLap().getValue(), 0.001);
+    assertEquals("Baseline Champ", dataReverted.getOverall().getFastestLap().getHolderName());
+    assertEquals(12345L, dataReverted.getOverall().getFastestLap().getDate());
+  }
+
+  @Test
+  public void testRecordsNotPersistedToDatabaseDuringRace() {
+    ClientSubscriptionManager mockCsm = mock(ClientSubscriptionManager.class);
+    when(mockCsm.getDatabaseContext()).thenReturn(dbContext);
+    ClientSubscriptionManager.setInstance(mockCsm);
+
+    race.changeState(new Racing());
+
+    DriverHeatData dhd0 = race.getCurrentHeat().getDrivers().get(0);
+    dhd0.addLap(3.8, false, true);
+    race.getRecordsManager().onLap(dhd0, 3.8, 0);
+    race.updateScoreRecords();
+
+    assertEquals(3.8, race.getRecordData().getOverall().getFastestLap().getValue(), 0.001);
+    verify(dbService, never()).saveRaceRecords(any(), any());
+
+    race.changeState(new RaceOver());
+    verify(dbService).saveRaceRecords(dbContext, race);
   }
 }

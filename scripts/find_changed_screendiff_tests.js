@@ -95,6 +95,10 @@ function resolveTestsByReverseDependency(filePath, visited = new Set()) {
         ? filePath 
         : path.dirname(filePath);
 
+    if (path.basename(currentDir).endsWith('-snapshots')) {
+        currentDir = path.dirname(currentDir);
+    }
+
     // 1. Search current directory and all subdirectories
     let tests = findScreendiffTestsInDir(currentDir);
     if (tests.length > 0) {

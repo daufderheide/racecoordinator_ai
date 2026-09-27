@@ -293,21 +293,22 @@
 
 /* Custom Webkit scrollbar for horizontal chart scrolling if many laps */
 .lap-chart-bars::-webkit-scrollbar {
-  height: 6px;
+  height: 8px;
 }
 
 .lap-chart-bars::-webkit-scrollbar-track {
-  background: rgba(10, 16, 26, 0.3);
-  border-radius: 3px;
+  background: rgba(15, 23, 42, 0.4);
+  border-radius: 4px;
 }
 
 .lap-chart-bars::-webkit-scrollbar-thumb {
-  background: rgba(0, 229, 255, 0.25);
-  border-radius: 3px;
+  background: rgba(56, 189, 248, 0.5);
+  border-radius: 4px;
+  border: 1px solid rgba(15, 23, 42, 0.2);
 }
 
 .lap-chart-bars::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 229, 255, 0.5);
+  background: rgba(56, 189, 248, 0.8);
 }
 
 .lap-bar {
@@ -676,9 +677,14 @@
   overflow-x: auto;
 }
 
+.analysis-table-wrapper .results-table {
+  min-width: auto;
+  width: 100%;
+}
+
 .analysis-grid {
   display: grid;
-  grid-template-columns: repeat(7, minmax(130px, 1fr));
+  grid-template-columns: repeat(7, minmax(0, 1fr));
 }
 
 .analysis-row {

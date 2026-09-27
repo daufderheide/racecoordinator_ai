@@ -473,6 +473,30 @@
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
   gap: 20px;
+  max-width: 90vw;
+  transition: all 0.3s ease;
+}
+
+.update-banner.is-updating {
+  min-width: 520px;
+}
+
+.update-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.update-title {
+  font-weight: bold;
+}
+
+.update-subtext {
+  font-size: 0.82em;
+  font-weight: 500;
+  color: #111;
+  opacity: 0.9;
+  letter-spacing: 0.2px;
 }
 
 .update-banner span {
@@ -526,19 +550,45 @@
 
 .update-progress-text {
   font-size: 0.9em;
-  color: var(--text-color, #333);
+  color: #000;
+  font-weight: bold;
 }
 
 .update-progress-bar {
   width: 150px;
   height: 8px;
-  background-color: #e0e0e0;
+  background-color: rgba(0, 0, 0, 0.2);
   border-radius: 4px;
   overflow: hidden;
 }
 
 .update-progress-fill {
   height: 100%;
-  background-color: var(--primary-color, #007bff);
+  background-color: #000;
   transition: width 0.3s ease;
+}
+
+.update-progress-bar.indeterminate {
+  background-color: rgba(0, 0, 0, 0.2);
+}
+
+.update-progress-bar.indeterminate .update-progress-fill {
+  width: 100% !important;
+  background: linear-gradient(
+    90deg,
+    #000 0%,
+    #007bff 50%,
+    #000 100%
+  );
+  background-size: 200% 100%;
+  animation: updateIndeterminateAnim 1.5s infinite linear;
+}
+
+@keyframes updateIndeterminateAnim {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }

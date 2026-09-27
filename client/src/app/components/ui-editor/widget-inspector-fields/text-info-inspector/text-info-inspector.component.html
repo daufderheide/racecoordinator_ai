@@ -9,18 +9,19 @@
       "UE_INSPECTOR_FONT_FAMILY" | translate
     }}</label>
     <div class="select-container select-sm">
-      <select
+      <app-custom-select
         [(ngModel)]="settings().labelFontFamily"
         (change)="onSettingsChange()"
         (focus)="fontService.loadLocalFonts()"
+        (click)="fontService.loadLocalFonts()"
       >
-        <option value="">
+        <app-custom-option value="">
           {{ "UE_INSPECTOR_FONT_THEME_DEFAULT" | translate }}
-        </option>
+        </app-custom-option>
         @for (font of fontService.availableFonts(); track font) {
-          <option [value]="font">{{ font }}</option>
+          <app-custom-option [value]="font">{{ font }}</app-custom-option>
         }
-      </select>
+      </app-custom-select>
     </div>
   </div>
 
@@ -85,18 +86,19 @@
       "UE_INSPECTOR_FONT_FAMILY" | translate
     }}</label>
     <div class="select-container select-sm">
-      <select
+      <app-custom-select
         [(ngModel)]="settings().valueFontFamily"
         (change)="onSettingsChange()"
         (focus)="fontService.loadLocalFonts()"
+        (click)="fontService.loadLocalFonts()"
       >
-        <option value="">
+        <app-custom-option value="">
           {{ "UE_INSPECTOR_FONT_THEME_DEFAULT" | translate }}
-        </option>
+        </app-custom-option>
         @for (font of fontService.availableFonts(); track font) {
-          <option [value]="font">{{ font }}</option>
+          <app-custom-option [value]="font">{{ font }}</app-custom-option>
         }
-      </select>
+      </app-custom-select>
     </div>
   </div>
 

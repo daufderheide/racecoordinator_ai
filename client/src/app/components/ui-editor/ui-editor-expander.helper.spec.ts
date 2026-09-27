@@ -68,4 +68,14 @@ describe("ui-editor-expander.helper", () => {
     expect(expanded["ui_u2"]).toBeTrue();
     expect(selectSpy).toHaveBeenCalledWith("u2");
   });
+
+  it("should execute scrollToThemeElement without throwing", (done) => {
+    const cdr = { detectChanges: jasmine.createSpy("detectChanges") };
+    const { scrollToThemeElement } = require("./ui-editor-expander.helper");
+    scrollToThemeElement("t1", cdr);
+    expect(cdr.detectChanges).toHaveBeenCalled();
+    setTimeout(() => {
+      done();
+    }, 10);
+  });
 });

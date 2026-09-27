@@ -28,14 +28,19 @@ All templates and component classes automatically have access to:
 - `driverStandings`: Array of overall driver standings with:
   - `name`: Driver name / nickname.
   - `rank`: Overall position (1, 2, 3...).
-  - `lapCount` / `total_laps`: Total completed laps.
-  - `total_time`: Total elapsed race time in seconds (e.g. `112.13`).
-  - `best_lap_time`: Fastest lap time in seconds (e.g. `3.892`).
-  - `last_lap_time`: Most recent lap time in seconds.
-  - `avg_lap_time` / `average_lap_time`: Average lap time in seconds.
-  - `gap_leader`: Gap to current race leader in seconds.
-  - `gap_position`: Gap to driver ahead in position.
+  - `lapCount` / `totalLaps`: Total completed laps.
+  - `totalTime`: Total elapsed race time in seconds (e.g. `112.13`).
+  - `bestLapTime`: Fastest lap time in seconds (e.g. `3.892`).
+  - `lastLapTime`: Most recent lap time in seconds.
+  - `averageLapTime`: Average lap time in seconds.
+  - `medianLapTime`: Median lap time in seconds.
+  - `gapLeader`: Gap to current race leader in seconds.
+  - `gapPosition`: Gap to driver ahead in position.
+  - `lane`: Assigned lane number (if heat driver).
 - `heatDrivers`: Drivers on track in the active heat with heat telemetry.
+
+### Unified Template Interpolation
+- `interpolate(template, context)`: Evaluates strings containing `{variable}` or `${variable}` expressions using unified telemetry bindings (matching XLS export and TTS callouts).
 
 ### Reading Custom Settings
 - `getSetting('keyName', defaultValue)`: Read any setting defined in your `settingsSchema`.

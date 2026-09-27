@@ -51,7 +51,31 @@ export function createMockEditorData(): MockEditorData {
     heatDrivers: nextHeatDrivers,
   } as unknown as Heat;
 
-  const heats = [heat, nextHeat];
+  const heats: Heat[] = [heat, nextHeat];
+  const numLanes = track.lanes?.length || 4;
+  for (let h = 3; h <= 20; h++) {
+    const driversForHeat: DriverHeatData[] = [];
+    for (let laneIdx = 0; laneIdx < numLanes; laneIdx++) {
+      const pIndex = (h - 1 + laneIdx) % participants.length;
+      const p = participants[pIndex];
+      const hd = new DriverHeatData(
+        `mock_hd_${h}_${laneIdx}`,
+        p as any,
+        laneIdx,
+        p.driver,
+      );
+      driversForHeat.push(hd);
+    }
+    heats.push({
+      id: `mock_heat_${h}`,
+      objectId: `mock_heat_${h}`,
+      race_id: "mock_race_1",
+      heatNumber: h,
+      group: Math.floor((h - 1) / 10),
+      started: false,
+      heatDrivers: driversForHeat,
+    } as unknown as Heat);
+  }
   const groupParticipants = participants;
   const recordData = createMockRecordData();
 
@@ -152,15 +176,71 @@ export function createMockRecordData(): IRecordData {
         holderNickname: "Bowser",
         holderName: "Bowser",
         date: 1749556800000,
+        heatNumber: 1,
       },
       heatFastestLap: {
         value: 2.012,
         holderNickname: "Peach",
         holderName: "Peach",
         date: 1748779200000,
+        heatNumber: 2,
       },
+      laneFastestLap: createMockBestRaceLapEntries(),
     },
   };
+}
+
+export function createMockBestRaceLapEntries(): IRecordEntry[] {
+  return [
+    {
+      value: 1.955,
+      holderNickname: "Bowser",
+      holderName: "Bowser",
+      heatNumber: 1,
+    },
+    {
+      value: 1.982,
+      holderNickname: "Mario",
+      holderName: "Mario",
+      heatNumber: 2,
+    },
+    {
+      value: 2.012,
+      holderNickname: "Peach",
+      holderName: "Peach",
+      heatNumber: 1,
+    },
+    {
+      value: 2.045,
+      holderNickname: "Luigi",
+      holderName: "Luigi",
+      heatNumber: 2,
+    },
+    {
+      value: 2.08,
+      holderNickname: "Yoshi",
+      holderName: "Yoshi",
+      heatNumber: 3,
+    },
+    {
+      value: 2.115,
+      holderNickname: "DK",
+      holderName: "Donkey Kong",
+      heatNumber: 2,
+    },
+    {
+      value: 2.142,
+      holderNickname: "Wario",
+      holderName: "Wario",
+      heatNumber: 1,
+    },
+    {
+      value: 2.19,
+      holderNickname: "Toad",
+      holderName: "Toad",
+      heatNumber: 3,
+    },
+  ];
 }
 
 export function createMockLaneRecordEntries(): IRecordEntry[] {
@@ -278,6 +358,7 @@ function createMockHeatDrivers(
     (hd as any).fuelPercentage = p.fuelLevel;
     (hd as any).fuelCapacity = 100;
     hd.lapsLed = [12, 5, 0, 0][index] ?? 0;
+    hd.trackCalls = [2, 1, 0, 0][index] ?? 0;
 
     return hd;
   });
@@ -311,10 +392,30 @@ function createMockTrack(): Track {
     name: "Mock Editor Track",
     hasDigitalFuel: () => true,
     lanes: [
-      { id: 1, color: "#FF0000" },
-      { id: 2, color: "#0000FF" },
-      { id: 3, color: "#FFFF00" },
-      { id: 4, color: "#00FF00" },
+      {
+        id: 1,
+        color: "#DC2626",
+        background_color: "#DC2626",
+        foreground_color: "#FFFFFF",
+      },
+      {
+        id: 2,
+        color: "#F8FAFC",
+        background_color: "#F8FAFC",
+        foreground_color: "#0F172A",
+      },
+      {
+        id: 3,
+        color: "#2563EB",
+        background_color: "#2563EB",
+        foreground_color: "#FFFFFF",
+      },
+      {
+        id: 4,
+        color: "#EAB308",
+        background_color: "#EAB308",
+        foreground_color: "#000000",
+      },
     ],
   } as unknown as Track;
 }

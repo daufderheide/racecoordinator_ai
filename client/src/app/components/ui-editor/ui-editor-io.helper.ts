@@ -1,21 +1,19 @@
 import { CustomUI } from "@app/models/custom-ui";
 import { LayoutConfig, Settings } from "@app/models/settings";
+import { saveFileAs } from "@app/utils/file-download.utils";
 
 import { computeScaledLayout } from "./ui-editor-resolution.helper";
 
 export function downloadJsonFile(data: any, filename: string): void {
-  if (typeof window === "undefined" || typeof document === "undefined") return;
-  const blob = new Blob([JSON.stringify(data, null, 2)], {
-    type: "application/json",
+  const jsonContent =
+    typeof data === "string" ? data : JSON.stringify(data, null, 2);
+  saveFileAs({
+    suggestedName: filename,
+    data: jsonContent,
+    mimeType: "application/json",
+    description: "JSON Files",
+    extension: ".json",
   });
-  const url = window.URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  window.URL.revokeObjectURL(url);
-  document.body.removeChild(a);
 }
 
 export function buildLayoutExport(
@@ -216,14 +214,100 @@ export function executeTemplateFileSelected(
   onLoaded: () => void,
 ): void {
   const input = event.target as HTMLInputElement;
-  if (input.files && input.files.length > 0) {
+  if (input?.files && input.files.length > 0) {
+    const file = input.files[0];
     const reader = new FileReader();
     reader.onload = () => {
       if (editingSettings) {
         editingSettings.customExportTemplateBase64 = reader.result as string;
+        const fullPath =
+          (file as any).path || (file as any).webkitRelativePath || file.name;
+        const fileName =
+          file.name || (fullPath ? fullPath.replace(/^.*[\\/]/, "") : "");
+        editingSettings.customExportTemplateName = fileName;
+        editingSettings.customExportTemplatePath = fullPath;
         onLoaded();
       }
     };
-    reader.readAsDataURL(input.files[0]);
+    reader.readAsDataURL(file);
+    input.value = "";
   }
+}
+
+export function handleDownloadTemplate(comp: any): void {
+  const customBase64 = comp.editingSettings?.customExportTemplateBase64;
+  if (customBase64) {
+    try {
+      const parts = customBase64.split(",");
+      const base64Data = parts.length > 1 ? parts[1] : parts[0];
+      const mimeMatch = parts.length > 1 ? parts[0].match(/:(.*?);/) : null;
+      const mimeType =
+        mimeMatch && mimeMatch[1]
+          ? mimeMatch[1]
+          : "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+      const binaryString = atob(base64Data);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      const blob = new Blob([bytes], { type: mimeType });
+      const rawName =
+        comp.editingSettings?.customExportTemplateName ||
+        (comp.editingSettings?.customExportTemplatePath
+          ? comp.editingSettings.customExportTemplatePath.replace(
+              /^.*[\\/]/,
+              "",
+            )
+          : "custom_export_template.xlsx");
+      const filename = rawName.endsWith(".xlsx") ? rawName : `${rawName}.xlsx`;
+      saveFileAs({
+        suggestedName: filename,
+        data: blob,
+        mimeType:
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        description: "Excel Export Template",
+        extension: ".xlsx",
+      });
+    } catch (err) {
+      comp.logger.error("Error downloading custom export template", err);
+    }
+  } else {
+    comp.dataService.downloadDefaultExportTemplate().subscribe({
+      next: (blob: Blob) => {
+        saveFileAs({
+          suggestedName: "race_export_template.xlsx",
+          data: blob,
+          mimeType:
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          description: "Excel Export Template",
+          extension: ".xlsx",
+        });
+      },
+      error: (err: any) => {
+        comp.logger.error("Error downloading default export template", err);
+      },
+    });
+  }
+}
+
+export const handleDownloadDefaultTemplate = handleDownloadTemplate;
+
+export function handleTestExport(comp: any): void {
+  comp.dataService
+    .testExportXls(comp.editingSettings?.customExportTemplateBase64)
+    .subscribe({
+      next: (blob: Blob) => {
+        saveFileAs({
+          suggestedName: "sample_race_export.xlsx",
+          data: blob,
+          mimeType:
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          description: "Excel Race Export",
+          extension: ".xlsx",
+        });
+      },
+      error: (err: any) => {
+        comp.logger.error("Error generating test Excel export", err);
+      },
+    });
 }

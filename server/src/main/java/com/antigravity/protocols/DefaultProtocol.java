@@ -54,6 +54,9 @@ public abstract class DefaultProtocol implements IProtocol {
   // Input states
   protected PitManager pitManager;
   protected long[] lastAnalogTimeMs;
+  public static final long DEFAULT_CALL_BUTTON_DEBOUNCE_MS = 250;
+  protected long callButtonDebounceMs = DEFAULT_CALL_BUTTON_DEBOUNCE_MS;
+  protected final Map<Integer, Long> lastCallButtonTriggerTimeMs = new HashMap<>();
   protected Map<Integer, Integer> lastCallButtonState = new HashMap<>();
   protected Map<Integer, Boolean> pinStateCache = new HashMap<>();
 
@@ -353,6 +356,14 @@ public abstract class DefaultProtocol implements IProtocol {
     }
   }
 
+  public long getCallButtonDebounceMs() {
+    return callButtonDebounceMs;
+  }
+
+  public void setCallButtonDebounceMs(long callButtonDebounceMs) {
+    this.callButtonDebounceMs = callButtonDebounceMs;
+  }
+
   protected void handleCallButton(int laneIndex, int state, int interfaceId) {
     logger.info(
         "Received Call Button - Lane: {}, State: {}, InterfaceId: {}",
@@ -362,6 +373,21 @@ public abstract class DefaultProtocol implements IProtocol {
 
     Integer prevState = lastCallButtonState.get(interfaceId);
     if (state == 0 && prevState != null && prevState == 1) {
+      long currentTime = now();
+      Long lastTriggerTime = lastCallButtonTriggerTimeMs.get(interfaceId);
+      if (lastTriggerTime != null && (currentTime - lastTriggerTime) < callButtonDebounceMs) {
+        logger.info(
+            "Call button transition (1 -> 0) ignored due to debounce (elapsed: {}ms < {}ms) for"
+                + " lane: {}, interfaceId: {}",
+            currentTime - lastTriggerTime,
+            callButtonDebounceMs,
+            laneIndex,
+            interfaceId);
+        lastCallButtonState.put(interfaceId, state);
+        return;
+      }
+
+      lastCallButtonTriggerTimeMs.put(interfaceId, currentTime);
       logger.info(
           "Call button transition (1 -> 0) detected. Triggering listener for lane: {}", laneIndex);
       if (listener != null) {
@@ -641,5 +667,6 @@ public abstract class DefaultProtocol implements IProtocol {
       pitManager.reset();
     }
     lastLeaderLane = null;
+    lastCallButtonTriggerTimeMs.clear();
   }
 }

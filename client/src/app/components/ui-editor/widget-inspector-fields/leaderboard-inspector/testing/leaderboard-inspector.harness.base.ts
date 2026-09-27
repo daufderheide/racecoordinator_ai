@@ -2,7 +2,7 @@ export abstract class LeaderboardInspectorHarnessBase {
   static readonly hostSelector = "app-leaderboard-inspector";
 
   static readonly selectors = {
-    selects: "select",
+    selects: "app-custom-select",
     sliders: "input[type='range']",
     colorPickers: "input[type='color']",
     resetButtons: ".color-reset-btn",

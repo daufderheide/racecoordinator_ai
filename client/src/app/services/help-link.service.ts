@@ -28,7 +28,7 @@ export class HelpLinkService {
   /**
    * Opens the help article for the given topic in a new browser tab.
    *
-   * @param article The article slug (e.g., 'race-editor', 'track-manager').
+   * @param article The article slug (e.g., 'race-editor', 'track-editor').
    *                Must match the Markdown filename without extension.
    * @param section Optional anchor to scroll to (e.g., 'heat-rotation-format').
    *                Must match a heading permalink in the article.

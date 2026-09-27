@@ -1,15 +1,40 @@
 import { TestBed } from "@angular/core/testing";
 
 import { FileSystemService } from "./file-system.service";
+import { ServerFileSystemService } from "./server-filesystem.service";
 
 describe("FileSystemService", () => {
   let service: FileSystemService;
+  let mockServerFs: any;
   let mockHandle: any;
   let mockSubfolderHandle: any;
   let mockFileHandle: any;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({});
+    mockServerFs = jasmine.createSpyObj("ServerFileSystemService", [
+      "getDirectories",
+      "chooseFolder",
+      "setDirectory",
+      "clearDirectory",
+      "listWidgets",
+      "getWidgetFile",
+      "writeWidgetFile",
+      "deleteWidgetDir",
+      "hasCustomFiles",
+      "getCustomFile",
+      "appendCustomUiFile",
+      "deleteCustomUiFile",
+    ]);
+    mockServerFs.getDirectories.and.returnValue(
+      Promise.resolve({ isLocalhost: false }),
+    );
+
+    TestBed.configureTestingModule({
+      providers: [
+        FileSystemService,
+        { provide: ServerFileSystemService, useValue: mockServerFs },
+      ],
+    });
     service = TestBed.inject(FileSystemService);
 
     mockFileHandle = {
@@ -302,6 +327,312 @@ describe("FileSystemService", () => {
       await expectAsync(
         service.writeWidgetFile("my-widget", "widget.json", "{}"),
       ).toBeRejectedWithError("No custom widget directory configured");
+    });
+
+    it("should discover hierarchical widgets with groups and subgroups", async () => {
+      const mockSubWidgetHandle = {
+        name: "speedo",
+        kind: "directory",
+        getFileHandle: jasmine
+          .createSpy("getFileHandle")
+          .and.callFake((file: string) => {
+            if (file === "widget.json") return Promise.resolve(mockFileHandle);
+            return Promise.reject("not found");
+          }),
+        values: async function* () {},
+      };
+
+      const mockSubgroupHandle = {
+        name: "gauges",
+        kind: "directory",
+        getFileHandle: jasmine
+          .createSpy("getFileHandle")
+          .and.rejectWith("not found"),
+        values: async function* () {
+          yield mockSubWidgetHandle;
+        },
+      };
+
+      const mockGroupWidgetHandle = {
+        name: "lap-delta",
+        kind: "directory",
+        getFileHandle: jasmine
+          .createSpy("getFileHandle")
+          .and.callFake((file: string) => {
+            if (file === "widget.json") return Promise.resolve(mockFileHandle);
+            return Promise.reject("not found");
+          }),
+        values: async function* () {},
+      };
+
+      const mockGroupHandle = {
+        name: "sample",
+        kind: "directory",
+        getFileHandle: jasmine
+          .createSpy("getFileHandle")
+          .and.rejectWith("not found"),
+        values: async function* () {
+          yield mockGroupWidgetHandle;
+          yield mockSubgroupHandle;
+        },
+      };
+
+      const mockRootWidgetHandle = {
+        name: "root-gauge",
+        kind: "directory",
+        getFileHandle: jasmine
+          .createSpy("getFileHandle")
+          .and.callFake((file: string) => {
+            if (file === "widget.json") return Promise.resolve(mockFileHandle);
+            return Promise.reject("not found");
+          }),
+        values: async function* () {},
+      };
+
+      const mockHierarchicalHandle = {
+        name: "CustomWidgetsRoot",
+        kind: "directory",
+        queryPermission: jasmine
+          .createSpy("queryPermission")
+          .and.returnValue(Promise.resolve("granted")),
+        values: async function* () {
+          yield mockRootWidgetHandle;
+          yield mockGroupHandle;
+        },
+      };
+
+      (service.getCustomWidgetDirectoryHandle as jasmine.Spy).and.returnValue(
+        Promise.resolve(mockHierarchicalHandle),
+      );
+
+      const dirs = await service.getCustomWidgetDirectories();
+      expect(dirs.length).toBe(3);
+
+      const rootWidget = dirs.find((d) => d.name === "root-gauge");
+      expect(rootWidget?.group).toBe("custom-root");
+      expect(rootWidget?.subgroup).toBeUndefined();
+
+      const groupWidget = dirs.find((d) => d.name === "lap-delta");
+      expect(groupWidget?.group).toBe("sample");
+      expect(groupWidget?.subgroup).toBeUndefined();
+      expect(groupWidget?.relativePath).toBe("sample/lap-delta");
+
+      const subgroupWidget = dirs.find((d) => d.name === "speedo");
+      expect(subgroupWidget?.group).toBe("sample");
+      expect(subgroupWidget?.subgroup).toBe("gauges");
+      expect(subgroupWidget?.relativePath).toBe("sample/gauges/speedo");
+    });
+
+    it("should write and read widget file with nested path", async () => {
+      const mockNestedDir = {
+        getFileHandle: jasmine
+          .createSpy("getFileHandle")
+          .and.returnValue(Promise.resolve(mockFileHandle)),
+      };
+      mockWidgetDirHandle.getDirectoryHandle.and.callFake((name: string) => {
+        if (name === "sample") {
+          return Promise.resolve({
+            getDirectoryHandle: jasmine
+              .createSpy("getDirectoryHandle")
+              .and.returnValue(Promise.resolve(mockNestedDir)),
+          });
+        }
+        return Promise.resolve(mockSubfolderHandle);
+      });
+
+      await service.writeWidgetFile("sample/my-widget", "widget.json", "{}");
+      expect(mockWidgetDirHandle.getDirectoryHandle).toHaveBeenCalledWith(
+        "sample",
+        { create: true },
+      );
+
+      const content = await service.getWidgetFile(
+        "sample/my-widget",
+        "widget.json",
+      );
+      expect(content).toBe("test content");
+    });
+
+    it("should delete widget directory recursively", async () => {
+      mockWidgetDirHandle.removeEntry = jasmine
+        .createSpy("removeEntry")
+        .and.returnValue(Promise.resolve());
+      await service.deleteWidgetDirectory("sample", true);
+      expect(mockWidgetDirHandle.removeEntry).toHaveBeenCalledWith("sample", {
+        recursive: true,
+      });
+    });
+
+    it("should delete nested widget directory recursively", async () => {
+      const mockNestedDir = {
+        removeEntry: jasmine
+          .createSpy("removeEntry")
+          .and.returnValue(Promise.resolve()),
+      };
+      mockWidgetDirHandle.getDirectoryHandle = jasmine
+        .createSpy("getDirectoryHandle")
+        .and.returnValue(Promise.resolve(mockNestedDir));
+
+      await service.deleteWidgetDirectory("sample/nested-folder", true);
+      expect(mockWidgetDirHandle.getDirectoryHandle).toHaveBeenCalledWith(
+        "sample",
+      );
+      expect(mockNestedDir.removeEntry).toHaveBeenCalledWith("nested-folder", {
+        recursive: true,
+      });
+    });
+
+    it("should handle NotFoundError gracefully when deleting widget directory", async () => {
+      mockWidgetDirHandle.removeEntry = jasmine
+        .createSpy("removeEntry")
+        .and.returnValue(Promise.reject({ name: "NotFoundError" }));
+      await expectAsync(
+        service.deleteWidgetDirectory("nonexistent"),
+      ).toBeResolved();
+    });
+
+    it("should do nothing if handle is not configured when deleting widget directory", async () => {
+      (service.getCustomWidgetDirectoryHandle as jasmine.Spy).and.returnValue(
+        Promise.resolve(undefined),
+      );
+      await expectAsync(service.deleteWidgetDirectory("sample")).toBeResolved();
+    });
+  });
+
+  describe("Server-backed directory operations", () => {
+    it("should use chooseFolder when selecting custom folder on localhost", async () => {
+      (service as any).isLocalhost = true;
+      mockServerFs.chooseFolder.and.returnValue(
+        Promise.resolve({
+          success: true,
+          path: "/custom/ui",
+          name: "ui",
+        }),
+      );
+
+      const res = await service.selectCustomFolder();
+      expect(res).toBeTrue();
+      expect(mockServerFs.chooseFolder).toHaveBeenCalledWith("ui");
+      expect(service.getServerCustomUiPath()).toBe("/custom/ui");
+    });
+
+    it("should use chooseFolder when selecting custom widget folder on localhost", async () => {
+      (service as any).isLocalhost = true;
+      mockServerFs.chooseFolder.and.returnValue(
+        Promise.resolve({
+          success: true,
+          path: "/custom/widgets",
+          name: "widgets",
+        }),
+      );
+
+      const res = await service.selectCustomWidgetFolder();
+      expect(res).toBeTrue();
+      expect(mockServerFs.chooseFolder).toHaveBeenCalledWith("widgets");
+      expect(service.getServerCustomWidgetPath()).toBe("/custom/widgets");
+    });
+
+    it("should set custom folder path directly", async () => {
+      mockServerFs.setDirectory.and.returnValue(
+        Promise.resolve({
+          success: true,
+          path: "/pasted/ui",
+          name: "ui",
+        }),
+      );
+
+      const res = await service.setCustomFolder("/pasted/ui");
+      expect(res).toBeTrue();
+      expect(service.getServerCustomUiPath()).toBe("/pasted/ui");
+    });
+
+    it("should set custom widget folder path directly", async () => {
+      mockServerFs.setDirectory.and.returnValue(
+        Promise.resolve({
+          success: true,
+          path: "/pasted/widgets",
+          name: "widgets",
+        }),
+      );
+
+      const res = await service.setCustomWidgetFolder("/pasted/widgets");
+      expect(res).toBeTrue();
+      expect(service.getServerCustomWidgetPath()).toBe("/pasted/widgets");
+    });
+
+    it("should delegate widget operations to ServerFileSystemService when server widget path is set", async () => {
+      (service as any).serverCustomWidgetPath = "/custom/widgets";
+      (service as any).serverCustomWidgetName = "widgets";
+
+      mockServerFs.listWidgets.and.returnValue(
+        Promise.resolve([
+          { name: "w1", relativePath: "sample/w1", group: "sample" },
+        ]),
+      );
+      mockServerFs.getWidgetFile.and.returnValue(
+        Promise.resolve("widget-content"),
+      );
+      mockServerFs.writeWidgetFile.and.returnValue(Promise.resolve(true));
+      mockServerFs.deleteWidgetDir.and.returnValue(Promise.resolve(true));
+
+      const dirs = await service.getCustomWidgetDirectories();
+      expect(dirs.length).toBe(1);
+      expect(dirs[0].name).toBe("w1");
+
+      const file = await service.getWidgetFile("sample/w1", "widget.json");
+      expect(file).toBe("widget-content");
+
+      const exists = await service.hasWidgetFile("sample/w1", "widget.json");
+      expect(exists).toBeTrue();
+
+      await service.writeWidgetFile("sample/w1", "widget.json", "{}");
+      expect(mockServerFs.writeWidgetFile).toHaveBeenCalledWith(
+        "sample/w1",
+        "widget.json",
+        "{}",
+      );
+
+      await service.deleteWidgetDirectory("sample");
+      expect(mockServerFs.deleteWidgetDir).toHaveBeenCalledWith("sample");
+    });
+
+    it("should delegate custom UI operations to ServerFileSystemService when server UI path is set", async () => {
+      (service as any).serverCustomUiPath = "/custom/ui";
+      (service as any).serverCustomUiName = "ui";
+
+      mockServerFs.hasCustomFiles.and.returnValue(
+        Promise.resolve({ exists: true, files: ["raceday.component.html"] }),
+      );
+      mockServerFs.getCustomFile.and.returnValue(
+        Promise.resolve("<div>UI</div>"),
+      );
+      mockServerFs.appendCustomUiFile.and.returnValue(Promise.resolve(true));
+      mockServerFs.deleteCustomUiFile.and.returnValue(Promise.resolve(true));
+
+      const has = await service.hasCustomFiles("raceday.component.html");
+      expect(has).toBeTrue();
+
+      const content = await service.getCustomFile("raceday.component.html");
+      expect(content).toBe("<div>UI</div>");
+
+      await service.appendToFile("raceday.component.html", "more");
+      expect(mockServerFs.appendCustomUiFile).toHaveBeenCalledWith(
+        "raceday.component.html",
+        "more",
+        undefined,
+      );
+
+      await service.deleteFile("raceday.component.html");
+      expect(mockServerFs.deleteCustomUiFile).toHaveBeenCalledWith(
+        "raceday.component.html",
+        undefined,
+      );
+    });
+
+    it("should resolve ensureServerDirectoriesInitialized when initServerDirectories completes", async () => {
+      await expectAsync(
+        service.ensureServerDirectoriesInitialized(),
+      ).toBeResolved();
     });
   });
 });

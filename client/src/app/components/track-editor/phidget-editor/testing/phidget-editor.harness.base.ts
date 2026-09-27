@@ -13,11 +13,11 @@ export abstract class PhidgetEditorHarnessBase {
     digitalInSectionContent: ".digital-in-section-content",
     digitalOutSectionHeader: ".digital-out-section-header",
     digitalOutSectionContent: ".digital-out-section-content",
-    deviceSelect: "select[id^='device-']",
+    deviceSelect: "[id^='device-']",
     statusBadge: "button[id^='phidget-status-badge-']",
     ncSensorsCheckbox: "input[id^='phidget-nc-sensors-']",
     ncRelaysCheckbox: "input[id^='phidget-nc-relays-']",
-    pitBehaviorSelect: "select[id^='phidget-pit-behavior-']",
+    pitBehaviorSelect: "[id^='phidget-pit-behavior-']",
     removeButton: "button.action-btn.danger",
     boardImage: ".board-image",
   };

@@ -26,4 +26,8 @@ export class RacedayRecordsHarnessE2e implements RacedayRecordsHarnessBase {
     }
     return { nickname: "", score: "" };
   }
+
+  async getRowCount(): Promise<number> {
+    return await this.recordRows.count();
+  }
 }

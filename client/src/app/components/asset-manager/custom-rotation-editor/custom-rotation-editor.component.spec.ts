@@ -6,6 +6,7 @@ import {
   tick,
 } from "@angular/core/testing";
 import { FormsModule } from "@angular/forms";
+import { By } from "@angular/platform-browser";
 import { ActivatedRoute, Router } from "@angular/router";
 import { of } from "rxjs";
 import { DataService } from "@app/data.service";
@@ -65,6 +66,23 @@ describe("CustomRotationEditorComponent", () => {
 
   it("should create", () => {
     expect(component).toBeTruthy();
+  });
+
+  it("should use AM_ROTATION_EDITOR titleKey and bind itemName to internalAssetName", () => {
+    fixture.detectChanges();
+
+    const titleEl = fixture.debugElement.query(By.css("app-editor-title"));
+    expect(titleEl).toBeTruthy();
+    expect(titleEl.componentInstance.titleKey()).toBe("AM_ROTATION_EDITOR");
+    expect(titleEl.componentInstance.itemName()).toBe("New Custom Rotation 1");
+    expect(titleEl.componentInstance.showZoom()).toBeTrue();
+
+    const headerEl = titleEl.nativeElement.querySelector(".header");
+    expect(headerEl.classList.contains("has-zoom")).toBeTrue();
+
+    component.internalAssetName = "Sprint Cup";
+    fixture.detectChanges();
+    expect(titleEl.componentInstance.itemName()).toBe("Sprint Cup");
   });
 
   it("should initialize with no rotations if none provided", () => {
@@ -840,37 +858,31 @@ describe("CustomRotationEditorComponent", () => {
   });
 
   describe("Export Rotations", () => {
-    let mockAnchor: any;
-    let createObjectURLSpy: jasmine.Spy;
-    let revokeObjectURLSpy: jasmine.Spy;
+    let originalShowSaveFilePicker: any;
+    let mockWritable: any;
+    let mockHandle: any;
 
     beforeEach(() => {
-      mockAnchor = {
-        click: jasmine.createSpy("click"),
-        remove: jasmine.createSpy("remove"),
-        setAttribute: jasmine.createSpy("setAttribute"),
-        href: "",
-        download: "",
-        style: {},
+      originalShowSaveFilePicker = (window as any).showSaveFilePicker;
+      mockWritable = {
+        write: jasmine.createSpy("write").and.returnValue(Promise.resolve()),
+        close: jasmine.createSpy("close").and.returnValue(Promise.resolve()),
       };
-
-      const originalCreateElement = document.createElement.bind(document);
-      spyOn(document, "createElement").and.callFake((tagName: string) => {
-        if (tagName === "a") {
-          return mockAnchor as any;
-        }
-        return originalCreateElement(tagName);
-      });
-
-      spyOn(document.body, "appendChild").and.stub();
-      spyOn(document.body, "removeChild").and.stub();
-      createObjectURLSpy = spyOn(URL, "createObjectURL").and.returnValue(
-        "mock-url",
-      );
-      revokeObjectURLSpy = spyOn(URL, "revokeObjectURL").and.stub();
+      mockHandle = {
+        createWritable: jasmine
+          .createSpy("createWritable")
+          .and.returnValue(Promise.resolve(mockWritable)),
+      };
+      (window as any).showSaveFilePicker = jasmine
+        .createSpy("showSaveFilePicker")
+        .and.returnValue(Promise.resolve(mockHandle));
     });
 
-    it("should trigger download for combined asset JSON file when exportRotations is called", fakeAsync(() => {
+    afterEach(() => {
+      (window as any).showSaveFilePicker = originalShowSaveFilePicker;
+    });
+
+    it("should trigger download for combined asset JSON file when exportRotations is called", async () => {
       fixture.detectChanges();
       component.internalAssetName = "TestRotation";
       component.internalNumLanes = 4;
@@ -879,35 +891,43 @@ describe("CustomRotationEditorComponent", () => {
         { numDrivers: 5, heats: [{ driverIndices: [1, 2, 3, 4] }] },
       ];
 
-      component.exportRotations();
+      await component.exportRotations();
 
-      expect(document.createElement).toHaveBeenCalledWith("a");
-      expect(mockAnchor.download).toBe("TestRotation_L4_Asset.json");
-      expect(mockAnchor.href).toBe("mock-url");
-      expect(mockAnchor.click).toHaveBeenCalled();
+      expect((window as any).showSaveFilePicker).toHaveBeenCalledWith({
+        suggestedName: "TestRotation_L4_Asset.json",
+        types: [
+          {
+            description: "JSON Files",
+            accept: { "application/json": [".json"] },
+          },
+        ],
+      });
+      expect(mockWritable.write).toHaveBeenCalled();
+      expect(mockWritable.close).toHaveBeenCalled();
+    });
 
-      tick(5000); // For setTimeout cleanup
-      expect(revokeObjectURLSpy).toHaveBeenCalled();
-    }));
-
-    it("should trigger download for individual rotation JSON file when exportSingleRotation is called", fakeAsync(() => {
+    it("should trigger download for individual rotation JSON file when exportSingleRotation is called", async () => {
       fixture.detectChanges();
       component.internalAssetName = "TestRotation";
       component.internalNumLanes = 4;
       const rot = { numDrivers: 4, heats: [{ driverIndices: [1, 2, 3, 4] }] };
 
-      component.exportSingleRotation(rot);
+      await component.exportSingleRotation(rot);
 
-      expect(document.createElement).toHaveBeenCalledWith("a");
-      expect(mockAnchor.download).toBe("TestRotation_L4_D4.json");
-      expect(mockAnchor.href).toBe("mock-url");
-      expect(mockAnchor.click).toHaveBeenCalled();
+      expect((window as any).showSaveFilePicker).toHaveBeenCalledWith({
+        suggestedName: "TestRotation_L4_D4.json",
+        types: [
+          {
+            description: "JSON Files",
+            accept: { "application/json": [".json"] },
+          },
+        ],
+      });
+      expect(mockWritable.write).toHaveBeenCalled();
+      expect(mockWritable.close).toHaveBeenCalled();
+    });
 
-      tick(5000); // For setTimeout cleanup
-      expect(revokeObjectURLSpy).toHaveBeenCalled();
-    }));
-
-    it("should format combined exported JSON with correct property names, Version, and 1-based group indices", fakeAsync(() => {
+    it("should format combined exported JSON with correct property names, Version, and 1-based group indices", async () => {
       fixture.detectChanges();
       component.internalAssetName = "FormatTest";
       component.internalNumLanes = 2;
@@ -917,10 +937,19 @@ describe("CustomRotationEditorComponent", () => {
 
       const stringifySpy = spyOn(JSON, "stringify").and.callThrough();
 
-      component.exportRotations();
+      await component.exportRotations();
 
-      const blobCall = createObjectURLSpy.calls.mostRecent().args[0] as Blob;
-      expect(blobCall.type).toBe("application/json");
+      expect(mockWritable.write).toHaveBeenCalled();
+      const writtenJson = JSON.parse(
+        mockWritable.write.calls.mostRecent().args[0],
+      );
+      expect(writtenJson.Version).toBe("1.0");
+      expect(writtenJson.IsAsset).toBeTrue();
+      expect(writtenJson.AssetName).toBe("FormatTest");
+      expect(writtenJson.NumLanes).toBe(2);
+      expect(writtenJson.Rotations[0].NumDrivers).toBe(2);
+      expect(writtenJson.Rotations[0].Heats[0].Drivers).toEqual([1, 2]);
+      expect(writtenJson.Rotations[0].Heats[0].Group).toBe(2);
 
       expect(stringifySpy).toHaveBeenCalledWith(
         jasmine.objectContaining({
@@ -935,11 +964,9 @@ describe("CustomRotationEditorComponent", () => {
         null,
         2,
       );
+    });
 
-      tick(5000);
-    }));
-
-    it("should format single exported JSON with Version", fakeAsync(() => {
+    it("should format single exported JSON with Version", async () => {
       fixture.detectChanges();
       component.internalAssetName = "FormatTest";
       component.internalNumLanes = 2;
@@ -950,7 +977,17 @@ describe("CustomRotationEditorComponent", () => {
 
       const stringifySpy = spyOn(JSON, "stringify").and.callThrough();
 
-      component.exportSingleRotation(rot);
+      await component.exportSingleRotation(rot);
+
+      expect(mockWritable.write).toHaveBeenCalled();
+      const writtenJson = JSON.parse(
+        mockWritable.write.calls.mostRecent().args[0],
+      );
+      expect(writtenJson.Version).toBe("1.0");
+      expect(writtenJson.NumDrivers).toBe(2);
+      expect(writtenJson.NumLanes).toBe(2);
+      expect(writtenJson.Heats[0].Drivers).toEqual([1, 2]);
+      expect(writtenJson.Heats[0].Group).toBe(2);
 
       expect(stringifySpy).toHaveBeenCalledWith(
         jasmine.objectContaining({
@@ -962,9 +999,19 @@ describe("CustomRotationEditorComponent", () => {
         null,
         2,
       );
+    });
 
-      tick(5000);
-    }));
+    it("should fallback to anchor download when showSaveFilePicker is not available", async () => {
+      delete (window as any).showSaveFilePicker;
+      const clickSpy = spyOn(HTMLAnchorElement.prototype, "click");
+      component.internalAssetName = "FallbackTest";
+      component.internalNumLanes = 2;
+      const rot = { numDrivers: 2, heats: [{ driverIndices: [1, 2] }] };
+
+      await component.exportSingleRotation(rot);
+
+      expect(clickSpy).toHaveBeenCalled();
+    });
   });
 
   describe("Heat Groups", () => {
@@ -1174,15 +1221,12 @@ describe("CustomRotationEditorComponent", () => {
   });
 
   describe("Layout Scale and Resize", () => {
-    it("should recalculate scale factor on resize host listener", () => {
-      fixture.detectChanges();
-
-      // Spy on updateScale to verify it's called
-      const scaleSpy = spyOn(component as any, "updateScale").and.callThrough();
-
+    it("should update scale on window resize", () => {
+      // Simulate window resize
+      spyOnProperty(window, "innerWidth", "get").and.returnValue(800);
+      spyOnProperty(window, "innerHeight", "get").and.returnValue(450);
       component.onResize();
-      expect(scaleSpy).toHaveBeenCalled();
-      expect(component.scale).toBeGreaterThan(0);
+      expect(component.scale).toBe(0.5); // min(800/1600, 450/900)
     });
   });
 
@@ -1429,6 +1473,124 @@ describe("CustomRotationEditorComponent", () => {
 
       // Should only have called autoSave once
       expect(autoSaveSpy).toHaveBeenCalledTimes(1);
+    });
+    it("should provide unsaved reasons when changes cannot be saved", () => {
+      // Empty name
+      component.internalAssetName = "";
+      expect(component.getUnsavedReasons()).toContain(
+        "DISCARD_REASON_ROTATION_NAME_EMPTY",
+      );
+
+      // Duplicate name
+      component.internalAssetName = "Existing Rotation";
+      component.allAssets = [
+        {
+          type: "custom_rotation",
+          name: "Existing Rotation",
+          model: { entityId: "other-id" },
+        } as any,
+      ];
+      expect(component.getUnsavedReasons()).toContain(
+        "DISCARD_REASON_ROTATION_NAME_DUPLICATE",
+      );
+
+      // Empty rotations
+      component.internalAssetName = "Unique Name";
+      component.internalRotations = [];
+      expect(component.getUnsavedReasons()).toContain(
+        "DISCARD_REASON_ROTATION_EMPTY",
+      );
+
+      // Rotation validation errors
+      component.internalRotations = [
+        { heat: 1, driverId: "d1", lane: 1, stage: 1 } as any,
+      ];
+      spyOn(component, "hasValidationErrors").and.returnValue(true);
+      expect(component.getUnsavedReasons()).toContain(
+        "DISCARD_REASON_ROTATION_ERRORS",
+      );
+
+      // Saving in progress
+      (component.hasValidationErrors as jasmine.Spy).and.returnValue(false);
+      (component as any).savingCount = 1;
+      expect(component.getUnsavedReasons()).toContain("DISCARD_REASON_SAVING");
+      (component as any).savingCount = 0;
+
+      // Exited too quickly (dirty, valid, not saving)
+      spyOn(component, "isDirtyState").and.returnValue(true);
+      expect(component.getUnsavedReasons()).toContain(
+        "DISCARD_REASON_EXIT_TOO_QUICKLY",
+      );
+
+      // discardMessage contains bullet points
+      expect(component.discardMessage).toContain("•");
+    });
+    describe("Default Name Auto-Select & Duplication", () => {
+      it("should set defaultRotationName and focus input when isNew queryParam is true", fakeAsync(() => {
+        spyOn(component, "focusNameInput").and.callThrough();
+        const activatedRoute = TestBed.inject(ActivatedRoute);
+        spyOn(activatedRoute.snapshot.queryParamMap, "get").and.callFake(
+          (key: string) => {
+            if (key === "isNew") return "true";
+            if (key === "id") return "new";
+            return null;
+          },
+        );
+
+        (component as any).loadAssetData();
+        tick();
+
+        expect(component.defaultRotationName).toBe(component.internalAssetName);
+        expect(component.focusNameInput).toHaveBeenCalled();
+      }));
+
+      it("should duplicate rotation via saveAsNew and focus input", fakeAsync(() => {
+        spyOn(component, "focusNameInput").and.callThrough();
+        spyOn(component, "save").and.stub();
+        component.internalAssetName = "Custom Rotation 1";
+        component.allAssets = [
+          {
+            type: "custom_rotation",
+            name: "Custom Rotation 1",
+            model: { entityId: "cr1" },
+          } as any,
+        ];
+
+        component.saveAsNew();
+        tick();
+
+        expect(component.internalAssetName).toBe("Custom Rotation 2");
+        expect(component.defaultRotationName).toBe("Custom Rotation 2");
+        expect(component.internalAssetId).toBeUndefined();
+        expect(component.save).toHaveBeenCalled();
+        expect(component.focusNameInput).toHaveBeenCalled();
+      }));
+
+      it("should bind appAutoSelectDefault to asset name input in template", () => {
+        component.defaultRotationName = "New Custom Rotation 1";
+        fixture.detectChanges();
+
+        const inputEl = fixture.nativeElement.querySelector(
+          "#custom-rotation-name-input",
+        );
+        expect(inputEl).toBeTruthy();
+      });
+    });
+    describe("Zoom Support", () => {
+      it("should update zoomLevel and bind it to the heats grid", () => {
+        fixture.detectChanges();
+        component.addRotation();
+        fixture.detectChanges();
+
+        const compiled = fixture.nativeElement as HTMLElement;
+        const grid = compiled.querySelector(".heats-grid") as HTMLElement;
+        expect(grid).toBeTruthy();
+        expect(grid.style.zoom).toBe("1");
+
+        component.zoomLevel = 120;
+        fixture.detectChanges();
+        expect(grid.style.zoom).toBe("1.2");
+      });
     });
   });
 });

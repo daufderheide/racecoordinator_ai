@@ -1,4 +1,5 @@
 import { ComponentHarness } from "@angular/cdk/testing";
+import { CustomSelectHarness } from "@app/components/shared/custom-select/testing/custom-select.harness";
 
 import { TimerInspectorHarnessBase } from "./timer-inspector.harness.base";
 
@@ -8,9 +9,7 @@ export class TimerInspectorHarness
 {
   static hostSelector = TimerInspectorHarnessBase.hostSelector;
 
-  protected getSelects = this.locatorForAll(
-    TimerInspectorHarnessBase.selectors.selects,
-  );
+  protected getSelects = this.locatorForAll(CustomSelectHarness);
   protected getSliders = this.locatorForAll(
     TimerInspectorHarnessBase.selectors.sliders,
   );
@@ -23,13 +22,12 @@ export class TimerInspectorHarness
 
   async getTimeFontFamily(): Promise<string> {
     const selects = await this.getSelects();
-    return await selects[0].getProperty("value");
+    return await selects[0].getValue();
   }
 
   async setTimeFontFamily(val: string): Promise<void> {
     const selects = await this.getSelects();
-    await selects[0].sendKeys(val);
-    await selects[0].dispatchEvent("change");
+    await selects[0].selectOptionByValue(val);
   }
 
   async getTimeFontSize(): Promise<number> {

@@ -110,6 +110,14 @@ export class DefaultRacedaySetupHarnessE2e implements DefaultRacedaySetupHarness
     await this.unselectedDrivers.nth(index).dblclick();
   }
 
+  async clickUnselectedDriver(index: number): Promise<void> {
+    await this.unselectedDrivers.nth(index).click();
+  }
+
+  async clickSelectedDriver(index: number): Promise<void> {
+    await this.selectedDrivers.nth(index).click();
+  }
+
   async getRaceCardCount(): Promise<number> {
     await this.raceCards.first().waitFor({ state: "attached" });
     return await this.raceCards.count();
@@ -122,7 +130,8 @@ export class DefaultRacedaySetupHarnessE2e implements DefaultRacedaySetupHarness
   async selectSeason(name: string): Promise<void> {
     const select = this.locator.locator(this.base.selectors.seasonSelect);
     await select.waitFor({ state: "visible" });
-    await select.selectOption({ label: name });
+    await select.locator(".custom-select-trigger").click();
+    await select.locator(`.custom-select-option:has-text("${name}")`).click();
   }
 
   async openOptionsMenu(): Promise<void> {

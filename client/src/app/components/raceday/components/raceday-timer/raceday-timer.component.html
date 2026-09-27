@@ -2,9 +2,9 @@
   <div class="timer-wrapper">
     <!-- Top area for auto-advance label (always rendered to reserve space) -->
     <div class="label-container top-label">
-      @if (autoStatusLabel() && !showCountdownOverlay()) {
+      @if (displayAutoStatusLabel() && !showCountdownOverlay()) {
         <div class="status-label">
-          {{ autoStatusLabel() | translate }}
+          {{ displayAutoStatusLabel() | translate }}
         </div>
       }
     </div>
@@ -13,9 +13,11 @@
     <div
       #timerText
       class="timer-text"
-      [class.timer-warmup]="isWarmup()"
+      [class.timer-warmup]="displayIsWarmup()"
       [class.timer-auto]="
-        autoStatusLabel() && !showCountdownOverlay() && !isWarmup()
+        displayAutoStatusLabel() &&
+        !showCountdownOverlay() &&
+        !displayIsWarmup()
       "
       [style.font-family]="widget()?.customSettings?.['timeFontFamily'] || null"
       [style.font-size.px]="
@@ -25,12 +27,12 @@
       "
       [style.color]="widget()?.customSettings?.['timeTextColor'] || null"
     >
-      {{ formattedTime() }}
+      {{ displayFormattedTime() }}
     </div>
 
     <!-- Bottom area for warmup label (always rendered to reserve space) -->
     <div class="label-container bottom-label">
-      @if (isWarmup()) {
+      @if (displayIsWarmup()) {
         <div class="warmup-label">
           {{ "RD_WARMUP" | translate }}
         </div>

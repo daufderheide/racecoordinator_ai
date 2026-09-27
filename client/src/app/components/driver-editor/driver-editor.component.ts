@@ -12,10 +12,13 @@ import { ActivatedRoute, Router } from "@angular/router";
 import { forkJoin, Subscription } from "rxjs";
 import { AudioSelectorComponent } from "@app/components/shared/audio-selector/audio-selector.component";
 import { ConfirmationModalComponent } from "@app/components/shared/confirmation-modal/confirmation-modal.component";
+import { EditorSectionComponent } from "@app/components/shared/editor-section/editor-section.component";
 import { EditorTitleComponent } from "@app/components/shared/editor-title/editor-title.component";
 import { ImageSelectorComponent } from "@app/components/shared/image-selector/image-selector.component";
 import { UndoManager } from "@app/components/shared/undo-redo-controls/undo-manager";
+import { DriverConverter } from "@app/converters/driver.converter";
 import { DataService } from "@app/data.service";
+import { AutoSelectDefaultDirective } from "@app/directives/auto-select-default.directive";
 import { DirtyComponent } from "@app/interfaces/dirty-component";
 import { AssetType, normalizeAssetType } from "@app/models/asset";
 import { Driver } from "@app/models/driver";
@@ -31,6 +34,32 @@ import { RaceConnectionService } from "@app/services/race-connection.service";
 import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
 import { createTTSContext, mockTTSContext } from "@app/utils/audio";
+import { EditorLifecycleHelper } from "@app/utils/editor-lifecycle.helper";
+import { getNextSelectionAfterDelete } from "@app/utils/editor-utils";
+import { naturalSortCompare } from "@app/utils/sorting.utils";
+
+import {
+  areDriversEqual,
+  cloneDriver,
+  createNewDriverTemplate,
+  DriverAudioSlot,
+  generateUniqueDriverName,
+  generateUniqueDriverNickname,
+  getAudioSlotFallbackName,
+  getDriverUnsavedReasons,
+  isDriverNameUnique,
+  isDriverNicknameUnique,
+  loadDriverStorageJson,
+  mergeDriverAsset,
+  saveDriverStorageJson,
+  toDriver,
+  updateDriverAudioText,
+  updateDriverAudioType,
+  updateDriverAudioUrl,
+} from "./driver-editor.helper";
+import { buildDriverEditorHelpSteps } from "./driver-editor-help.helper";
+
+export { DriverAudioSlot } from "./driver-editor.helper";
 
 @Component({
   standalone: true,
@@ -38,7 +67,9 @@ import { createTTSContext, mockTTSContext } from "@app/utils/audio";
   templateUrl: "./driver-editor.component.html",
   styleUrls: ["./driver-editor.component.css"],
   imports: [
+    AutoSelectDefaultDirective,
     EditorTitleComponent,
+    EditorSectionComponent,
     ImageSelectorComponent,
     FormsModule,
     AudioSelectorComponent,
@@ -49,9 +80,29 @@ import { createTTSContext, mockTTSContext } from "@app/utils/audio";
 export class DriverEditorComponent
   implements OnInit, OnDestroy, DirtyComponent
 {
-  isNavigationApproved = false;
-  showDiscardConfirm = false;
-  private pendingDeactivate: ((value: boolean) => void) | null = null;
+  // Discard Changes Confirmation Modal
+  lifecycle!: EditorLifecycleHelper;
+
+  get showDiscardConfirm(): boolean {
+    return this.lifecycle.showDiscardConfirm;
+  }
+  set showDiscardConfirm(val: boolean) {
+    this.lifecycle.showDiscardConfirm = val;
+  }
+
+  get isNavigationApproved(): boolean {
+    return this.lifecycle.isNavigationApproved;
+  }
+  set isNavigationApproved(val: boolean) {
+    this.lifecycle.isNavigationApproved = val;
+  }
+
+  get pendingDeactivate(): ((value: boolean) => void) | null {
+    return this.lifecycle.pendingDeactivate;
+  }
+  set pendingDeactivate(val: ((value: boolean) => void) | null) {
+    this.lifecycle.pendingDeactivate = val;
+  }
   private isReverting = false;
   @ViewChild(EditorTitleComponent) titleComponent!: EditorTitleComponent;
   private isDestroyed = false;
@@ -64,6 +115,27 @@ export class DriverEditorComponent
   isUploading: boolean = false;
   scale: number = 1;
   public navigateBackOnSave = false;
+  defaultDriverName: string = "";
+  defaultDriverNickname: string = "";
+
+  focusNameInput() {
+    setTimeout(() => {
+      const el = document.getElementById(
+        "driver-name-input",
+      ) as HTMLInputElement;
+      if (el) {
+        el.focus();
+        el.select();
+      }
+    }, 0);
+  }
+
+  // Unified Editor & Selection State
+  isEditMode: boolean = false;
+  private isPreservingEditModeOnNavigation: boolean = false;
+  private transitionToReadOnlyOnSave: boolean = false;
+  driverSelectItems: { id: string; name: string }[] = [];
+  selectedDriverId: string | undefined = undefined;
 
   // Manual change tracking baseline
   originalDriver: Driver | null = null;
@@ -73,6 +145,7 @@ export class DriverEditorComponent
 
   // Driver Data
   allDrivers: Driver[] = [];
+  private initialLastEditedId: string | null = null;
 
   // Assets for presets
   avatarAssets: any[] = [];
@@ -87,33 +160,80 @@ export class DriverEditorComponent
     audio: true,
   };
 
+  isNameNicknameLinked: boolean = false;
+
   toggleSection(section: keyof typeof this.sectionsExpanded) {
     this.sectionsExpanded[section] = !this.sectionsExpanded[section];
     this.saveExpanderState();
   }
 
+  areAllSectionsExpanded(): boolean {
+    return Object.values(this.sectionsExpanded).every(Boolean);
+  }
+
+  toggleAllSections(forcedState?: boolean) {
+    const next =
+      forcedState !== undefined ? forcedState : !this.areAllSectionsExpanded();
+    (
+      Object.keys(this.sectionsExpanded) as Array<
+        keyof typeof this.sectionsExpanded
+      >
+    ).forEach((key) => {
+      this.sectionsExpanded[key] = next;
+    });
+    this.saveExpanderState();
+  }
+
   saveExpanderState() {
-    try {
-      localStorage.setItem(
-        "driver_editor_expanders",
-        JSON.stringify(this.sectionsExpanded),
-      );
-    } catch (e) {
-      this.logger.error("Error saving expander state", e);
-    }
+    saveDriverStorageJson(
+      "driver_editor_expanders",
+      this.sectionsExpanded,
+      this.logger,
+      "Error saving expander state",
+    );
   }
 
   loadExpanderState() {
-    try {
-      const saved = localStorage.getItem("driver_editor_expanders");
-      if (saved) {
-        this.sectionsExpanded = {
-          ...this.sectionsExpanded,
-          ...JSON.parse(saved),
-        };
+    this.sectionsExpanded = loadDriverStorageJson(
+      "driver_editor_expanders",
+      this.sectionsExpanded,
+      this.logger,
+      "Error loading expander state",
+    );
+  }
+
+  saveLinkState() {
+    saveDriverStorageJson(
+      "driver_editor_name_nickname_linked",
+      this.isNameNicknameLinked,
+      this.logger,
+      "Error saving link state",
+    );
+  }
+
+  loadLinkState() {
+    this.isNameNicknameLinked = loadDriverStorageJson(
+      "driver_editor_name_nickname_linked",
+      this.isNameNicknameLinked,
+      this.logger,
+      "Error loading link state",
+    );
+  }
+
+  toggleNameNicknameLink() {
+    this.isNameNicknameLinked = !this.isNameNicknameLinked;
+    this.saveLinkState();
+    if (this.isNameNicknameLinked && this.editingDriver) {
+      if (
+        this.editingDriver.name &&
+        this.editingDriver.nickname !== this.editingDriver.name
+      ) {
+        this.editingDriver.nickname = this.editingDriver.name;
+        this.onInputChange();
+      } else if (!this.editingDriver.name && this.editingDriver.nickname) {
+        this.editingDriver.name = this.editingDriver.nickname;
+        this.onInputChange();
       }
-    } catch (e) {
-      this.logger.error("Error loading expander state", e);
     }
   }
 
@@ -133,8 +253,8 @@ export class DriverEditorComponent
   ) {
     this.undoManager = new UndoManager<Driver>(
       {
-        clonner: (d) => this.cloneDriver(d),
-        equalizer: (a, b) => this.areDriversEqual(a, b),
+        clonner: (d) => cloneDriver(d),
+        equalizer: (a, b) => areDriversEqual(a, b),
         applier: (d) => {
           // Preserve context ID safe-guard
           const currentId = this.editingDriver?.entity_id;
@@ -146,14 +266,21 @@ export class DriverEditorComponent
       },
       () => this.editingDriver, // snapshotGetter
     );
+    this.lifecycle = new EditorLifecycleHelper({
+      cdr: this.cdr,
+      translationService: this.translationService,
+      getUnsavedReasons: () => this.getUnsavedReasons(),
+    });
   }
 
   ngOnInit() {
+    this.initialLastEditedId = this.navigationService.getLastEditedId("driver");
     this.updateScale();
     this.connectionMonitor.startMonitoring();
     this.monitorConnection();
     this.raceConnectionService.connect();
     this.loadExpanderState();
+    this.loadLinkState();
 
     this.subscriptions.push(
       this.helpService.currentStep$.subscribe((step) => {
@@ -206,7 +333,7 @@ export class DriverEditorComponent
                 });
               }
             });
-          } else {
+          } else if (!currentId || nextId !== currentId) {
             this.loadData();
           }
         }),
@@ -217,8 +344,14 @@ export class DriverEditorComponent
 
     if (this.undoManager) {
       this.subscriptions.push(
-        this.undoManager.stateCommitted$.subscribe(() => {
-          this.autoSaveDriver();
+        this.undoManager.stateCommitted$.subscribe((event) => {
+          if (
+            event.type === "push" ||
+            event.type === "undo" ||
+            event.type === "redo"
+          ) {
+            this.autoSaveDriver();
+          }
         }),
       );
     }
@@ -249,6 +382,7 @@ export class DriverEditorComponent
 
   @HostListener("window:keydown", ["$event"])
   handleKeyboardEvent(event: KeyboardEvent) {
+    if (!this.isEditMode) return;
     if ((event.metaKey || event.ctrlKey) && event.key === "z") {
       event.preventDefault();
       if (event.shiftKey) {
@@ -264,23 +398,11 @@ export class DriverEditorComponent
   }
 
   private updateScale() {
-    const targetWidth = 1600;
-    const targetHeight = 900;
-    const windowWidth = window.innerWidth;
-    const windowHeight = window.innerHeight;
-
-    const scaleX = windowWidth / targetWidth;
-    const scaleY = windowHeight / targetHeight;
-    this.scale = Math.min(scaleX, scaleY);
+    this.scale = Math.min(window.innerWidth / 1600, window.innerHeight / 900);
   }
 
   loadData() {
     this.isNavigationApproved = false;
-    const idParam = this.route.snapshot.queryParamMap.get("id");
-    if (!idParam) {
-      throw new Error("Driver Editor: No entity ID provided.");
-    }
-
     this.isLoading = true;
     this.dataSubscription = forkJoin({
       drivers: this.dataService.getDrivers(),
@@ -306,18 +428,6 @@ export class DriverEditorComponent
     });
   }
 
-  private cloneDriver(driver: Driver): Driver {
-    return new Driver(
-      driver.entity_id,
-      driver.name,
-      driver.nickname,
-      driver.avatarUrl,
-      driver.lapAudio ? { ...driver.lapAudio } : undefined,
-      driver.bestLapAudio ? { ...driver.bestLapAudio } : undefined,
-      driver.penaltyAudio ? { ...driver.penaltyAudio } : undefined,
-    );
-  }
-
   get isNameInvalid(): boolean {
     if (this.isLoading || !this.editingDriver) return false;
     return !this.editingDriver.name.trim() || !this.isNameUnique(true);
@@ -325,67 +435,31 @@ export class DriverEditorComponent
 
   get isNicknameInvalid(): boolean {
     if (this.isLoading || !this.editingDriver) return false;
-    return !this.isNicknameUnique(true);
+    return !this.editingDriver.nickname?.trim() || !this.isNicknameUnique(true);
   }
 
-  private areDriversEqual(d1: Driver, d2: Driver): boolean {
-    const normalizeString = (val: any) =>
-      val === null || val === undefined ? "" : String(val).trim();
+  areDriversEqual(d1: Driver, d2: Driver): boolean {
+    return areDriversEqual(d1, d2);
+  }
 
-    const nameMatch = normalizeString(d1.name) === normalizeString(d2.name);
-    const nicknameMatch =
-      normalizeString(d1.nickname) === normalizeString(d2.nickname);
-    const avatarMatch =
-      normalizeString(d1.avatarUrl) === normalizeString(d2.avatarUrl);
-
-    const checkAudio = (a1: any, a2: any) => {
-      if (!a1 || !a2) return a1 === a2;
-      return (
-        normalizeString(a1.url) === normalizeString(a2.url) &&
-        normalizeString(a1.type || "preset") ===
-          normalizeString(a2.type || "preset") &&
-        normalizeString(a1.text) === normalizeString(a2.text)
-      );
-    };
-
-    return (
-      nameMatch &&
-      nicknameMatch &&
-      avatarMatch &&
-      checkAudio(d1.lapAudio, d2.lapAudio) &&
-      checkAudio(d1.bestLapAudio, d2.bestLapAudio) &&
-      checkAudio(d1.penaltyAudio, d2.penaltyAudio)
-    );
+  toDriver(d: any): Driver {
+    return toDriver(d);
   }
 
   isNameUnique(excludeSelf: boolean = true): boolean {
-    if (!this.editingDriver) return true;
-    const name = this.editingDriver.name.trim().toLowerCase();
-    if (!name) return false;
-
-    return !this.allDrivers.some(
-      (d) =>
-        (excludeSelf ? d.entity_id !== this.editingDriver!.entity_id : true) &&
-        d.name.toLowerCase() === name,
+    return isDriverNameUnique(
+      this.allDrivers,
+      this.editingDriver?.name,
+      excludeSelf ? this.editingDriver?.entity_id : undefined,
     );
   }
 
   isNicknameUnique(excludeSelf: boolean = true): boolean {
-    if (!this.editingDriver) return true;
-    const nickname = this.editingDriver.nickname?.trim().toLowerCase();
-    if (!nickname) return true;
-
-    return !this.allDrivers.some(
-      (d) =>
-        (excludeSelf ? d.entity_id !== this.editingDriver!.entity_id : true) &&
-        d.nickname?.toLowerCase() === nickname,
+    return isDriverNicknameUnique(
+      this.allDrivers,
+      this.editingDriver?.nickname,
+      excludeSelf ? this.editingDriver?.entity_id : undefined,
     );
-  }
-
-  private mapSoundType(type: string | undefined): "preset" | "tts" | "none" {
-    if (type === "tts") return "tts";
-    if (type === "none") return "none";
-    return "preset";
   }
 
   monitorConnection() {
@@ -414,28 +488,18 @@ export class DriverEditorComponent
     }, 1000);
   }
 
-  onBackClicked() {
-    if (this.isConfigValid()) {
-      if (this.isDirtyState()) {
-        this.navigateBackOnSave = true;
-        this.updateDriver();
-      } else {
-        this.onBack();
-      }
-    } else {
-      this.onBack();
-    }
-  }
-
   onBack() {
-    this.isNavigationApproved = true;
-    this.router.navigate(["/driver-manager"], {
-      queryParams: {
-        id: this.editingDriver?.entity_id,
-        from: this.route.snapshot.queryParamMap.get("from"),
-        returnUrl: this.route.snapshot.queryParamMap.get("returnUrl"),
-      },
-    });
+    const returnUrl = this.route.snapshot.queryParamMap.get("returnUrl");
+    const from = this.route.snapshot.queryParamMap.get("from");
+    if (returnUrl) {
+      this.router.navigateByUrl(returnUrl);
+    } else if (from === "modify-heats") {
+      this.router.navigate(["/default-raceday"], {
+        queryParams: { modifyHeats: "true" },
+      });
+    } else {
+      this.router.navigate(["/raceday-setup"]);
+    }
   }
 
   isConfigValid(): boolean {
@@ -446,7 +510,7 @@ export class DriverEditorComponent
     if (!this.undoManager) return false;
     const umChanges = this.undoManager.hasChanges();
     if (!this.editingDriver || !this.originalDriver) return umChanges;
-    const manualChanges = !this.areDriversEqual(
+    const manualChanges = !areDriversEqual(
       this.editingDriver,
       this.originalDriver,
     );
@@ -457,77 +521,72 @@ export class DriverEditorComponent
     return this.isDirtyState();
   }
 
+  getUnsavedReasons(): string[] {
+    return getDriverUnsavedReasons(
+      this.editingDriver,
+      this.isNameUnique(true),
+      this.isNicknameUnique(true),
+      this.isSaving,
+      this.isDirtyState(),
+    );
+  }
+
+  get discardMessage(): string {
+    return this.lifecycle.discardMessage;
+  }
+
   confirmDiscard(): Promise<boolean> {
-    this.showDiscardConfirm = true;
-    this.cdr.markForCheck();
-    this.cdr.detectChanges();
-    return new Promise((resolve) => {
-      this.pendingDeactivate = resolve;
-    });
+    return this.lifecycle.confirmDiscard();
   }
 
   onConfirmDiscard() {
-    this.showDiscardConfirm = false;
-    this.isNavigationApproved = true;
-    if (this.pendingDeactivate) {
-      this.pendingDeactivate(true);
-      this.pendingDeactivate = null;
-    }
+    this.lifecycle.onConfirmDiscard(() => {
+      if (this.originalDriver) {
+        this.editingDriver = cloneDriver(this.originalDriver);
+        this.undoManager.resetTracking(this.editingDriver);
+      } else if (this.allDrivers.length > 0) {
+        this.selectDriver(this.allDrivers[0]);
+      }
+      this.isEditMode = false;
+    });
   }
 
   onCancelDiscard() {
-    this.showDiscardConfirm = false;
-    if (this.pendingDeactivate) {
-      this.pendingDeactivate(false);
-      this.pendingDeactivate = null;
-    }
+    this.lifecycle.onCancelDiscard();
   }
 
   saveAsNew() {
     if (!this.editingDriver) return;
-    this.editingDriver.name = this.generateUniqueName(this.editingDriver.name);
+    this.editingDriver.name = this.generateUniqueName(
+      this.editingDriver.name,
+      true,
+    );
     if (this.editingDriver.nickname) {
       this.editingDriver.nickname = this.generateUniqueNickname(
         this.editingDriver.nickname,
+        true,
       );
     }
+    this.isEditMode = true;
+    this.defaultDriverName = this.editingDriver.name;
+    this.defaultDriverNickname = this.editingDriver.nickname || "";
+    this.focusNameInput();
     this.updateDriver(true);
   }
 
-  private generateUniqueName(baseName: string): string {
-    let counter = 1;
-    const pattern = /(_\d+)$/;
-    const base = baseName.replace(pattern, "");
-
-    while (true) {
-      const candidate = `${base}_${counter}`;
-      if (
-        !this.allDrivers.some(
-          (d) => d.name.toLowerCase() === candidate.toLowerCase(),
-        )
-      ) {
-        return candidate;
-      }
-      counter++;
-    }
+  generateUniqueName(baseName: string, forceSuffix: boolean = false): string {
+    return generateUniqueDriverName(this.allDrivers, baseName, forceSuffix);
   }
 
-  private generateUniqueNickname(baseNickname: string): string {
-    let counter = 1;
-    const pattern = /(_\d+)$/;
-    const base = baseNickname.replace(pattern, "");
-
-    while (true) {
-      const candidate = `${base}_${counter}`;
-      if (
-        !this.allDrivers.some(
-          (d) => d.nickname?.toLowerCase() === candidate.toLowerCase(),
-        )
-      ) {
-        return candidate;
-      }
-      counter++;
-    }
+  generateUniqueNickname(
+    baseNickname: string,
+    forceSuffix: boolean = false,
+  ): string {
+    return generateUniqueDriverNickname(
+      this.allDrivers,
+      baseNickname,
+      forceSuffix,
+    );
   }
 
   private autoSaveDriver() {
@@ -552,30 +611,8 @@ export class DriverEditorComponent
   }
 
   private loadDataInternal(rawDrivers: any[], assets: any[]) {
-    this.allDrivers = rawDrivers.map(
-      (d) =>
-        new Driver(
-          d.entity_id,
-          d.name,
-          d.nickname || "",
-          d.avatarUrl,
-          {
-            type: this.mapSoundType(d.lapAudio?.type || d.lapSoundType),
-            url: d.lapAudio?.url || d.lapSoundUrl,
-            text: d.lapAudio?.text || d.lapSoundText,
-          },
-          {
-            type: this.mapSoundType(d.bestLapAudio?.type || d.bestLapSoundType),
-            url: d.bestLapAudio?.url || d.bestLapSoundUrl,
-            text: d.bestLapAudio?.text || d.bestLapSoundText,
-          },
-          {
-            type: this.mapSoundType(d.penaltyAudio?.type || d.penaltySoundType),
-            url: d.penaltyAudio?.url || d.penaltySoundUrl,
-            text: d.penaltyAudio?.text || d.penaltySoundText,
-          },
-        ),
-    );
+    this.allDrivers = rawDrivers.map((d) => toDriver(d));
+    this.updateDriverSelectItems();
 
     const allAssets = assets || [];
     this.avatarAssets = allAssets.filter((a) => a.type === "image");
@@ -586,36 +623,77 @@ export class DriverEditorComponent
     const idParam = this.route.snapshot.queryParamMap.get("id");
 
     if (idParam === "new") {
-      this.selectedDriver = undefined;
-      this.editingDriver = new Driver(
-        "new",
-        "",
-        "",
-        "",
-        { type: "preset", url: "default_beep" },
-        { type: "preset", url: "default_driveby" },
-        { type: "preset", url: "default_penalty" },
-      );
+      this.startNewDriver();
     } else if (idParam) {
       const found = this.allDrivers.find((d) => d.entity_id === idParam);
       if (found) {
         this.selectDriver(found);
+        this.isEditMode = false;
+        this.navigationService.setLastEditedId("driver", found.entity_id);
       } else {
-        throw new Error(`Driver Editor: Invalid entity ID "${idParam}".`);
+        const lastEdited =
+          this.initialLastEditedId && this.initialLastEditedId !== idParam
+            ? this.initialLastEditedId
+            : this.navigationService.getLastEditedId("driver") !== idParam
+              ? this.navigationService.getLastEditedId("driver")
+              : null;
+        const foundLast = lastEdited
+          ? this.allDrivers.find((d) => d.entity_id === lastEdited)
+          : undefined;
+        if (foundLast) {
+          this.selectDriver(foundLast);
+          this.isEditMode = false;
+          this.navigationService.setLastEditedId("driver", foundLast.entity_id);
+        } else if (this.allDrivers.length > 0) {
+          this.selectDriver(this.allDrivers[0]);
+          this.isEditMode = false;
+          this.navigationService.setLastEditedId(
+            "driver",
+            this.allDrivers[0].entity_id,
+          );
+        } else {
+          this.startNewDriver();
+        }
+      }
+    } else {
+      const lastEdited = this.navigationService.getLastEditedId("driver");
+      const found = lastEdited
+        ? this.allDrivers.find((d) => d.entity_id === lastEdited)
+        : undefined;
+      if (found) {
+        this.selectDriver(found);
+        this.isEditMode = false;
+      } else if (this.allDrivers.length > 0) {
+        this.selectDriver(this.allDrivers[0]);
+        this.isEditMode = false;
+        this.navigationService.setLastEditedId(
+          "driver",
+          this.allDrivers[0].entity_id,
+        );
+      } else {
+        this.startNewDriver();
       }
     }
 
-    // undoManager.initialize will be called inside selectDriver if count > 0,
-    // or we call it once here if it's 'new'
-    if (idParam === "new" && this.editingDriver) {
-      this.undoManager.initialize(this.editingDriver);
+    const isNew = this.route.snapshot.queryParamMap.get("isNew") === "true";
+    if (
+      this.isPreservingEditModeOnNavigation ||
+      (isNew && this.editingDriver)
+    ) {
+      this.isPreservingEditModeOnNavigation = false;
+      this.isEditMode = true;
+      this.defaultDriverName = this.editingDriver?.name || "";
+      this.defaultDriverNickname = this.editingDriver?.nickname || "";
+      this.focusNameInput();
     }
   }
 
   undo() {
+    if (!this.isEditMode) return;
     this.undoManager.undo();
   }
   redo() {
+    if (!this.isEditMode) return;
     this.undoManager.redo();
   }
 
@@ -626,6 +704,22 @@ export class DriverEditorComponent
     this.undoManager.onInputChange();
     this.cdr.detectChanges();
   }
+  onNameChange(name: string) {
+    if (!this.editingDriver) return;
+    this.editingDriver.name = name;
+    if (this.isNameNicknameLinked) {
+      this.editingDriver.nickname = name;
+    }
+    this.onInputChange();
+  }
+  onNicknameChange(nickname: string) {
+    if (!this.editingDriver) return;
+    this.editingDriver.nickname = nickname;
+    if (this.isNameNicknameLinked) {
+      this.editingDriver.name = nickname;
+    }
+    this.onInputChange();
+  }
   onInputBlur() {
     this.undoManager.onInputBlur();
     this.cdr.detectChanges();
@@ -635,11 +729,153 @@ export class DriverEditorComponent
     this.cdr.detectChanges();
   }
 
+  onAudioTypeChange(
+    slot: DriverAudioSlot,
+    type: "preset" | "tts" | "none" | "audio_set",
+  ) {
+    if (!this.editingDriver) return;
+    updateDriverAudioType(this.editingDriver, slot, type);
+    this.captureState();
+    this.cdr.markForCheck();
+  }
+
+  onAudioUrlChange(slot: DriverAudioSlot, url: string | undefined) {
+    if (!this.editingDriver) return;
+    updateDriverAudioUrl(this.editingDriver, slot, url);
+    this.captureState();
+    this.cdr.markForCheck();
+  }
+
+  onAudioTextChange(slot: DriverAudioSlot, text: string | undefined) {
+    if (!this.editingDriver) return;
+    updateDriverAudioText(this.editingDriver, slot, text);
+    this.onInputChange();
+    this.cdr.markForCheck();
+  }
+
+  onAssetSelected(asset: any) {
+    if (!asset) return;
+    const type = normalizeAssetType(asset.type);
+    if (type === AssetType.AUDIO) {
+      this.soundAssets = mergeDriverAsset(this.soundAssets, asset);
+    } else if (type === AssetType.IMAGE) {
+      this.avatarAssets = mergeDriverAsset(this.avatarAssets, asset);
+    }
+    this.captureState();
+    this.cdr.markForCheck();
+  }
+
+  getAudioSlotFallbackName(slot: DriverAudioSlot): string {
+    return getAudioSlotFallbackName(slot);
+  }
+
   selectDriver(driver: Driver) {
     this.selectedDriver = driver;
-    this.editingDriver = this.cloneDriver(driver);
-    this.originalDriver = this.cloneDriver(driver);
+    this.editingDriver = cloneDriver(driver);
+    this.originalDriver = cloneDriver(driver);
+    this.selectedDriverId = driver.entity_id;
     this.undoManager.initialize(this.editingDriver);
+  }
+
+  updateDriverSelectItems() {
+    this.driverSelectItems = this.allDrivers
+      .slice()
+      .sort((a, b) => naturalSortCompare(a.name || "", b.name || ""))
+      .map((d) => ({
+        id: d.entity_id,
+        name: d.name,
+      }));
+  }
+
+  onSelectDriverById(id: string) {
+    if (this.isEditMode) return;
+    if (this.selectedDriverId === id) return;
+    const found = this.allDrivers.find((d) => d.entity_id === id);
+    if (found) {
+      this.selectDriver(found);
+      this.navigationService.setLastEditedId("driver", found.entity_id);
+      this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: { id: found.entity_id },
+        queryParamsHandling: "merge",
+        replaceUrl: true,
+      });
+    }
+  }
+
+  onToggleEditMode() {
+    if (!this.isEditMode) {
+      this.isEditMode = true;
+      this.focusNameInput();
+      return;
+    }
+
+    if (this.isSaving) {
+      this.transitionToReadOnlyOnSave = true;
+      return;
+    }
+
+    if (this.isDirtyState()) {
+      if (!this.isConfigValid()) {
+        alert(this.translationService.translate("DE_ERROR_NAME_EXISTS"));
+        return;
+      }
+      this.updateDriver(false, false);
+    } else {
+      this.isEditMode = false;
+    }
+  }
+
+  onAddNewDriver() {
+    if (this.isEditMode && this.isDirtyState()) {
+      this.confirmDiscard().then((confirmed) => {
+        if (confirmed) {
+          this.startNewDriver();
+        }
+      });
+    } else {
+      this.startNewDriver();
+    }
+  }
+
+  startNewDriver() {
+    this.isSaving = true;
+    this.isEditMode = true;
+    const defaultName =
+      this.translationService.translate("DM_DEFAULT_DRIVER_NAME") ||
+      "New Driver";
+    const defaultNickname =
+      this.translationService.translate("DM_DEFAULT_DRIVER_NICKNAME") ||
+      "New Driver Nickname";
+    const uniqueName = this.generateUniqueName(defaultName, false);
+    const uniqueNickname = this.generateUniqueNickname(defaultNickname, false);
+
+    const template = createNewDriverTemplate();
+    template.name = uniqueName;
+    template.nickname = uniqueNickname;
+    delete (template as any).entity_id;
+
+    this.subscriptions.push(
+      this.dataService.createDriver(template).subscribe({
+        next: (result) => {
+          this.handleSaveSuccess(result, template, true, false, false);
+        },
+        error: (err) => {
+          this.logger.error("Failed to create driver", err);
+          this.isSaving = false;
+          this.cdr.detectChanges();
+        },
+      }),
+    );
+  }
+
+  onCopyDriver() {
+    if (!this.editingDriver || !this.isConfigValid()) return;
+    this.saveAsNew();
+  }
+
+  onDeleteDriver() {
+    this.deleteDriver();
   }
 
   private saveDriverData(
@@ -662,101 +898,136 @@ export class DriverEditorComponent
 
     obs.subscribe({
       next: (result) => {
-        this.isSaving = false;
-        this.isAutoSaving = false;
-        this.navigationService.setLastEditedId("driver", result.entity_id);
-
-        if (this.editingDriver) {
-          this.editingDriver.entity_id = result.entity_id;
-          this.originalDriver = this.cloneDriver(this.editingDriver);
-          this.undoManager.resetTracking(this.editingDriver);
-        }
-
-        this.cdr.detectChanges();
-
-        if (wasNew) {
-          if (isAutoSave) {
-            const url = this.router.serializeUrl(
-              this.router.createUrlTree(["/driver-editor"], {
-                queryParams: {
-                  id: result.entity_id,
-                  from: this.route.snapshot.queryParamMap.get("from"),
-                  returnUrl: this.route.snapshot.queryParamMap.get("returnUrl"),
-                },
-              }),
-            );
-            this.location.replaceState(url);
-          } else {
-            this.router.navigate(["/driver-editor"], {
-              queryParams: {
-                id: result.entity_id,
-                from: this.route.snapshot.queryParamMap.get("from"),
-                returnUrl: this.route.snapshot.queryParamMap.get("returnUrl"),
-              },
-              replaceUrl: true,
-            });
-          }
-        }
-
-        if (this.navigateBackOnSave) {
-          this.onBack();
-        }
-
-        this.refreshDriverList();
+        this.handleSaveSuccess(
+          result,
+          driverToSend,
+          wasNew,
+          isSaveAsNew,
+          isAutoSave,
+        );
       },
       error: (err) => {
-        this.logger.error("Failed to save driver", err);
-        if (!isAutoSave) {
-          if (err.status === 409) {
-            alert(
-              err.error ||
-                this.translationService.translate("DE_ERROR_NAME_EXISTS"),
-            );
-          } else {
-            alert(
-              this.translationService.translate("DE_ERROR_SAVE_FAILED") +
-                (err.error || err.message),
-            );
-          }
-        }
-        this.isSaving = false;
-        this.isAutoSaving = false;
-        this.cdr.detectChanges();
+        this.handleSaveError(err, isAutoSave);
       },
     });
+  }
+
+  private handleSaveSuccess(
+    result: any,
+    driverToSend: any,
+    wasNew: boolean,
+    isSaveAsNew: boolean,
+    isAutoSave: boolean,
+  ) {
+    this.isSaving = false;
+    this.isAutoSaving = false;
+    this.navigationService.setLastEditedId("driver", result.entity_id);
+
+    const savedDriver = toDriver({
+      ...driverToSend,
+      entity_id: result.entity_id || driverToSend.entity_id,
+    });
+    DriverConverter.register(savedDriver);
+
+    if (wasNew || isSaveAsNew) {
+      this.isEditMode = true;
+      this.isPreservingEditModeOnNavigation = true;
+      this.defaultDriverName = savedDriver.name;
+      this.defaultDriverNickname = savedDriver.nickname || "";
+    } else if (!isAutoSave || this.transitionToReadOnlyOnSave) {
+      this.isEditMode = false;
+      this.transitionToReadOnlyOnSave = false;
+    }
+
+    if (wasNew || isSaveAsNew || !this.editingDriver) {
+      this.editingDriver = cloneDriver(savedDriver);
+    } else {
+      this.editingDriver.entity_id = savedDriver.entity_id;
+    }
+    this.selectedDriver = cloneDriver(savedDriver);
+    this.originalDriver = cloneDriver(savedDriver);
+    this.selectedDriverId = savedDriver.entity_id;
+    this.undoManager.resetTracking(savedDriver);
+
+    const idx = this.allDrivers.findIndex(
+      (d) => d.entity_id === result.entity_id,
+    );
+    if (idx >= 0) {
+      this.allDrivers[idx] = cloneDriver(this.editingDriver);
+    } else {
+      this.allDrivers.push(cloneDriver(this.editingDriver));
+    }
+    this.updateDriverSelectItems();
+
+    this.cdr.detectChanges();
+    if (wasNew || isSaveAsNew) {
+      this.focusNameInput();
+    }
+
+    if (wasNew) {
+      this.handleNewDriverNavigation(result.entity_id, isAutoSave);
+    }
+
+    if (this.navigateBackOnSave) {
+      this.onBack();
+    }
+
+    if (this.isDirtyState()) {
+      this.autoSaveDriver();
+    }
+
+    this.refreshDriverList();
+  }
+
+  private handleNewDriverNavigation(newId: string, isAutoSave: boolean) {
+    const queryParams = {
+      id: newId,
+      from: this.route.snapshot.queryParamMap.get("from"),
+      returnUrl: this.route.snapshot.queryParamMap.get("returnUrl"),
+    };
+    if (isAutoSave) {
+      const url = this.router.serializeUrl(
+        this.router.createUrlTree(["/driver-editor"], { queryParams }),
+      );
+      this.location.replaceState(url);
+    } else {
+      this.router.navigate(["/driver-editor"], {
+        queryParams,
+        replaceUrl: true,
+      });
+    }
+  }
+
+  private handleSaveError(err: any, isAutoSave: boolean) {
+    this.logger.error("Failed to save driver", err);
+    if (!isAutoSave) {
+      if (err.status === 409) {
+        alert(
+          err.error ||
+            this.translationService.translate("DE_ERROR_NAME_EXISTS"),
+        );
+      } else {
+        alert(
+          this.translationService.translate("DE_ERROR_SAVE_FAILED") +
+            (err.error || err.message),
+        );
+      }
+    }
+    this.isSaving = false;
+    this.isAutoSaving = false;
+    this.transitionToReadOnlyOnSave = false;
+    this.cdr.detectChanges();
   }
 
   private refreshDriverList() {
     this.dataService.getDrivers().subscribe({
       next: (drivers) => {
-        this.allDrivers = drivers.map(
-          (d) =>
-            new Driver(
-              d.entity_id,
-              d.name,
-              d.nickname || "",
-              d.avatarUrl,
-              {
-                type: this.mapSoundType(d.lapAudio?.type || d.lapSoundType),
-                url: d.lapAudio?.url || d.lapSoundUrl,
-                text: d.lapAudio?.text || d.lapSoundText,
-              },
-              {
-                type: this.mapSoundType(
-                  d.bestLapAudio?.type || d.bestLapSoundType,
-                ),
-                url: d.bestLapAudio?.url || d.bestLapSoundUrl,
-                text: d.bestLapAudio?.text || d.bestLapSoundText,
-              },
-              {
-                type: this.mapSoundType(
-                  d.penaltyAudio?.type || d.penaltySoundType,
-                ),
-                url: d.penaltyAudio?.url || d.penaltySoundUrl,
-                text: d.penaltyAudio?.text || d.penaltySoundText,
-              },
-            ),
-        );
+        this.allDrivers = drivers.map((d) => {
+          const driver = toDriver(d);
+          DriverConverter.register(driver);
+          return driver;
+        });
+        this.updateDriverSelectItems();
         this.cdr.detectChanges();
       },
       error: (err) => this.logger.error("Failed to refresh driver list", err),
@@ -764,18 +1035,39 @@ export class DriverEditorComponent
   }
 
   deleteDriver() {
-    if (!this.editingDriver) return;
+    if (!this.editingDriver || this.editingDriver.entity_id === "new") return;
     if (confirm(this.translationService.translate("DE_CONFIRM_DELETE"))) {
       this.isSaving = true;
-      this.isNavigationApproved = true;
-      this.dataService.deleteDriver(this.editingDriver.entity_id).subscribe({
+      const idToDelete = this.editingDriver.entity_id;
+      this.dataService.deleteDriver(idToDelete).subscribe({
         next: () => {
           this.isSaving = false;
-          this.onBack();
+          this.isEditMode = false;
+          const nextDriver = getNextSelectionAfterDelete(
+            this.allDrivers,
+            idToDelete,
+          );
+          this.allDrivers = this.allDrivers.filter(
+            (d) => d.entity_id !== idToDelete,
+          );
+          this.updateDriverSelectItems();
+          if (nextDriver) {
+            this.selectDriver(nextDriver);
+            this.router.navigate([], {
+              relativeTo: this.route,
+              queryParams: { id: nextDriver.entity_id },
+              queryParamsHandling: "merge",
+              replaceUrl: true,
+            });
+          } else {
+            this.startNewDriver();
+          }
+          this.cdr.detectChanges();
         },
         error: (err) => {
           this.logger.error("Failed to delete driver", err);
           this.isSaving = false;
+          this.cdr.detectChanges();
         },
       });
     }
@@ -788,62 +1080,11 @@ export class DriverEditorComponent
   }
 
   getHelpSteps(): GuideStep[] {
-    return [
-      {
-        title: this.translationService.translate("DE_HELP_WELCOME_TITLE"),
-        content: this.translationService.translate("DE_HELP_WELCOME_CONTENT"),
-        position: "center",
+    return buildDriverEditorHelpSteps({
+      translationService: this.translationService,
+      expandAudioSection: () => {
+        this.sectionsExpanded.audio = true;
       },
-      {
-        selector: "#driver-avatar-section",
-        title: this.translationService.translate("DE_HELP_AVATAR_TITLE"),
-        content: this.translationService.translate("DE_HELP_AVATAR_CONTENT"),
-        position: "right",
-      },
-      {
-        selector: "#driver-name-section",
-        title: this.translationService.translate("DE_HELP_NAME_TITLE"),
-        content: this.translationService.translate("DE_HELP_NAME_CONTENT"),
-        position: "bottom",
-      },
-      {
-        selector: "#driver-nickname-section",
-        title: this.translationService.translate("DE_HELP_NICKNAME_TITLE"),
-        content: this.translationService.translate("DE_HELP_NICKNAME_CONTENT"),
-        position: "bottom",
-      },
-      {
-        selector: "#driver-audio-section",
-        title: this.translationService.translate("DE_HELP_AUDIO_SECTION_TITLE"),
-        content: this.translationService.translate(
-          "DE_HELP_AUDIO_SECTION_CONTENT",
-        ),
-        position: "left",
-      },
-      {
-        selector: "#driver-lap-audio",
-        title: this.translationService.translate("DE_HELP_LAP_SOUND_TITLE"),
-        content: this.translationService.translate("DE_HELP_LAP_SOUND_CONTENT"),
-        position: "left",
-      },
-      {
-        selector: "#driver-best-lap-audio",
-        title: this.translationService.translate(
-          "DE_HELP_BEST_LAP_SOUND_TITLE",
-        ),
-        content: this.translationService.translate(
-          "DE_HELP_BEST_LAP_SOUND_CONTENT",
-        ),
-        position: "left",
-      },
-      {
-        selector: "#driver-penalty-audio",
-        title: this.translationService.translate("DE_HELP_PENALTY_SOUND_TITLE"),
-        content: this.translationService.translate(
-          "DE_HELP_PENALTY_SOUND_CONTENT",
-        ),
-        position: "left",
-      },
-    ];
+    });
   }
 }

@@ -35,15 +35,8 @@ public class RaceOverTest {
   }
 
   @Test
-  public void testGetFlagType_CheckeredOnLastHeatWhenNoFinishAllowed() {
-    when(race.isLastHeat()).thenReturn(true);
+  public void testGetFlagType_ReturnsCheckeredRaceOverFlag() {
     assertEquals(RaceFlag.CHECKERED, raceOver.getFlagType(race));
-  }
-
-  @Test
-  public void testGetFlagType_RedWhenNotLastHeat() {
-    when(race.isLastHeat()).thenReturn(false);
-    assertEquals(RaceFlag.RED, raceOver.getFlagType(race));
   }
 
   @Test
@@ -55,11 +48,7 @@ public class RaceOverTest {
         new com.antigravity.models.Theme("Custom", true, slots, null, "theme-1", "id-1");
     when(race.getTheme()).thenReturn(theme);
 
-    when(race.isLastHeat()).thenReturn(true);
     assertEquals(RaceFlag.YELLOW, raceOver.getFlagType(race));
-
-    when(race.isLastHeat()).thenReturn(false);
-    assertEquals(RaceFlag.GREEN, raceOver.getFlagType(race));
   }
 
   @Test(expected = IllegalStateException.class)
@@ -125,5 +114,21 @@ public class RaceOverTest {
     boolean result = raceOver.onLap(0, 5.0, 1, false);
 
     org.junit.Assert.assertFalse(result);
+  }
+
+  @Test
+  public void testEnter_SyncsDriverFlags() {
+    com.antigravity.race.Heat currentHeat = mock(com.antigravity.race.Heat.class);
+    when(currentHeat.getStatistics()).thenReturn(new com.antigravity.race.RaceHeatStatistics());
+    com.antigravity.race.DriverHeatData dhd =
+        new com.antigravity.race.DriverHeatData(
+            new com.antigravity.race.RaceParticipant(
+                new com.antigravity.models.Driver("d1", "Driver 1", "id1", "1"), "id1"));
+    when(currentHeat.getDrivers()).thenReturn(java.util.Collections.singletonList(dhd));
+    when(race.getCurrentHeat()).thenReturn(currentHeat);
+    when(race.isLastHeat()).thenReturn(true);
+
+    raceOver.enter(race);
+    assertEquals(RaceFlag.CHECKERED, dhd.getFlag());
   }
 }

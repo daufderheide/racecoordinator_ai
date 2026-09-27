@@ -76,6 +76,7 @@ class MockAssetPreviewComponent {
 })
 class MockEditorTitleComponent {
   titleKey = input<string>("");
+  itemName = input<string | undefined>(undefined);
   backRoute = input<string>("");
   undoManager = input<any>();
 }
@@ -206,6 +207,10 @@ describe("UIEditorComponent", () => {
       "getCustomWidgetDirectoryHandle",
       "selectCustomWidgetFolder",
       "clearCustomWidgetFolder",
+      "setCustomFolder",
+      "setCustomWidgetFolder",
+      "getServerCustomUiPath",
+      "getServerCustomWidgetPath",
     ]);
     mockCustomWidgetService = jasmine.createSpyObj("CustomWidgetService", [
       "getCustomWidgets",
@@ -234,6 +239,8 @@ describe("UIEditorComponent", () => {
       "updateCustomUI",
       "duplicateCustomUI",
       "deleteCustomUI",
+      "downloadDefaultExportTemplate",
+      "testExportXls",
     ]);
     mockDataService.socketConnected$ = of(true);
     mockDataService.systemState$ = new BehaviorSubject<any>({});
@@ -247,6 +254,12 @@ describe("UIEditorComponent", () => {
     mockDataService.createCustomUI.and.returnValue(of({}));
     mockDataService.duplicateCustomUI.and.returnValue(of({}));
     mockDataService.deleteCustomUI.and.returnValue(of({}));
+    mockDataService.downloadDefaultExportTemplate.and.returnValue(
+      of(new Blob(["template-data"])),
+    );
+    mockDataService.testExportXls.and.returnValue(
+      of(new Blob(["test-export-data"])),
+    );
     mockDataService.updateRaceSubscription.and.stub();
     mockRouter = jasmine.createSpyObj("Router", [
       "navigate",
@@ -457,6 +470,46 @@ describe("UIEditorComponent", () => {
     expect(component.customWidgetDirectoryName).toBeNull();
     expect(mockCustomWidgetService.reloadCustomWidgets).toHaveBeenCalled();
   });
+
+  it("should handle prompt enter path for UI and widgets", () => {
+    component.customDirectoryPath = "/my/ui/path";
+    component.promptEnterPath("ui");
+    expect(component.showEnterPathModal).toBeTrue();
+    expect(component.enterPathType).toBe("ui");
+    expect(component.manualPathInput).toBe("/my/ui/path");
+
+    component.customWidgetDirectoryPath = "/my/widget/path";
+    component.promptEnterPath("widgets");
+    expect(component.showEnterPathModal).toBeTrue();
+    expect(component.enterPathType).toBe("widgets");
+    expect(component.manualPathInput).toBe("/my/widget/path");
+  });
+
+  it("should handle cancel enter path modal", () => {
+    component.promptEnterPath("ui");
+    component.cancelEnterPathModal();
+    expect(component.showEnterPathModal).toBeFalse();
+    expect(component.enterPathType).toBeNull();
+    expect(component.manualPathInput).toBe("");
+  });
+
+  it("should handle confirm enter path", fakeAsync(() => {
+    mockFileSystem.setCustomFolder.and.returnValue(Promise.resolve(true));
+    mockFileSystem.getCustomDirectoryHandle.and.returnValue(
+      Promise.resolve({ name: "ManualDir" }),
+    );
+    mockFileSystem.getServerCustomUiPath.and.returnValue("/manual/path");
+
+    component.promptEnterPath("ui");
+    component.confirmEnterPath("/manual/path");
+    tick();
+    fixture.detectChanges();
+
+    expect(mockFileSystem.setCustomFolder).toHaveBeenCalledWith("/manual/path");
+    expect(component.customDirectoryName).toBe("ManualDir");
+    expect(component.customDirectoryPath).toBe("/manual/path");
+    expect(component.showEnterPathModal).toBeFalse();
+  }));
 
   it("should handle update sample widgets and show acknowledgement modal", async () => {
     await component.updateSampleWidgets();
@@ -774,6 +827,14 @@ describe("UIEditorComponent", () => {
     const lapsLed = component.availableColumns.find((c) => c.key === "lapsLed");
     expect(lapsLed).toBeTruthy();
     expect(lapsLed?.label).toBe("RD_COL_LAPS_LED");
+  });
+
+  it("should include trackCalls column in availableColumns", () => {
+    const trackCalls = component.availableColumns.find(
+      (c) => c.key === "trackCalls",
+    );
+    expect(trackCalls).toBeTruthy();
+    expect(trackCalls?.label).toBe("RD_COL_TRACK_CALLS");
   });
 
   it("should include driver flag column in availableColumns with label RD_COL_DRIVER_FLAG", () => {
@@ -1096,10 +1157,10 @@ describe("UIEditorComponent", () => {
 
       const sorted = component.displayThemes;
       expect(sorted.length).toBe(4);
-      expect(sorted[0].entity_id).toBe("default_classic_rc_ai");
-      expect(sorted[1].entity_id).toBe("practice_theme_rc_ai");
-      expect(sorted[2].name).toBe("ZZZ");
-      expect(sorted[3].name).toBe("AAA");
+      expect(sorted[0].name).toBe("AAA");
+      expect(sorted[1].name).toBe("Default");
+      expect(sorted[2].name).toBe("Practice");
+      expect(sorted[3].name).toBe("ZZZ");
     });
     it("should not show activate button on theme toolbar and allow theme selection", () => {
       const themes: Theme[] = [
@@ -1154,16 +1215,24 @@ describe("UIEditorComponent", () => {
       component.refreshDisplayProperties();
       fixture.detectChanges();
 
-      const inputs = fixture.debugElement.queryAll(By.css(".theme-name-input"));
-      expect(inputs.length).toBe(2);
+      const customSection = fixture.debugElement.query(
+        By.css('[data-theme-id="t2"]'),
+      );
+      expect(customSection).toBeTruthy();
+      const input = customSection.query(By.css(".theme-name-input"));
+      expect(input).toBeTruthy();
 
-      inputs[1].nativeElement.value = "Updated Name";
-      inputs[1].nativeElement.dispatchEvent(new Event("input"));
-      inputs[1].nativeElement.dispatchEvent(new Event("change"));
+      input.nativeElement.value = "Updated Name";
+      input.nativeElement.dispatchEvent(new Event("input"));
+      input.nativeElement.dispatchEvent(new Event("change"));
       tick();
 
-      expect(themes[1].name).toBe("Updated Name");
-      expect(mockDataService.updateTheme).toHaveBeenCalledWith("t2", themes[1]);
+      const customTheme = themes.find((t) => t.entity_id === "t2")!;
+      expect(customTheme.name).toBe("Updated Name");
+      expect(mockDataService.updateTheme).toHaveBeenCalledWith(
+        "t2",
+        customTheme,
+      );
     }));
 
     it("should enable image selectors for all themes including default", () => {
@@ -1394,6 +1463,7 @@ describe("UIEditorComponent", () => {
         entity_id: "t1",
         is_default: true,
         name: "Default",
+        slots: {},
       } as Theme;
       component.editingState.themes = [defaultTheme];
       component.refreshDisplayProperties();
@@ -1404,6 +1474,7 @@ describe("UIEditorComponent", () => {
         entity_id: "t2",
         is_default: false,
         name: "Default (Copy)",
+        slots: {},
       } as Theme;
       mockThemeService.duplicateTheme.and.returnValue(
         Promise.resolve(newTheme),
@@ -1975,6 +2046,230 @@ describe("UIEditorComponent", () => {
       });
       expect((component as any).areSettingsEqual(a, b)).toBeTrue();
     });
+
+    it("should detect a change in customExportTemplateBase64", () => {
+      const a = makeSettings({ customExportTemplateBase64: undefined });
+      const b = makeSettings({
+        customExportTemplateBase64: "data:application/vnd.ms-excel;base64,ABC",
+      });
+      expect((component as any).areSettingsEqual(a, b)).toBeFalse();
+
+      const c = makeSettings({
+        customExportTemplateBase64: "data:application/vnd.ms-excel;base64,XYZ",
+      });
+      expect((component as any).areSettingsEqual(b, c)).toBeFalse();
+    });
+
+    it("should report equal when customExportTemplateBase64 matches or is empty/undefined", () => {
+      const a = makeSettings({
+        customExportTemplateBase64: "data:application/vnd.ms-excel;base64,ABC",
+      });
+      const b = makeSettings({
+        customExportTemplateBase64: "data:application/vnd.ms-excel;base64,ABC",
+      });
+      expect((component as any).areSettingsEqual(a, b)).toBeTrue();
+
+      const c = makeSettings({ customExportTemplateBase64: undefined });
+      const d = makeSettings({ customExportTemplateBase64: "" });
+      expect((component as any).areSettingsEqual(c, d)).toBeTrue();
+    });
+    it("should detect changes in customExportTemplateName and customExportTemplatePath", () => {
+      const a = makeSettings({
+        customExportTemplateBase64: "data:abc",
+        customExportTemplateName: "t1.xlsx",
+        customExportTemplatePath: "/path1/t1.xlsx",
+      });
+      const b = makeSettings({
+        customExportTemplateBase64: "data:abc",
+        customExportTemplateName: "t2.xlsx",
+        customExportTemplatePath: "/path1/t1.xlsx",
+      });
+      expect((component as any).areSettingsEqual(a, b)).toBeFalse();
+
+      const c = makeSettings({
+        customExportTemplateBase64: "data:abc",
+        customExportTemplateName: "t1.xlsx",
+        customExportTemplatePath: "/path2/t1.xlsx",
+      });
+      expect((component as any).areSettingsEqual(a, c)).toBeFalse();
+    });
+  });
+
+  describe("custom export template actions and DOM rendering", () => {
+    let originalShowSaveFilePicker: any;
+    let mockWritable: any;
+    let mockHandle: any;
+
+    beforeEach(() => {
+      originalShowSaveFilePicker = (window as any).showSaveFilePicker;
+      mockWritable = {
+        write: jasmine.createSpy("write").and.returnValue(Promise.resolve()),
+        close: jasmine.createSpy("close").and.returnValue(Promise.resolve()),
+      };
+      mockHandle = {
+        createWritable: jasmine
+          .createSpy("createWritable")
+          .and.returnValue(Promise.resolve(mockWritable)),
+      };
+      (window as any).showSaveFilePicker = jasmine
+        .createSpy("showSaveFilePicker")
+        .and.returnValue(Promise.resolve(mockHandle));
+    });
+
+    afterEach(() => {
+      (window as any).showSaveFilePicker = originalShowSaveFilePicker;
+    });
+
+    it("should clear custom template and capture state", () => {
+      component.editingSettings.customExportTemplateBase64 = "data:test";
+      component.editingSettings.customExportTemplateName = "test.xlsx";
+      component.editingSettings.customExportTemplatePath = "/path/test.xlsx";
+      spyOn(component, "captureState").and.callThrough();
+
+      component.clearCustomTemplate();
+
+      expect(
+        component.editingSettings.customExportTemplateBase64,
+      ).toBeUndefined();
+      expect(
+        component.editingSettings.customExportTemplateName,
+      ).toBeUndefined();
+      expect(
+        component.editingSettings.customExportTemplatePath,
+      ).toBeUndefined();
+      expect(component.captureState).toHaveBeenCalled();
+    });
+
+    it("should handle onTemplateFileSelected, set customExportTemplate properties, and capture state", (done) => {
+      const file = new File(["test-content"], "test.xlsx", {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+      (file as any).path = "/docs/test.xlsx";
+      const input = document.createElement("input");
+      input.type = "file";
+      Object.defineProperty(input, "files", {
+        value: [file],
+        writable: true,
+      });
+
+      const event = { target: input } as unknown as Event;
+      spyOn(component, "captureState").and.callThrough();
+
+      component.onTemplateFileSelected(event);
+
+      setTimeout(() => {
+        expect(
+          component.editingSettings.customExportTemplateBase64,
+        ).toBeDefined();
+        expect(component.editingSettings.customExportTemplateBase64).toContain(
+          "data:",
+        );
+        expect(component.editingSettings.customExportTemplateName).toBe(
+          "test.xlsx",
+        );
+        expect(component.editingSettings.customExportTemplatePath).toBe(
+          "/docs/test.xlsx",
+        );
+        expect(component.captureState).toHaveBeenCalled();
+        done();
+      }, 50);
+    });
+
+    it("should render template file name and display full path on hover (title attribute)", () => {
+      component.sectionsExpanded["config"] = true;
+      component.editingSettings.customExportTemplateBase64 =
+        "data:application/test";
+      component.editingSettings.customExportTemplateName =
+        "custom_results.xlsx";
+      component.editingSettings.customExportTemplatePath =
+        "/home/user/templates/custom_results.xlsx";
+      fixture.detectChanges();
+
+      const templateContainer = fixture.nativeElement.querySelector(
+        "#help-export-template",
+      );
+      expect(templateContainer).toBeTruthy();
+
+      const directoryPathSpan =
+        templateContainer.querySelector(".directory-path");
+      expect(directoryPathSpan).toBeTruthy();
+      expect(directoryPathSpan.textContent.trim()).toBe("custom_results.xlsx");
+      expect(directoryPathSpan.getAttribute("title")).toBe(
+        "/home/user/templates/custom_results.xlsx",
+      );
+
+      const directoryInfoDiv =
+        templateContainer.querySelector(".directory-info");
+      expect(directoryInfoDiv.getAttribute("title")).toBe(
+        "/home/user/templates/custom_results.xlsx",
+      );
+    });
+
+    it("should fallback to custom_export_template.xlsx if custom template exists without filename", () => {
+      component.sectionsExpanded["config"] = true;
+      component.editingSettings.customExportTemplateBase64 =
+        "data:application/test";
+      delete component.editingSettings.customExportTemplateName;
+      delete component.editingSettings.customExportTemplatePath;
+      fixture.detectChanges();
+
+      const templateContainer = fixture.nativeElement.querySelector(
+        "#help-export-template",
+      );
+      const directoryPathSpan =
+        templateContainer.querySelector(".directory-path");
+      expect(directoryPathSpan.textContent.trim()).toBe(
+        "custom_export_template.xlsx",
+      );
+      expect(directoryPathSpan.getAttribute("title")).toBe(
+        "custom_export_template.xlsx",
+      );
+    });
+
+    it("should open template variables modal", () => {
+      component.showTemplateVariablesModal = false;
+      component.openTemplateVariablesModal();
+      expect(component.showTemplateVariablesModal).toBeTrue();
+    });
+
+    it("should download default template when no custom template is selected", fakeAsync(() => {
+      component.editingSettings.customExportTemplateBase64 = undefined;
+      component.downloadTemplate();
+      tick();
+      expect(mockDataService.downloadDefaultExportTemplate).toHaveBeenCalled();
+      expect((window as any).showSaveFilePicker).toHaveBeenCalled();
+    }));
+
+    it("should download selected custom template directly when custom template is present", fakeAsync(() => {
+      delete (window as any).showSaveFilePicker;
+      const clickSpy = spyOn(HTMLAnchorElement.prototype, "click");
+      const createUrlSpy = spyOn(window.URL, "createObjectURL").and.returnValue(
+        "blob:mock-url",
+      );
+      spyOn(window.URL, "revokeObjectURL").and.stub();
+      mockDataService.downloadDefaultExportTemplate.calls.reset();
+      component.editingSettings.customExportTemplateBase64 =
+        "data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,dGVzdA==";
+      component.editingSettings.customExportTemplateName =
+        "my_custom_template.xlsx";
+      component.downloadTemplate();
+      tick();
+      expect(
+        mockDataService.downloadDefaultExportTemplate,
+      ).not.toHaveBeenCalled();
+      expect(createUrlSpy).toHaveBeenCalled();
+      expect(clickSpy).toHaveBeenCalled();
+    }));
+
+    it("should trigger test export with custom template", fakeAsync(() => {
+      component.editingSettings.customExportTemplateBase64 = "custom-base64";
+      component.testExport();
+      tick();
+      expect(mockDataService.testExportXls).toHaveBeenCalledWith(
+        "custom-base64",
+      );
+      expect((window as any).showSaveFilePicker).toHaveBeenCalled();
+    }));
   });
 
   describe("autoSaveState – Promise-based API", () => {
@@ -2162,6 +2457,38 @@ describe("UIEditorComponent", () => {
       component.onConfirmDiscard();
       const result = await promise;
       expect(result).toBeTrue();
+    });
+
+    it("should provide unsaved reasons when changes cannot be saved", () => {
+      // Invalid theme name
+      spyOn(component, "isAnyThemeNameInvalid").and.returnValue(true);
+      expect(component.getUnsavedReasons()).toContain(
+        "DISCARD_REASON_THEME_NAME_INVALID",
+      );
+
+      // Invalid custom UI name
+      (component.isAnyThemeNameInvalid as jasmine.Spy).and.returnValue(false);
+      spyOn(component, "isAnyCustomUiNameInvalid").and.returnValue(true);
+      expect(component.getUnsavedReasons()).toContain(
+        "DISCARD_REASON_CUSTOM_UI_NAME_INVALID",
+      );
+
+      // Saving in progress
+      (component.isAnyCustomUiNameInvalid as jasmine.Spy).and.returnValue(
+        false,
+      );
+      component.isSaving = true;
+      expect(component.getUnsavedReasons()).toContain("DISCARD_REASON_SAVING");
+      component.isSaving = false;
+
+      // Exited too quickly (dirty, valid, not saving)
+      spyOn(component, "hasChanges").and.returnValue(true);
+      expect(component.getUnsavedReasons()).toContain(
+        "DISCARD_REASON_EXIT_TOO_QUICKLY",
+      );
+
+      // discardMessage contains bullet points
+      expect(component.discardMessage).toContain("•");
     });
   });
 
@@ -2650,9 +2977,11 @@ describe("UIEditorComponent", () => {
       expect(selectors).toContain("#help-custom-uis");
       expect(selectors).toContain("#help-custom-uis-add");
       expect(selectors).toContain("#help-default-ui");
+      expect(selectors).toContain("#help-raceday-zoom");
       expect(selectors).toContain("#help-raceday-sort");
       expect(selectors).toContain("#help-raceday-highlight");
       expect(selectors).toContain("#help-raceday-reset");
+      expect(selectors).toContain("#help-raceday-clear");
       expect(selectors).toContain("#help-raceday-import-export");
       expect(selectors).toContain("#help-raceday-canvas");
       expect(selectors).toContain("#help-widget-inspector");
@@ -2849,6 +3178,15 @@ describe("UIEditorComponent", () => {
         "My Custom Layout",
       );
 
+      const renamedDefaultUi: any = {
+        entity_id: "default_ui_layout_rc_ai",
+        is_default: true,
+        name: "Renamed Default Layout",
+      };
+      expect(component.getCustomUiDisplayNameKey(renamedDefaultUi)).toBe(
+        "Renamed Default Layout",
+      );
+
       expect(component.isCustomUiDefault(defaultUi)).toBeTrue();
       expect(component.isCustomUiDefault(practiceUi)).toBeTrue();
       expect(component.isCustomUiDefault(fuelUi)).toBeTrue();
@@ -2888,10 +3226,102 @@ describe("UIEditorComponent", () => {
         "My Custom Theme",
       );
 
+      const renamedDefaultTheme: any = {
+        entity_id: "default_classic_rc_ai",
+        is_default: true,
+        name: "Renamed Default Theme",
+      };
+      expect(component.getThemeDisplayNameKey(renamedDefaultTheme)).toBe(
+        "Renamed Default Theme",
+      );
+
       expect(component.isThemeDefault(defaultTheme)).toBeTrue();
       expect(component.isThemeDefault(practiceTheme)).toBeTrue();
       expect(component.isThemeDefault(fuelTheme)).toBeTrue();
       expect(component.isThemeDefault(customTheme)).toBeFalse();
+    });
+
+    it("should capture state and refresh display properties when custom UI name or theme name changes", () => {
+      spyOn(component, "captureState");
+      spyOn(component, "refreshDisplayProperties");
+
+      const ui: any = { entity_id: "u1", name: "New UI Name" };
+      component.onCustomUiNameChanged(ui);
+      expect(component.captureState).toHaveBeenCalled();
+      expect(component.refreshDisplayProperties).toHaveBeenCalled();
+
+      const theme: any = { entity_id: "t1", name: "New Theme Name" };
+      component.onThemeNameChanged(theme);
+      expect(component.captureState).toHaveBeenCalledTimes(2);
+      expect(component.refreshDisplayProperties).toHaveBeenCalledTimes(2);
+    });
+
+    it("should re-sort themes alphabetically upon onThemeNameChanged while preserving expanded state", () => {
+      const t1 = {
+        entity_id: "theme_1",
+        name: "Bravo Theme",
+        slots: {},
+      } as Theme;
+      const t2 = {
+        entity_id: "theme_2",
+        name: "Delta Theme",
+        slots: {},
+      } as Theme;
+      const t3 = {
+        entity_id: "theme_3",
+        name: "Echo Theme",
+        slots: {},
+      } as Theme;
+
+      component.editingState.themes = [t1, t2, t3];
+      component.refreshDisplayProperties();
+
+      expect(component.displayThemes.map((t) => t.name)).toEqual([
+        "Bravo Theme",
+        "Delta Theme",
+        "Echo Theme",
+      ]);
+
+      // Expand Delta Theme
+      component.sectionsExpanded["theme_theme_2"] = true;
+
+      // User modifies theme in place (simulating typing in the input before blur)
+      const deltaTheme = component.displayThemes.find(
+        (t) => t.entity_id === "theme_2",
+      )!;
+      deltaTheme.name = "Alpha Theme";
+
+      // displayThemes should still be in the previous order until onThemeNameChanged is invoked
+      expect(component.displayThemes.map((t) => t.entity_id)).toEqual([
+        "theme_1",
+        "theme_2",
+        "theme_3",
+      ]);
+
+      // Commit rename (simulating blur/enter triggering onThemeNameChanged)
+      component.onThemeNameChanged(deltaTheme);
+
+      // Now displayThemes should be re-sorted alphabetically
+      expect(component.displayThemes.map((t) => t.name)).toEqual([
+        "Alpha Theme",
+        "Bravo Theme",
+        "Echo Theme",
+      ]);
+      expect(component.displayThemes[0].entity_id).toBe("theme_2");
+
+      // Expanded state must be preserved
+      expect(component.sectionsExpanded["theme_theme_2"]).toBeTrue();
+    });
+
+    it("should sync editingState.themes in captureState", () => {
+      const t1 = { entity_id: "theme_1", name: "Theme 1", slots: {} } as Theme;
+      component.displayThemes = [t1];
+      component.editingState.themes = [];
+
+      component.captureState();
+
+      expect(component.editingState.themes.length).toBe(1);
+      expect(component.editingState.themes[0].name).toBe("Theme 1");
     });
 
     it("should handle onCustomUiSelected and only select default widget when no valid widget is selected", () => {
@@ -2974,6 +3404,34 @@ describe("UIEditorComponent", () => {
       expect(component.onImportPracticeRacedayLayout).toHaveBeenCalledWith(
         fakeEvent,
       );
+    });
+
+    it("should delegate clearLayout and clearCurrentLayout properly", () => {
+      spyOn(component.undoManager, "captureState");
+      const customUi: CustomUI = {
+        entity_id: "default_ui_layout_rc_ai",
+        name: "Default UI",
+        is_default: true,
+        layoutJson: JSON.stringify({
+          baseWidth: 1920,
+          baseHeight: 1080,
+          widgets: [{ id: "w1", widgetType: "lane-view" }],
+        }),
+      };
+      component.displayCustomUIs = [customUi];
+      component.activeCustomUiId = "default_ui_layout_rc_ai";
+      component.selectedWidgetId = "w1";
+
+      component.clearLayout(customUi);
+      expect(JSON.parse(customUi.layoutJson!).widgets).toEqual([]);
+      expect(component.selectedWidgetId).toBeNull();
+      expect(component.undoManager.captureState).toHaveBeenCalled();
+
+      spyOn(component, "clearLayout");
+      const targetUi = component.getTargetCustomUi("raceday");
+      expect(targetUi).toBeDefined();
+      component.clearCurrentLayout();
+      expect(component.clearLayout).toHaveBeenCalledWith(targetUi!);
     });
   });
 
@@ -3199,6 +3657,41 @@ describe("UIEditorComponent", () => {
       ).toBeFalse();
     });
 
+    it("should preserve custom theme uiId when theme references custom UI '2'", () => {
+      const customLayout: CustomUI = {
+        entity_id: "2",
+        name: "Custom Leaderboard",
+        is_default: false,
+      };
+      const customTheme: Theme = {
+        entity_id: "3",
+        name: "Custom Leaderboard Theme",
+        is_default: false,
+        uiId: "2",
+        slots: {},
+        audio_slots: {},
+      };
+      component.editingState.customUIs = [
+        ...(component.editingState.customUIs || []),
+        customLayout,
+      ];
+      component.editingState.themes = [
+        ...(component.editingState.themes || []),
+        customTheme,
+      ];
+      component.refreshDisplayProperties();
+
+      expect(
+        component.displayCustomUIs.some(
+          (u) => u.entity_id === "2" && u.name === "Custom Leaderboard",
+        ),
+      ).toBeTrue();
+      const loadedTheme = component.editingState.themes.find(
+        (t) => t.entity_id === "3",
+      );
+      expect(loadedTheme?.uiId).toBe("2");
+    });
+
     it("should not collide when a theme and custom UI layout share the same entity_id", () => {
       const themeWithSameId: Theme = {
         entity_id: "1",
@@ -3231,6 +3724,70 @@ describe("UIEditorComponent", () => {
       expect(component.sectionsExpanded["ui_1"]).toBeTrue();
       expect(component.sectionsExpanded["theme_1"]).toBeTrue();
     });
+
+    it("should call scrollToTheme when expanding a theme section", fakeAsync(() => {
+      spyOn(component, "scrollToTheme").and.callThrough();
+      component.sectionsExpanded["theme_1"] = false;
+      component.toggleThemeSection("1");
+      expect(component.scrollToTheme).toHaveBeenCalledWith("1");
+
+      // Calling toggleThemeSection again to collapse should not trigger scrollToTheme
+      (component.scrollToTheme as jasmine.Spy).calls.reset();
+      component.toggleThemeSection("1");
+      expect(component.scrollToTheme).not.toHaveBeenCalled();
+    }));
+
+    it("should scroll container when scrollToTheme is called with valid elements", fakeAsync(() => {
+      const mockContainer = document.createElement("div");
+      mockContainer.className = "sections-wrapper";
+      spyOn(mockContainer, "getBoundingClientRect").and.returnValue({
+        top: 100,
+      } as any);
+      spyOn(mockContainer, "scrollTo");
+      Object.defineProperty(mockContainer, "scrollTop", {
+        value: 50,
+        configurable: true,
+      });
+
+      const mockElement = document.createElement("div");
+      mockElement.setAttribute("data-theme-id", "t_scroll");
+      spyOn(mockElement, "getBoundingClientRect").and.returnValue({
+        top: 300,
+      } as any);
+
+      spyOn(document, "querySelector").and.callFake((selector: string) => {
+        if (selector === ".sections-wrapper") return mockContainer;
+        if (selector === '[data-theme-id="t_scroll"]') return mockElement;
+        return null;
+      });
+
+      component.scrollToTheme("t_scroll");
+      tick();
+
+      expect(mockContainer.scrollTo as jasmine.Spy).toHaveBeenCalledWith({
+        top: 300 - 100 + 50 - 15,
+        behavior: "smooth",
+      });
+    }));
+
+    it("should fallback to scrollIntoView when container is not found in scrollToTheme", fakeAsync(() => {
+      const mockElement = document.createElement("div");
+      mockElement.setAttribute("data-theme-id", "t_fallback");
+      spyOn(mockElement, "scrollIntoView");
+
+      spyOn(document, "querySelector").and.callFake((selector: string) => {
+        if (selector === '[data-theme-id="t_fallback"]') return mockElement;
+        return null;
+      });
+
+      component.scrollToTheme("t_fallback");
+      tick();
+
+      expect(mockElement.scrollIntoView as jasmine.Spy).toHaveBeenCalledWith({
+        behavior: "smooth",
+        block: "start",
+      });
+    }));
 
     it("should auto-save modified custom UIs and refresh customUiService", async () => {
       const customUi: CustomUI = {
@@ -3350,6 +3907,41 @@ describe("UIEditorComponent", () => {
       expect(inspector).toBeTruthy();
     });
 
+    it("should render widget toolbox at workspace level above canvas and widget inspector", () => {
+      component.activeCustomUiId = "default_ui_layout_rc_ai";
+      component.sectionsExpanded["ui_default_ui_layout_rc_ai"] = true;
+      component.editingSettings.racedayLayout = {
+        baseWidth: 1920,
+        baseHeight: 1080,
+        widgets: [{ id: "lv1", widgetType: "lane-view" } as any],
+      };
+      fixture.detectChanges();
+
+      const toolbox = fixture.debugElement.query(
+        By.css(".layout-customizer-toolbox-wrapper"),
+      );
+      expect(toolbox).toBeTruthy();
+
+      // Select widget to show inspector
+      component.onWidgetSelected("lv1");
+      fixture.detectChanges();
+
+      const inspector = fixture.debugElement.query(
+        By.css("#help-widget-inspector"),
+      );
+      expect(inspector).toBeTruthy();
+
+      const workspace = fixture.debugElement.query(
+        By.css(".raceday-editor-workspace"),
+      );
+      expect(workspace).toBeTruthy();
+
+      // Verify toolbox wrapper is inside the workspace alongside canvas and inspector
+      expect(
+        workspace.nativeElement.contains(toolbox.nativeElement),
+      ).toBeTrue();
+    });
+
     it("should select replacement widget when currently selected widget is removed", () => {
       const w1: any = { id: "w1", widgetType: "timer" };
       const w2: any = { id: "w2", widgetType: "lane-view" };
@@ -3405,6 +3997,610 @@ describe("UIEditorComponent", () => {
       const parsed = JSON.parse(customUi.layoutJson);
       expect(parsed.widgets[0].customSettings.showGap).toBeFalse();
       expect(component.undoManager.captureState).toHaveBeenCalled();
+    });
+
+    it("should preserve collapsed column groups on lane-view widget per layout independently", () => {
+      spyOn(component.undoManager, "captureState");
+      const customUi1: any = {
+        entity_id: "custom_ui_1",
+        layoutJson: JSON.stringify({
+          baseWidth: 1920,
+          baseHeight: 1080,
+          widgets: [
+            {
+              id: "lv1",
+              widgetType: "lane-view",
+              customSettings: { collapsedColumnGroups: { analysis: true } },
+            },
+          ],
+        }),
+      };
+      const customUi2: any = {
+        entity_id: "custom_ui_2",
+        layoutJson: JSON.stringify({
+          baseWidth: 1920,
+          baseHeight: 1080,
+          widgets: [
+            {
+              id: "lv2",
+              widgetType: "lane-view",
+              customSettings: { collapsedColumnGroups: { analysis: false } },
+            },
+          ],
+        }),
+      };
+      component.displayCustomUIs = [customUi1, customUi2];
+
+      // Update layout 1 widget
+      component.activeCustomUiId = "custom_ui_1";
+      component.selectedWidgetId = "lv1";
+      const updatedWidget1 = {
+        id: "lv1",
+        widgetType: "lane-view",
+        customSettings: {
+          collapsedColumnGroups: { analysis: true, driver: true },
+        },
+      };
+      component.onWidgetInspectorChange(updatedWidget1, customUi1);
+
+      const parsed1 = JSON.parse(customUi1.layoutJson);
+      const parsed2 = JSON.parse(customUi2.layoutJson);
+      expect(parsed1.widgets[0].customSettings.collapsedColumnGroups).toEqual({
+        analysis: true,
+        driver: true,
+      });
+      expect(parsed2.widgets[0].customSettings.collapsedColumnGroups).toEqual({
+        analysis: false,
+      });
+    });
+
+    it("should preserve collapsed toolbox groupings per layout independently", () => {
+      const customUi1: any = {
+        entity_id: "custom_ui_1",
+        layoutJson: JSON.stringify({
+          baseWidth: 1920,
+          baseHeight: 1080,
+          widgets: [],
+          collapsedToolboxGroups: { "race-coordinator-ai": true },
+          collapsedToolboxSubgroups: { actions: true },
+        }),
+      };
+      const customUi2: any = {
+        entity_id: "custom_ui_2",
+        layoutJson: JSON.stringify({
+          baseWidth: 1920,
+          baseHeight: 1080,
+          widgets: [],
+          collapsedToolboxGroups: { "race-coordinator-ai": false },
+          collapsedToolboxSubgroups: { actions: false },
+        }),
+      };
+      component.displayCustomUIs = [customUi1, customUi2];
+
+      // Update layout 1 toolbox state via onLayoutChanged with customUi1
+      component.activeCustomUiId = "custom_ui_1";
+      const updatedLayout1 = {
+        baseWidth: 1920,
+        baseHeight: 1080,
+        widgets: [],
+        collapsedToolboxGroups: {
+          "race-coordinator-ai": false,
+          telemetry: true,
+        },
+        collapsedToolboxSubgroups: { actions: false },
+      };
+      component.onLayoutChanged(updatedLayout1, customUi1);
+
+      const parsed1 = JSON.parse(customUi1.layoutJson);
+      const parsed2 = JSON.parse(customUi2.layoutJson);
+      expect(parsed1.collapsedToolboxGroups).toEqual({
+        "race-coordinator-ai": false,
+        telemetry: true,
+      });
+      expect(parsed2.collapsedToolboxGroups).toEqual({
+        "race-coordinator-ai": false,
+      });
+    });
+
+    it("should manage aspect ratio and scale mode settings on layouts", () => {
+      const customUi: CustomUI = {
+        _id: "ui_aspect_test",
+        entity_id: "ui_aspect_test",
+        name: "Aspect Test",
+        is_default: false,
+        layoutJson: JSON.stringify({
+          baseWidth: 1920,
+          baseHeight: 1080,
+          aspectRatio: "16:9",
+          scaleMode: "letterbox",
+          widgets: [],
+        }),
+      };
+      component.displayCustomUIs = [customUi];
+      component.activeCustomUiId = "ui_aspect_test";
+
+      expect(component.getLayoutAspectRatio(customUi)).toBe("16:9");
+      expect(component.getLayoutScaleMode(customUi)).toBe("letterbox");
+
+      const unspecifiedUi: CustomUI = {
+        _id: "ui_default_test",
+        entity_id: "ui_default_test",
+        name: "Unspecified Test",
+        is_default: false,
+        layoutJson: JSON.stringify({
+          widgets: [],
+        }),
+      };
+      expect(component.getLayoutAspectRatio(unspecifiedUi)).toBe("current");
+      expect(component.getLayoutScaleMode(unspecifiedUi)).toBe("stretch");
+
+      const options = component.getLayoutAspectRatioOptions(customUi);
+      expect(options.some((o) => o.ratio === "16:9")).toBeTrue();
+      expect(options.some((o) => o.ratio === "5:4")).toBeTrue();
+
+      spyOn(component, "captureState");
+      component.setLayoutAspectRatio("5:4", customUi);
+      expect(component.getLayoutAspectRatio(customUi)).toBe("5:4");
+      expect(component.parsedLayouts.get("ui_aspect_test")?.aspectRatio).toBe(
+        "5:4",
+      );
+      component.setLayoutAspectRatio("9:16", customUi);
+      expect(component.getLayoutAspectRatio(customUi)).toBe("9:16");
+      expect(component.parsedLayouts.get("ui_aspect_test")?.aspectRatio).toBe(
+        "9:16",
+      );
+      expect(component.captureState).toHaveBeenCalled();
+
+      component.setLayoutScaleMode("stretch", customUi);
+      expect(component.getLayoutScaleMode(customUi)).toBe("stretch");
+      expect(component.parsedLayouts.get("ui_aspect_test")?.scaleMode).toBe(
+        "stretch",
+      );
+
+      spyOnProperty(window, "innerWidth", "get").and.returnValue(1440);
+      spyOnProperty(window, "innerHeight", "get").and.returnValue(900);
+      component.onResize();
+      const currentOpt = component.layoutAspectRatioOptions.find(
+        (o) => o.ratio === "current",
+      );
+      expect(currentOpt?.width).toBe(1440);
+      expect(currentOpt?.height).toBe(900);
+    });
+
+    it("should handle canvas zoom operations and calculate preview scale", () => {
+      const customUi: CustomUI = {
+        entity_id: "ui_zoom_test",
+        name: "Zoom Test UI",
+        is_default: false,
+        layoutJson: JSON.stringify({
+          baseWidth: 1080,
+          baseHeight: 1920,
+          aspectRatio: "9:16",
+          widgets: [],
+        }),
+      };
+      component.editingState.customUIs = [customUi];
+      component.activeCustomUiId = "ui_zoom_test";
+
+      // Default zoom is 100%
+      expect(component.getLayoutZoom(customUi)).toBe(100);
+
+      // Set zoom to 150%
+      component.setLayoutZoom(150, customUi);
+      expect(component.getLayoutZoom(customUi)).toBe(150);
+
+      // Clamping: max 500%
+      component.setLayoutZoom(600, customUi);
+      expect(component.getLayoutZoom(customUi)).toBe(500);
+
+      // Clamping: min 75%
+      component.setLayoutZoom(10, customUi);
+      expect(component.getLayoutZoom(customUi)).toBe(75);
+
+      // Stepping zoom
+      component.setLayoutZoom(100, customUi);
+      component.stepZoom(10, customUi);
+      expect(component.getLayoutZoom(customUi)).toBe(110);
+      component.stepZoom(-20, customUi);
+      expect(component.getLayoutZoom(customUi)).toBe(90);
+
+      // Reset zoom
+      component.resetLayoutZoom(customUi);
+      expect(component.getLayoutZoom(customUi)).toBe(100);
+
+      // onZoomInput event
+      const inputEvent = {
+        target: { value: "175" },
+      } as unknown as Event;
+      component.onZoomInput(inputEvent, customUi);
+      expect(component.getLayoutZoom(customUi)).toBe(175);
+
+      // Preview scale includes zoom
+      const scale175 = component.getPreviewScaleNumber(customUi);
+      component.setLayoutZoom(100, customUi);
+      const scale100 = component.getPreviewScaleNumber(customUi);
+      expect(scale175).toBeCloseTo(scale100 * 1.75, 4);
+
+      // Container width & height scale with zoom
+      const width100 = component.getPreviewContainerWidth(customUi);
+      const height100 = component.getPreviewContainerHeight(customUi);
+      component.setLayoutZoom(200, customUi);
+      expect(component.getPreviewContainerWidth(customUi)).toBeCloseTo(
+        width100 * 2,
+        4,
+      );
+      expect(component.getPreviewContainerHeight(customUi)).toBeCloseTo(
+        height100 * 2,
+        4,
+      );
+
+      // Viewport and inspector heights
+      const maxViewportHeight = component.getCanvasViewportMaxHeight(customUi);
+      expect(maxViewportHeight).toBeGreaterThanOrEqual(500);
+      const inspectorHeight = component.getInspectorHeight(customUi);
+      expect(inspectorHeight).toBeGreaterThanOrEqual(400);
+      expect(inspectorHeight).toBeLessThanOrEqual(maxViewportHeight);
+    });
+  });
+
+  describe("Widget Selector and Countdown Preview Toggle", () => {
+    it("should toggle countdown preview state per UI", () => {
+      const customUi = {
+        entity_id: "test-ui-countdown-preview",
+        name: "Test Countdown UI",
+      } as CustomUI;
+
+      expect(component.isCountdownPreviewActive(customUi)).toBeFalse();
+      component.toggleCountdownPreview(customUi);
+      expect(component.isCountdownPreviewActive(customUi)).toBeTrue();
+      component.toggleCountdownPreview(customUi);
+      expect(component.isCountdownPreviewActive(customUi)).toBeFalse();
+    });
+
+    it("should select widget via onWidgetDropdownSelect", () => {
+      const customUi = {
+        entity_id: "test-ui-widget-select",
+        name: "Test Select UI",
+      } as CustomUI;
+      spyOn(component, "onWidgetSelected");
+
+      component.onWidgetDropdownSelect("widget-countdown", customUi);
+      expect(component.onWidgetSelected).toHaveBeenCalledWith(
+        "widget-countdown",
+        customUi,
+      );
+
+      component.onWidgetDropdownSelect("", customUi);
+      expect(component.onWidgetSelected).toHaveBeenCalledWith(null, customUi);
+    });
+
+    it("should return layout widgets and localized display name", () => {
+      const customUi = {
+        entity_id: "test-ui-widgets-list",
+        name: "Test Widgets UI",
+      } as CustomUI;
+      const widgets = component.getLayoutWidgets(customUi);
+      expect(Array.isArray(widgets)).toBeTrue();
+
+      const name = component.getWidgetDisplayName({
+        id: "widget-countdown",
+        widgetType: "countdown",
+        x: 0,
+        y: 0,
+        width: 100,
+        height: 100,
+        zIndex: 100,
+      });
+      expect(name).toBeTruthy();
+    });
+
+    it("should update urgentQueueTtl and calloutSpacing on editingSettings", () => {
+      component.editingSettings.urgentQueueTtl = 5000;
+      component.editingSettings.calloutSpacing = 500;
+
+      component.onUrgentQueueTtlChange(3000);
+      expect(component.editingSettings.urgentQueueTtl).toBe(3000);
+
+      component.onCalloutSpacingChange(1000);
+      expect(component.editingSettings.calloutSpacing).toBe(1000);
+    });
+
+    it("should update TTS settings on editingSettings", () => {
+      component.editingSettings.masterVolume = 100;
+      component.editingSettings.ttsVoice = "";
+      component.editingSettings.ttsRate = 1.0;
+      component.editingSettings.ttsPitch = 1.0;
+      component.editingSettings.ttsVolume = 100;
+
+      component.onMasterVolumeChange(85);
+      expect(component.editingSettings.masterVolume).toBe(85);
+
+      component.onMasterVolumeChange("60");
+      expect(component.editingSettings.masterVolume).toBe(60);
+
+      component.onTtsVoiceChange("Alex");
+      expect(component.editingSettings.ttsVoice).toBe("Alex");
+
+      component.onTtsRateChange(1.25);
+      expect(component.editingSettings.ttsRate).toBe(1.25);
+
+      component.onTtsRateChange("1.75");
+      expect(component.editingSettings.ttsRate).toBe(1.75);
+
+      component.onTtsPitchChange(0.9);
+      expect(component.editingSettings.ttsPitch).toBe(0.9);
+
+      component.onTtsPitchChange("1.3");
+      expect(component.editingSettings.ttsPitch).toBe(1.3);
+
+      component.onTtsVolumeChange(80);
+      expect(component.editingSettings.ttsVolume).toBe(80);
+
+      component.onTtsVolumeChange("45");
+      expect(component.editingSettings.ttsVolume).toBe(45);
+    });
+
+    it("should call audioService.previewTTS when testTtsVoice is invoked", () => {
+      const mockAudio = {
+        previewTTS: jasmine.createSpy("previewTTS"),
+      };
+      (component as any).audioService = mockAudio;
+      component.editingSettings.masterVolume = 90;
+      component.editingSettings.ttsVoice = "Alex";
+      component.editingSettings.ttsRate = 1.5;
+      component.editingSettings.ttsPitch = 0.8;
+      component.editingSettings.ttsVolume = 75;
+
+      component.testTtsVoice();
+
+      expect(mockAudio.previewTTS).toHaveBeenCalledWith(
+        jasmine.any(String),
+        "Alex",
+        1.5,
+        0.8,
+        75,
+        90,
+      );
+    });
+
+    it("should render Custom UI Settings and Audio Settings sections inside config-row", () => {
+      component.sectionsExpanded["config"] = true;
+      component.sectionsExpanded["audioSettings"] = true;
+      fixture.detectChanges();
+
+      const configRow = fixture.nativeElement.querySelector(".config-row");
+      expect(configRow).toBeTruthy();
+
+      const customUiSection = configRow.querySelector(
+        '.config-section[data-section="config"]',
+      );
+      expect(customUiSection).toBeTruthy();
+
+      const audioSettingsSection = configRow.querySelector(
+        '.config-section[data-section="audioSettings"]',
+      );
+      expect(audioSettingsSection).toBeTruthy();
+    });
+
+    it("should allow long TTS voice strings without error", () => {
+      const longVoice =
+        "Microsoft Server Speech Text to Speech Voice (en-US, AriaNeural) (en-US)";
+      component.onTtsVoiceChange(longVoice);
+      expect(component.editingSettings.ttsVoice).toBe(longVoice);
+    });
+
+    it("should focus custom UI and theme name inputs", (done) => {
+      const uiInput = document.createElement("input");
+      uiInput.id = "custom-ui-name-input-ui_123";
+      document.body.appendChild(uiInput);
+      spyOn(uiInput, "focus");
+
+      const themeInput = document.createElement("input");
+      themeInput.id = "theme-name-input-theme_456";
+      document.body.appendChild(themeInput);
+      spyOn(themeInput, "focus");
+
+      component.focusUiNameInput("ui_123");
+      component.focusThemeNameInput("theme_456");
+
+      setTimeout(() => {
+        expect(uiInput.focus).toHaveBeenCalled();
+        expect(themeInput.focus).toHaveBeenCalled();
+        document.body.removeChild(uiInput);
+        document.body.removeChild(themeInput);
+        done();
+      }, 200);
+    });
+
+    describe("Widget Inspector Geometry & Deletion", () => {
+      let testCustomUi: any;
+
+      beforeEach(() => {
+        testCustomUi = {
+          entity_id: "custom_ui_test",
+          layoutJson: JSON.stringify({
+            baseWidth: 1920,
+            baseHeight: 1080,
+            widgets: [
+              {
+                id: "w_lane",
+                widgetType: "lane-view",
+                x: 0,
+                y: 0,
+                width: 800,
+                height: 600,
+              },
+              {
+                id: "w_timer",
+                widgetType: "timer",
+                x: 100,
+                y: 200,
+                width: 300,
+                height: 150,
+              },
+            ],
+          }),
+        };
+        component.displayCustomUIs = [testCustomUi];
+        component.activeCustomUiId = "custom_ui_test";
+        component.selectedWidgetId = "w_timer";
+      });
+
+      it("should do nothing when removeSelectedWidget is called with no selected widget", () => {
+        spyOn(component, "onLayoutChanged");
+        component.selectedWidgetId = null;
+        component.removeSelectedWidget();
+        expect(component.onLayoutChanged).not.toHaveBeenCalled();
+      });
+
+      it("should remove the selected widget and select the lane-view fallback", () => {
+        spyOn(component, "onLayoutChanged");
+        component.removeSelectedWidget();
+
+        expect(component.onLayoutChanged).toHaveBeenCalled();
+        const updatedLayout = (
+          component.onLayoutChanged as jasmine.Spy
+        ).calls.mostRecent().args[0];
+        expect(updatedLayout.widgets.length).toBe(1);
+        expect(updatedLayout.widgets[0].id).toBe("w_lane");
+        expect(component.selectedWidgetId).toBe("w_lane");
+      });
+
+      it("should do nothing when nudgeSelectedWidget is called with invalid widget id", () => {
+        spyOn(component, "onWidgetInspectorChange");
+        component.selectedWidgetId = "non_existent";
+        component.nudgeSelectedWidget(10, 10);
+        expect(component.onWidgetInspectorChange).not.toHaveBeenCalled();
+      });
+
+      it("should nudge widget position and clamp within canvas boundaries", () => {
+        spyOn(component, "onWidgetInspectorChange");
+        component.nudgeSelectedWidget(50, -50);
+
+        const widget = component.selectedWidget;
+        expect(widget.x).toBe(150);
+        expect(widget.y).toBe(150);
+        expect(component.onWidgetInspectorChange).toHaveBeenCalledWith(
+          widget,
+          testCustomUi,
+        );
+
+        // Nudge beyond max bounds
+        component.nudgeSelectedWidget(3000, 3000);
+        expect(widget.x).toBe(1920 - 300);
+        expect(widget.y).toBe(1080 - 150);
+
+        // Nudge again beyond max bounds - position doesn't change, onWidgetInspectorChange not called again
+        (component.onWidgetInspectorChange as jasmine.Spy).calls.reset();
+        component.nudgeSelectedWidget(10, 10);
+        expect(component.onWidgetInspectorChange).not.toHaveBeenCalled();
+      });
+
+      it("should clamp onWidgetXChange between 0 and baseWidth - width", () => {
+        spyOn(component, "onWidgetInspectorChange");
+        const widget = component.selectedWidget;
+
+        component.onWidgetXChange(250, widget, testCustomUi);
+        expect(widget.x).toBe(250);
+
+        // Negative clamp
+        component.onWidgetXChange(-50, widget, testCustomUi);
+        expect(widget.x).toBe(0);
+
+        // Max bounds clamp
+        component.onWidgetXChange(2500, widget, testCustomUi);
+        expect(widget.x).toBe(1920 - 300);
+
+        // NaN fallback
+        component.onWidgetXChange("invalid", widget, testCustomUi);
+        expect(widget.x).toBe(0);
+      });
+
+      it("should clamp onWidgetYChange between 0 and baseHeight - height", () => {
+        spyOn(component, "onWidgetInspectorChange");
+        const widget = component.selectedWidget;
+
+        component.onWidgetYChange(350, widget, testCustomUi);
+        expect(widget.y).toBe(350);
+
+        // Negative clamp
+        component.onWidgetYChange(-100, widget, testCustomUi);
+        expect(widget.y).toBe(0);
+
+        // Max bounds clamp
+        component.onWidgetYChange(2000, widget, testCustomUi);
+        expect(widget.y).toBe(1080 - 150);
+
+        // NaN fallback
+        component.onWidgetYChange("invalid", widget, testCustomUi);
+        expect(widget.y).toBe(0);
+      });
+
+      it("should clamp onWidgetWidthChange between 50 and baseWidth - x", () => {
+        spyOn(component, "onWidgetInspectorChange");
+        const widget = component.selectedWidget;
+        widget.x = 100;
+
+        component.onWidgetWidthChange(400, widget, testCustomUi);
+        expect(widget.width).toBe(400);
+
+        // Below min clamp (50)
+        component.onWidgetWidthChange(10, widget, testCustomUi);
+        expect(widget.width).toBe(50);
+
+        // Beyond max bounds (1920 - 100 = 1820)
+        component.onWidgetWidthChange(2500, widget, testCustomUi);
+        expect(widget.width).toBe(1820);
+
+        // NaN fallback
+        component.onWidgetWidthChange("invalid", widget, testCustomUi);
+        expect(widget.width).toBe(50);
+      });
+
+      it("should clamp onWidgetHeightChange between 20 and baseHeight - y", () => {
+        spyOn(component, "onWidgetInspectorChange");
+        const widget = component.selectedWidget;
+        widget.y = 100;
+
+        component.onWidgetHeightChange(250, widget, testCustomUi);
+        expect(widget.height).toBe(250);
+
+        // Below min clamp (20)
+        component.onWidgetHeightChange(5, widget, testCustomUi);
+        expect(widget.height).toBe(20);
+
+        // Beyond max bounds (1080 - 100 = 980)
+        component.onWidgetHeightChange(2000, widget, testCustomUi);
+        expect(widget.height).toBe(980);
+
+        // NaN fallback
+        component.onWidgetHeightChange("invalid", widget, testCustomUi);
+        expect(widget.height).toBe(50);
+      });
+
+      it("should include password manager ignore attributes on inspector geometry inputs", () => {
+        component.sectionsExpanded["customUIs"] = true;
+        component.sectionsExpanded["ui_" + testCustomUi.entity_id] = true;
+        fixture.detectChanges();
+        const xInput = fixture.nativeElement.querySelector("#inspector-pos-x");
+        const yInput = fixture.nativeElement.querySelector("#inspector-pos-y");
+        const wInput = fixture.nativeElement.querySelector("#inspector-pos-w");
+        const hInput = fixture.nativeElement.querySelector("#inspector-pos-h");
+
+        expect(xInput).toBeTruthy();
+        expect(yInput).toBeTruthy();
+        expect(wInput).toBeTruthy();
+        expect(hInput).toBeTruthy();
+
+        for (const input of [xInput, yInput, wInput, hInput]) {
+          expect(input.getAttribute("autocomplete")).toBe("off");
+          expect(input.getAttribute("data-dashlane-ignore")).toBe("true");
+          expect(input.getAttribute("data-1p-ignore")).toBe("true");
+          expect(input.getAttribute("data-lpignore")).toBe("true");
+          expect(input.getAttribute("data-bwignore")).toBe("true");
+          expect(input.getAttribute("data-form-type")).toBe("other");
+        }
+      });
     });
   });
 });

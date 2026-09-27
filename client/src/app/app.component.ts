@@ -1,4 +1,10 @@
-import { ChangeDetectorRef, Component, NgZone, OnInit } from "@angular/core";
+import {
+  ChangeDetectorRef,
+  Component,
+  HostListener,
+  NgZone,
+  OnInit,
+} from "@angular/core";
 import {
   ChildrenOutletContexts,
   NavigationEnd,
@@ -39,6 +45,8 @@ import { ThemeService } from "./services/theme.service";
         position: relative;
         width: 100%;
         height: 100%;
+        height: 100dvh;
+        min-height: 100dvh;
         overflow: hidden;
         background-color: #000;
       }
@@ -204,5 +212,15 @@ export class AppComponent implements OnInit {
     // Return unique state string to ensure the animation triggers on every navigation
     const direction = this.navigationService.getDirection();
     return `${type}:${direction}:${routePath}:${this.navigationCounter}`;
+  }
+
+  @HostListener("window:dragover", ["$event"])
+  onWindowDragOver(event: DragEvent): void {
+    event.preventDefault();
+  }
+
+  @HostListener("window:drop", ["$event"])
+  onWindowDrop(event: DragEvent): void {
+    event.preventDefault();
   }
 }

@@ -152,7 +152,6 @@ test.describe("Database Manager Visuals", () => {
 
     // Wait for database rows to be rendered
     await page.locator(".list-item").first().waitFor({ state: "visible" });
-    await page.waitForTimeout(200);
 
     await expect(page).toHaveScreenshot("database-manager-initial.png");
   });

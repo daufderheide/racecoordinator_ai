@@ -11,6 +11,10 @@ import {
 } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { Subscription } from "rxjs";
+import {
+  CustomOptionComponent,
+  CustomSelectComponent,
+} from "@app/components/shared/custom-select/custom-select.component";
 import { DataService } from "@app/data.service";
 import { TrackmateConfig } from "@app/models/track";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
@@ -23,12 +27,19 @@ import { LoggerService } from "@app/services/logger.service";
   templateUrl: "./trakmate-editor.component.html",
   styleUrls: ["./trakmate-editor.component.css"],
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslatePipe],
+  imports: [
+    CommonModule,
+    FormsModule,
+    TranslatePipe,
+    CustomSelectComponent,
+    CustomOptionComponent,
+  ],
 })
 export class TrakmateEditorComponent implements OnInit, OnDestroy, OnChanges {
   config = input.required<TrackmateConfig>();
   lanes = input.required<number>();
   interfaceIndex = input.required<number>();
+  isEditMode = input<boolean>(true);
 
   change = output<void>();
   remove = output<void>();
@@ -230,6 +241,9 @@ export class TrakmateEditorComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   onConfigChange() {
+    if (!this.isEditMode()) {
+      return;
+    }
     this.change.emit();
   }
 
@@ -238,6 +252,9 @@ export class TrakmateEditorComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   onRemove() {
+    if (!this.isEditMode()) {
+      return;
+    }
     this.remove.emit();
   }
 
@@ -284,6 +301,9 @@ export class TrakmateEditorComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   toggleMasterRelay() {
+    if (!this.isEditMode()) {
+      return;
+    }
     this.mainRelayStatus = !this.mainRelayStatus;
     this.dataService.setMainPower(this.mainRelayStatus).subscribe({
       next: () => {
@@ -299,6 +319,9 @@ export class TrakmateEditorComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   toggleLaneRelay(laneIndex: number) {
+    if (!this.isEditMode()) {
+      return;
+    }
     this.relayStatuses[laneIndex] = !this.relayStatuses[laneIndex];
     // Lane index for backend is 1-based.
     this.dataService

@@ -21,6 +21,24 @@ Welcome to the **Race Coordinator AI** download and release portal. Download the
 
 ---
 
+## Release Channels & Auto-Updates { #release-channels }
+
+Race Coordinator AI offers multiple update channels so race directors can choose the release stream that best fits their needs. You can configure your channel at any time from **Options → Automatic Updates** in Raceday Setup or the Raceday Menu Bar.
+
+### 🟢 Production Releases
+Official, production-ready releases that have undergone extensive verification and are fully validated for all club, tournament, and general racing operations. Recommended when maximum operational stability is your primary priority.
+
+### 🟡 Beta Releases
+Stable, feature-complete releases published during active development cycles that undergo final community testing and real-world race verification before being promoted to official production releases. Installing beta releases is recommended to test new capabilities, provide feedback, and help ensure that the eventual production release is as rock-solid and stable as possible. Beta releases typically include new features (race configurations, track interfaces, etc.). A beta release will be promoted to a production release after a short period of time in which users do not report any problems with the new candidate.
+
+### 🔵 Daily Alpha Builds
+Automated builds generated daily from the active development branch. While generally stable for day-to-day use, alpha builds contain prototype features and work-in-progress enhancements that may change rapidly. Recommended for enthusiasts and contributors who want early access to cutting-edge features.
+
+### ⚪ Disabled
+Disables automatic background update checks. You can still check for updates manually at any time via the **Check for Updates** menu option.
+
+---
+
 ## 📦 Available Releases
 
 Explore all currently available releases, sorted from most recent to oldest:

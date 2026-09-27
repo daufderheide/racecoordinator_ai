@@ -2,6 +2,10 @@ import { ChangeDetectorRef, Component, inject, OnInit } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { Router } from "@angular/router";
 import { firstValueFrom } from "rxjs";
+import {
+  CustomOptionComponent,
+  CustomSelectComponent,
+} from "@app/components/shared/custom-select/custom-select.component";
 import { DataService } from "@app/data.service";
 import { Theme } from "@app/models/theme";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
@@ -10,7 +14,12 @@ import { ThemeService } from "@app/services/theme.service";
 @Component({
   selector: "app-display-client",
   standalone: true,
-  imports: [FormsModule, TranslatePipe],
+  imports: [
+    FormsModule,
+    TranslatePipe,
+    CustomSelectComponent,
+    CustomOptionComponent,
+  ],
   template: `
     <div class="display-client-container">
       <div class="display-card">
@@ -21,18 +30,20 @@ import { ThemeService } from "@app/services/theme.service";
           <p>{{ "DC_DESCRIPTION" | translate }}</p>
           <div class="form-group">
             <label for="themeSelect">{{ "DC_THEME_LABEL" | translate }}</label>
-            <select
+            <app-custom-select
               id="themeSelect"
               [(ngModel)]="selectedThemeId"
               class="rc-select"
             >
-              <option value="" disabled selected>
+              <app-custom-option value="" [disabled]="true">
                 {{ "DC_SELECT_THEME" | translate }}
-              </option>
+              </app-custom-option>
               @for (theme of themes; track theme.entity_id) {
-                <option [value]="theme.entity_id">{{ theme.name }}</option>
+                <app-custom-option [value]="theme.entity_id">{{
+                  theme.name
+                }}</app-custom-option>
               }
-            </select>
+            </app-custom-select>
           </div>
         </div>
         <div class="card-actions">

@@ -1,12 +1,25 @@
 <div class="page-container" [attr.data-is-dirty]="isDirty ? 'true' : 'false'">
   <app-editor-title
-    [titleKey]="editingSeason.entity_id ? 'SE_TITLE_EDIT' : 'SE_TITLE_NEW'"
+    titleKey="SE_TITLE"
+    [itemName]="editingSeason.name"
     [undoManager]="undoManager"
+    [items]="seasonSelectItems"
+    [selectedId]="selectedSeasonId"
+    [isEditMode]="isEditMode"
+    [showEdit]="true"
+    [showAdd]="true"
     [showCopy]="true"
+    [showDelete]="existingSeasons.length > 1"
     [disabledCopy]="!isFormValid || isSaving"
+    [disabledDelete]="!editingSeason || isSaving || existingSeasons.length <= 1"
     [isSaving]="isSaving"
     [helpSteps]="getHelpSteps()"
+    (selectedIdChange)="onSelectSeasonById($event)"
+    (edit)="onToggleEditMode()"
+    (add)="onAddNewSeason()"
     (copy)="saveAsNew()"
+    (delete)="onDeleteSeason()"
+    (back)="onBack()"
   ></app-editor-title>
 
   @if (!isLoading) {
@@ -25,11 +38,16 @@
             id="season-name"
             name="season-name"
             type="text"
+            [disabled]="!isEditMode"
+            [attr.disabled]="!isEditMode ? '' : null"
             [class.invalid]="
               isNameDuplicate || (!editingSeason.name && isDirty)
             "
             [(ngModel)]="editingSeason.name"
+            [appAutoSelectDefault]="defaultSeasonName"
             (ngModelChange)="onInputChange()"
+            (focus)="onInputFocus()"
+            (blur)="onInputBlur()"
             placeholder="e.g. 2026 Winter Championship"
             autocomplete="off"
             data-dashlane-ignore="true"
@@ -56,8 +74,18 @@
             min="0"
             max="50"
             step="1"
+            [disabled]="!isEditMode"
+            [attr.disabled]="!isEditMode ? '' : null"
             [(ngModel)]="editingSeason.drops"
             (ngModelChange)="onInputChange()"
+            (focus)="onInputFocus()"
+            (blur)="onInputBlur()"
+            autocomplete="off"
+            data-dashlane-ignore="true"
+            data-1p-ignore="true"
+            data-lpignore="true"
+            data-bwignore="true"
+            data-form-type="other"
           />
           <span class="help-text">
             {{ "SE_DROPS_HELP" | translate }}
@@ -69,7 +97,6 @@
       <div class="editor-panel-right">
         <div class="panel-header">
           <div class="header-title-group">
-            <h3>{{ editingSeason.name || ("SE_TITLE_NEW" | translate) }}</h3>
             <div id="season-editor-meta" class="season-meta">
               <span id="season-editor-races-run" class="meta-pill">
                 {{ "SM_RACES_RUN" | translate }}:
@@ -84,13 +111,15 @@
               }
             </div>
           </div>
-          <button
-            id="btn-add-race"
-            class="btn-add-race"
-            (click)="openAddRaceModal()"
-          >
-            + {{ "SE_BTN_ADD_RACE" | translate }}
-          </button>
+          @if (isEditMode) {
+            <button
+              id="btn-add-race"
+              class="btn-add-race"
+              (click)="openAddRaceModal()"
+            >
+              + {{ "SE_BTN_ADD_RACE" | translate }}
+            </button>
+          }
         </div>
 
         <div class="editor-scroll-content">
@@ -110,6 +139,9 @@
                     <th class="col-rank">{{ "SM_RANK" | translate }}</th>
                     <th class="col-driver">{{ "SM_DRIVER" | translate }}</th>
                     <th class="col-pts">{{ "SM_NET_POINTS" | translate }}</th>
+                    <th class="col-pts">
+                      {{ "SM_DROPPED_POINTS" | translate }}
+                    </th>
                     <th class="col-pts">{{ "SM_GROSS_POINTS" | translate }}</th>
                     <th class="col-races">{{ "SM_RACES" | translate }}</th>
                   </tr>
@@ -141,6 +173,9 @@
                       </td>
                       <td class="col-pts net-highlight">
                         <strong>{{ item.net_points | number: "1.0-2" }}</strong>
+                      </td>
+                      <td class="col-pts">
+                        {{ getDroppedPoints(item) | number: "1.0-2" }}
                       </td>
                       <td class="col-pts">
                         {{ item.gross_points | number: "1.0-2" }}
@@ -189,17 +224,19 @@
                         }
                         @if (race.timestamp) {
                           <span class="race-date"
-                            >({{ race.timestamp | date: "short" }})</span
+                            >({{ race.timestamp | localDate: "short" }})</span
                           >
                         }
                       </div>
-                      <button
-                        class="btn-remove-race"
-                        (click)="removeRaceFromSeason(idx, $event)"
-                        title="Remove Race"
-                      >
-                        {{ "SE_REMOVE_RACE" | translate }}
-                      </button>
+                      @if (isEditMode) {
+                        <button
+                          class="btn-remove-race"
+                          (click)="removeRaceFromSeason(idx, $event)"
+                          title="Remove Race"
+                        >
+                          {{ "SE_REMOVE_RACE" | translate }}
+                        </button>
+                      }
                     </div>
                     @if (isRaceExpanded(race, idx)) {
                       <div class="expander-body">
@@ -299,7 +336,7 @@
                   }
                 </div>
                 <span class="race-item-date"
-                  >({{ r.timestamp | date: "short" }})</span
+                  >({{ r.timestamp | localDate: "short" }})</span
                 >
               </div>
             }
@@ -319,7 +356,7 @@
 <app-confirmation-modal
   [visible]="showDiscardConfirm"
   [title]="'UE_CONFIRM_DISCARD_TITLE' | translate"
-  [message]="'UE_CONFIRM_DISCARD_MESSAGE' | translate"
+  [message]="discardMessage"
   [confirmText]="'COMMON_CONFIRM' | translate"
   [cancelText]="'COMMON_CANCEL' | translate"
   (confirm)="onConfirmDiscard()"

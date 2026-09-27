@@ -55,7 +55,7 @@ export class TwinGraphsComponent implements OnChanges {
   @Input() maxY = 5;
   @Input() stacked = false;
 
-  @Input() titleKey = "OR_TITLE";
+  @Input() titleKey = "";
   @Input() titleParams: any = {};
   @Input() leftTitleKey = "OR_RANKINGS_HEADER";
   @Input() rightTitleKey = "HR_LAP_TIMES_HEADER";

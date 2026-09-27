@@ -1,4 +1,5 @@
 import { ComponentHarness } from "@angular/cdk/testing";
+import { CustomSelectHarness } from "@app/components/shared/custom-select/testing/custom-select.harness";
 
 import { RacedayLaneViewHarnessBase } from "./raceday-lane-view.harness.base";
 
@@ -9,7 +10,9 @@ export class RacedayLaneRowHarness extends ComponentHarness {
     RacedayLaneViewHarnessBase.selectors.cell,
   );
   protected getTeammateSelect = this.locatorForOptional(
-    RacedayLaneViewHarnessBase.selectors.teammateSelect,
+    CustomSelectHarness.with({
+      selector: RacedayLaneViewHarnessBase.selectors.teammateSelect,
+    }),
   );
   protected getDriftIndicator = this.locatorForOptional(
     RacedayLaneViewHarnessBase.selectors.driftIndicator,
@@ -26,17 +29,13 @@ export class RacedayLaneRowHarness extends ComponentHarness {
 
   async getTeammateSelectValue(): Promise<string | null> {
     const select = await this.getTeammateSelect();
-    return select ? await select.getProperty("value") : null;
+    return select ? await select.getValue() : null;
   }
 
   async setTeammateSelectValue(val: string): Promise<void> {
     const select = await this.getTeammateSelect();
     if (select) {
-      const options = await this.locatorForAll(`option[value="${val}"]`)();
-      if (options.length > 0) {
-        await options[0].click();
-        await select.dispatchEvent("change");
-      }
+      await select.selectOptionByValue(val);
     }
   }
 

@@ -9,6 +9,10 @@ export class RecordsInspectorHarnessE2e implements RecordsInspectorHarnessBase {
     return RecordsInspectorHarnessBase;
   }
 
+  private get checkboxes() {
+    return this.locator.locator(this.base.selectors.checkboxes);
+  }
+
   private get selects() {
     return this.locator.locator(this.base.selectors.selects);
   }
@@ -25,12 +29,46 @@ export class RecordsInspectorHarnessE2e implements RecordsInspectorHarnessBase {
     return this.locator.locator(this.base.selectors.resetButtons);
   }
 
+  async getShowRaceRecordLap(): Promise<boolean> {
+    return await this.checkboxes.nth(0).isChecked();
+  }
+
+  async setShowRaceRecordLap(val: boolean): Promise<void> {
+    await this.checkboxes.nth(0).setChecked(val);
+  }
+
+  async getShowRaceRecordScore(): Promise<boolean> {
+    return await this.checkboxes.nth(1).isChecked();
+  }
+
+  async setShowRaceRecordScore(val: boolean): Promise<void> {
+    await this.checkboxes.nth(1).setChecked(val);
+  }
+
+  async getShowCurrentRaceBest(): Promise<boolean> {
+    return await this.checkboxes.nth(2).isChecked();
+  }
+
+  async setShowCurrentRaceBest(val: boolean): Promise<void> {
+    await this.checkboxes.nth(2).setChecked(val);
+  }
+
+  async getShowHeatBest(): Promise<boolean> {
+    return await this.checkboxes.nth(3).isChecked();
+  }
+
+  async setShowHeatBest(val: boolean): Promise<void> {
+    await this.checkboxes.nth(3).setChecked(val);
+  }
+
   async getHeaderFontFamily(): Promise<string> {
-    return await this.selects.nth(0).inputValue();
+    return (await this.selects.nth(0).getAttribute("data-value")) || "";
   }
 
   async setHeaderFontFamily(val: string): Promise<void> {
-    await this.selects.nth(0).selectOption({ label: val });
+    const sel = this.selects.nth(0);
+    await sel.locator(".custom-select-trigger").click();
+    await sel.locator(`.custom-select-option:has-text("${val}")`).click();
   }
 
   async getHeaderFontSize(): Promise<number> {
@@ -56,11 +94,13 @@ export class RecordsInspectorHarnessE2e implements RecordsInspectorHarnessBase {
   }
 
   async getValueFontFamily(): Promise<string> {
-    return await this.selects.nth(1).inputValue();
+    return (await this.selects.nth(1).getAttribute("data-value")) || "";
   }
 
   async setValueFontFamily(val: string): Promise<void> {
-    await this.selects.nth(1).selectOption({ label: val });
+    const sel = this.selects.nth(1);
+    await sel.locator(".custom-select-trigger").click();
+    await sel.locator(`.custom-select-option:has-text("${val}")`).click();
   }
 
   async getValueFontSize(): Promise<number> {

@@ -2,7 +2,7 @@ import {
   AnchorPoint,
   ColumnDefinition,
 } from "@app/components/raceday/column_definition";
-import { LayoutConfig } from "@app/models/settings";
+import { AbsoluteWidgetNode, LayoutConfig } from "@app/models/settings";
 
 export class RacedayLayoutUtils {
   static getColumnX(columns: ColumnDefinition[], columnIndex: number): number {
@@ -187,10 +187,17 @@ export class RacedayLayoutUtils {
     return (
       baseKey === "lastLapTime" ||
       baseKey === "bestLapTime" ||
+      baseKey === "bestRaceLapTime" ||
       baseKey === "averageLapTime" ||
       baseKey === "medianLapTime" ||
       baseKey === "recordLapTime" ||
-      baseKey === "segmentTime"
+      baseKey === "segmentTime" ||
+      baseKey === "standardDeviation" ||
+      baseKey === "averageTop5" ||
+      baseKey === "averageTop10" ||
+      baseKey === "averageTop15" ||
+      baseKey === "top2Consecutive" ||
+      baseKey === "top3Consecutive"
     );
   }
 
@@ -250,13 +257,23 @@ export class RacedayLayoutUtils {
     const baseKey = (propertyKey as string).split("_")[0];
     const labels: { [key: string]: string } = {
       lapCount: "RD_COL_LAP",
+      physicalLapCount: "RD_COL_LAP",
       lapsLed: "RD_COL_LAPS_LED",
+      trackCalls: "RD_COL_TRACK_CALLS",
       lastLapTime: "RD_COL_LAP_TIME",
       lastLaps: "RD_COL_LAST_LAPS",
       medianLapTime: "RD_COL_MEDIAN_LAP",
       averageLapTime: "RD_COL_AVG_LAP",
       bestLapTime: "RD_COL_BEST_LAP",
+      bestRaceLapTime: "RD_COL_BEST_RACE_LAP_TIME",
       recordLapTime: "RD_COL_RECORD_LAP_TIME",
+      standardDeviation: "RD_COL_STD_DEV",
+      consistencyScore: "RD_COL_CONSISTENCY",
+      averageTop5: "RD_COL_AVG_TOP_5",
+      averageTop10: "RD_COL_AVG_TOP_10",
+      averageTop15: "RD_COL_AVG_TOP_15",
+      top2Consecutive: "RD_COL_TOP_2_CONSECUTIVE",
+      top3Consecutive: "RD_COL_TOP_3_CONSECUTIVE",
       totalTime: "RD_COL_TOTAL_TIME",
       gapLeader: "RD_COL_GAP_LEADER",
       gapPosition: "RD_COL_GAP_POSITION",
@@ -343,14 +360,24 @@ export class RacedayLayoutUtils {
       "driver.nickname": 0,
       "driver.avatarUrl": 120,
       lapCount: 216,
+      physicalLapCount: 210,
       lapsLed: 216,
+      trackCalls: 216,
       reactionTime: 330,
       lastLapTime: 330,
       lastLaps: 1650,
       medianLapTime: 330,
       averageLapTime: 330,
       bestLapTime: 330,
+      bestRaceLapTime: 330,
       recordLapTime: 330,
+      standardDeviation: 330,
+      consistencyScore: 330,
+      averageTop5: 330,
+      averageTop10: 330,
+      averageTop15: 330,
+      top2Consecutive: 330,
+      top3Consecutive: 330,
       totalTime: 330,
       gapLeader: 330,
       gapPosition: 330,
@@ -511,5 +538,99 @@ export class RacedayLayoutUtils {
     }
 
     return { x: newX, y: newY, w: newW, h: newH };
+  }
+
+  static isPortraitLayout(
+    layout?: LayoutConfig,
+    dashboardWidth: number = 1920,
+    dashboardHeight: number = 1080,
+  ): boolean {
+    const width = layout?.baseWidth ?? dashboardWidth;
+    const height = layout?.baseHeight ?? dashboardHeight;
+    return width < height;
+  }
+
+  static ensureCountdownWidget(
+    layout?: LayoutConfig,
+  ): LayoutConfig | undefined {
+    if (!layout || !layout.widgets) return layout;
+    const hasCountdown = layout.widgets.some(
+      (w) => w.widgetType === "countdown",
+    );
+    if (hasCountdown) {
+      for (const w of layout.widgets) {
+        if (w.widgetType === "countdown") {
+          w.customSettings = {
+            orientation: "horizontal",
+            lampScale: 1.0,
+            blurArea: "fullscreen",
+            blurAmount: 50,
+            lampSizingMode: "custom",
+            previewLampCount: 5,
+            glowEffect: true,
+            glowOverlap: 100,
+            glowRedOverlap: 100,
+            glowGreenOverlap: 100,
+            ...w.customSettings,
+          };
+          if (!w.customSettings["lampSizingMode"]) {
+            w.customSettings["lampSizingMode"] = "custom";
+          }
+          if (!w.customSettings["previewLampCount"]) {
+            w.customSettings["previewLampCount"] = 5;
+          }
+          if (w.customSettings["glowEffect"] === undefined) {
+            w.customSettings["glowEffect"] = true;
+          }
+          if (w.customSettings["glowOverlap"] === undefined) {
+            w.customSettings["glowOverlap"] = 100;
+          }
+          if (w.customSettings["glowRedOverlap"] === undefined) {
+            w.customSettings["glowRedOverlap"] = 100;
+          }
+          if (w.customSettings["glowGreenOverlap"] === undefined) {
+            w.customSettings["glowGreenOverlap"] = 100;
+          }
+        }
+      }
+      return layout;
+    }
+
+    const baseWidth = layout.baseWidth || 1920;
+    const baseHeight = layout.baseHeight || 1080;
+    const isPortrait = baseWidth < baseHeight;
+
+    const widgetWidth = isPortrait ? 250 : 1000;
+    const widgetHeight = isPortrait ? 800 : 250;
+    const x = Math.max(0, Math.round((baseWidth - widgetWidth) / 2));
+    const y = Math.max(0, Math.round((baseHeight - widgetHeight) / 2));
+
+    const countdownWidget: AbsoluteWidgetNode = {
+      id: "widget-countdown",
+      widgetType: "countdown",
+      x,
+      y,
+      width: widgetWidth,
+      height: widgetHeight,
+      zIndex: 2000,
+      scaleMode: "auto",
+      customSettings: {
+        orientation: isPortrait ? "vertical" : "horizontal",
+        lampScale: 1.0,
+        blurArea: "fullscreen",
+        blurAmount: 50,
+        lampSizingMode: "custom",
+        previewLampCount: 5,
+        glowEffect: true,
+        glowOverlap: 100,
+        glowRedOverlap: 100,
+        glowGreenOverlap: 100,
+      },
+    };
+
+    return {
+      ...layout,
+      widgets: [...layout.widgets, countdownWidget],
+    };
   }
 }

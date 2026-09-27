@@ -18,21 +18,25 @@ export class LaneViewInspectorHarnessE2e implements LaneViewInspectorHarnessBase
   }
 
   async getTimeDecimalPlaces(): Promise<number> {
-    const val = await this.selects.nth(1).inputValue();
+    const val = await this.selects.nth(1).getAttribute("data-value");
     return Number(val);
   }
 
   async setTimeDecimalPlaces(val: number): Promise<void> {
-    await this.selects.nth(1).selectOption({ value: val.toString() });
+    const sel = this.selects.nth(1);
+    await sel.locator(".custom-select-trigger").click();
+    await sel.locator(`.custom-select-option[data-value="${val}"]`).click();
   }
 
   async getLapDecimalPlaces(): Promise<number> {
-    const val = await this.selects.nth(2).inputValue();
+    const val = await this.selects.nth(2).getAttribute("data-value");
     return Number(val);
   }
 
   async setLapDecimalPlaces(val: number): Promise<void> {
-    await this.selects.nth(2).selectOption({ value: val.toString() });
+    const sel = this.selects.nth(2);
+    await sel.locator(".custom-select-trigger").click();
+    await sel.locator(`.custom-select-option[data-value="${val}"]`).click();
   }
 
   async getColumnWidth(columnIndex: number): Promise<number> {

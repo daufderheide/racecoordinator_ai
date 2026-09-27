@@ -1,7 +1,9 @@
+import { TestbedHarnessEnvironment } from "@angular/cdk/testing/testbed";
 import { Pipe, PipeTransform } from "@angular/core";
 import { ComponentFixture, TestBed } from "@angular/core/testing";
 
 import { RacedaySeasonRaceLeaderboardComponent } from "./raceday-season-race-leaderboard.component";
+import { RacedaySeasonRaceLeaderboardHarness } from "./testing/raceday-season-race-leaderboard.harness";
 
 @Pipe({ name: "translate", standalone: true })
 class MockTranslatePipe implements PipeTransform {
@@ -13,6 +15,7 @@ class MockTranslatePipe implements PipeTransform {
 describe("RacedaySeasonRaceLeaderboardComponent", () => {
   let component: RacedaySeasonRaceLeaderboardComponent;
   let fixture: ComponentFixture<RacedaySeasonRaceLeaderboardComponent>;
+  let harness: RacedaySeasonRaceLeaderboardHarness;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
@@ -26,24 +29,29 @@ describe("RacedaySeasonRaceLeaderboardComponent", () => {
 
     fixture = TestBed.createComponent(RacedaySeasonRaceLeaderboardComponent);
     component = fixture.componentInstance;
+    harness = await TestbedHarnessEnvironment.harnessForFixture(
+      fixture,
+      RacedaySeasonRaceLeaderboardHarness,
+    );
     fixture.detectChanges();
   });
 
-  it("should create", () => {
+  it("should create", async () => {
     expect(component).toBeTruthy();
+    expect(await harness.isVisible()).toBeTrue();
+    expect(await harness.getTitle()).toBe("SM_SEASON_RACE_STANDINGS_TITLE");
   });
 
-  it("should display empty message when seasonStandings is empty", () => {
+  it("should display empty message when seasonStandings is empty", async () => {
     fixture.componentRef.setInput("seasonStandings", []);
     fixture.detectChanges();
 
-    const compiled = fixture.nativeElement as HTMLElement;
-    expect(
-      compiled.querySelector(".leaderboard-empty-message")?.textContent?.trim(),
-    ).toBe("SM_NO_RACES_RUN");
+    expect(await harness.isEmpty()).toBeTrue();
+    expect(await harness.getEmptyMessage()).toBe("SM_NO_RACES_RUN");
+    expect(await harness.getRowCount()).toBe(0);
   });
 
-  it("should display sorted standings by current race points descending", () => {
+  it("should display sorted standings by current race points descending", async () => {
     const mockStandings = [
       {
         driver_id: "d1",
@@ -61,15 +69,17 @@ describe("RacedaySeasonRaceLeaderboardComponent", () => {
     fixture.componentRef.setInput("seasonStandings", mockStandings);
     fixture.detectChanges();
 
-    const compiled = fixture.nativeElement as HTMLElement;
-    const names = compiled.querySelectorAll(".leaderboard-name");
-    expect(names.length).toBe(2);
-    expect(names[0].textContent?.trim()).toBe("Driver B");
-    expect(names[1].textContent?.trim()).toBe("Driver A");
+    expect(await harness.isEmpty()).toBeFalse();
+    expect(await harness.getRowCount()).toBe(2);
+    const names = await harness.getDriverNames();
+    expect(names[0]).toBe("Driver B");
+    expect(names[1]).toBe("Driver A");
+    expect(await harness.getDriverName(0)).toBe("Driver B");
+    expect(await harness.getDriverName(1)).toBe("Driver A");
 
-    const scores = compiled.querySelectorAll(".leaderboard-score");
-    expect(scores[0].textContent?.trim()).toBe("25");
-    expect(scores[1].textContent?.trim()).toBe("10");
+    const scores = await harness.getScores();
+    expect(scores[0]).toBe("25");
+    expect(scores[1]).toBe("10");
   });
 
   it("should handle null/undefined items in getRacePoints", () => {

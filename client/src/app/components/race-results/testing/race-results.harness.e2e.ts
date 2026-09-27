@@ -3,7 +3,7 @@ import { Locator } from "@playwright/test";
 import { RaceResultsHarnessBase } from "./race-results.harness.base";
 
 export class RaceResultsHarnessE2e implements RaceResultsHarnessBase {
-  constructor(private locator: Locator) {}
+  constructor(public readonly locator: Locator) {}
 
   private get base() {
     return RaceResultsHarnessBase;

@@ -15,11 +15,18 @@ import {
   tick,
 } from "@angular/core/testing";
 import { ActivatedRoute, Router } from "@angular/router";
+import { HeatConverter } from "@app/converters/heat.converter";
 import { DataService } from "@app/data.service";
+import { Driver } from "@app/models/driver";
 import { AllowFinish, FinishMethod } from "@app/models/heat_scoring";
 import { OverallRanking } from "@app/models/overall_scoring";
 import { Settings } from "@app/models/settings";
+import { DriverHeatData } from "@app/race/driver_heat_data";
+import { Heat } from "@app/race/heat";
+import { RaceParticipant } from "@app/race/race_participant";
+import { AudioService } from "@app/services/audio.service";
 import { ChildWindowManagerService } from "@app/services/child-window-manager.service";
+import { DateTimeFormatService } from "@app/services/date-time-format.service";
 import { HelpLinkService } from "@app/services/help-link.service";
 import { LoggerService } from "@app/services/logger.service";
 import { RaceService } from "@app/services/race.service";
@@ -38,7 +45,9 @@ class MockTranslatePipe implements PipeTransform {
   }
 }
 
+import { By } from "@angular/platform-browser";
 import { BehaviorSubject, of, Subject, throwError } from "rxjs";
+import { DisallowLapRecordsDialogComponent } from "@app/components/shared/disallow-lap-records-dialog/disallow-lap-records-dialog.component";
 import { Role } from "@app/models/role";
 import { THEME_SLOT_KEYS } from "@app/models/theme";
 import { AuthService } from "@app/services/auth.service";
@@ -78,6 +87,7 @@ class DefaultRacedayMockConfirmationModalComponent {
 }
 
 import {
+  ICarData,
   IInterfaceEvent,
   ILap,
   IRaceTime,
@@ -290,6 +300,7 @@ describe("DefaultRacedayComponent", () => {
   let mockAudioInstance: any;
   let recordDataSubject: Subject<IRecordData>;
   let participantsSubject: Subject<any[]>;
+  let carDataSubject: BehaviorSubject<ICarData>;
   let mockLogger: any;
 
   let raceStateSubject: Subject<RaceState>;
@@ -322,6 +333,7 @@ describe("DefaultRacedayComponent", () => {
     standingsUpdateSubject = mocks.standingsUpdateSubject;
     recordDataSubject = mocks.recordDataSubject;
     participantsSubject = mocks.participantsSubject;
+    carDataSubject = mocks.carDataSubject;
 
     mockAuthService = {
       currentRoleSubject: new BehaviorSubject<Role>(Role.DIRECTOR),
@@ -524,11 +536,24 @@ describe("DefaultRacedayComponent", () => {
     expect(mockRaceConnectionService.disconnect).toHaveBeenCalledWith(false);
   });
 
-  it("should pass force=true to disconnect when navigating to raceday-setup", () => {
+  it("should pass force=true to disconnect when navigating to raceday-setup and set skipIntro if race not ended", () => {
+    sessionStorage.removeItem("skipIntro");
     (mockRouter as any).url = "/raceday-setup";
+    component.raceHasEnded = false;
     fixture.detectChanges();
     fixture.destroy();
     expect(mockRaceConnectionService.disconnect).toHaveBeenCalledWith(true);
+    expect(sessionStorage.getItem("skipIntro")).toBe("true");
+  });
+
+  it("should not set skipIntro on destroy when navigating to raceday-setup if race has ended", () => {
+    sessionStorage.removeItem("skipIntro");
+    (mockRouter as any).url = "/raceday-setup";
+    fixture.detectChanges();
+    component.raceHasEnded = true;
+    fixture.destroy();
+    expect(mockRaceConnectionService.disconnect).toHaveBeenCalledWith(true);
+    expect(sessionStorage.getItem("skipIntro")).toBeNull();
   });
 
   it("should update countdown timers when raceTime$ emits", () => {
@@ -916,6 +941,16 @@ describe("DefaultRacedayComponent", () => {
 
       expect(component.onMenuSelect).toHaveBeenCalledWith("ABORT_TIMERS");
     });
+
+    it("should not trigger ABORT_TIMERS when race has ended or raceState is RACE_OVER", () => {
+      component["raceState"] = RaceState.RACE_OVER;
+      component["raceHasEnded"] = true;
+      component["autoStartRemaining"] = 5.0;
+
+      component.handleKeyUpEvent(mockEvent);
+
+      expect(component.onMenuSelect).not.toHaveBeenCalledWith("ABORT_TIMERS");
+    });
   });
 
   describe("onMenuSelect", () => {
@@ -1003,11 +1038,22 @@ describe("DefaultRacedayComponent", () => {
       mockDataService.resetLaneHeatData.and.returnValue(of(true));
       const mockEvent = new MouseEvent("click");
       spyOn(mockEvent, "stopPropagation");
+      spyOn(HeatConverter, "clearCache");
+
+      const dhd = new DriverHeatData(
+        "hd1",
+        new RaceParticipant("p1", new Driver("d1", "Driver 1", "D1")),
+        2,
+      );
+      dhd.addLapTime(1, 3.5, 3.5, 3.5, 3.5, 1);
+      (component as any).heat = { heatDrivers: [dhd] };
 
       component.resetLane(2, mockEvent);
 
       expect(mockEvent.stopPropagation).toHaveBeenCalled();
       expect(mockDataService.resetLaneHeatData).toHaveBeenCalledWith(2);
+      expect(dhd.lapTimes.length).toBe(0);
+      expect(HeatConverter.clearCache).toHaveBeenCalled();
     });
 
     it("should call resetLane and handle error", () => {
@@ -1029,11 +1075,22 @@ describe("DefaultRacedayComponent", () => {
       mockDataService.resetLaneHeatData.and.returnValue(of(true));
       const mockEvent = new MouseEvent("click");
       spyOn(mockEvent, "stopPropagation");
+      spyOn(HeatConverter, "clearCache");
+
+      const dhd = new DriverHeatData(
+        "hd1",
+        new RaceParticipant("p1", new Driver("d1", "Driver 1", "D1")),
+        0,
+      );
+      dhd.addLapTime(1, 3.5, 3.5, 3.5, 3.5, 1);
+      (component as any).heat = { heatDrivers: [dhd] };
 
       component.resetAllLanes(mockEvent);
 
       expect(mockEvent.stopPropagation).toHaveBeenCalled();
       expect(mockDataService.resetLaneHeatData).toHaveBeenCalledWith("all");
+      expect(dhd.lapTimes.length).toBe(0);
+      expect(HeatConverter.clearCache).toHaveBeenCalled();
     });
 
     it("should call resetAllLanes and handle error", () => {
@@ -1189,6 +1246,112 @@ describe("DefaultRacedayComponent", () => {
         expect(mockEvent.preventDefault).not.toHaveBeenCalled();
         expect(mockDataService.resetLaneHeatData).not.toHaveBeenCalled();
       });
+
+      describe("Layout Customizing Keyboard Shortcuts", () => {
+        beforeEach(() => {
+          component.isLayoutCustomizing = true;
+          component.layout = {
+            baseWidth: 1920,
+            baseHeight: 1080,
+            widgets: [
+              {
+                id: "widget-1",
+                widgetType: "timer",
+                x: 100,
+                y: 100,
+                width: 200,
+                height: 100,
+              },
+            ],
+          } as any;
+          (component as any).selectedWidgetId = () => "widget-1";
+        });
+
+        it("should remove selected widget on Delete key", () => {
+          spyOn(component, "removeWidget");
+          const event = new KeyboardEvent("keydown", { key: "Delete" });
+          spyOn(event, "preventDefault");
+
+          component["handleKeyboardEvent"](event);
+
+          expect(event.preventDefault).toHaveBeenCalled();
+          expect(component.removeWidget).toHaveBeenCalledWith("widget-1");
+        });
+
+        it("should remove selected widget on Backspace key", () => {
+          spyOn(component, "removeWidget");
+          const event = new KeyboardEvent("keydown", { key: "Backspace" });
+          spyOn(event, "preventDefault");
+
+          component["handleKeyboardEvent"](event);
+
+          expect(event.preventDefault).toHaveBeenCalled();
+          expect(component.removeWidget).toHaveBeenCalledWith("widget-1");
+        });
+
+        it("should nudge selected widget with arrow keys and clamp within boundaries", () => {
+          spyOn(component.layoutChanged, "emit");
+          const widget = component.layout.widgets[0];
+
+          // ArrowRight by 1px
+          const rightEvent = new KeyboardEvent("keydown", {
+            key: "ArrowRight",
+          });
+          spyOn(rightEvent, "preventDefault");
+          component["handleKeyboardEvent"](rightEvent);
+          expect(rightEvent.preventDefault).toHaveBeenCalled();
+          expect(widget.x).toBe(101);
+          expect(component.layoutChanged.emit).toHaveBeenCalledWith(
+            component.layout,
+          );
+
+          // Shift + ArrowDown by 10px
+          const downEvent = new KeyboardEvent("keydown", {
+            key: "ArrowDown",
+            shiftKey: true,
+          });
+          spyOn(downEvent, "preventDefault");
+          component["handleKeyboardEvent"](downEvent);
+          expect(downEvent.preventDefault).toHaveBeenCalled();
+          expect(widget.y).toBe(110);
+
+          // ArrowLeft by 1px
+          const leftEvent = new KeyboardEvent("keydown", { key: "ArrowLeft" });
+          spyOn(leftEvent, "preventDefault");
+          component["handleKeyboardEvent"](leftEvent);
+          expect(widget.x).toBe(100);
+
+          // ArrowUp by 1px
+          const upEvent = new KeyboardEvent("keydown", { key: "ArrowUp" });
+          spyOn(upEvent, "preventDefault");
+          component["handleKeyboardEvent"](upEvent);
+          expect(widget.y).toBe(109);
+
+          // Clamp at bounds: set to 0,0 and arrow up/left
+          widget.x = 0;
+          widget.y = 0;
+          component["handleKeyboardEvent"](upEvent);
+          component["handleKeyboardEvent"](leftEvent);
+          expect(widget.x).toBe(0);
+          expect(widget.y).toBe(0);
+        });
+
+        it("should not trigger Delete or nudge when typing in an input field", () => {
+          spyOn(component, "removeWidget");
+          const input = document.createElement("input");
+          document.body.appendChild(input);
+          input.focus();
+
+          const event = new KeyboardEvent("keydown", { key: "Delete" });
+          spyOn(event, "preventDefault");
+          component["handleKeyboardEvent"](event);
+
+          expect(event.preventDefault).not.toHaveBeenCalled();
+          expect(component.removeWidget).not.toHaveBeenCalled();
+
+          document.body.removeChild(input);
+        });
+      });
     });
 
     it("should call updateHeatUserLaps on confirm in menu mode", () => {
@@ -1293,12 +1456,16 @@ describe("DefaultRacedayComponent", () => {
     });
 
     it("should call restartHeat on confirm and hide dialog", () => {
+      const resetSpy = spyOn((component as any).audioService, "reset");
+      (component as any).hasRacedInCurrentHeat = true;
       fixture.detectChanges();
       component.showRestartHeatConfirmation = true;
 
       component.onRestartHeatConfirm();
 
       expect(component.showRestartHeatConfirmation).toBeFalse();
+      expect((component as any).hasRacedInCurrentHeat).toBeFalse();
+      expect(resetSpy).toHaveBeenCalled();
       expect(mockDataService.restartHeat).toHaveBeenCalled();
     });
 
@@ -1482,6 +1649,37 @@ describe("DefaultRacedayComponent", () => {
 
       const select = fixture.nativeElement.querySelector(".teammate-select");
       expect(select).toBeFalsy();
+    });
+  });
+
+  describe("getDropdownArrowBg and getDropdownIcon", () => {
+    it("should return sanitized SafeStyle for lane color", () => {
+      component["track"] = {
+        lanes: [
+          { foreground_color: "#ff0000" },
+          { foreground_color: "#00ff00" },
+        ],
+      } as any;
+
+      const mockHd = { laneIndex: 0 } as any;
+      const bg = component.getDropdownArrowBg(mockHd);
+      expect(bg).toBeTruthy();
+      expect(String(bg)).toContain("url(");
+      expect(String(bg)).toContain("%23ff0000");
+    });
+
+    it("should fallback to #ffffff when lane foreground_color is missing", () => {
+      component["track"] = { lanes: [] } as any;
+      const mockHd = { laneIndex: 5 } as any;
+      const bg = component.getDropdownArrowBg(mockHd);
+      expect(bg).toBeTruthy();
+      expect(String(bg)).toContain("%23ffffff");
+    });
+
+    it("should cache dropdown icon by color", () => {
+      const bg1 = component.getDropdownIcon("#123456");
+      const bg2 = component.getDropdownIcon("#123456");
+      expect(bg1).toBe(bg2);
     });
   });
 
@@ -1932,7 +2130,17 @@ describe("DefaultRacedayComponent", () => {
       );
     });
 
-    it("should use driver finished flag if driver isFinished is true", () => {
+    it("should use driver finished flag if driver isFinished is true in allow finish race", () => {
+      mockRaceService.getRace.and.returnValue({
+        heat_scoring: { allow_finish: "Allow" },
+      } as any);
+      (component as any).currentHeat = {
+        heatDrivers: [
+          { ...mockHd, isFinished: true },
+          { isFinished: false, driver: { name: "Driver 2" } },
+        ],
+      };
+      (component as any).raceState = RaceState.RACING;
       mockRaceFlagService.getFlagUrl.and.returnValue(
         "http://localhost/driver_finished.png",
       );
@@ -1942,6 +2150,97 @@ describe("DefaultRacedayComponent", () => {
       expect(mockRaceFlagService.getFlagUrl).toHaveBeenCalledWith(
         "flag.driver_finished",
       );
+    });
+
+    it("should use heat over flag when all drivers finish in HeatOver", () => {
+      mockRaceService.getRace.and.returnValue({
+        heat_scoring: { allow_finish: "Allow" },
+      } as any);
+      (component as any).raceState = RaceState.HEAT_OVER;
+      mockRaceFlagService.getFlagUrl.and.returnValue(
+        "http://localhost/heat_over.png",
+      );
+      const finishedHd = { ...mockHd, isFinished: true } as any;
+      const result = component.formatValue("flag", RaceFlag.RED, finishedHd);
+      expect(result).toBe("http://localhost/heat_over.png");
+      expect(mockRaceFlagService.getFlagUrl).toHaveBeenCalledWith(
+        "flag.heat_over",
+      );
+    });
+
+    it("should use race over flag when all drivers finish in RaceOver", () => {
+      mockRaceService.getRace.and.returnValue({
+        heat_scoring: { allow_finish: "Allow" },
+      } as any);
+      (component as any).raceState = RaceState.RACE_OVER;
+      mockRaceFlagService.getFlagUrl.and.returnValue(
+        "http://localhost/race_over.png",
+      );
+      const finishedHd = { ...mockHd, isFinished: true } as any;
+      const result = component.formatValue("flag", RaceFlag.RED, finishedHd);
+      expect(result).toBe("http://localhost/race_over.png");
+      expect(mockRaceFlagService.getFlagUrl).toHaveBeenCalledWith(
+        "flag.race_over",
+      );
+    });
+
+    it("should not use driver finished flag when allow finish is None", () => {
+      mockRaceService.getRace.and.returnValue({
+        heat_scoring: { allow_finish: "None" },
+      } as any);
+      (component as any).raceState = RaceState.RACING;
+      (component as any).currentHeat = {
+        heatDrivers: [
+          { ...mockHd, isFinished: true },
+          { isFinished: false, driver: { name: "Driver 2" } },
+        ],
+      };
+      mockRaceFlagService.getFlagUrl.and.returnValue(
+        "http://localhost/green.png",
+      );
+      const finishedHd = { ...mockHd, isFinished: true } as any;
+      const result = component.formatValue("flag", RaceFlag.GREEN, finishedHd);
+      expect(result).toBe("http://localhost/green.png");
+      expect(mockRaceFlagService.getFlagUrl).toHaveBeenCalledWith(
+        RaceFlag.GREEN,
+      );
+    });
+
+    it("should evaluate areAllDriversFinished correctly across states", () => {
+      (component as any).raceState = RaceState.HEAT_OVER;
+      expect(component.areAllDriversFinished()).toBeTrue();
+
+      (component as any).raceState = RaceState.RACE_OVER;
+      expect(component.areAllDriversFinished()).toBeTrue();
+
+      (component as any).raceState = RaceState.NOT_STARTED;
+      expect(component.areAllDriversFinished()).toBeFalse();
+
+      (component as any).raceState = RaceState.STARTING;
+      expect(component.areAllDriversFinished()).toBeFalse();
+
+      (component as any).raceState = RaceState.RACING;
+      const unfinishedHeat = {
+        heatDrivers: [
+          { isFinished: true, driver: { name: "D1" } },
+          { isFinished: false, driver: { name: "D2" } },
+        ],
+      };
+      (component as any).currentHeat = unfinishedHeat;
+      (component as any).heat = unfinishedHeat;
+      mockRaceService.getCurrentHeat.and.returnValue(unfinishedHeat);
+      expect(component.areAllDriversFinished()).toBeFalse();
+
+      const finishedHeat = {
+        heatDrivers: [
+          { isFinished: true, driver: { name: "D1" } },
+          { isFinished: true, driver: { name: "D2" } },
+        ],
+      };
+      (component as any).currentHeat = finishedHeat;
+      (component as any).heat = finishedHeat;
+      mockRaceService.getCurrentHeat.and.returnValue(finishedHeat);
+      expect(component.areAllDriversFinished()).toBeTrue();
     });
 
     it("should evaluate isDriverFinished based on server isFinished state", () => {
@@ -2650,6 +2949,97 @@ describe("DefaultRacedayComponent", () => {
       component["time"] = -1;
       expect(component["formattedTime"]).toBe("0");
     });
+
+    it("should format as mm_ss when layout specifies mm_ss", () => {
+      component["layout"] = {
+        widgets: [
+          {
+            widgetType: "timer",
+            customSettings: { timeDisplayFormat: "mm_ss" },
+          },
+        ],
+      } as any;
+      component["time"] = 83;
+      expect(component["formattedTime"]).toBe("01:23");
+      component["time"] = 45;
+      expect(component["formattedTime"]).toBe("00:45");
+    });
+
+    it("should format as m_ss when layout specifies m_ss", () => {
+      component["layout"] = {
+        widgets: [
+          {
+            widgetType: "timer",
+            customSettings: { timeDisplayFormat: "m_ss" },
+          },
+        ],
+      } as any;
+      component["time"] = 83;
+      expect(component["formattedTime"]).toBe("1:23");
+      component["time"] = 45;
+      expect(component["formattedTime"]).toBe("0:45");
+    });
+
+    it("should format as hh_mm_ss when layout specifies hh_mm_ss", () => {
+      component["layout"] = {
+        widgets: [
+          {
+            widgetType: "timer",
+            customSettings: { timeDisplayFormat: "hh_mm_ss" },
+          },
+        ],
+      } as any;
+      component["time"] = 83;
+      expect(component["formattedTime"]).toBe("00:01:23");
+    });
+
+    it("should format as seconds when layout specifies seconds", () => {
+      component["layout"] = {
+        widgets: [
+          {
+            widgetType: "timer",
+            customSettings: { timeDisplayFormat: "seconds" },
+          },
+        ],
+      } as any;
+      component["time"] = 83;
+      expect(component["formattedTime"]).toBe("83");
+    });
+
+    it("should support always showing subseconds from layout configuration", () => {
+      component["layout"] = {
+        widgets: [
+          {
+            widgetType: "timer",
+            customSettings: {
+              timeDisplayFormat: "mm_ss",
+              timeSubsecondMode: "always",
+              timeSubsecondDecimals: 2,
+            },
+          },
+        ],
+      } as any;
+      component["time"] = 75.42;
+      expect(component["formattedTime"]).toBe("01:15.42");
+    });
+
+    it("should support never showing subseconds from layout configuration", () => {
+      component["layout"] = {
+        widgets: [
+          {
+            widgetType: "timer",
+            customSettings: {
+              timeDisplayFormat: "dynamic",
+              timeSubsecondMode: "never",
+              timeSubsecondThreshold: 10,
+              timeSubsecondDecimals: 2,
+            },
+          },
+        ],
+      } as any;
+      component["time"] = 9.5;
+      expect(component["formattedTime"]).toBe("9");
+    });
   });
 
   describe("Lap Highlighting", () => {
@@ -2742,6 +3132,27 @@ describe("DefaultRacedayComponent", () => {
 
       expect(component["highlightedDrivers"].has("hd1")).toBeFalse();
     }));
+
+    it("should honor lane-view customSettings.highlightRowOnLap over global settings", fakeAsync(() => {
+      mockSettings.highlightRowOnLap = true;
+      component.currentRacedayLayout = {
+        widgets: [
+          {
+            widgetType: "lane-view",
+            customSettings: { highlightRowOnLap: false },
+          },
+        ],
+      } as any;
+
+      lapsSubject.next({
+        objectId: "hd1",
+        lapTime: 1.234,
+        bestLapTime: 1.0,
+      });
+      fixture.detectChanges();
+
+      expect(component["highlightedDrivers"].has("hd1")).toBeFalse();
+    }));
   });
 
   describe("False Start", () => {
@@ -2764,24 +3175,46 @@ describe("DefaultRacedayComponent", () => {
       fixture.detectChanges();
     });
 
-    it("should play themed penalty sound when FALSE_START received and no custom audio", () => {
+    it("should not play any sound when FALSE_START received and audio is set to none or not configured correctly (no fallback)", () => {
       spyOn(component as any, "playThemedSound");
+      const playCalloutSpy = spyOn(
+        (component as any).audioService,
+        "playCallout",
+      );
 
+      // 1. type is none
+      mockHd.driver.falseStartAudio = { type: "none" };
       lapsSubject.next({
         objectId: "hd1",
         type: LapType.FALSE_START,
       });
 
-      expect((component as any).playThemedSound).toHaveBeenCalledWith(
-        THEME_SLOT_KEYS.AUDIO_PENALTY,
-        jasmine.objectContaining({
-          driver: jasmine.objectContaining({ nickname: "Test Driver" }),
-        }),
-      );
+      expect((component as any).playThemedSound).not.toHaveBeenCalled();
+      expect(playCalloutSpy).not.toHaveBeenCalled();
+
+      // 2. type is preset but url is empty
+      mockHd.driver.falseStartAudio = { type: "preset", url: "" };
+      lapsSubject.next({
+        objectId: "hd1",
+        type: LapType.FALSE_START,
+      });
+
+      expect((component as any).playThemedSound).not.toHaveBeenCalled();
+      expect(playCalloutSpy).not.toHaveBeenCalled();
+
+      // 3. type is tts but text is empty
+      mockHd.driver.falseStartAudio = { type: "tts", text: "   " };
+      lapsSubject.next({
+        objectId: "hd1",
+        type: LapType.FALSE_START,
+      });
+
+      expect((component as any).playThemedSound).not.toHaveBeenCalled();
+      expect(playCalloutSpy).not.toHaveBeenCalled();
     });
 
-    it("should play custom penalty audio when FALSE_START received", () => {
-      mockHd.driver.penaltyAudio = {
+    it("should play driver false start audio when FALSE_START received and properly configured", () => {
+      mockHd.driver.falseStartAudio = {
         type: "preset",
         url: "custom-penalty.wav",
       };
@@ -2933,6 +3366,27 @@ describe("DefaultRacedayComponent", () => {
       expect((component as any).getDriverVisualPosition(mockHd1)).toBe(1); // Rank 2 -> visual pos 1
     });
 
+    it("should honor lane-view customSettings.sortByStandings over global settings", () => {
+      mockSettings.sortByStandings = true;
+      (component as any).currentRacedayLayout = {
+        widgets: [
+          {
+            widgetType: "lane-view",
+            customSettings: { sortByStandings: false },
+          },
+        ],
+      } as any;
+      (component as any).heat = (component as any).heat || ({} as any);
+      ((component as any).heat as any).standings = ["hd2", "hd1"];
+
+      (component as any).sortHeatDrivers();
+      fixture.detectChanges();
+
+      // Since customSettings.sortByStandings is false, lane index order is preserved (hd1 is pos 0, hd2 is pos 1)
+      expect((component as any).getDriverVisualPosition(mockHd1)).toBe(0);
+      expect((component as any).getDriverVisualPosition(mockHd2)).toBe(1);
+    });
+
     it("should update rankings and sort on standingsUpdate$ event", fakeAsync(() => {
       mockSettings.sortByStandings = true;
       (component as any).heat = (component as any).heat || ({} as any);
@@ -2956,6 +3410,191 @@ describe("DefaultRacedayComponent", () => {
       expect((component as any).getDriverVisualPosition(mockHd2)).toBe(0);
       expect((component as any).getDriverVisualPosition(mockHd1)).toBe(1);
     }));
+  });
+
+  describe("Heat and Driver Sorting Resiliency", () => {
+    it("should re-sort heat drivers when updateRacedayLayout is invoked with an active heat", () => {
+      fixture.detectChanges();
+      mockSettings.sortByStandings = true;
+      const mockHeat = {
+        heatDrivers: [
+          { objectId: "hd1", laneIndex: 0, participant: {} },
+          { objectId: "hd2", laneIndex: 1, participant: {} },
+        ],
+        heatNumber: 1,
+        standings: ["hd2", "hd1"],
+      };
+      (component as any).heat = mockHeat;
+      (component as any).driverRankings.set("hd1", 2);
+      (component as any).driverRankings.set("hd2", 1);
+      // Disrupt lane order to verify updateRacedayLayout restores lane order and calculates visual positions
+      component["sortedHeatDrivers"] = [
+        mockHeat.heatDrivers[1],
+        mockHeat.heatDrivers[0],
+      ] as any;
+
+      (component as any).updateRacedayLayout();
+
+      expect(component["sortedHeatDrivers"][0].objectId).toBe("hd1");
+      expect(component["sortedHeatDrivers"][1].objectId).toBe("hd2");
+      expect(
+        (component as any).getDriverVisualPosition(mockHeat.heatDrivers[1]),
+      ).toBe(0);
+      expect(
+        (component as any).getDriverVisualPosition(mockHeat.heatDrivers[0]),
+      ).toBe(1);
+    });
+
+    it("should sort heat drivers when currentHeat$ emits a new heat", () => {
+      const currentHeatSubject = new Subject<any>();
+      mockRaceService.currentHeat$ = currentHeatSubject.asObservable();
+      fixture.detectChanges();
+
+      mockSettings.sortByStandings = false;
+      const mockHeat = {
+        heatDrivers: [
+          { objectId: "hd2", laneIndex: 1, participant: {} },
+          { objectId: "hd1", laneIndex: 0, participant: {} },
+        ],
+        heatNumber: 1,
+        standings: [],
+      };
+      mockRaceService.getCurrentHeat.and.returnValue(mockHeat);
+
+      currentHeatSubject.next(mockHeat);
+
+      expect((component as any).heat).toBe(mockHeat);
+      expect(component["sortedHeatDrivers"].length).toBe(2);
+      expect(component["sortedHeatDrivers"][0].objectId).toBe("hd1");
+      expect(component["sortedHeatDrivers"][1].objectId).toBe("hd2");
+    });
+
+    it("should trigger dataService.updateRaceSubscription(true) when currentHeat$ emits without track", () => {
+      const currentHeatSubject = new Subject<any>();
+      mockRaceService.currentHeat$ = currentHeatSubject.asObservable();
+      fixture.detectChanges();
+
+      (component as any).track = null;
+      (component as any).race = null;
+      mockRaceService.getRace.and.returnValue(null);
+      mockDataService.updateRaceSubscription.calls.reset();
+
+      const mockHeat = {
+        heatDrivers: [{ objectId: "hd1", laneIndex: 0, participant: {} }],
+        heatNumber: 1,
+        standings: [],
+      };
+
+      currentHeatSubject.next(mockHeat);
+
+      expect(mockDataService.updateRaceSubscription).toHaveBeenCalledWith(true);
+    });
+
+    it("should re-sort heat drivers and mark change detection when selectedRace$ emits with existing heat", () => {
+      const selectedRaceSubject = new Subject<any>();
+      mockRaceService.selectedRace$ = selectedRaceSubject.asObservable();
+      fixture.detectChanges();
+
+      const mockHeat = {
+        heatDrivers: [{ objectId: "hd1", laneIndex: 0, participant: {} }],
+        heatNumber: 1,
+        standings: [],
+      };
+      (component as any).heat = mockHeat;
+      spyOn(component as any, "sortHeatDrivers").and.callThrough();
+      spyOn((component as any).cdr, "markForCheck").and.callThrough();
+
+      selectedRaceSubject.next({});
+
+      expect((component as any).sortHeatDrivers).toHaveBeenCalled();
+      expect((component as any).cdr.markForCheck).toHaveBeenCalled();
+    });
+
+    it("should initialize heat and sort drivers when heats$ emits if sortedHeatDrivers is empty", () => {
+      const heatsSubject = new Subject<any[]>();
+      mockRaceService.heats$ = heatsSubject.asObservable();
+      fixture.detectChanges();
+
+      component["sortedHeatDrivers"] = [];
+      (component as any).heat = null;
+
+      const mockHeat = {
+        heatDrivers: [
+          { objectId: "hd1", laneIndex: 0, participant: {} },
+          { objectId: "hd2", laneIndex: 1, participant: {} },
+        ],
+        heatNumber: 1,
+        standings: [],
+      };
+      mockRaceService.getCurrentHeat.and.returnValue(mockHeat);
+      mockRaceService.getHeats.and.returnValue([mockHeat]);
+
+      heatsSubject.next([mockHeat]);
+
+      expect(component["sortedHeatDrivers"].length).toBe(2);
+      expect((component as any).heat).toBe(mockHeat);
+    });
+
+    it("should populate rankings and sort drivers in initializeHeat even when getHeats returns empty array", () => {
+      fixture.detectChanges();
+      mockRaceService.getHeats.and.returnValue([]);
+      const mockHeat = {
+        heatDrivers: [
+          { objectId: "hd1", laneIndex: 0, participant: {} },
+          { objectId: "hd2", laneIndex: 1, participant: {} },
+        ],
+        heatNumber: 1,
+        standings: [],
+      };
+      mockRaceService.getCurrentHeat.and.returnValue(mockHeat);
+      (component as any).heat = null;
+      component["sortedHeatDrivers"] = [];
+
+      (component as any).initializeHeat();
+
+      expect((component as any).heat).toBe(mockHeat);
+      expect((component as any).driverRankings.size).toBe(2);
+      expect(component["sortedHeatDrivers"].length).toBe(2);
+    });
+
+    it("should update totalHeats when heats$ emits even if sortedHeatDrivers is already populated", () => {
+      const heatsSubject = new Subject<any[]>();
+      mockRaceService.heats$ = heatsSubject.asObservable();
+      fixture.detectChanges();
+
+      (component as any).sortedHeatDrivers = [{ objectId: "hd1" }];
+      (component as any).heat = { heatNumber: 1 };
+      (component as any).totalHeats = 0;
+
+      heatsSubject.next([
+        { heatNumber: 1 },
+        { heatNumber: 2 },
+        { heatNumber: 3 },
+        { heatNumber: 4 },
+      ]);
+
+      expect((component as any).totalHeats).toBe(4);
+    });
+
+    it("should fallback track from race or raceService in initializeHeat and getLaneColor", () => {
+      const mockTrack = {
+        lanes: [
+          { background_color: "#ff0000", foreground_color: "#ffffff" },
+          { background_color: "#0000ff", foreground_color: "#ffffff" },
+        ],
+      };
+      (component as any).track = null;
+      (component as any).race = { track: mockTrack };
+      mockRaceService.getRace.and.returnValue(null);
+
+      (component as any).initializeHeat();
+
+      expect((component as any).track).toBe(mockTrack);
+
+      const hd = { laneIndex: 0 } as any;
+      const color = component.getLaneColor(hd, "background_color");
+      expect(color).toBe("#ff0000");
+    });
   });
 
   describe("onFileMenuSelect and onOptionsSelect", () => {
@@ -3089,6 +3728,219 @@ describe("DefaultRacedayComponent", () => {
       );
     });
 
+    it("should open race history dialog when RACE_HISTORY is selected in file menu", () => {
+      component.onFileMenuSelect("RACE_HISTORY");
+      expect(component.showRaceHistoryDialog).toBeTrue();
+    });
+
+    it("should handle BACK action in file menu respecting isBackDisabled", () => {
+      spyOn(window.history, "back");
+      const navService = (component as any).navigationService;
+      spyOn(navService, "canGoBack").and.returnValue(false);
+
+      expect(component.isBackDisabled).toBeTrue();
+      component.onFileMenuSelect("BACK");
+      expect(window.history.back).not.toHaveBeenCalled();
+
+      navService.canGoBack.and.returnValue(true);
+      expect(component.isBackDisabled).toBeFalse();
+      component.onFileMenuSelect("BACK");
+      expect(window.history.back).toHaveBeenCalled();
+    });
+
+    it("should open disallow lap records dialog when DISALLOW_LAP_RECORDS is selected in menu", () => {
+      component.onMenuSelect("DISALLOW_LAP_RECORDS");
+      expect(component.showDisallowLapRecordsDialog).toBeTrue();
+    });
+
+    it("should return active heats including current heat in disallowLapRecordsHeats", () => {
+      mockRaceService.getHeats.and.returnValue([]);
+      mockRaceService.getCurrentHeat.and.returnValue(undefined);
+      const heat1 = { objectId: "h1", heatNumber: 1, heatDrivers: [] } as any;
+      const currentHeat = {
+        objectId: "h2",
+        heatNumber: 2,
+        heatDrivers: [],
+      } as any;
+      component.heats = [heat1];
+      (component as any).heat = currentHeat;
+
+      const heats = component.disallowLapRecordsHeats;
+      expect(heats.length).toBe(2);
+      expect(heats[0]).toBe(heat1);
+      expect(heats[1]).toBe(currentHeat);
+    });
+
+    it("should render lap rows in disallow lap records dialog when opened on raceday with recorded laps", () => {
+      const driver1 = new Driver("d1", "Alice", "The Rocket");
+      const part1 = new RaceParticipant(
+        "p1",
+        driver1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        100,
+      );
+      const dhd1 = new DriverHeatData("hd1", part1, 0);
+      dhd1.addLapTime(
+        1,
+        5.2,
+        5.2,
+        5.2,
+        5.2,
+        1,
+        "d1",
+        false,
+        undefined,
+        undefined,
+        true,
+      );
+      const heat1 = new Heat("h1", 1, [dhd1], [], true);
+
+      mockRaceService.getHeats.and.returnValue([heat1]);
+      mockRaceService.getCurrentHeat.and.returnValue(heat1);
+      mockRaceService.heats$ = of([heat1]);
+      mockRaceService.currentHeat$ = of(heat1);
+      component.heats = [heat1];
+      (component as any).heat = heat1;
+      component.showDisallowLapRecordsDialog = true;
+      fixture.detectChanges();
+
+      const dialogDebug = fixture.debugElement.query(
+        By.directive(DisallowLapRecordsDialogComponent),
+      );
+      const dialogComp =
+        dialogDebug.componentInstance as DisallowLapRecordsDialogComponent;
+      expect(dialogComp.normalizedLaps.length).toBe(1);
+      const dialogEl = fixture.nativeElement.querySelector(
+        "app-disallow-lap-records-dialog",
+      );
+      const rows = dialogEl.querySelectorAll(".table-row");
+      expect(rows.length).toBe(1);
+    });
+
+    it("should update lap record status in heat and heats when onRecordsUpdated is triggered", () => {
+      const driver1 = new Driver("d1", "Alice", "The Rocket");
+      const part1 = new RaceParticipant(
+        "p1",
+        driver1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        100,
+      );
+      const dhd1 = new DriverHeatData("hd1", part1, 0);
+      dhd1.addLapTime(
+        1,
+        5.2,
+        5.2,
+        5.2,
+        5.2,
+        1,
+        "d1",
+        false,
+        undefined,
+        undefined,
+        true,
+      );
+      const heat1 = new Heat("h1", 1, [dhd1], [], true);
+
+      const dhd2 = new DriverHeatData("hd2", part1, 0);
+      dhd2.addLapTime(
+        1,
+        5.2,
+        5.2,
+        5.2,
+        5.2,
+        1,
+        "d1",
+        false,
+        undefined,
+        undefined,
+        true,
+      );
+      const heat1Copy = new Heat("h1-copy", 1, [dhd2], [], true);
+
+      (component as any).heat = heat1;
+      component.heats = [heat1Copy];
+
+      component.onRecordsUpdated({
+        heatNumber: 1,
+        lane: 0,
+        lapIndex: 0,
+        countTowardsRecords: false,
+      });
+
+      expect(dhd1.lapsWithDetails[0].countTowardsRecords).toBeFalse();
+      expect(dhd2.lapsWithDetails[0].countTowardsRecords).toBeFalse();
+    });
+
+    it("should prefer heats with recorded laps when merging disallowLapRecordsHeats", () => {
+      const driver1 = new Driver("d1", "Alice", "The Rocket");
+      const part1 = new RaceParticipant(
+        "p1",
+        driver1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        100,
+      );
+
+      const dhdEmpty = new DriverHeatData("hd-empty", part1, 0);
+      const heatEmpty = new Heat("h1-empty", 1, [dhdEmpty], [], true);
+
+      const dhdWithLaps = new DriverHeatData("hd-laps", part1, 0);
+      dhdWithLaps.addLapTime(
+        1,
+        4.2,
+        4.2,
+        4.2,
+        4.2,
+        1,
+        "d1",
+        false,
+        undefined,
+        undefined,
+        true,
+      );
+      const heatWithLaps = new Heat("h1-laps", 1, [dhdWithLaps], [], true);
+
+      mockRaceService.getHeats.and.returnValue([heatEmpty]);
+      component.heats = [heatWithLaps];
+      (component as any).heat = undefined;
+
+      const result = component.disallowLapRecordsHeats;
+      expect(result.length).toBe(1);
+      expect(result[0]).toBe(heatWithLaps);
+    });
+
+    it("should resolve currentRaceDate from statistics or fallback to date", () => {
+      expect(component.currentRaceDate).toBeDefined();
+
+      (component as any).race = { statistics: { startMillis: 1725468300000 } };
+      expect(component.currentRaceDate).toBe(1725468300000);
+
+      (component as any).race = {
+        statistics: { startTime: "2026-09-04T16:00:00Z" },
+      };
+      expect(component.currentRaceDate).toBe("2026-09-04T16:00:00Z");
+    });
+
     it("should navigate to /ui-editor when CUSTOMIZE_UI is selected in options menu", () => {
       (mockRouter as any).url = "/raceday?someParam=true";
       component.onOptionsSelect("CUSTOMIZE_UI");
@@ -3105,6 +3957,22 @@ describe("DefaultRacedayComponent", () => {
       expect(result).toBeTrue();
     });
 
+    it("should allow deactivation when navigating to /ui-editor even if raceHasEnded is true", () => {
+      component.raceHasEnded = true;
+      const nextState = { url: "/ui-editor?returnUrl=/raceday" } as any;
+      const result = component.canDeactivate(nextState);
+      expect(result).toBeTrue();
+      expect(component.showAckModal).toBeFalse();
+    });
+
+    it("should allow deactivation when navigating to /ui-editor even if raceState is RACE_OVER", () => {
+      (component as any).raceState = RaceState.RACE_OVER;
+      const nextState = { url: "/ui-editor" } as any;
+      const result = component.canDeactivate(nextState);
+      expect(result).toBeTrue();
+      expect(component.showAckModal).toBeFalse();
+    });
+
     it("should allow deactivation when navigating to /modify-heats", () => {
       const nextState = { url: "/modify-heats" } as any;
       const result = component.canDeactivate(nextState);
@@ -3117,12 +3985,14 @@ describe("DefaultRacedayComponent", () => {
       expect(result).toBeTrue();
     });
 
-    it("should show exit confirmation and return observable when navigating elsewhere", (done) => {
+    it("should show exit confirmation, set skipIntro, and return observable when navigating elsewhere", (done) => {
+      sessionStorage.removeItem("skipIntro");
       const nextState = { url: "/home" } as any;
       const result = component.canDeactivate(nextState) as any;
       expect(component.showExitConfirmation).toBeTrue();
       result.subscribe((val: boolean) => {
         expect(val).toBeTrue();
+        expect(sessionStorage.getItem("skipIntro")).toBe("true");
         done();
       });
       component.onExitConfirm();
@@ -3455,8 +4325,61 @@ describe("DefaultRacedayComponent", () => {
       expect(component.getLaneRecordHolder(hd1)).toBe("Jane Doe");
       expect(component.getLaneRecordHolder(hd2)).toBe("---");
 
-      expect(component.getLaneRecordDate(hd0)).toBe("2026-08-21");
+      const dtService = TestBed.inject(DateTimeFormatService);
+      expect(component.getLaneRecordDate(hd0)).toBe(
+        dtService.formatDate(
+          mockRecords.overall!.laneFastestLap![0].date,
+          "short",
+          "---",
+        ),
+      );
       expect(component.getLaneRecordDate(hd2)).toBe("---");
+    });
+
+    it("should get best race lap entry, time, holder, and heat correctly", () => {
+      const mockRecords: IRecordData = {
+        current: {
+          laneFastestLap: [
+            {
+              value: 3.9876,
+              holderNickname: "Lightning",
+              heatNumber: 2,
+            },
+            {
+              value: 4.5432,
+              holderName: "Bob Builder",
+              heatNumber: 1,
+            },
+          ],
+        },
+      };
+      recordDataSubject.next(mockRecords);
+
+      const hd0 = { laneIndex: 0 } as any;
+      const hd1 = { laneIndex: 1 } as any;
+      const hd2 = { laneIndex: 2 } as any;
+
+      expect(component.getBestRaceLapEntry(hd0)?.value).toBe(3.9876);
+      expect(component.getBestRaceLapEntry(hd1)?.value).toBe(4.5432);
+      expect(component.getBestRaceLapEntry(hd2)).toBeUndefined();
+      expect(component.getBestRaceLapEntry(0)?.value).toBe(3.9876);
+
+      expect(component.getBestRaceLapTime(hd0)).toBe("3.988");
+      expect(component.getBestRaceLapTime(hd1)).toBe("4.543");
+      expect(component.getBestRaceLapTime(hd2)).toBe("--.---");
+
+      expect(component.getBestRaceLapHolder(hd0)).toBe("Lightning");
+      expect(component.getBestRaceLapHolder(hd1)).toBe("Bob Builder");
+      expect(component.getBestRaceLapHolder(hd2)).toBe("---");
+
+      expect(component.getBestRaceLapHeat(hd0)).toContain("2");
+      expect(component.getBestRaceLapHeat(hd1)).toContain("1");
+      expect(component.getBestRaceLapHeat(hd2)).toBe("---");
+
+      // UI editor mode fallback
+      spyOn(component, "isUIEditorMode").and.returnValue(true);
+      expect(component.getBestRaceLapEntry(hd2)).toBeDefined();
+      expect(component.getBestRaceLapEntry(hd2)?.value).toBeGreaterThan(0);
     });
   });
 
@@ -3590,6 +4513,128 @@ describe("DefaultRacedayComponent", () => {
       raceStateSubject.next(RaceState.PAUSED);
       tick();
       expect(component["showCountdownOverlay"]).toBeFalse();
+    }));
+
+    it("should render start countdown lights vertically in portrait mode with highest value at the top moving down", fakeAsync(() => {
+      component.layout = {
+        baseWidth: 1080,
+        baseHeight: 1920,
+        widgets: [
+          {
+            id: "widget-countdown",
+            widgetType: "countdown",
+            x: 415,
+            y: 560,
+            width: 250,
+            height: 800,
+            zIndex: 2000,
+            scaleMode: "auto",
+            customSettings: {
+              orientation: "vertical",
+              lampScale: 1.0,
+              blurArea: "fullscreen",
+              blurAmount: 50,
+              lampSizingMode: "custom",
+              previewLampCount: 5,
+            },
+          },
+        ],
+      };
+      component["race"] = { ...MOCK_RACES[0], start_time: 5.0 } as any;
+      expect(component.isPortraitLayout()).toBeTrue();
+
+      raceTimeSubject.next({ time: 5.0, autoStartRemaining: 5.0 });
+      raceStateSubject.next(RaceState.STARTING);
+      tick();
+      fixture.detectChanges();
+
+      const overlay = fixture.nativeElement.querySelector(".countdown-overlay");
+      const lampsContainer =
+        fixture.nativeElement.querySelector(".lamps-container");
+      expect(overlay).toBeTruthy();
+      expect(overlay.classList.contains("portrait")).toBeTrue();
+      expect(lampsContainer).toBeTruthy();
+      expect(lampsContainer.classList.contains("vertical")).toBeTrue();
+
+      const lampImages = lampsContainer.querySelectorAll("img.start-lamp");
+      expect(lampImages.length).toBe(5);
+
+      // Highest value (5s) at the top: lamp 0 (top in DOM) is ON, others are dim
+      expect(lampImages[0].classList.contains("on")).toBeTrue();
+      expect(lampImages[1].classList.contains("on")).toBeFalse();
+      expect(lampImages[2].classList.contains("on")).toBeFalse();
+      expect(lampImages[3].classList.contains("on")).toBeFalse();
+      expect(lampImages[4].classList.contains("on")).toBeFalse();
+
+      // At 4.0s: lamps come on moving down (lamps 0 and 1 are ON)
+      raceTimeSubject.next({ time: 4.0, autoStartRemaining: 4.0 });
+      tick();
+      fixture.detectChanges();
+      expect(lampImages[0].classList.contains("on")).toBeTrue();
+      expect(lampImages[1].classList.contains("on")).toBeTrue();
+      expect(lampImages[2].classList.contains("on")).toBeFalse();
+
+      // At 1.0s: all 5 lamps are ON moving all the way down
+      raceTimeSubject.next({ time: 1.0, autoStartRemaining: 1.0 });
+      tick();
+      fixture.detectChanges();
+      for (let i = 0; i < 5; i++) {
+        expect(lampImages[i].classList.contains("on")).toBeTrue();
+      }
+
+      // At RACING: all lamps turn green ('go')
+      raceStateSubject.next(RaceState.RACING);
+      tick();
+      fixture.detectChanges();
+      for (let i = 0; i < 5; i++) {
+        expect(lampImages[i].classList.contains("go")).toBeTrue();
+      }
+
+      tick(5000);
+    }));
+
+    it("should render start countdown lights horizontally when UI layout is in landscape mode (width >= height)", fakeAsync(() => {
+      component.layout = {
+        baseWidth: 1920,
+        baseHeight: 1080,
+        widgets: [
+          {
+            id: "widget-countdown",
+            widgetType: "countdown",
+            x: 460,
+            y: 415,
+            width: 1000,
+            height: 250,
+            zIndex: 2000,
+            scaleMode: "auto",
+            customSettings: {
+              orientation: "horizontal",
+              lampScale: 1.0,
+              blurArea: "fullscreen",
+              blurAmount: 50,
+              lampSizingMode: "custom",
+              previewLampCount: 5,
+            },
+          },
+        ],
+      };
+      component["race"] = { ...MOCK_RACES[0], start_time: 5.0 } as any;
+      expect(component.isPortraitLayout()).toBeFalse();
+
+      raceTimeSubject.next({ time: 5.0, autoStartRemaining: 5.0 });
+      raceStateSubject.next(RaceState.STARTING);
+      tick();
+      fixture.detectChanges();
+
+      const overlay = fixture.nativeElement.querySelector(".countdown-overlay");
+      const lampsContainer =
+        fixture.nativeElement.querySelector(".lamps-container");
+      expect(overlay).toBeTruthy();
+      expect(overlay.classList.contains("portrait")).toBeFalse();
+      expect(lampsContainer).toBeTruthy();
+      expect(lampsContainer.classList.contains("vertical")).toBeFalse();
+
+      tick(5000);
     }));
 
     it("should not show autoStartRemaining on timer during STARTING state", fakeAsync(() => {
@@ -4158,8 +5203,96 @@ describe("DefaultRacedayComponent", () => {
             audioEntries: [
               { url: "/api/assets/download/240", timeSeconds: 240 },
               { url: "/api/assets/download/60", timeSeconds: 60 },
+              { url: "/api/assets/download/30", timeSeconds: 30 },
             ],
             url: "/api/assets/download/default_seconds_left_set",
+          },
+          {
+            model: { entityId: "default_laps_left_set" },
+            type: "audio_set",
+            audioEntries: [
+              {
+                timeSeconds: 20,
+                name: "20 laps to go",
+                type: "tts",
+                text: "20 laps to go",
+              },
+              {
+                timeSeconds: 10,
+                name: "10 laps to go",
+                type: "tts",
+                text: "10 laps to go",
+              },
+              {
+                timeSeconds: 5,
+                name: "5 laps to go",
+                type: "tts",
+                text: "5 laps to go",
+              },
+              {
+                timeSeconds: 1,
+                name: "Final Lap",
+                type: "tts",
+                text: "Final Lap",
+              },
+              {
+                timeSeconds: 0,
+                name: "Leader finished",
+                type: "tts",
+                text: "Leader finished",
+              },
+            ],
+            url: "/api/assets/download/default_laps_left_set",
+          },
+          {
+            model: { entityId: "default_auto_start" },
+            type: "audio_set",
+            audioEntries: [
+              {
+                timeSeconds: 60,
+                name: "1 minute",
+                type: "tts",
+                text: "Heat Starts in 1 minute",
+              },
+              {
+                timeSeconds: 30,
+                name: "30 seconds",
+                type: "tts",
+                text: "Heat Starts in 30 seconds",
+              },
+              {
+                timeSeconds: 10,
+                name: "10 seconds",
+                type: "tts",
+                text: "Heat Starts in 10 seconds",
+              },
+            ],
+            url: "/api/assets/download/default_auto_start",
+          },
+          {
+            model: { entityId: "default_auto_advance" },
+            type: "audio_set",
+            audioEntries: [
+              {
+                timeSeconds: 60,
+                name: "1 minute",
+                type: "tts",
+                text: "Heat advances in 1 minute",
+              },
+              {
+                timeSeconds: 30,
+                name: "30 seconds",
+                type: "tts",
+                text: "Heat advances in 30 seconds",
+              },
+              {
+                timeSeconds: 10,
+                name: "10 seconds",
+                type: "tts",
+                text: "Heat advances in 10 seconds",
+              },
+            ],
+            url: "/api/assets/download/default_auto_advance",
           },
         ]),
       );
@@ -4238,17 +5371,1212 @@ describe("DefaultRacedayComponent", () => {
       expect(window.Audio).toHaveBeenCalledWith(
         `${mockDataService.serverUrl}api/assets/download/240`,
       );
+      component["audioService"].stopVoice();
 
       // Crossing halfway (150s for a 5 minute race)
       raceTimeSubject.next({ time: 150.0 });
       expect(mockThemeService.resolveAudioConfig).toHaveBeenCalledWith(
         THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT_HALFWAY,
       );
+      component["audioService"].stopVoice();
 
       // Crossing 1 minute (60s)
       raceTimeSubject.next({ time: 60.0 });
       expect(window.Audio).toHaveBeenCalledWith(
         `${mockDataService.serverUrl}api/assets/download/60`,
+      );
+    });
+
+    it("should resolve Halfway vs 30s collision by playing Halfway (NORMAL) and dropping 30s (NORMAL)", () => {
+      (window.Audio as any).calls.reset();
+
+      mockThemeService.resolveAudioConfig.and.callFake((key: string) => {
+        if (key === THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT) {
+          return { type: "audio_set", url: "default_seconds_left_set" };
+        }
+        if (key === THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT_HALFWAY) {
+          return { type: "preset", url: "halfway_sound" };
+        }
+        return { type: "preset", url: `url_${key}` };
+      });
+
+      const race = {
+        ...MOCK_RACES[0],
+        heat_scoring: {
+          finishMethod: FinishMethod.Timed,
+          finishValue: 60, // 1 minute race, halfway is at 30 seconds
+        },
+        track: component["track"],
+      } as any;
+      component["race"] = race;
+      mockRaceService.getRace.and.returnValue(race);
+
+      fixture.detectChanges();
+      component["raceState"] = RaceState.RACING;
+
+      // Initial time: 60s
+      raceTimeSubject.next({ time: 60.0 });
+      (window.Audio as any).calls.reset();
+
+      // Crossing 30s threshold: both Halfway (30s) and standard 30s threshold are triggered
+      raceTimeSubject.next({ time: 30.0 });
+
+      // Halfway is NORMAL priority (played first), 30s is NORMAL priority (dropped because channel is busy)
+      // Only halfway_sound should have been played; 30s was dropped!
+      expect(window.Audio).toHaveBeenCalledWith(
+        jasmine.stringMatching(/halfway_sound/),
+      );
+      expect(window.Audio).not.toHaveBeenCalledWith(
+        jasmine.stringMatching(/api\/assets\/download\/30$/),
+      );
+    });
+
+    it("should resolve Halfway vs 30s collision when Halfway is TTS by playing Halfway TTS (NORMAL) and dropping 30s (NORMAL)", () => {
+      (window.Audio as any).calls.reset();
+      const playCalloutSpy = spyOn(
+        component["audioService"],
+        "playCallout",
+      ).and.callThrough();
+
+      mockThemeService.resolveAudioConfig.and.callFake((key: string) => {
+        if (key === THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT) {
+          return { type: "audio_set", url: "default_seconds_left_set" };
+        }
+        if (key === THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT_HALFWAY) {
+          return { type: "tts", text: "Halfway through the heat" };
+        }
+        return { type: "preset", url: `url_${key}` };
+      });
+
+      const race = {
+        ...MOCK_RACES[0],
+        heat_scoring: {
+          finishMethod: FinishMethod.Timed,
+          finishValue: 60,
+        },
+        track: component["track"],
+      } as any;
+      component["race"] = race;
+      mockRaceService.getRace.and.returnValue(race);
+
+      fixture.detectChanges();
+      component["raceState"] = RaceState.RACING;
+
+      // Initial time: 60s
+      raceTimeSubject.next({ time: 60.0 });
+      (window.Audio as any).calls.reset();
+      playCalloutSpy.calls.reset();
+
+      // Crossing 30s threshold: Halfway (TTS) triggers first with NORMAL priority, occupies voice channel
+      raceTimeSubject.next({ time: 30.0 });
+
+      // Halfway TTS played with normal priority
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          type: "tts",
+          text: "Halfway through the heat",
+        }),
+        "normal",
+        undefined,
+        undefined,
+        { widgetType: "timer" },
+      );
+      // 30s threshold audio was dropped because voice channel was busy with NORMAL priority Halfway!
+      expect(window.Audio).not.toHaveBeenCalledWith(
+        jasmine.stringMatching(/api\/assets\/download\/30$/),
+      );
+    });
+
+    it("should preserve urgent, high, and normal priority levels when sounds are configured as TTS", () => {
+      const playCalloutSpy = spyOn(
+        component["audioService"],
+        "playCallout",
+      ).and.callThrough();
+
+      mockThemeService.resolveAudioConfig.and.callFake((key: string) => {
+        return { type: "tts", text: `TTS for ${key}` };
+      });
+
+      // Yellow flag (urgent)
+      component["raceState"] = RaceState.RACING;
+      component["handleRaceStateChange"](RaceState.PAUSED);
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          type: "tts",
+          text: "TTS for audio.yellowflag",
+        }),
+        "urgent",
+        undefined,
+        undefined,
+        { widgetType: "flag" },
+      );
+      playCalloutSpy.calls.reset();
+
+      // Heat over (urgent)
+      component["raceState"] = RaceState.RACING;
+      component["handleRaceStateChange"](RaceState.HEAT_OVER);
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          type: "tts",
+          text: "TTS for audio.heat_over",
+        }),
+        "urgent",
+        undefined,
+        undefined,
+        { widgetType: "flag" },
+      );
+      playCalloutSpy.calls.reset();
+
+      // Race over (urgent)
+      component["raceState"] = RaceState.RACING;
+      component["handleRaceStateChange"](RaceState.RACE_OVER);
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          type: "tts",
+          text: "TTS for audio.race_over",
+        }),
+        "urgent",
+        undefined,
+        undefined,
+        { widgetType: "flag" },
+      );
+      playCalloutSpy.calls.reset();
+
+      // Min lap time (urgent)
+      component["playThemedSound"](THEME_SLOT_KEYS.AUDIO_MIN_LAP_TIME);
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          type: "tts",
+          text: "TTS for audio.min_lap_time",
+        }),
+        "urgent",
+        undefined,
+        undefined,
+        {
+          widgetType: "lane-view",
+          laneIndex: undefined,
+          driverId: undefined,
+        },
+      );
+      playCalloutSpy.calls.reset();
+
+      // Halfway (normal)
+      component["playThemedSound"](THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT_HALFWAY);
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          type: "tts",
+          text: "TTS for audio.seconds_left.halfway",
+        }),
+        "normal",
+        undefined,
+        undefined,
+        { widgetType: "timer" },
+      );
+    });
+
+    it("should play laps left audio set at thresholds (20, 10, 5, 1, 0) when heat leader completes laps", () => {
+      const playCalloutSpy = spyOn(
+        component["audioService"],
+        "playCallout",
+      ).and.callThrough();
+
+      mockThemeService.resolveAudioConfig.and.callFake((key: string) => {
+        if (key === THEME_SLOT_KEYS.AUDIO_LAPS_LEFT) {
+          return { type: "audio_set", url: "default_laps_left_set" };
+        }
+        return { type: "preset", url: `url_${key}` };
+      });
+
+      const race = {
+        ...MOCK_RACES[0],
+        heat_scoring: {
+          finishMethod: FinishMethod.Lap,
+          finishValue: 25,
+        },
+        track: component["track"],
+      } as any;
+      component["race"] = race;
+      mockRaceService.getRace.and.returnValue(race);
+
+      fixture.detectChanges();
+      component["raceState"] = RaceState.RACING;
+
+      const leaderHd = component["heat"]!.heatDrivers[0];
+      const secondHd = component["heat"]!.heatDrivers[1];
+
+      // Lap 1: 24 laps left -> no threshold
+      lapsSubject.next({
+        objectId: leaderHd.objectId,
+        lapNumber: 1,
+        lapTime: 3.5,
+      });
+      expect(playCalloutSpy).not.toHaveBeenCalledWith(
+        jasmine.objectContaining({ text: "20 laps to go" }),
+        jasmine.anything(),
+        jasmine.anything(),
+        jasmine.anything(),
+        jasmine.anything(),
+      );
+
+      // Leader reaches lap 5: 20 laps left -> "20 laps to go"
+      lapsSubject.next({
+        objectId: leaderHd.objectId,
+        lapNumber: 5,
+        lapTime: 3.5,
+      });
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          type: "tts",
+          text: "20 laps to go",
+        }),
+        "normal",
+        undefined,
+        undefined,
+        { widgetType: "timer" },
+      );
+      playCalloutSpy.calls.reset();
+      component["audioService"].stopVoice();
+
+      // Second driver reaches lap 5: already played for leader -> should NOT play again
+      lapsSubject.next({
+        objectId: secondHd.objectId,
+        lapNumber: 5,
+        lapTime: 3.8,
+      });
+      expect(playCalloutSpy).not.toHaveBeenCalledWith(
+        jasmine.objectContaining({ text: "20 laps to go" }),
+        jasmine.anything(),
+        jasmine.anything(),
+        jasmine.anything(),
+        jasmine.anything(),
+      );
+
+      // Leader reaches lap 15: 10 laps left -> "10 laps to go"
+      lapsSubject.next({
+        objectId: leaderHd.objectId,
+        lapNumber: 15,
+        lapTime: 3.5,
+      });
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          type: "tts",
+          text: "10 laps to go",
+        }),
+        "normal",
+        undefined,
+        undefined,
+        { widgetType: "timer" },
+      );
+      playCalloutSpy.calls.reset();
+      component["audioService"].stopVoice();
+
+      // Leader reaches lap 20: 5 laps left -> "5 laps to go"
+      lapsSubject.next({
+        objectId: leaderHd.objectId,
+        lapNumber: 20,
+        lapTime: 3.5,
+      });
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          type: "tts",
+          text: "5 laps to go",
+        }),
+        "normal",
+        undefined,
+        undefined,
+        { widgetType: "timer" },
+      );
+      playCalloutSpy.calls.reset();
+      component["audioService"].stopVoice();
+
+      // Leader reaches lap 24: 1 lap left -> "Final Lap"
+      lapsSubject.next({
+        objectId: leaderHd.objectId,
+        lapNumber: 24,
+        lapTime: 3.5,
+      });
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          type: "tts",
+          text: "Final Lap",
+        }),
+        "normal",
+        undefined,
+        undefined,
+        { widgetType: "timer" },
+      );
+      playCalloutSpy.calls.reset();
+      component["audioService"].stopVoice();
+
+      // Leader reaches lap 25: 0 laps left -> "Leader finished"
+      lapsSubject.next({
+        objectId: leaderHd.objectId,
+        lapNumber: 25,
+        lapTime: 3.5,
+      });
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          type: "tts",
+          text: "Leader finished",
+        }),
+        "normal",
+        undefined,
+        undefined,
+        { widgetType: "timer" },
+      );
+      playCalloutSpy.calls.reset();
+      component["audioService"].stopVoice();
+
+      // Second driver reaches lap 25: already played for leader -> should NOT play again
+      lapsSubject.next({
+        objectId: secondHd.objectId,
+        lapNumber: 25,
+        lapTime: 3.8,
+      });
+      expect(playCalloutSpy).not.toHaveBeenCalledWith(
+        jasmine.objectContaining({ text: "Leader finished" }),
+        jasmine.anything(),
+        jasmine.anything(),
+        jasmine.anything(),
+        jasmine.anything(),
+      );
+    });
+
+    it("should NOT play laps left at heat start if threshold equals total laps", () => {
+      const playCalloutSpy = spyOn(
+        component["audioService"],
+        "playCallout",
+      ).and.callThrough();
+
+      mockThemeService.resolveAudioConfig.and.callFake((key: string) => {
+        if (key === THEME_SLOT_KEYS.AUDIO_LAPS_LEFT) {
+          return { type: "audio_set", url: "default_laps_left_set" };
+        }
+        return { type: "preset", url: `url_${key}` };
+      });
+
+      const race = {
+        ...MOCK_RACES[0],
+        heat_scoring: {
+          finishMethod: FinishMethod.Lap,
+          finishValue: 20, // 20 laps total, threshold is 20
+        },
+        track: component["track"],
+      } as any;
+      component["race"] = race;
+      mockRaceService.getRace.and.returnValue(race);
+
+      fixture.detectChanges();
+      component["raceState"] = RaceState.RACING;
+
+      const leaderHd = component["heat"]!.heatDrivers[0];
+
+      // Lap 1: 19 laps left (crossing from 20 to 19, threshold 20 must NOT play)
+      lapsSubject.next({
+        objectId: leaderHd.objectId,
+        lapNumber: 1,
+        lapTime: 3.5,
+      });
+      expect(playCalloutSpy).not.toHaveBeenCalledWith(
+        jasmine.objectContaining({ text: "20 laps to go" }),
+        jasmine.anything(),
+        jasmine.anything(),
+        jasmine.anything(),
+        jasmine.anything(),
+      );
+    });
+
+    it("should play auto-start audio set at configured thresholds during NOT_STARTED countdown", () => {
+      const playCalloutSpy = spyOn(
+        component["audioService"],
+        "playCallout",
+      ).and.callThrough();
+
+      mockThemeService.resolveAudioConfig.and.callFake((key: string) => {
+        if (key === THEME_SLOT_KEYS.AUDIO_AUTO_START) {
+          return { type: "audio_set", url: "default_auto_start" };
+        }
+        return { type: "preset", url: `url_${key}` };
+      });
+
+      component["race"] = {
+        ...MOCK_RACES[0],
+        auto_start_time: 120,
+        track: component["track"],
+      } as any;
+
+      fixture.detectChanges();
+      component["raceState"] = RaceState.NOT_STARTED;
+
+      // Initial tick (establishing previous remaining time)
+      raceTimeSubject.next({ time: 0, autoStartRemaining: 70 });
+      expect(playCalloutSpy).not.toHaveBeenCalled();
+
+      // Crossing 60s threshold
+      raceTimeSubject.next({ time: 0, autoStartRemaining: 60 });
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          type: "tts",
+          text: "Heat Starts in 1 minute",
+        }),
+        "normal",
+        undefined,
+        undefined,
+        { widgetType: "timer" },
+      );
+
+      playCalloutSpy.calls.reset();
+      component["audioService"].stopVoice();
+
+      // Crossing 30s threshold
+      raceTimeSubject.next({ time: 0, autoStartRemaining: 30 });
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          type: "tts",
+          text: "Heat Starts in 30 seconds",
+        }),
+        "normal",
+        undefined,
+        undefined,
+        { widgetType: "timer" },
+      );
+
+      playCalloutSpy.calls.reset();
+
+      // Subsequent tick within 30s does not trigger duplicate
+      raceTimeSubject.next({ time: 0, autoStartRemaining: 29 });
+      expect(playCalloutSpy).not.toHaveBeenCalled();
+    });
+
+    it("should NOT play auto-start announcement at start if threshold equals total auto_start_time", () => {
+      const playCalloutSpy = spyOn(
+        component["audioService"],
+        "playCallout",
+      ).and.callThrough();
+
+      mockThemeService.resolveAudioConfig.and.callFake((key: string) => {
+        if (key === THEME_SLOT_KEYS.AUDIO_AUTO_START) {
+          return { type: "audio_set", url: "default_auto_start" };
+        }
+        return { type: "preset", url: `url_${key}` };
+      });
+
+      component["race"] = {
+        ...MOCK_RACES[0],
+        auto_start_time: 60,
+        track: component["track"],
+      } as any;
+
+      fixture.detectChanges();
+      component["raceState"] = RaceState.NOT_STARTED;
+
+      // Start countdown at 60s
+      raceTimeSubject.next({ time: 0, autoStartRemaining: 65 });
+      raceTimeSubject.next({ time: 0, autoStartRemaining: 60 });
+
+      expect(playCalloutSpy).not.toHaveBeenCalledWith(
+        jasmine.objectContaining({ text: "Heat Starts in 1 minute" }),
+        jasmine.anything(),
+        jasmine.anything(),
+        jasmine.anything(),
+        jasmine.anything(),
+      );
+
+      // But 30s should play normally
+      raceTimeSubject.next({ time: 0, autoStartRemaining: 30 });
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        jasmine.objectContaining({ text: "Heat Starts in 30 seconds" }),
+        "normal",
+        undefined,
+        undefined,
+        { widgetType: "timer" },
+      );
+    });
+
+    it("should play auto-advance audio set at configured thresholds during HEAT_OVER countdown", () => {
+      const playCalloutSpy = spyOn(
+        component["audioService"],
+        "playCallout",
+      ).and.callThrough();
+
+      mockThemeService.resolveAudioConfig.and.callFake((key: string) => {
+        if (key === THEME_SLOT_KEYS.AUDIO_AUTO_ADVANCE) {
+          return { type: "audio_set", url: "default_auto_advance" };
+        }
+        return { type: "preset", url: `url_${key}` };
+      });
+
+      component["race"] = {
+        ...MOCK_RACES[0],
+        auto_advance_time: 120,
+        track: component["track"],
+      } as any;
+
+      fixture.detectChanges();
+      component["raceState"] = RaceState.HEAT_OVER;
+
+      // Initial tick
+      raceTimeSubject.next({ time: 0, autoAdvanceRemaining: 40 });
+      expect(playCalloutSpy).not.toHaveBeenCalled();
+
+      // Crossing 30s threshold
+      raceTimeSubject.next({ time: 0, autoAdvanceRemaining: 30 });
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          type: "tts",
+          text: "Heat advances in 30 seconds",
+        }),
+        "normal",
+        undefined,
+        undefined,
+        { widgetType: "timer" },
+      );
+
+      playCalloutSpy.calls.reset();
+      component["audioService"].stopVoice();
+
+      // Crossing 10s threshold
+      raceTimeSubject.next({ time: 0, autoAdvanceRemaining: 10 });
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          type: "tts",
+          text: "Heat advances in 10 seconds",
+        }),
+        "normal",
+        undefined,
+        undefined,
+        { widgetType: "timer" },
+      );
+
+      playCalloutSpy.calls.reset();
+
+      // Countdown reaching 0 clears tracking
+      raceTimeSubject.next({ time: 0, autoAdvanceRemaining: 0 });
+      expect(component["playedAutoAdvance"].size).toBe(0);
+    });
+
+    it("should NOT play auto-advance announcement at start if threshold equals total auto_advance_time", () => {
+      const playCalloutSpy = spyOn(
+        component["audioService"],
+        "playCallout",
+      ).and.callThrough();
+
+      mockThemeService.resolveAudioConfig.and.callFake((key: string) => {
+        if (key === THEME_SLOT_KEYS.AUDIO_AUTO_ADVANCE) {
+          return { type: "audio_set", url: "default_auto_advance" };
+        }
+        return { type: "preset", url: `url_${key}` };
+      });
+
+      component["race"] = {
+        ...MOCK_RACES[0],
+        auto_advance_time: 30,
+        track: component["track"],
+      } as any;
+
+      fixture.detectChanges();
+      component["raceState"] = RaceState.HEAT_OVER;
+
+      // Start countdown at 30s
+      raceTimeSubject.next({ time: 0, autoAdvanceRemaining: 35 });
+      raceTimeSubject.next({ time: 0, autoAdvanceRemaining: 30 });
+
+      expect(playCalloutSpy).not.toHaveBeenCalledWith(
+        jasmine.objectContaining({ text: "Heat advances in 30 seconds" }),
+        jasmine.anything(),
+        jasmine.anything(),
+        jasmine.anything(),
+        jasmine.anything(),
+      );
+
+      // But 10s should play normally
+      raceTimeSubject.next({ time: 0, autoAdvanceRemaining: 10 });
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        jasmine.objectContaining({ text: "Heat advances in 10 seconds" }),
+        "normal",
+        undefined,
+        undefined,
+        { widgetType: "timer" },
+      );
+    });
+
+    it("should stop active voice when transitioning to STARTING to un-duck audio", () => {
+      const stopVoiceSpy = spyOn((component as any).audioService, "stopVoice");
+      component["raceState"] = RaceState.PAUSED;
+      component["handleRaceStateChange"](RaceState.STARTING);
+      expect(stopVoiceSpy).toHaveBeenCalled();
+    });
+
+    it("should reset audio service when entering NOT_STARTED, HEAT_OVER, or RACE_OVER", () => {
+      const resetSpy = spyOn((component as any).audioService, "reset");
+      component["raceState"] = RaceState.RACING;
+      component["handleRaceStateChange"](RaceState.HEAT_OVER);
+      expect(resetSpy).toHaveBeenCalled();
+
+      resetSpy.calls.reset();
+      component["handleRaceStateChange"](RaceState.NOT_STARTED);
+      expect(resetSpy).toHaveBeenCalled();
+
+      resetSpy.calls.reset();
+      component["raceState"] = RaceState.RACING;
+      component["handleRaceStateChange"](RaceState.RACE_OVER);
+      expect(resetSpy).toHaveBeenCalled();
+    });
+
+    it("should not play themed sound when config is none, missing, or improperly configured (no fallback)", () => {
+      const playCalloutSpy = spyOn(
+        (component as any).audioService,
+        "playCallout",
+      );
+      const playSfxSpy = spyOn((component as any).audioService, "playSfx");
+
+      // 1. Slot not in theme at all
+      mockThemeService.resolveAudioConfig.and.returnValue(null);
+      component["playThemedSound"]("audio.unconfigured");
+      expect(playCalloutSpy).not.toHaveBeenCalled();
+      expect(playSfxSpy).not.toHaveBeenCalled();
+
+      // 2. Slot is type "none"
+      mockThemeService.resolveAudioConfig.and.returnValue({ type: "none" });
+      component["playThemedSound"](THEME_SLOT_KEYS.AUDIO_YELLOW_FLAG);
+      expect(playCalloutSpy).not.toHaveBeenCalled();
+      expect(playSfxSpy).not.toHaveBeenCalled();
+
+      // 3. Preset with empty url
+      mockThemeService.resolveAudioConfig.and.returnValue({
+        type: "preset",
+        url: "   ",
+      });
+      component["playThemedSound"](THEME_SLOT_KEYS.AUDIO_YELLOW_FLAG);
+      expect(playCalloutSpy).not.toHaveBeenCalled();
+      expect(playSfxSpy).not.toHaveBeenCalled();
+
+      // 4. TTS with empty text
+      mockThemeService.resolveAudioConfig.and.returnValue({
+        type: "tts",
+        text: "",
+      });
+      component["playThemedSound"](THEME_SLOT_KEYS.AUDIO_YELLOW_FLAG);
+      expect(playCalloutSpy).not.toHaveBeenCalled();
+      expect(playSfxSpy).not.toHaveBeenCalled();
+    });
+
+    it("should use configured audio settings during race playback for TTS callouts", () => {
+      const originalUtterance = (window as any).SpeechSynthesisUtterance;
+      (window as any).SpeechSynthesisUtterance =
+        class MockSpeechSynthesisUtterance {
+          text: string;
+          voice: any;
+          rate: number = 1.0;
+          pitch: number = 1.0;
+          volume: number = 1.0;
+          onend: any;
+          onerror: any;
+          constructor(text: string) {
+            this.text = text;
+          }
+        };
+
+      const mockVoice = {
+        name: "Samantha",
+        voiceURI: "samantha",
+        lang: "en-US",
+      };
+      const mockSpeech = {
+        speak: jasmine.createSpy("speak"),
+        cancel: jasmine.createSpy("cancel"),
+        pause: jasmine.createSpy("pause"),
+        resume: jasmine.createSpy("resume"),
+        paused: false,
+        getVoices: jasmine.createSpy("getVoices").and.returnValue([mockVoice]),
+      };
+      Object.defineProperty(window, "speechSynthesis", {
+        value: mockSpeech,
+        writable: true,
+        configurable: true,
+      });
+
+      mockSettings.masterVolume = 80;
+      mockSettings.ttsVolume = 50;
+      mockSettings.ttsVoice = "Samantha";
+      mockSettings.ttsRate = 1.25;
+      mockSettings.ttsPitch = 0.9;
+
+      fixture.detectChanges();
+      const mockHd = component["heat"]!.heatDrivers[0];
+      mockHd.driver.lapAudio = {
+        type: "tts",
+        text: "{driver.name} completed lap",
+      };
+
+      lapsSubject.next({
+        objectId: mockHd.objectId,
+        lapNumber: 5,
+        lapTime: 3.5,
+        bestLapTime: 3.0,
+      });
+
+      expect(mockSpeech.speak).toHaveBeenCalled();
+      const utterance = mockSpeech.speak.calls.mostRecent().args[0];
+      expect(utterance.text).toContain("completed lap");
+      expect(utterance.rate).toBeCloseTo(1.25, 2);
+      expect(utterance.pitch).toBeCloseTo(0.9, 2);
+      expect(utterance.volume).toBeCloseTo(0.4, 2); // 0.8 * 0.5
+      expect(utterance.voice).toEqual(
+        jasmine.objectContaining({ name: "Samantha" }),
+      );
+
+      (window as any).SpeechSynthesisUtterance = originalUtterance;
+      mockSettings.masterVolume = 100;
+      mockSettings.ttsVolume = 100;
+      mockSettings.ttsVoice = "";
+      mockSettings.ttsRate = 1.0;
+      mockSettings.ttsPitch = 1.0;
+    });
+
+    it("should use configured masterVolume during race playback for SFX sounds", () => {
+      (window.Audio as any).calls.reset();
+      mockSettings.masterVolume = 40;
+
+      fixture.detectChanges();
+      const mockHd = component["heat"]!.heatDrivers[0];
+      mockHd.driver.lapAudio = { type: "preset", url: "beep.wav" };
+
+      lapsSubject.next({
+        objectId: mockHd.objectId,
+        lapNumber: 3,
+        lapTime: 4.1,
+        bestLapTime: 3.5,
+      });
+
+      expect(window.Audio).toHaveBeenCalled();
+      const audioInstance = (window.Audio as any).calls.mostRecent()
+        .returnValue;
+      expect(audioInstance.volume).toBeCloseTo(0.4, 2);
+
+      mockSettings.masterVolume = 100;
+    });
+
+    it("should play record tier audio according to tier priority", () => {
+      fixture.detectChanges();
+      const playCalloutSpy = spyOn(
+        component["audioService"],
+        "playCallout",
+      ).and.callThrough();
+      const playSfxSpy = spyOn(
+        component["audioService"],
+        "playSfx",
+      ).and.callThrough();
+
+      const mockHd = component["heat"]!.heatDrivers[0];
+      mockHd.driver.lapAudio = { type: "preset", url: "beep.wav" };
+      mockHd.driver.bestLapAudio = { type: "preset", url: "personal_best.wav" };
+      mockHd.driver.overallBestLapAudio = {
+        type: "preset",
+        url: "w_recordlap.wav",
+      };
+      mockHd.driver.overallLaneBestLapAudio = {
+        type: "preset",
+        url: "w_recordlanelap.wav",
+      };
+      mockHd.driver.raceBestLapAudio = {
+        type: "preset",
+        url: "w_bestlap.wav",
+      };
+      mockHd.driver.raceLaneBestLapAudio = {
+        type: "preset",
+        url: "w_bestlanelap.wav",
+      };
+      mockHd.driver.heatBestLapAudio = {
+        type: "preset",
+        url: "w_bestheatlap.wav",
+      };
+      mockHd.driver.newRaceLeaderAudio = {
+        type: "preset",
+        url: "w_newraceleader.wav",
+      };
+      mockHd.driver.newHeatLeaderAudio = {
+        type: "preset",
+        url: "w_newheatleader.wav",
+      };
+
+      const expectedAssoc = {
+        widgetType: "lane-view" as const,
+        laneIndex: 0,
+        driverId: "d1",
+      };
+
+      // Tier 6: Overall Record (HIGH priority)
+      component["audioService"].reset();
+      (window.Audio as any).calls.reset();
+      playCalloutSpy.calls.reset();
+      lapsSubject.next({
+        objectId: mockHd.objectId,
+        lapNumber: 1,
+        lapTime: 3.0,
+        bestLapTime: 3.0,
+        recordTier: 6,
+      });
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        mockHd.driver.overallBestLapAudio,
+        "high",
+        jasmine.any(Object),
+        undefined,
+        expectedAssoc,
+      );
+      expect(window.Audio).toHaveBeenCalledWith(
+        jasmine.stringMatching(/w_recordlap\.wav$/),
+      );
+
+      // Tier 5: Overall Lane Record (HIGH priority)
+      component["audioService"].reset();
+      (window.Audio as any).calls.reset();
+      playCalloutSpy.calls.reset();
+      lapsSubject.next({
+        objectId: mockHd.objectId,
+        lapNumber: 2,
+        lapTime: 3.1,
+        bestLapTime: 3.0,
+        recordTier: 5,
+      });
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        mockHd.driver.overallLaneBestLapAudio,
+        "high",
+        jasmine.any(Object),
+        undefined,
+        expectedAssoc,
+      );
+      expect(window.Audio).toHaveBeenCalledWith(
+        jasmine.stringMatching(/w_recordlanelap\.wav$/),
+      );
+
+      // New Race Leader (HIGH priority)
+      component["audioService"].reset();
+      (window.Audio as any).calls.reset();
+      playCalloutSpy.calls.reset();
+      lapsSubject.next({
+        objectId: mockHd.objectId,
+        lapNumber: 3,
+        lapTime: 3.15,
+        bestLapTime: 3.0,
+        isNewRaceLeader: true,
+      });
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        mockHd.driver.newRaceLeaderAudio,
+        "high",
+        jasmine.any(Object),
+        undefined,
+        expectedAssoc,
+      );
+
+      // Tier 4: Race Best (HIGH priority)
+      component["audioService"].reset();
+      (window.Audio as any).calls.reset();
+      playCalloutSpy.calls.reset();
+      lapsSubject.next({
+        objectId: mockHd.objectId,
+        lapNumber: 4,
+        lapTime: 3.2,
+        bestLapTime: 3.0,
+        recordTier: 4,
+      });
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        mockHd.driver.raceBestLapAudio,
+        "high",
+        jasmine.any(Object),
+        undefined,
+        expectedAssoc,
+      );
+      expect(window.Audio).toHaveBeenCalledWith(
+        jasmine.stringMatching(/w_bestlap\.wav$/),
+      );
+
+      // New Heat Leader (NORMAL priority)
+      component["audioService"].reset();
+      (window.Audio as any).calls.reset();
+      playCalloutSpy.calls.reset();
+      lapsSubject.next({
+        objectId: mockHd.objectId,
+        lapNumber: 5,
+        lapTime: 3.25,
+        bestLapTime: 3.0,
+        isNewHeatLeader: true,
+      });
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        mockHd.driver.newHeatLeaderAudio,
+        "normal",
+        jasmine.any(Object),
+        undefined,
+        expectedAssoc,
+      );
+
+      // Both isNewRaceLeader and isNewHeatLeader set, but newRaceLeaderAudio is 'none' -> cascades to newHeatLeaderAudio
+      component["audioService"].reset();
+      (window.Audio as any).calls.reset();
+      playCalloutSpy.calls.reset();
+      const savedRaceLeader = mockHd.driver.newRaceLeaderAudio;
+      mockHd.driver.newRaceLeaderAudio = { type: "none" };
+      lapsSubject.next({
+        objectId: mockHd.objectId,
+        lapNumber: 5,
+        lapTime: 3.25,
+        bestLapTime: 3.0,
+        isNewRaceLeader: true,
+        isNewHeatLeader: true,
+      });
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        mockHd.driver.newHeatLeaderAudio,
+        "normal",
+        jasmine.any(Object),
+        undefined,
+        expectedAssoc,
+      );
+      mockHd.driver.newRaceLeaderAudio = savedRaceLeader;
+
+      // Tier 3: Race Lane Best (NORMAL priority)
+      component["audioService"].reset();
+      (window.Audio as any).calls.reset();
+      playCalloutSpy.calls.reset();
+      lapsSubject.next({
+        objectId: mockHd.objectId,
+        lapNumber: 6,
+        lapTime: 3.3,
+        bestLapTime: 3.0,
+        recordTier: 3,
+      });
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        mockHd.driver.raceLaneBestLapAudio,
+        "normal",
+        jasmine.any(Object),
+        undefined,
+        expectedAssoc,
+      );
+      expect(window.Audio).toHaveBeenCalledWith(
+        jasmine.stringMatching(/w_bestlanelap\.wav$/),
+      );
+
+      // Tier 2: Heat Best (NORMAL priority)
+      component["audioService"].reset();
+      (window.Audio as any).calls.reset();
+      playCalloutSpy.calls.reset();
+      lapsSubject.next({
+        objectId: mockHd.objectId,
+        lapNumber: 7,
+        lapTime: 3.4,
+        bestLapTime: 3.0,
+        recordTier: 2,
+      });
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        mockHd.driver.heatBestLapAudio,
+        "normal",
+        jasmine.any(Object),
+        undefined,
+        expectedAssoc,
+      );
+      expect(window.Audio).toHaveBeenCalledWith(
+        jasmine.stringMatching(/w_bestheatlap\.wav$/),
+      );
+
+      // Tier 1 / isBestLap: Personal Best preset is non-verbal SFX (calls playSfx, not playCallout)
+      component["audioService"].reset();
+      (window.Audio as any).calls.reset();
+      playCalloutSpy.calls.reset();
+      playSfxSpy.calls.reset();
+      lapsSubject.next({
+        objectId: mockHd.objectId,
+        lapNumber: 8,
+        lapTime: 2.9,
+        bestLapTime: 2.9,
+        recordTier: 1,
+      });
+      expect(playCalloutSpy).not.toHaveBeenCalled();
+      expect(playSfxSpy).toHaveBeenCalledWith(
+        "personal_best.wav",
+        expectedAssoc,
+      );
+
+      // Personal Best TTS is verbal callout with NORMAL priority
+      mockHd.driver.bestLapAudio = {
+        type: "tts",
+        text: "Personal best for {driver.name}",
+      };
+      component["audioService"].reset();
+      playCalloutSpy.calls.reset();
+      playSfxSpy.calls.reset();
+      lapsSubject.next({
+        objectId: mockHd.objectId,
+        lapNumber: 9,
+        lapTime: 2.8,
+        bestLapTime: 2.8,
+        recordTier: 1,
+      });
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        mockHd.driver.bestLapAudio,
+        "normal",
+        jasmine.any(Object),
+        undefined,
+        expectedAssoc,
+      );
+      expect(playSfxSpy).not.toHaveBeenCalled();
+    });
+
+    it("should fallback to personal best lap sound or normal lap sound when milestone sound is not played", () => {
+      fixture.detectChanges();
+      const playCalloutSpy = spyOn(
+        component["audioService"],
+        "playCallout",
+      ).and.callThrough();
+      const playSfxSpy = spyOn(
+        component["audioService"],
+        "playSfx",
+      ).and.callThrough();
+
+      const mockHd = component["heat"]!.heatDrivers[0];
+      mockHd.driver.lapAudio = { type: "preset", url: "beep.wav" };
+      mockHd.driver.bestLapAudio = { type: "preset", url: "personal_best.wav" };
+      mockHd.driver.overallBestLapAudio = { type: "none" };
+
+      const expectedAssoc = {
+        widgetType: "lane-view" as const,
+        laneIndex: 0,
+        driverId: "d1",
+      };
+
+      // Case 1: Overall Best Lap (Tier 6, isBestLap: true) has overallBestLapAudio = none.
+      // Falls back to personal best lap sound!
+      component["audioService"].reset();
+      playCalloutSpy.calls.reset();
+      playSfxSpy.calls.reset();
+      lapsSubject.next({
+        objectId: mockHd.objectId,
+        lapNumber: 1,
+        lapTime: 3.0,
+        bestLapTime: 3.0,
+        recordTier: 6,
+      });
+      expect(playCalloutSpy).not.toHaveBeenCalled();
+      expect(playSfxSpy).toHaveBeenCalledWith(
+        "personal_best.wav",
+        expectedAssoc,
+      );
+
+      // Case 2: Overall Best Lap is dropped by priority (e.g. urgent sound active).
+      // Falls back to personal best lap sound!
+      mockHd.driver.overallBestLapAudio = {
+        type: "preset",
+        url: "w_recordlap.wav",
+      };
+      // Simulate active urgent sound
+      component["audioService"].reset();
+      component["audioService"].playCallout(
+        { type: "preset", url: "yellow.wav" },
+        "urgent",
+      );
+      playCalloutSpy.calls.reset();
+      playSfxSpy.calls.reset();
+
+      lapsSubject.next({
+        objectId: mockHd.objectId,
+        lapNumber: 2,
+        lapTime: 2.9,
+        bestLapTime: 2.9,
+        recordTier: 6,
+      });
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        mockHd.driver.overallBestLapAudio,
+        "high",
+        jasmine.any(Object),
+        undefined,
+        expectedAssoc,
+      );
+      expect(playSfxSpy).toHaveBeenCalledWith(
+        "personal_best.wav",
+        expectedAssoc,
+      );
+
+      // Case 3: New Race Leader (isBestLap: false) is dropped by priority.
+      // Falls back to normal lap sound!
+      playCalloutSpy.calls.reset();
+      playSfxSpy.calls.reset();
+      mockHd.driver.newRaceLeaderAudio = {
+        type: "preset",
+        url: "w_leader.wav",
+      };
+
+      lapsSubject.next({
+        objectId: mockHd.objectId,
+        lapNumber: 3,
+        lapTime: 3.5,
+        bestLapTime: 2.9,
+        isNewRaceLeader: true,
+      });
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        mockHd.driver.newRaceLeaderAudio,
+        "high",
+        jasmine.any(Object),
+        undefined,
+        expectedAssoc,
+      );
+      expect(playSfxSpy).toHaveBeenCalledWith("beep.wav", expectedAssoc);
+
+      // Case 4: If fallback audio is configured as none, no sound plays.
+      mockHd.driver.lapAudio = { type: "none" };
+      playCalloutSpy.calls.reset();
+      playSfxSpy.calls.reset();
+
+      lapsSubject.next({
+        objectId: mockHd.objectId,
+        lapNumber: 4,
+        lapTime: 3.6,
+        bestLapTime: 2.9,
+        isNewRaceLeader: true,
+      });
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        mockHd.driver.newRaceLeaderAudio,
+        "high",
+        jasmine.any(Object),
+        undefined,
+        expectedAssoc,
+      );
+      expect(playSfxSpy).not.toHaveBeenCalled();
+    });
+
+    it("should fallback to 30s countdown if Halfway audio is configured to 'none'", () => {
+      (window.Audio as any).calls.reset();
+
+      mockThemeService.resolveAudioConfig.and.callFake((key: string) => {
+        if (key === THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT) {
+          return { type: "audio_set", url: "default_seconds_left_set" };
+        }
+        if (key === THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT_HALFWAY) {
+          return { type: "none" };
+        }
+        return { type: "preset", url: `url_${key}` };
+      });
+
+      const race = {
+        ...MOCK_RACES[0],
+        heat_scoring: {
+          finishMethod: FinishMethod.Timed,
+          finishValue: 60,
+        },
+        track: component["track"],
+      } as any;
+      component["race"] = race;
+      mockRaceService.getRace.and.returnValue(race);
+
+      fixture.detectChanges();
+      component["raceState"] = RaceState.RACING;
+
+      // Initial time: 60s
+      raceTimeSubject.next({ time: 60.0 });
+      (window.Audio as any).calls.reset();
+
+      // Crossing 30s threshold: Halfway is "none", channel is idle -> 30s plays as fallback
+      raceTimeSubject.next({ time: 30.0 });
+
+      expect(window.Audio).toHaveBeenCalledWith(
+        jasmine.stringMatching(/api\/assets\/download\/30$/),
       );
     });
 
@@ -4309,6 +6637,20 @@ describe("DefaultRacedayComponent", () => {
       expect(mockThemeService.resolveAudioConfig).not.toHaveBeenCalledWith(
         THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT_HALFWAY,
       );
+
+      // Another driver reaching lap 5 later should also not re-trigger halfway
+      const mockHd2 = component["heat"]!.heatDrivers[1];
+      if (mockHd2) {
+        lapsSubject.next({
+          objectId: mockHd2.objectId,
+          lapNumber: 5,
+          lapTime: 1.3,
+          bestLapTime: 1.1,
+        });
+        expect(mockThemeService.resolveAudioConfig).not.toHaveBeenCalledWith(
+          THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT_HALFWAY,
+        );
+      }
     });
   });
 
@@ -4317,6 +6659,15 @@ describe("DefaultRacedayComponent", () => {
 
     beforeEach(() => {
       mockThemeService = TestBed.inject(ThemeService);
+      component["playedSecondsLeft"]?.clear();
+      component["playedSecondsElapsed"]?.clear();
+      component["playedLapsLeft"]?.clear();
+      component["playedLapsElapsed"]?.clear();
+      component["playedAutoStart"]?.clear();
+      component["playedAutoStartElapsed"]?.clear();
+      component["playedAutoAdvance"]?.clear();
+      component["playedAutoAdvanceElapsed"]?.clear();
+      component["leaderLaps"] = 0;
       component["assets"] = [
         {
           entity_id: "audio-set-1",
@@ -4324,6 +6675,7 @@ describe("DefaultRacedayComponent", () => {
           audioEntries: [
             { timeSeconds: 0, url: "/assets/go.mp3" },
             { timeSeconds: 3, url: "/assets/3.mp3" },
+            { timeSeconds: 5, url: "/assets/5.mp3" },
             { timeSeconds: 30, url: "/assets/30_seconds.mp3" },
           ],
         },
@@ -4341,6 +6693,56 @@ describe("DefaultRacedayComponent", () => {
 
       expect(window.Audio).toHaveBeenCalledWith(
         jasmine.stringMatching("/assets/3.mp3"),
+      );
+    });
+
+    it("should not latch lastPlayedCountdownSecond if countdown audio fails to resolve or play", () => {
+      mockThemeService.resolveAudioConfig.and.returnValue({
+        type: "audio_set",
+        url: "audio-set-1",
+      });
+      component["assets"] = []; // Assets not loaded yet
+      component["showCountdownOverlay"] = true;
+      component["countdownTotalLamps"] = 5;
+      component["lastPlayedCountdownSecond"] = -1;
+
+      component["updateCountdownLamps"](5.0);
+
+      expect(component["lastPlayedCountdownSecond"]).toBe(-1);
+    });
+
+    it("should latch lastPlayedCountdownSecond when countdown sound successfully plays", () => {
+      mockThemeService.resolveAudioConfig.and.returnValue({
+        type: "audio_set",
+        url: "audio-set-1",
+      });
+      component["showCountdownOverlay"] = true;
+      component["countdownTotalLamps"] = 5;
+      component["lastPlayedCountdownSecond"] = -1;
+
+      component["updateCountdownLamps"](5.0);
+
+      expect(component["lastPlayedCountdownSecond"]).toBe(5);
+    });
+
+    it("should preload countdown audio entries across seconds 0 through 5", () => {
+      mockThemeService.resolveAudioConfig.and.returnValue({
+        type: "audio_set",
+        url: "audio-set-1",
+      });
+      const audioService = (component as any).audioService;
+      spyOn(audioService, "preload").and.callThrough();
+
+      (component as any).preloadCountdownAudio();
+
+      expect(audioService.preload).toHaveBeenCalledWith(
+        jasmine.stringMatching("/assets/go.mp3"),
+      );
+      expect(audioService.preload).toHaveBeenCalledWith(
+        jasmine.stringMatching("/assets/3.mp3"),
+      );
+      expect(audioService.preload).toHaveBeenCalledWith(
+        jasmine.stringMatching("/assets/5.mp3"),
       );
     });
 
@@ -4378,6 +6780,159 @@ describe("DefaultRacedayComponent", () => {
       );
     });
 
+    it("should disambiguate elapsed vs remaining entries sharing the exact same numeric value", () => {
+      component["assets"] = [
+        {
+          entity_id: "dual-time-set",
+          type: "audio_set",
+          audioEntries: [
+            {
+              timeSeconds: 30,
+              triggerMode: "remaining",
+              url: "/assets/30_remaining.mp3",
+            },
+            {
+              timeSeconds: 30,
+              triggerMode: "elapsed",
+              url: "/assets/30_elapsed.mp3",
+            },
+          ],
+        },
+      ];
+
+      mockThemeService.resolveAudioConfig.and.returnValue({
+        type: "audio_set",
+        url: "dual-time-set",
+      });
+
+      component["race"] = {
+        ...MOCK_RACES[0],
+        heat_scoring: {
+          finishMethod: FinishMethod.Timed,
+          finishValue: 600,
+        },
+      } as any;
+
+      const playCalloutSpy = spyOn(component["audioService"], "playCallout");
+
+      // At 30s elapsed: previous time 571 (29s elapsed), current time 569 (31s elapsed)
+      (component as any).checkAudioCallouts(569, 571);
+
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          url: jasmine.stringMatching("/assets/30_elapsed.mp3"),
+        }),
+        "normal",
+        undefined,
+        jasmine.stringMatching("/assets/30_elapsed.mp3"),
+        jasmine.anything(),
+      );
+      expect(playCalloutSpy).not.toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          url: jasmine.stringMatching("/assets/30_remaining.mp3"),
+        }),
+        jasmine.anything(),
+        jasmine.anything(),
+        jasmine.anything(),
+        jasmine.anything(),
+      );
+
+      playCalloutSpy.calls.reset();
+
+      // At 30s remaining: previous time 31, current time 29
+      (component as any).checkAudioCallouts(29, 31);
+
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          url: jasmine.stringMatching("/assets/30_remaining.mp3"),
+        }),
+        "normal",
+        undefined,
+        jasmine.stringMatching("/assets/30_remaining.mp3"),
+        jasmine.anything(),
+      );
+    });
+
+    it("should disambiguate elapsed vs remaining laps left entries sharing the exact same numeric value", () => {
+      component["assets"] = [
+        {
+          entity_id: "dual-lap-set",
+          type: "audio_set",
+          audioEntries: [
+            {
+              timeSeconds: 10,
+              triggerMode: "remaining",
+              url: "/assets/10_laps_remaining.mp3",
+            },
+            {
+              timeSeconds: 10,
+              triggerMode: "elapsed",
+              url: "/assets/10_laps_elapsed.mp3",
+            },
+          ],
+        },
+      ];
+
+      mockThemeService.resolveAudioConfig.and.returnValue({
+        type: "audio_set",
+        url: "dual-lap-set",
+      });
+
+      component["race"] = {
+        ...MOCK_RACES[0],
+        heat_scoring: {
+          finishMethod: FinishMethod.Lap,
+          finishValue: 50,
+        },
+      } as any;
+
+      component["leaderLaps"] = 0;
+      const playCalloutSpy = spyOn(component["audioService"], "playCallout");
+
+      // Leader reaches lap 10 (10 elapsed, 40 remaining)
+      (component as any).checkLapsLeftCallouts(
+        { lapNumber: 10 },
+        { lapCount: 10 },
+      );
+
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          url: jasmine.stringMatching("/assets/10_laps_elapsed.mp3"),
+        }),
+        "normal",
+        undefined,
+        jasmine.stringMatching("/assets/10_laps_elapsed.mp3"),
+        jasmine.anything(),
+      );
+      expect(playCalloutSpy).not.toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          url: jasmine.stringMatching("/assets/10_laps_remaining.mp3"),
+        }),
+        jasmine.anything(),
+        jasmine.anything(),
+        jasmine.anything(),
+        jasmine.anything(),
+      );
+
+      playCalloutSpy.calls.reset();
+
+      // Leader reaches lap 40 (40 elapsed, 10 remaining)
+      (component as any).checkLapsLeftCallouts(
+        { lapNumber: 40 },
+        { lapCount: 40 },
+      );
+
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          url: jasmine.stringMatching("/assets/10_laps_remaining.mp3"),
+        }),
+        "normal",
+        undefined,
+        jasmine.stringMatching("/assets/10_laps_remaining.mp3"),
+        jasmine.anything(),
+      );
+    });
+
     it("should not play if entry for time is not found", () => {
       mockThemeService.resolveAudioConfig.and.returnValue({
         type: "audio_set",
@@ -4387,6 +6942,366 @@ describe("DefaultRacedayComponent", () => {
       (component as any).playAudioFromSet(THEME_SLOT_KEYS.AUDIO_COUNTDOWN, 99);
 
       expect(window.Audio).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("Fuel Audio (Pit In & Fuel Level Audio Set)", () => {
+    let playCalloutSpy: jasmine.Spy;
+
+    beforeEach(() => {
+      playCalloutSpy = spyOn(
+        component["audioService"],
+        "playCallout",
+      ).and.callThrough();
+
+      fixture.detectChanges();
+
+      if (component["race"]) {
+        (component["race"] as any).fuel_options = {
+          ...(component["race"].fuel_options || {}),
+          enabled: true,
+        };
+      }
+
+      component["assets"] = [
+        {
+          entity_id: "default_fuel_level",
+          type: "audio_set",
+          audioEntries: [
+            {
+              percentage: 0,
+              url: "/assets/w_fuel_empty.wav",
+              name: "Fuel Empty",
+              type: "preset",
+            },
+            {
+              percentage: 10,
+              url: "/assets/w_fuel_low.wav",
+              name: "Fuel Low",
+              type: "preset",
+            },
+            {
+              percentage: 100,
+              url: "/assets/w_fuel_full.wav",
+              name: "Fuel Full",
+              type: "preset",
+            },
+          ],
+        },
+      ];
+
+      const mockHd = component["heat"]!.heatDrivers[0];
+      mockHd.driver.pitInAudio = { type: "preset", url: "default_pit_in" };
+      mockHd.driver.fuelAudio = {
+        type: "audio_set",
+        url: "default_fuel_level",
+      };
+      component["raceState"] = RaceState.RACING;
+      (component as any).resetFuelAudioTracking();
+    });
+
+    describe("Pit In Audio", () => {
+      it("should play w_pitin at HIGH priority when driver gains >= 0.1 fuel while refueling", () => {
+        carDataSubject.next({ lane: 0, fuelLevel: 50.0, isRefueling: true });
+        expect(playCalloutSpy).not.toHaveBeenCalled();
+
+        carDataSubject.next({ lane: 0, fuelLevel: 50.5, isRefueling: true });
+        expect(playCalloutSpy).toHaveBeenCalled();
+        expect(playCalloutSpy.calls.mostRecent().args[0].url).toBe(
+          "default_pit_in",
+        );
+        expect(playCalloutSpy.calls.mostRecent().args[1]).toBe("high");
+      });
+
+      it("should not play pit in audio more than once during the same refuel session", () => {
+        carDataSubject.next({ lane: 0, fuelLevel: 30.0, isRefueling: true });
+        carDataSubject.next({ lane: 0, fuelLevel: 31.0, isRefueling: true });
+        expect(playCalloutSpy).toHaveBeenCalledTimes(1);
+
+        playCalloutSpy.calls.reset();
+        carDataSubject.next({ lane: 0, fuelLevel: 35.0, isRefueling: true });
+        carDataSubject.next({ lane: 0, fuelLevel: 40.0, isRefueling: true });
+        expect(playCalloutSpy).not.toHaveBeenCalled();
+      });
+
+      it("should play pit in audio again after refueling stops and starts anew", () => {
+        carDataSubject.next({ lane: 0, fuelLevel: 20.0, isRefueling: true });
+        carDataSubject.next({ lane: 0, fuelLevel: 22.0, isRefueling: true });
+        expect(playCalloutSpy).toHaveBeenCalledTimes(1);
+
+        carDataSubject.next({ lane: 0, fuelLevel: 22.0, isRefueling: false });
+
+        playCalloutSpy.calls.reset();
+        carDataSubject.next({ lane: 0, fuelLevel: 22.0, isRefueling: true });
+        carDataSubject.next({ lane: 0, fuelLevel: 22.2, isRefueling: true });
+        expect(playCalloutSpy).toHaveBeenCalledTimes(1);
+        expect(playCalloutSpy.calls.mostRecent().args[0].url).toBe(
+          "default_pit_in",
+        );
+        expect(playCalloutSpy.calls.mostRecent().args[1]).toBe("high");
+      });
+
+      it("should not play pit in audio if pitInAudio is configured as 'none'", () => {
+        const mockHd = component["heat"]!.heatDrivers[0];
+        mockHd.driver.pitInAudio = { type: "none" };
+        mockHd.driver.fuelAudio = { type: "none" };
+
+        carDataSubject.next({ lane: 0, fuelLevel: 50.0, isRefueling: true });
+        carDataSubject.next({ lane: 0, fuelLevel: 52.0, isRefueling: true });
+        expect(playCalloutSpy).not.toHaveBeenCalled();
+      });
+    });
+
+    describe("Fuel Level Audio Set", () => {
+      it("should play w_fuel_low at URGENT priority when fuel drops to 10%", () => {
+        carDataSubject.next({ lane: 0, fuelLevel: 20.0, isRefueling: false });
+        expect(playCalloutSpy).not.toHaveBeenCalled();
+
+        carDataSubject.next({ lane: 0, fuelLevel: 10.0, isRefueling: false });
+        expect(playCalloutSpy).toHaveBeenCalled();
+        expect(playCalloutSpy.calls.mostRecent().args[0].url).toBe(
+          "/assets/w_fuel_low.wav",
+        );
+        expect(playCalloutSpy.calls.mostRecent().args[1]).toBe("urgent");
+      });
+
+      it("should play w_fuel_empty at URGENT priority when fuel drops to 0%", () => {
+        carDataSubject.next({ lane: 0, fuelLevel: 5.0, isRefueling: false });
+        playCalloutSpy.calls.reset();
+
+        carDataSubject.next({ lane: 0, fuelLevel: 0.0, isRefueling: false });
+        expect(playCalloutSpy).toHaveBeenCalled();
+        expect(playCalloutSpy.calls.mostRecent().args[0].url).toBe(
+          "/assets/w_fuel_empty.wav",
+        );
+        expect(playCalloutSpy.calls.mostRecent().args[1]).toBe("urgent");
+      });
+
+      it("should play TTS audio set entry for out of fuel with driver nickname", () => {
+        component["assets"] = [
+          {
+            entity_id: "tts_fuel_set",
+            type: "audio_set",
+            audioEntries: [
+              {
+                percentage: 0,
+                timeSeconds: 0,
+                type: "tts",
+                text: "{driver.nickname} out of fuel",
+                name: "Out of Fuel TTS",
+              },
+            ],
+          },
+        ];
+        const mockHd = component["heat"]!.heatDrivers[0];
+        mockHd.driver.fuelAudio = {
+          type: "audio_set",
+          url: "tts_fuel_set",
+        };
+        (component as any).resetFuelAudioTracking();
+
+        carDataSubject.next({ lane: 0, fuelLevel: 10.0, isRefueling: false });
+        playCalloutSpy.calls.reset();
+
+        carDataSubject.next({ lane: 0, fuelLevel: 0.0, isRefueling: false });
+        expect(playCalloutSpy).toHaveBeenCalled();
+        const callArgs = playCalloutSpy.calls.mostRecent().args;
+        expect(callArgs[0].type).toBe("tts");
+        expect(callArgs[0].text).toBe("{driver.nickname} out of fuel");
+        expect(callArgs[1]).toBe("urgent");
+        expect(callArgs[2].driver.nickname).toBe(
+          mockHd.driver.nickname || mockHd.driver.name,
+        );
+      });
+
+      it("should fall back to timeSeconds when entry.percentage is missing or 0", () => {
+        component["assets"] = [
+          {
+            entity_id: "legacy_fuel_set",
+            type: "audio_set",
+            audioEntries: [
+              {
+                percentage: 0,
+                timeSeconds: 100,
+                url: "/assets/full.wav",
+                type: "preset",
+              },
+              {
+                percentage: 0,
+                timeSeconds: 10,
+                url: "/assets/low.wav",
+                type: "preset",
+              },
+              {
+                percentage: 0,
+                timeSeconds: 0,
+                url: "/assets/empty.wav",
+                type: "preset",
+              },
+            ],
+          },
+        ];
+        const mockHd = component["heat"]!.heatDrivers[0];
+        mockHd.driver.fuelAudio = {
+          type: "audio_set",
+          url: "legacy_fuel_set",
+        };
+        (component as any).resetFuelAudioTracking();
+
+        // Drops to 10: should play low.wav (timeSeconds: 10), NOT empty.wav
+        carDataSubject.next({ lane: 0, fuelLevel: 20.0, isRefueling: false });
+        carDataSubject.next({ lane: 0, fuelLevel: 10.0, isRefueling: false });
+        expect(playCalloutSpy).toHaveBeenCalled();
+        expect(playCalloutSpy.calls.mostRecent().args[0].url).toBe(
+          "/assets/low.wav",
+        );
+
+        // Drops to 0: should play empty.wav (timeSeconds: 0)
+        playCalloutSpy.calls.reset();
+        carDataSubject.next({ lane: 0, fuelLevel: 0.0, isRefueling: false });
+        expect(playCalloutSpy).toHaveBeenCalled();
+        expect(playCalloutSpy.calls.mostRecent().args[0].url).toBe(
+          "/assets/empty.wav",
+        );
+      });
+
+      it("should play w_fuel_full at URGENT priority when refueled to 100%", () => {
+        const mockHd = component["heat"]!.heatDrivers[0];
+        mockHd.driver.pitInAudio = { type: "none" };
+
+        carDataSubject.next({ lane: 0, fuelLevel: 90.0, isRefueling: true });
+        playCalloutSpy.calls.reset();
+
+        carDataSubject.next({ lane: 0, fuelLevel: 100.0, isRefueling: true });
+        expect(playCalloutSpy).toHaveBeenCalled();
+        expect(playCalloutSpy.calls.mostRecent().args[0].url).toBe(
+          "/assets/w_fuel_full.wav",
+        );
+        expect(playCalloutSpy.calls.mostRecent().args[1]).toBe("urgent");
+      });
+
+      it("should not play w_fuel_full if 100% is received without isRefueling: true", () => {
+        carDataSubject.next({ lane: 0, fuelLevel: 95.0, isRefueling: false });
+        playCalloutSpy.calls.reset();
+
+        carDataSubject.next({ lane: 0, fuelLevel: 100.0, isRefueling: false });
+        expect(playCalloutSpy).not.toHaveBeenCalled();
+      });
+
+      it("should re-trigger threshold after fuel level rises above threshold and drops again", () => {
+        carDataSubject.next({ lane: 0, fuelLevel: 15.0, isRefueling: false });
+        carDataSubject.next({ lane: 0, fuelLevel: 10.0, isRefueling: false });
+        expect(playCalloutSpy).toHaveBeenCalledTimes(1);
+
+        playCalloutSpy.calls.reset();
+        carDataSubject.next({ lane: 0, fuelLevel: 9.0, isRefueling: false });
+        expect(playCalloutSpy).not.toHaveBeenCalled();
+
+        carDataSubject.next({ lane: 0, fuelLevel: 50.0, isRefueling: false });
+
+        carDataSubject.next({ lane: 0, fuelLevel: 10.0, isRefueling: false });
+        expect(playCalloutSpy).toHaveBeenCalledTimes(1);
+        expect(playCalloutSpy.calls.mostRecent().args[0].url).toBe(
+          "/assets/w_fuel_low.wav",
+        );
+        expect(playCalloutSpy.calls.mostRecent().args[1]).toBe("urgent");
+      });
+    });
+
+    describe("resetFuelAudioTracking", () => {
+      it("should clear fuel audio tracking states", () => {
+        carDataSubject.next({ lane: 0, fuelLevel: 20.0, isRefueling: false });
+        carDataSubject.next({ lane: 0, fuelLevel: 10.0, isRefueling: false });
+        expect(playCalloutSpy).toHaveBeenCalledTimes(1);
+
+        (component as any).resetFuelAudioTracking();
+        playCalloutSpy.calls.reset();
+
+        carDataSubject.next({ lane: 0, fuelLevel: 20.0, isRefueling: false });
+        carDataSubject.next({ lane: 0, fuelLevel: 10.0, isRefueling: false });
+        expect(playCalloutSpy).toHaveBeenCalledTimes(1);
+        expect(playCalloutSpy.calls.mostRecent().args[0].url).toBe(
+          "/assets/w_fuel_low.wav",
+        );
+        expect(playCalloutSpy.calls.mostRecent().args[1]).toBe("urgent");
+      });
+
+      it("should hydrate lane fuel from participant fuelLevel or initialFuelLevel when heat is initialized", () => {
+        const mockHeat: any = {
+          heatNumber: 1,
+          heatDrivers: [
+            {
+              laneIndex: 0,
+              objectId: "hd0",
+              initialFuelLevel: 80,
+              participant: { fuelLevel: 80, driver: { name: "Driver 1" } },
+            },
+            {
+              laneIndex: 1,
+              objectId: "hd1",
+              initialFuelLevel: 90,
+              participant: { fuelLevel: 0, driver: { name: "Driver 2" } },
+            },
+          ],
+        };
+
+        mockRaceService.getHeats.and.returnValue([mockHeat]);
+        mockRaceService.getCurrentHeat.and.returnValue(mockHeat);
+        (component as any).initializeHeat();
+
+        expect(mockHeat.heatDrivers[0].participant.fuelLevel).toBe(80);
+        expect(mockHeat.heatDrivers[1].participant.fuelLevel).toBe(90);
+        expect(
+          (component as any).laneFuelAudioStates.get(0)?.lastFuelLevel,
+        ).toBe(80);
+        expect(
+          (component as any).laneFuelAudioStates.get(1)?.lastFuelLevel,
+        ).toBe(90);
+      });
+
+      it("should not play any fuel audio when race is not a fuel race", () => {
+        (component["race"] as any).fuel_options = {
+          ...(component["race"]?.fuel_options || {}),
+          enabled: false,
+        };
+        (component as any).resetFuelAudioTracking();
+
+        carDataSubject.next({ lane: 0, fuelLevel: 50.0, isRefueling: true });
+        carDataSubject.next({ lane: 0, fuelLevel: 50.5, isRefueling: true });
+        carDataSubject.next({ lane: 0, fuelLevel: 0.0, isRefueling: false });
+        expect(playCalloutSpy).not.toHaveBeenCalled();
+      });
+
+      it("should not play 0% fuel audio on heat restart in non-fuel race", () => {
+        (component["race"] as any).fuel_options = {
+          ...(component["race"]?.fuel_options || {}),
+          enabled: false,
+        };
+        (component as any).hasRacedInCurrentHeat = true;
+        component.showRestartHeatConfirmation = true;
+
+        component.onRestartHeatConfirm();
+
+        // Simulate carData arriving with fuel 0 after restart
+        carDataSubject.next({ lane: 0, fuelLevel: 0.0, isRefueling: false });
+        expect(playCalloutSpy).not.toHaveBeenCalled();
+      });
+
+      it("should not play 0% fuel audio on heat restart when initial fuel > 0 in fuel race", () => {
+        (component["race"] as any).fuel_options = {
+          ...(component["race"]?.fuel_options || {}),
+          enabled: true,
+        };
+        (component as any).hasRacedInCurrentHeat = true;
+        component.showRestartHeatConfirmation = true;
+
+        component.onRestartHeatConfirm();
+
+        // Driver starts with 100 fuel, carData arrives before race starts
+        component["raceState"] = RaceState.NOT_STARTED;
+        carDataSubject.next({ lane: 0, fuelLevel: 100.0, isRefueling: false });
+        expect(playCalloutSpy).not.toHaveBeenCalled();
+      });
     });
   });
 
@@ -4518,6 +7433,52 @@ describe("DefaultRacedayComponent", () => {
         adjustedLapCount: 2,
       };
       expect(component.formatValue("lapCount", 2, hdAdjusted)).toBe("2.00");
+    });
+
+    it("should format physicalLapCount strictly as whole number physical laps", () => {
+      // 1. No data / not started -> "--"
+      const hdNoData: any = {
+        driver: { name: "Driver 1" },
+        reactionTime: 0,
+        lapTimes: [],
+      };
+      expect(component.formatValue("physicalLapCount", 0, hdNoData)).toBe("--");
+
+      // 2. Reaction time registered, 0 laps -> "0"
+      const hdReaction: any = {
+        driver: { name: "Driver 1" },
+        reactionTime: 0.123,
+        lapTimes: [],
+      };
+      expect(component.formatValue("physicalLapCount", 0, hdReaction)).toBe(
+        "0",
+      );
+
+      // 3. 3 physical laps -> "3"
+      const hdLaps: any = {
+        driver: { name: "Driver 1" },
+        reactionTime: 0.123,
+        lapTimes: [10.2, 10.1, 9.8],
+        userLaps: 0.5,
+        adjustedLapCount: 3.5,
+      };
+      expect(component.formatValue("physicalLapCount", 3, hdLaps)).toBe("3");
+
+      // 4. Empty driver -> "--"
+      const hdEmpty: any = {
+        isEmpty: true,
+        driver: { name: "Driver 1" },
+        reactionTime: 1.0,
+        lapTimes: [10.2],
+      };
+      expect(component.formatValue("physicalLapCount", 1, hdEmpty)).toBe("--");
+    });
+
+    it("should not treat physicalLapCount column as clickable for add lap sections", () => {
+      const hd: any = { laneIndex: 0 };
+      const col: any = { propertyName: "physicalLapCount" };
+      (component as any).heat = { started: true } as any;
+      expect(component.isLapCountColumnClickable(hd, col)).toBeFalse();
     });
 
     it("should call updateUserLaps with current + 0.25 on shift+click", () => {
@@ -4741,7 +7702,33 @@ describe("DefaultRacedayComponent", () => {
       expect(component.ackModalButtonText).toBe("RD_RACE_ENDED_BTN_OK");
     });
 
-    it("should redirect to /raceday-setup and set forceExit to true on acknowledging the modal when raceHasEnded is true", () => {
+    it("should allow deactivation and not show acknowledgement modal when race has ended and navigating to /ui-editor", () => {
+      fixture.detectChanges();
+      component.raceHasEnded = true;
+      component.forceExit = false;
+
+      const nextState = { url: "/ui-editor?returnUrl=/raceday" } as any;
+      const result = component.canDeactivate(nextState);
+      expect(result).toBeTrue();
+      expect(component.showAckModal).toBeFalse();
+    });
+
+    it("should block deactivation and show acknowledgement modal when race has ended and navigating to /raceday-setup", () => {
+      fixture.detectChanges();
+      component.raceHasEnded = true;
+      component.forceExit = false;
+
+      const nextState = { url: "/raceday-setup" } as any;
+      const result = component.canDeactivate(nextState);
+      expect(result).toBeFalse();
+      expect(component.showAckModal).toBeTrue();
+      expect(component.ackModalTitle).toBe("RD_RACE_ENDED_TITLE");
+      expect(component.ackModalMessage).toBe("RD_RACE_ENDED_MESSAGE");
+      expect(component.ackModalButtonText).toBe("RD_RACE_ENDED_BTN_OK");
+    });
+
+    it("should redirect to /raceday-setup and set forceExit to true on acknowledging the modal when raceHasEnded is true without setting skipIntro", () => {
+      sessionStorage.removeItem("skipIntro");
       fixture.detectChanges();
       component.raceHasEnded = true;
       component.showAckModal = true;
@@ -4752,6 +7739,7 @@ describe("DefaultRacedayComponent", () => {
       expect(component.showAckModal).toBeFalse();
       expect(component.forceExit).toBeTrue();
       expect(mockRouter.navigate).toHaveBeenCalledWith(["/raceday-setup"]);
+      expect(sessionStorage.getItem("skipIntro")).toBeNull();
     });
 
     it("should show exit confirmation modal on canDeactivate under normal conditions", () => {
@@ -4778,6 +7766,32 @@ describe("DefaultRacedayComponent", () => {
       expect(component.showAckModal).toBeTrue();
       expect(component.ackModalTitle).toBe("ACK_MODAL_TITLE_CONNECTED");
       expect(component.ackModalMessage).toBe("ACK_MODAL_MSG_CONNECTED");
+    });
+
+    it("should not show interface error modal if raceHasEnded is true", () => {
+      fixture.detectChanges();
+      component.raceHasEnded = true;
+      component.showAckModal = false;
+
+      interfaceAlertSubject.next({
+        titleKey: "ACK_MODAL_TITLE_DISCONNECTED",
+        messageKey: "ACK_MODAL_MSG_DISCONNECTED",
+      });
+
+      expect(component.showAckModal).toBeFalse();
+    });
+
+    it("should not show interface error modal if raceState is RACE_OVER", () => {
+      fixture.detectChanges();
+      (component as any).raceState = RaceState.RACE_OVER;
+      component.showAckModal = false;
+
+      interfaceAlertSubject.next({
+        titleKey: "ACK_MODAL_TITLE_DISCONNECTED",
+        messageKey: "ACK_MODAL_MSG_DISCONNECTED",
+      });
+
+      expect(component.showAckModal).toBeFalse();
     });
   });
   describe("Z-Order Widget Reordering", () => {
@@ -4844,6 +7858,124 @@ describe("DefaultRacedayComponent", () => {
         component.layout,
       );
       expect(component.widgetSelected.emit).toHaveBeenCalledWith("w4");
+    });
+
+    it("should keep countdown widget strictly on top when bringing a regular widget to the front", () => {
+      component.layout.widgets.push({
+        id: "widget-countdown",
+        widgetType: "countdown",
+        zIndex: 2000,
+      } as any);
+
+      component.bringToFront("w3");
+      const w3 = component.layout.widgets.find((w: any) => w.id === "w3");
+      const countdown = component.layout.widgets.find(
+        (w: any) => w.id === "widget-countdown",
+      );
+
+      // w3 only competes with w1 and w2 (max is 105 -> w3 becomes 106)
+      expect(w3?.zIndex).toBe(106);
+      expect(countdown?.zIndex).toBeGreaterThan(w3?.zIndex || 0);
+    });
+
+    it("should bump countdown widget if regular widget zIndex ever catches up to it", () => {
+      component.layout.widgets.push({
+        id: "widget-countdown",
+        widgetType: "countdown",
+        zIndex: 106,
+      } as any);
+
+      component.bringToFront("w3");
+      const w3 = component.layout.widgets.find((w: any) => w.id === "w3");
+      const countdown = component.layout.widgets.find(
+        (w: any) => w.id === "widget-countdown",
+      );
+
+      expect(w3?.zIndex).toBe(106);
+      expect(countdown?.zIndex).toBeGreaterThanOrEqual(2000);
+      expect(countdown?.zIndex).toBeGreaterThan(w3?.zIndex || 0);
+    });
+
+    it("should bring countdown widget to top when bringToFront is called on countdown", () => {
+      component.layout.widgets.push({
+        id: "widget-countdown",
+        widgetType: "countdown",
+        zIndex: 100,
+      } as any);
+
+      component.bringToFront("widget-countdown");
+      const countdown = component.layout.widgets.find(
+        (w: any) => w.id === "widget-countdown",
+      );
+      expect(countdown?.zIndex).toBe(2000);
+    });
+
+    it("should normalize z-indices placing countdown widgets above all regular widgets", () => {
+      component.layout.widgets.push({
+        id: "widget-countdown",
+        widgetType: "countdown",
+        zIndex: 50,
+      } as any);
+
+      component.normalizeZIndices();
+      const w1 = component.layout.widgets.find((w: any) => w.id === "w1");
+      const w2 = component.layout.widgets.find((w: any) => w.id === "w2");
+      const countdown = component.layout.widgets.find(
+        (w: any) => w.id === "widget-countdown",
+      );
+
+      expect(w1?.zIndex).toBe(100);
+      expect(w2?.zIndex).toBe(102);
+      expect(countdown?.zIndex).toBeGreaterThanOrEqual(2000);
+    });
+
+    it("should calculate getNextZIndex ignoring countdown widgets", () => {
+      component.layout.widgets.push({
+        id: "widget-countdown",
+        widgetType: "countdown",
+        zIndex: 2500,
+      } as any);
+
+      // Max regular widget is w2 at 105, so next regular widget gets 106
+      expect(component.getNextZIndex()).toBe(106);
+    });
+
+    it("should remove widget by id and emit layoutChanged", () => {
+      component.removeWidget("w2");
+      expect(
+        component.layout.widgets.some((w: any) => w.id === "w2"),
+      ).toBeFalse();
+      expect(component.layoutChanged.emit).toHaveBeenCalledWith(
+        component.layout,
+      );
+    });
+
+    it("should remove countdown widget and ensure getWidgets() does not resurrect it", () => {
+      component.layout.widgets.push({
+        id: "widget-countdown",
+        widgetType: "countdown",
+      } as any);
+      expect(
+        component.getWidgets().some((w: any) => w.id === "widget-countdown"),
+      ).toBeTrue();
+
+      component.removeWidget("widget-countdown");
+      expect(
+        component.layout.widgets.some((w: any) => w.id === "widget-countdown"),
+      ).toBeFalse();
+      expect(
+        component.getWidgets().some((w: any) => w.id === "widget-countdown"),
+      ).toBeFalse();
+    });
+
+    it("should select lane-view or next widget when selected widget is removed", () => {
+      component.layout.widgets.push({
+        id: "lane-view-1",
+        widgetType: "lane-view",
+      } as any);
+      (component as any).selectedWidgetId = () => "w1";
+      component.removeWidget("w1");
+      expect(component.widgetSelected.emit).toHaveBeenCalledWith("lane-view-1");
     });
   });
 
@@ -5279,6 +8411,140 @@ describe("DefaultRacedayComponent", () => {
       expect(component.scale).toBe(1);
       expect(component.dashboardWidth).toBe(1920);
     });
+
+    it("should calculate letterbox display dimensions when in letterbox mode", () => {
+      fixture.componentRef.setInput("isUIEditorMode", false);
+      fixture.detectChanges();
+
+      const widthSpy = spyOnProperty(
+        window,
+        "innerWidth",
+        "get",
+      ).and.returnValue(1440);
+      const heightSpy = spyOnProperty(
+        window,
+        "innerHeight",
+        "get",
+      ).and.returnValue(900);
+      const viewportSpy = spyOnProperty(
+        window,
+        "visualViewport",
+        "get",
+      ).and.returnValue({ width: 1440, height: 900 } as any);
+
+      component.layout = {
+        baseWidth: 1920,
+        baseHeight: 1080,
+        scaleMode: "letterbox",
+        widgets: [],
+      };
+
+      component.onResize();
+      expect(component.isLetterboxMode).toBeTrue();
+      // 1440 / 1920 = 0.75; 900 / 1080 = 0.8333... Min scale = 0.75
+      expect(component.displayContentWidth).toBe(1440);
+      expect(component.displayContentHeight).toBe(810);
+
+      // Wider screen (pillarbox): 2560x1080
+      widthSpy.and.returnValue(2560);
+      heightSpy.and.returnValue(1080);
+      viewportSpy.and.returnValue({ width: 2560, height: 1080 } as any);
+      component.onResize();
+      // 2560 / 1920 = 1.333...; 1080 / 1080 = 1.0. Min scale = 1.0
+      expect(component.displayContentWidth).toBe(1920);
+      expect(component.displayContentHeight).toBe(1080);
+    });
+
+    it("should fill window dimensions when in stretch mode", () => {
+      fixture.componentRef.setInput("isUIEditorMode", false);
+      fixture.detectChanges();
+
+      spyOnProperty(window, "innerWidth", "get").and.returnValue(1440);
+      spyOnProperty(window, "innerHeight", "get").and.returnValue(900);
+      spyOnProperty(window, "visualViewport", "get").and.returnValue({
+        width: 1440,
+        height: 900,
+      } as any);
+
+      component.layout = {
+        baseWidth: 1920,
+        baseHeight: 1080,
+        scaleMode: "stretch",
+        widgets: [],
+      };
+
+      component.onResize();
+      expect(component.isLetterboxMode).toBeFalse();
+      expect(component.displayContentWidth).toBe(1440);
+      expect(component.displayContentHeight).toBe(900);
+
+      component.layout.scaleMode = undefined;
+      expect(component.isLetterboxMode).toBeFalse();
+    });
+
+    it("should compute scaleTransform for mobile portrait (9:16) layout on mobile device in stretch mode", () => {
+      fixture.componentRef.setInput("isUIEditorMode", false);
+      fixture.detectChanges();
+
+      spyOnProperty(window, "innerWidth", "get").and.returnValue(393);
+      spyOnProperty(window, "innerHeight", "get").and.returnValue(852);
+      spyOnProperty(window, "visualViewport", "get").and.returnValue({
+        width: 393,
+        height: 852,
+      } as any);
+
+      component.layout = {
+        baseWidth: 1080,
+        baseHeight: 1920,
+        scaleMode: "stretch",
+        widgets: [],
+      };
+
+      component.onResize();
+      expect(component.isLetterboxMode).toBeFalse();
+      expect(component.dashboardWidth).toBe(1080);
+      expect(component.dashboardHeight).toBe(1920);
+      expect(component.contentLeft).toBe(0);
+      expect(component.contentTop).toBe(0);
+      const expectedScaleX = 393 / 1080;
+      const expectedScaleY = 852 / 1920;
+      expect(component.scaleTransform).toBe(
+        `scale(${expectedScaleX}, ${expectedScaleY})`,
+      );
+    });
+
+    it("should compute scaleTransform and letterbox centering for mobile portrait (9:16) in letterbox mode", () => {
+      fixture.componentRef.setInput("isUIEditorMode", false);
+      fixture.detectChanges();
+
+      spyOnProperty(window, "innerWidth", "get").and.returnValue(393);
+      spyOnProperty(window, "innerHeight", "get").and.returnValue(852);
+      spyOnProperty(window, "visualViewport", "get").and.returnValue({
+        width: 393,
+        height: 852,
+      } as any);
+
+      component.layout = {
+        baseWidth: 1080,
+        baseHeight: 1920,
+        scaleMode: "letterbox",
+        widgets: [],
+      };
+
+      component.onResize();
+      expect(component.isLetterboxMode).toBeTrue();
+      expect(component.dashboardWidth).toBe(1080);
+      expect(component.dashboardHeight).toBe(1920);
+      const expectedScale = Math.min(393 / 1080, 852 / 1920);
+      expect(component.scale).toBe(expectedScale);
+      expect(component.scaleTransform).toBe(`scale(${expectedScale})`);
+      expect(component.contentLeft).toBe(
+        Math.round((393 - Math.round(1080 * expectedScale)) / 2),
+      );
+      expect(component.contentTop).toBe(
+        Math.round((852 - Math.round(1920 * expectedScale)) / 2),
+      );
+    });
   });
 
   describe("setupMockDataForEditor records mock data", () => {
@@ -5354,6 +8620,14 @@ describe("DefaultRacedayComponent", () => {
             y: 0,
             width: 100,
             height: 100,
+          },
+          {
+            id: "widget-countdown",
+            widgetType: "countdown",
+            x: 460,
+            y: 415,
+            width: 1000,
+            height: 250,
           },
         ],
       } as any;
@@ -5517,6 +8791,91 @@ describe("DefaultRacedayComponent", () => {
         expect(droppedWidget.width).toBe(200);
         expect(droppedWidget.height).toBe(18);
       }
+    });
+
+    it("should set default size 384x400 for heat-list widget when dropping onto canvas", () => {
+      const element = document.createElement("div");
+      spyOnProperty(element, "offsetWidth", "get").and.returnValue(1920);
+      spyOnProperty(element, "offsetHeight", "get").and.returnValue(1080);
+      spyOn(element, "getBoundingClientRect").and.returnValue({
+        left: 0,
+        top: 0,
+        width: 1920,
+        height: 1080,
+      } as DOMRect);
+
+      spyOn(component["el"].nativeElement, "querySelector").and.returnValue(
+        element,
+      );
+
+      component.isLayoutCustomizing = true;
+      component.draggedWidgetType = "heat-list";
+      component.layout = { widgets: [] } as any;
+
+      const event = {
+        preventDefault: jasmine.createSpy("preventDefault"),
+        clientX: 400,
+        clientY: 200,
+      } as any;
+
+      component.onCanvasDrop(event);
+
+      expect(component.layout.widgets.length).toBe(1);
+      const droppedWidget = component.layout.widgets[0];
+      expect(droppedWidget.widgetType).toBe("heat-list");
+      expect(droppedWidget.width).toBe(384);
+      expect(droppedWidget.height).toBe(400);
+    });
+
+    it("should clamp dropped widget coordinates within canvas boundaries", () => {
+      const element = document.createElement("div");
+      spyOnProperty(element, "offsetWidth", "get").and.returnValue(1920);
+      spyOnProperty(element, "offsetHeight", "get").and.returnValue(1080);
+      spyOn(element, "getBoundingClientRect").and.returnValue({
+        left: 0,
+        top: 0,
+        width: 1920,
+        height: 1080,
+      } as DOMRect);
+
+      spyOn(component["el"].nativeElement, "querySelector").and.returnValue(
+        element,
+      );
+
+      component.isLayoutCustomizing = true;
+      component.draggedWidgetType = "timer";
+      component.layout = {
+        baseWidth: 1920,
+        baseHeight: 1080,
+        widgets: [],
+      } as any;
+
+      // Drop beyond top/left boundary (negative client coordinates)
+      const eventNegative = {
+        preventDefault: jasmine.createSpy("preventDefault"),
+        clientX: -100,
+        clientY: -50,
+      } as any;
+      component.onCanvasDrop(eventNegative);
+
+      expect(component.layout.widgets.length).toBe(1);
+      expect(component.layout.widgets[0].x).toBe(0);
+      expect(component.layout.widgets[0].y).toBe(0);
+
+      // Drop beyond bottom/right boundary
+      component.layout.widgets = [];
+      component.draggedWidgetType = "timer";
+      const eventPastBounds = {
+        preventDefault: jasmine.createSpy("preventDefault"),
+        clientX: 3000,
+        clientY: 2000,
+      } as any;
+      component.onCanvasDrop(eventPastBounds);
+
+      expect(component.layout.widgets.length).toBe(1);
+      const dropped = component.layout.widgets[0];
+      expect(dropped.x).toBe(1920 - dropped.width);
+      expect(dropped.y).toBe(1080 - dropped.height);
     });
   });
 
@@ -5812,6 +9171,24 @@ describe("DefaultRacedayComponent", () => {
         "t_custom",
       );
     });
+
+    it("should not call disconnect on ngOnDestroy when isUIEditorMode is true", () => {
+      fixture.componentRef.setInput("isUIEditorMode", true);
+      mockRaceConnectionService.disconnect.calls.reset();
+
+      component.ngOnDestroy();
+
+      expect(mockRaceConnectionService.disconnect).not.toHaveBeenCalled();
+    });
+
+    it("should not call disconnect on onPageHide when isUIEditorMode is true", () => {
+      fixture.componentRef.setInput("isUIEditorMode", true);
+      mockRaceConnectionService.disconnect.calls.reset();
+
+      component.onPageHide({});
+
+      expect(mockRaceConnectionService.disconnect).not.toHaveBeenCalled();
+    });
   });
 
   describe("Theme & Custom UI Transient Layout Management", () => {
@@ -6085,22 +9462,137 @@ describe("DefaultRacedayComponent", () => {
         auto_advance_time: 12,
       };
 
+      (component as any).raceState = RaceState.NOT_STARTED;
       (component as any).autoStartRemaining = 8;
       expect((component as any).isWarmup).toBeTrue();
 
       (component as any).autoStartRemaining = 2;
       expect((component as any).isWarmup).toBeFalse();
 
+      (component as any).raceState = RaceState.PAUSED;
+      (component as any).autoStartRemaining = 8;
+      expect((component as any).isWarmup).toBeFalse();
+
+      (component as any).raceState = RaceState.HEAT_OVER;
       (component as any).autoStartRemaining = 0;
       (component as any).autoAdvanceRemaining = 3;
-      (component as any).raceState = RaceState.HEAT_OVER;
       expect((component as any).isWarmup).toBeTrue();
 
       (component as any).autoAdvanceRemaining = 8;
       expect((component as any).isWarmup).toBeFalse();
 
+      (component as any).raceState = RaceState.PAUSED;
+      (component as any).autoAdvanceRemaining = 3;
+      expect((component as any).isWarmup).toBeFalse();
+
       (component as any).autoAdvanceRemaining = 0;
       expect((component as any).isWarmup).toBeFalse();
+    });
+
+    it("should evaluate isWarmup and autoStatusLabel as false/empty when race is PAUSED or RACING", () => {
+      (component as any).race = {
+        auto_start_warmup_time: 5,
+        auto_start_time: 10,
+        auto_advance_warmup_time: 4,
+        auto_advance_time: 12,
+      };
+
+      (component as any).autoStartRemaining = 8;
+      (component as any).autoAdvanceRemaining = 3;
+
+      (component as any).raceState = RaceState.PAUSED;
+      expect((component as any).isWarmup).toBeFalse();
+      expect((component as any).autoStatusLabel).toBe("");
+
+      (component as any).raceState = RaceState.RACING;
+      expect((component as any).isWarmup).toBeFalse();
+      expect((component as any).autoStatusLabel).toBe("");
+    });
+
+    it("should evaluate isWarmup and autoStatusLabel as false/empty when raceHasEnded or raceState is RACE_OVER", () => {
+      (component as any).race = {
+        auto_start_warmup_time: 5,
+        auto_start_time: 10,
+        auto_advance_warmup_time: 4,
+        auto_advance_time: 12,
+      };
+
+      (component as any).autoStartRemaining = 8;
+      (component as any).raceState = RaceState.RACE_OVER;
+      expect((component as any).isWarmup).toBeFalse();
+      expect((component as any).autoStatusLabel).toBe("");
+
+      (component as any).raceState = RaceState.NOT_STARTED;
+      (component as any).raceHasEnded = true;
+      expect((component as any).isWarmup).toBeFalse();
+      expect((component as any).autoStatusLabel).toBe("");
+    });
+
+    it("should not reset timer to auto-start when loading an autosaved paused race in loadRaceData", () => {
+      const pausedRace = {
+        entity_id: "autosaved_race_1",
+        auto_start_time: 10,
+        auto_start_warmup_time: 5,
+        auto_advance_time: 15,
+        state: RaceState.PAUSED,
+        accumulated_race_time: 45.2,
+      };
+      (component as any).race = null;
+      mockRaceService.getRace.and.returnValue(pausedRace as any);
+
+      (component as any).loadRaceData();
+
+      expect((component as any).autoStartRemaining).toBe(0);
+      expect((component as any).autoAdvanceRemaining).toBe(0);
+      expect((component as any).time).toBe(45.2);
+      expect((component as any).isWarmup).toBeFalse();
+      expect((component as any).autoStatusLabel).toBe("");
+    });
+
+    it("should preserve left-off accumulated race time and zero auto-timers when raceTime updates arrive in PAUSED state", () => {
+      fixture.detectChanges();
+      (component as any).race = {
+        entity_id: "autosaved_race_1",
+        auto_start_time: 10,
+        auto_advance_time: 15,
+        state: RaceState.PAUSED,
+      };
+      (component as any).raceState = RaceState.PAUSED;
+
+      raceTimeSubject.next({
+        time: 58.7,
+        autoStartRemaining: 10.0,
+        autoAdvanceRemaining: 15.0,
+      });
+
+      expect((component as any).autoStartRemaining).toBe(0);
+      expect((component as any).autoAdvanceRemaining).toBe(0);
+      expect((component as any).time).toBe(58.7);
+      expect((component as any).isWarmup).toBeFalse();
+      expect((component as any).autoStatusLabel).toBe("");
+    });
+
+    it("should zero timers and show 0 formattedTime when loading a finished race from history", () => {
+      const finishedRace = {
+        entity_id: "finished_race_1",
+        auto_start_time: 10,
+        auto_advance_time: 15,
+        state: RaceState.RACE_OVER,
+        is_finished: true,
+        track: { lanes: [] },
+      } as any;
+
+      mockRaceService.getRace.and.returnValue(finishedRace);
+      (component as any).race = null;
+      (component as any).loadRaceData();
+
+      expect((component as any).autoStartRemaining).toBe(0);
+      expect((component as any).autoAdvanceRemaining).toBe(0);
+      expect((component as any).time).toBe(0);
+      expect((component as any).raceHasEnded).toBeTrue();
+      expect((component as any).isWarmup).toBeFalse();
+      expect((component as any).autoStatusLabel).toBe("");
+      expect(component["formattedTime"]).toBe("0");
     });
 
     it("should delegate layout queries and handle viewer race modal getters/setters", () => {
@@ -6313,6 +9805,7 @@ describe("DefaultRacedayComponent", () => {
       expect(unused).toContain("action-master-power-off");
       expect(unused).toContain("action-open-season-results");
       expect(unused).toContain("action-open-prediction-results");
+      expect(unused).toContain("heat-list");
 
       component.layout = {
         widgets: [
@@ -6347,6 +9840,121 @@ describe("DefaultRacedayComponent", () => {
         "Live Telemetry",
       );
       expect(component.getWidgetTypeLabelKey("custom:unknown")).toBe("unknown");
+    });
+
+    it("should return structured toolbox groups with root and subgroups in getToolboxGroups", () => {
+      component.layout = { widgets: [] } as any;
+      const groups = component.getToolboxGroups();
+      expect(groups.length).toBeGreaterThanOrEqual(1);
+
+      const rcAiGroup = groups.find((g) => g.id === "race-coordinator-ai");
+      expect(rcAiGroup).toBeDefined();
+      expect(rcAiGroup?.rootWidgets.length).toBe(0);
+      expect(rcAiGroup?.subgroups.length).toBe(4);
+      const standings = rcAiGroup?.subgroups.find(
+        (s) => s.id === "standings-heats",
+      );
+      expect(standings?.widgets.map((w) => w.type)).toContain("lane-view");
+      const titles = rcAiGroup?.subgroups.find((s) => s.id === "titles-info");
+      expect(titles?.widgets.map((w) => w.type)).toContain("timer");
+
+      // Toggle group expansion
+      expect(rcAiGroup?.expanded).toBeTrue();
+      component.toggleToolboxGroup("race-coordinator-ai");
+      const toggledGroups = component.getToolboxGroups();
+      expect(
+        toggledGroups.find((g) => g.id === "race-coordinator-ai")?.expanded,
+      ).toBeFalse();
+
+      // Toggle subgroup expansion
+      component.toggleToolboxSubgroup("actions");
+      const updatedGroups = component.getToolboxGroups();
+      const actions = updatedGroups[0].subgroups.find(
+        (s) => s.id === "actions",
+      );
+      expect(actions?.expanded).toBeTrue();
+
+      // Clear search term
+      component.toolboxSearchTerm = "lap";
+      component.clearToolboxSearch();
+      expect(component.toolboxSearchTerm).toBe("");
+    });
+
+    it("should persist collapsed toolbox groups and subgroups to layout and emit layoutChanged in UI editor mode", () => {
+      fixture.componentRef.setInput("isUIEditorMode", true);
+      component.layout = { widgets: [] } as any;
+      spyOn(component.layoutChanged, "emit");
+
+      component.toggleToolboxGroup("race-coordinator-ai");
+      expect(
+        (component.layout.collapsedToolboxGroups as Record<string, boolean>)[
+          "race-coordinator-ai"
+        ],
+      ).toBeTrue();
+      expect(component.layoutChanged.emit).toHaveBeenCalledWith(
+        component.layout,
+      );
+
+      component.toggleToolboxSubgroup("actions");
+      expect(
+        (component.layout.collapsedToolboxSubgroups as Record<string, boolean>)[
+          "actions"
+        ],
+      ).toBeFalse();
+    });
+
+    it("should handle array-based collapsedToolboxGroups and collapsedToolboxSubgroups in layout", () => {
+      fixture.componentRef.setInput("isUIEditorMode", true);
+      component.layout = {
+        widgets: [],
+        collapsedToolboxGroups: ["other-group"],
+        collapsedToolboxSubgroups: ["actions"],
+      } as any;
+      component.loadToolboxExpandedStatesFromLayout();
+
+      component.toggleToolboxGroup("race-coordinator-ai");
+      expect(component.layout.collapsedToolboxGroups).toEqual(
+        jasmine.arrayContaining(["other-group", "race-coordinator-ai"]),
+      );
+
+      // actions was collapsed in the layout; toggling expands it and removes it from collapsed array
+      component.toggleToolboxSubgroup("actions");
+      expect(component.layout.collapsedToolboxSubgroups).not.toContain(
+        "actions",
+      );
+    });
+
+    it("should restore and isolate toolbox collapsed states across layouts", () => {
+      const layout1 = {
+        widgets: [],
+        collapsedToolboxGroups: { "race-coordinator-ai": true },
+        collapsedToolboxSubgroups: { actions: false },
+      } as any;
+      const layout2 = {
+        widgets: [],
+        collapsedToolboxGroups: { "race-coordinator-ai": false },
+        collapsedToolboxSubgroups: { actions: true },
+      } as any;
+
+      component.layout = layout1;
+      component.loadToolboxExpandedStatesFromLayout();
+      let groups = component.getToolboxGroups();
+      expect(
+        groups.find((g) => g.id === "race-coordinator-ai")?.expanded,
+      ).toBeFalse();
+      expect(
+        groups[0].subgroups.find((s) => s.id === "actions")?.expanded,
+      ).toBeTrue();
+
+      component.layout = layout2;
+      component.loadToolboxExpandedStatesFromLayout();
+      groups = component.getToolboxGroups();
+      expect(
+        groups.find((g) => g.id === "race-coordinator-ai")?.expanded,
+      ).toBeTrue();
+      expect(
+        groups[0].subgroups.find((s) => s.id === "actions")?.expanded,
+      ).toBeFalse();
     });
 
     it("should execute master power actions on executeWidgetAction", () => {
@@ -6406,6 +10014,535 @@ describe("DefaultRacedayComponent", () => {
       expect(handled).toBeTrue();
       expect(component.onTrackPowerMainSelect).toHaveBeenCalledWith(true);
       expect(event.preventDefault).toHaveBeenCalled();
+    });
+  });
+
+  describe("exportToCsv and exportToXls", () => {
+    let originalShowSaveFilePicker: any;
+    let mockWritable: any;
+    let mockHandle: any;
+
+    beforeEach(() => {
+      originalShowSaveFilePicker = (window as any).showSaveFilePicker;
+      mockWritable = {
+        write: jasmine.createSpy("write").and.returnValue(Promise.resolve()),
+        close: jasmine.createSpy("close").and.returnValue(Promise.resolve()),
+      };
+      mockHandle = {
+        createWritable: jasmine
+          .createSpy("createWritable")
+          .and.returnValue(Promise.resolve(mockWritable)),
+      };
+      (window as any).showSaveFilePicker = jasmine
+        .createSpy("showSaveFilePicker")
+        .and.returnValue(Promise.resolve(mockHandle));
+      mockDataService.exportRaceToCsv.and.returnValue(of("csv,test,content"));
+      mockDataService.exportRaceToXls.and.returnValue(
+        of(
+          new Blob(["mock xls"], {
+            type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          }),
+        ),
+      );
+    });
+
+    afterEach(() => {
+      (window as any).showSaveFilePicker = originalShowSaveFilePicker;
+    });
+
+    it("should export CSV via showSaveFilePicker", async () => {
+      await component.exportToCsv();
+
+      expect(mockDataService.exportRaceToCsv).toHaveBeenCalled();
+      expect((window as any).showSaveFilePicker).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          types: [
+            {
+              description: "CSV Files",
+              accept: { "text/csv": [".csv"] },
+            },
+          ],
+        }),
+      );
+      expect(mockWritable.write).toHaveBeenCalledWith("csv,test,content");
+      expect(mockWritable.close).toHaveBeenCalled();
+    });
+
+    it("should export XLS via showSaveFilePicker", async () => {
+      await component.exportToXls();
+
+      expect(mockDataService.exportRaceToXls).toHaveBeenCalled();
+      expect((window as any).showSaveFilePicker).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          types: [
+            {
+              description: "Excel Files",
+              accept: {
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":
+                  [".xlsx"],
+              },
+            },
+          ],
+        }),
+      );
+      expect(mockWritable.write).toHaveBeenCalled();
+      expect(mockWritable.close).toHaveBeenCalled();
+    });
+
+    it("should fallback to anchor download when showSaveFilePicker is not available", async () => {
+      delete (window as any).showSaveFilePicker;
+      const clickSpy = spyOn(HTMLAnchorElement.prototype, "click");
+
+      await component.exportToCsv();
+
+      expect(clickSpy).toHaveBeenCalled();
+    });
+  });
+
+  describe("Audio Relevance Filtering by Layout Widgets", () => {
+    let mockThemeService: any;
+
+    beforeEach(() => {
+      mockThemeService = TestBed.inject(ThemeService);
+    });
+
+    it("should allow all audio when layout contains all standard widgets", () => {
+      component.layout = {
+        widgets: [
+          { widgetType: "lane-view" },
+          { widgetType: "countdown" },
+          { widgetType: "timer" },
+          { widgetType: "flag" },
+        ],
+      } as any;
+
+      (component as any).updateAudioRelevance();
+
+      const audioService = (component as any).audioService as AudioService;
+      const filter = audioService.getRelevanceFilter();
+
+      expect(filter?.driverAudioMode).toBe("all");
+      expect(filter?.allowCountdown).toBeTrue();
+      expect(filter?.allowTimer).toBeTrue();
+      expect(filter?.allowRaceState).toBeTrue();
+    });
+
+    it("should silence all audio when widgets array is empty or undefined", () => {
+      component.layout = { widgets: [] } as any;
+
+      (component as any).updateAudioRelevance();
+
+      const audioService = (component as any).audioService as AudioService;
+      const filter = audioService.getRelevanceFilter();
+
+      expect(filter?.driverAudioMode).toBe("none");
+      expect(filter?.allowCountdown).toBeFalse();
+      expect(filter?.allowTimer).toBeFalse();
+      expect(filter?.allowRaceState).toBeFalse();
+
+      (component as any).layout = undefined;
+      (component as any).updateAudioRelevance();
+      const filter2 = audioService.getRelevanceFilter();
+      expect(filter2?.driverAudioMode).toBe("none");
+      expect(filter2?.allowCountdown).toBeFalse();
+      expect(filter2?.allowTimer).toBeFalse();
+      expect(filter2?.allowRaceState).toBeFalse();
+    });
+
+    it("should require lane-view widget for driver audio", () => {
+      // Without lane-view (e.g. leaderboard or records only), driverAudioMode is 'none'
+      component.layout = {
+        widgets: [{ widgetType: "leaderboard" }, { widgetType: "countdown" }],
+      } as any;
+
+      (component as any).updateAudioRelevance();
+
+      const audioService = (component as any).audioService as AudioService;
+      const filter = audioService.getRelevanceFilter();
+
+      expect(filter?.driverAudioMode).toBe("none");
+      expect(filter?.allowCountdown).toBeTrue();
+      expect(filter?.allowTimer).toBeFalse();
+      expect(filter?.allowRaceState).toBeFalse();
+
+      // With lane-view, driverAudioMode is 'all'
+      component.layout = {
+        widgets: [{ widgetType: "lane-view" }, { widgetType: "countdown" }],
+      } as any;
+      (component as any).updateAudioRelevance();
+      expect(audioService.getRelevanceFilter()?.driverAudioMode).toBe("all");
+    });
+
+    it("should require timer widget for timer audio and flag widget for race state", () => {
+      // menu-bar or heat-list does NOT satisfy timer or flag
+      component.layout = {
+        widgets: [{ widgetType: "menu-bar" }, { widgetType: "heat-list" }],
+      } as any;
+
+      (component as any).updateAudioRelevance();
+
+      const audioService = (component as any).audioService as AudioService;
+      const filter = audioService.getRelevanceFilter();
+
+      expect(filter?.driverAudioMode).toBe("none");
+      expect(filter?.allowCountdown).toBeFalse();
+      expect(filter?.allowTimer).toBeFalse();
+      expect(filter?.allowRaceState).toBeFalse();
+
+      // Explicit timer and flag widgets enable timer and race state audio
+      component.layout = {
+        widgets: [{ widgetType: "timer" }, { widgetType: "flag" }],
+      } as any;
+      (component as any).updateAudioRelevance();
+      const filter2 = audioService.getRelevanceFilter();
+      expect(filter2?.allowTimer).toBeTrue();
+      expect(filter2?.allowRaceState).toBeTrue();
+    });
+
+    it("should disable audio when only non-audio widgets are present", () => {
+      component.layout = {
+        widgets: [
+          { widgetType: "branding" },
+          { widgetType: "image" },
+          { widgetType: "qr" },
+        ],
+      } as any;
+
+      (component as any).updateAudioRelevance();
+
+      const audioService = (component as any).audioService as AudioService;
+      const filter = audioService.getRelevanceFilter();
+
+      expect(filter?.driverAudioMode).toBe("none");
+      expect(filter?.allowCountdown).toBeFalse();
+      expect(filter?.allowTimer).toBeFalse();
+      expect(filter?.allowRaceState).toBeFalse();
+    });
+
+    it("should sync audio relevance on layout modifications", () => {
+      const audioService = (component as any).audioService as AudioService;
+      component.layout = {
+        widgets: [
+          { id: "w-timer", widgetType: "timer" },
+          { id: "w-flag", widgetType: "flag" },
+        ],
+      } as any;
+
+      // Save layout
+      component.saveLayout();
+      expect(audioService.getRelevanceFilter()?.allowTimer).toBeTrue();
+      expect(audioService.getRelevanceFilter()?.allowRaceState).toBeTrue();
+      expect(audioService.getRelevanceFilter()?.driverAudioMode).toBe("none");
+
+      // Remove widget
+      component.removeWidget("w-timer");
+      expect(audioService.getRelevanceFilter()?.allowTimer).toBeFalse();
+      expect(audioService.getRelevanceFilter()?.allowRaceState).toBeTrue();
+
+      // Reset to defaults
+      component.resetLayoutToDefaults();
+      expect(audioService.getRelevanceFilter()?.driverAudioMode).toBe("all");
+      expect(audioService.getRelevanceFilter()?.allowCountdown).toBeTrue();
+    });
+
+    it("should attach flag association to race state sounds", () => {
+      const audioService = (component as any).audioService as AudioService;
+      spyOn(audioService, "playCallout");
+      mockThemeService.resolveAudioConfig.and.returnValue({
+        type: "preset",
+        url: "flag.wav",
+      });
+
+      (component as any).playThemedSound(THEME_SLOT_KEYS.AUDIO_YELLOW_FLAG);
+      expect(audioService.playCallout).toHaveBeenCalledWith(
+        jasmine.objectContaining({ type: "preset" }),
+        "urgent",
+        undefined,
+        jasmine.any(String),
+        { widgetType: "flag" },
+      );
+
+      (component as any).playThemedSound(THEME_SLOT_KEYS.AUDIO_HEAT_OVER);
+      expect(audioService.playCallout).toHaveBeenCalledWith(
+        jasmine.objectContaining({ type: "preset" }),
+        "urgent",
+        undefined,
+        jasmine.any(String),
+        { widgetType: "flag" },
+      );
+
+      (component as any).playThemedSound(THEME_SLOT_KEYS.AUDIO_RACE_OVER);
+      expect(audioService.playCallout).toHaveBeenCalledWith(
+        jasmine.objectContaining({ type: "preset" }),
+        "urgent",
+        undefined,
+        jasmine.any(String),
+        { widgetType: "flag" },
+      );
+    });
+
+    it("should attach timer association to timer sounds", () => {
+      const audioService = (component as any).audioService as AudioService;
+      spyOn(audioService, "playCallout");
+      mockThemeService.resolveAudioConfig.and.returnValue({
+        type: "preset",
+        url: "timer.wav",
+      });
+
+      (component as any).playThemedSound(
+        THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT_HALFWAY,
+      );
+      expect(audioService.playCallout).toHaveBeenCalledWith(
+        jasmine.objectContaining({ type: "preset" }),
+        "normal",
+        undefined,
+        jasmine.any(String),
+        { widgetType: "timer" },
+      );
+    });
+
+    it("should attach lane-view association to lap audio", () => {
+      const audioService = (component as any).audioService as AudioService;
+      spyOn(audioService, "playCallout");
+
+      const driver = {
+        entity_id: "driver-123",
+        name: "Test Driver",
+        lapAudio: { type: "tts" as const, text: "Lap" },
+      };
+      const driverData = {
+        objectId: "hd-123",
+        laneIndex: 2,
+        driver,
+      };
+      (component as any).heat = {
+        heatDrivers: [driverData],
+      } as any;
+
+      const lap = {
+        objectId: "hd-123",
+        lapTime: 4.5,
+        bestLapTime: 4.0,
+      };
+
+      (component as any).handleLapAudio(lap, driver, false, {});
+
+      expect(audioService.playCallout).toHaveBeenCalledWith(
+        driver.lapAudio,
+        "low",
+        jasmine.any(Object),
+        undefined,
+        {
+          widgetType: "lane-view",
+          laneIndex: 2,
+          driverId: "driver-123",
+        },
+      );
+    });
+  });
+
+  describe("Simultaneous Lap Audio Arbitration (Option 2)", () => {
+    let mockThemeService: any;
+
+    beforeEach(() => {
+      mockThemeService = TestBed.inject(ThemeService);
+    });
+
+    it("should play higher priority candidate (e.g. new race leader - high) and drop lower priority candidate (e.g. laps left - normal) on Lap 1", () => {
+      const audioService = (component as any).audioService as AudioService;
+      const playCalloutSpy = spyOn(
+        audioService,
+        "playCallout",
+      ).and.callThrough();
+      const queueCalloutSpy = spyOn(
+        audioService,
+        "queueCallout",
+      ).and.callThrough();
+
+      const mockAssets = [
+        {
+          _id: "default_laps_left_set",
+          model: { entityId: "default_laps_left_set" },
+          type: "audio_set",
+          audioEntries: [
+            {
+              timeSeconds: 20,
+              type: "tts",
+              text: "20 laps to go",
+              triggerMode: "remaining",
+            },
+          ],
+        },
+      ];
+      mockDataService.listAssets.and.returnValue(of(mockAssets));
+      mockDataService.loadedAssets = mockAssets;
+      component["assets"] = mockAssets as any;
+
+      mockThemeService.resolveAudioConfig.and.callFake((key: string) => {
+        if (key === THEME_SLOT_KEYS.AUDIO_LAPS_LEFT) {
+          return { type: "audio_set", url: "default_laps_left_set" };
+        }
+        return null;
+      });
+
+      const race = {
+        ...MOCK_RACES[0],
+        heat_scoring: {
+          finishMethod: FinishMethod.Lap,
+          finishValue: 21,
+        },
+        track: component["track"],
+      } as any;
+      component["race"] = race;
+      mockRaceService.getRace.and.returnValue(race);
+
+      fixture.detectChanges();
+      component["raceState"] = RaceState.RACING;
+
+      const leaderHd = component["heat"]!.heatDrivers[0];
+      leaderHd.driver.newRaceLeaderAudio = {
+        type: "tts",
+        text: "New Race Leader",
+      };
+
+      // Lap 1: 21 - 1 = 20 laps left (triggers "20 laps to go" - normal)
+      // AND driver becomes new race leader (triggers "New Race Leader" - high)
+      lapsSubject.next({
+        objectId: leaderHd.objectId,
+        lapNumber: 1,
+        lapTime: 3.5,
+        bestLapTime: 3.5,
+        isNewRaceLeader: true,
+      });
+
+      // Higher priority "New Race Leader" (high) must play immediately
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          type: "tts",
+          text: "New Race Leader",
+        }),
+        "high",
+        jasmine.any(Object),
+        undefined,
+        jasmine.objectContaining({ widgetType: "lane-view" }),
+      );
+
+      // Lower priority "20 laps to go" (normal) must NOT be played or queued
+      expect(playCalloutSpy).not.toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          text: "20 laps to go",
+        }),
+        jasmine.anything(),
+        jasmine.anything(),
+        jasmine.anything(),
+        jasmine.anything(),
+      );
+      expect(queueCalloutSpy).not.toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          text: "20 laps to go",
+        }),
+        jasmine.anything(),
+        jasmine.anything(),
+        jasmine.anything(),
+        jasmine.anything(),
+      );
+    });
+
+    it("should play first candidate immediately and queue equal priority second candidate when both trigger on same lap", () => {
+      const audioService = (component as any).audioService as AudioService;
+      const playCalloutSpy = spyOn(
+        audioService,
+        "playCallout",
+      ).and.callThrough();
+      const queueCalloutSpy = spyOn(
+        audioService,
+        "queueCallout",
+      ).and.callThrough();
+
+      const mockAssets = [
+        {
+          _id: "default_laps_left_set",
+          model: { entityId: "default_laps_left_set" },
+          type: "audio_set",
+          audioEntries: [
+            {
+              timeSeconds: 5,
+              type: "tts",
+              text: "5 laps to go",
+              triggerMode: "remaining",
+            },
+          ],
+        },
+      ];
+      mockDataService.listAssets.and.returnValue(of(mockAssets));
+      mockDataService.loadedAssets = mockAssets;
+      component["assets"] = mockAssets as any;
+
+      mockThemeService.resolveAudioConfig.and.callFake((key: string) => {
+        if (key === THEME_SLOT_KEYS.AUDIO_LAPS_LEFT) {
+          return { type: "audio_set", url: "default_laps_left_set" };
+        }
+        if (key === THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT_HALFWAY) {
+          return { type: "tts", text: "Halfway" };
+        }
+        return null;
+      });
+
+      const race = {
+        ...MOCK_RACES[0],
+        heat_scoring: {
+          finishMethod: FinishMethod.Lap,
+          finishValue: 10,
+        },
+        track: component["track"],
+      } as any;
+      component["race"] = race;
+      mockRaceService.getRace.and.returnValue(race);
+
+      fixture.detectChanges();
+      component["raceState"] = RaceState.RACING;
+
+      const leaderHd = component["heat"]!.heatDrivers[0];
+
+      // Lap 1 first to set leaderLaps = 1
+      lapsSubject.next({
+        objectId: leaderHd.objectId,
+        lapNumber: 1,
+        lapTime: 3.5,
+      });
+      playCalloutSpy.calls.reset();
+      queueCalloutSpy.calls.reset();
+
+      // Lap 5: 10 / 2 = 5 (halfway - normal) AND 10 - 5 = 5 (5 laps to go - normal)
+      lapsSubject.next({
+        objectId: leaderHd.objectId,
+        lapNumber: 5,
+        lapTime: 3.5,
+      });
+
+      // First normal priority candidate ("5 laps to go") plays immediately
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          type: "tts",
+          text: "5 laps to go",
+        }),
+        "normal",
+        undefined,
+        undefined,
+        { widgetType: "timer" },
+      );
+
+      // Second equal priority candidate ("Halfway") is queued sequentially
+      expect(queueCalloutSpy).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          type: "tts",
+          text: "Halfway",
+        }),
+        "normal",
+        undefined,
+        undefined,
+        { widgetType: "timer" },
+      );
     });
   });
 });

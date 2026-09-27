@@ -54,6 +54,8 @@ describe("CustomWidgetInspectorComponent", () => {
           label: "Display Mode",
           type: "select",
           default: "full",
+          colorKey: "modeColor",
+          colorDefault: "#38bdf8",
           options: [
             { label: "Full", value: "full" },
             { label: "Compact", value: "compact" },
@@ -160,5 +162,15 @@ describe("CustomWidgetInspectorComponent", () => {
 
     component.onSelectChange("mode", { target: { value: "compact" } } as any);
     expect(component.widget().customSettings?.["mode"]).toBe("compact");
+  });
+
+  it("should render inline color picker when field has colorKey", () => {
+    const inlinePickers = fixture.nativeElement.querySelectorAll(
+      ".inline-color-picker",
+    );
+    expect(inlinePickers.length).toBeGreaterThanOrEqual(1);
+
+    const colorInput = inlinePickers[0].querySelector("input[type='color']");
+    expect(colorInput).toBeTruthy();
   });
 });

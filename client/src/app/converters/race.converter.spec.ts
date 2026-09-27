@@ -254,4 +254,19 @@ describe("RaceConverter", () => {
     const result = RaceConverter.fromProto(mockProto);
     expect(result.theme_id).toBe("practice_theme_rc_ai");
   });
+
+  it("should map allowFinish from proto enum values including SingleLapAutoSegments", () => {
+    const mockProto: IRaceModel = {
+      model: { entityId: "r17" },
+      name: "Auto Segments Race",
+      track: { model: { entityId: "t1" }, name: "Track", lanes: [] },
+      heatScoring: {
+        finishMethod: 1,
+        finishValue: 60,
+        allowFinish: 4, // AF_SINGLE_LAP_AUTO_SEGMENTS
+      },
+    };
+    const result = RaceConverter.fromProto(mockProto);
+    expect(result.heat_scoring.allowFinish).toBe("SingleLapAutoSegments");
+  });
 });

@@ -1,5 +1,5 @@
 import { Injectable, OnDestroy } from "@angular/core";
-import { Subscription } from "rxjs";
+import { BehaviorSubject, Observable, Subscription } from "rxjs";
 import { DataService } from "@app/data.service";
 import { THEME_SLOT_KEYS } from "@app/models/theme";
 import { RaceFlag, RaceState } from "@app/proto/antigravity";
@@ -42,6 +42,10 @@ export class RaceFlagService implements OnDestroy {
   private subscriptions: Subscription = new Subscription();
   private assetsSubscription?: Subscription;
 
+  private currentFlagUrlSubject = new BehaviorSubject<string>("");
+  public currentFlagUrl$: Observable<string> =
+    this.currentFlagUrlSubject.asObservable();
+
   constructor(
     private raceConnectionService: RaceConnectionService,
     private raceService: RaceService,
@@ -53,6 +57,7 @@ export class RaceFlagService implements OnDestroy {
       this.subscriptions.add(
         this.raceConnectionService.raceFlag$.subscribe((flag) => {
           this.currentFlag = flag;
+          this.notifySubscribers();
         }),
       );
     }
@@ -61,6 +66,7 @@ export class RaceFlagService implements OnDestroy {
       this.subscriptions.add(
         this.raceConnectionService.raceState$.subscribe((state) => {
           this.currentState = state;
+          this.notifySubscribers();
         }),
       );
     }
@@ -75,6 +81,7 @@ export class RaceFlagService implements OnDestroy {
           } else {
             this.hasRacedInCurrentHeat = false;
           }
+          this.notifySubscribers();
         }),
       );
     }
@@ -92,6 +99,7 @@ export class RaceFlagService implements OnDestroy {
                 .subscribe({
                   next: (assets: any[]) => {
                     this.assets = assets || [];
+                    this.notifySubscribers();
                   },
                   error: (err) => {
                     console.error(
@@ -105,6 +113,10 @@ export class RaceFlagService implements OnDestroy {
         }),
       );
     }
+  }
+
+  private notifySubscribers(): void {
+    this.currentFlagUrlSubject.next(this.getCurrentFlagUrl());
   }
 
   ngOnDestroy() {
@@ -177,6 +189,13 @@ export class RaceFlagService implements OnDestroy {
   }
 
   /**
+   * Get the URL for the current behavioral flag image.
+   */
+  getCurrentFlagUrl(): string {
+    return this.getFlagUrl(this.getFlagType());
+  }
+
+  /**
    * Get the flag color for driver station indicator (simplified CSS class version).
    */
   getFlagTypeForFlag(flag: RaceFlag): FlagColor {
@@ -202,31 +221,33 @@ export class RaceFlagService implements OnDestroy {
 
     // 2. Individual Settings override
     if (!assetId) {
-      const settings = this.settingsService.getSettings();
+      const settings = this.settingsService?.getSettings();
       let url: string | undefined;
-      if (slotKey === THEME_SLOT_KEYS.FLAG_RACING) url = settings.flagRacing;
-      else if (slotKey === THEME_SLOT_KEYS.FLAG_HEAT_PAUSED)
-        url = settings.flagHeatPaused;
-      else if (slotKey === THEME_SLOT_KEYS.FLAG_HEAT_OVER)
-        url = settings.flagHeatOver;
-      else if (slotKey === THEME_SLOT_KEYS.FLAG_RACE_OVER)
-        url = settings.flagRaceOver;
-      else if (slotKey === THEME_SLOT_KEYS.FLAG_NOT_STARTED)
-        url = settings.flagNotStarted;
-      else if (slotKey === THEME_SLOT_KEYS.FLAG_STARTING)
-        url = settings.flagStarting;
-      else if (slotKey === THEME_SLOT_KEYS.FLAG_RESTARTING)
-        url = settings.flagRestarting;
-      else if (slotKey === THEME_SLOT_KEYS.FLAG_ONE_LAP_TO_GO)
-        url = settings.flagOneLapToGo;
-      else if (slotKey === THEME_SLOT_KEYS.FLAG_HEAT_FINISHING)
-        url = settings.flagHeatFinishing;
-      else if (slotKey === THEME_SLOT_KEYS.FLAG_WARMUP)
-        url = settings.flagWarmup;
-      else if (slotKey === THEME_SLOT_KEYS.FLAG_DRIVER_FINISHED)
-        url = settings.flagDriverFinished;
-      else if (slotKey === THEME_SLOT_KEYS.FLAG_PENALTY)
-        url = settings.flagPenalty;
+      if (settings) {
+        if (slotKey === THEME_SLOT_KEYS.FLAG_RACING) url = settings.flagRacing;
+        else if (slotKey === THEME_SLOT_KEYS.FLAG_HEAT_PAUSED)
+          url = settings.flagHeatPaused;
+        else if (slotKey === THEME_SLOT_KEYS.FLAG_HEAT_OVER)
+          url = settings.flagHeatOver;
+        else if (slotKey === THEME_SLOT_KEYS.FLAG_RACE_OVER)
+          url = settings.flagRaceOver;
+        else if (slotKey === THEME_SLOT_KEYS.FLAG_NOT_STARTED)
+          url = settings.flagNotStarted;
+        else if (slotKey === THEME_SLOT_KEYS.FLAG_STARTING)
+          url = settings.flagStarting;
+        else if (slotKey === THEME_SLOT_KEYS.FLAG_RESTARTING)
+          url = settings.flagRestarting;
+        else if (slotKey === THEME_SLOT_KEYS.FLAG_ONE_LAP_TO_GO)
+          url = settings.flagOneLapToGo;
+        else if (slotKey === THEME_SLOT_KEYS.FLAG_HEAT_FINISHING)
+          url = settings.flagHeatFinishing;
+        else if (slotKey === THEME_SLOT_KEYS.FLAG_WARMUP)
+          url = settings.flagWarmup;
+        else if (slotKey === THEME_SLOT_KEYS.FLAG_DRIVER_FINISHED)
+          url = settings.flagDriverFinished;
+        else if (slotKey === THEME_SLOT_KEYS.FLAG_PENALTY)
+          url = settings.flagPenalty;
+      }
 
       if (url) return this.getFullUrl(url);
     } else {

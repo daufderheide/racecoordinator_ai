@@ -107,6 +107,7 @@ public class CsvExporterTest {
     assertTrue("CSV should contain padded lap time 4.500", csv.contains("4.500"));
     assertTrue("CSV should contain padded lap time 10.000", csv.contains("10.000"));
     assertTrue("CSV should contain rounded lap time 5.482", csv.contains("5.482"));
+    assertTrue("CSV should contain consistencyScore", csv.contains("consistencyScore"));
   }
 
   @Test
@@ -223,5 +224,57 @@ public class CsvExporterTest {
     String csv = CsvExporter.export(specialRace);
     assertNotNull(csv);
     assertTrue(csv.contains("\"Driver, with \"\"Quotes\"\"\nAnd Newline\""));
+  }
+
+  @Test
+  public void testDriverStatisticsExport() {
+    race.changeState(new Racing());
+    DriverHeatData dhd = race.getCurrentHeat().getDrivers().get(0);
+    dhd.addLap(4.0, false, true);
+    dhd.addLap(5.0, false, true);
+
+    String csv = CsvExporter.export(race);
+    assertNotNull(csv);
+    assertTrue(
+        "CSV should contain Section Driver Statistics", csv.contains("#Section,Driver Statistics"));
+    assertTrue(
+        "CSV should contain Table Driver Statistics", csv.contains("#Table: Driver Statistics"));
+    assertTrue("CSV should contain consistencyScore header", csv.contains("consistencyScore"));
+  }
+
+  @Test
+  public void testDriverStatisticRowGetters() {
+    CsvExporter.DriverStatisticRow row = new CsvExporter.DriverStatisticRow();
+    row.driverName = "Dave";
+    row.laneName = "Lane 1";
+    row.laneNumber = 1;
+    row.totalLaps = 10.0;
+    row.totalTime = 50.0;
+    row.averageLapTime = 5.0;
+    row.medianLapTime = 4.9;
+    row.bestLapTime = 4.5;
+    row.standardDeviation = 0.2;
+    row.consistencyScore = 96.0;
+    row.averageTop5 = 4.7;
+    row.averageTop10 = 4.9;
+    row.averageTop15 = 5.0;
+    row.top2Consecutive = 9.2;
+    row.top3Consecutive = 13.9;
+
+    assertEquals("Dave", row.getDriverName());
+    assertEquals("Lane 1", row.getLaneName());
+    assertEquals(1, row.getLaneNumber());
+    assertEquals(10.0, row.getTotalLaps(), 0.001);
+    assertEquals(50.0, row.getTotalTime(), 0.001);
+    assertEquals(5.0, row.getAverageLapTime(), 0.001);
+    assertEquals(4.9, row.getMedianLapTime(), 0.001);
+    assertEquals(4.5, row.getBestLapTime(), 0.001);
+    assertEquals(0.2, row.getStandardDeviation(), 0.001);
+    assertEquals(96.0, row.getConsistencyScore(), 0.001);
+    assertEquals(4.7, row.getAverageTop5(), 0.001);
+    assertEquals(4.9, row.getAverageTop10(), 0.001);
+    assertEquals(5.0, row.getAverageTop15(), 0.001);
+    assertEquals(9.2, row.getTop2Consecutive(), 0.001);
+    assertEquals(13.9, row.getTop3Consecutive(), 0.001);
   }
 }

@@ -88,4 +88,77 @@ describe("DriverHeatData", () => {
     heatData.adjustedLapCount = 0;
     expect(heatData.lapCount).toBe(1 + -0.5 + 1.0 + 0.25); // 1.75
   });
+
+  it("should calculate physicalLapCount strictly from physical laps regardless of adjustments", () => {
+    expect(heatData.physicalLapCount).toBe(0);
+
+    heatData.addLapTime(1, 10.0, 10.0, 10.0, 10.0, 1);
+    expect(heatData.physicalLapCount).toBe(1);
+
+    heatData.addLapTime(2, 9.8, 9.9, 9.9, 9.8, 2);
+    expect(heatData.physicalLapCount).toBe(2);
+
+    // Modifying adjustedLapCount, userLaps, penalties, autoCalculatedLaps should NOT affect physicalLapCount
+    heatData.adjustedLapCount = 10.5;
+    heatData.penaltyLaps = -1.0;
+    heatData.userLaps = 2.5;
+    heatData.autoCalculatedLaps = 0.5;
+
+    expect(heatData.physicalLapCount).toBe(2);
+    expect(heatData.lapCount).toBe(10.5);
+
+    heatData.reset();
+    expect(heatData.physicalLapCount).toBe(0);
+  });
+
+  it("should update countTowardsRecords using updateLapRecordStatus", () => {
+    heatData.addLapTime(1, 10.0, 10.0, 10.0, 10.0, 1);
+    expect(heatData.lapsWithDetails[0].countTowardsRecords).toBeTrue();
+
+    heatData.updateLapRecordStatus(0, false);
+    expect(heatData.lapsWithDetails[0].countTowardsRecords).toBeFalse();
+
+    heatData.updateLapRecordStatus(0, true);
+    expect(heatData.lapsWithDetails[0].countTowardsRecords).toBeTrue();
+  });
+
+  describe("Analysis Metrics", () => {
+    it("should initialize metrics to null", () => {
+      expect(heatData.standardDeviation).toBeNull();
+      expect(heatData.consistencyScore).toBeNull();
+      expect(heatData.averageTop5).toBeNull();
+      expect(heatData.averageTop10).toBeNull();
+      expect(heatData.averageTop15).toBeNull();
+      expect(heatData.top2Consecutive).toBeNull();
+      expect(heatData.top3Consecutive).toBeNull();
+    });
+
+    it("should store server-provided metrics and reset them to null on reset()", () => {
+      heatData.standardDeviation = 0.123;
+      heatData.consistencyScore = 97.5;
+      heatData.averageTop5 = 4.15;
+      heatData.averageTop10 = 4.25;
+      heatData.averageTop15 = 4.35;
+      heatData.top2Consecutive = 8.2;
+      heatData.top3Consecutive = 12.3;
+
+      expect(heatData.standardDeviation).toBe(0.123);
+      expect(heatData.consistencyScore).toBe(97.5);
+      expect(heatData.averageTop5).toBe(4.15);
+      expect(heatData.averageTop10).toBe(4.25);
+      expect(heatData.averageTop15).toBe(4.35);
+      expect(heatData.top2Consecutive).toBe(8.2);
+      expect(heatData.top3Consecutive).toBe(12.3);
+
+      heatData.reset();
+
+      expect(heatData.standardDeviation).toBeNull();
+      expect(heatData.consistencyScore).toBeNull();
+      expect(heatData.averageTop5).toBeNull();
+      expect(heatData.averageTop10).toBeNull();
+      expect(heatData.averageTop15).toBeNull();
+      expect(heatData.top2Consecutive).toBeNull();
+      expect(heatData.top3Consecutive).toBeNull();
+    });
+  });
 });

@@ -319,11 +319,45 @@ export class DataService {
     );
   }
 
+  getRaceHistoryById(id: string, isDemo?: boolean): Observable<any> {
+    const url = isDemo
+      ? `${this.baseUrl}/api/history/races/${id}?demo=true`
+      : `${this.baseUrl}/api/history/races/${id}`;
+    return this.http.get<any>(url);
+  }
+
   getAllFinishedRaceHistory(): Observable<any[]> {
     return forkJoin([
       this.getRaceHistory(false).pipe(catchError(() => of([]))),
       this.getRaceHistory(true).pipe(catchError(() => of([]))),
     ]).pipe(map(([prod, demo]) => [...(prod || []), ...(demo || [])]));
+  }
+
+  loadRaceHistory(id: string, isDemo?: boolean): Observable<any> {
+    const url = isDemo
+      ? `${this.baseUrl}/api/history/races/${id}/load?demo=true`
+      : `${this.baseUrl}/api/history/races/${id}/load`;
+    return this.http.post(url, {}, { responseType: "text" });
+  }
+
+  exportRaceHistoryToCsv(id: string, isDemo?: boolean): Observable<string> {
+    const url = isDemo
+      ? `${this.baseUrl}/api/history/races/${id}/export?demo=true`
+      : `${this.baseUrl}/api/history/races/${id}/export`;
+    return this.http.get(url, {
+      responseType: "text",
+    });
+  }
+
+  updateHistoryLapSections(
+    id: string,
+    updates: any[],
+    isDemo?: boolean,
+  ): Observable<any> {
+    const url = isDemo
+      ? `${this.baseUrl}/api/history/races/${id}/lap-sections?demo=true`
+      : `${this.baseUrl}/api/history/races/${id}/lap-sections`;
+    return this.http.post(url, updates, { responseType: "text" });
   }
 
   exportRaceToCsv(): Observable<string> {
@@ -341,6 +375,19 @@ export class DataService {
         responseType: "blob",
       },
     );
+  }
+
+  downloadDefaultExportTemplate(): Observable<Blob> {
+    return this.http.get(`${this.baseUrl}/api/races/export-template/default`, {
+      responseType: "blob",
+    });
+  }
+
+  testExportXls(base64Template?: string): Observable<Blob> {
+    const body = base64Template ? { templateBase64: base64Template } : {};
+    return this.http.post(`${this.baseUrl}/api/races/test-export-xls`, body, {
+      responseType: "blob",
+    });
   }
 
   public getDefaultDemoConfig(): IDemoConfig {
@@ -1197,7 +1244,14 @@ export class DataService {
   }
 
   exportDatabase(name: string) {
-    window.location.href = `${this.baseUrl}/api/databases/${name}/export`;
+    window.location.href = `${this.baseUrl}/api/databases/${encodeURIComponent(name)}/export`;
+  }
+
+  exportDatabaseBlob(name: string): Observable<Blob> {
+    return this.http.get(
+      `${this.baseUrl}/api/databases/${encodeURIComponent(name)}/export`,
+      { responseType: "blob" },
+    );
   }
 
   importDatabase(name: string, file: File): Observable<any> {
@@ -1211,6 +1265,58 @@ export class DataService {
   }
 
   // --- Asset Management ---
+  private assetsSubject = new BehaviorSubject<IAssetMessage[]>([]);
+  assets$ = this.assetsSubject.asObservable();
+
+  get loadedAssets(): IAssetMessage[] {
+    return this.assetsSubject.getValue();
+  }
+
+  setLoadedAssets(assets: IAssetMessage[]): void {
+    this.assetsSubject.next(assets || []);
+  }
+
+  registerAsset(asset: IAssetMessage): void {
+    if (!asset) return;
+    const current = this.assetsSubject.getValue();
+    const assetId = asset.model?.entityId;
+    const index = current.findIndex(
+      (a) =>
+        (assetId && a.model?.entityId === assetId) ||
+        (asset.hash &&
+          a.hash &&
+          a.hash.toLowerCase() === asset.hash.toLowerCase() &&
+          a.type === asset.type),
+    );
+    if (index !== -1) {
+      const updated = [...current];
+      updated[index] = asset;
+      this.assetsSubject.next(updated);
+    } else {
+      this.assetsSubject.next([...current, asset]);
+    }
+  }
+
+  async computeFileHash(file: File): Promise<string> {
+    if (!file) return "";
+    const arrayBuffer = await file.arrayBuffer();
+    const hashBuffer = await crypto.subtle.digest("SHA-256", arrayBuffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+  }
+
+  findAssetByHash(hash: string, type?: string): IAssetMessage | undefined {
+    if (!hash) return undefined;
+    const normalizedHash = hash.toLowerCase();
+    const current = this.assetsSubject.getValue();
+    return current.find((a) => {
+      if (!a.hash || a.hash.toLowerCase() !== normalizedHash) return false;
+      if (type && a.type && a.type.toLowerCase() !== type.toLowerCase())
+        return false;
+      return true;
+    });
+  }
+
   listAssets(): Observable<IAssetMessage[]> {
     return this.http
       .get(`${this.baseUrl}/api/assets/list`, {
@@ -1222,7 +1328,9 @@ export class DataService {
             const listResponse = ListAssetsResponse.decode(
               Reader.create(new Uint8Array(response as any)),
             );
-            return listResponse.assets;
+            const assets = listResponse.assets || [];
+            this.assetsSubject.next(assets);
+            return assets;
           } catch (error) {
             this.logger.error("Error decoding asset list protobuf", error);
             return [];
@@ -1265,7 +1373,9 @@ export class DataService {
           if (!uploadResponse.success) {
             throw new Error(uploadResponse.message);
           }
-          return uploadResponse.asset!;
+          const asset = uploadResponse.asset!;
+          this.registerAsset(asset);
+          return asset;
         }),
       );
   }
@@ -1414,6 +1524,10 @@ export class DataService {
           if (!deleteResponse.success) {
             throw new Error(deleteResponse.message);
           }
+          const current = this.assetsSubject.getValue();
+          this.assetsSubject.next(
+            current.filter((a) => a.model?.entityId !== id),
+          );
           return true;
         }),
       );
@@ -1440,6 +1554,13 @@ export class DataService {
           );
           if (!renameResponse.success) {
             throw new Error(renameResponse.message);
+          }
+          const current = this.assetsSubject.getValue();
+          const index = current.findIndex((a) => a.model?.entityId === id);
+          if (index !== -1) {
+            const updated = [...current];
+            updated[index] = { ...updated[index], name: newName };
+            this.assetsSubject.next(updated);
           }
           return true;
         }),
@@ -1514,6 +1635,23 @@ export class DataService {
           Reader.create(new Uint8Array(arrayBuffer)),
         );
 
+        if (raceData.raceState) {
+          this.logger.debug("WS: Received RaceState", raceData.raceState);
+          this.raceStateSubject.next(raceData.raceState);
+        }
+        if (raceData.race) {
+          this.logger.debug("WS: Received Race", raceData.race);
+          this.raceUpdateSubject.next(raceData.race);
+          if (raceData.race.state) {
+            this.raceStateSubject.next(raceData.race.state);
+          }
+          if (raceData.race.flag) {
+            this.flagSubject.next(raceData.race.flag);
+          }
+          if (raceData.race.currentHeat) {
+            this.heatSubject.next(raceData.race.currentHeat);
+          }
+        }
         if (raceData.raceTime) {
           this.raceTimeSubject.next(raceData.raceTime);
         }
@@ -1528,20 +1666,6 @@ export class DataService {
         }
         if (raceData.groupStandingsUpdate) {
           this.groupStandingsSubject.next(raceData.groupStandingsUpdate);
-        }
-        if (raceData.raceState) {
-          this.logger.debug("WS: Received RaceState", raceData.raceState);
-          this.raceStateSubject.next(raceData.raceState);
-        }
-        if (raceData.race) {
-          this.logger.debug("WS: Received Race", raceData.race);
-          this.raceUpdateSubject.next(raceData.race);
-          if (raceData.race.state) {
-            this.raceStateSubject.next(raceData.race.state);
-          }
-          if (raceData.race.flag) {
-            this.flagSubject.next(raceData.race.flag);
-          }
         }
         if (raceData.carData) {
           this.carDataSubject.next(raceData.carData);
@@ -1922,6 +2046,32 @@ export class DataService {
       `${this.baseUrl}/api/races/heats/user-laps/batch`,
       updates,
     );
+  }
+
+  updateLiveLapRecordStatus(
+    heatNumber: number,
+    lane: number,
+    lapIndex: number,
+    countTowardsRecords: boolean,
+  ): Observable<any> {
+    return this.http.post<any>(
+      `${this.baseUrl}/api/races/heats/${heatNumber}/drivers/${lane}/laps/${lapIndex}/record-status`,
+      { countTowardsRecords },
+    );
+  }
+
+  updateHistoryLapRecordStatus(
+    raceHistoryId: string,
+    heatNumber: number,
+    lane: number,
+    lapIndex: number,
+    countTowardsRecords: boolean,
+    isDemo?: boolean,
+  ): Observable<any> {
+    const url = isDemo
+      ? `${this.baseUrl}/api/history/races/${raceHistoryId}/heats/${heatNumber}/drivers/${lane}/laps/${lapIndex}/record-status?demo=true`
+      : `${this.baseUrl}/api/history/races/${raceHistoryId}/heats/${heatNumber}/drivers/${lane}/laps/${lapIndex}/record-status`;
+    return this.http.put<any>(url, { countTowardsRecords, isDemo: !!isDemo });
   }
 
   getDriverStatistics(

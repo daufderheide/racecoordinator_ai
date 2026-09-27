@@ -2,9 +2,11 @@ package com.antigravity.service;
 
 import com.antigravity.context.DatabaseContext;
 import com.antigravity.context.RaceScope;
+import com.antigravity.models.Driver;
 import com.antigravity.models.DriverStatistics;
 import com.antigravity.models.DriverTrackStats;
 import com.antigravity.models.GlobalStatistics;
+import com.antigravity.models.RaceHistoryRecord;
 import com.antigravity.race.DriverHeatData;
 import com.antigravity.race.Heat;
 import com.antigravity.race.RaceParticipant;
@@ -13,8 +15,10 @@ import com.antigravity.repository.SqliteRepository;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -556,5 +560,232 @@ public class DatabaseStatisticsService {
 
   private String getCollectionName(String baseName, boolean isDemo) {
     return getCollectionName(baseName, RaceScope.fromBoolean(isDemo));
+  }
+
+  public void recalculateStatisticsAfterHistoryEdit(
+      DatabaseContext context, String raceEntityId, boolean isDemo) {
+    if (context == null || raceEntityId == null || raceEntityId.isEmpty()) {
+      return;
+    }
+    try {
+      List<RaceHistoryRecord> raceHistory = loadHistoryForRace(context, raceEntityId, isDemo);
+      recalculateHistoricalGlobalStatistics(context, raceEntityId, raceHistory, isDemo);
+      recalculateHistoricalDriverStatistics(context, raceEntityId, raceHistory, isDemo);
+      logger.info("Recalculated statistics after history edit for race: {}", raceEntityId);
+    } catch (Exception e) {
+      logger.error(
+          "Failed to recalculate statistics after history edit for race: {}", raceEntityId, e);
+    }
+  }
+
+  private List<RaceHistoryRecord> loadHistoryForRace(
+      DatabaseContext context, String raceEntityId, boolean isDemo) {
+    String historyTableName = getCollectionName("race_history", isDemo);
+    SqliteRepository<RaceHistoryRecord> historyRepo =
+        new SqliteRepository<>(context, historyTableName, RaceHistoryRecord.class);
+    List<RaceHistoryRecord> allHistory = historyRepo.findAll();
+    List<RaceHistoryRecord> raceHistory = new ArrayList<>();
+    for (RaceHistoryRecord r : allHistory) {
+      if (raceEntityId.equals(r.getOriginalEntityId())
+          || (r.getModel() != null && raceEntityId.equals(r.getModel().getEntityId()))) {
+        raceHistory.add(r);
+      }
+    }
+    return raceHistory;
+  }
+
+  private void recalculateHistoricalGlobalStatistics(
+      DatabaseContext context,
+      String raceEntityId,
+      List<RaceHistoryRecord> raceHistory,
+      boolean isDemo) {
+    String globalStatsTable = getCollectionName("global_statistics", isDemo);
+    SqliteRepository<GlobalStatistics> globalRepo =
+        new SqliteRepository<>(context, globalStatsTable, GlobalStatistics.class);
+    GlobalStatistics stats = globalRepo.findByEntityId(raceEntityId);
+    if (stats == null) {
+      return;
+    }
+
+    int maxLanes =
+        stats.getLaneFastestLapTimes() != null ? stats.getLaneFastestLapTimes().size() : 4;
+    List<Double> laneTimes = new ArrayList<>(Collections.nCopies(maxLanes, Double.MAX_VALUE));
+    List<String> laneHolders = new ArrayList<>(Collections.nCopies(maxLanes, ""));
+    List<String> laneNicknames = new ArrayList<>(Collections.nCopies(maxLanes, ""));
+    List<String> laneTeams = new ArrayList<>(Collections.nCopies(maxLanes, ""));
+    List<Long> laneDates = new ArrayList<>(Collections.nCopies(maxLanes, 0L));
+    BestLapEntry overallBest = new BestLapEntry();
+
+    for (RaceHistoryRecord r : raceHistory) {
+      processRaceHistoryForGlobalStats(
+          r, overallBest, laneTimes, laneHolders, laneNicknames, laneTeams, laneDates, maxLanes);
+    }
+
+    stats.setFastestLapTime(overallBest.time == Double.MAX_VALUE ? 0.0 : overallBest.time);
+    stats.setFastestLapDriverName(overallBest.holder);
+    stats.setFastestLapDriverNickname(overallBest.nickname);
+    stats.setFastestLapTeamName(overallBest.team);
+    stats.setFastestLapDate(overallBest.date);
+
+    for (int i = 0; i < laneTimes.size(); i++) {
+      if (laneTimes.get(i) == Double.MAX_VALUE) {
+        laneTimes.set(i, 0.0);
+      }
+    }
+    stats.setLaneFastestLapTimes(laneTimes);
+    stats.setLaneFastestLapDriverNames(laneHolders);
+    stats.setLaneFastestLapDriverNicknames(laneNicknames);
+    stats.setLaneFastestLapTeamNames(laneTeams);
+    stats.setLaneFastestLapDates(laneDates);
+
+    globalRepo.save(stats);
+  }
+
+  private static class BestLapEntry {
+    double time = Double.MAX_VALUE;
+    String holder = "";
+    String nickname = "";
+    String team = "";
+    long date = 0L;
+  }
+
+  private void processRaceHistoryForGlobalStats(
+      RaceHistoryRecord r,
+      BestLapEntry overallBest,
+      List<Double> laneTimes,
+      List<String> laneHolders,
+      List<String> laneNicknames,
+      List<String> laneTeams,
+      List<Long> laneDates,
+      int maxLanes) {
+    long raceDate = r.getStatistics() != null ? r.getStatistics().getStartMillis() : 0L;
+    if (r.getHeats() == null) return;
+    for (Heat heat : r.getHeats()) {
+      if (heat.getDrivers() == null) continue;
+      for (int laneIdx = 0; laneIdx < heat.getDrivers().size(); laneIdx++) {
+        DriverHeatData dhd = heat.getDrivers().get(laneIdx);
+        if (dhd == null || dhd.getLaps() == null) continue;
+        String driverName = resolveDriverName(dhd);
+        String nickname = resolveDriverNickname(dhd, driverName);
+        String teamName = resolveDriverTeam(dhd);
+
+        for (DriverHeatData.LapData lap : dhd.getLaps()) {
+          if (!lap.isCountTowardsRecords() || lap.getLapTime() <= 0) continue;
+          double t = lap.getLapTime();
+          if (t < overallBest.time) {
+            overallBest.time = t;
+            overallBest.holder = driverName;
+            overallBest.nickname = nickname;
+            overallBest.team = teamName;
+            overallBest.date = raceDate;
+          }
+          if (laneIdx < maxLanes && t < laneTimes.get(laneIdx)) {
+            laneTimes.set(laneIdx, t);
+            laneHolders.set(laneIdx, driverName);
+            laneNicknames.set(laneIdx, nickname);
+            laneTeams.set(laneIdx, teamName);
+            laneDates.set(laneIdx, raceDate);
+          }
+        }
+      }
+    }
+  }
+
+  private String resolveDriverName(DriverHeatData dhd) {
+    Driver actual = dhd.getActualDriver();
+    if (actual != null && !actual.isEmpty()) return actual.getName();
+    if (dhd.getDriver() != null && dhd.getDriver().getDriver() != null) {
+      return dhd.getDriver().getDriver().getName();
+    }
+    return "";
+  }
+
+  private String resolveDriverNickname(DriverHeatData dhd, String defaultName) {
+    Driver actual = dhd.getActualDriver();
+    if (actual != null && !actual.isEmpty()) return actual.getNickname();
+    if (dhd.getDriver() != null && dhd.getDriver().getDriver() != null) {
+      return dhd.getDriver().getDriver().getNickname();
+    }
+    return defaultName;
+  }
+
+  private String resolveDriverTeam(DriverHeatData dhd) {
+    if (dhd.getDriver() != null && dhd.getDriver().getTeam() != null) {
+      return dhd.getDriver().getTeam().getName();
+    }
+    return "";
+  }
+
+  private void recalculateHistoricalDriverStatistics(
+      DatabaseContext context,
+      String raceEntityId,
+      List<RaceHistoryRecord> raceHistory,
+      boolean isDemo) {
+    String driverStatsTable = getCollectionName("driver_statistics", isDemo);
+    SqliteRepository<DriverStatistics> driverRepo =
+        new SqliteRepository<>(context, driverStatsTable, DriverStatistics.class);
+    Set<String> driverIds = new HashSet<>();
+    for (RaceHistoryRecord r : raceHistory) {
+      if (r.getDrivers() != null) {
+        for (RaceParticipant rp : r.getDrivers()) {
+          if (rp != null && rp.getStableId() != null && !rp.getStableId().isEmpty()) {
+            driverIds.add(rp.getStableId());
+          }
+        }
+      }
+    }
+
+    for (String dId : driverIds) {
+      DriverStatistics dStats = driverRepo.findByEntityId(dId + "_" + raceEntityId);
+      if (dStats == null) continue;
+      recalculateSingleDriverStats(dId, dStats, raceHistory);
+      driverRepo.save(dStats);
+    }
+  }
+
+  private void recalculateSingleDriverStats(
+      String dId, DriverStatistics dStats, List<RaceHistoryRecord> raceHistory) {
+    double driverBestLap = Double.MAX_VALUE;
+    long driverBestLapDate = 0L;
+    int laneCount = dStats.getLaneBestLapTimes() != null ? dStats.getLaneBestLapTimes().size() : 4;
+    List<Double> laneBestLaps = new ArrayList<>(Collections.nCopies(laneCount, Double.MAX_VALUE));
+    List<Long> laneBestDates = new ArrayList<>(Collections.nCopies(laneCount, 0L));
+
+    for (RaceHistoryRecord r : raceHistory) {
+      long rDate = r.getStatistics() != null ? r.getStatistics().getStartMillis() : 0L;
+      if (r.getHeats() == null) continue;
+      for (Heat heat : r.getHeats()) {
+        if (heat.getDrivers() == null) continue;
+        for (int lIdx = 0; lIdx < heat.getDrivers().size(); lIdx++) {
+          DriverHeatData dhd = heat.getDrivers().get(lIdx);
+          if (dhd == null
+              || dhd.getDriver() == null
+              || !dId.equals(dhd.getDriver().getStableId())
+              || dhd.getLaps() == null) continue;
+          for (DriverHeatData.LapData lap : dhd.getLaps()) {
+            if (!lap.isCountTowardsRecords() || lap.getLapTime() <= 0) continue;
+            double t = lap.getLapTime();
+            if (t < driverBestLap) {
+              driverBestLap = t;
+              driverBestLapDate = rDate;
+            }
+            if (lIdx < laneCount && t < laneBestLaps.get(lIdx)) {
+              laneBestLaps.set(lIdx, t);
+              laneBestDates.set(lIdx, rDate);
+            }
+          }
+        }
+      }
+    }
+
+    dStats.setBestLapTime(driverBestLap == Double.MAX_VALUE ? 0.0 : driverBestLap);
+    dStats.setBestLapTimeDate(driverBestLapDate);
+    for (int i = 0; i < laneBestLaps.size(); i++) {
+      if (laneBestLaps.get(i) == Double.MAX_VALUE) {
+        laneBestLaps.set(i, 0.0);
+      }
+    }
+    dStats.setLaneBestLapTimes(laneBestLaps);
+    dStats.setLaneBestLapTimesDates(laneBestDates);
   }
 }

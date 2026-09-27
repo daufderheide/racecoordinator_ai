@@ -11,6 +11,7 @@ import com.antigravity.proto.SystemState;
 import com.antigravity.protocols.DefaultProtocol;
 import com.antigravity.protocols.IProtocol;
 import com.antigravity.protocols.ProtocolDelegate;
+import com.antigravity.race.states.RaceOver;
 import com.antigravity.service.DatabaseService;
 import com.antigravity.service.LogReplayService;
 import com.antigravity.util.NetworkUtils;
@@ -52,7 +53,12 @@ public class ClientSubscriptionManager {
   private boolean hasEverHadClient = false;
   private ScheduledFuture<?> autoShutdownFuture;
   private int autoShutdownDelaySeconds = 5;
-  private Runnable autoShutdownAction = () -> System.exit(0);
+  private Runnable autoShutdownAction =
+      () -> {
+        if (!Boolean.getBoolean("skip.jni.load")) {
+          System.exit(0);
+        }
+      };
   private volatile boolean lastDirectorExplicitlyUnsubscribed = false;
 
   void setAutoShutdownAction(Runnable action) {
@@ -267,7 +273,9 @@ public class ClientSubscriptionManager {
         sessions.size(),
         interfaceSubscribers.size());
 
-    if (currentRace != null && currentRace.getHardwareManager() != null) {
+    if (currentRace != null
+        && currentRace.getHardwareManager() != null
+        && !(currentRace.getState() instanceof RaceOver)) {
       ProtocolDelegate delegate = currentRace.getHardwareManager().getProtocols();
       if (delegate != null && delegate.getProtocols() != null) {
         for (IProtocol p : delegate.getProtocols()) {
@@ -478,6 +486,8 @@ public class ClientSubscriptionManager {
       saveData.setCurrentHeatIndex(race.getHeats().indexOf(race.getCurrentHeat()));
       saveData.setDemoMode(race.isDemoMode());
       saveData.setStatistics(race.getStatistics());
+      saveData.setAutoStartFired(race.isAutoStartFired());
+      saveData.setAutoAdvanceFired(race.isAutoAdvanceFired());
 
       saveData.setAutoSave(true);
       String filename = "autosave_" + race.getRaceModel().getEntityId() + ".json";
@@ -509,10 +519,6 @@ public class ClientSubscriptionManager {
         logger.error("Error deleting auto-save", e);
       }
     }
-  }
-
-  public synchronized void deleteAutoSave(String raceId) {
-    deleteAutoSave(raceId, false);
   }
 
   public boolean hasSubscribers() {
@@ -611,6 +617,9 @@ public class ClientSubscriptionManager {
 
   public void broadcastInterfaceEvent(InterfaceEvent event) {
     if (interfaceSubscribers.isEmpty()) {
+      return;
+    }
+    if (currentRace != null && (currentRace.getState() instanceof RaceOver)) {
       return;
     }
 

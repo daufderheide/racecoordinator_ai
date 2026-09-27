@@ -1,11 +1,27 @@
+import { ComponentFixture } from "@angular/core/testing";
 import { of, Subject } from "rxjs";
 import { deepCopy } from "@app/utils/clone.utils";
+import { scanAndSecureNode } from "@app/utils/form-security";
 
 import { Settings } from "../models/settings";
 import { MOCK_DRIVERS } from "./data/drivers_data";
 import { MOCK_RACES } from "./data/races_data";
 import { createDefaultSettings } from "./data/settings_data";
 import { MOCK_TEAMS } from "./data/teams_data";
+
+// Hook ComponentFixture.prototype.detectChanges to apply global form security attributes in component unit tests
+if (!(ComponentFixture.prototype as any).__formSecurityPatched) {
+  (ComponentFixture.prototype as any).__formSecurityPatched = true;
+  const originalDetectChanges = ComponentFixture.prototype.detectChanges;
+  ComponentFixture.prototype.detectChanges = function (
+    checkNoChanges?: boolean,
+  ): void {
+    originalDetectChanges.call(this, checkNoChanges);
+    if (this.nativeElement) {
+      scanAndSecureNode(this.nativeElement);
+    }
+  };
+}
 
 export const mockDataService = {
   listAssets: jasmine.createSpy("listAssets").and.returnValue(of([])),
@@ -67,6 +83,19 @@ export const mockDataService = {
     .createSpy("deleteDatabase")
     .and.returnValue(of({ success: true })),
   exportDatabase: jasmine.createSpy("exportDatabase"),
+  exportDatabaseBlob: jasmine
+    .createSpy("exportDatabaseBlob")
+    .and.returnValue(of(new Blob(["mock zip"], { type: "application/zip" }))),
+  exportRaceToCsv: jasmine
+    .createSpy("exportRaceToCsv")
+    .and.returnValue(of("mock,csv,data")),
+  exportRaceToXls: jasmine.createSpy("exportRaceToXls").and.returnValue(
+    of(
+      new Blob(["mock xls"], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      }),
+    ),
+  ),
   importDatabase: jasmine
     .createSpy("importDatabase")
     .and.returnValue(of({ success: true })),
@@ -155,6 +184,7 @@ export const mockTranslationService = {
 
 export const mockRouter = {
   navigate: jasmine.createSpy("navigate"),
+  navigateByUrl: jasmine.createSpy("navigateByUrl"),
   events: new Subject().asObservable(),
   serializeUrl: jasmine.createSpy("serializeUrl").and.returnValue("mock-url"),
   createUrlTree: jasmine.createSpy("createUrlTree").and.returnValue({}),
@@ -199,6 +229,10 @@ export const mockNavigationService = {
   canGoForward$: of(false),
   goBack: jasmine.createSpy("goBack"),
   goForward: jasmine.createSpy("goForward"),
+  getPreviousUrl: jasmine.createSpy("getPreviousUrl").and.returnValue(null),
+  getLastHistoryUrl: jasmine
+    .createSpy("getLastHistoryUrl")
+    .and.returnValue(null),
 };
 
 export const mockLoggerService = jasmine.createSpyObj("LoggerService", [
@@ -287,6 +321,7 @@ export function resetMocks() {
 
   // Restore default behaviors for mockRouter
   mockRouter.navigate.and.stub();
+  mockRouter.navigateByUrl.and.stub();
   (mockRouter as any).events = new Subject().asObservable();
   mockRouter.serializeUrl.and.returnValue("mock-url");
   mockRouter.createUrlTree.and.returnValue({});

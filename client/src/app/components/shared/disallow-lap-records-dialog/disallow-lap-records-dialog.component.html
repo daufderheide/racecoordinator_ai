@@ -1,0 +1,635 @@
+@if (visible()) {
+  <div class="disallow-records-backdrop" (click)="onDismiss()">
+    <div class="disallow-records-container" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div class="header-main-section">
+          <div class="dialog-title-row">
+            <span class="material-icons modal-header-icon">timer_off</span>
+            <div>
+              <h3 class="dialog-heading">{{ "DLR_TITLE" | translate }}</h3>
+              <p class="dialog-instructions">
+                {{ "DLR_SUBTITLE" | translate }}
+              </p>
+            </div>
+          </div>
+
+          <!-- Prominent Race & Date/Time Badge / Card -->
+          <div class="race-banner-card">
+            <div class="race-identity-block">
+              <span class="material-icons race-flag-icon">sports_score</span>
+              <div class="race-info-content">
+                <span class="race-field-label">{{
+                  "DLR_RACE_LABEL" | translate
+                }}</span>
+                <div class="race-name-row">
+                  <span
+                    class="race-name-text"
+                    [title]="
+                      raceName() || ('RHD_DEFAULT_RACE_NAME' | translate)
+                    "
+                  >
+                    {{ raceName() || ("RHD_DEFAULT_RACE_NAME" | translate) }}
+                  </span>
+                  @if (isDemo()) {
+                    <span class="badge-demo">{{
+                      "RHD_BADGE_DEMO" | translate
+                    }}</span>
+                  }
+                </div>
+              </div>
+            </div>
+
+            @if (bannerDateDisplay) {
+              <div class="race-date-block">
+                <span class="material-icons date-calendar-icon">event</span>
+                <div class="date-info-content">
+                  <span class="race-field-label">{{
+                    "DLR_DATE_LABEL" | translate
+                  }}</span>
+                  <span class="race-date-text">{{ bannerDateDisplay }}</span>
+                </div>
+              </div>
+            }
+
+            @if (track()?.name) {
+              <div class="race-track-block">
+                <span class="material-icons track-map-icon">alt_route</span>
+                <div class="track-info-content">
+                  <span class="race-field-label">{{
+                    "RD_LABEL_TRACK" | translate
+                  }}</span>
+                  <span class="race-track-text">{{ track().name }}</span>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+
+        <button
+          class="close-btn"
+          (click)="onDismiss()"
+          [attr.aria-label]="'DLR_CLOSE_ARIA' | translate"
+        >
+          ✕
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Info Banner -->
+        <div class="info-banner">
+          <span class="material-icons info-icon">info</span>
+          <div class="info-text">
+            {{ "DLR_INFO_BANNER" | translate }}
+          </div>
+        </div>
+
+        <!-- Read-only notice for non-directors -->
+        @if (!canEdit) {
+          <div class="warning-banner">
+            <span class="material-icons warning-icon">lock</span>
+            <div class="warning-text">
+              {{ "DLR_READONLY_NOTICE" | translate }}
+            </div>
+          </div>
+        }
+
+        <!-- Independent Selection Controls (Race, Driver, Heat, Lane) -->
+        <div class="selection-grid">
+          <!-- Date Filter -->
+          <div class="control-group">
+            <label class="control-label">{{
+              "DLR_SELECT_DATE" | translate
+            }}</label>
+            <app-custom-select
+              id="dlr-date-select"
+              [ngModel]="selectedRaceId"
+              (ngModelChange)="onRaceChange($event)"
+            >
+              <app-custom-option value="">
+                {{ "DLR_ALL_DATES" | translate }}
+              </app-custom-option>
+              @for (r of availableRaceOptions; track r.id) {
+                <app-custom-option [value]="r.id">
+                  <span class="date-option-item">
+                    {{ r.date ? (r.date | localDate: "medium") : "—" }}
+                  </span>
+                </app-custom-option>
+              }
+            </app-custom-select>
+          </div>
+
+          <!-- Driver Filter -->
+          <div class="control-group">
+            <label class="control-label">{{
+              "DLR_SELECT_DRIVER" | translate
+            }}</label>
+            <app-custom-select
+              id="dlr-driver-select"
+              [ngModel]="selectedDriverName"
+              (ngModelChange)="onDriverChange($event)"
+            >
+              <app-custom-option value="">
+                {{ "DLR_ALL_DRIVERS" | translate }}
+              </app-custom-option>
+              @for (driver of availableDrivers; track driver.driverName) {
+                <app-custom-option [value]="driver.driverName">
+                  <span class="driver-option-item">
+                    <span class="driver-name-text">{{
+                      driver.driverName
+                    }}</span>
+                    @if (driver.teamName) {
+                      <span class="driver-team-badge"
+                        >({{ driver.teamName }})</span
+                      >
+                    }
+                  </span>
+                </app-custom-option>
+              }
+            </app-custom-select>
+          </div>
+
+          <!-- Heat Filter -->
+          <div class="control-group">
+            <label class="control-label">{{
+              "DLR_SELECT_HEAT" | translate
+            }}</label>
+            <app-custom-select
+              id="dlr-heat-select"
+              [ngModel]="selectedHeatNumber"
+              (ngModelChange)="onHeatChange($event)"
+            >
+              <app-custom-option [value]="-1">
+                {{ "DLR_ALL_HEATS" | translate }}
+              </app-custom-option>
+              @for (h of availableHeats; track h + "-" + $index) {
+                <app-custom-option [value]="h">
+                  {{ "DLR_HEAT_OPTION" | translate: { heat: h } }}
+                </app-custom-option>
+              }
+            </app-custom-select>
+          </div>
+
+          <!-- Lane Filter -->
+          <div class="control-group">
+            <label class="control-label">{{
+              "DLR_SELECT_LANE" | translate
+            }}</label>
+            <app-custom-select
+              id="dlr-lane-select"
+              [ngModel]="selectedLaneIndex"
+              (ngModelChange)="onLaneChange($event)"
+            >
+              <app-custom-option [value]="-1">
+                {{ "DLR_ALL_LANES" | translate }}
+              </app-custom-option>
+              @for (l of availableLanes; track l.laneIndex + "-" + $index) {
+                <app-custom-option [value]="l.laneIndex">
+                  <span class="lane-option-item">
+                    @if (l.laneColor) {
+                      <span
+                        class="lane-color-dot"
+                        [style.backgroundColor]="l.laneColor"
+                      ></span>
+                    }
+                    <span class="lane-option-text">
+                      {{
+                        "DLR_LANE_NUM" | translate: { lane: l.laneIndex + 1 }
+                      }}
+                    </span>
+                  </span>
+                </app-custom-option>
+              }
+            </app-custom-select>
+          </div>
+        </div>
+
+        @if (errorMessage) {
+          <div class="error-alert">
+            <span class="material-icons">error_outline</span>
+            <span>{{ errorMessage }}</span>
+          </div>
+        }
+
+        <!-- Laps Table -->
+        <div class="table-card dlr-table-card">
+          <!-- Table Header: date, driver, heat, lane, lap #, time, record status, action -->
+          <div class="table-header-row dlr-table-header-row" role="row">
+            <!-- Date Header -->
+            <div
+              class="col-date sortable-header"
+              role="columnheader"
+              tabindex="0"
+              (click)="onSort('date')"
+              (keydown.enter)="onSort('date')"
+              (keydown.space)="onSort('date'); $event.preventDefault()"
+              [class.is-sorted]="sortColumn === 'date'"
+              [attr.aria-sort]="getAriaSort('date')"
+              [title]="
+                'DLR_SORT_ARIA'
+                  | translate: { column: ('DLR_COL_DATE' | translate) }
+              "
+            >
+              <span class="header-label">{{ "DLR_COL_DATE" | translate }}</span>
+              <span
+                class="sort-icon material-icons"
+                [class.active]="sortColumn === 'date'"
+              >
+                {{
+                  sortColumn === "date"
+                    ? sortDirection === "asc"
+                      ? "arrow_upward"
+                      : "arrow_downward"
+                    : "unfold_more"
+                }}
+              </span>
+            </div>
+
+            <!-- Driver Header -->
+            <div
+              class="col-driver sortable-header"
+              role="columnheader"
+              tabindex="0"
+              (click)="onSort('driver')"
+              (keydown.enter)="onSort('driver')"
+              (keydown.space)="onSort('driver'); $event.preventDefault()"
+              [class.is-sorted]="sortColumn === 'driver'"
+              [attr.aria-sort]="getAriaSort('driver')"
+              [title]="
+                'DLR_SORT_ARIA'
+                  | translate: { column: ('DLR_COL_DRIVER' | translate) }
+              "
+            >
+              <span class="header-label">{{
+                "DLR_COL_DRIVER" | translate
+              }}</span>
+              <span
+                class="sort-icon material-icons"
+                [class.active]="sortColumn === 'driver'"
+              >
+                {{
+                  sortColumn === "driver"
+                    ? sortDirection === "asc"
+                      ? "arrow_upward"
+                      : "arrow_downward"
+                    : "unfold_more"
+                }}
+              </span>
+            </div>
+
+            <!-- Heat Header -->
+            <div
+              class="col-heat sortable-header"
+              role="columnheader"
+              tabindex="0"
+              (click)="onSort('heat')"
+              (keydown.enter)="onSort('heat')"
+              (keydown.space)="onSort('heat'); $event.preventDefault()"
+              [class.is-sorted]="sortColumn === 'heat'"
+              [attr.aria-sort]="getAriaSort('heat')"
+              [title]="
+                'DLR_SORT_ARIA'
+                  | translate: { column: ('DLR_COL_HEAT' | translate) }
+              "
+            >
+              <span class="header-label">{{ "DLR_COL_HEAT" | translate }}</span>
+              <span
+                class="sort-icon material-icons"
+                [class.active]="sortColumn === 'heat'"
+              >
+                {{
+                  sortColumn === "heat"
+                    ? sortDirection === "asc"
+                      ? "arrow_upward"
+                      : "arrow_downward"
+                    : "unfold_more"
+                }}
+              </span>
+            </div>
+
+            <!-- Lane Header -->
+            <div
+              class="col-lane sortable-header"
+              role="columnheader"
+              tabindex="0"
+              (click)="onSort('lane')"
+              (keydown.enter)="onSort('lane')"
+              (keydown.space)="onSort('lane'); $event.preventDefault()"
+              [class.is-sorted]="sortColumn === 'lane'"
+              [attr.aria-sort]="getAriaSort('lane')"
+              [title]="
+                'DLR_SORT_ARIA'
+                  | translate: { column: ('DLR_COL_LANE' | translate) }
+              "
+            >
+              <span class="header-label">{{ "DLR_COL_LANE" | translate }}</span>
+              <span
+                class="sort-icon material-icons"
+                [class.active]="sortColumn === 'lane'"
+              >
+                {{
+                  sortColumn === "lane"
+                    ? sortDirection === "asc"
+                      ? "arrow_upward"
+                      : "arrow_downward"
+                    : "unfold_more"
+                }}
+              </span>
+            </div>
+
+            <!-- Lap # Header -->
+            <div
+              class="col-lap sortable-header"
+              role="columnheader"
+              tabindex="0"
+              (click)="onSort('lap')"
+              (keydown.enter)="onSort('lap')"
+              (keydown.space)="onSort('lap'); $event.preventDefault()"
+              [class.is-sorted]="sortColumn === 'lap'"
+              [attr.aria-sort]="getAriaSort('lap')"
+              [title]="
+                'DLR_SORT_ARIA'
+                  | translate: { column: ('DLR_COL_LAP' | translate) }
+              "
+            >
+              <span class="header-label">{{ "DLR_COL_LAP" | translate }}</span>
+              <span
+                class="sort-icon material-icons"
+                [class.active]="sortColumn === 'lap'"
+              >
+                {{
+                  sortColumn === "lap"
+                    ? sortDirection === "asc"
+                      ? "arrow_upward"
+                      : "arrow_downward"
+                    : "unfold_more"
+                }}
+              </span>
+            </div>
+
+            <!-- Time Header -->
+            <div
+              class="col-time sortable-header"
+              role="columnheader"
+              tabindex="0"
+              (click)="onSort('time')"
+              (keydown.enter)="onSort('time')"
+              (keydown.space)="onSort('time'); $event.preventDefault()"
+              [class.is-sorted]="sortColumn === 'time'"
+              [attr.aria-sort]="getAriaSort('time')"
+              [title]="
+                'DLR_SORT_ARIA'
+                  | translate: { column: ('DLR_COL_TIME' | translate) }
+              "
+            >
+              <span class="header-label">{{ "DLR_COL_TIME" | translate }}</span>
+              <span
+                class="sort-icon material-icons"
+                [class.active]="sortColumn === 'time'"
+              >
+                {{
+                  sortColumn === "time"
+                    ? sortDirection === "asc"
+                      ? "arrow_upward"
+                      : "arrow_downward"
+                    : "unfold_more"
+                }}
+              </span>
+            </div>
+
+            <!-- Record Status Header -->
+            <div
+              class="col-status sortable-header"
+              role="columnheader"
+              tabindex="0"
+              (click)="onSort('status')"
+              (keydown.enter)="onSort('status')"
+              (keydown.space)="onSort('status'); $event.preventDefault()"
+              [class.is-sorted]="sortColumn === 'status'"
+              [attr.aria-sort]="getAriaSort('status')"
+              [title]="
+                'DLR_SORT_ARIA'
+                  | translate: { column: ('DLR_COL_STATUS' | translate) }
+              "
+            >
+              <span class="header-label">{{
+                "DLR_COL_STATUS" | translate
+              }}</span>
+              <span
+                class="sort-icon material-icons"
+                [class.active]="sortColumn === 'status'"
+              >
+                {{
+                  sortColumn === "status"
+                    ? sortDirection === "asc"
+                      ? "arrow_upward"
+                      : "arrow_downward"
+                    : "unfold_more"
+                }}
+              </span>
+            </div>
+
+            <!-- Action Header -->
+            <div
+              class="col-action sortable-header"
+              role="columnheader"
+              tabindex="0"
+              (click)="onSort('action')"
+              (keydown.enter)="onSort('action')"
+              (keydown.space)="onSort('action'); $event.preventDefault()"
+              [class.is-sorted]="sortColumn === 'action'"
+              [attr.aria-sort]="getAriaSort('action')"
+              [title]="
+                'DLR_SORT_ARIA'
+                  | translate: { column: ('DLR_COL_ACTION' | translate) }
+              "
+            >
+              <span class="header-label">{{
+                "DLR_COL_ACTION" | translate
+              }}</span>
+              <span
+                class="sort-icon material-icons"
+                [class.active]="sortColumn === 'action'"
+              >
+                {{
+                  sortColumn === "action"
+                    ? sortDirection === "asc"
+                      ? "arrow_upward"
+                      : "arrow_downward"
+                    : "unfold_more"
+                }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Table Body: 8 columns in exact matching order -->
+          <div class="table-body dlr-table-body">
+            @if (normalizedLaps.length === 0) {
+              <div class="empty-state dlr-empty-state">
+                <span class="material-icons empty-icon">sports_score</span>
+                <p>{{ "DLR_NO_LAPS" | translate }}</p>
+              </div>
+            } @else {
+              @for (lap of normalizedLaps; track trackByLap(lap, $index)) {
+                <div
+                  class="table-row dlr-table-row"
+                  [class.row-disallowed]="!lap.countTowardsRecords"
+                  [class.dlr-row-disallowed]="!lap.countTowardsRecords"
+                  [class.row-gold]="lap.recordTier === 'gold'"
+                  [class.row-silver]="lap.recordTier === 'silver'"
+                  [class.row-bronze]="lap.recordTier === 'bronze'"
+                  [class.row-fastest]="lap.isFastest"
+                  [class.dlr-row-fastest]="lap.isFastest"
+                >
+                  <!-- 1. Date -->
+                  <div class="col-date">
+                    <span
+                      class="race-cell-date"
+                      [title]="
+                        lap.raceDate ? (lap.raceDate | localDate: 'medium') : ''
+                      "
+                    >
+                      {{
+                        lap.raceDate ? (lap.raceDate | localDate: "short") : "—"
+                      }}
+                    </span>
+                  </div>
+
+                  <!-- 3. Driver -->
+                  <div class="col-driver">
+                    <div class="driver-cell">
+                      <span class="driver-name-text" [title]="lap.driverName">
+                        {{ lap.driverName }}
+                      </span>
+                      @if (lap.teamName) {
+                        <span class="driver-team-text" [title]="lap.teamName">
+                          {{ lap.teamName }}
+                        </span>
+                      }
+                    </div>
+                  </div>
+
+                  <!-- 2. Heat -->
+                  <div class="col-heat">
+                    <span class="heat-badge">H{{ lap.heatNumber }}</span>
+                  </div>
+
+                  <!-- 3. Lane -->
+                  <div class="col-lane">
+                    <span class="lane-cell">
+                      @if (lap.laneColor) {
+                        <span
+                          class="lane-color-dot"
+                          [style.backgroundColor]="lap.laneColor"
+                        ></span>
+                      }
+                      <span class="lane-label">L{{ lap.laneIndex + 1 }}</span>
+                    </span>
+                  </div>
+
+                  <!-- 4. Lap # -->
+                  <div class="col-lap">
+                    <span class="lap-number">#{{ lap.lapNumber }}</span>
+                  </div>
+
+                  <!-- 5. Time -->
+                  <div class="col-time">
+                    <span class="lap-time-value"
+                      >{{ formatLapTime(lap.lapTime) }}s</span
+                    >
+                  </div>
+
+                  <!-- 6. Record Status -->
+                  <div class="col-status">
+                    @if (!lap.countTowardsRecords) {
+                      <span class="badge badge-disallowed">
+                        <span class="material-icons badge-icon">block</span>
+                        {{ "DLR_STATUS_DISALLOWED" | translate }}
+                      </span>
+                    } @else if (lap.recordTier === "gold") {
+                      <span
+                        class="badge badge-gold"
+                        [title]="'DLR_TOOLTIP_GOLD' | translate"
+                      >
+                        <span class="material-icons badge-icon"
+                          >emoji_events</span
+                        >
+                        {{ "DLR_STATUS_GOLD" | translate }}
+                      </span>
+                    } @else if (lap.recordTier === "silver") {
+                      <span
+                        class="badge badge-silver"
+                        [title]="'DLR_TOOLTIP_SILVER' | translate"
+                      >
+                        <span class="material-icons badge-icon"
+                          >military_tech</span
+                        >
+                        {{ "DLR_STATUS_SILVER" | translate }}
+                      </span>
+                    } @else if (lap.recordTier === "bronze") {
+                      <span
+                        class="badge badge-bronze"
+                        [title]="'DLR_TOOLTIP_BRONZE' | translate"
+                      >
+                        <span class="material-icons badge-icon"
+                          >workspace_premium</span
+                        >
+                        {{ "DLR_STATUS_BRONZE" | translate }}
+                      </span>
+                    } @else if (lap.isFastest) {
+                      <span class="badge badge-fastest">
+                        <span class="material-icons badge-icon"
+                          >emoji_events</span
+                        >
+                        {{ "DLR_STATUS_FASTEST" | translate }}
+                      </span>
+                    } @else {
+                      <span class="badge badge-eligible">
+                        <span class="material-icons badge-icon">check</span>
+                        {{ "DLR_STATUS_ELIGIBLE" | translate }}
+                      </span>
+                    }
+                  </div>
+
+                  <!-- 7. Action -->
+                  <div class="col-action">
+                    @if (lap.countTowardsRecords) {
+                      <button
+                        type="button"
+                        class="btn-toggle btn-disallow"
+                        [disabled]="!canEdit || isSaving"
+                        (click)="toggleLapRecord(lap)"
+                        [title]="'DLR_TOOLTIP_DISALLOW' | translate"
+                      >
+                        <span class="material-icons btn-icon">block</span>
+                        <span>{{ "DLR_BTN_DISALLOW" | translate }}</span>
+                      </button>
+                    } @else {
+                      <button
+                        type="button"
+                        class="btn-toggle btn-allow"
+                        [disabled]="!canEdit || isSaving"
+                        (click)="toggleLapRecord(lap)"
+                        [title]="'DLR_TOOLTIP_ALLOW' | translate"
+                      >
+                        <span class="material-icons btn-icon"
+                          >check_circle</span
+                        >
+                        <span>{{ "DLR_BTN_ALLOW" | translate }}</span>
+                      </button>
+                    }
+                  </div>
+                </div>
+              }
+            }
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" (click)="onDismiss()">
+          {{ "DLR_BTN_CLOSE" | translate }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

@@ -1,3 +1,5 @@
+import { forkJoin, of } from "rxjs";
+import { catchError } from "rxjs/operators";
 import { AssetType, normalizeAssetType } from "@app/models/asset";
 import { CustomUI } from "@app/models/custom-ui";
 import { Settings } from "@app/models/settings";
@@ -5,6 +7,14 @@ import { Theme } from "@app/models/theme";
 import { deepCopy } from "@app/utils/clone.utils";
 
 import { BASE_AVAILABLE_COLUMNS, UIEditorState } from "./ui-editor-constants";
+import {
+  isLegacyDefaultThemeName,
+  isLegacyFuelThemeName,
+  isLegacyFuelUiName,
+  isLegacyPracticeThemeName,
+  isLegacyPracticeUiName,
+  isLegacyRacedayUiName,
+} from "./ui-editor-crud.helper";
 import { cloneSettings } from "./ui-editor-state.utils";
 
 export interface LoadedEditorData {
@@ -17,11 +27,35 @@ export interface LoadedEditorData {
   initialState: UIEditorState;
 }
 
+function isUiEditorAsset(a: any): boolean {
+  const norm = normalizeAssetType(a.type);
+  const t = a.type ? String(a.type).toLowerCase() : "";
+  return (
+    t === "image" ||
+    t === "image_set" ||
+    norm === AssetType.AUDIO ||
+    t === "audio_set" ||
+    (a.audioEntries && a.audioEntries.length > 0) ||
+    (a.audio_entries && a.audio_entries.length > 0)
+  );
+}
+
+function isUiEditorSoundAsset(a: any): boolean {
+  const norm = normalizeAssetType(a.type);
+  const t = a.type ? String(a.type).toLowerCase() : "";
+  return (
+    norm === AssetType.AUDIO ||
+    t === "audio_set" ||
+    (a.audioEntries && a.audioEntries.length > 0) ||
+    (a.audio_entries && a.audio_entries.length > 0)
+  );
+}
+
 export function processLoadedEditorData(
   result: {
     assets: any[];
     dirHandle: any;
-    widgetDirHandle?: any;
+    widgetDirHandle: any;
     themes: Theme[];
     tracks: any[];
     customUIs: CustomUI[];
@@ -29,18 +63,8 @@ export function processLoadedEditorData(
   currentSettings: Settings,
   setActiveThemeFn?: (themeId: string) => void,
 ): LoadedEditorData {
-  const filteredAssets = (result.assets || []).filter(
-    (a: any) =>
-      a.type === "image" ||
-      a.type === "image_set" ||
-      normalizeAssetType(a.type) === AssetType.AUDIO ||
-      a.type === "audio_set",
-  );
-
-  const soundAssets = filteredAssets.filter(
-    (a) =>
-      normalizeAssetType(a.type) === AssetType.AUDIO || a.type === "audio_set",
-  );
+  const filteredAssets = (result.assets || []).filter(isUiEditorAsset);
+  const soundAssets = filteredAssets.filter(isUiEditorSoundAsset);
 
   const imageSetColumns = (result.assets || [])
     .filter(
@@ -64,6 +88,7 @@ export function processLoadedEditorData(
   const customDirectoryName = result.dirHandle?.name || null;
   const customWidgetDirectoryName = result.widgetDirHandle?.name || null;
   const themes = result.themes || [];
+  normalizeLoadedThemes(themes);
   const tracks = result.tracks || [];
   const track = tracks.length > 0 ? tracks[0] : undefined;
 
@@ -111,13 +136,83 @@ export function processLoadedEditorData(
   };
 }
 
+export function normalizeLoadedThemes(themes: Theme[]): void {
+  const hasFuelTheme = themes.some(
+    (t) => t.entity_id === "default_fuel_theme_rc_ai",
+  );
+  for (const t of themes) {
+    if (
+      t.entity_id === "default_classic_rc_ai" ||
+      (t.is_default &&
+        !t.entity_id?.includes("practice") &&
+        !t.entity_id?.includes("fuel"))
+    ) {
+      if (isLegacyDefaultThemeName(t.name)) {
+        t.name = "RaceCoordinator AI";
+      }
+      if (!t.uiId) {
+        t.uiId = "default_ui_layout_rc_ai";
+      }
+    } else if (t.entity_id === "practice_theme_rc_ai") {
+      if (isLegacyPracticeThemeName(t.name)) {
+        t.name = "RaceCoordinator AI (Practice)";
+      }
+      if (!t.uiId) {
+        t.uiId = "practice_ui_layout_rc_ai";
+      }
+    } else if (
+      t.entity_id === "default_fuel_theme_rc_ai" ||
+      (!hasFuelTheme &&
+        t.is_default &&
+        (t.entity_id === "2" || isLegacyFuelThemeName(t.name)))
+    ) {
+      if (t.entity_id === "2") {
+        t.entity_id = "default_fuel_theme_rc_ai";
+        (t as any)._id = "default_fuel_theme_rc_ai";
+      }
+      if (isLegacyFuelThemeName(t.name)) {
+        t.name = "RaceCoordinator AI (Fuel)";
+      }
+      if (!t.uiId || t.uiId === "2") {
+        t.uiId = "default_fuel_ui_layout_rc_ai";
+      }
+    }
+  }
+}
+
 export function ensureDefaultCustomUis(
   customUIs: CustomUI[],
   s: Settings,
 ): void {
-  if (!customUIs.some((u: any) => u.entity_id === "default_ui_layout_rc_ai")) {
+  const hasFuelUi = customUIs.some(
+    (u: any) => u.entity_id === "default_fuel_ui_layout_rc_ai",
+  );
+  if (!hasFuelUi) {
+    const legacyFuelUi = customUIs.find(
+      (u: any) =>
+        u.entity_id === "2" && (u.is_default || isLegacyFuelUiName(u.name)),
+    );
+    if (legacyFuelUi) {
+      legacyFuelUi.entity_id = "default_fuel_ui_layout_rc_ai";
+      (legacyFuelUi as any)._id = "default_fuel_ui_layout_rc_ai";
+      if (isLegacyFuelUiName(legacyFuelUi.name)) {
+        legacyFuelUi.name = "RaceCoordinator AI (Fuel)";
+      }
+    }
+  }
+
+  ensureRacedayCustomUi(customUIs, s);
+  ensurePracticeCustomUi(customUIs, s);
+  ensureFuelCustomUi(customUIs, s);
+}
+
+function ensureRacedayCustomUi(customUIs: CustomUI[], s: Settings): void {
+  const defaultUi = customUIs.find(
+    (u: any) => u.entity_id === "default_ui_layout_rc_ai",
+  );
+  if (!defaultUi) {
     customUIs.push({
-      name: "Default UI Layout",
+      name: "RaceCoordinator AI",
       is_default: true,
       layoutJson: JSON.stringify(s.racedayLayout || Settings.DEFAULT_LAYOUT),
       columnsJson: JSON.stringify(s.racedayColumns || Settings.DEFAULT_COLUMNS),
@@ -127,15 +222,25 @@ export function ensureDefaultCustomUis(
       columnVisibilityJson: JSON.stringify(
         s.columnVisibility || new Settings().columnVisibility,
       ),
-      columnWidthsJson: JSON.stringify(s.columnWidths || {}),
+      columnWidthsJson: JSON.stringify(
+        s.columnWidths || new Settings().columnWidths,
+      ),
       columnAnchorsJson: JSON.stringify(s.columnAnchors || {}),
       entity_id: "default_ui_layout_rc_ai",
       _id: "default_ui_layout_rc_ai",
     });
+  } else if (isLegacyRacedayUiName(defaultUi.name)) {
+    defaultUi.name = "RaceCoordinator AI";
   }
-  if (!customUIs.some((u: any) => u.entity_id === "practice_ui_layout_rc_ai")) {
+}
+
+function ensurePracticeCustomUi(customUIs: CustomUI[], s: Settings): void {
+  const practiceUi = customUIs.find(
+    (u: any) => u.entity_id === "practice_ui_layout_rc_ai",
+  );
+  if (!practiceUi) {
     customUIs.push({
-      name: "Practice UI Layout",
+      name: "RaceCoordinator AI (Practice)",
       is_default: true,
       layoutJson: JSON.stringify(
         s.practiceRacedayLayout || Settings.DEFAULT_PRACTICE_LAYOUT,
@@ -154,21 +259,60 @@ export function ensureDefaultCustomUis(
       entity_id: "practice_ui_layout_rc_ai",
       _id: "practice_ui_layout_rc_ai",
     });
+  } else if (isLegacyPracticeUiName(practiceUi.name)) {
+    practiceUi.name = "RaceCoordinator AI (Practice)";
+  }
+}
+
+function ensureFuelCustomUi(customUIs: CustomUI[], s: Settings): void {
+  const fuelUi = customUIs.find(
+    (u: any) => u.entity_id === "default_fuel_ui_layout_rc_ai",
+  );
+  if (!fuelUi) {
+    customUIs.push({
+      name: "RaceCoordinator AI (Fuel)",
+      is_default: true,
+      layoutJson: JSON.stringify(s.racedayLayout || Settings.DEFAULT_LAYOUT),
+      columnsJson: JSON.stringify(s.racedayColumns || Settings.DEFAULT_COLUMNS),
+      columnLayoutsJson: JSON.stringify(
+        s.columnLayouts || new Settings().columnLayouts,
+      ),
+      columnVisibilityJson: JSON.stringify(
+        s.columnVisibility || new Settings().columnVisibility,
+      ),
+      columnWidthsJson: JSON.stringify(
+        s.columnWidths || new Settings().columnWidths,
+      ),
+      columnAnchorsJson: JSON.stringify(s.columnAnchors || {}),
+      entity_id: "default_fuel_ui_layout_rc_ai",
+      _id: "default_fuel_ui_layout_rc_ai",
+    });
+  } else if (isLegacyFuelUiName(fuelUi.name)) {
+    fuelUi.name = "RaceCoordinator AI (Fuel)";
   }
 }
 
 export function fetchUiEditorData(dataService: any, fileSystem: any): any {
-  const { forkJoin, of } = require("rxjs");
-  const { catchError } = require("rxjs/operators");
   return forkJoin({
-    assets: dataService.listAssets(),
+    assets: dataService.listAssets().pipe(catchError(() => of([]))),
     dirHandle: fileSystem.getCustomDirectoryHandle(),
     widgetDirHandle: fileSystem.getCustomWidgetDirectoryHandle
       ? fileSystem.getCustomWidgetDirectoryHandle()
       : of(null),
-    themes: dataService.getThemes(),
-    tracks: dataService.getTracks(),
+    themes: dataService.getThemes().pipe(catchError(() => of([]))),
+    tracks: dataService.getTracks().pipe(catchError(() => of([]))),
     customUIs: dataService.getCustomUIs().pipe(catchError(() => of([]))),
+  });
+}
+
+export function sortAvailableColumnsList(
+  columns: { key: string; label: string }[],
+  translationService: any,
+): void {
+  columns.sort((a, b) => {
+    const labelA = translationService?.translate(a.label) || a.label;
+    const labelB = translationService?.translate(b.label) || b.label;
+    return labelA.localeCompare(labelB);
   });
 }
 
@@ -194,7 +338,12 @@ export function applyLoadedUiEditorData(comp: any, res: any): void {
   comp.availableColumns = loaded.availableColumns;
   comp.sortAvailableColumns();
   comp.customDirectoryName = loaded.customDirectoryName;
+  comp.customDirectoryPath =
+    comp.fileSystem?.getServerCustomUiPath?.() || loaded.customDirectoryName;
   comp.customWidgetDirectoryName = loaded.customWidgetDirectoryName;
+  comp.customWidgetDirectoryPath =
+    comp.fileSystem?.getServerCustomWidgetPath?.() ||
+    loaded.customWidgetDirectoryName;
   if (loaded.track) comp.track = loaded.track;
 
   comp.editingState = loaded.initialState;
@@ -225,6 +374,7 @@ export function handleUiEditorDestroy(comp: any): void {
   if (comp.autoSaveTimeout) clearTimeout(comp.autoSaveTimeout);
   comp.raceConnectionService.disconnect();
   comp.dataSubscription?.unsubscribe();
+  comp.translationSubscription?.unsubscribe();
   comp.helpSubscription?.unsubscribe();
   comp.undoManager.destroy();
 
@@ -242,14 +392,59 @@ export function handleUiEditorKeyboardShortcut(
   event: KeyboardEvent,
   onUndo: () => void,
   onRedo: () => void,
+  onDelete?: () => void,
+  onNudge?: (dx: number, dy: number) => void,
 ): void {
   if ((event.metaKey || event.ctrlKey) && event.key === "z") {
     event.preventDefault();
     if (event.shiftKey) onRedo();
     else onUndo();
+    return;
   }
   if ((event.metaKey || event.ctrlKey) && event.key === "y") {
     event.preventDefault();
     onRedo();
+    return;
+  }
+
+  const target = event.target as HTMLElement | null;
+  const isInputField =
+    target &&
+    (target.tagName === "INPUT" ||
+      target.tagName === "TEXTAREA" ||
+      target.isContentEditable ||
+      target.tagName === "SELECT");
+
+  if (isInputField) {
+    return;
+  }
+
+  if (event.key === "Delete" || event.key === "Backspace") {
+    if (onDelete) {
+      event.preventDefault();
+      onDelete();
+    }
+    return;
+  }
+
+  if (
+    event.key === "ArrowUp" ||
+    event.key === "ArrowDown" ||
+    event.key === "ArrowLeft" ||
+    event.key === "ArrowRight"
+  ) {
+    if (onNudge) {
+      event.preventDefault();
+      const step = event.shiftKey ? 10 : 1;
+      const dx =
+        event.key === "ArrowLeft"
+          ? -step
+          : event.key === "ArrowRight"
+            ? step
+            : 0;
+      const dy =
+        event.key === "ArrowUp" ? -step : event.key === "ArrowDown" ? step : 0;
+      onNudge(dx, dy);
+    }
   }
 }

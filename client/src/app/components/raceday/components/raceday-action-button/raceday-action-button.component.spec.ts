@@ -1,9 +1,11 @@
 import { CommonModule } from "@angular/common";
 import { Pipe, PipeTransform } from "@angular/core";
 import { ComponentFixture, TestBed } from "@angular/core/testing";
+import { BehaviorSubject } from "rxjs";
 import { Role } from "@app/models/role";
 import { AbsoluteWidgetNode } from "@app/models/settings";
 import { AuthService } from "@app/services/auth.service";
+import { NavigationService } from "@app/services/navigation.service";
 
 import { RacedayActionButtonComponent } from "./raceday-action-button.component";
 
@@ -18,6 +20,8 @@ describe("RacedayActionButtonComponent", () => {
   let component: RacedayActionButtonComponent;
   let fixture: ComponentFixture<RacedayActionButtonComponent>;
   let authServiceSpy: jasmine.SpyObj<AuthService>;
+  let canGoBackSubject: BehaviorSubject<boolean>;
+  let mockNavService: any;
 
   const mockWidget: AbsoluteWidgetNode = {
     id: "test",
@@ -35,13 +39,23 @@ describe("RacedayActionButtonComponent", () => {
   };
 
   beforeEach(async () => {
+    canGoBackSubject = new BehaviorSubject<boolean>(false);
+    mockNavService = {
+      canGoBack$: canGoBackSubject.asObservable(),
+      canGoBack: () => canGoBackSubject.value,
+      goBack: jasmine.createSpy("goBack"),
+    };
+
     authServiceSpy = jasmine.createSpyObj("AuthService", [], {
       currentRole: Role.DIRECTOR,
     });
 
     await TestBed.configureTestingModule({
       imports: [CommonModule, MockTranslatePipe, RacedayActionButtonComponent],
-      providers: [{ provide: AuthService, useValue: authServiceSpy }],
+      providers: [
+        { provide: AuthService, useValue: authServiceSpy },
+        { provide: NavigationService, useValue: mockNavService },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(RacedayActionButtonComponent);
@@ -71,7 +85,10 @@ describe("RacedayActionButtonComponent", () => {
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({
       imports: [CommonModule, MockTranslatePipe, RacedayActionButtonComponent],
-      providers: [{ provide: AuthService, useValue: authServiceSpy }],
+      providers: [
+        { provide: AuthService, useValue: authServiceSpy },
+        { provide: NavigationService, useValue: mockNavService },
+      ],
     }).compileComponents();
     fixture = TestBed.createComponent(RacedayActionButtonComponent);
     component = fixture.componentInstance;
@@ -91,6 +108,107 @@ describe("RacedayActionButtonComponent", () => {
     mockParent.isUIEditorMode = () => false;
     mockParent.isStartResumeDisabled = false;
     expect(component.isActionDisabled).toBeFalse();
+  });
+
+  describe("action-back button widget", () => {
+    const backWidget: AbsoluteWidgetNode = {
+      ...mockWidget,
+      widgetType: "action-back",
+    };
+
+    it("should be disabled when there is nowhere to navigate back to", () => {
+      canGoBackSubject.next(false);
+      mockParent.isUIEditorMode = () => false;
+      fixture.componentRef.setInput("widget", backWidget);
+      fixture.detectChanges();
+
+      expect(component.isActionDisabled).toBeTrue();
+    });
+
+    it("should be enabled when there is navigation history to go back to", () => {
+      canGoBackSubject.next(true);
+      mockParent.isUIEditorMode = () => false;
+      fixture.componentRef.setInput("widget", backWidget);
+      fixture.detectChanges();
+
+      expect(component.isActionDisabled).toBeFalse();
+    });
+
+    it("should remain enabled in UI editor mode even if there is nowhere to navigate back to", () => {
+      canGoBackSubject.next(false);
+      mockParent.isUIEditorMode = () => true;
+      fixture.componentRef.setInput("widget", backWidget);
+      fixture.detectChanges();
+
+      expect(component.isActionDisabled).toBeFalse();
+    });
+
+    it("should allow a viewer to use the back button if navigation history exists", () => {
+      canGoBackSubject.next(true);
+      mockParent.isUIEditorMode = () => false;
+      authServiceSpy = jasmine.createSpyObj("AuthService", [], {
+        currentRole: Role.VIEWER,
+      });
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({
+        imports: [
+          CommonModule,
+          MockTranslatePipe,
+          RacedayActionButtonComponent,
+        ],
+        providers: [
+          { provide: AuthService, useValue: authServiceSpy },
+          { provide: NavigationService, useValue: mockNavService },
+        ],
+      }).compileComponents();
+      fixture = TestBed.createComponent(RacedayActionButtonComponent);
+      component = fixture.componentInstance;
+      fixture.componentRef.setInput("widget", backWidget);
+      fixture.componentRef.setInput("parent", mockParent);
+      fixture.detectChanges();
+
+      expect(component.isActionDisabled).toBeFalse();
+    });
+
+    it("should call onFileMenuSelect('BACK') when clicked and enabled", () => {
+      canGoBackSubject.next(true);
+      mockParent.isUIEditorMode = () => false;
+      const onFileMenuSelectSpy = jasmine.createSpy("onFileMenuSelect");
+      const parentWithMenu = {
+        ...mockParent,
+        onFileMenuSelect: onFileMenuSelectSpy,
+      };
+      fixture.componentRef.setInput("parent", parentWithMenu);
+      fixture.componentRef.setInput("widget", backWidget);
+      fixture.detectChanges();
+
+      const event = new Event("click");
+      spyOn(event, "stopPropagation");
+      component.onClick(event);
+
+      expect(event.stopPropagation).toHaveBeenCalled();
+      expect(onFileMenuSelectSpy).toHaveBeenCalledWith("BACK");
+    });
+
+    it("should not call onFileMenuSelect when clicked and disabled", () => {
+      canGoBackSubject.next(false);
+      mockParent.isUIEditorMode = () => false;
+      const onFileMenuSelectSpy = jasmine.createSpy("onFileMenuSelect");
+      const parentWithMenu = {
+        ...mockParent,
+        onFileMenuSelect: onFileMenuSelectSpy,
+      };
+      fixture.componentRef.setInput("parent", parentWithMenu);
+      fixture.componentRef.setInput("widget", backWidget);
+      fixture.detectChanges();
+
+      const event = new Event("click");
+      spyOn(event, "stopPropagation");
+      component.onClick(event);
+
+      expect(event.stopPropagation).toHaveBeenCalled();
+      expect(onFileMenuSelectSpy).not.toHaveBeenCalled();
+    });
   });
 
   describe("Widget Actions and Labels", () => {
@@ -202,6 +320,12 @@ describe("RacedayActionButtonComponent", () => {
         label: "RD_MENU_MAIN_POWER_OFF",
         action: false,
         method: "onTrackPowerMainSelect",
+      },
+      {
+        widgetType: "action-back",
+        label: "RD_MENU_BACK",
+        action: "BACK",
+        method: "onFileMenuSelect",
       },
     ];
 

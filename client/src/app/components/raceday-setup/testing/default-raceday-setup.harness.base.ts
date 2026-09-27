@@ -32,6 +32,8 @@ export abstract class DefaultRacedaySetupHarnessBase {
   abstract getSelectedDriverCount(): Promise<number>;
   abstract getUnselectedDriverName(index: number): Promise<string>;
   abstract doubleClickUnselectedDriver(index: number): Promise<void>;
+  abstract clickUnselectedDriver(index: number): Promise<void>;
+  abstract clickSelectedDriver(index: number): Promise<void>;
   abstract getRaceCardCount(): Promise<number>;
   abstract clickRaceDropdown(): Promise<void>;
   abstract selectSeason(name: string): Promise<void>;

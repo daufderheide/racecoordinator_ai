@@ -12,6 +12,11 @@ import {
   ViewEncapsulation,
 } from "@angular/core";
 import { FormsModule } from "@angular/forms";
+import { SafeStyle } from "@angular/platform-browser";
+import {
+  CustomOptionComponent,
+  CustomSelectComponent,
+} from "@app/components/shared/custom-select/custom-select.component";
 import { Track } from "@app/models/track";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { DriverHeatData } from "@app/race/driver_heat_data";
@@ -24,7 +29,13 @@ import { TranslationService } from "@app/services/translation.service";
   templateUrl: "./raceday-heat-drivers.component.html",
   styleUrls: ["./raceday-heat-drivers.component.css"],
   encapsulation: ViewEncapsulation.None,
-  imports: [CommonModule, TranslatePipe, FormsModule],
+  imports: [
+    CommonModule,
+    TranslatePipe,
+    FormsModule,
+    CustomSelectComponent,
+    CustomOptionComponent,
+  ],
 })
 export class RacedayHeatDriversComponent implements AfterViewInit, OnDestroy {
   type = input<"next-heat" | "on-deck">("next-heat");
@@ -308,7 +319,7 @@ export class RacedayHeatDriversComponent implements AfterViewInit, OnDestroy {
     return this.parent()?.getTeammates(hd) ?? [];
   }
 
-  getDropdownArrowBg(_hd: DriverHeatData): string {
+  getDropdownArrowBg(_hd: DriverHeatData): SafeStyle | string {
     if (!this.parent()) return "";
     const color = this.widget()?.customSettings?.["laneTextColor"] || "#f8fafc";
     return this.parent().getDropdownIcon(color);

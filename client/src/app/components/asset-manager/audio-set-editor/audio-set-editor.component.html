@@ -42,13 +42,26 @@
           [placeholder]="'AM_AUDIO_SET_EDITOR_NAME' | translate"
           autocomplete="one-time-code"
           data-dashlane-ignore="true"
+          data-1p-ignore="true"
           data-lpignore="true"
+          data-bwignore="true"
           data-form-type="other"
           name="audioset-title-field"
           spellcheck="false"
           autocorrect="off"
           autocapitalize="off"
         />
+      </div>
+      <div class="audio-set-help-banner">
+        <span class="material-icons help-icon">info</span>
+        <div class="help-content">
+          <span class="help-title">{{
+            "AM_AUDIO_SET_EDITOR_HELP_TITLE" | translate
+          }}</span>
+          <p class="help-desc">
+            {{ "AM_AUDIO_SET_EDITOR_HELP_DESC" | translate }}
+          </p>
+        </div>
       </div>
       <div class="entries-header">
         <div class="header-main">
@@ -85,6 +98,7 @@
                 (urlChange)="
                   entry.url = $event; entry.name = entry.name || entry.url
                 "
+                (assetSelected)="entry.name = $event.name || entry.name"
                 (textChange)="entry.text = $event"
                 (typeChange)="entry.type = $event"
                 mode="single"
@@ -93,14 +107,34 @@
               </app-audio-selector>
             </div>
             <div class="entry-time">
-              <label>{{ "AM_AUDIO_SET_EDITOR_TIME" | translate }}</label>
+              <label [title]="'AM_AUDIO_SET_EDITOR_HELP_DESC' | translate">{{
+                "AM_AUDIO_SET_EDITOR_VALUE" | translate
+              }}</label>
               <input
                 type="number"
                 [(ngModel)]="entry.timeSeconds"
+                (ngModelChange)="entry.percentage = $event"
                 min="0"
                 class="time-input"
+                [attr.aria-label]="'AM_AUDIO_SET_EDITOR_VALUE' | translate"
               />
-              <span>s</span>
+            </div>
+            <div class="entry-mode">
+              <label [title]="'AM_AUDIO_SET_EDITOR_HELP_DESC' | translate">{{
+                "AM_AUDIO_SET_EDITOR_TRIGGER_MODE" | translate
+              }}</label>
+              <app-custom-select
+                [(ngModel)]="entry.triggerMode"
+                [id]="'trigger-mode-' + i"
+                class="mode-select"
+              >
+                <app-custom-option value="remaining">{{
+                  "AM_TRIGGER_MODE_REMAINING" | translate
+                }}</app-custom-option>
+                <app-custom-option value="elapsed">{{
+                  "AM_TRIGGER_MODE_ELAPSED" | translate
+                }}</app-custom-option>
+              </app-custom-select>
             </div>
             <button
               class="btn-remove"

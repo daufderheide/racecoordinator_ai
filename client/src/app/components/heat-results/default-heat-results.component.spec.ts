@@ -1,8 +1,10 @@
+import { TestbedHarnessEnvironment } from "@angular/cdk/testing/testbed";
 import { Pipe, PipeTransform } from "@angular/core";
 import { ComponentFixture, TestBed } from "@angular/core/testing";
 import { By } from "@angular/platform-browser";
 import { Router } from "@angular/router";
 import { BehaviorSubject, of } from "rxjs";
+import { HeatDriverExpanderComponent } from "@app/components/shared/heat-driver-expander/heat-driver-expander.component";
 import { TwinGraphsComponent } from "@app/components/shared/twin-graphs/twin-graphs.component";
 import { DataService } from "@app/data.service";
 import { Driver } from "@app/models/driver";
@@ -14,8 +16,12 @@ import { AuthService } from "@app/services/auth.service";
 import { PrintService } from "@app/services/print.service";
 import { RaceService } from "@app/services/race.service";
 import { RaceConnectionService } from "@app/services/race-connection.service";
+import { RaceFlagService } from "@app/services/race-flag.service";
+import { RaceTimeService } from "@app/services/race-time.service";
+import { TranslationService } from "@app/services/translation.service";
 
 import { DefaultHeatResultsComponent } from "./default-heat-results.component";
+import { HeatResultsHarness } from "./testing/heat-results.harness";
 
 @Pipe({ name: "translate" })
 class MockTranslatePipe implements PipeTransform {
@@ -31,6 +37,13 @@ describe("DefaultHeatResultsComponent", () => {
   let mockRaceService: any;
   let mockPrintService: any;
   let mockRouter: any;
+  let currentFlagUrlSubject: BehaviorSubject<string>;
+  let formattedTimeSubject: BehaviorSubject<string>;
+  let mockRaceFlagService: any;
+  let mockRaceTimeService: any;
+  let mockTranslationService: any;
+  let mockDataService: any;
+  let mockAuthService: any;
 
   beforeEach(async () => {
     mockRouter = {
@@ -43,13 +56,17 @@ describe("DefaultHeatResultsComponent", () => {
       laps$: new BehaviorSubject<any>(null),
       standingsUpdate$: new BehaviorSubject<any>(null),
       driverRankings: new Map<string, number>(),
+      raceState$: new BehaviorSubject<any>(0),
+      raceTime$: new BehaviorSubject<any>({ time: 0 }),
     };
 
     mockRaceService = jasmine.createSpyObj("RaceService", [
       "getRace",
       "getCurrentHeat",
+      "getHeats",
     ]);
     mockRaceService.currentHeat$ = of(null);
+    mockRaceService.getHeats.and.returnValue([]);
     mockRaceService.participants$ = of([]);
 
     // Mock Setup Data
@@ -92,23 +109,65 @@ describe("DefaultHeatResultsComponent", () => {
 
     mockPrintService = jasmine.createSpyObj("PrintService", ["print"]);
 
+    currentFlagUrlSubject = new BehaviorSubject<string>("test-flag-url");
+    formattedTimeSubject = new BehaviorSubject<string>("01:23");
+
+    mockRaceFlagService = {
+      getCurrentFlagUrl: jasmine
+        .createSpy("getCurrentFlagUrl")
+        .and.callFake(() => currentFlagUrlSubject.value),
+      getFlagUrl: jasmine
+        .createSpy("getFlagUrl")
+        .and.returnValue("test-flag-url"),
+      currentFlagUrl$: currentFlagUrlSubject.asObservable(),
+    };
+
+    mockRaceTimeService = {
+      get formattedTime() {
+        return formattedTimeSubject.value;
+      },
+      formattedTime$: formattedTimeSubject.asObservable(),
+    };
+
+    mockTranslationService = {
+      getCurrentLanguage: jasmine
+        .createSpy("getCurrentLanguage")
+        .and.returnValue(of("en")),
+      translate: jasmine.createSpy("translate").and.callFake((k: string) => k),
+    };
+
+    mockDataService = {
+      serverUrl: "http://localhost:8080",
+      getSystemState: () => of(null),
+      updateRaceSubscription: jasmine.createSpy("updateRaceSubscription"),
+      updateBatchUserLaps: jasmine
+        .createSpy("updateBatchUserLaps")
+        .and.returnValue(of({})),
+      updateHistoryLapSections: jasmine
+        .createSpy("updateHistoryLapSections")
+        .and.returnValue(of({})),
+    };
+
+    mockAuthService = {
+      currentRole: Role.VIEWER,
+    };
+
     await TestBed.configureTestingModule({
       imports: [DefaultHeatResultsComponent, MockTranslatePipe],
       providers: [
         { provide: RaceConnectionService, useValue: mockRaceConnectionService },
         { provide: RaceService, useValue: mockRaceService },
         { provide: PrintService, useValue: mockPrintService },
+        { provide: RaceFlagService, useValue: mockRaceFlagService },
+        { provide: RaceTimeService, useValue: mockRaceTimeService },
+        { provide: TranslationService, useValue: mockTranslationService },
         {
           provide: DataService,
-          useValue: {
-            serverUrl: "http://localhost:8080",
-            getSystemState: () => of(null),
-            updateRaceSubscription: () => {},
-          },
+          useValue: mockDataService,
         },
         {
           provide: AuthService,
-          useValue: { currentRole: Role.VIEWER },
+          useValue: mockAuthService,
         },
         { provide: Router, useValue: mockRouter },
       ],
@@ -143,6 +202,9 @@ describe("DefaultHeatResultsComponent", () => {
     // Verify axis titles for both graphs are rendered (X and Y for each = 4 total)
     const axisTitles = compiled.querySelectorAll(".axis-title");
     expect(axisTitles.length).toBe(4);
+
+    // Verify title above graphs is not rendered
+    expect(compiled.querySelector(".graphs-section-title")).toBeNull();
   });
 
   it("should calculate ranking timeline correctly", () => {
@@ -371,6 +433,215 @@ describe("DefaultHeatResultsComponent", () => {
 
       expect(row1?.rank).toBe(0);
       expect(row2?.rank).toBe(0);
+    });
+
+    it("should initialize currentFlagUrl and formattedTime from services", () => {
+      expect(component.currentFlagUrl).toBe("test-flag-url");
+      expect(component.formattedTime).toBe("01:23");
+    });
+
+    it("should update currentFlagUrl when raceFlagService emits", () => {
+      currentFlagUrlSubject.next("updated-flag-url");
+      expect(component.currentFlagUrl).toBe("updated-flag-url");
+    });
+
+    it("should update formattedTime when raceTimeService emits", () => {
+      formattedTimeSubject.next("05:43.2");
+      expect(component.formattedTime).toBe("05:43.2");
+    });
+  });
+
+  describe("Pacing and Trajectory Dialog", () => {
+    it("should open trajectory comparison dialog when openHeatTrajectory is called", () => {
+      const heatData = component["heatData"][0]; // Alice
+      component.openHeatTrajectory(heatData);
+
+      expect(component["showTrajectoryModal"]).toBeTrue();
+      expect(component["trajectoryDriverAName"]).toBe("Ally");
+      expect(component["trajectoryDriverALapTimes"]).toEqual([10.5, 10.2]);
+      expect(component["trajectoryReferenceOptions"].length).toBe(1);
+      expect(component["trajectoryReferenceOptions"][0].id).toBe("d2");
+      expect(component["trajectoryReferenceOptions"][0].name).toBe("Bobby");
+      expect(component["trajectoryReferenceOptions"][0].lapTimes).toEqual([
+        11.1, 10.9,
+      ]);
+      expect(component["trajectoryInitialReferenceId"]).toBe("d2");
+
+      component.closeTrajectoryDialog();
+      expect(component["showTrajectoryModal"]).toBeFalse();
+    });
+
+    it("should trigger openHeatTrajectory when openTrajectory is emitted from heat-driver-expander", () => {
+      spyOn(component, "openHeatTrajectory");
+      const expanderDebugEl = fixture.debugElement.query(
+        By.directive(HeatDriverExpanderComponent),
+      );
+      expect(expanderDebugEl).toBeTruthy();
+
+      const testData = component["heatData"][0];
+      expanderDebugEl.componentInstance.openTrajectory.emit(testData);
+
+      expect(component.openHeatTrajectory).toHaveBeenCalledWith(testData);
+    });
+
+    it("should filter out empty drivers from reference options", () => {
+      const emptyDriver = new Driver("empty_1", "Empty Lane", "Empty");
+      const hdEmpty = new DriverHeatData(
+        "hdEmpty",
+        { driver: emptyDriver } as any,
+        2,
+        emptyDriver,
+      );
+      const currentHeat = mockRaceService.getCurrentHeat();
+      currentHeat.heatDrivers.push(hdEmpty);
+
+      const heatData = component["heatData"][0];
+      component.openHeatTrajectory(heatData);
+
+      expect(
+        component["trajectoryReferenceOptions"].some(
+          (opt) => opt.id === "empty_1" || opt.name === "Empty",
+        ),
+      ).toBeFalse();
+    });
+
+    it("should display app-ghost-trajectory-dialog in template when modal is open", () => {
+      component["showTrajectoryModal"] = true;
+      fixture.detectChanges();
+
+      const dialogEl = fixture.nativeElement.querySelector(
+        "app-ghost-trajectory-dialog",
+      );
+      expect(dialogEl).toBeTruthy();
+    });
+
+    it("should open trajectory dialog when clicking the trajectory button in the template", () => {
+      expect(component["showTrajectoryModal"]).toBeFalse();
+
+      const trajectoryBtn = fixture.nativeElement.querySelector(
+        "app-heat-driver-expander .trajectory-btn",
+      ) as HTMLButtonElement;
+      expect(trajectoryBtn).toBeTruthy();
+
+      trajectoryBtn.click();
+      fixture.detectChanges();
+
+      expect(component["showTrajectoryModal"]).toBeTrue();
+      expect(component["trajectoryDriverAName"]).toBe("Ally");
+      expect(component["trajectoryReferenceOptions"].length).toBe(1);
+
+      const dialogEl = fixture.nativeElement.querySelector(
+        "app-ghost-trajectory-dialog .trajectory-modal-container",
+      );
+      expect(dialogEl).toBeTruthy();
+    });
+
+    it("should open trajectory modal via component harness when trajectory button is clicked", async () => {
+      const harness = await TestbedHarnessEnvironment.harnessForFixture(
+        fixture,
+        HeatResultsHarness,
+      );
+
+      expect(await harness.hasTrajectoryModal()).toBeFalse();
+      expect(await harness.hasTrajectoryButton()).toBeTrue();
+
+      await harness.clickTrajectoryButton();
+      fixture.detectChanges();
+
+      expect(await harness.hasTrajectoryModal()).toBeTrue();
+    });
+  });
+
+  describe("raceStartTime and date header", () => {
+    it("should return start_time_millis when present on race", () => {
+      const explicitTime = 1788784800000;
+      (component as any).race = {
+        name: "Test Race",
+        start_time_millis: explicitTime,
+      };
+      expect(component.raceStartTime.getTime()).toBe(explicitTime);
+    });
+
+    it("should render race-date-text when race and raceStartTime exist", () => {
+      (component as any).race = {
+        name: "Test Race",
+        start_time_millis: 1788784800000,
+      };
+      fixture.detectChanges();
+
+      const dateEl = fixture.nativeElement.querySelector(
+        ".race-name-container .race-date-text",
+      );
+      expect(dateEl).toBeTruthy();
+      expect(dateEl.textContent).toContain("26");
+    });
+  });
+
+  describe("Past Race Review, Heat Selection, and Lap Sections", () => {
+    it("should detect whether reviewing a past race based on historyRecordId", () => {
+      expect(component.isReviewingPastRace).toBeFalse();
+
+      (component as any).race = { historyRecordId: "hist_123" };
+      expect(component.isReviewingPastRace).toBeTrue();
+    });
+
+    it("should navigate to root on exitReview and set skipIntro in sessionStorage", () => {
+      sessionStorage.removeItem("skipIntro");
+      component.exitReview();
+      expect(mockRouter.navigate).toHaveBeenCalledWith(["/"]);
+      expect(sessionStorage.getItem("skipIntro")).toBe("true");
+    });
+
+    it("should navigate to race results on navigateToRaceResults", () => {
+      component.navigateToRaceResults();
+      expect(mockRouter.navigate).toHaveBeenCalledWith(["/race-results"]);
+    });
+
+    it("should switch heat on onHeatSelected", () => {
+      const mockH1 = new Heat("h1", 1, []);
+      const mockH2 = new Heat("h2", 2, []);
+      mockRaceService.getHeats.and.returnValue([mockH1, mockH2]);
+
+      expect(component.heats.length).toBe(2);
+
+      component.onHeatSelected(1);
+      expect(component.selectedHeatIndex).toBe(1);
+      expect((component as any).heat).toBe(mockH2);
+    });
+
+    it("should open and close add lap sections dialog", () => {
+      expect(component.showAddLapSectionsDialog).toBeFalse();
+      component.openAddLapSections();
+      expect(component.showAddLapSectionsDialog).toBeTrue();
+
+      component.onAddLapSectionsConfirm(null);
+      expect(component.showAddLapSectionsDialog).toBeFalse();
+    });
+
+    it("should call updateHistoryLapSections when confirming batch update on past race", () => {
+      (component as any).race = { historyRecordId: "hist_456", is_demo: true };
+      component.showAddLapSectionsDialog = true;
+
+      const updates = [{ heatIndex: 0, laneIndex: 0, sections: 50 }];
+      component.onAddLapSectionsConfirm({ isBatch: true, updates });
+
+      expect(mockDataService.updateHistoryLapSections).toHaveBeenCalledWith(
+        "hist_456",
+        updates,
+        true,
+      );
+      expect(component.showAddLapSectionsDialog).toBeFalse();
+    });
+
+    it("should call updateBatchUserLaps when confirming batch update on live race", () => {
+      (component as any).race = {};
+      component.showAddLapSectionsDialog = true;
+
+      const updates = [{ heatIndex: 0, laneIndex: 0, sections: 50 }];
+      component.onAddLapSectionsConfirm({ isBatch: true, updates });
+
+      expect(mockDataService.updateBatchUserLaps).toHaveBeenCalledWith(updates);
+      expect(component.showAddLapSectionsDialog).toBeFalse();
     });
   });
 });

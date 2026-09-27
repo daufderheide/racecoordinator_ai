@@ -144,11 +144,7 @@
   color-scheme: dark;
 }
 
-.reference-select option,
-.reference-select optgroup {
-  background-color: #0f172a;
-  color: #f8fafc;
-}
+
 
 .reference-select:hover,
 .reference-select:focus {

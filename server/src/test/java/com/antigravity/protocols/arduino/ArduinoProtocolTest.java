@@ -1084,6 +1084,14 @@ public class ArduinoProtocolTest {
     listener.callButtonCount = 0;
     // Current state is 0. Resetting state with 1 first.
     serialConnection.injectData(callHigh);
+    // Rapid bounce within debounce window is suppressed
+    protocol.advanceTime(10);
+    serialConnection.injectData(callLow);
+    assertEquals(0, listener.callButtonCount);
+
+    // After debounce window, trigger succeeds
+    protocol.advanceTime(300);
+    serialConnection.injectData(callHigh);
     serialConnection.injectData(callLow);
     assertEquals(1, listener.callButtonCount);
 

@@ -2,6 +2,13 @@ export enum FuelUsageType {
   LINEAR = "LINEAR",
   QUADRATIC = "QUADRATIC",
   CUBIC = "CUBIC",
+  CUSTOM_CURVE = "CUSTOM_CURVE",
+  CUSTOM = "CUSTOM_CURVE",
+}
+
+export interface FuelCurvePoint {
+  x: number;
+  y: number;
 }
 
 export enum OutOfFuelAction {
@@ -20,6 +27,7 @@ export abstract class FuelOptions {
   start_level: number;
   refuel_rate: number;
   pit_stop_delay: number;
+  custom_curve: FuelCurvePoint[];
 
   constructor(
     enabled: boolean = false,
@@ -31,6 +39,7 @@ export abstract class FuelOptions {
     start_level: number = 100,
     refuel_rate: number = 10,
     pit_stop_delay: number = 2.0,
+    custom_curve: FuelCurvePoint[] = [],
   ) {
     this.enabled = enabled;
     this.reset_fuel_at_heat_start = reset_fuel_at_heat_start;
@@ -41,5 +50,6 @@ export abstract class FuelOptions {
     this.start_level = start_level;
     this.refuel_rate = refuel_rate;
     this.pit_stop_delay = pit_stop_delay;
+    this.custom_curve = custom_curve || [];
   }
 }

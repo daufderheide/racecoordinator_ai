@@ -56,7 +56,6 @@ test.describe("Season Results Visuals", () => {
 
     // Expand the first race details
     await harness.toggleRaceExpander(0);
-    await page.waitForTimeout(200);
 
     expect(await harness.isRaceExpanded(0)).toBe(true);
 
@@ -85,12 +84,10 @@ test.describe("Season Results Visuals", () => {
 
     // Expand the first race details
     await harness.toggleRaceExpander(0);
-    await page.waitForTimeout(200);
     expect(await harness.isRaceExpanded(0)).toBe(true);
 
     // Expand the first driver details (Alice Sprint who has bonuses)
     await harness.toggleDriverExpander(0, 0);
-    await page.waitForTimeout(200);
     expect(await harness.isDriverExpanded(0, 0)).toBe(true);
 
     await expect(page).toHaveScreenshot("season-results-driver-expanded.png", {
@@ -139,11 +136,40 @@ test.describe("Season Results Visuals", () => {
       document.body.classList.add("print-full-scroll");
       document.body.classList.add("print-no-background");
     });
-    await page.waitForTimeout(200);
 
     await expect(page).toHaveScreenshot("season-results-no-background.png", {
       maxDiffPixelRatio: 0.05,
       fullPage: true,
+    });
+  });
+});
+
+test.describe("Season Results Visuals - French Locale", () => {
+  test.beforeEach(async ({ page }) => {
+    await TestSetupHelper.setupStandardMocks(page);
+    await TestSetupHelper.disableAnimations(page);
+    await page.setViewportSize({ width: 1920, height: 1080 });
+  });
+
+  test("should display season race list in French date format", async ({
+    page,
+  }) => {
+    await TestSetupHelper.setupSettings(page, { language: "fr" });
+    const mockSeason = SeasonResultsHelper.createMockSeason();
+    await SeasonResultsHelper.injectMockSeasonsData(page, [mockSeason]);
+
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "fr",
+      page.goto("/season-results?id=" + mockSeason.entity_id),
+    );
+
+    const racesSection = page.locator(".races-expander-section");
+    await racesSection.waitFor({ state: "visible" });
+
+    await page.mouse.move(0, 0);
+    await expect(racesSection).toHaveScreenshot("season-results-races-fr.png", {
+      maxDiffPixelRatio: 0.05,
     });
   });
 });

@@ -21,7 +21,7 @@ export default defineConfig({
     : "50%",
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: [
-    ["html"],
+    ["html", { open: "never" }],
     ["json", { outputFile: process.env["PW_REPORT_PATH"] || "pw-result.json" }],
   ],
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */

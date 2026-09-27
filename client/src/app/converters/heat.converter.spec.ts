@@ -155,6 +155,32 @@ describe("HeatConverter", () => {
     expect(driverData.lapsLed).toBe(4);
   });
 
+  it("should populate trackCalls and masterTrackCalls from proto", () => {
+    const proto: IHeat = {
+      objectId: "heat1",
+      heatNumber: 1,
+      masterTrackCalls: 2,
+      trackCalls: 5,
+      heatDrivers: [
+        {
+          objectId: "hd1",
+          driver: {
+            objectId: "p1",
+            driver: { name: "Driver 1" },
+          },
+          trackCalls: 3,
+        } as any,
+      ],
+    };
+
+    const heat = HeatConverter.fromProto(proto);
+    const driverData = heat.heatDrivers[0]!;
+
+    expect(driverData.trackCalls).toBe(3);
+    expect(heat.masterTrackCalls).toBe(2);
+    expect(heat.trackCalls).toBe(5);
+  });
+
   it("should assign driver heat ranks from proto.standings", () => {
     const proto: IHeat = {
       objectId: "heat1",
@@ -208,5 +234,218 @@ describe("HeatConverter", () => {
     const driverData = heat.heatDrivers[0]!;
 
     expect(driverData.isFinished).toBeTrue();
+  });
+
+  it("should map countTowardsRecords for laps from proto", () => {
+    const proto: IHeat = {
+      objectId: "heat1",
+      heatNumber: 1,
+      heatDrivers: [
+        {
+          objectId: "hd1",
+          driver: {
+            objectId: "p1",
+            driver: { name: "Driver 1" },
+          },
+          laps: [
+            { lapTime: 2.5, countTowardsRecords: true },
+            { lapTime: 1.1, countTowardsRecords: false },
+          ] as any,
+        } as any,
+      ],
+    };
+
+    const heat = HeatConverter.fromProto(proto);
+    const driverData = heat.heatDrivers[0]!;
+
+    expect(driverData.lapsWithDetails.length).toBe(2);
+    expect(driverData.lapsWithDetails[0].time).toBe(2.5);
+    expect(driverData.lapsWithDetails[0].countTowardsRecords).toBeTrue();
+    expect(driverData.lapsWithDetails[1].time).toBe(1.1);
+    expect(driverData.lapsWithDetails[1].countTowardsRecords).toBeFalse();
+  });
+
+  it("should not resurrect laps when a subsequent proto update has empty laps (lane reset)", () => {
+    const heatWithLaps: IHeat = {
+      objectId: "heat_reset_test",
+      heatNumber: 1,
+      heatDrivers: [
+        {
+          objectId: "hd_reset_1",
+          driver: {
+            objectId: "p1",
+            driver: { name: "Driver 1" },
+          },
+          laps: [
+            { lapTime: 2.5, countTowardsRecords: true },
+            { lapTime: 2.4, countTowardsRecords: true },
+          ] as any,
+          bestLapTime: 2.4,
+          averageLapTime: 2.45,
+        } as any,
+      ],
+    };
+
+    // First conversion: heat has 2 laps
+    const heat1 = HeatConverter.fromProto(heatWithLaps);
+    expect(heat1.heatDrivers[0]!.lapTimes.length).toBe(2);
+    expect(heat1.heatDrivers[0]!.lapsWithDetails.length).toBe(2);
+
+    // Second conversion: lane reset occurs, server sends snapshot with empty laps
+    const heatResetSnapshot: IHeat = {
+      objectId: "heat_reset_test",
+      heatNumber: 1,
+      heatDrivers: [
+        {
+          objectId: "hd_reset_1",
+          driver: {
+            objectId: "p1",
+            driver: { name: "Driver 1" },
+          },
+          laps: [],
+          bestLapTime: 0,
+          averageLapTime: 0,
+        } as any,
+      ],
+    };
+
+    const heat2 = HeatConverter.fromProto(heatResetSnapshot);
+    const resetDriver = heat2.heatDrivers[0]!;
+
+    expect(resetDriver.lapTimes.length).toBe(0);
+    expect(resetDriver.lapsWithDetails.length).toBe(0);
+    expect(resetDriver.bestLapTime).toBe(0);
+  });
+
+  it("should allow invalidating cache by objectId or clearing all cache", () => {
+    const proto: IHeat = {
+      objectId: "heat_cache_test",
+      heatNumber: 1,
+      heatDrivers: [
+        {
+          objectId: "hd_cache_1",
+          driver: {
+            objectId: "p1",
+            driver: { name: "Driver 1" },
+          },
+          laps: [{ lapTime: 3.1 }] as any,
+        } as any,
+      ],
+    };
+
+    HeatConverter.fromProto(proto);
+    HeatConverter.invalidateHeat("heat_cache_test");
+    HeatConverter.clearCache();
+    expect(true).toBeTrue();
+  });
+
+  it("should map initialFuelLevel and initialize participant fuelLevel if missing", () => {
+    const proto: IHeat = {
+      objectId: "heat_fuel",
+      heatNumber: 1,
+      heatDrivers: [
+        {
+          objectId: "hd_fuel_1",
+          driver: {
+            objectId: "p_fuel_1",
+            driver: { name: "Fuel Driver" },
+          },
+          initialFuelLevel: 85.5,
+        },
+      ],
+    };
+
+    const heat = HeatConverter.fromProto(proto);
+    expect(heat.heatDrivers.length).toBe(1);
+    const driverData = heat.heatDrivers[0];
+
+    expect(driverData.initialFuelLevel).toBe(85.5);
+    expect(driverData.participant.fuelLevel).toBe(85.5);
+  });
+
+  it("should preserve participant fuelLevel when it is 0 (out of fuel)", () => {
+    const proto: IHeat = {
+      objectId: "heat_fuel_zero",
+      heatNumber: 1,
+      heatDrivers: [
+        {
+          objectId: "hd_fuel_zero_1",
+          driver: {
+            objectId: "p_fuel_zero_1",
+            driver: { name: "Out of Fuel Driver" },
+            fuelLevel: 0,
+          },
+          initialFuelLevel: 100.0,
+        },
+      ],
+    };
+
+    const heat = HeatConverter.fromProto(proto);
+    expect(heat.heatDrivers.length).toBe(1);
+    const driverData = heat.heatDrivers[0];
+
+    expect(driverData.initialFuelLevel).toBe(100.0);
+    expect(driverData.participant.fuelLevel).toBe(0);
+  });
+
+  it("should preserve participant fuelLevel when already greater than 0", () => {
+    const proto: IHeat = {
+      objectId: "heat_fuel_preserve",
+      heatNumber: 1,
+      heatDrivers: [
+        {
+          objectId: "hd_fuel_2",
+          driver: {
+            objectId: "p_fuel_2",
+            driver: { name: "Fuel Driver 2" },
+            fuelLevel: 42.0,
+          },
+          initialFuelLevel: 100.0,
+        },
+      ],
+    };
+
+    const heat = HeatConverter.fromProto(proto);
+    expect(heat.heatDrivers.length).toBe(1);
+    const driverData = heat.heatDrivers[0];
+
+    expect(driverData.initialFuelLevel).toBe(100.0);
+    expect(driverData.participant.fuelLevel).toBe(42.0);
+  });
+
+  it("should populate analysis metrics from proto", () => {
+    const proto: IHeat = {
+      objectId: "heat_analysis",
+      heatNumber: 1,
+      heatDrivers: [
+        {
+          objectId: "hd_analysis",
+          driver: {
+            objectId: "p_analysis",
+            driver: { name: "Analysis Driver" },
+          },
+          laps: [{ lapTime: 4.1 }, { lapTime: 4.2 }, { lapTime: 4.3 }],
+          consistencyScore: 98.5,
+          standardDeviation: 0.125,
+          averageTop_5: 4.12,
+          averageTop_10: 4.22,
+          averageTop_15: 4.32,
+          top_2Consecutive: 8.24,
+          top_3Consecutive: 12.36,
+        },
+      ],
+    };
+
+    const heat = HeatConverter.fromProto(proto);
+    expect(heat.heatDrivers.length).toBe(1);
+    const driverData = heat.heatDrivers[0];
+
+    expect(driverData.consistencyScore).toBe(98.5);
+    expect(driverData.standardDeviation).toBe(0.125);
+    expect(driverData.averageTop5).toBe(4.12);
+    expect(driverData.averageTop10).toBe(4.22);
+    expect(driverData.averageTop15).toBe(4.32);
+    expect(driverData.top2Consecutive).toBe(8.24);
+    expect(driverData.top3Consecutive).toBe(12.36);
   });
 });

@@ -34,6 +34,13 @@
         (change)="onSettingsChange()"
       ></app-timer-inspector>
     }
+    @case ("countdown") {
+      <app-countdown-inspector
+        [settings]="widget().customSettings"
+        [widget]="widget()"
+        (change)="onSettingsChange()"
+      ></app-countdown-inspector>
+    }
     @case ("image") {
       <app-image-inspector
         [settings]="widget().customSettings"
@@ -65,6 +72,13 @@
         [disableFontSizes]="widget().scaleMode === 'auto'"
         (change)="onSettingsChange()"
       ></app-upcoming-inspector>
+    }
+    @case ("heat-list") {
+      <app-heat-list-inspector
+        [settings]="widget().customSettings"
+        [disableFontSizes]="widget().scaleMode === 'auto'"
+        (change)="onSettingsChange()"
+      ></app-heat-list-inspector>
     }
     @case ("heat-info") {
       <app-text-info-inspector
@@ -246,6 +260,13 @@
       ></app-action-button-inspector>
     }
     @case ("action-master-power-off") {
+      <app-action-button-inspector
+        [widget]="widget()"
+        [disableFontSizes]="widget().scaleMode === 'auto'"
+        (change)="onSettingsChange()"
+      ></app-action-button-inspector>
+    }
+    @case ("action-back") {
       <app-action-button-inspector
         [widget]="widget()"
         [disableFontSizes]="widget().scaleMode === 'auto'"

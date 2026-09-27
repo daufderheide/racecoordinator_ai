@@ -57,6 +57,28 @@ public class StandingsComparator<T extends StandingsParticipant> implements Comp
       return Integer.compare(a.getSeed(), b.getSeed());
     }
 
+    // 4b. Fastest lap time (if not already evaluated)
+    if (rankingMethod != RankingMethod.FASTEST_LAP
+        && tiebreakerMethod != TiebreakerMethod.FASTEST_LAP_TIME) {
+      double aBest = a.getBestLapTime() > 0 ? a.getBestLapTime() : Double.MAX_VALUE;
+      double bBest = b.getBestLapTime() > 0 ? b.getBestLapTime() : Double.MAX_VALUE;
+      cmp = Double.compare(aBest, bBest);
+      if (cmp != 0) {
+        return cmp;
+      }
+    }
+
+    // 4c. Total time (if not already evaluated)
+    if (rankingMethod != RankingMethod.TOTAL_TIME
+        && tiebreakerMethod != TiebreakerMethod.TOTAL_TIME) {
+      double aTime = a.getTotalTime() > 0 ? a.getTotalTime() : Double.MAX_VALUE;
+      double bTime = b.getTotalTime() > 0 ? b.getTotalTime() : Double.MAX_VALUE;
+      cmp = Double.compare(aTime, bTime);
+      if (cmp != 0) {
+        return cmp;
+      }
+    }
+
     return 0;
   }
 

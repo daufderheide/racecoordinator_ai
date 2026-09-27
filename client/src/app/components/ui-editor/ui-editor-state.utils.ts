@@ -28,6 +28,13 @@ export function cloneSettings(s: Settings): Settings {
   clone.highlightRowOnLap = s.highlightRowOnLap ?? true;
   clone.highlightPracticeRowOnLap = s.highlightPracticeRowOnLap ?? true;
   clone.pageTransition = s.pageTransition || "slide";
+  clone.masterVolume = s.masterVolume ?? 100;
+  clone.urgentQueueTtl = s.urgentQueueTtl ?? 5000;
+  clone.calloutSpacing = s.calloutSpacing ?? 500;
+  clone.ttsVoice = s.ttsVoice ?? "";
+  clone.ttsRate = s.ttsRate ?? 1.0;
+  clone.ttsPitch = s.ttsPitch ?? 1.0;
+  clone.ttsVolume = s.ttsVolume ?? 100;
 
   // Theme fields
   clone.activeThemeId = s.activeThemeId;
@@ -40,6 +47,9 @@ export function cloneSettings(s: Settings): Settings {
   clone.practiceRacedayLayout = s.practiceRacedayLayout
     ? deepCopy(s.practiceRacedayLayout)
     : undefined;
+  clone.customExportTemplateBase64 = s.customExportTemplateBase64;
+  clone.customExportTemplateName = s.customExportTemplateName;
+  clone.customExportTemplatePath = s.customExportTemplatePath;
 
   return clone;
 }
@@ -95,11 +105,22 @@ export function areSettingsEqual(a: Settings, b: Settings): boolean {
     a.highlightRowOnLap === b.highlightRowOnLap &&
     a.highlightPracticeRowOnLap === b.highlightPracticeRowOnLap &&
     a.pageTransition === b.pageTransition &&
+    (a.masterVolume ?? 100) === (b.masterVolume ?? 100) &&
+    (a.urgentQueueTtl ?? 5000) === (b.urgentQueueTtl ?? 5000) &&
+    (a.calloutSpacing ?? 500) === (b.calloutSpacing ?? 500) &&
+    (a.ttsVoice ?? "") === (b.ttsVoice ?? "") &&
+    (a.ttsRate ?? 1.0) === (b.ttsRate ?? 1.0) &&
+    (a.ttsPitch ?? 1.0) === (b.ttsPitch ?? 1.0) &&
+    (a.ttsVolume ?? 100) === (b.ttsVolume ?? 100) &&
     a.activeThemeId === b.activeThemeId &&
     a.lampRedOn === b.lampRedOn &&
     a.lampRedDim === b.lampRedDim &&
     a.lampGreen === b.lampGreen &&
     a.fuelGaugeImageSet === b.fuelGaugeImageSet &&
+    (a.customExportTemplateBase64 || "") ===
+      (b.customExportTemplateBase64 || "") &&
+    (a.customExportTemplateName || "") === (b.customExportTemplateName || "") &&
+    (a.customExportTemplatePath || "") === (b.customExportTemplatePath || "") &&
     JSON.stringify(a.demoConfig) === JSON.stringify(b.demoConfig) &&
     JSON.stringify(a.racedayColumns) === JSON.stringify(b.racedayColumns) &&
     JSON.stringify(a.columnAnchors) === JSON.stringify(b.columnAnchors) &&
@@ -117,4 +138,15 @@ export function areSettingsEqual(a: Settings, b: Settings): boolean {
     JSON.stringify(a.practiceRacedayLayout) ===
       JSON.stringify(b.practiceRacedayLayout)
   );
+}
+
+export function executeCaptureState(comp: any): void {
+  comp.editingState.settings = cloneSettings(comp.editingState.settings);
+  if (comp.displayCustomUIs?.length) {
+    comp.editingState.customUIs = deepCopy(comp.displayCustomUIs);
+  }
+  if (comp.displayThemes?.length) {
+    comp.editingState.themes = deepCopy(comp.displayThemes);
+  }
+  comp.undoManager.captureState();
 }

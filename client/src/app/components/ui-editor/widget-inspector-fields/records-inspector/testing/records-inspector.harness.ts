@@ -1,4 +1,5 @@
 import { ComponentHarness } from "@angular/cdk/testing";
+import { CustomSelectHarness } from "@app/components/shared/custom-select/testing/custom-select.harness";
 
 import { RecordsInspectorHarnessBase } from "./records-inspector.harness.base";
 
@@ -8,9 +9,10 @@ export class RecordsInspectorHarness
 {
   static hostSelector = RecordsInspectorHarnessBase.hostSelector;
 
-  protected getSelects = this.locatorForAll(
-    RecordsInspectorHarnessBase.selectors.selects,
+  protected getCheckboxes = this.locatorForAll(
+    RecordsInspectorHarnessBase.selectors.checkboxes,
   );
+  protected getSelects = this.locatorForAll(CustomSelectHarness);
   protected getSliders = this.locatorForAll(
     RecordsInspectorHarnessBase.selectors.sliders,
   );
@@ -21,15 +23,66 @@ export class RecordsInspectorHarness
     RecordsInspectorHarnessBase.selectors.resetButtons,
   );
 
+  async getShowRaceRecordLap(): Promise<boolean> {
+    const checkboxes = await this.getCheckboxes();
+    return await checkboxes[0].getProperty("checked");
+  }
+
+  async setShowRaceRecordLap(val: boolean): Promise<void> {
+    const checkboxes = await this.getCheckboxes();
+    const current = await checkboxes[0].getProperty("checked");
+    if (current !== val) {
+      await checkboxes[0].click();
+    }
+  }
+
+  async getShowRaceRecordScore(): Promise<boolean> {
+    const checkboxes = await this.getCheckboxes();
+    return await checkboxes[1].getProperty("checked");
+  }
+
+  async setShowRaceRecordScore(val: boolean): Promise<void> {
+    const checkboxes = await this.getCheckboxes();
+    const current = await checkboxes[1].getProperty("checked");
+    if (current !== val) {
+      await checkboxes[1].click();
+    }
+  }
+
+  async getShowCurrentRaceBest(): Promise<boolean> {
+    const checkboxes = await this.getCheckboxes();
+    return await checkboxes[2].getProperty("checked");
+  }
+
+  async setShowCurrentRaceBest(val: boolean): Promise<void> {
+    const checkboxes = await this.getCheckboxes();
+    const current = await checkboxes[2].getProperty("checked");
+    if (current !== val) {
+      await checkboxes[2].click();
+    }
+  }
+
+  async getShowHeatBest(): Promise<boolean> {
+    const checkboxes = await this.getCheckboxes();
+    return await checkboxes[3].getProperty("checked");
+  }
+
+  async setShowHeatBest(val: boolean): Promise<void> {
+    const checkboxes = await this.getCheckboxes();
+    const current = await checkboxes[3].getProperty("checked");
+    if (current !== val) {
+      await checkboxes[3].click();
+    }
+  }
+
   async getHeaderFontFamily(): Promise<string> {
     const selects = await this.getSelects();
-    return await selects[0].getProperty("value");
+    return await selects[0].getValue();
   }
 
   async setHeaderFontFamily(val: string): Promise<void> {
     const selects = await this.getSelects();
-    await selects[0].sendKeys(val);
-    await selects[0].dispatchEvent("change");
+    await selects[0].selectOptionByValue(val);
   }
 
   async getHeaderFontSize(): Promise<number> {
@@ -64,13 +117,12 @@ export class RecordsInspectorHarness
 
   async getValueFontFamily(): Promise<string> {
     const selects = await this.getSelects();
-    return await selects[1].getProperty("value");
+    return await selects[1].getValue();
   }
 
   async setValueFontFamily(val: string): Promise<void> {
     const selects = await this.getSelects();
-    await selects[1].sendKeys(val);
-    await selects[1].dispatchEvent("change");
+    await selects[1].selectOptionByValue(val);
   }
 
   async getValueFontSize(): Promise<number> {
@@ -100,8 +152,6 @@ export class RecordsInspectorHarness
     const buttons = await this.getResetButtons();
     if (buttons.length > 1) {
       await buttons[1].click();
-    } else if (buttons.length > 0) {
-      await buttons[0].click();
     }
   }
 }

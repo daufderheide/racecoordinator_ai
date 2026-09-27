@@ -4,23 +4,46 @@ import {
   moveItemInArray,
 } from "@angular/cdk/drag-drop";
 import { CommonModule } from "@angular/common";
-import { Component, inject, input, output } from "@angular/core";
+import {
+  Component,
+  effect,
+  inject,
+  input,
+  OnInit,
+  output,
+} from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { RacedayLayoutUtils } from "@app/components/raceday/utils/raceday-layout.utils";
+import {
+  CustomOptionComponent,
+  CustomSelectComponent,
+} from "@app/components/shared/custom-select/custom-select.component";
 import { CustomUI } from "@app/models/custom-ui";
 import { Settings } from "@app/models/settings";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { FontService } from "@app/services/font.service";
 import { TranslationService } from "@app/services/translation.service";
 
+import {
+  LaneViewColumnGroup,
+  LaneViewColumnGroupHelper,
+} from "./lane-view-column-group.helper";
+
 @Component({
   standalone: true,
   selector: "app-lane-view-inspector",
   templateUrl: "./lane-view-inspector.component.html",
   styleUrls: ["../../ui-editor.component.css"],
-  imports: [CommonModule, FormsModule, TranslatePipe, DragDropModule],
+  imports: [
+    CommonModule,
+    FormsModule,
+    TranslatePipe,
+    DragDropModule,
+    CustomSelectComponent,
+    CustomOptionComponent,
+  ],
 })
-export class LaneViewInspectorComponent {
+export class LaneViewInspectorComponent implements OnInit {
   settings = input.required<any>();
   widget = input<any>();
   globalSettings = input<Settings>();
@@ -31,6 +54,148 @@ export class LaneViewInspectorComponent {
   change = output<void>();
   fontService = inject(FontService);
   private translationService = inject(TranslationService);
+
+  columnSearchTerm = "";
+  columnGroupExpandedStates = new Map<string, boolean>();
+  private hasLoadedExpandedStates = false;
+
+  constructor() {
+    effect(() => {
+      const s = this.settings();
+      const w = this.widget?.();
+      if (s || w) {
+        this.loadExpandedStatesFromSettings();
+      }
+    });
+  }
+
+  ngOnInit(): void {
+    this.loadExpandedStatesFromSettings();
+  }
+
+  loadExpandedStatesFromSettings(): void {
+    let s: any = null;
+    try {
+      s = this.settings() || this.widget?.()?.customSettings;
+    } catch {
+      s = null;
+    }
+    if (!s) return;
+    this.columnGroupExpandedStates.clear();
+    this.hasLoadedExpandedStates = true;
+
+    const collapsed = s.collapsedColumnGroups || s.columnGroupCollapsedStates;
+    if (Array.isArray(collapsed)) {
+      for (const groupId of collapsed) {
+        this.columnGroupExpandedStates.set(groupId, false);
+      }
+    } else if (collapsed && typeof collapsed === "object") {
+      for (const [groupId, isCollapsed] of Object.entries(collapsed)) {
+        this.columnGroupExpandedStates.set(groupId, !isCollapsed);
+      }
+    }
+
+    if (
+      s.columnGroupExpandedStates &&
+      typeof s.columnGroupExpandedStates === "object"
+    ) {
+      for (const [groupId, isExpanded] of Object.entries(
+        s.columnGroupExpandedStates,
+      )) {
+        this.columnGroupExpandedStates.set(groupId, !!isExpanded);
+      }
+    }
+  }
+
+  ensureExpandedStatesLoaded(): void {
+    if (!this.hasLoadedExpandedStates) {
+      this.loadExpandedStatesFromSettings();
+    }
+  }
+
+  getColumnGroups(): LaneViewColumnGroup[] {
+    this.ensureExpandedStatesLoaded();
+    return LaneViewColumnGroupHelper.buildColumnGroups(
+      this.unusedColumns,
+      this.columnSearchTerm,
+      this.columnGroupExpandedStates,
+      (key) => this.translationService.translate(key) || key,
+    );
+  }
+
+  toggleColumnGroup(groupId: string): void {
+    this.ensureExpandedStatesLoaded();
+    const current = this.columnGroupExpandedStates.has(groupId)
+      ? this.columnGroupExpandedStates.get(groupId)!
+      : true;
+    const newExpanded = !current;
+    this.columnGroupExpandedStates.set(groupId, newExpanded);
+    this.saveExpandedStatesToSettings();
+  }
+
+  private saveExpandedStatesToSettings(): void {
+    const s = this.settings?.() || this.widget?.()?.customSettings;
+    if (s) {
+      if (!s.collapsedColumnGroups) {
+        s.collapsedColumnGroups = {};
+      }
+      if (Array.isArray(s.collapsedColumnGroups)) {
+        const set = new Set<string>(s.collapsedColumnGroups);
+        for (const [
+          groupId,
+          isExpanded,
+        ] of this.columnGroupExpandedStates.entries()) {
+          if (!isExpanded) {
+            set.add(groupId);
+          } else {
+            set.delete(groupId);
+          }
+        }
+        s.collapsedColumnGroups = Array.from(set);
+      } else {
+        for (const [
+          groupId,
+          isExpanded,
+        ] of this.columnGroupExpandedStates.entries()) {
+          s.collapsedColumnGroups[groupId] = !isExpanded;
+        }
+      }
+    }
+    const widget = this.widget?.();
+    if (widget) {
+      if (!widget.customSettings) widget.customSettings = {};
+      if (s?.collapsedColumnGroups) {
+        widget.customSettings.collapsedColumnGroups = s.collapsedColumnGroups;
+      }
+    }
+    this.change.emit();
+  }
+
+  clearColumnSearch(): void {
+    this.columnSearchTerm = "";
+  }
+
+  get sortByStandings(): boolean {
+    return this.settings()?.sortByStandings ?? true;
+  }
+
+  set sortByStandings(value: boolean) {
+    if (this.settings()) {
+      this.settings().sortByStandings = value;
+      this.onSettingsChange();
+    }
+  }
+
+  get highlightRowOnLap(): boolean {
+    return this.settings()?.highlightRowOnLap ?? true;
+  }
+
+  set highlightRowOnLap(value: boolean) {
+    if (this.settings()) {
+      this.settings().highlightRowOnLap = value;
+      this.onSettingsChange();
+    }
+  }
 
   onSettingsChange() {
     this.change.emit();

@@ -35,7 +35,7 @@ export class RacedayLaneViewHarnessE2e implements RacedayLaneViewHarnessBase {
     const row = this.tableRows.nth(rowIndex);
     const select = row.locator(this.base.selectors.teammateSelect);
     if (await select.isVisible()) {
-      return await select.inputValue();
+      return await select.getAttribute("data-value");
     }
     return null;
   }
@@ -43,7 +43,8 @@ export class RacedayLaneViewHarnessE2e implements RacedayLaneViewHarnessBase {
   async setTeammateSelectValue(rowIndex: number, val: string): Promise<void> {
     const row = this.tableRows.nth(rowIndex);
     const select = row.locator(this.base.selectors.teammateSelect);
-    await select.selectOption(val);
+    await select.locator(".custom-select-trigger").click();
+    await select.locator(`.custom-select-option[data-value="${val}"]`).click();
   }
 
   async hasDriftIndicator(rowIndex: number): Promise<boolean> {

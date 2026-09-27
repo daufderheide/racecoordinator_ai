@@ -1,4 +1,20 @@
 <div class="dashboard-wrapper">
+  @if (isReviewingPastRace) {
+    <div class="review-past-race-banner no-print">
+      <div class="review-banner-content">
+        <span class="material-icons review-icon">history_toggle_off</span>
+        <span class="review-text">
+          {{
+            "RHD_REVIEW_BANNER_TITLE" | translate: { name: race?.name || "" }
+          }}
+        </span>
+      </div>
+      <button type="button" class="btn-exit-review" (click)="exitReview()">
+        <span class="material-icons btn-icon">close</span>
+        <span>{{ "RHD_BTN_EXIT_REVIEW" | translate }}</span>
+      </button>
+    </div>
+  }
   <div class="scrollable-container">
     <!-- Top Cyberpunk Title Bar -->
     <div class="header-bar">
@@ -8,6 +24,20 @@
           <h1 class="page-title">
             {{ "HR_TITLE" | translate: { heat: heat?.heatNumber } }}
           </h1>
+          @if (totalHeats > 0) {
+            <span class="heat-x-of-y">
+              {{
+                "HR_HEAT_X_OF_Y"
+                  | translate: { current: heat?.heatNumber, total: totalHeats }
+              }}
+            </span>
+          }
+          <div class="header-flag-container">
+            @if (currentFlagUrl) {
+              <img [src]="currentFlagUrl" class="header-flag" alt="Race Flag" />
+            }
+          </div>
+          <div class="header-time">{{ formattedTime }}</div>
         </div>
         <div class="cyberpunk-line"></div>
       </div>
@@ -15,12 +45,55 @@
         <div class="race-name-container">
           <span class="label-text">{{ "DR_LABEL_RACE" | translate }}</span>
           <span class="value-text">{{ race.name }}</span>
+          @if (raceStartTime) {
+            <span class="race-date-text"
+              >({{ raceStartTime | localDate: "short" }})</span
+            >
+          }
+          @if (heats.length > 1) {
+            <div class="heat-select-wrapper no-print">
+              <span class="heat-select-label"
+                >{{ "HR_SELECT_HEAT" | translate }}:</span
+              >
+              <app-custom-select
+                class="heat-selector"
+                [ngModel]="selectedHeatIndex"
+                (ngModelChange)="onHeatSelected($event)"
+              >
+                @for (
+                  h of heats;
+                  track h.objectId || $index;
+                  let idx = $index
+                ) {
+                  <app-custom-option [value]="idx">
+                    {{ "HR_TITLE" | translate: { heat: h.heatNumber } }}
+                  </app-custom-option>
+                }
+              </app-custom-select>
+            </div>
+          }
           <button
             class="export-pdf-btn no-print"
             (click)="exportPdf()"
             title="Export PDF"
           >
             <span class="material-icons">picture_as_pdf</span>
+          </button>
+          @if (canEdit) {
+            <button
+              class="export-pdf-btn no-print"
+              (click)="openAddLapSections()"
+              [title]="'HR_BTN_ADD_LAP_SECTIONS' | translate"
+            >
+              <span class="material-icons">more_time</span>
+            </button>
+          }
+          <button
+            class="export-pdf-btn no-print"
+            (click)="navigateToRaceResults()"
+            [title]="'HR_BTN_RACE_RESULTS' | translate"
+          >
+            <span class="material-icons">leaderboard</span>
           </button>
         </div>
       }
@@ -40,6 +113,7 @@
             [isGroupRace]="race?.group_options?.enabled ?? false"
             [groupNames]="race?.group_options?.names ?? []"
             (toggle)="toggleHeat(dh.heatDriver.objectId)"
+            (openTrajectory)="openHeatTrajectory($event)"
           ></app-heat-driver-expander>
         }
       } @else {
@@ -66,8 +140,6 @@
         [maxX]="maxX"
         [maxY]="maxY"
         [stacked]="true"
-        titleKey="HR_TITLE"
-        [titleParams]="{ heat: heat?.heatNumber }"
         leftTitleKey="HR_RANKINGS_HEADER"
         rightTitleKey="HR_LAP_TIMES_HEADER"
         leftXAxisKey="HR_X_AXIS"
@@ -95,3 +167,27 @@
   (cancel)="onPdfExportCancel()"
 >
 </app-pdf-export-dialog>
+
+<app-ghost-trajectory-dialog
+  [visible]="showTrajectoryModal"
+  [driverAName]="trajectoryDriverAName"
+  [driverALapTimes]="trajectoryDriverALapTimes"
+  [referenceOptions]="trajectoryReferenceOptions"
+  [initialReferenceId]="trajectoryInitialReferenceId"
+  [benchmarkLapTime]="trajectoryBenchmarkLapTime"
+  (close)="closeTrajectoryDialog()"
+/>
+
+@if (showAddLapSectionsDialog && race?.track) {
+  <app-add-lap-sections-dialog
+    [visible]="showAddLapSectionsDialog"
+    [isMenuMode]="true"
+    [heats]="heats"
+    [track]="race?.track"
+    [numTrackSections]="race?.track?.num_track_sections || 100"
+    [currentHeatNumber]="heat?.heatNumber || 1"
+    (confirm)="onAddLapSectionsConfirm($event)"
+    (cancel)="showAddLapSectionsDialog = false"
+  >
+  </app-add-lap-sections-dialog>
+}

@@ -26,7 +26,6 @@ test.describe("About Dialog", () => {
     });
 
     // 6. Extra stabilization wait
-    await page.waitForTimeout(100);
   });
 
   async function openAboutDialog(page: Page): Promise<AboutDialogHarnessE2e> {
@@ -57,7 +56,6 @@ test.describe("About Dialog", () => {
   test("should display info tab on open", async ({ page }) => {
     await openAboutDialog(page);
 
-    await page.waitForTimeout(300);
     await expect(page).toHaveScreenshot("about-dialog.png", {
       mask: [page.locator(".quote-container"), page.locator(".spinner")],
       maxDiffPixelRatio: 0.1,
@@ -74,7 +72,6 @@ test.describe("About Dialog", () => {
       expect(await harness.isCharityTabVisible()).toBe(true);
     }).toPass();
 
-    await page.waitForTimeout(300);
     await expect(page).toHaveScreenshot("about-dialog-charity-tab.png", {
       mask: [page.locator(".quote-container"), page.locator(".spinner")],
       maxDiffPixelRatio: 0.1,
@@ -102,7 +99,6 @@ test.describe("About Dialog", () => {
       }
     });
 
-    await page.waitForTimeout(300);
     await expect(page).toHaveScreenshot("about-dialog-credits-tab.png", {
       mask: [page.locator(".quote-container"), page.locator(".spinner")],
       maxDiffPixelRatio: 0.1,

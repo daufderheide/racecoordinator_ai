@@ -71,7 +71,6 @@ test.describe("Image Inspector Visuals", () => {
     await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
     await TestSetupHelper.waitForImagesLoaded(inspectorPanel);
     await page.mouse.move(0, 0);
-    await page.waitForTimeout(500);
 
     // Take screenshot of the inspector panel
     await expect(inspectorPanel).toHaveScreenshot(

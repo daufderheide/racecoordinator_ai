@@ -11,6 +11,7 @@ describe("WIDGET_REGISTRY", () => {
     expect(keys).toContain("lane-view");
     expect(keys).toContain("on-deck");
     expect(keys).toContain("next-heat");
+    expect(keys).toContain("heat-list");
     expect(keys).toContain("group-leaderboard");
     expect(keys).toContain("heat-info");
     expect(keys).toContain("race-name");
@@ -37,6 +38,7 @@ describe("WIDGET_REGISTRY", () => {
     expect(keys).toContain("action-open-prediction-results");
     expect(keys).toContain("action-master-power-on");
     expect(keys).toContain("action-master-power-off");
+    expect(keys).toContain("action-back");
   });
 
   it("should generate valid default settings for every registered widget", () => {
@@ -63,5 +65,35 @@ describe("WIDGET_REGISTRY", () => {
     const actionSettings =
       WIDGET_REGISTRY["action-start-resume"].defaultSettings!();
     expect(actionSettings["fontSize"]).toBe(24);
+
+    const recordsSettings = WIDGET_REGISTRY["records"].defaultSettings!();
+    expect(recordsSettings["showRaceRecordLap"]).toBe(true);
+    expect(recordsSettings["showRaceRecordScore"]).toBe(true);
+    expect(recordsSettings["showCurrentRaceBest"]).toBe(true);
+    expect(recordsSettings["showHeatBest"]).toBe(true);
+
+    const heatListSettings = WIDGET_REGISTRY["heat-list"].defaultSettings!();
+    expect(heatListSettings["showHeader"]).toBe(true);
+    expect(heatListSettings["autoScrollToCurrent"]).toBe(true);
+    expect(heatListSettings["highlightCurrentHeat"]).toBe(true);
+    expect(heatListSettings["scaleToWindow"]).toBe(false);
+    expect(heatListSettings["heatColumns"]).toBe("auto");
+    expect(heatListSettings["laneColumns"]).toBe("auto");
+    expect(heatListSettings["heatNumberFontSize"]).toBe(14);
+    expect(heatListSettings["laneFontSize"]).toBe(12);
+    expect(heatListSettings["showCurrentHeatFlag"]).toBe(true);
+    expect(heatListSettings["showCurrentHeatTime"]).toBe(true);
+    expect(heatListSettings["showCompletedSummary"]).toBe(true);
+    expect(heatListSettings["showActiveSummary"]).toBe(true);
+    expect(heatListSettings["summaryShowPosition"]).toBe(true);
+    expect(heatListSettings["summaryShowDriver"]).toBe(true);
+    expect(heatListSettings["summaryShowLaps"]).toBe(true);
+    expect(heatListSettings["summaryShowBestLap"]).toBe(true);
+    expect(heatListSettings["summaryShowGap"]).toBe(false);
+    expect(heatListSettings["summaryShowAverageLap"]).toBe(false);
+    expect(heatListSettings["summaryShowMedianLap"]).toBe(false);
+    expect(heatListSettings["summaryLapDecimalPlaces"]).toBe("auto");
+    expect(heatListSettings["summaryTimeDecimalPlaces"]).toBe(3);
+    expect(heatListSettings["summaryUseLaneColors"]).toBe(true);
   });
 });

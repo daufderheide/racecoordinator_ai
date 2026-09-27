@@ -77,18 +77,18 @@ import { TranslatePipe } from "@app/pipes/translate.pipe";
         font-weight: bold;
         font-size: 1em;
       }
-      .btn-cancel {
+      .btn-confirm {
         background: #444;
         color: #fff;
       }
-      .btn-cancel:hover {
+      .btn-confirm:hover {
         background: #555;
       }
-      .btn-confirm {
+      .btn-cancel {
         background: #ffa500;
         color: #000;
       }
-      .btn-confirm:hover {
+      .btn-cancel:hover {
         background: #ffb733;
       }
     `,

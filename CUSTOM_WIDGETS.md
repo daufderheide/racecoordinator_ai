@@ -27,28 +27,41 @@ To enable custom widgets:
 6. The app will immediately scan all subdirectories, compile the widgets, and register them into the widget palette.
 
 > [!TIP]
-> **Starter Widget Examples**: If your folder is empty or you want reference examples, click the **Update Sample Widgets** button in the UI Editor. Race Coordinator AI will automatically generate ready-to-use sample widgets in your selected folder:
-> - `sample-telemetry-gauge/`: Live speedometer and telemetry gauge with configurable colors and thresholds.
-> - `sample-lap-delta/`: Real-time lap time deltas and intervals between race leaders.
-> - `sample-sponsor-banner/`: Animated sponsor ticker and announcement marquee.
-> - `sample-detailed-leaderboard/`: Rich leaderboard with configurable columns and row limits.
+> **Starter Widget Examples**: If your folder is empty or you want reference examples, click the **Update Sample Widgets** button in the UI Editor. Race Coordinator AI will automatically generate ready-to-use sample widgets in a dedicated `sample/` folder within your selected custom directory:
+> - `sample/sample-telemetry-gauge/`: Live speedometer and telemetry gauge with configurable colors and thresholds.
+> - `sample/sample-lap-delta/`: Real-time lap time deltas and intervals between race leaders.
+> - `sample/sample-sponsor-banner/`: Animated sponsor ticker and announcement marquee.
+> - `sample/sample-detailed-leaderboard/`: Rich leaderboard with configurable columns and row limits.
 
 ---
 
-## Widget Structure & Files
+## Widget Structure & Groups
 
-Each custom widget lives in its own dedicated subfolder inside your selected Custom Widgets directory:
+Race Coordinator AI automatically organizes your custom widgets into groups and sub-groups within the Widget Toolbox based on your folder structure:
+
+- **Root Folder**: You select a top-level folder for custom widgets.
+- **Groups**: Each folder directly under the root folder becomes a high-level **Group** in the Widget Toolbox (e.g. `sample/`, `my-club-pack/`).
+- **Sub-Groups**: Any folder inside a group that contains further widget directories becomes a **Sub-Group** (e.g. `sample/telemetry/`).
+- **Group Root Widgets**: Widget folders located directly inside a group folder appear at the root of that group.
+- **Custom Root**: Any widget folders placed directly in the top-level root folder appear under a dedicated **Custom Root** group.
 
 ```text
-MyCustomWidgets/
-├── my-telemetry-gauge/
-│   ├── widget.json       # Required: Manifest & schema definition
-│   ├── widget.html       # Required: Angular template
-│   ├── widget.css        # Optional: Scoped CSS styling
-│   └── widget.ts         # Optional: TypeScript component class
-└── my-sponsor-banner/
-    ├── widget.json
-    └── widget.html
+MyCustomWidgetsRoot/
+├── sample/                                    # Group: "sample"
+│   ├── sample-telemetry-gauge/                # Widget at root of "sample" group
+│   │   ├── widget.json                        # Required: Manifest & schema definition
+│   │   ├── widget.html                        # Required: Angular template
+│   │   ├── widget.css                         # Optional: Scoped CSS styling
+│   │   └── widget.ts                          # Optional: TypeScript component class
+│   ├── sample-lap-delta/                      # Widget at root of "sample" group
+│   └── telemetry/                             # Sub-Group: "telemetry" under "sample"
+│       └── custom-tach/                       # Widget inside "telemetry" sub-group
+│           ├── widget.json
+│           └── widget.html
+└── my-pack/                                   # Group: "my-pack"
+    └── my-sponsor-banner/                     # Widget at root of "my-pack" group
+        ├── widget.json
+        └── widget.html
 ```
 
 ### 1. `widget.json` (Manifest)
@@ -113,7 +126,7 @@ The manifest defines widget metadata, default dimensions, and custom property sc
 - `number`: Numeric input with optional `min`, `max`, and `step`.
 - `string`: Text input field.
 - `color`: Interactive color picker with hex code support.
-- `select`: Dropdown menu with defined `{ label, value }` options.
+- `select`: Dropdown menu with defined `{ label, value }` options. Any field (e.g. `select`) can also include optional `colorKey` and `colorDefault` properties to render an inline color picker directly adjacent to the control.
 
 ---
 
@@ -146,13 +159,15 @@ An array of sorted participant standings. Each object in `driverStandings` conta
   rank: number;              // 1-based position: 1, 2, 3, etc.
   rankValue: number;         // Current score (lap count or total time)
   lapCount: number;          // Number of laps completed
-  total_laps: number;        // Alias for lapCount
-  total_time: number;        // Elapsed race time in seconds (e.g. 112.13)
-  best_lap_time: number;     // Fastest lap time in seconds (e.g. 4.125)
-  last_lap_time: number;     // Most recent lap time in seconds (e.g. 4.301)
-  avg_lap_time: number;      // Average lap time in seconds (e.g. 4.250)
-  gap_leader: number;        // Gap to current race leader in seconds
-  gap_position: number;      // Gap to preceding driver position
+  totalLaps: number;         // Total completed laps
+  totalTime: number;         // Elapsed race time in seconds (e.g. 112.13)
+  bestLapTime: number;       // Fastest lap time in seconds (e.g. 4.125)
+  lastLapTime: number;       // Most recent lap time in seconds (e.g. 4.301)
+  averageLapTime: number;    // Average lap time in seconds (e.g. 4.250)
+  medianLapTime: number;     // Median lap time in seconds (e.g. 4.210)
+  gapLeader: number;         // Gap to current race leader in seconds
+  gapPosition: number;       // Gap to preceding driver position in seconds
+  lane: number;              // Assigned lane number (if heat driver)
   driver: Driver;            // Full driver domain object (id, avatar, car, etc.)
 }
 ```
@@ -161,7 +176,7 @@ An array of sorted participant standings. Each object in `driverStandings` conta
 ```html
 <div class="leader-banner" *ngIf="driverStandings.length > 0">
   <span>Leader: {{ driverStandings[0].name }}</span>
-  <span>Best Lap: {{ driverStandings[0].best_lap_time.toFixed(3) }}s</span>
+  <span>Best Lap: {{ driverStandings[0].bestLapTime ? driverStandings[0].bestLapTime.toFixed(3) + 's' : '--.---' }}</span>
 </div>
 
 <table class="standings-table">
@@ -169,13 +184,22 @@ An array of sorted participant standings. Each object in `driverStandings` conta
     <td>#{{ driver.rank }}</td>
     <td>{{ driver.name }}</td>
     <td>{{ driver.lapCount }} Laps</td>
-    <td>{{ driver.best_lap_time ? driver.best_lap_time.toFixed(3) + 's' : '--.---' }}</td>
+    <td>{{ driver.bestLapTime ? driver.bestLapTime.toFixed(3) + 's' : '--.---' }}</td>
   </tr>
 </table>
 ```
 
 #### `heatDrivers`
-An array of drivers currently on track in the active heat, including their assigned lanes and live status.
+An array of drivers currently on track in the active heat, including their assigned lanes and live heat telemetry.
+
+#### Unified Template Interpolation
+You can evaluate template strings containing dynamic variables using `{variable.path}` or `${variable.path}` syntax (matching the unified bindings available in Excel reports and Audio TTS):
+```typescript
+const callout = this.interpolate(
+  "Leader: {driver.name}, Fast Lap: {driver.bestLapTime}",
+  { driver: this.driverStandings[0] }
+);
+```
 
 ---
 

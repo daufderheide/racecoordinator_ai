@@ -1,6 +1,7 @@
 import { ICustomRotation } from "@app/proto/antigravity";
 import { TranslationService } from "@app/services/translation.service";
 import { deepCopy } from "@app/utils/clone.utils";
+import { saveFileAs } from "@app/utils/file-download.utils";
 import {
   checkLaneEquality,
   LaneEqualityResult,
@@ -103,19 +104,17 @@ export function areCustomRotationStatesEqual(
   });
 }
 
-export function downloadJsonFile(fileName: string, content: string): void {
-  const blob = new Blob([content], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.style.display = "none";
-  a.href = url;
-  a.download = fileName;
-  document.body.appendChild(a);
-  a.click();
-  setTimeout(() => {
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  }, 5000);
+export function downloadJsonFile(
+  fileName: string,
+  content: string,
+): Promise<boolean> {
+  return saveFileAs({
+    suggestedName: fileName,
+    data: content,
+    mimeType: "application/json",
+    description: "JSON Files",
+    extension: ".json",
+  });
 }
 
 export function buildSingleRotationExportJson(

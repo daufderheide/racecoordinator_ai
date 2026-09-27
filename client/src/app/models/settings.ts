@@ -18,6 +18,7 @@ export type WidgetType =
   | "qr"
   | "flag"
   | "timer"
+  | "countdown"
   | "records"
   | "leaderboard"
   | "group-leaderboard"
@@ -26,6 +27,7 @@ export type WidgetType =
   | "lane-view"
   | "on-deck"
   | "next-heat"
+  | "heat-list"
   | "image"
   | "action-start-resume"
   | "action-pause"
@@ -45,6 +47,7 @@ export type WidgetType =
   | "action-open-prediction-results"
   | "action-master-power-on"
   | "action-master-power-off"
+  | "action-back"
   | `custom:${string}`
   | (string & {});
 
@@ -65,19 +68,28 @@ export interface AbsoluteWidgetNode {
   customSettings?: Record<string, any>;
 }
 
+export type LayoutScaleMode = "letterbox" | "stretch";
+
 export interface LayoutConfig {
   widgets: AbsoluteWidgetNode[];
   baseWidth?: number;
   baseHeight?: number;
+  scaleMode?: LayoutScaleMode;
+  aspectRatio?: string;
+  collapsedToolboxGroups?: Record<string, boolean> | string[];
+  collapsedToolboxSubgroups?: Record<string, boolean> | string[];
+  toolboxGroupExpandedStates?: Record<string, boolean>;
+  toolboxSubgroupExpandedStates?: Record<string, boolean>;
 }
 
 export class Settings {
   static readonly DEFAULT_COLUMNS = [
     "driver.nickname",
-    "imageset_fuel-gauge-builtin",
     "lapCount",
     "lastLapTime",
+    "averageLapTime",
     "gapLeader",
+    "ghostPacingLeaderAvg",
   ];
 
   static readonly DEFAULT_PRACTICE_COLUMNS = [
@@ -103,6 +115,13 @@ export class Settings {
   clientLogLevel: string = "INFO";
   serverLogLevel: string = "INFO";
   exportPdfBackgrounds: boolean = true;
+  masterVolume: number = 100;
+  urgentQueueTtl: number = 5000;
+  calloutSpacing: number = 500;
+  ttsVoice: string = "";
+  ttsRate: number = 1.0;
+  ttsPitch: number = 1.0;
+  ttsVolume: number = 100;
 
   racedaySetupWalkthroughSeen: boolean = false;
   trackManagerHelpShown: boolean = false;
@@ -137,6 +156,8 @@ export class Settings {
   flagPenalty?: string;
 
   customExportTemplateBase64?: string;
+  customExportTemplateName?: string;
+  customExportTemplatePath?: string;
 
   // Theme system
   activeThemeId?: string; // entity_id of the active theme (server-side)
@@ -175,8 +196,7 @@ export class Settings {
     },
     lastLapTime: {
       [AnchorPoint.CenterCenter]: "lastLapTime",
-      [AnchorPoint.TopRight]: "bestLapTime",
-      [AnchorPoint.BottomRight]: "averageLapTime",
+      [AnchorPoint.BottomRight]: "bestLapTime",
     },
     gapLeader: {
       [AnchorPoint.CenterCenter]: "gapLeader",
@@ -186,7 +206,10 @@ export class Settings {
   columnVisibility: { [columnKey: string]: ColumnVisibility } = {
     "imageset_fuel-gauge-builtin": ColumnVisibility.FuelRaceOnly,
   };
-  columnWidths: { [columnKey: string]: number } = {};
+  columnWidths: { [columnKey: string]: number } = {
+    ghostPacingLeaderAvg: 200,
+    averageLapTime: 310,
+  };
 
   racedayLayout?: LayoutConfig;
 
@@ -308,6 +331,8 @@ export class Settings {
           timeFontFamily: "",
           timeFontSize: 100,
           timeTextColor: "",
+          timeDisplayFormat: "dynamic",
+          timeSubsecondMode: "threshold",
           timeSubsecondThreshold: 10,
           timeSubsecondDecimals: 2,
         },
@@ -321,6 +346,12 @@ export class Settings {
         height: 239,
         zIndex: 100,
         scaleMode: "auto",
+        customSettings: {
+          showRaceRecordLap: true,
+          showRaceRecordScore: true,
+          showCurrentRaceBest: true,
+          showHeatBest: true,
+        },
       },
       {
         id: "widget-leaderboard",
@@ -339,10 +370,63 @@ export class Settings {
         y: 329,
         width: 1920,
         height: 751,
-        zIndex: 100,
+        zIndex: 111,
         scaleMode: "auto",
+        fontFamily: "",
+        textColor: "",
+        backgroundColor: "",
+        fontSize: 24,
+        textScaleFactor: 1,
+        customSettings: {
+          isVertical: false,
+          sortByStandings: true,
+          highlightRowOnLap: true,
+          timeDecimalPlaces: 3,
+          lapDecimalPlaces: 2,
+          columnFontFamily: "",
+          columnFontSize: 24,
+          columnTextColor: "",
+          dataFontFamily: "",
+          dataFontSize: 54,
+          dataTextColor: "",
+          insetTimeDecimalPlaces: 3,
+          insetLapDecimalPlaces: 2,
+          insetFontFamily: "",
+          insetFontSize: 24,
+          insetTextColor: "",
+          columnWidths: {
+            ghostPacingLeaderAvg: 200,
+            averageLapTime: 310,
+          },
+        },
+      },
+      {
+        id: "widget-countdown",
+        widgetType: "countdown",
+        x: 460,
+        y: 390,
+        width: 1000,
+        height: 250,
+        zIndex: 2000,
+        scaleMode: "auto",
+        customSettings: {
+          orientation: "horizontal",
+          lampScale: 1.0,
+          blurArea: "fullscreen",
+          blurAmount: 50,
+          lampSizingMode: "custom",
+          previewLampCount: 5,
+          glowEffect: true,
+          glowOverlap: 100,
+          glowRedOverlap: 100,
+          glowGreenOverlap: 100,
+        },
       },
     ],
+    baseWidth: 1920,
+    baseHeight: 1080,
+    aspectRatio: "current",
+    scaleMode: "stretch",
   };
 
   static readonly DEFAULT_PRACTICE_LAYOUT: LayoutConfig = {
@@ -443,6 +527,8 @@ export class Settings {
         textScaleFactor: 1,
         customSettings: {
           isVertical: true,
+          sortByStandings: true,
+          highlightRowOnLap: true,
           timeDecimalPlaces: 3,
           lapDecimalPlaces: 0,
           columnFontFamily: "",
@@ -458,8 +544,32 @@ export class Settings {
           insetTextColor: "",
         },
       },
+      {
+        id: "widget-countdown",
+        widgetType: "countdown",
+        x: 364,
+        y: 324,
+        width: 1000,
+        height: 250,
+        zIndex: 2000,
+        scaleMode: "auto",
+        customSettings: {
+          orientation: "horizontal",
+          lampScale: 1.0,
+          blurArea: "fullscreen",
+          blurAmount: 50,
+          lampSizingMode: "custom",
+          previewLampCount: 5,
+          glowEffect: true,
+          glowOverlap: 100,
+          glowRedOverlap: 100,
+          glowGreenOverlap: 100,
+        },
+      },
     ],
     baseWidth: 1728,
     baseHeight: 906,
+    aspectRatio: "current",
+    scaleMode: "stretch",
   };
 }

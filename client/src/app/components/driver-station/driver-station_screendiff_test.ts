@@ -103,8 +103,6 @@ test.describe("Driver Station Visuals", () => {
 
     await TestSetupHelper.mockRaceData(page, raceData);
 
-    await page.waitForTimeout(500);
-
     // Verify visual snapshot
     await expect(page).toHaveScreenshot("driver-station-default.png", {
       maxDiffPixelRatio: 0.1,
@@ -160,8 +158,6 @@ test.describe("Driver Station Visuals", () => {
     };
 
     await TestSetupHelper.mockRaceData(page, raceData);
-
-    await page.waitForTimeout(500);
 
     await expect(page).toHaveScreenshot("driver-station-empty.png", {
       maxDiffPixelRatio: 0.1,
@@ -250,8 +246,6 @@ test.describe("Driver Station Visuals", () => {
     };
 
     await TestSetupHelper.mockRaceData(page, raceData);
-
-    await page.waitForTimeout(500);
 
     await expect(page).toHaveScreenshot("driver-station-fuel.png", {
       maxDiffPixelRatio: 0.1,
@@ -342,8 +336,6 @@ test.describe("Driver Station Visuals", () => {
     };
 
     await TestSetupHelper.mockRaceData(page, raceData);
-
-    await page.waitForTimeout(500);
 
     await expect(page).toHaveScreenshot("driver-station-team.png", {
       maxDiffPixelRatio: 0.1,

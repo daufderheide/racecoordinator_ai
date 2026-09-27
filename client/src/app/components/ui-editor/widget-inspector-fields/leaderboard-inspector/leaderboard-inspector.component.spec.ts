@@ -73,15 +73,24 @@ describe("LeaderboardInspectorComponent", () => {
   });
 
   it("should trigger loadLocalFonts on font service when select element is focused", () => {
-    const selectEl = fixture.nativeElement.querySelectorAll("select")[1];
+    const selectEl =
+      fixture.nativeElement.querySelectorAll("app-custom-select")[1];
     selectEl.dispatchEvent(new Event("focus"));
     expect(fontServiceSpy.loadLocalFonts).toHaveBeenCalled();
   });
 
   it("should bind decimalPlaces and emit change on selection", () => {
-    const selectEl = fixture.nativeElement.querySelectorAll("select")[0];
-    selectEl.value = "2";
-    selectEl.dispatchEvent(new Event("change"));
+    const selectEl =
+      fixture.nativeElement.querySelectorAll("app-custom-select")[0];
+    const trigger = selectEl.querySelector(
+      ".custom-select-trigger",
+    ) as HTMLElement;
+    trigger.click();
+    fixture.detectChanges();
+    const opt = selectEl.querySelector(
+      '.custom-select-option[data-value="2"]',
+    ) as HTMLElement;
+    opt?.click();
     fixture.detectChanges();
     expect(Number(component.settings().decimalPlaces)).toBe(2);
     expect(changeSpy).toHaveBeenCalled();

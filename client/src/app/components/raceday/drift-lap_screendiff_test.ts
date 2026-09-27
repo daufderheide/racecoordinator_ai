@@ -103,7 +103,6 @@ test.describe("Drift Lap Indicator Visuals", () => {
     await TestSetupHelper.mockRaceData(page, raceData);
 
     // Ensure data is applied and UI settles
-    await page.waitForTimeout(500);
 
     // Explicitly wait for the drift indicator to be ready in the DOM
     const driftBadge1 = page.locator(".drift-indicator").first();

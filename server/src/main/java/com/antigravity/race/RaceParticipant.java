@@ -233,6 +233,21 @@ public class RaceParticipant extends ServerToClientObject
     return allScoringLaps;
   }
 
+  public double getConsistencyScore() {
+    if (allScoringLaps == null || allScoringLaps.isEmpty()) {
+      return 0.0;
+    }
+    if (allScoringLaps.size() == 1) {
+      return 100.0;
+    }
+    double avg = getAverageLapTime();
+    if (avg <= 0.0) {
+      return 0.0;
+    }
+    double std = RaceStatisticsUtils.calculateStdDev(allScoringLaps, avg);
+    return Math.max(0.0, 1.0 - (std / avg)) * 100.0;
+  }
+
   @Override
   public int getPhysicalLapCount() {
     if (allScoringLaps == null) {
@@ -415,7 +430,10 @@ public class RaceParticipant extends ServerToClientObject
       return driver.getEntityId();
     }
     if (team != null && team.getEntityId() != null && !team.getEntityId().isEmpty()) {
-      return team.getEntityId();
+      return "t_" + team.getEntityId();
+    }
+    if (team != null && team.getName() != null && !team.getName().isEmpty()) {
+      return "t_" + team.getName();
     }
     if (getObjectId() != null) {
       return getObjectId();

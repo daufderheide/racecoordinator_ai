@@ -4,11 +4,11 @@
 >
   <!-- Sleek Premium Title Bar -->
   <app-editor-title
-    [titleKey]="
-      internalAssetId ? 'AM_EDIT_CUSTOM_ROTATION' : 'AM_NEW_CUSTOM_ROTATION'
-    "
+    titleKey="AM_ROTATION_EDITOR"
+    [itemName]="internalAssetName"
     [undoManager]="undoManager"
     [showAdd]="true"
+    [showCopy]="true"
     [showRegenerate]="false"
     [showLaneCheck]="false"
     [showImport]="true"
@@ -17,8 +17,11 @@
     [exportTitleKey]="'AM_BTN_EXPORT_ROTATION'"
     [isSaving]="isSaving"
     (add)="addRotation()"
+    (copy)="saveAsNew()"
     (import)="fileInput.click()"
     (export)="exportRotations()"
+    [showZoom]="true"
+    [(zoomLevel)]="zoomLevel"
   >
   </app-editor-title>
 
@@ -30,28 +33,39 @@
         <div class="input-group" [class.invalid]="isNameInvalid">
           <label>{{ "AM_LABEL_ASSET_NAME" | translate }}</label>
           <input
+            id="custom-rotation-name-input"
             type="text"
             [(ngModel)]="internalAssetName"
+            [appAutoSelectDefault]="defaultRotationName"
             (ngModelChange)="onInputChange()"
             (focus)="onInputFocus()"
             (blur)="onInputBlur()"
             [placeholder]="'AM_PLACEHOLDER_ASSET_NAME' | translate"
+            autocomplete="off"
+            data-dashlane-ignore="true"
+            data-1p-ignore="true"
+            data-lpignore="true"
+            data-bwignore="true"
+            data-form-type="other"
           />
         </div>
         <div class="input-group">
           <label>{{ "RM_COL_TRACK" | translate }}</label>
-          <select [(ngModel)]="selectedTrackId" (change)="onTrackChange()">
+          <app-custom-select
+            [(ngModel)]="selectedTrackId"
+            (change)="onTrackChange()"
+          >
             @for (
               track of tracks;
               track $any(track).entity_id || track.model?.entityId
             ) {
-              <option
+              <app-custom-option
                 [value]="($any(track).entity_id || track.model?.entityId) ?? ''"
               >
                 {{ track.name }}
-              </option>
+              </app-custom-option>
             }
-          </select>
+          </app-custom-select>
         </div>
       </div>
 
@@ -253,6 +267,7 @@
               <div class="expander-body">
                 <div
                   class="heats-grid"
+                  [style.zoom]="zoomLevel / 100"
                   cdkDropList
                   cdkDropListOrientation="horizontal"
                   [cdkDropListData]="rotation.heats || []"
@@ -572,7 +587,7 @@
   <app-confirmation-modal
     [visible]="showDiscardConfirm"
     title="UE_CONFIRM_DISCARD_TITLE"
-    message="UE_CONFIRM_DISCARD_MESSAGE"
+    [message]="discardMessage"
     (confirm)="onConfirmDiscard()"
     (cancel)="onCancelDiscard()"
   >

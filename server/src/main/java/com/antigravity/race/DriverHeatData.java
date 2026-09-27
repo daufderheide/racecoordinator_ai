@@ -89,7 +89,7 @@ public class DriverHeatData extends ServerToClientObject
   private double bestLapTime = 0.0f;
   private double reactionTime = -1.0;
   private double pendingLapTime = 0.0f;
-  private double initialFuelLevel = 0.0;
+  private double initialFuelLevel = 100.0;
   private double gapLeader = 0.0;
   private double gapPosition = 0.0;
   private double gapLeaderF1 = 0.0;
@@ -110,6 +110,7 @@ public class DriverHeatData extends ServerToClientObject
   private boolean hasDriftTime = false;
   private int lane = 0;
   private int lapsLed = 0;
+  private int trackCalls = 0;
 
   public int getLapsLed() {
     return lapsLed;
@@ -117,6 +118,18 @@ public class DriverHeatData extends ServerToClientObject
 
   public void setLapsLed(int lapsLed) {
     this.lapsLed = lapsLed;
+  }
+
+  public int getTrackCalls() {
+    return trackCalls;
+  }
+
+  public void setTrackCalls(int trackCalls) {
+    this.trackCalls = trackCalls;
+  }
+
+  public void incrementTrackCalls() {
+    this.trackCalls++;
   }
 
   public int getLane() {
@@ -295,6 +308,11 @@ public class DriverHeatData extends ServerToClientObject
     this.bestLapTime = bestLapTime;
   }
 
+  public void recalculateBestLapTime() {
+    this.bestLapTime = 0.0;
+    getBestLapTime();
+  }
+
   public double getReactionTime() {
     return reactionTime;
   }
@@ -309,6 +327,63 @@ public class DriverHeatData extends ServerToClientObject
       sum += lap.getLapTime();
     }
     return sum;
+  }
+
+  public List<Double> getValidLapTimes() {
+    List<Double> valid = new ArrayList<>();
+    if (laps != null) {
+      for (LapData lap : laps) {
+        if (lap != null && lap.getLapTime() > 0) {
+          valid.add(lap.getLapTime());
+        }
+      }
+    }
+    return valid;
+  }
+
+  public double getStandardDeviation() {
+    List<Double> valid = getValidLapTimes();
+    if (valid.size() <= 1) {
+      return 0.0;
+    }
+    return RaceStatisticsUtils.calculateStdDev(valid, getAverageLapTime());
+  }
+
+  public double getConsistencyScore() {
+    List<Double> valid = getValidLapTimes();
+    if (valid.isEmpty()) {
+      return 0.0;
+    }
+    if (valid.size() == 1) {
+      return 100.0;
+    }
+    double avg = getAverageLapTime();
+    if (avg <= 0.0) {
+      return 0.0;
+    }
+    double std = getStandardDeviation();
+    double cons = Math.max(0.0, 1.0 - (std / avg));
+    return cons * 100.0;
+  }
+
+  public double getAverageTop5() {
+    return RaceStatisticsUtils.calculateAverageTopN(getValidLapTimes(), 5);
+  }
+
+  public double getAverageTop10() {
+    return RaceStatisticsUtils.calculateAverageTopN(getValidLapTimes(), 10);
+  }
+
+  public double getAverageTop15() {
+    return RaceStatisticsUtils.calculateAverageTopN(getValidLapTimes(), 15);
+  }
+
+  public double getTop2Consecutive() {
+    return RaceStatisticsUtils.calculateTopKConsecutive(getValidLapTimes(), 2);
+  }
+
+  public double getTop3Consecutive() {
+    return RaceStatisticsUtils.calculateTopKConsecutive(getValidLapTimes(), 3);
   }
 
   public void reset() {
@@ -328,6 +403,7 @@ public class DriverHeatData extends ServerToClientObject
     penaltyLaps = 0.0;
     hasDriftTime = false;
     isFinished = false;
+    trackCalls = 0;
   }
 
   public void resetForFalseStart() {
@@ -524,16 +600,13 @@ public class DriverHeatData extends ServerToClientObject
   @Override
   @com.fasterxml.jackson.annotation.JsonIgnore
   public String getParticipantId() {
+    if (driver != null) {
+      return driver.getParticipantId();
+    }
     if (actualDriver != null
         && actualDriver.getEntityId() != null
         && !actualDriver.getEntityId().isEmpty()) {
       return actualDriver.getEntityId();
-    }
-    if (driver != null
-        && driver.getDriver() != null
-        && driver.getDriver().getEntityId() != null
-        && !driver.getDriver().getEntityId().isEmpty()) {
-      return driver.getDriver().getEntityId();
     }
     if (getObjectId() != null) {
       return getObjectId();

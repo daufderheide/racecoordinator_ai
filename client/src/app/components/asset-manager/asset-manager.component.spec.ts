@@ -346,20 +346,21 @@ describe("AssetManagerComponent", () => {
 
   it("should select range with Shift key", () => {
     component.assets = deepCopy(MOCK_ASSETS);
+    const displayed = component.filteredAssets;
 
     // First click (single)
     const event1 = new MouseEvent("click");
-    component.toggleSelection(component.assets[0], event1);
-    expect(component.assets[0].selected).toBeTrue();
+    component.toggleSelection(displayed[0], event1);
+    expect(displayed[0].selected).toBeTrue();
     expect(component.lastSelectedIndex).toBe(0);
 
     // Shift click on third item
     const event2 = new MouseEvent("click", { shiftKey: true });
-    component.toggleSelection(component.assets[2], event2);
+    component.toggleSelection(displayed[2], event2);
 
-    expect(component.assets[0].selected).toBeTrue();
-    expect(component.assets[1].selected).toBeTrue();
-    expect(component.assets[2].selected).toBeTrue();
+    expect(displayed[0].selected).toBeTrue();
+    expect(displayed[1].selected).toBeTrue();
+    expect(displayed[2].selected).toBeTrue();
   });
 
   it("should clear selection on single click", () => {
@@ -723,6 +724,216 @@ describe("AssetManagerComponent", () => {
       fixture.detectChanges();
     }));
 
+    it("should automatically play the audio asset when a single audio file is uploaded", fakeAsync(() => {
+      mockDataService.uploadAsset.calls.reset();
+      mockDataService.listAssets.calls.reset();
+
+      const uploadedAudio = {
+        model: { entityId: "audio_123" },
+        name: "bell.mp3",
+        type: "audio",
+        size: "15 KB",
+        url: "/assets/audio_123_bell.mp3",
+      };
+      mockDataService.uploadAsset.and.returnValue(of(uploadedAudio));
+      mockDataService.listAssets.and.returnValue(of([uploadedAudio]));
+
+      spyOn(component, "playAsset");
+
+      spyOn(window as any, "FileReader").and.callFake(function () {
+        const mockReader: any = {
+          readAsArrayBuffer: jasmine
+            .createSpy("readAsArrayBuffer")
+            .and.callFake(function () {
+              setTimeout(() => {
+                if (mockReader.onload) {
+                  mockReader.onload({ target: { result: new ArrayBuffer(0) } });
+                }
+              });
+            }),
+          onload: null,
+        };
+        return mockReader;
+      });
+
+      const files = [new File([""], "bell.mp3", { type: "audio/mpeg" })];
+      const fileList = {
+        0: files[0],
+        length: 1,
+        item: (index: number) => files[index],
+      } as unknown as FileList;
+
+      component.uploadFiles(fileList);
+      tick();
+      fixture.detectChanges();
+
+      expect(mockDataService.uploadAsset).toHaveBeenCalledTimes(1);
+      expect(component.playAsset).toHaveBeenCalled();
+      const played = (component.playAsset as jasmine.Spy).calls.mostRecent()
+        .args[0];
+      expect(played.id).toBe("audio_123");
+      expect(played.name).toBe("bell.mp3");
+    }));
+
+    it("should NOT automatically play audio when multiple audio files are uploaded", fakeAsync(() => {
+      mockDataService.uploadAsset.calls.reset();
+      mockDataService.listAssets.calls.reset();
+      spyOn(component, "playAsset");
+
+      spyOn(window as any, "FileReader").and.callFake(function () {
+        const mockReader: any = {
+          readAsArrayBuffer: jasmine
+            .createSpy("readAsArrayBuffer")
+            .and.callFake(function () {
+              setTimeout(() => {
+                if (mockReader.onload) {
+                  mockReader.onload({ target: { result: new ArrayBuffer(0) } });
+                }
+              });
+            }),
+          onload: null,
+        };
+        return mockReader;
+      });
+
+      const files = [
+        new File([""], "bell1.mp3", { type: "audio/mpeg" }),
+        new File([""], "bell2.mp3", { type: "audio/mpeg" }),
+      ];
+      const fileList = {
+        0: files[0],
+        1: files[1],
+        length: 2,
+        item: (index: number) => files[index],
+      } as unknown as FileList;
+
+      component.uploadFiles(fileList);
+      tick();
+      fixture.detectChanges();
+
+      expect(mockDataService.uploadAsset).toHaveBeenCalledTimes(2);
+      expect(component.playAsset).not.toHaveBeenCalled();
+    }));
+
+    it("should NOT play audio when a single image file is uploaded", fakeAsync(() => {
+      mockDataService.uploadAsset.calls.reset();
+      mockDataService.listAssets.calls.reset();
+      spyOn(component, "playAsset");
+
+      spyOn(window as any, "FileReader").and.callFake(function () {
+        const mockReader: any = {
+          readAsArrayBuffer: jasmine
+            .createSpy("readAsArrayBuffer")
+            .and.callFake(function () {
+              setTimeout(() => {
+                if (mockReader.onload) {
+                  mockReader.onload({ target: { result: new ArrayBuffer(0) } });
+                }
+              });
+            }),
+          onload: null,
+        };
+        return mockReader;
+      });
+
+      const files = [new File([""], "avatar.png", { type: "image/png" })];
+      const fileList = {
+        0: files[0],
+        length: 1,
+        item: (index: number) => files[index],
+      } as unknown as FileList;
+
+      component.uploadFiles(fileList);
+      tick();
+      fixture.detectChanges();
+
+      expect(mockDataService.uploadAsset).toHaveBeenCalledTimes(1);
+      expect(component.playAsset).not.toHaveBeenCalled();
+    }));
+
+    it("should fallback to constructed AssetView if single uploaded audio is not in listAssets", fakeAsync(() => {
+      mockDataService.uploadAsset.calls.reset();
+      mockDataService.listAssets.calls.reset();
+      const uploadedAudio = {
+        id: "audio_orphan",
+        name: "engine.wav",
+        type: "audio",
+        size: "20 KB",
+        url: "/assets/engine.wav",
+      };
+      mockDataService.uploadAsset.and.returnValue(of(uploadedAudio));
+      mockDataService.listAssets.and.returnValue(of([]));
+
+      spyOn(component, "playAsset");
+
+      spyOn(window as any, "FileReader").and.callFake(function () {
+        const mockReader: any = {
+          readAsArrayBuffer: jasmine
+            .createSpy("readAsArrayBuffer")
+            .and.callFake(function () {
+              setTimeout(() => {
+                if (mockReader.onload) {
+                  mockReader.onload({ target: { result: new ArrayBuffer(0) } });
+                }
+              });
+            }),
+          onload: null,
+        };
+        return mockReader;
+      });
+
+      const files = [new File([""], "engine.wav", { type: "audio/wav" })];
+      const fileList = {
+        0: files[0],
+        length: 1,
+        item: (index: number) => files[index],
+      } as unknown as FileList;
+
+      component.uploadFiles(fileList);
+      tick();
+      fixture.detectChanges();
+
+      expect(component.playAsset).toHaveBeenCalled();
+      const played = (component.playAsset as jasmine.Spy).calls.mostRecent()
+        .args[0];
+      expect(played.name).toBe("engine.wav");
+    }));
+
+    it("should not play audio if component is destroyed before upload completes", fakeAsync(() => {
+      mockDataService.uploadAsset.calls.reset();
+      spyOn(component, "playAsset");
+
+      spyOn(window as any, "FileReader").and.callFake(function () {
+        const mockReader: any = {
+          readAsArrayBuffer: jasmine
+            .createSpy("readAsArrayBuffer")
+            .and.callFake(function () {
+              setTimeout(() => {
+                if (mockReader.onload) {
+                  mockReader.onload({ target: { result: new ArrayBuffer(0) } });
+                }
+              });
+            }),
+          onload: null,
+        };
+        return mockReader;
+      });
+
+      const files = [new File([""], "horn.mp3", { type: "audio/mpeg" })];
+      const fileList = {
+        0: files[0],
+        length: 1,
+        item: (index: number) => files[index],
+      } as unknown as FileList;
+
+      component.uploadFiles(fileList);
+      component.ngOnDestroy();
+      tick();
+      fixture.detectChanges();
+
+      expect(component.playAsset).not.toHaveBeenCalled();
+    }));
+
     it("should handle custom rotation navigation and saved handlers", () => {
       component.openNewCustomRotationEditor();
       expect(mockRouter.navigate).toHaveBeenCalledWith(
@@ -752,14 +963,228 @@ describe("AssetManagerComponent", () => {
       expect(component.showAudioSetEditor).toBeFalse();
     });
 
-    it("should return guide steps for help walkthrough", () => {
+    it("should return guide steps for help walkthrough including layout switcher", () => {
       const steps = component.getHelpSteps();
       expect(steps.length).toBeGreaterThan(0);
+      const layoutStep = steps.find(
+        (s) => s.selector === "#asset-layout-switcher",
+      );
+      expect(layoutStep).toBeDefined();
+      expect(layoutStep?.title).toBe("AM_HELP_LAYOUT_TITLE");
       for (const step of steps) {
         if (step.onEnter) {
           step.onEnter();
         }
       }
+    });
+
+    it("should default layoutMode to medium and reflect in DOM", () => {
+      expect(component.layoutMode).toBe("medium");
+      fixture.detectChanges();
+      const grid = fixture.nativeElement.querySelector(".asset-grid");
+      expect(grid.classList.contains("layout-medium")).toBeTrue();
+    });
+
+    it("should update asset-grid and asset-card classes when layoutMode changes", () => {
+      component.assets = [
+        {
+          id: "1",
+          name: "Test Asset",
+          type: "image",
+          size: "10KB",
+          url: "test.png",
+        },
+      ];
+      component.layoutMode = "list";
+      fixture.detectChanges();
+
+      const grid = fixture.nativeElement.querySelector(".asset-grid");
+      expect(grid.classList.contains("layout-list")).toBeTrue();
+
+      const card = fixture.nativeElement.querySelector(".asset-card");
+      expect(card.classList.contains("layout-list")).toBeTrue();
+
+      component.layoutMode = "small";
+      fixture.detectChanges();
+      expect(grid.classList.contains("layout-small")).toBeTrue();
+      expect(card.classList.contains("layout-small")).toBeTrue();
+
+      component.layoutMode = "large";
+      fixture.detectChanges();
+      expect(grid.classList.contains("layout-large")).toBeTrue();
+      expect(card.classList.contains("layout-large")).toBeTrue();
+    });
+
+    it("should load layoutMode from localStorage on ngOnInit", () => {
+      localStorage.setItem("am_layout_mode", "small");
+      component.ngOnInit();
+      expect(component.layoutMode).toBe("small");
+      localStorage.removeItem("am_layout_mode");
+    });
+
+    it("should sort filteredAssets first by asset type then by asset name", () => {
+      component.assets = [
+        {
+          id: "1",
+          name: "Zebra Image",
+          type: "image",
+          size: "10KB",
+          url: "z.png",
+        },
+        {
+          id: "2",
+          name: "Banana Audio",
+          type: "audio",
+          size: "10KB",
+          url: "b.mp3",
+        },
+        {
+          id: "3",
+          name: "Apple Sound",
+          type: "sound",
+          size: "10KB",
+          url: "a.wav",
+        },
+        {
+          id: "4",
+          name: "Alpha Image Set",
+          type: "image_set",
+          size: "10KB",
+          url: "",
+        },
+        {
+          id: "5",
+          name: "Beta Image",
+          type: "image",
+          size: "10KB",
+          url: "b.png",
+        },
+        {
+          id: "6",
+          name: "Delta Audio Set",
+          type: "audio_set",
+          size: "10KB",
+          url: "",
+        },
+        {
+          id: "7",
+          name: "Echo Rotation",
+          type: "custom_rotation",
+          size: "10KB",
+          url: "",
+        },
+      ];
+      component.filterType = "all";
+      component.filterName = "";
+
+      const filtered = component.filteredAssets;
+      expect(filtered.map((a) => `${a.type}:${a.name}`)).toEqual([
+        "sound:Apple Sound",
+        "audio:Banana Audio",
+        "audio_set:Delta Audio Set",
+        "custom_rotation:Echo Rotation",
+        "image:Beta Image",
+        "image:Zebra Image",
+        "image_set:Alpha Image Set",
+      ]);
+    });
+
+    it("should sort allImages and allAudio by type then name", () => {
+      component.assets = [
+        {
+          id: "1",
+          name: "Zebra Image",
+          type: "image",
+          size: "10KB",
+          url: "z.png",
+        },
+        {
+          id: "2",
+          name: "Apple Set",
+          type: "image_set",
+          size: "10KB",
+          url: "",
+        },
+        {
+          id: "3",
+          name: "Beta Image",
+          type: "image",
+          size: "10KB",
+          url: "b.png",
+        },
+        {
+          id: "4",
+          name: "Zulu Audio",
+          type: "audio",
+          size: "10KB",
+          url: "z.mp3",
+        },
+        {
+          id: "5",
+          name: "Alpha Sound",
+          type: "sound",
+          size: "10KB",
+          url: "a.wav",
+        },
+        {
+          id: "6",
+          name: "Beta Audio Set",
+          type: "audio_set",
+          size: "10KB",
+          url: "",
+        },
+      ];
+
+      expect(component.allImages.map((a) => `${a.type}:${a.name}`)).toEqual([
+        "image:Beta Image",
+        "image:Zebra Image",
+        "image_set:Apple Set",
+      ]);
+
+      expect(component.allAudio.map((a) => `${a.type}:${a.name}`)).toEqual([
+        "sound:Alpha Sound",
+        "audio:Zulu Audio",
+        "audio_set:Beta Audio Set",
+      ]);
+    });
+
+    it("should preserve percentage and triggerMode when opening audio set editor", () => {
+      const asset: any = {
+        id: "set-1",
+        name: "Fuel Set",
+        audioEntries: [
+          {
+            timeSeconds: 10,
+            percentage: 10,
+            url: "low.wav",
+            name: "Low",
+            triggerMode: "elapsed",
+          },
+          {
+            timeSeconds: 0,
+            percentage: 0,
+            text: "{driver.nickname} out of fuel",
+            type: "tts",
+            name: "Empty",
+            // triggerMode omitted, should default to "remaining"
+          },
+        ],
+      };
+      component.openEditAudioSetEditor(asset);
+      expect(component.showAudioSetEditor).toBeTrue();
+      expect(component.editingAudioAssetId).toBe("set-1");
+      expect(component.editingAudioAssetName).toBe("Fuel Set");
+      expect((component.editingAudioAssetEntries[0] as any).percentage).toBe(
+        10,
+      );
+      expect(component.editingAudioAssetEntries[0].triggerMode).toBe("elapsed");
+      expect((component.editingAudioAssetEntries[1] as any).percentage).toBe(0);
+      expect(component.editingAudioAssetEntries[1].text).toBe(
+        "{driver.nickname} out of fuel",
+      );
+      expect(component.editingAudioAssetEntries[1].triggerMode).toBe(
+        "remaining",
+      );
     });
   });
 });

@@ -11,6 +11,15 @@ test.describe("Item Selector Visuals", () => {
     await TestSetupHelper.setupAssetMocks(page);
   });
 
+  async function enterEditMode(page: any) {
+    await page.locator(".page-container").waitFor();
+    await page.locator(".loader-overlay").waitFor({ state: "hidden" });
+    await page.locator("#edit-track-btn").click();
+    await expect(page.locator("#driver-name-input")).toBeEnabled();
+    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+    await TestSetupHelper.disableAnimations(page);
+  }
+
   test("should display item selector", async ({ page }) => {
     // Navigate to Driver Editor with an ID to ensure it loads
     await TestSetupHelper.waitForLocalization(
@@ -19,6 +28,8 @@ test.describe("Item Selector Visuals", () => {
       page.goto("/driver-editor?id=d1"),
     );
     await page.locator(".page-container").waitFor();
+
+    await enterEditMode(page);
 
     // Wait for the avatar preview to be visible (clickable)
     const avatarPreview = page.locator("app-image-selector .image-preview");
@@ -38,6 +49,100 @@ test.describe("Item Selector Visuals", () => {
     // We target the internal modal to match original behavior, or we can just screenshot the host. The original took a screenshot of `.modal-content`
     await expect(selector.locator(".modal-content")).toHaveScreenshot(
       "item-selector.png",
+    );
+  });
+
+  test("should display item selector in list layout", async ({ page }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/driver-editor?id=d1"),
+    );
+    await page.locator(".page-container").waitFor();
+
+    await enterEditMode(page);
+
+    const avatarPreview = page.locator("app-image-selector .image-preview");
+    await expect(avatarPreview).toBeVisible();
+    await avatarPreview.click();
+
+    const selector = page.locator("app-item-selector");
+    const harness = new ItemSelectorHarnessE2e(selector);
+    await expect(async () => {
+      expect(await harness.isVisible()).toBe(true);
+    }).toPass({ timeout: 10000 });
+
+    await harness.setLayoutMode("list");
+    await selector
+      .locator(".item-grid.layout-list")
+      .waitFor({ state: "visible" });
+
+    await expect(selector.locator(".modal-content")).toHaveScreenshot(
+      "item-selector-layout-list.png",
+    );
+  });
+
+  test("should display item selector in small thumbnails layout", async ({
+    page,
+  }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/driver-editor?id=d1"),
+    );
+    await page.locator(".page-container").waitFor();
+
+    await enterEditMode(page);
+
+    const avatarPreview = page.locator("app-image-selector .image-preview");
+    await expect(avatarPreview).toBeVisible();
+    await avatarPreview.click();
+
+    const selector = page.locator("app-item-selector");
+    const harness = new ItemSelectorHarnessE2e(selector);
+    await expect(async () => {
+      expect(await harness.isVisible()).toBe(true);
+    }).toPass({ timeout: 10000 });
+
+    await harness.setLayoutMode("small");
+    await selector
+      .locator(".item-grid.layout-small")
+      .waitFor({ state: "visible" });
+
+    await expect(selector.locator(".modal-content")).toHaveScreenshot(
+      "item-selector-layout-small.png",
+    );
+  });
+
+  test("should display item selector in large thumbnails layout", async ({
+    page,
+  }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/driver-editor?id=d1"),
+    );
+    await page.locator(".page-container").waitFor();
+
+    await enterEditMode(page);
+
+    const avatarPreview = page.locator("app-image-selector .image-preview");
+    await expect(avatarPreview).toBeVisible();
+    await avatarPreview.click();
+
+    const selector = page.locator("app-item-selector");
+    const harness = new ItemSelectorHarnessE2e(selector);
+    await expect(async () => {
+      expect(await harness.isVisible()).toBe(true);
+    }).toPass({ timeout: 10000 });
+
+    await harness.setLayoutMode("large");
+    await selector
+      .locator(".item-grid.layout-large")
+      .waitFor({ state: "visible" });
+
+    await expect(selector.locator(".modal-content")).toHaveScreenshot(
+      "item-selector-layout-large.png",
     );
   });
 });

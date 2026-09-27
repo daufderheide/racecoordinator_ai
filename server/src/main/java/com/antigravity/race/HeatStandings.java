@@ -116,10 +116,11 @@ public class HeatStandings {
                             .filter(dhd -> dhd.getObjectId().equals(id))
                             .findFirst()
                             .orElse(null);
-                    return (d != null ? d.getDriver().getDriver().getName() : "unknown")
-                        + "("
-                        + (d != null ? d.getAdjustedLapCount() : 0)
-                        + " laps)";
+                    String dName = "unknown";
+                    if (d != null && d.getDriver() != null && d.getDriver().getDriver() != null) {
+                      dName = d.getDriver().getDriver().getName();
+                    }
+                    return dName + "(" + (d != null ? d.getAdjustedLapCount() : 0) + " laps)";
                   })
               .collect(Collectors.joining(", ")));
     }

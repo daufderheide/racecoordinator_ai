@@ -621,6 +621,132 @@ public class HeatBuilderTest {
     assertEquals("1", heats.get(3).getDrivers().get(0).getActualDriver().getEntityId());
   }
 
+  @Test
+  public void testCustomRoundRobin_FewerDriversThanTrackLanes() {
+    when(raceModel.getHeatRotationType()).thenReturn(HeatRotationType.CustomRoundRobin);
+    List<Lane> sixLanes = new ArrayList<>();
+    for (int i = 1; i <= 6; i++) {
+      sixLanes.add(new Lane("Lane " + i, "color" + i, i));
+    }
+    when(track.getLanes()).thenReturn(sixLanes);
+
+    List<Integer> customSequence = Arrays.asList(2, 3, 4, 5);
+    when(raceModel.getCustomRotationSequence()).thenReturn(customSequence);
+
+    List<RaceParticipant> participants = new ArrayList<>();
+    for (int i = 1; i <= 4; i++) {
+      Driver driver =
+          new Driver(
+              "Driver " + i,
+              "D" + i,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              String.valueOf(i),
+              null);
+      participants.add(new RaceParticipant(driver));
+    }
+
+    List<Heat> heats = HeatBuilder.buildHeats(race, participants, new ArrayList<>());
+
+    assertEquals(4, heats.size());
+
+    // Heat 1: L1=Empty, L2=D1, L3=D2, L4=D3, L5=D4, L6=Empty
+    assertEquals(
+        Driver.EMPTY_DRIVER.getEntityId(),
+        heats.get(0).getDrivers().get(0).getActualDriver().getEntityId());
+    assertEquals("1", heats.get(0).getDrivers().get(1).getActualDriver().getEntityId());
+    assertEquals("2", heats.get(0).getDrivers().get(2).getActualDriver().getEntityId());
+    assertEquals("3", heats.get(0).getDrivers().get(3).getActualDriver().getEntityId());
+    assertEquals("4", heats.get(0).getDrivers().get(4).getActualDriver().getEntityId());
+    assertEquals(
+        Driver.EMPTY_DRIVER.getEntityId(),
+        heats.get(0).getDrivers().get(5).getActualDriver().getEntityId());
+
+    // Heat 2: L1=Empty, L2=D4, L3=D1, L4=D2, L5=D3, L6=Empty
+    assertEquals(
+        Driver.EMPTY_DRIVER.getEntityId(),
+        heats.get(1).getDrivers().get(0).getActualDriver().getEntityId());
+    assertEquals("4", heats.get(1).getDrivers().get(1).getActualDriver().getEntityId());
+    assertEquals("1", heats.get(1).getDrivers().get(2).getActualDriver().getEntityId());
+    assertEquals("2", heats.get(1).getDrivers().get(3).getActualDriver().getEntityId());
+    assertEquals("3", heats.get(1).getDrivers().get(4).getActualDriver().getEntityId());
+    assertEquals(
+        Driver.EMPTY_DRIVER.getEntityId(),
+        heats.get(1).getDrivers().get(5).getActualDriver().getEntityId());
+
+    // Heat 3: L1=Empty, L2=D3, L3=D4, L4=D1, L5=D2, L6=Empty
+    assertEquals(
+        Driver.EMPTY_DRIVER.getEntityId(),
+        heats.get(2).getDrivers().get(0).getActualDriver().getEntityId());
+    assertEquals("3", heats.get(2).getDrivers().get(1).getActualDriver().getEntityId());
+    assertEquals("4", heats.get(2).getDrivers().get(2).getActualDriver().getEntityId());
+    assertEquals("1", heats.get(2).getDrivers().get(3).getActualDriver().getEntityId());
+    assertEquals("2", heats.get(2).getDrivers().get(4).getActualDriver().getEntityId());
+    assertEquals(
+        Driver.EMPTY_DRIVER.getEntityId(),
+        heats.get(2).getDrivers().get(5).getActualDriver().getEntityId());
+
+    // Heat 4: L1=Empty, L2=D2, L3=D3, L4=D4, L5=D1, L6=Empty
+    assertEquals(
+        Driver.EMPTY_DRIVER.getEntityId(),
+        heats.get(3).getDrivers().get(0).getActualDriver().getEntityId());
+    assertEquals("2", heats.get(3).getDrivers().get(1).getActualDriver().getEntityId());
+    assertEquals("3", heats.get(3).getDrivers().get(2).getActualDriver().getEntityId());
+    assertEquals("4", heats.get(3).getDrivers().get(3).getActualDriver().getEntityId());
+    assertEquals("1", heats.get(3).getDrivers().get(4).getActualDriver().getEntityId());
+    assertEquals(
+        Driver.EMPTY_DRIVER.getEntityId(),
+        heats.get(3).getDrivers().get(5).getActualDriver().getEntityId());
+  }
+
+  @Test
+  public void testCustomRoundRobin_WithPaddedEmptyDrivers() {
+    when(raceModel.getHeatRotationType()).thenReturn(HeatRotationType.CustomRoundRobin);
+    List<Lane> sixLanes = new ArrayList<>();
+    for (int i = 1; i <= 6; i++) {
+      sixLanes.add(new Lane("Lane " + i, "color" + i, i));
+    }
+    when(track.getLanes()).thenReturn(sixLanes);
+
+    List<Integer> customSequence = Arrays.asList(2, 3, 4, 5);
+    when(raceModel.getCustomRotationSequence()).thenReturn(customSequence);
+
+    List<RaceParticipant> participants = new ArrayList<>();
+    for (int i = 1; i <= 4; i++) {
+      Driver driver =
+          new Driver(
+              "Driver " + i,
+              "D" + i,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              String.valueOf(i),
+              null);
+      participants.add(new RaceParticipant(driver));
+    }
+    participants.add(new RaceParticipant(Driver.EMPTY_DRIVER));
+    participants.add(new RaceParticipant(Driver.EMPTY_DRIVER));
+
+    List<Heat> heats = HeatBuilder.buildHeats(race, participants, new ArrayList<>());
+
+    assertEquals(4, heats.size());
+    assertEquals("4", heats.get(1).getDrivers().get(1).getActualDriver().getEntityId());
+    assertEquals("1", heats.get(1).getDrivers().get(2).getActualDriver().getEntityId());
+  }
+
   @Test(expected = IllegalArgumentException.class)
   public void testCustomRoundRobin_DuplicateLanes() {
     when(raceModel.getHeatRotationType()).thenReturn(HeatRotationType.CustomRoundRobin);

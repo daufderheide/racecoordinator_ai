@@ -55,6 +55,46 @@
   font-size: 1rem;
 }
 
+/* Help Banner */
+.audio-set-help-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: rgba(0, 255, 255, 0.06);
+  border: 1px solid rgba(0, 255, 255, 0.25);
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin-bottom: 20px;
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+
+.audio-set-help-banner .help-icon {
+  font-size: 20px;
+  color: #00ffff;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.audio-set-help-banner .help-content {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.audio-set-help-banner .help-title {
+  font-weight: 600;
+  color: #00ffff;
+  font-size: 0.85rem;
+}
+
+.audio-set-help-banner .help-desc {
+  margin: 0;
+  color: #bbb;
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
 /* Drop Overlay */
 .drop-overlay {
   position: fixed;
@@ -184,8 +224,9 @@
 }
 
 .entry-time label {
-  color: #888;
+  color: #aaa;
   font-size: 0.85rem;
+  white-space: nowrap;
 }
 
 .time-input {
@@ -196,6 +237,22 @@
   padding: 8px;
   border-radius: 4px;
   text-align: center;
+}
+
+.entry-mode {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.entry-mode label {
+  color: #aaa;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.mode-select {
+  min-width: 120px;
 }
 
 .btn-remove {

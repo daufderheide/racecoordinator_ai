@@ -7,6 +7,7 @@ import {
   executeClearWidgetFolder,
   executeSelectFolder,
   executeSelectWidgetFolder,
+  executeTemplateFileSelected,
   getDefaultLayoutResetData,
   parseLayoutImport,
 } from "./ui-editor-io.helper";
@@ -160,6 +161,69 @@ describe("ui-editor-io.helper", () => {
 
       await executeClearWidgetFolder(mockFs);
       expect(mockFs.clearCustomWidgetFolder).toHaveBeenCalled();
+    });
+  });
+
+  describe("executeTemplateFileSelected", () => {
+    it("should read selected file as data URL, set base64 on settings, clear input value, and invoke callback", (done) => {
+      const file = new File(["test-xlsx-content"], "template.xlsx", {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+      const input = {
+        files: [file],
+        value: "C:\\fakepath\\template.xlsx",
+      };
+
+      const event = { target: input } as unknown as Event;
+      const settings = new Settings();
+
+      executeTemplateFileSelected(event, settings, () => {
+        expect(settings.customExportTemplateBase64).toBeDefined();
+        expect(settings.customExportTemplateBase64).toContain("data:");
+        expect(settings.customExportTemplateName).toBe("template.xlsx");
+        expect(settings.customExportTemplatePath).toBe("template.xlsx");
+        expect(input.value).toBe("");
+        done();
+      });
+    });
+
+    it("should extract full path when file.path is available (desktop runtimes)", (done) => {
+      const file = new File(["test-xlsx-content"], "custom_report.xlsx", {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+      (file as any).path = "/Users/test/Documents/custom_report.xlsx";
+      const input = {
+        files: [file],
+        value: "C:\\fakepath\\custom_report.xlsx",
+      };
+
+      const event = { target: input } as unknown as Event;
+      const settings = new Settings();
+
+      executeTemplateFileSelected(event, settings, () => {
+        expect(settings.customExportTemplateName).toBe("custom_report.xlsx");
+        expect(settings.customExportTemplatePath).toBe(
+          "/Users/test/Documents/custom_report.xlsx",
+        );
+        done();
+      });
+    });
+
+    it("should not invoke callback if no files are selected", () => {
+      const input = document.createElement("input");
+      input.type = "file";
+      Object.defineProperty(input, "files", {
+        value: [],
+        writable: true,
+      });
+
+      const event = { target: input } as unknown as Event;
+      const settings = new Settings();
+      const onLoaded = jasmine.createSpy("onLoaded");
+
+      executeTemplateFileSelected(event, settings, onLoaded);
+      expect(onLoaded).not.toHaveBeenCalled();
+      expect(settings.customExportTemplateBase64).toBeUndefined();
     });
   });
 });

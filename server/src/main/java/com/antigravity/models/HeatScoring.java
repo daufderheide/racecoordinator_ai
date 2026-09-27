@@ -1,5 +1,6 @@
 package com.antigravity.models;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -26,22 +27,28 @@ public class HeatScoring {
     None,
     Allow,
     SingleLap,
-    NoneAutoSegments
+    NoneAutoSegments,
+    SingleLapAutoSegments
   }
 
   @JsonProperty("finish_method")
+  @JsonAlias("finishMethod")
   private final FinishMethod finishMethod;
 
   @JsonProperty("finish_value")
+  @JsonAlias("finishValue")
   private final long finishValue;
 
   @JsonProperty("heat_ranking")
+  @JsonAlias("heatRanking")
   private final HeatRanking heatRanking;
 
   @JsonProperty("heat_ranking_tiebreaker")
+  @JsonAlias("heatRankingTiebreaker")
   private final HeatRankingTiebreaker heatRankingTiebreaker;
 
   @JsonProperty("allow_finish")
+  @JsonAlias("allowFinish")
   private final AllowFinish allowFinish;
 
   public HeatScoring() {
@@ -53,20 +60,22 @@ public class HeatScoring {
   }
 
   public HeatScoring(
-      @JsonProperty("finish_method") FinishMethod finishMethod,
-      @JsonProperty("finish_value") long finishValue,
-      @JsonProperty("heat_ranking") HeatRanking heatRanking,
-      @JsonProperty("heat_ranking_tiebreaker") HeatRankingTiebreaker heatRankingTiebreaker) {
+      @JsonProperty("finish_method") @JsonAlias("finishMethod") FinishMethod finishMethod,
+      @JsonProperty("finish_value") @JsonAlias("finishValue") long finishValue,
+      @JsonProperty("heat_ranking") @JsonAlias("heatRanking") HeatRanking heatRanking,
+      @JsonProperty("heat_ranking_tiebreaker") @JsonAlias("heatRankingTiebreaker")
+          HeatRankingTiebreaker heatRankingTiebreaker) {
     this(finishMethod, finishValue, heatRanking, heatRankingTiebreaker, AllowFinish.None);
   }
 
   @JsonCreator
   public HeatScoring(
-      @JsonProperty("finish_method") FinishMethod finishMethod,
-      @JsonProperty("finish_value") long finishValue,
-      @JsonProperty("heat_ranking") HeatRanking heatRanking,
-      @JsonProperty("heat_ranking_tiebreaker") HeatRankingTiebreaker heatRankingTiebreaker,
-      @JsonProperty("allow_finish") AllowFinish allowFinish) {
+      @JsonProperty("finish_method") @JsonAlias("finishMethod") FinishMethod finishMethod,
+      @JsonProperty("finish_value") @JsonAlias("finishValue") long finishValue,
+      @JsonProperty("heat_ranking") @JsonAlias("heatRanking") HeatRanking heatRanking,
+      @JsonProperty("heat_ranking_tiebreaker") @JsonAlias("heatRankingTiebreaker")
+          HeatRankingTiebreaker heatRankingTiebreaker,
+      @JsonProperty("allow_finish") @JsonAlias("allowFinish") AllowFinish allowFinish) {
     this.finishMethod = finishMethod;
     this.finishValue = finishValue;
     this.heatRanking = heatRanking;

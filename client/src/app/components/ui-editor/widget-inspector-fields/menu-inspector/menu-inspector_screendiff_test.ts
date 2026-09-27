@@ -58,11 +58,12 @@ test.describe("Menu Inspector Visuals", () => {
     await inspectorFields.waitFor({ state: "visible" });
 
     // Switch to custom scaling mode to enable font size sliders
-    await page
+    const scaleSelect = page
       .locator(".inspector-section")
       .filter({ hasText: "Scaling Mode" })
-      .locator("select")
-      .selectOption("");
+      .locator("app-custom-select");
+    await scaleSelect.locator(".custom-select-trigger").click();
+    await scaleSelect.locator('.custom-select-option[data-value=""]').click();
 
     const sliders = inspectorFields.locator("input[type='range']");
     const colorPickers = inspectorFields.locator("input[type='color']");
@@ -76,7 +77,6 @@ test.describe("Menu Inspector Visuals", () => {
     // Blur any active element and move mouse to remove hover states
     await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
     await page.mouse.move(0, 0);
-    await page.waitForTimeout(500);
 
     // Take screenshot of the inspector panel
     await expect(inspectorPanel).toHaveScreenshot(

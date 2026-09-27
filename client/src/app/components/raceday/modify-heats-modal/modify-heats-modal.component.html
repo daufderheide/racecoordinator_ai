@@ -11,6 +11,8 @@
     [showLaneCheck]="true"
     [isSaving]="isSaving"
     [isHeatsEqual]="isHeatsEqual"
+    [showZoom]="true"
+    [(zoomLevel)]="zoomLevel"
     (add)="onAddHeat()"
     (regenerate)="onRegenerateHeats()"
     (laneCheck)="onLaneCheck()"
@@ -310,6 +312,7 @@
         [cdkDropListAutoScrollDisabled]="true"
         [cdkDropListSortingDisabled]="true"
         (cdkDropListDropped)="onHeatDrop($event)"
+        [style.zoom]="zoomLevel / 100"
       >
         @for (heat of localHeats; track heat.objectId; let hIdx = $index) {
           <div
@@ -460,43 +463,22 @@
                               >
                                 {{ getHeatDriverMeta(dhd) }}
                               </div>
-                              <select
+                              <app-custom-select
                                 class="teammate-select"
                                 (change)="onTeammateChange(hIdx, dhd, $event)"
                                 [disabled]="isHeatStarted(heat)"
-                                style="
-                                  position: absolute;
-                                  top: 0;
-                                  left: 0;
-                                  width: 100%;
-                                  height: 100%;
-                                  cursor: pointer;
-                                  z-index: 2;
-                                  opacity: 0;
-                                  appearance: none;
-                                  border: none;
-                                  outline: none;
+                                [ngModel]="
+                                  dhd.actualDriver?.entity_id ||
+                                  dhd.participant.driver.entity_id
                                 "
                               >
                                 @for (tm of getTeammates(dhd); track tm) {
-                                  <option
-                                    [value]="tm.entity_id"
-                                    [selected]="
-                                      tm.entity_id ===
-                                      (dhd.actualDriver?.entity_id ||
-                                        dhd.participant.driver.entity_id)
-                                    "
-                                    style="
-                                      background-color: #1a2332;
-                                      color: #fff;
-                                      font-size: 14px;
-                                    "
-                                  >
+                                  <app-custom-option [value]="tm.entity_id">
                                     {{ tm.nickname || tm.name }}
                                     {{ getDriverStats(dhd, tm.entity_id) }}
-                                  </option>
+                                  </app-custom-option>
                                 }
-                              </select>
+                              </app-custom-select>
                             </div>
                           } @else {
                             <div

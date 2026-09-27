@@ -105,7 +105,6 @@ test.describe("Viewer Race Director Menu", () => {
 
     await TestSetupHelper.mockRaceData(page, raceData);
     await page.locator(".table-row").first().waitFor({ state: "visible" });
-    await page.waitForTimeout(500);
 
     // 1. Open the Race Director menu dropdown (the second top-level menu button)
     const raceDirectorMenuButton = page.locator(".menu-button-top").nth(1);
@@ -115,8 +114,6 @@ test.describe("Viewer Race Director Menu", () => {
     // 2. Wait for the menu dropdown to be visible
     const dropdown = page.locator(".menu-dropdown").first();
     await expect(dropdown).toBeVisible();
-
-    await page.waitForTimeout(500);
 
     // 3. Take a screenshot to verify disabled options and the enabled login option
     await expect(page).toHaveScreenshot("raceday-viewer-menu.png", {
@@ -185,7 +182,6 @@ test.describe("Viewer Race Director Menu", () => {
 
     await TestSetupHelper.mockRaceData(page, raceData);
     await page.locator(".table-row").first().waitFor({ state: "visible" });
-    await page.waitForTimeout(500);
 
     // 1. Open the File menu dropdown (the first top-level menu button)
     const fileMenuButton = page.locator(".menu-button-top").first();
@@ -195,8 +191,6 @@ test.describe("Viewer Race Director Menu", () => {
     // 2. Wait for the menu dropdown to be visible
     const dropdown = page.locator(".menu-dropdown").first();
     await expect(dropdown).toBeVisible();
-
-    await page.waitForTimeout(500);
 
     // 3. Take a screenshot to verify disabled Save option
     await expect(page).toHaveScreenshot("raceday-viewer-file-menu.png", {
@@ -243,7 +237,6 @@ test.describe("Viewer Race Director Menu", () => {
     };
 
     await TestSetupHelper.mockRaceData(page, raceData);
-    await page.waitForTimeout(500);
 
     // 1. Open the Options menu dropdown
     const optionsMenuButton = page.locator("#options-menu-button");
@@ -262,8 +255,6 @@ test.describe("Viewer Race Director Menu", () => {
     // 4. Expect submenu to be visible
     const submenu = page.locator('[data-testid="submenu-localization"]');
     await expect(submenu).toBeVisible();
-
-    await page.waitForTimeout(500);
 
     // 5. Take a screenshot to verify visual rendering of the submenu
     await expect(page).toHaveScreenshot("raceday-localization-submenu.png", {

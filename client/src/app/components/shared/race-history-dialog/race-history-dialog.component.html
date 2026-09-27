@@ -1,0 +1,215 @@
+@if (visible()) {
+  <div class="race-history-backdrop" (click)="onDismiss()">
+    <div class="race-history-container" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div class="header-title">
+          <span class="material-icons modal-header-icon">history</span>
+          <div>
+            <h3>{{ "RHD_TITLE" | translate }}</h3>
+            <p class="modal-subtitle">{{ "RHD_SUBTITLE" | translate }}</p>
+          </div>
+        </div>
+        <button
+          class="close-btn"
+          (click)="onDismiss()"
+          [attr.aria-label]="'RHD_CLOSE_ARIA' | translate"
+        >
+          ✕
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Search bar -->
+        <div class="search-bar-row">
+          <div class="search-input-wrapper">
+            <span class="material-icons search-icon">search</span>
+            <input
+              type="text"
+              class="search-input"
+              [(ngModel)]="searchTerm"
+              [placeholder]="'RHD_SEARCH_PLACEHOLDER' | translate"
+              autocomplete="off"
+              data-dashlane-ignore="true"
+              data-1p-ignore="true"
+              data-lpignore="true"
+              data-bwignore="true"
+              data-form-type="other"
+            />
+            @if (searchTerm) {
+              <button
+                type="button"
+                class="clear-search-btn"
+                (click)="searchTerm = ''"
+              >
+                ✕
+              </button>
+            }
+          </div>
+        </div>
+
+        <!-- Race List -->
+        <div class="races-list-container">
+          @if (isLoading) {
+            <div class="loading-state">
+              <span class="material-icons spin-icon">sync</span>
+              <p>{{ "RHD_LOADING" | translate }}</p>
+            </div>
+          } @else if (filteredHistories.length === 0) {
+            <div class="empty-state">
+              <span class="material-icons empty-icon"
+                >sentiment_dissatisfied</span
+              >
+              <p>{{ "RHD_NO_RACES" | translate }}</p>
+            </div>
+          } @else {
+            <div class="races-grid">
+              @for (group of filteredHistories; track group.id || $index) {
+                <div class="race-card">
+                  <div class="race-card-main">
+                    <div class="race-card-title-row">
+                      <span class="race-name">{{ group.raceName }}</span>
+                      @if (group.isDemo) {
+                        <span class="badge-demo">{{
+                          "RHD_BADGE_DEMO" | translate
+                        }}</span>
+                      }
+                    </div>
+                    <div class="race-card-meta">
+                      @if (group.earliestDate; as earliest) {
+                        <span class="meta-item">
+                          <span class="material-icons meta-icon">event</span>
+                          <span class="meta-label"
+                            >{{ "RHD_EARLIEST_DATE" | translate }}:</span
+                          >
+                          {{ earliest | localDate: "short" }}
+                        </span>
+                      }
+                      @if (group.latestDate; as latest) {
+                        <span class="meta-item">
+                          <span class="material-icons meta-icon">update</span>
+                          <span class="meta-label"
+                            >{{ "RHD_LATEST_DATE" | translate }}:</span
+                          >
+                          {{ latest | localDate: "short" }}
+                        </span>
+                      }
+                      @if (group.trackName) {
+                        <span class="meta-item">
+                          <span class="material-icons meta-icon"
+                            >alt_route</span
+                          >
+                          {{ group.trackName }}
+                        </span>
+                      }
+                      <span
+                        class="meta-item meta-ineligible-laps"
+                        [class.has-ineligible]="group.ineligibleLapCount > 0"
+                      >
+                        <span class="material-icons meta-icon">block</span>
+                        {{
+                          (group.ineligibleLapCount === 1
+                            ? "RHD_INELIGIBLE_LAP_SINGLE"
+                            : "RHD_INELIGIBLE_LAPS_COUNT"
+                          ) | translate: { count: group.ineligibleLapCount }
+                        }}
+                      </span>
+                    </div>
+                  </div>
+                  <div class="race-card-action">
+                    <div class="race-run-select-wrapper">
+                      <span class="race-run-select-label"
+                        >{{ "RHD_SELECT_RUN" | translate }}:</span
+                      >
+                      <app-custom-select
+                        class="race-run-select"
+                        [ngModel]="getSelectedRaceId(group)"
+                        (ngModelChange)="onSelectRaceForGroup(group.id, $event)"
+                      >
+                        @for (
+                          race of group.races;
+                          track race._id || race.id || race.entity_id || $index
+                        ) {
+                          <app-custom-option
+                            [value]="race._id || race.id || race.entity_id"
+                          >
+                            @if (getNumericRaceTimestamp(race); as ts) {
+                              {{ ts | localDate: "short" }}
+                            } @else {
+                              {{
+                                "RHD_RACE_RUN_FALLBACK"
+                                  | translate: { index: $index + 1 }
+                              }}
+                            }
+                          </app-custom-option>
+                        }
+                      </app-custom-select>
+                    </div>
+                    <button
+                      type="button"
+                      class="btn-action btn-open-race"
+                      [disabled]="isLoadingDetails"
+                      (click)="openRace(group)"
+                      [title]="'RHD_BTN_OPEN_RACE' | translate"
+                    >
+                      <span class="material-icons btn-icon">sports_score</span>
+                      <span>{{ "RHD_BTN_OPEN_RACE" | translate }}</span>
+                    </button>
+                    <button
+                      type="button"
+                      class="btn-action btn-edit-laps"
+                      [disabled]="isLoadingDetails"
+                      (click)="editRaceLaps(group)"
+                    >
+                      <span class="material-icons btn-icon">edit_note</span>
+                      <span>{{ "RHD_BTN_EDIT_LAPS" | translate }}</span>
+                    </button>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" (click)="onDismiss()">
+          {{ "RHD_BTN_CLOSE" | translate }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+@if (showDisallowDialog && selectedRaceGroup) {
+  <app-disallow-lap-records-dialog
+    [visible]="showDisallowDialog"
+    [races]="selectedRaceGroup.races"
+    [allRaces]="raceHistories"
+    [heats]="
+      selectedHistoryDetails?.heats || selectedRaceGroup.races[0]?.heats || []
+    "
+    [drivers]="
+      selectedHistoryDetails?.drivers ||
+      selectedRaceGroup.races[0]?.drivers ||
+      []
+    "
+    [track]="selectedHistoryDetails?.track || selectedRaceGroup.races[0]?.track"
+    [currentHeatNumber]="1"
+    [raceHistoryId]="
+      selectedHistoryDetails?._id ||
+      selectedHistoryDetails?.id ||
+      selectedHistoryDetails?.entity_id ||
+      selectedRaceGroup.races[0]?._id ||
+      selectedRaceGroup.races[0]?.id ||
+      selectedRaceGroup.races[0]?.entity_id
+    "
+    [raceName]="selectedRaceGroup.raceName"
+    [raceDate]="
+      getNumericRaceTimestamp(selectedHistoryDetails) ||
+      selectedRaceGroup.latestDate
+    "
+    [isDemo]="selectedRaceGroup.isDemo"
+    (recordsUpdated)="onRecordsUpdated($event)"
+    (close)="closeDisallowDialog()"
+  ></app-disallow-lap-records-dialog>
+}

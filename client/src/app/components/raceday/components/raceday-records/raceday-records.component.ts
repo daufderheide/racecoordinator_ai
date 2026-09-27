@@ -2,6 +2,7 @@ import { CommonModule } from "@angular/common";
 import {
   AfterViewInit,
   Component,
+  computed,
   effect,
   ElementRef,
   input,
@@ -32,6 +33,19 @@ export class RacedayRecordsComponent implements AfterViewInit, OnDestroy {
   heatBestNickname = input<string>("");
   heatBestTime = input<number>(0);
 
+  showRaceRecordLap = computed(
+    () => this.widget()?.customSettings?.["showRaceRecordLap"] !== false,
+  );
+  showRaceRecordScore = computed(
+    () => this.widget()?.customSettings?.["showRaceRecordScore"] !== false,
+  );
+  showCurrentRaceBest = computed(
+    () => this.widget()?.customSettings?.["showCurrentRaceBest"] !== false,
+  );
+  showHeatBest = computed(
+    () => this.widget()?.customSettings?.["showHeatBest"] !== false,
+  );
+
   private recordPanel = viewChild<ElementRef<HTMLElement>>("recordPanel");
   private recordHeaders = viewChildren<ElementRef<HTMLElement>>("recordHeader");
   private recordNames = viewChildren<ElementRef<HTMLElement>>("recordName");
@@ -50,6 +64,10 @@ export class RacedayRecordsComponent implements AfterViewInit, OnDestroy {
       this.heatBestNickname();
       this.heatBestTime();
       this.widget();
+      this.showRaceRecordLap();
+      this.showRaceRecordScore();
+      this.showCurrentRaceBest();
+      this.showHeatBest();
 
       // Schedule fit on next microtask
       setTimeout(() => this.fitText(), 0);
@@ -82,12 +100,16 @@ export class RacedayRecordsComponent implements AfterViewInit, OnDestroy {
     if (!isAuto) {
       panelEl.style.removeProperty("--record-value-font-size");
       panelEl.style.removeProperty("--record-header-font-size");
+      panelEl.style.removeProperty("--record-count");
       return;
     }
 
     const headerEls = this.recordHeaders();
     const nameEls = this.recordNames();
     const valueEls = this.recordValues();
+    const visibleCount = headerEls.length || 1;
+
+    panelEl.style.setProperty("--record-count", String(visibleCount));
 
     if (headerEls.length === 0 || valueEls.length === 0) return;
 
@@ -110,7 +132,12 @@ export class RacedayRecordsComponent implements AfterViewInit, OnDestroy {
     if (context) {
       context.font = `${headerFontWeight} 100px ${headerFontFamily}`;
       for (const el of headerEls) {
-        const text = el.nativeElement.textContent?.trim() || "";
+        const rawText = el.nativeElement.textContent?.trim() || "";
+        const textTransform = window.getComputedStyle(
+          el.nativeElement,
+        ).textTransform;
+        const text =
+          textTransform === "uppercase" ? rawText.toUpperCase() : rawText;
         const width = context.measureText(text).width || 1;
         if (width > maxHeaderWidthAt100) {
           maxHeaderWidthAt100 = width;
@@ -151,24 +178,24 @@ export class RacedayRecordsComponent implements AfterViewInit, OnDestroy {
 
     const baseScaleFactor = widgetData?.textScaleFactor ?? 1;
 
-    // Height limit: each of the 4 groups occupies 25% of the total height.
-    // At value font size S (line-height 1.1), header is 0.8 * S (line-height 1.1).
-    // Total height occupied is (S * 1.1) + (0.8 * S * 1.1) = 1.98 * S.
-    // We leave a 25% safety margin vertically (multiply groupHeight by 0.75) to prevent overflow/clipping.
+    // Height limit: each group occupies its standard share (based on 4 standard slots) of the total height.
+    // Keeping the calculation based on 4 slots prevents the font size from blowing up unnaturally
+    // when individual metrics are hidden, maintaining visual harmony with surrounding widgets.
     const groupHeight = containerHeight / 4;
     const limitHeight = (groupHeight * 0.75) / 1.98;
 
     // Width limit for headers (header size = 0.8 * S)
+    // Use 85% of container width to safely account for card padding, margins, and borders
     let limitWidthHeader = Infinity;
     if (maxHeaderWidthAt100 > 0) {
       limitWidthHeader =
-        (containerWidth * 0.9 * 100) / (0.8 * maxHeaderWidthAt100);
+        (containerWidth * 0.85 * 100) / (0.8 * maxHeaderWidthAt100);
     }
 
     // Width limit for rows (row size = S)
     let limitWidthRow = Infinity;
     if (maxRowWidthAt100 > 0) {
-      limitWidthRow = (containerWidth * 0.9 * 100) / maxRowWidthAt100;
+      limitWidthRow = (containerWidth * 0.85 * 100) / maxRowWidthAt100;
     }
 
     // Choose the minimum scale and apply the widget scale factor

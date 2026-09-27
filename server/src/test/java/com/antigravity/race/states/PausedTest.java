@@ -87,4 +87,19 @@ public class PausedTest {
     paused.onCallbutton(race, 0);
     verify(race).startRace();
   }
+
+  @Test
+  public void testEnter_SyncsDriverFlags() {
+    com.antigravity.race.Heat currentHeat = mock(com.antigravity.race.Heat.class);
+    com.antigravity.race.DriverHeatData dhd =
+        new com.antigravity.race.DriverHeatData(
+            new com.antigravity.race.RaceParticipant(
+                new com.antigravity.models.Driver("d1", "Driver 1", "id1", "1"), "id1"));
+    when(currentHeat.getDrivers()).thenReturn(java.util.Collections.singletonList(dhd));
+    when(race.getCurrentHeat()).thenReturn(currentHeat);
+
+    paused.enter(race);
+
+    assertEquals(RaceFlag.YELLOW, dhd.getFlag());
+  }
 }

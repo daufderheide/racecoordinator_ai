@@ -1,4 +1,5 @@
 import { ComponentHarness } from "@angular/cdk/testing";
+import { CustomSelectHarness } from "@app/components/shared/custom-select/testing/custom-select.harness";
 
 import { PhidgetEditorHarnessBase } from "./phidget-editor.harness.base";
 
@@ -9,7 +10,9 @@ export class PhidgetEditorHarness
   static hostSelector = PhidgetEditorHarnessBase.hostSelector;
 
   protected getLapPinPitBehaviorSelect = this.locatorFor(
-    PhidgetEditorHarnessBase.selectors.pitBehaviorSelect,
+    CustomSelectHarness.with({
+      selector: PhidgetEditorHarnessBase.selectors.pitBehaviorSelect,
+    }),
   );
 
   async exists(): Promise<boolean> {
@@ -18,12 +21,12 @@ export class PhidgetEditorHarness
 
   async getLapPinPitBehavior(): Promise<number> {
     const select = await this.getLapPinPitBehaviorSelect();
-    const value = await select.getProperty("value");
+    const value = (await select.getValue()) || "0";
     return Number(value);
   }
 
   async setLapPinPitBehavior(value: number): Promise<void> {
     const select = await this.getLapPinPitBehaviorSelect();
-    await select.selectOptions(value);
+    await select.selectOptionByValue(value.toString());
   }
 }

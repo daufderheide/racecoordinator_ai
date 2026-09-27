@@ -215,6 +215,18 @@ describe("RacedayLayoutUtils", () => {
     expect(
       RacedayLayoutUtils.isLapTimeColumn(
         new ColumnDefinition(
+          "BEST_RACE",
+          "bestRaceLapTime",
+          200,
+          false,
+          "middle",
+          0,
+        ),
+      ),
+    ).toBe(true);
+    expect(
+      RacedayLayoutUtils.isLapTimeColumn(
+        new ColumnDefinition(
           "RECORD",
           "recordLapTime",
           200,
@@ -229,6 +241,90 @@ describe("RacedayLayoutUtils", () => {
         new ColumnDefinition("SEGMENT", "segmentTime", 200, false, "middle", 0),
       ),
     ).toBe(true);
+    expect(
+      RacedayLayoutUtils.isLapTimeColumn(
+        new ColumnDefinition(
+          "STD_DEV",
+          "standardDeviation",
+          200,
+          false,
+          "middle",
+          0,
+        ),
+      ),
+    ).toBe(true);
+    expect(
+      RacedayLayoutUtils.isLapTimeColumn(
+        new ColumnDefinition(
+          "AVG_TOP_5",
+          "averageTop5",
+          200,
+          false,
+          "middle",
+          0,
+        ),
+      ),
+    ).toBe(true);
+    expect(
+      RacedayLayoutUtils.isLapTimeColumn(
+        new ColumnDefinition(
+          "AVG_TOP_10",
+          "averageTop10",
+          200,
+          false,
+          "middle",
+          0,
+        ),
+      ),
+    ).toBe(true);
+    expect(
+      RacedayLayoutUtils.isLapTimeColumn(
+        new ColumnDefinition(
+          "AVG_TOP_15",
+          "averageTop15",
+          200,
+          false,
+          "middle",
+          0,
+        ),
+      ),
+    ).toBe(true);
+    expect(
+      RacedayLayoutUtils.isLapTimeColumn(
+        new ColumnDefinition(
+          "TOP_2_CONSECUTIVE",
+          "top2Consecutive",
+          200,
+          false,
+          "middle",
+          0,
+        ),
+      ),
+    ).toBe(true);
+    expect(
+      RacedayLayoutUtils.isLapTimeColumn(
+        new ColumnDefinition(
+          "TOP_3_CONSECUTIVE",
+          "top3Consecutive",
+          200,
+          false,
+          "middle",
+          0,
+        ),
+      ),
+    ).toBe(true);
+    expect(
+      RacedayLayoutUtils.isLapTimeColumn(
+        new ColumnDefinition(
+          "CONSISTENCY",
+          "consistencyScore",
+          200,
+          false,
+          "middle",
+          0,
+        ),
+      ),
+    ).toBe(false);
     expect(RacedayLayoutUtils.isLapTimeColumn(null as any)).toBe(false);
   });
 
@@ -277,11 +373,20 @@ describe("RacedayLayoutUtils", () => {
     expect(RacedayLayoutUtils.getLabelKeyForColumn("lapCount")).toBe(
       "RD_COL_LAP",
     );
+    expect(RacedayLayoutUtils.getLabelKeyForColumn("physicalLapCount")).toBe(
+      "RD_COL_LAP",
+    );
     expect(RacedayLayoutUtils.getLabelKeyForColumn("lapsLed")).toBe(
       "RD_COL_LAPS_LED",
     );
+    expect(RacedayLayoutUtils.getLabelKeyForColumn("trackCalls")).toBe(
+      "RD_COL_TRACK_CALLS",
+    );
     expect(RacedayLayoutUtils.getLabelKeyForColumn("lastLapTime")).toBe(
       "RD_COL_LAP_TIME",
+    );
+    expect(RacedayLayoutUtils.getLabelKeyForColumn("bestRaceLapTime")).toBe(
+      "RD_COL_BEST_RACE_LAP_TIME",
     );
     expect(RacedayLayoutUtils.getLabelKeyForColumn("recordLapTime")).toBe(
       "RD_COL_RECORD_LAP_TIME",
@@ -307,6 +412,27 @@ describe("RacedayLayoutUtils", () => {
     expect(
       RacedayLayoutUtils.getLabelKeyForColumn("ghostPacingLeaderBest"),
     ).toBe("RD_COL_GHOST_PACING");
+    expect(RacedayLayoutUtils.getLabelKeyForColumn("standardDeviation")).toBe(
+      "RD_COL_STD_DEV",
+    );
+    expect(RacedayLayoutUtils.getLabelKeyForColumn("consistencyScore")).toBe(
+      "RD_COL_CONSISTENCY",
+    );
+    expect(RacedayLayoutUtils.getLabelKeyForColumn("averageTop5")).toBe(
+      "RD_COL_AVG_TOP_5",
+    );
+    expect(RacedayLayoutUtils.getLabelKeyForColumn("averageTop10")).toBe(
+      "RD_COL_AVG_TOP_10",
+    );
+    expect(RacedayLayoutUtils.getLabelKeyForColumn("averageTop15")).toBe(
+      "RD_COL_AVG_TOP_15",
+    );
+    expect(RacedayLayoutUtils.getLabelKeyForColumn("top2Consecutive")).toBe(
+      "RD_COL_TOP_2_CONSECUTIVE",
+    );
+    expect(RacedayLayoutUtils.getLabelKeyForColumn("top3Consecutive")).toBe(
+      "RD_COL_TOP_3_CONSECUTIVE",
+    );
     expect(
       RacedayLayoutUtils.getLabelKeyForColumn("imageset_fuel-gauge-builtin"),
     ).toBe("RD_COL_FUEL_GAUGE");
@@ -371,7 +497,11 @@ describe("RacedayLayoutUtils", () => {
 
     it("should return correct default widths for standard fixed columns", () => {
       expect(RacedayLayoutUtils.getDefaultColumnWidth("lapCount")).toBe(216);
+      expect(RacedayLayoutUtils.getDefaultColumnWidth("physicalLapCount")).toBe(
+        210,
+      );
       expect(RacedayLayoutUtils.getDefaultColumnWidth("lapsLed")).toBe(216);
+      expect(RacedayLayoutUtils.getDefaultColumnWidth("trackCalls")).toBe(216);
       expect(RacedayLayoutUtils.getDefaultColumnWidth("reactionTime")).toBe(
         330,
       );
@@ -427,6 +557,31 @@ describe("RacedayLayoutUtils", () => {
       expect(
         RacedayLayoutUtils.getDefaultColumnWidth("ghostPacingLeaderBest"),
       ).toBe(330);
+      expect(RacedayLayoutUtils.getDefaultColumnWidth("bestRaceLapTime")).toBe(
+        330,
+      );
+    });
+
+    it("should return correct default width for driver analysis columns", () => {
+      expect(
+        RacedayLayoutUtils.getDefaultColumnWidth("standardDeviation"),
+      ).toBe(330);
+      expect(RacedayLayoutUtils.getDefaultColumnWidth("consistencyScore")).toBe(
+        330,
+      );
+      expect(RacedayLayoutUtils.getDefaultColumnWidth("averageTop5")).toBe(330);
+      expect(RacedayLayoutUtils.getDefaultColumnWidth("averageTop10")).toBe(
+        330,
+      );
+      expect(RacedayLayoutUtils.getDefaultColumnWidth("averageTop15")).toBe(
+        330,
+      );
+      expect(RacedayLayoutUtils.getDefaultColumnWidth("top2Consecutive")).toBe(
+        330,
+      );
+      expect(RacedayLayoutUtils.getDefaultColumnWidth("top3Consecutive")).toBe(
+        330,
+      );
     });
 
     it("should return 275 for unknown column keys", () => {
@@ -474,6 +629,48 @@ describe("RacedayLayoutUtils", () => {
           [AnchorPoint.CenterCenter]: "lapCount",
         }),
       ).toBe(216);
+    });
+  });
+
+  describe("isPortraitLayout", () => {
+    it("should return true when layout baseWidth is less than baseHeight", () => {
+      const portraitLayout: LayoutConfig = {
+        baseWidth: 1080,
+        baseHeight: 1920,
+        widgets: [],
+      };
+      expect(RacedayLayoutUtils.isPortraitLayout(portraitLayout)).toBeTrue();
+    });
+
+    it("should return false when layout baseWidth is greater than or equal to baseHeight", () => {
+      const landscapeLayout: LayoutConfig = {
+        baseWidth: 1920,
+        baseHeight: 1080,
+        widgets: [],
+      };
+      expect(RacedayLayoutUtils.isPortraitLayout(landscapeLayout)).toBeFalse();
+
+      const squareLayout: LayoutConfig = {
+        baseWidth: 1080,
+        baseHeight: 1080,
+        widgets: [],
+      };
+      expect(RacedayLayoutUtils.isPortraitLayout(squareLayout)).toBeFalse();
+    });
+
+    it("should fall back to dashboardWidth and dashboardHeight when layout dimensions are not defined", () => {
+      expect(
+        RacedayLayoutUtils.isPortraitLayout(undefined, 1920, 1080),
+      ).toBeFalse();
+      expect(
+        RacedayLayoutUtils.isPortraitLayout(undefined, 1080, 1920),
+      ).toBeTrue();
+      expect(
+        RacedayLayoutUtils.isPortraitLayout({ widgets: [] }, 800, 1200),
+      ).toBeTrue();
+      expect(
+        RacedayLayoutUtils.isPortraitLayout({ widgets: [] }, 1200, 800),
+      ).toBeFalse();
     });
   });
 });

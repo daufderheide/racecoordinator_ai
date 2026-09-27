@@ -7,29 +7,23 @@ test.describe("Editor Tabs Component Visuals", () => {
     await TestSetupHelper.disableAnimations(page);
   });
 
-  test("should display editor tabs in track manager", async ({ page }) => {
-    await TestSetupHelper.waitForLocalization(
-      page,
-      "en",
-      page.goto("/track-manager"),
-    );
+  async function enterTrackEditMode(page: any) {
+    await page.locator(".page-container").waitFor();
+    await page.locator(".loader-overlay").waitFor({ state: "hidden" });
+    await page.locator("#edit-track-btn").click();
+    await expect(page.locator("#track-name-input")).toBeEnabled();
+    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+    await TestSetupHelper.disableAnimations(page);
+  }
 
-    const tabs = page.locator("app-editor-tabs");
-    await tabs.waitFor({ state: "visible" });
-    await expect(tabs).toHaveScreenshot("editor-tabs-track-manager.png");
-  });
-
-  test("should display editor tabs in race manager", async ({ page }) => {
-    await TestSetupHelper.waitForLocalization(
-      page,
-      "en",
-      page.goto("/race-manager"),
-    );
-
-    const tabs = page.locator("app-editor-tabs");
-    await tabs.waitFor({ state: "visible" });
-    await expect(tabs).toHaveScreenshot("editor-tabs-race-manager.png");
-  });
+  async function enterRaceEditMode(page: any) {
+    await page.locator(".page-container").waitFor();
+    await page.locator(".loader-overlay").waitFor({ state: "hidden" });
+    await page.locator("#edit-track-btn").click();
+    await expect(page.locator("#race-name-input")).toBeEnabled();
+    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+    await TestSetupHelper.disableAnimations(page);
+  }
 
   test("should display editor tabs in track editor", async ({ page }) => {
     await TestSetupHelper.waitForLocalization(
@@ -37,6 +31,8 @@ test.describe("Editor Tabs Component Visuals", () => {
       "en",
       page.goto("/track-editor?id=t1"),
     );
+
+    await enterTrackEditMode(page);
 
     const tabs = page.locator("app-editor-tabs");
     await tabs.waitFor({ state: "visible" });
@@ -51,6 +47,8 @@ test.describe("Editor Tabs Component Visuals", () => {
       "en",
       page.goto("/race-editor?id=r1&driverCount=4"),
     );
+
+    await enterRaceEditMode(page);
 
     const tabs = page.locator("app-editor-tabs");
     await tabs.waitFor({ state: "visible" });

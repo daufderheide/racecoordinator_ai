@@ -88,7 +88,17 @@ export function createRacedayMocks(overrides: any = {}) {
     "setMainPower",
     "setLanePower",
     "saveRace",
+    "exportRaceToCsv",
+    "exportRaceToXls",
   ]);
+  mockDataService.exportRaceToCsv.and.returnValue(of("csv,mock,data"));
+  mockDataService.exportRaceToXls.and.returnValue(
+    of(
+      new Blob(["mock xls"], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      }),
+    ),
+  );
   mockDataService.getSystemStateValue.and.returnValue(null);
   mockDataService.listAssets.and.returnValue(of([]));
   mockDataService.saveRace.and.returnValue(of("saved_race.json"));
@@ -164,6 +174,7 @@ export function createRacedayMocks(overrides: any = {}) {
     "getRace",
     "getHeats",
     "getCurrentHeat",
+    "getParticipants",
   ]);
   const mockHeatsWithAudio = deepCopy(MOCK_HEATS).map((h: any) => ({
     ...h,
@@ -190,6 +201,7 @@ export function createRacedayMocks(overrides: any = {}) {
   mockRaceService.getRace.and.returnValue(mockRaceWithTrack);
   mockRaceService.getHeats.and.returnValue(mockHeatsWithAudio);
   mockRaceService.getCurrentHeat.and.returnValue(mockHeatsWithAudio[0]);
+  mockRaceService.getParticipants.and.returnValue([]);
 
   return {
     mockDataService,
@@ -201,10 +213,15 @@ export function createRacedayMocks(overrides: any = {}) {
         "getFlagColor",
         "getFlagNameKey",
         "getFlagUrl",
+        "getCurrentFlagUrl",
       ]);
       spy.getFlagType.and.returnValue("red");
       spy.getFlagColor.and.returnValue("red");
       spy.getFlagNameKey.and.returnValue("RACE_FLAG_RED");
+      spy.getCurrentFlagUrl.and.callFake(() =>
+        spy.getFlagUrl(spy.getFlagType()),
+      );
+      spy.currentFlagUrl$ = of("/assets/images/flags/red.png");
       spy.getFlagUrl.and.callFake((flag: any) => {
         const flagType = typeof flag === "string" ? flag : "red";
         const enumMap: Record<number, string> = {

@@ -1,5 +1,7 @@
 package com.antigravity.models;
 
+import com.antigravity.race.DriverHeatData;
+import com.antigravity.race.DriverHeatData.LapData;
 import com.antigravity.race.Heat;
 import com.antigravity.race.RaceParticipant;
 import com.antigravity.race.RaceStatistics;
@@ -54,7 +56,42 @@ public class RaceHistoryRecord {
   @JsonProperty("is_event_summary")
   private boolean isEventSummary;
 
+  @JsonProperty("timestamp")
+  @JsonAlias({"created_at", "createdAt"})
+  private Long timestamp;
+
+  @JsonProperty("ineligible_lap_count")
+  @JsonAlias({"ineligibleLapCount"})
+  private Integer ineligibleLapCount;
+
+  @JsonProperty("season_entity_id")
+  @JsonAlias({"seasonEntityId", "season_id", "seasonId"})
+  private String seasonEntityId;
+
   public RaceHistoryRecord() {}
+
+  public RaceHistoryRecord(
+      String id,
+      String originalEntityId,
+      Race model,
+      Track track,
+      List<RaceParticipant> drivers,
+      List<Heat> heats,
+      float accumulatedRaceTime,
+      RaceStatistics statistics,
+      Boolean isDemo) {
+    this(
+        id,
+        originalEntityId,
+        model,
+        track,
+        drivers,
+        heats,
+        accumulatedRaceTime,
+        statistics,
+        isDemo,
+        null);
+  }
 
   @JsonCreator
   public RaceHistoryRecord(
@@ -66,7 +103,8 @@ public class RaceHistoryRecord {
       @JsonProperty("heats") List<Heat> heats,
       @JsonProperty("accumulatedRaceTime") float accumulatedRaceTime,
       @JsonProperty("statistics") RaceStatistics statistics,
-      @JsonProperty("is_demo") @JsonAlias({"isDemo", "demo"}) Boolean isDemo) {
+      @JsonProperty("is_demo") @JsonAlias({"isDemo", "demo"}) Boolean isDemo,
+      @JsonProperty("timestamp") @JsonAlias({"created_at", "createdAt"}) Long timestamp) {
     this.id = id;
     this.originalEntityId = originalEntityId;
     this.model = model;
@@ -76,6 +114,7 @@ public class RaceHistoryRecord {
     this.accumulatedRaceTime = accumulatedRaceTime;
     this.statistics = statistics;
     this.isDemo = isDemo != null ? isDemo : false;
+    this.timestamp = timestamp;
   }
 
   public String getId() {
@@ -196,5 +235,92 @@ public class RaceHistoryRecord {
 
   public void setEventSummary(boolean isEventSummary) {
     this.isEventSummary = isEventSummary;
+  }
+
+  @JsonProperty("timestamp")
+  public Long getTimestamp() {
+    if (timestamp != null && timestamp > 0) {
+      return timestamp;
+    }
+    if (statistics != null) {
+      if (statistics.getStartMillis() > 0) {
+        return statistics.getStartMillis();
+      }
+      if (statistics.getStartTime() != null) {
+        try {
+          return java.time.OffsetDateTime.parse(statistics.getStartTime())
+              .toInstant()
+              .toEpochMilli();
+        } catch (Exception ignored) {
+        }
+      }
+    }
+    if (heats != null && !heats.isEmpty()) {
+      for (Heat h : heats) {
+        if (h.getStatistics() != null) {
+          if (h.getStatistics().getStartMillis() > 0) {
+            return h.getStatistics().getStartMillis();
+          }
+          if (h.getStatistics().getStartTime() != null) {
+            try {
+              return java.time.OffsetDateTime.parse(h.getStatistics().getStartTime())
+                  .toInstant()
+                  .toEpochMilli();
+            } catch (Exception ignored) {
+            }
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  @JsonProperty("timestamp")
+  public void setTimestamp(Long timestamp) {
+    this.timestamp = timestamp;
+  }
+
+  @JsonProperty("ineligible_lap_count")
+  public int getIneligibleLapCount() {
+    if (ineligibleLapCount != null) {
+      return ineligibleLapCount;
+    }
+    if (heats == null || heats.isEmpty()) {
+      return 0;
+    }
+    int count = 0;
+    for (Heat heat : heats) {
+      if (heat.getDrivers() == null) {
+        continue;
+      }
+      for (DriverHeatData dhd : heat.getDrivers()) {
+        if (dhd.getLaps() == null) {
+          continue;
+        }
+        for (LapData lap : dhd.getLaps()) {
+          if (!lap.isCountTowardsRecords()) {
+            count++;
+          }
+        }
+      }
+    }
+    return count;
+  }
+
+  @JsonProperty("ineligible_lap_count")
+  @JsonAlias({"ineligibleLapCount"})
+  public void setIneligibleLapCount(Integer ineligibleLapCount) {
+    this.ineligibleLapCount = ineligibleLapCount;
+  }
+
+  @JsonProperty("season_entity_id")
+  public String getSeasonEntityId() {
+    return seasonEntityId;
+  }
+
+  @JsonProperty("season_entity_id")
+  @JsonAlias({"seasonEntityId", "season_id", "seasonId"})
+  public void setSeasonEntityId(String seasonEntityId) {
+    this.seasonEntityId = seasonEntityId;
   }
 }

@@ -22,11 +22,16 @@ import com.antigravity.proto.AssetMessage;
 import com.antigravity.protocols.arduino.ArduinoConfig;
 import com.antigravity.repository.SqliteRepository;
 import java.io.InputStream;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,6 +47,8 @@ public class DatabaseInitializer {
       if (is != null) {
         context.importDatabase(dbName, is);
         new AssetService(context, context.getDataRoot() + dbName + "/assets").backfillDefaults();
+        backfillCustomUIs(context);
+        backfillDrivers(context);
         logger.info("Database reset to factory complete.");
         return;
       }
@@ -80,44 +87,9 @@ public class DatabaseInitializer {
             .filter(a -> a.getName().toLowerCase().contains("helmet"))
             .collect(Collectors.toList());
 
-    AssetMessage beepSound =
-        allAssets.stream()
-            .filter(
-                a ->
-                    "default_beep".equals(a.getModel().getEntityId())
-                        || "Lap Beep".equalsIgnoreCase(a.getName())
-                        || a.getName().toLowerCase().contains("beep"))
-            .findFirst()
-            .orElse(null);
-
-    AssetMessage drivebySound =
-        allAssets.stream()
-            .filter(
-                a ->
-                    "default_driveby".equals(a.getModel().getEntityId())
-                        || "Lap Driveby".equalsIgnoreCase(a.getName())
-                        || a.getName().toLowerCase().contains("driveby"))
-            .findFirst()
-            .orElse(null);
-
-    AssetMessage penaltySound =
-        allAssets.stream()
-            .filter(
-                a ->
-                    "default_penalty".equals(a.getModel().getEntityId())
-                        || "Penalty".equalsIgnoreCase(a.getName())
-                        || a.getName().toLowerCase().contains("penalty"))
-            .findFirst()
-            .orElse(null);
-
-    String lapSoundUrl = beepSound != null ? beepSound.getUrl() : "/assets/default_beep_beep.wav";
-    String bestLapSoundUrl =
-        drivebySound != null ? drivebySound.getUrl() : "/assets/default_driveby_driveby.wav";
-    String penaltySoundUrl =
-        penaltySound != null ? penaltySound.getUrl() : "/assets/default_penalty_penalty.wav";
-    AudioConfig lapAudio = new AudioConfig("preset", lapSoundUrl, null);
-    AudioConfig bestLapAudio = new AudioConfig("preset", bestLapSoundUrl, null);
-    AudioConfig penaltyAudio = new AudioConfig("preset", penaltySoundUrl, null);
+    AudioConfig lapAudio = new AudioConfig("preset", "default_beep", null);
+    AudioConfig bestLapAudio = new AudioConfig("preset", "default_driveby", null);
+    AudioConfig penaltyAudio = new AudioConfig("preset", "default_penalty", null);
 
     List<Driver> initialDrivers = new ArrayList<>();
     initialDrivers.add(
@@ -220,24 +192,124 @@ public class DatabaseInitializer {
     if (!helmetAssets.isEmpty()) {
       avatarUrl = helmetAssets.get((index - 1) % helmetAssets.size()).getUrl();
     }
-    return new Driver(
-        name,
-        nickname,
-        avatarUrl,
-        lapAudio,
-        bestLapAudio,
-        penaltyAudio,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        sequenceId,
-        null);
+    return new Driver.Builder()
+        .withName(name)
+        .withNickname(nickname)
+        .withAvatarUrl(avatarUrl)
+        .withLapAudio(lapAudio)
+        .withBestLapAudio(bestLapAudio)
+        .withPenaltyAudio(penaltyAudio)
+        .withOverallBestLapAudio(new AudioConfig("preset", "default_record_lap", ""))
+        .withOverallLaneBestLapAudio(new AudioConfig("preset", "default_record_lane_lap", ""))
+        .withRaceBestLapAudio(new AudioConfig("preset", "default_best_race_lap", ""))
+        .withRaceLaneBestLapAudio(new AudioConfig("preset", "default_best_race_lane_lap", ""))
+        .withHeatBestLapAudio(new AudioConfig("preset", "default_best_heat_lap", ""))
+        .withNewRaceLeaderAudio(new AudioConfig("preset", "default_new_race_leader", ""))
+        .withNewHeatLeaderAudio(new AudioConfig("preset", "default_new_heat_leader", ""))
+        .withPitInAudio(new AudioConfig("preset", "default_pit_in", ""))
+        .withFuelAudio(new AudioConfig("audio_set", "default_fuel_level", ""))
+        .withEntityId(sequenceId)
+        .build();
+  }
+
+  private boolean isAudioConfigMissing(AudioConfig config) {
+    if (config == null || config.getType() == null || config.getType().trim().isEmpty()) {
+      return true;
+    }
+    String type = config.getType().trim().toLowerCase();
+    if ("none".equals(type) || "tts".equals(type)) {
+      return false;
+    }
+    return config.getUrl() == null || config.getUrl().trim().isEmpty();
+  }
+
+  public void backfillDrivers(DatabaseContext context) {
+    SqliteRepository<Driver> driverRepo = new SqliteRepository<>(context, "drivers", Driver.class);
+    List<Driver> drivers = driverRepo.findAll();
+    Set<String> needsUpdateIds = new HashSet<>();
+
+    try (Statement stmt = context.getConnection().createStatement();
+        ResultSet rs = stmt.executeQuery("SELECT entity_id, json_data FROM drivers")) {
+      while (rs.next()) {
+        String json = rs.getString("json_data");
+        if (json == null
+            || !json.contains("pitInAudio")
+            || !json.contains("fuelAudio")
+            || !json.contains("overallBestLapAudio")
+            || !json.contains("newRaceLeaderAudio")
+            || !json.contains("newHeatLeaderAudio")
+            || (json.contains("fuelAudio") && json.contains("\"type\":\"preset\""))
+            || (json.contains("fuelAudio") && json.contains("\"type\": \"preset\""))) {
+          needsUpdateIds.add(rs.getString("entity_id"));
+        }
+      }
+    } catch (SQLException e) {
+      logger.warn("Failed to check drivers raw JSON for backfill", e);
+    }
+
+    for (Driver driver : drivers) {
+      boolean needsUpdate = needsUpdateIds.contains(driver.getEntityId());
+      Driver.Builder builder = Driver.Builder.from(driver);
+
+      if (isAudioConfigMissing(driver.getLapAudio())) {
+        builder.withLapAudio(new AudioConfig("preset", "default_beep", ""));
+        needsUpdate = true;
+      }
+      if (isAudioConfigMissing(driver.getBestLapAudio())) {
+        builder.withBestLapAudio(new AudioConfig("preset", "default_driveby", ""));
+        needsUpdate = true;
+      }
+      if (isAudioConfigMissing(driver.getPenaltyAudio())) {
+        builder.withPenaltyAudio(new AudioConfig("preset", "default_penalty", ""));
+        needsUpdate = true;
+      }
+      if (isAudioConfigMissing(driver.getOverallBestLapAudio())) {
+        builder.withOverallBestLapAudio(new AudioConfig("preset", "default_record_lap", ""));
+        needsUpdate = true;
+      }
+      if (isAudioConfigMissing(driver.getOverallLaneBestLapAudio())) {
+        builder.withOverallLaneBestLapAudio(
+            new AudioConfig("preset", "default_record_lane_lap", ""));
+        needsUpdate = true;
+      }
+      if (isAudioConfigMissing(driver.getRaceBestLapAudio())) {
+        builder.withRaceBestLapAudio(new AudioConfig("preset", "default_best_race_lap", ""));
+        needsUpdate = true;
+      }
+      if (isAudioConfigMissing(driver.getRaceLaneBestLapAudio())) {
+        builder.withRaceLaneBestLapAudio(
+            new AudioConfig("preset", "default_best_race_lane_lap", ""));
+        needsUpdate = true;
+      }
+      if (isAudioConfigMissing(driver.getHeatBestLapAudio())) {
+        builder.withHeatBestLapAudio(new AudioConfig("preset", "default_best_heat_lap", ""));
+        needsUpdate = true;
+      }
+      if (isAudioConfigMissing(driver.getNewRaceLeaderAudio())) {
+        builder.withNewRaceLeaderAudio(new AudioConfig("preset", "default_new_race_leader", ""));
+        needsUpdate = true;
+      }
+      if (isAudioConfigMissing(driver.getNewHeatLeaderAudio())) {
+        builder.withNewHeatLeaderAudio(new AudioConfig("preset", "default_new_heat_leader", ""));
+        needsUpdate = true;
+      }
+      if (isAudioConfigMissing(driver.getPitInAudio())) {
+        builder.withPitInAudio(new AudioConfig("preset", "default_pit_in", ""));
+        needsUpdate = true;
+      }
+      if (isAudioConfigMissing(driver.getFuelAudio())) {
+        builder.withFuelAudio(new AudioConfig("audio_set", "default_fuel_level", ""));
+        needsUpdate = true;
+      }
+
+      if (needsUpdate) {
+        driverRepo.replace(driver.getEntityId(), builder.build());
+        logger.info(
+            "Backfilled audio settings for driver '{}' ({})",
+            driver.getName(),
+            driver.getEntityId());
+      }
+    }
   }
 
   public Track resetTracks(DatabaseContext context) {
@@ -345,13 +417,16 @@ public class DatabaseInitializer {
             FuelOptions.OutOfFuelAction.DO_NOT_COUNT_LAPS,
             100.0,
             FuelOptions.FuelUsageType.QUADRATIC,
-            4.0,
             100.0,
             10.0,
             2.0,
-            6.0,
+            3.0,
+            16.0,
+            9.0,
+            16.0 / 9.0,
             1.0,
-            1.0);
+            1.0,
+            null);
     TeamOptions teamOptions = new TeamOptions(25, 0.0, 50, 0.0, false);
     return new Race.Builder()
         .withName("Fuel Race")
@@ -415,7 +490,7 @@ public class DatabaseInitializer {
 
     Theme defaultTheme =
         new Theme(
-            "Default Theme",
+            "RaceCoordinator AI",
             true,
             slots,
             audioSlots,
@@ -424,7 +499,7 @@ public class DatabaseInitializer {
             null);
     Theme practiceTheme =
         new Theme(
-            "Practice Theme",
+            "RaceCoordinator AI (Practice)",
             true,
             slots,
             audioSlots,
@@ -433,7 +508,13 @@ public class DatabaseInitializer {
             null);
     Theme fuelTheme =
         new Theme(
-            "Fuel Theme", true, slots, audioSlots, CustomUI.FUEL_UI_ID, Theme.FUEL_THEME_ID, null);
+            "RaceCoordinator AI (Fuel)",
+            true,
+            slots,
+            audioSlots,
+            CustomUI.FUEL_UI_ID,
+            Theme.FUEL_THEME_ID,
+            null);
 
     themeRepo.save(defaultTheme);
     themeRepo.save(practiceTheme);
@@ -466,14 +547,16 @@ public class DatabaseInitializer {
     Map<String, AudioConfig> as = new HashMap<>();
     as.put("audio.countdown", new AudioConfig("audio_set", "default_countdown", null));
     as.put("audio.seconds_left", new AudioConfig("audio_set", "default_seconds_left", null));
+    as.put("audio.laps_left", new AudioConfig("audio_set", "default_laps_left", null));
+    as.put("audio.auto_start", new AudioConfig("audio_set", "default_auto_start", null));
+    as.put("audio.auto_advance", new AudioConfig("audio_set", "default_auto_advance", null));
     as.put("audio.yellowflag", new AudioConfig("preset", "default_yellow_flag", null));
     as.put("audio.seconds_left.halfway", new AudioConfig("preset", "default_heat_half", null));
     as.put("audio.heat_over", new AudioConfig("preset", "default_heat_over", null));
     as.put("audio.race_over", new AudioConfig("preset", "default_race_over", null));
-    as.put("audio.penalty", new AudioConfig("preset", "default_penalty", null));
     as.put(
-        "audio.min_lap_time", new AudioConfig("tts", null, "Min lap time for {{driver.nickname}}"));
-    as.put("audio.drift_lap", new AudioConfig("tts", null, "Drift lap for {{driver.nickname}}"));
+        "audio.min_lap_time", new AudioConfig("tts", null, "Min lap time for {driver.nickname}"));
+    as.put("audio.drift_lap", new AudioConfig("tts", null, "Drift lap for {driver.nickname}"));
     return as;
   }
 
@@ -489,6 +572,8 @@ public class DatabaseInitializer {
       if ("Fuel Race".equals(race.getName())) {
         hasFuelRace = true;
       }
+      boolean modified = false;
+      Race.Builder raceBuilder = new Race.Builder().from(race);
       if (race.getThemeId() == null || race.getThemeId().trim().isEmpty()) {
         String themeId = Theme.DEFAULT_THEME_ID;
         if (race.isPractice() || "Practice".equalsIgnoreCase(race.getName())) {
@@ -497,13 +582,20 @@ public class DatabaseInitializer {
             || "Fuel Race".equalsIgnoreCase(race.getName())) {
           themeId = Theme.FUEL_THEME_ID;
         }
-        Race updated = new Race.Builder().from(race).withThemeId(themeId).build();
-        raceRepo.save(updated);
+        raceBuilder.withThemeId(themeId);
+        modified = true;
         logger.info(
             "Backfilled themeId '{}' for race '{}' ({})",
             themeId,
             race.getName(),
             race.getEntityId());
+      }
+      if (race.getFuelOptions() != null) {
+        raceBuilder.withFuelOptions(race.getFuelOptions());
+        modified = true;
+      }
+      if (modified) {
+        raceRepo.save(raceBuilder.build());
       }
     }
 
@@ -525,6 +617,93 @@ public class DatabaseInitializer {
           logger.info("Backfilled Practice Race to database.");
         }
       }
+    }
+  }
+
+  public void backfillCustomUIs(DatabaseContext context) {
+    SqliteRepository<CustomUI> uiRepo =
+        new SqliteRepository<>(context, "custom_uis", CustomUI.class);
+    List<CustomUI> uis = uiRepo.findAll();
+    boolean[] foundFlags = new boolean[3]; // [default, practice, fuel]
+    for (CustomUI ui : uis) {
+      backfillSingleCustomUi(ui, uiRepo, foundFlags);
+    }
+    if (!foundFlags[0]) {
+      uiRepo.save(CustomUI.createDefault());
+      logger.info("Backfilled default custom UI with ID {}", CustomUI.DEFAULT_UI_ID);
+    }
+    if (!foundFlags[1]) {
+      uiRepo.save(CustomUI.createPractice());
+      logger.info("Backfilled practice custom UI with ID {}", CustomUI.PRACTICE_UI_ID);
+    }
+    if (!foundFlags[2]) {
+      uiRepo.save(CustomUI.createFuel());
+      logger.info("Backfilled fuel custom UI with ID {}", CustomUI.FUEL_UI_ID);
+    }
+  }
+
+  private void backfillSingleCustomUi(
+      CustomUI ui, SqliteRepository<CustomUI> uiRepo, boolean[] foundFlags) {
+    boolean updated = false;
+    String entityId = ui.getEntityId();
+    String name = ui.getName();
+
+    if ("2".equals(entityId)
+        && !foundFlags[2]
+        && (ui.isDefault() || "Fuel UI".equalsIgnoreCase(name))) {
+      uiRepo.delete("2");
+      entityId = CustomUI.FUEL_UI_ID;
+      name = CustomUI.FUEL_UI_NAME;
+      foundFlags[2] = true;
+      updated = true;
+    }
+
+    if (CustomUI.DEFAULT_UI_ID.equals(entityId)) {
+      foundFlags[0] = true;
+      if (CustomUI.isLegacyDefaultName(name)) {
+        name = CustomUI.DEFAULT_UI_NAME;
+        updated = true;
+      }
+    }
+    if (CustomUI.PRACTICE_UI_ID.equals(entityId)) {
+      foundFlags[1] = true;
+      if (CustomUI.isLegacyPracticeName(name)) {
+        name = CustomUI.PRACTICE_UI_NAME;
+        updated = true;
+      }
+    }
+    if (CustomUI.FUEL_UI_ID.equals(entityId)) {
+      foundFlags[2] = true;
+      if (CustomUI.isLegacyFuelName(name)) {
+        name = CustomUI.FUEL_UI_NAME;
+        updated = true;
+      }
+    }
+
+    String layoutJson = ui.getLayoutJson();
+    if (layoutJson != null && !layoutJson.contains("\"widgetType\":\"countdown\"")) {
+      String updatedLayoutJson = CustomUI.ensureCountdownWidget(layoutJson);
+      if (!updatedLayoutJson.equals(layoutJson)) {
+        layoutJson = updatedLayoutJson;
+        updated = true;
+      }
+    }
+
+    if (updated) {
+      CustomUI updatedUi =
+          new CustomUI(
+              name,
+              ui.isDefault(),
+              layoutJson,
+              ui.getColumnsJson(),
+              ui.getColumnLayoutsJson(),
+              ui.getColumnVisibilityJson(),
+              ui.getColumnWidthsJson(),
+              ui.getColumnAnchorsJson(),
+              entityId,
+              ui.getId());
+      uiRepo.save(updatedUi);
+      logger.info("Backfilled custom UI '{}' ({})", updatedUi.getName(), updatedUi.getEntityId());
     }
   }
 

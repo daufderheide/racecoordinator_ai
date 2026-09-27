@@ -1,18 +1,18 @@
 import { CustomUI } from "@app/models/custom-ui";
 import { deepCopy } from "@app/utils/clone.utils";
+import { naturalSortCompare } from "@app/utils/sorting.utils";
 
 import { UIEditorState } from "./ui-editor-constants";
 import { isCustomUiDefault } from "./ui-editor-crud.helper";
 
 export function sortCustomUisForDisplay(customUIs: CustomUI[]): CustomUI[] {
-  const defaultUIs = (customUIs || []).filter((u) => isCustomUiDefault(u));
-  const otherUIs = (customUIs || []).filter((u) => !isCustomUiDefault(u));
-  defaultUIs.sort((a, b) => {
-    if (a.entity_id === "default_ui_layout_rc_ai") return -1;
-    if (b.entity_id === "default_ui_layout_rc_ai") return 1;
-    return 0;
+  const list = [...(customUIs || [])];
+  list.sort((a, b) => {
+    const cmp = naturalSortCompare(a.name || "", b.name || "");
+    if (cmp !== 0) return cmp;
+    return (a.entity_id || "").localeCompare(b.entity_id || "");
   });
-  return [...defaultUIs, ...otherUIs];
+  return list;
 }
 
 export function handleCustomUiStateDeletion(
@@ -149,9 +149,13 @@ export async function handleCreateCustomUi(comp: any): Promise<void> {
     logger: comp.logger,
   });
   if (created) {
+    if (comp.defaultUiNames) {
+      comp.defaultUiNames[created.entity_id] = created.name;
+    }
     comp.refreshDisplayProperties();
     comp.undoManager.captureState();
     comp.toggleUiSection(created.entity_id);
+    comp.focusUiNameInput?.(created.entity_id);
     comp.cdr.markForCheck();
   }
 }
@@ -168,9 +172,13 @@ export async function handleDuplicateCustomUi(
     logger: comp.logger,
   });
   if (created) {
+    if (comp.defaultUiNames) {
+      comp.defaultUiNames[created.entity_id] = created.name;
+    }
     comp.refreshDisplayProperties();
     comp.undoManager.captureState();
     comp.toggleUiSection(created.entity_id);
+    comp.focusUiNameInput?.(created.entity_id);
     comp.cdr.markForCheck();
   }
 }

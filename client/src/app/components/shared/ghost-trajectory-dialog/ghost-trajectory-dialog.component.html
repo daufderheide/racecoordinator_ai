@@ -28,22 +28,24 @@
               "GTD_GHOST_REFERENCE" | translate
             }}</span>
             @if (referenceOptions().length > 1) {
-              <select
+              <app-custom-select
                 class="reference-select"
                 [ngModel]="selectedRefId()"
                 (ngModelChange)="onReferenceChange($event)"
               >
                 @for (opt of referenceOptions(); track opt.id) {
-                  <option [value]="opt.id">{{ opt.name }}</option>
+                  <app-custom-option [value]="opt.id">{{
+                    opt.name
+                  }}</app-custom-option>
                 }
                 @if (benchmarkLapTime() > 0) {
-                  <option value="__benchmark__">
+                  <app-custom-option value="__benchmark__">
                     {{ "GTD_BENCHMARK" | translate }} ({{
                       benchmarkLapTime().toFixed(2)
                     }}s)
-                  </option>
+                  </app-custom-option>
                 }
-              </select>
+              </app-custom-select>
             } @else {
               <span class="driver-name">{{ currentReferenceName() }}</span>
             }

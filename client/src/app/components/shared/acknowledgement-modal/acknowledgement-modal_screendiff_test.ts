@@ -88,7 +88,6 @@ test.describe("Acknowledgement Modal Visuals", () => {
 
     // Wait for the modal to be visible before screenshot
     await harness.waitForVisible(10000);
-    await page.waitForTimeout(200);
 
     // Use modal-content for screenshot to avoid transparent background flakiness
     await expect(modalHost.locator(".modal-content")).toHaveScreenshot(
@@ -132,7 +131,6 @@ test.describe("Acknowledgement Modal Visuals", () => {
 
     // Wait for the modal to be visible and stable
     await harness.waitForVisible(10000);
-    await page.waitForTimeout(200); // Allow re-render to settle without checking text
 
     await expect(modalHost.locator(".modal-content")).toHaveScreenshot(
       "ack-modal-disconnected.png",
@@ -159,7 +157,6 @@ test.describe("Acknowledgement Modal Visuals", () => {
     await sendInterfaceEvent(page, InterfaceStatus.DISCONNECTED);
 
     // Wait past the first 500ms timeout so the modal appears
-    await page.waitForTimeout(600);
 
     // Test the duplicate event resilience
     await sendInterfaceEvent(page, InterfaceStatus.DISCONNECTED);
@@ -169,14 +166,19 @@ test.describe("Acknowledgement Modal Visuals", () => {
 
     // Wait for the Disconnected modal to be visible
     await harness.waitForVisible(10000);
-    await page.waitForTimeout(200);
 
     // 2. Simulate CONNECTED (recovery)
+    await page.evaluate(() => {
+      (window as any).WATCHDOG_TIMEOUT = 30000;
+      (window as any).INITIAL_WATCHDOG_TIMEOUT = 30000;
+    });
     await sendInterfaceEvent(page, InterfaceStatus.CONNECTED);
 
-    // Wait for the Connected (recovery) modal to be visible
-    await harness.waitForVisible(10000);
-    await page.waitForTimeout(200);
+    // Wait for the Connected (recovery) modal title to be visible
+    await expect(modalHost.locator(".modal-title")).toHaveText(
+      "Interface Connected",
+      { timeout: 10000 },
+    );
 
     await expect(modalHost.locator(".modal-content")).toHaveScreenshot(
       "ack-modal-recovered.png",

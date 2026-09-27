@@ -8,12 +8,24 @@ export class RacedaySeasonNameHarness
 {
   static hostSelector = RacedaySeasonNameHarnessBase.hostSelector;
 
-  protected getValueText = this.locatorForOptional(
+  protected getLabelEl = this.locatorForOptional(
+    RacedaySeasonNameHarnessBase.selectors.labelText,
+  );
+  protected getValueEl = this.locatorForOptional(
     RacedaySeasonNameHarnessBase.selectors.valueText,
   );
 
+  async isVisible(): Promise<boolean> {
+    return (await this.host()) !== null;
+  }
+
+  async getLabelText(): Promise<string> {
+    const el = await this.getLabelEl();
+    return el ? (await el.text()).trim() : "";
+  }
+
   async getSeasonName(): Promise<string> {
-    const el = await this.getValueText();
-    return el ? await el.text() : "";
+    const el = await this.getValueEl();
+    return el ? (await el.text()).trim() : "";
   }
 }

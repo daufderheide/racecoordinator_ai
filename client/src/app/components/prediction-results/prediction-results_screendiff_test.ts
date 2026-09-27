@@ -113,7 +113,6 @@ test.describe("Prediction Results Visuals", () => {
 
     // Hover over first driver row ("Alice Sprint")
     await harness.hoverDriverRow(0);
-    await page.waitForTimeout(300);
 
     expect(await harness.hasHovercard()).toBe(true);
 

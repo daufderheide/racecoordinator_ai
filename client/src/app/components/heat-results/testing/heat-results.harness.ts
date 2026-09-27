@@ -14,6 +14,12 @@ export class HeatResultsHarness
   protected getTwinGraphsEl = this.locatorForOptional(
     HeatResultsHarnessBase.selectors.twinGraphs,
   );
+  protected getTrajectoryModalEl = this.locatorForOptional(
+    HeatResultsHarnessBase.selectors.trajectoryModal,
+  );
+  protected getTrajectoryButtonsEl = this.locatorForAll(
+    HeatResultsHarnessBase.selectors.trajectoryButton,
+  );
 
   async hasHeatDriverExpander(): Promise<boolean> {
     return (await this.getHeatDriverExpandersEl()).length > 0;
@@ -25,5 +31,20 @@ export class HeatResultsHarness
 
   async getHeatDriverExpanderCount(): Promise<number> {
     return (await this.getHeatDriverExpandersEl()).length;
+  }
+
+  async hasTrajectoryModal(): Promise<boolean> {
+    return (await this.getTrajectoryModalEl()) !== null;
+  }
+
+  async hasTrajectoryButton(): Promise<boolean> {
+    return (await this.getTrajectoryButtonsEl()).length > 0;
+  }
+
+  async clickTrajectoryButton(index = 0): Promise<void> {
+    const buttons = await this.getTrajectoryButtonsEl();
+    if (buttons.length > index) {
+      await buttons[index].click();
+    }
   }
 }

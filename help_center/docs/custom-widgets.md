@@ -25,21 +25,27 @@ To load or update the sample widgets:
 2. Scroll to the **Custom UI** section at the bottom.
 3. Under **Custom Widgets Folder**, click **Select Folder** and choose any folder on your computer.
 4. Click the **Update Sample Widgets** button.
-5. Race Coordinator AI will automatically generate/update the sample widget folders inside your selected folder and reload them into your widget palette.
+5. Race Coordinator AI will automatically generate/update the sample widgets inside a dedicated `sample/` folder in your selected directory and reload them into the **sample** group in the widget toolbox.
 
 ---
 
-## Authoring Custom Widgets
+## Authoring Custom Widgets & Organizing Groups
 
-Each custom widget resides in a dedicated subfolder containing the following files:
+Custom widgets are organized into groups and sub-groups in the Widget Toolbox based on your folder structure:
+- Folders directly under your selected root folder become **Groups** (e.g. `sample/`, `my-pack/`).
+- Subfolders within a group become **Sub-Groups** (e.g. `sample/telemetry/`).
+- Standalone widget folders directly under root appear under **Custom Root**.
 
 ```text
 MyCustomWidgets/
-└── my-telemetry-widget/
-    ├── widget.json       # Required: Manifest & settingsSchema
-    ├── widget.html       # Required: Angular template
-    ├── widget.css        # Optional: Scoped stylesheet
-    └── widget.ts         # Optional: Component logic (extends CustomWidgetBaseComponent)
+├── sample/                       # Group: "sample"
+│   └── sample-telemetry-gauge/   # Widget in root of "sample" group
+│       ├── widget.json           # Required: Manifest & settingsSchema
+│       ├── widget.html           # Required: Angular template
+│       ├── widget.css            # Optional: Scoped stylesheet
+│       └── widget.ts             # Optional: Component logic
+└── my-pack/                      # Group: "my-pack"
+    └── my-widget/                # Widget in root of "my-pack" group
 ```
 
 ### Manifest Schema (`widget.json`)

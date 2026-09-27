@@ -9,4 +9,5 @@ export abstract class RacedayRecordsHarnessBase {
   abstract getRecordRowValues(
     index: number,
   ): Promise<{ nickname: string; score: string }>;
+  abstract getRowCount(): Promise<number>;
 }

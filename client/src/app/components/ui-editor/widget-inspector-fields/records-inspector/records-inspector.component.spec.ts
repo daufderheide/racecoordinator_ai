@@ -77,7 +77,7 @@ describe("RecordsInspectorComponent", () => {
   });
 
   it("should trigger loadLocalFonts on font service when select element is focused", () => {
-    const selectEl = fixture.nativeElement.querySelector("select");
+    const selectEl = fixture.nativeElement.querySelector("app-custom-select");
     selectEl.dispatchEvent(new Event("focus"));
     expect(fontServiceSpy.loadLocalFonts).toHaveBeenCalled();
   });
@@ -87,6 +87,31 @@ describe("RecordsInspectorComponent", () => {
     await harness.setHeaderFontSize(45);
     expect(await harness.getHeaderFontSize()).toBe(45);
     expect(changeSpy).toHaveBeenCalled();
+  });
+
+  it("should initialize checkboxes to true by default", async () => {
+    expect(await harness.getShowRaceRecordLap()).toBeTrue();
+    expect(await harness.getShowRaceRecordScore()).toBeTrue();
+    expect(await harness.getShowCurrentRaceBest()).toBeTrue();
+    expect(await harness.getShowHeatBest()).toBeTrue();
+  });
+
+  it("should toggle checkboxes and emit changes", async () => {
+    await harness.setShowRaceRecordLap(false);
+    expect(component.settings().showRaceRecordLap).toBeFalse();
+    expect(changeSpy).toHaveBeenCalled();
+
+    await harness.setShowRaceRecordScore(false);
+    expect(component.settings().showRaceRecordScore).toBeFalse();
+
+    await harness.setShowCurrentRaceBest(false);
+    expect(component.settings().showCurrentRaceBest).toBeFalse();
+
+    await harness.setShowHeatBest(false);
+    expect(component.settings().showHeatBest).toBeFalse();
+
+    await harness.setShowRaceRecordLap(true);
+    expect(component.settings().showRaceRecordLap).toBeTrue();
   });
 
   it("should disable font size inputs when disableFontSizes is true", async () => {

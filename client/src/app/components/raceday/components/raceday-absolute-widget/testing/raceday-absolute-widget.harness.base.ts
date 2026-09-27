@@ -16,6 +16,7 @@ export abstract class RacedayAbsoluteWidgetHarnessBase {
     resizeHandleSw: ".resize-handle.sw",
   };
 
+  abstract isVisible(): Promise<boolean>;
   abstract getWidgetTypeLabel(): Promise<string>;
   abstract clickRemove(): Promise<void>;
   abstract isCustomizing(): Promise<boolean>;

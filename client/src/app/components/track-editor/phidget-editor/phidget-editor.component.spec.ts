@@ -5,7 +5,9 @@ import {
   TestBed,
   tick,
 } from "@angular/core/testing";
+import { By } from "@angular/platform-browser";
 import { of, Subject, throwError } from "rxjs";
+import { CustomOptionComponent } from "@app/components/shared/custom-select/custom-select.component";
 import { DataService } from "@app/data.service";
 import { PhidgetConfig } from "@app/models/track";
 import {
@@ -336,15 +338,19 @@ describe("PhidgetEditorComponent", () => {
     // device2 is selected by config2, which is the current interface
     expect(component.isDeviceSelectedByOther(device2)).toBeFalse();
 
-    const selectEl: HTMLSelectElement =
-      fixture.nativeElement.querySelector("#device-0");
-    const options = Array.from(selectEl.options);
+    const optionComponents = fixture.debugElement
+      .queryAll(By.directive(CustomOptionComponent))
+      .map((de) => de.componentInstance);
 
-    const option1 = options.find((opt) => opt.value === "12345_false_0");
-    const option2 = options.find((opt) => opt.value === "67890_false_0");
+    const option1 = optionComponents.find(
+      (opt) => opt.value() === "12345_false_0",
+    );
+    const option2 = optionComponents.find(
+      (opt) => opt.value() === "67890_false_0",
+    );
 
-    expect(option1?.disabled).toBeTrue();
-    expect(option2?.disabled).toBeFalse();
+    expect(option1?.disabled()).toBeTrue();
+    expect(option2?.disabled()).toBeFalse();
   });
 
   it("should normalize hubPort to 0 when isHubPort is false or hubPort is negative", () => {
@@ -659,13 +665,15 @@ describe("PhidgetEditorComponent", () => {
     expect(component.availableDigitalInputPins.length).toBe(8);
     expect(component.availableDigitalOutputPins.length).toBe(8);
 
-    const selectEl: HTMLSelectElement =
-      fixture.nativeElement.querySelector("#device-0");
-    const options = Array.from(selectEl.options);
-    const discOpt = options.find((opt) => opt.value === "99999_false_0");
+    const optionComponents = fixture.debugElement
+      .queryAll(By.directive(CustomOptionComponent))
+      .map((de) => de.componentInstance);
+    const discOpt = optionComponents.find(
+      (opt) => opt.value() === "99999_false_0",
+    );
     expect(discOpt).toBeTruthy();
-    expect(discOpt?.textContent).toContain("Phidget 8/8/8 (99999)");
-    expect(discOpt?.textContent).toContain("PHIDGET_STATUS_DISCONNECTED");
+    expect(discOpt?.text).toContain("Phidget 8/8/8 (99999)");
+    expect(discOpt?.text).toContain("PHIDGET_STATUS_DISCONNECTED");
   });
 
   it("should show assigned pins even if device type has 0 inputs", () => {
@@ -729,6 +737,49 @@ describe("PhidgetEditorComponent", () => {
       expect(component.config()?.digitalOutIds?.[1]).toBe(
         (PinBehavior as any).BEHAVIOR_ANALOG_LED_HEAT_LEADER_BASE + 1,
       );
+    });
+  });
+
+  describe("Read-Only Mode", () => {
+    beforeEach(() => {
+      componentRef.setInput("isEditMode", false);
+      fixture.detectChanges();
+    });
+
+    it("should not select pin action in read-only mode", () => {
+      spyOn(component, "onConfigChange");
+      const initialVal = component.config()?.digitalInIds?.[0];
+      component.selectPinAction("in", 0, "call_0");
+      expect(component.onConfigChange).not.toHaveBeenCalled();
+      expect(component.config()?.digitalInIds?.[0]).toBe(initialVal);
+    });
+
+    it("should not toggle pin state in read-only mode", () => {
+      component.togglePinState("out", 0);
+      expect(mockDataService.setInterfacePinState).not.toHaveBeenCalled();
+    });
+
+    it("should not open pin dropdown in read-only mode", () => {
+      component.togglePinDropdown("out-0", new MouseEvent("click"));
+      expect(component.openPinDropdown).toBeNull();
+    });
+
+    it("should not change device in read-only mode", () => {
+      const origSerial = component.config()?.serialNumber;
+      component.onDeviceSelectChange("device-key");
+      expect(component.config()?.serialNumber).toBe(origSerial);
+    });
+
+    it("should not emit change on onConfigChange in read-only mode", () => {
+      spyOn(component.change, "emit");
+      component.onConfigChange();
+      expect(component.change.emit).not.toHaveBeenCalled();
+    });
+
+    it("should not emit remove on onRemove in read-only mode", () => {
+      spyOn(component.remove, "emit");
+      component.onRemove();
+      expect(component.remove.emit).not.toHaveBeenCalled();
     });
   });
 });

@@ -94,12 +94,12 @@ public class ThemeTaskHandlerTest {
     org.junit.Assert.assertEquals(
         "tts", defaultTheme.getAudioSlots().get("audio.min_lap_time").getType());
     org.junit.Assert.assertEquals(
-        "Min lap time for {{driver.nickname}}",
+        "Min lap time for {driver.nickname}",
         defaultTheme.getAudioSlots().get("audio.min_lap_time").getText());
     org.junit.Assert.assertEquals(
         "tts", defaultTheme.getAudioSlots().get("audio.drift_lap").getType());
     org.junit.Assert.assertEquals(
-        "Drift lap for {{driver.nickname}}",
+        "Drift lap for {driver.nickname}",
         defaultTheme.getAudioSlots().get("audio.drift_lap").getText());
     org.junit.Assert.assertEquals(
         "default_yellow_flag", defaultTheme.getAudioSlots().get("audio.yellowflag").getUrl());
@@ -339,5 +339,61 @@ public class ThemeTaskHandlerTest {
             .findByEntityId("legacy_1");
     assertNotNull(retrieved);
     assertEquals(com.antigravity.models.CustomUI.DEFAULT_UI_ID, retrieved.getUiId());
+  }
+
+  @Test
+  public void testEnsureDefaultTheme_RenamesLegacyThemeNames() {
+    com.antigravity.repository.SqliteRepository<Theme> repo =
+        new com.antigravity.repository.SqliteRepository<>(databaseContext, "themes", Theme.class);
+    repo.drop();
+
+    repo.save(
+        new Theme(
+            "Classic Theme",
+            true,
+            new HashMap<>(),
+            new HashMap<>(),
+            null,
+            Theme.DEFAULT_THEME_ID,
+            null));
+    repo.save(
+        new Theme(
+            "Practice Theme",
+            true,
+            new HashMap<>(),
+            new HashMap<>(),
+            null,
+            Theme.PRACTICE_THEME_ID,
+            null));
+    repo.save(
+        new Theme(
+            "Fuel Theme", true, new HashMap<>(), new HashMap<>(), null, Theme.FUEL_THEME_ID, null));
+    repo.save(
+        new Theme(
+            "My Custom Theme",
+            false,
+            new HashMap<>(),
+            new HashMap<>(),
+            "custom_ui",
+            "custom_1",
+            null));
+
+    handler.ensureDefaultTheme();
+
+    Theme defaultTheme = repo.findByEntityId(Theme.DEFAULT_THEME_ID);
+    assertNotNull(defaultTheme);
+    assertEquals(Theme.DEFAULT_THEME_NAME, defaultTheme.getName());
+
+    Theme practiceTheme = repo.findByEntityId(Theme.PRACTICE_THEME_ID);
+    assertNotNull(practiceTheme);
+    assertEquals(Theme.PRACTICE_THEME_NAME, practiceTheme.getName());
+
+    Theme fuelTheme = repo.findByEntityId(Theme.FUEL_THEME_ID);
+    assertNotNull(fuelTheme);
+    assertEquals(Theme.FUEL_THEME_NAME, fuelTheme.getName());
+
+    Theme customTheme = repo.findByEntityId("custom_1");
+    assertNotNull(customTheme);
+    assertEquals("My Custom Theme", customTheme.getName());
   }
 }

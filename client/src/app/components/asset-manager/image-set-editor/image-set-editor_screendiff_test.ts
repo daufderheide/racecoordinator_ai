@@ -49,7 +49,6 @@ test.describe("Image Set Editor Visuals", () => {
     );
 
     // Wait for assets to load visually
-    await page.waitForTimeout(500);
 
     // Click edit on the 'Custom Dash' image set card
     // We use a robust locator that finds the card by text and clicks its edit icon

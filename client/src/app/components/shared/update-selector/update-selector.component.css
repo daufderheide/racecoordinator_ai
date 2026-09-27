@@ -71,3 +71,114 @@ app-update-selector .menu-dropdown-item.disabled {
   opacity: 0.4;
   cursor: not-allowed;
 }
+
+/* Channel option row layout */
+app-update-selector .channel-option-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+app-update-selector .channel-label {
+  flex: 1;
+}
+
+app-update-selector .channel-info-icon {
+  margin-left: auto;
+  font-size: 13px;
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  transition: color 0.15s ease, background-color 0.15s ease;
+  font-style: normal;
+  line-height: 1;
+}
+
+app-update-selector .channel-info-icon:hover {
+  color: #38bdf8;
+  background-color: rgba(56, 189, 248, 0.15);
+}
+
+/* Rich Channel Tooltip */
+app-update-selector .channel-tooltip {
+  position: absolute;
+  top: -6px;
+  left: calc(100% + 8px);
+  width: 280px;
+  background: #181d26;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 8px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.7);
+  padding: 12px 14px;
+  z-index: 5000;
+  pointer-events: auto;
+  cursor: default;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-family: inherit;
+  animation: tooltipFadeIn 0.15s ease-out;
+}
+
+@keyframes tooltipFadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+app-update-selector .channel-tooltip-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #f1f5f9;
+  letter-spacing: 0.01em;
+}
+
+app-update-selector .channel-tooltip-body {
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: #94a3b8;
+}
+
+app-update-selector .channel-tooltip-admin-warning {
+  font-size: 0.75rem;
+  line-height: 1.35;
+  color: #fbbf24;
+  background: rgba(251, 191, 36, 0.1);
+  padding: 6px 8px;
+  border-radius: 4px;
+  border-left: 2px solid #fbbf24;
+}
+
+app-update-selector .channel-tooltip-footer {
+  margin-top: 4px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+app-update-selector .channel-learn-more-link {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #38bdf8;
+  text-decoration: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: color 0.15s ease;
+}
+
+app-update-selector .channel-learn-more-link:hover {
+  color: #7dd3fc;
+  text-decoration: underline;
+}

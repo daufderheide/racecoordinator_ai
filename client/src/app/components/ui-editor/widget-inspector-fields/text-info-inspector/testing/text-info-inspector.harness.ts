@@ -1,4 +1,5 @@
 import { ComponentHarness } from "@angular/cdk/testing";
+import { CustomSelectHarness } from "@app/components/shared/custom-select/testing/custom-select.harness";
 
 import { TextInfoInspectorHarnessBase } from "./text-info-inspector.harness.base";
 
@@ -8,9 +9,7 @@ export class TextInfoInspectorHarness
 {
   static hostSelector = TextInfoInspectorHarnessBase.hostSelector;
 
-  protected getSelects = this.locatorForAll(
-    TextInfoInspectorHarnessBase.selectors.selects,
-  );
+  protected getSelects = this.locatorForAll(CustomSelectHarness);
   protected getSliders = this.locatorForAll(
     TextInfoInspectorHarnessBase.selectors.sliders,
   );
@@ -23,13 +22,12 @@ export class TextInfoInspectorHarness
 
   async getLabelFontFamily(): Promise<string> {
     const selects = await this.getSelects();
-    return await selects[0].getProperty("value");
+    return await selects[0].getValue();
   }
 
   async setLabelFontFamily(val: string): Promise<void> {
     const selects = await this.getSelects();
-    await selects[0].sendKeys(val);
-    await selects[0].dispatchEvent("change");
+    await selects[0].selectOptionByValue(val);
   }
 
   async getLabelFontSize(): Promise<number> {
@@ -64,13 +62,12 @@ export class TextInfoInspectorHarness
 
   async getValueFontFamily(): Promise<string> {
     const selects = await this.getSelects();
-    return await selects[1].getProperty("value");
+    return await selects[1].getValue();
   }
 
   async setValueFontFamily(val: string): Promise<void> {
     const selects = await this.getSelects();
-    await selects[1].sendKeys(val);
-    await selects[1].dispatchEvent("change");
+    await selects[1].selectOptionByValue(val);
   }
 
   async getValueFontSize(): Promise<number> {
@@ -100,8 +97,6 @@ export class TextInfoInspectorHarness
     const buttons = await this.getResetButtons();
     if (buttons.length > 1) {
       await buttons[1].click();
-    } else if (buttons.length > 0) {
-      await buttons[0].click();
     }
   }
 }

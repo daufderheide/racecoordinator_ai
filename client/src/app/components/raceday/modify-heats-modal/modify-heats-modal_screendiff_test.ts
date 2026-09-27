@@ -549,4 +549,22 @@ test.describe("Modify Heats Modal Visuals", () => {
     // Just capture the screen showing the team layout and chevron.
     await expect(page).toHaveScreenshot("modify-heats-team-selector.png");
   });
+
+  test("should show zoomed in state when zoom in is clicked", async ({
+    page,
+  }) => {
+    const { modalHarness } = await setupUndoRedoTest(page);
+
+    // Click the zoom in icon (the second .zoom-icon in the DOM)
+    const zoomInBtn = page.locator('.zoom-icon:has-text("zoom_in")');
+    await zoomInBtn.click();
+    await zoomInBtn.click();
+    await zoomInBtn.click();
+    await zoomInBtn.click();
+    await zoomInBtn.click(); // Max zoom (150%)
+
+    await modalHarness.waitForLoaderToBeHidden();
+
+    await expect(page).toHaveScreenshot("modify-heats-zoomed-in.png");
+  });
 });

@@ -5,6 +5,7 @@ import { DataService } from "@app/data.service";
 import { Role } from "@app/models/role";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { AuthService } from "@app/services/auth.service";
+import { NavigationService } from "@app/services/navigation.service";
 import { TranslationService } from "@app/services/translation.service";
 import { mockTranslationService } from "@app/testing/unit-test-mocks";
 
@@ -17,11 +18,20 @@ describe("RacedayMenuBarComponent", () => {
   let harness: RacedayMenuBarHarness;
   let mockAuthService: any;
   let mockDataService: any;
+  let mockNavService: any;
+  let canGoBackSubject: BehaviorSubject<boolean>;
   let roleSubject: BehaviorSubject<Role>;
 
   beforeEach(async () => {
     mockTranslationService.translate.and.callFake((key: string) => key);
     roleSubject = new BehaviorSubject<Role>(Role.DIRECTOR);
+    canGoBackSubject = new BehaviorSubject<boolean>(false);
+
+    mockNavService = {
+      canGoBack$: canGoBackSubject.asObservable(),
+      canGoBack: () => canGoBackSubject.value,
+      goBack: jasmine.createSpy("goBack"),
+    };
 
     mockDataService = {
       getSystemStateValue: jasmine
@@ -50,6 +60,7 @@ describe("RacedayMenuBarComponent", () => {
         { provide: AuthService, useValue: mockAuthService },
         { provide: TranslationService, useValue: mockTranslationService },
         { provide: DataService, useValue: mockDataService },
+        { provide: NavigationService, useValue: mockNavService },
       ],
     }).compileComponents();
 
@@ -87,15 +98,20 @@ describe("RacedayMenuBarComponent", () => {
   });
 
   it("should conditionally render items based on role (Director vs Viewer)", async () => {
-    // With DIRECTOR role, "Logout" should be visible (under Race Director menu)
+    // With DIRECTOR role, "Logout" and "Disallow Lap Records" should be visible (under Race Director menu)
     await harness.clickMenuButton("RD_MENU_RACE_DIRECTOR");
     fixture.detectChanges();
 
-    const items = await fixture.nativeElement.querySelectorAll(".menu-item");
-    const logoutBtnText = Array.from(items)
+    let items = await fixture.nativeElement.querySelectorAll(".menu-item");
+    let logoutBtnText = Array.from(items)
       .map((el: any) => el.innerText.trim())
       .find((t) => t.includes("RD_MENU_LOGOUT"));
     expect(logoutBtnText).toBeDefined();
+
+    let disallowBtnText = Array.from(items)
+      .map((el: any) => el.innerText.trim())
+      .find((t) => t.includes("RD_MENU_DISALLOW_LAP_RECORDS"));
+    expect(disallowBtnText).toBeDefined();
 
     // Close menu
     component.toggleMenu();
@@ -105,7 +121,7 @@ describe("RacedayMenuBarComponent", () => {
     roleSubject.next(Role.VIEWER);
     fixture.detectChanges();
 
-    // With VIEWER role, "Login" should be visible
+    // With VIEWER role, "Login" should be visible and "Disallow Lap Records" should be hidden
     await harness.clickMenuButton("RD_MENU_RACE_DIRECTOR");
     fixture.detectChanges();
 
@@ -114,6 +130,32 @@ describe("RacedayMenuBarComponent", () => {
       .map((el: any) => el.innerText.trim())
       .find((t) => t.includes("RD_MENU_LOGIN"));
     expect(loginBtnText).toBeDefined();
+
+    const hiddenDisallow = Array.from(newItems)
+      .map((el: any) => el.innerText.trim())
+      .find((t) => t.includes("RD_MENU_DISALLOW_LAP_RECORDS"));
+    expect(hiddenDisallow).toBeUndefined();
+  });
+
+  it("should emit fileMenuSelect with RACE_HISTORY when Race History menu item is clicked", async () => {
+    spyOn(component.fileMenuSelect, "emit");
+    await harness.clickMenuButton("RD_MENU_FILE");
+    fixture.detectChanges();
+
+    await harness.clickMenuItem("RD_MENU_RACE_HISTORY");
+    expect(component.fileMenuSelect.emit).toHaveBeenCalledWith("RACE_HISTORY");
+  });
+
+  it("should emit menuSelect with DISALLOW_LAP_RECORDS when Disallow Lap Records item is clicked", async () => {
+    roleSubject.next(Role.DIRECTOR);
+    spyOn(component.menuSelect, "emit");
+    await harness.clickMenuButton("RD_MENU_RACE_DIRECTOR");
+    fixture.detectChanges();
+
+    await harness.clickMenuItem("RD_MENU_DISALLOW_LAP_RECORDS");
+    expect(component.menuSelect.emit).toHaveBeenCalledWith(
+      "DISALLOW_LAP_RECORDS",
+    );
   });
 
   it("should emit trackPowerMainSelect when main power options are clicked", () => {
@@ -354,6 +396,120 @@ describe("RacedayMenuBarComponent", () => {
       );
       expect(component.isWindowsMenuOpen).toBeFalse();
       expect(component.isThemesOpen).toBeFalse();
+    });
+
+    it("should alphabetize themes in natural order and localize default themes when rendered in the menu", () => {
+      mockTranslationService.translate.and.callFake((key: string) => {
+        if (key === "UE_LABEL_DEFAULT_THEME") return "RaceCoordinator AI";
+        return key;
+      });
+
+      component.themes = [
+        { entity_id: "t_zeta", name: "Zeta Theme" } as any,
+        {
+          entity_id: "default_classic_rc_ai",
+          name: "RaceCoordinator AI",
+          is_default: true,
+        } as any,
+        { entity_id: "t_alpha", name: "Alpha Theme" } as any,
+        { entity_id: "t_beta_10", name: "Beta 10 Theme" } as any,
+        { entity_id: "t_beta_2", name: "Beta 2 Theme" } as any,
+      ];
+      component.isWindowsMenuOpen = true;
+      component.toggleThemesMenu();
+      fixture.detectChanges();
+
+      const items = Array.from(
+        fixture.nativeElement.querySelectorAll(".theme-option-item"),
+      ).map((el: any) => el.innerText.trim());
+
+      expect(items).toEqual([
+        "Alpha Theme",
+        "Beta 2 Theme",
+        "Beta 10 Theme",
+        "RaceCoordinator AI",
+        "Zeta Theme",
+      ]);
+    });
+
+    it("should alphabetize themes when loadThemes fetches from themeService", async () => {
+      const mockThemeSvc = {
+        getThemes: jasmine
+          .createSpy("getThemes")
+          .and.returnValue([
+            { entity_id: "t_zeta", name: "Zeta" } as any,
+            { entity_id: "t_alpha", name: "Alpha" } as any,
+          ]),
+        initialize: jasmine.createSpy("initialize").and.resolveTo(),
+      };
+      (component as any).themeService = mockThemeSvc;
+      await component.loadThemes();
+      expect(component.themes.map((t) => t.name)).toEqual(["Alpha", "Zeta"]);
+    });
+
+    it("should alphabetize themes when loadThemes falls back to dataService", async () => {
+      (component as any).themeService = {
+        getThemes: () => [],
+        initialize: () => Promise.resolve(),
+      };
+      mockDataService.getThemes.and.returnValue(
+        of([
+          { entity_id: "t_zeta", name: "Zeta" } as any,
+          { entity_id: "t_alpha", name: "Alpha" } as any,
+        ]),
+      );
+      await component.loadThemes();
+      expect(component.themes.map((t) => t.name)).toEqual(["Alpha", "Zeta"]);
+    });
+  });
+
+  describe("Back Menu Option", () => {
+    it("should disable Back menu item when canGoBack is false", () => {
+      canGoBackSubject.next(false);
+      component.isFileMenuOpen = true;
+      fixture.detectChanges();
+
+      const backItem = Array.from(
+        fixture.nativeElement.querySelectorAll(".menu-item"),
+      ).find((el: any) =>
+        el.textContent.includes("RD_MENU_BACK"),
+      ) as HTMLElement;
+
+      expect(backItem).toBeTruthy();
+      expect(backItem.classList.contains("disabled")).toBeTrue();
+      expect(component.isBackActionDisabled()).toBeTrue();
+
+      spyOn(component.fileMenuSelect, "emit");
+      component.onFileMenuSelect("BACK");
+      expect(component.fileMenuSelect.emit).not.toHaveBeenCalled();
+    });
+
+    it("should enable Back menu item when canGoBack is true", () => {
+      canGoBackSubject.next(true);
+      component.isFileMenuOpen = true;
+      fixture.detectChanges();
+
+      const backItem = Array.from(
+        fixture.nativeElement.querySelectorAll(".menu-item"),
+      ).find((el: any) =>
+        el.textContent.includes("RD_MENU_BACK"),
+      ) as HTMLElement;
+
+      expect(backItem).toBeTruthy();
+      expect(backItem.classList.contains("disabled")).toBeFalse();
+      expect(component.isBackActionDisabled()).toBeFalse();
+
+      spyOn(component.fileMenuSelect, "emit");
+      component.onFileMenuSelect("BACK");
+      expect(component.fileMenuSelect.emit).toHaveBeenCalledWith("BACK");
+    });
+
+    it("should allow overriding isBackDisabled via input", () => {
+      canGoBackSubject.next(false);
+      fixture.componentRef.setInput("isBackDisabled", false);
+      fixture.detectChanges();
+
+      expect(component.isBackActionDisabled()).toBeFalse();
     });
   });
 });

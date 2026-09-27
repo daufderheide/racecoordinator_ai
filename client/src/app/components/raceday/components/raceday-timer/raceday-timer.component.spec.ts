@@ -1,6 +1,8 @@
 import { TestbedHarnessEnvironment } from "@angular/cdk/testing/testbed";
 import { ComponentFixture, TestBed } from "@angular/core/testing";
+import { of } from "rxjs";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
+import { RaceTimeService } from "@app/services/race-time.service";
 import { TranslationService } from "@app/services/translation.service";
 import { mockTranslationService } from "@app/testing/unit-test-mocks";
 
@@ -11,9 +13,24 @@ describe("RacedayTimerComponent", () => {
   let component: RacedayTimerComponent;
   let fixture: ComponentFixture<RacedayTimerComponent>;
   let harness: RacedayTimerHarness;
+  let originalOnError: any;
 
   beforeEach(async () => {
     mockTranslationService.translate.and.callFake((key: string) => key);
+
+    originalOnError = window.onerror;
+    window.onerror = function (message, url, line, col, error) {
+      const msgStr = String(message || "");
+      if (
+        msgStr.includes("ResizeObserver loop") ||
+        msgStr.includes("ResizeObserver loop limit exceeded")
+      ) {
+        return true;
+      }
+      return originalOnError
+        ? originalOnError.call(window, message, url, line, col, error)
+        : false;
+    };
 
     await TestBed.configureTestingModule({
       imports: [RacedayTimerComponent, TranslatePipe],
@@ -29,6 +46,12 @@ describe("RacedayTimerComponent", () => {
       RacedayTimerHarness,
     );
     fixture.detectChanges();
+  });
+
+  afterEach(() => {
+    if (originalOnError !== undefined) {
+      window.onerror = originalOnError;
+    }
   });
 
   it("should create", () => {
@@ -148,5 +171,36 @@ describe("RacedayTimerComponent", () => {
     const timerText = fixture.nativeElement.querySelector(".timer-text");
     expect(timerText.classList.contains("timer-warmup")).toBe(true);
     expect(timerText.classList.contains("timer-auto")).toBe(false);
+  });
+
+  it("should fallback to RaceTimeService when inputs are not provided", async () => {
+    const mockRaceTimeService = {
+      formattedTime: "04:56.7",
+      formattedTime$: of("04:56.7"),
+      autoStatusLabel: "RD_AUTO_ADVANCING",
+      autoStatusLabel$: of("RD_AUTO_ADVANCING"),
+      isWarmup: true,
+      isWarmup$: of(true),
+    };
+
+    TestBed.resetTestingModule();
+    await TestBed.configureTestingModule({
+      imports: [RacedayTimerComponent, TranslatePipe],
+      providers: [
+        { provide: TranslationService, useValue: mockTranslationService },
+        { provide: RaceTimeService, useValue: mockRaceTimeService },
+      ],
+    }).compileComponents();
+
+    const localFixture = TestBed.createComponent(RacedayTimerComponent);
+    const localHarness = await TestbedHarnessEnvironment.harnessForFixture(
+      localFixture,
+      RacedayTimerHarness,
+    );
+    localFixture.detectChanges();
+
+    expect(await localHarness.getTimeText()).toBe("04:56.7");
+    expect(await localHarness.getStatusLabel()).toBe("RD_AUTO_ADVANCING");
+    expect(await localHarness.getWarmupLabel()).toBe("RD_WARMUP");
   });
 });

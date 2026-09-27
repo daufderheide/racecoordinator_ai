@@ -15,13 +15,17 @@ export class RacedayEventNameHarness
     RacedayEventNameHarnessBase.selectors.eventName,
   );
 
+  async isVisible(): Promise<boolean> {
+    return (await this.host()) !== null;
+  }
+
   async getLabel(): Promise<string> {
     const el = await this.getLabelEl();
-    return el ? await el.text() : "";
+    return el ? (await el.text()).trim() : "";
   }
 
   async getEventName(): Promise<string> {
     const el = await this.getEventNameEl();
-    return el ? await el.text() : "";
+    return el ? (await el.text()).trim() : "";
   }
 }

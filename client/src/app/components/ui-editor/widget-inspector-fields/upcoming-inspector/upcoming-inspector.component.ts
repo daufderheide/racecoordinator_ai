@@ -1,6 +1,10 @@
 import { CommonModule } from "@angular/common";
 import { Component, inject, input, output } from "@angular/core";
 import { FormsModule } from "@angular/forms";
+import {
+  CustomOptionComponent,
+  CustomSelectComponent,
+} from "@app/components/shared/custom-select/custom-select.component";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { FontService } from "@app/services/font.service";
 
@@ -9,7 +13,13 @@ import { FontService } from "@app/services/font.service";
   selector: "app-upcoming-inspector",
   templateUrl: "./upcoming-inspector.component.html",
   styleUrls: ["../../ui-editor.component.css"],
-  imports: [CommonModule, FormsModule, TranslatePipe],
+  imports: [
+    CommonModule,
+    FormsModule,
+    TranslatePipe,
+    CustomSelectComponent,
+    CustomOptionComponent,
+  ],
 })
 export class UpcomingInspectorComponent {
   settings = input.required<any>();

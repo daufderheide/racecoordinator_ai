@@ -11,8 +11,7 @@ import {
 import { toSignal } from "@angular/core/rxjs-interop";
 import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, Router } from "@angular/router";
-import { forkJoin } from "rxjs";
-import { Subscription } from "rxjs";
+import { firstValueFrom, forkJoin, Subscription } from "rxjs";
 import { AcknowledgementModalComponent } from "@app/components/shared/acknowledgement-modal/acknowledgement-modal.component";
 import { ConfirmationModalComponent } from "@app/components/shared/confirmation-modal/confirmation-modal.component";
 import { ManagerHeaderComponent } from "@app/components/shared/manager-header/manager-header.component";
@@ -25,6 +24,7 @@ import {
 import { LoggerService } from "@app/services/logger.service";
 import { RaceConnectionService } from "@app/services/race-connection.service";
 import { SettingsService } from "@app/services/settings.service";
+import { saveFileAs } from "@app/utils/file-download.utils";
 
 @Component({
   standalone: true,
@@ -397,9 +397,32 @@ export class DatabaseManagerComponent implements OnInit, OnDestroy {
     );
   }
 
-  exportDatabase() {
+  async exportDatabase() {
     if (!this.selectedDatabase) return;
-    this.dataService.exportDatabase(this.selectedDatabase.name);
+    const dbName = this.selectedDatabase.name;
+    const suggestedName = `${dbName}.zip`;
+    this.loading = true;
+    this.cdr.detectChanges();
+    try {
+      const blob = await firstValueFrom(
+        this.dataService.exportDatabaseBlob(dbName),
+      );
+      await saveFileAs({
+        suggestedName,
+        data: blob,
+        mimeType: "application/zip",
+        description: "ZIP Files",
+        extension: ".zip",
+      });
+    } catch (err: any) {
+      if (err?.name !== "AbortError") {
+        this.logger.error("Error exporting database", err);
+        this.openAck("DBM_TITLE", "DBM_ERR_EXPORT");
+      }
+    } finally {
+      this.loading = false;
+      this.cdr.detectChanges();
+    }
   }
 
   importDatabase() {

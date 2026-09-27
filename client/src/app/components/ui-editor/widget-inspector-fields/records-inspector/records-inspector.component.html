@@ -1,4 +1,53 @@
 @if (settings()) {
+  <!-- Visible Records Section -->
+  <div class="inspector-geometry-title">
+    {{ "UE_INSPECTOR_RECORDS_DATA_POINTS" | translate }}
+  </div>
+
+  <div class="inspector-section">
+    <label class="inspector-checkbox-label">
+      <input
+        type="checkbox"
+        [(ngModel)]="settings().showRaceRecordLap"
+        (change)="onSettingsChange()"
+      />
+      {{ "RD_RECORD_RACE_LAP" | translate }}
+    </label>
+  </div>
+
+  <div class="inspector-section">
+    <label class="inspector-checkbox-label">
+      <input
+        type="checkbox"
+        [(ngModel)]="settings().showRaceRecordScore"
+        (change)="onSettingsChange()"
+      />
+      {{ "RD_RECORD_RACE_SCORE" | translate }}
+    </label>
+  </div>
+
+  <div class="inspector-section">
+    <label class="inspector-checkbox-label">
+      <input
+        type="checkbox"
+        [(ngModel)]="settings().showCurrentRaceBest"
+        (change)="onSettingsChange()"
+      />
+      {{ "RD_RECORD_CURRENT_RACE_BEST" | translate }}
+    </label>
+  </div>
+
+  <div class="inspector-section">
+    <label class="inspector-checkbox-label">
+      <input
+        type="checkbox"
+        [(ngModel)]="settings().showHeatBest"
+        (change)="onSettingsChange()"
+      />
+      {{ "RD_RECORD_HEAT_BEST" | translate }}
+    </label>
+  </div>
+
   <!-- Header Section -->
   <div class="inspector-geometry-title">
     {{ "UE_INSPECTOR_RECORDS_HEADER" | translate }}
@@ -9,18 +58,19 @@
       "UE_INSPECTOR_FONT_FAMILY" | translate
     }}</label>
     <div class="select-container select-sm">
-      <select
+      <app-custom-select
         [(ngModel)]="settings().headerFontFamily"
         (change)="onSettingsChange()"
         (focus)="fontService.loadLocalFonts()"
+        (click)="fontService.loadLocalFonts()"
       >
-        <option value="">
+        <app-custom-option value="">
           {{ "UE_INSPECTOR_FONT_THEME_DEFAULT" | translate }}
-        </option>
+        </app-custom-option>
         @for (font of fontService.availableFonts(); track font) {
-          <option [value]="font">{{ font }}</option>
+          <app-custom-option [value]="font">{{ font }}</app-custom-option>
         }
-      </select>
+      </app-custom-select>
     </div>
   </div>
 
@@ -85,18 +135,19 @@
       "UE_INSPECTOR_FONT_FAMILY" | translate
     }}</label>
     <div class="select-container select-sm">
-      <select
+      <app-custom-select
         [(ngModel)]="settings().valueFontFamily"
         (change)="onSettingsChange()"
         (focus)="fontService.loadLocalFonts()"
+        (click)="fontService.loadLocalFonts()"
       >
-        <option value="">
+        <app-custom-option value="">
           {{ "UE_INSPECTOR_FONT_THEME_DEFAULT" | translate }}
-        </option>
+        </app-custom-option>
         @for (font of fontService.availableFonts(); track font) {
-          <option [value]="font">{{ font }}</option>
+          <app-custom-option [value]="font">{{ font }}</app-custom-option>
         }
-      </select>
+      </app-custom-select>
     </div>
   </div>
 

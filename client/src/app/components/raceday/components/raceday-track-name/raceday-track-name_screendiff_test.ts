@@ -19,6 +19,29 @@ test.describe("Raceday Track Name Visuals", () => {
 
     await page.locator(".dashboard-wrapper").waitFor();
 
+    const raceData = {
+      race: {
+        race: {
+          model: { entityId: "r1" },
+          name: "Championship Grand Prix",
+          track: {
+            model: { entityId: "t1" },
+            name: "Monaco Grand Circuit",
+            lanes: [
+              {
+                objectId: "l1",
+                length: 10,
+                backgroundColor: "#dc2626",
+                foregroundColor: "#ffffff",
+              },
+            ],
+          },
+        },
+      },
+    };
+
+    await TestSetupHelper.mockRaceData(page, raceData);
+
     const trackNameWidget = page.locator("app-raceday-track-name");
     await expect(trackNameWidget).toBeVisible();
 

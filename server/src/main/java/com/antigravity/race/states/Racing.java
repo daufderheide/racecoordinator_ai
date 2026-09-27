@@ -100,8 +100,16 @@ public class Racing implements IRaceState {
     this.previousHeatProgress = -1.0;
     this.executionManager = race.getHeatExecutionManager();
 
+    HeatScoring scoring = race.getRaceModel().getHeatScoring();
+    if (scoring != null && scoring.getFinishMethod() == FinishMethod.Timed) {
+      if (race.getRaceTime() == 0) {
+        race.addRaceTime((float) scoring.getFinishValue());
+      }
+    }
+
     RaceFlag initialFlag = getFlagType(race);
     race.broadcastFlag(initialFlag);
+    syncDriverFlags(race);
     this.previousFlag = initialFlag;
 
     if (race.getStatistics().getStartTime() == null) {
@@ -120,13 +128,7 @@ public class Racing implements IRaceState {
                   com.antigravity.converters.HeatConverter.toProto( // fqn-collision
                       race.getCurrentHeat(), new java.util.HashSet<>()))
               .build());
-    }
-
-    HeatScoring scoring = race.getRaceModel().getHeatScoring();
-    if (scoring != null && scoring.getFinishMethod() == FinishMethod.Timed) {
-      if (race.getRaceTime() == 0) {
-        race.addRaceTime((float) scoring.getFinishValue());
-      }
+      race.broadcastFuelLevels();
     }
 
     race.setHasRacedInCurrentHeat(true);
@@ -210,6 +212,9 @@ public class Racing implements IRaceState {
                 Set<Integer> finishedLanes = executionManager.getFinishedLanes();
                 if (isTimed) {
                   if (!isInfiniteTimed && race.getRaceTime() <= 0) {
+                    if (allowFinish == AllowFinish.SingleLapAutoSegments) {
+                      executionManager.capturePartialLapTimes();
+                    }
                     race.resetRaceTime();
                     if (allowFinish == AllowFinish.None
                         || allowFinish == AllowFinish.NoneAutoSegments) {
@@ -377,10 +382,10 @@ public class Racing implements IRaceState {
   @Override
   public void restartHeat(Race race) {
     logger.info("Racing.restartHeat() called. Resetting current heat.");
+    race.changeState(new NotStarted());
     race.resetCurrentHeat();
     race.setAutoStartFired(false);
     race.setAutoAdvanceFired(false);
-    race.changeState(new NotStarted());
   }
 
   @Override
@@ -463,11 +468,14 @@ public class Racing implements IRaceState {
         List<DriverHeatData> drivers = race.getCurrentHeat().getDrivers();
         if (drivers != null) {
           for (int i = 0; i < Math.min(drivers.size(), previousFuelLevels.length); i++) {
-            double currentFuel = drivers.get(i).getDriver().getFuelLevel();
+            DriverHeatData driverData = drivers.get(i);
+            int lane = driverData.getLane() >= 0 ? driverData.getLane() : i;
+            if (lane < 0 || lane >= previousFuelLevels.length) continue;
+            double currentFuel = driverData.getDriver().getFuelLevel();
             int currentPct = (int) ((currentFuel / capacity) * 100.0);
-            if (currentPct != previousFuelLevels[i]) {
-              race.setFuelLevel(i, currentFuel, capacity);
-              previousFuelLevels[i] = currentPct;
+            if (currentPct != previousFuelLevels[lane]) {
+              race.setFuelLevel(lane, currentFuel, capacity);
+              previousFuelLevels[lane] = currentPct;
             }
           }
         }
@@ -478,6 +486,7 @@ public class Racing implements IRaceState {
   @Override
   public void onCallbutton(Race race, int lane) {
     logger.info("Racing.onCallbutton() called. Pausing race.");
+    race.recordTrackCall(lane);
     pause(race);
   }
 

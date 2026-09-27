@@ -16,6 +16,7 @@
         <div class="spacer"></div>
         <button
           class="action-btn danger small"
+          [disabled]="!isEditMode()"
           (click)="onRemove()"
           title="{{ 'TME_REMOVE_INTERFACE' | translate }}"
         >
@@ -45,20 +46,21 @@
                         <div class="control-group">
                           <label>{{ "TME_COMM_PORT" | translate }}</label>
                           <div class="com-port-row">
-                            <select
+                            <app-custom-select
                               [id]="'commPort-' + interfaceIndex()"
+                              [disabled]="!isEditMode()"
                               [(ngModel)]="config().commPort"
                               (change)="onPortChange()"
                             >
-                              <option value="" disabled>
+                              <app-custom-option value="" [disabled]="true">
                                 {{ "TME_SELECT_PORT" | translate }}
-                              </option>
+                              </app-custom-option>
                               @for (port of serialPorts; track port) {
-                                <option [value]="port">
+                                <app-custom-option [value]="port">
                                   {{ port }}
-                                </option>
+                                </app-custom-option>
                               }
-                            </select>
+                            </app-custom-select>
                             <button
                               type="button"
                               [id]="'trakmate-status-badge-' + interfaceIndex()"
@@ -73,16 +75,17 @@
 
                         <div class="control-group">
                           <label>{{ "TME_DEBOUNCE" | translate }}</label>
-                          <select
+                          <app-custom-select
                             [id]="'debounce-' + interfaceIndex()"
+                            [disabled]="!isEditMode()"
                             [(ngModel)]="config().debounce"
                             (change)="onConfigChange()"
                           >
-                            <option [ngValue]="1">1</option>
-                            <option [ngValue]="2">2</option>
-                            <option [ngValue]="3">3</option>
-                            <option [ngValue]="4">4</option>
-                          </select>
+                            <app-custom-option [value]="1">1</app-custom-option>
+                            <app-custom-option [value]="2">2</app-custom-option>
+                            <app-custom-option [value]="3">3</app-custom-option>
+                            <app-custom-option [value]="4">4</app-custom-option>
+                          </app-custom-select>
                         </div>
 
                         <div class="control-group">
@@ -90,8 +93,9 @@
                             "TME_LAP_PIN_PIT_BEHAVIOR" | translate
                           }}</label>
                           <div class="com-port-row">
-                            <select
+                            <app-custom-select
                               [id]="'lapPinPitBehavior-' + interfaceIndex()"
+                              [disabled]="!isEditMode()"
                               [(ngModel)]="config().lapPinPitBehavior"
                               (change)="onConfigChange()"
                             >
@@ -99,11 +103,11 @@
                                 option of lapPinPitBehaviors;
                                 track option.value
                               ) {
-                                <option [ngValue]="option.value">
+                                <app-custom-option [value]="option.value">
                                   {{ option.label | translate }}
-                                </option>
+                                </app-custom-option>
                               }
-                            </select>
+                            </app-custom-select>
                             <div
                               class="status-badge"
                               style="visibility: hidden"
@@ -117,6 +121,7 @@
                           <label class="checkbox-label">
                             <input
                               type="checkbox"
+                              [disabled]="!isEditMode()"
                               [id]="'trakmate-nc-sensors-' + interfaceIndex()"
                               [(ngModel)]="config().normallyClosedLaneSensors"
                               (change)="onConfigChange()"
@@ -129,6 +134,7 @@
                           <label class="checkbox-label">
                             <input
                               type="checkbox"
+                              [disabled]="!isEditMode()"
                               [id]="'trakmate-nc-relays-' + interfaceIndex()"
                               [(ngModel)]="config().normallyClosedRelays"
                               (change)="onConfigChange()"
@@ -141,6 +147,7 @@
                           <label class="checkbox-label">
                             <input
                               type="checkbox"
+                              [disabled]="!isEditMode()"
                               [id]="
                                 'trakmate-per-lane-relays-' + interfaceIndex()
                               "
@@ -212,18 +219,19 @@
                               class="control-group"
                               style="padding: 0 10px 10px 10px"
                             >
-                              <select
+                              <app-custom-select
                                 [id]="
                                   'trakmate-channel-select-' +
                                   $index +
                                   '-' +
                                   interfaceIndex()
                                 "
+                                [disabled]="!isEditMode()"
                                 [(ngModel)]="config().lapPinBehaviors![$index]"
                                 (change)="onConfigChange()"
                               >
                                 @for (pb of lapPinBehaviors; track pb.value) {
-                                  <option [ngValue]="pb.value">
+                                  <app-custom-option [value]="pb.value">
                                     @if (pb.lane) {
                                       {{
                                         pb.label | translate: { lane: pb.lane }
@@ -231,9 +239,9 @@
                                     } @else {
                                       {{ pb.label | translate }}
                                     }
-                                  </option>
+                                  </app-custom-option>
                                 }
-                              </select>
+                              </app-custom-select>
                             </div>
 
                             @if (
@@ -251,6 +259,7 @@
                                   type="button"
                                   class="status-badge small"
                                   [class.connected]="relayStatuses[$index]"
+                                  [disabled]="!isEditMode()"
                                   (click)="toggleLaneRelay($index)"
                                   style="cursor: pointer"
                                   aria-label="Toggle Relay"
@@ -306,6 +315,7 @@
                             [id]="'trakmate-master-relay-' + interfaceIndex()"
                             class="status-badge"
                             [class.connected]="mainRelayStatus"
+                            [disabled]="!isEditMode()"
                             (click)="toggleMasterRelay()"
                             style="cursor: pointer"
                           >

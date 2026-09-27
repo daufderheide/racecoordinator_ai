@@ -81,6 +81,16 @@ describe("NavigationService", () => {
     expect(service.getPreviousUrl()).toBe("/page2");
   });
 
+  it("should track last history URL correctly", () => {
+    expect(service.getLastHistoryUrl()).toBeNull();
+
+    routerEvents.next(new NavigationEnd(1, "/page1", "/page1"));
+    expect(service.getLastHistoryUrl()).toBe("/page1");
+
+    routerEvents.next(new NavigationEnd(2, "/page2", "/page2"));
+    expect(service.getLastHistoryUrl()).toBe("/page2");
+  });
+
   describe("Browser Back/Forward History Tracking", () => {
     it("should initially not allow going back or forward", () => {
       service.resetHistory();
@@ -93,29 +103,23 @@ describe("NavigationService", () => {
       expect(service.canGoBack()).toBeFalse();
       expect(service.canGoForward()).toBeFalse();
 
-      routerEvents.next(
-        new NavigationEnd(2, "/driver-manager", "/driver-manager"),
-      );
+      routerEvents.next(new NavigationEnd(2, "/team-editor", "/team-editor"));
       expect(service.canGoBack()).toBeTrue();
       expect(service.canGoForward()).toBeFalse();
     });
 
     it("should allow going forward after navigating back", () => {
       routerEvents.next(new NavigationEnd(1, "/home", "/home"));
-      routerEvents.next(
-        new NavigationEnd(2, "/driver-manager", "/driver-manager"),
-      );
+      routerEvents.next(new NavigationEnd(2, "/team-editor", "/team-editor"));
       routerEvents.next(
         new NavigationEnd(3, "/driver-editor", "/driver-editor"),
       );
 
-      // Simulate back to /driver-manager
+      // Simulate back to /team-editor
       window.dispatchEvent(
         new PopStateEvent("popstate", { state: { appHistoryIndex: 1 } }),
       );
-      routerEvents.next(
-        new NavigationEnd(4, "/driver-manager", "/driver-manager"),
-      );
+      routerEvents.next(new NavigationEnd(4, "/team-editor", "/team-editor"));
 
       expect(service.canGoBack()).toBeTrue();
       expect(service.canGoForward()).toBeTrue();
@@ -123,9 +127,7 @@ describe("NavigationService", () => {
 
     it("should disable canGoBack when back at initial entry (index 0)", () => {
       routerEvents.next(new NavigationEnd(1, "/home", "/home"));
-      routerEvents.next(
-        new NavigationEnd(2, "/driver-manager", "/driver-manager"),
-      );
+      routerEvents.next(new NavigationEnd(2, "/team-editor", "/team-editor"));
 
       // Back to home
       window.dispatchEvent(
@@ -139,9 +141,7 @@ describe("NavigationService", () => {
 
     it("should call window.history.back when goBack is invoked", () => {
       routerEvents.next(new NavigationEnd(1, "/home", "/home"));
-      routerEvents.next(
-        new NavigationEnd(2, "/driver-manager", "/driver-manager"),
-      );
+      routerEvents.next(new NavigationEnd(2, "/team-editor", "/team-editor"));
 
       spyOn(window.history, "back");
       service.goBack();
@@ -157,9 +157,7 @@ describe("NavigationService", () => {
 
     it("should call window.history.forward when goForward is invoked", () => {
       routerEvents.next(new NavigationEnd(1, "/home", "/home"));
-      routerEvents.next(
-        new NavigationEnd(2, "/driver-manager", "/driver-manager"),
-      );
+      routerEvents.next(new NavigationEnd(2, "/team-editor", "/team-editor"));
 
       window.dispatchEvent(
         new PopStateEvent("popstate", { state: { appHistoryIndex: 0 } }),
@@ -184,6 +182,15 @@ describe("NavigationService", () => {
       );
       routerEvents.next(new NavigationError(2, "/error", new Error("fail")));
       expect(service.canGoBack()).toBeFalse();
+    });
+
+    it("should preserve appHistoryIndex when navigating initial route with existing history state", () => {
+      window.history.replaceState({ appHistoryIndex: 2 }, "");
+      routerEvents.next(
+        new NavigationEnd(1, "/restored-page", "/restored-page"),
+      );
+      expect(service.canGoBack()).toBeTrue();
+      expect(window.history.state.appHistoryIndex).toBe(2);
     });
   });
 

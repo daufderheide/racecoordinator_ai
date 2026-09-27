@@ -41,7 +41,6 @@ test.describe("Raceday Setup Menu Exclusivity", () => {
     await TestSetupHelper.disableAnimations(page);
 
     await expect(page.getByText("Alice")).toBeVisible();
-    await page.waitForTimeout(100);
   });
 
   test("opening Config menu should close File menu", async ({ page }) => {
@@ -106,8 +105,6 @@ test.describe("Raceday Setup Menu Exclusivity", () => {
     ).toBeVisible();
 
     await harness.clickRaceDropdown();
-
-    await page.waitForTimeout(500);
 
     // Exclusivity checked by screenshot
     await expect(

@@ -11,12 +11,23 @@ import {
   ViewChild,
 } from "@angular/core";
 import { FormsModule } from "@angular/forms";
+import {
+  CustomOptionComponent,
+  CustomSelectComponent,
+} from "@app/components/shared/custom-select/custom-select.component";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { DriverHeatData } from "@app/race/driver_heat_data";
 
 @Component({
   standalone: true,
   selector: "app-add-lap-sections-dialog",
+  imports: [
+    CommonModule,
+    FormsModule,
+    TranslatePipe,
+    CustomSelectComponent,
+    CustomOptionComponent,
+  ],
   template: `
     @if (visible()) {
       <div class="modal-backdrop">
@@ -39,7 +50,7 @@ import { DriverHeatData } from "@app/race/driver_heat_data";
                   <span class="info-label"
                     >{{ "RD_ADD_LAP_SECTIONS_SELECT_HEAT" | translate }}:</span
                   >
-                  <select
+                  <app-custom-select
                     id="heatSelect"
                     [ngModel]="selectedHeatIndex()"
                     (ngModelChange)="onHeatSelectChange($event)"
@@ -49,11 +60,11 @@ import { DriverHeatData } from "@app/race/driver_heat_data";
                       track heat.heatNumber;
                       let idx = $index
                     ) {
-                      <option [value]="idx">
+                      <app-custom-option [value]="idx">
                         {{ "RD_HEAT" | translate }} {{ heat.heatNumber }}
-                      </option>
+                      </app-custom-option>
                     }
-                  </select>
+                  </app-custom-select>
                 </div>
                 <div class="info-row">
                   <span class="info-label"
@@ -61,7 +72,7 @@ import { DriverHeatData } from "@app/race/driver_heat_data";
                       "RD_ADD_LAP_SECTIONS_SELECT_DRIVER" | translate
                     }}:</span
                   >
-                  <select
+                  <app-custom-select
                     id="driverSelect"
                     [ngModel]="selectedLaneIndex()"
                     (ngModelChange)="onDriverSelectChange($event)"
@@ -71,12 +82,16 @@ import { DriverHeatData } from "@app/race/driver_heat_data";
                       track d.laneIndex;
                       let idx = $index
                     ) {
-                      <option [value]="idx">
+                      <app-custom-option [value]="idx">
                         {{ "RD_LANE" | translate }} {{ d.laneIndex + 1 }}:
-                        {{ d.driver?.name || ("RD_EMPTY_LANE" | translate) }}
-                      </option>
+                        {{
+                          d.driverName ||
+                            d.driver?.name ||
+                            ("RD_EMPTY_LANE" | translate)
+                        }}
+                      </app-custom-option>
                     }
-                  </select>
+                  </app-custom-select>
                 </div>
               </div>
             }
@@ -107,7 +122,8 @@ import { DriverHeatData } from "@app/race/driver_heat_data";
                   >{{ "RD_ADD_LAP_SECTIONS_DRIVER" | translate }}:</span
                 >
                 <span class="info-value">{{
-                  activeDriverHeatData()?.driver?.name ||
+                  activeDriverHeatData()?.driverName ||
+                    activeDriverHeatData()?.driver?.name ||
                     ("RD_EMPTY_LANE" | translate)
                 }}</span>
               </div>
@@ -418,7 +434,6 @@ import { DriverHeatData } from "@app/race/driver_heat_data";
       }
     `,
   ],
-  imports: [CommonModule, FormsModule, TranslatePipe],
 })
 export class AddLapSectionsDialogComponent {
   visible = input(false);
@@ -454,7 +469,22 @@ export class AddLapSectionsDialogComponent {
     if (!heatsList || heatsList.length === 0) return [];
     const hIdx = this.selectedHeatIndex();
     const heat = heatsList[hIdx];
-    return heat ? heat.heatDrivers || [] : [];
+    const rawDrivers = heat ? heat.heatDrivers || heat.drivers || [] : [];
+    return rawDrivers.map((d: any, idx: number) => ({
+      ...d,
+      laneIndex:
+        d.laneIndex !== undefined
+          ? d.laneIndex
+          : d.lane !== undefined
+            ? d.lane
+            : idx,
+      driverName:
+        d.driver?.name ||
+        d.actualDriver?.name ||
+        d.participant?.driver?.name ||
+        d.name ||
+        "",
+    }));
   });
 
   activeDriverHeatData = computed(() => {

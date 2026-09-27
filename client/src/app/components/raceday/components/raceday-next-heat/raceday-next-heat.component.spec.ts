@@ -208,10 +208,17 @@ describe("RacedayNextHeatComponent", () => {
     expect(nameSpan.textContent).toContain("One");
     expect(nameSpan.textContent).toContain("Team A");
 
-    const select = element.querySelector("select");
+    const select = element.querySelector("app-custom-select");
     expect(select).toBeTruthy();
-    select.value = "d2";
-    select.dispatchEvent(new Event("change"));
+    const trigger = select.querySelector(
+      ".custom-select-trigger",
+    ) as HTMLElement;
+    trigger.click();
+    fixture.detectChanges();
+    const opt = select.querySelector(
+      '.custom-select-option[data-value="d2"]',
+    ) as HTMLElement;
+    opt?.click();
     fixture.detectChanges();
 
     expect(mockParent.onNextHeatTeammateChange).toHaveBeenCalled();

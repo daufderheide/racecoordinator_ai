@@ -18,11 +18,16 @@ import { ActivatedRoute, Router } from "@angular/router";
 import { finalize, forkJoin, Subscription } from "rxjs";
 import { AcknowledgementModalComponent } from "@app/components/shared/acknowledgement-modal/acknowledgement-modal.component";
 import { ConfirmationModalComponent } from "@app/components/shared/confirmation-modal/confirmation-modal.component";
+import {
+  CustomOptionComponent,
+  CustomSelectComponent,
+} from "@app/components/shared/custom-select/custom-select.component";
 import { EditorTitleComponent } from "@app/components/shared/editor-title/editor-title.component";
 import {
   UndoEventType,
   UndoManager,
 } from "@app/components/shared/undo-redo-controls/undo-manager";
+import { DriverConverter } from "@app/converters/driver.converter";
 import { HeatConverter } from "@app/converters/heat.converter";
 import { DataService } from "@app/data.service";
 import { Driver } from "@app/models/driver";
@@ -42,6 +47,7 @@ import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
 import { checkLaneEquality } from "@app/utils/lane-equality";
 import { naturalSortCompare } from "@app/utils/sorting.utils";
+import { TeammateUtils } from "@app/utils/teammate.utils";
 
 import { ModifyHeatsService } from "./modify-heats.service";
 import {
@@ -73,6 +79,8 @@ import {
     EditorTitleComponent,
     AcknowledgementModalComponent,
     ConfirmationModalComponent,
+    CustomSelectComponent,
+    CustomOptionComponent,
   ],
 })
 export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
@@ -136,6 +144,7 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
   protected showExitConfirmation = false;
   protected errorMessage = signal<string | undefined>(undefined);
   protected scale = 1;
+  zoomLevel = 100;
 
   isDirtyState(): boolean {
     return this.undoManager?.hasChanges() ?? false;
@@ -286,18 +295,11 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
       teams: this.dataService.getTeams(),
     }).subscribe({
       next: (result: any) => {
-        this.allDrivers = (result.drivers as any[]).map(
-          (d) =>
-            new Driver(
-              d.entity_id || d.entityId || d.id || "",
-              d.name || "",
-              d.nickname || "",
-              d.avatarUrl || undefined,
-              d.lapAudio,
-              d.bestLapAudio,
-              d.penaltyAudio,
-            ),
-        );
+        this.allDrivers = (result.drivers as any[]).map((d) => {
+          const driver = DriverConverter.fromJSON(d);
+          DriverConverter.register(driver);
+          return driver;
+        });
         this.allTeams = (result.teams as any[]).map(
           (t) =>
             new Team(
@@ -515,17 +517,11 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
   }
 
   protected isTeamLane(dhd: DriverHeatData): boolean {
-    return !!dhd.participant?.team;
+    return TeammateUtils.isTeam(dhd);
   }
 
   protected getTeammates(dhd: DriverHeatData): Driver[] {
-    if (!dhd.participant || !dhd.participant.team) return [];
-    const team = dhd.participant.team;
-    const driverIds = team.driverIds || (team as any).driver_ids || [];
-    return this.allDrivers.filter((d) => {
-      const id = d.entity_id;
-      return driverIds.includes(id);
-    });
+    return TeammateUtils.getTeammates(dhd, this.allDrivers);
   }
 
   protected getDropdownArrowBg(color: string): SafeStyle {
@@ -537,10 +533,12 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
   protected onTeammateChange(
     heatIdx: number,
     dhd: DriverHeatData,
-    event: Event,
+    eventOrValue: any,
   ) {
-    const select = event.target as HTMLSelectElement;
-    const selectedDriverId = select.value;
+    const selectedDriverId =
+      typeof eventOrValue === "string"
+        ? eventOrValue
+        : ((eventOrValue?.target as HTMLSelectElement)?.value ?? eventOrValue);
     const driver = this.allDrivers.find((d) => {
       const id = d.entity_id;
       return id === selectedDriverId;
@@ -575,52 +573,11 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
   }
 
   protected getDriverStats(hd: DriverHeatData, driverId: string): string {
-    if (!hd || !driverId) return "";
-    let heatLaps = 0;
-    let heatTime = 0;
-    let overallLaps = 0;
-    let overallTime = 0;
-
-    const hLabel = this.translationService.translate("RD_STATS_HEAT_ABBR");
-    const lLabel = this.translationService.translate("RD_STATS_LAP_ABBR");
-    const tLabel = this.translationService.translate("RD_STATS_TOTAL_ABBR");
-
-    if (hd.lapsWithDetails) {
-      hd.lapsWithDetails.forEach((l: any) => {
-        if (l.driverId === driverId) {
-          heatLaps++;
-          heatTime += l.time;
-        }
-      });
-    }
-
-    if (this.localHeats) {
-      this.localHeats.forEach((h: any) => {
-        if (h.heatDrivers) {
-          h.heatDrivers.forEach((d_hd: any) => {
-            if (d_hd.lapsWithDetails) {
-              d_hd.lapsWithDetails.forEach((l: any) => {
-                if (l.driverId === driverId) {
-                  overallLaps++;
-                  overallTime += l.time;
-                }
-              });
-            }
-          });
-        }
-      });
-    }
-
-    const formatTime = (t: number) => {
-      if (t >= 60) {
-        const m = Math.floor(t / 60);
-        const s = (t % 60).toFixed(1).padStart(4, "0");
-        return `${m}:${s}`;
-      }
-      return `${t.toFixed(1)}s`;
-    };
-
-    return `(${hLabel}: ${heatLaps} ${lLabel} / ${formatTime(heatTime)}, ${tLabel}: ${overallLaps} ${lLabel} / ${formatTime(overallTime)})`;
+    return TeammateUtils.getDriverStats(hd, driverId, this.localHeats, {
+      heatAbbr: this.translationService.translate("RD_STATS_HEAT_ABBR"),
+      lapAbbr: this.translationService.translate("RD_STATS_LAP_ABBR"),
+      totalAbbr: this.translationService.translate("RD_STATS_TOTAL_ABBR"),
+    });
   }
 
   // eslint-disable-next-line max-lines-per-function
@@ -904,7 +861,7 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
     const returnUrl =
       this.route.snapshot.queryParamMap.get("returnUrl") ||
       this.router.url.split("?")[0];
-    this.router.navigate(["/team-manager"], {
+    this.router.navigate(["/team-editor"], {
       queryParams: { from: "modify-heats", returnUrl },
     });
   }
@@ -914,7 +871,7 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
     const returnUrl =
       this.route.snapshot.queryParamMap.get("returnUrl") ||
       this.router.url.split("?")[0];
-    this.router.navigate(["/driver-manager"], {
+    this.router.navigate(["/driver-editor"], {
       queryParams: { from: "modify-heats", returnUrl },
     });
   }

@@ -73,8 +73,6 @@ test.describe("Update Selector Visuals", () => {
     );
     await expect(updateSubMenu).toBeVisible();
 
-    await page.waitForTimeout(500);
-
     await expect(page).toHaveScreenshot("update-selector-options-enabled.png", {
       maxDiffPixelRatio: 0.05,
       animations: "disabled",
@@ -124,8 +122,6 @@ test.describe("Update Selector Visuals", () => {
       '[data-testid="submenu-automatic-updates"]',
     );
     await expect(updateSubMenu).toBeVisible();
-
-    await page.waitForTimeout(500);
 
     await expect(page).toHaveScreenshot(
       "update-selector-options-disabled.png",

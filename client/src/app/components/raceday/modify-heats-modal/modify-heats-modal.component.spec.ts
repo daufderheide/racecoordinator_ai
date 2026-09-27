@@ -1509,13 +1509,13 @@ describe("ModifyHeatsModalComponent", () => {
       const router = TestBed.inject(Router);
       component.onManageTeams();
       expect(router.navigate).toHaveBeenCalledWith(
-        ["/team-manager"],
+        ["/team-editor"],
         jasmine.any(Object),
       );
 
       component.onManageDrivers();
       expect(router.navigate).toHaveBeenCalledWith(
-        ["/driver-manager"],
+        ["/driver-editor"],
         jasmine.any(Object),
       );
     });
@@ -1539,6 +1539,25 @@ describe("ModifyHeatsModalComponent", () => {
 
       expect(component.canSave).toBeDefined();
       expect(component.currentValidationError).toBeDefined();
+    });
+    describe("Zoom Support", () => {
+      it("should update zoomLevel and bind it to the heats grid", () => {
+        const track = createMockTrack();
+        const race = createMockRace(track);
+        const heat1 = new Heat("h1", 1, []);
+        fixture.componentRef.setInput("raceInput", race);
+        fixture.componentRef.setInput("heatsInput", [heat1]);
+        fixture.detectChanges();
+
+        const compiled = fixture.nativeElement as HTMLElement;
+        const grid = compiled.querySelector(".heats-grid") as HTMLElement;
+        expect(grid).toBeTruthy();
+        expect(grid.style.zoom).toBe("1");
+
+        component.zoomLevel = 80;
+        fixture.detectChanges();
+        expect(grid.style.zoom).toBe("0.8");
+      });
     });
   });
 });

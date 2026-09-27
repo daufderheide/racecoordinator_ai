@@ -110,4 +110,42 @@ public class RaceParticipantTest {
     assertTrue(participant.getOverallBonusBreakdown().isEmpty());
     assertTrue(participant.getHeatBonusBreakdown().isEmpty());
   }
+
+  @Test
+  public void testConsistencyScores() {
+    Driver driver = new Driver("Racer 3", "d3");
+    RaceParticipant participant = new RaceParticipant(driver);
+
+    // Null and empty laps
+    assertEquals(0.0, participant.getConsistencyScore(), 0.001);
+
+    participant.setAllScoringLaps(java.util.Collections.emptyList());
+    assertEquals(0.0, participant.getConsistencyScore(), 0.001);
+
+    // Single lap
+    participant.setAllScoringLaps(java.util.Collections.singletonList(5.0));
+    participant.setAverageLapTime(5.0);
+    participant.setBestLapTime(5.0);
+    assertEquals(100.0, participant.getConsistencyScore(), 0.001);
+
+    // Multiple laps
+    participant.setAllScoringLaps(java.util.Arrays.asList(5.0, 5.0, 5.0));
+    participant.setAverageLapTime(5.0);
+    participant.setBestLapTime(5.0);
+    assertEquals(100.0, participant.getConsistencyScore(), 0.001);
+
+    // Different best and avg
+    participant.setAllScoringLaps(java.util.Arrays.asList(4.0, 6.0));
+    participant.setAverageLapTime(5.0);
+    participant.setBestLapTime(4.0);
+    assertTrue(participant.getConsistencyScore() > 0.0);
+
+    // Zero average or zero best
+    participant.setAverageLapTime(0.0);
+    participant.setBestLapTime(4.0);
+    assertEquals(0.0, participant.getConsistencyScore(), 0.001);
+
+    participant.setAverageLapTime(5.0);
+    participant.setBestLapTime(0.0);
+  }
 }

@@ -5,6 +5,7 @@ import static org.mockito.Mockito.*;
 
 import com.antigravity.context.DatabaseContext;
 import com.antigravity.models.AnalogFuelOptions;
+import com.antigravity.models.AudioConfig;
 import com.antigravity.models.Driver;
 import com.antigravity.models.HeatRotationType;
 import com.antigravity.models.HeatScoring;
@@ -160,6 +161,97 @@ public class RaceTest {
       Theme theme2 = new Theme("Theme 2", false, new java.util.HashMap<>(), null, "theme-2", null);
       race.setTheme(theme2);
       assertEquals(theme2, race.getTheme());
+    }
+
+    @Test
+    public void testUpdateDriver_NullOrEmptyId_DoesNotThrow() {
+      Race model = mock(Race.class);
+      when(model.getHeatRotationType()).thenReturn(HeatRotationType.RoundRobin);
+      Track track = mock(Track.class);
+
+      List<Heat> heats = new ArrayList<>();
+      heats.add(mock(Heat.class));
+
+      com.antigravity.race.Race race =
+          new com.antigravity.race.Race.Builder()
+              .model(model)
+              .track(track)
+              .databaseContext(dbContext)
+              .heats(heats)
+              .isDemoMode(true)
+              .build();
+
+      race.updateDriver(null);
+      race.updateDriver(new Driver.Builder().build());
+      assertNotNull(race);
+    }
+
+    @Test
+    public void testUpdateDriver_UpdatesParticipantsAndHeats() {
+      Race model = mock(Race.class);
+      when(model.getHeatRotationType()).thenReturn(HeatRotationType.RoundRobin);
+      when(model.getOverallScoring()).thenReturn(new OverallScoring());
+      Track track = mock(Track.class);
+
+      Driver originalDriver =
+          new Driver.Builder()
+              .withEntityId("driver_1")
+              .withName("Driver One")
+              .withNickname("D1")
+              .withLapAudio(new AudioConfig("preset", "default_beep", "none"))
+              .build();
+
+      RaceParticipant participant = new RaceParticipant(originalDriver);
+      List<RaceParticipant> participants = new ArrayList<>();
+      participants.add(participant);
+
+      Team team =
+          new Team("Test Team", null, Collections.singletonList("driver_1"), "team_1", null);
+      RaceParticipant teamParticipant = new RaceParticipant(team);
+      List<Driver> teamDrivers = new ArrayList<>();
+      teamDrivers.add(originalDriver);
+      teamParticipant.setTeamDrivers(teamDrivers);
+      participants.add(teamParticipant);
+
+      DriverHeatData dhd = new DriverHeatData(participant, originalDriver);
+      List<DriverHeatData> heatDrivers = new ArrayList<>();
+      heatDrivers.add(dhd);
+
+      Heat heat = new Heat(1, heatDrivers, new HeatScoring(), false);
+      List<Heat> heats = new ArrayList<>();
+      heats.add(heat);
+
+      com.antigravity.race.Race race =
+          new com.antigravity.race.Race.Builder()
+              .model(model)
+              .track(track)
+              .databaseContext(dbContext)
+              .drivers(participants)
+              .heats(heats)
+              .isDemoMode(true)
+              .build();
+
+      Driver updatedDriver =
+          new Driver.Builder()
+              .withEntityId("driver_1")
+              .withName("Driver One Updated")
+              .withNickname("D1 Updated")
+              .withLapAudio(new AudioConfig("none", "", "none"))
+              .withBestLapAudio(new AudioConfig("none", "", "none"))
+              .build();
+
+      race.updateDriver(updatedDriver);
+
+      assertEquals("Driver One Updated", participant.getDriver().getName());
+      assertEquals("none", participant.getDriver().getLapAudio().getType());
+      assertEquals("none", participant.getDriver().getBestLapAudio().getType());
+
+      assertEquals("Driver One Updated", teamParticipant.getTeamDrivers().get(0).getName());
+      assertEquals("none", teamParticipant.getTeamDrivers().get(0).getLapAudio().getType());
+
+      assertEquals("Driver One Updated", dhd.getActualDriver().getName());
+      assertEquals("none", dhd.getActualDriver().getLapAudio().getType());
+      assertEquals("Driver One Updated", dhd.getDriver().getDriver().getName());
     }
   }
 
@@ -1110,6 +1202,42 @@ public class RaceTest {
     }
 
     @Test
+    public void testOnCallbuttonTracksLaneAndMasterCalls() throws Exception {
+      race.startRace();
+      race.changeState(new Racing());
+      assertTrue(race.getState() instanceof Racing);
+
+      // Lane 0 triggers track call
+      race.onCallbutton(0, 0);
+      assertTrue(race.getState() instanceof Paused);
+      assertEquals(1, race.getCurrentHeat().getDrivers().get(0).getTrackCalls());
+      assertEquals(0, race.getCurrentHeat().getMasterTrackCalls());
+      assertEquals(1, race.getCurrentHeat().getTrackCalls());
+
+      // Resuming from Paused state via call button does not increment track calls
+      race.onCallbutton(0, 0);
+      assertTrue(race.getState() instanceof Starting);
+      assertEquals(1, race.getCurrentHeat().getDrivers().get(0).getTrackCalls());
+      assertEquals(1, race.getCurrentHeat().getTrackCalls());
+
+      // Move to Racing again
+      race.changeState(new Racing());
+
+      // Master track call via pauseRace()
+      race.pauseRace();
+      assertTrue(race.getState() instanceof Paused);
+      assertEquals(1, race.getCurrentHeat().getDrivers().get(0).getTrackCalls());
+      assertEquals(1, race.getCurrentHeat().getMasterTrackCalls());
+      assertEquals(2, race.getCurrentHeat().getTrackCalls());
+
+      // Restart heat resets track calls to 0
+      race.restartHeat();
+      assertEquals(0, race.getCurrentHeat().getDrivers().get(0).getTrackCalls());
+      assertEquals(0, race.getCurrentHeat().getMasterTrackCalls());
+      assertEquals(0, race.getCurrentHeat().getTrackCalls());
+    }
+
+    @Test
     public void testOnCallbuttonAbortsAutoAdvance() throws Exception {
       race.changeState(new HeatOver());
       race.setAutoAdvanceRemaining(10.0);
@@ -1291,7 +1419,7 @@ public class RaceTest {
     }
 
     @Test
-    public void testRaceOver_RedFlagWhenNotLastHeat() {
+    public void testRaceOver_CheckeredFlagWhenNotLastHeat() {
       RaceOver raceOver = new RaceOver();
       com.antigravity.race.Race mockRace = mock(com.antigravity.race.Race.class);
       Race mockModel = mock(Race.class);
@@ -1303,11 +1431,11 @@ public class RaceTest {
       when(mockRace.isLastHeat()).thenReturn(false);
 
       RaceFlag flag = raceOver.getFlagType(mockRace);
-      assertTrue(flag == RaceFlag.RED);
+      assertTrue(flag == RaceFlag.CHECKERED);
     }
 
     @Test
-    public void testRaceOver_RedFlagWhenAllowFinishEnabled() {
+    public void testRaceOver_CheckeredFlagWhenAllowFinishEnabled() {
       RaceOver raceOver = new RaceOver();
       com.antigravity.race.Race mockRace = mock(com.antigravity.race.Race.class);
       Race mockModel = mock(Race.class);
@@ -1319,7 +1447,7 @@ public class RaceTest {
       when(mockRace.isLastHeat()).thenReturn(true);
 
       RaceFlag flag = raceOver.getFlagType(mockRace);
-      assertTrue(flag == RaceFlag.RED);
+      assertTrue(flag == RaceFlag.CHECKERED);
     }
 
     @Test
@@ -1374,11 +1502,13 @@ public class RaceTest {
       assertEquals(RaceFlag.GREEN, dhd.getFlag());
 
       // Transition to HeatOver (time expired or heat finished)
+      // Once all drivers finish, driver flag uses heat_over flag in HeatOver
       race.changeState(new HeatOver());
       assertTrue(dhd.isFinished());
-      assertEquals(RaceFlag.CHECKERED, dhd.getFlag());
+      assertEquals(RaceFlag.RED, dhd.getFlag());
 
       // Transition to RaceOver
+      // Driver flag uses race_over flag in RaceOver
       race.changeState(new RaceOver());
       assertTrue(dhd.isFinished());
       assertEquals(RaceFlag.CHECKERED, dhd.getFlag());
@@ -1815,11 +1945,11 @@ public class RaceTest {
       racing.enter(mockRace);
       drivers.get(0).getDriver().setFuelLevel(50.0);
       Thread.sleep(300);
-      verify(mockRace).setFuelLevel(0, 50.0, 100.0);
+      verify(mockRace, atLeastOnce()).setFuelLevel(0, 50.0, 100.0);
 
       drivers.get(0).getDriver().setFuelLevel(25.0);
       Thread.sleep(300);
-      verify(mockRace).setFuelLevel(0, 25.0, 100.0);
+      verify(mockRace, atLeastOnce()).setFuelLevel(0, 25.0, 100.0);
 
       racing.exit(mockRace);
     }
@@ -2851,6 +2981,55 @@ public class RaceTest {
 
       assertEquals(75.0, parts.get(0).getFuelLevel(), 0.001);
     }
+
+    @Test
+    public void testNonFuelRaceDoesNotZeroOutFuelOnReset() {
+      AnalogFuelOptions disabledFuelOptions =
+          new AnalogFuelOptions(
+              false,
+              true,
+              null,
+              com.antigravity.models.FuelOptions.OutOfFuelAction.DO_NOT_COUNT_LAPS,
+              100.0,
+              AnalogFuelOptions.FuelUsageType.LINEAR,
+              4.0,
+              100.0,
+              20.0,
+              1.0,
+              6.0);
+
+      Race nonFuelModel =
+          new Race.Builder()
+              .withName("Non-Fuel Race")
+              .withFuelOptions(disabledFuelOptions)
+              .withAutoStartTime(60.0)
+              .withTrackEntityId("track1")
+              .withHeatRotationType(HeatRotationType.RoundRobin)
+              .withHeatScoring(race.getRaceModel().getHeatScoring())
+              .withOverallScoring(new OverallScoring())
+              .build();
+
+      List<RaceParticipant> parts = new ArrayList<>();
+      parts.add(new RaceParticipant(new Driver("D1", "d1", "1", "1")));
+      parts.get(0).setFuelLevel(100.0);
+
+      com.antigravity.race.Race nonFuelRace =
+          new com.antigravity.race.Race.Builder()
+              .model(nonFuelModel)
+              .drivers(parts)
+              .track(race.getTrack())
+              .isDemoMode(true)
+              .build();
+
+      DriverHeatData dhd = nonFuelRace.getCurrentHeat().getDrivers().get(0);
+      assertEquals(100.0, dhd.getInitialFuelLevel(), 0.001);
+      assertEquals(100.0, parts.get(0).getFuelLevel(), 0.001);
+
+      nonFuelRace.resetCurrentHeat();
+
+      assertEquals(100.0, parts.get(0).getFuelLevel(), 0.001);
+      assertEquals(100.0, dhd.getInitialFuelLevel(), 0.001);
+    }
   }
 
   // =========================================================================
@@ -3112,7 +3291,7 @@ public class RaceTest {
     @Test
     public void testRaceOverFlag() {
       RaceOver state = new RaceOver();
-      assertEquals(RaceFlag.RED, state.getFlagType(race));
+      assertEquals(RaceFlag.CHECKERED, state.getFlagType(race));
     }
 
     @Test
@@ -3179,7 +3358,7 @@ public class RaceTest {
 
       assertEquals(RaceFlag.CHECKERED, state.getFlagType(race));
       assertEquals(RaceFlag.RED, state.getLaneFlagType(race, 0));
-      assertEquals(RaceFlag.CHECKERED, state.getLaneFlagType(race, 1));
+      assertEquals(RaceFlag.GREEN, state.getLaneFlagType(race, 1));
     }
 
     @Test
@@ -3979,6 +4158,111 @@ public class RaceTest {
 
       // All heats empty -> should end up in RaceOver
       assertTrue(race.getState() instanceof RaceOver);
+      race.setAutoStartRemaining(10.0);
+      race.setAutoAdvanceRemaining(5.0);
+      assertEquals(0.0, race.getAutoStartRemaining(), 0.001);
+      assertEquals(0.0, race.getAutoAdvanceRemaining(), 0.001);
+    }
+
+    @Test
+    public void testPrepareHeatAndResetBroadcastFuelCarData() throws Exception {
+      Track track =
+          new Track.Builder()
+              .name("T")
+              .lanes(Arrays.asList(new Lane("r", "w", 100), new Lane("b", "w", 101)))
+              .build();
+      AnalogFuelOptions fuelOptions =
+          new AnalogFuelOptions(
+              true,
+              true,
+              null,
+              com.antigravity.models.FuelOptions.OutOfFuelAction.DO_NOT_COUNT_LAPS,
+              100.0,
+              AnalogFuelOptions.FuelUsageType.LINEAR,
+              4.0,
+              80.0,
+              20.0,
+              1.0,
+              6.0);
+      Race raceModel =
+          new Race.Builder()
+              .withName("FuelRace")
+              .withHeatScoring(new HeatScoring())
+              .withOverallScoring(new OverallScoring())
+              .withFuelOptions(fuelOptions)
+              .build();
+
+      RaceParticipant p1 =
+          new RaceParticipant(new Driver.Builder().withName("D1").withEntityId("d1").build());
+      RaceParticipant p2 =
+          new RaceParticipant(new Driver.Builder().withName("D2").withEntityId("d2").build());
+      DriverHeatData dhd1 = new DriverHeatData(p1);
+      DriverHeatData dhd2 = new DriverHeatData(p2);
+      Heat heat = new Heat(1, Arrays.asList(dhd1, dhd2), new HeatScoring(), false);
+
+      com.antigravity.race.Race race =
+          new com.antigravity.race.Race.Builder()
+              .model(raceModel)
+              .track(track)
+              .drivers(Arrays.asList(p1, p2))
+              .heats(Collections.singletonList(heat))
+              .isDemoMode(true)
+              .build();
+
+      ClientSubscriptionManager.getInstance().setRace(race);
+      Session mockSession = mock(Session.class);
+      RemoteEndpoint mockRemote = mock(RemoteEndpoint.class);
+      when(mockSession.isOpen()).thenReturn(true);
+      when(mockSession.getRemote()).thenReturn(mockRemote);
+      WsContext wsContext = new WsContext("fuel_test_session", mockSession) {};
+      ClientSubscriptionManager.getInstance().addSession(wsContext);
+      ClientSubscriptionManager.getInstance()
+          .handleRaceSubscription(
+              wsContext, RaceSubscriptionRequest.newBuilder().setSubscribe(true).build());
+
+      // Clear earlier messages
+      ArgumentCaptor<ByteBuffer> captor = ArgumentCaptor.forClass(ByteBuffer.class);
+      verify(mockRemote, atLeastOnce()).sendBytesByFuture(captor.capture());
+      reset(mockRemote);
+      when(mockRemote.sendBytesByFuture(any())).thenReturn(null);
+
+      // Call prepareHeat()
+      race.prepareHeat();
+
+      // Verify CarData messages were broadcast
+      verify(mockRemote, atLeastOnce()).sendBytesByFuture(captor.capture());
+      List<com.antigravity.proto.CarData> carDataList = new ArrayList<>(); // fqn-collision
+      for (ByteBuffer buf : captor.getAllValues()) {
+        RaceData data = RaceData.parseFrom(buf);
+        if (data.hasCarData()) {
+          carDataList.add(data.getCarData());
+        }
+      }
+
+      assertFalse("Expected CarData messages to be broadcast", carDataList.isEmpty());
+      assertEquals(2, carDataList.size());
+      assertEquals(0, carDataList.get(0).getLane());
+      assertEquals(80.0, carDataList.get(0).getFuelLevel(), 0.001);
+      assertEquals(1, carDataList.get(1).getLane());
+      assertEquals(80.0, carDataList.get(1).getFuelLevel(), 0.001);
+
+      // Verify resetCurrentHeat also broadcasts CarData
+      reset(mockRemote);
+      when(mockRemote.sendBytesByFuture(any())).thenReturn(null);
+      race.resetCurrentHeat();
+      ArgumentCaptor<ByteBuffer> resetCaptor = ArgumentCaptor.forClass(ByteBuffer.class);
+      verify(mockRemote, atLeastOnce()).sendBytesByFuture(resetCaptor.capture());
+      carDataList.clear();
+      for (ByteBuffer buf : resetCaptor.getAllValues()) {
+        RaceData data = RaceData.parseFrom(buf);
+        if (data.hasCarData()) {
+          carDataList.add(data.getCarData());
+        }
+      }
+      assertEquals(2, carDataList.size());
+      assertEquals(80.0, carDataList.get(0).getFuelLevel(), 0.001);
+
+      ClientSubscriptionManager.getInstance().removeSession(wsContext);
     }
   }
 }

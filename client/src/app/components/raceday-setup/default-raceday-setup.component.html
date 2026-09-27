@@ -43,7 +43,7 @@
                 class="setup-menu-dropdown-item"
                 (click)="openSeasonManager()"
               >
-                {{ "RDS_MENU_SEASON_MANAGER" | translate }}
+                {{ "RDS_MENU_SEASON" | translate }}
               </div>
               <hr class="setup-menu-dropdown-divider" />
               <div
@@ -73,6 +73,9 @@
             <div class="setup-menu-dropdown">
               <div class="setup-menu-dropdown-item" (click)="loadSavedRaces()">
                 {{ "RDS_MENU_LOAD_RACE" | translate }}
+              </div>
+              <div class="setup-menu-dropdown-item" (click)="openRaceHistory()">
+                {{ "RDS_MENU_RACE_HISTORY" | translate }}
               </div>
               <hr class="setup-menu-dropdown-divider" />
               <div class="setup-menu-dropdown-item" (click)="exportSettings()">
@@ -426,22 +429,61 @@
             </div>
           </div>
 
+          <div class="search-wrapper list-search">
+            <input
+              #availSearch
+              type="text"
+              class="search-input"
+              [placeholder]="'RDS_SEARCH_AVAILABLE' | translate"
+              [(ngModel)]="availableSearchQuery"
+              (ngModelChange)="onAvailableSearchQueryChange()"
+              (keydown)="onAvailableSearchKeydown($event, availSearch)"
+              autocomplete="off"
+              data-dashlane-ignore="true"
+              data-1p-ignore="true"
+              data-lpignore="true"
+              data-bwignore="true"
+              data-form-type="other"
+            />
+            <svg
+              class="search-icon"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+            >
+              <path
+                d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"
+              />
+            </svg>
+          </div>
+
           <div
             id="available-list"
             cdkDropList
-            [cdkDropListData]="unselectedParticipants"
+            [cdkDropListData]="filteredAvailableParticipants"
             [cdkDropListConnectedTo]="['selected-list']"
             class="driver-pool"
             (cdkDropListDropped)="drop($event)"
+            #availScrollContainer
+            cdkScrollable
+            (mouseleave)="onAvailableListMouseLeave()"
           >
             @if (!isRefreshingList) {
               @for (
-                participant of unselectedParticipants;
+                participant of filteredAvailableParticipants;
                 track trackByParticipant(i, participant);
                 let i = $index
               ) {
                 <div
+                  [id]="'avail-item-' + i"
                   class="driver-item"
+                  [attr.data-participant-id]="
+                    getParticipantUniqueId(participant)
+                  "
+                  [class.active]="isParticipantSelected(participant)"
+                  (click)="selectParticipant(participant, i)"
+                  (mouseenter)="onAvailableItemMouseEnter(participant, i)"
                   cdkDrag
                   [cdkDragScale]="scale"
                   [cdkDragData]="participant"
@@ -582,25 +624,62 @@
             </div>
           </div>
 
+          <div class="search-wrapper list-search">
+            <input
+              #racingSearch
+              type="text"
+              class="search-input"
+              [placeholder]="'RDS_SEARCH_RACING' | translate"
+              [(ngModel)]="racingSearchQuery"
+              (ngModelChange)="onRacingSearchQueryChange()"
+              (keydown)="onRacingSearchKeydown($event, racingSearch)"
+              autocomplete="off"
+              data-dashlane-ignore="true"
+              data-1p-ignore="true"
+              data-lpignore="true"
+              data-bwignore="true"
+              data-form-type="other"
+            />
+            <svg
+              class="search-icon"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+            >
+              <path
+                d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"
+              />
+            </svg>
+          </div>
+
           <div
             id="selected-list"
             cdkDropList
-            [cdkDropListData]="selectedParticipants"
+            [cdkDropListData]="filteredRacingParticipants"
             [cdkDropListConnectedTo]="['available-list']"
             class="driver-pool"
             (cdkDropListDropped)="drop($event)"
-            #scrollContainer
+            #racingScrollContainer
             cdkScrollable
             (selectstart)="preventSelection($event)"
+            (mouseleave)="onRacingListMouseLeave()"
           >
             @if (!isRefreshingList) {
               @for (
-                participant of selectedParticipants;
+                participant of filteredRacingParticipants;
                 track trackByParticipant(i, participant);
                 let i = $index
               ) {
                 <div
+                  [id]="'racing-item-' + i"
                   class="driver-item selected"
+                  [attr.data-participant-id]="
+                    getParticipantUniqueId(participant)
+                  "
+                  [class.active]="isParticipantSelected(participant)"
+                  (click)="selectParticipant(participant, i)"
+                  (mouseenter)="onRacingItemMouseEnter(participant, i)"
                   cdkDrag
                   [cdkDragScale]="scale"
                   [cdkDragData]="participant"
@@ -750,6 +829,12 @@
                 [placeholder]="'RDS_SEARCH_RACES' | translate"
                 [(ngModel)]="raceSearchQuery"
                 (ngModelChange)="onSearchChange()"
+                autocomplete="off"
+                data-dashlane-ignore="true"
+                data-1p-ignore="true"
+                data-lpignore="true"
+                data-bwignore="true"
+                data-form-type="other"
               />
               <svg
                 class="search-icon"
@@ -765,19 +850,21 @@
             </div>
 
             <div class="season-selection-wrapper">
-              <select
+              <app-custom-select
                 class="season-select-input"
                 [(ngModel)]="selectedSeason"
                 (ngModelChange)="onSeasonChange()"
                 [compareWith]="compareSeasons"
               >
-                <option [ngValue]="undefined">
+                <app-custom-option [value]="undefined">
                   {{ "RDS_SEASON_NONE" | translate }}
-                </option>
+                </app-custom-option>
                 @for (season of seasons; track season.entity_id) {
-                  <option [ngValue]="season">{{ season.name }}</option>
+                  <app-custom-option [value]="season">{{
+                    season.name
+                  }}</app-custom-option>
                 }
-              </select>
+              </app-custom-select>
             </div>
           </div>
 
@@ -843,7 +930,29 @@
               </div>
             } @else if (selectedRace) {
               <div class="event-details-card race-summary-card">
-                <div class="event-detail-title">{{ selectedRace.name }}</div>
+                <div class="event-detail-header">
+                  <div class="event-detail-title">{{ selectedRace.name }}</div>
+                  <button
+                    type="button"
+                    class="action-btn edit-race-btn"
+                    id="edit-selected-race-btn"
+                    (click)="editSelectedRace()"
+                    (mousedown)="$event.preventDefault()"
+                    [title]="'RDS_BTN_EDIT_RACE' | translate"
+                    data-testid="edit-selected-race-btn"
+                  >
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                    >
+                      <path
+                        d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"
+                      />
+                    </svg>
+                  </button>
+                </div>
                 <div class="summary-grid">
                   <div class="summary-item">
                     <span class="summary-label"
@@ -902,6 +1011,26 @@
                   </div>
                   <div class="summary-item">
                     <span class="summary-label"
+                      >{{ "RM_LABEL_HANDS_FREE" | translate }}:</span
+                    >
+                    <span class="summary-value">{{
+                      isHandsFree(selectedRace)
+                        ? ("GEN_YES" | translate)
+                        : ("GEN_NO" | translate)
+                    }}</span>
+                  </div>
+                  <div class="summary-item">
+                    <span class="summary-label"
+                      >{{ "RM_LABEL_WARMUP_TIME" | translate }}:</span
+                    >
+                    <span class="summary-value">{{
+                      hasWarmup(selectedRace)
+                        ? ("GEN_YES" | translate)
+                        : ("GEN_NO" | translate)
+                    }}</span>
+                  </div>
+                  <div class="summary-item">
+                    <span class="summary-label"
                       >{{ "RM_LABEL_THEME" | translate }}:</span
                     >
                     <span class="summary-value">{{
@@ -918,6 +1047,8 @@
                   [season]="selectedSeason"
                   [standings]="seasonStandings"
                   [compact]="true"
+                  [showEdit]="true"
+                  (edit)="editSelectedSeason()"
                 ></app-season-summary>
               </div>
             } @else {
@@ -1018,6 +1149,12 @@
                     class="inline-rename-input"
                     [placeholder]="'RDS_ENTER_SAVE_NAME' | translate"
                     autoFocus
+                    autocomplete="off"
+                    data-dashlane-ignore="true"
+                    data-1p-ignore="true"
+                    data-lpignore="true"
+                    data-bwignore="true"
+                    data-form-type="other"
                   />
                   <button
                     class="inline-rename-btn confirm"
@@ -1102,6 +1239,14 @@
   (acknowledge)="showErrorModal = false"
 >
 </app-acknowledgement-modal>
+<app-acknowledgement-modal
+  [visible]="showQuitBlockedModal"
+  title="RDS_QUIT_TITLE"
+  message="RDS_QUIT_BLOCKED_MESSAGE"
+  buttonText="GEN_OK"
+  (acknowledge)="onAcknowledgeQuitModal()"
+>
+</app-acknowledgement-modal>
 
 <app-demo-config-modal
   [visible]="showDemoConfigModal"
@@ -1139,6 +1284,14 @@
 <app-racing-roster-dialog
   [visible]="showRacingRosterDialog"
   [participants]="selectedParticipants"
+  [teams]="allTeams"
+  [allDrivers]="allDrivers"
   (close)="closeRacingRosterDialog()"
 >
 </app-racing-roster-dialog>
+
+<!-- Race History Dialog -->
+<app-race-history-dialog
+  [visible]="showRaceHistoryDialog"
+  (close)="showRaceHistoryDialog = false"
+></app-race-history-dialog>

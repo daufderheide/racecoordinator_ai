@@ -785,8 +785,13 @@ describe("DefaultSeasonResultsComponent", () => {
     );
     expect(standingsNetPts?.textContent?.trim()).toBe("41.64");
 
-    const standingsGrossPts = compiled.querySelector(
+    const standingsDroppedPts = compiled.querySelector(
       ".standings-table tbody td:nth-child(4)",
+    );
+    expect(standingsDroppedPts?.textContent?.trim()).toBe("0");
+
+    const standingsGrossPts = compiled.querySelector(
+      ".standings-table tbody td:nth-child(5)",
     );
     expect(standingsGrossPts?.textContent?.trim()).toBe("41.64");
 
@@ -902,8 +907,8 @@ describe("DefaultSeasonResultsComponent", () => {
     expect(headers[0].textContent?.trim()).toBe("SM_RANK");
     expect(headers[1].textContent?.trim()).toBe("SM_DRIVER");
     expect(headers[2].textContent?.trim()).toBe("SM_NET_POINTS");
-    expect(headers[3].textContent?.trim()).toBe("SM_GROSS_POINTS");
-    expect(headers[4].textContent?.trim()).toBe("SM_DROPPED_POINTS");
+    expect(headers[3].textContent?.trim()).toBe("SM_DROPPED_POINTS");
+    expect(headers[4].textContent?.trim()).toBe("SM_GROSS_POINTS");
     expect(headers[5].textContent?.trim()).toBe("SM_RACES");
 
     // Verify standings row values
@@ -914,8 +919,8 @@ describe("DefaultSeasonResultsComponent", () => {
     // Gross = 25 + 10 + 30 = 65, Drops = 2 lowest (10, 25) = 35 dropped, Net = 30
     expect(rowCells[1].textContent?.trim()).toBe("Top Racer");
     expect(rowCells[2].textContent?.trim()).toBe("30");
-    expect(rowCells[3].textContent?.trim()).toBe("65");
-    expect(rowCells[4].textContent?.trim()).toBe("35");
+    expect(rowCells[3].textContent?.trim()).toBe("35");
+    expect(rowCells[4].textContent?.trim()).toBe("65");
     expect(rowCells[5].textContent?.trim()).toBe("3");
   });
 });

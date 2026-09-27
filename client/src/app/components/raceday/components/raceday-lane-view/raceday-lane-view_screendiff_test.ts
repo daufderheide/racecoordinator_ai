@@ -258,31 +258,102 @@ test.describe("Raceday Lane View Visuals", () => {
     const raceData = {
       race: {
         race: {
-          heat: 1,
+          model: { entityId: "r1" },
+          name: "Championship Race",
+          track: {
+            model: { entityId: "t1" },
+            name: "Test Track",
+            lanes: [
+              {
+                objectId: "l1",
+                length: 10,
+                backgroundColor: "#dc2626",
+                foregroundColor: "#ffffff",
+              },
+              {
+                objectId: "l2",
+                length: 10,
+                backgroundColor: "#2563eb",
+                foregroundColor: "#ffffff",
+              },
+            ],
+          },
+        },
+        drivers: [
+          {
+            objectId: "rp1",
+            seed: 1,
+            rank: 1,
+            rankValue: 12.345,
+            fuelLevel: 85.0,
+            driver: {
+              model: { entityId: "d1" },
+              name: "Apex Hunter",
+              nickname: "Apex",
+            },
+          },
+          {
+            objectId: "rp2",
+            seed: 2,
+            rank: 2,
+            rankValue: 14.567,
+            fuelLevel: 72.0,
+            driver: {
+              model: { entityId: "d2" },
+              name: "Blaze Runner",
+              nickname: "Blaze",
+            },
+          },
+        ],
+        currentHeat: {
+          objectId: "h1",
+          heatNumber: 1,
+          heatDrivers: [
+            {
+              objectId: "hd1",
+              laneIndex: 0,
+              lapCount: 15,
+              lastLapTime: 3.456,
+              bestLapTime: 3.123,
+              averageLapTime: 3.555,
+              reactionTime: 0.245,
+              initialFuelLevel: 85.0,
+              driver: {
+                objectId: "rp1",
+                seed: 1,
+                rank: 1,
+                fuelLevel: 85.0,
+                driver: {
+                  model: { entityId: "d1" },
+                  name: "Apex Hunter",
+                  nickname: "Apex",
+                },
+              },
+            },
+            {
+              objectId: "hd2",
+              laneIndex: 1,
+              lapCount: 12,
+              lastLapTime: 3.789,
+              bestLapTime: 3.345,
+              averageLapTime: 3.899,
+              reactionTime: 0.312,
+              initialFuelLevel: 72.0,
+              driver: {
+                objectId: "rp2",
+                seed: 2,
+                rank: 2,
+                fuelLevel: 72.0,
+                driver: {
+                  model: { entityId: "d2" },
+                  name: "Blaze Runner",
+                  nickname: "Blaze",
+                },
+              },
+            },
+          ],
         },
       },
-      drivers: [
-        {
-          lane: 1,
-          name: "Driver 1",
-          nickname: "D1",
-        },
-        {
-          lane: 2,
-          name: "Driver 2",
-          nickname: "D2",
-        },
-      ],
-      lanes: [
-        {
-          lane: 1,
-          lapCount: 10,
-        },
-        {
-          lane: 2,
-          lapCount: 15,
-        },
-      ],
     };
 
     await TestSetupHelper.mockRaceData(page, raceData);

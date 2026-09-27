@@ -16,17 +16,22 @@
 }
 
 .editor-tabs-container::-webkit-scrollbar {
-  height: 6px;
+  height: 8px;
 }
 
 .editor-tabs-container::-webkit-scrollbar-track {
-  background: rgba(15, 23, 42, 0.5);
-  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.4);
+  border-radius: 4px;
 }
 
 .editor-tabs-container::-webkit-scrollbar-thumb {
-  background: rgba(56, 189, 248, 0.3);
-  border-radius: 10px;
+  background: rgba(56, 189, 248, 0.5);
+  border-radius: 4px;
+  border: 1px solid rgba(15, 23, 42, 0.2);
+}
+
+.editor-tabs-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(56, 189, 248, 0.8);
 }
 
 .editor-tab {

@@ -116,8 +116,9 @@
   margin: 4px 0;
 }
 
-.setup-menu-dropdown-item:nth-of-type(even) {
-  background: transparent;
+.setup-menu-dropdown-item:hover:not(.disabled) {
+  background-color: #2563eb;
+  color: #ffffff;
 }
 
 .setup-menu-dropdown-item.disabled {
@@ -294,22 +295,31 @@
 .preview-panel::-webkit-scrollbar,
 .dropdown-menu::-webkit-scrollbar,
 .saved-races-list::-webkit-scrollbar {
-  width: 6px;
+  width: 8px;
 }
 
 .driver-pool::-webkit-scrollbar-track,
 .preview-panel::-webkit-scrollbar-track,
 .dropdown-menu::-webkit-scrollbar-track,
 .saved-races-list::-webkit-scrollbar-track {
-  background: rgba(15, 23, 42, 0.3);
+  background: rgba(15, 23, 42, 0.4);
+  border-radius: 4px;
 }
 
 .driver-pool::-webkit-scrollbar-thumb,
 .preview-panel::-webkit-scrollbar-thumb,
 .dropdown-menu::-webkit-scrollbar-thumb,
 .saved-races-list::-webkit-scrollbar-thumb {
-  background: rgba(56, 189, 248, 0.3);
-  border-radius: 3px;
+  background: rgba(56, 189, 248, 0.5);
+  border-radius: 4px;
+  border: 1px solid rgba(15, 23, 42, 0.2);
+}
+
+.driver-pool::-webkit-scrollbar-thumb:hover,
+.preview-panel::-webkit-scrollbar-thumb:hover,
+.dropdown-menu::-webkit-scrollbar-thumb:hover,
+.saved-races-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(56, 189, 248, 0.8);
 }
 
 /* Unified Driver Action Toolbar - Used as helper selector for walkthrough tour guide */
@@ -365,17 +375,12 @@
   box-sizing: border-box;
 }
 
-.driver-item:hover {
+.driver-item:hover,
+.driver-item.keyboard-active,
+.driver-item.active {
   background: rgba(56, 189, 248, 0.15);
   border-color: #38bdf8;
   transform: translateX(4px);
-}
-
-.driver-item.selected {
-  background: linear-gradient(90deg, rgba(56, 189, 248, 0.15), rgba(56, 189, 248, 0.02));
-  border: 1px solid #38bdf8;
-  border-left: 4px solid #38bdf8;
-  box-shadow: 0 0 10px rgba(56, 189, 248, 0.2);
 }
 
 .driver-item.cdk-drag-placeholder {
@@ -521,17 +526,20 @@
   box-shadow: 0 0 4px rgba(56, 189, 248, 0.2);
 }
 
-#available-drivers-section .section-header {
+#available-drivers-section .section-header,
+#racing-drivers-section .section-header {
   flex-direction: column;
   align-items: stretch;
   gap: 8px;
 }
 
-#available-drivers-section .header-title-container {
+#available-drivers-section .header-title-container,
+#racing-drivers-section .header-title-container {
   width: 100%;
 }
 
-#available-drivers-section .header-actions {
+#available-drivers-section .header-actions,
+#racing-drivers-section .header-actions {
   margin-left: 0;
   width: 100%;
   display: flex;
@@ -543,6 +551,16 @@
   flex: 1;
   justify-content: center;
   padding: 3px 8px;
+}
+
+#racing-drivers-section .action-btn {
+  flex: 1;
+  height: 24px;
+  padding: 0;
+}
+
+.search-wrapper.list-search {
+  margin: 8px 0;
 }
 
 .section-header .header-actions {
@@ -827,35 +845,36 @@
 }
 
 .all-races-selector .season-select-input {
-  appearance: none !important;
-  -webkit-appearance: none !important;
-  -moz-appearance: none !important;
   width: 100%;
-  background-color: rgba(15, 23, 42, 0.6) !important;
-  background-image: url("data:image/svg+xml;base64,PHN2ZyBmaWxsPScjOTRhM2I4JyBoZWlnaHQ9JzI0JyB2aWV3Qm94PScwIDAgMjQgMjQnIHdpZHRoPScyNCcgeG1sbnM9J2h0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnJz48cGF0aCBkPSdNNyAxMGw1IDUgNS01eicvPjwvc3ZnPg==") !important;
-  background-repeat: no-repeat !important;
-  background-position: right 10px center !important;
-  border: 1px solid rgba(148, 163, 184, 0.2) !important;
-  padding: 10px 28px 10px 12px;
-  border-radius: 6px;
-  color: #fff !important;
-  outline: none;
-  box-sizing: border-box;
-  font-family: 'Inter', sans-serif;
-  font-size: 1rem;
-  transition: all 0.2s;
-  cursor: pointer;
 }
 
-.all-races-selector .season-select-input:focus {
+.all-races-selector .season-select-input ::ng-deep .custom-select-trigger {
+  width: 100%;
+  min-height: 42px;
+  padding: 10px 12px;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  color: #fff;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-family: 'Inter', sans-serif;
+  box-sizing: border-box;
+  transition: all 0.2s;
+}
+
+.all-races-selector .season-select-input ::ng-deep .custom-select-container.open .custom-select-trigger,
+.all-races-selector .season-select-input ::ng-deep .custom-select-trigger:hover {
   border-color: #38bdf8;
   background: rgba(15, 23, 42, 0.8);
   box-shadow: 0 0 10px rgba(56, 189, 248, 0.2);
 }
 
-.all-races-selector .season-select-input option {
-  background-color: #0f172a;
-  color: #fff;
+.all-races-selector .season-select-input ::ng-deep .custom-select-dropdown {
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  border-radius: 6px;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
 }
 
 .dropdown-trigger {
@@ -926,6 +945,11 @@
   color: #e2e8f0;
   border-radius: 5px;
   font-size: 0.9rem;
+}
+
+.dropdown-item:hover:not(.disabled) {
+  background-color: #2563eb;
+  color: #ffffff;
 }
 
 .dropdown-no-results {
@@ -1396,21 +1420,22 @@
 }
 
 .event-races-summary::-webkit-scrollbar {
-  width: 6px;
+  width: 8px;
 }
 
 .event-races-summary::-webkit-scrollbar-track {
-  background: rgba(15, 23, 42, 0.5);
-  border-radius: 3px;
+  background: rgba(15, 23, 42, 0.4);
+  border-radius: 4px;
 }
 
 .event-races-summary::-webkit-scrollbar-thumb {
-  background: #38bdf8;
-  border-radius: 3px;
+  background: rgba(56, 189, 248, 0.5);
+  border-radius: 4px;
+  border: 1px solid rgba(15, 23, 42, 0.2);
 }
 
 .event-races-summary::-webkit-scrollbar-thumb:hover {
-  background: #0284c7;
+  background: rgba(56, 189, 248, 0.8);
 }
 
 .race-sequence-table {
@@ -1503,6 +1528,7 @@
   border: 1px solid rgba(148, 163, 184, 0.1);
   flex: 1;
   align-content: start;
+  overflow-y: auto;
 }
 
 .summary-item {
@@ -1527,6 +1553,42 @@
   color: #ffffff;
   font-weight: 600;
   line-height: 1.2;
+}
+
+.race-summary-card .summary-grid {
+  gap: 14px 12px;
+  padding: 8px 10px;
+  margin-top: 6px;
+}
+
+.race-summary-card .summary-item {
+  gap: 3px;
+}
+
+.race-summary-card .summary-value {
+  line-height: 1.25;
+}
+
+.race-summary-card .edit-race-btn {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border-radius: 4px;
+  background: rgba(30, 41, 59, 0.6);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  color: #94a3b8;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.race-summary-card .edit-race-btn:hover {
+  background: rgba(56, 189, 248, 0.2);
+  border-color: #38bdf8;
+  color: #38bdf8;
 }
 
 .empty-standings {

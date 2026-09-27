@@ -22,7 +22,14 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.xssf.usermodel.XSSFColor;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.junit.Test;
 
 public class RaceStatisticsUtilsTest {
@@ -58,7 +65,8 @@ public class RaceStatisticsUtilsTest {
   @Test
   public void testTopKConsecutive() {
     List<Double> laps = Arrays.asList(6.0, 5.0, 4.0, 7.0, 4.5, 4.2, 8.0);
-    // Sliding 2-consecutive: (6+5=11), (5+4=9), (4+7=11), (7+4.5=11.5), (4.5+4.2=8.7), (4.2+8=12.2)
+    // Sliding 2-consecutive: (6+5=11), (5+4=9), (4+7=11), (7+4.5=11.5),
+    // (4.5+4.2=8.7), (4.2+8=12.2)
     // Min 2-consecutive = 8.7
     assertEquals(8.7, RaceStatisticsUtils.calculateTopKConsecutive(laps, 2), 0.0001);
   }
@@ -229,7 +237,8 @@ public class RaceStatisticsUtilsTest {
 
     byte[] outBytes = os.toByteArray();
 
-    // Now open resultBytes with POI, remove all cell comments and VML drawing relations, and write
+    // Now open resultBytes with POI, remove all cell comments and VML drawing
+    // relations, and write
     // out clean bytes
     try (org.apache.poi.xssf.usermodel.XSSFWorkbook resultWb =
         new org.apache.poi.xssf.usermodel.XSSFWorkbook(
@@ -312,14 +321,24 @@ public class RaceStatisticsUtilsTest {
     assertNotNull(rawIs);
     try (org.apache.poi.xssf.usermodel.XSSFWorkbook wb =
         new org.apache.poi.xssf.usermodel.XSSFWorkbook(rawIs)) {
+      java.util.Set<String> drawingTargets = new java.util.HashSet<>();
       for (int i = 0; i < wb.getNumberOfSheets(); i++) {
         org.apache.poi.xssf.usermodel.XSSFSheet sheet = wb.getSheetAt(i);
         for (org.apache.poi.ooxml.POIXMLDocumentPart.RelationPart rp : sheet.getRelationParts()) {
           String target = rp.getRelationship().getTargetURI().toString();
+          if (target.contains("drawing")) {
+            assertFalse(
+                "Drawing target should not be shared across sheets: "
+                    + target
+                    + " on "
+                    + sheet.getSheetName(),
+                drawingTargets.contains(target));
+            drawingTargets.add(target);
+          }
           assertFalse(
               "Relationship target should not be drawing1 on non-drawing sheets: "
                   + sheet.getSheetName(),
-              target.contains("drawing1.xml") && !sheet.getSheetName().equals("Race Information"));
+              target.contains("drawing1.xml") && !sheet.getSheetName().equals("Season Standings"));
         }
       }
 
@@ -341,9 +360,6 @@ public class RaceStatisticsUtilsTest {
     assertNotNull(rawIs);
     try (org.apache.poi.xssf.usermodel.XSSFWorkbook wb =
         new org.apache.poi.xssf.usermodel.XSSFWorkbook(rawIs)) {
-      for (int i = 0; i < wb.getNumberOfSheets(); i++) {
-        System.out.println("DEBUG SHEET " + i + ": " + wb.getSheetName(i));
-      }
       assertEquals("Heat List", wb.getSheetName(2));
       assertEquals("Overall Standings", wb.getSheetName(3));
 
@@ -537,22 +553,7 @@ public class RaceStatisticsUtilsTest {
     try (org.apache.poi.xssf.usermodel.XSSFWorkbook resultWb =
         new org.apache.poi.xssf.usermodel.XSSFWorkbook(
             new java.io.ByteArrayInputStream(outBytes))) {
-      System.out.println("FULL EXPORT RESULT SHEETS: " + resultWb.getNumberOfSheets());
-      for (int i = 0; i < resultWb.getNumberOfSheets(); i++) {
-        org.apache.poi.ss.usermodel.Sheet s = resultWb.getSheetAt(i);
-        System.out.println("Sheet " + i + ": " + s.getSheetName());
-        for (int r = 0; r <= Math.min(s.getLastRowNum(), 10); r++) {
-          org.apache.poi.ss.usermodel.Row row = s.getRow(r);
-          if (row == null) continue;
-          StringBuilder sb = new StringBuilder();
-          sb.append("  Row ").append(r).append(": ");
-          for (int c = 0; c < row.getLastCellNum(); c++) {
-            org.apache.poi.ss.usermodel.Cell cell = row.getCell(c);
-            sb.append("[").append(cell != null ? cell.toString() : "").append("] ");
-          }
-          System.out.println(sb.toString());
-        }
-      }
+      assertEquals(8, resultWb.getNumberOfSheets());
     }
   }
 
@@ -771,7 +772,8 @@ public class RaceStatisticsUtilsTest {
         (org.apache.poi.xssf.usermodel.XSSFColor) lh0.getCellStyle().getFillForegroundColorColor();
     assertEquals("FFD0D0D0", lh0Color.getARGBHex());
 
-    // Verify Heat Data Row 1 (Lane 1) - ALL cells in row have Lane 1 background color (#ff0000 ->
+    // Verify Heat Data Row 1 (Lane 1) - ALL cells in row have Lane 1 background
+    // color (#ff0000 ->
     // FFFF0000)
     org.apache.poi.xssf.usermodel.XSSFColor d1c0Color =
         (org.apache.poi.xssf.usermodel.XSSFColor) d1c0.getCellStyle().getFillForegroundColorColor();
@@ -782,7 +784,8 @@ public class RaceStatisticsUtilsTest {
     assertEquals("FFFF0000", d1c0Color.getARGBHex());
     assertEquals("FFFF0000", d1c2Color.getARGBHex());
 
-    // Verify Heat Data Row 2 (Lane 2) - ALL cells in row have Lane 2 background color (#00ff00 ->
+    // Verify Heat Data Row 2 (Lane 2) - ALL cells in row have Lane 2 background
+    // color (#00ff00 ->
     // FF00FF00)
     org.apache.poi.xssf.usermodel.XSSFColor d2c0Color =
         (org.apache.poi.xssf.usermodel.XSSFColor) d2c0.getCellStyle().getFillForegroundColorColor();
@@ -793,7 +796,8 @@ public class RaceStatisticsUtilsTest {
     assertEquals("FF00FF00", d2c0Color.getARGBHex());
     assertEquals("FF00FF00", d2c2Color.getARGBHex());
 
-    // Verify Lap Data Row (Lane 2) - ALL cells in row have Lane 2 background color (#00ff00 ->
+    // Verify Lap Data Row (Lane 2) - ALL cells in row have Lane 2 background color
+    // (#00ff00 ->
     // FF00FF00)
     org.apache.poi.xssf.usermodel.XSSFColor ld0Color =
         (org.apache.poi.xssf.usermodel.XSSFColor) ld0.getCellStyle().getFillForegroundColorColor();
@@ -1043,10 +1047,477 @@ public class RaceStatisticsUtilsTest {
   }
 
   @Test
+  public void testApplyPostJxlsLaneColors_SegmentsAndSpacerRows() throws Exception {
+    try (XSSFWorkbook wb = new XSSFWorkbook()) {
+      Sheet sheet = wb.createSheet("Heat 1");
+
+      // Row 0: spacer / empty row
+      sheet.createRow(0);
+
+      // Row 1: Header row with Lane 1 and Segments
+      Row header = sheet.createRow(1);
+      header.createCell(0).setCellValue("Lap Number");
+      header.createCell(1).setCellValue("Lane 1");
+      header.createCell(2).setCellValue("Segments");
+
+      // Row 2: Data row
+      Row data = sheet.createRow(2);
+      data.createCell(0).setCellValue(1);
+      data.createCell(1).setCellValue(3.5);
+      data.createCell(2).setCellValue("1.2, 2.3");
+
+      Lane l1 = new Lane("#EF4444", "#FFFFFF", 50);
+      Track track = new Track.Builder().name("Track").lanes(Collections.singletonList(l1)).build();
+      Race mockRace = mock(Race.class);
+      when(mockRace.getTrack()).thenReturn(track);
+
+      RaceStatisticsUtils.applyPostJxlsLaneColors(wb, mockRace);
+
+      // Row 0 spacer should remain unstyled (no cells created or colored)
+      Row r0 = sheet.getRow(0);
+      assertNull(r0.getCell(0));
+
+      // Row 2 data: cell 1 (Lane 1) and cell 2 (Segments) should both be styled with
+      // Lane 1 color
+      org.apache.poi.xssf.usermodel.XSSFColor c1Color =
+          (org.apache.poi.xssf.usermodel.XSSFColor)
+              data.getCell(1).getCellStyle().getFillForegroundColorColor();
+      org.apache.poi.xssf.usermodel.XSSFColor c2Color =
+          (org.apache.poi.xssf.usermodel.XSSFColor)
+              data.getCell(2).getCellStyle().getFillForegroundColorColor();
+      assertNotNull(c1Color);
+      assertNotNull(c2Color);
+      assertEquals("FFEF4444", c1Color.getARGBHex());
+      assertEquals("FFEF4444", c2Color.getARGBHex());
+    }
+  }
+
+  @Test
+  public void testApplyPostJxlsLaneColors_DriverAndTotalLapsRows() throws Exception {
+    try (XSSFWorkbook wb = new XSSFWorkbook()) {
+      Sheet sheet = wb.createSheet("Heat 1");
+
+      // Row 1: Header row with Lane 1, Seg 1, Seg 2, Lane 2, Seg 1
+      Row header = sheet.createRow(1);
+      header.createCell(0).setCellValue("Lap Number");
+      header.createCell(1).setCellValue("Lane 1");
+      header.createCell(2).setCellValue("Seg 1");
+      header.createCell(3).setCellValue("Seg 2");
+      header.createCell(4).setCellValue("Lane 2");
+      header.createCell(5).setCellValue("Seg 1");
+
+      // Row 2: Driver row
+      Row driverRow = sheet.createRow(2);
+      driverRow.createCell(0).setCellValue("Driver");
+      driverRow.createCell(1).setCellValue("Alice");
+      driverRow.createCell(4).setCellValue("Bob");
+
+      // Row 3: Total Laps row
+      Row totalLapsRow = sheet.createRow(3);
+      totalLapsRow.createCell(0).setCellValue("Total Laps");
+      totalLapsRow.createCell(1).setCellValue(15.0);
+      totalLapsRow.createCell(4).setCellValue(14.0);
+
+      // Row 4: Data row
+      Row data = sheet.createRow(4);
+      data.createCell(0).setCellValue(1);
+      data.createCell(1).setCellValue(3.5);
+      data.createCell(2).setCellValue(1.1);
+      data.createCell(3).setCellValue(2.4);
+      data.createCell(4).setCellValue(3.8);
+      data.createCell(5).setCellValue(1.9);
+
+      Lane l1 = new Lane("#EF4444", "#FFFFFF", 50);
+      Lane l2 = new Lane("#3B82F6", "#FFFFFF", 50);
+      Track track = new Track.Builder().name("Track").lanes(Arrays.asList(l1, l2)).build();
+      Race mockRace = mock(Race.class);
+      when(mockRace.getTrack()).thenReturn(track);
+
+      RaceStatisticsUtils.applyPostJxlsLaneColors(wb, mockRace);
+
+      // Verify Driver row (Row 2): col 0 uncolored, col 1 Lane 1 color, col 4 Lane 2
+      // color
+      assertNull(driverRow.getCell(0).getCellStyle().getFillForegroundColorColor());
+      org.apache.poi.xssf.usermodel.XSSFColor dL1 =
+          (org.apache.poi.xssf.usermodel.XSSFColor)
+              driverRow.getCell(1).getCellStyle().getFillForegroundColorColor();
+      org.apache.poi.xssf.usermodel.XSSFColor dL2 =
+          (org.apache.poi.xssf.usermodel.XSSFColor)
+              driverRow.getCell(4).getCellStyle().getFillForegroundColorColor();
+      assertNotNull(dL1);
+      assertNotNull(dL2);
+      assertEquals("FFEF4444", dL1.getARGBHex());
+      assertEquals("FF3B82F6", dL2.getARGBHex());
+
+      // Verify Total Laps row (Row 3): col 0 uncolored, col 1 Lane 1 color, col 4
+      // Lane 2 color
+      assertNull(totalLapsRow.getCell(0).getCellStyle().getFillForegroundColorColor());
+      org.apache.poi.xssf.usermodel.XSSFColor tL1 =
+          (org.apache.poi.xssf.usermodel.XSSFColor)
+              totalLapsRow.getCell(1).getCellStyle().getFillForegroundColorColor();
+      org.apache.poi.xssf.usermodel.XSSFColor tL2 =
+          (org.apache.poi.xssf.usermodel.XSSFColor)
+              totalLapsRow.getCell(4).getCellStyle().getFillForegroundColorColor();
+      assertNotNull(tL1);
+      assertNotNull(tL2);
+      assertEquals("FFEF4444", tL1.getARGBHex());
+      assertEquals("FF3B82F6", tL2.getARGBHex());
+
+      // Verify Segments in Data row (Row 4): col 2 and 3 get Lane 1, col 5 gets Lane
+      // 2
+      org.apache.poi.xssf.usermodel.XSSFColor dataSeg1 =
+          (org.apache.poi.xssf.usermodel.XSSFColor)
+              data.getCell(2).getCellStyle().getFillForegroundColorColor();
+      org.apache.poi.xssf.usermodel.XSSFColor dataSeg2 =
+          (org.apache.poi.xssf.usermodel.XSSFColor)
+              data.getCell(5).getCellStyle().getFillForegroundColorColor();
+      assertNotNull(dataSeg1);
+      assertNotNull(dataSeg2);
+      assertEquals("FFEF4444", dataSeg1.getARGBHex());
+      assertEquals("FF3B82F6", dataSeg2.getARGBHex());
+    }
+  }
+
+  @Test
   public void testSanitizeWorkbookTemplate_EdgeCases() {
     assertNull(RaceStatisticsUtils.sanitizeWorkbookTemplate(null));
     assertNotNull(
         RaceStatisticsUtils.sanitizeWorkbookTemplate(
             new java.io.ByteArrayInputStream(new byte[0])));
+  }
+
+  @Test
+  public void testRoundToThreeDecimals() {
+    assertEquals(0.0, RaceStatisticsUtils.roundToThreeDecimals(0.0), 0.00001);
+    assertEquals(1.0, RaceStatisticsUtils.roundToThreeDecimals(1.0), 0.00001);
+    assertEquals(1.5, RaceStatisticsUtils.roundToThreeDecimals(1.5), 0.00001);
+    assertEquals(1.25, RaceStatisticsUtils.roundToThreeDecimals(1.25), 0.00001);
+    assertEquals(1.123, RaceStatisticsUtils.roundToThreeDecimals(1.123), 0.00001);
+    assertEquals(1.123, RaceStatisticsUtils.roundToThreeDecimals(1.1234), 0.00001);
+    assertEquals(1.124, RaceStatisticsUtils.roundToThreeDecimals(1.1236), 0.00001);
+    assertEquals(1.124, RaceStatisticsUtils.roundToThreeDecimals(1.1235), 0.00001);
+    assertEquals(-2.346, RaceStatisticsUtils.roundToThreeDecimals(-2.3456), 0.00001);
+    assertTrue(Double.isNaN(RaceStatisticsUtils.roundToThreeDecimals(Double.NaN)));
+    assertTrue(
+        Double.isInfinite(RaceStatisticsUtils.roundToThreeDecimals(Double.POSITIVE_INFINITY)));
+    assertTrue(
+        Double.isInfinite(RaceStatisticsUtils.roundToThreeDecimals(Double.NEGATIVE_INFINITY)));
+  }
+
+  @Test
+  public void testCalculateLaneStats_RoundsDecimals() {
+    List<Double> laps = Arrays.asList(3.1111, 3.2222, 3.3333);
+    DriverAnalysisSummary.LaneStats stats =
+        RaceStatisticsUtils.calculateLaneStats("Lane 1", 1, 3.0, laps);
+
+    assertEquals(3.0, stats.getTotalLaps(), 0.00001);
+    assertEquals(9.667, stats.getTotalTime(), 0.00001);
+    assertEquals(3.222, stats.getAverageLapTime(), 0.00001);
+    assertEquals(3.222, stats.getMedianLapTime(), 0.00001);
+    assertEquals(3.111, stats.getBestLapTime(), 0.00001);
+    assertEquals(0.111, stats.getStandardDeviation(), 0.00001);
+    assertEquals(0.966, stats.getConsistencyScore(), 0.00001);
+  }
+
+  @Test
+  public void testEnforceMaxThreeDecimalPlaces_NumericAndStringCells() throws Exception {
+    try (XSSFWorkbook wb = new XSSFWorkbook()) {
+      Sheet sheet = wb.createSheet("Test");
+      Row row0 = sheet.createRow(0);
+
+      Cell c0 = row0.createCell(0);
+      c0.setCellValue(12.345678);
+
+      Cell c1 = row0.createCell(1);
+      c1.setCellValue(42.0);
+
+      Cell c2 = row0.createCell(2);
+      c2.setCellValue("98.7654321");
+
+      Cell c3 = row0.createCell(3);
+      c3.setCellValue("Alice");
+
+      Cell c4 = row0.createCell(4);
+      c4.setCellValue("123");
+
+      Cell c5 = row0.createCell(5);
+      c5.setCellValue("2026-09-11");
+
+      Cell c6 = row0.createCell(6);
+      c6.setCellValue(5.12345);
+      CellStyle style4Decimals = wb.createCellStyle();
+      style4Decimals.setDataFormat(wb.createDataFormat().getFormat("0.0000"));
+      c6.setCellStyle(style4Decimals);
+
+      Cell c7 = row0.createCell(7);
+      c7.setCellValue(new Date());
+      CellStyle dateStyle = wb.createCellStyle();
+      dateStyle.setDataFormat(wb.createDataFormat().getFormat("yyyy-mm-dd"));
+      c7.setCellStyle(dateStyle);
+      double origDateValue = c7.getNumericCellValue();
+
+      RaceStatisticsUtils.enforceMaxThreeDecimalPlaces(wb);
+
+      assertEquals(12.346, c0.getNumericCellValue(), 0.00001);
+      assertEquals(42.0, c1.getNumericCellValue(), 0.00001);
+      assertEquals("98.765", c2.getStringCellValue());
+      assertEquals("Alice", c3.getStringCellValue());
+      assertEquals("123", c4.getStringCellValue());
+      assertEquals("2026-09-11", c5.getStringCellValue());
+      assertEquals(5.123, c6.getNumericCellValue(), 0.00001);
+      assertEquals("0.000", c6.getCellStyle().getDataFormatString());
+      assertEquals(origDateValue, c7.getNumericCellValue(), 0.00001);
+    }
+
+    RaceStatisticsUtils.enforceMaxThreeDecimalPlaces(null);
+  }
+
+  @Test
+  public void testApplyPostJxlsLaneColors_HeatSheetDualTablesAndTitleProtection() throws Exception {
+    try (XSSFWorkbook wb = new XSSFWorkbook()) {
+      Sheet sheet = wb.createSheet("Heat 1");
+
+      // Row 0: Title banner (with extra empty cells like in Excel template)
+      Row r0 = sheet.createRow(0);
+      r0.createCell(0).setCellValue("Heat 1");
+      r0.createCell(1);
+      r0.createCell(2);
+      r0.createCell(3);
+
+      // Row 1: Subtitle
+      Row r1 = sheet.createRow(1);
+      r1.createCell(0).setCellValue("Source: #Section Heats -> #Table: Heat 1 Driver Data");
+      r1.createCell(1);
+      r1.createCell(2);
+      r1.createCell(3);
+
+      // Row 3: Table 1 header
+      Row t1Header = sheet.createRow(3);
+      String[] t1Cols = {
+        "Driver",
+        "Lane",
+        "Total Laps",
+        "Total Time",
+        "Best Lap Time",
+        "Average Lap Time",
+        "Median Lap Time",
+        "Gap to Leader",
+        "Gap to Position"
+      };
+      for (int i = 0; i < t1Cols.length; i++) {
+        t1Header.createCell(i).setCellValue(t1Cols[i]);
+      }
+
+      // Rows 4-7: Table 1 Data rows (Lanes 1 to 4)
+      Row t1Row1 = sheet.createRow(4); // Lane 1
+      t1Row1.createCell(0).setCellValue("Abby");
+      t1Row1.createCell(1).setCellValue(1);
+      t1Row1.createCell(2).setCellValue(2.0);
+
+      Row t1Row2 = sheet.createRow(5); // Lane 2
+      t1Row2.createCell(0).setCellValue("Austin");
+      t1Row2.createCell(1).setCellValue(2);
+      t1Row2.createCell(2).setCellValue(3.0);
+
+      Row t1Row3 = sheet.createRow(6); // Lane 3
+      t1Row3.createCell(0).setCellValue("Dave");
+      t1Row3.createCell(1).setCellValue(3);
+      t1Row3.createCell(2).setCellValue(2.0);
+
+      Row t1Row4 = sheet.createRow(7); // Lane 4
+      t1Row4.createCell(0).setCellValue("Driver 1");
+      t1Row4.createCell(1).setCellValue(4);
+      t1Row4.createCell(2).setCellValue(3.0);
+
+      // Row 9: Table 2 Driver row
+      Row t2Driver = sheet.createRow(9);
+      t2Driver.createCell(0).setCellValue("Driver");
+      t2Driver.createCell(1).setCellValue("Abby");
+      t2Driver.createCell(4).setCellValue("Austin");
+      t2Driver.createCell(7).setCellValue("Dave");
+      t2Driver.createCell(10).setCellValue("Driver 1");
+
+      // Row 10: Table 2 Total Laps row
+      Row t2TotalLaps = sheet.createRow(10);
+      t2TotalLaps.createCell(0).setCellValue("Total Laps");
+      t2TotalLaps.createCell(1).setCellValue(2.0);
+      t2TotalLaps.createCell(4).setCellValue(3.0);
+      t2TotalLaps.createCell(7).setCellValue(2.0);
+      t2TotalLaps.createCell(10).setCellValue(3.0);
+
+      // Row 11: Table 2 Column headers (Lap Number, Lane 1, Seg 1, Seg 2...)
+      Row t2Headers = sheet.createRow(11);
+      String[] t2Cols = {
+        "Lap Number",
+        "Lane 1",
+        "Seg 1",
+        "Seg 2",
+        "Lane 2",
+        "Seg 1",
+        "Seg 2",
+        "Lane 3",
+        "Seg 1",
+        "Seg 2",
+        "Lane 4",
+        "Seg 1",
+        "Seg 2"
+      };
+      for (int i = 0; i < t2Cols.length; i++) {
+        t2Headers.createCell(i).setCellValue(t2Cols[i]);
+      }
+
+      // Row 12: Table 2 Lap 1 Data row
+      Row t2Data1 = sheet.createRow(12);
+      t2Data1.createCell(0).setCellValue(1.0);
+      t2Data1.createCell(1).setCellValue(4.756);
+      t2Data1.createCell(2).setCellValue(1.555);
+      t2Data1.createCell(3).setCellValue(2.899);
+      t2Data1.createCell(4).setCellValue(4.155);
+      t2Data1.createCell(7).setCellValue(5.053);
+      t2Data1.createCell(10).setCellValue(4.652);
+
+      Lane l1 = new Lane("#EF4444", "#FFFFFF", 50);
+      Lane l2 = new Lane("#FFFFFF", "#000000", 50);
+      Lane l3 = new Lane("#3B82F6", "#FFFFFF", 50);
+      Lane l4 = new Lane("#FBBF24", "#000000", 50);
+      Track track = new Track.Builder().name("Track").lanes(Arrays.asList(l1, l2, l3, l4)).build();
+      Race mockRace = mock(Race.class);
+      when(mockRace.getTrack()).thenReturn(track);
+
+      RaceStatisticsUtils.applyPostJxlsLaneColors(wb, mockRace);
+
+      // 1. Verify Rows 0 and 1 (Title / Subtitle) are NEVER colored
+      assertNull(r0.getCell(1).getCellStyle().getFillForegroundColorColor());
+      assertNull(r1.getCell(1).getCellStyle().getFillForegroundColorColor());
+
+      // 2. Verify Table 1 Data rows are colored horizontally row-by-row
+      // Lane 1 (Abby) -> Red
+      assertEquals("FFEF4444", getCellColorHex(t1Row1.getCell(0)));
+      assertEquals("FFEF4444", getCellColorHex(t1Row1.getCell(1)));
+      assertEquals("FFEF4444", getCellColorHex(t1Row1.getCell(2)));
+      // Lane 4 (Driver 1) -> Yellow (Verifies Lane 4 is colored and present!)
+      assertEquals("FFFBBF24", getCellColorHex(t1Row4.getCell(0)));
+      assertEquals("FFFBBF24", getCellColorHex(t1Row4.getCell(1)));
+      assertEquals("FFFBBF24", getCellColorHex(t1Row4.getCell(2)));
+
+      // 3. Verify Table 2 Driver row: col 0 uncolored, col 1-3 Lane 1, col 10-12 Lane
+      // 4
+      assertNull(t2Driver.getCell(0).getCellStyle().getFillForegroundColorColor());
+      assertEquals("FFEF4444", getCellColorHex(t2Driver.getCell(1)));
+      assertEquals("FFEF4444", getCellColorHex(t2Driver.getCell(2)));
+      assertEquals("FFFBBF24", getCellColorHex(t2Driver.getCell(10)));
+      assertEquals("FFFBBF24", getCellColorHex(t2Driver.getCell(11)));
+
+      // 4. Verify Table 2 Lap 1 Data row: col 0 uncolored, col 1-3 Lane 1, col 10
+      // Lane 4
+      assertNull(t2Data1.getCell(0).getCellStyle().getFillForegroundColorColor());
+      assertEquals("FFEF4444", getCellColorHex(t2Data1.getCell(1)));
+      assertEquals("FFEF4444", getCellColorHex(t2Data1.getCell(2)));
+      assertEquals("FFFBBF24", getCellColorHex(t2Data1.getCell(10)));
+    }
+  }
+
+  @Test
+  public void testApplyPostJxlsLaneColors_DriverSheetTitleProtection() throws Exception {
+    try (XSSFWorkbook wb = new XSSFWorkbook()) {
+      Sheet sheet = wb.createSheet("Driver 8");
+
+      Row r0 = sheet.createRow(0);
+      r0.createCell(0).setCellValue("Driver 8");
+      r0.createCell(1);
+
+      Row r1 = sheet.createRow(1);
+      r1.createCell(0).setCellValue("Calculated from #Section Heats -> #Table: Heat # Laps");
+      r1.createCell(1);
+
+      Row header = sheet.createRow(3);
+      header.createCell(0).setCellValue("Metric");
+      header.createCell(1).setCellValue("Lane 1");
+      header.createCell(2).setCellValue("Lane 2");
+
+      Row data = sheet.createRow(4);
+      data.createCell(0).setCellValue("Total Laps");
+      data.createCell(1).setCellValue(5.0);
+      data.createCell(2).setCellValue(4.0);
+
+      Lane l1 = new Lane("#EF4444", "#FFFFFF", 50);
+      Lane l2 = new Lane("#3B82F6", "#FFFFFF", 50);
+      Track track = new Track.Builder().name("Track").lanes(Arrays.asList(l1, l2)).build();
+      Race mockRace = mock(Race.class);
+      when(mockRace.getTrack()).thenReturn(track);
+
+      RaceStatisticsUtils.applyPostJxlsLaneColors(wb, mockRace);
+
+      // Verify Row 0 and Row 1 are NOT colored
+      assertNull(r0.getCell(1).getCellStyle().getFillForegroundColorColor());
+      assertNull(r1.getCell(1).getCellStyle().getFillForegroundColorColor());
+
+      // Verify Data row has Lane colors
+      assertEquals("FFEF4444", getCellColorHex(data.getCell(1)));
+      assertEquals("FF3B82F6", getCellColorHex(data.getCell(2)));
+    }
+  }
+
+  private static String getCellColorHex(Cell cell) {
+    if (cell == null || cell.getCellStyle() == null) {
+      return null;
+    }
+    org.apache.poi.ss.usermodel.Color color = cell.getCellStyle().getFillForegroundColorColor();
+    if (color instanceof XSSFColor) {
+      return ((XSSFColor) color).getARGBHex();
+    }
+    return null;
+  }
+
+  @Test
+  public void testNormalizeTemplateVariables() {
+    assertEquals(
+        "${driver.totalLaps}",
+        RaceStatisticsUtils.normalizeTemplateVariables("{driver.totalLaps}"));
+    assertEquals(
+        "${driver.totalLaps}",
+        RaceStatisticsUtils.normalizeTemplateVariables("${driver.totalLaps}"));
+    assertEquals(
+        "${driver.laneLaps[0]}",
+        RaceStatisticsUtils.normalizeTemplateVariables("{driver.laneLaps[0]}"));
+    assertEquals(
+        "${heat.getDriverNameOnLane(0)}",
+        RaceStatisticsUtils.normalizeTemplateVariables("{heat.getDriverNameOnLane(0)}"));
+    assertEquals(
+        "${driver.nickname}",
+        RaceStatisticsUtils.normalizeTemplateVariables("{{driver.nickname}}"));
+    assertEquals(
+        "Winner: ${driver.name} with ${driver.totalLaps} laps",
+        RaceStatisticsUtils.normalizeTemplateVariables(
+            "Winner: {driver.name} with {driver.totalLaps} laps"));
+    assertEquals(
+        "Normal text without vars",
+        RaceStatisticsUtils.normalizeTemplateVariables("Normal text without vars"));
+    assertNull(RaceStatisticsUtils.normalizeTemplateVariables(null));
+  }
+
+  @Test
+  public void testSanitizeWorkbookNormalizesUnescapedVariables() throws Exception {
+    try (XSSFWorkbook wb = new XSSFWorkbook();
+        ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+      Sheet sheet = wb.createSheet("Overall Standings");
+      Row row = sheet.createRow(0);
+      Cell cell = row.createCell(0);
+      cell.setCellValue("{driver.totalLaps}");
+
+      Row row1 = sheet.createRow(1);
+      Cell cell1 = row1.createCell(0);
+      cell1.setCellValue("${driver.bestLapTime}");
+
+      wb.write(baos);
+
+      try (InputStream is = new java.io.ByteArrayInputStream(baos.toByteArray());
+          InputStream sanitized = RaceStatisticsUtils.sanitizeWorkbookTemplate(is);
+          XSSFWorkbook resultWb = new XSSFWorkbook(sanitized)) {
+        Sheet resSheet = resultWb.getSheet("Overall Standings");
+        assertEquals("${driver.totalLaps}", resSheet.getRow(0).getCell(0).getStringCellValue());
+        assertEquals("${driver.bestLapTime}", resSheet.getRow(1).getCell(0).getStringCellValue());
+      }
+    }
   }
 }

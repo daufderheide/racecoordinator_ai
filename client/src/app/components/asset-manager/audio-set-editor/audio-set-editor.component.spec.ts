@@ -112,6 +112,77 @@ describe("AudioSetEditorComponent", () => {
     expect(component.entries[1].name).toBe("Sound 5.mp3");
   });
 
+  it("should sort entries in natural race progression order (elapsed ascending, then remaining descending)", () => {
+    component.entries = [
+      {
+        name: "Rem 5.mp3",
+        timeSeconds: 5,
+        triggerMode: "remaining",
+        url: "",
+        data: new Uint8Array(),
+      },
+      {
+        name: "Elap 10.mp3",
+        timeSeconds: 10,
+        triggerMode: "elapsed",
+        url: "",
+        data: new Uint8Array(),
+      },
+      {
+        name: "Rem 1.mp3",
+        timeSeconds: 1,
+        triggerMode: "remaining",
+        url: "",
+        data: new Uint8Array(),
+      },
+      {
+        name: "Elap 2.mp3",
+        timeSeconds: 2,
+        triggerMode: "elapsed",
+        url: "",
+        data: new Uint8Array(),
+      },
+    ];
+
+    component.recalculateTimes();
+
+    // Natural order: elapsed ascending (2 -> 10), then remaining descending (5 -> 1)
+    expect(component.entries[0].name).toBe("Elap 2.mp3");
+    expect(component.entries[1].name).toBe("Elap 10.mp3");
+    expect(component.entries[2].name).toBe("Rem 5.mp3");
+    expect(component.entries[3].name).toBe("Rem 1.mp3");
+  });
+
+  it("should preserve triggerMode on save", () => {
+    component.name = "Dual Set";
+    component.entries = [
+      {
+        name: "Elapsed 10",
+        timeSeconds: 10,
+        triggerMode: "elapsed",
+        url: "/assets/elap.mp3",
+        data: new Uint8Array(),
+      },
+      {
+        name: "Remaining 10",
+        timeSeconds: 10,
+        triggerMode: "remaining",
+        url: "/assets/rem.mp3",
+        data: new Uint8Array(),
+      },
+    ];
+    mockDataService.saveAudioSet.and.returnValue(of({}));
+
+    component.onSave();
+
+    const callArgs = mockDataService.saveAudioSet.calls.mostRecent().args;
+    expect(callArgs[1].length).toBe(2);
+    expect(callArgs[1][0].triggerMode).toBe("elapsed");
+    expect(callArgs[1][0].timeSeconds).toBe(10);
+    expect(callArgs[1][1].triggerMode).toBe("remaining");
+    expect(callArgs[1][1].timeSeconds).toBe(10);
+  });
+
   it("should sanitize blob URLs on save", () => {
     component.name = "Test Set";
     component.entries = [
@@ -210,6 +281,7 @@ describe("AudioSetEditorComponent", () => {
       expect(component.entries.length).toBe(1);
       expect(component.entries[0].name).toBe("countdown.mp3");
       expect(component.entries[0].url).toBe("/assets/audio/123_countdown.mp3");
+      expect(component.entries[0].triggerMode).toBe("remaining");
     });
 
     it("should cleanup blob URLs on destroy", () => {
@@ -267,6 +339,161 @@ describe("AudioSetEditorComponent", () => {
     it("should correctly determine entry type", () => {
       expect(component.getEntryType({ type: "tts" } as any)).toBe("tts");
       expect(component.getEntryType({} as any)).toBe("preset");
+    });
+
+    it("should preserve percentage when mapping initialEntries in resetForm", () => {
+      fixture.componentRef.setInput("initialEntries", [
+        {
+          name: "Low Fuel",
+          timeSeconds: 10,
+          percentage: 10,
+          url: "low.wav",
+          data: new Uint8Array(),
+        } as any,
+        {
+          name: "Empty Fuel",
+          timeSeconds: 0,
+          percentage: 0,
+          type: "tts",
+          text: "{driver.nickname} out of fuel",
+          data: new Uint8Array(),
+        } as any,
+      ]);
+      fixture.detectChanges();
+      component.resetForm();
+
+      expect((component.entries[0] as any).percentage).toBe(10);
+      expect((component.entries[1] as any).percentage).toBe(0);
+      expect(component.entries[1].text).toBe("{driver.nickname} out of fuel");
+    });
+
+    it("should preserve triggerMode when mapping initialEntries in resetForm and default to remaining when omitted", () => {
+      fixture.componentRef.setInput("initialEntries", [
+        {
+          name: "Elapsed Entry",
+          timeSeconds: 15,
+          triggerMode: "elapsed",
+          url: "elap.wav",
+          data: new Uint8Array(),
+        } as any,
+        {
+          name: "Default Entry",
+          timeSeconds: 5,
+          // triggerMode omitted
+          url: "rem.wav",
+          data: new Uint8Array(),
+        } as any,
+      ]);
+      fixture.detectChanges();
+      component.resetForm();
+
+      expect(component.entries[0].triggerMode).toBe("elapsed");
+      expect(component.entries[1].triggerMode).toBe("remaining");
+    });
+
+    it("should save triggerMode to the value it was set to when edited", () => {
+      fixture.componentRef.setInput("visible", true);
+      fixture.componentRef.setInput("initialName", "Editable Set");
+      fixture.componentRef.setInput("initialEntries", [
+        {
+          name: "Lap 10",
+          timeSeconds: 10,
+          triggerMode: "remaining",
+          url: "lap10.wav",
+          data: new Uint8Array(),
+        } as any,
+      ]);
+      fixture.detectChanges();
+
+      expect(component.entries[0].triggerMode).toBe("remaining");
+
+      // User changes mode to elapsed
+      component.entries[0].triggerMode = "elapsed";
+      mockDataService.saveAudioSet.and.returnValue(of({} as any));
+
+      component.onSave();
+
+      const callArgs = mockDataService.saveAudioSet.calls.mostRecent().args;
+      expect(callArgs[1][0].triggerMode).toBe("elapsed");
+    });
+
+    it("should include synchronized percentage and name for TTS entries in onSave", () => {
+      component.name = "Fuel Audio Set";
+      component.entries = [
+        {
+          timeSeconds: 10,
+          percentage: 10,
+          url: "low.wav",
+          data: new Uint8Array(),
+          type: "preset",
+        } as any,
+        {
+          timeSeconds: 0,
+          percentage: 0,
+          type: "tts",
+          text: "{driver.nickname} out of fuel",
+          data: new Uint8Array(),
+        } as any,
+      ];
+      mockDataService.saveAudioSet.and.returnValue(of({ id: "set1" }));
+
+      component.onSave();
+
+      const savedEntries =
+        mockDataService.saveAudioSet.calls.mostRecent().args[1];
+      expect(savedEntries[0].percentage).toBe(10);
+      expect(savedEntries[0].timeSeconds).toBe(10);
+      expect(savedEntries[1].percentage).toBe(0);
+      expect(savedEntries[1].timeSeconds).toBe(0);
+      expect(savedEntries[1].type).toBe("tts");
+      expect(savedEntries[1].text).toBe("{driver.nickname} out of fuel");
+      expect(savedEntries[1].name).toBe("{driver.nickname} out of fuel");
+    });
+
+    it("should render help banner with title and description", () => {
+      fixture.componentRef.setInput("visible", true);
+      fixture.detectChanges();
+
+      const helpBanner = fixture.nativeElement.querySelector(
+        ".audio-set-help-banner",
+      );
+      expect(helpBanner).toBeTruthy();
+      expect(helpBanner.querySelector(".help-title").textContent).toContain(
+        "AM_AUDIO_SET_EDITOR_HELP_TITLE",
+      );
+      expect(helpBanner.querySelector(".help-desc").textContent).toContain(
+        "AM_AUDIO_SET_EDITOR_HELP_DESC",
+      );
+    });
+
+    it("should display value label and no hardcoded seconds suffix", () => {
+      fixture.componentRef.setInput("visible", true);
+      fixture.componentRef.setInput("initialEntries", [
+        {
+          name: "Entry 1",
+          timeSeconds: 10,
+          url: "url1",
+          data: new Uint8Array(),
+        },
+      ]);
+      fixture.detectChanges();
+
+      const entryTime = fixture.nativeElement.querySelector(".entry-time");
+      expect(entryTime).toBeTruthy();
+      const label = entryTime.querySelector("label");
+      expect(label.textContent.trim()).toBe("AM_AUDIO_SET_EDITOR_VALUE");
+      expect(entryTime.textContent.trim()).not.toContain("s");
+    });
+
+    it("should display updated recalc button title", () => {
+      fixture.componentRef.setInput("visible", true);
+      fixture.detectChanges();
+
+      const recalcBtn = fixture.nativeElement.querySelector(".btn-recalc");
+      expect(recalcBtn).toBeTruthy();
+      expect(recalcBtn.getAttribute("title")).toBe(
+        "AM_AUDIO_SET_EDITOR_RECALC",
+      );
     });
   });
 });

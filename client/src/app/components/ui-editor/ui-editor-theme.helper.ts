@@ -1,24 +1,46 @@
 import { UndoManager } from "@app/components/shared/undo-redo-controls/undo-manager";
 import { AudioConfig } from "@app/models/driver";
 import { Theme } from "@app/models/theme";
+import { TranslationService } from "@app/services/translation.service";
 import { deepCopy } from "@app/utils/clone.utils";
+import { naturalSortCompare } from "@app/utils/sorting.utils";
 
 import { UIEditorState } from "./ui-editor-constants";
-import { isThemeDefault } from "./ui-editor-crud.helper";
+import {
+  getThemeDisplayNameKey,
+  isThemeDefault,
+} from "./ui-editor-crud.helper";
+import { cloneSettings } from "./ui-editor-state.utils";
 import {
   extractAssetId,
   getThemeAudioConfigForSlot,
 } from "./ui-editor-theme-assets.helper";
 
-export function sortThemesForDisplay(themes: Theme[]): Theme[] {
-  const defaults = (themes || []).filter((t) => isThemeDefault(t));
-  const others = (themes || []).filter((t) => !isThemeDefault(t));
-  defaults.sort((a, b) => {
-    if (a.entity_id === "default_classic_rc_ai") return -1;
-    if (b.entity_id === "default_classic_rc_ai") return 1;
-    return 0;
+export function sortThemesForDisplay(
+  themes: Theme[],
+  translationService?: TranslationService,
+): Theme[] {
+  const list = [...(themes || [])];
+  list.sort((a, b) => {
+    const nameA = translationService
+      ? translationService.translate(
+          getThemeDisplayNameKey(a, translationService),
+        ) ||
+        a.name ||
+        ""
+      : a.name || "";
+    const nameB = translationService
+      ? translationService.translate(
+          getThemeDisplayNameKey(b, translationService),
+        ) ||
+        b.name ||
+        ""
+      : b.name || "";
+    const cmp = naturalSortCompare(nameA, nameB);
+    if (cmp !== 0) return cmp;
+    return (a.entity_id || "").localeCompare(b.entity_id || "");
   });
-  return [...defaults, ...others];
+  return list;
 }
 
 export function applyThemeSlotUpdate(
@@ -196,12 +218,16 @@ export async function handleCreateTheme(comp: any): Promise<void> {
     logger: comp.logger,
   });
   if (res.created) {
+    if (comp.defaultThemeNames) {
+      comp.defaultThemeNames[res.created.entity_id] = res.created.name;
+    }
     comp.refreshDisplayProperties();
     comp.toggleThemeSection(res.created.entity_id, false);
     comp.captureState();
     comp.openSuccessModal(
       res.successModalParams,
       res.defaultTheme?.entity_id || null,
+      res.created.entity_id,
     );
   }
 }
@@ -221,9 +247,16 @@ export async function handleDuplicateTheme(
     saveExpanderState: () => comp.saveExpanderState(),
   });
   if (res.created) {
+    if (comp.defaultThemeNames) {
+      comp.defaultThemeNames[res.created.entity_id] = res.created.name;
+    }
     comp.refreshDisplayProperties();
     comp.captureState();
-    comp.openSuccessModal(res.successModalParams, theme.entity_id);
+    comp.openSuccessModal(
+      res.successModalParams,
+      theme.entity_id,
+      res.created.entity_id,
+    );
   }
 }
 
@@ -271,4 +304,13 @@ export function handleThemeAudioChange(
   applyAudioConfigUpdate(theme, slot, field, value);
   comp.captureState();
   comp.cdr.markForCheck();
+}
+
+export function handleDetachTheme(comp: any): void {
+  comp.themeService.detachToSettings(comp.assets);
+  comp.editingState.settings = cloneSettings(
+    comp.settingsService.getSettings(),
+  );
+  comp.captureState();
+  if (!comp.isDestroyed) comp.cdr.markForCheck();
 }

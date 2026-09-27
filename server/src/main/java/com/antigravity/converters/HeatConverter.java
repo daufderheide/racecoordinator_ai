@@ -23,7 +23,9 @@ public class HeatConverter {
             .addAllStandings(
                 heat.getStandings() != null ? heat.getStandings() : Collections.emptyList())
             .setStarted(heat.isStarted())
-            .setGroup(heat.getGroup());
+            .setGroup(heat.getGroup())
+            .setMasterTrackCalls(heat.getMasterTrackCalls())
+            .setTrackCalls(heat.getTrackCalls());
 
     if (heat.getDrivers() != null) {
       builder.addAllHeatDrivers(
@@ -72,6 +74,7 @@ public class HeatConverter {
                           .setDriverId(l.getDriverId() != null ? l.getDriverId() : "")
                           .setIsDrift(l.isDrift())
                           .addAllSegments(l.getSegments())
+                          .setCountTowardsRecords(l.isCountTowardsRecords())
                           .build())
               .collect(Collectors.toList()));
     }
@@ -99,6 +102,14 @@ public class HeatConverter {
         .setFlag(data.getFlag() != null ? data.getFlag() : RaceFlag.UNKNOWN_FLAG)
         .setLapsLed(data.getLapsLed())
         .setIsFinished(data.isFinished())
+        .setTrackCalls(data.getTrackCalls())
+        .setConsistencyScore(data.getConsistencyScore())
+        .setStandardDeviation(data.getStandardDeviation())
+        .setAverageTop5(data.getAverageTop5())
+        .setAverageTop10(data.getAverageTop10())
+        .setAverageTop15(data.getAverageTop15())
+        .setTop2Consecutive(data.getTop2Consecutive())
+        .setTop3Consecutive(data.getTop3Consecutive())
         .build();
   }
 }
