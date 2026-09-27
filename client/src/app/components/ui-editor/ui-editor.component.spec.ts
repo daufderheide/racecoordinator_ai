@@ -4601,6 +4601,27 @@ describe("UIEditorComponent", () => {
           expect(input.getAttribute("data-form-type")).toBe("other");
         }
       });
+
+      it("should not render .delete-widget-btn at bottom of inspector and should delete widget via .inspector-delete-btn", () => {
+        component.sectionsExpanded["customUIs"] = true;
+        component.sectionsExpanded["ui_" + testCustomUi.entity_id] = true;
+        fixture.detectChanges();
+
+        const deleteWidgetBtn =
+          fixture.nativeElement.querySelector(".delete-widget-btn");
+        expect(deleteWidgetBtn).toBeNull();
+
+        const inspectorDeleteBtn = fixture.nativeElement.querySelector(
+          ".inspector-delete-btn",
+        );
+        expect(inspectorDeleteBtn).toBeTruthy();
+
+        spyOn(component, "removeSelectedWidget");
+        inspectorDeleteBtn.click();
+        expect(component.removeSelectedWidget).toHaveBeenCalledWith(
+          testCustomUi,
+        );
+      });
     });
   });
 });

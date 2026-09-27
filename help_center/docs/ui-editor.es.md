@@ -10,7 +10,7 @@ El Editor de Interfaz le permite diseñar diseños de pantalla personalizados pa
 - Cambie el tamaño, reposicione y alinee widgets para adaptarse a su resolución. Todos los widgets están delimitados para no salirse del lienzo.
 - **Controles del Inspector de Widgets**:
   - **Posición y tamaño**: Ajuste con precisión la posición y dimensiones del widget seleccionado mediante los campos numéricos **X**, **Y**, **Ancho** y **Altura**.
-  - **Eliminar widget**: Haga clic en el icono de papelera en el encabezado del inspector o en el botón **Eliminar widget** en la barra lateral.
+  - **Eliminar widget**: Haga clic en el icono de papelera en el encabezado del inspector.
 - **Atajos de teclado**:
   - <kbd>Supr</kbd> o <kbd>Retroceso</kbd>: Elimina el widget seleccionado del diseño.
   - <kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd>: Desplaza el widget seleccionado 1px (o 10px manteniendo pulsada <kbd>Mayús</kbd>).
