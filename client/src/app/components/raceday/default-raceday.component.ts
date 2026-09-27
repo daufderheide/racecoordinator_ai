@@ -6175,7 +6175,11 @@ export class DefaultRacedayComponent
     if (this.isUIEditorMode() || this.isLayoutCustomizing) {
       return false;
     }
-    if (!this.isNameProperty(col.propertyName || "")) {
+    const prop = col.propertyName || "";
+    const baseKey = prop.split("_")[0];
+    const isTeamOrName =
+      this.isNameProperty(prop) || baseKey === "participant.team.name";
+    if (!isTeamOrName) {
       return false;
     }
     if (!this.isTeam(hd) || this.isDriverSwapDisabled(hd)) {

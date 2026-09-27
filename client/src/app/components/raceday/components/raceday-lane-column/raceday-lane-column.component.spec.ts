@@ -1037,6 +1037,16 @@ describe("RacedayLaneColumnComponent", () => {
       mockParent.authService.currentRole = Role.VIEWER;
       expect(component.isTeamDriverSwapActive).toBeFalse();
 
+      mockParent.authService.currentRole = Role.DIRECTOR;
+
+      // Active for participant.team.name column
+      fixture.componentRef.setInput(
+        "widget",
+        createWidget({ columnKey: "participant.team.name", targetIndex: 0 }),
+      );
+      fixture.detectChanges();
+      expect(component.isTeamDriverSwapActive).toBeTrue();
+
       // Inactive for non-name column
       mockParent.authService.currentRole = Role.DIRECTOR;
       fixture.componentRef.setInput(
@@ -1085,7 +1095,7 @@ describe("RacedayLaneColumnComponent", () => {
       );
     });
 
-    it("should toggle teammate select open when clicking team card", () => {
+    it("should toggle teammate select open and stop propagation when clicking team card outside select", () => {
       fixture.componentRef.setInput("parent", mockParent);
       fixture.componentRef.setInput(
         "widget",
@@ -1098,12 +1108,42 @@ describe("RacedayLaneColumnComponent", () => {
       expect(select).toBeTruthy();
       const toggleSpy = spyOn(select!, "toggleOpen");
 
+      const cardBackground = document.createElement("div");
       const mockEvent: any = {
+        target: cardBackground,
         preventDefault: jasmine.createSpy("preventDefault"),
         stopPropagation: jasmine.createSpy("stopPropagation"),
       };
       component.onCardClick(mockEvent);
+      expect(mockEvent.stopPropagation).toHaveBeenCalled();
       expect(toggleSpy).toHaveBeenCalled();
+    });
+
+    it("should not double-toggle teammate select when click originated inside app-custom-select", () => {
+      fixture.componentRef.setInput("parent", mockParent);
+      fixture.componentRef.setInput(
+        "widget",
+        createWidget({ columnKey: "driver.name", targetIndex: 0 }),
+      );
+      fixture.detectChanges();
+
+      expect(component.isTeamDriverSwapActive).toBeTrue();
+      const select = component.teammateSelect();
+      expect(select).toBeTruthy();
+      const toggleSpy = spyOn(select!, "toggleOpen");
+
+      const selectEl = document.createElement("app-custom-select");
+      const triggerEl = document.createElement("div");
+      selectEl.appendChild(triggerEl);
+
+      const mockEvent: any = {
+        target: triggerEl,
+        preventDefault: jasmine.createSpy("preventDefault"),
+        stopPropagation: jasmine.createSpy("stopPropagation"),
+      };
+      component.onCardClick(mockEvent);
+      expect(mockEvent.stopPropagation).not.toHaveBeenCalled();
+      expect(toggleSpy).not.toHaveBeenCalled();
     });
 
     it("should activate practice lane reset button in practice mode and trigger resetLane", () => {

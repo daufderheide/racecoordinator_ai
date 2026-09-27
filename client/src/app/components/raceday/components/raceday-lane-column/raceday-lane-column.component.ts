@@ -308,11 +308,13 @@ export class RacedayLaneColumnComponent
         propertyName: this.columnKey,
       } as ColumnDefinition);
     }
-    const isName = p.isNameProperty
-      ? p.isNameProperty(this.columnKey)
-      : this.columnKey === "driver.name" ||
-        this.columnKey === "driver.nickname";
-    if (!isName) return false;
+    const baseKey = (this.columnKey || "").split("_")[0];
+    const isTeamOrName =
+      (p.isNameProperty ? p.isNameProperty(this.columnKey) : false) ||
+      this.columnKey === "driver.name" ||
+      this.columnKey === "driver.nickname" ||
+      baseKey === "participant.team.name";
+    if (!isTeamOrName) return false;
     if (!p.isTeam?.(hd) || p.isDriverSwapDisabled?.(hd)) return false;
     if (p.authService?.currentRole === Role.VIEWER) return false;
     return true;
@@ -360,6 +362,15 @@ export class RacedayLaneColumnComponent
         event,
       );
     } else if (this.isTeamDriverSwapActive) {
+      const target = event.target as HTMLElement | null;
+      if (
+        target &&
+        typeof target.closest === "function" &&
+        target.closest("app-custom-select")
+      ) {
+        return;
+      }
+      event.stopPropagation?.();
       const select = this.teammateSelect();
       if (select) {
         select.toggleOpen();

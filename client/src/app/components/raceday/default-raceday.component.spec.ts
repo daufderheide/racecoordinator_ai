@@ -1652,6 +1652,104 @@ describe("DefaultRacedayComponent", () => {
     });
   });
 
+  describe("isTeamDriverSwapActive", () => {
+    let mockHd: any;
+
+    beforeEach(() => {
+      mockHd = {
+        objectId: "hd-1",
+        laneIndex: 0,
+        driver: { entity_id: "driver1", name: "Driver 1" },
+        participant: {
+          team: {
+            name: "Team A",
+            driverIds: ["driver1", "driver2"],
+          },
+        },
+      };
+      mockAuthService.currentRoleSubject.next(Role.DIRECTOR);
+      fixture.componentRef.setInput("isUIEditorMode", false);
+      component.isLayoutCustomizing = false;
+    });
+
+    it("should return true for driver.name, driver.nickname, and participant.team.name on team heats", () => {
+      expect(
+        component.isTeamDriverSwapActive(mockHd, {
+          propertyName: "driver.name",
+        } as any),
+      ).toBeTrue();
+      expect(
+        component.isTeamDriverSwapActive(mockHd, {
+          propertyName: "driver.nickname",
+        } as any),
+      ).toBeTrue();
+      expect(
+        component.isTeamDriverSwapActive(mockHd, {
+          propertyName: "participant.team.name",
+        } as any),
+      ).toBeTrue();
+    });
+
+    it("should return false for non-driver/team properties", () => {
+      expect(
+        component.isTeamDriverSwapActive(mockHd, {
+          propertyName: "lapCount",
+        } as any),
+      ).toBeFalse();
+      expect(
+        component.isTeamDriverSwapActive(mockHd, {
+          propertyName: "lastLapTime",
+        } as any),
+      ).toBeFalse();
+    });
+
+    it("should return false when in UI editor or customizing layout", () => {
+      fixture.componentRef.setInput("isUIEditorMode", true);
+      expect(
+        component.isTeamDriverSwapActive(mockHd, {
+          propertyName: "participant.team.name",
+        } as any),
+      ).toBeFalse();
+
+      fixture.componentRef.setInput("isUIEditorMode", false);
+      component.isLayoutCustomizing = true;
+      expect(
+        component.isTeamDriverSwapActive(mockHd, {
+          propertyName: "participant.team.name",
+        } as any),
+      ).toBeFalse();
+    });
+
+    it("should return false for VIEWER role", () => {
+      mockAuthService.currentRoleSubject.next(Role.VIEWER);
+      expect(
+        component.isTeamDriverSwapActive(mockHd, {
+          propertyName: "participant.team.name",
+        } as any),
+      ).toBeFalse();
+    });
+
+    it("should return false when not a team heat or driver swap is disabled", () => {
+      const nonTeamHd = {
+        ...mockHd,
+        participant: undefined,
+        driver: { name: "Solo" },
+      };
+      expect(
+        component.isTeamDriverSwapActive(nonTeamHd, {
+          propertyName: "participant.team.name",
+        } as any),
+      ).toBeFalse();
+
+      spyOn(component, "isDriverSwapDisabled").and.returnValue(true);
+      expect(
+        component.isTeamDriverSwapActive(mockHd, {
+          propertyName: "participant.team.name",
+        } as any),
+      ).toBeFalse();
+    });
+  });
+
   describe("getDropdownArrowBg and getDropdownIcon", () => {
     it("should return sanitized SafeStyle for lane color", () => {
       component["track"] = {
