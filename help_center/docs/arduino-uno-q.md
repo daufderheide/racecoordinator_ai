@@ -1,23 +1,30 @@
-# Arduino UNO Q (4GB) Setup Guide
+# Arduino UNO Q Setup Guide
 
-This guide explains how to set up **Race Coordinator AI (RC AI)** on the **Arduino UNO Q 4GB** hybrid development board as a single, standalone hardware appliance.
+This guide explains how to set up **Race Coordinator AI (RC AI)** on the **Arduino UNO Q** hybrid development board as a standalone hardware appliance.
 
 ---
 
-## Hardware Overview
+## Hardware Overview & Memory Variants
 
-The **Arduino UNO Q 4GB** combines a 64-bit Linux Single Board Computer (SBC) with a real-time microcontroller on a single board:
+The **Arduino UNO Q** combines a 64-bit Linux Single Board Computer (SBC) with a real-time microcontroller on a single board:
 
-- **Linux MPU (Qualcomm Cortex-A53 @ 2.0 GHz, 4GB RAM)**: Runs the Race Coordinator AI server, SQLite database, web client server, and auto-updater.
+- **Linux MPU (Qualcomm Cortex-A53 @ 2.0 GHz)**: Runs the Race Coordinator AI server, SQLite database, web client server, and auto-updater.
 - **Real-Time MCU (STM32U585 Cortex-M33 @ 160 MHz)**: Handles lap sensor pin interrupts, power relays, and FastLED RGB light bridges with sub-millisecond timing accuracy.
-- **Display Output**: USB-C DisplayPort output connects directly to a monitor or touchscreen.
+- **Display Output**: USB-C DisplayPort output connects directly to a monitor, TV, or touchscreen.
+
+### 4GB vs. 2GB Models
+
+* **Arduino UNO Q 4GB (Recommended & Supported)**: Equipped with 4GB RAM and 32GB eMMC storage. This model is required for **Kiosk Display Mode** (driving an HDMI/DisplayPort TV or monitor directly) because running the Linux desktop, Chromium browser, Java runtime, and SQLite database simultaneously requires more than 2GB of memory.
+* **Arduino UNO Q 2GB (Headless Mode Consideration)**:
+  * While the 2GB model lacks the memory required to run the local desktop and Chromium kiosk display, it has sufficient memory to run the backend server in **Headless Appliance Mode**.
+  * **Current Support Status**: Headless mode on the Uno Q is **not currently supported** because additional changes to the Uno Q support package and configuration are still needed. However, headless support on the 2GB Q **could be added upon request**, provided the Uno Q has an active network connection (Wi-Fi or Ethernet) to allow race directors and drivers to access the web UI from other devices on the network.
 
 ---
 
 ## Operating Modes
 
-1. **Headless Appliance Mode**: The board runs the backend server and connects to track hardware. Race directors and drivers access the web UI from smartphones, tablets, or laptops on the local Wi-Fi network (`http://uno-q.local:7070`).
-2. **Kiosk Display Mode**: Plug an HDMI/DisplayPort monitor or touchscreen directly into the Uno Q's USB-C port. The board automatically launches Chromium in fullscreen Kiosk mode (`http://localhost:7070`) while simultaneously allowing remote network connections.
+1. **Kiosk Display Mode (4GB Model)**: Plug an HDMI/DisplayPort monitor or TV directly into the Uno Q's USB-C port via a multiport adapter. The board automatically launches Chromium in fullscreen Kiosk mode (`http://localhost:7070`) while simultaneously allowing remote network connections.
+2. **Headless Appliance Mode (Not Currently Supported - Available Upon Request)**: The board runs solely the backend server and connects to track hardware, with no local monitor or browser running. Users access the web UI over the local network (`http://uno-q.local:7070`). As noted above, headless mode on the Uno Q is not currently supported out of the box, but can be added upon request if the Uno Q has a network connection.
 
 ---
 
