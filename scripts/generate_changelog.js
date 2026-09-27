@@ -87,17 +87,12 @@ function getCommits(fromTag, toRef) {
   }
 }
 
-function formatInitialReleaseSection() {
-  return `### 🎉 Initial Official Release
+function formatInitialReleaseSection(tag = 'v1.0.0') {
+  return `### 🎉 Initial Release
 
-Welcome to the first official release of **Race Coordinator AI**!
+Initial release.
 
-- **Track & Hardware Management**: Comprehensive track editor, lane configuration, and pin mapping for Arduino UNO Q, Phidgets, and custom serial interfaces.
-- **Race Engine & Predictions**: Advanced race formats, rotations, driver scoring, live telemetry, and AI predictions.
-- **Customizable UI & Audio**: Modular race day dashboard, visual themes, sound effects, and text-to-speech race commentary.
-- **Cross-Platform**: Support for Windows (Online & Offline Standalone), macOS (Apple Silicon & Intel DMG), and Linux ARM64.
-
-Explore the complete [Help Center Documentation & Guides](https://daufderheide.github.io/racecoordinator_ai/) to get started.`;
+View the full commit history on [GitHub](${REPO_URL}/commits/${tag}).`;
 }
 
 function formatBetaCommitList(commits, previousTag) {
@@ -208,7 +203,7 @@ function generateChangelog(tag, isPrerelease, options = {}) {
 
   // 1. Initial official release (v1.0.0) without previous official tag
   if (!isPre && (rawVer === '1.0.0' || !previousTag)) {
-    return formatInitialReleaseSection();
+    return formatInitialReleaseSection(tag);
   }
 
   // 2. Beta & Official releases: filtered conventional changelist

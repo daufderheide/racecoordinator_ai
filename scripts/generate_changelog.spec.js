@@ -49,9 +49,9 @@ describe('generate_changelog', () => {
   describe('generateChangelog scenarios', () => {
     test('should produce initial release announcement for v1.0.0 official', () => {
       const output = generateChangelog('v1.0.0', false, { customTags: [] });
-      assert.ok(output.includes('Initial Official Release'));
-      assert.ok(output.includes('Race Coordinator AI'));
-      assert.ok(output.includes('Help Center Documentation'));
+      assert.ok(output.includes('Initial Release'));
+      assert.ok(output.includes('Initial release.'));
+      assert.ok(output.includes('/commits/v1.0.0'));
     });
 
     test('should filter and categorize beta releases and exclude noise', () => {
