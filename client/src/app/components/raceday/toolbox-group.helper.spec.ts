@@ -16,12 +16,13 @@ describe("ToolboxGroupHelper", () => {
     expect(rcAiGroup.rootWidgets.length).toBe(0);
     expect(rcAiGroup.rootWidgets).toEqual([]);
 
-    expect(rcAiGroup.subgroups.length).toBe(4);
+    expect(rcAiGroup.subgroups.length).toBe(5);
     expect(rcAiGroup.subgroups.map((sg) => sg.id)).toEqual([
       "actions",
+      "heat-data",
+      "media-chrome",
       "standings-heats",
       "titles-info",
-      "media-chrome",
     ]);
 
     const actionsSg = rcAiGroup.subgroups.find((sg) => sg.id === "actions");
@@ -44,7 +45,7 @@ describe("ToolboxGroupHelper", () => {
     const mediaSg = rcAiGroup.subgroups.find((sg) => sg.id === "media-chrome");
     expect(mediaSg?.widgets.length).toBe(4);
 
-    expect(rcAiGroup.totalCount).toBe(40);
+    expect(rcAiGroup.totalCount).toBe(95);
   });
 
   it("should exclude used widgets from root and subgroups", () => {
@@ -83,7 +84,7 @@ describe("ToolboxGroupHelper", () => {
     expect(mediaSg?.widgets.find((w) => w.type === "branding")).toBeUndefined();
     expect(mediaSg?.widgets.length).toBe(3);
 
-    expect(rcAiGroup.totalCount).toBe(36);
+    expect(rcAiGroup.totalCount).toBe(91);
   });
 
   it("should organize custom widgets into groups, subgroups, and custom-root", () => {
@@ -335,5 +336,122 @@ describe("ToolboxGroupHelper", () => {
       "Middle Gauge",
       "Zebra Meter",
     ]);
+  });
+
+  it("should nest Heat Data inside Race Coordinator AI with 9 alphabetized subgroups", () => {
+    const used = new Set<string>([
+      "lane-col:lastLapTime",
+      "lane-column",
+      "timer",
+    ]);
+    const customWidgets: CustomWidgetDefinition[] = [];
+
+    const groups = ToolboxGroupHelper.buildToolboxGroups(used, customWidgets);
+    const rcGroup = groups.find(
+      (g) => g.id === ToolboxGroupHelper.RC_AI_GROUP_ID,
+    );
+    expect(rcGroup).toBeDefined();
+
+    const heatDataSubgroup = rcGroup!.subgroups.find(
+      (sg) => sg.id === ToolboxGroupHelper.HEAT_DATA_GROUP_ID,
+    );
+    expect(heatDataSubgroup).toBeDefined();
+    expect(heatDataSubgroup!.nameKey).toBe("UE_TOOLBOX_GROUP_HEAT_DATA");
+    expect(heatDataSubgroup!.subgroups?.length).toBe(9);
+
+    // Verify alphabetized order of the 9 category subfolders inside Heat Data
+    const expectedSubgroups = [
+      "lane-col-sg-driver-team",
+      "lane-col-sg-analysis",
+      "lane-col-sg-gaps",
+      "lane-col-sg-lap-times",
+      "lane-col-sg-laps-standings",
+      "lane-col-sg-pacing",
+      "lane-col-sg-predictions",
+      "lane-col-sg-media-custom",
+      "lane-col-sg-telemetry",
+    ];
+    expect(heatDataSubgroup!.subgroups?.map((sg) => sg.id)).toEqual(
+      expectedSubgroups,
+    );
+
+    // Verify lastLapTime is still present despite being in used
+    const lapTimesSg = heatDataSubgroup!.subgroups?.find(
+      (sg) => sg.id === "lane-col-sg-lap-times",
+    );
+    expect(lapTimesSg).toBeDefined();
+    const lastLapWidget = lapTimesSg!.widgets.find(
+      (w) => w.type === "lane-col:lastLapTime",
+    );
+    expect(lastLapWidget).toBeDefined();
+  });
+
+  it("should include custom image sets in media-custom subgroup of Heat Data", () => {
+    const used = new Set<string>();
+    const customWidgets: CustomWidgetDefinition[] = [];
+    const availableColumns = [
+      { key: "driver.nickname", label: "RD_COL_NICKNAME" },
+      { key: "imageset_custom_gauge", label: "Custom Gauge Asset" },
+    ];
+
+    const groups = ToolboxGroupHelper.buildToolboxGroups(
+      used,
+      customWidgets,
+      "",
+      new Map(),
+      new Map(),
+      undefined,
+      availableColumns,
+    );
+
+    const rcGroup = groups.find(
+      (g) => g.id === ToolboxGroupHelper.RC_AI_GROUP_ID,
+    );
+    const heatDataSubgroup = rcGroup!.subgroups.find(
+      (sg) => sg.id === ToolboxGroupHelper.HEAT_DATA_GROUP_ID,
+    );
+    expect(heatDataSubgroup).toBeDefined();
+
+    const mediaCustomSg = heatDataSubgroup!.subgroups?.find(
+      (sg) => sg.id === "lane-col-sg-media-custom",
+    );
+    expect(mediaCustomSg).toBeDefined();
+    expect(
+      mediaCustomSg!.widgets.some(
+        (w) => w.type === "lane-col:imageset_custom_gauge",
+      ),
+    ).toBeTrue();
+  });
+
+  it("should expand Heat Data subgroup when legacy lane-columns id is saved in expanded states", () => {
+    const subgroupStates = new Map<string, boolean>([["lane-columns", true]]);
+    const groups = ToolboxGroupHelper.buildToolboxGroups(
+      new Set(),
+      [],
+      "",
+      new Map(),
+      subgroupStates,
+    );
+    const rcGroup = groups.find(
+      (g) => g.id === ToolboxGroupHelper.RC_AI_GROUP_ID,
+    );
+    const heatDataSubgroup = rcGroup!.subgroups.find(
+      (sg) => sg.id === ToolboxGroupHelper.HEAT_DATA_GROUP_ID,
+    );
+    expect(heatDataSubgroup?.expanded).toBeTrue();
+  });
+
+  it("should maintain LANE_COLUMNS_GROUP_ID and buildLaneColumnsGroup backwards compatibility", () => {
+    expect(ToolboxGroupHelper.LANE_COLUMNS_GROUP_ID).toBe(
+      ToolboxGroupHelper.HEAT_DATA_GROUP_ID,
+    );
+    const legacyGroup = ToolboxGroupHelper.buildLaneColumnsGroup(
+      "",
+      new Map(),
+      new Map(),
+    );
+    expect(legacyGroup).toBeDefined();
+    expect(legacyGroup!.id).toBe(ToolboxGroupHelper.HEAT_DATA_GROUP_ID);
+    expect(legacyGroup!.nameKey).toBe("UE_TOOLBOX_GROUP_HEAT_DATA");
   });
 });

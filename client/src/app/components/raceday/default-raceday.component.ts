@@ -51,7 +51,12 @@ import {
 import { Race } from "@app/models/race";
 import { RaceParticipant } from "@app/models/race_participant";
 import { Role } from "@app/models/role";
-import { LayoutConfig, Settings, WidgetType } from "@app/models/settings";
+import {
+  AbsoluteWidgetNode,
+  LayoutConfig,
+  Settings,
+  WidgetType,
+} from "@app/models/settings";
 import { THEME_SLOT_KEYS } from "@app/models/theme";
 import { Track } from "@app/models/track";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
@@ -125,6 +130,16 @@ import { AddLapSectionsDialogComponent } from "./components/add-lap-sections-dia
 import { RacedayAbsoluteWidgetComponent } from "./components/raceday-absolute-widget/raceday-absolute-widget.component";
 import { RacedayModalsComponent } from "./components/raceday-modals/raceday-modals.component";
 import { ToolboxGroup, ToolboxGroupHelper } from "./toolbox-group.helper";
+import {
+  GridResizeHandle,
+  LaneGridBounds,
+  LaneGridReplicationHelper,
+  LaneGridSession,
+} from "./utils/lane-grid-replication.helper";
+import {
+  LaneReplicationHelper,
+  LaneReplicationOptions,
+} from "./utils/lane-replication.helper";
 import {
   FormatContext,
   RacedayFormatUtils,
@@ -823,6 +838,8 @@ export class DefaultRacedayComponent
   private audioService: AudioService;
   private childWindowManagerService: ChildWindowManagerService;
   private dateTimeFormatService: DateTimeFormatService;
+  private sanitizer?: DomSanitizer =
+    inject(DomSanitizer, { optional: true }) ?? undefined;
 
   constructor(
     private el: ElementRef,
@@ -878,7 +895,7 @@ export class DefaultRacedayComponent
     });
   }
 
-  protected driverRankings = new Map<string, number>();
+  public driverRankings = new Map<string, number>();
   protected isInterfaceConnected: boolean = false;
   protected draggingLane: number | null = null;
   protected isDragging: boolean = false;
@@ -892,7 +909,6 @@ export class DefaultRacedayComponent
     return this.fuelAudioTracker.getStates();
   }
 
-  private sanitizer = inject(DomSanitizer, { optional: true });
   private dropdownIconCache = new Map<string, SafeStyle | string>();
   private deactivateSubject = new Subject<boolean>();
   private livePredictionSubject = new Subject<void>();
@@ -905,7 +921,10 @@ export class DefaultRacedayComponent
   activeCustomUi = input<CustomUI | null>(null);
   selectedWidgetId = input<string | null>(null);
   isCountdownPreviewActive = input<boolean>(false);
+  gridSession = input<LaneGridSession | null>(null);
   widgetSelected = output<string | null>();
+  finishGrid = output<void>();
+  gridBoundsChange = output<LaneGridBounds>();
 
   get visualScale(): number {
     return this.isUIEditorMode() ? this.uiScale() : this.scale;
@@ -2788,6 +2807,14 @@ export class DefaultRacedayComponent
               this.driverRankings.set(u.objectId, u.rank || 0);
             }
           });
+          if (this.heat?.heatDrivers) {
+            const sortedByRank = [...this.heat.heatDrivers].sort((a, b) => {
+              const rankA = this.driverRankings.get(a.objectId) ?? 999;
+              const rankB = this.driverRankings.get(b.objectId) ?? 999;
+              return rankA - rankB;
+            });
+            this.heat.standings = sortedByRank.map((hd) => hd.objectId);
+          }
         }
         this.sortHeatDrivers();
       }),
@@ -3184,6 +3211,14 @@ export class DefaultRacedayComponent
     this.heatBestNickname = "Peach";
     this.heatBestTime = 2.012;
     this.recordData = mockData.recordData;
+
+    this.driverRankings.clear();
+    if (this.heat?.heatDrivers) {
+      this.heat.heatDrivers.forEach((hd, index) => {
+        this.driverRankings.set(hd.objectId, index + 1);
+      });
+      this.heat.standings = this.heat.heatDrivers.map((hd) => hd.objectId);
+    }
 
     this.sortHeatDrivers();
     this.updateLeaderboardEntries();
@@ -4774,27 +4809,46 @@ export class DefaultRacedayComponent
     this.columnsChanged.emit();
   }
 
+  private canAcceptAnchorDrop(): boolean {
+    const isEditing = this.isUIEditorMode() || this.isLayoutCustomizing;
+    if (!isEditing) return false;
+    return (
+      !this.draggedWidgetType || this.draggedWidgetType.startsWith("lane-col:")
+    );
+  }
+
   onAnchorDragOver(event: DragEvent) {
-    if (!this.isUIEditorMode() || this.draggedWidgetType) return;
+    if (!this.canAcceptAnchorDrop()) return;
     event.preventDefault();
-    if (event.dataTransfer) event.dataTransfer.dropEffect = "copy";
+    if (event.dataTransfer) {
+      const allowed = event.dataTransfer.effectAllowed;
+      event.dataTransfer.dropEffect = allowed === "move" ? "move" : "copy";
+    }
   }
 
   onAnchorDragEnter(event: DragEvent) {
-    if (!this.isUIEditorMode() || this.draggedWidgetType) return;
+    if (!this.canAcceptAnchorDrop()) return;
     event.preventDefault();
-    (event.target as HTMLElement).classList.add("drag-over");
+    ((event.currentTarget || event.target) as HTMLElement).classList.add(
+      "drag-over",
+    );
   }
 
   onAnchorDragLeave(event: DragEvent) {
-    if (!this.isUIEditorMode() || this.draggedWidgetType) return;
-    (event.target as HTMLElement).classList.remove("drag-over");
+    if (!this.canAcceptAnchorDrop()) return;
+    ((event.currentTarget || event.target) as HTMLElement).classList.remove(
+      "drag-over",
+    );
   }
 
   onAnchorDrop(event: DragEvent, colData: ColumnDefinition, anchor: string) {
-    if (!this.isUIEditorMode() || this.draggedWidgetType) return;
+    if (!this.canAcceptAnchorDrop()) return;
     event.preventDefault();
-    (event.target as HTMLElement).classList.remove("drag-over");
+    ((event.currentTarget || event.target) as HTMLElement).classList.remove(
+      "drag-over",
+    );
+
+    let droppedKey: string | undefined;
 
     if (event.dataTransfer) {
       try {
@@ -4802,26 +4856,52 @@ export class DefaultRacedayComponent
         if (dataStr) {
           const data = JSON.parse(dataStr);
           if (data.type === "new-column" && data.key) {
-            const settings = this.editingSettings();
-            if (!settings) return;
-            const layouts = { ...(this.currentColumnLayouts || {}) };
-            if (!layouts[colData.propertyName]) {
-              layouts[colData.propertyName] = {
-                "center-center": colData.propertyName,
-              };
-            } else {
-              layouts[colData.propertyName] = {
-                ...layouts[colData.propertyName],
-              };
-            }
-            layouts[colData.propertyName][anchor as AnchorPoint] = data.key;
-            this.currentColumnLayouts = layouts;
-            this.loadColumns();
-            this.cdr.markForCheck();
-            this.columnsChanged.emit();
+            droppedKey = data.key;
+          } else if (data.key) {
+            droppedKey = data.key;
           }
         }
       } catch (e) {}
+
+      if (!droppedKey) {
+        const text = event.dataTransfer.getData("text/plain");
+        if (text) {
+          if (text.startsWith("lane-col:")) {
+            droppedKey = text.substring("lane-col:".length);
+          } else {
+            droppedKey = text;
+          }
+        }
+      }
+    }
+
+    if (!droppedKey && this.draggedWidgetType?.startsWith("lane-col:")) {
+      droppedKey = this.draggedWidgetType.substring("lane-col:".length);
+    }
+
+    if (this.draggedWidgetType) {
+      this.draggedWidgetType = null;
+    }
+
+    if (droppedKey) {
+      const settings =
+        this.editingSettings() || this.settingsService.getSettings();
+      if (!settings) return;
+      const layouts = { ...(this.currentColumnLayouts || {}) };
+      if (!layouts[colData.propertyName]) {
+        layouts[colData.propertyName] = {
+          "center-center": colData.propertyName,
+        };
+      } else {
+        layouts[colData.propertyName] = {
+          ...layouts[colData.propertyName],
+        };
+      }
+      layouts[colData.propertyName][anchor as AnchorPoint] = droppedKey;
+      this.currentColumnLayouts = layouts;
+      this.loadColumns();
+      this.cdr.markForCheck();
+      this.columnsChanged.emit();
     }
   }
 
@@ -5999,6 +6079,7 @@ export class DefaultRacedayComponent
     hd: DriverHeatData,
     column?: ColumnDefinition,
     anchor?: string,
+    widgetSettings?: any,
   ): string {
     const laneViewWidget = this.currentRacedayLayout?.widgets?.find(
       (w: any) => w.widgetType === "lane-view",
@@ -6012,7 +6093,7 @@ export class DefaultRacedayComponent
       getFlagUrl: (flag) => this.getFlagUrl(flag),
       getFullUrl: (url) => this.getFullUrl(url),
       getImageSetUrl: (hd, prop) => this.getImageUrl(prop, hd),
-      laneViewWidgetSettings: laneViewWidget?.customSettings,
+      laneViewWidgetSettings: widgetSettings || laneViewWidget?.customSettings,
       getDriverOverallRanking: (hd) => this.getDriverOverallRanking(hd),
       getDriverGroupRanking: (hd) => this.getDriverGroupRanking(hd),
       getLaneQrCodeUrl: (laneIndex) => this.getLaneQrCodeUrl(laneIndex),
@@ -6113,10 +6194,10 @@ export class DefaultRacedayComponent
     if (this.isUIEditorMode() || this.isLayoutCustomizing) {
       return false;
     }
-    if (col.propertyName !== "lapCount") {
-      return false;
-    }
-    if (this.heat && this.heat.started === false) {
+    if (
+      col.propertyName !== "lapCount" &&
+      col.propertyName !== "physicalLapCount"
+    ) {
       return false;
     }
     return true;
@@ -6548,7 +6629,10 @@ export class DefaultRacedayComponent
     if (this.isLayoutCustomizing || this.isUIEditorMode()) {
       return;
     }
-    if (col.propertyName === "lapCount") {
+    if (
+      col.propertyName === "lapCount" ||
+      col.propertyName === "physicalLapCount"
+    ) {
       if (event.shiftKey) {
         event.preventDefault();
         this.updateUserLaps(hd, this.LAP_ADJUSTMENT_AMOUNT);
@@ -6556,6 +6640,9 @@ export class DefaultRacedayComponent
         event.preventDefault();
         this.updateUserLaps(hd, -this.LAP_ADJUSTMENT_AMOUNT);
       } else {
+        if (!this.track) {
+          this.track = this.race?.track || this.raceService.getRace()?.track;
+        }
         this.selectedHeatDriver = hd;
         this.isMenuModeForAddLap = false;
         this.showAddLapSectionsDialog = true;
@@ -6848,7 +6935,10 @@ export class DefaultRacedayComponent
       return;
     }
 
-    const hasLaneView = widgets.some((w: any) => w.widgetType === "lane-view");
+    const hasLaneView = widgets.some(
+      (w: any) =>
+        w.widgetType === "lane-view" || w.widgetType === "lane-column",
+    );
     const hasCountdown = widgets.some((w: any) => w.widgetType === "countdown");
     const hasTimer = widgets.some((w: any) => w.widgetType === "timer");
     const hasFlag = widgets.some((w: any) => w.widgetType === "flag");
@@ -7189,7 +7279,7 @@ export class DefaultRacedayComponent
   onToolboxDragStart(event: DragEvent, type: string) {
     this.draggedWidgetType = type;
     if (event.dataTransfer) {
-      event.dataTransfer.effectAllowed = "move";
+      event.dataTransfer.effectAllowed = "all";
       event.dataTransfer.setData("text/plain", type);
     }
   }
@@ -7261,6 +7351,14 @@ export class DefaultRacedayComponent
       height = 80;
     }
 
+    const isLaneColumn = this.draggedWidgetType?.startsWith("lane-col:");
+    let laneColumnKey: string | undefined = undefined;
+    if (isLaneColumn) {
+      laneColumnKey = this.draggedWidgetType?.substring("lane-col:".length);
+      width = laneColumnKey === "lastLaps" ? 280 : 200;
+      height = laneColumnKey === "lastLaps" ? 200 : 90;
+    }
+
     const scaleX = rect.width / scalableContent.offsetWidth || 1;
     const scaleY = rect.height / scalableContent.offsetHeight || 1;
 
@@ -7272,9 +7370,13 @@ export class DefaultRacedayComponent
     const clampedX = Math.max(0, Math.min(baseWidth - width, Math.round(x)));
     const clampedY = Math.max(0, Math.min(baseHeight - height, Math.round(y)));
 
+    const actualWidgetType = isLaneColumn
+      ? "lane-column"
+      : (this.draggedWidgetType as any);
+
     const newWidget: any = {
       id: "widget-" + Date.now(),
-      widgetType: this.draggedWidgetType as any,
+      widgetType: actualWidgetType,
       x: clampedX,
       y: clampedY,
       width: width,
@@ -7285,6 +7387,12 @@ export class DefaultRacedayComponent
 
     if (this.draggedWidgetType === "image") {
       newWidget.customSettings = { imageUrl: "" };
+    } else if (isLaneColumn) {
+      const registryEntry = WIDGET_REGISTRY["lane-column"];
+      newWidget.customSettings = registryEntry?.defaultSettings
+        ? registryEntry.defaultSettings()
+        : {};
+      newWidget.customSettings.columnKey = laneColumnKey;
     } else {
       const registryEntry = WIDGET_REGISTRY[this.draggedWidgetType as string];
       if (registryEntry?.defaultSettings) {
@@ -7297,6 +7405,17 @@ export class DefaultRacedayComponent
     }
     if (!this.layout.widgets) this.layout.widgets = [];
     this.layout.widgets.push(newWidget);
+
+    if (this.gridSession()) {
+      const session = this.gridSession()!;
+      if (isLaneColumn || actualWidgetType === "lane-column") {
+        this.layout.widgets = LaneGridReplicationHelper.syncMasterWidgetToLanes(
+          newWidget,
+          session,
+          this.layout.widgets,
+        );
+      }
+    }
 
     this.draggedWidgetType = null;
     this.layoutChanged.emit(this.layout);
@@ -7319,6 +7438,17 @@ export class DefaultRacedayComponent
 
     const targetWidget = this.layout.widgets.find((w: any) => w.id === id);
     if (!targetWidget) return;
+
+    if (this.gridSession() && targetWidget.customSettings?.["gridMasterId"]) {
+      const masterId = targetWidget.customSettings["gridMasterId"];
+      const masterWidget = this.layout.widgets.find(
+        (w: any) => w.id === masterId,
+      );
+      if (masterWidget) {
+        this.bringToFront(masterId);
+        return;
+      }
+    }
 
     if (targetWidget.widgetType === "countdown") {
       const otherWidgets = this.layout.widgets.filter((w: any) => w.id !== id);
@@ -7387,7 +7517,16 @@ export class DefaultRacedayComponent
 
   removeWidget(id: string) {
     if (!this.layout?.widgets) return;
-    this.layout.widgets = this.layout.widgets.filter((w: any) => w.id !== id);
+    if (this.gridSession()) {
+      this.layout.widgets =
+        LaneGridReplicationHelper.removeMasterWidgetFromLanes(
+          id,
+          this.gridSession()!,
+          this.layout.widgets,
+        );
+    } else {
+      this.layout.widgets = this.layout.widgets.filter((w: any) => w.id !== id);
+    }
     this.layoutChanged.emit(this.layout);
     if (this.selectedWidgetId() === id) {
       const laneView = this.layout.widgets.find(
@@ -7397,6 +7536,117 @@ export class DefaultRacedayComponent
       this.widgetSelected.emit(nextWidget ? nextWidget.id : null);
     }
     this.updateAudioRelevance();
+  }
+
+  replicateLaneWidgets(
+    options: Omit<LaneReplicationOptions, "baseWidth" | "baseHeight">,
+  ) {
+    if (!this.layout?.widgets) return;
+    const baseWidth = this.layout.baseWidth || 1920;
+    const baseHeight = this.layout.baseHeight || 1080;
+    const updated = LaneReplicationHelper.replicateLaneWidgets(
+      this.layout.widgets,
+      {
+        ...options,
+        baseWidth,
+        baseHeight,
+      },
+    );
+    this.layout.widgets = updated;
+    this.layoutChanged.emit(this.layout);
+    this.cdr.markForCheck();
+  }
+
+  getGridDividers(): number[] {
+    const s = this.gridSession();
+    return s ? LaneGridReplicationHelper.computeGridDividers(s) : [];
+  }
+
+  getGridCells(): {
+    bounds: LaneGridBounds;
+    laneIndex: number;
+    isMaster: boolean;
+  }[] {
+    const s = this.gridSession();
+    if (!s) return [];
+    const cells: {
+      bounds: LaneGridBounds;
+      laneIndex: number;
+      isMaster: boolean;
+    }[] = [];
+    for (let k = 0; k < s.totalLanes; k++) {
+      cells.push({
+        bounds: LaneGridReplicationHelper.computeLaneCellBounds(s, k),
+        laneIndex: k,
+        isMaster: k === s.sourceLaneIndex,
+      });
+    }
+    return cells;
+  }
+
+  onGridResizeStart(event: PointerEvent, handle: GridResizeHandle): void {
+    event.preventDefault();
+    event.stopPropagation();
+    const session = this.gridSession();
+    if (!session) return;
+
+    const startX = event.clientX;
+    const startY = event.clientY;
+    const initialBounds = { ...session.bounds };
+    const scale = this.visualScale || 1;
+    const baseWidth = this.layout?.baseWidth || 1920;
+    const baseHeight = this.layout?.baseHeight || 1080;
+
+    const nonGridWidgets = (this.layout?.widgets || []).filter(
+      (w) => w.customSettings?.["gridId"] !== session.gridId,
+    );
+    const snapEdgesX: number[] = [0, baseWidth];
+    const snapEdgesY: number[] = [0, baseHeight];
+    for (const w of nonGridWidgets) {
+      snapEdgesX.push(w.x, w.x + w.width);
+      snapEdgesY.push(w.y, w.y + w.height);
+    }
+
+    const onPointerMove = (moveEvent: PointerEvent) => {
+      const deltaX = (moveEvent.clientX - startX) / scale;
+      const deltaY = (moveEvent.clientY - startY) / scale;
+
+      const newBounds = LaneGridReplicationHelper.resizeGridBounds(
+        initialBounds,
+        handle,
+        deltaX,
+        deltaY,
+        baseWidth,
+        baseHeight,
+        100,
+        60,
+        snapEdgesX,
+        snapEdgesY,
+        8,
+      );
+
+      this.gridBoundsChange.emit(newBounds);
+    };
+
+    const onPointerUp = () => {
+      document.removeEventListener("pointermove", onPointerMove);
+      document.removeEventListener("pointerup", onPointerUp);
+    };
+
+    document.addEventListener("pointermove", onPointerMove);
+    document.addEventListener("pointerup", onPointerUp);
+  }
+
+  onMasterWidgetModified(widget: AbsoluteWidgetNode): void {
+    const session = this.gridSession();
+    if (!session || !this.layout?.widgets) return;
+    this.layout.widgets = LaneGridReplicationHelper.syncMasterWidgetToLanes(
+      widget,
+      session,
+      this.layout.widgets,
+    );
+    this.layoutChanged.emit(this.layout);
+    this.cdr.markForCheck();
   }
 
   snapToEdges(
@@ -7409,6 +7659,20 @@ export class DefaultRacedayComponent
     layoutWidth: number = 1920,
     layoutHeight: number = 1080,
   ): { x: number; y: number; w: number; h: number } {
+    const extraX: number[] = [];
+    const extraY: number[] = [];
+    const s = this.gridSession();
+    if (s) {
+      extraX.push(s.bounds.x, s.bounds.x + s.bounds.width);
+      extraY.push(s.bounds.y, s.bounds.y + s.bounds.height);
+      const dividers = LaneGridReplicationHelper.computeGridDividers(s);
+      if (s.direction === "horizontal") {
+        extraX.push(...dividers);
+      } else {
+        extraY.push(...dividers);
+      }
+    }
+
     return RacedayLayoutUtils.snapToEdges(
       this.layout?.widgets || [],
       x,
@@ -7419,6 +7683,8 @@ export class DefaultRacedayComponent
       handle,
       layoutWidth,
       layoutHeight,
+      extraX,
+      extraY,
     );
   }
 

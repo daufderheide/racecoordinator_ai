@@ -1,3 +1,8 @@
+import { LaneGridReplicationHelper } from "@app/components/raceday/utils/lane-grid-replication.helper";
+import {
+  LaneReplicationHelper,
+  LaneReplicationOptions,
+} from "@app/components/raceday/utils/lane-replication.helper";
 import { CustomUI } from "@app/models/custom-ui";
 import { LayoutConfig, Settings } from "@app/models/settings";
 
@@ -190,6 +195,37 @@ export function handleWidgetInspectorChange(
     if (idx !== -1) {
       layout.widgets[idx] = targetWidget;
     }
+
+    const gridId = targetWidget.customSettings?.["gridId"];
+    const newBindingMode = targetWidget.customSettings?.["bindingMode"];
+    if (gridId && newBindingMode) {
+      if (comp.activeGridSession && comp.activeGridSession.gridId === gridId) {
+        comp.activeGridSession.bindingMode = newBindingMode;
+      }
+      for (const w of layout.widgets) {
+        if (
+          w.customSettings?.["gridId"] === gridId &&
+          w.id !== targetWidget.id
+        ) {
+          if (!w.customSettings) w.customSettings = {};
+          w.customSettings["bindingMode"] = newBindingMode;
+        }
+      }
+    }
+
+    if (
+      comp.activeGridSession &&
+      LaneGridReplicationHelper.isMasterWidget(
+        targetWidget,
+        comp.activeGridSession,
+      )
+    ) {
+      layout.widgets = LaneGridReplicationHelper.syncMasterWidgetToLanes(
+        targetWidget,
+        comp.activeGridSession,
+        layout.widgets,
+      );
+    }
     updateLayoutOnModel(
       layout,
       targetUi,
@@ -198,6 +234,34 @@ export function handleWidgetInspectorChange(
       comp.parsedLayouts,
     );
   }
+  comp.captureState();
+  comp.cdr.markForCheck();
+}
+
+export function handleReplicateLanes(
+  comp: any,
+  options: Omit<LaneReplicationOptions, "baseWidth" | "baseHeight">,
+  ui?: CustomUI,
+): void {
+  if (!options) return;
+  const targetUi = ui || comp.activeCustomUi;
+  const layout = comp.getLayout(targetUi);
+  if (!layout?.widgets) return;
+  const baseWidth = layout.baseWidth || 1920;
+  const baseHeight = layout.baseHeight || 1080;
+  const updated = LaneReplicationHelper.replicateLaneWidgets(layout.widgets, {
+    ...options,
+    baseWidth,
+    baseHeight,
+  });
+  layout.widgets = updated;
+  updateLayoutOnModel(
+    layout,
+    targetUi,
+    comp.editingSettings,
+    comp.isCustomUiPractice(targetUi),
+    comp.parsedLayouts,
+  );
   comp.captureState();
   comp.cdr.markForCheck();
 }
