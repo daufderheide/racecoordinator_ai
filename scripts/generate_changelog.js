@@ -47,30 +47,51 @@ function findPreviousTag(currentTag, isPrerelease, customTags) {
   const currentParsed = parseSemver(currentTag);
   const isPre = isPrerelease === 'true' || isPrerelease === true || currentTag.includes('beta') || currentTag.includes('alpha');
 
-  if (!isPre) {
-    // For official release: look for previous highest official release strictly older than currentTag
-    const officialTags = tags.filter(t => {
-      const p = parseSemver(t);
-      if (p.prereleaseType) return false;
-      // Must be strictly older than currentTag
-      return compareSemver(currentTag, t) < 0;
-    }).sort(compareSemver);
+  // Both official releases and beta prereleases accumulate changes from the previous official release
+  const officialTags = tags.filter(t => {
+    const p = parseSemver(t);
+    if (p.prereleaseType) return false;
+    // Must be strictly older than currentTag
+    return compareSemver(currentTag, t) < 0;
+  }).sort(compareSemver);
 
-    return officialTags.length > 0 ? officialTags[0] : null;
-  } else {
-    // For beta/prerelease: look for any release tag strictly older than currentTag
-    const olderTags = tags.filter(t => {
-      if (t === currentTag) return false;
-      return compareSemver(currentTag, t) < 0;
-    }).sort(compareSemver);
-
-    return olderTags.length > 0 ? olderTags[0] : null;
+  if (officialTags.length > 0) {
+    return officialTags[0];
   }
+
+  // Official releases only compare against prior official releases (return null for initial release)
+  if (!isPre) {
+    return null;
+  }
+
+  // Fallback for pre-1.0 development (when no official tag existed yet)
+  const olderTags = tags.filter(t => {
+    if (t === currentTag) return false;
+    return compareSemver(currentTag, t) < 0;
+  }).sort(compareSemver);
+
+  return olderTags.length > 0 ? olderTags[0] : null;
 }
 
 function getCommits(fromTag, toRef) {
   try {
-    const range = fromTag ? `${fromTag}..${toRef || 'HEAD'}` : (toRef || 'HEAD');
+    let validFromTag = fromTag;
+    if (validFromTag) {
+      try {
+        execSync(`git rev-parse --verify ${validFromTag}`, { stdio: 'ignore' });
+      } catch {
+        validFromTag = null;
+      }
+    }
+    let targetRef = toRef || 'HEAD';
+    if (toRef) {
+      try {
+        execSync(`git rev-parse --verify ${toRef}`, { stdio: 'ignore' });
+      } catch {
+        targetRef = 'HEAD';
+      }
+    }
+    const range = validFromTag ? `${validFromTag}..${targetRef}` : targetRef;
     const cmd = `git log ${range} --pretty=format:"%h|%s|%an"`;
     const output = execSync(cmd, { encoding: 'utf8' }).trim();
     if (!output) return [];
@@ -289,6 +310,7 @@ module.exports = {
   findPreviousTag,
   parseSemver,
   compareSemver,
+  getCommits,
   formatInitialReleaseSection,
   formatBetaCommitList,
   formatOfficialReleaseNotes,

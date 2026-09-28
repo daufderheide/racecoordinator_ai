@@ -5,6 +5,7 @@ const path = require('path');
 const {
   findPreviousTag,
   compareSemver,
+  getCommits,
   formatInitialReleaseSection,
   formatBetaCommitList,
   formatOfficialReleaseNotes,
@@ -39,10 +40,24 @@ describe('generate_changelog', () => {
       assert.strictEqual(prev, null);
     });
 
-    test('should find previous tag for beta release', () => {
+    test('should find previous tag for beta release during pre-1.0 development', () => {
       const customTags = ['v1.0.0', 'v1.0.0-beta.1', 'v1.0.0-beta.2'];
       const prev = findPreviousTag('v1.0.0-beta.3', true, customTags);
       assert.strictEqual(prev, 'v1.0.0-beta.2');
+    });
+
+    test('should find previous official tag for beta releases to accumulate all changes', () => {
+      const customTags = ['v1.0.0', 'v1.0.1-beta.1'];
+      const prev = findPreviousTag('v1.0.1-beta.2', true, customTags);
+      assert.strictEqual(prev, 'v1.0.0');
+    });
+
+    test('should ensure both last beta and official release share identical previous official tag', () => {
+      const customTags = ['v1.0.0', 'v1.0.1-beta.1', 'v1.0.1-beta.2'];
+      const betaPrev = findPreviousTag('v1.0.1-beta.3', true, customTags);
+      const officialPrev = findPreviousTag('v1.0.1', false, customTags);
+      assert.strictEqual(betaPrev, 'v1.0.0');
+      assert.strictEqual(officialPrev, 'v1.0.0');
     });
   });
 
@@ -149,6 +164,12 @@ describe('generate_changelog', () => {
         toRef: 'v1.0.0-beta.25'
       });
       assert.ok(output.includes('resolved edge case'));
+    });
+
+    test('should gracefully handle uncreated tag in getCommits by falling back to HEAD', () => {
+      // Pass an uncreated tag as toRef and verify getCommits does not throw or fail
+      const commits = getCommits('v1.0.0', 'v99.99.99-uncreated-tag');
+      assert.ok(Array.isArray(commits));
     });
   });
 
