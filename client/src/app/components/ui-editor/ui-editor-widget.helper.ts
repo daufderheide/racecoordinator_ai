@@ -28,6 +28,15 @@ export function ensureWidgetSelectedHelper(comp: any, ui?: CustomUI): void {
   ) {
     comp.selectedWidgetId = findDefaultWidgetId(layout);
   }
+  const selectedWidget =
+    comp.selectedWidget ||
+    widgets.find((w: any) => w.id === comp.selectedWidgetId);
+  if (selectedWidget?.widgetType === "countdown") {
+    const uiId = ui?.entity_id || comp.activeCustomUiId;
+    if (uiId && comp.countdownPreviewActiveByUi) {
+      comp.countdownPreviewActiveByUi[uiId] = true;
+    }
+  }
 }
 
 export function applyWidgetDefaultSettings(widget: any): boolean {
@@ -158,11 +167,20 @@ export function handleWidgetSelection(
   if (ui) comp.activeCustomUiId = ui.entity_id;
   const layout = comp.getLayout(ui || comp.activeCustomUi);
   comp.selectedWidgetId = id || findDefaultWidgetId(layout);
-  if (comp.selectedWidgetId && comp.selectedWidget) {
-    if (applyWidgetDefaultSettings(comp.selectedWidget)) {
+  const selectedWidget =
+    comp.selectedWidget ||
+    layout?.widgets?.find((w: any) => w.id === comp.selectedWidgetId);
+  if (comp.selectedWidgetId && selectedWidget) {
+    if (applyWidgetDefaultSettings(selectedWidget)) {
       if (ui) ui.layoutJson = JSON.stringify(comp.getLayout(ui));
       if (comp.editingState?.settings) {
         comp.editingState.settings = { ...comp.editingState.settings };
+      }
+    }
+    if (selectedWidget.widgetType === "countdown") {
+      const uiId = ui?.entity_id || comp.activeCustomUiId;
+      if (uiId && comp.countdownPreviewActiveByUi) {
+        comp.countdownPreviewActiveByUi[uiId] = true;
       }
     }
   }

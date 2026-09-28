@@ -52,9 +52,9 @@ export const WIDGET_REGISTRY: Record<string, WidgetRegistryEntry> = {
       previewLampCount: 5,
       glowEffect: true,
       glowIntensity: 100,
-      glowOverlap: 100,
-      glowRedOverlap: 100,
-      glowGreenOverlap: 100,
+      glowOverlap: 30,
+      glowRedOverlap: 30,
+      glowGreenOverlap: 25,
     }),
   },
   image: {

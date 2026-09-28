@@ -1,5 +1,13 @@
 # Changelog
 
+## [v1.0.0] - 2026-09-27
+
+### 🎉 Initial Release
+
+Initial release.
+
+View the full commit history on [GitHub](https://github.com/daufderheide/racecoordinator_ai/commits/v1.0.0).
+
 ## [v1.0.0-beta.89] - 2026-09-26
 
 ### 🐛 Bug Fixes

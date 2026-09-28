@@ -307,12 +307,12 @@ describe("RacedayCountdownComponent", () => {
     expect(parseInt(styles["width"], 10)).toBeGreaterThan(50);
   });
 
-  it("should default glowEffect to true, glowIntensity to 100, glowRedOverlap to 100, and glowGreenOverlap to 100", () => {
+  it("should default glowEffect to true, glowIntensity to 100, glowRedOverlap to 30, and glowGreenOverlap to 25", () => {
     expect(component.glowEffect).toBeTrue();
     expect(component.glowIntensity).toBe(100);
-    expect(component.glowRedOverlap).toBe(100);
-    expect(component.glowGreenOverlap).toBe(100);
-    expect(component.glowOverlap).toBe(100);
+    expect(component.glowRedOverlap).toBe(30);
+    expect(component.glowGreenOverlap).toBe(25);
+    expect(component.glowOverlap).toBe(30);
   });
 
   it("should respect custom glowEffect, glowIntensity, glowRedOverlap, and glowGreenOverlap settings", () => {
@@ -355,9 +355,9 @@ describe("RacedayCountdownComponent", () => {
     const onLamp = { url: "red-on.png", state: "on" };
     const goLamp = { url: "green.png", state: "go" };
 
-    // Default: red is 1.250 (100%), green is 1.400 (100%)
-    expect(component.getLampStyles(onLamp)["transform"]).toBe("scale(1.250)");
-    expect(component.getLampStyles(goLamp)["transform"]).toBe("scale(1.400)");
+    // Default (30% red, 25% green): red is 1.075, green is 1.100
+    expect(component.getLampStyles(onLamp)["transform"]).toBe("scale(1.075)");
+    expect(component.getLampStyles(goLamp)["transform"]).toBe("scale(1.100)");
 
     // Independent overlap settings: red = 0, green = 50
     const independentWidget: AbsoluteWidgetNode = {
@@ -522,5 +522,18 @@ describe("RacedayCountdownComponent", () => {
     expect(noGlowLamps[0].classList.contains("has-glow")).toBeFalse();
     expect(noGlowLamps[1].classList.contains("has-glow")).toBeFalse();
     expect(noGlowLamps[2].classList.contains("has-glow")).toBeFalse();
+  });
+
+  it("should use bundled default asset paths when parent and themeService have no assets", () => {
+    fixture.componentRef.setInput("parent", null);
+    fixture.componentRef.setInput("isCustomizing", true);
+    fixture.detectChanges();
+
+    const lamps = component.displayLamps;
+    expect(lamps.length).toBeGreaterThan(0);
+    expect(lamps[0].url).toBe("assets/images/defaults/start_red_on.png");
+    expect(lamps[lamps.length - 1].url).toBe(
+      "assets/images/defaults/start_green.png",
+    );
   });
 });

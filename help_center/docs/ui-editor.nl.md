@@ -20,7 +20,7 @@ Raadpleeg de [Gids voor aangepaste widgets](custom-widgets.md) voor alle ontwikk
 - Pas grootte, positie en uitlijning van widgets aan op uw schermresolutie. Alle widgets blijven begrensd binnen het canvas.
 - **Widget-inspector bediening**:
   - **Positie & grootte**: Positioneer en dimensioneer de geselecteerde widget nauwkeurig met de numerieke velden voor **X**, **Y**, **Breedte** en **Hoogte**.
-  - **Widget verwijderen**: Klik op het prullenbak-icoon in de koptekst van de inspector of op de knop **Widget verwijderen** in de zijbalk.
+  - **Widget verwijderen**: Klik op het prullenbak-icoon in de koptekst van de inspector.
 - **Sneltoetsen**:
   - <kbd>Delete</kbd> of <kbd>Backspace</kbd>: Verwijdert de geselecteerde widget uit de layout.
   - <kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd>: Verplaatst de geselecteerde widget met 1px (of 10px met <kbd>Shift</kbd>).

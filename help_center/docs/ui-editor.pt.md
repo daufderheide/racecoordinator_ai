@@ -20,7 +20,7 @@ Para mais detalhes sobre o desenvolvimento de widgets, consulte o [Guia de widge
 - Redimensione, reposicione e alinhe widgets de acordo com a resolução do ecrã. Todos os widgets permanecem delimitados dentro do ecrã.
 - **Controlos do Inspetor de Widgets**:
   - **Posição e tamanho**: Posicione e dimensione com precisão o widget selecionado utilizando os campos numéricos **X**, **Y**, **Largura** e **Altura**.
-  - **Excluir widget**: Clique no ícone do lixo no cabeçalho do inspetor ou no botão **Excluir widget** na barra lateral.
+  - **Excluir widget**: Clique no ícone do lixo no cabeçalho do inspetor.
 - **Atalhos de teclado**:
   - <kbd>Delete</kbd> ou <kbd>Backspace</kbd>: Remove o widget selecionado do layout.
   - <kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd>: Move o widget selecionado 1px (ou 10px mantendo <kbd>Shift</kbd> pressionado).

@@ -144,16 +144,16 @@ describe("CountdownInspectorComponent", () => {
     expect(component.glowOverlap).toBe(50);
   });
 
-  it("should default glowEffect to true, glowIntensity to 100, glowRedOverlap to 100, and glowGreenOverlap to 100", () => {
+  it("should default glowEffect to true, glowIntensity to 100, glowRedOverlap to 30, and glowGreenOverlap to 25", () => {
     expect(component.glowEffect).toBeTrue();
     expect(component.glowIntensity).toBe(100);
-    expect(component.glowRedOverlap).toBe(100);
-    expect(component.glowGreenOverlap).toBe(100);
-    expect(component.glowOverlap).toBe(100);
+    expect(component.glowRedOverlap).toBe(30);
+    expect(component.glowGreenOverlap).toBe(25);
+    expect(component.glowOverlap).toBe(30);
     expect(component.settings().glowEffect).toBeTrue();
     expect(component.settings().glowIntensity).toBe(100);
-    expect(component.settings().glowRedOverlap).toBe(100);
-    expect(component.settings().glowGreenOverlap).toBe(100);
+    expect(component.settings().glowRedOverlap).toBe(30);
+    expect(component.settings().glowGreenOverlap).toBe(25);
   });
 
   it("should show glow intensity and overlap sliders when glowEffect is true and hide when false", () => {

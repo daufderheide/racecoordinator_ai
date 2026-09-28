@@ -570,9 +570,9 @@ export class RacedayLayoutUtils {
             lampSizingMode: "custom",
             previewLampCount: 5,
             glowEffect: true,
-            glowOverlap: 100,
-            glowRedOverlap: 100,
-            glowGreenOverlap: 100,
+            glowOverlap: 30,
+            glowRedOverlap: 30,
+            glowGreenOverlap: 25,
             ...w.customSettings,
           };
           if (!w.customSettings["lampSizingMode"]) {
@@ -584,14 +584,23 @@ export class RacedayLayoutUtils {
           if (w.customSettings["glowEffect"] === undefined) {
             w.customSettings["glowEffect"] = true;
           }
-          if (w.customSettings["glowOverlap"] === undefined) {
-            w.customSettings["glowOverlap"] = 100;
+          if (
+            w.customSettings["glowOverlap"] === undefined ||
+            w.customSettings["glowOverlap"] === 100
+          ) {
+            w.customSettings["glowOverlap"] = 30;
           }
-          if (w.customSettings["glowRedOverlap"] === undefined) {
-            w.customSettings["glowRedOverlap"] = 100;
+          if (
+            w.customSettings["glowRedOverlap"] === undefined ||
+            w.customSettings["glowRedOverlap"] === 100
+          ) {
+            w.customSettings["glowRedOverlap"] = 30;
           }
-          if (w.customSettings["glowGreenOverlap"] === undefined) {
-            w.customSettings["glowGreenOverlap"] = 100;
+          if (
+            w.customSettings["glowGreenOverlap"] === undefined ||
+            w.customSettings["glowGreenOverlap"] === 100
+          ) {
+            w.customSettings["glowGreenOverlap"] = 25;
           }
         }
       }
@@ -624,9 +633,9 @@ export class RacedayLayoutUtils {
         lampSizingMode: "custom",
         previewLampCount: 5,
         glowEffect: true,
-        glowOverlap: 100,
-        glowRedOverlap: 100,
-        glowGreenOverlap: 100,
+        glowOverlap: 30,
+        glowRedOverlap: 30,
+        glowGreenOverlap: 25,
       },
     };
 
