@@ -1,5 +1,20 @@
 # Changelog
 
+## [v1.0.1-beta.2] - 2026-09-28
+
+### 🐛 Bug Fixes
+
+- Unify tooltip icons, including making all delet operations a red trash can to signify a dangerous operation. ([67774bb2](https://github.com/daufderheide/racecoordinator_ai/commit/67774bb2))
+- Changed default countdown lamps so they do not overlap fix: Auto-enable countdown preview if the countdown widget is selected. https://github.com/daufderheide/racecoordinator_ai/issues/859 ([021b6061](https://github.com/daufderheide/racecoordinator_ai/commit/021b6061))
+- Fixed driver editor audio expander and track editor lane expander.  They both required multiple clicks to open/close properly [skip-screendiffs] ([cfded194](https://github.com/daufderheide/racecoordinator_ai/commit/cfded194))
+- Removed duplicate delete widget button in the widget inspector ([4a06b3fd](https://github.com/daufderheide/racecoordinator_ai/commit/4a06b3fd))
+
+<details>
+<summary>🔍 <b>Full Commit History</b></summary>
+
+<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0...v1.0.1-beta.2">GitHub</a></p>
+</details>
+
 ## [v1.0.1-beta.1] - 2026-09-28
 
 ### 🐛 Bug Fixes
