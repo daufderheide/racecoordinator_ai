@@ -673,4 +673,83 @@ describe("RacedayLayoutUtils", () => {
       ).toBeFalse();
     });
   });
+
+  describe("ensureCountdownWidget", () => {
+    it("should return undefined/layout when input is undefined or has no widgets", () => {
+      expect(
+        RacedayLayoutUtils.ensureCountdownWidget(undefined),
+      ).toBeUndefined();
+      const emptyLayout: any = {};
+      expect(RacedayLayoutUtils.ensureCountdownWidget(emptyLayout)).toBe(
+        emptyLayout,
+      );
+    });
+
+    it("should add countdown widget with 30% red and 25% green default overlap when missing", () => {
+      const layout: LayoutConfig = {
+        baseWidth: 1920,
+        baseHeight: 1080,
+        widgets: [{ id: "w1", widgetType: "lane-view" } as any],
+      };
+      const result = RacedayLayoutUtils.ensureCountdownWidget(layout);
+      expect(result).toBeDefined();
+      const countdown = result?.widgets.find(
+        (w) => w.widgetType === "countdown",
+      );
+      expect(countdown).toBeDefined();
+      expect(countdown?.customSettings?.["glowOverlap"]).toBe(30);
+      expect(countdown?.customSettings?.["glowRedOverlap"]).toBe(30);
+      expect(countdown?.customSettings?.["glowGreenOverlap"]).toBe(25);
+    });
+
+    it("should backfill existing countdown widget using default 100 overlap to 30% red and 25% green", () => {
+      const layout: LayoutConfig = {
+        baseWidth: 1920,
+        baseHeight: 1080,
+        widgets: [
+          {
+            id: "widget-countdown",
+            widgetType: "countdown",
+            customSettings: {
+              glowOverlap: 100,
+              glowRedOverlap: 100,
+              glowGreenOverlap: 100,
+            },
+          } as any,
+        ],
+      };
+      const result = RacedayLayoutUtils.ensureCountdownWidget(layout);
+      const countdown = result?.widgets.find(
+        (w) => w.widgetType === "countdown",
+      );
+      expect(countdown?.customSettings?.["glowOverlap"]).toBe(30);
+      expect(countdown?.customSettings?.["glowRedOverlap"]).toBe(30);
+      expect(countdown?.customSettings?.["glowGreenOverlap"]).toBe(25);
+    });
+
+    it("should preserve custom overlap settings on existing countdown widget", () => {
+      const layout: LayoutConfig = {
+        baseWidth: 1920,
+        baseHeight: 1080,
+        widgets: [
+          {
+            id: "widget-countdown",
+            widgetType: "countdown",
+            customSettings: {
+              glowOverlap: 45,
+              glowRedOverlap: 45,
+              glowGreenOverlap: 55,
+            },
+          } as any,
+        ],
+      };
+      const result = RacedayLayoutUtils.ensureCountdownWidget(layout);
+      const countdown = result?.widgets.find(
+        (w) => w.widgetType === "countdown",
+      );
+      expect(countdown?.customSettings?.["glowOverlap"]).toBe(45);
+      expect(countdown?.customSettings?.["glowRedOverlap"]).toBe(45);
+      expect(countdown?.customSettings?.["glowGreenOverlap"]).toBe(55);
+    });
+  });
 });

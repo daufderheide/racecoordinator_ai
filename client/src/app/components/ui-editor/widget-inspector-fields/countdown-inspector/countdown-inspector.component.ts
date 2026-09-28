@@ -72,15 +72,15 @@ export class CountdownInspectorComponent {
       modified = true;
     }
     if (s.glowOverlap === undefined || s.glowOverlap === null) {
-      s.glowOverlap = 100;
+      s.glowOverlap = 30;
       modified = true;
     }
     if (s.glowRedOverlap === undefined || s.glowRedOverlap === null) {
-      s.glowRedOverlap = s.glowOverlap ?? 100;
+      s.glowRedOverlap = s.glowOverlap ?? 30;
       modified = true;
     }
     if (s.glowGreenOverlap === undefined || s.glowGreenOverlap === null) {
-      s.glowGreenOverlap = 100;
+      s.glowGreenOverlap = 25;
       modified = true;
     }
     if (modified) {
@@ -154,7 +154,7 @@ export class CountdownInspectorComponent {
 
   get glowRedOverlap(): number {
     const val = this.settings()?.glowRedOverlap ?? this.settings()?.glowOverlap;
-    return typeof val === "number" ? Math.max(0, Math.min(100, val)) : 100;
+    return typeof val === "number" ? Math.max(0, Math.min(100, val)) : 30;
   }
 
   setGlowRedOverlap(val: any) {
@@ -168,7 +168,7 @@ export class CountdownInspectorComponent {
 
   get glowGreenOverlap(): number {
     const val = this.settings()?.glowGreenOverlap;
-    return typeof val === "number" ? Math.max(0, Math.min(100, val)) : 100;
+    return typeof val === "number" ? Math.max(0, Math.min(100, val)) : 25;
   }
 
   setGlowGreenOverlap(val: any) {
