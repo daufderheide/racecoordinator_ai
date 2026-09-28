@@ -94,7 +94,7 @@
             sectionId="lane-editor-section"
             titleKey="TE_LANE_EDITOR"
             [(expanded)]="sectionsExpanded.lanes"
-            (toggle)="toggleSection('lanes')"
+            (toggle)="toggleSection('lanes', $event)"
           >
             <button
               header-actions
@@ -193,7 +193,7 @@
             customClass="interface-config-section"
             titleKey="TE_INTERFACES"
             [(expanded)]="sectionsExpanded.interfaces"
-            (toggle)="toggleSection('interfaces')"
+            (toggle)="toggleSection('interfaces', $event)"
           >
             <div class="editor-section">
               <div

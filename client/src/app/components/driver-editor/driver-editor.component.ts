@@ -162,8 +162,14 @@ export class DriverEditorComponent
 
   isNameNicknameLinked: boolean = false;
 
-  toggleSection(section: keyof typeof this.sectionsExpanded) {
-    this.sectionsExpanded[section] = !this.sectionsExpanded[section];
+  toggleSection(
+    section: keyof typeof this.sectionsExpanded,
+    forcedState?: boolean,
+  ) {
+    this.sectionsExpanded[section] =
+      typeof forcedState === "boolean"
+        ? forcedState
+        : !this.sectionsExpanded[section];
     this.saveExpanderState();
   }
 

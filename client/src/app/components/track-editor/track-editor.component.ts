@@ -197,8 +197,14 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   showLedStringDialog = false;
   requestingArduinoIndex = -1;
 
-  toggleSection(section: keyof typeof this.sectionsExpanded) {
-    this.sectionsExpanded[section] = !this.sectionsExpanded[section];
+  toggleSection(
+    section: keyof typeof this.sectionsExpanded,
+    forcedState?: boolean,
+  ) {
+    this.sectionsExpanded[section] =
+      typeof forcedState === "boolean"
+        ? forcedState
+        : !this.sectionsExpanded[section];
     localStorage.setItem(
       "rc.track-editor.sections",
       JSON.stringify(this.sectionsExpanded),

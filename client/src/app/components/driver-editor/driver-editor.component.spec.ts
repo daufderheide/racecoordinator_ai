@@ -1246,6 +1246,58 @@ describe("DriverEditorComponent", () => {
       expect(component.areAllSectionsExpanded()).toBeTrue();
       expect(component.sectionsExpanded.audio).toBeTrue();
     });
+
+    it("should toggle audio section correctly with and without forcedState", () => {
+      component.sectionsExpanded.audio = true;
+      component.toggleSection("audio");
+      expect(component.sectionsExpanded.audio).toBeFalse();
+
+      component.toggleSection("audio");
+      expect(component.sectionsExpanded.audio).toBeTrue();
+
+      component.toggleSection("audio", false);
+      expect(component.sectionsExpanded.audio).toBeFalse();
+
+      component.toggleSection("audio", true);
+      expect(component.sectionsExpanded.audio).toBeTrue();
+    });
+
+    it("should toggle audio section in a single header click in the DOM", () => {
+      component.sectionsExpanded.audio = true;
+      fixture.detectChanges();
+
+      const headerEl = fixture.debugElement.query(
+        By.css("#driver-audio-section .section-header"),
+      );
+      expect(headerEl).toBeTruthy();
+      expect(
+        fixture.debugElement.query(
+          By.css("#driver-audio-section .section-content"),
+        ),
+      ).toBeTruthy();
+
+      // Click once to close
+      headerEl.nativeElement.click();
+      fixture.detectChanges();
+
+      expect(component.sectionsExpanded.audio).toBeFalse();
+      expect(
+        fixture.debugElement.query(
+          By.css("#driver-audio-section .section-content"),
+        ),
+      ).toBeFalsy();
+
+      // Click once to open
+      headerEl.nativeElement.click();
+      fixture.detectChanges();
+
+      expect(component.sectionsExpanded.audio).toBeTrue();
+      expect(
+        fixture.debugElement.query(
+          By.css("#driver-audio-section .section-content"),
+        ),
+      ).toBeTruthy();
+    });
   });
 
   describe("guided help", () => {
