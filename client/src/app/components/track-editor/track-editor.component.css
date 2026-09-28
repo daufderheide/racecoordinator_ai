@@ -279,10 +279,66 @@
 
 .lane-item .action-btn.danger {
   margin-right: 0;
+  background: transparent;
+  border: 1px solid transparent;
+  color: #ef4444;
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  padding: 0;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease-in-out;
+}
+
+.lane-item .action-btn.danger:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+  transform: translateY(-1px);
+}
+
+.lane-item .action-btn.danger:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.lane-item .action-btn.danger .material-icons {
+  font-size: 1.15rem;
 }
 
 .add-list-btn {
   margin-right: 0;
+  background: transparent;
+  border: 1px solid transparent;
+  color: #94a3b8;
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  padding: 0;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease-in-out;
+}
+
+.add-list-btn:hover:not(:disabled) {
+  background: rgba(56, 189, 248, 0.15);
+  border-color: rgba(56, 189, 248, 0.3);
+  color: #38bdf8;
+  transform: translateY(-1px);
+}
+
+.add-list-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.add-list-btn .material-icons {
+  font-size: 1.25rem;
 }
 
 .editor-actions {
@@ -343,8 +399,14 @@
   padding: 4px 10px;
   font-size: 1rem;
   line-height: 1;
-  /* min-width: 40px; */
   text-align: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.action-btn.small .material-icons {
+  font-size: 16px;
 }
 
 /* .add-list-btn {
@@ -366,6 +428,13 @@
   padding: 4px 8px;
   font-size: 0.8rem;
   min-width: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lane-item .danger.small .material-icons {
+  font-size: 16px;
 }
 
 .action-btn:disabled {

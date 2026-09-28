@@ -375,9 +375,9 @@
       <button
         class="widget-remove-btn"
         (click)="removeWidget($event)"
-        title="Remove widget"
+        [title]="'UE_BTN_DELETE_WIDGET' | translate"
       >
-        ×
+        <span class="material-icons">delete</span>
       </button>
     </div>
 

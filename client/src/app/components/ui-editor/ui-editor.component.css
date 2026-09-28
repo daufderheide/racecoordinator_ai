@@ -958,12 +958,12 @@
 }
 
 .canvas-action-icon-btn.reset-icon-btn {
-  color: #f59e0b;
+  color: #ef4444;
 }
 
 .canvas-action-icon-btn.reset-icon-btn:hover {
-  color: #fbbf24;
-  background: rgba(245, 158, 11, 0.15);
+  color: #f87171;
+  background: rgba(239, 68, 68, 0.15);
 }
 
 .canvas-action-icon-btn.clear-icon-btn {
@@ -1138,6 +1138,10 @@
 .toolbox-search-clear:hover {
   color: #000000;
   background: rgba(0, 0, 0, 0.1);
+}
+
+.toolbox-search-clear .material-icons {
+  font-size: 14px;
 }
 
 .toolbox-widget-list {

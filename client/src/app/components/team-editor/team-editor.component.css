@@ -110,6 +110,13 @@
 
 .action-btn.small {
   padding: 5px 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.action-btn.small .material-icons {
+  font-size: 16px;
 }
 
 .action-btn.danger {
@@ -173,6 +180,50 @@
   background: rgba(56, 189, 248, 0.1);
   border-color: rgba(56, 189, 248, 0.3);
   cursor: pointer;
+}
+
+.driver-item .action-btn.danger.small {
+  background: transparent;
+  border: 1px solid transparent;
+  color: #ef4444;
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  padding: 0;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease-in-out;
+}
+
+.driver-item .action-btn.danger.small:hover {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+  transform: translateY(-1px);
+}
+
+.driver-item .add-list-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  color: #94a3b8;
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  padding: 0;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease-in-out;
+}
+
+.driver-item .add-list-btn:hover {
+  background: rgba(56, 189, 248, 0.15);
+  border-color: rgba(56, 189, 248, 0.3);
+  color: #38bdf8;
+  transform: translateY(-1px);
 }
 
 .driver-avatar-mini {

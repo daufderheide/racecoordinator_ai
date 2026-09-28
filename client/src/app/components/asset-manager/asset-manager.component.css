@@ -437,20 +437,51 @@
 }
 
 .action-icon {
-  width: 20px;
-  height: 20px;
+  width: 26px;
+  height: 26px;
+  font-size: 18px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
-  opacity: 0.6;
-  transition: all 0.2s;
+  opacity: 0.7;
+  color: #94a3b8;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  transition: all 0.2s ease-in-out;
+  padding: 0;
+  box-sizing: border-box;
 }
 
 .action-icon:hover {
   opacity: 1;
-  transform: scale(1.2);
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.15);
+  border-color: rgba(56, 189, 248, 0.3);
+  transform: translateY(-1px);
+}
+
+.action-icon.delete {
+  color: #ef4444;
+  opacity: 1;
 }
 
 .action-icon.delete:hover {
-  filter: hue-rotate(150deg) saturate(3);
+  color: #ef4444;
+  opacity: 1;
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.action-icon.stop {
+  color: #ef4444;
+}
+
+.action-icon.stop:hover {
+  color: #f87171;
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.3);
 }
 
 /* Edit Mode */
@@ -521,7 +552,8 @@
   height: 28px;
 }
 
-.asset-card.layout-small .rotation-preview i {
+.asset-card.layout-small .rotation-preview i,
+.asset-card.layout-small .rotation-preview .material-icons {
   font-size: 1.1rem;
 }
 
@@ -541,6 +573,7 @@
 .asset-card.layout-small .action-icon {
   width: 15px;
   height: 15px;
+  font-size: 15px;
 }
 
 /* Medium Thumbnails (Default) */
@@ -571,7 +604,8 @@
   height: 56px;
 }
 
-.asset-card.layout-large .rotation-preview i {
+.asset-card.layout-large .rotation-preview i,
+.asset-card.layout-large .rotation-preview .material-icons {
   font-size: 2.2rem;
 }
 
@@ -591,6 +625,7 @@
 .asset-card.layout-large .action-icon {
   width: 24px;
   height: 24px;
+  font-size: 24px;
 }
 
 /* List View */
@@ -690,6 +725,7 @@
 .asset-card.layout-list .action-icon {
   width: 16px;
   height: 16px;
+  font-size: 16px;
 }
 
 .asset-card.layout-list .edit-mode {
@@ -781,7 +817,8 @@
   animation: slideUp 0.3s ease-out;
 }
 
-.error-toast i {
+.error-toast i,
+.error-toast .material-icons {
   color: #ef4444;
   font-size: 1.2rem;
   text-shadow: 0 0 8px rgba(239, 68, 68, 0.6);

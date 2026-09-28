@@ -2843,8 +2843,9 @@
                               type="button"
                               class="btn-remove-pos"
                               (click)="removeSeasonPositionPoint(idx)"
+                              [title]="'REMOVE' | translate"
                             >
-                              ✕
+                              <span class="material-icons">delete</span>
                             </button>
                           </div>
                         }

@@ -150,6 +150,15 @@ describe("ToolbarComponent", () => {
     expect(component.delete.emit).toHaveBeenCalled();
   });
 
+  it("should render material-icons delete in delete button", () => {
+    fixture.componentRef.setInput("showDelete", true);
+    fixture.detectChanges();
+    const deleteBtn = fixture.nativeElement.querySelector("#delete-track-btn");
+    const icon = deleteBtn.querySelector(".material-icons");
+    expect(icon).toBeTruthy();
+    expect(icon.textContent.trim()).toBe("delete");
+  });
+
   it("should show undo/redo when showUndo/showRedo are true", async () => {
     fixture.componentRef.setInput("showUndo", true);
     fixture.componentRef.setInput("showRedo", true);
