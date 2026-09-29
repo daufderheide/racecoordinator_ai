@@ -61,6 +61,10 @@ Race Coordinator AI uses embedded SQLite (`sqlite-jdbc`) for all persistent data
 - **Manual releases from develop**: Manual workflow dispatch on `develop` without an explicit version override publishes an alpha build named `vX.Y.Z-alpha.<hash>` (using the commit SHA).
 - **README Updates Restricted to Beta & Official Releases**: Automated README download link updates and PRs targeting `main` are strictly restricted to official stable releases (`vX.Y.Z`) and beta prereleases (`vX.Y.Z-beta.N`). Daily alpha and manual develop builds (`*-alpha.*`) must never update the main README or open documentation PRs.
 
+## Git Push Policy (No AI Agent Pushes)
+- **AI Agent must never push to git**: The AI agent must NEVER execute `git push` under any circumstances. All git changes will be reviewed and manually pushed by the user.
+- **Provide push commands**: When changes are ready to be pushed, provide the user with the exact git commands needed to push, especially when non-simple commands are required (e.g. `--force-with-lease`, `--no-verify`, upstream tracking, or specific tags).
+
 ## Meaningful Test Assertions & Mutation Resistance
 - **Test real behavior, not just line coverage**: New unit and integration tests must validate outputs, state changes, and boundary conditions with explicit assertions rather than writing trivial executions that only aim to pass line coverage counters. Tests must withstand mutation testing (PIT / Stryker).
 
@@ -69,6 +73,8 @@ Race Coordinator AI uses embedded SQLite (`sqlite-jdbc`) for all persistent data
 
 ## Conventional Commit Message Discipline
 - **Use supported conventional commit prefixes**: All git commit messages must use supported conventional prefixes (`feat:`, `fix:`, `refactor:`, `perf:`, `docs:`, `test:`, `chore:`, `ci:`, `style:`, `build:`), optional scopes (e.g. `feat(phidget): ...`), and concise descriptions to ensure automated release changelog generation remains accurate and clean.
+- **Strict use of `feat` and `fix` for clean release notes**: Commits must ONLY use `feat:` and `fix:` for specific bug fixes and initial new feature commits. The intent is to keep user-facing release notes clean and free of noise. Non-user-facing work, internal refactoring, test adjustments, tooling, CI, docs, and follow-up tweaks should use other appropriate prefixes (`refactor:`, `test:`, `docs:`, `chore:`, `ci:`, `style:`, `perf:`, `build:`).
+
 
 ## Server-Side Calculations & Single Source of Truth
 - **All calculations performed on the server**: All calculations with very few if any exceptions should be done on the server. The client should get calculations from the server and display them.
