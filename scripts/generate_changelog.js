@@ -116,6 +116,55 @@ Initial release.
 View the full commit history on [GitHub](${REPO_URL}/commits/${tag}).`;
 }
 
+function linkifyCommitText(text, repoUrl = REPO_URL) {
+  if (!text) return '';
+
+  const protectedLinks = [];
+  const protect = (str) => {
+    protectedLinks.push(str);
+    return `\x00LINK_${protectedLinks.length - 1}\x00`;
+  };
+
+  // Protect existing markdown links [text](url) and autolinks <url>
+  let result = text.replace(/(\[[^\]]+\]\([^\)]+\)|<https?:\/\/[^>]+>)/g, (match) => protect(match));
+
+  // 1. Convert GitHub issue/pull URLs for current repo to clean [#123](url)
+  const escapedRepo = repoUrl.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const thisRepoIssueRegex = new RegExp(`${escapedRepo}\\/(issues|pull)\\/(\\d+)`, 'g');
+  result = result.replace(thisRepoIssueRegex, (match, type, num) => {
+    return protect(`[#${num}](${repoUrl}/${type}/${num})`);
+  });
+
+  // 2. Convert GitHub issue/pull URLs for other repos to [owner/repo#123](url)
+  const otherRepoIssueRegex = /https:\/\/github\.com\/([a-zA-Z0-9_.-]+)\/([a-zA-Z0-9_.-]+)\/(issues|pull)\/(\d+)/g;
+  result = result.replace(otherRepoIssueRegex, (match, owner, repo, type, num) => {
+    if (owner === 'daufderheide' && repo === 'racecoordinator_ai') return match;
+    return protect(`[${owner}/${repo}#${num}](${match})`);
+  });
+
+  // 3. Convert any other HTTP/HTTPS URLs to <url>
+  result = result.replace(/(https?:\/\/[^\s)<>]+)/g, (match, url) => {
+    let cleanUrl = url;
+    let trailing = '';
+    const punctMatch = cleanUrl.match(/([.,;:]+)$/);
+    if (punctMatch) {
+      trailing = punctMatch[1];
+      cleanUrl = cleanUrl.slice(0, -trailing.length);
+    }
+    return `${protect(`<${cleanUrl}>`)}${trailing}`;
+  });
+
+  // 4. Convert standalone issue numbers like (#870) or #870 (not preceded by [ or / or & or alphanumeric, not followed by alphanumeric)
+  result = result.replace(/(?<![[/&a-zA-Z0-9])#(\d+)(?![\]a-zA-Z0-9])/g, (_, num) => {
+    return protect(`[#${num}](${repoUrl}/issues/${num})`);
+  });
+
+  // Restore protected links
+  result = result.replace(/\x00LINK_(\d+)\x00/g, (_, index) => protectedLinks[Number(index)]);
+
+  return result;
+}
+
 function formatBetaCommitList(commits, previousTag) {
   if (!commits || commits.length === 0) {
     const prevNote = previousTag ? ` since \`${previousTag}\`` : '';
@@ -126,7 +175,7 @@ function formatBetaCommitList(commits, previousTag) {
   const lines = commits.map(c => {
     const commitLink = `[\`${c.hash}\`](${REPO_URL}/commit/${c.hash})`;
     const authorStr = c.author ? ` *(${c.author})*` : '';
-    return `- ${commitLink} ${c.subject}${authorStr}`;
+    return `- ${commitLink} ${linkifyCommitText(c.subject)}${authorStr}`;
   });
 
   return `### 📋 Beta Changes & Commits\n\nChanges included in this preview build${prevText}:\n\n${lines.join('\n')}`;
@@ -164,7 +213,7 @@ function formatOfficialReleaseNotes(commits, previousTag, isBeta = false) {
         continue; // Exclude beta-scoped features from official release notes
       }
       const scopePrefix = rawScope ? `**${rawScope}**: ` : '';
-      const text = featMatch[2].trim();
+      const text = linkifyCommitText(featMatch[2].trim());
       features.push(`- ${scopePrefix}${text} ${commitLink}`);
     } else if (fixMatch) {
       const rawScope = fixMatch[1] ? fixMatch[1].trim() : '';
@@ -172,7 +221,7 @@ function formatOfficialReleaseNotes(commits, previousTag, isBeta = false) {
         continue; // Exclude beta-scoped fixes from official release notes
       }
       const scopePrefix = rawScope ? `**${rawScope}**: ` : '';
-      const text = fixMatch[2].trim();
+      const text = linkifyCommitText(fixMatch[2].trim());
       bugFixes.push(`- ${scopePrefix}${text} ${commitLink}`);
     } else if (perfMatch) {
       const rawScope = perfMatch[1] ? perfMatch[1].trim() : '';
@@ -180,12 +229,12 @@ function formatOfficialReleaseNotes(commits, previousTag, isBeta = false) {
         continue; // Exclude beta-scoped improvements from official release notes
       }
       const scopePrefix = rawScope ? `**${rawScope}**: ` : '';
-      const text = perfMatch[2].trim();
+      const text = linkifyCommitText(perfMatch[2].trim());
       improvements.push(`- ${scopePrefix}${text} ${commitLink}`);
     } else if (/^add\s+/i.test(subject) || /^implement\s+/i.test(subject) || /^support\s+/i.test(subject)) {
-      features.push(`- ${subject} ${commitLink}`);
+      features.push(`- ${linkifyCommitText(subject)} ${commitLink}`);
     } else if (/^fix\s+/i.test(subject) || /^resolve\s+/i.test(subject) || /^correct\s+/i.test(subject)) {
-      bugFixes.push(`- ${subject} ${commitLink}`);
+      bugFixes.push(`- ${linkifyCommitText(subject)} ${commitLink}`);
     }
   }
 
@@ -363,5 +412,6 @@ module.exports = {
   generateChangelog,
   parseChangelogSections,
   filterChangelogSections,
+  linkifyCommitText,
   updateChangelogMarkdown
 };

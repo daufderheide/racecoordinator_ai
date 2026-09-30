@@ -12,6 +12,7 @@ const {
   generateChangelog,
   parseChangelogSections,
   filterChangelogSections,
+  linkifyCommitText,
   updateChangelogMarkdown
 } = require('./generate_changelog');
 
@@ -266,6 +267,54 @@ describe('generate_changelog', () => {
       } finally {
         if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath);
       }
+    });
+  });
+
+  describe('linkifyCommitText', () => {
+    test('should format repository issue URLs as clean [#num](url)', () => {
+      const input = 'Auto hide the countdown widget https://github.com/daufderheide/racecoordinator_ai/issues/869 [skip-screendiffs]';
+      const output = linkifyCommitText(input);
+      assert.strictEqual(output, 'Auto hide the countdown widget [#869](https://github.com/daufderheide/racecoordinator_ai/issues/869) [skip-screendiffs]');
+    });
+
+    test('should format repository pull request URLs as clean [#num](url)', () => {
+      const input = 'Update links https://github.com/daufderheide/racecoordinator_ai/pull/873';
+      const output = linkifyCommitText(input);
+      assert.strictEqual(output, 'Update links [#873](https://github.com/daufderheide/racecoordinator_ai/pull/873)');
+    });
+
+    test('should format other repository issue URLs as [owner/repo#num](url)', () => {
+      const input = 'Ref issue https://github.com/other-org/other-repo/issues/42 for details';
+      const output = linkifyCommitText(input);
+      assert.strictEqual(output, 'Ref issue [other-org/other-repo#42](https://github.com/other-org/other-repo/issues/42) for details');
+    });
+
+    test('should autolink external URLs and preserve trailing punctuation', () => {
+      const input = 'Update PayPal donation link https://www.paypal.com/donate/?hosted_button_id=XYZ. Fixed.';
+      const output = linkifyCommitText(input);
+      assert.strictEqual(output, 'Update PayPal donation link <https://www.paypal.com/donate/?hosted_button_id=XYZ>. Fixed.');
+    });
+
+    test('should convert standalone issue references like #870 and (#870) to links', () => {
+      const input = 'Fixed countdown issue (#870) and #871';
+      const output = linkifyCommitText(input);
+      assert.strictEqual(output, 'Fixed countdown issue ([#870](https://github.com/daufderheide/racecoordinator_ai/issues/870)) and [#871](https://github.com/daufderheide/racecoordinator_ai/issues/871)');
+    });
+
+    test('should not double-link already linked markdown links or brackets', () => {
+      const input = 'Already linked [#869](https://github.com/daufderheide/racecoordinator_ai/issues/869) and <https://example.com>';
+      const output = linkifyCommitText(input);
+      assert.strictEqual(output, 'Already linked [#869](https://github.com/daufderheide/racecoordinator_ai/issues/869) and <https://example.com>');
+    });
+
+    test('formatOfficialReleaseNotes should linkify issue links in commit subjects', () => {
+      const customCommits = [
+        { hash: '1234567', subject: 'feat: add preview https://github.com/daufderheide/racecoordinator_ai/issues/869', author: 'Dev' },
+        { hash: '8901234', subject: 'fix: resolve crash https://github.com/daufderheide/racecoordinator_ai/issues/870', author: 'Dev' }
+      ];
+      const output = formatOfficialReleaseNotes(customCommits, 'v1.0.0', true);
+      assert.ok(output.includes('[#869](https://github.com/daufderheide/racecoordinator_ai/issues/869)'));
+      assert.ok(output.includes('[#870](https://github.com/daufderheide/racecoordinator_ai/issues/870)'));
     });
   });
 });
