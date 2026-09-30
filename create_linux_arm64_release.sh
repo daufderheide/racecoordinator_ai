@@ -126,24 +126,34 @@ echo "Updating Race Coordinator AI..."
 mkdir -p /tmp/rc_update_extract
 tar -xzf "$ARCHIVE_PATH" -C /tmp/rc_update_extract/
 
-# Copy updated files over installation
-cp -r /tmp/rc_update_extract/* "$TARGET_DIR/"
+# Copy updated files over installation (handling root directory in archive if present)
+if [ -d "/tmp/rc_update_extract/RaceCoordinator_Linux_ARM64" ]; then
+  cp -r /tmp/rc_update_extract/RaceCoordinator_Linux_ARM64/* "$TARGET_DIR/"
+else
+  cp -r /tmp/rc_update_extract/* "$TARGET_DIR/"
+fi
 rm -rf /tmp/rc_update_extract
 
 # Flash MCU sketch if arduino-cli is installed
 if command -v arduino-cli >/dev/null 2>&1; then
-  echo "Flashing updated microcontroller firmware..."
+  echo "Checking microcontroller core and compiling firmware..."
   BOARD_INFO=$(arduino-cli board list 2>/dev/null | grep -i "uno.*q" | head -n1)
   PORT=$(echo "$BOARD_INFO" | awk '{print $1}')
   FQBN=$(echo "$BOARD_INFO" | awk '{print $6}')
-  [ -z "$PORT" ] && PORT="172.17.0.1"
   [ -z "$FQBN" ] && FQBN="arduino:zephyr:unoq"
-  arduino-cli upload -p "$PORT" --fqbn "$FQBN" --upload-field password=arduino "$TARGET_DIR/arduino/racecoordinatorai_sketch" 2>/dev/null || \
-    arduino-cli upload -p "$PORT" --fqbn "$FQBN" "$TARGET_DIR/arduino/racecoordinatorai_sketch" || true
+  [ -z "$PORT" ] && PORT="172.17.0.1"
+
+  if [ -d "$TARGET_DIR/arduino/racecoordinatorai_sketch" ]; then
+    echo "Compiling and uploading sketch to $FQBN on $PORT..."
+    if arduino-cli compile --fqbn "$FQBN" "$TARGET_DIR/arduino/racecoordinatorai_sketch"; then
+      arduino-cli upload -p "$PORT" --fqbn "$FQBN" --upload-field password=arduino "$TARGET_DIR/arduino/racecoordinatorai_sketch" 2>/dev/null || \
+      arduino-cli upload -p "$PORT" --fqbn "$FQBN" "$TARGET_DIR/arduino/racecoordinatorai_sketch" || true
+    fi
+  fi
 fi
 
 echo "Restarting service..."
-systemctl restart racecoordinatorai
+(sleep 1 && (sudo systemctl restart racecoordinatorai || systemctl restart racecoordinatorai) && (sudo systemctl restart racecoordinatorai-kiosk || systemctl restart racecoordinatorai-kiosk || true)) >/dev/null 2>&1 &
 EOF
 chmod +x "$DIST_DIR/scripts/update_app.sh"
 
@@ -236,6 +246,15 @@ fi
 if id "arduino" &>/dev/null; then
   chown -R arduino:arduino "$INSTALL_DIR"
   usermod -a -G dialout arduino 2>/dev/null || true
+
+  # Allow arduino user to restart racecoordinatorai services without password for in-app auto-updates
+  if [ -d "/etc/sudoers.d" ]; then
+    echo "Configuring sudoers permissions for auto-update service restart..."
+    cat << 'SUDO_EOF' > /etc/sudoers.d/racecoordinatorai
+arduino ALL=(ALL) NOPASSWD: /bin/systemctl restart racecoordinatorai, /bin/systemctl restart racecoordinatorai-kiosk, /usr/bin/systemctl restart racecoordinatorai, /usr/bin/systemctl restart racecoordinatorai-kiosk
+SUDO_EOF
+    chmod 0440 /etc/sudoers.d/racecoordinatorai
+  fi
 fi
 
 # 4. Systemd service registration and boot auto-start
@@ -318,6 +337,13 @@ fi
 if id "arduino" &>/dev/null; then
   chown -R arduino:arduino "$INSTALL_DIR"
   usermod -a -G dialout arduino 2>/dev/null || true
+
+  if [ -d "/etc/sudoers.d" ]; then
+    cat << 'SUDO_EOF' > /etc/sudoers.d/racecoordinatorai
+arduino ALL=(ALL) NOPASSWD: /bin/systemctl restart racecoordinatorai, /bin/systemctl restart racecoordinatorai-kiosk, /usr/bin/systemctl restart racecoordinatorai, /usr/bin/systemctl restart racecoordinatorai-kiosk
+SUDO_EOF
+    chmod 0440 /etc/sudoers.d/racecoordinatorai
+  fi
 fi
 
 cp "$INSTALL_DIR/systemd/racecoordinatorai.service" /etc/systemd/system/
