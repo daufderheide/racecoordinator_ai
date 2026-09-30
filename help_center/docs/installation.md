@@ -106,7 +106,8 @@ When you first launch Race Coordinator AI:
 Upgrading to a newer version of Race Coordinator AI is seamless:
 
 * **Your Data is Preserved**: Your database (`racecoordinator.db`), race statistics, custom driver profiles, track configurations, and custom themes are stored in your user application data folder and are **not** overwritten when updating the app.
-* **To Upgrade**: Simply download and run the installer for the new version over your existing installation.
+* **To Upgrade on Windows**: Simply run the downloaded installer over your existing installation, or click **Install Now** in the in-app update banner.
+* **To Upgrade on Linux / Arduino Uno Q**: Run `sudo /opt/racecoordinatorai/scripts/update_app.sh /path/to/RaceCoordinatorAI-Linux-ARM64*.tar.gz` or extract the archive and run `sudo ./install.sh`. See the [Arduino UNO Q Guide](arduino-uno-q.md#upgrading-an-existing-installation-manually-from-downloaded-archive) for step-by-step instructions.
 
 ---
 

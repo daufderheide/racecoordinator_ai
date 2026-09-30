@@ -108,6 +108,51 @@ If you prefer manual control or need to customize your configuration:
    sudo systemctl enable racecoordinatorai.service
    ```
 
+#### Upgrading an Existing Installation Manually (From Downloaded Archive)
+When you download a release update (such as `RaceCoordinatorAI-Linux-ARM64_*.tar.gz` saved to `~/Downloads/` via the browser save dialog or transferred manually), you can apply the update using any of the following methods:
+
+##### Method 1: Built-In Update Helper Script (Fastest & Recommended)
+Race Coordinator AI includes an automated in-place update script that unpacks the release over `/opt/racecoordinatorai`, recompiles and uploads the microcontroller firmware if updated, and restarts services:
+```bash
+sudo /opt/racecoordinatorai/scripts/update_app.sh ~/Downloads/RaceCoordinatorAI-Linux-ARM64*.tar.gz
+```
+
+##### Method 2: Extract & Run `install.sh` from the Downloaded Package
+```bash
+# Extract the downloaded archive
+tar -xzf ~/Downloads/RaceCoordinatorAI-Linux-ARM64*.tar.gz
+
+# Run the installer over the existing directory (preserves database & settings)
+cd RaceCoordinator_Linux_ARM64
+sudo ./install.sh
+```
+
+##### Method 3: Direct Manual File Extraction
+If you prefer to perform each step by hand:
+1. **Stop the active services**:
+   ```bash
+   sudo systemctl stop racecoordinatorai-kiosk racecoordinatorai
+   ```
+2. **Extract updated files over `/opt/racecoordinatorai`**:
+   ```bash
+   sudo tar -xzf ~/Downloads/RaceCoordinatorAI-Linux-ARM64*.tar.gz -C /opt/racecoordinatorai/ --strip-components=1
+   ```
+3. **Ensure correct permissions**:
+   ```bash
+   sudo chown -R arduino:arduino /opt/racecoordinatorai
+   ```
+4. **Re-flash microcontroller firmware (if sketch was updated)**:
+   ```bash
+   cd /opt/racecoordinatorai/arduino/racecoordinatorai_sketch
+   arduino-cli compile --fqbn arduino:zephyr:unoq .
+   arduino-cli upload -p 172.17.0.1 --fqbn arduino:zephyr:unoq --upload-field password=arduino .
+   ```
+5. **Restart services**:
+   ```bash
+   sudo systemctl restart racecoordinatorai
+   sudo systemctl restart racecoordinatorai-kiosk
+   ```
+
 ### Step 4: Flash Microcontroller Firmware (With FastLED Support)
 Compile and upload the hardware sketch to the onboard MCU:
 ```bash
@@ -177,3 +222,7 @@ When connected to Wi-Fi, Race Coordinator AI checks GitHub Releases automaticall
 1. **App Update**: Downloads the new Linux ARM64 package in the background.
 2. **Service Restart**: Restarts `racecoordinatorai.service` via systemd seamlessly.
 3. **MCU Sketch Sync**: Automatically re-flashes the STM32 microcontroller firmware using `arduino-cli` if `racecoordinatorai_sketch.ino` was updated.
+
+> [!TIP]
+> If you downloaded a `.tar.gz` release archive via the **Download Update** link in the browser, see [Upgrading an Existing Installation Manually](#upgrading-an-existing-installation-manually-from-downloaded-archive) above to install the update from your downloaded file.
+

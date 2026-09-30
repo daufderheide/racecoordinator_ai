@@ -128,20 +128,32 @@ tar -xzf "$ARCHIVE_PATH" -C /tmp/rc_update_extract/
 
 # Copy updated files over installation (handling root directory in archive if present)
 if [ -d "/tmp/rc_update_extract/RaceCoordinator_Linux_ARM64" ]; then
-  cp -r /tmp/rc_update_extract/RaceCoordinator_Linux_ARM64/* "$TARGET_DIR/"
+  cp -rf --remove-destination /tmp/rc_update_extract/RaceCoordinator_Linux_ARM64/* "$TARGET_DIR/"
 else
-  cp -r /tmp/rc_update_extract/* "$TARGET_DIR/"
+  cp -rf --remove-destination /tmp/rc_update_extract/* "$TARGET_DIR/"
 fi
+chmod +x "$TARGET_DIR/scripts/"*.sh "$TARGET_DIR/"*.sh 2>/dev/null || true
 rm -rf /tmp/rc_update_extract
+rm -rf "$TARGET_DIR/RaceCoordinator_Linux_ARM64"
 
 # Flash MCU sketch if arduino-cli is installed
 if command -v arduino-cli >/dev/null 2>&1; then
   echo "Checking microcontroller core and compiling firmware..."
+  if ! arduino-cli core list 2>/dev/null | grep -q "arduino:zephyr"; then
+    echo "Installing Zephyr board core..."
+    arduino-cli core update-index >/dev/null 2>&1 || true
+    arduino-cli core install arduino:zephyr >/dev/null 2>&1 || true
+  fi
+
   BOARD_INFO=$(arduino-cli board list 2>/dev/null | grep -i "uno.*q" | head -n1)
   PORT=$(echo "$BOARD_INFO" | awk '{print $1}')
-  FQBN=$(echo "$BOARD_INFO" | awk '{print $6}')
-  [ -z "$FQBN" ] && FQBN="arduino:zephyr:unoq"
-  [ -z "$PORT" ] && PORT="172.17.0.1"
+  FQBN=$(echo "$BOARD_INFO" | grep -o 'arduino:[a-zA-Z0-9_:]*' | head -n1)
+  if [ -z "$FQBN" ] || [ "$FQBN" = "arduino:stm32" ] || [ "$FQBN" = "Q" ]; then
+    FQBN="arduino:zephyr:unoq"
+  fi
+  if [ -z "$PORT" ]; then
+    PORT="172.17.0.1"
+  fi
 
   if [ -d "$TARGET_DIR/arduino/racecoordinatorai_sketch" ]; then
     echo "Compiling and uploading sketch to $FQBN on $PORT..."
@@ -272,7 +284,7 @@ if command -v arduino-cli >/dev/null 2>&1; then
   if ! arduino-cli core list 2>/dev/null | grep -q "arduino:zephyr"; then
     echo "Installing Zephyr board core..."
     arduino-cli core update-index >/dev/null 2>&1 || true
-    arduino-cli core install arduino:zephyr >/dev/null 2>&1 || arduino-cli core install arduino:stm32 >/dev/null 2>&1 || true
+    arduino-cli core install arduino:zephyr >/dev/null 2>&1 || true
   fi
 
   echo "Installing required Arduino libraries (Arduino_RouterBridge, FastLED)..."
@@ -282,9 +294,13 @@ if command -v arduino-cli >/dev/null 2>&1; then
 
   BOARD_INFO=$(arduino-cli board list 2>/dev/null | grep -i "uno.*q" | head -n1)
   PORT=$(echo "$BOARD_INFO" | awk '{print $1}')
-  FQBN=$(echo "$BOARD_INFO" | awk '{print $6}')
-  [ -z "$FQBN" ] && FQBN="arduino:zephyr:unoq"
-  [ -z "$PORT" ] && PORT="172.17.0.1"
+  FQBN=$(echo "$BOARD_INFO" | grep -o 'arduino:[a-zA-Z0-9_:]*' | head -n1)
+  if [ -z "$FQBN" ] || [ "$FQBN" = "arduino:stm32" ] || [ "$FQBN" = "Q" ]; then
+    FQBN="arduino:zephyr:unoq"
+  fi
+  if [ -z "$PORT" ]; then
+    PORT="172.17.0.1"
+  fi
 
   if [ -d "$INSTALL_DIR/arduino/racecoordinatorai_sketch" ]; then
     echo "Compiling and uploading sketch to $FQBN on $PORT..."
