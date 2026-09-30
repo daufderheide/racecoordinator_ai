@@ -24,13 +24,12 @@ export function ensureWidgetSelectedHelper(comp: any, ui?: CustomUI): void {
     comp.selectedWidgetId = findDefaultWidgetId(layout);
   }
   const selectedWidget =
-    comp.selectedWidget ||
-    widgets.find((w: any) => w.id === comp.selectedWidgetId);
-  if (selectedWidget?.widgetType === "countdown") {
-    const uiId = ui?.entity_id || comp.activeCustomUiId;
-    if (uiId && comp.countdownPreviewActiveByUi) {
-      comp.countdownPreviewActiveByUi[uiId] = true;
-    }
+    layout?.widgets?.find((w: any) => w.id === comp.selectedWidgetId) ||
+    comp.selectedWidget;
+  const uiId = ui?.entity_id || comp.activeCustomUiId;
+  if (uiId && comp.countdownPreviewActiveByUi) {
+    comp.countdownPreviewActiveByUi[uiId] =
+      selectedWidget?.widgetType === "countdown";
   }
 }
 
@@ -163,8 +162,9 @@ export function handleWidgetSelection(
   const layout = comp.getLayout(ui || comp.activeCustomUi);
   comp.selectedWidgetId = id || findDefaultWidgetId(layout);
   const selectedWidget =
-    comp.selectedWidget ||
-    layout?.widgets?.find((w: any) => w.id === comp.selectedWidgetId);
+    layout?.widgets?.find((w: any) => w.id === comp.selectedWidgetId) ||
+    comp.selectedWidget;
+  const uiId = ui?.entity_id || comp.activeCustomUiId;
   if (comp.selectedWidgetId && selectedWidget) {
     if (applyWidgetDefaultSettings(selectedWidget)) {
       if (ui) ui.layoutJson = JSON.stringify(comp.getLayout(ui));
@@ -172,12 +172,12 @@ export function handleWidgetSelection(
         comp.editingState.settings = { ...comp.editingState.settings };
       }
     }
-    if (selectedWidget.widgetType === "countdown") {
-      const uiId = ui?.entity_id || comp.activeCustomUiId;
-      if (uiId && comp.countdownPreviewActiveByUi) {
-        comp.countdownPreviewActiveByUi[uiId] = true;
-      }
+    if (uiId && comp.countdownPreviewActiveByUi) {
+      comp.countdownPreviewActiveByUi[uiId] =
+        selectedWidget.widgetType === "countdown";
     }
+  } else if (uiId && comp.countdownPreviewActiveByUi) {
+    comp.countdownPreviewActiveByUi[uiId] = false;
   }
   comp.cdr.markForCheck();
 }
@@ -233,6 +233,12 @@ export function handleRemoveSelectedWidget(comp: any, ui?: CustomUI): void {
   const laneView = newWidgets.find((w: any) => w.widgetType === "lane-view");
   const nextWidget = laneView || newWidgets[0];
   comp.selectedWidgetId = nextWidget ? nextWidget.id : null;
+
+  const uiId = targetUi?.entity_id || comp.activeCustomUiId;
+  if (uiId && comp.countdownPreviewActiveByUi) {
+    comp.countdownPreviewActiveByUi[uiId] =
+      nextWidget?.widgetType === "countdown";
+  }
 
   comp.onLayoutChanged(updatedLayout, targetUi);
 }
@@ -354,6 +360,14 @@ export function handleLayoutChanged(
       !widgets.some((w: any) => w.id === comp.selectedWidgetId))
   ) {
     comp.selectedWidgetId = findDefaultWidgetId(newLayout);
+    const selectedWidget = widgets.find(
+      (w: any) => w.id === comp.selectedWidgetId,
+    );
+    const uiId = ui?.entity_id || comp.activeCustomUiId;
+    if (uiId && comp.countdownPreviewActiveByUi) {
+      comp.countdownPreviewActiveByUi[uiId] =
+        selectedWidget?.widgetType === "countdown";
+    }
   }
   comp.captureState();
   comp.cdr.markForCheck();

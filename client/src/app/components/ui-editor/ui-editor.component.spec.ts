@@ -4274,6 +4274,30 @@ describe("UIEditorComponent", () => {
       expect(component.isCountdownPreviewActive(customUi)).toBeTrue();
     });
 
+    it("should automatically deactivate countdown preview when non-countdown widget is selected", () => {
+      const customUi = {
+        entity_id: "test-ui-auto-hide-countdown",
+        name: "Test UI",
+      } as CustomUI;
+      const countdownWidget = {
+        id: "w-countdown-auto",
+        widgetType: "countdown",
+      } as any;
+      const laneViewWidget = {
+        id: "w-lane-view-auto",
+        widgetType: "lane-view",
+      } as any;
+      spyOn(component, "getLayout").and.returnValue({
+        widgets: [countdownWidget, laneViewWidget],
+      } as any);
+
+      component.onWidgetSelected("w-countdown-auto", customUi);
+      expect(component.isCountdownPreviewActive(customUi)).toBeTrue();
+
+      component.onWidgetSelected("w-lane-view-auto", customUi);
+      expect(component.isCountdownPreviewActive(customUi)).toBeFalse();
+    });
+
     it("should report countdown preview as active when selected widget is countdown and state is undefined", () => {
       const customUi = {
         entity_id: "test-ui-countdown-default",
