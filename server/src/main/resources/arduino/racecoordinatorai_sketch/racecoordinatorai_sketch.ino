@@ -47,10 +47,11 @@
    sketch if you want to use FastLED addressable RGB LED light strips.
 */
 
-// Comment in to enable rgb led support.  You'll also likely
-// need to make other changes.  Search for WITH_FAST_LED and
-// the places you need to modify should be clearly marked.
+// Enable rgb led support on architectures supported by FastLED (AVR, ESP32, SAMD, RP2040, etc.).
+// FastLED is not supported on STM32U5 / Zephyr CMSIS 6 architecture (Arduino Uno Q).
+#if !defined(ARDUINO_ARCH_ZEPHYR) && !defined(ARDUINO_UNO_Q) && !defined(CONFIG_SOC_SERIES_STM32U5X)
 #define WITH_FAST_LED
+#endif
 
 // Comment in to enable the watch dog, which is a slightly
 // better way to do a software reset of the board.  Unfortunately
@@ -1247,6 +1248,13 @@ void softwareReboot() {
   }
 #else
   SERIAL_PRINTLN(F("Doing software reboot"));
+#if defined(__AVR__)
   asm volatile("jmp 0");
+#elif defined(__arm__) || defined(__thumb__) || defined(ARDUINO_ARCH_ZEPHYR) || defined(ARDUINO_UNO_Q) || defined(ARDUINO_ARCH_STM32)
+  NVIC_SystemReset();
+#else
+  void (*resetFunc)(void) = 0;
+  resetFunc();
+#endif
 #endif
 }
