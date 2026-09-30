@@ -47,30 +47,51 @@ function findPreviousTag(currentTag, isPrerelease, customTags) {
   const currentParsed = parseSemver(currentTag);
   const isPre = isPrerelease === 'true' || isPrerelease === true || currentTag.includes('beta') || currentTag.includes('alpha');
 
-  if (!isPre) {
-    // For official release: look for previous highest official release strictly older than currentTag
-    const officialTags = tags.filter(t => {
-      const p = parseSemver(t);
-      if (p.prereleaseType) return false;
-      // Must be strictly older than currentTag
-      return compareSemver(currentTag, t) < 0;
-    }).sort(compareSemver);
+  // Both official releases and beta prereleases accumulate changes from the previous official release
+  const officialTags = tags.filter(t => {
+    const p = parseSemver(t);
+    if (p.prereleaseType) return false;
+    // Must be strictly older than currentTag
+    return compareSemver(currentTag, t) < 0;
+  }).sort(compareSemver);
 
-    return officialTags.length > 0 ? officialTags[0] : null;
-  } else {
-    // For beta/prerelease: look for any release tag strictly older than currentTag
-    const olderTags = tags.filter(t => {
-      if (t === currentTag) return false;
-      return compareSemver(currentTag, t) < 0;
-    }).sort(compareSemver);
-
-    return olderTags.length > 0 ? olderTags[0] : null;
+  if (officialTags.length > 0) {
+    return officialTags[0];
   }
+
+  // Official releases only compare against prior official releases (return null for initial release)
+  if (!isPre) {
+    return null;
+  }
+
+  // Fallback for pre-1.0 development (when no official tag existed yet)
+  const olderTags = tags.filter(t => {
+    if (t === currentTag) return false;
+    return compareSemver(currentTag, t) < 0;
+  }).sort(compareSemver);
+
+  return olderTags.length > 0 ? olderTags[0] : null;
 }
 
 function getCommits(fromTag, toRef) {
   try {
-    const range = fromTag ? `${fromTag}..${toRef || 'HEAD'}` : (toRef || 'HEAD');
+    let validFromTag = fromTag;
+    if (validFromTag) {
+      try {
+        execSync(`git rev-parse --verify ${validFromTag}`, { stdio: 'ignore' });
+      } catch {
+        validFromTag = null;
+      }
+    }
+    let targetRef = toRef || 'HEAD';
+    if (toRef) {
+      try {
+        execSync(`git rev-parse --verify ${toRef}`, { stdio: 'ignore' });
+      } catch {
+        targetRef = 'HEAD';
+      }
+    }
+    const range = validFromTag ? `${validFromTag}..${targetRef}` : targetRef;
     const cmd = `git log ${range} --pretty=format:"%h|%s|%an"`;
     const output = execSync(cmd, { encoding: 'utf8' }).trim();
     if (!output) return [];
@@ -220,29 +241,75 @@ function generateChangelog(tag, isPrerelease, options = {}) {
   return notes;
 }
 
+function parseChangelogSections(content) {
+  const headerMatch = content.match(/^(# Changelog[\s\S]*?\n\n)(?=## \[)/);
+  let header;
+  let body;
+  if (headerMatch) {
+    header = headerMatch[1];
+    body = content.slice(headerMatch[1].length);
+  } else {
+    const simpleHeaderMatch = content.match(/^(# Changelog[\s\S]*?\n\n)/);
+    if (simpleHeaderMatch) {
+      header = simpleHeaderMatch[1];
+      body = content.slice(simpleHeaderMatch[1].length);
+    } else {
+      header = '# Changelog\n\n';
+      body = content;
+    }
+  }
+
+  const rawSections = body.split(/(?=^## \[)/m).filter(s => s.trim().length > 0);
+  const sections = rawSections.map(s => {
+    const tagMatch = s.match(/^## \[([^\]]+)\]/);
+    const tag = tagMatch ? tagMatch[1] : '';
+    return { tag, content: s.trim() };
+  }).filter(s => s.tag);
+
+  return { header, sections };
+}
+
+function filterChangelogSections(sections) {
+  const isBetaTag = (t) => {
+    const p = parseSemver(t);
+    return Boolean(p.prereleaseType === 'beta' || t.includes('beta'));
+  };
+
+  const officialSections = sections.filter(s => !isBetaTag(s.tag)).sort((a, b) => compareSemver(a.tag, b.tag));
+  const betaSections = sections.filter(s => isBetaTag(s.tag)).sort((a, b) => compareSemver(a.tag, b.tag));
+
+  let finalBeta = null;
+  if (betaSections.length > 0) {
+    const newestBeta = betaSections[0];
+    if (officialSections.length === 0 || compareSemver(newestBeta.tag, officialSections[0].tag) < 0) {
+      finalBeta = newestBeta;
+    }
+  }
+
+  return finalBeta ? [finalBeta, ...officialSections] : officialSections;
+}
+
 function updateChangelogMarkdown(filePath, tag, releaseNotes, dateStr) {
   const date = dateStr || new Date().toISOString().substring(0, 10);
-  const newEntry = `## [${tag}] - ${date}\n\n${releaseNotes}\n`;
+  const newSection = {
+    tag,
+    content: `## [${tag}] - ${date}\n\n${releaseNotes}`.trim()
+  };
 
   if (!fs.existsSync(filePath)) {
-    const initialContent = `# Changelog\n\nAll notable changes to Race Coordinator AI are documented in this file.\n\n${newEntry}\n`;
+    const initialContent = `# Changelog\n\nAll notable changes to Race Coordinator AI are documented in this file.\n\n${newSection.content}\n`;
     fs.writeFileSync(filePath, initialContent, 'utf8');
     return initialContent;
   }
 
   const content = fs.readFileSync(filePath, 'utf8');
-  if (content.includes(`## [${tag}]`)) {
-    return content; // already recorded
-  }
+  const { header, sections } = parseChangelogSections(content);
 
-  const headerRegex = /(# Changelog[\s\S]*?\n\n)/;
-  if (headerRegex.test(content)) {
-    const updated = content.replace(headerRegex, `$1${newEntry}\n`);
-    fs.writeFileSync(filePath, updated, 'utf8');
-    return updated;
-  }
+  // Combine new section with existing sections, excluding any entry with the same tag
+  const combined = [newSection, ...sections.filter(s => s.tag !== tag)];
+  const filtered = filterChangelogSections(combined);
 
-  const updated = `# Changelog\n\n${newEntry}\n${content}`;
+  const updated = `${header}${filtered.map(s => s.content).join('\n\n')}\n`;
   fs.writeFileSync(filePath, updated, 'utf8');
   return updated;
 }
@@ -289,9 +356,12 @@ module.exports = {
   findPreviousTag,
   parseSemver,
   compareSemver,
+  getCommits,
   formatInitialReleaseSection,
   formatBetaCommitList,
   formatOfficialReleaseNotes,
   generateChangelog,
+  parseChangelogSections,
+  filterChangelogSections,
   updateChangelogMarkdown
 };

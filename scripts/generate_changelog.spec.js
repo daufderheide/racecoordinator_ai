@@ -5,10 +5,13 @@ const path = require('path');
 const {
   findPreviousTag,
   compareSemver,
+  getCommits,
   formatInitialReleaseSection,
   formatBetaCommitList,
   formatOfficialReleaseNotes,
   generateChangelog,
+  parseChangelogSections,
+  filterChangelogSections,
   updateChangelogMarkdown
 } = require('./generate_changelog');
 
@@ -39,10 +42,24 @@ describe('generate_changelog', () => {
       assert.strictEqual(prev, null);
     });
 
-    test('should find previous tag for beta release', () => {
+    test('should find previous tag for beta release during pre-1.0 development', () => {
       const customTags = ['v1.0.0', 'v1.0.0-beta.1', 'v1.0.0-beta.2'];
       const prev = findPreviousTag('v1.0.0-beta.3', true, customTags);
       assert.strictEqual(prev, 'v1.0.0-beta.2');
+    });
+
+    test('should find previous official tag for beta releases to accumulate all changes', () => {
+      const customTags = ['v1.0.0', 'v1.0.1-beta.1'];
+      const prev = findPreviousTag('v1.0.1-beta.2', true, customTags);
+      assert.strictEqual(prev, 'v1.0.0');
+    });
+
+    test('should ensure both last beta and official release share identical previous official tag', () => {
+      const customTags = ['v1.0.0', 'v1.0.1-beta.1', 'v1.0.1-beta.2'];
+      const betaPrev = findPreviousTag('v1.0.1-beta.3', true, customTags);
+      const officialPrev = findPreviousTag('v1.0.1', false, customTags);
+      assert.strictEqual(betaPrev, 'v1.0.0');
+      assert.strictEqual(officialPrev, 'v1.0.0');
     });
   });
 
@@ -150,9 +167,50 @@ describe('generate_changelog', () => {
       });
       assert.ok(output.includes('resolved edge case'));
     });
+
+    test('should gracefully handle uncreated tag in getCommits by falling back to HEAD', () => {
+      // Pass an uncreated tag as toRef and verify getCommits does not throw or fail
+      const commits = getCommits('v1.0.0', 'v99.99.99-uncreated-tag');
+      assert.ok(Array.isArray(commits));
+    });
   });
 
-  describe('updateChangelogMarkdown', () => {
+  describe('updateChangelogMarkdown & beta retention', () => {
+    test('filterChangelogSections should keep only the latest beta version and all official versions', () => {
+      const sections = [
+        { tag: 'v1.0.1-beta.4', content: '## [v1.0.1-beta.4]' },
+        { tag: 'v1.0.1-beta.3', content: '## [v1.0.1-beta.3]' },
+        { tag: 'v1.0.1-beta.2', content: '## [v1.0.1-beta.2]' },
+        { tag: 'v1.0.1-beta.1', content: '## [v1.0.1-beta.1]' },
+        { tag: 'v1.0.0', content: '## [v1.0.0]' }
+      ];
+
+      const filtered = filterChangelogSections(sections);
+      assert.deepStrictEqual(filtered.map(s => s.tag), ['v1.0.1-beta.4', 'v1.0.0']);
+    });
+
+    test('filterChangelogSections should remove all betas when official release is present and newer', () => {
+      const sections = [
+        { tag: 'v1.0.1', content: '## [v1.0.1]' },
+        { tag: 'v1.0.1-beta.4', content: '## [v1.0.1-beta.4]' },
+        { tag: 'v1.0.0', content: '## [v1.0.0]' }
+      ];
+
+      const filtered = filterChangelogSections(sections);
+      assert.deepStrictEqual(filtered.map(s => s.tag), ['v1.0.1', 'v1.0.0']);
+    });
+
+    test('filterChangelogSections should keep a new beta for the next release cycle alongside official releases', () => {
+      const sections = [
+        { tag: 'v1.0.2-beta.1', content: '## [v1.0.2-beta.1]' },
+        { tag: 'v1.0.1', content: '## [v1.0.1]' },
+        { tag: 'v1.0.0', content: '## [v1.0.0]' }
+      ];
+
+      const filtered = filterChangelogSections(sections);
+      assert.deepStrictEqual(filtered.map(s => s.tag), ['v1.0.2-beta.1', 'v1.0.1', 'v1.0.0']);
+    });
+
     test('should create and update changelog markdown file', () => {
       const tempPath = path.resolve(__dirname, '..', 'scratch_changelog_test.md');
       try {
@@ -167,6 +225,44 @@ describe('generate_changelog', () => {
         content = fs.readFileSync(tempPath, 'utf8');
         assert.ok(content.includes('## [v1.1.0] - 2026-09-01'));
         assert.ok(content.indexOf('v1.1.0') < content.indexOf('v1.0.0')); // v1.1.0 prepended before v1.0.0
+      } finally {
+        if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath);
+      }
+    });
+
+    test('should replace older beta with newer beta and subsequently remove beta upon official release', () => {
+      const tempPath = path.resolve(__dirname, '..', 'scratch_beta_lifecycle_test.md');
+      try {
+        // 1. Initial official release
+        updateChangelogMarkdown(tempPath, 'v1.0.0', 'Initial official release', '2026-08-20');
+
+        // 2. First beta for 1.0.1
+        updateChangelogMarkdown(tempPath, 'v1.0.1-beta.1', 'Beta 1 fixes', '2026-08-25');
+        let content = fs.readFileSync(tempPath, 'utf8');
+        assert.ok(content.includes('## [v1.0.1-beta.1] - 2026-08-25'));
+        assert.ok(content.includes('## [v1.0.0] - 2026-08-20'));
+
+        // 3. Second beta for 1.0.1 replaces first beta
+        updateChangelogMarkdown(tempPath, 'v1.0.1-beta.2', 'Beta 2 cumulative fixes', '2026-08-28');
+        content = fs.readFileSync(tempPath, 'utf8');
+        assert.ok(content.includes('## [v1.0.1-beta.2] - 2026-08-28'));
+        assert.ok(!content.includes('## [v1.0.1-beta.1]'));
+        assert.ok(content.includes('## [v1.0.0] - 2026-08-20'));
+
+        // 4. Official v1.0.1 release removes beta.2
+        updateChangelogMarkdown(tempPath, 'v1.0.1', 'Official 1.0.1 release notes', '2026-09-01');
+        content = fs.readFileSync(tempPath, 'utf8');
+        assert.ok(content.includes('## [v1.0.1] - 2026-09-01'));
+        assert.ok(!content.includes('## [v1.0.1-beta.2]'));
+        assert.ok(!content.includes('## [v1.0.1-beta.1]'));
+        assert.ok(content.includes('## [v1.0.0] - 2026-08-20'));
+
+        // 5. Next cycle beta 1.0.2-beta.1 appears alongside 1.0.1 and 1.0.0
+        updateChangelogMarkdown(tempPath, 'v1.0.2-beta.1', 'Beta 1 for 1.0.2', '2026-09-10');
+        content = fs.readFileSync(tempPath, 'utf8');
+        assert.ok(content.includes('## [v1.0.2-beta.1] - 2026-09-10'));
+        assert.ok(content.includes('## [v1.0.1] - 2026-09-01'));
+        assert.ok(content.includes('## [v1.0.0] - 2026-08-20'));
       } finally {
         if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath);
       }
