@@ -68,6 +68,8 @@ export class CustomSelectComponent
   compareWith = input<(o1: any, o2: any) => boolean>(
     (o1: any, o2: any) => o1 === o2,
   );
+  extendToPageBottom = input(false, { transform: booleanAttribute });
+  maxDropdownHeight = input<number | string | undefined>(undefined);
   readonly change = output<any>();
 
   @ContentChildren(CustomOptionComponent)
@@ -76,6 +78,7 @@ export class CustomSelectComponent
   isOpen = false;
   openUpward = false;
   openRightAligned = false;
+  calculatedMaxHeight: string | null = null;
   value = model<any>(undefined);
   selectedLabel: string = "";
 
@@ -97,6 +100,9 @@ export class CustomSelectComponent
     this.customOptions.changes.subscribe(() => {
       this.updateSelectedLabel();
       if (this.isOpen) {
+        if (this.extendToPageBottom()) {
+          this.checkDropdownPosition();
+        }
         this.scrollToSelectedOption();
       }
     });
@@ -152,14 +158,41 @@ export class CustomSelectComponent
     try {
       const el = this.elementRef.nativeElement as HTMLElement;
       const rect = el.getBoundingClientRect();
-      const dropdownHeight = 250;
-      const spaceBelow = window.innerHeight - rect.bottom;
+      const defaultDropdownHeight = 250;
+      const innerHeight =
+        typeof window !== "undefined" && window.innerHeight > 0
+          ? window.innerHeight
+          : 768;
+      const innerWidth =
+        typeof window !== "undefined" && window.innerWidth > 0
+          ? window.innerWidth
+          : 1024;
+      const spaceBelow = innerHeight - rect.bottom;
       const spaceAbove = rect.top;
-      this.openUpward = spaceBelow < dropdownHeight && spaceAbove > spaceBelow;
-      this.openRightAligned = rect.left + 350 > window.innerWidth;
+
+      const threshold = this.extendToPageBottom() ? 200 : defaultDropdownHeight;
+      this.openUpward = spaceBelow < threshold && spaceAbove > spaceBelow;
+      this.openRightAligned = rect.left + 350 > innerWidth;
+
+      if (this.extendToPageBottom()) {
+        const bottomPadding = 16;
+        const availableHeight = this.openUpward
+          ? Math.max(100, Math.floor(spaceAbove - bottomPadding))
+          : Math.max(100, Math.floor(spaceBelow - bottomPadding));
+        this.calculatedMaxHeight = `${availableHeight}px`;
+      } else if (
+        this.maxDropdownHeight() !== undefined &&
+        this.maxDropdownHeight() !== null
+      ) {
+        const mh = this.maxDropdownHeight();
+        this.calculatedMaxHeight = typeof mh === "number" ? `${mh}px` : `${mh}`;
+      } else {
+        this.calculatedMaxHeight = null;
+      }
     } catch {
       this.openUpward = false;
       this.openRightAligned = false;
+      this.calculatedMaxHeight = null;
     }
   }
 
@@ -204,6 +237,22 @@ export class CustomSelectComponent
     this.onChange(this.value());
     this.change.emit(this.value());
     this.isOpen = false;
+  }
+
+  @HostListener("window:resize")
+  onWindowResize() {
+    if (this.isOpen) {
+      this.checkDropdownPosition();
+      this.cdr.markForCheck();
+    }
+  }
+
+  @HostListener("window:scroll")
+  onWindowScroll() {
+    if (this.isOpen && this.extendToPageBottom()) {
+      this.checkDropdownPosition();
+      this.cdr.markForCheck();
+    }
   }
 
   @HostListener("keydown.escape")

@@ -19,6 +19,7 @@
       class="custom-select-dropdown"
       [class.open-upward]="openUpward"
       [class.align-right]="openRightAligned"
+      [style.max-height]="calculatedMaxHeight"
     >
       @for (option of customOptions; track option.value() ?? $index) {
         <div

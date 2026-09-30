@@ -22,7 +22,11 @@ class MockTranslatePipe implements PipeTransform {
   standalone: true,
   imports: [CustomSelectComponent, CustomOptionComponent],
   template: `
-    <app-custom-select [value]="val">
+    <app-custom-select
+      [value]="val"
+      [extendToPageBottom]="extendToBottom"
+      [maxDropdownHeight]="maxHeight"
+    >
       <app-custom-option value="opt1" separator>Option 1</app-custom-option>
       <app-custom-option value="opt2">Option 2</app-custom-option>
       <app-custom-option value="opt3" divider>Option 3</app-custom-option>
@@ -32,6 +36,8 @@ class MockTranslatePipe implements PipeTransform {
 })
 class TestHostComponent {
   val = "opt1";
+  extendToBottom = false;
+  maxHeight?: number | string;
 }
 
 describe("CustomSelectComponent", () => {
@@ -378,6 +384,153 @@ describe("CustomSelectComponent", () => {
     expect(select.isOpen).toBeFalse();
     expect(select.value()).toBe("opt2");
     expect(select.selectedLabel).toBe("Option 2");
+  });
+
+  it("should calculate available height to page bottom when extendToPageBottom is true", () => {
+    const hostFixture = TestBed.createComponent(TestHostComponent);
+    hostFixture.componentInstance.extendToBottom = true;
+    hostFixture.detectChanges();
+    const select = hostFixture.debugElement.children[0]
+      .componentInstance as CustomSelectComponent;
+
+    const selectEl = hostFixture.nativeElement.querySelector(
+      "app-custom-select",
+    ) as HTMLElement;
+
+    spyOn(selectEl, "getBoundingClientRect").and.returnValue({
+      top: 20,
+      bottom: 60,
+      left: 100,
+      right: 300,
+      width: 200,
+      height: 40,
+    } as DOMRect);
+    spyOnProperty(window, "innerHeight", "get").and.returnValue(900);
+
+    select.toggleOpen();
+    hostFixture.detectChanges();
+
+    expect(select.openUpward).toBeFalse();
+    // 900 - 60 - 16 = 824px
+    expect(select.calculatedMaxHeight).toBe("824px");
+    const dropdown = hostFixture.nativeElement.querySelector(
+      ".custom-select-dropdown",
+    ) as HTMLElement;
+    expect(dropdown.style.maxHeight).toBe("824px");
+  });
+
+  it("should calculate available height to top when extendToPageBottom is true and opening upward", () => {
+    const hostFixture = TestBed.createComponent(TestHostComponent);
+    hostFixture.componentInstance.extendToBottom = true;
+    hostFixture.detectChanges();
+    const select = hostFixture.debugElement.children[0]
+      .componentInstance as CustomSelectComponent;
+
+    const selectEl = hostFixture.nativeElement.querySelector(
+      "app-custom-select",
+    ) as HTMLElement;
+
+    spyOn(selectEl, "getBoundingClientRect").and.returnValue({
+      top: 600,
+      bottom: 640,
+      left: 100,
+      right: 300,
+      width: 200,
+      height: 40,
+    } as DOMRect);
+    // spaceBelow = 700 - 640 = 60 (< 200 threshold), spaceAbove = 600 (> 60)
+    spyOnProperty(window, "innerHeight", "get").and.returnValue(700);
+
+    select.toggleOpen();
+    hostFixture.detectChanges();
+
+    expect(select.openUpward).toBeTrue();
+    // 600 - 16 = 584px
+    expect(select.calculatedMaxHeight).toBe("584px");
+    const dropdown = hostFixture.nativeElement.querySelector(
+      ".custom-select-dropdown",
+    ) as HTMLElement;
+    expect(dropdown.style.maxHeight).toBe("584px");
+  });
+
+  it("should apply maxDropdownHeight when specified", () => {
+    const hostFixture = TestBed.createComponent(TestHostComponent);
+    hostFixture.componentInstance.maxHeight = 450;
+    hostFixture.detectChanges();
+    const select = hostFixture.debugElement.children[0]
+      .componentInstance as CustomSelectComponent;
+
+    select.toggleOpen();
+    hostFixture.detectChanges();
+
+    expect(select.calculatedMaxHeight).toBe("450px");
+    const dropdown = hostFixture.nativeElement.querySelector(
+      ".custom-select-dropdown",
+    ) as HTMLElement;
+    expect(dropdown.style.maxHeight).toBe("450px");
+  });
+
+  it("should not set calculatedMaxHeight when extendToPageBottom is false and maxHeight is undefined", () => {
+    const hostFixture = TestBed.createComponent(TestHostComponent);
+    hostFixture.detectChanges();
+    const select = hostFixture.debugElement.children[0]
+      .componentInstance as CustomSelectComponent;
+
+    select.toggleOpen();
+    hostFixture.detectChanges();
+
+    expect(select.calculatedMaxHeight).toBeNull();
+    const dropdown = hostFixture.nativeElement.querySelector(
+      ".custom-select-dropdown",
+    ) as HTMLElement;
+    expect(dropdown.style.maxHeight).toBe("");
+  });
+
+  it("should update calculatedMaxHeight on window resize and scroll when open", () => {
+    const hostFixture = TestBed.createComponent(TestHostComponent);
+    hostFixture.componentInstance.extendToBottom = true;
+    hostFixture.detectChanges();
+    const select = hostFixture.debugElement.children[0]
+      .componentInstance as CustomSelectComponent;
+
+    const selectEl = hostFixture.nativeElement.querySelector(
+      "app-custom-select",
+    ) as HTMLElement;
+
+    let currentBottom = 60;
+    spyOn(selectEl, "getBoundingClientRect").and.callFake(
+      () =>
+        ({
+          top: currentBottom - 40,
+          bottom: currentBottom,
+          left: 100,
+          right: 300,
+          width: 200,
+          height: 40,
+        }) as DOMRect,
+    );
+    let currentHeight = 900;
+    spyOnProperty(window, "innerHeight", "get").and.callFake(
+      () => currentHeight,
+    );
+
+    select.toggleOpen();
+    hostFixture.detectChanges();
+    expect(select.calculatedMaxHeight).toBe("824px");
+
+    // Resize window
+    currentHeight = 1000;
+    window.dispatchEvent(new Event("resize"));
+    hostFixture.detectChanges();
+    // 1000 - 60 - 16 = 924px
+    expect(select.calculatedMaxHeight).toBe("924px");
+
+    // Scroll window
+    currentBottom = 80;
+    window.dispatchEvent(new Event("scroll"));
+    hostFixture.detectChanges();
+    // 1000 - 80 - 16 = 904px
+    expect(select.calculatedMaxHeight).toBe("904px");
   });
 });
 
