@@ -24,7 +24,7 @@ L'**Arduino UNO Q** combina un Single Board Computer (SBC) Linux a 64 bit con un
 ## Modalità operative
 
 1. **Modalità display Kiosk (Modello da 4 GB)**: Collega un monitor o una TV HDMI/DisplayPort direttamente alla porta USB-C di Uno Q tramite un adattatore multiporta. La scheda avvia automaticamente Chromium in modalità kiosk a schermo intero (`http://localhost:7070`), consentendo contemporaneamente connessioni di rete remote.
-2. **Modalità dispositivo headless (Attualmente non supportata - Disponibile su richiesta)**: La scheda esegue esclusivamente il server backend e si collega all'hardware della pista, senza monitor o browser locali in esecuzione. Gli utenti accedono all'interfaccia web tramite la rete locale (`http://uno-q.local:7070`). Come indicato sopra, la modalità headless su Uno Q non è supportata per impostazione predefinita, ma può essere aggiunta su richiesta se Uno Q dispone di una connessione di rete.
+2. **Modalità dispositivo headless (Attualmente non supportata - Disponibile su richiesta)**: La scheda esegue esclusivamente il server backend e si collega all'hardware della pista, senza monitor o browser locali in esecuzione. Gli utenti accedono all'interfaccia web tramite la rete locale (`http://<hostname>:7070` o `http://<INDIRIZZO_IP>:7070`). Come indicato sopra, la modalità headless su Uno Q non è supportata per impostazione predefinita, ma può essere aggiunta su richiesta se Uno Q dispone di una connessione di rete.
 
 ---
 
@@ -32,53 +32,132 @@ L'**Arduino UNO Q** combina un Single Board Computer (SBC) Linux a 64 bit con un
 
 ### Passaggio 1: Preparare la scheda e connettersi tramite SSH
 1. Installa **Arduino Linux OS** (Debian 12 arm64) su Uno Q.
-2. Collega la scheda alla rete locale tramite Wi-Fi o Ethernet.
-3. Apri una sessione SSH:
-   ```bash
-   ssh arduino@uno-q.local
-   ```
+2. Collega la scheda alla rete locale tramite Wi-Fi o Ethernet:
+   * **Configurazione Wi-Fi al primo avvio**: All'avvio iniziale, la procedura guidata di configurazione richiederà la configurazione della rete wireless.
+   * **Nota sulla prima connessione**: La connessione Wi-Fi potrebbe non avere effetto immediato e i comandi manuali da terminale come `sudo nmcli dev wifi connect "IlTuo_SSID" password "LaTua_Password"` potrebbero inizialmente fallire al primo avvio. Se ciò si verifica, esegui semplicemente `sudo reboot`. Dopo il riavvio, la scheda di rete wireless si inizializzerà correttamente e si connetterà automaticamente alla rete Wi-Fi configurata.
+   * **Applicare gli aggiornamenti della scheda e del firmware**: Al riavvio (o quando richiesto dal sistema), potrebbe esserti chiesto se desideri aggiornare vari pacchetti e componenti firmware sulla scheda. Si consiglia vivamente di accettare ed eseguire tutti gli aggiornamenti suggeriti, poiché il firmware di fabbrica è spesso obsoleto. Tieni presente che questo aggiornamento iniziale può richiedere del tempo (spesso da 5 a più di 10 minuti a seconda della velocità della rete); lascia che si completi senza interruzioni.
+3. Abilitare SSH sulla scheda e connettersi:
+   * **Abilitare il servizio SSH**: Per impostazione predefinita, il server SSH non è attivo sulla scheda. Dal terminale locale (utilizzando la tastiera e il display collegati alla scheda), abilita e avvia il servizio SSH:
+     ```bash
+     sudo systemctl enable --now ssh
+     ```
+   * **Trovare il nome host e l'indirizzo IP**: Esegui `hostname` e `hostname -I` sulla scheda per scoprire il nome host assegnato e l'indirizzo IP locale (la configurazione di fabbrica assegna spesso un nome univoco come `allianora` anziché `uno-q`):
+     ```bash
+     hostname
+     hostname -I
+     ```
+     *(Nota: `avahi-daemon` non è preinstallato su Arduino Linux OS, quindi i nomi di dominio mDNS `.local` come `uno-q.local` non esistono per impostazione predefinita a meno che non si installi il pacchetto tramite `sudo apt-get install -y avahi-daemon`).*
+   * **Connettersi dal PC**: Apri un terminale sul tuo computer e connettiti utilizzando il nome host o l'indirizzo IP della scheda:
+     ```bash
+     ssh arduino@<hostname>
+     # Oppure connettiti direttamente tramite IP:
+     ssh arduino@<INDIRIZZO_IP>
+     ```
 
 ### Passaggio 2: Installare i prerequisiti
-Installa OpenJDK 11, `arduino-cli`, utilità di visualizzazione e Chromium:
+Installa l'ambiente di runtime Java (`default-jre-headless`), le utilità audio (`espeak-ng`, `alsa-utils`), `chromium` e il gestore delle finestre (`wmctrl`):
 ```bash
 sudo apt-get update
-sudo apt-get install -y openjdk-11-jre-headless espeak-ng alsa-utils git curl unzip xorg nodm chromium-browser
+sudo apt-get install -y default-jre-headless espeak-ng alsa-utils git curl unzip chromium wmctrl
 ```
+*(Nota: Su Debian, il pacchetto del browser si chiama `chromium` anziché `chromium-browser` e `default-jre-headless` fornisce l'ambiente di runtime OpenJDK standard. L'utilità `wmctrl` viene utilizzata dal servizio chiosco per garantire che Race Coordinator AI mantenga il focus della finestra rispetto alle app con avvio automatico del desktop come Arduino App Lab).*
 
-### Passaggio 3: Eseguire il flashing del firmware del microcontrollore (con supporto FastLED)
-Compila e carica lo sketch hardware sulla MCU STM32 integrata:
+Verifica che `arduino-cli` sia installato:
 ```bash
-# Installa il core della scheda STM32 in arduino-cli
-arduino-cli core update-index
-arduino-cli core install arduino:stm32
+arduino-cli version
+```
+*(Se `arduino-cli` non è preinstallato sulla scheda, installalo tramite: `curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | sudo BINDIR=/usr/local/bin sh`).*
 
-# Compila e carica racecoordinatorai_sketch
-cd /opt/racecoordinatorai/arduino/racecoordinatorai_sketch
-arduino-cli compile --fqbn arduino:stm32:uno_q .
-arduino-cli upload -p /dev/ttyACM0 --fqbn arduino:stm32:uno_q .
+### Passaggio 3: Installare il pacchetto dell'applicazione e i servizi Systemd
+Trasferisci `RaceCoordinatorAI-Linux-ARM64.tar.gz` dal tuo computer alla scheda:
+```bash
+# Dal terminale del tuo laptop:
+scp release/RaceCoordinatorAI-Linux-ARM64.tar.gz arduino@<hostname>:~/
 ```
 
-### Passaggio 4: Installare il pacchetto dell'applicazione e i servizi Systemd
-1. Scarica `RaceCoordinatorAI-Linux-ARM64.tar.gz` ed estrailo in `/opt/racecoordinatorai`:
+Scegli uno dei seguenti metodi di installazione:
+
+#### Opzione A: Installazione automatizzata chiavi in mano (Consigliato)
+L'installer automatico gestisce il controllo dei prerequisiti, la configurazione della directory, i permessi seriali, la registrazione dei servizi systemd, il caricamento del firmware del microcontrollore e l'avvio immediato con gestione degli errori:
+```bash
+tar -xzf ~/RaceCoordinatorAI-Linux-ARM64.tar.gz
+cd RaceCoordinator_Linux_ARM64
+sudo ./install.sh
+```
+*(Nota: Eventuali avvisi come `tar: Ignoring unknown extended header...` sono innocui tag di metadati macOS e possono essere ignorati).*
+
+#### Opzione B: Installazione manuale passo-passo (Alternativa)
+Se preferisci il controllo manuale o hai bisogno di personalizzare la configurazione:
+1. **Estrarre i file dell'applicazione in `/opt/racecoordinatorai`**:
    ```bash
    sudo mkdir -p /opt/racecoordinatorai
-   sudo tar -xzf RaceCoordinatorAI-Linux-ARM64.tar.gz -C /opt/racecoordinatorai/
+   sudo tar -xzf ~/RaceCoordinatorAI-Linux-ARM64.tar.gz -C /opt/racecoordinatorai/ --strip-components=1
+   ```
+
+2. **Configurare i permessi e l'accesso al gruppo seriale**:
+   ```bash
    sudo chown -R arduino:arduino /opt/racecoordinatorai
-   ```
-2. Esegui lo script di installazione:
-   ```bash
-   cd /opt/racecoordinatorai
-   sudo ./install.sh
+   sudo usermod -a -G dialout arduino
    ```
 
-3. Avvia i servizi:
+3. **Installare e registrare i servizi systemd**:
    ```bash
-   # Avvia il server backend
-   sudo systemctl start racecoordinatorai
-
-   # (Facoltativo) Abilita il chiosco dello schermo locale su USB-C DisplayPort
-   sudo systemctl enable --now racecoordinatorai-kiosk
+   sudo cp /opt/racecoordinatorai/systemd/racecoordinatorai.service /etc/systemd/system/
+   sudo cp /opt/racecoordinatorai/systemd/racecoordinatorai-kiosk.service /etc/systemd/system/
+   sudo systemctl daemon-reload
+   sudo systemctl enable racecoordinatorai.service
    ```
+
+### Passaggio 4: Eseguire il flashing del firmware del microcontrollore (con supporto FastLED)
+Compila e carica lo sketch hardware sulla MCU integrata:
+```bash
+# Verifica schede e porte rilevate
+arduino-cli board list
+
+# Installa il core della scheda Zephyr in arduino-cli
+arduino-cli core update-index
+arduino-cli core install arduino:zephyr
+
+# Installa le librerie Arduino richieste (bridge router Uno Q e FastLED)
+arduino-cli lib update-index
+arduino-cli lib install Arduino_RouterBridge
+arduino-cli lib install FastLED
+
+# Compila racecoordinatorai_sketch per la MCU Uno Q
+cd /opt/racecoordinatorai/arduino/racecoordinatorai_sketch
+arduino-cli compile --fqbn arduino:zephyr:unoq .
+
+# Carica sulla MCU integrata tramite il bridge di rete interno
+# (Inserisci la password della scheda 'arduino' quando richiesto, o passa --upload-field password=arduino)
+arduino-cli upload -p 172.17.0.1 --fqbn arduino:zephyr:unoq --upload-field password=arduino .
+```
+*(Nota: Come verificato tramite `arduino-cli board list`, il microcontrollore Uno Q esegue Zephyr OS sul bridge di rete interno `172.17.0.1` con FQBN `arduino:zephyr:unoq`. La libreria `Arduino_RouterBridge` è necessaria per la comunicazione seriale attraverso il bridge SoC. Le strisce di luci LED FastLED non sono attualmente supportate sull'architettura STM32U5 / Zephyr Cortex-M33 a causa delle definizioni di registro CMSIS 6, ma tutte le funzionalità principali della pista—sensori di giro, tempi di settore, pulsanti di chiamata e relè di corsia—sono perfettamente operative).*
+
+### Passaggio 5: Avviare i servizi e avviare il display Kiosk
+Avvia il demone backend e abilita il chiosco TV a schermo intero:
+```bash
+# Avvia il server backend
+sudo systemctl start racecoordinatorai
+
+# Hai già abilitato il demone backend in precedenza.
+# Ora abilita il servizio chiosco TV per l'avvio grafico del sistema:
+sudo systemctl enable racecoordinatorai-kiosk.service
+
+# Avvia il display del chiosco TV a schermo intero immediatamente
+sudo systemctl start racecoordinatorai-kiosk.service
+```
+
+---
+
+## Focus della finestra e app di avvio automatico del desktop (es. Arduino App Lab)
+
+Su Arduino Uno Q, Arduino Linux OS avvia «Arduino App Lab» all'accesso al desktop.
+- **Mantenimento automatico del focus**: Per impostazione predefinita, `start_kiosk.sh` utilizza `wmctrl` per portare automaticamente Race Coordinator AI in primo piano e mantenere il focus, assicurando che lo schermo TV sia subito pronto per le gare senza dover cambiare finestra con mouse o tastiera.
+- **Opzionale: Disabilitare App Lab all'avvio**: Per un chiosco dedicato alla pista in cui Arduino App Lab non è necessario all'avvio, puoi disabilitare la sua voce di avvio automatico:
+  ```bash
+  mkdir -p ~/.config/autostart-disabled
+  mv ~/.config/autostart/*app-lab*.desktop ~/.config/autostart-disabled/ 2>/dev/null || true
+  ```
 
 ---
 
