@@ -11,7 +11,9 @@ import com.antigravity.repository.SqliteRepository;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -370,6 +372,25 @@ public class AssetDefaultsInitializer {
       java.io.File file = new java.io.File(assetService.getAssetDir(), filename);
       if (!file.exists() || !file.isFile() || file.length() == 0) {
         return true;
+      }
+      if (id != null && id.startsWith("default_")) {
+        String resourcePath = getDefaultResourcePath(id);
+        if (resourcePath != null) {
+          try {
+            byte[] bundledData = readResource(resourcePath);
+            if (bundledData != null) {
+              if (bundledData.length != file.length()) {
+                return true;
+              }
+              byte[] existingData = Files.readAllBytes(file.toPath());
+              if (!Arrays.equals(bundledData, existingData)) {
+                return true;
+              }
+            }
+          } catch (Exception ignored) {
+            // Keep existing file if reading fails
+          }
+        }
       }
     }
     return false;

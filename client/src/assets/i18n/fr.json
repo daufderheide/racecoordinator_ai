@@ -2190,6 +2190,7 @@
   "UE_INSPECTOR_HEAT_LIST_SUMMARY": "Paramètres du résumé de manche",
   "UE_INSPECTOR_HEAT_LIST_SHOW_COMPLETED_SUMMARY": "Afficher le résumé pour les manches terminées",
   "UE_INSPECTOR_HEAT_LIST_SHOW_ACTIVE_SUMMARY": "Afficher le résumé pour la manche active",
+  "UE_INSPECTOR_HEAT_LIST_SHOW_FUTURE_SUMMARY": "Afficher le résumé pour les manches à venir",
   "UE_INSPECTOR_HEAT_LIST_SUMMARY_COLUMNS": "Colonnes du résumé",
   "UE_INSPECTOR_HEAT_LIST_SUMMARY_COL_POS": "Position",
   "UE_INSPECTOR_HEAT_LIST_SUMMARY_COL_DRIVER": "Pilote",
