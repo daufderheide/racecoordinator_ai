@@ -369,7 +369,22 @@
     </label>
   </div>
 
-  @if (settings().showCompletedSummary || settings().showActiveSummary) {
+  <div class="inspector-section">
+    <label class="inspector-checkbox-label">
+      <input
+        type="checkbox"
+        [(ngModel)]="settings().showFutureSummary"
+        (change)="onSettingsChange()"
+      />
+      {{ "UE_INSPECTOR_HEAT_LIST_SHOW_FUTURE_SUMMARY" | translate }}
+    </label>
+  </div>
+
+  @if (
+    settings().showCompletedSummary ||
+    settings().showActiveSummary ||
+    settings().showFutureSummary
+  ) {
     <!-- Summary Columns -->
     <div class="inspector-section">
       <label class="inspector-label">{{

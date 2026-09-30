@@ -2189,6 +2189,7 @@
   "UE_INSPECTOR_HEAT_LIST_SUMMARY": "Ajustes del resumen de manga",
   "UE_INSPECTOR_HEAT_LIST_SHOW_COMPLETED_SUMMARY": "Mostrar resumen para mangas completadas",
   "UE_INSPECTOR_HEAT_LIST_SHOW_ACTIVE_SUMMARY": "Mostrar resumen para manga activa",
+  "UE_INSPECTOR_HEAT_LIST_SHOW_FUTURE_SUMMARY": "Mostrar resumen para mangas futuras",
   "UE_INSPECTOR_HEAT_LIST_SUMMARY_COLUMNS": "Columnas del resumen",
   "UE_INSPECTOR_HEAT_LIST_SUMMARY_COL_POS": "Posición",
   "UE_INSPECTOR_HEAT_LIST_SUMMARY_COL_DRIVER": "Piloto",

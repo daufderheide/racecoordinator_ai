@@ -2188,6 +2188,7 @@
   "UE_INSPECTOR_HEAT_LIST_SUMMARY": "Impostazioni riepilogo manche",
   "UE_INSPECTOR_HEAT_LIST_SHOW_COMPLETED_SUMMARY": "Mostra riepilogo per le manche completate",
   "UE_INSPECTOR_HEAT_LIST_SHOW_ACTIVE_SUMMARY": "Mostra riepilogo per la manche attiva",
+  "UE_INSPECTOR_HEAT_LIST_SHOW_FUTURE_SUMMARY": "Mostra riepilogo per le manche future",
   "UE_INSPECTOR_HEAT_LIST_SUMMARY_COLUMNS": "Colonne del riepilogo",
   "UE_INSPECTOR_HEAT_LIST_SUMMARY_COL_POS": "Posizione",
   "UE_INSPECTOR_HEAT_LIST_SUMMARY_COL_DRIVER": "Pilota",

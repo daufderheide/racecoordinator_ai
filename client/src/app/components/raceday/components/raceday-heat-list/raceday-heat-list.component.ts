@@ -151,6 +151,10 @@ export class RacedayHeatListComponent implements AfterViewInit, OnDestroy {
     return this.widget()?.customSettings?.["showActiveSummary"] !== false;
   });
 
+  showFutureSummary = computed(() => {
+    return this.widget()?.customSettings?.["showFutureSummary"] === true;
+  });
+
   summaryShowPosition = computed(() => {
     return this.widget()?.customSettings?.["summaryShowPosition"] !== false;
   });
@@ -238,10 +242,12 @@ export class RacedayHeatListComponent implements AfterViewInit, OnDestroy {
       (heatNum === curHeatNum && isRaceOver) ||
       !!h.isCompleted;
     const isActive = isCurrentHeat;
+    const isFuture = !isCompleted && !isActive;
 
     const showSummary =
       (isCompleted && this.showCompletedSummary()) ||
-      (isActive && this.showActiveSummary());
+      (isActive && this.showActiveSummary()) ||
+      (isFuture && this.showFutureSummary());
 
     const lanes = this.buildHeatLanes(h, cur, trackObj, isCompleted, isActive);
 
@@ -333,52 +339,52 @@ export class RacedayHeatListComponent implements AfterViewInit, OnDestroy {
     let formattedMedianLap = "--";
 
     if (isOccupied && hd) {
-      if (typeof hd.rank === "number" && hd.rank > 0 && hd.rank < 90) {
-        rank = hd.rank;
-        formattedRank = String(rank);
-      } else if (standings && Array.isArray(standings)) {
-        const sidIdx = standings.findIndex(
-          (sid: string) =>
-            sid && (sid === hd.objectId || sid === hd.participant?.objectId),
-        );
-        if (sidIdx >= 0) {
-          rank = sidIdx + 1;
-          formattedRank = String(rank);
-        }
-      }
-
-      lapCount = this.extractDriverLaps(hd);
       if (isCompleted || isActive) {
+        if (typeof hd.rank === "number" && hd.rank > 0 && hd.rank < 90) {
+          rank = hd.rank;
+          formattedRank = String(rank);
+        } else if (standings && Array.isArray(standings)) {
+          const sidIdx = standings.findIndex(
+            (sid: string) =>
+              sid && (sid === hd.objectId || sid === hd.participant?.objectId),
+          );
+          if (sidIdx >= 0) {
+            rank = sidIdx + 1;
+            formattedRank = String(rank);
+          }
+        }
+
+        lapCount = this.extractDriverLaps(hd);
         formattedLaps =
           lapDecSetting === "auto"
             ? lapCount % 1 !== 0
               ? lapCount.toFixed(3)
               : String(lapCount)
             : lapCount.toFixed(Number(lapDecSetting));
-      }
 
-      if (typeof hd.bestLapTime === "number" && hd.bestLapTime > 0) {
-        bestLapTime = hd.bestLapTime;
-        formattedBestLap = bestLapTime.toFixed(timeDec);
-      }
-
-      if (typeof hd.gapLeader === "number") {
-        gapLeader = hd.gapLeader;
-        if (gapLeader > 0) {
-          formattedGap = "+" + gapLeader.toFixed(timeDec);
-        } else if (gapLeader === 0 && rank === 1) {
-          formattedGap = "--";
+        if (typeof hd.bestLapTime === "number" && hd.bestLapTime > 0) {
+          bestLapTime = hd.bestLapTime;
+          formattedBestLap = bestLapTime.toFixed(timeDec);
         }
-      }
 
-      if (typeof hd.averageLapTime === "number" && hd.averageLapTime > 0) {
-        averageLapTime = hd.averageLapTime;
-        formattedAvgLap = averageLapTime.toFixed(timeDec);
-      }
+        if (typeof hd.gapLeader === "number") {
+          gapLeader = hd.gapLeader;
+          if (gapLeader > 0) {
+            formattedGap = "+" + gapLeader.toFixed(timeDec);
+          } else if (gapLeader === 0 && rank === 1) {
+            formattedGap = "--";
+          }
+        }
 
-      if (typeof hd.medianLapTime === "number" && hd.medianLapTime > 0) {
-        medianLapTime = hd.medianLapTime;
-        formattedMedianLap = medianLapTime.toFixed(timeDec);
+        if (typeof hd.averageLapTime === "number" && hd.averageLapTime > 0) {
+          averageLapTime = hd.averageLapTime;
+          formattedAvgLap = averageLapTime.toFixed(timeDec);
+        }
+
+        if (typeof hd.medianLapTime === "number" && hd.medianLapTime > 0) {
+          medianLapTime = hd.medianLapTime;
+          formattedMedianLap = medianLapTime.toFixed(timeDec);
+        }
       }
     }
 
@@ -442,31 +448,53 @@ export class RacedayHeatListComponent implements AfterViewInit, OnDestroy {
 
       let rank = 99;
       let formattedRank = "--";
-      if (
-        isOccupied &&
-        typeof lane.rank === "number" &&
-        lane.rank > 0 &&
-        lane.rank < 90
-      ) {
-        rank = lane.rank;
-        formattedRank = String(rank);
-      }
-
-      const laps = typeof lane.lapCount === "number" ? lane.lapCount : 0;
+      let laps = 0;
       let formattedLaps = "--";
+      let bestTime = 0;
+      let formattedBestLap = "--";
+      let gapLeader = 0;
+      let formattedGap = "--";
+      let averageLapTime = 0;
+      let formattedAvgLap = "--";
+      let medianLapTime = 0;
+      let formattedMedianLap = "--";
+
       if (isOccupied && (isCompleted || isActive)) {
+        if (typeof lane.rank === "number" && lane.rank > 0 && lane.rank < 90) {
+          rank = lane.rank;
+          formattedRank = String(rank);
+        }
+
+        laps = typeof lane.lapCount === "number" ? lane.lapCount : 0;
         formattedLaps =
           lapDecSetting === "auto"
             ? laps % 1 !== 0
               ? laps.toFixed(3)
               : String(laps)
             : laps.toFixed(Number(lapDecSetting));
-      }
 
-      const bestTime =
-        typeof lane.bestLapTime === "number" ? lane.bestLapTime : 0;
-      const formattedBestLap =
-        isOccupied && bestTime > 0 ? bestTime.toFixed(timeDec) : "--";
+        bestTime = typeof lane.bestLapTime === "number" ? lane.bestLapTime : 0;
+        if (bestTime > 0) {
+          formattedBestLap = bestTime.toFixed(timeDec);
+        }
+
+        gapLeader = lane.gapLeader || 0;
+        if (gapLeader > 0) {
+          formattedGap = "+" + Number(lane.gapLeader).toFixed(timeDec);
+        } else if (gapLeader === 0 && rank === 1) {
+          formattedGap = "--";
+        }
+
+        averageLapTime = lane.averageLapTime || 0;
+        if (averageLapTime > 0) {
+          formattedAvgLap = Number(lane.averageLapTime).toFixed(timeDec);
+        }
+
+        medianLapTime = lane.medianLapTime || 0;
+        if (medianLapTime > 0) {
+          formattedMedianLap = Number(lane.medianLapTime).toFixed(timeDec);
+        }
+      }
 
       return {
         laneNumber: lane.laneNumber ?? laneIdx + 1,
@@ -484,21 +512,12 @@ export class RacedayHeatListComponent implements AfterViewInit, OnDestroy {
         formattedLaps,
         bestLapTime: bestTime,
         formattedBestLap,
-        gapLeader: lane.gapLeader || 0,
-        formattedGap:
-          lane.gapLeader > 0
-            ? "+" + Number(lane.gapLeader).toFixed(timeDec)
-            : "--",
-        averageLapTime: lane.averageLapTime || 0,
-        formattedAvgLap:
-          lane.averageLapTime > 0
-            ? Number(lane.averageLapTime).toFixed(timeDec)
-            : "--",
-        medianLapTime: lane.medianLapTime || 0,
-        formattedMedianLap:
-          lane.medianLapTime > 0
-            ? Number(lane.medianLapTime).toFixed(timeDec)
-            : "--",
+        gapLeader,
+        formattedGap,
+        averageLapTime,
+        formattedAvgLap,
+        medianLapTime,
+        formattedMedianLap,
       };
     });
   }

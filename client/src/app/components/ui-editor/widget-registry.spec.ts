@@ -85,6 +85,7 @@ describe("WIDGET_REGISTRY", () => {
     expect(heatListSettings["showCurrentHeatTime"]).toBe(true);
     expect(heatListSettings["showCompletedSummary"]).toBe(true);
     expect(heatListSettings["showActiveSummary"]).toBe(true);
+    expect(heatListSettings["showFutureSummary"]).toBe(false);
     expect(heatListSettings["summaryShowPosition"]).toBe(true);
     expect(heatListSettings["summaryShowDriver"]).toBe(true);
     expect(heatListSettings["summaryShowLaps"]).toBe(true);

@@ -2188,6 +2188,7 @@
   "UE_INSPECTOR_HEAT_LIST_SUMMARY": "Lauf-Zusammenfassung",
   "UE_INSPECTOR_HEAT_LIST_SHOW_COMPLETED_SUMMARY": "Zusammenfassung für beendete Läufe anzeigen",
   "UE_INSPECTOR_HEAT_LIST_SHOW_ACTIVE_SUMMARY": "Zusammenfassung für aktiven Lauf anzeigen",
+  "UE_INSPECTOR_HEAT_LIST_SHOW_FUTURE_SUMMARY": "Zusammenfassung für zukünftige Läufe anzeigen",
   "UE_INSPECTOR_HEAT_LIST_SUMMARY_COLUMNS": "Zusammenfassungsspalten",
   "UE_INSPECTOR_HEAT_LIST_SUMMARY_COL_POS": "Position",
   "UE_INSPECTOR_HEAT_LIST_SUMMARY_COL_DRIVER": "Fahrer",

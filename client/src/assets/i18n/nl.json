@@ -2188,6 +2188,7 @@
   "UE_INSPECTOR_HEAT_LIST_SUMMARY": "Heat-overzichtinstellingen",
   "UE_INSPECTOR_HEAT_LIST_SHOW_COMPLETED_SUMMARY": "Overzicht tonen voor voltooide heats",
   "UE_INSPECTOR_HEAT_LIST_SHOW_ACTIVE_SUMMARY": "Overzicht tonen voor actieve heat",
+  "UE_INSPECTOR_HEAT_LIST_SHOW_FUTURE_SUMMARY": "Overzicht tonen voor toekomstige heats",
   "UE_INSPECTOR_HEAT_LIST_SUMMARY_COLUMNS": "Overzichtskolommen",
   "UE_INSPECTOR_HEAT_LIST_SUMMARY_COL_POS": "Positie",
   "UE_INSPECTOR_HEAT_LIST_SUMMARY_COL_DRIVER": "Coureur",

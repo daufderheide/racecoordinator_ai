@@ -124,6 +124,7 @@ export const WIDGET_REGISTRY: Record<string, WidgetRegistryEntry> = {
       showCurrentHeatTime: true,
       showCompletedSummary: true,
       showActiveSummary: true,
+      showFutureSummary: false,
       summaryShowPosition: true,
       summaryShowDriver: true,
       summaryShowLaps: true,
