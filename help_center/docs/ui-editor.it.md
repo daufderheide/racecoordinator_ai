@@ -20,7 +20,7 @@ Per tutti i dettagli sullo sviluppo dei widget, consulta la [Guida ai widget per
 - Ridimensiona, riposiziona e allinea i widget in base alla risoluzione dello schermo. Tutti i widget rimangono delimitati all'interno dell'area di lavoro.
 - **Controlli dell'Ispettore Widget**:
   - **Posizione e dimensioni**: Posiziona e dimensiona con precisione il widget selezionato tramite i campi numerici **X**, **Y**, **Larghezza** e **Altezza**.
-  - **Elimina widget**: Fai clic sull'icona del cestino nell'intestazione dell'ispettore o sul pulsante **Elimina widget** nella barra laterale.
+  - **Elimina widget**: Fai clic sull'icona del cestino nell'intestazione dell'ispettore.
 - **Scorciatoie da tastiera**:
   - <kbd>Canc</kbd> o <kbd>Backspace</kbd>: Rimuove il widget selezionato dal layout.
   - <kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd>: Sposta il widget selezionato di 1px (o 10px tenendo premuto <kbd>Maiusc</kbd>).

@@ -943,12 +943,12 @@
 }
 
 .canvas-action-icon-btn.reset-icon-btn {
-  color: #f59e0b;
+  color: #ef4444;
 }
 
 .canvas-action-icon-btn.reset-icon-btn:hover {
-  color: #fbbf24;
-  background: rgba(245, 158, 11, 0.15);
+  color: #f87171;
+  background: rgba(239, 68, 68, 0.15);
 }
 
 .canvas-action-icon-btn.clear-icon-btn {
@@ -1020,6 +1020,7 @@
 .layout-customizer-toolbox-wrapper > * {
   pointer-events: auto;
 }
+
 
 .inspector-body {
   flex: 1;
@@ -1103,16 +1104,12 @@
   color: #ef4444;
 }
 
-.inspector-delete-btn,
-.delete-widget-btn {
+.inspector-delete-btn {
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: 0.15s ease;
-}
-
-.inspector-delete-btn {
   background: transparent;
   border: none;
   color: #dc2626;
@@ -1127,29 +1124,6 @@
 
 .inspector-delete-btn .material-icons {
   font-size: 20px;
-}
-
-.delete-widget-btn {
-  gap: 6px;
-  width: 100%;
-  padding: 6px 12px;
-  background: rgba(220, 38, 38, 0.12);
-  border: 1px solid rgba(220, 38, 38, 0.5);
-  color: #991b1b;
-  font-size: 12px;
-  font-weight: 700;
-  border-radius: 6px;
-}
-
-.delete-widget-btn:hover {
-  background: #dc2626;
-  color: #ffffff;
-  border-color: #dc2626;
-  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.35);
-}
-
-.delete-widget-btn .material-icons {
-  font-size: 16px;
 }
 
 .inspector-section {

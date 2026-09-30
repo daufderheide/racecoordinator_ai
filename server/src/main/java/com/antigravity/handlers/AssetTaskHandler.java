@@ -220,6 +220,7 @@ public class AssetTaskHandler {
       setContentType(ctx, contentType);
       ctx.header("Accept-Ranges", "bytes");
       ctx.header("Content-Length", String.valueOf(file.length()));
+      ctx.header("Cache-Control", "public, max-age=86400");
       setStream(ctx, new FileInputStream(file));
     } catch (FileNotFoundException e) {
       setStatus(ctx, 404);
@@ -250,6 +251,7 @@ public class AssetTaskHandler {
       setContentType(ctx, contentType);
       ctx.header("Accept-Ranges", "bytes");
       ctx.header("Content-Length", String.valueOf(bytes.length));
+      ctx.header("Cache-Control", "public, max-age=86400");
       setStream(ctx, new ByteArrayInputStream(bytes));
 
       // Self-heal: persist to assetsDir on disk

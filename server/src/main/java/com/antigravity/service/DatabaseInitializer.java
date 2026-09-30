@@ -681,7 +681,7 @@ public class DatabaseInitializer {
     }
 
     String layoutJson = ui.getLayoutJson();
-    if (layoutJson != null && !layoutJson.contains("\"widgetType\":\"countdown\"")) {
+    if (layoutJson != null) {
       String updatedLayoutJson = CustomUI.ensureCountdownWidget(layoutJson);
       if (!updatedLayoutJson.equals(layoutJson)) {
         layoutJson = updatedLayoutJson;

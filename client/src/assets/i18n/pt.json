@@ -2190,6 +2190,7 @@
   "UE_INSPECTOR_HEAT_LIST_SUMMARY": "Configurações do resumo da bateria",
   "UE_INSPECTOR_HEAT_LIST_SHOW_COMPLETED_SUMMARY": "Mostrar resumo para baterias concluídas",
   "UE_INSPECTOR_HEAT_LIST_SHOW_ACTIVE_SUMMARY": "Mostrar resumo para bateria ativa",
+  "UE_INSPECTOR_HEAT_LIST_SHOW_FUTURE_SUMMARY": "Mostrar resumo para baterias futuras",
   "UE_INSPECTOR_HEAT_LIST_SUMMARY_COLUMNS": "Colunas do resumo",
   "UE_INSPECTOR_HEAT_LIST_SUMMARY_COL_POS": "Posição",
   "UE_INSPECTOR_HEAT_LIST_SUMMARY_COL_DRIVER": "Piloto",

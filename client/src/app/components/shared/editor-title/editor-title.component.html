@@ -27,6 +27,7 @@
             class="editor-title-select"
             [value]="selectedId()"
             [disabled]="isEditMode()"
+            [extendToPageBottom]="true"
             (change)="onSelectionChange($event)"
             [title]="
               (isEditMode() ? 'EDITOR_LOCKED_SELECTOR_TOOLTIP' : '') | translate

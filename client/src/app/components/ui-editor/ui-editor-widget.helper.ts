@@ -28,6 +28,14 @@ export function ensureWidgetSelectedHelper(comp: any, ui?: CustomUI): void {
   ) {
     comp.selectedWidgetId = findDefaultWidgetId(layout);
   }
+  const selectedWidget =
+    layout?.widgets?.find((w: any) => w.id === comp.selectedWidgetId) ||
+    comp.selectedWidget;
+  const uiId = ui?.entity_id || comp.activeCustomUiId;
+  if (uiId && comp.countdownPreviewActiveByUi) {
+    comp.countdownPreviewActiveByUi[uiId] =
+      selectedWidget?.widgetType === "countdown";
+  }
 }
 
 export function applyWidgetDefaultSettings(widget: any): boolean {
@@ -158,13 +166,23 @@ export function handleWidgetSelection(
   if (ui) comp.activeCustomUiId = ui.entity_id;
   const layout = comp.getLayout(ui || comp.activeCustomUi);
   comp.selectedWidgetId = id || findDefaultWidgetId(layout);
-  if (comp.selectedWidgetId && comp.selectedWidget) {
-    if (applyWidgetDefaultSettings(comp.selectedWidget)) {
+  const selectedWidget =
+    layout?.widgets?.find((w: any) => w.id === comp.selectedWidgetId) ||
+    comp.selectedWidget;
+  const uiId = ui?.entity_id || comp.activeCustomUiId;
+  if (comp.selectedWidgetId && selectedWidget) {
+    if (applyWidgetDefaultSettings(selectedWidget)) {
       if (ui) ui.layoutJson = JSON.stringify(comp.getLayout(ui));
       if (comp.editingState?.settings) {
         comp.editingState.settings = { ...comp.editingState.settings };
       }
     }
+    if (uiId && comp.countdownPreviewActiveByUi) {
+      comp.countdownPreviewActiveByUi[uiId] =
+        selectedWidget.widgetType === "countdown";
+    }
+  } else if (uiId && comp.countdownPreviewActiveByUi) {
+    comp.countdownPreviewActiveByUi[uiId] = false;
   }
   comp.cdr.markForCheck();
 }
@@ -279,6 +297,12 @@ export function handleRemoveSelectedWidget(comp: any, ui?: CustomUI): void {
   const laneView = newWidgets.find((w: any) => w.widgetType === "lane-view");
   const nextWidget = laneView || newWidgets[0];
   comp.selectedWidgetId = nextWidget ? nextWidget.id : null;
+
+  const uiId = targetUi?.entity_id || comp.activeCustomUiId;
+  if (uiId && comp.countdownPreviewActiveByUi) {
+    comp.countdownPreviewActiveByUi[uiId] =
+      nextWidget?.widgetType === "countdown";
+  }
 
   comp.onLayoutChanged(updatedLayout, targetUi);
 }
@@ -400,6 +424,14 @@ export function handleLayoutChanged(
       !widgets.some((w: any) => w.id === comp.selectedWidgetId))
   ) {
     comp.selectedWidgetId = findDefaultWidgetId(newLayout);
+    const selectedWidget = widgets.find(
+      (w: any) => w.id === comp.selectedWidgetId,
+    );
+    const uiId = ui?.entity_id || comp.activeCustomUiId;
+    if (uiId && comp.countdownPreviewActiveByUi) {
+      comp.countdownPreviewActiveByUi[uiId] =
+        selectedWidget?.widgetType === "countdown";
+    }
   }
   comp.captureState();
   comp.cdr.markForCheck();

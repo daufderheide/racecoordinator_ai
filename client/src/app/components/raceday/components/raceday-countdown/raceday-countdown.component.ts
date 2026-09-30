@@ -55,12 +55,12 @@ export class RacedayCountdownComponent {
     const val =
       this.widget()?.customSettings?.["glowRedOverlap"] ??
       this.widget()?.customSettings?.["glowOverlap"];
-    return typeof val === "number" ? Math.max(0, Math.min(100, val)) : 100;
+    return typeof val === "number" ? Math.max(0, Math.min(100, val)) : 30;
   }
 
   get glowGreenOverlap(): number {
     const val = this.widget()?.customSettings?.["glowGreenOverlap"];
-    return typeof val === "number" ? Math.max(0, Math.min(100, val)) : 100;
+    return typeof val === "number" ? Math.max(0, Math.min(100, val)) : 25;
   }
 
   get glowOverlap(): number {
@@ -336,6 +336,15 @@ export class RacedayCountdownComponent {
             : asset.url;
         }
       }
+    }
+    if (slotKey === THEME_SLOT_KEYS.LAMP_RED_ON) {
+      return "assets/images/defaults/start_red_on.png";
+    }
+    if (slotKey === THEME_SLOT_KEYS.LAMP_RED_DIM) {
+      return "assets/images/defaults/start_red_dim.png";
+    }
+    if (slotKey === THEME_SLOT_KEYS.LAMP_GREEN) {
+      return "assets/images/defaults/start_green.png";
     }
     return "";
   }

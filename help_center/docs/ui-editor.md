@@ -20,7 +20,7 @@ For complete widget development details, see the [Custom Widgets Guide](custom-w
 - Resize, reposition, and align widgets to match your screen resolution. All widgets are bounded to prevent dragging or resizing past the canvas frame.
 - **Widget Inspector Controls**:
   - **Position & Size**: Precisely position and dimension the selected widget using the **X**, **Y**, **Width**, and **Height** numeric inputs.
-  - **Delete Widget**: Click the trash icon in the inspector header or the **Delete Widget** button in the inspector sidebar to remove the selected widget.
+  - **Delete Widget**: Click the trash icon in the inspector header to remove the selected widget.
 - **Keyboard Shortcuts**:
   - <kbd>Delete</kbd> or <kbd>Backspace</kbd>: Removes the selected widget from the layout.
   - <kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd>: Nudges the selected widget by 1px (or 10px holding <kbd>Shift</kbd>).

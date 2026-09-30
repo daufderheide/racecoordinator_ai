@@ -250,4 +250,88 @@ describe("ui-editor-widget.helper", () => {
     expect(comp.captureState).toHaveBeenCalled();
     expect(comp.cdr.markForCheck).toHaveBeenCalled();
   });
+
+  it("should automatically activate countdown preview when countdown widget is selected in handleWidgetSelection", () => {
+    const { handleWidgetSelection } = require("./ui-editor-widget.helper");
+    const countdownWidget = { id: "w-countdown", widgetType: "countdown" };
+    const layout = { widgets: [countdownWidget] };
+    const comp = {
+      activeCustomUiId: "ui-1",
+      countdownPreviewActiveByUi: {} as Record<string, boolean>,
+      getLayout: jasmine.createSpy("getLayout").and.returnValue(layout),
+      cdr: { markForCheck: jasmine.createSpy("markForCheck") },
+    };
+
+    handleWidgetSelection(comp, "w-countdown");
+    expect(comp.countdownPreviewActiveByUi["ui-1"]).toBeTrue();
+    expect(comp.cdr.markForCheck).toHaveBeenCalled();
+  });
+
+  it("should automatically activate countdown preview in ensureWidgetSelectedHelper when countdown widget is selected", () => {
+    const { ensureWidgetSelectedHelper } = require("./ui-editor-widget.helper");
+    const countdownWidget = { id: "w-countdown", widgetType: "countdown" };
+    const layout = { widgets: [countdownWidget] };
+    const comp = {
+      activeCustomUiId: "ui-1",
+      selectedWidgetId: null as string | null,
+      countdownPreviewActiveByUi: {} as Record<string, boolean>,
+      getLayout: jasmine.createSpy("getLayout").and.returnValue(layout),
+    };
+
+    ensureWidgetSelectedHelper(comp);
+    expect(comp.selectedWidgetId).toBe("w-countdown");
+    expect(comp.countdownPreviewActiveByUi["ui-1"]).toBeTrue();
+  });
+
+  it("should automatically deactivate countdown preview when non-countdown widget is selected in handleWidgetSelection", () => {
+    const { handleWidgetSelection } = require("./ui-editor-widget.helper");
+    const countdownWidget = { id: "w-countdown", widgetType: "countdown" };
+    const laneWidget = { id: "w-lane", widgetType: "lane-view" };
+    const layout = { widgets: [countdownWidget, laneWidget] };
+    const comp = {
+      activeCustomUiId: "ui-1",
+      countdownPreviewActiveByUi: { "ui-1": true } as Record<string, boolean>,
+      getLayout: jasmine.createSpy("getLayout").and.returnValue(layout),
+      cdr: { markForCheck: jasmine.createSpy("markForCheck") },
+    };
+
+    handleWidgetSelection(comp, "w-lane");
+    expect(comp.countdownPreviewActiveByUi["ui-1"]).toBeFalse();
+    expect(comp.cdr.markForCheck).toHaveBeenCalled();
+  });
+
+  it("should automatically deactivate countdown preview in ensureWidgetSelectedHelper when non-countdown widget is selected", () => {
+    const { ensureWidgetSelectedHelper } = require("./ui-editor-widget.helper");
+    const laneWidget = { id: "w-lane", widgetType: "lane-view" };
+    const layout = { widgets: [laneWidget] };
+    const comp = {
+      activeCustomUiId: "ui-1",
+      selectedWidgetId: null as string | null,
+      countdownPreviewActiveByUi: { "ui-1": true } as Record<string, boolean>,
+      getLayout: jasmine.createSpy("getLayout").and.returnValue(layout),
+    };
+
+    ensureWidgetSelectedHelper(comp);
+    expect(comp.selectedWidgetId).toBe("w-lane");
+    expect(comp.countdownPreviewActiveByUi["ui-1"]).toBeFalse();
+  });
+
+  it("should automatically deactivate countdown preview in handleRemoveSelectedWidget when countdown widget is removed", () => {
+    const { handleRemoveSelectedWidget } = require("./ui-editor-widget.helper");
+    const countdownWidget = { id: "w-countdown", widgetType: "countdown" };
+    const laneWidget = { id: "w-lane", widgetType: "lane-view" };
+    const layout = { widgets: [countdownWidget, laneWidget] };
+    const comp = {
+      activeCustomUiId: "ui-1",
+      selectedWidgetId: "w-countdown",
+      countdownPreviewActiveByUi: { "ui-1": true } as Record<string, boolean>,
+      getLayout: jasmine.createSpy("getLayout").and.returnValue(layout),
+      onLayoutChanged: jasmine.createSpy("onLayoutChanged"),
+    };
+
+    handleRemoveSelectedWidget(comp);
+    expect(comp.selectedWidgetId).toBe("w-lane");
+    expect(comp.countdownPreviewActiveByUi["ui-1"]).toBeFalse();
+    expect(comp.onLayoutChanged).toHaveBeenCalled();
+  });
 });

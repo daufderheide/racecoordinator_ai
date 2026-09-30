@@ -94,7 +94,7 @@
             sectionId="lane-editor-section"
             titleKey="TE_LANE_EDITOR"
             [(expanded)]="sectionsExpanded.lanes"
-            (toggle)="toggleSection('lanes')"
+            (toggle)="toggleSection('lanes', $event)"
           >
             <button
               header-actions
@@ -102,7 +102,7 @@
               [disabled]="!isEditMode"
               (click)="addLane(); $event.stopPropagation()"
             >
-              +
+              <span class="material-icons">add</span>
             </button>
             <div
               class="lanes-list"
@@ -120,19 +120,16 @@
                       cdkDragHandle
                       [cdkDragHandleDisabled]="!isEditMode"
                     >
-                      <svg width="24px" fill="currentColor" viewBox="0 0 24 24">
-                        <path
-                          d="M10 9h4V7h-4v2zm0 4h4v-2h-4v2zm0 4h4v-2h-4v2zm-4-8h4V7H6v2zm0 4h4v-2H6v2zm0 4h4v-2H6v2zm10-8h4V7h-4v2zm0 4h4v-2h-4v2zm0 4h4v-2h-4v2z"
-                        ></path>
-                      </svg>
+                      <span class="material-icons">drag_indicator</span>
                     </div>
                     <button
                       [id]="'lane-delete-' + i"
                       class="action-btn danger small"
                       [disabled]="!isEditMode"
                       (click)="removeLane(i)"
+                      [title]="'TM_DELETE' | translate"
                     >
-                      X
+                      <span class="material-icons">delete</span>
                     </button>
                   </div>
                   <div
@@ -193,7 +190,7 @@
             customClass="interface-config-section"
             titleKey="TE_INTERFACES"
             [(expanded)]="sectionsExpanded.interfaces"
-            (toggle)="toggleSection('interfaces')"
+            (toggle)="toggleSection('interfaces', $event)"
           >
             <div class="editor-section">
               <div
@@ -222,7 +219,7 @@
                   [disabled]="!isEditMode"
                   (click)="addArduinoConfig(); $event.stopPropagation()"
                 >
-                  +
+                  <span class="material-icons">add</span>
                 </button>
               </div>
             </div>
@@ -253,7 +250,7 @@
                   [disabled]="!isEditMode"
                   (click)="addPhidgetConfig(); $event.stopPropagation()"
                 >
-                  +
+                  <span class="material-icons">add</span>
                 </button>
               </div>
             </div>
@@ -284,7 +281,7 @@
                   [disabled]="!isEditMode"
                   (click)="addTrackmateConfig(); $event.stopPropagation()"
                 >
-                  +
+                  <span class="material-icons">add</span>
                 </button>
               </div>
             </div>

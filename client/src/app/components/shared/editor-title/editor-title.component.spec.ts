@@ -1,10 +1,12 @@
 import { TestbedHarnessEnvironment } from "@angular/cdk/testing/testbed";
 import { Component, input, output } from "@angular/core";
 import { ComponentFixture, TestBed } from "@angular/core/testing";
+import { By } from "@angular/platform-browser";
 import { ActivatedRoute, Router } from "@angular/router";
 import { of } from "rxjs";
 import { TranslationService } from "@app/services/translation.service";
 
+import { CustomSelectComponent } from "../custom-select/custom-select.component";
 import { EditorTitleComponent } from "./editor-title.component";
 import { EditorTitleHarness } from "./testing/editor-title.harness";
 
@@ -164,6 +166,16 @@ describe("EditorTitleComponent", () => {
       fixture.componentRef.setInput("items", testItems);
       fixture.componentRef.setInput("selectedId", "item-1");
       fixture.detectChanges();
+    });
+
+    it("should configure custom select with extendToPageBottom", () => {
+      const selectDebug = fixture.debugElement.query(
+        By.css("#editor-object-selector"),
+      );
+      expect(selectDebug).toBeTruthy();
+      const selectComponent =
+        selectDebug.componentInstance as CustomSelectComponent;
+      expect(selectComponent.extendToPageBottom()).toBeTrue();
     });
 
     it("should display prev/next buttons and item counter", async () => {

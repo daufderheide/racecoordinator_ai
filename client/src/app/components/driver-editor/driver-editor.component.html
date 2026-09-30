@@ -133,7 +133,7 @@
           sectionId="driver-audio-section"
           titleKey="DE_HEADER_AUDIO_CONFIG"
           [(expanded)]="sectionsExpanded.audio"
-          (toggle)="toggleSection('audio')"
+          (toggle)="toggleSection('audio', $event)"
         >
           <div class="audio-group" id="driver-personal-lap-group">
             <div class="audio-group-header">

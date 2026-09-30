@@ -764,6 +764,7 @@ describe("RacedayHeatListComponent", () => {
           ...mockWidget.customSettings,
           showActiveSummary: false,
           showCompletedSummary: false,
+          showFutureSummary: false,
         },
       });
       fixture.detectChanges();
@@ -771,6 +772,199 @@ describe("RacedayHeatListComponent", () => {
       const heat1 = fixture.nativeElement.querySelector("#heat-card-1");
       expect(heat1.querySelector(".heat-summary-table")).toBeFalsy();
       expect(heat1.querySelector(".heat-lanes-grid")).toBeTruthy();
+    });
+
+    it("should render summary tables for all heats including future heats when showFutureSummary is true", () => {
+      fixture.componentRef.setInput("heats", mockTelemetryHeats);
+      fixture.componentRef.setInput("currentHeat", { heatNumber: 2 } as Heat);
+      fixture.componentRef.setInput("widget", {
+        ...mockWidget,
+        customSettings: {
+          ...mockWidget.customSettings,
+          showCompletedSummary: true,
+          showActiveSummary: true,
+          showFutureSummary: true,
+          summaryShowGap: true,
+          summaryShowAverageLap: true,
+          summaryShowMedianLap: true,
+        },
+      });
+      fixture.detectChanges();
+
+      // All 3 heats (completed Heat 1, active Heat 2, future Heat 3) should render summary tables
+      const heat1 = fixture.nativeElement.querySelector("#heat-card-1");
+      const heat2 = fixture.nativeElement.querySelector("#heat-card-2");
+      const heat3 = fixture.nativeElement.querySelector("#heat-card-3");
+
+      expect(heat1.querySelector(".heat-summary-table")).toBeTruthy();
+      expect(heat2.querySelector(".heat-summary-table")).toBeTruthy();
+      expect(heat3.querySelector(".heat-summary-table")).toBeTruthy();
+      expect(heat3.querySelector(".heat-lanes-grid")).toBeFalsy();
+
+      // Check future Heat 3 lane rows: driver shown, but all lap & standing metrics are "--"
+      const heat3Rows = heat3.querySelectorAll(".summary-lane-row");
+      expect(heat3Rows.length).toBe(4);
+
+      // Lane 1: Batman
+      expect(
+        heat3Rows[0].querySelector(".summary-cell-driver").textContent,
+      ).toContain("Batman");
+      expect(
+        heat3Rows[0].querySelector(".summary-cell-pos").textContent.trim(),
+      ).toBe("--");
+      expect(
+        heat3Rows[0].querySelector(".summary-cell-laps").textContent.trim(),
+      ).toBe("--");
+      expect(
+        heat3Rows[0].querySelector(".summary-cell-best-lap").textContent.trim(),
+      ).toBe("--");
+      expect(
+        heat3Rows[0].querySelector(".summary-cell-gap").textContent.trim(),
+      ).toBe("--");
+      expect(
+        heat3Rows[0].querySelector(".summary-cell-avg-lap").textContent.trim(),
+      ).toBe("--");
+      expect(
+        heat3Rows[0]
+          .querySelector(".summary-cell-median-lap")
+          .textContent.trim(),
+      ).toBe("--");
+
+      // Lane 2: Superman
+      expect(
+        heat3Rows[1].querySelector(".summary-cell-driver").textContent,
+      ).toContain("Superman");
+      expect(
+        heat3Rows[1].querySelector(".summary-cell-pos").textContent.trim(),
+      ).toBe("--");
+      expect(
+        heat3Rows[1].querySelector(".summary-cell-laps").textContent.trim(),
+      ).toBe("--");
+      expect(
+        heat3Rows[1].querySelector(".summary-cell-best-lap").textContent.trim(),
+      ).toBe("--");
+    });
+
+    it("should display dashes for future heat even if heatDriver object contains residual lap data", () => {
+      const heatsWithResidualData = [
+        {
+          heatNumber: 1,
+          isCompleted: false,
+          heatDrivers: [
+            {
+              laneIndex: 0,
+              driver: { nickname: "FutureRacer" },
+              rank: 1,
+              lapCount: 20,
+              bestLapTime: 4.888,
+              gapLeader: 0.123,
+              averageLapTime: 5.1,
+              medianLapTime: 5.0,
+            },
+          ],
+        },
+      ];
+
+      // Heat 1 is future because curHeatNum is 0 (race not started yet) and not completed
+      fixture.componentRef.setInput("heats", heatsWithResidualData);
+      fixture.componentRef.setInput("currentHeat", null);
+      fixture.componentRef.setInput("widget", {
+        ...mockWidget,
+        customSettings: {
+          ...mockWidget.customSettings,
+          showFutureSummary: true,
+          summaryShowGap: true,
+          summaryShowAverageLap: true,
+          summaryShowMedianLap: true,
+        },
+      });
+      fixture.detectChanges();
+
+      const heat1 = fixture.nativeElement.querySelector("#heat-card-1");
+      const summaryTable = heat1.querySelector(".heat-summary-table");
+      expect(summaryTable).toBeTruthy();
+
+      const row = heat1.querySelector(".summary-lane-row");
+      expect(row.querySelector(".summary-cell-driver").textContent).toContain(
+        "FutureRacer",
+      );
+      expect(row.querySelector(".summary-cell-pos").textContent.trim()).toBe(
+        "--",
+      );
+      expect(row.querySelector(".summary-cell-laps").textContent.trim()).toBe(
+        "--",
+      );
+      expect(
+        row.querySelector(".summary-cell-best-lap").textContent.trim(),
+      ).toBe("--");
+      expect(row.querySelector(".summary-cell-gap").textContent.trim()).toBe(
+        "--",
+      );
+      expect(
+        row.querySelector(".summary-cell-avg-lap").textContent.trim(),
+      ).toBe("--");
+      expect(
+        row.querySelector(".summary-cell-median-lap").textContent.trim(),
+      ).toBe("--");
+    });
+
+    it("should display dashes for future heat with legacy lanes structure", () => {
+      const heatsWithLegacyLanes = [
+        {
+          heatNumber: 1,
+          isCompleted: false,
+          lanes: [
+            {
+              laneNumber: 1,
+              nickname: "LegacyRacer",
+              rank: 1,
+              lapCount: 12,
+              bestLapTime: 5.2,
+              gapLeader: 0.4,
+              averageLapTime: 5.5,
+              medianLapTime: 5.4,
+            },
+          ],
+        },
+      ];
+
+      fixture.componentRef.setInput("heats", heatsWithLegacyLanes);
+      fixture.componentRef.setInput("currentHeat", null);
+      fixture.componentRef.setInput("widget", {
+        ...mockWidget,
+        customSettings: {
+          ...mockWidget.customSettings,
+          showFutureSummary: true,
+          summaryShowGap: true,
+          summaryShowAverageLap: true,
+          summaryShowMedianLap: true,
+        },
+      });
+      fixture.detectChanges();
+
+      const heat1 = fixture.nativeElement.querySelector("#heat-card-1");
+      const row = heat1.querySelector(".summary-lane-row");
+      expect(row.querySelector(".summary-cell-driver").textContent).toContain(
+        "LegacyRacer",
+      );
+      expect(row.querySelector(".summary-cell-pos").textContent.trim()).toBe(
+        "--",
+      );
+      expect(row.querySelector(".summary-cell-laps").textContent.trim()).toBe(
+        "--",
+      );
+      expect(
+        row.querySelector(".summary-cell-best-lap").textContent.trim(),
+      ).toBe("--");
+      expect(row.querySelector(".summary-cell-gap").textContent.trim()).toBe(
+        "--",
+      );
+      expect(
+        row.querySelector(".summary-cell-avg-lap").textContent.trim(),
+      ).toBe("--");
+      expect(
+        row.querySelector(".summary-cell-median-lap").textContent.trim(),
+      ).toBe("--");
     });
   });
 });

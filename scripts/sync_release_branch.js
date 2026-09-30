@@ -100,8 +100,32 @@ function getUnmergedCommitCount(releaseBranch, targetBranch = 'develop', customE
 }
 
 /**
+ * Checks whether conflict output contains conflicts in files other than VERSION.
+ *
+ * @param {string} output
+ * @returns {boolean} true if blocking conflicts exist, false if only VERSION or clean.
+ */
+function isBlockingConflict(output) {
+  if (!output) return true;
+  const lines = output.split('\n');
+  const conflictLines = lines.filter(
+    l => l.includes('CONFLICT') || l.includes('<<<<<<<') || l.includes('changed in both')
+  );
+  if (conflictLines.length === 0) return false;
+
+  // Filter out conflicts that are strictly in VERSION
+  const nonVersionConflicts = conflictLines.filter(l => {
+    return !l.includes('in VERSION') && !l.includes(': VERSION') && !l.includes('VERSION (');
+  });
+
+  return nonVersionConflicts.length > 0;
+}
+
+/**
  * Checks if merging releaseBranch into targetBranch would result in conflicts.
- * Uses git merge-tree or git merge-base to test without altering working tree.
+ * Uses modern git merge-tree --write-tree (Git 2.38+) or fallback 3-way merge-tree.
+ * Note: If the only conflicted file is VERSION, this is not considered a blocking conflict
+ * because develop's target version is automatically preserved during merge.
  *
  * @param {string} releaseBranch
  * @param {string} [targetBranch='develop']
@@ -112,22 +136,50 @@ function checkHasMergeConflict(releaseBranch, targetBranch = 'develop', customEx
   const exec = customExec || execSync;
   const resolvedTarget = resolveGitRef(targetBranch, customExec);
   const resolvedRelease = resolveGitRef(releaseBranch, customExec);
+
+  // 1. Try modern git merge-tree --write-tree (Git 2.38+)
+  // Exits 0 on clean merge, exits 1 on conflict without writing to disk
   try {
-    // Check if git merge-tree can simulate the 3-way merge cleanly
+    const output = exec(`git merge-tree --write-tree "${resolvedTarget}" "${resolvedRelease}"`, {
+      encoding: 'utf8',
+      stdio: 'pipe',
+      maxBuffer: 50 * 1024 * 1024
+    });
+    // For mocks or output containing conflict markers
+    if (typeof output === 'string' && (output.includes('<<<<<<<') || output.includes('CONFLICT') || output.includes('changed in both'))) {
+      return isBlockingConflict(output);
+    }
+    return false;
+  } catch (err) {
+    if (err && err.status === 1) {
+      // Conflict occurred: check if only VERSION conflicted
+      const stdout = err.stdout ? err.stdout.toString() : '';
+      const stderr = err.stderr ? err.stderr.toString() : '';
+      return isBlockingConflict(`${stdout}\n${stderr}`);
+    }
+    // If not exit code 1 (e.g. unknown flag or older git), try fallback
+  }
+
+  // 2. Fallback to 3-way merge-tree
+  try {
     const mergeBase = exec(`git merge-base "${resolvedTarget}" "${resolvedRelease}"`, {
       encoding: 'utf8'
     }).trim();
     if (!mergeBase) return false;
 
     const treeOutput = exec(`git merge-tree "${mergeBase}" "${resolvedTarget}" "${resolvedRelease}"`, {
-      encoding: 'utf8'
+      encoding: 'utf8',
+      maxBuffer: 50 * 1024 * 1024
     });
 
-    // If merge-tree output contains conflict markers, there is a conflict
-    return treeOutput.includes('<<<<<<<') || treeOutput.includes('changed in both');
-  } catch {
-    // If command fails, assume safe or handle error
+    if (treeOutput.includes('<<<<<<<') || treeOutput.includes('changed in both') || treeOutput.includes('CONFLICT')) {
+      return isBlockingConflict(treeOutput);
+    }
     return false;
+  } catch {
+    // If merge check fails unexpectedly (e.g. buffer exceeded or git error),
+    // treat as conflict/unsafe to prevent broken automated merges
+    return true;
   }
 }
 
@@ -218,6 +270,7 @@ module.exports = {
   getActiveReleaseBranches,
   parseReleaseBranches,
   getUnmergedCommitCount,
+  isBlockingConflict,
   checkHasMergeConflict,
   checkSyncStatus
 };

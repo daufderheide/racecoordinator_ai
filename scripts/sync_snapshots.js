@@ -1,17 +1,12 @@
 const fs = require('fs');
 const path = require('path');
 
-const PROJECT_ROOT = process.env.CLIENT_DIR || path.resolve(__dirname, '..', 'client');
-const REPORT_PATH = process.env.PW_REPORT_PATH || path.join(PROJECT_ROOT, 'pw-result.json');
-const ISOLATED_DIR = process.env.ISOLATED_DIR || path.join(PROJECT_ROOT, '.isolated-test');
-
-
 function findFailedSpecs(node) {
     if (!node) return [];
     let failed = [];
     if (node.specs) {
         for (const spec of node.specs) {
-            const hasFailure = spec.tests && spec.tests.some(t => t.status === 'failed' || (t.results && t.results.some(r => r.status === 'failed' || r.status === 'unexpected')));
+            const hasFailure = spec.tests && spec.tests.some(t => t.status === 'unexpected' || t.status === 'failed');
             if (hasFailure) {
                 failed.push(spec);
             }
@@ -25,76 +20,99 @@ function findFailedSpecs(node) {
     return failed;
 }
 
-if (!fs.existsSync(REPORT_PATH)) {
-    console.error(`Error: Report file not found at ${REPORT_PATH}`);
-    process.exit(1);
-}
+function syncSnapshots(options = {}) {
+    const projectRoot = options.projectRoot || process.env.CLIENT_DIR || path.resolve(__dirname, '..', 'client');
+    const reportPath = options.reportPath || process.env.PW_REPORT_PATH || path.join(projectRoot, 'pw-result.json');
+    const isolatedDir = options.isolatedDir || process.env.ISOLATED_DIR || path.join(projectRoot, '.isolated-test');
 
-const report = JSON.parse(fs.readFileSync(REPORT_PATH, 'utf8'));
-const failedSpecs = findFailedSpecs(report);
-
-if (failedSpecs.length === 0) {
-    console.log("No failed/unexpected tests found in the report. Nothing to sync.");
-    process.exit(0);
-}
-
-console.log(`Found ${failedSpecs.length} specs with failures. Syncing snapshots...`);
-
-for (const spec of failedSpecs) {
-    const relativeTestFile = spec.file; // e.g. components/track-editor/...
-    if (!relativeTestFile) continue;
-
-    const snapshotDir = path.join(PROJECT_ROOT, 'src', 'app', `${relativeTestFile}-snapshots`);
-    if (!fs.existsSync(snapshotDir)) {
-         fs.mkdirSync(snapshotDir, { recursive: true });
+    if (!fs.existsSync(reportPath)) {
+        console.error(`Error: Report file not found at ${reportPath}`);
+        return { success: false, syncedFiles: [], error: 'Report file not found' };
     }
 
-    for (const test of spec.tests) {
-        const projectName = test.projectName || test.projectId || 'chromium';
-        for (const result of (test.results || [])) {
-            if (result.status !== 'unexpected' && result.status !== 'failed') continue;
+    const report = JSON.parse(fs.readFileSync(reportPath, 'utf8'));
+    const failedSpecs = findFailedSpecs(report);
 
-            const attachments = result.attachments || [];
-            for (const attachment of attachments) {
-                if (attachment.name.endsWith('-actual.png')) {
-                    let actualPath = attachment.path;
-                    // If the path is from the Docker container, map it back to the host filesystem
-                    if (actualPath.startsWith('/work/')) {
-                        actualPath = actualPath.replace('/work', ISOLATED_DIR);
-                    }
+    if (failedSpecs.length === 0) {
+        console.log("No failed/unexpected tests found in the report. Nothing to sync.");
+        return { success: true, syncedFiles: [] };
+    }
 
-                    if (!fs.existsSync(actualPath)) {
-                        console.log(`Warning: Actual file not found on disk: ${actualPath}`);
-                        continue;
-                    }
+    console.log(`Found ${failedSpecs.length} specs with failures. Syncing snapshots...`);
+    const syncedFiles = [];
 
-                    const snapshotBaseName = attachment.name.replace('-actual.png', '');
-                    // Find matching expected file in snapshot folder
-                    const files = fs.readdirSync(snapshotDir);
-                    const matchingFiles = files.filter(f =>
-                        (f === `${snapshotBaseName}-${projectName}-linux.png` ||
-                         f === `${snapshotBaseName}-${projectName}.png` ||
-                         f.startsWith(`${snapshotBaseName}-${projectName}-`)) &&
-                        f.endsWith('.png')
-                    );
+    for (const spec of failedSpecs) {
+        const relativeTestFile = spec.file; // e.g. components/track-editor/...
+        if (!relativeTestFile) continue;
 
-                    if (matchingFiles.length === 0) {
-                        const targetName = `${snapshotBaseName}-${projectName}-linux.png`;
-                        const destPath = path.join(snapshotDir, targetName);
-                        fs.copyFileSync(actualPath, destPath);
-                        console.log(`✅ Created new snapshot: ${targetName}`);
-                        continue;
-                    }
+        const snapshotDir = path.join(projectRoot, 'src', 'app', `${relativeTestFile}-snapshots`);
+        if (!fs.existsSync(snapshotDir)) {
+            fs.mkdirSync(snapshotDir, { recursive: true });
+        }
 
-                    for (const match of matchingFiles) {
-                         const destPath = path.join(snapshotDir, match);
-                         fs.copyFileSync(actualPath, destPath);
-                         console.log(`✅ Synced: ${match}`);
+        for (const test of spec.tests) {
+            if (test.status !== 'unexpected' && test.status !== 'failed') continue;
+            const projectName = test.projectName || test.projectId || 'chromium';
+            for (const result of (test.results || [])) {
+                if (result.status !== 'unexpected' && result.status !== 'failed') continue;
+
+                const attachments = result.attachments || [];
+                for (const attachment of attachments) {
+                    if (attachment.name.endsWith('-actual.png')) {
+                        let actualPath = attachment.path;
+                        // If the path is from the Docker container, map it back to the host filesystem
+                        if (actualPath.startsWith('/work/')) {
+                            actualPath = actualPath.replace('/work', isolatedDir);
+                        }
+
+                        if (!fs.existsSync(actualPath)) {
+                            console.log(`Warning: Actual file not found on disk: ${actualPath}`);
+                            continue;
+                        }
+
+                        const snapshotBaseName = attachment.name.replace('-actual.png', '');
+                        // Find matching expected file in snapshot folder
+                        const files = fs.readdirSync(snapshotDir);
+                        const matchingFiles = files.filter(f =>
+                            (f === `${snapshotBaseName}-${projectName}-linux.png` ||
+                             f === `${snapshotBaseName}-${projectName}.png` ||
+                             f.startsWith(`${snapshotBaseName}-${projectName}-`)) &&
+                            f.endsWith('.png')
+                        );
+
+                        if (matchingFiles.length === 0) {
+                            const targetName = `${snapshotBaseName}-${projectName}-linux.png`;
+                            const destPath = path.join(snapshotDir, targetName);
+                            fs.copyFileSync(actualPath, destPath);
+                            console.log(`✅ Created new snapshot: ${targetName}`);
+                            syncedFiles.push(destPath);
+                            continue;
+                        }
+
+                        for (const match of matchingFiles) {
+                            const destPath = path.join(snapshotDir, match);
+                            fs.copyFileSync(actualPath, destPath);
+                            console.log(`✅ Synced: ${match}`);
+                            syncedFiles.push(destPath);
+                        }
                     }
                 }
             }
         }
     }
+
+    console.log("Snapshot sync complete.");
+    return { success: true, syncedFiles };
 }
 
-console.log("Snapshot sync complete.");
+if (require.main === module) {
+    const result = syncSnapshots();
+    if (!result.success) {
+        process.exit(1);
+    }
+}
+
+module.exports = {
+    findFailedSpecs,
+    syncSnapshots
+};

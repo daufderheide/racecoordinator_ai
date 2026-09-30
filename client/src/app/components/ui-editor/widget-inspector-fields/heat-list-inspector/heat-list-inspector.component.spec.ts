@@ -151,5 +151,9 @@ describe("HeatListInspectorComponent", () => {
     component.settings().showCurrentHeatTime = false;
     component.onSettingsChange();
     expect(component.settings().showCurrentHeatTime).toBeFalse();
+
+    component.settings().showFutureSummary = true;
+    component.onSettingsChange();
+    expect(component.settings().showFutureSummary).toBeTrue();
   });
 });

@@ -197,6 +197,10 @@ export function handleClearLayout(comp: any, ui: CustomUI): void {
     comp.editingState.settings = deepCopy(comp.editingSettings);
   }
   comp.selectedWidgetId = null;
+  const uiId = ui?.entity_id || comp.activeCustomUiId;
+  if (uiId && comp.countdownPreviewActiveByUi) {
+    comp.countdownPreviewActiveByUi[uiId] = false;
+  }
   comp.undoManager.captureState();
   comp.refreshDisplayProperties();
   comp.cdr.detectChanges();

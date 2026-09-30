@@ -16,8 +16,9 @@
           class="action-btn danger small"
           [disabled]="!isEditMode()"
           (click)="removeInterface($event)"
+          [title]="'TM_DELETE' | translate"
         >
-          X
+          <span class="material-icons">delete</span>
         </button>
       </div>
       @if (sectionsExpanded.arduino) {
@@ -733,9 +734,9 @@
                                   class="icon-button delete"
                                   [disabled]="!isEditMode()"
                                   (click)="removeLedString(i, $event)"
-                                  [title]="'GEN_DELETE' | translate"
+                                  [title]="'TM_DELETE' | translate"
                                 >
-                                  <span class="material-icons">close</span>
+                                  <span class="material-icons">delete</span>
                                 </button>
                               </div>
                             </div>

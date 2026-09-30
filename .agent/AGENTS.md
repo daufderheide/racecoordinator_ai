@@ -36,6 +36,15 @@ Race Coordinator AI uses embedded SQLite (`sqlite-jdbc`) for all persistent data
 - **Implementation**: Always use `<app-custom-select>` and `<app-custom-option>` from `@app/components/shared/custom-select/custom-select.component` for all dropdown controls across the application.
 - **Testing & Harnesses**: When writing E2E or screendiff tests, interact with custom selects via the component test harness (`CustomSelectHarnessE2e`) or by clicking the custom trigger and target options (`.custom-select-option[data-value='...']`) rather than using `page.selectOption()`.
 
+## Material Icons Standardization
+- **Always use Material Icons**: Use `<span class="material-icons">...</span>` for all UI icons, action buttons, status indicators, and controls whenever possible. Material Icons are bundled locally via `@font-face` from `assets/fonts/materialicons.woff2`.
+- **Unified delete icon**: All deletion, removal, and discard actions across the application MUST use the trashcan icon (`<span class="material-icons">delete</span>`) rather than an "X", close, or cancel icon.
+- **No unbundled libraries or raster icon assets**: Do not use FontAwesome (`fas`, `fa-*`), external icon fonts, or raster PNG/GIF images for action icons. Use vector Material Icons instead.
+- **No raw unicode or HTML entity action icons**: Do not use raw Unicode geometric characters or HTML entities for interactive controls or action buttons (e.g. avoid `&times;`, `✕`, `×`, `+`, `&#10004;`, `&#9998;`, `▶`, `■`, `🔍`). Replace them with standard Material Icons (`close`, `delete`, `add`, `check`, `edit`, `play_arrow`, `stop`, `search`).
+- **Button flex alignment and icon sizing**: Buttons and wrappers containing `.material-icons` must specify flex centering (`display: inline-flex; align-items: center; justify-content: center;`) and explicit font sizing on the icon to guarantee consistent vertical alignment and cross-browser rendering.
+- **Ghost icon button standard**: All contextual action icons and buttons across cards, lists, modals, and tables (such as edit, delete, add, play, expand, swap) MUST follow the Ghost Icon Button pattern: borderless and transparent at rest (`background: transparent; border: 1px solid transparent;`) to prevent visual clutter and box fatigue, revealing a subtle, rounded background tint on hover (e.g. `rgba(239, 68, 68, 0.15)` for delete, `rgba(56, 189, 248, 0.15)` for primary/edit actions) with `border-radius: 6px`.
+- **Unified reset icon & color semantics**: All reset actions across toolbars, editors, and canvas bars MUST use the counter-clockwise reset icon (`<span class="material-icons">restart_alt</span>`). Do not use `refresh` (which signifies reloading external data). All reset (`restart_alt`), clear (`delete_sweep`), and delete (`delete`) actions use Danger Red (`#ef4444`, hover background `rgba(239, 68, 68, 0.15)`) to maintain visual consistency for actions that wipe, discard, or reset data/state.
+
 ## Cross-Browser Compatibility (Safari, Edge, Chrome, Firefox)
 - **Support all major browsers**: The web client must fully support Safari, Microsoft Edge, Google Chrome, and Mozilla Firefox. Web APIs and UX patterns that are restricted to a single browser engine (such as Chromium-only APIs like `window.showDirectoryPicker()`) must not be relied upon exclusively.
 - **Cross-browser parity or graceful alternatives**: Always provide cross-browser solutions (e.g. server-assisted native desktop dialogs on localhost, file inputs, manual path inputs, or polyfills) so functionality remains accessible across all four supported browsers.
@@ -52,6 +61,10 @@ Race Coordinator AI uses embedded SQLite (`sqlite-jdbc`) for all persistent data
 - **Manual releases from develop**: Manual workflow dispatch on `develop` without an explicit version override publishes an alpha build named `vX.Y.Z-alpha.<hash>` (using the commit SHA).
 - **README Updates Restricted to Beta & Official Releases**: Automated README download link updates and PRs targeting `main` are strictly restricted to official stable releases (`vX.Y.Z`) and beta prereleases (`vX.Y.Z-beta.N`). Daily alpha and manual develop builds (`*-alpha.*`) must never update the main README or open documentation PRs.
 
+## Git Push Policy (No AI Agent Pushes)
+- **AI Agent must never push to git**: The AI agent must NEVER execute `git push` under any circumstances. All git changes will be reviewed and manually pushed by the user.
+- **Provide push commands**: When changes are ready to be pushed, provide the user with the exact git commands needed to push, especially when non-simple commands are required (e.g. `--force-with-lease`, `--no-verify`, upstream tracking, or specific tags).
+
 ## Meaningful Test Assertions & Mutation Resistance
 - **Test real behavior, not just line coverage**: New unit and integration tests must validate outputs, state changes, and boundary conditions with explicit assertions rather than writing trivial executions that only aim to pass line coverage counters. Tests must withstand mutation testing (PIT / Stryker).
 
@@ -60,6 +73,8 @@ Race Coordinator AI uses embedded SQLite (`sqlite-jdbc`) for all persistent data
 
 ## Conventional Commit Message Discipline
 - **Use supported conventional commit prefixes**: All git commit messages must use supported conventional prefixes (`feat:`, `fix:`, `refactor:`, `perf:`, `docs:`, `test:`, `chore:`, `ci:`, `style:`, `build:`), optional scopes (e.g. `feat(phidget): ...`), and concise descriptions to ensure automated release changelog generation remains accurate and clean.
+- **Strict use of `feat` and `fix` for clean release notes**: Commits must ONLY use `feat:` and `fix:` for specific bug fixes and initial new feature commits. The intent is to keep user-facing release notes clean and free of noise. Non-user-facing work, internal refactoring, test adjustments, tooling, CI, docs, and follow-up tweaks should use other appropriate prefixes (`refactor:`, `test:`, `docs:`, `chore:`, `ci:`, `style:`, `perf:`, `build:`).
+
 
 ## Server-Side Calculations & Single Source of Truth
 - **All calculations performed on the server**: All calculations with very few if any exceptions should be done on the server. The client should get calculations from the server and display them.

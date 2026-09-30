@@ -607,6 +607,10 @@ app-custom-select.teammate-select,
   background: rgba(0, 0, 0, 0.1);
 }
 
+.toolbox-search-clear .material-icons {
+  font-size: 14px;
+}
+
 .toolbox-widget-list {
   flex: 1;
   overflow-y: auto;

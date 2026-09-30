@@ -20,7 +20,7 @@ Ausführliche Informationen zur Entwicklung finden Sie im [Leitfaden für benutz
 - Passen Sie Größe, Position und Ausrichtung der Widgets an Ihre Bildschirmauflösung an. Alle Widgets bleiben innerhalb des Leinwandbereichs begrenzt.
 - **Widget-Inspektor-Steuerung**:
   - **Position & Größe**: Positionieren und dimensionieren Sie das ausgewählte Widget präzise über die Eingabefelder für **X**, **Y**, **Breite** und **Höhe**.
-  - **Widget löschen**: Klicken Sie auf das Papierkorb-Symbol im Inspektor-Kopfbereich oder auf **Widget löschen** in der Seitenleiste.
+  - **Widget löschen**: Klicken Sie auf das Papierkorb-Symbol im Inspektor-Kopfbereich.
 - **Tastaturkurzbefehle**:
   - <kbd>Entf</kbd> oder <kbd>Rücktaste</kbd>: Entfernt das ausgewählte Widget aus dem Layout.
   - <kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd>: Verschiebt das ausgewählte Widget um 1px (oder 10px mit gedrückter <kbd>Umschalttaste</kbd>).
