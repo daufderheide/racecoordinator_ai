@@ -1797,6 +1797,9 @@ export class DefaultRacedayComponent
 
         // Update countdown overlay if active
         if (this.showCountdownOverlay) {
+          if (this.countdownTotalLamps === 0 && this.autoStartRemaining > 0) {
+            this.countdownTotalLamps = Math.ceil(this.autoStartRemaining);
+          }
           this.updateCountdownLamps(this.autoStartRemaining);
         }
 
@@ -3674,10 +3677,12 @@ export class DefaultRacedayComponent
       ) {
         const duration =
           this.isRestarting || this.raceState === RaceState.PAUSED
-            ? (race.restart_time ?? 5.0)
-            : (race.start_time ?? 5.0);
-        this.countdownTotalLamps = Math.ceil(duration);
-        this.updateCountdownLamps(this.autoStartRemaining ?? duration);
+            ? (race.restart_time ?? race.start_time)
+            : race.start_time;
+        if (duration != null) {
+          this.countdownTotalLamps = Math.ceil(duration);
+          this.updateCountdownLamps(this.autoStartRemaining ?? duration);
+        }
       }
     } else {
       this.logger.debug("RacedayComponent: Waiting for race data...");
@@ -6320,11 +6325,13 @@ export class DefaultRacedayComponent
       // Determine duration based on entry path
       const r = this.raceService.getRace() || this.race;
       const duration = this.isRestarting
-        ? (r?.restart_time ?? 5.0)
-        : (r?.start_time ?? 5.0);
+        ? (r?.restart_time ?? r?.start_time)
+        : r?.start_time;
 
-      this.countdownTotalLamps = Math.ceil(duration);
-      this.updateCountdownLamps(duration);
+      if (duration != null) {
+        this.countdownTotalLamps = Math.ceil(duration);
+        this.updateCountdownLamps(duration);
+      }
     }
 
     // If RACING state came, set all lamps to green
@@ -6525,6 +6532,7 @@ export class DefaultRacedayComponent
   }
 
   private preloadCountdownAudio(): void {
+    this.preloadCountdownImages();
     if (
       !this.assets ||
       this.assets.length === 0 ||
@@ -6540,6 +6548,30 @@ export class DefaultRacedayComponent
       );
       if (item?.playableUrl && item.config.type !== "tts") {
         this.audioService.preload(item.playableUrl);
+      }
+    }
+  }
+
+  private preloadCountdownImages(): void {
+    if (
+      typeof Image === "undefined" ||
+      !this.assets ||
+      this.assets.length === 0
+    ) {
+      return;
+    }
+    const lampUrls = [
+      this.resolveAssetUrlBySlot("lamp.red.on") ||
+        this.getAssetUrl("Start Lamp Red"),
+      this.resolveAssetUrlBySlot("lamp.red.dim") ||
+        this.getAssetUrl("Start Lamp Dim"),
+      this.resolveAssetUrlBySlot("lamp.green") ||
+        this.getAssetUrl("Start Lamp Green"),
+    ];
+    for (const url of lampUrls) {
+      if (url) {
+        const img = new Image();
+        img.src = url;
       }
     }
   }
@@ -6865,7 +6897,10 @@ export class DefaultRacedayComponent
     const url =
       this.resolveAssetUrlBySlot("lamp.green") ||
       this.getAssetUrl("Start Lamp Green");
-    const count = this.countdownTotalLamps > 0 ? this.countdownTotalLamps : 5;
+    const count =
+      this.countdownTotalLamps > 0
+        ? this.countdownTotalLamps
+        : this.countdownLamps.length || 0;
     this.countdownLamps = Array.from({ length: count }).map(() => ({
       url: url,
       state: "go",

@@ -4460,6 +4460,15 @@ describe("DefaultRacedayComponent", () => {
       expect(component["countdownTotalLamps"]).toBe(4);
     }));
 
+    it("should dynamically synchronize countdownTotalLamps from autoStartRemaining if uninitialized", fakeAsync(() => {
+      component["countdownTotalLamps"] = 0;
+      component["showCountdownOverlay"] = true;
+      raceTimeSubject.next({ time: 4.2, autoStartRemaining: 4.2 });
+      tick();
+
+      expect(component["countdownTotalLamps"]).toBe(5);
+    }));
+
     it("should update lamp states based on time remaining", fakeAsync(() => {
       component["race"] = { ...MOCK_RACES[0], start_time: 5.0 } as any;
       raceTimeSubject.next({ time: 5.0, autoStartRemaining: 5.0 });
@@ -5138,10 +5147,7 @@ describe("DefaultRacedayComponent", () => {
       expect(window.Audio).not.toHaveBeenCalledWith(
         `${mockDataService.serverUrl}api/assets/download/5`,
       );
-      expect(component["countdownLamps"].length).toBe(5);
-      expect(
-        component["countdownLamps"].every((l) => l.state === "go"),
-      ).toBeTrue();
+      expect(component["countdownLamps"].length).toBe(0);
     }));
 
     it("should play only 'GO' sound and NOT '5' when restart_time is 0", fakeAsync(() => {
@@ -5174,10 +5180,7 @@ describe("DefaultRacedayComponent", () => {
       expect(window.Audio).not.toHaveBeenCalledWith(
         `${mockDataService.serverUrl}api/assets/download/5`,
       );
-      expect(component["countdownLamps"].length).toBe(5);
-      expect(
-        component["countdownLamps"].every((l) => l.state === "go"),
-      ).toBeTrue();
+      expect(component["countdownLamps"].length).toBe(0);
     }));
   });
 
@@ -6744,6 +6747,44 @@ describe("DefaultRacedayComponent", () => {
       expect(audioService.preload).toHaveBeenCalledWith(
         jasmine.stringMatching("/assets/5.mp3"),
       );
+    });
+
+    it("should preload countdown lamp images when preloadCountdownAudio is called", () => {
+      component["assets"] = [
+        { name: "Start Lamp Red", url: "/assets/red.svg" },
+        { name: "Start Lamp Dim", url: "/assets/dim.svg" },
+        { name: "Start Lamp Green", url: "/assets/green.svg" },
+      ] as any;
+      const createdImages: any[] = [];
+      const origImage = (window as any).Image;
+      (window as any).Image = function (this: any) {
+        const img = this || {};
+        createdImages.push(img);
+        return img;
+      };
+
+      try {
+        (component as any).preloadCountdownAudio();
+      } finally {
+        (window as any).Image = origImage;
+      }
+
+      expect(createdImages.length).toBeGreaterThanOrEqual(3);
+      expect(
+        createdImages.some(
+          (img) => img.src && img.src.includes("/assets/red.svg"),
+        ),
+      ).toBeTrue();
+      expect(
+        createdImages.some(
+          (img) => img.src && img.src.includes("/assets/dim.svg"),
+        ),
+      ).toBeTrue();
+      expect(
+        createdImages.some(
+          (img) => img.src && img.src.includes("/assets/green.svg"),
+        ),
+      ).toBeTrue();
     });
 
     it("should play sound from audio set for GO (0 seconds)", () => {

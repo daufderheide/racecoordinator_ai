@@ -212,6 +212,7 @@ export class DefaultDriverStationComponent implements OnInit, OnDestroy {
     this.timeAudioHandler.playedHalfway = v;
   }
   private previousRaceState: RaceState = RaceState.UNKNOWN_STATE;
+  private isRestarting: boolean = false;
   private assets: any[] = [];
 
   /* eslint-disable max-lines-per-function */
@@ -311,8 +312,15 @@ export class DefaultDriverStationComponent implements OnInit, OnDestroy {
         if (this.raceState === RaceState.STARTING) {
           const currentSecond = Math.ceil(this.time);
           const r = this.race;
-          const duration = r?.start_time ?? 5.0;
-          const totalLamps = Math.ceil(duration);
+          const duration = this.isRestarting
+            ? (r?.restart_time ?? r?.start_time)
+            : r?.start_time;
+          const totalLamps =
+            duration != null
+              ? Math.ceil(duration)
+              : this.time > 0
+                ? Math.ceil(this.time)
+                : 0;
           if (
             currentSecond <= totalLamps &&
             currentSecond <= 5 &&
@@ -399,11 +407,13 @@ export class DefaultDriverStationComponent implements OnInit, OnDestroy {
           }
 
           if (state === RaceState.STARTING) {
+            this.isRestarting = previousState === RaceState.PAUSED;
             this.audioService.stopVoice();
             this.lastPlayedCountdownSecond = -1;
           }
 
           if (state === RaceState.RACING) {
+            this.isRestarting = false;
             this.hasRacedInCurrentHeat = true;
             if (previousState !== RaceState.UNKNOWN_STATE) {
               this.playAudioFromSet(THEME_SLOT_KEYS.AUDIO_COUNTDOWN, 0, {
