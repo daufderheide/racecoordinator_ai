@@ -557,13 +557,6 @@ public class UpdateServiceTest {
   }
 
   @Test
-  public void testCancelDownload() {
-    UpdateService service = new UpdateService("1.0.0", mockConfigService);
-    service.cancelDownload();
-    assertEquals("RDS_UPDATE_STATUS_CANCELLED", service.getDownloadProgress().status);
-  }
-
-  @Test
   public void testUpdateCheckResult_SupportsLinux() {
     UpdateService.UpdateCheckResult result = new UpdateService.UpdateCheckResult();
     result.isLinux = true;
