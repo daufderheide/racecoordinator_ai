@@ -116,6 +116,55 @@ Initial release.
 View the full commit history on [GitHub](${REPO_URL}/commits/${tag}).`;
 }
 
+function linkifyCommitText(text, repoUrl = REPO_URL) {
+  if (!text) return '';
+
+  const protectedLinks = [];
+  const protect = (str) => {
+    protectedLinks.push(str);
+    return `\x00LINK_${protectedLinks.length - 1}\x00`;
+  };
+
+  // Protect existing markdown links [text](url) and autolinks <url>
+  let result = text.replace(/(\[[^\]]+\]\([^\)]+\)|<https?:\/\/[^>]+>)/g, (match) => protect(match));
+
+  // 1. Convert GitHub issue/pull URLs for current repo to clean [#123](url)
+  const escapedRepo = repoUrl.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const thisRepoIssueRegex = new RegExp(`${escapedRepo}\\/(issues|pull)\\/(\\d+)`, 'g');
+  result = result.replace(thisRepoIssueRegex, (match, type, num) => {
+    return protect(`[#${num}](${repoUrl}/${type}/${num})`);
+  });
+
+  // 2. Convert GitHub issue/pull URLs for other repos to [owner/repo#123](url)
+  const otherRepoIssueRegex = /https:\/\/github\.com\/([a-zA-Z0-9_.-]+)\/([a-zA-Z0-9_.-]+)\/(issues|pull)\/(\d+)/g;
+  result = result.replace(otherRepoIssueRegex, (match, owner, repo, type, num) => {
+    if (owner === 'daufderheide' && repo === 'racecoordinator_ai') return match;
+    return protect(`[${owner}/${repo}#${num}](${match})`);
+  });
+
+  // 3. Convert any other HTTP/HTTPS URLs to <url>
+  result = result.replace(/(https?:\/\/[^\s)<>]+)/g, (match, url) => {
+    let cleanUrl = url;
+    let trailing = '';
+    const punctMatch = cleanUrl.match(/([.,;:]+)$/);
+    if (punctMatch) {
+      trailing = punctMatch[1];
+      cleanUrl = cleanUrl.slice(0, -trailing.length);
+    }
+    return `${protect(`<${cleanUrl}>`)}${trailing}`;
+  });
+
+  // 4. Convert standalone issue numbers like (#870) or #870 (not preceded by [ or / or & or alphanumeric, not followed by alphanumeric)
+  result = result.replace(/(?<![[/&a-zA-Z0-9])#(\d+)(?![\]a-zA-Z0-9])/g, (_, num) => {
+    return protect(`[#${num}](${repoUrl}/issues/${num})`);
+  });
+
+  // Restore protected links
+  result = result.replace(/\x00LINK_(\d+)\x00/g, (_, index) => protectedLinks[Number(index)]);
+
+  return result;
+}
+
 function formatBetaCommitList(commits, previousTag) {
   if (!commits || commits.length === 0) {
     const prevNote = previousTag ? ` since \`${previousTag}\`` : '';
@@ -126,7 +175,7 @@ function formatBetaCommitList(commits, previousTag) {
   const lines = commits.map(c => {
     const commitLink = `[\`${c.hash}\`](${REPO_URL}/commit/${c.hash})`;
     const authorStr = c.author ? ` *(${c.author})*` : '';
-    return `- ${commitLink} ${c.subject}${authorStr}`;
+    return `- ${commitLink} ${linkifyCommitText(c.subject)}${authorStr}`;
   });
 
   return `### 📋 Beta Changes & Commits\n\nChanges included in this preview build${prevText}:\n\n${lines.join('\n')}`;
@@ -164,7 +213,7 @@ function formatOfficialReleaseNotes(commits, previousTag, isBeta = false) {
         continue; // Exclude beta-scoped features from official release notes
       }
       const scopePrefix = rawScope ? `**${rawScope}**: ` : '';
-      const text = featMatch[2].trim();
+      const text = linkifyCommitText(featMatch[2].trim());
       features.push(`- ${scopePrefix}${text} ${commitLink}`);
     } else if (fixMatch) {
       const rawScope = fixMatch[1] ? fixMatch[1].trim() : '';
@@ -172,7 +221,7 @@ function formatOfficialReleaseNotes(commits, previousTag, isBeta = false) {
         continue; // Exclude beta-scoped fixes from official release notes
       }
       const scopePrefix = rawScope ? `**${rawScope}**: ` : '';
-      const text = fixMatch[2].trim();
+      const text = linkifyCommitText(fixMatch[2].trim());
       bugFixes.push(`- ${scopePrefix}${text} ${commitLink}`);
     } else if (perfMatch) {
       const rawScope = perfMatch[1] ? perfMatch[1].trim() : '';
@@ -180,12 +229,12 @@ function formatOfficialReleaseNotes(commits, previousTag, isBeta = false) {
         continue; // Exclude beta-scoped improvements from official release notes
       }
       const scopePrefix = rawScope ? `**${rawScope}**: ` : '';
-      const text = perfMatch[2].trim();
+      const text = linkifyCommitText(perfMatch[2].trim());
       improvements.push(`- ${scopePrefix}${text} ${commitLink}`);
     } else if (/^add\s+/i.test(subject) || /^implement\s+/i.test(subject) || /^support\s+/i.test(subject)) {
-      features.push(`- ${subject} ${commitLink}`);
+      features.push(`- ${linkifyCommitText(subject)} ${commitLink}`);
     } else if (/^fix\s+/i.test(subject) || /^resolve\s+/i.test(subject) || /^correct\s+/i.test(subject)) {
-      bugFixes.push(`- ${subject} ${commitLink}`);
+      bugFixes.push(`- ${linkifyCommitText(subject)} ${commitLink}`);
     }
   }
 
@@ -241,29 +290,75 @@ function generateChangelog(tag, isPrerelease, options = {}) {
   return notes;
 }
 
+function parseChangelogSections(content) {
+  const headerMatch = content.match(/^(# Changelog[\s\S]*?\n\n)(?=## \[)/);
+  let header;
+  let body;
+  if (headerMatch) {
+    header = headerMatch[1];
+    body = content.slice(headerMatch[1].length);
+  } else {
+    const simpleHeaderMatch = content.match(/^(# Changelog[\s\S]*?\n\n)/);
+    if (simpleHeaderMatch) {
+      header = simpleHeaderMatch[1];
+      body = content.slice(simpleHeaderMatch[1].length);
+    } else {
+      header = '# Changelog\n\n';
+      body = content;
+    }
+  }
+
+  const rawSections = body.split(/(?=^## \[)/m).filter(s => s.trim().length > 0);
+  const sections = rawSections.map(s => {
+    const tagMatch = s.match(/^## \[([^\]]+)\]/);
+    const tag = tagMatch ? tagMatch[1] : '';
+    return { tag, content: s.trim() };
+  }).filter(s => s.tag);
+
+  return { header, sections };
+}
+
+function filterChangelogSections(sections) {
+  const isBetaTag = (t) => {
+    const p = parseSemver(t);
+    return Boolean(p.prereleaseType === 'beta' || t.includes('beta'));
+  };
+
+  const officialSections = sections.filter(s => !isBetaTag(s.tag)).sort((a, b) => compareSemver(a.tag, b.tag));
+  const betaSections = sections.filter(s => isBetaTag(s.tag)).sort((a, b) => compareSemver(a.tag, b.tag));
+
+  let finalBeta = null;
+  if (betaSections.length > 0) {
+    const newestBeta = betaSections[0];
+    if (officialSections.length === 0 || compareSemver(newestBeta.tag, officialSections[0].tag) < 0) {
+      finalBeta = newestBeta;
+    }
+  }
+
+  return finalBeta ? [finalBeta, ...officialSections] : officialSections;
+}
+
 function updateChangelogMarkdown(filePath, tag, releaseNotes, dateStr) {
   const date = dateStr || new Date().toISOString().substring(0, 10);
-  const newEntry = `## [${tag}] - ${date}\n\n${releaseNotes}\n`;
+  const newSection = {
+    tag,
+    content: `## [${tag}] - ${date}\n\n${releaseNotes}`.trim()
+  };
 
   if (!fs.existsSync(filePath)) {
-    const initialContent = `# Changelog\n\nAll notable changes to Race Coordinator AI are documented in this file.\n\n${newEntry}\n`;
+    const initialContent = `# Changelog\n\nAll notable changes to Race Coordinator AI are documented in this file.\n\n${newSection.content}\n`;
     fs.writeFileSync(filePath, initialContent, 'utf8');
     return initialContent;
   }
 
   const content = fs.readFileSync(filePath, 'utf8');
-  if (content.includes(`## [${tag}]`)) {
-    return content; // already recorded
-  }
+  const { header, sections } = parseChangelogSections(content);
 
-  const headerRegex = /(# Changelog[\s\S]*?\n\n)/;
-  if (headerRegex.test(content)) {
-    const updated = content.replace(headerRegex, `$1${newEntry}\n`);
-    fs.writeFileSync(filePath, updated, 'utf8');
-    return updated;
-  }
+  // Combine new section with existing sections, excluding any entry with the same tag
+  const combined = [newSection, ...sections.filter(s => s.tag !== tag)];
+  const filtered = filterChangelogSections(combined);
 
-  const updated = `# Changelog\n\n${newEntry}\n${content}`;
+  const updated = `${header}${filtered.map(s => s.content).join('\n\n')}\n`;
   fs.writeFileSync(filePath, updated, 'utf8');
   return updated;
 }
@@ -315,5 +410,8 @@ module.exports = {
   formatBetaCommitList,
   formatOfficialReleaseNotes,
   generateChangelog,
+  parseChangelogSections,
+  filterChangelogSections,
+  linkifyCommitText,
   updateChangelogMarkdown
 };
