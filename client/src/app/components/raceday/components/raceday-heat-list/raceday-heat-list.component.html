@@ -75,7 +75,7 @@
               ((showCurrentHeatFlag() && displayFlagUrl()) ||
                 (showCurrentHeatTime() && displayFormattedTime()))
             ) {
-              <div class="header-center-status">
+              <div class="header-center-status header-right-status">
                 @if (showCurrentHeatFlag() && displayFlagUrl()) {
                   <div class="header-flag-container">
                     <img
@@ -88,14 +88,6 @@
                 @if (showCurrentHeatTime() && displayFormattedTime()) {
                   <div class="header-time">{{ displayFormattedTime() }}</div>
                 }
-              </div>
-            }
-
-            @if (heat.isCurrent) {
-              <div class="current-heat-status">
-                <span class="current-heat-badge">{{
-                  "UE_INSPECTOR_HEAT_LIST_CURRENT_BADGE" | translate
-                }}</span>
               </div>
             }
           </div>

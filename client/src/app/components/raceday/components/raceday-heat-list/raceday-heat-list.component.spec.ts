@@ -152,7 +152,7 @@ describe("RacedayHeatListComponent", () => {
     expect(textContent).not.toContain("Jane Smith");
   });
 
-  it("should highlight the current heat, center race state flag and race time together in header", () => {
+  it("should highlight the current heat, place race state flag and race time on the right, and not render current heat badge", () => {
     const currentCard = fixture.nativeElement.querySelector(
       "#heat-card-1.current-heat",
     );
@@ -161,29 +161,29 @@ describe("RacedayHeatListComponent", () => {
     const currentBadge = fixture.nativeElement.querySelector(
       ".current-heat-badge",
     );
-    expect(currentBadge).toBeTruthy();
+    expect(currentBadge).toBeFalsy();
 
-    // Centered status container in card header containing both flag and time
-    const centerStatus = currentCard.querySelector(
-      ".heat-card-header .header-center-status",
+    // Right-aligned status container in card header containing both flag and time
+    const rightStatus = currentCard.querySelector(
+      ".heat-card-header .header-right-status",
     );
-    expect(centerStatus).toBeTruthy();
+    expect(rightStatus).toBeTruthy();
 
-    const flagContainer = centerStatus.querySelector(".header-flag-container");
+    const flagContainer = rightStatus.querySelector(".header-flag-container");
     expect(flagContainer).toBeTruthy();
 
     const flagImg = flagContainer.querySelector(".header-flag");
     expect(flagImg).toBeTruthy();
     expect(flagImg.getAttribute("src")).toBe("assets/flags/green.svg");
 
-    const timeEl = centerStatus.querySelector(".header-time");
+    const timeEl = rightStatus.querySelector(".header-time");
     expect(timeEl).toBeTruthy();
     expect(timeEl.textContent.trim()).toBe("01:23.4");
 
-    // Non-current heat (heat 2) should NOT show center status, flag or time
+    // Non-current heat (heat 2) should NOT show status, flag or time
     const heat2Card = fixture.nativeElement.querySelector("#heat-card-2");
+    expect(heat2Card.querySelector(".header-right-status")).toBeFalsy();
     expect(heat2Card.querySelector(".header-center-status")).toBeFalsy();
-    expect(heat2Card.querySelector(".current-heat-status")).toBeFalsy();
     expect(heat2Card.querySelector(".header-flag-container")).toBeFalsy();
     expect(heat2Card.querySelector(".header-time")).toBeFalsy();
   });
@@ -233,7 +233,7 @@ describe("RacedayHeatListComponent", () => {
     expect(currentCard.querySelector(".header-center-status")).toBeFalsy();
     expect(currentCard.querySelector(".header-flag")).toBeFalsy();
     expect(currentCard.querySelector(".header-time")).toBeFalsy();
-    expect(currentCard.querySelector(".current-heat-badge")).toBeTruthy();
+    expect(currentCard.querySelector(".current-heat-badge")).toBeFalsy();
 
     // Show only time
     fixture.componentRef.setInput("widget", {
@@ -1070,6 +1070,28 @@ describe("RacedayHeatListComponent", () => {
       fixture.detectChanges();
 
       expect(header.classList.contains("has-center-status")).toBeFalse();
+    });
+
+    it("should provide full title bar space for heat and group info with right-aligned flag and time and no badge", () => {
+      const currentCard = fixture.nativeElement.querySelector(
+        "#heat-card-1.current-heat",
+      );
+      expect(currentCard).toBeTruthy();
+      expect(currentCard.classList.contains("current-heat")).toBeTrue();
+
+      // No active heat badge
+      expect(currentCard.querySelector(".current-heat-badge")).toBeNull();
+
+      // Title text has heat and group info
+      const titleText = currentCard.querySelector(".heat-title-text");
+      expect(titleText).toBeTruthy();
+      expect(titleText.textContent).toContain("RM_LABEL_HEAT_NUMBER");
+
+      // Right-aligned status container with flag and time
+      const rightStatus = currentCard.querySelector(".header-right-status");
+      expect(rightStatus).toBeTruthy();
+      expect(rightStatus.querySelector(".header-flag")).toBeTruthy();
+      expect(rightStatus.querySelector(".header-time")).toBeTruthy();
     });
   });
 });
