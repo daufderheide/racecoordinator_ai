@@ -42,18 +42,18 @@
 }
 
 .heat-list-scroll-view::-webkit-scrollbar-track {
-  background: rgba(15, 23, 42, 0.4);
+  background: rgba(15, 23, 42, 0.5);
   border-radius: 4px;
 }
 
 .heat-list-scroll-view::-webkit-scrollbar-thumb {
-  background: rgba(56, 189, 248, 0.5);
+  background: rgba(56, 189, 248, 0.6);
   border-radius: 4px;
   border: 1px solid rgba(15, 23, 42, 0.2);
 }
 
 .heat-list-scroll-view::-webkit-scrollbar-thumb:hover {
-  background: rgba(56, 189, 248, 0.8);
+  background: rgba(56, 189, 248, 0.9);
 }
 
 /* Heats Grid */
