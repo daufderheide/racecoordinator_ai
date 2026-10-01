@@ -26,6 +26,20 @@ export class RacedayActionButtonComponent {
     initialValue: this.navigationService?.canGoBack?.() ?? false,
   });
 
+  public canGoForward = toSignal(
+    this.navigationService?.canGoForward$ || of(false),
+    {
+      initialValue: this.navigationService?.canGoForward?.() ?? false,
+    },
+  );
+
+  get isNavOrCloseButton(): boolean {
+    const t = this.widget().widgetType;
+    return (
+      t === "action-back" || t === "action-forward" || t === "action-close"
+    );
+  }
+
   constructor(public authService: AuthService) {}
 
   get isActionDisabled(): boolean {
@@ -38,6 +52,12 @@ export class RacedayActionButtonComponent {
 
     if (this.widget().widgetType === "action-back") {
       return !this.canGoBack();
+    }
+    if (this.widget().widgetType === "action-forward") {
+      return !this.canGoForward();
+    }
+    if (this.widget().widgetType === "action-close") {
+      return false;
     }
 
     if (this.authService.currentRole === Role.VIEWER) {
@@ -111,8 +131,84 @@ export class RacedayActionButtonComponent {
         return "RD_MENU_MAIN_POWER_OFF";
       case "action-back":
         return "RD_MENU_BACK";
+      case "action-forward":
+        return "RD_MENU_FORWARD";
+      case "action-close":
+        return "RD_MENU_CLOSE";
       default:
         return "";
+    }
+  }
+
+  private getActionString(): string {
+    switch (this.widget().widgetType) {
+      case "action-start-resume":
+        return "START_RESUME";
+      case "action-pause":
+        return "PAUSE";
+      case "action-next-heat":
+        return "NEXT_HEAT";
+      case "action-restart-heat":
+        return "RESTART_HEAT";
+      case "action-defer-heat":
+        return "DEFER_HEAT";
+      case "action-skip-heat":
+        return "SKIP_HEAT";
+      case "action-skip-race":
+        return "SKIP_RACE";
+      case "action-add-lap":
+        return "ADD_LAP";
+      case "action-modify-heats":
+        return "MODIFY";
+      case "action-export-pdf":
+        return "EXPORT_PDF";
+      case "action-export-csv":
+        return "EXPORT_CSV";
+      case "action-export-xls":
+        return "EXPORT_XLS";
+      case "action-open-heat-results":
+        return "HEAT_RESULTS";
+      case "action-open-race-results":
+        return "RACE_RESULTS";
+      case "action-open-season-results":
+        return "SEASON_RESULTS";
+      case "action-open-prediction-results":
+        return "PREDICTION_RESULTS";
+      case "action-master-power-on":
+        return "MASTER_POWER_ON";
+      case "action-master-power-off":
+        return "MASTER_POWER_OFF";
+      case "action-back":
+        return "BACK";
+      case "action-forward":
+        return "FORWARD";
+      case "action-close":
+        return "CLOSE";
+      default:
+        return "";
+    }
+  }
+
+  private executeFileOrNavAction(actionString: string): void {
+    if (typeof this.parent()?.onFileMenuSelect === "function") {
+      this.parent().onFileMenuSelect(actionString);
+      return;
+    }
+    if (actionString === "BACK") {
+      this.navigationService?.goBack?.();
+    } else if (actionString === "FORWARD") {
+      this.navigationService?.goForward?.();
+    } else if (actionString === "CLOSE") {
+      if (typeof document !== "undefined" && document.fullscreenElement) {
+        try {
+          document.exitFullscreen();
+        } catch (e) {}
+      }
+      if (typeof window !== "undefined") {
+        try {
+          window.close();
+        } catch (e) {}
+      }
     }
   }
 
@@ -120,89 +216,31 @@ export class RacedayActionButtonComponent {
     event.stopPropagation();
     if (this.isActionDisabled) return;
 
-    let actionString = "";
-    switch (this.widget().widgetType) {
-      case "action-start-resume":
-        actionString = "START_RESUME";
-        break;
-      case "action-pause":
-        actionString = "PAUSE";
-        break;
-      case "action-next-heat":
-        actionString = "NEXT_HEAT";
-        break;
-      case "action-restart-heat":
-        actionString = "RESTART_HEAT";
-        break;
-      case "action-defer-heat":
-        actionString = "DEFER_HEAT";
-        break;
-      case "action-skip-heat":
-        actionString = "SKIP_HEAT";
-        break;
-      case "action-skip-race":
-        actionString = "SKIP_RACE";
-        break;
-      case "action-add-lap":
-        actionString = "ADD_LAP";
-        break;
-      case "action-modify-heats":
-        actionString = "MODIFY";
-        break;
-      case "action-export-pdf":
-        actionString = "EXPORT_PDF";
-        break;
-      case "action-export-csv":
-        actionString = "EXPORT_CSV";
-        break;
-      case "action-export-xls":
-        actionString = "EXPORT_XLS";
-        break;
-      case "action-open-heat-results":
-        actionString = "HEAT_RESULTS";
-        break;
-      case "action-open-race-results":
-        actionString = "RACE_RESULTS";
-        break;
-      case "action-open-season-results":
-        actionString = "SEASON_RESULTS";
-        break;
-      case "action-open-prediction-results":
-        actionString = "PREDICTION_RESULTS";
-        break;
-      case "action-master-power-on":
-        actionString = "MASTER_POWER_ON";
-        break;
-      case "action-master-power-off":
-        actionString = "MASTER_POWER_OFF";
-        break;
-      case "action-back":
-        actionString = "BACK";
-        break;
-    }
+    const actionString = this.getActionString();
+    if (!actionString) return;
 
-    if (actionString) {
-      if (
-        actionString === "EXPORT_CSV" ||
-        actionString === "EXPORT_XLS" ||
-        actionString === "EXPORT_PDF" ||
-        actionString === "BACK"
-      ) {
-        this.parent().onFileMenuSelect(actionString);
-      } else if (
-        actionString === "HEAT_RESULTS" ||
-        actionString === "RACE_RESULTS" ||
-        actionString === "SEASON_RESULTS" ||
-        actionString === "PREDICTION_RESULTS"
-      ) {
-        this.parent().onWindowsMenuSelect(actionString);
-      } else if (actionString === "MASTER_POWER_ON") {
-        this.parent().onTrackPowerMainSelect(true);
-      } else if (actionString === "MASTER_POWER_OFF") {
-        this.parent().onTrackPowerMainSelect(false);
-      } else {
-        this.parent().onMenuSelect(actionString);
-      }
+    if (
+      actionString === "EXPORT_CSV" ||
+      actionString === "EXPORT_XLS" ||
+      actionString === "EXPORT_PDF" ||
+      actionString === "BACK" ||
+      actionString === "FORWARD" ||
+      actionString === "CLOSE"
+    ) {
+      this.executeFileOrNavAction(actionString);
+    } else if (
+      actionString === "HEAT_RESULTS" ||
+      actionString === "RACE_RESULTS" ||
+      actionString === "SEASON_RESULTS" ||
+      actionString === "PREDICTION_RESULTS"
+    ) {
+      this.parent().onWindowsMenuSelect(actionString);
+    } else if (actionString === "MASTER_POWER_ON") {
+      this.parent().onTrackPowerMainSelect(true);
+    } else if (actionString === "MASTER_POWER_OFF") {
+      this.parent().onTrackPowerMainSelect(false);
+    } else {
+      this.parent().onMenuSelect(actionString);
     }
   }
 }

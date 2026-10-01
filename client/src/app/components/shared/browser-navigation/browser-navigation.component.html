@@ -1,24 +1,36 @@
 @if (isFullscreen()) {
   <div class="browser-nav-container">
-    <button
-      id="browser-nav-back-btn"
-      class="browser-nav-btn back-btn"
-      [disabled]="!canGoBack()"
-      (click)="goBack()"
-      [title]="'NAV_BACK' | translate"
-      [attr.aria-label]="'NAV_BACK' | translate"
-    >
-      <span class="material-icons">arrow_back</span>
-    </button>
-    <button
-      id="browser-nav-forward-btn"
-      class="browser-nav-btn forward-btn"
-      [disabled]="!canGoForward()"
-      (click)="goForward()"
-      [title]="'NAV_FORWARD' | translate"
-      [attr.aria-label]="'NAV_FORWARD' | translate"
-    >
-      <span class="material-icons">arrow_forward</span>
-    </button>
+    @if (isCloseMode()) {
+      <button
+        id="browser-nav-close-btn"
+        class="browser-nav-btn close-btn"
+        (click)="closeWindow()"
+        [title]="'NAV_CLOSE' | translate"
+        [attr.aria-label]="'NAV_CLOSE' | translate"
+      >
+        <span class="material-icons">close</span>
+      </button>
+    } @else {
+      <button
+        id="browser-nav-back-btn"
+        class="browser-nav-btn back-btn"
+        [disabled]="!canGoBack()"
+        (click)="goBack()"
+        [title]="'NAV_BACK' | translate"
+        [attr.aria-label]="'NAV_BACK' | translate"
+      >
+        <span class="material-icons">arrow_back</span>
+      </button>
+      <button
+        id="browser-nav-forward-btn"
+        class="browser-nav-btn forward-btn"
+        [disabled]="!canGoForward()"
+        (click)="goForward()"
+        [title]="'NAV_FORWARD' | translate"
+        [attr.aria-label]="'NAV_FORWARD' | translate"
+      >
+        <span class="material-icons">arrow_forward</span>
+      </button>
+    }
   </div>
 }

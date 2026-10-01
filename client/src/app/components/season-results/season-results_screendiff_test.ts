@@ -142,6 +142,32 @@ test.describe("Season Results Visuals", () => {
       fullPage: true,
     });
   });
+
+  test("should display season results in fullscreen mode with close button", async ({
+    page,
+  }) => {
+    const mockSeason = SeasonResultsHelper.createMockSeason();
+    await SeasonResultsHelper.injectMockSeasonsData(page, [mockSeason]);
+
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/season-results?id=" + mockSeason.entity_id),
+    );
+
+    await page.evaluate(() => {
+      (window as any).fullscreenService?.setFullscreenOverride(true);
+    });
+
+    const header = page.locator(".header-bar");
+    await header.waitFor({ state: "visible" });
+
+    await page.mouse.move(0, 0);
+
+    await expect(page).toHaveScreenshot("season-results-fullscreen.png", {
+      maxDiffPixelRatio: 0.05,
+    });
+  });
 });
 
 test.describe("Season Results Visuals - French Locale", () => {

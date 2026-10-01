@@ -37,6 +37,11 @@
         >
           <div
             class="heat-card-header"
+            [class.has-center-status]="
+              heat.isCurrent &&
+              ((showCurrentHeatFlag() && displayFlagUrl()) ||
+                (showCurrentHeatTime() && displayFormattedTime()))
+            "
             [style.font-family]="
               widget()?.customSettings?.['heatNumberFontFamily'] || null
             "
@@ -54,11 +59,14 @@
                 "RM_LABEL_HEAT_NUMBER" | translate: { number: heat.heatNumber }
               }}</span>
               @if (heat.groupName) {
-                <span class="heat-group-name"> - {{ heat.groupName }}</span>
-              } @else if (race()?.group_options?.enabled) {
-                <span class="heat-group-name">
-                  - {{ "RE_GROUPS_LABEL" | translate }}: {{ heat.group + 1 }}
-                </span>
+                <span class="heat-separator">{{ " - " }}</span>
+                <span class="heat-group-name">{{ heat.groupName }}</span>
+              } @else if (heat.hasGroup || isGroupEnabled()) {
+                <span class="heat-separator">{{ " - " }}</span>
+                <span class="heat-group-name"
+                  >{{ "RE_GROUPS_LABEL" | translate }}
+                  {{ heat.group + 1 }}</span
+                >
               }
             </div>
 

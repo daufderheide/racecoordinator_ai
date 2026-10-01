@@ -66,6 +66,11 @@ export class ToolboxGroupHelper {
           labelKey: "UE_WIDGET_TYPE_ACTION_BACK",
         },
         {
+          type: "action-close",
+          icon: "",
+          labelKey: "UE_WIDGET_TYPE_ACTION_CLOSE",
+        },
+        {
           type: "action-defer-heat",
           icon: "",
           labelKey: "UE_WIDGET_TYPE_ACTION_DEFER_HEAT",
@@ -84,6 +89,11 @@ export class ToolboxGroupHelper {
           type: "action-export-xls",
           icon: "",
           labelKey: "UE_WIDGET_TYPE_ACTION_EXPORT_XLS",
+        },
+        {
+          type: "action-forward",
+          icon: "",
+          labelKey: "UE_WIDGET_TYPE_ACTION_FORWARD",
         },
         {
           type: "action-master-power-off",

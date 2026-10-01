@@ -84,4 +84,12 @@ describe("LoggerService", () => {
     expect(warnSpy).not.toHaveBeenCalled();
     expect(errorSpy).toHaveBeenCalled();
   });
+
+  it("should register server logging only once", () => {
+    service.registerServerLogging("http://localhost:8080");
+    const initialCount = (service as any).appenders.length;
+
+    service.registerServerLogging("http://localhost:8080");
+    expect((service as any).appenders.length).toBe(initialCount);
+  });
 });

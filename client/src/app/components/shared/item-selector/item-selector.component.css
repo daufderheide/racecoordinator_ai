@@ -122,8 +122,6 @@
   padding: 30px;
   overflow-y: auto;
   flex: 1;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(56, 189, 248, 0.5) rgba(15, 23, 42, 0.4);
 }
 
 .modal-body::-webkit-scrollbar {

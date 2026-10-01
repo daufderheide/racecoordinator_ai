@@ -17,6 +17,9 @@ export class BrowserNavigationHarness
   protected getForwardButtonElement = this.locatorForOptional(
     BrowserNavigationHarnessBase.selectors.forwardButton,
   );
+  protected getCloseButtonElement = this.locatorForOptional(
+    BrowserNavigationHarnessBase.selectors.closeButton,
+  );
 
   async isVisible(): Promise<boolean> {
     const container = await this.getContainerElement();
@@ -33,6 +36,11 @@ export class BrowserNavigationHarness
     if (btn) await btn.click();
   }
 
+  async clickClose(): Promise<void> {
+    const btn = await this.getCloseButtonElement();
+    if (btn) await btn.click();
+  }
+
   async isBackDisabled(): Promise<boolean> {
     const btn = await this.getBackButtonElement();
     if (!btn) return true;
@@ -43,5 +51,20 @@ export class BrowserNavigationHarness
     const btn = await this.getForwardButtonElement();
     if (!btn) return true;
     return (await btn.getAttribute("disabled")) !== null;
+  }
+
+  async hasBackButton(): Promise<boolean> {
+    const btn = await this.getBackButtonElement();
+    return btn !== null;
+  }
+
+  async hasForwardButton(): Promise<boolean> {
+    const btn = await this.getForwardButtonElement();
+    return btn !== null;
+  }
+
+  async hasCloseButton(): Promise<boolean> {
+    const btn = await this.getCloseButtonElement();
+    return btn !== null;
   }
 }

@@ -304,7 +304,7 @@ export class DefaultRacedayComponent
   private subscriptions: Subscription[] = [];
   protected heat?: Heat;
   protected track?: Track;
-  protected race!: Race;
+  public race!: Race;
   protected columns: ColumnDefinition[];
   protected errorMessage?: string;
   protected startResumeShortcut: string = "Ctrl+S";
@@ -336,6 +336,7 @@ export class DefaultRacedayComponent
   countdownColor: string = "";
   countdownTotalLamps: number = 0;
   private lastPlayedCountdownSecond: number = -1;
+  private lastCountdownSoundTime: number = -1;
   protected isRestarting: boolean = false;
   isPrinting = false;
 
@@ -3293,10 +3294,25 @@ export class DefaultRacedayComponent
   }
 
   onAcknowledgeModal() {
+    const isSaveModal =
+      this.ackModalTitle === "RD_SAVE_SUCCESS" ||
+      this.ackModalTitle ===
+        this.translationService.translate("RD_SAVE_SUCCESS") ||
+      this.ackModalTitle === "RD_SAVE_ERROR" ||
+      this.ackModalTitle === this.translationService.translate("RD_SAVE_ERROR");
+
+    const isRaceEndedModal =
+      !isSaveModal &&
+      (this.ackModalTitle === "RD_RACE_ENDED_TITLE" ||
+        this.ackModalTitle ===
+          this.translationService.translate("RD_RACE_ENDED_TITLE") ||
+        !this.ackModalTitle);
+
     this.showAckModal = false;
+    this.ackModalTitle = "";
     this.cdr.markForCheck();
     this.cdr.detectChanges();
-    if (this.raceHasEnded) {
+    if (this.raceHasEnded && isRaceEndedModal) {
       this.forceExit = true;
       this.router.navigate(["/raceday-setup"]);
     }
@@ -4967,11 +4983,33 @@ export class DefaultRacedayComponent
     } else if (action === "BACK") {
       if (this.isBackDisabled) return;
       window.history.back();
+    } else if (action === "FORWARD") {
+      if (this.isForwardDisabled) return;
+      window.history.forward();
+    } else if (action === "CLOSE") {
+      this.closeWindow();
     }
   }
 
   get isBackDisabled(): boolean {
     return !this.navigationService?.canGoBack?.();
+  }
+
+  get isForwardDisabled(): boolean {
+    return !this.navigationService?.canGoForward?.();
+  }
+
+  closeWindow(): void {
+    if (typeof document !== "undefined" && document.fullscreenElement) {
+      try {
+        document.exitFullscreen();
+      } catch (e) {}
+    }
+    if (typeof window !== "undefined") {
+      try {
+        window.close();
+      } catch (e) {}
+    }
   }
 
   saveRace() {
@@ -5528,6 +5566,15 @@ export class DefaultRacedayComponent
         break;
       case "action-master-power-off":
         if (!this.isMainPowerDisabled) this.onTrackPowerMainSelect(false);
+        break;
+      case "action-back":
+        this.onFileMenuSelect("BACK");
+        break;
+      case "action-forward":
+        this.onFileMenuSelect("FORWARD");
+        break;
+      case "action-close":
+        this.onFileMenuSelect("CLOSE");
         break;
     }
   }
@@ -6399,6 +6446,7 @@ export class DefaultRacedayComponent
       this.audioService.stopVoice();
       this.showCountdownOverlay = true;
       this.lastPlayedCountdownSecond = -1;
+      this.lastCountdownSoundTime = -1;
 
       // Determine if this is a restart from a paused state
       if (previousState === RaceState.PAUSED) {
@@ -6501,6 +6549,23 @@ export class DefaultRacedayComponent
       currentSecond >= 1 &&
       currentSecond !== this.lastPlayedCountdownSecond
     ) {
+      const now =
+        typeof performance !== "undefined" ? performance.now() : Date.now();
+      const deltaMs =
+        this.lastPlayedCountdownSecond > 0 && this.lastCountdownSoundTime > 0
+          ? Math.round(now - this.lastCountdownSoundTime)
+          : -1;
+      this.logger.debug(
+        `[PERF] Countdown sound triggered: second=${currentSecond}, currentTime=${currentTime.toFixed(2)}, delta=${deltaMs}ms`,
+      );
+      if (deltaMs >= 0 && deltaMs < 750) {
+        this.logger.warn(
+          `[PERF] Countdown sound for second=${currentSecond} arrived rapidly (${deltaMs}ms after previous), skipping to prevent audio overlap`,
+        );
+        this.lastPlayedCountdownSecond = currentSecond;
+        this.lastCountdownSoundTime = now;
+        return;
+      }
       const played = this.playAudioFromSet(
         THEME_SLOT_KEYS.AUDIO_COUNTDOWN,
         currentSecond,
@@ -6510,6 +6575,7 @@ export class DefaultRacedayComponent
       );
       if (played) {
         this.lastPlayedCountdownSecond = currentSecond;
+        this.lastCountdownSoundTime = now;
       }
     }
   }
@@ -7133,6 +7199,8 @@ export class DefaultRacedayComponent
       "action-master-power-on",
       "action-master-power-off",
       "action-back",
+      "action-forward",
+      "action-close",
     ];
 
     const customWidgets = this.customWidgetService?.getCustomWidgets() || [];
@@ -7382,7 +7450,11 @@ export class DefaultRacedayComponent
             : this.draggedWidgetType === "image"
               ? 300
               : 200;
-    } else if (this.draggedWidgetType === "action-back") {
+    } else if (
+      this.draggedWidgetType === "action-back" ||
+      this.draggedWidgetType === "action-forward" ||
+      this.draggedWidgetType === "action-close"
+    ) {
       width = 36;
       height = 36;
     } else if (isActionButton) {

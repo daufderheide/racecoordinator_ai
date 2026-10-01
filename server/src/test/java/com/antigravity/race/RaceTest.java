@@ -969,6 +969,35 @@ public class RaceTest {
     }
 
     @Test
+    public void testStartingWallClockCountdownDecreasesMonotonically() throws InterruptedException {
+      Race countdownModel = new Race.Builder().from(race.getRaceModel()).withStartTime(2.0).build();
+
+      com.antigravity.race.Race testRace =
+          new com.antigravity.race.Race.Builder()
+              .model(countdownModel)
+              .track(race.getTrack())
+              .drivers(race.getDrivers())
+              .isDemoMode(true)
+              .build();
+      ClientSubscriptionManager.getInstance().setRace(testRace);
+
+      testRace.setHasRacedInCurrentHeat(false);
+      testRace.changeState(new Starting());
+
+      Thread.sleep(150);
+      double rem1 = testRace.getAutoStartRemaining();
+      Thread.sleep(200);
+      double rem2 = testRace.getAutoStartRemaining();
+
+      assertTrue("Countdown should start around 2.0s, was: " + rem1, rem1 <= 2.0 && rem1 > 1.5);
+      assertTrue(
+          "Countdown should decrease monotonically, rem1=" + rem1 + ", rem2=" + rem2, rem2 < rem1);
+      assertTrue("rem2 should be around 1.6s, was: " + rem2, rem2 > 1.2 && rem2 < 1.8);
+
+      testRace.stop();
+    }
+
+    @Test
     public void testStartAtCurrent_CarryOverTime() {
       HeatScoring heatScoring =
           new HeatScoring(

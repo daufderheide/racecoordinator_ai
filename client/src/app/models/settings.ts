@@ -49,6 +49,8 @@ export type WidgetType =
   | "action-master-power-on"
   | "action-master-power-off"
   | "action-back"
+  | "action-forward"
+  | "action-close"
   | `custom:${string}`
   | (string & {});
 

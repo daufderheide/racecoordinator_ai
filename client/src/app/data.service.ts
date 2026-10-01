@@ -135,6 +135,10 @@ export class DataService {
     return this.baseUrl;
   }
 
+  public getBaseUrl(): string {
+    return this.baseUrl;
+  }
+
   private get driversUrl(): string {
     return `${this.baseUrl}/api/drivers`;
   }
@@ -155,6 +159,7 @@ export class DataService {
     return `${this.baseUrl}/api/seasons`;
   }
   private connectionIntent = "";
+  private lastRaceTimeReceivedAt = 0;
 
   constructor(
     private http: HttpClient,
@@ -1630,6 +1635,22 @@ export class DataService {
   private handleRaceDataMessage(event: MessageEvent) {
     this.ngZone.run(() => {
       try {
+        const now =
+          typeof performance !== "undefined" ? performance.now() : Date.now();
+        const dispatchDelay =
+          event &&
+          typeof event.timeStamp === "number" &&
+          event.timeStamp > 0 &&
+          event.timeStamp <= now
+            ? Math.round(now - event.timeStamp)
+            : -1;
+
+        if (dispatchDelay > 100) {
+          this.logger.warn(
+            `[PERF] Browser main-thread freeze: message dispatch delayed by ${dispatchDelay}ms (UI rendering or long task blocked event loop)`,
+          );
+        }
+
         const arrayBuffer = event.data as ArrayBuffer;
         const raceData = RaceData.decode(
           Reader.create(new Uint8Array(arrayBuffer)),
@@ -1653,6 +1674,19 @@ export class DataService {
           }
         }
         if (raceData.raceTime) {
+          if (this.lastRaceTimeReceivedAt > 0) {
+            const gap = Math.round(now - this.lastRaceTimeReceivedAt);
+            if (gap > 350) {
+              const delayInfo =
+                dispatchDelay >= 0
+                  ? `, browser dispatch delay: ${dispatchDelay}ms`
+                  : "";
+              this.logger.warn(
+                `[PERF] RaceTime WebSocket interval lag: ${gap}ms (expected ~100ms${delayInfo})`,
+              );
+            }
+          }
+          this.lastRaceTimeReceivedAt = now;
           this.raceTimeSubject.next(raceData.raceTime);
         }
         if (raceData.lap) {

@@ -464,30 +464,33 @@ app-custom-select.teammate-select,
   font-size: 24px;
 }
 
-/* Standard Global Scrollbars */
-* {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(56, 189, 248, 0.5) rgba(15, 23, 42, 0.4);
-}
-
+/* Standard Global Scrollbars (Chromium / WebKit - Chrome, Edge, Safari) */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(15, 23, 42, 0.4);
+  background: rgba(15, 23, 42, 0.5);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(56, 189, 248, 0.5);
+  background: rgba(56, 189, 248, 0.6);
   border-radius: 4px;
   border: 1px solid rgba(15, 23, 42, 0.2);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(56, 189, 248, 0.8);
+  background: rgba(56, 189, 248, 0.9);
+}
+
+/* Standards-based fallback for Firefox (isolated so Chromium doesn't disable ::-webkit-scrollbar) */
+@supports not selector(::-webkit-scrollbar) {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(56, 189, 248, 0.6) rgba(15, 23, 42, 0.5);
+  }
 }
 
 /* Layout Customizer Floating Toolbox Global Baseline */

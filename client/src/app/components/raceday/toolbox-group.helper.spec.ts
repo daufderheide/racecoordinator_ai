@@ -26,7 +26,7 @@ describe("ToolboxGroupHelper", () => {
     ]);
 
     const actionsSg = rcAiGroup.subgroups.find((sg) => sg.id === "actions");
-    expect(actionsSg?.widgets.length).toBe(19);
+    expect(actionsSg?.widgets.length).toBe(21);
 
     const standingsSg = rcAiGroup.subgroups.find(
       (sg) => sg.id === "standings-heats",
@@ -45,7 +45,7 @@ describe("ToolboxGroupHelper", () => {
     const mediaSg = rcAiGroup.subgroups.find((sg) => sg.id === "media-chrome");
     expect(mediaSg?.widgets.length).toBe(4);
 
-    expect(rcAiGroup.totalCount).toBe(95);
+    expect(rcAiGroup.totalCount).toBe(97);
   });
 
   it("should exclude used widgets from root and subgroups", () => {
@@ -72,7 +72,7 @@ describe("ToolboxGroupHelper", () => {
     expect(
       actionsSg?.widgets.find((w) => w.type === "action-start-resume"),
     ).toBeUndefined();
-    expect(actionsSg?.widgets.length).toBe(18);
+    expect(actionsSg?.widgets.length).toBe(20);
 
     const titlesSg = rcAiGroup.subgroups.find((sg) => sg.id === "titles-info");
     expect(
@@ -84,7 +84,7 @@ describe("ToolboxGroupHelper", () => {
     expect(mediaSg?.widgets.find((w) => w.type === "branding")).toBeUndefined();
     expect(mediaSg?.widgets.length).toBe(3);
 
-    expect(rcAiGroup.totalCount).toBe(91);
+    expect(rcAiGroup.totalCount).toBe(93);
   });
 
   it("should organize custom widgets into groups, subgroups, and custom-root", () => {
@@ -242,7 +242,9 @@ describe("ToolboxGroupHelper", () => {
     const mockTranslations: Record<string, string> = {
       UE_WIDGET_TYPE_ACTION_START_RESUME: "Start/Resume Heat",
       UE_WIDGET_TYPE_ACTION_PAUSE: "Pause Heat",
-      UE_WIDGET_TYPE_ACTION_BACK: "Back",
+      UE_WIDGET_TYPE_ACTION_BACK: "Browser Back",
+      UE_WIDGET_TYPE_ACTION_FORWARD: "Browser Forward",
+      UE_WIDGET_TYPE_ACTION_CLOSE: "Close",
       UE_WIDGET_TYPE_ACTION_ADD_LAP: "Add Laps/Sections",
       UE_WIDGET_TYPE_TIMER: "Timer",
       UE_WIDGET_TYPE_FLAG: "Race State",

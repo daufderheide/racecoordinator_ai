@@ -1,5 +1,8 @@
 <div class="driver-view-container">
-  <app-browser-navigation class="driver-view-nav"></app-browser-navigation>
+  <app-browser-navigation
+    class="driver-view-nav"
+    mode="navigation"
+  ></app-browser-navigation>
   @if (isRacingInCurrentHeat) {
     <app-driver-station [inputLaneIndex]="laneIndex"></app-driver-station>
   } @else {

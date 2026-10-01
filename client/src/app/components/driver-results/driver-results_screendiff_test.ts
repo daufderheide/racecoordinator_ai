@@ -158,4 +158,34 @@ test.describe("Driver Results Visuals", () => {
       maxDiffPixelRatio: 0.05,
     });
   });
+
+  test("should display driver results in fullscreen mode with close button", async ({
+    page,
+  }) => {
+    const mockData = DriverResultsHelper.createMockIndividualDriverData();
+    await DriverResultsHelper.injectMockRaceData(page, mockData);
+
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/driver-results/d1"),
+    );
+
+    await page.evaluate(() => {
+      (window as any).fullscreenService?.setFullscreenOverride(true);
+    });
+
+    const harness = new DriverResultsHarnessE2e(
+      page.locator("app-driver-results"),
+    );
+
+    await harness.getExpandedHeatCardLocator().waitFor({ state: "visible" });
+    await harness.getLapBarsLocator().nth(2).waitFor({ state: "attached" });
+
+    await page.mouse.move(0, 0);
+
+    await expect(page).toHaveScreenshot("driver-results-fullscreen.png", {
+      maxDiffPixelRatio: 0.05,
+    });
+  });
 });

@@ -3846,6 +3846,40 @@ describe("DefaultRacedayComponent", () => {
       expect(window.history.back).toHaveBeenCalled();
     });
 
+    it("should handle FORWARD action in file menu respecting isForwardDisabled", () => {
+      spyOn(window.history, "forward");
+      const navService = (component as any).navigationService;
+      spyOn(navService, "canGoForward").and.returnValue(false);
+
+      expect(component.isForwardDisabled).toBeTrue();
+      component.onFileMenuSelect("FORWARD");
+      expect(window.history.forward).not.toHaveBeenCalled();
+
+      navService.canGoForward.and.returnValue(true);
+      expect(component.isForwardDisabled).toBeFalse();
+      component.onFileMenuSelect("FORWARD");
+      expect(window.history.forward).toHaveBeenCalled();
+    });
+
+    it("should handle CLOSE action in file menu calling window.close", () => {
+      spyOn(window, "close");
+      component.onFileMenuSelect("CLOSE");
+      expect(window.close).toHaveBeenCalled();
+    });
+
+    it("should exit fullscreen when closing window if in fullscreen", () => {
+      spyOn(window, "close");
+      const exitFsSpy = jasmine.createSpy("exitFullscreen");
+      spyOnProperty(document, "fullscreenElement", "get").and.returnValue(
+        document.body,
+      );
+      spyOn(document, "exitFullscreen").and.callFake(exitFsSpy);
+
+      component.closeWindow();
+      expect(exitFsSpy).toHaveBeenCalled();
+      expect(window.close).toHaveBeenCalled();
+    });
+
     it("should open disallow lap records dialog when DISALLOW_LAP_RECORDS is selected in menu", () => {
       component.onMenuSelect("DISALLOW_LAP_RECORDS");
       expect(component.showDisallowLapRecordsDialog).toBeTrue();
@@ -6826,6 +6860,25 @@ describe("DefaultRacedayComponent", () => {
       expect(component["lastPlayedCountdownSecond"]).toBe(5);
     });
 
+    it("should skip countdown sound if triggered rapidly (<750ms) after previous countdown sound", () => {
+      mockThemeService.resolveAudioConfig.and.returnValue({
+        type: "audio_set",
+        url: "audio-set-1",
+      });
+      spyOn<any>(component, "playAudioFromSet").and.callThrough();
+      component["showCountdownOverlay"] = true;
+      component["countdownTotalLamps"] = 5;
+      component["lastPlayedCountdownSecond"] = 5;
+      component["lastCountdownSoundTime"] =
+        (typeof performance !== "undefined" ? performance.now() : Date.now()) -
+        200;
+
+      component["updateCountdownLamps"](4.0);
+
+      expect(component["playAudioFromSet"]).not.toHaveBeenCalled();
+      expect(component["lastPlayedCountdownSecond"]).toBe(4);
+    });
+
     it("should preload countdown audio entries across seconds 0 through 5", () => {
       mockThemeService.resolveAudioConfig.and.returnValue({
         type: "audio_set",
@@ -7897,6 +7950,20 @@ describe("DefaultRacedayComponent", () => {
       expect(sessionStorage.getItem("skipIntro")).toBeNull();
     });
 
+    it("should redirect to /raceday-setup on acknowledging RD_RACE_ENDED_TITLE modal when raceHasEnded is true", () => {
+      fixture.detectChanges();
+      component.raceHasEnded = true;
+      component.ackModalTitle = "RD_RACE_ENDED_TITLE";
+      component.showAckModal = true;
+      component.forceExit = false;
+
+      component.onAcknowledgeModal();
+
+      expect(component.showAckModal).toBeFalse();
+      expect(component.forceExit).toBeTrue();
+      expect(mockRouter.navigate).toHaveBeenCalledWith(["/raceday-setup"]);
+    });
+
     it("should show exit confirmation modal on canDeactivate under normal conditions", () => {
       fixture.detectChanges();
       component.raceHasEnded = false;
@@ -8958,6 +9025,42 @@ describe("DefaultRacedayComponent", () => {
       expect(droppedWidget.customSettings?.["fontSize"]).toBe(24);
     });
 
+    it("should set default size 36x36 for action-back, action-forward, and action-close buttons when dropping onto canvas", () => {
+      const navButtons = ["action-back", "action-forward", "action-close"];
+      const element = document.createElement("div");
+      spyOnProperty(element, "offsetWidth", "get").and.returnValue(1920);
+      spyOnProperty(element, "offsetHeight", "get").and.returnValue(1080);
+      spyOn(element, "getBoundingClientRect").and.returnValue({
+        left: 0,
+        top: 0,
+        width: 1920,
+        height: 1080,
+      } as DOMRect);
+      spyOn(component["el"].nativeElement, "querySelector").and.returnValue(
+        element,
+      );
+
+      for (const btnType of navButtons) {
+        component.layout = { widgets: [] } as any;
+        component.isLayoutCustomizing = true;
+        component.draggedWidgetType = btnType as any;
+
+        const event = {
+          preventDefault: jasmine.createSpy("preventDefault"),
+          clientX: 100,
+          clientY: 100,
+        } as any;
+
+        component.onCanvasDrop(event);
+
+        expect(component.layout.widgets.length).toBe(1);
+        const droppedWidget = component.layout.widgets[0];
+        expect(droppedWidget.widgetType).toBe(btnType as any);
+        expect(droppedWidget.width).toBe(36);
+        expect(droppedWidget.height).toBe(36);
+      }
+    });
+
     it("should set default size 200x18 for header widgets (event-name, race-name, track-name, heat-info) when dropping onto canvas", () => {
       const headerWidgetTypes = [
         "event-name",
@@ -9478,6 +9581,20 @@ describe("DefaultRacedayComponent", () => {
       await new Promise((resolve) => setTimeout(resolve, 0));
       expect(updateSpy).toHaveBeenCalled();
     });
+
+    it("should not render auto-injected app-browser-navigation in theme window or raceday", () => {
+      if (!(component as any).route.snapshot.queryParams) {
+        (component as any).route.snapshot.queryParams = {};
+      }
+      (component as any).route.snapshot.queryParams["themeId"] = "theme-1";
+      fixture.detectChanges();
+
+      const navEl = fixture.nativeElement.querySelector(
+        "app-browser-navigation",
+      );
+      expect(navEl).toBeNull();
+      delete (component as any).route.snapshot.queryParams["themeId"];
+    });
   });
 
   describe("PDF Export handling", () => {
@@ -9975,6 +10092,71 @@ describe("DefaultRacedayComponent", () => {
 
       expect(component.showSaveRaceDialog).toBeFalse();
     });
+
+    it("should remain on raceday page and not navigate to /raceday-setup when acknowledging save success in race over state", () => {
+      mockDataService.saveRace.and.returnValue(
+        of("Race saved successfully: 20260826_FinishedRace.json"),
+      );
+      fixture.detectChanges();
+      (component as any).raceState = RaceState.RACE_OVER;
+      component.raceHasEnded = true;
+      component.forceExit = false;
+      mockRouter.navigate.calls.reset();
+
+      component.onSaveRaceConfirm("Finished Race");
+
+      expect(component.showAckModal).toBeTrue();
+      expect(component.ackModalTitle).toBe("RD_SAVE_SUCCESS");
+
+      component.onAcknowledgeModal();
+
+      expect(component.showAckModal).toBeFalse();
+      expect(mockRouter.navigate).not.toHaveBeenCalled();
+      expect(component.forceExit).toBeFalse();
+    });
+
+    it("should remain on raceday page and not navigate to /raceday-setup when acknowledging save error in race over state", () => {
+      mockDataService.saveRace.and.returnValue(
+        throwError(() => ({ error: "Disk Full" })),
+      );
+      fixture.detectChanges();
+      (component as any).raceState = RaceState.RACE_OVER;
+      component.raceHasEnded = true;
+      component.forceExit = false;
+      mockRouter.navigate.calls.reset();
+
+      component.onSaveRaceConfirm("Finished Race");
+
+      expect(component.showAckModal).toBeTrue();
+      expect(component.ackModalTitle).toBe("RD_SAVE_ERROR");
+
+      component.onAcknowledgeModal();
+
+      expect(component.showAckModal).toBeFalse();
+      expect(mockRouter.navigate).not.toHaveBeenCalled();
+      expect(component.forceExit).toBeFalse();
+    });
+
+    it("should remain on raceday page when acknowledging save success during normal race state", () => {
+      mockDataService.saveRace.and.returnValue(
+        of("Race saved successfully: 20260826_MidRace.json"),
+      );
+      fixture.detectChanges();
+      (component as any).raceState = RaceState.RACING;
+      component.raceHasEnded = false;
+      component.forceExit = false;
+      mockRouter.navigate.calls.reset();
+
+      component.onSaveRaceConfirm("Mid Race");
+
+      expect(component.showAckModal).toBeTrue();
+
+      component.onAcknowledgeModal();
+
+      expect(component.showAckModal).toBeFalse();
+      expect(mockRouter.navigate).not.toHaveBeenCalled();
+      expect(component.forceExit).toBeFalse();
+    });
   });
 
   describe("Master Power Actions and Unused Widgets", () => {
@@ -10012,6 +10194,8 @@ describe("DefaultRacedayComponent", () => {
       expect(unused).toContain("action-master-power-off");
       expect(unused).toContain("action-open-season-results");
       expect(unused).toContain("action-open-prediction-results");
+      expect(unused).toContain("action-forward");
+      expect(unused).toContain("action-close");
       expect(unused).toContain("heat-list");
 
       component.layout = {
@@ -10194,6 +10378,12 @@ describe("DefaultRacedayComponent", () => {
 
       component["executeWidgetAction"]("action-export-pdf");
       expect(component.onFileMenuSelect).toHaveBeenCalledWith("EXPORT_PDF");
+
+      component["executeWidgetAction"]("action-forward");
+      expect(component.onFileMenuSelect).toHaveBeenCalledWith("FORWARD");
+
+      component["executeWidgetAction"]("action-close");
+      expect(component.onFileMenuSelect).toHaveBeenCalledWith("CLOSE");
     });
 
     it("should trigger master power action from keyboard shortcut", () => {

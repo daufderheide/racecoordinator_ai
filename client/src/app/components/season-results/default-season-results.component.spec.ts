@@ -923,4 +923,13 @@ describe("DefaultSeasonResultsComponent", () => {
     expect(rowCells[4].textContent?.trim()).toBe("65");
     expect(rowCells[5].textContent?.trim()).toBe("3");
   });
+
+  it("should render app-browser-navigation with mode='close'", () => {
+    fixture.detectChanges();
+    const navEl = fixture.nativeElement.querySelector("app-browser-navigation");
+    expect(navEl).toBeTruthy();
+    expect(
+      navEl.getAttribute("mode") || navEl.getAttribute("ng-reflect-mode"),
+    ).toBe("close");
+  });
 });

@@ -64,6 +64,9 @@ describe("ActionButtonInspectorComponent", () => {
       "action-open-prediction-results": "RD_WIN_PREDICTION_RESULTS",
       "action-master-power-on": "RD_MENU_MAIN_POWER_ON",
       "action-master-power-off": "RD_MENU_MAIN_POWER_OFF",
+      "action-back": "RD_MENU_BACK",
+      "action-forward": "RD_MENU_FORWARD",
+      "action-close": "RD_MENU_CLOSE",
       "unknown-action": "",
     };
 
