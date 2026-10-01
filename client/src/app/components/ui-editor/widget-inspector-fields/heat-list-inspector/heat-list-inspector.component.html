@@ -692,17 +692,22 @@
       />
     </div>
 
-    <div class="inspector-section">
+    <div
+      class="inspector-section summary-row-text-color-section"
+      [class.disabled]="settings().summaryUseLaneColors !== false"
+    >
       <label class="inspector-label">{{
         "UE_INSPECTOR_TEXT_COLOR" | translate
       }}</label>
       <div
-        class="color-picker-wrapper"
+        class="color-picker-wrapper summary-row-text-color-wrapper"
         [class.is-null]="!settings().summaryRowTextColor"
+        [class.disabled]="settings().summaryUseLaneColors !== false"
       >
         <input
           type="color"
           [value]="settings().summaryRowTextColor || '#ffffff'"
+          [disabled]="settings().summaryUseLaneColors !== false"
           (change)="onColorChange('summaryRowTextColor', $event)"
           class="color-picker-input"
         />
@@ -714,6 +719,7 @@
         @if (settings().summaryRowTextColor) {
           <button
             class="color-reset-btn"
+            [disabled]="settings().summaryUseLaneColors !== false"
             (click)="resetColor('summaryRowTextColor')"
             [title]="'UE_INSPECTOR_COLOR_RESET' | translate"
           >

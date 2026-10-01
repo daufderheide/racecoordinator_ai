@@ -1093,5 +1093,78 @@ describe("RacedayHeatListComponent", () => {
       expect(rightStatus.querySelector(".header-flag")).toBeTruthy();
       expect(rightStatus.querySelector(".header-time")).toBeTruthy();
     });
+
+    it("should use lane background color and font color when summaryUseLaneColors is enabled", () => {
+      fixture.componentRef.setInput("track", {
+        id: "track-1",
+        name: "Test Track",
+        lanes: [
+          {
+            lane_number: 1,
+            background_color: "#ff0000",
+            foreground_color: "#ffffff",
+          },
+          {
+            lane_number: 2,
+            background_color: "#0000ff",
+            foreground_color: "#ffff00",
+          },
+        ],
+      } as any);
+
+      fixture.componentRef.setInput("widget", {
+        ...mockWidget,
+        customSettings: {
+          ...mockWidget.customSettings,
+          showActiveSummary: true,
+          summaryUseLaneColors: true,
+          summaryRowTextColor: "#123456",
+        },
+      });
+      fixture.detectChanges();
+
+      const heat1 = fixture.nativeElement.querySelector("#heat-card-1");
+      const rows = heat1.querySelectorAll(".summary-lane-row");
+      expect(rows.length).toBeGreaterThanOrEqual(1);
+
+      const row1 = rows[0] as HTMLElement;
+      expect(row1.style.backgroundColor).toBe("rgb(255, 0, 0)");
+      expect(row1.style.color).toBe("rgb(255, 255, 255)");
+    });
+
+    it("should use summaryRowTextColor and default background when summaryUseLaneColors is disabled", () => {
+      fixture.componentRef.setInput("track", {
+        id: "track-1",
+        name: "Test Track",
+        lanes: [
+          {
+            lane_number: 1,
+            background_color: "#ff0000",
+            foreground_color: "#ffffff",
+          },
+        ],
+      } as any);
+
+      fixture.componentRef.setInput("widget", {
+        ...mockWidget,
+        customSettings: {
+          ...mockWidget.customSettings,
+          showActiveSummary: true,
+          summaryUseLaneColors: false,
+          summaryRowTextColor: "#123456",
+        },
+      });
+      fixture.detectChanges();
+
+      const heat1 = fixture.nativeElement.querySelector("#heat-card-1");
+      const rows = heat1.querySelectorAll(".summary-lane-row");
+      expect(rows.length).toBeGreaterThanOrEqual(1);
+
+      const row1 = rows[0] as HTMLElement;
+      // Background should not be lane color (null / empty style)
+      expect(row1.style.backgroundColor).toBe("");
+      // Font color should come from summaryRowTextColor
+      expect(row1.style.color).toBe("rgb(18, 52, 86)");
+    });
   });
 });

@@ -1736,6 +1736,23 @@
   color: #ef4444;
 }
 
+.color-picker-wrapper.disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.color-picker-input:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.color-reset-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.35;
+  pointer-events: none;
+}
+
 .inspector-geometry-title {
   font-size: 10px;
   font-weight: 700;

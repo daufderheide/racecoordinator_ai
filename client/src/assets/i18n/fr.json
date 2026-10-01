@@ -2208,7 +2208,7 @@
   "UE_INSPECTOR_HEAT_LIST_SUMMARY_ROW_SETTINGS": "Paramètres des lignes",
   "UE_INSPECTOR_HEAT_LIST_SUMMARY_BORDER_COLOR": "Couleur de la bordure du tableau",
   "UE_INSPECTOR_HEAT_LIST_SUMMARY_HEADER_BG_COLOR": "Couleur de fond de l'en-tête",
-  "UE_INSPECTOR_HEAT_LIST_SUMMARY_USE_LANE_COLORS": "Utiliser les couleurs de fond des voies",
+  "UE_INSPECTOR_HEAT_LIST_SUMMARY_USE_LANE_COLORS": "Utiliser les couleurs des voies",
   "HL_SUMMARY_POS": "Pos",
   "HL_SUMMARY_DRIVER": "Pilote",
   "HL_SUMMARY_LAPS": "Tours",

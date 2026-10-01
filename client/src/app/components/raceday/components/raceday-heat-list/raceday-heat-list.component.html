@@ -171,8 +171,10 @@
                         summaryUseLaneColors() ? lane.backgroundColor : null
                       "
                       [style.color]="
-                        widget()?.customSettings?.['summaryRowTextColor'] ||
-                        lane.foregroundColor
+                        summaryUseLaneColors()
+                          ? lane.foregroundColor
+                          : widget()?.customSettings?.['summaryRowTextColor'] ||
+                            null
                       "
                       [style.font-family]="
                         widget()?.customSettings?.['summaryRowFontFamily'] ||

@@ -2207,7 +2207,7 @@
   "UE_INSPECTOR_HEAT_LIST_SUMMARY_ROW_SETTINGS": "Configurações das linhas",
   "UE_INSPECTOR_HEAT_LIST_SUMMARY_BORDER_COLOR": "Cor da borda da tabela",
   "UE_INSPECTOR_HEAT_LIST_SUMMARY_HEADER_BG_COLOR": "Cor de fundo do cabeçalho",
-  "UE_INSPECTOR_HEAT_LIST_SUMMARY_USE_LANE_COLORS": "Usar cores de fundo da pista",
+  "UE_INSPECTOR_HEAT_LIST_SUMMARY_USE_LANE_COLORS": "Usar cores da pista",
   "HL_SUMMARY_POS": "Pos",
   "HL_SUMMARY_DRIVER": "Piloto",
   "HL_SUMMARY_LAPS": "Voltas",
