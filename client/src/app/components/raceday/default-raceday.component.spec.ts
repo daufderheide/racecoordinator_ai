@@ -6762,7 +6762,7 @@ describe("DefaultRacedayComponent", () => {
       expect(component["lastPlayedCountdownSecond"]).toBe(5);
     });
 
-    it("should skip countdown sound if triggered rapidly (<750ms) after previous countdown sound", () => {
+    it("should skip countdown sound if triggered rapidly (<250ms) after previous countdown sound without advancing lastCountdownSoundTime", () => {
       mockThemeService.resolveAudioConfig.and.returnValue({
         type: "audio_set",
         url: "audio-set-1",
@@ -6771,14 +6771,42 @@ describe("DefaultRacedayComponent", () => {
       component["showCountdownOverlay"] = true;
       component["countdownTotalLamps"] = 5;
       component["lastPlayedCountdownSecond"] = 5;
-      component["lastCountdownSoundTime"] =
+      const initialTime =
         (typeof performance !== "undefined" ? performance.now() : Date.now()) -
-        200;
+        150;
+      component["lastCountdownSoundTime"] = initialTime;
 
       component["updateCountdownLamps"](4.0);
 
       expect(component["playAudioFromSet"]).not.toHaveBeenCalled();
       expect(component["lastPlayedCountdownSecond"]).toBe(4);
+      // Ensure skipped sound does NOT update lastCountdownSoundTime so it avoids cascading drops
+      expect(component["lastCountdownSoundTime"]).toBe(initialTime);
+    });
+
+    it("should play countdown sound when delta is at least 250ms after previous sound", () => {
+      mockThemeService.resolveAudioConfig.and.returnValue({
+        type: "audio_set",
+        url: "audio-set-1",
+      });
+      spyOn<any>(component, "playAudioFromSet").and.returnValue(true);
+      component["showCountdownOverlay"] = true;
+      component["countdownTotalLamps"] = 5;
+      component["lastPlayedCountdownSecond"] = 5;
+      const initialTime =
+        (typeof performance !== "undefined" ? performance.now() : Date.now()) -
+        700;
+      component["lastCountdownSoundTime"] = initialTime;
+
+      component["updateCountdownLamps"](4.0);
+
+      expect(component["playAudioFromSet"]).toHaveBeenCalledWith(
+        THEME_SLOT_KEYS.AUDIO_COUNTDOWN,
+        4,
+        { widgetType: "countdown" },
+      );
+      expect(component["lastPlayedCountdownSecond"]).toBe(4);
+      expect(component["lastCountdownSoundTime"]).toBeGreaterThan(initialTime);
     });
 
     it("should preload countdown audio entries across seconds 0 through 5", () => {

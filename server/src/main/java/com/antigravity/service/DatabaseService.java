@@ -646,7 +646,7 @@ public class DatabaseService {
   }
 
   public void upsertAutoSave(DatabaseContext context, RaceSaveData data) {
-    if (data == null) {
+    if (data == null || context == null || context.getConnection() == null) {
       return;
     }
     boolean isDemo = data.isDemoMode();
@@ -743,7 +743,7 @@ public class DatabaseService {
   }
 
   public boolean deleteSavedRace(DatabaseContext context, String saveName, RaceScope scope) {
-    if (context == null || saveName == null) return false;
+    if (context == null || context.getConnection() == null || saveName == null) return false;
     String tableName = getCollectionName("saved_races", scope);
     context.ensureTable(tableName);
     String sql =

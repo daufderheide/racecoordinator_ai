@@ -6488,12 +6488,11 @@ export class DefaultRacedayComponent
       this.logger.debug(
         `[PERF] Countdown sound triggered: second=${currentSecond}, currentTime=${currentTime.toFixed(2)}, delta=${deltaMs}ms`,
       );
-      if (deltaMs >= 0 && deltaMs < 750) {
+      if (deltaMs >= 0 && deltaMs < 250) {
         this.logger.warn(
           `[PERF] Countdown sound for second=${currentSecond} arrived rapidly (${deltaMs}ms after previous), skipping to prevent audio overlap`,
         );
         this.lastPlayedCountdownSecond = currentSecond;
-        this.lastCountdownSoundTime = now;
         return;
       }
       const played = this.playAudioFromSet(

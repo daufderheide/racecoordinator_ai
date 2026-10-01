@@ -20,6 +20,7 @@ import io.javalin.websocket.WsContext;
 import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -470,11 +471,12 @@ public class ClientSubscriptionManager {
     }
   }
 
-  public synchronized void autoSave(Race race) {
-    if (race == null || databaseContext == null) {
-      return;
+  public CompletableFuture<Void> autoSaveAsync(Race race) {
+    if (race == null || databaseContext == null || databaseContext.getConnection() == null) {
+      return CompletableFuture.completedFuture(null);
     }
     try {
+      final DatabaseContext ctx = databaseContext;
       RaceSaveData saveData = new RaceSaveData();
       saveData.setModel(race.getRaceModel());
       saveData.setTrack(race.getTrack());
@@ -493,30 +495,68 @@ public class ClientSubscriptionManager {
       String filename = "autosave_" + race.getRaceModel().getEntityId() + ".json";
       saveData.setSaveName(filename);
 
-      DatabaseService dbService = DatabaseService.getInstance();
-      dbService.upsertAutoSave(databaseContext, saveData);
-      logger.info("Auto-saved race to database: {}", filename);
+      return CompletableFuture.runAsync(
+          () -> {
+            try {
+              DatabaseService dbService = DatabaseService.getInstance();
+              dbService.upsertAutoSave(ctx, saveData);
+              logger.info("Auto-saved race to database: {}", filename);
+            } catch (Exception e) {
+              if (!isShuttingDown) {
+                logger.error("Error during auto-save", e);
+              }
+            }
+          },
+          scheduler);
     } catch (Exception e) {
       if (!isShuttingDown) {
-        logger.error("Error during auto-save", e);
+        logger.error("Error preparing auto-save data", e);
+      }
+      CompletableFuture<Void> failed = new CompletableFuture<>();
+      failed.completeExceptionally(e);
+      return failed;
+    }
+  }
+
+  public void autoSave(Race race) {
+    try {
+      autoSaveAsync(race).get(5, TimeUnit.SECONDS);
+    } catch (Exception e) {
+      if (!isShuttingDown) {
+        logger.warn("Synchronous autoSave timed out or failed: {}", e.getMessage());
       }
     }
   }
 
-  public synchronized void deleteAutoSave(String raceId, boolean isDemo) {
-    if (databaseContext == null || raceId == null) {
-      return;
+  public CompletableFuture<Void> deleteAutoSaveAsync(String raceId, boolean isDemo) {
+    if (databaseContext == null || databaseContext.getConnection() == null || raceId == null) {
+      return CompletableFuture.completedFuture(null);
     }
+    final DatabaseContext ctx = databaseContext;
+    String filename = "autosave_" + raceId + ".json";
+    return CompletableFuture.runAsync(
+        () -> {
+          try {
+            DatabaseService dbService = DatabaseService.getInstance();
+            boolean deleted = dbService.deleteSavedRace(ctx, filename, isDemo);
+            if (deleted) {
+              logger.info("Deleted auto-save from db (demo={}): {}", isDemo, filename);
+            }
+          } catch (Exception e) {
+            if (!isShuttingDown) {
+              logger.error("Error deleting auto-save", e);
+            }
+          }
+        },
+        scheduler);
+  }
+
+  public void deleteAutoSave(String raceId, boolean isDemo) {
     try {
-      String filename = "autosave_" + raceId + ".json";
-      DatabaseService dbService = DatabaseService.getInstance();
-      boolean deleted = dbService.deleteSavedRace(databaseContext, filename, isDemo);
-      if (deleted) {
-        logger.info("Deleted auto-save from db (demo={}): {}", isDemo, filename);
-      }
+      deleteAutoSaveAsync(raceId, isDemo).get(5, TimeUnit.SECONDS);
     } catch (Exception e) {
       if (!isShuttingDown) {
-        logger.error("Error deleting auto-save", e);
+        logger.warn("Synchronous deleteAutoSave timed out or failed: {}", e.getMessage());
       }
     }
   }

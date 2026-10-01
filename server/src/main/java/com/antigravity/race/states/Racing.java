@@ -173,9 +173,12 @@ public class Racing implements IRaceState {
                 long jitterNs = now - expectedNextTickNano;
                 if (jitterNs > 100_000_000L) {
                   logger.warn("[PERF] Racing ticker delayed by {} ms", jitterNs / 1_000_000L);
+                  if (jitterNs > 500_000_000L) {
+                    expectedNextTickNano = now;
+                  }
                 }
               }
-              expectedNextTickNano = now + 100_000_000L;
+              expectedNextTickNano += 100_000_000L;
 
               float delta = (now - lastTime) / 1_000_000_000.0f;
               lastTime = now;
@@ -299,6 +302,12 @@ public class Racing implements IRaceState {
               // Broadcast RaceTime message wrapped in RaceData
               race.broadcastTime();
 
+              long tickDurationNs = System.nanoTime() - now;
+              if (tickDurationNs > 25_000_000L && !allFinished) {
+                logger.warn(
+                    "[PERF] Racing ticker execution took {} ms", tickDurationNs / 1_000_000L);
+              }
+
               if (allFinished) {
                 if (allowFinish == AllowFinish.NoneAutoSegments) {
                   calculateAutoSegments();
@@ -315,18 +324,12 @@ public class Racing implements IRaceState {
                   race.changeState(new HeatOver());
                 }
               }
-
-              long tickDurationNs = System.nanoTime() - now;
-              if (tickDurationNs > 25_000_000L) {
-                logger.warn(
-                    "[PERF] Racing ticker execution took {} ms", tickDurationNs / 1_000_000L);
-              }
             } catch (Exception e) {
               logger.error("Error in Racing timer", e);
             }
           }
         };
-    timerHandle = scheduler.scheduleWithFixedDelay(ticker, 0, 100, TimeUnit.MILLISECONDS);
+    timerHandle = scheduler.scheduleAtFixedRate(ticker, 0, 100, TimeUnit.MILLISECONDS);
   }
 
   @Override

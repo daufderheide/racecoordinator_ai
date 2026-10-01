@@ -1677,14 +1677,18 @@ export class DataService {
           Reader.create(new Uint8Array(arrayBuffer)),
         );
 
+        const previousState = this.raceStateSubject.value;
+        let newState = previousState;
         if (raceData.raceState) {
           this.logger.debug("WS: Received RaceState", raceData.raceState);
+          newState = raceData.raceState;
           this.raceStateSubject.next(raceData.raceState);
         }
         if (raceData.race) {
           this.logger.debug("WS: Received Race", raceData.race);
           this.raceUpdateSubject.next(raceData.race);
           if (raceData.race.state) {
+            newState = raceData.race.state;
             this.raceStateSubject.next(raceData.race.state);
           }
           if (raceData.race.flag) {
@@ -1694,58 +1698,85 @@ export class DataService {
             this.heatSubject.next(raceData.race.currentHeat);
           }
         }
+        if (newState !== previousState) {
+          this.lastRaceTimeReceivedAt = 0;
+        }
         if (raceData.raceTime) {
-          if (this.lastRaceTimeReceivedAt > 0) {
-            const gap = Math.round(now - this.lastRaceTimeReceivedAt);
-            if (gap > 350) {
-              const delayInfo =
-                dispatchDelay >= 0
-                  ? `, browser dispatch delay: ${dispatchDelay}ms`
-                  : "";
-              this.logger.warn(
-                `[PERF] RaceTime WebSocket interval lag: ${gap}ms (expected ~100ms${delayInfo})`,
-              );
-            }
-          }
-          this.lastRaceTimeReceivedAt = now;
-          this.raceTimeSubject.next(raceData.raceTime);
+          this.handleRaceTimeMessage(
+            raceData.raceTime,
+            newState,
+            now,
+            dispatchDelay,
+          );
         }
-        if (raceData.lap) {
-          this.lapSubject.next(raceData.lap);
-        }
-        if (raceData.standingsUpdate) {
-          this.standingsSubject.next(raceData.standingsUpdate);
-        }
-        if (raceData.overallStandingsUpdate) {
-          this.overallStandingsSubject.next(raceData.overallStandingsUpdate);
-        }
-        if (raceData.groupStandingsUpdate) {
-          this.groupStandingsSubject.next(raceData.groupStandingsUpdate);
-        }
-        if (raceData.carData) {
-          this.carDataSubject.next(raceData.carData);
-        }
-        if (raceData.segment) {
-          this.segmentSubject.next(raceData.segment);
-        }
-        if (raceData.flag) {
-          this.logger.debug("WS: Received RaceFlag", raceData.flag);
-          this.flagSubject.next(raceData.flag);
-        }
-        if (raceData.recordData) {
-          this.recordDataSubject.next(raceData.recordData);
-        }
-        if (raceData.heat) {
-          this.logger.debug("WS: Received Heat", raceData.heat);
-          this.heatSubject.next(raceData.heat);
-        }
-        if (raceData.systemState) {
-          this.systemStateSubject.next(raceData.systemState as SystemState);
-        }
+        this.dispatchTelemetryUpdates(raceData);
       } catch (e) {
         this.logger.error("Error parsing race data message", e);
       }
     });
+  }
+
+  private handleRaceTimeMessage(
+    raceTime: IRaceTime,
+    raceState: RaceState,
+    now: number,
+    dispatchDelay: number,
+  ): void {
+    const isTicking =
+      raceState === RaceState.STARTING ||
+      raceState === RaceState.RACING ||
+      (raceTime.autoStartRemaining ?? 0) > 0 ||
+      (raceTime.autoAdvanceRemaining ?? 0) > 0;
+
+    if (isTicking && this.lastRaceTimeReceivedAt > 0) {
+      const gap = Math.round(now - this.lastRaceTimeReceivedAt);
+      if (gap > 350) {
+        const delayInfo =
+          dispatchDelay >= 0
+            ? `, browser dispatch delay: ${dispatchDelay}ms`
+            : "";
+        this.logger.warn(
+          `[PERF] RaceTime WebSocket interval lag: ${gap}ms (expected ~100ms${delayInfo})`,
+        );
+      }
+    }
+    this.lastRaceTimeReceivedAt = isTicking ? now : 0;
+    this.raceTimeSubject.next(raceTime);
+  }
+
+  private dispatchTelemetryUpdates(raceData: RaceData): void {
+    if (raceData.lap) {
+      this.lapSubject.next(raceData.lap);
+    }
+    if (raceData.standingsUpdate) {
+      this.standingsSubject.next(raceData.standingsUpdate);
+    }
+    if (raceData.overallStandingsUpdate) {
+      this.overallStandingsSubject.next(raceData.overallStandingsUpdate);
+    }
+    if (raceData.groupStandingsUpdate) {
+      this.groupStandingsSubject.next(raceData.groupStandingsUpdate);
+    }
+    if (raceData.carData) {
+      this.carDataSubject.next(raceData.carData);
+    }
+    if (raceData.segment) {
+      this.segmentSubject.next(raceData.segment);
+    }
+    if (raceData.flag) {
+      this.logger.debug("WS: Received RaceFlag", raceData.flag);
+      this.flagSubject.next(raceData.flag);
+    }
+    if (raceData.recordData) {
+      this.recordDataSubject.next(raceData.recordData);
+    }
+    if (raceData.heat) {
+      this.logger.debug("WS: Received Heat", raceData.heat);
+      this.heatSubject.next(raceData.heat);
+    }
+    if (raceData.systemState) {
+      this.systemStateSubject.next(raceData.systemState as SystemState);
+    }
   }
 
   public connectToRaceDataSocket() {

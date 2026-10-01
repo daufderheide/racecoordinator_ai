@@ -1476,6 +1476,49 @@ describe("DataService", () => {
       );
     });
 
+    it("should warn on RaceTime WebSocket interval lag when active ticking gap exceeds 350ms in RACING state", () => {
+      const loggerSpy = spyOn((service as any).logger, "warn");
+      (service as any).raceStateSubject.next(RaceState.RACING);
+
+      const pastTime =
+        (typeof performance !== "undefined" ? performance.now() : Date.now()) -
+        500;
+      (service as any).lastRaceTimeReceivedAt = pastTime;
+
+      const mockRaceData = RaceData.encode({
+        raceTime: { time: 5.0 },
+      }).finish();
+
+      (service as any).handleRaceDataMessage({
+        data: mockRaceData.slice().buffer,
+      });
+
+      expect(loggerSpy).toHaveBeenCalledWith(
+        jasmine.stringMatching(
+          /\[PERF\] RaceTime WebSocket interval lag: \d+ms/,
+        ),
+      );
+    });
+
+    it("should not warn on RaceTime gap across race state transition or when timer is not ticking", () => {
+      const loggerSpy = spyOn((service as any).logger, "warn");
+      (service as any).raceStateSubject.next(RaceState.NOT_STARTED);
+      (service as any).lastRaceTimeReceivedAt = 1000;
+
+      // Transition to STARTING with a raceTime message
+      const mockRaceData = RaceData.encode({
+        raceState: RaceState.STARTING,
+        raceTime: { time: 5.0 },
+      }).finish();
+
+      (service as any).handleRaceDataMessage({
+        data: mockRaceData.slice().buffer,
+      });
+
+      expect(loggerSpy).not.toHaveBeenCalled();
+      expect((service as any).lastRaceTimeReceivedAt).toBeGreaterThan(0);
+    });
+
     it("should return base URL via getBaseUrl", () => {
       expect(service.getBaseUrl()).toBe(service.serverUrl);
     });
