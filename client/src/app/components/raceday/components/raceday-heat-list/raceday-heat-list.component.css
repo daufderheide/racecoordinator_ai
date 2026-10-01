@@ -108,20 +108,38 @@
 .heat-title-text {
   display: flex;
   align-items: center;
-  gap: 4px;
-  max-width: calc(38% - 8px);
+  min-width: 0;
+  max-width: 100%;
   overflow: hidden;
-  text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.heat-card.current-heat .heat-title-text {
+  max-width: calc(100% - 85px);
+}
+
+.heat-card.current-heat .heat-card-header.has-center-status .heat-title-text {
+  max-width: calc(50% - 32px);
 }
 
 .heat-label {
   font-weight: bold;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.heat-separator {
+  flex-shrink: 0;
+  white-space: pre;
 }
 
 .heat-group-name {
   font-weight: normal;
   opacity: 0.85;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
 }
 
 /* Centered race state flag and race time in card header */
@@ -531,6 +549,14 @@
   flex: 1;
   height: 100%;
   line-height: 1.15;
+}
+
+.raceday-heat-list-container.scale-to-window .heat-card.current-heat .heat-title-text {
+  max-width: calc(100% - (75px * var(--heat-scale, 1)));
+}
+
+.raceday-heat-list-container.scale-to-window .heat-card.current-heat .heat-card-header.has-center-status .heat-title-text {
+  max-width: calc(50% - (20px * var(--heat-scale, 1)));
 }
 
 .raceday-heat-list-container.scale-to-window .current-heat-status {

@@ -967,4 +967,109 @@ describe("RacedayHeatListComponent", () => {
       ).toBe("--");
     });
   });
+
+  describe("Group Display", () => {
+    it("should display group number when group_options is enabled", () => {
+      fixture.componentRef.setInput("race", {
+        group_options: {
+          enabled: true,
+          names: [],
+        },
+      });
+      fixture.detectChanges();
+
+      const heat1 = fixture.nativeElement.querySelector("#heat-card-1");
+      const heat2 = fixture.nativeElement.querySelector("#heat-card-2");
+
+      const title1 = heat1.querySelector(".heat-title-text").textContent.trim();
+      const title2 = heat2.querySelector(".heat-title-text").textContent.trim();
+
+      const sep1 = heat1.querySelector(".heat-separator");
+      expect(sep1).not.toBeNull();
+      expect(sep1.textContent).toBe(" - ");
+
+      expect(title1).toBe("RM_LABEL_HEAT_NUMBER - RE_GROUPS_LABEL 1");
+      expect(title2).toBe("RM_LABEL_HEAT_NUMBER - RE_GROUPS_LABEL 2");
+    });
+
+    it("should display custom group name when group_options has names defined", () => {
+      fixture.componentRef.setInput("race", {
+        group_options: {
+          enabled: true,
+          names: ["Pro Group", "Amateur Group"],
+        },
+      });
+      fixture.detectChanges();
+
+      const heat1 = fixture.nativeElement.querySelector("#heat-card-1");
+      const heat2 = fixture.nativeElement.querySelector("#heat-card-2");
+
+      const title1 = heat1.querySelector(".heat-title-text").textContent.trim();
+      const title2 = heat2.querySelector(".heat-title-text").textContent.trim();
+
+      expect(title1).toBe("RM_LABEL_HEAT_NUMBER - Pro Group");
+      expect(title2).toBe("RM_LABEL_HEAT_NUMBER - Amateur Group");
+    });
+
+    it("should not display group when group_options is disabled", () => {
+      fixture.componentRef.setInput("race", {
+        group_options: {
+          enabled: false,
+          names: ["Pro Group"],
+        },
+      });
+      fixture.detectChanges();
+
+      const heat1 = fixture.nativeElement.querySelector("#heat-card-1");
+      const title1 = heat1.querySelector(".heat-title-text").textContent.trim();
+
+      expect(title1).toBe("RM_LABEL_HEAT_NUMBER");
+      expect(heat1.querySelector(".heat-separator")).toBeNull();
+      expect(title1).not.toContain("RE_GROUPS_LABEL");
+      expect(title1).not.toContain("Pro Group");
+    });
+
+    it("should support camelCase groupOptions and fallback to parent.race", () => {
+      fixture.componentRef.setInput("race", undefined);
+      fixture.componentRef.setInput("parent", {
+        race: {
+          groupOptions: {
+            enabled: true,
+            names: ["Semi-Pro"],
+          },
+        },
+      });
+      fixture.detectChanges();
+
+      const heat1 = fixture.nativeElement.querySelector("#heat-card-1");
+      const heat2 = fixture.nativeElement.querySelector("#heat-card-2");
+
+      const title1 = heat1.querySelector(".heat-title-text").textContent.trim();
+      const title2 = heat2.querySelector(".heat-title-text").textContent.trim();
+
+      expect(title1).toBe("RM_LABEL_HEAT_NUMBER - Semi-Pro");
+      expect(title2).toBe("RM_LABEL_HEAT_NUMBER - RE_GROUPS_LABEL 2");
+    });
+
+    it("should toggle has-center-status class on heat-card-header for current heat", () => {
+      const currentCard = fixture.nativeElement.querySelector(
+        "#heat-card-1.current-heat",
+      );
+      const header = currentCard.querySelector(".heat-card-header");
+      expect(header.classList.contains("has-center-status")).toBeTrue();
+
+      // Disable both flag and time
+      fixture.componentRef.setInput("widget", {
+        ...mockWidget,
+        customSettings: {
+          ...mockWidget.customSettings,
+          showCurrentHeatFlag: false,
+          showCurrentHeatTime: false,
+        },
+      });
+      fixture.detectChanges();
+
+      expect(header.classList.contains("has-center-status")).toBeFalse();
+    });
+  });
 });

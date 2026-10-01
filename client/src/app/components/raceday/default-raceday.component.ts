@@ -289,7 +289,7 @@ export class DefaultRacedayComponent
   private subscriptions: Subscription[] = [];
   protected heat?: Heat;
   protected track?: Track;
-  protected race!: Race;
+  public race!: Race;
   protected columns: ColumnDefinition[];
   protected errorMessage?: string;
   protected startResumeShortcut: string = "Ctrl+S";

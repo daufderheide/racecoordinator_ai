@@ -48,6 +48,7 @@ export interface ProcessedHeat {
   heatNumber: number;
   group: number;
   groupName: string;
+  hasGroup: boolean;
   isCurrent: boolean;
   isCompleted: boolean;
   showSummary: boolean;
@@ -196,12 +197,18 @@ export class RacedayHeatListComponent implements AfterViewInit, OnDestroy {
     return this.widget()?.customSettings?.["summaryUseLaneColors"] !== false;
   });
 
+  isGroupEnabled = computed(() => {
+    const raceObj = this.race() ?? this.parent()?.race;
+    const groupOptions = raceObj?.group_options ?? raceObj?.groupOptions;
+    return !!groupOptions?.enabled;
+  });
+
   processedHeats = computed<ProcessedHeat[]>(() => {
     const rawHeats = this.heats() || [];
     const cur = this.currentHeat();
     const curHeatNum = cur?.heatNumber ?? -1;
     const trackObj = this.track();
-    const raceObj = this.race();
+    const raceObj = this.race() ?? this.parent()?.race;
     const isRaceOver = this.parent()?.raceState === RaceState.RACE_OVER;
 
     return rawHeats.map((h, idx) =>
@@ -227,12 +234,17 @@ export class RacedayHeatListComponent implements AfterViewInit, OnDestroy {
     isRaceOver: boolean,
   ): ProcessedHeat {
     const heatNum = h.heatNumber ?? idx + 1;
-    const groupNum = h.group ?? 0;
+    const groupNum =
+      typeof h.group === "number" ? h.group : parseInt(h.group, 10) || 0;
+    const groupOptions = raceObj?.group_options ?? raceObj?.groupOptions;
+    const hasGroup = !!groupOptions?.enabled;
     let groupName = "";
-    if (raceObj?.group_options?.enabled) {
-      const customName = raceObj.group_options?.names?.[groupNum];
+    if (hasGroup) {
+      const customName = groupOptions?.names?.[groupNum] || h.groupName;
       groupName =
         customName && customName.trim() !== "" ? customName.trim() : "";
+    } else if (h.groupName) {
+      groupName = h.groupName.trim();
     }
 
     const isCurrentHeat = heatNum === curHeatNum && !isRaceOver;
@@ -255,6 +267,7 @@ export class RacedayHeatListComponent implements AfterViewInit, OnDestroy {
       heatNumber: heatNum,
       group: groupNum,
       groupName,
+      hasGroup,
       isCurrent,
       isCompleted,
       showSummary,
