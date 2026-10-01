@@ -1019,6 +1019,7 @@
   "RD_CONFIRM_EXIT_BTN_LEAVE": "Sair",
   "RD_CONFIRM_EXIT_BTN_STAY": "Ficar",
   "RD_CONFIRM_EXIT_MESSAGE": "Tem certeza de que deseja sair da corrida?",
+  "RD_CONFIRM_EXIT_RACE_ENDED_MESSAGE": "A corrida terminou. Tem certeza de que deseja sair?",
   "RD_CONFIRM_EXIT_TITLE": "Sair da corrida",
   "RD_CONFIRM_RESTART_HEAT_MESSAGE": "Tem certeza de que deseja reiniciar esta bateria?",
   "RD_CONFIRM_RESTART_HEAT_TITLE": "Reiniciar Bateria",

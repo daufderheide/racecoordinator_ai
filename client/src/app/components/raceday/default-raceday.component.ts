@@ -3286,13 +3286,17 @@ export class DefaultRacedayComponent
   }
 
   onExitConfirm() {
-    sessionStorage.setItem("skipIntro", "true");
+    if (!this.raceHasEnded && this.raceState !== RaceState.RACE_OVER) {
+      sessionStorage.setItem("skipIntro", "true");
+    }
     this.showExitConfirmation = false;
+    this.cdr.markForCheck();
     this.deactivateSubject.next(true);
   }
 
   onExitCancel() {
     this.showExitConfirmation = false;
+    this.cdr.markForCheck();
     this.deactivateSubject.next(false);
   }
 
@@ -3408,21 +3412,18 @@ export class DefaultRacedayComponent
         return true;
       }
     }
+    this.showSkipHeatConfirmation = false;
+    this.showRestartHeatConfirmation = false;
+    this.showDeferHeatConfirmation = false;
+
     if (this.raceHasEnded || this.raceState === RaceState.RACE_OVER) {
-      this.showExitConfirmation = false;
-      this.showSkipHeatConfirmation = false;
-      this.showRestartHeatConfirmation = false;
-      this.showDeferHeatConfirmation = false;
-      this.ackModalTitle = "RD_RACE_ENDED_TITLE";
-      this.ackModalMessage = "RD_RACE_ENDED_MESSAGE";
-      this.ackModalButtonText = "RD_RACE_ENDED_BTN_OK";
-      this.showAckModal = true;
-      this.cdr.markForCheck();
-      return false;
+      this.exitModalTitle = "RD_RACE_ENDED_TITLE";
+      this.exitModalMessage = "RD_CONFIRM_EXIT_RACE_ENDED_MESSAGE";
+    } else {
+      this.exitModalTitle = "RD_CONFIRM_EXIT_TITLE";
+      this.exitModalMessage = "RD_CONFIRM_EXIT_MESSAGE";
     }
 
-    this.exitModalTitle = "RD_CONFIRM_EXIT_TITLE";
-    this.exitModalMessage = "RD_CONFIRM_EXIT_MESSAGE";
     this.exitConfirmText = "RD_CONFIRM_EXIT_BTN_LEAVE";
     this.exitCancelText = "RD_CONFIRM_EXIT_BTN_STAY";
     this.showExitConfirmation = true;

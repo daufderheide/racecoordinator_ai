@@ -1019,6 +1019,7 @@
   "RD_CONFIRM_EXIT_BTN_LEAVE": "Salir",
   "RD_CONFIRM_EXIT_BTN_STAY": "Quedarse",
   "RD_CONFIRM_EXIT_MESSAGE": "¿Está seguro de que desea salir de la carrera?",
+  "RD_CONFIRM_EXIT_RACE_ENDED_MESSAGE": "La carrera ha terminado. ¿Está seguro de que desea salir?",
   "RD_CONFIRM_EXIT_TITLE": "Salir de la carrera",
   "RD_CONFIRM_RESTART_HEAT_MESSAGE": "¿Está seguro de que desea reiniciar esta manga?",
   "RD_CONFIRM_RESTART_HEAT_TITLE": "Reiniciar Manga",

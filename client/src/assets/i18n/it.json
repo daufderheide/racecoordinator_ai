@@ -1019,6 +1019,7 @@
   "RD_CONFIRM_EXIT_BTN_LEAVE": "Esci",
   "RD_CONFIRM_EXIT_BTN_STAY": "Resta",
   "RD_CONFIRM_EXIT_MESSAGE": "Sei sicuro di voler uscire dalla gara?",
+  "RD_CONFIRM_EXIT_RACE_ENDED_MESSAGE": "La gara è terminata. Sei sicuro di voler uscire?",
   "RD_CONFIRM_EXIT_TITLE": "Esci dalla gara",
   "RD_CONFIRM_RESTART_HEAT_MESSAGE": "Sei sicuro di voler riavviare questa manche?",
   "RD_CONFIRM_RESTART_HEAT_TITLE": "Riavvia Manche",

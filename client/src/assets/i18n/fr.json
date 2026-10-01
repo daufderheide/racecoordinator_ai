@@ -1019,6 +1019,7 @@
   "RD_CONFIRM_EXIT_BTN_LEAVE": "Quitter",
   "RD_CONFIRM_EXIT_BTN_STAY": "Rester",
   "RD_CONFIRM_EXIT_MESSAGE": "Êtes-vous sûr de vouloir quitter la course ?",
+  "RD_CONFIRM_EXIT_RACE_ENDED_MESSAGE": "La course est terminée. Êtes-vous sûr de vouloir quitter ?",
   "RD_CONFIRM_EXIT_TITLE": "Quitter la course",
   "RD_CONFIRM_RESTART_HEAT_MESSAGE": "Êtes-vous sûr de vouloir recommencer cette manche ?",
   "RD_CONFIRM_RESTART_HEAT_TITLE": "Recommencer Manche",

@@ -1019,6 +1019,7 @@
   "RD_CONFIRM_EXIT_BTN_LEAVE": "Verlassen",
   "RD_CONFIRM_EXIT_BTN_STAY": "Bleiben",
   "RD_CONFIRM_EXIT_MESSAGE": "Sind Sie sicher, dass Sie das Rennen verlassen möchten?",
+  "RD_CONFIRM_EXIT_RACE_ENDED_MESSAGE": "Das Rennen ist beendet. Sind Sie sicher, dass Sie es verlassen möchten?",
   "RD_CONFIRM_EXIT_TITLE": "Rennen verlassen",
   "RD_CONFIRM_RESTART_HEAT_MESSAGE": "Sind Sie sicher, dass Sie diesen Heat neustarten möchten?",
   "RD_CONFIRM_RESTART_HEAT_TITLE": "Heat neustarten",

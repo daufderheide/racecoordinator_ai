@@ -7783,20 +7783,47 @@ describe("DefaultRacedayComponent", () => {
       expect(result).toBeTrue();
     });
 
-    it("should block deactivation and show acknowledgement modal when race has ended and forceExit is false", () => {
+    it("should show exit confirmation modal when race has ended and forceExit is false", (done) => {
+      fixture.detectChanges();
+      sessionStorage.removeItem("skipIntro");
+      component.raceHasEnded = true;
+      component.forceExit = false;
+
+      const result = component.canDeactivate() as any;
+      expect(component.showExitConfirmation).toBeTrue();
+      expect(component.showAckModal).toBeFalse();
+      expect(component.exitModalTitle).toBe("RD_RACE_ENDED_TITLE");
+      expect(component.exitModalMessage).toBe(
+        "RD_CONFIRM_EXIT_RACE_ENDED_MESSAGE",
+      );
+      expect(component.exitConfirmText).toBe("RD_CONFIRM_EXIT_BTN_LEAVE");
+      expect(component.exitCancelText).toBe("RD_CONFIRM_EXIT_BTN_STAY");
+
+      result.subscribe((val: boolean) => {
+        expect(val).toBeTrue();
+        expect(sessionStorage.getItem("skipIntro")).toBeNull();
+        done();
+      });
+      component.onExitConfirm();
+    });
+
+    it("should stay on page when cancelling exit confirmation after race has ended", (done) => {
       fixture.detectChanges();
       component.raceHasEnded = true;
       component.forceExit = false;
 
-      const result = component.canDeactivate();
-      expect(result).toBeFalse();
-      expect(component.showAckModal).toBeTrue();
-      expect(component.ackModalTitle).toBe("RD_RACE_ENDED_TITLE");
-      expect(component.ackModalMessage).toBe("RD_RACE_ENDED_MESSAGE");
-      expect(component.ackModalButtonText).toBe("RD_RACE_ENDED_BTN_OK");
+      const result = component.canDeactivate() as any;
+      expect(component.showExitConfirmation).toBeTrue();
+
+      result.subscribe((val: boolean) => {
+        expect(val).toBeFalse();
+        expect(component.showExitConfirmation).toBeFalse();
+        done();
+      });
+      component.onExitCancel();
     });
 
-    it("should allow deactivation and not show acknowledgement modal when race has ended and navigating to /ui-editor", () => {
+    it("should allow deactivation and not show confirmation modal when race has ended and navigating to /ui-editor", () => {
       fixture.detectChanges();
       component.raceHasEnded = true;
       component.forceExit = false;
@@ -7804,21 +7831,24 @@ describe("DefaultRacedayComponent", () => {
       const nextState = { url: "/ui-editor?returnUrl=/raceday" } as any;
       const result = component.canDeactivate(nextState);
       expect(result).toBeTrue();
-      expect(component.showAckModal).toBeFalse();
+      expect(component.showExitConfirmation).toBeFalse();
     });
 
-    it("should block deactivation and show acknowledgement modal when race has ended and navigating to /raceday-setup", () => {
+    it("should show exit confirmation modal when race has ended and navigating to /raceday-setup", () => {
       fixture.detectChanges();
       component.raceHasEnded = true;
       component.forceExit = false;
 
       const nextState = { url: "/raceday-setup" } as any;
       const result = component.canDeactivate(nextState);
-      expect(result).toBeFalse();
-      expect(component.showAckModal).toBeTrue();
-      expect(component.ackModalTitle).toBe("RD_RACE_ENDED_TITLE");
-      expect(component.ackModalMessage).toBe("RD_RACE_ENDED_MESSAGE");
-      expect(component.ackModalButtonText).toBe("RD_RACE_ENDED_BTN_OK");
+      expect(result).toBeDefined();
+      expect(component.showExitConfirmation).toBeTrue();
+      expect(component.exitModalTitle).toBe("RD_RACE_ENDED_TITLE");
+      expect(component.exitModalMessage).toBe(
+        "RD_CONFIRM_EXIT_RACE_ENDED_MESSAGE",
+      );
+      expect(component.exitConfirmText).toBe("RD_CONFIRM_EXIT_BTN_LEAVE");
+      expect(component.exitCancelText).toBe("RD_CONFIRM_EXIT_BTN_STAY");
     });
 
     it("should redirect to /raceday-setup and set forceExit to true on acknowledging the modal when raceHasEnded is true without setting skipIntro", () => {

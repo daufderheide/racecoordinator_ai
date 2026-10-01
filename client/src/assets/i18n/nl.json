@@ -1019,6 +1019,7 @@
   "RD_CONFIRM_EXIT_BTN_LEAVE": "Vertrekken",
   "RD_CONFIRM_EXIT_BTN_STAY": "Blijven",
   "RD_CONFIRM_EXIT_MESSAGE": "Weet u zeker dat u de race wilt verlaten?",
+  "RD_CONFIRM_EXIT_RACE_ENDED_MESSAGE": "De race is afgelopen. Weet u zeker dat u wilt afsluiten?",
   "RD_CONFIRM_EXIT_TITLE": "Race verlaten",
   "RD_CONFIRM_RESTART_HEAT_MESSAGE": "Weet u zeker dat u deze heat wilt herstarten?",
   "RD_CONFIRM_RESTART_HEAT_TITLE": "Heat Herstarten",
