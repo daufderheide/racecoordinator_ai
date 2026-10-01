@@ -321,6 +321,7 @@ export class DefaultRacedayComponent
   countdownColor: string = "";
   countdownTotalLamps: number = 0;
   private lastPlayedCountdownSecond: number = -1;
+  private lastCountdownSoundTime: number = -1;
   protected isRestarting: boolean = false;
   isPrinting = false;
 
@@ -6360,6 +6361,7 @@ export class DefaultRacedayComponent
       this.audioService.stopVoice();
       this.showCountdownOverlay = true;
       this.lastPlayedCountdownSecond = -1;
+      this.lastCountdownSoundTime = -1;
 
       // Determine if this is a restart from a paused state
       if (previousState === RaceState.PAUSED) {
@@ -6462,6 +6464,23 @@ export class DefaultRacedayComponent
       currentSecond >= 1 &&
       currentSecond !== this.lastPlayedCountdownSecond
     ) {
+      const now =
+        typeof performance !== "undefined" ? performance.now() : Date.now();
+      const deltaMs =
+        this.lastPlayedCountdownSecond > 0 && this.lastCountdownSoundTime > 0
+          ? Math.round(now - this.lastCountdownSoundTime)
+          : -1;
+      this.logger.debug(
+        `[PERF] Countdown sound triggered: second=${currentSecond}, currentTime=${currentTime.toFixed(2)}, delta=${deltaMs}ms`,
+      );
+      if (deltaMs >= 0 && deltaMs < 750) {
+        this.logger.warn(
+          `[PERF] Countdown sound for second=${currentSecond} arrived rapidly (${deltaMs}ms after previous), skipping to prevent audio overlap`,
+        );
+        this.lastPlayedCountdownSecond = currentSecond;
+        this.lastCountdownSoundTime = now;
+        return;
+      }
       const played = this.playAudioFromSet(
         THEME_SLOT_KEYS.AUDIO_COUNTDOWN,
         currentSecond,
@@ -6471,6 +6490,7 @@ export class DefaultRacedayComponent
       );
       if (played) {
         this.lastPlayedCountdownSecond = currentSecond;
+        this.lastCountdownSoundTime = now;
       }
     }
   }

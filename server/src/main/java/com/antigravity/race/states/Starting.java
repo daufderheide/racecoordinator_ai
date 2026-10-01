@@ -65,8 +65,14 @@ public class Starting implements IRaceState {
 
     final int randomTicks =
         delayLimitVal > 0 ? new java.util.Random().nextInt((int) (delayLimitVal * 10)) + 1 : 0;
+    final double randomDelaySeconds = randomTicks / 10.0;
+    final double totalDurationSeconds = startTimeVal + randomDelaySeconds;
 
-    logger.info("Starting countdown: {}s + {} random ticks", startTimeVal, randomTicks);
+    logger.info(
+        "Starting countdown: {}s + {}s random delay (total {}s)",
+        startTimeVal,
+        randomDelaySeconds,
+        totalDurationSeconds);
 
     if (scheduler != null) {
       scheduler.shutdown();
@@ -79,29 +85,43 @@ public class Starting implements IRaceState {
               return t;
             });
 
+    final long startNanoTime = System.nanoTime();
     final Runnable ticker =
         new Runnable() {
-          private int countdown = (int) (startTimeVal * 10);
-          private int remainingRandomTicks = randomTicks;
+          private long expectedNextTickNano = startNanoTime;
 
           @Override
           public void run() {
             try {
-              float displayTime = Math.max(0, countdown) / 10.0f;
-              race.setAutoStartRemaining(displayTime);
+              long tickStartNano = System.nanoTime();
+              if (expectedNextTickNano > 0) {
+                long jitterNs = tickStartNano - expectedNextTickNano;
+                if (jitterNs > 100_000_000L) {
+                  logger.warn("[PERF] Starting ticker delayed by {} ms", jitterNs / 1_000_000L);
+                }
+              }
+              expectedNextTickNano = tickStartNano + 100_000_000L;
 
-              // Update hardware and broadcast time
-              race.setHeatProgress(0.0);
-              race.syncRaceState();
-              race.broadcastTime();
+              double elapsed = (tickStartNano - startNanoTime) / 1_000_000_000.0;
+              float displayTime = (float) Math.max(0.0, startTimeVal - elapsed);
 
-              if (countdown > 0) {
-                countdown--;
-              } else if (remainingRandomTicks > 0) {
-                remainingRandomTicks--;
-              } else {
+              if (elapsed >= totalDurationSeconds) {
+                race.setAutoStartRemaining(0.0f);
+                race.setHeatProgress(0.0);
+                race.syncRaceState();
+                race.broadcastTime();
                 logger.info("Starting ticker: Transitioning to Racing.");
                 race.changeState(new Racing());
+              } else {
+                race.setAutoStartRemaining(displayTime);
+                race.setHeatProgress(0.0);
+                race.syncRaceState();
+                race.broadcastTime();
+              }
+
+              long tickExecNs = System.nanoTime() - tickStartNano;
+              if (tickExecNs > 25_000_000L) {
+                logger.warn("[PERF] Starting ticker execution took {} ms", tickExecNs / 1_000_000L);
               }
             } catch (Throwable t) {
               logger.error("Error in Starting timer", t);
@@ -109,7 +129,7 @@ public class Starting implements IRaceState {
           }
         };
 
-    timerHandle = scheduler.scheduleAtFixedRate(ticker, 0, 100, TimeUnit.MILLISECONDS);
+    timerHandle = scheduler.scheduleWithFixedDelay(ticker, 0, 100, TimeUnit.MILLISECONDS);
   }
 
   @Override

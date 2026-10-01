@@ -1452,6 +1452,34 @@ describe("DataService", () => {
       });
     });
 
+    it("should warn on browser main-thread freeze when dispatchDelay exceeds 100ms", () => {
+      const mockRaceData = RaceData.encode({
+        raceTime: {
+          time: 12.5,
+        },
+      }).finish();
+
+      const loggerSpy = spyOn((service as any).logger, "warn");
+      const pastTime =
+        (typeof performance !== "undefined" ? performance.now() : Date.now()) -
+        250;
+
+      (service as any).handleRaceDataMessage({
+        data: mockRaceData.slice().buffer,
+        timeStamp: pastTime,
+      });
+
+      expect(loggerSpy).toHaveBeenCalledWith(
+        jasmine.stringMatching(
+          /\[PERF\] Browser main-thread freeze: message dispatch delayed by/,
+        ),
+      );
+    });
+
+    it("should return base URL via getBaseUrl", () => {
+      expect(service.getBaseUrl()).toBe(service.serverUrl);
+    });
+
     it("should expose interfaceEvents observable stream", (done) => {
       const mockInterfaceEvent = InterfaceEvent.encode({
         digitalPin: {

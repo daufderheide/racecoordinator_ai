@@ -7,6 +7,7 @@ import {
   LogEntry,
   LogLevel,
 } from "@app/utils/logging/log-appender";
+import { ServerLogAppender } from "@app/utils/logging/server-appender";
 
 @Injectable({
   providedIn: "root",
@@ -23,6 +24,12 @@ export class LoggerService {
     // Only register once
     if (this.appenders.some((a) => a instanceof FileAppender)) return;
     this.appenders.push(new FileAppender(fileSystemService));
+  }
+
+  registerServerLogging(baseUrlOrFn: string | (() => string)): void {
+    // Only register once
+    if (this.appenders.some((a) => a instanceof ServerLogAppender)) return;
+    this.appenders.push(new ServerLogAppender(baseUrlOrFn));
   }
 
   debug(message: string, ...args: any[]): void {

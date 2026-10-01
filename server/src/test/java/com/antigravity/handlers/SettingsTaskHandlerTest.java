@@ -132,4 +132,75 @@ public class SettingsTaskHandlerTest {
     getAuthSettingsMethod.invoke(handler, ctx);
     verify(ctx).json(any());
   }
+
+  @Test
+  public void testHandleClientLog_Success() {
+    SettingsTaskHandler.ClientLogRequest req = new SettingsTaskHandler.ClientLogRequest();
+    req.level = "WARN";
+    req.message = "[PERF] Test client warning";
+    org.mockito.Mockito.doReturn(req).when(ctx).bodyAsClass(any());
+
+    handler.handleClientLog(ctx);
+    verify(handler).setStatus(ctx, 200);
+    verify(handler).setResult(ctx, "OK");
+  }
+
+  @Test
+  public void testHandleClientLog_WithIpAndClientId() {
+    SettingsTaskHandler.ClientLogRequest req = new SettingsTaskHandler.ClientLogRequest();
+    req.level = "WARN";
+    req.message = "[PERF] Lag on client";
+    req.clientId = "a1b2c3";
+    org.mockito.Mockito.doReturn(req).when(ctx).bodyAsClass(any());
+    org.mockito.Mockito.doReturn("192.168.1.100").when(ctx).ip();
+
+    handler.handleClientLog(ctx);
+    verify(handler).setStatus(ctx, 200);
+    verify(handler).setResult(ctx, "OK");
+  }
+
+  @Test
+  public void testHandleClientLog_DifferentLevels() {
+    for (String level : new String[] {"ERROR", "INFO", "DEBUG", "UNKNOWN"}) {
+      SettingsTaskHandler.ClientLogRequest req = new SettingsTaskHandler.ClientLogRequest();
+      req.level = level;
+      req.message = "[PERF] Message for " + level;
+      org.mockito.Mockito.doReturn(req).when(ctx).bodyAsClass(any());
+
+      handler.handleClientLog(ctx);
+      verify(handler, org.mockito.Mockito.atLeastOnce()).setStatus(ctx, 200);
+    }
+  }
+
+  @Test
+  public void testHandleClientLog_Exception() {
+    org.mockito.Mockito.doThrow(new RuntimeException("JSON error")).when(ctx).bodyAsClass(any());
+
+    handler.handleClientLog(ctx);
+    verify(handler).setStatus(ctx, 400);
+  }
+
+  @Test
+  public void testDownloadLog_FileNotFound() {
+    java.io.File nonExistentFile = new java.io.File("non_existent_file.log");
+    org.mockito.Mockito.doReturn(nonExistentFile).when(handler).getLogFile();
+
+    handler.downloadLog(ctx);
+    verify(handler).setStatus(ctx, 404);
+    verify(handler).setResult(ctx, "Log file not found");
+  }
+
+  @Test
+  public void testDownloadLog_Success() throws Exception {
+    java.io.File tempFile = java.io.File.createTempFile("test_racecoordinator", ".log");
+    tempFile.deleteOnExit();
+    java.nio.file.Files.write(
+        tempFile.toPath(), "test log line".getBytes(java.nio.charset.StandardCharsets.UTF_8));
+    org.mockito.Mockito.doReturn(tempFile).when(handler).getLogFile();
+
+    handler.downloadLog(ctx);
+    verify(ctx).contentType("text/plain; charset=utf-8");
+    verify(ctx).header("Content-Disposition", "attachment; filename=\"racecoordinator.log\"");
+    verify(ctx).result(any(java.io.InputStream.class));
+  }
 }

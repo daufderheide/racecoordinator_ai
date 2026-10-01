@@ -557,6 +557,7 @@ public class ClientSubscriptionManager {
       return;
     }
 
+    long startNs = System.nanoTime();
     byte[] bytes = message.toByteArray();
 
     raceDataSubscribers.forEach(
@@ -567,6 +568,15 @@ public class ClientSubscriptionManager {
             logger.warn("Failed to broadcast message to subscriber: {}", e.getMessage());
           }
         });
+
+    long elapsedNs = System.nanoTime() - startNs;
+    if (elapsedNs > 25_000_000L) {
+      logger.warn(
+          "[PERF] WebSocket broadcast took {} ms ({} subscribers, msg: {})",
+          elapsedNs / 1_000_000L,
+          raceDataSubscribers.size(),
+          message.getClass().getSimpleName());
+    }
   }
 
   public void broadcastSystemState() {

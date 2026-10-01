@@ -6762,6 +6762,25 @@ describe("DefaultRacedayComponent", () => {
       expect(component["lastPlayedCountdownSecond"]).toBe(5);
     });
 
+    it("should skip countdown sound if triggered rapidly (<750ms) after previous countdown sound", () => {
+      mockThemeService.resolveAudioConfig.and.returnValue({
+        type: "audio_set",
+        url: "audio-set-1",
+      });
+      spyOn<any>(component, "playAudioFromSet").and.callThrough();
+      component["showCountdownOverlay"] = true;
+      component["countdownTotalLamps"] = 5;
+      component["lastPlayedCountdownSecond"] = 5;
+      component["lastCountdownSoundTime"] =
+        (typeof performance !== "undefined" ? performance.now() : Date.now()) -
+        200;
+
+      component["updateCountdownLamps"](4.0);
+
+      expect(component["playAudioFromSet"]).not.toHaveBeenCalled();
+      expect(component["lastPlayedCountdownSecond"]).toBe(4);
+    });
+
     it("should preload countdown audio entries across seconds 0 through 5", () => {
       mockThemeService.resolveAudioConfig.and.returnValue({
         type: "audio_set",
