@@ -1,6 +1,6 @@
 # Changelog
 
-## [v1.0.1-beta.4] - 2026-09-30
+## [v1.0.1-beta.5] - 2026-10-01
 
 ### 🚀 New Features
 
@@ -9,6 +9,12 @@
 
 ### 🐛 Bug Fixes
 
+- Fixed Starting state timer to use a proper timer rather than a constant 'tick' timer. ([fc6037f8](https://github.com/daufderheide/racecoordinator_ai/commit/fc6037f8))
+- prevent redirect to raceday-setup when acknowledging save modals after race ends [#878](https://github.com/daufderheide/racecoordinator_ai/issues/878) [skip-screendiffs] ([6a4ae651](https://github.com/daufderheide/racecoordinator_ai/commit/6a4ae651))
+- **installer**: exclude redundant portable setup scripts from windows installer.  This should fix issues with having to skip files during the install [#876](https://github.com/daufderheide/racecoordinator_ai/issues/876) ([cf26c841](https://github.com/daufderheide/racecoordinator_ai/commit/cf26c841))
+- Updated scrollbar so that its always visible when needed.  This should prevent user confusion as to what can be scrolled and what cannot [#890](https://github.com/daufderheide/racecoordinator_ai/issues/890) [skip-screendiffs] ([c998ad1d](https://github.com/daufderheide/racecoordinator_ai/commit/c998ad1d))
+- **heat-list**: Fixed group titles for heat list component. [#869](https://github.com/daufderheide/racecoordinator_ai/issues/869) [#874](https://github.com/daufderheide/racecoordinator_ai/issues/874) [skip-screendiffs] ([36f61826](https://github.com/daufderheide/racecoordinator_ai/commit/36f61826))
+- **raceday**: ensure driver station/view display back/forward nav buttons and theme windows show no hardcoded navigation.  Also ensure heat, race, season, predictions results, etc windows show a close button when in full screen mode. [#885](https://github.com/daufderheide/racecoordinator_ai/issues/885) ([5382813a](https://github.com/daufderheide/racecoordinator_ai/commit/5382813a))
 - Attempt to make the heat, race and driver results pages more readable by making the foreground data standout over the background more [#870](https://github.com/daufderheide/racecoordinator_ai/issues/870) ([a3336144](https://github.com/daufderheide/racecoordinator_ai/commit/a3336144))
 - Extended editor object selector (drriver, race, track, etc) to the bottom of the page or as far as needed to minimize scrolling when large numuber of items have been created [#865](https://github.com/daufderheide/racecoordinator_ai/issues/865) [skip-screendiffs] ([7d362757](https://github.com/daufderheide/racecoordinator_ai/commit/7d362757))
 - Trying to fix client side start lamp synchronization but pre-loading start lamp images, and adding caching to the get request. [#871](https://github.com/daufderheide/racecoordinator_ai/issues/871) [skip-screendiffs] ([46ed328d](https://github.com/daufderheide/racecoordinator_ai/commit/46ed328d))
@@ -22,7 +28,7 @@
 <details>
 <summary>🔍 <b>Full Commit History</b></summary>
 
-<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0...v1.0.1-beta.4">GitHub</a></p>
+<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0...v1.0.1-beta.5">GitHub</a></p>
 </details>
 
 ## [v1.0.0] - 2026-09-27
