@@ -1756,5 +1756,44 @@ describe("DataService", () => {
       });
       req.flush({ bestLapTime: 3.1 });
     });
+
+    it("should clear race data and replay buffers on clearRaceData()", () => {
+      (service as any).raceStateSubject.next(RaceState.RACE_OVER);
+      (service as any).flagSubject.next(RaceFlag.RED);
+      (service as any).raceTimeSubject.next({ time: 5000 });
+      (service as any).lastRaceTimeReceivedAt = 1000;
+      (service as any).raceUpdateSubject.next({ entity_id: "old-race" });
+      (service as any).standingsSubject.next({ updates: [] });
+      (service as any).overallStandingsSubject.next({ participants: [] });
+      (service as any).groupStandingsSubject.next({ group: 1 });
+      (service as any).recordDataSubject.next({ overall: {} });
+
+      service.clearRaceData();
+
+      expect((service as any).raceStateSubject.value).toBe(
+        RaceState.UNKNOWN_STATE,
+      );
+      expect((service as any).flagSubject.value).toBe(RaceFlag.UNKNOWN_FLAG);
+      expect((service as any).raceTimeSubject.value).toEqual({ time: 0 });
+      expect((service as any).lastRaceTimeReceivedAt).toBe(0);
+
+      let replayedRace = false;
+      service.getRaceUpdate().subscribe(() => {
+        replayedRace = true;
+      });
+      expect(replayedRace).toBeFalse();
+
+      let replayedStandings = false;
+      service.getStandingsUpdate().subscribe(() => {
+        replayedStandings = true;
+      });
+      expect(replayedStandings).toBeFalse();
+    });
+
+    it("should call clearRaceData when updateRaceSubscription(false) is called", () => {
+      spyOn(service, "clearRaceData").and.callThrough();
+      service.updateRaceSubscription(false);
+      expect(service.clearRaceData).toHaveBeenCalled();
+    });
   });
 });

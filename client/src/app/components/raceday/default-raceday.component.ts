@@ -1488,6 +1488,8 @@ export class DefaultRacedayComponent
         },
       },
     );
+    this.raceHasEnded = false;
+    this.isInterfaceConnected = this.raceConnectionService.isInterfaceConnected;
 
     const settings =
       this.editingSettings() || this.settingsService.getSettings();
@@ -3577,14 +3579,17 @@ export class DefaultRacedayComponent
       this.track = race.track;
       this.preloadCountdownAudio();
 
+      const state =
+        (race as any)?.state ?? (race as any)?.raceState ?? this.raceState;
       const isEnded =
-        this.raceHasEnded ||
-        this.raceState === RaceState.RACE_OVER ||
-        (race as any)?.is_finished ||
-        (race as any)?.isFinished ||
-        (race as any)?.state === RaceState.RACE_OVER ||
-        (race as any)?.raceState === RaceState.RACE_OVER ||
-        (race as any)?.state_class_name?.includes("RaceOver");
+        (race as any)?.is_finished === true ||
+        (race as any)?.isFinished === true ||
+        state === RaceState.RACE_OVER ||
+        (race as any)?.state_class_name?.includes("RaceOver") ||
+        (this.raceHasEnded &&
+          state !== RaceState.NOT_STARTED &&
+          state !== RaceState.STARTING &&
+          state !== RaceState.RACING);
 
       if (isEnded) {
         this.raceHasEnded = true;
@@ -3607,61 +3612,68 @@ export class DefaultRacedayComponent
         this.leaderLaps = 0;
         this.playedHalfway = false;
         this.resetFuelAudioTracking();
-      } else if (isNewRace) {
-        // Reset timer state ONLY when advancing to a new race
-        const state =
-          (race as any)?.state ?? (race as any)?.raceState ?? this.raceState;
-        const isNotStarted =
-          state === RaceState.NOT_STARTED ||
-          state === RaceState.UNKNOWN_STATE ||
-          state === undefined ||
-          state === null;
-        const isHeatOver = state === RaceState.HEAT_OVER;
-
-        if (isNotStarted) {
-          this.autoStartRemaining =
-            (race as any)?.auto_start_remaining_seconds ||
-            (race as any)?.auto_start_remaining ||
-            race.auto_start_time ||
-            0;
-          this.autoAdvanceRemaining = 0;
-          this.time = this.autoStartRemaining > 0 ? this.autoStartRemaining : 0;
-        } else if (isHeatOver) {
-          this.autoStartRemaining = 0;
-          this.autoAdvanceRemaining =
-            (race as any)?.auto_advance_remaining_seconds ||
-            (race as any)?.auto_advance_remaining ||
-            0;
-          this.time =
-            this.autoAdvanceRemaining > 0 ? this.autoAdvanceRemaining : 0;
-        } else {
-          this.autoStartRemaining = 0;
-          this.autoAdvanceRemaining = 0;
-          if (typeof (race as any)?.accumulated_race_time === "number") {
-            this.time = (race as any).accumulated_race_time;
-          }
-        }
-        this.previousTime = this.time;
-        this.timeFormat = "1.0-0";
-        this.playedSecondsLeft.clear();
-        this.playedSecondsElapsed.clear();
-        this.playedLapsLeft.clear();
-        this.playedLapsElapsed.clear();
-        this.playedAutoStart.clear();
-        this.playedAutoStartElapsed.clear();
-        this.playedAutoAdvance.clear();
-        this.playedAutoAdvanceElapsed.clear();
-        this.previousAutoStartRemaining = 0;
-        this.previousAutoAdvanceRemaining = 0;
-        this.leaderLaps = 0;
-        this.playedHalfway = false;
-        this.resetFuelAudioTracking();
       } else {
-        const remaining = (race as any)?.auto_advance_remaining_seconds;
-        if (remaining !== undefined && remaining !== null) {
-          this.autoAdvanceRemaining = remaining;
-          if (remaining > 0) {
-            this.time = remaining;
+        this.raceHasEnded = false;
+        if (state !== undefined && state !== RaceState.UNKNOWN_STATE) {
+          this.raceState = state;
+        }
+        if (isNewRace) {
+          // Reset timer state ONLY when advancing to a new race
+          const state =
+            (race as any)?.state ?? (race as any)?.raceState ?? this.raceState;
+          const isNotStarted =
+            state === RaceState.NOT_STARTED ||
+            state === RaceState.UNKNOWN_STATE ||
+            state === undefined ||
+            state === null;
+          const isHeatOver = state === RaceState.HEAT_OVER;
+
+          if (isNotStarted) {
+            this.autoStartRemaining =
+              (race as any)?.auto_start_remaining_seconds ||
+              (race as any)?.auto_start_remaining ||
+              race.auto_start_time ||
+              0;
+            this.autoAdvanceRemaining = 0;
+            this.time =
+              this.autoStartRemaining > 0 ? this.autoStartRemaining : 0;
+          } else if (isHeatOver) {
+            this.autoStartRemaining = 0;
+            this.autoAdvanceRemaining =
+              (race as any)?.auto_advance_remaining_seconds ||
+              (race as any)?.auto_advance_remaining ||
+              0;
+            this.time =
+              this.autoAdvanceRemaining > 0 ? this.autoAdvanceRemaining : 0;
+          } else {
+            this.autoStartRemaining = 0;
+            this.autoAdvanceRemaining = 0;
+            if (typeof (race as any)?.accumulated_race_time === "number") {
+              this.time = (race as any).accumulated_race_time;
+            }
+          }
+          this.previousTime = this.time;
+          this.timeFormat = "1.0-0";
+          this.playedSecondsLeft.clear();
+          this.playedSecondsElapsed.clear();
+          this.playedLapsLeft.clear();
+          this.playedLapsElapsed.clear();
+          this.playedAutoStart.clear();
+          this.playedAutoStartElapsed.clear();
+          this.playedAutoAdvance.clear();
+          this.playedAutoAdvanceElapsed.clear();
+          this.previousAutoStartRemaining = 0;
+          this.previousAutoAdvanceRemaining = 0;
+          this.leaderLaps = 0;
+          this.playedHalfway = false;
+          this.resetFuelAudioTracking();
+        } else {
+          const remaining = (race as any)?.auto_advance_remaining_seconds;
+          if (remaining !== undefined && remaining !== null) {
+            this.autoAdvanceRemaining = remaining;
+            if (remaining > 0) {
+              this.time = remaining;
+            }
           }
         }
       }
@@ -6296,6 +6308,8 @@ export class DefaultRacedayComponent
       this.time = 0;
       this.previousTime = 0;
       this.timeFormat = "1.0-0";
+    } else if (state !== RaceState.UNKNOWN_STATE) {
+      this.raceHasEnded = false;
     }
 
     if (

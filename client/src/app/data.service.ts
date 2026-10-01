@@ -1600,8 +1600,29 @@ export class DataService {
   private shouldSubscribeToRaceData = false;
   private isInterfaceSocketExplicitlyDisconnected = false;
 
+  public clearRaceData() {
+    this.raceStateSubject.next(RaceState.UNKNOWN_STATE);
+    this.flagSubject.next(RaceFlag.UNKNOWN_FLAG);
+    this.raceTimeSubject.next({ time: 0 });
+    this.lastRaceTimeReceivedAt = 0;
+
+    const clearReplay = (subject: any) => {
+      if (subject && Array.isArray(subject._buffer)) {
+        subject._buffer.length = 0;
+      }
+    };
+    clearReplay(this.standingsSubject);
+    clearReplay(this.overallStandingsSubject);
+    clearReplay(this.groupStandingsSubject);
+    clearReplay(this.raceUpdateSubject);
+    clearReplay(this.recordDataSubject);
+  }
+
   public updateRaceSubscription(subscribe: boolean) {
     this.shouldSubscribeToRaceData = subscribe;
+    if (!subscribe) {
+      this.clearRaceData();
+    }
     if (
       this.raceDataSocket &&
       this.raceDataSocket.readyState === WebSocket.OPEN

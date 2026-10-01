@@ -10776,4 +10776,56 @@ describe("DefaultRacedayComponent", () => {
       );
     });
   });
+
+  describe("Race Restart and Second Race Start Lifecycle", () => {
+    it("should reset raceHasEnded, load auto-start timer, and enable Start button when loading a new race in NOT_STARTED state", () => {
+      // Simulate previously ended race
+      component.raceHasEnded = true;
+      (component as any).raceState = RaceState.RACE_OVER;
+      mockRaceConnectionService.isInterfaceConnected = true;
+      (component as any).isInterfaceConnected = true;
+
+      const newRace = {
+        entity_id: "new-race-id",
+        name: "Second Race",
+        state: RaceState.NOT_STARTED,
+        auto_start_time: 60,
+        track: { lanes: [{ id: "l1" }] },
+      };
+      mockRaceService.getRace.and.returnValue(newRace);
+
+      (component as any).loadRaceData();
+
+      expect(component.raceHasEnded).toBeFalse();
+      expect((component as any).raceState).toBe(RaceState.NOT_STARTED);
+      expect((component as any).autoStartRemaining).toBe(60);
+      expect((component as any).time).toBe(60);
+      expect(component.isStartResumeDisabled).toBeFalse();
+    });
+
+    it("should reset raceHasEnded to false when handleRaceStateChange transitions from RACE_OVER to NOT_STARTED", () => {
+      component.raceHasEnded = true;
+      (component as any).raceState = RaceState.RACE_OVER;
+
+      (component as any).handleRaceStateChange(RaceState.NOT_STARTED);
+
+      expect(component.raceHasEnded).toBeFalse();
+      expect((component as any).raceState).toBe(RaceState.NOT_STARTED);
+    });
+
+    it("should update autoStartRemaining and time on raceTime updates when race has restarted in NOT_STARTED state", () => {
+      component.raceHasEnded = false;
+      (component as any).raceState = RaceState.NOT_STARTED;
+
+      (component as any).subscribeToRaceTime();
+
+      raceTimeSubject.next({
+        time: 55,
+        autoStartRemaining: 55,
+      });
+
+      expect((component as any).autoStartRemaining).toBe(55);
+      expect((component as any).time).toBe(55);
+    });
+  });
 });

@@ -220,13 +220,22 @@ public class Demo extends DefaultProtocol {
 
   @Override
   public void close() {
+    if (timerHandle != null) {
+      timerHandle.cancel(true);
+      timerHandle = null;
+    }
+    if (scheduler != null) {
+      scheduler.shutdown();
+      scheduler = null;
+    }
     if (statusFuture != null) {
       statusFuture.cancel(true);
+      statusFuture = null;
     }
     if (statusScheduler != null) {
       statusScheduler.shutdown();
+      statusScheduler = null;
     }
-    statusScheduler = null;
   }
 
   @Override
