@@ -1,14 +1,17 @@
 # Changelog
 
-## [v1.0.1-beta.5] - 2026-10-01
+## [v1.0.1-beta.6] - 2026-10-01
 
 ### 🚀 New Features
 
+- for the heat-view widget, changed 'use lane background colors' to use lane colors' and disabled summary row text color controls when lane colors are enabled.  Coloring is now completely controlled by the track lane data or the text color set in the widget. [#897](https://github.com/daufderheide/racecoordinator_ai/issues/897) [skip-screendiffs] ([7df44d18](https://github.com/daufderheide/racecoordinator_ai/commit/7df44d18))
 - Auto hide the countdown widget when a different widget is selected. [#869](https://github.com/daufderheide/racecoordinator_ai/issues/869) [skip-screendiffs] ([29801310](https://github.com/daufderheide/racecoordinator_ai/commit/29801310))
 - Added 'show summary for future heats' option for the heat list widget.  This allows all heats to be shown with the same size and column data [#869](https://github.com/daufderheide/racecoordinator_ai/issues/869) [skip-screendiffs] ([5f63db0f](https://github.com/daufderheide/racecoordinator_ai/commit/5f63db0f))
 
 ### 🐛 Bug Fixes
 
+- prompt with confirmation dialog when leaving ended race [#900](https://github.com/daufderheide/racecoordinator_ai/issues/900) [skip-screendiffs] ([cc5a30cf](https://github.com/daufderheide/racecoordinator_ai/commit/cc5a30cf))
+- reset race ended and connection state when restarting race session [#900](https://github.com/daufderheide/racecoordinator_ai/issues/900) [skip-screendiffs] ([7174420b](https://github.com/daufderheide/racecoordinator_ai/commit/7174420b))
 - Fixed Starting state timer to use a proper timer rather than a constant 'tick' timer. ([fc6037f8](https://github.com/daufderheide/racecoordinator_ai/commit/fc6037f8))
 - prevent redirect to raceday-setup when acknowledging save modals after race ends [#878](https://github.com/daufderheide/racecoordinator_ai/issues/878) [skip-screendiffs] ([6a4ae651](https://github.com/daufderheide/racecoordinator_ai/commit/6a4ae651))
 - **installer**: exclude redundant portable setup scripts from windows installer.  This should fix issues with having to skip files during the install [#876](https://github.com/daufderheide/racecoordinator_ai/issues/876) ([cf26c841](https://github.com/daufderheide/racecoordinator_ai/commit/cf26c841))
@@ -25,10 +28,14 @@
 - Fixed driver editor audio expander and track editor lane expander.  They both required multiple clicks to open/close properly [skip-screendiffs] ([cfded194](https://github.com/daufderheide/racecoordinator_ai/commit/cfded194))
 - Removed duplicate delete widget button in the widget inspector ([4a06b3fd](https://github.com/daufderheide/racecoordinator_ai/commit/4a06b3fd))
 
+### ⚡ Improvements & Refactoring
+
+- **timer**: eliminate ticker drift, async auto-save, and countdown audio cascade [skip-screendiffs] ([127e9e0e](https://github.com/daufderheide/racecoordinator_ai/commit/127e9e0e))
+
 <details>
 <summary>🔍 <b>Full Commit History</b></summary>
 
-<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0...v1.0.1-beta.5">GitHub</a></p>
+<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0...v1.0.1-beta.6">GitHub</a></p>
 </details>
 
 ## [v1.0.0] - 2026-09-27
