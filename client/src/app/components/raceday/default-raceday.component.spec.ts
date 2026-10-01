@@ -7817,6 +7817,20 @@ describe("DefaultRacedayComponent", () => {
       expect(sessionStorage.getItem("skipIntro")).toBeNull();
     });
 
+    it("should redirect to /raceday-setup on acknowledging RD_RACE_ENDED_TITLE modal when raceHasEnded is true", () => {
+      fixture.detectChanges();
+      component.raceHasEnded = true;
+      component.ackModalTitle = "RD_RACE_ENDED_TITLE";
+      component.showAckModal = true;
+      component.forceExit = false;
+
+      component.onAcknowledgeModal();
+
+      expect(component.showAckModal).toBeFalse();
+      expect(component.forceExit).toBeTrue();
+      expect(mockRouter.navigate).toHaveBeenCalledWith(["/raceday-setup"]);
+    });
+
     it("should show exit confirmation modal on canDeactivate under normal conditions", () => {
       fixture.detectChanges();
       component.raceHasEnded = false;
@@ -9892,6 +9906,71 @@ describe("DefaultRacedayComponent", () => {
       component.onSaveRaceCancel();
 
       expect(component.showSaveRaceDialog).toBeFalse();
+    });
+
+    it("should remain on raceday page and not navigate to /raceday-setup when acknowledging save success in race over state", () => {
+      mockDataService.saveRace.and.returnValue(
+        of("Race saved successfully: 20260826_FinishedRace.json"),
+      );
+      fixture.detectChanges();
+      (component as any).raceState = RaceState.RACE_OVER;
+      component.raceHasEnded = true;
+      component.forceExit = false;
+      mockRouter.navigate.calls.reset();
+
+      component.onSaveRaceConfirm("Finished Race");
+
+      expect(component.showAckModal).toBeTrue();
+      expect(component.ackModalTitle).toBe("RD_SAVE_SUCCESS");
+
+      component.onAcknowledgeModal();
+
+      expect(component.showAckModal).toBeFalse();
+      expect(mockRouter.navigate).not.toHaveBeenCalled();
+      expect(component.forceExit).toBeFalse();
+    });
+
+    it("should remain on raceday page and not navigate to /raceday-setup when acknowledging save error in race over state", () => {
+      mockDataService.saveRace.and.returnValue(
+        throwError(() => ({ error: "Disk Full" })),
+      );
+      fixture.detectChanges();
+      (component as any).raceState = RaceState.RACE_OVER;
+      component.raceHasEnded = true;
+      component.forceExit = false;
+      mockRouter.navigate.calls.reset();
+
+      component.onSaveRaceConfirm("Finished Race");
+
+      expect(component.showAckModal).toBeTrue();
+      expect(component.ackModalTitle).toBe("RD_SAVE_ERROR");
+
+      component.onAcknowledgeModal();
+
+      expect(component.showAckModal).toBeFalse();
+      expect(mockRouter.navigate).not.toHaveBeenCalled();
+      expect(component.forceExit).toBeFalse();
+    });
+
+    it("should remain on raceday page when acknowledging save success during normal race state", () => {
+      mockDataService.saveRace.and.returnValue(
+        of("Race saved successfully: 20260826_MidRace.json"),
+      );
+      fixture.detectChanges();
+      (component as any).raceState = RaceState.RACING;
+      component.raceHasEnded = false;
+      component.forceExit = false;
+      mockRouter.navigate.calls.reset();
+
+      component.onSaveRaceConfirm("Mid Race");
+
+      expect(component.showAckModal).toBeTrue();
+
+      component.onAcknowledgeModal();
+
+      expect(component.showAckModal).toBeFalse();
+      expect(mockRouter.navigate).not.toHaveBeenCalled();
+      expect(component.forceExit).toBeFalse();
     });
   });
 

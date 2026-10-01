@@ -3258,10 +3258,25 @@ export class DefaultRacedayComponent
   }
 
   onAcknowledgeModal() {
+    const isSaveModal =
+      this.ackModalTitle === "RD_SAVE_SUCCESS" ||
+      this.ackModalTitle ===
+        this.translationService.translate("RD_SAVE_SUCCESS") ||
+      this.ackModalTitle === "RD_SAVE_ERROR" ||
+      this.ackModalTitle === this.translationService.translate("RD_SAVE_ERROR");
+
+    const isRaceEndedModal =
+      !isSaveModal &&
+      (this.ackModalTitle === "RD_RACE_ENDED_TITLE" ||
+        this.ackModalTitle ===
+          this.translationService.translate("RD_RACE_ENDED_TITLE") ||
+        !this.ackModalTitle);
+
     this.showAckModal = false;
+    this.ackModalTitle = "";
     this.cdr.markForCheck();
     this.cdr.detectChanges();
-    if (this.raceHasEnded) {
+    if (this.raceHasEnded && isRaceEndedModal) {
       this.forceExit = true;
       this.router.navigate(["/raceday-setup"]);
     }
