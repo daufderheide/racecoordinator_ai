@@ -3748,6 +3748,40 @@ describe("DefaultRacedayComponent", () => {
       expect(window.history.back).toHaveBeenCalled();
     });
 
+    it("should handle FORWARD action in file menu respecting isForwardDisabled", () => {
+      spyOn(window.history, "forward");
+      const navService = (component as any).navigationService;
+      spyOn(navService, "canGoForward").and.returnValue(false);
+
+      expect(component.isForwardDisabled).toBeTrue();
+      component.onFileMenuSelect("FORWARD");
+      expect(window.history.forward).not.toHaveBeenCalled();
+
+      navService.canGoForward.and.returnValue(true);
+      expect(component.isForwardDisabled).toBeFalse();
+      component.onFileMenuSelect("FORWARD");
+      expect(window.history.forward).toHaveBeenCalled();
+    });
+
+    it("should handle CLOSE action in file menu calling window.close", () => {
+      spyOn(window, "close");
+      component.onFileMenuSelect("CLOSE");
+      expect(window.close).toHaveBeenCalled();
+    });
+
+    it("should exit fullscreen when closing window if in fullscreen", () => {
+      spyOn(window, "close");
+      const exitFsSpy = jasmine.createSpy("exitFullscreen");
+      spyOnProperty(document, "fullscreenElement", "get").and.returnValue(
+        document.body,
+      );
+      spyOn(document, "exitFullscreen").and.callFake(exitFsSpy);
+
+      component.closeWindow();
+      expect(exitFsSpy).toHaveBeenCalled();
+      expect(window.close).toHaveBeenCalled();
+    });
+
     it("should open disallow lap records dialog when DISALLOW_LAP_RECORDS is selected in menu", () => {
       component.onMenuSelect("DISALLOW_LAP_RECORDS");
       expect(component.showDisallowLapRecordsDialog).toBeTrue();
@@ -8792,6 +8826,42 @@ describe("DefaultRacedayComponent", () => {
       expect(droppedWidget.customSettings?.["fontSize"]).toBe(24);
     });
 
+    it("should set default size 36x36 for action-back, action-forward, and action-close buttons when dropping onto canvas", () => {
+      const navButtons = ["action-back", "action-forward", "action-close"];
+      const element = document.createElement("div");
+      spyOnProperty(element, "offsetWidth", "get").and.returnValue(1920);
+      spyOnProperty(element, "offsetHeight", "get").and.returnValue(1080);
+      spyOn(element, "getBoundingClientRect").and.returnValue({
+        left: 0,
+        top: 0,
+        width: 1920,
+        height: 1080,
+      } as DOMRect);
+      spyOn(component["el"].nativeElement, "querySelector").and.returnValue(
+        element,
+      );
+
+      for (const btnType of navButtons) {
+        component.layout = { widgets: [] } as any;
+        component.isLayoutCustomizing = true;
+        component.draggedWidgetType = btnType as any;
+
+        const event = {
+          preventDefault: jasmine.createSpy("preventDefault"),
+          clientX: 100,
+          clientY: 100,
+        } as any;
+
+        component.onCanvasDrop(event);
+
+        expect(component.layout.widgets.length).toBe(1);
+        const droppedWidget = component.layout.widgets[0];
+        expect(droppedWidget.widgetType).toBe(btnType as any);
+        expect(droppedWidget.width).toBe(36);
+        expect(droppedWidget.height).toBe(36);
+      }
+    });
+
     it("should set default size 200x18 for header widgets (event-name, race-name, track-name, heat-info) when dropping onto canvas", () => {
       const headerWidgetTypes = [
         "event-name",
@@ -9311,6 +9381,20 @@ describe("DefaultRacedayComponent", () => {
       await fixture.whenStable();
       await new Promise((resolve) => setTimeout(resolve, 0));
       expect(updateSpy).toHaveBeenCalled();
+    });
+
+    it("should not render auto-injected app-browser-navigation in theme window or raceday", () => {
+      if (!(component as any).route.snapshot.queryParams) {
+        (component as any).route.snapshot.queryParams = {};
+      }
+      (component as any).route.snapshot.queryParams["themeId"] = "theme-1";
+      fixture.detectChanges();
+
+      const navEl = fixture.nativeElement.querySelector(
+        "app-browser-navigation",
+      );
+      expect(navEl).toBeNull();
+      delete (component as any).route.snapshot.queryParams["themeId"];
     });
   });
 
@@ -9846,6 +9930,8 @@ describe("DefaultRacedayComponent", () => {
       expect(unused).toContain("action-master-power-off");
       expect(unused).toContain("action-open-season-results");
       expect(unused).toContain("action-open-prediction-results");
+      expect(unused).toContain("action-forward");
+      expect(unused).toContain("action-close");
       expect(unused).toContain("heat-list");
 
       component.layout = {
@@ -10025,6 +10111,12 @@ describe("DefaultRacedayComponent", () => {
 
       component["executeWidgetAction"]("action-export-pdf");
       expect(component.onFileMenuSelect).toHaveBeenCalledWith("EXPORT_PDF");
+
+      component["executeWidgetAction"]("action-forward");
+      expect(component.onFileMenuSelect).toHaveBeenCalledWith("FORWARD");
+
+      component["executeWidgetAction"]("action-close");
+      expect(component.onFileMenuSelect).toHaveBeenCalledWith("CLOSE");
     });
 
     it("should trigger master power action from keyboard shortcut", () => {

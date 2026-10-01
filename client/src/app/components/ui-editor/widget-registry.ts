@@ -411,4 +411,22 @@ export const WIDGET_REGISTRY: Record<string, WidgetRegistryEntry> = {
       shortcut: "",
     }),
   },
+  "action-forward": {
+    defaultSettings: () => ({
+      fontFamily: "",
+      fontSize: 24,
+      textColor: "",
+      backgroundColor: "",
+      shortcut: "",
+    }),
+  },
+  "action-close": {
+    defaultSettings: () => ({
+      fontFamily: "",
+      fontSize: 24,
+      textColor: "",
+      backgroundColor: "",
+      shortcut: "",
+    }),
+  },
 };

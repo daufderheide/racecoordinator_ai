@@ -1567,4 +1567,13 @@ describe("DefaultDriverStationComponent", () => {
       expect((component as any).lastPlayedCountdownSecond).toBe(5);
     });
   });
+
+  it("should render app-browser-navigation with mode='navigation'", () => {
+    fixture.detectChanges();
+    const navEl = fixture.nativeElement.querySelector("app-browser-navigation");
+    expect(navEl).toBeTruthy();
+    expect(
+      navEl.getAttribute("mode") || navEl.getAttribute("ng-reflect-mode"),
+    ).toBe("navigation");
+  });
 });

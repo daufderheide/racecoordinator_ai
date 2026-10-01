@@ -348,6 +348,18 @@
             [parent]="parentComponent()"
           ></app-raceday-action-button>
         }
+        @case ("action-forward") {
+          <app-raceday-action-button
+            [widget]="widget()"
+            [parent]="parentComponent()"
+          ></app-raceday-action-button>
+        }
+        @case ("action-close") {
+          <app-raceday-action-button
+            [widget]="widget()"
+            [parent]="parentComponent()"
+          ></app-raceday-action-button>
+        }
         @case ("countdown") {
           <app-raceday-countdown
             [widget]="widget()"

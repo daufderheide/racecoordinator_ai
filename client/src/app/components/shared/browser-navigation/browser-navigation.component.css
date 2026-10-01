@@ -36,6 +36,13 @@
   transform: translateY(-1px);
 }
 
+.browser-nav-btn.close-btn:hover:not(:disabled) {
+  background: rgba(30, 41, 59, 0.9);
+  border-color: rgba(239, 68, 68, 0.6);
+  color: #ef4444;
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.4);
+}
+
 .browser-nav-btn:active:not(:disabled) {
   transform: translateY(0);
   background: rgba(15, 23, 42, 0.9);

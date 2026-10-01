@@ -4887,11 +4887,33 @@ export class DefaultRacedayComponent
     } else if (action === "BACK") {
       if (this.isBackDisabled) return;
       window.history.back();
+    } else if (action === "FORWARD") {
+      if (this.isForwardDisabled) return;
+      window.history.forward();
+    } else if (action === "CLOSE") {
+      this.closeWindow();
     }
   }
 
   get isBackDisabled(): boolean {
     return !this.navigationService?.canGoBack?.();
+  }
+
+  get isForwardDisabled(): boolean {
+    return !this.navigationService?.canGoForward?.();
+  }
+
+  closeWindow(): void {
+    if (typeof document !== "undefined" && document.fullscreenElement) {
+      try {
+        document.exitFullscreen();
+      } catch (e) {}
+    }
+    if (typeof window !== "undefined") {
+      try {
+        window.close();
+      } catch (e) {}
+    }
   }
 
   saveRace() {
@@ -5448,6 +5470,15 @@ export class DefaultRacedayComponent
         break;
       case "action-master-power-off":
         if (!this.isMainPowerDisabled) this.onTrackPowerMainSelect(false);
+        break;
+      case "action-back":
+        this.onFileMenuSelect("BACK");
+        break;
+      case "action-forward":
+        this.onFileMenuSelect("FORWARD");
+        break;
+      case "action-close":
+        this.onFileMenuSelect("CLOSE");
         break;
     }
   }
@@ -7039,6 +7070,8 @@ export class DefaultRacedayComponent
       "action-master-power-on",
       "action-master-power-off",
       "action-back",
+      "action-forward",
+      "action-close",
     ];
 
     const customWidgets = this.customWidgetService?.getCustomWidgets() || [];
@@ -7288,7 +7321,11 @@ export class DefaultRacedayComponent
             : this.draggedWidgetType === "image"
               ? 300
               : 200;
-    } else if (this.draggedWidgetType === "action-back") {
+    } else if (
+      this.draggedWidgetType === "action-back" ||
+      this.draggedWidgetType === "action-forward" ||
+      this.draggedWidgetType === "action-close"
+    ) {
       width = 36;
       height = 36;
     } else if (isActionButton) {

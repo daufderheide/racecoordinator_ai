@@ -273,5 +273,19 @@
         (change)="onSettingsChange()"
       ></app-action-button-inspector>
     }
+    @case ("action-forward") {
+      <app-action-button-inspector
+        [widget]="widget()"
+        [disableFontSizes]="widget().scaleMode === 'auto'"
+        (change)="onSettingsChange()"
+      ></app-action-button-inspector>
+    }
+    @case ("action-close") {
+      <app-action-button-inspector
+        [widget]="widget()"
+        [disableFontSizes]="widget().scaleMode === 'auto'"
+        (change)="onSettingsChange()"
+      ></app-action-button-inspector>
+    }
   }
 }
