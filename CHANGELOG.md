@@ -1,6 +1,6 @@
 # Changelog
 
-## [v1.0.1-beta.7] - 2026-10-02
+## [v1.0.1-beta.8] - 2026-10-02
 
 ### 🚀 New Features
 
@@ -30,12 +30,13 @@
 
 ### ⚡ Improvements & Refactoring
 
+- **timer**: async websocket broadcast queue, racetime coalescing, and telemetry batching [#880](https://github.com/daufderheide/racecoordinator_ai/issues/880) [skip-screendiff] ([541dfcee](https://github.com/daufderheide/racecoordinator_ai/commit/541dfcee))
 - **timer**: eliminate ticker drift, async auto-save, and countdown audio cascade [skip-screendiffs] ([127e9e0e](https://github.com/daufderheide/racecoordinator_ai/commit/127e9e0e))
 
 <details>
 <summary>🔍 <b>Full Commit History</b></summary>
 
-<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0...v1.0.1-beta.7">GitHub</a></p>
+<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0...v1.0.1-beta.8">GitHub</a></p>
 </details>
 
 ## [v1.0.0] - 2026-09-27
