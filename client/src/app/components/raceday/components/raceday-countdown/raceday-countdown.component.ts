@@ -153,11 +153,21 @@ export class RacedayCountdownComponent {
       : "custom";
   }
 
-  get previewLampCount(): number {
-    const c = this.widget()?.customSettings?.["previewLampCount"];
+  get fadeIn(): boolean {
+    return this.widget()?.customSettings?.["fadeIn"] !== false;
+  }
+
+  get maxLamps(): number {
+    const c =
+      this.widget()?.customSettings?.["maxLamps"] ??
+      this.widget()?.customSettings?.["previewLampCount"];
     return typeof c === "number" && c >= 1
       ? Math.min(10, Math.max(1, Math.round(c)))
       : 5;
+  }
+
+  get previewLampCount(): number {
+    return this.maxLamps;
   }
 
   private getLampGap(size: number): number {

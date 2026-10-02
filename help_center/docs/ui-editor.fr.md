@@ -33,3 +33,13 @@ Le widget **Minuteur** affiche le temps écoulé ou restant de la manche/course 
   - **Toujours** : Affiche les fractions de seconde en continu pendant toute la manche.
   - **Jamais** : Limite le minuteur uniquement aux secondes entières.
 - **Aperçu en direct** : L'inspecteur comprend un aperçu en direct immédiat montrant la mise en forme aux différents points de passage de la course (`> 1 hr`, `> 1 min`, `< 1 min` et `< 10s`).
+
+## Configuration du widget de compte à rebours
+
+Le widget **Compte à rebours** affiche les feux visuels de départ et déclenche les sons correspondants pendant la procédure de départ :
+
+- **Nombre maximal de feux** : Définit le nombre maximal de feux à afficher (5 par défaut, plage de 1 à 10). Lorsque la durée du départ dépasse cette valeur (par exemple, un départ de 6 secondes avec 5 feux au maximum), tous les feux restent éteints/atténués pendant la différence initiale (1 seconde) avant de s'illuminer consécutivement.
+- **Animation de fondu d'apparition** : Détermine si l'incrustation des feux et le flou d'arrière-plan apparaissent avec une transition progressive. Si désactivée, les feux et le fond s'affichent instantanément.
+- **Orientation** : Basculez entre une disposition **Horizontale** et **Verticale**.
+- **Effets de lueur et de flou** : Personnalisez le halo lumineux des lampes, l'agrandissement lors de l'activation des feux rouges/verts, ainsi que l'intensité et la zone du flou d'arrière-plan.
+

@@ -4529,6 +4529,53 @@ describe("DefaultRacedayComponent", () => {
       expect(component["countdownText"]).toBe("1");
     }));
 
+    it("should cap countdownTotalLamps to maxLamps and keep all lamps dim when duration > maxLamps", fakeAsync(() => {
+      component.layout = {
+        baseWidth: 1920,
+        baseHeight: 1080,
+        widgets: [
+          {
+            id: "widget-countdown",
+            widgetType: "countdown",
+            x: 0,
+            y: 0,
+            width: 500,
+            height: 200,
+            zIndex: 2000,
+            scaleMode: "auto",
+            customSettings: {
+              maxLamps: 5,
+            },
+          },
+        ],
+      };
+
+      const race = { ...MOCK_RACES[0], start_time: 6.0 } as any;
+      component["race"] = race;
+      mockRaceService.getRace.and.returnValue(race);
+      raceStateSubject.next(RaceState.STARTING);
+      tick();
+
+      // Capped to maxLamps = 5 even though start_time = 6.0
+      expect(component["countdownTotalLamps"]).toBe(5);
+      expect(component["countdownLamps"].length).toBe(5);
+
+      // At T=6.0s (extra 1 second above 5 max lamps), all 5 lamps should be DIM / OFF!
+      expect(
+        component["countdownLamps"].every((l) => l.state === "dim"),
+      ).toBeTrue();
+      expect(component["countdownText"]).toBe("6");
+
+      // At T=5.0s, the first lamp should illuminate
+      raceTimeSubject.next({ time: 5.0, autoStartRemaining: 5.0 });
+      tick();
+      expect(component["countdownLamps"][0].state).toBe("on");
+      expect(
+        component["countdownLamps"].filter((l) => l.state === "on").length,
+      ).toBe(1);
+      expect(component["countdownText"]).toBe("5");
+    }));
+
     it("should transition to green and hide after 5s when state becomes RACING", fakeAsync(() => {
       component["race"] = { ...MOCK_RACES[0], start_time: 5.0 } as any;
       raceStateSubject.next(RaceState.STARTING);

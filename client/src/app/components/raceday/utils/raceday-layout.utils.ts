@@ -560,46 +560,7 @@ export class RacedayLayoutUtils {
     if (hasCountdown) {
       for (const w of layout.widgets) {
         if (w.widgetType === "countdown") {
-          w.customSettings = {
-            orientation: "horizontal",
-            lampScale: 1.0,
-            blurArea: "fullscreen",
-            blurAmount: 50,
-            lampSizingMode: "custom",
-            previewLampCount: 5,
-            glowEffect: true,
-            glowOverlap: 30,
-            glowRedOverlap: 30,
-            glowGreenOverlap: 25,
-            ...w.customSettings,
-          };
-          if (!w.customSettings["lampSizingMode"]) {
-            w.customSettings["lampSizingMode"] = "custom";
-          }
-          if (!w.customSettings["previewLampCount"]) {
-            w.customSettings["previewLampCount"] = 5;
-          }
-          if (w.customSettings["glowEffect"] === undefined) {
-            w.customSettings["glowEffect"] = true;
-          }
-          if (
-            w.customSettings["glowOverlap"] === undefined ||
-            w.customSettings["glowOverlap"] === 100
-          ) {
-            w.customSettings["glowOverlap"] = 30;
-          }
-          if (
-            w.customSettings["glowRedOverlap"] === undefined ||
-            w.customSettings["glowRedOverlap"] === 100
-          ) {
-            w.customSettings["glowRedOverlap"] = 30;
-          }
-          if (
-            w.customSettings["glowGreenOverlap"] === undefined ||
-            w.customSettings["glowGreenOverlap"] === 100
-          ) {
-            w.customSettings["glowGreenOverlap"] = 25;
-          }
+          w.customSettings = this.backfillCountdownSettings(w.customSettings);
         }
       }
       return layout;
@@ -607,14 +568,75 @@ export class RacedayLayoutUtils {
 
     const baseWidth = layout.baseWidth || 1920;
     const baseHeight = layout.baseHeight || 1080;
-    const isPortrait = baseWidth < baseHeight;
+    const countdownWidget = this.createDefaultCountdownWidget(
+      baseWidth,
+      baseHeight,
+    );
 
+    return {
+      ...layout,
+      widgets: [...layout.widgets, countdownWidget],
+    };
+  }
+
+  private static backfillCountdownSettings(
+    customSettings?: Record<string, any>,
+  ): Record<string, any> {
+    const s: Record<string, any> = {
+      orientation: "horizontal",
+      lampScale: 1.0,
+      blurArea: "fullscreen",
+      blurAmount: 50,
+      lampSizingMode: "custom",
+      previewLampCount: 5,
+      maxLamps: 5,
+      fadeIn: true,
+      glowEffect: true,
+      glowOverlap: 30,
+      glowRedOverlap: 30,
+      glowGreenOverlap: 25,
+      ...customSettings,
+    };
+    if (!s["lampSizingMode"]) {
+      s["lampSizingMode"] = "custom";
+    }
+    if (!s["previewLampCount"] && !s["maxLamps"]) {
+      s["previewLampCount"] = 5;
+      s["maxLamps"] = 5;
+    } else if (!s["maxLamps"]) {
+      s["maxLamps"] = s["previewLampCount"] || 5;
+    } else if (!s["previewLampCount"]) {
+      s["previewLampCount"] = s["maxLamps"] || 5;
+    }
+    if (s["fadeIn"] === undefined) {
+      s["fadeIn"] = true;
+    }
+    if (s["glowEffect"] === undefined) {
+      s["glowEffect"] = true;
+    }
+    if (s["glowOverlap"] === undefined || s["glowOverlap"] === 100) {
+      s["glowOverlap"] = 30;
+    }
+    if (s["glowRedOverlap"] === undefined || s["glowRedOverlap"] === 100) {
+      s["glowRedOverlap"] = 30;
+    }
+    if (s["glowGreenOverlap"] === undefined || s["glowGreenOverlap"] === 100) {
+      s["glowGreenOverlap"] = 25;
+    }
+    return s;
+  }
+
+  private static createDefaultCountdownWidget(
+    baseWidth: number,
+    baseHeight: number,
+  ): AbsoluteWidgetNode {
+    const isPortrait = baseWidth < baseHeight;
     const widgetWidth = isPortrait ? 250 : 1000;
     const widgetHeight = isPortrait ? 800 : 250;
     const x = Math.max(0, Math.round((baseWidth - widgetWidth) / 2));
     const y = Math.max(0, Math.round((baseHeight - widgetHeight) / 2));
 
-    const countdownWidget: AbsoluteWidgetNode = {
+    return {
       id: "widget-countdown",
       widgetType: "countdown",
       x,
@@ -630,16 +652,13 @@ export class RacedayLayoutUtils {
         blurAmount: 50,
         lampSizingMode: "custom",
         previewLampCount: 5,
+        maxLamps: 5,
+        fadeIn: true,
         glowEffect: true,
         glowOverlap: 30,
         glowRedOverlap: 30,
         glowGreenOverlap: 25,
       },
-    };
-
-    return {
-      ...layout,
-      widgets: [...layout.widgets, countdownWidget],
     };
   }
 }

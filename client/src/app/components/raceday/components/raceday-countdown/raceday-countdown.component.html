@@ -7,6 +7,7 @@
   @if (isVisible && blurArea !== "none" && blurAmount > 0) {
     <div
       class="countdown-blur-backdrop"
+      [class.fade-in]="fadeIn"
       [class.fullscreen]="blurArea === 'fullscreen'"
       [class.widget-area]="blurArea === 'widget'"
       [class.custom-area]="blurArea === 'custom'"
@@ -15,7 +16,11 @@
   }
 
   @if (isVisible) {
-    <div class="countdown-overlay" [class.portrait]="isVertical">
+    <div
+      class="countdown-overlay"
+      [class.portrait]="isVertical"
+      [class.fade-in]="fadeIn"
+    >
       <div
         class="lamps-container"
         [class.vertical]="isVertical"

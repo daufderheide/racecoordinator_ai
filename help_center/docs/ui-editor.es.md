@@ -33,3 +33,13 @@ El widget **Temporizador** muestra el tiempo transcurrido o restante de la manga
   - **Siempre**: Muestra fracciones de segundo continuamente durante toda la manga.
   - **Nunca**: Limita el temporizador exclusivamente a segundos enteros.
 - **Vista previa**: El inspector incluye una vista previa en tiempo real que demuestra cómo se muestran las opciones seleccionadas en distintos puntos de la carrera (`> 1 hr`, `> 1 min`, `< 1 min` y `< 10s`).
+
+## Configuración del widget de cuenta atrás
+
+El widget **Cuenta atrás** muestra el semáforo visual de salida y reproduce el audio correspondiente durante la secuencia de inicio:
+
+- **Lámparas máximas**: Define el número máximo de luces a mostrar (por defecto 5, rango de 1 a 10). Cuando la duración de la cuenta atrás supera este número (por ejemplo, una salida de 6 segundos con un máximo de 5 lámparas), todas las luces permanecen apagadas/atenuadas durante la diferencia inicial (1 segundo) antes de iluminarse secuencialmente.
+- **Animación de aparición gradual**: Determina si el semáforo y el desenfoque de fondo aparecen con una suave transición gradual. Al desactivarse, aparecen de forma instantánea.
+- **Orientación**: Permite alternar entre disposición **Horizontal** y **Vertical**.
+- **Efectos de brillo y desenfoque**: Personalice el resplandor de las luces, la escala de superposición roja/verde y la intensidad o área del desenfoque.
+
