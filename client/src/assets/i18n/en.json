@@ -704,6 +704,8 @@
   "RDS_CHARITY_HEADING": "Supporting Community & First Candle",
   "RDS_CHARITY_VISIT_WEBSITE": "Visit firstcandle.org ↗",
   "RDS_CLICK_TO_TOGGLE": "Click to expand/collapse",
+  "RDS_HIGHLIGHT_DRIVER": "Click to highlight driver across heats",
+  "RDS_REMOVE_HIGHLIGHT": "Click to remove highlight",
   "RDS_CREDITS_FORWARD": "Forward",
   "RDS_CREDITS_HEADING": "Race Coordinator AI",
   "RDS_CREDITS_PAUSE": "Pause",
@@ -1065,6 +1067,8 @@
   "RD_HEAT": "Heat",
   "RD_HEAT_LOCKED": "This heat has already started and cannot be modified.",
   "RD_HEAT_OF_TOTAL": "{{current}} of {{total}}",
+  "RD_MOVE_HEAT": "Move Heat",
+  "RD_SWAP": "Swap",
   "RD_LABEL_EVENT": "Event:",
   "RD_LABEL_RACE": "Race:",
   "RD_LABEL_SEASON": "Season:",
@@ -2612,5 +2616,6 @@
   "UE_GRID_POSITION_INSPECTOR_TITLE": "Part of {{count}}-Position Grid",
   "UE_GRID_POSITION_MASTER_HINT": "Editing Position 1 master. Changes apply to all positions.",
   "UE_GRID_POSITION_MASTER_BADGE": "Position 1 (Master)",
-  "UE_GRID_POSITION_MIRRORED_BADGE": "Position {{index}} (Mirrored)"
+  "UE_GRID_POSITION_MIRRORED_BADGE": "Position {{index}} (Mirrored)",
+  "SWAP": "Swap"
 }

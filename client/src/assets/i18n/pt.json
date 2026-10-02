@@ -704,6 +704,8 @@
   "RDS_CHARITY_HEADING": "Apoio à Comunidade e First Candle",
   "RDS_CHARITY_VISIT_WEBSITE": "Visitar firstcandle.org ↗",
   "RDS_CLICK_TO_TOGGLE": "Clique para expandir/recolher",
+  "RDS_HIGHLIGHT_DRIVER": "Clique para destacar o piloto nas baterias",
+  "RDS_REMOVE_HIGHLIGHT": "Clique para remover o destaque",
   "RDS_CREDITS_FORWARD": "Avançar",
   "RDS_CREDITS_HEADING": "Race Coordinator AI",
   "RDS_CREDITS_PAUSE": "Pausar",
@@ -1065,6 +1067,8 @@
   "RD_HEAT": "Bateria",
   "RD_HEAT_LOCKED": "Esta bateria já começou e não pode ser modificada.",
   "RD_HEAT_OF_TOTAL": "{{current}} de {{total}}",
+  "RD_MOVE_HEAT": "Mover bateria",
+  "RD_SWAP": "Trocar",
   "RD_LABEL_EVENT": "Evento:",
   "RD_LABEL_RACE": "Corrida:",
   "RD_LABEL_SEASON": "Temporada:",
@@ -2612,5 +2616,6 @@
   "UE_GRID_POSITION_INSPECTOR_TITLE": "Parte da grade de {{count}} posições",
   "UE_GRID_POSITION_MASTER_HINT": "Editando mestre da Posição 1. As alterações se aplicam a todas as posições.",
   "UE_GRID_POSITION_MASTER_BADGE": "Posição 1 (Mestre)",
-  "UE_GRID_POSITION_MIRRORED_BADGE": "Posição {{index}} (Espelhada)"
+  "UE_GRID_POSITION_MIRRORED_BADGE": "Posição {{index}} (Espelhada)",
+  "SWAP": "Trocar"
 }

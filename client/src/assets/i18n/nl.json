@@ -704,6 +704,8 @@
   "RDS_CHARITY_HEADING": "Ondersteuning voor Community & First Candle",
   "RDS_CHARITY_VISIT_WEBSITE": "Bezoek firstcandle.org ↗",
   "RDS_CLICK_TO_TOGGLE": "Klik om in of uit te klappen",
+  "RDS_HIGHLIGHT_DRIVER": "Klik om de coureur in de heats te markeren",
+  "RDS_REMOVE_HIGHLIGHT": "Klik om markering te verwijderen",
   "RDS_CREDITS_FORWARD": "Vooruit",
   "RDS_CREDITS_HEADING": "Race Coordinator AI",
   "RDS_CREDITS_PAUSE": "Pauzeer",
@@ -1065,6 +1067,8 @@
   "RD_HEAT": "Heat",
   "RD_HEAT_LOCKED": "Deze heat is al begonnen en kan niet worden gewijzigd.",
   "RD_HEAT_OF_TOTAL": "{{current}} van {{total}}",
+  "RD_MOVE_HEAT": "Heat verplaatsen",
+  "RD_SWAP": "Wisselen",
   "RD_LABEL_EVENT": "Evenement:",
   "RD_LABEL_RACE": "Race:",
   "RD_LABEL_SEASON": "Seizoen:",
@@ -2612,5 +2616,6 @@
   "UE_GRID_POSITION_INSPECTOR_TITLE": "Deel van {{count}}-posities raster",
   "UE_GRID_POSITION_MASTER_HINT": "Hoofdsjabloon Positie 1 wordt bewerkt. Wijzigingen gelden voor alle posities.",
   "UE_GRID_POSITION_MASTER_BADGE": "Positie 1 (Master)",
-  "UE_GRID_POSITION_MIRRORED_BADGE": "Positie {{index}} (Gespiegeld)"
+  "UE_GRID_POSITION_MIRRORED_BADGE": "Positie {{index}} (Gespiegeld)",
+  "SWAP": "Wisselen"
 }

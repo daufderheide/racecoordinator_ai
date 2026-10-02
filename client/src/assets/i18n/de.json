@@ -704,6 +704,8 @@
   "RDS_CHARITY_HEADING": "Unterstützung von Gemeinschaft & First Candle",
   "RDS_CHARITY_VISIT_WEBSITE": "firstcandle.org besuchen ↗",
   "RDS_CLICK_TO_TOGGLE": "Klicken zum Auf-/Zuklappen",
+  "RDS_HIGHLIGHT_DRIVER": "Klicken, um den Fahrer in den Läufen hervorzuheben",
+  "RDS_REMOVE_HIGHLIGHT": "Klicken, um die Hervorhebung zu entfernen",
   "RDS_CREDITS_FORWARD": "Vorwärts",
   "RDS_CREDITS_HEADING": "Race Coordinator AI",
   "RDS_CREDITS_PAUSE": "Pause",
@@ -1065,6 +1067,8 @@
   "RD_HEAT": "Lauf",
   "RD_HEAT_LOCKED": "Dieser Lauf hat bereits begonnen und kann nicht mehr geändert werden.",
   "RD_HEAT_OF_TOTAL": "{{current}} von {{total}}",
+  "RD_MOVE_HEAT": "Lauf verschieben",
+  "RD_SWAP": "Tauschen",
   "RD_LABEL_EVENT": "Event:",
   "RD_LABEL_RACE": "Rennen:",
   "RD_LABEL_SEASON": "Saison:",
@@ -2612,5 +2616,6 @@
   "UE_GRID_POSITION_INSPECTOR_TITLE": "Teil des {{count}}-Positionen-Rasters",
   "UE_GRID_POSITION_MASTER_HINT": "Hauptvorlage für Position 1 wird bearbeitet. Änderungen gelten für alle Positionen.",
   "UE_GRID_POSITION_MASTER_BADGE": "Position 1 (Master)",
-  "UE_GRID_POSITION_MIRRORED_BADGE": "Position {{index}} (Gespiegelt)"
+  "UE_GRID_POSITION_MIRRORED_BADGE": "Position {{index}} (Gespiegelt)",
+  "SWAP": "Tauschen"
 }

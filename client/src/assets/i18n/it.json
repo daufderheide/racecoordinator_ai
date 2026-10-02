@@ -704,6 +704,8 @@
   "RDS_CHARITY_HEADING": "Sostegno alla Comunità e First Candle",
   "RDS_CHARITY_VISIT_WEBSITE": "Visita firstcandle.org ↗",
   "RDS_CLICK_TO_TOGGLE": "Clicca per espandere/comprimere",
+  "RDS_HIGHLIGHT_DRIVER": "Fai clic per evidenziare il pilota nelle manche",
+  "RDS_REMOVE_HIGHLIGHT": "Fai clic per rimuovere l'evidenziazione",
   "RDS_CREDITS_FORWARD": "Avanti",
   "RDS_CREDITS_HEADING": "Race Coordinator AI",
   "RDS_CREDITS_PAUSE": "Pausa",
@@ -1065,6 +1067,8 @@
   "RD_HEAT": "Manche",
   "RD_HEAT_LOCKED": "Questa manche è già iniziata e non può essere modificata.",
   "RD_HEAT_OF_TOTAL": "{{current}} di {{total}}",
+  "RD_MOVE_HEAT": "Sposta manche",
+  "RD_SWAP": "Scambia",
   "RD_LABEL_EVENT": "Evento:",
   "RD_LABEL_RACE": "Gara:",
   "RD_LABEL_SEASON": "Stagione:",
@@ -2612,5 +2616,6 @@
   "UE_GRID_POSITION_INSPECTOR_TITLE": "Parte della griglia a {{count}} posizioni",
   "UE_GRID_POSITION_MASTER_HINT": "Modifica master Posizione 1. Le modifiche si applicano a tutte le posizioni.",
   "UE_GRID_POSITION_MASTER_BADGE": "Posizione 1 (Master)",
-  "UE_GRID_POSITION_MIRRORED_BADGE": "Posizione {{index}} (Riflessa)"
+  "UE_GRID_POSITION_MIRRORED_BADGE": "Posizione {{index}} (Riflessa)",
+  "SWAP": "Scambia"
 }

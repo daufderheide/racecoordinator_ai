@@ -704,6 +704,8 @@
   "RDS_CHARITY_HEADING": "Soutien à la communauté & First Candle",
   "RDS_CHARITY_VISIT_WEBSITE": "Visiter firstcandle.org ↗",
   "RDS_CLICK_TO_TOGGLE": "Cliquer pour agrandir/réduire",
+  "RDS_HIGHLIGHT_DRIVER": "Cliquer pour surligner le pilote dans les manches",
+  "RDS_REMOVE_HIGHLIGHT": "Cliquer pour supprimer le surlignage",
   "RDS_CREDITS_FORWARD": "Avancer",
   "RDS_CREDITS_HEADING": "Race Coordinator AI",
   "RDS_CREDITS_PAUSE": "Pause",
@@ -1065,6 +1067,8 @@
   "RD_HEAT": "Série",
   "RD_HEAT_LOCKED": "Cette série a déjà commencé et ne peut plus être modifiée.",
   "RD_HEAT_OF_TOTAL": "{{current}} sur {{total}}",
+  "RD_MOVE_HEAT": "Déplacer la manche",
+  "RD_SWAP": "Échanger",
   "RD_LABEL_EVENT": "Événement:",
   "RD_LABEL_RACE": "Course:",
   "RD_LABEL_SEASON": "Saison:",
@@ -2612,5 +2616,6 @@
   "UE_GRID_POSITION_INSPECTOR_TITLE": "Fait partie d'une grille de {{count}} positions",
   "UE_GRID_POSITION_MASTER_HINT": "Modification du modèle maître de la Position 1. Les modifications s'appliquent à toutes les positions.",
   "UE_GRID_POSITION_MASTER_BADGE": "Position 1 (Maître)",
-  "UE_GRID_POSITION_MIRRORED_BADGE": "Position {{index}} (Reflétée)"
+  "UE_GRID_POSITION_MIRRORED_BADGE": "Position {{index}} (Reflétée)",
+  "SWAP": "Échanger"
 }

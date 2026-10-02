@@ -567,4 +567,238 @@ test.describe("Modify Heats Modal Visuals", () => {
 
     await expect(page).toHaveScreenshot("modify-heats-zoomed-in.png");
   });
+
+  test("should show multiple highlighted drivers across heats with high contrast and spotlight focus", async ({
+    page,
+  }) => {
+    const racedayHarness = new DefaultRacedayHarnessE2e(
+      page.locator(".dashboard-wrapper"),
+    );
+
+    const raceData = {
+      race: {
+        race: {
+          model: { entityId: "r1" },
+          name: "Highlight Screendiff Race",
+          track: {
+            model: { entityId: "t1" },
+            name: "Test Track",
+            lanes: [
+              {
+                objectId: "l1",
+                backgroundColor: "#ff0000",
+                foregroundColor: "#ffffff",
+                length: 10,
+              },
+              {
+                objectId: "l2",
+                backgroundColor: "#ffffff",
+                foregroundColor: "#000000",
+                length: 10,
+              },
+              {
+                objectId: "l3",
+                backgroundColor: "#0000ff",
+                foregroundColor: "#ffffff",
+                length: 10,
+              },
+              {
+                objectId: "l4",
+                backgroundColor: "#ffff00",
+                foregroundColor: "#000000",
+                length: 10,
+              },
+            ],
+          },
+        },
+        drivers: [
+          {
+            objectId: "rp1",
+            seed: 1,
+            driver: { model: { entityId: "d1" }, name: "Alice" },
+          },
+          {
+            objectId: "rp2",
+            seed: 2,
+            driver: { model: { entityId: "d2" }, name: "Bob" },
+          },
+          {
+            objectId: "rp3",
+            seed: 3,
+            driver: { model: { entityId: "d3" }, name: "Charlie" },
+          },
+          {
+            objectId: "rp4",
+            seed: 4,
+            driver: { model: { entityId: "d4" }, name: "Dave" },
+          },
+        ],
+        heats: [
+          {
+            objectId: "h1",
+            heatNumber: 1,
+            heatDrivers: [
+              {
+                objectId: "hd1",
+                laneIndex: 0,
+                driverId: "rp1",
+                driver: {
+                  objectId: "rp1",
+                  seed: 1,
+                  driver: { model: { entityId: "d1" }, name: "Alice" },
+                },
+              },
+              {
+                objectId: "hd2",
+                laneIndex: 1,
+                driverId: "rp2",
+                driver: {
+                  objectId: "rp2",
+                  seed: 2,
+                  driver: { model: { entityId: "d2" }, name: "Bob" },
+                },
+              },
+              {
+                objectId: "hd3",
+                laneIndex: 3,
+                driverId: "rp4",
+                driver: {
+                  objectId: "rp4",
+                  seed: 4,
+                  driver: { model: { entityId: "d4" }, name: "Dave" },
+                },
+              },
+            ],
+          },
+          {
+            objectId: "h2",
+            heatNumber: 2,
+            heatDrivers: [
+              {
+                objectId: "hd4",
+                laneIndex: 0,
+                driverId: "rp3",
+                driver: {
+                  objectId: "rp3",
+                  seed: 3,
+                  driver: { model: { entityId: "d3" }, name: "Charlie" },
+                },
+              },
+              {
+                objectId: "hd5",
+                laneIndex: 2,
+                driverId: "rp1",
+                driver: {
+                  objectId: "rp1",
+                  seed: 1,
+                  driver: { model: { entityId: "d1" }, name: "Alice" },
+                },
+              },
+            ],
+          },
+          {
+            objectId: "h3",
+            heatNumber: 3,
+            heatDrivers: [
+              {
+                objectId: "hd6",
+                laneIndex: 0,
+                driverId: "rp4",
+                driver: {
+                  objectId: "rp4",
+                  seed: 4,
+                  driver: { model: { entityId: "d4" }, name: "Dave" },
+                },
+              },
+              {
+                objectId: "hd7",
+                laneIndex: 1,
+                driverId: "rp2",
+                driver: {
+                  objectId: "rp2",
+                  seed: 2,
+                  driver: { model: { entityId: "d2" }, name: "Bob" },
+                },
+              },
+            ],
+          },
+          {
+            objectId: "h4",
+            heatNumber: 4,
+            heatDrivers: [
+              {
+                objectId: "hd8",
+                laneIndex: 0,
+                driverId: "rp3",
+                driver: {
+                  objectId: "rp3",
+                  seed: 3,
+                  driver: { model: { entityId: "d3" }, name: "Charlie" },
+                },
+              },
+              {
+                objectId: "hd9",
+                laneIndex: 3,
+                driverId: "rp4",
+                driver: {
+                  objectId: "rp4",
+                  seed: 4,
+                  driver: { model: { entityId: "d4" }, name: "Dave" },
+                },
+              },
+            ],
+          },
+        ],
+        currentHeat: { objectId: "h1", heatNumber: 1 },
+        state: RaceState.NOT_STARTED,
+      },
+    };
+
+    await TestSetupHelper.mockRaceData(page, raceData);
+
+    await racedayHarness.clickMenuButton("Race Director");
+    await racedayHarness.clickMenuItem("Modify Heats");
+
+    const modalHarness = new ModifyHeatsModalHarnessE2e(
+      page.locator("app-modify-heats-modal"),
+    );
+    await page.locator("app-modify-heats-modal").waitFor();
+
+    await TestSetupHelper.waitForLocalization(page);
+
+    // Wait for Alice to be visible in the racing pool
+    await page
+      .locator('#driver-pool .driver-item:has-text("Alice")')
+      .waitFor({ state: "visible", timeout: 15000 });
+
+    // Select/highlight the first driver ("Alice")
+    await page
+      .locator(
+        '#driver-pool .driver-item:has-text("Alice") .clickable-driver-name',
+      )
+      .click();
+
+    // Select/highlight the second driver ("Bob")
+    await page
+      .locator(
+        '#driver-pool .driver-item:has-text("Bob") .clickable-driver-name',
+      )
+      .click();
+
+    // Wait for driver highlight chips to appear in the pool
+    await page
+      .locator(
+        '#driver-pool .driver-item:has-text("Alice") .driver-highlight-chip',
+      )
+      .waitFor({ state: "visible", timeout: 5000 });
+    await page
+      .locator(
+        '#driver-pool .driver-item:has-text("Bob") .driver-highlight-chip',
+      )
+      .waitFor({ state: "visible", timeout: 5000 });
+
+    await modalHarness.waitForLoaderToBeHidden();
+
+    await expect(page).toHaveScreenshot("modify-heats-highlighted-drivers.png");
+  });
 });

@@ -704,6 +704,8 @@
   "RDS_CHARITY_HEADING": "Apoyo a la Comunidad y First Candle",
   "RDS_CHARITY_VISIT_WEBSITE": "Visitar firstcandle.org ↗",
   "RDS_CLICK_TO_TOGGLE": "Haga clic para expandir/contraer",
+  "RDS_HIGHLIGHT_DRIVER": "Haga clic para resaltar el piloto en las mangas",
+  "RDS_REMOVE_HIGHLIGHT": "Haga clic para eliminar el resaltado",
   "RDS_CREDITS_FORWARD": "Avanzar",
   "RDS_CREDITS_HEADING": "Race Coordinator AI",
   "RDS_CREDITS_PAUSE": "Pausar",
@@ -1065,6 +1067,8 @@
   "RD_HEAT": "Manga",
   "RD_HEAT_LOCKED": "Esta manga ya ha comenzado y no se puede modificar.",
   "RD_HEAT_OF_TOTAL": "{{current}} de {{total}}",
+  "RD_MOVE_HEAT": "Mover manga",
+  "RD_SWAP": "Intercambiar",
   "RD_LABEL_EVENT": "Evento:",
   "RD_LABEL_RACE": "Carrera:",
   "RD_LABEL_SEASON": "Temporada:",
@@ -2612,5 +2616,6 @@
   "UE_GRID_POSITION_INSPECTOR_TITLE": "Parte de cuadrícula de {{count}} posiciones",
   "UE_GRID_POSITION_MASTER_HINT": "Editando maestra de Posición 1. Los cambios se aplican a todas las posiciones.",
   "UE_GRID_POSITION_MASTER_BADGE": "Posición 1 (Maestra)",
-  "UE_GRID_POSITION_MIRRORED_BADGE": "Posición {{index}} (Reflejada)"
+  "UE_GRID_POSITION_MIRRORED_BADGE": "Posición {{index}} (Reflejada)",
+  "SWAP": "Intercambiar"
 }

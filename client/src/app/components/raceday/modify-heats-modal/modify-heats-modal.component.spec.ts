@@ -1559,5 +1559,611 @@ describe("ModifyHeatsModalComponent", () => {
         expect(grid.style.zoom).toBe("0.8");
       });
     });
+
+    describe("Heat Drag and Drop (Swap and Move Between Heats)", () => {
+      let heat1: Heat;
+      let heat2: Heat;
+      let heat3: Heat;
+      let heat4: Heat;
+
+      beforeEach(() => {
+        const track = createMockTrack();
+        const race = createMockRace(track);
+        heat1 = new Heat("h1", 1, [], []);
+        heat2 = new Heat("h2", 2, [], []);
+        heat3 = new Heat("h3", 3, [], []);
+        heat4 = new Heat("h4", 4, [], []);
+
+        fixture.componentRef.setInput("trackInput", track);
+        fixture.componentRef.setInput("raceInput", race);
+        fixture.componentRef.setInput("heatsInput", [
+          heat1,
+          heat2,
+          heat3,
+          heat4,
+        ]);
+        fixture.detectChanges();
+      });
+
+      it("should track dragging lifecycle through onHeatDragStarted and onHeatDragEnded", () => {
+        (component as any)["heatDropAction"] = {
+          type: "swap",
+          targetIndex: 2,
+        };
+        (component as any)["hoveredHeatIdx"] = 2;
+
+        (component as any)["onHeatDragStarted"]();
+        expect((component as any)["isDraggingHeat"]).toBeTrue();
+        expect((component as any)["heatDropAction"]).toBeNull();
+        expect((component as any)["hoveredHeatIdx"]).toBe(-1);
+
+        (component as any)["heatDropAction"] = {
+          type: "insert",
+          slotIndex: 1,
+        };
+        (component as any)["hoveredHeatIdx"] = 1;
+
+        (component as any)["onHeatDragEnded"]();
+        expect((component as any)["isDraggingHeat"]).toBeFalse();
+        expect((component as any)["heatDropAction"]).toBeNull();
+        expect((component as any)["hoveredHeatIdx"]).toBe(-1);
+      });
+
+      it("should detect insert action on left 20% of card when hovering", () => {
+        (component as any)["isDraggingHeat"] = true;
+        const mockCardEl = {
+          getBoundingClientRect: () => ({
+            left: 100,
+            right: 300,
+            width: 200,
+            top: 50,
+            bottom: 250,
+            height: 200,
+          }),
+        };
+        const mockEvent = { currentTarget: mockCardEl, clientX: 120 } as any;
+
+        (component as any)["onHeatMouseEnter"](2, mockEvent);
+        expect((component as any)["heatDropAction"]).toEqual({
+          type: "insert",
+          slotIndex: 2,
+        });
+        expect(component["activeInsertSlot"]).toBe(2);
+        expect((component as any)["hoveredHeatIdx"]).toBe(-1);
+      });
+
+      it("should detect insert action on right 20% of card when hovering", () => {
+        (component as any)["isDraggingHeat"] = true;
+        const mockCardEl = {
+          getBoundingClientRect: () => ({
+            left: 100,
+            right: 300,
+            width: 200,
+            top: 50,
+            bottom: 250,
+            height: 200,
+          }),
+        };
+        const mockEvent = { currentTarget: mockCardEl, clientX: 280 } as any;
+
+        (component as any)["onHeatMouseMove"](1, mockEvent);
+        expect((component as any)["heatDropAction"]).toEqual({
+          type: "insert",
+          slotIndex: 2,
+        });
+        expect(component["activeInsertSlot"]).toBe(2);
+        expect((component as any)["hoveredHeatIdx"]).toBe(-1);
+      });
+
+      it("should detect swap action on middle 60% of card when hovering", () => {
+        (component as any)["isDraggingHeat"] = true;
+        const mockCardEl = {
+          getBoundingClientRect: () => ({
+            left: 100,
+            right: 300,
+            width: 200,
+            top: 50,
+            bottom: 250,
+            height: 200,
+          }),
+        };
+        const mockEvent = { currentTarget: mockCardEl, clientX: 200 } as any;
+
+        (component as any)["onHeatMouseMove"](2, mockEvent);
+        expect((component as any)["heatDropAction"]).toEqual({
+          type: "swap",
+          targetIndex: 2,
+        });
+        expect(component["activeInsertSlot"]).toBe(-1);
+        expect((component as any)["hoveredHeatIdx"]).toBe(2);
+        expect(component["isHeatSwapHighlight"](2, heat3)).toBeTrue();
+        expect(component["isHeatSwapHighlight"](1, heat2)).toBeFalse();
+      });
+
+      it("should not allow swap or insert before started heats during hover", () => {
+        (component as any)["localHeats"][0].started = true;
+        (component as any)["isDraggingHeat"] = true;
+        const mockCardEl = {
+          getBoundingClientRect: () => ({
+            left: 100,
+            right: 300,
+            width: 200,
+            top: 50,
+            bottom: 250,
+            height: 200,
+          }),
+        };
+        const middleEvent = {
+          currentTarget: mockCardEl,
+          clientX: 200,
+        } as any;
+        (component as any)["onHeatMouseMove"](0, middleEvent);
+        expect((component as any)["heatDropAction"]).toBeNull();
+
+        const leftEvent = { currentTarget: mockCardEl, clientX: 110 } as any;
+        (component as any)["onHeatMouseMove"](0, leftEvent);
+        expect((component as any)["heatDropAction"]).toBeNull();
+      });
+
+      it("should ignore mouseenter/mousemove if not dragging", () => {
+        (component as any)["isDraggingHeat"] = false;
+        const mockCardEl = {
+          getBoundingClientRect: () => ({
+            left: 100,
+            right: 300,
+            width: 200,
+            top: 50,
+            bottom: 250,
+            height: 200,
+          }),
+        };
+        const mockEvent = { currentTarget: mockCardEl, clientX: 200 } as any;
+        (component as any)["onHeatMouseMove"](1, mockEvent);
+        expect((component as any)["heatDropAction"]).toBeNull();
+      });
+
+      it("should handle onHeatHover for swap and reset", () => {
+        (component as any)["isDraggingHeat"] = true;
+        (component as any)["onHeatHover"](2);
+        expect((component as any)["heatDropAction"]).toEqual({
+          type: "swap",
+          targetIndex: 2,
+        });
+        expect((component as any)["hoveredHeatIdx"]).toBe(2);
+
+        (component as any)["onHeatHover"](-1);
+        expect((component as any)["heatDropAction"]).toBeNull();
+        expect((component as any)["hoveredHeatIdx"]).toBe(-1);
+      });
+
+      it("should execute heat swap on drop when action is swap", () => {
+        spyOn(component as any, "autoSave").and.callThrough();
+        spyOn(
+          (component as any)["undoManager"],
+          "captureState",
+        ).and.callThrough();
+
+        (component as any)["isDraggingHeat"] = true;
+        (component as any)["heatDropAction"] = {
+          type: "swap",
+          targetIndex: 2,
+        };
+
+        const mockDropEvent: any = {
+          item: { data: heat2 },
+        };
+
+        (component as any)["onHeatDrop"](mockDropEvent);
+
+        expect(
+          (component as any)["localHeats"].map((h: Heat) => h.objectId),
+        ).toEqual(["h1", "h3", "h2", "h4"]);
+        expect(
+          (component as any)["localHeats"].map((h: Heat) => h.heatNumber),
+        ).toEqual([1, 2, 3, 4]);
+        expect(
+          (component as any)["undoManager"].captureState,
+        ).toHaveBeenCalled();
+        expect((component as any)["autoSave"]).toHaveBeenCalled();
+        expect((component as any)["isDraggingHeat"]).toBeFalse();
+        expect((component as any)["heatDropAction"]).toBeNull();
+      });
+
+      it("should execute heat insert (move forward between heats) on drop", () => {
+        spyOn(component as any, "autoSave").and.callThrough();
+        spyOn(
+          (component as any)["undoManager"],
+          "captureState",
+        ).and.callThrough();
+
+        (component as any)["isDraggingHeat"] = true;
+        (component as any)["heatDropAction"] = {
+          type: "insert",
+          slotIndex: 3,
+        };
+
+        const mockDropEvent: any = {
+          item: { data: heat1 },
+        };
+
+        (component as any)["onHeatDrop"](mockDropEvent);
+
+        expect(
+          (component as any)["localHeats"].map((h: Heat) => h.objectId),
+        ).toEqual(["h2", "h3", "h1", "h4"]);
+        expect(
+          (component as any)["localHeats"].map((h: Heat) => h.heatNumber),
+        ).toEqual([1, 2, 3, 4]);
+        expect(
+          (component as any)["undoManager"].captureState,
+        ).toHaveBeenCalled();
+        expect((component as any)["autoSave"]).toHaveBeenCalled();
+      });
+
+      it("should execute heat insert (move backward between heats) on drop", () => {
+        spyOn(component as any, "autoSave").and.callThrough();
+        spyOn(
+          (component as any)["undoManager"],
+          "captureState",
+        ).and.callThrough();
+
+        (component as any)["isDraggingHeat"] = true;
+        (component as any)["heatDropAction"] = {
+          type: "insert",
+          slotIndex: 1,
+        };
+
+        const mockDropEvent: any = {
+          item: { data: heat4 },
+        };
+
+        (component as any)["onHeatDrop"](mockDropEvent);
+
+        expect(
+          (component as any)["localHeats"].map((h: Heat) => h.objectId),
+        ).toEqual(["h1", "h4", "h2", "h3"]);
+        expect(
+          (component as any)["localHeats"].map((h: Heat) => h.heatNumber),
+        ).toEqual([1, 2, 3, 4]);
+        expect(
+          (component as any)["undoManager"].captureState,
+        ).toHaveBeenCalled();
+        expect((component as any)["autoSave"]).toHaveBeenCalled();
+      });
+
+      it("should not reorder heats if dragged heat is started", () => {
+        spyOn(component as any, "autoSave");
+        (component as any)["localHeats"][1].started = true;
+
+        (component as any)["isDraggingHeat"] = true;
+        (component as any)["heatDropAction"] = {
+          type: "swap",
+          targetIndex: 3,
+        };
+
+        const mockDropEvent: any = {
+          item: { data: (component as any)["localHeats"][1] },
+        };
+
+        (component as any)["onHeatDrop"](mockDropEvent);
+
+        expect(
+          (component as any)["localHeats"].map((h: Heat) => h.objectId),
+        ).toEqual(["h1", "h2", "h3", "h4"]);
+        expect((component as any)["autoSave"]).not.toHaveBeenCalled();
+      });
+
+      it("should not reorder heats if inserting at or before last started heat", () => {
+        spyOn(component as any, "autoSave");
+        (component as any)["localHeats"][0].started = true;
+
+        (component as any)["isDraggingHeat"] = true;
+        (component as any)["heatDropAction"] = {
+          type: "insert",
+          slotIndex: 0,
+        };
+
+        const mockDropEvent: any = {
+          item: { data: (component as any)["localHeats"][2] },
+        };
+
+        (component as any)["onHeatDrop"](mockDropEvent);
+
+        expect(
+          (component as any)["localHeats"].map((h: Heat) => h.objectId),
+        ).toEqual(["h1", "h2", "h3", "h4"]);
+        expect((component as any)["autoSave"]).not.toHaveBeenCalled();
+      });
+
+      it("should compute action from dropPoint when heatDropAction is not pre-set", () => {
+        spyOn(component as any, "getHeatCardBounds").and.returnValue([
+          {
+            index: 0,
+            rect: {
+              left: 0,
+              right: 100,
+              top: 0,
+              bottom: 100,
+              width: 100,
+              height: 100,
+            },
+          },
+          {
+            index: 1,
+            rect: {
+              left: 120,
+              right: 220,
+              top: 0,
+              bottom: 100,
+              width: 100,
+              height: 100,
+            },
+          },
+        ]);
+        spyOn(component as any, "autoSave");
+
+        const mockDropEvent: any = {
+          item: { data: heat4 },
+          dropPoint: { x: 110, y: 50 },
+        };
+
+        (component as any)["heatDropAction"] = null;
+        (component as any)["onHeatDrop"](mockDropEvent);
+
+        expect(
+          (component as any)["localHeats"].map((h: Heat) => h.objectId),
+        ).toEqual(["h1", "h4", "h2", "h3"]);
+        expect((component as any)["autoSave"]).toHaveBeenCalled();
+      });
+    });
+  });
+
+  describe("Driver Highlighting", () => {
+    let p1: RaceParticipant;
+    let p2: RaceParticipant;
+    let heat1: Heat;
+    let heat2: Heat;
+
+    beforeEach(() => {
+      const d1 = new Driver("d1", "Austin", "Austin");
+      const d2 = new Driver("d2", "Bob", "Bob");
+      p1 = new RaceParticipant("rp1", d1, 0, 0, 0, 0, 0, 0, 0, 0, 100);
+      p2 = new RaceParticipant("rp2", d2, 0, 0, 0, 0, 0, 0, 0, 0, 100);
+
+      heat1 = new Heat("h1", 1, [new DriverHeatData("dhd1", p1, 0)]);
+      heat2 = new Heat("h2", 2, [
+        new DriverHeatData("dhd2", p2, 0),
+        new DriverHeatData("dhd3", p1, 1),
+      ]);
+
+      const track = createMockTrack();
+      fixture.componentRef.setInput("raceInput", createMockRace(track));
+      fixture.componentRef.setInput("trackInput", track);
+      fixture.componentRef.setInput("participantsInput", [p1, p2]);
+      fixture.componentRef.setInput("heatsInput", [heat1, heat2]);
+      fixture.componentRef.setInput("raceStateInput", RaceState.NOT_STARTED);
+
+      fixture.detectChanges();
+    });
+
+    it("should toggle driver highlight on and off when driver name is clicked in driver pool", () => {
+      expect(component["isDriverHighlighted"](p1)).toBeFalse();
+      expect(component["getDriverHighlightColor"](p1)).toBeNull();
+
+      // Click on p1 driver name in the driver pool
+      const poolDriverNames = fixture.debugElement.queryAll(
+        By.css("#driver-pool .driver-name"),
+      );
+      expect(poolDriverNames.length).toBeGreaterThanOrEqual(1);
+
+      poolDriverNames[0].nativeElement.click();
+      fixture.detectChanges();
+
+      expect(component["isDriverHighlighted"](p1)).toBeTrue();
+      const color1 = component["getDriverHighlightColor"](p1);
+      expect(color1).toBeTruthy();
+
+      // DOM check in driver pool
+      const poolDriverItems = fixture.debugElement.queryAll(
+        By.css("#driver-pool .driver-item"),
+      );
+      expect(
+        poolDriverItems[0].nativeElement.classList.contains(
+          "driver-highlighted",
+        ),
+      ).toBeTrue();
+      const badge = poolDriverNames[0].query(By.css(".driver-highlight-badge"));
+      expect(badge).toBeTruthy();
+
+      // DOM check in heats: p1 races in Heat 1 Lane 0 and Heat 2 Lane 1
+      const heat1Lane0 = fixture.debugElement.query(
+        By.css("#heat-0-lane-0 .driver-item.populated"),
+      );
+      expect(
+        heat1Lane0.nativeElement.classList.contains("driver-highlighted"),
+      ).toBeTrue();
+
+      const heat2Lane1 = fixture.debugElement.query(
+        By.css("#heat-1-lane-1 .driver-item.populated"),
+      );
+      expect(
+        heat2Lane1.nativeElement.classList.contains("driver-highlighted"),
+      ).toBeTrue();
+
+      // p2 in Heat 2 Lane 0 is not highlighted
+      const heat2Lane0 = fixture.debugElement.query(
+        By.css("#heat-1-lane-0 .driver-item.populated"),
+      );
+      expect(
+        heat2Lane0.nativeElement.classList.contains("driver-highlighted"),
+      ).toBeFalse();
+
+      // Click p1 again to remove highlight
+      poolDriverNames[0].nativeElement.click();
+      fixture.detectChanges();
+
+      expect(component["isDriverHighlighted"](p1)).toBeFalse();
+      expect(component["getDriverHighlightColor"](p1)).toBeNull();
+      expect(
+        poolDriverItems[0].nativeElement.classList.contains(
+          "driver-highlighted",
+        ),
+      ).toBeFalse();
+      expect(
+        heat1Lane0.nativeElement.classList.contains("driver-highlighted"),
+      ).toBeFalse();
+      expect(
+        heat2Lane1.nativeElement.classList.contains("driver-highlighted"),
+      ).toBeFalse();
+    });
+
+    it("should allow any number of drivers to be highlighted concurrently with different colors", () => {
+      const poolDriverNames = fixture.debugElement.queryAll(
+        By.css("#driver-pool .driver-name"),
+      );
+
+      // Highlight p1
+      poolDriverNames[0].nativeElement.click();
+      // Highlight p2
+      poolDriverNames[1].nativeElement.click();
+      fixture.detectChanges();
+
+      expect(component["isDriverHighlighted"](p1)).toBeTrue();
+      expect(component["isDriverHighlighted"](p2)).toBeTrue();
+
+      const color1 = component["getDriverHighlightColor"](p1);
+      const color2 = component["getDriverHighlightColor"](p2);
+      expect(color1).toBeTruthy();
+      expect(color2).toBeTruthy();
+      expect(color1).not.toBe(color2);
+
+      // Both should be highlighted with their respective distinct colors in Heat 2
+      const heat2Lane0 = fixture.debugElement.query(
+        By.css("#heat-1-lane-0 .driver-item.populated"),
+      );
+      const heat2Lane1 = fixture.debugElement.query(
+        By.css("#heat-1-lane-1 .driver-item.populated"),
+      );
+
+      expect(
+        heat2Lane0.nativeElement.classList.contains("driver-highlighted"),
+      ).toBeTrue();
+      expect(
+        heat2Lane1.nativeElement.classList.contains("driver-highlighted"),
+      ).toBeTrue();
+      expect(
+        heat2Lane0.nativeElement.style.getPropertyValue(
+          "--driver-highlight-color",
+        ),
+      ).toBe(color2);
+      expect(
+        heat2Lane1.nativeElement.style.getPropertyValue(
+          "--driver-highlight-color",
+        ),
+      ).toBe(color1);
+    });
+
+    it("should toggle highlight when clicking driver name in a heat lane", () => {
+      const heat1Lane0Name = fixture.debugElement.query(
+        By.css("#heat-0-lane-0 .driver-name"),
+      );
+      expect(heat1Lane0Name).toBeTruthy();
+
+      heat1Lane0Name.nativeElement.click();
+      fixture.detectChanges();
+
+      expect(component["isDriverHighlighted"](p1)).toBeTrue();
+
+      // Check that p1 is also highlighted in Heat 2 Lane 1 and driver pool
+      const heat2Lane1 = fixture.debugElement.query(
+        By.css("#heat-1-lane-1 .driver-item.populated"),
+      );
+      expect(
+        heat2Lane1.nativeElement.classList.contains("driver-highlighted"),
+      ).toBeTrue();
+
+      const poolDriverItem0 = fixture.debugElement.query(
+        By.css("#driver-pool .driver-item"),
+      );
+      expect(
+        poolDriverItem0.nativeElement.classList.contains("driver-highlighted"),
+      ).toBeTrue();
+
+      // Click p1's name in Heat 2 Lane 1 to remove highlight
+      const heat2Lane1Name = fixture.debugElement.query(
+        By.css("#heat-1-lane-1 .driver-name"),
+      );
+      heat2Lane1Name.nativeElement.click();
+      fixture.detectChanges();
+
+      expect(component["isDriverHighlighted"](p1)).toBeFalse();
+      expect(
+        heat2Lane1.nativeElement.classList.contains("driver-highlighted"),
+      ).toBeFalse();
+    });
+
+    it("should allow highlighting drivers even in a started heat", () => {
+      heat1.started = true;
+      fixture.detectChanges();
+
+      const heat1Lane0Name = fixture.debugElement.query(
+        By.css("#heat-0-lane-0 .driver-name"),
+      );
+      heat1Lane0Name.nativeElement.click();
+      fixture.detectChanges();
+
+      expect(component["isDriverHighlighted"](p1)).toBeTrue();
+    });
+
+    it("should stop dblclick propagation on driver name", () => {
+      spyOn<any>(component, "onRemoveFromRacing");
+      spyOn<any>(component, "onRemoveFromHeat");
+
+      const poolDriverName = fixture.debugElement.query(
+        By.css("#driver-pool .driver-name"),
+      );
+      const dblClickEvent = new MouseEvent("dblclick", {
+        bubbles: true,
+        cancelable: true,
+      });
+      poolDriverName.nativeElement.dispatchEvent(dblClickEvent);
+
+      expect((component as any)["onRemoveFromRacing"]).not.toHaveBeenCalled();
+
+      const heatLaneName = fixture.debugElement.query(
+        By.css("#heat-0-lane-0 .driver-name"),
+      );
+      heatLaneName.nativeElement.dispatchEvent(dblClickEvent);
+      expect((component as any)["onRemoveFromHeat"]).not.toHaveBeenCalled();
+    });
+
+    it("should ignore non-left click events", () => {
+      const rightClickEvent = new MouseEvent("click", { button: 2 });
+      component["toggleDriverHighlight"](p1, rightClickEvent);
+
+      expect(component["isDriverHighlighted"](p1)).toBeFalse();
+    });
+
+    it("should clean up driver highlight when driver is removed from racing", () => {
+      component["toggleDriverHighlight"](p1);
+      expect(component["isDriverHighlighted"](p1)).toBeTrue();
+
+      mockDataService.modifyHeats.and.returnValue(of({ success: true }));
+      component["onRemoveFromRacing"](p1);
+
+      expect(component["isDriverHighlighted"](p1)).toBeFalse();
+    });
+
+    it("should clear all highlights when clearDriverHighlights is called", () => {
+      component["toggleDriverHighlight"](p1);
+      component["toggleDriverHighlight"](p2);
+      expect(component["isDriverHighlighted"](p1)).toBeTrue();
+      expect(component["isDriverHighlighted"](p2)).toBeTrue();
+
+      component["clearDriverHighlights"]();
+
+      expect(component["isDriverHighlighted"](p1)).toBeFalse();
+      expect(component["isDriverHighlighted"](p2)).toBeFalse();
+    });
   });
 });

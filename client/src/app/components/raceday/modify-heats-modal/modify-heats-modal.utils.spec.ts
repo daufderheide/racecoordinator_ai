@@ -2,14 +2,17 @@ import { Driver } from "@app/models/driver";
 import { Heat } from "@app/race/heat";
 
 import {
+  allocateHighlightColor,
   areModifyHeatsStatesEqual,
   buildDropListConnections,
   calculateHeatDropAction,
   cloneHeat,
   createParticipantFromDriver,
+  DRIVER_HIGHLIGHT_PALETTE,
   executeHeatReorder,
   filterDatabaseParticipants,
   filterDriverPool,
+  getParticipantKey,
   HeatCardBounds,
 } from "./modify-heats-modal.utils";
 
@@ -355,6 +358,66 @@ describe("modify-heats-modal.utils", () => {
         "heat-1-lane-0",
         "heat-1-lane-1",
       ]);
+    });
+  });
+
+  describe("getParticipantKey", () => {
+    it("should return empty string for null or undefined", () => {
+      expect(getParticipantKey(null)).toBe("");
+      expect(getParticipantKey(undefined)).toBe("");
+    });
+
+    it("should return objectId when present", () => {
+      const p = createParticipantFromDriver(new Driver("d1", "Driver 1", "D1"));
+      p.objectId = "obj-123";
+      expect(getParticipantKey(p)).toBe("obj-123");
+    });
+
+    it("should fall back to driver entity_id when objectId is empty", () => {
+      const p = createParticipantFromDriver(new Driver("d1", "Driver 1", "D1"));
+      p.objectId = "";
+      expect(getParticipantKey(p)).toBe("d1");
+    });
+  });
+
+  describe("allocateHighlightColor", () => {
+    it("should have at least 10 unique colors in DRIVER_HIGHLIGHT_PALETTE", () => {
+      expect(DRIVER_HIGHLIGHT_PALETTE.length).toBeGreaterThanOrEqual(10);
+      const unique = new Set(
+        DRIVER_HIGHLIGHT_PALETTE.map((c) => c.toLowerCase()),
+      );
+      expect(unique.size).toBe(DRIVER_HIGHLIGHT_PALETTE.length);
+    });
+
+    it("should allocate the first color in the palette when no colors are used", () => {
+      const color = allocateHighlightColor(new Set());
+      expect(color).toBe(DRIVER_HIGHLIGHT_PALETTE[0]);
+    });
+
+    it("should allocate the next unused color in the palette", () => {
+      const used = new Set([DRIVER_HIGHLIGHT_PALETTE[0].toLowerCase()]);
+      const color = allocateHighlightColor(used);
+      expect(color).toBe(DRIVER_HIGHLIGHT_PALETTE[1]);
+    });
+
+    it("should be case-insensitive when checking used colors", () => {
+      const used = new Set([DRIVER_HIGHLIGHT_PALETTE[0].toUpperCase()]);
+      const color = allocateHighlightColor(used);
+      expect(color).toBe(DRIVER_HIGHLIGHT_PALETTE[1]);
+    });
+
+    it("should dynamically generate distinct HSL colors when all palette colors are used", () => {
+      const used = new Set(
+        DRIVER_HIGHLIGHT_PALETTE.map((c) => c.toLowerCase()),
+      );
+      const genColor1 = allocateHighlightColor(used);
+      expect(genColor1).toMatch(/^hsl\(\d+,\s*90%,\s*55%\)$/);
+      expect(used.has(genColor1)).toBeFalse();
+
+      used.add(genColor1.toLowerCase());
+      const genColor2 = allocateHighlightColor(used);
+      expect(genColor2).toMatch(/^hsl\(\d+,\s*90%,\s*55%\)$/);
+      expect(genColor2).not.toBe(genColor1);
     });
   });
 });
