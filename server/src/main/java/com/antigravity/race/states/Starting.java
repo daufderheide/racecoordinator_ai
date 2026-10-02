@@ -98,26 +98,25 @@ public class Starting implements IRaceState {
                 long jitterNs = tickStartNano - expectedNextTickNano;
                 if (jitterNs > 100_000_000L) {
                   logger.warn("[PERF] Starting ticker delayed by {} ms", jitterNs / 1_000_000L);
-                  if (jitterNs > 500_000_000L) {
-                    expectedNextTickNano = tickStartNano;
-                  }
+                  expectedNextTickNano = tickStartNano + 100_000_000L;
+                } else {
+                  expectedNextTickNano += 100_000_000L;
                 }
+              } else {
+                expectedNextTickNano = tickStartNano + 100_000_000L;
               }
-              expectedNextTickNano += 100_000_000L;
 
               double elapsed = (tickStartNano - startNanoTime) / 1_000_000_000.0;
               float displayTime = (float) Math.max(0.0, startTimeVal - elapsed);
 
               if (elapsed >= totalDurationSeconds) {
                 race.setAutoStartRemaining(0.0f);
-                race.setHeatProgress(0.0);
                 race.syncRaceState();
                 race.broadcastTime();
                 logger.info("Starting ticker: Transitioning to Racing.");
                 race.changeState(new Racing());
               } else {
                 race.setAutoStartRemaining(displayTime);
-                race.setHeatProgress(0.0);
                 race.syncRaceState();
                 race.broadcastTime();
               }

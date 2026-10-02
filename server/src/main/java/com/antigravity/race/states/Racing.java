@@ -173,12 +173,13 @@ public class Racing implements IRaceState {
                 long jitterNs = now - expectedNextTickNano;
                 if (jitterNs > 100_000_000L) {
                   logger.warn("[PERF] Racing ticker delayed by {} ms", jitterNs / 1_000_000L);
-                  if (jitterNs > 500_000_000L) {
-                    expectedNextTickNano = now;
-                  }
+                  expectedNextTickNano = now + 100_000_000L;
+                } else {
+                  expectedNextTickNano += 100_000_000L;
                 }
+              } else {
+                expectedNextTickNano = now + 100_000_000L;
               }
-              expectedNextTickNano += 100_000_000L;
 
               float delta = (now - lastTime) / 1_000_000_000.0f;
               lastTime = now;
@@ -313,10 +314,12 @@ public class Racing implements IRaceState {
                   calculateAutoSegments();
                   StandingsUpdate update =
                       race.getCurrentHeat().getHeatStandings().updateStandings();
+                  RaceData.Builder finishBuilder = RaceData.newBuilder();
                   if (update != null) {
-                    race.broadcast(RaceData.newBuilder().setStandingsUpdate(update).build());
+                    finishBuilder.setStandingsUpdate(update);
                   }
-                  race.updateAndBroadcastOverallStandings();
+                  race.populateOverallStandings(finishBuilder);
+                  race.broadcast(finishBuilder.build());
                 }
                 if (race.isLastHeat()) {
                   race.changeState(new RaceOver());

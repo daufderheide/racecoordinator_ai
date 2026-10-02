@@ -841,18 +841,16 @@ public class HeatExecutionManager {
               .build();
       driverData.setFlag(rtMsg.getFlag());
 
-      RaceData rtDataMsg = RaceData.newBuilder().setLap(rtMsg).build();
-
-      this.race.broadcast(rtDataMsg);
-      logger.info("Broadcasted reaction time for lane {}: {}", lane, totalReactionTime);
+      RaceData.Builder rtDataBuilder = RaceData.newBuilder().setLap(rtMsg);
 
       StandingsUpdate standingsUpdate =
           this.race.getCurrentHeat().getHeatStandings().updateStandings();
       if (standingsUpdate != null) {
-        RaceData standingsDataMsg =
-            RaceData.newBuilder().setStandingsUpdate(standingsUpdate).build();
-        this.race.broadcast(standingsDataMsg);
+        rtDataBuilder.setStandingsUpdate(standingsUpdate);
       }
+
+      this.race.broadcast(rtDataBuilder.build());
+      logger.info("Broadcasted reaction time for lane {}: {}", lane, totalReactionTime);
 
       updateProtocolStandings();
       return true;
@@ -955,17 +953,15 @@ public class HeatExecutionManager {
             .build();
     driverData.setFlag(lapMsg.getFlag());
 
-    RaceData lapDataMsg = RaceData.newBuilder().setLap(lapMsg).build();
-
-    this.race.broadcast(lapDataMsg);
+    RaceData.Builder combinedDataBuilder = RaceData.newBuilder().setLap(lapMsg);
 
     if (standingsUpdate != null) {
-      RaceData standingsDataMsg = RaceData.newBuilder().setStandingsUpdate(standingsUpdate).build();
-      this.race.broadcast(standingsDataMsg);
+      combinedDataBuilder.setStandingsUpdate(standingsUpdate);
     }
 
+    this.race.populateOverallStandings(combinedDataBuilder);
     updateProtocolStandings();
-    this.race.updateAndBroadcastOverallStandings();
+    this.race.broadcast(combinedDataBuilder.build());
     return true;
   }
 
@@ -1239,17 +1235,15 @@ public class HeatExecutionManager {
     }
     this.race.recalculateOverallStandings();
 
+    RaceData.Builder finishDataBuilder = RaceData.newBuilder();
     if (standingsUpdate != null) {
-      RaceData standingsDataMsg = RaceData.newBuilder().setStandingsUpdate(standingsUpdate).build();
-      this.race.broadcast(standingsDataMsg);
+      finishDataBuilder.setStandingsUpdate(standingsUpdate);
     }
-    this.race.updateAndBroadcastOverallStandings();
+    this.race.populateOverallStandings(finishDataBuilder);
     if (this.race.getCurrentHeat() != null) {
-      this.race.broadcast(
-          RaceData.newBuilder()
-              .setHeat(HeatConverter.toProto(this.race.getCurrentHeat(), new HashSet<>()))
-              .build());
+      finishDataBuilder.setHeat(HeatConverter.toProto(this.race.getCurrentHeat(), new HashSet<>()));
     }
+    this.race.broadcast(finishDataBuilder.build());
 
     if (finishedLanes.size() >= race.getCurrentHeat().getActiveDriverCount()) {
       if (race.isLastHeat()) {
