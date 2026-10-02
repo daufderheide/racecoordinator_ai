@@ -139,19 +139,6 @@
     </button>
   }
 
-  <!-- Delete -->
-  @if (showDelete()) {
-    <button
-      id="delete-track-btn"
-      class="toolbar-btn danger"
-      (click)="onDelete()"
-      [disabled]="isSaving() || disabledDelete()"
-      [title]="'TM_DELETE' | translate"
-    >
-      <span class="material-icons">delete</span>
-    </button>
-  }
-
   <!-- Import -->
   @if (showImport()) {
     <button
@@ -175,6 +162,19 @@
       [title]="importRc1TitleKey() | translate"
     >
       <span class="material-icons">{{ importRc1Icon() }}</span>
+    </button>
+  }
+
+  <!-- Delete -->
+  @if (showDelete()) {
+    <button
+      id="delete-track-btn"
+      class="toolbar-btn danger"
+      (click)="onDelete()"
+      [disabled]="isSaving() || disabledDelete()"
+      [title]="'TM_DELETE' | translate"
+    >
+      <span class="material-icons">delete</span>
     </button>
   }
 
