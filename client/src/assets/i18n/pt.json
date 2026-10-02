@@ -2675,5 +2675,8 @@
   "DIM_ASSETS_MODAL_DESC": "Os seguintes arquivos de mídia complementares foram detectados e serão importados no Gerenciador de recursos:",
   "DIM_ASSET_AUDIO": "Áudio",
   "DIM_ASSET_IMAGE": "Imagem",
-  "DIM_ASSETS_EMPTY": "Nenhum arquivo de mídia complementar encontrado."
+  "DIM_ASSETS_EMPTY": "Nenhum arquivo de mídia complementar encontrado.",
+  "DIM_CONFLICT_DUPLICATE_NAME": "O nome do piloto já existe no banco de dados: {{name}}",
+  "DIM_CONFLICT_DUPLICATE_NICKNAME": "O apelido do piloto já existe no banco de dados: {{nickname}}",
+  "DIM_CONFLICT_NICKNAME_MATCHES_NAME": "O apelido do piloto corresponde ao nome de um piloto existente: {{nickname}}"
 }

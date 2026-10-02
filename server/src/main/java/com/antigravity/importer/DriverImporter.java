@@ -7,6 +7,7 @@ import com.antigravity.importer.model.DriverImportCommitRequest;
 import com.antigravity.importer.model.DriverImportPreview;
 import com.antigravity.importer.model.DriverImportResult;
 import com.antigravity.importer.model.DriverImportRow;
+import com.antigravity.importer.model.ExistingDriverSummary;
 import com.antigravity.models.AudioConfig;
 import com.antigravity.models.Driver;
 import com.antigravity.proto.AssetMessage;
@@ -176,6 +177,15 @@ public class DriverImporter {
       resultRows.add(row);
     }
 
+    List<ExistingDriverSummary> summaries = new ArrayList<>();
+    if (existingDrivers != null) {
+      for (Driver d : existingDrivers) {
+        if (d != null && d.getEntityId() != null) {
+          summaries.add(new ExistingDriverSummary(d.getEntityId(), d.getName(), d.getNickname()));
+        }
+      }
+    }
+
     return new DriverImportPreview(
         resultRows,
         resultRows.size(),
@@ -183,7 +193,8 @@ public class DriverImporter {
         conflictCount,
         errorCount,
         importedAssets,
-        parsedData.getDetectedAudioDefault());
+        parsedData.getDetectedAudioDefault(),
+        summaries);
   }
 
   private DriverImportRow processRow(
@@ -293,6 +304,16 @@ public class DriverImporter {
         setConflict(row, "DUPLICATE_NICKNAME", msg, d.getEntityId());
         return;
       }
+      if (!nicknameWasDefaulted
+          && d.getNickname() != null
+          && candName.equalsIgnoreCase(d.getNickname().trim())) {
+        setConflict(
+            row,
+            "DUPLICATE_NAME",
+            "Driver name matches an existing driver nickname: " + candName,
+            d.getEntityId());
+        return;
+      }
     }
 
     seenNames.add(candName.toLowerCase(Locale.ROOT));
@@ -337,7 +358,12 @@ public class DriverImporter {
           result.setSkippedCount(result.getSkippedCount() + 1);
         }
       } else {
-        executeInsert(row, existingNames, existingNicknames, result);
+        if (containsCaseInsensitive(existingNames, row.getResolvedName())
+            || containsCaseInsensitive(existingNicknames, row.getResolvedNickname())) {
+          executeAutoRename(row, existingNames, existingNicknames, result);
+        } else {
+          executeInsert(row, existingNames, existingNicknames, result);
+        }
       }
     }
 

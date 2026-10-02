@@ -74,7 +74,15 @@ public class DriverImportPreviewTest {
     rows.add(row);
 
     DriverImportPreview preview =
-        new DriverImportPreview(rows, 1, 1, 0, 0, Arrays.asList("car.png"), "none");
+        new DriverImportPreview(
+            rows,
+            1,
+            1,
+            0,
+            0,
+            Arrays.asList("car.png"),
+            "none",
+            Arrays.asList(new ExistingDriverSummary("d1", "Old Driver", "OldNick")));
     String json = mapper.writeValueAsString(preview);
     DriverImportPreview deserialized = mapper.readValue(json, DriverImportPreview.class);
 
@@ -83,5 +91,23 @@ public class DriverImportPreviewTest {
     assertEquals("Alice", deserialized.getRows().get(0).getResolvedName());
     assertEquals("car.png", deserialized.getImportedAssetNames().get(0));
     assertEquals("none", deserialized.getDetectedAudioDefault());
+    assertNotNull(deserialized.getExistingDrivers());
+    assertEquals(1, deserialized.getExistingDrivers().size());
+    assertEquals("d1", deserialized.getExistingDrivers().get(0).getEntityId());
+    assertEquals("Old Driver", deserialized.getExistingDrivers().get(0).getName());
+    assertEquals("OldNick", deserialized.getExistingDrivers().get(0).getNickname());
+  }
+
+  @Test
+  public void testExistingDriverSummaryEqualsAndHashCode() {
+    ExistingDriverSummary s1 = new ExistingDriverSummary("d1", "Name", "Nick");
+    ExistingDriverSummary s2 = new ExistingDriverSummary("d1", "Name", "Nick");
+    ExistingDriverSummary s3 = new ExistingDriverSummary("d2", "Other", "OtherNick");
+
+    assertEquals(s1, s2);
+    assertEquals(s1.hashCode(), s2.hashCode());
+    org.junit.Assert.assertNotEquals(s1, s3);
+    org.junit.Assert.assertNotEquals(s1, null);
+    org.junit.Assert.assertNotEquals(s1, new Object());
   }
 }

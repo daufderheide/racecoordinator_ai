@@ -16,6 +16,7 @@ import com.antigravity.service.AssetService;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import org.junit.After;
@@ -285,5 +286,51 @@ public class DriverImporterTest {
 
     String json = importer.generateJsonTemplate();
     assertTrue(json.contains("\"drivers\""));
+  }
+
+  @Test
+  public void testExistingDriversIncludedInPreviewAndCrossFieldCollisions() throws Exception {
+    Driver d1 = new Driver("Max Verstappen", "Mad Max", "d-max", "d-max");
+    driverRepository.insert(d1);
+
+    // Row 1 matches existing nickname as candidate name
+    // Row 2 matches existing name as candidate nickname
+    String csv = "Name,Nickname\nMad Max,SuperMax\nNewDriver,Max Verstappen\n";
+    DriverImportPreview preview =
+        importer.parseAndValidate(
+            new ByteArrayInputStream(csv.getBytes(StandardCharsets.UTF_8)), "drivers.csv", null);
+
+    assertNotNull(preview.getExistingDrivers());
+    assertEquals(1, preview.getExistingDrivers().size());
+    assertEquals("Max Verstappen", preview.getExistingDrivers().get(0).getName());
+    assertEquals("Mad Max", preview.getExistingDrivers().get(0).getNickname());
+
+    assertEquals(2, preview.getConflictCount());
+    assertEquals("DUPLICATE_NAME", preview.getRows().get(0).getConflictType());
+    assertEquals("DUPLICATE_NICKNAME", preview.getRows().get(1).getConflictType());
+  }
+
+  @Test
+  public void testDefensiveAutoRenameOnCommitForCollidingValidRow() throws Exception {
+    Driver d1 = new Driver("Existing Driver", "OldNick", "d1", "d1");
+    driverRepository.insert(d1);
+
+    // Row comes marked VALID but has duplicate nickname OldNick
+    DriverImportRow collidingRow = new DriverImportRow();
+    collidingRow.setResolvedName("Existing Driver_1");
+    collidingRow.setResolvedNickname("OldNick");
+    collidingRow.setStatus("VALID");
+
+    DriverImportCommitRequest request = new DriverImportCommitRequest();
+    request.setRows(Arrays.asList(collidingRow));
+
+    DriverImportResult result = importer.commitImport(request);
+    assertTrue(result.isSuccess());
+    assertEquals(1, result.getImportedCount());
+
+    // Defensive check auto-renamed nickname to avoid DB collision
+    assertTrue(
+        driverRepository.findAll().stream()
+            .anyMatch(d -> d.getNickname().startsWith("OldNick (1)")));
   }
 }

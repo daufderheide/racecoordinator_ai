@@ -14,8 +14,28 @@ public class DriverImportPreview {
   private int errorCount;
   private List<String> importedAssetNames = new ArrayList<>();
   private String detectedAudioDefault = "system";
+  private List<ExistingDriverSummary> existingDrivers = new ArrayList<>();
 
   public DriverImportPreview() {}
+
+  public DriverImportPreview(
+      List<DriverImportRow> rows,
+      int totalRows,
+      int validCount,
+      int conflictCount,
+      int errorCount,
+      List<String> importedAssetNames,
+      String detectedAudioDefault) {
+    this(
+        rows,
+        totalRows,
+        validCount,
+        conflictCount,
+        errorCount,
+        importedAssetNames,
+        detectedAudioDefault,
+        null);
+  }
 
   @JsonCreator
   public DriverImportPreview(
@@ -25,7 +45,8 @@ public class DriverImportPreview {
       @JsonProperty("conflictCount") int conflictCount,
       @JsonProperty("errorCount") int errorCount,
       @JsonProperty("importedAssetNames") List<String> importedAssetNames,
-      @JsonProperty("detectedAudioDefault") String detectedAudioDefault) {
+      @JsonProperty("detectedAudioDefault") String detectedAudioDefault,
+      @JsonProperty("existingDrivers") List<ExistingDriverSummary> existingDrivers) {
     if (rows != null) {
       this.rows = new ArrayList<>(rows);
     }
@@ -37,6 +58,9 @@ public class DriverImportPreview {
       this.importedAssetNames = new ArrayList<>(importedAssetNames);
     }
     this.detectedAudioDefault = detectedAudioDefault != null ? detectedAudioDefault : "system";
+    if (existingDrivers != null) {
+      this.existingDrivers = new ArrayList<>(existingDrivers);
+    }
   }
 
   public List<DriverImportRow> getRows() {
@@ -93,5 +117,14 @@ public class DriverImportPreview {
 
   public void setDetectedAudioDefault(String detectedAudioDefault) {
     this.detectedAudioDefault = detectedAudioDefault;
+  }
+
+  public List<ExistingDriverSummary> getExistingDrivers() {
+    return existingDrivers;
+  }
+
+  public void setExistingDrivers(List<ExistingDriverSummary> existingDrivers) {
+    this.existingDrivers =
+        existingDrivers != null ? new ArrayList<>(existingDrivers) : new ArrayList<>();
   }
 }

@@ -24,6 +24,12 @@ export interface DriverImportRow {
   existingDriverId?: string;
 }
 
+export interface ExistingDriverSummary {
+  entityId: string;
+  name: string;
+  nickname: string;
+}
+
 export interface DriverImportPreview {
   rows: DriverImportRow[];
   totalRows: number;
@@ -32,6 +38,7 @@ export interface DriverImportPreview {
   errorCount: number;
   importedAssetNames: string[];
   detectedAudioDefault: string;
+  existingDrivers?: ExistingDriverSummary[];
 }
 
 export interface DriverImportCommitRequest {

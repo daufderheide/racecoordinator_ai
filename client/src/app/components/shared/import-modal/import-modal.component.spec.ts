@@ -29,6 +29,9 @@ describe("ImportModalComponent", () => {
     errorCount: 1,
     importedAssetNames: ["custom_avatar.png"],
     detectedAudioDefault: "system",
+    existingDrivers: [
+      { entityId: "d-bob-existing", name: "Bob Smith", nickname: "Bob" },
+    ],
     rows: [
       {
         rowIndex: 1,
@@ -359,6 +362,27 @@ describe("ImportModalComponent", () => {
 
       component.onRowNicknameChange(row, "Speedy");
       expect(row.status).toBe("VALID");
+    });
+
+    it("should remain in CONFLICT when name is renamed but nickname is still a database duplicate", () => {
+      const conflictRow = component.preview!.rows[1];
+      expect(conflictRow.status).toBe("CONFLICT");
+      expect(conflictRow.resolvedName).toBe("Bob Smith");
+      expect(conflictRow.resolvedNickname).toBe("Bob");
+
+      // Change name to Bob Smith_1 - nickname Bob is still duplicate in DB
+      component.onRowNameChange(conflictRow, "Bob Smith_1");
+      expect(conflictRow.status).toBe("CONFLICT");
+      expect(conflictRow.conflictType).toBe("DUPLICATE_NICKNAME");
+      expect(conflictRow.message).toContain("DIM_CONFLICT_DUPLICATE_NICKNAME");
+      expect(component.preview!.conflictCount).toBe(1);
+
+      // Now change nickname to Bob_1 as well
+      component.onRowNicknameChange(conflictRow, "Bob_1");
+      expect(conflictRow.status).toBe("VALID");
+      expect(conflictRow.conflictType).toBe("NONE");
+      expect(component.preview!.conflictCount).toBe(0);
+      expect(component.preview!.validCount).toBe(2);
     });
 
     it("should compute resolvable count correctly", () => {

@@ -21,6 +21,7 @@ import {
   DriverImportRow,
 } from "@app/models/driver-import.model";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
+import { TranslationService } from "@app/services/translation.service";
 
 @Component({
   standalone: true,
@@ -63,6 +64,7 @@ export class ImportModalComponent {
   constructor(
     private dataService: DataService,
     private cdr: ChangeDetectorRef,
+    private translationService: TranslationService,
   ) {}
 
   onDragOver(event: DragEvent) {
@@ -258,48 +260,158 @@ export class ImportModalComponent {
     if (!row.rawNickname) {
       row.resolvedNickname = row.resolvedName;
     }
-    this.recheckRowValidity(row);
-    this.cdr.detectChanges();
+    this.recheckAllRows();
   }
 
   onRowNicknameChange(row: DriverImportRow, newNick: string) {
     row.resolvedNickname = newNick.trim();
-    this.recheckRowValidity(row);
+    this.recheckAllRows();
+  }
+
+  recheckAllRows() {
+    if (!this.preview) return;
+    for (const r of this.preview.rows) {
+      this.recheckRowValidity(r);
+    }
+    this.updatePreviewCounts();
     this.cdr.detectChanges();
   }
 
-  recheckRowValidity(row: DriverImportRow) {
-    if (!row.resolvedName) {
-      row.status = "ERROR";
-      row.message = "DIM_ERROR_NAME_REQUIRED";
-      return;
+  updatePreviewCounts() {
+    if (!this.preview) return;
+    let valid = 0;
+    let conflict = 0;
+    let error = 0;
+    for (const r of this.preview.rows) {
+      if (r.status === "VALID") valid++;
+      else if (r.status === "CONFLICT") conflict++;
+      else if (r.status === "ERROR") error++;
     }
-    if (!row.resolvedNickname) {
-      row.status = "ERROR";
-      row.message = "DIM_ERROR_NICK_REQUIRED";
-      return;
-    }
+    this.preview.validCount = valid;
+    this.preview.conflictCount = conflict;
+    this.preview.errorCount = error;
+  }
 
-    // Check duplicate in file
+  private validateEmptyFields(
+    row: DriverImportRow,
+    candName: string,
+    candNick: string,
+  ): boolean {
+    if (!candName) {
+      row.status = "ERROR";
+      row.conflictType = "NONE";
+      row.message = "DIM_ERROR_NAME_REQUIRED";
+      row.existingDriverId = undefined;
+      return true;
+    }
+    if (!candNick) {
+      row.status = "ERROR";
+      row.conflictType = "NONE";
+      row.message = "DIM_ERROR_NICK_REQUIRED";
+      row.existingDriverId = undefined;
+      return true;
+    }
+    return false;
+  }
+
+  private validateFileDuplicates(
+    row: DriverImportRow,
+    candName: string,
+    candNick: string,
+  ): boolean {
+    const lowerName = candName.toLowerCase();
+    const lowerNick = candNick.toLowerCase();
+
     const otherInFile = this.preview?.rows.find(
       (r) =>
         r !== row &&
-        (r.resolvedName.toLowerCase() === row.resolvedName.toLowerCase() ||
-          r.resolvedNickname.toLowerCase() ===
-            row.resolvedNickname.toLowerCase()),
+        (r.resolvedName.trim().toLowerCase() === lowerName ||
+          r.resolvedNickname.trim().toLowerCase() === lowerNick),
     );
 
     if (otherInFile) {
       row.status = "CONFLICT";
       row.conflictType = "DUPLICATE_IN_FILE";
-      row.message = "DIM_CONFLICT_DUPLICATE_IN_FILE";
-      return;
+      row.message = this.translationService.translate(
+        "DIM_CONFLICT_DUPLICATE_IN_FILE",
+        { name: candName },
+      );
+      row.existingDriverId = undefined;
+      if (!row.selectedResolution) {
+        row.selectedResolution = this.bulkConflictResolution;
+      }
+      return true;
     }
+    return false;
+  }
 
-    // Valid if user manually resolved
+  private validateDatabaseCollisions(
+    row: DriverImportRow,
+    candName: string,
+    candNick: string,
+  ): boolean {
+    if (!this.preview?.existingDrivers) return false;
+
+    const lowerName = candName.toLowerCase();
+    const lowerNick = candNick.toLowerCase();
+
+    for (const d of this.preview.existingDrivers) {
+      const existName = (d.name || "").trim().toLowerCase();
+      const existNick = (d.nickname || "").trim().toLowerCase();
+
+      if (existName && (lowerName === existName || lowerNick === existName)) {
+        const isNameMatch = lowerName === existName;
+        row.status = "CONFLICT";
+        row.conflictType = isNameMatch
+          ? "DUPLICATE_NAME"
+          : "DUPLICATE_NICKNAME";
+        row.message = this.translationService.translate(
+          isNameMatch
+            ? "DIM_CONFLICT_DUPLICATE_NAME"
+            : "DIM_CONFLICT_NICKNAME_MATCHES_NAME",
+          isNameMatch ? { name: candName } : { nickname: candNick },
+        );
+        row.existingDriverId = d.entityId;
+        if (!row.selectedResolution) {
+          row.selectedResolution = this.bulkConflictResolution;
+        }
+        return true;
+      }
+
+      if (existNick && (lowerNick === existNick || lowerName === existNick)) {
+        const isNickMatch = lowerNick === existNick;
+        row.status = "CONFLICT";
+        row.conflictType = isNickMatch
+          ? "DUPLICATE_NICKNAME"
+          : "DUPLICATE_NAME";
+        row.message = this.translationService.translate(
+          isNickMatch
+            ? "DIM_CONFLICT_DUPLICATE_NICKNAME"
+            : "DIM_CONFLICT_DUPLICATE_NAME",
+          isNickMatch ? { nickname: candNick } : { name: candName },
+        );
+        row.existingDriverId = d.entityId;
+        if (!row.selectedResolution) {
+          row.selectedResolution = this.bulkConflictResolution;
+        }
+        return true;
+      }
+    }
+    return false;
+  }
+
+  recheckRowValidity(row: DriverImportRow) {
+    const candName = (row.resolvedName || "").trim();
+    const candNick = (row.resolvedNickname || "").trim();
+
+    if (this.validateEmptyFields(row, candName, candNick)) return;
+    if (this.validateFileDuplicates(row, candName, candNick)) return;
+    if (this.validateDatabaseCollisions(row, candName, candNick)) return;
+
     row.status = "VALID";
     row.conflictType = "NONE";
     row.message = "";
+    row.existingDriverId = undefined;
   }
 
   get resolvableCount(): number {

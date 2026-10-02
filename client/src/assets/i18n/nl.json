@@ -2675,5 +2675,8 @@
   "DIM_ASSETS_MODAL_DESC": "De volgende bijbehorende mediabestanden zijn gedetecteerd en worden geïmporteerd in Asset Manager:",
   "DIM_ASSET_AUDIO": "Audio",
   "DIM_ASSET_IMAGE": "Afbeelding",
-  "DIM_ASSETS_EMPTY": "Geen bijbehorende mediabestanden gevonden."
+  "DIM_ASSETS_EMPTY": "Geen bijbehorende mediabestanden gevonden.",
+  "DIM_CONFLICT_DUPLICATE_NAME": "Naam van coureur bestaat al in database: {{name}}",
+  "DIM_CONFLICT_DUPLICATE_NICKNAME": "Bijnaam van coureur bestaat al in database: {{nickname}}",
+  "DIM_CONFLICT_NICKNAME_MATCHES_NAME": "Bijnaam van coureur komt overeen met een bestaande coureurnaam: {{nickname}}"
 }
