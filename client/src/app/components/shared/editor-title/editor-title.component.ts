@@ -66,6 +66,8 @@ export class EditorTitleComponent implements AfterViewChecked {
   showImportRc1 = input(false);
   showExport = input(false);
   importTitleKey = input("DBM_BTN_IMPORT");
+  importHelpTitleKey = input("TOOLBAR_HELP_IMPORT_TITLE");
+  importHelpContentKey = input("TOOLBAR_HELP_IMPORT_CONTENT");
   importRc1TitleKey = input("AM_BTN_IMPORT_RC1_ROTATION");
   importRc1Icon = input("file_download");
   exportTitleKey = input("DBM_BTN_EXPORT");

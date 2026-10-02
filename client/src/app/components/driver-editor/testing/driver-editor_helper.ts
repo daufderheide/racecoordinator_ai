@@ -33,6 +33,9 @@ export class DriverEditorHelper {
       "getHeats",
       "getRecordData",
       "getSystemState",
+      "validateDriverImport",
+      "commitDriverImport",
+      "downloadDriverImportTemplate",
     ]);
     spy.updateRaceSubscription = jasmine.createSpy("updateRaceSubscription");
     spy.connectToInterfaceDataSocket = jasmine.createSpy(
@@ -88,6 +91,26 @@ export class DriverEditorHelper {
       of({ ...driver, entity_id: "d-new-id" }),
     );
     spy.listAssets.and.returnValue(of([]));
+    spy.validateDriverImport.and.returnValue(
+      of({
+        rows: [],
+        importedAssets: [],
+        totalRows: 0,
+        validRows: 0,
+        conflictRows: 0,
+        errorRows: 0,
+      }),
+    );
+    spy.commitDriverImport.and.returnValue(
+      of({
+        importedCount: 0,
+        updatedCount: 0,
+        skippedCount: 0,
+        importedAssetsCount: 0,
+        drivers: [],
+      }),
+    );
+    spy.downloadDriverImportTemplate.and.returnValue(of(new Blob([])));
     spy.socketConnected$ = of(true);
 
     return spy;

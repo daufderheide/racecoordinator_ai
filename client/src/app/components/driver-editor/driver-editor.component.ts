@@ -15,6 +15,7 @@ import { ConfirmationModalComponent } from "@app/components/shared/confirmation-
 import { EditorSectionComponent } from "@app/components/shared/editor-section/editor-section.component";
 import { EditorTitleComponent } from "@app/components/shared/editor-title/editor-title.component";
 import { ImageSelectorComponent } from "@app/components/shared/image-selector/image-selector.component";
+import { ImportModalComponent } from "@app/components/shared/import-modal/import-modal.component";
 import { UndoManager } from "@app/components/shared/undo-redo-controls/undo-manager";
 import { DriverConverter } from "@app/converters/driver.converter";
 import { DataService } from "@app/data.service";
@@ -22,6 +23,7 @@ import { AutoSelectDefaultDirective } from "@app/directives/auto-select-default.
 import { DirtyComponent } from "@app/interfaces/dirty-component";
 import { AssetType, normalizeAssetType } from "@app/models/asset";
 import { Driver } from "@app/models/driver";
+import { DriverImportResult } from "@app/models/driver-import.model";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import {
   ConnectionMonitorService,
@@ -75,6 +77,7 @@ export { DriverAudioSlot } from "./driver-editor.helper";
     AudioSelectorComponent,
     TranslatePipe,
     ConfirmationModalComponent,
+    ImportModalComponent,
   ],
 })
 export class DriverEditorComponent
@@ -1038,6 +1041,19 @@ export class DriverEditorComponent
       },
       error: (err) => this.logger.error("Failed to refresh driver list", err),
     });
+  }
+
+  showImportModal = false;
+
+  onOpenImportModal() {
+    this.showImportModal = true;
+  }
+
+  onDriversImported(result: DriverImportResult) {
+    this.refreshDriverList();
+    if (result.createdDriverIds && result.createdDriverIds.length > 0) {
+      this.onSelectDriverById(result.createdDriverIds[0]);
+    }
   }
 
   deleteDriver() {

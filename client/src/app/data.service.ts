@@ -11,6 +11,11 @@ import {
   Subject,
 } from "rxjs";
 import { catchError, map } from "rxjs/operators";
+import {
+  DriverImportCommitRequest,
+  DriverImportPreview,
+  DriverImportResult,
+} from "@app/models/driver-import.model";
 import { Event } from "@app/models/event";
 import { Season, SeasonStandingItem } from "@app/models/season";
 import {
@@ -243,6 +248,31 @@ export class DataService {
 
   deleteDriver(id: string): Observable<any> {
     return this.http.delete<any>(`${this.driversUrl}/${id}`);
+  }
+
+  validateDriverImport(formData: FormData): Observable<DriverImportPreview> {
+    return this.http.post<DriverImportPreview>(
+      `${this.driversUrl}/import/preview`,
+      formData,
+    );
+  }
+
+  commitDriverImport(
+    request: DriverImportCommitRequest,
+  ): Observable<DriverImportResult> {
+    return this.http.post<DriverImportResult>(
+      `${this.driversUrl}/import/commit`,
+      request,
+    );
+  }
+
+  downloadDriverImportTemplate(format: string): Observable<Blob> {
+    return this.http.get(
+      `${this.driversUrl}/import/template?format=${format}`,
+      {
+        responseType: "blob",
+      },
+    );
   }
 
   getRaces(): Observable<any[]> {
