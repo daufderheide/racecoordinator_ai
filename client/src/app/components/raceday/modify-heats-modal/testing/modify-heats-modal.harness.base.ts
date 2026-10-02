@@ -12,6 +12,8 @@ export abstract class ModifyHeatsModalHarnessBase {
     undoBtn: "#undo-btn",
     redoBtn: "#redo-btn",
     loaderOverlay: ".loader-overlay",
+    laneCheckBtn: "#lane-check-btn",
+    equalityReportModal: ".equality-report-modal",
   };
 
   abstract getDriverItemCount(): Promise<number>;
@@ -21,6 +23,8 @@ export abstract class ModifyHeatsModalHarnessBase {
   abstract isDriverVisibleInPool(name: string): Promise<boolean>;
   abstract clickUndo(): Promise<void>;
   abstract clickRedo(): Promise<void>;
+  abstract clickLaneCheck(): Promise<void>;
+  abstract isEqualityReportVisible(): Promise<boolean>;
   abstract waitForLoaderToBeHidden(): Promise<void>;
   abstract dragDriverToHeat(
     driverName: string,

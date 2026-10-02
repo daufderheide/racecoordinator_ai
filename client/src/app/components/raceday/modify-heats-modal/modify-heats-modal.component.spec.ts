@@ -1052,6 +1052,75 @@ describe("ModifyHeatsModalComponent", () => {
       expect(component["equalityReport"]?.[0]?.params?.heat).toBe(1);
     });
 
+    it("should populate equalityReport with summarized lane equality when drivers have unequal assignments in multi-driver races", () => {
+      const p1 = new RaceParticipant(
+        "p1",
+        new Driver("d1", "Driver 1", "D1"),
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        100,
+      );
+      const p2 = new RaceParticipant(
+        "p2",
+        new Driver("d2", "Driver 2", "D2"),
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        100,
+      );
+      const p3 = new RaceParticipant(
+        "p3",
+        new Driver("d3", "Driver 3", "D3"),
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        100,
+      );
+      // Heat 1: p2 on Lane 1, p3 on Lane 2 (p1 has 0 heats on Lane 1; p2 and p3 each have 1 heat on Lane 1 across heats)
+      // Heat 2: p3 on Lane 1, p2 on Lane 2
+      const heat1 = new Heat("h1", 1, [
+        new DriverHeatData("dhd1", p2, 0),
+        new DriverHeatData("dhd2", p3, 1),
+      ]);
+      const heat2 = new Heat("h2", 2, [
+        new DriverHeatData("dhd3", p3, 0),
+        new DriverHeatData("dhd4", p2, 1),
+      ]);
+
+      const track = createMockTrack();
+      fixture.componentRef.setInput("trackInput", track);
+      component["localHeats"] = [heat1, heat2];
+      component["localParticipants"] = [p1, p2, p3];
+
+      component["onLaneCheck"]();
+
+      expect(component["isHeatsEqual"]).toBeFalse();
+      expect(component["equalityReport"]?.length).toBeGreaterThan(0);
+      const lane1Report = component["equalityReport"]?.find(
+        (r) => r.params?.lane === 1,
+      );
+      expect(lane1Report?.key).toBe("AM_REPORT_LANE_DIFF_SINGLE");
+      expect(lane1Report?.params?.driver).toBe("Driver 1");
+      expect(lane1Report?.params?.count).toBe(0);
+      expect(lane1Report?.params?.expectedCount).toBe(1);
+    });
+
     it("should update isHeatsEqual but not open diagnostic report overlay when showModal is false", () => {
       const p1 = new RaceParticipant(
         "p1",

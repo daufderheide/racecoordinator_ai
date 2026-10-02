@@ -130,33 +130,44 @@ function checkDiffsAndBuildReports(
 
   for (let l = 0; l < numLanes; l++) {
     totalAssignments += laneTotals[l];
+
+    const countsMap = new Map<number, string[]>();
     for (let i = 0; i < numDrivers; i++) {
-      const d1 = driverIds[i];
-      const count1 = driverLaneCounts.get(d1)![l];
-      const d1Name = driverNames?.get(d1) || d1;
-
-      for (let j = 0; j < numDrivers; j++) {
-        if (i === j) continue;
-        const d2 = driverIds[j];
-        const count2 = driverLaneCounts.get(d2)![l];
-        const d2Name = driverNames?.get(d2) || d2;
-
-        if (count1 !== count2) {
-          allEqual = false;
-          finalReports.push({
-            key: "AM_REPORT_LANE_DIFF",
-            params: {
-              lane: l + 1,
-              d1: d1Name,
-              count1: count1,
-              heat1: getHeatLabel(count1),
-              d2: d2Name,
-              count2: count2,
-              heat2: getHeatLabel(count2),
-            },
-          });
-        }
+      const dId = driverIds[i];
+      const count = driverLaneCounts.get(dId)![l];
+      if (!countsMap.has(count)) {
+        countsMap.set(count, []);
       }
+      countsMap.get(count)!.push(dId);
+    }
+
+    if (countsMap.size <= 1) {
+      continue;
+    }
+
+    allEqual = false;
+
+    if (numDrivers === 2) {
+      finalReports.push(
+        buildTwoDriverReport(
+          l + 1,
+          driverIds,
+          driverLaneCounts,
+          driverNames,
+          getHeatLabel,
+        ),
+      );
+    } else {
+      finalReports.push(
+        ...buildMultiDriverReports(
+          l + 1,
+          countsMap,
+          laneTotals[l],
+          numDrivers,
+          driverNames,
+          getHeatLabel,
+        ),
+      );
     }
   }
 
@@ -166,4 +177,139 @@ function checkDiffsAndBuildReports(
   }
 
   return { allEqual, finalReports };
+}
+
+function determineBaselineCount(
+  countsMap: Map<number, string[]>,
+  totalAssignmentsInLane: number,
+  numDrivers: number,
+): number {
+  const avgHeats = totalAssignmentsInLane / numDrivers;
+  const sortedCounts = Array.from(countsMap.entries()).sort((a, b) => {
+    const diffCount = b[1].length - a[1].length;
+    if (diffCount !== 0) return diffCount;
+    const distA = Math.abs(a[0] - avgHeats);
+    const distB = Math.abs(b[0] - avgHeats);
+    if (distA !== distB) return distA - distB;
+    return b[0] - a[0];
+  });
+  return sortedCounts[0][0];
+}
+
+function buildTwoDriverReport(
+  lane: number,
+  driverIds: string[],
+  driverLaneCounts: Map<string, number[]>,
+  driverNames?: Map<string, string>,
+  getHeatLabel?: (count: number) => string,
+): LaneEqualityReportItem {
+  const d1 = driverIds[0];
+  const d2 = driverIds[1];
+  const count1 = driverLaneCounts.get(d1)![lane - 1];
+  const count2 = driverLaneCounts.get(d2)![lane - 1];
+  const d1Name = driverNames?.get(d1) || d1;
+  const d2Name = driverNames?.get(d2) || d2;
+  const heat1 = getHeatLabel
+    ? getHeatLabel(count1)
+    : count1 === 1
+      ? "heat"
+      : "heats";
+  const heat2 = getHeatLabel
+    ? getHeatLabel(count2)
+    : count2 === 1
+      ? "heat"
+      : "heats";
+
+  return {
+    key: "AM_REPORT_LANE_DIFF",
+    params: {
+      lane,
+      d1: d1Name,
+      count1,
+      heat1,
+      d2: d2Name,
+      count2,
+      heat2,
+      driver: d1Name,
+      count: count1,
+      heatLabel: heat1,
+      expectedCount: count2,
+      expectedHeatLabel: heat2,
+    },
+  };
+}
+
+function buildMultiDriverReports(
+  lane: number,
+  countsMap: Map<number, string[]>,
+  totalAssignmentsInLane: number,
+  numDrivers: number,
+  driverNames?: Map<string, string>,
+  getHeatLabel?: (count: number) => string,
+): LaneEqualityReportItem[] {
+  const reports: LaneEqualityReportItem[] = [];
+  const baselineCount = determineBaselineCount(
+    countsMap,
+    totalAssignmentsInLane,
+    numDrivers,
+  );
+  const expectedHeatLabel = getHeatLabel
+    ? getHeatLabel(baselineCount)
+    : baselineCount === 1
+      ? "heat"
+      : "heats";
+
+  const deviatingCounts = Array.from(countsMap.keys())
+    .filter((count) => count !== baselineCount)
+    .sort((a, b) => a - b);
+
+  for (const count of deviatingCounts) {
+    const deviatingDriverIds = countsMap.get(count)!;
+    const countHeatLabel = getHeatLabel
+      ? getHeatLabel(count)
+      : count === 1
+        ? "heat"
+        : "heats";
+    const names = deviatingDriverIds.map((id) => driverNames?.get(id) || id);
+
+    if (names.length === 1) {
+      reports.push({
+        key: "AM_REPORT_LANE_DIFF_SINGLE",
+        params: {
+          lane,
+          driver: names[0],
+          count,
+          heatLabel: countHeatLabel,
+          expectedCount: baselineCount,
+          expectedHeatLabel,
+          d1: names[0],
+          count1: count,
+          heat1: countHeatLabel,
+          d2: "",
+          count2: baselineCount,
+          heat2: expectedHeatLabel,
+        },
+      });
+    } else {
+      reports.push({
+        key: "AM_REPORT_LANE_DIFF_MULTIPLE",
+        params: {
+          lane,
+          drivers: names.join(", "),
+          count,
+          heatLabel: countHeatLabel,
+          expectedCount: baselineCount,
+          expectedHeatLabel,
+          d1: names.join(", "),
+          count1: count,
+          heat1: countHeatLabel,
+          d2: "",
+          count2: baselineCount,
+          heat2: expectedHeatLabel,
+        },
+      });
+    }
+  }
+
+  return reports;
 }

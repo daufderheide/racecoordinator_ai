@@ -801,4 +801,214 @@ test.describe("Modify Heats Modal Visuals", () => {
 
     await expect(page).toHaveScreenshot("modify-heats-highlighted-drivers.png");
   });
+
+  async function setupLaneCheckTest(page: any, isEqual: boolean) {
+    const racedayHarness = new DefaultRacedayHarnessE2e(
+      page.locator(".dashboard-wrapper"),
+    );
+
+    const raceData = isEqual
+      ? {
+          race: {
+            race: {
+              model: { entityId: "r1" },
+              name: "Lane Equality Equal Race",
+              track: {
+                model: { entityId: "t1" },
+                name: "Test Track",
+                lanes: [
+                  {
+                    objectId: "l1",
+                    backgroundColor: "#ff0000",
+                    foregroundColor: "#ffffff",
+                    length: 10,
+                  },
+                  {
+                    objectId: "l2",
+                    backgroundColor: "#00ff00",
+                    foregroundColor: "#000000",
+                    length: 10,
+                  },
+                ],
+              },
+            },
+            drivers: [
+              {
+                objectId: "rp1",
+                seed: 1,
+                driver: { model: { entityId: "d1" }, name: "Alice" },
+              },
+              {
+                objectId: "rp2",
+                seed: 2,
+                driver: { model: { entityId: "d2" }, name: "Bob" },
+              },
+            ],
+            heats: [
+              {
+                objectId: "h1",
+                heatNumber: 1,
+                heatDrivers: [
+                  {
+                    objectId: "hd1",
+                    laneIndex: 0,
+                    driverId: "rp1",
+                    driver: { objectId: "rp1" },
+                  },
+                  {
+                    objectId: "hd2",
+                    laneIndex: 1,
+                    driverId: "rp2",
+                    driver: { objectId: "rp2" },
+                  },
+                ],
+              },
+              {
+                objectId: "h2",
+                heatNumber: 2,
+                heatDrivers: [
+                  {
+                    objectId: "hd3",
+                    laneIndex: 0,
+                    driverId: "rp2",
+                    driver: { objectId: "rp2" },
+                  },
+                  {
+                    objectId: "hd4",
+                    laneIndex: 1,
+                    driverId: "rp1",
+                    driver: { objectId: "rp1" },
+                  },
+                ],
+              },
+            ],
+            currentHeat: { objectId: "h1", heatNumber: 1 },
+            state: RaceState.NOT_STARTED,
+          },
+        }
+      : {
+          race: {
+            race: {
+              model: { entityId: "r1" },
+              name: "Lane Equality Unequal Race",
+              track: {
+                model: { entityId: "t1" },
+                name: "Test Track",
+                lanes: [
+                  {
+                    objectId: "l1",
+                    backgroundColor: "#ff0000",
+                    foregroundColor: "#ffffff",
+                    length: 10,
+                  },
+                  {
+                    objectId: "l2",
+                    backgroundColor: "#00ff00",
+                    foregroundColor: "#000000",
+                    length: 10,
+                  },
+                ],
+              },
+            },
+            drivers: [
+              {
+                objectId: "rp1",
+                seed: 1,
+                driver: { model: { entityId: "d1" }, name: "Alice" },
+              },
+              {
+                objectId: "rp2",
+                seed: 2,
+                driver: { model: { entityId: "d2" }, name: "Bob" },
+              },
+              {
+                objectId: "rp3",
+                seed: 3,
+                driver: { model: { entityId: "d3" }, name: "Charlie" },
+              },
+            ],
+            heats: [
+              {
+                objectId: "h1",
+                heatNumber: 1,
+                heatDrivers: [
+                  {
+                    objectId: "hd1",
+                    laneIndex: 0,
+                    driverId: "rp2",
+                    driver: { objectId: "rp2" },
+                  },
+                  {
+                    objectId: "hd2",
+                    laneIndex: 1,
+                    driverId: "rp3",
+                    driver: { objectId: "rp3" },
+                  },
+                ],
+              },
+              {
+                objectId: "h2",
+                heatNumber: 2,
+                heatDrivers: [
+                  {
+                    objectId: "hd3",
+                    laneIndex: 0,
+                    driverId: "rp3",
+                    driver: { objectId: "rp3" },
+                  },
+                  {
+                    objectId: "hd4",
+                    laneIndex: 1,
+                    driverId: "rp2",
+                    driver: { objectId: "rp2" },
+                  },
+                ],
+              },
+            ],
+            currentHeat: { objectId: "h1", heatNumber: 1 },
+            state: RaceState.NOT_STARTED,
+          },
+        };
+
+    await TestSetupHelper.mockRaceData(page, raceData);
+
+    await racedayHarness.clickMenuButton("Race Director");
+    await racedayHarness.clickMenuItem("Modify Heats");
+
+    const modalHarness = new ModifyHeatsModalHarnessE2e(
+      page.locator("app-modify-heats-modal"),
+    );
+    await page.locator("app-modify-heats-modal").waitFor();
+
+    await TestSetupHelper.waitForLocalization(page);
+    await modalHarness.waitForLoaderToBeHidden();
+
+    return modalHarness;
+  }
+
+  test("should show lane equality check dialog with unequal lane warnings", async ({
+    page,
+  }) => {
+    const modalHarness = await setupLaneCheckTest(page, false);
+    await modalHarness.clickLaneCheck();
+
+    await page
+      .locator(".equality-report-modal")
+      .waitFor({ state: "visible", timeout: 15000 });
+
+    await expect(page).toHaveScreenshot("modify-heats-lane-check-unequal.png");
+  });
+
+  test("should show lane equality check dialog when all lanes are equal", async ({
+    page,
+  }) => {
+    const modalHarness = await setupLaneCheckTest(page, true);
+    await modalHarness.clickLaneCheck();
+
+    await page
+      .locator(".equality-report-modal")
+      .waitFor({ state: "visible", timeout: 15000 });
+
+    await expect(page).toHaveScreenshot("modify-heats-lane-check-equal.png");
+  });
 });
