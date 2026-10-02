@@ -287,6 +287,15 @@ export class ToolbarComponent implements OnInit {
         ),
       );
     }
+    if (this.showExport()) {
+      steps.push(
+        this.createGuideStep(
+          "export-btn",
+          "TOOLBAR_HELP_EXPORT_TITLE",
+          "TOOLBAR_HELP_EXPORT_CONTENT",
+        ),
+      );
+    }
     if (this.showDelete()) {
       steps.push(
         this.createGuideStep(
@@ -301,15 +310,6 @@ export class ToolbarComponent implements OnInit {
 
   private getDataAndUtilityHelpSteps(): GuideStep[] {
     const steps: GuideStep[] = [];
-    if (this.showExport()) {
-      steps.push(
-        this.createGuideStep(
-          "export-btn",
-          "TOOLBAR_HELP_EXPORT_TITLE",
-          "TOOLBAR_HELP_EXPORT_CONTENT",
-        ),
-      );
-    }
     if (this.showReset()) {
       steps.push(
         this.createGuideStep(

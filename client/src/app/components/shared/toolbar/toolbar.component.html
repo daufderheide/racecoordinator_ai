@@ -152,6 +152,19 @@
     </button>
   }
 
+  <!-- Export -->
+  @if (showExport()) {
+    <button
+      id="export-btn"
+      class="toolbar-btn info"
+      (click)="onExport()"
+      [disabled]="isSaving() || disabledExport()"
+      [title]="exportTitleKey() | translate"
+    >
+      <span class="material-icons">upload</span>
+    </button>
+  }
+
   <!-- Import RC1 -->
   @if (showImportRc1()) {
     <button
@@ -175,19 +188,6 @@
       [title]="'TM_DELETE' | translate"
     >
       <span class="material-icons">delete</span>
-    </button>
-  }
-
-  <!-- Export -->
-  @if (showExport()) {
-    <button
-      id="export-btn"
-      class="toolbar-btn info"
-      (click)="onExport()"
-      [disabled]="isSaving() || disabledExport()"
-      [title]="exportTitleKey() | translate"
-    >
-      <span class="material-icons">upload</span>
     </button>
   }
 
