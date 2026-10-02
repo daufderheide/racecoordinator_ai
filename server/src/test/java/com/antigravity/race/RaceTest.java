@@ -372,6 +372,7 @@ public class RaceTest {
     }
 
     private void verifyFullSnapshotBroadcast(RaceState expectedState) throws Exception {
+      ClientSubscriptionManager.getInstance().flushBroadcasts();
       Field sessionField = WsContext.class.getDeclaredField("session");
       sessionField.setAccessible(true);
       Session session = (Session) sessionField.get(currentMockWsContext);
@@ -397,6 +398,7 @@ public class RaceTest {
 
     private void verifyBroadcast(RaceState expectedState) {
       try {
+        ClientSubscriptionManager.getInstance().flushBroadcasts();
         Field sessionField = WsContext.class.getDeclaredField("session");
         sessionField.setAccessible(true);
         Session session = (Session) sessionField.get(currentMockWsContext);
@@ -1624,6 +1626,7 @@ public class RaceTest {
 
       refreshSession();
       race.setCurrentHeat(h2);
+      ClientSubscriptionManager.getInstance().flushBroadcasts();
 
       Field sessionField = WsContext.class.getDeclaredField("session");
       sessionField.setAccessible(true);
@@ -4257,6 +4260,7 @@ public class RaceTest {
 
       // Call prepareHeat()
       race.prepareHeat();
+      ClientSubscriptionManager.getInstance().flushBroadcasts();
 
       // Verify CarData messages were broadcast
       verify(mockRemote, atLeastOnce()).sendBytesByFuture(captor.capture());
@@ -4279,6 +4283,7 @@ public class RaceTest {
       reset(mockRemote);
       when(mockRemote.sendBytesByFuture(any())).thenReturn(null);
       race.resetCurrentHeat();
+      ClientSubscriptionManager.getInstance().flushBroadcasts();
       ArgumentCaptor<ByteBuffer> resetCaptor = ArgumentCaptor.forClass(ByteBuffer.class);
       verify(mockRemote, atLeastOnce()).sendBytesByFuture(resetCaptor.capture());
       carDataList.clear();

@@ -22,10 +22,13 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,6 +52,15 @@ public class ClientSubscriptionManager {
             t.setDaemon(true);
             return t;
           });
+  private final ExecutorService broadcastExecutor =
+      Executors.newSingleThreadExecutor(
+          r -> {
+            Thread t = new Thread(r, "WebSocket-Broadcast");
+            t.setDaemon(true);
+            return t;
+          });
+  private final AtomicReference<byte[]> pendingRaceTimeBytes = new AtomicReference<>();
+  private final AtomicBoolean raceTimeScheduled = new AtomicBoolean(false);
   private ScheduledFuture<?> cleanupFuture;
   private long cleanupGracePeriodSeconds = 10;
   private boolean hasEverHadClient = false;
@@ -133,6 +145,7 @@ public class ClientSubscriptionManager {
         } catch (Exception ignored) {
         }
       }
+      pendingRaceTimeBytes.set(null);
       sessions.clear();
       raceDataSubscribers.clear();
       interfaceSubscribers.clear();
@@ -593,13 +606,59 @@ public class ClientSubscriptionManager {
   }
 
   public void broadcast(GeneratedMessageV3 message) {
+    broadcastAsync(message);
+  }
+
+  public CompletableFuture<Void> broadcastAsync(GeneratedMessageV3 message) {
+    if (raceDataSubscribers.isEmpty()) {
+      return CompletableFuture.completedFuture(null);
+    }
+
+    if (isPureRaceTime(message)) {
+      byte[] bytes = message.toByteArray();
+      pendingRaceTimeBytes.set(bytes);
+      CompletableFuture<Void> future = new CompletableFuture<>();
+      if (raceTimeScheduled.compareAndSet(false, true)) {
+        broadcastExecutor.submit(
+            () -> {
+              processPendingRaceTime();
+              future.complete(null);
+            });
+      } else {
+        future.complete(null);
+      }
+      return future;
+    }
+
+    byte[] bytes = message.toByteArray();
+    return CompletableFuture.runAsync(
+        () -> sendToRaceDataSubscribers(bytes, message.getClass().getSimpleName()),
+        broadcastExecutor);
+  }
+
+  public void flushBroadcasts() {
+    try {
+      broadcastExecutor.submit(() -> {}).get(2, TimeUnit.SECONDS);
+    } catch (Exception ignored) {
+    }
+  }
+
+  private void processPendingRaceTime() {
+    byte[] bt = pendingRaceTimeBytes.getAndSet(null);
+    raceTimeScheduled.set(false);
+    if (bt != null) {
+      sendToRaceDataSubscribers(bt, "RaceTime");
+    }
+    if (pendingRaceTimeBytes.get() != null && raceTimeScheduled.compareAndSet(false, true)) {
+      broadcastExecutor.submit(this::processPendingRaceTime);
+    }
+  }
+
+  private void sendToRaceDataSubscribers(byte[] bytes, String msgName) {
     if (raceDataSubscribers.isEmpty()) {
       return;
     }
-
     long startNs = System.nanoTime();
-    byte[] bytes = message.toByteArray();
-
     raceDataSubscribers.forEach(
         ctx -> {
           try {
@@ -615,8 +674,28 @@ public class ClientSubscriptionManager {
           "[PERF] WebSocket broadcast took {} ms ({} subscribers, msg: {})",
           elapsedNs / 1_000_000L,
           raceDataSubscribers.size(),
-          message.getClass().getSimpleName());
+          msgName);
     }
+  }
+
+  private boolean isPureRaceTime(GeneratedMessageV3 message) {
+    if (!(message instanceof RaceData)) {
+      return false;
+    }
+    RaceData rd = (RaceData) message;
+    return rd.hasRaceTime()
+        && !rd.hasLap()
+        && !rd.hasStandingsUpdate()
+        && !rd.hasOverallStandingsUpdate()
+        && !rd.hasRace()
+        && !rd.hasCarData()
+        && !rd.hasSegment()
+        && !rd.hasFlag()
+        && !rd.hasRecordData()
+        && !rd.hasHeat()
+        && !rd.hasSystemState()
+        && !rd.hasGroupStandingsUpdate()
+        && !rd.hasRaceState();
   }
 
   public void broadcastSystemState() {
@@ -666,20 +745,28 @@ public class ClientSubscriptionManager {
   }
 
   public void broadcastInterfaceEvent(InterfaceEvent event) {
+    broadcastInterfaceEventAsync(event);
+  }
+
+  public CompletableFuture<Void> broadcastInterfaceEventAsync(InterfaceEvent event) {
     if (interfaceSubscribers.isEmpty()) {
-      return;
+      return CompletableFuture.completedFuture(null);
     }
     if (currentRace != null && (currentRace.getState() instanceof RaceOver)) {
-      return;
+      return CompletableFuture.completedFuture(null);
     }
 
     byte[] bytes = event.toByteArray();
-    for (WsContext session : interfaceSubscribers) {
-      try {
-        session.send(ByteBuffer.wrap(bytes));
-      } catch (Exception e) {
-        // Ignore or log
-      }
-    }
+    return CompletableFuture.runAsync(
+        () -> {
+          for (WsContext session : interfaceSubscribers) {
+            try {
+              session.send(ByteBuffer.wrap(bytes));
+            } catch (Exception e) {
+              // Ignore or log
+            }
+          }
+        },
+        broadcastExecutor);
   }
 }

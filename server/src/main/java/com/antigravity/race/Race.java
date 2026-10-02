@@ -1169,19 +1169,19 @@ public class Race implements ProtocolListener {
     }
   }
 
-  public void updateAndBroadcastOverallStandings() {
+  public RaceData.Builder populateOverallStandings(RaceData.Builder dataBuilder) {
     recalculateOverallStandings();
     recordsManager.recalculateScoreRecords();
     List<com.antigravity.proto.RaceParticipant> participants = new ArrayList<>(); // fqn-collision
     for (RaceParticipant driver : this.drivers) {
-      if (driver.getDriver() != Driver.EMPTY_DRIVER)
+      if (driver.getDriver() != Driver.EMPTY_DRIVER) {
         participants.add(RaceParticipantConverter.toProto(driver, new HashSet<>()));
+      }
     }
-    RaceData.Builder dataBuilder =
-        RaceData.newBuilder()
-            .setOverallStandingsUpdate(
-                OverallStandingsUpdate.newBuilder().addAllParticipants(participants).build())
-            .setRecordData(getRecordData());
+    dataBuilder
+        .setOverallStandingsUpdate(
+            OverallStandingsUpdate.newBuilder().addAllParticipants(participants).build())
+        .setRecordData(getRecordData());
     GroupStandingsUpdate groupStandings = buildGroupStandingsUpdate();
     if (groupStandings != null) {
       dataBuilder.setGroupStandingsUpdate(groupStandings);
@@ -1189,7 +1189,11 @@ public class Race implements ProtocolListener {
     if (seasonEntityId != null && !seasonEntityId.isEmpty()) {
       dataBuilder.setRace(RaceConverter.toProto(this));
     }
-    broadcast(dataBuilder.build());
+    return dataBuilder;
+  }
+
+  public void updateAndBroadcastOverallStandings() {
+    broadcast(populateOverallStandings(RaceData.newBuilder()).build());
   }
 
   private GroupStandingsUpdate buildGroupStandingsUpdate() {

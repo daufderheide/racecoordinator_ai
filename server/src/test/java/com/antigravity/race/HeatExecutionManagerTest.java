@@ -5,7 +5,10 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.verify;
 
 import com.antigravity.models.AnalogFuelOptions;
 import com.antigravity.models.Driver;
@@ -17,18 +20,21 @@ import com.antigravity.models.Race;
 import com.antigravity.models.Team;
 import com.antigravity.models.TeamOptions;
 import com.antigravity.models.Track;
+import com.antigravity.proto.RaceData;
 import com.antigravity.protocols.CarData;
 import com.antigravity.protocols.CarLocation;
 import com.antigravity.protocols.arduino.ArduinoConfig;
 import com.antigravity.race.prediction.PredictionEngine;
 import com.antigravity.race.states.HeatOver;
 import com.antigravity.race.states.NotStarted;
+import com.google.protobuf.GeneratedMessageV3;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 
 public class HeatExecutionManagerTest {
 
@@ -2051,5 +2057,65 @@ public class HeatExecutionManagerTest {
     boolean[] change = teamExec.evaluateLeaderChange(null, null, dhd0.getParticipantId());
     assertTrue("Team participant taking the lead must be recognized as new race leader", change[0]);
     assertTrue("Team participant taking the lead should also be new heat leader", change[1]);
+  }
+
+  @Test
+  public void testBatchedLapDataBroadcast() {
+    ClientSubscriptionManager mockCsm = mock(ClientSubscriptionManager.class);
+    ClientSubscriptionManager origCsm = ClientSubscriptionManager.getInstance();
+    try {
+      ClientSubscriptionManager.setInstance(mockCsm);
+
+      // 1. Reaction time trigger
+      executionManager.onLap(0, 1.0, 1, false, true, false);
+
+      ArgumentCaptor<GeneratedMessageV3> rtCaptor =
+          ArgumentCaptor.forClass(GeneratedMessageV3.class);
+      verify(mockCsm, atLeastOnce()).broadcast(rtCaptor.capture());
+
+      RaceData rtMsg = null;
+      for (GeneratedMessageV3 msg : rtCaptor.getAllValues()) {
+        if (msg instanceof RaceData) {
+          RaceData rd = (RaceData) msg;
+          if (rd.hasLap()
+              && rd.getLap().getType() == com.antigravity.proto.Lap.LapType.REACTION_TIME) {
+            rtMsg = rd;
+            break;
+          }
+        }
+      }
+      assertNotNull("Reaction time broadcast must be captured", rtMsg);
+      assertTrue("Reaction time broadcast should contain Lap", rtMsg.hasLap());
+      assertTrue(
+          "Reaction time broadcast should contain StandingsUpdate", rtMsg.hasStandingsUpdate());
+
+      reset(mockCsm);
+
+      // 2. Lap 1 trigger
+      executionManager.onLap(0, 5.0, 1, false, true, false);
+
+      ArgumentCaptor<GeneratedMessageV3> lapCaptor =
+          ArgumentCaptor.forClass(GeneratedMessageV3.class);
+      verify(mockCsm, atLeastOnce()).broadcast(lapCaptor.capture());
+
+      RaceData lapMsg = null;
+      for (GeneratedMessageV3 msg : lapCaptor.getAllValues()) {
+        if (msg instanceof RaceData) {
+          RaceData rd = (RaceData) msg;
+          if (rd.hasLap() && rd.getLap().getLapNumber() == 1) {
+            lapMsg = rd;
+            break;
+          }
+        }
+      }
+      assertNotNull("Lap 1 broadcast must be captured", lapMsg);
+      assertTrue("Lap broadcast must contain Lap", lapMsg.hasLap());
+      assertTrue("Lap broadcast must contain StandingsUpdate", lapMsg.hasStandingsUpdate());
+      assertTrue(
+          "Lap broadcast must contain OverallStandingsUpdate", lapMsg.hasOverallStandingsUpdate());
+      assertTrue("Lap broadcast must contain RecordData", lapMsg.hasRecordData());
+    } finally {
+      ClientSubscriptionManager.setInstance(origCsm);
+    }
   }
 }
