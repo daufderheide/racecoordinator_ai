@@ -330,6 +330,8 @@
                       <input
                         type="text"
                         class="cell-input"
+                        [class.invalid]="isRowNameInvalid(row)"
+                        [title]="isRowNameInvalid(row) ? row.message || '' : ''"
                         [ngModel]="row.resolvedName"
                         (ngModelChange)="onRowNameChange(row, $event)"
                       />
@@ -338,6 +340,10 @@
                       <input
                         type="text"
                         class="cell-input"
+                        [class.invalid]="isRowNicknameInvalid(row)"
+                        [title]="
+                          isRowNicknameInvalid(row) ? row.message || '' : ''
+                        "
                         [ngModel]="row.resolvedNickname"
                         (ngModelChange)="onRowNicknameChange(row, $event)"
                       />

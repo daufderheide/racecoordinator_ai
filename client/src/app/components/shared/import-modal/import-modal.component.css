@@ -473,6 +473,17 @@
   outline: none;
 }
 
+.cell-input.invalid {
+  border-color: #ef4444 !important;
+  color: #ef4444 !important;
+  background: rgba(239, 68, 68, 0.05) !important;
+}
+
+.cell-input.invalid:focus {
+  border-color: #ef4444 !important;
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.3) !important;
+}
+
 .badge {
   display: inline-flex;
   align-items: center;

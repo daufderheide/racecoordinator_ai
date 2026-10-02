@@ -10,6 +10,7 @@ import { DataService } from "@app/data.service";
 import {
   DriverImportPreview,
   DriverImportResult,
+  DriverImportRow,
 } from "@app/models/driver-import.model";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { TranslationService } from "@app/services/translation.service";
@@ -383,6 +384,88 @@ describe("ImportModalComponent", () => {
       expect(conflictRow.conflictType).toBe("NONE");
       expect(component.preview!.conflictCount).toBe(0);
       expect(component.preview!.validCount).toBe(2);
+    });
+
+    it("should outline name and nickname inputs in red when invalid or conflicting", () => {
+      fixture.detectChanges();
+
+      const row0 = component.preview!.rows[0];
+      const row1 = component.preview!.rows[1];
+      const row2 = component.preview!.rows[2];
+
+      expect(component.isRowNameInvalid(row0)).toBeFalse();
+      expect(component.isRowNicknameInvalid(row0)).toBeFalse();
+
+      // Row 1 has both name and nickname colliding with existing driver
+      expect(component.isRowNameInvalid(row1)).toBeTrue();
+      expect(component.isRowNicknameInvalid(row1)).toBeTrue();
+
+      // Row 2 has empty name error
+      expect(component.isRowNameInvalid(row2)).toBeTrue();
+      expect(component.isRowNicknameInvalid(row2)).toBeFalse();
+
+      const rows = fixture.nativeElement.querySelectorAll(
+        ".preview-table tbody tr",
+      );
+      expect(rows.length).toBe(3);
+
+      const row1NameInput = rows[1].querySelector(".col-name input");
+      const row1NickInput = rows[1].querySelector(".col-nick input");
+      expect(row1NameInput.classList).toContain("invalid");
+      expect(row1NickInput.classList).toContain("invalid");
+
+      const row2NameInput = rows[2].querySelector(".col-name input");
+      const row2NickInput = rows[2].querySelector(".col-nick input");
+      expect(row2NameInput.classList).toContain("invalid");
+      expect(row2NickInput.classList).not.toContain("invalid");
+
+      // Edit row 1 name to Bob Smith_1 -> name is no longer invalid, nickname remains invalid
+      component.onRowNameChange(row1, "Bob Smith_1");
+      fixture.detectChanges();
+
+      expect(component.isRowNameInvalid(row1)).toBeFalse();
+      expect(component.isRowNicknameInvalid(row1)).toBeTrue();
+      expect(row1NameInput.classList).not.toContain("invalid");
+      expect(row1NickInput.classList).toContain("invalid");
+
+      // Edit row 1 nickname to Bob_1 -> neither is invalid
+      component.onRowNicknameChange(row1, "Bob_1");
+      fixture.detectChanges();
+
+      expect(component.isRowNameInvalid(row1)).toBeFalse();
+      expect(component.isRowNicknameInvalid(row1)).toBeFalse();
+      expect(row1NameInput.classList).not.toContain("invalid");
+      expect(row1NickInput.classList).not.toContain("invalid");
+    });
+
+    it("should handle edge cases in collision detection and row invalidity", () => {
+      const dummyRow: DriverImportRow = {
+        rowIndex: 99,
+        status: "CONFLICT",
+        conflictType: "DUPLICATE_IN_FILE",
+        rawName: "InFileDup",
+        rawNickname: "DupNick",
+        resolvedName: "InFileDup",
+        resolvedNickname: "DupNick",
+        message: "Duplicate driver name in import file",
+        selectedResolution: "SKIP",
+      };
+
+      // Empty/whitespace collision checks
+      expect(component.hasNameCollision("", dummyRow)).toBeFalse();
+      expect(component.hasNicknameCollision("   ", dummyRow)).toBeFalse();
+
+      // Isolated row with DUPLICATE_IN_FILE and name in message
+      component.preview = null;
+      expect(component.hasNameCollision("InFileDup", dummyRow)).toBeFalse();
+      expect(component.hasNicknameCollision("DupNick", dummyRow)).toBeFalse();
+      expect(component.isRowNameInvalid(dummyRow)).toBeTrue();
+      expect(component.isRowNicknameInvalid(dummyRow)).toBeFalse();
+
+      // Message with nickname
+      dummyRow.message = "Duplicate driver nickname in import file";
+      expect(component.isRowNameInvalid(dummyRow)).toBeFalse();
+      expect(component.isRowNicknameInvalid(dummyRow)).toBeTrue();
     });
 
     it("should compute resolvable count correctly", () => {

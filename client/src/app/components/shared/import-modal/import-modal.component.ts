@@ -414,6 +414,93 @@ export class ImportModalComponent {
     row.existingDriverId = undefined;
   }
 
+  hasNameCollision(candName: string, row: DriverImportRow): boolean {
+    const lowerName = candName.trim().toLowerCase();
+    if (!lowerName) return false;
+
+    if (this.preview?.rows) {
+      const match = this.preview.rows.some(
+        (r) =>
+          r !== row &&
+          ((r.resolvedName || "").trim().toLowerCase() === lowerName ||
+            (r.resolvedNickname || "").trim().toLowerCase() === lowerName),
+      );
+      if (match) return true;
+    }
+
+    if (this.preview?.existingDrivers) {
+      const match = this.preview.existingDrivers.some(
+        (d) =>
+          (d.name || "").trim().toLowerCase() === lowerName ||
+          (d.nickname || "").trim().toLowerCase() === lowerName,
+      );
+      if (match) return true;
+    }
+
+    return false;
+  }
+
+  hasNicknameCollision(candNick: string, row: DriverImportRow): boolean {
+    const lowerNick = candNick.trim().toLowerCase();
+    if (!lowerNick) return false;
+
+    if (this.preview?.rows) {
+      const match = this.preview.rows.some(
+        (r) =>
+          r !== row &&
+          ((r.resolvedNickname || "").trim().toLowerCase() === lowerNick ||
+            (r.resolvedName || "").trim().toLowerCase() === lowerNick),
+      );
+      if (match) return true;
+    }
+
+    if (this.preview?.existingDrivers) {
+      const match = this.preview.existingDrivers.some(
+        (d) =>
+          (d.nickname || "").trim().toLowerCase() === lowerNick ||
+          (d.name || "").trim().toLowerCase() === lowerNick,
+      );
+      if (match) return true;
+    }
+
+    return false;
+  }
+
+  isRowNameInvalid(row: DriverImportRow): boolean {
+    if (row.status === "VALID") return false;
+    const candName = (row.resolvedName || "").trim();
+    if (!candName) return true;
+    if (this.hasNameCollision(candName, row)) return true;
+    if (row.status === "CONFLICT") {
+      if (row.conflictType === "DUPLICATE_NAME") return true;
+      if (
+        row.conflictType === "DUPLICATE_IN_FILE" &&
+        row.message?.toLowerCase().includes("name") &&
+        !row.message?.toLowerCase().includes("nickname")
+      ) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  isRowNicknameInvalid(row: DriverImportRow): boolean {
+    if (row.status === "VALID") return false;
+    const candNick = (row.resolvedNickname || "").trim();
+    if (!candNick) return true;
+    if (this.hasNicknameCollision(candNick, row)) return true;
+    if (row.status === "CONFLICT") {
+      if (row.conflictType === "DUPLICATE_NICKNAME") return true;
+      if (
+        row.conflictType === "DUPLICATE_IN_FILE" &&
+        row.message?.toLowerCase().includes("nickname")
+      ) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   get resolvableCount(): number {
     if (!this.preview) return 0;
     return this.preview.rows.filter(
