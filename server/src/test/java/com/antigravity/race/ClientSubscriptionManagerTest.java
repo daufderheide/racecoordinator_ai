@@ -27,6 +27,7 @@ import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ScheduledExecutorService;
 import org.junit.Before;
 import org.junit.Test;
@@ -780,5 +781,52 @@ public class ClientSubscriptionManagerTest {
                 dc, "autosave_testRaceId.json", com.antigravity.context.RaceScope.PRODUCTION);
     org.junit.Assert.assertNotNull(saved);
     org.junit.Assert.assertEquals(HeatOver.class.getName(), saved.getStateClassName());
+  }
+
+  @Test
+  public void testAutoSaveAsyncAndDeleteAutoSaveAsync() throws Exception {
+    Race mockRace = mock(Race.class);
+    com.antigravity.models.Race realModel =
+        new com.antigravity.models.Race.Builder()
+            .withEntityId("asyncRaceId")
+            .withId(null)
+            .withName("Async Race")
+            .build();
+    when(mockRace.getRaceModel()).thenReturn(realModel);
+    when(mockRace.getTrack())
+        .thenReturn(
+            new Track.Builder()
+                .name("Track")
+                .lanes(Collections.emptyList())
+                .entityId("track1")
+                .id(null)
+                .build());
+    when(mockRace.getHeats()).thenReturn(Collections.emptyList());
+    when(mockRace.getState()).thenReturn(new Paused());
+
+    DatabaseContext dc = new DatabaseContext("test_db", null, System.getProperty("java.io.tmpdir"));
+    manager.setDatabaseContext(dc);
+    manager.setShuttingDown(false);
+
+    CompletableFuture<Void> saveFuture = manager.autoSaveAsync(mockRace);
+    org.junit.Assert.assertNotNull(saveFuture);
+    saveFuture.get(5, java.util.concurrent.TimeUnit.SECONDS);
+
+    RaceSaveData saved =
+        com.antigravity.service.DatabaseService.getInstance()
+            .getSavedRace(
+                dc, "autosave_asyncRaceId.json", com.antigravity.context.RaceScope.PRODUCTION);
+    org.junit.Assert.assertNotNull(saved);
+    org.junit.Assert.assertEquals(Paused.class.getName(), saved.getStateClassName());
+
+    CompletableFuture<Void> deleteFuture = manager.deleteAutoSaveAsync("asyncRaceId", false);
+    org.junit.Assert.assertNotNull(deleteFuture);
+    deleteFuture.get(5, java.util.concurrent.TimeUnit.SECONDS);
+
+    RaceSaveData deleted =
+        com.antigravity.service.DatabaseService.getInstance()
+            .getSavedRace(
+                dc, "autosave_asyncRaceId.json", com.antigravity.context.RaceScope.PRODUCTION);
+    org.junit.Assert.assertNull(deleted);
   }
 }

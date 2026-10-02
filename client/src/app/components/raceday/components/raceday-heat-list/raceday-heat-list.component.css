@@ -82,11 +82,21 @@
   background: rgba(56, 189, 248, 0.05);
 }
 
-/* Active / Current Heat Accent */
+/* Active / Current Heat Accent - Bolder Frame */
 .heat-card.current-heat {
-  border-color: #38bdf8;
-  box-shadow: 0 0 10px rgba(56, 189, 248, 0.4), inset 0 0 12px rgba(56, 189, 248, 0.1);
-  background: rgba(56, 189, 248, 0.1);
+  border: 2px solid #38bdf8;
+  padding: 7px 9px;
+  box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.65),
+              0 0 16px rgba(56, 189, 248, 0.45),
+              inset 0 0 14px rgba(56, 189, 248, 0.15);
+  background: linear-gradient(180deg, rgba(56, 189, 248, 0.14) 0%, rgba(15, 23, 42, 0.75) 100%);
+}
+
+.heat-card.current-heat:hover {
+  border-color: #7dd3fc;
+  box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.85),
+              0 0 20px rgba(56, 189, 248, 0.55),
+              inset 0 0 16px rgba(56, 189, 248, 0.2);
 }
 
 .heat-card.completed-heat {
@@ -99,27 +109,24 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 8px;
   font-size: 13px;
   font-weight: 700;
   color: #38bdf8;
   line-height: 1.2;
 }
 
+.heat-card.current-heat .heat-card-header {
+  text-shadow: 0 0 8px rgba(56, 189, 248, 0.5);
+}
+
 .heat-title-text {
   display: flex;
   align-items: center;
   min-width: 0;
-  max-width: 100%;
+  flex: 1 1 auto;
   overflow: hidden;
   white-space: nowrap;
-}
-
-.heat-card.current-heat .heat-title-text {
-  max-width: calc(100% - 85px);
-}
-
-.heat-card.current-heat .heat-card-header.has-center-status .heat-title-text {
-  max-width: calc(50% - 32px);
 }
 
 .heat-label {
@@ -140,19 +147,18 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   min-width: 0;
+  flex: 0 1 auto;
 }
 
-/* Centered race state flag and race time in card header */
+/* Right-aligned race state flag and race time in card header */
+.heat-card-header .header-right-status,
 .heat-card-header .header-center-status {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
   display: inline-flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-end;
   gap: 8px;
-  pointer-events: none;
+  flex-shrink: 0;
+  margin-left: auto;
   white-space: nowrap;
 }
 
@@ -180,27 +186,6 @@
   text-shadow: 0 0 8px rgba(0, 229, 255, 0.6);
   line-height: 1;
   font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}
-
-.current-heat-status {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
-  max-width: calc(35% - 8px);
-  justify-content: flex-end;
-}
-
-.current-heat-badge {
-  background: #38bdf8;
-  color: #0f172a;
-  font-size: 10px;
-  font-weight: 800;
-  text-transform: uppercase;
-  padding: 1px 6px;
-  border-radius: 3px;
-  letter-spacing: 0.5px;
   white-space: nowrap;
 }
 
@@ -316,6 +301,7 @@
 }
 
 .summary-lane-row {
+  color: #ffffff;
   font-size: 11px;
   border-bottom: 1px solid rgba(0, 0, 0, 0.15);
   transition: background-color 0.15s ease;
@@ -430,6 +416,7 @@
     calc(min(2cqh, 1.2cqw) * var(--widget-scale-factor, 1));
 }
 
+.raceday-heat-list-container.scale-auto .heat-card-header .header-right-status,
 .raceday-heat-list-container.scale-auto .heat-card-header .header-center-status {
   gap: calc(min(1.5cqh, 1cqw) * var(--widget-scale-factor, 1));
 }
@@ -441,14 +428,6 @@
 
 .raceday-heat-list-container.scale-auto .heat-card-header .header-time {
   font-size: calc(min(4.2cqh, 2.3cqw) * var(--widget-scale-factor, 1));
-}
-
-.raceday-heat-list-container.scale-auto .current-heat-status {
-  gap: calc(min(1.5cqh, 1cqw) * var(--widget-scale-factor, 1));
-}
-
-.raceday-heat-list-container.scale-auto .current-heat-badge {
-  font-size: calc(min(3.2cqh, 1.8cqw) * var(--widget-scale-factor, 1));
 }
 
 .raceday-heat-list-container.scale-auto .summary-header-row {
@@ -551,18 +530,12 @@
   line-height: 1.15;
 }
 
-.raceday-heat-list-container.scale-to-window .heat-card.current-heat .heat-title-text {
-  max-width: calc(100% - (75px * var(--heat-scale, 1)));
+.raceday-heat-list-container.scale-to-window .heat-card.current-heat {
+  border-width: max(2px, calc(2.5px * var(--heat-scale, 1)));
+  padding: calc(3px * var(--heat-scale, 1)) calc(5px * var(--heat-scale, 1));
 }
 
-.raceday-heat-list-container.scale-to-window .heat-card.current-heat .heat-card-header.has-center-status .heat-title-text {
-  max-width: calc(50% - (20px * var(--heat-scale, 1)));
-}
-
-.raceday-heat-list-container.scale-to-window .current-heat-status {
-  gap: calc(5px * var(--heat-scale, 1));
-}
-
+.raceday-heat-list-container.scale-to-window .heat-card-header .header-right-status,
 .raceday-heat-list-container.scale-to-window .heat-card-header .header-center-status {
   gap: calc(5px * var(--heat-scale, 1));
 }
@@ -574,11 +547,6 @@
 
 .raceday-heat-list-container.scale-to-window .heat-card-header .header-time {
   font-size: calc(11px * var(--heat-scale, 1));
-}
-
-.raceday-heat-list-container.scale-to-window .current-heat-badge {
-  font-size: calc(9px * var(--heat-scale, 1));
-  padding: 0 calc(4px * var(--heat-scale, 1));
 }
 
 .raceday-heat-list-container.scale-to-window .heat-summary-container {

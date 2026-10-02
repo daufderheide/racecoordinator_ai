@@ -1507,6 +1507,8 @@ export class DefaultRacedayComponent
         },
       },
     );
+    this.raceHasEnded = false;
+    this.isInterfaceConnected = this.raceConnectionService.isInterfaceConnected;
 
     const settings =
       this.editingSettings() || this.settingsService.getSettings();
@@ -3319,13 +3321,17 @@ export class DefaultRacedayComponent
   }
 
   onExitConfirm() {
-    sessionStorage.setItem("skipIntro", "true");
+    if (!this.raceHasEnded && this.raceState !== RaceState.RACE_OVER) {
+      sessionStorage.setItem("skipIntro", "true");
+    }
     this.showExitConfirmation = false;
+    this.cdr.markForCheck();
     this.deactivateSubject.next(true);
   }
 
   onExitCancel() {
     this.showExitConfirmation = false;
+    this.cdr.markForCheck();
     this.deactivateSubject.next(false);
   }
 
@@ -3441,21 +3447,18 @@ export class DefaultRacedayComponent
         return true;
       }
     }
+    this.showSkipHeatConfirmation = false;
+    this.showRestartHeatConfirmation = false;
+    this.showDeferHeatConfirmation = false;
+
     if (this.raceHasEnded || this.raceState === RaceState.RACE_OVER) {
-      this.showExitConfirmation = false;
-      this.showSkipHeatConfirmation = false;
-      this.showRestartHeatConfirmation = false;
-      this.showDeferHeatConfirmation = false;
-      this.ackModalTitle = "RD_RACE_ENDED_TITLE";
-      this.ackModalMessage = "RD_RACE_ENDED_MESSAGE";
-      this.ackModalButtonText = "RD_RACE_ENDED_BTN_OK";
-      this.showAckModal = true;
-      this.cdr.markForCheck();
-      return false;
+      this.exitModalTitle = "RD_RACE_ENDED_TITLE";
+      this.exitModalMessage = "RD_CONFIRM_EXIT_RACE_ENDED_MESSAGE";
+    } else {
+      this.exitModalTitle = "RD_CONFIRM_EXIT_TITLE";
+      this.exitModalMessage = "RD_CONFIRM_EXIT_MESSAGE";
     }
 
-    this.exitModalTitle = "RD_CONFIRM_EXIT_TITLE";
-    this.exitModalMessage = "RD_CONFIRM_EXIT_MESSAGE";
     this.exitConfirmText = "RD_CONFIRM_EXIT_BTN_LEAVE";
     this.exitCancelText = "RD_CONFIRM_EXIT_BTN_STAY";
     this.showExitConfirmation = true;
@@ -3612,14 +3615,17 @@ export class DefaultRacedayComponent
       this.track = race.track;
       this.preloadCountdownAudio();
 
+      const state =
+        (race as any)?.state ?? (race as any)?.raceState ?? this.raceState;
       const isEnded =
-        this.raceHasEnded ||
-        this.raceState === RaceState.RACE_OVER ||
-        (race as any)?.is_finished ||
-        (race as any)?.isFinished ||
-        (race as any)?.state === RaceState.RACE_OVER ||
-        (race as any)?.raceState === RaceState.RACE_OVER ||
-        (race as any)?.state_class_name?.includes("RaceOver");
+        (race as any)?.is_finished === true ||
+        (race as any)?.isFinished === true ||
+        state === RaceState.RACE_OVER ||
+        (race as any)?.state_class_name?.includes("RaceOver") ||
+        (this.raceHasEnded &&
+          state !== RaceState.NOT_STARTED &&
+          state !== RaceState.STARTING &&
+          state !== RaceState.RACING);
 
       if (isEnded) {
         this.raceHasEnded = true;
@@ -3642,61 +3648,68 @@ export class DefaultRacedayComponent
         this.leaderLaps = 0;
         this.playedHalfway = false;
         this.resetFuelAudioTracking();
-      } else if (isNewRace) {
-        // Reset timer state ONLY when advancing to a new race
-        const state =
-          (race as any)?.state ?? (race as any)?.raceState ?? this.raceState;
-        const isNotStarted =
-          state === RaceState.NOT_STARTED ||
-          state === RaceState.UNKNOWN_STATE ||
-          state === undefined ||
-          state === null;
-        const isHeatOver = state === RaceState.HEAT_OVER;
-
-        if (isNotStarted) {
-          this.autoStartRemaining =
-            (race as any)?.auto_start_remaining_seconds ||
-            (race as any)?.auto_start_remaining ||
-            race.auto_start_time ||
-            0;
-          this.autoAdvanceRemaining = 0;
-          this.time = this.autoStartRemaining > 0 ? this.autoStartRemaining : 0;
-        } else if (isHeatOver) {
-          this.autoStartRemaining = 0;
-          this.autoAdvanceRemaining =
-            (race as any)?.auto_advance_remaining_seconds ||
-            (race as any)?.auto_advance_remaining ||
-            0;
-          this.time =
-            this.autoAdvanceRemaining > 0 ? this.autoAdvanceRemaining : 0;
-        } else {
-          this.autoStartRemaining = 0;
-          this.autoAdvanceRemaining = 0;
-          if (typeof (race as any)?.accumulated_race_time === "number") {
-            this.time = (race as any).accumulated_race_time;
-          }
-        }
-        this.previousTime = this.time;
-        this.timeFormat = "1.0-0";
-        this.playedSecondsLeft.clear();
-        this.playedSecondsElapsed.clear();
-        this.playedLapsLeft.clear();
-        this.playedLapsElapsed.clear();
-        this.playedAutoStart.clear();
-        this.playedAutoStartElapsed.clear();
-        this.playedAutoAdvance.clear();
-        this.playedAutoAdvanceElapsed.clear();
-        this.previousAutoStartRemaining = 0;
-        this.previousAutoAdvanceRemaining = 0;
-        this.leaderLaps = 0;
-        this.playedHalfway = false;
-        this.resetFuelAudioTracking();
       } else {
-        const remaining = (race as any)?.auto_advance_remaining_seconds;
-        if (remaining !== undefined && remaining !== null) {
-          this.autoAdvanceRemaining = remaining;
-          if (remaining > 0) {
-            this.time = remaining;
+        this.raceHasEnded = false;
+        if (state !== undefined && state !== RaceState.UNKNOWN_STATE) {
+          this.raceState = state;
+        }
+        if (isNewRace) {
+          // Reset timer state ONLY when advancing to a new race
+          const state =
+            (race as any)?.state ?? (race as any)?.raceState ?? this.raceState;
+          const isNotStarted =
+            state === RaceState.NOT_STARTED ||
+            state === RaceState.UNKNOWN_STATE ||
+            state === undefined ||
+            state === null;
+          const isHeatOver = state === RaceState.HEAT_OVER;
+
+          if (isNotStarted) {
+            this.autoStartRemaining =
+              (race as any)?.auto_start_remaining_seconds ||
+              (race as any)?.auto_start_remaining ||
+              race.auto_start_time ||
+              0;
+            this.autoAdvanceRemaining = 0;
+            this.time =
+              this.autoStartRemaining > 0 ? this.autoStartRemaining : 0;
+          } else if (isHeatOver) {
+            this.autoStartRemaining = 0;
+            this.autoAdvanceRemaining =
+              (race as any)?.auto_advance_remaining_seconds ||
+              (race as any)?.auto_advance_remaining ||
+              0;
+            this.time =
+              this.autoAdvanceRemaining > 0 ? this.autoAdvanceRemaining : 0;
+          } else {
+            this.autoStartRemaining = 0;
+            this.autoAdvanceRemaining = 0;
+            if (typeof (race as any)?.accumulated_race_time === "number") {
+              this.time = (race as any).accumulated_race_time;
+            }
+          }
+          this.previousTime = this.time;
+          this.timeFormat = "1.0-0";
+          this.playedSecondsLeft.clear();
+          this.playedSecondsElapsed.clear();
+          this.playedLapsLeft.clear();
+          this.playedLapsElapsed.clear();
+          this.playedAutoStart.clear();
+          this.playedAutoStartElapsed.clear();
+          this.playedAutoAdvance.clear();
+          this.playedAutoAdvanceElapsed.clear();
+          this.previousAutoStartRemaining = 0;
+          this.previousAutoAdvanceRemaining = 0;
+          this.leaderLaps = 0;
+          this.playedHalfway = false;
+          this.resetFuelAudioTracking();
+        } else {
+          const remaining = (race as any)?.auto_advance_remaining_seconds;
+          if (remaining !== undefined && remaining !== null) {
+            this.autoAdvanceRemaining = remaining;
+            if (remaining > 0) {
+              this.time = remaining;
+            }
           }
         }
       }
@@ -6381,6 +6394,8 @@ export class DefaultRacedayComponent
       this.time = 0;
       this.previousTime = 0;
       this.timeFormat = "1.0-0";
+    } else if (state !== RaceState.UNKNOWN_STATE) {
+      this.raceHasEnded = false;
     }
 
     if (
@@ -6558,12 +6573,11 @@ export class DefaultRacedayComponent
       this.logger.debug(
         `[PERF] Countdown sound triggered: second=${currentSecond}, currentTime=${currentTime.toFixed(2)}, delta=${deltaMs}ms`,
       );
-      if (deltaMs >= 0 && deltaMs < 750) {
+      if (deltaMs >= 0 && deltaMs < 250) {
         this.logger.warn(
           `[PERF] Countdown sound for second=${currentSecond} arrived rapidly (${deltaMs}ms after previous), skipping to prevent audio overlap`,
         );
         this.lastPlayedCountdownSecond = currentSecond;
-        this.lastCountdownSoundTime = now;
         return;
       }
       const played = this.playAudioFromSet(

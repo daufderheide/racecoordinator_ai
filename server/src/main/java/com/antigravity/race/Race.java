@@ -800,9 +800,10 @@ public class Race implements ProtocolListener {
     updatePowerForFlag(protoFlag);
 
     if (state instanceof RaceOver) {
-      ClientSubscriptionManager.getInstance().deleteAutoSave(model.getEntityId(), isDemoMode());
+      ClientSubscriptionManager.getInstance()
+          .deleteAutoSaveAsync(model.getEntityId(), isDemoMode());
     } else if (state instanceof Paused || state instanceof HeatOver) {
-      ClientSubscriptionManager.getInstance().autoSave(this);
+      ClientSubscriptionManager.getInstance().autoSaveAsync(this);
     }
   }
 
@@ -880,7 +881,7 @@ public class Race implements ProtocolListener {
       return;
     }
     state.restartHeat(this);
-    ClientSubscriptionManager.getInstance().autoSave(this);
+    ClientSubscriptionManager.getInstance().autoSaveAsync(this);
   }
 
   public void skipHeat() {
@@ -888,7 +889,7 @@ public class Race implements ProtocolListener {
       return;
     }
     state.skipHeat(this);
-    ClientSubscriptionManager.getInstance().autoSave(this);
+    ClientSubscriptionManager.getInstance().autoSaveAsync(this);
   }
 
   public void skipRace() {
@@ -906,7 +907,7 @@ public class Race implements ProtocolListener {
       return;
     }
     state.deferHeat(this);
-    ClientSubscriptionManager.getInstance().autoSave(this);
+    ClientSubscriptionManager.getInstance().autoSaveAsync(this);
   }
 
   public synchronized void stop() {

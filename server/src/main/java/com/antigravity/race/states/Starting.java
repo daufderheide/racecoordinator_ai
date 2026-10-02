@@ -98,9 +98,12 @@ public class Starting implements IRaceState {
                 long jitterNs = tickStartNano - expectedNextTickNano;
                 if (jitterNs > 100_000_000L) {
                   logger.warn("[PERF] Starting ticker delayed by {} ms", jitterNs / 1_000_000L);
+                  if (jitterNs > 500_000_000L) {
+                    expectedNextTickNano = tickStartNano;
+                  }
                 }
               }
-              expectedNextTickNano = tickStartNano + 100_000_000L;
+              expectedNextTickNano += 100_000_000L;
 
               double elapsed = (tickStartNano - startNanoTime) / 1_000_000_000.0;
               float displayTime = (float) Math.max(0.0, startTimeVal - elapsed);
@@ -129,7 +132,7 @@ public class Starting implements IRaceState {
           }
         };
 
-    timerHandle = scheduler.scheduleWithFixedDelay(ticker, 0, 100, TimeUnit.MILLISECONDS);
+    timerHandle = scheduler.scheduleAtFixedRate(ticker, 0, 100, TimeUnit.MILLISECONDS);
   }
 
   @Override

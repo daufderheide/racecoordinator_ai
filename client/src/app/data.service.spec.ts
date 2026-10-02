@@ -1476,6 +1476,49 @@ describe("DataService", () => {
       );
     });
 
+    it("should warn on RaceTime WebSocket interval lag when active ticking gap exceeds 350ms in RACING state", () => {
+      const loggerSpy = spyOn((service as any).logger, "warn");
+      (service as any).raceStateSubject.next(RaceState.RACING);
+
+      const pastTime =
+        (typeof performance !== "undefined" ? performance.now() : Date.now()) -
+        500;
+      (service as any).lastRaceTimeReceivedAt = pastTime;
+
+      const mockRaceData = RaceData.encode({
+        raceTime: { time: 5.0 },
+      }).finish();
+
+      (service as any).handleRaceDataMessage({
+        data: mockRaceData.slice().buffer,
+      });
+
+      expect(loggerSpy).toHaveBeenCalledWith(
+        jasmine.stringMatching(
+          /\[PERF\] RaceTime WebSocket interval lag: \d+ms/,
+        ),
+      );
+    });
+
+    it("should not warn on RaceTime gap across race state transition or when timer is not ticking", () => {
+      const loggerSpy = spyOn((service as any).logger, "warn");
+      (service as any).raceStateSubject.next(RaceState.NOT_STARTED);
+      (service as any).lastRaceTimeReceivedAt = 1000;
+
+      // Transition to STARTING with a raceTime message
+      const mockRaceData = RaceData.encode({
+        raceState: RaceState.STARTING,
+        raceTime: { time: 5.0 },
+      }).finish();
+
+      (service as any).handleRaceDataMessage({
+        data: mockRaceData.slice().buffer,
+      });
+
+      expect(loggerSpy).not.toHaveBeenCalled();
+      expect((service as any).lastRaceTimeReceivedAt).toBeGreaterThan(0);
+    });
+
     it("should return base URL via getBaseUrl", () => {
       expect(service.getBaseUrl()).toBe(service.serverUrl);
     });
@@ -1755,6 +1798,45 @@ describe("DataService", () => {
         isDemo: false,
       });
       req.flush({ bestLapTime: 3.1 });
+    });
+
+    it("should clear race data and replay buffers on clearRaceData()", () => {
+      (service as any).raceStateSubject.next(RaceState.RACE_OVER);
+      (service as any).flagSubject.next(RaceFlag.RED);
+      (service as any).raceTimeSubject.next({ time: 5000 });
+      (service as any).lastRaceTimeReceivedAt = 1000;
+      (service as any).raceUpdateSubject.next({ entity_id: "old-race" });
+      (service as any).standingsSubject.next({ updates: [] });
+      (service as any).overallStandingsSubject.next({ participants: [] });
+      (service as any).groupStandingsSubject.next({ group: 1 });
+      (service as any).recordDataSubject.next({ overall: {} });
+
+      service.clearRaceData();
+
+      expect((service as any).raceStateSubject.value).toBe(
+        RaceState.UNKNOWN_STATE,
+      );
+      expect((service as any).flagSubject.value).toBe(RaceFlag.UNKNOWN_FLAG);
+      expect((service as any).raceTimeSubject.value).toEqual({ time: 0 });
+      expect((service as any).lastRaceTimeReceivedAt).toBe(0);
+
+      let replayedRace = false;
+      service.getRaceUpdate().subscribe(() => {
+        replayedRace = true;
+      });
+      expect(replayedRace).toBeFalse();
+
+      let replayedStandings = false;
+      service.getStandingsUpdate().subscribe(() => {
+        replayedStandings = true;
+      });
+      expect(replayedStandings).toBeFalse();
+    });
+
+    it("should call clearRaceData when updateRaceSubscription(false) is called", () => {
+      spyOn(service, "clearRaceData").and.callThrough();
+      service.updateRaceSubscription(false);
+      expect(service.clearRaceData).toHaveBeenCalled();
     });
   });
 });

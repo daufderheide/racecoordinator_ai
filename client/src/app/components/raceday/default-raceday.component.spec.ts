@@ -6860,7 +6860,7 @@ describe("DefaultRacedayComponent", () => {
       expect(component["lastPlayedCountdownSecond"]).toBe(5);
     });
 
-    it("should skip countdown sound if triggered rapidly (<750ms) after previous countdown sound", () => {
+    it("should skip countdown sound if triggered rapidly (<250ms) after previous countdown sound without advancing lastCountdownSoundTime", () => {
       mockThemeService.resolveAudioConfig.and.returnValue({
         type: "audio_set",
         url: "audio-set-1",
@@ -6869,14 +6869,42 @@ describe("DefaultRacedayComponent", () => {
       component["showCountdownOverlay"] = true;
       component["countdownTotalLamps"] = 5;
       component["lastPlayedCountdownSecond"] = 5;
-      component["lastCountdownSoundTime"] =
+      const initialTime =
         (typeof performance !== "undefined" ? performance.now() : Date.now()) -
-        200;
+        150;
+      component["lastCountdownSoundTime"] = initialTime;
 
       component["updateCountdownLamps"](4.0);
 
       expect(component["playAudioFromSet"]).not.toHaveBeenCalled();
       expect(component["lastPlayedCountdownSecond"]).toBe(4);
+      // Ensure skipped sound does NOT update lastCountdownSoundTime so it avoids cascading drops
+      expect(component["lastCountdownSoundTime"]).toBe(initialTime);
+    });
+
+    it("should play countdown sound when delta is at least 250ms after previous sound", () => {
+      mockThemeService.resolveAudioConfig.and.returnValue({
+        type: "audio_set",
+        url: "audio-set-1",
+      });
+      spyOn<any>(component, "playAudioFromSet").and.returnValue(true);
+      component["showCountdownOverlay"] = true;
+      component["countdownTotalLamps"] = 5;
+      component["lastPlayedCountdownSecond"] = 5;
+      const initialTime =
+        (typeof performance !== "undefined" ? performance.now() : Date.now()) -
+        700;
+      component["lastCountdownSoundTime"] = initialTime;
+
+      component["updateCountdownLamps"](4.0);
+
+      expect(component["playAudioFromSet"]).toHaveBeenCalledWith(
+        THEME_SLOT_KEYS.AUDIO_COUNTDOWN,
+        4,
+        { widgetType: "countdown" },
+      );
+      expect(component["lastPlayedCountdownSecond"]).toBe(4);
+      expect(component["lastCountdownSoundTime"]).toBeGreaterThan(initialTime);
     });
 
     it("should preload countdown audio entries across seconds 0 through 5", () => {
@@ -7897,20 +7925,47 @@ describe("DefaultRacedayComponent", () => {
       expect(result).toBeTrue();
     });
 
-    it("should block deactivation and show acknowledgement modal when race has ended and forceExit is false", () => {
+    it("should show exit confirmation modal when race has ended and forceExit is false", (done) => {
+      fixture.detectChanges();
+      sessionStorage.removeItem("skipIntro");
+      component.raceHasEnded = true;
+      component.forceExit = false;
+
+      const result = component.canDeactivate() as any;
+      expect(component.showExitConfirmation).toBeTrue();
+      expect(component.showAckModal).toBeFalse();
+      expect(component.exitModalTitle).toBe("RD_RACE_ENDED_TITLE");
+      expect(component.exitModalMessage).toBe(
+        "RD_CONFIRM_EXIT_RACE_ENDED_MESSAGE",
+      );
+      expect(component.exitConfirmText).toBe("RD_CONFIRM_EXIT_BTN_LEAVE");
+      expect(component.exitCancelText).toBe("RD_CONFIRM_EXIT_BTN_STAY");
+
+      result.subscribe((val: boolean) => {
+        expect(val).toBeTrue();
+        expect(sessionStorage.getItem("skipIntro")).toBeNull();
+        done();
+      });
+      component.onExitConfirm();
+    });
+
+    it("should stay on page when cancelling exit confirmation after race has ended", (done) => {
       fixture.detectChanges();
       component.raceHasEnded = true;
       component.forceExit = false;
 
-      const result = component.canDeactivate();
-      expect(result).toBeFalse();
-      expect(component.showAckModal).toBeTrue();
-      expect(component.ackModalTitle).toBe("RD_RACE_ENDED_TITLE");
-      expect(component.ackModalMessage).toBe("RD_RACE_ENDED_MESSAGE");
-      expect(component.ackModalButtonText).toBe("RD_RACE_ENDED_BTN_OK");
+      const result = component.canDeactivate() as any;
+      expect(component.showExitConfirmation).toBeTrue();
+
+      result.subscribe((val: boolean) => {
+        expect(val).toBeFalse();
+        expect(component.showExitConfirmation).toBeFalse();
+        done();
+      });
+      component.onExitCancel();
     });
 
-    it("should allow deactivation and not show acknowledgement modal when race has ended and navigating to /ui-editor", () => {
+    it("should allow deactivation and not show confirmation modal when race has ended and navigating to /ui-editor", () => {
       fixture.detectChanges();
       component.raceHasEnded = true;
       component.forceExit = false;
@@ -7918,21 +7973,24 @@ describe("DefaultRacedayComponent", () => {
       const nextState = { url: "/ui-editor?returnUrl=/raceday" } as any;
       const result = component.canDeactivate(nextState);
       expect(result).toBeTrue();
-      expect(component.showAckModal).toBeFalse();
+      expect(component.showExitConfirmation).toBeFalse();
     });
 
-    it("should block deactivation and show acknowledgement modal when race has ended and navigating to /raceday-setup", () => {
+    it("should show exit confirmation modal when race has ended and navigating to /raceday-setup", () => {
       fixture.detectChanges();
       component.raceHasEnded = true;
       component.forceExit = false;
 
       const nextState = { url: "/raceday-setup" } as any;
       const result = component.canDeactivate(nextState);
-      expect(result).toBeFalse();
-      expect(component.showAckModal).toBeTrue();
-      expect(component.ackModalTitle).toBe("RD_RACE_ENDED_TITLE");
-      expect(component.ackModalMessage).toBe("RD_RACE_ENDED_MESSAGE");
-      expect(component.ackModalButtonText).toBe("RD_RACE_ENDED_BTN_OK");
+      expect(result).toBeDefined();
+      expect(component.showExitConfirmation).toBeTrue();
+      expect(component.exitModalTitle).toBe("RD_RACE_ENDED_TITLE");
+      expect(component.exitModalMessage).toBe(
+        "RD_CONFIRM_EXIT_RACE_ENDED_MESSAGE",
+      );
+      expect(component.exitConfirmText).toBe("RD_CONFIRM_EXIT_BTN_LEAVE");
+      expect(component.exitCancelText).toBe("RD_CONFIRM_EXIT_BTN_STAY");
     });
 
     it("should redirect to /raceday-setup and set forceExit to true on acknowledging the modal when raceHasEnded is true without setting skipIntro", () => {
@@ -10992,6 +11050,58 @@ describe("DefaultRacedayComponent", () => {
       emitSpy.calls.reset();
       document.dispatchEvent(moveEvent);
       expect(emitSpy).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("Race Restart and Second Race Start Lifecycle", () => {
+    it("should reset raceHasEnded, load auto-start timer, and enable Start button when loading a new race in NOT_STARTED state", () => {
+      // Simulate previously ended race
+      component.raceHasEnded = true;
+      (component as any).raceState = RaceState.RACE_OVER;
+      mockRaceConnectionService.isInterfaceConnected = true;
+      (component as any).isInterfaceConnected = true;
+
+      const newRace = {
+        entity_id: "new-race-id",
+        name: "Second Race",
+        state: RaceState.NOT_STARTED,
+        auto_start_time: 60,
+        track: { lanes: [{ id: "l1" }] },
+      };
+      mockRaceService.getRace.and.returnValue(newRace);
+
+      (component as any).loadRaceData();
+
+      expect(component.raceHasEnded).toBeFalse();
+      expect((component as any).raceState).toBe(RaceState.NOT_STARTED);
+      expect((component as any).autoStartRemaining).toBe(60);
+      expect((component as any).time).toBe(60);
+      expect(component.isStartResumeDisabled).toBeFalse();
+    });
+
+    it("should reset raceHasEnded to false when handleRaceStateChange transitions from RACE_OVER to NOT_STARTED", () => {
+      component.raceHasEnded = true;
+      (component as any).raceState = RaceState.RACE_OVER;
+
+      (component as any).handleRaceStateChange(RaceState.NOT_STARTED);
+
+      expect(component.raceHasEnded).toBeFalse();
+      expect((component as any).raceState).toBe(RaceState.NOT_STARTED);
+    });
+
+    it("should update autoStartRemaining and time on raceTime updates when race has restarted in NOT_STARTED state", () => {
+      component.raceHasEnded = false;
+      (component as any).raceState = RaceState.NOT_STARTED;
+
+      (component as any).subscribeToRaceTime();
+
+      raceTimeSubject.next({
+        time: 55,
+        autoStartRemaining: 55,
+      });
+
+      expect((component as any).autoStartRemaining).toBe(55);
+      expect((component as any).time).toBe(55);
     });
   });
 });

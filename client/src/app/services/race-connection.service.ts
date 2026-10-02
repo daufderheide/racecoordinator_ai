@@ -190,7 +190,7 @@ export class RaceConnectionService implements OnDestroy {
     this.pendingHeat = null;
     this.hasInitiallyConnected = false;
     this.lastInterfaceStatus = -1;
-    this.isRaceEnded = this.raceStateSubject.value === RaceState.RACE_OVER;
+    this.isRaceEnded = false;
     this.dataService.updateRaceSubscription(true);
 
     this.subscriptions.push(
@@ -484,6 +484,10 @@ export class RaceConnectionService implements OnDestroy {
           }
           this.clearDisconnectedError();
           this.dataService.disconnectFromInterfaceDataSocket();
+        } else if (state !== RaceState.UNKNOWN_STATE && this.isRaceEnded) {
+          this.isRaceEnded = false;
+          this.dataService.connectToInterfaceDataSocket();
+          this.resetWatchdog();
         }
         this.raceStateSubject.next(state);
       }),
@@ -529,13 +533,22 @@ export class RaceConnectionService implements OnDestroy {
 
     this.raceService.clear();
 
+    // Reset state & connection flags
+    this.isRaceEnded = false;
+    this.isInterfaceConnected = false;
+    this.lastInterfaceStatus = -1;
+    this.hasInitiallyConnected = false;
+
     // Reset subjects to prevent old state from immediately firing on reconnect
     this.raceStateSubject.next(RaceState.UNKNOWN_STATE);
     this.raceFlagSubject.next(RaceFlag.UNKNOWN_FLAG);
     this.raceTimeSubject.next({ time: 0 });
     this.recordDataSubject.next(null);
 
-    if (this.noStatusWatchdog) clearTimeout(this.noStatusWatchdog);
+    if (this.noStatusWatchdog) {
+      clearTimeout(this.noStatusWatchdog);
+      this.noStatusWatchdog = null;
+    }
     this.clearDisconnectedError();
     if (this.childWindowManagerService) {
       this.childWindowManagerService.closeAllWindows();
@@ -644,6 +657,18 @@ export class RaceConnectionService implements OnDestroy {
       this.dataService.disconnectFromInterfaceDataSocket();
       if (this.raceStateSubject.value !== RaceState.RACE_OVER) {
         this.raceStateSubject.next(RaceState.RACE_OVER);
+      }
+    } else {
+      const state = update.state ?? (update as any).raceState;
+      if (state !== undefined && state !== RaceState.UNKNOWN_STATE) {
+        if (this.isRaceEnded) {
+          this.isRaceEnded = false;
+          this.dataService.connectToInterfaceDataSocket();
+          this.resetWatchdog();
+        }
+        if (this.raceStateSubject.value !== state) {
+          this.raceStateSubject.next(state);
+        }
       }
     }
     if (update.drivers && update.drivers.length > 0) {
