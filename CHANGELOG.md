@@ -1,6 +1,6 @@
 # Changelog
 
-## [v1.0.1-beta.6] - 2026-10-01
+## [v1.0.1-beta.7] - 2026-10-02
 
 ### 🚀 New Features
 
@@ -35,7 +35,7 @@
 <details>
 <summary>🔍 <b>Full Commit History</b></summary>
 
-<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0...v1.0.1-beta.6">GitHub</a></p>
+<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0...v1.0.1-beta.7">GitHub</a></p>
 </details>
 
 ## [v1.0.0] - 2026-09-27
