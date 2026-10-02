@@ -58,7 +58,6 @@ export class ToolbarComponent implements OnInit {
   helpTitle = input("");
   helpRecordName = input<keyof Settings>();
   showImport = input(false);
-  showImportRc1 = input(false);
   showExport = input(false);
   importTitleKey = input("DBM_BTN_IMPORT");
   importHelpTitleKey = input("TOOLBAR_HELP_IMPORT_TITLE");

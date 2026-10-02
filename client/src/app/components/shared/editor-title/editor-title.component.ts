@@ -63,7 +63,6 @@ export class EditorTitleComponent implements AfterViewChecked {
   disabledLaneCheck = input(false);
   isHeatsEqual = input<boolean | undefined>(undefined);
   showImport = input(false);
-  showImportRc1 = input(false);
   showExport = input(false);
   importTitleKey = input("DBM_BTN_IMPORT");
   importHelpTitleKey = input("TOOLBAR_HELP_IMPORT_TITLE");
