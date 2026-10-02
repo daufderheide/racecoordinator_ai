@@ -424,7 +424,147 @@ describe("ImportModalComponent", () => {
       expect(component.step).toBe("upload");
       expect(component.selectedFile).toBeNull();
       expect(component.preview).toBeNull();
+      expect(component.showAssetsModal).toBeFalse();
       expect(component.close.emit).toHaveBeenCalled();
+    });
+  });
+
+  describe("Assets Details Modal", () => {
+    it("should identify audio file extensions accurately", () => {
+      expect(component.isAudioFile("engine.wav")).toBeTrue();
+      expect(component.isAudioFile("VOICE.MP3")).toBeTrue();
+      expect(component.isAudioFile("beep.ogg")).toBeTrue();
+      expect(component.isAudioFile("avatar.png")).toBeFalse();
+      expect(component.isAudioFile("photo.jpg")).toBeFalse();
+      expect(component.isAudioFile("drivers.csv")).toBeFalse();
+      expect(component.isAudioFile("")).toBeFalse();
+    });
+
+    it("should toggle showAssetsModal state", () => {
+      expect(component.showAssetsModal).toBeFalse();
+      component.openAssetsModal();
+      expect(component.showAssetsModal).toBeTrue();
+      component.closeAssetsModal();
+      expect(component.showAssetsModal).toBeFalse();
+    });
+
+    it("should open and close assets modal via pill click in preview step", () => {
+      component.step = "preview";
+      component.preview = {
+        totalRows: 1,
+        validCount: 1,
+        conflictCount: 0,
+        errorCount: 0,
+        importedAssetNames: ["engine.wav", "driver_headshot.png"],
+        detectedAudioDefault: "system",
+        rows: [
+          {
+            rowIndex: 1,
+            status: "VALID",
+            conflictType: "NONE",
+            rawName: "Dan Gurney",
+            resolvedName: "Dan Gurney",
+            resolvedNickname: "Dan",
+            selectedResolution: "AUTO_RENAME",
+          },
+        ],
+      };
+      fixture.detectChanges();
+
+      const pill = fixture.nativeElement.querySelector("#pill-assets-badge");
+      expect(pill).toBeTruthy();
+
+      pill.click();
+      fixture.detectChanges();
+
+      expect(component.showAssetsModal).toBeTrue();
+      const dialogBackdrop = fixture.nativeElement.querySelector(
+        "#assets-dialog-backdrop",
+      );
+      expect(dialogBackdrop).toBeTruthy();
+
+      const rows = fixture.nativeElement.querySelectorAll(".asset-list-row");
+      expect(rows.length).toBe(2);
+      expect(rows[0].textContent).toContain("engine.wav");
+      expect(rows[0].textContent).toContain("DIM_ASSET_AUDIO");
+      expect(rows[1].textContent).toContain("driver_headshot.png");
+      expect(rows[1].textContent).toContain("DIM_ASSET_IMAGE");
+
+      // Close via close button
+      const closeBtn = fixture.nativeElement.querySelector(
+        "#btn-close-assets-modal",
+      );
+      closeBtn.click();
+      fixture.detectChanges();
+
+      expect(component.showAssetsModal).toBeFalse();
+      expect(
+        fixture.nativeElement.querySelector("#assets-dialog-backdrop"),
+      ).toBeNull();
+    });
+
+    it("should close assets modal on backdrop click and stop propagation on card click", () => {
+      component.step = "preview";
+      component.preview = {
+        totalRows: 1,
+        validCount: 1,
+        conflictCount: 0,
+        errorCount: 0,
+        importedAssetNames: ["test.wav"],
+        detectedAudioDefault: "system",
+        rows: [],
+      };
+      component.showAssetsModal = true;
+      fixture.detectChanges();
+
+      const card = fixture.nativeElement.querySelector("#assets-dialog-card");
+      expect(card).toBeTruthy();
+      const cardClickEvent = new MouseEvent("click", { bubbles: true });
+      spyOn(cardClickEvent, "stopPropagation").and.callThrough();
+      card.dispatchEvent(cardClickEvent);
+      expect(cardClickEvent.stopPropagation).toHaveBeenCalled();
+      expect(component.showAssetsModal).toBeTrue();
+
+      const backdrop = fixture.nativeElement.querySelector(
+        "#assets-dialog-backdrop",
+      );
+      backdrop.click();
+      expect(component.showAssetsModal).toBeFalse();
+    });
+
+    it("should open assets modal from summary step card", () => {
+      component.step = "summary";
+      component.preview = {
+        totalRows: 1,
+        validCount: 1,
+        conflictCount: 0,
+        errorCount: 0,
+        importedAssetNames: ["sample_clip.mp3"],
+        detectedAudioDefault: "system",
+        rows: [],
+      };
+      component.importResult = {
+        success: true,
+        importedCount: 1,
+        updatedCount: 0,
+        skippedCount: 0,
+        createdDriverIds: ["d1"],
+        messages: [],
+      };
+      fixture.detectChanges();
+
+      const summaryAssetCard = fixture.nativeElement.querySelector(
+        "#summary-assets-card",
+      );
+      expect(summaryAssetCard).toBeTruthy();
+
+      summaryAssetCard.click();
+      fixture.detectChanges();
+
+      expect(component.showAssetsModal).toBeTrue();
+      expect(
+        fixture.nativeElement.querySelector("#assets-dialog-backdrop"),
+      ).toBeTruthy();
     });
   });
 });

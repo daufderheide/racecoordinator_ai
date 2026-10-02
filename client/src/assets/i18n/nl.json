@@ -2669,5 +2669,11 @@
   "DIM_ERROR_COMMIT_FAILED": "Importeren van coureurs mislukt.",
   "DIM_ERROR_NAME_REQUIRED": "Naam van coureur mag niet leeg zijn.",
   "DIM_ERROR_NICK_REQUIRED": "Bijnaam van coureur mag niet leeg zijn.",
-  "DIM_CONFLICT_DUPLICATE_IN_FILE": "Dubbele naam of bijnaam in geïmporteerd bestand."
+  "DIM_CONFLICT_DUPLICATE_IN_FILE": "Dubbele naam of bijnaam in geïmporteerd bestand.",
+  "DIM_ASSETS_TOOLTIP": "Klik om geïmporteerde mediabestanden te bekijken",
+  "DIM_ASSETS_MODAL_TITLE": "Geïmporteerde mediabestanden",
+  "DIM_ASSETS_MODAL_DESC": "De volgende bijbehorende mediabestanden zijn gedetecteerd en worden geïmporteerd in Asset Manager:",
+  "DIM_ASSET_AUDIO": "Audio",
+  "DIM_ASSET_IMAGE": "Afbeelding",
+  "DIM_ASSETS_EMPTY": "Geen bijbehorende mediabestanden gevonden."
 }

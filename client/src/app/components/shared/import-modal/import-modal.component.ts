@@ -58,6 +58,7 @@ export class ImportModalComponent {
   filterText = "";
   bulkConflictResolution: ConflictResolution = "AUTO_RENAME";
   importResult: DriverImportResult | null = null;
+  showAssetsModal = false;
 
   constructor(
     private dataService: DataService,
@@ -337,6 +338,24 @@ export class ImportModalComponent {
     });
   }
 
+  openAssetsModal() {
+    this.showAssetsModal = true;
+    this.cdr.detectChanges();
+  }
+
+  closeAssetsModal() {
+    this.showAssetsModal = false;
+    this.cdr.detectChanges();
+  }
+
+  isAudioFile(filename: string): boolean {
+    if (!filename) return false;
+    const lower = filename.toLowerCase();
+    return (
+      lower.endsWith(".wav") || lower.endsWith(".mp3") || lower.endsWith(".ogg")
+    );
+  }
+
   onClose() {
     this.resetState();
     this.close.emit();
@@ -352,6 +371,7 @@ export class ImportModalComponent {
     this.isLoading = false;
     this.filterText = "";
     this.activeTab = "all";
+    this.showAssetsModal = false;
     if (this.fileInputRef?.nativeElement) {
       this.fileInputRef.nativeElement.value = "";
     }

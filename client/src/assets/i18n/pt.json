@@ -2669,5 +2669,11 @@
   "DIM_ERROR_COMMIT_FAILED": "Falha ao confirmar a importação de pilotos.",
   "DIM_ERROR_NAME_REQUIRED": "O nome do piloto não pode estar vazio.",
   "DIM_ERROR_NICK_REQUIRED": "O apelido do piloto não pode estar vazio.",
-  "DIM_CONFLICT_DUPLICATE_IN_FILE": "Nome ou apelido duplicado no arquivo importado."
+  "DIM_CONFLICT_DUPLICATE_IN_FILE": "Nome ou apelido duplicado no arquivo importado.",
+  "DIM_ASSETS_TOOLTIP": "Clique para ver os arquivos de mídia importados",
+  "DIM_ASSETS_MODAL_TITLE": "Arquivos de mídia importados",
+  "DIM_ASSETS_MODAL_DESC": "Os seguintes arquivos de mídia complementares foram detectados e serão importados no Gerenciador de recursos:",
+  "DIM_ASSET_AUDIO": "Áudio",
+  "DIM_ASSET_IMAGE": "Imagem",
+  "DIM_ASSETS_EMPTY": "Nenhum arquivo de mídia complementar encontrado."
 }

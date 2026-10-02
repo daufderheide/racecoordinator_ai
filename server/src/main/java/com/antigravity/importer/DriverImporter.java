@@ -108,6 +108,7 @@ public class DriverImporter {
       String name = entry.getKey();
       byte[] data = entry.getValue();
       if (data == null || data.length == 0) continue;
+      if (!DriverImportParserHelper.isMediaFile(name)) continue;
 
       String lower = name.toLowerCase(Locale.ROOT);
       String type =

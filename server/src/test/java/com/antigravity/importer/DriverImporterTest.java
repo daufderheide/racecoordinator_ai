@@ -207,6 +207,24 @@ public class DriverImporterTest {
   }
 
   @Test
+  public void testNonMediaCompanionAssetsAreIgnored() throws Exception {
+    String csv = "Name,Nickname\nAlice,Ace\n";
+    Map<String, byte[]> companionAssets = new HashMap<>();
+    companionAssets.put("notes.txt", "some text".getBytes(StandardCharsets.UTF_8));
+    companionAssets.put("data.csv", "more,csv".getBytes(StandardCharsets.UTF_8));
+    companionAssets.put("avatar.png", "fake-png-bytes".getBytes(StandardCharsets.UTF_8));
+
+    DriverImportPreview preview =
+        importer.parseAndValidate(
+            new ByteArrayInputStream(csv.getBytes(StandardCharsets.UTF_8)),
+            "drivers.csv",
+            companionAssets);
+
+    assertEquals(1, preview.getImportedAssetNames().size());
+    assertEquals("avatar.png", preview.getImportedAssetNames().get(0));
+  }
+
+  @Test
   public void testCommitImportWithResolutions() throws Exception {
     Driver existing = new Driver("Existing Driver", "OldNick", "d1", "d1");
     driverRepository.insert(existing);

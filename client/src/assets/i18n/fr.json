@@ -2669,5 +2669,11 @@
   "DIM_ERROR_COMMIT_FAILED": "Échec de l'importation des pilotes.",
   "DIM_ERROR_NAME_REQUIRED": "Le nom du pilote ne peut pas être vide.",
   "DIM_ERROR_NICK_REQUIRED": "Le surnom du pilote ne peut pas être vide.",
-  "DIM_CONFLICT_DUPLICATE_IN_FILE": "Nom ou surnom en double dans le fichier importé."
+  "DIM_CONFLICT_DUPLICATE_IN_FILE": "Nom ou surnom en double dans le fichier importé.",
+  "DIM_ASSETS_TOOLTIP": "Cliquez pour voir les fichiers multimédias importés",
+  "DIM_ASSETS_MODAL_TITLE": "Fichiers multimédias importés",
+  "DIM_ASSETS_MODAL_DESC": "Les fichiers multimédias complémentaires suivants ont été détectés et seront importés dans le Gestionnaire de ressources :",
+  "DIM_ASSET_AUDIO": "Audio",
+  "DIM_ASSET_IMAGE": "Image",
+  "DIM_ASSETS_EMPTY": "Aucun fichier multimédia complémentaire trouvé."
 }

@@ -2669,5 +2669,11 @@
   "DIM_ERROR_COMMIT_FAILED": "Importieren der Fahrer fehlgeschlagen.",
   "DIM_ERROR_NAME_REQUIRED": "Fahrername darf nicht leer sein.",
   "DIM_ERROR_NICK_REQUIRED": "Spitzname des Fahrers darf nicht leer sein.",
-  "DIM_CONFLICT_DUPLICATE_IN_FILE": "Doppelter Name oder Spitzname in der Importdatei."
+  "DIM_CONFLICT_DUPLICATE_IN_FILE": "Doppelter Name oder Spitzname in der Importdatei.",
+  "DIM_ASSETS_TOOLTIP": "Klicken, um importierte Mediendateien anzuzeigen",
+  "DIM_ASSETS_MODAL_TITLE": "Importierte Mediendateien",
+  "DIM_ASSETS_MODAL_DESC": "Die folgenden begleitenden Mediendateien wurden erkannt und werden in den Asset-Manager importiert:",
+  "DIM_ASSET_AUDIO": "Audio",
+  "DIM_ASSET_IMAGE": "Bild",
+  "DIM_ASSETS_EMPTY": "Keine Mediendateien gefunden."
 }

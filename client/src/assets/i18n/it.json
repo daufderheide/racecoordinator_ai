@@ -2669,5 +2669,11 @@
   "DIM_ERROR_COMMIT_FAILED": "Importazione dei piloti non riuscita.",
   "DIM_ERROR_NAME_REQUIRED": "Il nome del pilota non può essere vuoto.",
   "DIM_ERROR_NICK_REQUIRED": "Il soprannome del pilota non può essere vuoto.",
-  "DIM_CONFLICT_DUPLICATE_IN_FILE": "Nome o soprannome duplicato nel file importato."
+  "DIM_CONFLICT_DUPLICATE_IN_FILE": "Nome o soprannome duplicato nel file importato.",
+  "DIM_ASSETS_TOOLTIP": "Fai clic per visualizzare i file multimediali importati",
+  "DIM_ASSETS_MODAL_TITLE": "File multimediali importati",
+  "DIM_ASSETS_MODAL_DESC": "I seguenti file multimediali complementari sono stati rilevati e verranno importati in Gestione risorse:",
+  "DIM_ASSET_AUDIO": "Audio",
+  "DIM_ASSET_IMAGE": "Immagine",
+  "DIM_ASSETS_EMPTY": "Nessun file multimediale complementare trovato."
 }

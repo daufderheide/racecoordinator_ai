@@ -2667,5 +2667,11 @@
   "DIM_ERROR_COMMIT_FAILED": "Failed to commit driver import.",
   "DIM_ERROR_NAME_REQUIRED": "Driver name cannot be empty.",
   "DIM_ERROR_NICK_REQUIRED": "Driver nickname cannot be empty.",
-  "DIM_CONFLICT_DUPLICATE_IN_FILE": "Duplicate name or nickname in imported file."
+  "DIM_CONFLICT_DUPLICATE_IN_FILE": "Duplicate name or nickname in imported file.",
+  "DIM_ASSETS_TOOLTIP": "Click to view imported assets",
+  "DIM_ASSETS_MODAL_TITLE": "Imported Media Assets",
+  "DIM_ASSETS_MODAL_DESC": "The following companion media files were detected and will be imported into the Asset Manager:",
+  "DIM_ASSET_AUDIO": "Audio",
+  "DIM_ASSET_IMAGE": "Image",
+  "DIM_ASSETS_EMPTY": "No companion assets found."
 }

@@ -209,7 +209,16 @@
               <span class="stat-value">{{ preview?.errorCount || 0 }}</span>
             </div>
             @if (preview && preview.importedAssetNames.length > 0) {
-              <div class="stat-pill pill-assets">
+              <div
+                class="stat-pill pill-assets"
+                id="pill-assets-badge"
+                role="button"
+                tabindex="0"
+                (click)="openAssetsModal()"
+                (keydown.enter)="openAssetsModal()"
+                (keydown.space)="openAssetsModal()"
+                [title]="'DIM_ASSETS_TOOLTIP' | translate"
+              >
                 <span class="material-icons pill-icon">perm_media</span>
                 <span class="stat-label"
                   >{{ "DIM_TAB_ASSETS" | translate }}:</span
@@ -462,7 +471,16 @@
               }}</span>
             </div>
             @if (preview && preview.importedAssetNames.length > 0) {
-              <div class="summary-card">
+              <div
+                class="summary-card clickable-card"
+                id="summary-assets-card"
+                role="button"
+                tabindex="0"
+                (click)="openAssetsModal()"
+                (keydown.enter)="openAssetsModal()"
+                (keydown.space)="openAssetsModal()"
+                [title]="'DIM_ASSETS_TOOLTIP' | translate"
+              >
                 <span class="material-icons card-icon icon-asset"
                   >perm_media</span
                 >
@@ -487,6 +505,94 @@
           >
             {{ "COMMON_DONE" | translate }}
           </button>
+        </div>
+      }
+
+      <!-- Nested Assets Details Modal -->
+      @if (showAssetsModal && preview) {
+        <div
+          class="assets-dialog-backdrop"
+          id="assets-dialog-backdrop"
+          (click)="closeAssetsModal()"
+        >
+          <div
+            class="assets-dialog-card"
+            id="assets-dialog-card"
+            (click)="$event.stopPropagation()"
+          >
+            <div class="assets-dialog-header">
+              <div class="assets-dialog-title-wrap">
+                <span class="material-icons assets-header-icon"
+                  >perm_media</span
+                >
+                <h3 class="assets-dialog-title">
+                  {{ "DIM_ASSETS_MODAL_TITLE" | translate }}
+                </h3>
+                <span class="assets-count-badge">{{
+                  preview.importedAssetNames.length
+                }}</span>
+              </div>
+              <button
+                type="button"
+                class="btn-ghost-close"
+                id="btn-close-assets-modal"
+                (click)="closeAssetsModal()"
+                [title]="'COMMON_CLOSE' | translate"
+                aria-label="Close"
+              >
+                <span class="material-icons">close</span>
+              </button>
+            </div>
+
+            <div class="assets-dialog-body">
+              <p class="assets-dialog-desc">
+                {{ "DIM_ASSETS_MODAL_DESC" | translate }}
+              </p>
+
+              <div class="assets-list-container" id="assets-list-container">
+                @if (preview.importedAssetNames.length === 0) {
+                  <div class="assets-empty-state">
+                    <span class="material-icons">info</span>
+                    <span>{{ "DIM_ASSETS_EMPTY" | translate }}</span>
+                  </div>
+                } @else {
+                  @for (asset of preview.importedAssetNames; track asset) {
+                    <div class="asset-list-row">
+                      <span class="material-icons asset-row-icon">
+                        {{ isAudioFile(asset) ? "volume_up" : "image" }}
+                      </span>
+                      <span class="asset-row-name" [title]="asset">{{
+                        asset
+                      }}</span>
+                      <span
+                        class="asset-type-badge"
+                        [class.type-audio]="isAudioFile(asset)"
+                        [class.type-image]="!isAudioFile(asset)"
+                      >
+                        {{
+                          (isAudioFile(asset)
+                            ? "DIM_ASSET_AUDIO"
+                            : "DIM_ASSET_IMAGE"
+                          ) | translate
+                        }}
+                      </span>
+                    </div>
+                  }
+                }
+              </div>
+            </div>
+
+            <div class="assets-dialog-footer">
+              <button
+                type="button"
+                class="btn-primary"
+                id="btn-done-assets-modal"
+                (click)="closeAssetsModal()"
+              >
+                {{ "COMMON_CLOSE" | translate }}
+              </button>
+            </div>
+          </div>
         </div>
       }
     </div>

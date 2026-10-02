@@ -2,6 +2,7 @@ package com.antigravity.handlers;
 
 import com.antigravity.auth.Role;
 import com.antigravity.context.DatabaseContext;
+import com.antigravity.importer.DriverImportParserHelper;
 import com.antigravity.importer.DriverImporter;
 import com.antigravity.importer.model.DriverImportCommitRequest;
 import com.antigravity.importer.model.DriverImportPreview;
@@ -83,10 +84,12 @@ public class DriverImportTaskHandler {
 
       Map<String, byte[]> companionAssets = new HashMap<>();
       for (UploadedFile f : files) {
-        if (f != primaryFile) {
-          byte[] data = DriverImportTaskHandlerUtils.readBytes(f.getContent());
-          companionAssets.put(f.getFilename(), data);
+        if (f.getFilename().equalsIgnoreCase(primaryFile.getFilename())
+            || !DriverImportParserHelper.isMediaFile(f.getFilename())) {
+          continue;
         }
+        byte[] data = DriverImportTaskHandlerUtils.readBytes(f.getContent());
+        companionAssets.put(f.getFilename(), data);
       }
 
       DriverImporter importer = createImporter();

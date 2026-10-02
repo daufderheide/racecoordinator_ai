@@ -388,15 +388,17 @@ public final class DriverImportParserHelper {
     return pkg;
   }
 
-  private static boolean isMediaFile(String name) {
-    return name.endsWith(".wav")
-        || name.endsWith(".mp3")
-        || name.endsWith(".ogg")
-        || name.endsWith(".png")
-        || name.endsWith(".jpg")
-        || name.endsWith(".jpeg")
-        || name.endsWith(".webp")
-        || name.endsWith(".gif");
+  public static boolean isMediaFile(String name) {
+    if (name == null) return false;
+    String lower = name.toLowerCase(Locale.ROOT);
+    return lower.endsWith(".wav")
+        || lower.endsWith(".mp3")
+        || lower.endsWith(".ogg")
+        || lower.endsWith(".png")
+        || lower.endsWith(".jpg")
+        || lower.endsWith(".jpeg")
+        || lower.endsWith(".webp")
+        || lower.endsWith(".gif");
   }
 
   private static String getSimpleFileName(String path) {
