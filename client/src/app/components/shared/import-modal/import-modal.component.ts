@@ -1,5 +1,12 @@
 import { CommonModule } from "@angular/common";
-import { Component, ElementRef, input, output, ViewChild } from "@angular/core";
+import {
+  ChangeDetectorRef,
+  Component,
+  ElementRef,
+  input,
+  output,
+  ViewChild,
+} from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import {
   CustomOptionComponent,
@@ -52,7 +59,10 @@ export class ImportModalComponent {
   bulkConflictResolution: ConflictResolution = "AUTO_RENAME";
   importResult: DriverImportResult | null = null;
 
-  constructor(private dataService: DataService) {}
+  constructor(
+    private dataService: DataService,
+    private cdr: ChangeDetectorRef,
+  ) {}
 
   onDragOver(event: DragEvent) {
     event.preventDefault();
@@ -110,23 +120,28 @@ export class ImportModalComponent {
 
     if (!mainFile) {
       this.errorMessage = "DIM_ERROR_NO_DATA_FILE";
+      this.cdr.detectChanges();
       return;
     }
 
     this.selectedFile = mainFile;
     this.companionFiles = companions;
+    this.cdr.detectChanges();
   }
 
   triggerFilePicker() {
+    if (this.isLoading) return;
     this.fileInputRef?.nativeElement?.click();
   }
 
   removeFile() {
+    if (this.isLoading) return;
     this.selectedFile = null;
     this.companionFiles = [];
     if (this.fileInputRef?.nativeElement) {
       this.fileInputRef.nativeElement.value = "";
     }
+    this.cdr.detectChanges();
   }
 
   downloadTemplate(format: string) {
@@ -138,22 +153,26 @@ export class ImportModalComponent {
         a.download = `drivers_template.${format}`;
         a.click();
         window.URL.revokeObjectURL(url);
+        this.cdr.detectChanges();
       },
       error: () => {
         this.errorMessage = "DIM_ERROR_TEMPLATE_DOWNLOAD";
+        this.cdr.detectChanges();
       },
     });
   }
 
   onAudioDefaultModeChange(val: string) {
     this.audioDefaultMode = val;
+    this.cdr.detectChanges();
   }
 
   startValidation() {
-    if (!this.selectedFile) return;
+    if (!this.selectedFile || this.isLoading) return;
 
     this.isLoading = true;
     this.errorMessage = null;
+    this.cdr.detectChanges();
 
     const formData = new FormData();
     formData.append("file", this.selectedFile, this.selectedFile.name);
@@ -168,10 +187,12 @@ export class ImportModalComponent {
         this.applyAudioDefaultToPreview();
         this.step = "preview";
         this.isLoading = false;
+        this.cdr.detectChanges();
       },
       error: (err) => {
         this.isLoading = false;
         this.errorMessage = err?.error || "DIM_ERROR_VALIDATION_FAILED";
+        this.cdr.detectChanges();
       },
     });
   }
@@ -223,10 +244,12 @@ export class ImportModalComponent {
         row.selectedResolution = this.bulkConflictResolution;
       }
     }
+    this.cdr.detectChanges();
   }
 
   onRowResolutionChange(row: DriverImportRow, resolution: string) {
     row.selectedResolution = resolution as ConflictResolution;
+    this.cdr.detectChanges();
   }
 
   onRowNameChange(row: DriverImportRow, newName: string) {
@@ -235,11 +258,13 @@ export class ImportModalComponent {
       row.resolvedNickname = row.resolvedName;
     }
     this.recheckRowValidity(row);
+    this.cdr.detectChanges();
   }
 
   onRowNicknameChange(row: DriverImportRow, newNick: string) {
     row.resolvedNickname = newNick.trim();
     this.recheckRowValidity(row);
+    this.cdr.detectChanges();
   }
 
   recheckRowValidity(row: DriverImportRow) {
@@ -286,10 +311,11 @@ export class ImportModalComponent {
   }
 
   commitImport() {
-    if (!this.preview || this.resolvableCount === 0) return;
+    if (!this.preview || this.resolvableCount === 0 || this.isLoading) return;
 
     this.isLoading = true;
     this.errorMessage = null;
+    this.cdr.detectChanges();
 
     const request: DriverImportCommitRequest = {
       rows: this.preview.rows,
@@ -301,10 +327,12 @@ export class ImportModalComponent {
         this.step = "summary";
         this.isLoading = false;
         this.imported.emit(res);
+        this.cdr.detectChanges();
       },
       error: (err) => {
         this.isLoading = false;
         this.errorMessage = err?.error || "DIM_ERROR_COMMIT_FAILED";
+        this.cdr.detectChanges();
       },
     });
   }
@@ -327,5 +355,6 @@ export class ImportModalComponent {
     if (this.fileInputRef?.nativeElement) {
       this.fileInputRef.nativeElement.value = "";
     }
+    this.cdr.detectChanges();
   }
 }

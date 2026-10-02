@@ -66,6 +66,7 @@
                 <button
                   type="button"
                   class="btn-remove-file"
+                  [disabled]="isLoading"
                   (click)="$event.stopPropagation(); removeFile()"
                   [title]="'DIM_REMOVE_FILE' | translate"
                 >

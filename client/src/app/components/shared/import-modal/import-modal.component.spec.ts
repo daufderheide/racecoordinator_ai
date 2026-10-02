@@ -163,6 +163,17 @@ describe("ImportModalComponent", () => {
       expect(component.companionFiles.length).toBe(0);
     });
 
+    it("should not remove file when isLoading is true", () => {
+      const file = new File([""], "drivers.json");
+      component.selectedFile = file;
+      component.companionFiles = [new File([""], "audio.wav")];
+      component.isLoading = true;
+      component.removeFile();
+
+      expect(component.selectedFile).toBe(file);
+      expect(component.companionFiles.length).toBe(1);
+    });
+
     it("should trigger native file input click", () => {
       const inputEl = document.createElement("input");
       spyOn(inputEl, "click");
