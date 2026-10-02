@@ -19,7 +19,18 @@ test.describe("Driver Editor Visuals", () => {
   async function enterEditMode(page: any) {
     await page.locator("#edit-track-btn").click();
     await expect(page.locator("#driver-name-input")).toBeEnabled();
-    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+    await page.waitForFunction(() => {
+      const input = document.getElementById(
+        "driver-name-input",
+      ) as HTMLInputElement;
+      return (
+        input &&
+        document.activeElement === input &&
+        input.selectionStart === 0 &&
+        input.selectionEnd === input.value.length
+      );
+    });
+    await page.mouse.move(0, 0);
     await TestSetupHelper.disableAnimations(page);
   }
 

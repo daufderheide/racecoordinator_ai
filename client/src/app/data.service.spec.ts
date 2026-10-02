@@ -1839,4 +1839,69 @@ describe("DataService", () => {
       expect(service.clearRaceData).toHaveBeenCalled();
     });
   });
+
+  describe("resolveAssetUrl", () => {
+    it("should handle empty or falsy inputs", () => {
+      expect(service.resolveAssetUrl(undefined)).toBe("");
+      expect(service.resolveAssetUrl("")).toBe("");
+      expect(service.resolveAssetUrl("   ")).toBe("");
+    });
+
+    it("should preserve absolute or http/https URLs", () => {
+      expect(service.resolveAssetUrl("http://example.com/a.png")).toBe(
+        "http://example.com/a.png",
+      );
+      expect(service.resolveAssetUrl("https://example.com/a.png")).toBe(
+        "https://example.com/a.png",
+      );
+      expect(service.resolveAssetUrl("/assets/my_image.png")).toBe(
+        "/assets/my_image.png",
+      );
+    });
+
+    it("should preserve client assets/images/ static paths", () => {
+      expect(service.resolveAssetUrl("assets/images/default_avatar.svg")).toBe(
+        "assets/images/default_avatar.svg",
+      );
+    });
+
+    it("should prefix assets/default_ paths with slash", () => {
+      expect(service.resolveAssetUrl("assets/default_helmet.png")).toBe(
+        "/assets/default_helmet.png",
+      );
+    });
+
+    it("should resolve helmet aliases to default asset URLs", () => {
+      expect(
+        service.resolveAssetUrl("assets/defaults/helmets/helmet_yellow.png"),
+      ).toBe("/assets/default_black-yellow_Helmet_Black-Yellow");
+      expect(
+        service.resolveAssetUrl("assets/defaults/helmets/helmet_red.png"),
+      ).toBe("/assets/default_red-yellow_Helmet_Red-Yellow");
+      expect(service.resolveAssetUrl("helmet_blue.png")).toBe(
+        "/assets/default_blue-white_Helmet_Blue-White",
+      );
+    });
+
+    it("should match against loadedAssets by id, name, or filename", () => {
+      service.setLoadedAssets([
+        {
+          model: { entityId: "custom-avatar-1" },
+          name: "My Custom Avatar",
+          type: "image",
+          url: "/assets/custom-avatar-1_My_Custom_Avatar.png",
+        } as any,
+      ]);
+
+      expect(service.resolveAssetUrl("custom-avatar-1")).toBe(
+        "/assets/custom-avatar-1_My_Custom_Avatar.png",
+      );
+      expect(service.resolveAssetUrl("My Custom Avatar")).toBe(
+        "/assets/custom-avatar-1_My_Custom_Avatar.png",
+      );
+      expect(
+        service.resolveAssetUrl("custom-avatar-1_My_Custom_Avatar.png"),
+      ).toBe("/assets/custom-avatar-1_My_Custom_Avatar.png");
+    });
+  });
 });

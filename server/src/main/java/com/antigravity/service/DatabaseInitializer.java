@@ -301,11 +301,22 @@ public class DatabaseInitializer {
         builder.withFuelAudio(new AudioConfig("audio_set", "default_fuel_level", ""));
         needsUpdate = true;
       }
+      if (driver.getAvatarUrl() != null
+          && !driver.getAvatarUrl().isEmpty()
+          && !driver.getAvatarUrl().startsWith("/")
+          && !driver.getAvatarUrl().startsWith("http")) {
+        String resolvedAvatar =
+            AssetDefaultsInitializer.resolveDefaultAssetUrl(driver.getAvatarUrl());
+        if (resolvedAvatar != null && !resolvedAvatar.equals(driver.getAvatarUrl())) {
+          builder.withAvatarUrl(resolvedAvatar);
+          needsUpdate = true;
+        }
+      }
 
       if (needsUpdate) {
         driverRepo.replace(driver.getEntityId(), builder.build());
         logger.info(
-            "Backfilled audio settings for driver '{}' ({})",
+            "Backfilled audio/avatar settings for driver '{}' ({})",
             driver.getName(),
             driver.getEntityId());
       }
