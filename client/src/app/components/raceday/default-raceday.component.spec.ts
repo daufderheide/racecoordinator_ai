@@ -3226,6 +3226,16 @@ describe("DefaultRacedayComponent", () => {
 
       expect(mockAudioInstance.play).toHaveBeenCalled();
     });
+
+    it("should update driverData adjustedLapCount when FALSE_START received with adjustedLapCount", () => {
+      lapsSubject.next({
+        objectId: "hd1",
+        type: LapType.FALSE_START,
+        adjustedLapCount: -1,
+      });
+
+      expect(mockHd.adjustedLapCount).toBe(-1);
+    });
   });
 
   describe("Lap Audio", () => {

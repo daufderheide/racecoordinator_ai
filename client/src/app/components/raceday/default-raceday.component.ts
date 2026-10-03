@@ -1875,7 +1875,45 @@ export class DefaultRacedayComponent
                 : Array.isArray((driverData as any).laps)
                   ? (driverData as any).laps.length
                   : (driverData as any).lapCount || 0;
-            if (
+            if (lap.type === LapType.FALSE_START) {
+              if (
+                lap.adjustedLapCount !== undefined &&
+                lap.adjustedLapCount !== null &&
+                !isNaN(lap.adjustedLapCount)
+              ) {
+                driverData.adjustedLapCount = lap.adjustedLapCount;
+                if (
+                  this.heat &&
+                  this.heat !== currentHeat &&
+                  this.heat.heatDrivers
+                ) {
+                  const localHd = DriverMatchingUtils.findDriverForLap(
+                    this.heat.heatDrivers,
+                    lap,
+                  );
+                  if (localHd) {
+                    localHd.adjustedLapCount = lap.adjustedLapCount;
+                  }
+                }
+                if (this.heats && this.heats.length > 0 && currentHeat) {
+                  const targetHeat = this.heats.find(
+                    (h) =>
+                      (currentHeat.objectId &&
+                        h.objectId === currentHeat.objectId) ||
+                      h.heatNumber === currentHeat.heatNumber,
+                  );
+                  if (targetHeat && targetHeat.heatDrivers) {
+                    const targetHd = DriverMatchingUtils.findDriverForLap(
+                      targetHeat.heatDrivers,
+                      lap,
+                    );
+                    if (targetHd && targetHd !== driverData) {
+                      targetHd.adjustedLapCount = lap.adjustedLapCount;
+                    }
+                  }
+                }
+              }
+            } else if (
               lap.lapNumber &&
               currentLapCount < lap.lapNumber &&
               typeof driverData.addLapTime === "function"

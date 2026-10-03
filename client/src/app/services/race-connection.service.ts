@@ -300,6 +300,48 @@ export class RaceConnectionService implements OnDestroy {
                 `Lap on lane ${driverData.laneIndex} was below min lap time: ${lap.lapTime}`,
               );
               this.lapSubject.next(lap);
+            } else if (lap.type === LapType.FALSE_START) {
+              if (
+                lap.adjustedLapCount !== undefined &&
+                lap.adjustedLapCount !== null &&
+                !isNaN(lap.adjustedLapCount)
+              ) {
+                driverData.adjustedLapCount = lap.adjustedLapCount;
+              }
+              if (lap.flag !== undefined && lap.flag !== null) {
+                driverData.flag = lap.flag;
+              }
+
+              // Also ensure matching driver in raceService.getHeats() is kept in sync
+              if (allHeats && allHeats.length > 0) {
+                const targetHeat = allHeats.find(
+                  (h) =>
+                    (heat.objectId && h.objectId === heat.objectId) ||
+                    h.heatNumber === heat.heatNumber,
+                );
+                if (targetHeat && targetHeat.heatDrivers) {
+                  const targetHd = DriverMatchingUtils.findDriverForLap(
+                    targetHeat.heatDrivers,
+                    lap,
+                  );
+                  if (targetHd && targetHd !== driverData) {
+                    if (
+                      lap.adjustedLapCount !== undefined &&
+                      lap.adjustedLapCount !== null &&
+                      !isNaN(lap.adjustedLapCount)
+                    ) {
+                      targetHd.adjustedLapCount = lap.adjustedLapCount;
+                    }
+                    if (lap.flag !== undefined && lap.flag !== null) {
+                      targetHd.flag = lap.flag;
+                    }
+                  }
+                }
+                this.raceService.setHeats([...allHeats]);
+              }
+
+              this.raceService.setCurrentHeat(heat);
+              this.lapSubject.next(lap);
             } else {
               const segmentsCopy = [...(driverData.currentLapSegments || [])];
               if (typeof driverData.addLapTime === "function") {

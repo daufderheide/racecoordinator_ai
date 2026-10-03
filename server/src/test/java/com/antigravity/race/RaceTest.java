@@ -697,6 +697,16 @@ public class RaceTest {
       assertEquals(1, dhd.getFalseStarts());
       assertEquals(1.0, dhd.getPenaltyLaps(), 0.001);
       assertEquals(3.0, dhd.getRemainingFalseStartTimePenalty(), 0.001);
+      assertEquals(
+          "Reaction time should remain -1.0 when restart on false start is enabled",
+          -1.0,
+          dhd.getReactionTime(),
+          0.001);
+      assertEquals(
+          "Adjusted lap count should reflect false start penalty even after restart",
+          -1.0,
+          dhd.getAdjustedLapCount(),
+          0.001);
     }
 
     @Test
@@ -729,6 +739,16 @@ public class RaceTest {
       assertEquals(1, dhd.getFalseStarts());
       assertEquals(0.5, dhd.getPenaltyLaps(), 0.001);
       assertEquals(2.0, dhd.getRemainingFalseStartTimePenalty(), 0.001);
+      assertEquals(
+          "Reaction time should be set to 0.0 when restart on false start is disabled",
+          0.0,
+          dhd.getReactionTime(),
+          0.001);
+      assertEquals(
+          "Adjusted lap count should reflect false start penalty",
+          -0.5,
+          dhd.getAdjustedLapCount(),
+          0.001);
       assertFalse("Lane 0 power should be cut immediately on false start", fsRace.isLanePower(0));
       fsRace.stop();
     }
@@ -817,11 +837,42 @@ public class RaceTest {
       st.onLap(0, 0.5, 1, false);
       assertFalse("Lane 0 power should be cut immediately", fsRace.isLanePower(0));
 
+      DriverHeatData dhd = fsRace.getCurrentHeat().getDrivers().get(0);
+      assertEquals("Penalty laps should be 1.0", 1.0, dhd.getPenaltyLaps(), 0.001);
+      assertEquals(
+          "Adjusted lap count should be -1.0 immediately on false start",
+          -1.0,
+          dhd.getAdjustedLapCount(),
+          0.001);
+      assertEquals(
+          "Reaction time should be set to 0.0 on false start", 0.0, dhd.getReactionTime(), 0.001);
+
       // Transition to Racing (Go / Green)
       Racing racing = new Racing();
       fsRace.changeState(racing);
       assertTrue(
           "Lane 0 power should be restored at Green when time penalty is 0", fsRace.isLanePower(0));
+
+      // First crossing in racing: completes Lap 1, adjusting lap count from -1.0 to 0.0
+      racing.onLap(0, 3.5, 1, false);
+      assertEquals(
+          "Physical lap count should be 1 after first crossing in racing", 1, dhd.getLapCount());
+      assertEquals(
+          "Adjusted lap count should transition from -1.0 to 0.0 on first crossing",
+          0.0,
+          dhd.getAdjustedLapCount(),
+          0.001);
+
+      // Second crossing in racing: completes Lap 2, adjusting lap count from 0.0 to 1.0
+      racing.onLap(0, 3.2, 1, false);
+      assertEquals(
+          "Physical lap count should be 2 after second crossing in racing", 2, dhd.getLapCount());
+      assertEquals(
+          "Adjusted lap count should transition from 0.0 to 1.0 on second crossing",
+          1.0,
+          dhd.getAdjustedLapCount(),
+          0.001);
+
       fsRace.stop();
     }
 
