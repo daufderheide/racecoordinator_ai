@@ -1,6 +1,6 @@
 # Changelog
 
-## [v1.0.1-beta.9] - 2026-10-03
+## [v1.0.1-beta.10] - 2026-10-03
 
 ### 🚀 New Features
 
@@ -10,6 +10,9 @@
 
 ### 🐛 Bug Fixes
 
+- Changed lane-view column 'Lap Count' to "Lap Count (Raw)" for a bit more clarity [#893](https://github.com/daufderheide/racecoordinator_ai/issues/893) [skip-screendiffs] ([a71408b6](https://github.com/daufderheide/racecoordinator_ai/commit/a71408b6))
+- Update the xls export template per user request [#898](https://github.com/daufderheide/racecoordinator_ai/issues/898) ([a7cbd71a](https://github.com/daufderheide/racecoordinator_ai/commit/a7cbd71a))
+- Changed how countdown blur works as on some gpus it doesn't work right.  This should also be a performance optimization, although it doesn't look as good, but it's good enough: [#899](https://github.com/daufderheide/racecoordinator_ai/issues/899) ([995cb29c](https://github.com/daufderheide/racecoordinator_ai/commit/995cb29c))
 - prompt with confirmation dialog when leaving ended race [#900](https://github.com/daufderheide/racecoordinator_ai/issues/900) [skip-screendiffs] ([cc5a30cf](https://github.com/daufderheide/racecoordinator_ai/commit/cc5a30cf))
 - reset race ended and connection state when restarting race session [#900](https://github.com/daufderheide/racecoordinator_ai/issues/900) [skip-screendiffs] ([7174420b](https://github.com/daufderheide/racecoordinator_ai/commit/7174420b))
 - Fixed Starting state timer to use a proper timer rather than a constant 'tick' timer. ([fc6037f8](https://github.com/daufderheide/racecoordinator_ai/commit/fc6037f8))
@@ -37,7 +40,7 @@
 <details>
 <summary>🔍 <b>Full Commit History</b></summary>
 
-<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0...v1.0.1-beta.9">GitHub</a></p>
+<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0...v1.0.1-beta.10">GitHub</a></p>
 </details>
 
 ## [v1.0.0] - 2026-09-27
