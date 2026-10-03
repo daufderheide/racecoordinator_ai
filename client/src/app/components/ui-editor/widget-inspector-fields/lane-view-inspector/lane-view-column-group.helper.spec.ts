@@ -8,6 +8,7 @@ describe("LaneViewColumnGroupHelper", () => {
     const map: Record<string, string> = {
       RD_COL_NAME: "Driver Name",
       RD_COL_LAP: "Lap Count",
+      UI_EDITOR_COL_LAP_COUNT: "Lap Count (Raw)",
       RD_COL_STD_DEV: "Standard Deviation",
       RD_COL_GHOST_PACING_LANE_RECORD: "Lane Record Delta",
       RD_COL_FUEL_LEVEL: "Fuel Level",
@@ -250,6 +251,24 @@ describe("LaneViewColumnGroupHelper", () => {
       expect(groups.length).toBe(1);
       expect(groups[0].columns.length).toBe(1);
       expect(groups[0].columns[0].key).toBe("top2Consecutive");
+    });
+
+    it("should filter columns when searching for raw lap count", () => {
+      const unused = [
+        { key: "driver.name", label: "RD_COL_NAME" },
+        { key: "lapCount", label: "RD_COL_LAP" },
+        { key: "physicalLapCount", label: "UI_EDITOR_COL_LAP_COUNT" },
+      ];
+      const groups = LaneViewColumnGroupHelper.buildColumnGroups(
+        unused,
+        "raw",
+        new Map(),
+        dummyTranslate,
+      );
+      expect(groups.length).toBe(1);
+      expect(groups[0].id).toBe("laps-standings");
+      expect(groups[0].columns.length).toBe(1);
+      expect(groups[0].columns[0].key).toBe("physicalLapCount");
     });
 
     it("should return empty array if search term matches no columns", () => {

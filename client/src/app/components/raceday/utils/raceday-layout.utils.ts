@@ -257,7 +257,7 @@ export class RacedayLayoutUtils {
     const baseKey = (propertyKey as string).split("_")[0];
     const labels: { [key: string]: string } = {
       lapCount: "RD_COL_LAP",
-      physicalLapCount: "RD_COL_LAP",
+      physicalLapCount: "UI_EDITOR_COL_LAP_COUNT",
       lapsLed: "RD_COL_LAPS_LED",
       trackCalls: "RD_COL_TRACK_CALLS",
       lastLapTime: "RD_COL_LAP_TIME",
