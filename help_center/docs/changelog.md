@@ -1,15 +1,17 @@
 # Changelog
 
-## [v1.0.1-beta.10] - 2026-10-03
+## [v1.0.1-beta.11] - 2026-10-03
 
 ### 🚀 New Features
 
+- Added more port diagnosis when RC AI cannot be started because port 7070 is busy/not available.  This will be useful for users to help troubleshoot what's going on. ([f258adde](https://github.com/daufderheide/racecoordinator_ai/commit/f258adde))
 - for the heat-view widget, changed 'use lane background colors' to use lane colors' and disabled summary row text color controls when lane colors are enabled.  Coloring is now completely controlled by the track lane data or the text color set in the widget. [#897](https://github.com/daufderheide/racecoordinator_ai/issues/897) [skip-screendiffs] ([7df44d18](https://github.com/daufderheide/racecoordinator_ai/commit/7df44d18))
 - Auto hide the countdown widget when a different widget is selected. [#869](https://github.com/daufderheide/racecoordinator_ai/issues/869) [skip-screendiffs] ([29801310](https://github.com/daufderheide/racecoordinator_ai/commit/29801310))
 - Added 'show summary for future heats' option for the heat list widget.  This allows all heats to be shown with the same size and column data [#869](https://github.com/daufderheide/racecoordinator_ai/issues/869) [skip-screendiffs] ([5f63db0f](https://github.com/daufderheide/racecoordinator_ai/commit/5f63db0f))
 
 ### 🐛 Bug Fixes
 
+- **raceday**: stabilize auto-start/advance timers, track calls, and countdown audio [skip-screendiff] [#881](https://github.com/daufderheide/racecoordinator_ai/issues/881) ([aba288c1](https://github.com/daufderheide/racecoordinator_ai/commit/aba288c1))
 - Changed lane-view column 'Lap Count' to "Lap Count (Raw)" for a bit more clarity [#893](https://github.com/daufderheide/racecoordinator_ai/issues/893) [skip-screendiffs] ([a71408b6](https://github.com/daufderheide/racecoordinator_ai/commit/a71408b6))
 - Update the xls export template per user request [#898](https://github.com/daufderheide/racecoordinator_ai/issues/898) ([a7cbd71a](https://github.com/daufderheide/racecoordinator_ai/commit/a7cbd71a))
 - Changed how countdown blur works as on some gpus it doesn't work right.  This should also be a performance optimization, although it doesn't look as good, but it's good enough: [#899](https://github.com/daufderheide/racecoordinator_ai/issues/899) ([995cb29c](https://github.com/daufderheide/racecoordinator_ai/commit/995cb29c))
@@ -40,7 +42,7 @@
 <details>
 <summary>🔍 <b>Full Commit History</b></summary>
 
-<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0...v1.0.1-beta.10">GitHub</a></p>
+<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0...v1.0.1-beta.11">GitHub</a></p>
 </details>
 
 ## [v1.0.0] - 2026-09-27
