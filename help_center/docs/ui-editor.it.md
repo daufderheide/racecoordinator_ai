@@ -41,7 +41,17 @@ Il widget **Cronometro** mostra il tempo trascorso o rimanente della manche/gara
 - **Frazioni di secondo (Subsecondi)**:
   - **Sotto la soglia**: Mostra le frazioni di secondo (da 1 a 3 cifre decimali) quando il tempo scende sotto la soglia configurata (ad es. ultimi 10 secondi).
   - **Sempre**: Mostra le frazioni di secondo costantemente per l'intera manche.
+  - **Mai**: Limita il cronometro esclusivamente ai secondi interi.
 - **Anteprima dal vivo**: L'ispettore include un'anteprima istantanea che dimostra come le opzioni selezionate vengono visualizzate a vari intervalli di gara (`> 1 hr`, `> 1 min`, `< 1 min` e `< 10s`).
+
+## Configurazione del widget di conto alla rovescia
+
+Il widget **Conto alla rovescia** mostra il semaforo visivo di partenza ed emette i suoni corrispondenti durante la sequenza di avvio:
+
+- **Lampade massime**: Imposta il numero massimo di luci da visualizzare (predefinito 5, intervallo da 1 a 10). Quando la durata della partenza supera tale valore (ad esempio, una partenza di 6 secondi con un massimo di 5 lampade), tutte le luci rimangono spente/attenuate per la differenza iniziale (1 secondo) prima di accendersi in sequenza.
+- **Animazione dissolvenza in entrata**: Controlla se la schermata delle luci e la sfocatura dello sfondo appaiono con una transizione fluida. Se disattivata, le luci e lo sfondo compaiono istantaneamente.
+- **Orientamento**: Alterna tra disposizione **Orizzontale** e **Verticale**.
+- **Effetti bagliore e sfocatura**: Personalizza l'alone luminoso delle lampade, l'ingrandimento delle luci rosse/verdi e l'intensità o l'area di sfocatura dello sfondo.
 
 ## Widget Colonna Corsia e Duplicazione
 

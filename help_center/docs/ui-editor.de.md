@@ -41,7 +41,17 @@ Das **Timer**-Widget zeigt die abgelaufene oder verbleibende Renn- bzw. Durchgan
 - **Sekundenbruchteile (Subsekunden)**:
   - **Unter Schwellenwert**: Zeigt Dezimalstellen (1 bis 3 Stellen) an, sobald die Zeit unter den konfigurierten Schwellenwert fällt (z. B. letzte 10 Sekunden).
   - **Immer**: Zeigt Sekundenbruchteile durchgehend während des gesamten Durchgangs an.
+  - **Nie**: Beschränkt den Timer ausschließlich auf ganze Sekunden.
 - **Live-Vorschau**: Der Inspektor bietet eine sofortige Vorschau darauf, wie die ausgewählten Einstellungen an verschiedenen Zeitpunkten formatiert werden (`> 1 hr`, `> 1 min`, `< 1 min` und `< 10s`).
+
+## Countdown-Widget-Konfiguration
+
+Das **Countdown**-Widget stellt die visuelle Startampel dar und steuert die Starttöne während der Startsequenz:
+
+- **Maximale Lampenanzahl**: Legt die maximale Anzahl der angezeigten Lampen fest (Standard: 5, Bereich 1 bis 10). Wenn die Countdown-Dauer diese Anzahl überschreitet (z. B. ein 6-Sekunden-Start-Countdown bei maximal 5 Lampen), bleiben alle Lampen während der anfänglichen Differenz (1 Sekunde) dunkel/aus, bevor die Lampen nacheinander aufleuchten.
+- **Einblend-Animation**: Steuert, ob das Countdown-Overlay und die Hintergrundunschärfe beim Start weich eingeblendet werden. Ist die Option deaktiviert, erscheinen Ampel und Hintergrund sofort.
+- **Ausrichtung**: Wechseln Sie zwischen **Horizontaler** und **Vertikaler** Ampelanordnung.
+- **Leucht- & Unschärfeeffekte**: Passen Sie Halos, Skalierungsüberlappungen für rote/grüne Lampen sowie Stärke und Bereich der Hintergrundunschärfe an.
 
 ## Spurspalten-Widgets & Duplizierung
 

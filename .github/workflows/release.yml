@@ -543,7 +543,8 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           BRANCH_NAME="${{ github.ref_name }}"
-          SYNC_BRANCH="sync/${BRANCH_NAME}-to-develop"
+          SAFE_BRANCH="${BRANCH_NAME//\//-}"
+          SYNC_BRANCH="chore/sync-${SAFE_BRANCH}-to-develop"
           echo "Pushing $BRANCH_NAME to $SYNC_BRANCH..."
           git push origin "${{ github.sha }}:refs/heads/$SYNC_BRANCH" --force
           EXISTING_PR=$(gh pr list --head "$SYNC_BRANCH" --base develop --state open --json number --jq '.[0].number' 2>/dev/null || echo "")

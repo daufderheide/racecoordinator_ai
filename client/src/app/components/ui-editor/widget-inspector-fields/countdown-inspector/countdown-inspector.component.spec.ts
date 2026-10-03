@@ -90,15 +90,18 @@ describe("CountdownInspectorComponent", () => {
     expect(slider).toBeNull();
   });
 
-  it("should default lampSizingMode to custom and previewLampCount to 5 when not set in settings", () => {
+  it("should default lampSizingMode to custom, maxLamps to 5, and fadeIn to true when not set in settings", () => {
     expect(component.lampSizingMode).toBe("custom");
+    expect(component.maxLamps).toBe(5);
     expect(component.previewLampCount).toBe(5);
+    expect(component.fadeIn).toBeTrue();
     expect(component.settings().lampSizingMode).toBe("custom");
-    expect(component.settings().previewLampCount).toBe(5);
+    expect(component.settings().maxLamps).toBe(5);
+    expect(component.settings().fadeIn).toBeTrue();
 
     // Verify custom selects have these values set
     const selects = fixture.nativeElement.querySelectorAll("app-custom-select");
-    // selects: 0: orientation, 1: lampSizingMode, 2: previewLampCount, 3: blurArea
+    // selects: 0: orientation, 1: lampSizingMode, 2: maxLamps, 3: blurArea
     expect(selects[1].getAttribute("data-value")).toBe("custom");
     expect(selects[2].getAttribute("data-value")).toBe("5");
   });
@@ -111,9 +114,18 @@ describe("CountdownInspectorComponent", () => {
     expect(component.lampSizingMode).toBe("fit");
     expect(component.change.emit).toHaveBeenCalled();
 
-    component.setPreviewLampCount(8);
-    expect(component.settings().previewLampCount).toBe(8);
+    component.setMaxLamps(8);
+    expect(component.settings().maxLamps).toBe(8);
+    expect(component.maxLamps).toBe(8);
     expect(component.previewLampCount).toBe(8);
+
+    component.setFadeIn(false);
+    expect(component.settings().fadeIn).toBeFalse();
+    expect(component.fadeIn).toBeFalse();
+
+    component.setPreviewLampCount(6);
+    expect(component.settings().maxLamps).toBe(6);
+    expect(component.maxLamps).toBe(6);
 
     component.setOrientation("vertical");
     expect(component.settings().orientation).toBe("vertical");

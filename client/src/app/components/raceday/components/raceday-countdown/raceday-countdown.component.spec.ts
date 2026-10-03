@@ -536,4 +536,65 @@ describe("RacedayCountdownComponent", () => {
       "assets/images/defaults/start_green.png",
     );
   });
+
+  it("should apply fade-in class when fadeIn is true (default) and omit it when false", () => {
+    const activeParent = { ...mockParent, showCountdownOverlay: true };
+    fixture.componentRef.setInput("parent", activeParent);
+    fixture.detectChanges();
+
+    expect(component.fadeIn).toBeTrue();
+    const overlay = fixture.nativeElement.querySelector(".countdown-overlay");
+    const backdrop = fixture.nativeElement.querySelector(
+      ".countdown-blur-backdrop",
+    );
+    expect(overlay.classList.contains("fade-in")).toBeTrue();
+    expect(backdrop.classList.contains("fade-in")).toBeTrue();
+
+    const noFadeWidget: AbsoluteWidgetNode = {
+      ...defaultWidget,
+      customSettings: {
+        ...defaultWidget.customSettings,
+        fadeIn: false,
+      },
+    };
+    fixture.componentRef.setInput("widget", noFadeWidget);
+    fixture.detectChanges();
+
+    expect(component.fadeIn).toBeFalse();
+    expect(overlay.classList.contains("fade-in")).toBeFalse();
+    expect(backdrop.classList.contains("fade-in")).toBeFalse();
+  });
+
+  it("should respect maxLamps and fallback to previewLampCount", () => {
+    expect(component.maxLamps).toBe(5);
+
+    const customWidget: AbsoluteWidgetNode = {
+      ...defaultWidget,
+      customSettings: {
+        ...defaultWidget.customSettings,
+        maxLamps: 7,
+      },
+    };
+    fixture.componentRef.setInput("widget", customWidget);
+    fixture.componentRef.setInput("isCustomizing", true);
+    fixture.componentRef.setInput("parent", null);
+    fixture.detectChanges();
+
+    expect(component.maxLamps).toBe(7);
+    expect(component.displayLamps.length).toBe(7);
+
+    // Fallback to previewLampCount
+    const legacyWidget: AbsoluteWidgetNode = {
+      ...defaultWidget,
+      customSettings: {
+        ...defaultWidget.customSettings,
+        previewLampCount: 4,
+      },
+    };
+    fixture.componentRef.setInput("widget", legacyWidget);
+    fixture.detectChanges();
+
+    expect(component.maxLamps).toBe(4);
+    expect(component.displayLamps.length).toBe(4);
+  });
 });

@@ -82,4 +82,14 @@ public class StartingTest {
 
     assertEquals(RaceFlag.RED, dhd.getFlag());
   }
+
+  @Test
+  public void testEnterAndExit_StopsTicker() {
+    starting.enter(race);
+    verify(race).broadcastFlag(RaceFlag.RED);
+    verify(race).setAutoStartFired(true);
+
+    starting.exit(race);
+    verify(race).setAutoStartRemaining(0);
+  }
 }

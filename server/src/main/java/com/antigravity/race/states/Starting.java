@@ -47,9 +47,17 @@ public class Starting implements IRaceState {
       ClientSubscriptionManager csm = ClientSubscriptionManager.getInstance();
       DatabaseContext dbCtx = csm != null ? csm.getDatabaseContext() : null;
       if (dbCtx != null && DatabaseService.getInstance() != null) {
-        DatabaseService.getInstance()
-            .deletePredictionEvaluationRecord(
-                dbCtx, race.getRaceModel().getEntityId(), race.isDemoMode());
+        final String entityId = race.getRaceModel().getEntityId();
+        final boolean isDemo = race.isDemoMode();
+        java.util.concurrent.CompletableFuture.runAsync(
+            () -> {
+              try {
+                DatabaseService.getInstance()
+                    .deletePredictionEvaluationRecord(dbCtx, entityId, isDemo);
+              } catch (Exception e) {
+                logger.warn("Failed to delete prediction evaluation record asynchronously", e);
+              }
+            });
       }
     }
 
@@ -88,13 +96,15 @@ public class Starting implements IRaceState {
     final long startNanoTime = System.nanoTime();
     final Runnable ticker =
         new Runnable() {
-          private long expectedNextTickNano = startNanoTime;
+          private long expectedNextTickNano = 0;
 
           @Override
           public void run() {
             try {
               long tickStartNano = System.nanoTime();
-              if (expectedNextTickNano > 0) {
+              if (expectedNextTickNano == 0) {
+                expectedNextTickNano = tickStartNano + 100_000_000L;
+              } else {
                 long jitterNs = tickStartNano - expectedNextTickNano;
                 if (jitterNs > 100_000_000L) {
                   logger.warn("[PERF] Starting ticker delayed by {} ms", jitterNs / 1_000_000L);
@@ -102,8 +112,6 @@ public class Starting implements IRaceState {
                 } else {
                   expectedNextTickNano += 100_000_000L;
                 }
-              } else {
-                expectedNextTickNano = tickStartNano + 100_000_000L;
               }
 
               double elapsed = (tickStartNano - startNanoTime) / 1_000_000_000.0;

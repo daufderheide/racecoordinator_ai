@@ -44,6 +44,15 @@ The **Timer** widget displays the elapsed or remaining heat/race time with confi
   - **Never**: Restricts the timer to whole seconds only.
 - **Live Preview**: The inspector includes an instant live preview demonstrating how the selected options format across different race time checkpoints (`> 1 hr`, `> 1 min`, `< 1 min`, and `< 10s`).
 
+## Countdown Widget Configuration
+
+The **Countdown** widget displays visual start lights and triggers start audio during the starting sequence:
+
+- **Maximum Lamps**: Sets the maximum number of lamps to display (defaults to 5, range 1 to 10). When the start countdown duration exceeds this number (for example, a 6-second start countdown with 5 maximum lamps), all lamps remain off/dim for the initial difference (1 second) before sequentially illuminating the countdown lamps.
+- **Fade In Animation**: Controls whether the countdown overlay and background blur smoothly fade in when the countdown begins. When unchecked, the lights and background appear immediately.
+- **Orientation**: Switch between **Horizontal** and **Vertical** light bar arrangements.
+- **Glow & Blur Effects**: Customize lamp illumination halos, red/green overlap scaling, and background blur amount or target area.
+
 ## Lane Column Widgets & Replication
 
 The **Lane Column** widget allows individual data columns from the lane view (such as Driver Info, Last Lap Time, Best Lap / Personal Record, Fuel %, Last Laps history, Sector Speeds, Position, etc.) to be placed anywhere on the canvas as independent modular cards.

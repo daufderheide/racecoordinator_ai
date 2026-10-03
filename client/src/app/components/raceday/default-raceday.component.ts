@@ -1820,7 +1820,10 @@ export class DefaultRacedayComponent
         // Update countdown overlay if active
         if (this.showCountdownOverlay) {
           if (this.countdownTotalLamps === 0 && this.autoStartRemaining > 0) {
-            this.countdownTotalLamps = Math.ceil(this.autoStartRemaining);
+            this.countdownTotalLamps = Math.min(
+              this.getCountdownMaxLamps(),
+              Math.ceil(this.autoStartRemaining),
+            );
           }
           this.updateCountdownLamps(this.autoStartRemaining);
         }
@@ -3744,7 +3747,10 @@ export class DefaultRacedayComponent
             ? (race.restart_time ?? race.start_time)
             : race.start_time;
         if (duration != null) {
-          this.countdownTotalLamps = Math.ceil(duration);
+          this.countdownTotalLamps = Math.min(
+            this.getCountdownMaxLamps(),
+            Math.ceil(duration),
+          );
           this.updateCountdownLamps(this.autoStartRemaining ?? duration);
         }
       }
@@ -6477,7 +6483,10 @@ export class DefaultRacedayComponent
         : r?.start_time;
 
       if (duration != null) {
-        this.countdownTotalLamps = Math.ceil(duration);
+        this.countdownTotalLamps = Math.min(
+          this.getCountdownMaxLamps(),
+          Math.ceil(duration),
+        );
         this.updateCountdownLamps(duration);
       }
     }
@@ -6517,6 +6526,18 @@ export class DefaultRacedayComponent
     }
   }
 
+  private getCountdownMaxLamps(): number {
+    const countdownWidget = this.layout?.widgets?.find(
+      (w: any) => w.widgetType === "countdown",
+    );
+    const maxLamps =
+      countdownWidget?.customSettings?.["maxLamps"] ??
+      countdownWidget?.customSettings?.["previewLampCount"];
+    return typeof maxLamps === "number" && maxLamps >= 1
+      ? Math.min(10, Math.max(1, Math.round(maxLamps)))
+      : 5;
+  }
+
   private updateCountdownLamps(currentTime: number) {
     if (!this.showCountdownOverlay) return;
 
@@ -6527,15 +6548,23 @@ export class DefaultRacedayComponent
       return;
     }
 
+    if (this.countdownTotalLamps === 0 && currentTime > 0) {
+      this.countdownTotalLamps = Math.min(
+        this.getCountdownMaxLamps(),
+        Math.ceil(currentTime),
+      );
+    }
+
     const displayTime =
       this.raceState === RaceState.STARTING && currentTime <= 0
         ? 1
         : currentTime;
 
     // Show the number of lamps corresponding to the seconds elapsed (e.g., 1st sec = 1 lamp).
-    // This synchronizes with the updated hardware LED logic (1, 2, 3, GO).
+    // If currentTime > countdownTotalLamps (e.g., 6s duration with 5 max lamps), onCount will be 0,
+    // keeping all lamps dim/off for the extra time before the countdown sequence begins.
     const onCount = Math.max(
-      1,
+      0,
       this.countdownTotalLamps - Math.ceil(displayTime) + 1,
     );
 

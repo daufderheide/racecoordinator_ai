@@ -92,15 +92,20 @@ public class CustomUITest {
     assertTrue(backfilled.contains("widget-countdown"));
     assertTrue(backfilled.contains("\"widgetType\":\"countdown\""));
     assertTrue(backfilled.contains("\"orientation\":\"horizontal\""));
+    assertTrue(backfilled.contains("\"maxLamps\":5"));
+    assertTrue(backfilled.contains("\"fadeIn\":true"));
     assertTrue(backfilled.contains("\"glowEffect\":true"));
     assertTrue(backfilled.contains("\"glowOverlap\":30"));
     assertTrue(backfilled.contains("\"glowRedOverlap\":30"));
     assertTrue(backfilled.contains("\"glowGreenOverlap\":25"));
 
-    // Existing countdown widget without glowEffect backfills glowEffect and glowOverlap
+    // Existing countdown widget without glowEffect backfills glowEffect, maxLamps, fadeIn and
+    // glowOverlap
     String layoutWithOldCountdown =
-        "{\"widgets\":[{\"id\":\"widget-countdown\",\"widgetType\":\"countdown\",\"customSettings\":{\"lampScale\":1.0}}]}";
+        "{\"widgets\":[{\"id\":\"widget-countdown\",\"widgetType\":\"countdown\",\"customSettings\":{\"lampScale\":1.0,\"previewLampCount\":7}}]}";
     String backfilledExisting = CustomUI.ensureCountdownWidget(layoutWithOldCountdown);
+    assertTrue(backfilledExisting.contains("\"maxLamps\":7"));
+    assertTrue(backfilledExisting.contains("\"fadeIn\":true"));
     assertTrue(backfilledExisting.contains("\"glowEffect\":true"));
     assertTrue(backfilledExisting.contains("\"glowOverlap\":30"));
     assertTrue(backfilledExisting.contains("\"glowRedOverlap\":30"));
