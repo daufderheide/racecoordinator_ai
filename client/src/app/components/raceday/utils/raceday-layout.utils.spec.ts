@@ -374,7 +374,7 @@ describe("RacedayLayoutUtils", () => {
       "RD_COL_LAP",
     );
     expect(RacedayLayoutUtils.getLabelKeyForColumn("physicalLapCount")).toBe(
-      "RD_COL_LAP",
+      "UI_EDITOR_COL_LAP_COUNT",
     );
     expect(RacedayLayoutUtils.getLabelKeyForColumn("lapsLed")).toBe(
       "RD_COL_LAPS_LED",
