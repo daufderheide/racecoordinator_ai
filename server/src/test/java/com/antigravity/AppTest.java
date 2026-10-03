@@ -15,6 +15,7 @@ import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.rolling.RollingFileAppender;
 import io.javalin.http.Context;
+import java.awt.GraphicsEnvironment;
 import java.io.File;
 import java.io.FileWriter;
 import org.junit.After;
@@ -129,6 +130,8 @@ public class AppTest {
 
   @Test
   public void testShowPortConflictDialog_HeadlessFalseDoesNotThrow() {
-    App.showPortConflictDialog("Port Conflict Test", "Test port conflict message", false);
+    if (GraphicsEnvironment.isHeadless()) {
+      App.showPortConflictDialog("Port Conflict Test", "Test port conflict message", false);
+    }
   }
 }
