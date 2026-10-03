@@ -101,14 +101,11 @@ export class RacedayCountdownComponent {
     }
 
     const amount = this.blurAmount;
-    const blurRadius = (amount / 50) * 8;
     const factor = amount / 50;
     const innerAlpha = Math.min(1.0, 0.4 * factor);
     const outerAlpha = Math.min(1.0, 0.8 * factor);
 
     const baseStyles: Record<string, string> = {
-      "backdrop-filter": `blur(${blurRadius}px)`,
-      "-webkit-backdrop-filter": `blur(${blurRadius}px)`,
       background:
         amount >= 100
           ? "rgba(0, 0, 0, 0.95)"

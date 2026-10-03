@@ -151,7 +151,10 @@ describe("RacedayCountdownComponent", () => {
     fixture.detectChanges();
 
     const styles = component.blurBackdropStyles;
-    expect(styles["backdrop-filter"]).toBe("blur(8px)");
+    expect(styles["backdrop-filter"]).toBeUndefined();
+    expect(styles["background"]).toBe(
+      "radial-gradient(circle, rgba(0, 0, 0, 0.40) 0%, rgba(0, 0, 0, 0.80) 100%)",
+    );
     expect(styles["left"]).toBe(`${(-460 / 1000) * 100}%`);
     expect(styles["top"]).toBe(`${(-390 / 250) * 100}%`);
     expect(styles["width"]).toBe(`${(1920 / 1000) * 100}%`);
@@ -240,7 +243,27 @@ describe("RacedayCountdownComponent", () => {
 
     const styles = component.blurBackdropStyles;
     expect(styles["background"]).toBe("rgba(0, 0, 0, 0.95)");
-    expect(styles["backdrop-filter"]).toBe("blur(16px)");
+    expect(styles["backdrop-filter"]).toBeUndefined();
+  });
+
+  it("should calculate subtle radial-gradient and omit backdrop-filter for low blur amounts to prevent GPU texture mirroring", () => {
+    const lowAmountWidget: AbsoluteWidgetNode = {
+      ...defaultWidget,
+      customSettings: {
+        ...defaultWidget.customSettings,
+        blurAmount: 13,
+      },
+    };
+    fixture.componentRef.setInput("widget", lowAmountWidget);
+    fixture.componentRef.setInput("isCustomizing", true);
+    fixture.detectChanges();
+
+    const styles = component.blurBackdropStyles;
+    expect(styles["backdrop-filter"]).toBeUndefined();
+    expect(styles["-webkit-backdrop-filter"]).toBeUndefined();
+    expect(styles["background"]).toBe(
+      "radial-gradient(circle, rgba(0, 0, 0, 0.10) 0%, rgba(0, 0, 0, 0.21) 100%)",
+    );
   });
 
   it("should calculate dynamic lamp size when lampSizingMode is fit", () => {
