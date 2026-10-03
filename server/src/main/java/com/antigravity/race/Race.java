@@ -751,10 +751,12 @@ public class Race implements ProtocolListener {
   public void syncRaceState() {
     RaceState protoState = getProtoState(state);
     RaceFlag protoFlag = state.getFlagType(this);
+    syncRaceState(protoState, protoFlag, getAutoStartRemaining() + getAutoAdvanceRemaining());
+  }
+
+  public void syncRaceState(RaceState protoState, RaceFlag protoFlag, double countdown) {
     if (hardwareManager.getProtocols() != null) {
-      hardwareManager
-          .getProtocols()
-          .setRaceState(protoState, protoFlag, getAutoStartRemaining() + getAutoAdvanceRemaining());
+      hardwareManager.getProtocols().setRaceState(protoState, protoFlag, countdown);
     }
   }
 

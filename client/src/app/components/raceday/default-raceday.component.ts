@@ -6701,7 +6701,7 @@ export class DefaultRacedayComponent
         if (entryItem.config.type === "tts") {
           return this.audioService.playCallout(
             { type: "tts", text: entryItem.config.text },
-            "normal",
+            "urgent",
             undefined,
             undefined,
             defaultAssoc,

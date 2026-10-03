@@ -216,7 +216,7 @@ public class HeatOver implements IRaceState {
                   lastFlag = currentFlag;
                 }
 
-                race.setRaceState(RaceState.HEAT_OVER, currentFlag, remaining);
+                race.syncRaceState(RaceState.HEAT_OVER, currentFlag, remaining);
                 broadcastTime(race);
               }
             } catch (Exception e) {

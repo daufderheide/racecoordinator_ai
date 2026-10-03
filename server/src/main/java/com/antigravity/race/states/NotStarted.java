@@ -340,7 +340,7 @@ public class NotStarted implements IRaceState {
                   lastFlag = currentFlag;
                 }
 
-                race.setRaceState(RaceState.NOT_STARTED, currentFlag, remaining);
+                race.syncRaceState(RaceState.NOT_STARTED, currentFlag, remaining);
                 broadcastTime(race);
               }
             } catch (Exception e) {
@@ -366,8 +366,13 @@ public class NotStarted implements IRaceState {
 
   @Override
   public void onCallbutton(Race race, int lane) {
-    logger.info("NotStarted.onCallbutton() called. Starting race.");
-    race.startRace();
+    if (race.getAutoStartRemaining() > 0) {
+      logger.info("NotStarted.onCallbutton() called. Aborting auto-start timer.");
+      pause(race);
+    } else {
+      logger.info("NotStarted.onCallbutton() called. Starting race.");
+      race.startRace();
+    }
   }
 
   @Override

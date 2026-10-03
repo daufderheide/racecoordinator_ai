@@ -19,6 +19,8 @@ import com.antigravity.service.DatabaseService;
 import com.antigravity.service.ServerConfigService;
 import com.antigravity.service.UpdateService;
 import com.antigravity.util.NetworkUtils;
+import com.antigravity.util.PortConflictInspector;
+import com.antigravity.util.PortConflictReport;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.javalin.Javalin;
 import io.javalin.http.Context;
@@ -110,7 +112,7 @@ public class App {
 
   static void showPortConflictDialog(String title, String message, boolean headless) {
     logger.error("PORT CONFLICT ERROR - {}: {}", title, message.replace("\n", " "));
-    if (!java.awt.GraphicsEnvironment.isHeadless()) {
+    if (!headless && !java.awt.GraphicsEnvironment.isHeadless()) {
       try {
         javax.swing.JOptionPane.showMessageDialog(
             null, message, title, javax.swing.JOptionPane.ERROR_MESSAGE);
@@ -118,6 +120,16 @@ public class App {
         logger.error("Failed to display GUI port conflict alert dialog: {}", ex.getMessage());
       }
     }
+  }
+
+  static void handlePortConflict(int port, boolean headless, Exception cause) {
+    logger.error(
+        "Fatal error starting Javalin server on port {}: {}", port, cause.getMessage(), cause);
+    PortConflictReport report = PortConflictInspector.inspect(port);
+    logger.error("Port conflict diagnostic analysis:\n{}", report.toDiagnosticString());
+    showPortConflictDialog(
+        "Race Coordinator AI - Web Server Port Conflict", report.toDialogMessage(), headless);
+    System.exit(1);
   }
 
   @SuppressWarnings("checkstyle:MethodLength")
@@ -278,19 +290,7 @@ public class App {
                 .start(serverPort);
         logger.info("Javalin started successfully on port {}.", serverPort);
       } catch (Exception e) {
-        logger.error(
-            "Fatal error starting Javalin server on port {}: {}", serverPort, e.getMessage(), e);
-        showPortConflictDialog(
-            "Race Coordinator AI - Web Server Port Conflict",
-            "Failed to start Web Server on port "
-                + serverPort
-                + ".\n"
-                + "Port is already in use or unavailable.\n\n"
-                + "Please terminate the process using port "
-                + serverPort
-                + ", or start with '--port <port>' (or set SERVER_PORT / PORT environment variable).",
-            headless);
-        System.exit(1);
+        handlePortConflict(serverPort, headless, e);
       }
 
       app.before(
