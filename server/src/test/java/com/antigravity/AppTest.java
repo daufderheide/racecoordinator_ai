@@ -121,4 +121,14 @@ public class AppTest {
     verify(ctx).header("Pragma", "no-cache");
     verify(ctx).header("Expires", "0");
   }
+
+  @Test
+  public void testShowPortConflictDialog_HeadlessTrueDoesNotThrow() {
+    App.showPortConflictDialog("Port Conflict Test", "Test port conflict message", true);
+  }
+
+  @Test
+  public void testShowPortConflictDialog_HeadlessFalseDoesNotThrow() {
+    App.showPortConflictDialog("Port Conflict Test", "Test port conflict message", false);
+  }
 }
