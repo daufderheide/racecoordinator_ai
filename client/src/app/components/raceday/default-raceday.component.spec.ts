@@ -6856,6 +6856,43 @@ describe("DefaultRacedayComponent", () => {
       expect(component["lastCountdownSoundTime"]).toBeGreaterThan(initialTime);
     });
 
+    it("should play TTS countdown callout with urgent priority to avoid being dropped by cadence spacing", () => {
+      mockThemeService.resolveAudioConfig.and.returnValue({
+        type: "audio_set",
+        url: "audio-set-tts",
+      });
+      component["assets"] = [
+        {
+          entity_id: "audio-set-tts",
+          type: "audio_set",
+          audio_entries: [
+            {
+              time_seconds: 3,
+              type: "tts",
+              text: "Three",
+              trigger_mode: "remaining",
+            },
+          ],
+        } as any,
+      ];
+      const audioService = (component as any).audioService;
+      spyOn(audioService, "playCallout").and.returnValue(true);
+
+      const played = (component as any).playAudioFromSet(
+        THEME_SLOT_KEYS.AUDIO_COUNTDOWN,
+        3,
+      );
+
+      expect(played).toBeTrue();
+      expect(audioService.playCallout).toHaveBeenCalledWith(
+        { type: "tts", text: "Three" },
+        "urgent",
+        undefined,
+        undefined,
+        { widgetType: "countdown" },
+      );
+    });
+
     it("should preload countdown audio entries across seconds 0 through 5", () => {
       mockThemeService.resolveAudioConfig.and.returnValue({
         type: "audio_set",

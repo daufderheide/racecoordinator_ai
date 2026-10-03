@@ -1283,6 +1283,19 @@ public class RaceTest {
     }
 
     @Test
+    public void testOnCallbuttonAbortsAutoStart() throws Exception {
+      assertTrue(race.getState() instanceof NotStarted);
+      race.setAutoStartRemaining(10.0);
+      race.addRaceTime(5.5f);
+
+      race.onCallbutton(0, 0);
+
+      assertEquals(0.0, race.getAutoStartRemaining(), 0.001);
+      assertEquals(0.0, race.getRaceTime(), 0.001);
+      assertTrue(race.getState() instanceof NotStarted);
+    }
+
+    @Test
     public void testPauseDuringAutoStartCancelsTimer() throws Exception {
       race.setAutoStartRemaining(10.0);
       race.addRaceTime(5.5f);
