@@ -282,7 +282,7 @@ describe("RacedayLaneColumnComponent", () => {
       createWidget({ columnKey: "physicalLapCount" }),
     );
     fixture.detectChanges();
-    expect(component.headerLabel).toBe("RD_COL_LAP");
+    expect(component.headerLabel).toBe("UI_EDITOR_COL_LAP_COUNT");
 
     fixture.componentRef.setInput(
       "widget",
