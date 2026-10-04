@@ -154,6 +154,11 @@ public class ThemeTest {
       assertEquals(RaceFlag.YELLOW, theme.resolveFlag("flag.racing", RaceFlag.GREEN, dbCtx));
       // Falls back if asset not in DB
       assertEquals(RaceFlag.RED, theme.resolveFlag("flag.not_found", RaceFlag.RED, dbCtx));
+
+      // Test cached resolution: resolves even when dbCtx is null
+      assertEquals(
+          RaceFlag.CHECKERED, theme.resolveFlag("flag.heat_paused", RaceFlag.YELLOW, null));
+      assertEquals(RaceFlag.YELLOW, theme.resolveFlag("flag.racing", RaceFlag.GREEN, null));
     } finally {
       if (dbCtx.getConnection() != null) {
         dbCtx.getConnection().close();

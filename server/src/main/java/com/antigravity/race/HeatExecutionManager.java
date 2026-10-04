@@ -28,12 +28,21 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class HeatExecutionManager {
 
   private static final Logger logger = LoggerFactory.getLogger(HeatExecutionManager.class);
+  private static final ExecutorService predictionExecutor =
+      Executors.newSingleThreadExecutor(
+          r -> {
+            Thread t = new Thread(r, "Prediction-Worker");
+            t.setDaemon(true);
+            return t;
+          });
   private Race race;
 
   // Transient heat execution state
@@ -1334,31 +1343,25 @@ public class HeatExecutionManager {
 
       Map<String, DriverHeatState> actualDriverStates = buildDriverHeatStates(this.race);
       List<Heat> heats = this.race.getHeats();
-      int heatIdx = heats != null ? heats.indexOf(this.race.getCurrentHeat()) : 0;
-      if (heatIdx < 0) {
-        heatIdx = 0;
-      }
+      int rawHeatIdx = heats != null ? heats.indexOf(this.race.getCurrentHeat()) : 0;
+      final int heatIdx = Math.max(0, rawHeatIdx);
 
-      RacePredictionService.getInstance()
-          .updateRealtimePrediction(
-              dbCtx,
-              raceId,
-              this.race.getRaceModel(),
-              new ArrayList<>(this.race.getDrivers()),
-              this.race.getHeats(),
-              heatIdx,
-              actualDriverStates,
-              this.race.isDemoMode());
+      com.antigravity.models.Race raceModel = this.race.getRaceModel(); // fqn-collision
+      List<RaceParticipant> drivers = new ArrayList<>(this.race.getDrivers());
+      boolean demoMode = this.race.isDemoMode();
+      RacePredictionService predictionService = RacePredictionService.getInstance();
+
+      predictionExecutor.submit(
+          () -> {
+            try {
+              predictionService.updateRealtimePrediction(
+                  dbCtx, raceId, raceModel, drivers, heats, heatIdx, actualDriverStates, demoMode);
+            } catch (Exception e) {
+              logger.error("Error updating realtime prediction on lap in background", e);
+            }
+          });
     } catch (Exception e) {
       logger.error("Error updating realtime prediction on lap", e);
-      try {
-        java.io.PrintWriter pw =
-            new java.io.PrintWriter(new java.io.FileWriter("/tmp/antigravity_error.log", true));
-        pw.println("ERROR IN updateRealtimePredictionOnLap:");
-        e.printStackTrace(pw);
-        pw.close();
-      } catch (Exception ex) {
-      }
     }
   }
 }

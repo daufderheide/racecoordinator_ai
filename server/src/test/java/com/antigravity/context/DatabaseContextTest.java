@@ -283,4 +283,17 @@ public class DatabaseContextTest {
     databaseContext.ensureTable("");
     databaseContext.ensureTable("   ");
   }
+
+  @Test
+  public void testEnsureTableCaching() {
+    databaseContext.ensureTable("custom_cached_table");
+    // Repeated calls hit the verifiedTables in-memory cache
+    databaseContext.ensureTable("custom_cached_table");
+    databaseContext.ensureTable("CUSTOM_CACHED_TABLE");
+
+    // Database switch clears verifiedTables cache cleanly
+    databaseContext.createDatabase("cache_switch_db");
+    databaseContext.ensureTable("custom_cached_table");
+    databaseContext.switchDatabase("test_db");
+  }
 }

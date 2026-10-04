@@ -461,11 +461,34 @@ export class RacedayAbsoluteWidgetComponent implements OnInit, OnDestroy {
     return undefined;
   }
 
+  private cachedCustomInputs?: {
+    widget: any;
+    parent: any;
+    isCustomizing: boolean;
+  };
+  private lastCustomWidgetRef?: any;
+  private lastCustomParentRef?: any;
+  private lastCustomizingFlag?: boolean;
+
   getCustomWidgetInputs() {
-    return {
-      widget: this.widget(),
-      parent: this.parentComponent(),
-      isCustomizing: this.isCustomizing(),
-    };
+    const w = this.widget();
+    const p = this.parentComponent();
+    const c = this.isCustomizing();
+    if (
+      !this.cachedCustomInputs ||
+      this.lastCustomWidgetRef !== w ||
+      this.lastCustomParentRef !== p ||
+      this.lastCustomizingFlag !== c
+    ) {
+      this.lastCustomWidgetRef = w;
+      this.lastCustomParentRef = p;
+      this.lastCustomizingFlag = c;
+      this.cachedCustomInputs = {
+        widget: w,
+        parent: p,
+        isCustomizing: c,
+      };
+    }
+    return this.cachedCustomInputs;
   }
 }

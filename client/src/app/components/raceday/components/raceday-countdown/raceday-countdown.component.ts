@@ -26,6 +26,20 @@ export class RacedayCountdownComponent {
   showCountdownOverlay = input<boolean>(false);
   countdownLamps = input<any[]>([]);
 
+  private cachedStartLampStyles: {
+    key: string;
+    styles: Record<string, string>;
+  } | null = null;
+  private cachedContainerStyles: {
+    key: string;
+    styles: Record<string, string>;
+  } | null = null;
+  private cachedBlurBackdropStyles: {
+    key: string;
+    styles: Record<string, string>;
+  } | null = null;
+  private lampStyleCache = new Map<string, Record<string, string>>();
+
   get orientation(): string {
     const custom = this.widget()?.customSettings?.["orientation"];
     if (custom) return custom;
@@ -96,11 +110,27 @@ export class RacedayCountdownComponent {
 
   get blurBackdropStyles(): Record<string, string> {
     const area = this.blurArea;
-    if (area === "none" || this.blurAmount <= 0) {
+    const amount = this.blurAmount;
+    if (area === "none" || amount <= 0) {
       return { display: "none" };
     }
 
-    const amount = this.blurAmount;
+    const bw = this.parent()?.layout?.baseWidth || 1920;
+    const bh = this.parent()?.layout?.baseHeight || 1080;
+    const wx = this.widget()?.x || 0;
+    const wy = this.widget()?.y || 0;
+    const ww = this.widget()?.width || bw;
+    const wh = this.widget()?.height || bh;
+    const cx = this.widget()?.customSettings?.["blurCustomX"] ?? 0;
+    const cy = this.widget()?.customSettings?.["blurCustomY"] ?? 0;
+    const cw = this.widget()?.customSettings?.["blurCustomWidth"] ?? bw;
+    const ch = this.widget()?.customSettings?.["blurCustomHeight"] ?? bh;
+
+    const key = `${area}_${amount}_${bw}_${bh}_${wx}_${wy}_${ww}_${wh}_${cx}_${cy}_${cw}_${ch}`;
+    if (this.cachedBlurBackdropStyles?.key === key) {
+      return this.cachedBlurBackdropStyles.styles;
+    }
+
     const factor = amount / 50;
     const innerAlpha = Math.min(1.0, 0.4 * factor);
     const outerAlpha = Math.min(1.0, 0.8 * factor);
@@ -112,23 +142,12 @@ export class RacedayCountdownComponent {
           : `radial-gradient(circle, rgba(0, 0, 0, ${innerAlpha.toFixed(2)}) 0%, rgba(0, 0, 0, ${outerAlpha.toFixed(2)}) 100%)`,
     };
 
-    const bw = this.parent()?.layout?.baseWidth || 1920;
-    const bh = this.parent()?.layout?.baseHeight || 1080;
-    const wx = this.widget()?.x || 0;
-    const wy = this.widget()?.y || 0;
-    const ww = this.widget()?.width || bw;
-    const wh = this.widget()?.height || bh;
-
     if (area === "fullscreen") {
       baseStyles["left"] = `${(-wx / ww) * 100}%`;
       baseStyles["top"] = `${(-wy / wh) * 100}%`;
       baseStyles["width"] = `${(bw / ww) * 100}%`;
       baseStyles["height"] = `${(bh / wh) * 100}%`;
     } else if (area === "custom") {
-      const cx = this.widget()?.customSettings?.["blurCustomX"] ?? 0;
-      const cy = this.widget()?.customSettings?.["blurCustomY"] ?? 0;
-      const cw = this.widget()?.customSettings?.["blurCustomWidth"] ?? bw;
-      const ch = this.widget()?.customSettings?.["blurCustomHeight"] ?? bh;
       baseStyles["left"] = `${((cx - wx) / ww) * 100}%`;
       baseStyles["top"] = `${((cy - wy) / wh) * 100}%`;
       baseStyles["width"] = `${(cw / ww) * 100}%`;
@@ -141,6 +160,7 @@ export class RacedayCountdownComponent {
       baseStyles["height"] = "100%";
     }
 
+    this.cachedBlurBackdropStyles = { key, styles: baseStyles };
     return baseStyles;
   }
 
@@ -217,54 +237,80 @@ export class RacedayCountdownComponent {
 
   get startLampStyles(): Record<string, string> {
     const size = this.fitLampSize;
-    return {
+    const key = `${size}`;
+    if (this.cachedStartLampStyles?.key === key) {
+      return this.cachedStartLampStyles.styles;
+    }
+    const styles: Record<string, string> = {
       width: `${size}px`,
       height: `${size}px`,
       "max-width": "100%",
       "max-height": "100%",
     };
+    this.cachedStartLampStyles = { key, styles };
+    return styles;
   }
 
   get lampsContainerStyles(): Record<string, string> {
     const size = this.fitLampSize;
-    const gap = this.getLampGap(size);
+    const mode = this.lampSizingMode;
+    const glow = this.glowEffect;
+    const intensity = this.glowIntensity;
+    const isVert = this.isVertical;
     const ww = this.widget()?.width || 1000;
     const wh = this.widget()?.height || 250;
-    const primaryDim = this.isVertical ? wh : ww;
+    const key = `${size}_${mode}_${glow}_${intensity}_${isVert}_${ww}_${wh}`;
+    if (this.cachedContainerStyles?.key === key) {
+      return this.cachedContainerStyles.styles;
+    }
 
-    if (this.lampSizingMode === "fit") {
+    const gap = this.getLampGap(size);
+    const primaryDim = isVert ? wh : ww;
+
+    let styles: Record<string, string>;
+    if (mode === "fit") {
       const pad = Math.max(10, Math.min(40, Math.round(primaryDim * 0.04)));
-      if (this.glowEffect) {
-        const glowRadius = Math.round(20 * (this.glowIntensity / 100));
+      if (glow) {
+        const glowRadius = Math.round(20 * (intensity / 100));
         const extraPad = Math.max(pad, glowRadius + 10);
-        return {
+        styles = {
           gap: `${gap}px`,
           padding: `${extraPad}px`,
         };
+      } else {
+        styles = {
+          gap: `${gap}px`,
+          padding: `${pad}px`,
+        };
       }
-      return {
-        gap: `${gap}px`,
-        padding: `${pad}px`,
-      };
-    }
-
-    if (this.glowEffect) {
-      const glowRadius = Math.round(20 * (this.glowIntensity / 100));
-      return {
+    } else if (glow) {
+      const glowRadius = Math.round(20 * (intensity / 100));
+      styles = {
         gap: `${gap}px`,
         padding: `${glowRadius + 10}px`,
       };
+    } else {
+      styles = {
+        gap: `${gap}px`,
+        padding: "10px",
+      };
     }
 
-    return {
-      gap: `${gap}px`,
-      padding: "10px",
-    };
+    this.cachedContainerStyles = { key, styles };
+    return styles;
   }
 
   getLampStyles(lamp: LampState): Record<string, string> {
+    const key = `${lamp.state}_${this.fitLampSize}_${this.glowEffect}_${this.glowIntensity}_${this.glowRedOverlap}_${this.glowGreenOverlap}`;
+    const cached = this.lampStyleCache.get(key);
+    if (cached) {
+      return cached;
+    }
+
     const styles: Record<string, string> = { ...this.startLampStyles };
     if (!this.glowEffect) {
+      if (this.lampStyleCache.size > 20) this.lampStyleCache.clear();
+      this.lampStyleCache.set(key, styles);
       return styles;
     }
     const factor = this.glowIntensity / 100;
@@ -288,6 +334,9 @@ export class RacedayCountdownComponent {
       styles["filter"] =
         `drop-shadow(0 0 ${r1}px rgba(0, 255, 70, 0.9)) drop-shadow(0 0 ${r2}px rgba(0, 255, 50, 0.6))`;
     }
+
+    if (this.lampStyleCache.size > 20) this.lampStyleCache.clear();
+    this.lampStyleCache.set(key, styles);
     return styles;
   }
 

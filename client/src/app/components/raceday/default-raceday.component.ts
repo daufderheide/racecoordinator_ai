@@ -543,19 +543,48 @@ export class DefaultRacedayComponent
     return af === "NoneAutoSegments" || af === "SingleLapAutoSegments";
   }
 
+  private cachedLayoutRef: LayoutConfig | null = null;
+  private cachedTimerWidget: AbsoluteWidgetNode | undefined = undefined;
+  private cachedTimerSettings: Record<string, any> | undefined = undefined;
+  private cachedTimerFormatOptions: TimerFormatOptions | null = null;
+
   protected getTimerFormatOptions(): TimerFormatOptions {
-    const timerWidget = this.layout?.widgets?.find(
-      (w) => w.widgetType === "timer",
-    );
-    return {
-      format: timerWidget?.customSettings?.["timeDisplayFormat"] ?? "dynamic",
-      subsecondMode:
-        timerWidget?.customSettings?.["timeSubsecondMode"] ?? "threshold",
-      subsecondThreshold:
-        timerWidget?.customSettings?.["timeSubsecondThreshold"] ?? 10,
-      subsecondDecimals:
-        timerWidget?.customSettings?.["timeSubsecondDecimals"] ?? 2,
+    const timerWidget =
+      this.cachedLayoutRef === this.layout
+        ? this.cachedTimerWidget
+        : this.layout?.widgets?.find((w) => w.widgetType === "timer");
+
+    if (this.cachedLayoutRef !== this.layout) {
+      this.cachedLayoutRef = this.layout;
+      this.cachedTimerWidget = timerWidget;
+    }
+
+    const currentSettings = timerWidget?.customSettings;
+    const format = currentSettings?.["timeDisplayFormat"] ?? "dynamic";
+    const subsecondMode = currentSettings?.["timeSubsecondMode"] ?? "threshold";
+    const subsecondThreshold =
+      currentSettings?.["timeSubsecondThreshold"] ?? 10;
+    const subsecondDecimals = currentSettings?.["timeSubsecondDecimals"] ?? 2;
+
+    if (
+      this.cachedTimerFormatOptions &&
+      this.cachedTimerSettings === currentSettings &&
+      this.cachedTimerFormatOptions.format === format &&
+      this.cachedTimerFormatOptions.subsecondMode === subsecondMode &&
+      this.cachedTimerFormatOptions.subsecondThreshold === subsecondThreshold &&
+      this.cachedTimerFormatOptions.subsecondDecimals === subsecondDecimals
+    ) {
+      return this.cachedTimerFormatOptions;
+    }
+
+    this.cachedTimerSettings = currentSettings;
+    this.cachedTimerFormatOptions = {
+      format,
+      subsecondMode,
+      subsecondThreshold,
+      subsecondDecimals,
     };
+    return this.cachedTimerFormatOptions;
   }
 
   protected get formattedTime(): string {
@@ -914,6 +943,7 @@ export class DefaultRacedayComponent
   protected assets: any[] = [];
   protected hasRacedInCurrentHeat: boolean = false;
   protected highlightedDrivers: Set<string> = new Set();
+  private lapHighlightTimers: Set<any> = new Set();
   private carLocations = new Map<number, number>();
   private fuelAudioTracker: FuelAudioTracker;
   private get laneFuelAudioStates(): Map<number, any> {
@@ -2753,12 +2783,13 @@ export class DefaultRacedayComponent
         this.cdr.markForCheck();
       }
       const timer = setTimeout(() => {
+        this.lapHighlightTimers.delete(timer);
         this.highlightedDrivers.delete(lap.objectId!);
         if (!this.isDestroyed) {
           this.cdr.markForCheck();
         }
       }, 400);
-      this.subscriptions.push(new Subscription(() => clearTimeout(timer)));
+      this.lapHighlightTimers.add(timer);
     }
   }
 
@@ -3297,6 +3328,8 @@ export class DefaultRacedayComponent
   }
 
   ngOnDestroy() {
+    this.lapHighlightTimers.forEach((timer) => clearTimeout(timer));
+    this.lapHighlightTimers.clear();
     this.audioService.reset();
     if (
       typeof window !== "undefined" &&

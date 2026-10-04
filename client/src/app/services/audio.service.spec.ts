@@ -255,6 +255,20 @@ describe("AudioService", () => {
       expect(mockAudioInstance.play).toHaveBeenCalled();
     });
 
+    it("should reuse preloaded audio instance in playPresetVoice when paused", () => {
+      service.preload("w_heat_half.wav");
+      (window as any).Audio.calls.reset();
+      mockAudioInstance.paused = true;
+      mockAudioInstance.currentTime = 5;
+
+      const config: AudioConfig = { type: "preset", url: "w_heat_half.wav" };
+      const played = service.playCallout(config, "high");
+      expect(played).toBeTrue();
+      expect((window as any).Audio).not.toHaveBeenCalled();
+      expect(mockAudioInstance.currentTime).toBe(0);
+      expect(mockAudioInstance.play).toHaveBeenCalled();
+    });
+
     it("should clear preloaded audio cache on reset", () => {
       service.preload("default_countdown_5");
       service.reset();

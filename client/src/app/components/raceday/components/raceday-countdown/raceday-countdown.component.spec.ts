@@ -620,4 +620,23 @@ describe("RacedayCountdownComponent", () => {
     expect(component.maxLamps).toBe(4);
     expect(component.displayLamps.length).toBe(4);
   });
+
+  it("should return memoized style object instances when inputs have not changed", () => {
+    const lamp = { url: "red-on.png", state: "on" };
+    const styles1 = component.getLampStyles(lamp);
+    const styles2 = component.getLampStyles(lamp);
+    expect(styles1).toBe(styles2);
+
+    const start1 = component.startLampStyles;
+    const start2 = component.startLampStyles;
+    expect(start1).toBe(start2);
+
+    const container1 = component.lampsContainerStyles;
+    const container2 = component.lampsContainerStyles;
+    expect(container1).toBe(container2);
+
+    const blur1 = component.blurBackdropStyles;
+    const blur2 = component.blurBackdropStyles;
+    expect(blur1).toBe(blur2);
+  });
 });

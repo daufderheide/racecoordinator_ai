@@ -70,6 +70,7 @@ public class Race implements ProtocolListener {
   private Theme theme;
   private final List<RaceParticipant> drivers;
   private List<Heat> heats;
+  private Map<String, Integer> cachedDriverToGroup;
   private Heat currentHeat;
   private final OverallStandings overallStandings;
   private final List<CustomRotation> customRotations;
@@ -596,6 +597,7 @@ public class Race implements ProtocolListener {
 
   public void setHeats(List<Heat> heats) {
     this.heats = heats;
+    this.cachedDriverToGroup = null;
   }
 
   public Heat getCurrentHeat() {
@@ -1301,14 +1303,7 @@ public class Race implements ProtocolListener {
         && this.model.getGroupOptions().isEnabled()
         && this.currentHeat != null) {
       int currentGroup = this.currentHeat.getGroup();
-      Map<String, Integer> driverToGroup = new HashMap<>();
-      for (Heat heat : heats) {
-        for (DriverHeatData dhd : heat.getDrivers()) {
-          if (dhd.getDriver() != null) {
-            driverToGroup.put(dhd.getDriver().getStableId(), heat.getGroup());
-          }
-        }
-      }
+      Map<String, Integer> driverToGroup = getDriverToGroup();
       List<com.antigravity.proto.RaceParticipant> groupParticipants = // fqn-collision
           new ArrayList<>();
       int groupRank = 1;
@@ -1329,6 +1324,24 @@ public class Race implements ProtocolListener {
           .build();
     }
     return null;
+  }
+
+  private Map<String, Integer> getDriverToGroup() {
+    if (this.cachedDriverToGroup != null) {
+      return this.cachedDriverToGroup;
+    }
+    Map<String, Integer> map = new HashMap<>();
+    if (this.heats != null) {
+      for (Heat heat : this.heats) {
+        for (DriverHeatData dhd : heat.getDrivers()) {
+          if (dhd.getDriver() != null) {
+            map.put(dhd.getDriver().getStableId(), heat.getGroup());
+          }
+        }
+      }
+    }
+    this.cachedDriverToGroup = map;
+    return map;
   }
 
   public void updateScoreRecords() {

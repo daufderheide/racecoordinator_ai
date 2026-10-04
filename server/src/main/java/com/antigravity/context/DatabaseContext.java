@@ -45,6 +45,7 @@ public class DatabaseContext {
   private volatile String currentDatabaseName;
   private final ServerConfigService configService;
   private final String dataRoot;
+  private final Set<String> verifiedTables = Collections.synchronizedSet(new HashSet<>());
 
   public DatabaseContext(
       String initialDatabaseName, ServerConfigService configService, String dataRoot) {
@@ -85,6 +86,7 @@ public class DatabaseContext {
         logger.warn("Error closing database connection during switch", e);
       }
     }
+    this.verifiedTables.clear();
 
     this.currentDatabaseName = databaseName;
     File dbDir = new File(dataRoot + databaseName);
@@ -119,6 +121,10 @@ public class DatabaseContext {
     if (tableName == null || tableName.trim().isEmpty()) {
       return;
     }
+    String normalized = tableName.trim().toLowerCase();
+    if (verifiedTables.contains(normalized)) {
+      return;
+    }
     try (Statement stmt = getConnection().createStatement()) {
       if ("counters".equalsIgnoreCase(tableName)) {
         stmt.execute(
@@ -129,6 +135,7 @@ public class DatabaseContext {
                 + tableName
                 + " (entity_id TEXT PRIMARY KEY, sequence_id TEXT, json_data TEXT NOT NULL)");
       }
+      verifiedTables.add(normalized);
     } catch (SQLException e) {
       logger.error("Error creating table {}", tableName, e);
     }

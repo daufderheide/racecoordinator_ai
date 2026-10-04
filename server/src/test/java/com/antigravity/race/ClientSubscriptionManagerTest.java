@@ -873,4 +873,36 @@ public class ClientSubscriptionManagerTest {
     }
     assertTrue("Marker message must be delivered", foundMarker);
   }
+
+  @Test
+  public void testAutoSaveAndDeleteOnSchedulerThreadDoesNotDeadlock() throws Exception {
+    DatabaseContext dc = new DatabaseContext("test_db", null, System.getProperty("java.io.tmpdir"));
+    manager.setDatabaseContext(dc);
+
+    Race mockRace = mock(Race.class);
+    com.antigravity.models.Race realModel =
+        new com.antigravity.models.Race.Builder()
+            .withName("Race")
+            .withEntityId("deadlockTestRaceId")
+            .build();
+    when(mockRace.getRaceModel()).thenReturn(realModel);
+    when(mockRace.getHeats()).thenReturn(Collections.emptyList());
+    IRaceState mockState = mock(IRaceState.class);
+    when(mockRace.getState()).thenReturn(mockState);
+
+    java.lang.reflect.Field schedulerField =
+        ClientSubscriptionManager.class.getDeclaredField("scheduler");
+    schedulerField.setAccessible(true);
+    java.util.concurrent.ScheduledExecutorService sched =
+        (java.util.concurrent.ScheduledExecutorService) schedulerField.get(manager);
+
+    java.util.concurrent.Future<?> future =
+        sched.submit(
+            () -> {
+              manager.autoSave(mockRace);
+              manager.deleteAutoSave("deadlockTestRaceId", false);
+            });
+
+    future.get(2, TimeUnit.SECONDS);
+  }
 }
