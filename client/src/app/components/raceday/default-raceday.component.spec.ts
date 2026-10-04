@@ -11344,5 +11344,50 @@ describe("DefaultRacedayComponent", () => {
       expect((component as any).autoStartRemaining).toBe(55);
       expect((component as any).time).toBe(55);
     });
+
+    it("should reuse latestPredictionRecord on sortHeatDrivers without refetching from predictionService", () => {
+      const predService = TestBed.inject(RacePredictionService);
+      const mockRecord: any = {
+        race_id: "test_race",
+        timestamp: 1000,
+        pre_race: { projected_standings: [] },
+      };
+      (predService.getRacePredictions as jasmine.Spy).and.returnValue(
+        of(mockRecord),
+      );
+      (component as any).race = { entity_id: "test_race" };
+      (component as any).heat = {
+        heatDrivers: [{ laneIndex: 0, objectId: "d1" }],
+      };
+
+      (component as any).latestPredictionRecord = null;
+      (predService.getRacePredictions as jasmine.Spy).calls.reset();
+
+      // First call fetches from predictionService
+      (component as any).sortHeatDrivers();
+      expect(predService.getRacePredictions).toHaveBeenCalledTimes(1);
+      expect((component as any).latestPredictionRecord).toBe(mockRecord);
+
+      // Subsequent call reuses latestPredictionRecord
+      (component as any).sortHeatDrivers();
+      expect(predService.getRacePredictions).toHaveBeenCalledTimes(1);
+    });
+
+    it("should generate lane QR code lazily on-demand and cache it", async () => {
+      (component as any).serverUrlBase = "http://localhost:7070";
+      (component as any).laneQrCodeCache.clear();
+      (component as any).generatingLaneQrCodes.clear();
+
+      expect((component as any).laneQrCodeCache.has(0)).toBeFalse();
+
+      const url = component.getLaneQrCodeUrl(0);
+      expect(url).toBe("");
+      expect((component as any).generatingLaneQrCodes.has(0)).toBeTrue();
+
+      // Wait a tick for QRCode.toDataURL to resolve
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      expect((component as any).laneQrCodeCache.has(0)).toBeTrue();
+      expect(component.getLaneQrCodeUrl(0)).toContain("data:image/png;base64,");
+    });
   });
 });

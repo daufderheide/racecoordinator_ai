@@ -431,7 +431,12 @@ public class Demo extends DefaultProtocol {
   }
 
   protected ScheduledExecutorService createScheduler() {
-    return Executors.newScheduledThreadPool(1);
+    return Executors.newSingleThreadScheduledExecutor(
+        r -> {
+          Thread thread = new Thread(r, "DemoProtocol-Scheduler");
+          thread.setDaemon(true);
+          return thread;
+        });
   }
 
   @Override

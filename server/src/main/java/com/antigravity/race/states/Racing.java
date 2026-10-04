@@ -152,7 +152,13 @@ public class Racing implements IRaceState {
     if (scheduler != null) {
       scheduler.shutdown();
     }
-    scheduler = Executors.newScheduledThreadPool(1);
+    scheduler =
+        Executors.newSingleThreadScheduledExecutor(
+            r -> {
+              Thread t = new Thread(r, "RacingTicker");
+              t.setDaemon(true);
+              return t;
+            });
     final Runnable ticker =
         new Runnable() {
           long lastTime = 0;

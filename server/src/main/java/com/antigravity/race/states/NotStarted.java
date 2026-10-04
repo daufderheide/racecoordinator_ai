@@ -283,7 +283,13 @@ public class NotStarted implements IRaceState {
   }
 
   private void startAutoStartTimer(final Race race) {
-    scheduler = Executors.newScheduledThreadPool(1);
+    scheduler =
+        Executors.newSingleThreadScheduledExecutor(
+            r -> {
+              Thread t = new Thread(r, "AutoStartTicker");
+              t.setDaemon(true);
+              return t;
+            });
     final Runnable ticker =
         new Runnable() {
           long lastTime = 0;
