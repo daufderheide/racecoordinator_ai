@@ -1,6 +1,6 @@
 # Changelog
 
-## [v1.0.1-beta.13] - 2026-10-04
+## [v1.0.1-beta.14] - 2026-10-04
 
 ### 🚀 New Features
 
@@ -40,6 +40,8 @@
 
 ### ⚡ Improvements & Refactoring
 
+- standardize hardware and demo protocol schedulers to named daemon threads [skip-screendiffs] ([68e59442](https://github.com/daufderheide/racecoordinator_ai/commit/68e59442))
+- deduplicate pre-race prediction simulations and make lane QR codes lazy [skip-screendiffs] ([f38eb9cb](https://github.com/daufderheide/racecoordinator_ai/commit/f38eb9cb))
 - eliminate scheduler self-deadlock, optimize standings indexing and memoize timer options [skip-screendiffs] ([a3dab0f0](https://github.com/daufderheide/racecoordinator_ai/commit/a3dab0f0))
 - offload lap predictions to daemon worker and remove redundant ngZone.run() [skip-screendiffs] ([9bf7d372](https://github.com/daufderheide/racecoordinator_ai/commit/9bf7d372))
 - eliminate hot-path SQLite DDL, ticker lock contention [skip-screendiffs] ([f1e7c96b](https://github.com/daufderheide/racecoordinator_ai/commit/f1e7c96b))
@@ -50,7 +52,7 @@
 <details>
 <summary>🔍 <b>Full Commit History</b></summary>
 
-<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0...v1.0.1-beta.13">GitHub</a></p>
+<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0...v1.0.1-beta.14">GitHub</a></p>
 </details>
 
 ## [v1.0.0] - 2026-09-27
