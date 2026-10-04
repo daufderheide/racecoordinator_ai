@@ -22,7 +22,7 @@ import {
   ViewEncapsulation,
 } from "@angular/core";
 import { FormsModule } from "@angular/forms";
-import { DomSanitizer, SafeStyle } from "@angular/platform-browser";
+import { DomSanitizer, SafeStyle, Title } from "@angular/platform-browser";
 import {
   ActivatedRoute,
   NavigationStart,
@@ -88,6 +88,7 @@ import {
   PdfExportOptions,
 } from "@app/components/shared/pdf-export-dialog/pdf-export-dialog.component";
 import { RaceHistoryDialogComponent } from "@app/components/shared/race-history-dialog/race-history-dialog.component";
+import { getThemeDisplayNameKey } from "@app/components/ui-editor/ui-editor-crud.helper";
 import { WIDGET_REGISTRY } from "@app/components/ui-editor/widget-registry";
 import { CustomUI } from "@app/models/custom-ui";
 import { AudioConfig } from "@app/models/driver";
@@ -824,6 +825,7 @@ export class DefaultRacedayComponent
   private audioService: AudioService;
   private childWindowManagerService: ChildWindowManagerService;
   private dateTimeFormatService: DateTimeFormatService;
+  private titleService?: Title;
 
   constructor(
     private el: ElementRef,
@@ -848,7 +850,15 @@ export class DefaultRacedayComponent
     private navigationService?: NavigationService,
     dateTimeFormatService?: DateTimeFormatService,
     audioService?: AudioService,
+    titleService?: Title,
   ) {
+    let injectedTitle: Title | null = null;
+    try {
+      injectedTitle = inject(Title, { optional: true });
+    } catch {
+      // Ignore if outside injection context
+    }
+    this.titleService = titleService ?? injectedTitle ?? undefined;
     this.audioService = audioService ?? inject(AudioService);
     this.fuelAudioTracker = new FuelAudioTracker(this.audioService, (urlOrId) =>
       this.resolveAssetPlayableUrl(urlOrId),
@@ -1389,6 +1399,7 @@ export class DefaultRacedayComponent
     this.subscribeToAssets();
     this.detectShortcutKey();
     this.updateScale();
+    this.updateTabTitle();
 
     if (
       this.customWidgetService &&
@@ -1463,8 +1474,19 @@ export class DefaultRacedayComponent
       this.themeService.activeTheme$.subscribe(() => {
         this.updateRacedayLayout();
         this.preloadCountdownAudio();
+        this.updateTabTitle();
       }),
     );
+
+    if (this.translationService?.getTranslationsLoaded) {
+      this.subscriptions.push(
+        this.translationService.getTranslationsLoaded().subscribe((loaded) => {
+          if (loaded) {
+            this.updateTabTitle();
+          }
+        }),
+      );
+    }
 
     this.subscriptions.push(
       this.customUiService.customUIs$.subscribe(() => {
@@ -2851,6 +2873,7 @@ export class DefaultRacedayComponent
             this.customUiService.initialize(),
           ]).then(() => {
             this.updateRacedayLayout();
+            this.updateTabTitle(themeId);
           });
         }
         if (params["modifyHeats"] === "true") {
@@ -4710,14 +4733,106 @@ export class DefaultRacedayComponent
     }
   }
 
+  private lastThemeOpenTime = 0;
+  private lastThemeOpenId = "";
+
   onThemeMenuSelect(themeId: string) {
+    const now = Date.now();
+    if (
+      this.lastThemeOpenId === themeId &&
+      now - this.lastThemeOpenTime < 500
+    ) {
+      return;
+    }
+    this.lastThemeOpenTime = now;
+    this.lastThemeOpenId = themeId;
+
     this.logger.debug("Opening theme window for themeId:", themeId);
     const url = this.router.serializeUrl(
       this.router.createUrlTree(["/default-raceday"], {
         queryParams: { themeId },
       }),
     );
-    this.childWindowManagerService.openThemeWindow(url);
+    const theme =
+      this.themeService
+        ?.getThemes?.()
+        ?.find?.((t) => t.entity_id === themeId) ||
+      (this.themeService?.getActiveTheme?.()?.entity_id === themeId
+        ? this.themeService.getActiveTheme()
+        : null);
+    let themeTitle: string | undefined;
+    if (theme) {
+      const key = getThemeDisplayNameKey(theme, this.translationService);
+      themeTitle = this.translationService?.translate
+        ? this.translationService.translate(key)
+        : theme.name;
+    } else if (themeId === "practice_theme_rc_ai") {
+      themeTitle =
+        this.translationService?.translate?.("UE_LABEL_PRACTICE_THEME") ||
+        "RaceCoordinator AI (Practice)";
+    } else if (themeId === "default_fuel_theme_rc_ai") {
+      themeTitle =
+        this.translationService?.translate?.("UE_LABEL_FUEL_THEME") ||
+        "RaceCoordinator AI (Fuel)";
+    } else if (themeId === "default_classic_rc_ai") {
+      themeTitle =
+        this.translationService?.translate?.("UE_LABEL_DEFAULT_THEME") ||
+        "RaceCoordinator AI";
+    }
+    if (themeTitle) {
+      this.childWindowManagerService.openThemeWindow(url, themeTitle);
+    } else {
+      this.childWindowManagerService.openThemeWindow(url);
+    }
+  }
+
+  updateTabTitle(themeIdOverride?: string): void {
+    const themeId =
+      themeIdOverride ||
+      this.route.snapshot?.queryParams?.["themeId"] ||
+      this.themeService?.getTransientThemeId?.();
+    if (!themeId) {
+      return;
+    }
+    const activeTheme = this.themeService?.getActiveTheme?.();
+    const theme =
+      (activeTheme?.entity_id === themeId ? activeTheme : null) ||
+      this.themeService
+        ?.getThemes?.()
+        ?.find?.((t) => t.entity_id === themeId) ||
+      null;
+    let titleToSet: string | undefined;
+    if (theme) {
+      const displayNameKey = getThemeDisplayNameKey(
+        theme,
+        this.translationService,
+      );
+      titleToSet = this.translationService?.translate
+        ? this.translationService.translate(displayNameKey)
+        : displayNameKey;
+      if (!titleToSet) {
+        titleToSet = theme.name;
+      }
+    } else if (themeId === "practice_theme_rc_ai") {
+      titleToSet =
+        this.translationService?.translate?.("UE_LABEL_PRACTICE_THEME") ||
+        "RaceCoordinator AI (Practice)";
+    } else if (themeId === "default_fuel_theme_rc_ai") {
+      titleToSet =
+        this.translationService?.translate?.("UE_LABEL_FUEL_THEME") ||
+        "RaceCoordinator AI (Fuel)";
+    } else if (themeId === "default_classic_rc_ai") {
+      titleToSet =
+        this.translationService?.translate?.("UE_LABEL_DEFAULT_THEME") ||
+        "RaceCoordinator AI";
+    }
+    if (titleToSet) {
+      if (this.titleService) {
+        this.titleService.setTitle(titleToSet);
+      } else if (typeof document !== "undefined") {
+        document.title = titleToSet;
+      }
+    }
   }
 
   @HostListener("window:beforeunload", ["$event"])
