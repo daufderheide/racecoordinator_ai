@@ -17,7 +17,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -69,10 +68,7 @@ public class ArduinoProtocol extends AbstractSerialProtocol {
       int numLanes,
       ISerialConnection serialConnection,
       ScheduledExecutorService statusScheduler) {
-    super(
-        numLanes,
-        serialConnection,
-        statusScheduler != null ? statusScheduler : Executors.newScheduledThreadPool(1));
+    super(numLanes, serialConnection, statusScheduler);
     this.config = config;
     logger.info("ArduinoProtocol initialized with {} lanes", numLanes);
 
