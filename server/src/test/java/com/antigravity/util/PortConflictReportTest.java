@@ -118,4 +118,46 @@ public class PortConflictReportTest {
     assertTrue(dialog.contains("Port is already in use or unavailable."));
     assertTrue(dialog.contains("1. Terminate the process using port 8080"));
   }
+
+  @Test
+  public void testForProcess_WithApplicationNameAndCommandLine() {
+    PortConflictReport report =
+        PortConflictReport.forProcess(
+            7070,
+            5555L,
+            "java.exe",
+            "C:\\Java\\bin\\java.exe",
+            "java -jar server.jar",
+            "Race Coordinator AI Server (another instance is already running)");
+
+    assertEquals(
+        "Race Coordinator AI Server (another instance is already running)",
+        report.getApplicationName());
+    assertEquals("java -jar server.jar", report.getCommandLine());
+
+    String diag = report.toDiagnosticString();
+    assertTrue(diag.contains("Application : Race Coordinator AI Server"));
+    assertTrue(diag.contains("Command Line: java -jar server.jar"));
+
+    String dialog = report.toDialogMessage();
+    assertTrue(dialog.contains("Application: Race Coordinator AI Server"));
+    assertTrue(dialog.contains("Command: java -jar server.jar"));
+    assertTrue(
+        dialog.contains("Another instance of Race Coordinator AI appears to already be running."));
+  }
+
+  @Test
+  public void testForProcess_TruncatesLongCommandLineInDialog() {
+    String longCmd =
+        "java -cp very/long/path/with/lots/of/libraries/"
+            + "library1.jar:library2.jar:library3.jar:library4.jar:library5.jar:library6.jar:"
+            + "library7.jar:library8.jar:library9.jar:library10.jar:library11.jar com.antigravity.App";
+    PortConflictReport report =
+        PortConflictReport.forProcess(
+            7070, 1111L, "java", "/usr/bin/java", longCmd, "Race Coordinator AI Server");
+
+    String dialog = report.toDialogMessage();
+    assertTrue(dialog.contains("..."));
+    assertTrue(report.toDiagnosticString().contains(longCmd));
+  }
 }

@@ -14,6 +14,8 @@ public class PortConflictReport {
   private final Long pid;
   private final String processName;
   private final String executablePath;
+  private final String commandLine;
+  private final String applicationName;
   private final String portRange;
 
   public PortConflictReport(
@@ -22,28 +24,59 @@ public class PortConflictReport {
       Long pid,
       String processName,
       String executablePath,
+      String commandLine,
+      String applicationName,
       String portRange) {
     this.port = port;
     this.conflictType = conflictType;
     this.pid = pid;
     this.processName = processName;
     this.executablePath = executablePath;
+    this.commandLine = commandLine;
+    this.applicationName = applicationName;
     this.portRange = portRange;
+  }
+
+  public PortConflictReport(
+      int port,
+      ConflictType conflictType,
+      Long pid,
+      String processName,
+      String executablePath,
+      String portRange) {
+    this(port, conflictType, pid, processName, executablePath, null, null, portRange);
+  }
+
+  public static PortConflictReport forProcess(
+      int port,
+      Long pid,
+      String processName,
+      String executablePath,
+      String commandLine,
+      String applicationName) {
+    return new PortConflictReport(
+        port,
+        ConflictType.PROCESS_IN_USE,
+        pid,
+        processName,
+        executablePath,
+        commandLine,
+        applicationName,
+        null);
   }
 
   public static PortConflictReport forProcess(
       int port, Long pid, String processName, String executablePath) {
-    return new PortConflictReport(
-        port, ConflictType.PROCESS_IN_USE, pid, processName, executablePath, null);
+    return forProcess(port, pid, processName, executablePath, null, null);
   }
 
   public static PortConflictReport forExcludedRange(int port, String portRange) {
     return new PortConflictReport(
-        port, ConflictType.WINDOWS_EXCLUDED_PORT_RANGE, null, null, null, portRange);
+        port, ConflictType.WINDOWS_EXCLUDED_PORT_RANGE, null, null, null, null, null, portRange);
   }
 
   public static PortConflictReport forUnknown(int port) {
-    return new PortConflictReport(port, ConflictType.UNKNOWN, null, null, null, null);
+    return new PortConflictReport(port, ConflictType.UNKNOWN, null, null, null, null, null, null);
   }
 
   public int getPort() {
@@ -66,6 +99,14 @@ public class PortConflictReport {
     return executablePath;
   }
 
+  public String getCommandLine() {
+    return commandLine;
+  }
+
+  public String getApplicationName() {
+    return applicationName;
+  }
+
   public String getPortRange() {
     return portRange;
   }
@@ -78,6 +119,9 @@ public class PortConflictReport {
     sb.append("Status      : ").append(conflictType).append(System.lineSeparator());
 
     if (conflictType == ConflictType.PROCESS_IN_USE) {
+      if (applicationName != null) {
+        sb.append("Application : ").append(applicationName).append(System.lineSeparator());
+      }
       if (processName != null) {
         sb.append("Process Name: ").append(processName).append(System.lineSeparator());
       }
@@ -86,6 +130,9 @@ public class PortConflictReport {
       }
       if (executablePath != null && !executablePath.trim().isEmpty()) {
         sb.append("Path        : ").append(executablePath).append(System.lineSeparator());
+      }
+      if (commandLine != null && !commandLine.trim().isEmpty()) {
+        sb.append("Command Line: ").append(commandLine).append(System.lineSeparator());
       }
     } else if (conflictType == ConflictType.WINDOWS_EXCLUDED_PORT_RANGE) {
       sb.append("Exclusion   : ")
@@ -107,6 +154,9 @@ public class PortConflictReport {
 
     if (conflictType == ConflictType.PROCESS_IN_USE) {
       sb.append("Port ").append(port).append(" is currently in use by another application:\n");
+      if (applicationName != null) {
+        sb.append("  • Application: ").append(applicationName).append("\n");
+      }
       if (processName != null) {
         sb.append("  • Process: ").append(processName);
         if (pid != null) {
@@ -119,6 +169,13 @@ public class PortConflictReport {
       if (executablePath != null && !executablePath.trim().isEmpty()) {
         sb.append("  • Path: ").append(executablePath).append("\n");
       }
+      if (commandLine != null && !commandLine.trim().isEmpty()) {
+        String shortCmd = commandLine.trim();
+        if (shortCmd.length() > 140) {
+          shortCmd = shortCmd.substring(0, 140) + "...";
+        }
+        sb.append("  • Command: ").append(shortCmd).append("\n");
+      }
       sb.append("\nTroubleshooting Steps:\n");
       if (pid != null) {
         sb.append("1. Close or terminate the conflicting application (PID: ")
@@ -126,6 +183,10 @@ public class PortConflictReport {
             .append(").\n");
       } else {
         sb.append("1. Close or terminate the conflicting application.\n");
+      }
+      if (applicationName != null
+          && applicationName.toLowerCase().contains("race coordinator ai")) {
+        sb.append("   Another instance of Race Coordinator AI appears to already be running.\n");
       }
       sb.append(
           "2. Or start with '--port <port>' (or set SERVER_PORT / PORT environment variable).");

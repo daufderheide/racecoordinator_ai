@@ -278,6 +278,143 @@ public class PortConflictInspectorTest {
   }
 
   @Test
+  public void testInspectWindows_RaceCoordinatorAiServerDetected() {
+    PortConflictInspector.setCommandRunner(
+        (command, timeoutSeconds) -> {
+          String cmd = String.join(" ", command);
+          if (cmd.contains("netstat")) {
+            return "  TCP    0.0.0.0:7070           0.0.0.0:0              LISTENING       1234\n";
+          } else if (cmd.contains("tasklist")) {
+            return "\"java.exe\",\"1234\",\"Console\",\"1\",\"250,000 K\"\n";
+          } else if (cmd.contains("powershell")) {
+            return "PATH=C:\\Program Files\\Java\\jdk-21\\bin\\java.exe\n"
+                + "CMD=\"C:\\Program Files\\Java\\jdk-21\\bin\\java.exe\" -Dapp.data.dir=C:\\rc\\data -cp server.jar com.antigravity.App\n";
+          }
+          return null;
+        });
+
+    PortConflictReport report = PortConflictInspector.inspect(7070, "Windows 11");
+
+    assertEquals(7070, report.getPort());
+    assertEquals(PortConflictReport.ConflictType.PROCESS_IN_USE, report.getConflictType());
+    assertEquals(Long.valueOf(1234L), report.getPid());
+    assertEquals("java.exe", report.getProcessName());
+    assertEquals("C:\\Program Files\\Java\\jdk-21\\bin\\java.exe", report.getExecutablePath());
+    assertEquals(
+        "Race Coordinator AI Server (another instance is already running)",
+        report.getApplicationName());
+    assertTrue(report.getCommandLine().contains("com.antigravity.App"));
+    assertTrue(report.toDialogMessage().contains("Race Coordinator AI Server"));
+    assertTrue(report.toDialogMessage().contains("Another instance of Race Coordinator AI"));
+  }
+
+  @Test
+  public void testInspectWindows_JavaJarDetected() {
+    PortConflictInspector.setCommandRunner(
+        (command, timeoutSeconds) -> {
+          String cmd = String.join(" ", command);
+          if (cmd.contains("netstat")) {
+            return "  TCP    0.0.0.0:7070           0.0.0.0:0              LISTENING       4321\n";
+          } else if (cmd.contains("tasklist")) {
+            return "\"javaw.exe\",\"4321\",\"Console\",\"1\",\"80,000 K\"\n";
+          } else if (cmd.contains("powershell")) {
+            return "PATH=C:\\Java\\javaw.exe\nCMD=javaw -jar \"C:\\apps\\custom_app.jar\"\n";
+          }
+          return null;
+        });
+
+    PortConflictReport report = PortConflictInspector.inspect(7070, "Windows 10");
+
+    assertEquals("Java Application (custom_app.jar)", report.getApplicationName());
+    assertEquals("C:\\Java\\javaw.exe", report.getExecutablePath());
+    assertEquals("javaw -jar \"C:\\apps\\custom_app.jar\"", report.getCommandLine());
+  }
+
+  @Test
+  public void testInspectUnix_RaceCoordinatorAiServerDetected() {
+    PortConflictInspector.setCommandRunner(
+        (command, timeoutSeconds) -> {
+          String cmd = String.join(" ", command);
+          if (cmd.contains("lsof")) {
+            return "COMMAND   PID USER   FD   TYPE DEVICE SIZE/OFF NODE NAME\n"
+                + "java    9876 dave   88u  IPv6 0x123      0t0  TCP *:7070 (LISTEN)\n";
+          } else if (cmd.contains("command=")) {
+            return "java -Dapp.data.dir=/Users/dave/rc/data -cp server.jar com.antigravity.App\n";
+          } else if (cmd.contains("comm=")) {
+            return "/Library/Java/JavaVirtualMachines/jdk-21/Contents/Home/bin/java\n";
+          }
+          return null;
+        });
+
+    PortConflictReport report = PortConflictInspector.inspect(7070, "Mac OS X");
+
+    assertEquals(7070, report.getPort());
+    assertEquals(Long.valueOf(9876L), report.getPid());
+    assertEquals("java", report.getProcessName());
+    assertEquals(
+        "Race Coordinator AI Server (another instance is already running)",
+        report.getApplicationName());
+    assertEquals(
+        "/Library/Java/JavaVirtualMachines/jdk-21/Contents/Home/bin/java",
+        report.getExecutablePath());
+    assertTrue(report.getCommandLine().contains("com.antigravity.App"));
+  }
+
+  @Test
+  public void testResolveApplicationName_VariousScenarios() {
+    assertEquals(
+        "Race Coordinator AI Server (another instance is already running)",
+        PortConflictInspector.resolveApplicationName(
+            "java.exe", "java -cp target_dist/classes com.antigravity.App"));
+
+    assertEquals(
+        "Race Coordinator AI Client (Angular dev server)",
+        PortConflictInspector.resolveApplicationName(
+            "node.exe", "node C:\\racecoordinator_ai\\client\\node_modules\\.bin\\ng.js serve"));
+
+    assertEquals(
+        "Angular Dev Server",
+        PortConflictInspector.resolveApplicationName(
+            "node", "node /usr/local/bin/ng serve --port 4200"));
+
+    assertEquals(
+        "Java Application (minecraft.jar)",
+        PortConflictInspector.resolveApplicationName(
+            "java", "java -Xmx2G -jar /opt/minecraft/minecraft.jar nogui"));
+
+    assertEquals(
+        "Java Application",
+        PortConflictInspector.resolveApplicationName("javaw.exe", "javaw -Xms512M"));
+
+    assertEquals(
+        "Node.js Application",
+        PortConflictInspector.resolveApplicationName("node", "node server.js"));
+
+    assertNull(
+        PortConflictInspector.resolveApplicationName(
+            "Openfire.exe", "C:\\Openfire\\bin\\openfire.exe"));
+  }
+
+  @Test
+  public void testParseWindowsProcessDetails_Formats() {
+    PortConflictInspector.ProcessDetails d1 =
+        PortConflictInspector.parseWindowsProcessDetails(
+            "PATH=C:\\Java\\bin\\java.exe\nCMD=java -jar test.jar\n");
+    assertEquals("C:\\Java\\bin\\java.exe", d1.path);
+    assertEquals("java -jar test.jar", d1.commandLine);
+
+    PortConflictInspector.ProcessDetails d2 =
+        PortConflictInspector.parseWindowsProcessDetails("C:\\Simple\\Path.exe\n");
+    assertEquals("C:\\Simple\\Path.exe", d2.path);
+    assertNull(d2.commandLine);
+
+    PortConflictInspector.ProcessDetails d3 =
+        PortConflictInspector.parseWindowsProcessDetails(null);
+    assertNull(d3.path);
+    assertNull(d3.commandLine);
+  }
+
+  @Test
   public void testDefaultCommandRunner_ExecutesHostCommand() throws Exception {
     PortConflictInspector.DefaultCommandRunner runner =
         new PortConflictInspector.DefaultCommandRunner();
