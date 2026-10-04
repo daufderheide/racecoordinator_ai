@@ -2915,6 +2915,94 @@ describe("DefaultRacedaySetupComponent", () => {
       expect(component.selectedParticipants).toEqual([d2]);
     }));
 
+    it("should select the next available driver on Enter and add consecutive drivers on repeated Enter", fakeAsync(() => {
+      component.allDrivers = [d1, d2, d10];
+      component.allTeams = [];
+      component.unselectedParticipants = [d1, d2, d10];
+      component.selectedParticipants = [];
+      component.availableActiveIndex = 0;
+      component.selectedParticipantItem = d1;
+      fixture.detectChanges();
+
+      const enterEvent = new KeyboardEvent("keydown", { key: "Enter" });
+
+      // First Enter adds d1
+      component.onAvailableSearchKeydown(enterEvent);
+      tick(50);
+
+      expect(component.selectedParticipants).toEqual([d1]);
+      // The remaining unselected list has [d2, d10].
+      // d2 is now at index 0 and should be selected!
+      expect(component.availableActiveIndex).toBe(0);
+      expect(component.selectedParticipantItem).toBe(d2);
+      expect(component.isParticipantSelected(d2)).toBeTrue();
+
+      // Second Enter adds d2 (which was selected)
+      component.onAvailableSearchKeydown(enterEvent);
+      tick(50);
+
+      expect(component.selectedParticipants).toEqual([d1, d2]);
+      // d10 is now at index 0 and should be selected!
+      expect(component.availableActiveIndex).toBe(0);
+      expect(component.selectedParticipantItem).toBe(d10);
+      expect(component.isParticipantSelected(d10)).toBeTrue();
+
+      // Third Enter adds d10
+      component.onAvailableSearchKeydown(enterEvent);
+      tick(50);
+
+      expect(component.selectedParticipants).toEqual([d1, d2, d10]);
+      // Available list is now empty
+      expect(component.filteredAvailableParticipants.length).toBe(0);
+      expect(component.selectedParticipantItem).toBeNull();
+    }));
+
+    it("should select the next racing driver on Enter and remove consecutive drivers on repeated Enter", fakeAsync(() => {
+      component.selectedParticipants = [d1, d2, d10, d100];
+      component.racingActiveIndex = 0;
+      component.selectedParticipantItem = d1;
+      fixture.detectChanges();
+
+      const enterEvent = new KeyboardEvent("keydown", { key: "Enter" });
+
+      // First Enter removes d1
+      component.onRacingSearchKeydown(enterEvent);
+      tick(50);
+
+      expect(component.selectedParticipants).toEqual([d2, d10, d100]);
+      // d2 is now at index 0 and should be selected!
+      expect(component.racingActiveIndex).toBe(0);
+      expect(component.selectedParticipantItem).toBe(d2);
+      expect(component.isParticipantSelected(d2)).toBeTrue();
+
+      // Second Enter removes d2 (which was selected)
+      component.onRacingSearchKeydown(enterEvent);
+      tick(50);
+
+      expect(component.selectedParticipants).toEqual([d10, d100]);
+      // d10 is now at index 0 and should be selected!
+      expect(component.racingActiveIndex).toBe(0);
+      expect(component.selectedParticipantItem).toBe(d10);
+      expect(component.isParticipantSelected(d10)).toBeTrue();
+    }));
+
+    it("should select the new last driver when removing the last driver in racing list", fakeAsync(() => {
+      component.selectedParticipants = [d1, d2];
+      component.racingActiveIndex = 1; // pointing to d2 (last item)
+      component.selectedParticipantItem = d2;
+      fixture.detectChanges();
+
+      const enterEvent = new KeyboardEvent("keydown", { key: "Enter" });
+      component.onRacingSearchKeydown(enterEvent);
+      tick(50);
+
+      expect(component.selectedParticipants).toEqual([d1]);
+      // Clamped to 0, which is d1 (the new last item)
+      expect(component.racingActiveIndex).toBe(0);
+      expect(component.selectedParticipantItem).toBe(d1);
+      expect(component.isParticipantSelected(d1)).toBeTrue();
+    }));
+
     it("should do nothing when adding/removing from empty filtered list", () => {
       component.availableSearchQuery = "NonExistentDriver";
       expect(component.filteredAvailableParticipants.length).toBe(0);
@@ -3194,14 +3282,61 @@ describe("DefaultRacedaySetupComponent", () => {
       expect(component.selectedParticipantItem).toBe(d1);
     });
 
-    it("should select participant when addActiveAvailableParticipant is invoked", () => {
+    it("should select the next available participant when addActiveAvailableParticipant is invoked", () => {
       const d1 = new Driver("d1", "Dave", "D");
+      const d2 = new Driver("d2", "Dan", "D");
+      component.allDrivers = [d1, d2];
+      component.allTeams = [];
+      component.unselectedParticipants = [d1, d2];
+      component.selectedParticipants = [];
+      component.availableActiveIndex = 0;
+
+      component.addActiveAvailableParticipant();
+      expect(component.selectedParticipants).toEqual([d1]);
+      expect(component.selectedParticipantItem).toBe(d2);
+      expect(component.isParticipantSelected(d2)).toBeTrue();
+    });
+
+    it("should set selectedParticipantItem to null when adding the last available participant", () => {
+      const d1 = new Driver("d1", "Dave", "D");
+      component.allDrivers = [d1];
+      component.allTeams = [];
       component.unselectedParticipants = [d1];
       component.selectedParticipants = [];
       component.availableActiveIndex = 0;
 
       component.addActiveAvailableParticipant();
-      expect(component.selectedParticipantItem).toBe(d1);
+      expect(component.selectedParticipants).toEqual([d1]);
+      expect(component.selectedParticipantItem).toBeNull();
+      expect(component.isParticipantSelected(d1)).toBeFalse();
+    });
+
+    it("should select the next racing participant when removeActiveRacingParticipant is invoked", () => {
+      const d1 = new Driver("d1", "Dave", "D");
+      const d2 = new Driver("d2", "Dan", "D");
+      component.allDrivers = [d1, d2];
+      component.allTeams = [];
+      component.selectedParticipants = [d1, d2];
+      component.unselectedParticipants = [];
+      component.racingActiveIndex = 0;
+
+      component.removeActiveRacingParticipant();
+      expect(component.selectedParticipants).toEqual([d2]);
+      expect(component.selectedParticipantItem).toBe(d2);
+      expect(component.isParticipantSelected(d2)).toBeTrue();
+    });
+
+    it("should set selectedParticipantItem to null when removing the last racing participant", () => {
+      const d1 = new Driver("d1", "Dave", "D");
+      component.allDrivers = [d1];
+      component.allTeams = [];
+      component.selectedParticipants = [d1];
+      component.unselectedParticipants = [];
+      component.racingActiveIndex = 0;
+
+      component.removeActiveRacingParticipant();
+      expect(component.selectedParticipants).toEqual([]);
+      expect(component.selectedParticipantItem).toBeNull();
     });
 
     it("should select participant when typing into racing search query and navigating", () => {
