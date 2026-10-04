@@ -1819,9 +1819,7 @@ export class DataService {
     };
 
     this.raceDataSocket.onmessage = (event) => {
-      this.ngZone.run(() => {
-        this.handleRaceDataMessage(event);
-      });
+      this.handleRaceDataMessage(event);
     };
 
     this.raceDataSocket.onclose = () => {

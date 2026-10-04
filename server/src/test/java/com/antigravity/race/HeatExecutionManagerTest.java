@@ -1805,7 +1805,7 @@ public class HeatExecutionManagerTest {
       org.mockito.ArgumentCaptor<java.util.List<RaceParticipant>> listCaptor =
           org.mockito.ArgumentCaptor.forClass(java.util.List.class);
 
-      org.mockito.Mockito.verify(mockService)
+      org.mockito.Mockito.verify(mockService, org.mockito.Mockito.timeout(2000))
           .updateRealtimePrediction(
               org.mockito.ArgumentMatchers.any(),
               org.mockito.ArgumentMatchers.anyString(),
