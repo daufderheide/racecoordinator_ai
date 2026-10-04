@@ -771,6 +771,16 @@ export class DefaultRacedaySetupComponent implements OnInit {
       ];
       this.updateUnselectedParticipants();
     }, inputElem);
+
+    const remainingAvail = this.filteredAvailableParticipants.length;
+    if (this.availableActiveIndex >= remainingAvail) {
+      this.availableActiveIndex = Math.max(0, remainingAvail - 1);
+    }
+    this.selectedParticipantItem =
+      remainingAvail > 0
+        ? this.filteredAvailableParticipants[this.availableActiveIndex] || null
+        : null;
+    this.cdr.detectChanges();
   }
 
   removeAllFilteredRacingParticipants(inputElem?: HTMLInputElement) {
@@ -794,6 +804,16 @@ export class DefaultRacedaySetupComponent implements OnInit {
       this.selectedParticipants = remainingParticipants;
       this.updateUnselectedParticipants();
     }, inputElem);
+
+    const remainingRacing = this.filteredRacingParticipants.length;
+    if (this.racingActiveIndex >= remainingRacing) {
+      this.racingActiveIndex = Math.max(0, remainingRacing - 1);
+    }
+    this.selectedParticipantItem =
+      remainingRacing > 0
+        ? this.filteredRacingParticipants[this.racingActiveIndex] || null
+        : null;
+    this.cdr.detectChanges();
   }
 
   onAvailableSearchQueryChange() {
@@ -886,16 +906,21 @@ export class DefaultRacedaySetupComponent implements OnInit {
       Math.max(0, this.availableActiveIndex),
       participants.length - 1,
     );
+    this.availableActiveIndex = index;
     const participant = participants[index];
     if (!participant) return;
 
-    this.selectedParticipantItem = participant;
     this.toggleParticipantSelection(participant, false, inputElem);
 
     const remaining = this.filteredAvailableParticipants.length;
     if (this.availableActiveIndex >= remaining) {
       this.availableActiveIndex = Math.max(0, remaining - 1);
     }
+    this.selectedParticipantItem =
+      remaining > 0
+        ? this.filteredAvailableParticipants[this.availableActiveIndex] || null
+        : null;
+    this.cdr.detectChanges();
     this.scrollActiveAvailableItemIntoView();
   }
 
@@ -907,16 +932,21 @@ export class DefaultRacedaySetupComponent implements OnInit {
       Math.max(0, this.racingActiveIndex),
       participants.length - 1,
     );
+    this.racingActiveIndex = index;
     const participant = participants[index];
     if (!participant) return;
 
-    this.selectedParticipantItem = participant;
     this.toggleParticipantSelection(participant, true, inputElem);
 
     const remaining = this.filteredRacingParticipants.length;
     if (this.racingActiveIndex >= remaining) {
       this.racingActiveIndex = Math.max(0, remaining - 1);
     }
+    this.selectedParticipantItem =
+      remaining > 0
+        ? this.filteredRacingParticipants[this.racingActiveIndex] || null
+        : null;
+    this.cdr.detectChanges();
     this.scrollActiveRacingItemIntoView();
   }
 

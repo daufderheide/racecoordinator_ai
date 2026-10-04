@@ -448,4 +448,26 @@ describe("HeatConverter", () => {
     expect(driverData.top2Consecutive).toBe(8.24);
     expect(driverData.top3Consecutive).toBe(12.36);
   });
+
+  it("should preserve lapCount and adjustedLapCount when proto laps exist but adjustedLapCount is missing or 0", () => {
+    const proto: IHeat = {
+      objectId: "heat_laps_no_adjusted",
+      heatNumber: 1,
+      heatDrivers: [
+        {
+          objectId: "hd_test",
+          driver: {
+            objectId: "p1",
+            driver: { name: "Driver 1" },
+          },
+          laps: [{ lapTime: 2.5 }, { lapTime: 2.4 }, { lapTime: 2.3 }] as any,
+        } as any,
+      ],
+    };
+
+    const heat = HeatConverter.fromProto(proto);
+    const hd = heat.heatDrivers[0]!;
+    expect(hd.physicalLapCount).toBe(3);
+    expect(hd.lapCount).toBe(3);
+  });
 });

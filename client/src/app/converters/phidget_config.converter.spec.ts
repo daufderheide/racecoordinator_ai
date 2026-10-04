@@ -12,6 +12,7 @@ describe("PhidgetConfigConverter", () => {
       hubPort: 2,
       normallyClosedLaneSensors: true,
       normallyClosedRelays: false,
+      activeLowAnalogLeds: true,
       digitalInIds: [1000, 1001],
       digitalOutIds: [4000, 4001],
       analogIds: [0, 1],
@@ -23,11 +24,13 @@ describe("PhidgetConfigConverter", () => {
     expect(config.serialNumber).toBe(123456);
     expect(config.isHubPort).toBeTrue();
     expect(config.hubPort).toBe(2);
+    expect(config.activeLowAnalogLeds).toBeTrue();
     expect(config.voltageConfigs?.[0]).toBe(12.5);
 
     const backToProto = PhidgetConfigConverter.toProto(config);
     expect(backToProto.name).toBe("Test Phidget");
     expect(backToProto.serialNumber).toBe(123456);
+    expect(backToProto.activeLowAnalogLeds).toBeTrue();
     expect(backToProto.voltageConfigs?.[0].maxVoltage).toBe(12.5);
   });
 

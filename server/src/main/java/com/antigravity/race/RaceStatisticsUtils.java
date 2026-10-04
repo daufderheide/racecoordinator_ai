@@ -23,6 +23,7 @@ import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.Comment;
 import org.apache.poi.ss.usermodel.DateUtil;
 import org.apache.poi.ss.usermodel.FillPatternType;
+import org.apache.poi.ss.usermodel.HorizontalAlignment;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -119,10 +120,6 @@ public final class RaceStatisticsUtils {
   }
 
   private static void adjustRaceInformationSheet(XSSFWorkbook workbook, Race race) {
-    if (race == null || race.getRaceModel() == null) {
-      return;
-    }
-
     Sheet sheet = workbook.getSheet("Race Information");
     if (sheet == null && workbook.getNumberOfSheets() > 0) {
       for (Sheet s : workbook) {
@@ -133,6 +130,12 @@ public final class RaceStatisticsUtils {
       }
     }
     if (sheet == null) {
+      return;
+    }
+
+    healRaceInformationTemplate(sheet);
+
+    if (race == null || race.getRaceModel() == null) {
       return;
     }
 
@@ -147,7 +150,7 @@ public final class RaceStatisticsUtils {
             && race.getRaceModel().getGroupOptions().isEnabled();
 
     int lastRow = sheet.getLastRowNum();
-    for (int r = lastRow; r >= 15; r--) {
+    for (int r = lastRow; r >= 0; r--) {
       Row row = sheet.getRow(r);
       if (row == null) {
         continue;
@@ -179,6 +182,175 @@ public final class RaceStatisticsUtils {
         sheet.removeRow(row);
         if (r < sheet.getLastRowNum()) {
           sheet.shiftRows(r + 1, sheet.getLastRowNum(), -1);
+        }
+      }
+    }
+  }
+
+  private static void healRaceInformationTemplate(Sheet sheet) {
+    for (int r = 0; r <= sheet.getLastRowNum(); r++) {
+      Row row = sheet.getRow(r);
+      if (row == null) {
+        continue;
+      }
+      for (Cell cell : row) {
+        Comment comment = cell.getCellComment();
+        if (comment != null && comment.getString() != null) {
+          String cStr = comment.getString().getString();
+          if (cStr != null
+              && (cStr.contains("race.track.lanes") || cStr.contains("var=\"lane\""))) {
+            cell.removeCellComment();
+          }
+        }
+      }
+    }
+
+    int trackSectionsRow = findTrackSectionsRow(sheet);
+    int laneCountRowIdx = trackSectionsRow != -1 ? trackSectionsRow + 1 : 9;
+    Row laneCountRow = sheet.getRow(laneCountRowIdx);
+    if (laneCountRow == null) {
+      laneCountRow = sheet.createRow(laneCountRowIdx);
+    }
+    Cell c0 = laneCountRow.getCell(0);
+    if (c0 == null) {
+      c0 = laneCountRow.createCell(0);
+    }
+    Cell c1 = laneCountRow.getCell(1);
+    if (c1 == null) {
+      c1 = laneCountRow.createCell(1);
+    }
+    c0.removeCellComment();
+    c1.removeCellComment();
+    c0.setCellValue("Lane Count");
+    c1.setCellValue("${race.track.getLaneCount()}");
+    copyStylesFromTrackSections(sheet, trackSectionsRow, c0, c1);
+    cleanupExcessSpacerRows(sheet, laneCountRowIdx);
+  }
+
+  public static void ensureRaceInformationLaneCount(Workbook workbook, Race race) {
+    if (workbook == null) {
+      return;
+    }
+    Sheet sheet = workbook.getSheet("Race Information");
+    if (sheet == null && workbook.getNumberOfSheets() > 0) {
+      for (Sheet s : workbook) {
+        if ("Race Information".equalsIgnoreCase(s.getSheetName())) {
+          sheet = s;
+          break;
+        }
+      }
+    }
+    if (sheet == null) {
+      return;
+    }
+
+    int laneCount = (race != null && race.getTrack() != null) ? race.getTrack().getLaneCount() : 0;
+    int trackSectionsRow = findTrackSectionsRow(sheet);
+    if (trackSectionsRow == -1) {
+      return;
+    }
+
+    int targetRowIdx = trackSectionsRow + 1;
+    Row targetRow = sheet.getRow(targetRowIdx);
+    if (targetRow == null) {
+      targetRow = sheet.createRow(targetRowIdx);
+    }
+    Cell c0 = targetRow.getCell(0);
+    if (c0 == null) {
+      c0 = targetRow.createCell(0);
+    }
+    Cell c1 = targetRow.getCell(1);
+    if (c1 == null) {
+      c1 = targetRow.createCell(1);
+    }
+
+    String text0 = c0.getCellType() == CellType.STRING ? c0.getStringCellValue().trim() : "";
+    if (!"Lane Count".equalsIgnoreCase(text0)) {
+      c0.setCellValue("Lane Count");
+    }
+
+    updateLaneCountCell(c1, laneCount);
+    copyStylesFromTrackSections(sheet, trackSectionsRow, c0, c1);
+    cleanupExcessSpacerRows(sheet, targetRowIdx);
+  }
+
+  private static void copyStylesFromTrackSections(
+      Sheet sheet, int trackSectionsRow, Cell c0, Cell c1) {
+    if (trackSectionsRow < 0) {
+      return;
+    }
+    Row refRow = sheet.getRow(trackSectionsRow);
+    if (refRow != null) {
+      Cell refC0 = refRow.getCell(0);
+      if (refC0 != null && refC0.getCellStyle() != null) {
+        c0.setCellStyle(refC0.getCellStyle());
+      }
+      Cell refC1 = refRow.getCell(1);
+      if (refC1 != null && refC1.getCellStyle() != null) {
+        c1.setCellStyle(refC1.getCellStyle());
+      }
+    }
+  }
+
+  private static int findTrackSectionsRow(Sheet sheet) {
+    for (int r = 0; r <= sheet.getLastRowNum(); r++) {
+      Row row = sheet.getRow(r);
+      if (row != null) {
+        Cell c0 = row.getCell(0);
+        if (c0 != null
+            && c0.getCellType() == CellType.STRING
+            && "Track Sections".equalsIgnoreCase(c0.getStringCellValue().trim())) {
+          return r;
+        }
+      }
+    }
+    return -1;
+  }
+
+  private static void updateLaneCountCell(Cell c1, int laneCount) {
+    boolean needsVal = false;
+    if (c1.getCellType() == CellType.BLANK) {
+      needsVal = true;
+    } else if (c1.getCellType() == CellType.STRING) {
+      String s = c1.getStringCellValue().trim();
+      if (s.isEmpty() || s.startsWith("${")) {
+        needsVal = true;
+      }
+    } else if (c1.getCellType() == CellType.NUMERIC
+        && c1.getNumericCellValue() == 0.0
+        && laneCount > 0) {
+      needsVal = true;
+    }
+    if (needsVal) {
+      c1.setCellValue((double) laneCount);
+    }
+  }
+
+  private static void cleanupExcessSpacerRows(Sheet sheet, int targetRowIdx) {
+    int raceModelRow = -1;
+    for (int r = targetRowIdx + 1; r <= sheet.getLastRowNum(); r++) {
+      Row row = sheet.getRow(r);
+      if (row != null) {
+        Cell c = row.getCell(0);
+        if (c != null
+            && c.getCellType() == CellType.STRING
+            && "Race Model".equalsIgnoreCase(c.getStringCellValue().trim())) {
+          raceModelRow = r;
+          break;
+        }
+      }
+    }
+
+    if (raceModelRow > targetRowIdx + 2) {
+      int excess = (raceModelRow - targetRowIdx) - 2;
+      for (int i = 0; i < excess; i++) {
+        int removeIdx = targetRowIdx + 1;
+        Row rowToRemove = sheet.getRow(removeIdx);
+        if (rowToRemove != null) {
+          sheet.removeRow(rowToRemove);
+        }
+        if (removeIdx + 1 <= sheet.getLastRowNum()) {
+          sheet.shiftRows(removeIdx + 1, sheet.getLastRowNum(), -1);
         }
       }
     }
@@ -527,6 +699,119 @@ public final class RaceStatisticsUtils {
           }
         }
       }
+    }
+  }
+
+  public static void leftJustifyAllCells(Workbook workbook) {
+    if (workbook == null) {
+      return;
+    }
+    Map<CellStyle, CellStyle> styleCache = new HashMap<>();
+    for (Sheet sheet : workbook) {
+      for (Row row : sheet) {
+        for (Cell cell : row) {
+          if (cell == null) {
+            continue;
+          }
+          CellStyle origStyle = cell.getCellStyle();
+          if (origStyle != null && origStyle.getAlignment() == HorizontalAlignment.LEFT) {
+            continue;
+          }
+          CellStyle baseStyle = origStyle != null ? origStyle : workbook.createCellStyle();
+          CellStyle newStyle =
+              styleCache.computeIfAbsent(
+                  baseStyle,
+                  orig -> {
+                    CellStyle cs = workbook.createCellStyle();
+                    cs.cloneStyleFrom(orig);
+                    cs.setAlignment(HorizontalAlignment.LEFT);
+                    return cs;
+                  });
+          cell.setCellStyle(newStyle);
+        }
+      }
+    }
+  }
+
+  public static void autoSizeAllColumns(Workbook workbook) {
+    if (workbook == null) {
+      return;
+    }
+    for (Sheet sheet : workbook) {
+      autoSizeSheetColumns(sheet);
+    }
+  }
+
+  private static void autoSizeSheetColumns(Sheet sheet) {
+    int maxCol = -1;
+    for (Row row : sheet) {
+      if (row.getLastCellNum() > maxCol) {
+        maxCol = row.getLastCellNum();
+      }
+    }
+    if (maxCol <= 0) {
+      return;
+    }
+
+    List<CellTextBackup> backups = new ArrayList<>();
+    for (Row row : sheet) {
+      if (isSpanningTitleOrSubtitleRow(row)) {
+        Cell c0 = row.getCell(0);
+        if (c0 != null && c0.getCellType() == CellType.STRING) {
+          backups.add(new CellTextBackup(c0, c0.getStringCellValue()));
+          c0.setCellValue("");
+        }
+      }
+    }
+
+    try {
+      for (int col = 0; col < maxCol; col++) {
+        try {
+          sheet.autoSizeColumn(col);
+          int currentWidth = sheet.getColumnWidth(col);
+          int paddedWidth = Math.min(255 * 256, currentWidth + 1000);
+          sheet.setColumnWidth(col, Math.max(2560, paddedWidth));
+        } catch (Exception e) {
+          // Ignored: gracefully fall back if font metrics are unavailable in headless environment
+        }
+      }
+    } finally {
+      for (CellTextBackup backup : backups) {
+        backup.cell.setCellValue(backup.text);
+      }
+    }
+  }
+
+  private static boolean isSpanningTitleOrSubtitleRow(Row row) {
+    if (row == null) {
+      return false;
+    }
+    Cell c0 = row.getCell(0);
+    if (c0 == null || c0.getCellType() != CellType.STRING) {
+      return false;
+    }
+    String text = c0.getStringCellValue().trim();
+    if (text.startsWith("Source:") || text.startsWith("Calculated from")) {
+      return true;
+    }
+    if (row.getRowNum() < 2) {
+      Cell c1 = row.getCell(1);
+      if (c1 == null
+          || c1.getCellType() == CellType.BLANK
+          || (c1.getCellType() == CellType.STRING && c1.getStringCellValue().trim().isEmpty())) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static class CellTextBackup {
+    final Cell cell;
+    final String text;
+
+    CellTextBackup(Cell cell, String text) {
+      this.cell = cell;
+      this.text = text;
     }
   }
 
@@ -1357,10 +1642,25 @@ public final class RaceStatisticsUtils {
   private static final Pattern UNESCAPED_VARIABLE_PATTERN =
       Pattern.compile("(?<!\\$)\\{+([a-zA-Z0-9_.()\\[\\]]+)\\}+");
 
+  private static final Pattern TRACK_SECTIONS_PATTERN =
+      Pattern.compile(
+          "\\$\\{(?:(?:race\\.)?track\\.(?:sections|trackSections|numTrackSections|getNumTrackSections(?=[^a-zA-Z0-9_]|$)(?:\\(\\))?)"
+              + "|(?:race\\.)?(?:trackSections|sections|numTrackSections|getNumTrackSections(?=[^a-zA-Z0-9_]|$)(?:\\(\\))?))\\}");
+
+  private static final Pattern LANE_COUNT_PATTERN =
+      Pattern.compile(
+          "\\$\\{(?:(?:race\\.)?track\\.(?:laneCount|getLaneCount(?=[^a-zA-Z0-9_]|$)(?:\\(\\))?)"
+              + "|(?:race\\.)?(?:laneCount|getLaneCount(?=[^a-zA-Z0-9_]|$)(?:\\(\\))?))\\}");
+
   public static String normalizeTemplateVariables(String input) {
     if (input == null || !input.contains("{")) {
       return input;
     }
-    return UNESCAPED_VARIABLE_PATTERN.matcher(input).replaceAll("\\${$1}");
+    String normalized = UNESCAPED_VARIABLE_PATTERN.matcher(input).replaceAll("\\${$1}");
+    String withSections =
+        TRACK_SECTIONS_PATTERN
+            .matcher(normalized)
+            .replaceAll("\\${race.track.getNumTrackSections()}");
+    return LANE_COUNT_PATTERN.matcher(withSections).replaceAll("\\${race.track.getLaneCount()}");
   }
 }

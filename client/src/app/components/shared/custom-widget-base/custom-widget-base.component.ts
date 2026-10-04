@@ -67,6 +67,18 @@ export class CustomWidgetBaseComponent {
     return this.track?.name || "";
   }
 
+  get numTrackSections(): number {
+    return this.track?.num_track_sections ?? 0;
+  }
+
+  get laneCount(): number {
+    return this.track?.lanes?.length ?? 0;
+  }
+
+  get startTime(): string {
+    return this.race?.startTime || "";
+  }
+
   get participants(): RaceParticipant[] {
     return this.parent()?.participants || [];
   }
@@ -287,9 +299,22 @@ export class CustomWidgetBaseComponent {
         totalHeats: this.totalHeats,
         formattedTime: this.formattedTime,
         status: this.autoStatusLabel,
+        startTime: this.startTime,
+        getNumTrackSections: this.numTrackSections,
+        getLaneCount: this.laneCount,
+        laneCount: this.laneCount,
+        track: {
+          name: this.trackName,
+          getNumTrackSections: this.numTrackSections,
+          getLaneCount: this.laneCount,
+          laneCount: this.laneCount,
+        },
       },
       track: {
         name: this.trackName,
+        getNumTrackSections: this.numTrackSections,
+        getLaneCount: this.laneCount,
+        laneCount: this.laneCount,
       },
       heat: this.heat,
       driver: leader,

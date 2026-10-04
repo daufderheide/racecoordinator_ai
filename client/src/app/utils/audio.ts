@@ -28,10 +28,17 @@ export interface TTSRaceData {
   name?: string;
   trackName?: string;
   totalHeats?: number;
+  getNumTrackSections?: number;
+  getLaneCount?: number;
+  laneCount?: number;
+  track?: TTSTrackData;
 }
 
 export interface TTSTrackData {
   name?: string;
+  getNumTrackSections?: number;
+  getLaneCount?: number;
+  laneCount?: number;
 }
 
 export interface TTSHeatData {
@@ -736,7 +743,7 @@ export function interpolate(text: string, data: any): string {
     return text || "";
   }
   return text.replace(/\$?\{([^{}]+)\}/g, (match, path) => {
-    const cleanPath = path.trim();
+    const cleanPath = path.trim().replace(/\(\)$/, "");
     if (!cleanPath) {
       return match;
     }
@@ -805,6 +812,15 @@ export function createTTSContext(
             name: race.name || "",
             trackName: race.trackName || "",
             totalHeats: race.totalHeats || 0,
+            getNumTrackSections: track?.getNumTrackSections ?? 0,
+            getLaneCount: track?.getLaneCount ?? track?.laneCount ?? 0,
+            laneCount: track?.laneCount ?? track?.getLaneCount ?? 0,
+            track: {
+              name: track?.name || race.trackName || "",
+              getNumTrackSections: track?.getNumTrackSections ?? 0,
+              getLaneCount: track?.getLaneCount ?? track?.laneCount ?? 0,
+              laneCount: track?.laneCount ?? track?.getLaneCount ?? 0,
+            },
           },
         }
       : {}),
@@ -812,12 +828,18 @@ export function createTTSContext(
       ? {
           track: {
             name: track.name || "",
+            getNumTrackSections: track.getNumTrackSections ?? 0,
+            getLaneCount: track.getLaneCount ?? track.laneCount ?? 0,
+            laneCount: track.laneCount ?? track.getLaneCount ?? 0,
           },
         }
       : race?.trackName
         ? {
             track: {
               name: race.trackName,
+              getNumTrackSections: 0,
+              getLaneCount: 0,
+              laneCount: 0,
             },
           }
         : {}),

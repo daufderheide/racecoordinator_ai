@@ -157,6 +157,19 @@ public class PhidgetProtocol extends DefaultProtocol {
     return config != null && config.normallyClosedRelays;
   }
 
+  public boolean isActiveLowAnalogLeds() {
+    return config != null && config.activeLowAnalogLeds;
+  }
+
+  public static boolean isAnalogLedBehavior(int behavior) {
+    return behavior == PinBehavior.BEHAVIOR_ANALOG_LED_GREEN_FLAG_VALUE
+        || behavior == PinBehavior.BEHAVIOR_ANALOG_LED_YELLOW_FLAG_VALUE
+        || (behavior >= PinBehavior.BEHAVIOR_ANALOG_LED_COUNTDOWN_1_VALUE
+            && behavior <= PinBehavior.BEHAVIOR_ANALOG_LED_COUNTDOWN_5_VALUE)
+        || (behavior >= PinBehavior.BEHAVIOR_ANALOG_LED_HEAT_LEADER_BASE_VALUE
+            && behavior < PinBehavior.BEHAVIOR_ANALOG_LED_HEAT_LEADER_BASE_VALUE + 64);
+  }
+
   @Override
   protected ArduinoConfig.LapPinPitBehavior getLapPinPitBehavior() {
     if (config == null || config.lapPinPitBehavior == null) {
@@ -603,18 +616,22 @@ public class PhidgetProtocol extends DefaultProtocol {
       boolean state = isNormallyClosedRelays() ? power : !power;
       setOutputChannelPhysicalState(channel, state);
     } else if (behavior == PinBehavior.BEHAVIOR_ANALOG_LED_GREEN_FLAG_VALUE) {
-      setOutputChannelPhysicalState(channel, isGreenFlagOn);
+      boolean state = isActiveLowAnalogLeds() ? !isGreenFlagOn : isGreenFlagOn;
+      setOutputChannelPhysicalState(channel, state);
     } else if (behavior == PinBehavior.BEHAVIOR_ANALOG_LED_YELLOW_FLAG_VALUE) {
-      setOutputChannelPhysicalState(channel, isYellowFlagOn);
+      boolean state = isActiveLowAnalogLeds() ? !isYellowFlagOn : isYellowFlagOn;
+      setOutputChannelPhysicalState(channel, state);
     } else if (behavior >= PinBehavior.BEHAVIOR_ANALOG_LED_COUNTDOWN_1_VALUE
         && behavior <= PinBehavior.BEHAVIOR_ANALOG_LED_COUNTDOWN_5_VALUE) {
       int idx = behavior - PinBehavior.BEHAVIOR_ANALOG_LED_COUNTDOWN_1_VALUE;
-      setOutputChannelPhysicalState(channel, isCountdownOn[idx]);
+      boolean state = isActiveLowAnalogLeds() ? !isCountdownOn[idx] : isCountdownOn[idx];
+      setOutputChannelPhysicalState(channel, state);
     } else if (behavior >= PinBehavior.BEHAVIOR_ANALOG_LED_HEAT_LEADER_BASE_VALUE
         && behavior < PinBehavior.BEHAVIOR_ANALOG_LED_HEAT_LEADER_BASE_VALUE + 64) {
       int lane = behavior - PinBehavior.BEHAVIOR_ANALOG_LED_HEAT_LEADER_BASE_VALUE;
       boolean isLeader = (lastLeaderLane != null && lastLeaderLane == lane);
-      setOutputChannelPhysicalState(channel, isLeader);
+      boolean state = isActiveLowAnalogLeds() ? !isLeader : isLeader;
+      setOutputChannelPhysicalState(channel, state);
     }
   }
 
@@ -927,6 +944,9 @@ public class PhidgetProtocol extends DefaultProtocol {
           boolean state = isNormallyClosedRelays() ? isHigh : !isHigh;
           setOutputChannelPhysicalState(pin, state);
           lastLanePower.put(lane, isHigh);
+        } else if (isAnalogLedBehavior(behavior)) {
+          boolean state = isActiveLowAnalogLeds() ? !isHigh : isHigh;
+          setOutputChannelPhysicalState(pin, state);
         } else {
           setOutputChannelPhysicalState(pin, isHigh);
         }
@@ -988,7 +1008,8 @@ public class PhidgetProtocol extends DefaultProtocol {
     if (out != null) {
       try {
         if (out.getAttached()) {
-          out.setState(on);
+          boolean state = isActiveLowAnalogLeds() ? !on : on;
+          out.setState(state);
         }
       } catch (PhidgetException e) {
         logger.error("Error setting analog LED pin state for behavior {}", behavior, e);

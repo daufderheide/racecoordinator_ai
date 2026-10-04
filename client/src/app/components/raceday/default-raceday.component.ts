@@ -22,7 +22,7 @@ import {
   ViewEncapsulation,
 } from "@angular/core";
 import { FormsModule } from "@angular/forms";
-import { DomSanitizer, SafeStyle } from "@angular/platform-browser";
+import { DomSanitizer, SafeStyle, Title } from "@angular/platform-browser";
 import {
   ActivatedRoute,
   NavigationStart,
@@ -93,6 +93,7 @@ import {
   PdfExportOptions,
 } from "@app/components/shared/pdf-export-dialog/pdf-export-dialog.component";
 import { RaceHistoryDialogComponent } from "@app/components/shared/race-history-dialog/race-history-dialog.component";
+import { getThemeDisplayNameKey } from "@app/components/ui-editor/ui-editor-crud.helper";
 import { WIDGET_REGISTRY } from "@app/components/ui-editor/widget-registry";
 import { CustomUI } from "@app/models/custom-ui";
 import { AudioConfig } from "@app/models/driver";
@@ -839,6 +840,7 @@ export class DefaultRacedayComponent
   private audioService: AudioService;
   private childWindowManagerService: ChildWindowManagerService;
   private dateTimeFormatService: DateTimeFormatService;
+  private titleService?: Title;
   private sanitizer?: DomSanitizer =
     inject(DomSanitizer, { optional: true }) ?? undefined;
 
@@ -865,7 +867,15 @@ export class DefaultRacedayComponent
     private navigationService?: NavigationService,
     dateTimeFormatService?: DateTimeFormatService,
     audioService?: AudioService,
+    titleService?: Title,
   ) {
+    let injectedTitle: Title | null = null;
+    try {
+      injectedTitle = inject(Title, { optional: true });
+    } catch {
+      // Ignore if outside injection context
+    }
+    this.titleService = titleService ?? injectedTitle ?? undefined;
     this.audioService = audioService ?? inject(AudioService);
     this.fuelAudioTracker = new FuelAudioTracker(this.audioService, (urlOrId) =>
       this.resolveAssetPlayableUrl(urlOrId),
@@ -1408,6 +1418,7 @@ export class DefaultRacedayComponent
     this.subscribeToAssets();
     this.detectShortcutKey();
     this.updateScale();
+    this.updateTabTitle();
 
     if (
       this.customWidgetService &&
@@ -1482,8 +1493,19 @@ export class DefaultRacedayComponent
       this.themeService.activeTheme$.subscribe(() => {
         this.updateRacedayLayout();
         this.preloadCountdownAudio();
+        this.updateTabTitle();
       }),
     );
+
+    if (this.translationService?.getTranslationsLoaded) {
+      this.subscriptions.push(
+        this.translationService.getTranslationsLoaded().subscribe((loaded) => {
+          if (loaded) {
+            this.updateTabTitle();
+          }
+        }),
+      );
+    }
 
     this.subscriptions.push(
       this.customUiService.customUIs$.subscribe(() => {
@@ -1894,7 +1916,45 @@ export class DefaultRacedayComponent
                 : Array.isArray((driverData as any).laps)
                   ? (driverData as any).laps.length
                   : (driverData as any).lapCount || 0;
-            if (
+            if (lap.type === LapType.FALSE_START) {
+              if (
+                lap.adjustedLapCount !== undefined &&
+                lap.adjustedLapCount !== null &&
+                !isNaN(lap.adjustedLapCount)
+              ) {
+                driverData.adjustedLapCount = lap.adjustedLapCount;
+                if (
+                  this.heat &&
+                  this.heat !== currentHeat &&
+                  this.heat.heatDrivers
+                ) {
+                  const localHd = DriverMatchingUtils.findDriverForLap(
+                    this.heat.heatDrivers,
+                    lap,
+                  );
+                  if (localHd) {
+                    localHd.adjustedLapCount = lap.adjustedLapCount;
+                  }
+                }
+                if (this.heats && this.heats.length > 0 && currentHeat) {
+                  const targetHeat = this.heats.find(
+                    (h) =>
+                      (currentHeat.objectId &&
+                        h.objectId === currentHeat.objectId) ||
+                      h.heatNumber === currentHeat.heatNumber,
+                  );
+                  if (targetHeat && targetHeat.heatDrivers) {
+                    const targetHd = DriverMatchingUtils.findDriverForLap(
+                      targetHeat.heatDrivers,
+                      lap,
+                    );
+                    if (targetHd && targetHd !== driverData) {
+                      targetHd.adjustedLapCount = lap.adjustedLapCount;
+                    }
+                  }
+                }
+              }
+            } else if (
               lap.lapNumber &&
               currentLapCount < lap.lapNumber &&
               typeof driverData.addLapTime === "function"
@@ -2840,6 +2900,7 @@ export class DefaultRacedayComponent
             this.customUiService.initialize(),
           ]).then(() => {
             this.updateRacedayLayout();
+            this.updateTabTitle(themeId);
           });
         }
         if (params["modifyHeats"] === "true") {
@@ -4707,14 +4768,106 @@ export class DefaultRacedayComponent
     }
   }
 
+  private lastThemeOpenTime = 0;
+  private lastThemeOpenId = "";
+
   onThemeMenuSelect(themeId: string) {
+    const now = Date.now();
+    if (
+      this.lastThemeOpenId === themeId &&
+      now - this.lastThemeOpenTime < 500
+    ) {
+      return;
+    }
+    this.lastThemeOpenTime = now;
+    this.lastThemeOpenId = themeId;
+
     this.logger.debug("Opening theme window for themeId:", themeId);
     const url = this.router.serializeUrl(
       this.router.createUrlTree(["/default-raceday"], {
         queryParams: { themeId },
       }),
     );
-    this.childWindowManagerService.openThemeWindow(url);
+    const theme =
+      this.themeService
+        ?.getThemes?.()
+        ?.find?.((t) => t.entity_id === themeId) ||
+      (this.themeService?.getActiveTheme?.()?.entity_id === themeId
+        ? this.themeService.getActiveTheme()
+        : null);
+    let themeTitle: string | undefined;
+    if (theme) {
+      const key = getThemeDisplayNameKey(theme, this.translationService);
+      themeTitle = this.translationService?.translate
+        ? this.translationService.translate(key)
+        : theme.name;
+    } else if (themeId === "practice_theme_rc_ai") {
+      themeTitle =
+        this.translationService?.translate?.("UE_LABEL_PRACTICE_THEME") ||
+        "RaceCoordinator AI (Practice)";
+    } else if (themeId === "default_fuel_theme_rc_ai") {
+      themeTitle =
+        this.translationService?.translate?.("UE_LABEL_FUEL_THEME") ||
+        "RaceCoordinator AI (Fuel)";
+    } else if (themeId === "default_classic_rc_ai") {
+      themeTitle =
+        this.translationService?.translate?.("UE_LABEL_DEFAULT_THEME") ||
+        "RaceCoordinator AI";
+    }
+    if (themeTitle) {
+      this.childWindowManagerService.openThemeWindow(url, themeTitle);
+    } else {
+      this.childWindowManagerService.openThemeWindow(url);
+    }
+  }
+
+  updateTabTitle(themeIdOverride?: string): void {
+    const themeId =
+      themeIdOverride ||
+      this.route.snapshot?.queryParams?.["themeId"] ||
+      this.themeService?.getTransientThemeId?.();
+    if (!themeId) {
+      return;
+    }
+    const activeTheme = this.themeService?.getActiveTheme?.();
+    const theme =
+      (activeTheme?.entity_id === themeId ? activeTheme : null) ||
+      this.themeService
+        ?.getThemes?.()
+        ?.find?.((t) => t.entity_id === themeId) ||
+      null;
+    let titleToSet: string | undefined;
+    if (theme) {
+      const displayNameKey = getThemeDisplayNameKey(
+        theme,
+        this.translationService,
+      );
+      titleToSet = this.translationService?.translate
+        ? this.translationService.translate(displayNameKey)
+        : displayNameKey;
+      if (!titleToSet) {
+        titleToSet = theme.name;
+      }
+    } else if (themeId === "practice_theme_rc_ai") {
+      titleToSet =
+        this.translationService?.translate?.("UE_LABEL_PRACTICE_THEME") ||
+        "RaceCoordinator AI (Practice)";
+    } else if (themeId === "default_fuel_theme_rc_ai") {
+      titleToSet =
+        this.translationService?.translate?.("UE_LABEL_FUEL_THEME") ||
+        "RaceCoordinator AI (Fuel)";
+    } else if (themeId === "default_classic_rc_ai") {
+      titleToSet =
+        this.translationService?.translate?.("UE_LABEL_DEFAULT_THEME") ||
+        "RaceCoordinator AI";
+    }
+    if (titleToSet) {
+      if (this.titleService) {
+        this.titleService.setTitle(titleToSet);
+      } else if (typeof document !== "undefined") {
+        document.title = titleToSet;
+      }
+    }
   }
 
   @HostListener("window:beforeunload", ["$event"])
@@ -5176,25 +5329,30 @@ export class DefaultRacedayComponent
 
   async exportToCsv() {
     try {
-      const csvData = await firstValueFrom(this.dataService.exportRaceToCsv());
-      if (!csvData || csvData.trim().length === 0) {
-        this.logger.error("Failed to export CSV: received empty data");
-        return;
-      }
-
       const timestamp = this.getExportTimestamp();
       const timeStr = this.printService.formatExportTimestamp(timestamp);
       const raceName = this.race?.name || "Race";
       const suggestedName = `${raceName}-RaceDay${timeStr}.csv`;
 
-      await saveFileAs({
+      const saved = await saveFileAs({
         suggestedName,
-        data: csvData,
+        data: async () => {
+          const csvData = await firstValueFrom(
+            this.dataService.exportRaceToCsv(),
+          );
+          if (!csvData || csvData.trim().length === 0) {
+            this.logger.error("Failed to export CSV: received empty data");
+            return null;
+          }
+          return csvData;
+        },
         mimeType: "text/csv;charset=utf-8",
         description: "CSV Files",
         extension: ".csv",
       });
-      this.logger.debug("CSV Exported successfully");
+      if (saved) {
+        this.logger.debug("CSV Exported successfully");
+      }
     } catch (err: any) {
       this.logger.error("Failed to export CSV", err);
     }
@@ -5202,31 +5360,34 @@ export class DefaultRacedayComponent
 
   async exportToXls() {
     try {
-      const template =
-        this.settingsService.getSettings()?.customExportTemplateBase64;
-      const xlsData: Blob = await firstValueFrom(
-        this.dataService.exportRaceToXls(template),
-      );
-
-      if (!xlsData || xlsData.size === 0) {
-        this.logger.error("Failed to export XLS: received empty blob");
-        return;
-      }
-
       const timestamp = this.getExportTimestamp();
       const timeStr = this.printService.formatExportTimestamp(timestamp);
       const raceName = this.race?.name || "Race";
       const suggestedName = `${raceName}-RaceDay${timeStr}.xlsx`;
 
-      await saveFileAs({
+      const saved = await saveFileAs({
         suggestedName,
-        data: xlsData,
+        data: async () => {
+          const template =
+            this.settingsService.getSettings()?.customExportTemplateBase64;
+          const xlsData: Blob = await firstValueFrom(
+            this.dataService.exportRaceToXls(template),
+          );
+
+          if (!xlsData || xlsData.size === 0) {
+            this.logger.error("Failed to export XLS: received empty blob");
+            return null;
+          }
+          return xlsData;
+        },
         mimeType:
           "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         description: "Excel Files",
         extension: ".xlsx",
       });
-      this.logger.debug("XLS Exported successfully");
+      if (saved) {
+        this.logger.debug("XLS Exported successfully");
+      }
     } catch (err: any) {
       if (err?.error instanceof Blob) {
         try {

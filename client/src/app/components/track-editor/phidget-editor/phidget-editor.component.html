@@ -170,6 +170,22 @@
                             {{ "PHIDGET_NORMALLY_CLOSED_RELAYS" | translate }}
                           </label>
                         </div>
+
+                        <div class="control-group">
+                          <label class="checkbox-label">
+                            <input
+                              type="checkbox"
+                              [disabled]="!isEditMode()"
+                              [id]="
+                                'phidget-active-low-analog-leds-' +
+                                interfaceIndex()
+                              "
+                              [(ngModel)]="config()!.activeLowAnalogLeds"
+                              (change)="onConfigChange()"
+                            />
+                            {{ "PHIDGET_ACTIVE_LOW_ANALOG_LEDS" | translate }}
+                          </label>
+                        </div>
                       </div>
                     </div>
 

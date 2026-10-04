@@ -1,14 +1,17 @@
 package com.antigravity.race.states;
 
 import com.antigravity.context.DatabaseContext;
+import com.antigravity.converters.HeatConverter;
 import com.antigravity.proto.Lap;
 import com.antigravity.proto.RaceData;
 import com.antigravity.proto.RaceFlag;
+import com.antigravity.proto.StandingsUpdate;
 import com.antigravity.protocols.CarData;
 import com.antigravity.race.ClientSubscriptionManager;
 import com.antigravity.race.DriverHeatData;
 import com.antigravity.race.Race;
 import com.antigravity.service.DatabaseService;
+import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -217,6 +220,9 @@ public class Starting implements IRaceState {
     }
 
     dhd.incrementFalseStarts();
+    if (!race.getRaceModel().isRestartOnFalseStart()) {
+      dhd.setReactionTime(0.0);
+    }
 
     double lapPenalty = race.getRaceModel().getFalseStartLapPenalty();
     if (lapPenalty > 0) {
@@ -238,11 +244,27 @@ public class Starting implements IRaceState {
             .setType(Lap.LapType.FALSE_START)
             .setFlag(getLaneFlagType(race, lane))
             .setFuelLevel(dhd.getDriver().getFuelLevel())
+            .setAdjustedLapCount(dhd.getAdjustedLapCount())
             .build();
     dhd.setFlag(falseStartMsg.getFlag());
 
-    RaceData falseStartDataMsg = RaceData.newBuilder().setLap(falseStartMsg).build();
-    race.broadcast(falseStartDataMsg);
+    RaceData.Builder falseStartDataBuilder =
+        RaceData.newBuilder()
+            .setLap(falseStartMsg)
+            .setHeat(HeatConverter.toProto(race.getCurrentHeat(), new HashSet<>()))
+            .setRace(
+                com.antigravity.proto.Race.newBuilder() // fqn-collision
+                    .setCurrentHeat(HeatConverter.toProto(race.getCurrentHeat(), new HashSet<>()))
+                    .build());
+
+    if (race.getCurrentHeat().getHeatStandings() != null) {
+      StandingsUpdate standingsUpdate = race.getCurrentHeat().getHeatStandings().updateStandings();
+      if (standingsUpdate != null) {
+        falseStartDataBuilder.setStandingsUpdate(standingsUpdate);
+      }
+    }
+
+    race.broadcast(falseStartDataBuilder.build());
 
     if (race.getRaceModel().isRestartOnFalseStart()) {
       logger.info("Restarting heat due to false start on lane {}", lane);

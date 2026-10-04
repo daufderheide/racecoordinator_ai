@@ -58,4 +58,16 @@ describe("TrackConverter", () => {
     expect(track.entity_id).toBe("track-2");
     expect(track.track_scale).toBeCloseTo(0.015625, 5);
   });
+
+  it("should default 0 track sections from proto to 100", () => {
+    const proto: ITrackModel = {
+      model: { entityId: "track-3" },
+      name: "Zero Section Track",
+      numTrackSections: 0,
+      lanes: [],
+    };
+
+    const track = TrackConverter.fromProto(proto);
+    expect(track.num_track_sections).toBe(100);
+  });
 });

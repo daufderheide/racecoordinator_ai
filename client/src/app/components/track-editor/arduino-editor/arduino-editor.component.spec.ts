@@ -80,7 +80,7 @@ describe("ArduinoEditorComponent", () => {
         new Array(MAX_ANALOG_PINS).fill(PinBehavior.BEHAVIOR_UNUSED),
       normallyClosedLaneSensors: false,
       normallyClosedRelays: true,
-      globalInvertLights: 0,
+      activeLowAnalogLeds: false,
       usePitsAsLaps: false,
       useLapsForSegments: true,
       ledStrings: [],
@@ -1392,6 +1392,18 @@ describe("ArduinoEditorComponent", () => {
       expect(steps.length).toBeGreaterThan(0);
       expect(steps[0].selector).toBe("#arduino-board-type-0");
       expect(steps[0].title).toBe("TE_HELP_ARDUINO_BOARD_TYPE_TITLE");
+    });
+
+    it("should include active low analog leds in help steps", () => {
+      const steps = component.getHelpSteps();
+      const activeLowStep = steps.find(
+        (s) => s.title === "TE_HELP_ARDUINO_ACTIVE_LOW_LEDS_TITLE",
+      );
+      expect(activeLowStep).toBeDefined();
+      expect(activeLowStep?.selector).toBe("#arduino-active-low-analog-leds-0");
+      component.sectionsExpanded.main = false;
+      activeLowStep?.onEnter();
+      expect(component.sectionsExpanded.main).toBeTrue();
     });
 
     it("should generate voltage section help step when no voltage lanes exist", () => {

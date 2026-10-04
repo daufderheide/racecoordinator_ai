@@ -39,7 +39,7 @@ export class DriverHeatData {
   public penaltyLaps: number = 0;
   public userLaps: number = 0;
   public autoCalculatedLaps: number = 0;
-  private _adjustedLapCount: number = 0;
+  private _adjustedLapCount: number | null = null;
   public isRefueling: boolean = false;
   public currentLocation: number = -1;
   public rank: number = 0;
@@ -92,7 +92,7 @@ export class DriverHeatData {
     this.penaltyLaps = 0;
     this.userLaps = 0;
     this.autoCalculatedLaps = 0;
-    this._adjustedLapCount = 0;
+    this._adjustedLapCount = null;
     this.isRefueling = false;
     this.currentLocation = -1;
     this.flag = 0;
@@ -121,7 +121,13 @@ export class DriverHeatData {
     segments?: number[],
     countTowardsRecords: boolean = true,
   ): void {
-    this._adjustedLapCount = adjustedLapCount;
+    if (
+      adjustedLapCount !== undefined &&
+      adjustedLapCount !== null &&
+      !isNaN(adjustedLapCount)
+    ) {
+      this._adjustedLapCount = adjustedLapCount;
+    }
     if (
       lapNumber === undefined ||
       lapNumber === null ||
@@ -208,15 +214,12 @@ export class DriverHeatData {
   }
 
   get lapCount(): number {
-    if (this._adjustedLapCount !== 0) {
+    if (this._adjustedLapCount !== null) {
       return this._adjustedLapCount;
     }
-    return (
-      this.laps.length +
-      this.penaltyLaps +
-      this.userLaps +
-      this.autoCalculatedLaps
-    );
+    const penalty =
+      this.penaltyLaps > 0 ? this.penaltyLaps : Math.abs(this.penaltyLaps);
+    return this.laps.length - penalty + this.userLaps + this.autoCalculatedLaps;
   }
 
   get physicalLapCount(): number {
@@ -224,11 +227,12 @@ export class DriverHeatData {
   }
 
   get adjustedLapCount(): number {
-    return this._adjustedLapCount;
+    return this._adjustedLapCount ?? 0;
   }
 
-  set adjustedLapCount(value: number) {
-    this._adjustedLapCount = value;
+  set adjustedLapCount(value: number | null) {
+    this._adjustedLapCount =
+      value !== null && value !== undefined && !isNaN(value) ? value : null;
   }
 
   get totalTime(): number {

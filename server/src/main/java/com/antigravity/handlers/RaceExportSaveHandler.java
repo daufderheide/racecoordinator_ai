@@ -95,7 +95,10 @@ public class RaceExportSaveHandler {
         new org.apache.poi.xssf.usermodel.XSSFWorkbook(new ByteArrayInputStream(rawBytes))) {
       RaceStatisticsUtils.applyPostJxlsLaneColors(outputWb, race);
       RaceStatisticsUtils.removeAllCommentsAndVmlDrawings(outputWb);
+      RaceStatisticsUtils.ensureRaceInformationLaneCount(outputWb, race);
       RaceStatisticsUtils.enforceMaxThreeDecimalPlaces(outputWb);
+      RaceStatisticsUtils.leftJustifyAllCells(outputWb);
+      RaceStatisticsUtils.autoSizeAllColumns(outputWb);
 
       int lapDataIdx = outputWb.getSheetIndex("Lap Data");
       if (lapDataIdx != -1) {
@@ -204,6 +207,8 @@ public class RaceExportSaveHandler {
       Race race = ClientSubscriptionManager.getInstance().getRace();
       if (race == null) {
         race = SampleRaceFactory.createSampleRace();
+      } else if (race.getStartTime() == null || race.getStartTime().trim().isEmpty()) {
+        race.setFallbackStartTime(java.time.OffsetDateTime.now().toString());
       }
 
       InputStream is = loadTemplateInputStream(ctx);
@@ -275,6 +280,7 @@ public class RaceExportSaveHandler {
 
       org.jxls.common.Context jxlsContext = new org.jxls.common.Context();
       jxlsContext.putVar("race", race);
+      jxlsContext.putVar("track", race.getTrack());
       jxlsContext.putVar("standings", driversCopy);
 
       List<Heat> runHeats = new ArrayList<>();
@@ -348,6 +354,8 @@ public class RaceExportSaveHandler {
         byte[] decoded = Base64.getDecoder().decode(raw);
         if (decoded != null && decoded.length > 0) {
           is = new ByteArrayInputStream(decoded);
+          logger.info(
+              "Using custom Excel export template from request payload ({} bytes)", decoded.length);
         }
       } catch (Exception e) {
         logger.warn("Custom base64 template decoding failed; falling back to default template", e);
@@ -364,6 +372,7 @@ public class RaceExportSaveHandler {
         ctx.status(500).result("Default template not found");
         return null;
       }
+      logger.info("Using default Excel export template from classpath");
     }
     return is;
   }

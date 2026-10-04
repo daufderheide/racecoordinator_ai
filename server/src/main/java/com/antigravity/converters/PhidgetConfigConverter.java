@@ -17,6 +17,7 @@ public class PhidgetConfigConverter {
     config.hubPort = proto.getHubPort();
     config.normallyClosedLaneSensors = proto.getNormallyClosedLaneSensors();
     config.normallyClosedRelays = proto.getNormallyClosedRelays();
+    config.activeLowAnalogLeds = proto.getActiveLowAnalogLeds();
     config.useLapsForSegments = proto.getUseLapsForSegments();
 
     LapPinPitBehavior protoBehavior = proto.getLapPinPitBehavior();
@@ -53,6 +54,7 @@ public class PhidgetConfigConverter {
             .setHubPort(config.hubPort)
             .setNormallyClosedLaneSensors(config.normallyClosedLaneSensors)
             .setNormallyClosedRelays(config.normallyClosedRelays)
+            .setActiveLowAnalogLeds(config.activeLowAnalogLeds)
             .setUseLapsForSegments(config.useLapsForSegments);
     if (config.lapPinPitBehavior != null) {
       builder.setLapPinPitBehaviorValue(config.lapPinPitBehavior.getValue());

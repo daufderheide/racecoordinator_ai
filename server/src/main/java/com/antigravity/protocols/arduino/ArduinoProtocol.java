@@ -165,6 +165,8 @@ public class ArduinoProtocol extends AbstractSerialProtocol {
         this.config.normallyClosedRelays != newConfig.normallyClosedRelays;
     boolean normallyClosedLaneSensorsChanged =
         this.config.normallyClosedLaneSensors != newConfig.normallyClosedLaneSensors;
+    boolean activeLowAnalogLedsChanged =
+        this.config.activeLowAnalogLeds != newConfig.activeLowAnalogLeds;
 
     String oldPort = this.config.commPort;
     this.config = newConfig;
@@ -190,10 +192,47 @@ public class ArduinoProtocol extends AbstractSerialProtocol {
       if (digitalPinsChanged || analogPinsChanged || normallyClosedRelaysChanged) {
         syncPower();
       }
+      if (digitalPinsChanged || analogPinsChanged || activeLowAnalogLedsChanged) {
+        pinStateCache.clear();
+        onAnalogLedsChanged();
+      }
     }
   }
 
+  public int getPinBehavior(boolean isDigital, int pin) {
+    if (config == null) {
+      return PinBehavior.BEHAVIOR_UNUSED_VALUE;
+    }
+    List<Integer> ids = isDigital ? config.digitalIds : config.analogIds;
+    if (ids != null && pin >= 0 && pin < ids.size() && ids.get(pin) != null) {
+      return ids.get(pin);
+    }
+    return PinBehavior.BEHAVIOR_UNUSED_VALUE;
+  }
+
+  public static boolean isAnalogLedBehavior(int behavior) {
+    return behavior == PinBehavior.BEHAVIOR_ANALOG_LED_GREEN_FLAG_VALUE
+        || behavior == PinBehavior.BEHAVIOR_ANALOG_LED_YELLOW_FLAG_VALUE
+        || (behavior >= PinBehavior.BEHAVIOR_ANALOG_LED_COUNTDOWN_1_VALUE
+            && behavior <= PinBehavior.BEHAVIOR_ANALOG_LED_COUNTDOWN_5_VALUE)
+        || (behavior >= PinBehavior.BEHAVIOR_ANALOG_LED_HEAT_LEADER_BASE_VALUE
+            && behavior < PinBehavior.BEHAVIOR_ANALOG_LED_HEAT_LEADER_BASE_VALUE + 64);
+  }
+
   public void setPinState(boolean isDigital, int pin, boolean isHigh) {
+    int behavior = getPinBehavior(isDigital, pin);
+    boolean physicalHigh = isHigh;
+    if (isAnalogLedBehavior(behavior)) {
+      physicalHigh = (config != null && config.activeLowAnalogLeds) ? !isHigh : isHigh;
+    } else if (behavior == PinBehavior.BEHAVIOR_RELAY_VALUE
+        || (behavior >= PinBehavior.BEHAVIOR_RELAY_BASE_VALUE
+            && behavior < PinBehavior.BEHAVIOR_RELAY_BASE_VALUE + 64)) {
+      physicalHigh = isHigh != (config != null && config.normallyClosedRelays);
+    }
+    writePhysicalPinState(isDigital, pin, physicalHigh);
+  }
+
+  public void writePhysicalPinState(boolean isDigital, int pin, boolean physicalHigh) {
     if (!isConnected()) {
       logger.warn("Serial connection not open, cannot set pin state");
       return;
@@ -201,7 +240,7 @@ public class ArduinoProtocol extends AbstractSerialProtocol {
 
     int cacheKey = (isDigital ? 1000 : 2000) + pin;
     Boolean lastState = pinStateCache.get(cacheKey);
-    if (lastState != null && lastState == isHigh) {
+    if (lastState != null && lastState == physicalHigh) {
       return;
     }
 
@@ -209,17 +248,17 @@ public class ArduinoProtocol extends AbstractSerialProtocol {
     message[0] = 0x4F; // 'O'
     message[1] = isDigital ? DIGITAL : ANALOG;
     message[2] = (byte) pin;
-    message[3] = isHigh ? (byte) 1 : (byte) 0;
+    message[3] = physicalHigh ? (byte) 1 : (byte) 0;
     message[4] = TERMINATOR;
 
     writeData(message);
-    pinStateCache.put(cacheKey, isHigh);
+    pinStateCache.put(cacheKey, physicalHigh);
 
     logger.info(
         "Sent PIN_STATE - Type: {}, Pin: {}, State: {}",
         isDigital ? "Digital" : "Analog",
         pin,
-        isHigh ? "HIGH" : "LOW");
+        physicalHigh ? "HIGH" : "LOW");
   }
 
   @Override
@@ -883,7 +922,7 @@ public class ArduinoProtocol extends AbstractSerialProtocol {
     boolean isHigh = on != config.normallyClosedRelays;
     for (PinConfig pinConfig : pinLookup.values()) {
       if (pinConfig.behavior == InputBehavior.MAIN_RELAY) {
-        setPinState(pinConfig.isDigital, pinConfig.pin, isHigh);
+        writePhysicalPinState(pinConfig.isDigital, pinConfig.pin, isHigh);
       }
     }
   }
@@ -954,7 +993,7 @@ public class ArduinoProtocol extends AbstractSerialProtocol {
     boolean isHigh = on != config.normallyClosedRelays;
     for (PinConfig pinConfig : pinLookup.values()) {
       if (pinConfig.behavior == InputBehavior.LANE_RELAY && pinConfig.laneIndex == lane) {
-        setPinState(pinConfig.isDigital, pinConfig.pin, isHigh);
+        writePhysicalPinState(pinConfig.isDigital, pinConfig.pin, isHigh);
       }
     }
   }

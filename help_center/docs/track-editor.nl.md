@@ -152,6 +152,7 @@ Stelt de ontdenderingstijd van ingangspinnen in in **microseconden** ($1\text{ m
 #### Inverteer-Opties (Ruststroom / Normally Closed)
 - **Normally Closed Spoorsensoren**: Inschakelen indien de sensor in rust hoog is en naar laag zakt zodra een auto passeert (standaard bij lichtsluizen). Uitschakelen bij dead strips of reed-contacten.
 - **Normally Closed Relais**: Inschakelen indien het relais bekrachtigt om stroom af te sluiten en in rust stroom doorlaat. Garandeert baanstroom, zelfs als de computer uitstaat.
+- **Actief-laag Analoge Leds (Active Low Analog LEDs)**: Inschakelen als uw analoge leds (zoals startlichten, vlaggen of heat-leaderindicatoren) AAN gaan bij LAAG (0V) en UIT bij HOOG (5V). Dit lost omgekeerd gedrag op bij bedrading met gemeenschappelijke anode op Arduino- en Phidget-interfaces.
 
 #### Pitstop-Gedrag op Rondepin
 Laat de start/finish-sensor fungeren als pitstop-detectie tijdens brandstofraces:
@@ -263,6 +264,10 @@ De bovenste werkbalk van de Baan-Editor biedt essentiële beheertools:
 ### Oneindig Tanken
 - **Symptoom**: Auto's blijven continu tanken zodra ze de baan opgaan.
 - **Oplossing**: Wijzig de instelling **Normally Closed Spoorsensoren**.
+
+### Analoge Leds Geïnverteerd (Aan wanneer ze uit horen te zijn)
+- **Symptoom**: Startlichten, vlaggen of heat-leaderleds branden in rust en gaan uit tijdens actieve sequenties.
+- **Oplossing**: Schakel de optie **Actief-laag analoge leds (Active Low Analog LEDs)** in uw interfaceconfiguratie (Arduino of Phidget) in.
 
 ### Dubbele Tellingen of Gemiste Ronden
 - **Oplossing**: Verhoog de ontdendering (Debounce) bij dubbeltellingen; verlaag deze bij gemiste ronden van snelle auto's en controleer de uitlijning van de fotocellen.

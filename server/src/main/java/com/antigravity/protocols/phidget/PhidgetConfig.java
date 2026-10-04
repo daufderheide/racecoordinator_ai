@@ -22,6 +22,7 @@ public class PhidgetConfig {
 
   public boolean normallyClosedLaneSensors;
   public boolean normallyClosedRelays;
+  public boolean activeLowAnalogLeds;
   public boolean useLapsForSegments;
   public LapPinPitBehavior lapPinPitBehavior;
 
@@ -65,6 +66,7 @@ public class PhidgetConfig {
 
     this.normallyClosedLaneSensors = true;
     this.normallyClosedRelays = true;
+    this.activeLowAnalogLeds = false;
     this.useLapsForSegments = true;
     this.lapPinPitBehavior = LapPinPitBehavior.PIT_IN_OUT;
   }
@@ -77,6 +79,8 @@ public class PhidgetConfig {
       @JsonProperty("hubPort") int hubPort,
       @JsonProperty("normallyClosedLaneSensors") boolean normallyClosedLaneSensors,
       @JsonProperty("normallyClosedRelays") boolean normallyClosedRelays,
+      @JsonProperty("active_low_analog_leds") @JsonAlias("activeLowAnalogLeds")
+          boolean activeLowAnalogLeds,
       @JsonProperty("useLapsForSegments") boolean useLapsForSegments,
       @JsonProperty("lapPinPitBehavior") LapPinPitBehavior lapPinPitBehavior,
       @JsonProperty("digitalInIds") List<Integer> digitalInIds,
@@ -90,6 +94,7 @@ public class PhidgetConfig {
     this.hubPort = hubPort;
     this.normallyClosedLaneSensors = normallyClosedLaneSensors;
     this.normallyClosedRelays = normallyClosedRelays;
+    this.activeLowAnalogLeds = activeLowAnalogLeds;
     this.useLapsForSegments = useLapsForSegments;
     this.lapPinPitBehavior =
         lapPinPitBehavior != null ? lapPinPitBehavior : LapPinPitBehavior.PIT_IN_OUT;

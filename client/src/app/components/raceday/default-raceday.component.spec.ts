@@ -45,7 +45,7 @@ class MockTranslatePipe implements PipeTransform {
   }
 }
 
-import { By } from "@angular/platform-browser";
+import { By, Title } from "@angular/platform-browser";
 import { BehaviorSubject, of, Subject, throwError } from "rxjs";
 import { DisallowLapRecordsDialogComponent } from "@app/components/shared/disallow-lap-records-dialog/disallow-lap-records-dialog.component";
 import { Role } from "@app/models/role";
@@ -3323,6 +3323,16 @@ describe("DefaultRacedayComponent", () => {
       });
 
       expect(mockAudioInstance.play).toHaveBeenCalled();
+    });
+
+    it("should update driverData adjustedLapCount when FALSE_START received with adjustedLapCount", () => {
+      lapsSubject.next({
+        objectId: "hd1",
+        type: LapType.FALSE_START,
+        adjustedLapCount: -1,
+      });
+
+      expect(mockHd.adjustedLapCount).toBe(-1);
     });
   });
 
@@ -9736,6 +9746,105 @@ describe("DefaultRacedayComponent", () => {
       );
       expect(navEl).toBeNull();
       delete (component as any).route.snapshot.queryParams["themeId"];
+    });
+
+    it("should update tab title to theme name when themeId query param is present", () => {
+      const titleService = TestBed.inject(Title);
+      const setTitleSpy = spyOn(titleService, "setTitle");
+      const themeService = TestBed.inject(ThemeService);
+
+      (themeService.getActiveTheme as jasmine.Spy).and.returnValue({
+        entity_id: "custom_theme_1",
+        name: "Neon Cyberpunk",
+      });
+
+      if (!(component as any).route.snapshot.queryParams) {
+        (component as any).route.snapshot.queryParams = {};
+      }
+      (component as any).route.snapshot.queryParams["themeId"] =
+        "custom_theme_1";
+
+      component.updateTabTitle();
+      expect(setTitleSpy).toHaveBeenCalledWith("Neon Cyberpunk");
+      delete (component as any).route.snapshot.queryParams["themeId"];
+    });
+
+    it("should update tab title for practice theme using localized display name", () => {
+      const titleService = TestBed.inject(Title);
+      const setTitleSpy = spyOn(titleService, "setTitle");
+      const translationService = TestBed.inject(TranslationService);
+      (translationService.translate as jasmine.Spy).and.callFake(
+        (key: string) => {
+          if (key === "UE_LABEL_PRACTICE_THEME") {
+            return "RaceCoordinator AI (Training)";
+          }
+          return key;
+        },
+      );
+
+      component.updateTabTitle("practice_theme_rc_ai");
+      expect(setTitleSpy).toHaveBeenCalledWith("RaceCoordinator AI (Training)");
+    });
+
+    it("should update tab title for fuel theme using localized display name", () => {
+      const titleService = TestBed.inject(Title);
+      const setTitleSpy = spyOn(titleService, "setTitle");
+      const translationService = TestBed.inject(TranslationService);
+      (translationService.translate as jasmine.Spy).and.callFake(
+        (key: string) => {
+          if (key === "UE_LABEL_FUEL_THEME") {
+            return "RaceCoordinator AI (Kraftstoff)";
+          }
+          return key;
+        },
+      );
+
+      component.updateTabTitle("default_fuel_theme_rc_ai");
+      expect(setTitleSpy).toHaveBeenCalledWith(
+        "RaceCoordinator AI (Kraftstoff)",
+      );
+    });
+
+    it("should update tab title for default classic theme using localized display name", () => {
+      const titleService = TestBed.inject(Title);
+      const setTitleSpy = spyOn(titleService, "setTitle");
+      const translationService = TestBed.inject(TranslationService);
+      (translationService.translate as jasmine.Spy).and.callFake(
+        (key: string) => {
+          if (key === "UE_LABEL_DEFAULT_THEME") {
+            return "RaceCoordinator AI";
+          }
+          return key;
+        },
+      );
+
+      component.updateTabTitle("default_classic_rc_ai");
+      expect(setTitleSpy).toHaveBeenCalledWith("RaceCoordinator AI");
+    });
+
+    it("should not update tab title when themeId is absent", () => {
+      const titleService = TestBed.inject(Title);
+      const setTitleSpy = spyOn(titleService, "setTitle");
+      const themeService = TestBed.inject(ThemeService);
+      (themeService.getTransientThemeId as jasmine.Spy).and.returnValue(null);
+      if ((component as any).route.snapshot.queryParams) {
+        delete (component as any).route.snapshot.queryParams["themeId"];
+      }
+
+      component.updateTabTitle();
+      expect(setTitleSpy).not.toHaveBeenCalled();
+    });
+
+    it("should pass theme title to openThemeWindow when onThemeMenuSelect is called with known theme", () => {
+      const childWindowManager = TestBed.inject(ChildWindowManagerService);
+      const openSpy = spyOn(childWindowManager, "openThemeWindow");
+      const themeService = TestBed.inject(ThemeService);
+      (themeService.getThemes as jasmine.Spy).and.returnValue([
+        { entity_id: "t_custom", name: "Custom Vintage" },
+      ]);
+
+      (component as any).onThemeMenuSelect("t_custom");
+      expect(openSpy).toHaveBeenCalledWith("mock-url", "Custom Vintage");
     });
   });
 

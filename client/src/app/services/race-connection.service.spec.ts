@@ -6,6 +6,7 @@ import {
   IInterfaceEvent,
   ILap,
   InterfaceStatus,
+  LapType,
   RaceFlag,
   RaceState,
 } from "@app/proto/antigravity";
@@ -531,6 +532,33 @@ describe("RaceConnectionService", () => {
 
       expect(lane1Driver.addLapTime).toHaveBeenCalled();
       expect(lane0Driver.addLapTime).not.toHaveBeenCalled();
+    });
+
+    it("should update driver adjustedLapCount when FALSE_START lap is received", () => {
+      const driver = new Driver("d_fs", "False Starter", "FS");
+      const participant = new RaceParticipant("p_fs", driver);
+      const hd = new DriverHeatData("dhd_fs", participant, 0, driver);
+      spyOn(hd, "addLapTime");
+
+      mockRaceService.getCurrentHeat.and.returnValue({
+        objectId: "heat_fs",
+        heatDrivers: [hd],
+      });
+
+      service.connect();
+
+      const falseStartLap: ILap = {
+        objectId: "dhd_fs",
+        type: LapType.FALSE_START,
+        adjustedLapCount: -1,
+        flag: RaceFlag.RED,
+      };
+      lapsSubject.next(falseStartLap);
+
+      expect(hd.addLapTime).not.toHaveBeenCalled();
+      expect(hd.adjustedLapCount).toBe(-1);
+      expect(hd.lapCount).toBe(-1);
+      expect(hd.flag).toBe(RaceFlag.RED);
     });
 
     it("should pipe flags to raceFlag$", (done) => {
