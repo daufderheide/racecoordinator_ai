@@ -677,13 +677,111 @@ export class RacedayHeatListComponent implements AfterViewInit, OnDestroy {
     return `repeat(${isNaN(cols) ? 2 : cols}, 1fr)`;
   }
 
+  calculateAutoCardMinWidth(): number {
+    let minWidth = 280;
+
+    // 1. Single-line title bar requirement
+    let headerDemand = 65;
+    const hasGroupName =
+      this.isGroupEnabled() || this.processedHeats().some((h) => !!h.groupName);
+    if (hasGroupName) {
+      headerDemand += 85;
+    }
+    let statusDemand = 0;
+    if (this.showCurrentHeatFlag()) {
+      statusDemand += 34;
+    }
+    if (this.showCurrentHeatTime()) {
+      statusDemand += 84;
+    }
+    if (statusDemand > 0) {
+      headerDemand += statusDemand + 8;
+    }
+    headerDemand += 20;
+    minWidth = Math.max(minWidth, headerDemand);
+
+    // 2. Summary table column demand
+    const hasSummary =
+      this.showActiveSummary() ||
+      this.showCompletedSummary() ||
+      this.showFutureSummary();
+    if (hasSummary) {
+      let tableDemand = 0;
+      if (this.summaryShowPosition()) {
+        tableDemand += 36;
+      }
+      if (this.summaryShowDriver()) {
+        tableDemand += 155;
+      }
+      if (this.summaryShowLaps()) {
+        tableDemand += 56;
+      }
+      if (this.summaryShowBestLap()) {
+        tableDemand += 105;
+      }
+      if (this.summaryShowGap()) {
+        tableDemand += 70;
+      }
+      if (this.summaryShowAverageLap()) {
+        tableDemand += 95;
+      }
+      if (this.summaryShowMedianLap()) {
+        tableDemand += 95;
+      }
+      tableDemand += 40;
+      minWidth = Math.max(minWidth, tableDemand);
+    }
+
+    // 3. Lane badge column demand (accounting for lane count and driver/team name length)
+    const laneSetting = this.laneColumnsSetting();
+    let laneCols = 1;
+    if (laneSetting === "auto") {
+      laneCols = Math.min(this.trackLaneCount(), 4);
+    } else {
+      const parsed = parseInt(laneSetting, 10);
+      laneCols = isNaN(parsed) ? 1 : parsed;
+    }
+
+    if (laneCols > 1) {
+      let maxSampledLen = 0;
+      for (const heat of this.processedHeats()) {
+        if (!heat.lanes) continue;
+        for (const lane of heat.lanes) {
+          if (!lane.isOccupied) continue;
+          if (lane.driverNickname) {
+            maxSampledLen = Math.max(maxSampledLen, lane.driverNickname.length);
+          }
+          if (lane.isTeam && lane.teamName) {
+            maxSampledLen = Math.max(maxSampledLen, lane.teamName.length);
+          }
+        }
+      }
+
+      // Default to 9 chars ("Driver 20"), capped between 9 and 13 chars
+      const effectiveChars = Math.min(13, Math.max(9, maxSampledLen));
+
+      // Fixed overhead: Tag L1 (~22px) + Gap (6px) + Badge Padding (16px) = 44px
+      // Character width at ~12px font is ~7.5px + 8px safety margin
+      const textWidth = Math.round(effectiveChars * 7.5 + 8);
+      const singleBadgeWidth = 44 + textWidth; // ~120px for 9 chars, ~150px for 13 chars
+
+      // Total badge demand: columns * badgeWidth + gaps + card padding (24px)
+      const badgesDemand =
+        laneCols * singleBadgeWidth + (laneCols - 1) * 4 + 24;
+      minWidth = Math.max(minWidth, badgesDemand);
+    }
+
+    return Math.round(minWidth);
+  }
+
   getHeatColumnsStyle(): string {
     if (this.scaleToWindow()) {
       return `repeat(${this.autoFitLayout().columns}, 1fr)`;
     }
     const setting = this.heatColumnsSetting();
     if (setting === "auto") {
-      return "repeat(auto-fill, minmax(280px, 1fr))";
+      const minWidth = this.calculateAutoCardMinWidth();
+      return `repeat(auto-fill, minmax(${minWidth}px, 1fr))`;
     }
     const cols = parseInt(setting, 10);
     return `repeat(${isNaN(cols) ? 1 : cols}, 1fr)`;
