@@ -26,6 +26,7 @@ import java.util.Date;
 import java.util.List;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.HorizontalAlignment;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.xssf.usermodel.XSSFColor;
@@ -1493,6 +1494,36 @@ public class RaceStatisticsUtilsTest {
     assertEquals(
         "Normal text without vars",
         RaceStatisticsUtils.normalizeTemplateVariables("Normal text without vars"));
+    assertEquals(
+        "${race.track.getNumTrackSections()}",
+        RaceStatisticsUtils.normalizeTemplateVariables("${race.track.sections}"));
+    assertEquals(
+        "${race.track.getNumTrackSections()}",
+        RaceStatisticsUtils.normalizeTemplateVariables("{race.track.sections}"));
+    assertEquals(
+        "${race.track.getNumTrackSections()}",
+        RaceStatisticsUtils.normalizeTemplateVariables("${race.track.trackSections}"));
+    assertEquals(
+        "${race.track.getNumTrackSections()}",
+        RaceStatisticsUtils.normalizeTemplateVariables("{race.track.trackSections}"));
+    assertEquals(
+        "${race.track.getNumTrackSections()}",
+        RaceStatisticsUtils.normalizeTemplateVariables("${race.trackSections}"));
+    assertEquals(
+        "${race.track.getNumTrackSections()}",
+        RaceStatisticsUtils.normalizeTemplateVariables("${race.sections}"));
+    assertEquals(
+        "${race.track.getNumTrackSections()}",
+        RaceStatisticsUtils.normalizeTemplateVariables("${race.track.numTrackSections}"));
+    assertEquals(
+        "${race.track.getNumTrackSections()}",
+        RaceStatisticsUtils.normalizeTemplateVariables("${race.track.getNumTrackSections}"));
+    assertEquals(
+        "${race.track.getNumTrackSections()}",
+        RaceStatisticsUtils.normalizeTemplateVariables("${track.sections}"));
+    assertEquals(
+        "${race.track.getNumTrackSections()}",
+        RaceStatisticsUtils.normalizeTemplateVariables("${track.getNumTrackSections}"));
     assertNull(RaceStatisticsUtils.normalizeTemplateVariables(null));
   }
 
@@ -1519,5 +1550,175 @@ public class RaceStatisticsUtilsTest {
         assertEquals("${driver.bestLapTime}", resSheet.getRow(1).getCell(0).getStringCellValue());
       }
     }
+  }
+
+  @Test
+  public void testLeftJustifyAllCells() {
+    try (XSSFWorkbook wb = new XSSFWorkbook()) {
+      Sheet sheet = wb.createSheet("TestSheet");
+      Row row0 = sheet.createRow(0);
+      Cell cell0 = row0.createCell(0);
+      cell0.setCellValue("Text");
+
+      Row row1 = sheet.createRow(1);
+      Cell cell1 = row1.createCell(0);
+      cell1.setCellValue(123.45);
+      CellStyle rightStyle = wb.createCellStyle();
+      rightStyle.setAlignment(HorizontalAlignment.RIGHT);
+      cell1.setCellStyle(rightStyle);
+
+      RaceStatisticsUtils.leftJustifyAllCells(wb);
+
+      assertEquals(HorizontalAlignment.LEFT, cell0.getCellStyle().getAlignment());
+      assertEquals(HorizontalAlignment.LEFT, cell1.getCellStyle().getAlignment());
+
+      RaceStatisticsUtils.leftJustifyAllCells(null);
+    } catch (Exception e) {
+      org.junit.Assert.fail("Unexpected exception: " + e.getMessage());
+    }
+  }
+
+  @Test
+  public void testAutoSizeAllColumns() {
+    try (XSSFWorkbook wb = new XSSFWorkbook()) {
+      Sheet sheet = wb.createSheet("TestSheet");
+      Row row0 = sheet.createRow(0);
+      row0.createCell(0).setCellValue("Col A Header Long Title Text");
+      row0.createCell(1).setCellValue("Col B");
+
+      Row row1 = sheet.createRow(1);
+      row1.createCell(0).setCellValue("Val A");
+      row1.createCell(1).setCellValue("Val B Long Value In Cell");
+
+      RaceStatisticsUtils.autoSizeAllColumns(wb);
+
+      assertTrue(sheet.getColumnWidth(0) >= 2560);
+      assertTrue(sheet.getColumnWidth(1) >= 2560);
+
+      RaceStatisticsUtils.autoSizeAllColumns(null);
+    } catch (Exception e) {
+      org.junit.Assert.fail("Unexpected exception: " + e.getMessage());
+    }
+  }
+
+  @Test
+  public void testAutoSizeAllColumns_WithSpanningTitleRow() {
+    try (XSSFWorkbook wb = new XSSFWorkbook()) {
+      Sheet sheet = wb.createSheet("Overall Standings");
+      Row row0 = sheet.createRow(0);
+      row0.createCell(0).setCellValue("Overall Standings");
+
+      Row row1 = sheet.createRow(1);
+      row1.createCell(0)
+          .setCellValue(
+              "Source: #Section Overall Standings -> #Table: Standings Very Long Subtitle");
+
+      Row row3 = sheet.createRow(3);
+      row3.createCell(0).setCellValue("Rank");
+      row3.createCell(1).setCellValue("Driver");
+
+      Row row4 = sheet.createRow(4);
+      row4.createCell(0).setCellValue(1);
+      row4.createCell(1).setCellValue("Austin");
+
+      RaceStatisticsUtils.autoSizeAllColumns(wb);
+
+      assertEquals("Overall Standings", sheet.getRow(0).getCell(0).getStringCellValue());
+      assertEquals(
+          "Source: #Section Overall Standings -> #Table: Standings Very Long Subtitle",
+          sheet.getRow(1).getCell(0).getStringCellValue());
+
+      int col0WidthChars = sheet.getColumnWidth(0) / 256;
+      assertTrue(
+          "Column 0 width in chars should be reasonable (< 40), but was: " + col0WidthChars,
+          col0WidthChars < 40);
+    } catch (Exception e) {
+      org.junit.Assert.fail("Unexpected exception: " + e.getMessage());
+    }
+  }
+
+  @Test
+  public void testEnsureRaceInformationLaneCount_PopulatesAndCleansExcessRows() {
+    try (XSSFWorkbook wb = new XSSFWorkbook()) {
+      Sheet sheet = wb.createSheet("Race Information");
+      Row row8 = sheet.createRow(8);
+      CellStyle style8A = wb.createCellStyle();
+      org.apache.poi.ss.usermodel.Font font8A = wb.createFont();
+      font8A.setFontName("Arial");
+      font8A.setFontHeightInPoints((short) 16);
+      font8A.setBold(true);
+      style8A.setFont(font8A);
+      Cell cell8A = row8.createCell(0);
+      cell8A.setCellValue("Track Sections");
+      cell8A.setCellStyle(style8A);
+
+      CellStyle style8B = wb.createCellStyle();
+      org.apache.poi.ss.usermodel.Font font8B = wb.createFont();
+      font8B.setFontName("Arial");
+      font8B.setFontHeightInPoints((short) 16);
+      font8B.setBold(false);
+      style8B.setFont(font8B);
+      Cell cell8B = row8.createCell(1);
+      cell8B.setCellValue(100.0);
+      cell8B.setCellStyle(style8B);
+
+      Row row9 = sheet.createRow(9);
+      row9.createCell(0).setCellValue("");
+      row9.createCell(1).setCellValue("");
+
+      for (int r = 10; r <= 16; r++) {
+        sheet.createRow(r);
+      }
+      Row raceModelRow = sheet.getRow(16);
+      raceModelRow.createCell(0).setCellValue("Race Model");
+
+      com.antigravity.models.Track track =
+          new com.antigravity.models.Track.Builder()
+              .name("Test 4 Lane Track")
+              .lanes(
+                  Arrays.asList(
+                      new Lane("red", "white", 100),
+                      new Lane("blue", "white", 100),
+                      new Lane("yellow", "black", 100),
+                      new Lane("green", "white", 100)))
+              .build();
+      com.antigravity.race.Race mockRace = mock(com.antigravity.race.Race.class);
+      when(mockRace.getTrack()).thenReturn(track);
+
+      RaceStatisticsUtils.ensureRaceInformationLaneCount(wb, mockRace);
+
+      Row healedLaneRow = sheet.getRow(9);
+      assertNotNull(healedLaneRow);
+      assertEquals("Lane Count", healedLaneRow.getCell(0).getStringCellValue());
+      assertEquals(4.0, healedLaneRow.getCell(1).getNumericCellValue(), 0.001);
+
+      assertEquals(style8A, healedLaneRow.getCell(0).getCellStyle());
+      assertEquals(style8B, healedLaneRow.getCell(1).getCellStyle());
+
+      Row modelRow = sheet.getRow(11);
+      assertNotNull(modelRow);
+      assertEquals("Race Model", modelRow.getCell(0).getStringCellValue());
+    } catch (Exception e) {
+      org.junit.Assert.fail("Unexpected exception: " + e.getMessage());
+    }
+  }
+
+  @Test
+  public void testNormalizeTemplateVariables_LaneCount() {
+    assertEquals(
+        "${race.track.getLaneCount()}",
+        RaceStatisticsUtils.normalizeTemplateVariables("${laneCount}"));
+    assertEquals(
+        "${race.track.getLaneCount()}",
+        RaceStatisticsUtils.normalizeTemplateVariables("${race.track.laneCount}"));
+    assertEquals(
+        "${race.track.getLaneCount()}",
+        RaceStatisticsUtils.normalizeTemplateVariables("${track.laneCount}"));
+    assertEquals(
+        "${race.track.getLaneCount()}",
+        RaceStatisticsUtils.normalizeTemplateVariables("{track.laneCount}"));
+    assertEquals(
+        "${race.track.getLaneCount()}",
+        RaceStatisticsUtils.normalizeTemplateVariables("${race.laneCount}"));
   }
 }

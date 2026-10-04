@@ -8,6 +8,7 @@ import com.antigravity.protocols.bart.BartConfig;
 import com.antigravity.protocols.phidget.PhidgetConfig;
 import com.antigravity.protocols.trackmate.TrackmateConfig;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.ArrayList;
@@ -310,6 +311,11 @@ public class Track extends Model {
 
   public List<Lane> getLanes() {
     return lanes;
+  }
+
+  @JsonIgnore
+  public int getLaneCount() {
+    return lanes != null ? lanes.size() : 0;
   }
 
   @JsonProperty("arduino_configs")

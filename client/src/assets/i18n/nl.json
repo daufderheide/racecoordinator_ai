@@ -1992,6 +1992,7 @@
   "UE_VAR_DESC_SEASON_GROSS_POINTS": "Totaal aantal bruto seizoenspunten vóór schrapresultaten",
   "UE_VAR_DESC_RACE_START_TIME": "Datum en tijd waarop het race-evenement begon",
   "UE_VAR_DESC_RACE_TRACK_SECTIONS": "Aantal geconfigureerde baansectoren of segmenten",
+  "UE_VAR_DESC_RACE_LANE_COUNT": "Aantal geconfigureerde baanrijstroken",
   "UE_VAR_DESC_RACE_MIN_LAP": "Minimum rondetijddrempelwaarde (seconden)",
   "UE_VAR_DESC_RACE_ROTATION_TYPE": "Geconfigureerde heat-rotatiemethode (bijv. Round Robin)",
   "UE_VAR_DESC_RACE_FINISH_METHOD": "Heat-finishvoorwaarde (Rondelimiet, Tijdslimiet, enz.)",

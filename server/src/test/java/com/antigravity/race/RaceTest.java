@@ -253,6 +253,53 @@ public class RaceTest {
       assertEquals("none", dhd.getActualDriver().getLapAudio().getType());
       assertEquals("Driver One Updated", dhd.getDriver().getDriver().getName());
     }
+
+    @Test
+    public void testRaceUnifiedPropertiesAndStartTime() {
+      Lane lane1 = new Lane("#EF4444", "white", 100);
+      Track track =
+          new Track.Builder()
+              .name("Monza Grand Prix")
+              .numTrackSections(4)
+              .lanes(Collections.singletonList(lane1))
+              .build();
+      Driver d = new Driver("D1", "d1");
+      RaceParticipant p = new RaceParticipant(d);
+      Race model = new Race.Builder().withName("Night Shootout").build();
+
+      com.antigravity.race.Race race =
+          new com.antigravity.race.Race.Builder()
+              .model(model)
+              .track(track)
+              .drivers(Collections.singletonList(p))
+              .isDemoMode(true)
+              .build();
+
+      assertEquals("Night Shootout", race.getName());
+      assertEquals("Monza Grand Prix", race.getTrackName());
+      assertEquals(4, race.getTrack().getNumTrackSections());
+      assertEquals(4, race.getNumTrackSections());
+      assertEquals(1, race.getTrack().getLaneCount());
+      assertEquals(1, race.getLaneCount());
+      assertEquals("", race.getStartTime());
+
+      race.setFallbackStartTime("2026-10-03T18:30:00-04:00");
+      assertEquals("2026-10-03 18:30:00", race.getStartTime());
+
+      // Statistics start time takes priority over fallback
+      race.getStatistics().setStartTime("2026-10-03T19:00:00Z");
+      // Instant / offset formatted properly
+      assertTrue(race.getStartTime().startsWith("2026-10-03"));
+
+      // Direct pre-formatted date string
+      race.getStatistics().setStartTime("2026-09-11 19:30:00");
+      assertEquals("2026-09-11 19:30:00", race.getStartTime());
+
+      // Start millis fallback
+      race.getStatistics().setStartTime(null);
+      race.getStatistics().setStartMillis(1700000000000L);
+      assertFalse(race.getStartTime().isEmpty());
+    }
   }
 
   // =========================================================================

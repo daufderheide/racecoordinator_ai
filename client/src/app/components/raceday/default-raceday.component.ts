@@ -5134,25 +5134,30 @@ export class DefaultRacedayComponent
 
   async exportToCsv() {
     try {
-      const csvData = await firstValueFrom(this.dataService.exportRaceToCsv());
-      if (!csvData || csvData.trim().length === 0) {
-        this.logger.error("Failed to export CSV: received empty data");
-        return;
-      }
-
       const timestamp = this.getExportTimestamp();
       const timeStr = this.printService.formatExportTimestamp(timestamp);
       const raceName = this.race?.name || "Race";
       const suggestedName = `${raceName}-RaceDay${timeStr}.csv`;
 
-      await saveFileAs({
+      const saved = await saveFileAs({
         suggestedName,
-        data: csvData,
+        data: async () => {
+          const csvData = await firstValueFrom(
+            this.dataService.exportRaceToCsv(),
+          );
+          if (!csvData || csvData.trim().length === 0) {
+            this.logger.error("Failed to export CSV: received empty data");
+            return null;
+          }
+          return csvData;
+        },
         mimeType: "text/csv;charset=utf-8",
         description: "CSV Files",
         extension: ".csv",
       });
-      this.logger.debug("CSV Exported successfully");
+      if (saved) {
+        this.logger.debug("CSV Exported successfully");
+      }
     } catch (err: any) {
       this.logger.error("Failed to export CSV", err);
     }
@@ -5160,31 +5165,34 @@ export class DefaultRacedayComponent
 
   async exportToXls() {
     try {
-      const template =
-        this.settingsService.getSettings()?.customExportTemplateBase64;
-      const xlsData: Blob = await firstValueFrom(
-        this.dataService.exportRaceToXls(template),
-      );
-
-      if (!xlsData || xlsData.size === 0) {
-        this.logger.error("Failed to export XLS: received empty blob");
-        return;
-      }
-
       const timestamp = this.getExportTimestamp();
       const timeStr = this.printService.formatExportTimestamp(timestamp);
       const raceName = this.race?.name || "Race";
       const suggestedName = `${raceName}-RaceDay${timeStr}.xlsx`;
 
-      await saveFileAs({
+      const saved = await saveFileAs({
         suggestedName,
-        data: xlsData,
+        data: async () => {
+          const template =
+            this.settingsService.getSettings()?.customExportTemplateBase64;
+          const xlsData: Blob = await firstValueFrom(
+            this.dataService.exportRaceToXls(template),
+          );
+
+          if (!xlsData || xlsData.size === 0) {
+            this.logger.error("Failed to export XLS: received empty blob");
+            return null;
+          }
+          return xlsData;
+        },
         mimeType:
           "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         description: "Excel Files",
         extension: ".xlsx",
       });
-      this.logger.debug("XLS Exported successfully");
+      if (saved) {
+        this.logger.debug("XLS Exported successfully");
+      }
     } catch (err: any) {
       if (err?.error instanceof Blob) {
         try {

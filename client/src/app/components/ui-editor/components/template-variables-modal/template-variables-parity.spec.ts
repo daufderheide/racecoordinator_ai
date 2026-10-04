@@ -67,8 +67,25 @@ describe("Template & Telemetry Variable Parity (XLS, Raceday UI, TTS)", () => {
       const standing = component.driverStandings[0];
       const context = {
         driver: standing,
-        race: { name: component.raceName },
-        track: { name: component.trackName },
+        race: {
+          name: component.raceName,
+          startTime: "2026-09-11 19:30:00",
+          getNumTrackSections: 3,
+          getLaneCount: 4,
+          laneCount: 4,
+          track: {
+            name: component.trackName,
+            getNumTrackSections: 3,
+            getLaneCount: 4,
+            laneCount: 4,
+          },
+        },
+        track: {
+          name: component.trackName,
+          getNumTrackSections: 3,
+          getLaneCount: 4,
+          laneCount: 4,
+        },
       };
 
       const testBindings = [
@@ -80,7 +97,23 @@ describe("Template & Telemetry Variable Parity (XLS, Raceday UI, TTS)", () => {
         ["{driver.averageLapTime}", "${driver.averageLapTime}"],
         ["{driver.medianLapTime}", "${driver.medianLapTime}"],
         ["{race.name}", "${race.name}"],
+        ["{race.startTime}", "${race.startTime}"],
+        ["{race.track.name}", "${race.track.name}"],
+        [
+          "{race.track.getNumTrackSections}",
+          "${race.track.getNumTrackSections}",
+        ],
+        [
+          "{race.track.getNumTrackSections()}",
+          "${race.track.getNumTrackSections()}",
+        ],
+        ["{race.track.getLaneCount}", "${race.track.getLaneCount}"],
+        ["{race.track.getLaneCount()}", "${race.track.getLaneCount()}"],
         ["{track.name}", "${track.name}"],
+        ["{track.getNumTrackSections}", "${track.getNumTrackSections}"],
+        ["{track.getNumTrackSections()}", "${track.getNumTrackSections()}"],
+        ["{track.getLaneCount}", "${track.getLaneCount}"],
+        ["{track.getLaneCount()}", "${track.getLaneCount()}"],
       ];
 
       for (const [curly, dollarCurly] of testBindings) {

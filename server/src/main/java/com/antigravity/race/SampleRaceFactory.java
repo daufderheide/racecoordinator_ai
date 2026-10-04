@@ -68,11 +68,16 @@ public final class SampleRaceFactory {
     heat2.setStarted(true);
     heats.add(heat2);
 
+    RaceStatistics stats = new RaceStatistics();
+    stats.setStartTime(java.time.OffsetDateTime.now().minusHours(1).toString());
+    stats.setStartMillis(System.currentTimeMillis() - 3600000);
+
     return new Race.Builder()
         .model(model)
         .track(track)
         .drivers(participants)
         .heats(heats)
+        .statistics(stats)
         .skipHardwareInterface(true)
         .build();
   }

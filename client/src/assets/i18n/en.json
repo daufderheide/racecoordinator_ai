@@ -1992,6 +1992,7 @@
   "UE_VAR_DESC_SEASON_GROSS_POINTS": "Total unadjusted season points before drops",
   "UE_VAR_DESC_RACE_START_TIME": "Date and time when the race event started",
   "UE_VAR_DESC_RACE_TRACK_SECTIONS": "Number of track sectors or segments configured",
+  "UE_VAR_DESC_RACE_LANE_COUNT": "Number of track lanes configured",
   "UE_VAR_DESC_RACE_MIN_LAP": "Minimum lap time filter threshold (seconds)",
   "UE_VAR_DESC_RACE_ROTATION_TYPE": "Configured heat rotation method (e.g. Round Robin)",
   "UE_VAR_DESC_RACE_FINISH_METHOD": "Heat finish condition (Lap Limit, Time Limit, etc.)",

@@ -1992,6 +1992,7 @@
   "UE_VAR_DESC_SEASON_GROSS_POINTS": "Pontos brutos totais da temporada antes dos descartes",
   "UE_VAR_DESC_RACE_START_TIME": "Data e hora de início do evento de corrida",
   "UE_VAR_DESC_RACE_TRACK_SECTIONS": "Número de setores ou segmentos de pista configurados",
+  "UE_VAR_DESC_RACE_LANE_COUNT": "Número de pistas da pista configuradas",
   "UE_VAR_DESC_RACE_MIN_LAP": "Limite do filtro de tempo mínimo de volta (segundos)",
   "UE_VAR_DESC_RACE_ROTATION_TYPE": "Método de rotação de baterias configurado (ex.: Round Robin)",
   "UE_VAR_DESC_RACE_FINISH_METHOD": "Condição de término de bateria (Limite de voltas, Limite de tempo, etc.)",
