@@ -484,43 +484,50 @@ public class ClientSubscriptionManager {
     }
   }
 
+  private RaceSaveData buildRaceSaveData(Race race) {
+    RaceSaveData saveData = new RaceSaveData();
+    saveData.setModel(race.getRaceModel());
+    saveData.setTrack(race.getTrack());
+    saveData.setDrivers(race.getDrivers());
+    saveData.setHeats(race.getHeats());
+    saveData.setStateClassName(race.getState().getClass().getName());
+    saveData.setAccumulatedRaceTime(race.getRaceTime());
+    saveData.setHasRacedInCurrentHeat(race.hasRacedInCurrentHeat());
+    saveData.setCurrentHeatIndex(race.getHeats().indexOf(race.getCurrentHeat()));
+    saveData.setDemoMode(race.isDemoMode());
+    saveData.setStatistics(race.getStatistics());
+    saveData.setAutoStartFired(race.isAutoStartFired());
+    saveData.setAutoAdvanceFired(race.isAutoAdvanceFired());
+
+    saveData.setAutoSave(true);
+    String filename = "autosave_" + race.getRaceModel().getEntityId() + ".json";
+    saveData.setSaveName(filename);
+    return saveData;
+  }
+
+  private void executeUpsertAutoSave(DatabaseContext ctx, RaceSaveData saveData, String filename) {
+    try {
+      DatabaseService dbService = DatabaseService.getInstance();
+      dbService.upsertAutoSave(ctx, saveData);
+      logger.info("Auto-saved race to database: {}", filename);
+    } catch (Exception e) {
+      if (!isShuttingDown) {
+        logger.error("Error during auto-save", e);
+      }
+    }
+  }
+
   public CompletableFuture<Void> autoSaveAsync(Race race) {
     if (race == null || databaseContext == null || databaseContext.getConnection() == null) {
       return CompletableFuture.completedFuture(null);
     }
     try {
       final DatabaseContext ctx = databaseContext;
-      RaceSaveData saveData = new RaceSaveData();
-      saveData.setModel(race.getRaceModel());
-      saveData.setTrack(race.getTrack());
-      saveData.setDrivers(race.getDrivers());
-      saveData.setHeats(race.getHeats());
-      saveData.setStateClassName(race.getState().getClass().getName());
-      saveData.setAccumulatedRaceTime(race.getRaceTime());
-      saveData.setHasRacedInCurrentHeat(race.hasRacedInCurrentHeat());
-      saveData.setCurrentHeatIndex(race.getHeats().indexOf(race.getCurrentHeat()));
-      saveData.setDemoMode(race.isDemoMode());
-      saveData.setStatistics(race.getStatistics());
-      saveData.setAutoStartFired(race.isAutoStartFired());
-      saveData.setAutoAdvanceFired(race.isAutoAdvanceFired());
-
-      saveData.setAutoSave(true);
-      String filename = "autosave_" + race.getRaceModel().getEntityId() + ".json";
-      saveData.setSaveName(filename);
+      RaceSaveData saveData = buildRaceSaveData(race);
+      String filename = saveData.getSaveName();
 
       return CompletableFuture.runAsync(
-          () -> {
-            try {
-              DatabaseService dbService = DatabaseService.getInstance();
-              dbService.upsertAutoSave(ctx, saveData);
-              logger.info("Auto-saved race to database: {}", filename);
-            } catch (Exception e) {
-              if (!isShuttingDown) {
-                logger.error("Error during auto-save", e);
-              }
-            }
-          },
-          scheduler);
+          () -> executeUpsertAutoSave(ctx, saveData, filename), scheduler);
     } catch (Exception e) {
       if (!isShuttingDown) {
         logger.error("Error preparing auto-save data", e);
@@ -532,11 +539,39 @@ public class ClientSubscriptionManager {
   }
 
   public void autoSave(Race race) {
+    if (race == null || databaseContext == null || databaseContext.getConnection() == null) {
+      return;
+    }
+    if (Thread.currentThread().getName().startsWith("ClientSubscriptionManager-Scheduler")) {
+      try {
+        RaceSaveData saveData = buildRaceSaveData(race);
+        executeUpsertAutoSave(databaseContext, saveData, saveData.getSaveName());
+      } catch (Exception e) {
+        if (!isShuttingDown) {
+          logger.error("Error during auto-save on scheduler thread", e);
+        }
+      }
+      return;
+    }
     try {
       autoSaveAsync(race).get(5, TimeUnit.SECONDS);
     } catch (Exception e) {
       if (!isShuttingDown) {
         logger.warn("Synchronous autoSave timed out or failed: {}", e.getMessage());
+      }
+    }
+  }
+
+  private void executeDeleteAutoSave(DatabaseContext ctx, String filename, boolean isDemo) {
+    try {
+      DatabaseService dbService = DatabaseService.getInstance();
+      boolean deleted = dbService.deleteSavedRace(ctx, filename, isDemo);
+      if (deleted) {
+        logger.info("Deleted auto-save from db (demo={}): {}", isDemo, filename);
+      }
+    } catch (Exception e) {
+      if (!isShuttingDown) {
+        logger.error("Error deleting auto-save", e);
       }
     }
   }
@@ -548,23 +583,17 @@ public class ClientSubscriptionManager {
     final DatabaseContext ctx = databaseContext;
     String filename = "autosave_" + raceId + ".json";
     return CompletableFuture.runAsync(
-        () -> {
-          try {
-            DatabaseService dbService = DatabaseService.getInstance();
-            boolean deleted = dbService.deleteSavedRace(ctx, filename, isDemo);
-            if (deleted) {
-              logger.info("Deleted auto-save from db (demo={}): {}", isDemo, filename);
-            }
-          } catch (Exception e) {
-            if (!isShuttingDown) {
-              logger.error("Error deleting auto-save", e);
-            }
-          }
-        },
-        scheduler);
+        () -> executeDeleteAutoSave(ctx, filename, isDemo), scheduler);
   }
 
   public void deleteAutoSave(String raceId, boolean isDemo) {
+    if (databaseContext == null || databaseContext.getConnection() == null || raceId == null) {
+      return;
+    }
+    if (Thread.currentThread().getName().startsWith("ClientSubscriptionManager-Scheduler")) {
+      executeDeleteAutoSave(databaseContext, "autosave_" + raceId + ".json", isDemo);
+      return;
+    }
     try {
       deleteAutoSaveAsync(raceId, isDemo).get(5, TimeUnit.SECONDS);
     } catch (Exception e) {

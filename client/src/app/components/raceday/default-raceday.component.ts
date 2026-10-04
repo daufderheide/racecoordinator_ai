@@ -51,7 +51,12 @@ import {
 import { Race } from "@app/models/race";
 import { RaceParticipant } from "@app/models/race_participant";
 import { Role } from "@app/models/role";
-import { LayoutConfig, Settings, WidgetType } from "@app/models/settings";
+import {
+  AbsoluteWidgetNode,
+  LayoutConfig,
+  Settings,
+  WidgetType,
+} from "@app/models/settings";
 import { THEME_SLOT_KEYS } from "@app/models/theme";
 import { Track } from "@app/models/track";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
@@ -528,19 +533,48 @@ export class DefaultRacedayComponent
     return af === "NoneAutoSegments" || af === "SingleLapAutoSegments";
   }
 
+  private cachedLayoutRef: LayoutConfig | null = null;
+  private cachedTimerWidget: AbsoluteWidgetNode | undefined = undefined;
+  private cachedTimerSettings: Record<string, any> | undefined = undefined;
+  private cachedTimerFormatOptions: TimerFormatOptions | null = null;
+
   protected getTimerFormatOptions(): TimerFormatOptions {
-    const timerWidget = this.layout?.widgets?.find(
-      (w) => w.widgetType === "timer",
-    );
-    return {
-      format: timerWidget?.customSettings?.["timeDisplayFormat"] ?? "dynamic",
-      subsecondMode:
-        timerWidget?.customSettings?.["timeSubsecondMode"] ?? "threshold",
-      subsecondThreshold:
-        timerWidget?.customSettings?.["timeSubsecondThreshold"] ?? 10,
-      subsecondDecimals:
-        timerWidget?.customSettings?.["timeSubsecondDecimals"] ?? 2,
+    const timerWidget =
+      this.cachedLayoutRef === this.layout
+        ? this.cachedTimerWidget
+        : this.layout?.widgets?.find((w) => w.widgetType === "timer");
+
+    if (this.cachedLayoutRef !== this.layout) {
+      this.cachedLayoutRef = this.layout;
+      this.cachedTimerWidget = timerWidget;
+    }
+
+    const currentSettings = timerWidget?.customSettings;
+    const format = currentSettings?.["timeDisplayFormat"] ?? "dynamic";
+    const subsecondMode = currentSettings?.["timeSubsecondMode"] ?? "threshold";
+    const subsecondThreshold =
+      currentSettings?.["timeSubsecondThreshold"] ?? 10;
+    const subsecondDecimals = currentSettings?.["timeSubsecondDecimals"] ?? 2;
+
+    if (
+      this.cachedTimerFormatOptions &&
+      this.cachedTimerSettings === currentSettings &&
+      this.cachedTimerFormatOptions.format === format &&
+      this.cachedTimerFormatOptions.subsecondMode === subsecondMode &&
+      this.cachedTimerFormatOptions.subsecondThreshold === subsecondThreshold &&
+      this.cachedTimerFormatOptions.subsecondDecimals === subsecondDecimals
+    ) {
+      return this.cachedTimerFormatOptions;
+    }
+
+    this.cachedTimerSettings = currentSettings;
+    this.cachedTimerFormatOptions = {
+      format,
+      subsecondMode,
+      subsecondThreshold,
+      subsecondDecimals,
     };
+    return this.cachedTimerFormatOptions;
   }
 
   protected get formattedTime(): string {

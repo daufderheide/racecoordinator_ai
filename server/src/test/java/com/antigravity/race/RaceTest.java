@@ -4409,5 +4409,61 @@ public class RaceTest {
 
       ClientSubscriptionManager.getInstance().removeSession(wsContext);
     }
+
+    @Test
+    public void testCachedDriverToGroupInvalidatedOnSetHeats() throws Exception {
+      Track track =
+          new Track.Builder()
+              .name("T")
+              .lanes(Arrays.asList(new Lane("r", "w", 100), new Lane("b", "w", 101)))
+              .build();
+      com.antigravity.models.GroupOptions groupOptions =
+          new com.antigravity.models.GroupOptions(true, 1, false, true, false, true, 1);
+      Race raceModel =
+          new Race.Builder()
+              .withName("GroupRace")
+              .withHeatScoring(new HeatScoring())
+              .withOverallScoring(new OverallScoring())
+              .withGroupOptions(groupOptions)
+              .build();
+
+      RaceParticipant p1 =
+          new RaceParticipant(new Driver.Builder().withName("D1").withEntityId("d1").build());
+      RaceParticipant p2 =
+          new RaceParticipant(new Driver.Builder().withName("D2").withEntityId("d2").build());
+      DriverHeatData dhd1 = new DriverHeatData(p1);
+      DriverHeatData dhd2 = new DriverHeatData(p2);
+
+      Heat heat1 = new Heat(1, Arrays.asList(dhd1, dhd2), new HeatScoring(), false);
+      heat1.setGroup(1);
+
+      com.antigravity.race.Race race =
+          new com.antigravity.race.Race.Builder()
+              .model(raceModel)
+              .track(track)
+              .drivers(Arrays.asList(p1, p2))
+              .heats(Collections.singletonList(heat1))
+              .isDemoMode(true)
+              .build();
+
+      RaceData.Builder raceDataBuilder = race.populateOverallStandings(RaceData.newBuilder());
+      assertTrue(raceDataBuilder.hasGroupStandingsUpdate());
+      assertEquals(1, raceDataBuilder.getGroupStandingsUpdate().getGroup());
+      assertEquals(2, raceDataBuilder.getGroupStandingsUpdate().getParticipantsCount());
+
+      Heat modifiedHeat1 = new Heat(1, Collections.singletonList(dhd1), new HeatScoring(), false);
+      modifiedHeat1.setGroup(1);
+      Heat modifiedHeat2 = new Heat(2, Collections.singletonList(dhd2), new HeatScoring(), false);
+      modifiedHeat2.setGroup(2);
+
+      race.setHeats(Arrays.asList(modifiedHeat1, modifiedHeat2));
+
+      RaceData.Builder updatedBuilder = race.populateOverallStandings(RaceData.newBuilder());
+      assertTrue(updatedBuilder.hasGroupStandingsUpdate());
+      assertEquals(1, updatedBuilder.getGroupStandingsUpdate().getGroup());
+      assertEquals(1, updatedBuilder.getGroupStandingsUpdate().getParticipantsCount());
+      assertEquals(
+          "D1", updatedBuilder.getGroupStandingsUpdate().getParticipants(0).getDriver().getName());
+    }
   }
 }

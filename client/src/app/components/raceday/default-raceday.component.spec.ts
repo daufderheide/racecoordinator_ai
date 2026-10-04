@@ -3040,6 +3040,54 @@ describe("DefaultRacedayComponent", () => {
       component["time"] = 9.5;
       expect(component["formattedTime"]).toBe("9");
     });
+
+    it("should memoize TimerFormatOptions and invalidate on layout or settings change", () => {
+      component["layout"] = {
+        widgets: [
+          {
+            widgetType: "timer",
+            customSettings: {
+              timeDisplayFormat: "mm_ss",
+              timeSubsecondMode: "threshold",
+              timeSubsecondThreshold: 10,
+              timeSubsecondDecimals: 2,
+            },
+          },
+        ],
+      } as any;
+
+      const opts1 = component["getTimerFormatOptions"]();
+      const opts2 = component["getTimerFormatOptions"]();
+      expect(opts1).toBe(opts2);
+
+      // Modify layout reference
+      component["layout"] = {
+        widgets: [
+          {
+            widgetType: "timer",
+            customSettings: {
+              timeDisplayFormat: "m_ss",
+              timeSubsecondMode: "always",
+              timeSubsecondThreshold: 5,
+              timeSubsecondDecimals: 3,
+            },
+          },
+        ],
+      } as any;
+
+      const opts3 = component["getTimerFormatOptions"]();
+      expect(opts3).not.toBe(opts1);
+      expect(opts3.format).toBe("m_ss");
+      expect(opts3.subsecondMode).toBe("always");
+
+      // Modify settings within existing layout
+      component["layout"].widgets[0].customSettings = {
+        timeDisplayFormat: "hh_mm_ss",
+      };
+      const opts4 = component["getTimerFormatOptions"]();
+      expect(opts4).not.toBe(opts3);
+      expect(opts4.format).toBe("hh_mm_ss");
+    });
   });
 
   describe("Lap Highlighting", () => {
