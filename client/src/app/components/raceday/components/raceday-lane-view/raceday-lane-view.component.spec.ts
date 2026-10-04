@@ -219,6 +219,24 @@ describe("RacedayLaneViewComponent", () => {
     expect(cells[0].getAttribute("title")).toBe("RD_TEAM_DRIVER_TOOLTIP");
   });
 
+  it("should display team name and teammate select when column is participant.team.name", () => {
+    (mockParent.sortedHeatDrivers[0] as any).participant = {
+      team: { name: "Team Fast" },
+    };
+    mockParent.getLayoutEntries = (_col: any) => [
+      { property: "participant.team.name", anchor: "center-center" },
+    ];
+    fixture.detectChanges();
+
+    const rowEl = fixture.nativeElement.querySelector(".table-row");
+    const nameEl = rowEl.querySelector(".teammate-display-name") as HTMLElement;
+    expect(nameEl).toBeTruthy();
+    expect(nameEl.textContent).toContain("Team Fast");
+
+    const selectEl = rowEl.querySelector("app-custom-select.teammate-select");
+    expect(selectEl).toBeTruthy();
+  });
+
   it("should apply clickable-lap-cell class and lap tooltip to the lap column cell", () => {
     const rowEl = fixture.nativeElement.querySelector(".table-row");
     const cells = rowEl.querySelectorAll(".body-cell");

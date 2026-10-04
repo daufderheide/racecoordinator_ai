@@ -11,7 +11,12 @@ export class AvatarUrlPipe implements PipeTransform {
 
   transform(url?: string): string {
     if (!url) return "assets/images/default_avatar.svg";
-    if (url.startsWith("/")) return `${this.dataService.serverUrl}${url}`;
-    return url;
+    const resolved = this.dataService?.resolveAssetUrl
+      ? this.dataService.resolveAssetUrl(url)
+      : url;
+    if (resolved && resolved.startsWith("/")) {
+      return `${this.dataService.serverUrl}${resolved}`;
+    }
+    return resolved;
   }
 }

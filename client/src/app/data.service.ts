@@ -11,6 +11,11 @@ import {
   Subject,
 } from "rxjs";
 import { catchError, map } from "rxjs/operators";
+import {
+  DriverImportCommitRequest,
+  DriverImportPreview,
+  DriverImportResult,
+} from "@app/models/driver-import.model";
 import { Event } from "@app/models/event";
 import { Season, SeasonStandingItem } from "@app/models/season";
 import {
@@ -243,6 +248,31 @@ export class DataService {
 
   deleteDriver(id: string): Observable<any> {
     return this.http.delete<any>(`${this.driversUrl}/${id}`);
+  }
+
+  validateDriverImport(formData: FormData): Observable<DriverImportPreview> {
+    return this.http.post<DriverImportPreview>(
+      `${this.driversUrl}/import/preview`,
+      formData,
+    );
+  }
+
+  commitDriverImport(
+    request: DriverImportCommitRequest,
+  ): Observable<DriverImportResult> {
+    return this.http.post<DriverImportResult>(
+      `${this.driversUrl}/import/commit`,
+      request,
+    );
+  }
+
+  downloadDriverImportTemplate(format: string): Observable<Blob> {
+    return this.http.get(
+      `${this.driversUrl}/import/template?format=${format}`,
+      {
+        responseType: "blob",
+      },
+    );
   }
 
   getRaces(): Observable<any[]> {
@@ -1348,6 +1378,94 @@ export class DataService {
 
   getAssetUrl(id: string): string {
     return `${this.baseUrl}/api/assets/download/${id}`;
+  }
+
+  resolveAssetUrl(url?: string): string {
+    if (!url || !url.trim()) return "";
+    const clean = url.trim();
+    if (clean.startsWith("http://") || clean.startsWith("https://")) {
+      return clean;
+    }
+    if (clean.startsWith("/assets/")) {
+      return clean;
+    }
+    if (clean.startsWith("assets/images/")) {
+      return clean;
+    }
+    if (clean.startsWith("assets/default_")) {
+      return "/" + clean;
+    }
+
+    const lower = clean.toLowerCase();
+    const filename = lower.includes("/")
+      ? lower.substring(lower.lastIndexOf("/") + 1)
+      : lower;
+    const noExt = filename.includes(".")
+      ? filename.substring(0, filename.lastIndexOf("."))
+      : filename;
+
+    const assets = this.loadedAssets || [];
+    const directMatch = assets.find((a) => {
+      const id = a.model?.entityId?.toLowerCase();
+      const name = a.name?.toLowerCase();
+      const aUrl = a.url?.toLowerCase();
+      return (
+        id === lower ||
+        id === filename ||
+        id === noExt ||
+        name === lower ||
+        name === filename ||
+        name === noExt ||
+        aUrl === "/" + lower ||
+        (aUrl && aUrl.endsWith("/" + filename))
+      );
+    });
+    if (directMatch?.url) {
+      return directMatch.url;
+    }
+
+    if (
+      lower.includes("helmet") ||
+      lower.includes("defaults/helmets") ||
+      lower.endsWith(".png")
+    ) {
+      let targetId = "";
+      if (lower.includes("yellow")) targetId = "default_black-yellow";
+      else if (lower.includes("red")) targetId = "default_red-yellow";
+      else if (lower.includes("blue")) targetId = "default_blue-white";
+      else if (lower.includes("green")) targetId = "default_green-white";
+      else if (lower.includes("black")) targetId = "default_black";
+      else if (lower.includes("white")) targetId = "default_white-blue";
+      else if (lower.includes("orange")) targetId = "default_red-orange";
+      else if (lower.includes("silver")) targetId = "default_silver-green";
+
+      if (targetId) {
+        const helmetAsset = assets.find(
+          (a) => a.model?.entityId?.toLowerCase() === targetId,
+        );
+        if (helmetAsset?.url) {
+          return helmetAsset.url;
+        }
+        const fallbackMap: Record<string, string> = {
+          "default_black-yellow":
+            "/assets/default_black-yellow_Helmet_Black-Yellow",
+          "default_red-yellow": "/assets/default_red-yellow_Helmet_Red-Yellow",
+          "default_blue-white": "/assets/default_blue-white_Helmet_Blue-White",
+          "default_green-white":
+            "/assets/default_green-white_Helmet_Green-White",
+          default_black: "/assets/default_black_Helmet_Black",
+          "default_white-blue": "/assets/default_white-blue_Helmet_White-Blue",
+          "default_red-orange": "/assets/default_red-orange_Helmet_Red-Orange",
+          "default_silver-green":
+            "/assets/default_silver-green_Helmet_Silver-Green",
+        };
+        if (fallbackMap[targetId]) {
+          return fallbackMap[targetId];
+        }
+      }
+    }
+
+    return clean;
   }
 
   uploadAsset(

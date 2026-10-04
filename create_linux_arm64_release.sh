@@ -83,18 +83,30 @@ fi
 cat << 'EOF' > "$DIST_DIR/scripts/start_kiosk.sh"
 #!/bin/bash
 # Wait for Race Coordinator AI backend server to start
-until curl -s http://localhost:7070/api/health >/dev/null 2>&1; do
+until curl -s http://localhost:7070 >/dev/null 2>&1; do
   sleep 1
 done
 
 # Launch Chromium in fullscreen kiosk mode
-exec chromium-browser \
+BROWSER_BIN=$(command -v chromium || command -v chromium-browser || echo "chromium")
+"$BROWSER_BIN" \
   --kiosk \
   --noerrdialogs \
   --disable-infobars \
   --check-for-update-interval=31536000 \
   --incognito \
-  http://localhost:7070
+  http://localhost:7070 &
+BROWSER_PID=$!
+
+# Ensure Race Coordinator AI gains and retains window focus over desktop autostart apps (such as Arduino App Lab)
+for i in {1..12}; do
+  sleep 2
+  if command -v wmctrl >/dev/null 2>&1; then
+    wmctrl -a "Race Coordinator" 2>/dev/null || wmctrl -a "Chromium" 2>/dev/null || true
+  fi
+done
+
+wait "$BROWSER_PID"
 EOF
 chmod +x "$DIST_DIR/scripts/start_kiosk.sh"
 
@@ -114,18 +126,46 @@ echo "Updating Race Coordinator AI..."
 mkdir -p /tmp/rc_update_extract
 tar -xzf "$ARCHIVE_PATH" -C /tmp/rc_update_extract/
 
-# Copy updated files over installation
-cp -r /tmp/rc_update_extract/* "$TARGET_DIR/"
+# Copy updated files over installation (handling root directory in archive if present)
+if [ -d "/tmp/rc_update_extract/RaceCoordinator_Linux_ARM64" ]; then
+  cp -rf --remove-destination /tmp/rc_update_extract/RaceCoordinator_Linux_ARM64/* "$TARGET_DIR/"
+else
+  cp -rf --remove-destination /tmp/rc_update_extract/* "$TARGET_DIR/"
+fi
+chmod +x "$TARGET_DIR/scripts/"*.sh "$TARGET_DIR/"*.sh 2>/dev/null || true
 rm -rf /tmp/rc_update_extract
+rm -rf "$TARGET_DIR/RaceCoordinator_Linux_ARM64"
 
 # Flash MCU sketch if arduino-cli is installed
 if command -v arduino-cli >/dev/null 2>&1; then
-  echo "Flashing updated microcontroller firmware..."
-  arduino-cli upload -p /dev/ttyACM0 --fqbn arduino:stm32:uno_q "$TARGET_DIR/arduino/racecoordinatorai_sketch" || true
+  echo "Checking microcontroller core and compiling firmware..."
+  if ! arduino-cli core list 2>/dev/null | grep -q "arduino:zephyr"; then
+    echo "Installing Zephyr board core..."
+    arduino-cli core update-index >/dev/null 2>&1 || true
+    arduino-cli core install arduino:zephyr >/dev/null 2>&1 || true
+  fi
+
+  BOARD_INFO=$(arduino-cli board list 2>/dev/null | grep -i "uno.*q" | head -n1)
+  PORT=$(echo "$BOARD_INFO" | awk '{print $1}')
+  FQBN=$(echo "$BOARD_INFO" | grep -o 'arduino:[a-zA-Z0-9_:]*' | head -n1)
+  if [ -z "$FQBN" ] || [ "$FQBN" = "arduino:stm32" ] || [ "$FQBN" = "Q" ]; then
+    FQBN="arduino:zephyr:unoq"
+  fi
+  if [ -z "$PORT" ]; then
+    PORT="172.17.0.1"
+  fi
+
+  if [ -d "$TARGET_DIR/arduino/racecoordinatorai_sketch" ]; then
+    echo "Compiling and uploading sketch to $FQBN on $PORT..."
+    if arduino-cli compile --fqbn "$FQBN" "$TARGET_DIR/arduino/racecoordinatorai_sketch"; then
+      arduino-cli upload -p "$PORT" --fqbn "$FQBN" --upload-field password=arduino "$TARGET_DIR/arduino/racecoordinatorai_sketch" 2>/dev/null || \
+      arduino-cli upload -p "$PORT" --fqbn "$FQBN" "$TARGET_DIR/arduino/racecoordinatorai_sketch" || true
+    fi
+  fi
 fi
 
 echo "Restarting service..."
-systemctl restart racecoordinatorai
+(sleep 1 && (sudo systemctl restart racecoordinatorai || systemctl restart racecoordinatorai) && (sudo systemctl restart racecoordinatorai-kiosk || systemctl restart racecoordinatorai-kiosk || true)) >/dev/null 2>&1 &
 EOF
 chmod +x "$DIST_DIR/scripts/update_app.sh"
 
@@ -150,13 +190,14 @@ EOF
 cat << 'EOF' > "$DIST_DIR/systemd/racecoordinatorai-kiosk.service"
 [Unit]
 Description=Race Coordinator AI Local Kiosk Display
-After=racecoordinatorai.service
+After=racecoordinatorai.service graphical.target
 Wants=racecoordinatorai.service
 
 [Service]
 Type=simple
 User=arduino
 Environment=DISPLAY=:0
+Environment=XAUTHORITY=/home/arduino/.Xauthority
 ExecStart=/bin/bash /opt/racecoordinatorai/scripts/start_kiosk.sh
 Restart=always
 RestartSec=3
@@ -165,7 +206,7 @@ RestartSec=3
 WantedBy=graphical.target
 EOF
 
-# 7. Create Installer Script
+# 7. Create Automated & Manual Installer Scripts
 cat << 'EOF' > "$DIST_DIR/install.sh"
 #!/bin/bash
 set -e
@@ -176,29 +217,163 @@ if [ "$EUID" -ne 0 ]; then
 fi
 
 INSTALL_DIR="/opt/racecoordinatorai"
-echo "Installing Race Coordinator AI to $INSTALL_DIR..."
+echo "=========================================================="
+echo " Starting Race Coordinator AI Automated Installer"
+echo " Target Directory: $INSTALL_DIR"
+echo "=========================================================="
 
-mkdir -p "$INSTALL_DIR"
-cp -r ./* "$INSTALL_DIR/"
+# 1. System prerequisites check and auto-installation
+REQUIRED_PKGS=(default-jre-headless chromium wmctrl espeak-ng alsa-utils git curl unzip)
+MISSING_PKGS=()
+for pkg in "${REQUIRED_PKGS[@]}"; do
+  if ! dpkg -s "$pkg" >/dev/null 2>&1; then
+    MISSING_PKGS+=("$pkg")
+  fi
+done
 
-# Setup user permissions
-if id "arduino" &>/dev/null; then
-  chown -R arduino:arduino "$INSTALL_DIR"
+if [ ${#MISSING_PKGS[@]} -gt 0 ]; then
+  echo "Installing missing system prerequisites: ${MISSING_PKGS[*]}..."
+  apt-get update -qq
+  DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends "${MISSING_PKGS[@]}"
+else
+  echo "All system prerequisites are already installed."
 fi
 
-# Install systemd services
+# Ensure arduino-cli is installed
+if ! command -v arduino-cli >/dev/null 2>&1; then
+  echo "Installing arduino-cli..."
+  curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | BINDIR=/usr/local/bin sh || true
+fi
+
+# 2. File deployment
+mkdir -p "$INSTALL_DIR"
+CURRENT_DIR="$(pwd -P)"
+TARGET_DIR="$(cd "$INSTALL_DIR" 2>/dev/null && pwd -P || echo "$INSTALL_DIR")"
+if [ "$CURRENT_DIR" != "$TARGET_DIR" ]; then
+  echo "Copying application files to $INSTALL_DIR..."
+  cp -r ./* "$INSTALL_DIR/"
+fi
+
+# 3. User permissions & serial access
+if id "arduino" &>/dev/null; then
+  chown -R arduino:arduino "$INSTALL_DIR"
+  usermod -a -G dialout arduino 2>/dev/null || true
+
+  # Allow arduino user to restart racecoordinatorai services without password for in-app auto-updates
+  if [ -d "/etc/sudoers.d" ]; then
+    echo "Configuring sudoers permissions for auto-update service restart..."
+    cat << 'SUDO_EOF' > /etc/sudoers.d/racecoordinatorai
+arduino ALL=(ALL) NOPASSWD: /bin/systemctl restart racecoordinatorai, /bin/systemctl restart racecoordinatorai-kiosk, /usr/bin/systemctl restart racecoordinatorai, /usr/bin/systemctl restart racecoordinatorai-kiosk
+SUDO_EOF
+    chmod 0440 /etc/sudoers.d/racecoordinatorai
+  fi
+fi
+
+# 4. Systemd service registration and boot auto-start
+echo "Registering systemd services..."
 cp "$INSTALL_DIR/systemd/racecoordinatorai.service" /etc/systemd/system/
 cp "$INSTALL_DIR/systemd/racecoordinatorai-kiosk.service" /etc/systemd/system/
 
 systemctl daemon-reload
 systemctl enable racecoordinatorai.service
+systemctl enable racecoordinatorai-kiosk.service
 
+# 5. Microcontroller firmware compile and upload
+if command -v arduino-cli >/dev/null 2>&1; then
+  echo "Checking microcontroller core, libraries, and firmware..."
+  if ! arduino-cli core list 2>/dev/null | grep -q "arduino:zephyr"; then
+    echo "Installing Zephyr board core..."
+    arduino-cli core update-index >/dev/null 2>&1 || true
+    arduino-cli core install arduino:zephyr >/dev/null 2>&1 || true
+  fi
+
+  echo "Installing required Arduino libraries (Arduino_RouterBridge, FastLED)..."
+  arduino-cli lib update-index >/dev/null 2>&1 || true
+  arduino-cli lib install Arduino_RouterBridge >/dev/null 2>&1 || true
+  arduino-cli lib install FastLED >/dev/null 2>&1 || true
+
+  BOARD_INFO=$(arduino-cli board list 2>/dev/null | grep -i "uno.*q" | head -n1)
+  PORT=$(echo "$BOARD_INFO" | awk '{print $1}')
+  FQBN=$(echo "$BOARD_INFO" | grep -o 'arduino:[a-zA-Z0-9_:]*' | head -n1)
+  if [ -z "$FQBN" ] || [ "$FQBN" = "arduino:stm32" ] || [ "$FQBN" = "Q" ]; then
+    FQBN="arduino:zephyr:unoq"
+  fi
+  if [ -z "$PORT" ]; then
+    PORT="172.17.0.1"
+  fi
+
+  if [ -d "$INSTALL_DIR/arduino/racecoordinatorai_sketch" ]; then
+    echo "Compiling and uploading sketch to $FQBN on $PORT..."
+    if ! arduino-cli compile --fqbn "$FQBN" "$INSTALL_DIR/arduino/racecoordinatorai_sketch"; then
+      echo "Notice: Sketch compilation encountered a warning/error. Continuing installation..."
+    elif ! (arduino-cli upload -p "$PORT" --fqbn "$FQBN" --upload-field password=arduino "$INSTALL_DIR/arduino/racecoordinatorai_sketch" 2>/dev/null || \
+            arduino-cli upload -p "$PORT" --fqbn "$FQBN" "$INSTALL_DIR/arduino/racecoordinatorai_sketch"); then
+      echo "Notice: MCU upload to $PORT was busy or not ready. Continuing installation..."
+    else
+      echo "Firmware upload successful!"
+    fi
+  fi
+fi
+
+# 6. Service startup
+echo "Starting Race Coordinator AI services..."
+systemctl restart racecoordinatorai.service
+systemctl restart racecoordinatorai-kiosk.service
+
+IP_ADDR=$(hostname -I 2>/dev/null | awk '{print $1}')
+HOST_NAME=$(hostname 2>/dev/null || echo "localhost")
 echo ""
-echo "Installation complete!"
-echo "To start the backend service: sudo systemctl start racecoordinatorai"
-echo "To enable local USB-C kiosk display: sudo systemctl enable --now racecoordinatorai-kiosk"
+echo "=========================================================="
+echo " Race Coordinator AI Installation Complete!"
+echo " - Kiosk Display: ACTIVE on TV screen"
+echo " - Web UI:        http://${HOST_NAME}:7070 or http://${IP_ADDR}:7070"
+echo " - Boot Launch:   AUTO-START ENABLED on power-on"
+echo "=========================================================="
 EOF
 chmod +x "$DIST_DIR/install.sh"
+
+cat << 'EOF' > "$DIST_DIR/manual_install.sh"
+#!/bin/bash
+set -e
+
+if [ "$EUID" -ne 0 ]; then
+  echo "Please run as root (e.g. sudo ./manual_install.sh)"
+  exit 1
+fi
+
+INSTALL_DIR="/opt/racecoordinatorai"
+echo "Copying Race Coordinator AI files to $INSTALL_DIR..."
+mkdir -p "$INSTALL_DIR"
+CURRENT_DIR="$(pwd -P)"
+TARGET_DIR="$(cd "$INSTALL_DIR" 2>/dev/null && pwd -P || echo "$INSTALL_DIR")"
+if [ "$CURRENT_DIR" != "$TARGET_DIR" ]; then
+  cp -r ./* "$INSTALL_DIR/"
+fi
+
+if id "arduino" &>/dev/null; then
+  chown -R arduino:arduino "$INSTALL_DIR"
+  usermod -a -G dialout arduino 2>/dev/null || true
+
+  if [ -d "/etc/sudoers.d" ]; then
+    cat << 'SUDO_EOF' > /etc/sudoers.d/racecoordinatorai
+arduino ALL=(ALL) NOPASSWD: /bin/systemctl restart racecoordinatorai, /bin/systemctl restart racecoordinatorai-kiosk, /usr/bin/systemctl restart racecoordinatorai, /usr/bin/systemctl restart racecoordinatorai-kiosk
+SUDO_EOF
+    chmod 0440 /etc/sudoers.d/racecoordinatorai
+  fi
+fi
+
+cp "$INSTALL_DIR/systemd/racecoordinatorai.service" /etc/systemd/system/
+cp "$INSTALL_DIR/systemd/racecoordinatorai-kiosk.service" /etc/systemd/system/
+
+systemctl daemon-reload
+systemctl enable racecoordinatorai.service
+systemctl enable racecoordinatorai-kiosk.service
+
+echo ""
+echo "Manual installation complete!"
+echo "To start services: sudo systemctl start racecoordinatorai && sudo systemctl start racecoordinatorai-kiosk"
+EOF
+chmod +x "$DIST_DIR/manual_install.sh"
 
 # 8. Verify Release Artifacts
 if [ -n "$RELEASE_VERSION" ] && [ "$RELEASE_VERSION" != "0.0.0_dev" ]; then

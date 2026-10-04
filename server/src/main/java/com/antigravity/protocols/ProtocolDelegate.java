@@ -4,6 +4,9 @@ import com.antigravity.proto.RaceFlag;
 import com.antigravity.proto.RaceState;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.function.LongSupplier;
+import java.util.function.Supplier;
 
 public class ProtocolDelegate implements IProtocol {
 
@@ -17,16 +20,52 @@ public class ProtocolDelegate implements IProtocol {
 
   private final List<IProtocol> protocols;
   private final PowerManager powerManager;
-  private final PitManager pitManager;
+  private final Supplier<ScheduledExecutorService> customSchedulerSupplier;
+  private PitManager pitManager;
   private ProtocolListener listener;
 
   public ProtocolDelegate(List<IProtocol> protocols) {
+    this(protocols, null, (Supplier<ScheduledExecutorService>) null);
+  }
+
+  public ProtocolDelegate(List<IProtocol> protocols, ScheduledExecutorService scheduler) {
+    this(protocols, null, scheduler != null ? () -> scheduler : null);
+  }
+
+  public ProtocolDelegate(
+      List<IProtocol> protocols, LongSupplier timeSupplier, ScheduledExecutorService scheduler) {
+    this(protocols, timeSupplier, scheduler != null ? () -> scheduler : null);
+  }
+
+  public ProtocolDelegate(
+      List<IProtocol> protocols,
+      LongSupplier timeSupplier,
+      Supplier<ScheduledExecutorService> schedulerSupplier) {
     this.protocols = protocols;
     this.powerManager = new PowerManager(this);
-    this.pitManager = new PitManager(getNumLanes(), this::hasPitInConfigured, () -> this.listener);
+    this.customSchedulerSupplier = schedulerSupplier;
+    Supplier<ScheduledExecutorService> effectiveScheduler =
+        schedulerSupplier != null ? schedulerSupplier : this::resolveScheduler;
+    this.pitManager =
+        new PitManager(
+            getNumLanes(),
+            this::hasPitInConfigured,
+            () -> this.listener,
+            timeSupplier,
+            effectiveScheduler);
     for (IProtocol protocol : protocols) {
       protocol.setPitManager(this.pitManager);
     }
+  }
+
+  private ScheduledExecutorService resolveScheduler() {
+    for (IProtocol protocol : protocols) {
+      ScheduledExecutorService ses = protocol.getScheduler();
+      if (ses != null) {
+        return ses;
+      }
+    }
+    return null;
   }
 
   public List<IProtocol> getProtocols() {
@@ -215,9 +254,29 @@ public class ProtocolDelegate implements IProtocol {
   }
 
   @Override
+  public ScheduledExecutorService getScheduler() {
+    if (customSchedulerSupplier != null && customSchedulerSupplier.get() != null) {
+      return customSchedulerSupplier.get();
+    }
+    return resolveScheduler();
+  }
+
+  @Override
   public void setPitManager(PitManager pitManager) {
+    if (this.pitManager != null && this.pitManager != pitManager) {
+      this.pitManager.stop();
+    }
+    this.pitManager =
+        pitManager != null
+            ? pitManager
+            : new PitManager(
+                getNumLanes(),
+                this::hasPitInConfigured,
+                () -> this.listener,
+                null,
+                this::resolveScheduler);
     for (IProtocol protocol : protocols) {
-      protocol.setPitManager(pitManager);
+      protocol.setPitManager(this.pitManager);
     }
   }
 }

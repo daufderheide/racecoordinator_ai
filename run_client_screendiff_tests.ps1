@@ -130,6 +130,7 @@ $DockerArgs = @(
     "-w", "/work",
     "-e", "HOME=/work/test-home",
     "-e", "PWTEST_WORKERS=$WorkerCount",
+    "-e", "CI=$(if ($env:CI) { $env:CI } else { 'true' })",
     "mcr.microsoft.com/playwright:v1.61.1-jammy",
     "/bin/bash", "-c", $DockerCmd
 )

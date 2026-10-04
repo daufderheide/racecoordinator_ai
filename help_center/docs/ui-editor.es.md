@@ -4,6 +4,16 @@
 
 El Editor de Interfaz le permite diseñar diseños de pantalla personalizados para el día de la carrera, configurar columnas de clasificación de pilotos, personalizar efectos de sonido y gráficos de temas y cargar [Widgets personalizados](custom-widgets.md) modulares.
 
+## Widgets personalizados y carpeta de widgets
+
+Se pueden agregar widgets personalizados a sus diseños de interfaz personalizada:
+- **Carpeta de widgets personalizados**: Establezca su carpeta local de widgets en la sección **Interfaz personalizada** en la parte inferior del editor.
+- **Actualizar widgets de muestra**: Haga clic en **Actualizar widgets de muestra** para generar o actualizar widgets de muestra listos para usar en una carpeta `sample/` (`sample-telemetry-gauge`, `sample-lap-delta`, `sample-sponsor-banner`, `sample-detailed-leaderboard`).
+- **Grupos de la caja de herramientas de widgets**: La caja de herramientas organiza los widgets en grupos (**Race Coordinator AI**, **Raíz personalizada** y carpetas personalizadas como **sample**) con subgrupos anidados (como **Acciones** y **Datos de la tanda** con subcarpetas categorizadas) y un filtro de búsqueda instantánea.
+- **Inspector dinámico**: Cuando se selecciona un widget personalizado en el lienzo, sus propiedades personalizadas (colores, umbrales, selectores, campos de texto) aparecen dinámicamente en el Inspector de widgets.
+
+Para obtener detalles completos sobre el desarrollo de widgets, consulte la [Guía de widgets personalizados](custom-widgets.md).
+
 ## Configuración de diseño y columnas
 
 - Arrastre y suelte widgets desde la paleta hacia el lienzo.
@@ -42,4 +52,21 @@ El widget **Cuenta atrás** muestra el semáforo visual de salida y reproduce el
 - **Animación de aparición gradual**: Determina si el semáforo y el desenfoque de fondo aparecen con una suave transición gradual. Al desactivarse, aparecen de forma instantánea.
 - **Orientación**: Permite alternar entre disposición **Horizontal** y **Vertical**.
 - **Efectos de brillo y desenfoque**: Personalice el resplandor de las luces, la escala de superposición roja/verde y la intensidad o área del desenfoque.
+
+## Widgets de Columna de Carril y Duplicación
+
+El widget de **Columna de Carril** permite colocar columnas individuales de datos de la vista de carril (como información del piloto, tiempo de última vuelta, mejor vuelta / récord personal, combustible %, historial de vueltas, velocidades de sector, posición, etc.) en cualquier parte del lienzo como tarjetas modulares independientes.
+
+- **Modos de Vinculación**:
+  - **Carril Físico**: Vincula la tarjeta a un carril específico de la pista (Carril 1 a Carril 8). La tarjeta mantiene los datos de ese carril durante toda la carrera.
+  - **Posición en la Carrera**: Vincula la tarjeta a la clasificación actual (1º Lugar, 2º Lugar, etc.). La tarjeta sigue dinámicamente los cambios de posición y adelantamientos, adaptando sus colores de fondo y acento al carril del piloto que se encuentra en esa posición.
+- **Orientación**: Admite diseños **Vertical** (encabezado encima del valor) y **Horizontal** (encabezado y valor lado a lado).
+- **Herencia de Color y Personalización**: Las tarjetas heredan de manera predeterminada los colores de fondo y texto del carril asignado (`Usar Colores de Carril`), o pueden personalizarse con colores de fondo, texto y bordes propios.
+- **Duplicar en Carriles / Posiciones**:
+  - En lugar de crear y alinear tarjetas manualmente para cada carril, configure una única tarjeta de carril o posición y haga clic en **Duplicar en Carriles / Posiciones...** en el inspector.
+  - Elija la dirección (**Horizontal** lado a lado o **Vertical** apilado), la cantidad total de carriles/posiciones destino (por defecto el número máximo de carriles de todas las pistas en la base de datos), el modo de espaciado (**Ajustar al Lienzo** o **Preservar Espaciado**) y opcionalmente reemplazar los widgets existentes.
+  - **Modo de Replicación en Tiempo Real**: Al iniciar la replicación, el editor entra en un modo interactivo de plantilla con guías visuales de carriles y ajuste magnético. En este modo, coloca, redimensiona y diseña widgets directamente en el Carril 1 (Maestro), y los cambios se reflejan inmediatamente en tiempo real en todos los carriles restantes. Los widgets duplicados en los carriles 2..N son vistas previas en vivo de solo lectura; al hacer clic en cualquiera de ellos, el foco se redirige al maestro del Carril 1.
+  - **Área Inteligente y Redimensionamiento**: El espacio de replicación se expande automáticamente en las cuatro direcciones para llenar el espacio disponible en el lienzo hasta encontrar el límite de cualquier widget existente fuera de la cuadrícula. Puede ajustar el área general interactivamente con los 8 controles perimetrales de cambio de tamaño en la superposición.
+  - Al hacer clic en **Listo**, la cuadrícula se consolida en widgets independientes.
+  - **Editar Plantilla y Desvincular**: Al seleccionar cualquier widget de la cuadrícula, el inspector muestra una tarjeta para **Editar Plantilla de Cuadrícula** (para reingresar al modo de replicación en tiempo real en cualquier momento) o **Desvincular de Cuadrícula** (para separar permanentemente el widget).
 

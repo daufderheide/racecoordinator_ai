@@ -84,7 +84,7 @@ public class PitManager {
     try {
       refuelFuture =
           execToUse.scheduleAtFixedRate(
-              this::onRefuelTick, 0, REFUEL_INTERVAL_MS, TimeUnit.MILLISECONDS);
+              this::onRefuelTick, REFUEL_INTERVAL_MS, REFUEL_INTERVAL_MS, TimeUnit.MILLISECONDS);
     } catch (RejectedExecutionException e) {
       logger.warn("PitManager refuel scheduler task rejected during startup: {}", e.getMessage());
     }

@@ -73,6 +73,17 @@ export class ModifyHeatsModalHarnessE2e implements ModifyHeatsModalHarnessBase {
     await this.locator.locator(this.base.selectors.redoBtn).click();
   }
 
+  async clickLaneCheck(): Promise<void> {
+    await this.waitForLoaderToBeHidden();
+    await this.locator.locator(this.base.selectors.laneCheckBtn).click();
+  }
+
+  async isEqualityReportVisible(): Promise<boolean> {
+    return await this.locator
+      .locator(this.base.selectors.equalityReportModal)
+      .isVisible();
+  }
+
   async dragDriverToHeat(driverName: string, heatIndex: number): Promise<void> {
     const driver = this.driverPool
       .locator(this.base.selectors.driverItem, { hasText: driverName })

@@ -37,6 +37,7 @@ export function createMockEditorData(): MockEditorData {
     start_time: "2026-06-05T12:00:00Z",
     end_time: "2026-06-05T12:03:00Z",
     heatDrivers: heatDrivers,
+    standings: heatDrivers.map((hd) => hd.objectId),
   } as unknown as Heat;
 
   const nextHeatDrivers = createMockNextHeatDrivers();
@@ -590,10 +591,9 @@ function createMockRaceParticipants(): RaceParticipant[] {
       gap_position: index === 0 ? 0 : 1.5,
       fuelLevel: Math.max(0, 100 - index * 4),
       seed: rank,
-      team:
-        index === 0
-          ? { name: char.team, driverIds: [`d${rank}`, "d2", "d3"] }
-          : undefined,
+      team: char.team
+        ? { name: char.team, driverIds: [`d${rank}`] }
+        : undefined,
     } as unknown as RaceParticipant;
   });
 }

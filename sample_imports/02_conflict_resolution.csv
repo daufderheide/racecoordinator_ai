@@ -1,0 +1,8 @@
+# default-audio: system
+Name,Nickname,Lap,BestLap,Penalty
+Dave,Bad Cheese,preset:default_beep,preset:default_driveby,tts:Dave has a penalty
+Abby,Custom Abby,none,preset:default_driveby,none
+Carlos Sainz,Smooth Operator,tts:Smooth Operator lap,preset:default_driveby,none
+Carlos Sainz,The Matador,none,none,none
+,Nameless Driver,none,none,none
+George Russell,Mr Saturday,preset:default_beep,preset:default_driveby,tts:Blimey

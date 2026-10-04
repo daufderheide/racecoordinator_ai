@@ -799,7 +799,21 @@ describe("RacedaySetupComponent", () => {
       expect(component.updateVersionHtml).toBe("");
     });
 
-    it("should call updateService.installUpdate when installUpdate is called", () => {
+    it("should compute canAutoInstall correctly", () => {
+      component.updateResult = null;
+      expect(component.canAutoInstall).toBeFalse();
+
+      component.updateResult = {
+        updateAvailable: true,
+        latestVersion: "v1.2.3",
+        releaseNotes: "",
+        downloadUrl: "http://example.com/dl",
+        releaseUrl: "http://example.com/release",
+        isWindows: false,
+        isLinux: true,
+      };
+      expect(component.canAutoInstall).toBeTrue();
+
       component.updateResult = {
         updateAvailable: true,
         latestVersion: "v1.2.3",
@@ -807,6 +821,31 @@ describe("RacedaySetupComponent", () => {
         downloadUrl: "http://example.com/dl",
         releaseUrl: "http://example.com/release",
         isWindows: true,
+        isLinux: false,
+      };
+      expect(component.canAutoInstall).toBeTrue();
+
+      component.updateResult = {
+        updateAvailable: true,
+        latestVersion: "v1.2.3",
+        releaseNotes: "",
+        downloadUrl: "http://example.com/dl",
+        releaseUrl: "http://example.com/release",
+        isWindows: false,
+        isLinux: false,
+      };
+      expect(component.canAutoInstall).toBeFalse();
+    });
+
+    it("should call updateService.installUpdate when installUpdate is called", () => {
+      component.updateResult = {
+        updateAvailable: true,
+        latestVersion: "v1.2.3",
+        releaseNotes: "",
+        downloadUrl: "http://example.com/dl",
+        releaseUrl: "http://example.com/release",
+        isWindows: false,
+        isLinux: true,
       };
 
       mockUpdateService.installUpdate.and.returnValue(of(true));

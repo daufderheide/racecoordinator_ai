@@ -3,6 +3,7 @@ package com.antigravity.converters;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import com.antigravity.models.Driver;
 import com.antigravity.proto.DriverModel;
@@ -470,5 +471,23 @@ public class DriverConverterTest {
     assertEquals("preset", proto.getOverallBestLapAudio().getType());
     assertEquals("custom_record", proto.getOverallBestLapAudio().getUrl());
     assertEquals("Record Lap!", proto.getOverallBestLapAudio().getText());
+  }
+
+  @Test
+  public void testToProtoAndFromProto_ResolvesDefaultHelmetAvatar() {
+    Driver driver =
+        new Driver.Builder()
+            .withName("Fernando Alonso")
+            .withAvatarUrl("assets/defaults/helmets/helmet_yellow.png")
+            .build();
+
+    DriverModel proto = DriverConverter.toProto(driver, new HashSet<>());
+    assertNotNull(proto);
+    assertTrue(proto.getAvatarUrl().startsWith("/assets/"));
+    assertTrue(proto.getAvatarUrl().contains("black-yellow"));
+
+    Driver converted = DriverConverter.fromProto(proto);
+    assertNotNull(converted);
+    assertEquals(proto.getAvatarUrl(), converted.getAvatarUrl());
   }
 }

@@ -477,6 +477,8 @@ export class RacedayLayoutUtils {
     handle: string,
     layoutWidth: number = 1920,
     layoutHeight: number = 1080,
+    extraSnapEdgesX: number[] = [],
+    extraSnapEdgesY: number[] = [],
   ): { x: number; y: number; w: number; h: number } {
     const snapThreshold = 10;
     let newX = x;
@@ -484,8 +486,8 @@ export class RacedayLayoutUtils {
     let newW = w;
     let newH = h;
 
-    const edgesX: number[] = [0, layoutWidth];
-    const edgesY: number[] = [0, layoutHeight];
+    const edgesX: number[] = [0, layoutWidth, ...extraSnapEdgesX];
+    const edgesY: number[] = [0, layoutHeight, ...extraSnapEdgesY];
 
     for (const widget of widgets || []) {
       if (widget.id === ignoreId) continue;
