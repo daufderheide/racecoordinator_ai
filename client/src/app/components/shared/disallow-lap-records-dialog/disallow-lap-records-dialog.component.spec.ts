@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from "@angular/core/testing";
 import { BehaviorSubject, of, throwError } from "rxjs";
+import { DriverConverter } from "@app/converters/driver.converter";
 import { DataService } from "@app/data.service";
 import { Driver } from "@app/models/driver";
 import { RaceParticipant } from "@app/models/race_participant";
@@ -81,6 +82,7 @@ describe("DisallowLapRecordsDialogComponent", () => {
   };
 
   beforeEach(async () => {
+    DriverConverter.clearCache();
     mockDataService = jasmine.createSpyObj("DataService", [
       "updateLiveLapRecordStatus",
       "updateHistoryLapRecordStatus",
@@ -121,6 +123,10 @@ describe("DisallowLapRecordsDialogComponent", () => {
     fixture.componentRef.setInput("track", mockTrack);
     fixture.componentRef.setInput("visible", true);
     fixture.detectChanges();
+  });
+
+  afterEach(() => {
+    DriverConverter.clearCache();
   });
 
   it("should create the component with default selection of All Drivers, All Heats, All Lanes, and sort by time asc", () => {

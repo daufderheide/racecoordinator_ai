@@ -148,6 +148,12 @@ import { DriverHeatData } from "@app/race/driver_heat_data";
                 (input)="onInputChange($event)"
                 (keyup.enter)="onConfirm()"
                 placeholder="0"
+                autocomplete="off"
+                data-dashlane-ignore="true"
+                data-1p-ignore="true"
+                data-lpignore="true"
+                data-bwignore="true"
+                data-form-type="other"
               />
             </div>
 
@@ -205,16 +211,16 @@ import { DriverHeatData } from "@app/race/driver_heat_data";
         display: block;
       }
       .modal-backdrop {
-        position: absolute;
+        position: fixed;
         top: 0;
         left: 0;
-        width: 100%;
-        height: 100%;
+        width: 100vw;
+        height: 100vh;
         background: rgba(15, 23, 42, 0.75);
         display: flex;
         justify-content: center;
         align-items: center;
-        z-index: 2000;
+        z-index: 99999;
         backdrop-filter: blur(8px);
         animation: fadeIn 0.25s ease-out;
       }

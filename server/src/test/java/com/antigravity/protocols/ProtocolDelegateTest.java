@@ -2,6 +2,7 @@ package com.antigravity.protocols;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -380,5 +381,52 @@ public class ProtocolDelegateTest {
     assertEquals(CarLocation.Main, listener.carData.get(1).getLocation());
 
     pitDelegate.close();
+  }
+
+  @Test
+  public void testSchedulerResolutionAndOverloadedConstructors() {
+    MockScheduler mockScheduler = new MockScheduler();
+    IProtocol mockProtoWithScheduler = mock(IProtocol.class);
+    when(mockProtoWithScheduler.getScheduler()).thenReturn(mockScheduler);
+
+    // Resolves from delegates
+    ProtocolDelegate delegateWithResolvedScheduler =
+        new ProtocolDelegate(Arrays.asList(proto1, mockProtoWithScheduler));
+    assertEquals(mockScheduler, delegateWithResolvedScheduler.getScheduler());
+
+    // Explicit scheduler constructor
+    MockScheduler explicitScheduler = new MockScheduler();
+    ProtocolDelegate delegateWithExplicitScheduler =
+        new ProtocolDelegate(Arrays.asList(proto1, proto2), explicitScheduler);
+    assertEquals(explicitScheduler, delegateWithExplicitScheduler.getScheduler());
+
+    // Explicit scheduler with time supplier
+    ProtocolDelegate delegateWithTimeAndScheduler =
+        new ProtocolDelegate(Arrays.asList(proto1, proto2), () -> 12345L, explicitScheduler);
+    assertEquals(explicitScheduler, delegateWithTimeAndScheduler.getScheduler());
+
+    // Supplier constructor
+    ProtocolDelegate delegateWithSupplier =
+        new ProtocolDelegate(Arrays.asList(proto1, proto2), () -> 12345L, () -> explicitScheduler);
+    assertEquals(explicitScheduler, delegateWithSupplier.getScheduler());
+  }
+
+  @Test
+  public void testSetPitManagerLifecycle() {
+    PitManager initialManager = delegate.getPitManager();
+    assertNotNull(initialManager);
+
+    PitManager customManager = mock(PitManager.class);
+    delegate.setPitManager(customManager);
+
+    assertEquals(customManager, delegate.getPitManager());
+    verify(proto1).setPitManager(customManager);
+    verify(proto2).setPitManager(customManager);
+
+    // Resetting to null creates new default PitManager
+    delegate.setPitManager(null);
+    assertNotNull(delegate.getPitManager());
+    verify(proto1).setPitManager(delegate.getPitManager());
+    verify(proto2).setPitManager(delegate.getPitManager());
   }
 }

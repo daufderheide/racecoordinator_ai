@@ -330,7 +330,8 @@
                   >
                     <!-- Team Driver Pulldown -->
                     @if (
-                      parent().isNameProperty(entry.property) &&
+                      (parent().isNameProperty(entry.property) ||
+                        entry.property === "participant.team.name") &&
                       parent().isTeam(hd)
                     ) {
                       <div
@@ -376,7 +377,12 @@
                                 hd.actualDriver?.name ||
                                 hd.driver.nickname ||
                                 hd.driver.name
-                              : hd.actualDriver?.name || hd.driver.name
+                              : entry.property === "participant.team.name"
+                                ? hd.participant?.team?.name ||
+                                  $any(hd.driver)?.team?.name ||
+                                  hd.actualDriver?.name ||
+                                  hd.driver.name
+                                : hd.actualDriver?.name || hd.driver.name
                           }}
                         </span>
                         @if (

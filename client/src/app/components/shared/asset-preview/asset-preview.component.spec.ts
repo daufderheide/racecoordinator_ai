@@ -15,10 +15,15 @@ describe("AssetPreviewComponent", () => {
   let dataServiceSpy: jasmine.SpyObj<DataService>;
 
   beforeEach(async () => {
-    const spy = jasmine.createSpyObj("DataService", ["getAssetUrl"], {
-      baseUrl: "http://localhost:7070",
-      serverUrl: "http://localhost:7070",
-    });
+    const spy = jasmine.createSpyObj(
+      "DataService",
+      ["getAssetUrl", "resolveAssetUrl"],
+      {
+        baseUrl: "http://localhost:7070",
+        serverUrl: "http://localhost:7070",
+      },
+    );
+    spy.resolveAssetUrl.and.callFake((url?: string) => url || "");
 
     await TestBed.configureTestingModule({
       imports: [AssetPreviewComponent],
@@ -163,5 +168,24 @@ describe("AssetPreviewComponent", () => {
       "http://localhost:7070/api/asset/asset-123",
     );
     expect(dataServiceSpy.getAssetUrl).toHaveBeenCalledWith("asset-123");
+  });
+
+  it("should resolve relative asset URLs via DataService", () => {
+    dataServiceSpy.resolveAssetUrl.and.returnValue(
+      "/assets/default_black-yellow_Helmet_Black-Yellow",
+    );
+    fixture.componentRef.setInput("type", "image");
+    fixture.componentRef.setInput(
+      "imageUrl",
+      "assets/defaults/helmets/helmet_yellow.png",
+    );
+    fixture.detectChanges();
+
+    expect(component.currentUrl()).toBe(
+      "http://localhost:7070/assets/default_black-yellow_Helmet_Black-Yellow",
+    );
+    expect(dataServiceSpy.resolveAssetUrl).toHaveBeenCalledWith(
+      "assets/defaults/helmets/helmet_yellow.png",
+    );
   });
 });

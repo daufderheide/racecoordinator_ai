@@ -4,6 +4,7 @@ export * from "./ui-editor-custom-ui.helper";
 export * from "./ui-editor-data.helper";
 export * from "./ui-editor-directory.helper";
 export * from "./ui-editor-expander.helper";
+export * from "./ui-editor-grid.helper";
 export * from "./ui-editor-help.helper";
 export * from "./ui-editor-io.helper";
 export * from "./ui-editor-layout-actions.helper";
