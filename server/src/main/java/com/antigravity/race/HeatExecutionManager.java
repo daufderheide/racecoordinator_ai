@@ -1351,14 +1351,6 @@ public class HeatExecutionManager {
               this.race.isDemoMode());
     } catch (Exception e) {
       logger.error("Error updating realtime prediction on lap", e);
-      try {
-        java.io.PrintWriter pw =
-            new java.io.PrintWriter(new java.io.FileWriter("/tmp/antigravity_error.log", true));
-        pw.println("ERROR IN updateRealtimePredictionOnLap:");
-        e.printStackTrace(pw);
-        pw.close();
-      } catch (Exception ex) {
-      }
     }
   }
 }

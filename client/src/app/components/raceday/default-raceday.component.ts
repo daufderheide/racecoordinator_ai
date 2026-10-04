@@ -897,6 +897,7 @@ export class DefaultRacedayComponent
   protected assets: any[] = [];
   protected hasRacedInCurrentHeat: boolean = false;
   protected highlightedDrivers: Set<string> = new Set();
+  private lapHighlightTimers: Set<any> = new Set();
   private carLocations = new Map<number, number>();
   private fuelAudioTracker: FuelAudioTracker;
   private get laneFuelAudioStates(): Map<number, any> {
@@ -2734,12 +2735,13 @@ export class DefaultRacedayComponent
         this.cdr.markForCheck();
       }
       const timer = setTimeout(() => {
+        this.lapHighlightTimers.delete(timer);
         this.highlightedDrivers.delete(lap.objectId!);
         if (!this.isDestroyed) {
           this.cdr.markForCheck();
         }
       }, 400);
-      this.subscriptions.push(new Subscription(() => clearTimeout(timer)));
+      this.lapHighlightTimers.add(timer);
     }
   }
 
@@ -3262,6 +3264,8 @@ export class DefaultRacedayComponent
   }
 
   ngOnDestroy() {
+    this.lapHighlightTimers.forEach((timer) => clearTimeout(timer));
+    this.lapHighlightTimers.clear();
     this.audioService.reset();
     if (
       typeof window !== "undefined" &&

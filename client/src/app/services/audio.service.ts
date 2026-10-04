@@ -499,7 +499,19 @@ export class AudioService implements OnDestroy {
 
   private playPresetVoice(url: string, priority: AudioPriority): void {
     const playableUrl = resolveAudioUrl(url, this.dataService.serverUrl);
-    const audio = new Audio(playableUrl);
+    let audio: HTMLAudioElement;
+    const cached = this.preloadedAudioMap.get(playableUrl);
+    if (cached && (cached.paused || cached.ended)) {
+      audio = cached;
+      try {
+        audio.currentTime = 0;
+      } catch {
+        // ignore
+      }
+    } else {
+      audio = new Audio(playableUrl);
+      this.preloadedAudioMap.set(playableUrl, audio);
+    }
     this.activeAudioElement = audio;
     const settings = this.settingsService.getSettings();
     audio.volume = Math.max(
