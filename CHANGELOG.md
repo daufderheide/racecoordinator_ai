@@ -1,9 +1,10 @@
 # Changelog
 
-## [v1.0.1-beta.11] - 2026-10-03
+## [v1.0.1-beta.12] - 2026-10-04
 
 ### 🚀 New Features
 
+- add Arduino and Phidget editor "active low analog led" config options. [#911](https://github.com/daufderheide/racecoordinator_ai/issues/911) ([0c993d0a](https://github.com/daufderheide/racecoordinator_ai/commit/0c993d0a))
 - Added more port diagnosis when RC AI cannot be started because port 7070 is busy/not available.  This will be useful for users to help troubleshoot what's going on. ([f258adde](https://github.com/daufderheide/racecoordinator_ai/commit/f258adde))
 - for the heat-view widget, changed 'use lane background colors' to use lane colors' and disabled summary row text color controls when lane colors are enabled.  Coloring is now completely controlled by the track lane data or the text color set in the widget. [#897](https://github.com/daufderheide/racecoordinator_ai/issues/897) [skip-screendiffs] ([7df44d18](https://github.com/daufderheide/racecoordinator_ai/commit/7df44d18))
 - Auto hide the countdown widget when a different widget is selected. [#869](https://github.com/daufderheide/racecoordinator_ai/issues/869) [skip-screendiffs] ([29801310](https://github.com/daufderheide/racecoordinator_ai/commit/29801310))
@@ -11,6 +12,10 @@
 
 ### 🐛 Bug Fixes
 
+- select next driver after adding or removing via keyboard navigation on raceday setup [#912](https://github.com/daufderheide/racecoordinator_ai/issues/912) ([3395e6f7](https://github.com/daufderheide/racecoordinator_ai/commit/3395e6f7))
+- Set the theme name as the title of the new page when opened from the raceday window menu [#915](https://github.com/daufderheide/racecoordinator_ai/issues/915) [skip-screendiffs] ([5726a587](https://github.com/daufderheide/racecoordinator_ai/commit/5726a587))
+- Fixed xls export so that the race info on the sammary tab output the correct track data.  Also adjusted the column widths automatically based on size and left justified all cell values. [#914](https://github.com/daufderheide/racecoordinator_ai/issues/914) [skip-screendiffs] ([dc61c127](https://github.com/daufderheide/racecoordinator_ai/commit/dc61c127))
+- Fixed false start penalty handling to properly adjust lap counts and handle subsequent reaction times. [#910](https://github.com/daufderheide/racecoordinator_ai/issues/910) [skip-screendiffs] ([fad4474e](https://github.com/daufderheide/racecoordinator_ai/commit/fad4474e))
 - **raceday**: stabilize auto-start/advance timers, track calls, and countdown audio [skip-screendiff] [#881](https://github.com/daufderheide/racecoordinator_ai/issues/881) ([aba288c1](https://github.com/daufderheide/racecoordinator_ai/commit/aba288c1))
 - Changed lane-view column 'Lap Count' to "Lap Count (Raw)" for a bit more clarity [#893](https://github.com/daufderheide/racecoordinator_ai/issues/893) [skip-screendiffs] ([a71408b6](https://github.com/daufderheide/racecoordinator_ai/commit/a71408b6))
 - Update the xls export template per user request [#898](https://github.com/daufderheide/racecoordinator_ai/issues/898) ([a7cbd71a](https://github.com/daufderheide/racecoordinator_ai/commit/a7cbd71a))
@@ -42,7 +47,7 @@
 <details>
 <summary>🔍 <b>Full Commit History</b></summary>
 
-<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0...v1.0.1-beta.11">GitHub</a></p>
+<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0...v1.0.1-beta.12">GitHub</a></p>
 </details>
 
 ## [v1.0.0] - 2026-09-27
