@@ -362,7 +362,9 @@ export class DefaultRacedayComponent
   protected qrCodeUrl?: string;
   protected serverUrlBase: string = window?.location?.origin || "";
   protected laneQrCodeCache = new Map<number, string>();
+  protected generatingLaneQrCodes = new Set<number>();
   protected driverViewQrCodeCache = new Map<string, string>();
+  private latestPredictionRecord: RacePredictionRecord | null = null;
 
   get groupEnabled(): boolean {
     return this.race?.group_options?.enabled || false;
@@ -1723,12 +1725,12 @@ export class DefaultRacedayComponent
             if (this.serverUrlBase !== url) {
               this.serverUrlBase = url;
               this.laneQrCodeCache.clear();
+              this.generatingLaneQrCodes.clear();
               this.driverViewQrCodeCache.clear();
             }
             QRCode.toDataURL(url, { margin: 1 })
               .then((dataUrl) => {
                 this.qrCodeUrl = dataUrl;
-                this.generateAllLaneQrCodes();
                 if (!this.isDestroyed) {
                   this.cdr.markForCheck();
                 }
@@ -3573,7 +3575,11 @@ export class DefaultRacedayComponent
       );
     }
 
-    this.loadPredictionsForCurrentRace();
+    if (this.latestPredictionRecord) {
+      this.applyPredictionsToDrivers(this.latestPredictionRecord);
+    } else {
+      this.loadPredictionsForCurrentRace();
+    }
     this.cdr.markForCheck();
   }
 
@@ -3789,7 +3795,9 @@ export class DefaultRacedayComponent
       ) {
         this.themeService.activateForRace(race.entity_id);
       }
-      this.generateAllLaneQrCodes();
+      this.latestPredictionRecord = null;
+      this.laneQrCodeCache.clear();
+      this.generatingLaneQrCodes.clear();
 
       if (this.currentRacedayLayout && this.currentRacedayLayout.widgets) {
         this.layout = JSON.parse(JSON.stringify(this.currentRacedayLayout));
@@ -4024,6 +4032,7 @@ export class DefaultRacedayComponent
       .getRacePredictions(raceId, isDemo)
       .subscribe((record) => {
         if (record) {
+          this.latestPredictionRecord = record;
           this.applyPredictionsToDrivers(record);
           this.cdr.markForCheck();
         }
@@ -4150,24 +4159,33 @@ export class DefaultRacedayComponent
   generateAllLaneQrCodes(): void {
     if (!this.serverUrlBase || !this.track?.lanes) return;
 
-    this.track.lanes.forEach((lane, index) => {
-      QRCode.toDataURL(`${this.serverUrlBase}/driver-station/${index + 1}`, {
-        margin: 1,
-      })
-        .then((dataUrl) => {
-          this.laneQrCodeCache.set(index, dataUrl);
-          if (!this.isDestroyed) {
-            this.cdr.markForCheck();
-          }
-        })
-        .catch((err) =>
-          this.logger.error("Lane QR Code generation failed", err),
-        );
+    this.track.lanes.forEach((_, index) => {
+      this.getLaneQrCodeUrl(index);
     });
   }
 
   getLaneQrCodeUrl(laneIndex: number): string {
-    return this.laneQrCodeCache.get(laneIndex) || "";
+    const cached = this.laneQrCodeCache.get(laneIndex);
+    if (cached) return cached;
+    if (!this.serverUrlBase || this.generatingLaneQrCodes.has(laneIndex)) {
+      return "";
+    }
+    this.generatingLaneQrCodes.add(laneIndex);
+    QRCode.toDataURL(`${this.serverUrlBase}/driver-station/${laneIndex + 1}`, {
+      margin: 1,
+    })
+      .then((dataUrl) => {
+        this.laneQrCodeCache.set(laneIndex, dataUrl);
+        this.generatingLaneQrCodes.delete(laneIndex);
+        if (!this.isDestroyed) {
+          this.cdr.markForCheck();
+        }
+      })
+      .catch((err) => {
+        this.generatingLaneQrCodes.delete(laneIndex);
+        this.logger.error("Lane QR Code generation failed", err);
+      });
+    return "";
   }
 
   getDriverViewQrCodeUrl(hd: DriverHeatData): string {
