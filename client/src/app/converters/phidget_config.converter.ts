@@ -19,6 +19,10 @@ export class PhidgetConfigConverter {
       hubPort: proto.hubPort || 0,
       normallyClosedLaneSensors: proto.normallyClosedLaneSensors ?? false,
       normallyClosedRelays: proto.normallyClosedRelays ?? false,
+      activeLowAnalogLeds:
+        proto.activeLowAnalogLeds ??
+        (proto as any).active_low_analog_leds ??
+        false,
       useLapsForSegments: proto.useLapsForSegments ?? false,
       lapPinPitBehavior: proto.lapPinPitBehavior ?? 3,
       digitalInIds: proto.digitalInIds || [],
@@ -36,6 +40,7 @@ export class PhidgetConfigConverter {
       hubPort: config.hubPort,
       normallyClosedLaneSensors: config.normallyClosedLaneSensors,
       normallyClosedRelays: config.normallyClosedRelays,
+      activeLowAnalogLeds: config.activeLowAnalogLeds ?? false,
       useLapsForSegments: config.useLapsForSegments,
       lapPinPitBehavior: config.lapPinPitBehavior,
       digitalInIds: config.digitalInIds || [],

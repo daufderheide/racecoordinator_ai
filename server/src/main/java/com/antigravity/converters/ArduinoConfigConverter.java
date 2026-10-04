@@ -42,7 +42,7 @@ public class ArduinoConfigConverter {
         proto.getHardwareType(),
         proto.getNormallyClosedLaneSensors(),
         proto.getNormallyClosedRelays(),
-        proto.getGlobalInvertLights(),
+        proto.getActiveLowAnalogLeds(),
         proto.getUsePitsAsLaps(),
         proto.getUseLapsForSegments(),
         ArduinoConfig.LapPinPitBehavior.fromValue(proto.getLapPinPitBehaviorValue()),
@@ -65,7 +65,7 @@ public class ArduinoConfigConverter {
             .setDebounceUs(config.debounceUs)
             .setNormallyClosedLaneSensors(config.normallyClosedLaneSensors)
             .setNormallyClosedRelays(config.normallyClosedRelays)
-            .setGlobalInvertLights(config.globalInvertLights)
+            .setActiveLowAnalogLeds(config.activeLowAnalogLeds)
             .setUsePitsAsLaps(config.usePitsAsLaps)
             .setUseLapsForSegments(config.useLapsForSegments)
             .setHardwareType(config.hardwareType);

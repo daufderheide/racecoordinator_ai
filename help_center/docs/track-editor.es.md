@@ -152,6 +152,7 @@ Configura el tiempo de filtrado en **microsegundos** ($1\text{ ms} = 1000\,\mu\t
 #### Lógica Invertida (Normalmente Cerrado / NC)
 - **Sensores de Carril Normalmente Cerrados**: Habilítelo si el sensor entrega nivel alto en reposo y cae a bajo cuando pasa el coche (típico en fototransistores e infrarrojos). Desactívelo en dead strips o reed switches.
 - **Relés Normalmente Cerrados**: Habilítelo si el relé se activa para cortar la corriente y se desactiva para dar paso de corriente. Asegura que la pista tenga corriente si el ordenador está apagado.
+- **LEDs Analógicos Activos Bajos (Active Low Analog LEDs)**: Habilítelo si sus LEDs analógicos (como semáforos de salida, banderas o indicadores de líder de manga) se encienden con señal LOW (0V) y se apagan con HIGH (5V). Esto soluciona el comportamiento invertido en circuitos con ánodo común en interfaces Arduino y Phidget.
 
 #### Comportamiento de Repostaje en Pin de Vuelta
 Permite que el sensor de meta actúe en carreras con consumo de combustible:
@@ -263,6 +264,10 @@ La barra de herramientas superior del Editor de Pistas proporciona herramientas 
 ### Repostaje Continuo en Carreras con Combustible
 - **Síntoma**: Los coches comienzan a repostar sin detenerse en cuanto tocan la pista.
 - **Solución**: Conmute la casilla **Sensores de Carril Normalmente Cerrados (Normally Closed Lane Sensors)**.
+
+### LEDs Analógicos Invertidos (Luces encendidas cuando deberían estar apagadas)
+- **Síntoma**: Los LEDs de salida, banderas o indicadores de líder están iluminados en reposo y se apagan durante las fases activas.
+- **Solución**: Active la casilla **LEDs analógicos activos bajos (Active Low Analog LEDs)** en la configuración de su interfaz (Arduino o Phidget).
 
 ### Vueltas Dobles o No Detectadas
 - **Solución**: Aumente el antirrebote (Debounce) si se marcan vueltas dobles, o redúzcalo si coches muy veloces no son leídos. Verifique la alineación de las fotocélulas.

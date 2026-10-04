@@ -434,7 +434,7 @@ describe("DataService", () => {
         hardwareType: 0,
         normallyClosedLaneSensors: true,
         normallyClosedRelays: true,
-        globalInvertLights: 0,
+        activeLowAnalogLeds: false,
         usePitsAsLaps: false,
         useLapsForSegments: false,
         lapPinPitBehavior: 0,
@@ -1235,6 +1235,7 @@ describe("DataService", () => {
         hubPort: 0,
         normallyClosedLaneSensors: false,
         normallyClosedRelays: false,
+        activeLowAnalogLeds: false,
         useLapsForSegments: false,
         lapPinPitBehavior: 0,
         digitalInIds: [],
@@ -1480,10 +1481,8 @@ describe("DataService", () => {
       const loggerSpy = spyOn((service as any).logger, "warn");
       (service as any).raceStateSubject.next(RaceState.RACING);
 
-      const pastTime =
-        (typeof performance !== "undefined" ? performance.now() : Date.now()) -
-        500;
-      (service as any).lastRaceTimeReceivedAt = pastTime;
+      spyOn(performance, "now").and.returnValue(1000);
+      (service as any).lastRaceTimeReceivedAt = 500;
 
       const mockRaceData = RaceData.encode({
         raceTime: { time: 5.0 },

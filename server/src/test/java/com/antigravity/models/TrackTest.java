@@ -116,7 +116,7 @@ public class TrackTest {
             1,
             true,
             true,
-            0,
+            false,
             false,
             true,
             ArduinoConfig.LapPinPitBehavior.PIT_IN_OUT,

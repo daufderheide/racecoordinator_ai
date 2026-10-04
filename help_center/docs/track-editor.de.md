@@ -153,6 +153,7 @@ Konfiguriert die Entprellzeit der Eingangspins in **Mikrosekunden** ($1\text{ ms
 #### Invertierungs-Optionen (Ruhestrom / Normally Closed)
 - **Ruhestrom-Spursensoren (Normally Closed Lane Sensors)**: Aktivieren, wenn Sensoren im Ruhezustand High liefern und beim Durchfahren eines Fahrzeugs auf Low fallen (typisch für Lichtschranken und IR-Sensoren). Bei Dead Strips oder Reed-Kontakten bleibt diese Option in der Regel deaktiviert.
 - **Ruhestrom-Relais (Normally Closed Relays)**: Wenn aktiviert, zieht das Relais an, um den Bahnstrom zu unterbrechen. Dies stellt sicher, dass die Bahn auch bei ausgeschaltetem PC mit Strom versorgt bleibt.
+- **Aktiv-Low Analoge LEDs (Active Low Analog LEDs)**: Wenn aktiviert, schalten analoge LEDs (wie Startampeln, Flaggen und Heat-Leader-Anzeigen) EIN, wenn der Pin auf LOW (0V) gezogen wird, und AUS bei HIGH (5V). Dies behebt invertiertes Verhalten bei LED-Schaltungen mit gemeinsamer Anode bei Arduino- und Phidget-Schnittstellen.
 
 #### Rundenpin-Boxenverhalten (Lap Pin Pit Behavior)
 Ermöglicht es den Start/Ziel-Sensoren, bei Tankrennen als Boxenstopp-Erkennung zu dienen:
@@ -267,6 +268,10 @@ Die obere Symbolleiste des Strecken-Editors bietet wichtige Steuerungsfunktionen
 ### Dauertanken im Tankrennen
 - **Symptom**: Fahrzeuge beginnen sofort ununterbrochen zu tanken.
 - **Lösung**: Ändern Sie die Einstellung **Ruhestrom-Spursensoren (Normally Closed Lane Sensors)**.
+
+### Analoge LEDs invertiert (leuchten, wenn sie aus sein sollten)
+- **Symptom**: Startampel-LEDs, Grün-/Gelb-Flaggen oder Heat-Leader-Anzeigen leuchten im Ruhezustand und gehen während aktiver Phasen aus.
+- **Lösung**: Aktivieren Sie die Option **Aktiv-Low Analoge LEDs (Active Low Analog LEDs)** in Ihrer Schnittstellenkonfiguration (Arduino oder Phidget).
 
 ### Doppelauslösungen oder verpasste Runden
 - **Lösung**: Entprellzeit (Debounce) erhöhen (bei Doppelauslösungen) bzw. verringern (bei verpassten Runden schneller Fahrzeuge) und Lichtschrankenausrichtung prüfen.

@@ -162,6 +162,18 @@
                             {{ "AE_NORMALLY_CLOSED_RELAYS" | translate }}
                           </label>
                         </div>
+                        <div class="control-group">
+                          <label class="checkbox-label">
+                            <input
+                              [id]="'arduino-active-low-analog-leds-' + index()"
+                              type="checkbox"
+                              [disabled]="!isEditMode()"
+                              [(ngModel)]="config()!.activeLowAnalogLeds"
+                              (change)="updateArduinoConfig()"
+                            />
+                            {{ "AE_ACTIVE_LOW_ANALOG_LEDS" | translate }}
+                          </label>
+                        </div>
                       </div>
                     </div>
 

@@ -1292,7 +1292,7 @@ export class TestSetupHelper {
               voltageConfigs: { 1: 12.0 }, // This also indicates digital fuel
               normallyClosedLaneSensors: false,
               normallyClosedRelays: true,
-              globalInvertLights: 0,
+              activeLowAnalogLeds: false,
               usePitsAsLaps: false,
               useLapsForSegments: true,
               ledStrings: null,
@@ -2679,7 +2679,7 @@ export class TestSetupHelper {
               analogIds: [-1, -1],
               normallyClosedLaneSensors: false,
               normallyClosedRelays: true,
-              globalInvertLights: 0,
+              activeLowAnalogLeds: false,
               usePitsAsLaps: false,
               useLapsForSegments: true,
               ledStrings: null,

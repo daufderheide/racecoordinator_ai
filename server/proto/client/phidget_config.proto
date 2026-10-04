@@ -24,4 +24,5 @@ message PhidgetConfig {
   repeated int32 analog_ids = 13;
   
   repeated VoltageConfig voltage_configs = 14;
+  bool active_low_analog_leds = 15;
 }

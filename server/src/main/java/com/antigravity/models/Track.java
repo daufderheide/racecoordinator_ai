@@ -360,7 +360,7 @@ public class Track extends Model {
               config.hardwareType,
               config.normallyClosedLaneSensors,
               config.normallyClosedRelays,
-              config.globalInvertLights,
+              config.activeLowAnalogLeds,
               config.usePitsAsLaps,
               config.useLapsForSegments,
               config.lapPinPitBehavior,
