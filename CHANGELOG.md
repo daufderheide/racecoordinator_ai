@@ -1,6 +1,6 @@
 # Changelog
 
-## [v1.0.1-beta.12] - 2026-10-04
+## [v1.0.1-beta.13] - 2026-10-04
 
 ### 🚀 New Features
 
@@ -40,6 +40,9 @@
 
 ### ⚡ Improvements & Refactoring
 
+- eliminate scheduler self-deadlock, optimize standings indexing and memoize timer options [skip-screendiffs] ([a3dab0f0](https://github.com/daufderheide/racecoordinator_ai/commit/a3dab0f0))
+- offload lap predictions to daemon worker and remove redundant ngZone.run() [skip-screendiffs] ([9bf7d372](https://github.com/daufderheide/racecoordinator_ai/commit/9bf7d372))
+- eliminate hot-path SQLite DDL, ticker lock contention [skip-screendiffs] ([f1e7c96b](https://github.com/daufderheide/racecoordinator_ai/commit/f1e7c96b))
 - Warm / Reuse StartingTicker:  To eliminate the ~150 ms initial tick jitter on older CPUs when starting/aborting, we can avoid creating and tearing down a brand-new ScheduledExecutorService on every abort/start, or move non-critical database deletions (deletePredictionEvaluationRecord) off the critical ticker startup path. ([803548dc](https://github.com/daufderheide/racecoordinator_ai/commit/803548dc))
 - **timer**: async websocket broadcast queue, racetime coalescing, and telemetry batching [#880](https://github.com/daufderheide/racecoordinator_ai/issues/880) [skip-screendiff] ([541dfcee](https://github.com/daufderheide/racecoordinator_ai/commit/541dfcee))
 - **timer**: eliminate ticker drift, async auto-save, and countdown audio cascade [skip-screendiffs] ([127e9e0e](https://github.com/daufderheide/racecoordinator_ai/commit/127e9e0e))
@@ -47,7 +50,7 @@
 <details>
 <summary>🔍 <b>Full Commit History</b></summary>
 
-<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0...v1.0.1-beta.12">GitHub</a></p>
+<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0...v1.0.1-beta.13">GitHub</a></p>
 </details>
 
 ## [v1.0.0] - 2026-09-27
