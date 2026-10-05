@@ -127,10 +127,20 @@ export class LaneViewInspectorComponent implements OnInit {
     this.ensureExpandedStatesLoaded();
     const current = this.columnGroupExpandedStates.has(groupId)
       ? this.columnGroupExpandedStates.get(groupId)!
-      : true;
+      : this.getDefaultGroupExpanded(groupId);
     const newExpanded = !current;
     this.columnGroupExpandedStates.set(groupId, newExpanded);
     this.saveExpandedStatesToSettings();
+  }
+
+  private getDefaultGroupExpanded(groupId: string): boolean {
+    if (
+      groupId === LaneViewColumnGroupHelper.HEAT_DATA_GROUP_ID ||
+      groupId === LaneViewColumnGroupHelper.OVERALL_DATA_GROUP_ID
+    ) {
+      return true;
+    }
+    return false;
   }
 
   private saveExpandedStatesToSettings(): void {

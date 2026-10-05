@@ -41,7 +41,11 @@ import { TranslatePipe } from "@app/pipes/translate.pipe";
             {{
               (bindingMode() === "position"
                 ? "UE_REPLICATE_POSITIONS_TITLE"
-                : "UE_REPLICATE_LANES_TITLE"
+                : bindingMode() === "overallPosition"
+                  ? "UE_REPLICATE_OVERALL_POSITIONS_TITLE"
+                  : bindingMode() === "seed"
+                    ? "UE_REPLICATE_SEEDS_TITLE"
+                    : "UE_REPLICATE_LANES_TITLE"
               ) | translate
             }}
           </h2>
@@ -49,7 +53,11 @@ import { TranslatePipe } from "@app/pipes/translate.pipe";
             {{
               (bindingMode() === "position"
                 ? "UE_REPLICATE_POSITIONS_DESC"
-                : "UE_REPLICATE_LANES_DESC"
+                : bindingMode() === "overallPosition"
+                  ? "UE_REPLICATE_OVERALL_POSITIONS_DESC"
+                  : bindingMode() === "seed"
+                    ? "UE_REPLICATE_SEEDS_DESC"
+                    : "UE_REPLICATE_LANES_DESC"
               ) | translate: { index: sourceIndex() + 1 }
             }}
           </p>
@@ -244,7 +252,7 @@ import { TranslatePipe } from "@app/pipes/translate.pipe";
 export class ReplicateLaneDialogComponent {
   visible = input<boolean>(false);
   sourceIndex = input<number>(0);
-  bindingMode = input<"lane" | "position">("lane");
+  bindingMode = input<"lane" | "position" | "overallPosition" | "seed">("lane");
   defaultCount = input<number>(4);
 
   confirm = output<Omit<LaneReplicationOptions, "baseWidth" | "baseHeight">>();
@@ -255,7 +263,7 @@ export class ReplicateLaneDialogComponent {
   distributionMode = signal<"auto-fit" | "preserve-spacing">("auto-fit");
   replaceExisting = signal<boolean>(true);
 
-  availableCounts = [2, 3, 4, 5, 6, 7, 8];
+  availableCounts = [2, 3, 4, 5, 6, 7, 8, 10, 12, 16, 20, 24, 32];
 
   constructor() {
     effect(

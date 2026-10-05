@@ -14,7 +14,7 @@ export interface LaneGridSession {
   totalLanes: number;
   direction: "horizontal" | "vertical";
   sourceLaneIndex: number;
-  bindingMode: "lane" | "position";
+  bindingMode: "lane" | "position" | "overallPosition" | "seed";
 }
 
 export type GridResizeHandle =
@@ -326,7 +326,7 @@ export class LaneGridReplicationHelper {
     allWidgets: AbsoluteWidgetNode[],
     sourceWidgets: AbsoluteWidgetNode[],
     replaceExisting: boolean,
-    sourceBindingMode: "lane" | "position",
+    sourceBindingMode: "lane" | "position" | "overallPosition" | "seed",
     sourceIndex: number,
     targetCount: number,
     gridId?: string,
@@ -437,7 +437,11 @@ export class LaneGridReplicationHelper {
     baseHeight: number,
     direction: "horizontal" | "vertical" = "horizontal",
     replaceExisting: boolean = true,
-    sourceBindingMode: "lane" | "position" = "lane",
+    sourceBindingMode:
+      | "lane"
+      | "position"
+      | "overallPosition"
+      | "seed" = "lane",
     sourceIndex: number = 0,
     targetCount: number = 4,
     gridId?: string,

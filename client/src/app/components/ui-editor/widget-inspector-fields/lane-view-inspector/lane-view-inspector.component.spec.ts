@@ -419,44 +419,53 @@ describe("LaneViewInspectorComponent", () => {
 
     it("should return column groups with count badges for unused columns", () => {
       const groups = component.getColumnGroups();
-      expect(groups.length).toBe(9);
-      expect(groups.map((g) => g.id)).toEqual([
-        "driver-team",
-        "laps-standings",
-        "lap-times",
-        "analysis",
-        "gaps",
-        "pacing",
-        "telemetry",
-        "predictions",
-        "media-custom",
-      ]);
-      expect(groups[0].columns.length).toBe(1);
-      expect(groups[0].columns[0].key).toBe("driver.name");
-      expect(groups[3].columns[0].key).toBe("standardDeviation");
+      expect(groups.length).toBe(2);
+      expect(groups.map((g) => g.id)).toEqual(["heat-data", "overall-data"]);
+      expect(groups[0].totalCount).toBe(8);
+      expect(groups[0].subgroups.length).toBe(8);
+      expect(groups[1].totalCount).toBe(3);
+      expect(groups[1].subgroups.length).toBe(3);
+
+      const heatAnalysis = groups[0].subgroups.find(
+        (sg) => sg.id === "heat-data-sg-analysis",
+      );
+      expect(heatAnalysis?.columns[0].key).toBe("standardDeviation");
+
+      const overallPredictions = groups[1].subgroups.find(
+        (sg) => sg.id === "overall-data-sg-predictions",
+      );
+      expect(overallPredictions?.columns[0].key).toBe("winProbability");
     });
 
     it("should toggle column group expansion", () => {
       expect(
-        component.columnGroupExpandedStates.get("analysis"),
+        component.columnGroupExpandedStates.get("heat-data"),
       ).toBeUndefined();
-      component.toggleColumnGroup("analysis");
-      expect(component.columnGroupExpandedStates.get("analysis")).toBeFalse();
+      component.toggleColumnGroup("heat-data");
+      expect(component.columnGroupExpandedStates.get("heat-data")).toBeFalse();
 
-      component.toggleColumnGroup("analysis");
-      expect(component.columnGroupExpandedStates.get("analysis")).toBeTrue();
+      component.toggleColumnGroup("heat-data");
+      expect(component.columnGroupExpandedStates.get("heat-data")).toBeTrue();
+
+      expect(
+        component.columnGroupExpandedStates.get("heat-data-sg-analysis"),
+      ).toBeUndefined();
+      component.toggleColumnGroup("heat-data-sg-analysis");
+      expect(
+        component.columnGroupExpandedStates.get("heat-data-sg-analysis"),
+      ).toBeTrue();
     });
 
     it("should save collapsed state to settings.collapsedColumnGroups and emit change on toggle", () => {
-      component.toggleColumnGroup("telemetry");
+      component.toggleColumnGroup("heat-data");
       expect(
-        component.settings().collapsedColumnGroups["telemetry"],
+        component.settings().collapsedColumnGroups["heat-data"],
       ).toBeTrue();
       expect(changeSpy).toHaveBeenCalled();
 
-      component.toggleColumnGroup("telemetry");
+      component.toggleColumnGroup("heat-data");
       expect(
-        component.settings().collapsedColumnGroups["telemetry"],
+        component.settings().collapsedColumnGroups["heat-data"],
       ).toBeFalse();
     });
 
@@ -465,45 +474,55 @@ describe("LaneViewInspectorComponent", () => {
       const customComp = customFixture.componentInstance;
       customFixture.componentRef.setInput("settings", {
         collapsedColumnGroups: {
-          analysis: true,
-          telemetry: false,
+          "heat-data": true,
+          "heat-data-sg-telemetry": false,
         },
       });
       customFixture.componentRef.setInput("globalSettings", {});
       customFixture.componentRef.setInput("availableColumns", [
-        { key: "standardDeviation", label: "Std Dev" },
+        { key: "participant.fuelLevel", label: "Fuel" },
       ]);
       customFixture.detectChanges();
 
-      expect(customComp.columnGroupExpandedStates.get("analysis")).toBeFalse();
-      expect(customComp.columnGroupExpandedStates.get("telemetry")).toBeTrue();
+      expect(customComp.columnGroupExpandedStates.get("heat-data")).toBeFalse();
+      expect(
+        customComp.columnGroupExpandedStates.get("heat-data-sg-telemetry"),
+      ).toBeTrue();
 
       const groups = customComp.getColumnGroups();
-      const analysisGroup = groups.find((g) => g.id === "analysis");
-      expect(analysisGroup?.expanded).toBeFalse();
+      const heatGroup = groups.find((g) => g.id === "heat-data");
+      expect(heatGroup?.expanded).toBeFalse();
+      const telemetrySg = heatGroup?.subgroups.find(
+        (sg) => sg.id === "heat-data-sg-telemetry",
+      );
+      expect(telemetrySg?.expanded).toBeTrue();
     });
 
     it("should load collapsed state from settings.collapsedColumnGroups array on initialization", () => {
       const customFixture = TestBed.createComponent(LaneViewInspectorComponent);
       const customComp = customFixture.componentInstance;
       customFixture.componentRef.setInput("settings", {
-        collapsedColumnGroups: ["analysis", "gaps"],
+        collapsedColumnGroups: ["heat-data", "heat-data-sg-gaps"],
       });
       customFixture.componentRef.setInput("globalSettings", {});
       customFixture.componentRef.setInput("availableColumns", [
-        { key: "col1", label: "Col 1" },
+        { key: "gapLeader", label: "Gap" },
       ]);
       customFixture.detectChanges();
 
-      expect(customComp.columnGroupExpandedStates.get("analysis")).toBeFalse();
-      expect(customComp.columnGroupExpandedStates.get("gaps")).toBeFalse();
+      expect(customComp.columnGroupExpandedStates.get("heat-data")).toBeFalse();
+      expect(
+        customComp.columnGroupExpandedStates.get("heat-data-sg-gaps"),
+      ).toBeFalse();
 
       // Toggle one that was in array to expand it
-      customComp.toggleColumnGroup("analysis");
+      customComp.toggleColumnGroup("heat-data");
       expect(customComp.settings().collapsedColumnGroups).not.toContain(
-        "analysis",
+        "heat-data",
       );
-      expect(customComp.settings().collapsedColumnGroups).toContain("gaps");
+      expect(customComp.settings().collapsedColumnGroups).toContain(
+        "heat-data-sg-gaps",
+      );
     });
 
     it("should filter groups and columns by search term", () => {
@@ -512,9 +531,12 @@ describe("LaneViewInspectorComponent", () => {
 
       const groups = component.getColumnGroups();
       expect(groups.length).toBe(1);
-      expect(groups[0].id).toBe("pacing");
-      expect(groups[0].columns[0].key).toBe("ghostPacing");
+      expect(groups[0].id).toBe("heat-data");
+      expect(groups[0].subgroups.length).toBe(1);
+      expect(groups[0].subgroups[0].id).toBe("heat-data-sg-pacing");
+      expect(groups[0].subgroups[0].columns[0].key).toBe("ghostPacing");
       expect(groups[0].expanded).toBeTrue();
+      expect(groups[0].subgroups[0].expanded).toBeTrue();
     });
 
     it("should clear column search", () => {
@@ -527,19 +549,43 @@ describe("LaneViewInspectorComponent", () => {
       const headers = fixture.nativeElement.querySelectorAll(
         ".toolbox-group-header",
       );
-      expect(headers.length).toBe(9);
+      expect(headers.length).toBe(2);
 
       const firstHeader = headers[0] as HTMLElement;
       expect(firstHeader.classList.contains("expanded")).toBeTrue();
       const folderIcon = firstHeader.querySelector(".toolbox-folder-icon");
       expect(folderIcon?.textContent?.trim()).toBe("folder_open");
 
-      // Click to collapse
+      // Click top-level header to collapse
       firstHeader.click();
       fixture.detectChanges();
 
       expect(firstHeader.classList.contains("expanded")).toBeFalse();
       expect(folderIcon?.textContent?.trim()).toBe("folder");
+
+      // Click again to expand
+      firstHeader.click();
+      fixture.detectChanges();
+      expect(firstHeader.classList.contains("expanded")).toBeTrue();
+
+      // Subgroup headers inside the expanded top-level group
+      const subHeaders = fixture.nativeElement.querySelectorAll(
+        ".toolbox-subgroup-header",
+      );
+      expect(subHeaders.length).toBeGreaterThan(0);
+      const firstSubHeader = subHeaders[0] as HTMLElement;
+      expect(firstSubHeader.classList.contains("expanded")).toBeFalse();
+      const subFolderIcon = firstSubHeader.querySelector(
+        ".toolbox-folder-icon",
+      );
+      expect(subFolderIcon?.textContent?.trim()).toBe("folder");
+
+      // Click subfolder header to expand
+      firstSubHeader.click();
+      fixture.detectChanges();
+
+      expect(firstSubHeader.classList.contains("expanded")).toBeTrue();
+      expect(subFolderIcon?.textContent?.trim()).toBe("folder_open");
     });
 
     it("should display no matches message when search yields no columns", () => {

@@ -612,7 +612,7 @@ describe("UIEditorComponent", () => {
     const slots = component.displayColumnSlots;
     expect(slots.length).toBe(2);
     expect(slots[0].label).toBe("RD_COL_NAME");
-    expect(slots[1].label).toBe("RD_COL_LAP");
+    expect(slots[1].label).toBe("UI_EDITOR_COL_HEAT_LAPS");
   });
 
   it("should capture state on onColumnsChanged", () => {
@@ -815,7 +815,7 @@ describe("UIEditorComponent", () => {
       (c) => c.key === "totalTime",
     );
     expect(totalTime).toBeTruthy();
-    expect(totalTime?.label).toBe("RD_COL_TOTAL_TIME");
+    expect(totalTime?.label).toBe("UI_EDITOR_COL_HEAT_TOTAL_TIME");
   });
 
   it("should include recordLapTime column in availableColumns", () => {
@@ -829,7 +829,7 @@ describe("UIEditorComponent", () => {
   it("should include lapsLed column in availableColumns", () => {
     const lapsLed = component.availableColumns.find((c) => c.key === "lapsLed");
     expect(lapsLed).toBeTruthy();
-    expect(lapsLed?.label).toBe("RD_COL_LAPS_LED");
+    expect(lapsLed?.label).toBe("UI_EDITOR_COL_HEAT_LAPS_LED");
   });
 
   it("should include trackCalls column in availableColumns", () => {
@@ -837,7 +837,7 @@ describe("UIEditorComponent", () => {
       (c) => c.key === "trackCalls",
     );
     expect(trackCalls).toBeTruthy();
-    expect(trackCalls?.label).toBe("RD_COL_TRACK_CALLS");
+    expect(trackCalls?.label).toBe("UI_EDITOR_COL_HEAT_TRACK_CALLS");
   });
 
   it("should include driver flag column in availableColumns with label RD_COL_DRIVER_FLAG", () => {

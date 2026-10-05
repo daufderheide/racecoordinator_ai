@@ -35,8 +35,30 @@ export interface ToolboxGroup {
 export class ToolboxGroupHelper {
   public static readonly RC_AI_GROUP_ID = "race-coordinator-ai";
   public static readonly HEAT_DATA_GROUP_ID = "heat-data";
+  public static readonly OVERALL_DATA_GROUP_ID = "overall-data";
   public static readonly LANE_COLUMNS_GROUP_ID = "heat-data";
   public static readonly CUSTOM_ROOT_GROUP_ID = "custom-root";
+
+  public static readonly HEAT_DATA_GROUP_IDS = [
+    "driver-team",
+    "laps-standings",
+    "lap-times",
+    "analysis",
+    "gaps",
+    "telemetry",
+    "pacing",
+    "media-custom",
+  ];
+
+  public static readonly OVERALL_DATA_GROUP_IDS = [
+    "driver-team",
+    "overall-standings",
+    "overall-lap-times",
+    "overall-analysis",
+    "overall-gaps",
+    "predictions",
+    "media-custom",
+  ];
 
   public static readonly RC_AI_ROOT_WIDGETS: {
     type: WidgetType;
@@ -327,7 +349,10 @@ export class ToolboxGroupHelper {
     return groups;
   }
 
-  public static buildHeatDataSubgroup(
+  public static buildScopedDataSubgroup(
+    groupId: string,
+    nameKey: string,
+    allowedGroupIds: string[],
     term: string,
     subgroupExpandedStates: Map<string, boolean>,
     translateFn?: (key: string) => string,
@@ -346,6 +371,8 @@ export class ToolboxGroupHelper {
     const subgroups: ToolboxSubgroup[] = [];
 
     for (const grp of LANE_VIEW_COLUMN_GROUPS) {
+      if (!allowedGroupIds.includes(grp.id)) continue;
+
       const items: ToolboxWidgetItem[] = [];
       for (const colKey of grp.columnKeys) {
         const col = colMap.get(colKey);
@@ -387,7 +414,7 @@ export class ToolboxGroupHelper {
       );
 
       if (items.length > 0) {
-        const sgId = `lane-col-sg-${grp.id}`;
+        const sgId = `${groupId}-sg-${grp.id}`;
         const isSgExpanded = term
           ? true
           : subgroupExpandedStates.has(sgId)
@@ -404,7 +431,6 @@ export class ToolboxGroupHelper {
       }
     }
 
-    // Alphabetize the 9 category subfolders inside Heat Data
     subgroups.sort((a, b) =>
       ToolboxGroupHelper.compareSubgroups(a, b, translateFn),
     );
@@ -419,21 +445,55 @@ export class ToolboxGroupHelper {
 
     const isGroupExpanded = term
       ? true
-      : subgroupExpandedStates.has(ToolboxGroupHelper.HEAT_DATA_GROUP_ID)
-        ? subgroupExpandedStates.get(ToolboxGroupHelper.HEAT_DATA_GROUP_ID)!
+      : subgroupExpandedStates.has(groupId)
+        ? subgroupExpandedStates.get(groupId)!
         : subgroupExpandedStates.has("lane-columns")
           ? subgroupExpandedStates.get("lane-columns")!
           : false;
 
     return {
-      id: ToolboxGroupHelper.HEAT_DATA_GROUP_ID,
-      nameKey: "UE_TOOLBOX_GROUP_HEAT_DATA",
+      id: groupId,
+      nameKey: nameKey,
       icon: "folder",
       widgets: [],
       subgroups: subgroups,
       expanded: isGroupExpanded,
       totalCount: totalCount,
     };
+  }
+
+  public static buildHeatDataSubgroup(
+    term: string,
+    subgroupExpandedStates: Map<string, boolean>,
+    translateFn?: (key: string) => string,
+    availableColumnsList?: { key: string; label: string }[],
+  ): ToolboxSubgroup | null {
+    return ToolboxGroupHelper.buildScopedDataSubgroup(
+      ToolboxGroupHelper.HEAT_DATA_GROUP_ID,
+      "UE_TOOLBOX_GROUP_HEAT_DATA",
+      ToolboxGroupHelper.HEAT_DATA_GROUP_IDS,
+      term,
+      subgroupExpandedStates,
+      translateFn,
+      availableColumnsList,
+    );
+  }
+
+  public static buildOverallDataSubgroup(
+    term: string,
+    subgroupExpandedStates: Map<string, boolean>,
+    translateFn?: (key: string) => string,
+    availableColumnsList?: { key: string; label: string }[],
+  ): ToolboxSubgroup | null {
+    return ToolboxGroupHelper.buildScopedDataSubgroup(
+      ToolboxGroupHelper.OVERALL_DATA_GROUP_ID,
+      "UE_TOOLBOX_GROUP_OVERALL_DATA",
+      ToolboxGroupHelper.OVERALL_DATA_GROUP_IDS,
+      term,
+      subgroupExpandedStates,
+      translateFn,
+      availableColumnsList,
+    );
   }
 
   public static buildHeatDataGroup(
@@ -461,6 +521,38 @@ export class ToolboxGroupHelper {
     return {
       id: ToolboxGroupHelper.HEAT_DATA_GROUP_ID,
       nameKey: "UE_TOOLBOX_GROUP_HEAT_DATA",
+      isBuiltIn: true,
+      icon: "folder",
+      rootWidgets: [],
+      subgroups: sg.subgroups || [],
+      expanded: isGroupExpanded,
+      totalCount: sg.totalCount || 0,
+    };
+  }
+
+  public static buildOverallDataGroup(
+    term: string,
+    groupExpandedStates: Map<string, boolean>,
+    subgroupExpandedStates: Map<string, boolean>,
+    translateFn?: (key: string) => string,
+    availableColumnsList?: { key: string; label: string }[],
+  ): ToolboxGroup | null {
+    const sg = ToolboxGroupHelper.buildOverallDataSubgroup(
+      term,
+      subgroupExpandedStates,
+      translateFn,
+      availableColumnsList,
+    );
+    if (!sg) return null;
+    const isGroupExpanded = term
+      ? true
+      : groupExpandedStates.has(ToolboxGroupHelper.OVERALL_DATA_GROUP_ID)
+        ? groupExpandedStates.get(ToolboxGroupHelper.OVERALL_DATA_GROUP_ID)!
+        : (sg.expanded ?? false);
+
+    return {
+      id: ToolboxGroupHelper.OVERALL_DATA_GROUP_ID,
+      nameKey: "UE_TOOLBOX_GROUP_OVERALL_DATA",
       isBuiltIn: true,
       icon: "folder",
       rootWidgets: [],
@@ -546,6 +638,16 @@ export class ToolboxGroupHelper {
     );
     if (heatDataSubgroup) {
       rcSubgroups.push(heatDataSubgroup);
+    }
+
+    const overallDataSubgroup = ToolboxGroupHelper.buildOverallDataSubgroup(
+      term,
+      subgroupExpandedStates,
+      translateFn,
+      availableColumnsList,
+    );
+    if (overallDataSubgroup) {
+      rcSubgroups.push(overallDataSubgroup);
     }
 
     // Alphabetize the subgroups within Race Coordinator AI
@@ -724,6 +826,7 @@ export class ToolboxGroupHelper {
     UE_TOOLBOX_SUBGROUP_ACTIONS: "Actions",
     UE_TOOLBOX_GROUP_HEAT_DATA: "Heat Data",
     UE_TOOLBOX_GROUP_LANE_COLUMNS: "Heat Data",
+    UE_TOOLBOX_GROUP_OVERALL_DATA: "Overall Race Data",
     UE_TOOLBOX_SUBGROUP_MEDIA_CHROME: "Media & Graphics",
     UE_TOOLBOX_SUBGROUP_STANDINGS_HEATS: "Standings & Heats",
     UE_TOOLBOX_SUBGROUP_TITLES_INFO: "Titles & Info",
@@ -733,6 +836,10 @@ export class ToolboxGroupHelper {
     UE_COL_GROUP_LAP_TIMES: "Lap Times & Records",
     UE_COL_GROUP_LAPS_STANDINGS: "Laps & Standings",
     UE_COL_GROUP_MEDIA_CUSTOM: "QR Codes & Media",
+    UE_COL_GROUP_OVERALL_ANALYSIS: "Overall Analysis & Consistency",
+    UE_COL_GROUP_OVERALL_GAPS: "Overall Gaps & Intervals",
+    UE_COL_GROUP_OVERALL_LAP_TIMES: "Overall Lap Times & Records",
+    UE_COL_GROUP_OVERALL_STANDINGS: "Overall Standings & Laps",
     UE_COL_GROUP_PACING: "Pacing",
     UE_COL_GROUP_PREDICTIONS: "Predictions",
     UE_COL_GROUP_TELEMETRY: "Telemetry, Fuel & Speed",

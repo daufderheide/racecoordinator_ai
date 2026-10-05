@@ -198,6 +198,75 @@ describe("RacedayLaneColumnComponent", () => {
     expect(component.targetDriver?.objectId).toBe("driver-2");
   });
 
+  it("should resolve target driver by overall rank in overallPosition mode", () => {
+    mockParent.participants = [
+      {
+        objectId: "driver-1",
+        rank: 2,
+        seed: 1,
+        driver: { name: "Driver One" },
+      },
+      {
+        objectId: "driver-3",
+        rank: 1,
+        seed: 3,
+        driver: { name: "Driver Three" },
+      },
+    ];
+
+    fixture.componentRef.setInput("parent", mockParent);
+    // targetIndex: 0 means rank 1 (driver-3, not in active heat -> synthetic)
+    fixture.componentRef.setInput(
+      "widget",
+      createWidget({ bindingMode: "overallPosition", targetIndex: 0 }),
+    );
+    fixture.detectChanges();
+    expect(component.targetDriver?.objectId).toBe("driver-3");
+    expect(component.targetDriver?.driver?.name).toBe("Driver Three");
+
+    // targetIndex: 1 means rank 2 (driver-1, in active heat -> returns active heat driver)
+    fixture.componentRef.setInput(
+      "widget",
+      createWidget({ bindingMode: "overallPosition", targetIndex: 1 }),
+    );
+    fixture.detectChanges();
+    expect(component.targetDriver?.objectId).toBe("driver-1");
+  });
+
+  it("should resolve target driver by seed in seed mode", () => {
+    mockParent.participants = [
+      {
+        objectId: "driver-1",
+        rank: 2,
+        seed: 1,
+        driver: { name: "Driver One" },
+      },
+      {
+        objectId: "driver-3",
+        rank: 1,
+        seed: 2,
+        driver: { name: "Driver Three" },
+      },
+    ];
+
+    fixture.componentRef.setInput("parent", mockParent);
+    // targetIndex: 0 means seed 1 (driver-1)
+    fixture.componentRef.setInput(
+      "widget",
+      createWidget({ bindingMode: "seed", targetIndex: 0 }),
+    );
+    fixture.detectChanges();
+    expect(component.targetDriver?.objectId).toBe("driver-1");
+
+    // targetIndex: 1 means seed 2 (driver-3)
+    fixture.componentRef.setInput(
+      "widget",
+      createWidget({ bindingMode: "seed", targetIndex: 1 }),
+    );
+    fixture.detectChanges();
+    expect(component.targetDriver?.objectId).toBe("driver-3");
+  });
+
   it("should inherit background and foreground colors from lane by default", () => {
     fixture.componentRef.setInput("parent", mockParent);
     fixture.componentRef.setInput(

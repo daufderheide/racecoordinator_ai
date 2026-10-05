@@ -269,4 +269,18 @@ describe("LaneColumnInspectorComponent", () => {
       "bottom-right",
     ]);
   });
+
+  it("should provide extended availableIndices for overallPosition and seed modes", () => {
+    mockSettings.bindingMode = "overallPosition";
+    expect(component.availableIndices.length).toBe(16);
+
+    mockSettings.bindingMode = "seed";
+    expect(component.availableIndices.length).toBe(16);
+
+    mockSettings.bindingMode = "lane";
+    expect(component.availableIndices.length).toBe(8);
+
+    mockSettings.bindingMode = "position";
+    expect(component.availableIndices.length).toBe(8);
+  });
 });

@@ -40,7 +40,15 @@ export class LaneColumnInspectorComponent {
   fontService = inject(FontService);
   showReplicateModal = signal<boolean>(false);
 
-  availableIndices = [0, 1, 2, 3, 4, 5, 6, 7];
+  get availableIndices(): number[] {
+    const mode = this.currentSettings["bindingMode"];
+    if (mode === "overallPosition" || mode === "seed") {
+      const count = Math.max(16, Math.min(64, (this.totalLanes() || 4) * 4));
+      return Array.from({ length: count }, (_, i) => i);
+    }
+    const laneCount = Math.max(8, this.totalLanes() || 8);
+    return Array.from({ length: laneCount }, (_, i) => i);
+  }
 
   readonly ANCHOR_POSITIONS = [
     { key: "top-left", labelKey: "UE_ANCHOR_top-left" },

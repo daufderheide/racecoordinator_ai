@@ -251,14 +251,29 @@ public class OverallStandings {
     double totalLaps = 0.0;
     double totalTime = 0.0;
     double bestLap = Double.MAX_VALUE;
+    int totalLapsLed = 0;
+    int totalTrackCalls = 0;
+
+    double bestTop2Consecutive = Double.MAX_VALUE;
+    double bestTop3Consecutive = Double.MAX_VALUE;
 
     List<Double> allScoringLaps = new ArrayList<>();
     for (DriverHeatData dhd : scoringHeats) {
       totalLaps += dhd.getAdjustedLapCount();
       totalTime += dhd.getTotalTime();
+      totalLapsLed += dhd.getLapsLed();
+      totalTrackCalls += dhd.getTrackCalls();
 
       if (dhd.getBestLapTime() > 0 && dhd.getBestLapTime() < bestLap) {
         bestLap = dhd.getBestLapTime();
+      }
+      double top2 = dhd.getTop2Consecutive();
+      if (top2 > 0 && top2 < bestTop2Consecutive) {
+        bestTop2Consecutive = top2;
+      }
+      double top3 = dhd.getTop3Consecutive();
+      if (top3 > 0 && top3 < bestTop3Consecutive) {
+        bestTop3Consecutive = top3;
       }
       for (DriverHeatData.LapData lap : dhd.getLaps()) {
         allScoringLaps.add(lap.getLapTime());
@@ -273,6 +288,10 @@ public class OverallStandings {
     driver.setTotalLaps(totalLaps);
     driver.setTotalTime(totalTime);
     driver.setBestLapTime(bestLap);
+    driver.setLapsLed(totalLapsLed);
+    driver.setTrackCalls(totalTrackCalls);
+    driver.setTop2Consecutive(bestTop2Consecutive == Double.MAX_VALUE ? 0.0 : bestTop2Consecutive);
+    driver.setTop3Consecutive(bestTop3Consecutive == Double.MAX_VALUE ? 0.0 : bestTop3Consecutive);
 
     if (!allScoringLaps.isEmpty()) {
       double sum = 0;
@@ -289,9 +308,15 @@ public class OverallStandings {
         driver.setMedianLapTime(
             (allScoringLaps.get(middle - 1) + allScoringLaps.get(middle)) / 2.0);
       }
+      driver.setAverageTop5(RaceStatisticsUtils.calculateAverageTopN(allScoringLaps, 5));
+      driver.setAverageTop10(RaceStatisticsUtils.calculateAverageTopN(allScoringLaps, 10));
+      driver.setAverageTop15(RaceStatisticsUtils.calculateAverageTopN(allScoringLaps, 15));
     } else {
       driver.setAverageLapTime(0.0);
       driver.setMedianLapTime(0.0);
+      driver.setAverageTop5(0.0);
+      driver.setAverageTop10(0.0);
+      driver.setAverageTop15(0.0);
     }
   }
 

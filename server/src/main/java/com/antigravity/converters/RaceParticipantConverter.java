@@ -44,6 +44,17 @@ public class RaceParticipantConverter {
         .setGapPositionF1(participant.getGapPositionF1())
         .setLapsDownLeader(participant.getLapsDownLeader())
         .setLapsDownPosition(participant.getLapsDownPosition())
+        .setConsistencyScore(participant.getConsistencyScore())
+        .setPhysicalLapCount(participant.getPhysicalLapCount())
+        .setStandardDeviation(participant.getStandardDeviation())
+        .setLapsLed(participant.getLapsLed())
+        .setTrackCalls(participant.getTrackCalls())
+        .setTotalPoints(participant.getTotalPoints())
+        .setAverageTop5(participant.getAverageTop5())
+        .setAverageTop10(participant.getAverageTop10())
+        .setAverageTop15(participant.getAverageTop15())
+        .setTop2Consecutive(participant.getTop2Consecutive())
+        .setTop3Consecutive(participant.getTop3Consecutive())
         .build();
   }
 }

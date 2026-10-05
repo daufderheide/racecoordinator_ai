@@ -73,7 +73,7 @@ export interface AbsoluteWidgetNode {
 
 export interface LaneColumnWidgetSettings {
   columnKey: string;
-  bindingMode: "lane" | "position";
+  bindingMode: "lane" | "position" | "overallPosition" | "seed";
   targetIndex: number;
   layoutOrientation: "vertical" | "horizontal";
   showHeader: boolean;

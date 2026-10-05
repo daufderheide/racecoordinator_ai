@@ -10,7 +10,11 @@
         {{
           (currentSettings["bindingMode"] === "position"
             ? "UE_GRID_POSITION_INSPECTOR_TITLE"
-            : "UE_GRID_INSPECTOR_TITLE"
+            : currentSettings["bindingMode"] === "overallPosition"
+              ? "UE_GRID_OVERALL_POSITION_INSPECTOR_TITLE"
+              : currentSettings["bindingMode"] === "seed"
+                ? "UE_GRID_SEED_INSPECTOR_TITLE"
+                : "UE_GRID_INSPECTOR_TITLE"
           )
             | translate
               : { count: currentSettings["gridTotalLanes"] || totalLanes() }
@@ -20,7 +24,11 @@
         {{
           (currentSettings["bindingMode"] === "position"
             ? "UE_GRID_POSITION_MIRRORED_BADGE"
-            : "UE_GRID_LANE_MIRRORED_BADGE"
+            : currentSettings["bindingMode"] === "overallPosition"
+              ? "UE_GRID_OVERALL_POSITION_MIRRORED_BADGE"
+              : currentSettings["bindingMode"] === "seed"
+                ? "UE_GRID_SEED_MIRRORED_BADGE"
+                : "UE_GRID_LANE_MIRRORED_BADGE"
           )
             | translate
               : {
@@ -70,6 +78,12 @@
       <app-custom-option value="position">
         {{ "UE_INSPECTOR_BINDING_POSITION" | translate }}
       </app-custom-option>
+      <app-custom-option value="overallPosition">
+        {{ "UE_INSPECTOR_BINDING_OVERALL_POSITION" | translate }}
+      </app-custom-option>
+      <app-custom-option value="seed">
+        {{ "UE_INSPECTOR_BINDING_SEED" | translate }}
+      </app-custom-option>
     </app-custom-select>
   </div>
 </div>
@@ -79,7 +93,11 @@
     {{
       (currentSettings["bindingMode"] === "position"
         ? "UE_INSPECTOR_TARGET_POSITION"
-        : "UE_INSPECTOR_TARGET_LANE"
+        : currentSettings["bindingMode"] === "overallPosition"
+          ? "UE_INSPECTOR_TARGET_OVERALL_POSITION"
+          : currentSettings["bindingMode"] === "seed"
+            ? "UE_INSPECTOR_TARGET_SEED"
+            : "UE_INSPECTOR_TARGET_LANE"
       ) | translate
     }}
   </label>
@@ -93,7 +111,11 @@
           {{
             (currentSettings["bindingMode"] === "position"
               ? "UE_INSPECTOR_POSITION_INDEX"
-              : "UE_INSPECTOR_LANE_INDEX"
+              : currentSettings["bindingMode"] === "overallPosition"
+                ? "UE_INSPECTOR_OVERALL_POSITION_INDEX"
+                : currentSettings["bindingMode"] === "seed"
+                  ? "UE_INSPECTOR_SEED_INDEX"
+                  : "UE_INSPECTOR_LANE_INDEX"
             ) | translate: { index: idx + 1 }
           }}
         </app-custom-option>

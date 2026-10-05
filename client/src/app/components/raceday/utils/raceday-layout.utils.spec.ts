@@ -433,6 +433,30 @@ describe("RacedayLayoutUtils", () => {
     expect(RacedayLayoutUtils.getLabelKeyForColumn("top3Consecutive")).toBe(
       "RD_COL_TOP_3_CONSECUTIVE",
     );
+    expect(RacedayLayoutUtils.getLabelKeyForColumn("overallAverageTop5")).toBe(
+      "RD_COL_AVG_TOP_5",
+    );
+    expect(RacedayLayoutUtils.getLabelKeyForColumn("overallAverageTop10")).toBe(
+      "RD_COL_AVG_TOP_10",
+    );
+    expect(RacedayLayoutUtils.getLabelKeyForColumn("overallAverageTop15")).toBe(
+      "RD_COL_AVG_TOP_15",
+    );
+    expect(
+      RacedayLayoutUtils.getLabelKeyForColumn("overallTop2Consecutive"),
+    ).toBe("RD_COL_TOP_2_CONSECUTIVE");
+    expect(
+      RacedayLayoutUtils.getLabelKeyForColumn("overallTop3Consecutive"),
+    ).toBe("RD_COL_TOP_3_CONSECUTIVE");
+    expect(RacedayLayoutUtils.getLabelKeyForColumn("overallTotalTime")).toBe(
+      "RD_COL_TOTAL_TIME",
+    );
+    expect(RacedayLayoutUtils.getLabelKeyForColumn("overallLapCount")).toBe(
+      "RD_COL_LAP",
+    );
+    expect(RacedayLayoutUtils.getLabelKeyForColumn("overallBestLapTime")).toBe(
+      "RD_COL_BEST_LAP",
+    );
     expect(
       RacedayLayoutUtils.getLabelKeyForColumn("imageset_fuel-gauge-builtin"),
     ).toBe("RD_COL_FUEL_GAUGE");
@@ -598,6 +622,21 @@ describe("RacedayLayoutUtils", () => {
       expect(RacedayLayoutUtils.getDefaultColumnWidth("top3Consecutive")).toBe(
         330,
       );
+      expect(
+        RacedayLayoutUtils.getDefaultColumnWidth("overallAverageTop5"),
+      ).toBe(330);
+      expect(
+        RacedayLayoutUtils.getDefaultColumnWidth("overallAverageTop10"),
+      ).toBe(330);
+      expect(
+        RacedayLayoutUtils.getDefaultColumnWidth("overallAverageTop15"),
+      ).toBe(330);
+      expect(
+        RacedayLayoutUtils.getDefaultColumnWidth("overallTop2Consecutive"),
+      ).toBe(330);
+      expect(
+        RacedayLayoutUtils.getDefaultColumnWidth("overallTop3Consecutive"),
+      ).toBe(330);
     });
 
     it("should return 275 for unknown column keys", () => {

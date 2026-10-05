@@ -617,4 +617,49 @@ public class OverallStandingsTest {
     // SingleHeatSoloAllLanes: max(5, 10) = 10 laps
     assertEquals(10.0, p1.getTotalLaps(), 0.001);
   }
+
+  @Test
+  public void testExtendedAnalysisMetricsCalculation() {
+    HeatScoring heatScoring =
+        new HeatScoring(
+            FinishMethod.Lap,
+            10,
+            HeatRanking.LAP_COUNT,
+            HeatRankingTiebreaker.FASTEST_LAP_TIME,
+            HeatScoring.AllowFinish.None);
+    OverallScoring overallScoring =
+        new OverallScoring(0, OverallRanking.LAP_COUNT, OverallRankingTiebreaker.FASTEST_LAP_TIME);
+    OverallStandings os =
+        new OverallStandings(heatScoring, overallScoring, new GroupOptions(), false);
+
+    RaceParticipant p1 = createDriver("D1", "id1");
+    List<RaceParticipant> drivers = new ArrayList<>();
+    drivers.add(p1);
+
+    DriverHeatData dhd1 = new DriverHeatData(p1);
+    dhd1.addLap(10.0, false, true);
+    dhd1.addLap(8.0, false, true);
+    dhd1.addLap(9.0, false, true);
+    dhd1.addLap(11.0, false, true);
+    dhd1.addLap(7.0, false, true);
+
+    DriverHeatData dhd2 = new DriverHeatData(p1);
+    dhd2.addLap(6.0, false, true);
+    dhd2.addLap(5.0, false, true);
+    dhd2.addLap(7.0, false, true);
+    dhd2.addLap(8.0, false, true);
+    dhd2.addLap(9.0, false, true);
+
+    List<Heat> heats = new ArrayList<>();
+    heats.add(new Heat(1, java.util.Collections.singletonList(dhd1), heatScoring, false));
+    heats.add(new Heat(2, java.util.Collections.singletonList(dhd2), heatScoring, false));
+
+    os.recalculate(drivers, heats);
+
+    assertEquals(6.6, p1.getAverageTop5(), 0.001);
+    assertEquals(8.0, p1.getAverageTop10(), 0.001);
+    assertEquals(8.0, p1.getAverageTop15(), 0.001);
+    assertEquals(11.0, p1.getTop2Consecutive(), 0.001);
+    assertEquals(18.0, p1.getTop3Consecutive(), 0.001);
+  }
 }

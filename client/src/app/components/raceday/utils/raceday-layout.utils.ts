@@ -197,7 +197,12 @@ export class RacedayLayoutUtils {
       baseKey === "averageTop10" ||
       baseKey === "averageTop15" ||
       baseKey === "top2Consecutive" ||
-      baseKey === "top3Consecutive"
+      baseKey === "top3Consecutive" ||
+      baseKey === "overallAverageTop5" ||
+      baseKey === "overallAverageTop10" ||
+      baseKey === "overallAverageTop15" ||
+      baseKey === "overallTop2Consecutive" ||
+      baseKey === "overallTop3Consecutive"
     );
   }
 
@@ -245,6 +250,169 @@ export class RacedayLayoutUtils {
     }
     return false;
   }
+  private static readonly COLUMN_LABELS: Record<string, string> = {
+    lapCount: "RD_COL_LAP",
+    physicalLapCount: "UI_EDITOR_COL_LAP_COUNT",
+    lapsLed: "RD_COL_LAPS_LED",
+    trackCalls: "RD_COL_TRACK_CALLS",
+    lastLapTime: "RD_COL_LAP_TIME",
+    lastLaps: "RD_COL_LAST_LAPS",
+    medianLapTime: "RD_COL_MEDIAN_LAP",
+    averageLapTime: "RD_COL_AVG_LAP",
+    bestLapTime: "RD_COL_BEST_LAP",
+    bestRaceLapTime: "RD_COL_BEST_RACE_LAP_TIME",
+    recordLapTime: "RD_COL_RECORD_LAP_TIME",
+    standardDeviation: "RD_COL_STD_DEV",
+    consistencyScore: "RD_COL_CONSISTENCY",
+    averageTop5: "RD_COL_AVG_TOP_5",
+    averageTop10: "RD_COL_AVG_TOP_10",
+    averageTop15: "RD_COL_AVG_TOP_15",
+    top2Consecutive: "RD_COL_TOP_2_CONSECUTIVE",
+    top3Consecutive: "RD_COL_TOP_3_CONSECUTIVE",
+    totalTime: "RD_COL_TOTAL_TIME",
+    gapLeader: "RD_COL_GAP_LEADER",
+    gapPosition: "RD_COL_GAP_POSITION",
+    gapLeaderF1: "RD_COL_GAP_LEADER_F1",
+    gapPositionF1: "RD_COL_GAP_POSITION_F1",
+    reactionTime: "RD_COL_REACTION_TIME",
+    "participant.team.name": "RD_COL_TEAM",
+    "driver.name": "RD_COL_NAME",
+    "driver.nickname": "RD_COL_NICKNAME",
+    "participant.fuelLevel": "RD_COL_FUEL_LEVEL",
+    fuelCapacity: "RD_COL_FUEL_CAPACITY",
+    fuelPercentage: "RD_COL_FUEL_PERCENTAGE",
+    "imageset_fuel-gauge-builtin": "RD_COL_FUEL_GAUGE",
+    imageset_default_fuel_gauge: "RD_COL_FUEL_GAUGE",
+    "imageset_default_fuel-gauge-builtin": "RD_COL_FUEL_GAUGE",
+    "fuel-gauge-builtin": "RD_COL_FUEL_GAUGE",
+    default_fuel_gauge: "RD_COL_FUEL_GAUGE",
+    seed: "RD_COL_SEED",
+    rankHeat: "RD_COL_RANK_HEAT",
+    rankOverall: "RD_COL_RANK_OVERALL",
+    rankGroup: "RD_COL_RANK_GROUP",
+    overallLapCount: "RD_COL_LAP",
+    overallPhysicalLapCount: "UI_EDITOR_COL_LAP_COUNT",
+    overallTotalTime: "RD_COL_TOTAL_TIME",
+    overallBestLapTime: "RD_COL_BEST_LAP",
+    overallAverageLapTime: "RD_COL_AVG_LAP",
+    overallMedianLapTime: "RD_COL_MEDIAN_LAP",
+    overallConsistencyScore: "RD_COL_CONSISTENCY",
+    overallStandardDeviation: "RD_COL_STD_DEV",
+    overallAverageTop5: "RD_COL_AVG_TOP_5",
+    overallAverageTop10: "RD_COL_AVG_TOP_10",
+    overallAverageTop15: "RD_COL_AVG_TOP_15",
+    overallTop2Consecutive: "RD_COL_TOP_2_CONSECUTIVE",
+    overallTop3Consecutive: "RD_COL_TOP_3_CONSECUTIVE",
+    overallGapLeader: "RD_COL_GAP_LEADER",
+    overallGapPosition: "RD_COL_GAP_POSITION",
+    overallGapLeaderF1: "RD_COL_GAP_LEADER_F1",
+    overallGapPositionF1: "RD_COL_GAP_POSITION_F1",
+    overallLapsLed: "RD_COL_LAPS_LED",
+    overallTrackCalls: "RD_COL_TRACK_CALLS",
+    overallPoints: "RD_COL_POINTS",
+    winProbability: "RD_COL_WIN_PROB",
+    projectedRank: "RD_COL_PROJ_RANK",
+    projectedLaps: "RD_COL_PROJ_LAPS",
+    mph: "RD_COL_MPH",
+    kph: "RD_COL_KPH",
+    fph: "RD_COL_FPH",
+    segmentTime: "RD_COL_SEGMENT_TIME",
+    "driver.avatarUrl": "RD_COL_AVATAR",
+    flag: "",
+    qrCode: "RD_COL_LANE_QR",
+    driverViewQrCode: "RD_COL_DRIVER_VIEW_QR",
+    laneNumber: "RD_COL_LANE",
+    ghostPacing: "RD_COL_GHOST_PACING",
+    ghostPacingPB: "RD_COL_GHOST_PACING",
+    ghostPacingPersonalAvg: "RD_COL_GHOST_PACING",
+    ghostPacingPersonalMedian: "RD_COL_GHOST_PACING",
+    ghostPacingLeaderAvg: "RD_COL_GHOST_PACING",
+    ghostPacingLeaderMedian: "RD_COL_GHOST_PACING",
+    ghostPacingLeaderBest: "RD_COL_GHOST_PACING",
+  };
+
+  private static readonly COLUMN_WIDTHS: Record<string, number> = {
+    "driver.name": 0,
+    "driver.nickname": 0,
+    "driver.avatarUrl": 120,
+    lapCount: 216,
+    physicalLapCount: 210,
+    lapsLed: 216,
+    trackCalls: 216,
+    overallLapCount: 216,
+    overallPhysicalLapCount: 210,
+    overallTotalTime: 330,
+    overallBestLapTime: 330,
+    overallAverageLapTime: 330,
+    overallMedianLapTime: 330,
+    overallConsistencyScore: 330,
+    overallStandardDeviation: 330,
+    overallAverageTop5: 330,
+    overallAverageTop10: 330,
+    overallAverageTop15: 330,
+    overallTop2Consecutive: 330,
+    overallTop3Consecutive: 330,
+    overallGapLeader: 330,
+    overallGapPosition: 330,
+    overallGapLeaderF1: 330,
+    overallGapPositionF1: 330,
+    overallLapsLed: 216,
+    overallTrackCalls: 216,
+    overallPoints: 216,
+    reactionTime: 330,
+    lastLapTime: 330,
+    lastLaps: 1650,
+    medianLapTime: 330,
+    averageLapTime: 330,
+    bestLapTime: 330,
+    bestRaceLapTime: 330,
+    recordLapTime: 330,
+    standardDeviation: 330,
+    consistencyScore: 330,
+    averageTop5: 330,
+    averageTop10: 330,
+    averageTop15: 330,
+    top2Consecutive: 330,
+    top3Consecutive: 330,
+    totalTime: 330,
+    gapLeader: 330,
+    gapPosition: 330,
+    gapLeaderF1: 330,
+    gapPositionF1: 330,
+    "participant.team.name": 330,
+    "participant.fuelLevel": 216,
+    fuelCapacity: 216,
+    fuelPercentage: 216,
+    "imageset_fuel-gauge-builtin": 216,
+    imageset_default_fuel_gauge: 216,
+    "imageset_default_fuel-gauge-builtin": 216,
+    "fuel-gauge-builtin": 216,
+    default_fuel_gauge: 216,
+    seed: 216,
+    rankHeat: 108,
+    rankOverall: 108,
+    rankGroup: 108,
+    winProbability: 330,
+    projectedRank: 216,
+    projectedLaps: 216,
+    mph: 330,
+    kph: 330,
+    fph: 330,
+    segmentTime: 330,
+    flag: 120,
+    qrCode: 120,
+    driverViewQrCode: 120,
+    laneNumber: 120,
+    imageset: 216,
+    ghostPacing: 330,
+    ghostPacingPB: 330,
+    ghostPacingPersonalAvg: 330,
+    ghostPacingPersonalMedian: 330,
+    ghostPacingLeaderAvg: 330,
+    ghostPacingLeaderMedian: 330,
+    ghostPacingLeaderBest: 330,
+  };
+
   static getLabelKeyForColumn(
     key: string,
     layout?: { [A in AnchorPoint]?: string },
@@ -255,68 +423,11 @@ export class RacedayLayoutUtils {
       key;
 
     const baseKey = (propertyKey as string).split("_")[0];
-    const labels: { [key: string]: string } = {
-      lapCount: "RD_COL_LAP",
-      physicalLapCount: "UI_EDITOR_COL_LAP_COUNT",
-      lapsLed: "RD_COL_LAPS_LED",
-      trackCalls: "RD_COL_TRACK_CALLS",
-      lastLapTime: "RD_COL_LAP_TIME",
-      lastLaps: "RD_COL_LAST_LAPS",
-      medianLapTime: "RD_COL_MEDIAN_LAP",
-      averageLapTime: "RD_COL_AVG_LAP",
-      bestLapTime: "RD_COL_BEST_LAP",
-      bestRaceLapTime: "RD_COL_BEST_RACE_LAP_TIME",
-      recordLapTime: "RD_COL_RECORD_LAP_TIME",
-      standardDeviation: "RD_COL_STD_DEV",
-      consistencyScore: "RD_COL_CONSISTENCY",
-      averageTop5: "RD_COL_AVG_TOP_5",
-      averageTop10: "RD_COL_AVG_TOP_10",
-      averageTop15: "RD_COL_AVG_TOP_15",
-      top2Consecutive: "RD_COL_TOP_2_CONSECUTIVE",
-      top3Consecutive: "RD_COL_TOP_3_CONSECUTIVE",
-      totalTime: "RD_COL_TOTAL_TIME",
-      gapLeader: "RD_COL_GAP_LEADER",
-      gapPosition: "RD_COL_GAP_POSITION",
-      gapLeaderF1: "RD_COL_GAP_LEADER_F1",
-      gapPositionF1: "RD_COL_GAP_POSITION_F1",
-      reactionTime: "RD_COL_REACTION_TIME",
-      "participant.team.name": "RD_COL_TEAM",
-      "driver.name": "RD_COL_NAME",
-      "driver.nickname": "RD_COL_NICKNAME",
-      "participant.fuelLevel": "RD_COL_FUEL_LEVEL",
-      fuelCapacity: "RD_COL_FUEL_CAPACITY",
-      fuelPercentage: "RD_COL_FUEL_PERCENTAGE",
-      "imageset_fuel-gauge-builtin": "RD_COL_FUEL_GAUGE",
-      imageset_default_fuel_gauge: "RD_COL_FUEL_GAUGE",
-      "imageset_default_fuel-gauge-builtin": "RD_COL_FUEL_GAUGE",
-      "fuel-gauge-builtin": "RD_COL_FUEL_GAUGE",
-      default_fuel_gauge: "RD_COL_FUEL_GAUGE",
-      seed: "RD_COL_SEED",
-      rankHeat: "RD_COL_RANK_HEAT",
-      rankOverall: "RD_COL_RANK_OVERALL",
-      rankGroup: "RD_COL_RANK_GROUP",
-      winProbability: "RD_COL_WIN_PROB",
-      projectedRank: "RD_COL_PROJ_RANK",
-      projectedLaps: "RD_COL_PROJ_LAPS",
-      mph: "RD_COL_MPH",
-      kph: "RD_COL_KPH",
-      fph: "RD_COL_FPH",
-      segmentTime: "RD_COL_SEGMENT_TIME",
-      "driver.avatarUrl": "RD_COL_AVATAR",
-      flag: "",
-      qrCode: "RD_COL_LANE_QR",
-      driverViewQrCode: "RD_COL_DRIVER_VIEW_QR",
-      laneNumber: "RD_COL_LANE",
-      ghostPacing: "RD_COL_GHOST_PACING",
-      ghostPacingPB: "RD_COL_GHOST_PACING",
-      ghostPacingPersonalAvg: "RD_COL_GHOST_PACING",
-      ghostPacingPersonalMedian: "RD_COL_GHOST_PACING",
-      ghostPacingLeaderAvg: "RD_COL_GHOST_PACING",
-      ghostPacingLeaderMedian: "RD_COL_GHOST_PACING",
-      ghostPacingLeaderBest: "RD_COL_GHOST_PACING",
-    };
-    if (typeof propertyKey === "string" && labels[propertyKey]) {
-      return labels[propertyKey];
+    if (
+      typeof propertyKey === "string" &&
+      RacedayLayoutUtils.COLUMN_LABELS[propertyKey]
+    ) {
+      return RacedayLayoutUtils.COLUMN_LABELS[propertyKey];
     }
     if (
       typeof propertyKey === "string" &&
@@ -333,7 +444,7 @@ export class RacedayLayoutUtils {
     ) {
       return "RD_COL_FUEL_GAUGE";
     }
-    return labels[baseKey] ?? "UNKNOWN";
+    return RacedayLayoutUtils.COLUMN_LABELS[baseKey] ?? "UNKNOWN";
   }
 
   static getDefaultColumnWidth(
@@ -355,69 +466,11 @@ export class RacedayLayoutUtils {
       return 170;
     }
 
-    const widths: { [key: string]: number } = {
-      "driver.name": 0,
-      "driver.nickname": 0,
-      "driver.avatarUrl": 120,
-      lapCount: 216,
-      physicalLapCount: 210,
-      lapsLed: 216,
-      trackCalls: 216,
-      reactionTime: 330,
-      lastLapTime: 330,
-      lastLaps: 1650,
-      medianLapTime: 330,
-      averageLapTime: 330,
-      bestLapTime: 330,
-      bestRaceLapTime: 330,
-      recordLapTime: 330,
-      standardDeviation: 330,
-      consistencyScore: 330,
-      averageTop5: 330,
-      averageTop10: 330,
-      averageTop15: 330,
-      top2Consecutive: 330,
-      top3Consecutive: 330,
-      totalTime: 330,
-      gapLeader: 330,
-      gapPosition: 330,
-      gapLeaderF1: 330,
-      gapPositionF1: 330,
-      "participant.team.name": 330,
-      "participant.fuelLevel": 216,
-      fuelCapacity: 216,
-      fuelPercentage: 216,
-      "imageset_fuel-gauge-builtin": 216,
-      imageset_default_fuel_gauge: 216,
-      "imageset_default_fuel-gauge-builtin": 216,
-      "fuel-gauge-builtin": 216,
-      default_fuel_gauge: 216,
-      seed: 216,
-      rankHeat: 108,
-      rankOverall: 108,
-      rankGroup: 108,
-      winProbability: 330,
-      projectedRank: 216,
-      projectedLaps: 216,
-      mph: 330,
-      kph: 330,
-      fph: 330,
-      segmentTime: 330,
-      flag: 120,
-      qrCode: 120,
-      driverViewQrCode: 120,
-      laneNumber: 120,
-      imageset: 216,
-      ghostPacing: 330,
-      ghostPacingPB: 330,
-      ghostPacingPersonalAvg: 330,
-      ghostPacingPersonalMedian: 330,
-      ghostPacingLeaderAvg: 330,
-      ghostPacingLeaderMedian: 330,
-      ghostPacingLeaderBest: 330,
-    };
-    if (typeof propertyKey === "string" && widths[propertyKey] !== undefined) {
-      return widths[propertyKey];
+    if (
+      typeof propertyKey === "string" &&
+      RacedayLayoutUtils.COLUMN_WIDTHS[propertyKey] !== undefined
+    ) {
+      return RacedayLayoutUtils.COLUMN_WIDTHS[propertyKey];
     }
     if (
       typeof propertyKey === "string" &&
@@ -433,7 +486,7 @@ export class RacedayLayoutUtils {
     ) {
       return 216;
     }
-    return widths[baseKey] ?? 275;
+    return RacedayLayoutUtils.COLUMN_WIDTHS[baseKey] ?? 275;
   }
 
   static reindexColumnLayout(layout: { [A in AnchorPoint]?: string }): {

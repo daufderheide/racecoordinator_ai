@@ -2,7 +2,7 @@ import { AbsoluteWidgetNode } from "@app/models/settings";
 import { deepCopy } from "@app/utils/clone.utils";
 
 export interface LaneReplicationOptions {
-  sourceBindingMode: "lane" | "position";
+  sourceBindingMode: "lane" | "position" | "overallPosition" | "seed";
   sourceIndex: number;
   direction: "horizontal" | "vertical";
   targetCount: number;

@@ -137,7 +137,7 @@ export class RacedayLaneColumnComponent
     return this.settings.columnKey || "lastLapTime";
   }
 
-  get bindingMode(): "lane" | "position" {
+  get bindingMode(): "lane" | "position" | "overallPosition" | "seed" {
     return this.settings.bindingMode || "lane";
   }
 
@@ -149,6 +149,22 @@ export class RacedayLaneColumnComponent
     return this.settings.layoutOrientation || "vertical";
   }
 
+  private syntheticHeatDrivers = new Map<string, DriverHeatData>();
+
+  private getOrCreateSyntheticDriver(participant: any): DriverHeatData {
+    let synth = this.syntheticHeatDrivers.get(participant.objectId);
+    if (!synth || synth.participant !== participant) {
+      synth = new DriverHeatData(
+        participant.objectId,
+        participant,
+        -1,
+        participant.driver,
+      );
+      this.syntheticHeatDrivers.set(participant.objectId, synth);
+    }
+    return synth;
+  }
+
   get targetDriver(): DriverHeatData | undefined {
     const parent = this.parent();
     if (!parent) return undefined;
@@ -158,6 +174,36 @@ export class RacedayLaneColumnComponent
       parent.heatDrivers ||
       parent.heat?.heatDrivers ||
       [];
+
+    if (this.bindingMode === "overallPosition") {
+      const targetRank = this.targetIndex + 1;
+      const participants: any[] = parent.participants || [];
+      const match =
+        participants.find((p: any) => p.rank === targetRank) ||
+        participants[this.targetIndex];
+      if (!match) return undefined;
+      const activeHeatDriver = drivers.find(
+        (d) =>
+          d.objectId === match.objectId ||
+          d.participant?.objectId === match.objectId,
+      );
+      return activeHeatDriver || this.getOrCreateSyntheticDriver(match);
+    }
+
+    if (this.bindingMode === "seed") {
+      const targetSeed = this.targetIndex + 1;
+      const participants: any[] = parent.participants || [];
+      const match =
+        participants.find((p: any) => p.seed === targetSeed) ||
+        participants[this.targetIndex];
+      if (!match) return undefined;
+      const activeHeatDriver = drivers.find(
+        (d) =>
+          d.objectId === match.objectId ||
+          d.participant?.objectId === match.objectId,
+      );
+      return activeHeatDriver || this.getOrCreateSyntheticDriver(match);
+    }
 
     if (this.bindingMode === "position") {
       const targetRank = this.targetIndex + 1;
@@ -216,7 +262,8 @@ export class RacedayLaneColumnComponent
       parent?.track ||
       parent?.race?.track ||
       parent?.raceService?.getRace()?.track;
-    const trackLaneBg = track?.lanes?.[laneIdx]?.background_color;
+    const trackLaneBg =
+      laneIdx >= 0 ? track?.lanes?.[laneIdx]?.background_color : undefined;
     return trackLaneBg || this.settings.backgroundColor || "transparent";
   }
 
@@ -236,7 +283,8 @@ export class RacedayLaneColumnComponent
       parent?.track ||
       parent?.race?.track ||
       parent?.raceService?.getRace()?.track;
-    const trackLaneFg = track?.lanes?.[laneIdx]?.foreground_color;
+    const trackLaneFg =
+      laneIdx >= 0 ? track?.lanes?.[laneIdx]?.foreground_color : undefined;
     return trackLaneFg || this.settings.textColor || "#ffffff";
   }
 

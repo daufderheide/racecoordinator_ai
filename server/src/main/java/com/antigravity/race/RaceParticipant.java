@@ -248,6 +248,79 @@ public class RaceParticipant extends ServerToClientObject
     return Math.max(0.0, 1.0 - (std / avg)) * 100.0;
   }
 
+  public double getStandardDeviation() {
+    if (allScoringLaps == null || allScoringLaps.isEmpty()) {
+      return 0.0;
+    }
+    double avg = getAverageLapTime();
+    return RaceStatisticsUtils.calculateStdDev(allScoringLaps, avg);
+  }
+
+  private double averageTop5;
+  private double averageTop10;
+  private double averageTop15;
+  private double top2Consecutive;
+  private double top3Consecutive;
+
+  public double getAverageTop5() {
+    return averageTop5;
+  }
+
+  public void setAverageTop5(double averageTop5) {
+    this.averageTop5 = averageTop5;
+  }
+
+  public double getAverageTop10() {
+    return averageTop10;
+  }
+
+  public void setAverageTop10(double averageTop10) {
+    this.averageTop10 = averageTop10;
+  }
+
+  public double getAverageTop15() {
+    return averageTop15;
+  }
+
+  public void setAverageTop15(double averageTop15) {
+    this.averageTop15 = averageTop15;
+  }
+
+  public double getTop2Consecutive() {
+    return top2Consecutive;
+  }
+
+  public void setTop2Consecutive(double top2Consecutive) {
+    this.top2Consecutive = top2Consecutive;
+  }
+
+  public double getTop3Consecutive() {
+    return top3Consecutive;
+  }
+
+  public void setTop3Consecutive(double top3Consecutive) {
+    this.top3Consecutive = top3Consecutive;
+  }
+
+  private int lapsLed;
+  private int trackCalls;
+
+  public int getLapsLed() {
+    return lapsLed;
+  }
+
+  public void setLapsLed(int lapsLed) {
+    this.lapsLed = lapsLed;
+  }
+
+  public int getTrackCalls() {
+    return trackCalls;
+  }
+
+  public void setTrackCalls(int trackCalls) {
+    this.trackCalls = trackCalls;
+  }
+
   @Override
   public int getPhysicalLapCount() {
     if (allScoringLaps == null) {

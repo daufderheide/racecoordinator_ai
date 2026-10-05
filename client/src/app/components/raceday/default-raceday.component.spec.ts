@@ -10540,10 +10540,15 @@ describe("DefaultRacedayComponent", () => {
       const rcAiGroup = groups.find((g) => g.id === "race-coordinator-ai");
       expect(rcAiGroup).toBeDefined();
       expect(rcAiGroup?.rootWidgets.length).toBe(0);
-      expect(rcAiGroup?.subgroups.length).toBe(5);
+      expect(rcAiGroup?.subgroups.length).toBe(6);
       const heatData = rcAiGroup?.subgroups.find((s) => s.id === "heat-data");
       expect(heatData).toBeDefined();
-      expect(heatData?.subgroups?.length).toBe(9);
+      expect(heatData?.subgroups?.length).toBe(8);
+      const overallData = rcAiGroup?.subgroups.find(
+        (s) => s.id === "overall-data",
+      );
+      expect(overallData).toBeDefined();
+      expect(overallData?.subgroups?.length).toBe(7);
       const standings = rcAiGroup?.subgroups.find(
         (s) => s.id === "standings-heats",
       );
