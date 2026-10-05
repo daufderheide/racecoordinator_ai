@@ -1530,6 +1530,43 @@
   flex-shrink: 0;
 }
 
+.col-decimals-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.col-decimals-select {
+  width: 44px;
+  flex-shrink: 0;
+}
+
+.col-decimals-select ::ng-deep .custom-select-trigger {
+  min-height: 24px;
+  height: 24px;
+  padding: 2px 4px;
+  font-size: 11px;
+  line-height: 1;
+}
+
+.col-decimals-select ::ng-deep .dropdown-icon {
+  margin-left: 2px;
+  font-size: 0.7em;
+}
+
+.col-decimals-select ::ng-deep .custom-select-option {
+  padding: 4px 6px;
+  font-size: 11px;
+  text-align: center;
+}
+
+.col-decimals-unit {
+  font-size: 10px;
+  color: #888;
+  flex-shrink: 0;
+}
+
 .inspector-column-item .delete-btn {
   color: #ef4444;
   background: none;

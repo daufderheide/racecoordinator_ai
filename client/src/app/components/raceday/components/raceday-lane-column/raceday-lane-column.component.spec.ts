@@ -1419,4 +1419,75 @@ describe("RacedayLaneColumnComponent", () => {
       expect(mockParent.isTeamDriverSwapActive).toHaveBeenCalled();
     });
   });
+
+  describe("getPacingDecimalPlaces", () => {
+    it("should resolve decimal places from widget settings columnDecimals", () => {
+      fixture.componentRef.setInput("parent", mockParent);
+      fixture.componentRef.setInput(
+        "widget",
+        createWidget({
+          columnKey: "ghostPacing",
+          columnDecimals: { ghostPacing: 1 },
+        }),
+      );
+      fixture.detectChanges();
+
+      expect(component.getPacingDecimalPlaces()).toBe(1);
+    });
+
+    it("should resolve decimal places via prefix matching ghostPacing", () => {
+      fixture.componentRef.setInput("parent", mockParent);
+      fixture.componentRef.setInput(
+        "widget",
+        createWidget({
+          columnKey: "ghostPacingPB",
+          columnDecimals: { ghostPacing: 2 },
+        }),
+      );
+      fixture.detectChanges();
+
+      expect(component.getPacingDecimalPlaces()).toBe(2);
+    });
+
+    it("should fall back to widget timeDecimalPlaces", () => {
+      fixture.componentRef.setInput("parent", mockParent);
+      fixture.componentRef.setInput(
+        "widget",
+        createWidget({
+          columnKey: "ghostPacing",
+          timeDecimalPlaces: 0,
+        }),
+      );
+      fixture.detectChanges();
+
+      expect(component.getPacingDecimalPlaces()).toBe(0);
+    });
+
+    it("should clamp decimal places within [0, 3]", () => {
+      fixture.componentRef.setInput("parent", mockParent);
+      fixture.componentRef.setInput(
+        "widget",
+        createWidget({
+          columnKey: "ghostPacing",
+          columnDecimals: { ghostPacing: 5 },
+        }),
+      );
+      fixture.detectChanges();
+
+      expect(component.getPacingDecimalPlaces()).toBe(3);
+    });
+
+    it("should default to 3 when neither columnDecimals nor timeDecimalPlaces is specified", () => {
+      fixture.componentRef.setInput("parent", mockParent);
+      fixture.componentRef.setInput(
+        "widget",
+        createWidget({
+          columnKey: "ghostPacing",
+        }),
+      );
+      fixture.detectChanges();
+
+      expect(component.getPacingDecimalPlaces()).toBe(3);
+    });
+  });
 });

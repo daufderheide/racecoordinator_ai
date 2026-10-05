@@ -15,7 +15,7 @@
           {{ benchmarkLabelKey() | translate }}
         </div>
         <div class="pacing-target-time">
-          {{ targetGhostLapTime().toFixed(2) }}s
+          {{ formattedTargetGhostLapTime() }}
         </div>
         <div
           class="delta-badge"
@@ -39,7 +39,7 @@
         <div class="pacing-benchmark-label">
           {{ benchmarkLabelKey() | translate }}
         </div>
-        <div class="pacing-target-time">--.--s</div>
+        <div class="pacing-target-time">{{ targetTimePlaceholder() }}</div>
         <div class="delta-badge">
           <span class="delta-arrow">●</span>
           <span class="delta-value">--</span>
@@ -53,14 +53,14 @@
         [title]="
           (benchmarkLabelKey() | translate) +
           ' (' +
-          targetGhostLapTime().toFixed(2) +
-          's)'
+          formattedTargetGhostLapTime() +
+          ')'
         "
       >
         <span class="benchmark-name"
           >{{ benchmarkLabelKey() | translate }} ({{
-            targetGhostLapTime().toFixed(2)
-          }}s)</span
+            formattedTargetGhostLapTime()
+          }})</span
         >
       </span>
 

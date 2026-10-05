@@ -195,3 +195,29 @@
   padding: 8px 12px;
 }
 
+/* Compact column decimals select */
+:host(.col-decimals-select) {
+  display: inline-block;
+  width: 44px;
+  min-width: 44px;
+}
+
+:host(.col-decimals-select) .custom-select-trigger {
+  min-height: 24px;
+  height: 24px;
+  padding: 2px 4px;
+  font-size: 11px;
+  line-height: 1;
+}
+
+:host(.col-decimals-select) .dropdown-icon {
+  margin-left: 2px;
+  font-size: 0.7em;
+}
+
+:host(.col-decimals-select) .custom-select-option {
+  padding: 4px 6px;
+  font-size: 11px;
+  text-align: center;
+}
+

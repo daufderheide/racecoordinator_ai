@@ -3088,13 +3088,20 @@ export class DefaultRacedayComponent
     const laneViewWidget = this.currentRacedayLayout?.widgets?.find(
       (w: any) => w.widgetType === "lane-view",
     );
+    const colDecimals =
+      laneViewWidget?.customSettings?.["columnDecimals"]?.["recordLapTime"] ??
+      laneViewWidget?.customSettings?.["columnDecimalPlaces"]?.[
+        "recordLapTime"
+      ];
     const timeDecimals = isInset
       ? laneViewWidget?.customSettings?.["insetTimeDecimalPlaces"] !== undefined
         ? Number(laneViewWidget.customSettings["insetTimeDecimalPlaces"])
         : 3
-      : laneViewWidget?.customSettings?.["timeDecimalPlaces"] !== undefined
-        ? Number(laneViewWidget.customSettings["timeDecimalPlaces"])
-        : 3;
+      : colDecimals !== undefined && colDecimals !== null && colDecimals !== ""
+        ? Number(colDecimals)
+        : laneViewWidget?.customSettings?.["timeDecimalPlaces"] !== undefined
+          ? Number(laneViewWidget.customSettings["timeDecimalPlaces"])
+          : 3;
     const timePlaceholder =
       timeDecimals > 0 ? "--." + "-".repeat(timeDecimals) : "--";
     if (!entry || !entry.value || entry.value <= 0) return timePlaceholder;
@@ -3143,13 +3150,20 @@ export class DefaultRacedayComponent
     const laneViewWidget = this.currentRacedayLayout?.widgets?.find(
       (w: any) => w.widgetType === "lane-view",
     );
+    const colDecimals =
+      laneViewWidget?.customSettings?.["columnDecimals"]?.["bestRaceLapTime"] ??
+      laneViewWidget?.customSettings?.["columnDecimalPlaces"]?.[
+        "bestRaceLapTime"
+      ];
     const timeDecimals = isInset
       ? laneViewWidget?.customSettings?.["insetTimeDecimalPlaces"] !== undefined
         ? Number(laneViewWidget.customSettings["insetTimeDecimalPlaces"])
         : 3
-      : laneViewWidget?.customSettings?.["timeDecimalPlaces"] !== undefined
-        ? Number(laneViewWidget.customSettings["timeDecimalPlaces"])
-        : 3;
+      : colDecimals !== undefined && colDecimals !== null && colDecimals !== ""
+        ? Number(colDecimals)
+        : laneViewWidget?.customSettings?.["timeDecimalPlaces"] !== undefined
+          ? Number(laneViewWidget.customSettings["timeDecimalPlaces"])
+          : 3;
     const timePlaceholder =
       timeDecimals > 0 ? "--." + "-".repeat(timeDecimals) : "--";
     if (!entry || !entry.value || entry.value <= 0) return timePlaceholder;
@@ -4323,13 +4337,24 @@ export class DefaultRacedayComponent
     };
 
     const isInset = anchor ? anchor !== "center-center" : false;
+    const customColDecimals =
+      ctx.laneViewWidgetSettings?.columnDecimals ||
+      ctx.laneViewWidgetSettings?.columnDecimalPlaces;
+    const colDecimalOverride = customColDecimals
+      ? (customColDecimals[column?.propertyName ?? ""] ??
+        customColDecimals["lastLaps"])
+      : undefined;
     const timeDecimals = isInset
       ? ctx.laneViewWidgetSettings?.insetTimeDecimalPlaces !== undefined
         ? Number(ctx.laneViewWidgetSettings.insetTimeDecimalPlaces)
         : 3
-      : ctx.laneViewWidgetSettings?.timeDecimalPlaces !== undefined
-        ? Number(ctx.laneViewWidgetSettings.timeDecimalPlaces)
-        : 3;
+      : colDecimalOverride !== undefined &&
+          colDecimalOverride !== null &&
+          colDecimalOverride !== ""
+        ? Number(colDecimalOverride)
+        : ctx.laneViewWidgetSettings?.timeDecimalPlaces !== undefined
+          ? Number(ctx.laneViewWidgetSettings.timeDecimalPlaces)
+          : 3;
 
     for (let i = 1; i <= 5; i++) {
       const index = n - 1 - i;

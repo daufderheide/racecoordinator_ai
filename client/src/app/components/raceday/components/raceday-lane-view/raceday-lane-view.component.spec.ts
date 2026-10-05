@@ -1295,4 +1295,134 @@ describe("RacedayLaneViewComponent", () => {
     expect(firstRowCells.length).toBe(1);
     expect(firstRowCells[0].textContent.trim()).toBe("3");
   });
+
+  describe("getPacingDecimalPlaces", () => {
+    it("should resolve decimal places from widget customSettings columnDecimals for direct columnKey", () => {
+      fixture.componentRef.setInput("widget", {
+        id: "w1",
+        widgetType: "lane-view",
+        customSettings: {
+          columnDecimals: { ghostPacing: 1 },
+        },
+      } as any);
+
+      expect(
+        component.getPacingDecimalPlaces({ propertyName: "ghostPacing" }),
+      ).toBe(1);
+    });
+
+    it("should resolve decimal places from widget customSettings columnDecimals for entry property", () => {
+      fixture.componentRef.setInput("widget", {
+        id: "w1",
+        widgetType: "lane-view",
+        customSettings: {
+          columnDecimals: { ghostPacingPB: 0 },
+        },
+      } as any);
+
+      expect(
+        component.getPacingDecimalPlaces(
+          { propertyName: "compound" },
+          { property: "ghostPacingPB" },
+        ),
+      ).toBe(0);
+    });
+
+    it("should resolve decimal places for compound columnKey", () => {
+      fixture.componentRef.setInput("widget", {
+        id: "w1",
+        widgetType: "lane-view",
+        customSettings: {
+          columnDecimals: { ghostPacing: 2 },
+        },
+      } as any);
+
+      expect(
+        component.getPacingDecimalPlaces({
+          propertyName: "lapCount_ghostPacing",
+        }),
+      ).toBe(2);
+    });
+
+    it("should resolve decimal places via prefix matching ghostPacing", () => {
+      fixture.componentRef.setInput("widget", {
+        id: "w1",
+        widgetType: "lane-view",
+        customSettings: {
+          columnDecimals: { ghostPacing: 1 },
+        },
+      } as any);
+
+      expect(
+        component.getPacingDecimalPlaces({
+          propertyName: "ghostPacingPersonalMedian",
+        }),
+      ).toBe(1);
+    });
+
+    it("should fall back to insetTimeDecimalPlaces when entry is an inset", () => {
+      fixture.componentRef.setInput("widget", {
+        id: "w1",
+        widgetType: "lane-view",
+        customSettings: {
+          insetTimeDecimalPlaces: 1,
+          timeDecimalPlaces: 2,
+        },
+      } as any);
+
+      expect(
+        component.getPacingDecimalPlaces(
+          { propertyName: "other" },
+          { anchor: "top-left", property: "ghostPacing" },
+        ),
+      ).toBe(1);
+    });
+
+    it("should fall back to timeDecimalPlaces when center entry and no override", () => {
+      fixture.componentRef.setInput("widget", {
+        id: "w1",
+        widgetType: "lane-view",
+        customSettings: {
+          timeDecimalPlaces: 2,
+        },
+      } as any);
+
+      expect(
+        component.getPacingDecimalPlaces(
+          { propertyName: "other" },
+          { anchor: "center-center", property: "ghostPacing" },
+        ),
+      ).toBe(2);
+    });
+
+    it("should clamp resolved decimal values into [0, 3]", () => {
+      fixture.componentRef.setInput("widget", {
+        id: "w1",
+        widgetType: "lane-view",
+        customSettings: {
+          columnDecimals: { ghostPacing: 5 },
+          timeDecimalPlaces: -2,
+        },
+      } as any);
+
+      expect(
+        component.getPacingDecimalPlaces({ propertyName: "ghostPacing" }),
+      ).toBe(3);
+
+      expect(
+        component.getPacingDecimalPlaces({ propertyName: "unknown" }),
+      ).toBe(0);
+    });
+
+    it("should default to 3 when no custom settings exist", () => {
+      fixture.componentRef.setInput("widget", {
+        id: "w1",
+        widgetType: "lane-view",
+      } as any);
+
+      expect(
+        component.getPacingDecimalPlaces({ propertyName: "ghostPacing" }),
+      ).toBe(3);
+    });
+  });
 });

@@ -108,42 +108,6 @@
     {{ "UE_INSPECTOR_LANE_VIEW_DATA_SECTION" | translate }}
   </div>
 
-  <!-- Time Decimal Places -->
-  <div class="inspector-section">
-    <label class="inspector-label">{{
-      "UE_INSPECTOR_LANE_VIEW_TIME_DECIMAL_PLACES" | translate
-    }}</label>
-    <div class="select-container select-sm">
-      <app-custom-select
-        [(ngModel)]="settings().timeDecimalPlaces"
-        (change)="onSettingsChange()"
-      >
-        <app-custom-option [value]="0">0</app-custom-option>
-        <app-custom-option [value]="1">1</app-custom-option>
-        <app-custom-option [value]="2">2</app-custom-option>
-        <app-custom-option [value]="3">3</app-custom-option>
-      </app-custom-select>
-    </div>
-  </div>
-
-  <!-- Lap Decimal Places -->
-  <div class="inspector-section">
-    <label class="inspector-label">{{
-      "UE_INSPECTOR_LANE_VIEW_LAP_DECIMAL_PLACES" | translate
-    }}</label>
-    <div class="select-container select-sm">
-      <app-custom-select
-        [(ngModel)]="settings().lapDecimalPlaces"
-        (change)="onSettingsChange()"
-      >
-        <app-custom-option [value]="0">0</app-custom-option>
-        <app-custom-option [value]="1">1</app-custom-option>
-        <app-custom-option [value]="2">2</app-custom-option>
-        <app-custom-option [value]="3">3</app-custom-option>
-      </app-custom-select>
-    </div>
-  </div>
-
   <div class="inspector-section">
     <label class="inspector-label">{{
       "UE_INSPECTOR_FONT_FAMILY" | translate
@@ -314,6 +278,26 @@
               />
               <span class="col-width-unit">px</span>
             </div>
+            @if (isLapOrTimeColumn(col)) {
+              <div
+                class="col-decimals-wrapper"
+                [title]="'UE_INSPECTOR_DECIMAL_PLACES' | translate"
+              >
+                <div class="select-container select-sm col-decimals-select">
+                  <app-custom-select
+                    class="col-decimals-select"
+                    [ngModel]="getColumnDecimalPlaces(col)"
+                    (ngModelChange)="setColumnDecimalPlaces(col, $event)"
+                  >
+                    <app-custom-option [value]="0">0</app-custom-option>
+                    <app-custom-option [value]="1">1</app-custom-option>
+                    <app-custom-option [value]="2">2</app-custom-option>
+                    <app-custom-option [value]="3">3</app-custom-option>
+                  </app-custom-select>
+                </div>
+                <span class="col-decimals-unit">dec</span>
+              </div>
+            }
             <button
               class="icon-btn delete-btn"
               (click)="deleteColumn(col)"

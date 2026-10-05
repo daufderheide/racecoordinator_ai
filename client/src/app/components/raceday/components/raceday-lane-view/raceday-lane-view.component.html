@@ -458,6 +458,7 @@
                           [driverHeatData]="hd"
                           [compact]="!isSoloCenterPacing(col, entry, hd)"
                           [stacked]="isSoloCenterPacing(col, entry, hd)"
+                          [decimalPlaces]="getPacingDecimalPlaces(col, entry)"
                           [benchmarkType]="
                             getPacingBenchmarkType(entry.property)
                           "

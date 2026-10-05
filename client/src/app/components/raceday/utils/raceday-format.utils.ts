@@ -394,20 +394,43 @@ export class RacedayFormatUtils {
 
     const isInset = anchor ? !anchor.startsWith("center-") : false;
 
+    const colKey = column?.propertyName || baseKey;
+    const customColDecimals =
+      ctx.laneViewWidgetSettings?.columnDecimals ||
+      ctx.laneViewWidgetSettings?.columnDecimalPlaces;
+    const colDecimalOverride = customColDecimals
+      ? (customColDecimals[column?.propertyName ?? ""] ??
+        customColDecimals[colKey] ??
+        customColDecimals[baseKey] ??
+        (baseKey.startsWith("ghostPacing")
+          ? Object.entries(customColDecimals).find(([k]) =>
+              k.startsWith("ghostPacing"),
+            )?.[1]
+          : undefined))
+      : undefined;
+
     const timeDecimals = isInset
       ? ctx.laneViewWidgetSettings?.insetTimeDecimalPlaces !== undefined
         ? Number(ctx.laneViewWidgetSettings.insetTimeDecimalPlaces)
         : 3
-      : ctx.laneViewWidgetSettings?.timeDecimalPlaces !== undefined
-        ? Number(ctx.laneViewWidgetSettings.timeDecimalPlaces)
-        : 3;
+      : colDecimalOverride !== undefined &&
+          colDecimalOverride !== null &&
+          colDecimalOverride !== ""
+        ? Number(colDecimalOverride)
+        : ctx.laneViewWidgetSettings?.timeDecimalPlaces !== undefined
+          ? Number(ctx.laneViewWidgetSettings.timeDecimalPlaces)
+          : 3;
     const lapDecimals = isInset
       ? ctx.laneViewWidgetSettings?.insetLapDecimalPlaces !== undefined
         ? Number(ctx.laneViewWidgetSettings.insetLapDecimalPlaces)
         : 2
-      : ctx.laneViewWidgetSettings?.lapDecimalPlaces !== undefined
-        ? Number(ctx.laneViewWidgetSettings.lapDecimalPlaces)
-        : 2;
+      : colDecimalOverride !== undefined &&
+          colDecimalOverride !== null &&
+          colDecimalOverride !== ""
+        ? Number(colDecimalOverride)
+        : ctx.laneViewWidgetSettings?.lapDecimalPlaces !== undefined
+          ? Number(ctx.laneViewWidgetSettings.lapDecimalPlaces)
+          : 2;
 
     const timePlaceholder =
       timeDecimals > 0 ? "--." + "-".repeat(timeDecimals) : "--";
@@ -615,8 +638,12 @@ export class RacedayFormatUtils {
       const currentLapTime = (hd as any).currentLapTime ?? hd.lastLapTime ?? 0;
       if (ghostLap > 0 && currentLapTime > 0) {
         const delta = ghostLap - currentLapTime;
+        const fixedVal = delta.toFixed(timeDecimals);
+        if (Math.abs(Number(fixedVal)) === 0) {
+          return (0).toFixed(timeDecimals) + "s";
+        }
         const sign = delta > 0 ? "+" : "";
-        return sign + delta.toFixed(timeDecimals) + "s";
+        return sign + fixedVal + "s";
       }
       return "--";
     } else if (baseKey === "driver.name") {

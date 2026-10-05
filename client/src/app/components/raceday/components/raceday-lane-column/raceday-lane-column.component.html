@@ -342,6 +342,7 @@
           <app-raceday-ghost-pacing
             [driverHeatData]="targetDriver || null"
             [benchmarkType]="getPacingBenchmarkType()"
+            [decimalPlaces]="getPacingDecimalPlaces()"
             [personalBest]="targetDriver?.bestLapTime || 0"
             [personalAvg]="targetDriver?.averageLapTime || 0"
             [personalMedian]="targetDriver?.medianLapTime || 0"

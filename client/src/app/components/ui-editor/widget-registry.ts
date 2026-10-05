@@ -83,6 +83,7 @@ export const WIDGET_REGISTRY: Record<string, WidgetRegistryEntry> = {
       insetFontSize: 24,
       insetTextColor: "",
       collapsedColumnGroups: {},
+      columnDecimals: {},
     }),
   },
   "lane-column": {

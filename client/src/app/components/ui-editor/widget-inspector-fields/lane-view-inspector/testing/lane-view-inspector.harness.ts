@@ -15,24 +15,56 @@ export class LaneViewInspectorHarness
     LaneViewInspectorHarnessBase.selectors.columnWidthInputs,
   );
 
+  protected getColumnDecimalsSelects = this.locatorForAll(
+    CustomSelectHarness.with({ ancestor: ".col-decimals-select" }),
+  );
+
+  async getColumnDecimals(columnIndex: number): Promise<number> {
+    const selects = await this.getColumnDecimalsSelects();
+    return Number(await selects[columnIndex].getValue());
+  }
+
+  async setColumnDecimals(columnIndex: number, val: number): Promise<void> {
+    const selects = await this.getColumnDecimalsSelects();
+    await selects[columnIndex].selectOptionByValue(val.toString());
+  }
+
   async getTimeDecimalPlaces(): Promise<number> {
-    const selects = await this.getSelects();
-    return Number(await selects[1].getValue());
+    const selects = await this.getColumnDecimalsSelects();
+    if (selects.length > 1) {
+      return Number(await selects[1].getValue());
+    }
+    const allSelects = await this.getSelects();
+    return Number(await allSelects[1].getValue());
   }
 
   async setTimeDecimalPlaces(val: number): Promise<void> {
-    const selects = await this.getSelects();
-    await selects[1].selectOptionByValue(val.toString());
+    const selects = await this.getColumnDecimalsSelects();
+    if (selects.length > 1) {
+      await selects[1].selectOptionByValue(val.toString());
+      return;
+    }
+    const allSelects = await this.getSelects();
+    await allSelects[1].selectOptionByValue(val.toString());
   }
 
   async getLapDecimalPlaces(): Promise<number> {
-    const selects = await this.getSelects();
-    return Number(await selects[2].getValue());
+    const selects = await this.getColumnDecimalsSelects();
+    if (selects.length > 0) {
+      return Number(await selects[0].getValue());
+    }
+    const allSelects = await this.getSelects();
+    return Number(await allSelects[2].getValue());
   }
 
   async setLapDecimalPlaces(val: number): Promise<void> {
-    const selects = await this.getSelects();
-    await selects[2].selectOptionByValue(val.toString());
+    const selects = await this.getColumnDecimalsSelects();
+    if (selects.length > 0) {
+      await selects[0].selectOptionByValue(val.toString());
+      return;
+    }
+    const allSelects = await this.getSelects();
+    await allSelects[2].selectOptionByValue(val.toString());
   }
 
   async getColumnWidth(columnIndex: number): Promise<number> {

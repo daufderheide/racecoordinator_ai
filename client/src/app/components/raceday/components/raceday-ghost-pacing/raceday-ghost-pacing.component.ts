@@ -33,6 +33,28 @@ export class RacedayGhostPacingComponent {
   compact = input<boolean>(false);
   stacked = input<boolean>(false);
   lapProgress = input<number | null>(null);
+  decimalPlaces = input<number>(3);
+
+  effectiveDecimals = computed(() => {
+    const d = this.decimalPlaces();
+    return d !== undefined && d !== null
+      ? Math.max(0, Math.min(3, Number(d)))
+      : 3;
+  });
+
+  targetTimePlaceholder = computed(() => {
+    const d = this.effectiveDecimals();
+    return d > 0 ? `--.${"-".repeat(d)}s` : `--s`;
+  });
+
+  formattedTargetGhostLapTime = computed(() => {
+    const time = this.targetGhostLapTime();
+    if (time <= 0) {
+      return this.targetTimePlaceholder();
+    }
+    const d = this.effectiveDecimals();
+    return `${time.toFixed(d)}s`;
+  });
 
   isEmptyDriver = computed(() => {
     const hd = this.driverHeatData();
@@ -142,7 +164,12 @@ export class RacedayGhostPacingComponent {
     if (gap.ghostLapTime <= 0 || gap.progressPct <= 0.02) {
       return "--";
     }
+    const d = this.effectiveDecimals();
+    const fixedVal = gap.deltaSeconds.toFixed(d);
+    if (Math.abs(Number(fixedVal)) === 0) {
+      return `${(0).toFixed(d)}s`;
+    }
     const sign = gap.deltaSeconds > 0 ? "+" : "";
-    return `${sign}${gap.deltaSeconds.toFixed(2)}s`;
+    return `${sign}${fixedVal}s`;
   });
 }

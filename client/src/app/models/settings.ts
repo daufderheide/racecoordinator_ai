@@ -88,6 +88,7 @@ export interface LaneColumnWidgetSettings {
   valueAlignment: "start" | "center" | "end";
   timeDecimalPlaces: number;
   lapDecimalPlaces: number;
+  columnDecimals?: Record<string, number>;
   useLaneColors: boolean;
   insets?: Record<string, string>;
   insetFontFamily?: string;

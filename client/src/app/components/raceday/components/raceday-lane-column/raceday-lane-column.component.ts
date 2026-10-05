@@ -1038,6 +1038,46 @@ export class RacedayLaneColumnComponent
     return RacedayLayoutUtils.isPacingProperty(this.columnKey);
   }
 
+  getPacingDecimalPlaces(): number {
+    const s = this.settings as any;
+    const parentSettings =
+      (this.parent() as any)?.laneViewWidgetSettings ||
+      (this.parent() as any)?.currentRacedayLayout?.widgets?.find?.(
+        (w: any) => w.widgetType === "lane-view",
+      )?.customSettings;
+    const customColDecimals =
+      s?.columnDecimals ||
+      s?.columnDecimalPlaces ||
+      parentSettings?.columnDecimals ||
+      parentSettings?.columnDecimalPlaces;
+    if (customColDecimals) {
+      if (
+        customColDecimals[this.columnKey] !== undefined &&
+        customColDecimals[this.columnKey] !== null &&
+        customColDecimals[this.columnKey] !== ""
+      ) {
+        return Math.min(
+          3,
+          Math.max(0, Number(customColDecimals[this.columnKey])),
+        );
+      }
+      for (const k of Object.keys(customColDecimals)) {
+        if (
+          k.startsWith("ghostPacing") &&
+          customColDecimals[k] !== undefined &&
+          customColDecimals[k] !== null &&
+          customColDecimals[k] !== ""
+        ) {
+          return Math.min(3, Math.max(0, Number(customColDecimals[k])));
+        }
+      }
+    }
+    if (this.settings.timeDecimalPlaces !== undefined) {
+      return Math.min(3, Math.max(0, Number(this.settings.timeDecimalPlaces)));
+    }
+    return 3;
+  }
+
   getPacingBenchmarkType(): GhostBenchmarkType {
     switch (this.columnKey) {
       case "ghostPacingPB":

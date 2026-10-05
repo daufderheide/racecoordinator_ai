@@ -206,6 +206,78 @@ export class RacedayLayoutUtils {
     );
   }
 
+  static isTimeColumnKey(key: string): boolean {
+    if (!key) return false;
+    const baseKey = key.split("_")[0];
+    const isTimeBase = (k: string) =>
+      k.includes("LapTime") ||
+      k === "lastLaps" ||
+      k === "reactionTime" ||
+      k === "totalTime" ||
+      k === "overallTotalTime" ||
+      k === "segmentTime" ||
+      k === "standardDeviation" ||
+      k === "overallStandardDeviation" ||
+      k === "averageTop5" ||
+      k === "averageTop10" ||
+      k === "averageTop15" ||
+      k === "top2Consecutive" ||
+      k === "top3Consecutive" ||
+      k === "overallAverageTop5" ||
+      k === "overallAverageTop10" ||
+      k === "overallAverageTop15" ||
+      k === "overallTop2Consecutive" ||
+      k === "overallTop3Consecutive" ||
+      k === "gapLeader" ||
+      k === "gapPosition" ||
+      k === "gapLeaderF1" ||
+      k === "gapPositionF1" ||
+      k === "overallGapLeader" ||
+      k === "overallGapPosition" ||
+      k === "overallGapLeaderF1" ||
+      k === "overallGapPositionF1" ||
+      k.startsWith("ghostPacing");
+
+    if (isTimeBase(baseKey)) return true;
+    const parts = key.split("_");
+    return parts.some((p) => isTimeBase(p));
+  }
+
+  static isLapColumnKey(key: string): boolean {
+    if (!key) return false;
+    const baseKey = key.split("_")[0];
+    const isLapBase = (k: string) =>
+      k === "lapCount" || k === "overallLapCount";
+    if (isLapBase(baseKey)) return true;
+    const parts = key.split("_");
+    return parts.some((p) => isLapBase(p));
+  }
+
+  static isLapOrTimeColumnKey(key: string): boolean {
+    return (
+      RacedayLayoutUtils.isTimeColumnKey(key) ||
+      RacedayLayoutUtils.isLapColumnKey(key)
+    );
+  }
+
+  static isTimeColumn(col: ColumnDefinition | string): boolean {
+    if (!col) return false;
+    const key = typeof col === "string" ? col : col.propertyName || "";
+    return RacedayLayoutUtils.isTimeColumnKey(key);
+  }
+
+  static isLapColumn(col: ColumnDefinition | string): boolean {
+    if (!col) return false;
+    const key = typeof col === "string" ? col : col.propertyName || "";
+    return RacedayLayoutUtils.isLapColumnKey(key);
+  }
+
+  static isLapOrTimeColumn(col: ColumnDefinition | string): boolean {
+    if (!col) return false;
+    const key = typeof col === "string" ? col : col.propertyName || "";
+    return RacedayLayoutUtils.isLapOrTimeColumnKey(key);
+  }
+
   static isImageProperty(prop: string): boolean {
     if (!prop) return false;
     const base = prop.split("_")[0];

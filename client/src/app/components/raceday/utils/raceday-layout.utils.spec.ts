@@ -807,4 +807,87 @@ describe("RacedayLayoutUtils", () => {
       expect(countdown?.customSettings?.["glowGreenOverlap"]).toBe(55);
     });
   });
+
+  describe("Column Type Identification (Time and Lap columns)", () => {
+    it("should correctly identify time column keys", () => {
+      expect(RacedayLayoutUtils.isTimeColumnKey("lastLapTime")).toBeTrue();
+      expect(RacedayLayoutUtils.isTimeColumnKey("bestLapTime")).toBeTrue();
+      expect(RacedayLayoutUtils.isTimeColumnKey("averageLapTime")).toBeTrue();
+      expect(RacedayLayoutUtils.isTimeColumnKey("medianLapTime")).toBeTrue();
+      expect(RacedayLayoutUtils.isTimeColumnKey("lastLaps")).toBeTrue();
+      expect(RacedayLayoutUtils.isTimeColumnKey("reactionTime")).toBeTrue();
+      expect(RacedayLayoutUtils.isTimeColumnKey("totalTime")).toBeTrue();
+      expect(RacedayLayoutUtils.isTimeColumnKey("overallTotalTime")).toBeTrue();
+      expect(RacedayLayoutUtils.isTimeColumnKey("segmentTime")).toBeTrue();
+      expect(
+        RacedayLayoutUtils.isTimeColumnKey("standardDeviation"),
+      ).toBeTrue();
+      expect(RacedayLayoutUtils.isTimeColumnKey("averageTop5")).toBeTrue();
+      expect(RacedayLayoutUtils.isTimeColumnKey("top2Consecutive")).toBeTrue();
+      expect(RacedayLayoutUtils.isTimeColumnKey("gapLeader")).toBeTrue();
+      expect(RacedayLayoutUtils.isTimeColumnKey("gapPosition")).toBeTrue();
+      expect(RacedayLayoutUtils.isTimeColumnKey("gapLeaderF1")).toBeTrue();
+      expect(
+        RacedayLayoutUtils.isTimeColumnKey("ghostPacingLeaderAvg"),
+      ).toBeTrue();
+
+      // Compound keys with suffixes
+      expect(
+        RacedayLayoutUtils.isTimeColumnKey("lastLapTime_center-center"),
+      ).toBeTrue();
+
+      // Non-time keys
+      expect(RacedayLayoutUtils.isTimeColumnKey("")).toBeFalse();
+      expect(RacedayLayoutUtils.isTimeColumnKey(null as any)).toBeFalse();
+      expect(RacedayLayoutUtils.isTimeColumnKey("driver.name")).toBeFalse();
+      expect(RacedayLayoutUtils.isTimeColumnKey("lapCount")).toBeFalse();
+      expect(RacedayLayoutUtils.isTimeColumnKey("laneNumber")).toBeFalse();
+    });
+
+    it("should correctly identify lap column keys", () => {
+      expect(RacedayLayoutUtils.isLapColumnKey("lapCount")).toBeTrue();
+      expect(RacedayLayoutUtils.isLapColumnKey("overallLapCount")).toBeTrue();
+      expect(
+        RacedayLayoutUtils.isLapColumnKey("lapCount_center-center"),
+      ).toBeTrue();
+
+      expect(RacedayLayoutUtils.isLapColumnKey("")).toBeFalse();
+      expect(RacedayLayoutUtils.isLapColumnKey(null as any)).toBeFalse();
+      expect(RacedayLayoutUtils.isLapColumnKey("lastLapTime")).toBeFalse();
+      expect(RacedayLayoutUtils.isLapColumnKey("driver.name")).toBeFalse();
+      expect(RacedayLayoutUtils.isLapColumnKey("physicalLapCount")).toBeFalse();
+    });
+
+    it("should correctly identify lap or time column keys", () => {
+      expect(RacedayLayoutUtils.isLapOrTimeColumnKey("lapCount")).toBeTrue();
+      expect(RacedayLayoutUtils.isLapOrTimeColumnKey("lastLapTime")).toBeTrue();
+      expect(
+        RacedayLayoutUtils.isLapOrTimeColumnKey("driver.name"),
+      ).toBeFalse();
+      expect(RacedayLayoutUtils.isLapOrTimeColumnKey("carNumber")).toBeFalse();
+    });
+
+    it("should correctly identify column definitions and string arguments", () => {
+      const timeCol = new ColumnDefinition("Time", "lastLapTime", 100);
+      const lapCol = new ColumnDefinition("Laps", "lapCount", 100);
+      const nameCol = new ColumnDefinition("Name", "driver.name", 100);
+
+      expect(RacedayLayoutUtils.isTimeColumn(timeCol)).toBeTrue();
+      expect(RacedayLayoutUtils.isTimeColumn(nameCol)).toBeFalse();
+      expect(RacedayLayoutUtils.isTimeColumn("bestLapTime")).toBeTrue();
+      expect(RacedayLayoutUtils.isTimeColumn("driver.nickname")).toBeFalse();
+      expect(RacedayLayoutUtils.isTimeColumn(null as any)).toBeFalse();
+
+      expect(RacedayLayoutUtils.isLapColumn(lapCol)).toBeTrue();
+      expect(RacedayLayoutUtils.isLapColumn(timeCol)).toBeFalse();
+      expect(RacedayLayoutUtils.isLapColumn("overallLapCount")).toBeTrue();
+      expect(RacedayLayoutUtils.isLapColumn("driver.name")).toBeFalse();
+      expect(RacedayLayoutUtils.isLapColumn(null as any)).toBeFalse();
+
+      expect(RacedayLayoutUtils.isLapOrTimeColumn(timeCol)).toBeTrue();
+      expect(RacedayLayoutUtils.isLapOrTimeColumn(lapCol)).toBeTrue();
+      expect(RacedayLayoutUtils.isLapOrTimeColumn(nameCol)).toBeFalse();
+      expect(RacedayLayoutUtils.isLapOrTimeColumn(null as any)).toBeFalse();
+    });
+  });
 });

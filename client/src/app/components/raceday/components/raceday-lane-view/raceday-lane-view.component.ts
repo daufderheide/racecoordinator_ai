@@ -212,6 +212,68 @@ export class RacedayLaneViewComponent implements AfterViewInit, OnDestroy {
     return RacedayLayoutUtils.isPacingProperty(property || "");
   }
 
+  getPacingDecimalPlaces(col?: any, entry?: any): number {
+    const s =
+      this.widget()?.customSettings ||
+      (this.parent() as any)?.laneViewWidgetSettings ||
+      (this.parent() as any)?.currentRacedayLayout?.widgets?.find?.(
+        (w: any) => w.widgetType === "lane-view",
+      )?.customSettings;
+    const customColDecimals =
+      s?.["columnDecimals"] || s?.["columnDecimalPlaces"];
+    const colKey = typeof col === "string" ? col : col?.propertyName;
+    const propKey = typeof entry === "string" ? entry : entry?.property;
+
+    if (customColDecimals) {
+      if (
+        colKey &&
+        customColDecimals[colKey] !== undefined &&
+        customColDecimals[colKey] !== null &&
+        customColDecimals[colKey] !== ""
+      ) {
+        return Math.min(3, Math.max(0, Number(customColDecimals[colKey])));
+      }
+      if (
+        propKey &&
+        customColDecimals[propKey] !== undefined &&
+        customColDecimals[propKey] !== null &&
+        customColDecimals[propKey] !== ""
+      ) {
+        return Math.min(3, Math.max(0, Number(customColDecimals[propKey])));
+      }
+      if (colKey && colKey.includes("_")) {
+        for (const subKey of colKey.split("_")) {
+          if (
+            customColDecimals[subKey] !== undefined &&
+            customColDecimals[subKey] !== null &&
+            customColDecimals[subKey] !== ""
+          ) {
+            return Math.min(3, Math.max(0, Number(customColDecimals[subKey])));
+          }
+        }
+      }
+      for (const k of Object.keys(customColDecimals)) {
+        if (
+          k.startsWith("ghostPacing") &&
+          customColDecimals[k] !== undefined &&
+          customColDecimals[k] !== null &&
+          customColDecimals[k] !== ""
+        ) {
+          return Math.min(3, Math.max(0, Number(customColDecimals[k])));
+        }
+      }
+    }
+
+    const isInset = entry?.anchor && !entry.anchor.startsWith("center-");
+    if (isInset && s?.["insetTimeDecimalPlaces"] !== undefined) {
+      return Math.min(3, Math.max(0, Number(s["insetTimeDecimalPlaces"])));
+    }
+    if (s?.["timeDecimalPlaces"] !== undefined) {
+      return Math.min(3, Math.max(0, Number(s["timeDecimalPlaces"])));
+    }
+    return 3;
+  }
+
   isLaneEmpty(hd: any): boolean {
     if (this.parent()?.isEmptyDriver) {
       return this.parent().isEmptyDriver(hd);

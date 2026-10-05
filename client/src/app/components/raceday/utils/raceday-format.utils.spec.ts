@@ -455,6 +455,52 @@ describe("RacedayFormatUtils", () => {
         ),
       ).toBe("--");
     });
+
+    it("should respect columnDecimals override for ghost pacing columns", () => {
+      const mockHd = {
+        actualDriver: { name: "Driver A" },
+        ghostLapTime: 5.234,
+        lastLapTime: 5.0,
+      } as any;
+      const ctxWithOverride = {
+        ...ctx,
+        laneViewWidgetSettings: {
+          columnDecimals: { ghostPacing: 1 },
+        },
+      };
+
+      const result = RacedayFormatUtils.formatValue(
+        "ghostPacing",
+        undefined,
+        mockHd,
+        undefined,
+        ctxWithOverride,
+      );
+      expect(result).toBe("+0.2s");
+    });
+
+    it("should normalize negative zero when rounding delta to zero", () => {
+      const mockHd = {
+        actualDriver: { name: "Driver A" },
+        ghostLapTime: 5.0,
+        lastLapTime: 5.001,
+      } as any;
+      const ctxWithZeroDecimals = {
+        ...ctx,
+        laneViewWidgetSettings: {
+          columnDecimals: { ghostPacing: 1 },
+        },
+      };
+
+      const result = RacedayFormatUtils.formatValue(
+        "ghostPacing",
+        undefined,
+        mockHd,
+        undefined,
+        ctxWithZeroDecimals,
+      );
+      expect(result).toBe("0.0s");
+    });
   });
 
   describe("formatValue - recordLapTime", () => {
@@ -1654,6 +1700,111 @@ describe("RacedayFormatUtils", () => {
           ctx,
         ),
       ).toBe("--");
+    });
+  });
+
+  describe("formatValue - Column Specific Decimals", () => {
+    it("should allow two different time columns to have different decimal places", () => {
+      ctx.laneViewWidgetSettings = {
+        timeDecimalPlaces: 3,
+        lapDecimalPlaces: 2,
+        columnDecimals: {
+          lastLapTime: 1,
+          bestLapTime: 4,
+        },
+      } as any;
+
+      const lastLapCol = { propertyName: "lastLapTime" } as any;
+      const bestLapCol = { propertyName: "bestLapTime" } as any;
+
+      const lastLapFormatted = RacedayFormatUtils.formatValue(
+        "lastLapTime",
+        5.1234,
+        hd,
+        lastLapCol,
+        ctx,
+      );
+      const bestLapFormatted = RacedayFormatUtils.formatValue(
+        "bestLapTime",
+        5.1234,
+        hd,
+        bestLapCol,
+        ctx,
+      );
+
+      expect(lastLapFormatted).toBe("5.1");
+      expect(bestLapFormatted).toBe("5.1234");
+    });
+
+    it("should allow column-specific lap decimal places", () => {
+      ctx.laneViewWidgetSettings = {
+        timeDecimalPlaces: 3,
+        lapDecimalPlaces: 2,
+        columnDecimals: {
+          lapCount: 1,
+        },
+      } as any;
+
+      hd.reactionTime = 1;
+      const lapCol = { propertyName: "lapCount" } as any;
+      const result = RacedayFormatUtils.formatValue(
+        "lapCount",
+        10.456,
+        hd,
+        lapCol,
+        ctx,
+      );
+      expect(result).toBe("10.5");
+    });
+
+    it("should fall back to widget timeDecimalPlaces and lapDecimalPlaces when columnDecimals is not set", () => {
+      ctx.laneViewWidgetSettings = {
+        timeDecimalPlaces: 3,
+        lapDecimalPlaces: 2,
+      } as any;
+
+      hd.reactionTime = 1;
+      const lastLapCol = { propertyName: "lastLapTime" } as any;
+      const lapCol = { propertyName: "lapCount" } as any;
+
+      const lastLapFormatted = RacedayFormatUtils.formatValue(
+        "lastLapTime",
+        5.1234,
+        hd,
+        lastLapCol,
+        ctx,
+      );
+      const lapFormatted = RacedayFormatUtils.formatValue(
+        "lapCount",
+        10.456,
+        hd,
+        lapCol,
+        ctx,
+      );
+
+      expect(lastLapFormatted).toBe("5.123");
+      expect(lapFormatted).toBe("10.46");
+    });
+
+    it("should use inset decimal places when column is an inset anchor even if columnDecimals exists", () => {
+      ctx.laneViewWidgetSettings = {
+        timeDecimalPlaces: 3,
+        lapDecimalPlaces: 2,
+        insetTimeDecimalPlaces: 1,
+        columnDecimals: {
+          lastLapTime: 4,
+        },
+      } as any;
+
+      const result = RacedayFormatUtils.formatValue(
+        "lastLapTime",
+        5.1234,
+        hd,
+        undefined,
+        ctx,
+        "top-right",
+      );
+      expect(result).toBe("5.1");
     });
   });
 });

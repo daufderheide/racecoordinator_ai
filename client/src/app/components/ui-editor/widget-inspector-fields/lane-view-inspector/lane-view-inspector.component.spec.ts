@@ -64,9 +64,9 @@ describe("LaneViewInspectorComponent", () => {
     expect(changeSpy).toHaveBeenCalled();
   });
 
-  it("should bind timeDecimalPlaces and emit change on selection", () => {
+  it("should bind insetTimeDecimalPlaces and emit change on selection", () => {
     const selectEl =
-      fixture.nativeElement.querySelectorAll("app-custom-select")[1];
+      fixture.nativeElement.querySelectorAll("app-custom-select")[2];
     const trigger = selectEl.querySelector(
       ".custom-select-trigger",
     ) as HTMLElement;
@@ -77,13 +77,13 @@ describe("LaneViewInspectorComponent", () => {
     ) as HTMLElement;
     opt?.click();
     fixture.detectChanges();
-    expect(Number(component.settings().timeDecimalPlaces)).toBe(1);
+    expect(Number(component.settings().insetTimeDecimalPlaces)).toBe(1);
     expect(changeSpy).toHaveBeenCalled();
   });
 
-  it("should bind lapDecimalPlaces and emit change on selection", () => {
+  it("should bind insetLapDecimalPlaces and emit change on selection", () => {
     const selectEl =
-      fixture.nativeElement.querySelectorAll("app-custom-select")[2];
+      fixture.nativeElement.querySelectorAll("app-custom-select")[3];
     const trigger = selectEl.querySelector(
       ".custom-select-trigger",
     ) as HTMLElement;
@@ -94,7 +94,7 @@ describe("LaneViewInspectorComponent", () => {
     ) as HTMLElement;
     opt?.click();
     fixture.detectChanges();
-    expect(Number(component.settings().lapDecimalPlaces)).toBe(0);
+    expect(Number(component.settings().insetLapDecimalPlaces)).toBe(0);
     expect(changeSpy).toHaveBeenCalled();
   });
 
@@ -669,6 +669,141 @@ describe("LaneViewInspectorComponent", () => {
 
       // drag handle precedes col-info in DOM and acts as sibling in flex layout
       expect(dragHandle.nextElementSibling).toBe(colInfo);
+    });
+  });
+
+  describe("Column Decimals Management", () => {
+    it("should correctly identify lap and time columns", () => {
+      expect(component.isTimeColumn("lastLapTime")).toBeTrue();
+      expect(component.isTimeColumn("bestLapTime")).toBeTrue();
+      expect(component.isTimeColumn("lapCount")).toBeFalse();
+      expect(component.isTimeColumn("driver.name")).toBeFalse();
+
+      expect(component.isLapColumn("lapCount")).toBeTrue();
+      expect(component.isLapColumn("overallLapCount")).toBeTrue();
+      expect(component.isLapColumn("lastLapTime")).toBeFalse();
+      expect(component.isLapColumn("driver.name")).toBeFalse();
+
+      expect(component.isLapOrTimeColumn("lastLapTime")).toBeTrue();
+      expect(component.isLapOrTimeColumn("lapCount")).toBeTrue();
+      expect(component.isLapOrTimeColumn("driver.name")).toBeFalse();
+    });
+
+    it("should resolve primary property from customUi columnLayoutsJson if present", () => {
+      fixture.componentRef.setInput("customUi", {
+        columnLayoutsJson: JSON.stringify({
+          col1: { "center-center": "lastLapTime" },
+        }),
+      } as any);
+
+      expect(component.isTimeColumn("col1")).toBeTrue();
+      expect(component.isLapOrTimeColumn("col1")).toBeTrue();
+    });
+
+    it("should default getColumnDecimalPlaces to timeDecimalPlaces or lapDecimalPlaces when unset", () => {
+      component.settings().timeDecimalPlaces = 3;
+      component.settings().lapDecimalPlaces = 2;
+
+      expect(component.getColumnDecimalPlaces("lastLapTime")).toBe(3);
+      expect(component.getColumnDecimalPlaces("lapCount")).toBe(2);
+    });
+
+    it("should return column-specific decimal places when configured within [0, 3]", () => {
+      component.settings().columnDecimals = {
+        lastLapTime: 1,
+        bestLapTime: 3,
+        lapCount: 0,
+      };
+
+      expect(component.getColumnDecimalPlaces("lastLapTime")).toBe(1);
+      expect(component.getColumnDecimalPlaces("bestLapTime")).toBe(3);
+      expect(component.getColumnDecimalPlaces("lapCount")).toBe(0);
+    });
+
+    it("should allow setting decimal places individually on different columns within [0, 3] and emit change", () => {
+      fixture.componentRef.setInput("widget", {
+        id: "widget-lane-view",
+        widgetType: "lane-view",
+        customSettings: {},
+      } as any);
+
+      component.setColumnDecimalPlaces("lastLapTime", 1);
+      component.setColumnDecimalPlaces("bestLapTime", 3);
+
+      expect(component.getColumnDecimalPlaces("lastLapTime")).toBe(1);
+      expect(component.getColumnDecimalPlaces("bestLapTime")).toBe(3);
+      expect(
+        component.widget().customSettings["columnDecimals"]["lastLapTime"],
+      ).toBe(1);
+      expect(
+        component.widget().customSettings["columnDecimals"]["bestLapTime"],
+      ).toBe(3);
+      expect(changeSpy).toHaveBeenCalled();
+    });
+
+    it("should clean up columnDecimals when deleteColumn is called", () => {
+      fixture.componentRef.setInput("widget", {
+        id: "widget-lane-view",
+        widgetType: "lane-view",
+        customSettings: {
+          columnDecimals: {
+            lastLapTime: 1,
+            bestLapTime: 3,
+          },
+        },
+      } as any);
+      component.settings().columnDecimals = {
+        lastLapTime: 1,
+        bestLapTime: 3,
+      };
+
+      component.deleteColumn("lastLapTime");
+
+      expect(
+        component.widget().customSettings["columnDecimals"]["lastLapTime"],
+      ).toBeUndefined();
+      expect(
+        component.widget().customSettings["columnDecimals"]["bestLapTime"],
+      ).toBe(3);
+      expect(
+        component.settings().columnDecimals["lastLapTime"],
+      ).toBeUndefined();
+      expect(component.settings().columnDecimals["bestLapTime"]).toBe(3);
+      expect(changeSpy).toHaveBeenCalled();
+    });
+
+    it("should render col-decimals-wrapper with [0, 3] options for time and lap columns but not other columns", () => {
+      fixture.componentRef.setInput("globalSettings", {
+        racedayColumns: ["driver.name", "lastLapTime", "lapCount"],
+      });
+      fixture.detectChanges();
+
+      const items = fixture.nativeElement.querySelectorAll(
+        ".inspector-column-item",
+      );
+      expect(items.length).toBe(3);
+
+      const nameDecimals = items[0].querySelector(".col-decimals-wrapper");
+      expect(nameDecimals).toBeNull();
+
+      const timeDecimals = items[1].querySelector(".col-decimals-wrapper");
+      expect(timeDecimals).toBeTruthy();
+
+      const lapDecimals = items[2].querySelector(".col-decimals-wrapper");
+      expect(lapDecimals).toBeTruthy();
+
+      // Range is strictly [0, 3] for both
+      const timeOptions = items[1].querySelectorAll("app-custom-option");
+      const timeValues = Array.from(timeOptions).map((o: any) =>
+        o.textContent?.trim(),
+      );
+      expect(timeValues).toEqual(["0", "1", "2", "3"]);
+
+      const lapOptions = items[2].querySelectorAll("app-custom-option");
+      const lapValues = Array.from(lapOptions).map((o: any) =>
+        o.textContent?.trim(),
+      );
+      expect(lapValues).toEqual(["0", "1", "2", "3"]);
     });
   });
 });
