@@ -279,12 +279,14 @@ describe("RacedayHeatListComponent", () => {
     expect(timeEl.textContent.trim()).toBe("00:45.0");
   });
 
-  it("should handle lane and heat columns configuration", () => {
+  it("should handle lane and heat columns configuration with content-aware dynamic min-width", () => {
+    // Default widget has 4 lanes across with 9-char name => min-width 516px
     expect(component.getHeatColumnsStyle()).toBe(
-      "repeat(auto-fill, minmax(280px, 1fr))",
+      "repeat(auto-fill, minmax(516px, 1fr))",
     );
     expect(component.getLaneColumnsStyle()).toBe("repeat(4, 1fr)");
 
+    // Fixed heatColumns and laneColumns
     fixture.componentRef.setInput("widget", {
       ...mockWidget,
       customSettings: {
@@ -297,6 +299,126 @@ describe("RacedayHeatListComponent", () => {
 
     expect(component.getHeatColumnsStyle()).toBe("repeat(2, 1fr)");
     expect(component.getLaneColumnsStyle()).toBe("repeat(1, 1fr)");
+  });
+
+  it("should dynamically calculate card min-width based on visible summary columns", () => {
+    // When summary is completely disabled and laneColumns is 1, base min-width floor of 280px applies
+    fixture.componentRef.setInput("widget", {
+      ...mockWidget,
+      customSettings: {
+        ...mockWidget.customSettings,
+        heatColumns: "auto",
+        laneColumns: "1",
+        showActiveSummary: false,
+        showCompletedSummary: false,
+        showFutureSummary: false,
+        showCurrentHeatFlag: false,
+        showCurrentHeatTime: false,
+      },
+    });
+    fixture.detectChanges();
+
+    expect(component.calculateAutoCardMinWidth()).toBe(280);
+    expect(component.getHeatColumnsStyle()).toBe(
+      "repeat(auto-fill, minmax(280px, 1fr))",
+    );
+
+    // When all summary columns (Pos, Driver, Laps, Best, Gap, Avg, Median) are enabled
+    fixture.componentRef.setInput("widget", {
+      ...mockWidget,
+      customSettings: {
+        ...mockWidget.customSettings,
+        heatColumns: "auto",
+        showActiveSummary: true,
+        summaryShowPosition: true,
+        summaryShowDriver: true,
+        summaryShowLaps: true,
+        summaryShowBestLap: true,
+        summaryShowGap: true,
+        summaryShowAverageLap: true,
+        summaryShowMedianLap: true,
+      },
+    });
+    fixture.detectChanges();
+
+    const fullTableMinWidth = component.calculateAutoCardMinWidth();
+    expect(fullTableMinWidth).toBeGreaterThanOrEqual(550);
+    expect(component.getHeatColumnsStyle()).toBe(
+      `repeat(auto-fill, minmax(${fullTableMinWidth}px, 1fr))`,
+    );
+  });
+
+  it("should increase card min-width when laneColumns requires multiple columns", () => {
+    fixture.componentRef.setInput("widget", {
+      ...mockWidget,
+      customSettings: {
+        ...mockWidget.customSettings,
+        heatColumns: "auto",
+        showActiveSummary: false,
+        showCompletedSummary: false,
+        showFutureSummary: false,
+        laneColumns: "3",
+      },
+    });
+    fixture.detectChanges();
+
+    const minWidth = component.calculateAutoCardMinWidth();
+    // 3 columns * 120 + 2 * 4 + 24 = 392
+    expect(minWidth).toBe(392);
+    expect(component.getHeatColumnsStyle()).toBe(
+      "repeat(auto-fill, minmax(392px, 1fr))",
+    );
+  });
+
+  it("should dynamically expand card min-width based on driver name length and cap at maximum characters", () => {
+    // 12-character name: text width = round(12 * 7.5 + 8) = 98 => badge width = 142px
+    // 4 columns: 4 * 142 + 3 * 4 + 24 = 604px
+    const heatsWithLongName = [
+      {
+        heatNumber: 1,
+        isCompleted: false,
+        heatDrivers: [
+          {
+            laneIndex: 0,
+            driver: { nickname: "DriverTwenty" }, // 12 characters
+          },
+        ],
+      },
+    ];
+
+    fixture.componentRef.setInput("heats", heatsWithLongName);
+    fixture.componentRef.setInput("widget", {
+      ...mockWidget,
+      customSettings: {
+        ...mockWidget.customSettings,
+        heatColumns: "auto",
+        laneColumns: "auto",
+        showActiveSummary: false,
+      },
+    });
+    fixture.detectChanges();
+
+    expect(component.calculateAutoCardMinWidth()).toBe(604);
+
+    // 30-character outlier: capped at 13 characters => text width = round(13 * 7.5 + 8) = 106 => badge = 150px
+    // 4 columns: 4 * 150 + 3 * 4 + 24 = 636px
+    const heatsWithSuperLongName = [
+      {
+        heatNumber: 1,
+        isCompleted: false,
+        heatDrivers: [
+          {
+            laneIndex: 0,
+            driver: { nickname: "SuperLongDriverNameExceedingMax" }, // 31 characters
+          },
+        ],
+      },
+    ];
+
+    fixture.componentRef.setInput("heats", heatsWithSuperLongName);
+    fixture.detectChanges();
+
+    expect(component.calculateAutoCardMinWidth()).toBe(636);
   });
 
   it("should toggle title header based on showHeader setting", () => {
@@ -561,6 +683,25 @@ describe("RacedayHeatListComponent", () => {
       expect(rows.length).toBe(4); // 4 track lanes
       expect(rows[0].textContent).toContain("Flash");
       expect(rows[1].textContent).toContain("Arrow");
+      expect(summaryTable2.style.getPropertyValue("--lane-count")).toBe("4");
+    });
+
+    it("should set --lane-count on summary table so all lanes divide height equally", () => {
+      fixture.componentRef.setInput("heats", mockTelemetryHeats);
+      fixture.componentRef.setInput("currentHeat", { heatNumber: 2 } as Heat);
+      fixture.componentRef.setInput("widget", {
+        ...mockWidget,
+        customSettings: {
+          ...mockWidget.customSettings,
+          showCompletedSummary: true,
+        },
+      });
+      fixture.detectChanges();
+
+      const heat1 = fixture.nativeElement.querySelector("#heat-card-1");
+      const table = heat1.querySelector(".heat-summary-table");
+      expect(table).toBeTruthy();
+      expect(table.style.getPropertyValue("--lane-count")).toBe("4");
     });
 
     it("should ALWAYS sort summary rows by lane number and never by heat position", () => {
@@ -966,6 +1107,98 @@ describe("RacedayHeatListComponent", () => {
         row.querySelector(".summary-cell-median-lap").textContent.trim(),
       ).toBe("--");
     });
+
+    it("should only display team name in summary data when driver is a team, and not both driver and team name", () => {
+      const heatsWithTeam = [
+        {
+          heatNumber: 1,
+          isCompleted: false,
+          heatDrivers: [
+            {
+              laneIndex: 0,
+              driver: { nickname: "Speedy" },
+              participant: { team: null },
+            },
+            {
+              laneIndex: 1,
+              driver: { nickname: "Rocket" },
+              participant: { team: { name: "Team Red" } },
+            },
+          ],
+        },
+      ];
+
+      fixture.componentRef.setInput("heats", heatsWithTeam);
+      fixture.componentRef.setInput("currentHeat", { heatNumber: 1 } as Heat);
+      fixture.componentRef.setInput("widget", {
+        ...mockWidget,
+        customSettings: {
+          ...mockWidget.customSettings,
+          showActiveSummary: true,
+          summaryShowDriver: true,
+        },
+      });
+      fixture.detectChanges();
+
+      const heat1 = fixture.nativeElement.querySelector("#heat-card-1");
+      const rows = heat1.querySelectorAll(".summary-lane-row");
+
+      // Lane 1 is individual driver: shows Speedy
+      const lane1DriverCell = rows[0].querySelector(".summary-cell-driver");
+      expect(lane1DriverCell.textContent.trim()).toBe("Speedy");
+      expect(
+        lane1DriverCell.querySelector(".summary-driver-nickname"),
+      ).toBeTruthy();
+      expect(lane1DriverCell.querySelector(".summary-team-name")).toBeFalsy();
+
+      // Lane 2 is team driver: shows Team Red only, NOT Rocket
+      const lane2DriverCell = rows[1].querySelector(".summary-cell-driver");
+      expect(lane2DriverCell.textContent.trim()).toBe("Team Red");
+      expect(lane2DriverCell.querySelector(".summary-team-name")).toBeTruthy();
+      expect(
+        lane2DriverCell.querySelector(".summary-driver-nickname"),
+      ).toBeFalsy();
+      expect(lane2DriverCell.textContent).not.toContain("Rocket");
+    });
+
+    it("should continue to display both driver nickname and team name when heat is NOT showing summary data", () => {
+      const heatsWithTeam = [
+        {
+          heatNumber: 1,
+          isCompleted: false,
+          heatDrivers: [
+            {
+              laneIndex: 0,
+              driver: { nickname: "Rocket" },
+              participant: { team: { name: "Team Red" } },
+            },
+          ],
+        },
+      ];
+
+      fixture.componentRef.setInput("heats", heatsWithTeam);
+      fixture.componentRef.setInput("currentHeat", { heatNumber: 1 } as Heat);
+      fixture.componentRef.setInput("widget", {
+        ...mockWidget,
+        customSettings: {
+          ...mockWidget.customSettings,
+          showActiveSummary: false, // Summary disabled -> standard lane badge view
+        },
+      });
+      fixture.detectChanges();
+
+      const heat1 = fixture.nativeElement.querySelector("#heat-card-1");
+      const badge = heat1.querySelector(".lane-badge-item");
+      expect(badge).toBeTruthy();
+
+      const driverNick = badge.querySelector(".lane-driver-nickname");
+      const teamName = badge.querySelector(".lane-team-name");
+
+      expect(driverNick).toBeTruthy();
+      expect(driverNick.textContent.trim()).toBe("Rocket");
+      expect(teamName).toBeTruthy();
+      expect(teamName.textContent.trim()).toBe("Team Red");
+    });
   });
 
   describe("Group Display", () => {
@@ -1165,6 +1398,55 @@ describe("RacedayHeatListComponent", () => {
       expect(row1.style.backgroundColor).toBe("");
       // Font color should come from summaryRowTextColor
       expect(row1.style.color).toBe("rgb(18, 52, 86)");
+    });
+
+    it("should render lane-badge-item and heat-lanes-grid elements with stretching layout across heats", () => {
+      const mixedHeats = [
+        {
+          heatNumber: 1,
+          isCompleted: false,
+          heatDrivers: [
+            { laneIndex: 0, driver: { nickname: "Speedy" } },
+            { laneIndex: 1, driver: { nickname: "Rocket" } },
+          ],
+        },
+        {
+          heatNumber: 2,
+          isCompleted: false,
+          heatDrivers: [
+            { laneIndex: 0, driver: { nickname: "Driver A" } },
+            {
+              laneIndex: 1,
+              driver: { nickname: "Driver B" },
+              participant: { team: { name: "Team Beta" } },
+            },
+          ],
+        },
+      ];
+
+      fixture.componentRef.setInput("heats", mixedHeats);
+      fixture.componentRef.setInput("currentHeat", null);
+      fixture.componentRef.setInput("widget", {
+        ...mockWidget,
+        customSettings: {
+          ...mockWidget.customSettings,
+          showActiveSummary: false,
+          showFutureSummary: false,
+        },
+      });
+      fixture.detectChanges();
+
+      const heat1 = fixture.nativeElement.querySelector("#heat-card-1");
+      const heat2 = fixture.nativeElement.querySelector("#heat-card-2");
+
+      expect(heat1.querySelector(".heat-lanes-grid")).toBeTruthy();
+      expect(heat2.querySelector(".heat-lanes-grid")).toBeTruthy();
+
+      const heat1Badges = heat1.querySelectorAll(".lane-badge-item");
+      const heat2Badges = heat2.querySelectorAll(".lane-badge-item");
+
+      expect(heat1Badges.length).toBe(4);
+      expect(heat2Badges.length).toBe(4);
     });
   });
 });

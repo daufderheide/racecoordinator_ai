@@ -297,7 +297,9 @@ public class DatabaseInitializer {
         builder.withPitInAudio(new AudioConfig("preset", "default_pit_in", ""));
         needsUpdate = true;
       }
-      if (isAudioConfigMissing(driver.getFuelAudio())) {
+      if (isAudioConfigMissing(driver.getFuelAudio())
+          || (driver.getFuelAudio() != null
+              && "preset".equalsIgnoreCase(driver.getFuelAudio().getType()))) {
         builder.withFuelAudio(new AudioConfig("audio_set", "default_fuel_level", ""));
         needsUpdate = true;
       }
@@ -671,21 +673,21 @@ public class DatabaseInitializer {
 
     if (CustomUI.DEFAULT_UI_ID.equals(entityId)) {
       foundFlags[0] = true;
-      if (CustomUI.isLegacyDefaultName(name)) {
+      if (CustomUI.isLegacyDefaultName(name) && !CustomUI.DEFAULT_UI_NAME.equals(name)) {
         name = CustomUI.DEFAULT_UI_NAME;
         updated = true;
       }
     }
     if (CustomUI.PRACTICE_UI_ID.equals(entityId)) {
       foundFlags[1] = true;
-      if (CustomUI.isLegacyPracticeName(name)) {
+      if (CustomUI.isLegacyPracticeName(name) && !CustomUI.PRACTICE_UI_NAME.equals(name)) {
         name = CustomUI.PRACTICE_UI_NAME;
         updated = true;
       }
     }
     if (CustomUI.FUEL_UI_ID.equals(entityId)) {
       foundFlags[2] = true;
-      if (CustomUI.isLegacyFuelName(name)) {
+      if (CustomUI.isLegacyFuelName(name) && !CustomUI.FUEL_UI_NAME.equals(name)) {
         name = CustomUI.FUEL_UI_NAME;
         updated = true;
       }

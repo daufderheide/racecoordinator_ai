@@ -808,7 +808,7 @@ public class AssetDefaultsInitializer {
         uiId = CustomUI.DEFAULT_UI_ID;
         updated = true;
       }
-      if (Theme.isLegacyDefaultName(name)) {
+      if (Theme.isLegacyDefaultName(name) && !Theme.DEFAULT_THEME_NAME.equals(name)) {
         name = Theme.DEFAULT_THEME_NAME;
         updated = true;
       }
@@ -819,7 +819,7 @@ public class AssetDefaultsInitializer {
         uiId = CustomUI.PRACTICE_UI_ID;
         updated = true;
       }
-      if (Theme.isLegacyPracticeName(name)) {
+      if (Theme.isLegacyPracticeName(name) && !Theme.PRACTICE_THEME_NAME.equals(name)) {
         name = Theme.PRACTICE_THEME_NAME;
         updated = true;
       }
@@ -830,7 +830,7 @@ public class AssetDefaultsInitializer {
         uiId = CustomUI.FUEL_UI_ID;
         updated = true;
       }
-      if (Theme.isLegacyFuelName(name)) {
+      if (Theme.isLegacyFuelName(name) && !Theme.FUEL_THEME_NAME.equals(name)) {
         name = Theme.FUEL_THEME_NAME;
         updated = true;
       }

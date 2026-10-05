@@ -876,5 +876,66 @@ describe("AudioService", () => {
       service.reset();
       expect(service.getCalloutQueue().length).toBe(0);
     });
+
+    it("should log debug instead of error when voice preset playback is aborted or paused", fakeAsync(() => {
+      const abortError = new Error(
+        "The play() request was interrupted by a call to pause().",
+      );
+      abortError.name = "AbortError";
+      mockAudioInstance.play = jasmine
+        .createSpy("play")
+        .and.returnValue(Promise.reject(abortError));
+
+      const config: AudioConfig = { type: "preset", url: "w_heat_half.wav" };
+      service.playCallout(config, "high");
+      tick();
+      tick(500);
+
+      expect(mockLogger.debug).toHaveBeenCalledWith(
+        "Voice preset playback aborted or paused",
+        abortError.message,
+      );
+      expect(mockLogger.error).not.toHaveBeenCalledWith(
+        "Voice preset playback failed",
+        jasmine.anything(),
+      );
+    }));
+
+    it("should log error when voice preset playback fails with unexpected error", fakeAsync(() => {
+      const genericError = new Error("Decoding error");
+      mockAudioInstance.play = jasmine
+        .createSpy("play")
+        .and.returnValue(Promise.reject(genericError));
+
+      const config: AudioConfig = { type: "preset", url: "w_heat_half.wav" };
+      service.playCallout(config, "high");
+      tick();
+      tick(500);
+
+      expect(mockLogger.error).toHaveBeenCalledWith(
+        "Voice preset playback failed",
+        genericError,
+      );
+    }));
+
+    it("should log debug instead of error when SFX playback is aborted or paused", fakeAsync(() => {
+      const abortError = new Error("Interrupted by pause");
+      abortError.name = "AbortError";
+      mockAudioInstance.play = jasmine
+        .createSpy("play")
+        .and.returnValue(Promise.reject(abortError));
+
+      service.playSfx("default_countdown_5");
+      tick();
+
+      expect(mockLogger.debug).toHaveBeenCalledWith(
+        "SFX playback aborted or paused",
+        abortError.message,
+      );
+      expect(mockLogger.error).not.toHaveBeenCalledWith(
+        "Error playing SFX",
+        jasmine.anything(),
+      );
+    }));
   });
 });

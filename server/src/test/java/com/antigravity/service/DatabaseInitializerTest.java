@@ -505,4 +505,20 @@ public class DatabaseInitializerTest {
       assertTrue(updatedJson.contains("\"fuelAudio\":{\"type\":\"audio_set\""));
     }
   }
+
+  @Test
+  public void testBackfillCustomUIs_DoesNotRewriteWhenAlreadyCanonical() {
+    initializer.resetCustomUIs(context);
+    SqliteRepository<CustomUI> uiRepo =
+        new SqliteRepository<>(context, "custom_uis", CustomUI.class);
+    CustomUI defaultUiBefore = uiRepo.findByEntityId(CustomUI.DEFAULT_UI_ID);
+    assertNotNull(defaultUiBefore);
+    assertEquals(CustomUI.DEFAULT_UI_NAME, defaultUiBefore.getName());
+
+    initializer.backfillCustomUIs(context);
+
+    CustomUI defaultUiAfter = uiRepo.findByEntityId(CustomUI.DEFAULT_UI_ID);
+    assertNotNull(defaultUiAfter);
+    assertEquals(CustomUI.DEFAULT_UI_NAME, defaultUiAfter.getName());
+  }
 }

@@ -141,6 +141,38 @@ public class DatabaseContext {
     }
   }
 
+  public synchronized void ensureRaceRecordsTable(String tableName) {
+    if (tableName == null || tableName.trim().isEmpty()) {
+      return;
+    }
+    String normalized = tableName.trim().toLowerCase();
+    if (verifiedTables.contains(normalized)) {
+      return;
+    }
+    try (Statement stmt = getConnection().createStatement()) {
+      stmt.execute(
+          "CREATE TABLE IF NOT EXISTS "
+              + tableName
+              + " (race_id TEXT PRIMARY KEY, records_blob BLOB)");
+      verifiedTables.add(normalized);
+    } catch (SQLException e) {
+      logger.error("Error creating race records table {}", tableName, e);
+    }
+  }
+
+  public boolean isTableVerified(String tableName) {
+    if (tableName == null) {
+      return false;
+    }
+    return verifiedTables.contains(tableName.trim().toLowerCase());
+  }
+
+  public void markTableVerified(String tableName) {
+    if (tableName != null) {
+      verifiedTables.add(tableName.trim().toLowerCase());
+    }
+  }
+
   private void ensureCountersSchema() {
     ensureTable("counters");
   }

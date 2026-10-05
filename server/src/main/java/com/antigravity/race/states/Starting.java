@@ -99,22 +99,22 @@ public class Starting implements IRaceState {
     final long startNanoTime = System.nanoTime();
     final Runnable ticker =
         new Runnable() {
-          private long expectedNextTickNano = 0;
+          private long lastTickNano = 0;
 
           @Override
           public void run() {
             try {
               long tickStartNano = System.nanoTime();
-              if (expectedNextTickNano == 0) {
-                expectedNextTickNano = tickStartNano + 100_000_000L;
+              if (lastTickNano == 0) {
+                lastTickNano = tickStartNano;
               } else {
-                long jitterNs = tickStartNano - expectedNextTickNano;
-                if (jitterNs > 100_000_000L) {
-                  logger.warn("[PERF] Starting ticker delayed by {} ms", jitterNs / 1_000_000L);
-                  expectedNextTickNano = tickStartNano + 100_000_000L;
-                } else {
-                  expectedNextTickNano += 100_000_000L;
+                long intervalNs = tickStartNano - lastTickNano;
+                if (intervalNs > 200_000_000L) {
+                  logger.warn(
+                      "[PERF] Starting ticker delayed by {} ms",
+                      (intervalNs - 100_000_000L) / 1_000_000L);
                 }
+                lastTickNano = tickStartNano;
               }
 
               double elapsed = (tickStartNano - startNanoTime) / 1_000_000_000.0;
@@ -130,11 +130,12 @@ public class Starting implements IRaceState {
                 race.setAutoStartRemaining(displayTime);
                 race.syncRaceState();
                 race.broadcastTime();
-              }
 
-              long tickExecNs = System.nanoTime() - tickStartNano;
-              if (tickExecNs > 25_000_000L) {
-                logger.warn("[PERF] Starting ticker execution took {} ms", tickExecNs / 1_000_000L);
+                long tickExecNs = System.nanoTime() - tickStartNano;
+                if (tickExecNs > 50_000_000L) {
+                  logger.warn(
+                      "[PERF] Starting ticker execution took {} ms", tickExecNs / 1_000_000L);
+                }
               }
             } catch (Throwable t) {
               logger.error("Error in Starting timer", t);

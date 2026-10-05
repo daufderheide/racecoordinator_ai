@@ -1477,7 +1477,7 @@ describe("DataService", () => {
       );
     });
 
-    it("should warn on RaceTime WebSocket interval lag when active ticking gap exceeds 350ms in RACING state", () => {
+    it("should warn on RaceTime WebSocket interval lag when active ticking gap exceeds 450ms in RACING state", () => {
       const loggerSpy = spyOn((service as any).logger, "warn");
       (service as any).raceStateSubject.next(RaceState.RACING);
 
@@ -1497,6 +1497,26 @@ describe("DataService", () => {
           /\[PERF\] RaceTime WebSocket interval lag: \d+ms/,
         ),
       );
+    });
+
+    it("should suppress RaceTime WebSocket interval lag warning during initial subscription hydration grace window", () => {
+      const loggerSpy = spyOn((service as any).logger, "warn");
+      (service as any).raceStateSubject.next(RaceState.RACING);
+
+      // Subscription started 1000ms ago, current time 2000ms (within 3000ms grace window)
+      (service as any).raceSubscriptionStartedAt = 1000;
+      spyOn(performance, "now").and.returnValue(2000);
+      (service as any).lastRaceTimeReceivedAt = 1400; // gap 600ms > 450ms
+
+      const mockRaceData = RaceData.encode({
+        raceTime: { time: 5.0 },
+      }).finish();
+
+      (service as any).handleRaceDataMessage({
+        data: mockRaceData.slice().buffer,
+      });
+
+      expect(loggerSpy).not.toHaveBeenCalled();
     });
 
     it("should not warn on RaceTime gap across race state transition or when timer is not ticking", () => {

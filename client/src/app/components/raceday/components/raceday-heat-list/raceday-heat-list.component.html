@@ -99,7 +99,10 @@
                 widget()?.customSettings?.['summaryBorderColor'] || null
               "
             >
-              <table class="heat-summary-table">
+              <table
+                class="heat-summary-table"
+                [style.--lane-count]="heat.lanes.length"
+              >
                 <thead>
                   <tr
                     class="summary-header-row"
@@ -195,23 +198,28 @@
                       @if (summaryShowDriver()) {
                         <td
                           class="summary-cell-driver"
-                          [title]="lane.driverNickname || lane.teamName"
+                          [title]="
+                            lane.isTeam && lane.teamName
+                              ? lane.teamName
+                              : lane.driverNickname || lane.teamName
+                          "
                         >
                           <div class="summary-driver-info">
-                            <span class="summary-driver-nickname">
-                              {{
-                                lane.isOccupied
-                                  ? lane.driverNickname ||
-                                    ("RD_EMPTY_LANE" | translate)
-                                  : ("RD_EMPTY_LANE" | translate)
-                              }}
-                            </span>
                             @if (lane.isTeam && lane.teamName) {
                               <span
                                 class="summary-team-name"
                                 [title]="lane.teamName"
                               >
                                 {{ lane.teamName }}
+                              </span>
+                            } @else {
+                              <span class="summary-driver-nickname">
+                                {{
+                                  lane.isOccupied
+                                    ? lane.driverNickname ||
+                                      ("RD_EMPTY_LANE" | translate)
+                                    : ("RD_EMPTY_LANE" | translate)
+                                }}
                               </span>
                             }
                           </div>

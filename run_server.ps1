@@ -40,8 +40,150 @@ function Stop-PortProcesses($Port) {
     }
 }
 
+function Get-PortConflictReport($Port, $ServiceName) {
+    $connections = Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction SilentlyContinue
+    if (-not $connections) {
+        $connections = Get-NetTCPConnection -LocalPort $Port -ErrorAction SilentlyContinue
+    }
+
+    $owningPid = $null
+    if ($connections) {
+        $owningPid = ($connections | Select-Object -ExpandProperty OwningProcess -First 1)
+    }
+
+    if ($owningPid -and $owningPid -gt 0) {
+        $proc = Get-CimInstance Win32_Process -Filter "ProcessId = $owningPid" -ErrorAction SilentlyContinue
+        if (-not $proc) {
+            $proc = Get-WmiObject Win32_Process -Filter "ProcessId = $owningPid" -ErrorAction SilentlyContinue
+        }
+
+        $procName = if ($proc) { $proc.Name } else { (Get-Process -Id $owningPid -ErrorAction SilentlyContinue).Name }
+        $cmdLine = if ($proc) { $proc.CommandLine } else { $null }
+        $execPath = if ($proc) { $proc.ExecutablePath } else { (Get-Process -Id $owningPid -ErrorAction SilentlyContinue).Path }
+
+        $appDesc = $null
+        if ($cmdLine) {
+            $lowerCmd = $cmdLine.ToLower()
+            if ($lowerCmd -match "racecoordinator|com\.antigravity\.app|com\.antigravity\.") {
+                if ($lowerCmd -match "app|server") {
+                    $appDesc = "Race Coordinator AI Server (another instance is already running)"
+                } elseif ($lowerCmd -match "ng|client") {
+                    $appDesc = "Race Coordinator AI Client (Angular dev server)"
+                } else {
+                    $appDesc = "Race Coordinator AI (another instance is already running)"
+                }
+            } elseif ($lowerCmd -match "ng(\.cmd|\.ps1|\.js)?[ ]+serve|@angular/cli") {
+                $appDesc = "Angular Dev Server"
+            } elseif ($procName -match "^java(w)?(\.exe)?$" -and $cmdLine -match "-jar\s+[""']?([^""'\s]+\.jar)[""']?") {
+                $jarName = Split-Path -Leaf $Matches[1]
+                $appDesc = "Java Application ($jarName)"
+            } elseif ($procName -match "^java(w)?(\.exe)?$") {
+                $appDesc = "Java Application"
+            } elseif ($procName -match "^node(\.exe)?$") {
+                $appDesc = "Node.js Application"
+            }
+        } elseif ($procName -match "^java(w)?(\.exe)?$") {
+            $appDesc = "Java Application"
+        }
+
+        $lines = @("Failed to start $ServiceName on port $Port.", "", "Port $Port is currently in use by another application:")
+        if ($appDesc) {
+            $lines += "  • Application: $appDesc"
+        }
+        if ($procName) {
+            $lines += "  • Process: $procName (PID: $owningPid)"
+        } else {
+            $lines += "  • PID: $owningPid"
+        }
+        if ($execPath) {
+            $lines += "  • Path: $execPath"
+        }
+        if ($cmdLine) {
+            $shortCmd = $cmdLine.Trim()
+            if ($shortCmd.Length -gt 140) {
+                $shortCmd = $shortCmd.Substring(0, 140) + "..."
+            }
+            $lines += "  • Command: $shortCmd"
+        }
+
+        $lines += ""
+        $lines += "Troubleshooting Steps:"
+        $lines += "1. Close or terminate the conflicting application (PID: $owningPid)."
+        if ($appDesc -and $appDesc -match "Race Coordinator AI") {
+            $lines += "   Another instance of Race Coordinator AI appears to already be running."
+        }
+        if ($ServiceName -eq "Web Server") {
+            $lines += "2. Or launch with '--port <port>' (or set SERVER_PORT / PORT environment variable)."
+        } else {
+            $lines += "2. Or start in headless mode with '-Headless' if you only need the server."
+        }
+        return ($lines -join "`n")
+    }
+
+    # Check for Windows excluded port range (WinNAT / Hyper-V / WSL2)
+    $excludedRange = $null
+    $netshOut = netsh interface ipv4 show excludedportrange protocol=tcp 2>$null
+    if ($netshOut) {
+        foreach ($line in $netshOut) {
+            if ($line -match '^\s*(\d+)\s+(\d+)') {
+                $startP = [int]$Matches[1]
+                $endP = [int]$Matches[2]
+                if ($Port -ge $startP -and $Port -le $endP) {
+                    $excludedRange = "$startP - $endP"
+                    break
+                }
+            }
+        }
+    }
+    if (-not $excludedRange) {
+        $netshIpv6 = netsh interface ipv6 show excludedportrange protocol=tcp 2>$null
+        if ($netshIpv6) {
+            foreach ($line in $netshIpv6) {
+                if ($line -match '^\s*(\d+)\s+(\d+)') {
+                    $startP = [int]$Matches[1]
+                    $endP = [int]$Matches[2]
+                    if ($Port -ge $startP -and $Port -le $endP) {
+                        $excludedRange = "$startP - $endP"
+                        break
+                    }
+                }
+            }
+        }
+    }
+
+    if ($excludedRange) {
+        $lines = @(
+            "Failed to start $ServiceName on port $Port.", "",
+            "Port $Port falls within a Windows excluded port range ($excludedRange).",
+            "This is caused by Windows dynamic port reservations (WinNAT / Hyper-V / WSL2).",
+            "No application is listening on port $Port, but Windows has reserved it.", "",
+            "Troubleshooting Steps:",
+            "1. Restart the Windows NAT service from an Administrator Command Prompt:",
+            "     net stop winnat",
+            "     net start winnat",
+            "2. Or restart your computer.",
+            "3. Or launch with '--port <port>' (or set SERVER_PORT / PORT environment variable)."
+        )
+        return ($lines -join "`n")
+    }
+
+    $lines = @(
+        "Failed to start $ServiceName on port $Port.", "",
+        "Port $Port is already in use by another process or unavailable.", "",
+        "Troubleshooting Steps:",
+        "1. Terminate the process using port $Port, or restart your computer."
+    )
+    if ($ServiceName -eq "Web Server") {
+        $lines += "2. Or launch with '--port <port>' (or set SERVER_PORT / PORT environment variable)."
+    } else {
+        $lines += "2. Or start in headless mode with '-Headless' if you only need the server."
+    }
+    return ($lines -join "`n")
+}
+
 function Show-PortErrorDialog($Title, $Message) {
-    Write-Host "PORT CONFLICT ERROR - $Title: $Message" -ForegroundColor Red
+    Write-Host "`nPORT CONFLICT ERROR - $Title:" -ForegroundColor Red
+    Write-Host "$Message`n" -ForegroundColor Yellow
     try {
         Add-Type -AssemblyName System.Windows.Forms
         [System.Windows.Forms.MessageBox]::Show($Message, $Title, [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Error)
@@ -49,12 +191,14 @@ function Show-PortErrorDialog($Title, $Message) {
 }
 
 if (-not $Headless -and (Test-PortInUse $ClientPort)) {
-    Show-PortErrorDialog "Race Coordinator AI - Client Port Conflict" "Failed to start Angular Client on port $ClientPort.`nPort $ClientPort is already in use by another process.`n`nPlease terminate the process using port $ClientPort and try again."
+    $report = Get-PortConflictReport $ClientPort "Angular Client"
+    Show-PortErrorDialog "Race Coordinator AI - Client Port Conflict" $report
     exit 1
 }
 
 if (Test-PortInUse $ServerPort) {
-    Show-PortErrorDialog "Race Coordinator AI - Web Server Port Conflict" "Failed to start Web Server on port $ServerPort.`nPort $ServerPort is already in use by another process.`n`nPlease terminate the process using port $ServerPort or launch with '--port <port'."
+    $report = Get-PortConflictReport $ServerPort "Web Server"
+    Show-PortErrorDialog "Race Coordinator AI - Web Server Port Conflict" $report
     exit 1
 }
 
