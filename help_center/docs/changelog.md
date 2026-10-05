@@ -1,6 +1,6 @@
 # Changelog
 
-## [v1.0.1-beta.14] - 2026-10-04
+## [v1.0.1-beta.15] - 2026-10-05
 
 ### 🚀 New Features
 
@@ -12,6 +12,7 @@
 
 ### 🐛 Bug Fixes
 
+- **heat-list**: Updated the Heat Columns 'Auto (Responsive)' option including the default heat list widget configuration to fit names and columns better into the layout. [#916](https://github.com/daufderheide/racecoordinator_ai/issues/916) ([94af8398](https://github.com/daufderheide/racecoordinator_ai/commit/94af8398))
 - select next driver after adding or removing via keyboard navigation on raceday setup [#912](https://github.com/daufderheide/racecoordinator_ai/issues/912) ([3395e6f7](https://github.com/daufderheide/racecoordinator_ai/commit/3395e6f7))
 - Set the theme name as the title of the new page when opened from the raceday window menu [#915](https://github.com/daufderheide/racecoordinator_ai/issues/915) [skip-screendiffs] ([5726a587](https://github.com/daufderheide/racecoordinator_ai/commit/5726a587))
 - Fixed xls export so that the race info on the sammary tab output the correct track data.  Also adjusted the column widths automatically based on size and left justified all cell values. [#914](https://github.com/daufderheide/racecoordinator_ai/issues/914) [skip-screendiffs] ([dc61c127](https://github.com/daufderheide/racecoordinator_ai/commit/dc61c127))
@@ -40,6 +41,7 @@
 
 ### ⚡ Improvements & Refactoring
 
+- optimize startup backfills, ticker delay calculations, and audio abort handling [skip-screendiff] ([90fed865](https://github.com/daufderheide/racecoordinator_ai/commit/90fed865))
 - standardize hardware and demo protocol schedulers to named daemon threads [skip-screendiffs] ([68e59442](https://github.com/daufderheide/racecoordinator_ai/commit/68e59442))
 - deduplicate pre-race prediction simulations and make lane QR codes lazy [skip-screendiffs] ([f38eb9cb](https://github.com/daufderheide/racecoordinator_ai/commit/f38eb9cb))
 - eliminate scheduler self-deadlock, optimize standings indexing and memoize timer options [skip-screendiffs] ([a3dab0f0](https://github.com/daufderheide/racecoordinator_ai/commit/a3dab0f0))
@@ -52,7 +54,7 @@
 <details>
 <summary>🔍 <b>Full Commit History</b></summary>
 
-<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0...v1.0.1-beta.14">GitHub</a></p>
+<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0...v1.0.1-beta.15">GitHub</a></p>
 </details>
 
 ## [v1.0.0] - 2026-09-27
