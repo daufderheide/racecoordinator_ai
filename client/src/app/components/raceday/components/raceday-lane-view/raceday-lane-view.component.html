@@ -329,11 +329,7 @@
                     "
                   >
                     <!-- Team Driver Pulldown -->
-                    @if (
-                      (parent().isNameProperty(entry.property) ||
-                        entry.property === "participant.team.name") &&
-                      parent().isTeam(hd)
-                    ) {
+                    @if (shouldShowTeammateSelect(col, entry, hd)) {
                       <div
                         style="
                           position: relative;
@@ -371,19 +367,7 @@
                           "
                           style="background-repeat: no-repeat"
                         >
-                          {{
-                            entry.property === "driver.nickname"
-                              ? hd.actualDriver?.nickname ||
-                                hd.actualDriver?.name ||
-                                hd.driver.nickname ||
-                                hd.driver.name
-                              : entry.property === "participant.team.name"
-                                ? hd.participant?.team?.name ||
-                                  $any(hd.driver)?.team?.name ||
-                                  hd.actualDriver?.name ||
-                                  hd.driver.name
-                                : hd.actualDriver?.name || hd.driver.name
-                          }}
+                          {{ getTeammateDisplayName(hd, entry.property) }}
                         </span>
                         @if (
                           (parent().authService.currentRole$ | async) !==
@@ -617,19 +601,14 @@
                           </div>
                         </div>
                       }
-                    } @else if (
-                      !parent().isNameProperty(entry.property) ||
-                      !parent().isTeam(hd)
-                    ) {
+                    } @else if (!shouldShowTeammateSelect(col, entry, hd)) {
                       <span
                         [style.white-space]="
-                          parent().isNameProperty(entry.property)
-                            ? 'normal'
-                            : 'nowrap'
+                          isNameProperty(entry.property) ? 'normal' : 'nowrap'
                         "
                         [style.padding-right]="
                           parent().race?.practice &&
-                          parent().isNameProperty(entry.property) &&
+                          isNameProperty(entry.property) &&
                           (parent().authService.currentRole$ | async) !==
                             parent().Role.VIEWER
                             ? '44px'
@@ -647,7 +626,7 @@
                       </span>
                       @if (
                         parent().race?.practice &&
-                        (parent().isNameProperty(entry.property) ||
+                        (isNameProperty(entry.property) ||
                           entry.property === "laneNumber") &&
                         (parent().authService.currentRole$ | async) !==
                           parent().Role.VIEWER
