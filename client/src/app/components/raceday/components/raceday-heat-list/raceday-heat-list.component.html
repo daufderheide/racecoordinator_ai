@@ -171,10 +171,10 @@
                     <tr
                       class="summary-lane-row"
                       [style.background-color]="
-                        summaryUseLaneColors() ? lane.backgroundColor : null
+                        heat.useLaneColors ? lane.backgroundColor : null
                       "
                       [style.color]="
-                        summaryUseLaneColors()
+                        heat.useLaneColors
                           ? lane.foregroundColor
                           : widget()?.customSettings?.['summaryRowTextColor'] ||
                             null
@@ -263,8 +263,16 @@
               @for (lane of heat.lanes; track trackByLaneNumber($index, lane)) {
                 <div
                   class="lane-badge-item"
-                  [style.background-color]="lane.backgroundColor"
-                  [style.color]="lane.foregroundColor"
+                  [class.no-lane-colors]="!heat.useLaneColors"
+                  [style.background-color]="
+                    heat.useLaneColors ? lane.backgroundColor : null
+                  "
+                  [style.color]="
+                    heat.useLaneColors
+                      ? widget()?.customSettings?.['laneTextColor'] ||
+                        lane.foregroundColor
+                      : widget()?.customSettings?.['laneTextColor'] || null
+                  "
                   [style.font-family]="
                     widget()?.customSettings?.['laneFontFamily'] || null
                   "
@@ -272,10 +280,6 @@
                     widget()?.scaleMode === 'auto' || scaleToWindow()
                       ? null
                       : widget()?.customSettings?.['laneFontSize'] || null
-                  "
-                  [style.color]="
-                    widget()?.customSettings?.['laneTextColor'] ||
-                    lane.foregroundColor
                   "
                 >
                   <div class="lane-badge-header">

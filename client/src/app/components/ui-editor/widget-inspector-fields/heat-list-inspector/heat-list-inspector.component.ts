@@ -31,6 +31,83 @@ export class HeatListInspectorComponent {
     this.change.emit();
   }
 
+  onDisplayModeChange(field: string, value: string) {
+    if (this.settings()) {
+      this.settings()[field] = value;
+      const isSummary = value === "summary" || value === "summary_lane_colors";
+      if (field === "activeHeatDisplay") {
+        this.settings().showActiveSummary = isSummary;
+      } else if (field === "completedHeatsDisplay") {
+        this.settings().showCompletedSummary = isSummary;
+      } else if (field === "futureHeatsDisplay") {
+        this.settings().showFutureSummary = isSummary;
+      }
+      this.onSettingsChange();
+    }
+  }
+
+  getActiveHeatDisplay(): string {
+    const s = this.settings();
+    if (s?.activeHeatDisplay) {
+      return s.activeHeatDisplay;
+    }
+    if (s?.showActiveSummary !== false) {
+      return s?.summaryUseLaneColors !== false
+        ? "summary_lane_colors"
+        : "summary";
+    }
+    return "lane_colors";
+  }
+
+  getCompletedHeatsDisplay(): string {
+    const s = this.settings();
+    if (s?.completedHeatsDisplay) {
+      return s.completedHeatsDisplay;
+    }
+    if (s?.showCompletedSummary !== false) {
+      return s?.summaryUseLaneColors !== false
+        ? "summary_lane_colors"
+        : "summary";
+    }
+    return "lane_colors";
+  }
+
+  getFutureHeatsDisplay(): string {
+    const s = this.settings();
+    if (s?.futureHeatsDisplay) {
+      return s.futureHeatsDisplay;
+    }
+    if (s?.showFutureSummary === true) {
+      return s?.summaryUseLaneColors !== false
+        ? "summary_lane_colors"
+        : "summary";
+    }
+    return "lane_colors";
+  }
+
+  hasSummary(): boolean {
+    const completed = this.getCompletedHeatsDisplay();
+    const active = this.getActiveHeatDisplay();
+    const future = this.getFutureHeatsDisplay();
+    return (
+      completed === "summary" ||
+      completed === "summary_lane_colors" ||
+      active === "summary" ||
+      active === "summary_lane_colors" ||
+      future === "summary" ||
+      future === "summary_lane_colors"
+    );
+  }
+
+  disableSummaryRowTextColor(): boolean {
+    const completed = this.getCompletedHeatsDisplay();
+    const active = this.getActiveHeatDisplay();
+    const future = this.getFutureHeatsDisplay();
+    const hasSummaryWithoutLaneColors =
+      completed === "summary" || active === "summary" || future === "summary";
+    return !hasSummaryWithoutLaneColors;
+  }
+
   onColorChange(field: string, event: Event) {
     const value = (event.target as HTMLInputElement).value;
     if (this.settings()) {

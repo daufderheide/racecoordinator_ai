@@ -157,11 +157,32 @@ describe("HeatListInspectorComponent", () => {
     expect(component.settings().showFutureSummary).toBeTrue();
   });
 
-  it("should disable summaryRowTextColor field when summaryUseLaneColors is enabled", () => {
+  it("should handle display mode changes for active, completed, and future heats", () => {
+    component.onDisplayModeChange("activeHeatDisplay", "summary_lane_colors");
+    expect(component.settings().activeHeatDisplay).toBe("summary_lane_colors");
+    expect(component.settings().showActiveSummary).toBeTrue();
+    expect(changeSpy).toHaveBeenCalled();
+
+    component.onDisplayModeChange("completedHeatsDisplay", "summary");
+    expect(component.settings().completedHeatsDisplay).toBe("summary");
+    expect(component.settings().showCompletedSummary).toBeTrue();
+
+    component.onDisplayModeChange("futureHeatsDisplay", "off");
+    expect(component.settings().futureHeatsDisplay).toBe("off");
+    expect(component.settings().showFutureSummary).toBeFalse();
+
+    expect(component.getActiveHeatDisplay()).toBe("summary_lane_colors");
+    expect(component.getCompletedHeatsDisplay()).toBe("summary");
+    expect(component.getFutureHeatsDisplay()).toBe("off");
+    expect(component.hasSummary()).toBeTrue();
+  });
+
+  it("should disable summaryRowTextColor field when all summaries use lane colors", () => {
     fixture.componentRef.setInput("settings", {
       ...component.settings(),
-      showActiveSummary: true,
-      summaryUseLaneColors: true,
+      activeHeatDisplay: "summary_lane_colors",
+      completedHeatsDisplay: "summary_lane_colors",
+      futureHeatsDisplay: "off",
       summaryRowTextColor: "#ffffff",
     });
     fixture.detectChanges();
@@ -177,13 +198,15 @@ describe("HeatListInspectorComponent", () => {
 
     const resetBtn = section.querySelector(".color-reset-btn");
     expect(resetBtn.disabled).toBeTrue();
+    expect(component.disableSummaryRowTextColor()).toBeTrue();
   });
 
-  it("should enable summaryRowTextColor field when summaryUseLaneColors is disabled", () => {
+  it("should enable summaryRowTextColor field when a summary is without lane colors", () => {
     fixture.componentRef.setInput("settings", {
       ...component.settings(),
-      showActiveSummary: true,
-      summaryUseLaneColors: false,
+      activeHeatDisplay: "summary_lane_colors",
+      completedHeatsDisplay: "summary",
+      futureHeatsDisplay: "off",
       summaryRowTextColor: "#ffffff",
     });
     fixture.detectChanges();
@@ -199,5 +222,21 @@ describe("HeatListInspectorComponent", () => {
 
     const resetBtn = section.querySelector(".color-reset-btn");
     expect(resetBtn.disabled).toBeFalse();
+    expect(component.disableSummaryRowTextColor()).toBeFalse();
+  });
+
+  it("should resolve legacy settings correctly in getters", () => {
+    fixture.componentRef.setInput("settings", {
+      showActiveSummary: true,
+      showCompletedSummary: false,
+      showFutureSummary: true,
+      summaryUseLaneColors: false,
+    });
+    fixture.detectChanges();
+
+    expect(component.getActiveHeatDisplay()).toBe("summary");
+    expect(component.getCompletedHeatsDisplay()).toBe("lane_colors");
+    expect(component.getFutureHeatsDisplay()).toBe("summary");
+    expect(component.hasSummary()).toBeTrue();
   });
 });

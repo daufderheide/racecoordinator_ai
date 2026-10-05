@@ -86,6 +86,11 @@ describe("WIDGET_REGISTRY", () => {
     expect(heatListSettings["laneFontSize"]).toBe(12);
     expect(heatListSettings["showCurrentHeatFlag"]).toBe(true);
     expect(heatListSettings["showCurrentHeatTime"]).toBe(true);
+    expect(heatListSettings["activeHeatDisplay"]).toBe("summary_lane_colors");
+    expect(heatListSettings["completedHeatsDisplay"]).toBe(
+      "summary_lane_colors",
+    );
+    expect(heatListSettings["futureHeatsDisplay"]).toBe("lane_colors");
     expect(heatListSettings["showCompletedSummary"]).toBe(true);
     expect(heatListSettings["showActiveSummary"]).toBe(true);
     expect(heatListSettings["showFutureSummary"]).toBe(false);

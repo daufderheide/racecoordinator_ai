@@ -52,6 +52,7 @@ export interface ProcessedHeat {
   isCurrent: boolean;
   isCompleted: boolean;
   showSummary: boolean;
+  useLaneColors: boolean;
   lanes: ProcessedHeatLane[];
 }
 
@@ -144,16 +145,58 @@ export class RacedayHeatListComponent implements AfterViewInit, OnDestroy {
     return this.track()?.lanes?.length || 4;
   });
 
+  activeHeatDisplay = computed(() => {
+    const custom = this.widget()?.customSettings;
+    if (custom?.["activeHeatDisplay"]) {
+      return custom["activeHeatDisplay"];
+    }
+    if (custom?.["showActiveSummary"] !== false) {
+      return custom?.["summaryUseLaneColors"] !== false
+        ? "summary_lane_colors"
+        : "summary";
+    }
+    return "lane_colors";
+  });
+
+  completedHeatsDisplay = computed(() => {
+    const custom = this.widget()?.customSettings;
+    if (custom?.["completedHeatsDisplay"]) {
+      return custom["completedHeatsDisplay"];
+    }
+    if (custom?.["showCompletedSummary"] !== false) {
+      return custom?.["summaryUseLaneColors"] !== false
+        ? "summary_lane_colors"
+        : "summary";
+    }
+    return "lane_colors";
+  });
+
+  futureHeatsDisplay = computed(() => {
+    const custom = this.widget()?.customSettings;
+    if (custom?.["futureHeatsDisplay"]) {
+      return custom["futureHeatsDisplay"];
+    }
+    if (custom?.["showFutureSummary"] === true) {
+      return custom?.["summaryUseLaneColors"] !== false
+        ? "summary_lane_colors"
+        : "summary";
+    }
+    return "lane_colors";
+  });
+
   showCompletedSummary = computed(() => {
-    return this.widget()?.customSettings?.["showCompletedSummary"] !== false;
+    const mode = this.completedHeatsDisplay();
+    return mode === "summary" || mode === "summary_lane_colors";
   });
 
   showActiveSummary = computed(() => {
-    return this.widget()?.customSettings?.["showActiveSummary"] !== false;
+    const mode = this.activeHeatDisplay();
+    return mode === "summary" || mode === "summary_lane_colors";
   });
 
   showFutureSummary = computed(() => {
-    return this.widget()?.customSettings?.["showFutureSummary"] === true;
+    const mode = this.futureHeatsDisplay();
+    return mode === "summary" || mode === "summary_lane_colors";
   });
 
   summaryShowPosition = computed(() => {
@@ -254,12 +297,20 @@ export class RacedayHeatListComponent implements AfterViewInit, OnDestroy {
       (heatNum === curHeatNum && isRaceOver) ||
       !!h.isCompleted;
     const isActive = isCurrentHeat;
-    const isFuture = !isCompleted && !isActive;
+
+    let displayMode: string;
+    if (isActive) {
+      displayMode = this.activeHeatDisplay();
+    } else if (isCompleted) {
+      displayMode = this.completedHeatsDisplay();
+    } else {
+      displayMode = this.futureHeatsDisplay();
+    }
 
     const showSummary =
-      (isCompleted && this.showCompletedSummary()) ||
-      (isActive && this.showActiveSummary()) ||
-      (isFuture && this.showFutureSummary());
+      displayMode === "summary" || displayMode === "summary_lane_colors";
+    const useLaneColors =
+      displayMode === "lane_colors" || displayMode === "summary_lane_colors";
 
     const lanes = this.buildHeatLanes(h, cur, trackObj, isCompleted, isActive);
 
@@ -271,6 +322,7 @@ export class RacedayHeatListComponent implements AfterViewInit, OnDestroy {
       isCurrent,
       isCompleted,
       showSummary,
+      useLaneColors,
       lanes,
     };
   }
