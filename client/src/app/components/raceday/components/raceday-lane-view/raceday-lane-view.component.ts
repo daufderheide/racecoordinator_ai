@@ -223,6 +223,11 @@ export class RacedayLaneViewComponent implements AfterViewInit, OnDestroy {
       s?.["columnDecimals"] || s?.["columnDecimalPlaces"];
     const colKey = typeof col === "string" ? col : col?.propertyName;
     const propKey = typeof entry === "string" ? entry : entry?.property;
+    const isPacing =
+      this.isPacingProperty(propKey) ||
+      this.isPacingProperty(colKey) ||
+      Boolean(colKey && colKey.startsWith("ghostPacing")) ||
+      Boolean(propKey && propKey.startsWith("ghostPacing"));
 
     if (customColDecimals) {
       if (
@@ -252,14 +257,16 @@ export class RacedayLaneViewComponent implements AfterViewInit, OnDestroy {
           }
         }
       }
-      for (const k of Object.keys(customColDecimals)) {
-        if (
-          k.startsWith("ghostPacing") &&
-          customColDecimals[k] !== undefined &&
-          customColDecimals[k] !== null &&
-          customColDecimals[k] !== ""
-        ) {
-          return Math.min(3, Math.max(0, Number(customColDecimals[k])));
+      if (isPacing) {
+        for (const k of Object.keys(customColDecimals)) {
+          if (
+            k.startsWith("ghostPacing") &&
+            customColDecimals[k] !== undefined &&
+            customColDecimals[k] !== null &&
+            customColDecimals[k] !== ""
+          ) {
+            return Math.min(3, Math.max(0, Number(customColDecimals[k])));
+          }
         }
       }
     }

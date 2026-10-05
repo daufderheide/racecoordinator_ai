@@ -430,40 +430,41 @@
 <hr class="inspector-divider" />
 
 <!-- Decimals Settings -->
-<div class="inspector-section">
-  <label class="inspector-label">{{
-    "UE_INSPECTOR_TIME_DECIMALS" | translate
-  }}</label>
-  <div class="select-container select-sm">
-    <app-custom-select
-      [(ngModel)]="currentSettings['timeDecimalPlaces']"
-      (change)="onFieldChange()"
-    >
-      <app-custom-option [value]="0">0</app-custom-option>
-      <app-custom-option [value]="1">1</app-custom-option>
-      <app-custom-option [value]="2">2</app-custom-option>
-      <app-custom-option [value]="3">3</app-custom-option>
-      <app-custom-option [value]="4">4</app-custom-option>
-    </app-custom-select>
+@if (isTimeColumn) {
+  <div class="inspector-section">
+    <label class="inspector-label">{{
+      "UE_INSPECTOR_TIME_DECIMALS" | translate
+    }}</label>
+    <div class="select-container select-sm">
+      <app-custom-select
+        [(ngModel)]="currentSettings['timeDecimalPlaces']"
+        (change)="onFieldChange()"
+      >
+        <app-custom-option [value]="0">0</app-custom-option>
+        <app-custom-option [value]="1">1</app-custom-option>
+        <app-custom-option [value]="2">2</app-custom-option>
+        <app-custom-option [value]="3">3</app-custom-option>
+      </app-custom-select>
+    </div>
   </div>
-</div>
-
-<div class="inspector-section">
-  <label class="inspector-label">{{
-    "UE_INSPECTOR_LAP_DECIMALS" | translate
-  }}</label>
-  <div class="select-container select-sm">
-    <app-custom-select
-      [(ngModel)]="currentSettings['lapDecimalPlaces']"
-      (change)="onFieldChange()"
-    >
-      <app-custom-option [value]="0">0</app-custom-option>
-      <app-custom-option [value]="1">1</app-custom-option>
-      <app-custom-option [value]="2">2</app-custom-option>
-      <app-custom-option [value]="3">3</app-custom-option>
-    </app-custom-select>
+} @else {
+  <div class="inspector-section">
+    <label class="inspector-label">{{
+      "UE_INSPECTOR_LAP_DECIMALS" | translate
+    }}</label>
+    <div class="select-container select-sm">
+      <app-custom-select
+        [(ngModel)]="currentSettings['lapDecimalPlaces']"
+        (change)="onFieldChange()"
+      >
+        <app-custom-option [value]="0">0</app-custom-option>
+        <app-custom-option [value]="1">1</app-custom-option>
+        <app-custom-option [value]="2">2</app-custom-option>
+        <app-custom-option [value]="3">3</app-custom-option>
+      </app-custom-select>
+    </div>
   </div>
-</div>
+}
 
 <hr class="inspector-divider" />
 
@@ -554,7 +555,6 @@
       <app-custom-option [value]="1">1</app-custom-option>
       <app-custom-option [value]="2">2</app-custom-option>
       <app-custom-option [value]="3">3</app-custom-option>
-      <app-custom-option [value]="4">4</app-custom-option>
     </app-custom-select>
   </div>
 </div>

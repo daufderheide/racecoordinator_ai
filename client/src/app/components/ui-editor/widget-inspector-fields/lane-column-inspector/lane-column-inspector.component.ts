@@ -2,6 +2,7 @@ import { CommonModule } from "@angular/common";
 import { Component, inject, input, output, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { LaneReplicationOptions } from "@app/components/raceday/utils/lane-replication.helper";
+import { RacedayLayoutUtils } from "@app/components/raceday/utils/raceday-layout.utils";
 import {
   CustomOptionComponent,
   CustomSelectComponent,
@@ -65,7 +66,37 @@ export class LaneColumnInspectorComponent {
     return this.settings() || {};
   }
 
+  get isTimeColumn(): boolean {
+    return RacedayLayoutUtils.isTimeColumnKey(
+      this.currentSettings["columnKey"] || "",
+    );
+  }
+
   onFieldChange(): void {
+    if (this.currentSettings["timeDecimalPlaces"] !== undefined) {
+      this.currentSettings["timeDecimalPlaces"] = Math.min(
+        3,
+        Math.max(0, Number(this.currentSettings["timeDecimalPlaces"])),
+      );
+    }
+    if (this.currentSettings["lapDecimalPlaces"] !== undefined) {
+      this.currentSettings["lapDecimalPlaces"] = Math.min(
+        3,
+        Math.max(0, Number(this.currentSettings["lapDecimalPlaces"])),
+      );
+    }
+    if (this.currentSettings["insetTimeDecimalPlaces"] !== undefined) {
+      this.currentSettings["insetTimeDecimalPlaces"] = Math.min(
+        3,
+        Math.max(0, Number(this.currentSettings["insetTimeDecimalPlaces"])),
+      );
+    }
+    if (this.currentSettings["insetLapDecimalPlaces"] !== undefined) {
+      this.currentSettings["insetLapDecimalPlaces"] = Math.min(
+        3,
+        Math.max(0, Number(this.currentSettings["insetLapDecimalPlaces"])),
+      );
+    }
     this.change.emit();
   }
 
