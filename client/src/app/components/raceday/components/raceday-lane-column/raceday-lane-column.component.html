@@ -5,6 +5,7 @@
   [class.clickable-team-card]="isTeamDriverSwapActive"
   [class.orientation-vertical]="layoutOrientation === 'vertical'"
   [class.orientation-horizontal]="layoutOrientation === 'horizontal'"
+  [class.has-header]="settings.showHeader !== false"
   [attr.title]="cardTooltip"
   (click)="onCardClick($event)"
   [style.background]="backgroundColor"
@@ -17,20 +18,33 @@
   "
   [style.border-style]="settings.showBorder !== false ? 'solid' : 'none'"
   [style.color]="foregroundColor"
+  [style.--lane-col-header-border]="
+    settings.showBorder !== false && borderColor
+      ? borderColor
+      : 'rgba(255, 255, 255, 0.25)'
+  "
 >
   <!-- Optional Header / Label -->
   @if (settings.showHeader !== false) {
     <div
       class="lane-col-header"
+      [style.background]="effectiveHeaderBackgroundColor"
       [style.font-family]="settings.headerFontFamily || null"
       [style.font-size.px]="settings.headerFontSize || 14"
       [style.color]="effectiveHeaderTextColor"
       [style.justify-content]="
-        settings.headerAlignment === 'center'
-          ? 'center'
+        settings.headerAlignment === 'start'
+          ? 'flex-start'
           : settings.headerAlignment === 'end'
             ? 'flex-end'
-            : 'flex-start'
+            : 'center'
+      "
+      [style.text-align]="
+        settings.headerAlignment === 'start'
+          ? 'left'
+          : settings.headerAlignment === 'end'
+            ? 'right'
+            : 'center'
       "
     >
       {{ headerLabel }}

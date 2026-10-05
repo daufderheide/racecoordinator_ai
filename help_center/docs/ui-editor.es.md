@@ -61,6 +61,12 @@ El widget de **Columna de Carril** permite colocar columnas individuales de dato
   - **Carril Físico**: Vincula la tarjeta a un carril específico de la pista (Carril 1 a Carril 8). La tarjeta mantiene los datos de ese carril durante toda la carrera.
   - **Posición en la Carrera**: Vincula la tarjeta a la clasificación actual (1º Lugar, 2º Lugar, etc.). La tarjeta sigue dinámicamente los cambios de posición y adelantamientos, adaptando sus colores de fondo y acento al carril del piloto que se encuentra en esa posición.
 - **Orientación**: Admite diseños **Vertical** (encabezado encima del valor) y **Horizontal** (encabezado y valor lado a lado).
+- **Diseño y Personalización de la Barra de Título**:
+  - La barra de título tiene el mismo estilo que el encabezado de columna de la vista de carril de forma predeterminada (fondo oscuro semitransparente `rgba(68, 68, 68, 0.7)`, texto blanco en negrita, esquinas superiores redondeadas y borde divisor).
+  - **Mostrar Encabezado**: Activa o desactiva la barra de título. Al desactivarla, se elimina por completo de la tarjeta, maximizando el espacio para los valores principales e inserciones.
+  - **Etiqueta Personalizada**: Reemplaza el nombre del dato predeterminado con un título personalizado.
+  - **Tipografía y Alineación**: Personalice la familia tipográfica, el tamaño de fuente y la alineación del texto (Izquierda, Centro, Derecha).
+  - **Color de Texto y Fondo**: Ajuste libremente el color de fondo y de texto del encabezado mediante selectores de color, con opción de restablecimiento al valor predeterminado en un solo clic.
 - **Herencia de Color y Personalización**: Las tarjetas heredan de manera predeterminada los colores de fondo y texto del carril asignado (`Usar Colores de Carril`), o pueden personalizarse con colores de fondo, texto y bordes propios.
 - **Duplicar en Carriles / Posiciones**:
   - En lugar de crear y alinear tarjetas manualmente para cada carril, configure una única tarjeta de carril o posición y haga clic en **Duplicar en Carriles / Posiciones...** en el inspector.

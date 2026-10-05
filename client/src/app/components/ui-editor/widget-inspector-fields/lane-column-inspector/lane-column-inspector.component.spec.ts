@@ -467,4 +467,72 @@ describe("LaneColumnInspectorComponent", () => {
       expect(component.change.emit).toHaveBeenCalled();
     });
   });
+
+  describe("Title Bar Settings", () => {
+    it("should render the Title Bar Settings title and showHeader checkbox", () => {
+      fixture.detectChanges();
+      const titles = fixture.debugElement.queryAll(
+        By.css(".inspector-geometry-title"),
+      );
+      const titleBarTitle = titles.find((t) =>
+        t.nativeElement.textContent.includes("UE_INSPECTOR_TITLE_BAR_SETTINGS"),
+      );
+      expect(titleBarTitle).toBeTruthy();
+
+      const showHeaderCheckbox = fixture.debugElement.query(
+        By.css(".form-checkbox"),
+      );
+      expect(showHeaderCheckbox).toBeTruthy();
+    });
+
+    it("should hide title bar controls when showHeader is false", () => {
+      mockSettings.showHeader = false;
+      fixture.detectChanges();
+
+      const customLabelInput = fixture.debugElement.query(
+        By.css('input[placeholder="UE_INSPECTOR_LABEL_PLACEHOLDER"]'),
+      );
+      expect(customLabelInput).toBeNull();
+    });
+
+    it("should show title bar controls when showHeader is true", () => {
+      mockSettings.showHeader = true;
+      fixture.detectChanges();
+
+      const customLabelInput = fixture.debugElement.query(
+        By.css('input[placeholder="UE_INSPECTOR_LABEL_PLACEHOLDER"]'),
+      );
+      expect(customLabelInput).toBeTruthy();
+    });
+
+    it("should update header colors on onColorChange and emit change", () => {
+      spyOn(component.change, "emit");
+      const eventText = { target: { value: "#123456" } } as any;
+      component.onColorChange("headerTextColor", eventText);
+      expect(component.currentSettings["headerTextColor"]).toBe("#123456");
+      expect(component.change.emit).toHaveBeenCalled();
+
+      const eventBg = { target: { value: "#654321" } } as any;
+      component.onColorChange("headerBackgroundColor", eventBg);
+      expect(component.currentSettings["headerBackgroundColor"]).toBe(
+        "#654321",
+      );
+    });
+
+    it("should reset header text color on resetHeaderTextColor", () => {
+      spyOn(component.change, "emit");
+      component.currentSettings["headerTextColor"] = "#ff0000";
+      component.resetHeaderTextColor();
+      expect(component.currentSettings["headerTextColor"]).toBeFalsy();
+      expect(component.change.emit).toHaveBeenCalled();
+    });
+
+    it("should reset header background color on resetHeaderBackgroundColor", () => {
+      spyOn(component.change, "emit");
+      component.currentSettings["headerBackgroundColor"] = "#00ff00";
+      component.resetHeaderBackgroundColor();
+      expect(component.currentSettings["headerBackgroundColor"]).toBeFalsy();
+      expect(component.change.emit).toHaveBeenCalled();
+    });
+  });
 });

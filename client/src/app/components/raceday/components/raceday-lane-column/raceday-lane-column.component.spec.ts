@@ -1490,4 +1490,171 @@ describe("RacedayLaneColumnComponent", () => {
       expect(component.getPacingDecimalPlaces()).toBe(3);
     });
   });
+
+  describe("Title Bar Styling & Configuration", () => {
+    it("should render title bar by default with lane-view column header styling", () => {
+      fixture.componentRef.setInput("parent", mockParent);
+      fixture.componentRef.setInput(
+        "widget",
+        createWidget({
+          columnKey: "lastLapTime",
+        }),
+      );
+      fixture.detectChanges();
+
+      const headerEl = fixture.nativeElement.querySelector(".lane-col-header");
+      expect(headerEl).toBeTruthy();
+      expect(component.effectiveHeaderBackgroundColor).toBe(
+        "rgba(68, 68, 68, 0.7)",
+      );
+      const cardEl = fixture.nativeElement.querySelector(
+        ".raceday-lane-column-card",
+      );
+      expect(cardEl.classList.contains("has-header")).toBeTrue();
+    });
+
+    it("should completely remove the title bar when showHeader is false", () => {
+      fixture.componentRef.setInput("parent", mockParent);
+      fixture.componentRef.setInput(
+        "widget",
+        createWidget({
+          columnKey: "lastLapTime",
+          showHeader: false,
+        }),
+      );
+      fixture.detectChanges();
+
+      const headerEl = fixture.nativeElement.querySelector(".lane-col-header");
+      expect(headerEl).toBeNull();
+      const cardEl = fixture.nativeElement.querySelector(
+        ".raceday-lane-column-card",
+      );
+      expect(cardEl.classList.contains("has-header")).toBeFalse();
+    });
+
+    it("should display custom title text when customLabel is configured", () => {
+      fixture.componentRef.setInput("parent", mockParent);
+      fixture.componentRef.setInput(
+        "widget",
+        createWidget({
+          columnKey: "lastLapTime",
+          customLabel: "Heat Lap Time",
+        }),
+      );
+      fixture.detectChanges();
+
+      expect(component.headerLabel).toBe("Heat Lap Time");
+      const headerEl = fixture.nativeElement.querySelector(".lane-col-header");
+      expect(headerEl.textContent.trim()).toBe("Heat Lap Time");
+    });
+
+    it("should apply custom font family and font size to the title bar", () => {
+      fixture.componentRef.setInput("parent", mockParent);
+      fixture.componentRef.setInput(
+        "widget",
+        createWidget({
+          columnKey: "lastLapTime",
+          headerFontFamily: "Courier New",
+          headerFontSize: 20,
+        }),
+      );
+      fixture.detectChanges();
+
+      const headerEl = fixture.nativeElement.querySelector(
+        ".lane-col-header",
+      ) as HTMLElement;
+      expect(headerEl.style.fontFamily).toContain("Courier New");
+      expect(headerEl.style.fontSize).toBe("20px");
+    });
+
+    it("should apply custom header text color and background color", () => {
+      fixture.componentRef.setInput("parent", mockParent);
+      fixture.componentRef.setInput(
+        "widget",
+        createWidget({
+          columnKey: "lastLapTime",
+          headerTextColor: "#ff0055",
+          headerBackgroundColor: "#112233",
+        }),
+      );
+      fixture.detectChanges();
+
+      expect(component.effectiveHeaderTextColor).toBe("#ff0055");
+      expect(component.effectiveHeaderBackgroundColor).toBe("#112233");
+
+      const headerEl = fixture.nativeElement.querySelector(
+        ".lane-col-header",
+      ) as HTMLElement;
+      expect(headerEl.style.color).toBe("rgb(255, 0, 85)");
+      expect(headerEl.style.background).toBe("rgb(17, 34, 51)");
+    });
+
+    it("should apply header text alignment for start, center, and end", () => {
+      fixture.componentRef.setInput("parent", mockParent);
+
+      // Start alignment
+      fixture.componentRef.setInput(
+        "widget",
+        createWidget({
+          columnKey: "lastLapTime",
+          headerAlignment: "start",
+        }),
+      );
+      fixture.detectChanges();
+      let headerEl = fixture.nativeElement.querySelector(
+        ".lane-col-header",
+      ) as HTMLElement;
+      expect(headerEl.style.justifyContent).toBe("flex-start");
+      expect(headerEl.style.textAlign).toBe("left");
+
+      // End alignment
+      fixture.componentRef.setInput(
+        "widget",
+        createWidget({
+          columnKey: "lastLapTime",
+          headerAlignment: "end",
+        }),
+      );
+      fixture.detectChanges();
+      headerEl = fixture.nativeElement.querySelector(
+        ".lane-col-header",
+      ) as HTMLElement;
+      expect(headerEl.style.justifyContent).toBe("flex-end");
+      expect(headerEl.style.textAlign).toBe("right");
+
+      // Center alignment
+      fixture.componentRef.setInput(
+        "widget",
+        createWidget({
+          columnKey: "lastLapTime",
+          headerAlignment: "center",
+        }),
+      );
+      fixture.detectChanges();
+      headerEl = fixture.nativeElement.querySelector(
+        ".lane-col-header",
+      ) as HTMLElement;
+      expect(headerEl.style.justifyContent).toBe("center");
+      expect(headerEl.style.textAlign).toBe("center");
+    });
+
+    it("should style header correctly in horizontal layout orientation", () => {
+      fixture.componentRef.setInput("parent", mockParent);
+      fixture.componentRef.setInput(
+        "widget",
+        createWidget({
+          columnKey: "lastLapTime",
+          layoutOrientation: "horizontal",
+        }),
+      );
+      fixture.detectChanges();
+
+      const cardEl = fixture.nativeElement.querySelector(
+        ".raceday-lane-column-card",
+      );
+      expect(cardEl.classList.contains("orientation-horizontal")).toBeTrue();
+      const headerEl = fixture.nativeElement.querySelector(".lane-col-header");
+      expect(headerEl).toBeTruthy();
+    });
+  });
 });

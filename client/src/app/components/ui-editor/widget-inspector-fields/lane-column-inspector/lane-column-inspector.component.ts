@@ -116,9 +116,27 @@ export class LaneColumnInspectorComponent {
     this.onFieldChange();
   }
 
-  resetInsetTextColor(): void {
-    delete this.currentSettings["insetTextColor"];
+  onColorChange(field: string, event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.currentSettings[field] = input.value;
     this.onFieldChange();
+  }
+
+  resetColor(field: string): void {
+    delete this.currentSettings[field];
+    this.onFieldChange();
+  }
+
+  resetHeaderTextColor(): void {
+    this.resetColor("headerTextColor");
+  }
+
+  resetHeaderBackgroundColor(): void {
+    this.resetColor("headerBackgroundColor");
+  }
+
+  resetInsetTextColor(): void {
+    this.resetColor("insetTextColor");
   }
 
   onEditGridTemplate(): void {

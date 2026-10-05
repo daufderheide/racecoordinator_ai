@@ -175,7 +175,11 @@
   </div>
 </div>
 
-<!-- Show Header & Custom Label -->
+<!-- Title Bar Settings Section -->
+<div class="inspector-geometry-title">
+  {{ "UE_INSPECTOR_TITLE_BAR_SETTINGS" | translate }}
+</div>
+
 <div class="inspector-section">
   <label class="form-check-label">
     <input
@@ -188,7 +192,7 @@
   </label>
 </div>
 
-@if (currentSettings["showHeader"]) {
+@if (currentSettings["showHeader"] !== false) {
   <div class="inspector-section">
     <label class="inspector-label">{{
       "UE_INSPECTOR_CUSTOM_LABEL" | translate
@@ -206,6 +210,132 @@
       data-bwignore="true"
       data-form-type="other"
     />
+  </div>
+
+  <div class="inspector-section">
+    <label class="inspector-label">{{
+      "UE_INSPECTOR_HEADER_FONT_FAMILY" | translate
+    }}</label>
+    <div class="select-container select-sm">
+      <app-custom-select
+        [(ngModel)]="currentSettings['headerFontFamily']"
+        (change)="onFieldChange()"
+        (click)="fontService.loadLocalFonts()"
+      >
+        <app-custom-option value="">
+          {{ "UE_INSPECTOR_FONT_THEME_DEFAULT" | translate }}
+        </app-custom-option>
+        @for (font of fontService.availableFonts(); track font) {
+          <app-custom-option [value]="font">{{ font }}</app-custom-option>
+        }
+      </app-custom-select>
+    </div>
+  </div>
+
+  <div class="inspector-section">
+    <div class="inspector-label-row">
+      <label class="inspector-label">{{
+        "UE_INSPECTOR_HEADER_FONT_SIZE" | translate
+      }}</label>
+      <span class="inspector-val-badge"
+        >{{ currentSettings["headerFontSize"] || 14 }}px</span
+      >
+    </div>
+    <input
+      type="range"
+      min="8"
+      max="48"
+      [(ngModel)]="currentSettings['headerFontSize']"
+      [disabled]="disableFontSizes()"
+      (change)="onFieldChange()"
+      class="inspector-slider"
+    />
+  </div>
+
+  <div class="inspector-section">
+    <label class="inspector-label">{{
+      "UE_INSPECTOR_HEADER_ALIGNMENT" | translate
+    }}</label>
+    <div class="select-container select-sm">
+      <app-custom-select
+        [(ngModel)]="currentSettings['headerAlignment']"
+        (change)="onFieldChange()"
+      >
+        <app-custom-option value="start">
+          {{ "UE_INSPECTOR_ALIGN_START" | translate }}
+        </app-custom-option>
+        <app-custom-option value="center">
+          {{ "UE_INSPECTOR_ALIGN_CENTER" | translate }}
+        </app-custom-option>
+        <app-custom-option value="end">
+          {{ "UE_INSPECTOR_ALIGN_END" | translate }}
+        </app-custom-option>
+      </app-custom-select>
+    </div>
+  </div>
+
+  <div class="inspector-section">
+    <label class="inspector-label">{{
+      "UE_INSPECTOR_HEADER_TEXT_COLOR" | translate
+    }}</label>
+    <div
+      class="color-picker-wrapper"
+      [class.is-null]="!currentSettings['headerTextColor']"
+    >
+      <input
+        type="color"
+        [value]="currentSettings['headerTextColor'] || '#ffffff'"
+        (change)="onColorChange('headerTextColor', $event)"
+        class="color-picker-input"
+      />
+      @if (!currentSettings["headerTextColor"]) {
+        <span class="color-picker-placeholder">{{
+          "UE_INSPECTOR_COLOR_DEFAULT" | translate
+        }}</span>
+      }
+      @if (currentSettings["headerTextColor"]) {
+        <button
+          type="button"
+          class="color-reset-btn"
+          (click)="resetHeaderTextColor()"
+          [title]="'UE_INSPECTOR_COLOR_RESET' | translate"
+        >
+          <span class="material-icons">restart_alt</span>
+        </button>
+      }
+    </div>
+  </div>
+
+  <div class="inspector-section">
+    <label class="inspector-label">{{
+      "UE_INSPECTOR_HEADER_BACKGROUND_COLOR" | translate
+    }}</label>
+    <div
+      class="color-picker-wrapper"
+      [class.is-null]="!currentSettings['headerBackgroundColor']"
+    >
+      <input
+        type="color"
+        [value]="currentSettings['headerBackgroundColor'] || '#444444'"
+        (change)="onColorChange('headerBackgroundColor', $event)"
+        class="color-picker-input"
+      />
+      @if (!currentSettings["headerBackgroundColor"]) {
+        <span class="color-picker-placeholder">{{
+          "UE_INSPECTOR_COLOR_DEFAULT" | translate
+        }}</span>
+      }
+      @if (currentSettings["headerBackgroundColor"]) {
+        <button
+          type="button"
+          class="color-reset-btn"
+          (click)="resetHeaderBackgroundColor()"
+          [title]="'UE_INSPECTOR_COLOR_RESET' | translate"
+        >
+          <span class="material-icons">restart_alt</span>
+        </button>
+      }
+    </div>
   </div>
 }
 
@@ -317,48 +447,6 @@
     </app-custom-select>
   </div>
 </div>
-
-@if (currentSettings["showHeader"]) {
-  <div class="inspector-section">
-    <label class="inspector-label">{{
-      "UE_INSPECTOR_HEADER_FONT_FAMILY" | translate
-    }}</label>
-    <div class="select-container select-sm">
-      <app-custom-select
-        [(ngModel)]="currentSettings['headerFontFamily']"
-        (change)="onFieldChange()"
-        (click)="fontService.loadLocalFonts()"
-      >
-        <app-custom-option value="">
-          {{ "UE_INSPECTOR_FONT_THEME_DEFAULT" | translate }}
-        </app-custom-option>
-        @for (font of fontService.availableFonts(); track font) {
-          <app-custom-option [value]="font">{{ font }}</app-custom-option>
-        }
-      </app-custom-select>
-    </div>
-  </div>
-
-  <div class="inspector-section">
-    <div class="inspector-label-row">
-      <label class="inspector-label">{{
-        "UE_INSPECTOR_HEADER_FONT_SIZE" | translate
-      }}</label>
-      <span class="inspector-val-badge"
-        >{{ currentSettings["headerFontSize"] || 14 }}px</span
-      >
-    </div>
-    <input
-      type="range"
-      min="8"
-      max="48"
-      [(ngModel)]="currentSettings['headerFontSize']"
-      [disabled]="disableFontSizes()"
-      (change)="onFieldChange()"
-      class="inspector-slider"
-    />
-  </div>
-}
 
 <hr class="inspector-divider" />
 
@@ -531,11 +619,11 @@
     @if (currentSettings["insetTextColor"]) {
       <button
         type="button"
-        class="btn btn-sm btn-outline-secondary"
+        class="color-reset-btn"
         (click)="resetInsetTextColor()"
-        title="Reset"
+        [title]="'UE_INSPECTOR_COLOR_RESET' | translate"
       >
-        <i class="fas fa-undo"></i>
+        <span class="material-icons">restart_alt</span>
       </button>
     }
   </div>

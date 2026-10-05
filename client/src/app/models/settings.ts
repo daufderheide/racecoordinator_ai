@@ -82,6 +82,7 @@ export interface LaneColumnWidgetSettings {
   headerFontSize: number;
   headerTextColor: string;
   headerAlignment: "start" | "center" | "end";
+  headerBackgroundColor?: string;
   valueFontFamily: string;
   valueFontSize: number;
   valueTextColor: string;

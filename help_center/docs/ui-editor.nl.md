@@ -61,6 +61,12 @@ De widget **Baankolom** maakt het mogelijk om individuele gegevenskolommen uit h
   - **Fysieke Baan**: Koppelt de kaart aan een specifieke baan van het circuit (Baan 1 t/m Baan 8). De kaart toont gedurende de hele race de gegevens van die baan.
   - **Positie in Stand**: Koppelt de kaart aan een huidige positie in het klassement (1e plaats, 2e plaats, enz.). De kaart volgt automatisch positiewisselingen en inhaalacties en past de achtergrond- en tekstkleur aan de baan van de betreffende coureur aan.
 - **Layout-oriëntatie**: Ondersteunt **Verticaal** (kop boven de waarde) en **Horizontaal** (kop en waarde naast elkaar).
+- **Vormgeving & Aanpassing van de Titelbalk**:
+  - De titelbalk is standaard vormgegeven volgens de kolomkop in de baanweergave (half-transparante donkere achtergrond `rgba(68, 68, 68, 0.7)`, vette witte tekst, afgeronde bovenhoeken en een scheidingsrand).
+  - **Kolomkop Weergeven**: Schakelt de titelbalk in of uit. Indien uitgeschakeld wordt de titelbalk volledig verwijderd van de kaart, waardoor maximale ruimte vrijkomt voor de hoofdwaarden en inzetcellen.
+  - **Aangepaste Kolomkop**: Overschrijf de standaardnaam van het datapunt met een eigen titellabel.
+  - **Typografie & Uitlijning**: Pas het lettertype, de lettergrootte en de tekstuitlijning (Links, Gecentreerd, Rechts) van de titelbalk naar wens aan.
+  - **Tekst- & Achtergrondkleur**: Pas de achtergrondkleur en tekstkleur van de titelbalk eenvoudig aan via kleurkiezers, met éénknops-herstel naar de standaardwaarden.
 - **Kleur-overname & Aanpassingen**: Kaarten nemen standaard de toegewezen achtergrond- en tekstkleur van de betreffende baan over (`Baankleuren Gebruiken`), of kunnen worden voorzien van aangepaste kleuren en randen.
 - **Dupliceren over Banen / Posities**:
   - In plaats van kaarten handmatig voor elke baan te maken en uit te lijnen, configureert u één baan of positie en klikt u in de inspecteur op **Dupliceren over Banen / Posities...**.

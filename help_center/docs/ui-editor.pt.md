@@ -61,6 +61,12 @@ O widget **Coluna de Pista** permite posicionar colunas individuais de dados da 
   - **Pista Física**: Vincula o cartão a uma pista específica do circuito (Pista 1 a Pista 8). O cartão mantém os dados dessa pista durante toda a corrida.
   - **Posição na Classificação**: Vincula o cartão a uma classificação atual (1º Lugar, 2º Lugar, etc.). O cartão acompanha dinamicamente ultrapassagens e alterações de posição, adaptando as cores de fundo e texto à pista do piloto que ocupa essa colocação.
 - **Orientação**: Suporta layouts **Vertical** (cabeçalho acima do valor) e **Horizontal** (cabeçalho e valor lado a lado).
+- **Estilo e Personalização da Barra de Título**:
+  - A barra de título segue por padrão o mesmo estilo do cabeçalho de coluna da visualização de pista (fundo escuro semitransparente `rgba(68, 68, 68, 0.7)`, texto branco em negrito, cantos superiores arredondados e borda divisória).
+  - **Mostrar Cabeçalho**: Ativa ou desativa a barra de título. Ao ser desativada, a barra de título é totalmente removida do cartão, maximizando a área para os valores principais e inserções.
+  - **Rótulo Personalizado**: Substitui o nome padrão do ponto de dados por um título personalizado.
+  - **Tipografia e Alinhamento**: Configure a fonte, o tamanho do texto e o alinhamento (Esquerda, Centralizado, Direita).
+  - **Cor do Texto e do Fundo**: Personalize a cor de fundo e a cor do texto do cabeçalho com seletores de cores dedicados e botão de restauração padrão em um clique.
 - **Herança de Cores e Personalização**: Por padrão, os cartões herdam as cores de fundo e texto da pista atribuída (`Usar Cores da Pista`), ou podem receber cores personalizadas de fundo, texto e borda.
 - **Duplicar em Pistas / Posições**:
   - Em vez de criar e alinhar cartões manualmente para cada pista, configure um único cartão para uma pista ou posição e clique em **Duplicar em Pistas / Posições...** no inspetor.

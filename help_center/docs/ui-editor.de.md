@@ -61,6 +61,12 @@ Das **Spurspalten-Widget** ermöglicht es, einzelne Datenspalten aus der Spurans
   - **Physische Spur**: Bindet die Karte an eine feste Spur (Spur 1 bis Spur 8). Die Karte zeigt während des gesamten Rennens die Daten dieser Spur an.
   - **Laufplatzierung (Position)**: Bindet die Karte an einen aktuellen Rang in der Platzierung (1. Platz, 2. Platz usw.). Die Karte folgt dynamisch Positionswechseln und Überholmanövern und passt Hintergrund- und Akzentfarben an die Spur des jeweiligen Fahrers auf diesem Rang an.
 - **Ausrichtung**: Unterstützt **Vertikal** (Überschrift über dem Wert) und **Horizontal** (Überschrift und Wert nebeneinander).
+- **Titelleisten-Design & Anpassung**:
+  - Die Titelleiste ist standardmäßig identisch zur Spaltenüberschrift der Spuransicht gestaltet (halbtransparenter dunkler Hintergrund `rgba(68, 68, 68, 0.7)`, weiße Fettschrift, abgerundete obere Ecken und Trennlinie).
+  - **Kopfzeile anzeigen**: Schaltet die Titelleiste ein oder aus. Bei Deaktivierung wird die Titelleiste vollständig von der Karte entfernt, wodurch maximaler Platz für Hauptwerte und Einschübe zur Verfügung steht.
+  - **Benutzerdefinierte Überschrift**: Überschreibt die Standardbezeichnung des Datenpunkts mit einem individuellen Titel.
+  - **Typografie & Ausrichtung**: Schriftart, Schriftgröße und Textausrichtung (Links, Zentriert, Rechts) der Titelleiste lassen sich präzise anpassen.
+  - **Text- und Hintergrundfarbe**: Sowohl die Hintergrundfarbe als auch die Textfarbe der Titelleiste können über Farbwähler angepasst und mit einem Klick auf die Standardwerte zurückgesetzt werden.
 - **Farbübernahme & Anpassungen**: Karten übernehmen standardmäßig die zugewiesenen Hintergrund- und Textfarben der jeweiligen Spur (`Spurfarben verwenden`) oder können mit benutzerdefinierten Farben und Rahmen gestaltet werden.
 - **Über Spuren / Positionen duplizieren**:
   - Anstatt Karten für jede Spur manuell zu erstellen und auszurichten, konfigurieren Sie eine einzelne Spur oder Position und klicken im Inspektor auf **Über Spuren / Positionen duplizieren...**.

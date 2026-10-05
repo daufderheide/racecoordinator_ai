@@ -61,6 +61,12 @@ Il widget **Colonna Corsia** consente di posizionare le singole colonne di dati 
   - **Corsia Fisica**: Associa la scheda a una corsia specifica della pista (Corsia 1 fino a Corsia 8). La scheda mantiene i dati di tale corsia durante l'intera gara.
   - **Posizione in Classifica**: Associa la scheda a una posizione attuale della classifica (1° posto, 2° posto, ecc.). La scheda segue dinamicamente cambi di posizione e sorpassi, adattando i colori di sfondo e testo alla corsia del pilota che occupa quella posizione.
 - **Orientamento**: Supporta layout **Verticale** (intestazione sopra il valore) e **Orizzontale** (intestazione e valore affiancati).
+- **Stile e Personalizzazione della Barra del Titolo**:
+  - La barra del titolo segue per impostazione predefinita lo stesso stile dell'intestazione della colonna nella vista corsia (sfondo scuro semitrasparente `rgba(68, 68, 68, 0.7)`, testo bianco in grassetto, angoli superiori arrotondati e bordo divisore).
+  - **Mostra Intestazione**: Attiva o disattiva la barra del titolo. Se disattivata, la barra del titolo viene rimossa completamente dalla scheda, massimizzando lo spazio per i valori principali e gli inserti.
+  - **Etichetta Personalizzata**: Sostituisce il nome predefinito del dato con un titolo personalizzato.
+  - **Tipografia e Allineamento**: Configura famiglia di caratteri, dimensione del testo e allineamento (Sinistra, Centro, Destra).
+  - **Colore del Testo e di Sfondo**: Personalizza il colore di sfondo e del testo dell'intestazione tramite selettori colore dedicati, con pulsante per ripristinare i valori predefiniti in un clic.
 - **Ereditarietà Colori e Personalizzazioni**: Le schede ereditano in modo predefinito i colori di sfondo e testo della corsia assegnata (`Usa Colori Corsia`), oppure possono essere personalizzate con colori di sfondo, testo e bordi dedicati.
 - **Duplica su Corsie / Posiciones**:
   - Invece di creare e allineare manualmente le schede per ciascuna corsia, configura una singola scheda per corsia o posizione e fai clic su **Duplica su Corsie / Posizioni...** nell'ispettore.

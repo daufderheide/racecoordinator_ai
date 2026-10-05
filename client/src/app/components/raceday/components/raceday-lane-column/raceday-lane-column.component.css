@@ -9,7 +9,7 @@
   height: 100%;
   box-sizing: border-box;
   display: flex;
-  padding: 8px 12px;
+  padding: 0;
   overflow: hidden;
   position: relative;
   transition: border-color 0.2s ease, background-color 0.2s ease, color 0.2s ease;
@@ -21,31 +21,43 @@
 
 .raceday-lane-column-card.orientation-horizontal {
   flex-direction: row;
-  align-items: center;
-  gap: 12px;
+  align-items: stretch;
 }
 
 .lane-col-header {
+  background: rgba(68, 68, 68, 0.7);
+  color: #fff;
+  font-weight: bold;
+  font-size: 14px;
+  line-height: 1.2;
+  text-align: center;
+  user-select: none;
+  box-sizing: border-box;
   display: flex;
   align-items: center;
-  text-transform: uppercase;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-  opacity: 0.88;
+  justify-content: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   flex-shrink: 0;
-  line-height: 1.2;
+  padding: 3px 8px;
+  min-width: 0;
 }
 
 .raceday-lane-column-card.orientation-vertical .lane-col-header {
   width: 100%;
-  margin-bottom: 4px;
+  border-bottom: 1px solid var(--lane-col-header-border, rgba(255, 255, 255, 0.25));
+  border-top-left-radius: inherit;
+  border-top-right-radius: inherit;
 }
 
 .raceday-lane-column-card.orientation-horizontal .lane-col-header {
+  height: 100%;
   max-width: 50%;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  border-right: 1px solid var(--lane-col-header-border, rgba(255, 255, 255, 0.25));
+  border-top-left-radius: inherit;
+  border-bottom-left-radius: inherit;
+  padding: 3px 10px;
 }
 
 .lane-col-body {
@@ -58,8 +70,14 @@
   min-height: 0;
   width: 100%;
   height: 100%;
+  box-sizing: border-box;
   position: relative;
   overflow: hidden;
+  padding: 6px 12px;
+}
+
+.raceday-lane-column-card:not(.has-header) .lane-col-body {
+  padding: 8px 12px;
 }
 
 .lane-col-main-row {

@@ -31,12 +31,15 @@ import { DriverHeatData } from "@app/race/driver_heat_data";
 import { GhostBenchmarkType } from "@app/services/ghost-pacing.service";
 import { TranslationService } from "@app/services/translation.service";
 
-export interface HeatDataLapItem {
-  lapNumber: number;
-  lapTime: string;
-  isBest: boolean;
-  segments: string[];
-}
+import {
+  applyColumnInsetsAndPaddings,
+  computeHeatDataLastLaps,
+  HeatDataLapItem,
+  resolvePacingBenchmarkType,
+  resolvePacingDecimalPlaces,
+} from "./raceday-lane-column.utils";
+
+export { HeatDataLapItem };
 
 @Component({
   standalone: true,
@@ -289,14 +292,30 @@ export class RacedayLaneColumnComponent
   }
 
   get effectiveHeaderTextColor(): string {
+    if (this.settings.headerTextColor) {
+      return this.settings.headerTextColor;
+    }
     if (this.settings.useLaneColors !== false) {
       return this.foregroundColor;
     }
-    return (
-      this.settings.headerTextColor ||
-      this.settings.textColor ||
-      this.foregroundColor
-    );
+    return this.settings.textColor || this.foregroundColor || "#ffffff";
+  }
+
+  get effectiveHeaderBackgroundColor(): string {
+    return this.settings.headerBackgroundColor || "rgba(68, 68, 68, 0.7)";
+  }
+
+  get effectiveHeaderFontSize(): number {
+    const custom = this.settings.headerFontSize;
+    if (this.widget()?.scaleMode === "auto") {
+      const cardEl = this.cardRef()?.nativeElement;
+      const cardH = cardEl?.clientHeight || 0;
+      if (cardH > 0) {
+        const autoSize = Math.round(cardH * 0.18);
+        return Math.max(10, Math.min(28, autoSize));
+      }
+    }
+    return custom && custom > 0 ? custom : 14;
   }
 
   get effectiveValueTextColor(): string {
@@ -522,63 +541,11 @@ export class RacedayLaneColumnComponent
   }
 
   getLastLaps(): HeatDataLapItem[] {
-    const hd = this.targetDriver;
-    if (!hd) return [];
-
-    const laps = hd.lapTimes || [];
-    const lapsDetails = hd.lapsWithDetails || [];
-    const n = laps.length;
-
-    if (n > 0) {
-      const decimals =
-        this.settings.timeDecimalPlaces !== undefined
-          ? Number(this.settings.timeDecimalPlaces)
-          : 3;
-      const bestTime = hd.bestLapTime || 0;
-
-      const result: HeatDataLapItem[] = [];
-      for (let i = n - 1; i >= 0; i--) {
-        const val = laps[i] || 0;
-        if (val <= 0) continue;
-
-        const formattedLapTime = val.toFixed(decimals);
-        const isBest = bestTime > 0 && Math.abs(val - bestTime) < 0.0001;
-
-        const segments: string[] = [];
-        const detail = lapsDetails[i];
-        if (detail?.segments && detail.segments.length > 0) {
-          for (const seg of detail.segments) {
-            if (seg > 0) {
-              segments.push(seg.toFixed(decimals));
-            }
-          }
-        }
-
-        result.push({
-          lapNumber: i + 1,
-          lapTime: formattedLapTime,
-          isBest,
-          segments,
-        });
-      }
-      return result;
-    }
-
-    const parent = this.parent();
-    if (parent?.getLastLaps) {
-      const colDef = parent.columns?.find(
-        (c: any) => c.propertyName === "lastLaps",
-      );
-      const parentLaps = parent.getLastLaps(hd, colDef, "center-center") || [];
-      return parentLaps.map((l: any, idx: number) => ({
-        lapNumber: l.lapNumber ?? idx + 1,
-        lapTime: l.lapTime ?? "--",
-        isBest: Boolean(l.isBest),
-        segments: l.segments ?? [],
-      }));
-    }
-
-    return [];
+    return computeHeatDataLastLaps(
+      this.targetDriver,
+      this.settings,
+      this.parent(),
+    );
   }
 
   getVisibleLastLaps(): HeatDataLapItem[] {
@@ -629,24 +596,27 @@ export class RacedayLaneColumnComponent
     const textWidth = ctx.measureText(text).width || 1;
 
     let availWidth = Math.max(10, cardEl.clientWidth - 24);
-    let availHeight = Math.max(10, cardEl.clientHeight - 16);
+    let availHeight = Math.max(10, cardEl.clientHeight);
 
     if (this.settings.showHeader !== false) {
       if (isHorizontal) {
         const headerEl = cardEl.querySelector(
           ".lane-col-header",
         ) as HTMLElement | null;
-        const headerW = headerEl ? headerEl.offsetWidth + 12 : 60;
+        const headerW = headerEl ? headerEl.offsetWidth + 8 : 60;
         availWidth = Math.max(10, availWidth - headerW);
+        availHeight = Math.max(10, availHeight - 12);
       } else {
         const headerEl = cardEl.querySelector(
           ".lane-col-header",
         ) as HTMLElement | null;
         const headerH = headerEl
           ? headerEl.offsetHeight
-          : (this.settings.headerFontSize || 14) * 1.5;
-        availHeight = Math.max(10, availHeight - headerH);
+          : (this.settings.headerFontSize || 14) * 1.2;
+        availHeight = Math.max(10, availHeight - headerH - 8);
       }
+    } else {
+      availHeight = Math.max(10, availHeight - 16);
     }
 
     const dims = this.applyInsetsAndPaddings(cardEl, availWidth, availHeight);
@@ -671,64 +641,15 @@ export class RacedayLaneColumnComponent
     availWidth: number,
     availHeight: number,
   ): { availWidth: number; availHeight: number } {
-    const effectiveInsetFont = this.effectiveInsetFontSize;
-
-    let leftPad = 0;
-    if (this.hasLeftInsets() && !this.hasInset("center-left")) {
-      const tlEl = cardEl.querySelector(".inset-cell.tl") as HTMLElement | null;
-      const blEl = cardEl.querySelector(".inset-cell.bl") as HTMLElement | null;
-      const lW =
-        Math.max(tlEl?.offsetWidth || 0, blEl?.offsetWidth || 0) ||
-        Math.round(effectiveInsetFont * 2.5);
-      leftPad = lW + 6;
-      availWidth = Math.max(10, availWidth - leftPad);
-    }
-
-    let rightPad = 0;
-    if (this.hasRightInsets() && !this.hasInset("center-right")) {
-      const trEl = cardEl.querySelector(".inset-cell.tr") as HTMLElement | null;
-      const brEl = cardEl.querySelector(".inset-cell.br") as HTMLElement | null;
-      const rW =
-        Math.max(trEl?.offsetWidth || 0, brEl?.offsetWidth || 0) ||
-        Math.round(effectiveInsetFont * 2.5);
-      rightPad = rW + 6;
-      availWidth = Math.max(10, availWidth - rightPad);
-    }
-
-    let topPad = 0;
-    if (this.hasInset("top-center")) {
-      const tcEl = cardEl.querySelector(".inset-cell.tc") as HTMLElement | null;
-      const tcH = tcEl?.offsetHeight || Math.round(effectiveInsetFont * 1.2);
-      topPad = tcH + 2;
-      availHeight = Math.max(10, availHeight - topPad);
-    }
-
-    let bottomPad = 0;
-    if (this.hasInset("bottom-center")) {
-      const bcEl = cardEl.querySelector(".inset-cell.bc") as HTMLElement | null;
-      const bcH = bcEl?.offsetHeight || Math.round(effectiveInsetFont * 1.2);
-      bottomPad = bcH + 2;
-      availHeight = Math.max(10, availHeight - bottomPad);
-    }
-
-    cardEl.style.setProperty("--lane-col-pad-left", `${leftPad}px`);
-    cardEl.style.setProperty("--lane-col-pad-right", `${rightPad}px`);
-    cardEl.style.setProperty("--lane-col-pad-top", `${topPad}px`);
-    cardEl.style.setProperty("--lane-col-pad-bottom", `${bottomPad}px`);
-
-    if (this.hasInset("center-left")) {
-      const clEl = cardEl.querySelector(".inset-cell.cl") as HTMLElement | null;
-      const clW = clEl ? clEl.offsetWidth : 30;
-      availWidth = Math.max(10, availWidth - clW - 6);
-    }
-
-    if (this.hasInset("center-right")) {
-      const crEl = cardEl.querySelector(".inset-cell.cr") as HTMLElement | null;
-      const crW = crEl ? crEl.offsetWidth : 30;
-      availWidth = Math.max(10, availWidth - crW - 6);
-    }
-
-    return { availWidth, availHeight };
+    return applyColumnInsetsAndPaddings(
+      cardEl,
+      availWidth,
+      availHeight,
+      this.hasLeftInsets(),
+      this.hasRightInsets(),
+      (anchor) => this.hasInset(anchor),
+      this.effectiveInsetFontSize,
+    );
   }
 
   private fitLastLaps(): void {
@@ -1039,63 +960,15 @@ export class RacedayLaneColumnComponent
   }
 
   getPacingDecimalPlaces(): number {
-    const s = this.settings as any;
-    const parentSettings =
-      (this.parent() as any)?.laneViewWidgetSettings ||
-      (this.parent() as any)?.currentRacedayLayout?.widgets?.find?.(
-        (w: any) => w.widgetType === "lane-view",
-      )?.customSettings;
-    const customColDecimals =
-      s?.columnDecimals ||
-      s?.columnDecimalPlaces ||
-      parentSettings?.columnDecimals ||
-      parentSettings?.columnDecimalPlaces;
-    if (customColDecimals) {
-      if (
-        customColDecimals[this.columnKey] !== undefined &&
-        customColDecimals[this.columnKey] !== null &&
-        customColDecimals[this.columnKey] !== ""
-      ) {
-        return Math.min(
-          3,
-          Math.max(0, Number(customColDecimals[this.columnKey])),
-        );
-      }
-      for (const k of Object.keys(customColDecimals)) {
-        if (
-          k.startsWith("ghostPacing") &&
-          customColDecimals[k] !== undefined &&
-          customColDecimals[k] !== null &&
-          customColDecimals[k] !== ""
-        ) {
-          return Math.min(3, Math.max(0, Number(customColDecimals[k])));
-        }
-      }
-    }
-    if (this.settings.timeDecimalPlaces !== undefined) {
-      return Math.min(3, Math.max(0, Number(this.settings.timeDecimalPlaces)));
-    }
-    return 3;
+    return resolvePacingDecimalPlaces(
+      this.settings,
+      this.parent(),
+      this.columnKey,
+    );
   }
 
   getPacingBenchmarkType(): GhostBenchmarkType {
-    switch (this.columnKey) {
-      case "ghostPacingPB":
-        return "PERSONAL_BEST";
-      case "ghostPacingPersonalAvg":
-        return "PERSONAL_AVG";
-      case "ghostPacingPersonalMedian":
-        return "PERSONAL_MEDIAN";
-      case "ghostPacingLeaderAvg":
-        return "HEAT_LEADER_AVG";
-      case "ghostPacingLeaderMedian":
-        return "HEAT_LEADER_MEDIAN";
-      case "ghostPacingLeaderBest":
-        return "HEAT_LEADER";
-      case "ghostPacing":
-      default:
-        return "LANE_RECORD";
-    }
+    return resolvePacingBenchmarkType(this.columnKey);
   }
 
   isDriftLap(): boolean {

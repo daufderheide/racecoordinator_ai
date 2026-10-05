@@ -61,6 +61,12 @@ Le widget **Colonne de Voie** permet de positionner des colonnes individuelles d
   - **Voie Physique** : Associe la carte à une voie spécifique du circuit (Voie 1 à Voie 8). La carte conserve les données de cette voie pendant toute la durée de la course.
   - **Position au Classement** : Associe la carte à un rang actuel du classement (1ère place, 2e place, etc.). La carte s'adapte dynamiquement aux dépassements et aux changements de position, tout en ajustant ses couleurs de fond et de texte à la voie du pilote occupant ce rang.
 - **Orientation** : Prend en charge les dispositions **Verticale** (en-tête au-dessus de la valeur) et **Horizontale** (en-tête et valeur côte à côte).
+- **Style et Personnalisation de la Barre de Titre** :
+  - La barre de titre reprend par défaut l'apparence exacte de l'en-tête de colonne de la vue de voie (arrière-plan sombre semi-transparent `rgba(68, 68, 68, 0.7)`, texte blanc en gras, coins supérieurs arrondis et bordure de séparation).
+  - **Afficher l'En-tête** : Active ou désactive la barre de titre. Lorsqu'elle est désactivée, elle est totalement retirée de la carte afin de maximiser l'espace dédié aux valeurs principales et aux incrustations.
+  - **En-tête Personnalisé** : Remplace le nom du champ de données par défaut par un titre sur mesure.
+  - **Typographie et Alignement** : Personnalisez la police, la taille du texte et son alignement (Gauche, Centré, Droite).
+  - **Couleur du Texte et d'Arrière-plan** : Modifiez la couleur de fond et la couleur du texte de l'en-tête avec des sélecteurs dédiés et un bouton de réinitialisation instantanée.
 - **Héritage des Couleurs et Personnalisation** : Par défaut, les cartes héritent des couleurs de fond et de texte de la voie attribuée (`Utiliser les Couleurs de Voie`), ou peuvent être personnalisées avec des couleurs d'arrière-plan, de texte et de bordure spécifiques.
 - **Dupliquer sur les Voies / Positions** :
   - Au lieu de créer et d'aligner manuellement les cartes pour chaque voie, configurez un ensemble pour une seule voie ou position et cliquez sur **Dupliquer sur les Voies / Positions...** dans l'inspecteur.

@@ -61,6 +61,12 @@ The **Lane Column** widget allows individual data columns from the lane view (su
   - **Physical Lane**: Binds the card to a specific track lane (Lane 1 through Lane 8). The card maintains that lane's data throughout the race.
   - **Heat Standings Position**: Binds the card to a current standings rank (1st Place, 2nd Place, etc.). The card dynamically follows position changes, leader overtakes, and adjusts its background/accent colors to match the lane of whoever is currently in that position.
 - **Orientation**: Supports **Vertical** (stacked header over value) and **Horizontal** (side-by-side header and value) layouts.
+- **Title Bar Styling & Customization**:
+  - The title bar is styled identically to the Lane View column header by default (semi-transparent dark background `rgba(68, 68, 68, 0.7)`, bold white text, rounded top corners, and divider border).
+  - **Show Header**: Toggle the title bar on or off. When disabled, the title bar is completely removed from the card, maximizing the area for primary values and insets.
+  - **Custom Header Label**: Override the default data point name with custom title text.
+  - **Typography & Alignment**: Customize the header font family, font size, and text alignment (Left, Center, Right).
+  - **Header Text & Background Color**: Customize the title bar background color and text color with full color picker support and one-click reset to default.
 - **Color Inheritance & Overrides**: Cards default to inheriting the assigned lane's background and foreground colors (`Use Lane Colors`), or can be given custom background, text, and border color overrides.
 - **Replicate Across Lanes / Positions**:
   - Rather than creating and aligning cards for each lane manually, configure a single lane or position setup and click **Replicate Across Lanes / Positions...** in the inspector.
