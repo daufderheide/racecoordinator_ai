@@ -727,7 +727,7 @@ export class DefaultRacedayComponent
     return RacedayLayoutUtils.shouldShowLaneColor(col);
   }
 
-  protected get isWarmup(): boolean {
+  public get isWarmup(): boolean {
     if (
       this.raceHasEnded ||
       this.raceState === RaceState.RACE_OVER ||
@@ -751,6 +751,19 @@ export class DefaultRacedayComponent
         return totalTime - this.autoStartRemaining < warmupTime;
       }
     }
+    return false;
+  }
+
+  public get isCooldown(): boolean {
+    if (
+      this.raceHasEnded ||
+      this.raceState === RaceState.RACE_OVER ||
+      this.raceState === RaceState.PAUSED ||
+      this.raceState === RaceState.RACING ||
+      this.raceState === RaceState.STARTING
+    ) {
+      return false;
+    }
     if (
       (this.raceState === RaceState.HEAT_OVER ||
         this.raceState === RaceState.UNKNOWN_STATE) &&
@@ -760,7 +773,7 @@ export class DefaultRacedayComponent
       const warmupTime = this.race.auto_advance_warmup_time || 0;
       const totalTime = this.race.auto_advance_time || 0;
       if (warmupTime > 0 && totalTime > 0) {
-        // Warmup is at the END of auto-advance
+        // Cooldown is at the END of auto-advance (when track power is on)
         return this.autoAdvanceRemaining <= warmupTime;
       }
     }

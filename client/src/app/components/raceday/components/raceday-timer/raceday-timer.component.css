@@ -81,7 +81,8 @@
   white-space: nowrap;
 }
 
-.warmup-label {
+.warmup-label,
+.cooldown-label {
   font-family: 'Orbitron', sans-serif;
   font-size: 20px;
   font-weight: 800;
@@ -119,7 +120,8 @@
   }
 
   :host-context(body.print-no-background) .status-label,
-  :host-context(body.print-no-background) .warmup-label {
+  :host-context(body.print-no-background) .warmup-label,
+  :host-context(body.print-no-background) .cooldown-label {
     color: #0284c7 !important;
     text-shadow: none !important;
   }

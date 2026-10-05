@@ -176,6 +176,7 @@ describe("DefaultRaceResultsComponent", () => {
       formattedTime$: formattedTimeSubject.asObservable(),
       autoStatusLabel: "",
       isWarmup: false,
+      isCooldown: false,
       time: 83,
     };
 

@@ -21,6 +21,7 @@ All templates and component classes automatically have access to:
 - `formattedTime`: Live race timer formatted as `MM:SS.mmm`.
 - `autoStatusLabel`: Race status (Green Flag, Caution, Warmup, etc.).
 - `isWarmup`: Boolean indicating if in warmup.
+- `isCooldown`: Boolean indicating if in cooldown.
 - `totalHeats`: Total scheduled heats.
 - `currentFlagUrl`: Current race flag image URL.
 

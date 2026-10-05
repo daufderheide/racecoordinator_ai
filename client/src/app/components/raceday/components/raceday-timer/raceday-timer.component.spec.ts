@@ -62,6 +62,7 @@ describe("RacedayTimerComponent", () => {
     fixture.componentRef.setInput("formattedTime", "02:30.000");
     fixture.componentRef.setInput("autoStatusLabel", "");
     fixture.componentRef.setInput("isWarmup", false);
+    fixture.componentRef.setInput("isCooldown", false);
     fixture.componentRef.setInput("showCountdownOverlay", false);
 
     fixture.detectChanges();
@@ -69,14 +70,26 @@ describe("RacedayTimerComponent", () => {
     expect(await harness.getTimeText()).toBe("02:30.000");
     expect(await harness.getStatusLabel()).toBeNull();
     expect(await harness.getWarmupLabel()).toBeNull();
+    expect(await harness.getCooldownLabel()).toBeNull();
 
     // With warmup and status labels active
     fixture.componentRef.setInput("autoStatusLabel", "RD_PAUSED");
     fixture.componentRef.setInput("isWarmup", true);
+    fixture.componentRef.setInput("isCooldown", false);
     fixture.detectChanges();
 
     expect(await harness.getStatusLabel()).toBe("RD_PAUSED");
     expect(await harness.getWarmupLabel()).toBe("RD_WARMUP");
+    expect(await harness.getCooldownLabel()).toBeNull();
+
+    // With cooldown active instead of warmup
+    fixture.componentRef.setInput("isWarmup", false);
+    fixture.componentRef.setInput("isCooldown", true);
+    fixture.detectChanges();
+
+    expect(await harness.getStatusLabel()).toBe("RD_PAUSED");
+    expect(await harness.getWarmupLabel()).toBe("RD_COOLDOWN");
+    expect(await harness.getCooldownLabel()).toBe("RD_COOLDOWN");
 
     // Hide status label when countdown overlay is active
     fixture.componentRef.setInput("showCountdownOverlay", true);
@@ -141,10 +154,21 @@ describe("RacedayTimerComponent", () => {
     expect(timerText.classList.contains("timer-auto")).toBe(false);
   });
 
-  it("should apply timer-auto class during auto-start/auto-advance (not warmup)", () => {
+  it("should apply timer-warmup class during cooldown state", () => {
+    fixture.componentRef.setInput("formattedTime", "01:23");
+    fixture.componentRef.setInput("isWarmup", false);
+    fixture.componentRef.setInput("isCooldown", true);
+    fixture.detectChanges();
+    const timerText = fixture.nativeElement.querySelector(".timer-text");
+    expect(timerText.classList.contains("timer-warmup")).toBe(true);
+    expect(timerText.classList.contains("timer-auto")).toBe(false);
+  });
+
+  it("should apply timer-auto class during auto-start/auto-advance (not warmup or cooldown)", () => {
     fixture.componentRef.setInput("formattedTime", "01:23");
     fixture.componentRef.setInput("autoStatusLabel", "RD_AUTO_START");
     fixture.componentRef.setInput("isWarmup", false);
+    fixture.componentRef.setInput("isCooldown", false);
     fixture.componentRef.setInput("showCountdownOverlay", false);
     fixture.detectChanges();
     const timerText = fixture.nativeElement.querySelector(".timer-text");
@@ -173,6 +197,18 @@ describe("RacedayTimerComponent", () => {
     expect(timerText.classList.contains("timer-auto")).toBe(false);
   });
 
+  it("should not apply timer-auto class during cooldown even with auto status", () => {
+    fixture.componentRef.setInput("formattedTime", "01:23");
+    fixture.componentRef.setInput("autoStatusLabel", "RD_AUTO_ADVANCING");
+    fixture.componentRef.setInput("isWarmup", false);
+    fixture.componentRef.setInput("isCooldown", true);
+    fixture.componentRef.setInput("showCountdownOverlay", false);
+    fixture.detectChanges();
+    const timerText = fixture.nativeElement.querySelector(".timer-text");
+    expect(timerText.classList.contains("timer-warmup")).toBe(true);
+    expect(timerText.classList.contains("timer-auto")).toBe(false);
+  });
+
   it("should fallback to RaceTimeService when inputs are not provided", async () => {
     const mockRaceTimeService = {
       formattedTime: "04:56.7",
@@ -181,6 +217,8 @@ describe("RacedayTimerComponent", () => {
       autoStatusLabel$: of("RD_AUTO_ADVANCING"),
       isWarmup: true,
       isWarmup$: of(true),
+      isCooldown: false,
+      isCooldown$: of(false),
     };
 
     TestBed.resetTestingModule();
@@ -202,5 +240,40 @@ describe("RacedayTimerComponent", () => {
     expect(await localHarness.getTimeText()).toBe("04:56.7");
     expect(await localHarness.getStatusLabel()).toBe("RD_AUTO_ADVANCING");
     expect(await localHarness.getWarmupLabel()).toBe("RD_WARMUP");
+    expect(await localHarness.getCooldownLabel()).toBeNull();
+  });
+
+  it("should fallback to RaceTimeService for isCooldown when inputs are not provided", async () => {
+    const mockRaceTimeService = {
+      formattedTime: "00:04.0",
+      formattedTime$: of("00:04.0"),
+      autoStatusLabel: "RD_AUTO_ADVANCING",
+      autoStatusLabel$: of("RD_AUTO_ADVANCING"),
+      isWarmup: false,
+      isWarmup$: of(false),
+      isCooldown: true,
+      isCooldown$: of(true),
+    };
+
+    TestBed.resetTestingModule();
+    await TestBed.configureTestingModule({
+      imports: [RacedayTimerComponent, TranslatePipe],
+      providers: [
+        { provide: TranslationService, useValue: mockTranslationService },
+        { provide: RaceTimeService, useValue: mockRaceTimeService },
+      ],
+    }).compileComponents();
+
+    const localFixture = TestBed.createComponent(RacedayTimerComponent);
+    const localHarness = await TestbedHarnessEnvironment.harnessForFixture(
+      localFixture,
+      RacedayTimerHarness,
+    );
+    localFixture.detectChanges();
+
+    expect(await localHarness.getTimeText()).toBe("00:04.0");
+    expect(await localHarness.getStatusLabel()).toBe("RD_AUTO_ADVANCING");
+    expect(await localHarness.getWarmupLabel()).toBe("RD_COOLDOWN");
+    expect(await localHarness.getCooldownLabel()).toBe("RD_COOLDOWN");
   });
 });

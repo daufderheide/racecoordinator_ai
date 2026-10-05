@@ -10077,7 +10077,7 @@ describe("DefaultRacedayComponent", () => {
       );
     });
 
-    it("should evaluate isWarmup correctly across auto-start and auto-advance states", () => {
+    it("should evaluate isWarmup and isCooldown correctly across auto-start and auto-advance states", () => {
       (component as any).race = {
         auto_start_warmup_time: 5,
         auto_start_time: 10,
@@ -10088,31 +10088,38 @@ describe("DefaultRacedayComponent", () => {
       (component as any).raceState = RaceState.NOT_STARTED;
       (component as any).autoStartRemaining = 8;
       expect((component as any).isWarmup).toBeTrue();
+      expect((component as any).isCooldown).toBeFalse();
 
       (component as any).autoStartRemaining = 2;
       expect((component as any).isWarmup).toBeFalse();
+      expect((component as any).isCooldown).toBeFalse();
 
       (component as any).raceState = RaceState.PAUSED;
       (component as any).autoStartRemaining = 8;
       expect((component as any).isWarmup).toBeFalse();
+      expect((component as any).isCooldown).toBeFalse();
 
       (component as any).raceState = RaceState.HEAT_OVER;
       (component as any).autoStartRemaining = 0;
       (component as any).autoAdvanceRemaining = 3;
-      expect((component as any).isWarmup).toBeTrue();
+      expect((component as any).isWarmup).toBeFalse();
+      expect((component as any).isCooldown).toBeTrue();
 
       (component as any).autoAdvanceRemaining = 8;
       expect((component as any).isWarmup).toBeFalse();
+      expect((component as any).isCooldown).toBeFalse();
 
       (component as any).raceState = RaceState.PAUSED;
       (component as any).autoAdvanceRemaining = 3;
       expect((component as any).isWarmup).toBeFalse();
+      expect((component as any).isCooldown).toBeFalse();
 
       (component as any).autoAdvanceRemaining = 0;
       expect((component as any).isWarmup).toBeFalse();
+      expect((component as any).isCooldown).toBeFalse();
     });
 
-    it("should evaluate isWarmup and autoStatusLabel as false/empty when race is PAUSED or RACING", () => {
+    it("should evaluate isWarmup, isCooldown, and autoStatusLabel as false/empty when race is PAUSED or RACING", () => {
       (component as any).race = {
         auto_start_warmup_time: 5,
         auto_start_time: 10,
@@ -10125,14 +10132,16 @@ describe("DefaultRacedayComponent", () => {
 
       (component as any).raceState = RaceState.PAUSED;
       expect((component as any).isWarmup).toBeFalse();
+      expect((component as any).isCooldown).toBeFalse();
       expect((component as any).autoStatusLabel).toBe("");
 
       (component as any).raceState = RaceState.RACING;
       expect((component as any).isWarmup).toBeFalse();
+      expect((component as any).isCooldown).toBeFalse();
       expect((component as any).autoStatusLabel).toBe("");
     });
 
-    it("should evaluate isWarmup and autoStatusLabel as false/empty when raceHasEnded or raceState is RACE_OVER", () => {
+    it("should evaluate isWarmup, isCooldown, and autoStatusLabel as false/empty when raceHasEnded or raceState is RACE_OVER", () => {
       (component as any).race = {
         auto_start_warmup_time: 5,
         auto_start_time: 10,
@@ -10141,13 +10150,16 @@ describe("DefaultRacedayComponent", () => {
       };
 
       (component as any).autoStartRemaining = 8;
+      (component as any).autoAdvanceRemaining = 3;
       (component as any).raceState = RaceState.RACE_OVER;
       expect((component as any).isWarmup).toBeFalse();
+      expect((component as any).isCooldown).toBeFalse();
       expect((component as any).autoStatusLabel).toBe("");
 
       (component as any).raceState = RaceState.NOT_STARTED;
       (component as any).raceHasEnded = true;
       expect((component as any).isWarmup).toBeFalse();
+      expect((component as any).isCooldown).toBeFalse();
       expect((component as any).autoStatusLabel).toBe("");
     });
 

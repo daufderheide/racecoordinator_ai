@@ -2336,6 +2336,10 @@ describe("RaceEditorComponent", () => {
       expect(steps[10].selector).toBe("#adjust-drift-laps-input");
       expect(steps[11].selector).toBe("#auto-advance-time-input");
       expect(steps[12].selector).toBe("#auto-advance-warmup-time-input");
+      expect(steps[12].title).toBe("RE_HELP_AUTO_ADVANCE_COOLDOWN_TIME_TITLE");
+      expect(steps[12].content).toBe(
+        "RE_HELP_AUTO_ADVANCE_COOLDOWN_TIME_CONTENT",
+      );
       expect(steps[13].selector).toBe("#auto-start-time-input");
       expect(steps[14].selector).toBe("#auto-start-warmup-time-input");
       expect(steps[15].selector).toBe("#heat-times-through-input");

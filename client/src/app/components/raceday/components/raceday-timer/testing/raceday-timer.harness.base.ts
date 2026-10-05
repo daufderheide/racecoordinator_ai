@@ -5,9 +5,11 @@ export abstract class RacedayTimerHarnessBase {
     timerText: ".timer-text",
     statusLabel: ".status-label",
     warmupLabel: ".warmup-label",
+    cooldownLabel: ".cooldown-label",
   };
 
   abstract getTimeText(): Promise<string>;
   abstract getStatusLabel(): Promise<string | null>;
   abstract getWarmupLabel(): Promise<string | null>;
+  abstract getCooldownLabel(): Promise<string | null>;
 }

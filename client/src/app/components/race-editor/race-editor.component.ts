@@ -3620,10 +3620,10 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       {
         selector: "#auto-advance-warmup-time-input",
         title: this.translationService.translate(
-          "RE_HELP_AUTO_ADVANCE_WARMUP_TIME_TITLE",
+          "RE_HELP_AUTO_ADVANCE_COOLDOWN_TIME_TITLE",
         ),
         content: this.translationService.translate(
-          "RE_HELP_AUTO_ADVANCE_WARMUP_TIME_CONTENT",
+          "RE_HELP_AUTO_ADVANCE_COOLDOWN_TIME_CONTENT",
         ),
         position: "bottom",
         onEnter: () => {

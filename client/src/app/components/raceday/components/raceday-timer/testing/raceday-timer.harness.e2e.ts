@@ -21,6 +21,10 @@ export class RacedayTimerHarnessE2e implements RacedayTimerHarnessBase {
     return this.locator.locator(this.base.selectors.warmupLabel).first();
   }
 
+  private get cooldownLabel() {
+    return this.locator.locator(this.base.selectors.cooldownLabel).first();
+  }
+
   async getTimeText(): Promise<string> {
     return await this.timerText.innerText();
   }
@@ -35,6 +39,13 @@ export class RacedayTimerHarnessE2e implements RacedayTimerHarnessBase {
   async getWarmupLabel(): Promise<string | null> {
     if (await this.warmupLabel.isVisible()) {
       return await this.warmupLabel.innerText();
+    }
+    return null;
+  }
+
+  async getCooldownLabel(): Promise<string | null> {
+    if (await this.cooldownLabel.isVisible()) {
+      return await this.cooldownLabel.innerText();
     }
     return null;
   }
