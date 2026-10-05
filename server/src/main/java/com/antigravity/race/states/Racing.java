@@ -162,7 +162,6 @@ public class Racing implements IRaceState {
     final Runnable ticker =
         new Runnable() {
           long lastTime = 0;
-          long expectedNextTickNano = 0;
 
           @Override
           @SuppressWarnings("checkstyle:MethodLength")
@@ -171,20 +170,14 @@ public class Racing implements IRaceState {
               long now = System.nanoTime();
               if (lastTime == 0) {
                 lastTime = now;
-                expectedNextTickNano = now + 100_000_000L;
                 return;
               }
 
-              if (expectedNextTickNano > 0) {
-                long jitterNs = now - expectedNextTickNano;
-                if (jitterNs > 100_000_000L) {
-                  logger.warn("[PERF] Racing ticker delayed by {} ms", jitterNs / 1_000_000L);
-                  expectedNextTickNano = now + 100_000_000L;
-                } else {
-                  expectedNextTickNano += 100_000_000L;
-                }
-              } else {
-                expectedNextTickNano = now + 100_000_000L;
+              long intervalNs = now - lastTime;
+              if (intervalNs > 200_000_000L) {
+                logger.warn(
+                    "[PERF] Racing ticker delayed by {} ms",
+                    (intervalNs - 100_000_000L) / 1_000_000L);
               }
 
               float delta = (now - lastTime) / 1_000_000_000.0f;
@@ -310,7 +303,7 @@ public class Racing implements IRaceState {
               race.broadcastTime();
 
               long tickDurationNs = System.nanoTime() - now;
-              if (tickDurationNs > 25_000_000L && !allFinished) {
+              if (tickDurationNs > 50_000_000L && !allFinished) {
                 logger.warn(
                     "[PERF] Racing ticker execution took {} ms", tickDurationNs / 1_000_000L);
               }

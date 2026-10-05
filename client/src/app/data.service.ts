@@ -160,6 +160,7 @@ export class DataService {
   }
   private connectionIntent = "";
   private lastRaceTimeReceivedAt = 0;
+  private raceSubscriptionStartedAt = 0;
 
   constructor(
     private http: HttpClient,
@@ -1607,6 +1608,7 @@ export class DataService {
     this.flagSubject.next(RaceFlag.UNKNOWN_FLAG);
     this.raceTimeSubject.next({ time: 0 });
     this.lastRaceTimeReceivedAt = 0;
+    this.raceSubscriptionStartedAt = 0;
 
     const clearReplay = (subject: any) => {
       if (subject && Array.isArray(subject._buffer)) {
@@ -1622,7 +1624,10 @@ export class DataService {
 
   public updateRaceSubscription(subscribe: boolean) {
     this.shouldSubscribeToRaceData = subscribe;
-    if (!subscribe) {
+    if (subscribe) {
+      this.raceSubscriptionStartedAt =
+        typeof performance !== "undefined" ? performance.now() : Date.now();
+    } else {
       this.clearRaceData();
     }
     if (
@@ -1731,8 +1736,11 @@ export class DataService {
       (raceTime.autoAdvanceRemaining ?? 0) > 0;
 
     if (isTicking && this.lastRaceTimeReceivedAt > 0) {
+      const isHydrationGracePeriod =
+        this.raceSubscriptionStartedAt > 0 &&
+        now - this.raceSubscriptionStartedAt < 3000;
       const gap = Math.round(now - this.lastRaceTimeReceivedAt);
-      if (gap > 350) {
+      if (gap > 450 && !isHydrationGracePeriod) {
         const delayInfo =
           dispatchDelay >= 0
             ? `, browser dispatch delay: ${dispatchDelay}ms`

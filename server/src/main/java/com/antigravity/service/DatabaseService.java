@@ -488,13 +488,7 @@ public class DatabaseService {
     String raceId = runtimeRace.getRaceModel().getEntityId();
     String tableName = getCollectionName("race_records", isDemo);
     try {
-      context
-          .getConnection()
-          .createStatement()
-          .execute(
-              "CREATE TABLE IF NOT EXISTS "
-                  + tableName
-                  + " (race_id TEXT PRIMARY KEY, records_blob BLOB)");
+      context.ensureRaceRecordsTable(tableName);
       String sql =
           "INSERT INTO "
               + tableName
@@ -518,13 +512,7 @@ public class DatabaseService {
   public RecordData getRaceRecords(DatabaseContext context, String raceId, boolean isDemo) {
     String tableName = getCollectionName("race_records", isDemo);
     try {
-      context
-          .getConnection()
-          .createStatement()
-          .execute(
-              "CREATE TABLE IF NOT EXISTS "
-                  + tableName
-                  + " (race_id TEXT PRIMARY KEY, records_blob BLOB)");
+      context.ensureRaceRecordsTable(tableName);
       String sql = "SELECT records_blob FROM " + tableName + " WHERE race_id = ?";
       try (PreparedStatement pstmt = context.getConnection().prepareStatement(sql)) {
         pstmt.setString(1, raceId);

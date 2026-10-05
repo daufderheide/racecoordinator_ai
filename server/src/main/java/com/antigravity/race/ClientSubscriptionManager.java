@@ -59,7 +59,8 @@ public class ClientSubscriptionManager {
             t.setDaemon(true);
             return t;
           });
-  private final AtomicReference<byte[]> pendingRaceTimeBytes = new AtomicReference<>();
+  private final AtomicReference<GeneratedMessageV3> pendingRaceTimeMessage =
+      new AtomicReference<>();
   private final AtomicBoolean raceTimeScheduled = new AtomicBoolean(false);
   private ScheduledFuture<?> cleanupFuture;
   private long cleanupGracePeriodSeconds = 10;
@@ -145,7 +146,7 @@ public class ClientSubscriptionManager {
         } catch (Exception ignored) {
         }
       }
-      pendingRaceTimeBytes.set(null);
+      pendingRaceTimeMessage.set(null);
       sessions.clear();
       raceDataSubscribers.clear();
       interfaceSubscribers.clear();
@@ -644,8 +645,7 @@ public class ClientSubscriptionManager {
     }
 
     if (isPureRaceTime(message)) {
-      byte[] bytes = message.toByteArray();
-      pendingRaceTimeBytes.set(bytes);
+      pendingRaceTimeMessage.set(message);
       CompletableFuture<Void> future = new CompletableFuture<>();
       if (raceTimeScheduled.compareAndSet(false, true)) {
         broadcastExecutor.submit(
@@ -673,12 +673,13 @@ public class ClientSubscriptionManager {
   }
 
   private void processPendingRaceTime() {
-    byte[] bt = pendingRaceTimeBytes.getAndSet(null);
+    GeneratedMessageV3 msg = pendingRaceTimeMessage.getAndSet(null);
     raceTimeScheduled.set(false);
-    if (bt != null) {
+    if (msg != null) {
+      byte[] bt = msg.toByteArray();
       sendToRaceDataSubscribers(bt, "RaceTime");
     }
-    if (pendingRaceTimeBytes.get() != null && raceTimeScheduled.compareAndSet(false, true)) {
+    if (pendingRaceTimeMessage.get() != null && raceTimeScheduled.compareAndSet(false, true)) {
       broadcastExecutor.submit(this::processPendingRaceTime);
     }
   }

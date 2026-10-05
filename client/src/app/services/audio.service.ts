@@ -274,8 +274,15 @@ export class AudioService implements OnDestroy {
     }
 
     audio.volume = finalVolume;
-    audio.play().catch((err) => {
-      this.logger.error("Error playing SFX", err);
+    audio.play().catch((err: any) => {
+      if (err?.name === "AbortError") {
+        this.logger.debug(
+          "SFX playback aborted or paused",
+          err?.message || err,
+        );
+      } else {
+        this.logger.error("Error playing SFX", err);
+      }
     });
     return audio;
   }
@@ -497,21 +504,54 @@ export class AudioService implements OnDestroy {
     }
   }
 
-  private playPresetVoice(url: string, priority: AudioPriority): void {
-    const playableUrl = resolveAudioUrl(url, this.dataService.serverUrl);
-    let audio: HTMLAudioElement;
+  private getOrCreatePresetAudio(playableUrl: string): HTMLAudioElement {
     const cached = this.preloadedAudioMap.get(playableUrl);
     if (cached && (cached.paused || cached.ended)) {
-      audio = cached;
       try {
-        audio.currentTime = 0;
+        cached.currentTime = 0;
       } catch {
         // ignore
       }
-    } else {
-      audio = new Audio(playableUrl);
-      this.preloadedAudioMap.set(playableUrl, audio);
+      return cached;
     }
+    const audio = new Audio(playableUrl);
+    this.preloadedAudioMap.set(playableUrl, audio);
+    return audio;
+  }
+
+  private setupAudioWatchdog(
+    audio: HTMLAudioElement,
+    isEnded: () => boolean,
+    onTimeout: () => void,
+  ): void {
+    const startWatchdog = (timeoutMs: number) => {
+      if (this.safetyTimeout) {
+        clearTimeout(this.safetyTimeout);
+      }
+      this.safetyTimeout = setTimeout(onTimeout, timeoutMs);
+    };
+
+    startWatchdog(10000);
+
+    audio.onloadedmetadata = () => {
+      if (
+        !isEnded() &&
+        audio.duration &&
+        !isNaN(audio.duration) &&
+        isFinite(audio.duration)
+      ) {
+        const dynamicTimeout = Math.max(
+          3000,
+          Math.min(10000, Math.ceil(audio.duration * 1000) + 1500),
+        );
+        startWatchdog(dynamicTimeout);
+      }
+    };
+  }
+
+  private playPresetVoice(url: string, priority: AudioPriority): void {
+    const playableUrl = resolveAudioUrl(url, this.dataService.serverUrl);
+    const audio = this.getOrCreatePresetAudio(playableUrl);
     this.activeAudioElement = audio;
     const settings = this.settingsService.getSettings();
     audio.volume = Math.max(
@@ -547,35 +587,16 @@ export class AudioService implements OnDestroy {
 
     this.activeVoice = { priority, stop };
 
-    const startWatchdog = (timeoutMs: number) => {
-      if (this.safetyTimeout) {
-        clearTimeout(this.safetyTimeout);
-      }
-      this.safetyTimeout = setTimeout(() => {
+    this.setupAudioWatchdog(
+      audio,
+      () => ended,
+      () => {
         cleanup();
         if (this.activeVoice?.stop === stop) {
           this.onVoiceCalloutEnded();
         }
-      }, timeoutMs);
-    };
-
-    // Initial fallback watchdog (10s) if metadata has not loaded yet
-    startWatchdog(10000);
-
-    audio.onloadedmetadata = () => {
-      if (
-        !ended &&
-        audio.duration &&
-        !isNaN(audio.duration) &&
-        isFinite(audio.duration)
-      ) {
-        const dynamicTimeout = Math.max(
-          3000,
-          Math.min(10000, Math.ceil(audio.duration * 1000) + 1500),
-        );
-        startWatchdog(dynamicTimeout);
-      }
-    };
+      },
+    );
 
     audio.onended = () => {
       cleanup();
@@ -585,16 +606,29 @@ export class AudioService implements OnDestroy {
     };
 
     audio.onerror = (err) => {
+      const wasEnded = ended;
       cleanup();
-      this.logger.error("Error playing voice preset", err);
+      if (wasEnded) {
+        this.logger.debug("Voice preset playback interrupted", err);
+      } else {
+        this.logger.error("Error playing voice preset", err);
+      }
       if (this.activeVoice?.stop === stop) {
         this.onVoiceCalloutEnded();
       }
     };
 
-    audio.play().catch((err) => {
+    audio.play().catch((err: any) => {
+      const wasEnded = ended;
       cleanup();
-      this.logger.error("Voice preset playback failed", err);
+      if (wasEnded || err?.name === "AbortError") {
+        this.logger.debug(
+          "Voice preset playback aborted or paused",
+          err?.message || err,
+        );
+      } else {
+        this.logger.error("Voice preset playback failed", err);
+      }
       if (this.activeVoice?.stop === stop) {
         this.onVoiceCalloutEnded();
       }
