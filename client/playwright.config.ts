@@ -63,7 +63,7 @@ export default defineConfig({
     command: "npm run test:visual:serve",
     url: "http://127.0.0.1:4250",
     reuseExistingServer: !process.env["CI"],
-    timeout: 300000,
+    timeout: 120000,
   },
 
   /* Expect options */

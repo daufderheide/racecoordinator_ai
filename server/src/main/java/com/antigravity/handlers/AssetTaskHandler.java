@@ -94,6 +94,16 @@ public class AssetTaskHandler {
     AssetService service = getAssetService();
     AssetMessage asset = service.getAssetById(id);
     if (asset == null) {
+      String defaultFilename = AssetDefaultsInitializer.getDefaultFilename(id);
+      if (defaultFilename != null) {
+        serveFile(ctx, defaultFilename);
+        return;
+      }
+      if (AssetDefaultsInitializer.getDefaultResourcePath(id) != null
+          || id.startsWith("default_")) {
+        serveFile(ctx, id);
+        return;
+      }
       setStatus(ctx, 404);
       setResult(ctx, "Asset not found");
       return;
@@ -103,12 +113,12 @@ public class AssetTaskHandler {
     String filename = null;
     if (url != null && url.startsWith("/assets/")) {
       filename = url.substring("/assets/".length());
+    } else if (asset.getName() != null && !asset.getName().isEmpty()) {
+      filename = id + "_" + asset.getName().replaceAll("[^a-zA-Z0-9.-]", "_");
     }
 
     if (filename == null) {
-      setStatus(ctx, 404);
-      setResult(ctx, "Asset file not found");
-      return;
+      filename = id;
     }
 
     serveFile(ctx, filename);
@@ -208,6 +218,9 @@ public class AssetTaskHandler {
       }
       String contentType = detectContentType(file.getName(), bytesRead > 0 ? header : null);
       setContentType(ctx, contentType);
+      ctx.header("Accept-Ranges", "bytes");
+      ctx.header("Content-Length", String.valueOf(file.length()));
+      ctx.header("Cache-Control", "public, max-age=86400");
       setStream(ctx, new FileInputStream(file));
     } catch (FileNotFoundException e) {
       setStatus(ctx, 404);
@@ -236,6 +249,9 @@ public class AssetTaskHandler {
       byte[] bytes = buffer.toByteArray();
       String contentType = detectContentType(resourcePath, bytes);
       setContentType(ctx, contentType);
+      ctx.header("Accept-Ranges", "bytes");
+      ctx.header("Content-Length", String.valueOf(bytes.length));
+      ctx.header("Cache-Control", "public, max-age=86400");
       setStream(ctx, new ByteArrayInputStream(bytes));
 
       // Self-heal: persist to assetsDir on disk
@@ -243,7 +259,11 @@ public class AssetTaskHandler {
         if (!assetsDir.exists()) {
           assetsDir.mkdirs();
         }
-        File targetFile = new File(assetsDir, filename);
+        String saveName = AssetDefaultsInitializer.getDefaultFilename(filename);
+        if (saveName == null) {
+          saveName = filename;
+        }
+        File targetFile = new File(assetsDir, saveName);
         if (!targetFile.exists()) {
           try (FileOutputStream fos = new FileOutputStream(targetFile)) {
             fos.write(bytes);
@@ -304,7 +324,8 @@ public class AssetTaskHandler {
                       candidate.contains(".")
                           ? candidate.substring(0, candidate.lastIndexOf('.'))
                           : candidate;
-                  return candidateBase.equals(targetBase);
+                  if (candidateBase.equals(targetBase)) return true;
+                  return candidate.startsWith(target + "_");
                 });
         if (matchingFiles != null && matchingFiles.length > 0) {
           file = matchingFiles[0];

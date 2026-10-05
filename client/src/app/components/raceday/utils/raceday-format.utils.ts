@@ -69,8 +69,12 @@ export class RacedayFormatUtils {
       af === AllowFinish.AF_SINGLE_LAP ||
       af === "SingleLap" ||
       af === "AF_SINGLE_LAP" ||
+      af === AllowFinish.AF_SINGLE_LAP_AUTO_SEGMENTS ||
+      af === "SingleLapAutoSegments" ||
+      af === "AF_SINGLE_LAP_AUTO_SEGMENTS" ||
       af === 1 ||
-      af === 2
+      af === 2 ||
+      af === 4
     );
   }
 
@@ -79,6 +83,17 @@ export class RacedayFormatUtils {
     propertyPath: string,
   ): any {
     if (!heatDriver) return undefined;
+    const baseKey = propertyPath.split(".")[0].split("_")[0];
+    const p =
+      heatDriver.participant ?? (heatDriver as any).actualDriver?.participant;
+    const overallVal = RacedayFormatUtils.extractOverallPropertyValue(
+      p,
+      heatDriver as any,
+      baseKey,
+    );
+    if (overallVal !== undefined) {
+      return overallVal;
+    }
     const parts = propertyPath.split(".").map((part) => part.split("_")[0]);
     let value: any = heatDriver;
     for (const part of parts) {
@@ -86,6 +101,284 @@ export class RacedayFormatUtils {
       value = value[part];
     }
     return value;
+  }
+
+  private static extractOverallPropertyValue(
+    p: any,
+    heatDriver: any,
+    baseKey: string,
+  ): any {
+    switch (baseKey) {
+      case "overallLapCount":
+        return (
+          p?.totalLaps ?? heatDriver?.totalLaps ?? heatDriver?.overallLapCount
+        );
+      case "overallPhysicalLapCount":
+        return (
+          p?.physicalLapCount ??
+          heatDriver?.physicalLapCount ??
+          heatDriver?.overallPhysicalLapCount
+        );
+      case "overallTotalTime":
+        return (
+          p?.totalTime ?? heatDriver?.totalTime ?? heatDriver?.overallTotalTime
+        );
+      case "overallBestLapTime":
+        return (
+          p?.bestLapTime ??
+          heatDriver?.bestLapTime ??
+          heatDriver?.overallBestLapTime
+        );
+      case "overallAverageLapTime":
+        return (
+          p?.averageLapTime ??
+          heatDriver?.averageLapTime ??
+          heatDriver?.overallAverageLapTime
+        );
+      case "overallMedianLapTime":
+        return (
+          p?.medianLapTime ??
+          heatDriver?.medianLapTime ??
+          heatDriver?.overallMedianLapTime
+        );
+      case "overallConsistencyScore":
+        return (
+          p?.consistencyScore ??
+          heatDriver?.consistencyScore ??
+          heatDriver?.overallConsistencyScore
+        );
+      case "overallStandardDeviation":
+        return (
+          p?.standardDeviation ??
+          heatDriver?.standardDeviation ??
+          heatDriver?.overallStandardDeviation
+        );
+      case "overallAverageTop5":
+        return (
+          p?.averageTop5 ??
+          heatDriver?.averageTop5 ??
+          heatDriver?.overallAverageTop5
+        );
+      case "overallAverageTop10":
+        return (
+          p?.averageTop10 ??
+          heatDriver?.averageTop10 ??
+          heatDriver?.overallAverageTop10
+        );
+      case "overallAverageTop15":
+        return (
+          p?.averageTop15 ??
+          heatDriver?.averageTop15 ??
+          heatDriver?.overallAverageTop15
+        );
+      case "overallTop2Consecutive":
+        return (
+          p?.top2Consecutive ??
+          heatDriver?.top2Consecutive ??
+          heatDriver?.overallTop2Consecutive
+        );
+      case "overallTop3Consecutive":
+        return (
+          p?.top3Consecutive ??
+          heatDriver?.top3Consecutive ??
+          heatDriver?.overallTop3Consecutive
+        );
+      case "overallGapLeader":
+        return (
+          p?.gapLeader ?? heatDriver?.gapLeader ?? heatDriver?.overallGapLeader
+        );
+      case "overallGapPosition":
+        return (
+          p?.gapPosition ??
+          heatDriver?.gapPosition ??
+          heatDriver?.overallGapPosition
+        );
+      case "overallGapLeaderF1":
+        return (
+          p?.gapLeaderF1 ??
+          heatDriver?.gapLeaderF1 ??
+          heatDriver?.overallGapLeaderF1
+        );
+      case "overallGapPositionF1":
+        return (
+          p?.gapPositionF1 ??
+          heatDriver?.gapPositionF1 ??
+          heatDriver?.overallGapPositionF1
+        );
+      case "overallLapsLed":
+        return p?.lapsLed ?? heatDriver?.lapsLed ?? heatDriver?.overallLapsLed;
+      case "overallTrackCalls":
+        return (
+          p?.trackCalls ??
+          heatDriver?.trackCalls ??
+          heatDriver?.overallTrackCalls
+        );
+      case "overallPoints":
+        return (
+          p?.totalPoints ?? heatDriver?.totalPoints ?? heatDriver?.overallPoints
+        );
+      default:
+        return undefined;
+    }
+  }
+
+  private static formatOverallValue(
+    baseKey: string,
+    value: any,
+    hd: DriverHeatData,
+    ctx: FormatContext,
+    timePlaceholder: string,
+    lapPlaceholder: string,
+    timeDecimals: number,
+    lapDecimals: number,
+  ): string | null {
+    if (RacedayFormatUtils.isEmptyDriver(hd)) {
+      if (
+        baseKey === "overallPhysicalLapCount" ||
+        baseKey === "overallLapsLed" ||
+        baseKey === "overallTrackCalls" ||
+        baseKey === "overallPoints"
+      ) {
+        return "--";
+      }
+      if (
+        baseKey === "overallTotalTime" ||
+        baseKey === "overallBestLapTime" ||
+        baseKey === "overallAverageLapTime" ||
+        baseKey === "overallMedianLapTime" ||
+        baseKey === "overallStandardDeviation" ||
+        baseKey === "overallAverageTop5" ||
+        baseKey === "overallAverageTop10" ||
+        baseKey === "overallAverageTop15" ||
+        baseKey === "overallTop2Consecutive" ||
+        baseKey === "overallTop3Consecutive" ||
+        baseKey === "overallGapLeader" ||
+        baseKey === "overallGapPosition" ||
+        baseKey === "overallGapLeaderF1" ||
+        baseKey === "overallGapPositionF1"
+      ) {
+        return timePlaceholder;
+      }
+      if (baseKey === "overallConsistencyScore") {
+        return "--.-%";
+      }
+      if (baseKey === "overallLapCount") {
+        return lapPlaceholder;
+      }
+    }
+
+    if (
+      baseKey === "overallBestLapTime" ||
+      baseKey === "overallAverageLapTime" ||
+      baseKey === "overallMedianLapTime" ||
+      baseKey === "overallTotalTime" ||
+      baseKey === "overallStandardDeviation" ||
+      baseKey === "overallAverageTop5" ||
+      baseKey === "overallAverageTop10" ||
+      baseKey === "overallAverageTop15" ||
+      baseKey === "overallTop2Consecutive" ||
+      baseKey === "overallTop3Consecutive"
+    ) {
+      const isStdDev = baseKey === "overallStandardDeviation";
+      const isValid =
+        value !== null &&
+        value !== undefined &&
+        (isStdDev ? value >= 0 : value > 0);
+      return isValid ? value.toFixed(timeDecimals) : timePlaceholder;
+    }
+
+    if (baseKey === "overallConsistencyScore") {
+      if (value === null || value === undefined) return "--.-%";
+      return value.toFixed(1) + "%";
+    }
+
+    if (baseKey === "overallGapLeader" || baseKey === "overallGapPosition") {
+      if (value === 0 || value === null || value === undefined) {
+        return timePlaceholder;
+      }
+      const sign = value > 0 ? "+" : "";
+      return sign + value.toFixed(timeDecimals);
+    }
+
+    if (
+      baseKey === "overallGapLeaderF1" ||
+      baseKey === "overallGapPositionF1"
+    ) {
+      const isLeader = baseKey === "overallGapLeaderF1";
+      const p = hd?.participant;
+      const lapsDown =
+        (isLeader ? p?.lapsDownLeader : p?.lapsDownPosition) ??
+        (isLeader ? hd?.lapsDownLeader : hd?.lapsDownPosition) ??
+        0;
+
+      if (lapsDown === 1) {
+        return ctx
+          .translate("RD_LAP_DOWN")
+          .replace("{{count}}", lapsDown.toString());
+      } else if (lapsDown > 1) {
+        return ctx
+          .translate("RD_LAPS_DOWN")
+          .replace("{{count}}", lapsDown.toString());
+      } else {
+        if (value === 0 || value === null || value === undefined) {
+          return timePlaceholder;
+        }
+        const sign = value > 0 ? "+" : "";
+        return sign + value.toFixed(timeDecimals);
+      }
+    }
+
+    if (baseKey === "overallLapCount") {
+      const p = hd?.participant;
+      const hasCompleted = p?.totalTime && p.totalTime > 0;
+      if (
+        value === null ||
+        value === undefined ||
+        (value === 0 && !hasCompleted)
+      ) {
+        return lapPlaceholder;
+      }
+      return Number(value).toFixed(lapDecimals);
+    }
+
+    if (baseKey === "overallPhysicalLapCount") {
+      const p = hd?.participant;
+      const hasCompleted = p?.totalTime && p.totalTime > 0;
+      if (
+        value === null ||
+        value === undefined ||
+        (value === 0 && !hasCompleted)
+      ) {
+        return "--";
+      }
+      return String(value);
+    }
+
+    if (baseKey === "overallLapsLed") {
+      const led =
+        value !== undefined && value !== null
+          ? value
+          : (hd?.participant?.lapsLed ?? 0);
+      return String(led);
+    }
+
+    if (baseKey === "overallTrackCalls") {
+      const calls =
+        value !== undefined && value !== null
+          ? value
+          : (hd?.participant?.trackCalls ?? 0);
+      return String(calls);
+    }
+
+    if (baseKey === "overallPoints") {
+      const points =
+        value !== undefined && value !== null
+          ? value
+          : (hd?.participant?.totalPoints ?? 0);
+      return String(points);
+    }
+
+    return null;
   }
 
   static formatValue(
@@ -101,25 +394,64 @@ export class RacedayFormatUtils {
 
     const isInset = anchor ? !anchor.startsWith("center-") : false;
 
+    const colKey = column?.propertyName || baseKey;
+    const customColDecimals =
+      ctx.laneViewWidgetSettings?.columnDecimals ||
+      ctx.laneViewWidgetSettings?.columnDecimalPlaces;
+    const colDecimalOverride = customColDecimals
+      ? (customColDecimals[column?.propertyName ?? ""] ??
+        customColDecimals[colKey] ??
+        customColDecimals[baseKey] ??
+        (baseKey.startsWith("ghostPacing")
+          ? Object.entries(customColDecimals).find(([k]) =>
+              k.startsWith("ghostPacing"),
+            )?.[1]
+          : undefined))
+      : undefined;
+
     const timeDecimals = isInset
       ? ctx.laneViewWidgetSettings?.insetTimeDecimalPlaces !== undefined
         ? Number(ctx.laneViewWidgetSettings.insetTimeDecimalPlaces)
         : 3
-      : ctx.laneViewWidgetSettings?.timeDecimalPlaces !== undefined
-        ? Number(ctx.laneViewWidgetSettings.timeDecimalPlaces)
-        : 3;
+      : colDecimalOverride !== undefined &&
+          colDecimalOverride !== null &&
+          colDecimalOverride !== ""
+        ? Number(colDecimalOverride)
+        : ctx.laneViewWidgetSettings?.timeDecimalPlaces !== undefined
+          ? Number(ctx.laneViewWidgetSettings.timeDecimalPlaces)
+          : 3;
     const lapDecimals = isInset
       ? ctx.laneViewWidgetSettings?.insetLapDecimalPlaces !== undefined
         ? Number(ctx.laneViewWidgetSettings.insetLapDecimalPlaces)
         : 2
-      : ctx.laneViewWidgetSettings?.lapDecimalPlaces !== undefined
-        ? Number(ctx.laneViewWidgetSettings.lapDecimalPlaces)
-        : 2;
+      : colDecimalOverride !== undefined &&
+          colDecimalOverride !== null &&
+          colDecimalOverride !== ""
+        ? Number(colDecimalOverride)
+        : ctx.laneViewWidgetSettings?.lapDecimalPlaces !== undefined
+          ? Number(ctx.laneViewWidgetSettings.lapDecimalPlaces)
+          : 2;
 
     const timePlaceholder =
       timeDecimals > 0 ? "--." + "-".repeat(timeDecimals) : "--";
     const lapPlaceholder =
       lapDecimals > 0 ? "--." + "-".repeat(lapDecimals) : "--";
+
+    if (baseKey.startsWith("overall")) {
+      const overallStr = RacedayFormatUtils.formatOverallValue(
+        baseKey,
+        value,
+        hd,
+        ctx,
+        timePlaceholder,
+        lapPlaceholder,
+        timeDecimals,
+        lapDecimals,
+      );
+      if (overallStr !== null) {
+        return overallStr;
+      }
+    }
 
     if (RacedayFormatUtils.isEmptyDriver(hd)) {
       if (baseKey === "seed") {
@@ -306,8 +638,12 @@ export class RacedayFormatUtils {
       const currentLapTime = (hd as any).currentLapTime ?? hd.lastLapTime ?? 0;
       if (ghostLap > 0 && currentLapTime > 0) {
         const delta = ghostLap - currentLapTime;
+        const fixedVal = delta.toFixed(timeDecimals);
+        if (Math.abs(Number(fixedVal)) === 0) {
+          return (0).toFixed(timeDecimals) + "s";
+        }
         const sign = delta > 0 ? "+" : "";
-        return sign + delta.toFixed(timeDecimals) + "s";
+        return sign + fixedVal + "s";
       }
       return "--";
     } else if (baseKey === "driver.name") {

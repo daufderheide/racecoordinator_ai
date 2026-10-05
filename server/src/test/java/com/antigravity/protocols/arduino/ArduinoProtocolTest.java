@@ -194,8 +194,13 @@ public class ArduinoProtocolTest {
   }
 
   private void setupAnalogLedPins() {
+    setupAnalogLedPins(false);
+  }
+
+  private void setupAnalogLedPins(boolean activeLowAnalogLeds) {
     ArduinoConfig newConfig = new ArduinoConfig();
     newConfig.commPort = "COM1";
+    newConfig.activeLowAnalogLeds = activeLowAnalogLeds;
     for (int i = 0; i < 11; i++) {
       newConfig.digitalIds.add(PinBehavior.BEHAVIOR_UNUSED_VALUE);
     }
@@ -208,6 +213,7 @@ public class ArduinoProtocolTest {
     newConfig.digitalIds.set(8, PinBehavior.BEHAVIOR_ANALOG_LED_COUNTDOWN_5_VALUE);
     newConfig.digitalIds.set(9, PinBehavior.BEHAVIOR_ANALOG_LED_HEAT_LEADER_BASE_VALUE);
     newConfig.digitalIds.set(10, PinBehavior.BEHAVIOR_ANALOG_LED_HEAT_LEADER_BASE_VALUE + 1);
+    this.config = newConfig;
     protocol = new TestableArduinoProtocol(newConfig, 2, scheduler, serialConnection);
     protocol.open();
 
@@ -326,6 +332,38 @@ public class ArduinoProtocolTest {
     protocol.initializeHardwareState();
     assertPinState(9, false);
     assertPinState(10, false);
+  }
+
+  @Test
+  public void testAnalogLed_ActiveLow_RedFlag() {
+    setupAnalogLedPins(true);
+    protocol.setRaceState(RaceState.NOT_STARTED, RaceFlag.RED, 0);
+    // Green/Yellow OFF -> Active Low means driven HIGH (5V)
+    assertPinState(2, true);
+    assertPinState(3, true);
+    // Countdowns ON -> Active Low means driven LOW (0V)
+    assertPinState(4, false);
+    assertPinState(5, false);
+    assertPinState(6, false);
+    assertPinState(7, false);
+    assertPinState(8, false);
+  }
+
+  @Test
+  public void testSetPinState_ActiveLowAnalogLed_ConfigPage() {
+    setupAnalogLedPins(true);
+    protocol.clearPinStateCache();
+    serialConnection.allWrittenData.clear();
+
+    // Pin D2 is Green Flag (Analog LED). Requesting ON (isHigh=true) should output LOW (0V).
+    protocol.setPinState(true, 2, true);
+    assertPinState(2, false);
+
+    // Requesting OFF (isHigh=false) should output HIGH (5V).
+    protocol.clearPinStateCache();
+    serialConnection.allWrittenData.clear();
+    protocol.setPinState(true, 2, false);
+    assertPinState(2, true);
   }
 
   private static class TestableArduinoProtocol extends ArduinoProtocol {
@@ -530,6 +568,26 @@ public class ArduinoProtocolTest {
       }
     }
     assertTrue("Should have synchronized power after NC setting change", foundPower);
+  }
+
+  @Test
+  public void testUpdateConfig_ActiveLowAnalogLeds_SynchronizesLeds() {
+    setupAnalogLedPins(false);
+    protocol.setRaceState(RaceState.NOT_STARTED, RaceFlag.RED, 0);
+    // Green (pin 2) is OFF -> 0V (LOW)
+    assertPinState(2, false);
+
+    serialConnection.allWrittenData.clear();
+    protocol.clearPinStateCache();
+
+    ArduinoConfig newConfig = new ArduinoConfig();
+    newConfig.commPort = "COM1";
+    newConfig.activeLowAnalogLeds = true;
+    newConfig.digitalIds = new ArrayList<>(config.digitalIds);
+    protocol.updateConfig(newConfig);
+
+    // After updating to activeLowAnalogLeds=true, Green (OFF) should now be driven 5V (HIGH)
+    assertPinState(2, true);
   }
 
   @Test

@@ -44,11 +44,19 @@ export class CountdownInspectorComponent {
       s.lampSizingMode = "custom";
       modified = true;
     }
-    if (!s.previewLampCount) {
+    if (!s.maxLamps && !s.previewLampCount) {
+      s.maxLamps = 5;
       s.previewLampCount = 5;
       modified = true;
-    } else if (typeof s.previewLampCount === "string") {
-      s.previewLampCount = Number(s.previewLampCount) || 5;
+    } else if (!s.maxLamps) {
+      s.maxLamps = Number(s.previewLampCount) || 5;
+      modified = true;
+    } else if (!s.previewLampCount) {
+      s.previewLampCount = Number(s.maxLamps) || 5;
+      modified = true;
+    }
+    if (s.fadeIn === undefined || s.fadeIn === null) {
+      s.fadeIn = true;
       modified = true;
     }
     if (!s.blurArea) {
@@ -72,15 +80,15 @@ export class CountdownInspectorComponent {
       modified = true;
     }
     if (s.glowOverlap === undefined || s.glowOverlap === null) {
-      s.glowOverlap = 100;
+      s.glowOverlap = 30;
       modified = true;
     }
     if (s.glowRedOverlap === undefined || s.glowRedOverlap === null) {
-      s.glowRedOverlap = s.glowOverlap ?? 100;
+      s.glowRedOverlap = s.glowOverlap ?? 30;
       modified = true;
     }
     if (s.glowGreenOverlap === undefined || s.glowGreenOverlap === null) {
-      s.glowGreenOverlap = 100;
+      s.glowGreenOverlap = 25;
       modified = true;
     }
     if (modified) {
@@ -110,13 +118,35 @@ export class CountdownInspectorComponent {
     }
   }
 
+  get maxLamps(): number {
+    const val = this.settings()?.maxLamps ?? this.settings()?.previewLampCount;
+    return Number(val) || 5;
+  }
+
+  setMaxLamps(count: any) {
+    if (this.settings()) {
+      const num = Number(count) || 5;
+      this.settings().maxLamps = num;
+      this.settings().previewLampCount = num;
+      this.onSettingsChange();
+    }
+  }
+
   get previewLampCount(): number {
-    return Number(this.settings()?.previewLampCount) || 5;
+    return this.maxLamps;
   }
 
   setPreviewLampCount(count: any) {
+    this.setMaxLamps(count);
+  }
+
+  get fadeIn(): boolean {
+    return this.settings()?.fadeIn !== false;
+  }
+
+  setFadeIn(val: boolean) {
     if (this.settings()) {
-      this.settings().previewLampCount = Number(count) || 5;
+      this.settings().fadeIn = val;
       this.onSettingsChange();
     }
   }
@@ -154,7 +184,7 @@ export class CountdownInspectorComponent {
 
   get glowRedOverlap(): number {
     const val = this.settings()?.glowRedOverlap ?? this.settings()?.glowOverlap;
-    return typeof val === "number" ? Math.max(0, Math.min(100, val)) : 100;
+    return typeof val === "number" ? Math.max(0, Math.min(100, val)) : 30;
   }
 
   setGlowRedOverlap(val: any) {
@@ -168,7 +198,7 @@ export class CountdownInspectorComponent {
 
   get glowGreenOverlap(): number {
     const val = this.settings()?.glowGreenOverlap;
-    return typeof val === "number" ? Math.max(0, Math.min(100, val)) : 100;
+    return typeof val === "number" ? Math.max(0, Math.min(100, val)) : 25;
   }
 
   setGlowGreenOverlap(val: any) {

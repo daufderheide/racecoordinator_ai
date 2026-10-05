@@ -16,6 +16,85 @@
       as="image"
       href="assets/images/progress_bar_fill.png"
     />
+    <script>
+      (function () {
+        var SKIP_TYPES = {
+          password: 1,
+          checkbox: 1,
+          radio: 1,
+          file: 1,
+          color: 1,
+          range: 1,
+          hidden: 1,
+          submit: 1,
+          button: 1,
+          reset: 1,
+          image: 1,
+        };
+        var ATTRS = {
+          autocomplete: "off",
+          "data-dashlane-ignore": "true",
+          "data-dashlane-disabled-on-field": "true",
+          "data-1p-ignore": "true",
+          "data-lpignore": "true",
+          "data-bwignore": "true",
+          "data-form-type": "other",
+          "data-field-type": "other",
+        };
+        function secure(el) {
+          if (!el || !el.tagName) return;
+          var tag = el.tagName.toLowerCase();
+          if (tag !== "input" && tag !== "textarea") return;
+          if (
+            tag === "input" &&
+            SKIP_TYPES[(el.getAttribute("type") || "text").toLowerCase()]
+          )
+            return;
+          for (var k in ATTRS) {
+            if (
+              !el.hasAttribute(k) ||
+              (k === "autocomplete" && el.getAttribute(k) !== "off")
+            ) {
+              el.setAttribute(k, ATTRS[k]);
+            }
+          }
+        }
+        function scan(node) {
+          if (!node || node.nodeType !== 1) return;
+          secure(node);
+          if (node.querySelectorAll) {
+            var inputs = node.querySelectorAll("input, textarea");
+            for (var i = 0; i < inputs.length; i++) secure(inputs[i]);
+          }
+        }
+        if (typeof MutationObserver !== "undefined") {
+          var observer = new MutationObserver(function (mutations) {
+            for (var i = 0; i < mutations.length; i++) {
+              var added = mutations[i].addedNodes;
+              for (var j = 0; j < added.length; j++) scan(added[j]);
+            }
+          });
+          observer.observe(document.documentElement, {
+            childList: true,
+            subtree: true,
+          });
+        }
+        document.addEventListener(
+          "focusin",
+          function (e) {
+            secure(e.target);
+          },
+          true,
+        );
+        document.addEventListener(
+          "pointerdown",
+          function (e) {
+            secure(e.target);
+          },
+          true,
+        );
+      })();
+    </script>
     <style>
       #rc-unsupported-browser-overlay {
         position: fixed;

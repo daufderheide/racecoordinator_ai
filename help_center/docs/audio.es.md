@@ -173,8 +173,8 @@ Las siguientes tablas detallan todos los eventos de audio en Race Coordinator AI
 | **Semáforo Verde / SALIDA** | `audio.countdown.green` | **Aviso de Voz** / Tono Predefinido | `urgent` | `countdown`: Suena en Pantalla Principal (si hay widget de cuenta atrás) y en todos los Puestos de Piloto. |
 | **Bandera Amarilla** | `audio.yellowflag` | **Aviso de Voz** (Sirena de Aviso) | `urgent` (Peso 4) | `flag`: Suena en Pantalla Principal (si hay widget de bandera) y en todos los Puestos de Piloto. |
 | **Segundos Restantes de Inicio Automático** | `audio.auto_start` | **Aviso de Voz** / Conjunto de Audio (Predeterminado: TTS) | `normal` (Peso 2) | `timer`: Suena en Pantalla Principal (si hay widget de temporizador) y en todos los Puestos de Piloto. |
-| **Segundos Restantes** | `audio.seconds_left` | **Aviso de Voz** | `normal` (Peso 2) | `timer`: Suena en Pantalla Principal (si hay widget de temporizador) y en todos los Puestos de Piloto. |
-| **Vueltas Restantes** | `audio.laps_left` | **Aviso de Voz** / Conjunto de Audio | `normal` (Peso 2) | `timer`: Suena en Pantalla Principal (si hay widget de temporizador) y en todos los Puestos de Piloto. Anuncia las vueltas restantes del líder; un valor de 0 anuncia cuando el líder completa el recuento de vueltas (p. ej., «Líder finalizó» en carreras con permitir finalizar). |
+| **Tiempo de Manga / Segundos Restantes** | `audio.seconds_left` | **Aviso de Voz** | `normal` (Peso 2) | `timer`: Suena en Pantalla Principal (si hay widget de temporizador) y en todos los Puestos de Piloto. |
+| **Vueltas del Líder / Vueltas Restantes** | `audio.laps_left` | **Aviso de Voz** / Conjunto de Audio | `normal` (Peso 2) | `timer`: Suena en Pantalla Principal (si hay widget de temporizador) y en todos los Puestos de Piloto. Anuncia las vueltas restantes del líder; un valor de 0 anuncia cuando el líder completa el recuento de vueltas (p. ej., «Líder finalizó» en carreras con permitir finalizar). |
 | **Mitad de Manga** | `audio.seconds_left.halfway` | **Aviso de Voz** | `normal` (Peso 2) | `timer`: Suena en Pantalla Principal (si hay widget de temporizador) y en todos los Puestos de Piloto al alcanzar la mitad de la serie (por tiempo o cuando el líder completa la mitad de las vueltas). |
 | **Manga Terminada** | `audio.heat_over` | **Aviso de Voz** | `urgent` (Peso 4) | `flag`: Suena en Pantalla Principal (si hay widget de bandera) y en todos los Puestos de Piloto. |
 | **Segundos Restantes de Avance Automático** | `audio.auto_advance` | **Aviso de Voz** / Conjunto de Audio (Predeterminado: TTS) | `normal` (Peso 2) | `timer`: Suena en Pantalla Principal (si hay widget de temporizador) y en todos los Puestos de Piloto. |
@@ -190,8 +190,8 @@ Un **Conjunto de Audio** es un activo compuesto que contiene una colección de a
 
 1. **Cuenta regresiva de salida (`audio.countdown`):** Tonos de secuencia y bocinas previas a la salida.
 2. **Segundos restantes de inicio automático (`audio.auto_start`):** Avisos de voz antes de comenzar una manga.
-3. **Segundos restantes (`audio.seconds_left`):** Avisos de tiempo en mangas por tiempo.
-4. **Vueltas restantes (`audio.laps_left`):** Avisos de vueltas en mangas por vueltas.
+3. **Tiempo de manga / Segundos restantes (`audio.seconds_left`):** Avisos de tiempo en mangas por tiempo.
+4. **Vueltas del líder / Vueltas restantes (`audio.laps_left`):** Avisos de vueltas en mangas por vueltas.
 5. **Segundos restantes de avance automático (`audio.auto_advance`):** Avisos entre mangas antes del avance automático.
 6. **Sonidos de nivel de combustible (`fuelLevelAudio`):** Avisos de advertencia, crítico y repostaje según porcentaje.
 

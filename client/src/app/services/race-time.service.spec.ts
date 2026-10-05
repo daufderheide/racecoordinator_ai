@@ -280,7 +280,12 @@ describe("RaceTimeService", () => {
       expect(service.autoStatusLabel).toBe("");
     });
 
-    it("should evaluate isWarmup correctly across auto-start and auto-advance states", () => {
+    it("should evaluate isWarmup and isCooldown correctly across auto-start and auto-advance states", () => {
+      let latestWarmup: boolean | undefined;
+      let latestCooldown: boolean | undefined;
+      const sub1 = service.isWarmup$.subscribe((w) => (latestWarmup = w));
+      const sub2 = service.isCooldown$.subscribe((c) => (latestCooldown = c));
+
       selectedRaceSubject.next({
         auto_start_warmup_time: 5,
         auto_start_time: 10,
@@ -291,41 +296,56 @@ describe("RaceTimeService", () => {
       service.raceState = RaceState.NOT_STARTED;
       service.autoStartRemaining = 8;
       expect(service.isWarmup).toBeTrue();
+      expect(service.isCooldown).toBeFalse();
+      expect(latestWarmup).toBeTrue();
+      expect(latestCooldown).toBeFalse();
 
       service.autoStartRemaining = 2;
       expect(service.isWarmup).toBeFalse();
+      expect(service.isCooldown).toBeFalse();
 
       service.raceState = RaceState.PAUSED;
       service.autoStartRemaining = 8;
       expect(service.isWarmup).toBeFalse();
+      expect(service.isCooldown).toBeFalse();
 
       service.raceState = RaceState.HEAT_OVER;
       service.autoStartRemaining = 0;
       service.autoAdvanceRemaining = 3;
-      expect(service.isWarmup).toBeTrue();
+      expect(service.isWarmup).toBeFalse();
+      expect(service.isCooldown).toBeTrue();
+      expect(latestWarmup).toBeFalse();
+      expect(latestCooldown).toBeTrue();
 
       service.autoAdvanceRemaining = 8;
       expect(service.isWarmup).toBeFalse();
+      expect(service.isCooldown).toBeFalse();
 
       service.raceState = RaceState.PAUSED;
       service.autoAdvanceRemaining = 3;
       expect(service.isWarmup).toBeFalse();
+      expect(service.isCooldown).toBeFalse();
 
       service.autoAdvanceRemaining = 0;
       expect(service.isWarmup).toBeFalse();
+      expect(service.isCooldown).toBeFalse();
+
+      sub1.unsubscribe();
+      sub2.unsubscribe();
     });
 
-    it("should not evaluate isWarmup as true during auto-advance if raceState is RACE_OVER", () => {
+    it("should not evaluate isCooldown or isWarmup as true during auto-advance if raceState is RACE_OVER", () => {
       selectedRaceSubject.next({
         auto_advance_warmup_time: 4,
         auto_advance_time: 12,
       });
       service.autoAdvanceRemaining = 3;
       service.raceState = RaceState.RACE_OVER;
+      expect(service.isCooldown).toBeFalse();
       expect(service.isWarmup).toBeFalse();
     });
 
-    it("should not evaluate isWarmup or autoStatusLabel as active if raceState is RACE_OVER during auto-start", () => {
+    it("should not evaluate isWarmup, isCooldown, or autoStatusLabel as active if raceState is RACE_OVER during auto-start", () => {
       selectedRaceSubject.next({
         auto_start_warmup_time: 5,
         auto_start_time: 10,
@@ -333,6 +353,7 @@ describe("RaceTimeService", () => {
       service.autoStartRemaining = 8;
       service.raceState = RaceState.RACE_OVER;
       expect(service.isWarmup).toBeFalse();
+      expect(service.isCooldown).toBeFalse();
       expect(service.autoStatusLabel).toBe("");
     });
 

@@ -1,11 +1,27 @@
+import { ComponentFixture } from "@angular/core/testing";
 import { of, Subject } from "rxjs";
 import { deepCopy } from "@app/utils/clone.utils";
+import { scanAndSecureNode } from "@app/utils/form-security";
 
 import { Settings } from "../models/settings";
 import { MOCK_DRIVERS } from "./data/drivers_data";
 import { MOCK_RACES } from "./data/races_data";
 import { createDefaultSettings } from "./data/settings_data";
 import { MOCK_TEAMS } from "./data/teams_data";
+
+// Hook ComponentFixture.prototype.detectChanges to apply global form security attributes in component unit tests
+if (!(ComponentFixture.prototype as any).__formSecurityPatched) {
+  (ComponentFixture.prototype as any).__formSecurityPatched = true;
+  const originalDetectChanges = ComponentFixture.prototype.detectChanges;
+  ComponentFixture.prototype.detectChanges = function (
+    checkNoChanges?: boolean,
+  ): void {
+    originalDetectChanges.call(this, checkNoChanges);
+    if (this.nativeElement) {
+      scanAndSecureNode(this.nativeElement);
+    }
+  };
+}
 
 export const mockDataService = {
   listAssets: jasmine.createSpy("listAssets").and.returnValue(of([])),

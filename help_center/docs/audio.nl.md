@@ -174,8 +174,8 @@ De onderstaande tabellen geven een gedetailleerd overzicht van alle audiogebeurt
 | **Groen Licht / START** | `audio.countdown.green` | **Spraakbericht** / Signaaltoon | `urgent` | `countdown`: Klinkt op het Hoofdscherm (indien Aftel-widget aanwezig) en op alle Rijdersstations. |
 | **Gele Vlag** | `audio.yellowflag` | **Spraakbericht** (Waarschuwingssirene) | `urgent` (Gewicht 4) | `flag`: Klinkt op het Hoofdscherm (indien Vlag-widget aanwezig) en op alle Rijdersstations. |
 | **Resterende Seconden Automatische Start** | `audio.auto_start` | **Spraakbericht** / Audioset (Standaard: TTS) | `normal` (Gewicht 2) | `timer`: Klinkt op het Hoofdscherm (indien Timer-widget aanwezig) en op alle Rijdersstations. |
-| **Resterende Seconden** | `audio.seconds_left` | **Spraakbericht** | `normal` (Gewicht 2) | `timer`: Klinkt op het Hoofdscherm (indien Timer-widget aanwezig) en op alle Rijdersstations. |
-| **Resterende Ronden** | `audio.laps_left` | **Spraakbericht** / Audioset | `normal` (Gewicht 2) | `timer`: Klinkt op het Hoofdscherm (indien Timer-widget aanwezig) en op alle Rijdersstations. Kondigt resterende ronden voor de leider aan; een waarde van 0 meldt wanneer de leider het aantal ronden heeft bereikt (bijv. "Leider gefinisht" in races met uitrijden toegestaan). |
+| **Heat-tijd / Resterende Seconden** | `audio.seconds_left` | **Spraakbericht** | `normal` (Gewicht 2) | `timer`: Klinkt op het Hoofdscherm (indien Timer-widget aanwezig) en op alle Rijdersstations. |
+| **Rondetelling Leider / Resterende Ronden** | `audio.laps_left` | **Spraakbericht** / Audioset | `normal` (Gewicht 2) | `timer`: Klinkt op het Hoofdscherm (indien Timer-widget aanwezig) en op alle Rijdersstations. Kondigt resterende ronden voor de leider aan; een waarde van 0 meldt wanneer de leider het aantal ronden heeft bereikt (bijv. "Leider gefinisht" in races met uitrijden toegestaan). |
 | **Halverwege** | `audio.seconds_left.halfway` | **Spraakbericht** | `normal` (Gewicht 2) | `timer`: Klinkt op het Hoofdscherm (indien Timer-widget aanwezig) en op alle Rijdersstations bij het bereiken van de helft van de heat (op basis van tijd of wanneer de leider de helft van het aantal ronden heeft voltooid). |
 | **Heat Beëindigd** | `audio.heat_over` | **Spraakbericht** | `urgent` (Gewicht 4) | `flag`: Klinkt op het Hoofdscherm (indien Vlag-widget aanwezig) en op alle Rijdersstations. |
 | **Resterende Seconden Automatische Doorgang** | `audio.auto_advance` | **Spraakbericht** / Audioset (Standaard: TTS) | `normal` (Gewicht 2) | `timer`: Klinkt op het Hoofdscherm (indien Timer-widget aanwezig) en op alle Rijdersstations. |
@@ -191,8 +191,8 @@ Een **Audioset** is een samengesteld audio-asset dat een verzameling geluidsbest
 
 1. **Startaftelling (`audio.countdown`):** Reekstonen en hoorns voorafgaand aan de start.
 2. **Resterende seconden automatische start (`audio.auto_start`):** Gesproken meldingen voor aanvang van een heat.
-3. **Resterende seconden (`audio.seconds_left`):** Tijdsmeldingen tijdens tijdgebonden heats.
-4. **Resterende ronden (`audio.laps_left`):** Rondemeldingen tijdens rondegebonden heats.
+3. **Heat-tijd / Resterende seconden (`audio.seconds_left`):** Tijdsmeldingen tijdens tijdgebonden heats.
+4. **Rondetelling leider / Resterende ronden (`audio.laps_left`):** Rondemeldingen tijdens rondegebonden heats.
 5. **Resterende seconden automatische doorgang (`audio.auto_advance`):** Meldingen tussen heats voor automatische doorgang.
 6. **Brandstofniveau-geluiden (`fuelLevelAudio`):** Waarschuwings-, kritieke en voltankgeluiden op basis van percentages.
 

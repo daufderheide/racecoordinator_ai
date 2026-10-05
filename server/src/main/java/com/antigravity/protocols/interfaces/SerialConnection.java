@@ -97,8 +97,17 @@ public class SerialConnection implements ISerialConnection {
     if (outputStream == null) {
       throw new IOException("Port not open");
     }
+    long startNs = System.nanoTime();
     outputStream.write(data);
     outputStream.flush();
+    long elapsedNs = System.nanoTime() - startNs;
+    if (elapsedNs > 25_000_000L) {
+      logger.warn(
+          "[PERF] Serial writeData on {} ({} bytes) took {} ms",
+          portName,
+          data.length,
+          elapsedNs / 1_000_000L);
+    }
   }
 
   public void writeData(String data) throws IOException {

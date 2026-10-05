@@ -355,7 +355,7 @@
                                 'UI_EDITOR_RESET_LAYOUT_DEFAULTS' | translate
                               "
                             >
-                              <span class="material-icons">refresh</span>
+                              <span class="material-icons">restart_alt</span>
                             </button>
 
                             <button
@@ -440,11 +440,16 @@
                                   [isCountdownPreviewActive]="
                                     isCountdownPreviewActive(ui)
                                   "
+                                  [gridSession]="activeGridSession"
                                   (widgetSelected)="
                                     onWidgetSelected($event, ui)
                                   "
                                   (layoutChanged)="onLayoutChanged($event, ui)"
                                   (columnsChanged)="onColumnsChanged(ui)"
+                                  (finishGrid)="finishGridSession(ui)"
+                                  (gridBoundsChange)="
+                                    onGridBoundsChange($event, ui)
+                                  "
                                 ></app-default-raceday>
                               </div>
                             </div>
@@ -663,21 +668,6 @@
                                   </div>
                                 </div>
 
-                                <div
-                                  class="inspector-section"
-                                  style="margin-top: 4px"
-                                >
-                                  <button
-                                    type="button"
-                                    class="delete-widget-btn"
-                                    (click)="removeSelectedWidget(ui)"
-                                    [title]="'UE_BTN_DELETE_WIDGET' | translate"
-                                  >
-                                    <span class="material-icons">delete</span>
-                                    {{ "UE_BTN_DELETE_WIDGET" | translate }}
-                                  </button>
-                                </div>
-
                                 <hr class="inspector-divider" />
 
                                 <app-widget-inspector-fields
@@ -687,6 +677,12 @@
                                   [availableColumns]="availableColumns"
                                   [isPracticeMode]="isCustomUiPractice(ui)"
                                   (change)="onWidgetInspectorChange($event, ui)"
+                                  (requestReplicate)="
+                                    openReplicateLaneModal(ui)
+                                  "
+                                  (replicate)="onReplicateLanes($event, ui)"
+                                  (editGrid)="onEditGridTemplate($event, ui)"
+                                  (detachGrid)="onDetachGrid($event, ui)"
                                 ></app-widget-inspector-fields>
                               </div>
                             </div>
@@ -1795,4 +1791,14 @@
     (confirm)="confirmEnterPath($event)"
     (cancel)="cancelEnterPathModal()"
   ></app-enter-path-modal>
+
+  <!-- Lane / Position Replication Modal -->
+  <app-replicate-lane-dialog
+    [visible]="showReplicateLaneModal"
+    [bindingMode]="replicateBindingMode"
+    [sourceIndex]="replicateSourceIndex"
+    [defaultCount]="replicateDefaultCount"
+    (confirm)="onConfirmReplicateLanes($event)"
+    (cancel)="showReplicateLaneModal = false"
+  ></app-replicate-lane-dialog>
 </div>

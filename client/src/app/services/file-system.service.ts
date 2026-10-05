@@ -1,4 +1,5 @@
-import { Injectable } from "@angular/core";
+import { inject, Injectable } from "@angular/core";
+import { LoggerService } from "@app/services/logger.service";
 import { ServerFileSystemService } from "@app/services/server-filesystem.service";
 
 export interface DiscoveredWidgetDir {
@@ -24,13 +25,27 @@ export class FileSystemService {
   private serverCustomWidgetPath?: string;
   private serverCustomWidgetName?: string;
   private isLocalhost: boolean = false;
+  private initServerDirectoriesPromise: Promise<void>;
 
-  constructor(private serverFileSystem: ServerFileSystemService) {
+  constructor(
+    private serverFileSystem: ServerFileSystemService,
+    private logger?: LoggerService,
+  ) {
+    if (!this.logger) {
+      this.logger = inject(LoggerService, { optional: true }) ?? undefined;
+    }
     this.dbPromise = this.initDB();
-    this.initServerDirectories().catch(() => {});
+    this.initServerDirectoriesPromise = this.initServerDirectories().catch(
+      () => {},
+    );
+  }
+
+  async ensureServerDirectoriesInitialized(): Promise<void> {
+    await this.initServerDirectoriesPromise;
   }
 
   async initServerDirectories(): Promise<void> {
+    this.logger?.info("FileSystemService: Initializing server directories...");
     try {
       const dirs = await this.serverFileSystem.getDirectories();
       this.isLocalhost = dirs.isLocalhost;
@@ -46,8 +61,16 @@ export class FileSystemService {
           dirs.customWidgetDirectory,
         );
       }
-    } catch {
-      // Offline fallback
+      this.logger?.info("FileSystemService: Server directories initialized", {
+        isLocalhost: dirs.isLocalhost,
+        customUiDirectory: dirs.customUiDirectory,
+        customWidgetDirectory: dirs.customWidgetDirectory,
+      });
+    } catch (err) {
+      this.logger?.warn(
+        "FileSystemService: Failed to fetch server directories (offline fallback)",
+        err,
+      );
     }
   }
 
@@ -154,6 +177,8 @@ export class FileSystemService {
   async getCustomDirectoryHandle(): Promise<
     FileSystemDirectoryHandle | undefined
   > {
+    await this.ensureServerDirectoriesInitialized();
+
     if (this.serverCustomUiPath) {
       return {
         name: this.serverCustomUiName || "custom-ui",
@@ -245,7 +270,12 @@ export class FileSystemService {
   async getCustomWidgetDirectoryHandle(): Promise<
     FileSystemDirectoryHandle | undefined
   > {
+    await this.ensureServerDirectoriesInitialized();
+
     if (this.serverCustomWidgetPath) {
+      this.logger?.info(
+        `FileSystemService.getCustomWidgetDirectoryHandle: Using server custom widget path '${this.serverCustomWidgetPath}'`,
+      );
       return {
         name: this.serverCustomWidgetName || "custom-widgets",
       } as any;
@@ -259,18 +289,40 @@ export class FileSystemService {
       const request = store.get(this.WIDGETS_HANDLE_KEY);
 
       request.onsuccess = () => {
-        resolve(request.result as FileSystemDirectoryHandle);
+        const handle = request.result as FileSystemDirectoryHandle;
+        if (handle) {
+          this.logger?.info(
+            `FileSystemService.getCustomWidgetDirectoryHandle: Using IndexedDB handle '${handle.name}'`,
+          );
+        } else {
+          this.logger?.info(
+            "FileSystemService.getCustomWidgetDirectoryHandle: No server path or IndexedDB handle configured",
+          );
+        }
+        resolve(handle);
       };
 
       request.onerror = () => {
+        this.logger?.warn(
+          "FileSystemService.getCustomWidgetDirectoryHandle: Error retrieving handle from IndexedDB",
+          request.error,
+        );
         resolve(undefined);
       };
     });
   }
 
   async getCustomWidgetDirectories(): Promise<DiscoveredWidgetDir[]> {
+    await this.ensureServerDirectoriesInitialized();
+
     if (this.serverCustomWidgetPath) {
+      this.logger?.info(
+        `FileSystemService.getCustomWidgetDirectories: Listing widgets via server from '${this.serverCustomWidgetPath}'`,
+      );
       const serverWidgets = await this.serverFileSystem.listWidgets();
+      this.logger?.info(
+        `FileSystemService.getCustomWidgetDirectories: Server returned ${serverWidgets.length} widgets: [${serverWidgets.map((w) => w.relativePath || w.name).join(", ")}]`,
+      );
       return serverWidgets.map((w) => ({
         name: w.name,
         relativePath: w.relativePath,
@@ -280,10 +332,20 @@ export class FileSystemService {
     }
 
     const handle = await this.getCustomWidgetDirectoryHandle();
-    if (!handle) return [];
+    if (!handle) {
+      this.logger?.info(
+        "FileSystemService.getCustomWidgetDirectories: No handle configured, returning empty list",
+      );
+      return [];
+    }
 
     const permission = await this.verifyPermission(handle, false);
-    if (!permission) return [];
+    if (!permission) {
+      this.logger?.warn(
+        `FileSystemService.getCustomWidgetDirectories: Permission denied or prompt required for handle '${handle.name}'`,
+      );
+      return [];
+    }
 
     const results: DiscoveredWidgetDir[] = [];
     try {
@@ -527,6 +589,8 @@ export class FileSystemService {
     filename?: string,
     subfolder?: string,
   ): Promise<boolean> {
+    await this.ensureServerDirectoriesInitialized();
+
     if (this.serverCustomUiPath) {
       const res = await this.serverFileSystem.hasCustomFiles(
         filename,
@@ -679,11 +743,26 @@ export class FileSystemService {
     if (readWrite) {
       options.mode = "readwrite";
     }
-    if ((await handle.queryPermission(options)) === "granted") {
-      return true;
-    }
-    if ((await handle.requestPermission(options)) === "granted") {
-      return true;
+    try {
+      const queryResult = await handle.queryPermission(options);
+      if (queryResult === "granted") {
+        return true;
+      }
+      this.logger?.info(
+        `FileSystemService.verifyPermission: queryPermission returned '${queryResult}' for handle '${handle.name}'`,
+      );
+      const reqResult = await handle.requestPermission(options);
+      if (reqResult === "granted") {
+        return true;
+      }
+      this.logger?.warn(
+        `FileSystemService.verifyPermission: requestPermission returned '${reqResult}' for handle '${handle.name}'`,
+      );
+    } catch (permErr) {
+      this.logger?.warn(
+        `FileSystemService.verifyPermission: Error checking/requesting permission for handle '${handle.name}'`,
+        permErr,
+      );
     }
     return false;
   }

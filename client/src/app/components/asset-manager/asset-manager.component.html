@@ -364,7 +364,7 @@
                 }
                 @if (asset.type === "custom_rotation") {
                   <div class="rotation-preview">
-                    <i class="fas fa-sync-alt"></i>
+                    <span class="material-icons">sync</span>
                     <span class="lane-count">{{ asset.numLanes }} Lanes</span>
                   </div>
                 }
@@ -420,32 +420,23 @@
                         asset.type === "audio_set"
                       ) {
                         @if (currentlyPlayingAsset?.id !== asset.id) {
-                          <img
-                            src="assets/images/am_icon_play.png"
-                            class="action-icon play"
+                          <span
+                            class="material-icons action-icon play"
                             (click)="$event.stopPropagation(); playAsset(asset)"
                             title="Play"
-                          />
+                            >play_arrow</span
+                          >
                         } @else {
                           <span
                             class="material-icons action-icon stop"
                             (click)="$event.stopPropagation(); stopAsset()"
                             title="Stop"
-                            style="
-                              font-size: 20px;
-                              display: inline-flex;
-                              align-items: center;
-                              justify-content: center;
-                              width: 20px;
-                              height: 20px;
-                            "
                             >stop</span
                           >
                         }
                       }
-                      <img
-                        src="assets/images/am_icon_edit.png"
-                        class="action-icon"
+                      <span
+                        class="material-icons action-icon"
                         [class.disabled]="selectedAssets.length > 1"
                         (click)="
                           $event.stopPropagation();
@@ -459,13 +450,14 @@
                                   : startEditing(asset.id))
                         "
                         title="Edit"
-                      />
-                      <img
-                        src="assets/images/am_icon_trash.png"
-                        class="action-icon delete"
+                        >edit</span
+                      >
+                      <span
+                        class="material-icons action-icon delete"
                         (click)="$event.stopPropagation(); onDelete(asset.id)"
                         title="Delete"
-                      />
+                        >delete</span
+                      >
                     </div>
                   </div>
                 }
@@ -479,7 +471,7 @@
     <!-- Error Toast -->
     @if (errorMessage) {
       <div class="error-toast">
-        <i class="fas fa-exclamation-triangle"></i>
+        <span class="material-icons">warning</span>
         <span>{{ errorMessage | translate }}</span>
       </div>
     }

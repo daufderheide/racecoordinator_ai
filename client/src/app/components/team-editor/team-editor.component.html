@@ -131,8 +131,9 @@
                     <button
                       class="action-btn danger small"
                       (click)="removeDriver(driver)"
+                      [title]="'REMOVE' | translate"
                     >
-                      X
+                      <span class="material-icons">delete</span>
                     </button>
                   }
                 </div>
@@ -177,7 +178,9 @@
                   </div>
                   <div class="spacer"></div>
                   @if (isEditMode) {
-                    <button class="action-btn small add-list-btn">+</button>
+                    <button class="action-btn small add-list-btn">
+                      <span class="material-icons">add</span>
+                    </button>
                   }
                 </div>
               }

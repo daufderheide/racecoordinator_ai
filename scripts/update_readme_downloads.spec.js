@@ -2,9 +2,50 @@ const { test, describe } = require('node:test');
 const assert = require('node:assert');
 const fs = require('fs');
 const path = require('path');
-const { generateDownloadSection, updateReadmeContent, updateReadmeFile } = require('./update_readme_downloads');
+const {
+  getOfficialReleasesToShow,
+  getLatestBetaRelease,
+  generateDownloadSection,
+  updateReadmeContent,
+  updateReadmeFile
+} = require('./update_readme_downloads');
 
 describe('update_readme_downloads', () => {
+  describe('getOfficialReleasesToShow', () => {
+    test('should return only the latest fix version per release line', () => {
+      const tags = ['v1.0.0', 'v1.0.1', 'v1.1.0', 'v1.0.0-beta.1', 'v1.1.0-beta.2'];
+      const selected = getOfficialReleasesToShow(tags);
+      // For 1.1 line: v1.1.0, for 1.0 line: v1.0.1 (v1.0.0 is dropped)
+      assert.deepStrictEqual(selected, ['v1.1.0', 'v1.0.1']);
+    });
+
+    test('should sort lines newest first', () => {
+      const tags = ['v1.0.0', 'v1.0.2', 'v1.0.1', 'v2.0.0', 'v2.0.1'];
+      const selected = getOfficialReleasesToShow(tags);
+      assert.deepStrictEqual(selected, ['v2.0.1', 'v1.0.2']);
+    });
+
+    test('should ignore non-official tags and alphas', () => {
+      const tags = ['v0.0.0', 'v1.0.0-alpha.20260901', 'v1.0.0-beta.89', 'v1.0.0', 'vSQLite.Test'];
+      const selected = getOfficialReleasesToShow(tags);
+      assert.deepStrictEqual(selected, ['v1.0.0']);
+    });
+  });
+
+  describe('getLatestBetaRelease', () => {
+    test('should return highest beta release tag', () => {
+      const tags = ['v1.0.0', 'v1.0.1-beta.1', 'v1.0.1-beta.2', 'v1.0.0-beta.89'];
+      const latestBeta = getLatestBetaRelease(tags);
+      assert.strictEqual(latestBeta, 'v1.0.1-beta.2');
+    });
+
+    test('should return null when no beta tags exist', () => {
+      const tags = ['v1.0.0', 'v1.0.1'];
+      const latestBeta = getLatestBetaRelease(tags);
+      assert.strictEqual(latestBeta, null);
+    });
+  });
+
   describe('generateDownloadSection', () => {
     test('should generate download section for beta prereleases', () => {
       const section = generateDownloadSection('v1.0.0-beta.7', true);
@@ -32,6 +73,27 @@ describe('update_readme_downloads', () => {
       assert.ok(section.includes('https://daufderheide.github.io/racecoordinator_ai/changelog/'));
       assert.ok(section.includes('https://daufderheide.github.io/racecoordinator_ai/downloads/'));
       assert.ok(section.includes('https://daufderheide.github.io/racecoordinator_ai/installation/'));
+    });
+
+    test('should show multiple official release lines (one fix version each) and separate beta preview', () => {
+      const customTags = ['v1.0.0', 'v1.0.1', 'v1.1.0', 'v1.0.1-beta.1'];
+      const section = generateDownloadSection('v1.0.1-beta.1', true, { customTags });
+
+      // Official section checks
+      assert.ok(section.includes('### 🟢 Official Stable Releases'));
+      assert.ok(section.includes('#### Release `v1.1.0` *(Official Stable Release)*'));
+      assert.ok(section.includes('#### Release `v1.0.1`'));
+      assert.ok(!section.includes('#### Release `v1.0.0`')); // Older fix version 1.0.0 is dropped in favor of 1.0.1
+
+      // Beta section checks
+      assert.ok(section.includes('### 🧪 Beta Preview Releases'));
+      assert.ok(section.includes('#### Release `v1.0.1-beta.1` *(Beta Preview)*'));
+
+      // Verify clear separation
+      const officialIdx = section.indexOf('### 🟢 Official Stable Releases');
+      const betaIdx = section.indexOf('### 🧪 Beta Preview Releases');
+      assert.ok(officialIdx !== -1 && betaIdx !== -1);
+      assert.ok(officialIdx < betaIdx);
     });
 
     test('should reject alpha tags and throw an error', () => {

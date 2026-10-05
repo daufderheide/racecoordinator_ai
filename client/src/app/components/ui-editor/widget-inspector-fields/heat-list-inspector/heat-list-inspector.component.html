@@ -347,29 +347,85 @@
     {{ "UE_INSPECTOR_HEAT_LIST_SUMMARY" | translate }}
   </div>
 
+  <!-- Active Heat -->
   <div class="inspector-section">
-    <label class="inspector-checkbox-label">
-      <input
-        type="checkbox"
-        [(ngModel)]="settings().showCompletedSummary"
-        (change)="onSettingsChange()"
-      />
-      {{ "UE_INSPECTOR_HEAT_LIST_SHOW_COMPLETED_SUMMARY" | translate }}
-    </label>
+    <label class="inspector-label">{{
+      "UE_INSPECTOR_HEAT_LIST_ACTIVE_HEAT" | translate
+    }}</label>
+    <div class="select-container select-sm">
+      <app-custom-select
+        [ngModel]="getActiveHeatDisplay()"
+        (ngModelChange)="onDisplayModeChange('activeHeatDisplay', $event)"
+      >
+        <app-custom-option value="off">
+          {{ "UE_INSPECTOR_HEAT_LIST_OPTION_OFF" | translate }}
+        </app-custom-option>
+        <app-custom-option value="lane_colors">
+          {{ "UE_INSPECTOR_HEAT_LIST_OPTION_LANE_COLORS" | translate }}
+        </app-custom-option>
+        <app-custom-option value="summary">
+          {{ "UE_INSPECTOR_HEAT_LIST_OPTION_SUMMARY" | translate }}
+        </app-custom-option>
+        <app-custom-option value="summary_lane_colors">
+          {{ "UE_INSPECTOR_HEAT_LIST_OPTION_SUMMARY_LANE_COLORS" | translate }}
+        </app-custom-option>
+      </app-custom-select>
+    </div>
   </div>
 
+  <!-- Completed Heats -->
   <div class="inspector-section">
-    <label class="inspector-checkbox-label">
-      <input
-        type="checkbox"
-        [(ngModel)]="settings().showActiveSummary"
-        (change)="onSettingsChange()"
-      />
-      {{ "UE_INSPECTOR_HEAT_LIST_SHOW_ACTIVE_SUMMARY" | translate }}
-    </label>
+    <label class="inspector-label">{{
+      "UE_INSPECTOR_HEAT_LIST_COMPLETED_HEATS" | translate
+    }}</label>
+    <div class="select-container select-sm">
+      <app-custom-select
+        [ngModel]="getCompletedHeatsDisplay()"
+        (ngModelChange)="onDisplayModeChange('completedHeatsDisplay', $event)"
+      >
+        <app-custom-option value="off">
+          {{ "UE_INSPECTOR_HEAT_LIST_OPTION_OFF" | translate }}
+        </app-custom-option>
+        <app-custom-option value="lane_colors">
+          {{ "UE_INSPECTOR_HEAT_LIST_OPTION_LANE_COLORS" | translate }}
+        </app-custom-option>
+        <app-custom-option value="summary">
+          {{ "UE_INSPECTOR_HEAT_LIST_OPTION_SUMMARY" | translate }}
+        </app-custom-option>
+        <app-custom-option value="summary_lane_colors">
+          {{ "UE_INSPECTOR_HEAT_LIST_OPTION_SUMMARY_LANE_COLORS" | translate }}
+        </app-custom-option>
+      </app-custom-select>
+    </div>
   </div>
 
-  @if (settings().showCompletedSummary || settings().showActiveSummary) {
+  <!-- Future Heats -->
+  <div class="inspector-section">
+    <label class="inspector-label">{{
+      "UE_INSPECTOR_HEAT_LIST_FUTURE_HEATS" | translate
+    }}</label>
+    <div class="select-container select-sm">
+      <app-custom-select
+        [ngModel]="getFutureHeatsDisplay()"
+        (ngModelChange)="onDisplayModeChange('futureHeatsDisplay', $event)"
+      >
+        <app-custom-option value="off">
+          {{ "UE_INSPECTOR_HEAT_LIST_OPTION_OFF" | translate }}
+        </app-custom-option>
+        <app-custom-option value="lane_colors">
+          {{ "UE_INSPECTOR_HEAT_LIST_OPTION_LANE_COLORS" | translate }}
+        </app-custom-option>
+        <app-custom-option value="summary">
+          {{ "UE_INSPECTOR_HEAT_LIST_OPTION_SUMMARY" | translate }}
+        </app-custom-option>
+        <app-custom-option value="summary_lane_colors">
+          {{ "UE_INSPECTOR_HEAT_LIST_OPTION_SUMMARY_LANE_COLORS" | translate }}
+        </app-custom-option>
+      </app-custom-select>
+    </div>
+  </div>
+
+  @if (hasSummary()) {
     <!-- Summary Columns -->
     <div class="inspector-section">
       <label class="inspector-label">{{
@@ -626,17 +682,6 @@
     </div>
 
     <div class="inspector-section">
-      <label class="inspector-checkbox-label">
-        <input
-          type="checkbox"
-          [(ngModel)]="settings().summaryUseLaneColors"
-          (change)="onSettingsChange()"
-        />
-        {{ "UE_INSPECTOR_HEAT_LIST_SUMMARY_USE_LANE_COLORS" | translate }}
-      </label>
-    </div>
-
-    <div class="inspector-section">
       <label class="inspector-label">{{
         "UE_INSPECTOR_FONT_FAMILY" | translate
       }}</label>
@@ -677,17 +722,22 @@
       />
     </div>
 
-    <div class="inspector-section">
+    <div
+      class="inspector-section summary-row-text-color-section"
+      [class.disabled]="disableSummaryRowTextColor()"
+    >
       <label class="inspector-label">{{
         "UE_INSPECTOR_TEXT_COLOR" | translate
       }}</label>
       <div
-        class="color-picker-wrapper"
+        class="color-picker-wrapper summary-row-text-color-wrapper"
         [class.is-null]="!settings().summaryRowTextColor"
+        [class.disabled]="disableSummaryRowTextColor()"
       >
         <input
           type="color"
           [value]="settings().summaryRowTextColor || '#ffffff'"
+          [disabled]="disableSummaryRowTextColor()"
           (change)="onColorChange('summaryRowTextColor', $event)"
           class="color-picker-input"
         />
@@ -699,6 +749,7 @@
         @if (settings().summaryRowTextColor) {
           <button
             class="color-reset-btn"
+            [disabled]="disableSummaryRowTextColor()"
             (click)="resetColor('summaryRowTextColor')"
             [title]="'UE_INSPECTOR_COLOR_RESET' | translate"
           >

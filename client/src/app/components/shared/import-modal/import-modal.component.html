@@ -1,0 +1,615 @@
+@if (visible()) {
+  <div class="import-modal-backdrop" id="import-modal-backdrop">
+    <div class="import-modal-dialog" id="import-modal-dialog">
+      <!-- Modal Header -->
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <span class="material-icons modal-header-icon">file_upload</span>
+          <h2 class="modal-title">{{ titleKey() | translate }}</h2>
+        </div>
+        <button
+          type="button"
+          class="btn-ghost-close"
+          (click)="onClose()"
+          [title]="'COMMON_CLOSE' | translate"
+          aria-label="Close"
+        >
+          <span class="material-icons">close</span>
+        </button>
+      </div>
+
+      <!-- Error Alert Banner -->
+      @if (errorMessage) {
+        <div class="alert-banner error" id="import-error-banner">
+          <span class="material-icons alert-icon">error</span>
+          <span class="alert-text">{{ errorMessage | translate }}</span>
+        </div>
+      }
+
+      <!-- Step 1: Upload View -->
+      @if (step === "upload") {
+        <div class="modal-body upload-step" id="import-upload-step">
+          <!-- Dropzone -->
+          <div
+            class="dropzone"
+            [class.dragging]="isDragging"
+            [class.has-file]="selectedFile !== null"
+            (dragover)="onDragOver($event)"
+            (dragleave)="onDragLeave($event)"
+            (drop)="onDrop($event)"
+            (click)="triggerFilePicker()"
+            id="import-dropzone"
+          >
+            <input
+              #fileInput
+              type="file"
+              class="hidden-file-input"
+              multiple
+              accept=".csv,.xlsx,.xls,.json,.zip,.wav,.mp3,.ogg,.png,.jpg,.jpeg,.webp"
+              (change)="onFileInputChange($event)"
+            />
+
+            @if (!selectedFile) {
+              <span class="material-icons dropzone-icon">cloud_upload</span>
+              <p class="dropzone-primary-text">
+                {{ "DIM_DROPZONE_TEXT" | translate }}
+              </p>
+              <p class="dropzone-secondary-text">
+                {{ "DIM_DROPZONE_HINT" | translate }}
+              </p>
+            } @else {
+              <span class="material-icons dropzone-icon file-ready"
+                >description</span
+              >
+              <div class="file-chip">
+                <span class="file-name">{{ selectedFile.name }}</span>
+                <button
+                  type="button"
+                  class="btn-remove-file"
+                  [disabled]="isLoading"
+                  (click)="$event.stopPropagation(); removeFile()"
+                  [title]="'DIM_REMOVE_FILE' | translate"
+                >
+                  <span class="material-icons">delete</span>
+                </button>
+              </div>
+              @if (companionFiles.length > 0) {
+                <span class="companion-badge">
+                  + {{ companionFiles.length }}
+                  {{ "DIM_COMPANION_ASSETS" | translate }}
+                </span>
+              }
+            }
+          </div>
+
+          <!-- Upload Configuration Settings -->
+          <div class="upload-config-section">
+            <div class="config-row">
+              <label class="config-label">{{
+                "DIM_BLANK_AUDIO_LABEL" | translate
+              }}</label>
+              <app-custom-select
+                id="import-audio-default-select"
+                class="config-select"
+                [value]="audioDefaultMode"
+                (change)="onAudioDefaultModeChange($event)"
+              >
+                <app-custom-option value="file">{{
+                  "DIM_BLANK_AUDIO_FILE" | translate
+                }}</app-custom-option>
+                <app-custom-option value="none">{{
+                  "DIM_BLANK_AUDIO_NONE" | translate
+                }}</app-custom-option>
+                <app-custom-option value="system">{{
+                  "DIM_BLANK_AUDIO_SYSTEM" | translate
+                }}</app-custom-option>
+              </app-custom-select>
+            </div>
+          </div>
+
+          <!-- Template Downloads -->
+          <div class="templates-section">
+            <span class="templates-title">{{
+              "DIM_TEMPLATE_LABEL" | translate
+            }}</span>
+            <div class="template-buttons">
+              <button
+                type="button"
+                class="btn-template"
+                id="btn-download-csv"
+                (click)="downloadTemplate('csv')"
+              >
+                <span class="material-icons">description</span>
+                <span>CSV</span>
+              </button>
+              <button
+                type="button"
+                class="btn-template"
+                id="btn-download-xlsx"
+                (click)="downloadTemplate('xlsx')"
+              >
+                <span class="material-icons">table_view</span>
+                <span>Excel (.xlsx)</span>
+              </button>
+              <button
+                type="button"
+                class="btn-template"
+                id="btn-download-json"
+                (click)="downloadTemplate('json')"
+              >
+                <span class="material-icons">code</span>
+                <span>JSON</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 1 Footer -->
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" (click)="onClose()">
+            {{ "COMMON_CANCEL" | translate }}
+          </button>
+          <button
+            type="button"
+            class="btn-primary"
+            id="btn-validate-preview"
+            [disabled]="!selectedFile || isLoading"
+            (click)="startValidation()"
+          >
+            @if (isLoading) {
+              <span class="loading-spinner"></span>
+            }
+            <span>{{ "DIM_BTN_VALIDATE" | translate }}</span>
+          </button>
+        </div>
+      }
+
+      <!-- Step 2: Preview & Conflict Resolution Table -->
+      @if (step === "preview") {
+        <div class="modal-body preview-step" id="import-preview-step">
+          <!-- Statistics Pills -->
+          <div class="preview-stats-bar">
+            <div
+              class="stat-pill"
+              [class.active]="activeTab === 'all'"
+              (click)="activeTab = 'all'"
+            >
+              <span class="stat-label">{{ "DIM_TAB_ALL" | translate }}:</span>
+              <span class="stat-value">{{ preview?.totalRows || 0 }}</span>
+            </div>
+            <div
+              class="stat-pill pill-valid"
+              [class.active]="activeTab === 'valid'"
+              (click)="activeTab = 'valid'"
+            >
+              <span class="material-icons pill-icon">check_circle</span>
+              <span class="stat-label">{{ "DIM_TAB_VALID" | translate }}:</span>
+              <span class="stat-value">{{ preview?.validCount || 0 }}</span>
+            </div>
+            <div
+              class="stat-pill pill-conflict"
+              [class.active]="activeTab === 'conflicts'"
+              (click)="activeTab = 'conflicts'"
+            >
+              <span class="material-icons pill-icon">warning</span>
+              <span class="stat-label"
+                >{{ "DIM_TAB_CONFLICTS" | translate }}:</span
+              >
+              <span class="stat-value">{{ preview?.conflictCount || 0 }}</span>
+            </div>
+            <div
+              class="stat-pill pill-error"
+              [class.active]="activeTab === 'errors'"
+              (click)="activeTab = 'errors'"
+            >
+              <span class="material-icons pill-icon">error</span>
+              <span class="stat-label"
+                >{{ "DIM_TAB_ERRORS" | translate }}:</span
+              >
+              <span class="stat-value">{{ preview?.errorCount || 0 }}</span>
+            </div>
+            @if (preview && preview.importedAssetNames.length > 0) {
+              <div
+                class="stat-pill pill-assets"
+                id="pill-assets-badge"
+                role="button"
+                tabindex="0"
+                (click)="openAssetsModal()"
+                (keydown.enter)="openAssetsModal()"
+                (keydown.space)="openAssetsModal()"
+                [title]="'DIM_ASSETS_TOOLTIP' | translate"
+              >
+                <span class="material-icons pill-icon">perm_media</span>
+                <span class="stat-label"
+                  >{{ "DIM_TAB_ASSETS" | translate }}:</span
+                >
+                <span class="stat-value">{{
+                  preview.importedAssetNames.length
+                }}</span>
+              </div>
+            }
+          </div>
+
+          <!-- Filter & Bulk Actions Bar -->
+          <div class="preview-actions-bar">
+            <div class="search-input-wrap">
+              <span class="material-icons search-icon">search</span>
+              <input
+                type="text"
+                class="search-input"
+                [placeholder]="'DIM_SEARCH_PLACEHOLDER' | translate"
+                [(ngModel)]="filterText"
+              />
+            </div>
+
+            @if (preview && preview.conflictCount > 0) {
+              <div class="bulk-action-wrap">
+                <span class="bulk-action-label">{{
+                  "DIM_BULK_RESOLUTION" | translate
+                }}</span>
+                <app-custom-select
+                  id="bulk-conflict-select"
+                  class="bulk-select"
+                  [value]="bulkConflictResolution"
+                  (change)="bulkConflictResolution = $any($event)"
+                >
+                  <app-custom-option value="AUTO_RENAME">{{
+                    "DIM_ACTION_AUTO_RENAME" | translate
+                  }}</app-custom-option>
+                  <app-custom-option value="OVERWRITE">{{
+                    "DIM_ACTION_OVERWRITE" | translate
+                  }}</app-custom-option>
+                  <app-custom-option value="SKIP">{{
+                    "DIM_ACTION_SKIP" | translate
+                  }}</app-custom-option>
+                </app-custom-select>
+                <button
+                  type="button"
+                  class="btn-apply-bulk"
+                  id="btn-apply-bulk"
+                  (click)="applyBulkConflictResolution()"
+                >
+                  {{ "DIM_BTN_APPLY_ALL" | translate }}
+                </button>
+              </div>
+            }
+          </div>
+
+          <!-- Preview Table -->
+          <div class="table-container">
+            <table class="preview-table" id="import-preview-table">
+              <thead>
+                <tr>
+                  <th class="col-num">#</th>
+                  <th class="col-status">{{ "DIM_COL_STATUS" | translate }}</th>
+                  <th class="col-name">{{ "RDS_LABEL_NAME" | translate }}</th>
+                  <th class="col-nick">
+                    {{ "RDS_LABEL_NICKNAME" | translate }}
+                  </th>
+                  <th class="col-avatar">{{ "DIM_COL_AVATAR" | translate }}</th>
+                  <th class="col-audio">{{ "DIM_COL_AUDIO" | translate }}</th>
+                  <th class="col-action">
+                    {{ "DIM_COL_RESOLUTION" | translate }}
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (row of filteredRows; track row.rowIndex) {
+                  <tr
+                    class="preview-row"
+                    [class.row-valid]="row.status === 'VALID'"
+                    [class.row-conflict]="row.status === 'CONFLICT'"
+                    [class.row-error]="row.status === 'ERROR'"
+                    [class.row-skipped]="isRowSkipped(row)"
+                  >
+                    <td class="col-num">{{ row.rowIndex }}</td>
+                    <td class="col-status">
+                      @if (row.status === "VALID") {
+                        <span class="badge badge-valid">
+                          <span class="material-icons">check_circle</span>
+                          <span>{{ "DIM_STATUS_VALID" | translate }}</span>
+                        </span>
+                      } @else if (row.status === "CONFLICT") {
+                        <span
+                          class="badge badge-conflict"
+                          [title]="row.message || ''"
+                        >
+                          <span class="material-icons">warning</span>
+                          <span>{{ "DIM_STATUS_CONFLICT" | translate }}</span>
+                        </span>
+                      } @else {
+                        <span
+                          class="badge badge-error"
+                          [title]="row.message || ''"
+                        >
+                          <span class="material-icons">error</span>
+                          <span>{{ "DIM_STATUS_ERROR" | translate }}</span>
+                        </span>
+                      }
+                    </td>
+                    <td class="col-name">
+                      <input
+                        type="text"
+                        class="cell-input"
+                        [class.invalid]="
+                          isRowNameInvalid(row) && !isRowSkipped(row)
+                        "
+                        [class.warning]="isRowNameWarning(row)"
+                        [class.skipped]="isRowNameWarning(row)"
+                        [title]="isRowNameInvalid(row) ? row.message || '' : ''"
+                        [ngModel]="row.resolvedName"
+                        (ngModelChange)="onRowNameChange(row, $event)"
+                      />
+                    </td>
+                    <td class="col-nick">
+                      <input
+                        type="text"
+                        class="cell-input"
+                        [class.invalid]="
+                          isRowNicknameInvalid(row) && !isRowSkipped(row)
+                        "
+                        [class.warning]="isRowNicknameWarning(row)"
+                        [class.skipped]="isRowNicknameWarning(row)"
+                        [title]="
+                          isRowNicknameInvalid(row) ? row.message || '' : ''
+                        "
+                        [ngModel]="row.resolvedNickname"
+                        (ngModelChange)="onRowNicknameChange(row, $event)"
+                      />
+                    </td>
+                    <td class="col-avatar">
+                      @if (row.avatarUrl) {
+                        <div class="avatar-cell">
+                          <span class="material-icons avatar-icon">image</span>
+                          <span class="avatar-text" [title]="row.avatarUrl">{{
+                            row.avatarUrl
+                          }}</span>
+                        </div>
+                      } @else {
+                        <span class="text-muted">—</span>
+                      }
+                    </td>
+                    <td class="col-audio">
+                      @if (row.defaultAudioMode === "none") {
+                        <span class="audio-badge badge-muted">
+                          <span class="material-icons">volume_off</span>
+                          <span>{{ "DIM_AUDIO_MUTED" | translate }}</span>
+                        </span>
+                      } @else {
+                        <span class="audio-badge badge-active">
+                          <span class="material-icons">volume_up</span>
+                          <span>{{ "DIM_AUDIO_CONFIGURED" | translate }}</span>
+                        </span>
+                      }
+                    </td>
+                    <td class="col-action">
+                      @if (row.status === "CONFLICT") {
+                        <app-custom-select
+                          class="row-resolution-select"
+                          [value]="row.selectedResolution"
+                          (change)="onRowResolutionChange(row, $event)"
+                        >
+                          <app-custom-option value="AUTO_RENAME">{{
+                            "DIM_ACTION_AUTO_RENAME" | translate
+                          }}</app-custom-option>
+                          <app-custom-option value="OVERWRITE">{{
+                            "DIM_ACTION_OVERWRITE" | translate
+                          }}</app-custom-option>
+                          <app-custom-option value="SKIP">{{
+                            "DIM_ACTION_SKIP" | translate
+                          }}</app-custom-option>
+                        </app-custom-select>
+                      } @else if (row.status === "ERROR") {
+                        <span
+                          class="error-detail-text"
+                          [title]="row.message || ''"
+                        >
+                          {{ row.message }}
+                        </span>
+                      } @else {
+                        <span class="text-ready">{{
+                          "DIM_READY" | translate
+                        }}</span>
+                      }
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Step 2 Footer -->
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" (click)="step = 'upload'">
+            <span class="material-icons">arrow_back</span>
+            <span>{{ "DIM_BTN_BACK" | translate }}</span>
+          </button>
+          <div class="footer-spacer"></div>
+          <button type="button" class="btn-secondary" (click)="onClose()">
+            {{ "COMMON_CANCEL" | translate }}
+          </button>
+          <button
+            type="button"
+            class="btn-primary"
+            id="btn-commit-import"
+            [disabled]="resolvableCount === 0 || isLoading"
+            (click)="commitImport()"
+          >
+            @if (isLoading) {
+              <span class="loading-spinner"></span>
+            }
+            <span class="material-icons">file_download_done</span>
+            <span>{{
+              "DIM_BTN_IMPORT_COUNT" | translate: { count: resolvableCount }
+            }}</span>
+          </button>
+        </div>
+      }
+
+      <!-- Step 3: Summary View -->
+      @if (step === "summary") {
+        <div class="modal-body summary-step" id="import-summary-step">
+          <div class="summary-hero">
+            <span class="material-icons success-hero-icon">check_circle</span>
+            <h3 class="summary-title">{{ "DIM_SUMMARY_TITLE" | translate }}</h3>
+          </div>
+
+          <div class="summary-cards-grid">
+            <div class="summary-card">
+              <span class="material-icons card-icon icon-import"
+                >person_add</span
+              >
+              <span class="card-number">{{
+                importResult?.importedCount || 0
+              }}</span>
+              <span class="card-label">{{
+                "DIM_SUMMARY_IMPORTED" | translate
+              }}</span>
+            </div>
+            <div class="summary-card">
+              <span class="material-icons card-icon icon-update">update</span>
+              <span class="card-number">{{
+                importResult?.updatedCount || 0
+              }}</span>
+              <span class="card-label">{{
+                "DIM_SUMMARY_UPDATED" | translate
+              }}</span>
+            </div>
+            <div class="summary-card">
+              <span class="material-icons card-icon icon-skip">skip_next</span>
+              <span class="card-number">{{
+                importResult?.skippedCount || 0
+              }}</span>
+              <span class="card-label">{{
+                "DIM_SUMMARY_SKIPPED" | translate
+              }}</span>
+            </div>
+            @if (preview && preview.importedAssetNames.length > 0) {
+              <div
+                class="summary-card clickable-card"
+                id="summary-assets-card"
+                role="button"
+                tabindex="0"
+                (click)="openAssetsModal()"
+                (keydown.enter)="openAssetsModal()"
+                (keydown.space)="openAssetsModal()"
+                [title]="'DIM_ASSETS_TOOLTIP' | translate"
+              >
+                <span class="material-icons card-icon icon-asset"
+                  >perm_media</span
+                >
+                <span class="card-number">{{
+                  preview.importedAssetNames.length
+                }}</span>
+                <span class="card-label">{{
+                  "DIM_SUMMARY_ASSETS" | translate
+                }}</span>
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Step 3 Footer -->
+        <div class="modal-footer">
+          <button
+            type="button"
+            class="btn-primary"
+            id="btn-done-import"
+            (click)="onClose()"
+          >
+            {{ "COMMON_DONE" | translate }}
+          </button>
+        </div>
+      }
+
+      <!-- Nested Assets Details Modal -->
+      @if (showAssetsModal && preview) {
+        <div
+          class="assets-dialog-backdrop"
+          id="assets-dialog-backdrop"
+          (click)="closeAssetsModal()"
+        >
+          <div
+            class="assets-dialog-card"
+            id="assets-dialog-card"
+            (click)="$event.stopPropagation()"
+          >
+            <div class="assets-dialog-header">
+              <div class="assets-dialog-title-wrap">
+                <span class="material-icons assets-header-icon"
+                  >perm_media</span
+                >
+                <h3 class="assets-dialog-title">
+                  {{ "DIM_ASSETS_MODAL_TITLE" | translate }}
+                </h3>
+                <span class="assets-count-badge">{{
+                  preview.importedAssetNames.length
+                }}</span>
+              </div>
+              <button
+                type="button"
+                class="btn-ghost-close"
+                id="btn-close-assets-modal"
+                (click)="closeAssetsModal()"
+                [title]="'COMMON_CLOSE' | translate"
+                aria-label="Close"
+              >
+                <span class="material-icons">close</span>
+              </button>
+            </div>
+
+            <div class="assets-dialog-body">
+              <p class="assets-dialog-desc">
+                {{ "DIM_ASSETS_MODAL_DESC" | translate }}
+              </p>
+
+              <div class="assets-list-container" id="assets-list-container">
+                @if (preview.importedAssetNames.length === 0) {
+                  <div class="assets-empty-state">
+                    <span class="material-icons">info</span>
+                    <span>{{ "DIM_ASSETS_EMPTY" | translate }}</span>
+                  </div>
+                } @else {
+                  @for (asset of preview.importedAssetNames; track asset) {
+                    <div class="asset-list-row">
+                      <span class="material-icons asset-row-icon">
+                        {{ isAudioFile(asset) ? "volume_up" : "image" }}
+                      </span>
+                      <span class="asset-row-name" [title]="asset">{{
+                        asset
+                      }}</span>
+                      <span
+                        class="asset-type-badge"
+                        [class.type-audio]="isAudioFile(asset)"
+                        [class.type-image]="!isAudioFile(asset)"
+                      >
+                        {{
+                          (isAudioFile(asset)
+                            ? "DIM_ASSET_AUDIO"
+                            : "DIM_ASSET_IMAGE"
+                          ) | translate
+                        }}
+                      </span>
+                    </div>
+                  }
+                }
+              </div>
+            </div>
+
+            <div class="assets-dialog-footer">
+              <button
+                type="button"
+                class="btn-primary"
+                id="btn-done-assets-modal"
+                (click)="closeAssetsModal()"
+              >
+                {{ "COMMON_CLOSE" | translate }}
+              </button>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+}

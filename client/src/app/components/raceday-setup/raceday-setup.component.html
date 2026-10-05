@@ -38,7 +38,7 @@
       </div>
       <div class="update-actions">
         @if (!isUpdating) {
-          @if (updateResult?.isWindows) {
+          @if (canAutoInstall) {
             <button (click)="installUpdate()" class="update-btn-primary">
               {{ "RDS_UPDATE_BTN_INSTALL_NOW" | translate }}
             </button>

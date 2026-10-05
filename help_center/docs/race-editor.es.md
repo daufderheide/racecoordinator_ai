@@ -36,6 +36,12 @@ El espacio de trabajo se divide en dos paneles sincronizados:
 
 ### Opciones de Puntuación
 - **Puntuación de Mangas**: Finalización por vueltas o tiempo límite, método de clasificación y desempates.
+  - **Permitir terminar**: Defina cómo completan sus vueltas los coches cuando el líder finaliza o expira el tiempo:
+    - *No permitir finalizar*: La manga finaliza inmediatamente.
+    - *Permitir terminar*: Todos los pilotos continúan hasta completar los requisitos.
+    - *Permitir terminar (una vuelta)*: Los pilotos pueden terminar su vuelta actual; esa vuelta cuenta en el total.
+    - *No permitir terminar (segmentos automáticos)*: La manga termina de inmediato y la fracción de vuelta se calcula a partir del tiempo transcurrido en la vuelta actual dividido por el tiempo de vuelta mediano del piloto (`autoSegments = timeSinceLastLap / medianLapTime`, con un límite de 0,99).
+    - *Permitir terminar (una vuelta) (segmentos automáticos)*: Los pilotos terminan su vuelta en pista; la vuelta no cuenta como una vuelta completa, sino que la fracción de vuelta se calcula a partir del tiempo transcurrido antes del final dividido por el tiempo de vuelta mediano del piloto (`autoSegments = partialLapTime / medianLapTime`, con un límite de 0,99).
 - **Puntuación General**: Método de clasificación general, reglas de desempate y mangas descartadas.
 - **Puntuación de Temporada**: Distribución de puntos por posición para campeonatos.
 

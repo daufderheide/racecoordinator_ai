@@ -44,6 +44,11 @@ import com.antigravity.repository.SqliteRepository;
 import com.antigravity.service.AssetService;
 import com.antigravity.service.DatabaseService;
 import com.google.protobuf.GeneratedMessageV3;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -57,12 +62,15 @@ import org.slf4j.LoggerFactory;
 @SuppressWarnings("checkstyle:FileLength")
 public class Race implements ProtocolListener {
   private static final Logger logger = LoggerFactory.getLogger(Race.class);
+  private static final DateTimeFormatter DISPLAY_DATE_TIME_FORMATTER =
+      DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
   private com.antigravity.models.Race model; // fqn-collision
   private final Track track;
   private Theme theme;
   private final List<RaceParticipant> drivers;
   private List<Heat> heats;
+  private Map<String, Integer> cachedDriverToGroup;
   private Heat currentHeat;
   private final OverallStandings overallStandings;
   private final List<CustomRotation> customRotations;
@@ -90,6 +98,7 @@ public class Race implements ProtocolListener {
 
   private HeatExecutionManager executionManager;
   private RaceStatistics statistics;
+  private String fallbackStartTime;
 
   public boolean isStopped() {
     return stopped;
@@ -228,7 +237,8 @@ public class Race implements ProtocolListener {
   private void linkDriverReferences() {
     // Link the DriverHeatData's driver references to the master driver list in
     // this.drivers.
-    // This is crucial because JSON/SQLite deserialization creates separate instances,
+    // This is crucial because JSON/SQLite deserialization creates separate
+    // instances,
     // causing overall
     // standings updates to not propagate to the heat's driver objects.
     java.util.Map<String, RaceParticipant> masterDrivers = new java.util.HashMap<>();
@@ -488,8 +498,97 @@ public class Race implements ProtocolListener {
     this.seasonEntityId = seasonEntityId;
   }
 
+  public String getName() {
+    return model != null && model.getName() != null ? model.getName() : "";
+  }
+
+  public String getTrackName() {
+    return track != null && track.getName() != null ? track.getName() : "";
+  }
+
+  public int getNumTrackSections() {
+    return track != null ? track.getNumTrackSections() : 0;
+  }
+
+  public String getStartTime() {
+    if (statistics != null) {
+      if (statistics.getStartTime() != null && !statistics.getStartTime().trim().isEmpty()) {
+        return formatStartTime(statistics.getStartTime());
+      }
+      if (statistics.getStartMillis() > 0) {
+        return formatMillis(statistics.getStartMillis());
+      }
+    }
+    if (heats != null) {
+      for (Heat h : heats) {
+        if (h.getStatistics() != null) {
+          if (h.getStatistics().getStartTime() != null
+              && !h.getStatistics().getStartTime().trim().isEmpty()) {
+            return formatStartTime(h.getStatistics().getStartTime());
+          }
+          if (h.getStatistics().getStartMillis() > 0) {
+            return formatMillis(h.getStatistics().getStartMillis());
+          }
+        }
+      }
+    }
+    if (fallbackStartTime != null && !fallbackStartTime.trim().isEmpty()) {
+      return formatStartTime(fallbackStartTime);
+    }
+    return "";
+  }
+
+  public void setFallbackStartTime(String fallbackStartTime) {
+    this.fallbackStartTime = fallbackStartTime;
+  }
+
+  private static String formatStartTime(String raw) {
+    if (raw == null || raw.trim().isEmpty()) {
+      return "";
+    }
+    String trimmed = raw.trim();
+    try {
+      OffsetDateTime odt = OffsetDateTime.parse(trimmed);
+      return odt.format(DISPLAY_DATE_TIME_FORMATTER);
+    } catch (Exception e1) {
+      try {
+        LocalDateTime ldt = LocalDateTime.parse(trimmed);
+        return ldt.format(DISPLAY_DATE_TIME_FORMATTER);
+      } catch (Exception e2) {
+        try {
+          Instant inst = Instant.parse(trimmed);
+          return inst.atZone(ZoneId.systemDefault()).format(DISPLAY_DATE_TIME_FORMATTER);
+        } catch (Exception e3) {
+          try {
+            LocalDateTime ldt = LocalDateTime.parse(trimmed, DISPLAY_DATE_TIME_FORMATTER);
+            return ldt.format(DISPLAY_DATE_TIME_FORMATTER);
+          } catch (Exception e4) {
+            return trimmed;
+          }
+        }
+      }
+    }
+  }
+
+  private static String formatMillis(long millis) {
+    if (millis <= 0) {
+      return "";
+    }
+    try {
+      return Instant.ofEpochMilli(millis)
+          .atZone(ZoneId.systemDefault())
+          .format(DISPLAY_DATE_TIME_FORMATTER);
+    } catch (Exception e) {
+      return "";
+    }
+  }
+
   public Track getTrack() {
     return track;
+  }
+
+  public int getLaneCount() {
+    return track != null ? track.getLaneCount() : 0;
   }
 
   public List<Heat> getHeats() {
@@ -498,6 +597,7 @@ public class Race implements ProtocolListener {
 
   public void setHeats(List<Heat> heats) {
     this.heats = heats;
+    this.cachedDriverToGroup = null;
   }
 
   public Heat getCurrentHeat() {
@@ -751,10 +851,12 @@ public class Race implements ProtocolListener {
   public void syncRaceState() {
     RaceState protoState = getProtoState(state);
     RaceFlag protoFlag = state.getFlagType(this);
+    syncRaceState(protoState, protoFlag, getAutoStartRemaining() + getAutoAdvanceRemaining());
+  }
+
+  public void syncRaceState(RaceState protoState, RaceFlag protoFlag, double countdown) {
     if (hardwareManager.getProtocols() != null) {
-      hardwareManager
-          .getProtocols()
-          .setRaceState(protoState, protoFlag, getAutoStartRemaining() + getAutoAdvanceRemaining());
+      hardwareManager.getProtocols().setRaceState(protoState, protoFlag, countdown);
     }
   }
 
@@ -800,9 +902,10 @@ public class Race implements ProtocolListener {
     updatePowerForFlag(protoFlag);
 
     if (state instanceof RaceOver) {
-      ClientSubscriptionManager.getInstance().deleteAutoSave(model.getEntityId(), isDemoMode());
+      ClientSubscriptionManager.getInstance()
+          .deleteAutoSaveAsync(model.getEntityId(), isDemoMode());
     } else if (state instanceof Paused || state instanceof HeatOver) {
-      ClientSubscriptionManager.getInstance().autoSave(this);
+      ClientSubscriptionManager.getInstance().autoSaveAsync(this);
     }
   }
 
@@ -880,7 +983,7 @@ public class Race implements ProtocolListener {
       return;
     }
     state.restartHeat(this);
-    ClientSubscriptionManager.getInstance().autoSave(this);
+    ClientSubscriptionManager.getInstance().autoSaveAsync(this);
   }
 
   public void skipHeat() {
@@ -888,7 +991,7 @@ public class Race implements ProtocolListener {
       return;
     }
     state.skipHeat(this);
-    ClientSubscriptionManager.getInstance().autoSave(this);
+    ClientSubscriptionManager.getInstance().autoSaveAsync(this);
   }
 
   public void skipRace() {
@@ -906,7 +1009,7 @@ public class Race implements ProtocolListener {
       return;
     }
     state.deferHeat(this);
-    ClientSubscriptionManager.getInstance().autoSave(this);
+    ClientSubscriptionManager.getInstance().autoSaveAsync(this);
   }
 
   public synchronized void stop() {
@@ -1168,19 +1271,19 @@ public class Race implements ProtocolListener {
     }
   }
 
-  public void updateAndBroadcastOverallStandings() {
+  public RaceData.Builder populateOverallStandings(RaceData.Builder dataBuilder) {
     recalculateOverallStandings();
     recordsManager.recalculateScoreRecords();
     List<com.antigravity.proto.RaceParticipant> participants = new ArrayList<>(); // fqn-collision
     for (RaceParticipant driver : this.drivers) {
-      if (driver.getDriver() != Driver.EMPTY_DRIVER)
+      if (driver.getDriver() != Driver.EMPTY_DRIVER) {
         participants.add(RaceParticipantConverter.toProto(driver, new HashSet<>()));
+      }
     }
-    RaceData.Builder dataBuilder =
-        RaceData.newBuilder()
-            .setOverallStandingsUpdate(
-                OverallStandingsUpdate.newBuilder().addAllParticipants(participants).build())
-            .setRecordData(getRecordData());
+    dataBuilder
+        .setOverallStandingsUpdate(
+            OverallStandingsUpdate.newBuilder().addAllParticipants(participants).build())
+        .setRecordData(getRecordData());
     GroupStandingsUpdate groupStandings = buildGroupStandingsUpdate();
     if (groupStandings != null) {
       dataBuilder.setGroupStandingsUpdate(groupStandings);
@@ -1188,7 +1291,11 @@ public class Race implements ProtocolListener {
     if (seasonEntityId != null && !seasonEntityId.isEmpty()) {
       dataBuilder.setRace(RaceConverter.toProto(this));
     }
-    broadcast(dataBuilder.build());
+    return dataBuilder;
+  }
+
+  public void updateAndBroadcastOverallStandings() {
+    broadcast(populateOverallStandings(RaceData.newBuilder()).build());
   }
 
   private GroupStandingsUpdate buildGroupStandingsUpdate() {
@@ -1196,14 +1303,7 @@ public class Race implements ProtocolListener {
         && this.model.getGroupOptions().isEnabled()
         && this.currentHeat != null) {
       int currentGroup = this.currentHeat.getGroup();
-      Map<String, Integer> driverToGroup = new HashMap<>();
-      for (Heat heat : heats) {
-        for (DriverHeatData dhd : heat.getDrivers()) {
-          if (dhd.getDriver() != null) {
-            driverToGroup.put(dhd.getDriver().getStableId(), heat.getGroup());
-          }
-        }
-      }
+      Map<String, Integer> driverToGroup = getDriverToGroup();
       List<com.antigravity.proto.RaceParticipant> groupParticipants = // fqn-collision
           new ArrayList<>();
       int groupRank = 1;
@@ -1224,6 +1324,24 @@ public class Race implements ProtocolListener {
           .build();
     }
     return null;
+  }
+
+  private Map<String, Integer> getDriverToGroup() {
+    if (this.cachedDriverToGroup != null) {
+      return this.cachedDriverToGroup;
+    }
+    Map<String, Integer> map = new HashMap<>();
+    if (this.heats != null) {
+      for (Heat heat : this.heats) {
+        for (DriverHeatData dhd : heat.getDrivers()) {
+          if (dhd.getDriver() != null) {
+            map.put(dhd.getDriver().getStableId(), heat.getGroup());
+          }
+        }
+      }
+    }
+    this.cachedDriverToGroup = map;
+    return map;
   }
 
   public void updateScoreRecords() {

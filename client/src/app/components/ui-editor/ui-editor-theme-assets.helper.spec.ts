@@ -38,8 +38,19 @@ describe("ui-editor-theme-assets.helper", () => {
     ]);
     dataServiceSpy.getAssetUrl.and.returnValue("/api/asset/a1");
 
+    const assetObjWithUrl = {
+      entity_id: "a1",
+      type: "image",
+      url: "/assets/custom_a1.png",
+    };
+    expect(getThemeUrlForAsset(assetObjWithUrl, dataServiceSpy)).toBe(
+      "/assets/custom_a1.png",
+    );
+
     const assetObj = { entity_id: "a1", type: "image" };
     expect(getThemeUrlForAsset(assetObj, dataServiceSpy)).toBe("/api/asset/a1");
+
+    expect(getThemeUrlForAsset(null, dataServiceSpy)).toBeUndefined();
   });
 
   it("should return audio config for slot with default speech fallback", () => {
@@ -59,6 +70,55 @@ describe("ui-editor-theme-assets.helper", () => {
 
     const defaultConfig = getThemeAudioConfigForSlot("audio.race_over", theme);
     expect(defaultConfig.type).toBe("preset");
+
+    const emptyTheme: Theme = {
+      entity_id: "t2",
+      name: "Theme 2",
+      is_default: false,
+      slots: {},
+      audio_slots: {},
+    };
+    const yellowConfig = getThemeAudioConfigForSlot(
+      "audio.yellowflag",
+      emptyTheme,
+    );
+    expect(yellowConfig.type).toBe("preset");
+    expect(yellowConfig.url).toBe("default_yellow_flag");
+
+    const halfwayConfig = getThemeAudioConfigForSlot(
+      "audio.seconds_left.halfway",
+      emptyTheme,
+    );
+    expect(halfwayConfig.type).toBe("preset");
+    expect(halfwayConfig.url).toBe("default_heat_half");
+
+    const heatOverConfig = getThemeAudioConfigForSlot(
+      "audio.heat_over",
+      emptyTheme,
+    );
+    expect(heatOverConfig.type).toBe("preset");
+    expect(heatOverConfig.url).toBe("default_heat_over");
+
+    const raceOverConfig = getThemeAudioConfigForSlot(
+      "audio.race_over",
+      emptyTheme,
+    );
+    expect(raceOverConfig.type).toBe("preset");
+    expect(raceOverConfig.url).toBe("default_race_over");
+
+    const minLapConfig = getThemeAudioConfigForSlot(
+      "audio.min_lap_time",
+      emptyTheme,
+    );
+    expect(minLapConfig.type).toBe("tts");
+    expect(minLapConfig.text).toBe("Min lap time for {driver.nickname}");
+
+    const driftLapConfig = getThemeAudioConfigForSlot(
+      "audio.drift_lap",
+      emptyTheme,
+    );
+    expect(driftLapConfig.type).toBe("tts");
+    expect(driftLapConfig.text).toBe("Drift lap for {driver.nickname}");
   });
 
   it("should resolve audio url from theme slot or assets", () => {
@@ -81,6 +141,14 @@ describe("ui-editor-theme-assets.helper", () => {
       { entity_id: "audio1" },
     ]);
     expect(url).toBe("/api/asset/audio1");
+
+    const fallbackUrl = getThemeAudioUrl(
+      "audio.yellowflag",
+      theme,
+      dataServiceSpy,
+      [],
+    );
+    expect(fallbackUrl).toBe("audio1");
   });
 
   it("should resolve theme flag, lamp, fuel gauge and asset slot urls", () => {

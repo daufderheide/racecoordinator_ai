@@ -1,3 +1,4 @@
+import { firstValueFrom } from "rxjs";
 import { CustomUI } from "@app/models/custom-ui";
 import { LayoutConfig, Settings } from "@app/models/settings";
 import { saveFileAs } from "@app/utils/file-download.utils";
@@ -293,21 +294,19 @@ export function handleDownloadTemplate(comp: any): void {
 export const handleDownloadDefaultTemplate = handleDownloadTemplate;
 
 export function handleTestExport(comp: any): void {
-  comp.dataService
-    .testExportXls(comp.editingSettings?.customExportTemplateBase64)
-    .subscribe({
-      next: (blob: Blob) => {
-        saveFileAs({
-          suggestedName: "sample_race_export.xlsx",
-          data: blob,
-          mimeType:
-            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-          description: "Excel Race Export",
-          extension: ".xlsx",
-        });
-      },
-      error: (err: any) => {
-        comp.logger.error("Error generating test Excel export", err);
-      },
-    });
+  saveFileAs({
+    suggestedName: "sample_race_export.xlsx",
+    data: () =>
+      firstValueFrom(
+        comp.dataService.testExportXls(
+          comp.editingSettings?.customExportTemplateBase64,
+        ),
+      ),
+    mimeType:
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    description: "Excel Race Export",
+    extension: ".xlsx",
+  }).catch((err: any) => {
+    comp.logger.error("Error generating test Excel export", err);
+  });
 }

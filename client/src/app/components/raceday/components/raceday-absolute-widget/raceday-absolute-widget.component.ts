@@ -21,6 +21,7 @@ import { RacedayGroupLeaderboardComponent } from "@app/components/raceday/compon
 import { RacedayHeatInfoComponent } from "@app/components/raceday/components/raceday-heat-info/raceday-heat-info.component";
 import { RacedayHeatListComponent } from "@app/components/raceday/components/raceday-heat-list/raceday-heat-list.component";
 import { RacedayImageComponent } from "@app/components/raceday/components/raceday-image/raceday-image.component";
+import { RacedayLaneColumnComponent } from "@app/components/raceday/components/raceday-lane-column/raceday-lane-column.component";
 import { RacedayLaneViewComponent } from "@app/components/raceday/components/raceday-lane-view/raceday-lane-view.component";
 import { RacedayLeaderboardComponent } from "@app/components/raceday/components/raceday-leaderboard/raceday-leaderboard.component";
 import { RacedayMenuBarComponent } from "@app/components/raceday/components/raceday-menu-bar/raceday-menu-bar.component";
@@ -37,6 +38,7 @@ import { RacedayTrackNameComponent } from "@app/components/raceday/components/ra
 import { AbsoluteWidgetNode } from "@app/models/settings";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { CustomWidgetService } from "@app/services/custom-widget.service";
+import { LoggerService } from "@app/services/logger.service";
 
 @Component({
   standalone: true,
@@ -66,6 +68,7 @@ import { CustomWidgetService } from "@app/services/custom-widget.service";
     RacedaySeasonLeaderboardComponent,
     RacedaySeasonRaceLeaderboardComponent,
     RacedayLaneViewComponent,
+    RacedayLaneColumnComponent,
     RacedayOnDeckComponent,
     RacedayNextHeatComponent,
     RacedayHeatListComponent,
@@ -81,7 +84,8 @@ export class RacedayAbsoluteWidgetComponent implements OnInit, OnDestroy {
   selectedWidgetId = input<string | null>(null);
   isCountdownPreviewActive = input<boolean>(false);
 
-  private customWidgetService = inject(CustomWidgetService);
+  private customWidgetService = inject(CustomWidgetService, { optional: true });
+  private logger = inject(LoggerService, { optional: true });
   private widgetSub?: Subscription;
 
   get isSelected(): boolean {
@@ -107,6 +111,16 @@ export class RacedayAbsoluteWidgetComponent implements OnInit, OnDestroy {
       return false;
     }
     return !this.isSelected && !this.isCountdownPreviewActive();
+  }
+
+  get isGridMirrored(): boolean {
+    const session = this.parentComponent()?.gridSession?.();
+    if (!session) return false;
+    const s = this.widget().customSettings;
+    return (
+      s?.["gridId"] === session.gridId &&
+      Number(s?.["gridLane"] ?? s?.["targetIndex"]) !== session.sourceLaneIndex
+    );
   }
 
   get computedZIndex(): number {
@@ -136,14 +150,113 @@ export class RacedayAbsoluteWidgetComponent implements OnInit, OnDestroy {
         this.cdr.markForCheck();
       });
     }
+    const type = this.widget()?.widgetType;
+    if (
+      this.isCustomWidget(type) &&
+      this.customWidgetService &&
+      this.customWidgetService.getCustomWidgets().length === 0
+    ) {
+      this.logger?.info(
+        `RacedayAbsoluteWidget: Custom widget '${type}' requested but 0 widgets currently loaded in CustomWidgetService. Triggering reload...`,
+      );
+      this.customWidgetService.reloadCustomWidgets().catch((err) => {
+        this.logger?.warn(
+          "RacedayAbsoluteWidget: Error reloading custom widgets",
+          err,
+        );
+      });
+    }
   }
 
   ngOnDestroy() {
     this.widgetSub?.unsubscribe();
   }
 
+  private calculateResizedBounds(
+    handle: string,
+    deltaX: number,
+    deltaY: number,
+    baseWidth: number,
+    baseHeight: number,
+  ): { x: number; y: number; width: number; height: number } {
+    let newW = this.resizeStartWidth;
+    let newH = this.resizeStartHeight;
+    let newX = this.resizeStartX;
+    let newY = this.resizeStartY;
+
+    if (handle.includes("e")) newW += deltaX;
+    if (handle.includes("w")) {
+      newW -= deltaX;
+      newX += deltaX;
+    }
+    if (handle.includes("s")) newH += deltaY;
+    if (handle.includes("n")) {
+      newH -= deltaY;
+      newY += deltaY;
+    }
+
+    if (newW < 50) {
+      if (handle.includes("w")) newX -= 50 - newW;
+      newW = 50;
+    }
+    if (newH < 50) {
+      if (handle.includes("n")) newY -= 50 - newH;
+      newH = 50;
+    }
+
+    if (newX < 0) {
+      if (handle.includes("w")) newW += newX;
+      newX = 0;
+    }
+    if (newY < 0) {
+      if (handle.includes("n")) newH += newY;
+      newY = 0;
+    }
+    if (newX + newW > baseWidth) {
+      newW = baseWidth - newX;
+    }
+    if (newY + newH > baseHeight) {
+      newH = baseHeight - newY;
+    }
+
+    if (newW < 50) {
+      if (handle.includes("w")) newX -= 50 - newW;
+      newW = 50;
+    }
+    if (newH < 50) {
+      if (handle.includes("n")) newY -= 50 - newH;
+      newH = 50;
+    }
+
+    let snapped = { x: newX, y: newY, w: newW, h: newH };
+    if (this.parentComponent().snapToEdges) {
+      snapped = this.parentComponent().snapToEdges(
+        newX,
+        newY,
+        newW,
+        newH,
+        this.widget().id,
+        handle,
+        baseWidth,
+        baseHeight,
+      );
+    }
+
+    const clampedX = Math.max(0, Math.min(baseWidth - 50, snapped.x));
+    const clampedY = Math.max(0, Math.min(baseHeight - 50, snapped.y));
+    const clampedW = Math.max(50, Math.min(baseWidth - clampedX, snapped.w));
+    const clampedH = Math.max(50, Math.min(baseHeight - clampedY, snapped.h));
+
+    return {
+      x: clampedX,
+      y: clampedY,
+      width: clampedW,
+      height: clampedH,
+    };
+  }
+
   onResizeStart(event: PointerEvent, handle: string) {
-    if (!this.isCustomizing()) return;
+    if (!this.isCustomizing() || this.isGridMirrored) return;
     event.preventDefault();
     event.stopPropagation();
 
@@ -161,82 +274,21 @@ export class RacedayAbsoluteWidgetComponent implements OnInit, OnDestroy {
       const scale = this.parentComponent().visualScale || 1;
       const deltaX = (moveEvent.clientX - this.startPointerX) / scale;
       const deltaY = (moveEvent.clientY - this.startPointerY) / scale;
-
-      let newW = this.resizeStartWidth;
-      let newH = this.resizeStartHeight;
-      let newX = this.resizeStartX;
-      let newY = this.resizeStartY;
-
-      if (handle.includes("e")) newW += deltaX;
-      if (handle.includes("w")) {
-        newW -= deltaX;
-        newX += deltaX;
-      }
-      if (handle.includes("s")) newH += deltaY;
-      if (handle.includes("n")) {
-        newH -= deltaY;
-        newY += deltaY;
-      }
-
-      if (newW < 50) {
-        if (handle.includes("w")) newX -= 50 - newW;
-        newW = 50;
-      }
-      if (newH < 50) {
-        if (handle.includes("n")) newY -= 50 - newH;
-        newH = 50;
-      }
-
       const baseWidth = this.parentComponent().layout?.baseWidth || 1920;
       const baseHeight = this.parentComponent().layout?.baseHeight || 1080;
 
-      if (newX < 0) {
-        if (handle.includes("w")) newW += newX;
-        newX = 0;
-      }
-      if (newY < 0) {
-        if (handle.includes("n")) newH += newY;
-        newY = 0;
-      }
-      if (newX + newW > baseWidth) {
-        newW = baseWidth - newX;
-      }
-      if (newY + newH > baseHeight) {
-        newH = baseHeight - newY;
-      }
+      const bounds = this.calculateResizedBounds(
+        handle,
+        deltaX,
+        deltaY,
+        baseWidth,
+        baseHeight,
+      );
 
-      if (newW < 50) {
-        if (handle.includes("w")) newX -= 50 - newW;
-        newW = 50;
-      }
-      if (newH < 50) {
-        if (handle.includes("n")) newY -= 50 - newH;
-        newH = 50;
-      }
-
-      let snapped = { x: newX, y: newY, w: newW, h: newH };
-      if (this.parentComponent().snapToEdges) {
-        snapped = this.parentComponent().snapToEdges(
-          newX,
-          newY,
-          newW,
-          newH,
-          this.widget().id,
-          handle,
-          baseWidth,
-          baseHeight,
-        );
-      }
-
-      const clampedX = Math.max(0, Math.min(baseWidth - 50, snapped.x));
-      const clampedY = Math.max(0, Math.min(baseHeight - 50, snapped.y));
-      const clampedW = Math.max(50, Math.min(baseWidth - clampedX, snapped.w));
-      const clampedH = Math.max(50, Math.min(baseHeight - clampedY, snapped.h));
-
-      this.widget().x = clampedX;
-      this.widget().y = clampedY;
-      this.widget().width = clampedW;
-      this.widget().height = clampedH;
+      this.widget().x = bounds.x;
+      this.widget().y = bounds.y;
+      this.widget().width = bounds.width;
+      this.widget().height = bounds.height;
 
       this.cdr.detectChanges();
     };
@@ -245,6 +297,16 @@ export class RacedayAbsoluteWidgetComponent implements OnInit, OnDestroy {
       this.isResizing = false;
       document.removeEventListener("pointermove", onPointerMove);
       document.removeEventListener("pointerup", onPointerUp);
+      if (this.parentComponent().gridSession?.()) {
+        const session = this.parentComponent().gridSession();
+        if (
+          this.widget().customSettings?.["gridId"] === session.gridId &&
+          Number(this.widget().customSettings?.["gridLane"]) ===
+            session.sourceLaneIndex
+        ) {
+          this.parentComponent().onMasterWidgetModified?.(this.widget());
+        }
+      }
       if (this.parentComponent().layoutChanged) {
         this.parentComponent().layoutChanged.emit(
           this.parentComponent().layout,
@@ -258,7 +320,7 @@ export class RacedayAbsoluteWidgetComponent implements OnInit, OnDestroy {
 
   // Handle dragging manually to support snapping better than cdkDrag might out of the box
   onDragStart(event: PointerEvent) {
-    if (!this.isCustomizing()) return;
+    if (!this.isCustomizing() || this.isGridMirrored) return;
     // Don't drag if clicking a resize handle
     if ((event.target as HTMLElement).classList.contains("resize-handle"))
       return;
@@ -314,6 +376,16 @@ export class RacedayAbsoluteWidgetComponent implements OnInit, OnDestroy {
     const onPointerUp = () => {
       document.removeEventListener("pointermove", onPointerMove);
       document.removeEventListener("pointerup", onPointerUp);
+      if (this.parentComponent().gridSession?.()) {
+        const session = this.parentComponent().gridSession();
+        if (
+          this.widget().customSettings?.["gridId"] === session.gridId &&
+          Number(this.widget().customSettings?.["gridLane"]) ===
+            session.sourceLaneIndex
+        ) {
+          this.parentComponent().onMasterWidgetModified?.(this.widget());
+        }
+      }
       if (this.parentComponent().layoutChanged) {
         this.parentComponent().layoutChanged.emit(
           this.parentComponent().layout,
@@ -334,7 +406,12 @@ export class RacedayAbsoluteWidgetComponent implements OnInit, OnDestroy {
 
   bringToFront() {
     if (this.parentComponent() && this.parentComponent().bringToFront) {
-      this.parentComponent().bringToFront(this.widget().id);
+      const masterId = this.widget().customSettings?.["gridMasterId"];
+      if (this.isGridMirrored && masterId) {
+        this.parentComponent().bringToFront(masterId);
+      } else {
+        this.parentComponent().bringToFront(this.widget().id);
+      }
     }
   }
 
@@ -386,11 +463,34 @@ export class RacedayAbsoluteWidgetComponent implements OnInit, OnDestroy {
     return undefined;
   }
 
+  private cachedCustomInputs?: {
+    widget: any;
+    parent: any;
+    isCustomizing: boolean;
+  };
+  private lastCustomWidgetRef?: any;
+  private lastCustomParentRef?: any;
+  private lastCustomizingFlag?: boolean;
+
   getCustomWidgetInputs() {
-    return {
-      widget: this.widget(),
-      parent: this.parentComponent(),
-      isCustomizing: this.isCustomizing(),
-    };
+    const w = this.widget();
+    const p = this.parentComponent();
+    const c = this.isCustomizing();
+    if (
+      !this.cachedCustomInputs ||
+      this.lastCustomWidgetRef !== w ||
+      this.lastCustomParentRef !== p ||
+      this.lastCustomizingFlag !== c
+    ) {
+      this.lastCustomWidgetRef = w;
+      this.lastCustomParentRef = p;
+      this.lastCustomizingFlag = c;
+      this.cachedCustomInputs = {
+        widget: w,
+        parent: p,
+        isCustomizing: c,
+      };
+    }
+    return this.cachedCustomInputs;
   }
 }

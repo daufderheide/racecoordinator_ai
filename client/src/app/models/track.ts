@@ -156,7 +156,7 @@ export interface ArduinoConfig {
 
   normallyClosedLaneSensors: boolean;
   normallyClosedRelays: boolean;
-  globalInvertLights: number;
+  activeLowAnalogLeds: boolean;
 
   usePitsAsLaps: boolean;
   useLapsForSegments: boolean;
@@ -178,6 +178,7 @@ export interface PhidgetConfig {
 
   normallyClosedLaneSensors: boolean;
   normallyClosedRelays: boolean;
+  activeLowAnalogLeds: boolean;
 
   useLapsForSegments: boolean;
   lapPinPitBehavior: number;

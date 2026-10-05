@@ -29,6 +29,8 @@ export class CustomWidgetService {
   public customWidgets$ = this.customWidgetsSubject.asObservable();
 
   private widgetDefinitions = new Map<string, CustomWidgetDefinition>();
+  private reloadPromise?: Promise<void>;
+  private warnedMissingWidgets = new Set<string>();
 
   constructor(
     private fileSystem: FileSystemService,
@@ -64,22 +66,64 @@ export class CustomWidgetService {
     const key = widgetType.startsWith("custom:")
       ? widgetType
       : `custom:${widgetType}`;
-    return this.widgetDefinitions.get(key);
+    const def = this.widgetDefinitions.get(key);
+    if (!def && !this.warnedMissingWidgets.has(key)) {
+      this.warnedMissingWidgets.add(key);
+      this.logger.warn(
+        `CustomWidgetService.getWidgetDefinition: Custom widget '${key}' was requested but is not in registered definitions. Total registered: ${this.widgetDefinitions.size}. Available keys: [${Array.from(this.widgetDefinitions.keys()).join(", ")}]`,
+      );
+    }
+    return def;
   }
 
   getWidgetComponent(widgetType: string | undefined): Type<any> | undefined {
     const def = this.getWidgetDefinition(widgetType);
+    if (def && !def.componentType) {
+      this.logger.warn(
+        `CustomWidgetService.getWidgetComponent: Custom widget '${widgetType}' has no compiled componentType (error: ${def.error || "none"})`,
+      );
+    }
     return def?.componentType;
   }
 
-  async reloadCustomWidgets(): Promise<void> {
+  reloadCustomWidgets(): Promise<void> {
+    if (this.reloadPromise) {
+      return this.reloadPromise;
+    }
+    this.reloadPromise = this.doReloadCustomWidgets().finally(() => {
+      this.reloadPromise = undefined;
+    });
+    return this.reloadPromise;
+  }
+
+  private async doReloadCustomWidgets(): Promise<void> {
+    this.logger.info("CustomWidgetService: Reloading custom widgets...");
+    try {
+      await this.fileSystem.ensureServerDirectoriesInitialized?.();
+    } catch (initErr) {
+      this.logger.warn(
+        "CustomWidgetService: Error awaiting server directory initialization",
+        initErr,
+      );
+    }
+
     const handle = await this.fileSystem.getCustomWidgetDirectoryHandle();
     if (!handle) {
+      this.logger.info(
+        "CustomWidgetService: No custom widget directory configured or accessible.",
+      );
       this.clearCustomWidgets();
       return;
     }
 
+    this.logger.info(
+      `CustomWidgetService: Discovering custom widgets in handle '${handle.name}'...`,
+    );
     const directories = await this.fileSystem.getCustomWidgetDirectories();
+    this.logger.info(
+      `CustomWidgetService: Found ${directories.length} candidate widget directories in '${handle.name}'.`,
+    );
+
     const newDefinitions = new Map<string, CustomWidgetDefinition>();
 
     for (const dir of directories) {
@@ -88,17 +132,28 @@ export class CustomWidgetService {
         if (loaded) {
           newDefinitions.set(loaded.key, loaded.def);
           this.registerInWidgetRegistry(loaded.key, loaded.def.manifest);
+          this.logger.info(
+            `CustomWidgetService: Successfully loaded custom widget '${loaded.key}' (${loaded.def.manifest.name || loaded.def.folderName})${loaded.def.error ? ` with error: ${loaded.def.error}` : ""}`,
+          );
+        } else {
+          this.logger.warn(
+            `CustomWidgetService: Widget directory '${dir.relativePath || dir.name}' did not contain a valid widget.json, skipping.`,
+          );
         }
       } catch (err: any) {
         this.logger.error(
-          `Error loading custom widget directory ${dir.name}:`,
+          `CustomWidgetService: Error loading custom widget directory ${dir.name}:`,
           err,
         );
       }
     }
 
     this.widgetDefinitions = newDefinitions;
+    this.warnedMissingWidgets.clear();
     this.customWidgetsSubject.next(Array.from(newDefinitions.values()));
+    this.logger.info(
+      `CustomWidgetService: Reload complete. Loaded ${newDefinitions.size} custom widget(s): [${Array.from(newDefinitions.keys()).join(", ")}]`,
+    );
   }
 
   private async loadSingleWidget(
@@ -113,11 +168,20 @@ export class CustomWidgetService {
       return null;
     }
 
-    const manifestRaw = await this.fileSystem.getWidgetFile(
-      widgetPath,
-      "widget.json",
-    );
-    const manifest: CustomWidgetManifest = JSON.parse(manifestRaw);
+    let manifest: CustomWidgetManifest;
+    try {
+      const manifestRaw = await this.fileSystem.getWidgetFile(
+        widgetPath,
+        "widget.json",
+      );
+      manifest = JSON.parse(manifestRaw);
+    } catch (parseErr: any) {
+      this.logger.error(
+        `CustomWidgetService: Failed to read or parse widget.json for '${widgetPath}':`,
+        parseErr,
+      );
+      return null;
+    }
     if (!manifest.id) {
       manifest.id = dir.name;
     }
@@ -270,11 +334,18 @@ export class CustomWidgetService {
   }
 
   private clearCustomWidgets(): void {
+    const count = this.widgetDefinitions.size;
     for (const key of Array.from(this.widgetDefinitions.keys())) {
       delete WIDGET_REGISTRY[key];
     }
     this.widgetDefinitions.clear();
+    this.warnedMissingWidgets.clear();
     this.customWidgetsSubject.next([]);
+    if (count > 0) {
+      this.logger.info(
+        `CustomWidgetService: Cleared ${count} custom widget(s) from registry.`,
+      );
+    }
   }
 
   async exportStarterWidgets(): Promise<{

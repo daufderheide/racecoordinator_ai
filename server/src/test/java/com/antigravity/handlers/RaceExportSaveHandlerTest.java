@@ -12,9 +12,11 @@ import java.io.File;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.nio.file.Path;
+import java.util.List;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.DateUtil;
+import org.apache.poi.ss.usermodel.HorizontalAlignment;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -586,10 +588,53 @@ public class RaceExportSaveHandlerTest {
                     decimals <= 3);
               }
             }
+
+            org.junit.Assert.assertEquals(
+                "Cell at "
+                    + sheet.getSheetName()
+                    + "!"
+                    + cell.getAddress()
+                    + " should be left justified",
+                HorizontalAlignment.LEFT,
+                cell.getCellStyle().getAlignment());
           }
         }
       }
       org.junit.Assert.assertTrue("Workbook should contain data cells", cellCount > 0);
+
+      Sheet raceInfo = wb.getSheet("Race Information");
+      org.junit.Assert.assertNotNull(raceInfo);
+      Row rowSections = raceInfo.getRow(8);
+      org.junit.Assert.assertNotNull(rowSections);
+      Row row10 = raceInfo.getRow(9);
+      org.junit.Assert.assertNotNull(row10);
+      org.junit.Assert.assertEquals("Lane Count", row10.getCell(0).getStringCellValue());
+      org.junit.Assert.assertEquals(2.0, row10.getCell(1).getNumericCellValue(), 0.001);
+
+      org.junit.Assert.assertEquals(
+          rowSections.getCell(0).getCellStyle().getFontIndex(),
+          row10.getCell(0).getCellStyle().getFontIndex());
+      org.junit.Assert.assertEquals(
+          rowSections.getCell(1).getCellStyle().getFontIndex(),
+          row10.getCell(1).getCellStyle().getFontIndex());
+
+      Row raceModelRow = raceInfo.getRow(11);
+      org.junit.Assert.assertNotNull(raceModelRow);
+      org.junit.Assert.assertEquals("Race Model", raceModelRow.getCell(0).getStringCellValue());
+
+      for (Sheet sheet : wb) {
+        int maxCol = -1;
+        for (Row row : sheet) {
+          if (row.getLastCellNum() > maxCol) {
+            maxCol = row.getLastCellNum();
+          }
+        }
+        for (int col = 0; col < maxCol; col++) {
+          org.junit.Assert.assertTrue(
+              "Column " + col + " on " + sheet.getSheetName() + " should have auto-sized width",
+              sheet.getColumnWidth(col) >= 2560);
+        }
+      }
     }
   }
 
@@ -607,7 +652,7 @@ public class RaceExportSaveHandlerTest {
   }
 
   @Test
-  public void testTestExportXls_NoActiveRace_UsesSampleRace() {
+  public void testTestExportXls_NoActiveRace_UsesSampleRace() throws Exception {
     ClientSubscriptionManager.getInstance().setRace(null);
 
     handler.testExportXls(ctx);
@@ -619,16 +664,45 @@ public class RaceExportSaveHandlerTest {
     byte[] exportedBytes = captor.getValue();
     org.junit.Assert.assertNotNull(exportedBytes);
     org.junit.Assert.assertTrue(exportedBytes.length > 0);
+
+    try (org.apache.poi.xssf.usermodel.XSSFWorkbook wb =
+        new org.apache.poi.xssf.usermodel.XSSFWorkbook(
+            new java.io.ByteArrayInputStream(exportedBytes))) {
+      org.apache.poi.ss.usermodel.Sheet infoSheet = wb.getSheet("Race Information");
+      org.junit.Assert.assertNotNull(infoSheet);
+
+      // Row index 5 is Row 6: Race Start Time
+      org.apache.poi.ss.usermodel.Row rowStart = infoSheet.getRow(5);
+      org.junit.Assert.assertEquals("Race Start Time", rowStart.getCell(0).getStringCellValue());
+      org.junit.Assert.assertFalse(rowStart.getCell(1).getStringCellValue().trim().isEmpty());
+
+      // Row index 6 is Row 7: Track Name
+      org.apache.poi.ss.usermodel.Row rowTrack = infoSheet.getRow(6);
+      org.junit.Assert.assertEquals("Track Name", rowTrack.getCell(0).getStringCellValue());
+      org.junit.Assert.assertEquals("Grand Prix Raceway", rowTrack.getCell(1).getStringCellValue());
+
+      // Row index 7 is Row 8: Race Name
+      org.apache.poi.ss.usermodel.Row rowRace = infoSheet.getRow(7);
+      org.junit.Assert.assertEquals("Race Name", rowRace.getCell(0).getStringCellValue());
+      org.junit.Assert.assertEquals(
+          "Sample Race Demonstration", rowRace.getCell(1).getStringCellValue());
+
+      // Row index 8 is Row 9: Track Sections
+      org.apache.poi.ss.usermodel.Row rowSections = infoSheet.getRow(8);
+      org.junit.Assert.assertEquals("Track Sections", rowSections.getCell(0).getStringCellValue());
+      org.junit.Assert.assertEquals(2.0, rowSections.getCell(1).getNumericCellValue(), 0.001);
+    }
   }
 
   @Test
-  public void testTestExportXls_WithActiveRace_UsesActiveRace() {
+  public void testTestExportXls_WithActiveRace_UsesActiveRace() throws Exception {
     com.antigravity.models.Driver d1 = new com.antigravity.models.Driver("Active Driver", "ad1");
     com.antigravity.race.RaceParticipant p1 = new com.antigravity.race.RaceParticipant(d1);
     com.antigravity.models.Lane l1 = new com.antigravity.models.Lane("#EF4444", "white", 100);
     com.antigravity.models.Track track =
         new com.antigravity.models.Track.Builder()
             .name("Test Track")
+            .numTrackSections(0)
             .lanes(java.util.Arrays.asList(l1))
             .build();
     com.antigravity.models.Race model = // fqn-collision
@@ -665,5 +739,209 @@ public class RaceExportSaveHandlerTest {
     byte[] exportedBytes = captor.getValue();
     org.junit.Assert.assertNotNull(exportedBytes);
     org.junit.Assert.assertTrue(exportedBytes.length > 0);
+
+    try (org.apache.poi.xssf.usermodel.XSSFWorkbook wb =
+        new org.apache.poi.xssf.usermodel.XSSFWorkbook(
+            new java.io.ByteArrayInputStream(exportedBytes))) {
+      org.apache.poi.ss.usermodel.Sheet infoSheet = wb.getSheet("Race Information");
+      org.junit.Assert.assertNotNull(infoSheet);
+
+      // Row index 5 is Row 6: Race Start Time
+      org.apache.poi.ss.usermodel.Row rowStart = infoSheet.getRow(5);
+      org.junit.Assert.assertEquals("Race Start Time", rowStart.getCell(0).getStringCellValue());
+      org.junit.Assert.assertFalse(rowStart.getCell(1).getStringCellValue().trim().isEmpty());
+
+      // Row index 6 is Row 7: Track Name
+      org.apache.poi.ss.usermodel.Row rowTrack = infoSheet.getRow(6);
+      org.junit.Assert.assertEquals("Track Name", rowTrack.getCell(0).getStringCellValue());
+      org.junit.Assert.assertEquals("Test Track", rowTrack.getCell(1).getStringCellValue());
+
+      // Row index 7 is Row 8: Race Name
+      org.apache.poi.ss.usermodel.Row rowRace = infoSheet.getRow(7);
+      org.junit.Assert.assertEquals("Race Name", rowRace.getCell(0).getStringCellValue());
+      org.junit.Assert.assertEquals("Active Test Race", rowRace.getCell(1).getStringCellValue());
+
+      // Row index 8 is Row 9: Track Sections (configured to 0)
+      org.apache.poi.ss.usermodel.Row rowSections = infoSheet.getRow(8);
+      org.junit.Assert.assertEquals("Track Sections", rowSections.getCell(0).getStringCellValue());
+      org.junit.Assert.assertEquals(0.0, rowSections.getCell(1).getNumericCellValue(), 0.001);
+    }
+  }
+
+  @Test
+  public void testExportRaceXls_PopulatesTrackSections_LegacyCustomTemplate() throws Exception {
+    com.antigravity.models.Driver d1 =
+        new com.antigravity.models.Driver("Alice", "Ally", "d1", "1");
+    com.antigravity.race.RaceParticipant p1 = new com.antigravity.race.RaceParticipant(d1);
+    com.antigravity.models.Track track =
+        new com.antigravity.models.Track.Builder()
+            .name("Test Track")
+            .numTrackSections(100)
+            .lanes(
+                java.util.Collections.singletonList(
+                    new com.antigravity.models.Lane("red", "black", 100)))
+            .build();
+
+    com.antigravity.models.Race model =
+        new com.antigravity.models.Race.Builder()
+            .withName("Active Test Race")
+            .withEntityId("r_active")
+            .build();
+
+    com.antigravity.race.Race activeRace =
+        new com.antigravity.race.Race.Builder()
+            .model(model)
+            .track(track)
+            .drivers(java.util.Collections.singletonList(p1))
+            .isDemoMode(true)
+            .build();
+
+    ClientSubscriptionManager.getInstance().setRace(activeRace);
+
+    byte[] customTemplateBytes;
+    try (org.apache.poi.xssf.usermodel.XSSFWorkbook wb =
+        new org.apache.poi.xssf.usermodel.XSSFWorkbook(
+            getClass().getResourceAsStream("/race_export_template.xlsx"))) {
+      org.apache.poi.xssf.usermodel.XSSFCell cell =
+          wb.getSheet("Race Information").getRow(8).getCell(1);
+      cell.setBlank();
+      cell.setCellValue("${race.track.sections}");
+      java.io.ByteArrayOutputStream bos = new java.io.ByteArrayOutputStream();
+      wb.write(bos);
+      customTemplateBytes = bos.toByteArray();
+    }
+
+    String base64 = java.util.Base64.getEncoder().encodeToString(customTemplateBytes);
+    java.util.Map<String, Object> body = new java.util.HashMap<>();
+    body.put("templateBase64", base64);
+    when(ctx.bodyAsClass(java.util.Map.class)).thenReturn(body);
+
+    handler.exportRaceXls(ctx);
+
+    org.mockito.ArgumentCaptor<byte[]> captor = org.mockito.ArgumentCaptor.forClass(byte[].class);
+    verify(ctx).result(captor.capture());
+    byte[] exportedBytes = captor.getValue();
+    org.junit.Assert.assertNotNull(exportedBytes);
+
+    try (org.apache.poi.xssf.usermodel.XSSFWorkbook wb =
+        new org.apache.poi.xssf.usermodel.XSSFWorkbook(
+            new java.io.ByteArrayInputStream(exportedBytes))) {
+      org.apache.poi.ss.usermodel.Sheet infoSheet = wb.getSheet("Race Information");
+      org.junit.Assert.assertNotNull(infoSheet);
+
+      org.apache.poi.ss.usermodel.Row rowSections = infoSheet.getRow(8);
+      org.junit.Assert.assertEquals("Track Sections", rowSections.getCell(0).getStringCellValue());
+      org.junit.Assert.assertEquals(100.0, rowSections.getCell(1).getNumericCellValue(), 0.001);
+
+      org.apache.poi.ss.usermodel.Row rowLanes = infoSheet.getRow(9);
+      org.junit.Assert.assertNotNull("Row 9 (Lane Count) should not be null", rowLanes);
+      org.junit.Assert.assertEquals("Lane Count", rowLanes.getCell(0).getStringCellValue());
+      org.junit.Assert.assertEquals(1.0, rowLanes.getCell(1).getNumericCellValue(), 0.001);
+    }
+  }
+
+  @Test
+  public void testExportRaceXls_PopulatesLaneCount_LegacyEachLanesTemplate() throws Exception {
+    com.antigravity.models.Driver d1 =
+        new com.antigravity.models.Driver("Alice", "Ally", "d1", "1");
+    com.antigravity.models.Driver d2 = new com.antigravity.models.Driver("Bob", "Bobby", "d2", "2");
+    com.antigravity.race.RaceParticipant p1 = new com.antigravity.race.RaceParticipant(d1);
+    com.antigravity.race.RaceParticipant p2 = new com.antigravity.race.RaceParticipant(d2);
+
+    List<com.antigravity.models.Lane> fourLanes =
+        java.util.Arrays.asList(
+            new com.antigravity.models.Lane("red", "white", 100),
+            new com.antigravity.models.Lane("blue", "white", 100),
+            new com.antigravity.models.Lane("yellow", "black", 100),
+            new com.antigravity.models.Lane("green", "white", 100));
+
+    com.antigravity.models.Track track =
+        new com.antigravity.models.Track.Builder()
+            .name("Four Lane Track")
+            .numTrackSections(100)
+            .lanes(fourLanes)
+            .build();
+
+    com.antigravity.models.Race model =
+        new com.antigravity.models.Race.Builder()
+            .withName("Four Lane Test Race")
+            .withEntityId("r_four_lane")
+            .build();
+
+    com.antigravity.race.Race activeRace =
+        new com.antigravity.race.Race.Builder()
+            .model(model)
+            .track(track)
+            .drivers(java.util.Arrays.asList(p1, p2))
+            .isDemoMode(true)
+            .build();
+
+    ClientSubscriptionManager.getInstance().setRace(activeRace);
+
+    byte[] legacyTemplateBytes;
+    try (org.apache.poi.xssf.usermodel.XSSFWorkbook wb =
+        new org.apache.poi.xssf.usermodel.XSSFWorkbook(
+            getClass().getResourceAsStream("/race_export_template.xlsx"))) {
+      org.apache.poi.xssf.usermodel.XSSFSheet sheet = wb.getSheet("Race Information");
+      org.apache.poi.xssf.usermodel.XSSFRow row9 = sheet.getRow(9);
+      org.apache.poi.xssf.usermodel.XSSFCell cellA10 = row9.getCell(0);
+      cellA10.setBlank();
+      cellA10.setCellValue("${lane.name}");
+      org.apache.poi.xssf.usermodel.XSSFComment comment =
+          sheet
+              .createDrawingPatriarch()
+              .createCellComment(
+                  new org.apache.poi.xssf.usermodel.XSSFClientAnchor(0, 0, 0, 0, 0, 9, 2, 11));
+      comment.setString(
+          new org.apache.poi.xssf.usermodel.XSSFRichTextString(
+              "jx:each(items=\"race.track.lanes\", var=\"lane\", lastCell=\"B10\")"));
+      cellA10.setCellComment(comment);
+
+      org.apache.poi.xssf.usermodel.XSSFCell cellB10 = row9.getCell(1);
+      cellB10.setBlank();
+
+      java.io.ByteArrayOutputStream bos = new java.io.ByteArrayOutputStream();
+      wb.write(bos);
+      legacyTemplateBytes = bos.toByteArray();
+    }
+
+    String base64 = java.util.Base64.getEncoder().encodeToString(legacyTemplateBytes);
+    java.util.Map<String, Object> body = new java.util.HashMap<>();
+    body.put("templateBase64", base64);
+    when(ctx.bodyAsClass(java.util.Map.class)).thenReturn(body);
+
+    handler.exportRaceXls(ctx);
+
+    org.mockito.ArgumentCaptor<byte[]> captor = org.mockito.ArgumentCaptor.forClass(byte[].class);
+    verify(ctx, org.mockito.Mockito.atLeastOnce()).result(captor.capture());
+    byte[] exportedBytes = captor.getValue();
+    org.junit.Assert.assertNotNull(exportedBytes);
+
+    try (org.apache.poi.xssf.usermodel.XSSFWorkbook wb =
+        new org.apache.poi.xssf.usermodel.XSSFWorkbook(
+            new java.io.ByteArrayInputStream(exportedBytes))) {
+      org.apache.poi.ss.usermodel.Sheet infoSheet = wb.getSheet("Race Information");
+      org.junit.Assert.assertNotNull(infoSheet);
+
+      org.apache.poi.ss.usermodel.Row rowSections = infoSheet.getRow(8);
+      org.junit.Assert.assertNotNull(rowSections);
+
+      org.apache.poi.ss.usermodel.Row rowLanes = infoSheet.getRow(9);
+      org.junit.Assert.assertNotNull("Row 9 (Lane Count) should not be null", rowLanes);
+      org.junit.Assert.assertEquals("Lane Count", rowLanes.getCell(0).getStringCellValue());
+      org.junit.Assert.assertEquals(4.0, rowLanes.getCell(1).getNumericCellValue(), 0.001);
+
+      org.junit.Assert.assertEquals(
+          rowSections.getCell(0).getCellStyle().getFontIndex(),
+          rowLanes.getCell(0).getCellStyle().getFontIndex());
+      org.junit.Assert.assertEquals(
+          rowSections.getCell(1).getCellStyle().getFontIndex(),
+          rowLanes.getCell(1).getCellStyle().getFontIndex());
+
+      // Verify that "Race Model" header is positioned with exactly 1 spacer row after Lane Count
+      org.apache.poi.ss.usermodel.Row raceModelRow = infoSheet.getRow(11);
+      org.junit.Assert.assertNotNull("Race Model row should not be null", raceModelRow);
+      org.junit.Assert.assertEquals("Race Model", raceModelRow.getCell(0).getStringCellValue());
+    }
   }
 }

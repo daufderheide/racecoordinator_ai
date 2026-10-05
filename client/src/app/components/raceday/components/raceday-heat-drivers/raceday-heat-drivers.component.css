@@ -26,6 +26,22 @@
   padding-right: 4px;
 }
 
+.next-heat-panel:has(.custom-select-container.open),
+.on-deck-panel:has(.custom-select-container.open),
+.next-heat-list:has(.custom-select-container.open),
+.on-deck-list:has(.custom-select-container.open),
+.next-heat-item:has(.custom-select-container.open),
+.on-deck-item:has(.custom-select-container.open),
+.next-heat-panel:has(app-custom-select.open),
+.on-deck-panel:has(app-custom-select.open),
+.next-heat-list:has(app-custom-select.open),
+.on-deck-list:has(app-custom-select.open),
+.next-heat-item:has(app-custom-select.open),
+.on-deck-item:has(app-custom-select.open) {
+  overflow: visible !important;
+  z-index: 1000 !important;
+}
+
 .next-heat-list::-webkit-scrollbar, .on-deck-list::-webkit-scrollbar {
   width: 8px;
 }

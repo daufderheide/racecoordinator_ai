@@ -658,7 +658,17 @@ public abstract class DefaultProtocol implements IProtocol {
     this.pitManager =
         pitManager != null
             ? pitManager
-            : new PitManager(numLanes, this::hasPitInConfigured, () -> this.listener);
+            : new PitManager(
+                numLanes,
+                this::hasPitInConfigured,
+                () -> this.listener,
+                this::now,
+                () -> this.statusScheduler);
+  }
+
+  @Override
+  public ScheduledExecutorService getScheduler() {
+    return statusScheduler;
   }
 
   @Override

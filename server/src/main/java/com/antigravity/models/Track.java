@@ -9,6 +9,7 @@ import com.antigravity.protocols.camera.CameraConfig;
 import com.antigravity.protocols.phidget.PhidgetConfig;
 import com.antigravity.protocols.trackmate.TrackmateConfig;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.ArrayList;
@@ -327,6 +328,11 @@ public class Track extends Model {
     return lanes;
   }
 
+  @JsonIgnore
+  public int getLaneCount() {
+    return lanes != null ? lanes.size() : 0;
+  }
+
   @JsonProperty("arduino_configs")
   public List<ArduinoConfig> getArduinoConfigs() {
     return arduinoConfigs;
@@ -374,7 +380,7 @@ public class Track extends Model {
               config.hardwareType,
               config.normallyClosedLaneSensors,
               config.normallyClosedRelays,
-              config.globalInvertLights,
+              config.activeLowAnalogLeds,
               config.usePitsAsLaps,
               config.useLapsForSegments,
               config.lapPinPitBehavior,

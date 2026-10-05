@@ -22,6 +22,7 @@ import {
   ViewEncapsulation,
 } from "@angular/core";
 import { FormsModule } from "@angular/forms";
+import { DomSanitizer, SafeStyle, Title } from "@angular/platform-browser";
 import {
   ActivatedRoute,
   NavigationStart,
@@ -50,7 +51,12 @@ import {
 import { Race } from "@app/models/race";
 import { RaceParticipant } from "@app/models/race_participant";
 import { Role } from "@app/models/role";
-import { LayoutConfig, Settings, WidgetType } from "@app/models/settings";
+import {
+  AbsoluteWidgetNode,
+  LayoutConfig,
+  Settings,
+  WidgetType,
+} from "@app/models/settings";
 import { THEME_SLOT_KEYS } from "@app/models/theme";
 import { Track } from "@app/models/track";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
@@ -70,6 +76,7 @@ import {
   RacePredictionService,
 } from "@app/services/race-prediction.service";
 import { DriverMatchingUtils } from "@app/utils/driver-matching.utils";
+import { TeammateUtils } from "@app/utils/teammate.utils";
 import {
   formatTimerDisplay,
   TimerFormatOptions,
@@ -86,6 +93,7 @@ import {
   PdfExportOptions,
 } from "@app/components/shared/pdf-export-dialog/pdf-export-dialog.component";
 import { RaceHistoryDialogComponent } from "@app/components/shared/race-history-dialog/race-history-dialog.component";
+import { getThemeDisplayNameKey } from "@app/components/ui-editor/ui-editor-crud.helper";
 import { WIDGET_REGISTRY } from "@app/components/ui-editor/widget-registry";
 import { CustomUI } from "@app/models/custom-ui";
 import { AudioConfig } from "@app/models/driver";
@@ -123,6 +131,16 @@ import { AddLapSectionsDialogComponent } from "./components/add-lap-sections-dia
 import { RacedayAbsoluteWidgetComponent } from "./components/raceday-absolute-widget/raceday-absolute-widget.component";
 import { RacedayModalsComponent } from "./components/raceday-modals/raceday-modals.component";
 import { ToolboxGroup, ToolboxGroupHelper } from "./toolbox-group.helper";
+import {
+  GridResizeHandle,
+  LaneGridBounds,
+  LaneGridReplicationHelper,
+  LaneGridSession,
+} from "./utils/lane-grid-replication.helper";
+import {
+  LaneReplicationHelper,
+  LaneReplicationOptions,
+} from "./utils/lane-replication.helper";
 import {
   FormatContext,
   RacedayFormatUtils,
@@ -287,7 +305,7 @@ export class DefaultRacedayComponent
   private subscriptions: Subscription[] = [];
   protected heat?: Heat;
   protected track?: Track;
-  protected race!: Race;
+  public race!: Race;
   protected columns: ColumnDefinition[];
   protected errorMessage?: string;
   protected startResumeShortcut: string = "Ctrl+S";
@@ -319,6 +337,7 @@ export class DefaultRacedayComponent
   countdownColor: string = "";
   countdownTotalLamps: number = 0;
   private lastPlayedCountdownSecond: number = -1;
+  private lastCountdownSoundTime: number = -1;
   protected isRestarting: boolean = false;
   isPrinting = false;
 
@@ -355,7 +374,9 @@ export class DefaultRacedayComponent
   public cameraPairingUrl?: string;
   protected serverUrlBase: string = window?.location?.origin || "";
   protected laneQrCodeCache = new Map<number, string>();
+  protected generatingLaneQrCodes = new Set<number>();
   protected driverViewQrCodeCache = new Map<string, string>();
+  private latestPredictionRecord: RacePredictionRecord | null = null;
 
   get groupEnabled(): boolean {
     return this.race?.group_options?.enabled || false;
@@ -522,24 +543,52 @@ export class DefaultRacedayComponent
   }
 
   protected get isAutoSegments(): boolean {
-    return (
-      (this.race?.heat_scoring?.allowFinish as string) === "NoneAutoSegments"
-    );
+    const af = this.race?.heat_scoring?.allowFinish as string;
+    return af === "NoneAutoSegments" || af === "SingleLapAutoSegments";
   }
 
+  private cachedLayoutRef: LayoutConfig | null = null;
+  private cachedTimerWidget: AbsoluteWidgetNode | undefined = undefined;
+  private cachedTimerSettings: Record<string, any> | undefined = undefined;
+  private cachedTimerFormatOptions: TimerFormatOptions | null = null;
+
   protected getTimerFormatOptions(): TimerFormatOptions {
-    const timerWidget = this.layout?.widgets?.find(
-      (w) => w.widgetType === "timer",
-    );
-    return {
-      format: timerWidget?.customSettings?.["timeDisplayFormat"] ?? "dynamic",
-      subsecondMode:
-        timerWidget?.customSettings?.["timeSubsecondMode"] ?? "threshold",
-      subsecondThreshold:
-        timerWidget?.customSettings?.["timeSubsecondThreshold"] ?? 10,
-      subsecondDecimals:
-        timerWidget?.customSettings?.["timeSubsecondDecimals"] ?? 2,
+    const timerWidget =
+      this.cachedLayoutRef === this.layout
+        ? this.cachedTimerWidget
+        : this.layout?.widgets?.find((w) => w.widgetType === "timer");
+
+    if (this.cachedLayoutRef !== this.layout) {
+      this.cachedLayoutRef = this.layout;
+      this.cachedTimerWidget = timerWidget;
+    }
+
+    const currentSettings = timerWidget?.customSettings;
+    const format = currentSettings?.["timeDisplayFormat"] ?? "dynamic";
+    const subsecondMode = currentSettings?.["timeSubsecondMode"] ?? "threshold";
+    const subsecondThreshold =
+      currentSettings?.["timeSubsecondThreshold"] ?? 10;
+    const subsecondDecimals = currentSettings?.["timeSubsecondDecimals"] ?? 2;
+
+    if (
+      this.cachedTimerFormatOptions &&
+      this.cachedTimerSettings === currentSettings &&
+      this.cachedTimerFormatOptions.format === format &&
+      this.cachedTimerFormatOptions.subsecondMode === subsecondMode &&
+      this.cachedTimerFormatOptions.subsecondThreshold === subsecondThreshold &&
+      this.cachedTimerFormatOptions.subsecondDecimals === subsecondDecimals
+    ) {
+      return this.cachedTimerFormatOptions;
+    }
+
+    this.cachedTimerSettings = currentSettings;
+    this.cachedTimerFormatOptions = {
+      format,
+      subsecondMode,
+      subsecondThreshold,
+      subsecondDecimals,
     };
+    return this.cachedTimerFormatOptions;
   }
 
   protected get formattedTime(): string {
@@ -680,7 +729,7 @@ export class DefaultRacedayComponent
     return RacedayLayoutUtils.shouldShowLaneColor(col);
   }
 
-  protected get isWarmup(): boolean {
+  public get isWarmup(): boolean {
     if (
       this.raceHasEnded ||
       this.raceState === RaceState.RACE_OVER ||
@@ -704,6 +753,19 @@ export class DefaultRacedayComponent
         return totalTime - this.autoStartRemaining < warmupTime;
       }
     }
+    return false;
+  }
+
+  public get isCooldown(): boolean {
+    if (
+      this.raceHasEnded ||
+      this.raceState === RaceState.RACE_OVER ||
+      this.raceState === RaceState.PAUSED ||
+      this.raceState === RaceState.RACING ||
+      this.raceState === RaceState.STARTING
+    ) {
+      return false;
+    }
     if (
       (this.raceState === RaceState.HEAT_OVER ||
         this.raceState === RaceState.UNKNOWN_STATE) &&
@@ -713,7 +775,7 @@ export class DefaultRacedayComponent
       const warmupTime = this.race.auto_advance_warmup_time || 0;
       const totalTime = this.race.auto_advance_time || 0;
       if (warmupTime > 0 && totalTime > 0) {
-        // Warmup is at the END of auto-advance
+        // Cooldown is at the END of auto-advance (when track power is on)
         return this.autoAdvanceRemaining <= warmupTime;
       }
     }
@@ -824,6 +886,9 @@ export class DefaultRacedayComponent
   private audioService: AudioService;
   private childWindowManagerService: ChildWindowManagerService;
   private dateTimeFormatService: DateTimeFormatService;
+  private titleService?: Title;
+  private sanitizer?: DomSanitizer =
+    inject(DomSanitizer, { optional: true }) ?? undefined;
 
   constructor(
     private el: ElementRef,
@@ -848,7 +913,15 @@ export class DefaultRacedayComponent
     private navigationService?: NavigationService,
     dateTimeFormatService?: DateTimeFormatService,
     audioService?: AudioService,
+    titleService?: Title,
   ) {
+    let injectedTitle: Title | null = null;
+    try {
+      injectedTitle = inject(Title, { optional: true });
+    } catch {
+      // Ignore if outside injection context
+    }
+    this.titleService = titleService ?? injectedTitle ?? undefined;
     this.audioService = audioService ?? inject(AudioService);
     this.fuelAudioTracker = new FuelAudioTracker(this.audioService, (urlOrId) =>
       this.resolveAssetPlayableUrl(urlOrId),
@@ -879,7 +952,7 @@ export class DefaultRacedayComponent
     });
   }
 
-  protected driverRankings = new Map<string, number>();
+  public driverRankings = new Map<string, number>();
   protected isInterfaceConnected: boolean = false;
   protected draggingLane: number | null = null;
   protected isDragging: boolean = false;
@@ -887,13 +960,14 @@ export class DefaultRacedayComponent
   protected assets: any[] = [];
   protected hasRacedInCurrentHeat: boolean = false;
   protected highlightedDrivers: Set<string> = new Set();
+  private lapHighlightTimers: Set<any> = new Set();
   private carLocations = new Map<number, number>();
   private fuelAudioTracker: FuelAudioTracker;
   private get laneFuelAudioStates(): Map<number, any> {
     return this.fuelAudioTracker.getStates();
   }
 
-  private dropdownIconCache = new Map<string, string>();
+  private dropdownIconCache = new Map<string, SafeStyle | string>();
   private deactivateSubject = new Subject<boolean>();
   private livePredictionSubject = new Subject<void>();
 
@@ -905,7 +979,10 @@ export class DefaultRacedayComponent
   activeCustomUi = input<CustomUI | null>(null);
   selectedWidgetId = input<string | null>(null);
   isCountdownPreviewActive = input<boolean>(false);
+  gridSession = input<LaneGridSession | null>(null);
   widgetSelected = output<string | null>();
+  finishGrid = output<void>();
+  gridBoundsChange = output<LaneGridBounds>();
 
   get visualScale(): number {
     return this.isUIEditorMode() ? this.uiScale() : this.scale;
@@ -1388,6 +1465,14 @@ export class DefaultRacedayComponent
     this.subscribeToAssets();
     this.detectShortcutKey();
     this.updateScale();
+    this.updateTabTitle();
+
+    if (
+      this.customWidgetService &&
+      this.customWidgetService.getCustomWidgets().length === 0
+    ) {
+      this.customWidgetService.reloadCustomWidgets().catch(() => {});
+    }
 
     if (
       typeof window !== "undefined" &&
@@ -1454,8 +1539,20 @@ export class DefaultRacedayComponent
     this.subscriptions.push(
       this.themeService.activeTheme$.subscribe(() => {
         this.updateRacedayLayout();
+        this.preloadCountdownAudio();
+        this.updateTabTitle();
       }),
     );
+
+    if (this.translationService?.getTranslationsLoaded) {
+      this.subscriptions.push(
+        this.translationService.getTranslationsLoaded().subscribe((loaded) => {
+          if (loaded) {
+            this.updateTabTitle();
+          }
+        }),
+      );
+    }
 
     this.subscriptions.push(
       this.customUiService.customUIs$.subscribe(() => {
@@ -1479,6 +1576,8 @@ export class DefaultRacedayComponent
         },
       },
     );
+    this.raceHasEnded = false;
+    this.isInterfaceConnected = this.raceConnectionService.isInterfaceConnected;
 
     const settings =
       this.editingSettings() || this.settingsService.getSettings();
@@ -1513,6 +1612,7 @@ export class DefaultRacedayComponent
             next: (assets) => {
               this.assets = assets || [];
               this.loadColumns();
+              this.preloadCountdownAudio();
               if (!this.isDestroyed) {
                 this.cdr.markForCheck();
               }
@@ -1654,12 +1754,12 @@ export class DefaultRacedayComponent
             if (this.serverUrlBase !== url) {
               this.serverUrlBase = url;
               this.laneQrCodeCache.clear();
+              this.generatingLaneQrCodes.clear();
               this.driverViewQrCodeCache.clear();
             }
             QRCode.toDataURL(url, { margin: 1 })
               .then((dataUrl) => {
                 this.qrCodeUrl = dataUrl;
-                this.generateAllLaneQrCodes();
                 this.generateCameraQrCode();
                 if (!this.isDestroyed) {
                   this.cdr.markForCheck();
@@ -1789,6 +1889,12 @@ export class DefaultRacedayComponent
 
         // Update countdown overlay if active
         if (this.showCountdownOverlay) {
+          if (this.countdownTotalLamps === 0 && this.autoStartRemaining > 0) {
+            this.countdownTotalLamps = Math.min(
+              this.getCountdownMaxLamps(),
+              Math.ceil(this.autoStartRemaining),
+            );
+          }
           this.updateCountdownLamps(this.autoStartRemaining);
         }
 
@@ -1858,7 +1964,45 @@ export class DefaultRacedayComponent
                 : Array.isArray((driverData as any).laps)
                   ? (driverData as any).laps.length
                   : (driverData as any).lapCount || 0;
-            if (
+            if (lap.type === LapType.FALSE_START) {
+              if (
+                lap.adjustedLapCount !== undefined &&
+                lap.adjustedLapCount !== null &&
+                !isNaN(lap.adjustedLapCount)
+              ) {
+                driverData.adjustedLapCount = lap.adjustedLapCount;
+                if (
+                  this.heat &&
+                  this.heat !== currentHeat &&
+                  this.heat.heatDrivers
+                ) {
+                  const localHd = DriverMatchingUtils.findDriverForLap(
+                    this.heat.heatDrivers,
+                    lap,
+                  );
+                  if (localHd) {
+                    localHd.adjustedLapCount = lap.adjustedLapCount;
+                  }
+                }
+                if (this.heats && this.heats.length > 0 && currentHeat) {
+                  const targetHeat = this.heats.find(
+                    (h) =>
+                      (currentHeat.objectId &&
+                        h.objectId === currentHeat.objectId) ||
+                      h.heatNumber === currentHeat.heatNumber,
+                  );
+                  if (targetHeat && targetHeat.heatDrivers) {
+                    const targetHd = DriverMatchingUtils.findDriverForLap(
+                      targetHeat.heatDrivers,
+                      lap,
+                    );
+                    if (targetHd && targetHd !== driverData) {
+                      targetHd.adjustedLapCount = lap.adjustedLapCount;
+                    }
+                  }
+                }
+              }
+            } else if (
               lap.lapNumber &&
               currentLapCount < lap.lapNumber &&
               typeof driverData.addLapTime === "function"
@@ -2657,12 +2801,13 @@ export class DefaultRacedayComponent
         this.cdr.markForCheck();
       }
       const timer = setTimeout(() => {
+        this.lapHighlightTimers.delete(timer);
         this.highlightedDrivers.delete(lap.objectId!);
         if (!this.isDestroyed) {
           this.cdr.markForCheck();
         }
       }, 400);
-      this.subscriptions.push(new Subscription(() => clearTimeout(timer)));
+      this.lapHighlightTimers.add(timer);
     }
   }
 
@@ -2780,6 +2925,14 @@ export class DefaultRacedayComponent
               this.driverRankings.set(u.objectId, u.rank || 0);
             }
           });
+          if (this.heat?.heatDrivers) {
+            const sortedByRank = [...this.heat.heatDrivers].sort((a, b) => {
+              const rankA = this.driverRankings.get(a.objectId) ?? 999;
+              const rankB = this.driverRankings.get(b.objectId) ?? 999;
+              return rankA - rankB;
+            });
+            this.heat.standings = sortedByRank.map((hd) => hd.objectId);
+          }
         }
         this.sortHeatDrivers();
       }),
@@ -2796,6 +2949,7 @@ export class DefaultRacedayComponent
             this.customUiService.initialize(),
           ]).then(() => {
             this.updateRacedayLayout();
+            this.updateTabTitle(themeId);
           });
         }
         if (params["modifyHeats"] === "true") {
@@ -2950,13 +3104,20 @@ export class DefaultRacedayComponent
     const laneViewWidget = this.currentRacedayLayout?.widgets?.find(
       (w: any) => w.widgetType === "lane-view",
     );
+    const colDecimals =
+      laneViewWidget?.customSettings?.["columnDecimals"]?.["recordLapTime"] ??
+      laneViewWidget?.customSettings?.["columnDecimalPlaces"]?.[
+        "recordLapTime"
+      ];
     const timeDecimals = isInset
       ? laneViewWidget?.customSettings?.["insetTimeDecimalPlaces"] !== undefined
         ? Number(laneViewWidget.customSettings["insetTimeDecimalPlaces"])
         : 3
-      : laneViewWidget?.customSettings?.["timeDecimalPlaces"] !== undefined
-        ? Number(laneViewWidget.customSettings["timeDecimalPlaces"])
-        : 3;
+      : colDecimals !== undefined && colDecimals !== null && colDecimals !== ""
+        ? Number(colDecimals)
+        : laneViewWidget?.customSettings?.["timeDecimalPlaces"] !== undefined
+          ? Number(laneViewWidget.customSettings["timeDecimalPlaces"])
+          : 3;
     const timePlaceholder =
       timeDecimals > 0 ? "--." + "-".repeat(timeDecimals) : "--";
     if (!entry || !entry.value || entry.value <= 0) return timePlaceholder;
@@ -3005,13 +3166,20 @@ export class DefaultRacedayComponent
     const laneViewWidget = this.currentRacedayLayout?.widgets?.find(
       (w: any) => w.widgetType === "lane-view",
     );
+    const colDecimals =
+      laneViewWidget?.customSettings?.["columnDecimals"]?.["bestRaceLapTime"] ??
+      laneViewWidget?.customSettings?.["columnDecimalPlaces"]?.[
+        "bestRaceLapTime"
+      ];
     const timeDecimals = isInset
       ? laneViewWidget?.customSettings?.["insetTimeDecimalPlaces"] !== undefined
         ? Number(laneViewWidget.customSettings["insetTimeDecimalPlaces"])
         : 3
-      : laneViewWidget?.customSettings?.["timeDecimalPlaces"] !== undefined
-        ? Number(laneViewWidget.customSettings["timeDecimalPlaces"])
-        : 3;
+      : colDecimals !== undefined && colDecimals !== null && colDecimals !== ""
+        ? Number(colDecimals)
+        : laneViewWidget?.customSettings?.["timeDecimalPlaces"] !== undefined
+          ? Number(laneViewWidget.customSettings["timeDecimalPlaces"])
+          : 3;
     const timePlaceholder =
       timeDecimals > 0 ? "--." + "-".repeat(timeDecimals) : "--";
     if (!entry || !entry.value || entry.value <= 0) return timePlaceholder;
@@ -3182,6 +3350,14 @@ export class DefaultRacedayComponent
     this.heatBestTime = 2.012;
     this.recordData = mockData.recordData;
 
+    this.driverRankings.clear();
+    if (this.heat?.heatDrivers) {
+      this.heat.heatDrivers.forEach((hd, index) => {
+        this.driverRankings.set(hd.objectId, index + 1);
+      });
+      this.heat.standings = this.heat.heatDrivers.map((hd) => hd.objectId);
+    }
+
     this.sortHeatDrivers();
     this.updateLeaderboardEntries();
     this.updateGroupLeaderboardEntries();
@@ -3189,6 +3365,8 @@ export class DefaultRacedayComponent
   }
 
   ngOnDestroy() {
+    this.lapHighlightTimers.forEach((timer) => clearTimeout(timer));
+    this.lapHighlightTimers.clear();
     this.audioService.reset();
     if (
       typeof window !== "undefined" &&
@@ -3252,23 +3430,42 @@ export class DefaultRacedayComponent
   }
 
   onAcknowledgeModal() {
+    const isSaveModal =
+      this.ackModalTitle === "RD_SAVE_SUCCESS" ||
+      this.ackModalTitle ===
+        this.translationService.translate("RD_SAVE_SUCCESS") ||
+      this.ackModalTitle === "RD_SAVE_ERROR" ||
+      this.ackModalTitle === this.translationService.translate("RD_SAVE_ERROR");
+
+    const isRaceEndedModal =
+      !isSaveModal &&
+      (this.ackModalTitle === "RD_RACE_ENDED_TITLE" ||
+        this.ackModalTitle ===
+          this.translationService.translate("RD_RACE_ENDED_TITLE") ||
+        !this.ackModalTitle);
+
     this.showAckModal = false;
+    this.ackModalTitle = "";
     this.cdr.markForCheck();
     this.cdr.detectChanges();
-    if (this.raceHasEnded) {
+    if (this.raceHasEnded && isRaceEndedModal) {
       this.forceExit = true;
       this.router.navigate(["/raceday-setup"]);
     }
   }
 
   onExitConfirm() {
-    sessionStorage.setItem("skipIntro", "true");
+    if (!this.raceHasEnded && this.raceState !== RaceState.RACE_OVER) {
+      sessionStorage.setItem("skipIntro", "true");
+    }
     this.showExitConfirmation = false;
+    this.cdr.markForCheck();
     this.deactivateSubject.next(true);
   }
 
   onExitCancel() {
     this.showExitConfirmation = false;
+    this.cdr.markForCheck();
     this.deactivateSubject.next(false);
   }
 
@@ -3384,21 +3581,18 @@ export class DefaultRacedayComponent
         return true;
       }
     }
+    this.showSkipHeatConfirmation = false;
+    this.showRestartHeatConfirmation = false;
+    this.showDeferHeatConfirmation = false;
+
     if (this.raceHasEnded || this.raceState === RaceState.RACE_OVER) {
-      this.showExitConfirmation = false;
-      this.showSkipHeatConfirmation = false;
-      this.showRestartHeatConfirmation = false;
-      this.showDeferHeatConfirmation = false;
-      this.ackModalTitle = "RD_RACE_ENDED_TITLE";
-      this.ackModalMessage = "RD_RACE_ENDED_MESSAGE";
-      this.ackModalButtonText = "RD_RACE_ENDED_BTN_OK";
-      this.showAckModal = true;
-      this.cdr.markForCheck();
-      return false;
+      this.exitModalTitle = "RD_RACE_ENDED_TITLE";
+      this.exitModalMessage = "RD_CONFIRM_EXIT_RACE_ENDED_MESSAGE";
+    } else {
+      this.exitModalTitle = "RD_CONFIRM_EXIT_TITLE";
+      this.exitModalMessage = "RD_CONFIRM_EXIT_MESSAGE";
     }
 
-    this.exitModalTitle = "RD_CONFIRM_EXIT_TITLE";
-    this.exitModalMessage = "RD_CONFIRM_EXIT_MESSAGE";
     this.exitConfirmText = "RD_CONFIRM_EXIT_BTN_LEAVE";
     this.exitCancelText = "RD_CONFIRM_EXIT_BTN_STAY";
     this.showExitConfirmation = true;
@@ -3446,7 +3640,11 @@ export class DefaultRacedayComponent
       );
     }
 
-    this.loadPredictionsForCurrentRace();
+    if (this.latestPredictionRecord) {
+      this.applyPredictionsToDrivers(this.latestPredictionRecord);
+    } else {
+      this.loadPredictionsForCurrentRace();
+    }
     this.cdr.markForCheck();
   }
 
@@ -3553,15 +3751,19 @@ export class DefaultRacedayComponent
 
       this.race = race;
       this.track = race.track;
+      this.preloadCountdownAudio();
 
+      const state =
+        (race as any)?.state ?? (race as any)?.raceState ?? this.raceState;
       const isEnded =
-        this.raceHasEnded ||
-        this.raceState === RaceState.RACE_OVER ||
-        (race as any)?.is_finished ||
-        (race as any)?.isFinished ||
-        (race as any)?.state === RaceState.RACE_OVER ||
-        (race as any)?.raceState === RaceState.RACE_OVER ||
-        (race as any)?.state_class_name?.includes("RaceOver");
+        (race as any)?.is_finished === true ||
+        (race as any)?.isFinished === true ||
+        state === RaceState.RACE_OVER ||
+        (race as any)?.state_class_name?.includes("RaceOver") ||
+        (this.raceHasEnded &&
+          state !== RaceState.NOT_STARTED &&
+          state !== RaceState.STARTING &&
+          state !== RaceState.RACING);
 
       if (isEnded) {
         this.raceHasEnded = true;
@@ -3584,61 +3786,68 @@ export class DefaultRacedayComponent
         this.leaderLaps = 0;
         this.playedHalfway = false;
         this.resetFuelAudioTracking();
-      } else if (isNewRace) {
-        // Reset timer state ONLY when advancing to a new race
-        const state =
-          (race as any)?.state ?? (race as any)?.raceState ?? this.raceState;
-        const isNotStarted =
-          state === RaceState.NOT_STARTED ||
-          state === RaceState.UNKNOWN_STATE ||
-          state === undefined ||
-          state === null;
-        const isHeatOver = state === RaceState.HEAT_OVER;
-
-        if (isNotStarted) {
-          this.autoStartRemaining =
-            (race as any)?.auto_start_remaining_seconds ||
-            (race as any)?.auto_start_remaining ||
-            race.auto_start_time ||
-            0;
-          this.autoAdvanceRemaining = 0;
-          this.time = this.autoStartRemaining > 0 ? this.autoStartRemaining : 0;
-        } else if (isHeatOver) {
-          this.autoStartRemaining = 0;
-          this.autoAdvanceRemaining =
-            (race as any)?.auto_advance_remaining_seconds ||
-            (race as any)?.auto_advance_remaining ||
-            0;
-          this.time =
-            this.autoAdvanceRemaining > 0 ? this.autoAdvanceRemaining : 0;
-        } else {
-          this.autoStartRemaining = 0;
-          this.autoAdvanceRemaining = 0;
-          if (typeof (race as any)?.accumulated_race_time === "number") {
-            this.time = (race as any).accumulated_race_time;
-          }
-        }
-        this.previousTime = this.time;
-        this.timeFormat = "1.0-0";
-        this.playedSecondsLeft.clear();
-        this.playedSecondsElapsed.clear();
-        this.playedLapsLeft.clear();
-        this.playedLapsElapsed.clear();
-        this.playedAutoStart.clear();
-        this.playedAutoStartElapsed.clear();
-        this.playedAutoAdvance.clear();
-        this.playedAutoAdvanceElapsed.clear();
-        this.previousAutoStartRemaining = 0;
-        this.previousAutoAdvanceRemaining = 0;
-        this.leaderLaps = 0;
-        this.playedHalfway = false;
-        this.resetFuelAudioTracking();
       } else {
-        const remaining = (race as any)?.auto_advance_remaining_seconds;
-        if (remaining !== undefined && remaining !== null) {
-          this.autoAdvanceRemaining = remaining;
-          if (remaining > 0) {
-            this.time = remaining;
+        this.raceHasEnded = false;
+        if (state !== undefined && state !== RaceState.UNKNOWN_STATE) {
+          this.raceState = state;
+        }
+        if (isNewRace) {
+          // Reset timer state ONLY when advancing to a new race
+          const state =
+            (race as any)?.state ?? (race as any)?.raceState ?? this.raceState;
+          const isNotStarted =
+            state === RaceState.NOT_STARTED ||
+            state === RaceState.UNKNOWN_STATE ||
+            state === undefined ||
+            state === null;
+          const isHeatOver = state === RaceState.HEAT_OVER;
+
+          if (isNotStarted) {
+            this.autoStartRemaining =
+              (race as any)?.auto_start_remaining_seconds ||
+              (race as any)?.auto_start_remaining ||
+              race.auto_start_time ||
+              0;
+            this.autoAdvanceRemaining = 0;
+            this.time =
+              this.autoStartRemaining > 0 ? this.autoStartRemaining : 0;
+          } else if (isHeatOver) {
+            this.autoStartRemaining = 0;
+            this.autoAdvanceRemaining =
+              (race as any)?.auto_advance_remaining_seconds ||
+              (race as any)?.auto_advance_remaining ||
+              0;
+            this.time =
+              this.autoAdvanceRemaining > 0 ? this.autoAdvanceRemaining : 0;
+          } else {
+            this.autoStartRemaining = 0;
+            this.autoAdvanceRemaining = 0;
+            if (typeof (race as any)?.accumulated_race_time === "number") {
+              this.time = (race as any).accumulated_race_time;
+            }
+          }
+          this.previousTime = this.time;
+          this.timeFormat = "1.0-0";
+          this.playedSecondsLeft.clear();
+          this.playedSecondsElapsed.clear();
+          this.playedLapsLeft.clear();
+          this.playedLapsElapsed.clear();
+          this.playedAutoStart.clear();
+          this.playedAutoStartElapsed.clear();
+          this.playedAutoAdvance.clear();
+          this.playedAutoAdvanceElapsed.clear();
+          this.previousAutoStartRemaining = 0;
+          this.previousAutoAdvanceRemaining = 0;
+          this.leaderLaps = 0;
+          this.playedHalfway = false;
+          this.resetFuelAudioTracking();
+        } else {
+          const remaining = (race as any)?.auto_advance_remaining_seconds;
+          if (remaining !== undefined && remaining !== null) {
+            this.autoAdvanceRemaining = remaining;
+            if (remaining > 0) {
+              this.time = remaining;
+            }
           }
         }
       }
@@ -3651,7 +3860,9 @@ export class DefaultRacedayComponent
       ) {
         this.themeService.activateForRace(race.entity_id);
       }
-      this.generateAllLaneQrCodes();
+      this.latestPredictionRecord = null;
+      this.laneQrCodeCache.clear();
+      this.generatingLaneQrCodes.clear();
 
       if (this.currentRacedayLayout && this.currentRacedayLayout.widgets) {
         this.layout = JSON.parse(JSON.stringify(this.currentRacedayLayout));
@@ -3670,10 +3881,15 @@ export class DefaultRacedayComponent
       ) {
         const duration =
           this.isRestarting || this.raceState === RaceState.PAUSED
-            ? (race.restart_time ?? 5.0)
-            : (race.start_time ?? 5.0);
-        this.countdownTotalLamps = Math.ceil(duration);
-        this.updateCountdownLamps(this.autoStartRemaining ?? duration);
+            ? (race.restart_time ?? race.start_time)
+            : race.start_time;
+        if (duration != null) {
+          this.countdownTotalLamps = Math.min(
+            this.getCountdownMaxLamps(),
+            Math.ceil(duration),
+          );
+          this.updateCountdownLamps(this.autoStartRemaining ?? duration);
+        }
       }
     } else {
       this.logger.debug("RacedayComponent: Waiting for race data...");
@@ -3884,6 +4100,7 @@ export class DefaultRacedayComponent
       .getRacePredictions(raceId, isDemo)
       .subscribe((record) => {
         if (record) {
+          this.latestPredictionRecord = record;
           this.applyPredictionsToDrivers(record);
           this.cdr.markForCheck();
         }
@@ -4010,19 +4227,8 @@ export class DefaultRacedayComponent
   generateAllLaneQrCodes(): void {
     if (!this.serverUrlBase || !this.track?.lanes) return;
 
-    this.track.lanes.forEach((lane, index) => {
-      QRCode.toDataURL(`${this.serverUrlBase}/driver-station/${index + 1}`, {
-        margin: 1,
-      })
-        .then((dataUrl) => {
-          this.laneQrCodeCache.set(index, dataUrl);
-          if (!this.isDestroyed) {
-            this.cdr.markForCheck();
-          }
-        })
-        .catch((err) =>
-          this.logger.error("Lane QR Code generation failed", err),
-        );
+    this.track.lanes.forEach((_, index) => {
+      this.getLaneQrCodeUrl(index);
     });
   }
 
@@ -4114,7 +4320,27 @@ export class DefaultRacedayComponent
   }
 
   getLaneQrCodeUrl(laneIndex: number): string {
-    return this.laneQrCodeCache.get(laneIndex) || "";
+    const cached = this.laneQrCodeCache.get(laneIndex);
+    if (cached) return cached;
+    if (!this.serverUrlBase || this.generatingLaneQrCodes.has(laneIndex)) {
+      return "";
+    }
+    this.generatingLaneQrCodes.add(laneIndex);
+    QRCode.toDataURL(`${this.serverUrlBase}/driver-station/${laneIndex + 1}`, {
+      margin: 1,
+    })
+      .then((dataUrl) => {
+        this.laneQrCodeCache.set(laneIndex, dataUrl);
+        this.generatingLaneQrCodes.delete(laneIndex);
+        if (!this.isDestroyed) {
+          this.cdr.markForCheck();
+        }
+      })
+      .catch((err) => {
+        this.generatingLaneQrCodes.delete(laneIndex);
+        this.logger.error("Lane QR Code generation failed", err);
+      });
+    return "";
   }
 
   getDriverViewQrCodeUrl(hd: DriverHeatData): string {
@@ -4222,13 +4448,24 @@ export class DefaultRacedayComponent
     };
 
     const isInset = anchor ? anchor !== "center-center" : false;
+    const customColDecimals =
+      ctx.laneViewWidgetSettings?.columnDecimals ||
+      ctx.laneViewWidgetSettings?.columnDecimalPlaces;
+    const colDecimalOverride = customColDecimals
+      ? (customColDecimals[column?.propertyName ?? ""] ??
+        customColDecimals["lastLaps"])
+      : undefined;
     const timeDecimals = isInset
       ? ctx.laneViewWidgetSettings?.insetTimeDecimalPlaces !== undefined
         ? Number(ctx.laneViewWidgetSettings.insetTimeDecimalPlaces)
         : 3
-      : ctx.laneViewWidgetSettings?.timeDecimalPlaces !== undefined
-        ? Number(ctx.laneViewWidgetSettings.timeDecimalPlaces)
-        : 3;
+      : colDecimalOverride !== undefined &&
+          colDecimalOverride !== null &&
+          colDecimalOverride !== ""
+        ? Number(colDecimalOverride)
+        : ctx.laneViewWidgetSettings?.timeDecimalPlaces !== undefined
+          ? Number(ctx.laneViewWidgetSettings.timeDecimalPlaces)
+          : 3;
 
     for (let i = 1; i <= 5; i++) {
       const index = n - 1 - i;
@@ -4718,14 +4955,106 @@ export class DefaultRacedayComponent
     }
   }
 
+  private lastThemeOpenTime = 0;
+  private lastThemeOpenId = "";
+
   onThemeMenuSelect(themeId: string) {
+    const now = Date.now();
+    if (
+      this.lastThemeOpenId === themeId &&
+      now - this.lastThemeOpenTime < 500
+    ) {
+      return;
+    }
+    this.lastThemeOpenTime = now;
+    this.lastThemeOpenId = themeId;
+
     this.logger.debug("Opening theme window for themeId:", themeId);
     const url = this.router.serializeUrl(
       this.router.createUrlTree(["/default-raceday"], {
         queryParams: { themeId },
       }),
     );
-    this.childWindowManagerService.openThemeWindow(url);
+    const theme =
+      this.themeService
+        ?.getThemes?.()
+        ?.find?.((t) => t.entity_id === themeId) ||
+      (this.themeService?.getActiveTheme?.()?.entity_id === themeId
+        ? this.themeService.getActiveTheme()
+        : null);
+    let themeTitle: string | undefined;
+    if (theme) {
+      const key = getThemeDisplayNameKey(theme, this.translationService);
+      themeTitle = this.translationService?.translate
+        ? this.translationService.translate(key)
+        : theme.name;
+    } else if (themeId === "practice_theme_rc_ai") {
+      themeTitle =
+        this.translationService?.translate?.("UE_LABEL_PRACTICE_THEME") ||
+        "RaceCoordinator AI (Practice)";
+    } else if (themeId === "default_fuel_theme_rc_ai") {
+      themeTitle =
+        this.translationService?.translate?.("UE_LABEL_FUEL_THEME") ||
+        "RaceCoordinator AI (Fuel)";
+    } else if (themeId === "default_classic_rc_ai") {
+      themeTitle =
+        this.translationService?.translate?.("UE_LABEL_DEFAULT_THEME") ||
+        "RaceCoordinator AI";
+    }
+    if (themeTitle) {
+      this.childWindowManagerService.openThemeWindow(url, themeTitle);
+    } else {
+      this.childWindowManagerService.openThemeWindow(url);
+    }
+  }
+
+  updateTabTitle(themeIdOverride?: string): void {
+    const themeId =
+      themeIdOverride ||
+      this.route.snapshot?.queryParams?.["themeId"] ||
+      this.themeService?.getTransientThemeId?.();
+    if (!themeId) {
+      return;
+    }
+    const activeTheme = this.themeService?.getActiveTheme?.();
+    const theme =
+      (activeTheme?.entity_id === themeId ? activeTheme : null) ||
+      this.themeService
+        ?.getThemes?.()
+        ?.find?.((t) => t.entity_id === themeId) ||
+      null;
+    let titleToSet: string | undefined;
+    if (theme) {
+      const displayNameKey = getThemeDisplayNameKey(
+        theme,
+        this.translationService,
+      );
+      titleToSet = this.translationService?.translate
+        ? this.translationService.translate(displayNameKey)
+        : displayNameKey;
+      if (!titleToSet) {
+        titleToSet = theme.name;
+      }
+    } else if (themeId === "practice_theme_rc_ai") {
+      titleToSet =
+        this.translationService?.translate?.("UE_LABEL_PRACTICE_THEME") ||
+        "RaceCoordinator AI (Practice)";
+    } else if (themeId === "default_fuel_theme_rc_ai") {
+      titleToSet =
+        this.translationService?.translate?.("UE_LABEL_FUEL_THEME") ||
+        "RaceCoordinator AI (Fuel)";
+    } else if (themeId === "default_classic_rc_ai") {
+      titleToSet =
+        this.translationService?.translate?.("UE_LABEL_DEFAULT_THEME") ||
+        "RaceCoordinator AI";
+    }
+    if (titleToSet) {
+      if (this.titleService) {
+        this.titleService.setTitle(titleToSet);
+      } else if (typeof document !== "undefined") {
+        document.title = titleToSet;
+      }
+    }
   }
 
   @HostListener("window:beforeunload", ["$event"])
@@ -4860,27 +5189,46 @@ export class DefaultRacedayComponent
     this.columnsChanged.emit();
   }
 
+  private canAcceptAnchorDrop(): boolean {
+    const isEditing = this.isUIEditorMode() || this.isLayoutCustomizing;
+    if (!isEditing) return false;
+    return (
+      !this.draggedWidgetType || this.draggedWidgetType.startsWith("lane-col:")
+    );
+  }
+
   onAnchorDragOver(event: DragEvent) {
-    if (!this.isUIEditorMode() || this.draggedWidgetType) return;
+    if (!this.canAcceptAnchorDrop()) return;
     event.preventDefault();
-    if (event.dataTransfer) event.dataTransfer.dropEffect = "copy";
+    if (event.dataTransfer) {
+      const allowed = event.dataTransfer.effectAllowed;
+      event.dataTransfer.dropEffect = allowed === "move" ? "move" : "copy";
+    }
   }
 
   onAnchorDragEnter(event: DragEvent) {
-    if (!this.isUIEditorMode() || this.draggedWidgetType) return;
+    if (!this.canAcceptAnchorDrop()) return;
     event.preventDefault();
-    (event.target as HTMLElement).classList.add("drag-over");
+    ((event.currentTarget || event.target) as HTMLElement).classList.add(
+      "drag-over",
+    );
   }
 
   onAnchorDragLeave(event: DragEvent) {
-    if (!this.isUIEditorMode() || this.draggedWidgetType) return;
-    (event.target as HTMLElement).classList.remove("drag-over");
+    if (!this.canAcceptAnchorDrop()) return;
+    ((event.currentTarget || event.target) as HTMLElement).classList.remove(
+      "drag-over",
+    );
   }
 
   onAnchorDrop(event: DragEvent, colData: ColumnDefinition, anchor: string) {
-    if (!this.isUIEditorMode() || this.draggedWidgetType) return;
+    if (!this.canAcceptAnchorDrop()) return;
     event.preventDefault();
-    (event.target as HTMLElement).classList.remove("drag-over");
+    ((event.currentTarget || event.target) as HTMLElement).classList.remove(
+      "drag-over",
+    );
+
+    let droppedKey: string | undefined;
 
     if (event.dataTransfer) {
       try {
@@ -4888,26 +5236,52 @@ export class DefaultRacedayComponent
         if (dataStr) {
           const data = JSON.parse(dataStr);
           if (data.type === "new-column" && data.key) {
-            const settings = this.editingSettings();
-            if (!settings) return;
-            const layouts = { ...(this.currentColumnLayouts || {}) };
-            if (!layouts[colData.propertyName]) {
-              layouts[colData.propertyName] = {
-                "center-center": colData.propertyName,
-              };
-            } else {
-              layouts[colData.propertyName] = {
-                ...layouts[colData.propertyName],
-              };
-            }
-            layouts[colData.propertyName][anchor as AnchorPoint] = data.key;
-            this.currentColumnLayouts = layouts;
-            this.loadColumns();
-            this.cdr.markForCheck();
-            this.columnsChanged.emit();
+            droppedKey = data.key;
+          } else if (data.key) {
+            droppedKey = data.key;
           }
         }
       } catch (e) {}
+
+      if (!droppedKey) {
+        const text = event.dataTransfer.getData("text/plain");
+        if (text) {
+          if (text.startsWith("lane-col:")) {
+            droppedKey = text.substring("lane-col:".length);
+          } else {
+            droppedKey = text;
+          }
+        }
+      }
+    }
+
+    if (!droppedKey && this.draggedWidgetType?.startsWith("lane-col:")) {
+      droppedKey = this.draggedWidgetType.substring("lane-col:".length);
+    }
+
+    if (this.draggedWidgetType) {
+      this.draggedWidgetType = null;
+    }
+
+    if (droppedKey) {
+      const settings =
+        this.editingSettings() || this.settingsService.getSettings();
+      if (!settings) return;
+      const layouts = { ...(this.currentColumnLayouts || {}) };
+      if (!layouts[colData.propertyName]) {
+        layouts[colData.propertyName] = {
+          "center-center": colData.propertyName,
+        };
+      } else {
+        layouts[colData.propertyName] = {
+          ...layouts[colData.propertyName],
+        };
+      }
+      layouts[colData.propertyName][anchor as AnchorPoint] = droppedKey;
+      this.currentColumnLayouts = layouts;
+      this.loadColumns();
+      this.cdr.markForCheck();
+      this.columnsChanged.emit();
     }
   }
 
@@ -4968,11 +5342,33 @@ export class DefaultRacedayComponent
     } else if (action === "BACK") {
       if (this.isBackDisabled) return;
       window.history.back();
+    } else if (action === "FORWARD") {
+      if (this.isForwardDisabled) return;
+      window.history.forward();
+    } else if (action === "CLOSE") {
+      this.closeWindow();
     }
   }
 
   get isBackDisabled(): boolean {
     return !this.navigationService?.canGoBack?.();
+  }
+
+  get isForwardDisabled(): boolean {
+    return !this.navigationService?.canGoForward?.();
+  }
+
+  closeWindow(): void {
+    if (typeof document !== "undefined" && document.fullscreenElement) {
+      try {
+        document.exitFullscreen();
+      } catch (e) {}
+    }
+    if (typeof window !== "undefined") {
+      try {
+        window.close();
+      } catch (e) {}
+    }
   }
 
   saveRace() {
@@ -5120,25 +5516,30 @@ export class DefaultRacedayComponent
 
   async exportToCsv() {
     try {
-      const csvData = await firstValueFrom(this.dataService.exportRaceToCsv());
-      if (!csvData || csvData.trim().length === 0) {
-        this.logger.error("Failed to export CSV: received empty data");
-        return;
-      }
-
       const timestamp = this.getExportTimestamp();
       const timeStr = this.printService.formatExportTimestamp(timestamp);
       const raceName = this.race?.name || "Race";
       const suggestedName = `${raceName}-RaceDay${timeStr}.csv`;
 
-      await saveFileAs({
+      const saved = await saveFileAs({
         suggestedName,
-        data: csvData,
+        data: async () => {
+          const csvData = await firstValueFrom(
+            this.dataService.exportRaceToCsv(),
+          );
+          if (!csvData || csvData.trim().length === 0) {
+            this.logger.error("Failed to export CSV: received empty data");
+            return null;
+          }
+          return csvData;
+        },
         mimeType: "text/csv;charset=utf-8",
         description: "CSV Files",
         extension: ".csv",
       });
-      this.logger.debug("CSV Exported successfully");
+      if (saved) {
+        this.logger.debug("CSV Exported successfully");
+      }
     } catch (err: any) {
       this.logger.error("Failed to export CSV", err);
     }
@@ -5146,31 +5547,34 @@ export class DefaultRacedayComponent
 
   async exportToXls() {
     try {
-      const template =
-        this.settingsService.getSettings()?.customExportTemplateBase64;
-      const xlsData: Blob = await firstValueFrom(
-        this.dataService.exportRaceToXls(template),
-      );
-
-      if (!xlsData || xlsData.size === 0) {
-        this.logger.error("Failed to export XLS: received empty blob");
-        return;
-      }
-
       const timestamp = this.getExportTimestamp();
       const timeStr = this.printService.formatExportTimestamp(timestamp);
       const raceName = this.race?.name || "Race";
       const suggestedName = `${raceName}-RaceDay${timeStr}.xlsx`;
 
-      await saveFileAs({
+      const saved = await saveFileAs({
         suggestedName,
-        data: xlsData,
+        data: async () => {
+          const template =
+            this.settingsService.getSettings()?.customExportTemplateBase64;
+          const xlsData: Blob = await firstValueFrom(
+            this.dataService.exportRaceToXls(template),
+          );
+
+          if (!xlsData || xlsData.size === 0) {
+            this.logger.error("Failed to export XLS: received empty blob");
+            return null;
+          }
+          return xlsData;
+        },
         mimeType:
           "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         description: "Excel Files",
         extension: ".xlsx",
       });
-      this.logger.debug("XLS Exported successfully");
+      if (saved) {
+        this.logger.debug("XLS Exported successfully");
+      }
     } catch (err: any) {
       if (err?.error instanceof Blob) {
         try {
@@ -5529,6 +5933,15 @@ export class DefaultRacedayComponent
         break;
       case "action-master-power-off":
         if (!this.isMainPowerDisabled) this.onTrackPowerMainSelect(false);
+        break;
+      case "action-back":
+        this.onFileMenuSelect("BACK");
+        break;
+      case "action-forward":
+        this.onFileMenuSelect("FORWARD");
+        break;
+      case "action-close":
+        this.onFileMenuSelect("CLOSE");
         break;
     }
   }
@@ -6085,6 +6498,7 @@ export class DefaultRacedayComponent
     hd: DriverHeatData,
     column?: ColumnDefinition,
     anchor?: string,
+    widgetSettings?: any,
   ): string {
     const laneViewWidget = this.currentRacedayLayout?.widgets?.find(
       (w: any) => w.widgetType === "lane-view",
@@ -6098,7 +6512,7 @@ export class DefaultRacedayComponent
       getFlagUrl: (flag) => this.getFlagUrl(flag),
       getFullUrl: (url) => this.getFullUrl(url),
       getImageSetUrl: (hd, prop) => this.getImageUrl(prop, hd),
-      laneViewWidgetSettings: laneViewWidget?.customSettings,
+      laneViewWidgetSettings: widgetSettings || laneViewWidget?.customSettings,
       getDriverOverallRanking: (hd) => this.getDriverOverallRanking(hd),
       getDriverGroupRanking: (hd) => this.getDriverGroupRanking(hd),
       getLaneQrCodeUrl: (laneIndex) => this.getLaneQrCodeUrl(laneIndex),
@@ -6143,9 +6557,9 @@ export class DefaultRacedayComponent
     return `${entry.anchor}-${entry.property}`;
   }
 
-  getDropdownArrowBg(hd: DriverHeatData): string {
+  getDropdownArrowBg(hd: DriverHeatData): SafeStyle | string {
     const color =
-      this.track?.lanes?.[hd.laneIndex]?.foreground_color || "#ffffff";
+      this.track?.lanes?.[hd?.laneIndex]?.foreground_color || "#ffffff";
     return this.getDropdownIcon(color);
   }
 
@@ -6155,18 +6569,20 @@ export class DefaultRacedayComponent
   ): string {
     const track =
       this.track || this.race?.track || this.raceService.getRace()?.track;
-    return track?.lanes?.[hd.laneIndex]?.[property] || "";
+    return track?.lanes?.[hd?.laneIndex]?.[property] || "";
   }
 
-  getDropdownIcon(color: string): string {
+  getDropdownIcon(color: string): SafeStyle | string {
     if (this.dropdownIconCache.has(color)) {
       return this.dropdownIconCache.get(color)!;
     }
-    // Use an inline SVG with the correct fill color
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24"><path fill="${color}" d="M4 8l8 8 8-8z"/></svg>`;
-    const url = `url("data:image/svg+xml;charset=US-ASCII,${encodeURIComponent(svg)}")`;
-    this.dropdownIconCache.set(color, url);
-    return url;
+    const encodedColor = encodeURIComponent(color);
+    const svg = `data:image/svg+xml;utf8,<svg fill="%23${encodedColor.replace(/^%23/, "")}" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/><path d="M0 0h24v24H0z" fill="none"/></svg>`;
+    const safeStyle = this.sanitizer
+      ? this.sanitizer.bypassSecurityTrustStyle(`url('${svg}')`)
+      : `url('${svg}')`;
+    this.dropdownIconCache.set(color, safeStyle);
+    return safeStyle;
   }
 
   isNameProperty(property: string): boolean {
@@ -6178,7 +6594,11 @@ export class DefaultRacedayComponent
     if (this.isUIEditorMode() || this.isLayoutCustomizing) {
       return false;
     }
-    if (!this.isNameProperty(col.propertyName || "")) {
+    const prop = col.propertyName || "";
+    const baseKey = prop.split("_")[0];
+    const isTeamOrName =
+      this.isNameProperty(prop) || baseKey === "participant.team.name";
+    if (!isTeamOrName) {
       return false;
     }
     if (!this.isTeam(hd) || this.isDriverSwapDisabled(hd)) {
@@ -6197,73 +6617,25 @@ export class DefaultRacedayComponent
     if (this.isUIEditorMode() || this.isLayoutCustomizing) {
       return false;
     }
-    if (col.propertyName !== "lapCount") {
-      return false;
-    }
-    if (this.heat && this.heat.started === false) {
+    if (
+      col.propertyName !== "lapCount" &&
+      col.propertyName !== "physicalLapCount"
+    ) {
       return false;
     }
     return true;
   }
 
   isTeam(hd: DriverHeatData | any): boolean {
-    return (
-      !!(hd?.participant?.team || hd?.driver?.team) || !!this.race?.practice
-    );
+    return TeammateUtils.isTeam(hd, !!this.race?.practice);
   }
 
   getTeammates(hd: DriverHeatData | any): any[] {
-    if (this.race?.practice) {
-      const emptyDriver = {
-        name: this.translationService.translate("RD_EMPTY_LANE"),
-        nickname: "",
-        entity_id: "EMPTY_LANE",
-        id: "EMPTY_LANE",
-      };
-
-      const raceDrivers: any[] = [];
-      this.participants.forEach((p) => {
-        if (p.driver && p.driver.entity_id !== "EMPTY_LANE") {
-          const d = this.allDrivers.find(
-            (d) =>
-              (d.entity_id || d.id) ===
-              (p.driver?.entity_id || (p as any).driverId),
-          );
-          if (
-            d &&
-            !raceDrivers.find(
-              (rd) => (rd.entity_id || rd.id) === (d.entity_id || d.id),
-            )
-          ) {
-            raceDrivers.push(d);
-          }
-        }
-        if (p.team && p.team.driverIds) {
-          p.team.driverIds.forEach((id: string) => {
-            const d = this.allDrivers.find((d) => (d.entity_id || d.id) === id);
-            if (
-              d &&
-              !raceDrivers.find(
-                (rd) => (rd.entity_id || rd.id) === (d.entity_id || d.id),
-              )
-            ) {
-              raceDrivers.push(d);
-            }
-          });
-        }
-      });
-
-      return [emptyDriver, ...raceDrivers];
-    }
-    const team = hd.participant?.team || hd.driver?.team;
-    if (team && team.driverIds) {
-      return team.driverIds
-        .map((id: string) =>
-          this.allDrivers.find((d) => (d.entity_id || d.id) === id),
-        )
-        .filter((d: any) => !!d);
-    }
-    return [];
+    return TeammateUtils.getTeammates(hd, this.allDrivers, {
+      isPractice: !!this.race?.practice,
+      participants: this.participants,
+      emptyLaneLabel: this.translationService.translate("RD_EMPTY_LANE"),
+    });
   }
 
   onTeammateChange(hd: DriverHeatData, event: any) {
@@ -6343,53 +6715,16 @@ export class DefaultRacedayComponent
   }
 
   getDriverStats(hd: any, driverId: string): string {
-    if (!hd || !driverId) return "";
-    let heatLaps = 0;
-    let heatTime = 0;
-    let overallLaps = 0;
-    let overallTime = 0;
-
-    const hLabel = this.translationService.translate("RD_STATS_HEAT_ABBR");
-    const lLabel = this.translationService.translate("RD_STATS_LAP_ABBR");
-    const tLabel = this.translationService.translate("RD_STATS_TOTAL_ABBR");
-
-    if (hd.lapsWithDetails) {
-      hd.lapsWithDetails.forEach((l: any) => {
-        if (l.driverId === driverId) {
-          heatLaps++;
-          heatTime += l.time;
-        }
-      });
-    }
-
-    const heats = this.raceService.getHeats();
-    if (heats) {
-      heats.forEach((h: any) => {
-        if (h.heatDrivers) {
-          h.heatDrivers.forEach((d_hd: any) => {
-            if (d_hd.lapsWithDetails) {
-              d_hd.lapsWithDetails.forEach((l: any) => {
-                if (l.driverId === driverId) {
-                  overallLaps++;
-                  overallTime += l.time;
-                }
-              });
-            }
-          });
-        }
-      });
-    }
-
-    const formatTime = (t: number) => {
-      if (t >= 60) {
-        const m = Math.floor(t / 60);
-        const s = (t % 60).toFixed(1).padStart(4, "0");
-        return `${m}:${s}`;
-      }
-      return `${t.toFixed(1)}s`;
-    };
-
-    return `(${hLabel}: ${heatLaps} ${lLabel} / ${formatTime(heatTime)}, ${tLabel}: ${overallLaps} ${lLabel} / ${formatTime(overallTime)})`;
+    return TeammateUtils.getDriverStats(
+      hd,
+      driverId,
+      this.raceService.getHeats(),
+      {
+        heatAbbr: this.translationService.translate("RD_STATS_HEAT_ABBR"),
+        lapAbbr: this.translationService.translate("RD_STATS_LAP_ABBR"),
+        totalAbbr: this.translationService.translate("RD_STATS_TOTAL_ABBR"),
+      },
+    );
   }
 
   private handleRaceStateChange(state: RaceState) {
@@ -6413,6 +6748,8 @@ export class DefaultRacedayComponent
       this.time = 0;
       this.previousTime = 0;
       this.timeFormat = "1.0-0";
+    } else if (state !== RaceState.UNKNOWN_STATE) {
+      this.raceHasEnded = false;
     }
 
     if (
@@ -6478,6 +6815,7 @@ export class DefaultRacedayComponent
       this.audioService.stopVoice();
       this.showCountdownOverlay = true;
       this.lastPlayedCountdownSecond = -1;
+      this.lastCountdownSoundTime = -1;
 
       // Determine if this is a restart from a paused state
       if (previousState === RaceState.PAUSED) {
@@ -6489,11 +6827,16 @@ export class DefaultRacedayComponent
       // Determine duration based on entry path
       const r = this.raceService.getRace() || this.race;
       const duration = this.isRestarting
-        ? (r?.restart_time ?? 5.0)
-        : (r?.start_time ?? 5.0);
+        ? (r?.restart_time ?? r?.start_time)
+        : r?.start_time;
 
-      this.countdownTotalLamps = Math.ceil(duration);
-      this.updateCountdownLamps(duration);
+      if (duration != null) {
+        this.countdownTotalLamps = Math.min(
+          this.getCountdownMaxLamps(),
+          Math.ceil(duration),
+        );
+        this.updateCountdownLamps(duration);
+      }
     }
 
     // If RACING state came, set all lamps to green
@@ -6531,6 +6874,18 @@ export class DefaultRacedayComponent
     }
   }
 
+  private getCountdownMaxLamps(): number {
+    const countdownWidget = this.layout?.widgets?.find(
+      (w: any) => w.widgetType === "countdown",
+    );
+    const maxLamps =
+      countdownWidget?.customSettings?.["maxLamps"] ??
+      countdownWidget?.customSettings?.["previewLampCount"];
+    return typeof maxLamps === "number" && maxLamps >= 1
+      ? Math.min(10, Math.max(1, Math.round(maxLamps)))
+      : 5;
+  }
+
   private updateCountdownLamps(currentTime: number) {
     if (!this.showCountdownOverlay) return;
 
@@ -6541,15 +6896,23 @@ export class DefaultRacedayComponent
       return;
     }
 
+    if (this.countdownTotalLamps === 0 && currentTime > 0) {
+      this.countdownTotalLamps = Math.min(
+        this.getCountdownMaxLamps(),
+        Math.ceil(currentTime),
+      );
+    }
+
     const displayTime =
       this.raceState === RaceState.STARTING && currentTime <= 0
         ? 1
         : currentTime;
 
     // Show the number of lamps corresponding to the seconds elapsed (e.g., 1st sec = 1 lamp).
-    // This synchronizes with the updated hardware LED logic (1, 2, 3, GO).
+    // If currentTime > countdownTotalLamps (e.g., 6s duration with 5 max lamps), onCount will be 0,
+    // keeping all lamps dim/off for the extra time before the countdown sequence begins.
     const onCount = Math.max(
-      1,
+      0,
       this.countdownTotalLamps - Math.ceil(displayTime) + 1,
     );
 
@@ -6578,10 +6941,33 @@ export class DefaultRacedayComponent
       currentSecond >= 1 &&
       currentSecond !== this.lastPlayedCountdownSecond
     ) {
-      this.lastPlayedCountdownSecond = currentSecond;
-      this.playAudioFromSet(THEME_SLOT_KEYS.AUDIO_COUNTDOWN, currentSecond, {
-        widgetType: "countdown",
-      });
+      const now =
+        typeof performance !== "undefined" ? performance.now() : Date.now();
+      const deltaMs =
+        this.lastPlayedCountdownSecond > 0 && this.lastCountdownSoundTime > 0
+          ? Math.round(now - this.lastCountdownSoundTime)
+          : -1;
+      this.logger.debug(
+        `[PERF] Countdown sound triggered: second=${currentSecond}, currentTime=${currentTime.toFixed(2)}, delta=${deltaMs}ms`,
+      );
+      if (deltaMs >= 0 && deltaMs < 250) {
+        this.logger.warn(
+          `[PERF] Countdown sound for second=${currentSecond} arrived rapidly (${deltaMs}ms after previous), skipping to prevent audio overlap`,
+        );
+        this.lastPlayedCountdownSecond = currentSecond;
+        return;
+      }
+      const played = this.playAudioFromSet(
+        THEME_SLOT_KEYS.AUDIO_COUNTDOWN,
+        currentSecond,
+        {
+          widgetType: "countdown",
+        },
+      );
+      if (played) {
+        this.lastPlayedCountdownSecond = currentSecond;
+        this.lastCountdownSoundTime = now;
+      }
     }
   }
 
@@ -6590,6 +6976,12 @@ export class DefaultRacedayComponent
     timeSeconds: number,
     triggerMode: string = "remaining",
   ): { config: AudioConfig; playableUrl?: string } | null {
+    if (
+      !this.themeService ||
+      typeof this.themeService.resolveAudioConfig !== "function"
+    ) {
+      return null;
+    }
     const config = this.themeService.resolveAudioConfig(slotKey);
     if (!config || config.type !== "audio_set") return null;
 
@@ -6604,8 +6996,14 @@ export class DefaultRacedayComponent
     );
     if (!asset || asset.type !== "audio_set") return null;
 
-    const entry = asset.audioEntries?.find((e: any) => {
-      const val = e.timeSeconds != null ? e.timeSeconds : e.percentage;
+    const entries = asset.audioEntries || asset.audio_entries;
+    const entry = entries?.find((e: any) => {
+      const val =
+        e.timeSeconds != null
+          ? e.timeSeconds
+          : e.time_seconds != null
+            ? e.time_seconds
+            : e.percentage;
       const mode = e.triggerMode || e.trigger_mode || "remaining";
       return (
         val != null &&
@@ -6634,7 +7032,7 @@ export class DefaultRacedayComponent
     timeSeconds: number,
     association?: AudioAssociation,
     triggerMode: string = "remaining",
-  ) {
+  ): boolean {
     const defaultAssoc =
       association ??
       (slotKey === THEME_SLOT_KEYS.AUDIO_COUNTDOWN
@@ -6649,18 +7047,21 @@ export class DefaultRacedayComponent
     if (entryItem) {
       if (slotKey === THEME_SLOT_KEYS.AUDIO_COUNTDOWN) {
         if (entryItem.config.type === "tts") {
-          this.audioService.playCallout(
+          return this.audioService.playCallout(
             { type: "tts", text: entryItem.config.text },
-            "normal",
+            "urgent",
             undefined,
             undefined,
             defaultAssoc,
           );
         } else {
-          this.audioService.playSfx(entryItem.playableUrl, defaultAssoc);
+          return !!this.audioService.playSfx(
+            entryItem.playableUrl,
+            defaultAssoc,
+          );
         }
       } else {
-        this.audioService.playCallout(
+        return this.audioService.playCallout(
           entryItem.config,
           "normal",
           undefined,
@@ -6669,13 +7070,62 @@ export class DefaultRacedayComponent
         );
       }
     }
+    return false;
+  }
+
+  private preloadCountdownAudio(): void {
+    this.preloadCountdownImages();
+    if (
+      !this.assets ||
+      this.assets.length === 0 ||
+      !this.audioService ||
+      typeof this.audioService.preload !== "function"
+    ) {
+      return;
+    }
+    for (let second = 0; second <= 5; second++) {
+      const item = this.getAudioFromSetEntry(
+        THEME_SLOT_KEYS.AUDIO_COUNTDOWN,
+        second,
+      );
+      if (item?.playableUrl && item.config.type !== "tts") {
+        this.audioService.preload(item.playableUrl);
+      }
+    }
+  }
+
+  private preloadCountdownImages(): void {
+    if (
+      typeof Image === "undefined" ||
+      !this.assets ||
+      this.assets.length === 0
+    ) {
+      return;
+    }
+    const lampUrls = [
+      this.resolveAssetUrlBySlot("lamp.red.on") ||
+        this.getAssetUrl("Start Lamp Red"),
+      this.resolveAssetUrlBySlot("lamp.red.dim") ||
+        this.getAssetUrl("Start Lamp Dim"),
+      this.resolveAssetUrlBySlot("lamp.green") ||
+        this.getAssetUrl("Start Lamp Green"),
+    ];
+    for (const url of lampUrls) {
+      if (url) {
+        const img = new Image();
+        img.src = url;
+      }
+    }
   }
 
   onCellClick(hd: DriverHeatData, col: ColumnDefinition, event: MouseEvent) {
     if (this.isLayoutCustomizing || this.isUIEditorMode()) {
       return;
     }
-    if (col.propertyName === "lapCount") {
+    if (
+      col.propertyName === "lapCount" ||
+      col.propertyName === "physicalLapCount"
+    ) {
       if (event.shiftKey) {
         event.preventDefault();
         this.updateUserLaps(hd, this.LAP_ADJUSTMENT_AMOUNT);
@@ -6683,6 +7133,9 @@ export class DefaultRacedayComponent
         event.preventDefault();
         this.updateUserLaps(hd, -this.LAP_ADJUSTMENT_AMOUNT);
       } else {
+        if (!this.track) {
+          this.track = this.race?.track || this.raceService.getRace()?.track;
+        }
         this.selectedHeatDriver = hd;
         this.isMenuModeForAddLap = false;
         this.showAddLapSectionsDialog = true;
@@ -6975,7 +7428,10 @@ export class DefaultRacedayComponent
       return;
     }
 
-    const hasLaneView = widgets.some((w: any) => w.widgetType === "lane-view");
+    const hasLaneView = widgets.some(
+      (w: any) =>
+        w.widgetType === "lane-view" || w.widgetType === "lane-column",
+    );
     const hasCountdown = widgets.some((w: any) => w.widgetType === "countdown");
     const hasTimer = widgets.some((w: any) => w.widgetType === "timer");
     const hasFlag = widgets.some((w: any) => w.widgetType === "flag");
@@ -6992,7 +7448,10 @@ export class DefaultRacedayComponent
     const url =
       this.resolveAssetUrlBySlot("lamp.green") ||
       this.getAssetUrl("Start Lamp Green");
-    const count = this.countdownTotalLamps > 0 ? this.countdownTotalLamps : 5;
+    const count =
+      this.countdownTotalLamps > 0
+        ? this.countdownTotalLamps
+        : this.countdownLamps.length || 0;
     this.countdownLamps = Array.from({ length: count }).map(() => ({
       url: url,
       state: "go",
@@ -7132,6 +7591,8 @@ export class DefaultRacedayComponent
       "action-master-power-on",
       "action-master-power-off",
       "action-back",
+      "action-forward",
+      "action-close",
     ];
 
     const customWidgets = this.customWidgetService?.getCustomWidgets() || [];
@@ -7317,7 +7778,7 @@ export class DefaultRacedayComponent
   onToolboxDragStart(event: DragEvent, type: string) {
     this.draggedWidgetType = type;
     if (event.dataTransfer) {
-      event.dataTransfer.effectAllowed = "move";
+      event.dataTransfer.effectAllowed = "all";
       event.dataTransfer.setData("text/plain", type);
     }
   }
@@ -7381,12 +7842,24 @@ export class DefaultRacedayComponent
             : this.draggedWidgetType === "image"
               ? 300
               : 200;
-    } else if (this.draggedWidgetType === "action-back") {
+    } else if (
+      this.draggedWidgetType === "action-back" ||
+      this.draggedWidgetType === "action-forward" ||
+      this.draggedWidgetType === "action-close"
+    ) {
       width = 36;
       height = 36;
     } else if (isActionButton) {
       width = 170;
       height = 80;
+    }
+
+    const isLaneColumn = this.draggedWidgetType?.startsWith("lane-col:");
+    let laneColumnKey: string | undefined = undefined;
+    if (isLaneColumn) {
+      laneColumnKey = this.draggedWidgetType?.substring("lane-col:".length);
+      width = laneColumnKey === "lastLaps" ? 280 : 200;
+      height = laneColumnKey === "lastLaps" ? 200 : 90;
     }
 
     const scaleX = rect.width / scalableContent.offsetWidth || 1;
@@ -7400,9 +7873,13 @@ export class DefaultRacedayComponent
     const clampedX = Math.max(0, Math.min(baseWidth - width, Math.round(x)));
     const clampedY = Math.max(0, Math.min(baseHeight - height, Math.round(y)));
 
+    const actualWidgetType = isLaneColumn
+      ? "lane-column"
+      : (this.draggedWidgetType as any);
+
     const newWidget: any = {
       id: "widget-" + Date.now(),
-      widgetType: this.draggedWidgetType as any,
+      widgetType: actualWidgetType,
       x: clampedX,
       y: clampedY,
       width: width,
@@ -7413,6 +7890,12 @@ export class DefaultRacedayComponent
 
     if (this.draggedWidgetType === "image") {
       newWidget.customSettings = { imageUrl: "" };
+    } else if (isLaneColumn) {
+      const registryEntry = WIDGET_REGISTRY["lane-column"];
+      newWidget.customSettings = registryEntry?.defaultSettings
+        ? registryEntry.defaultSettings()
+        : {};
+      newWidget.customSettings.columnKey = laneColumnKey;
     } else {
       const registryEntry = WIDGET_REGISTRY[this.draggedWidgetType as string];
       if (registryEntry?.defaultSettings) {
@@ -7425,6 +7908,17 @@ export class DefaultRacedayComponent
     }
     if (!this.layout.widgets) this.layout.widgets = [];
     this.layout.widgets.push(newWidget);
+
+    if (this.gridSession()) {
+      const session = this.gridSession()!;
+      if (isLaneColumn || actualWidgetType === "lane-column") {
+        this.layout.widgets = LaneGridReplicationHelper.syncMasterWidgetToLanes(
+          newWidget,
+          session,
+          this.layout.widgets,
+        );
+      }
+    }
 
     this.draggedWidgetType = null;
     this.layoutChanged.emit(this.layout);
@@ -7447,6 +7941,17 @@ export class DefaultRacedayComponent
 
     const targetWidget = this.layout.widgets.find((w: any) => w.id === id);
     if (!targetWidget) return;
+
+    if (this.gridSession() && targetWidget.customSettings?.["gridMasterId"]) {
+      const masterId = targetWidget.customSettings["gridMasterId"];
+      const masterWidget = this.layout.widgets.find(
+        (w: any) => w.id === masterId,
+      );
+      if (masterWidget) {
+        this.bringToFront(masterId);
+        return;
+      }
+    }
 
     if (targetWidget.widgetType === "countdown") {
       const otherWidgets = this.layout.widgets.filter((w: any) => w.id !== id);
@@ -7515,7 +8020,16 @@ export class DefaultRacedayComponent
 
   removeWidget(id: string) {
     if (!this.layout?.widgets) return;
-    this.layout.widgets = this.layout.widgets.filter((w: any) => w.id !== id);
+    if (this.gridSession()) {
+      this.layout.widgets =
+        LaneGridReplicationHelper.removeMasterWidgetFromLanes(
+          id,
+          this.gridSession()!,
+          this.layout.widgets,
+        );
+    } else {
+      this.layout.widgets = this.layout.widgets.filter((w: any) => w.id !== id);
+    }
     this.layoutChanged.emit(this.layout);
     if (this.selectedWidgetId() === id) {
       const laneView = this.layout.widgets.find(
@@ -7525,6 +8039,117 @@ export class DefaultRacedayComponent
       this.widgetSelected.emit(nextWidget ? nextWidget.id : null);
     }
     this.updateAudioRelevance();
+  }
+
+  replicateLaneWidgets(
+    options: Omit<LaneReplicationOptions, "baseWidth" | "baseHeight">,
+  ) {
+    if (!this.layout?.widgets) return;
+    const baseWidth = this.layout.baseWidth || 1920;
+    const baseHeight = this.layout.baseHeight || 1080;
+    const updated = LaneReplicationHelper.replicateLaneWidgets(
+      this.layout.widgets,
+      {
+        ...options,
+        baseWidth,
+        baseHeight,
+      },
+    );
+    this.layout.widgets = updated;
+    this.layoutChanged.emit(this.layout);
+    this.cdr.markForCheck();
+  }
+
+  getGridDividers(): number[] {
+    const s = this.gridSession();
+    return s ? LaneGridReplicationHelper.computeGridDividers(s) : [];
+  }
+
+  getGridCells(): {
+    bounds: LaneGridBounds;
+    laneIndex: number;
+    isMaster: boolean;
+  }[] {
+    const s = this.gridSession();
+    if (!s) return [];
+    const cells: {
+      bounds: LaneGridBounds;
+      laneIndex: number;
+      isMaster: boolean;
+    }[] = [];
+    for (let k = 0; k < s.totalLanes; k++) {
+      cells.push({
+        bounds: LaneGridReplicationHelper.computeLaneCellBounds(s, k),
+        laneIndex: k,
+        isMaster: k === s.sourceLaneIndex,
+      });
+    }
+    return cells;
+  }
+
+  onGridResizeStart(event: PointerEvent, handle: GridResizeHandle): void {
+    event.preventDefault();
+    event.stopPropagation();
+    const session = this.gridSession();
+    if (!session) return;
+
+    const startX = event.clientX;
+    const startY = event.clientY;
+    const initialBounds = { ...session.bounds };
+    const scale = this.visualScale || 1;
+    const baseWidth = this.layout?.baseWidth || 1920;
+    const baseHeight = this.layout?.baseHeight || 1080;
+
+    const nonGridWidgets = (this.layout?.widgets || []).filter(
+      (w) => w.customSettings?.["gridId"] !== session.gridId,
+    );
+    const snapEdgesX: number[] = [0, baseWidth];
+    const snapEdgesY: number[] = [0, baseHeight];
+    for (const w of nonGridWidgets) {
+      snapEdgesX.push(w.x, w.x + w.width);
+      snapEdgesY.push(w.y, w.y + w.height);
+    }
+
+    const onPointerMove = (moveEvent: PointerEvent) => {
+      const deltaX = (moveEvent.clientX - startX) / scale;
+      const deltaY = (moveEvent.clientY - startY) / scale;
+
+      const newBounds = LaneGridReplicationHelper.resizeGridBounds(
+        initialBounds,
+        handle,
+        deltaX,
+        deltaY,
+        baseWidth,
+        baseHeight,
+        100,
+        60,
+        snapEdgesX,
+        snapEdgesY,
+        8,
+      );
+
+      this.gridBoundsChange.emit(newBounds);
+    };
+
+    const onPointerUp = () => {
+      document.removeEventListener("pointermove", onPointerMove);
+      document.removeEventListener("pointerup", onPointerUp);
+    };
+
+    document.addEventListener("pointermove", onPointerMove);
+    document.addEventListener("pointerup", onPointerUp);
+  }
+
+  onMasterWidgetModified(widget: AbsoluteWidgetNode): void {
+    const session = this.gridSession();
+    if (!session || !this.layout?.widgets) return;
+    this.layout.widgets = LaneGridReplicationHelper.syncMasterWidgetToLanes(
+      widget,
+      session,
+      this.layout.widgets,
+    );
+    this.layoutChanged.emit(this.layout);
+    this.cdr.markForCheck();
   }
 
   snapToEdges(
@@ -7537,6 +8162,20 @@ export class DefaultRacedayComponent
     layoutWidth: number = 1920,
     layoutHeight: number = 1080,
   ): { x: number; y: number; w: number; h: number } {
+    const extraX: number[] = [];
+    const extraY: number[] = [];
+    const s = this.gridSession();
+    if (s) {
+      extraX.push(s.bounds.x, s.bounds.x + s.bounds.width);
+      extraY.push(s.bounds.y, s.bounds.y + s.bounds.height);
+      const dividers = LaneGridReplicationHelper.computeGridDividers(s);
+      if (s.direction === "horizontal") {
+        extraX.push(...dividers);
+      } else {
+        extraY.push(...dividers);
+      }
+    }
+
     return RacedayLayoutUtils.snapToEdges(
       this.layout?.widgets || [],
       x,
@@ -7547,6 +8186,8 @@ export class DefaultRacedayComponent
       handle,
       layoutWidth,
       layoutHeight,
+      extraX,
+      extraY,
     );
   }
 

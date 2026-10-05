@@ -297,15 +297,28 @@ public class DatabaseInitializer {
         builder.withPitInAudio(new AudioConfig("preset", "default_pit_in", ""));
         needsUpdate = true;
       }
-      if (isAudioConfigMissing(driver.getFuelAudio())) {
+      if (isAudioConfigMissing(driver.getFuelAudio())
+          || (driver.getFuelAudio() != null
+              && "preset".equalsIgnoreCase(driver.getFuelAudio().getType()))) {
         builder.withFuelAudio(new AudioConfig("audio_set", "default_fuel_level", ""));
         needsUpdate = true;
+      }
+      if (driver.getAvatarUrl() != null
+          && !driver.getAvatarUrl().isEmpty()
+          && !driver.getAvatarUrl().startsWith("/")
+          && !driver.getAvatarUrl().startsWith("http")) {
+        String resolvedAvatar =
+            AssetDefaultsInitializer.resolveDefaultAssetUrl(driver.getAvatarUrl());
+        if (resolvedAvatar != null && !resolvedAvatar.equals(driver.getAvatarUrl())) {
+          builder.withAvatarUrl(resolvedAvatar);
+          needsUpdate = true;
+        }
       }
 
       if (needsUpdate) {
         driverRepo.replace(driver.getEntityId(), builder.build());
         logger.info(
-            "Backfilled audio settings for driver '{}' ({})",
+            "Backfilled audio/avatar settings for driver '{}' ({})",
             driver.getName(),
             driver.getEntityId());
       }
@@ -660,28 +673,28 @@ public class DatabaseInitializer {
 
     if (CustomUI.DEFAULT_UI_ID.equals(entityId)) {
       foundFlags[0] = true;
-      if (CustomUI.isLegacyDefaultName(name)) {
+      if (CustomUI.isLegacyDefaultName(name) && !CustomUI.DEFAULT_UI_NAME.equals(name)) {
         name = CustomUI.DEFAULT_UI_NAME;
         updated = true;
       }
     }
     if (CustomUI.PRACTICE_UI_ID.equals(entityId)) {
       foundFlags[1] = true;
-      if (CustomUI.isLegacyPracticeName(name)) {
+      if (CustomUI.isLegacyPracticeName(name) && !CustomUI.PRACTICE_UI_NAME.equals(name)) {
         name = CustomUI.PRACTICE_UI_NAME;
         updated = true;
       }
     }
     if (CustomUI.FUEL_UI_ID.equals(entityId)) {
       foundFlags[2] = true;
-      if (CustomUI.isLegacyFuelName(name)) {
+      if (CustomUI.isLegacyFuelName(name) && !CustomUI.FUEL_UI_NAME.equals(name)) {
         name = CustomUI.FUEL_UI_NAME;
         updated = true;
       }
     }
 
     String layoutJson = ui.getLayoutJson();
-    if (layoutJson != null && !layoutJson.contains("\"widgetType\":\"countdown\"")) {
+    if (layoutJson != null) {
       String updatedLayoutJson = CustomUI.ensureCountdownWidget(layoutJson);
       if (!updatedLayoutJson.equals(layoutJson)) {
         layoutJson = updatedLayoutJson;

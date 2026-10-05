@@ -1,3 +1,5 @@
+import { forkJoin, of } from "rxjs";
+import { catchError } from "rxjs/operators";
 import { AssetType, normalizeAssetType } from "@app/models/asset";
 import { CustomUI } from "@app/models/custom-ui";
 import { Settings } from "@app/models/settings";
@@ -22,14 +24,39 @@ export interface LoadedEditorData {
   customDirectoryName: string | null;
   customWidgetDirectoryName: string | null;
   track: any;
+  maxTrackLanes: number;
   initialState: UIEditorState;
+}
+
+function isUiEditorAsset(a: any): boolean {
+  const norm = normalizeAssetType(a.type);
+  const t = a.type ? String(a.type).toLowerCase() : "";
+  return (
+    t === "image" ||
+    t === "image_set" ||
+    norm === AssetType.AUDIO ||
+    t === "audio_set" ||
+    (a.audioEntries && a.audioEntries.length > 0) ||
+    (a.audio_entries && a.audio_entries.length > 0)
+  );
+}
+
+function isUiEditorSoundAsset(a: any): boolean {
+  const norm = normalizeAssetType(a.type);
+  const t = a.type ? String(a.type).toLowerCase() : "";
+  return (
+    norm === AssetType.AUDIO ||
+    t === "audio_set" ||
+    (a.audioEntries && a.audioEntries.length > 0) ||
+    (a.audio_entries && a.audio_entries.length > 0)
+  );
 }
 
 export function processLoadedEditorData(
   result: {
     assets: any[];
     dirHandle: any;
-    widgetDirHandle?: any;
+    widgetDirHandle: any;
     themes: Theme[];
     tracks: any[];
     customUIs: CustomUI[];
@@ -37,18 +64,8 @@ export function processLoadedEditorData(
   currentSettings: Settings,
   setActiveThemeFn?: (themeId: string) => void,
 ): LoadedEditorData {
-  const filteredAssets = (result.assets || []).filter(
-    (a: any) =>
-      a.type === "image" ||
-      a.type === "image_set" ||
-      normalizeAssetType(a.type) === AssetType.AUDIO ||
-      a.type === "audio_set",
-  );
-
-  const soundAssets = filteredAssets.filter(
-    (a) =>
-      normalizeAssetType(a.type) === AssetType.AUDIO || a.type === "audio_set",
-  );
+  const filteredAssets = (result.assets || []).filter(isUiEditorAsset);
+  const soundAssets = filteredAssets.filter(isUiEditorSoundAsset);
 
   const imageSetColumns = (result.assets || [])
     .filter(
@@ -75,6 +92,11 @@ export function processLoadedEditorData(
   normalizeLoadedThemes(themes);
   const tracks = result.tracks || [];
   const track = tracks.length > 0 ? tracks[0] : undefined;
+  const maxTrackLanes =
+    tracks.reduce(
+      (max: number, t: any) => Math.max(max, t?.lanes?.length || 0),
+      0,
+    ) || 4;
 
   const editingSettings = cloneSettings(currentSettings);
 
@@ -116,6 +138,7 @@ export function processLoadedEditorData(
     customDirectoryName,
     customWidgetDirectoryName,
     track,
+    maxTrackLanes,
     initialState,
   };
 }
@@ -277,16 +300,14 @@ function ensureFuelCustomUi(customUIs: CustomUI[], s: Settings): void {
 }
 
 export function fetchUiEditorData(dataService: any, fileSystem: any): any {
-  const { forkJoin, of } = require("rxjs");
-  const { catchError } = require("rxjs/operators");
   return forkJoin({
-    assets: dataService.listAssets(),
+    assets: dataService.listAssets().pipe(catchError(() => of([]))),
     dirHandle: fileSystem.getCustomDirectoryHandle(),
     widgetDirHandle: fileSystem.getCustomWidgetDirectoryHandle
       ? fileSystem.getCustomWidgetDirectoryHandle()
       : of(null),
-    themes: dataService.getThemes(),
-    tracks: dataService.getTracks(),
+    themes: dataService.getThemes().pipe(catchError(() => of([]))),
+    tracks: dataService.getTracks().pipe(catchError(() => of([]))),
     customUIs: dataService.getCustomUIs().pipe(catchError(() => of([]))),
   });
 }
@@ -331,6 +352,7 @@ export function applyLoadedUiEditorData(comp: any, res: any): void {
     comp.fileSystem?.getServerCustomWidgetPath?.() ||
     loaded.customWidgetDirectoryName;
   if (loaded.track) comp.track = loaded.track;
+  comp.maxTrackLanes = loaded.maxTrackLanes;
 
   comp.editingState = loaded.initialState;
   comp.refreshDisplayProperties();
@@ -360,6 +382,7 @@ export function handleUiEditorDestroy(comp: any): void {
   if (comp.autoSaveTimeout) clearTimeout(comp.autoSaveTimeout);
   comp.raceConnectionService.disconnect();
   comp.dataSubscription?.unsubscribe();
+  comp.translationSubscription?.unsubscribe();
   comp.helpSubscription?.unsubscribe();
   comp.undoManager.destroy();
 

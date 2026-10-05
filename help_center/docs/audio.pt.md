@@ -174,8 +174,8 @@ As seguintes tabelas detalham todos os eventos de áudio no Race Coordinator AI,
 | **Luz Verde / PARTIDA** | `audio.countdown.green` | **Aviso de Voz** / Toque Predefinido | `urgent` | `countdown`: Toca no Ecrã Principal (se houver widget de contagem) e em todos os Postos de Piloto. |
 | **Bandeira Amarela** | `audio.yellowflag` | **Aviso de Voz** (Sirene de Aviso) | `urgent` (Peso 4) | `flag`: Toca no Ecrã Principal (se houver widget de bandeira) e em todos os Postos de Piloto. |
 | **Segundos Restantes para Início Automático** | `audio.auto_start` | **Aviso de Voz** / Conjunto de Áudio (Padrão: TTS) | `normal` (Peso 2) | `timer`: Toca no Ecrã Principal (se houver widget de cronómetro) e em todos os Postos de Piloto. |
-| **Segundos Restantes** | `audio.seconds_left` | **Aviso de Voz** | `normal` (Peso 2) | `timer`: Toca no Ecrã Principal (se houver widget de cronómetro) e em todos os Postos de Piloto. |
-| **Voltas Restantes** | `audio.laps_left` | **Aviso de Voz** / Conjunto de Áudio | `normal` (Peso 2) | `timer`: Toca no Ecrã Principal (se houver widget de cronómetro) e em todos os Postos de Piloto. Anuncia as voltas restantes do líder; um valor de 0 anuncia quando o líder completa a contagem de voltas (ex.: "Líder terminou" em corridas com permitir conclusão). |
+| **Tempo de Manga / Segundos Restantes** | `audio.seconds_left` | **Aviso de Voz** | `normal` (Peso 2) | `timer`: Toca no Ecrã Principal (se houver widget de cronómetro) e em todos os Postos de Piloto. |
+| **Contagem de Voltas do Líder / Voltas Restantes** | `audio.laps_left` | **Aviso de Voz** / Conjunto de Áudio | `normal` (Peso 2) | `timer`: Toca no Ecrã Principal (se houver widget de cronómetro) e em todos os Postos de Piloto. Anuncia as voltas restantes do líder; um valor de 0 anuncia quando o líder completa a contagem de voltas (ex.: "Líder terminou" em corridas com permitir conclusão). |
 | **Metade da Manga** | `audio.seconds_left.halfway` | **Aviso de Voz** | `normal` (Peso 2) | `timer`: Toca no Ecrã Principal (se houver widget de cronómetro) e em todos os Postos de Piloto ao atingir a metade da bateria (por tempo ou quando o líder completa metade das voltas). |
 | **Manga Terminada** | `audio.heat_over` | **Aviso de Voz** | `urgent` (Peso 4) | `flag`: Toca no Ecrã Principal (se houver widget de bandeira) e em todos os Postos de Piloto. |
 | **Segundos Restantes para Avanço Automático** | `audio.auto_advance` | **Aviso de Voz** / Conjunto de Áudio (Padrão: TTS) | `normal` (Peso 2) | `timer`: Toca no Ecrã Principal (se houver widget de cronómetro) e em todos os Postos de Piloto. |
@@ -191,8 +191,8 @@ Um **Conjunto de Áudio** é um recurso composto que contém uma coleção de fi
 
 1. **Contagem Decrescente de Partida (`audio.countdown`):** Bipes de sequência e buzinas antes do início da corrida.
 2. **Segundos Restantes para Início Automático (`audio.auto_start`):** Avisos de voz antes de começar uma manga.
-3. **Segundos Restantes (`audio.seconds_left`):** Avisos de tempo durante mangas por tempo.
-4. **Voltas Restantes (`audio.laps_left`):** Avisos de voltas durante mangas por voltas.
+3. **Tempo de manga / Segundos Restantes (`audio.seconds_left`):** Avisos de tempo durante mangas por tempo.
+4. **Contagem de voltas do líder / Voltas Restantes (`audio.laps_left`):** Avisos de voltas durante mangas por voltas.
 5. **Segundos Restantes para Avanço Automático (`audio.auto_advance`):** Avisos de voz entre mangas antes do avanço automático.
 6. **Sons de Nível de Combustível (`fuelLevelAudio`):** Alertas de aviso, crítico e reabastecido acionados em limites percentuais de combustível.
 

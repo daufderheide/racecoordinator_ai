@@ -22,7 +22,11 @@ class MockTranslatePipe implements PipeTransform {
   standalone: true,
   imports: [CustomSelectComponent, CustomOptionComponent],
   template: `
-    <app-custom-select [value]="val">
+    <app-custom-select
+      [value]="val"
+      [extendToPageBottom]="extendToBottom"
+      [maxDropdownHeight]="maxHeight"
+    >
       <app-custom-option value="opt1" separator>Option 1</app-custom-option>
       <app-custom-option value="opt2">Option 2</app-custom-option>
       <app-custom-option value="opt3" divider>Option 3</app-custom-option>
@@ -32,6 +36,8 @@ class MockTranslatePipe implements PipeTransform {
 })
 class TestHostComponent {
   val = "opt1";
+  extendToBottom = false;
+  maxHeight?: number | string;
 }
 
 describe("CustomSelectComponent", () => {
@@ -273,6 +279,259 @@ describe("CustomSelectComponent", () => {
 
     expect(scrollIntoViewSpy).not.toHaveBeenCalled();
   }));
+
+  it("should open upward when space below is tight and space above is larger", () => {
+    const hostFixture = TestBed.createComponent(TestHostComponent);
+    hostFixture.detectChanges();
+    const select = hostFixture.debugElement.children[0]
+      .componentInstance as CustomSelectComponent;
+    const selectEl = hostFixture.nativeElement.querySelector(
+      "app-custom-select",
+    ) as HTMLElement;
+
+    spyOn(selectEl, "getBoundingClientRect").and.returnValue({
+      top: 500,
+      bottom: 540,
+      left: 100,
+      right: 200,
+      width: 100,
+      height: 40,
+    } as DOMRect);
+
+    // Mock window innerHeight so spaceBelow = 600 - 540 = 60 (< 250) and spaceAbove = 500 (> 60)
+    spyOnProperty(window, "innerHeight", "get").and.returnValue(600);
+
+    select.toggleOpen();
+    hostFixture.detectChanges();
+
+    expect(select.openUpward).toBeTrue();
+    const dropdown = hostFixture.nativeElement.querySelector(
+      ".custom-select-dropdown",
+    );
+    expect(dropdown.classList.contains("open-upward")).toBeTrue();
+  });
+
+  it("should align right when element is near right edge of viewport", () => {
+    const hostFixture = TestBed.createComponent(TestHostComponent);
+    hostFixture.detectChanges();
+    const select = hostFixture.debugElement.children[0]
+      .componentInstance as CustomSelectComponent;
+    const selectEl = hostFixture.nativeElement.querySelector(
+      "app-custom-select",
+    ) as HTMLElement;
+
+    // rect.left + 350 > window.innerWidth (700 + 350 = 1050 > 1000)
+    spyOn(selectEl, "getBoundingClientRect").and.returnValue({
+      top: 100,
+      bottom: 140,
+      left: 700,
+      right: 800,
+      width: 100,
+      height: 40,
+    } as DOMRect);
+    spyOnProperty(window, "innerWidth", "get").and.returnValue(1000);
+
+    select.toggleOpen();
+    hostFixture.detectChanges();
+
+    expect(select.openRightAligned).toBeTrue();
+    const dropdown = hostFixture.nativeElement.querySelector(
+      ".custom-select-dropdown",
+    );
+    expect(dropdown.classList.contains("align-right")).toBeTrue();
+  });
+
+  it("should close dropdown when Escape key is pressed", () => {
+    component.isOpen = true;
+    fixture.detectChanges();
+
+    component.onEscape();
+    expect(component.isOpen).toBeFalse();
+  });
+
+  it("should close dropdown when clicking outside element", () => {
+    component.isOpen = true;
+    fixture.detectChanges();
+
+    const outsideElement = document.createElement("div");
+    document.body.appendChild(outsideElement);
+
+    component.onDocumentClick({
+      target: outsideElement,
+    } as unknown as MouseEvent);
+    expect(component.isOpen).toBeFalse();
+
+    document.body.removeChild(outsideElement);
+  });
+
+  it("should select option and close dropdown on option click", () => {
+    const hostFixture = TestBed.createComponent(TestHostComponent);
+    hostFixture.detectChanges();
+    const select = hostFixture.debugElement.children[0]
+      .componentInstance as CustomSelectComponent;
+
+    select.toggleOpen();
+    hostFixture.detectChanges();
+
+    const option2 = hostFixture.nativeElement.querySelector(
+      '.custom-select-option[data-value="opt2"]',
+    ) as HTMLElement;
+    expect(option2).toBeTruthy();
+
+    option2.click();
+    hostFixture.detectChanges();
+
+    expect(select.isOpen).toBeFalse();
+    expect(select.value()).toBe("opt2");
+    expect(select.selectedLabel).toBe("Option 2");
+  });
+
+  it("should calculate available height to page bottom when extendToPageBottom is true", () => {
+    const hostFixture = TestBed.createComponent(TestHostComponent);
+    hostFixture.componentInstance.extendToBottom = true;
+    hostFixture.detectChanges();
+    const select = hostFixture.debugElement.children[0]
+      .componentInstance as CustomSelectComponent;
+
+    const selectEl = hostFixture.nativeElement.querySelector(
+      "app-custom-select",
+    ) as HTMLElement;
+
+    spyOn(selectEl, "getBoundingClientRect").and.returnValue({
+      top: 20,
+      bottom: 60,
+      left: 100,
+      right: 300,
+      width: 200,
+      height: 40,
+    } as DOMRect);
+    spyOnProperty(window, "innerHeight", "get").and.returnValue(900);
+
+    select.toggleOpen();
+    hostFixture.detectChanges();
+
+    expect(select.openUpward).toBeFalse();
+    // 900 - 60 - 16 = 824px
+    expect(select.calculatedMaxHeight).toBe("824px");
+    const dropdown = hostFixture.nativeElement.querySelector(
+      ".custom-select-dropdown",
+    ) as HTMLElement;
+    expect(dropdown.style.maxHeight).toBe("824px");
+  });
+
+  it("should calculate available height to top when extendToPageBottom is true and opening upward", () => {
+    const hostFixture = TestBed.createComponent(TestHostComponent);
+    hostFixture.componentInstance.extendToBottom = true;
+    hostFixture.detectChanges();
+    const select = hostFixture.debugElement.children[0]
+      .componentInstance as CustomSelectComponent;
+
+    const selectEl = hostFixture.nativeElement.querySelector(
+      "app-custom-select",
+    ) as HTMLElement;
+
+    spyOn(selectEl, "getBoundingClientRect").and.returnValue({
+      top: 600,
+      bottom: 640,
+      left: 100,
+      right: 300,
+      width: 200,
+      height: 40,
+    } as DOMRect);
+    // spaceBelow = 700 - 640 = 60 (< 200 threshold), spaceAbove = 600 (> 60)
+    spyOnProperty(window, "innerHeight", "get").and.returnValue(700);
+
+    select.toggleOpen();
+    hostFixture.detectChanges();
+
+    expect(select.openUpward).toBeTrue();
+    // 600 - 16 = 584px
+    expect(select.calculatedMaxHeight).toBe("584px");
+    const dropdown = hostFixture.nativeElement.querySelector(
+      ".custom-select-dropdown",
+    ) as HTMLElement;
+    expect(dropdown.style.maxHeight).toBe("584px");
+  });
+
+  it("should apply maxDropdownHeight when specified", () => {
+    const hostFixture = TestBed.createComponent(TestHostComponent);
+    hostFixture.componentInstance.maxHeight = 450;
+    hostFixture.detectChanges();
+    const select = hostFixture.debugElement.children[0]
+      .componentInstance as CustomSelectComponent;
+
+    select.toggleOpen();
+    hostFixture.detectChanges();
+
+    expect(select.calculatedMaxHeight).toBe("450px");
+    const dropdown = hostFixture.nativeElement.querySelector(
+      ".custom-select-dropdown",
+    ) as HTMLElement;
+    expect(dropdown.style.maxHeight).toBe("450px");
+  });
+
+  it("should not set calculatedMaxHeight when extendToPageBottom is false and maxHeight is undefined", () => {
+    const hostFixture = TestBed.createComponent(TestHostComponent);
+    hostFixture.detectChanges();
+    const select = hostFixture.debugElement.children[0]
+      .componentInstance as CustomSelectComponent;
+
+    select.toggleOpen();
+    hostFixture.detectChanges();
+
+    expect(select.calculatedMaxHeight).toBeNull();
+    const dropdown = hostFixture.nativeElement.querySelector(
+      ".custom-select-dropdown",
+    ) as HTMLElement;
+    expect(dropdown.style.maxHeight).toBe("");
+  });
+
+  it("should update calculatedMaxHeight on window resize and scroll when open", () => {
+    const hostFixture = TestBed.createComponent(TestHostComponent);
+    hostFixture.componentInstance.extendToBottom = true;
+    hostFixture.detectChanges();
+    const select = hostFixture.debugElement.children[0]
+      .componentInstance as CustomSelectComponent;
+
+    const selectEl = hostFixture.nativeElement.querySelector(
+      "app-custom-select",
+    ) as HTMLElement;
+
+    let currentBottom = 60;
+    spyOn(selectEl, "getBoundingClientRect").and.callFake(
+      () =>
+        ({
+          top: currentBottom - 40,
+          bottom: currentBottom,
+          left: 100,
+          right: 300,
+          width: 200,
+          height: 40,
+        }) as DOMRect,
+    );
+    let currentHeight = 900;
+    spyOnProperty(window, "innerHeight", "get").and.callFake(
+      () => currentHeight,
+    );
+
+    select.toggleOpen();
+    hostFixture.detectChanges();
+    expect(select.calculatedMaxHeight).toBe("824px");
+
+    // Resize window
+    currentHeight = 1000;
+    window.dispatchEvent(new Event("resize"));
+    hostFixture.detectChanges();
+    // 1000 - 60 - 16 = 924px
+    expect(select.calculatedMaxHeight).toBe("924px");
+
+    // Scroll window
+    currentBottom = 80;
+    window.dispatchEvent(new Event("scroll"));
+    hostFixture.detectChanges();
+    // 1000 - 80 - 16 = 904px
+    expect(select.calculatedMaxHeight).toBe("904px");
+  });
 });
 
 @Component({

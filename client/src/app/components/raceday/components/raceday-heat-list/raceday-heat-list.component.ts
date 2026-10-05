@@ -48,9 +48,11 @@ export interface ProcessedHeat {
   heatNumber: number;
   group: number;
   groupName: string;
+  hasGroup: boolean;
   isCurrent: boolean;
   isCompleted: boolean;
   showSummary: boolean;
+  useLaneColors: boolean;
   lanes: ProcessedHeatLane[];
 }
 
@@ -143,12 +145,58 @@ export class RacedayHeatListComponent implements AfterViewInit, OnDestroy {
     return this.track()?.lanes?.length || 4;
   });
 
+  activeHeatDisplay = computed(() => {
+    const custom = this.widget()?.customSettings;
+    if (custom?.["activeHeatDisplay"]) {
+      return custom["activeHeatDisplay"];
+    }
+    if (custom?.["showActiveSummary"] !== false) {
+      return custom?.["summaryUseLaneColors"] !== false
+        ? "summary_lane_colors"
+        : "summary";
+    }
+    return "lane_colors";
+  });
+
+  completedHeatsDisplay = computed(() => {
+    const custom = this.widget()?.customSettings;
+    if (custom?.["completedHeatsDisplay"]) {
+      return custom["completedHeatsDisplay"];
+    }
+    if (custom?.["showCompletedSummary"] !== false) {
+      return custom?.["summaryUseLaneColors"] !== false
+        ? "summary_lane_colors"
+        : "summary";
+    }
+    return "lane_colors";
+  });
+
+  futureHeatsDisplay = computed(() => {
+    const custom = this.widget()?.customSettings;
+    if (custom?.["futureHeatsDisplay"]) {
+      return custom["futureHeatsDisplay"];
+    }
+    if (custom?.["showFutureSummary"] === true) {
+      return custom?.["summaryUseLaneColors"] !== false
+        ? "summary_lane_colors"
+        : "summary";
+    }
+    return "lane_colors";
+  });
+
   showCompletedSummary = computed(() => {
-    return this.widget()?.customSettings?.["showCompletedSummary"] !== false;
+    const mode = this.completedHeatsDisplay();
+    return mode === "summary" || mode === "summary_lane_colors";
   });
 
   showActiveSummary = computed(() => {
-    return this.widget()?.customSettings?.["showActiveSummary"] !== false;
+    const mode = this.activeHeatDisplay();
+    return mode === "summary" || mode === "summary_lane_colors";
+  });
+
+  showFutureSummary = computed(() => {
+    const mode = this.futureHeatsDisplay();
+    return mode === "summary" || mode === "summary_lane_colors";
   });
 
   summaryShowPosition = computed(() => {
@@ -192,12 +240,18 @@ export class RacedayHeatListComponent implements AfterViewInit, OnDestroy {
     return this.widget()?.customSettings?.["summaryUseLaneColors"] !== false;
   });
 
+  isGroupEnabled = computed(() => {
+    const raceObj = this.race() ?? this.parent()?.race;
+    const groupOptions = raceObj?.group_options ?? raceObj?.groupOptions;
+    return !!groupOptions?.enabled;
+  });
+
   processedHeats = computed<ProcessedHeat[]>(() => {
     const rawHeats = this.heats() || [];
     const cur = this.currentHeat();
     const curHeatNum = cur?.heatNumber ?? -1;
     const trackObj = this.track();
-    const raceObj = this.race();
+    const raceObj = this.race() ?? this.parent()?.race;
     const isRaceOver = this.parent()?.raceState === RaceState.RACE_OVER;
 
     return rawHeats.map((h, idx) =>
@@ -223,12 +277,17 @@ export class RacedayHeatListComponent implements AfterViewInit, OnDestroy {
     isRaceOver: boolean,
   ): ProcessedHeat {
     const heatNum = h.heatNumber ?? idx + 1;
-    const groupNum = h.group ?? 0;
+    const groupNum =
+      typeof h.group === "number" ? h.group : parseInt(h.group, 10) || 0;
+    const groupOptions = raceObj?.group_options ?? raceObj?.groupOptions;
+    const hasGroup = !!groupOptions?.enabled;
     let groupName = "";
-    if (raceObj?.group_options?.enabled) {
-      const customName = raceObj.group_options?.names?.[groupNum];
+    if (hasGroup) {
+      const customName = groupOptions?.names?.[groupNum] || h.groupName;
       groupName =
         customName && customName.trim() !== "" ? customName.trim() : "";
+    } else if (h.groupName) {
+      groupName = h.groupName.trim();
     }
 
     const isCurrentHeat = heatNum === curHeatNum && !isRaceOver;
@@ -239,9 +298,19 @@ export class RacedayHeatListComponent implements AfterViewInit, OnDestroy {
       !!h.isCompleted;
     const isActive = isCurrentHeat;
 
+    let displayMode: string;
+    if (isActive) {
+      displayMode = this.activeHeatDisplay();
+    } else if (isCompleted) {
+      displayMode = this.completedHeatsDisplay();
+    } else {
+      displayMode = this.futureHeatsDisplay();
+    }
+
     const showSummary =
-      (isCompleted && this.showCompletedSummary()) ||
-      (isActive && this.showActiveSummary());
+      displayMode === "summary" || displayMode === "summary_lane_colors";
+    const useLaneColors =
+      displayMode === "lane_colors" || displayMode === "summary_lane_colors";
 
     const lanes = this.buildHeatLanes(h, cur, trackObj, isCompleted, isActive);
 
@@ -249,9 +318,11 @@ export class RacedayHeatListComponent implements AfterViewInit, OnDestroy {
       heatNumber: heatNum,
       group: groupNum,
       groupName,
+      hasGroup,
       isCurrent,
       isCompleted,
       showSummary,
+      useLaneColors,
       lanes,
     };
   }
@@ -333,52 +404,52 @@ export class RacedayHeatListComponent implements AfterViewInit, OnDestroy {
     let formattedMedianLap = "--";
 
     if (isOccupied && hd) {
-      if (typeof hd.rank === "number" && hd.rank > 0 && hd.rank < 90) {
-        rank = hd.rank;
-        formattedRank = String(rank);
-      } else if (standings && Array.isArray(standings)) {
-        const sidIdx = standings.findIndex(
-          (sid: string) =>
-            sid && (sid === hd.objectId || sid === hd.participant?.objectId),
-        );
-        if (sidIdx >= 0) {
-          rank = sidIdx + 1;
-          formattedRank = String(rank);
-        }
-      }
-
-      lapCount = this.extractDriverLaps(hd);
       if (isCompleted || isActive) {
+        if (typeof hd.rank === "number" && hd.rank > 0 && hd.rank < 90) {
+          rank = hd.rank;
+          formattedRank = String(rank);
+        } else if (standings && Array.isArray(standings)) {
+          const sidIdx = standings.findIndex(
+            (sid: string) =>
+              sid && (sid === hd.objectId || sid === hd.participant?.objectId),
+          );
+          if (sidIdx >= 0) {
+            rank = sidIdx + 1;
+            formattedRank = String(rank);
+          }
+        }
+
+        lapCount = this.extractDriverLaps(hd);
         formattedLaps =
           lapDecSetting === "auto"
             ? lapCount % 1 !== 0
               ? lapCount.toFixed(3)
               : String(lapCount)
             : lapCount.toFixed(Number(lapDecSetting));
-      }
 
-      if (typeof hd.bestLapTime === "number" && hd.bestLapTime > 0) {
-        bestLapTime = hd.bestLapTime;
-        formattedBestLap = bestLapTime.toFixed(timeDec);
-      }
-
-      if (typeof hd.gapLeader === "number") {
-        gapLeader = hd.gapLeader;
-        if (gapLeader > 0) {
-          formattedGap = "+" + gapLeader.toFixed(timeDec);
-        } else if (gapLeader === 0 && rank === 1) {
-          formattedGap = "--";
+        if (typeof hd.bestLapTime === "number" && hd.bestLapTime > 0) {
+          bestLapTime = hd.bestLapTime;
+          formattedBestLap = bestLapTime.toFixed(timeDec);
         }
-      }
 
-      if (typeof hd.averageLapTime === "number" && hd.averageLapTime > 0) {
-        averageLapTime = hd.averageLapTime;
-        formattedAvgLap = averageLapTime.toFixed(timeDec);
-      }
+        if (typeof hd.gapLeader === "number") {
+          gapLeader = hd.gapLeader;
+          if (gapLeader > 0) {
+            formattedGap = "+" + gapLeader.toFixed(timeDec);
+          } else if (gapLeader === 0 && rank === 1) {
+            formattedGap = "--";
+          }
+        }
 
-      if (typeof hd.medianLapTime === "number" && hd.medianLapTime > 0) {
-        medianLapTime = hd.medianLapTime;
-        formattedMedianLap = medianLapTime.toFixed(timeDec);
+        if (typeof hd.averageLapTime === "number" && hd.averageLapTime > 0) {
+          averageLapTime = hd.averageLapTime;
+          formattedAvgLap = averageLapTime.toFixed(timeDec);
+        }
+
+        if (typeof hd.medianLapTime === "number" && hd.medianLapTime > 0) {
+          medianLapTime = hd.medianLapTime;
+          formattedMedianLap = medianLapTime.toFixed(timeDec);
+        }
       }
     }
 
@@ -442,31 +513,53 @@ export class RacedayHeatListComponent implements AfterViewInit, OnDestroy {
 
       let rank = 99;
       let formattedRank = "--";
-      if (
-        isOccupied &&
-        typeof lane.rank === "number" &&
-        lane.rank > 0 &&
-        lane.rank < 90
-      ) {
-        rank = lane.rank;
-        formattedRank = String(rank);
-      }
-
-      const laps = typeof lane.lapCount === "number" ? lane.lapCount : 0;
+      let laps = 0;
       let formattedLaps = "--";
+      let bestTime = 0;
+      let formattedBestLap = "--";
+      let gapLeader = 0;
+      let formattedGap = "--";
+      let averageLapTime = 0;
+      let formattedAvgLap = "--";
+      let medianLapTime = 0;
+      let formattedMedianLap = "--";
+
       if (isOccupied && (isCompleted || isActive)) {
+        if (typeof lane.rank === "number" && lane.rank > 0 && lane.rank < 90) {
+          rank = lane.rank;
+          formattedRank = String(rank);
+        }
+
+        laps = typeof lane.lapCount === "number" ? lane.lapCount : 0;
         formattedLaps =
           lapDecSetting === "auto"
             ? laps % 1 !== 0
               ? laps.toFixed(3)
               : String(laps)
             : laps.toFixed(Number(lapDecSetting));
-      }
 
-      const bestTime =
-        typeof lane.bestLapTime === "number" ? lane.bestLapTime : 0;
-      const formattedBestLap =
-        isOccupied && bestTime > 0 ? bestTime.toFixed(timeDec) : "--";
+        bestTime = typeof lane.bestLapTime === "number" ? lane.bestLapTime : 0;
+        if (bestTime > 0) {
+          formattedBestLap = bestTime.toFixed(timeDec);
+        }
+
+        gapLeader = lane.gapLeader || 0;
+        if (gapLeader > 0) {
+          formattedGap = "+" + Number(lane.gapLeader).toFixed(timeDec);
+        } else if (gapLeader === 0 && rank === 1) {
+          formattedGap = "--";
+        }
+
+        averageLapTime = lane.averageLapTime || 0;
+        if (averageLapTime > 0) {
+          formattedAvgLap = Number(lane.averageLapTime).toFixed(timeDec);
+        }
+
+        medianLapTime = lane.medianLapTime || 0;
+        if (medianLapTime > 0) {
+          formattedMedianLap = Number(lane.medianLapTime).toFixed(timeDec);
+        }
+      }
 
       return {
         laneNumber: lane.laneNumber ?? laneIdx + 1,
@@ -484,21 +577,12 @@ export class RacedayHeatListComponent implements AfterViewInit, OnDestroy {
         formattedLaps,
         bestLapTime: bestTime,
         formattedBestLap,
-        gapLeader: lane.gapLeader || 0,
-        formattedGap:
-          lane.gapLeader > 0
-            ? "+" + Number(lane.gapLeader).toFixed(timeDec)
-            : "--",
-        averageLapTime: lane.averageLapTime || 0,
-        formattedAvgLap:
-          lane.averageLapTime > 0
-            ? Number(lane.averageLapTime).toFixed(timeDec)
-            : "--",
-        medianLapTime: lane.medianLapTime || 0,
-        formattedMedianLap:
-          lane.medianLapTime > 0
-            ? Number(lane.medianLapTime).toFixed(timeDec)
-            : "--",
+        gapLeader,
+        formattedGap,
+        averageLapTime,
+        formattedAvgLap,
+        medianLapTime,
+        formattedMedianLap,
       };
     });
   }
@@ -645,13 +729,111 @@ export class RacedayHeatListComponent implements AfterViewInit, OnDestroy {
     return `repeat(${isNaN(cols) ? 2 : cols}, 1fr)`;
   }
 
+  calculateAutoCardMinWidth(): number {
+    let minWidth = 280;
+
+    // 1. Single-line title bar requirement
+    let headerDemand = 65;
+    const hasGroupName =
+      this.isGroupEnabled() || this.processedHeats().some((h) => !!h.groupName);
+    if (hasGroupName) {
+      headerDemand += 85;
+    }
+    let statusDemand = 0;
+    if (this.showCurrentHeatFlag()) {
+      statusDemand += 34;
+    }
+    if (this.showCurrentHeatTime()) {
+      statusDemand += 84;
+    }
+    if (statusDemand > 0) {
+      headerDemand += statusDemand + 8;
+    }
+    headerDemand += 20;
+    minWidth = Math.max(minWidth, headerDemand);
+
+    // 2. Summary table column demand
+    const hasSummary =
+      this.showActiveSummary() ||
+      this.showCompletedSummary() ||
+      this.showFutureSummary();
+    if (hasSummary) {
+      let tableDemand = 0;
+      if (this.summaryShowPosition()) {
+        tableDemand += 36;
+      }
+      if (this.summaryShowDriver()) {
+        tableDemand += 155;
+      }
+      if (this.summaryShowLaps()) {
+        tableDemand += 56;
+      }
+      if (this.summaryShowBestLap()) {
+        tableDemand += 105;
+      }
+      if (this.summaryShowGap()) {
+        tableDemand += 70;
+      }
+      if (this.summaryShowAverageLap()) {
+        tableDemand += 95;
+      }
+      if (this.summaryShowMedianLap()) {
+        tableDemand += 95;
+      }
+      tableDemand += 40;
+      minWidth = Math.max(minWidth, tableDemand);
+    }
+
+    // 3. Lane badge column demand (accounting for lane count and driver/team name length)
+    const laneSetting = this.laneColumnsSetting();
+    let laneCols = 1;
+    if (laneSetting === "auto") {
+      laneCols = Math.min(this.trackLaneCount(), 4);
+    } else {
+      const parsed = parseInt(laneSetting, 10);
+      laneCols = isNaN(parsed) ? 1 : parsed;
+    }
+
+    if (laneCols > 1) {
+      let maxSampledLen = 0;
+      for (const heat of this.processedHeats()) {
+        if (!heat.lanes) continue;
+        for (const lane of heat.lanes) {
+          if (!lane.isOccupied) continue;
+          if (lane.driverNickname) {
+            maxSampledLen = Math.max(maxSampledLen, lane.driverNickname.length);
+          }
+          if (lane.isTeam && lane.teamName) {
+            maxSampledLen = Math.max(maxSampledLen, lane.teamName.length);
+          }
+        }
+      }
+
+      // Default to 9 chars ("Driver 20"), capped between 9 and 13 chars
+      const effectiveChars = Math.min(13, Math.max(9, maxSampledLen));
+
+      // Fixed overhead: Tag L1 (~22px) + Gap (6px) + Badge Padding (16px) = 44px
+      // Character width at ~12px font is ~7.5px + 8px safety margin
+      const textWidth = Math.round(effectiveChars * 7.5 + 8);
+      const singleBadgeWidth = 44 + textWidth; // ~120px for 9 chars, ~150px for 13 chars
+
+      // Total badge demand: columns * badgeWidth + gaps + card padding (24px)
+      const badgesDemand =
+        laneCols * singleBadgeWidth + (laneCols - 1) * 4 + 24;
+      minWidth = Math.max(minWidth, badgesDemand);
+    }
+
+    return Math.round(minWidth);
+  }
+
   getHeatColumnsStyle(): string {
     if (this.scaleToWindow()) {
       return `repeat(${this.autoFitLayout().columns}, 1fr)`;
     }
     const setting = this.heatColumnsSetting();
     if (setting === "auto") {
-      return "repeat(auto-fill, minmax(280px, 1fr))";
+      const minWidth = this.calculateAutoCardMinWidth();
+      return `repeat(auto-fill, minmax(${minWidth}px, 1fr))`;
     }
     const cols = parseInt(setting, 10);
     return `repeat(${isNaN(cols) ? 1 : cols}, 1fr)`;

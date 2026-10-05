@@ -557,16 +557,7 @@
                 [title]="'RDS_BTN_VIEW_ROSTER' | translate"
                 data-testid="btn-view-roster"
               >
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                >
-                  <path
-                    d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"
-                  />
-                </svg>
+                <span class="material-icons">visibility</span>
               </button>
               <button
                 class="action-btn"
@@ -576,14 +567,7 @@
                 [title]="'RDS_BTN_ADD_ALL' | translate"
                 data-testid="btn-add-all"
               >
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                >
-                  <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
-                </svg>
+                <span class="material-icons">add</span>
               </button>
               <button
                 class="action-btn"
@@ -593,14 +577,7 @@
                 [title]="'RDS_BTN_REMOVE_ALL' | translate"
                 data-testid="btn-remove-all"
               >
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                >
-                  <path d="M19 13H5v-2h14v2z" />
-                </svg>
+                <span class="material-icons">remove</span>
               </button>
               <button
                 class="action-btn"
@@ -610,16 +587,7 @@
                 [title]="'RDS_BTN_RANDOMIZE' | translate"
                 data-testid="btn-randomize"
               >
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                >
-                  <path
-                    d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41l-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z"
-                  />
-                </svg>
+                <span class="material-icons">shuffle</span>
               </button>
             </div>
           </div>
@@ -941,16 +909,7 @@
                     [title]="'RDS_BTN_EDIT_RACE' | translate"
                     data-testid="edit-selected-race-btn"
                   >
-                    <svg
-                      width="14"
-                      height="14"
-                      viewBox="0 0 24 24"
-                      fill="currentColor"
-                    >
-                      <path
-                        d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"
-                      />
-                    </svg>
+                    <span class="material-icons">edit</span>
                   </button>
                 </div>
                 <div class="summary-grid">
@@ -1122,7 +1081,7 @@
       <div class="modal-header">
         <h2>{{ "RDS_LOAD_RACE_TITLE" | translate }}</h2>
         <button class="close-btn" (click)="closeLoadRaceModal()">
-          &times;
+          <span class="material-icons">close</span>
         </button>
       </div>
       <div class="modal-body">
@@ -1161,14 +1120,14 @@
                     (click)="saveInlineRename(file)"
                     title="Save"
                   >
-                    &#10004;
+                    <span class="material-icons">check</span>
                   </button>
                   <button
                     class="inline-rename-btn cancel"
                     (click)="cancelInlineRename()"
                     title="Cancel"
                   >
-                    &times;
+                    <span class="material-icons">close</span>
                   </button>
                 </div>
               } @else {
@@ -1185,14 +1144,14 @@
                     (click)="startInlineRename($event, file)"
                     [title]="'RDS_RENAME_SAVE_TOOLTIP' | translate"
                   >
-                    &#9998;
+                    <span class="material-icons">edit</span>
                   </button>
                   <button
                     class="delete-saved-btn"
                     (click)="deleteSavedRace($event, file)"
-                    title="Delete Save"
+                    [title]="'TM_DELETE' | translate"
                   >
-                    &times;
+                    <span class="material-icons">delete</span>
                   </button>
                 </div>
               }

@@ -1292,7 +1292,7 @@ export class TestSetupHelper {
               voltageConfigs: { 1: 12.0 }, // This also indicates digital fuel
               normallyClosedLaneSensors: false,
               normallyClosedRelays: true,
-              globalInvertLights: 0,
+              activeLowAnalogLeds: false,
               usePitsAsLaps: false,
               useLapsForSegments: true,
               ledStrings: null,
@@ -2111,6 +2111,12 @@ export class TestSetupHelper {
         ) {
           r.heatScoring.allowFinish = 3;
         } else if (
+          r.heatScoring.allowFinish === "SingleLapAutoSegments" ||
+          r.heatScoring.allowFinish === "AF_SINGLE_LAP_AUTO_SEGMENTS" ||
+          r.heatScoring.allowFinish === 4
+        ) {
+          r.heatScoring.allowFinish = 4;
+        } else if (
           r.heatScoring.allowFinish === "None" ||
           r.heatScoring.allowFinish === "AF_NONE" ||
           r.heatScoring.allowFinish === 0
@@ -2673,7 +2679,7 @@ export class TestSetupHelper {
               analogIds: [-1, -1],
               normallyClosedLaneSensors: false,
               normallyClosedRelays: true,
-              globalInvertLights: 0,
+              activeLowAnalogLeds: false,
               usePitsAsLaps: false,
               useLapsForSegments: true,
               ledStrings: null,

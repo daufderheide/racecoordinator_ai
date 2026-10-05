@@ -1,0 +1,42 @@
+{
+  "defaultAudio": "system",
+  "drivers": [
+    {
+      "name": "Fernando Alonso",
+      "nickname": "El Nano",
+      "avatarUrl": "assets/defaults/helmets/helmet_yellow.png",
+      "lapAudio": {
+        "type": "tts",
+        "text": "${nickname} completed a lap"
+      },
+      "bestLapAudio": {
+        "type": "preset",
+        "url": "default_driveby"
+      },
+      "penaltyAudio": {
+        "type": "tts",
+        "text": "Five second penalty for ${nickname}"
+      },
+      "heatBestLapAudio": "tts:Fastest lap in the heat for ${nickname}",
+      "newRaceLeaderAudio": "tts:${nickname} takes the lead!",
+      "pitInAudio": "preset:default_pit_in"
+    },
+    {
+      "name": "Sebastian Vettel",
+      "nickname": "Seb",
+      "avatarUrl": "assets/defaults/helmets/helmet_red.png",
+      "defaultAudio": "none",
+      "lapAudio": "none",
+      "bestLapAudio": "preset:default_driveby",
+      "newRaceLeaderAudio": "tts:Ring-a-ding-ding, ${nickname} leads the race!"
+    },
+    {
+      "name": "Kimi Raikkonen",
+      "nickname": "Iceman",
+      "avatarUrl": "",
+      "lapAudio": "none",
+      "penaltyAudio": "tts:Leave me alone, I know what to do",
+      "pitInAudio": "tts:Bwoah, box box box"
+    }
+  ]
+}

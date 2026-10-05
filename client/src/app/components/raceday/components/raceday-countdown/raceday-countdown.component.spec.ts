@@ -151,7 +151,10 @@ describe("RacedayCountdownComponent", () => {
     fixture.detectChanges();
 
     const styles = component.blurBackdropStyles;
-    expect(styles["backdrop-filter"]).toBe("blur(8px)");
+    expect(styles["backdrop-filter"]).toBeUndefined();
+    expect(styles["background"]).toBe(
+      "radial-gradient(circle, rgba(0, 0, 0, 0.40) 0%, rgba(0, 0, 0, 0.80) 100%)",
+    );
     expect(styles["left"]).toBe(`${(-460 / 1000) * 100}%`);
     expect(styles["top"]).toBe(`${(-390 / 250) * 100}%`);
     expect(styles["width"]).toBe(`${(1920 / 1000) * 100}%`);
@@ -240,7 +243,27 @@ describe("RacedayCountdownComponent", () => {
 
     const styles = component.blurBackdropStyles;
     expect(styles["background"]).toBe("rgba(0, 0, 0, 0.95)");
-    expect(styles["backdrop-filter"]).toBe("blur(16px)");
+    expect(styles["backdrop-filter"]).toBeUndefined();
+  });
+
+  it("should calculate subtle radial-gradient and omit backdrop-filter for low blur amounts to prevent GPU texture mirroring", () => {
+    const lowAmountWidget: AbsoluteWidgetNode = {
+      ...defaultWidget,
+      customSettings: {
+        ...defaultWidget.customSettings,
+        blurAmount: 13,
+      },
+    };
+    fixture.componentRef.setInput("widget", lowAmountWidget);
+    fixture.componentRef.setInput("isCustomizing", true);
+    fixture.detectChanges();
+
+    const styles = component.blurBackdropStyles;
+    expect(styles["backdrop-filter"]).toBeUndefined();
+    expect(styles["-webkit-backdrop-filter"]).toBeUndefined();
+    expect(styles["background"]).toBe(
+      "radial-gradient(circle, rgba(0, 0, 0, 0.10) 0%, rgba(0, 0, 0, 0.21) 100%)",
+    );
   });
 
   it("should calculate dynamic lamp size when lampSizingMode is fit", () => {
@@ -307,12 +330,12 @@ describe("RacedayCountdownComponent", () => {
     expect(parseInt(styles["width"], 10)).toBeGreaterThan(50);
   });
 
-  it("should default glowEffect to true, glowIntensity to 100, glowRedOverlap to 100, and glowGreenOverlap to 100", () => {
+  it("should default glowEffect to true, glowIntensity to 100, glowRedOverlap to 30, and glowGreenOverlap to 25", () => {
     expect(component.glowEffect).toBeTrue();
     expect(component.glowIntensity).toBe(100);
-    expect(component.glowRedOverlap).toBe(100);
-    expect(component.glowGreenOverlap).toBe(100);
-    expect(component.glowOverlap).toBe(100);
+    expect(component.glowRedOverlap).toBe(30);
+    expect(component.glowGreenOverlap).toBe(25);
+    expect(component.glowOverlap).toBe(30);
   });
 
   it("should respect custom glowEffect, glowIntensity, glowRedOverlap, and glowGreenOverlap settings", () => {
@@ -355,9 +378,9 @@ describe("RacedayCountdownComponent", () => {
     const onLamp = { url: "red-on.png", state: "on" };
     const goLamp = { url: "green.png", state: "go" };
 
-    // Default: red is 1.250 (100%), green is 1.400 (100%)
-    expect(component.getLampStyles(onLamp)["transform"]).toBe("scale(1.250)");
-    expect(component.getLampStyles(goLamp)["transform"]).toBe("scale(1.400)");
+    // Default (30% red, 25% green): red is 1.075, green is 1.100
+    expect(component.getLampStyles(onLamp)["transform"]).toBe("scale(1.075)");
+    expect(component.getLampStyles(goLamp)["transform"]).toBe("scale(1.100)");
 
     // Independent overlap settings: red = 0, green = 50
     const independentWidget: AbsoluteWidgetNode = {
@@ -522,5 +545,98 @@ describe("RacedayCountdownComponent", () => {
     expect(noGlowLamps[0].classList.contains("has-glow")).toBeFalse();
     expect(noGlowLamps[1].classList.contains("has-glow")).toBeFalse();
     expect(noGlowLamps[2].classList.contains("has-glow")).toBeFalse();
+  });
+
+  it("should use bundled default asset paths when parent and themeService have no assets", () => {
+    fixture.componentRef.setInput("parent", null);
+    fixture.componentRef.setInput("isCustomizing", true);
+    fixture.detectChanges();
+
+    const lamps = component.displayLamps;
+    expect(lamps.length).toBeGreaterThan(0);
+    expect(lamps[0].url).toBe("assets/images/defaults/start_red_on.png");
+    expect(lamps[lamps.length - 1].url).toBe(
+      "assets/images/defaults/start_green.png",
+    );
+  });
+
+  it("should apply fade-in class when fadeIn is true (default) and omit it when false", () => {
+    const activeParent = { ...mockParent, showCountdownOverlay: true };
+    fixture.componentRef.setInput("parent", activeParent);
+    fixture.detectChanges();
+
+    expect(component.fadeIn).toBeTrue();
+    const overlay = fixture.nativeElement.querySelector(".countdown-overlay");
+    const backdrop = fixture.nativeElement.querySelector(
+      ".countdown-blur-backdrop",
+    );
+    expect(overlay.classList.contains("fade-in")).toBeTrue();
+    expect(backdrop.classList.contains("fade-in")).toBeTrue();
+
+    const noFadeWidget: AbsoluteWidgetNode = {
+      ...defaultWidget,
+      customSettings: {
+        ...defaultWidget.customSettings,
+        fadeIn: false,
+      },
+    };
+    fixture.componentRef.setInput("widget", noFadeWidget);
+    fixture.detectChanges();
+
+    expect(component.fadeIn).toBeFalse();
+    expect(overlay.classList.contains("fade-in")).toBeFalse();
+    expect(backdrop.classList.contains("fade-in")).toBeFalse();
+  });
+
+  it("should respect maxLamps and fallback to previewLampCount", () => {
+    expect(component.maxLamps).toBe(5);
+
+    const customWidget: AbsoluteWidgetNode = {
+      ...defaultWidget,
+      customSettings: {
+        ...defaultWidget.customSettings,
+        maxLamps: 7,
+      },
+    };
+    fixture.componentRef.setInput("widget", customWidget);
+    fixture.componentRef.setInput("isCustomizing", true);
+    fixture.componentRef.setInput("parent", null);
+    fixture.detectChanges();
+
+    expect(component.maxLamps).toBe(7);
+    expect(component.displayLamps.length).toBe(7);
+
+    // Fallback to previewLampCount
+    const legacyWidget: AbsoluteWidgetNode = {
+      ...defaultWidget,
+      customSettings: {
+        ...defaultWidget.customSettings,
+        previewLampCount: 4,
+      },
+    };
+    fixture.componentRef.setInput("widget", legacyWidget);
+    fixture.detectChanges();
+
+    expect(component.maxLamps).toBe(4);
+    expect(component.displayLamps.length).toBe(4);
+  });
+
+  it("should return memoized style object instances when inputs have not changed", () => {
+    const lamp = { url: "red-on.png", state: "on" };
+    const styles1 = component.getLampStyles(lamp);
+    const styles2 = component.getLampStyles(lamp);
+    expect(styles1).toBe(styles2);
+
+    const start1 = component.startLampStyles;
+    const start2 = component.startLampStyles;
+    expect(start1).toBe(start2);
+
+    const container1 = component.lampsContainerStyles;
+    const container2 = component.lampsContainerStyles;
+    expect(container1).toBe(container2);
+
+    const blur1 = component.blurBackdropStyles;
+    const blur2 = component.blurBackdropStyles;
+    expect(blur1).toBe(blur2);
   });
 });

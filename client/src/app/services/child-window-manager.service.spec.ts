@@ -116,6 +116,20 @@ describe("ChildWindowManagerService", () => {
       service.clearThemeTabs();
       expect(service.getThemeTabs().length).toBe(0);
     });
+
+    it("should set win.document.title if title is provided and win.document exists", () => {
+      const mockWinWithDoc = {
+        close: jasmine.createSpy("close"),
+        closed: false,
+        document: { title: "" },
+      };
+      (window.open as jasmine.Spy).and.returnValue(mockWinWithDoc);
+      service.openThemeWindow(
+        "/default-raceday?themeId=t1",
+        "Custom Theme Title",
+      );
+      expect(mockWinWithDoc.document.title).toBe("Custom Theme Title");
+    });
   });
 
   describe("closeAllWindows", () => {

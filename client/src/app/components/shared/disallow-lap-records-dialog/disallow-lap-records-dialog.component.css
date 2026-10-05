@@ -190,6 +190,10 @@
   transition: background 0.15s ease, color 0.15s ease;
 }
 
+.close-btn .material-icons {
+  font-size: 20px;
+}
+
 .close-btn:hover {
   background: rgba(255, 255, 255, 0.1);
   color: #f8fafc;

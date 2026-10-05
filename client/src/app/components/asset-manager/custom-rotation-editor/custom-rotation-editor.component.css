@@ -398,6 +398,10 @@
   font-size: 1rem;
 }
 
+.chevron-icon .material-icons {
+  font-size: 1.2rem;
+}
+
 .expander-title {
   font-size: 1.1rem;
   font-weight: 700;
@@ -461,55 +465,55 @@
 }
 
 .equality-btn {
-  background: rgba(16, 185, 129, 0.15) !important;
+  background: transparent !important;
   color: #10b981 !important;
-  border: 1px solid rgba(16, 185, 129, 0.4) !important;
+  border: 1px solid transparent !important;
 }
 
 .equality-btn:hover {
-  background: rgba(16, 185, 129, 0.25) !important;
-  border-color: rgba(16, 185, 129, 0.6) !important;
-  box-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
+  background: rgba(16, 185, 129, 0.15) !important;
+  border-color: rgba(16, 185, 129, 0.3) !important;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.2);
 }
 
 .equality-btn.unequal {
-  background: rgba(239, 68, 68, 0.15) !important;
+  background: transparent !important;
   color: #ef4444 !important;
-  border: 1px solid rgba(239, 68, 68, 0.45) !important;
+  border: 1px solid transparent !important;
 }
 
 .equality-btn.unequal:hover {
-  background: rgba(239, 68, 68, 0.25) !important;
-  border-color: rgba(239, 68, 68, 0.7) !important;
-  box-shadow: 0 0 10px rgba(239, 68, 68, 0.3);
+  background: rgba(239, 68, 68, 0.15) !important;
+  border-color: rgba(239, 68, 68, 0.3) !important;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.2);
 }
 
 .add-heat-card-btn,
 .export-rotation-card-btn {
-  background: rgba(56, 189, 248, 0.15) !important;
-  color: #38bdf8 !important;
-  border: 1px solid rgba(56, 189, 248, 0.4) !important;
+  background: transparent !important;
+  color: #94a3b8 !important;
+  border: 1px solid transparent !important;
 }
 
 .add-heat-card-btn:hover,
 .export-rotation-card-btn:hover {
-  background: rgba(56, 189, 248, 0.25) !important;
-  border-color: rgba(56, 189, 248, 0.7) !important;
+  background: rgba(56, 189, 248, 0.15) !important;
+  border-color: rgba(56, 189, 248, 0.3) !important;
   color: #38bdf8 !important;
-  box-shadow: 0 0 10px rgba(56, 189, 248, 0.3);
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.2);
 }
 
 .delete-rotation-btn {
-  background: rgba(239, 68, 68, 0.15) !important;
+  background: transparent !important;
   color: #ef4444 !important;
-  border: 1px solid rgba(239, 68, 68, 0.4) !important;
+  border: 1px solid transparent !important;
 }
 
 .delete-rotation-btn:hover {
-  background: rgba(239, 68, 68, 0.3) !important;
+  background: rgba(239, 68, 68, 0.15) !important;
   color: #ef4444 !important;
-  border-color: rgba(239, 68, 68, 0.6) !important;
-  box-shadow: 0 0 10px rgba(239, 68, 68, 0.3);
+  border-color: rgba(239, 68, 68, 0.3) !important;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.2);
 }
 
 /* Expander Body (Heats list) */
@@ -568,7 +572,7 @@
 }
 
 .drag-handle-icon {
-  font-size: 0.8rem;
+  font-size: 1.1rem;
   color: rgba(148, 163, 184, 0.6);
 }
 
@@ -603,17 +607,29 @@
 
 .btn-remove {
   background: transparent;
-  border: none;
-  color: rgba(148, 163, 184, 0.6);
+  border: 1px solid transparent;
+  color: #ef4444;
   font-weight: 700;
   font-size: 0.85rem;
   cursor: pointer;
-  transition: color 0.2s;
-  padding: 4px;
+  transition: all 0.2s ease-in-out;
+  padding: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
   font-family: inherit;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-remove .material-icons {
+  font-size: 1.1rem;
 }
 
 .btn-remove:hover {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.3);
   color: #ef4444;
 }
 
@@ -711,6 +727,14 @@
   font-size: 1.1rem;
   cursor: pointer;
   transition: color 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+}
+
+.close-btn .material-icons {
+  font-size: 1.1rem;
 }
 
 .close-btn:hover {
@@ -768,7 +792,8 @@
   background: rgba(16, 185, 129, 0.08);
 }
 
-.report-item.success i {
+.report-item.success i,
+.report-item.success .material-icons {
   color: #10b981;
   margin-top: 2px;
 }
@@ -778,7 +803,8 @@
   background: rgba(239, 68, 68, 0.08);
 }
 
-.report-item.error i {
+.report-item.error i,
+.report-item.error .material-icons {
   color: #ef4444;
   margin-top: 2px;
 }
@@ -867,8 +893,14 @@
 .warning-icon {
   color: #f59e0b;
   margin-left: 6px;
+  display: inline-flex;
+  align-items: center;
   font-size: 0.85rem;
   animation: pulse 1.5s infinite ease-in-out;
+}
+
+.warning-icon .material-icons {
+  font-size: 1rem;
 }
 
 @keyframes pulse {
@@ -879,17 +911,12 @@
 
 .equality-btn .material-icons,
 .add-heat-card-btn .material-icons,
-.export-rotation-card-btn .material-icons {
+.export-rotation-card-btn .material-icons,
+.delete-rotation-btn .material-icons {
   font-size: 1.3rem !important;
   width: auto !important;
   height: auto !important;
   line-height: normal !important;
-}
-
-.delete-x {
-  font-family: inherit;
-  font-weight: bold;
-  font-size: 1.1rem;
 }
 
 /* Premium Glassmorphism Empty State Styles */

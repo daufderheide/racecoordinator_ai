@@ -67,6 +67,13 @@
   padding: 4px 8px;
   border-radius: 4px;
   transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.close-btn .material-icons {
+  font-size: 20px;
 }
 
 .close-btn:hover {

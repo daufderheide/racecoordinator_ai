@@ -36,6 +36,12 @@ Lo spazio di lavoro è suddiviso in due pannelli sincronizzati:
 
 ### Opzioni di Punteggio
 - **Punteggio Manche**: Fine per giri o tempo limite, metodo di classifica e spareggi.
+  - **Consenti arrivo**: Configura come le vetture completano i giri al traguardo del leader o allo scadere del tempo:
+    - *Non consentire l'arrivo*: La manche termina immediatamente.
+    - *Consenti arrivo*: Tutti i piloti continuano fino al completamento dei requisiti.
+    - *Consenti arrivo (un giro)*: I piloti possono completare il giro attuale; il giro viene conteggiato.
+    - *Non consentire l'arrivo (segmenti automatici)*: La manche termina subito e la frazione di giro viene calcolata dal tempo trascorso nel giro corrente diviso per il tempo mediano sul giro del pilota (`autoSegments = timeSinceLastLap / medianLapTime`, con limite a 0,99).
+    - *Consenti arrivo (un giro) (segmenti automatici)*: I piloti completano il giro in pista; il giro non conta come giro intero, ma la frazione è calcolata dal tempo trascorso prima della fine diviso per il tempo mediano sul giro del pilota (`autoSegments = partialLapTime / medianLapTime`, con limite a 0,99).
 - **Punteggio Generale**: Metodo di classifica generale, regole di spareggio e manche scartate.
 - **Punteggio Stagionale**: Distribuzione punti per posizione nei campionati.
 

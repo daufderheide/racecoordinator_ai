@@ -156,4 +156,63 @@ describe("RacePredictionService", () => {
 
     req.flush("Not found", { status: 404, statusText: "Not Found" });
   });
+
+  it("should deduplicate concurrent in-flight calls to getRacePredictions", () => {
+    const mockRecord: RacePredictionRecord = {
+      race_id: "race_dedup",
+      timestamp: 123456,
+      pre_race: {} as any,
+      realtime_snapshots: [],
+    };
+
+    let result1: any = null;
+    let result2: any = null;
+
+    service.getRacePredictions("race_dedup", true).subscribe((r) => {
+      result1 = r;
+    });
+    service.getRacePredictions("race_dedup", true).subscribe((r) => {
+      result2 = r;
+    });
+
+    // Only one HTTP request should be made
+    const requests = httpMock.match((req) =>
+      req.url.includes("/api/predictions/races/race_dedup"),
+    );
+    expect(requests.length).toBe(1);
+
+    requests[0].flush(mockRecord);
+    expect(result1).toEqual(mockRecord);
+    expect(result2).toEqual(mockRecord);
+  });
+
+  it("should deduplicate concurrent in-flight calls to getPredictionEvaluation", () => {
+    const mockEvaluation: PredictionEvaluationRecord = {
+      race_id: "race_dedup",
+      evaluated_at: 1000,
+      brier_score: 0.02,
+      rank_mae: 0.1,
+      lap_projection_mae: 0.5,
+      driver_evaluations: [],
+    };
+
+    let result1: any = null;
+    let result2: any = null;
+
+    service.getPredictionEvaluation("race_dedup", false).subscribe((r) => {
+      result1 = r;
+    });
+    service.getPredictionEvaluation("race_dedup", false).subscribe((r) => {
+      result2 = r;
+    });
+
+    const requests = httpMock.match((req) =>
+      req.url.includes("/api/predictions/evaluations/race_dedup"),
+    );
+    expect(requests.length).toBe(1);
+
+    requests[0].flush(mockEvaluation);
+    expect(result1).toEqual(mockEvaluation);
+    expect(result2).toEqual(mockEvaluation);
+  });
 });

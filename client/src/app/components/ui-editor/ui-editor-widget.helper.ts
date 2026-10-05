@@ -1,3 +1,8 @@
+import { LaneGridReplicationHelper } from "@app/components/raceday/utils/lane-grid-replication.helper";
+import {
+  LaneReplicationHelper,
+  LaneReplicationOptions,
+} from "@app/components/raceday/utils/lane-replication.helper";
 import { CustomUI } from "@app/models/custom-ui";
 import { LayoutConfig, Settings } from "@app/models/settings";
 
@@ -22,6 +27,14 @@ export function ensureWidgetSelectedHelper(comp: any, ui?: CustomUI): void {
     !widgets.some((w: any) => w.id === comp.selectedWidgetId)
   ) {
     comp.selectedWidgetId = findDefaultWidgetId(layout);
+  }
+  const selectedWidget =
+    layout?.widgets?.find((w: any) => w.id === comp.selectedWidgetId) ||
+    comp.selectedWidget;
+  const uiId = ui?.entity_id || comp.activeCustomUiId;
+  if (uiId && comp.countdownPreviewActiveByUi) {
+    comp.countdownPreviewActiveByUi[uiId] =
+      selectedWidget?.widgetType === "countdown";
   }
 }
 
@@ -154,13 +167,23 @@ export function handleWidgetSelection(
   if (ui) comp.activeCustomUiId = ui.entity_id;
   const layout = comp.getLayout(ui || comp.activeCustomUi);
   comp.selectedWidgetId = id || findDefaultWidgetId(layout);
-  if (comp.selectedWidgetId && comp.selectedWidget) {
-    if (applyWidgetDefaultSettings(comp.selectedWidget)) {
+  const selectedWidget =
+    layout?.widgets?.find((w: any) => w.id === comp.selectedWidgetId) ||
+    comp.selectedWidget;
+  const uiId = ui?.entity_id || comp.activeCustomUiId;
+  if (comp.selectedWidgetId && selectedWidget) {
+    if (applyWidgetDefaultSettings(selectedWidget)) {
       if (ui) ui.layoutJson = JSON.stringify(comp.getLayout(ui));
       if (comp.editingState?.settings) {
         comp.editingState.settings = { ...comp.editingState.settings };
       }
     }
+    if (uiId && comp.countdownPreviewActiveByUi) {
+      comp.countdownPreviewActiveByUi[uiId] =
+        selectedWidget.widgetType === "countdown";
+    }
+  } else if (uiId && comp.countdownPreviewActiveByUi) {
+    comp.countdownPreviewActiveByUi[uiId] = false;
   }
   comp.cdr.markForCheck();
 }
@@ -191,6 +214,37 @@ export function handleWidgetInspectorChange(
     if (idx !== -1) {
       layout.widgets[idx] = targetWidget;
     }
+
+    const gridId = targetWidget.customSettings?.["gridId"];
+    const newBindingMode = targetWidget.customSettings?.["bindingMode"];
+    if (gridId && newBindingMode) {
+      if (comp.activeGridSession && comp.activeGridSession.gridId === gridId) {
+        comp.activeGridSession.bindingMode = newBindingMode;
+      }
+      for (const w of layout.widgets) {
+        if (
+          w.customSettings?.["gridId"] === gridId &&
+          w.id !== targetWidget.id
+        ) {
+          if (!w.customSettings) w.customSettings = {};
+          w.customSettings["bindingMode"] = newBindingMode;
+        }
+      }
+    }
+
+    if (
+      comp.activeGridSession &&
+      LaneGridReplicationHelper.isMasterWidget(
+        targetWidget,
+        comp.activeGridSession,
+      )
+    ) {
+      layout.widgets = LaneGridReplicationHelper.syncMasterWidgetToLanes(
+        targetWidget,
+        comp.activeGridSession,
+        layout.widgets,
+      );
+    }
     updateLayoutOnModel(
       layout,
       targetUi,
@@ -199,6 +253,34 @@ export function handleWidgetInspectorChange(
       comp.parsedLayouts,
     );
   }
+  comp.captureState();
+  comp.cdr.markForCheck();
+}
+
+export function handleReplicateLanes(
+  comp: any,
+  options: Omit<LaneReplicationOptions, "baseWidth" | "baseHeight">,
+  ui?: CustomUI,
+): void {
+  if (!options) return;
+  const targetUi = ui || comp.activeCustomUi;
+  const layout = comp.getLayout(targetUi);
+  if (!layout?.widgets) return;
+  const baseWidth = layout.baseWidth || 1920;
+  const baseHeight = layout.baseHeight || 1080;
+  const updated = LaneReplicationHelper.replicateLaneWidgets(layout.widgets, {
+    ...options,
+    baseWidth,
+    baseHeight,
+  });
+  layout.widgets = updated;
+  updateLayoutOnModel(
+    layout,
+    targetUi,
+    comp.editingSettings,
+    comp.isCustomUiPractice(targetUi),
+    comp.parsedLayouts,
+  );
   comp.captureState();
   comp.cdr.markForCheck();
 }
@@ -216,6 +298,12 @@ export function handleRemoveSelectedWidget(comp: any, ui?: CustomUI): void {
   const laneView = newWidgets.find((w: any) => w.widgetType === "lane-view");
   const nextWidget = laneView || newWidgets[0];
   comp.selectedWidgetId = nextWidget ? nextWidget.id : null;
+
+  const uiId = targetUi?.entity_id || comp.activeCustomUiId;
+  if (uiId && comp.countdownPreviewActiveByUi) {
+    comp.countdownPreviewActiveByUi[uiId] =
+      nextWidget?.widgetType === "countdown";
+  }
 
   comp.onLayoutChanged(updatedLayout, targetUi);
 }
@@ -337,6 +425,14 @@ export function handleLayoutChanged(
       !widgets.some((w: any) => w.id === comp.selectedWidgetId))
   ) {
     comp.selectedWidgetId = findDefaultWidgetId(newLayout);
+    const selectedWidget = widgets.find(
+      (w: any) => w.id === comp.selectedWidgetId,
+    );
+    const uiId = ui?.entity_id || comp.activeCustomUiId;
+    if (uiId && comp.countdownPreviewActiveByUi) {
+      comp.countdownPreviewActiveByUi[uiId] =
+        selectedWidget?.widgetType === "countdown";
+    }
   }
   comp.captureState();
   comp.cdr.markForCheck();

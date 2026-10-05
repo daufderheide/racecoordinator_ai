@@ -283,4 +283,37 @@ public class DatabaseContextTest {
     databaseContext.ensureTable("");
     databaseContext.ensureTable("   ");
   }
+
+  @Test
+  public void testEnsureTableCaching() {
+    databaseContext.ensureTable("custom_cached_table");
+    // Repeated calls hit the verifiedTables in-memory cache
+    databaseContext.ensureTable("custom_cached_table");
+    databaseContext.ensureTable("CUSTOM_CACHED_TABLE");
+
+    // Database switch clears verifiedTables cache cleanly
+    databaseContext.createDatabase("cache_switch_db");
+    databaseContext.ensureTable("custom_cached_table");
+    databaseContext.switchDatabase("test_db");
+  }
+
+  @Test
+  public void testEnsureRaceRecordsTableAndVerificationHelpers() {
+    org.junit.Assert.assertFalse(databaseContext.isTableVerified("race_records"));
+    databaseContext.ensureRaceRecordsTable("race_records");
+    org.junit.Assert.assertTrue(databaseContext.isTableVerified("race_records"));
+    org.junit.Assert.assertTrue(databaseContext.isTableVerified("RACE_RECORDS"));
+
+    // Repeated call hits verifiedTables cache without error
+    databaseContext.ensureRaceRecordsTable("race_records");
+
+    // Null and empty checks
+    databaseContext.ensureRaceRecordsTable(null);
+    databaseContext.ensureRaceRecordsTable("");
+    org.junit.Assert.assertFalse(databaseContext.isTableVerified(null));
+
+    // Manual markTableVerified
+    databaseContext.markTableVerified("manual_verified");
+    org.junit.Assert.assertTrue(databaseContext.isTableVerified("manual_verified"));
+  }
 }

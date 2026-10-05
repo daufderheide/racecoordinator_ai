@@ -37,7 +37,9 @@ import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -662,7 +664,7 @@ public class ClientSubscriptionManagerTest {
   }
 
   @Test
-  public void testBroadcastSentAsBinary() {
+  public void testBroadcastSentAsBinary() throws Exception {
     org.eclipse.jetty.websocket.api.RemoteEndpoint mockRemote =
         mock(org.eclipse.jetty.websocket.api.RemoteEndpoint.class);
     WsContext context = createMockWsContext(mockRemote);
@@ -675,7 +677,7 @@ public class ClientSubscriptionManagerTest {
     org.mockito.Mockito.reset(mockRemote);
 
     RaceData update = RaceData.newBuilder().build();
-    manager.broadcast(update);
+    manager.broadcastAsync(update).get(2, TimeUnit.SECONDS);
 
     verify(mockRemote, org.mockito.Mockito.atLeastOnce())
         .sendBytesByFuture(org.mockito.ArgumentMatchers.any(ByteBuffer.class));
@@ -684,7 +686,7 @@ public class ClientSubscriptionManagerTest {
   }
 
   @Test
-  public void testBroadcastInterfaceEventSentAsBinary() {
+  public void testBroadcastInterfaceEventSentAsBinary() throws Exception {
     org.eclipse.jetty.websocket.api.RemoteEndpoint mockRemote =
         mock(org.eclipse.jetty.websocket.api.RemoteEndpoint.class);
     WsContext context = createMockWsContext(mockRemote);
@@ -694,7 +696,7 @@ public class ClientSubscriptionManagerTest {
 
     com.antigravity.proto.InterfaceEvent event =
         com.antigravity.proto.InterfaceEvent.newBuilder().build();
-    manager.broadcastInterfaceEvent(event);
+    manager.broadcastInterfaceEventAsync(event).get(2, TimeUnit.SECONDS);
 
     verify(mockRemote, org.mockito.Mockito.atLeastOnce())
         .sendBytesByFuture(org.mockito.ArgumentMatchers.any(ByteBuffer.class));
@@ -731,7 +733,7 @@ public class ClientSubscriptionManagerTest {
   }
 
   @Test
-  public void testBroadcastInterfaceEventSuppressedWhenRaceOver() {
+  public void testBroadcastInterfaceEventSuppressedWhenRaceOver() throws Exception {
     org.eclipse.jetty.websocket.api.RemoteEndpoint mockRemote =
         mock(org.eclipse.jetty.websocket.api.RemoteEndpoint.class);
     WsContext context = createMockWsContext(mockRemote);
@@ -746,7 +748,7 @@ public class ClientSubscriptionManagerTest {
 
     com.antigravity.proto.InterfaceEvent event =
         com.antigravity.proto.InterfaceEvent.newBuilder().build();
-    manager.broadcastInterfaceEvent(event);
+    manager.broadcastInterfaceEventAsync(event).get(2, TimeUnit.SECONDS);
 
     verify(mockRemote, never())
         .sendBytesByFuture(org.mockito.ArgumentMatchers.any(ByteBuffer.class));
@@ -955,5 +957,127 @@ public class ClientSubscriptionManagerTest {
     } finally {
       protocol.close();
     }
+  }
+
+  @Test
+  public void testAutoSaveAsyncAndDeleteAutoSaveAsync() throws Exception {
+    Race mockRace = mock(Race.class);
+    com.antigravity.models.Race realModel =
+        new com.antigravity.models.Race.Builder()
+            .withEntityId("asyncRaceId")
+            .withId(null)
+            .withName("Async Race")
+            .build();
+    when(mockRace.getRaceModel()).thenReturn(realModel);
+    when(mockRace.getTrack())
+        .thenReturn(
+            new Track.Builder()
+                .name("Track")
+                .lanes(Collections.emptyList())
+                .entityId("track1")
+                .id(null)
+                .build());
+    when(mockRace.getHeats()).thenReturn(Collections.emptyList());
+    when(mockRace.getState()).thenReturn(new Paused());
+
+    DatabaseContext dc = new DatabaseContext("test_db", null, System.getProperty("java.io.tmpdir"));
+    manager.setDatabaseContext(dc);
+    manager.setShuttingDown(false);
+
+    CompletableFuture<Void> saveFuture = manager.autoSaveAsync(mockRace);
+    org.junit.Assert.assertNotNull(saveFuture);
+    saveFuture.get(5, java.util.concurrent.TimeUnit.SECONDS);
+
+    RaceSaveData saved =
+        com.antigravity.service.DatabaseService.getInstance()
+            .getSavedRace(
+                dc, "autosave_asyncRaceId.json", com.antigravity.context.RaceScope.PRODUCTION);
+    org.junit.Assert.assertNotNull(saved);
+    org.junit.Assert.assertEquals(Paused.class.getName(), saved.getStateClassName());
+
+    CompletableFuture<Void> deleteFuture = manager.deleteAutoSaveAsync("asyncRaceId", false);
+    org.junit.Assert.assertNotNull(deleteFuture);
+    deleteFuture.get(5, java.util.concurrent.TimeUnit.SECONDS);
+
+    RaceSaveData deleted =
+        com.antigravity.service.DatabaseService.getInstance()
+            .getSavedRace(
+                dc, "autosave_asyncRaceId.json", com.antigravity.context.RaceScope.PRODUCTION);
+    org.junit.Assert.assertNull(deleted);
+  }
+
+  @Test
+  public void testBroadcast_RaceTimeCoalescing() throws Exception {
+    org.eclipse.jetty.websocket.api.RemoteEndpoint mockRemote =
+        mock(org.eclipse.jetty.websocket.api.RemoteEndpoint.class);
+    WsContext context = createMockWsContext(mockRemote);
+
+    manager.addSession(context);
+    manager.handleRaceSubscription(
+        context,
+        com.antigravity.proto.RaceSubscriptionRequest.newBuilder().setSubscribe(true).build());
+
+    org.mockito.Mockito.reset(mockRemote);
+
+    // Send rapid RaceTime updates
+    for (int i = 1; i <= 5; i++) {
+      com.antigravity.proto.RaceTime rt =
+          com.antigravity.proto.RaceTime.newBuilder().setTime((double) i).build();
+      manager.broadcast(RaceData.newBuilder().setRaceTime(rt).build());
+    }
+
+    // A non-RaceTime event flushes and guarantees all prior tasks on the worker are executed
+    RaceData marker =
+        RaceData.newBuilder()
+            .setLap(com.antigravity.proto.Lap.newBuilder().setLapNumber(99).build())
+            .build();
+    manager.broadcastAsync(marker).get(2, TimeUnit.SECONDS);
+
+    ArgumentCaptor<ByteBuffer> captor = ArgumentCaptor.forClass(ByteBuffer.class);
+    verify(mockRemote, atLeastOnce()).sendBytesByFuture(captor.capture());
+
+    // Verify the marker lap was delivered
+    boolean foundMarker = false;
+    for (ByteBuffer buf : captor.getAllValues()) {
+      byte[] bytes = new byte[buf.remaining()];
+      buf.duplicate().get(bytes);
+      RaceData data = RaceData.parseFrom(bytes);
+      if (data.hasLap() && data.getLap().getLapNumber() == 99) {
+        foundMarker = true;
+      }
+    }
+    assertTrue("Marker message must be delivered", foundMarker);
+  }
+
+  @Test
+  public void testAutoSaveAndDeleteOnSchedulerThreadDoesNotDeadlock() throws Exception {
+    DatabaseContext dc = new DatabaseContext("test_db", null, System.getProperty("java.io.tmpdir"));
+    manager.setDatabaseContext(dc);
+
+    Race mockRace = mock(Race.class);
+    com.antigravity.models.Race realModel =
+        new com.antigravity.models.Race.Builder()
+            .withName("Race")
+            .withEntityId("deadlockTestRaceId")
+            .build();
+    when(mockRace.getRaceModel()).thenReturn(realModel);
+    when(mockRace.getHeats()).thenReturn(Collections.emptyList());
+    IRaceState mockState = mock(IRaceState.class);
+    when(mockRace.getState()).thenReturn(mockState);
+
+    java.lang.reflect.Field schedulerField =
+        ClientSubscriptionManager.class.getDeclaredField("scheduler");
+    schedulerField.setAccessible(true);
+    java.util.concurrent.ScheduledExecutorService sched =
+        (java.util.concurrent.ScheduledExecutorService) schedulerField.get(manager);
+
+    java.util.concurrent.Future<?> future =
+        sched.submit(
+            () -> {
+              manager.autoSave(mockRace);
+              manager.deleteAutoSave("deadlockTestRaceId", false);
+            });
+
+    future.get(2, TimeUnit.SECONDS);
   }
 }

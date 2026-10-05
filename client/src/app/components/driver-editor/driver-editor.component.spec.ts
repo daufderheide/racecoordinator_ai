@@ -113,6 +113,23 @@ class MockEditorTitleComponent {
   delete = output<void>();
   selectedIdChange = output<string>();
   edit = output<void>();
+  showImport = input<boolean>(false);
+  importHelpTitleKey = input<string>("");
+  importHelpContentKey = input<string>("");
+  import = output<void>();
+}
+
+@Component({
+  selector: "app-import-modal",
+  standalone: true,
+  template: "",
+})
+class MockImportModalComponent {
+  visible = input<boolean>(false);
+  titleKey = input<string>("");
+  entityType = input<string>("");
+  close = output<void>();
+  imported = output<any>();
 }
 
 @Component({
@@ -198,6 +215,7 @@ describe("DriverEditorComponent", () => {
         MockItemSelectorComponent,
         MockImageSelectorComponent,
         MockEditorTitleComponent,
+        MockImportModalComponent,
         MockHelpOverlayComponent,
         MockTranslatePipe,
         MockAvatarUrlPipe,
@@ -281,10 +299,12 @@ describe("DriverEditorComponent", () => {
     const nameEl = fixture.nativeElement.querySelector("#driver-name-input");
     expect(nameEl).toBeTruthy();
     expect(nameEl.getAttribute("data-dashlane-ignore")).toBe("true");
+    expect(nameEl.getAttribute("data-dashlane-disabled-on-field")).toBe("true");
     expect(nameEl.getAttribute("data-1p-ignore")).toBe("true");
     expect(nameEl.getAttribute("data-lpignore")).toBe("true");
     expect(nameEl.getAttribute("data-bwignore")).toBe("true");
     expect(nameEl.getAttribute("data-form-type")).toBe("other");
+    expect(nameEl.getAttribute("data-field-type")).toBe("other");
     expect(nameEl.getAttribute("autocomplete")).toBe("off");
 
     const nicknameEl = fixture.nativeElement.querySelector(
@@ -292,10 +312,14 @@ describe("DriverEditorComponent", () => {
     );
     expect(nicknameEl).toBeTruthy();
     expect(nicknameEl.getAttribute("data-dashlane-ignore")).toBe("true");
+    expect(nicknameEl.getAttribute("data-dashlane-disabled-on-field")).toBe(
+      "true",
+    );
     expect(nicknameEl.getAttribute("data-1p-ignore")).toBe("true");
     expect(nicknameEl.getAttribute("data-lpignore")).toBe("true");
     expect(nicknameEl.getAttribute("data-bwignore")).toBe("true");
     expect(nicknameEl.getAttribute("data-form-type")).toBe("other");
+    expect(nicknameEl.getAttribute("data-field-type")).toBe("other");
     expect(nicknameEl.getAttribute("autocomplete")).toBe("off");
   });
 
@@ -1240,6 +1264,58 @@ describe("DriverEditorComponent", () => {
       expect(component.areAllSectionsExpanded()).toBeTrue();
       expect(component.sectionsExpanded.audio).toBeTrue();
     });
+
+    it("should toggle audio section correctly with and without forcedState", () => {
+      component.sectionsExpanded.audio = true;
+      component.toggleSection("audio");
+      expect(component.sectionsExpanded.audio).toBeFalse();
+
+      component.toggleSection("audio");
+      expect(component.sectionsExpanded.audio).toBeTrue();
+
+      component.toggleSection("audio", false);
+      expect(component.sectionsExpanded.audio).toBeFalse();
+
+      component.toggleSection("audio", true);
+      expect(component.sectionsExpanded.audio).toBeTrue();
+    });
+
+    it("should toggle audio section in a single header click in the DOM", () => {
+      component.sectionsExpanded.audio = true;
+      fixture.detectChanges();
+
+      const headerEl = fixture.debugElement.query(
+        By.css("#driver-audio-section .section-header"),
+      );
+      expect(headerEl).toBeTruthy();
+      expect(
+        fixture.debugElement.query(
+          By.css("#driver-audio-section .section-content"),
+        ),
+      ).toBeTruthy();
+
+      // Click once to close
+      headerEl.nativeElement.click();
+      fixture.detectChanges();
+
+      expect(component.sectionsExpanded.audio).toBeFalse();
+      expect(
+        fixture.debugElement.query(
+          By.css("#driver-audio-section .section-content"),
+        ),
+      ).toBeFalsy();
+
+      // Click once to open
+      headerEl.nativeElement.click();
+      fixture.detectChanges();
+
+      expect(component.sectionsExpanded.audio).toBeTrue();
+      expect(
+        fixture.debugElement.query(
+          By.css("#driver-audio-section .section-content"),
+        ),
+      ).toBeTruthy();
+    });
   });
 
   describe("guided help", () => {
@@ -1847,6 +1923,35 @@ describe("DriverEditorComponent", () => {
 
       expect(component.selectedDriverId).toBe("d1");
       expect(component.editingDriver?.name).toBe("Alice");
+    });
+  });
+
+  describe("Import Drivers Modal", () => {
+    it("should toggle showImportModal on open and close", () => {
+      expect(component.showImportModal).toBeFalse();
+      component.onOpenImportModal();
+      expect(component.showImportModal).toBeTrue();
+      component.showImportModal = false;
+      expect(component.showImportModal).toBeFalse();
+    });
+
+    it("should reload drivers and select newly created driver when import completes", () => {
+      component.onOpenImportModal();
+      expect(component.showImportModal).toBeTrue();
+
+      spyOn(component as any, "refreshDriverList");
+      spyOn(component, "onSelectDriverById");
+      component.onDriversImported({
+        success: true,
+        importedCount: 2,
+        updatedCount: 0,
+        skippedCount: 0,
+        createdDriverIds: ["d-new-1"],
+        messages: [],
+      });
+
+      expect((component as any).refreshDriverList).toHaveBeenCalled();
+      expect(component.onSelectDriverById).toHaveBeenCalledWith("d-new-1");
     });
   });
 });

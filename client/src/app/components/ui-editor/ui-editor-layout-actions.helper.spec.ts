@@ -146,10 +146,12 @@ describe("ui-editor-layout-actions.helper", () => {
   });
 
   describe("handleClearLayout", () => {
-    it("should clear widgets, reset selectedWidgetId to null, capture state, and refresh display", () => {
+    it("should clear widgets, reset selectedWidgetId to null, deactivate countdown preview, capture state, and refresh display", () => {
+      mockComp.countdownPreviewActiveByUi = { [ui.entity_id]: true };
       handleClearLayout(mockComp, ui);
 
       expect(mockComp.selectedWidgetId).toBeNull();
+      expect(mockComp.countdownPreviewActiveByUi[ui.entity_id]).toBeFalse();
       expect(mockComp.undoManager.captureState).toHaveBeenCalled();
       expect(mockComp.refreshDisplayProperties).toHaveBeenCalled();
       expect(mockComp.cdr.detectChanges).toHaveBeenCalled();

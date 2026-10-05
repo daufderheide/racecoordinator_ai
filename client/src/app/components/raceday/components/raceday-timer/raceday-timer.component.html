@@ -13,11 +13,12 @@
     <div
       #timerText
       class="timer-text"
-      [class.timer-warmup]="displayIsWarmup()"
+      [class.timer-warmup]="displayIsWarmup() || displayIsCooldown()"
       [class.timer-auto]="
         displayAutoStatusLabel() &&
         !showCountdownOverlay() &&
-        !displayIsWarmup()
+        !displayIsWarmup() &&
+        !displayIsCooldown()
       "
       [style.font-family]="widget()?.customSettings?.['timeFontFamily'] || null"
       [style.font-size.px]="
@@ -35,6 +36,10 @@
       @if (displayIsWarmup()) {
         <div class="warmup-label">
           {{ "RD_WARMUP" | translate }}
+        </div>
+      } @else if (displayIsCooldown()) {
+        <div class="warmup-label cooldown-label">
+          {{ "RD_COOLDOWN" | translate }}
         </div>
       }
     </div>

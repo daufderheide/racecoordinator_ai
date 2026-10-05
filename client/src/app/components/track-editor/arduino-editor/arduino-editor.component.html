@@ -16,8 +16,9 @@
           class="action-btn danger small"
           [disabled]="!isEditMode()"
           (click)="removeInterface($event)"
+          [title]="'TM_DELETE' | translate"
         >
-          X
+          <span class="material-icons">delete</span>
         </button>
       </div>
       @if (sectionsExpanded.arduino) {
@@ -159,6 +160,18 @@
                               (change)="updateArduinoConfig()"
                             />
                             {{ "AE_NORMALLY_CLOSED_RELAYS" | translate }}
+                          </label>
+                        </div>
+                        <div class="control-group">
+                          <label class="checkbox-label">
+                            <input
+                              [id]="'arduino-active-low-analog-leds-' + index()"
+                              type="checkbox"
+                              [disabled]="!isEditMode()"
+                              [(ngModel)]="config()!.activeLowAnalogLeds"
+                              (change)="updateArduinoConfig()"
+                            />
+                            {{ "AE_ACTIVE_LOW_ANALOG_LEDS" | translate }}
                           </label>
                         </div>
                       </div>
@@ -733,9 +746,9 @@
                                   class="icon-button delete"
                                   [disabled]="!isEditMode()"
                                   (click)="removeLedString(i, $event)"
-                                  [title]="'GEN_DELETE' | translate"
+                                  [title]="'TM_DELETE' | translate"
                                 >
-                                  <span class="material-icons">close</span>
+                                  <span class="material-icons">delete</span>
                                 </button>
                               </div>
                             </div>

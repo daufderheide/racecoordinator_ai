@@ -47,9 +47,12 @@ describe("AudioService", () => {
     mockAudioInstance = {
       play: jasmine.createSpy("play").and.returnValue(Promise.resolve()),
       pause: jasmine.createSpy("pause"),
+      load: jasmine.createSpy("load"),
       currentTime: 0,
       onended: null as any,
       onerror: null as any,
+      paused: true,
+      ended: false,
     };
     originalAudio = window.Audio;
     (window as any).Audio = jasmine
@@ -212,6 +215,69 @@ describe("AudioService", () => {
       expect(mockAudioInstance.volume).toBe(0.75);
       expect(mockAudioInstance.play).toHaveBeenCalled();
       expect(service.getActiveVoice()).toBeNull();
+    });
+  });
+
+  describe("preload", () => {
+    it("should do nothing if url is empty or undefined", () => {
+      service.preload("");
+      service.preload(undefined);
+      expect((window as any).Audio).not.toHaveBeenCalled();
+    });
+
+    it("should create Audio instance, set preload to auto and call load", () => {
+      const audio = service.preload("default_countdown_5");
+      expect((window as any).Audio).toHaveBeenCalledWith(
+        "http://localhost:7070/assets/default_countdown_5_Countdown_5",
+      );
+      expect(mockAudioInstance.load).toHaveBeenCalled();
+      expect(audio).toBe(mockAudioInstance as any);
+    });
+
+    it("should return cached Audio instance without re-instantiating", () => {
+      service.preload("default_countdown_5");
+      (window as any).Audio.calls.reset();
+      const cached = service.preload("default_countdown_5");
+      expect((window as any).Audio).not.toHaveBeenCalled();
+      expect(cached).toBe(mockAudioInstance as any);
+    });
+
+    it("should reuse preloaded audio instance in playSfx when paused", () => {
+      service.preload("default_countdown_5");
+      (window as any).Audio.calls.reset();
+      mockAudioInstance.paused = true;
+      mockAudioInstance.currentTime = 5;
+
+      const played = service.playSfx("default_countdown_5");
+      expect((window as any).Audio).not.toHaveBeenCalled();
+      expect(played).toBe(mockAudioInstance as any);
+      expect(mockAudioInstance.currentTime).toBe(0);
+      expect(mockAudioInstance.play).toHaveBeenCalled();
+    });
+
+    it("should reuse preloaded audio instance in playPresetVoice when paused", () => {
+      service.preload("w_heat_half.wav");
+      (window as any).Audio.calls.reset();
+      mockAudioInstance.paused = true;
+      mockAudioInstance.currentTime = 5;
+
+      const config: AudioConfig = { type: "preset", url: "w_heat_half.wav" };
+      const played = service.playCallout(config, "high");
+      expect(played).toBeTrue();
+      expect((window as any).Audio).not.toHaveBeenCalled();
+      expect(mockAudioInstance.currentTime).toBe(0);
+      expect(mockAudioInstance.play).toHaveBeenCalled();
+    });
+
+    it("should clear preloaded audio cache on reset", () => {
+      service.preload("default_countdown_5");
+      service.reset();
+      (window as any).Audio.calls.reset();
+
+      service.preload("default_countdown_5");
+      expect((window as any).Audio).toHaveBeenCalledWith(
+        "http://localhost:7070/assets/default_countdown_5_Countdown_5",
+      );
     });
   });
 
@@ -810,5 +876,66 @@ describe("AudioService", () => {
       service.reset();
       expect(service.getCalloutQueue().length).toBe(0);
     });
+
+    it("should log debug instead of error when voice preset playback is aborted or paused", fakeAsync(() => {
+      const abortError = new Error(
+        "The play() request was interrupted by a call to pause().",
+      );
+      abortError.name = "AbortError";
+      mockAudioInstance.play = jasmine
+        .createSpy("play")
+        .and.returnValue(Promise.reject(abortError));
+
+      const config: AudioConfig = { type: "preset", url: "w_heat_half.wav" };
+      service.playCallout(config, "high");
+      tick();
+      tick(500);
+
+      expect(mockLogger.debug).toHaveBeenCalledWith(
+        "Voice preset playback aborted or paused",
+        abortError.message,
+      );
+      expect(mockLogger.error).not.toHaveBeenCalledWith(
+        "Voice preset playback failed",
+        jasmine.anything(),
+      );
+    }));
+
+    it("should log error when voice preset playback fails with unexpected error", fakeAsync(() => {
+      const genericError = new Error("Decoding error");
+      mockAudioInstance.play = jasmine
+        .createSpy("play")
+        .and.returnValue(Promise.reject(genericError));
+
+      const config: AudioConfig = { type: "preset", url: "w_heat_half.wav" };
+      service.playCallout(config, "high");
+      tick();
+      tick(500);
+
+      expect(mockLogger.error).toHaveBeenCalledWith(
+        "Voice preset playback failed",
+        genericError,
+      );
+    }));
+
+    it("should log debug instead of error when SFX playback is aborted or paused", fakeAsync(() => {
+      const abortError = new Error("Interrupted by pause");
+      abortError.name = "AbortError";
+      mockAudioInstance.play = jasmine
+        .createSpy("play")
+        .and.returnValue(Promise.reject(abortError));
+
+      service.playSfx("default_countdown_5");
+      tick();
+
+      expect(mockLogger.debug).toHaveBeenCalledWith(
+        "SFX playback aborted or paused",
+        abortError.message,
+      );
+      expect(mockLogger.error).not.toHaveBeenCalledWith(
+        "Error playing SFX",
+        jasmine.anything(),
+      );
+    }));
   });
 });

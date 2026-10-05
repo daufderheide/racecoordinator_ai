@@ -36,6 +36,12 @@ The editor workspace is split into two synchronized working panels:
 
 ### Scoring Options
 - **Heat Scoring**: Configure heat completion by lap count or elapsed time limit, heat ranking method (laps or lap times), and tiebreakers.
+  - **Allow Finish**: Choose how cars complete their laps when the race leader finishes or heat time expires:
+    - *Do not allow finish*: Heat ends immediately when the condition is met.
+    - *Allow Finish*: All drivers continue until they complete the heat requirements.
+    - *Allow Finish (single lap)*: Drivers are allowed to finish their current lap; that single lap counts towards their total.
+    - *Do not allow finish (auto segments)*: Heat ends immediately and partial lap credit is calculated from the time elapsed on the current lap divided by the driver's median lap time (`autoSegments = timeSinceLastLap / medianLapTime`, capped at 0.99).
+    - *Allow Finish (single lap) (auto segments)*: Drivers are allowed to finish their current lap on the track; the single lap does not count as a full lap, but partial lap credit is calculated from the time spent racing before heat end divided by the driver's median lap time (`autoSegments = partialLapTime / medianLapTime`, capped at 0.99).
 - **Overall Scoring**: Configure overall race standings ranking method, tiebreaker rules, and dropped heats.
 - **Season Scoring**: Assign points distribution per position for season-long championships.
 

@@ -76,6 +76,105 @@
           [isCountdownPreviewActive]="isCountdownPreviewActive()"
         ></app-raceday-absolute-widget>
       }
+
+      @if (gridSession()) {
+        <div
+          class="lane-blueprint-overlay"
+          [style.left.px]="gridSession()!.bounds.x"
+          [style.top.px]="gridSession()!.bounds.y"
+          [style.width.px]="gridSession()!.bounds.width"
+          [style.height.px]="gridSession()!.bounds.height"
+        >
+          <div
+            class="grid-resize-handle handle-nw"
+            (pointerdown)="onGridResizeStart($event, 'nw')"
+          ></div>
+          <div
+            class="grid-resize-handle handle-n"
+            (pointerdown)="onGridResizeStart($event, 'n')"
+          ></div>
+          <div
+            class="grid-resize-handle handle-ne"
+            (pointerdown)="onGridResizeStart($event, 'ne')"
+          ></div>
+          <div
+            class="grid-resize-handle handle-e"
+            (pointerdown)="onGridResizeStart($event, 'e')"
+          ></div>
+          <div
+            class="grid-resize-handle handle-se"
+            (pointerdown)="onGridResizeStart($event, 'se')"
+          ></div>
+          <div
+            class="grid-resize-handle handle-s"
+            (pointerdown)="onGridResizeStart($event, 's')"
+          ></div>
+          <div
+            class="grid-resize-handle handle-sw"
+            (pointerdown)="onGridResizeStart($event, 'sw')"
+          ></div>
+          <div
+            class="grid-resize-handle handle-w"
+            (pointerdown)="onGridResizeStart($event, 'w')"
+          ></div>
+
+          @for (cell of getGridCells(); track cell.laneIndex) {
+            <div
+              class="lane-blueprint-cell"
+              [class.master-cell]="cell.isMaster"
+              [style.left.px]="cell.bounds.x - gridSession()!.bounds.x"
+              [style.top.px]="cell.bounds.y - gridSession()!.bounds.y"
+              [style.width.px]="cell.bounds.width"
+              [style.height.px]="cell.bounds.height"
+            >
+              <div
+                class="lane-blueprint-badge"
+                [class.master-badge]="cell.isMaster"
+              >
+                @if (cell.isMaster) {
+                  <i class="fas fa-crown"></i>
+                  {{
+                    (gridSession()!.bindingMode === "position"
+                      ? "UE_GRID_POSITION_MASTER_BADGE"
+                      : "UE_GRID_LANE_MASTER_BADGE"
+                    ) | translate
+                  }}
+                } @else {
+                  <i class="fas fa-clone"></i>
+                  {{
+                    (gridSession()!.bindingMode === "position"
+                      ? "UE_GRID_POSITION_MIRRORED_BADGE"
+                      : "UE_GRID_LANE_MIRRORED_BADGE"
+                    ) | translate: { index: cell.laneIndex + 1 }
+                  }}
+                }
+              </div>
+            </div>
+          }
+        </div>
+
+        <div class="lane-blueprint-toolbar">
+          <div class="lane-blueprint-title">
+            <i class="fas fa-layer-group me-1"></i>
+            {{
+              (gridSession()!.bindingMode === "position"
+                ? "UE_GRID_POSITION_MODE_TITLE"
+                : "UE_GRID_MODE_TITLE"
+              ) | translate: { count: gridSession()!.totalLanes }
+            }}
+          </div>
+          <div class="lane-blueprint-actions">
+            <button
+              type="button"
+              class="btn btn-sm btn-primary"
+              (click)="finishGrid.emit()"
+            >
+              <i class="fas fa-check me-1"></i>
+              {{ "UE_GRID_MODE_DONE" | translate }}
+            </button>
+          </div>
+        </div>
+      }
     </div>
 
     @if (!heat && errorMessage) {
@@ -187,7 +286,7 @@
                   (click)="clearToolboxSearch()"
                   title="Clear"
                 >
-                  ✕
+                  <span class="material-icons">close</span>
                 </button>
               }
             </div>
@@ -260,12 +359,94 @@
                               }}
                             </span>
                             <span class="toolbox-subgroup-badge">{{
-                              sg.widgets.length
+                              sg.totalCount !== undefined
+                                ? sg.totalCount
+                                : sg.widgets.length
                             }}</span>
                           </div>
 
                           @if (sg.expanded) {
-                            <div class="toolbox-subgroup-content">
+                            <div
+                              class="toolbox-subgroup-content"
+                              [class.has-nested-subgroups]="
+                                sg.subgroups && sg.subgroups.length > 0
+                              "
+                            >
+                              <!-- Nested Subfolders (Tier 3) -->
+                              @if (sg.subgroups && sg.subgroups.length > 0) {
+                                @for (
+                                  childSg of sg.subgroups;
+                                  track childSg.id
+                                ) {
+                                  <div
+                                    class="toolbox-subgroup-section tier3-subgroup"
+                                  >
+                                    <div
+                                      class="toolbox-subgroup-header tier3-subgroup-header"
+                                      (click)="
+                                        toggleToolboxSubgroup(childSg.id)
+                                      "
+                                      [class.expanded]="childSg.expanded"
+                                    >
+                                      <span
+                                        class="material-icons toolbox-folder-icon subfolder-icon"
+                                      >
+                                        {{
+                                          childSg.expanded
+                                            ? "folder_open"
+                                            : "folder"
+                                        }}
+                                      </span>
+                                      <span
+                                        class="toolbox-subgroup-title tier3-subgroup-title"
+                                      >
+                                        {{
+                                          group.isBuiltIn
+                                            ? (childSg.nameKey | translate)
+                                            : childSg.nameKey
+                                        }}
+                                      </span>
+                                      <span class="toolbox-subgroup-badge">{{
+                                        childSg.widgets.length
+                                      }}</span>
+                                    </div>
+
+                                    @if (childSg.expanded) {
+                                      <div
+                                        class="toolbox-subgroup-content tier3-subgroup-content"
+                                      >
+                                        @for (
+                                          w of childSg.widgets;
+                                          track w.type
+                                        ) {
+                                          <div
+                                            class="toolbox-widget-item nested-widget-item tier3-widget-item"
+                                            draggable="true"
+                                            (dragstart)="
+                                              onToolboxDragStart($event, w.type)
+                                            "
+                                            [title]="
+                                              w.type.startsWith('custom:')
+                                                ? w.labelKey
+                                                : (w.labelKey | translate)
+                                            "
+                                          >
+                                            <span class="toolbox-widget-label">
+                                              {{
+                                                w.type.startsWith("custom:")
+                                                  ? w.labelKey
+                                                  : (w.labelKey | translate)
+                                              }}
+                                            </span>
+                                          </div>
+                                        }
+                                      </div>
+                                    }
+                                  </div>
+                                }
+                              }
+
+                              <!-- Direct widgets in this Subgroup -->
                               @for (w of sg.widgets; track w.type) {
                                 <div
                                   class="toolbox-widget-item nested-widget-item"
@@ -342,11 +523,13 @@
 <app-login-dialog [visible]="showLoginModal" (close)="showLoginModal = false">
 </app-login-dialog>
 
-@if (showAddLapSectionsDialog && track) {
+@if (showAddLapSectionsDialog && (track || race.track)) {
   <app-add-lap-sections-dialog
     [visible]="showAddLapSectionsDialog"
     [driverHeatData]="selectedHeatDriver"
-    [numTrackSections]="track ? track.num_track_sections : 100"
+    [numTrackSections]="
+      track || race.track ? (track || race.track)!.num_track_sections : 100
+    "
     [laneBg]="
       selectedHeatDriver
         ? getLaneColor(selectedHeatDriver, 'background_color')
@@ -360,7 +543,7 @@
     [isAutoSegments]="isAutoSegments"
     [isMenuMode]="isMenuModeForAddLap"
     [heats]="heats"
-    [track]="track"
+    [track]="track || race.track"
     [currentHeatNumber]="heat?.heatNumber ?? 0"
     (confirm)="onAddLapSectionsConfirm($event)"
     (cancel)="showAddLapSectionsDialog = false"

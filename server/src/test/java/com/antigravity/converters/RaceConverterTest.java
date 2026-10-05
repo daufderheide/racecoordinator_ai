@@ -113,6 +113,68 @@ public class RaceConverterTest {
   }
 
   @Test
+  public void testToProto_AllowFinish_NoneAutoSegments() {
+    HeatScoring heatScoring =
+        new HeatScoring(
+            HeatScoring.FinishMethod.Timed,
+            15,
+            HeatScoring.HeatRanking.LAP_COUNT,
+            HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME,
+            HeatScoring.AllowFinish.NoneAutoSegments);
+    Race race =
+        new Race.Builder()
+            .withName("Test Race")
+            .withTrackEntityId("track-id")
+            .withHeatScoring(heatScoring)
+            .build();
+    Track track =
+        new Track.Builder()
+            .name("Test Track")
+            .lanes(new ArrayList<>())
+            .arduinoConfigs(null)
+            .entityId("track-id")
+            .id(null)
+            .build();
+
+    RaceModel proto = RaceConverter.toProto(race, track, new HashSet<>());
+
+    assertEquals(
+        com.antigravity.proto.HeatScoring.AllowFinish.AF_NONE_AUTO_SEGMENTS,
+        proto.getHeatScoring().getAllowFinish());
+  }
+
+  @Test
+  public void testToProto_AllowFinish_SingleLapAutoSegments() {
+    HeatScoring heatScoring =
+        new HeatScoring(
+            HeatScoring.FinishMethod.Timed,
+            15,
+            HeatScoring.HeatRanking.LAP_COUNT,
+            HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME,
+            HeatScoring.AllowFinish.SingleLapAutoSegments);
+    Race race =
+        new Race.Builder()
+            .withName("Test Race")
+            .withTrackEntityId("track-id")
+            .withHeatScoring(heatScoring)
+            .build();
+    Track track =
+        new Track.Builder()
+            .name("Test Track")
+            .lanes(new ArrayList<>())
+            .arduinoConfigs(null)
+            .entityId("track-id")
+            .id(null)
+            .build();
+
+    RaceModel proto = RaceConverter.toProto(race, track, new HashSet<>());
+
+    assertEquals(
+        com.antigravity.proto.HeatScoring.AllowFinish.AF_SINGLE_LAP_AUTO_SEGMENTS,
+        proto.getHeatScoring().getAllowFinish());
+  }
+
+  @Test
   public void testToProto_AnalogFuelOptions() {
     HeatScoring heatScoring =
         new HeatScoring(

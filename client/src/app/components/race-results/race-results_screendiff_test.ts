@@ -289,7 +289,7 @@ test.describe("Race Results Visuals", () => {
     );
   });
 
-  test("should display race results in fullscreen mode with navigation buttons", async ({
+  test("should display race results in fullscreen mode with close button", async ({
     page,
   }) => {
     const mockData = RaceResultsHelper.createMockRaceData();

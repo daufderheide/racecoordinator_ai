@@ -84,9 +84,27 @@ describe("DriverHeatData", () => {
     heatData.adjustedLapCount = 1.75;
     expect(heatData.lapCount).toBe(1.75);
 
-    // If adjustedLapCount is 0, it uses the fallback formula
+    // If adjustedLapCount is 0 (e.g. 1 lap with 1 penalty lap), it preserves 0
     heatData.adjustedLapCount = 0;
-    expect(heatData.lapCount).toBe(1 + -0.5 + 1.0 + 0.25); // 1.75
+    expect(heatData.lapCount).toBe(0);
+
+    // If adjustedLapCount is negative (e.g. false start with penalty)
+    heatData.adjustedLapCount = -1;
+    expect(heatData.lapCount).toBe(-1);
+
+    // If adjustedLapCount is null, it uses the fallback formula
+    heatData.adjustedLapCount = null;
+    expect(heatData.lapCount).toBe(1 - 0.5 + 1.0 + 0.25); // 1.75
+  });
+
+  it("should calculate lapCount correctly when adjustedLapCount is null but laps exist and no penalty", () => {
+    heatData.reset();
+    heatData.addLapTime(1, 10.0, 10.0, 10.0, 10.0, 0);
+    heatData.addLapTime(2, 9.8, 9.9, 9.9, 9.8, 0);
+    heatData.adjustedLapCount = null;
+    expect(heatData.penaltyLaps).toBe(0);
+    expect(heatData.physicalLapCount).toBe(2);
+    expect(heatData.lapCount).toBe(2);
   });
 
   it("should calculate physicalLapCount strictly from physical laps regardless of adjustments", () => {

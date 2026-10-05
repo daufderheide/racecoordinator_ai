@@ -176,7 +176,13 @@ public class HeatOver implements IRaceState {
   public void onCarData(CarData carData) {}
 
   private void startAutoAdvanceTimer(final Race race) {
-    scheduler = Executors.newScheduledThreadPool(1);
+    scheduler =
+        Executors.newSingleThreadScheduledExecutor(
+            r -> {
+              Thread t = new Thread(r, "HeatOverTicker");
+              t.setDaemon(true);
+              return t;
+            });
     final Runnable ticker =
         new Runnable() {
           long lastTime = 0;
@@ -216,7 +222,7 @@ public class HeatOver implements IRaceState {
                   lastFlag = currentFlag;
                 }
 
-                race.setRaceState(RaceState.HEAT_OVER, currentFlag, remaining);
+                race.syncRaceState(RaceState.HEAT_OVER, currentFlag, remaining);
                 broadcastTime(race);
               }
             } catch (Exception e) {

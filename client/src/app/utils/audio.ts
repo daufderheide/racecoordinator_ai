@@ -28,10 +28,17 @@ export interface TTSRaceData {
   name?: string;
   trackName?: string;
   totalHeats?: number;
+  getNumTrackSections?: number;
+  getLaneCount?: number;
+  laneCount?: number;
+  track?: TTSTrackData;
 }
 
 export interface TTSTrackData {
   name?: string;
+  getNumTrackSections?: number;
+  getLaneCount?: number;
+  laneCount?: number;
 }
 
 export interface TTSHeatData {
@@ -350,6 +357,28 @@ export const DEFAULT_AUDIO_URLS: Record<string, string> = {
   default_countdown_3: "/assets/default_countdown_3_Countdown_3",
   default_countdown_4: "/assets/default_countdown_4_Countdown_4",
   default_countdown_5: "/assets/default_countdown_5_Countdown_5",
+  default_seconds_left_300:
+    "/assets/default_seconds_left_300_Seconds_Left_--_5_Minutes",
+  default_seconds_left_240:
+    "/assets/default_seconds_left_240_Seconds_Left_--_4_Minutes",
+  default_seconds_left_180:
+    "/assets/default_seconds_left_180_Seconds_Left_--_3_Minutes",
+  default_seconds_left_120:
+    "/assets/default_seconds_left_120_Seconds_Left_--_2_Minutes",
+  default_seconds_left_60:
+    "/assets/default_seconds_left_60_Seconds_Left_--_1_Minute",
+  default_seconds_left_30:
+    "/assets/default_seconds_left_30_Seconds_Left_--_30_Seconds",
+  default_seconds_left_25:
+    "/assets/default_seconds_left_25_Seconds_Left_--_25_Seconds",
+  default_seconds_left_20:
+    "/assets/default_seconds_left_20_Seconds_Left_--_20_Seconds",
+  default_seconds_left_15:
+    "/assets/default_seconds_left_15_Seconds_Left_--_15_Seconds",
+  default_seconds_left_10:
+    "/assets/default_seconds_left_10_Seconds_Left_--_10_Seconds",
+  default_seconds_left_5:
+    "/assets/default_seconds_left_5_Seconds_Left_--_5_Seconds",
   default_heat_half: "/assets/default_heat_half_Seconds_Left_--_Halfway",
   default_heat_over: "/assets/default_heat_over_Heat_Over",
   default_race_over: "/assets/default_race_over_Race_Over",
@@ -393,6 +422,9 @@ export const DEFAULT_AUDIO_NAMES: Record<string, string> = {
   default_seconds_left_15: "Seconds Left -- 15 Seconds",
   default_seconds_left_10: "Seconds Left -- 10 Seconds",
   default_seconds_left_5: "Seconds Left -- 5 Seconds",
+  default_laps_left: "Default Laps Left",
+  default_auto_start: "Default Auto Start",
+  default_auto_advance: "Default Auto Advance",
   default_heat_half: "Seconds Left -- Halfway",
   default_heat_over: "Heat Over",
   default_race_over: "Race Over",
@@ -436,6 +468,11 @@ export function getDefaultAudioName(
   if (trimmed.includes("default_new_heat_leader")) return "New Heat Leader";
   if (trimmed.includes("default_pit_in")) return "Pit In";
   if (trimmed.includes("default_fuel_level")) return "Default Fuel Level";
+  if (trimmed.includes("default_auto_start")) return "Default Auto Start";
+  if (trimmed.includes("default_auto_advance")) return "Default Auto Advance";
+  if (trimmed.includes("default_laps_left")) return "Default Laps Left";
+  if (trimmed.includes("default_countdown")) return "Default Countdown";
+  if (trimmed.includes("default_seconds_left")) return "Default Seconds Left";
   if (trimmed.includes("default_yellow_flag")) return "Yellow Flag";
 
   return undefined;
@@ -450,13 +487,24 @@ export function resolveAudioUrl(
   if (url.startsWith("http://") || url.startsWith("https://")) {
     return url;
   }
+  const base = serverUrl.endsWith("/") ? serverUrl.slice(0, -1) : serverUrl;
   if (url.startsWith("/")) {
-    return `${serverUrl}${url}`;
+    return `${base}${url}`;
   }
   if (DEFAULT_AUDIO_URLS[url]) {
-    return `${serverUrl}${DEFAULT_AUDIO_URLS[url]}`;
+    return `${base}${DEFAULT_AUDIO_URLS[url]}`;
   }
-  return `${serverUrl}/api/assets/download/${url}`;
+  for (const defaultUrl of Object.values(DEFAULT_AUDIO_URLS)) {
+    if (
+      defaultUrl === `/${url}` ||
+      defaultUrl === url ||
+      defaultUrl === `/assets/${url}` ||
+      defaultUrl.endsWith(`/${url}`)
+    ) {
+      return `${base}${defaultUrl}`;
+    }
+  }
+  return `${base}/api/assets/download/${url}`;
 }
 
 export interface PlaySoundOptions {
@@ -488,6 +536,171 @@ function getSavedAudioSettings(): PlaySoundOptions {
   return {};
 }
 
+const activeUtterances = new Set<SpeechSynthesisUtterance>();
+
+export function retainUtterance(utterance: SpeechSynthesisUtterance): void {
+  activeUtterances.add(utterance);
+}
+
+export function releaseUtterance(
+  utterance: SpeechSynthesisUtterance | null | undefined,
+): void {
+  if (utterance) {
+    activeUtterances.delete(utterance);
+  }
+}
+
+let globalAudioUnlocked = false;
+
+/**
+ * Initializes global user gesture listeners to unlock web audio and speech synthesis.
+ * Unlocks the Web Audio AudioContext and ensures SpeechSynthesis is not in a paused state.
+ */
+export function initGlobalAudioUnlocker(): void {
+  if (typeof window === "undefined" || globalAudioUnlocked) return;
+
+  const unlock = () => {
+    try {
+      if (window.speechSynthesis && window.speechSynthesis.paused) {
+        window.speechSynthesis.resume();
+      }
+      const AudioCtx =
+        window.AudioContext || (window as any).webkitAudioContext;
+      if (AudioCtx) {
+        const ctx = new AudioCtx();
+        if (ctx.state === "suspended") {
+          ctx.resume().catch(() => {});
+        }
+        const buffer = ctx.createBuffer(1, 1, 22050);
+        const source = ctx.createBufferSource();
+        source.buffer = buffer;
+        source.connect(ctx.destination);
+        source.start(0);
+        setTimeout(() => {
+          if (ctx.state !== "closed") {
+            ctx.close().catch(() => {});
+          }
+        }, 100);
+      }
+    } catch {
+      // ignore
+    }
+
+    globalAudioUnlocked = true;
+    window.removeEventListener("click", unlock, true);
+    window.removeEventListener("keydown", unlock, true);
+    window.removeEventListener("touchstart", unlock, true);
+    window.removeEventListener("pointerdown", unlock, true);
+  };
+
+  window.addEventListener("click", unlock, { capture: true, once: false });
+  window.addEventListener("keydown", unlock, { capture: true, once: false });
+  window.addEventListener("touchstart", unlock, { capture: true, once: false });
+  window.addEventListener("pointerdown", unlock, {
+    capture: true,
+    once: false,
+  });
+}
+
+function playPresetAudio(
+  url: string,
+  serverUrl: string,
+  masterVolume: number,
+  logger?: LoggerService,
+): HTMLAudioElement {
+  const playableUrl = resolveAudioUrl(url, serverUrl);
+  if (logger) logger.debug("Playing audio from URL:", playableUrl);
+  const audio = new Audio(playableUrl);
+  audio.volume = Math.max(0, Math.min(1, masterVolume / 100));
+  audio.play().catch((err) => {
+    if (logger) logger.error("Error playing sound", err);
+  });
+  return audio;
+}
+
+function playTtsAudio(
+  text: string,
+  data: any,
+  options: {
+    ttsVoice?: string;
+    ttsRate?: number;
+    ttsPitch?: number;
+    ttsVolume?: number;
+    masterVolume?: number;
+  },
+  logger?: LoggerService,
+): void {
+  let interpolatedText = text;
+  if (data) {
+    interpolatedText = interpolate(text, data);
+  }
+
+  if (!(window as any).SUPPRESS_AUDIO_LOGS && logger) {
+    logger.debug("Playing TTS:", interpolatedText);
+  }
+  if (!window.speechSynthesis) {
+    if (logger) logger.warn("Text-to-speech not supported in this browser.");
+    return;
+  }
+
+  try {
+    window.speechSynthesis.cancel();
+  } catch {
+    // ignore
+  }
+  const utterance = new SpeechSynthesisUtterance(interpolatedText);
+  retainUtterance(utterance);
+  utterance.onend = () => releaseUtterance(utterance);
+  utterance.onerror = () => releaseUtterance(utterance);
+  if (!utterance.lang) {
+    utterance.lang = "en-US";
+  }
+  if (
+    options.ttsVoice &&
+    typeof window.speechSynthesis.getVoices === "function"
+  ) {
+    try {
+      const voices = window.speechSynthesis.getVoices() || [];
+      const trimmed = options.ttsVoice.trim().toLowerCase();
+      const match = voices.find(
+        (v) =>
+          v.name === options.ttsVoice ||
+          v.voiceURI === options.ttsVoice ||
+          (v.name && v.name.trim().toLowerCase() === trimmed) ||
+          (v.voiceURI && v.voiceURI.trim().toLowerCase() === trimmed),
+      );
+      if (match) {
+        utterance.voice = match;
+      }
+    } catch {
+      // Ignored
+    }
+  }
+  if (options.ttsRate != null) {
+    utterance.rate = Math.max(0.1, Math.min(10, options.ttsRate));
+  }
+  if (options.ttsPitch != null) {
+    utterance.pitch = Math.max(0, Math.min(2, options.ttsPitch));
+  }
+  const effMaster =
+    typeof options.masterVolume === "number" && !isNaN(options.masterVolume)
+      ? options.masterVolume
+      : 100;
+  const effTts =
+    typeof options.ttsVolume === "number" && !isNaN(options.ttsVolume)
+      ? options.ttsVolume
+      : 100;
+  const masterVol = Math.max(0, Math.min(1, effMaster / 100));
+  const ttsVol = Math.max(0, Math.min(1, effTts / 100));
+  const finalVol = masterVol * ttsVol;
+  utterance.volume = isNaN(finalVol) ? 1.0 : finalVol;
+
+  if (window.speechSynthesis.paused) {
+    window.speechSynthesis.resume();
+  }
+  window.speechSynthesis.speak(utterance);
+}
+
 /** Plays a sound based on the provided configuration. */
 export function playSound(
   type: "preset" | "tts" | "none" | "audio_set" | undefined,
@@ -504,76 +717,22 @@ export function playSound(
     options?.masterVolume !== undefined
       ? options.masterVolume
       : (saved.masterVolume ?? 100);
-  const ttsVoice =
-    options?.ttsVoice !== undefined ? options.ttsVoice : saved.ttsVoice;
-  const ttsRate =
-    options?.ttsRate !== undefined ? options.ttsRate : (saved.ttsRate ?? 1.0);
-  const ttsPitch =
-    options?.ttsPitch !== undefined
-      ? options.ttsPitch
-      : (saved.ttsPitch ?? 1.0);
-  const ttsVolume =
-    options?.ttsVolume !== undefined
-      ? options.ttsVolume
-      : (saved.ttsVolume ?? 100);
 
   if (type === "preset" && url) {
-    const playableUrl = resolveAudioUrl(url, serverUrl);
-    if (logger) logger.debug("Playing audio from URL:", playableUrl);
-    const audio = new Audio(playableUrl);
-    audio.volume = Math.max(0, Math.min(1, masterVolume / 100));
-    audio.play().catch((err) => {
-      if (logger) logger.error("Error playing sound", err);
-    });
-    return audio;
+    return playPresetAudio(url, serverUrl, masterVolume, logger);
   } else if (type === "tts" && text) {
-    let interpolatedText = text;
-    if (data) {
-      interpolatedText = interpolate(text, data);
-    }
-
-    if (!(window as any).SUPPRESS_AUDIO_LOGS && logger) {
-      logger.debug("Playing TTS:", interpolatedText);
-    }
-    if (window.speechSynthesis) {
-      // Cancel any current speech
-      window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(interpolatedText);
-      if (ttsVoice && typeof window.speechSynthesis.getVoices === "function") {
-        try {
-          const voices = window.speechSynthesis.getVoices() || [];
-          const trimmed = ttsVoice.trim().toLowerCase();
-          const match = voices.find(
-            (v) =>
-              v.name === ttsVoice ||
-              v.voiceURI === ttsVoice ||
-              (v.name && v.name.trim().toLowerCase() === trimmed) ||
-              (v.voiceURI && v.voiceURI.trim().toLowerCase() === trimmed),
-          );
-          if (match) {
-            utterance.voice = match;
-          }
-        } catch {
-          // Ignored
-        }
-      }
-      if (ttsRate != null) {
-        utterance.rate = Math.max(0.1, Math.min(10, ttsRate));
-      }
-      if (ttsPitch != null) {
-        utterance.pitch = Math.max(0, Math.min(2, ttsPitch));
-      }
-      const masterVol = Math.max(0, Math.min(1, masterVolume / 100));
-      const ttsVol = Math.max(0, Math.min(1, ttsVolume / 100));
-      utterance.volume = masterVol * ttsVol;
-
-      if (window.speechSynthesis.paused) {
-        window.speechSynthesis.resume();
-      }
-      window.speechSynthesis.speak(utterance);
-    } else {
-      if (logger) logger.warn("Text-to-speech not supported in this browser.");
-    }
+    playTtsAudio(
+      text,
+      data,
+      {
+        ttsVoice: options?.ttsVoice ?? saved.ttsVoice,
+        ttsRate: options?.ttsRate ?? saved.ttsRate ?? 1.0,
+        ttsPitch: options?.ttsPitch ?? saved.ttsPitch ?? 1.0,
+        ttsVolume: options?.ttsVolume ?? saved.ttsVolume ?? 100,
+        masterVolume,
+      },
+      logger,
+    );
   } else {
     if (logger) logger.debug("No sound to play (missing type, url, or text)");
   }
@@ -584,7 +743,7 @@ export function interpolate(text: string, data: any): string {
     return text || "";
   }
   return text.replace(/\$?\{([^{}]+)\}/g, (match, path) => {
-    const cleanPath = path.trim();
+    const cleanPath = path.trim().replace(/\(\)$/, "");
     if (!cleanPath) {
       return match;
     }
@@ -653,6 +812,15 @@ export function createTTSContext(
             name: race.name || "",
             trackName: race.trackName || "",
             totalHeats: race.totalHeats || 0,
+            getNumTrackSections: track?.getNumTrackSections ?? 0,
+            getLaneCount: track?.getLaneCount ?? track?.laneCount ?? 0,
+            laneCount: track?.laneCount ?? track?.getLaneCount ?? 0,
+            track: {
+              name: track?.name || race.trackName || "",
+              getNumTrackSections: track?.getNumTrackSections ?? 0,
+              getLaneCount: track?.getLaneCount ?? track?.laneCount ?? 0,
+              laneCount: track?.laneCount ?? track?.getLaneCount ?? 0,
+            },
           },
         }
       : {}),
@@ -660,12 +828,18 @@ export function createTTSContext(
       ? {
           track: {
             name: track.name || "",
+            getNumTrackSections: track.getNumTrackSections ?? 0,
+            getLaneCount: track.getLaneCount ?? track.laneCount ?? 0,
+            laneCount: track.laneCount ?? track.getLaneCount ?? 0,
           },
         }
       : race?.trackName
         ? {
             track: {
               name: race.trackName,
+              getNumTrackSections: 0,
+              getLaneCount: 0,
+              laneCount: 0,
             },
           }
         : {}),

@@ -152,6 +152,7 @@ Définit la durée d'antirebond en **microsecondes** ($1\text{ ms} = 1000\,\mu\t
 #### Inversion Logique (Normalement Fermé / NC)
 - **Capteurs de Voie Normalement Fermés (NC)** : À activer si le capteur délivre un niveau haut au repos et passe à l'état bas au passage d'une voiture (cas typique des cellules photoélectriques). À désactiver sur dead strips ou reeds.
 - **Relais Normalement Fermés (NC)** : À activer si le relais s'excite pour couper l'alimentation et retombe au repos pour alimenter la piste. Garantit que la piste reste sous tension même si l'ordinateur est éteint.
+- **LEDs Analogiques Actives Basses (Active Low Analog LEDs)** : À activer si vos LEDs analogiques (feux de départ, drapeaux ou témoins de leader) s'allument à l'état BAS (0V) et s'éteignent à l'état HAUT (5V). Cela résout le comportement inversé pour les câblages à anode commune sur Arduino et Phidget.
 
 #### Comportement Stand sur Broche de Tour
 Permet au capteur de ligne d'assurer le ravitaillement en course avec essence :
@@ -258,6 +259,7 @@ La barre d'outils supérieure de l'Éditeur de Circuits propose les outils de ge
 - **Ajouter un Circuit (+)** : Crée un nouveau modèle de circuit et active le mode édition.
 - **Dupliquer le Circuit** : Crée une copie conforme sous un nouveau nom unique, idéal pour tester des variantes sans altérer le circuit principal.
 - **Modifier / Terminer l'Édition** : Bascule entre le mode lecture seule et le mode édition. En quittant le mode édition, les modifications sont validées et enregistrées.
+- **Tout développer / réduire** : Développe ou réduit toutes les sections de configuration et panneaux d'interfaces en une seule fois.
 - **Supprimer le Circuit** : Supprime le circuit sélectionné après confirmation.
 - **Annuler (`Ctrl+Z`) / Rétablir (`Ctrl+Y`)** : Historique complet pour rétablir facilement tout changement.
 - **Aide (`?`)** : Lance une visite interactive guidée de chaque élément à l'écran.
@@ -273,6 +275,10 @@ La barre d'outils supérieure de l'Éditeur de Circuits propose les outils de ge
 ### Ravitaillement Sans Fin
 - **Symptôme** : Les voitures se mettent à ravitailler sans arrêt dès qu'elles sont sur la piste.
 - **Solution** : Changez l'état de la case **Capteurs de Voie Normalement Fermés (Normally Closed Lane Sensors)**.
+
+### LEDs Analogiques Inversées (Allumées au lieu d'être éteintes)
+- **Symptôme** : Les feux de départ, drapeaux ou témoins de leader sont allumés au repos et s'éteignent lors des phases actives.
+- **Solution** : Cochez la case **LEDs analogiques actives basses (Active Low Analog LEDs)** dans la configuration de votre interface (Arduino ou Phidget).
 
 ### Tours Doubles ou Passages Manqués
 - **Solution** : Augmentez l'antirebond (Debounce) en cas de doubles comptages ; diminuez-le si des voitures très rapides ne sont pas détectées, et vérifiez l'alignement des cellules optiques.

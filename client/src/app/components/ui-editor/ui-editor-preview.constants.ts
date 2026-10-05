@@ -7,6 +7,7 @@ export const MOCK_RACEDAY_PROPERTIES = {
   formattedTime: "0:00.00",
   autoStatusLabel: "",
   isWarmup: false,
+  isCooldown: false,
   showCountdownOverlay: false,
   raceRecordLapNickname: "RecordHolder",
   raceRecordLapTime: "5.000",

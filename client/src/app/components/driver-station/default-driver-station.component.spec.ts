@@ -1463,4 +1463,117 @@ describe("DefaultDriverStationComponent", () => {
       );
     });
   });
+
+  describe("Countdown Audio Preloading & Conditional Latching", () => {
+    it("should preload countdown audio entries across seconds 0 through 5", () => {
+      const audioService = (component as any).audioService as AudioService;
+      spyOn(audioService, "preload").and.callThrough();
+
+      mockThemeService.resolveAudioConfig.and.returnValue({
+        type: "audio_set",
+        url: "countdown_set",
+      });
+
+      component["assets"] = [
+        {
+          _id: "countdown_set",
+          model: { entityId: "countdown_set" },
+          type: "audio_set",
+          audioEntries: [
+            {
+              timeSeconds: 5,
+              url: "/assets/5.wav",
+              type: "preset",
+              triggerMode: "remaining",
+            },
+            {
+              timeSeconds: 3,
+              url: "/assets/3.wav",
+              type: "preset",
+              triggerMode: "remaining",
+            },
+            {
+              timeSeconds: 0,
+              url: "/assets/go.wav",
+              type: "preset",
+              triggerMode: "remaining",
+            },
+          ],
+        },
+      ];
+
+      (component as any).preloadCountdownAudio();
+
+      expect(audioService.preload).toHaveBeenCalledWith(
+        jasmine.stringMatching("/assets/5.wav"),
+      );
+      expect(audioService.preload).toHaveBeenCalledWith(
+        jasmine.stringMatching("/assets/3.wav"),
+      );
+      expect(audioService.preload).toHaveBeenCalledWith(
+        jasmine.stringMatching("/assets/go.wav"),
+      );
+    });
+
+    it("should not latch lastPlayedCountdownSecond when playAudioFromSet fails", () => {
+      mockThemeService.resolveAudioConfig.and.returnValue({
+        type: "audio_set",
+        url: "countdown_set",
+      });
+      component["assets"] = [];
+      component["raceState"] = RaceState.STARTING;
+      (component as any).lastPlayedCountdownSecond = -1;
+
+      const raceTimeSubject = new Subject<any>();
+      mockRaceConnectionService.raceTime$ = raceTimeSubject.asObservable();
+      component.ngOnInit();
+
+      raceTimeSubject.next({ time: 5.0 });
+
+      expect((component as any).lastPlayedCountdownSecond).toBe(-1);
+    });
+
+    it("should latch lastPlayedCountdownSecond when playAudioFromSet succeeds", () => {
+      mockThemeService.resolveAudioConfig.and.returnValue({
+        type: "audio_set",
+        url: "countdown_set",
+      });
+      const mockAssets = [
+        {
+          _id: "countdown_set",
+          model: { entityId: "countdown_set" },
+          type: "audio_set",
+          audioEntries: [
+            {
+              timeSeconds: 5,
+              url: "/assets/5.wav",
+              type: "preset",
+              triggerMode: "remaining",
+            },
+          ],
+        },
+      ];
+      mockDataService.listAssets.and.returnValue(of(mockAssets));
+      component["race"] = { start_time: 5.0 } as any;
+      component["raceState"] = RaceState.STARTING;
+      (component as any).lastPlayedCountdownSecond = -1;
+
+      const raceTimeSubject = new Subject<any>();
+      mockRaceConnectionService.raceTime$ = raceTimeSubject.asObservable();
+      component.ngOnInit();
+
+      raceTimeSubject.next({ time: 5.0 });
+
+      expect((component as any).lastPlayedCountdownSecond).toBe(5);
+    });
+  });
+
+  it("should render app-browser-navigation with mode='navigation'", () => {
+    fixture.detectChanges();
+    const navEl = fixture.nativeElement.querySelector("app-browser-navigation");
+    expect(navEl).toBeTruthy();
+    expect(
+      navEl.getAttribute("mode") || navEl.getAttribute("ng-reflect-mode"),
+    ).toBe("navigation");
+  });
 });

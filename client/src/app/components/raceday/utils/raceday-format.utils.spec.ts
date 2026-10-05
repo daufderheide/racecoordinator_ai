@@ -455,6 +455,52 @@ describe("RacedayFormatUtils", () => {
         ),
       ).toBe("--");
     });
+
+    it("should respect columnDecimals override for ghost pacing columns", () => {
+      const mockHd = {
+        actualDriver: { name: "Driver A" },
+        ghostLapTime: 5.234,
+        lastLapTime: 5.0,
+      } as any;
+      const ctxWithOverride = {
+        ...ctx,
+        laneViewWidgetSettings: {
+          columnDecimals: { ghostPacing: 1 },
+        },
+      };
+
+      const result = RacedayFormatUtils.formatValue(
+        "ghostPacing",
+        undefined,
+        mockHd,
+        undefined,
+        ctxWithOverride,
+      );
+      expect(result).toBe("+0.2s");
+    });
+
+    it("should normalize negative zero when rounding delta to zero", () => {
+      const mockHd = {
+        actualDriver: { name: "Driver A" },
+        ghostLapTime: 5.0,
+        lastLapTime: 5.001,
+      } as any;
+      const ctxWithZeroDecimals = {
+        ...ctx,
+        laneViewWidgetSettings: {
+          columnDecimals: { ghostPacing: 1 },
+        },
+      };
+
+      const result = RacedayFormatUtils.formatValue(
+        "ghostPacing",
+        undefined,
+        mockHd,
+        undefined,
+        ctxWithZeroDecimals,
+      );
+      expect(result).toBe("0.0s");
+    });
   });
 
   describe("formatValue - recordLapTime", () => {
@@ -1001,6 +1047,18 @@ describe("RacedayFormatUtils", () => {
           heat_scoring: { allowFinish: AllowFinish.AF_SINGLE_LAP },
         } as any),
       ).toBeTrue();
+      expect(
+        RacedayFormatUtils.isAllowFinish({
+          heat_scoring: {
+            allowFinish: AllowFinish.AF_SINGLE_LAP_AUTO_SEGMENTS,
+          },
+        } as any),
+      ).toBeTrue();
+      expect(
+        RacedayFormatUtils.isAllowFinish({
+          heat_scoring: { allow_finish: "SingleLapAutoSegments" },
+        } as any),
+      ).toBeTrue();
     });
 
     it("should return flag URL based on value when flag is valid", () => {
@@ -1233,6 +1291,520 @@ describe("RacedayFormatUtils", () => {
           ctx,
         ),
       ).toBe("--.---");
+    });
+  });
+
+  describe("formatValue & getPropertyValue - Overall Columns", () => {
+    let participantHd: any;
+
+    beforeEach(() => {
+      participantHd = {
+        objectId: "p-1",
+        laneIndex: 0,
+        actualDriver: { name: "Driver One" },
+        participant: {
+          objectId: "p-1",
+          rank: 2,
+          seed: 1,
+          totalLaps: 50.25,
+          physicalLapCount: 50,
+          totalTime: 320.456,
+          bestLapTime: 5.123,
+          averageLapTime: 6.409,
+          medianLapTime: 6.35,
+          consistencyScore: 92.5,
+          standardDeviation: 0.145,
+          gapLeader: 1.234,
+          gapPosition: 0.567,
+          gapLeaderF1: 1.234,
+          gapPositionF1: 0.567,
+          lapsDownLeader: 0,
+          lapsDownPosition: 1,
+          lapsLed: 15,
+          trackCalls: 2,
+          totalPoints: 100,
+          averageTop5: 5.5,
+          averageTop10: 5.8,
+          averageTop15: 6.0,
+          top2Consecutive: 10.4,
+          top3Consecutive: 15.8,
+        },
+      };
+    });
+
+    it("should resolve overall properties via getPropertyValue", () => {
+      expect(
+        RacedayFormatUtils.getPropertyValue(participantHd, "overallLapCount"),
+      ).toBe(50.25);
+      expect(
+        RacedayFormatUtils.getPropertyValue(
+          participantHd,
+          "overallPhysicalLapCount",
+        ),
+      ).toBe(50);
+      expect(
+        RacedayFormatUtils.getPropertyValue(participantHd, "overallTotalTime"),
+      ).toBe(320.456);
+      expect(
+        RacedayFormatUtils.getPropertyValue(
+          participantHd,
+          "overallBestLapTime",
+        ),
+      ).toBe(5.123);
+      expect(
+        RacedayFormatUtils.getPropertyValue(
+          participantHd,
+          "overallAverageLapTime",
+        ),
+      ).toBe(6.409);
+      expect(
+        RacedayFormatUtils.getPropertyValue(
+          participantHd,
+          "overallMedianLapTime",
+        ),
+      ).toBe(6.35);
+      expect(
+        RacedayFormatUtils.getPropertyValue(
+          participantHd,
+          "overallConsistencyScore",
+        ),
+      ).toBe(92.5);
+      expect(
+        RacedayFormatUtils.getPropertyValue(
+          participantHd,
+          "overallStandardDeviation",
+        ),
+      ).toBe(0.145);
+      expect(
+        RacedayFormatUtils.getPropertyValue(
+          participantHd,
+          "overallAverageTop5",
+        ),
+      ).toBe(5.5);
+      expect(
+        RacedayFormatUtils.getPropertyValue(
+          participantHd,
+          "overallAverageTop10",
+        ),
+      ).toBe(5.8);
+      expect(
+        RacedayFormatUtils.getPropertyValue(
+          participantHd,
+          "overallAverageTop15",
+        ),
+      ).toBe(6.0);
+      expect(
+        RacedayFormatUtils.getPropertyValue(
+          participantHd,
+          "overallTop2Consecutive",
+        ),
+      ).toBe(10.4);
+      expect(
+        RacedayFormatUtils.getPropertyValue(
+          participantHd,
+          "overallTop3Consecutive",
+        ),
+      ).toBe(15.8);
+      expect(
+        RacedayFormatUtils.getPropertyValue(participantHd, "overallGapLeader"),
+      ).toBe(1.234);
+      expect(
+        RacedayFormatUtils.getPropertyValue(
+          participantHd,
+          "overallGapPosition",
+        ),
+      ).toBe(0.567);
+      expect(
+        RacedayFormatUtils.getPropertyValue(participantHd, "overallLapsLed"),
+      ).toBe(15);
+      expect(
+        RacedayFormatUtils.getPropertyValue(participantHd, "overallTrackCalls"),
+      ).toBe(2);
+      expect(
+        RacedayFormatUtils.getPropertyValue(participantHd, "overallPoints"),
+      ).toBe(100);
+    });
+
+    it("should format overall values correctly", () => {
+      expect(
+        RacedayFormatUtils.formatValue(
+          "overallLapCount",
+          50.25,
+          participantHd,
+          undefined,
+          ctx,
+        ),
+      ).toBe("50.25");
+      expect(
+        RacedayFormatUtils.formatValue(
+          "overallPhysicalLapCount",
+          50,
+          participantHd,
+          undefined,
+          ctx,
+        ),
+      ).toBe("50");
+      expect(
+        RacedayFormatUtils.formatValue(
+          "overallTotalTime",
+          320.456,
+          participantHd,
+          undefined,
+          ctx,
+        ),
+      ).toBe("320.456");
+      expect(
+        RacedayFormatUtils.formatValue(
+          "overallBestLapTime",
+          5.123,
+          participantHd,
+          undefined,
+          ctx,
+        ),
+      ).toBe("5.123");
+      expect(
+        RacedayFormatUtils.formatValue(
+          "overallAverageLapTime",
+          6.409,
+          participantHd,
+          undefined,
+          ctx,
+        ),
+      ).toBe("6.409");
+      expect(
+        RacedayFormatUtils.formatValue(
+          "overallMedianLapTime",
+          6.35,
+          participantHd,
+          undefined,
+          ctx,
+        ),
+      ).toBe("6.350");
+      expect(
+        RacedayFormatUtils.formatValue(
+          "overallConsistencyScore",
+          92.5,
+          participantHd,
+          undefined,
+          ctx,
+        ),
+      ).toBe("92.5%");
+      expect(
+        RacedayFormatUtils.formatValue(
+          "overallStandardDeviation",
+          0.145,
+          participantHd,
+          undefined,
+          ctx,
+        ),
+      ).toBe("0.145");
+      expect(
+        RacedayFormatUtils.formatValue(
+          "overallAverageTop5",
+          5.5,
+          participantHd,
+          undefined,
+          ctx,
+        ),
+      ).toBe("5.500");
+      expect(
+        RacedayFormatUtils.formatValue(
+          "overallAverageTop10",
+          5.8,
+          participantHd,
+          undefined,
+          ctx,
+        ),
+      ).toBe("5.800");
+      expect(
+        RacedayFormatUtils.formatValue(
+          "overallAverageTop15",
+          6.0,
+          participantHd,
+          undefined,
+          ctx,
+        ),
+      ).toBe("6.000");
+      expect(
+        RacedayFormatUtils.formatValue(
+          "overallTop2Consecutive",
+          10.4,
+          participantHd,
+          undefined,
+          ctx,
+        ),
+      ).toBe("10.400");
+      expect(
+        RacedayFormatUtils.formatValue(
+          "overallTop3Consecutive",
+          15.8,
+          participantHd,
+          undefined,
+          ctx,
+        ),
+      ).toBe("15.800");
+      expect(
+        RacedayFormatUtils.formatValue(
+          "overallGapLeader",
+          1.234,
+          participantHd,
+          undefined,
+          ctx,
+        ),
+      ).toBe("+1.234");
+      expect(
+        RacedayFormatUtils.formatValue(
+          "overallGapPosition",
+          0.567,
+          participantHd,
+          undefined,
+          ctx,
+        ),
+      ).toBe("+0.567");
+      expect(
+        RacedayFormatUtils.formatValue(
+          "overallGapLeaderF1",
+          1.234,
+          participantHd,
+          undefined,
+          ctx,
+        ),
+      ).toBe("+1.234");
+      expect(
+        RacedayFormatUtils.formatValue(
+          "overallGapPositionF1",
+          0,
+          participantHd,
+          undefined,
+          ctx,
+        ),
+      ).toBe("+1 Lap");
+      expect(
+        RacedayFormatUtils.formatValue(
+          "overallLapsLed",
+          15,
+          participantHd,
+          undefined,
+          ctx,
+        ),
+      ).toBe("15");
+      expect(
+        RacedayFormatUtils.formatValue(
+          "overallTrackCalls",
+          2,
+          participantHd,
+          undefined,
+          ctx,
+        ),
+      ).toBe("2");
+      expect(
+        RacedayFormatUtils.formatValue(
+          "overallPoints",
+          100,
+          participantHd,
+          undefined,
+          ctx,
+        ),
+      ).toBe("100");
+    });
+
+    it("should format empty driver for overall columns", () => {
+      const emptyHd: any = { isEmptyLane: true };
+      expect(
+        RacedayFormatUtils.formatValue(
+          "overallLapCount",
+          0,
+          emptyHd,
+          undefined,
+          ctx,
+        ),
+      ).toBe("--.--");
+      expect(
+        RacedayFormatUtils.formatValue(
+          "overallPhysicalLapCount",
+          0,
+          emptyHd,
+          undefined,
+          ctx,
+        ),
+      ).toBe("--");
+      expect(
+        RacedayFormatUtils.formatValue(
+          "overallTotalTime",
+          0,
+          emptyHd,
+          undefined,
+          ctx,
+        ),
+      ).toBe("--.---");
+      expect(
+        RacedayFormatUtils.formatValue(
+          "overallBestLapTime",
+          0,
+          emptyHd,
+          undefined,
+          ctx,
+        ),
+      ).toBe("--.---");
+      expect(
+        RacedayFormatUtils.formatValue(
+          "overallConsistencyScore",
+          0,
+          emptyHd,
+          undefined,
+          ctx,
+        ),
+      ).toBe("--.-%");
+      expect(
+        RacedayFormatUtils.formatValue(
+          "overallStandardDeviation",
+          0,
+          emptyHd,
+          undefined,
+          ctx,
+        ),
+      ).toBe("--.---");
+      expect(
+        RacedayFormatUtils.formatValue(
+          "overallGapLeader",
+          0,
+          emptyHd,
+          undefined,
+          ctx,
+        ),
+      ).toBe("--.---");
+      expect(
+        RacedayFormatUtils.formatValue(
+          "overallLapsLed",
+          0,
+          emptyHd,
+          undefined,
+          ctx,
+        ),
+      ).toBe("--");
+      expect(
+        RacedayFormatUtils.formatValue(
+          "overallTrackCalls",
+          0,
+          emptyHd,
+          undefined,
+          ctx,
+        ),
+      ).toBe("--");
+      expect(
+        RacedayFormatUtils.formatValue(
+          "overallPoints",
+          0,
+          emptyHd,
+          undefined,
+          ctx,
+        ),
+      ).toBe("--");
+    });
+  });
+
+  describe("formatValue - Column Specific Decimals", () => {
+    it("should allow two different time columns to have different decimal places", () => {
+      ctx.laneViewWidgetSettings = {
+        timeDecimalPlaces: 3,
+        lapDecimalPlaces: 2,
+        columnDecimals: {
+          lastLapTime: 1,
+          bestLapTime: 4,
+        },
+      } as any;
+
+      const lastLapCol = { propertyName: "lastLapTime" } as any;
+      const bestLapCol = { propertyName: "bestLapTime" } as any;
+
+      const lastLapFormatted = RacedayFormatUtils.formatValue(
+        "lastLapTime",
+        5.1234,
+        hd,
+        lastLapCol,
+        ctx,
+      );
+      const bestLapFormatted = RacedayFormatUtils.formatValue(
+        "bestLapTime",
+        5.1234,
+        hd,
+        bestLapCol,
+        ctx,
+      );
+
+      expect(lastLapFormatted).toBe("5.1");
+      expect(bestLapFormatted).toBe("5.1234");
+    });
+
+    it("should allow column-specific lap decimal places", () => {
+      ctx.laneViewWidgetSettings = {
+        timeDecimalPlaces: 3,
+        lapDecimalPlaces: 2,
+        columnDecimals: {
+          lapCount: 1,
+        },
+      } as any;
+
+      hd.reactionTime = 1;
+      const lapCol = { propertyName: "lapCount" } as any;
+      const result = RacedayFormatUtils.formatValue(
+        "lapCount",
+        10.456,
+        hd,
+        lapCol,
+        ctx,
+      );
+      expect(result).toBe("10.5");
+    });
+
+    it("should fall back to widget timeDecimalPlaces and lapDecimalPlaces when columnDecimals is not set", () => {
+      ctx.laneViewWidgetSettings = {
+        timeDecimalPlaces: 3,
+        lapDecimalPlaces: 2,
+      } as any;
+
+      hd.reactionTime = 1;
+      const lastLapCol = { propertyName: "lastLapTime" } as any;
+      const lapCol = { propertyName: "lapCount" } as any;
+
+      const lastLapFormatted = RacedayFormatUtils.formatValue(
+        "lastLapTime",
+        5.1234,
+        hd,
+        lastLapCol,
+        ctx,
+      );
+      const lapFormatted = RacedayFormatUtils.formatValue(
+        "lapCount",
+        10.456,
+        hd,
+        lapCol,
+        ctx,
+      );
+
+      expect(lastLapFormatted).toBe("5.123");
+      expect(lapFormatted).toBe("10.46");
+    });
+
+    it("should use inset decimal places when column is an inset anchor even if columnDecimals exists", () => {
+      ctx.laneViewWidgetSettings = {
+        timeDecimalPlaces: 3,
+        lapDecimalPlaces: 2,
+        insetTimeDecimalPlaces: 1,
+        columnDecimals: {
+          lastLapTime: 4,
+        },
+      } as any;
+
+      const result = RacedayFormatUtils.formatValue(
+        "lastLapTime",
+        5.1234,
+        hd,
+        undefined,
+        ctx,
+        "top-right",
+      );
+      expect(result).toBe("5.1");
     });
   });
 });

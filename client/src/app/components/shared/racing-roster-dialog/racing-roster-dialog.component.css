@@ -152,6 +152,10 @@
   justify-content: center;
 }
 
+.close-btn .material-icons {
+  font-size: 20px;
+}
+
 .close-btn:hover {
   color: #ffffff;
   background: rgba(239, 68, 68, 0.2);

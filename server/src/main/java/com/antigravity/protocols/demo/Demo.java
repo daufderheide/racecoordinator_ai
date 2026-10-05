@@ -220,13 +220,27 @@ public class Demo extends DefaultProtocol {
 
   @Override
   public void close() {
+    if (timerHandle != null) {
+      timerHandle.cancel(true);
+      timerHandle = null;
+    }
+    if (scheduler != null) {
+      scheduler.shutdown();
+      scheduler = null;
+    }
     if (statusFuture != null) {
       statusFuture.cancel(true);
+      statusFuture = null;
     }
     if (statusScheduler != null) {
       statusScheduler.shutdown();
+      statusScheduler = null;
     }
-    statusScheduler = null;
+  }
+
+  @Override
+  public ScheduledExecutorService getScheduler() {
+    return statusScheduler != null ? statusScheduler : scheduler;
   }
 
   @Override
@@ -417,7 +431,12 @@ public class Demo extends DefaultProtocol {
   }
 
   protected ScheduledExecutorService createScheduler() {
-    return Executors.newScheduledThreadPool(1);
+    return Executors.newSingleThreadScheduledExecutor(
+        r -> {
+          Thread thread = new Thread(r, "DemoProtocol-Scheduler");
+          thread.setDaemon(true);
+          return thread;
+        });
   }
 
   @Override

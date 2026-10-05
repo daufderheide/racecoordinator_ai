@@ -26,6 +26,7 @@ export type WidgetType =
   | "season-leaderboard"
   | "season-race-leaderboard"
   | "lane-view"
+  | "lane-column"
   | "on-deck"
   | "next-heat"
   | "heat-list"
@@ -49,6 +50,8 @@ export type WidgetType =
   | "action-master-power-on"
   | "action-master-power-off"
   | "action-back"
+  | "action-forward"
+  | "action-close"
   | `custom:${string}`
   | (string & {});
 
@@ -67,6 +70,40 @@ export interface AbsoluteWidgetNode {
   textColor?: string;
   backgroundColor?: string;
   customSettings?: Record<string, any>;
+}
+
+export interface LaneColumnWidgetSettings {
+  columnKey: string;
+  bindingMode: "lane" | "position" | "overallPosition" | "seed";
+  targetIndex: number;
+  layoutOrientation: "vertical" | "horizontal";
+  showHeader: boolean;
+  customLabel: string;
+  headerFontFamily: string;
+  headerFontSize: number;
+  headerTextColor: string;
+  headerAlignment: "start" | "center" | "end";
+  headerBackgroundColor?: string;
+  valueFontFamily: string;
+  valueFontSize: number;
+  valueTextColor: string;
+  valueAlignment: "start" | "center" | "end";
+  timeDecimalPlaces: number;
+  lapDecimalPlaces: number;
+  columnDecimals?: Record<string, number>;
+  useLaneColors: boolean;
+  insets?: Record<string, string>;
+  insetFontFamily?: string;
+  insetFontSize?: number;
+  insetTextColor?: string;
+  insetTimeDecimalPlaces?: number;
+  insetLapDecimalPlaces?: number;
+  backgroundColor: string;
+  textColor: string;
+  showBorder: boolean;
+  borderColor: string;
+  borderWidth: number;
+  borderRadius: number;
 }
 
 export type LayoutScaleMode = "letterbox" | "stretch";
@@ -417,10 +454,12 @@ export class Settings {
           blurAmount: 50,
           lampSizingMode: "custom",
           previewLampCount: 5,
+          maxLamps: 5,
+          fadeIn: true,
           glowEffect: true,
-          glowOverlap: 100,
-          glowRedOverlap: 100,
-          glowGreenOverlap: 100,
+          glowOverlap: 30,
+          glowRedOverlap: 30,
+          glowGreenOverlap: 25,
         },
       },
     ],
@@ -561,10 +600,12 @@ export class Settings {
           blurAmount: 50,
           lampSizingMode: "custom",
           previewLampCount: 5,
+          maxLamps: 5,
+          fadeIn: true,
           glowEffect: true,
-          glowOverlap: 100,
-          glowRedOverlap: 100,
-          glowGreenOverlap: 100,
+          glowOverlap: 30,
+          glowRedOverlap: 30,
+          glowGreenOverlap: 25,
         },
       },
     ],

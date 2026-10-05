@@ -19,7 +19,7 @@
   flex-direction: column;
   align-items: stretch;
   position: relative;
-  background: radial-gradient(circle at center, rgba(13, 21, 30, 0.4) 0%, rgba(6, 9, 14, 0.8) 100%), url('/assets/images/race_results_bg.png') no-repeat center center;
+  background: radial-gradient(circle at center, rgba(13, 21, 30, 0.25) 0%, rgba(6, 9, 14, 0.65) 100%), url('/assets/images/race_results_bg.png') no-repeat center center;
   background-size: cover;
   background-attachment: fixed;
   padding: 30px 40px;
@@ -34,6 +34,8 @@
   margin-bottom: 25px;
   padding: 0 10px;
   flex-shrink: 0;
+  position: relative;
+  z-index: 1;
 }
 
 .title-glow-container {
@@ -68,7 +70,7 @@
 
 /* Standings Grid & Data Container Glass Overlay - Matched to Race Results */
 .results-container {
-  background: rgba(8, 14, 24, 0.72);
+  background: rgba(8, 14, 24, 0.78);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(0, 229, 255, 0.2);
@@ -81,6 +83,8 @@
   overflow-y: auto;
   overflow-x: hidden;
   box-sizing: border-box;
+  position: relative;
+  z-index: 1;
 }
 
 /* Scrollbars for Results Container */

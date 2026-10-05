@@ -41,7 +41,9 @@ class MockRacedayHeatDriversComponent {
   standalone: true,
   template: '<div class="mock-nav">Nav Mock</div>',
 })
-class MockBrowserNavigationComponent {}
+class MockBrowserNavigationComponent {
+  mode = input<"navigation" | "close">("navigation");
+}
 
 @Component({
   selector: "app-acknowledgement-modal",
@@ -255,5 +257,14 @@ describe("DriverViewComponent", () => {
     component.onPageHide();
 
     expect(mockRaceConnection.disconnect).toHaveBeenCalledWith();
+  });
+
+  it("should render app-browser-navigation with mode='navigation'", () => {
+    fixture.detectChanges();
+    const navEl = fixture.nativeElement.querySelector("app-browser-navigation");
+    expect(navEl).toBeTruthy();
+    expect(
+      navEl.getAttribute("mode") || navEl.getAttribute("ng-reflect-mode"),
+    ).toBe("navigation");
   });
 });

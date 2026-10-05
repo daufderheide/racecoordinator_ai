@@ -305,6 +305,7 @@ public class AssetTaskHandlerTest {
 
     verify(handler, org.mockito.Mockito.never()).setStatus(eq(ctx), eq(404));
     verify(handler).setContentType(eq(ctx), eq("image/png"));
+    verify(ctx).header(eq("Cache-Control"), eq("public, max-age=86400"));
     verify(handler).setStream(eq(ctx), any());
   }
 
@@ -325,6 +326,7 @@ public class AssetTaskHandlerTest {
 
     verify(handler, org.mockito.Mockito.never()).setStatus(eq(ctx), eq(404));
     verify(handler).setContentType(eq(ctx), eq("audio/wav"));
+    verify(ctx).header(eq("Cache-Control"), eq("public, max-age=86400"));
   }
 
   @Test
@@ -345,6 +347,38 @@ public class AssetTaskHandlerTest {
     org.mockito.Mockito.doReturn("ext_url_asset").when(handler).getPathParam(ctx, "id");
     handler.downloadAsset(ctx);
     verify(handler, org.mockito.Mockito.atLeastOnce()).setStatus(eq(ctx), eq(404));
+  }
+
+  @Test
+  public void testDownloadAsset_DefaultAssetFallbackWhenNotInDb() {
+    AssetService assetService = handler.getAssetService();
+    when(assetService.getAssetById("default_yellow_flag")).thenReturn(null);
+    org.mockito.Mockito.doReturn("default_yellow_flag").when(handler).getPathParam(ctx, "id");
+    handler.downloadAsset(ctx);
+
+    verify(handler, org.mockito.Mockito.never()).setStatus(eq(ctx), eq(404));
+    verify(handler).setStream(eq(ctx), any());
+  }
+
+  @Test
+  public void testDownloadAsset_DeriveFilenameFromName() throws Exception {
+    File assetsDir = new File(new File(databaseContext.getDataRoot(), "TestDB"), "assets");
+    assetsDir.mkdirs();
+    File testFile = new File(assetsDir, "custom_1_Custom_Sound.wav");
+    byte[] wavData = new byte[] {'R', 'I', 'F', 'F', 0, 0, 0, 0, 'W', 'A', 'V', 'E'};
+    try (java.io.FileOutputStream fos = new java.io.FileOutputStream(testFile)) {
+      fos.write(wavData);
+    }
+
+    AssetService assetService = handler.getAssetService();
+    when(assetService.getAssetById("custom_1"))
+        .thenReturn(AssetMessage.newBuilder().setName("Custom Sound").build());
+    org.mockito.Mockito.doReturn("custom_1").when(handler).getPathParam(ctx, "id");
+
+    handler.downloadAsset(ctx);
+
+    verify(handler, org.mockito.Mockito.never()).setStatus(eq(ctx), eq(404));
+    verify(handler).setStream(eq(ctx), any());
   }
 
   @Test

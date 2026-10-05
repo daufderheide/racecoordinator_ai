@@ -76,21 +76,21 @@ public class CustomUITaskHandler {
 
     if (CustomUI.DEFAULT_UI_ID.equals(entityId)) {
       foundFlags[0] = true;
-      if (CustomUI.isLegacyDefaultName(name)) {
+      if (CustomUI.isLegacyDefaultName(name) && !CustomUI.DEFAULT_UI_NAME.equals(name)) {
         name = CustomUI.DEFAULT_UI_NAME;
         updated = true;
       }
     }
     if (CustomUI.PRACTICE_UI_ID.equals(entityId)) {
       foundFlags[1] = true;
-      if (CustomUI.isLegacyPracticeName(name)) {
+      if (CustomUI.isLegacyPracticeName(name) && !CustomUI.PRACTICE_UI_NAME.equals(name)) {
         name = CustomUI.PRACTICE_UI_NAME;
         updated = true;
       }
     }
     if (CustomUI.FUEL_UI_ID.equals(entityId)) {
       foundFlags[2] = true;
-      if (CustomUI.isLegacyFuelName(name)) {
+      if (CustomUI.isLegacyFuelName(name) && !CustomUI.FUEL_UI_NAME.equals(name)) {
         name = CustomUI.FUEL_UI_NAME;
         updated = true;
       }

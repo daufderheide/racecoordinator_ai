@@ -99,4 +99,85 @@ describe("WidgetInspectorFieldsComponent", () => {
     );
     expect(inspectorEl).toBeTruthy();
   });
+
+  it("should render lane-column inspector when widget is lane-column", () => {
+    const laneColWidget: AbsoluteWidgetNode = {
+      id: "w-lane-col",
+      widgetType: "lane-column",
+      x: 0,
+      y: 0,
+      width: 200,
+      height: 120,
+      zIndex: 1,
+      customSettings: {
+        columnKey: "lastLapTime",
+        bindingMode: "lane",
+        targetIndex: 0,
+      },
+    };
+    fixture.componentRef.setInput("widget", laneColWidget);
+    fixture.detectChanges();
+
+    const inspectorEl = fixture.nativeElement.querySelector(
+      "app-lane-column-inspector",
+    );
+    expect(inspectorEl).toBeTruthy();
+  });
+
+  it("should forward requestReplicate when lane-column inspector requests replicate", () => {
+    const laneColWidget: AbsoluteWidgetNode = {
+      id: "w-lane-col",
+      widgetType: "lane-column",
+      x: 0,
+      y: 0,
+      width: 200,
+      height: 120,
+      zIndex: 1,
+      customSettings: {
+        columnKey: "lastLapTime",
+        bindingMode: "lane",
+        targetIndex: 0,
+      },
+    };
+    fixture.componentRef.setInput("widget", laneColWidget);
+    fixture.detectChanges();
+
+    spyOn(component.requestReplicate, "emit");
+    const laneColComp =
+      fixture.debugElement.children[0].children[0].componentInstance;
+    laneColComp.requestReplicate.emit();
+    expect(component.requestReplicate.emit).toHaveBeenCalled();
+  });
+
+  it("should render action-button-inspector when widget is action-forward or action-close", () => {
+    fixture.componentRef.setInput("widget", {
+      id: "w-forward",
+      widgetType: "action-forward",
+      x: 0,
+      y: 0,
+      width: 36,
+      height: 36,
+      zIndex: 1,
+      customSettings: {},
+    });
+    fixture.detectChanges();
+    expect(
+      fixture.nativeElement.querySelector("app-action-button-inspector"),
+    ).toBeTruthy();
+
+    fixture.componentRef.setInput("widget", {
+      id: "w-close",
+      widgetType: "action-close",
+      x: 0,
+      y: 0,
+      width: 36,
+      height: 36,
+      zIndex: 1,
+      customSettings: {},
+    });
+    fixture.detectChanges();
+    expect(
+      fixture.nativeElement.querySelector("app-action-button-inspector"),
+    ).toBeTruthy();
+  });
 });

@@ -658,6 +658,13 @@
   padding: 5px 12px;
   font-size: 1rem;
   line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.action-btn.small .material-icons {
+  font-size: 16px;
 }
 
 .action-btn.danger {
@@ -668,6 +675,69 @@
 
 .action-btn.danger:hover {
   background: rgba(239, 68, 68, 0.4);
+}
+
+.section-header .action-btn.danger.small {
+  background: transparent;
+  border: 1px solid transparent;
+  color: #ef4444;
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  padding: 0;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease-in-out;
+}
+
+.section-header .action-btn.danger.small:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+  transform: translateY(-1px);
+}
+
+.section-header .action-btn.danger.small:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.section-header .action-btn.danger.small .material-icons {
+  font-size: 1.15rem;
+}
+
+.ls-actions .icon-button.delete {
+  background: transparent;
+  border: 1px solid transparent;
+  color: #ef4444;
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  padding: 0;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.ls-actions .icon-button.delete:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+  transform: translateY(-1px);
+}
+
+.ls-actions .icon-button.delete:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.ls-actions .icon-button.delete .material-icons {
+  font-size: 1.1rem;
 }
 
 /* LED Configuration Styles */

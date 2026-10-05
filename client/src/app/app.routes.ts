@@ -1,4 +1,5 @@
-import { Routes } from "@angular/router";
+import { inject } from "@angular/core";
+import { ActivatedRouteSnapshot, ResolveFn, Routes } from "@angular/router";
 import { AssetManagerComponent } from "@app/components/asset-manager/asset-manager.component";
 import { CustomRotationEditorComponent } from "@app/components/asset-manager/custom-rotation-editor/custom-rotation-editor.component";
 import { CameraInterfaceComponent } from "@app/components/camera-interface/camera-interface.component";
@@ -21,10 +22,53 @@ import { SeasonResultsComponent } from "@app/components/season-results/season-re
 import { TeamEditorComponent } from "@app/components/team-editor/team-editor.component";
 import { TrackEditorComponent } from "@app/components/track-editor/track-editor.component";
 import { UIEditorComponent } from "@app/components/ui-editor/ui-editor.component";
+import { getThemeDisplayNameKey } from "@app/components/ui-editor/ui-editor-crud.helper";
 import { AuthGuard } from "@app/guards/auth.guard";
 import { DirtyCheckGuard } from "@app/guards/dirty-check.guard";
 import { RacedayGuard } from "@app/guards/raceday.guard";
 import { Role } from "@app/models/role";
+import { ThemeService } from "@app/services/theme.service";
+import { TranslationService } from "@app/services/translation.service";
+
+export const racedayTitleResolver: ResolveFn<string> = (
+  route: ActivatedRouteSnapshot,
+) => {
+  const themeId = route.queryParams?.["themeId"];
+  if (themeId) {
+    const themeService = inject(ThemeService, { optional: true });
+    const translationService = inject(TranslationService, { optional: true });
+    const theme =
+      themeService?.getActiveTheme?.() ||
+      themeService?.getThemes?.()?.find?.((t) => t.entity_id === themeId);
+    if (theme) {
+      const displayNameKey = getThemeDisplayNameKey(
+        theme,
+        translationService ?? undefined,
+      );
+      const translated = translationService?.translate?.(displayNameKey);
+      return translated || theme.name;
+    }
+    if (themeId === "practice_theme_rc_ai") {
+      return (
+        translationService?.translate?.("UE_LABEL_PRACTICE_THEME") ||
+        "RaceCoordinator AI (Practice)"
+      );
+    }
+    if (themeId === "default_fuel_theme_rc_ai") {
+      return (
+        translationService?.translate?.("UE_LABEL_FUEL_THEME") ||
+        "RaceCoordinator AI (Fuel)"
+      );
+    }
+    if (themeId === "default_classic_rc_ai") {
+      return (
+        translationService?.translate?.("UE_LABEL_DEFAULT_THEME") ||
+        "RaceCoordinator AI"
+      );
+    }
+  }
+  return "Raceday";
+};
 
 export const routes: Routes = [
   { path: "", redirectTo: "raceday-setup", pathMatch: "full" },
@@ -32,14 +76,14 @@ export const routes: Routes = [
     path: "raceday",
     component: RacedayComponent,
     canDeactivate: [RacedayGuard],
-    title: "Raceday",
+    title: racedayTitleResolver,
     data: { animation: "RacedayPage" },
   },
   {
     path: "default-raceday",
     component: DefaultRacedayComponent,
     canDeactivate: [RacedayGuard],
-    title: "Raceday",
+    title: racedayTitleResolver,
     data: { animation: "RacedayPage" },
   },
   {

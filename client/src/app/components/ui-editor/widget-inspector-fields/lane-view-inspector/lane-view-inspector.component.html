@@ -108,42 +108,6 @@
     {{ "UE_INSPECTOR_LANE_VIEW_DATA_SECTION" | translate }}
   </div>
 
-  <!-- Time Decimal Places -->
-  <div class="inspector-section">
-    <label class="inspector-label">{{
-      "UE_INSPECTOR_LANE_VIEW_TIME_DECIMAL_PLACES" | translate
-    }}</label>
-    <div class="select-container select-sm">
-      <app-custom-select
-        [(ngModel)]="settings().timeDecimalPlaces"
-        (change)="onSettingsChange()"
-      >
-        <app-custom-option [value]="0">0</app-custom-option>
-        <app-custom-option [value]="1">1</app-custom-option>
-        <app-custom-option [value]="2">2</app-custom-option>
-        <app-custom-option [value]="3">3</app-custom-option>
-      </app-custom-select>
-    </div>
-  </div>
-
-  <!-- Lap Decimal Places -->
-  <div class="inspector-section">
-    <label class="inspector-label">{{
-      "UE_INSPECTOR_LANE_VIEW_LAP_DECIMAL_PLACES" | translate
-    }}</label>
-    <div class="select-container select-sm">
-      <app-custom-select
-        [(ngModel)]="settings().lapDecimalPlaces"
-        (change)="onSettingsChange()"
-      >
-        <app-custom-option [value]="0">0</app-custom-option>
-        <app-custom-option [value]="1">1</app-custom-option>
-        <app-custom-option [value]="2">2</app-custom-option>
-        <app-custom-option [value]="3">3</app-custom-option>
-      </app-custom-select>
-    </div>
-  </div>
-
   <div class="inspector-section">
     <label class="inspector-label">{{
       "UE_INSPECTOR_FONT_FAMILY" | translate
@@ -314,6 +278,26 @@
               />
               <span class="col-width-unit">px</span>
             </div>
+            @if (isLapOrTimeColumn(col)) {
+              <div
+                class="col-decimals-wrapper"
+                [title]="'UE_INSPECTOR_DECIMAL_PLACES' | translate"
+              >
+                <div class="select-container select-sm col-decimals-select">
+                  <app-custom-select
+                    class="col-decimals-select"
+                    [ngModel]="getColumnDecimalPlaces(col)"
+                    (ngModelChange)="setColumnDecimalPlaces(col, $event)"
+                  >
+                    <app-custom-option [value]="0">0</app-custom-option>
+                    <app-custom-option [value]="1">1</app-custom-option>
+                    <app-custom-option [value]="2">2</app-custom-option>
+                    <app-custom-option [value]="3">3</app-custom-option>
+                  </app-custom-select>
+                </div>
+                <span class="col-decimals-unit">dec</span>
+              </div>
+            }
             <button
               class="icon-btn delete-btn"
               (click)="deleteColumn(col)"
@@ -360,7 +344,7 @@
             (click)="clearColumnSearch()"
             title="Clear"
           >
-            ✕
+            <span class="material-icons">close</span>
           </button>
         }
       </div>
@@ -395,12 +379,71 @@
                 {{ group.nameKey | translate }}
               </span>
               <span class="toolbox-group-badge">{{
-                group.columns.length
+                group.totalCount !== undefined
+                  ? group.totalCount
+                  : group.columns.length
               }}</span>
             </div>
 
             @if (group.expanded) {
               <div class="toolbox-group-content">
+                @for (sg of group.subgroups; track sg.id) {
+                  <div class="toolbox-subgroup-section">
+                    <div
+                      class="toolbox-subgroup-header"
+                      (click)="toggleColumnGroup(sg.id)"
+                      [class.expanded]="sg.expanded"
+                    >
+                      <span
+                        class="material-icons toolbox-folder-icon subfolder-icon"
+                      >
+                        {{ sg.expanded ? "folder_open" : "folder" }}
+                      </span>
+                      <span class="toolbox-subgroup-title">
+                        {{ sg.nameKey | translate }}
+                      </span>
+                      <span class="toolbox-subgroup-badge">{{
+                        sg.columns.length
+                      }}</span>
+                    </div>
+
+                    @if (sg.expanded) {
+                      <div class="toolbox-subgroup-content">
+                        @for (col of sg.columns; track col.key) {
+                          <div
+                            class="toolbox-widget-item nested-widget-item"
+                            draggable="true"
+                            (dragstart)="onDragStart($event, col)"
+                            [title]="col.label | translate"
+                            style="cursor: grab"
+                          >
+                            <span
+                              class="material-icons drag-indicator-icon"
+                              style="font-size: 16px; color: #999"
+                              >drag_indicator</span
+                            >
+                            <span
+                              class="material-icons toolbox-widget-icon"
+                              style="font-size: 16px; color: #666"
+                              >view_column</span
+                            >
+                            <span
+                              class="toolbox-widget-label"
+                              style="
+                                font-size: 12px;
+                                white-space: nowrap;
+                                overflow: hidden;
+                                text-overflow: ellipsis;
+                              "
+                              >{{ col.label | translate }}</span
+                            >
+                          </div>
+                        }
+                      </div>
+                    }
+                  </div>
+                }
+
                 @for (col of group.columns; track col.key) {
                   <div
                     class="toolbox-widget-item"

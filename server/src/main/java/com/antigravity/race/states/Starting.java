@@ -1,14 +1,17 @@
 package com.antigravity.race.states;
 
 import com.antigravity.context.DatabaseContext;
+import com.antigravity.converters.HeatConverter;
 import com.antigravity.proto.Lap;
 import com.antigravity.proto.RaceData;
 import com.antigravity.proto.RaceFlag;
+import com.antigravity.proto.StandingsUpdate;
 import com.antigravity.protocols.CarData;
 import com.antigravity.race.ClientSubscriptionManager;
 import com.antigravity.race.DriverHeatData;
 import com.antigravity.race.Race;
 import com.antigravity.service.DatabaseService;
+import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -47,9 +50,17 @@ public class Starting implements IRaceState {
       ClientSubscriptionManager csm = ClientSubscriptionManager.getInstance();
       DatabaseContext dbCtx = csm != null ? csm.getDatabaseContext() : null;
       if (dbCtx != null && DatabaseService.getInstance() != null) {
-        DatabaseService.getInstance()
-            .deletePredictionEvaluationRecord(
-                dbCtx, race.getRaceModel().getEntityId(), race.isDemoMode());
+        final String entityId = race.getRaceModel().getEntityId();
+        final boolean isDemo = race.isDemoMode();
+        java.util.concurrent.CompletableFuture.runAsync(
+            () -> {
+              try {
+                DatabaseService.getInstance()
+                    .deletePredictionEvaluationRecord(dbCtx, entityId, isDemo);
+              } catch (Exception e) {
+                logger.warn("Failed to delete prediction evaluation record asynchronously", e);
+              }
+            });
       }
     }
 
@@ -65,8 +76,14 @@ public class Starting implements IRaceState {
 
     final int randomTicks =
         delayLimitVal > 0 ? new java.util.Random().nextInt((int) (delayLimitVal * 10)) + 1 : 0;
+    final double randomDelaySeconds = randomTicks / 10.0;
+    final double totalDurationSeconds = startTimeVal + randomDelaySeconds;
 
-    logger.info("Starting countdown: {}s + {} random ticks", startTimeVal, randomTicks);
+    logger.info(
+        "Starting countdown: {}s + {}s random delay (total {}s)",
+        startTimeVal,
+        randomDelaySeconds,
+        totalDurationSeconds);
 
     if (scheduler != null) {
       scheduler.shutdown();
@@ -79,29 +96,46 @@ public class Starting implements IRaceState {
               return t;
             });
 
+    final long startNanoTime = System.nanoTime();
     final Runnable ticker =
         new Runnable() {
-          private int countdown = (int) (startTimeVal * 10);
-          private int remainingRandomTicks = randomTicks;
+          private long lastTickNano = 0;
 
           @Override
           public void run() {
             try {
-              float displayTime = Math.max(0, countdown) / 10.0f;
-              race.setAutoStartRemaining(displayTime);
-
-              // Update hardware and broadcast time
-              race.setHeatProgress(0.0);
-              race.syncRaceState();
-              race.broadcastTime();
-
-              if (countdown > 0) {
-                countdown--;
-              } else if (remainingRandomTicks > 0) {
-                remainingRandomTicks--;
+              long tickStartNano = System.nanoTime();
+              if (lastTickNano == 0) {
+                lastTickNano = tickStartNano;
               } else {
+                long intervalNs = tickStartNano - lastTickNano;
+                if (intervalNs > 200_000_000L) {
+                  logger.warn(
+                      "[PERF] Starting ticker delayed by {} ms",
+                      (intervalNs - 100_000_000L) / 1_000_000L);
+                }
+                lastTickNano = tickStartNano;
+              }
+
+              double elapsed = (tickStartNano - startNanoTime) / 1_000_000_000.0;
+              float displayTime = (float) Math.max(0.0, startTimeVal - elapsed);
+
+              if (elapsed >= totalDurationSeconds) {
+                race.setAutoStartRemaining(0.0f);
+                race.syncRaceState();
+                race.broadcastTime();
                 logger.info("Starting ticker: Transitioning to Racing.");
                 race.changeState(new Racing());
+              } else {
+                race.setAutoStartRemaining(displayTime);
+                race.syncRaceState();
+                race.broadcastTime();
+
+                long tickExecNs = System.nanoTime() - tickStartNano;
+                if (tickExecNs > 50_000_000L) {
+                  logger.warn(
+                      "[PERF] Starting ticker execution took {} ms", tickExecNs / 1_000_000L);
+                }
               }
             } catch (Throwable t) {
               logger.error("Error in Starting timer", t);
@@ -187,6 +221,9 @@ public class Starting implements IRaceState {
     }
 
     dhd.incrementFalseStarts();
+    if (!race.getRaceModel().isRestartOnFalseStart()) {
+      dhd.setReactionTime(0.0);
+    }
 
     double lapPenalty = race.getRaceModel().getFalseStartLapPenalty();
     if (lapPenalty > 0) {
@@ -208,11 +245,27 @@ public class Starting implements IRaceState {
             .setType(Lap.LapType.FALSE_START)
             .setFlag(getLaneFlagType(race, lane))
             .setFuelLevel(dhd.getDriver().getFuelLevel())
+            .setAdjustedLapCount(dhd.getAdjustedLapCount())
             .build();
     dhd.setFlag(falseStartMsg.getFlag());
 
-    RaceData falseStartDataMsg = RaceData.newBuilder().setLap(falseStartMsg).build();
-    race.broadcast(falseStartDataMsg);
+    RaceData.Builder falseStartDataBuilder =
+        RaceData.newBuilder()
+            .setLap(falseStartMsg)
+            .setHeat(HeatConverter.toProto(race.getCurrentHeat(), new HashSet<>()))
+            .setRace(
+                com.antigravity.proto.Race.newBuilder() // fqn-collision
+                    .setCurrentHeat(HeatConverter.toProto(race.getCurrentHeat(), new HashSet<>()))
+                    .build());
+
+    if (race.getCurrentHeat().getHeatStandings() != null) {
+      StandingsUpdate standingsUpdate = race.getCurrentHeat().getHeatStandings().updateStandings();
+      if (standingsUpdate != null) {
+        falseStartDataBuilder.setStandingsUpdate(standingsUpdate);
+      }
+    }
+
+    race.broadcast(falseStartDataBuilder.build());
 
     if (race.getRaceModel().isRestartOnFalseStart()) {
       logger.info("Restarting heat due to false start on lane {}", lane);

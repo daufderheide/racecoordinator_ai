@@ -12,6 +12,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Theme extends Model {
@@ -63,6 +64,7 @@ public class Theme extends Model {
   private final Map<String, String> slots;
   private final Map<String, AudioConfig> audioSlots;
   private final String uiId;
+  private final Map<String, RaceFlag> resolvedFlagCache = new ConcurrentHashMap<>();
 
   @JsonCreator
   public Theme(
@@ -123,6 +125,18 @@ public class Theme extends Model {
     if (slots == null || slotKey == null) {
       return fallback;
     }
+    String cacheKey = slotKey + ":" + (fallback != null ? fallback.name() : "NONE");
+    RaceFlag cached = resolvedFlagCache.get(cacheKey);
+    if (cached != null) {
+      return cached;
+    }
+
+    RaceFlag resolved = doResolveFlag(slotKey, fallback, dbCtx);
+    resolvedFlagCache.put(cacheKey, resolved);
+    return resolved;
+  }
+
+  private RaceFlag doResolveFlag(String slotKey, RaceFlag fallback, DatabaseContext dbCtx) {
     String assetId = slots.get(slotKey);
     if (assetId == null || assetId.isEmpty()) {
       return fallback;

@@ -355,10 +355,13 @@ public class UpdateService {
             new ProcessBuilder(
                 "bash",
                 "-c",
-                "tar -xzf "
+                "tar --strip-components=1 -xzf "
                     + installerFile.getAbsolutePath()
-                    + " -C /opt/racecoordinatorai && sudo systemctl restart racecoordinatorai");
+                    + " -C /opt/racecoordinatorai && (sudo systemctl restart racecoordinatorai || systemctl restart racecoordinatorai)");
       }
+      File logFile = new File("/tmp/racecoordinator_update.log");
+      pb.redirectErrorStream(true);
+      pb.redirectOutput(ProcessBuilder.Redirect.appendTo(logFile));
       pb.start();
       downloadStatus = "RDS_UPDATE_STATUS_INSTALLING";
     }

@@ -32,11 +32,15 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -63,6 +67,16 @@ public class ClientSubscriptionManager {
             t.setDaemon(true);
             return t;
           });
+  private final ExecutorService broadcastExecutor =
+      Executors.newSingleThreadExecutor(
+          r -> {
+            Thread t = new Thread(r, "WebSocket-Broadcast");
+            t.setDaemon(true);
+            return t;
+          });
+  private final AtomicReference<GeneratedMessageV3> pendingRaceTimeMessage =
+      new AtomicReference<>();
+  private final AtomicBoolean raceTimeScheduled = new AtomicBoolean(false);
   private ScheduledFuture<?> cleanupFuture;
   private long cleanupGracePeriodSeconds = 10;
   private boolean hasEverHadClient = false;
@@ -147,6 +161,7 @@ public class ClientSubscriptionManager {
         } catch (Exception ignored) {
         }
       }
+      pendingRaceTimeMessage.set(null);
       sessions.clear();
       raceDataSubscribers.clear();
       interfaceSubscribers.clear();
@@ -485,31 +500,31 @@ public class ClientSubscriptionManager {
     }
   }
 
-  public synchronized void autoSave(Race race) {
-    if (race == null || databaseContext == null) {
-      return;
-    }
+  private RaceSaveData buildRaceSaveData(Race race) {
+    RaceSaveData saveData = new RaceSaveData();
+    saveData.setModel(race.getRaceModel());
+    saveData.setTrack(race.getTrack());
+    saveData.setDrivers(race.getDrivers());
+    saveData.setHeats(race.getHeats());
+    saveData.setStateClassName(race.getState().getClass().getName());
+    saveData.setAccumulatedRaceTime(race.getRaceTime());
+    saveData.setHasRacedInCurrentHeat(race.hasRacedInCurrentHeat());
+    saveData.setCurrentHeatIndex(race.getHeats().indexOf(race.getCurrentHeat()));
+    saveData.setDemoMode(race.isDemoMode());
+    saveData.setStatistics(race.getStatistics());
+    saveData.setAutoStartFired(race.isAutoStartFired());
+    saveData.setAutoAdvanceFired(race.isAutoAdvanceFired());
+
+    saveData.setAutoSave(true);
+    String filename = "autosave_" + race.getRaceModel().getEntityId() + ".json";
+    saveData.setSaveName(filename);
+    return saveData;
+  }
+
+  private void executeUpsertAutoSave(DatabaseContext ctx, RaceSaveData saveData, String filename) {
     try {
-      RaceSaveData saveData = new RaceSaveData();
-      saveData.setModel(race.getRaceModel());
-      saveData.setTrack(race.getTrack());
-      saveData.setDrivers(race.getDrivers());
-      saveData.setHeats(race.getHeats());
-      saveData.setStateClassName(race.getState().getClass().getName());
-      saveData.setAccumulatedRaceTime(race.getRaceTime());
-      saveData.setHasRacedInCurrentHeat(race.hasRacedInCurrentHeat());
-      saveData.setCurrentHeatIndex(race.getHeats().indexOf(race.getCurrentHeat()));
-      saveData.setDemoMode(race.isDemoMode());
-      saveData.setStatistics(race.getStatistics());
-      saveData.setAutoStartFired(race.isAutoStartFired());
-      saveData.setAutoAdvanceFired(race.isAutoAdvanceFired());
-
-      saveData.setAutoSave(true);
-      String filename = "autosave_" + race.getRaceModel().getEntityId() + ".json";
-      saveData.setSaveName(filename);
-
       DatabaseService dbService = DatabaseService.getInstance();
-      dbService.upsertAutoSave(databaseContext, saveData);
+      dbService.upsertAutoSave(ctx, saveData);
       logger.info("Auto-saved race to database: {}", filename);
     } catch (Exception e) {
       if (!isShuttingDown) {
@@ -518,20 +533,88 @@ public class ClientSubscriptionManager {
     }
   }
 
-  public synchronized void deleteAutoSave(String raceId, boolean isDemo) {
-    if (databaseContext == null || raceId == null) {
+  public CompletableFuture<Void> autoSaveAsync(Race race) {
+    if (race == null || databaseContext == null || databaseContext.getConnection() == null) {
+      return CompletableFuture.completedFuture(null);
+    }
+    try {
+      final DatabaseContext ctx = databaseContext;
+      RaceSaveData saveData = buildRaceSaveData(race);
+      String filename = saveData.getSaveName();
+
+      return CompletableFuture.runAsync(
+          () -> executeUpsertAutoSave(ctx, saveData, filename), scheduler);
+    } catch (Exception e) {
+      if (!isShuttingDown) {
+        logger.error("Error preparing auto-save data", e);
+      }
+      CompletableFuture<Void> failed = new CompletableFuture<>();
+      failed.completeExceptionally(e);
+      return failed;
+    }
+  }
+
+  public void autoSave(Race race) {
+    if (race == null || databaseContext == null || databaseContext.getConnection() == null) {
+      return;
+    }
+    if (Thread.currentThread().getName().startsWith("ClientSubscriptionManager-Scheduler")) {
+      try {
+        RaceSaveData saveData = buildRaceSaveData(race);
+        executeUpsertAutoSave(databaseContext, saveData, saveData.getSaveName());
+      } catch (Exception e) {
+        if (!isShuttingDown) {
+          logger.error("Error during auto-save on scheduler thread", e);
+        }
+      }
       return;
     }
     try {
-      String filename = "autosave_" + raceId + ".json";
+      autoSaveAsync(race).get(5, TimeUnit.SECONDS);
+    } catch (Exception e) {
+      if (!isShuttingDown) {
+        logger.warn("Synchronous autoSave timed out or failed: {}", e.getMessage());
+      }
+    }
+  }
+
+  private void executeDeleteAutoSave(DatabaseContext ctx, String filename, boolean isDemo) {
+    try {
       DatabaseService dbService = DatabaseService.getInstance();
-      boolean deleted = dbService.deleteSavedRace(databaseContext, filename, isDemo);
+      boolean deleted = dbService.deleteSavedRace(ctx, filename, isDemo);
       if (deleted) {
         logger.info("Deleted auto-save from db (demo={}): {}", isDemo, filename);
       }
     } catch (Exception e) {
       if (!isShuttingDown) {
         logger.error("Error deleting auto-save", e);
+      }
+    }
+  }
+
+  public CompletableFuture<Void> deleteAutoSaveAsync(String raceId, boolean isDemo) {
+    if (databaseContext == null || databaseContext.getConnection() == null || raceId == null) {
+      return CompletableFuture.completedFuture(null);
+    }
+    final DatabaseContext ctx = databaseContext;
+    String filename = "autosave_" + raceId + ".json";
+    return CompletableFuture.runAsync(
+        () -> executeDeleteAutoSave(ctx, filename, isDemo), scheduler);
+  }
+
+  public void deleteAutoSave(String raceId, boolean isDemo) {
+    if (databaseContext == null || databaseContext.getConnection() == null || raceId == null) {
+      return;
+    }
+    if (Thread.currentThread().getName().startsWith("ClientSubscriptionManager-Scheduler")) {
+      executeDeleteAutoSave(databaseContext, "autosave_" + raceId + ".json", isDemo);
+      return;
+    }
+    try {
+      deleteAutoSaveAsync(raceId, isDemo).get(5, TimeUnit.SECONDS);
+    } catch (Exception e) {
+      if (!isShuttingDown) {
+        logger.warn("Synchronous deleteAutoSave timed out or failed: {}", e.getMessage());
       }
     }
   }
@@ -568,12 +651,59 @@ public class ClientSubscriptionManager {
   }
 
   public void broadcast(GeneratedMessageV3 message) {
+    broadcastAsync(message);
+  }
+
+  public CompletableFuture<Void> broadcastAsync(GeneratedMessageV3 message) {
     if (raceDataSubscribers.isEmpty()) {
-      return;
+      return CompletableFuture.completedFuture(null);
+    }
+
+    if (isPureRaceTime(message)) {
+      pendingRaceTimeMessage.set(message);
+      CompletableFuture<Void> future = new CompletableFuture<>();
+      if (raceTimeScheduled.compareAndSet(false, true)) {
+        broadcastExecutor.submit(
+            () -> {
+              processPendingRaceTime();
+              future.complete(null);
+            });
+      } else {
+        future.complete(null);
+      }
+      return future;
     }
 
     byte[] bytes = message.toByteArray();
+    return CompletableFuture.runAsync(
+        () -> sendToRaceDataSubscribers(bytes, message.getClass().getSimpleName()),
+        broadcastExecutor);
+  }
 
+  public void flushBroadcasts() {
+    try {
+      broadcastExecutor.submit(() -> {}).get(2, TimeUnit.SECONDS);
+    } catch (Exception ignored) {
+    }
+  }
+
+  private void processPendingRaceTime() {
+    GeneratedMessageV3 msg = pendingRaceTimeMessage.getAndSet(null);
+    raceTimeScheduled.set(false);
+    if (msg != null) {
+      byte[] bt = msg.toByteArray();
+      sendToRaceDataSubscribers(bt, "RaceTime");
+    }
+    if (pendingRaceTimeMessage.get() != null && raceTimeScheduled.compareAndSet(false, true)) {
+      broadcastExecutor.submit(this::processPendingRaceTime);
+    }
+  }
+
+  private void sendToRaceDataSubscribers(byte[] bytes, String msgName) {
+    if (raceDataSubscribers.isEmpty()) {
+      return;
+    }
+    long startNs = System.nanoTime();
     raceDataSubscribers.forEach(
         ctx -> {
           try {
@@ -582,6 +712,35 @@ public class ClientSubscriptionManager {
             logger.warn("Failed to broadcast message to subscriber: {}", e.getMessage());
           }
         });
+
+    long elapsedNs = System.nanoTime() - startNs;
+    if (elapsedNs > 25_000_000L) {
+      logger.warn(
+          "[PERF] WebSocket broadcast took {} ms ({} subscribers, msg: {})",
+          elapsedNs / 1_000_000L,
+          raceDataSubscribers.size(),
+          msgName);
+    }
+  }
+
+  private boolean isPureRaceTime(GeneratedMessageV3 message) {
+    if (!(message instanceof RaceData)) {
+      return false;
+    }
+    RaceData rd = (RaceData) message;
+    return rd.hasRaceTime()
+        && !rd.hasLap()
+        && !rd.hasStandingsUpdate()
+        && !rd.hasOverallStandingsUpdate()
+        && !rd.hasRace()
+        && !rd.hasCarData()
+        && !rd.hasSegment()
+        && !rd.hasFlag()
+        && !rd.hasRecordData()
+        && !rd.hasHeat()
+        && !rd.hasSystemState()
+        && !rd.hasGroupStandingsUpdate()
+        && !rd.hasRaceState();
   }
 
   public void broadcastSystemState() {
@@ -631,21 +790,29 @@ public class ClientSubscriptionManager {
   }
 
   public void broadcastInterfaceEvent(InterfaceEvent event) {
+    broadcastInterfaceEventAsync(event);
+  }
+
+  public CompletableFuture<Void> broadcastInterfaceEventAsync(InterfaceEvent event) {
     if (interfaceSubscribers.isEmpty()) {
-      return;
+      return CompletableFuture.completedFuture(null);
     }
     if (currentRace != null && (currentRace.getState() instanceof RaceOver)) {
-      return;
+      return CompletableFuture.completedFuture(null);
     }
 
     byte[] bytes = event.toByteArray();
-    for (WsContext session : interfaceSubscribers) {
-      try {
-        session.send(ByteBuffer.wrap(bytes));
-      } catch (Exception e) {
-        // Ignore or log
-      }
-    }
+    return CompletableFuture.runAsync(
+        () -> {
+          for (WsContext session : interfaceSubscribers) {
+            try {
+              session.send(ByteBuffer.wrap(bytes));
+            } catch (Exception e) {
+              // Ignore or log
+            }
+          }
+        },
+        broadcastExecutor);
   }
 
   public void registerCameraProtocol(CameraWebSocketProtocol protocol) {

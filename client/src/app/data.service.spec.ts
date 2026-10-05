@@ -434,7 +434,7 @@ describe("DataService", () => {
         hardwareType: 0,
         normallyClosedLaneSensors: true,
         normallyClosedRelays: true,
-        globalInvertLights: 0,
+        activeLowAnalogLeds: false,
         usePitsAsLaps: false,
         useLapsForSegments: false,
         lapPinPitBehavior: 0,
@@ -1240,6 +1240,7 @@ describe("DataService", () => {
         hubPort: 0,
         normallyClosedLaneSensors: false,
         normallyClosedRelays: false,
+        activeLowAnalogLeds: false,
         useLapsForSegments: false,
         lapPinPitBehavior: 0,
         digitalInIds: [],
@@ -1455,6 +1456,95 @@ describe("DataService", () => {
       (service as any).handleRaceDataMessage({
         data: mockRaceData.slice().buffer,
       });
+    });
+
+    it("should warn on browser main-thread freeze when dispatchDelay exceeds 100ms", () => {
+      const mockRaceData = RaceData.encode({
+        raceTime: {
+          time: 12.5,
+        },
+      }).finish();
+
+      const loggerSpy = spyOn((service as any).logger, "warn");
+      const pastTime =
+        (typeof performance !== "undefined" ? performance.now() : Date.now()) -
+        250;
+
+      (service as any).handleRaceDataMessage({
+        data: mockRaceData.slice().buffer,
+        timeStamp: pastTime,
+      });
+
+      expect(loggerSpy).toHaveBeenCalledWith(
+        jasmine.stringMatching(
+          /\[PERF\] Browser main-thread freeze: message dispatch delayed by/,
+        ),
+      );
+    });
+
+    it("should warn on RaceTime WebSocket interval lag when active ticking gap exceeds 450ms in RACING state", () => {
+      const loggerSpy = spyOn((service as any).logger, "warn");
+      (service as any).raceStateSubject.next(RaceState.RACING);
+
+      spyOn(performance, "now").and.returnValue(1000);
+      (service as any).lastRaceTimeReceivedAt = 500;
+
+      const mockRaceData = RaceData.encode({
+        raceTime: { time: 5.0 },
+      }).finish();
+
+      (service as any).handleRaceDataMessage({
+        data: mockRaceData.slice().buffer,
+      });
+
+      expect(loggerSpy).toHaveBeenCalledWith(
+        jasmine.stringMatching(
+          /\[PERF\] RaceTime WebSocket interval lag: \d+ms/,
+        ),
+      );
+    });
+
+    it("should suppress RaceTime WebSocket interval lag warning during initial subscription hydration grace window", () => {
+      const loggerSpy = spyOn((service as any).logger, "warn");
+      (service as any).raceStateSubject.next(RaceState.RACING);
+
+      // Subscription started 1000ms ago, current time 2000ms (within 3000ms grace window)
+      (service as any).raceSubscriptionStartedAt = 1000;
+      spyOn(performance, "now").and.returnValue(2000);
+      (service as any).lastRaceTimeReceivedAt = 1400; // gap 600ms > 450ms
+
+      const mockRaceData = RaceData.encode({
+        raceTime: { time: 5.0 },
+      }).finish();
+
+      (service as any).handleRaceDataMessage({
+        data: mockRaceData.slice().buffer,
+      });
+
+      expect(loggerSpy).not.toHaveBeenCalled();
+    });
+
+    it("should not warn on RaceTime gap across race state transition or when timer is not ticking", () => {
+      const loggerSpy = spyOn((service as any).logger, "warn");
+      (service as any).raceStateSubject.next(RaceState.NOT_STARTED);
+      (service as any).lastRaceTimeReceivedAt = 1000;
+
+      // Transition to STARTING with a raceTime message
+      const mockRaceData = RaceData.encode({
+        raceState: RaceState.STARTING,
+        raceTime: { time: 5.0 },
+      }).finish();
+
+      (service as any).handleRaceDataMessage({
+        data: mockRaceData.slice().buffer,
+      });
+
+      expect(loggerSpy).not.toHaveBeenCalled();
+      expect((service as any).lastRaceTimeReceivedAt).toBeGreaterThan(0);
+    });
+
+    it("should return base URL via getBaseUrl", () => {
+      expect(service.getBaseUrl()).toBe(service.serverUrl);
     });
 
     it("should expose interfaceEvents observable stream", (done) => {
@@ -1732,6 +1822,110 @@ describe("DataService", () => {
         isDemo: false,
       });
       req.flush({ bestLapTime: 3.1 });
+    });
+
+    it("should clear race data and replay buffers on clearRaceData()", () => {
+      (service as any).raceStateSubject.next(RaceState.RACE_OVER);
+      (service as any).flagSubject.next(RaceFlag.RED);
+      (service as any).raceTimeSubject.next({ time: 5000 });
+      (service as any).lastRaceTimeReceivedAt = 1000;
+      (service as any).raceUpdateSubject.next({ entity_id: "old-race" });
+      (service as any).standingsSubject.next({ updates: [] });
+      (service as any).overallStandingsSubject.next({ participants: [] });
+      (service as any).groupStandingsSubject.next({ group: 1 });
+      (service as any).recordDataSubject.next({ overall: {} });
+
+      service.clearRaceData();
+
+      expect((service as any).raceStateSubject.value).toBe(
+        RaceState.UNKNOWN_STATE,
+      );
+      expect((service as any).flagSubject.value).toBe(RaceFlag.UNKNOWN_FLAG);
+      expect((service as any).raceTimeSubject.value).toEqual({ time: 0 });
+      expect((service as any).lastRaceTimeReceivedAt).toBe(0);
+
+      let replayedRace = false;
+      service.getRaceUpdate().subscribe(() => {
+        replayedRace = true;
+      });
+      expect(replayedRace).toBeFalse();
+
+      let replayedStandings = false;
+      service.getStandingsUpdate().subscribe(() => {
+        replayedStandings = true;
+      });
+      expect(replayedStandings).toBeFalse();
+    });
+
+    it("should call clearRaceData when updateRaceSubscription(false) is called", () => {
+      spyOn(service, "clearRaceData").and.callThrough();
+      service.updateRaceSubscription(false);
+      expect(service.clearRaceData).toHaveBeenCalled();
+    });
+  });
+
+  describe("resolveAssetUrl", () => {
+    it("should handle empty or falsy inputs", () => {
+      expect(service.resolveAssetUrl(undefined)).toBe("");
+      expect(service.resolveAssetUrl("")).toBe("");
+      expect(service.resolveAssetUrl("   ")).toBe("");
+    });
+
+    it("should preserve absolute or http/https URLs", () => {
+      expect(service.resolveAssetUrl("http://example.com/a.png")).toBe(
+        "http://example.com/a.png",
+      );
+      expect(service.resolveAssetUrl("https://example.com/a.png")).toBe(
+        "https://example.com/a.png",
+      );
+      expect(service.resolveAssetUrl("/assets/my_image.png")).toBe(
+        "/assets/my_image.png",
+      );
+    });
+
+    it("should preserve client assets/images/ static paths", () => {
+      expect(service.resolveAssetUrl("assets/images/default_avatar.svg")).toBe(
+        "assets/images/default_avatar.svg",
+      );
+    });
+
+    it("should prefix assets/default_ paths with slash", () => {
+      expect(service.resolveAssetUrl("assets/default_helmet.png")).toBe(
+        "/assets/default_helmet.png",
+      );
+    });
+
+    it("should resolve helmet aliases to default asset URLs", () => {
+      expect(
+        service.resolveAssetUrl("assets/defaults/helmets/helmet_yellow.png"),
+      ).toBe("/assets/default_black-yellow_Helmet_Black-Yellow");
+      expect(
+        service.resolveAssetUrl("assets/defaults/helmets/helmet_red.png"),
+      ).toBe("/assets/default_red-yellow_Helmet_Red-Yellow");
+      expect(service.resolveAssetUrl("helmet_blue.png")).toBe(
+        "/assets/default_blue-white_Helmet_Blue-White",
+      );
+    });
+
+    it("should match against loadedAssets by id, name, or filename", () => {
+      service.setLoadedAssets([
+        {
+          model: { entityId: "custom-avatar-1" },
+          name: "My Custom Avatar",
+          type: "image",
+          url: "/assets/custom-avatar-1_My_Custom_Avatar.png",
+        } as any,
+      ]);
+
+      expect(service.resolveAssetUrl("custom-avatar-1")).toBe(
+        "/assets/custom-avatar-1_My_Custom_Avatar.png",
+      );
+      expect(service.resolveAssetUrl("My Custom Avatar")).toBe(
+        "/assets/custom-avatar-1_My_Custom_Avatar.png",
+      );
+      expect(
+        service.resolveAssetUrl("custom-avatar-1_My_Custom_Avatar.png"),
+      ).toBe("/assets/custom-avatar-1_My_Custom_Avatar.png");
     });
   });
 });

@@ -64,9 +64,9 @@ describe("LaneViewInspectorComponent", () => {
     expect(changeSpy).toHaveBeenCalled();
   });
 
-  it("should bind timeDecimalPlaces and emit change on selection", () => {
+  it("should bind insetTimeDecimalPlaces and emit change on selection", () => {
     const selectEl =
-      fixture.nativeElement.querySelectorAll("app-custom-select")[1];
+      fixture.nativeElement.querySelectorAll("app-custom-select")[2];
     const trigger = selectEl.querySelector(
       ".custom-select-trigger",
     ) as HTMLElement;
@@ -77,13 +77,13 @@ describe("LaneViewInspectorComponent", () => {
     ) as HTMLElement;
     opt?.click();
     fixture.detectChanges();
-    expect(Number(component.settings().timeDecimalPlaces)).toBe(1);
+    expect(Number(component.settings().insetTimeDecimalPlaces)).toBe(1);
     expect(changeSpy).toHaveBeenCalled();
   });
 
-  it("should bind lapDecimalPlaces and emit change on selection", () => {
+  it("should bind insetLapDecimalPlaces and emit change on selection", () => {
     const selectEl =
-      fixture.nativeElement.querySelectorAll("app-custom-select")[2];
+      fixture.nativeElement.querySelectorAll("app-custom-select")[3];
     const trigger = selectEl.querySelector(
       ".custom-select-trigger",
     ) as HTMLElement;
@@ -94,7 +94,7 @@ describe("LaneViewInspectorComponent", () => {
     ) as HTMLElement;
     opt?.click();
     fixture.detectChanges();
-    expect(Number(component.settings().lapDecimalPlaces)).toBe(0);
+    expect(Number(component.settings().insetLapDecimalPlaces)).toBe(0);
     expect(changeSpy).toHaveBeenCalled();
   });
 
@@ -183,8 +183,9 @@ describe("LaneViewInspectorComponent", () => {
     expect(component.getColumnLabel("unknown")).toBe("unknown");
   });
 
-  it("should return correct column label for analysis columns in availableColumns", () => {
+  it("should return correct column label for analysis and lap columns in availableColumns", () => {
     fixture.componentRef.setInput("availableColumns", [
+      { key: "physicalLapCount", label: "UI_EDITOR_COL_LAP_COUNT" },
       { key: "standardDeviation", label: "RD_COL_STD_DEV" },
       { key: "consistencyScore", label: "RD_COL_CONSISTENCY" },
       { key: "averageTop5", label: "RD_COL_AVG_TOP_5" },
@@ -193,6 +194,9 @@ describe("LaneViewInspectorComponent", () => {
       { key: "top2Consecutive", label: "RD_COL_TOP_2_CONSECUTIVE" },
       { key: "top3Consecutive", label: "RD_COL_TOP_3_CONSECUTIVE" },
     ]);
+    expect(component.getColumnLabel("physicalLapCount")).toBe(
+      "UI_EDITOR_COL_LAP_COUNT",
+    );
     expect(component.getColumnLabel("standardDeviation")).toBe(
       "RD_COL_STD_DEV",
     );
@@ -415,44 +419,53 @@ describe("LaneViewInspectorComponent", () => {
 
     it("should return column groups with count badges for unused columns", () => {
       const groups = component.getColumnGroups();
-      expect(groups.length).toBe(9);
-      expect(groups.map((g) => g.id)).toEqual([
-        "driver-team",
-        "laps-standings",
-        "lap-times",
-        "analysis",
-        "gaps",
-        "pacing",
-        "telemetry",
-        "predictions",
-        "media-custom",
-      ]);
-      expect(groups[0].columns.length).toBe(1);
-      expect(groups[0].columns[0].key).toBe("driver.name");
-      expect(groups[3].columns[0].key).toBe("standardDeviation");
+      expect(groups.length).toBe(2);
+      expect(groups.map((g) => g.id)).toEqual(["heat-data", "overall-data"]);
+      expect(groups[0].totalCount).toBe(8);
+      expect(groups[0].subgroups.length).toBe(8);
+      expect(groups[1].totalCount).toBe(3);
+      expect(groups[1].subgroups.length).toBe(3);
+
+      const heatAnalysis = groups[0].subgroups.find(
+        (sg) => sg.id === "heat-data-sg-analysis",
+      );
+      expect(heatAnalysis?.columns[0].key).toBe("standardDeviation");
+
+      const overallPredictions = groups[1].subgroups.find(
+        (sg) => sg.id === "overall-data-sg-predictions",
+      );
+      expect(overallPredictions?.columns[0].key).toBe("winProbability");
     });
 
     it("should toggle column group expansion", () => {
       expect(
-        component.columnGroupExpandedStates.get("analysis"),
+        component.columnGroupExpandedStates.get("heat-data"),
       ).toBeUndefined();
-      component.toggleColumnGroup("analysis");
-      expect(component.columnGroupExpandedStates.get("analysis")).toBeFalse();
+      component.toggleColumnGroup("heat-data");
+      expect(component.columnGroupExpandedStates.get("heat-data")).toBeFalse();
 
-      component.toggleColumnGroup("analysis");
-      expect(component.columnGroupExpandedStates.get("analysis")).toBeTrue();
+      component.toggleColumnGroup("heat-data");
+      expect(component.columnGroupExpandedStates.get("heat-data")).toBeTrue();
+
+      expect(
+        component.columnGroupExpandedStates.get("heat-data-sg-analysis"),
+      ).toBeUndefined();
+      component.toggleColumnGroup("heat-data-sg-analysis");
+      expect(
+        component.columnGroupExpandedStates.get("heat-data-sg-analysis"),
+      ).toBeTrue();
     });
 
     it("should save collapsed state to settings.collapsedColumnGroups and emit change on toggle", () => {
-      component.toggleColumnGroup("telemetry");
+      component.toggleColumnGroup("heat-data");
       expect(
-        component.settings().collapsedColumnGroups["telemetry"],
+        component.settings().collapsedColumnGroups["heat-data"],
       ).toBeTrue();
       expect(changeSpy).toHaveBeenCalled();
 
-      component.toggleColumnGroup("telemetry");
+      component.toggleColumnGroup("heat-data");
       expect(
-        component.settings().collapsedColumnGroups["telemetry"],
+        component.settings().collapsedColumnGroups["heat-data"],
       ).toBeFalse();
     });
 
@@ -461,45 +474,55 @@ describe("LaneViewInspectorComponent", () => {
       const customComp = customFixture.componentInstance;
       customFixture.componentRef.setInput("settings", {
         collapsedColumnGroups: {
-          analysis: true,
-          telemetry: false,
+          "heat-data": true,
+          "heat-data-sg-telemetry": false,
         },
       });
       customFixture.componentRef.setInput("globalSettings", {});
       customFixture.componentRef.setInput("availableColumns", [
-        { key: "standardDeviation", label: "Std Dev" },
+        { key: "participant.fuelLevel", label: "Fuel" },
       ]);
       customFixture.detectChanges();
 
-      expect(customComp.columnGroupExpandedStates.get("analysis")).toBeFalse();
-      expect(customComp.columnGroupExpandedStates.get("telemetry")).toBeTrue();
+      expect(customComp.columnGroupExpandedStates.get("heat-data")).toBeFalse();
+      expect(
+        customComp.columnGroupExpandedStates.get("heat-data-sg-telemetry"),
+      ).toBeTrue();
 
       const groups = customComp.getColumnGroups();
-      const analysisGroup = groups.find((g) => g.id === "analysis");
-      expect(analysisGroup?.expanded).toBeFalse();
+      const heatGroup = groups.find((g) => g.id === "heat-data");
+      expect(heatGroup?.expanded).toBeFalse();
+      const telemetrySg = heatGroup?.subgroups.find(
+        (sg) => sg.id === "heat-data-sg-telemetry",
+      );
+      expect(telemetrySg?.expanded).toBeTrue();
     });
 
     it("should load collapsed state from settings.collapsedColumnGroups array on initialization", () => {
       const customFixture = TestBed.createComponent(LaneViewInspectorComponent);
       const customComp = customFixture.componentInstance;
       customFixture.componentRef.setInput("settings", {
-        collapsedColumnGroups: ["analysis", "gaps"],
+        collapsedColumnGroups: ["heat-data", "heat-data-sg-gaps"],
       });
       customFixture.componentRef.setInput("globalSettings", {});
       customFixture.componentRef.setInput("availableColumns", [
-        { key: "col1", label: "Col 1" },
+        { key: "gapLeader", label: "Gap" },
       ]);
       customFixture.detectChanges();
 
-      expect(customComp.columnGroupExpandedStates.get("analysis")).toBeFalse();
-      expect(customComp.columnGroupExpandedStates.get("gaps")).toBeFalse();
+      expect(customComp.columnGroupExpandedStates.get("heat-data")).toBeFalse();
+      expect(
+        customComp.columnGroupExpandedStates.get("heat-data-sg-gaps"),
+      ).toBeFalse();
 
       // Toggle one that was in array to expand it
-      customComp.toggleColumnGroup("analysis");
+      customComp.toggleColumnGroup("heat-data");
       expect(customComp.settings().collapsedColumnGroups).not.toContain(
-        "analysis",
+        "heat-data",
       );
-      expect(customComp.settings().collapsedColumnGroups).toContain("gaps");
+      expect(customComp.settings().collapsedColumnGroups).toContain(
+        "heat-data-sg-gaps",
+      );
     });
 
     it("should filter groups and columns by search term", () => {
@@ -508,9 +531,12 @@ describe("LaneViewInspectorComponent", () => {
 
       const groups = component.getColumnGroups();
       expect(groups.length).toBe(1);
-      expect(groups[0].id).toBe("pacing");
-      expect(groups[0].columns[0].key).toBe("ghostPacing");
+      expect(groups[0].id).toBe("heat-data");
+      expect(groups[0].subgroups.length).toBe(1);
+      expect(groups[0].subgroups[0].id).toBe("heat-data-sg-pacing");
+      expect(groups[0].subgroups[0].columns[0].key).toBe("ghostPacing");
       expect(groups[0].expanded).toBeTrue();
+      expect(groups[0].subgroups[0].expanded).toBeTrue();
     });
 
     it("should clear column search", () => {
@@ -523,19 +549,43 @@ describe("LaneViewInspectorComponent", () => {
       const headers = fixture.nativeElement.querySelectorAll(
         ".toolbox-group-header",
       );
-      expect(headers.length).toBe(9);
+      expect(headers.length).toBe(2);
 
       const firstHeader = headers[0] as HTMLElement;
       expect(firstHeader.classList.contains("expanded")).toBeTrue();
       const folderIcon = firstHeader.querySelector(".toolbox-folder-icon");
       expect(folderIcon?.textContent?.trim()).toBe("folder_open");
 
-      // Click to collapse
+      // Click top-level header to collapse
       firstHeader.click();
       fixture.detectChanges();
 
       expect(firstHeader.classList.contains("expanded")).toBeFalse();
       expect(folderIcon?.textContent?.trim()).toBe("folder");
+
+      // Click again to expand
+      firstHeader.click();
+      fixture.detectChanges();
+      expect(firstHeader.classList.contains("expanded")).toBeTrue();
+
+      // Subgroup headers inside the expanded top-level group
+      const subHeaders = fixture.nativeElement.querySelectorAll(
+        ".toolbox-subgroup-header",
+      );
+      expect(subHeaders.length).toBeGreaterThan(0);
+      const firstSubHeader = subHeaders[0] as HTMLElement;
+      expect(firstSubHeader.classList.contains("expanded")).toBeFalse();
+      const subFolderIcon = firstSubHeader.querySelector(
+        ".toolbox-folder-icon",
+      );
+      expect(subFolderIcon?.textContent?.trim()).toBe("folder");
+
+      // Click subfolder header to expand
+      firstSubHeader.click();
+      fixture.detectChanges();
+
+      expect(firstSubHeader.classList.contains("expanded")).toBeTrue();
+      expect(subFolderIcon?.textContent?.trim()).toBe("folder_open");
     });
 
     it("should display no matches message when search yields no columns", () => {
@@ -619,6 +669,141 @@ describe("LaneViewInspectorComponent", () => {
 
       // drag handle precedes col-info in DOM and acts as sibling in flex layout
       expect(dragHandle.nextElementSibling).toBe(colInfo);
+    });
+  });
+
+  describe("Column Decimals Management", () => {
+    it("should correctly identify lap and time columns", () => {
+      expect(component.isTimeColumn("lastLapTime")).toBeTrue();
+      expect(component.isTimeColumn("bestLapTime")).toBeTrue();
+      expect(component.isTimeColumn("lapCount")).toBeFalse();
+      expect(component.isTimeColumn("driver.name")).toBeFalse();
+
+      expect(component.isLapColumn("lapCount")).toBeTrue();
+      expect(component.isLapColumn("overallLapCount")).toBeTrue();
+      expect(component.isLapColumn("lastLapTime")).toBeFalse();
+      expect(component.isLapColumn("driver.name")).toBeFalse();
+
+      expect(component.isLapOrTimeColumn("lastLapTime")).toBeTrue();
+      expect(component.isLapOrTimeColumn("lapCount")).toBeTrue();
+      expect(component.isLapOrTimeColumn("driver.name")).toBeFalse();
+    });
+
+    it("should resolve primary property from customUi columnLayoutsJson if present", () => {
+      fixture.componentRef.setInput("customUi", {
+        columnLayoutsJson: JSON.stringify({
+          col1: { "center-center": "lastLapTime" },
+        }),
+      } as any);
+
+      expect(component.isTimeColumn("col1")).toBeTrue();
+      expect(component.isLapOrTimeColumn("col1")).toBeTrue();
+    });
+
+    it("should default getColumnDecimalPlaces to timeDecimalPlaces or lapDecimalPlaces when unset", () => {
+      component.settings().timeDecimalPlaces = 3;
+      component.settings().lapDecimalPlaces = 2;
+
+      expect(component.getColumnDecimalPlaces("lastLapTime")).toBe(3);
+      expect(component.getColumnDecimalPlaces("lapCount")).toBe(2);
+    });
+
+    it("should return column-specific decimal places when configured within [0, 3]", () => {
+      component.settings().columnDecimals = {
+        lastLapTime: 1,
+        bestLapTime: 3,
+        lapCount: 0,
+      };
+
+      expect(component.getColumnDecimalPlaces("lastLapTime")).toBe(1);
+      expect(component.getColumnDecimalPlaces("bestLapTime")).toBe(3);
+      expect(component.getColumnDecimalPlaces("lapCount")).toBe(0);
+    });
+
+    it("should allow setting decimal places individually on different columns within [0, 3] and emit change", () => {
+      fixture.componentRef.setInput("widget", {
+        id: "widget-lane-view",
+        widgetType: "lane-view",
+        customSettings: {},
+      } as any);
+
+      component.setColumnDecimalPlaces("lastLapTime", 1);
+      component.setColumnDecimalPlaces("bestLapTime", 3);
+
+      expect(component.getColumnDecimalPlaces("lastLapTime")).toBe(1);
+      expect(component.getColumnDecimalPlaces("bestLapTime")).toBe(3);
+      expect(
+        component.widget().customSettings["columnDecimals"]["lastLapTime"],
+      ).toBe(1);
+      expect(
+        component.widget().customSettings["columnDecimals"]["bestLapTime"],
+      ).toBe(3);
+      expect(changeSpy).toHaveBeenCalled();
+    });
+
+    it("should clean up columnDecimals when deleteColumn is called", () => {
+      fixture.componentRef.setInput("widget", {
+        id: "widget-lane-view",
+        widgetType: "lane-view",
+        customSettings: {
+          columnDecimals: {
+            lastLapTime: 1,
+            bestLapTime: 3,
+          },
+        },
+      } as any);
+      component.settings().columnDecimals = {
+        lastLapTime: 1,
+        bestLapTime: 3,
+      };
+
+      component.deleteColumn("lastLapTime");
+
+      expect(
+        component.widget().customSettings["columnDecimals"]["lastLapTime"],
+      ).toBeUndefined();
+      expect(
+        component.widget().customSettings["columnDecimals"]["bestLapTime"],
+      ).toBe(3);
+      expect(
+        component.settings().columnDecimals["lastLapTime"],
+      ).toBeUndefined();
+      expect(component.settings().columnDecimals["bestLapTime"]).toBe(3);
+      expect(changeSpy).toHaveBeenCalled();
+    });
+
+    it("should render col-decimals-wrapper with [0, 3] options for time and lap columns but not other columns", () => {
+      fixture.componentRef.setInput("globalSettings", {
+        racedayColumns: ["driver.name", "lastLapTime", "lapCount"],
+      });
+      fixture.detectChanges();
+
+      const items = fixture.nativeElement.querySelectorAll(
+        ".inspector-column-item",
+      );
+      expect(items.length).toBe(3);
+
+      const nameDecimals = items[0].querySelector(".col-decimals-wrapper");
+      expect(nameDecimals).toBeNull();
+
+      const timeDecimals = items[1].querySelector(".col-decimals-wrapper");
+      expect(timeDecimals).toBeTruthy();
+
+      const lapDecimals = items[2].querySelector(".col-decimals-wrapper");
+      expect(lapDecimals).toBeTruthy();
+
+      // Range is strictly [0, 3] for both
+      const timeOptions = items[1].querySelectorAll("app-custom-option");
+      const timeValues = Array.from(timeOptions).map((o: any) =>
+        o.textContent?.trim(),
+      );
+      expect(timeValues).toEqual(["0", "1", "2", "3"]);
+
+      const lapOptions = items[2].querySelectorAll("app-custom-option");
+      const lapValues = Array.from(lapOptions).map((o: any) =>
+        o.textContent?.trim(),
+      );
+      expect(lapValues).toEqual(["0", "1", "2", "3"]);
     });
   });
 });

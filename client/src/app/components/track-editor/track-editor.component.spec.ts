@@ -229,10 +229,12 @@ describe("TrackEditorComponent", () => {
     const nameEl = fixture.nativeElement.querySelector("#track-name-input");
     expect(nameEl).toBeTruthy();
     expect(nameEl.getAttribute("data-dashlane-ignore")).toBe("true");
+    expect(nameEl.getAttribute("data-dashlane-disabled-on-field")).toBe("true");
     expect(nameEl.getAttribute("data-1p-ignore")).toBe("true");
     expect(nameEl.getAttribute("data-lpignore")).toBe("true");
     expect(nameEl.getAttribute("data-bwignore")).toBe("true");
     expect(nameEl.getAttribute("data-form-type")).toBe("other");
+    expect(nameEl.getAttribute("data-field-type")).toBe("other");
     expect(nameEl.getAttribute("autocomplete")).toBe("off");
   });
 
@@ -1079,7 +1081,7 @@ describe("TrackEditorComponent", () => {
           hardwareType: 0,
           normallyClosedLaneSensors: false,
           normallyClosedRelays: false,
-          globalInvertLights: 0,
+          activeLowAnalogLeds: false,
           usePitsAsLaps: false,
           useLapsForSegments: false,
           lapPinPitBehavior: 0,
@@ -1344,6 +1346,49 @@ describe("TrackEditorComponent", () => {
       component.sectionsExpanded["lanes"] = true;
       component.toggleSection("lanes");
       expect(component.sectionsExpanded["lanes"]).toBeFalse();
+
+      component.toggleSection("lanes", false);
+      expect(component.sectionsExpanded["lanes"]).toBeFalse();
+
+      component.toggleSection("lanes", true);
+      expect(component.sectionsExpanded["lanes"]).toBeTrue();
+    });
+
+    it("should toggle lane section in a single header click in the DOM", () => {
+      component.sectionsExpanded["lanes"] = true;
+      fixture.detectChanges();
+
+      const headerEl = fixture.debugElement.query(
+        By.css("#lane-editor-section .section-header"),
+      );
+      expect(headerEl).toBeTruthy();
+      expect(
+        fixture.debugElement.query(
+          By.css("#lane-editor-section .section-content"),
+        ),
+      ).toBeTruthy();
+
+      // Click once to close
+      headerEl.nativeElement.click();
+      fixture.detectChanges();
+
+      expect(component.sectionsExpanded["lanes"]).toBeFalse();
+      expect(
+        fixture.debugElement.query(
+          By.css("#lane-editor-section .section-content"),
+        ),
+      ).toBeFalsy();
+
+      // Click once to open
+      headerEl.nativeElement.click();
+      fixture.detectChanges();
+
+      expect(component.sectionsExpanded["lanes"]).toBeTrue();
+      expect(
+        fixture.debugElement.query(
+          By.css("#lane-editor-section .section-content"),
+        ),
+      ).toBeTruthy();
     });
 
     it("should allow toggling sections when in read-only mode", () => {
@@ -1394,7 +1439,7 @@ describe("TrackEditorComponent", () => {
           analogIds: new Array(6).fill(0),
           normallyClosedLaneSensors: false,
           normallyClosedRelays: true,
-          globalInvertLights: 0,
+          activeLowAnalogLeds: false,
           usePitsAsLaps: false,
           useLapsForSegments: true,
           ledStrings: [ls],

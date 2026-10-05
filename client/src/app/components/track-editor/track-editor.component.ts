@@ -203,8 +203,14 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   showLedStringDialog = false;
   requestingArduinoIndex = -1;
 
-  toggleSection(section: keyof typeof this.sectionsExpanded) {
-    this.sectionsExpanded[section] = !this.sectionsExpanded[section];
+  toggleSection(
+    section: keyof typeof this.sectionsExpanded,
+    forcedState?: boolean,
+  ) {
+    this.sectionsExpanded[section] =
+      typeof forcedState === "boolean"
+        ? forcedState
+        : !this.sectionsExpanded[section];
     localStorage.setItem(
       "rc.track-editor.sections",
       JSON.stringify(this.sectionsExpanded),
@@ -1642,6 +1648,22 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
         position: "bottom",
       },
       {
+        targetId: "edit-track-btn",
+        title: this.translationService.translate("TOOLBAR_HELP_EDIT_TITLE"),
+        content: this.translationService.translate("TOOLBAR_HELP_EDIT_CONTENT"),
+        position: "bottom",
+      },
+      {
+        targetId: "expand-collapse-all-btn",
+        title: this.translationService.translate(
+          "TOOLBAR_HELP_EXPAND_COLLAPSE_TITLE",
+        ),
+        content: this.translationService.translate(
+          "TOOLBAR_HELP_EXPAND_COLLAPSE_CONTENT",
+        ),
+        position: "bottom",
+      },
+      {
         targetId: "copy-item-btn",
         title: this.translationService.translate("TOOLBAR_HELP_COPY_TITLE"),
         content: this.translationService.translate("TOOLBAR_HELP_COPY_CONTENT"),
@@ -2113,7 +2135,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       hardwareType: 0,
       normallyClosedLaneSensors: true,
       normallyClosedRelays: true,
-      globalInvertLights: 0,
+      activeLowAnalogLeds: false,
       usePitsAsLaps: false,
       useLapsForSegments: false,
       lapPinPitBehavior: 3,
@@ -2373,6 +2395,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       hubPort: 0,
       normallyClosedLaneSensors: true,
       normallyClosedRelays: true,
+      activeLowAnalogLeds: false,
       useLapsForSegments: false,
       lapPinPitBehavior: 3,
       digitalInIds: Array(32).fill(0),

@@ -65,7 +65,7 @@ public class ArduinoConfigConverterTest {
             .setHardwareType(1)
             .setNormallyClosedLaneSensors(true)
             .setNormallyClosedRelays(false)
-            .setGlobalInvertLights(1)
+            .setActiveLowAnalogLeds(true)
             .setUsePitsAsLaps(false)
             .setUseLapsForSegments(true)
             .setLapPinPitBehaviorValue(1)
@@ -81,6 +81,7 @@ public class ArduinoConfigConverterTest {
     assertEquals("/dev/ttyUSB0", domainConfig.commPort);
     assertEquals(115200, domainConfig.baudRate);
     assertEquals(500, domainConfig.debounceUs);
+    org.junit.Assert.assertTrue(domainConfig.activeLowAnalogLeds);
     assertEquals(Integer.valueOf(12), domainConfig.voltageConfigs.get("1"));
     assertEquals(1, domainConfig.ledStrings.size());
     assertEquals(6, domainConfig.ledStrings.get(0).pin);
@@ -89,6 +90,7 @@ public class ArduinoConfigConverterTest {
     assertEquals("Custom Uno", backToProto.getName());
     assertEquals("/dev/ttyUSB0", backToProto.getCommPort());
     assertEquals(115200, backToProto.getBaudRate());
+    org.junit.Assert.assertTrue(backToProto.getActiveLowAnalogLeds());
     assertEquals(1, backToProto.getVoltageConfigsCount());
     assertEquals(1, backToProto.getLedStringsCount());
   }

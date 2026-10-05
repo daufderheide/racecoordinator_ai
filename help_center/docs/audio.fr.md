@@ -174,8 +174,8 @@ Les tableaux suivants répertorient tous les événements audio dans Race Coordi
 | **Feu Vert / PARTEZ** | `audio.countdown.green` | **Annonce Vocale** / Bip Prédéfini | `urgent` | `countdown`: Joué sur l'Écran Principal (si widget compte à rebours présent) et sur tous les Postes Pilote. |
 | **Drapeau Jaune** | `audio.yellowflag` | **Annonce Vocale** (Sirène d'Alerte) | `urgent` (Poids 4) | `flag`: Joué sur l'Écran Principal (si widget drapeau présent) et sur tous les Postes Pilote. |
 | **Secondes Restantes avant Démarrage Automatique** | `audio.auto_start` | **Annonce Vocale** / Ensemble Audio (Par défaut : TTS) | `normal` (Poids 2) | `timer`: Joué sur l'Écran Principal (si widget chronomètre présent) et sur tous les Postes Pilote. |
-| **Secondes Restantes** | `audio.seconds_left` | **Annonce Vocale** | `normal` (Poids 2) | `timer`: Joué sur l'Écran Principal (si widget chronomètre présent) et sur tous les Postes Pilote. |
-| **Tours Restants** | `audio.laps_left` | **Annonce Vocale** / Ensemble Audio | `normal` (Poids 2) | `timer`: Joué sur l'Écran Principal (si widget chronomètre présent) et sur tous les Postes Pilote. Annonce les tours restants pour le meneur ; une valeur de 0 annonce lorsque le meneur atteint le nombre de tours (par ex. « Meneur terminé » dans les courses autorisant la fin de manche). |
+| **Temps de Manche / Secondes Restantes** | `audio.seconds_left` | **Annonce Vocale** | `normal` (Poids 2) | `timer`: Joué sur l'Écran Principal (si widget chronomètre présent) et sur tous les Postes Pilote. |
+| **Tours du Meneur / Tours Restants** | `audio.laps_left` | **Annonce Vocale** / Ensemble Audio | `normal` (Poids 2) | `timer`: Joué sur l'Écran Principal (si widget chronomètre présent) et sur tous les Postes Pilote. Annonce les tours restants pour le meneur ; une valeur de 0 annonce lorsque le meneur atteint le nombre de tours (par ex. « Meneur terminé » dans les courses autorisant la fin de manche). |
 | **Mi-Manche** | `audio.seconds_left.halfway` | **Annonce Vocale** | `normal` (Poids 2) | `timer`: Joué sur l'Écran Principal (si widget chronomètre présent) et sur tous les Postes Pilote à la mi-course (au temps écoulé ou lorsque le meneur franchit la moitié des tours). |
 | **Manche Terminée** | `audio.heat_over` | **Annonce Vocale** | `urgent` (Poids 4) | `flag`: Joué sur l'Écran Principal (si widget drapeau présent) et sur tous les Postes Pilote. |
 | **Secondes Restantes avant Passage Automatique** | `audio.auto_advance` | **Annonce Vocale** / Ensemble Audio (Par défaut : TTS) | `normal` (Poids 2) | `timer`: Joué sur l'Écran Principal (si widget chronomètre présent) et sur tous les Postes Pilote. |
@@ -191,8 +191,8 @@ Un **Ensemble Audio** est une ressource composite regroupant une collection de f
 
 1. **Compte à rebours de départ (`audio.countdown`) :** Bips et avertisseurs avant le départ.
 2. **Secondes restantes avant démarrage automatique (`audio.auto_start`) :** Annonces avant le lancement d'une manche.
-3. **Secondes restantes (`audio.seconds_left`) :** Annonces de temps pendant les manches au temps.
-4. **Tours restants (`audio.laps_left`) :** Annonces de tours pendant les manches au tour.
+3. **Temps de manche / Secondes restantes (`audio.seconds_left`) :** Annonces de temps pendant les manches au temps.
+4. **Tours du meneur / Tours restants (`audio.laps_left`) :** Annonces de tours pendant les manches au tour.
 5. **Secondes restantes avant passage automatique (`audio.auto_advance`) :** Annonces entre les manches avant l'enchaînement.
 6. **Sons de niveau de carburant (`fuelLevelAudio`) :** Alertes de réserve, niveau critique et plein selon le pourcentage.
 

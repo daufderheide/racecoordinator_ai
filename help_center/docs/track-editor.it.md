@@ -152,6 +152,7 @@ Imposta il tempo di antirimbalzo in **microsecondi** ($1\text{ ms} = 1000\,\mu\t
 #### Logica Invertita (Normalmente Chiuso / NC)
 - **Sensori di Corsia Normalmente Chiusi (NC)**: Attivare se il sensore fornisce livello alto a riposo e scende a basso al passaggio del modello (tipico per fotocellule e IR). Disattivare per dead strip o reed.
 - **Relè Normalmente Chiusi (NC)**: Attivare se il relè si eccita per togliere corrente e rimane a riposo per alimentare la pista. Garantisce che la pista sia alimentata anche a computer spento.
+- **LED Analogici Attivi Bassi (Active Low Analog LEDs)**: Attivare se i LED analogici (come semafori di partenza, bandiere o indicatori di leader) si accendono a livello BASSO (0V) e si spengono a livello ALTO (5V). Risolve il comportamento invertito nei circuiti ad anodo comune su Arduino e Phidget.
 
 #### Comportamento Box su Pin Giri
 Consente al sensore di traguardo di gestire il rifornimento nelle gare con carburante:
@@ -258,6 +259,7 @@ La barra degli strumenti superiore dell'Editor dei Tracciati fornisce strumenti 
 - **Aggiungi Tracciato (+)**: Crea un nuovo modello di tracciato ed entra in modalità modifica.
 - **Duplica Tracciato**: Crea una copia esatta con un nuovo nome univoco, perfetta per testare configurazioni alternative senza ripartire da zero.
 - **Modifica / Fine Modifica**: Passa dalla modalità sola lettura alla modalità modifica e viceversa. Uscendo dalla modalità modifica, le modifiche vengono convalidate e salvate.
+- **Espandi / Comprimi tutto**: Espande o comprime tutte le sezioni di configurazione e i pannelli delle interfacce contemporaneamente.
 - **Elimina Tracciato**: Elimina il tracciato selezionato previa conferma.
 - **Annulla (`Ctrl+Z`) / Ripristina (`Ctrl+Y`)**: Ripristina con facilità qualsiasi modifica a corsie, colori o pin.
 - **Guida (`?`)**: Avvia un tour guidato interattivo a video su tutti i comandi.
@@ -273,6 +275,10 @@ La barra degli strumenti superiore dell'Editor dei Tracciati fornisce strumenti 
 ### Rifornimento Continuo nelle Gare con Carburante
 - **Sintomo**: I modelli iniziano a rifornire senza sosta non appena poggiano sulla pista.
 - **Soluzione**: Modifica lo stato della casella **Sensori di Corsia Normalmente Chiusi (Normally Closed Lane Sensors)**.
+
+### LED Analogici Invertiti (Accesi quando dovrebbero essere spenti)
+- **Sintomo**: I LED del semaforo, bandiere o indicatori di leader sono accesi a riposo e si spengono durante le fasi attive.
+- **Soluzione**: Attiva la casella **LED analogici attivi bassi (Active Low Analog LEDs)** nella configurazione dell'interfaccia (Arduino o Phidget).
 
 ### Doppi Giri o Giri Persi
 - **Soluzione**: Aumenta l'antirimbalzo (Debounce) se vengono contati doppi giri; riducilo se i modelli più veloci non vengono rilevati, e verifica l'allineamento delle fotocellule.

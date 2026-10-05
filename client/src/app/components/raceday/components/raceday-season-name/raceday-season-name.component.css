@@ -4,7 +4,7 @@ app-raceday-season-name {
   height: 100%;
 }
 
-.info-section {
+app-raceday-season-name .info-section {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -13,7 +13,7 @@ app-raceday-season-name {
   border-right: 1px solid rgba(0, 0, 0, 0.15);
 }
 
-.label-text {
+app-raceday-season-name .label-text {
   font-size: var(--header-label-font-size, 13px);
   font-weight: 600;
   text-transform: uppercase;
@@ -23,7 +23,7 @@ app-raceday-season-name {
   font-family: 'Inter', 'Segoe UI', Roboto, sans-serif;
 }
 
-.value-text {
+app-raceday-season-name .value-text {
   font-size: var(--header-value-font-size, 18px);
   font-weight: 700;
   color: #f8fafc;
@@ -32,14 +32,14 @@ app-raceday-season-name {
 }
 
 @media print {
-  :host-context(body.print-no-background) .info-section {
+  :host-context(body.print-no-background) app-raceday-season-name .info-section {
     background: #ffffff !important;
     background-color: #ffffff !important;
     border-color: #cbd5e1 !important;
   }
 
-  :host-context(body.print-no-background) .label-text,
-  :host-context(body.print-no-background) .value-text {
+  :host-context(body.print-no-background) app-raceday-season-name .label-text,
+  :host-context(body.print-no-background) app-raceday-season-name .value-text {
     color: #0f172a !important;
     text-shadow: none !important;
   }

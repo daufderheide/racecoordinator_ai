@@ -23,6 +23,12 @@ export class ModifyHeatsModalHarness
   protected getRedoBtn = this.locatorFor(
     ModifyHeatsModalHarnessBase.selectors.redoBtn,
   );
+  protected getLaneCheckBtn = this.locatorFor(
+    ModifyHeatsModalHarnessBase.selectors.laneCheckBtn,
+  );
+  protected getEqualityReportModal = this.locatorForOptional(
+    ModifyHeatsModalHarnessBase.selectors.equalityReportModal,
+  );
 
   async getDriverItemCount(): Promise<number> {
     return (await this.getDriverItems()).length;
@@ -62,6 +68,16 @@ export class ModifyHeatsModalHarness
   async clickRedo(): Promise<void> {
     const btn = await this.getRedoBtn();
     await btn.click();
+  }
+
+  async clickLaneCheck(): Promise<void> {
+    const btn = await this.getLaneCheckBtn();
+    await btn.click();
+  }
+
+  async isEqualityReportVisible(): Promise<boolean> {
+    const modal = await this.getEqualityReportModal();
+    return modal !== null;
   }
 
   async waitForLoaderToBeHidden(): Promise<void> {}

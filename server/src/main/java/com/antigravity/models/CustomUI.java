@@ -160,8 +160,8 @@ public class CustomUI extends Model {
             + "\"width\":1000,\"height\":250,\"zIndex\":2000,\"scaleMode\":\"auto\","
             + "\"customSettings\":{\"orientation\":\"horizontal\",\"lampScale\":1.0,"
             + "\"blurArea\":\"fullscreen\",\"blurAmount\":50,\"lampSizingMode\":\"custom\","
-            + "\"previewLampCount\":5,\"glowEffect\":true,\"glowOverlap\":100,"
-            + "\"glowRedOverlap\":100,\"glowGreenOverlap\":100}}]}";
+            + "\"previewLampCount\":5,\"maxLamps\":5,\"fadeIn\":true,\"glowEffect\":true,\"glowOverlap\":30,"
+            + "\"glowRedOverlap\":30,\"glowGreenOverlap\":25}}]}";
     String columnsJson =
         "[\"driver.nickname\",\"lapCount\",\"lastLapTime\",\"averageLapTime\",\"gapLeader\","
             + "\"ghostPacingLeaderAvg\"]";
@@ -196,7 +196,7 @@ public class CustomUI extends Model {
             + "{\"backgroundColor\":\"\",\"fontFamily\":\"\",\"fontSize\":24,\"height\":92,\"id\":\"widget-qr\",\"scaleMode\":\"auto\",\"textColor\":\"\",\"textScaleFactor\":1,\"widgetType\":\"qr\",\"width\":119,\"x\":422,\"y\":42,\"zIndex\":217},"
             + "{\"id\":\"widget-1783269768449\",\"widgetType\":\"flag\",\"x\":541,\"y\":41,\"width\":160,\"height\":93,\"zIndex\":212,\"scaleMode\":\"auto\",\"fontFamily\":\"\",\"textColor\":\"\",\"backgroundColor\":\"\",\"fontSize\":24,\"textScaleFactor\":1},"
             + "{\"id\":\"widget-1783269787601\",\"widgetType\":\"lane-view\",\"x\":0,\"y\":124,\"width\":1728,\"height\":775,\"zIndex\":221,\"scaleMode\":\"auto\",\"fontFamily\":\"\",\"textColor\":\"\",\"backgroundColor\":\"\",\"fontSize\":24,\"textScaleFactor\":1,\"customSettings\":{\"isVertical\":true,\"timeDecimalPlaces\":3,\"lapDecimalPlaces\":0,\"columnFontFamily\":\"\",\"columnFontSize\":24,\"columnTextColor\":\"\",\"dataFontFamily\":\"\",\"dataFontSize\":54,\"dataTextColor\":\"\",\"insetTimeDecimalPlaces\":3,\"insetLapDecimalPlaces\":2,\"insetFontFamily\":\"\",\"insetFontSize\":24,\"insetTextColor\":\"\"}},"
-            + "{\"id\":\"widget-countdown\",\"widgetType\":\"countdown\",\"x\":364,\"y\":324,\"width\":1000,\"height\":250,\"zIndex\":2000,\"scaleMode\":\"auto\",\"customSettings\":{\"orientation\":\"horizontal\",\"lampScale\":1.0,\"blurArea\":\"fullscreen\",\"blurAmount\":50,\"lampSizingMode\":\"custom\",\"previewLampCount\":5,\"glowEffect\":true,\"glowOverlap\":100,\"glowRedOverlap\":100,\"glowGreenOverlap\":100}}],\"baseWidth\":1728,\"baseHeight\":899}";
+            + "{\"id\":\"widget-countdown\",\"widgetType\":\"countdown\",\"x\":364,\"y\":324,\"width\":1000,\"height\":250,\"zIndex\":2000,\"scaleMode\":\"auto\",\"customSettings\":{\"orientation\":\"horizontal\",\"lampScale\":1.0,\"blurArea\":\"fullscreen\",\"blurAmount\":50,\"lampSizingMode\":\"custom\",\"previewLampCount\":5,\"maxLamps\":5,\"fadeIn\":true,\"glowEffect\":true,\"glowOverlap\":30,\"glowRedOverlap\":30,\"glowGreenOverlap\":25}}],\"baseWidth\":1728,\"baseHeight\":899}";
     String columnsJson =
         "[\"laneNumber\",\"lastLapTime\",\"bestLapTime\",\"lastLaps\",\"lapCount\"]";
     String columnLayoutsJson =
@@ -255,8 +255,8 @@ public class CustomUI extends Model {
             + "\"width\":1000,\"height\":250,\"zIndex\":2000,\"scaleMode\":\"auto\","
             + "\"customSettings\":{\"orientation\":\"horizontal\",\"lampScale\":1.0,"
             + "\"blurArea\":\"fullscreen\",\"blurAmount\":50,\"lampSizingMode\":\"custom\","
-            + "\"previewLampCount\":5,\"glowEffect\":true,\"glowOverlap\":100,"
-            + "\"glowRedOverlap\":100,\"glowGreenOverlap\":100}}]}";
+            + "\"previewLampCount\":5,\"maxLamps\":5,\"fadeIn\":true,\"glowEffect\":true,\"glowOverlap\":30,"
+            + "\"glowRedOverlap\":30,\"glowGreenOverlap\":25}}]}";
     String columnsJson =
         "[\"driver.nickname\",\"imageset_fuel-gauge-builtin\",\"lapCount\",\"lastLapTime\","
             + "\"gapLeader\"]";
@@ -322,80 +322,105 @@ public class CustomUI extends Model {
               && "countdown".equals(widgetNode.get("widgetType").asText())) {
             boolean modified = false;
             if (widgetNode.isObject()) {
-              com.fasterxml.jackson.databind.node.ObjectNode wObj =
-                  (com.fasterxml.jackson.databind.node.ObjectNode) widgetNode;
-              com.fasterxml.jackson.databind.node.ObjectNode cs;
-              if (wObj.has("customSettings") && wObj.get("customSettings").isObject()) {
-                cs = (com.fasterxml.jackson.databind.node.ObjectNode) wObj.get("customSettings");
-              } else {
-                cs = mapper.createObjectNode();
-                wObj.set("customSettings", cs);
-                modified = true;
-              }
-              if (!cs.has("lampSizingMode")) {
-                cs.put("lampSizingMode", "custom");
-                modified = true;
-              }
-              if (!cs.has("previewLampCount")) {
-                cs.put("previewLampCount", 5);
-                modified = true;
-              }
-              if (!cs.has("glowEffect")) {
-                cs.put("glowEffect", true);
-                modified = true;
-              }
-              if (!cs.has("glowOverlap")) {
-                cs.put("glowOverlap", 100);
-                modified = true;
-              }
-              if (!cs.has("glowRedOverlap")) {
-                cs.put("glowRedOverlap", 100);
-                modified = true;
-              }
-              if (!cs.has("glowGreenOverlap")) {
-                cs.put("glowGreenOverlap", 100);
-                modified = true;
-              }
+              modified =
+                  backfillCountdownSettings(
+                      mapper, (com.fasterxml.jackson.databind.node.ObjectNode) widgetNode);
             }
             return modified ? mapper.writeValueAsString(rootObj) : layoutJson;
           }
         }
         int baseWidth = rootObj.has("baseWidth") ? rootObj.get("baseWidth").asInt(1920) : 1920;
         int baseHeight = rootObj.has("baseHeight") ? rootObj.get("baseHeight").asInt(1080) : 1080;
-        int widgetWidth = 1000;
-        int widgetHeight = 250;
-        int x = Math.max(0, (baseWidth - widgetWidth) / 2);
-        int y = Math.max(0, (baseHeight - widgetHeight) / 2);
-
-        com.fasterxml.jackson.databind.node.ObjectNode countdownWidget = mapper.createObjectNode();
-        countdownWidget.put("id", "widget-countdown");
-        countdownWidget.put("widgetType", "countdown");
-        countdownWidget.put("x", x);
-        countdownWidget.put("y", y);
-        countdownWidget.put("width", widgetWidth);
-        countdownWidget.put("height", widgetHeight);
-        countdownWidget.put("zIndex", 2000);
-        countdownWidget.put("scaleMode", "auto");
-
-        com.fasterxml.jackson.databind.node.ObjectNode customSettings = mapper.createObjectNode();
-        customSettings.put("orientation", "horizontal");
-        customSettings.put("lampScale", 1.0);
-        customSettings.put("blurArea", "fullscreen");
-        customSettings.put("blurAmount", 50);
-        customSettings.put("lampSizingMode", "custom");
-        customSettings.put("previewLampCount", 5);
-        customSettings.put("glowEffect", true);
-        customSettings.put("glowOverlap", 100);
-        customSettings.put("glowRedOverlap", 100);
-        customSettings.put("glowGreenOverlap", 100);
-        countdownWidget.set("customSettings", customSettings);
-
-        widgetsArray.add(countdownWidget);
+        widgetsArray.add(createDefaultCountdownWidget(mapper, baseWidth, baseHeight));
         return mapper.writeValueAsString(rootObj);
       }
     } catch (Exception e) {
       // Return original on error
     }
     return layoutJson;
+  }
+
+  private static boolean backfillCountdownSettings(
+      com.fasterxml.jackson.databind.ObjectMapper mapper,
+      com.fasterxml.jackson.databind.node.ObjectNode wObj) {
+    boolean modified = false;
+    com.fasterxml.jackson.databind.node.ObjectNode cs;
+    if (wObj.has("customSettings") && wObj.get("customSettings").isObject()) {
+      cs = (com.fasterxml.jackson.databind.node.ObjectNode) wObj.get("customSettings");
+    } else {
+      cs = mapper.createObjectNode();
+      wObj.set("customSettings", cs);
+      modified = true;
+    }
+    if (!cs.has("lampSizingMode")) {
+      cs.put("lampSizingMode", "custom");
+      modified = true;
+    }
+    if (!cs.has("previewLampCount") && !cs.has("maxLamps")) {
+      cs.put("previewLampCount", 5);
+      cs.put("maxLamps", 5);
+      modified = true;
+    } else if (!cs.has("maxLamps")) {
+      cs.put("maxLamps", cs.get("previewLampCount").asInt(5));
+      modified = true;
+    } else if (!cs.has("previewLampCount")) {
+      cs.put("previewLampCount", cs.get("maxLamps").asInt(5));
+      modified = true;
+    }
+    if (!cs.has("fadeIn")) {
+      cs.put("fadeIn", true);
+      modified = true;
+    }
+    if (!cs.has("glowEffect")) {
+      cs.put("glowEffect", true);
+      modified = true;
+    }
+    if (!cs.has("glowOverlap") || cs.get("glowOverlap").asInt() == 100) {
+      cs.put("glowOverlap", 30);
+      modified = true;
+    }
+    if (!cs.has("glowRedOverlap") || cs.get("glowRedOverlap").asInt() == 100) {
+      cs.put("glowRedOverlap", 30);
+      modified = true;
+    }
+    if (!cs.has("glowGreenOverlap") || cs.get("glowGreenOverlap").asInt() == 100) {
+      cs.put("glowGreenOverlap", 25);
+      modified = true;
+    }
+    return modified;
+  }
+
+  private static com.fasterxml.jackson.databind.node.ObjectNode createDefaultCountdownWidget(
+      com.fasterxml.jackson.databind.ObjectMapper mapper, int baseWidth, int baseHeight) {
+    int widgetWidth = 1000;
+    int widgetHeight = 250;
+    int x = Math.max(0, (baseWidth - widgetWidth) / 2);
+    int y = Math.max(0, (baseHeight - widgetHeight) / 2);
+
+    com.fasterxml.jackson.databind.node.ObjectNode countdownWidget = mapper.createObjectNode();
+    countdownWidget.put("id", "widget-countdown");
+    countdownWidget.put("widgetType", "countdown");
+    countdownWidget.put("x", x);
+    countdownWidget.put("y", y);
+    countdownWidget.put("width", widgetWidth);
+    countdownWidget.put("height", widgetHeight);
+    countdownWidget.put("zIndex", 2000);
+    countdownWidget.put("scaleMode", "auto");
+
+    com.fasterxml.jackson.databind.node.ObjectNode customSettings = mapper.createObjectNode();
+    customSettings.put("orientation", "horizontal");
+    customSettings.put("lampScale", 1.0);
+    customSettings.put("blurArea", "fullscreen");
+    customSettings.put("blurAmount", 50);
+    customSettings.put("lampSizingMode", "custom");
+    customSettings.put("previewLampCount", 5);
+    customSettings.put("maxLamps", 5);
+    customSettings.put("fadeIn", true);
+    customSettings.put("glowEffect", true);
+    customSettings.put("glowOverlap", 30);
+    customSettings.put("glowRedOverlap", 30);
+    customSettings.put("glowGreenOverlap", 25);
+    countdownWidget.set("customSettings", customSettings);
+    return countdownWidget;
   }
 }

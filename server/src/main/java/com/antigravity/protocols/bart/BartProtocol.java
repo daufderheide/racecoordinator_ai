@@ -12,7 +12,6 @@ import com.antigravity.protocols.interfaces.BleConnection;
 import com.antigravity.protocols.interfaces.ConnectionDataListener;
 import com.antigravity.protocols.interfaces.IConnection;
 import java.io.IOException;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
 public class BartProtocol extends DefaultProtocol implements ConnectionDataListener {
@@ -34,11 +33,7 @@ public class BartProtocol extends DefaultProtocol implements ConnectionDataListe
   public static final byte OP_READ_STAT = 0x20;
 
   public BartProtocol(BartConfig config, int numLanes) {
-    this(
-        config,
-        numLanes,
-        new BleConnection(config.deviceName, config.deviceAddress),
-        Executors.newScheduledThreadPool(1));
+    this(config, numLanes, new BleConnection(config.deviceName, config.deviceAddress), null);
   }
 
   public BartProtocol(
@@ -52,8 +47,7 @@ public class BartProtocol extends DefaultProtocol implements ConnectionDataListe
         connection != null
             ? connection
             : new BleConnection(config.deviceName, config.deviceAddress);
-    this.statusScheduler =
-        statusScheduler != null ? statusScheduler : Executors.newScheduledThreadPool(1);
+    this.statusScheduler = statusScheduler != null ? statusScheduler : createScheduler();
     this.detectedChannels = numLanes;
     this.connection.addDataListener(this);
   }

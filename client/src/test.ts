@@ -5,6 +5,17 @@ import {
   platformBrowserDynamicTesting,
 } from "@angular/platform-browser-dynamic/testing";
 
+// Prevent accidental file downloads to host disk during automated tests
+if (typeof HTMLAnchorElement !== "undefined") {
+  const originalAnchorClick = HTMLAnchorElement.prototype.click;
+  HTMLAnchorElement.prototype.click = function (this: HTMLAnchorElement) {
+    if (this.hasAttribute("download") || this.download) {
+      return;
+    }
+    return originalAnchorClick.apply(this, arguments as any);
+  };
+}
+
 // First, initialize the Angular testing environment.
 getTestBed().initTestEnvironment(
   BrowserDynamicTestingModule,

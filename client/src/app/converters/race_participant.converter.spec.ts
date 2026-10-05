@@ -65,4 +65,35 @@ describe("RaceParticipantConverter", () => {
     expect(p1.fuelLevel).toBe(80);
     expect(p2.fuelLevel).toBe(80);
   });
+
+  it("should convert overall stats fields correctly", () => {
+    const proto: IRaceParticipant = {
+      objectId: "p-stats",
+      driver: { model: { entityId: "d1" }, name: "Bob" },
+      consistencyScore: 94.5,
+      physicalLapCount: 42,
+      standardDeviation: 0.123,
+      lapsLed: 15,
+      trackCalls: 4,
+      totalPoints: 120.5,
+      averageTop5: 4.56,
+      averageTop10: 4.78,
+      averageTop15: 4.95,
+      top2Consecutive: 9.12,
+      top3Consecutive: 13.84,
+    };
+
+    const p = RaceParticipantConverter.fromProto(proto);
+    expect(p.consistencyScore).toBe(94.5);
+    expect(p.physicalLapCount).toBe(42);
+    expect(p.standardDeviation).toBe(0.123);
+    expect(p.lapsLed).toBe(15);
+    expect(p.trackCalls).toBe(4);
+    expect(p.totalPoints).toBe(120.5);
+    expect(p.averageTop5).toBe(4.56);
+    expect(p.averageTop10).toBe(4.78);
+    expect(p.averageTop15).toBe(4.95);
+    expect(p.top2Consecutive).toBe(9.12);
+    expect(p.top3Consecutive).toBe(13.84);
+  });
 });

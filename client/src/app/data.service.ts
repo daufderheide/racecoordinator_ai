@@ -11,6 +11,11 @@ import {
   Subject,
 } from "rxjs";
 import { catchError, map } from "rxjs/operators";
+import {
+  DriverImportCommitRequest,
+  DriverImportPreview,
+  DriverImportResult,
+} from "@app/models/driver-import.model";
 import { Event } from "@app/models/event";
 import { Season, SeasonStandingItem } from "@app/models/season";
 import {
@@ -153,6 +158,10 @@ export class DataService {
     return this.serverPort;
   }
 
+  public getBaseUrl(): string {
+    return this.baseUrl;
+  }
+
   private get driversUrl(): string {
     return `${this.baseUrl}/api/drivers`;
   }
@@ -173,6 +182,8 @@ export class DataService {
     return `${this.baseUrl}/api/seasons`;
   }
   private connectionIntent = "";
+  private lastRaceTimeReceivedAt = 0;
+  private raceSubscriptionStartedAt = 0;
 
   constructor(
     private http: HttpClient,
@@ -285,6 +296,31 @@ export class DataService {
 
   deleteDriver(id: string): Observable<any> {
     return this.http.delete<any>(`${this.driversUrl}/${id}`);
+  }
+
+  validateDriverImport(formData: FormData): Observable<DriverImportPreview> {
+    return this.http.post<DriverImportPreview>(
+      `${this.driversUrl}/import/preview`,
+      formData,
+    );
+  }
+
+  commitDriverImport(
+    request: DriverImportCommitRequest,
+  ): Observable<DriverImportResult> {
+    return this.http.post<DriverImportResult>(
+      `${this.driversUrl}/import/commit`,
+      request,
+    );
+  }
+
+  downloadDriverImportTemplate(format: string): Observable<Blob> {
+    return this.http.get(
+      `${this.driversUrl}/import/template?format=${format}`,
+      {
+        responseType: "blob",
+      },
+    );
   }
 
   getRaces(): Observable<any[]> {
@@ -630,7 +666,7 @@ export class DataService {
         hardwareType: config.hardwareType,
         normallyClosedLaneSensors: config.normallyClosedLaneSensors,
         normallyClosedRelays: config.normallyClosedRelays,
-        globalInvertLights: config.globalInvertLights,
+        activeLowAnalogLeds: config.activeLowAnalogLeds,
         usePitsAsLaps: config.usePitsAsLaps,
         useLapsForSegments: config.useLapsForSegments,
         digitalIds: config.digitalIds,
@@ -686,6 +722,7 @@ export class DataService {
           hubPort: config.hubPort,
           normallyClosedLaneSensors: config.normallyClosedLaneSensors,
           normallyClosedRelays: config.normallyClosedRelays,
+          activeLowAnalogLeds: config.activeLowAnalogLeds,
           useLapsForSegments: config.useLapsForSegments,
           lapPinPitBehavior: config.lapPinPitBehavior,
           digitalInIds: config.digitalInIds,
@@ -722,7 +759,7 @@ export class DataService {
             hardwareType: config.hardwareType,
             normallyClosedLaneSensors: config.normallyClosedLaneSensors,
             normallyClosedRelays: config.normallyClosedRelays,
-            globalInvertLights: config.globalInvertLights,
+            activeLowAnalogLeds: config.activeLowAnalogLeds,
             usePitsAsLaps: config.usePitsAsLaps,
             useLapsForSegments: config.useLapsForSegments,
             digitalIds: config.digitalIds,
@@ -757,6 +794,7 @@ export class DataService {
             hubPort: phidgetConfig.hubPort,
             normallyClosedLaneSensors: phidgetConfig.normallyClosedLaneSensors,
             normallyClosedRelays: phidgetConfig.normallyClosedRelays,
+            activeLowAnalogLeds: phidgetConfig.activeLowAnalogLeds,
             useLapsForSegments: phidgetConfig.useLapsForSegments,
             lapPinPitBehavior: phidgetConfig.lapPinPitBehavior,
             digitalInIds: phidgetConfig.digitalInIds,
@@ -1390,6 +1428,94 @@ export class DataService {
     return `${this.baseUrl}/api/assets/download/${id}`;
   }
 
+  resolveAssetUrl(url?: string): string {
+    if (!url || !url.trim()) return "";
+    const clean = url.trim();
+    if (clean.startsWith("http://") || clean.startsWith("https://")) {
+      return clean;
+    }
+    if (clean.startsWith("/assets/")) {
+      return clean;
+    }
+    if (clean.startsWith("assets/images/")) {
+      return clean;
+    }
+    if (clean.startsWith("assets/default_")) {
+      return "/" + clean;
+    }
+
+    const lower = clean.toLowerCase();
+    const filename = lower.includes("/")
+      ? lower.substring(lower.lastIndexOf("/") + 1)
+      : lower;
+    const noExt = filename.includes(".")
+      ? filename.substring(0, filename.lastIndexOf("."))
+      : filename;
+
+    const assets = this.loadedAssets || [];
+    const directMatch = assets.find((a) => {
+      const id = a.model?.entityId?.toLowerCase();
+      const name = a.name?.toLowerCase();
+      const aUrl = a.url?.toLowerCase();
+      return (
+        id === lower ||
+        id === filename ||
+        id === noExt ||
+        name === lower ||
+        name === filename ||
+        name === noExt ||
+        aUrl === "/" + lower ||
+        (aUrl && aUrl.endsWith("/" + filename))
+      );
+    });
+    if (directMatch?.url) {
+      return directMatch.url;
+    }
+
+    if (
+      lower.includes("helmet") ||
+      lower.includes("defaults/helmets") ||
+      lower.endsWith(".png")
+    ) {
+      let targetId = "";
+      if (lower.includes("yellow")) targetId = "default_black-yellow";
+      else if (lower.includes("red")) targetId = "default_red-yellow";
+      else if (lower.includes("blue")) targetId = "default_blue-white";
+      else if (lower.includes("green")) targetId = "default_green-white";
+      else if (lower.includes("black")) targetId = "default_black";
+      else if (lower.includes("white")) targetId = "default_white-blue";
+      else if (lower.includes("orange")) targetId = "default_red-orange";
+      else if (lower.includes("silver")) targetId = "default_silver-green";
+
+      if (targetId) {
+        const helmetAsset = assets.find(
+          (a) => a.model?.entityId?.toLowerCase() === targetId,
+        );
+        if (helmetAsset?.url) {
+          return helmetAsset.url;
+        }
+        const fallbackMap: Record<string, string> = {
+          "default_black-yellow":
+            "/assets/default_black-yellow_Helmet_Black-Yellow",
+          "default_red-yellow": "/assets/default_red-yellow_Helmet_Red-Yellow",
+          "default_blue-white": "/assets/default_blue-white_Helmet_Blue-White",
+          "default_green-white":
+            "/assets/default_green-white_Helmet_Green-White",
+          default_black: "/assets/default_black_Helmet_Black",
+          "default_white-blue": "/assets/default_white-blue_Helmet_White-Blue",
+          "default_red-orange": "/assets/default_red-orange_Helmet_Red-Orange",
+          "default_silver-green":
+            "/assets/default_silver-green_Helmet_Silver-Green",
+        };
+        if (fallbackMap[targetId]) {
+          return fallbackMap[targetId];
+        }
+      }
+    }
+
+    return clean;
+  }
+
   uploadAsset(
     name: string,
     type: string,
@@ -1642,8 +1768,33 @@ export class DataService {
   private shouldSubscribeToRaceData = false;
   private isInterfaceSocketExplicitlyDisconnected = false;
 
+  public clearRaceData() {
+    this.raceStateSubject.next(RaceState.UNKNOWN_STATE);
+    this.flagSubject.next(RaceFlag.UNKNOWN_FLAG);
+    this.raceTimeSubject.next({ time: 0 });
+    this.lastRaceTimeReceivedAt = 0;
+    this.raceSubscriptionStartedAt = 0;
+
+    const clearReplay = (subject: any) => {
+      if (subject && Array.isArray(subject._buffer)) {
+        subject._buffer.length = 0;
+      }
+    };
+    clearReplay(this.standingsSubject);
+    clearReplay(this.overallStandingsSubject);
+    clearReplay(this.groupStandingsSubject);
+    clearReplay(this.raceUpdateSubject);
+    clearReplay(this.recordDataSubject);
+  }
+
   public updateRaceSubscription(subscribe: boolean) {
     this.shouldSubscribeToRaceData = subscribe;
+    if (subscribe) {
+      this.raceSubscriptionStartedAt =
+        typeof performance !== "undefined" ? performance.now() : Date.now();
+    } else {
+      this.clearRaceData();
+    }
     if (
       this.raceDataSocket &&
       this.raceDataSocket.readyState === WebSocket.OPEN
@@ -1677,19 +1828,39 @@ export class DataService {
   private handleRaceDataMessage(event: MessageEvent) {
     this.ngZone.run(() => {
       try {
+        const now =
+          typeof performance !== "undefined" ? performance.now() : Date.now();
+        const dispatchDelay =
+          event &&
+          typeof event.timeStamp === "number" &&
+          event.timeStamp > 0 &&
+          event.timeStamp <= now
+            ? Math.round(now - event.timeStamp)
+            : -1;
+
+        if (dispatchDelay > 100) {
+          this.logger.warn(
+            `[PERF] Browser main-thread freeze: message dispatch delayed by ${dispatchDelay}ms (UI rendering or long task blocked event loop)`,
+          );
+        }
+
         const arrayBuffer = event.data as ArrayBuffer;
         const raceData = RaceData.decode(
           Reader.create(new Uint8Array(arrayBuffer)),
         );
 
+        const previousState = this.raceStateSubject.value;
+        let newState = previousState;
         if (raceData.raceState) {
           this.logger.debug("WS: Received RaceState", raceData.raceState);
+          newState = raceData.raceState;
           this.raceStateSubject.next(raceData.raceState);
         }
         if (raceData.race) {
           this.logger.debug("WS: Received Race", raceData.race);
           this.raceUpdateSubject.next(raceData.race);
           if (raceData.race.state) {
+            newState = raceData.race.state;
             this.raceStateSubject.next(raceData.race.state);
           }
           if (raceData.race.flag) {
@@ -1699,45 +1870,88 @@ export class DataService {
             this.heatSubject.next(raceData.race.currentHeat);
           }
         }
+        if (newState !== previousState) {
+          this.lastRaceTimeReceivedAt = 0;
+        }
         if (raceData.raceTime) {
-          this.raceTimeSubject.next(raceData.raceTime);
+          this.handleRaceTimeMessage(
+            raceData.raceTime,
+            newState,
+            now,
+            dispatchDelay,
+          );
         }
-        if (raceData.lap) {
-          this.lapSubject.next(raceData.lap);
-        }
-        if (raceData.standingsUpdate) {
-          this.standingsSubject.next(raceData.standingsUpdate);
-        }
-        if (raceData.overallStandingsUpdate) {
-          this.overallStandingsSubject.next(raceData.overallStandingsUpdate);
-        }
-        if (raceData.groupStandingsUpdate) {
-          this.groupStandingsSubject.next(raceData.groupStandingsUpdate);
-        }
-        if (raceData.carData) {
-          this.carDataSubject.next(raceData.carData);
-        }
-        if (raceData.segment) {
-          this.segmentSubject.next(raceData.segment);
-        }
-        if (raceData.flag) {
-          this.logger.debug("WS: Received RaceFlag", raceData.flag);
-          this.flagSubject.next(raceData.flag);
-        }
-        if (raceData.recordData) {
-          this.recordDataSubject.next(raceData.recordData);
-        }
-        if (raceData.heat) {
-          this.logger.debug("WS: Received Heat", raceData.heat);
-          this.heatSubject.next(raceData.heat);
-        }
-        if (raceData.systemState) {
-          this.systemStateSubject.next(raceData.systemState as SystemState);
-        }
+        this.dispatchTelemetryUpdates(raceData);
       } catch (e) {
         this.logger.error("Error parsing race data message", e);
       }
     });
+  }
+
+  private handleRaceTimeMessage(
+    raceTime: IRaceTime,
+    raceState: RaceState,
+    now: number,
+    dispatchDelay: number,
+  ): void {
+    const isTicking =
+      raceState === RaceState.STARTING ||
+      raceState === RaceState.RACING ||
+      (raceTime.autoStartRemaining ?? 0) > 0 ||
+      (raceTime.autoAdvanceRemaining ?? 0) > 0;
+
+    if (isTicking && this.lastRaceTimeReceivedAt > 0) {
+      const isHydrationGracePeriod =
+        this.raceSubscriptionStartedAt > 0 &&
+        now - this.raceSubscriptionStartedAt < 3000;
+      const gap = Math.round(now - this.lastRaceTimeReceivedAt);
+      if (gap > 450 && !isHydrationGracePeriod) {
+        const delayInfo =
+          dispatchDelay >= 0
+            ? `, browser dispatch delay: ${dispatchDelay}ms`
+            : "";
+        this.logger.warn(
+          `[PERF] RaceTime WebSocket interval lag: ${gap}ms (expected ~100ms${delayInfo})`,
+        );
+      }
+    }
+    this.lastRaceTimeReceivedAt = isTicking ? now : 0;
+    this.raceTimeSubject.next(raceTime);
+  }
+
+  private dispatchTelemetryUpdates(raceData: RaceData): void {
+    if (raceData.lap) {
+      this.lapSubject.next(raceData.lap);
+    }
+    if (raceData.standingsUpdate) {
+      this.standingsSubject.next(raceData.standingsUpdate);
+    }
+    if (raceData.overallStandingsUpdate) {
+      this.overallStandingsSubject.next(raceData.overallStandingsUpdate);
+    }
+    if (raceData.groupStandingsUpdate) {
+      this.groupStandingsSubject.next(raceData.groupStandingsUpdate);
+    }
+    if (raceData.carData) {
+      this.carDataSubject.next(raceData.carData);
+    }
+    if (raceData.segment) {
+      this.segmentSubject.next(raceData.segment);
+    }
+    if (raceData.flag) {
+      this.logger.debug("WS: Received RaceFlag", raceData.flag);
+      this.flagSubject.next(raceData.flag);
+    }
+    if (raceData.recordData) {
+      this.recordDataSubject.next(raceData.recordData);
+    }
+    if (raceData.heat) {
+      this.logger.debug("WS: Received Heat", raceData.heat);
+      this.heatSubject.next(raceData.heat);
+    }
+    if (raceData.systemState) {
+      this.systemStateSubject.next(raceData.systemState as SystemState);
+    }
   }
 
   public connectToRaceDataSocket() {
@@ -1783,9 +1997,7 @@ export class DataService {
     };
 
     this.raceDataSocket.onmessage = (event) => {
-      this.ngZone.run(() => {
-        this.handleRaceDataMessage(event);
-      });
+      this.handleRaceDataMessage(event);
     };
 
     this.raceDataSocket.onclose = () => {

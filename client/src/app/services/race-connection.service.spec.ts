@@ -6,6 +6,7 @@ import {
   IInterfaceEvent,
   ILap,
   InterfaceStatus,
+  LapType,
   RaceFlag,
   RaceState,
 } from "@app/proto/antigravity";
@@ -80,6 +81,7 @@ describe("RaceConnectionService", () => {
 
     mockRaceService = jasmine.createSpyObj("RaceService", [
       "getRace",
+      "setRace",
       "getCurrentHeat",
       "setCurrentHeat",
       "getHeats",
@@ -532,6 +534,33 @@ describe("RaceConnectionService", () => {
       expect(lane0Driver.addLapTime).not.toHaveBeenCalled();
     });
 
+    it("should update driver adjustedLapCount when FALSE_START lap is received", () => {
+      const driver = new Driver("d_fs", "False Starter", "FS");
+      const participant = new RaceParticipant("p_fs", driver);
+      const hd = new DriverHeatData("dhd_fs", participant, 0, driver);
+      spyOn(hd, "addLapTime");
+
+      mockRaceService.getCurrentHeat.and.returnValue({
+        objectId: "heat_fs",
+        heatDrivers: [hd],
+      });
+
+      service.connect();
+
+      const falseStartLap: ILap = {
+        objectId: "dhd_fs",
+        type: LapType.FALSE_START,
+        adjustedLapCount: -1,
+        flag: RaceFlag.RED,
+      };
+      lapsSubject.next(falseStartLap);
+
+      expect(hd.addLapTime).not.toHaveBeenCalled();
+      expect(hd.adjustedLapCount).toBe(-1);
+      expect(hd.lapCount).toBe(-1);
+      expect(hd.flag).toBe(RaceFlag.RED);
+    });
+
     it("should pipe flags to raceFlag$", (done) => {
       const mockFlagSubject = new Subject<RaceFlag>();
       mockDataService.getRaceFlag.and.returnValue(
@@ -890,6 +919,62 @@ describe("RaceConnectionService", () => {
       });
 
       expect(mockDataService.updateRaceSubscription).toHaveBeenCalledWith(true);
+    });
+
+    it("should reset isRaceEnded to false and connect to interface socket on startConnection", () => {
+      // Simulate state where previous race was RACE_OVER
+      (service as any).raceStateSubject.next(RaceState.RACE_OVER);
+      (service as any).isRaceEnded = true;
+
+      service.connect();
+
+      expect((service as any).isRaceEnded).toBeFalse();
+      expect(mockDataService.connectToInterfaceDataSocket).toHaveBeenCalled();
+    });
+
+    it("should reset isRaceEnded and reconnect interface socket when getRaceState transitions from RACE_OVER to NOT_STARTED", () => {
+      const stateSubject = new Subject<RaceState>();
+      mockDataService.getRaceState.and.returnValue(stateSubject.asObservable());
+
+      service.connect();
+      (service as any).isRaceEnded = true;
+      mockDataService.connectToInterfaceDataSocket.calls.reset();
+
+      stateSubject.next(RaceState.NOT_STARTED);
+
+      expect((service as any).isRaceEnded).toBeFalse();
+      expect(mockDataService.connectToInterfaceDataSocket).toHaveBeenCalled();
+    });
+
+    it("should reset connection and ended flags on stopConnection", () => {
+      service.connect();
+      (service as any).isRaceEnded = true;
+      service.isInterfaceConnected = true;
+      (service as any).lastInterfaceStatus = 1;
+      (service as any).hasInitiallyConnected = true;
+
+      service.disconnect(true);
+
+      expect((service as any).isRaceEnded).toBeFalse();
+      expect(service.isInterfaceConnected).toBeFalse();
+      expect((service as any).lastInterfaceStatus).toBe(-1);
+      expect((service as any).hasInitiallyConnected).toBeFalse();
+    });
+
+    it("should reset isRaceEnded and reconnect when processRaceUpdate receives a NOT_STARTED state", () => {
+      service.connect();
+      (service as any).driversLoaded = true;
+      (service as any).isRaceEnded = true;
+      mockDataService.connectToInterfaceDataSocket.calls.reset();
+
+      (service as any).processRaceUpdate({
+        state: RaceState.NOT_STARTED,
+        race: {},
+      });
+
+      expect((service as any).isRaceEnded).toBeFalse();
+      expect(mockDataService.connectToInterfaceDataSocket).toHaveBeenCalled();
+      expect(service["raceStateSubject"].value).toBe(RaceState.NOT_STARTED);
     });
   });
 });

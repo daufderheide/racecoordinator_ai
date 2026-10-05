@@ -461,15 +461,15 @@
   /* Extremely clean and narrow gap */
   padding: 2px 7px;
   /* Optimized narrow padding */
-  border-radius: 15px;
-  /* Clean compact pill shape */
+  border-radius: 6px;
   font-family: 'Inter', sans-serif;
   font-size: 0.8rem;
   font-weight: 600;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  border: 1px solid rgba(56, 189, 248, 0.25);
-  background: rgba(15, 23, 42, 0.4);
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.05);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid transparent;
+  background: transparent;
+  box-shadow: none;
+  cursor: pointer;
 }
 
 .available-pill .graphic-icon {
@@ -498,15 +498,15 @@
   min-width: 12px;
   text-align: center;
   line-height: 1;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  border: 1px solid rgba(56, 189, 248, 0.1);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid transparent;
 }
 
 .available-pill:hover {
   background: rgba(56, 189, 248, 0.15);
-  border-color: #38bdf8;
-  box-shadow: 0 0 12px rgba(56, 189, 248, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.1);
-  transform: translateY(-1px) scale(1.03);
+  border-color: rgba(56, 189, 248, 0.3);
+  box-shadow: 0 0 8px rgba(56, 189, 248, 0.2);
+  transform: translateY(-1px);
 }
 
 .available-pill:hover .graphic-icon {
@@ -522,8 +522,8 @@
 }
 
 .available-pill:active {
-  transform: translateY(0) scale(0.98);
-  box-shadow: 0 0 4px rgba(56, 189, 248, 0.2);
+  transform: translateY(0);
+  box-shadow: none;
 }
 
 #available-drivers-section .section-header,
@@ -572,26 +572,31 @@
 
 .section-header .header-actions .action-btn {
   flex: 0 0 auto;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 22px;
-  height: 22px;
-  background: rgba(56, 189, 248, 0.12);
-  border: 1px solid rgba(56, 189, 248, 0.45);
+  width: 24px;
+  height: 24px;
+  background: transparent;
+  border: 1px solid transparent;
   border-radius: 4px;
-  color: #38bdf8;
+  color: #94a3b8;
   padding: 0;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   user-select: none;
 }
 
+.section-header .header-actions .action-btn .material-icons {
+  font-size: 15px;
+  transition: transform 0.2s;
+}
+
 .section-header .header-actions .action-btn:hover {
-  background: rgba(56, 189, 248, 0.25);
-  border-color: #38bdf8;
-  color: #ffffff;
-  box-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
+  background: rgba(56, 189, 248, 0.15);
+  border-color: rgba(56, 189, 248, 0.3);
+  color: #38bdf8;
+  box-shadow: 0 0 8px rgba(56, 189, 248, 0.3);
   transform: translateY(-1px);
 }
 
@@ -599,23 +604,16 @@
   transform: translateY(0);
 }
 
-.section-header .header-actions .action-btn svg {
-  width: 12px;
-  height: 12px;
-  color: #38bdf8;
-  transition: transform 0.2s;
-}
-
-.section-header .header-actions .action-btn:hover svg {
+.section-header .header-actions .action-btn:hover .material-icons {
   transform: scale(1.15);
 }
 
 .icon-button {
-  background: rgba(56, 189, 248, 0.1);
-  border: 1px solid rgba(56, 189, 248, 0.3);
+  background: transparent;
+  border: 1px solid transparent;
   color: #38bdf8;
   padding: 4px 8px;
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s;
   display: flex;
@@ -624,9 +622,9 @@
 }
 
 .icon-button:hover {
-  background: rgba(56, 189, 248, 0.2);
-  border-color: #38bdf8;
-  transform: scale(1.05);
+  background: rgba(56, 189, 248, 0.15);
+  border-color: rgba(56, 189, 248, 0.3);
+  transform: translateY(-1px);
 }
 
 /* LHS Available Search Bar */
@@ -1078,6 +1076,9 @@
   font-size: 24px;
   cursor: pointer;
   transition: color 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .close-btn:hover {
@@ -1155,6 +1156,13 @@
   line-height: 1;
   border-radius: 4px;
   transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.inline-rename-btn .material-icons {
+  font-size: 16px;
 }
 
 .inline-rename-btn.confirm {
@@ -1171,6 +1179,10 @@
   font-size: 18px;
 }
 
+.inline-rename-btn.cancel .material-icons {
+  font-size: 18px;
+}
+
 .inline-rename-btn.cancel:hover {
   background: rgba(239, 68, 68, 0.2);
   transform: scale(1.15);
@@ -1184,34 +1196,56 @@
 
 .rename-saved-btn {
   background: transparent;
-  border: none;
+  border: 1px solid transparent;
   color: #94a3b8;
-  font-size: 16px;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
   cursor: pointer;
-  padding: 0 4px;
+  padding: 0;
   line-height: 1;
-  transition: all 0.2s;
+  transition: all 0.2s ease-in-out;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rename-saved-btn .material-icons {
+  font-size: 18px;
 }
 
 .rename-saved-btn:hover {
+  background: rgba(56, 189, 248, 0.15);
+  border-color: rgba(56, 189, 248, 0.3);
   color: #38bdf8;
-  transform: scale(1.15);
+  transform: translateY(-1px);
 }
 
 .delete-saved-btn {
   background: transparent;
-  border: none;
+  border: 1px solid transparent;
   color: #ef4444;
-  font-size: 20px;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
   cursor: pointer;
-  padding: 0 4px;
+  padding: 0;
   line-height: 1;
-  transition: all 0.2s;
+  transition: all 0.2s ease-in-out;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.delete-saved-btn .material-icons {
+  font-size: 18px;
 }
 
 .delete-saved-btn:hover {
-  color: #f87171;
-  transform: scale(1.15);
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+  transform: translateY(-1px);
 }
 
 .no-saved-races {
@@ -1574,21 +1608,26 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 26px;
-  height: 26px;
+  width: 28px;
+  height: 28px;
   padding: 0;
-  border-radius: 4px;
-  background: rgba(30, 41, 59, 0.6);
-  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 6px;
+  background: transparent;
+  border: 1px solid transparent;
   color: #94a3b8;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+.race-summary-card .edit-race-btn .material-icons {
+  font-size: 1.15rem;
+}
+
 .race-summary-card .edit-race-btn:hover {
-  background: rgba(56, 189, 248, 0.2);
-  border-color: #38bdf8;
+  background: rgba(56, 189, 248, 0.15);
+  border-color: rgba(56, 189, 248, 0.3);
   color: #38bdf8;
+  transform: translateY(-1px);
 }
 
 .empty-standings {

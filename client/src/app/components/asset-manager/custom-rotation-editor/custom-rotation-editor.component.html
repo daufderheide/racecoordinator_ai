@@ -199,11 +199,9 @@
             <div class="expander-header" (click)="toggleExpander(rotation)">
               <div class="expander-title-section">
                 <span class="chevron-icon">
-                  <i
-                    class="fas"
-                    [class.fa-chevron-right]="!rotation.isExpanded"
-                    [class.fa-chevron-down]="rotation.isExpanded"
-                  ></i>
+                  <span class="material-icons">{{
+                    rotation.isExpanded ? "expand_more" : "chevron_right"
+                  }}</span>
                 </span>
                 <span class="expander-title">
                   {{ "AM_LABEL_NUM_DRIVERS" | translate }}:
@@ -256,8 +254,9 @@
                 <button
                   class="delete-rotation-btn"
                   (click)="removeRotation(rotIdx)"
+                  [title]="'TM_DELETE' | translate"
                 >
-                  <span class="delete-x">X</span>
+                  <span class="material-icons">delete</span>
                 </button>
               </div>
             </div>
@@ -289,7 +288,9 @@
                     >
                       <div class="heat-header">
                         <div class="header-title">
-                          <i class="fas fa-grip-vertical drag-handle-icon"></i>
+                          <span class="material-icons drag-handle-icon"
+                            >drag_indicator</span
+                          >
                           <h4>
                             {{ "RD_HEAT" | translate }} {{ hIdx + 1 }} -
                             {{ "RE_GROUPS_LABEL" | translate }}:
@@ -313,7 +314,7 @@
                             "
                             [title]="'REMOVE' | translate"
                           >
-                            <span class="delete-x">X</span>
+                            <span class="material-icons">delete</span>
                           </button>
                         </div>
                       </div>
@@ -458,10 +459,10 @@
                                         <span
                                           class="warning-icon"
                                           title="Driver is assigned to multiple groups!"
-                                          ><i
-                                            class="fas fa-exclamation-triangle"
-                                          ></i
-                                        ></span>
+                                          ><span class="material-icons"
+                                            >warning</span
+                                          ></span
+                                        >
                                       }
                                     </div>
                                   </div>
@@ -507,7 +508,7 @@
             }}: {{ internalRotations[reportRotationIdx].numDrivers }})
           </h4>
           <button class="close-btn" (click)="closeReport()">
-            <i class="fas fa-times"></i>
+            <span class="material-icons">close</span>
           </button>
         </div>
         <div class="report-content">
@@ -523,9 +524,9 @@
                 "
               >
                 @if (isRotationEqual(internalRotations[reportRotationIdx])) {
-                  <i class="fas fa-check-circle"></i>
+                  <span class="material-icons success-icon">check_circle</span>
                 } @else {
-                  <i class="fas fa-exclamation-triangle"></i>
+                  <span class="material-icons warn-icon">warning</span>
                 }
                 <span>{{ item.key | translate: item.params }}</span>
               </li>
@@ -546,7 +547,7 @@
         <div class="report-header">
           <h4>{{ "AM_IMPORT_SUMMARY_TITLE" | translate }}</h4>
           <button class="close-btn" (click)="closeImportSummary()">
-            <i class="fas fa-times"></i>
+            <span class="material-icons">close</span>
           </button>
         </div>
         <div class="report-content">
@@ -558,9 +559,9 @@
                 [class.error]="!item.success"
               >
                 @if (item.success) {
-                  <i class="fas fa-check-circle"></i>
+                  <span class="material-icons success-icon">check_circle</span>
                 } @else {
-                  <i class="fas fa-exclamation-triangle"></i>
+                  <span class="material-icons warn-icon">warning</span>
                 }
                 <span>{{ item.key | translate: item.params }}</span>
               </li>

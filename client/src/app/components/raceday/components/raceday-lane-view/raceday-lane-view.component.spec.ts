@@ -100,7 +100,8 @@ describe("RacedayLaneViewComponent", () => {
       isDriverSwapDisabled: (_hd: any) => false,
       onTeammateChange: jasmine.createSpy("onTeammateChange"),
       getTeammates: (_hd: any) => teammates,
-      getDropdownArrowBg: (_hd: any) => "",
+      getDropdownArrowBg: (_hd: any) =>
+        'url("data:image/svg+xml;utf8,<svg></svg>")',
       getDriverStats: (_hd: any, _id: string) => " (Heat: 0 Laps)",
       formatColumnValue: (hd: any, col: any, prop: string) => {
         if (prop === "driver.nickname") return hd.driver.nickname;
@@ -162,6 +163,50 @@ describe("RacedayLaneViewComponent", () => {
     expect(mockParent.onTeammateChange).toHaveBeenCalled();
   });
 
+  it("should open teammate dropdown and display options with driver stats", () => {
+    const rowEl = fixture.nativeElement.querySelector(".table-row");
+    const selectEl = rowEl.querySelector(
+      "app-custom-select.teammate-select",
+    ) as HTMLElement;
+    expect(selectEl).toBeTruthy();
+
+    const trigger = selectEl.querySelector(
+      ".custom-select-trigger",
+    ) as HTMLElement;
+    trigger.click();
+    fixture.detectChanges();
+
+    expect(selectEl.classList.contains("open")).toBeTrue();
+    const dropdown = selectEl.querySelector(
+      ".custom-select-dropdown",
+    ) as HTMLElement;
+    expect(dropdown).toBeTruthy();
+
+    const options = selectEl.querySelectorAll(".custom-select-option");
+    expect(options.length).toBe(2);
+    expect(options[0].textContent).toContain("Rocket");
+    expect(options[0].textContent).toContain("(Heat: 0 Laps)");
+    expect(options[1].textContent).toContain("Chuck");
+    expect(options[1].textContent).toContain("(Heat: 0 Laps)");
+
+    (options[1] as HTMLElement).click();
+    fixture.detectChanges();
+    expect(mockParent.onTeammateChange).toHaveBeenCalled();
+    expect(selectEl.classList.contains("open")).toBeFalse();
+  });
+
+  it("should display pulldown marker background image on teammate display name in resting state", () => {
+    const rowEl = fixture.nativeElement.querySelector(".table-row");
+    const nameEl = rowEl.querySelector(".teammate-display-name") as HTMLElement;
+    expect(nameEl).toBeTruthy();
+    expect(nameEl.style.backgroundImage).toContain("url(");
+
+    const selectEl = rowEl.querySelector(
+      "app-custom-select.teammate-select",
+    ) as HTMLElement;
+    expect(selectEl.style.backgroundImage).toBeFalsy();
+  });
+
   it("should trigger parent onCellClick on cell click", async () => {
     await harness.clickCell(0, 1);
     expect(mockParent.onCellClick).toHaveBeenCalled();
@@ -172,6 +217,348 @@ describe("RacedayLaneViewComponent", () => {
     const cells = rowEl.querySelectorAll(".body-cell");
     expect(cells[0].classList.contains("clickable-team-cell")).toBeTrue();
     expect(cells[0].getAttribute("title")).toBe("RD_TEAM_DRIVER_TOOLTIP");
+  });
+
+  it("should display team name once and teammate select when column is participant.team.name in team race", () => {
+    (mockParent.sortedHeatDrivers[0] as any).participant = {
+      team: { name: "Team Fast" },
+    };
+    mockParent.getLayoutEntries = (_col: any) => [
+      { property: "participant.team.name", anchor: "center-center" },
+    ];
+    mockParent.formatColumnValue = (_hd: any, _col: any, prop: string) => {
+      if (prop === "participant.team.name") return "Team Fast";
+      return "";
+    };
+    fixture.detectChanges();
+
+    const rowEl = fixture.nativeElement.querySelector(".table-row");
+    const nameEl = rowEl.querySelector(".teammate-display-name") as HTMLElement;
+    expect(nameEl).toBeTruthy();
+    expect(nameEl.textContent?.trim()).toBe("Team Fast");
+
+    const selectEl = rowEl.querySelector("app-custom-select.teammate-select");
+    expect(selectEl).toBeTruthy();
+
+    // Verify team name is not displayed twice
+    const cellEl = rowEl.querySelector(
+      ".body-cell .anchor-center-center",
+    ) as HTMLElement;
+    const textMatches = Array.from(cellEl.querySelectorAll("span")).filter(
+      (s) => s.textContent?.trim() === "Team Fast",
+    );
+    expect(textMatches.length).toBe(1);
+  });
+
+  it("should display team name once without teammate select when participant.team.name in non-team race", () => {
+    mockParent.isTeam = () => false;
+    (mockParent.sortedHeatDrivers[0] as any).participant = {
+      team: { name: "Team Solo" },
+    };
+    mockParent.getLayoutEntries = (_col: any) => [
+      { property: "participant.team.name", anchor: "center-center" },
+    ];
+    mockParent.formatColumnValue = (_hd: any, _col: any, prop: string) => {
+      if (prop === "participant.team.name") return "Team Solo";
+      return "";
+    };
+    fixture.detectChanges();
+
+    const rowEl = fixture.nativeElement.querySelector(".table-row");
+    const nameEl = rowEl.querySelector(".teammate-display-name");
+    expect(nameEl).toBeNull();
+
+    const selectEl = rowEl.querySelector("app-custom-select.teammate-select");
+    expect(selectEl).toBeNull();
+
+    const cellEl = rowEl.querySelector(
+      ".body-cell .anchor-center-center",
+    ) as HTMLElement;
+    const textMatches = Array.from(cellEl.querySelectorAll("span")).filter(
+      (s) => s.textContent?.trim() === "Team Solo",
+    );
+    expect(textMatches.length).toBe(1);
+  });
+
+  it("should not show teammate select for team name when it is an inset of a driver name column", () => {
+    (mockParent.sortedHeatDrivers[0] as any).participant = {
+      team: { name: "Team Fast" },
+    };
+    (mockParent.sortedHeatDrivers[0] as any).actualDriver = {
+      entity_id: "d1",
+      name: "Alice",
+      nickname: "Ace",
+    };
+    mockParent.columns = [
+      {
+        propertyName: "driver.name",
+        labelKey: "RD_COL_NAME",
+        layout: {
+          "center-center": "driver.name",
+          "bottom-right": "participant.team.name",
+        },
+      },
+    ];
+    mockParent.getLayoutEntries = (_col: any) => [
+      { property: "driver.name", anchor: "center-center" },
+      { property: "participant.team.name", anchor: "bottom-right" },
+    ];
+    mockParent.formatColumnValue = (_hd: any, _col: any, prop: string) => {
+      if (prop === "participant.team.name") return "Team Fast";
+      if (prop === "driver.name") return "Alice";
+      return "";
+    };
+    fixture.detectChanges();
+
+    const rowEl = fixture.nativeElement.querySelector(".table-row");
+    // Center-center (driver.name) should have teammate selector
+    const centerEl = rowEl.querySelector(
+      ".body-cell .anchor-center-center",
+    ) as HTMLElement;
+    expect(centerEl.querySelector(".teammate-display-name")).toBeTruthy();
+    expect(
+      centerEl.querySelector("app-custom-select.teammate-select"),
+    ).toBeTruthy();
+
+    // Bottom-right (participant.team.name inset) should NOT have teammate selector
+    const insetEl = rowEl.querySelector(
+      ".body-cell .anchor-bottom-right",
+    ) as HTMLElement;
+    expect(insetEl.querySelector(".teammate-display-name")).toBeNull();
+    expect(
+      insetEl.querySelector("app-custom-select.teammate-select"),
+    ).toBeNull();
+    expect(insetEl.textContent?.trim()).toBe("Team Fast");
+
+    // Only 1 teammate select dropdown exists in this row
+    const selects = rowEl.querySelectorAll("app-custom-select.teammate-select");
+    expect(selects.length).toBe(1);
+  });
+
+  describe("isNameProperty", () => {
+    it("should return true for driver name and nickname properties", () => {
+      expect(component.isNameProperty("driver.name")).toBeTrue();
+      expect(component.isNameProperty("driver.name_0")).toBeTrue();
+      expect(component.isNameProperty("driver.nickname")).toBeTrue();
+      expect(component.isNameProperty("driver.nickname_1")).toBeTrue();
+    });
+
+    it("should return false for other properties or undefined", () => {
+      expect(component.isNameProperty("participant.team.name")).toBeFalse();
+      expect(component.isNameProperty("lapCount")).toBeFalse();
+      expect(component.isNameProperty("")).toBeFalse();
+      expect(component.isNameProperty(undefined)).toBeFalse();
+    });
+  });
+
+  describe("isTeamProperty", () => {
+    it("should return true for participant.team.name properties", () => {
+      expect(component.isTeamProperty("participant.team.name")).toBeTrue();
+      expect(component.isTeamProperty("participant.team.name_0")).toBeTrue();
+    });
+
+    it("should return false for other properties or undefined", () => {
+      expect(component.isTeamProperty("driver.name")).toBeFalse();
+      expect(component.isTeamProperty("driver.nickname")).toBeFalse();
+      expect(component.isTeamProperty("lapCount")).toBeFalse();
+      expect(component.isTeamProperty("")).toBeFalse();
+      expect(component.isTeamProperty(undefined)).toBeFalse();
+    });
+  });
+
+  describe("hasNameProperty", () => {
+    it("should return true when column propertyName is a name property", () => {
+      expect(
+        component.hasNameProperty({ propertyName: "driver.name" }),
+      ).toBeTrue();
+      expect(
+        component.hasNameProperty({ propertyName: "driver.nickname" }),
+      ).toBeTrue();
+    });
+
+    it("should return true when column layout contains a name property", () => {
+      const col = {
+        propertyName: "custom",
+        layout: {
+          "center-center": "participant.team.name",
+          "top-left": "driver.name",
+        },
+      };
+      expect(component.hasNameProperty(col)).toBeTrue();
+    });
+
+    it("should return false when column has no name property", () => {
+      const col = {
+        propertyName: "participant.team.name",
+        layout: {
+          "center-center": "participant.team.name",
+          "bottom-right": "lapCount",
+        },
+      };
+      expect(component.hasNameProperty(col)).toBeFalse();
+    });
+
+    it("should return false for null or undefined column", () => {
+      expect(component.hasNameProperty(null)).toBeFalse();
+      expect(component.hasNameProperty(undefined)).toBeFalse();
+    });
+  });
+
+  describe("shouldShowTeammateSelect", () => {
+    const mockHd = {
+      objectId: "hd1",
+      laneIndex: 0,
+      driver: { entity_id: "d1", name: "Alice" },
+      participant: { team: { name: "Team Fast" } },
+    };
+
+    it("should return true for driver name in a team race", () => {
+      const col = { propertyName: "driver.name" };
+      const entry = { property: "driver.name", anchor: "center-center" };
+      expect(component.shouldShowTeammateSelect(col, entry, mockHd)).toBeTrue();
+    });
+
+    it("should return true for driver nickname in a team race", () => {
+      const col = { propertyName: "driver.nickname" };
+      const entry = { property: "driver.nickname", anchor: "center-center" };
+      expect(component.shouldShowTeammateSelect(col, entry, mockHd)).toBeTrue();
+    });
+
+    it("should return true for standalone team column in center-center", () => {
+      const col = { propertyName: "participant.team.name" };
+      const entry = {
+        property: "participant.team.name",
+        anchor: "center-center",
+      };
+      expect(component.shouldShowTeammateSelect(col, entry, mockHd)).toBeTrue();
+    });
+
+    it("should return false for team name when column contains driver name", () => {
+      const col = {
+        propertyName: "driver.name",
+        layout: {
+          "center-center": "driver.name",
+          "bottom-right": "participant.team.name",
+        },
+      };
+      const entry = {
+        property: "participant.team.name",
+        anchor: "bottom-right",
+      };
+      expect(
+        component.shouldShowTeammateSelect(col, entry, mockHd),
+      ).toBeFalse();
+    });
+
+    it("should return false for team name when it is an inset (not center-center)", () => {
+      const col = {
+        propertyName: "lapCount",
+        layout: {
+          "center-center": "lapCount",
+          "bottom-right": "participant.team.name",
+        },
+      };
+      const entry = {
+        property: "participant.team.name",
+        anchor: "bottom-right",
+      };
+      expect(
+        component.shouldShowTeammateSelect(col, entry, mockHd),
+      ).toBeFalse();
+    });
+
+    it("should return false when race is not a team race", () => {
+      mockParent.isTeam = () => false;
+      const col = { propertyName: "driver.name" };
+      const entry = { property: "driver.name", anchor: "center-center" };
+      expect(
+        component.shouldShowTeammateSelect(col, entry, mockHd),
+      ).toBeFalse();
+    });
+
+    it("should return false for non-name and non-team properties", () => {
+      const col = { propertyName: "lapCount" };
+      const entry = { property: "lapCount", anchor: "center-center" };
+      expect(
+        component.shouldShowTeammateSelect(col, entry, mockHd),
+      ).toBeFalse();
+    });
+
+    it("should return false when hd or entry is null/undefined", () => {
+      expect(component.shouldShowTeammateSelect(null, null, null)).toBeFalse();
+      expect(
+        component.shouldShowTeammateSelect({}, { property: "" }, mockHd),
+      ).toBeFalse();
+    });
+  });
+
+  describe("isTeamOrNameProperty", () => {
+    it("should return true for driver names, nicknames, and team names including suffixes", () => {
+      expect(component.isTeamOrNameProperty("driver.name")).toBeTrue();
+      expect(component.isTeamOrNameProperty("driver.name_0")).toBeTrue();
+      expect(component.isTeamOrNameProperty("driver.nickname")).toBeTrue();
+      expect(component.isTeamOrNameProperty("driver.nickname_1")).toBeTrue();
+      expect(
+        component.isTeamOrNameProperty("participant.team.name"),
+      ).toBeTrue();
+      expect(
+        component.isTeamOrNameProperty("participant.team.name_0"),
+      ).toBeTrue();
+    });
+
+    it("should return false for non-name properties or empty values", () => {
+      expect(component.isTeamOrNameProperty("lapCount")).toBeFalse();
+      expect(component.isTeamOrNameProperty("totalLaps")).toBeFalse();
+      expect(component.isTeamOrNameProperty("bestLapTime")).toBeFalse();
+      expect(component.isTeamOrNameProperty("")).toBeFalse();
+      expect(component.isTeamOrNameProperty(undefined)).toBeFalse();
+    });
+  });
+
+  describe("getTeammateDisplayName", () => {
+    it("should return driver nickname or fallback to name for driver.nickname", () => {
+      const hd = {
+        actualDriver: { nickname: "Rocket", name: "John Doe" },
+        driver: { nickname: "R", name: "J" },
+      };
+      expect(component.getTeammateDisplayName(hd, "driver.nickname")).toBe(
+        "Rocket",
+      );
+      expect(
+        component.getTeammateDisplayName(
+          { actualDriver: { name: "John Doe" } },
+          "driver.nickname",
+        ),
+      ).toBe("John Doe");
+    });
+
+    it("should return team name for participant.team.name", () => {
+      const hd = {
+        participant: { team: { name: "Apex Racing" } },
+        driver: { name: "Driver 1" },
+      };
+      expect(
+        component.getTeammateDisplayName(hd, "participant.team.name"),
+      ).toBe("Apex Racing");
+      expect(
+        component.getTeammateDisplayName(hd, "participant.team.name_0"),
+      ).toBe("Apex Racing");
+    });
+
+    it("should return actualDriver or driver name for driver.name", () => {
+      const hd = {
+        actualDriver: { name: "Jane Smith" },
+        driver: { name: "Other" },
+      };
+      expect(component.getTeammateDisplayName(hd, "driver.name")).toBe(
+        "Jane Smith",
+      );
+    });
+
+    it("should handle null or undefined gracefully", () => {
+      expect(component.getTeammateDisplayName(null, "driver.name")).toBe("");
+      expect(component.getTeammateDisplayName({}, "")).toBe("");
+    });
   });
 
   it("should apply clickable-lap-cell class and lap tooltip to the lap column cell", () => {
@@ -907,5 +1294,135 @@ describe("RacedayLaneViewComponent", () => {
     );
     expect(firstRowCells.length).toBe(1);
     expect(firstRowCells[0].textContent.trim()).toBe("3");
+  });
+
+  describe("getPacingDecimalPlaces", () => {
+    it("should resolve decimal places from widget customSettings columnDecimals for direct columnKey", () => {
+      fixture.componentRef.setInput("widget", {
+        id: "w1",
+        widgetType: "lane-view",
+        customSettings: {
+          columnDecimals: { ghostPacing: 1 },
+        },
+      } as any);
+
+      expect(
+        component.getPacingDecimalPlaces({ propertyName: "ghostPacing" }),
+      ).toBe(1);
+    });
+
+    it("should resolve decimal places from widget customSettings columnDecimals for entry property", () => {
+      fixture.componentRef.setInput("widget", {
+        id: "w1",
+        widgetType: "lane-view",
+        customSettings: {
+          columnDecimals: { ghostPacingPB: 0 },
+        },
+      } as any);
+
+      expect(
+        component.getPacingDecimalPlaces(
+          { propertyName: "compound" },
+          { property: "ghostPacingPB" },
+        ),
+      ).toBe(0);
+    });
+
+    it("should resolve decimal places for compound columnKey", () => {
+      fixture.componentRef.setInput("widget", {
+        id: "w1",
+        widgetType: "lane-view",
+        customSettings: {
+          columnDecimals: { ghostPacing: 2 },
+        },
+      } as any);
+
+      expect(
+        component.getPacingDecimalPlaces({
+          propertyName: "lapCount_ghostPacing",
+        }),
+      ).toBe(2);
+    });
+
+    it("should resolve decimal places via prefix matching ghostPacing", () => {
+      fixture.componentRef.setInput("widget", {
+        id: "w1",
+        widgetType: "lane-view",
+        customSettings: {
+          columnDecimals: { ghostPacing: 1 },
+        },
+      } as any);
+
+      expect(
+        component.getPacingDecimalPlaces({
+          propertyName: "ghostPacingPersonalMedian",
+        }),
+      ).toBe(1);
+    });
+
+    it("should fall back to insetTimeDecimalPlaces when entry is an inset", () => {
+      fixture.componentRef.setInput("widget", {
+        id: "w1",
+        widgetType: "lane-view",
+        customSettings: {
+          insetTimeDecimalPlaces: 1,
+          timeDecimalPlaces: 2,
+        },
+      } as any);
+
+      expect(
+        component.getPacingDecimalPlaces(
+          { propertyName: "other" },
+          { anchor: "top-left", property: "ghostPacing" },
+        ),
+      ).toBe(1);
+    });
+
+    it("should fall back to timeDecimalPlaces when center entry and no override", () => {
+      fixture.componentRef.setInput("widget", {
+        id: "w1",
+        widgetType: "lane-view",
+        customSettings: {
+          timeDecimalPlaces: 2,
+        },
+      } as any);
+
+      expect(
+        component.getPacingDecimalPlaces(
+          { propertyName: "other" },
+          { anchor: "center-center", property: "ghostPacing" },
+        ),
+      ).toBe(2);
+    });
+
+    it("should clamp resolved decimal values into [0, 3]", () => {
+      fixture.componentRef.setInput("widget", {
+        id: "w1",
+        widgetType: "lane-view",
+        customSettings: {
+          columnDecimals: { ghostPacing: 5 },
+          timeDecimalPlaces: -2,
+        },
+      } as any);
+
+      expect(
+        component.getPacingDecimalPlaces({ propertyName: "ghostPacing" }),
+      ).toBe(3);
+
+      expect(
+        component.getPacingDecimalPlaces({ propertyName: "unknown" }),
+      ).toBe(0);
+    });
+
+    it("should default to 3 when no custom settings exist", () => {
+      fixture.componentRef.setInput("widget", {
+        id: "w1",
+        widgetType: "lane-view",
+      } as any);
+
+      expect(
+        component.getPacingDecimalPlaces({ propertyName: "ghostPacing" }),
+      ).toBe(3);
+    });
   });
 });

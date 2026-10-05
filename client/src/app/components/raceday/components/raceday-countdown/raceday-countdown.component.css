@@ -17,8 +17,11 @@
   position: absolute;
   z-index: 1;
   pointer-events: none;
-  animation: countdownFadeIn 0.3s ease-out;
   border-radius: 12px;
+}
+
+.countdown-blur-backdrop.fade-in {
+  animation: countdownFadeIn 0.3s ease-out;
 }
 
 .countdown-blur-backdrop.fullscreen {
@@ -36,6 +39,9 @@
   justify-content: center;
   z-index: 2;
   pointer-events: none;
+}
+
+.countdown-overlay.fade-in {
   animation: countdownFadeIn 0.3s ease-out;
 }
 

@@ -254,4 +254,43 @@ describe("RaceConverter", () => {
     const result = RaceConverter.fromProto(mockProto);
     expect(result.theme_id).toBe("practice_theme_rc_ai");
   });
+
+  it("should map allowFinish from proto enum values including SingleLapAutoSegments", () => {
+    const mockProto: IRaceModel = {
+      model: { entityId: "r17" },
+      name: "Auto Segments Race",
+      track: { model: { entityId: "t1" }, name: "Track", lanes: [] },
+      heatScoring: {
+        finishMethod: 1,
+        finishValue: 60,
+        allowFinish: 4, // AF_SINGLE_LAP_AUTO_SEGMENTS
+      },
+    };
+    const result = RaceConverter.fromProto(mockProto);
+    expect(result.heat_scoring.allowFinish).toBe("SingleLapAutoSegments");
+  });
+
+  it("should preserve custom and 0 startTime and restartTime without falling back to 5.0", () => {
+    const mockProtoZero: IRaceModel = {
+      model: { entityId: "r18" },
+      name: "Zero Countdown Race",
+      track: { model: { entityId: "t1" }, name: "Track", lanes: [] },
+      startTime: 0,
+      restartTime: 0,
+    };
+    const resultZero = RaceConverter.fromProto(mockProtoZero);
+    expect(resultZero.start_time).toBe(0);
+    expect(resultZero.restart_time).toBe(0);
+
+    const mockProtoCustom: IRaceModel = {
+      model: { entityId: "r19" },
+      name: "3s Countdown Race",
+      track: { model: { entityId: "t1" }, name: "Track", lanes: [] },
+      startTime: 3.0,
+      restartTime: 2.0,
+    };
+    const resultCustom = RaceConverter.fromProto(mockProtoCustom);
+    expect(resultCustom.start_time).toBe(3.0);
+    expect(resultCustom.restart_time).toBe(2.0);
+  });
 });

@@ -17,6 +17,7 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -44,6 +45,7 @@ public class DatabaseContext {
   private volatile String currentDatabaseName;
   private final ServerConfigService configService;
   private final String dataRoot;
+  private final Set<String> verifiedTables = Collections.synchronizedSet(new HashSet<>());
 
   public DatabaseContext(
       String initialDatabaseName, ServerConfigService configService, String dataRoot) {
@@ -84,6 +86,7 @@ public class DatabaseContext {
         logger.warn("Error closing database connection during switch", e);
       }
     }
+    this.verifiedTables.clear();
 
     this.currentDatabaseName = databaseName;
     File dbDir = new File(dataRoot + databaseName);
@@ -118,6 +121,10 @@ public class DatabaseContext {
     if (tableName == null || tableName.trim().isEmpty()) {
       return;
     }
+    String normalized = tableName.trim().toLowerCase();
+    if (verifiedTables.contains(normalized)) {
+      return;
+    }
     try (Statement stmt = getConnection().createStatement()) {
       if ("counters".equalsIgnoreCase(tableName)) {
         stmt.execute(
@@ -128,8 +135,41 @@ public class DatabaseContext {
                 + tableName
                 + " (entity_id TEXT PRIMARY KEY, sequence_id TEXT, json_data TEXT NOT NULL)");
       }
+      verifiedTables.add(normalized);
     } catch (SQLException e) {
       logger.error("Error creating table {}", tableName, e);
+    }
+  }
+
+  public synchronized void ensureRaceRecordsTable(String tableName) {
+    if (tableName == null || tableName.trim().isEmpty()) {
+      return;
+    }
+    String normalized = tableName.trim().toLowerCase();
+    if (verifiedTables.contains(normalized)) {
+      return;
+    }
+    try (Statement stmt = getConnection().createStatement()) {
+      stmt.execute(
+          "CREATE TABLE IF NOT EXISTS "
+              + tableName
+              + " (race_id TEXT PRIMARY KEY, records_blob BLOB)");
+      verifiedTables.add(normalized);
+    } catch (SQLException e) {
+      logger.error("Error creating race records table {}", tableName, e);
+    }
+  }
+
+  public boolean isTableVerified(String tableName) {
+    if (tableName == null) {
+      return false;
+    }
+    return verifiedTables.contains(tableName.trim().toLowerCase());
+  }
+
+  public void markTableVerified(String tableName) {
+    if (tableName != null) {
+      verifiedTables.add(tableName.trim().toLowerCase());
     }
   }
 
@@ -247,7 +287,8 @@ public class DatabaseContext {
     }
 
     DatabaseContext targetContext = new DatabaseContext(targetDbName, configService, dataRoot);
-    new AssetService(targetContext, dataRoot + targetDbName + "/assets").backfillDefaults();
+    new AssetService(targetContext, Paths.get(dataRoot, targetDbName, "assets").toString())
+        .backfillDefaults();
   }
 
   public synchronized void deleteDatabase(String dbName) {
@@ -304,7 +345,8 @@ public class DatabaseContext {
       if (is != null) {
         logger.info("Restoring database '{}' from factory_default.zip resource", dbName);
         importDatabase(dbName, is);
-        new AssetService(this, dataRoot + dbName + "/assets").backfillDefaults();
+        switchDatabase(dbName);
+        new AssetService(this, Paths.get(dataRoot, dbName, "assets").toString()).backfillDefaults();
         DatabaseService.getInstance().backfillDrivers(this);
         DatabaseService.getInstance().backfillCustomUIs(this);
         return;
@@ -314,7 +356,7 @@ public class DatabaseContext {
     }
 
     switchDatabase(dbName);
-    new AssetService(this, dataRoot + dbName + "/assets").resetAssets();
+    new AssetService(this, Paths.get(dataRoot, dbName, "assets").toString()).resetAssets();
     DatabaseService.getInstance().resetToFactory(this);
   }
 
@@ -663,7 +705,7 @@ public class DatabaseContext {
       }
     }
 
-    new AssetService(this, dataRoot + dbName + "/assets").backfillDefaults();
+    new AssetService(this, Paths.get(dataRoot, dbName, "assets").toString()).backfillDefaults();
   }
 
   public static class DatabaseStats {

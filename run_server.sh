@@ -46,27 +46,125 @@ is_port_in_use() {
   fi
 }
 
+get_port_listening_pid() {
+  local port=$1
+  local pid=""
+  if command -v lsof >/dev/null 2>&1; then
+    pid=$(lsof -n -P -iTCP:"$port" -sTCP:LISTEN -t 2>/dev/null | head -n 1)
+    if [ -z "$pid" ]; then
+      pid=$(lsof -i:"$port" -t 2>/dev/null | head -n 1)
+    fi
+  elif command -v fuser >/dev/null 2>&1; then
+    pid=$(fuser "$port"/tcp 2>/dev/null | tr -d ' ' | head -n 1)
+  elif command -v ss >/dev/null 2>&1; then
+    pid=$(ss -lptn "sport = :$port" 2>/dev/null | grep -o 'pid=[0-9]*' | head -n 1 | cut -d= -f2)
+  fi
+  echo "$pid"
+}
+
+resolve_app_description() {
+  local proc_name="$1"
+  local cmd_line="$2"
+  local lower_cmd=$(echo "$cmd_line" | tr '[:upper:]' '[:lower:]')
+
+  if [[ "$lower_cmd" =~ racecoordinator|com\.antigravity\.app|com\.antigravity\. ]]; then
+    if [[ "$lower_cmd" =~ app|server ]]; then
+      echo "Race Coordinator AI Server (another instance is already running)"
+    elif [[ "$lower_cmd" =~ ng|client ]]; then
+      echo "Race Coordinator AI Client (Angular dev server)"
+    else
+      echo "Race Coordinator AI (another instance is already running)"
+    fi
+  elif [[ "$lower_cmd" =~ ng(\.js|\.cmd|\.ps1)?[[:space:]]+serve|@angular/cli ]]; then
+    echo "Angular Dev Server"
+  elif [[ "$proc_name" =~ ^java(w)?(\.exe)?$ ]]; then
+    if [[ "$cmd_line" =~ -jar[[:space:]]+[\"\']?([^\"\'[:space:]]+\.jar)[\"\']? ]]; then
+      local jar_path="${BASH_REMATCH[1]}"
+      local jar_name=$(basename "$jar_path")
+      echo "Java Application ($jar_name)"
+    else
+      echo "Java Application"
+    fi
+  elif [[ "$proc_name" =~ ^node(\.exe)?$ ]]; then
+    echo "Node.js Application"
+  fi
+}
+
+build_port_conflict_message() {
+  local port=$1
+  local service_name="$2"
+  local pid=$(get_port_listening_pid "$port")
+
+  local msg="Failed to start $service_name on port $port."
+
+  if [ -n "$pid" ] && [ "$pid" -gt 0 ] 2>/dev/null; then
+    local proc_name=$(ps -p "$pid" -o comm= 2>/dev/null | xargs)
+    local cmd_line=$(ps -p "$pid" -o command= 2>/dev/null | xargs)
+    local app_desc=$(resolve_app_description "$proc_name" "$cmd_line")
+
+    msg="$msg\n\nPort $port is currently in use by another application:"
+    if [ -n "$app_desc" ]; then
+      msg="$msg\n  • Application: $app_desc"
+    fi
+    if [ -n "$proc_name" ]; then
+      msg="$msg\n  • Process: $proc_name (PID: $pid)"
+    else
+      msg="$msg\n  • PID: $pid"
+    fi
+    if [ -n "$cmd_line" ]; then
+      local short_cmd="$cmd_line"
+      if [ ${#short_cmd} -gt 140 ]; then
+        short_cmd="${short_cmd:0:140}..."
+      fi
+      msg="$msg\n  • Command: $short_cmd"
+    fi
+
+    msg="$msg\n\nTroubleshooting Steps:"
+    msg="$msg\n1. Close or terminate the conflicting application (PID: $pid)."
+    if [[ "$app_desc" =~ "Race Coordinator AI" ]]; then
+      msg="$msg\n   Another instance of Race Coordinator AI appears to already be running."
+    fi
+  else
+    msg="$msg\n\nPort $port is already in use by another process or unavailable.\n\nTroubleshooting Steps:\n1. Terminate the process using port $port, or restart your computer."
+  fi
+
+  if [ "$service_name" = "Web Server" ]; then
+    msg="$msg\n2. Or start with '--port <port>' (or set SERVER_PORT / PORT environment variable)."
+  else
+    msg="$msg\n2. Or start in headless mode with '--headless' if you only need the server."
+  fi
+
+  echo "$msg"
+}
+
 show_gui_error() {
   local title="$1"
   local message="$2"
-  echo "PORT CONFLICT ERROR - $title: $message"
+  printf "\n\033[1;31mPORT CONFLICT ERROR - %s:\033[0m\n%b\n\n" "$title" "$message"
   if [ "$(uname)" = "Darwin" ]; then
-    osascript -e "display dialog \"$message\" with title \"$title\" buttons {\"OK\"} default button \"OK\" with icon stop" >/dev/null 2>&1 &
+    local escaped_msg=$(printf "%b" "$message" | sed 's/\\/\\\\/g; s/"/\\"/g')
+    osascript <<EOF >/dev/null 2>&1 &
+display dialog "$escaped_msg" with title "$title" buttons {"OK"} default button "OK" with icon stop
+EOF
   elif command -v zenity >/dev/null 2>&1; then
-    zenity --error --title="$title" --text="$message" >/dev/null 2>&1 &
+    local formatted_msg=$(printf "%b" "$message")
+    zenity --error --title="$title" --text="$formatted_msg" >/dev/null 2>&1 &
   elif command -v kdialog >/dev/null 2>&1; then
-    kdialog --error "$message" --title "$title" >/dev/null 2>&1 &
+    local formatted_msg=$(printf "%b" "$message")
+    kdialog --error "$formatted_msg" --title "$title" >/dev/null 2>&1 &
   fi
 }
 
 # Pre-flight port availability checks
 if [ "$HEADLESS" = false ] && is_port_in_use "$CLIENT_PORT"; then
-  show_gui_error "Race Coordinator AI - Client Port Conflict" "Failed to start Angular Client on port $CLIENT_PORT.\nPort $CLIENT_PORT is already in use by another process.\n\nPlease terminate the process using port $CLIENT_PORT and try again."
+  conflict_msg=$(build_port_conflict_message "$CLIENT_PORT" "Angular Client")
+  show_gui_error "Race Coordinator AI - Client Port Conflict" "$conflict_msg"
   exit 1
 fi
 
 if is_port_in_use "$SERVER_PORT"; then
-  show_gui_error "Race Coordinator AI - Web Server Port Conflict" "Failed to start Web Server on port $SERVER_PORT.\nPort $SERVER_PORT is already in use by another process.\n\nPlease terminate the process using port $SERVER_PORT or start with '--port <port'."
+  conflict_msg=$(build_port_conflict_message "$SERVER_PORT" "Web Server")
+  show_gui_error "Race Coordinator AI - Web Server Port Conflict" "$conflict_msg"
   exit 1
 fi
 

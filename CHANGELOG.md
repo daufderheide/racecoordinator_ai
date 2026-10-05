@@ -1,19 +1,34 @@
 # Changelog
 
-All notable changes to Race Coordinator AI are documented in this file.
+## [v1.0.1-beta.4] - 2026-09-30
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+### 🚀 New Features
 
-## [v1.0.0] - 2026-08-22
+- Auto hide the countdown widget when a different widget is selected. [#869](https://github.com/daufderheide/racecoordinator_ai/issues/869) [skip-screendiffs] ([29801310](https://github.com/daufderheide/racecoordinator_ai/commit/29801310))
+- Added 'show summary for future heats' option for the heat list widget.  This allows all heats to be shown with the same size and column data [#869](https://github.com/daufderheide/racecoordinator_ai/issues/869) [skip-screendiffs] ([5f63db0f](https://github.com/daufderheide/racecoordinator_ai/commit/5f63db0f))
 
-### 🎉 Initial Official Release
+### 🐛 Bug Fixes
 
-Welcome to the first official release of **Race Coordinator AI**!
+- Attempt to make the heat, race and driver results pages more readable by making the foreground data standout over the background more [#870](https://github.com/daufderheide/racecoordinator_ai/issues/870) ([a3336144](https://github.com/daufderheide/racecoordinator_ai/commit/a3336144))
+- Extended editor object selector (drriver, race, track, etc) to the bottom of the page or as far as needed to minimize scrolling when large numuber of items have been created [#865](https://github.com/daufderheide/racecoordinator_ai/issues/865) [skip-screendiffs] ([7d362757](https://github.com/daufderheide/racecoordinator_ai/commit/7d362757))
+- Trying to fix client side start lamp synchronization but pre-loading start lamp images, and adding caching to the get request. [#871](https://github.com/daufderheide/racecoordinator_ai/issues/871) [skip-screendiffs] ([46ed328d](https://github.com/daufderheide/racecoordinator_ai/commit/46ed328d))
+- Updated default countdown images to be pixel correct.  This prevents them from slightly shifting positions on screen which is particularly noticeable when the blur effects are disabled: [#866](https://github.com/daufderheide/racecoordinator_ai/issues/866) [skip-screendiffs] ([64615c3c](https://github.com/daufderheide/racecoordinator_ai/commit/64615c3c))
+- localize leaderboard widget title with RD_WIN_LEADER_BOARD key ([dbf82f16](https://github.com/daufderheide/racecoordinator_ai/commit/dbf82f16))
+- Unify tooltip icons, including making all delet operations a red trash can to signify a dangerous operation. ([67774bb2](https://github.com/daufderheide/racecoordinator_ai/commit/67774bb2))
+- Changed default countdown lamps so they do not overlap fix: Auto-enable countdown preview if the countdown widget is selected. [#859](https://github.com/daufderheide/racecoordinator_ai/issues/859) ([021b6061](https://github.com/daufderheide/racecoordinator_ai/commit/021b6061))
+- Fixed driver editor audio expander and track editor lane expander.  They both required multiple clicks to open/close properly [skip-screendiffs] ([cfded194](https://github.com/daufderheide/racecoordinator_ai/commit/cfded194))
+- Removed duplicate delete widget button in the widget inspector ([4a06b3fd](https://github.com/daufderheide/racecoordinator_ai/commit/4a06b3fd))
 
-- **Track & Hardware Management**: Comprehensive track editor, lane configuration, and pin mapping for Arduino UNO Q, Phidgets, and custom serial interfaces.
-- **Race Engine & Predictions**: Advanced race formats, rotations, driver scoring, live telemetry, and AI predictions.
-- **Customizable UI & Audio**: Modular race day dashboard, visual themes, sound effects, and text-to-speech race commentary.
-- **Cross-Platform**: Support for Windows (Online & Offline Standalone), macOS (Apple Silicon & Intel DMG), and Linux ARM64.
+<details>
+<summary>🔍 <b>Full Commit History</b></summary>
 
-Explore the complete [Help Center Documentation & Guides](https://daufderheide.github.io/racecoordinator_ai/) to get started.
+<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0...v1.0.1-beta.4">GitHub</a></p>
+</details>
+
+## [v1.0.0] - 2026-09-27
+
+### 🎉 Initial Release
+
+Initial release.
+
+View the full commit history on [GitHub](https://github.com/daufderheide/racecoordinator_ai/commits/v1.0.0).

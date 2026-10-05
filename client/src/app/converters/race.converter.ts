@@ -92,6 +92,7 @@ export class RaceConverter {
               AllowFinish.AF_ALLOW,
               AllowFinish.AF_SINGLE_LAP,
               AllowFinish.AF_NONE_AUTO_SEGMENTS,
+              AllowFinish.AF_SINGLE_LAP_AUTO_SEGMENTS,
             ];
             allowFinish = allowFinishes[allowFinish] || AllowFinish.AF_NONE;
           }
@@ -187,18 +188,26 @@ export class RaceConverter {
           proto.autoStartTime || 0,
           proto.autoAdvanceWarmupTime || 0,
           proto.autoStartWarmupTime || 0,
-          p.driftTime || p.drift_time || 0.5,
-          p.minLapTime ?? p.min_lap_time ?? 1.5,
-          p.start_time !== undefined && p.start_time !== null
+          p.driftTime != null
+            ? Number(p.driftTime)
+            : p.drift_time != null
+              ? Number(p.drift_time)
+              : undefined,
+          p.minLapTime != null
+            ? Number(p.minLapTime)
+            : p.min_lap_time != null
+              ? Number(p.min_lap_time)
+              : undefined,
+          p.start_time != null
             ? Number(p.start_time)
-            : p.startTime !== undefined && p.startTime !== null
+            : p.startTime != null
               ? Number(p.startTime)
-              : 5.0,
-          p.restart_time !== undefined && p.restart_time !== null
+              : undefined,
+          p.restart_time != null
             ? Number(p.restart_time)
-            : p.restartTime !== undefined && p.restartTime !== null
+            : p.restartTime != null
               ? Number(p.restartTime)
-              : 5.0,
+              : undefined,
           p.startRandomizer ||
             p.start_randomizer ||
             p.startDelay ||

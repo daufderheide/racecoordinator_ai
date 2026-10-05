@@ -544,6 +544,9 @@ describe("UIEditorComponent", () => {
     expect(component.getWidgetTypeLabelKey("leaderboard")).toBe(
       "UE_WIDGET_TYPE_LEADERBOARD",
     );
+    expect(component.getWidgetTypeLabelKey("lane-column")).toBe(
+      "UE_WIDGET_TYPE_LANE_COLUMN",
+    );
     expect(component.getWidgetTypeLabelKey("custom:telemetry")).toBe(
       "Live Telemetry Gauge",
     );
@@ -609,7 +612,7 @@ describe("UIEditorComponent", () => {
     const slots = component.displayColumnSlots;
     expect(slots.length).toBe(2);
     expect(slots[0].label).toBe("RD_COL_NAME");
-    expect(slots[1].label).toBe("RD_COL_LAP");
+    expect(slots[1].label).toBe("UI_EDITOR_COL_HEAT_LAPS");
   });
 
   it("should capture state on onColumnsChanged", () => {
@@ -812,7 +815,7 @@ describe("UIEditorComponent", () => {
       (c) => c.key === "totalTime",
     );
     expect(totalTime).toBeTruthy();
-    expect(totalTime?.label).toBe("RD_COL_TOTAL_TIME");
+    expect(totalTime?.label).toBe("UI_EDITOR_COL_HEAT_TOTAL_TIME");
   });
 
   it("should include recordLapTime column in availableColumns", () => {
@@ -826,7 +829,7 @@ describe("UIEditorComponent", () => {
   it("should include lapsLed column in availableColumns", () => {
     const lapsLed = component.availableColumns.find((c) => c.key === "lapsLed");
     expect(lapsLed).toBeTruthy();
-    expect(lapsLed?.label).toBe("RD_COL_LAPS_LED");
+    expect(lapsLed?.label).toBe("UI_EDITOR_COL_HEAT_LAPS_LED");
   });
 
   it("should include trackCalls column in availableColumns", () => {
@@ -834,7 +837,7 @@ describe("UIEditorComponent", () => {
       (c) => c.key === "trackCalls",
     );
     expect(trackCalls).toBeTruthy();
-    expect(trackCalls?.label).toBe("RD_COL_TRACK_CALLS");
+    expect(trackCalls?.label).toBe("UI_EDITOR_COL_HEAT_TRACK_CALLS");
   });
 
   it("should include driver flag column in availableColumns with label RD_COL_DRIVER_FLAG", () => {
@@ -2096,6 +2099,30 @@ describe("UIEditorComponent", () => {
   });
 
   describe("custom export template actions and DOM rendering", () => {
+    let originalShowSaveFilePicker: any;
+    let mockWritable: any;
+    let mockHandle: any;
+
+    beforeEach(() => {
+      originalShowSaveFilePicker = (window as any).showSaveFilePicker;
+      mockWritable = {
+        write: jasmine.createSpy("write").and.returnValue(Promise.resolve()),
+        close: jasmine.createSpy("close").and.returnValue(Promise.resolve()),
+      };
+      mockHandle = {
+        createWritable: jasmine
+          .createSpy("createWritable")
+          .and.returnValue(Promise.resolve(mockWritable)),
+      };
+      (window as any).showSaveFilePicker = jasmine
+        .createSpy("showSaveFilePicker")
+        .and.returnValue(Promise.resolve(mockHandle));
+    });
+
+    afterEach(() => {
+      (window as any).showSaveFilePicker = originalShowSaveFilePicker;
+    });
+
     it("should clear custom template and capture state", () => {
       component.editingSettings.customExportTemplateBase64 = "data:test";
       component.editingSettings.customExportTemplateName = "test.xlsx";
@@ -2209,48 +2236,42 @@ describe("UIEditorComponent", () => {
     });
 
     it("should download default template when no custom template is selected", fakeAsync(() => {
-      spyOn(window.URL, "createObjectURL").and.returnValue("blob:mock-url");
-      spyOn(window.URL, "revokeObjectURL").and.stub();
       component.editingSettings.customExportTemplateBase64 = undefined;
       component.downloadTemplate();
       tick();
       expect(mockDataService.downloadDefaultExportTemplate).toHaveBeenCalled();
+      expect((window as any).showSaveFilePicker).toHaveBeenCalled();
     }));
 
     it("should download selected custom template directly when custom template is present", fakeAsync(() => {
-      const originalPicker = (window as any).showSaveFilePicker;
       delete (window as any).showSaveFilePicker;
-      try {
-        const createUrlSpy = spyOn(
-          window.URL,
-          "createObjectURL",
-        ).and.returnValue("blob:mock-url");
-        spyOn(window.URL, "revokeObjectURL").and.stub();
-        mockDataService.downloadDefaultExportTemplate.calls.reset();
-        component.editingSettings.customExportTemplateBase64 =
-          "data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,dGVzdA==";
-        component.editingSettings.customExportTemplateName =
-          "my_custom_template.xlsx";
-        component.downloadTemplate();
-        tick();
-        expect(
-          mockDataService.downloadDefaultExportTemplate,
-        ).not.toHaveBeenCalled();
-        expect(createUrlSpy).toHaveBeenCalled();
-      } finally {
-        (window as any).showSaveFilePicker = originalPicker;
-      }
+      const clickSpy = spyOn(HTMLAnchorElement.prototype, "click");
+      const createUrlSpy = spyOn(window.URL, "createObjectURL").and.returnValue(
+        "blob:mock-url",
+      );
+      spyOn(window.URL, "revokeObjectURL").and.stub();
+      mockDataService.downloadDefaultExportTemplate.calls.reset();
+      component.editingSettings.customExportTemplateBase64 =
+        "data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,dGVzdA==";
+      component.editingSettings.customExportTemplateName =
+        "my_custom_template.xlsx";
+      component.downloadTemplate();
+      tick();
+      expect(
+        mockDataService.downloadDefaultExportTemplate,
+      ).not.toHaveBeenCalled();
+      expect(createUrlSpy).toHaveBeenCalled();
+      expect(clickSpy).toHaveBeenCalled();
     }));
 
     it("should trigger test export with custom template", fakeAsync(() => {
-      spyOn(window.URL, "createObjectURL").and.returnValue("blob:mock-url");
-      spyOn(window.URL, "revokeObjectURL").and.stub();
       component.editingSettings.customExportTemplateBase64 = "custom-base64";
       component.testExport();
       tick();
       expect(mockDataService.testExportXls).toHaveBeenCalledWith(
         "custom-base64",
       );
+      expect((window as any).showSaveFilePicker).toHaveBeenCalled();
     }));
   });
 
@@ -3981,6 +4002,178 @@ describe("UIEditorComponent", () => {
       expect(component.undoManager.captureState).toHaveBeenCalled();
     });
 
+    it("should replicate lane widgets and capture state when onReplicateLanes is called", () => {
+      spyOn(component.undoManager, "captureState");
+      const customUi: any = {
+        entity_id: "custom_ui_rep",
+        layoutJson: JSON.stringify({
+          baseWidth: 1920,
+          baseHeight: 1080,
+          widgets: [
+            {
+              id: "lc-1",
+              widgetType: "lane-column",
+              x: 0,
+              y: 0,
+              width: 200,
+              height: 100,
+              zIndex: 1,
+              customSettings: {
+                bindingMode: "lane",
+                targetIndex: 0,
+                columnKey: "lastLapTime",
+              },
+            },
+          ],
+        }),
+      };
+      component.displayCustomUIs = [customUi];
+      component.activeCustomUiId = "custom_ui_rep";
+
+      component.onReplicateLanes(
+        {
+          sourceBindingMode: "lane",
+          sourceIndex: 0,
+          direction: "horizontal",
+          targetCount: 4,
+          distributionMode: "auto-fit",
+          replaceExisting: true,
+        },
+        customUi,
+      );
+
+      const parsed = JSON.parse(customUi.layoutJson);
+      expect(parsed.widgets.length).toBe(4);
+      expect(component.undoManager.captureState).toHaveBeenCalled();
+    });
+
+    it("should open and confirm replicate lane modal properly", () => {
+      const widget = {
+        id: "lc-1",
+        widgetType: "lane-column",
+        customSettings: {
+          bindingMode: "lane",
+          targetIndex: 0,
+        },
+      };
+      const customUi: any = {
+        entity_id: "custom_ui_rep",
+        layoutJson: JSON.stringify({
+          baseWidth: 1920,
+          baseHeight: 1080,
+          widgets: [widget],
+        }),
+      };
+      component.displayCustomUIs = [customUi];
+      component.activeCustomUiId = "custom_ui_rep";
+      component.selectedWidgetId = "lc-1";
+      component.track = { lanes: [{}, {}, {}, {}, {}, {}] };
+
+      component.openReplicateLaneModal(customUi);
+      expect(component.showReplicateLaneModal).toBeTrue();
+      expect(component.replicateBindingMode).toBe("lane");
+      expect(component.replicateSourceIndex).toBe(0);
+      expect(component.replicateDefaultCount).toBe(6);
+
+      spyOn(component, "onReplicateLanes");
+      const options = { targetCount: 6 } as any;
+      component.onConfirmReplicateLanes(options);
+      expect(component.onReplicateLanes).toHaveBeenCalledWith(
+        options,
+        customUi,
+      );
+    });
+
+    it("should use maxTrackLanes for replicateDefaultCount when greater than track lanes", () => {
+      const widget = {
+        id: "lc-1",
+        widgetType: "lane-column",
+        customSettings: { bindingMode: "lane", targetIndex: 0 },
+      };
+      const customUi: any = {
+        entity_id: "custom_ui_rep2",
+        layoutJson: JSON.stringify({ widgets: [widget] }),
+      };
+      component.displayCustomUIs = [customUi];
+      component.activeCustomUiId = "custom_ui_rep2";
+      component.selectedWidgetId = "lc-1";
+      component.track = { lanes: [{}, {}, {}] }; // 3 lanes
+      component.maxTrackLanes = 8; // 8 max lanes across all tracks
+
+      component.openReplicateLaneModal(customUi);
+      expect(component.replicateDefaultCount).toBe(8);
+    });
+
+    it("should handle grid session lifecycle (finish, cancel, edit, detach)", () => {
+      spyOn(component.undoManager, "captureState");
+      const widget = {
+        id: "lc-1",
+        widgetType: "lane-column",
+        customSettings: {
+          gridId: "test-grid-spec",
+          gridLane: 0,
+        },
+      };
+      const customUi: any = {
+        entity_id: "custom_ui_grid",
+        layoutJson: JSON.stringify({
+          baseWidth: 1920,
+          baseHeight: 1080,
+          widgets: [widget],
+        }),
+      };
+      component.displayCustomUIs = [customUi];
+      component.activeCustomUiId = "custom_ui_grid";
+
+      component.startGridSession(
+        {
+          sourceBindingMode: "lane",
+          sourceIndex: 0,
+          direction: "horizontal",
+          targetCount: 4,
+          distributionMode: "auto-fit",
+          replaceExisting: false,
+        },
+        customUi,
+      );
+      expect(component.activeGridSession).toBeDefined();
+      expect(component.activeGridSession?.totalLanes).toBe(4);
+
+      component.finishGridSession(customUi);
+      expect(component.activeGridSession).toBeNull();
+      expect(component.undoManager.captureState).toHaveBeenCalled();
+
+      // Edit grid test
+      component.onEditGridTemplate("test-grid-spec", customUi);
+      expect(component.activeGridSession?.gridId).toBe("test-grid-spec");
+
+      // Detach grid test
+      component.onDetachGrid("test-grid-spec", customUi);
+      expect(component.activeGridSession).toBeNull();
+      const parsed = JSON.parse(customUi.layoutJson);
+      expect(parsed.widgets[0].customSettings?.gridId).toBeUndefined();
+
+      // Resize grid bounds test
+      component.activeGridSession = {
+        gridId: "test-grid-spec",
+        bounds: { x: 100, y: 100, width: 800, height: 400 },
+        totalLanes: 4,
+        direction: "horizontal",
+        sourceLaneIndex: 0,
+        bindingMode: "lane",
+      };
+      component.onGridBoundsChange(
+        { x: 50, y: 50, width: 900, height: 500 },
+        customUi,
+      );
+      expect(component.activeGridSession.bounds).toEqual({
+        x: 50,
+        y: 50,
+        width: 900,
+        height: 500,
+      });
+    });
+
     it("should preserve collapsed column groups on lane-view widget per layout independently", () => {
       spyOn(component.undoManager, "captureState");
       const customUi1: any = {
@@ -4237,6 +4430,64 @@ describe("UIEditorComponent", () => {
       expect(component.isCountdownPreviewActive(customUi)).toBeTrue();
       component.toggleCountdownPreview(customUi);
       expect(component.isCountdownPreviewActive(customUi)).toBeFalse();
+    });
+
+    it("should automatically activate countdown preview when countdown widget is selected", () => {
+      const customUi = {
+        entity_id: "test-ui-auto-countdown",
+        name: "Test UI",
+      } as CustomUI;
+      const countdownWidget = {
+        id: "w-countdown-auto",
+        widgetType: "countdown",
+      } as any;
+      spyOn(component, "getLayout").and.returnValue({
+        widgets: [countdownWidget],
+      } as any);
+
+      component.onWidgetSelected("w-countdown-auto", customUi);
+      expect(component.isCountdownPreviewActive(customUi)).toBeTrue();
+    });
+
+    it("should automatically deactivate countdown preview when non-countdown widget is selected", () => {
+      const customUi = {
+        entity_id: "test-ui-auto-hide-countdown",
+        name: "Test UI",
+      } as CustomUI;
+      const countdownWidget = {
+        id: "w-countdown-auto",
+        widgetType: "countdown",
+      } as any;
+      const laneViewWidget = {
+        id: "w-lane-view-auto",
+        widgetType: "lane-view",
+      } as any;
+      spyOn(component, "getLayout").and.returnValue({
+        widgets: [countdownWidget, laneViewWidget],
+      } as any);
+
+      component.onWidgetSelected("w-countdown-auto", customUi);
+      expect(component.isCountdownPreviewActive(customUi)).toBeTrue();
+
+      component.onWidgetSelected("w-lane-view-auto", customUi);
+      expect(component.isCountdownPreviewActive(customUi)).toBeFalse();
+    });
+
+    it("should report countdown preview as active when selected widget is countdown and state is undefined", () => {
+      const customUi = {
+        entity_id: "test-ui-countdown-default",
+        name: "Test UI",
+      } as CustomUI;
+      const countdownWidget = {
+        id: "w-countdown-selected",
+        widgetType: "countdown",
+      } as any;
+      component.selectedWidgetId = "w-countdown-selected";
+      spyOn(component, "getLayout").and.returnValue({
+        widgets: [countdownWidget],
+      } as any);
+
+      expect(component.isCountdownPreviewActive(customUi)).toBeTrue();
     });
 
     it("should select widget via onWidgetDropdownSelect", () => {
@@ -4582,6 +4833,27 @@ describe("UIEditorComponent", () => {
           expect(input.getAttribute("data-bwignore")).toBe("true");
           expect(input.getAttribute("data-form-type")).toBe("other");
         }
+      });
+
+      it("should not render .delete-widget-btn at bottom of inspector and should delete widget via .inspector-delete-btn", () => {
+        component.sectionsExpanded["customUIs"] = true;
+        component.sectionsExpanded["ui_" + testCustomUi.entity_id] = true;
+        fixture.detectChanges();
+
+        const deleteWidgetBtn =
+          fixture.nativeElement.querySelector(".delete-widget-btn");
+        expect(deleteWidgetBtn).toBeNull();
+
+        const inspectorDeleteBtn = fixture.nativeElement.querySelector(
+          ".inspector-delete-btn",
+        );
+        expect(inspectorDeleteBtn).toBeTruthy();
+
+        spyOn(component, "removeSelectedWidget");
+        inspectorDeleteBtn.click();
+        expect(component.removeSelectedWidget).toHaveBeenCalledWith(
+          testCustomUi,
+        );
       });
     });
   });

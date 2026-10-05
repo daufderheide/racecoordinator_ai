@@ -99,6 +99,7 @@ Custom widget templates (`widget.html`) and TypeScript components (`widget.ts`) 
 - `formattedTime`: Current race clock / heat timer (`02:15.340`).
 - `autoStatusLabel`: Race status (e.g., Green Flag, Caution, Yellow Flag, Warmup).
 - `isWarmup`: Boolean indicating if currently in warmup mode.
+- `isCooldown`: Boolean indicating if currently in cooldown mode.
 - `totalHeats`: Total number of scheduled heats.
 - `currentFlagUrl`: Image path for the active race flag.
 

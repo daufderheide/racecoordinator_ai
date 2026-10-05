@@ -41,7 +41,13 @@ import { LoggerService } from "@app/services/logger.service";
 import { RaceConnectionService } from "@app/services/race-connection.service";
 import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
-import { interpolate, mockTTSContext, resolveAudioUrl } from "@app/utils/audio";
+import {
+  interpolate,
+  mockTTSContext,
+  releaseUtterance,
+  resolveAudioUrl,
+  retainUtterance,
+} from "@app/utils/audio";
 
 import { getAssetManagerHelpSteps } from "./asset-manager-help";
 import { AudioSetEditorComponent } from "./audio-set-editor/audio-set-editor.component";
@@ -91,6 +97,8 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
   layoutMode: AssetLayoutMode = "medium";
   currentlyPlayingAsset: AssetView | null = null;
   private currentAudio: HTMLAudioElement | null = null;
+  private activeUtterance: SpeechSynthesisUtterance | null = null;
+  private ttsSafetyTimeout: any = null;
 
   // Filtering
   filterType:
@@ -826,8 +834,25 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
       this.currentAudio.pause();
       this.currentAudio = null;
     }
-    if (window.speechSynthesis) {
-      window.speechSynthesis.cancel();
+    if (this.ttsSafetyTimeout) {
+      clearTimeout(this.ttsSafetyTimeout);
+      this.ttsSafetyTimeout = null;
+    }
+    if (this.activeUtterance) {
+      this.activeUtterance.onend = null;
+      this.activeUtterance.onerror = null;
+      releaseUtterance(this.activeUtterance);
+      this.activeUtterance = null;
+    }
+    if (typeof window !== "undefined" && window.speechSynthesis) {
+      try {
+        window.speechSynthesis.cancel();
+        if (window.speechSynthesis.paused) {
+          window.speechSynthesis.resume();
+        }
+      } catch {
+        // ignore
+      }
     }
     this.cdr.detectChanges();
   }
@@ -852,21 +877,56 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
     });
   }
 
-  private playTTSPromise(text: string | undefined): Promise<void> {
+  private playTTSPromise(
+    text: string | undefined,
+    skipCancel = false,
+  ): Promise<void> {
     return new Promise((resolve) => {
-      if (!text || !window.speechSynthesis) {
+      if (!text || typeof window === "undefined" || !window.speechSynthesis) {
         resolve();
         return;
       }
-      window.speechSynthesis.cancel();
+      if (
+        !skipCancel &&
+        (window.speechSynthesis.speaking || window.speechSynthesis.pending)
+      ) {
+        try {
+          window.speechSynthesis.cancel();
+        } catch {
+          // ignore
+        }
+      }
       const playContext = mockTTSContext();
       const interpolatedText = interpolate(text, playContext);
       const utterance = new SpeechSynthesisUtterance(interpolatedText);
+      this.activeUtterance = utterance;
+      retainUtterance(utterance);
       if (this.audioService) {
         this.audioService.applyTtsSettingsToUtterance(utterance);
       }
-      utterance.onend = () => resolve();
-      utterance.onerror = () => resolve();
+
+      let finished = false;
+      const done = () => {
+        if (finished) return;
+        finished = true;
+        releaseUtterance(utterance);
+        if (this.ttsSafetyTimeout) {
+          clearTimeout(this.ttsSafetyTimeout);
+          this.ttsSafetyTimeout = null;
+        }
+        if (this.activeUtterance === utterance) {
+          this.activeUtterance = null;
+        }
+        resolve();
+      };
+
+      utterance.onend = () => done();
+      utterance.onerror = () => done();
+
+      const wordCount = interpolatedText.trim().split(/\s+/).length;
+      const dynamicTimeout = Math.max(3000, wordCount * 500 + 2000);
+      this.ttsSafetyTimeout = setTimeout(() => done(), dynamicTimeout);
+
       if (window.speechSynthesis.paused) {
         window.speechSynthesis.resume();
       }
@@ -903,7 +963,7 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
         if (entryType === "preset") {
           await this.playUrl(entry.url || undefined);
         } else if (entryType === "tts") {
-          await this.playTTSPromise(entry.text || undefined);
+          await this.playTTSPromise(entry.text || undefined, true);
         }
       } catch (e) {
         this.logger.error("Error playing audio set entry", e);

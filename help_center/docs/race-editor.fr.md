@@ -36,6 +36,12 @@ L'espace de travail est divisé en deux panneaux synchronisés :
 
 ### Options de Score
 - **Score de Manche** : Fin par nombre de tours ou durée limite, méthode de classement et départages.
+  - **Autoriser l'arrivée** : Choisissez comment les voitures terminent leurs tours lorsque le meneur finit ou que le temps expire :
+    - *Ne pas autoriser l'arrivée* : La manche se termine immédiatement.
+    - *Autoriser l'arrivée* : Tous les pilotes continuent jusqu'à satisfaire aux exigences.
+    - *Autoriser l'arrivée (un tour)* : Les pilotes peuvent terminer leur tour actuel ; ce tour compte dans le total.
+    - *Ne pas autoriser l'arrivée (segments automatiques)* : La manche se termine immédiatement et la fraction de tour est calculée d'après le temps écoulé sur le tour en cours divisé par le temps au tour médian du pilote (`autoSegments = timeSinceLastLap / medianLapTime`, plafonné à 0,99).
+    - *Autoriser l'arrivée (un tour) (segments automatiques)* : Les pilotes terminent leur tour en piste ; le tour ne compte pas comme un tour complet, le crédit partiel est calculé d'après le temps couru avant la fin divisé par le temps au tour médian du pilote (`autoSegments = partialLapTime / medianLapTime`, plafonné à 0,99).
 - **Score Général** : Méthode de classement général, règles de départage et manches retirées.
 - **Score de Saison** : Distribution des points par position pour les championnats.
 

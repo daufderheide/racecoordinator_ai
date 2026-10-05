@@ -152,7 +152,13 @@ public class Racing implements IRaceState {
     if (scheduler != null) {
       scheduler.shutdown();
     }
-    scheduler = Executors.newScheduledThreadPool(1);
+    scheduler =
+        Executors.newSingleThreadScheduledExecutor(
+            r -> {
+              Thread t = new Thread(r, "RacingTicker");
+              t.setDaemon(true);
+              return t;
+            });
     final Runnable ticker =
         new Runnable() {
           long lastTime = 0;
@@ -165,6 +171,13 @@ public class Racing implements IRaceState {
               if (lastTime == 0) {
                 lastTime = now;
                 return;
+              }
+
+              long intervalNs = now - lastTime;
+              if (intervalNs > 200_000_000L) {
+                logger.warn(
+                    "[PERF] Racing ticker delayed by {} ms",
+                    (intervalNs - 100_000_000L) / 1_000_000L);
               }
 
               float delta = (now - lastTime) / 1_000_000_000.0f;
@@ -212,6 +225,9 @@ public class Racing implements IRaceState {
                 Set<Integer> finishedLanes = executionManager.getFinishedLanes();
                 if (isTimed) {
                   if (!isInfiniteTimed && race.getRaceTime() <= 0) {
+                    if (allowFinish == AllowFinish.SingleLapAutoSegments) {
+                      executionManager.capturePartialLapTimes();
+                    }
                     race.resetRaceTime();
                     if (allowFinish == AllowFinish.None
                         || allowFinish == AllowFinish.NoneAutoSegments) {
@@ -286,15 +302,23 @@ public class Racing implements IRaceState {
               // Broadcast RaceTime message wrapped in RaceData
               race.broadcastTime();
 
+              long tickDurationNs = System.nanoTime() - now;
+              if (tickDurationNs > 50_000_000L && !allFinished) {
+                logger.warn(
+                    "[PERF] Racing ticker execution took {} ms", tickDurationNs / 1_000_000L);
+              }
+
               if (allFinished) {
                 if (allowFinish == AllowFinish.NoneAutoSegments) {
                   calculateAutoSegments();
                   StandingsUpdate update =
                       race.getCurrentHeat().getHeatStandings().updateStandings();
+                  RaceData.Builder finishBuilder = RaceData.newBuilder();
                   if (update != null) {
-                    race.broadcast(RaceData.newBuilder().setStandingsUpdate(update).build());
+                    finishBuilder.setStandingsUpdate(update);
                   }
-                  race.updateAndBroadcastOverallStandings();
+                  race.populateOverallStandings(finishBuilder);
+                  race.broadcast(finishBuilder.build());
                 }
                 if (race.isLastHeat()) {
                   race.changeState(new RaceOver());
@@ -302,7 +326,6 @@ public class Racing implements IRaceState {
                   race.changeState(new HeatOver());
                 }
               }
-
             } catch (Exception e) {
               logger.error("Error in Racing timer", e);
             }

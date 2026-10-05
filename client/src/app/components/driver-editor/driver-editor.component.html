@@ -13,6 +13,11 @@
     [showAdd]="true"
     [showCopy]="true"
     [showDelete]="true"
+    [showImport]="true"
+    [disabledImport]="isEditMode || isSaving"
+    [importTitleKey]="'DIM_TITLE'"
+    [importHelpTitleKey]="'DE_HELP_IMPORT_TITLE'"
+    [importHelpContentKey]="'DE_HELP_IMPORT_CONTENT'"
     [disabledCopy]="!isConfigValid() || isSaving"
     [disabledDelete]="!selectedDriver || isSaving"
     [copyDisabledTooltipKey]="'DE_TOOLTIP_COPY_DISABLED'"
@@ -26,6 +31,7 @@
     (add)="onAddNewDriver()"
     (copy)="onCopyDriver()"
     (delete)="onDeleteDriver()"
+    (import)="onOpenImportModal()"
   >
   </app-editor-title>
 
@@ -64,13 +70,6 @@
             (focus)="onInputFocus()"
             (blur)="onInputBlur()"
             class="dm-input"
-            autocomplete="off"
-            data-dashlane-ignore="true"
-            data-1p-ignore="true"
-            data-lpignore="true"
-            data-bwignore="true"
-            data-form-type="other"
-            name="driverNameInput"
           />
         </div>
         <!-- Link / Unlink Visualization and Toggle -->
@@ -128,13 +127,6 @@
             (focus)="onInputFocus()"
             (blur)="onInputBlur()"
             class="dm-input"
-            autocomplete="off"
-            data-dashlane-ignore="true"
-            data-1p-ignore="true"
-            data-lpignore="true"
-            data-bwignore="true"
-            data-form-type="other"
-            name="driverNicknameInput"
           />
         </div>
         <div class="editor-actions">
@@ -147,7 +139,7 @@
           sectionId="driver-audio-section"
           titleKey="DE_HEADER_AUDIO_CONFIG"
           [(expanded)]="sectionsExpanded.audio"
-          (toggle)="toggleSection('audio')"
+          (toggle)="toggleSection('audio', $event)"
         >
           <div class="audio-group" id="driver-personal-lap-group">
             <div class="audio-group-header">
@@ -449,4 +441,13 @@
     (cancel)="onCancelDiscard()"
   >
   </app-confirmation-modal>
+
+  <!-- Driver Import Modal -->
+  <app-import-modal
+    [visible]="showImportModal"
+    [titleKey]="'DIM_TITLE'"
+    (close)="showImportModal = false"
+    (imported)="onDriversImported($event)"
+  >
+  </app-import-modal>
 </div>

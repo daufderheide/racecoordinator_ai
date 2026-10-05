@@ -64,9 +64,20 @@
   border-radius: 4px;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
   z-index: 1000;
-  max-height: 250px;
+  max-height: var(--custom-select-max-height, 250px);
   overflow-y: auto;
   box-sizing: border-box;
+}
+
+.custom-select-dropdown.open-upward {
+  top: auto;
+  bottom: calc(100% + 4px);
+  box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.5), 0 -2px 4px -1px rgba(0, 0, 0, 0.3);
+}
+
+.custom-select-dropdown.align-right {
+  left: auto;
+  right: 0;
 }
 
 /* Scrollbar styles for the dropdown */
@@ -129,13 +140,21 @@
   top: 0;
   left: 0;
   width: 100%;
+  max-width: 100%;
   height: 100%;
   z-index: 2;
+  box-sizing: border-box;
+}
+
+:host(.teammate-select.open),
+:host(.teammate-select[data-open="true"]) {
+  z-index: 10000;
 }
 
 :host(.teammate-select) .custom-select-container {
   width: 100%;
   height: 100%;
+  box-sizing: border-box;
 }
 
 :host(.teammate-select) .custom-select-trigger {
@@ -144,7 +163,61 @@
   min-height: unset;
   padding: 0;
   opacity: 0;
-  border: none;
+  border: none !important;
+  outline: none !important;
   background: transparent;
+  box-sizing: border-box;
+}
+
+:host(.teammate-select) .dropdown-icon {
+  display: none !important;
+}
+
+:host(.teammate-select) .custom-select-dropdown {
+  min-width: 100%;
+  width: max-content;
+  max-width: 480px;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: #f1f5f9;
+  text-align: left;
+  white-space: nowrap;
+  z-index: 10000;
+}
+
+:host(.teammate-select) .custom-select-option {
+  font-size: 16px;
+  font-weight: 500;
+  color: #f1f5f9;
+  text-align: left;
+  white-space: nowrap;
+  padding: 8px 12px;
+}
+
+/* Compact column decimals select */
+:host(.col-decimals-select) {
+  display: inline-block;
+  width: 44px;
+  min-width: 44px;
+}
+
+:host(.col-decimals-select) .custom-select-trigger {
+  min-height: 24px;
+  height: 24px;
+  padding: 2px 4px;
+  font-size: 11px;
+  line-height: 1;
+}
+
+:host(.col-decimals-select) .dropdown-icon {
+  margin-left: 2px;
+  font-size: 0.7em;
+}
+
+:host(.col-decimals-select) .custom-select-option {
+  padding: 4px 6px;
+  font-size: 11px;
+  text-align: center;
 }
 

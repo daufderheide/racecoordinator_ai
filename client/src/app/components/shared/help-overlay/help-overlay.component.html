@@ -18,7 +18,9 @@
       >
         <div class="popover-header">
           <h3>{{ currentStep?.title || "" | translate }}</h3>
-          <button class="close-btn" (click)="end()">×</button>
+          <button class="close-btn" (click)="end()">
+            <span class="material-icons">close</span>
+          </button>
         </div>
         <div class="popover-content">
           <p [innerHTML]="currentStep?.content || '' | translate"></p>

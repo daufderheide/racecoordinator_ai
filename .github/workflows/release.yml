@@ -85,8 +85,23 @@ jobs:
               echo "Merging $ACTIVE_BRANCH into develop before daily build..."
               git config user.name "github-actions[bot]"
               git config user.email "github-actions[bot]@users.noreply.github.com"
-              git merge --no-ff "origin/$ACTIVE_BRANCH" -m "chore: merge $ACTIVE_BRANCH into develop before daily build [skip ci]"
-              git push origin develop
+              if git merge --no-ff "origin/$ACTIVE_BRANCH" -m "chore: merge $ACTIVE_BRANCH into develop before daily build [skip ci]"; then
+                git push origin develop
+              else
+                CONFLICT_FILES=$(git diff --name-only --diff-filter=U)
+                if [ "$CONFLICT_FILES" == "VERSION" ]; then
+                  echo "Only VERSION conflicted. Keeping develop's VERSION and concluding merge..."
+                  git checkout --ours VERSION
+                  git add VERSION
+                  git commit -m "chore: merge $ACTIVE_BRANCH into develop before daily build (keep develop VERSION) [skip ci]"
+                  git push origin develop
+                else
+                  echo "WARNING: Unmerged commits exist on $ACTIVE_BRANCH with merge conflict ($CONFLICT_FILES). Skipping daily build."
+                  git merge --abort || true
+                  echo "should_run=false" >> $GITHUB_OUTPUT
+                  exit 0
+                fi
+              fi
             fi
 
             LATEST_TAG=$(git describe --tags --match "*-alpha*" --abbrev=0 2>/dev/null || echo "")
@@ -500,27 +515,53 @@ jobs:
       - name: Sync release branch into develop
         id: sync
         run: |
+          git fetch origin "+refs/heads/*:refs/remotes/origin/*" --prune
           BRANCH_NAME="${{ github.ref_name }}"
           echo "Merging origin/$BRANCH_NAME into develop..."
           if git merge --no-ff "origin/$BRANCH_NAME" -m "chore: merge $BRANCH_NAME into develop [skip ci]"; then
             git push origin develop
             echo "sync_status=merged" >> $GITHUB_OUTPUT
           else
-            echo "Merge conflict detected when syncing $BRANCH_NAME into develop."
-            echo "sync_status=conflict" >> $GITHUB_OUTPUT
-            git merge --abort || true
+            CONFLICT_FILES=$(git diff --name-only --diff-filter=U)
+            if [ "$CONFLICT_FILES" == "VERSION" ]; then
+              echo "Only VERSION conflicted. Keeping develop's VERSION and concluding merge..."
+              git checkout --ours VERSION
+              git add VERSION
+              git commit -m "chore: merge $BRANCH_NAME into develop (keep develop VERSION) [skip ci]"
+              git push origin develop
+              echo "sync_status=merged" >> $GITHUB_OUTPUT
+            else
+              echo "Merge conflict detected when syncing $BRANCH_NAME into develop: $CONFLICT_FILES"
+              echo "sync_status=conflict" >> $GITHUB_OUTPUT
+              git merge --abort || true
+            fi
           fi
 
       - name: Create PR for Conflict Resolution
         if: ${{ steps.sync.outputs.sync_status == 'conflict' }}
-        uses: peter-evans/create-pull-request@v6
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          branch: "sync/${{ github.ref_name }}-to-develop"
-          base: "develop"
-          title: "🚨 Sync Conflict: ${{ github.ref_name }} -> develop"
-          body: |
-            Automated sync from \`${{ github.ref_name }}\` into \`develop\` encountered merge conflicts.
-            Please resolve conflicts and merge into \`develop\` to ensure it includes the latest beta fixes.
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          BRANCH_NAME="${{ github.ref_name }}"
+          SAFE_BRANCH="${BRANCH_NAME//\//-}"
+          SYNC_BRANCH="chore/sync-${SAFE_BRANCH}-to-develop"
+          echo "Pushing $BRANCH_NAME to $SYNC_BRANCH..."
+          git push origin "${{ github.sha }}:refs/heads/$SYNC_BRANCH" --force
+          EXISTING_PR=$(gh pr list --head "$SYNC_BRANCH" --base develop --state open --json number --jq '.[0].number' 2>/dev/null || echo "")
+          if [ -z "$EXISTING_PR" ]; then
+            echo "Opening pull request from $SYNC_BRANCH to develop..."
+            gh pr create \
+              --base develop \
+              --head "$SYNC_BRANCH" \
+              --title "🚨 Sync Conflict: $BRANCH_NAME -> develop" \
+              --body "Automated sync from \`$BRANCH_NAME\` into \`develop\` encountered merge conflicts. Please resolve conflicts and merge into \`develop\` to ensure it includes the latest beta fixes." || {
+                echo "::warning::Failed to automatically create pull request using GitHub CLI. Please check repository Actions permissions (Allow GitHub Actions to create and approve pull requests)."
+              }
+          else
+            echo "Pull request #$EXISTING_PR already exists for $SYNC_BRANCH."
+          fi
+          echo "### 🚨 Release Sync Merge Conflict" >> $GITHUB_STEP_SUMMARY
+          echo "Automated sync of \`$BRANCH_NAME\` into \`develop\` encountered merge conflicts." >> $GITHUB_STEP_SUMMARY
+          echo "Pushed sync branch: \`$SYNC_BRANCH\`" >> $GITHUB_STEP_SUMMARY
 
 

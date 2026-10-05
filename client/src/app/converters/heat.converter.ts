@@ -74,7 +74,25 @@ export class HeatConverter {
     hd.penaltyLaps = dProto.penaltyLaps || 0;
     hd.userLaps = dProto.userLaps || 0;
     hd.autoCalculatedLaps = dProto.autoCalculatedLaps || 0;
-    hd.adjustedLapCount = dProto.adjustedLapCount || 0;
+
+    const penalty =
+      hd.penaltyLaps > 0 ? hd.penaltyLaps : Math.abs(hd.penaltyLaps);
+    const rawLapsCount = dProto.laps ? dProto.laps.length : 0;
+    const formulaLaps =
+      rawLapsCount -
+      penalty +
+      (hd.userLaps || 0) +
+      (hd.autoCalculatedLaps || 0);
+    const rawAdjusted = dProto.adjustedLapCount;
+    if (
+      rawAdjusted !== undefined &&
+      rawAdjusted !== null &&
+      (rawAdjusted !== 0 || formulaLaps === 0)
+    ) {
+      hd.adjustedLapCount = rawAdjusted;
+    } else {
+      hd.adjustedLapCount = null;
+    }
     hd.reactionTime = dProto.reactionTime || 0;
     hd.isRefueling = !!dProto.isRefueling;
     hd.currentLocation = dProto.currentLocation ?? -1;
@@ -170,13 +188,32 @@ export class HeatConverter {
             ? (lap.countTowardsRecords ?? lap.count_towards_records ?? true)
             : true;
 
+        const penalty = dProto.penaltyLaps
+          ? dProto.penaltyLaps > 0
+            ? dProto.penaltyLaps
+            : Math.abs(dProto.penaltyLaps)
+          : 0;
+        const rawLapsCount = dProto.laps ? dProto.laps.length : 0;
+        const formulaLaps =
+          rawLapsCount -
+          penalty +
+          (dProto.userLaps || 0) +
+          (dProto.autoCalculatedLaps || 0);
+        const rawAdjusted = dProto.adjustedLapCount;
+        const adjustedForLap =
+          rawAdjusted !== undefined &&
+          rawAdjusted !== null &&
+          (rawAdjusted !== 0 || formulaLaps === 0)
+            ? rawAdjusted
+            : undefined;
+
         hd.addLapTime(
           i + 1,
           time,
           dProto.averageLapTime || 0,
           dProto.medianLapTime || 0,
           dProto.bestLapTime || 0,
-          dProto.adjustedLapCount || 0,
+          adjustedForLap,
           driverId,
           isDrift,
           undefined,

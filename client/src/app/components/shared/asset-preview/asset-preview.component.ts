@@ -136,9 +136,14 @@ export class AssetPreviewComponent implements OnDestroy {
   }
 
   private getFullUrl(url: string): string {
-    if (url && url.startsWith("/")) {
-      return `${this.dataService.serverUrl}${url}`;
+    if (!url) return "";
+    const resolved = this.dataService?.resolveAssetUrl
+      ? this.dataService.resolveAssetUrl(url)
+      : url;
+    if (resolved && resolved.startsWith("/")) {
+      const serverUrl = this.dataService?.serverUrl || "";
+      return `${serverUrl}${resolved}`;
     }
-    return url;
+    return resolved;
   }
 }

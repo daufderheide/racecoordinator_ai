@@ -1,4 +1,8 @@
-import { CdkDragDrop, DragDropModule } from "@angular/cdk/drag-drop";
+import {
+  CdkDragDrop,
+  CdkDragMove,
+  DragDropModule,
+} from "@angular/cdk/drag-drop";
 import { CommonModule } from "@angular/common";
 import {
   ChangeDetectorRef,
@@ -45,22 +49,38 @@ import { RaceService } from "@app/services/race.service";
 import { RaceConnectionService } from "@app/services/race-connection.service";
 import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
-import { checkLaneEquality } from "@app/utils/lane-equality";
-import { naturalSortCompare } from "@app/utils/sorting.utils";
+import { TeammateUtils } from "@app/utils/teammate.utils";
 
 import { ModifyHeatsService } from "./modify-heats.service";
 import {
+  allocateHighlightColor,
+  areModifyHeatsStatesEqual,
+  buildDropListConnections,
+  calculateHeatCardHoverAction,
+  calculateHeatDropAction,
   cloneHeat,
+  collectHeatCardBounds,
   convertHeatsToProto,
   convertParticipantsToProto,
+  executeHeatReorder,
+  filterDatabaseParticipants,
+  filterDriverPool,
+  getContrastTextColor,
   getDatabaseItemTrackId,
+  getLastStartedHeatIndex,
   getModifyHeatsValidationError,
   getParticipantAvatar,
+  getParticipantKey,
   getParticipantMeta,
   getParticipantName,
+  HeatCardBounds,
+  HeatDropAction,
   isDriver,
+  isParticipantInStartedHeat,
   isTeam,
   ModifyHeatsState,
+  performLaneCheck,
+  revertSaveFailure,
   validateGroupSequence,
 } from "./modify-heats-modal.utils";
 
@@ -151,11 +171,18 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
   private isRecovering = false;
   protected hoveredHeatIdx = -1;
   protected isDraggingHeat = false;
+  protected heatDropAction: HeatDropAction = null;
+  protected get activeInsertSlot(): number {
+    return this.heatDropAction?.type === "insert"
+      ? this.heatDropAction.slotIndex
+      : -1;
+  }
   protected allTeams: Team[] = [];
   protected isLoading = false;
   protected equalityReport: any[] | null = null;
   protected isHeatsEqual: boolean = false;
   protected isAvailableDriversCollapsed = false;
+  protected highlightedDrivers = new Map<string, string>();
 
   private translationService = inject(TranslationService);
   private router = inject(Router);
@@ -185,35 +212,7 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
           heats: state.heats.map((h) => cloneHeat(h)),
           participants: [...state.participants],
         }),
-        equalizer: (a, b) => {
-          // Compare heats structure
-          const heatsMatch =
-            a.heats.length === b.heats.length &&
-            a.heats.every((h, i) => {
-              const otherH = b.heats[i];
-              return (
-                h.objectId === otherH.objectId &&
-                h.group === otherH.group &&
-                h.heatDrivers.length === otherH.heatDrivers.length &&
-                h.heatDrivers.every((dhd, j) => {
-                  const otherDhd = otherH.heatDrivers[j];
-                  return (
-                    dhd.laneIndex === otherDhd.laneIndex &&
-                    dhd.participant.objectId === otherDhd.participant.objectId
-                  );
-                })
-              );
-            });
-
-          // Compare participants
-          const participantsMatch =
-            a.participants.length === b.participants.length &&
-            a.participants.every(
-              (p, i) => p.objectId === b.participants[i].objectId,
-            );
-
-          return heatsMatch && participantsMatch;
-        },
+        equalizer: areModifyHeatsStatesEqual,
         applier: (state) => {
           this.localHeats = state.heats;
           this.localParticipants = state.participants;
@@ -400,6 +399,78 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
 
   protected validateGroupSequence = validateGroupSequence;
 
+  protected isDriverHighlighted(
+    participant: RaceParticipant | null | undefined,
+  ): boolean {
+    if (!participant) return false;
+    const key = getParticipantKey(participant);
+    return key !== "" && this.highlightedDrivers.has(key);
+  }
+
+  protected getDriverHighlightColor(
+    participant: RaceParticipant | null | undefined,
+  ): string | null {
+    if (!participant) return null;
+    const key = getParticipantKey(participant);
+    return key !== "" ? (this.highlightedDrivers.get(key) ?? null) : null;
+  }
+
+  protected toggleDriverHighlight(
+    participant: RaceParticipant | null | undefined,
+    event?: MouseEvent,
+  ) {
+    if (event) {
+      event.stopPropagation();
+      if (event.button !== 0) return;
+    }
+    if (!participant) return;
+    const key = getParticipantKey(participant);
+    if (!key) return;
+
+    if (this.highlightedDrivers.has(key)) {
+      this.highlightedDrivers.delete(key);
+    } else {
+      const usedColors = new Set(
+        Array.from(this.highlightedDrivers.values()).map((c) =>
+          c.toLowerCase(),
+        ),
+      );
+      const color = allocateHighlightColor(usedColors);
+      this.highlightedDrivers.set(key, color);
+    }
+    this.cdr.markForCheck();
+  }
+
+  protected clearDriverHighlights(): void {
+    this.highlightedDrivers.clear();
+    this.cdr.markForCheck();
+  }
+
+  protected getContrastTextColor = getContrastTextColor;
+
+  protected hasHighlightedDrivers(): boolean {
+    return this.highlightedDrivers.size > 0;
+  }
+
+  protected isHeatHighlighted(heat: Heat): boolean {
+    if (this.highlightedDrivers.size === 0) return false;
+    return heat.heatDrivers.some((dhd) =>
+      this.isDriverHighlighted(dhd.participant),
+    );
+  }
+
+  protected getHeatHighlightColors(heat: Heat): string[] {
+    if (this.highlightedDrivers.size === 0) return [];
+    const colors: string[] = [];
+    for (const dhd of heat.heatDrivers) {
+      const color = this.getDriverHighlightColor(dhd.participant);
+      if (color && !colors.includes(color)) {
+        colors.push(color);
+      }
+    }
+    return colors;
+  }
+
   protected getCustomGroupName(groupIdx: number): string {
     const r = this.race();
     if (!r || !r.group_options?.enabled) return "";
@@ -417,62 +488,25 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
   }
 
   private updateDriverPool() {
-    this.driverPool = this.localParticipants.filter((p) => {
-      // 1. Must be a real participant (not a placeholder empty lane)
-      const isPlaceholder = Driver.isEmpty(p.driver) && !p.team;
-      if (isPlaceholder) return false;
-
-      return true;
-    });
+    this.driverPool = filterDriverPool(this.localParticipants);
   }
 
   private updateDatabaseParticipants() {
-    const participantDriverIds = new Set<string>();
-    const participantTeamIds = new Set<string>();
-
-    this.localParticipants.forEach((p) => {
-      const dId = p.driver?.entity_id;
-      if (dId && dId !== "EMPTY_LANE") {
-        participantDriverIds.add(dId);
-      }
-      const team = p.team;
-      const tId = team?.entity_id;
-      if (tId && team) {
-        participantTeamIds.add(tId);
-        const driverIds = team.driverIds || (team as any).driver_ids || [];
-        driverIds.forEach((id: string) => participantDriverIds.add(id));
-      }
-    });
-
-    this.databaseDrivers = this.allDrivers.filter((d) => {
-      const id = d.entity_id;
-      return id && id !== "EMPTY_LANE" && !participantDriverIds.has(id);
-    });
-
-    this.databaseTeams = this.allTeams.filter((t) => {
-      const id = t.entity_id || t.objectId || (t as any).entityId;
-      if (id && participantTeamIds.has(id)) return false;
-      const driverIds = (t as any).driver_ids || t.driverIds || [];
-      return !driverIds.some((dId: string) => participantDriverIds.has(dId));
-    });
-
-    this.databaseParticipants.length = 0;
-    this.databaseParticipants.push(
-      ...this.databaseDrivers,
-      ...this.databaseTeams,
+    const result = filterDatabaseParticipants(
+      this.localParticipants,
+      this.allDrivers,
+      this.allTeams,
     );
-    this.databaseParticipants.sort((a, b) =>
-      naturalSortCompare(a.name, b.name),
-    );
+    this.databaseDrivers = result.databaseDrivers;
+    this.databaseTeams = result.databaseTeams;
+    this.databaseParticipants = result.databaseParticipants;
   }
 
   private updateDropListConnections() {
-    this.heatDropListIds = ["driver-pool", "database-drivers"];
-    this.localHeats.forEach((h, hIdx) => {
-      this.track().lanes.forEach((_, lIdx) => {
-        this.heatDropListIds.push(`heat-${hIdx}-lane-${lIdx}`);
-      });
-    });
+    this.heatDropListIds = buildDropListConnections(
+      this.localHeats.length,
+      this.track().lanes.length,
+    );
     this.connectedTo = [...this.heatDropListIds];
   }
 
@@ -516,17 +550,11 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
   }
 
   protected isTeamLane(dhd: DriverHeatData): boolean {
-    return !!dhd.participant?.team;
+    return TeammateUtils.isTeam(dhd);
   }
 
   protected getTeammates(dhd: DriverHeatData): Driver[] {
-    if (!dhd.participant || !dhd.participant.team) return [];
-    const team = dhd.participant.team;
-    const driverIds = team.driverIds || (team as any).driver_ids || [];
-    return this.allDrivers.filter((d) => {
-      const id = d.entity_id;
-      return driverIds.includes(id);
-    });
+    return TeammateUtils.getTeammates(dhd, this.allDrivers);
   }
 
   protected getDropdownArrowBg(color: string): SafeStyle {
@@ -578,52 +606,11 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
   }
 
   protected getDriverStats(hd: DriverHeatData, driverId: string): string {
-    if (!hd || !driverId) return "";
-    let heatLaps = 0;
-    let heatTime = 0;
-    let overallLaps = 0;
-    let overallTime = 0;
-
-    const hLabel = this.translationService.translate("RD_STATS_HEAT_ABBR");
-    const lLabel = this.translationService.translate("RD_STATS_LAP_ABBR");
-    const tLabel = this.translationService.translate("RD_STATS_TOTAL_ABBR");
-
-    if (hd.lapsWithDetails) {
-      hd.lapsWithDetails.forEach((l: any) => {
-        if (l.driverId === driverId) {
-          heatLaps++;
-          heatTime += l.time;
-        }
-      });
-    }
-
-    if (this.localHeats) {
-      this.localHeats.forEach((h: any) => {
-        if (h.heatDrivers) {
-          h.heatDrivers.forEach((d_hd: any) => {
-            if (d_hd.lapsWithDetails) {
-              d_hd.lapsWithDetails.forEach((l: any) => {
-                if (l.driverId === driverId) {
-                  overallLaps++;
-                  overallTime += l.time;
-                }
-              });
-            }
-          });
-        }
-      });
-    }
-
-    const formatTime = (t: number) => {
-      if (t >= 60) {
-        const m = Math.floor(t / 60);
-        const s = (t % 60).toFixed(1).padStart(4, "0");
-        return `${m}:${s}`;
-      }
-      return `${t.toFixed(1)}s`;
-    };
-
-    return `(${hLabel}: ${heatLaps} ${lLabel} / ${formatTime(heatTime)}, ${tLabel}: ${overallLaps} ${lLabel} / ${formatTime(overallTime)})`;
+    return TeammateUtils.getDriverStats(hd, driverId, this.localHeats, {
+      heatAbbr: this.translationService.translate("RD_STATS_HEAT_ABBR"),
+      lapAbbr: this.translationService.translate("RD_STATS_LAP_ABBR"),
+      totalAbbr: this.translationService.translate("RD_STATS_TOTAL_ABBR"),
+    });
   }
 
   // eslint-disable-next-line max-lines-per-function
@@ -676,6 +663,10 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
     if (result.actionTaken) {
       this.localHeats = result.updatedHeats;
       this.localParticipants = result.updatedParticipants;
+      const removedKey = getParticipantKey(participant);
+      if (removedKey && this.highlightedDrivers.has(removedKey)) {
+        this.highlightedDrivers.delete(removedKey);
+      }
       this.updateSeeds();
       this.updateDriverPool();
       this.updateDatabaseParticipants();
@@ -714,71 +705,158 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
   }
 
   protected isParticipantInStartedHeat(participant: RaceParticipant): boolean {
-    for (const heat of this.localHeats) {
-      if (this.isHeatStarted(heat)) {
-        const isInHeat = heat.heatDrivers?.some(
-          (dhd) => dhd.participant.objectId === participant.objectId,
-        );
-        if (isInHeat) {
-          return true;
-        }
-      }
-    }
-    return false;
+    return isParticipantInStartedHeat(participant, this.localHeats, (h) =>
+      this.isHeatStarted(h),
+    );
+  }
+
+  protected getLastStartedHeatIndex(): number {
+    return getLastStartedHeatIndex(this.localHeats, (h) =>
+      this.isHeatStarted(h),
+    );
+  }
+
+  protected isHeatSwapHighlight(index: number, heat: Heat): boolean {
+    if (this.isHeatStarted(heat)) return false;
+    return (
+      this.heatDropAction?.type === "swap" &&
+      this.heatDropAction.targetIndex === index
+    );
   }
 
   protected onHeatDragStarted() {
     this.isDraggingHeat = true;
+    this.heatDropAction = null;
+    this.hoveredHeatIdx = -1;
+  }
+
+  protected onHeatDragEnded() {
+    this.isDraggingHeat = false;
+    this.heatDropAction = null;
+    this.hoveredHeatIdx = -1;
   }
 
   protected onHeatHover(index: number) {
     if (this.isDraggingHeat) {
-      this.hoveredHeatIdx = index;
+      if (index === -1) {
+        this.heatDropAction = null;
+        this.hoveredHeatIdx = -1;
+      } else {
+        const lastStartedIdx = this.getLastStartedHeatIndex();
+        if (
+          index > lastStartedIdx &&
+          !this.isHeatStarted(this.localHeats[index])
+        ) {
+          this.heatDropAction = { type: "swap", targetIndex: index };
+          this.hoveredHeatIdx = index;
+        }
+      }
     }
+  }
+
+  protected onHeatMouseEnter(index: number, event: MouseEvent) {
+    if (this.isDraggingHeat) {
+      this.updateHeatCardHover(index, event);
+    }
+  }
+
+  protected onHeatMouseMove(index: number, event: MouseEvent) {
+    if (this.isDraggingHeat) {
+      this.updateHeatCardHover(index, event);
+    }
+  }
+
+  protected onHeatMouseLeave(_index: number) {
+    // Retain action until next movement or grid leave
+  }
+
+  private updateHeatCardHover(index: number, event: MouseEvent) {
+    const cardEl = event.currentTarget as HTMLElement;
+    if (!cardEl) return;
+    const action = calculateHeatCardHoverAction(
+      index,
+      cardEl.getBoundingClientRect(),
+      event.clientX,
+      this.getLastStartedHeatIndex(),
+      this.localHeats[index],
+      (h) => this.isHeatStarted(h),
+    );
+    this.heatDropAction = action;
+    this.hoveredHeatIdx = action?.type === "swap" ? action.targetIndex : -1;
+  }
+
+  protected onGridMouseMove(event: MouseEvent) {
+    if (!this.isDraggingHeat) return;
+    this.updateDropActionFromPoint(event.clientX, event.clientY);
+  }
+
+  protected onHeatDragMoved(event: CdkDragMove<Heat>) {
+    if (!this.isDraggingHeat) return;
+    this.updateDropActionFromPoint(
+      event.pointerPosition.x,
+      event.pointerPosition.y,
+    );
+  }
+
+  private updateDropActionFromPoint(pointerX: number, pointerY: number) {
+    const cards = this.getHeatCardBounds();
+    const lastStartedIdx = this.getLastStartedHeatIndex();
+    const action = calculateHeatDropAction(
+      pointerX,
+      pointerY,
+      cards,
+      lastStartedIdx,
+    );
+    this.heatDropAction = action;
+    this.hoveredHeatIdx = action?.type === "swap" ? action.targetIndex : -1;
+  }
+
+  private getHeatCardBounds(): HeatCardBounds[] {
+    return collectHeatCardBounds(this.localHeats, (h) => this.isHeatStarted(h));
   }
 
   protected onHeatDrop(event: CdkDragDrop<Heat[]>) {
     this.isDraggingHeat = false;
-    const toIdx = this.hoveredHeatIdx;
+
+    let action = this.heatDropAction;
+    if (!action && event.dropPoint) {
+      const cards = this.getHeatCardBounds();
+      const lastStartedIdx = this.getLastStartedHeatIndex();
+      action = calculateHeatDropAction(
+        event.dropPoint.x,
+        event.dropPoint.y,
+        cards,
+        lastStartedIdx,
+      );
+    }
+
+    this.heatDropAction = null;
     this.hoveredHeatIdx = -1;
 
-    if (toIdx === -1) return;
+    if (!action) return;
 
-    // Get the actual heat that was being dragged
-    const draggedHeat = event.item.data as Heat;
+    const draggedHeat = event.item?.data as Heat;
+    if (!draggedHeat) return;
+
     const fromIdx = this.localHeats.findIndex(
       (h) => h.objectId === draggedHeat.objectId,
     );
+    if (fromIdx === -1) return;
 
-    if (fromIdx === -1 || fromIdx === toIdx) return;
+    const lastStartedIdx = this.getLastStartedHeatIndex();
+    const result = executeHeatReorder(
+      this.localHeats,
+      fromIdx,
+      action,
+      lastStartedIdx,
+    );
 
-    const heatToMove = this.localHeats[fromIdx];
-    const targetHeat = this.localHeats[toIdx];
-
-    if (this.isHeatStarted(heatToMove) || this.isHeatStarted(targetHeat))
-      return;
-
-    // Find the index of the last started heat
-    let lastStartedIdx = -1;
-    for (let i = 0; i < this.localHeats.length; i++) {
-      if (this.isHeatStarted(this.localHeats[i])) {
-        lastStartedIdx = i;
-      }
+    if (result.reordered) {
+      this.localHeats = result.newHeats;
+      this.updateDropListConnections();
+      this.undoManager.captureState();
+      this.autoSave();
     }
-
-    if (toIdx <= lastStartedIdx) return;
-
-    console.log(`Swapping heat at ${fromIdx} with heat at ${toIdx}`);
-
-    const temp = this.localHeats[fromIdx];
-    this.localHeats[fromIdx] = this.localHeats[toIdx];
-    this.localHeats[toIdx] = temp;
-
-    // Renumber heats to maintain order
-    this.localHeats.forEach((h, i) => (h.heatNumber = i + 1));
-    this.updateDropListConnections();
-    this.undoManager.captureState();
-    this.autoSave();
   }
 
   protected onAddHeat() {
@@ -1007,29 +1085,9 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
   }
 
   private handleSaveFailure(triggeredBy: UndoEventType) {
-    // If the save failed (e.g., trying to modify a started heat),
-    // automatically revert the change and clear it from history so it "never happened".
     this.isRecovering = true;
     try {
-      if (triggeredBy === "undo") {
-        // We tried to undo B -> A, but server rejected A.
-        // We are at A on client. We should go back to B.
-        // Going back to B from A is a redo.
-        this.undoManager.redo();
-        // Now B is applied, and A is in undoStack. Remove A.
-        this.undoManager.popUndo();
-      } else if (triggeredBy === "redo") {
-        // We tried to redo A -> B, but server rejected B.
-        // We are at B on client. We should go back to A.
-        // Going back to A from B is an undo.
-        this.undoManager.undo();
-        // Now A is applied, and B is in redoStack. Remove B.
-        this.undoManager.popRedo();
-      } else {
-        // Normal push (drag drop, etc)
-        this.undoManager.undo();
-        this.undoManager.clearRedo();
-      }
+      revertSaveFailure(triggeredBy, this.undoManager);
     } finally {
       this.isRecovering = false;
     }
@@ -1054,32 +1112,10 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
   }
 
   protected onLaneCheck(showModal = true) {
-    const activeParticipants = this.localParticipants.filter(
-      (p) => p.driver && !p.driver.isEmpty(),
-    );
-    const driverIds = activeParticipants.map((p) => p.objectId);
-    const driverNames = new Map<string, string>();
-    activeParticipants.forEach((p) => {
-      driverNames.set(p.objectId, getParticipantName(p));
-    });
-
-    const heats = this.localHeats.map((h) =>
-      this.track().lanes.map((_, laneIdx) => {
-        const dhd = h.heatDrivers.find((d) => d.laneIndex === laneIdx);
-        return dhd &&
-          dhd.participant &&
-          dhd.participant.driver &&
-          !dhd.participant.driver.isEmpty()
-          ? dhd.participant.objectId
-          : null;
-      }),
-    );
-
-    const result = checkLaneEquality(
-      this.track().lanes.length,
-      driverIds,
-      heats,
-      driverNames,
+    const result = performLaneCheck(
+      this.localParticipants,
+      this.localHeats,
+      this.track(),
       this.translationService,
     );
     this.isHeatsEqual = result.allEqual;

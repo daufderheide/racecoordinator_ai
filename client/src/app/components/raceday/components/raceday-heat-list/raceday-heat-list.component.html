@@ -37,6 +37,11 @@
         >
           <div
             class="heat-card-header"
+            [class.has-center-status]="
+              heat.isCurrent &&
+              ((showCurrentHeatFlag() && displayFlagUrl()) ||
+                (showCurrentHeatTime() && displayFormattedTime()))
+            "
             [style.font-family]="
               widget()?.customSettings?.['heatNumberFontFamily'] || null
             "
@@ -54,11 +59,14 @@
                 "RM_LABEL_HEAT_NUMBER" | translate: { number: heat.heatNumber }
               }}</span>
               @if (heat.groupName) {
-                <span class="heat-group-name"> - {{ heat.groupName }}</span>
-              } @else if (race()?.group_options?.enabled) {
-                <span class="heat-group-name">
-                  - {{ "RE_GROUPS_LABEL" | translate }}: {{ heat.group + 1 }}
-                </span>
+                <span class="heat-separator">{{ " - " }}</span>
+                <span class="heat-group-name">{{ heat.groupName }}</span>
+              } @else if (heat.hasGroup || isGroupEnabled()) {
+                <span class="heat-separator">{{ " - " }}</span>
+                <span class="heat-group-name"
+                  >{{ "RE_GROUPS_LABEL" | translate }}
+                  {{ heat.group + 1 }}</span
+                >
               }
             </div>
 
@@ -67,7 +75,7 @@
               ((showCurrentHeatFlag() && displayFlagUrl()) ||
                 (showCurrentHeatTime() && displayFormattedTime()))
             ) {
-              <div class="header-center-status">
+              <div class="header-center-status header-right-status">
                 @if (showCurrentHeatFlag() && displayFlagUrl()) {
                   <div class="header-flag-container">
                     <img
@@ -82,14 +90,6 @@
                 }
               </div>
             }
-
-            @if (heat.isCurrent) {
-              <div class="current-heat-status">
-                <span class="current-heat-badge">{{
-                  "UE_INSPECTOR_HEAT_LIST_CURRENT_BADGE" | translate
-                }}</span>
-              </div>
-            }
           </div>
 
           @if (heat.showSummary) {
@@ -99,7 +99,10 @@
                 widget()?.customSettings?.['summaryBorderColor'] || null
               "
             >
-              <table class="heat-summary-table">
+              <table
+                class="heat-summary-table"
+                [style.--lane-count]="heat.lanes.length"
+              >
                 <thead>
                   <tr
                     class="summary-header-row"
@@ -168,11 +171,13 @@
                     <tr
                       class="summary-lane-row"
                       [style.background-color]="
-                        summaryUseLaneColors() ? lane.backgroundColor : null
+                        heat.useLaneColors ? lane.backgroundColor : null
                       "
                       [style.color]="
-                        widget()?.customSettings?.['summaryRowTextColor'] ||
-                        lane.foregroundColor
+                        heat.useLaneColors
+                          ? lane.foregroundColor
+                          : widget()?.customSettings?.['summaryRowTextColor'] ||
+                            null
                       "
                       [style.font-family]="
                         widget()?.customSettings?.['summaryRowFontFamily'] ||
@@ -193,23 +198,28 @@
                       @if (summaryShowDriver()) {
                         <td
                           class="summary-cell-driver"
-                          [title]="lane.driverNickname || lane.teamName"
+                          [title]="
+                            lane.isTeam && lane.teamName
+                              ? lane.teamName
+                              : lane.driverNickname || lane.teamName
+                          "
                         >
                           <div class="summary-driver-info">
-                            <span class="summary-driver-nickname">
-                              {{
-                                lane.isOccupied
-                                  ? lane.driverNickname ||
-                                    ("RD_EMPTY_LANE" | translate)
-                                  : ("RD_EMPTY_LANE" | translate)
-                              }}
-                            </span>
                             @if (lane.isTeam && lane.teamName) {
                               <span
                                 class="summary-team-name"
                                 [title]="lane.teamName"
                               >
                                 {{ lane.teamName }}
+                              </span>
+                            } @else {
+                              <span class="summary-driver-nickname">
+                                {{
+                                  lane.isOccupied
+                                    ? lane.driverNickname ||
+                                      ("RD_EMPTY_LANE" | translate)
+                                    : ("RD_EMPTY_LANE" | translate)
+                                }}
                               </span>
                             }
                           </div>
@@ -253,8 +263,16 @@
               @for (lane of heat.lanes; track trackByLaneNumber($index, lane)) {
                 <div
                   class="lane-badge-item"
-                  [style.background-color]="lane.backgroundColor"
-                  [style.color]="lane.foregroundColor"
+                  [class.no-lane-colors]="!heat.useLaneColors"
+                  [style.background-color]="
+                    heat.useLaneColors ? lane.backgroundColor : null
+                  "
+                  [style.color]="
+                    heat.useLaneColors
+                      ? widget()?.customSettings?.['laneTextColor'] ||
+                        lane.foregroundColor
+                      : widget()?.customSettings?.['laneTextColor'] || null
+                  "
                   [style.font-family]="
                     widget()?.customSettings?.['laneFontFamily'] || null
                   "
@@ -262,10 +280,6 @@
                     widget()?.scaleMode === 'auto' || scaleToWindow()
                       ? null
                       : widget()?.customSettings?.['laneFontSize'] || null
-                  "
-                  [style.color]="
-                    widget()?.customSettings?.['laneTextColor'] ||
-                    lane.foregroundColor
                   "
                 >
                   <div class="lane-badge-header">
