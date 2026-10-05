@@ -611,6 +611,10 @@ export class RacedayLaneColumnComponent
         "--lane-col-value-font-size",
         `${baseFontSize}px`,
       );
+      cardEl.style.setProperty("--lane-col-pad-left", "0px");
+      cardEl.style.setProperty("--lane-col-pad-right", "0px");
+      cardEl.style.setProperty("--lane-col-pad-top", "0px");
+      cardEl.style.setProperty("--lane-col-pad-bottom", "0px");
       return;
     }
 
@@ -645,25 +649,72 @@ export class RacedayLaneColumnComponent
       }
     }
 
-    if (this.hasTopInsets()) {
-      const topEl = cardEl.querySelector(
-        ".lane-col-insets-top",
-      ) as HTMLElement | null;
-      const topH = topEl
-        ? topEl.offsetHeight
-        : (this.settings.insetFontSize || 12) * 1.5;
-      availHeight = Math.max(10, availHeight - topH - 4);
+    const dims = this.applyInsetsAndPaddings(cardEl, availWidth, availHeight);
+    availWidth = dims.availWidth;
+    availHeight = dims.availHeight;
+
+    let scale = 1;
+    if (availWidth > 0 && textWidth > availWidth) {
+      scale = Math.min(scale, availWidth / textWidth);
+    }
+    if (availHeight > 0 && baseFontSize > availHeight) {
+      scale = Math.min(scale, availHeight / baseFontSize);
     }
 
-    if (this.hasBottomInsets()) {
-      const btmEl = cardEl.querySelector(
-        ".lane-col-insets-bottom",
-      ) as HTMLElement | null;
-      const btmH = btmEl
-        ? btmEl.offsetHeight
-        : (this.settings.insetFontSize || 12) * 1.5;
-      availHeight = Math.max(10, availHeight - btmH - 4);
+    const minSize = 10;
+    const targetSize = Math.max(minSize, Math.floor(baseFontSize * scale));
+    cardEl.style.setProperty("--lane-col-value-font-size", `${targetSize}px`);
+  }
+
+  private applyInsetsAndPaddings(
+    cardEl: HTMLElement,
+    availWidth: number,
+    availHeight: number,
+  ): { availWidth: number; availHeight: number } {
+    const effectiveInsetFont = this.effectiveInsetFontSize;
+
+    let leftPad = 0;
+    if (this.hasLeftInsets() && !this.hasInset("center-left")) {
+      const tlEl = cardEl.querySelector(".inset-cell.tl") as HTMLElement | null;
+      const blEl = cardEl.querySelector(".inset-cell.bl") as HTMLElement | null;
+      const lW =
+        Math.max(tlEl?.offsetWidth || 0, blEl?.offsetWidth || 0) ||
+        Math.round(effectiveInsetFont * 2.5);
+      leftPad = lW + 6;
+      availWidth = Math.max(10, availWidth - leftPad);
     }
+
+    let rightPad = 0;
+    if (this.hasRightInsets() && !this.hasInset("center-right")) {
+      const trEl = cardEl.querySelector(".inset-cell.tr") as HTMLElement | null;
+      const brEl = cardEl.querySelector(".inset-cell.br") as HTMLElement | null;
+      const rW =
+        Math.max(trEl?.offsetWidth || 0, brEl?.offsetWidth || 0) ||
+        Math.round(effectiveInsetFont * 2.5);
+      rightPad = rW + 6;
+      availWidth = Math.max(10, availWidth - rightPad);
+    }
+
+    let topPad = 0;
+    if (this.hasInset("top-center")) {
+      const tcEl = cardEl.querySelector(".inset-cell.tc") as HTMLElement | null;
+      const tcH = tcEl?.offsetHeight || Math.round(effectiveInsetFont * 1.2);
+      topPad = tcH + 2;
+      availHeight = Math.max(10, availHeight - topPad);
+    }
+
+    let bottomPad = 0;
+    if (this.hasInset("bottom-center")) {
+      const bcEl = cardEl.querySelector(".inset-cell.bc") as HTMLElement | null;
+      const bcH = bcEl?.offsetHeight || Math.round(effectiveInsetFont * 1.2);
+      bottomPad = bcH + 2;
+      availHeight = Math.max(10, availHeight - bottomPad);
+    }
+
+    cardEl.style.setProperty("--lane-col-pad-left", `${leftPad}px`);
+    cardEl.style.setProperty("--lane-col-pad-right", `${rightPad}px`);
+    cardEl.style.setProperty("--lane-col-pad-top", `${topPad}px`);
+    cardEl.style.setProperty("--lane-col-pad-bottom", `${bottomPad}px`);
 
     if (this.hasInset("center-left")) {
       const clEl = cardEl.querySelector(".inset-cell.cl") as HTMLElement | null;
@@ -677,17 +728,7 @@ export class RacedayLaneColumnComponent
       availWidth = Math.max(10, availWidth - crW - 6);
     }
 
-    let scale = 1;
-    if (availWidth > 0 && textWidth > availWidth) {
-      scale = Math.min(scale, availWidth / textWidth);
-    }
-    if (availHeight > 0 && baseFontSize > availHeight) {
-      scale = Math.min(scale, availHeight / baseFontSize);
-    }
-
-    const minSize = 10;
-    const targetSize = Math.max(minSize, Math.floor(baseFontSize * scale));
-    cardEl.style.setProperty("--lane-col-value-font-size", `${targetSize}px`);
+    return { availWidth, availHeight };
   }
 
   private fitLastLaps(): void {
@@ -786,6 +827,28 @@ export class RacedayLaneColumnComponent
       this.hasInset("bottom-center") ||
       this.hasInset("bottom-right")
     );
+  }
+
+  hasLeftInsets(): boolean {
+    return this.hasInset("top-left") || this.hasInset("bottom-left");
+  }
+
+  hasRightInsets(): boolean {
+    return this.hasInset("top-right") || this.hasInset("bottom-right");
+  }
+
+  get effectiveInsetFontSize(): number {
+    const custom = this.settings.insetFontSize;
+    if (this.widget()?.scaleMode === "auto") {
+      const cardEl = this.cardRef()?.nativeElement;
+      const cardH = cardEl?.clientHeight || 0;
+      if (cardH > 0) {
+        // In auto mode, scale proportionally with card height: ~28% of height, clamped between 14px and 24px
+        const autoSize = Math.round(cardH * 0.28);
+        return Math.max(14, Math.min(24, autoSize));
+      }
+    }
+    return custom && custom > 0 ? custom : 18;
   }
 
   getInsetValue(anchor: string): string {

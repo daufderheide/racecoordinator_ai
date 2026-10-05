@@ -1022,6 +1022,142 @@ describe("RacedayLaneColumnComponent", () => {
         expect(numSize).toBeGreaterThanOrEqual(10);
       }
     });
+
+    it("should preserve large main value font size when only corner insets are present (top-right, bottom-right)", () => {
+      fixture.componentRef.setInput("parent", mockParent);
+      fixture.componentRef.setInput(
+        "widget",
+        createWidget({
+          columnKey: "lastLapTime",
+          valueFontSize: 36,
+          insetFontSize: 18,
+          insets: {
+            "top-right": "bestLapTime",
+            "bottom-right": "lastLapTime",
+          },
+        }),
+      );
+      fixture.detectChanges();
+
+      const cardEl = component.cardRef()?.nativeElement;
+      if (cardEl) {
+        Object.defineProperty(cardEl, "clientWidth", {
+          value: 160,
+          configurable: true,
+        });
+        Object.defineProperty(cardEl, "clientHeight", {
+          value: 60,
+          configurable: true,
+        });
+      }
+      spyOnProperty(component, "formattedValue", "get").and.returnValue(
+        "4.555",
+      );
+      component.fitContent();
+
+      if (cardEl) {
+        const fontSizeVar = cardEl.style.getPropertyValue(
+          "--lane-col-value-font-size",
+        );
+        expect(fontSizeVar).toBeTruthy();
+        const numSize = parseInt(fontSizeVar, 10);
+        // Previously this shrank all the way down to 10px because availHeight was squashed!
+        // Now it should remain large and legible (>= 25px).
+        expect(numSize).toBeGreaterThanOrEqual(25);
+
+        // Right padding should be applied to prevent text overlapping corner insets
+        const rightPad = cardEl.style.getPropertyValue("--lane-col-pad-right");
+        expect(rightPad).not.toBe("0px");
+        expect(parseInt(rightPad, 10)).toBeGreaterThan(0);
+
+        // Top, bottom, and left paddings should remain 0px
+        expect(cardEl.style.getPropertyValue("--lane-col-pad-left")).toBe(
+          "0px",
+        );
+        expect(cardEl.style.getPropertyValue("--lane-col-pad-top")).toBe("0px");
+        expect(cardEl.style.getPropertyValue("--lane-col-pad-bottom")).toBe(
+          "0px",
+        );
+      }
+    });
+
+    it("should apply top headroom and padding only when top-center inset is present", () => {
+      fixture.componentRef.setInput("parent", mockParent);
+      fixture.componentRef.setInput(
+        "widget",
+        createWidget({
+          columnKey: "lastLapTime",
+          valueFontSize: 36,
+          insetFontSize: 18,
+          insets: {
+            "top-center": "driver.nickname",
+          },
+        }),
+      );
+      fixture.detectChanges();
+
+      const cardEl = component.cardRef()?.nativeElement;
+      if (cardEl) {
+        Object.defineProperty(cardEl, "clientWidth", {
+          value: 160,
+          configurable: true,
+        });
+        Object.defineProperty(cardEl, "clientHeight", {
+          value: 60,
+          configurable: true,
+        });
+      }
+      spyOnProperty(component, "formattedValue", "get").and.returnValue(
+        "4.555",
+      );
+      component.fitContent();
+
+      if (cardEl) {
+        const topPad = cardEl.style.getPropertyValue("--lane-col-pad-top");
+        expect(topPad).not.toBe("0px");
+        expect(parseInt(topPad, 10)).toBeGreaterThan(0);
+      }
+    });
+
+    it("should calculate effectiveInsetFontSize proportionally with card height in auto scaleMode", () => {
+      const widget = createWidget({
+        columnKey: "lastLapTime",
+        insetFontSize: 18,
+      });
+      widget.scaleMode = "auto";
+      fixture.componentRef.setInput("widget", widget);
+      fixture.detectChanges();
+
+      const cardEl = component.cardRef()?.nativeElement;
+      if (cardEl) {
+        // Height 60px -> 60 * 0.28 = ~17px
+        Object.defineProperty(cardEl, "clientHeight", {
+          value: 60,
+          configurable: true,
+        });
+        expect(component.effectiveInsetFontSize).toBe(17);
+
+        // Height 80px -> 80 * 0.28 = ~22px
+        Object.defineProperty(cardEl, "clientHeight", {
+          value: 80,
+          configurable: true,
+        });
+        expect(component.effectiveInsetFontSize).toBe(22);
+
+        // Small height clamped to minimum 14px
+        Object.defineProperty(cardEl, "clientHeight", {
+          value: 30,
+          configurable: true,
+        });
+        expect(component.effectiveInsetFontSize).toBe(14);
+      }
+
+      // If scaleMode is manual/fixed, returns settings value or fallback
+      widget.scaleMode = "fixed";
+      fixture.componentRef.setInput("widget", widget);
+      fixture.detectChanges();
+      expect(component.effectiveInsetFontSize).toBe(18);
+    });
   });
 
   describe("Interactive Column Actions", () => {

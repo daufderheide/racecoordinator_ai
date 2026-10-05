@@ -204,7 +204,7 @@
       <div
         class="lane-col-insets-row lane-col-insets-top"
         [style.font-family]="settings.insetFontFamily || null"
-        [style.font-size.px]="settings.insetFontSize || 12"
+        [style.font-size.px]="effectiveInsetFontSize"
         [style.color]="effectiveInsetTextColor"
       >
         <div
@@ -289,7 +289,7 @@
           "
           (click)="onInsetClick('center-left', $event)"
           [style.font-family]="settings.insetFontFamily || null"
-          [style.font-size.px]="settings.insetFontSize || 12"
+          [style.font-size.px]="effectiveInsetFontSize"
           [style.color]="effectiveInsetTextColor"
         >
           @if (isImageProperty(getInsetKey("center-left")!)) {
@@ -437,7 +437,7 @@
           "
           (click)="onInsetClick('center-right', $event)"
           [style.font-family]="settings.insetFontFamily || null"
-          [style.font-size.px]="settings.insetFontSize || 12"
+          [style.font-size.px]="effectiveInsetFontSize"
           [style.color]="effectiveInsetTextColor"
         >
           @if (isImageProperty(getInsetKey("center-right")!)) {
@@ -458,7 +458,7 @@
       <div
         class="lane-col-insets-row lane-col-insets-bottom"
         [style.font-family]="settings.insetFontFamily || null"
-        [style.font-size.px]="settings.insetFontSize || 12"
+        [style.font-size.px]="effectiveInsetFontSize"
         [style.color]="effectiveInsetTextColor"
       >
         <div

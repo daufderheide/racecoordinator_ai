@@ -69,9 +69,15 @@
   align-items: center;
   justify-content: center;
   width: 100%;
+  height: 100%;
   min-width: 0;
   min-height: 0;
   overflow: hidden;
+  box-sizing: border-box;
+  padding-left: var(--lane-col-pad-left, 0px);
+  padding-right: var(--lane-col-pad-right, 0px);
+  padding-top: var(--lane-col-pad-top, 0px);
+  padding-bottom: var(--lane-col-pad-bottom, 0px);
 }
 
 .lane-col-main-content {
@@ -94,17 +100,23 @@
   align-items: center;
   justify-content: space-between;
   line-height: 1.2;
-  flex-shrink: 0;
   overflow: hidden;
   z-index: 2;
+  pointer-events: none;
 }
 
 .lane-col-insets-top {
-  margin-bottom: 2px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
 }
 
 .lane-col-insets-bottom {
-  margin-top: 2px;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
 }
 
 .inset-cell {
@@ -114,6 +126,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 40%;
+  pointer-events: auto;
 }
 
 .inset-cell.tl,

@@ -105,7 +105,7 @@ export const WIDGET_REGISTRY: Record<string, WidgetRegistryEntry> = {
       lapDecimalPlaces: 2,
       insets: {},
       insetFontFamily: "",
-      insetFontSize: 14,
+      insetFontSize: 18,
       insetTextColor: "",
       insetTimeDecimalPlaces: 3,
       insetLapDecimalPlaces: 2,
