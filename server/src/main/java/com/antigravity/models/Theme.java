@@ -125,39 +125,61 @@ public class Theme extends Model {
     if (slots == null || slotKey == null) {
       return fallback;
     }
+    RaceFlag slotFlag = resolvedFlagCache.get(slotKey);
+    if (slotFlag != null) {
+      return slotFlag;
+    }
     String cacheKey = slotKey + ":" + (fallback != null ? fallback.name() : "NONE");
     RaceFlag cached = resolvedFlagCache.get(cacheKey);
     if (cached != null) {
       return cached;
     }
 
-    RaceFlag resolved = doResolveFlag(slotKey, fallback, dbCtx);
-    resolvedFlagCache.put(cacheKey, resolved);
-    return resolved;
+    RaceFlag resolved = findSlotFlag(slotKey, dbCtx);
+    if (resolved != null) {
+      resolvedFlagCache.put(slotKey, resolved);
+      resolvedFlagCache.put(cacheKey, resolved);
+      return resolved;
+    }
+
+    resolvedFlagCache.put(cacheKey, fallback);
+    return fallback;
   }
 
-  private RaceFlag doResolveFlag(String slotKey, RaceFlag fallback, DatabaseContext dbCtx) {
+  public void prewarmFlagCache(DatabaseContext dbCtx) {
+    if (slots == null || slots.isEmpty()) {
+      return;
+    }
+    resolveFlag("flag.warmup", RaceFlag.GREEN_YELLOW, dbCtx);
+    resolveFlag("flag.not_started", RaceFlag.RED, dbCtx);
+    resolveFlag("flag.starting", RaceFlag.RED, dbCtx);
+    resolveFlag("flag.restarting", RaceFlag.YELLOW, dbCtx);
+    resolveFlag("flag.racing", RaceFlag.GREEN, dbCtx);
+    resolveFlag("flag.heat_paused", RaceFlag.YELLOW, dbCtx);
+    resolveFlag("flag.heat_finishing", RaceFlag.CHECKERED, dbCtx);
+    resolveFlag("flag.heat_over", RaceFlag.RED, dbCtx);
+    resolveFlag("flag.driver_finished", RaceFlag.RED, dbCtx);
+    resolveFlag("flag.one_lap_to_go", RaceFlag.WHITE, dbCtx);
+    resolveFlag("flag.race_over", RaceFlag.CHECKERED, dbCtx);
+    resolveFlag("flag.penalty", RaceFlag.BLACK, dbCtx);
+  }
+
+  private RaceFlag findSlotFlag(String slotKey, DatabaseContext dbCtx) {
     String assetId = slots.get(slotKey);
     if (assetId == null || assetId.isEmpty()) {
-      return fallback;
+      return null;
     }
     RaceFlag matched = matchFlagString(assetId);
     if (matched != null) {
-      if (isFlagCollision(slotKey, matched)) {
-        return fallback;
-      }
-      return matched;
+      return isFlagCollision(slotKey, matched) ? null : matched;
     }
     if (dbCtx != null) {
       RaceFlag fromDb = lookupFlagFromDatabase(dbCtx, assetId);
       if (fromDb != null) {
-        if (isFlagCollision(slotKey, fromDb)) {
-          return fallback;
-        }
-        return fromDb;
+        return isFlagCollision(slotKey, fromDb) ? null : fromDb;
       }
     }
-    return fallback;
+    return null;
   }
 
   private boolean isFlagCollision(String slotKey, RaceFlag flag) {
