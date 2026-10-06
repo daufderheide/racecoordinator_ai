@@ -1168,6 +1168,79 @@ public class HeatExecutionManagerTest {
   }
 
   @Test
+  public void testDriftLap_WithPendingLapTime_ExceedsMinLapTime_CountsAndClearsCarryOver() {
+    race =
+        new com.antigravity.race.Race.Builder()
+            .model(
+                new Race.Builder()
+                    .withName("Test Race")
+                    .withTrackEntityId("track1")
+                    .withMinLapTime(2.0)
+                    .withDriftTime(3.0)
+                    .withHeatScoring(heatScoring)
+                    .withOverallScoring(new OverallScoring())
+                    .withEntityId("race1")
+                    .build())
+            .drivers(participants)
+            .track(track)
+            .isDemoMode(true)
+            .build();
+    executionManager = race.getHeatExecutionManager();
+    executionManager.initialize(1);
+    race.changeState(new com.antigravity.race.states.HeatOver());
+
+    DriverHeatData dhd = race.getCurrentHeat().getDrivers().get(0);
+    dhd.setReactionTime(0.0);
+    dhd.setPendingLapTime(4.8);
+    dhd.setCarryOverTime(4.8);
+
+    boolean counted = executionManager.onLap(0, 0.2, 1, false, true, true);
+
+    assertTrue(counted);
+    assertEquals(1, dhd.getLaps().size());
+    assertEquals(5.0, dhd.getLaps().get(0).getLapTime(), 0.001);
+    assertTrue(dhd.getLaps().get(0).isDrift());
+    assertEquals(0.0, dhd.getPendingLapTime(), 0.001);
+    assertEquals(0.0, dhd.getCarryOverTime(), 0.001);
+    assertTrue(dhd.isFinished());
+    assertEquals(1, race.getStatistics().getDriftLapCount());
+    assertEquals(0, race.getStatistics().getMinLapTimeRejectionCount());
+  }
+
+  @Test
+  public void testDriftLap_WithPendingLapTime_BelowMinLapTime_Rejected() {
+    race =
+        new com.antigravity.race.Race.Builder()
+            .model(
+                new Race.Builder()
+                    .withName("Test Race")
+                    .withTrackEntityId("track1")
+                    .withMinLapTime(2.0)
+                    .withDriftTime(3.0)
+                    .withHeatScoring(heatScoring)
+                    .withOverallScoring(new OverallScoring())
+                    .withEntityId("race1")
+                    .build())
+            .drivers(participants)
+            .track(track)
+            .isDemoMode(true)
+            .build();
+    executionManager = race.getHeatExecutionManager();
+    executionManager.initialize(1);
+    race.changeState(new com.antigravity.race.states.HeatOver());
+
+    DriverHeatData dhd = race.getCurrentHeat().getDrivers().get(0);
+    dhd.setReactionTime(0.5);
+    dhd.setPendingLapTime(0.3);
+
+    boolean counted = executionManager.onLap(0, 0.2, 1, false, true, true);
+
+    assertFalse(counted);
+    assertEquals(0, dhd.getLaps().size());
+    assertEquals(1, race.getStatistics().getMinLapTimeRejectionCount());
+  }
+
+  @Test
   public void testHeatEndsWithEmptyLane_AllowFinish() {
     heatScoring =
         new HeatScoring(

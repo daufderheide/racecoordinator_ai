@@ -14,6 +14,7 @@ import com.antigravity.models.HeatScoring.FinishMethod;
 import com.antigravity.models.HeatScoring.HeatRanking;
 import com.antigravity.models.HeatScoring.HeatRankingTiebreaker;
 import com.antigravity.proto.RaceFlag;
+import com.antigravity.protocols.PartialTime;
 import com.antigravity.race.DriverHeatData;
 import com.antigravity.race.Heat;
 import com.antigravity.race.HeatExecutionManager;
@@ -21,7 +22,11 @@ import com.antigravity.race.HeatStandings;
 import com.antigravity.race.Race;
 import com.antigravity.race.RaceParticipant;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -242,5 +247,45 @@ public class RacingTest {
     verify(race).addRaceTime(60.0f);
     verify(race).broadcastFlag(RaceFlag.GREEN);
     assertEquals(RaceFlag.GREEN, drivers.get(0).getFlag());
+  }
+
+  @Test
+  public void testExit_CapturesPartialLapTimesForUnfinishedDrivers() {
+    List<PartialTime> partials =
+        Arrays.asList(new PartialTime(0, 4.5, 0.0), new PartialTime(1, 3.2, 0.0));
+    when(race.stopProtocols()).thenReturn(partials);
+
+    // Lane 0 unfinished, Lane 1 finished
+    Set<Integer> finishedLanes = new HashSet<>(Collections.singletonList(1));
+    when(executionManager.getFinishedLanes()).thenReturn(finishedLanes);
+
+    racing.exit(race);
+
+    assertEquals(4.5, drivers.get(0).getPendingLapTime(), 0.001);
+    assertEquals(0.0, drivers.get(1).getPendingLapTime(), 0.001);
+  }
+
+  @Test
+  public void testExit_IgnoresZeroOrNegativePartialTimes() {
+    List<PartialTime> partials =
+        Arrays.asList(new PartialTime(0, 0.0, 0.0), new PartialTime(1, -1.0, 0.0));
+    when(race.stopProtocols()).thenReturn(partials);
+    when(executionManager.getFinishedLanes()).thenReturn(Collections.emptySet());
+
+    racing.exit(race);
+
+    assertEquals(0.0, drivers.get(0).getPendingLapTime(), 0.001);
+    assertEquals(0.0, drivers.get(1).getPendingLapTime(), 0.001);
+  }
+
+  @Test
+  public void testPause_TransitionsToPausedState() {
+    racing.pause(race);
+
+    assertEquals(1, race.getStatistics().getYellowFlagCount());
+    org.mockito.ArgumentCaptor<IRaceState> stateCaptor =
+        org.mockito.ArgumentCaptor.forClass(IRaceState.class);
+    verify(race).changeState(stateCaptor.capture());
+    org.junit.Assert.assertTrue(stateCaptor.getValue() instanceof Paused);
   }
 }

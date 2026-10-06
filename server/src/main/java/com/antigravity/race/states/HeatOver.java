@@ -164,6 +164,7 @@ public class HeatOver implements IRaceState {
         lapTime,
         interfaceId,
         () -> {
+          race.updateAndBroadcastOverallStandings();
           race.updateScoreRecords();
           race.broadcast(race.createSnapshot());
         });
