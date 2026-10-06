@@ -1,6 +1,6 @@
 # Changelog
 
-## [v1.0.1-beta.15] - 2026-10-05
+## [v1.0.1-beta.16] - 2026-10-06
 
 ### 🚀 New Features
 
@@ -12,6 +12,7 @@
 
 ### 🐛 Bug Fixes
 
+- handle drift laps and pending times correctly during heat transitions [#929](https://github.com/daufderheide/racecoordinator_ai/issues/929) ([dcb77006](https://github.com/daufderheide/racecoordinator_ai/commit/dcb77006))
 - **heat-list**: Updated the Heat Columns 'Auto (Responsive)' option including the default heat list widget configuration to fit names and columns better into the layout. [#916](https://github.com/daufderheide/racecoordinator_ai/issues/916) ([94af8398](https://github.com/daufderheide/racecoordinator_ai/commit/94af8398))
 - select next driver after adding or removing via keyboard navigation on raceday setup [#912](https://github.com/daufderheide/racecoordinator_ai/issues/912) ([3395e6f7](https://github.com/daufderheide/racecoordinator_ai/commit/3395e6f7))
 - Set the theme name as the title of the new page when opened from the raceday window menu [#915](https://github.com/daufderheide/racecoordinator_ai/issues/915) [skip-screendiffs] ([5726a587](https://github.com/daufderheide/racecoordinator_ai/commit/5726a587))
@@ -54,7 +55,7 @@
 <details>
 <summary>🔍 <b>Full Commit History</b></summary>
 
-<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0...v1.0.1-beta.15">GitHub</a></p>
+<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0...v1.0.1-beta.16">GitHub</a></p>
 </details>
 
 ## [v1.0.0] - 2026-09-27
