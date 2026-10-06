@@ -259,4 +259,52 @@ public class RaceHeatTaskHandlerTest {
       }
     }
   }
+
+  @Test
+  public void testDeleteDefaultRace_TracksDeletionAndClearsOnCreate() throws Exception {
+    String rootDir =
+        tempFolder.newFolder("db_root_del_race").getAbsolutePath() + java.io.File.separator;
+    DatabaseContext dbCtx = new DatabaseContext("test_del_race_db", null, rootDir);
+    Javalin app = mock(Javalin.class);
+    RaceHeatTaskHandler realHandler = new RaceHeatTaskHandler(dbCtx, app);
+
+    try {
+      com.antigravity.repository.SqliteRepository<Race> raceRepo =
+          new com.antigravity.repository.SqliteRepository<>(dbCtx, "races", Race.class);
+      Race practiceRace = new Race.Builder().withName("Practice").withEntityId("race_prac").build();
+      Race fuelRace = new Race.Builder().withName("Fuel Race").withEntityId("race_fuel").build();
+      raceRepo.insert(practiceRace);
+      raceRepo.insert(fuelRace);
+
+      // Delete Practice race
+      Context ctxDeletePractice = mock(Context.class);
+      when(ctxDeletePractice.pathParam("id")).thenReturn("race_prac");
+      when(ctxDeletePractice.status(org.mockito.ArgumentMatchers.anyInt()))
+          .thenReturn(ctxDeletePractice);
+      realHandler.handleDeleteRace(ctxDeletePractice);
+      verify(ctxDeletePractice).status(204);
+
+      org.junit.Assert.assertTrue(dbCtx.isDefaultArtifactDeleted("race", "Practice"));
+      org.junit.Assert.assertFalse(dbCtx.isDefaultArtifactDeleted("race", "Fuel Race"));
+
+      // Delete Fuel race
+      Context ctxDeleteFuel = mock(Context.class);
+      when(ctxDeleteFuel.pathParam("id")).thenReturn("race_fuel");
+      when(ctxDeleteFuel.status(org.mockito.ArgumentMatchers.anyInt())).thenReturn(ctxDeleteFuel);
+      realHandler.handleDeleteRace(ctxDeleteFuel);
+      verify(ctxDeleteFuel).status(204);
+
+      org.junit.Assert.assertTrue(dbCtx.isDefaultArtifactDeleted("race", "Fuel Race"));
+
+      // Recreate practice race -> clears deletion marker
+      Race newPractice =
+          new Race.Builder().withName("Practice").withEntityId("race_prac_new").build();
+      realHandler.createRace(newPractice);
+      org.junit.Assert.assertFalse(dbCtx.isDefaultArtifactDeleted("race", "Practice"));
+    } finally {
+      if (dbCtx.getConnection() != null) {
+        dbCtx.getConnection().close();
+      }
+    }
+  }
 }

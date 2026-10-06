@@ -1,6 +1,7 @@
 package com.antigravity.service;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -520,5 +521,69 @@ public class DatabaseInitializerTest {
     CustomUI defaultUiAfter = uiRepo.findByEntityId(CustomUI.DEFAULT_UI_ID);
     assertNotNull(defaultUiAfter);
     assertEquals(CustomUI.DEFAULT_UI_NAME, defaultUiAfter.getName());
+  }
+
+  @Test
+  public void testBackfillRaces_SkipsDeletedDefaults() {
+    Track track = initializer.resetTracks(context);
+    initializer.resetRaces(context, track);
+    SqliteRepository<Race> raceRepo = new SqliteRepository<>(context, "races", Race.class);
+    List<Race> races = raceRepo.findAll();
+    assertEquals(4, races.size());
+
+    Race practice =
+        races.stream().filter(r -> "Practice".equals(r.getName())).findFirst().orElse(null);
+    Race fuel =
+        races.stream().filter(r -> "Fuel Race".equals(r.getName())).findFirst().orElse(null);
+    assertNotNull(practice);
+    assertNotNull(fuel);
+    raceRepo.delete(practice.getEntityId());
+    raceRepo.delete(fuel.getEntityId());
+    context.markDefaultArtifactDeleted("race", "Practice");
+    context.markDefaultArtifactDeleted("race", "Fuel Race");
+
+    initializer.backfillRaces(context);
+
+    List<Race> remaining = raceRepo.findAll();
+    assertEquals(2, remaining.size());
+    assertTrue(remaining.stream().noneMatch(r -> "Practice".equals(r.getName())));
+    assertTrue(remaining.stream().noneMatch(r -> "Fuel Race".equals(r.getName())));
+  }
+
+  @Test
+  public void testBackfillCustomUIs_SkipsDeletedDefaults() {
+    initializer.resetCustomUIs(context);
+    SqliteRepository<CustomUI> uiRepo =
+        new SqliteRepository<>(context, "custom_uis", CustomUI.class);
+    assertEquals(3, uiRepo.findAll().size());
+
+    uiRepo.delete(CustomUI.PRACTICE_UI_ID);
+    uiRepo.delete(CustomUI.FUEL_UI_ID);
+    context.markDefaultArtifactDeleted("custom_ui", CustomUI.PRACTICE_UI_ID);
+    context.markDefaultArtifactDeleted("custom_ui", CustomUI.FUEL_UI_ID);
+
+    initializer.backfillCustomUIs(context);
+
+    List<CustomUI> remaining = uiRepo.findAll();
+    assertEquals(1, remaining.size());
+    assertEquals(CustomUI.DEFAULT_UI_ID, remaining.get(0).getEntityId());
+  }
+
+  @Test
+  public void testResetToFactory_ClearsDeletedDefaultArtifacts() {
+    context.markDefaultArtifactDeleted("race", "Practice");
+    context.markDefaultArtifactDeleted("race", "Fuel Race");
+    context.markDefaultArtifactDeleted("custom_ui", CustomUI.PRACTICE_UI_ID);
+    context.markDefaultArtifactDeleted("theme", Theme.PRACTICE_THEME_ID);
+
+    initializer.resetToFactory(context);
+
+    assertFalse(context.isDefaultArtifactDeleted("race", "Practice"));
+    assertFalse(context.isDefaultArtifactDeleted("race", "Fuel Race"));
+    assertFalse(context.isDefaultArtifactDeleted("custom_ui", CustomUI.PRACTICE_UI_ID));
+    assertFalse(context.isDefaultArtifactDeleted("theme", Theme.PRACTICE_THEME_ID));
+
+    SqliteRepository<Race> raceRepo = new SqliteRepository<>(context, "races", Race.class);
+    assertEquals(4, raceRepo.findAll().size());
   }
 }

@@ -5,6 +5,7 @@ import { Theme } from "@app/models/theme";
 import {
   ensureDefaultCustomUis,
   handleUiEditorKeyboardShortcut,
+  normalizeLoadedCustomUis,
   normalizeLoadedThemes,
   processLoadedEditorData,
 } from "./ui-editor-data.helper";
@@ -25,6 +26,25 @@ describe("ui-editor-data.helper", () => {
     expect(
       uis.some((u) => u.entity_id === "default_fuel_ui_layout_rc_ai"),
     ).toBeTrue();
+  });
+
+  it("should normalize loaded custom UIs without adding missing defaults", () => {
+    const uis: CustomUI[] = [
+      {
+        entity_id: "default_ui_layout_rc_ai",
+        name: "Default UI Layout",
+        is_default: true,
+      },
+    ];
+    normalizeLoadedCustomUis(uis);
+    expect(uis.length).toBe(1);
+    expect(uis[0].name).toBe("RaceCoordinator AI");
+    expect(
+      uis.some((u) => u.entity_id === "practice_ui_layout_rc_ai"),
+    ).toBeFalse();
+    expect(
+      uis.some((u) => u.entity_id === "default_fuel_ui_layout_rc_ai"),
+    ).toBeFalse();
   });
 
   it("should rename legacy default custom UI names to canonical names and preserve custom UIs", () => {
@@ -199,6 +219,40 @@ describe("ui-editor-data.helper", () => {
     expect(
       loadedThemes.find((t) => t.entity_id === "custom_theme_1")?.name,
     ).toBe("My Custom Theme");
+  });
+
+  it("should preserve deletion of default custom UIs in processLoadedEditorData when remaining custom UIs exist", () => {
+    const defaultTheme: Theme = {
+      entity_id: "default_classic_rc_ai",
+      name: "Default Theme",
+      is_default: true,
+      slots: {},
+      audio_slots: {},
+    };
+    const rawData = {
+      assets: [],
+      dirHandle: null,
+      widgetDirHandle: null,
+      themes: [defaultTheme],
+      tracks: [],
+      customUIs: [
+        {
+          entity_id: "default_ui_layout_rc_ai",
+          name: "RaceCoordinator AI",
+          is_default: true,
+        },
+      ],
+    };
+    const currentSettings = new Settings();
+    const result = processLoadedEditorData(
+      rawData as any,
+      currentSettings,
+      jasmine.createSpy("setActiveTheme"),
+    );
+    expect(result.initialState.customUIs?.length).toBe(1);
+    expect(result.initialState.customUIs?.[0].entity_id).toBe(
+      "default_ui_layout_rc_ai",
+    );
   });
 
   describe("handleUiEditorKeyboardShortcut", () => {

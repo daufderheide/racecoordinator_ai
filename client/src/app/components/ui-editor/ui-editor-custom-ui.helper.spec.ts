@@ -3,6 +3,7 @@ import { CustomUI } from "@app/models/custom-ui";
 import { Theme } from "@app/models/theme";
 
 import {
+  executeDeleteCustomUi,
   handleCreateCustomUi,
   handleCustomUiStateDeletion,
   handleDuplicateCustomUi,
@@ -178,5 +179,54 @@ describe("ui-editor-custom-ui.helper", () => {
 
     expect(comp.defaultUiNames["ui_1_copy"]).toBe("My Layout (1)");
     expect(comp.focusUiNameInput).toHaveBeenCalledWith("ui_1_copy");
+  });
+
+  it("should execute delete custom UI and refresh customUiService", async () => {
+    const uiToDelete: CustomUI = {
+      entity_id: "ui_del",
+      name: "To Delete",
+      is_default: false,
+    };
+    const defUi: CustomUI = {
+      entity_id: "default_ui_layout_rc_ai",
+      name: "Default",
+      is_default: true,
+    };
+    const editingState: any = {
+      customUIs: [uiToDelete, defUi],
+      themes: [],
+    };
+    const sectionsExpanded: { [key: string]: boolean } = {
+      ui_ui_del: true,
+      ui_default_ui_layout_rc_ai: true,
+    };
+    const customUiService = {
+      initialize: jasmine
+        .createSpy("initialize")
+        .and.returnValue(Promise.resolve()),
+    };
+    const dataService = {
+      deleteCustomUI: jasmine
+        .createSpy("deleteCustomUI")
+        .and.returnValue(of(null)),
+    };
+    const logger = { error: jasmine.createSpy("error") };
+    const translationService = { translate: jasmine.createSpy("translate") };
+
+    const res = await executeDeleteCustomUi({
+      uiToDelete,
+      editingState,
+      activeCustomUiId: "ui_del",
+      sectionsExpanded,
+      dataService,
+      logger,
+      translationService,
+      customUiService,
+    });
+
+    expect(customUiService.initialize).toHaveBeenCalled();
+    expect(sectionsExpanded["ui_ui_del"]).toBeUndefined();
+    expect(editingState.customUIs.length).toBe(1);
+    expect(res.newActiveUiId).toBe("default_ui_layout_rc_ai");
   });
 });

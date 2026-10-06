@@ -41,6 +41,7 @@ public class DatabaseInitializer {
 
   public void resetToFactory(DatabaseContext context) {
     logger.info("Resetting database to factory settings...");
+    context.clearAllDeletedDefaultArtifacts();
 
     String dbName = context.getCurrentDatabaseName();
     try (InputStream is = getClass().getResourceAsStream("/defaults/factory_default.zip")) {
@@ -606,13 +607,13 @@ public class DatabaseInitializer {
       List<Track> tracks = trackRepo.findAll();
       Track track = tracks.isEmpty() ? null : tracks.get(0);
       if (track != null) {
-        if (!hasFuelRace) {
+        if (!hasFuelRace && !context.isDefaultArtifactDeleted("race", "Fuel Race")) {
           Race fuelRace =
               createDefaultFuelRace(track.getEntityId(), context.getNextSequence("races"));
           raceRepo.save(fuelRace);
           logger.info("Backfilled Fuel Race to database.");
         }
-        if (!hasPractice) {
+        if (!hasPractice && !context.isDefaultArtifactDeleted("race", "Practice")) {
           Race practiceRace =
               createDefaultPracticeRace(track.getEntityId(), context.getNextSequence("races"));
           raceRepo.save(practiceRace);
@@ -630,15 +631,15 @@ public class DatabaseInitializer {
     for (CustomUI ui : uis) {
       backfillSingleCustomUi(ui, uiRepo, foundFlags);
     }
-    if (!foundFlags[0]) {
+    if (!foundFlags[0] && !context.isDefaultArtifactDeleted("custom_ui", CustomUI.DEFAULT_UI_ID)) {
       uiRepo.save(CustomUI.createDefault());
       logger.info("Backfilled default custom UI with ID {}", CustomUI.DEFAULT_UI_ID);
     }
-    if (!foundFlags[1]) {
+    if (!foundFlags[1] && !context.isDefaultArtifactDeleted("custom_ui", CustomUI.PRACTICE_UI_ID)) {
       uiRepo.save(CustomUI.createPractice());
       logger.info("Backfilled practice custom UI with ID {}", CustomUI.PRACTICE_UI_ID);
     }
-    if (!foundFlags[2]) {
+    if (!foundFlags[2] && !context.isDefaultArtifactDeleted("custom_ui", CustomUI.FUEL_UI_ID)) {
       uiRepo.save(CustomUI.createFuel());
       logger.info("Backfilled fuel custom UI with ID {}", CustomUI.FUEL_UI_ID);
     }
