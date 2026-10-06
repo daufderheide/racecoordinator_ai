@@ -126,6 +126,9 @@ public class Race implements ProtocolListener {
     this.historyRecordId = builder.historyRecordId;
     this.drivers = builder.drivers != null ? new ArrayList<>(builder.drivers) : new ArrayList<>();
     this.databaseContext = builder.databaseContext;
+    if (this.theme != null && this.databaseContext != null) {
+      this.theme.prewarmFlagCache(this.databaseContext);
+    }
     this.customRotations =
         builder.customRotations != null
             ? new ArrayList<>(builder.customRotations)
@@ -431,6 +434,9 @@ public class Race implements ProtocolListener {
 
   public synchronized void setTheme(Theme theme) {
     this.theme = theme;
+    if (this.theme != null && this.databaseContext != null) {
+      this.theme.prewarmFlagCache(this.databaseContext);
+    }
     syncRaceState();
   }
 

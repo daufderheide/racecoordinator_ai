@@ -30,6 +30,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,6 +46,9 @@ public class HeatExecutionManager {
             t.setDaemon(true);
             return t;
           });
+  private static final AtomicReference<PendingPredictionData> pendingPrediction =
+      new AtomicReference<>();
+  private static final AtomicBoolean predictionScheduled = new AtomicBoolean(false);
   private Race race;
 
   // Transient heat execution state
@@ -78,6 +84,8 @@ public class HeatExecutionManager {
 
   public void initialize(int laneCount) {
     this.finishedLanes.clear();
+    pendingPrediction.set(null);
+    predictionScheduled.set(false);
     this.refuelDelayRemaining = new double[laneCount];
     this.isRefueling = new boolean[laneCount];
     this.accumulatedRefuelTime = new double[laneCount];
@@ -1361,19 +1369,91 @@ public class HeatExecutionManager {
       com.antigravity.models.Race raceModel = this.race.getRaceModel(); // fqn-collision
       List<RaceParticipant> drivers = new ArrayList<>(this.race.getDrivers());
       boolean demoMode = this.race.isDemoMode();
-      RacePredictionService predictionService = RacePredictionService.getInstance();
 
-      predictionExecutor.submit(
-          () -> {
-            try {
-              predictionService.updateRealtimePrediction(
-                  dbCtx, raceId, raceModel, drivers, heats, heatIdx, actualDriverStates, demoMode);
-            } catch (Exception e) {
-              logger.error("Error updating realtime prediction on lap in background", e);
-            }
-          });
+      RacePredictionService predictionService = RacePredictionService.getInstance();
+      PendingPredictionData data =
+          new PendingPredictionData(
+              predictionService,
+              dbCtx,
+              raceId,
+              raceModel,
+              drivers,
+              heats,
+              heatIdx,
+              actualDriverStates,
+              demoMode);
+      pendingPrediction.set(data);
+
+      if (predictionScheduled.compareAndSet(false, true)) {
+        predictionExecutor.submit(HeatExecutionManager::processPendingPrediction);
+      }
     } catch (Exception e) {
       logger.error("Error updating realtime prediction on lap", e);
+    }
+  }
+
+  private static void processPendingPrediction() {
+    PendingPredictionData data = pendingPrediction.getAndSet(null);
+    predictionScheduled.set(false);
+    if (data != null) {
+      try {
+        data.predictionService.updateRealtimePrediction(
+            data.dbCtx,
+            data.raceId,
+            data.raceModel,
+            data.drivers,
+            data.heats,
+            data.heatIdx,
+            data.actualDriverStates,
+            data.demoMode);
+      } catch (Exception e) {
+        logger.error("Error updating realtime prediction on lap in background", e);
+      }
+    }
+    if (pendingPrediction.get() != null && predictionScheduled.compareAndSet(false, true)) {
+      predictionExecutor.submit(HeatExecutionManager::processPendingPrediction);
+    }
+  }
+
+  public static void flushPredictions() {
+    try {
+      for (int i = 0; i < 2; i++) {
+        predictionExecutor.submit(() -> {}).get(2, TimeUnit.SECONDS);
+      }
+    } catch (Exception ignored) {
+    }
+  }
+
+  private static class PendingPredictionData {
+    final RacePredictionService predictionService;
+    final DatabaseContext dbCtx;
+    final String raceId;
+    final com.antigravity.models.Race raceModel; // fqn-collision
+    final List<RaceParticipant> drivers;
+    final List<Heat> heats;
+    final int heatIdx;
+    final Map<String, DriverHeatState> actualDriverStates;
+    final boolean demoMode;
+
+    PendingPredictionData(
+        RacePredictionService predictionService,
+        DatabaseContext dbCtx,
+        String raceId,
+        com.antigravity.models.Race raceModel, // fqn-collision
+        List<RaceParticipant> drivers,
+        List<Heat> heats,
+        int heatIdx,
+        Map<String, DriverHeatState> actualDriverStates,
+        boolean demoMode) {
+      this.predictionService = predictionService;
+      this.dbCtx = dbCtx;
+      this.raceId = raceId;
+      this.raceModel = raceModel;
+      this.drivers = drivers;
+      this.heats = heats;
+      this.heatIdx = heatIdx;
+      this.actualDriverStates = actualDriverStates;
+      this.demoMode = demoMode;
     }
   }
 }

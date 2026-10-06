@@ -1887,7 +1887,7 @@ describe("DefaultRacedaySetupComponent", () => {
 
     it("should correctly return theme display name in getThemeDisplay", () => {
       const themeService = TestBed.inject(ThemeService);
-      spyOn(themeService, "getThemes").and.returnValue([
+      const getThemesSpy = spyOn(themeService, "getThemes").and.returnValue([
         { entity_id: "default_classic_rc_ai", name: "Default Theme" } as any,
         { entity_id: "practice_theme_rc_ai", name: "Practice Theme" } as any,
         { entity_id: "default_fuel_theme_rc_ai", name: "Fuel Theme" } as any,
@@ -1907,6 +1907,28 @@ describe("DefaultRacedaySetupComponent", () => {
         "Custom Theme",
       );
       expect(component.getThemeDisplay({})).toBe("UE_LABEL_DEFAULT_THEME");
+
+      // Verify renamed default themes (e.g. renamed "RaceCoordinator AI" to "Fixed Distance")
+      getThemesSpy.and.returnValue([
+        {
+          entity_id: "default_classic_rc_ai",
+          name: "Fixed Distance",
+          is_default: true,
+        } as any,
+        { entity_id: "practice_theme_rc_ai", name: "My Practice" } as any,
+        { entity_id: "default_fuel_theme_rc_ai", name: "My Fuel" } as any,
+      ]);
+
+      expect(
+        component.getThemeDisplay({ theme_id: "default_classic_rc_ai" }),
+      ).toBe("Fixed Distance");
+      expect(
+        component.getThemeDisplay({ theme_id: "practice_theme_rc_ai" }),
+      ).toBe("My Practice");
+      expect(
+        component.getThemeDisplay({ theme_id: "default_fuel_theme_rc_ai" }),
+      ).toBe("My Fuel");
+      expect(component.getThemeDisplay({})).toBe("Fixed Distance");
     });
 
     it("should update recentRaceIds and quickStartRaces when an event is started", fakeAsync(() => {

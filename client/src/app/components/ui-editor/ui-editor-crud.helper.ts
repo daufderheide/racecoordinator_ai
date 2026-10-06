@@ -83,8 +83,10 @@ export function getCustomUiDisplayNameKey(
   ui: CustomUI,
   translationService?: TranslationService,
 ): string {
+  if (!ui) return "";
   const nameNorm = (ui.name || "").trim().toLowerCase();
-  if (ui.entity_id === "default_ui_layout_rc_ai") {
+  const entityId = ui.entity_id || (ui as any)?.id || (ui as any)?._id;
+  if (entityId === "default_ui_layout_rc_ai") {
     const translated = translationService
       ?.translate("UE_LABEL_DEFAULT_RACEDAY_UI")
       ?.trim()
@@ -95,9 +97,9 @@ export function getCustomUiDisplayNameKey(
     ) {
       return "UE_LABEL_DEFAULT_RACEDAY_UI";
     }
-    return ui.name;
+    return ui.name || "";
   }
-  if (ui.entity_id === "practice_ui_layout_rc_ai") {
+  if (entityId === "practice_ui_layout_rc_ai") {
     const translated = translationService
       ?.translate("UE_LABEL_DEFAULT_PRACTICE_UI")
       ?.trim()
@@ -108,9 +110,9 @@ export function getCustomUiDisplayNameKey(
     ) {
       return "UE_LABEL_DEFAULT_PRACTICE_UI";
     }
-    return ui.name;
+    return ui.name || "";
   }
-  if (ui.entity_id === "default_fuel_ui_layout_rc_ai") {
+  if (entityId === "default_fuel_ui_layout_rc_ai") {
     const translated = translationService
       ?.translate("UE_LABEL_DEFAULT_FUEL_UI")
       ?.trim()
@@ -121,7 +123,7 @@ export function getCustomUiDisplayNameKey(
     ) {
       return "UE_LABEL_DEFAULT_FUEL_UI";
     }
-    return ui.name;
+    return ui.name || "";
   }
   return ui.name || "UE_LABEL_DEFAULT_UI";
 }
@@ -152,8 +154,10 @@ export function getThemeDisplayNameKey(
   theme: Theme,
   translationService?: TranslationService,
 ): string {
+  if (!theme) return "";
   const nameNorm = (theme.name || "").trim().toLowerCase();
-  if (theme.entity_id === "practice_theme_rc_ai") {
+  const entityId = theme.entity_id || (theme as any)?.id || (theme as any)?._id;
+  if (entityId === "practice_theme_rc_ai") {
     const translated = translationService
       ?.translate("UE_LABEL_PRACTICE_THEME")
       ?.trim()
@@ -164,9 +168,9 @@ export function getThemeDisplayNameKey(
     ) {
       return "UE_LABEL_PRACTICE_THEME";
     }
-    return theme.name;
+    return theme.name || "";
   }
-  if (theme.entity_id === "default_fuel_theme_rc_ai") {
+  if (entityId === "default_fuel_theme_rc_ai") {
     const translated = translationService
       ?.translate("UE_LABEL_FUEL_THEME")
       ?.trim()
@@ -177,9 +181,9 @@ export function getThemeDisplayNameKey(
     ) {
       return "UE_LABEL_FUEL_THEME";
     }
-    return theme.name;
+    return theme.name || "";
   }
-  if (theme.is_default || theme.entity_id === "default_classic_rc_ai") {
+  if (theme.is_default || entityId === "default_classic_rc_ai") {
     const translated = translationService
       ?.translate("UE_LABEL_DEFAULT_THEME")
       ?.trim()
@@ -190,9 +194,9 @@ export function getThemeDisplayNameKey(
     ) {
       return "UE_LABEL_DEFAULT_THEME";
     }
-    return theme.name;
+    return theme.name || "";
   }
-  return theme.name;
+  return theme.name || entityId || "";
 }
 
 export function isThemeDefault(theme: Theme): boolean {
