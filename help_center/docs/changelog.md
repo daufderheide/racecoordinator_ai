@@ -1,6 +1,6 @@
 # Changelog
 
-## [v1.0.1-beta.16] - 2026-10-06
+## [v1.0.1-beta.17] - 2026-10-06
 
 ### 🚀 New Features
 
@@ -12,6 +12,8 @@
 
 ### 🐛 Bug Fixes
 
+- Fixed renaming default theme/layouts and the names displayed in places like the race summary on the raceday setup page. [#930](https://github.com/daufderheide/racecoordinator_ai/issues/930) [skip-screendiffs] ([968ee365](https://github.com/daufderheide/racecoordinator_ai/commit/968ee365))
+- prevent backfilling deleted default themes, layouts, and races [#933](https://github.com/daufderheide/racecoordinator_ai/issues/933) [skip-screendiffs] ([11f98fe8](https://github.com/daufderheide/racecoordinator_ai/commit/11f98fe8))
 - handle drift laps and pending times correctly during heat transitions [#929](https://github.com/daufderheide/racecoordinator_ai/issues/929) ([dcb77006](https://github.com/daufderheide/racecoordinator_ai/commit/dcb77006))
 - **heat-list**: Updated the Heat Columns 'Auto (Responsive)' option including the default heat list widget configuration to fit names and columns better into the layout. [#916](https://github.com/daufderheide/racecoordinator_ai/issues/916) ([94af8398](https://github.com/daufderheide/racecoordinator_ai/commit/94af8398))
 - select next driver after adding or removing via keyboard navigation on raceday setup [#912](https://github.com/daufderheide/racecoordinator_ai/issues/912) ([3395e6f7](https://github.com/daufderheide/racecoordinator_ai/commit/3395e6f7))
@@ -42,6 +44,7 @@
 
 ### ⚡ Improvements & Refactoring
 
+- **race**: coalesce realtime prediction updates and prewarm theme flags [skip-screendiff] ([acb86c69](https://github.com/daufderheide/racecoordinator_ai/commit/acb86c69))
 - optimize startup backfills, ticker delay calculations, and audio abort handling [skip-screendiff] ([90fed865](https://github.com/daufderheide/racecoordinator_ai/commit/90fed865))
 - standardize hardware and demo protocol schedulers to named daemon threads [skip-screendiffs] ([68e59442](https://github.com/daufderheide/racecoordinator_ai/commit/68e59442))
 - deduplicate pre-race prediction simulations and make lane QR codes lazy [skip-screendiffs] ([f38eb9cb](https://github.com/daufderheide/racecoordinator_ai/commit/f38eb9cb))
@@ -55,7 +58,7 @@
 <details>
 <summary>🔍 <b>Full Commit History</b></summary>
 
-<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0...v1.0.1-beta.16">GitHub</a></p>
+<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0...v1.0.1-beta.17">GitHub</a></p>
 </details>
 
 ## [v1.0.0] - 2026-09-27
