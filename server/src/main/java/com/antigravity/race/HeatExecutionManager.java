@@ -298,10 +298,14 @@ public class HeatExecutionManager {
           || allowFinish == AllowFinish.NoneAutoSegments
           || finishedLanes.size() >= race.getCurrentHeat().getActiveDriverCount()) {
         // Heat ends
-        if (race.isLastHeat()) {
-          race.changeState(new RaceOver());
-        } else {
-          race.changeState(new HeatOver());
+        if (race.getState() != null
+            && !(race.getState() instanceof HeatOver)
+            && !(race.getState() instanceof RaceOver)) {
+          if (race.isLastHeat()) {
+            race.changeState(new RaceOver());
+          } else {
+            race.changeState(new HeatOver());
+          }
         }
       } else {
         // Other drivers still racing so turn off power to this lane
@@ -371,8 +375,12 @@ public class HeatExecutionManager {
 
     if (lapCounted) {
       timeSinceLastLap[lane] = 0.0;
-      if (isDrift && this.race.getStatistics() != null) {
-        this.race.getStatistics().incrementDriftLapCount();
+      driverData.setCarryOverTime(0.0);
+      if (isDrift) {
+        driverData.setAutoCalculatedLaps(0.0);
+        if (this.race.getStatistics() != null) {
+          this.race.getStatistics().incrementDriftLapCount();
+        }
       }
     }
 
@@ -1255,10 +1263,14 @@ public class HeatExecutionManager {
     this.race.broadcast(finishDataBuilder.build());
 
     if (finishedLanes.size() >= race.getCurrentHeat().getActiveDriverCount()) {
-      if (race.isLastHeat()) {
-        race.changeState(new RaceOver());
-      } else {
-        race.changeState(new HeatOver());
+      if (race.getState() != null
+          && !(race.getState() instanceof HeatOver)
+          && !(race.getState() instanceof RaceOver)) {
+        if (race.isLastHeat()) {
+          race.changeState(new RaceOver());
+        } else {
+          race.changeState(new HeatOver());
+        }
       }
     }
   }

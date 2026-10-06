@@ -106,6 +106,7 @@ public class HeatOverTest {
 
     org.junit.Assert.assertTrue(result);
     verify(hem).onLap(0, 5.0, 1, false, true, true);
+    verify(race).updateAndBroadcastOverallStandings();
     verify(race).updateScoreRecords();
     verify(race, org.mockito.Mockito.atLeastOnce())
         .broadcast(org.mockito.ArgumentMatchers.any(com.antigravity.proto.RaceData.class));
