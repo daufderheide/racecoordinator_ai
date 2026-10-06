@@ -34,6 +34,7 @@ import { RaceHistoryDialogComponent } from "@app/components/shared/race-history-
 import { RacingRosterDialogComponent } from "@app/components/shared/racing-roster-dialog/racing-roster-dialog.component";
 import { SeasonSummaryComponent } from "@app/components/shared/season-summary/season-summary.component";
 import { UpdateSelectorComponent } from "@app/components/shared/update-selector/update-selector.component";
+import { getThemeDisplayNameKey } from "@app/components/ui-editor/ui-editor-crud.helper";
 import { DriverConverter } from "@app/converters/driver.converter";
 import { DataService } from "@app/data.service";
 import { Driver } from "@app/models/driver";
@@ -2261,33 +2262,16 @@ export class DefaultRacedaySetupComponent implements OnInit {
 
   getThemeDisplayNameKey(theme: any): string {
     if (!theme) return "";
-    if (
-      theme.entity_id === "default_classic_rc_ai" ||
-      theme.id === "default_classic_rc_ai" ||
-      theme._id === "default_classic_rc_ai"
-    ) {
-      return "UE_LABEL_DEFAULT_THEME";
-    }
-    if (
-      theme.entity_id === "practice_theme_rc_ai" ||
-      theme.id === "practice_theme_rc_ai" ||
-      theme._id === "practice_theme_rc_ai"
-    ) {
-      return "UE_LABEL_PRACTICE_THEME";
-    }
-    if (
-      theme.entity_id === "default_fuel_theme_rc_ai" ||
-      theme.id === "default_fuel_theme_rc_ai" ||
-      theme._id === "default_fuel_theme_rc_ai"
-    ) {
-      return "UE_LABEL_FUEL_THEME";
-    }
-    return theme.name || theme.entity_id || "";
+    return getThemeDisplayNameKey(theme, this.translationService);
   }
 
   getThemeDisplay(race: any): string {
-    const themeId = race?.theme_id || "default_classic_rc_ai";
     const themes = this.themeService.getThemes() || [];
+    const defaultTheme = themes.find(
+      (t) => t.is_default || t.entity_id === "default_classic_rc_ai",
+    );
+    const themeId =
+      race?.theme_id || defaultTheme?.entity_id || "default_classic_rc_ai";
     const theme = themes.find(
       (t) => (t.entity_id || (t as any).id || (t as any)._id) === themeId,
     );
