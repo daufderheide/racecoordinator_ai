@@ -90,6 +90,7 @@ export interface LaneColumnWidgetSettings {
   timeDecimalPlaces: number;
   lapDecimalPlaces: number;
   columnDecimals?: Record<string, number>;
+  onlyShowDecimalsIfSegments?: boolean;
   useLaneColors: boolean;
   insets?: Record<string, string>;
   insetFontFamily?: string;
@@ -247,6 +248,7 @@ export class Settings {
     ghostPacingLeaderAvg: 200,
     averageLapTime: 310,
   };
+  columnOnlyShowDecimalsIfSegments?: { [columnKey: string]: boolean };
 
   racedayLayout?: LayoutConfig;
 

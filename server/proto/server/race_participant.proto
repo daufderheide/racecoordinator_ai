@@ -38,4 +38,5 @@ message RaceParticipant {
   double average_top15 = 27;
   double top2_consecutive = 28;
   double top3_consecutive = 29;
+  bool has_segments = 30;
 }

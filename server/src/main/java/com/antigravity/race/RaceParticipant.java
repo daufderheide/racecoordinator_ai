@@ -31,6 +31,7 @@ public class RaceParticipant extends ServerToClientObject
   private int lapsDownLeader;
   private int lapsDownPosition;
   private List<Double> allScoringLaps;
+  private boolean hasSegments;
 
   public RaceParticipant(Driver driver) {
     super();
@@ -494,6 +495,18 @@ public class RaceParticipant extends ServerToClientObject
   public void setHeatBonusBreakdown(java.util.Map<String, Double> heatBonusBreakdown) {
     this.heatBonusBreakdown =
         heatBonusBreakdown != null ? heatBonusBreakdown : new java.util.HashMap<>();
+  }
+
+  public boolean hasSegments() {
+    return hasSegments;
+  }
+
+  public boolean isHasSegments() {
+    return hasSegments;
+  }
+
+  public void setHasSegments(boolean hasSegments) {
+    this.hasSegments = hasSegments;
   }
 
   @Override

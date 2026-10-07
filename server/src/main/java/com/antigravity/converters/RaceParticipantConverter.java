@@ -55,6 +55,7 @@ public class RaceParticipantConverter {
         .setAverageTop15(participant.getAverageTop15())
         .setTop2Consecutive(participant.getTop2Consecutive())
         .setTop3Consecutive(participant.getTop3Consecutive())
+        .setHasSegments(participant.hasSegments())
         .build();
   }
 }

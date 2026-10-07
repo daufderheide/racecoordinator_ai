@@ -1590,6 +1590,18 @@
   font-size: 18px;
 }
 
+.col-segments-toggle-row {
+  margin-top: 4px;
+}
+
+.col-segments-toggle-row .inspector-checkbox-label {
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: none;
+  color: #475569;
+  letter-spacing: normal;
+}
+
 .timer-preview-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;

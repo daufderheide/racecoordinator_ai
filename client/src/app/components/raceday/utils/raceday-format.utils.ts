@@ -420,7 +420,7 @@ export class RacedayFormatUtils {
         : ctx.laneViewWidgetSettings?.timeDecimalPlaces !== undefined
           ? Number(ctx.laneViewWidgetSettings.timeDecimalPlaces)
           : 3;
-    const lapDecimals = isInset
+    let lapDecimals = isInset
       ? ctx.laneViewWidgetSettings?.insetLapDecimalPlaces !== undefined
         ? Number(ctx.laneViewWidgetSettings.insetLapDecimalPlaces)
         : 2
@@ -431,6 +431,38 @@ export class RacedayFormatUtils {
         : ctx.laneViewWidgetSettings?.lapDecimalPlaces !== undefined
           ? Number(ctx.laneViewWidgetSettings.lapDecimalPlaces)
           : 2;
+
+    const onlyShowDecimalsIfSegments =
+      ctx.laneViewWidgetSettings?.onlyShowDecimalsIfSegments ??
+      ctx.laneViewWidgetSettings?.columnOnlyShowDecimalsIfSegments?.[
+        column?.propertyName ?? ""
+      ] ??
+      ctx.laneViewWidgetSettings?.columnOnlyShowDecimalsIfSegments?.[colKey] ??
+      ctx.laneViewWidgetSettings?.columnOnlyShowDecimalsIfSegments?.[baseKey] ??
+      false;
+
+    if (onlyShowDecimalsIfSegments) {
+      if (baseKey === "lapCount") {
+        const hasSegs =
+          hd?.hasSegments ??
+          ((hd?.userLaps !== undefined && hd.userLaps !== 0) ||
+            (hd?.autoCalculatedLaps !== undefined &&
+              hd.autoCalculatedLaps !== 0));
+        if (!hasSegs) {
+          lapDecimals = 0;
+        }
+      } else if (baseKey === "overallLapCount") {
+        const hasSegs =
+          hd?.participant?.hasSegments ??
+          hd?.hasSegments ??
+          ((hd?.userLaps !== undefined && hd.userLaps !== 0) ||
+            (hd?.autoCalculatedLaps !== undefined &&
+              hd.autoCalculatedLaps !== 0));
+        if (!hasSegs) {
+          lapDecimals = 0;
+        }
+      }
+    }
 
     const timePlaceholder =
       timeDecimals > 0 ? "--." + "-".repeat(timeDecimals) : "--";

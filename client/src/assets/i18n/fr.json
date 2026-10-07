@@ -2232,6 +2232,7 @@
   "UE_INSPECTOR_COUNTDOWN_SIZING_MODE": "Mode de mise à l'échelle des feux",
   "UE_INSPECTOR_CUSTOM_PROPERTIES": "Propriétés personnalisées",
   "UE_INSPECTOR_DECIMAL_PLACES": "Décimales",
+  "UE_INSPECTOR_ONLY_SHOW_DECIMALS_IF_SEGMENTS": "Afficher les décimales uniquement lorsque des segments sont ajoutés",
   "UE_INSPECTOR_FONT_COURIER": "Courier (Monospace)",
   "UE_INSPECTOR_FONT_FAMILY": "Famille de Polices",
   "UE_INSPECTOR_FONT_GEORGIA": "Georgia (Classique)",

@@ -258,11 +258,15 @@ public class OverallStandings {
     double bestTop3Consecutive = Double.MAX_VALUE;
 
     List<Double> allScoringLaps = new ArrayList<>();
+    boolean hasSegments = false;
     for (DriverHeatData dhd : scoringHeats) {
       totalLaps += dhd.getAdjustedLapCount();
       totalTime += dhd.getTotalTime();
       totalLapsLed += dhd.getLapsLed();
       totalTrackCalls += dhd.getTrackCalls();
+      if (dhd.getUserLaps() != 0.0 || dhd.getAutoCalculatedLaps() != 0.0) {
+        hasSegments = true;
+      }
 
       if (dhd.getBestLapTime() > 0 && dhd.getBestLapTime() < bestLap) {
         bestLap = dhd.getBestLapTime();
@@ -292,6 +296,7 @@ public class OverallStandings {
     driver.setTrackCalls(totalTrackCalls);
     driver.setTop2Consecutive(bestTop2Consecutive == Double.MAX_VALUE ? 0.0 : bestTop2Consecutive);
     driver.setTop3Consecutive(bestTop3Consecutive == Double.MAX_VALUE ? 0.0 : bestTop3Consecutive);
+    driver.setHasSegments(hasSegments);
 
     if (!allScoringLaps.isEmpty()) {
       double sum = 0;

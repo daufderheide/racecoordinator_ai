@@ -535,4 +535,70 @@ describe("LaneColumnInspectorComponent", () => {
       expect(component.change.emit).toHaveBeenCalled();
     });
   });
+
+  describe("onlyShowDecimalsIfSegments", () => {
+    it("should return true for isLapColumn when columnKey is lapCount or overallLapCount", () => {
+      component.currentSettings["columnKey"] = "lapCount";
+      expect(component.isLapColumn).toBeTrue();
+
+      component.currentSettings["columnKey"] = "overallLapCount";
+      expect(component.isLapColumn).toBeTrue();
+
+      component.currentSettings["columnKey"] = "lastLapTime";
+      expect(component.isLapColumn).toBeFalse();
+    });
+
+    it("should render onlyShowDecimalsIfSegments checkbox when column is lapCount", () => {
+      mockSettings.columnKey = "lapCount";
+      fixture.detectChanges();
+
+      const allCheckboxes = fixture.nativeElement.querySelectorAll(
+        'input[type="checkbox"]',
+      );
+      const segmentCheckbox = Array.from(allCheckboxes).find((el: any) =>
+        el.parentElement?.textContent?.includes(
+          "UE_INSPECTOR_ONLY_SHOW_DECIMALS_IF_SEGMENTS",
+        ),
+      );
+      expect(segmentCheckbox).toBeTruthy();
+    });
+
+    it("should not render onlyShowDecimalsIfSegments checkbox when column is lastLapTime", () => {
+      mockSettings.columnKey = "lastLapTime";
+      fixture.detectChanges();
+
+      const allCheckboxes = fixture.nativeElement.querySelectorAll(
+        'input[type="checkbox"]',
+      );
+      const segmentCheckbox = Array.from(allCheckboxes).find((el: any) =>
+        el.parentElement?.textContent?.includes(
+          "UE_INSPECTOR_ONLY_SHOW_DECIMALS_IF_SEGMENTS",
+        ),
+      );
+      expect(segmentCheckbox).toBeFalsy();
+    });
+
+    it("should toggle onlyShowDecimalsIfSegments and emit change", () => {
+      spyOn(component.change, "emit");
+      mockSettings.columnKey = "lapCount";
+      mockSettings.onlyShowDecimalsIfSegments = false;
+      fixture.detectChanges();
+
+      const allCheckboxes = fixture.nativeElement.querySelectorAll(
+        'input[type="checkbox"]',
+      );
+      const segmentCheckbox: any = Array.from(allCheckboxes).find((el: any) =>
+        el.parentElement?.textContent?.includes(
+          "UE_INSPECTOR_ONLY_SHOW_DECIMALS_IF_SEGMENTS",
+        ),
+      );
+      expect(segmentCheckbox).toBeTruthy();
+
+      segmentCheckbox.checked = true;
+      segmentCheckbox.dispatchEvent(new Event("change"));
+      fixture.detectChanges();
+
+      expect(component.change.emit).toHaveBeenCalled();
+    });
+  });
 });

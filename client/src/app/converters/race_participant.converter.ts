@@ -64,6 +64,7 @@ export class RaceParticipantConverter {
         proto.averageTop15 || 0,
         proto.top2Consecutive || 0,
         proto.top3Consecutive || 0,
+        proto.hasSegments || false,
       );
     });
   }
@@ -130,6 +131,8 @@ export class RaceParticipantConverter {
       cached.top2Consecutive = proto.top2Consecutive;
     if (proto.top3Consecutive !== undefined && proto.top3Consecutive !== null)
       cached.top3Consecutive = proto.top3Consecutive;
+    if (proto.hasSegments !== undefined && proto.hasSegments !== null)
+      cached.hasSegments = proto.hasSegments;
 
     if (proto.team) {
       cached.team = TeamConverter.fromProto(proto.team);

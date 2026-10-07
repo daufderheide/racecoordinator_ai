@@ -2232,6 +2232,7 @@
   "UE_INSPECTOR_COUNTDOWN_SIZING_MODE": "Lamp schalingsmodus",
   "UE_INSPECTOR_CUSTOM_PROPERTIES": "Aangepaste eigenschappen",
   "UE_INSPECTOR_DECIMAL_PLACES": "Decimalen",
+  "UE_INSPECTOR_ONLY_SHOW_DECIMALS_IF_SEGMENTS": "Decimalen alleen weergeven wanneer segmenten zijn toegevoegd",
   "UE_INSPECTOR_FONT_COURIER": "Courier (Monospace)",
   "UE_INSPECTOR_FONT_FAMILY": "Lettertypefamilie",
   "UE_INSPECTOR_FONT_GEORGIA": "Georgia (Klassiek)",

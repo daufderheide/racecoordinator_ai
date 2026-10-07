@@ -552,6 +552,22 @@
       </app-custom-select>
     </div>
   </div>
+
+  @if (isLapColumn) {
+    <div class="inspector-section">
+      <label class="form-check-label">
+        <input
+          type="checkbox"
+          class="form-checkbox"
+          [(ngModel)]="currentSettings['onlyShowDecimalsIfSegments']"
+          (change)="onFieldChange()"
+        />
+        <span>{{
+          "UE_INSPECTOR_ONLY_SHOW_DECIMALS_IF_SEGMENTS" | translate
+        }}</span>
+      </label>
+    </div>
+  }
 }
 
 <hr class="inspector-divider" />

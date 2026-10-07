@@ -36,6 +36,7 @@ export class RaceParticipant {
     public averageTop15: number = 0,
     public top2Consecutive: number = 0,
     public top3Consecutive: number = 0,
+    public hasSegments?: boolean,
   ) {
     this.driver = driver;
     this.objectId = objectId;

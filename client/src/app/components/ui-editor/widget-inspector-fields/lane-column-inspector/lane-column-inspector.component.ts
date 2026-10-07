@@ -72,6 +72,12 @@ export class LaneColumnInspectorComponent {
     );
   }
 
+  get isLapColumn(): boolean {
+    return RacedayLayoutUtils.isLapColumnKey(
+      this.currentSettings["columnKey"] || "",
+    );
+  }
+
   onFieldChange(): void {
     if (this.currentSettings["timeDecimalPlaces"] !== undefined) {
       this.currentSettings["timeDecimalPlaces"] = Math.min(

@@ -62,10 +62,12 @@ public class RaceParticipantConverterTest {
     participant.setAverageTop15(11.8);
     participant.setTop2Consecutive(21.0);
     participant.setTop3Consecutive(33.0);
+    participant.setHasSegments(true);
 
     RaceParticipant proto = RaceParticipantConverter.toProto(participant, new HashSet<>());
 
     assertNotNull(proto);
+    assertEquals(true, proto.getHasSegments());
     assertEquals(3, proto.getPhysicalLapCount());
     assertEquals(5, proto.getLapsLed());
     assertEquals(2, proto.getTrackCalls());
