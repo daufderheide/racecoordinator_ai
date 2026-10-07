@@ -401,8 +401,8 @@ public class HeatStandingsTest {
     DriverHeatData d2 = new DriverHeatData(p2);
 
     List<DriverHeatData> data = new ArrayList<>();
-    data.add(d2); // empty lane first
-    data.add(d1); // real driver second
+    data.add(d2); // empty lane first (lane 0)
+    data.add(d1); // real driver second (lane 1)
 
     HeatStandings standings =
         new HeatStandings(
@@ -411,16 +411,142 @@ public class HeatStandingsTest {
                 FinishMethod.Lap, 0, HeatRanking.LAP_COUNT, HeatRankingTiebreaker.FASTEST_LAP_TIME),
             false);
 
-    // Initial state set by constructor calculateStandings
+    // Initial state at heat start must be lane order (empty lane in lane 0 is first)
     List<String> results = standings.getStandings();
-    assertEquals(d1.getObjectId(), results.get(0));
-    assertEquals(d2.getObjectId(), results.get(1));
+    assertEquals(d2.getObjectId(), results.get(0));
+    assertEquals(d1.getObjectId(), results.get(1));
 
-    // Resetting should maintain the same sorted order (empty lane last)
+    // Resetting at heat start maintains lane order
     standings.reset();
+    results = standings.getStandings();
+    assertEquals(d2.getObjectId(), results.get(0));
+    assertEquals(d1.getObjectId(), results.get(1));
+
+    // Once racing begins and a real driver completes a lap, empty lanes sort to bottom
+    d1.addLap(10.0, false, true);
+    standings.updateStandings();
     results = standings.getStandings();
     assertEquals(d1.getObjectId(), results.get(0));
     assertEquals(d2.getObjectId(), results.get(1));
+  }
+
+  @Test
+  public void testHeatStartStandingsAreInLaneOrderRegardlessOfSeed() {
+    RaceParticipant p1 = createDriver("p1");
+    p1.setSeed(10); // Lane 0, high seed
+    RaceParticipant p2 = createDriver("p2");
+    p2.setSeed(1); // Lane 1, lowest seed (would rank 1st under tiebreaker)
+    RaceParticipant p3 = createDriver("p3");
+    p3.setSeed(5); // Lane 2, middle seed
+
+    DriverHeatData d1 = new DriverHeatData(p1);
+    d1.setLane(0);
+    DriverHeatData d2 = new DriverHeatData(p2);
+    d2.setLane(1);
+    DriverHeatData d3 = new DriverHeatData(p3);
+    d3.setLane(2);
+
+    List<DriverHeatData> data = new ArrayList<>();
+    data.add(d1);
+    data.add(d2);
+    data.add(d3);
+
+    HeatStandings standings =
+        new HeatStandings(
+            data,
+            new HeatScoring(
+                FinishMethod.Lap, 0, HeatRanking.LAP_COUNT, HeatRankingTiebreaker.FASTEST_LAP_TIME),
+            false);
+
+    // At heat start, standings must be lane order: 0, 1, 2 regardless of seed
+    List<String> results = standings.getStandings();
+    assertEquals(d1.getObjectId(), results.get(0));
+    assertEquals(d2.getObjectId(), results.get(1));
+    assertEquals(d3.getObjectId(), results.get(2));
+
+    com.antigravity.proto.StandingsUpdate update = standings.updateStandings();
+    assertEquals(1, update.getUpdates(0).getRank());
+    assertEquals(2, update.getUpdates(1).getRank());
+    assertEquals(3, update.getUpdates(2).getRank());
+  }
+
+  @Test
+  public void testHeatStartStandingsWithScrambledInsertionOrder() {
+    RaceParticipant p1 = createDriver("p1");
+    RaceParticipant p2 = createDriver("p2");
+    RaceParticipant p3 = createDriver("p3");
+
+    DriverHeatData d1 = new DriverHeatData(p1);
+    d1.setLane(0);
+    DriverHeatData d2 = new DriverHeatData(p2);
+    d2.setLane(1);
+    DriverHeatData d3 = new DriverHeatData(p3);
+    d3.setLane(2);
+
+    List<DriverHeatData> data = new ArrayList<>();
+    // Add in scrambled lane order: 2, 0, 1
+    data.add(d3);
+    data.add(d1);
+    data.add(d2);
+
+    HeatStandings standings =
+        new HeatStandings(
+            data,
+            new HeatScoring(
+                FinishMethod.Lap, 0, HeatRanking.LAP_COUNT, HeatRankingTiebreaker.FASTEST_LAP_TIME),
+            false);
+
+    // At heat start, standings must be sorted by lane: Lane 0, Lane 1, Lane 2
+    List<String> results = standings.getStandings();
+    assertEquals(d1.getObjectId(), results.get(0));
+    assertEquals(d2.getObjectId(), results.get(1));
+    assertEquals(d3.getObjectId(), results.get(2));
+  }
+
+  @Test
+  public void testLaneOrderDoesNotMatterAfterHeatStart() {
+    RaceParticipant p1 = createDriver("p1");
+    p1.setSeed(10); // Lane 0, Seed 10
+    RaceParticipant p2 = createDriver("p2");
+    p2.setSeed(2); // Lane 1, Seed 2
+    RaceParticipant p3 = createDriver("p3");
+    p3.setSeed(8); // Lane 2, Seed 8
+
+    DriverHeatData d1 = new DriverHeatData(p1);
+    d1.setLane(0);
+    DriverHeatData d2 = new DriverHeatData(p2);
+    d2.setLane(1);
+    DriverHeatData d3 = new DriverHeatData(p3);
+    d3.setLane(2);
+
+    List<DriverHeatData> data = new ArrayList<>();
+    data.add(d1);
+    data.add(d2);
+    data.add(d3);
+
+    HeatStandings standings =
+        new HeatStandings(
+            data,
+            new HeatScoring(
+                FinishMethod.Lap, 0, HeatRanking.LAP_COUNT, HeatRankingTiebreaker.FASTEST_LAP_TIME),
+            false);
+
+    // At heat start: Lane order 0, 1, 2
+    assertEquals(d1.getObjectId(), standings.getStandings().get(0));
+    assertEquals(d2.getObjectId(), standings.getStandings().get(1));
+    assertEquals(d3.getObjectId(), standings.getStandings().get(2));
+
+    // Car on Lane 2 completes a lap: now racing is underway
+    d3.addLap(10.0, false, true);
+    standings.updateStandings();
+
+    // d3 (Lane 2) is 1st because it has 1 lap.
+    // For d1 (Lane 0) and d2 (Lane 1), both have 0 laps. Lane order NO LONGER matters.
+    // Their tiebreaker is Seed: p2 (seed 2) wins over p1 (seed 10), so d2 is 2nd, d1 is 3rd.
+    List<String> racingResults = standings.getStandings();
+    assertEquals(d3.getObjectId(), racingResults.get(0)); // 1 lap
+    assertEquals(d2.getObjectId(), racingResults.get(1)); // 0 laps, Seed 2
+    assertEquals(d1.getObjectId(), racingResults.get(2)); // 0 laps, Seed 10
   }
 
   @Test
