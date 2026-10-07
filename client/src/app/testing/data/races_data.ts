@@ -282,6 +282,7 @@ export const MOCK_RACE_INSTANCES = MOCK_RACES.map((r: any) => {
     },
     r.practice || false,
     r.adjust_drift_laps || false,
+    r.auto_segments_on_pause || false,
     r.theme_id || "default_classic_rc_ai",
     r.season_scoring,
   );

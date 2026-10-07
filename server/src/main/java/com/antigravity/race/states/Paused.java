@@ -1,10 +1,15 @@
 package com.antigravity.race.states;
 
+import com.antigravity.converters.HeatConverter;
+import com.antigravity.models.HeatScoring;
+import com.antigravity.models.HeatScoring.AllowFinish;
 import com.antigravity.proto.RaceData;
 import com.antigravity.proto.RaceFlag;
+import com.antigravity.proto.StandingsUpdate;
 import com.antigravity.protocols.CarData;
 import com.antigravity.race.DriverHeatData;
 import com.antigravity.race.Race;
+import java.util.HashSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,6 +36,10 @@ public class Paused implements IRaceState {
     syncDriverFlags(race);
     race.broadcastTime();
     this.pauseStartTimeMillis = System.currentTimeMillis();
+
+    if (race.getRaceModel() != null && race.getRaceModel().isAutoSegmentsOnPause()) {
+      applyPauseAutoSegments(race);
+    }
   }
 
   @Override
@@ -49,6 +58,9 @@ public class Paused implements IRaceState {
   @Override
   public void start(Race race) {
     logger.info("Paused.start() called. Resuming from Paused state.");
+    if (race.getRaceModel() != null && race.getRaceModel().isAutoSegmentsOnPause()) {
+      removePauseAutoSegments(race);
+    }
     race.changeState(new Starting());
   }
 
@@ -69,6 +81,16 @@ public class Paused implements IRaceState {
   @Override
   public void skipHeat(Race race) {
     logger.info("Paused.skipHeat() called. Skipping current heat and auto-advancing.");
+    if (race.getRaceModel() != null && race.getRaceModel().isAutoSegmentsOnPause()) {
+      HeatScoring scoring = race.getRaceModel().getHeatScoring();
+      boolean isAutoSegmentScoring =
+          scoring != null
+              && (scoring.getAllowFinish() == AllowFinish.NoneAutoSegments
+                  || scoring.getAllowFinish() == AllowFinish.SingleLapAutoSegments);
+      if (!isAutoSegmentScoring) {
+        removePauseAutoSegments(race);
+      }
+    }
     Common.advanceToNextHeat(race);
   }
 
@@ -81,7 +103,17 @@ public class Paused implements IRaceState {
   @Override
   public boolean onLap(int lane, double lapTime, int interfaceId, boolean isDrift) {
     return Common.handleDriftLap(
-        race, pauseStartTimeMillis, "Paused", lane, lapTime, interfaceId, null);
+        race,
+        pauseStartTimeMillis,
+        "Paused",
+        lane,
+        lapTime,
+        interfaceId,
+        () -> {
+          if (race.getRaceModel() != null && race.getRaceModel().isAutoSegmentsOnPause()) {
+            applyPauseAutoSegments(race);
+          }
+        });
   }
 
   @Override
@@ -130,5 +162,47 @@ public class Paused implements IRaceState {
   public void onCallbutton(Race race, int lane) {
     logger.info("Paused.onCallbutton() called. Resuming race.");
     race.startRace();
+  }
+
+  private void applyPauseAutoSegments(Race race) {
+    if (race.getHeatExecutionManager() != null) {
+      race.getHeatExecutionManager().calculateAutoSegments();
+    }
+    StandingsUpdate update = null;
+    if (race.getCurrentHeat() != null && race.getCurrentHeat().getHeatStandings() != null) {
+      update = race.getCurrentHeat().getHeatStandings().updateStandings();
+    }
+    race.recalculateOverallStandings();
+
+    RaceData.Builder broadcastBuilder = RaceData.newBuilder();
+    if (update != null) {
+      broadcastBuilder.setStandingsUpdate(update);
+    }
+    race.populateOverallStandings(broadcastBuilder);
+    if (race.getCurrentHeat() != null) {
+      broadcastBuilder.setHeat(HeatConverter.toProto(race.getCurrentHeat(), new HashSet<>()));
+    }
+    race.broadcast(broadcastBuilder.build());
+  }
+
+  private void removePauseAutoSegments(Race race) {
+    if (race.getHeatExecutionManager() != null) {
+      race.getHeatExecutionManager().removePauseAutoSegments();
+    }
+    StandingsUpdate update = null;
+    if (race.getCurrentHeat() != null && race.getCurrentHeat().getHeatStandings() != null) {
+      update = race.getCurrentHeat().getHeatStandings().updateStandings();
+    }
+    race.recalculateOverallStandings();
+
+    RaceData.Builder broadcastBuilder = RaceData.newBuilder();
+    if (update != null) {
+      broadcastBuilder.setStandingsUpdate(update);
+    }
+    race.populateOverallStandings(broadcastBuilder);
+    if (race.getCurrentHeat() != null) {
+      broadcastBuilder.setHeat(HeatConverter.toProto(race.getCurrentHeat(), new HashSet<>()));
+    }
+    race.broadcast(broadcastBuilder.build());
   }
 }

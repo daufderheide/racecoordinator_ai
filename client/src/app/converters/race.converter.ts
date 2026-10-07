@@ -262,6 +262,7 @@ export class RaceConverter {
             : new GroupOptions(),
           p.practice || false,
           p.adjustDriftLaps ?? p.adjust_drift_laps ?? false,
+          p.autoSegmentsOnPause ?? p.auto_segments_on_pause ?? false,
           p.themeId || p.theme_id || undefined,
         );
       },

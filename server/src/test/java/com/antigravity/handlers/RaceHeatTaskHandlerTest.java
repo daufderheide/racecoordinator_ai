@@ -130,7 +130,7 @@ public class RaceHeatTaskHandlerTest {
       Context ctxCreate = mock(Context.class);
       when(ctxCreate.body())
           .thenReturn(
-              "{\"name\":\"Formula 1\",\"track_entity_id\":\"t1\",\"heat_rotation_type\":\"RoundRobin\",\"theme_id\":\"practice_theme_rc_ai\",\"entity_id\":\"new\"}");
+              "{\"name\":\"Formula 1\",\"track_entity_id\":\"t1\",\"heat_rotation_type\":\"RoundRobin\",\"theme_id\":\"practice_theme_rc_ai\",\"auto_segments_on_pause\":true,\"entity_id\":\"new\"}");
       when(ctxCreate.status(org.mockito.ArgumentMatchers.anyInt())).thenReturn(ctxCreate);
       realHandler.handleCreateRace(ctxCreate);
       verify(ctxCreate).status(201);
@@ -138,6 +138,7 @@ public class RaceHeatTaskHandlerTest {
           new com.antigravity.repository.SqliteRepository<>(dbCtx, "races", Race.class);
       org.junit.Assert.assertEquals(
           "practice_theme_rc_ai", raceRepo.findByEntityId("1").getThemeId());
+      org.junit.Assert.assertTrue(raceRepo.findByEntityId("1").isAutoSegmentsOnPause());
 
       // 3. Get Races
       Context ctxGet = mock(Context.class);
@@ -149,11 +150,12 @@ public class RaceHeatTaskHandlerTest {
       when(ctxUpdate.pathParam("id")).thenReturn("1");
       when(ctxUpdate.body())
           .thenReturn(
-              "{\"name\":\"Formula 1 World Championship\",\"track_entity_id\":\"t1\",\"heat_rotation_type\":\"RoundRobin\",\"theme_id\":\"default_classic_rc_ai\",\"entity_id\":\"1\"}");
+              "{\"name\":\"Formula 1 World Championship\",\"track_entity_id\":\"t1\",\"heat_rotation_type\":\"RoundRobin\",\"theme_id\":\"default_classic_rc_ai\",\"auto_segments_on_pause\":true,\"entity_id\":\"1\"}");
       realHandler.handleUpdateRace(ctxUpdate);
       verify(ctxUpdate).json(org.mockito.ArgumentMatchers.any());
       org.junit.Assert.assertEquals(
           "default_classic_rc_ai", raceRepo.findByEntityId("1").getThemeId());
+      org.junit.Assert.assertTrue(raceRepo.findByEntityId("1").isAutoSegmentsOnPause());
 
       // 5. Generate Heats
       Context ctxGen = mock(Context.class);

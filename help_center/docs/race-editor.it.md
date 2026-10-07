@@ -42,6 +42,7 @@ Lo spazio di lavoro è suddiviso in due pannelli sincronizzati:
     - *Consenti arrivo (un giro)*: I piloti possono completare il giro attuale; il giro viene conteggiato.
     - *Non consentire l'arrivo (segmenti automatici)*: La manche termina subito e la frazione di giro viene calcolata dal tempo trascorso nel giro corrente diviso per il tempo mediano sul giro del pilota (`autoSegments = timeSinceLastLap / medianLapTime`, con limite a 0,99).
     - *Consenti arrivo (un giro) (segmenti automatici)*: I piloti completano il giro in pista; il giro non conta come giro intero, ma la frazione è calcolata dal tempo trascorso prima della fine diviso per il tempo mediano sul giro del pilota (`autoSegments = partialLapTime / medianLapTime`, con limite a 0,99).
+  - **Segmenti automatici in pausa**: Se abilitato, i segmenti automatici dei piloti vengono stimati durante la pausa di una manche utilizzando la stessa formula del tempo sul giro mediano di *Non consentire l'arrivo (segmenti automatici)*. Questi segmenti stimano la posizione sulla pista in cui le vetture si sono fermate e vengono rimossi alla ripresa della gara. Contano per il totale dei giri solo se la manche viene terminata durante la pausa ed è selezionata un'opzione di arrivo con segmenti automatici.
 - **Punteggio Generale**: Metodo di classifica generale, regole di spareggio e manche scartate.
 - **Punteggio Stagionale**: Distribuzione punti per posizione nei campionati.
 

@@ -42,6 +42,7 @@ Der Arbeitsbereich ist in zwei synchronisierte Bereiche unterteilt:
     - *Eine weitere Runde*: Fahrer dürfen ihre aktuelle Runde beenden; diese Runde zählt vollständig.
     - *Zieleinlauf nicht erlauben (Auto-Segmente)*: Lauf endet sofort und die Teilrundengutschrift wird aus der verstrichenen Zeit auf der aktuellen Runde geteilt durch die Median-Rundenzeit des Fahrers berechnet (`autoSegments = timeSinceLastLap / medianLapTime`, maximal 0,99).
     - *Eine weitere Runde (Auto-Segmente)*: Fahrer beenden ihre aktuelle Runde auf der Strecke; die Runde zählt nicht als volle Runde, sondern die Teilrundengutschrift wird aus der Rennzeit vor Laufende geteilt durch die Median-Rundenzeit des Fahrers berechnet (`autoSegments = partialLapTime / medianLapTime`, maximal 0,99).
+  - **Auto-Segmente bei Pause**: Wenn aktiviert, werden Fahrer-Autosegmente beim Pausieren eines Laufs mit derselben Formel wie bei *Zieleinlauf nicht erlauben (Auto-Segmente)* angenähert. Diese Segmente schätzen ab, wo auf der Strecke die Fahrer angehalten haben, und werden beim Fortsetzen des Rennens wieder entfernt. Sie zählen nur dann zum Rundentotal, wenn der Lauf im pausierten Zustand beendet wird und eine Autosegment-Abschlussoption verwendet wird.
 - **Gesamtwertung**: Ranglistenmethode, Tiebreaker-Regeln und Streichergebnisse.
 - **Saisonwertung**: Punkteverteilung pro Position für Meisterschaften.
 

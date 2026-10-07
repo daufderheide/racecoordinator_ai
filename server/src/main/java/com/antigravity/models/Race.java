@@ -126,6 +126,10 @@ public class Race extends Model {
   @JsonAlias("adjustDriftLaps")
   private final boolean adjustDriftLaps;
 
+  @JsonProperty("auto_segments_on_pause")
+  @JsonAlias("autoSegmentsOnPause")
+  private final boolean autoSegmentsOnPause;
+
   @JsonProperty("theme_id")
   @JsonAlias("themeId")
   private final String themeId;
@@ -181,6 +185,8 @@ public class Race extends Model {
           Boolean startBehindSensor,
       @JsonProperty("practice") @JsonAlias("practice") Boolean practice,
       @JsonProperty("adjust_drift_laps") @JsonAlias("adjustDriftLaps") Boolean adjustDriftLaps,
+      @JsonProperty("auto_segments_on_pause") @JsonAlias("autoSegmentsOnPause")
+          Boolean autoSegmentsOnPause,
       @JsonProperty("theme_id") @JsonAlias("themeId") String themeId,
       @JsonProperty("entity_id") String entityId,
       @JsonProperty("_id") String id) {
@@ -224,6 +230,7 @@ public class Race extends Model {
     this.startBehindSensor = startBehindSensor != null ? startBehindSensor : true;
     this.practice = practice != null ? practice : false;
     this.adjustDriftLaps = adjustDriftLaps != null ? adjustDriftLaps : false;
+    this.autoSegmentsOnPause = autoSegmentsOnPause != null ? autoSegmentsOnPause : false;
     this.themeId = themeId != null ? themeId : Theme.DEFAULT_THEME_ID;
   }
 
@@ -263,6 +270,7 @@ public class Race extends Model {
     private boolean startBehindSensor = true;
     private boolean practice = false;
     private boolean adjustDriftLaps = false;
+    private boolean autoSegmentsOnPause = false;
     private String themeId = Theme.DEFAULT_THEME_ID;
     private String entityId;
     private String id;
@@ -302,6 +310,7 @@ public class Race extends Model {
       this.startBehindSensor = other.isStartBehindSensor();
       this.practice = other.isPractice();
       this.adjustDriftLaps = other.isAdjustDriftLaps();
+      this.autoSegmentsOnPause = other.isAutoSegmentsOnPause();
       this.themeId = other.getThemeId();
       this.entityId = other.getEntityId();
       this.id = other.getId();
@@ -478,6 +487,11 @@ public class Race extends Model {
       return this;
     }
 
+    public Builder withAutoSegmentsOnPause(boolean autoSegmentsOnPause) {
+      this.autoSegmentsOnPause = autoSegmentsOnPause;
+      return this;
+    }
+
     public Builder withThemeId(String themeId) {
       this.themeId = themeId;
       return this;
@@ -530,6 +544,7 @@ public class Race extends Model {
           startBehindSensor,
           practice,
           adjustDriftLaps,
+          autoSegmentsOnPause,
           themeId,
           entityId,
           id);
@@ -672,6 +687,11 @@ public class Race extends Model {
   @JsonProperty("adjust_drift_laps")
   public boolean isAdjustDriftLaps() {
     return adjustDriftLaps;
+  }
+
+  @JsonProperty("auto_segments_on_pause")
+  public boolean isAutoSegmentsOnPause() {
+    return autoSegmentsOnPause;
   }
 
   @JsonProperty("theme_id")

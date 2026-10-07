@@ -333,6 +333,178 @@ public class HeatExecutionManagerTest {
   }
 
   @Test
+  public void testTimedRace_AllowFinish_NoneAutoSegments_CalculatesSegmentsOnHeatEnd() {
+    heatScoring =
+        new HeatScoring(
+            HeatScoring.FinishMethod.Timed,
+            60L,
+            HeatScoring.HeatRanking.LAP_COUNT,
+            HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME,
+            HeatScoring.AllowFinish.NoneAutoSegments);
+
+    Race raceModel =
+        new Race.Builder()
+            .withName("Timed Race NoneAutoSegments End")
+            .withTrackEntityId("track1")
+            .withHeatScoring(heatScoring)
+            .withOverallScoring(new OverallScoring())
+            .withEntityId("race_timed_auto_end")
+            .build();
+    race =
+        new com.antigravity.race.Race.Builder()
+            .model(raceModel)
+            .drivers(participants)
+            .track(track)
+            .isDemoMode(true)
+            .build();
+    executionManager = race.getHeatExecutionManager();
+    executionManager.initialize(track.getLanes().size());
+    race.changeState(new com.antigravity.race.states.Racing());
+
+    // Lane 0: reaction time (1.0s) + lap 1 (4.0s + 1.0s reaction = 5.0s) + lap 2 (5.0s) -> median =
+    // 5.0s
+    executionManager.onLap(0, 1.0, 1, false, true, false);
+    executionManager.onLap(0, 4.0, 1, false, true, false);
+    executionManager.onLap(0, 5.0, 1, false, true, false);
+
+    // Lane 1: reaction time (1.0s) + lap 1 (9.0s + 1.0s reaction = 10.0s) + lap 2 (10.0s) -> median
+    // = 10.0s
+    executionManager.onLap(1, 1.0, 1, false, true, false);
+    executionManager.onLap(1, 9.0, 1, false, true, false);
+    executionManager.onLap(1, 10.0, 1, false, true, false);
+
+    // Simulate 4.0s elapsed on lane 1
+    executionManager.getTimeSinceLastLap()[1] = 4.0;
+
+    // Time expired
+    race.resetRaceTime();
+
+    // Lane 0 crosses the finish line, triggering heat end
+    executionManager.onLap(0, 5.0, 1, false, true, false);
+    assertTrue(
+        "Heat should end immediately for NoneAutoSegments", race.getState() instanceof HeatOver);
+
+    DriverHeatData d0 = race.getCurrentHeat().getDrivers().get(0);
+    DriverHeatData d1 = race.getCurrentHeat().getDrivers().get(1);
+
+    assertEquals(
+        "Lane 0 finished at line, auto-segments should be 0.0",
+        0.0,
+        d0.getAutoCalculatedLaps(),
+        0.001);
+    assertEquals(
+        "Lane 1 should calculate 4.0 / 10.0 = 0.4 auto-segments",
+        0.4,
+        d1.getAutoCalculatedLaps(),
+        0.001);
+    assertEquals("Lane 1 adjusted lap count should be 2.4", 2.4, d1.getAdjustedLapCount(), 0.001);
+  }
+
+  @Test
+  public void testLapRace_AllowFinish_NoneAutoSegments_CalculatesSegmentsOnHeatEnd() {
+    heatScoring =
+        new HeatScoring(
+            HeatScoring.FinishMethod.Lap,
+            3L,
+            HeatScoring.HeatRanking.LAP_COUNT,
+            HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME,
+            HeatScoring.AllowFinish.NoneAutoSegments);
+
+    Race raceModel =
+        new Race.Builder()
+            .withName("Lap Race NoneAutoSegments End")
+            .withTrackEntityId("track1")
+            .withHeatScoring(heatScoring)
+            .withOverallScoring(new OverallScoring())
+            .withEntityId("race_lap_auto_end")
+            .build();
+    race =
+        new com.antigravity.race.Race.Builder()
+            .model(raceModel)
+            .drivers(participants)
+            .track(track)
+            .isDemoMode(true)
+            .build();
+    executionManager = race.getHeatExecutionManager();
+    executionManager.initialize(track.getLanes().size());
+    race.changeState(new com.antigravity.race.states.Racing());
+
+    // Lane 0: reaction time (1.0s) + lap 1 (4.0s + 1.0s reaction = 5.0s) + lap 2 (5.0s)
+    executionManager.onLap(0, 1.0, 1, false, true, false);
+    executionManager.onLap(0, 4.0, 1, false, true, false);
+    executionManager.onLap(0, 5.0, 1, false, true, false);
+
+    // Lane 1: reaction time (1.0s) + lap 1 (7.0s + 1.0s reaction = 8.0s) (median = 8.0s)
+    executionManager.onLap(1, 1.0, 1, false, true, false);
+    executionManager.onLap(1, 7.0, 1, false, true, false);
+
+    // Simulate 6.0s elapsed on lane 1
+    executionManager.getTimeSinceLastLap()[1] = 6.0;
+
+    // Lane 0 completes 3rd lap (reaches finish value 3)
+    executionManager.onLap(0, 5.0, 1, false, true, false);
+    assertTrue(
+        "Heat should end immediately for NoneAutoSegments", race.getState() instanceof HeatOver);
+
+    DriverHeatData d0 = race.getCurrentHeat().getDrivers().get(0);
+    DriverHeatData d1 = race.getCurrentHeat().getDrivers().get(1);
+
+    assertEquals(
+        "Lane 0 finished all laps, auto-segments should be 0.0",
+        0.0,
+        d0.getAutoCalculatedLaps(),
+        0.001);
+    assertEquals(
+        "Lane 1 should calculate 6.0 / 8.0 = 0.75 auto-segments",
+        0.75,
+        d1.getAutoCalculatedLaps(),
+        0.001);
+    assertEquals("Lane 1 adjusted lap count should be 1.75", 1.75, d1.getAdjustedLapCount(), 0.001);
+  }
+
+  @Test
+  public void testApplyEndHeatAutoSegments_SkipsIfNotNoneAutoSegments() {
+    heatScoring =
+        new HeatScoring(
+            HeatScoring.FinishMethod.Timed,
+            60L,
+            HeatScoring.HeatRanking.LAP_COUNT,
+            HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME,
+            HeatScoring.AllowFinish.None);
+
+    Race raceModel =
+        new Race.Builder()
+            .withName("Timed Race None")
+            .withTrackEntityId("track1")
+            .withHeatScoring(heatScoring)
+            .withOverallScoring(new OverallScoring())
+            .withEntityId("race_timed_none")
+            .build();
+    race =
+        new com.antigravity.race.Race.Builder()
+            .model(raceModel)
+            .drivers(participants)
+            .track(track)
+            .isDemoMode(true)
+            .build();
+    executionManager = race.getHeatExecutionManager();
+    executionManager.initialize(track.getLanes().size());
+
+    // Lane 0: 2 laps of 5.0s, elapsed 3.0s
+    DriverHeatData d0 = race.getCurrentHeat().getDrivers().get(0);
+    d0.addLap(5.0, false, true);
+    d0.addLap(5.0, false, true);
+    executionManager.getTimeSinceLastLap()[0] = 3.0;
+
+    executionManager.applyEndHeatAutoSegments();
+    assertEquals(
+        "Should not calculate auto segments when AllowFinish is None",
+        0.0,
+        d0.getAutoCalculatedLaps(),
+        0.001);
+  }
+
+  @Test
   public void testTimedRace_AllowFinish_SingleLapAutoSegments() {
     heatScoring =
         new HeatScoring(

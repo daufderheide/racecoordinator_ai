@@ -63,4 +63,26 @@ public class RaceTest {
     Race customMinLapRace = new Race.Builder().withName("Custom").withMinLapTime(2.5).build();
     assertEquals(2.5, customMinLapRace.getMinLapTime(), 0.001);
   }
+
+  @Test
+  public void testRaceBuilderWithAutoSegmentsOnPause() {
+    Race defaultRace = new Race.Builder().withName("Default Race").build();
+    assertFalse(defaultRace.isAutoSegmentsOnPause());
+
+    Race customRace =
+        new Race.Builder().withName("Custom Race").withAutoSegmentsOnPause(true).build();
+    assertTrue(customRace.isAutoSegmentsOnPause());
+  }
+
+  @Test
+  public void testRaceCloneWithAutoSegmentsOnPause() {
+    Race original = new Race.Builder().withName("Original").withAutoSegmentsOnPause(true).build();
+    Race cloned = new Race.Builder().from(original).build();
+    assertTrue(cloned.isAutoSegmentsOnPause());
+
+    Race originalFalse =
+        new Race.Builder().withName("Original False").withAutoSegmentsOnPause(false).build();
+    Race clonedFalse = new Race.Builder().from(originalFalse).build();
+    assertFalse(clonedFalse.isAutoSegmentsOnPause());
+  }
 }

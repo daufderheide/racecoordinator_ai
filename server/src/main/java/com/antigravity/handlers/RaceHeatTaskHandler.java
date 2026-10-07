@@ -131,6 +131,7 @@ public class RaceHeatTaskHandler {
               .withGroupOptions(race.getGroupOptions())
               .withPractice(race.isPractice())
               .withAdjustDriftLaps(race.isAdjustDriftLaps())
+              .withAutoSegmentsOnPause(race.isAutoSegmentsOnPause())
               .withThemeId(race.getThemeId())
               .withEntityId(nextId)
               .build();

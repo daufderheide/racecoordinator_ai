@@ -42,6 +42,7 @@ The editor workspace is split into two synchronized working panels:
     - *Allow Finish (single lap)*: Drivers are allowed to finish their current lap; that single lap counts towards their total.
     - *Do not allow finish (auto segments)*: Heat ends immediately and partial lap credit is calculated from the time elapsed on the current lap divided by the driver's median lap time (`autoSegments = timeSinceLastLap / medianLapTime`, capped at 0.99).
     - *Allow Finish (single lap) (auto segments)*: Drivers are allowed to finish their current lap on the track; the single lap does not count as a full lap, but partial lap credit is calculated from the time spent racing before heat end divided by the driver's median lap time (`autoSegments = partialLapTime / medianLapTime`, capped at 0.99).
+  - **Auto Segments on Pause**: When enabled, driver auto-segments are approximated when a heat is paused using the same median lap time formula as *Do not allow finish (auto segments)*. These segments approximate where on the track drivers stopped and are cleared when the race is resumed. They only count towards the lap total if the heat is ended while paused and an auto-segment finish option is in use.
 - **Overall Scoring**: Configure overall race standings ranking method, tiebreaker rules, and dropped heats.
 - **Season Scoring**: Assign points distribution per position for season-long championships.
 

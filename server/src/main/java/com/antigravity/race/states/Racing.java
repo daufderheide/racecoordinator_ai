@@ -6,7 +6,6 @@ import com.antigravity.models.HeatScoring.AllowFinish;
 import com.antigravity.models.HeatScoring.FinishMethod;
 import com.antigravity.proto.RaceData;
 import com.antigravity.proto.RaceFlag;
-import com.antigravity.proto.StandingsUpdate;
 import com.antigravity.protocols.CarData;
 import com.antigravity.protocols.PartialTime;
 import com.antigravity.race.DriverHeatData;
@@ -310,16 +309,8 @@ public class Racing implements IRaceState {
               }
 
               if (allFinished) {
-                if (allowFinish == AllowFinish.NoneAutoSegments) {
-                  calculateAutoSegments();
-                  StandingsUpdate update =
-                      race.getCurrentHeat().getHeatStandings().updateStandings();
-                  RaceData.Builder finishBuilder = RaceData.newBuilder();
-                  if (update != null) {
-                    finishBuilder.setStandingsUpdate(update);
-                  }
-                  race.populateOverallStandings(finishBuilder);
-                  race.broadcast(finishBuilder.build());
+                if (allowFinish == AllowFinish.NoneAutoSegments && executionManager != null) {
+                  executionManager.applyEndHeatAutoSegments();
                 }
                 if (race.isLastHeat()) {
                   race.changeState(new RaceOver());
@@ -511,40 +502,7 @@ public class Racing implements IRaceState {
   }
 
   void calculateAutoSegments() {
-    if (race == null || race.getCurrentHeat() == null) return;
-
-    HeatScoring scoring = race.getRaceModel().getHeatScoring();
-    if (scoring == null) return;
-
-    boolean isLapBased = scoring.getFinishMethod() == FinishMethod.Lap;
-    long limit = scoring.getFinishValue();
-    double[] times = executionManager.getTimeSinceLastLap();
-    List<DriverHeatData> drivers = race.getCurrentHeat().getDrivers();
-    if (drivers == null) return;
-
-    for (int i = 0; i < drivers.size(); i++) {
-      DriverHeatData dhd = drivers.get(i);
-      if (dhd == null) continue;
-
-      // Lap based race: the driver that got to the lap limit ending the heat should
-      // get 0 auto
-      // segments
-      if (isLapBased && dhd.getLapCount() >= limit) {
-        dhd.setAutoCalculatedLaps(0.0);
-      } else {
-        double median = dhd.getMedianLapTime();
-        if (median <= 0) {
-          dhd.setAutoCalculatedLaps(0.0);
-        } else {
-          double time = (times != null && i < times.length) ? times[i] : 0.0;
-          double segments = time / median;
-          if (segments >= 1.0) {
-            segments = 0.99;
-          }
-          dhd.setAutoCalculatedLaps(segments);
-        }
-      }
-    }
+    HeatExecutionManager.calculateAutoSegments(race, executionManager);
   }
 
   private void initializeFalseStartTimePenalties() {

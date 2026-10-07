@@ -9,6 +9,8 @@ import com.antigravity.models.CustomRotation;
 import com.antigravity.models.Driver;
 import com.antigravity.models.FuelOptions;
 import com.antigravity.models.HeatRotationType;
+import com.antigravity.models.HeatScoring;
+import com.antigravity.models.HeatScoring.AllowFinish;
 import com.antigravity.models.OverallScoring.OverallRanking;
 import com.antigravity.models.RaceConfigDump;
 import com.antigravity.models.Theme;
@@ -1006,6 +1008,18 @@ public class Race implements ProtocolListener {
     }
     if (state instanceof RaceOver) {
       throw new IllegalStateException("Cannot skip race: Race is already over.");
+    }
+    if (state instanceof Paused
+        && getRaceModel() != null
+        && getRaceModel().isAutoSegmentsOnPause()) {
+      HeatScoring scoring = getRaceModel().getHeatScoring();
+      boolean isAutoSegmentScoring =
+          scoring != null
+              && (scoring.getAllowFinish() == AllowFinish.NoneAutoSegments
+                  || scoring.getAllowFinish() == AllowFinish.SingleLapAutoSegments);
+      if (!isAutoSegmentScoring && executionManager != null) {
+        executionManager.removePauseAutoSegments();
+      }
     }
     changeState(new RaceOver());
   }

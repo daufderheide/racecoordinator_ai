@@ -605,6 +605,26 @@
                       </app-custom-option>
                     </app-custom-select>
                   </div>
+                  <div class="config-section checkbox-section">
+                    <label
+                      id="auto-segments-on-pause-input"
+                      class="checkbox-container"
+                      [class.disabled]="!isEditMode"
+                    >
+                      <input
+                        type="checkbox"
+                        [(ngModel)]="editingRace.auto_segments_on_pause"
+                        (ngModelChange)="captureState()"
+                        class="auto-segments-on-pause-input"
+                        data-testid="auto-segments-on-pause-input"
+                        [disabled]="!isEditMode"
+                      />
+                      <span class="checkmark"></span>
+                      <span class="checkbox-label">
+                        {{ "RE_AUTO_SEGMENTS_ON_PAUSE" | translate }}
+                      </span>
+                    </label>
+                  </div>
                 </div>
                 <!-- Overall Scoring Section -->
                 <div class="scoring-column">

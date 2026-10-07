@@ -42,6 +42,7 @@ De werkruimte is verdeeld in twee gesynchroniseerde panelen:
     - *Finish Toestaan (enkele ronde)*: Coureurs mogen hun huidige ronde afmaken; die telt mee voor het totaal.
     - *Finish niet toestaan (automatische segmenten)*: Heat eindigt meteen en deeltijdtegoed wordt berekend uit de verstreken tijd in de huidige ronde gedeeld door de mediaan-rondetijd van de coureur (`autoSegments = timeSinceLastLap / medianLapTime`, met een maximum van 0,99).
     - *Finish Toestaan (enkele ronde) (automatische segmenten)*: Coureurs maken hun ronde op de baan af; de ronde telt niet als volle ronde, maar als percentage berekend uit de rijtijd voor het einde gedeeld door de mediaan-rondetijd van de coureur (`autoSegments = partialLapTime / medianLapTime`, met een maximum van 0,99).
+  - **Auto-segmenten bij pauze**: Wanneer ingeschakeld, worden automatische segmenten voor coureurs bij benadering berekend bij het pauzeren van een heat met behulp van dezelfde formule voor de mediaan-rondetijd als *Finish niet toestaan (automatische segmenten)*. Deze segmenten schatten in waar op de baan de auto's tot stilstand zijn gekomen en worden gewist wanneer de race wordt hervat. Ze tellen alleen mee voor het rondetotaal als de heat wordt beëindigd tijdens de pauze en een finishoptie met automatische segmenten wordt gebruikt.
 - **Algemene score**: Algemene rangschikkingsmethode, tiebreaker-regels en schrapresultaten.
 - **Seizoensscore**: Puntenverdeling per positie voor kampioenschappen.
 

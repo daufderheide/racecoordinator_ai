@@ -42,6 +42,7 @@ L'espace de travail est divisé en deux panneaux synchronisés :
     - *Autoriser l'arrivée (un tour)* : Les pilotes peuvent terminer leur tour actuel ; ce tour compte dans le total.
     - *Ne pas autoriser l'arrivée (segments automatiques)* : La manche se termine immédiatement et la fraction de tour est calculée d'après le temps écoulé sur le tour en cours divisé par le temps au tour médian du pilote (`autoSegments = timeSinceLastLap / medianLapTime`, plafonné à 0,99).
     - *Autoriser l'arrivée (un tour) (segments automatiques)* : Les pilotes terminent leur tour en piste ; le tour ne compte pas comme un tour complet, le crédit partiel est calculé d'après le temps couru avant la fin divisé par le temps au tour médian du pilote (`autoSegments = partialLapTime / medianLapTime`, plafonné à 0,99).
+  - **Segments automatiques en pause** : Lorsqu'il est activé, les segments automatiques des pilotes sont estimés lors de la mise en pause d'une manche avec la même formule basée sur le temps au tour médian que *Ne pas autoriser l'arrivée (segments automatiques)*. Ces segments estiment l'emplacement sur la piste où les voitures se sont arrêtées et sont effacés à la reprise de la course. Ils ne comptent dans le total de tours que si la manche se termine en pause et qu'une option d'arrivée par segments automatiques est utilisée.
 - **Score Général** : Méthode de classement général, règles de départage et manches retirées.
 - **Score de Saison** : Distribution des points par position pour les championnats.
 
