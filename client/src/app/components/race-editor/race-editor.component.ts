@@ -125,6 +125,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     this.lifecycle.pendingDeactivate = val;
   }
   private isReverting = false;
+  private isSwitchingSelection = false;
   editingRace: any;
   originalRace: any;
   selectedRace: any;
@@ -340,7 +341,9 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     if (this.selectedRaceId === id) return;
     const found = this.allRaces.find((r) => r.entity_id === id);
     if (found) {
+      this.isSwitchingSelection = true;
       this.selectRace(found);
+      this.navigationService.setLastEditedId("race", found.entity_id);
       this.router.navigate([], {
         relativeTo: this.route,
         queryParams: { id: found.entity_id },
@@ -858,6 +861,10 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
             this.router.url.startsWith("/race-editor") ||
             this.router.url.includes("mock");
           if (!isEditorRoute) {
+            return;
+          }
+          if (this.isSwitchingSelection) {
+            this.isSwitchingSelection = false;
             return;
           }
           const nextId = paramMap.get("id");

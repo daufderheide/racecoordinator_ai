@@ -718,5 +718,32 @@ describe("EventEditorComponent", () => {
       component.handleKeyboardEvent(yEvent);
       expect(component.editingEvent.name).toBe("Modified Event");
     });
+
+    it("should switch event without re-fetching data when selected via onSelectEventById", () => {
+      const router = TestBed.inject(Router);
+      const route = TestBed.inject(ActivatedRoute);
+      const event2: Event = {
+        entity_id: "evt_2",
+        name: "Event Two",
+        description: "",
+        auto_advance_time: 0,
+        races: [],
+      };
+      component.existingEvents = [component.editingEvent, event2];
+      component.isEditMode = false;
+      spyOn(component, "loadData").and.callThrough();
+
+      component.onSelectEventById("evt_2");
+
+      expect(component.selectedEventId).toBe("evt_2");
+      expect(component.editingEvent?.name).toBe("Event Two");
+      expect(router.navigate).toHaveBeenCalledWith([], {
+        relativeTo: route,
+        queryParams: { id: "evt_2" },
+        queryParamsHandling: "merge",
+        replaceUrl: true,
+      });
+      expect(component.loadData).not.toHaveBeenCalled();
+    });
   });
 });
