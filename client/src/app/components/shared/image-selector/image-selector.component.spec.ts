@@ -222,6 +222,69 @@ describe("ImageSelectorComponent", () => {
     expect(logger.error).toHaveBeenCalled();
   }));
 
+  it("should ensure remove button and its icon have pointer-events auto", () => {
+    fixture.componentRef.setInput("imageUrl", "/assets/test.png");
+    fixture.detectChanges();
+    const removeBtn = fixture.nativeElement.querySelector(".remove-button");
+    const icon = fixture.nativeElement.querySelector(
+      ".remove-button .material-icons",
+    );
+    expect(window.getComputedStyle(removeBtn).pointerEvents).toBe("auto");
+    expect(window.getComputedStyle(icon).pointerEvents).toBe("auto");
+  });
+
+  it("should remove image and NOT open item selector when remove button is clicked", () => {
+    fixture.componentRef.setInput("imageUrl", "/assets/test.png");
+    fixture.detectChanges();
+
+    let emittedUrl: string | undefined = "not-called";
+    let emittedAsset: any = "not-called";
+    (component as any).imageUrlChange.subscribe(
+      (val: any) => (emittedUrl = val),
+    );
+    (component as any).assetSelected.subscribe(
+      (val: any) => (emittedAsset = val),
+    );
+
+    const removeBtn = fixture.nativeElement.querySelector(
+      ".remove-button",
+    ) as HTMLButtonElement;
+    removeBtn.click();
+    fixture.detectChanges();
+
+    expect(emittedUrl).toBeUndefined();
+    expect(emittedAsset).toBeNull();
+    expect(component.showSelector).toBeFalse();
+  });
+
+  it("should remove image and NOT open item selector when remove button icon is clicked", () => {
+    fixture.componentRef.setInput("imageUrl", "/assets/test.png");
+    fixture.detectChanges();
+
+    let emittedUrl: string | undefined = "not-called";
+    (component as any).imageUrlChange.subscribe(
+      (val: any) => (emittedUrl = val),
+    );
+
+    const icon = fixture.nativeElement.querySelector(
+      ".remove-button .material-icons",
+    ) as HTMLElement;
+    icon.click();
+    fixture.detectChanges();
+
+    expect(emittedUrl).toBeUndefined();
+    expect(component.showSelector).toBeFalse();
+  });
+
+  it("should not show remove button when disabled", () => {
+    fixture.componentRef.setInput("imageUrl", "/assets/test.png");
+    fixture.componentRef.setInput("disabled", true);
+    fixture.detectChanges();
+
+    const removeBtn = fixture.nativeElement.querySelector(".remove-button");
+    expect(removeBtn).toBeNull();
+  });
+
   it("should open and close selector", async () => {
     await harness.clickPreviewToOpenSelector();
     expect(component.showSelector).toBeTrue();

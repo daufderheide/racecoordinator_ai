@@ -51,7 +51,8 @@ class MockImageSelectorComponent {
   imageUrl = input<string | undefined>();
   assets = input<any[]>([]);
   size = input<string | undefined>();
-  imageUrlChange = output<string>();
+  imageUrlChange = output<string | undefined>();
+  assetSelected = output<any>();
   uploadStarted = output<void>();
   uploadFinished = output<void>();
 }
@@ -1583,6 +1584,19 @@ describe("DriverEditorComponent", () => {
       // Re-selecting same asset should not duplicate
       component.onAssetSelected(newAsset);
       expect(component.avatarAssets.length).toBe(2);
+    });
+
+    it("should clear avatarUrl and capture state when imageUrlChange emits undefined", () => {
+      const driver = new Driver("d1", "Test Driver", "Tester", "avatar.png");
+      setupDriver(driver);
+      fixture.detectChanges();
+      const imgSelector = fixture.debugElement.query(
+        By.css("app-image-selector"),
+      );
+      spyOn(component, "captureState");
+      imgSelector.componentInstance.imageUrlChange.emit(undefined);
+      expect(component.editingDriver?.avatarUrl).toBeUndefined();
+      expect(component.captureState).toHaveBeenCalled();
     });
   });
 
