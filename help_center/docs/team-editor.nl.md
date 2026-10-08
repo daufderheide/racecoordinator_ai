@@ -20,7 +20,7 @@ De bovenste werkbalk biedt de volgende acties:
 - **Terug**: Keert terug naar het vorige scherm of de Racedag Setup.
 - **Team toevoegen (+)**: Maakt een nieuw teamsjabloon aan en activeert de bewerkingsmodus.
 - **Team dupliceren**: Maakt een kopie van het geselecteerde team met een unieke naam.
-- **Bewerken / Bewerken voltooien**: Schakelt tussen de alleen-lezen modus en de bewerkingsmodus.
+- **Bewerken / Bewerken voltooien**: Schakelt tussen de alleen-lezen modus en de bewerkingsmodus (sneltoets: Cmd/Ctrl+E).
 - **Team verwijderen**: Verwijdert het geselecteerde team na bevestiging.
 - **Ongedaan maken / Opnieuw**: Maakt recente wijzigingen tijdens de sessie ongedaan of past ze opnieuw toe.
 - **Help (?)**: Start de interactieve rondleiding die elk onderdeel van de editor toelicht.

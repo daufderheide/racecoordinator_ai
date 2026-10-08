@@ -9,7 +9,7 @@ L'Editor Piloti integra la selezione e la modifica dei piloti in un'interfaccia 
 - **Selettore Pilota**: Situato nell'intestazione superiore accanto al titolo, questo menu a discesa elenca tutti i piloti esistenti e consente di passare rapidamente dall'uno all'altro.
 - **Modalità Sola Lettura**: Per impostazione predefinita, l'editor mostra i dettagli del pilota in modalità sola lettura. I campi del modulo sono bloccati per prevenire modifiche accidentali, pur consentendo l'ascolto dei campioni audio.
 - **Modalità Modifica**: Cliccando sull'icona **Modifica** (matita) sulla barra degli strumenti, i campi del modulo vengono sbloccati. Durante la modalità di modifica, il selettore dei piloti è bloccato per evitare perdite di dati.
-- **Salvataggio delle modifiche**: Cliccando sull'icona **Fine Modifica** (occhio / fatto), le modifiche vengono convalidate, salvate sul server e l'editor torna in modalità sola lettura.
+- **Salvataggio delle modifiche**: Cliccando sull'icona **Fine Modifica** (segno di spunta), le modifiche vengono convalidate, salvate sul server e l'editor torna in modalità sola lettura.
 - **Annullamento delle modifiche**: Se si tenta di lasciare l'editor con modifiche non salvate, viene mostrata una richiesta di conferma. Annullando le modifiche, tutti i campi tornano alla versione salvata in precedenza.
 
 ## Azioni della Barra degli Strumenti
@@ -19,7 +19,7 @@ La barra degli strumenti superiore offre le seguenti azioni:
 - **Indietro**: Torna alla vista precedente o alla Configurazione della Gara.
 - **Aggiungi Pilota (+)**: Crea un nuovo profilo pilota ed entra in modalità modifica.
 - **Copia Pilota**: Duplica il profilo del pilota selezionato.
-- **Modifica / Fine Modifica**: Alterna tra modalità sola lettura e modalità modifica.
+- **Modifica / Fine Modifica**: Alterna tra modalità sola lettura e modalità modifica (scorciatoia da tastiera: Cmd/Ctrl+E).
 - **Espandi / Comprimi tutto**: Espande o comprime tutte le sezioni a soffietto contemporaneamente.
 - **Elimina Pilota**: Rimuove il profilo del pilota selezionato previa conferma.
 - **Guida (?)**: Avvia il tour guidato interattivo che illustra le sezioni dell'editor.

@@ -9,7 +9,7 @@ De Coureureditor combineert het selecteren en bewerken van coureurs in één ove
 - **Coureurkiezer**: Dit dropdown-menu bovenaan naast de paginatitel toont alle bestaande coureurs en maakt het eenvoudig om tussen hen te wisselen.
 - **Alleen-lezen modus**: Standaard opent de editor in een alleen-lezen modus. De velden zijn vergrendeld om onbedoelde wijzigingen te voorkomen, terwijl geluidsfragmenten wel kunnen worden afgespeeld.
 - **Bewerkingsmodus**: Door op het **Bewerken**-icoon (potlood) op de werkbalk te klikken, worden de invoervelden ontgrendeld. Tijdens de bewerkingsmodus is de coureurkiezer vergrendeld om gegevensverlies te voorkomen.
-- **Wijzigingen opslaan**: Door op het icoon **Klaar met bewerken** (oog / gereed) te klikken, worden de wijzigingen gevalideerd, opgeslagen op de server en keert de editor terug naar de alleen-lezen modus.
+- **Wijzigingen opslaan**: Door op het icoon **Klaar met bewerken** (vinkje) te klikken, worden de wijzigingen gevalideerd, opgeslagen op de server en keert de editor terug naar de alleen-lezen modus.
 - **Wijzigingen verwerpen**: Als u de editor verlaat met niet-opgeslagen wijzigingen, vraagt het bevestigingsvenster om akkoord. Bij verwerpen keren alle gegevens terug naar de laatst opgeslagen versie.
 
 ## Werkbalkacties
@@ -19,7 +19,7 @@ De bovenste werkbalk biedt de volgende opties:
 - **Terug**: Keert terug naar het vorige scherm of de racedaginstellingen.
 - **Coureur toevoegen (+)**: Maakt een nieuw coureurprofiel aan en activeert de bewerkingsmodus.
 - **Coureur kopiëren**: Dupliceert het geselecteerde profiel naar een nieuwe sjabloon.
-- **Bewerken / Klaar**: Schakelt tussen alleen-lezen modus en bewerkingsmodus.
+- **Bewerken / Klaar**: Schakelt tussen alleen-lezen modus en bewerkingsmodus (sneltoets: Cmd/Ctrl+E).
 - **Alles uitvouwen / samenvouwen**: Vouwt alle accordeonsecties in één keer uit of samen.
 - **Coureur verwijderen**: Verwijdert het geselecteerde coureurprofiel na bevestiging.
 - **Help (?)**: Start de interactieve rondleiding door de verschillende onderdelen van de editor.
