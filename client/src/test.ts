@@ -16,11 +16,18 @@ if (typeof HTMLAnchorElement !== "undefined") {
   };
 }
 
+import { ConverterCache } from "./app/converters/converter_cache";
+
 // First, initialize the Angular testing environment.
 getTestBed().initTestEnvironment(
   BrowserDynamicTestingModule,
   platformBrowserDynamicTesting(),
 );
+
+// Reset all converter caches before each test to prevent static cache pollution between tests
+beforeEach(() => {
+  ConverterCache.clearAll();
+});
 
 // Then we find all the tests.
 declare const require: {
@@ -34,9 +41,5 @@ declare const require: {
   };
 };
 const context = require.context("./", true, /\.spec\.ts$/);
-console.log("DEBUG: Found context keys:", context.keys());
 // And load the modules.
-context.keys().map((key) => {
-  console.log("DEBUG: Loading test file:", key);
-  return context(key);
-});
+context.keys().map(context);

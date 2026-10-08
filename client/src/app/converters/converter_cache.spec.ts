@@ -41,4 +41,16 @@ describe("ConverterCache", () => {
     expect(cache.has("1")).toBeFalse();
     expect(cache.getKeys().length).toBe(0);
   });
+
+  it("should clear all registered caches with clearAll", () => {
+    const cache2 = new ConverterCache<{ id: string; val: number }>();
+    cache.process("1", false, () => ({ id: "1", name: "Item 1" }));
+    cache2.process("2", false, () => ({ id: "2", val: 42 }));
+    expect(cache.has("1")).toBeTrue();
+    expect(cache2.has("2")).toBeTrue();
+
+    ConverterCache.clearAll();
+    expect(cache.has("1")).toBeFalse();
+    expect(cache2.has("2")).toBeFalse();
+  });
 });

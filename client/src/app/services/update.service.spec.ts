@@ -287,7 +287,8 @@ describe("UpdateService", () => {
       expect(isAlphaVersion(null)).toBeFalse();
       expect(isAlphaVersion(undefined)).toBeFalse();
     });
-    
+  });
+
   it("should support isLinux in update check result", () => {
     const mockResult: UpdateCheckResult = {
       updateAvailable: true,
