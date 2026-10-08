@@ -143,6 +143,10 @@ public abstract class AbstractSerialProtocol extends DefaultProtocol {
       return;
     }
 
+    if (!isConnected()) {
+      return;
+    }
+
     int maxBuffer = getMaxBufferSize();
     if (message.length > maxBuffer) {
       logger.error(

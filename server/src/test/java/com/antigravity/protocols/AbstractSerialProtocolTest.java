@@ -323,4 +323,31 @@ public class AbstractSerialProtocolTest {
     // Connection count should increment because auto-reconnect was attempted
     assertTrue(serialConnection.connectionCount >= 2);
   }
+
+  @Test
+  public void testWriteData_WhenDisconnected_DoesNotWrite() {
+    assertFalse(protocol.isConnected());
+    protocol.writeData(new byte[] {0x01, 0x02});
+    assertTrue(serialConnection.allWrittenData.isEmpty());
+  }
+
+  @Test
+  public void testWriteData_WhenConnected_WritesSuccessfully() {
+    protocol.open();
+    assertTrue(protocol.isConnected());
+    byte[] payload = new byte[] {0x41, 0x31, 0x0A};
+    protocol.writeData(payload);
+    assertEquals(1, serialConnection.allWrittenData.size());
+    assertEquals(payload, serialConnection.allWrittenData.get(0));
+  }
+
+  @Test
+  public void testWriteData_NullOrEmptyOrExceedsBuffer_DoesNotWrite() {
+    protocol.open();
+    assertTrue(protocol.isConnected());
+    protocol.writeData(null);
+    protocol.writeData(new byte[0]);
+    protocol.writeData(new byte[200]); // Max buffer size is 128
+    assertTrue(serialConnection.allWrittenData.isEmpty());
+  }
 }
