@@ -3408,4 +3408,193 @@ describe("DefaultRacedaySetupComponent", () => {
       });
     });
   });
+
+  describe("Enter key on mouse selection and global Enter handling", () => {
+    let d1: Driver;
+    let d2: Driver;
+    let d3: Driver;
+
+    beforeEach(() => {
+      d1 = new Driver("d1", "Driver 1", "Ace");
+      d2 = new Driver("d2", "Driver 2", "Deuce");
+      d3 = new Driver("d3", "Driver 3", "Trey");
+      component.allDrivers = [d1, d2, d3];
+      component.allTeams = [];
+      component.unselectedParticipants = [d1, d2];
+      component.selectedParticipants = [d3];
+      component.availableSearchQuery = "";
+      component.racingSearchQuery = "";
+      (component as any).selectedParticipantItem = null;
+      (component as any).clickedParticipantItem = null;
+      fixture.detectChanges();
+    });
+
+    it("should add available driver to race on window Enter key when selected by mouse click", fakeAsync(() => {
+      component.selectParticipant(d1, 0);
+      expect(component.selectedParticipantItem).toBe(d1);
+      expect(component.isParticipantSelected(d1)).toBeTrue();
+
+      const enterEvent = new KeyboardEvent("keydown", { key: "Enter" });
+      window.dispatchEvent(enterEvent);
+      tick(50);
+
+      expect(component.selectedParticipants).toContain(d1);
+      expect(component.unselectedParticipants).not.toContain(d1);
+      // Next available driver (d2) should be selected
+      expect(component.selectedParticipantItem).toBe(d2);
+      expect(component.isParticipantSelected(d2)).toBeTrue();
+    }));
+
+    it("should retain click selection when mouse leaves available list and add driver on Enter", fakeAsync(() => {
+      component.selectParticipant(d1, 0);
+      expect(component.selectedParticipantItem).toBe(d1);
+
+      // Mouse leaves available list
+      component.onAvailableListMouseLeave();
+      expect(component.selectedParticipantItem).toBe(d1);
+      expect(component.isParticipantSelected(d1)).toBeTrue();
+
+      const enterEvent = new KeyboardEvent("keydown", { key: "Enter" });
+      window.dispatchEvent(enterEvent);
+      tick(50);
+
+      expect(component.selectedParticipants).toContain(d1);
+      expect(component.unselectedParticipants).not.toContain(d1);
+    }));
+
+    it("should remove racing driver from race on window Enter key when selected by mouse click", fakeAsync(() => {
+      component.selectParticipant(d3, 0);
+      expect(component.selectedParticipantItem).toBe(d3);
+      expect(component.isParticipantSelected(d3)).toBeTrue();
+
+      const enterEvent = new KeyboardEvent("keydown", { key: "Enter" });
+      window.dispatchEvent(enterEvent);
+      tick(50);
+
+      expect(component.selectedParticipants).not.toContain(d3);
+      expect(component.unselectedParticipants).toContain(d3);
+      expect(component.selectedParticipants.length).toBe(0);
+    }));
+
+    it("should retain click selection when mouse leaves racing list and remove driver on Enter", fakeAsync(() => {
+      component.selectParticipant(d3, 0);
+      expect(component.selectedParticipantItem).toBe(d3);
+
+      // Mouse leaves racing list
+      component.onRacingListMouseLeave();
+      expect(component.selectedParticipantItem).toBe(d3);
+      expect(component.isParticipantSelected(d3)).toBeTrue();
+
+      const enterEvent = new KeyboardEvent("keydown", { key: "Enter" });
+      window.dispatchEvent(enterEvent);
+      tick(50);
+
+      expect(component.selectedParticipants).not.toContain(d3);
+      expect(component.unselectedParticipants).toContain(d3);
+    }));
+
+    it("should add available driver on Enter when selected via mouse hover", fakeAsync(() => {
+      component.onAvailableItemMouseEnter(d2, 1);
+      expect(component.selectedParticipantItem).toBe(d2);
+
+      const enterEvent = new KeyboardEvent("keydown", { key: "Enter" });
+      window.dispatchEvent(enterEvent);
+      tick(50);
+
+      expect(component.selectedParticipants).toContain(d2);
+      expect(component.unselectedParticipants).not.toContain(d2);
+    }));
+
+    it("should remove racing driver on Enter when selected via mouse hover", fakeAsync(() => {
+      component.onRacingItemMouseEnter(d3, 0);
+      expect(component.selectedParticipantItem).toBe(d3);
+
+      const enterEvent = new KeyboardEvent("keydown", { key: "Enter" });
+      window.dispatchEvent(enterEvent);
+      tick(50);
+
+      expect(component.selectedParticipants).not.toContain(d3);
+    }));
+
+    it("should do nothing on Enter when no participant is selected", fakeAsync(() => {
+      expect(component.selectedParticipantItem).toBeNull();
+      const initialSelected = [...component.selectedParticipants];
+      const initialUnselected = [...component.unselectedParticipants];
+
+      const enterEvent = new KeyboardEvent("keydown", { key: "Enter" });
+      window.dispatchEvent(enterEvent);
+      tick(50);
+
+      expect(component.selectedParticipants).toEqual(initialSelected);
+      expect(component.unselectedParticipants).toEqual(initialUnselected);
+    }));
+
+    it("should not add or remove on Enter when a modal or menu is open", fakeAsync(() => {
+      component.selectParticipant(d1, 0);
+      component.showErrorModal = true;
+
+      const enterEvent = new KeyboardEvent("keydown", { key: "Enter" });
+      window.dispatchEvent(enterEvent);
+      tick(50);
+
+      expect(component.selectedParticipants).not.toContain(d1);
+    }));
+
+    it("should not intercept Enter when a button has DOM focus", fakeAsync(() => {
+      component.selectParticipant(d1, 0);
+
+      const btn = document.createElement("button");
+      document.body.appendChild(btn);
+      btn.focus();
+
+      try {
+        const enterEvent = new KeyboardEvent("keydown", { key: "Enter" });
+        window.dispatchEvent(enterEvent);
+        tick(50);
+
+        expect(component.selectedParticipants).not.toContain(d1);
+      } finally {
+        document.body.removeChild(btn);
+      }
+    }));
+
+    it("should remove racing driver on Enter in available search input if racing driver is selected", fakeAsync(() => {
+      component.selectParticipant(d3, 0);
+      expect(component.selectedParticipantItem).toBe(d3);
+
+      const enterEvent = new KeyboardEvent("keydown", { key: "Enter" });
+      component.onAvailableSearchKeydown(enterEvent);
+      tick(50);
+
+      expect(component.selectedParticipants).not.toContain(d3);
+    }));
+
+    it("should add available driver on Enter in racing search input if available driver is selected", fakeAsync(() => {
+      component.selectParticipant(d1, 0);
+      expect(component.selectedParticipantItem).toBe(d1);
+
+      const enterEvent = new KeyboardEvent("keydown", { key: "Enter" });
+      component.onRacingSearchKeydown(enterEvent);
+      tick(50);
+
+      expect(component.selectedParticipants).toContain(d1);
+    }));
+
+    it("should add consecutive available drivers on repeated Enter presses after mouse selection", fakeAsync(() => {
+      component.selectParticipant(d1, 0);
+
+      const enterEvent = new KeyboardEvent("keydown", { key: "Enter" });
+      // First Enter adds d1
+      window.dispatchEvent(enterEvent);
+      tick(50);
+      expect(component.selectedParticipants).toContain(d1);
+      expect(component.selectedParticipantItem).toBe(d2);
+
+      // Second Enter adds d2
+      window.dispatchEvent(enterEvent);
+      tick(50);
+      expect(component.selectedParticipants).toContain(d2);
+      expect(component.selectedParticipantItem).toBeNull();
+    }));
+  });
 });
