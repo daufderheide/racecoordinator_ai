@@ -96,6 +96,7 @@ public class RaceExportSaveHandler {
       RaceStatisticsUtils.applyPostJxlsLaneColors(outputWb, race);
       RaceStatisticsUtils.removeAllCommentsAndVmlDrawings(outputWb);
       RaceStatisticsUtils.ensureRaceInformationLaneCount(outputWb, race);
+      RaceStatisticsUtils.adjustPostExportRaceInformation(outputWb, race);
       RaceStatisticsUtils.enforceMaxThreeDecimalPlaces(outputWb);
       RaceStatisticsUtils.leftJustifyAllCells(outputWb);
       RaceStatisticsUtils.autoSizeAllColumns(outputWb);

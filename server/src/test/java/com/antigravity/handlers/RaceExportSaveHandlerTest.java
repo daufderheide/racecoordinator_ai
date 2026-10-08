@@ -12,6 +12,7 @@ import java.io.File;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.List;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellType;
@@ -942,6 +943,74 @@ public class RaceExportSaveHandlerTest {
       org.apache.poi.ss.usermodel.Row raceModelRow = infoSheet.getRow(11);
       org.junit.Assert.assertNotNull("Race Model row should not be null", raceModelRow);
       org.junit.Assert.assertEquals("Race Model", raceModelRow.getCell(0).getStringCellValue());
+    }
+  }
+
+  @Test
+  public void testExportRaceXls_CustomRotationAssetOutputsNameAndExcludesAssetId()
+      throws Exception {
+    com.antigravity.models.Driver d1 = new com.antigravity.models.Driver("Practice Driver", "pd1");
+    com.antigravity.race.RaceParticipant p1 = new com.antigravity.race.RaceParticipant(d1);
+    com.antigravity.models.Lane l1 = new com.antigravity.models.Lane("#EF4444", "white", 100);
+    com.antigravity.models.Track track =
+        new com.antigravity.models.Track.Builder()
+            .name("Practice Track")
+            .lanes(Collections.singletonList(l1))
+            .build();
+
+    com.antigravity.models.Race model =
+        new com.antigravity.models.Race.Builder()
+            .withName("Practice Race")
+            .withHeatRotationType(com.antigravity.models.HeatRotationType.Custom)
+            .withCustomRotationAssetId("82c1bfa2-4c74-480b-af39-36b677ec62c4")
+            .withPractice(true)
+            .build();
+
+    com.antigravity.race.DriverHeatData dhd = new com.antigravity.race.DriverHeatData(p1, d1);
+    dhd.setLane(1);
+    com.antigravity.race.Heat heat =
+        new com.antigravity.race.Heat(1, Collections.singletonList(dhd), false);
+
+    com.antigravity.race.Race activeRace =
+        new com.antigravity.race.Race.Builder()
+            .model(model)
+            .track(track)
+            .drivers(Collections.singletonList(p1))
+            .heats(Collections.singletonList(heat))
+            .customRotationAssetName("Single Heat Practice")
+            .skipHardwareInterface(true)
+            .build();
+
+    ClientSubscriptionManager.getInstance().setRace(activeRace);
+
+    handler.exportRaceXls(ctx);
+
+    org.mockito.ArgumentCaptor<byte[]> captor = org.mockito.ArgumentCaptor.forClass(byte[].class);
+    verify(ctx, org.mockito.Mockito.atLeastOnce()).result(captor.capture());
+    byte[] exportedBytes = captor.getValue();
+    org.junit.Assert.assertNotNull(exportedBytes);
+
+    try (XSSFWorkbook wb = new XSSFWorkbook(new java.io.ByteArrayInputStream(exportedBytes))) {
+      Sheet infoSheet = wb.getSheet("Race Information");
+      org.junit.Assert.assertNotNull(infoSheet);
+
+      boolean foundAssetId = false;
+      String rotationsVal = null;
+      for (int r = 0; r <= infoSheet.getLastRowNum(); r++) {
+        Row row = infoSheet.getRow(r);
+        if (row != null && row.getCell(0) != null) {
+          String key = row.getCell(0).getStringCellValue();
+          if ("custom_rotation_asset_id".equalsIgnoreCase(key)) {
+            foundAssetId = true;
+          } else if ("custom_rotations".equalsIgnoreCase(key)) {
+            rotationsVal = row.getCell(1).getStringCellValue();
+          }
+        }
+      }
+
+      org.junit.Assert.assertFalse(
+          "custom_rotation_asset_id must be excluded from XLS", foundAssetId);
+      org.junit.Assert.assertEquals("Single Heat Practice", rotationsVal);
     }
   }
 }

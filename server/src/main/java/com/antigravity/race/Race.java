@@ -13,6 +13,7 @@ import com.antigravity.models.OverallScoring.OverallRanking;
 import com.antigravity.models.RaceConfigDump;
 import com.antigravity.models.Theme;
 import com.antigravity.models.Track;
+import com.antigravity.proto.AssetMessage;
 import com.antigravity.proto.CallbuttonEvent;
 import com.antigravity.proto.DemoConfig;
 import com.antigravity.proto.GroupStandingsUpdate;
@@ -74,6 +75,7 @@ public class Race implements ProtocolListener {
   private Heat currentHeat;
   private final OverallStandings overallStandings;
   private final List<CustomRotation> customRotations;
+  private String customRotationAssetName;
 
   private final RaceHardwareManager hardwareManager;
   private final RaceRecords recordsManager;
@@ -133,6 +135,7 @@ public class Race implements ProtocolListener {
         builder.customRotations != null
             ? new ArrayList<>(builder.customRotations)
             : new ArrayList<>();
+    this.customRotationAssetName = builder.customRotationAssetName;
 
     this.recordsManager = new RaceRecords(this);
     loadExistingRecords(builder.isDemoMode, builder.existingRecords);
@@ -319,6 +322,12 @@ public class Race implements ProtocolListener {
     private String historyRecordId;
     private Theme theme;
     private boolean skipHardwareInterface = false;
+    private String customRotationAssetName;
+
+    public Builder customRotationAssetName(String customRotationAssetName) {
+      this.customRotationAssetName = customRotationAssetName;
+      return this;
+    }
 
     public Builder historyRecordId(String historyRecordId) {
       this.historyRecordId = historyRecordId;
@@ -744,6 +753,54 @@ public class Race implements ProtocolListener {
     return customRotations;
   }
 
+  public String getCustomRotationAssetName() {
+    if (this.customRotationAssetName != null && !this.customRotationAssetName.isEmpty()) {
+      return this.customRotationAssetName;
+    }
+    if (this.model == null
+        || this.model.getCustomRotationAssetId() == null
+        || this.model.getCustomRotationAssetId().isEmpty()) {
+      return null;
+    }
+    if (databaseContext == null) {
+      return null;
+    }
+    try {
+      AssetService assetService =
+          new AssetService(
+              databaseContext,
+              databaseContext.getDataRoot() + databaseContext.getCurrentDatabaseName() + "/assets");
+      AssetMessage asset = assetService.getAssetById(this.model.getCustomRotationAssetId());
+      if (asset != null && asset.getName() != null && !asset.getName().isEmpty()) {
+        this.customRotationAssetName = asset.getName();
+        return this.customRotationAssetName;
+      }
+    } catch (Exception e) {
+      logger.warn(
+          "Failed to resolve custom rotation asset name for ID {}",
+          this.model.getCustomRotationAssetId(),
+          e);
+    }
+    return null;
+  }
+
+  public void setCustomRotationAssetName(String customRotationAssetName) {
+    this.customRotationAssetName = customRotationAssetName;
+  }
+
+  public Object getCustomRotationsDisplay() {
+    String assetName = getCustomRotationAssetName();
+    if (assetName != null && !assetName.isEmpty()) {
+      return assetName;
+    }
+    if (this.model != null
+        && this.model.getCustomRotations() != null
+        && !this.model.getCustomRotations().isEmpty()) {
+      return this.model.getCustomRotations();
+    }
+    return "[]";
+  }
+
   public DatabaseContext getDatabaseContext() {
     return databaseContext;
   }
@@ -781,8 +838,12 @@ public class Race implements ProtocolListener {
         new AssetService(
             databaseContext,
             databaseContext.getDataRoot() + databaseContext.getCurrentDatabaseName() + "/assets");
-    com.antigravity.proto.AssetMessage asset = assetService.getAssetById(assetId); // fqn-collision
-    if (asset == null || asset.getCustomRotationsCount() == 0) return null;
+    AssetMessage asset = assetService.getAssetById(assetId);
+    if (asset == null) return null;
+    if (asset.getName() != null && !asset.getName().isEmpty()) {
+      this.customRotationAssetName = asset.getName();
+    }
+    if (asset.getCustomRotationsCount() == 0) return null;
     List<CustomRotation> result = new ArrayList<>();
     for (com.antigravity.proto.CustomRotation protoRot : // fqn-collision
         asset.getCustomRotationsList()) { // fqn-collision
