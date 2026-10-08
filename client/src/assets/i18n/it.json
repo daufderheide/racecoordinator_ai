@@ -927,6 +927,8 @@
   "RDS_UPDATE_CHANNEL_DISABLED": "Disabilitato",
   "RDS_UPDATE_CHANNEL_PRODUCTION": "Versioni di produzione",
   "RDS_UPDATE_CONFIRM_PROMPT_INFO": "Fai clic su 'Sì' nella richiesta di Controllo dell'account utente se richiesto.",
+  "RDS_UPDATE_CONFIRM_DOWNGRADE_MESSAGE": "Il downgrade dalla versione {{currentVersion}} alla {{targetVersion}} potrebbe rendere inaccessibili alcune funzionalità. Sei sicuro di voler continuare?",
+  "RDS_UPDATE_CONFIRM_DOWNGRADE_TITLE": "Conferma downgrade",
   "RDS_UPDATE_INSTALLING_INFO": "Attendi, Race Coordinator si riavvierà automaticamente al termine.",
   "RDS_UPDATE_LEARN_MORE": "Ulteriori informazioni",
   "RDS_UPDATE_STATUS_CANCELLED": "Annullato",

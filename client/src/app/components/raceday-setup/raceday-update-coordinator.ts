@@ -2,6 +2,7 @@ import { interval, Subscription, timer } from "rxjs";
 import { DataService } from "@app/data.service";
 import { LoggerService } from "@app/services/logger.service";
 import {
+  isDowngrade,
   UpdateCheckResult,
   UpdateProgress,
   UpdateService,
@@ -19,6 +20,8 @@ export class RacedayUpdateCoordinator {
   public updateBannerDismissed = false;
   public updateProgress: UpdateProgress | null = null;
   public showUpToDateModal = false;
+  public showDowngradeModal = false;
+  public pendingUpdateAction: "install" | "download" | null = null;
   public progressSubscription: Subscription | null = null;
   public restartPollSubscription: Subscription | null = null;
   public targetUpdateVersion: string | null = null;
@@ -44,6 +47,16 @@ export class RacedayUpdateCoordinator {
     return !!(
       this.updateResult?.updateAvailable && !this.updateBannerDismissed
     );
+  }
+
+  public get downgradeMessageParams(): {
+    currentVersion: string;
+    targetVersion: string;
+  } {
+    return {
+      currentVersion: this.preUpdateServerVersion || "",
+      targetVersion: this.updateResult?.latestVersion || "",
+    };
   }
 
   public get updateVersionHtml(): string {
@@ -221,6 +234,8 @@ export class RacedayUpdateCoordinator {
     this.updateTimedOut = false;
     this.targetUpdateVersion = null;
     this.preUpdateServerVersion = null;
+    this.showDowngradeModal = false;
+    this.pendingUpdateAction = null;
     this.clearPendingUpdateSession();
     if (this.progressSubscription) {
       this.progressSubscription.unsubscribe();
@@ -243,6 +258,59 @@ export class RacedayUpdateCoordinator {
   public doStartRestartWatcher() {
     if (this.restartPollSubscription) return;
     this.waitForServerRestartAndReload(1000, 1000);
+  }
+
+  public isDowngradeUpdate(currentServerVersion?: string): boolean {
+    const current = currentServerVersion ?? this.preUpdateServerVersion;
+    const target = this.updateResult?.latestVersion;
+    return isDowngrade(current, target);
+  }
+
+  public requestInstallUpdate(currentServerVersion?: string): boolean {
+    if (this.isDowngradeUpdate(currentServerVersion)) {
+      if (currentServerVersion !== undefined) {
+        this.preUpdateServerVersion = currentServerVersion;
+      }
+      this.pendingUpdateAction = "install";
+      this.showDowngradeModal = true;
+      this.callbacks.onStateChange();
+      return false;
+    }
+    this.installUpdate(currentServerVersion);
+    return true;
+  }
+
+  public requestDownloadUpdate(currentServerVersion?: string): boolean {
+    if (this.isDowngradeUpdate(currentServerVersion)) {
+      if (currentServerVersion !== undefined) {
+        this.preUpdateServerVersion = currentServerVersion;
+      }
+      this.pendingUpdateAction = "download";
+      this.showDowngradeModal = true;
+      this.callbacks.onStateChange();
+      return false;
+    }
+    return true;
+  }
+
+  public confirmDowngradeUpdate() {
+    this.showDowngradeModal = false;
+    const action = this.pendingUpdateAction;
+    this.pendingUpdateAction = null;
+    this.callbacks.onStateChange();
+    if (action === "install") {
+      this.installUpdate(this.preUpdateServerVersion || undefined);
+    } else if (action === "download") {
+      if (this.updateResult?.downloadUrl && typeof window !== "undefined") {
+        window.open(this.updateResult.downloadUrl, "_blank");
+      }
+    }
+  }
+
+  public cancelDowngradeUpdate() {
+    this.showDowngradeModal = false;
+    this.pendingUpdateAction = null;
+    this.callbacks.onStateChange();
   }
 
   public installUpdate(currentServerVersion?: string) {

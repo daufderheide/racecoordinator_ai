@@ -17,6 +17,7 @@ import { of, Subscription } from "rxjs";
 import { filter, take } from "rxjs/operators";
 import { AboutDialogComponent } from "@app/components/shared/about-dialog/about-dialog.component";
 import { AcknowledgementModalComponent } from "@app/components/shared/acknowledgement-modal/acknowledgement-modal.component";
+import { ConfirmationModalComponent } from "@app/components/shared/confirmation-modal/confirmation-modal.component";
 import { DataService } from "@app/data.service";
 import { Role } from "@app/models/role";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
@@ -51,6 +52,7 @@ import { RacedayUpdateCoordinator } from "./raceday-update-coordinator";
     FormsModule,
     AboutDialogComponent,
     AcknowledgementModalComponent,
+    ConfirmationModalComponent,
     TranslatePipe,
   ],
 })
@@ -131,6 +133,20 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
   }
   public set showUpToDateModal(val: boolean) {
     this.updateCoordinator.showUpToDateModal = val;
+  }
+
+  public get showDowngradeModal(): boolean {
+    return this.updateCoordinator.showDowngradeModal;
+  }
+  public set showDowngradeModal(val: boolean) {
+    this.updateCoordinator.showDowngradeModal = val;
+  }
+
+  public get downgradeMessageParams(): {
+    currentVersion: string;
+    targetVersion: string;
+  } {
+    return this.updateCoordinator.downgradeMessageParams;
   }
 
   public get progressSubscription(): Subscription | null {
@@ -630,7 +646,21 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
   }
 
   public installUpdate() {
-    this.updateCoordinator.installUpdate(this.serverVersion);
+    this.updateCoordinator.requestInstallUpdate(this.serverVersion);
+  }
+
+  public onDownloadUpdate(event: Event) {
+    if (!this.updateCoordinator.requestDownloadUpdate(this.serverVersion)) {
+      event.preventDefault();
+    }
+  }
+
+  public confirmDowngradeUpdate() {
+    this.updateCoordinator.confirmDowngradeUpdate();
+  }
+
+  public cancelDowngradeUpdate() {
+    this.updateCoordinator.cancelDowngradeUpdate();
   }
 
   public cancelUpdate() {
@@ -761,6 +791,7 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
     this.dataService.getServerVersion().subscribe({
       next: (version) => {
         this.serverVersion = version;
+        this.updateCoordinator.preUpdateServerVersion = version;
         this.clientVersion = getClientVersion(version);
         this.cdr.detectChanges();
       },

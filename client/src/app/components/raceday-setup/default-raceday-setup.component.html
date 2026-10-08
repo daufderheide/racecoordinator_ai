@@ -129,6 +129,7 @@
                 wrapperClass="setup-menu-dropdown-item"
                 itemClass="setup-menu-dropdown-item"
                 (checkForUpdatesRequested)="onCheckForUpdates()"
+                (channelSelected)="onChannelSelected($event)"
               ></app-update-selector>
               <hr class="setup-menu-dropdown-divider" />
               <div class="setup-menu-dropdown-item" (click)="configureDemo()">

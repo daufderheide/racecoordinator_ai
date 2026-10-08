@@ -182,14 +182,25 @@ public class UpdateService {
     this.lastCheckTime = 0;
   }
 
+  static boolean isAlpha(String version) {
+    if (version == null) {
+      return false;
+    }
+    String lower = version.toLowerCase();
+    return lower.contains("alpha") || lower.contains("dev");
+  }
+
   static boolean isAlpha(JsonNode node) {
-    if (!node.has("tag_name")) return false;
-    String tag = node.get("tag_name").asText().toLowerCase();
-    return tag.contains("alpha");
+    if (!node.has("tag_name")) {
+      return false;
+    }
+    return isAlpha(node.get("tag_name").asText());
   }
 
   static boolean isBeta(JsonNode node) {
-    if (!node.has("tag_name")) return false;
+    if (!node.has("tag_name")) {
+      return false;
+    }
     String tag = node.get("tag_name").asText().toLowerCase();
     return tag.contains("beta");
   }
@@ -200,7 +211,7 @@ public class UpdateService {
 
   static boolean matchesChannel(JsonNode node, String channel) {
     if ("ALPHA".equalsIgnoreCase(channel)) {
-      return true;
+      return isAlpha(node);
     } else if (channel == null || channel.equalsIgnoreCase("BETA")) {
       return isBeta(node) || isProduction(node);
     } else if (channel.equalsIgnoreCase("PRODUCTION")) {
@@ -221,6 +232,15 @@ public class UpdateService {
       return false;
     }
 
+    boolean isBaseAlpha = isAlpha(baseVersion);
+    boolean isTargetAlpha = isAlpha(latestTarget);
+
+    // If user is on an alpha release and switching to a non-alpha release (beta or production),
+    // allow the target non-alpha release to be offered regardless of published_at date.
+    if (isBaseAlpha && !isTargetAlpha) {
+      return true;
+    }
+
     JsonNode baseRelease =
         StreamSupport.stream(releases.spliterator(), false)
             .filter(
@@ -238,9 +258,28 @@ public class UpdateService {
       String latestPublishedAt = latestTarget.get("published_at").asText();
       return latestPublishedAt.compareTo(basePublishedAt) > 0;
     } else {
+      String baseDate = extractAlphaDate(baseVersion);
+      String latestDate = extractAlphaDate(latestTag);
+      if (baseDate != null && latestDate != null) {
+        return latestDate.compareTo(baseDate) > 0;
+      }
       // If base release not found in recent releases, assume latest release is newer
       return true;
     }
+  }
+
+  static String extractAlphaDate(String version) {
+    if (version == null) {
+      return null;
+    }
+    int idx = version.indexOf("alpha.");
+    if (idx != -1 && version.length() >= idx + 14) {
+      String sub = version.substring(idx + 6, idx + 14);
+      if (sub.matches("\\d{8}")) {
+        return sub;
+      }
+    }
+    return null;
   }
 
   // Helper method no longer needed as we do inline date comparison

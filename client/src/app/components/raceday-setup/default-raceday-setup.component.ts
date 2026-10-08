@@ -54,6 +54,7 @@ import { RaceService } from "@app/services/race.service";
 import { SettingsService } from "@app/services/settings.service";
 import { ThemeService } from "@app/services/theme.service";
 import { TranslationService } from "@app/services/translation.service";
+import { UpdateChannel } from "@app/services/update.service";
 import { saveFileAs } from "@app/utils/file-download.utils";
 import { calculateSeasonStandings } from "@app/utils/season.utils";
 import { naturalSortCompare } from "@app/utils/sorting.utils";
@@ -2524,6 +2525,13 @@ export class DefaultRacedaySetupComponent implements OnInit {
 
   onCheckForUpdates() {
     if (this.isUpdateBannerVisible()) return;
+    this.closeFileDropdown();
+    this.closeOptionsDropdown();
+    this.closeHelpDropdown();
+    this.requestCheckForUpdates.emit();
+  }
+
+  onChannelSelected(_channel: UpdateChannel) {
     this.closeFileDropdown();
     this.closeOptionsDropdown();
     this.closeHelpDropdown();
