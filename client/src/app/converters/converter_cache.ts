@@ -2,7 +2,22 @@
  * A generic cache for converters to store and retrieve models.
  */
 export class ConverterCache<T> {
+  private static allCaches: ConverterCache<any>[] = [];
+
   private cache = new Map<string, T>();
+
+  constructor() {
+    ConverterCache.allCaches.push(this);
+  }
+
+  /**
+   * Clears all items from every converter cache instance.
+   */
+  static clearAll(): void {
+    for (const c of ConverterCache.allCaches) {
+      c.clear();
+    }
+  }
 
   /**
    * Clears all items from the cache.
