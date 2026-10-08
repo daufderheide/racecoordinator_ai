@@ -14,8 +14,10 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,12 +28,12 @@ public class AssetDefaultsInitializer {
   private final AssetService assetService;
   private final DatabaseContext databaseContext;
 
-  static class DefaultAsset {
-    final String id;
-    final String filename;
-    final String displayName;
+  public static class DefaultAsset {
+    public final String id;
+    public final String filename;
+    public final String displayName;
 
-    DefaultAsset(String id, String filename, String displayName) {
+    public DefaultAsset(String id, String filename, String displayName) {
       this.id = id;
       this.filename = filename;
       this.displayName = displayName;
@@ -307,15 +309,53 @@ public class AssetDefaultsInitializer {
       String safeName = asset.displayName.replaceAll("[^a-zA-Z0-9.-]", "_");
       RESOURCE_MAP.put((asset.id + "_" + safeName).toLowerCase(), "/defaults/" + asset.filename);
     }
+
+    registerHelmetColorAliases();
+  }
+
+  private static void registerHelmetColorAliases() {
+    String[][] aliases = {
+      {"yellow", "black-yellow.png"},
+      {"red", "red-yellow.png"},
+      {"blue", "blue-white.png"},
+      {"green", "green-white.png"},
+      {"black", "black.png"},
+      {"white", "white-blue.png"},
+      {"orange", "red-orange.png"},
+      {"silver", "silver-green.png"}
+    };
+    for (String[] pair : aliases) {
+      String color = pair[0];
+      String res = "/defaults/" + pair[1];
+      RESOURCE_MAP.put("helmet_" + color + ".png", res);
+      RESOURCE_MAP.put("helmet_" + color, res);
+      RESOURCE_MAP.put("helmet-" + color + ".png", res);
+      RESOURCE_MAP.put("helmet-" + color, res);
+      RESOURCE_MAP.put("assets/defaults/helmets/helmet_" + color + ".png", res);
+    }
+  }
+
+  public static List<DefaultAsset> getDefaultImageAssets() {
+    return Collections.unmodifiableList(DEFAULT_IMAGE_ASSETS);
+  }
+
+  public static List<DefaultAsset> getDefaultAudioAssets() {
+    return Collections.unmodifiableList(DEFAULT_AUDIO_ASSETS);
   }
 
   public static String getDefaultResourcePath(String nameOrId) {
     if (nameOrId == null || nameOrId.trim().isEmpty()) {
       return null;
     }
-    String key = nameOrId.trim().toLowerCase();
+    String key = nameOrId.trim().toLowerCase(Locale.ROOT);
     if (RESOURCE_MAP.containsKey(key)) {
       return RESOURCE_MAP.get(key);
+    }
+    if (key.contains("/") || key.contains("\\")) {
+      String fn = key.substring(Math.max(key.lastIndexOf('/'), key.lastIndexOf('\\')) + 1);
+      if (RESOURCE_MAP.containsKey(fn)) {
+        return RESOURCE_MAP.get(fn);
+      }
     }
     String directPath = "/defaults/" + nameOrId.trim();
     if (AssetDefaultsInitializer.class.getResource(directPath) != null) {
@@ -328,26 +368,75 @@ public class AssetDefaultsInitializer {
     if (nameOrId == null || nameOrId.trim().isEmpty()) {
       return null;
     }
-    String key = nameOrId.trim().toLowerCase();
+    String key = nameOrId.trim().toLowerCase(Locale.ROOT);
+    if (key.contains("/") || key.contains("\\")) {
+      key = key.substring(Math.max(key.lastIndexOf('/'), key.lastIndexOf('\\')) + 1);
+    }
     for (DefaultAsset asset : DEFAULT_IMAGE_ASSETS) {
-      if (asset.id.equalsIgnoreCase(key) || asset.filename.equalsIgnoreCase(key)) {
-        String safeName = asset.displayName.replaceAll("[^a-zA-Z0-9.-]", "_");
+      String safeName = asset.displayName.replaceAll("[^a-zA-Z0-9.-]", "_");
+      if (asset.id.equalsIgnoreCase(key)
+          || asset.filename.equalsIgnoreCase(key)
+          || asset.displayName.equalsIgnoreCase(key)
+          || asset.filename.equalsIgnoreCase(key + ".png")
+          || (asset.id + "_" + safeName).equalsIgnoreCase(key)) {
         return asset.id + "_" + safeName;
       }
     }
     for (FuelDefaultAsset asset : DEFAULT_FUEL_IMAGE_ASSETS) {
-      if (asset.id.equalsIgnoreCase(key) || asset.filename.equalsIgnoreCase(key)) {
-        String safeName = asset.displayName.replaceAll("[^a-zA-Z0-9.-]", "_");
+      String safeName = asset.displayName.replaceAll("[^a-zA-Z0-9.-]", "_");
+      if (asset.id.equalsIgnoreCase(key)
+          || asset.filename.equalsIgnoreCase(key)
+          || asset.displayName.equalsIgnoreCase(key)
+          || asset.filename.equalsIgnoreCase(key + ".png")
+          || (asset.id + "_" + safeName).equalsIgnoreCase(key)) {
         return asset.id + "_" + safeName;
       }
     }
     for (DefaultAsset asset : DEFAULT_AUDIO_ASSETS) {
-      if (asset.id.equalsIgnoreCase(key) || asset.filename.equalsIgnoreCase(key)) {
-        String safeName = asset.displayName.replaceAll("[^a-zA-Z0-9.-]", "_");
+      String safeName = asset.displayName.replaceAll("[^a-zA-Z0-9.-]", "_");
+      if (asset.id.equalsIgnoreCase(key)
+          || asset.filename.equalsIgnoreCase(key)
+          || asset.displayName.equalsIgnoreCase(key)
+          || asset.filename.equalsIgnoreCase(key + ".wav")
+          || (asset.id + "_" + safeName).equalsIgnoreCase(key)) {
         return asset.id + "_" + safeName;
       }
     }
+
+    if (key.contains("helmet") || key.endsWith(".png")) {
+      if (key.contains("yellow")) return getDefaultFilename("default_black-yellow");
+      if (key.contains("red")) return getDefaultFilename("default_red-yellow");
+      if (key.contains("blue")) return getDefaultFilename("default_blue-white");
+      if (key.contains("green")) return getDefaultFilename("default_green-white");
+      if (key.contains("black")) return getDefaultFilename("default_black");
+      if (key.contains("white")) return getDefaultFilename("default_white-blue");
+      if (key.contains("orange")) return getDefaultFilename("default_red-orange");
+      if (key.contains("silver")) return getDefaultFilename("default_silver-green");
+    }
+
     return null;
+  }
+
+  public static String resolveDefaultAssetUrl(String nameOrPath) {
+    if (nameOrPath == null || nameOrPath.trim().isEmpty()) {
+      return null;
+    }
+    String clean = nameOrPath.trim();
+    if (clean.startsWith("/assets/")
+        || clean.startsWith("http://")
+        || clean.startsWith("https://")) {
+      return clean;
+    }
+    if (clean.startsWith("assets/default_")) {
+      return "/" + clean;
+    }
+
+    String defaultFilename = getDefaultFilename(clean);
+    if (defaultFilename != null) {
+      return "/assets/" + defaultFilename;
+    }
+
+    return clean;
   }
 
   public AssetDefaultsInitializer(AssetService assetService, DatabaseContext databaseContext) {

@@ -193,7 +193,7 @@ describe("RacedayGhostPacingComponent", () => {
     fixture.detectChanges();
 
     expect(await harness.getBenchmarkName()).toBe("Lane Record");
-    expect(await harness.getTargetTimeText()).toBe("5.20s");
+    expect(await harness.getTargetTimeText()).toBe("5.200s");
     expect(await harness.isAhead()).toBeTrue();
   });
 
@@ -210,6 +210,103 @@ describe("RacedayGhostPacingComponent", () => {
     fixture.detectChanges();
 
     expect(await harness.getBenchmarkName()).toBe("Lane Record");
-    expect(await harness.getTargetTimeText()).toBe("--.--s");
+    expect(await harness.getTargetTimeText()).toBe("--.---s");
+  });
+
+  describe("decimalPlaces formatting [0, 3]", () => {
+    const mockHd = {
+      laneIndex: 0,
+      currentLapTime: 2.0,
+      driver: { name: "Driver 1" },
+    } as unknown as DriverHeatData;
+
+    it("should format target time, delta, and placeholders with 3 decimals by default", async () => {
+      fixture.componentRef.setInput("driverHeatData", mockHd);
+      fixture.componentRef.setInput("laneRecord", 5.234);
+      fixture.componentRef.setInput("lapProgress", 0.5);
+      fixture.componentRef.setInput("stacked", true);
+      fixture.detectChanges();
+
+      // expected ghost elapsed = 5.234 * 0.5 = 2.617s; live = 2.0s; delta = +0.617s
+      expect(component.effectiveDecimals()).toBe(3);
+      expect(component.formattedTargetGhostLapTime()).toBe("5.234s");
+      expect(component.formattedDelta()).toBe("+0.617s");
+      expect(await harness.getTargetTimeText()).toBe("5.234s");
+      expect(await harness.getDeltaText()).toContain("+0.617s");
+    });
+
+    it("should format target time, delta, and placeholders with 2 decimals", async () => {
+      fixture.componentRef.setInput("driverHeatData", mockHd);
+      fixture.componentRef.setInput("laneRecord", 5.234);
+      fixture.componentRef.setInput("lapProgress", 0.5);
+      fixture.componentRef.setInput("stacked", true);
+      fixture.componentRef.setInput("decimalPlaces", 2);
+      fixture.detectChanges();
+
+      expect(component.effectiveDecimals()).toBe(2);
+      expect(component.formattedTargetGhostLapTime()).toBe("5.23s");
+      expect(component.formattedDelta()).toBe("+0.62s");
+      expect(await harness.getTargetTimeText()).toBe("5.23s");
+      expect(await harness.getDeltaText()).toContain("+0.62s");
+    });
+
+    it("should format target time, delta, and placeholders with 1 decimal", async () => {
+      fixture.componentRef.setInput("driverHeatData", mockHd);
+      fixture.componentRef.setInput("laneRecord", 5.234);
+      fixture.componentRef.setInput("lapProgress", 0.5);
+      fixture.componentRef.setInput("stacked", true);
+      fixture.componentRef.setInput("decimalPlaces", 1);
+      fixture.detectChanges();
+
+      expect(component.effectiveDecimals()).toBe(1);
+      expect(component.formattedTargetGhostLapTime()).toBe("5.2s");
+      expect(component.formattedDelta()).toBe("+0.6s");
+      expect(await harness.getTargetTimeText()).toBe("5.2s");
+      expect(await harness.getDeltaText()).toContain("+0.6s");
+    });
+
+    it("should format target time, delta, and placeholders with 0 decimals", async () => {
+      fixture.componentRef.setInput("driverHeatData", mockHd);
+      fixture.componentRef.setInput("laneRecord", 5.234);
+      fixture.componentRef.setInput("lapProgress", 0.5);
+      fixture.componentRef.setInput("stacked", true);
+      fixture.componentRef.setInput("decimalPlaces", 0);
+      fixture.detectChanges();
+
+      expect(component.effectiveDecimals()).toBe(0);
+      expect(component.formattedTargetGhostLapTime()).toBe("5s");
+      expect(component.formattedDelta()).toBe("+1s");
+      expect(await harness.getTargetTimeText()).toBe("5s");
+      expect(await harness.getDeltaText()).toContain("+1s");
+
+      // Placeholder with 0 decimals
+      fixture.componentRef.setInput("laneRecord", 0);
+      fixture.detectChanges();
+      expect(component.targetTimePlaceholder()).toBe("--s");
+      expect(await harness.getTargetTimeText()).toBe("--s");
+    });
+
+    it("should clamp decimalPlaces within [0, 3]", () => {
+      fixture.componentRef.setInput("decimalPlaces", -1);
+      fixture.detectChanges();
+      expect(component.effectiveDecimals()).toBe(0);
+
+      fixture.componentRef.setInput("decimalPlaces", 5);
+      fixture.detectChanges();
+      expect(component.effectiveDecimals()).toBe(3);
+    });
+
+    it("should format compact header tag with configured decimal places", () => {
+      fixture.componentRef.setInput("driverHeatData", mockHd);
+      fixture.componentRef.setInput("laneRecord", 6.123);
+      fixture.componentRef.setInput("stacked", false);
+      fixture.componentRef.setInput("decimalPlaces", 1);
+      fixture.detectChanges();
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      const tag = compiled.querySelector(".benchmark-tag");
+      expect(tag?.getAttribute("title")).toContain("6.1s");
+      expect(tag?.textContent).toContain("6.1s");
+    });
   });
 });

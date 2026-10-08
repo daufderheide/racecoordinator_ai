@@ -426,3 +426,43 @@ export function isDriverNicknameUnique(
       (d.nickname || "").trim().toLowerCase() === trimmed,
   );
 }
+
+export function resolveDriverAvatarUrl(
+  url?: string,
+  dataService?: {
+    serverUrl?: string;
+    resolveAssetUrl?: (u?: string) => string;
+  },
+): string {
+  if (!url) return "assets/images/default_avatar.svg";
+  const resolved = dataService?.resolveAssetUrl
+    ? dataService.resolveAssetUrl(url)
+    : url;
+  if (resolved && resolved.startsWith("/")) {
+    return `${dataService?.serverUrl || ""}${resolved}`;
+  }
+  return resolved;
+}
+
+export function syncLinkedNameAndNickname(driver?: Driver): boolean {
+  if (!driver) return false;
+  if (driver.name && driver.nickname !== driver.name) {
+    driver.nickname = driver.name;
+    return true;
+  }
+  if (!driver.name && driver.nickname) {
+    driver.name = driver.nickname;
+    return true;
+  }
+  return false;
+}
+
+export function focusDriverNameInput(): void {
+  setTimeout(() => {
+    const el = document.getElementById("driver-name-input") as HTMLInputElement;
+    if (el) {
+      el.focus();
+      el.select();
+    }
+  }, 0);
+}

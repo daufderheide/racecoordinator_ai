@@ -1,8 +1,19 @@
-export interface LaneViewColumnGroup {
+import { naturalSortCompare } from "@app/utils/sorting.utils";
+
+export interface LaneViewColumnSubgroup {
   id: string;
   nameKey: string;
   columns: { key: string; label: string }[];
   expanded: boolean;
+}
+
+export interface LaneViewColumnGroup {
+  id: string;
+  nameKey: string;
+  columns: { key: string; label: string }[];
+  subgroups: LaneViewColumnSubgroup[];
+  expanded: boolean;
+  totalCount: number;
 }
 
 export interface ColumnGroupDefinition {
@@ -34,8 +45,6 @@ export const LANE_VIEW_COLUMN_GROUPS: readonly ColumnGroupDefinition[] = [
       "lapsLed",
       "trackCalls",
       "rankHeat",
-      "rankOverall",
-      "rankGroup",
     ],
   },
   {
@@ -45,8 +54,6 @@ export const LANE_VIEW_COLUMN_GROUPS: readonly ColumnGroupDefinition[] = [
       "lastLapTime",
       "lastLaps",
       "bestLapTime",
-      "bestRaceLapTime",
-      "recordLapTime",
       "segmentTime",
       "reactionTime",
       "totalTime",
@@ -71,6 +78,54 @@ export const LANE_VIEW_COLUMN_GROUPS: readonly ColumnGroupDefinition[] = [
     id: "gaps",
     nameKey: "UE_COL_GROUP_GAPS",
     columnKeys: ["gapLeader", "gapPosition", "gapLeaderF1", "gapPositionF1"],
+  },
+  {
+    id: "overall-standings",
+    nameKey: "UE_COL_GROUP_OVERALL_STANDINGS",
+    columnKeys: [
+      "rankOverall",
+      "overallLapCount",
+      "overallPhysicalLapCount",
+      "rankGroup",
+      "overallPoints",
+      "overallLapsLed",
+      "overallTrackCalls",
+    ],
+  },
+  {
+    id: "overall-lap-times",
+    nameKey: "UE_COL_GROUP_OVERALL_LAP_TIMES",
+    columnKeys: [
+      "overallBestLapTime",
+      "overallTotalTime",
+      "bestRaceLapTime",
+      "recordLapTime",
+    ],
+  },
+  {
+    id: "overall-analysis",
+    nameKey: "UE_COL_GROUP_OVERALL_ANALYSIS",
+    columnKeys: [
+      "overallAverageLapTime",
+      "overallMedianLapTime",
+      "overallConsistencyScore",
+      "overallStandardDeviation",
+      "overallAverageTop5",
+      "overallAverageTop10",
+      "overallAverageTop15",
+      "overallTop2Consecutive",
+      "overallTop3Consecutive",
+    ],
+  },
+  {
+    id: "overall-gaps",
+    nameKey: "UE_COL_GROUP_OVERALL_GAPS",
+    columnKeys: [
+      "overallGapLeader",
+      "overallGapPosition",
+      "overallGapLeaderF1",
+      "overallGapPositionF1",
+    ],
   },
   {
     id: "pacing",
@@ -111,6 +166,48 @@ export const LANE_VIEW_COLUMN_GROUPS: readonly ColumnGroupDefinition[] = [
 ];
 
 export class LaneViewColumnGroupHelper {
+  public static readonly HEAT_DATA_GROUP_ID = "heat-data";
+  public static readonly OVERALL_DATA_GROUP_ID = "overall-data";
+
+  public static readonly HEAT_DATA_SUBGROUP_IDS: readonly string[] = [
+    "driver-team",
+    "laps-standings",
+    "lap-times",
+    "analysis",
+    "gaps",
+    "telemetry",
+    "pacing",
+    "media-custom",
+  ];
+
+  public static readonly OVERALL_DATA_SUBGROUP_IDS: readonly string[] = [
+    "driver-team",
+    "overall-standings",
+    "overall-lap-times",
+    "overall-analysis",
+    "overall-gaps",
+    "predictions",
+    "media-custom",
+  ];
+
+  private static readonly SUBGROUP_FALLBACK_LABELS: Record<string, string> = {
+    UE_TOOLBOX_GROUP_HEAT_DATA: "Heat Data",
+    UE_TOOLBOX_GROUP_OVERALL_DATA: "Overall Race Data",
+    UE_COL_GROUP_ANALYSIS: "Driver Analysis & Consistency",
+    UE_COL_GROUP_DRIVER_TEAM: "Driver & Team",
+    UE_COL_GROUP_GAPS: "Gaps & Intervals",
+    UE_COL_GROUP_LAP_TIMES: "Lap Times & Records",
+    UE_COL_GROUP_LAPS_STANDINGS: "Laps & Standings",
+    UE_COL_GROUP_MEDIA_CUSTOM: "QR Codes & Media",
+    UE_COL_GROUP_OVERALL_ANALYSIS: "Overall Analysis & Consistency",
+    UE_COL_GROUP_OVERALL_GAPS: "Overall Gaps & Intervals",
+    UE_COL_GROUP_OVERALL_LAP_TIMES: "Overall Lap Times & Records",
+    UE_COL_GROUP_OVERALL_STANDINGS: "Overall Standings & Laps",
+    UE_COL_GROUP_PACING: "Pacing",
+    UE_COL_GROUP_PREDICTIONS: "Predictions",
+    UE_COL_GROUP_TELEMETRY: "Telemetry, Fuel & Speed",
+  };
+
   private static readonly KEY_TO_GROUP_ID_MAP =
     LaneViewColumnGroupHelper.createKeyToGroupIdMap();
 
@@ -128,33 +225,124 @@ export class LaneViewColumnGroupHelper {
     return this.KEY_TO_GROUP_ID_MAP.get(key) || "media-custom";
   }
 
-  static buildColumnGroups(
+  private static compareSubgroups(
+    a: LaneViewColumnSubgroup,
+    b: LaneViewColumnSubgroup,
+    translateFn?: (key: string) => string,
+  ): number {
+    const labelA = LaneViewColumnGroupHelper.getSubgroupDisplayLabel(
+      a,
+      translateFn,
+    );
+    const labelB = LaneViewColumnGroupHelper.getSubgroupDisplayLabel(
+      b,
+      translateFn,
+    );
+    const cmp = naturalSortCompare(labelA, labelB);
+    if (cmp !== 0) return cmp;
+    return naturalSortCompare(a.id, b.id);
+  }
+
+  private static getSubgroupDisplayLabel(
+    sg: LaneViewColumnSubgroup,
+    translateFn?: (key: string) => string,
+  ): string {
+    if (translateFn) {
+      const translated = translateFn(sg.nameKey);
+      if (translated && translated !== sg.nameKey) return translated;
+    }
+    return (
+      LaneViewColumnGroupHelper.SUBGROUP_FALLBACK_LABELS[sg.nameKey] ||
+      sg.nameKey ||
+      sg.id
+    );
+  }
+
+  private static isSubgroupExpanded(
+    expandedStates: Map<string, boolean> | Record<string, boolean> | undefined,
+    sgId: string,
+    rawGroupId: string,
+    term: string,
+  ): boolean {
+    if (term) return true;
+    if (!expandedStates) return false;
+    if (expandedStates instanceof Map) {
+      if (expandedStates.has(sgId)) return !!expandedStates.get(sgId);
+      if (expandedStates.has(rawGroupId))
+        return !!expandedStates.get(rawGroupId);
+      return false;
+    }
+    if (typeof expandedStates === "object") {
+      if (expandedStates[sgId] !== undefined) return !!expandedStates[sgId];
+      if (expandedStates[rawGroupId] !== undefined)
+        return !!expandedStates[rawGroupId];
+      return false;
+    }
+    return false;
+  }
+
+  private static isGroupExpanded(
+    expandedStates: Map<string, boolean> | Record<string, boolean> | undefined,
+    groupId: string,
+    term: string,
+  ): boolean {
+    if (term) return true;
+    if (!expandedStates) return true;
+    if (expandedStates instanceof Map) {
+      return expandedStates.has(groupId) ? !!expandedStates.get(groupId) : true;
+    }
+    if (typeof expandedStates === "object") {
+      return expandedStates[groupId] !== undefined
+        ? !!expandedStates[groupId]
+        : true;
+    }
+    return true;
+  }
+
+  private static buildScopedGroup(
+    groupId: string,
+    nameKey: string,
+    subgroupDefIds: readonly string[],
     unusedColumns: { key: string; label: string }[],
     searchTerm: string,
     expandedStates: Map<string, boolean> | Record<string, boolean>,
     translateFn: (key: string) => string,
-  ): LaneViewColumnGroup[] {
+  ): LaneViewColumnGroup | null {
     const term = searchTerm ? searchTerm.trim().toLowerCase() : "";
-    const groupMap = new Map<string, { key: string; label: string }[]>();
+    const subgroups: LaneViewColumnSubgroup[] = [];
 
-    for (const group of LANE_VIEW_COLUMN_GROUPS) {
-      groupMap.set(group.id, []);
-    }
-
+    const unusedMap = new Map<string, { key: string; label: string }>();
     for (const col of unusedColumns) {
-      const groupId = this.getGroupIdForColumn(col.key);
-      const list = groupMap.get(groupId);
-      if (list) {
-        list.push(col);
-      } else {
-        groupMap.get("media-custom")?.push(col);
-      }
+      unusedMap.set(col.key, col);
     }
 
-    const result: LaneViewColumnGroup[] = [];
+    for (const subgroupId of subgroupDefIds) {
+      const groupDef = LANE_VIEW_COLUMN_GROUPS.find((g) => g.id === subgroupId);
+      if (!groupDef) continue;
 
-    for (const groupDef of LANE_VIEW_COLUMN_GROUPS) {
-      let cols = groupMap.get(groupDef.id) || [];
+      let cols: { key: string; label: string }[] = [];
+      if (subgroupId === "media-custom") {
+        for (const key of groupDef.columnKeys) {
+          const col = unusedMap.get(key);
+          if (col) cols.push(col);
+        }
+        for (const col of unusedColumns) {
+          if (
+            (col.key.startsWith("imageset_") ||
+              LaneViewColumnGroupHelper.getGroupIdForColumn(col.key) ===
+                "media-custom") &&
+            !groupDef.columnKeys.includes(col.key) &&
+            !cols.some((c) => c.key === col.key)
+          ) {
+            cols.push(col);
+          }
+        }
+      } else {
+        for (const key of groupDef.columnKeys) {
+          const col = unusedMap.get(key);
+          if (col) cols.push(col);
+        }
+      }
 
       if (term) {
         cols = cols.filter((col) => {
@@ -170,29 +358,81 @@ export class LaneViewColumnGroupHelper {
       }
 
       if (cols.length > 0) {
-        let isExpanded = true;
-        if (term) {
-          isExpanded = true;
-        } else if (expandedStates instanceof Map) {
-          isExpanded = expandedStates.has(groupDef.id)
-            ? expandedStates.get(groupDef.id)!
-            : true;
-        } else if (expandedStates && typeof expandedStates === "object") {
-          isExpanded =
-            expandedStates[groupDef.id] !== undefined
-              ? !!expandedStates[groupDef.id]
-              : true;
-        }
+        const sgId = `${groupId}-sg-${groupDef.id}`;
+        const isSgExpanded = LaneViewColumnGroupHelper.isSubgroupExpanded(
+          expandedStates,
+          sgId,
+          groupDef.id,
+          term,
+        );
 
-        result.push({
-          id: groupDef.id,
+        subgroups.push({
+          id: sgId,
           nameKey: groupDef.nameKey,
           columns: cols,
-          expanded: isExpanded,
+          expanded: isSgExpanded,
         });
       }
     }
 
+    subgroups.sort((a, b) =>
+      LaneViewColumnGroupHelper.compareSubgroups(a, b, translateFn),
+    );
+
+    if (subgroups.length === 0) {
+      return null;
+    }
+
+    const totalCount = subgroups.reduce(
+      (sum, sg) => sum + sg.columns.length,
+      0,
+    );
+
+    const isGroupExpanded = LaneViewColumnGroupHelper.isGroupExpanded(
+      expandedStates,
+      groupId,
+      term,
+    );
+
+    return {
+      id: groupId,
+      nameKey: nameKey,
+      columns: [],
+      subgroups: subgroups,
+      expanded: isGroupExpanded,
+      totalCount: totalCount,
+    };
+  }
+
+  static buildColumnGroups(
+    unusedColumns: { key: string; label: string }[],
+    searchTerm: string,
+    expandedStates: Map<string, boolean> | Record<string, boolean>,
+    translateFn: (key: string) => string,
+  ): LaneViewColumnGroup[] {
+    const heatDataGroup = LaneViewColumnGroupHelper.buildScopedGroup(
+      LaneViewColumnGroupHelper.HEAT_DATA_GROUP_ID,
+      "UE_TOOLBOX_GROUP_HEAT_DATA",
+      LaneViewColumnGroupHelper.HEAT_DATA_SUBGROUP_IDS,
+      unusedColumns,
+      searchTerm,
+      expandedStates,
+      translateFn,
+    );
+
+    const overallDataGroup = LaneViewColumnGroupHelper.buildScopedGroup(
+      LaneViewColumnGroupHelper.OVERALL_DATA_GROUP_ID,
+      "UE_TOOLBOX_GROUP_OVERALL_DATA",
+      LaneViewColumnGroupHelper.OVERALL_DATA_SUBGROUP_IDS,
+      unusedColumns,
+      searchTerm,
+      expandedStates,
+      translateFn,
+    );
+
+    const result: LaneViewColumnGroup[] = [];
+    if (heatDataGroup) result.push(heatDataGroup);
+    if (overallDataGroup) result.push(overallDataGroup);
     return result;
   }
 }

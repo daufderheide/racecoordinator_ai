@@ -287,5 +287,26 @@ describe("UpdateService", () => {
       expect(isAlphaVersion(null)).toBeFalse();
       expect(isAlphaVersion(undefined)).toBeFalse();
     });
+    
+  it("should support isLinux in update check result", () => {
+    const mockResult: UpdateCheckResult = {
+      updateAvailable: true,
+      latestVersion: "v1.0.1",
+      downloadUrl: "https://example.com/update.tar.gz",
+      releaseNotes: "Linux arm64 update",
+      releaseUrl: "https://github.com/release/v1.0.1",
+      isWindows: false,
+      isLinux: true,
+    };
+
+    service.checkForUpdates().subscribe((result) => {
+      expect(result.isLinux).toBeTrue();
+      expect(result.isWindows).toBeFalse();
+    });
+
+    const req = httpMock.expectOne((req) =>
+      req.url.endsWith("/api/update/check"),
+    );
+    req.flush(mockResult);
   });
 });

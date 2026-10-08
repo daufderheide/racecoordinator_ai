@@ -547,6 +547,24 @@ describe("ToolbarComponent", () => {
       expect(copyIdx).toBe(expandCollapseIdx + 1);
     });
 
+    it("should place export-btn step immediately after import-btn", () => {
+      fixture.componentRef.setInput("showImport", true);
+      fixture.componentRef.setInput("showExport", true);
+      fixture.componentRef.setInput("showDelete", true);
+      fixture.detectChanges();
+
+      const steps = component.getToolbarHelpSteps();
+      const targetIds = steps.map((s) => s.targetId);
+
+      const importIdx = targetIds.indexOf("import-btn");
+      const exportIdx = targetIds.indexOf("export-btn");
+      const deleteIdx = targetIds.indexOf("delete-track-btn");
+
+      expect(importIdx).toBeGreaterThanOrEqual(0);
+      expect(exportIdx).toBe(importIdx + 1);
+      expect(deleteIdx).toBe(exportIdx + 1);
+    });
+
     it("should return all toolbar help steps in correct order when all actions are enabled", () => {
       fixture.componentRef.setInput("showActivate", true);
       fixture.componentRef.setInput("showUndo", true);
@@ -574,13 +592,37 @@ describe("ToolbarComponent", () => {
         "expand-collapse-all-btn",
         "copy-item-btn",
         "add-item-btn",
-        "delete-track-btn",
         "import-btn",
         "export-btn",
+        "delete-track-btn",
         "reset-btn",
         "analytics-btn",
         "help-track-btn",
       ]);
+    });
+  });
+
+  describe("Button DOM order", () => {
+    it("should place export button immediately to the right of import button", () => {
+      fixture.componentRef.setInput("showCopy", true);
+      fixture.componentRef.setInput("showAdd", true);
+      fixture.componentRef.setInput("showImport", true);
+      fixture.componentRef.setInput("showExport", true);
+      fixture.componentRef.setInput("showDelete", true);
+      fixture.detectChanges();
+
+      const buttons = Array.from(
+        fixture.nativeElement.querySelectorAll("button"),
+      ) as HTMLButtonElement[];
+      const buttonIds = buttons.map((b) => b.id).filter(Boolean);
+
+      const importIndex = buttonIds.indexOf("import-btn");
+      const exportIndex = buttonIds.indexOf("export-btn");
+      const deleteIndex = buttonIds.indexOf("delete-track-btn");
+
+      expect(importIndex).toBeGreaterThanOrEqual(0);
+      expect(exportIndex).toBe(importIndex + 1);
+      expect(deleteIndex).toBe(exportIndex + 1);
     });
   });
 });

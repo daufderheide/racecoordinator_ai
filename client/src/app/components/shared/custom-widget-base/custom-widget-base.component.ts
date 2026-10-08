@@ -272,6 +272,10 @@ export class CustomWidgetBaseComponent {
     return this.parent()?.isWarmup || false;
   }
 
+  get isCooldown() {
+    return this.parent()?.isCooldown || false;
+  }
+
   get currentFlagUrl() {
     return this.parent()?.getCurrentFlagUrl
       ? this.parent().getCurrentFlagUrl()

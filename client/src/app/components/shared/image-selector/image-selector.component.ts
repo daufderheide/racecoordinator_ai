@@ -60,7 +60,10 @@ export class ImageSelectorComponent implements OnChanges, OnDestroy {
   effectiveImageUrl = computed(() => {
     if (this.pendingPreview) return this.pendingPreview;
     if (this.localUrl()) return this.localUrl();
-    return this.imageUrl();
+    const url = this.imageUrl();
+    return this.dataService?.resolveAssetUrl
+      ? this.dataService.resolveAssetUrl(url)
+      : url;
   });
 
   allAvailableAssets = computed(() => {

@@ -718,6 +718,34 @@ public class RaceConverterTest {
     assertEquals(1.0, proto.getDigitalFuelOptions().getCustomCurve(2).getY(), 0.001);
   }
 
+  @Test
+  public void testToProto_AutoSegmentsOnPause_True() {
+    Race race =
+        new Race.Builder()
+            .withName("Pause Segments Race")
+            .withTrackEntityId("track-1")
+            .withAutoSegmentsOnPause(true)
+            .build();
+    Track track = new Track.Builder().entityId("track-1").name("Track").build();
+
+    RaceModel proto = RaceConverter.toProto(race, track, new HashSet<>());
+    assertEquals(true, proto.getAutoSegmentsOnPause());
+  }
+
+  @Test
+  public void testToProto_AutoSegmentsOnPause_False() {
+    Race race =
+        new Race.Builder()
+            .withName("No Pause Segments Race")
+            .withTrackEntityId("track-1")
+            .withAutoSegmentsOnPause(false)
+            .build();
+    Track track = new Track.Builder().entityId("track-1").name("Track").build();
+
+    RaceModel proto = RaceConverter.toProto(race, track, new HashSet<>());
+    assertEquals(false, proto.getAutoSegmentsOnPause());
+  }
+
   private void assertNotNull(Object obj) {
     org.junit.Assert.assertNotNull(obj);
   }

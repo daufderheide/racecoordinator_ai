@@ -1,6 +1,8 @@
 package com.antigravity.race.states;
 
 import com.antigravity.context.DatabaseContext;
+import com.antigravity.models.HeatScoring;
+import com.antigravity.models.HeatScoring.AllowFinish;
 import com.antigravity.models.RacePredictionRecord.DriverProjection;
 import com.antigravity.models.SeasonRaceRecord.SeasonDriverResult;
 import com.antigravity.proto.RaceFlag;
@@ -39,6 +41,14 @@ public class RaceOver implements IRaceState {
     logger.info("RaceOver state entered.");
     this.race = race;
     this.raceOverStartTimeMillis = System.currentTimeMillis();
+
+    HeatScoring scoring = race.getRaceModel() != null ? race.getRaceModel().getHeatScoring() : null;
+    if (scoring != null && scoring.getAllowFinish() == AllowFinish.NoneAutoSegments) {
+      if (race.getHeatExecutionManager() != null) {
+        race.getHeatExecutionManager().applyEndHeatAutoSegments();
+      }
+    }
+
     race.broadcastFlag(getFlagType(race));
     syncDriverFlags(race);
 

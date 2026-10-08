@@ -46,6 +46,10 @@ export class RaceTimeService implements OnDestroy {
   private isWarmupSubject = new BehaviorSubject<boolean>(false);
   public isWarmup$: Observable<boolean> = this.isWarmupSubject.asObservable();
 
+  private isCooldownSubject = new BehaviorSubject<boolean>(false);
+  public isCooldown$: Observable<boolean> =
+    this.isCooldownSubject.asObservable();
+
   private raceStateSubject = new BehaviorSubject<RaceState>(
     RaceState.UNKNOWN_STATE,
   );
@@ -397,6 +401,19 @@ export class RaceTimeService implements OnDestroy {
         return totalTime - this._autoStartRemaining < warmupTime;
       }
     }
+    return false;
+  }
+
+  get isCooldown(): boolean {
+    if (
+      this._raceState === RaceState.RACE_OVER ||
+      this._raceState === RaceState.PAUSED ||
+      this._raceState === RaceState.RACING ||
+      this._raceState === RaceState.STARTING
+    ) {
+      return false;
+    }
+    const race = this.raceService?.getRace();
     if (
       this._raceState === RaceState.HEAT_OVER &&
       this._autoAdvanceRemaining > 0 &&
@@ -493,5 +510,6 @@ export class RaceTimeService implements OnDestroy {
     this.formattedTimeSubject.next(this.formattedTime);
     this.autoStatusLabelSubject.next(this.autoStatusLabel);
     this.isWarmupSubject.next(this.isWarmup);
+    this.isCooldownSubject.next(this.isCooldown);
   }
 }

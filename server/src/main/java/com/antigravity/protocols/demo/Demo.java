@@ -239,6 +239,11 @@ public class Demo extends DefaultProtocol {
   }
 
   @Override
+  public ScheduledExecutorService getScheduler() {
+    return statusScheduler != null ? statusScheduler : scheduler;
+  }
+
+  @Override
   protected void startStatusScheduler() {
     if (statusFuture != null && !statusFuture.isCancelled()) {
       return;

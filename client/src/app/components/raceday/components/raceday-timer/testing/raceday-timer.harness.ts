@@ -17,6 +17,9 @@ export class RacedayTimerHarness
   protected getWarmupLabelEl = this.locatorForOptional(
     RacedayTimerHarnessBase.selectors.warmupLabel,
   );
+  protected getCooldownLabelEl = this.locatorForOptional(
+    RacedayTimerHarnessBase.selectors.cooldownLabel,
+  );
 
   async getTimeText(): Promise<string> {
     return await (await this.getTimerTextEl()).text();
@@ -29,6 +32,11 @@ export class RacedayTimerHarness
 
   async getWarmupLabel(): Promise<string | null> {
     const el = await this.getWarmupLabelEl();
+    return el ? await el.text() : null;
+  }
+
+  async getCooldownLabel(): Promise<string | null> {
+    const el = await this.getCooldownLabelEl();
     return el ? await el.text() : null;
   }
 }

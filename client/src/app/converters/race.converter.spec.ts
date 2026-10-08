@@ -293,4 +293,32 @@ describe("RaceConverter", () => {
     expect(resultCustom.start_time).toBe(3.0);
     expect(resultCustom.restart_time).toBe(2.0);
   });
+
+  it("should map autoSegmentsOnPause from proto", () => {
+    const mockProtoTrue: IRaceModel = {
+      model: { entityId: "r20" },
+      name: "Pause Segments Race",
+      track: { model: { entityId: "t1" }, name: "Track", lanes: [] },
+      autoSegmentsOnPause: true,
+    };
+    const resultTrue = RaceConverter.fromProto(mockProtoTrue);
+    expect(resultTrue.auto_segments_on_pause).toBeTrue();
+
+    const mockProtoFalse: IRaceModel = {
+      model: { entityId: "r21" },
+      name: "No Pause Segments Race",
+      track: { model: { entityId: "t1" }, name: "Track", lanes: [] },
+      autoSegmentsOnPause: false,
+    };
+    const resultFalse = RaceConverter.fromProto(mockProtoFalse);
+    expect(resultFalse.auto_segments_on_pause).toBeFalse();
+
+    const mockProtoDefault: IRaceModel = {
+      model: { entityId: "r22" },
+      name: "Default Pause Segments Race",
+      track: { model: { entityId: "t1" }, name: "Track", lanes: [] },
+    };
+    const resultDefault = RaceConverter.fromProto(mockProtoDefault);
+    expect(resultDefault.auto_segments_on_pause).toBeFalse();
+  });
 });

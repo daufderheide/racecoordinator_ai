@@ -3,6 +3,7 @@ package com.antigravity.protocols;
 import com.antigravity.proto.RaceFlag;
 import com.antigravity.proto.RaceState;
 import java.util.List;
+import java.util.concurrent.ScheduledExecutorService;
 
 public interface IProtocol {
 
@@ -56,4 +57,8 @@ public interface IProtocol {
   boolean isLaneInPits(int laneIndex);
 
   void setPitManager(PitManager pitManager);
+
+  default ScheduledExecutorService getScheduler() {
+    return null;
+  }
 }

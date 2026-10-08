@@ -114,6 +114,23 @@ class MockEditorTitleComponent {
   delete = output<void>();
   selectedIdChange = output<string>();
   edit = output<void>();
+  showImport = input<boolean>(false);
+  importHelpTitleKey = input<string>("");
+  importHelpContentKey = input<string>("");
+  import = output<void>();
+}
+
+@Component({
+  selector: "app-import-modal",
+  standalone: true,
+  template: "",
+})
+class MockImportModalComponent {
+  visible = input<boolean>(false);
+  titleKey = input<string>("");
+  entityType = input<string>("");
+  close = output<void>();
+  imported = output<any>();
 }
 
 @Component({
@@ -199,6 +216,7 @@ describe("DriverEditorComponent", () => {
         MockItemSelectorComponent,
         MockImageSelectorComponent,
         MockEditorTitleComponent,
+        MockImportModalComponent,
         MockHelpOverlayComponent,
         MockTranslatePipe,
         MockAvatarUrlPipe,
@@ -1923,6 +1941,35 @@ describe("DriverEditorComponent", () => {
 
       expect(component.selectedDriverId).toBe("d1");
       expect(component.editingDriver?.name).toBe("Alice");
+    });
+  });
+
+  describe("Import Drivers Modal", () => {
+    it("should toggle showImportModal on open and close", () => {
+      expect(component.showImportModal).toBeFalse();
+      component.onOpenImportModal();
+      expect(component.showImportModal).toBeTrue();
+      component.showImportModal = false;
+      expect(component.showImportModal).toBeFalse();
+    });
+
+    it("should reload drivers and select newly created driver when import completes", () => {
+      component.onOpenImportModal();
+      expect(component.showImportModal).toBeTrue();
+
+      spyOn(component as any, "refreshDriverList");
+      spyOn(component, "onSelectDriverById");
+      component.onDriversImported({
+        success: true,
+        importedCount: 2,
+        updatedCount: 0,
+        skippedCount: 0,
+        createdDriverIds: ["d-new-1"],
+        messages: [],
+      });
+
+      expect((component as any).refreshDriverList).toHaveBeenCalled();
+      expect(component.onSelectDriverById).toHaveBeenCalledWith("d-new-1");
     });
   });
 });

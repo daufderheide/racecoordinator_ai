@@ -46,4 +46,38 @@ public class RaceParticipantConverterTest {
     assertNotNull(proto.getDriver()); // Driver is always present but might be empty
     assertEquals("Team Alpha", proto.getDriver().getName());
   }
+
+  @Test
+  public void testToProto_OverallStats() {
+    Driver driver = new Driver("Bob", "The Builder", "d2", "2");
+    com.antigravity.race.RaceParticipant participant =
+        new com.antigravity.race.RaceParticipant(driver, "p2");
+    participant.setAllScoringLaps(Arrays.asList(10.0, 11.0, 12.0));
+    participant.setAverageLapTime(11.0);
+    participant.setLapsLed(5);
+    participant.setTrackCalls(2);
+    participant.setTotalPoints(45.5);
+    participant.setAverageTop5(10.5);
+    participant.setAverageTop10(11.2);
+    participant.setAverageTop15(11.8);
+    participant.setTop2Consecutive(21.0);
+    participant.setTop3Consecutive(33.0);
+    participant.setHasSegments(true);
+
+    RaceParticipant proto = RaceParticipantConverter.toProto(participant, new HashSet<>());
+
+    assertNotNull(proto);
+    assertEquals(true, proto.getHasSegments());
+    assertEquals(3, proto.getPhysicalLapCount());
+    assertEquals(5, proto.getLapsLed());
+    assertEquals(2, proto.getTrackCalls());
+    assertEquals(45.5, proto.getTotalPoints(), 0.01);
+    assertEquals(participant.getConsistencyScore(), proto.getConsistencyScore(), 0.01);
+    assertEquals(participant.getStandardDeviation(), proto.getStandardDeviation(), 0.01);
+    assertEquals(10.5, proto.getAverageTop5(), 0.01);
+    assertEquals(11.2, proto.getAverageTop10(), 0.01);
+    assertEquals(11.8, proto.getAverageTop15(), 0.01);
+    assertEquals(21.0, proto.getTop2Consecutive(), 0.01);
+    assertEquals(33.0, proto.getTop3Consecutive(), 0.01);
+  }
 }

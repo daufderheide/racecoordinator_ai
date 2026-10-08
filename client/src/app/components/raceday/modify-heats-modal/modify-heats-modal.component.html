@@ -45,6 +45,13 @@
               class="driver-item"
               cdkDrag
               [cdkDragData]="participant"
+              [class.driver-highlighted]="isDriverHighlighted(participant)"
+              [class.driver-dimmed]="
+                hasHighlightedDrivers() && !isDriverHighlighted(participant)
+              "
+              [style.--driver-highlight-color]="
+                getDriverHighlightColor(participant)
+              "
               (dblclick)="onRemoveFromRacing(participant)"
             >
               <div class="driver-seed">({{ i + 1 }})</div>
@@ -53,13 +60,47 @@
                 class="driver-avatar"
               />
               <div class="driver-details">
-                <div class="driver-name">
-                  {{ getParticipantName(participant) }}
+                <div
+                  class="driver-name clickable-driver-name"
+                  (click)="toggleDriverHighlight(participant, $event)"
+                  (dblclick)="$event.stopPropagation()"
+                  [title]="
+                    isDriverHighlighted(participant)
+                      ? ('RDS_REMOVE_HIGHLIGHT' | translate)
+                      : ('RDS_HIGHLIGHT_DRIVER' | translate)
+                  "
+                >
+                  <span class="driver-name-text">{{
+                    getParticipantName(participant)
+                  }}</span>
+                  @if (getDriverHighlightColor(participant); as hlColor) {
+                    <span
+                      class="driver-highlight-badge"
+                      [style.background-color]="hlColor"
+                      [style.box-shadow]="'0 0 6px ' + hlColor"
+                    ></span>
+                  }
                 </div>
                 <div class="driver-meta">
                   {{ getParticipantMeta(participant) }}
                 </div>
               </div>
+              @if (getDriverHighlightColor(participant); as hlColor) {
+                <div
+                  class="driver-highlight-chip"
+                  [style.background-color]="hlColor"
+                  [style.color]="getContrastTextColor(hlColor)"
+                  [style.box-shadow]="'0 0 10px ' + hlColor"
+                  [title]="'RDS_REMOVE_HIGHLIGHT' | translate"
+                  (click)="toggleDriverHighlight(participant, $event)"
+                  (dblclick)="$event.stopPropagation()"
+                >
+                  <span class="chip-dot"></span>
+                  <span class="chip-text">{{
+                    getParticipantName(participant)
+                  }}</span>
+                </div>
+              }
             </div>
           }
         </div>
@@ -306,33 +347,73 @@
     <div class="preview-panel">
       <div
         class="heats-grid"
+        [class.has-driver-highlight]="hasHighlightedDrivers()"
         cdkDropList
         cdkDropListOrientation="horizontal"
         [cdkDropListData]="localHeats"
         [cdkDropListAutoScrollDisabled]="true"
         [cdkDropListSortingDisabled]="true"
         (cdkDropListDropped)="onHeatDrop($event)"
+        (mousemove)="onGridMouseMove($event)"
         [style.zoom]="zoomLevel / 100"
       >
         @for (heat of localHeats; track heat.objectId; let hIdx = $index) {
           <div
             class="heat-card"
+            [attr.data-heat-idx]="hIdx"
             [class.started]="isHeatStarted(heat)"
-            [class.drop-target]="hoveredHeatIdx === hIdx"
+            [class.heat-has-highlight]="isHeatHighlighted(heat)"
+            [class.heat-dimmed]="
+              hasHighlightedDrivers() && !isHeatHighlighted(heat)
+            "
+            [class.drop-target]="isHeatSwapHighlight(hIdx, heat)"
+            [class.has-insert-indicator]="
+              activeInsertSlot === hIdx ||
+              (hIdx === localHeats.length - 1 &&
+                activeInsertSlot === localHeats.length)
+            "
             cdkDrag
             cdkDragBoundary=".preview-panel"
             cdkDragPreviewContainer="parent"
             [cdkDragData]="heat"
             [cdkDragDisabled]="isHeatStarted(heat)"
             (cdkDragStarted)="onHeatDragStarted()"
-            (mouseenter)="onHeatHover(hIdx)"
-            (mouseleave)="onHeatHover(-1)"
+            (cdkDragMoved)="onHeatDragMoved($event)"
+            (cdkDragEnded)="onHeatDragEnded()"
+            (mouseenter)="onHeatMouseEnter(hIdx, $event)"
+            (mousemove)="onHeatMouseMove(hIdx, $event)"
+            (mouseleave)="onHeatMouseLeave(hIdx)"
           >
             <!-- Highlight Overlay -->
-            @if (hoveredHeatIdx === hIdx && !isHeatStarted(heat)) {
+            @if (isHeatSwapHighlight(hIdx, heat)) {
               <div class="swap-highlight">
                 <span class="material-icons">swap_horiz</span>
-                <span>{{ "SWAP" | translate }}</span>
+                <span>{{ "RD_SWAP" | translate }}</span>
+              </div>
+            }
+
+            <!-- Insertion Indicator (Before this heat) -->
+            @if (activeInsertSlot === hIdx) {
+              <div class="heat-insert-indicator insert-before">
+                <div class="indicator-line"></div>
+                <div class="indicator-badge">
+                  <span class="material-icons">arrow_downward</span>
+                  <span>{{ "RD_MOVE_HEAT" | translate }}</span>
+                </div>
+              </div>
+            }
+
+            <!-- Insertion Indicator (After last heat) -->
+            @if (
+              hIdx === localHeats.length - 1 &&
+              activeInsertSlot === localHeats.length
+            ) {
+              <div class="heat-insert-indicator insert-after">
+                <div class="indicator-line"></div>
+                <div class="indicator-badge">
+                  <span class="material-icons">arrow_downward</span>
+                  <span>{{ "RD_MOVE_HEAT" | translate }}</span>
+                </div>
               </div>
             }
 
@@ -349,6 +430,19 @@
                 >
                 <h4>
                   {{ "RD_HEAT" | translate }} {{ heat.heatNumber }}
+                  @if (getHeatHighlightColors(heat); as pips) {
+                    @if (pips.length > 0) {
+                      <span class="heat-highlight-pips">
+                        @for (pipColor of pips; track pipColor) {
+                          <span
+                            class="heat-pip"
+                            [style.background-color]="pipColor"
+                            [style.box-shadow]="'0 0 6px ' + pipColor"
+                          ></span>
+                        }
+                      </span>
+                    }
+                  }
                   @if (
                     race() &&
                     race().group_options &&
@@ -407,6 +501,16 @@
                         cdkDrag
                         [cdkDragData]="dhd.participant"
                         [cdkDragDisabled]="isHeatStarted(heat)"
+                        [class.driver-highlighted]="
+                          isDriverHighlighted(dhd.participant)
+                        "
+                        [class.driver-dimmed]="
+                          hasHighlightedDrivers() &&
+                          !isDriverHighlighted(dhd.participant)
+                        "
+                        [style.--driver-highlight-color]="
+                          getDriverHighlightColor(dhd.participant)
+                        "
                         [style.background-color]="
                           track().lanes[lIdx].background_color
                         "
@@ -427,10 +531,31 @@
                           style="position: relative; flex: 1; min-width: 0"
                         >
                           <div
-                            class="driver-name"
+                            class="driver-name clickable-driver-name"
                             [style.color]="track().lanes[lIdx].foreground_color"
+                            (click)="
+                              toggleDriverHighlight(dhd.participant, $event)
+                            "
+                            (dblclick)="$event.stopPropagation()"
+                            [title]="
+                              isDriverHighlighted(dhd.participant)
+                                ? ('RDS_REMOVE_HIGHLIGHT' | translate)
+                                : ('RDS_HIGHLIGHT_DRIVER' | translate)
+                            "
                           >
-                            {{ getParticipantName(dhd.participant) }}
+                            <span class="driver-name-text">{{
+                              getParticipantName(dhd.participant)
+                            }}</span>
+                            @if (
+                              getDriverHighlightColor(dhd.participant);
+                              as hlColor
+                            ) {
+                              <span
+                                class="driver-highlight-badge"
+                                [style.background-color]="hlColor"
+                                [style.box-shadow]="'0 0 6px ' + hlColor"
+                              ></span>
+                            }
                           </div>
                           @if (isTeamLane(dhd)) {
                             <div
@@ -494,6 +619,31 @@
                             </div>
                           }
                         </div>
+                        @if (
+                          getDriverHighlightColor(dhd.participant);
+                          as hlColor
+                        ) {
+                          <div
+                            class="driver-highlight-chip"
+                            [style.background-color]="hlColor"
+                            [style.color]="getContrastTextColor(hlColor)"
+                            [style.box-shadow]="'0 0 10px ' + hlColor"
+                            [title]="
+                              isDriverHighlighted(dhd.participant)
+                                ? ('RDS_REMOVE_HIGHLIGHT' | translate)
+                                : ('RDS_HIGHLIGHT_DRIVER' | translate)
+                            "
+                            (click)="
+                              toggleDriverHighlight(dhd.participant, $event)
+                            "
+                            (dblclick)="$event.stopPropagation()"
+                          >
+                            <span class="chip-dot"></span>
+                            <span class="chip-text">{{
+                              getParticipantName(dhd.participant)
+                            }}</span>
+                          </div>
+                        }
                       </div>
                     } @else {
                       <div

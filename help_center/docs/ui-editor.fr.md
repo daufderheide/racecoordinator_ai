@@ -4,6 +4,16 @@
 
 L'Éditeur d'Interface vous permet de concevoir des mises en page de jour de course personnalisées, de configurer les colonnes du classement des pilotes, de personnaliser les effets sonores et les images des thèmes et de charger des [Widgets personnalisés](custom-widgets.md) modulaires.
 
+## Widgets personnalisés et dossier de widgets
+
+Des widgets personnalisés peuvent être ajoutés à vos dispositions d'interface personnalisées :
+- **Dossier de widgets personnalisés** : Définissez votre dossier local de widgets dans la section **Interface personnalisée** au bas de l'éditeur.
+- **Mettre à jour les widgets d'exemple** : Cliquez sur **Mettre à jour les widgets d'exemple** pour générer ou mettre à jour des widgets d'exemple prêts à l'emploi dans un dossier `sample/` (`sample-telemetry-gauge`, `sample-lap-delta`, `sample-sponsor-banner`, `sample-detailed-leaderboard`).
+- **Groupes de la boîte à outils de widgets** : La boîte à outils organise les widgets en groupes (**Race Coordinator AI**, **Racine personnalisée** et dossiers personnalisés tels que **sample**) avec des sous-groupes imbriqués (comme **Actions** et **Données de manche** avec des sous-dossiers catégorisés) et un filtre de recherche instantané.
+- **Inspecteur dynamique** : Lorsqu'un widget personnalisé est sélectionné sur le canevas, ses propriétés personnalisées (couleurs, seuils, bascules, champs de texte) apparaissent dynamiquement dans l'Inspecteur de widgets.
+
+Pour tous les détails sur le développement de widgets, consultez le [Guide des widgets personnalisés](custom-widgets.md).
+
 ## Configuration de la mise en page et des colonnes
 
 - Glissez-déposez des widgets depuis la palette sur le canevas.
@@ -42,4 +52,27 @@ Le widget **Compte à rebours** affiche les feux visuels de départ et déclench
 - **Animation de fondu d'apparition** : Détermine si l'incrustation des feux et le flou d'arrière-plan apparaissent avec une transition progressive. Si désactivée, les feux et le fond s'affichent instantanément.
 - **Orientation** : Basculez entre une disposition **Horizontale** et **Verticale**.
 - **Effets de lueur et de flou** : Personnalisez le halo lumineux des lampes, l'agrandissement lors de l'activation des feux rouges/verts, ainsi que l'intensité et la zone du flou d'arrière-plan.
+
+## Widgets de Colonne de Voie et Duplication
+
+Le widget **Colonne de Voie** permet de positionner des colonnes individuelles de données provenant de la vue de voie (telles que les informations du pilote, le temps du dernier tour, le meilleur tour / record personnel, le niveau de carburant %, l'historique des tours, les vitesses de secteur, la position, etc.) n'importe où sur le canevas sous la forme de cartes modulaires indépendantes.
+
+- **Modes de Liaison** :
+  - **Voie Physique** : Associe la carte à une voie spécifique du circuit (Voie 1 à Voie 8). La carte conserve les données de cette voie pendant toute la durée de la course.
+  - **Position au Classement** : Associe la carte à un rang actuel du classement (1ère place, 2e place, etc.). La carte s'adapte dynamiquement aux dépassements et aux changements de position, tout en ajustant ses couleurs de fond et de texte à la voie du pilote occupant ce rang.
+- **Orientation** : Prend en charge les dispositions **Verticale** (en-tête au-dessus de la valeur) et **Horizontale** (en-tête et valeur côte à côte).
+- **Style et Personnalisation de la Barre de Titre** :
+  - La barre de titre reprend par défaut l'apparence exacte de l'en-tête de colonne de la vue de voie (arrière-plan sombre semi-transparent `rgba(68, 68, 68, 0.7)`, texte blanc en gras, coins supérieurs arrondis et bordure de séparation).
+  - **Afficher l'En-tête** : Active ou désactive la barre de titre. Lorsqu'elle est désactivée, elle est totalement retirée de la carte afin de maximiser l'espace dédié aux valeurs principales et aux incrustations.
+  - **En-tête Personnalisé** : Remplace le nom du champ de données par défaut par un titre sur mesure.
+  - **Typographie et Alignement** : Personnalisez la police, la taille du texte et son alignement (Gauche, Centré, Droite).
+  - **Couleur du Texte et d'Arrière-plan** : Modifiez la couleur de fond et la couleur du texte de l'en-tête avec des sélecteurs dédiés et un bouton de réinitialisation instantanée.
+- **Héritage des Couleurs et Personnalisation** : Par défaut, les cartes héritent des couleurs de fond et de texte de la voie attribuée (`Utiliser les Couleurs de Voie`), ou peuvent être personnalisées avec des couleurs d'arrière-plan, de texte et de bordure spécifiques.
+- **Dupliquer sur les Voies / Positions** :
+  - Au lieu de créer et d'aligner manuellement les cartes pour chaque voie, configurez un ensemble pour une seule voie ou position et cliquez sur **Dupliquer sur les Voies / Positions...** dans l'inspecteur.
+  - Choisissez la direction (**Horizontale** côte à côte ou **Verticale** superposée), le nombre total de voies/positions cibles (par défaut le nombre maximal de voies de tous les circuits de la base de données), le mode d'espacement (**Ajuster au Canevas** ou **Conserver l'Espacement**) et le remplacement facultatif des widgets existants.
+  - **Mode de Réplication en Temps Réel** : Lors de la duplication, l'éditeur bascule dans un mode de modèle interactif avec repères visuels de voie et alignement magnétique. Dans ce mode, vous placez, redimensionnez et personnalisez les widgets directement sur la Voie 1 (Maître), et les modifications sont immédiatement répercutées en temps réel sur l'ensemble des voies. Les widgets clonés sur les voies 2..N sont des aperçus en direct non modifiables ; cliquer sur un widget cloné renvoie la sélection sur le maître de la Voie 1.
+  - **Zone Intelligente et Redimensionnement** : L'espace de réplication s'agrandit automatiquement dans les quatre directions pour occuper l'espace disponible sur le canevas jusqu'à rencontrer les limites d'un widget extérieur à la grille. Vous pouvez ajuster la zone globale à l'aide des 8 poignées de redimensionnement périmétriques de la superposition.
+  - Cliquez sur **Terminé** pour figer la grille en widgets indépendants.
+  - **Modifier le Modèle et Détacher** : En sélectionnant ultérieurement un widget de la grille, l'inspecteur propose un panneau permettant de cliquer sur **Modifier le Modèle de Grille** (pour réactiver à tout moment le mode de réplication en temps réel) ou **Détacher de la Grille** (pour rompre définitivement le lien).
 

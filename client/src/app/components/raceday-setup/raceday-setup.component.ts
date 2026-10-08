@@ -211,6 +211,10 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
     return this.updateCoordinator.showCancelInUpdate;
   }
 
+  public get canAutoInstall(): boolean {
+    return this.updateCoordinator.canAutoInstall;
+  }
+
   constructor(
     private fileSystem: FileSystemService,
     private compiler: Compiler,

@@ -39,6 +39,7 @@ export class Race implements Model {
   readonly group_options: GroupOptions;
   readonly practice: boolean;
   readonly adjust_drift_laps: boolean;
+  readonly auto_segments_on_pause: boolean;
   readonly theme_id?: string;
   readonly start_time_millis?: number;
 
@@ -86,6 +87,7 @@ export class Race implements Model {
     group_options: GroupOptions = new GroupOptions(),
     practice: boolean = false,
     adjust_drift_laps: boolean = false,
+    auto_segments_on_pause: boolean = false,
     theme_id?: string,
     season_scoring?: SeasonScoring,
     start_time_millis?: number,
@@ -124,6 +126,7 @@ export class Race implements Model {
     this.group_options = group_options;
     this.practice = practice;
     this.adjust_drift_laps = adjust_drift_laps;
+    this.auto_segments_on_pause = auto_segments_on_pause;
     this.theme_id = theme_id;
     this.season_scoring = season_scoring;
     this.start_time_millis = start_time_millis;

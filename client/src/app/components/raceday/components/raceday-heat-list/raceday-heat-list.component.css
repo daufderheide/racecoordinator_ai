@@ -218,6 +218,14 @@
   font-weight: 600;
   min-width: 0;
   transition: transform 0.15s ease;
+  background: rgba(30, 41, 59, 0.6);
+  color: #ffffff;
+}
+
+.lane-badge-item.no-lane-colors {
+  background: rgba(30, 41, 59, 0.6);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
 }
 
 .lane-badge-header {

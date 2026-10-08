@@ -42,6 +42,7 @@ O espaço de trabalho é dividido em dois painéis sincronizados:
     - *Permitir terminar (uma volta)*: Os pilotos podem concluir sua volta atual; essa volta conta no total.
     - *Não permitir finalizar (segmentos automáticos)*: A bateria termina imediatamente e o crédito de volta parcial é calculado a partir do tempo decorrido na volta atual dividido pelo tempo de volta mediano do piloto (`autoSegments = timeSinceLastLap / medianLapTime`, limitado a 0,99).
     - *Permitir terminar (uma volta) (segmentos automáticos)*: Os pilotos concluem a volta na pista; a volta não conta como uma volta inteira, mas a fração é calculada a partir do tempo de corrida antes do término dividido pelo tempo de volta mediano do piloto (`autoSegments = partialLapTime / medianLapTime`, limitado a 0,99).
+  - **Segmentos automáticos na pausa**: Quando ativado, os segmentos automáticos dos pilotos são estimados na pausa de uma bateria usando a mesma fórmula de tempo de volta mediano de *Não permitir finalizar (segmentos automáticos)*. Esses segmentos estimam onde na pista os carros pararam e são limpos quando a corrida é reiniciada. Eles só contam para o total de voltas se a bateria for encerrada durante a pausa e uma opção de término por segmentos automáticos for utilizada.
 - **Pontuação Geral**: Método de classificação geral, regras de desempate e baterias descartadas.
 - **Pontuação da Temporada**: Distribuição de pontos por posição para campeonatos.
 

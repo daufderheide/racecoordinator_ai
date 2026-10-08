@@ -212,6 +212,75 @@ export class RacedayLaneViewComponent implements AfterViewInit, OnDestroy {
     return RacedayLayoutUtils.isPacingProperty(property || "");
   }
 
+  getPacingDecimalPlaces(col?: any, entry?: any): number {
+    const s =
+      this.widget()?.customSettings ||
+      (this.parent() as any)?.laneViewWidgetSettings ||
+      (this.parent() as any)?.currentRacedayLayout?.widgets?.find?.(
+        (w: any) => w.widgetType === "lane-view",
+      )?.customSettings;
+    const customColDecimals =
+      s?.["columnDecimals"] || s?.["columnDecimalPlaces"];
+    const colKey = typeof col === "string" ? col : col?.propertyName;
+    const propKey = typeof entry === "string" ? entry : entry?.property;
+    const isPacing =
+      this.isPacingProperty(propKey) ||
+      this.isPacingProperty(colKey) ||
+      Boolean(colKey && colKey.startsWith("ghostPacing")) ||
+      Boolean(propKey && propKey.startsWith("ghostPacing"));
+
+    if (customColDecimals) {
+      if (
+        colKey &&
+        customColDecimals[colKey] !== undefined &&
+        customColDecimals[colKey] !== null &&
+        customColDecimals[colKey] !== ""
+      ) {
+        return Math.min(3, Math.max(0, Number(customColDecimals[colKey])));
+      }
+      if (
+        propKey &&
+        customColDecimals[propKey] !== undefined &&
+        customColDecimals[propKey] !== null &&
+        customColDecimals[propKey] !== ""
+      ) {
+        return Math.min(3, Math.max(0, Number(customColDecimals[propKey])));
+      }
+      if (colKey && colKey.includes("_")) {
+        for (const subKey of colKey.split("_")) {
+          if (
+            customColDecimals[subKey] !== undefined &&
+            customColDecimals[subKey] !== null &&
+            customColDecimals[subKey] !== ""
+          ) {
+            return Math.min(3, Math.max(0, Number(customColDecimals[subKey])));
+          }
+        }
+      }
+      if (isPacing) {
+        for (const k of Object.keys(customColDecimals)) {
+          if (
+            k.startsWith("ghostPacing") &&
+            customColDecimals[k] !== undefined &&
+            customColDecimals[k] !== null &&
+            customColDecimals[k] !== ""
+          ) {
+            return Math.min(3, Math.max(0, Number(customColDecimals[k])));
+          }
+        }
+      }
+    }
+
+    const isInset = entry?.anchor && !entry.anchor.startsWith("center-");
+    if (isInset && s?.["insetTimeDecimalPlaces"] !== undefined) {
+      return Math.min(3, Math.max(0, Number(s["insetTimeDecimalPlaces"])));
+    }
+    if (s?.["timeDecimalPlaces"] !== undefined) {
+      return Math.min(3, Math.max(0, Number(s["timeDecimalPlaces"])));
+    }
+    return 3;
+  }
+
   isLaneEmpty(hd: any): boolean {
     if (this.parent()?.isEmptyDriver) {
       return this.parent().isEmptyDriver(hd);
@@ -232,5 +301,87 @@ export class RacedayLaneViewComponent implements AfterViewInit, OnDestroy {
     if (!this.isPacingProperty(entry.property)) return false;
     const entries = this.parent()?.getLayoutEntries?.(col);
     return Boolean(entries && entries.length === 1);
+  }
+
+  isNameProperty(property?: string): boolean {
+    if (!property) return false;
+    const baseKey = property.split("_")[0];
+    if (this.parent()?.isNameProperty) {
+      return this.parent().isNameProperty(property);
+    }
+    return baseKey === "driver.name" || baseKey === "driver.nickname";
+  }
+
+  isTeamProperty(property?: string): boolean {
+    if (!property) return false;
+    const baseKey = property.split("_")[0];
+    return baseKey === "participant.team.name";
+  }
+
+  isTeamOrNameProperty(property?: string): boolean {
+    return this.isNameProperty(property) || this.isTeamProperty(property);
+  }
+
+  hasNameProperty(col: any): boolean {
+    if (!col) return false;
+    if (this.isNameProperty(col.propertyName)) return true;
+    if (col.layout) {
+      return Object.values(col.layout).some((p: any) => this.isNameProperty(p));
+    }
+    const entries = this.parent()?.getLayoutEntries?.(col);
+    if (entries && Array.isArray(entries)) {
+      return entries.some((e: any) => this.isNameProperty(e?.property));
+    }
+    return false;
+  }
+
+  shouldShowTeammateSelect(col: any, entry: any, hd: any): boolean {
+    if (!hd || !entry?.property) return false;
+    const p = this.parent();
+    if (!p) return false;
+    if (!p.isTeam?.(hd)) return false;
+
+    // Driver name or nickname always provides the team selector
+    if (this.isNameProperty(entry.property)) {
+      return true;
+    }
+
+    // Team name only provides the selector if the column does not have a name/nickname
+    // and this entry is not an inset (i.e. it is center-center)
+    if (this.isTeamProperty(entry.property)) {
+      if (this.hasNameProperty(col)) {
+        return false;
+      }
+      if (entry.anchor && entry.anchor !== "center-center") {
+        return false;
+      }
+      return true;
+    }
+
+    return false;
+  }
+
+  getTeammateDisplayName(hd: any, property?: string): string {
+    if (!hd || !property) return "";
+    const baseKey = property.split("_")[0];
+    if (baseKey === "driver.nickname") {
+      return (
+        hd.actualDriver?.nickname ||
+        hd.actualDriver?.name ||
+        hd.driver?.nickname ||
+        hd.driver?.name ||
+        ""
+      );
+    }
+    if (baseKey === "participant.team.name") {
+      return (
+        hd.participant?.team?.name ||
+        hd.driver?.team?.name ||
+        hd.actualDriver?.name ||
+        hd.driver?.name ||
+        ""
+      );
+    }
+    return hd.actualDriver?.name || hd.driver?.name || "";
   }
 }

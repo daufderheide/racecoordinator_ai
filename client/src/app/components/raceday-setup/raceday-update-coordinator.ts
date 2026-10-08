@@ -64,14 +64,20 @@ export class RacedayUpdateCoordinator {
     return `<a href="${this.updateResult.releaseUrl}" target="_blank" class="update-link">${this.updateResult.latestVersion}</a>`;
   }
 
+  public get canAutoInstall(): boolean {
+    return !!(this.updateResult?.isWindows || this.updateResult?.isLinux);
+  }
+
   public get updateSubtext(): string | null {
     if (this.updateTimedOut) return null;
     const status = this.updateProgress?.status;
-    if (
-      status === "RDS_UPDATE_STATUS_CONFIRM_PROMPT" ||
-      status === "RDS_UPDATE_STATUS_LAUNCHING"
-    ) {
+    if (status === "RDS_UPDATE_STATUS_CONFIRM_PROMPT") {
       return "RDS_UPDATE_CONFIRM_PROMPT_INFO";
+    }
+    if (status === "RDS_UPDATE_STATUS_LAUNCHING") {
+      return this.updateResult?.isWindows
+        ? "RDS_UPDATE_CONFIRM_PROMPT_INFO"
+        : "RDS_UPDATE_INSTALLING_INFO";
     }
     if (status === "RDS_UPDATE_STATUS_INSTALLING") {
       return "RDS_UPDATE_INSTALLING_INFO";
@@ -351,12 +357,15 @@ export class RacedayUpdateCoordinator {
           this.updateProgress = prog;
           if (
             prog.status === "RDS_UPDATE_STATUS_LAUNCHING" ||
-            prog.status === "RDS_UPDATE_STATUS_CONFIRM_PROMPT"
+            prog.status === "RDS_UPDATE_STATUS_CONFIRM_PROMPT" ||
+            prog.status === "RDS_UPDATE_STATUS_INSTALLING"
           ) {
             if (this.updateProgress.status === "RDS_UPDATE_STATUS_LAUNCHING") {
               this.updateProgress = {
                 progress: 100,
-                status: "RDS_UPDATE_STATUS_CONFIRM_PROMPT",
+                status: this.updateResult?.isWindows
+                  ? "RDS_UPDATE_STATUS_CONFIRM_PROMPT"
+                  : "RDS_UPDATE_STATUS_INSTALLING",
               };
             }
             this.callbacks.onStateChange();

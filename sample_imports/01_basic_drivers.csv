@@ -1,0 +1,7 @@
+# default-audio: none
+Name,Nickname,Lap,BestLap,RaceBestLap
+Max Verstappen,Mad Max,tts:${nickname} completed a lap,preset:default_driveby,tts:New race record by ${nickname}
+Lewis Hamilton,Sir Lewis,preset:default_beep,preset:default_driveby,none
+Lando Norris,,tts:Lando crossed the line,tts:Personal best for Lando,tts:Race best lap
+Charles Leclerc,Lord Perceval,none,preset:default_driveby,preset:default_record_lap
+Oscar Piastri,Pastry,preset:default_beep,none,none

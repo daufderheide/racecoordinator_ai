@@ -18,8 +18,8 @@ describe("LaneViewColumnGroupHelper", () => {
     return map[key] || key;
   };
 
-  it("should have 9 defined column groups", () => {
-    expect(LANE_VIEW_COLUMN_GROUPS.length).toBe(9);
+  it("should have 13 defined column groups", () => {
+    expect(LANE_VIEW_COLUMN_GROUPS.length).toBe(13);
     const ids = LANE_VIEW_COLUMN_GROUPS.map((g) => g.id);
     expect(ids).toEqual([
       "driver-team",
@@ -27,6 +27,10 @@ describe("LaneViewColumnGroupHelper", () => {
       "lap-times",
       "analysis",
       "gaps",
+      "overall-standings",
+      "overall-lap-times",
+      "overall-analysis",
+      "overall-gaps",
       "pacing",
       "telemetry",
       "predictions",
@@ -70,7 +74,7 @@ describe("LaneViewColumnGroupHelper", () => {
         "lap-times",
       );
       expect(
-        LaneViewColumnGroupHelper.getGroupIdForColumn("recordLapTime"),
+        LaneViewColumnGroupHelper.getGroupIdForColumn("reactionTime"),
       ).toBe("lap-times");
     });
 
@@ -96,6 +100,56 @@ describe("LaneViewColumnGroupHelper", () => {
       expect(LaneViewColumnGroupHelper.getGroupIdForColumn("gapLeaderF1")).toBe(
         "gaps",
       );
+    });
+
+    it("should return overall-standings for overall standings columns", () => {
+      expect(
+        LaneViewColumnGroupHelper.getGroupIdForColumn("overallLapCount"),
+      ).toBe("overall-standings");
+      expect(LaneViewColumnGroupHelper.getGroupIdForColumn("rankOverall")).toBe(
+        "overall-standings",
+      );
+      expect(
+        LaneViewColumnGroupHelper.getGroupIdForColumn("overallPoints"),
+      ).toBe("overall-standings");
+    });
+
+    it("should return overall-lap-times for overall timing columns", () => {
+      expect(
+        LaneViewColumnGroupHelper.getGroupIdForColumn("overallBestLapTime"),
+      ).toBe("overall-lap-times");
+      expect(
+        LaneViewColumnGroupHelper.getGroupIdForColumn("overallTotalTime"),
+      ).toBe("overall-lap-times");
+      expect(
+        LaneViewColumnGroupHelper.getGroupIdForColumn("recordLapTime"),
+      ).toBe("overall-lap-times");
+    });
+
+    it("should return overall-analysis for overall statistics columns", () => {
+      expect(
+        LaneViewColumnGroupHelper.getGroupIdForColumn("overallAverageLapTime"),
+      ).toBe("overall-analysis");
+      expect(
+        LaneViewColumnGroupHelper.getGroupIdForColumn(
+          "overallConsistencyScore",
+        ),
+      ).toBe("overall-analysis");
+      expect(
+        LaneViewColumnGroupHelper.getGroupIdForColumn("overallAverageTop5"),
+      ).toBe("overall-analysis");
+      expect(
+        LaneViewColumnGroupHelper.getGroupIdForColumn("overallTop2Consecutive"),
+      ).toBe("overall-analysis");
+    });
+
+    it("should return overall-gaps for overall gap columns", () => {
+      expect(
+        LaneViewColumnGroupHelper.getGroupIdForColumn("overallGapLeader"),
+      ).toBe("overall-gaps");
+      expect(
+        LaneViewColumnGroupHelper.getGroupIdForColumn("overallGapPositionF1"),
+      ).toBe("overall-gaps");
     });
 
     it("should return pacing for ghost pacing columns", () => {
@@ -150,7 +204,7 @@ describe("LaneViewColumnGroupHelper", () => {
   });
 
   describe("buildColumnGroups", () => {
-    it("should partition unused columns into their corresponding groups and omit empty groups", () => {
+    it("should partition unused columns into Heat Data and Overall Race Data with corresponding subgroups", () => {
       const unused = [
         { key: "driver.name", label: "RD_COL_NAME" },
         { key: "lapCount", label: "RD_COL_LAP" },
@@ -165,18 +219,32 @@ describe("LaneViewColumnGroupHelper", () => {
         dummyTranslate,
       );
 
-      expect(groups.length).toBe(4);
-      expect(groups.map((g) => g.id)).toEqual([
-        "driver-team",
-        "laps-standings",
-        "analysis",
-        "media-custom",
+      expect(groups.length).toBe(2);
+      expect(groups.map((g) => g.id)).toEqual(["heat-data", "overall-data"]);
+
+      const heatGroup = groups.find((g) => g.id === "heat-data");
+      expect(heatGroup).toBeDefined();
+      expect(heatGroup!.totalCount).toBe(4);
+      expect(heatGroup!.subgroups.map((sg) => sg.id)).toEqual([
+        "heat-data-sg-driver-team",
+        "heat-data-sg-analysis",
+        "heat-data-sg-laps-standings",
+        "heat-data-sg-media-custom",
       ]);
-      expect(groups[0].columns.length).toBe(1);
-      expect(groups[0].columns[0].key).toBe("driver.name");
-      expect(groups[1].columns[0].key).toBe("lapCount");
-      expect(groups[2].columns[0].key).toBe("standardDeviation");
-      expect(groups[3].columns[0].key).toBe("imageset_custom");
+      expect(heatGroup!.subgroups[0].columns[0].key).toBe("driver.name");
+      expect(heatGroup!.subgroups[1].columns[0].key).toBe("standardDeviation");
+      expect(heatGroup!.subgroups[2].columns[0].key).toBe("lapCount");
+      expect(heatGroup!.subgroups[3].columns[0].key).toBe("imageset_custom");
+
+      const overallGroup = groups.find((g) => g.id === "overall-data");
+      expect(overallGroup).toBeDefined();
+      expect(overallGroup!.totalCount).toBe(2);
+      expect(overallGroup!.subgroups.map((sg) => sg.id)).toEqual([
+        "overall-data-sg-driver-team",
+        "overall-data-sg-media-custom",
+      ]);
+      expect(overallGroup!.subgroups[0].columns[0].key).toBe("driver.name");
+      expect(overallGroup!.subgroups[1].columns[0].key).toBe("imageset_custom");
     });
 
     it("should respect expandedStates when search term is empty", () => {
@@ -185,8 +253,8 @@ describe("LaneViewColumnGroupHelper", () => {
         { key: "lapCount", label: "RD_COL_LAP" },
       ];
       const expandedStates = new Map<string, boolean>([
-        ["driver-team", false],
-        ["laps-standings", true],
+        ["heat-data", false],
+        ["heat-data-sg-laps-standings", true],
       ]);
       const groups = LaneViewColumnGroupHelper.buildColumnGroups(
         unused,
@@ -195,13 +263,16 @@ describe("LaneViewColumnGroupHelper", () => {
         dummyTranslate,
       );
 
-      expect(groups.find((g) => g.id === "driver-team")?.expanded).toBeFalse();
+      const heatGroup = groups.find((g) => g.id === "heat-data");
+      expect(heatGroup?.expanded).toBeFalse();
       expect(
-        groups.find((g) => g.id === "laps-standings")?.expanded,
+        heatGroup?.subgroups.find(
+          (sg) => sg.id === "heat-data-sg-laps-standings",
+        )?.expanded,
       ).toBeTrue();
     });
 
-    it("should default to expanded true if not in expandedStates", () => {
+    it("should default top-level groups to expanded true and subgroups to false if not in expandedStates", () => {
       const unused = [{ key: "driver.name", label: "RD_COL_NAME" }];
       const expandedStates = new Map<string, boolean>();
       const groups = LaneViewColumnGroupHelper.buildColumnGroups(
@@ -211,15 +282,18 @@ describe("LaneViewColumnGroupHelper", () => {
         dummyTranslate,
       );
       expect(groups[0].expanded).toBeTrue();
+      expect(groups[0].subgroups[0].expanded).toBeFalse();
     });
 
-    it("should filter columns and auto-expand matching groups when search term is active", () => {
+    it("should filter columns and auto-expand matching groups and subgroups when search term is active", () => {
       const unused = [
         { key: "driver.name", label: "RD_COL_NAME" },
         { key: "lapCount", label: "RD_COL_LAP" },
         { key: "standardDeviation", label: "RD_COL_STD_DEV" },
       ];
-      const expandedStates = new Map<string, boolean>([["analysis", false]]);
+      const expandedStates = new Map<string, boolean>([
+        ["heat-data-sg-analysis", false],
+      ]);
 
       // Searching by translated name "standard"
       const groups = LaneViewColumnGroupHelper.buildColumnGroups(
@@ -230,10 +304,13 @@ describe("LaneViewColumnGroupHelper", () => {
       );
 
       expect(groups.length).toBe(1);
-      expect(groups[0].id).toBe("analysis");
+      expect(groups[0].id).toBe("heat-data");
       expect(groups[0].expanded).toBeTrue();
-      expect(groups[0].columns.length).toBe(1);
-      expect(groups[0].columns[0].key).toBe("standardDeviation");
+      expect(groups[0].subgroups.length).toBe(1);
+      expect(groups[0].subgroups[0].id).toBe("heat-data-sg-analysis");
+      expect(groups[0].subgroups[0].expanded).toBeTrue();
+      expect(groups[0].subgroups[0].columns.length).toBe(1);
+      expect(groups[0].subgroups[0].columns[0].key).toBe("standardDeviation");
     });
 
     it("should search by column key when translated label does not match", () => {
@@ -249,8 +326,10 @@ describe("LaneViewColumnGroupHelper", () => {
       );
 
       expect(groups.length).toBe(1);
-      expect(groups[0].columns.length).toBe(1);
-      expect(groups[0].columns[0].key).toBe("top2Consecutive");
+      expect(groups[0].id).toBe("heat-data");
+      expect(groups[0].subgroups.length).toBe(1);
+      expect(groups[0].subgroups[0].columns.length).toBe(1);
+      expect(groups[0].subgroups[0].columns[0].key).toBe("top2Consecutive");
     });
 
     it("should filter columns when searching for raw lap count", () => {
@@ -266,9 +345,11 @@ describe("LaneViewColumnGroupHelper", () => {
         dummyTranslate,
       );
       expect(groups.length).toBe(1);
-      expect(groups[0].id).toBe("laps-standings");
-      expect(groups[0].columns.length).toBe(1);
-      expect(groups[0].columns[0].key).toBe("physicalLapCount");
+      expect(groups[0].id).toBe("heat-data");
+      expect(groups[0].subgroups.length).toBe(1);
+      expect(groups[0].subgroups[0].id).toBe("heat-data-sg-laps-standings");
+      expect(groups[0].subgroups[0].columns.length).toBe(1);
+      expect(groups[0].subgroups[0].columns[0].key).toBe("physicalLapCount");
     });
 
     it("should return empty array if search term matches no columns", () => {

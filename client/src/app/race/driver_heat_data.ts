@@ -73,6 +73,13 @@ export class DriverHeatData {
     return this.actualDriver ?? this.participant?.driver;
   }
 
+  get hasSegments(): boolean {
+    return (
+      (this.userLaps !== undefined && this.userLaps !== 0) ||
+      (this.autoCalculatedLaps !== undefined && this.autoCalculatedLaps !== 0)
+    );
+  }
+
   reset(): void {
     this.laps = [];
     this._lapsWithDetails = [];

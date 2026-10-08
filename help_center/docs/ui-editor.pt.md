@@ -4,6 +4,16 @@
 
 O Editor de Interface permite criar layouts personalizados para o dia de corrida, configurar colunas da classificação dos pilotos, personalizar efeitos sonoros e imagens de temas e carregar [Widgets Personalizados](custom-widgets.md) modulares.
 
+## Widgets personalizados e pasta de widgets
+
+Widgets personalizados podem ser adicionados aos seus layouts de interface personalizados:
+- **Pasta de widgets personalizados**: Defina a sua pasta local de widgets na seção **Interface personalizada** na parte inferior do editor.
+- **Atualizar widgets de amostra**: Clique em **Atualizar widgets de amostra** para gerar ou atualizar widgets de amostra prontos a usar numa pasta `sample/` (`sample-telemetry-gauge`, `sample-lap-delta`, `sample-sponsor-banner`, `sample-detailed-leaderboard`).
+- **Grupos da caixa de ferramentas de widgets**: A caixa de ferramentas organiza os widgets em grupos (**Race Coordinator AI**, **Raiz personalizada** e pastas personalizadas como **sample**) com subgrupos aninhados (como **Ações** e **Dados da manga** com subpastas categorizadas) e um filtro de pesquisa instantâneo.
+- **Inspetor dinâmico**: Quando um widget personalizado é selecionado na tela, as suas propriedades personalizadas (cores, limites, seletores, campos de texto) aparecem dinamicamente no Inspetor de widgets.
+
+Para mais detalhes sobre o desenvolvimento de widgets, consulte o [Guia de widgets personalizados](custom-widgets.md).
+
 ## Configuração de layout e colunas
 
 - Arraste e solte widgets da paleta no ecrã.
@@ -42,4 +52,27 @@ O widget **Contagem Decrescente** exibe o semáforo visual de partida e aciona o
 - **Animação de fade-in**: Controla se a sobreposição do semáforo e o desfoque de fundo aparecem com uma transição suave. Quando desmarcado, as luzes e o fundo surgem de imediato.
 - **Orientação**: Alterne entre a disposição **Horizontal** e **Vertical** do semáforo.
 - **Efeitos de brilho e desfoque**: Personalize o halo luminoso das lâmpadas, a sobreposição de escala das luzes vermelhas/verdes e a intensidade ou área do desfoque de fundo.
+
+## Widgets de Coluna de Pista e Duplicação
+
+O widget **Coluna de Pista** permite posicionar colunas individuais de dados da visualização de pista (como informações do piloto, tempo da última volta, melhor volta / recorde pessoal, combustível %, histórico de voltas, velocidades de setor, posição, etc.) em qualquer lugar da tela como cartões modulares independentes.
+
+- **Modos de Associação**:
+  - **Pista Física**: Vincula o cartão a uma pista específica do circuito (Pista 1 a Pista 8). O cartão mantém os dados dessa pista durante toda a corrida.
+  - **Posição na Classificação**: Vincula o cartão a uma classificação atual (1º Lugar, 2º Lugar, etc.). O cartão acompanha dinamicamente ultrapassagens e alterações de posição, adaptando as cores de fundo e texto à pista do piloto que ocupa essa colocação.
+- **Orientação**: Suporta layouts **Vertical** (cabeçalho acima do valor) e **Horizontal** (cabeçalho e valor lado a lado).
+- **Estilo e Personalização da Barra de Título**:
+  - A barra de título segue por padrão o mesmo estilo do cabeçalho de coluna da visualização de pista (fundo escuro semitransparente `rgba(68, 68, 68, 0.7)`, texto branco em negrito, cantos superiores arredondados e borda divisória).
+  - **Mostrar Cabeçalho**: Ativa ou desativa a barra de título. Ao ser desativada, a barra de título é totalmente removida do cartão, maximizando a área para os valores principais e inserções.
+  - **Rótulo Personalizado**: Substitui o nome padrão do ponto de dados por um título personalizado.
+  - **Tipografia e Alinhamento**: Configure a fonte, o tamanho do texto e o alinhamento (Esquerda, Centralizado, Direita).
+  - **Cor do Texto e do Fundo**: Personalize a cor de fundo e a cor do texto do cabeçalho com seletores de cores dedicados e botão de restauração padrão em um clique.
+- **Herança de Cores e Personalização**: Por padrão, os cartões herdam as cores de fundo e texto da pista atribuída (`Usar Cores da Pista`), ou podem receber cores personalizadas de fundo, texto e borda.
+- **Duplicar em Pistas / Posições**:
+  - Em vez de criar e alinhar cartões manualmente para cada pista, configure um único cartão para uma pista ou posição e clique em **Duplicar em Pistas / Posições...** no inspetor.
+  - Escolha a direção (**Horizontal** lado a lado ou **Vertical** empilhado), o número total de pistas/posições de destino (por padrão o número máximo de pistas em todos os circuitos no banco de dados), o modo de espaçamento (**Ajustar à Tela** ou **Preservar Espaçamento**) e a substituição opcional dos widgets existentes.
+  - **Modo de Replicação em Tempo Real**: Ao duplicar, o editor entra em um modo interativo de modelo com guias visuais de pista e alinhamento magnético. Nesse modo, você posiciona, redimensiona e edita widgets diretamente na Pista 1 (Mestre), e as alterações são espelhadas imediatamente em tempo real para todas as demais pistas. Os widgets espelhados nas pistas 2..N são pré-visualizações ativas somente leitura; clicar em qualquer widget espelhado direciona o foco para o mestre da Pista 1.
+  - **Área Inteligente e Redimensionamento**: O espaço de replicação expande-se automaticamente em todas as quatro direções para preencher o espaço disponível na tela até encontrar os limites de qualquer widget existente fora da grade. Você pode ajustar a área total dinamicamente usando as 8 alças de redimensionamento no perímetro da sobreposição.
+  - Clique em **Concluído** para consolidar a grade em widgets independentes.
+  - **Editar Modelo e Desvincular**: Ao selecionar qualquer widget da grade posteriormente, o inspetor exibe um cartão permitindo clicar em **Editar Modelo da Grade** (para reentrar no modo de replicação em tempo real a qualquer momento) ou **Desvincular da Grade** (para quebrar permanentemente o vínculo).
 

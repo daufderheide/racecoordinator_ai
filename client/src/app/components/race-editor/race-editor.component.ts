@@ -1449,6 +1449,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       false_start_lap_penalty: 0,
       false_start_time_penalty: 0,
       adjust_drift_laps: false,
+      auto_segments_on_pause: false,
       group_options: {
         enabled: false,
         max_groups: 2,
@@ -3330,6 +3331,21 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
           }
         },
       },
+      {
+        selector: "#auto-segments-on-pause-input",
+        title: this.translationService.translate(
+          "RE_HELP_AUTO_SEGMENTS_ON_PAUSE_TITLE",
+        ),
+        content: this.translationService.translate(
+          "RE_HELP_AUTO_SEGMENTS_ON_PAUSE_CONTENT",
+        ),
+        position: "bottom",
+        onEnter: () => {
+          if (!this.sectionsExpanded.scoring) {
+            this.sectionsExpanded.scoring = true;
+          }
+        },
+      },
     ];
   }
 
@@ -3626,10 +3642,10 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       {
         selector: "#auto-advance-warmup-time-input",
         title: this.translationService.translate(
-          "RE_HELP_AUTO_ADVANCE_WARMUP_TIME_TITLE",
+          "RE_HELP_AUTO_ADVANCE_COOLDOWN_TIME_TITLE",
         ),
         content: this.translationService.translate(
-          "RE_HELP_AUTO_ADVANCE_WARMUP_TIME_CONTENT",
+          "RE_HELP_AUTO_ADVANCE_COOLDOWN_TIME_CONTENT",
         ),
         position: "bottom",
         onEnter: () => {

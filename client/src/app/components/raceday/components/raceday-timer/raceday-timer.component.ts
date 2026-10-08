@@ -43,10 +43,15 @@ export class RacedayTimerComponent implements AfterViewInit, OnDestroy {
     this.raceTimeService?.isWarmup$ ?? of(false),
     { initialValue: this.raceTimeService?.isWarmup ?? false },
   );
+  private serviceIsCooldown = toSignal(
+    this.raceTimeService?.isCooldown$ ?? of(false),
+    { initialValue: this.raceTimeService?.isCooldown ?? false },
+  );
 
   formattedTime = input<string>("");
   autoStatusLabel = input<string>("");
   isWarmup = input<boolean | undefined>(undefined);
+  isCooldown = input<boolean | undefined>(undefined);
 
   protected displayFormattedTime = computed(() => {
     const custom = this.formattedTime();
@@ -66,6 +71,12 @@ export class RacedayTimerComponent implements AfterViewInit, OnDestroy {
     return this.serviceIsWarmup() ?? false;
   });
 
+  protected displayIsCooldown = computed(() => {
+    const custom = this.isCooldown();
+    if (custom !== undefined) return custom;
+    return this.serviceIsCooldown() ?? false;
+  });
+
   private timerText = viewChild<ElementRef<HTMLElement>>("timerText");
   private timerPanel = viewChild<ElementRef<HTMLElement>>("timerPanel");
   private resizeObserver?: ResizeObserver;
@@ -76,6 +87,7 @@ export class RacedayTimerComponent implements AfterViewInit, OnDestroy {
       this.displayFormattedTime();
       this.displayAutoStatusLabel();
       this.displayIsWarmup();
+      this.displayIsCooldown();
       this.widget();
 
       // Schedule fit on next microtask

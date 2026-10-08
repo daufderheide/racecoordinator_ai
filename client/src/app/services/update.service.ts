@@ -9,6 +9,7 @@ export interface UpdateCheckResult {
   releaseNotes: string;
   releaseUrl: string;
   isWindows: boolean;
+  isLinux?: boolean;
 }
 
 export interface UpdateProgress {

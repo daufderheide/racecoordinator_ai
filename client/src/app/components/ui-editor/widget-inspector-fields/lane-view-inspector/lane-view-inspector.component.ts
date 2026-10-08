@@ -127,10 +127,20 @@ export class LaneViewInspectorComponent implements OnInit {
     this.ensureExpandedStatesLoaded();
     const current = this.columnGroupExpandedStates.has(groupId)
       ? this.columnGroupExpandedStates.get(groupId)!
-      : true;
+      : this.getDefaultGroupExpanded(groupId);
     const newExpanded = !current;
     this.columnGroupExpandedStates.set(groupId, newExpanded);
     this.saveExpandedStatesToSettings();
+  }
+
+  private getDefaultGroupExpanded(groupId: string): boolean {
+    if (
+      groupId === LaneViewColumnGroupHelper.HEAT_DATA_GROUP_ID ||
+      groupId === LaneViewColumnGroupHelper.OVERALL_DATA_GROUP_ID
+    ) {
+      return true;
+    }
+    return false;
   }
 
   private saveExpandedStatesToSettings(): void {
@@ -302,6 +312,23 @@ export class LaneViewInspectorComponent implements OnInit {
     if (this.widget()?.customSettings?.["columnWidths"]) {
       delete this.widget().customSettings["columnWidths"][colKey];
     }
+    if (this.widget()?.customSettings?.["columnLabels"]) {
+      delete this.widget().customSettings["columnLabels"][colKey];
+    }
+    if (this.widget()?.customSettings?.["columnDecimals"]) {
+      delete this.widget().customSettings["columnDecimals"][colKey];
+    }
+    if (this.settings()?.columnDecimals) {
+      delete this.settings().columnDecimals[colKey];
+    }
+    if (this.widget()?.customSettings?.["columnOnlyShowDecimalsIfSegments"]) {
+      delete this.widget().customSettings["columnOnlyShowDecimalsIfSegments"][
+        colKey
+      ];
+    }
+    if (this.settings()?.columnOnlyShowDecimalsIfSegments) {
+      delete this.settings().columnOnlyShowDecimalsIfSegments[colKey];
+    }
     const ui = this.customUi();
     if (ui && ui.columnWidthsJson) {
       try {
@@ -438,6 +465,120 @@ export class LaneViewInspectorComponent implements OnInit {
     if (!widget.customSettings["columnLabels"])
       widget.customSettings["columnLabels"] = {};
     widget.customSettings["columnLabels"][colKey] = label;
+    this.change.emit();
+  }
+
+  getPrimaryProperty(colKey: string): string {
+    const ui = this.customUi();
+    if (ui && ui.columnLayoutsJson) {
+      try {
+        const layouts = JSON.parse(ui.columnLayoutsJson);
+        if (layouts && layouts[colKey]) {
+          const layout = layouts[colKey];
+          return layout["center-center"] || layout["centerCenter"] || colKey;
+        }
+      } catch (e) {}
+    }
+    const global = this.globalSettings();
+    const layouts = this.isPracticeMode()
+      ? global?.practiceColumnLayouts
+      : global?.columnLayouts;
+    if (layouts && layouts[colKey]) {
+      const layout = layouts[colKey] as any;
+      return layout["center-center"] || layout["centerCenter"] || colKey;
+    }
+    return colKey;
+  }
+
+  isLapOrTimeColumn(colKey: string): boolean {
+    const prop = this.getPrimaryProperty(colKey);
+    return (
+      RacedayLayoutUtils.isLapOrTimeColumnKey(prop) ||
+      RacedayLayoutUtils.isLapOrTimeColumnKey(colKey)
+    );
+  }
+
+  isTimeColumn(colKey: string): boolean {
+    const prop = this.getPrimaryProperty(colKey);
+    return (
+      RacedayLayoutUtils.isTimeColumnKey(prop) ||
+      RacedayLayoutUtils.isTimeColumnKey(colKey)
+    );
+  }
+
+  isLapColumn(colKey: string): boolean {
+    const prop = this.getPrimaryProperty(colKey);
+    return (
+      RacedayLayoutUtils.isLapColumnKey(prop) ||
+      RacedayLayoutUtils.isLapColumnKey(colKey)
+    );
+  }
+
+  getColumnDecimalPlaces(colKey: string): number {
+    const s = this.settings?.() || this.widget?.()?.customSettings;
+    const widgetDecimals = s?.columnDecimals || s?.columnDecimalPlaces;
+    if (
+      widgetDecimals &&
+      widgetDecimals[colKey] !== undefined &&
+      widgetDecimals[colKey] !== null &&
+      widgetDecimals[colKey] !== ""
+    ) {
+      return Math.min(3, Math.max(0, Number(widgetDecimals[colKey])));
+    }
+    if (this.isLapColumn(colKey)) {
+      return s?.lapDecimalPlaces !== undefined
+        ? Math.min(3, Math.max(0, Number(s.lapDecimalPlaces)))
+        : 2;
+    }
+    return s?.timeDecimalPlaces !== undefined
+      ? Math.min(3, Math.max(0, Number(s.timeDecimalPlaces)))
+      : 3;
+  }
+
+  setColumnDecimalPlaces(colKey: string, decimals: any): void {
+    const val = Math.min(3, Math.max(0, Number(decimals)));
+    const s = this.settings?.() || this.widget?.()?.customSettings;
+    if (s) {
+      if (!s.columnDecimals) {
+        s.columnDecimals = {};
+      }
+      s.columnDecimals[colKey] = val;
+    }
+    const widget = this.widget?.();
+    if (widget) {
+      if (!widget.customSettings) widget.customSettings = {};
+      if (!widget.customSettings.columnDecimals) {
+        widget.customSettings.columnDecimals = {};
+      }
+      widget.customSettings.columnDecimals[colKey] = val;
+    }
+    this.change.emit();
+  }
+
+  getColumnOnlyShowDecimalsIfSegments(colKey: string): boolean {
+    const s = this.settings?.() || this.widget?.()?.customSettings;
+    const flags =
+      s?.columnOnlyShowDecimalsIfSegments ||
+      this.widget?.()?.customSettings?.columnOnlyShowDecimalsIfSegments;
+    return Boolean(flags?.[colKey]);
+  }
+
+  setColumnOnlyShowDecimalsIfSegments(colKey: string, value: boolean): void {
+    const s = this.settings?.() || this.widget?.()?.customSettings;
+    if (s) {
+      if (!s.columnOnlyShowDecimalsIfSegments) {
+        s.columnOnlyShowDecimalsIfSegments = {};
+      }
+      s.columnOnlyShowDecimalsIfSegments[colKey] = value;
+    }
+    const widget = this.widget?.();
+    if (widget) {
+      if (!widget.customSettings) widget.customSettings = {};
+      if (!widget.customSettings.columnOnlyShowDecimalsIfSegments) {
+        widget.customSettings.columnOnlyShowDecimalsIfSegments = {};
+      }
+      widget.customSettings.columnOnlyShowDecimalsIfSegments[colKey] = value;
+    }
     this.change.emit();
   }
 }

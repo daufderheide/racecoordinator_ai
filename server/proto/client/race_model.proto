@@ -129,6 +129,7 @@ message RaceModel {
   bool start_at_current = 33;
   bool adjust_drift_laps = 34;
   string theme_id = 35;
+  bool auto_segments_on_pause = 36;
 }
 
 // CustomRotation and CustomHeat moved to rotation_model.proto

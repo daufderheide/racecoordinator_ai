@@ -30,7 +30,12 @@ public class TemplateVariableParityTest {
             "getOverallBonusPoints",
             "getHeatPositionPoints",
             "getHeatBonusPoints",
-            "getTotalPoints");
+            "getTotalPoints",
+            "getAverageTop5",
+            "getAverageTop10",
+            "getAverageTop15",
+            "getTop2Consecutive",
+            "getTop3Consecutive");
 
     for (String getterName : requiredGetters) {
       Method m = clazz.getMethod(getterName);

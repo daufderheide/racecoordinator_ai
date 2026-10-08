@@ -1448,5 +1448,180 @@ describe("RacedayHeatListComponent", () => {
       expect(heat1Badges.length).toBe(4);
       expect(heat2Badges.length).toBe(4);
     });
+
+    it("should support independent display options: active summary with lane colors, completed summary without lane colors, and future heats with no summary and no lane colors", () => {
+      fixture.componentRef.setInput("track", {
+        id: "track-1",
+        name: "Test Track",
+        lanes: [
+          {
+            lane_number: 1,
+            background_color: "#ff0000",
+            foreground_color: "#ffffff",
+          },
+          {
+            lane_number: 2,
+            background_color: "#0000ff",
+            foreground_color: "#ffff00",
+          },
+        ],
+      } as any);
+
+      const threeHeats = [
+        {
+          heatNumber: 1,
+          isCompleted: true,
+          heatDrivers: [
+            { laneIndex: 0, driver: { nickname: "Driver 1" } },
+            { laneIndex: 1, driver: { nickname: "Driver 2" } },
+          ],
+        },
+        {
+          heatNumber: 2,
+          isCompleted: false,
+          heatDrivers: [
+            { laneIndex: 0, driver: { nickname: "Driver 3" } },
+            { laneIndex: 1, driver: { nickname: "Driver 4" } },
+          ],
+        },
+        {
+          heatNumber: 3,
+          isCompleted: false,
+          heatDrivers: [
+            { laneIndex: 0, driver: { nickname: "Driver 5" } },
+            { laneIndex: 1, driver: { nickname: "Driver 6" } },
+          ],
+        },
+      ];
+
+      fixture.componentRef.setInput("heats", threeHeats);
+      fixture.componentRef.setInput("currentHeat", { heatNumber: 2 } as any);
+      fixture.componentRef.setInput("widget", {
+        ...mockWidget,
+        customSettings: {
+          ...mockWidget.customSettings,
+          activeHeatDisplay: "summary_lane_colors", // A) Summary with Lane colors
+          completedHeatsDisplay: "summary", // B) Summary without Lane colors
+          futureHeatsDisplay: "off", // C) No Summary and No Lane colors
+          summaryRowTextColor: "#abcdef",
+        },
+      });
+      fixture.detectChanges();
+
+      const heat1 = fixture.nativeElement.querySelector("#heat-card-1"); // Completed
+      const heat2 = fixture.nativeElement.querySelector("#heat-card-2"); // Active
+      const heat3 = fixture.nativeElement.querySelector("#heat-card-3"); // Future
+
+      // Heat 1 (Completed): Summary table rendered WITHOUT lane background colors
+      expect(heat1.querySelector(".heat-summary-table")).toBeTruthy();
+      const heat1Row = heat1.querySelector(".summary-lane-row") as HTMLElement;
+      expect(heat1Row.style.backgroundColor).toBe("");
+      expect(heat1Row.style.color).toBe("rgb(171, 205, 239)");
+
+      // Heat 2 (Active): Summary table rendered WITH lane background colors
+      expect(heat2.querySelector(".heat-summary-table")).toBeTruthy();
+      const heat2Row = heat2.querySelector(".summary-lane-row") as HTMLElement;
+      expect(heat2Row.style.backgroundColor).toBe("rgb(255, 0, 0)");
+      expect(heat2Row.style.color).toBe("rgb(255, 255, 255)");
+
+      // Heat 3 (Future): No summary table, lane badges rendered WITHOUT lane background colors
+      expect(heat3.querySelector(".heat-summary-table")).toBeFalsy();
+      expect(heat3.querySelector(".heat-lanes-grid")).toBeTruthy();
+      const heat3Badges = heat3.querySelectorAll(".lane-badge-item");
+      expect(heat3Badges.length).toBe(2);
+      const heat3Badge1 = heat3Badges[0] as HTMLElement;
+      expect(heat3Badge1.style.backgroundColor).toBe("");
+      expect(heat3Badge1.classList.contains("no-lane-colors")).toBeTrue();
+    });
+
+    it("should render future heats with lane colors when futureHeatsDisplay is lane_colors", () => {
+      fixture.componentRef.setInput("track", {
+        id: "track-1",
+        name: "Test Track",
+        lanes: [
+          {
+            lane_number: 1,
+            background_color: "#ff0000",
+            foreground_color: "#ffffff",
+          },
+        ],
+      } as any);
+
+      fixture.componentRef.setInput("heats", [
+        {
+          heatNumber: 1,
+          isCompleted: false,
+          heatDrivers: [{ laneIndex: 0, driver: { nickname: "Solo" } }],
+        },
+      ]);
+      fixture.componentRef.setInput("currentHeat", null);
+      fixture.componentRef.setInput("widget", {
+        ...mockWidget,
+        customSettings: {
+          ...mockWidget.customSettings,
+          futureHeatsDisplay: "lane_colors",
+        },
+      });
+      fixture.detectChanges();
+
+      const heat1 = fixture.nativeElement.querySelector("#heat-card-1");
+      expect(heat1.querySelector(".heat-lanes-grid")).toBeTruthy();
+      const badge = heat1.querySelector(".lane-badge-item") as HTMLElement;
+      expect(badge.style.backgroundColor).toBe("rgb(255, 0, 0)");
+      expect(badge.classList.contains("no-lane-colors")).toBeFalse();
+    });
+
+    it("should resolve legacy settings for active, completed, and future heats when display modes are undefined", () => {
+      fixture.componentRef.setInput("track", {
+        id: "track-1",
+        lanes: [
+          {
+            lane_number: 1,
+            background_color: "#ff0000",
+            foreground_color: "#ffffff",
+          },
+        ],
+      } as any);
+
+      fixture.componentRef.setInput("heats", [
+        { heatNumber: 1, isCompleted: true, heatDrivers: [{ laneIndex: 0 }] },
+        { heatNumber: 2, isCompleted: false, heatDrivers: [{ laneIndex: 0 }] },
+        { heatNumber: 3, isCompleted: false, heatDrivers: [{ laneIndex: 0 }] },
+      ]);
+      fixture.componentRef.setInput("currentHeat", { heatNumber: 2 } as any);
+      fixture.componentRef.setInput("widget", {
+        ...mockWidget,
+        customSettings: {
+          ...mockWidget.customSettings,
+          activeHeatDisplay: undefined,
+          completedHeatsDisplay: undefined,
+          futureHeatsDisplay: undefined,
+          showActiveSummary: true,
+          showCompletedSummary: false,
+          showFutureSummary: true,
+          summaryUseLaneColors: false,
+        },
+      });
+      fixture.detectChanges();
+
+      const heat1 = fixture.nativeElement.querySelector("#heat-card-1");
+      const heat2 = fixture.nativeElement.querySelector("#heat-card-2");
+      const heat3 = fixture.nativeElement.querySelector("#heat-card-3");
+
+      // Completed has showCompletedSummary: false -> lane_colors
+      expect(heat1.querySelector(".heat-lanes-grid")).toBeTruthy();
+      const heat1Badge = heat1.querySelector(".lane-badge-item") as HTMLElement;
+      expect(heat1Badge.style.backgroundColor).toBe("rgb(255, 0, 0)");
+
+      // Active has showActiveSummary: true, summaryUseLaneColors: false -> summary
+      expect(heat2.querySelector(".heat-summary-table")).toBeTruthy();
+      const heat2Row = heat2.querySelector(".summary-lane-row") as HTMLElement;
+      expect(heat2Row.style.backgroundColor).toBe("");
+
+      // Future has showFutureSummary: true, summaryUseLaneColors: false -> summary
+      expect(heat3.querySelector(".heat-summary-table")).toBeTruthy();
+      const heat3Row = heat3.querySelector(".summary-lane-row") as HTMLElement;
+      expect(heat3Row.style.backgroundColor).toBe("");
+    });
   });
 });

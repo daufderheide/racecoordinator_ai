@@ -4,6 +4,7 @@ import com.antigravity.models.Driver;
 import com.antigravity.proto.AudioConfig;
 import com.antigravity.proto.DriverModel;
 import com.antigravity.proto.Model;
+import com.antigravity.service.AssetDefaultsInitializer;
 import java.util.Set;
 
 public class DriverConverter {
@@ -13,10 +14,21 @@ public class DriverConverter {
       return null;
     }
 
+    String avatarUrl = driver.getAvatarUrl();
+    if (avatarUrl != null
+        && !avatarUrl.isEmpty()
+        && !avatarUrl.startsWith("/")
+        && !avatarUrl.startsWith("http")) {
+      String resolved = AssetDefaultsInitializer.resolveDefaultAssetUrl(avatarUrl);
+      if (resolved != null) {
+        avatarUrl = resolved;
+      }
+    }
+
     return DriverModel.newBuilder()
         .setName(driver.getName() != null ? driver.getName() : "")
         .setNickname(driver.getNickname() != null ? driver.getNickname() : "")
-        .setAvatarUrl(driver.getAvatarUrl() != null ? driver.getAvatarUrl() : "")
+        .setAvatarUrl(avatarUrl != null ? avatarUrl : "")
         .setLapAudio(toProtoAudio(driver.getLapAudio(), "default_beep"))
         .setBestLapAudio(toProtoAudio(driver.getBestLapAudio(), "default_driveby"))
         .setPenaltyAudio(toProtoAudio(driver.getPenaltyAudio(), "default_penalty"))
@@ -82,6 +94,11 @@ public class DriverConverter {
     String avatarUrl = proto.getAvatarUrl();
     if (avatarUrl != null && avatarUrl.isEmpty()) {
       avatarUrl = null;
+    } else if (avatarUrl != null && !avatarUrl.startsWith("/") && !avatarUrl.startsWith("http")) {
+      String resolved = AssetDefaultsInitializer.resolveDefaultAssetUrl(avatarUrl);
+      if (resolved != null) {
+        avatarUrl = resolved;
+      }
     }
 
     Driver.Builder builder =

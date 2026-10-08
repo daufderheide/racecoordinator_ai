@@ -59,6 +59,19 @@
         (change)="onSettingsChange()"
       ></app-lane-view-inspector>
     }
+    @case ("lane-column") {
+      <app-lane-column-inspector
+        [settings]="widget().customSettings"
+        [widget]="widget()"
+        [availableColumns]="availableColumns()"
+        [disableFontSizes]="widget().scaleMode === 'auto'"
+        (change)="onSettingsChange()"
+        (requestReplicate)="requestReplicate.emit()"
+        (replicate)="replicate.emit($event)"
+        (editGrid)="editGrid.emit($event)"
+        (detachGrid)="detachGrid.emit($event)"
+      ></app-lane-column-inspector>
+    }
     @case ("on-deck") {
       <app-upcoming-inspector
         [settings]="widget().customSettings"

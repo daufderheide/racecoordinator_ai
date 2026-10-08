@@ -1,6 +1,8 @@
 package com.antigravity.race.states;
 
 import com.antigravity.context.DatabaseContext;
+import com.antigravity.models.HeatScoring;
+import com.antigravity.models.HeatScoring.AllowFinish;
 import com.antigravity.proto.RaceFlag;
 import com.antigravity.proto.RaceState;
 import com.antigravity.protocols.CarData;
@@ -50,6 +52,13 @@ public class HeatOver implements IRaceState {
     logger.info("HeatOver state entered.");
     this.race = race;
     this.heatOverStartTimeMillis = System.currentTimeMillis();
+
+    HeatScoring scoring = race.getRaceModel() != null ? race.getRaceModel().getHeatScoring() : null;
+    if (scoring != null && scoring.getAllowFinish() == AllowFinish.NoneAutoSegments) {
+      if (race.getHeatExecutionManager() != null) {
+        race.getHeatExecutionManager().applyEndHeatAutoSegments();
+      }
+    }
 
     if (race.getCurrentHeat() != null) {
       race.getCurrentHeat().getStatistics().setEndTime(OffsetDateTime.now().toString());

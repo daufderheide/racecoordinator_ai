@@ -15,6 +15,7 @@ import { ConfirmationModalComponent } from "@app/components/shared/confirmation-
 import { EditorSectionComponent } from "@app/components/shared/editor-section/editor-section.component";
 import { EditorTitleComponent } from "@app/components/shared/editor-title/editor-title.component";
 import { ImageSelectorComponent } from "@app/components/shared/image-selector/image-selector.component";
+import { ImportModalComponent } from "@app/components/shared/import-modal/import-modal.component";
 import { UndoManager } from "@app/components/shared/undo-redo-controls/undo-manager";
 import { DriverConverter } from "@app/converters/driver.converter";
 import { DataService } from "@app/data.service";
@@ -22,6 +23,7 @@ import { AutoSelectDefaultDirective } from "@app/directives/auto-select-default.
 import { DirtyComponent } from "@app/interfaces/dirty-component";
 import { AssetType, normalizeAssetType } from "@app/models/asset";
 import { Driver } from "@app/models/driver";
+import { DriverImportResult } from "@app/models/driver-import.model";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import {
   ConnectionMonitorService,
@@ -43,6 +45,7 @@ import {
   cloneDriver,
   createNewDriverTemplate,
   DriverAudioSlot,
+  focusDriverNameInput,
   generateUniqueDriverName,
   generateUniqueDriverNickname,
   getAudioSlotFallbackName,
@@ -51,7 +54,9 @@ import {
   isDriverNicknameUnique,
   loadDriverStorageJson,
   mergeDriverAsset,
+  resolveDriverAvatarUrl,
   saveDriverStorageJson,
+  syncLinkedNameAndNickname,
   toDriver,
   updateDriverAudioText,
   updateDriverAudioType,
@@ -75,6 +80,7 @@ export { DriverAudioSlot } from "./driver-editor.helper";
     AudioSelectorComponent,
     TranslatePipe,
     ConfirmationModalComponent,
+    ImportModalComponent,
   ],
 })
 export class DriverEditorComponent
@@ -122,15 +128,7 @@ export class DriverEditorComponent
   defaultDriverNickname: string = "";
 
   focusNameInput() {
-    setTimeout(() => {
-      const el = document.getElementById(
-        "driver-name-input",
-      ) as HTMLInputElement;
-      if (el) {
-        el.focus();
-        el.select();
-      }
-    }, 0);
+    focusDriverNameInput();
   }
 
   // Unified Editor & Selection State
@@ -232,17 +230,11 @@ export class DriverEditorComponent
   toggleNameNicknameLink() {
     this.isNameNicknameLinked = !this.isNameNicknameLinked;
     this.saveLinkState();
-    if (this.isNameNicknameLinked && this.editingDriver) {
-      if (
-        this.editingDriver.name &&
-        this.editingDriver.nickname !== this.editingDriver.name
-      ) {
-        this.editingDriver.nickname = this.editingDriver.name;
-        this.onInputChange();
-      } else if (!this.editingDriver.name && this.editingDriver.nickname) {
-        this.editingDriver.name = this.editingDriver.nickname;
-        this.onInputChange();
-      }
+    if (
+      this.isNameNicknameLinked &&
+      syncLinkedNameAndNickname(this.editingDriver)
+    ) {
+      this.onInputChange();
     }
   }
 
@@ -1043,6 +1035,19 @@ export class DriverEditorComponent
     });
   }
 
+  showImportModal = false;
+
+  onOpenImportModal() {
+    this.showImportModal = true;
+  }
+
+  onDriversImported(result: DriverImportResult) {
+    this.refreshDriverList();
+    if (result.createdDriverIds && result.createdDriverIds.length > 0) {
+      this.onSelectDriverById(result.createdDriverIds[0]);
+    }
+  }
+
   deleteDriver() {
     if (!this.editingDriver || this.editingDriver.entity_id === "new") return;
     this.showDeleteConfirm = true;
@@ -1091,9 +1096,7 @@ export class DriverEditorComponent
   }
 
   getAvatarUrl(url?: string): string {
-    if (!url) return "assets/images/default_avatar.svg";
-    if (url.startsWith("/")) return `${this.dataService.serverUrl}${url}`;
-    return url;
+    return resolveDriverAvatarUrl(url, this.dataService);
   }
 
   getHelpSteps(): GuideStep[] {

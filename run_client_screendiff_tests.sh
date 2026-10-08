@@ -108,6 +108,7 @@ docker run --rm \
   -w /work \
   -e HOME="/work/test-home" \
   -e PWTEST_WORKERS="${PWTEST_WORKERS:-100%}" \
+  -e CI="${CI:-true}" \
   mcr.microsoft.com/playwright:v1.61.1-jammy \
   /bin/bash -c "$DOCKER_CMD"
 TEST_EXIT_CODE=$?

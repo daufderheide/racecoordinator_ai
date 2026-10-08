@@ -27,4 +27,16 @@ message RaceParticipant {
   double gap_position_f1 = 16;
   int32 laps_down_leader = 17;
   int32 laps_down_position = 18;
+  double consistency_score = 19;
+  int32 physical_lap_count = 20;
+  double standard_deviation = 21;
+  int32 laps_led = 22;
+  int32 track_calls = 23;
+  double total_points = 24;
+  double average_top5 = 25;
+  double average_top10 = 26;
+  double average_top15 = 27;
+  double top2_consecutive = 28;
+  double top3_consecutive = 29;
+  bool has_segments = 30;
 }

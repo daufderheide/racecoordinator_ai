@@ -107,7 +107,54 @@ describe("RacedayUpdateCoordinator", () => {
       expect(coordinator.updateVersionHtml).toContain("v1.2.3");
     });
 
+    it("should compute canAutoInstall correctly", () => {
+      coordinator.updateResult = null;
+      expect(coordinator.canAutoInstall).toBeFalse();
+
+      coordinator.updateResult = {
+        updateAvailable: true,
+        latestVersion: "v1.2.3",
+        downloadUrl: "http://example.com/dl",
+        releaseNotes: "",
+        releaseUrl: "http://example.com/rel",
+        isWindows: true,
+        isLinux: false,
+      };
+      expect(coordinator.canAutoInstall).toBeTrue();
+
+      coordinator.updateResult = {
+        updateAvailable: true,
+        latestVersion: "v1.2.3",
+        downloadUrl: "http://example.com/dl",
+        releaseNotes: "",
+        releaseUrl: "http://example.com/rel",
+        isWindows: false,
+        isLinux: true,
+      };
+      expect(coordinator.canAutoInstall).toBeTrue();
+
+      coordinator.updateResult = {
+        updateAvailable: true,
+        latestVersion: "v1.2.3",
+        downloadUrl: "http://example.com/dl",
+        releaseNotes: "",
+        releaseUrl: "http://example.com/rel",
+        isWindows: false,
+        isLinux: false,
+      };
+      expect(coordinator.canAutoInstall).toBeFalse();
+    });
+
     it("should compute updateSubtext for various statuses", () => {
+      coordinator.updateResult = {
+        updateAvailable: true,
+        latestVersion: "v1.2.3",
+        downloadUrl: "http://example.com/dl",
+        releaseNotes: "",
+        releaseUrl: "http://example.com/rel",
+        isWindows: true,
+      };
+
       coordinator.updateProgress = {
         progress: 100,
         status: "RDS_UPDATE_STATUS_CONFIRM_PROMPT",
@@ -119,6 +166,11 @@ describe("RacedayUpdateCoordinator", () => {
         status: "RDS_UPDATE_STATUS_LAUNCHING",
       };
       expect(coordinator.updateSubtext).toBe("RDS_UPDATE_CONFIRM_PROMPT_INFO");
+
+      // For Linux (isWindows: false), launching shows installing info
+      coordinator.updateResult.isWindows = false;
+      coordinator.updateResult.isLinux = true;
+      expect(coordinator.updateSubtext).toBe("RDS_UPDATE_INSTALLING_INFO");
 
       coordinator.updateProgress = {
         progress: 100,
@@ -335,6 +387,37 @@ describe("RacedayUpdateCoordinator", () => {
 
       tick(100);
       expect(mockUpdateService.getUpdateProgress).toHaveBeenCalled();
+
+      coordinator.destroy();
+    }));
+
+    it("should start installation and track installing progress on Linux", fakeAsync(() => {
+      coordinator.updateResult = {
+        updateAvailable: true,
+        latestVersion: "v2.0.0",
+        downloadUrl: "http://example.com/dl.tar.gz",
+        releaseNotes: "",
+        releaseUrl: "http://example.com/rel",
+        isWindows: false,
+        isLinux: true,
+      };
+
+      mockUpdateService.getUpdateProgress.and.returnValue(
+        of({ progress: 100, status: "RDS_UPDATE_STATUS_LAUNCHING" }),
+      );
+
+      coordinator.installUpdate("v1.0.0");
+      expect(coordinator.isUpdating).toBeTrue();
+      expect(mockUpdateService.installUpdate).toHaveBeenCalledWith(
+        "http://example.com/dl.tar.gz",
+      );
+
+      tick(100);
+      expect(coordinator.updateProgress?.status).toBe(
+        "RDS_UPDATE_STATUS_INSTALLING",
+      );
+      expect(coordinator.updateProgress?.progress).toBe(100);
+      expect(restartWatcherStarted).toBeTrue();
 
       coordinator.destroy();
     }));

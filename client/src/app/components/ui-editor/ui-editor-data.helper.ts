@@ -24,6 +24,7 @@ export interface LoadedEditorData {
   customDirectoryName: string | null;
   customWidgetDirectoryName: string | null;
   track: any;
+  maxTrackLanes: number;
   initialState: UIEditorState;
 }
 
@@ -91,6 +92,11 @@ export function processLoadedEditorData(
   normalizeLoadedThemes(themes);
   const tracks = result.tracks || [];
   const track = tracks.length > 0 ? tracks[0] : undefined;
+  const maxTrackLanes =
+    tracks.reduce(
+      (max: number, t: any) => Math.max(max, t?.lanes?.length || 0),
+      0,
+    ) || 4;
 
   const editingSettings = cloneSettings(currentSettings);
 
@@ -136,6 +142,7 @@ export function processLoadedEditorData(
     customDirectoryName,
     customWidgetDirectoryName,
     track,
+    maxTrackLanes,
     initialState,
   };
 }
@@ -387,6 +394,7 @@ export function applyLoadedUiEditorData(comp: any, res: any): void {
     comp.fileSystem?.getServerCustomWidgetPath?.() ||
     loaded.customWidgetDirectoryName;
   if (loaded.track) comp.track = loaded.track;
+  comp.maxTrackLanes = loaded.maxTrackLanes;
 
   comp.editingState = loaded.initialState;
   comp.refreshDisplayProperties();

@@ -147,5 +147,26 @@ public class RaceParticipantTest {
 
     participant.setAverageLapTime(5.0);
     participant.setBestLapTime(0.0);
+
+    participant.setAllScoringLaps(java.util.Arrays.asList(4.0, 6.0));
+    participant.setAverageLapTime(5.0);
+    assertTrue(participant.getStandardDeviation() > 0.0);
+    assertEquals(2, participant.getPhysicalLapCount());
+
+    participant.setLapsLed(8);
+    participant.setTrackCalls(3);
+    assertEquals(8, participant.getLapsLed());
+    assertEquals(3, participant.getTrackCalls());
+
+    participant.setAverageTop5(4.5);
+    participant.setAverageTop10(4.8);
+    participant.setAverageTop15(5.1);
+    participant.setTop2Consecutive(8.9);
+    participant.setTop3Consecutive(13.4);
+    assertEquals(4.5, participant.getAverageTop5(), 0.001);
+    assertEquals(4.8, participant.getAverageTop10(), 0.001);
+    assertEquals(5.1, participant.getAverageTop15(), 0.001);
+    assertEquals(8.9, participant.getTop2Consecutive(), 0.001);
+    assertEquals(13.4, participant.getTop3Consecutive(), 0.001);
   }
 }

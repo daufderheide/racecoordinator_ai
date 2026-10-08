@@ -9,6 +9,7 @@ describe("WIDGET_REGISTRY", () => {
     expect(keys).toContain("timer");
     expect(keys).toContain("image");
     expect(keys).toContain("lane-view");
+    expect(keys).toContain("lane-column");
     expect(keys).toContain("on-deck");
     expect(keys).toContain("next-heat");
     expect(keys).toContain("heat-list");
@@ -85,6 +86,11 @@ describe("WIDGET_REGISTRY", () => {
     expect(heatListSettings["laneFontSize"]).toBe(12);
     expect(heatListSettings["showCurrentHeatFlag"]).toBe(true);
     expect(heatListSettings["showCurrentHeatTime"]).toBe(true);
+    expect(heatListSettings["activeHeatDisplay"]).toBe("summary_lane_colors");
+    expect(heatListSettings["completedHeatsDisplay"]).toBe(
+      "summary_lane_colors",
+    );
+    expect(heatListSettings["futureHeatsDisplay"]).toBe("lane_colors");
     expect(heatListSettings["showCompletedSummary"]).toBe(true);
     expect(heatListSettings["showActiveSummary"]).toBe(true);
     expect(heatListSettings["showFutureSummary"]).toBe(false);
@@ -98,5 +104,18 @@ describe("WIDGET_REGISTRY", () => {
     expect(heatListSettings["summaryLapDecimalPlaces"]).toBe("auto");
     expect(heatListSettings["summaryTimeDecimalPlaces"]).toBe(3);
     expect(heatListSettings["summaryUseLaneColors"]).toBe(true);
+
+    const laneColumnSettings =
+      WIDGET_REGISTRY["lane-column"].defaultSettings!();
+    expect(laneColumnSettings["columnKey"]).toBe("lastLapTime");
+    expect(laneColumnSettings["bindingMode"]).toBe("lane");
+    expect(laneColumnSettings["targetIndex"]).toBe(0);
+    expect(laneColumnSettings["layoutOrientation"]).toBe("vertical");
+    expect(laneColumnSettings["useLaneColors"]).toBe(true);
+    expect(laneColumnSettings["showBorder"]).toBe(true);
+    expect(laneColumnSettings["borderRadius"]).toBe(8);
+    expect(laneColumnSettings["insets"]).toEqual({});
+    expect(laneColumnSettings["insetTimeDecimalPlaces"]).toBe(3);
+    expect(laneColumnSettings["insetLapDecimalPlaces"]).toBe(2);
   });
 });

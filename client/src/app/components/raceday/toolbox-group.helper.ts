@@ -1,3 +1,5 @@
+import { BASE_AVAILABLE_COLUMNS } from "@app/components/ui-editor/ui-editor-constants";
+import { LANE_VIEW_COLUMN_GROUPS } from "@app/components/ui-editor/widget-inspector-fields/lane-view-inspector/lane-view-column-group.helper";
 import { CustomWidgetDefinition } from "@app/models/custom-widget.model";
 import { WidgetType } from "@app/models/settings";
 import { naturalSortCompare } from "@app/utils/sorting.utils";
@@ -14,7 +16,9 @@ export interface ToolboxSubgroup {
   nameKey: string;
   icon?: string;
   widgets: ToolboxWidgetItem[];
+  subgroups?: ToolboxSubgroup[];
   expanded?: boolean;
+  totalCount?: number;
 }
 
 export interface ToolboxGroup {
@@ -30,7 +34,31 @@ export interface ToolboxGroup {
 
 export class ToolboxGroupHelper {
   public static readonly RC_AI_GROUP_ID = "race-coordinator-ai";
+  public static readonly HEAT_DATA_GROUP_ID = "heat-data";
+  public static readonly OVERALL_DATA_GROUP_ID = "overall-data";
+  public static readonly LANE_COLUMNS_GROUP_ID = "heat-data";
   public static readonly CUSTOM_ROOT_GROUP_ID = "custom-root";
+
+  public static readonly HEAT_DATA_GROUP_IDS = [
+    "driver-team",
+    "laps-standings",
+    "lap-times",
+    "analysis",
+    "gaps",
+    "telemetry",
+    "pacing",
+    "media-custom",
+  ];
+
+  public static readonly OVERALL_DATA_GROUP_IDS = [
+    "driver-team",
+    "overall-standings",
+    "overall-lap-times",
+    "overall-analysis",
+    "overall-gaps",
+    "predictions",
+    "media-custom",
+  ];
 
   public static readonly RC_AI_ROOT_WIDGETS: {
     type: WidgetType;
@@ -291,6 +319,7 @@ export class ToolboxGroupHelper {
     groupExpandedStates: Map<string, boolean> = new Map(),
     subgroupExpandedStates: Map<string, boolean> = new Map(),
     translateFn?: (key: string) => string,
+    availableColumnsList?: { key: string; label: string }[],
   ): ToolboxGroup[] {
     const term = (searchTerm || "").trim().toLowerCase();
     const groups: ToolboxGroup[] = [];
@@ -301,6 +330,7 @@ export class ToolboxGroupHelper {
       groupExpandedStates,
       subgroupExpandedStates,
       translateFn,
+      availableColumnsList,
     );
     if (rcGroup) {
       groups.push(rcGroup);
@@ -319,12 +349,245 @@ export class ToolboxGroupHelper {
     return groups;
   }
 
+  public static buildScopedDataSubgroup(
+    groupId: string,
+    nameKey: string,
+    allowedGroupIds: string[],
+    term: string,
+    subgroupExpandedStates: Map<string, boolean>,
+    translateFn?: (key: string) => string,
+    availableColumnsList?: { key: string; label: string }[],
+  ): ToolboxSubgroup | null {
+    const cols =
+      availableColumnsList && availableColumnsList.length > 0
+        ? availableColumnsList
+        : BASE_AVAILABLE_COLUMNS;
+
+    const colMap = new Map<string, { key: string; label: string }>();
+    for (const c of cols) {
+      colMap.set(c.key, c);
+    }
+
+    const subgroups: ToolboxSubgroup[] = [];
+
+    for (const grp of LANE_VIEW_COLUMN_GROUPS) {
+      if (!allowedGroupIds.includes(grp.id)) continue;
+
+      const items: ToolboxWidgetItem[] = [];
+      for (const colKey of grp.columnKeys) {
+        const col = colMap.get(colKey);
+        if (!col) continue;
+
+        const widgetItem: ToolboxWidgetItem = {
+          type: `lane-col:${col.key}`,
+          labelKey: col.label,
+          icon: "",
+        };
+
+        if (ToolboxGroupHelper.matchesSearch(widgetItem, term, translateFn)) {
+          items.push(widgetItem);
+        }
+      }
+
+      if (grp.id === "media-custom") {
+        for (const col of cols) {
+          if (
+            col.key.startsWith("imageset_") &&
+            !grp.columnKeys.includes(col.key)
+          ) {
+            const widgetItem: ToolboxWidgetItem = {
+              type: `lane-col:${col.key}`,
+              labelKey: col.label,
+              icon: "",
+            };
+            if (
+              ToolboxGroupHelper.matchesSearch(widgetItem, term, translateFn)
+            ) {
+              items.push(widgetItem);
+            }
+          }
+        }
+      }
+
+      items.sort((a, b) =>
+        ToolboxGroupHelper.compareWidgets(a, b, translateFn),
+      );
+
+      if (items.length > 0) {
+        const sgId = `${groupId}-sg-${grp.id}`;
+        const isSgExpanded = term
+          ? true
+          : subgroupExpandedStates.has(sgId)
+            ? subgroupExpandedStates.get(sgId)!
+            : false;
+
+        subgroups.push({
+          id: sgId,
+          nameKey: grp.nameKey,
+          icon: "folder",
+          widgets: items,
+          expanded: isSgExpanded,
+        });
+      }
+    }
+
+    subgroups.sort((a, b) =>
+      ToolboxGroupHelper.compareSubgroups(a, b, translateFn),
+    );
+
+    const totalCount = subgroups.reduce(
+      (sum, sg) => sum + sg.widgets.length,
+      0,
+    );
+    if (totalCount === 0 && term) {
+      return null;
+    }
+
+    const isGroupExpanded = term
+      ? true
+      : subgroupExpandedStates.has(groupId)
+        ? subgroupExpandedStates.get(groupId)!
+        : subgroupExpandedStates.has("lane-columns")
+          ? subgroupExpandedStates.get("lane-columns")!
+          : false;
+
+    return {
+      id: groupId,
+      nameKey: nameKey,
+      icon: "folder",
+      widgets: [],
+      subgroups: subgroups,
+      expanded: isGroupExpanded,
+      totalCount: totalCount,
+    };
+  }
+
+  public static buildHeatDataSubgroup(
+    term: string,
+    subgroupExpandedStates: Map<string, boolean>,
+    translateFn?: (key: string) => string,
+    availableColumnsList?: { key: string; label: string }[],
+  ): ToolboxSubgroup | null {
+    return ToolboxGroupHelper.buildScopedDataSubgroup(
+      ToolboxGroupHelper.HEAT_DATA_GROUP_ID,
+      "UE_TOOLBOX_GROUP_HEAT_DATA",
+      ToolboxGroupHelper.HEAT_DATA_GROUP_IDS,
+      term,
+      subgroupExpandedStates,
+      translateFn,
+      availableColumnsList,
+    );
+  }
+
+  public static buildOverallDataSubgroup(
+    term: string,
+    subgroupExpandedStates: Map<string, boolean>,
+    translateFn?: (key: string) => string,
+    availableColumnsList?: { key: string; label: string }[],
+  ): ToolboxSubgroup | null {
+    return ToolboxGroupHelper.buildScopedDataSubgroup(
+      ToolboxGroupHelper.OVERALL_DATA_GROUP_ID,
+      "UE_TOOLBOX_GROUP_OVERALL_DATA",
+      ToolboxGroupHelper.OVERALL_DATA_GROUP_IDS,
+      term,
+      subgroupExpandedStates,
+      translateFn,
+      availableColumnsList,
+    );
+  }
+
+  public static buildHeatDataGroup(
+    term: string,
+    groupExpandedStates: Map<string, boolean>,
+    subgroupExpandedStates: Map<string, boolean>,
+    translateFn?: (key: string) => string,
+    availableColumnsList?: { key: string; label: string }[],
+  ): ToolboxGroup | null {
+    const sg = ToolboxGroupHelper.buildHeatDataSubgroup(
+      term,
+      subgroupExpandedStates,
+      translateFn,
+      availableColumnsList,
+    );
+    if (!sg) return null;
+    const isGroupExpanded = term
+      ? true
+      : groupExpandedStates.has(ToolboxGroupHelper.HEAT_DATA_GROUP_ID)
+        ? groupExpandedStates.get(ToolboxGroupHelper.HEAT_DATA_GROUP_ID)!
+        : groupExpandedStates.has("lane-columns")
+          ? groupExpandedStates.get("lane-columns")!
+          : (sg.expanded ?? false);
+
+    return {
+      id: ToolboxGroupHelper.HEAT_DATA_GROUP_ID,
+      nameKey: "UE_TOOLBOX_GROUP_HEAT_DATA",
+      isBuiltIn: true,
+      icon: "folder",
+      rootWidgets: [],
+      subgroups: sg.subgroups || [],
+      expanded: isGroupExpanded,
+      totalCount: sg.totalCount || 0,
+    };
+  }
+
+  public static buildOverallDataGroup(
+    term: string,
+    groupExpandedStates: Map<string, boolean>,
+    subgroupExpandedStates: Map<string, boolean>,
+    translateFn?: (key: string) => string,
+    availableColumnsList?: { key: string; label: string }[],
+  ): ToolboxGroup | null {
+    const sg = ToolboxGroupHelper.buildOverallDataSubgroup(
+      term,
+      subgroupExpandedStates,
+      translateFn,
+      availableColumnsList,
+    );
+    if (!sg) return null;
+    const isGroupExpanded = term
+      ? true
+      : groupExpandedStates.has(ToolboxGroupHelper.OVERALL_DATA_GROUP_ID)
+        ? groupExpandedStates.get(ToolboxGroupHelper.OVERALL_DATA_GROUP_ID)!
+        : (sg.expanded ?? false);
+
+    return {
+      id: ToolboxGroupHelper.OVERALL_DATA_GROUP_ID,
+      nameKey: "UE_TOOLBOX_GROUP_OVERALL_DATA",
+      isBuiltIn: true,
+      icon: "folder",
+      rootWidgets: [],
+      subgroups: sg.subgroups || [],
+      expanded: isGroupExpanded,
+      totalCount: sg.totalCount || 0,
+    };
+  }
+
+  /**
+   * @deprecated Use buildHeatDataGroup instead.
+   */
+  public static buildLaneColumnsGroup(
+    term: string,
+    groupExpandedStates: Map<string, boolean>,
+    subgroupExpandedStates: Map<string, boolean>,
+    translateFn?: (key: string) => string,
+    availableColumnsList?: { key: string; label: string }[],
+  ): ToolboxGroup | null {
+    return ToolboxGroupHelper.buildHeatDataGroup(
+      term,
+      groupExpandedStates,
+      subgroupExpandedStates,
+      translateFn,
+      availableColumnsList,
+    );
+  }
+
   private static buildRcAiGroup(
     usedWidgetTypes: Set<string>,
     term: string,
     groupExpandedStates: Map<string, boolean>,
     subgroupExpandedStates: Map<string, boolean>,
     translateFn?: (key: string) => string,
+    availableColumnsList?: { key: string; label: string }[],
   ): ToolboxGroup | null {
     const rcRootWidgets: ToolboxWidgetItem[] =
       ToolboxGroupHelper.RC_AI_ROOT_WIDGETS.filter(
@@ -367,9 +630,39 @@ export class ToolboxGroupHelper {
       }
     }
 
+    const heatDataSubgroup = ToolboxGroupHelper.buildHeatDataSubgroup(
+      term,
+      subgroupExpandedStates,
+      translateFn,
+      availableColumnsList,
+    );
+    if (heatDataSubgroup) {
+      rcSubgroups.push(heatDataSubgroup);
+    }
+
+    const overallDataSubgroup = ToolboxGroupHelper.buildOverallDataSubgroup(
+      term,
+      subgroupExpandedStates,
+      translateFn,
+      availableColumnsList,
+    );
+    if (overallDataSubgroup) {
+      rcSubgroups.push(overallDataSubgroup);
+    }
+
+    // Alphabetize the subgroups within Race Coordinator AI
+    rcSubgroups.sort((a, b) =>
+      ToolboxGroupHelper.compareSubgroups(a, b, translateFn),
+    );
+
     const rcTotalCount =
       rcRootWidgets.length +
-      rcSubgroups.reduce((sum, sg) => sum + sg.widgets.length, 0);
+      rcSubgroups.reduce(
+        (sum, sg) =>
+          sum +
+          (sg.totalCount !== undefined ? sg.totalCount : sg.widgets.length),
+        0,
+      );
 
     if (rcTotalCount === 0 && term) {
       return null;
@@ -527,6 +820,56 @@ export class ToolboxGroupHelper {
       expanded: isGroupExpanded,
       totalCount: groupTotal,
     };
+  }
+
+  private static readonly SUBGROUP_FALLBACK_LABELS: Record<string, string> = {
+    UE_TOOLBOX_SUBGROUP_ACTIONS: "Actions",
+    UE_TOOLBOX_GROUP_HEAT_DATA: "Heat Data",
+    UE_TOOLBOX_GROUP_LANE_COLUMNS: "Heat Data",
+    UE_TOOLBOX_GROUP_OVERALL_DATA: "Overall Race Data",
+    UE_TOOLBOX_SUBGROUP_MEDIA_CHROME: "Media & Graphics",
+    UE_TOOLBOX_SUBGROUP_STANDINGS_HEATS: "Standings & Heats",
+    UE_TOOLBOX_SUBGROUP_TITLES_INFO: "Titles & Info",
+    UE_COL_GROUP_ANALYSIS: "Driver Analysis & Consistency",
+    UE_COL_GROUP_DRIVER_TEAM: "Driver & Team",
+    UE_COL_GROUP_GAPS: "Gaps & Intervals",
+    UE_COL_GROUP_LAP_TIMES: "Lap Times & Records",
+    UE_COL_GROUP_LAPS_STANDINGS: "Laps & Standings",
+    UE_COL_GROUP_MEDIA_CUSTOM: "QR Codes & Media",
+    UE_COL_GROUP_OVERALL_ANALYSIS: "Overall Analysis & Consistency",
+    UE_COL_GROUP_OVERALL_GAPS: "Overall Gaps & Intervals",
+    UE_COL_GROUP_OVERALL_LAP_TIMES: "Overall Lap Times & Records",
+    UE_COL_GROUP_OVERALL_STANDINGS: "Overall Standings & Laps",
+    UE_COL_GROUP_PACING: "Pacing",
+    UE_COL_GROUP_PREDICTIONS: "Predictions",
+    UE_COL_GROUP_TELEMETRY: "Telemetry, Fuel & Speed",
+  };
+
+  private static compareSubgroups(
+    a: ToolboxSubgroup,
+    b: ToolboxSubgroup,
+    translateFn?: (key: string) => string,
+  ): number {
+    const labelA = ToolboxGroupHelper.getSubgroupDisplayLabel(a, translateFn);
+    const labelB = ToolboxGroupHelper.getSubgroupDisplayLabel(b, translateFn);
+    const cmp = naturalSortCompare(labelA, labelB);
+    if (cmp !== 0) return cmp;
+    return naturalSortCompare(a.id, b.id);
+  }
+
+  private static getSubgroupDisplayLabel(
+    sg: ToolboxSubgroup,
+    translateFn?: (key: string) => string,
+  ): string {
+    if (translateFn) {
+      const translated = translateFn(sg.nameKey);
+      if (translated && translated !== sg.nameKey) return translated;
+    }
+    return (
+      ToolboxGroupHelper.SUBGROUP_FALLBACK_LABELS[sg.nameKey] ||
+      sg.nameKey ||
+      sg.id
+    );
   }
 
   private static compareWidgets(

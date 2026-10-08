@@ -628,4 +628,22 @@ public class UpdateServiceTest {
     org.junit.Assert.assertNull(UpdateService.extractAlphaDate("v1.0.0"));
     org.junit.Assert.assertNull(UpdateService.extractAlphaDate(null));
   }
+
+  @Test
+  public void testCalculateDownloadProgress() {
+    assertEquals(50, UpdateService.calculateDownloadProgress(500, 1000));
+    assertEquals(100, UpdateService.calculateDownloadProgress(1000, 1000));
+    assertEquals(0, UpdateService.calculateDownloadProgress(0, 1000));
+    long fallbackTotal = 150L * 1024 * 1024;
+    assertEquals(50, UpdateService.calculateDownloadProgress(fallbackTotal / 2, -1));
+  }
+
+  @Test
+  public void testUpdateCheckResult_SupportsLinux() {
+    UpdateService.UpdateCheckResult result = new UpdateService.UpdateCheckResult();
+    result.isLinux = true;
+    result.isWindows = false;
+    assertTrue(result.isLinux);
+    assertFalse(result.isWindows);
+  }
 }
