@@ -1239,6 +1239,19 @@
 >
 </app-confirmation-modal>
 
+<!-- Delete Saved Race Confirmation Modal -->
+<app-confirmation-modal
+  [visible]="showDeleteSavedRaceConfirm"
+  title="RDS_CONFIRM_DELETE_SAVED_RACE_TITLE"
+  message="RDS_CONFIRM_DELETE_SAVED_RACE_MSG"
+  [messageParams]="{ filename: savedRaceToDelete?.filename || '' }"
+  confirmText="GEN_YES"
+  cancelText="GEN_NO"
+  (confirm)="onConfirmDeleteSavedRace()"
+  (cancel)="onCancelDeleteSavedRace()"
+>
+</app-confirmation-modal>
+
 <!-- Racing Roster Dialog -->
 <app-racing-roster-dialog
   [visible]="showRacingRosterDialog"

@@ -442,6 +442,18 @@
 >
 </app-confirmation-modal>
 
+<!-- Delete Track Confirmation -->
+<app-confirmation-modal
+  [visible]="showDeleteConfirm"
+  title="TE_CONFIRM_DELETE_TITLE"
+  message="TE_CONFIRM_DELETE"
+  confirmText="CD_YES"
+  cancelText="CD_NO"
+  (confirm)="onConfirmDelete()"
+  (cancel)="onCancelDelete()"
+>
+</app-confirmation-modal>
+
 <app-acknowledgement-modal
   [visible]="driverMissingError"
   title="PHIDGET_MISSING_DRIVER"

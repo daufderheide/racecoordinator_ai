@@ -1160,7 +1160,6 @@ describe("DefaultRacedaySetupComponent", () => {
   });
 
   it("should delete saved race after confirmation", () => {
-    spyOn(window, "confirm").and.returnValue(true);
     const fileToDelete = { filename: "race1.json", isDemo: false };
     component.savedRaces = [
       fileToDelete,
@@ -1174,7 +1173,12 @@ describe("DefaultRacedaySetupComponent", () => {
     component.deleteSavedRace(event, fileToDelete);
 
     expect(event.stopPropagation).toHaveBeenCalled();
-    expect(window.confirm).toHaveBeenCalled();
+    expect(component.showDeleteSavedRaceConfirm).toBeTrue();
+    expect(component.savedRaceToDelete).toBe(fileToDelete);
+
+    component.onConfirmDeleteSavedRace();
+
+    expect(component.showDeleteSavedRaceConfirm).toBeFalse();
     expect(mockDataService.deleteSavedRace).toHaveBeenCalledWith(
       "race1.json",
       false,
@@ -1183,6 +1187,21 @@ describe("DefaultRacedaySetupComponent", () => {
       jasmine.objectContaining({ filename: "race1.json" }),
     );
     expect(component.selectedSavedRace).toBeNull();
+  });
+
+  it("should cancel delete saved race when onCancelDeleteSavedRace is called", () => {
+    const fileToDelete = { filename: "race1.json", isDemo: false };
+    component.savedRaces = [fileToDelete];
+    const event = new MouseEvent("click");
+    spyOn(event, "stopPropagation");
+
+    component.deleteSavedRace(event, fileToDelete);
+    expect(component.showDeleteSavedRaceConfirm).toBeTrue();
+
+    component.onCancelDeleteSavedRace();
+    expect(component.showDeleteSavedRaceConfirm).toBeFalse();
+    expect(component.savedRaceToDelete).toBeNull();
+    expect(mockDataService.deleteSavedRace).not.toHaveBeenCalled();
   });
 
   it("should select saved race", () => {

@@ -9,9 +9,14 @@
     [showEdit]="true"
     [showAdd]="true"
     [showCopy]="true"
-    [showDelete]="existingSeasons.length > 1"
+    [showDelete]="true"
     [disabledCopy]="!isFormValid || isSaving"
-    [disabledDelete]="!editingSeason || isSaving || existingSeasons.length <= 1"
+    [disabledDelete]="
+      !editingSeason ||
+      isSaving ||
+      !editingSeason.entity_id ||
+      editingSeason.entity_id === 'new'
+    "
     [isSaving]="isSaving"
     [helpSteps]="getHelpSteps()"
     (selectedIdChange)="onSelectSeasonById($event)"
@@ -361,4 +366,15 @@
   [cancelText]="'COMMON_CANCEL' | translate"
   (confirm)="onConfirmDiscard()"
   (cancel)="onCancelDiscard()"
+></app-confirmation-modal>
+
+<!-- Delete Season Confirmation -->
+<app-confirmation-modal
+  [visible]="showDeleteConfirm"
+  title="SE_CONFIRM_DELETE_TITLE"
+  message="SE_CONFIRM_DELETE"
+  confirmText="CD_YES"
+  cancelText="CD_NO"
+  (confirm)="onConfirmDelete()"
+  (cancel)="onCancelDelete()"
 ></app-confirmation-modal>

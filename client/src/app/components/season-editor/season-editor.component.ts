@@ -67,6 +67,8 @@ export class SeasonEditorComponent
   implements OnInit, OnDestroy, DirtyComponent
 {
   lifecycle!: EditorLifecycleHelper;
+  // Delete Season Confirmation Modal
+  showDeleteConfirm = false;
 
   get showDiscardConfirm(): boolean {
     return this.lifecycle.showDiscardConfirm;
@@ -764,43 +766,51 @@ export class SeasonEditorComponent
 
   onDeleteSeason(): void {
     if (!this.editingSeason?.entity_id) return;
-    if (confirm(this.translationService.translate("SE_CONFIRM_DELETE"))) {
-      this.isSaving = true;
-      const idToDelete = this.editingSeason.entity_id;
-      this.subscriptions.push(
-        this.dataService.deleteSeason(idToDelete).subscribe({
-          next: () => {
-            this.isSaving = false;
-            this.isEditMode = false;
-            const nextSeason = getNextSelectionAfterDelete(
-              this.existingSeasons,
-              idToDelete,
-            );
-            this.existingSeasons = this.existingSeasons.filter(
-              (s) => s.entity_id !== idToDelete,
-            );
-            this.updateSeasonSelectItems();
-            if (nextSeason) {
-              this.selectSeason(nextSeason);
-              this.router.navigate([], {
-                relativeTo: this.route,
-                queryParams: { id: nextSeason.entity_id },
-                queryParamsHandling: "merge",
-                replaceUrl: true,
-              });
-            } else {
-              this.startNewSeason();
-            }
-            this.cdr.detectChanges();
-          },
-          error: (err) => {
-            this.logger.error("Failed to delete season", err);
-            this.isSaving = false;
-            this.cdr.detectChanges();
-          },
-        }),
-      );
-    }
+    this.showDeleteConfirm = true;
+  }
+
+  onCancelDelete(): void {
+    this.showDeleteConfirm = false;
+  }
+
+  onConfirmDelete(): void {
+    this.showDeleteConfirm = false;
+    if (!this.editingSeason?.entity_id) return;
+    this.isSaving = true;
+    const idToDelete = this.editingSeason.entity_id;
+    this.subscriptions.push(
+      this.dataService.deleteSeason(idToDelete).subscribe({
+        next: () => {
+          this.isSaving = false;
+          this.isEditMode = false;
+          const nextSeason = getNextSelectionAfterDelete(
+            this.existingSeasons,
+            idToDelete,
+          );
+          this.existingSeasons = this.existingSeasons.filter(
+            (s) => s.entity_id !== idToDelete,
+          );
+          this.updateSeasonSelectItems();
+          if (nextSeason) {
+            this.selectSeason(nextSeason);
+            this.router.navigate([], {
+              relativeTo: this.route,
+              queryParams: { id: nextSeason.entity_id },
+              queryParamsHandling: "merge",
+              replaceUrl: true,
+            });
+          } else {
+            this.startNewSeason();
+          }
+          this.cdr.detectChanges();
+        },
+        error: (err) => {
+          this.logger.error("Failed to delete season", err);
+          this.isSaving = false;
+          this.cdr.detectChanges();
+        },
+      }),
+    );
   }
 
   autoSaveSeason(): void {

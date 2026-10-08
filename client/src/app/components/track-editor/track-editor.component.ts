@@ -101,6 +101,8 @@ import {
 })
 export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   lifecycle!: EditorLifecycleHelper;
+  // Delete Track Confirmation Modal
+  showDeleteConfirm = false;
 
   get showDiscardConfirm(): boolean {
     return this.lifecycle.showDiscardConfirm;
@@ -878,41 +880,49 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
 
   deleteTrack() {
     if (!this.editingTrack || this.editingTrack.entity_id === "new") return;
-    if (confirm(this.translationService.translate("TE_CONFIRM_DELETE"))) {
-      this.isSaving = true;
-      const idToDelete = this.editingTrack.entity_id;
-      this.dataService.deleteTrack(idToDelete).subscribe({
-        next: () => {
-          this.isSaving = false;
-          this.isEditMode = false;
-          const nextTrack = getNextSelectionAfterDelete(
-            this.allTracks,
-            idToDelete,
-          );
-          this.allTracks = this.allTracks.filter(
-            (t) => t.entity_id !== idToDelete,
-          );
-          this.updateTrackSelectItems();
-          if (nextTrack) {
-            this.selectTrack(nextTrack);
-            this.router.navigate([], {
-              relativeTo: this.route,
-              queryParams: { id: nextTrack.entity_id },
-              queryParamsHandling: "merge",
-              replaceUrl: true,
-            });
-          } else {
-            this.startNewTrack();
-          }
-          this.cdr.detectChanges();
-        },
-        error: (err) => {
-          this.logger.error("Failed to delete track", err);
-          this.isSaving = false;
-          this.cdr.detectChanges();
-        },
-      });
-    }
+    this.showDeleteConfirm = true;
+  }
+
+  onCancelDelete() {
+    this.showDeleteConfirm = false;
+  }
+
+  onConfirmDelete() {
+    this.showDeleteConfirm = false;
+    if (!this.editingTrack || this.editingTrack.entity_id === "new") return;
+    this.isSaving = true;
+    const idToDelete = this.editingTrack.entity_id;
+    this.dataService.deleteTrack(idToDelete).subscribe({
+      next: () => {
+        this.isSaving = false;
+        this.isEditMode = false;
+        const nextTrack = getNextSelectionAfterDelete(
+          this.allTracks,
+          idToDelete,
+        );
+        this.allTracks = this.allTracks.filter(
+          (t) => t.entity_id !== idToDelete,
+        );
+        this.updateTrackSelectItems();
+        if (nextTrack) {
+          this.selectTrack(nextTrack);
+          this.router.navigate([], {
+            relativeTo: this.route,
+            queryParams: { id: nextTrack.entity_id },
+            queryParamsHandling: "merge",
+            replaceUrl: true,
+          });
+        } else {
+          this.startNewTrack();
+        }
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        this.logger.error("Failed to delete track", err);
+        this.isSaving = false;
+        this.cdr.detectChanges();
+      },
+    });
   }
 
   private initializeInterfaces() {

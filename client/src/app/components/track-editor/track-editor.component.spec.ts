@@ -1590,10 +1590,11 @@ describe("TrackEditorComponent", () => {
       const track2 = new Track({ entity_id: "t2", name: "Track 2", lanes: [] });
       component.allTracks = [track1, track2];
       component.editingTrack = track1;
-      spyOn(window, "confirm").and.returnValue(true);
       dataService.deleteTrack.and.returnValue(of(true));
 
       component.deleteTrack();
+      expect(component.showDeleteConfirm).toBeTrue();
+      component.onConfirmDelete();
 
       expect(dataService.deleteTrack).toHaveBeenCalledWith("t1");
       expect(component.allTracks.length).toBe(1);
@@ -1608,20 +1609,36 @@ describe("TrackEditorComponent", () => {
 
       component.allTracks = [trackA, trackB, trackC];
       component.selectTrack(trackB);
-      spyOn(window, "confirm").and.returnValue(true);
       dataService.deleteTrack.and.returnValue(of(true));
 
       // Delete B -> C is selected
       component.deleteTrack();
+      expect(component.showDeleteConfirm).toBeTrue();
+      component.onConfirmDelete();
       expect(dataService.deleteTrack).toHaveBeenCalledWith("t2");
       expect(component.selectedTrackId).toBe("t3");
       expect(component.editingTrack?.name).toBe("Track C");
 
       // Delete C -> A is selected
       component.deleteTrack();
+      expect(component.showDeleteConfirm).toBeTrue();
+      component.onConfirmDelete();
       expect(dataService.deleteTrack).toHaveBeenCalledWith("t3");
       expect(component.selectedTrackId).toBe("t1");
       expect(component.editingTrack?.name).toBe("Track A");
+    });
+
+    it("should cancel delete track when onCancelDelete is called", () => {
+      component.editingTrack = new Track({
+        entity_id: "t1",
+        name: "Track 1",
+        lanes: [],
+      });
+      component.deleteTrack();
+      expect(component.showDeleteConfirm).toBeTrue();
+      component.onCancelDelete();
+      expect(component.showDeleteConfirm).toBeFalse();
+      expect(dataService.deleteTrack).not.toHaveBeenCalled();
     });
 
     it("should stay in edit mode during continuous auto-save", fakeAsync(() => {

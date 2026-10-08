@@ -2600,6 +2600,8 @@ export class DefaultRacedaySetupComponent implements OnInit {
 
   closeLoadRaceModal() {
     this.showLoadRaceModal = false;
+    this.showDeleteSavedRaceConfirm = false;
+    this.savedRaceToDelete = null;
   }
 
   confirmLoadRace() {
@@ -2616,21 +2618,37 @@ export class DefaultRacedaySetupComponent implements OnInit {
       });
   }
 
+  showDeleteSavedRaceConfirm = false;
+  savedRaceToDelete: ISavedRace | null = null;
+
   deleteSavedRace(event: MouseEvent, file: ISavedRace) {
     event.stopPropagation(); // Prevent selection
-    if (confirm(`Are you sure you want to delete "${file.filename}"?`)) {
-      this.dataService.deleteSavedRace(file.filename, file.isDemo).subscribe({
-        next: () => {
-          this.savedRaces = this.savedRaces.filter(
-            (r) => r.filename !== file.filename,
-          );
-          if (this.selectedSavedRace?.filename === file.filename) {
-            this.selectedSavedRace = null;
-          }
-          this.cdr.detectChanges();
-        },
-        error: (err) => console.error("Failed to delete race:", err),
-      });
-    }
+    this.savedRaceToDelete = file;
+    this.showDeleteSavedRaceConfirm = true;
+  }
+
+  onCancelDeleteSavedRace() {
+    this.showDeleteSavedRaceConfirm = false;
+    this.savedRaceToDelete = null;
+  }
+
+  onConfirmDeleteSavedRace() {
+    this.showDeleteSavedRaceConfirm = false;
+    const file = this.savedRaceToDelete;
+    this.savedRaceToDelete = null;
+    if (!file) return;
+
+    this.dataService.deleteSavedRace(file.filename, file.isDemo).subscribe({
+      next: () => {
+        this.savedRaces = this.savedRaces.filter(
+          (r) => r.filename !== file.filename,
+        );
+        if (this.selectedSavedRace?.filename === file.filename) {
+          this.selectedSavedRace = null;
+        }
+        this.cdr.detectChanges();
+      },
+      error: (err) => console.error("Failed to delete race:", err),
+    });
   }
 }

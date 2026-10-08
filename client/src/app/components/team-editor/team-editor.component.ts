@@ -65,6 +65,9 @@ export class TeamEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   // Discard Changes Confirmation Modal
   lifecycle!: EditorLifecycleHelper;
 
+  // Delete Team Confirmation Modal
+  showDeleteConfirm = false;
+
   get showDiscardConfirm(): boolean {
     return this.lifecycle.showDiscardConfirm;
   }
@@ -587,41 +590,44 @@ export class TeamEditorComponent implements OnInit, OnDestroy, DirtyComponent {
 
   deleteTeam() {
     if (!this.editingTeam || this.editingTeam.entity_id === "new") return;
-    if (confirm(this.translationService.translate("TEM_CONFIRM_DELETE"))) {
-      this.isSaving = true;
-      const idToDelete = this.editingTeam.entity_id;
-      this.dataService.deleteTeam(idToDelete).subscribe({
-        next: () => {
-          this.isSaving = false;
-          this.isEditMode = false;
-          const nextTeam = getNextSelectionAfterDelete(
-            this.allTeams,
-            idToDelete,
-          );
-          this.allTeams = this.allTeams.filter(
-            (t) => t.entity_id !== idToDelete,
-          );
-          this.updateTeamSelectItems();
-          if (nextTeam) {
-            this.selectTeam(nextTeam);
-            this.router.navigate([], {
-              relativeTo: this.route,
-              queryParams: { id: nextTeam.entity_id },
-              queryParamsHandling: "merge",
-              replaceUrl: true,
-            });
-          } else {
-            this.startNewTeam();
-          }
-          this.cdr.detectChanges();
-        },
-        error: (err) => {
-          this.logger.error("Failed to delete team", err);
-          this.isSaving = false;
-          this.cdr.detectChanges();
-        },
-      });
-    }
+    this.showDeleteConfirm = true;
+  }
+
+  onCancelDelete() {
+    this.showDeleteConfirm = false;
+  }
+
+  onConfirmDelete() {
+    this.showDeleteConfirm = false;
+    if (!this.editingTeam || this.editingTeam.entity_id === "new") return;
+    this.isSaving = true;
+    const idToDelete = this.editingTeam.entity_id;
+    this.dataService.deleteTeam(idToDelete).subscribe({
+      next: () => {
+        this.isSaving = false;
+        this.isEditMode = false;
+        const nextTeam = getNextSelectionAfterDelete(this.allTeams, idToDelete);
+        this.allTeams = this.allTeams.filter((t) => t.entity_id !== idToDelete);
+        this.updateTeamSelectItems();
+        if (nextTeam) {
+          this.selectTeam(nextTeam);
+          this.router.navigate([], {
+            relativeTo: this.route,
+            queryParams: { id: nextTeam.entity_id },
+            queryParamsHandling: "merge",
+            replaceUrl: true,
+          });
+        } else {
+          this.startNewTeam();
+        }
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        this.logger.error("Failed to delete team", err);
+        this.isSaving = false;
+        this.cdr.detectChanges();
+      },
+    });
   }
 
   // Undo/Redo Proxies
