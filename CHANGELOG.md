@@ -1,9 +1,10 @@
 # Changelog
 
-## [v1.0.1-beta.17] - 2026-10-06
+## [v1.0.1-beta.18] - 2026-10-08
 
 ### 🚀 New Features
 
+- **updater**: warn and confirm when downgrading release versions.  Also made it so that when configured for alpha releases, it will only discover alpha releases ([b87d3291](https://github.com/daufderheide/racecoordinator_ai/commit/b87d3291))
 - add Arduino and Phidget editor "active low analog led" config options. [#911](https://github.com/daufderheide/racecoordinator_ai/issues/911) ([0c993d0a](https://github.com/daufderheide/racecoordinator_ai/commit/0c993d0a))
 - Added more port diagnosis when RC AI cannot be started because port 7070 is busy/not available.  This will be useful for users to help troubleshoot what's going on. ([f258adde](https://github.com/daufderheide/racecoordinator_ai/commit/f258adde))
 - for the heat-view widget, changed 'use lane background colors' to use lane colors' and disabled summary row text color controls when lane colors are enabled.  Coloring is now completely controlled by the track lane data or the text color set in the widget. [#897](https://github.com/daufderheide/racecoordinator_ai/issues/897) [skip-screendiffs] ([7df44d18](https://github.com/daufderheide/racecoordinator_ai/commit/7df44d18))
@@ -12,6 +13,12 @@
 
 ### 🐛 Bug Fixes
 
+- fixed export of the custom rotation name.  Also removed the custom rotation asset id as it's not usefull to the user [#938](https://github.com/daufderheide/racecoordinator_ai/issues/938) ([913274a8](https://github.com/daufderheide/racecoordinator_ai/commit/913274a8))
+- **raceday-setup**: support enter key on mouse-selected drivers [#940](https://github.com/daufderheide/racecoordinator_ai/issues/940) [skip-screendiffs] ([5aeb7759](https://github.com/daufderheide/racecoordinator_ai/commit/5aeb7759))
+- changed the delete object confirmation from the browser system confirmation to the RC AI confirmation fix: added delete ability in view mode to the season and event pages.  This is consistent with the other pages [#942](https://github.com/daufderheide/racecoordinator_ai/issues/942) ([6dadacee](https://github.com/daufderheide/racecoordinator_ai/commit/6dadacee))
+- fixed selecting image names with the mouse, it no longer drags the image fix: fixed being able to edit multiple assets at one time [#944](https://github.com/daufderheide/racecoordinator_ai/issues/944) [#943](https://github.com/daufderheide/racecoordinator_ai/issues/943) [skip-screendiffs] ([4af79d15](https://github.com/daufderheide/racecoordinator_ai/commit/4af79d15))
+- Clicking the trashcan on the avatar in the driver editor now correctly removes the image [#946](https://github.com/daufderheide/racecoordinator_ai/issues/946) [skip-screendiffs] ([bd95dcab](https://github.com/daufderheide/racecoordinator_ai/commit/bd95dcab))
+- Added !isConnected safeguard for TM to prevent data from being sent before the port is open ([21596348](https://github.com/daufderheide/racecoordinator_ai/commit/21596348))
 - Fixed renaming default theme/layouts and the names displayed in places like the race summary on the raceday setup page. [#930](https://github.com/daufderheide/racecoordinator_ai/issues/930) [skip-screendiffs] ([968ee365](https://github.com/daufderheide/racecoordinator_ai/commit/968ee365))
 - prevent backfilling deleted default themes, layouts, and races [#933](https://github.com/daufderheide/racecoordinator_ai/issues/933) [skip-screendiffs] ([11f98fe8](https://github.com/daufderheide/racecoordinator_ai/commit/11f98fe8))
 - handle drift laps and pending times correctly during heat transitions [#929](https://github.com/daufderheide/racecoordinator_ai/issues/929) ([dcb77006](https://github.com/daufderheide/racecoordinator_ai/commit/dcb77006))
@@ -58,7 +65,7 @@
 <details>
 <summary>🔍 <b>Full Commit History</b></summary>
 
-<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0...v1.0.1-beta.17">GitHub</a></p>
+<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0...v1.0.1-beta.18">GitHub</a></p>
 </details>
 
 ## [v1.0.0] - 2026-09-27
