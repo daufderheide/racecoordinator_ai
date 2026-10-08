@@ -512,4 +512,68 @@ describe("RacedayMenuBarComponent", () => {
       expect(component.isBackActionDisabled()).toBeFalse();
     });
   });
+
+  describe("Options Menu", () => {
+    it("should toggle options menu and render customize UI and language selector without automatic updates", () => {
+      expect(component.isOptionsMenuOpen).toBeFalse();
+
+      component.toggleOptionsMenu();
+      fixture.detectChanges();
+
+      expect(component.isOptionsMenuOpen).toBeTrue();
+
+      const dropdown = fixture.nativeElement.querySelector(".menu-dropdown");
+      expect(dropdown).toBeTruthy();
+
+      const items = Array.from(dropdown.querySelectorAll(".menu-item")).map(
+        (el: any) => el.textContent.trim(),
+      );
+
+      expect(
+        items.some((text: string) => text.includes("RD_MENU_CUSTOMIZE_UI")),
+      ).toBeTrue();
+
+      const languageSelector = dropdown.querySelector("app-language-selector");
+      expect(languageSelector).toBeTruthy();
+
+      // Verify automatic updates / update-selector is not present
+      const updateSelector = dropdown.querySelector("app-update-selector");
+      expect(updateSelector).toBeNull();
+      expect(
+        items.some((text: string) =>
+          text.includes("RDS_MENU_AUTOMATIC_UPDATES"),
+        ),
+      ).toBeFalse();
+    });
+
+    it("should emit optionsMenuSelect with CUSTOMIZE_UI when Customize UI is clicked", () => {
+      spyOn(component.optionsMenuSelect, "emit");
+      component.isOptionsMenuOpen = true;
+      fixture.detectChanges();
+
+      const customizeItem = Array.from(
+        fixture.nativeElement.querySelectorAll(".menu-item"),
+      ).find((el: any) =>
+        el.textContent.includes("RD_MENU_CUSTOMIZE_UI"),
+      ) as HTMLElement;
+
+      expect(customizeItem).toBeTruthy();
+      customizeItem.click();
+
+      expect(component.optionsMenuSelect.emit).toHaveBeenCalledWith(
+        "CUSTOMIZE_UI",
+      );
+      expect(component.isOptionsMenuOpen).toBeFalse();
+    });
+
+    it("should emit languageSelected when language is selected", () => {
+      spyOn(component.languageSelected, "emit");
+      component.isOptionsMenuOpen = true;
+
+      component.onLanguageSelected();
+
+      expect(component.languageSelected.emit).toHaveBeenCalled();
+      expect(component.isOptionsMenuOpen).toBeFalse();
+    });
+  });
 });

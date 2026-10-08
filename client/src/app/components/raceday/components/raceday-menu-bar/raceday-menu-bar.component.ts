@@ -13,7 +13,6 @@ import {
 import { toSignal } from "@angular/core/rxjs-interop";
 import { of } from "rxjs";
 import { LanguageSelectorComponent } from "@app/components/shared/language-selector/language-selector.component";
-import { UpdateSelectorComponent } from "@app/components/shared/update-selector/update-selector.component";
 import { getThemeDisplayNameKey } from "@app/components/ui-editor/ui-editor-crud.helper";
 import { sortThemesForDisplay } from "@app/components/ui-editor/ui-editor-theme.helper";
 import { DataService } from "@app/data.service";
@@ -32,12 +31,7 @@ import { TranslationService } from "@app/services/translation.service";
   templateUrl: "./raceday-menu-bar.component.html",
   styleUrls: ["./raceday-menu-bar.component.css"],
   encapsulation: ViewEncapsulation.None,
-  imports: [
-    CommonModule,
-    LanguageSelectorComponent,
-    UpdateSelectorComponent,
-    TranslatePipe,
-  ],
+  imports: [CommonModule, LanguageSelectorComponent, TranslatePipe],
 })
 export class RacedayMenuBarComponent implements OnInit, OnDestroy {
   track = input<Track | undefined>(undefined);
@@ -87,7 +81,6 @@ export class RacedayMenuBarComponent implements OnInit, OnDestroy {
   themeMenuSelect = output<string>();
   optionsMenuSelect = output<string>();
   languageSelected = output<void>();
-  checkForUpdatesRequested = output<void>();
 
   trackPowerMainSelect = output<boolean>();
   trackPowerLaneSelect = output<{ lane: number; on: boolean }>();
