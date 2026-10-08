@@ -89,14 +89,18 @@ jobs:
                 git push origin develop
               else
                 CONFLICT_FILES=$(git diff --name-only --diff-filter=U)
-                if [ "$CONFLICT_FILES" == "VERSION" ]; then
-                  echo "Only VERSION conflicted. Keeping develop's VERSION and concluding merge..."
+                if echo "$CONFLICT_FILES" | grep -qx "VERSION"; then
+                  echo "Resolving VERSION conflict by keeping develop's VERSION..."
                   git checkout --ours VERSION
                   git add VERSION
+                fi
+                REMAINING_CONFLICTS=$(git diff --name-only --diff-filter=U)
+                if [ -z "$REMAINING_CONFLICTS" ]; then
+                  echo "All conflicts resolved (only VERSION had conflicted). Concluding merge..."
                   git commit -m "chore: merge $ACTIVE_BRANCH into develop before daily build (keep develop VERSION) [skip ci]"
                   git push origin develop
                 else
-                  echo "WARNING: Unmerged commits exist on $ACTIVE_BRANCH with merge conflict ($CONFLICT_FILES). Skipping daily build."
+                  echo "WARNING: Unmerged commits exist on $ACTIVE_BRANCH with merge conflict ($REMAINING_CONFLICTS). Skipping daily build."
                   git merge --abort || true
                   echo "should_run=false" >> $GITHUB_OUTPUT
                   exit 0
@@ -523,15 +527,19 @@ jobs:
             echo "sync_status=merged" >> $GITHUB_OUTPUT
           else
             CONFLICT_FILES=$(git diff --name-only --diff-filter=U)
-            if [ "$CONFLICT_FILES" == "VERSION" ]; then
-              echo "Only VERSION conflicted. Keeping develop's VERSION and concluding merge..."
+            if echo "$CONFLICT_FILES" | grep -qx "VERSION"; then
+              echo "Resolving VERSION conflict by keeping develop's VERSION..."
               git checkout --ours VERSION
               git add VERSION
+            fi
+            REMAINING_CONFLICTS=$(git diff --name-only --diff-filter=U)
+            if [ -z "$REMAINING_CONFLICTS" ]; then
+              echo "All conflicts resolved (only VERSION had conflicted). Concluding merge..."
               git commit -m "chore: merge $BRANCH_NAME into develop (keep develop VERSION) [skip ci]"
               git push origin develop
               echo "sync_status=merged" >> $GITHUB_OUTPUT
             else
-              echo "Merge conflict detected when syncing $BRANCH_NAME into develop: $CONFLICT_FILES"
+              echo "Merge conflict detected when syncing $BRANCH_NAME into develop: $REMAINING_CONFLICTS"
               echo "sync_status=conflict" >> $GITHUB_OUTPUT
               git merge --abort || true
             fi
@@ -548,20 +556,49 @@ jobs:
           echo "Pushing $BRANCH_NAME to $SYNC_BRANCH..."
           git push origin "${{ github.sha }}:refs/heads/$SYNC_BRANCH" --force
           EXISTING_PR=$(gh pr list --head "$SYNC_BRANCH" --base develop --state open --json number --jq '.[0].number' 2>/dev/null || echo "")
+          PR_TITLE="🚨 Sync Conflict: $BRANCH_NAME -> develop [MERGE COMMIT ONLY - DO NOT SQUASH]"
+          PR_BODY=$(cat << 'EOF'
+          ## ⚠️ CRITICAL: DO NOT SQUASH OR REBASE THIS PULL REQUEST!
+
+          > [!CAUTION]
+          > **DO NOT select "Squash and merge" or "Rebase and merge" on GitHub.**
+          > You **MUST** merge using **"Create a merge commit"** from the merge button dropdown.
+          >
+          > **Why?**
+          > Squashing or rebasing creates a single disconnected commit that strips the release branch from Git's parent history (DAG). This prevents Git from advancing the merge-base between this release branch and `develop`, which causes **EVERY future beta release to fail with recurring merge conflicts**.
+
+          ### 🛠️ Preferred Resolution via Local Terminal:
+          You can resolve conflicts locally on your development machine and push directly to `develop`:
+          ```bash
+          git checkout develop
+          git pull origin develop
+          git merge origin/BRANCH_PLACEHOLDER
+          # (Resolve any conflicting files, run tests, and commit)
+          git commit -m "chore: merge BRANCH_PLACEHOLDER into develop"
+          git push origin develop
+          ```
+          Once pushed, close this pull request.
+          EOF
+          )
+          PR_BODY="${PR_BODY//BRANCH_PLACEHOLDER/$BRANCH_NAME}"
           if [ -z "$EXISTING_PR" ]; then
             echo "Opening pull request from $SYNC_BRANCH to develop..."
             gh pr create \
               --base develop \
               --head "$SYNC_BRANCH" \
-              --title "🚨 Sync Conflict: $BRANCH_NAME -> develop" \
-              --body "Automated sync from \`$BRANCH_NAME\` into \`develop\` encountered merge conflicts. Please resolve conflicts and merge into \`develop\` to ensure it includes the latest beta fixes." || {
+              --title "$PR_TITLE" \
+              --body "$PR_BODY" || {
                 echo "::warning::Failed to automatically create pull request using GitHub CLI. Please check repository Actions permissions (Allow GitHub Actions to create and approve pull requests)."
               }
           else
-            echo "Pull request #$EXISTING_PR already exists for $SYNC_BRANCH."
+            echo "Pull request #$EXISTING_PR already exists for $SYNC_BRANCH. Updating description..."
+            gh pr edit "$EXISTING_PR" --title "$PR_TITLE" --body "$PR_BODY" || true
           fi
           echo "### 🚨 Release Sync Merge Conflict" >> $GITHUB_STEP_SUMMARY
           echo "Automated sync of \`$BRANCH_NAME\` into \`develop\` encountered merge conflicts." >> $GITHUB_STEP_SUMMARY
           echo "Pushed sync branch: \`$SYNC_BRANCH\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "> [!CAUTION]" >> $GITHUB_STEP_SUMMARY
+          echo "> When merging the sync PR, **NEVER SQUASH OR REBASE**. Use **'Create a merge commit'** or merge locally with \`git merge\` to preserve Git's DAG merge-base." >> $GITHUB_STEP_SUMMARY
 
 

@@ -60,6 +60,7 @@ Race Coordinator AI uses embedded SQLite (`sqlite-jdbc`) for all persistent data
 - **Daily schedule builds**: Automatically publish daily alpha builds from `develop` named `vX.Y.Z-alpha.YYYYMMDD` (where `X.Y.Z` comes from the `VERSION` file). Daily builds pre-check active release branches to guarantee `develop` is synced before publishing.
 - **Manual releases from develop**: Manual workflow dispatch on `develop` without an explicit version override publishes an alpha build named `vX.Y.Z-alpha.<hash>` (using the commit SHA).
 - **README Updates Restricted to Beta & Official Releases**: Automated README download link updates and PRs targeting `main` are strictly restricted to official stable releases (`vX.Y.Z`) and beta prereleases (`vX.Y.Z-beta.N`). Daily alpha and manual develop builds (`*-alpha.*`) must never update the main README or open documentation PRs.
+- **Release Sync PRs Must Use Merge Commits (Never Squash or Rebase)**: When an automated release sync PR (e.g. from `release/vX.Y.Z` into `develop`) encounters merge conflicts, it MUST be merged using a true two-parent merge commit ("Create a merge commit" in GitHub, or local `git merge`). NEVER squash or rebase a release sync PR, as squashing destroys the Git merge-base history and causes recurring merge conflicts on all subsequent releases.
 
 ## Git Push Policy (No AI Agent Pushes)
 - **AI Agent must never push to git**: The AI agent must NEVER execute `git push` under any circumstances. All git changes will be reviewed and manually pushed by the user.
