@@ -269,9 +269,18 @@ public class ArduinoProtocolTest {
     // Countdown is at 5
     protocol.setRaceState(RaceState.STARTING, RaceFlag.RED, 5.0);
     assertPinState(2, false); // Green OFF
-    assertPinState(3, true); // Yellow ON
+    assertPinState(3, false); // Yellow OFF
     assertPinState(8, true);
     assertPinState(7, false);
+  }
+
+  @Test
+  public void testAnalogLed_StartingState_RestartCountdown() {
+    setupAnalogLedPins();
+    // Restart countdown from paused heat with YELLOW flag
+    protocol.setRaceState(RaceState.STARTING, RaceFlag.YELLOW, 3.0);
+    assertPinState(2, false); // Green OFF
+    assertPinState(3, false); // Yellow OFF during countdown
   }
 
   @Test
@@ -284,12 +293,21 @@ public class ArduinoProtocolTest {
   }
 
   @Test
+  public void testAnalogLed_PausedState() {
+    setupAnalogLedPins();
+    protocol.setRaceState(RaceState.PAUSED, RaceFlag.YELLOW, 0);
+    assertPinState(2, false); // Green OFF
+    assertPinState(3, true); // Yellow ON
+    assertPinState(4, false); // Countdowns OFF
+  }
+
+  @Test
   public void testAnalogLed_OtherStates() {
     setupAnalogLedPins();
     // Any other state e.g. HEAT_OVER
     protocol.setRaceState(RaceState.HEAT_OVER, RaceFlag.YELLOW, 0);
     assertPinState(2, false); // Green OFF
-    assertPinState(3, true); // Yellow ON
+    assertPinState(3, false); // Yellow OFF
     assertPinState(4, false); // Countdowns OFF
   }
 

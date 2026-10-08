@@ -461,7 +461,7 @@ public abstract class DefaultProtocol implements IProtocol {
   protected void evaluateAnalogLeds() {
     if (currentRaceState == RaceState.STARTING) {
       isGreenFlagOn = false;
-      isYellowFlagOn = true;
+      isYellowFlagOn = false;
       for (int i = 0; i < 5; i++) {
         int onCount = Math.max(1, startingDuration - (int) Math.ceil(currentCountdown) + 1);
         boolean shouldBeOn = i >= startingDuration - onCount && i < startingDuration;
@@ -481,9 +481,13 @@ public abstract class DefaultProtocol implements IProtocol {
       isGreenFlagOn = true;
       isYellowFlagOn = false;
       for (int i = 0; i < 5; i++) isCountdownOn[i] = false;
-    } else {
+    } else if (currentRaceState == RaceState.PAUSED && currentRaceFlag == RaceFlag.YELLOW) {
       isGreenFlagOn = false;
       isYellowFlagOn = true;
+      for (int i = 0; i < 5; i++) isCountdownOn[i] = false;
+    } else {
+      isGreenFlagOn = false;
+      isYellowFlagOn = false;
       for (int i = 0; i < 5; i++) isCountdownOn[i] = false;
     }
   }
