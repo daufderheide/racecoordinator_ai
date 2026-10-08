@@ -102,7 +102,9 @@ public class TemplateVariableParityTest {
             "getRaceModel",
             "getDrivers",
             "getHeats",
-            "getLaneCount");
+            "getLaneCount",
+            "getCustomRotationAssetName",
+            "getCustomRotationsDisplay");
 
     for (String getterName : requiredGetters) {
       Method m = clazz.getMethod(getterName);

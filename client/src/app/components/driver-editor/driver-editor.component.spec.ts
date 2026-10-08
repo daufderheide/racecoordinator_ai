@@ -51,7 +51,8 @@ class MockImageSelectorComponent {
   imageUrl = input<string | undefined>();
   assets = input<any[]>([]);
   size = input<string | undefined>();
-  imageUrlChange = output<string>();
+  imageUrlChange = output<string | undefined>();
+  assetSelected = output<any>();
   uploadStarted = output<void>();
   uploadFinished = output<void>();
 }
@@ -423,7 +424,6 @@ describe("DriverEditorComponent", () => {
   });
 
   it("should delete driver and navigate back", () => {
-    spyOn(window, "confirm").and.returnValue(true);
     const driver = new Driver("d1", "Driver to Delete", "");
     setupDriver(driver);
     component.allDrivers = [driver, new Driver("d2", "Next Driver", "")];
@@ -431,6 +431,8 @@ describe("DriverEditorComponent", () => {
     dataService.deleteDriver.and.returnValue(of({}));
 
     component.deleteDriver();
+    expect(component.showDeleteConfirm).toBeTrue();
+    component.onConfirmDelete();
 
     expect(dataService.deleteDriver).toHaveBeenCalledWith("d1");
     expect(component.selectedDriverId).toBe("d2");
@@ -438,7 +440,6 @@ describe("DriverEditorComponent", () => {
   });
 
   it("should auto-select next driver in alphabetical order, or previous if last was deleted", () => {
-    spyOn(window, "confirm").and.returnValue(true);
     dataService.deleteDriver.and.returnValue(of({}));
 
     const driverA = new Driver("d1", "Driver A", "");
@@ -450,19 +451,20 @@ describe("DriverEditorComponent", () => {
 
     // Delete B -> C should be selected
     component.deleteDriver();
+    component.onConfirmDelete();
     expect(dataService.deleteDriver).toHaveBeenCalledWith("d2");
     expect(component.selectedDriverId).toBe("d3");
     expect(component.editingDriver?.name).toBe("Driver C");
 
     // Delete C -> A should be selected (since C was the last in list)
     component.deleteDriver();
+    component.onConfirmDelete();
     expect(dataService.deleteDriver).toHaveBeenCalledWith("d3");
     expect(component.selectedDriverId).toBe("d1");
     expect(component.editingDriver?.name).toBe("Driver A");
   });
 
   it("should start new driver if last remaining driver is deleted", () => {
-    spyOn(window, "confirm").and.returnValue(true);
     dataService.deleteDriver.and.returnValue(of({}));
     spyOn(component, "startNewDriver").and.callThrough();
 
@@ -471,6 +473,7 @@ describe("DriverEditorComponent", () => {
     component.allDrivers = [driverA];
 
     component.deleteDriver();
+    component.onConfirmDelete();
     expect(component.startNewDriver).toHaveBeenCalled();
   });
 
@@ -521,11 +524,13 @@ describe("DriverEditorComponent", () => {
   });
 
   it("should not delete if confirm is cancelled", () => {
-    spyOn(window, "confirm").and.returnValue(false);
     const driver = new Driver("d1", "", "");
     setupDriver(driver);
 
     component.deleteDriver();
+    expect(component.showDeleteConfirm).toBeTrue();
+    component.onCancelDelete();
+    expect(component.showDeleteConfirm).toBeFalse();
 
     expect(dataService.deleteDriver).not.toHaveBeenCalled();
   });
@@ -1601,6 +1606,19 @@ describe("DriverEditorComponent", () => {
       // Re-selecting same asset should not duplicate
       component.onAssetSelected(newAsset);
       expect(component.avatarAssets.length).toBe(2);
+    });
+
+    it("should clear avatarUrl and capture state when imageUrlChange emits undefined", () => {
+      const driver = new Driver("d1", "Test Driver", "Tester", "avatar.png");
+      setupDriver(driver);
+      fixture.detectChanges();
+      const imgSelector = fixture.debugElement.query(
+        By.css("app-image-selector"),
+      );
+      spyOn(component, "captureState");
+      imgSelector.componentInstance.imageUrlChange.emit(undefined);
+      expect(component.editingDriver?.avatarUrl).toBeUndefined();
+      expect(component.captureState).toHaveBeenCalled();
     });
   });
 

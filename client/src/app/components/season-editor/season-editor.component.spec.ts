@@ -1575,7 +1575,6 @@ describe("SeasonEditorComponent", () => {
     it("should prompt confirmation and delete season on onDeleteSeason", fakeAsync(() => {
       const dataService = TestBed.inject(DataService);
       spyOn(dataService, "deleteSeason").and.returnValue(of({}));
-      spyOn(window, "confirm").and.returnValue(true);
 
       const s1: Season = {
         entity_id: "s1",
@@ -1594,6 +1593,8 @@ describe("SeasonEditorComponent", () => {
       component.updateSeasonSelectItems();
 
       component.onDeleteSeason();
+      expect(component.showDeleteConfirm).toBeTrue();
+      component.onConfirmDelete();
       tick(200);
 
       expect(dataService.deleteSeason).toHaveBeenCalledWith("s1");
@@ -1626,11 +1627,12 @@ describe("SeasonEditorComponent", () => {
 
       component.existingSeasons = [sA, sB, sC];
       component.selectSeason(sB);
-      spyOn(window, "confirm").and.returnValue(true);
       spyOn(dataService, "deleteSeason").and.returnValue(of({}));
 
       // Delete B -> C is selected
       component.onDeleteSeason();
+      expect(component.showDeleteConfirm).toBeTrue();
+      component.onConfirmDelete();
       tick(200);
       expect(dataService.deleteSeason).toHaveBeenCalledWith("s2");
       expect(component.selectedSeasonId).toBe("s3");
@@ -1638,10 +1640,52 @@ describe("SeasonEditorComponent", () => {
 
       // Delete C -> A is selected
       component.onDeleteSeason();
+      expect(component.showDeleteConfirm).toBeTrue();
+      component.onConfirmDelete();
       tick(200);
       expect(dataService.deleteSeason).toHaveBeenCalledWith("s3");
       expect(component.selectedSeasonId).toBe("s1");
       expect(component.editingSeason?.name).toBe("Season A");
+    }));
+
+    it("should cancel delete season when onCancelDelete is called", () => {
+      const dataService = TestBed.inject(DataService);
+      spyOn(dataService, "deleteSeason");
+      component.editingSeason = {
+        entity_id: "s1",
+        name: "Season One",
+        drops: 0,
+        races: [],
+      };
+
+      component.onDeleteSeason();
+      expect(component.showDeleteConfirm).toBeTrue();
+      component.onCancelDelete();
+      expect(component.showDeleteConfirm).toBeFalse();
+      expect(dataService.deleteSeason).not.toHaveBeenCalled();
+    });
+
+    it("should start new season if last remaining season is deleted", fakeAsync(() => {
+      const dataService = TestBed.inject(DataService);
+      spyOn(dataService, "deleteSeason").and.returnValue(of({}));
+      spyOn(component, "startNewSeason").and.callThrough();
+
+      const s1: Season = {
+        entity_id: "s1",
+        name: "Only Season",
+        drops: 0,
+        races: [],
+      };
+      component.existingSeasons = [s1];
+      component.editingSeason = { ...s1 };
+
+      component.onDeleteSeason();
+      expect(component.showDeleteConfirm).toBeTrue();
+      component.onConfirmDelete();
+      tick(200);
+
+      expect(dataService.deleteSeason).toHaveBeenCalledWith("s1");
+      expect(component.startNewSeason).toHaveBeenCalled();
     }));
 
     it("should disable undo/redo and keyboard shortcuts in read-only mode, and enable in edit mode", () => {

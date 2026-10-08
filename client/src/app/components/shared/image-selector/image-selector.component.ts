@@ -300,6 +300,7 @@ export class ImageSelectorComponent implements OnChanges, OnDestroy {
 
   removeImage(event: MouseEvent) {
     if (this.disabled()) return;
+    event.preventDefault();
     event.stopPropagation();
     this.localSelectedAsset.set(null);
     this.localUrl.set(undefined);

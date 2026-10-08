@@ -28,7 +28,7 @@ import {
   resetMocks,
 } from "@app/testing/unit-test-mocks";
 
-import { AssetManagerComponent } from "./asset-manager.component";
+import { AssetManagerComponent, AssetView } from "./asset-manager.component";
 
 @Pipe({ name: "translate" })
 class MockTranslatePipe implements PipeTransform {
@@ -235,6 +235,248 @@ describe("AssetManagerComponent", () => {
     expect(mockDataService.renameAsset).toHaveBeenCalledWith("a1", newName);
     expect(mockDataService.listAssets).toHaveBeenCalled();
   });
+
+  it("should disable draggable on image card during edit mode to allow mouse text selection", () => {
+    component.assets = [
+      {
+        id: "a1",
+        name: "RedCar",
+        type: "image",
+        size: "150 KB",
+        url: "assets/images/red_car.png",
+        editMode: false,
+        selected: false,
+      },
+    ];
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    const a1Card = compiled.querySelector(".asset-card") as HTMLElement;
+    expect(a1Card).toBeTruthy();
+
+    // Initial state: image card a1 is draggable
+    expect(a1Card.getAttribute("draggable")).toBe("true");
+
+    // Enter edit mode
+    component.startEditing("a1");
+    fixture.detectChanges();
+
+    // In edit mode: draggable must be false so mouse drag performs text selection instead of moving asset
+    expect(a1Card.getAttribute("draggable")).toBe("false");
+    const nameInput = a1Card.querySelector(".name-input") as HTMLInputElement;
+    expect(nameInput).toBeTruthy();
+    expect(nameInput.getAttribute("draggable")).toBe("false");
+  });
+
+  it("should close edit mode on other assets when editing a different asset", () => {
+    component.assets = deepCopy(MOCK_ASSETS);
+    component.startEditing("a1");
+    expect(component.assets.find((a) => a.id === "a1")?.editMode).toBeTrue();
+
+    component.startEditing("a2");
+    expect(component.assets.find((a) => a.id === "a1")?.editMode).toBeFalse();
+    expect(component.assets.find((a) => a.id === "a2")?.editMode).toBeTrue();
+  });
+
+  it("should prevent asset drag when asset is in edit mode or not an image", () => {
+    const mockDataTransfer = {
+      setData: jasmine.createSpy("setData"),
+    };
+    const mockEvent = {
+      dataTransfer: mockDataTransfer,
+      preventDefault: jasmine.createSpy("preventDefault"),
+    } as unknown as DragEvent;
+
+    const imageAsset: AssetView = {
+      id: "img1",
+      name: "Image 1",
+      type: "image",
+      size: "100 KB",
+      url: "assets/images/img1.png",
+      editMode: false,
+    };
+
+    // When editMode is false: dataTransfer is set with url
+    component.onAssetDragStart(mockEvent, imageAsset);
+    expect(mockDataTransfer.setData).toHaveBeenCalledWith(
+      "text/plain",
+      "assets/images/img1.png",
+    );
+    expect(mockEvent.preventDefault).not.toHaveBeenCalled();
+
+    // When editMode is true: drag is prevented and dataTransfer is not called
+    mockDataTransfer.setData.calls.reset();
+    (mockEvent.preventDefault as jasmine.Spy).calls.reset();
+    imageAsset.editMode = true;
+
+    component.onAssetDragStart(mockEvent, imageAsset);
+    expect(mockDataTransfer.setData).not.toHaveBeenCalled();
+    expect(mockEvent.preventDefault).toHaveBeenCalled();
+
+    // When asset is sound: drag is prevented
+    mockDataTransfer.setData.calls.reset();
+    (mockEvent.preventDefault as jasmine.Spy).calls.reset();
+    const soundAsset: AssetView = {
+      id: "snd1",
+      name: "Sound 1",
+      type: "sound",
+      size: "50 KB",
+      url: "assets/sounds/snd1.mp3",
+      editMode: false,
+    };
+    component.onAssetDragStart(mockEvent, soundAsset);
+    expect(mockDataTransfer.setData).not.toHaveBeenCalled();
+    expect(mockEvent.preventDefault).toHaveBeenCalled();
+  });
+
+  it("should stop click event propagation in edit-mode container", () => {
+    component.assets = deepCopy(MOCK_ASSETS);
+    component.startEditing("a1");
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    const editContainer = compiled.querySelector(".edit-mode") as HTMLElement;
+    expect(editContainer).toBeTruthy();
+
+    spyOn(component, "toggleSelection");
+    const clickEvent = new MouseEvent("click", {
+      bubbles: true,
+      cancelable: true,
+    });
+    spyOn(clickEvent, "stopPropagation").and.callThrough();
+
+    editContainer.dispatchEvent(clickEvent);
+
+    expect(clickEvent.stopPropagation).toHaveBeenCalled();
+    expect(component.toggleSelection).not.toHaveBeenCalled();
+  });
+
+  it("should cancel editing on Escape key press in name input", () => {
+    component.assets = deepCopy(MOCK_ASSETS);
+    component.startEditing("a1");
+    fixture.detectChanges();
+
+    spyOn(component, "cancelEditing");
+    const compiled = fixture.nativeElement as HTMLElement;
+    const nameInput = compiled.querySelector(".name-input") as HTMLInputElement;
+
+    const escapeEvent = new KeyboardEvent("keydown", {
+      key: "Escape",
+      bubbles: true,
+    });
+    nameInput.dispatchEvent(escapeEvent);
+
+    expect(component.cancelEditing).toHaveBeenCalledWith("a1");
+  });
+
+  it("should render csv-preview and not an img tag for CSV assets", () => {
+    const csvAsset: AssetView = {
+      id: "csv1",
+      name: "01_basic_drivers.csv",
+      type: "image",
+      size: "468 B",
+      url: "/assets/01_basic_drivers.csv",
+      editMode: false,
+      selected: false,
+    };
+    component.assets = [csvAsset];
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    const csvPreview = compiled.querySelector(".csv-preview");
+    expect(csvPreview).toBeTruthy();
+    expect(csvPreview?.textContent).toContain("CSV");
+
+    const imgTag = compiled.querySelector(".preview-img");
+    expect(imgTag).toBeNull();
+  });
+
+  it("should correctly identify CSV assets with isCsvAsset", () => {
+    expect(
+      component.isCsvAsset({
+        id: "1",
+        name: "data.csv",
+        type: "image",
+        size: "1KB",
+        url: "/data.csv",
+      }),
+    ).toBeTrue();
+
+    expect(
+      component.isCsvAsset({
+        id: "2",
+        name: "rot",
+        type: "custom_rotation",
+        size: "1KB",
+        url: "",
+      }),
+    ).toBeFalse();
+
+    expect(
+      component.isCsvAsset({
+        id: "3",
+        name: "car.png",
+        type: "image",
+        size: "1KB",
+        url: "/car.png",
+      }),
+    ).toBeFalse();
+  });
+
+  it("should handle onImageError by setting hasError and returning valid placeholder", () => {
+    const asset: AssetView = {
+      id: "img_err",
+      name: "broken.png",
+      type: "image",
+      size: "10KB",
+      url: "/broken.png",
+      editMode: false,
+    };
+
+    expect(component.getAssetImageUrl(asset)).toBe("/broken.png");
+
+    component.onImageError(asset);
+    expect(asset.hasError).toBeTrue();
+    expect(component.getAssetImageUrl(asset)).toBe(
+      "assets/images/am_icon_image.svg",
+    );
+  });
+
+  it("should only trigger detectChanges during preview cycling when multi-image sets exist", fakeAsync(() => {
+    // Only single images / CSV assets - no image sets
+    component.assets = [
+      {
+        id: "img1",
+        name: "img.png",
+        type: "image",
+        size: "1KB",
+        url: "/img.png",
+      },
+    ];
+
+    const cdrSpy = spyOn((component as any).cdr, "detectChanges");
+    (component as any).startPreviewCycling();
+
+    tick(1100);
+    expect(cdrSpy).not.toHaveBeenCalled();
+
+    // Now add an image set with multiple images
+    component.assets.push({
+      id: "set1",
+      name: "Set",
+      type: "image_set",
+      size: "2KB",
+      url: "",
+      images: [
+        { url: "1.png", percentage: 100 },
+        { url: "2.png", percentage: 50 },
+      ],
+      currentPreviewIndex: 0,
+    });
+
+    tick(1100);
+    expect(cdrSpy).toHaveBeenCalled();
+  }));
 
   it("should cycle preview index for image sets", fakeAsync(() => {
     component.assets = deepCopy(MOCK_ASSETS);

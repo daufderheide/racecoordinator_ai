@@ -691,7 +691,6 @@ describe("TeamEditorComponent", () => {
     });
 
     it("should delete team and select remaining team", fakeAsync(() => {
-      spyOn(window, "confirm").and.returnValue(true);
       component.editingTeam = new Team("t1", "Team Alpha");
       component.allTeams = [
         new Team("t1", "Team Alpha"),
@@ -700,6 +699,8 @@ describe("TeamEditorComponent", () => {
       dataService.deleteTeam.and.returnValue(of({ success: true }));
 
       component.onDeleteTeam();
+      expect(component.showDeleteConfirm).toBeTrue();
+      component.onConfirmDelete();
       flush();
 
       expect(dataService.deleteTeam).toHaveBeenCalledWith("t1");
@@ -709,7 +710,6 @@ describe("TeamEditorComponent", () => {
     }));
 
     it("should auto-select next team in alphabetical order, or previous if last was deleted", fakeAsync(() => {
-      spyOn(window, "confirm").and.returnValue(true);
       const teamA = new Team("t1", "Team A");
       const teamB = new Team("t2", "Team B");
       const teamC = new Team("t3", "Team C");
@@ -720,6 +720,8 @@ describe("TeamEditorComponent", () => {
 
       // Delete B -> C is selected
       component.onDeleteTeam();
+      expect(component.showDeleteConfirm).toBeTrue();
+      component.onConfirmDelete();
       flush();
       expect(dataService.deleteTeam).toHaveBeenCalledWith("t2");
       expect(component.selectedTeamId).toBe("t3");
@@ -727,11 +729,22 @@ describe("TeamEditorComponent", () => {
 
       // Delete C -> A is selected
       component.onDeleteTeam();
+      expect(component.showDeleteConfirm).toBeTrue();
+      component.onConfirmDelete();
       flush();
       expect(dataService.deleteTeam).toHaveBeenCalledWith("t3");
       expect(component.selectedTeamId).toBe("t1");
       expect(component.editingTeam?.name).toBe("Team A");
     }));
+
+    it("should cancel delete when onCancelDelete is called", () => {
+      component.editingTeam = new Team("t1", "Team Alpha");
+      component.onDeleteTeam();
+      expect(component.showDeleteConfirm).toBeTrue();
+      component.onCancelDelete();
+      expect(component.showDeleteConfirm).toBeFalse();
+      expect(dataService.deleteTeam).not.toHaveBeenCalled();
+    });
 
     it("should revert changes on onConfirmDiscard and exit edit mode", () => {
       component.isEditMode = true;

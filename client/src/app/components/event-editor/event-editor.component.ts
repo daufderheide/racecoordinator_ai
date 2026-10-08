@@ -56,6 +56,8 @@ import {
 })
 export class EventEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   lifecycle!: EditorLifecycleHelper;
+  // Delete Event Confirmation Modal
+  showDeleteConfirm = false;
 
   get showDiscardConfirm(): boolean {
     return this.lifecycle.showDiscardConfirm;
@@ -560,43 +562,51 @@ export class EventEditorComponent implements OnInit, OnDestroy, DirtyComponent {
 
   onDeleteEvent(): void {
     if (!this.editingEvent?.entity_id) return;
-    if (confirm(this.translationService.translate("EE_CONFIRM_DELETE"))) {
-      this.isSaving = true;
-      const idToDelete = this.editingEvent.entity_id;
-      this.subscriptions.push(
-        this.dataService.deleteEvent(idToDelete).subscribe({
-          next: () => {
-            this.isSaving = false;
-            this.isEditMode = false;
-            const nextEvent = getNextSelectionAfterDelete(
-              this.existingEvents,
-              idToDelete,
-            );
-            this.existingEvents = this.existingEvents.filter(
-              (e) => e.entity_id !== idToDelete,
-            );
-            this.updateEventSelectItems();
-            if (nextEvent) {
-              this.selectEvent(nextEvent);
-              this.router.navigate([], {
-                relativeTo: this.route,
-                queryParams: { id: nextEvent.entity_id },
-                queryParamsHandling: "merge",
-                replaceUrl: true,
-              });
-            } else {
-              this.startNewEvent();
-            }
-            this.cdr.detectChanges();
-          },
-          error: (err) => {
-            this.logger.error("Failed to delete event", err);
-            this.isSaving = false;
-            this.cdr.detectChanges();
-          },
-        }),
-      );
-    }
+    this.showDeleteConfirm = true;
+  }
+
+  onCancelDelete(): void {
+    this.showDeleteConfirm = false;
+  }
+
+  onConfirmDelete(): void {
+    this.showDeleteConfirm = false;
+    if (!this.editingEvent?.entity_id) return;
+    this.isSaving = true;
+    const idToDelete = this.editingEvent.entity_id;
+    this.subscriptions.push(
+      this.dataService.deleteEvent(idToDelete).subscribe({
+        next: () => {
+          this.isSaving = false;
+          this.isEditMode = false;
+          const nextEvent = getNextSelectionAfterDelete(
+            this.existingEvents,
+            idToDelete,
+          );
+          this.existingEvents = this.existingEvents.filter(
+            (e) => e.entity_id !== idToDelete,
+          );
+          this.updateEventSelectItems();
+          if (nextEvent) {
+            this.selectEvent(nextEvent);
+            this.router.navigate([], {
+              relativeTo: this.route,
+              queryParams: { id: nextEvent.entity_id },
+              queryParamsHandling: "merge",
+              replaceUrl: true,
+            });
+          } else {
+            this.startNewEvent();
+          }
+          this.cdr.detectChanges();
+        },
+        error: (err) => {
+          this.logger.error("Failed to delete event", err);
+          this.isSaving = false;
+          this.cdr.detectChanges();
+        },
+      }),
+    );
   }
 
   autoSaveEvent(): void {

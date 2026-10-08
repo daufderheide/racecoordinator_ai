@@ -27,13 +27,15 @@
     @if (
       effectiveImageUrl() && !pendingPreview && !isUploading && !disabled()
     ) {
-      <div
+      <button
+        type="button"
         class="remove-button"
         (click)="removeImage($event)"
         [title]="'UE_BTN_REMOVE_IMAGE' | translate"
+        [attr.aria-label]="'UE_BTN_REMOVE_IMAGE' | translate"
       >
         <span class="material-icons" style="font-size: 1.2rem">delete</span>
-      </div>
+      </button>
     }
     @if (!effectiveImageUrl() && !pendingPreview) {
       <div class="drop-hint">

@@ -162,7 +162,10 @@ public final class RaceStatisticsUtils {
       String fieldName = cell0.getStringCellValue().trim();
 
       boolean removeRow = false;
-      if (fieldName.startsWith("fuel_options.") && !fieldName.equals("fuel_options.enabled")) {
+      if ("custom_rotation_asset_id".equalsIgnoreCase(fieldName)) {
+        removeRow = true;
+      } else if (fieldName.startsWith("fuel_options.")
+          && !fieldName.equals("fuel_options.enabled")) {
         if (!analogFuelEnabled) {
           removeRow = true;
         }
@@ -272,6 +275,53 @@ public final class RaceStatisticsUtils {
     updateLaneCountCell(c1, laneCount);
     copyStylesFromTrackSections(sheet, trackSectionsRow, c0, c1);
     cleanupExcessSpacerRows(sheet, targetRowIdx);
+  }
+
+  public static void adjustPostExportRaceInformation(Workbook workbook, Race race) {
+    if (workbook == null) {
+      return;
+    }
+    Sheet sheet = workbook.getSheet("Race Information");
+    if (sheet == null && workbook.getNumberOfSheets() > 0) {
+      for (Sheet s : workbook) {
+        if ("Race Information".equalsIgnoreCase(s.getSheetName())) {
+          sheet = s;
+          break;
+        }
+      }
+    }
+    if (sheet == null) {
+      return;
+    }
+
+    String assetName = race != null ? race.getCustomRotationAssetName() : null;
+
+    int lastRow = sheet.getLastRowNum();
+    for (int r = lastRow; r >= 0; r--) {
+      Row row = sheet.getRow(r);
+      if (row == null) {
+        continue;
+      }
+      Cell c0 = row.getCell(0);
+      if (c0 == null || c0.getCellType() != CellType.STRING) {
+        continue;
+      }
+      String fieldName = c0.getStringCellValue().trim();
+      if ("custom_rotation_asset_id".equalsIgnoreCase(fieldName)) {
+        sheet.removeRow(row);
+        if (r < sheet.getLastRowNum()) {
+          sheet.shiftRows(r + 1, sheet.getLastRowNum(), -1);
+        }
+      } else if ("custom_rotations".equalsIgnoreCase(fieldName)) {
+        if (assetName != null && !assetName.trim().isEmpty()) {
+          Cell c1 = row.getCell(1);
+          if (c1 == null) {
+            c1 = row.createCell(1);
+          }
+          c1.setCellValue(assetName);
+        }
+      }
+    }
   }
 
   private static void copyStylesFromTrackSections(

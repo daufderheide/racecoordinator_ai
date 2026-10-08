@@ -1721,4 +1721,94 @@ public class RaceStatisticsUtilsTest {
         "${race.track.getLaneCount()}",
         RaceStatisticsUtils.normalizeTemplateVariables("${race.laneCount}"));
   }
+
+  @Test
+  public void testAdjustPostExportRaceInformation_RemovesAssetIdAndSetsAssetName() {
+    try (XSSFWorkbook wb = new XSSFWorkbook()) {
+      Sheet sheet = wb.createSheet("Race Information");
+      Row r0 = sheet.createRow(0);
+      r0.createCell(0).setCellValue("custom_rotation_sequence");
+      r0.createCell(1).setCellValue("[]");
+
+      Row r1 = sheet.createRow(1);
+      r1.createCell(0).setCellValue("custom_rotation_asset_id");
+      r1.createCell(1).setCellValue("82c1bfa2-4c74-480b-af39-36b677ec62c4");
+
+      Row r2 = sheet.createRow(2);
+      r2.createCell(0).setCellValue("custom_rotations");
+      r2.createCell(1).setCellValue("[]");
+
+      Row r3 = sheet.createRow(3);
+      r3.createCell(0).setCellValue("heat_times_through");
+      r3.createCell(1).setCellValue(1.0);
+
+      com.antigravity.race.Race mockRace = mock(com.antigravity.race.Race.class);
+      when(mockRace.getCustomRotationAssetName()).thenReturn("Single Heat Practice");
+
+      RaceStatisticsUtils.adjustPostExportRaceInformation(wb, mockRace);
+
+      boolean foundAssetId = false;
+      String rotationsVal = null;
+      for (int r = 0; r <= sheet.getLastRowNum(); r++) {
+        Row row = sheet.getRow(r);
+        if (row != null && row.getCell(0) != null) {
+          String key = row.getCell(0).getStringCellValue();
+          if ("custom_rotation_asset_id".equalsIgnoreCase(key)) {
+            foundAssetId = true;
+          } else if ("custom_rotations".equalsIgnoreCase(key)) {
+            rotationsVal = row.getCell(1).getStringCellValue();
+          }
+        }
+      }
+
+      assertFalse("custom_rotation_asset_id must be removed", foundAssetId);
+      assertEquals("Single Heat Practice", rotationsVal);
+    } catch (Exception e) {
+      org.junit.Assert.fail("Unexpected exception: " + e.getMessage());
+    }
+  }
+
+  @Test
+  public void testSanitizeWorkbookTemplate_RemovesCustomRotationAssetId() {
+    try (XSSFWorkbook wb = new XSSFWorkbook()) {
+      Sheet sheet = wb.createSheet("Race Information");
+      Row r0 = sheet.createRow(0);
+      r0.createCell(0).setCellValue("custom_rotation_asset_id");
+      r0.createCell(1).setCellValue("${race.raceModel.customRotationAssetId}");
+
+      Row r1 = sheet.createRow(1);
+      r1.createCell(0).setCellValue("custom_rotations");
+      r1.createCell(1).setCellValue("${race.customRotationsDisplay}");
+
+      java.io.ByteArrayOutputStream bos = new java.io.ByteArrayOutputStream();
+      wb.write(bos);
+
+      com.antigravity.models.Race model = new com.antigravity.models.Race.Builder().build();
+      com.antigravity.race.Race mockRace = mock(com.antigravity.race.Race.class);
+      when(mockRace.getRaceModel()).thenReturn(model);
+
+      java.io.InputStream sanitized =
+          RaceStatisticsUtils.sanitizeWorkbookTemplate(
+              new java.io.ByteArrayInputStream(bos.toByteArray()),
+              Collections.emptyList(),
+              mockRace);
+
+      try (XSSFWorkbook resultWb = new XSSFWorkbook(sanitized)) {
+        Sheet resultSheet = resultWb.getSheet("Race Information");
+        boolean foundAssetId = false;
+        for (int r = 0; r <= resultSheet.getLastRowNum(); r++) {
+          Row row = resultSheet.getRow(r);
+          if (row != null && row.getCell(0) != null) {
+            String key = row.getCell(0).getStringCellValue();
+            if ("custom_rotation_asset_id".equalsIgnoreCase(key)) {
+              foundAssetId = true;
+            }
+          }
+        }
+        assertFalse("custom_rotation_asset_id must be removed during sanitization", foundAssetId);
+      }
+    } catch (Exception e) {
+      org.junit.Assert.fail("Unexpected exception: " + e.getMessage());
+    }
+  }
 }

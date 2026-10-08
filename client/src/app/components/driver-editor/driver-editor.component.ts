@@ -89,6 +89,9 @@ export class DriverEditorComponent
   // Discard Changes Confirmation Modal
   lifecycle!: EditorLifecycleHelper;
 
+  // Delete Driver Confirmation Modal
+  showDeleteConfirm = false;
+
   get showDiscardConfirm(): boolean {
     return this.lifecycle.showDiscardConfirm;
   }
@@ -1047,41 +1050,49 @@ export class DriverEditorComponent
 
   deleteDriver() {
     if (!this.editingDriver || this.editingDriver.entity_id === "new") return;
-    if (confirm(this.translationService.translate("DE_CONFIRM_DELETE"))) {
-      this.isSaving = true;
-      const idToDelete = this.editingDriver.entity_id;
-      this.dataService.deleteDriver(idToDelete).subscribe({
-        next: () => {
-          this.isSaving = false;
-          this.isEditMode = false;
-          const nextDriver = getNextSelectionAfterDelete(
-            this.allDrivers,
-            idToDelete,
-          );
-          this.allDrivers = this.allDrivers.filter(
-            (d) => d.entity_id !== idToDelete,
-          );
-          this.updateDriverSelectItems();
-          if (nextDriver) {
-            this.selectDriver(nextDriver);
-            this.router.navigate([], {
-              relativeTo: this.route,
-              queryParams: { id: nextDriver.entity_id },
-              queryParamsHandling: "merge",
-              replaceUrl: true,
-            });
-          } else {
-            this.startNewDriver();
-          }
-          this.cdr.detectChanges();
-        },
-        error: (err) => {
-          this.logger.error("Failed to delete driver", err);
-          this.isSaving = false;
-          this.cdr.detectChanges();
-        },
-      });
-    }
+    this.showDeleteConfirm = true;
+  }
+
+  onCancelDelete() {
+    this.showDeleteConfirm = false;
+  }
+
+  onConfirmDelete() {
+    this.showDeleteConfirm = false;
+    if (!this.editingDriver || this.editingDriver.entity_id === "new") return;
+    this.isSaving = true;
+    const idToDelete = this.editingDriver.entity_id;
+    this.dataService.deleteDriver(idToDelete).subscribe({
+      next: () => {
+        this.isSaving = false;
+        this.isEditMode = false;
+        const nextDriver = getNextSelectionAfterDelete(
+          this.allDrivers,
+          idToDelete,
+        );
+        this.allDrivers = this.allDrivers.filter(
+          (d) => d.entity_id !== idToDelete,
+        );
+        this.updateDriverSelectItems();
+        if (nextDriver) {
+          this.selectDriver(nextDriver);
+          this.router.navigate([], {
+            relativeTo: this.route,
+            queryParams: { id: nextDriver.entity_id },
+            queryParamsHandling: "merge",
+            replaceUrl: true,
+          });
+        } else {
+          this.startNewDriver();
+        }
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        this.logger.error("Failed to delete driver", err);
+        this.isSaving = false;
+        this.cdr.detectChanges();
+      },
+    });
   }
 
   getAvatarUrl(url?: string): string {

@@ -3455,11 +3455,12 @@ describe("RaceEditorComponent", () => {
           { entity_id: "r2", name: "Race 2" },
         ];
         component.editingRace = { ...component.allRaces[0] };
-        spyOn(window, "confirm").and.returnValue(true);
         dataService.deleteRace.and.returnValue(of(null));
         spyOn(component, "selectRace").and.callThrough();
 
         component.onDeleteRace();
+        expect(component.showDeleteConfirm).toBeTrue();
+        component.onConfirmDelete();
         tick();
 
         expect(dataService.deleteRace).toHaveBeenCalledWith("r1");
@@ -3477,11 +3478,12 @@ describe("RaceEditorComponent", () => {
 
         component.allRaces = [raceA, raceB, raceC];
         component.selectRace(raceB);
-        spyOn(window, "confirm").and.returnValue(true);
         dataService.deleteRace.and.returnValue(of(null));
 
         // Delete B -> C is selected
         component.onDeleteRace();
+        expect(component.showDeleteConfirm).toBeTrue();
+        component.onConfirmDelete();
         tick();
         expect(dataService.deleteRace).toHaveBeenCalledWith("r2");
         expect(component.selectedRaceId).toBe("r3");
@@ -3489,11 +3491,22 @@ describe("RaceEditorComponent", () => {
 
         // Delete C -> A is selected
         component.onDeleteRace();
+        expect(component.showDeleteConfirm).toBeTrue();
+        component.onConfirmDelete();
         tick();
         expect(dataService.deleteRace).toHaveBeenCalledWith("r3");
         expect(component.selectedRaceId).toBe("r1");
         expect(component.editingRace?.name).toBe("Race A");
       }));
+
+      it("should cancel delete race when cancelled", () => {
+        component.editingRace = { entity_id: "r1", name: "Race 1" } as Race;
+        component.onDeleteRace();
+        expect(component.showDeleteConfirm).toBeTrue();
+        component.onCancelDelete();
+        expect(component.showDeleteConfirm).toBeFalse();
+        expect(dataService.deleteRace).not.toHaveBeenCalled();
+      });
 
       it("should allow expanders to toggle in read-only mode", () => {
         component.isEditMode = false;

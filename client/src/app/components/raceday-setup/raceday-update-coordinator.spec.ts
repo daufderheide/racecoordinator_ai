@@ -482,4 +482,114 @@ describe("RacedayUpdateCoordinator", () => {
       expect(coordinator.updateTitleTextKey).toBe("RDS_UPDATE_STATUS_TIMEOUT");
     }));
   });
+
+  describe("downgrade confirmation workflow", () => {
+    beforeEach(() => {
+      coordinator.updateResult = {
+        updateAvailable: true,
+        latestVersion: "1.0.1-beta.1",
+        downloadUrl: "http://example.com/dl",
+        releaseNotes: "",
+        releaseUrl: "http://example.com/rel",
+        isWindows: true,
+      };
+    });
+
+    it("should correctly determine isDowngradeUpdate", () => {
+      // 1.1.0-alpha to 1.0.1-beta is a downgrade
+      expect(coordinator.isDowngradeUpdate("1.1.0-alpha.20261001")).toBeTrue();
+
+      // 1.1.0-alpha to 1.2.0-beta is NOT a downgrade
+      coordinator.updateResult!.latestVersion = "1.2.0-beta.1";
+      expect(coordinator.isDowngradeUpdate("1.1.0-alpha.20261001")).toBeFalse();
+
+      // Null or undefined current version
+      expect(coordinator.isDowngradeUpdate(undefined)).toBeFalse();
+    });
+
+    it("should provide downgradeMessageParams", () => {
+      coordinator.preUpdateServerVersion = "1.1.0-alpha.20261001";
+      expect(coordinator.downgradeMessageParams).toEqual({
+        currentVersion: "1.1.0-alpha.20261001",
+        targetVersion: "1.0.1-beta.1",
+      });
+    });
+
+    it("should intercept requestInstallUpdate on downgrade and show modal", () => {
+      const allowed = coordinator.requestInstallUpdate("1.1.0-alpha.20261001");
+
+      expect(allowed).toBeFalse();
+      expect(coordinator.showDowngradeModal).toBeTrue();
+      expect(coordinator.pendingUpdateAction).toBe("install");
+      expect(stateChanged).toBeTrue();
+      expect(mockUpdateService.installUpdate).not.toHaveBeenCalled();
+    });
+
+    it("should proceed immediately with requestInstallUpdate when not a downgrade", () => {
+      coordinator.updateResult!.latestVersion = "1.2.0-beta.1";
+      const allowed = coordinator.requestInstallUpdate("1.1.0-alpha.20261001");
+
+      expect(allowed).toBeTrue();
+      expect(coordinator.showDowngradeModal).toBeFalse();
+      expect(mockUpdateService.installUpdate).toHaveBeenCalledWith(
+        "http://example.com/dl",
+      );
+    });
+
+    it("should intercept requestDownloadUpdate on downgrade and show modal", () => {
+      const allowed = coordinator.requestDownloadUpdate("1.1.0-alpha.20261001");
+
+      expect(allowed).toBeFalse();
+      expect(coordinator.showDowngradeModal).toBeTrue();
+      expect(coordinator.pendingUpdateAction).toBe("download");
+      expect(stateChanged).toBeTrue();
+    });
+
+    it("should proceed immediately with requestDownloadUpdate when not a downgrade", () => {
+      coordinator.updateResult!.latestVersion = "1.2.0-beta.1";
+      const allowed = coordinator.requestDownloadUpdate("1.1.0-alpha.20261001");
+
+      expect(allowed).toBeTrue();
+      expect(coordinator.showDowngradeModal).toBeFalse();
+    });
+
+    it("should execute install when confirmDowngradeUpdate is called for install action", () => {
+      coordinator.requestInstallUpdate("1.1.0-alpha.20261001");
+      expect(coordinator.showDowngradeModal).toBeTrue();
+
+      coordinator.confirmDowngradeUpdate();
+
+      expect(coordinator.showDowngradeModal).toBeFalse();
+      expect(coordinator.pendingUpdateAction).toBeNull();
+      expect(mockUpdateService.installUpdate).toHaveBeenCalledWith(
+        "http://example.com/dl",
+      );
+    });
+
+    it("should open download URL when confirmDowngradeUpdate is called for download action", () => {
+      spyOn(window, "open");
+      coordinator.requestDownloadUpdate("1.1.0-alpha.20261001");
+      expect(coordinator.showDowngradeModal).toBeTrue();
+
+      coordinator.confirmDowngradeUpdate();
+
+      expect(coordinator.showDowngradeModal).toBeFalse();
+      expect(coordinator.pendingUpdateAction).toBeNull();
+      expect(window.open).toHaveBeenCalledWith(
+        "http://example.com/dl",
+        "_blank",
+      );
+    });
+
+    it("should cancel downgrade update and close modal without taking action", () => {
+      coordinator.requestInstallUpdate("1.1.0-alpha.20261001");
+      expect(coordinator.showDowngradeModal).toBeTrue();
+
+      coordinator.cancelDowngradeUpdate();
+
+      expect(coordinator.showDowngradeModal).toBeFalse();
+      expect(coordinator.pendingUpdateAction).toBeNull();
+      expect(mockUpdateService.installUpdate).not.toHaveBeenCalled();
+    });
+  });
 });

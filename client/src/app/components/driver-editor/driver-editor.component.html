@@ -442,6 +442,17 @@
   >
   </app-confirmation-modal>
 
+  <!-- Delete Driver Confirmation -->
+  <app-confirmation-modal
+    [visible]="showDeleteConfirm"
+    title="DE_CONFIRM_DELETE_TITLE"
+    message="DE_CONFIRM_DELETE"
+    confirmText="CD_YES"
+    cancelText="CD_NO"
+    (confirm)="onConfirmDelete()"
+    (cancel)="onCancelDelete()"
+  >
+  </app-confirmation-modal>
   <!-- Driver Import Modal -->
   <app-import-modal
     [visible]="showImportModal"

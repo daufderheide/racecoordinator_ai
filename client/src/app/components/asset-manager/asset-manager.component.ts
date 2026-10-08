@@ -63,7 +63,8 @@ export interface AssetView {
     | "audio"
     | "image_set"
     | "audio_set"
-    | "custom_rotation";
+    | "custom_rotation"
+    | "csv";
   size: string;
   url: string;
   editMode?: boolean;
@@ -73,6 +74,7 @@ export interface AssetView {
   numLanes?: number;
   customRotations?: ICustomRotation[];
   currentPreviewIndex?: number;
+  hasError?: boolean;
 }
 
 @Component({
@@ -541,12 +543,14 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
       return;
     }
     this.previewInterval = setInterval(() => {
+      let hasImageSets = false;
       this.assets.forEach((asset) => {
         if (
           asset.type === "image_set" &&
           asset.images &&
-          asset.images.length > 0
+          asset.images.length > 1
         ) {
+          hasImageSets = true;
           // Cycle from 100% to 0%.
           // Assuming images are already sorted or we sort them now.
           // Let's assume they are sorted by percentage descending (100 to 0).
@@ -554,22 +558,47 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
           asset.currentPreviewIndex = (index + 1) % asset.images.length;
         }
       });
-      this.cdr.detectChanges();
+      if (hasImageSets) {
+        this.cdr.detectChanges();
+      }
     }, 1000); // 1 second per image
   }
 
+  isCsvAsset(asset: AssetView): boolean {
+    if (!asset) {
+      return false;
+    }
+    if (asset.type === "custom_rotation") {
+      return false;
+    }
+    const name = (asset.name || "").toLowerCase();
+    const url = (asset.url || "").toLowerCase();
+    return (
+      asset.type === "csv" || name.endsWith(".csv") || url.endsWith(".csv")
+    );
+  }
+
+  onImageError(asset: AssetView) {
+    asset.hasError = true;
+  }
+
   getAssetImageUrl(asset: AssetView): string {
+    if (asset.hasError) {
+      return "assets/images/am_icon_image.svg";
+    }
     if (asset.type === "image_set" && asset.images && asset.images.length > 0) {
       const entry = asset.images[asset.currentPreviewIndex ?? 0];
       return this.getFullUrl(entry.url ?? "");
     }
-    return asset.url;
+    return asset.url || "assets/images/am_icon_image.svg";
   }
 
   onAssetDragStart(event: DragEvent, asset: AssetView) {
-    if (asset.type === "image") {
+    if (asset.type === "image" && !this.isCsvAsset(asset) && !asset.editMode) {
       event.dataTransfer?.setData("text/plain", asset.url);
       // Optional: hide the drag image or customize it
+    } else {
+      event.preventDefault();
     }
   }
 
@@ -1001,6 +1030,11 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
   }
 
   startEditing(id: string) {
+    this.assets.forEach((a) => {
+      if (a.id !== id && a.editMode) {
+        a.editMode = false;
+      }
+    });
     const asset = this.assets.find((a) => a.id === id);
     if (asset) {
       asset.editMode = true;
