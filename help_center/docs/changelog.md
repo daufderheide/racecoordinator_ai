@@ -1,9 +1,10 @@
 # Changelog
 
-## [v1.0.1-beta.19] - 2026-10-08
+## [v1.0.1-beta.20] - 2026-10-08
 
 ### 🚀 New Features
 
+- add shortcut to toggle between edit and view mode fix: changed they eye icon to a checkmark to make it more identifiable. [#947](https://github.com/daufderheide/racecoordinator_ai/issues/947) ([26b04c90](https://github.com/daufderheide/racecoordinator_ai/commit/26b04c90))
 - **updater**: warn and confirm when downgrading release versions.  Also made it so that when configured for alpha releases, it will only discover alpha releases ([b87d3291](https://github.com/daufderheide/racecoordinator_ai/commit/b87d3291))
 - add Arduino and Phidget editor "active low analog led" config options. [#911](https://github.com/daufderheide/racecoordinator_ai/issues/911) ([0c993d0a](https://github.com/daufderheide/racecoordinator_ai/commit/0c993d0a))
 - Added more port diagnosis when RC AI cannot be started because port 7070 is busy/not available.  This will be useful for users to help troubleshoot what's going on. ([f258adde](https://github.com/daufderheide/racecoordinator_ai/commit/f258adde))
@@ -13,6 +14,8 @@
 
 ### 🐛 Bug Fixes
 
+- **raceday**: Fixed state of analog leds.  In particular yellow flag leds were on during the start sequence. [#953](https://github.com/daufderheide/racecoordinator_ai/issues/953) ([df65b8ce](https://github.com/daufderheide/racecoordinator_ai/commit/df65b8ce))
+- **raceday**: remove automatic updates option from options menu ([21ac049d](https://github.com/daufderheide/racecoordinator_ai/commit/21ac049d))
 - fixed export of the custom rotation name.  Also removed the custom rotation asset id as it's not usefull to the user [#938](https://github.com/daufderheide/racecoordinator_ai/issues/938) ([913274a8](https://github.com/daufderheide/racecoordinator_ai/commit/913274a8))
 - **raceday-setup**: support enter key on mouse-selected drivers [#940](https://github.com/daufderheide/racecoordinator_ai/issues/940) [skip-screendiffs] ([5aeb7759](https://github.com/daufderheide/racecoordinator_ai/commit/5aeb7759))
 - changed the delete object confirmation from the browser system confirmation to the RC AI confirmation fix: added delete ability in view mode to the season and event pages.  This is consistent with the other pages [#942](https://github.com/daufderheide/racecoordinator_ai/issues/942) ([6dadacee](https://github.com/daufderheide/racecoordinator_ai/commit/6dadacee))
@@ -65,7 +68,7 @@
 <details>
 <summary>🔍 <b>Full Commit History</b></summary>
 
-<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0...v1.0.1-beta.19">GitHub</a></p>
+<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0...v1.0.1-beta.20">GitHub</a></p>
 </details>
 
 ## [v1.0.0] - 2026-09-27
