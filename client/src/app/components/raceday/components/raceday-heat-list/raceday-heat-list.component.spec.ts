@@ -553,6 +553,105 @@ describe("RacedayHeatListComponent", () => {
     expect(layout20.rows).toBeGreaterThanOrEqual(4);
   });
 
+  describe("Scale to Window Font Sizing", () => {
+    it("should calculate optimal separate font sizes for summary headers, summary rows, and non-summary heats and bind them to CSS variables", () => {
+      fixture.componentRef.setInput("widget", {
+        ...mockWidget,
+        customSettings: {
+          ...mockWidget.customSettings,
+          scaleToWindow: true,
+          activeHeatDisplay: "summary",
+          completedHeatsDisplay: "summary",
+          futureHeatsDisplay: "lane_colors",
+        },
+      });
+      // Mock dimensions: 960x540
+      component.containerDimensions.set({ width: 960, height: 540 });
+      fixture.detectChanges();
+
+      const container = fixture.nativeElement.querySelector(
+        ".raceday-heat-list-container.scale-to-window",
+      ) as HTMLElement;
+      expect(container).toBeTruthy();
+
+      const headerFont = component.summaryHeaderFontSize();
+      const rowFont = component.summaryRowFontSize();
+      const nonSummaryFont = component.nonSummaryFontSize();
+
+      expect(headerFont).toBeGreaterThanOrEqual(14);
+      expect(rowFont).toBeGreaterThanOrEqual(18);
+      expect(nonSummaryFont).toBeGreaterThanOrEqual(14);
+
+      // Verify CSS custom properties bound to the container element
+      expect(
+        container.style.getPropertyValue("--summary-header-font-size"),
+      ).toBe(`${headerFont}px`);
+      expect(container.style.getPropertyValue("--summary-row-font-size")).toBe(
+        `${rowFont}px`,
+      );
+      expect(container.style.getPropertyValue("--non-summary-font-size")).toBe(
+        `${nonSummaryFont}px`,
+      );
+    });
+
+    it("should fallback to customSettings font sizes when scaleToWindow is false or dimensions are 0", () => {
+      fixture.componentRef.setInput("widget", {
+        ...mockWidget,
+        customSettings: {
+          ...mockWidget.customSettings,
+          scaleToWindow: false,
+          summaryHeaderFontSize: 13,
+          summaryRowFontSize: 14,
+          laneFontSize: 16,
+        },
+      });
+      component.containerDimensions.set({ width: 0, height: 0 });
+      fixture.detectChanges();
+
+      expect(component.summaryHeaderFontSize()).toBe(13);
+      expect(component.summaryRowFontSize()).toBe(14);
+      expect(component.nonSummaryFontSize()).toBe(16);
+    });
+
+    it("should ensure all summary rows use the same row font size and header uses header font size in scale to window mode", () => {
+      fixture.componentRef.setInput("widget", {
+        ...mockWidget,
+        customSettings: {
+          ...mockWidget.customSettings,
+          scaleToWindow: true,
+          showActiveSummary: true,
+          showCompletedSummary: true,
+        },
+      });
+      component.containerDimensions.set({ width: 1200, height: 700 });
+      fixture.detectChanges();
+
+      const headerFont = component.summaryHeaderFontSize();
+      const rowFont = component.summaryRowFontSize();
+      expect(headerFont).toBeGreaterThanOrEqual(14);
+      expect(rowFont).toBeGreaterThanOrEqual(20);
+
+      const headerRow = fixture.nativeElement.querySelector(
+        ".summary-header-row",
+      );
+      const laneRows =
+        fixture.nativeElement.querySelectorAll(".summary-lane-row");
+
+      expect(headerRow).toBeTruthy();
+      expect(laneRows.length).toBeGreaterThan(0);
+
+      const container = fixture.nativeElement.querySelector(
+        ".raceday-heat-list-container",
+      );
+      expect(
+        container.style.getPropertyValue("--summary-header-font-size"),
+      ).toBe(`${headerFont}px`);
+      expect(container.style.getPropertyValue("--summary-row-font-size")).toBe(
+        `${rowFont}px`,
+      );
+    });
+  });
+
   describe("Heat Summary Mode", () => {
     const mockTelemetryHeats = [
       {

@@ -559,7 +559,7 @@
   min-height: 0;
   box-sizing: border-box;
   padding: calc(2px * var(--heat-scale, 1)) calc(5px * var(--heat-scale, 1));
-  font-size: calc(11px * var(--heat-scale, 1));
+  font-size: var(--non-summary-font-size, calc(11px * var(--heat-scale, 1)));
   gap: calc(4px * var(--heat-scale, 1));
 }
 
@@ -624,20 +624,36 @@
   width: 100%;
 }
 
+.raceday-heat-list-container.scale-to-window .summary-col-pos,
+.raceday-heat-list-container.scale-to-window .summary-cell-pos {
+  width: 12%;
+}
+
 .raceday-heat-list-container.scale-to-window .summary-header-row {
-  font-size: calc(11px * var(--heat-scale, 1));
+  height: calc(100% / (var(--lane-count, 4) + 1));
+  font-size: var(
+    --summary-header-font-size,
+    var(--summary-font-size, calc(11px * var(--heat-scale, 1)))
+  );
 }
 
 .raceday-heat-list-container.scale-to-window .summary-header-row th {
   padding: calc(1px * var(--heat-scale, 1)) calc(4px * var(--heat-scale, 1));
+  min-width: 0;
+  vertical-align: middle;
 }
 
 .raceday-heat-list-container.scale-to-window .summary-lane-row {
-  height: calc(100% / var(--lane-count, 4));
-  font-size: calc(11px * var(--heat-scale, 1));
+  height: calc(100% / (var(--lane-count, 4) + 1));
+  font-size: var(
+    --summary-row-font-size,
+    var(--summary-font-size, calc(11px * var(--heat-scale, 1)))
+  );
 }
 
 .raceday-heat-list-container.scale-to-window .summary-lane-row td {
   padding: calc(1px * var(--heat-scale, 1)) calc(4px * var(--heat-scale, 1));
+  min-width: 0;
+  vertical-align: middle;
 }
 

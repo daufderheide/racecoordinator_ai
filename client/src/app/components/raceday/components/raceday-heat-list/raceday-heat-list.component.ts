@@ -22,6 +22,13 @@ import { Heat } from "@app/race/heat";
 import { RaceFlagService } from "@app/services/race-flag.service";
 import { RaceTimeService } from "@app/services/race-time.service";
 
+import {
+  calculateCardDimensions,
+  calculateOptimalNonSummaryFontSize,
+  calculateOptimalSummaryHeaderFontSize,
+  calculateOptimalSummaryRowFontSize,
+} from "./raceday-heat-list-scaler";
+
 export interface ProcessedHeatLane {
   laneNumber: number;
   driverNickname: string;
@@ -595,6 +602,154 @@ export class RacedayHeatListComponent implements AfterViewInit, OnDestroy {
 
     const { width, height } = this.containerDimensions();
     return this.calculateOptimalFit(n, width, height);
+  });
+
+  summaryHeaderFontSize = computed(() => {
+    if (!this.scaleToWindow()) {
+      return this.widget()?.customSettings?.["summaryHeaderFontSize"] || 12;
+    }
+    const { width, height } = this.containerDimensions();
+    if (width <= 0 || height <= 0) {
+      return this.widget()?.customSettings?.["summaryHeaderFontSize"] || 12;
+    }
+
+    const fit = this.autoFitLayout();
+    const dims = calculateCardDimensions(
+      width,
+      height,
+      fit.columns,
+      fit.rows,
+      fit.scale,
+    );
+
+    const heats = this.processedHeats();
+    const summaryHeats = heats.filter((h) => h.showSummary);
+    const maxLanes =
+      summaryHeats.length > 0
+        ? Math.max(...summaryHeats.map((h) => h.lanes?.length || 0), 1)
+        : Math.max(this.trackLaneCount(), 4);
+
+    return calculateOptimalSummaryHeaderFontSize({
+      contentWidth: dims.contentWidth,
+      contentHeight: dims.contentHeight,
+      scale: fit.scale,
+      maxLanes,
+      columns: {
+        pos: this.summaryShowPosition(),
+        driver: this.summaryShowDriver(),
+        laps: this.summaryShowLaps(),
+        bestLap: this.summaryShowBestLap(),
+        gap: this.summaryShowGap(),
+        avgLap: this.summaryShowAverageLap(),
+        medianLap: this.summaryShowMedianLap(),
+      },
+    });
+  });
+
+  summaryRowFontSize = computed(() => {
+    if (!this.scaleToWindow()) {
+      return this.widget()?.customSettings?.["summaryRowFontSize"] || 12;
+    }
+    const { width, height } = this.containerDimensions();
+    if (width <= 0 || height <= 0) {
+      return this.widget()?.customSettings?.["summaryRowFontSize"] || 12;
+    }
+
+    const fit = this.autoFitLayout();
+    const dims = calculateCardDimensions(
+      width,
+      height,
+      fit.columns,
+      fit.rows,
+      fit.scale,
+    );
+
+    const heats = this.processedHeats();
+    const summaryHeats = heats.filter((h) => h.showSummary);
+    const maxLanes =
+      summaryHeats.length > 0
+        ? Math.max(...summaryHeats.map((h) => h.lanes?.length || 0), 1)
+        : Math.max(this.trackLaneCount(), 4);
+
+    return calculateOptimalSummaryRowFontSize({
+      contentWidth: dims.contentWidth,
+      contentHeight: dims.contentHeight,
+      scale: fit.scale,
+      maxLanes,
+      columns: {
+        pos: this.summaryShowPosition(),
+        driver: this.summaryShowDriver(),
+        laps: this.summaryShowLaps(),
+        bestLap: this.summaryShowBestLap(),
+        gap: this.summaryShowGap(),
+        avgLap: this.summaryShowAverageLap(),
+        medianLap: this.summaryShowMedianLap(),
+      },
+    });
+  });
+
+  summaryFontSize = computed(() => {
+    return this.summaryRowFontSize();
+  });
+
+  nonSummaryFontSize = computed(() => {
+    if (!this.scaleToWindow()) {
+      return this.widget()?.customSettings?.["laneFontSize"] || 12;
+    }
+    const { width, height } = this.containerDimensions();
+    if (width <= 0 || height <= 0) {
+      return this.widget()?.customSettings?.["laneFontSize"] || 12;
+    }
+
+    const fit = this.autoFitLayout();
+    const dims = calculateCardDimensions(
+      width,
+      height,
+      fit.columns,
+      fit.rows,
+      fit.scale,
+    );
+
+    const heats = this.processedHeats();
+    const nonSummaryHeats = heats.filter((h) => !h.showSummary);
+    const maxLanes =
+      nonSummaryHeats.length > 0
+        ? Math.max(...nonSummaryHeats.map((h) => h.lanes?.length || 0), 1)
+        : Math.max(this.trackLaneCount(), 4);
+
+    const laneSetting = this.laneColumnsSetting();
+    let laneCols = 1;
+    if (laneSetting === "auto") {
+      laneCols = Math.min(this.trackLaneCount(), 4);
+    } else {
+      const parsed = parseInt(laneSetting, 10);
+      laneCols = isNaN(parsed) ? 2 : parsed;
+    }
+
+    let hasTeam = false;
+    let maxNameLen = 8;
+    for (const h of nonSummaryHeats) {
+      for (const l of h.lanes || []) {
+        if (!l.isOccupied) continue;
+        if (l.isTeam && l.teamName) {
+          hasTeam = true;
+          maxNameLen = Math.max(maxNameLen, l.teamName.length);
+        }
+        if (l.driverNickname) {
+          maxNameLen = Math.max(maxNameLen, l.driverNickname.length);
+        }
+      }
+    }
+
+    return calculateOptimalNonSummaryFontSize({
+      contentWidth: dims.contentWidth,
+      contentHeight: dims.contentHeight,
+      scale: fit.scale,
+      maxLanes,
+      laneColumns: laneCols,
+      hasTeam,
+      longestDriverNameLength: maxNameLen,
+    });
   });
 
   constructor() {
