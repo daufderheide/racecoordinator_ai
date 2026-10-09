@@ -1277,6 +1277,7 @@ public class Race implements ProtocolListener {
 
   public void resetCurrentHeat() {
     if (currentHeat != null) {
+      this.hasRacedInCurrentHeat = false;
       statistics.incrementRestartCount();
       for (DriverHeatData driverData : currentHeat.getDrivers()) driverData.reset();
       currentHeat.resetTrackCalls();
@@ -1312,6 +1313,7 @@ public class Race implements ProtocolListener {
 
   public void restartHeatForFalseStart() {
     if (currentHeat != null) {
+      this.hasRacedInCurrentHeat = false;
       statistics.incrementRestartCount();
       for (DriverHeatData driverData : currentHeat.getDrivers()) {
         driverData.resetForFalseStart();

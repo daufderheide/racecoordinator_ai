@@ -240,6 +240,7 @@ public class RacingTest {
   @Test
   public void testEnter_TimedScoring_AddsRaceTimeWhenZero() {
     org.mockito.Mockito.clearInvocations(race);
+    when(race.hasRacedInCurrentHeat()).thenReturn(false);
     when(race.getRaceTime()).thenReturn(0.0f, 60.0f);
     Racing newRacing = new Racing();
     newRacing.enter(race);
@@ -247,6 +248,17 @@ public class RacingTest {
     verify(race).addRaceTime(60.0f);
     verify(race).broadcastFlag(RaceFlag.GREEN);
     assertEquals(RaceFlag.GREEN, drivers.get(0).getFlag());
+  }
+
+  @Test
+  public void testEnter_TimedScoring_DoesNotAddRaceTimeWhenHasRacedInCurrentHeat() {
+    org.mockito.Mockito.clearInvocations(race);
+    when(race.hasRacedInCurrentHeat()).thenReturn(true);
+    when(race.getRaceTime()).thenReturn(0.0f);
+    Racing newRacing = new Racing();
+    newRacing.enter(race);
+
+    verify(race, never()).addRaceTime(any(Float.class));
   }
 
   @Test

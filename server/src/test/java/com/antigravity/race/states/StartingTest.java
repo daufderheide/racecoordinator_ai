@@ -92,4 +92,40 @@ public class StartingTest {
     starting.exit(race);
     verify(race).setAutoStartRemaining(0);
   }
+
+  @Test
+  public void testGetLaneFlagType_AllowFinish_FinishedDriverShowsDriverFinishedFlag() {
+    HeatScoring allowFinishScoring =
+        new HeatScoring(
+            HeatScoring.FinishMethod.Timed,
+            60,
+            HeatScoring.HeatRanking.LAP_COUNT,
+            HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME,
+            HeatScoring.AllowFinish.SingleLapAutoSegments);
+    com.antigravity.models.Race model =
+        new com.antigravity.models.Race.Builder().withHeatScoring(allowFinishScoring).build();
+    when(race.getRaceModel()).thenReturn(model);
+    when(race.hasRacedInCurrentHeat()).thenReturn(true);
+
+    com.antigravity.race.Heat currentHeat = mock(com.antigravity.race.Heat.class);
+    com.antigravity.race.DriverHeatData dhd0 =
+        new com.antigravity.race.DriverHeatData(
+            new com.antigravity.race.RaceParticipant(
+                new com.antigravity.models.Driver("d1", "Driver 1", "id1", "1"), "id1"));
+    com.antigravity.race.DriverHeatData dhd1 =
+        new com.antigravity.race.DriverHeatData(
+            new com.antigravity.race.RaceParticipant(
+                new com.antigravity.models.Driver("d2", "Driver 2", "id2", "2"), "id2"));
+    when(currentHeat.getDrivers()).thenReturn(java.util.Arrays.asList(dhd0, dhd1));
+    when(race.getCurrentHeat()).thenReturn(currentHeat);
+
+    com.antigravity.race.HeatExecutionManager em =
+        mock(com.antigravity.race.HeatExecutionManager.class);
+    when(em.getFinishedLanes())
+        .thenReturn(new java.util.HashSet<>(java.util.Collections.singletonList(0)));
+    when(race.getHeatExecutionManager()).thenReturn(em);
+
+    assertEquals(RaceFlag.RED, starting.getLaneFlagType(race, 0));
+    assertEquals(RaceFlag.YELLOW, starting.getLaneFlagType(race, 1));
+  }
 }

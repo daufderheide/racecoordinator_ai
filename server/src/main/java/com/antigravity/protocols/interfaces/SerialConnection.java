@@ -13,9 +13,9 @@ import org.slf4j.LoggerFactory;
 public class SerialConnection implements ISerialConnection {
 
   private static final Logger logger = LoggerFactory.getLogger(SerialConnection.class);
-  private SerialPort serialPort;
-  private OutputStream outputStream;
-  private String portName;
+  private volatile SerialPort serialPort;
+  private volatile OutputStream outputStream;
+  private volatile String portName;
 
   public static List<String> getAvailableSerialPorts() {
     SerialPort[] ports = SerialPort.getCommPorts();
@@ -34,7 +34,8 @@ public class SerialConnection implements ISerialConnection {
     connect(portName, baudRate, true);
   }
 
-  public void connect(String portName, int baudRate, boolean setDtrRts) throws IOException {
+  public synchronized void connect(String portName, int baudRate, boolean setDtrRts)
+      throws IOException {
     if (serialPort != null && serialPort.isOpen()) {
       return;
     }
@@ -78,7 +79,7 @@ public class SerialConnection implements ISerialConnection {
     }
   }
 
-  public void disconnect() {
+  public synchronized void disconnect() {
     if (serialPort != null) {
       try {
         serialPort.removeDataListener();
@@ -92,7 +93,7 @@ public class SerialConnection implements ISerialConnection {
     outputStream = null;
   }
 
-  public void writeData(byte[] data) throws IOException {
+  public synchronized void writeData(byte[] data) throws IOException {
     logger.debug("Sending: {}", bytesToHex(data));
     if (outputStream == null) {
       throw new IOException("Port not open");
@@ -168,7 +169,7 @@ public class SerialConnection implements ISerialConnection {
     }
   }
 
-  public boolean isOpen() {
+  public synchronized boolean isOpen() {
     return serialPort != null && serialPort.isOpen();
   }
 

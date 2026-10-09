@@ -174,14 +174,14 @@ public interface IRaceState {
       return true;
     }
 
-    if (this instanceof NotStarted || this instanceof Starting) {
-      return false;
-    }
-
     // Check if they are already in the finished lanes list (most authoritative)
     if (race.getHeatExecutionManager() != null
         && race.getHeatExecutionManager().getFinishedLanes().contains(laneIndex)) {
       return true;
+    }
+
+    if (this instanceof NotStarted || this instanceof Starting) {
+      return false;
     }
 
     if (scoring.getFinishMethod() == FinishMethod.Lap) {
