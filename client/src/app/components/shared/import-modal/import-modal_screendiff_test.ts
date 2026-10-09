@@ -119,6 +119,13 @@ test.describe("Driver Import Modal Visuals", () => {
     await selectSampleFile(harness);
     await harness.validateBtn.click();
     await harness.previewStep.waitFor({ state: "visible" });
+    await harness.avatarThumbnails.first().waitFor({ state: "visible" });
+    await page.waitForFunction(() => {
+      const img = document.querySelector(
+        ".avatar-thumbnail",
+      ) as HTMLImageElement;
+      return img && img.complete && img.naturalWidth > 0;
+    });
     await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
     await page.mouse.move(0, 0);
     await TestSetupHelper.disableAnimations(page);
@@ -148,6 +155,7 @@ test.describe("Driver Import Modal Visuals", () => {
     );
   });
 
+  // Verifies preview table layout including avatar thumbnails for rows with an imported avatarUrl
   test("should display preview step with duplicate conflict rows and red outlines", async ({
     page,
   }) => {

@@ -2775,5 +2775,6 @@
   "DIM_ASSETS_EMPTY": "Keine Mediendateien gefunden.",
   "DIM_CONFLICT_DUPLICATE_NAME": "Fahrername existiert bereits in der Datenbank: {{name}}",
   "DIM_CONFLICT_DUPLICATE_NICKNAME": "Spitzname des Fahrers existiert bereits in der Datenbank: {{nickname}}",
-  "DIM_CONFLICT_NICKNAME_MATCHES_NAME": "Spitzname des Fahrers entspricht einem vorhandenen Fahrernamen: {{nickname}}"
+  "DIM_CONFLICT_NICKNAME_MATCHES_NAME": "Spitzname des Fahrers entspricht einem vorhandenen Fahrernamen: {{nickname}}",
+  "DIM_AVATAR_LOAD_ERROR": "Avatar-Bild konnte nicht geladen werden"
 }

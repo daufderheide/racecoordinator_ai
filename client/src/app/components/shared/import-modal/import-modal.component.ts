@@ -20,6 +20,7 @@ import {
   DriverImportResult,
   DriverImportRow,
 } from "@app/models/driver-import.model";
+import { AvatarUrlPipe } from "@app/pipes/avatar-url.pipe";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { TranslationService } from "@app/services/translation.service";
 
@@ -32,6 +33,7 @@ import { TranslationService } from "@app/services/translation.service";
     CommonModule,
     FormsModule,
     TranslatePipe,
+    AvatarUrlPipe,
     CustomSelectComponent,
     CustomOptionComponent,
   ],
@@ -60,6 +62,7 @@ export class ImportModalComponent {
   bulkConflictResolution: ConflictResolution = "AUTO_RENAME";
   importResult: DriverImportResult | null = null;
   showAssetsModal = false;
+  avatarErrors = new Set<number>();
 
   constructor(
     private dataService: DataService,
@@ -187,6 +190,7 @@ export class ImportModalComponent {
     this.dataService.validateDriverImport(formData).subscribe({
       next: (previewRes) => {
         this.preview = previewRes;
+        this.avatarErrors.clear();
         this.applyAudioDefaultToPreview();
         this.step = "preview";
         this.isLoading = false;
@@ -700,6 +704,11 @@ export class ImportModalComponent {
     );
   }
 
+  onAvatarError(rowIndex: number) {
+    this.avatarErrors.add(rowIndex);
+    this.cdr.detectChanges();
+  }
+
   onClose() {
     this.resetState();
     this.close.emit();
@@ -716,6 +725,7 @@ export class ImportModalComponent {
     this.filterText = "";
     this.activeTab = "all";
     this.showAssetsModal = false;
+    this.avatarErrors.clear();
     if (this.fileInputRef?.nativeElement) {
       this.fileInputRef.nativeElement.value = "";
     }

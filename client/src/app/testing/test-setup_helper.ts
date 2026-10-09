@@ -968,6 +968,10 @@ export class TestSetupHelper {
         filename = hashMatch[1] + ".png";
       }
 
+      if (filename === "driver_helmet.png") {
+        filename = "red-yellow.png";
+      }
+
       // Try multiple potential base paths
       const potentialPaths = [
         path.resolve(process.cwd(), "client/src/assets/images/defaults"),

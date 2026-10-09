@@ -2775,5 +2775,6 @@
   "DIM_ASSETS_EMPTY": "Nessun file multimediale complementare trovato.",
   "DIM_CONFLICT_DUPLICATE_NAME": "Il nome del pilota esiste già nel database: {{name}}",
   "DIM_CONFLICT_DUPLICATE_NICKNAME": "Il soprannome del pilota esiste già nel database: {{nickname}}",
-  "DIM_CONFLICT_NICKNAME_MATCHES_NAME": "Il soprannome del pilota corrisponde al nome di un pilota esistente: {{nickname}}"
+  "DIM_CONFLICT_NICKNAME_MATCHES_NAME": "Il soprannome del pilota corrisponde al nome di un pilota esistente: {{nickname}}",
+  "DIM_AVATAR_LOAD_ERROR": "Impossibile caricare l'immagine dell'avatar"
 }

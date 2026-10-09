@@ -2775,5 +2775,6 @@
   "DIM_ASSETS_EMPTY": "Geen bijbehorende mediabestanden gevonden.",
   "DIM_CONFLICT_DUPLICATE_NAME": "Naam van coureur bestaat al in database: {{name}}",
   "DIM_CONFLICT_DUPLICATE_NICKNAME": "Bijnaam van coureur bestaat al in database: {{nickname}}",
-  "DIM_CONFLICT_NICKNAME_MATCHES_NAME": "Bijnaam van coureur komt overeen met een bestaande coureurnaam: {{nickname}}"
+  "DIM_CONFLICT_NICKNAME_MATCHES_NAME": "Bijnaam van coureur komt overeen met een bestaande coureurnaam: {{nickname}}",
+  "DIM_AVATAR_LOAD_ERROR": "Kan avatarafbeelding niet laden"
 }

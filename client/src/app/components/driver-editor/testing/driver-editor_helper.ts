@@ -83,6 +83,10 @@ export class DriverEditorHelper {
     spy.getSystemState = jasmine
       .createSpy("getSystemState")
       .and.returnValue(of(null));
+    spy.serverUrl = "http://localhost:7070";
+    spy.resolveAssetUrl = jasmine
+      .createSpy("resolveAssetUrl")
+      .and.callFake((url: string) => url);
 
     spy.getDrivers.and.callFake(() => of(deepCopy(MOCK_DRIVERS)));
     spy.deleteDriver.and.returnValue(of({ success: true }));
