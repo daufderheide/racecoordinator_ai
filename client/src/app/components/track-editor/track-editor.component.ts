@@ -125,6 +125,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     this.lifecycle.pendingDeactivate = val;
   }
   private isReverting = false;
+  private isSwitchingSelection = false;
   @ViewChild(EditorTitleComponent) titleComponent!: EditorTitleComponent;
   private isDestroyed = false;
   private subscriptions: Subscription[] = [];
@@ -409,6 +410,10 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
             this.router.url.startsWith("/track-editor") ||
             this.router.url.includes("mock");
           if (!isEditorRoute) {
+            return;
+          }
+          if (this.isSwitchingSelection) {
+            this.isSwitchingSelection = false;
             return;
           }
           const nextId = paramMap.get("id");
@@ -829,7 +834,9 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     if (this.selectedTrackId === id) return;
     const found = this.allTracks.find((t) => t.entity_id === id);
     if (found) {
+      this.isSwitchingSelection = true;
       this.selectTrack(found);
+      this.navigationService.setLastEditedId("track", found.entity_id);
       this.router.navigate([], {
         relativeTo: this.route,
         queryParams: { id: found.entity_id },

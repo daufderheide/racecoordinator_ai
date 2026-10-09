@@ -9,7 +9,7 @@ O Editor de Pilotos unifica a seleção e a edição de pilotos numa interface c
 - **Seletor de Piloto**: Localizado no cabeçalho superior junto ao título, este menu suspenso lista todos os pilotos existentes e permite alternar rapidamente entre eles.
 - **Modo Somente Leitura**: Por padrão, o editor exibe os detalhes em modo somente leitura. Os campos estão bloqueados para evitar alterações acidentais, enquanto as prévias de áudio continuam disponíveis.
 - **Modo de Edição**: Clicar no ícone **Editar** (lápis) na barra de ferramentas desbloqueia os campos para edição. Enquanto estiver no modo de edição, o seletor de piloto fica bloqueado para evitar perda de dados.
-- **Salvar Alterações**: Clicar no ícone **Concluir Edição** (olho / concluído) valida as alterações, salva-as no servidor e retorna o editor ao modo somente leitura.
+- **Salvar Alterações**: Clicar no ícone **Concluir Edição** (marca de verificação) valida as alterações, salva-as no servidor e retorna o editor ao modo somente leitura.
 - **Descartar Alterações**: Se tentar sair com alterações não salvas, a caixa de diálogo de confirmação solicitará sua decisão. Ao descartar, todas as alterações retornarão à versão salva anteriormente.
 
 ## Ações da Barra de Ferramentas
@@ -19,7 +19,7 @@ A barra de ferramentas superior oferece as seguintes ações:
 - **Voltar**: Retorna à tela anterior ou à Configuração do Dia de Corrida.
 - **Adicionar Piloto (+)**: Cria um novo modelo de piloto e entra no modo de edição.
 - **Copiar Piloto**: Duplica o perfil do piloto selecionado.
-- **Editar / Concluir**: Alterna entre modo somente leitura e modo de edição.
+- **Editar / Concluir**: Alterna entre modo somente leitura e modo de edição (atalho de teclado: Cmd/Ctrl+E).
 - **Importar Pilotos**: Abre o diálogo para importar perfis de pilotos, avatares e configurações de áudio de arquivos externos.
 - **Expandir / Recolher tudo**: Expande ou recolhe todas as seções acordeão de uma vez.
 - **Excluir Piloto**: Remove o perfil do piloto selecionado após confirmação.

@@ -829,5 +829,23 @@ describe("TeamEditorComponent", () => {
       expect(component.selectedTeamId).toBe("t1");
       expect(component.editingTeam?.name).toBe("Team Alpha");
     });
+
+    it("should switch team without re-fetching data when selected via onSelectTeamById", () => {
+      component.allTeams = [t1, t2];
+      component.isEditMode = false;
+      spyOn(component, "loadData").and.callThrough();
+
+      component.onSelectTeamById("t2");
+
+      expect(component.selectedTeamId).toBe("t2");
+      expect(component.editingTeam?.name).toBe("Team Beta");
+      expect(router.navigate).toHaveBeenCalledWith([], {
+        relativeTo: _activatedRoute,
+        queryParams: { id: "t2" },
+        queryParamsHandling: "merge",
+        replaceUrl: true,
+      });
+      expect(component.loadData).not.toHaveBeenCalled();
+    });
   });
 });

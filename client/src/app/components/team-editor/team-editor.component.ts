@@ -89,6 +89,7 @@ export class TeamEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     this.lifecycle.pendingDeactivate = val;
   }
   private isReverting = false;
+  private isSwitchingSelection = false;
   @ViewChild(EditorTitleComponent) titleComponent!: EditorTitleComponent;
   private isDestroyed = false;
   private dataSubscription: Subscription | null = null;
@@ -190,6 +191,10 @@ export class TeamEditorComponent implements OnInit, OnDestroy, DirtyComponent {
             this.router.url.startsWith("/team-editor") ||
             this.router.url.includes("mock");
           if (!isEditorRoute) {
+            return;
+          }
+          if (this.isSwitchingSelection) {
+            this.isSwitchingSelection = false;
             return;
           }
           const nextId = paramMap.get("id");
@@ -476,6 +481,7 @@ export class TeamEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     if (this.selectedTeamId === id) return;
     const found = this.allTeams.find((t) => t.entity_id === id);
     if (found) {
+      this.isSwitchingSelection = true;
       this.selectTeam(found);
       this.navigationService.setLastEditedId("team", found.entity_id);
       this.router.navigate([], {

@@ -9,7 +9,7 @@ El Editor de Pilotos integra la selección y edición de pilotos en una interfaz
 - **Selector de Pilotos**: Ubicado en el encabezado superior junto al título, este menú desplegable enumera todos los pilotos existentes y permite cambiar rápidamente entre ellos.
 - **Modo de Solo Lectura**: De forma predeterminada, el editor muestra los detalles en modo de solo lectura. Los campos están bloqueados para evitar cambios accidentales, permitiendo probar los sonidos de audio.
 - **Modo de Edición**: Al hacer clic en el icono **Editar** (lápiz) de la barra de herramientas, se desbloquean los campos. Durante la edición, el selector de pilotos se bloquea para evitar perder cambios no guardados.
-- **Guardar Cambios**: Al hacer clic en el icono **Terminar Edición** (ojo / listo), se validan los cambios, se guardan en el servidor y el editor vuelve al modo de solo lectura.
+- **Guardar Cambios**: Al hacer clic en el icono **Terminar Edición** (marca de verificación), se validan los cambios, se guardan en el servidor y el editor vuelve al modo de solo lectura.
 - **Descartar Cambios**: Si intenta salir con cambios sin guardar, el cuadro de diálogo le pedirá confirmación. Al descartar, todos los cambios volverán a la versión guardada anteriormente.
 
 ## Acciones de la Barra de Herramientas
@@ -19,7 +19,7 @@ La barra de herramientas superior proporciona las siguientes acciones:
 - **Volver**: Regresa a la vista anterior o a la Configuración del Día de Carrera.
 - **Añadir Piloto (+)**: Crea una nueva plantilla de piloto y entra en el modo de edición.
 - **Copiar Piloto**: Duplica el perfil del piloto seleccionado en una nueva plantilla.
-- **Editar / Terminar Edición**: Alterna entre el modo de solo lectura y el modo de edición.
+- **Editar / Terminar Edición**: Alterna entre el modo de solo lectura y el modo de edición (atajo de teclado: Cmd/Ctrl+E).
 - **Importar Pilotos**: Abre el cuadro de diálogo para importar perfiles de pilotos, avatares y configuraciones de audio desde archivos externos.
 - **Expandir / Contraer todo**: Expande o contrae todas las secciones de acordeón a la vez.
 - **Eliminar Piloto**: Elimina el perfil del piloto seleccionado tras su confirmación.

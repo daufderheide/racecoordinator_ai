@@ -1731,5 +1731,31 @@ describe("SeasonEditorComponent", () => {
       component.handleKeyboardEvent(zEvent);
       expect(component.editingSeason.name).toBe("Season One");
     });
+
+    it("should switch season without re-fetching data when selected via onSelectSeasonById", () => {
+      const router = TestBed.inject(Router);
+      const route = TestBed.inject(ActivatedRoute);
+      const season2: Season = {
+        entity_id: "s2",
+        name: "Season Two",
+        drops: 0,
+        races: [],
+      };
+      component.existingSeasons = [component.editingSeason, season2];
+      component.isEditMode = false;
+      spyOn(component, "loadData").and.callThrough();
+
+      component.onSelectSeasonById("s2");
+
+      expect(component.selectedSeasonId).toBe("s2");
+      expect(component.editingSeason?.name).toBe("Season Two");
+      expect(router.navigate).toHaveBeenCalledWith([], {
+        relativeTo: route,
+        queryParams: { id: "s2" },
+        queryParamsHandling: "merge",
+        replaceUrl: true,
+      });
+      expect(component.loadData).not.toHaveBeenCalled();
+    });
   });
 });

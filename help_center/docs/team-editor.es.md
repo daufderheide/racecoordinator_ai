@@ -20,7 +20,7 @@ La barra de herramientas superior proporciona las siguientes acciones:
 - **Atrás**: Regresa a la vista anterior o a Configuración del Día de Carrera.
 - **Agregar Equipo (+)**: Crea una nueva plantilla de equipo y entra en el modo de edición.
 - **Duplicar Equipo**: Duplica el equipo actualmente seleccionado con un nombre único.
-- **Editar / Finalizar Edición**: Alterna entre el modo de solo lectura y el modo de edición.
+- **Editar / Finalizar Edición**: Alterna entre el modo de solo lectura y el modo de edición (atajo de teclado: Cmd/Ctrl+E).
 - **Eliminar Equipo**: Elimina el equipo seleccionado tras confirmación.
 - **Deshacer / Rehacer**: Revierte o vuelve a aplicar ediciones recientes realizadas durante la sesión.
 - **Ayuda (?)**: Abre la guía interactiva que destaca cada sección del editor.

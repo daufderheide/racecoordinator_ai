@@ -1718,5 +1718,31 @@ describe("TrackEditorComponent", () => {
       expect(laneBgInput?.disabled).toBeTrue();
       expect(laneFgInput?.disabled).toBeTrue();
     });
+
+    it("should switch track without re-fetching data when selected via onSelectTrackById", () => {
+      const track2 = new Track({
+        entity_id: "t2",
+        name: "Monza",
+        lanes: [],
+      });
+      component.allTracks = [component.editingTrack!, track2];
+      component.isEditMode = false;
+      spyOn(component, "loadData").and.callThrough();
+
+      component.onSelectTrackById("t2");
+
+      expect(component.selectedTrackId).toBe("t2");
+      expect(component.editingTrack?.name).toBe("Monza");
+      expect(router.navigate).toHaveBeenCalledWith([], {
+        relativeTo: _activatedRoute,
+        queryParams: { id: "t2" },
+        queryParamsHandling: "merge",
+        replaceUrl: true,
+      });
+
+      // Simulate queryParamMap emitting the updated ID
+      _activatedRoute.setQueryParams({ id: "t2" });
+      expect(component.loadData).not.toHaveBeenCalled();
+    });
   });
 });

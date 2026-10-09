@@ -95,6 +95,7 @@ export class SeasonEditorComponent
   isEditMode = false;
   private isPreservingEditModeOnNavigation = false;
   private transitionToReadOnlyOnSave = false;
+  private isSwitchingSelection = false;
   seasonSelectItems: { id: string; name: string }[] = [];
   selectedSeasonId = "";
   originalSeason?: Season;
@@ -242,8 +243,49 @@ export class SeasonEditorComponent
             this.isReverting = false;
             return;
           }
-          const seasonId = paramMap.get("id");
-          this.loadData(seasonId);
+          if (this.isSwitchingSelection) {
+            this.isSwitchingSelection = false;
+            return;
+          }
+          const isEditorRoute =
+            !this.router.url ||
+            this.router.url === "/" ||
+            this.router.url.startsWith("/season-editor") ||
+            this.router.url.includes("mock");
+          if (!isEditorRoute) {
+            return;
+          }
+          const nextId = paramMap.get("id");
+          if (nextId && nextId !== "new") {
+            this.navigationService.setLastEditedId("season", nextId);
+          }
+          const currentId = this.editingSeason?.entity_id;
+          if (
+            currentId &&
+            nextId !== currentId &&
+            this.hasChanges() &&
+            !this.isNavigationApproved
+          ) {
+            this.confirmDiscard().then((confirmed) => {
+              if (confirmed) {
+                this.loadData(nextId);
+              } else {
+                this.isReverting = true;
+                this.router.navigate([], {
+                  relativeTo: this.route,
+                  queryParams: {
+                    id: currentId,
+                    from: this.route.snapshot.queryParamMap.get("from"),
+                    returnUrl:
+                      this.route.snapshot.queryParamMap.get("returnUrl"),
+                  },
+                  queryParamsHandling: "merge",
+                });
+              }
+            });
+          } else {
+            this.loadData(nextId);
+          }
         }),
       );
     } else {
@@ -272,6 +314,7 @@ export class SeasonEditorComponent
     if (this.selectedSeasonId === id) return;
     const found = this.existingSeasons.find((s) => s.entity_id === id);
     if (found) {
+      this.isSwitchingSelection = true;
       this.selectSeason(found);
       this.router.navigate([], {
         relativeTo: this.route,

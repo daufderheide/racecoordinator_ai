@@ -3590,6 +3590,28 @@ describe("RaceEditorComponent", () => {
         expect(reverseCb).toBeTruthy();
         expect(reverseCb.disabled).toBeFalse();
       }));
+
+      it("should switch race without re-fetching data when selected via onSelectRaceById", fakeAsync(() => {
+        const mockRace2 = {
+          entity_id: "r2",
+          name: "Silverstone Grand Prix",
+          track_entity_id: "t1",
+          heat_rotation_type: "RoundRobin",
+          heat_scoring: { finish_method: "Lap" },
+          overall_scoring: { dropped_heats: 0 },
+        };
+        component.allRaces = [component.editingRace, mockRace2];
+        component.isEditMode = false;
+        component.isLoading = false;
+        spyOn(component, "loadRace").and.callThrough();
+
+        component.onSelectRaceById("r2");
+
+        expect(component.selectedRaceId).toBe("r2");
+        expect(component.editingRace?.name).toBe("Silverstone Grand Prix");
+        expect(component.isLoading).toBeFalse();
+        expect(component.loadRace).not.toHaveBeenCalled();
+      }));
     });
   });
 });
