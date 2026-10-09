@@ -10,6 +10,10 @@ import { Race } from "@app/models/race";
 import { Track } from "@app/models/track";
 import { RaceFlag, RaceState } from "@app/proto/antigravity";
 import { DriverHeatData } from "@app/race/driver_heat_data";
+import {
+  formatTimerDisplay,
+  TimerFormatOptions,
+} from "@app/utils/timer-format.utils";
 
 export interface FormatContext {
   translate: (key: string) => string;
@@ -235,6 +239,69 @@ export class RacedayFormatUtils {
     }
   }
 
+  static resolveTimerFormatOptions(
+    colKey: string,
+    settings: any,
+  ): TimerFormatOptions | undefined {
+    if (!settings) return undefined;
+    const baseKey = colKey ? colKey.split("_")[0] : "";
+    const isTotalTime =
+      colKey === "totalTime" ||
+      colKey === "overallTotalTime" ||
+      baseKey === "totalTime" ||
+      baseKey === "overallTotalTime";
+    if (!isTotalTime) return undefined;
+
+    const colFormat =
+      settings.columnTimeDisplayFormat?.[colKey] ??
+      settings.columnTimeDisplayFormat?.[baseKey];
+    const colSubMode =
+      settings.columnTimeSubsecondMode?.[colKey] ??
+      settings.columnTimeSubsecondMode?.[baseKey];
+    const colThresh =
+      settings.columnTimeSubsecondThreshold?.[colKey] ??
+      settings.columnTimeSubsecondThreshold?.[baseKey];
+    const colDec =
+      settings.columnTimeSubsecondDecimals?.[colKey] ??
+      settings.columnTimeSubsecondDecimals?.[baseKey];
+
+    if (
+      colFormat !== undefined ||
+      colSubMode !== undefined ||
+      colThresh !== undefined ||
+      colDec !== undefined
+    ) {
+      return {
+        format: colFormat || "dynamic",
+        subsecondMode: colSubMode || "threshold",
+        subsecondThreshold: colThresh !== undefined ? Number(colThresh) : 10,
+        subsecondDecimals: colDec !== undefined ? Number(colDec) : 2,
+      };
+    }
+
+    if (
+      settings.timeDisplayFormat !== undefined ||
+      settings.timeSubsecondMode !== undefined ||
+      settings.timeSubsecondThreshold !== undefined ||
+      settings.timeSubsecondDecimals !== undefined
+    ) {
+      return {
+        format: settings.timeDisplayFormat || "dynamic",
+        subsecondMode: settings.timeSubsecondMode || "threshold",
+        subsecondThreshold:
+          settings.timeSubsecondThreshold !== undefined
+            ? Number(settings.timeSubsecondThreshold)
+            : 10,
+        subsecondDecimals:
+          settings.timeSubsecondDecimals !== undefined
+            ? Number(settings.timeSubsecondDecimals)
+            : 2,
+      };
+    }
+
+    return undefined;
+  }
+
   private static formatOverallValue(
     baseKey: string,
     value: any,
@@ -244,6 +311,7 @@ export class RacedayFormatUtils {
     lapPlaceholder: string,
     timeDecimals: number,
     lapDecimals: number,
+    colKey?: string,
   ): string | null {
     if (RacedayFormatUtils.isEmptyDriver(hd)) {
       if (
@@ -302,6 +370,15 @@ export class RacedayFormatUtils {
         value !== null &&
         value !== undefined &&
         (isStdDev ? value >= 0 : value > 0);
+      if (isValid && baseKey === "overallTotalTime") {
+        const timerOpts = RacedayFormatUtils.resolveTimerFormatOptions(
+          colKey || baseKey,
+          ctx.laneViewWidgetSettings,
+        );
+        if (timerOpts) {
+          return formatTimerDisplay(value, timerOpts);
+        }
+      }
       return isValid ? value.toFixed(timeDecimals) : timePlaceholder;
     }
 
@@ -522,6 +599,7 @@ export class RacedayFormatUtils {
         lapPlaceholder,
         timeDecimals,
         lapDecimals,
+        colKey,
       );
       if (overallStr !== null) {
         return overallStr;
@@ -636,6 +714,15 @@ export class RacedayFormatUtils {
         value !== null &&
         value !== undefined &&
         (isStdDev ? value >= 0 : value > 0);
+      if (isValid && baseKey === "totalTime") {
+        const timerOpts = RacedayFormatUtils.resolveTimerFormatOptions(
+          colKey,
+          ctx.laneViewWidgetSettings,
+        );
+        if (timerOpts) {
+          return formatTimerDisplay(value, timerOpts);
+        }
+      }
       return isValid ? value.toFixed(timeDecimals) : timePlaceholder;
     } else if (baseKey === "consistencyScore") {
       if (RacedayFormatUtils.isEmptyDriver(hd)) return "--.-%";

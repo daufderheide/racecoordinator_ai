@@ -635,4 +635,62 @@ describe("LaneColumnInspectorComponent", () => {
       expect(component.change.emit).toHaveBeenCalled();
     });
   });
+
+  describe("Timer formatting options for totalTime and overallTotalTime", () => {
+    it("should identify total time columns correctly", () => {
+      mockSettings.columnKey = "totalTime";
+      expect(component.isTotalTimeColumn).toBeTrue();
+
+      mockSettings.columnKey = "overallTotalTime";
+      expect(component.isTotalTimeColumn).toBeTrue();
+
+      mockSettings.columnKey = "lastLapTime";
+      expect(component.isTotalTimeColumn).toBeFalse();
+    });
+
+    it("should render timer display format dropdown, subsecond mode, and live preview for totalTime", () => {
+      mockSettings.columnKey = "totalTime";
+      mockSettings.timeDisplayFormat = "dynamic";
+      mockSettings.timeSubsecondMode = "threshold";
+      mockSettings.timeSubsecondThreshold = 10;
+      mockSettings.timeSubsecondDecimals = 2;
+      fixture.detectChanges();
+
+      const previewGrid = fixture.nativeElement.querySelector(
+        ".timer-preview-grid",
+      );
+      expect(previewGrid).toBeTruthy();
+
+      const previewItems = fixture.nativeElement.querySelectorAll(
+        ".timer-preview-item",
+      );
+      expect(previewItems.length).toBe(4);
+    });
+
+    it("should compute correct preview values", () => {
+      mockSettings.columnKey = "totalTime";
+      mockSettings.timeDisplayFormat = "dynamic";
+      mockSettings.timeSubsecondMode = "threshold";
+      mockSettings.timeSubsecondThreshold = 10;
+      mockSettings.timeSubsecondDecimals = 2;
+
+      expect(component.getPreview(3665)).toBe("1:01:05");
+      expect(component.getPreview(75)).toBe("1:15");
+      expect(component.getPreview(45)).toBe("45");
+      expect(component.getPreview(8.45)).toBe("8.45");
+    });
+
+    it("should clamp subsecond threshold and decimals in onFieldChange", () => {
+      spyOn(component.change, "emit");
+      mockSettings.columnKey = "totalTime";
+      mockSettings.timeSubsecondThreshold = -5;
+      mockSettings.timeSubsecondDecimals = 5;
+
+      component.onFieldChange();
+
+      expect(mockSettings.timeSubsecondThreshold).toBe(0);
+      expect(mockSettings.timeSubsecondDecimals).toBe(3);
+      expect(component.change.emit).toHaveBeenCalled();
+    });
+  });
 });

@@ -258,6 +258,16 @@ export class RacedayLayoutUtils {
     return parts.some((p) => isLapBase(p));
   }
 
+  static isTotalTimeColumnKey(key: string): boolean {
+    if (!key) return false;
+    const baseKey = key.split("_")[0];
+    const isTotalTimeBase = (k: string) =>
+      k === "totalTime" || k === "overallTotalTime";
+    if (isTotalTimeBase(baseKey)) return true;
+    const parts = key.split("_");
+    return parts.some((p) => isTotalTimeBase(p));
+  }
+
   static isLapOrTimeColumnKey(key: string): boolean {
     return (
       RacedayLayoutUtils.isTimeColumnKey(key) ||

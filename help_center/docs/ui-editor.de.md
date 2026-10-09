@@ -44,6 +44,9 @@ Das **Timer**-Widget zeigt die abgelaufene oder verbleibende Renn- bzw. Durchgan
   - **Nie**: Beschränkt den Timer ausschließlich auf ganze Sekunden.
 - **Live-Vorschau**: Der Inspektor bietet eine sofortige Vorschau darauf, wie die ausgewählten Einstellungen an verschiedenen Zeitpunkten formatiert werden (`> 1 hr`, `> 1 min`, `< 1 min` und `< 10s`).
 
+> [!NOTE]
+> Genau diese Zeitformatierungsoptionen (Anzeigeformat-Vorgaben, Subsekunden-Modi, Schwellenwert und Dezimalstellen-Schieberegler mit Live-Vorschau) werden auch für **Gesamtzeit-Widgets** (Heat-Gesamtzeit und Renn-/Gesamtzeit) sowie für **Gesamtzeit-Spalten** in der Spuransicht unterstützt. Klicken Sie in der Spaltenliste der Spuransicht auf das Symbol für Zeitoptionen (<span class="material-icons">more_time</span>) neben einer beliebigen Gesamtzeit-Spalte, um deren Zeitformat anzupassen.
+
 ## Countdown-Widget-Konfiguration
 
 Das **Countdown**-Widget stellt die visuelle Startampel dar und steuert die Starttöne während der Startsequenz:

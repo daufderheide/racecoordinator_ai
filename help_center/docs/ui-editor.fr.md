@@ -44,6 +44,9 @@ Le widget **Minuteur** affiche le temps écoulé ou restant de la manche/course 
   - **Jamais** : Limite le minuteur uniquement aux secondes entières.
 - **Aperçu en direct** : L'inspecteur comprend un aperçu en direct immédiat montrant la mise en forme aux différents points de passage de la course (`> 1 hr`, `> 1 min`, `< 1 min` et `< 10s`).
 
+> [!NOTE]
+> Ces mêmes options de formatage horaire (préréglages de format d'affichage, modes de sous-secondes, seuil et curseur de décimales avec aperçu en direct) sont également prises en charge pour les widgets de **Temps Total** (Temps Total de Manche et Temps Total de Course/Général) ainsi que pour les colonnes de **Temps Total** dans la Vue des Voies. Dans la liste des colonnes de la Vue des Voies, cliquez sur l'icône des options de temps (<span class="material-icons">more_time</span>) à côté de toute colonne de Temps Total pour personnaliser son format.
+
 ## Configuration du widget de compte à rebours
 
 Le widget **Compte à rebours** affiche les feux visuels de départ et déclenche les sons correspondants pendant la procédure de départ :

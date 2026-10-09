@@ -44,6 +44,9 @@ Il widget **Cronometro** mostra il tempo trascorso o rimanente della manche/gara
   - **Mai**: Limita il cronometro esclusivamente ai secondi interi.
 - **Anteprima dal vivo**: L'ispettore include un'anteprima istantanea che dimostra come le opzioni selezionate vengono visualizzate a vari intervalli di gara (`> 1 hr`, `> 1 min`, `< 1 min` e `< 10s`).
 
+> [!NOTE]
+> Queste stesse opzioni di formattazione del tempo (preimpostazioni del formato di visualizzazione, modalità frazioni di secondo, soglia e cursore decimali con anteprima in tempo reale) sono supportate anche per i widget **Tempo Totale** (Tempo Totale Manche e Tempo Totale Gara/Generale) e per le colonne di **Tempo Totale** nella Vista Corsie. Nell'elenco delle colonne della Vista Corsie, fare clic sull'icona delle opzioni di tempo (<span class="material-icons">more_time</span>) accanto a qualsiasi colonna Tempo Totale per personalizzarne il formato.
+
 ## Configurazione del widget di conto alla rovescia
 
 Il widget **Conto alla rovescia** mostra il semaforo visivo di partenza ed emette i suoni corrispondenti durante la sequenza di avvio:

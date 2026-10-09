@@ -2050,6 +2050,40 @@ describe("DefaultRacedayComponent", () => {
       expect(result2).toBe("--.---");
     });
 
+    it("should format totalTime with timer options when widgetSettings provided", () => {
+      const settings = {
+        timeDisplayFormat: "dynamic",
+        timeSubsecondMode: "threshold",
+        timeSubsecondThreshold: 10,
+        timeSubsecondDecimals: 2,
+      };
+      const result = component.formatValue(
+        "totalTime",
+        83,
+        mockHd,
+        undefined,
+        "center-center",
+        settings,
+      );
+      expect(result).toBe("1:23");
+    });
+
+    it("should format overallTotalTime with timer options when widgetSettings provided", () => {
+      const settings = {
+        timeDisplayFormat: "hh_mm_ss",
+        timeSubsecondMode: "never",
+      };
+      const result = component.formatValue(
+        "overallTotalTime",
+        3665,
+        mockHd,
+        undefined,
+        "center-center",
+        settings,
+      );
+      expect(result).toBe("01:01:05");
+    });
+
     it("should not render img tag in the table when avatarUrl is empty", () => {
       mockSettings.racedayColumns = ["driver.avatarUrl"];
       (component as any).loadColumns();

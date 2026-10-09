@@ -2182,4 +2182,139 @@ describe("RacedayFormatUtils", () => {
       expect(result).toBe("15.25");
     });
   });
+
+  describe("Timer formatting for totalTime and overallTotalTime", () => {
+    it("should resolve timer format options from lane-column settings", () => {
+      const settings = {
+        timeDisplayFormat: "mm_ss",
+        timeSubsecondMode: "always",
+        timeSubsecondThreshold: 5,
+        timeSubsecondDecimals: 3,
+      };
+      const opts = RacedayFormatUtils.resolveTimerFormatOptions(
+        "totalTime",
+        settings,
+      );
+      expect(opts).toEqual({
+        format: "mm_ss",
+        subsecondMode: "always",
+        subsecondThreshold: 5,
+        subsecondDecimals: 3,
+      });
+    });
+
+    it("should resolve timer format options from lane-view per-column maps", () => {
+      const settings = {
+        columnTimeDisplayFormat: { overallTotalTime: "hh_mm_ss" },
+        columnTimeSubsecondMode: { overallTotalTime: "never" },
+        columnTimeSubsecondThreshold: { overallTotalTime: 15 },
+        columnTimeSubsecondDecimals: { overallTotalTime: 1 },
+      };
+      const opts = RacedayFormatUtils.resolveTimerFormatOptions(
+        "overallTotalTime",
+        settings,
+      );
+      expect(opts).toEqual({
+        format: "hh_mm_ss",
+        subsecondMode: "never",
+        subsecondThreshold: 15,
+        subsecondDecimals: 1,
+      });
+    });
+
+    it("should return undefined for non-total-time columns or empty settings", () => {
+      expect(
+        RacedayFormatUtils.resolveTimerFormatOptions("lastLapTime", {
+          timeDisplayFormat: "dynamic",
+        }),
+      ).toBeUndefined();
+      expect(
+        RacedayFormatUtils.resolveTimerFormatOptions("totalTime", undefined),
+      ).toBeUndefined();
+      expect(
+        RacedayFormatUtils.resolveTimerFormatOptions("totalTime", {}),
+      ).toBeUndefined();
+    });
+
+    it("should format totalTime using timer options when configured on lane-column", () => {
+      ctx.laneViewWidgetSettings = {
+        timeDisplayFormat: "dynamic",
+        timeSubsecondMode: "threshold",
+        timeSubsecondThreshold: 10,
+        timeSubsecondDecimals: 2,
+      };
+      expect(
+        RacedayFormatUtils.formatValue("totalTime", 3665, hd, undefined, ctx),
+      ).toBe("1:01:05");
+      expect(
+        RacedayFormatUtils.formatValue("totalTime", 83, hd, undefined, ctx),
+      ).toBe("1:23");
+      expect(
+        RacedayFormatUtils.formatValue("totalTime", 45, hd, undefined, ctx),
+      ).toBe("45");
+      expect(
+        RacedayFormatUtils.formatValue("totalTime", 8.45, hd, undefined, ctx),
+      ).toBe("8.45");
+    });
+
+    it("should format totalTime with mm_ss and hh_mm_ss formats", () => {
+      ctx.laneViewWidgetSettings = {
+        timeDisplayFormat: "mm_ss",
+        timeSubsecondMode: "never",
+      };
+      expect(
+        RacedayFormatUtils.formatValue("totalTime", 83, hd, undefined, ctx),
+      ).toBe("01:23");
+      expect(
+        RacedayFormatUtils.formatValue("totalTime", 45, hd, undefined, ctx),
+      ).toBe("00:45");
+
+      ctx.laneViewWidgetSettings = {
+        timeDisplayFormat: "hh_mm_ss",
+        timeSubsecondMode: "never",
+      };
+      expect(
+        RacedayFormatUtils.formatValue("totalTime", 83, hd, undefined, ctx),
+      ).toBe("00:01:23");
+    });
+
+    it("should format overallTotalTime using lane-view per-column timer settings", () => {
+      ctx.laneViewWidgetSettings = {
+        columnTimeDisplayFormat: { overallTotalTime: "seconds" },
+        columnTimeSubsecondMode: { overallTotalTime: "always" },
+        columnTimeSubsecondDecimals: { overallTotalTime: 2 },
+      };
+      expect(
+        RacedayFormatUtils.formatValue(
+          "overallTotalTime",
+          83.42,
+          hd,
+          undefined,
+          ctx,
+        ),
+      ).toBe("83.42");
+    });
+
+    it("should maintain backward compatibility when no timer options are set", () => {
+      ctx.laneViewWidgetSettings = undefined;
+      expect(
+        RacedayFormatUtils.formatValue(
+          "totalTime",
+          42.1234,
+          hd,
+          undefined,
+          ctx,
+        ),
+      ).toBe("42.123");
+      expect(
+        RacedayFormatUtils.formatValue(
+          "overallTotalTime",
+          320.456,
+          hd,
+          undefined,
+          ctx,
+        ),
+      ).toBe("320.456");
+    });
+  });
 });

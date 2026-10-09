@@ -44,6 +44,9 @@ De **Timer**-widget toont de verstreken of resterende heat-/racetijd in verschil
   - **Nooit**: Beperkt de timer uitsluitend tot hele seconden.
 - **Live Voorbeeld**: De inspecteur bevat een direct voorbeeld waarin te zien is hoe de geselecteerde opmaak eruitziet op verschillende meetpunten (`> 1 hr`, `> 1 min`, `< 1 min` en `< 10s`).
 
+> [!NOTE]
+> Precies dezelfde tijdnotatie-opties (weergaveformaat-voorinstellingen, subseconde-modi, drempelwaarde en decimalenschuifregelaar met live voorbeeld) worden ook ondersteund voor **Totale Tijd**-widgets (Heat Totale Tijd en Race/Algemene Totale Tijd) en voor **Totale Tijd**-kolommen in de Baanweergave. Klik in de kolommenlijst van de Baanweergave op het pictogram voor tijdopties (<span class="material-icons">more_time</span>) naast een Totale Tijd-kolom om de tijdnotatie aan te passen.
+
 ## Aftel-widgetconfiguratie
 
 De **Aftel-widget** toont de visuele startlichten en regelt de startgeluiden tijdens de startprocedure:

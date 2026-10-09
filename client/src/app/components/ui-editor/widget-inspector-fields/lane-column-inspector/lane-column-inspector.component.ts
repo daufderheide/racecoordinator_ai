@@ -10,6 +10,7 @@ import {
 import { AbsoluteWidgetNode } from "@app/models/settings";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { FontService } from "@app/services/font.service";
+import { formatTimerDisplay } from "@app/utils/timer-format.utils";
 
 @Component({
   standalone: true,
@@ -64,6 +65,12 @@ export class LaneColumnInspectorComponent {
 
   get currentSettings(): any {
     return this.settings() || {};
+  }
+
+  get isTotalTimeColumn(): boolean {
+    return RacedayLayoutUtils.isTotalTimeColumnKey(
+      this.currentSettings["columnKey"] || "",
+    );
   }
 
   get isTimeColumn(): boolean {
@@ -135,7 +142,28 @@ export class LaneColumnInspectorComponent {
         Math.max(0, Number(this.currentSettings["insetLapDecimalPlaces"])),
       );
     }
+    if (this.currentSettings["timeSubsecondThreshold"] !== undefined) {
+      this.currentSettings["timeSubsecondThreshold"] = Math.max(
+        0,
+        Number(this.currentSettings["timeSubsecondThreshold"]),
+      );
+    }
+    if (this.currentSettings["timeSubsecondDecimals"] !== undefined) {
+      this.currentSettings["timeSubsecondDecimals"] = Math.min(
+        3,
+        Math.max(0, Number(this.currentSettings["timeSubsecondDecimals"])),
+      );
+    }
     this.change.emit();
+  }
+
+  getPreview(seconds: number): string {
+    return formatTimerDisplay(seconds, {
+      format: this.currentSettings["timeDisplayFormat"] || "dynamic",
+      subsecondMode: this.currentSettings["timeSubsecondMode"] || "threshold",
+      subsecondThreshold: this.currentSettings["timeSubsecondThreshold"] ?? 10,
+      subsecondDecimals: this.currentSettings["timeSubsecondDecimals"] ?? 2,
+    });
   }
 
   getAnchorValue(anchor: string): string {

@@ -898,4 +898,124 @@ describe("LaneViewInspectorComponent", () => {
       expect(changeSpy).toHaveBeenCalled();
     });
   });
+
+  describe("Total Time Column Timer Options", () => {
+    it("should correctly identify total time columns", () => {
+      expect(component.isTotalTimeColumn("totalTime")).toBeTrue();
+      expect(component.isTotalTimeColumn("overallTotalTime")).toBeTrue();
+      expect(component.isTotalTimeColumn("lapCount")).toBeFalse();
+      expect(component.isTotalTimeColumn("lastLapTime")).toBeFalse();
+    });
+
+    it("should toggle column time options expansion state", () => {
+      expect(component.isColumnTimeOptionsExpanded("totalTime")).toBeFalse();
+      component.toggleColumnTimeOptions("totalTime");
+      expect(component.isColumnTimeOptionsExpanded("totalTime")).toBeTrue();
+      component.toggleColumnTimeOptions("totalTime");
+      expect(component.isColumnTimeOptionsExpanded("totalTime")).toBeFalse();
+    });
+
+    it("should get and set column time display format", () => {
+      expect(component.getColumnTimeDisplayFormat("totalTime")).toBe("dynamic");
+      component.setColumnTimeDisplayFormat("totalTime", "mm_ss");
+      expect(component.getColumnTimeDisplayFormat("totalTime")).toBe("mm_ss");
+      expect(changeSpy).toHaveBeenCalled();
+    });
+
+    it("should get and set column subsecond mode, threshold, and decimals", () => {
+      expect(component.getColumnTimeSubsecondMode("totalTime")).toBe(
+        "threshold",
+      );
+      component.setColumnTimeSubsecondMode("totalTime", "always");
+      expect(component.getColumnTimeSubsecondMode("totalTime")).toBe("always");
+
+      expect(component.getColumnTimeSubsecondThreshold("totalTime")).toBe(10);
+      component.setColumnTimeSubsecondThreshold("totalTime", 15);
+      expect(component.getColumnTimeSubsecondThreshold("totalTime")).toBe(15);
+
+      expect(component.getColumnTimeSubsecondDecimals("totalTime")).toBe(2);
+      component.setColumnTimeSubsecondDecimals("totalTime", 3);
+      expect(component.getColumnTimeSubsecondDecimals("totalTime")).toBe(3);
+
+      expect(changeSpy).toHaveBeenCalled();
+    });
+
+    it("should compute correct column preview values", () => {
+      component.setColumnTimeDisplayFormat("totalTime", "dynamic");
+      component.setColumnTimeSubsecondMode("totalTime", "threshold");
+      component.setColumnTimeSubsecondThreshold("totalTime", 10);
+      component.setColumnTimeSubsecondDecimals("totalTime", 2);
+
+      expect(component.getColumnPreview("totalTime", 3665)).toBe("1:01:05");
+      expect(component.getColumnPreview("totalTime", 75)).toBe("1:15");
+      expect(component.getColumnPreview("totalTime", 45)).toBe("45");
+      expect(component.getColumnPreview("totalTime", 8.45)).toBe("8.45");
+    });
+
+    it("should clean up column time options on deleteColumn", () => {
+      fixture.componentRef.setInput("widget", {
+        customSettings: {
+          columnTimeDisplayFormat: { totalTime: "mm_ss" },
+          columnTimeSubsecondMode: { totalTime: "always" },
+          columnTimeSubsecondThreshold: { totalTime: 12 },
+          columnTimeSubsecondDecimals: { totalTime: 3 },
+        },
+      } as any);
+      component.settings().columnTimeDisplayFormat = { totalTime: "mm_ss" };
+      component.settings().columnTimeSubsecondMode = { totalTime: "always" };
+      component.settings().columnTimeSubsecondThreshold = { totalTime: 12 };
+      component.settings().columnTimeSubsecondDecimals = { totalTime: 3 };
+      component.toggleColumnTimeOptions("totalTime");
+      expect(component.isColumnTimeOptionsExpanded("totalTime")).toBeTrue();
+
+      component.deleteColumn("totalTime");
+
+      expect(component.isColumnTimeOptionsExpanded("totalTime")).toBeFalse();
+      expect(
+        component.settings().columnTimeDisplayFormat["totalTime"],
+      ).toBeUndefined();
+      expect(
+        component.settings().columnTimeSubsecondMode["totalTime"],
+      ).toBeUndefined();
+      expect(
+        component.settings().columnTimeSubsecondThreshold["totalTime"],
+      ).toBeUndefined();
+      expect(
+        component.settings().columnTimeSubsecondDecimals["totalTime"],
+      ).toBeUndefined();
+      expect(
+        component.widget().customSettings["columnTimeDisplayFormat"][
+          "totalTime"
+        ],
+      ).toBeUndefined();
+    });
+
+    it("should render more_time button and toggle format panel in template", () => {
+      fixture.componentRef.setInput("globalSettings", {
+        racedayColumns: ["totalTime"],
+        practiceRacedayColumns: [],
+        columnVisibility: {},
+        practiceColumnVisibility: {},
+      });
+      fixture.detectChanges();
+
+      const toggleBtn = fixture.nativeElement.querySelector(
+        ".col-format-toggle-btn",
+      );
+      expect(toggleBtn).toBeTruthy();
+
+      // Initially closed
+      let panel = fixture.nativeElement.querySelector(".col-time-format-panel");
+      expect(panel).toBeNull();
+
+      // Click to open
+      toggleBtn.click();
+      fixture.detectChanges();
+
+      panel = fixture.nativeElement.querySelector(".col-time-format-panel");
+      expect(panel).toBeTruthy();
+      const previewGrid = panel.querySelector(".timer-preview-grid");
+      expect(previewGrid).toBeTruthy();
+    });
+  });
 });

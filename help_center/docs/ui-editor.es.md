@@ -44,6 +44,9 @@ El widget **Temporizador** muestra el tiempo transcurrido o restante de la manga
   - **Nunca**: Limita el temporizador exclusivamente a segundos enteros.
 - **Vista previa**: El inspector incluye una vista previa en tiempo real que demuestra cómo se muestran las opciones seleccionadas en distintos puntos de la carrera (`> 1 hr`, `> 1 min`, `< 1 min` y `< 10s`).
 
+> [!NOTE]
+> Estas mismas opciones de formato de tiempo (preajustes de formato de visualización, modos de fracciones de segundo, umbral y control deslizante de decimales con vista previa en vivo) también son compatibles con los widgets de **Tiempo Total** (Tiempo Total de Manga y Tiempo Total de Carrera/General) y con las columnas de **Tiempo Total** en la Vista de Carril. En la lista de columnas de la Vista de Carril, haga clic en el icono de opciones de tiempo (<span class="material-icons">more_time</span>) junto a cualquier columna de Tiempo Total para personalizar su formato.
+
 ## Configuración del widget de cuenta atrás
 
 El widget **Cuenta atrás** muestra el semáforo visual de salida y reproduce el audio correspondiente durante la secuencia de inicio:

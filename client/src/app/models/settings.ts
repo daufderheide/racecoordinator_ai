@@ -1,5 +1,9 @@
 import { AnchorPoint } from "@app/components/raceday/column_definition";
 import { IDemoConfig } from "@app/proto/antigravity";
+import {
+  TimerDisplayFormat,
+  TimerSubsecondMode,
+} from "@app/utils/timer-format.utils";
 
 export enum ColumnVisibility {
   Always = "Always",
@@ -92,6 +96,10 @@ export interface LaneColumnWidgetSettings {
   columnDecimals?: Record<string, number>;
   onlyShowDecimalsIfSegments?: boolean;
   onlyShowSegmentsWhenNotRacing?: boolean;
+  timeDisplayFormat?: TimerDisplayFormat;
+  timeSubsecondMode?: TimerSubsecondMode;
+  timeSubsecondThreshold?: number;
+  timeSubsecondDecimals?: number;
   useLaneColors: boolean;
   insets?: Record<string, string>;
   insetFontFamily?: string;

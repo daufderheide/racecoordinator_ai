@@ -44,6 +44,9 @@ O widget **Cronómetro** exibe o tempo decorrido ou restante da manga/corrida co
   - **Nunca**: Limita o cronómetro exclusivamente a segundos inteiros.
 - **Pré-visualização**: O inspetor inclui uma pré-visualização instantânea que demonstra a formatação das opções selecionadas em diferentes fases da corrida (`> 1 hr`, `> 1 min`, `< 1 min` e `< 10s`).
 
+> [!NOTE]
+> Estas opções exatas de formatação de tempo (predefinições de formato de exibição, modos de frações de segundo, limite e controlo deslizante de casas decimais com pré-visualização ao vivo) também são suportadas nos widgets de **Tempo Total** (Tempo Total da Bateria e Tempo Total da Corrida/Geral) e nas colunas de **Tempo Total** na Vista de Pistas. Na lista de colunas da Vista de Pistas, clique no ícone de opções de tempo (<span class="material-icons">more_time</span>) junto a qualquer coluna de Tempo Total para personalizar o seu formato.
+
 ## Configuração do widget de contagem decrescente
 
 O widget **Contagem Decrescente** exibe o semáforo visual de partida e aciona os efeitos sonoros correspondentes durante o procedimento de largada:

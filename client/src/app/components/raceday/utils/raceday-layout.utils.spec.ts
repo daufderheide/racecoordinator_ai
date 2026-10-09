@@ -865,6 +865,29 @@ describe("RacedayLayoutUtils", () => {
       expect(RacedayLayoutUtils.isLapColumnKey("physicalLapCount")).toBeFalse();
     });
 
+    it("should correctly identify total time column keys", () => {
+      expect(RacedayLayoutUtils.isTotalTimeColumnKey("totalTime")).toBeTrue();
+      expect(
+        RacedayLayoutUtils.isTotalTimeColumnKey("overallTotalTime"),
+      ).toBeTrue();
+      expect(
+        RacedayLayoutUtils.isTotalTimeColumnKey("totalTime_center-center"),
+      ).toBeTrue();
+      expect(
+        RacedayLayoutUtils.isTotalTimeColumnKey("overallTotalTime_top-left"),
+      ).toBeTrue();
+
+      expect(RacedayLayoutUtils.isTotalTimeColumnKey("")).toBeFalse();
+      expect(RacedayLayoutUtils.isTotalTimeColumnKey(null as any)).toBeFalse();
+      expect(
+        RacedayLayoutUtils.isTotalTimeColumnKey("lastLapTime"),
+      ).toBeFalse();
+      expect(RacedayLayoutUtils.isTotalTimeColumnKey("lapCount")).toBeFalse();
+      expect(
+        RacedayLayoutUtils.isTotalTimeColumnKey("driver.name"),
+      ).toBeFalse();
+    });
+
     it("should correctly identify lap or time column keys", () => {
       expect(RacedayLayoutUtils.isLapOrTimeColumnKey("lapCount")).toBeTrue();
       expect(RacedayLayoutUtils.isLapOrTimeColumnKey("lastLapTime")).toBeTrue();

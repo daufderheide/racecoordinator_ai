@@ -23,6 +23,11 @@ import { Settings } from "@app/models/settings";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { FontService } from "@app/services/font.service";
 import { TranslationService } from "@app/services/translation.service";
+import {
+  formatTimerDisplay,
+  TimerDisplayFormat,
+  TimerSubsecondMode,
+} from "@app/utils/timer-format.utils";
 
 import {
   LaneViewColumnGroup,
@@ -57,6 +62,7 @@ export class LaneViewInspectorComponent implements OnInit {
 
   columnSearchTerm = "";
   columnGroupExpandedStates = new Map<string, boolean>();
+  columnTimeOptionsExpanded = new Set<string>();
   private hasLoadedExpandedStates = false;
 
   constructor() {
@@ -349,6 +355,35 @@ export class LaneViewInspectorComponent implements OnInit {
     if (this.settings()?.columnOnlyShowDecimalsIfSegments) {
       delete this.settings().columnOnlyShowDecimalsIfSegments[colKey];
     }
+    if (this.widget()?.customSettings?.["columnTimeDisplayFormat"]) {
+      delete this.widget().customSettings["columnTimeDisplayFormat"][colKey];
+    }
+    if (this.settings()?.columnTimeDisplayFormat) {
+      delete this.settings().columnTimeDisplayFormat[colKey];
+    }
+    if (this.widget()?.customSettings?.["columnTimeSubsecondMode"]) {
+      delete this.widget().customSettings["columnTimeSubsecondMode"][colKey];
+    }
+    if (this.settings()?.columnTimeSubsecondMode) {
+      delete this.settings().columnTimeSubsecondMode[colKey];
+    }
+    if (this.widget()?.customSettings?.["columnTimeSubsecondThreshold"]) {
+      delete this.widget().customSettings["columnTimeSubsecondThreshold"][
+        colKey
+      ];
+    }
+    if (this.settings()?.columnTimeSubsecondThreshold) {
+      delete this.settings().columnTimeSubsecondThreshold[colKey];
+    }
+    if (this.widget()?.customSettings?.["columnTimeSubsecondDecimals"]) {
+      delete this.widget().customSettings["columnTimeSubsecondDecimals"][
+        colKey
+      ];
+    }
+    if (this.settings()?.columnTimeSubsecondDecimals) {
+      delete this.settings().columnTimeSubsecondDecimals[colKey];
+    }
+    this.columnTimeOptionsExpanded.delete(colKey);
     const ui = this.customUi();
     if (ui && ui.columnWidthsJson) {
       try {
@@ -636,5 +671,132 @@ export class LaneViewInspectorComponent implements OnInit {
 
   setColumnOnlyShowDecimalsIfSegments(colKey: string, value: boolean): void {
     this.setColumnOnlyShowDecimalsWhenNotRacing(colKey, value);
+  }
+
+  isColumnTimeOptionsExpanded(colKey: string): boolean {
+    return this.columnTimeOptionsExpanded.has(colKey);
+  }
+
+  toggleColumnTimeOptions(colKey: string): void {
+    if (this.columnTimeOptionsExpanded.has(colKey)) {
+      this.columnTimeOptionsExpanded.delete(colKey);
+    } else {
+      this.columnTimeOptionsExpanded.add(colKey);
+    }
+  }
+
+  isTotalTimeColumn(colKey: string): boolean {
+    const prop = this.getPrimaryProperty(colKey);
+    return (
+      RacedayLayoutUtils.isTotalTimeColumnKey(prop) ||
+      RacedayLayoutUtils.isTotalTimeColumnKey(colKey)
+    );
+  }
+
+  getColumnTimeDisplayFormat(colKey: string): TimerDisplayFormat {
+    const s = this.settings?.() || this.widget?.()?.customSettings;
+    return s?.columnTimeDisplayFormat?.[colKey] || "dynamic";
+  }
+
+  setColumnTimeDisplayFormat(colKey: string, format: TimerDisplayFormat): void {
+    const s = this.settings?.() || this.widget?.()?.customSettings;
+    if (s) {
+      if (!s.columnTimeDisplayFormat) {
+        s.columnTimeDisplayFormat = {};
+      }
+      s.columnTimeDisplayFormat[colKey] = format;
+    }
+    const widget = this.widget?.();
+    if (widget) {
+      if (!widget.customSettings) widget.customSettings = {};
+      if (!widget.customSettings.columnTimeDisplayFormat) {
+        widget.customSettings.columnTimeDisplayFormat = {};
+      }
+      widget.customSettings.columnTimeDisplayFormat[colKey] = format;
+    }
+    this.change.emit();
+  }
+
+  getColumnTimeSubsecondMode(colKey: string): TimerSubsecondMode {
+    const s = this.settings?.() || this.widget?.()?.customSettings;
+    return s?.columnTimeSubsecondMode?.[colKey] || "threshold";
+  }
+
+  setColumnTimeSubsecondMode(colKey: string, mode: TimerSubsecondMode): void {
+    const s = this.settings?.() || this.widget?.()?.customSettings;
+    if (s) {
+      if (!s.columnTimeSubsecondMode) {
+        s.columnTimeSubsecondMode = {};
+      }
+      s.columnTimeSubsecondMode[colKey] = mode;
+    }
+    const widget = this.widget?.();
+    if (widget) {
+      if (!widget.customSettings) widget.customSettings = {};
+      if (!widget.customSettings.columnTimeSubsecondMode) {
+        widget.customSettings.columnTimeSubsecondMode = {};
+      }
+      widget.customSettings.columnTimeSubsecondMode[colKey] = mode;
+    }
+    this.change.emit();
+  }
+
+  getColumnTimeSubsecondThreshold(colKey: string): number {
+    const s = this.settings?.() || this.widget?.()?.customSettings;
+    return s?.columnTimeSubsecondThreshold?.[colKey] ?? 10;
+  }
+
+  setColumnTimeSubsecondThreshold(colKey: string, threshold: any): void {
+    const val = Math.max(0, Number(threshold));
+    const s = this.settings?.() || this.widget?.()?.customSettings;
+    if (s) {
+      if (!s.columnTimeSubsecondThreshold) {
+        s.columnTimeSubsecondThreshold = {};
+      }
+      s.columnTimeSubsecondThreshold[colKey] = val;
+    }
+    const widget = this.widget?.();
+    if (widget) {
+      if (!widget.customSettings) widget.customSettings = {};
+      if (!widget.customSettings.columnTimeSubsecondThreshold) {
+        widget.customSettings.columnTimeSubsecondThreshold = {};
+      }
+      widget.customSettings.columnTimeSubsecondThreshold[colKey] = val;
+    }
+    this.change.emit();
+  }
+
+  getColumnTimeSubsecondDecimals(colKey: string): number {
+    const s = this.settings?.() || this.widget?.()?.customSettings;
+    return s?.columnTimeSubsecondDecimals?.[colKey] ?? 2;
+  }
+
+  setColumnTimeSubsecondDecimals(colKey: string, decimals: any): void {
+    const val = Math.min(3, Math.max(0, Number(decimals)));
+    const s = this.settings?.() || this.widget?.()?.customSettings;
+    if (s) {
+      if (!s.columnTimeSubsecondDecimals) {
+        s.columnTimeSubsecondDecimals = {};
+      }
+      s.columnTimeSubsecondDecimals[colKey] = val;
+    }
+    const widget = this.widget?.();
+    if (widget) {
+      if (!widget.customSettings) widget.customSettings = {};
+      if (!widget.customSettings.columnTimeSubsecondDecimals) {
+        widget.customSettings.columnTimeSubsecondDecimals = {};
+      }
+      widget.customSettings.columnTimeSubsecondDecimals[colKey] = val;
+    }
+    this.change.emit();
+  }
+
+  getColumnPreview(colKey: string, seconds: number): string {
+    return formatTimerDisplay(seconds, {
+      format: this.getColumnTimeDisplayFormat(colKey),
+      subsecondMode: this.getColumnTimeSubsecondMode(colKey),
+      subsecondThreshold: this.getColumnTimeSubsecondThreshold(colKey),
+      subsecondDecimals: this.getColumnTimeSubsecondDecimals(colKey),
+    });
   }
 }

@@ -44,6 +44,9 @@ The **Timer** widget displays the elapsed or remaining heat/race time with confi
   - **Never**: Restricts the timer to whole seconds only.
 - **Live Preview**: The inspector includes an instant live preview demonstrating how the selected options format across different race time checkpoints (`> 1 hr`, `> 1 min`, `< 1 min`, and `< 10s`).
 
+> [!NOTE]
+> These exact time formatting options (Display Format presets, Sub-second timing modes, threshold, and decimals slider with live preview) are also supported for **Total Time** widgets (Heat Total Time and Race/Overall Total Time) and for **Total Time** columns in the Lane View. In the Lane View column list, click the timer options icon (<span class="material-icons">more_time</span>) next to any Total Time column to customize its time format.
+
 ## Countdown Widget Configuration
 
 The **Countdown** widget displays visual start lights and triggers start audio during the starting sequence:
