@@ -1,6 +1,6 @@
 # Changelog
 
-## [v1.0.1-beta.20] - 2026-10-08
+## [v1.0.1-beta.21] - 2026-10-09
 
 ### 🚀 New Features
 
@@ -14,6 +14,7 @@
 
 ### 🐛 Bug Fixes
 
+- **serial**: prevent host sleep, add serial write timeout, and auto-recover on microcontroller reboot [#934](https://github.com/daufderheide/racecoordinator_ai/issues/934) ([22fff6d4](https://github.com/daufderheide/racecoordinator_ai/commit/22fff6d4))
 - **raceday**: Fixed state of analog leds.  In particular yellow flag leds were on during the start sequence. [#953](https://github.com/daufderheide/racecoordinator_ai/issues/953) ([df65b8ce](https://github.com/daufderheide/racecoordinator_ai/commit/df65b8ce))
 - **raceday**: remove automatic updates option from options menu ([21ac049d](https://github.com/daufderheide/racecoordinator_ai/commit/21ac049d))
 - fixed export of the custom rotation name.  Also removed the custom rotation asset id as it's not usefull to the user [#938](https://github.com/daufderheide/racecoordinator_ai/issues/938) ([913274a8](https://github.com/daufderheide/racecoordinator_ai/commit/913274a8))
@@ -68,7 +69,7 @@
 <details>
 <summary>🔍 <b>Full Commit History</b></summary>
 
-<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0...v1.0.1-beta.20">GitHub</a></p>
+<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0...v1.0.1-beta.21">GitHub</a></p>
 </details>
 
 ## [v1.0.0] - 2026-09-27
