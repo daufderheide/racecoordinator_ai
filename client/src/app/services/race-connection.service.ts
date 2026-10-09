@@ -29,6 +29,7 @@ import { DriverMatchingUtils } from "@app/utils/driver-matching.utils";
 import { ChildWindowManagerService } from "./child-window-manager.service";
 import { LoggerService } from "./logger.service";
 import { RaceService } from "./race.service";
+import { WakeLockService } from "./wake-lock.service";
 
 export interface IReactionTime {
   objectId?: string | null;
@@ -104,6 +105,7 @@ export class RaceConnectionService implements OnDestroy {
   private pendingUpdate: IRace | null = null;
   private pendingHeat: any = null;
   private driverSubscription?: Subscription;
+  private raceStateSubscription?: Subscription;
 
   // Test hook or configuration
   private get WATCHDOG_TIMEOUT(): number {
@@ -120,10 +122,18 @@ export class RaceConnectionService implements OnDestroy {
     private logger: LoggerService,
     private ngZone: NgZone,
     private childWindowManagerService?: ChildWindowManagerService,
+    private wakeLockService?: WakeLockService,
   ) {
     if (!this.childWindowManagerService) {
       this.childWindowManagerService = inject(ChildWindowManagerService);
     }
+    if (!this.wakeLockService) {
+      this.wakeLockService = inject(WakeLockService);
+    }
+
+    this.raceStateSubscription = this.raceState$.subscribe((state) => {
+      this.updateWakeLockForState(state);
+    });
   }
 
   connect() {
@@ -1004,8 +1014,25 @@ export class RaceConnectionService implements OnDestroy {
     }
   }
 
+  private updateWakeLockForState(state: RaceState): void {
+    if (
+      state === RaceState.NOT_STARTED ||
+      state === RaceState.STARTING ||
+      state === RaceState.RACING ||
+      state === RaceState.PAUSED ||
+      state === RaceState.HEAT_OVER ||
+      state === RaceState.RACE_OVER
+    ) {
+      void this.wakeLockService?.request();
+    } else {
+      void this.wakeLockService?.release();
+    }
+  }
+
   ngOnDestroy() {
     this.isDestroyed = true;
+    this.raceStateSubscription?.unsubscribe();
     this.stopConnection();
+    void this.wakeLockService?.release();
   }
 }
