@@ -309,10 +309,19 @@ public class Starting implements IRaceState {
     if (race != null
         && race.getCurrentHeat() != null
         && lane < race.getCurrentHeat().getDrivers().size()) {
-      if (race.getCurrentHeat().getDrivers().get(lane).getRemainingFalseStartTimePenalty() > 0) {
+      DriverHeatData dhd = race.getCurrentHeat().getDrivers().get(lane);
+      if (dhd.getRemainingFalseStartTimePenalty() > 0) {
         return race.getTheme() != null
             ? race.getTheme().resolveFlag("flag.penalty", RaceFlag.BLACK, race.getDatabaseContext())
             : RaceFlag.BLACK;
+      }
+      if (isAllowFinish(race)
+          && isDriverFinished(race, lane, dhd)
+          && !areAllDriversFinished(race)) {
+        return race.getTheme() != null
+            ? race.getTheme()
+                .resolveFlag("flag.driver_finished", RaceFlag.RED, race.getDatabaseContext())
+            : RaceFlag.RED;
       }
     }
     return getFlagType(race);
