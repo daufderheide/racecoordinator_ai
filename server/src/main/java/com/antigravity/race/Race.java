@@ -44,6 +44,7 @@ import com.antigravity.race.states.Starting;
 import com.antigravity.repository.SqliteRepository;
 import com.antigravity.service.AssetService;
 import com.antigravity.service.DatabaseService;
+import com.antigravity.service.SleepPreventionService;
 import com.google.protobuf.GeneratedMessageV3;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -196,6 +197,9 @@ public class Race implements ProtocolListener {
     if (!isFinishedRace) {
       this.hardwareManager.createProtocols(builder.isDemoMode, builder.demoConfig);
     }
+    if (this.hardwareManager.getProtocols() != null) {
+      SleepPreventionService.getInstance().acquireSleepLock();
+    }
     this.isDemoMode = builder.isDemoMode;
 
     this.executionManager = new HeatExecutionManager(this);
@@ -294,6 +298,7 @@ public class Race implements ProtocolListener {
       if (this.hardwareManager.open()) {
         initializeHardwareState();
       }
+      SleepPreventionService.getInstance().acquireSleepLock();
     }
   }
 
@@ -1081,6 +1086,7 @@ public class Race implements ProtocolListener {
 
   public synchronized void stop() {
     this.stopped = true;
+    SleepPreventionService.getInstance().releaseSleepLock();
     if (state != null) {
       state.exit(this);
     }

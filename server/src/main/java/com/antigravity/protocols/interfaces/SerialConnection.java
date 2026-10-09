@@ -70,8 +70,8 @@ public class SerialConnection implements ISerialConnection {
     }
 
     if (serialPort.openPort()) {
-      // Default timeouts
-      serialPort.setComPortTimeouts(SerialPort.TIMEOUT_READ_SEMI_BLOCKING, 100, 0);
+      // Default timeouts: 100ms read timeout, 500ms write timeout
+      serialPort.setComPortTimeouts(SerialPort.TIMEOUT_READ_SEMI_BLOCKING, 100, 500);
       outputStream = serialPort.getOutputStream();
     } else {
       throw new IOException("Failed to open port: " + portName);

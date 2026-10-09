@@ -2705,4 +2705,63 @@ public class ArduinoProtocolTest {
       p.close();
     }
   }
+
+  @Test
+  public void testUnexpectedVersionWhenAlreadyVerified_ReinitializesPins() {
+    protocol.open();
+    byte[] versionMsg = {0x56, 2, 1, 0, 0, 0x3B};
+    serialConnection.injectData(versionMsg);
+    assertTrue("Should be verified and open", protocol.isOpen());
+
+    serialConnection.allWrittenData.clear();
+
+    // Inject version again (simulating Arduino reboot while port remained open)
+    serialConnection.injectData(versionMsg);
+
+    boolean hasPinModeRead =
+        serialConnection.allWrittenData.stream()
+            .anyMatch(data -> data.length > 1 && data[0] == 0x50 && data[1] == 0x49);
+    boolean hasPinModeWrite =
+        serialConnection.allWrittenData.stream()
+            .anyMatch(data -> data.length > 1 && data[0] == 0x50 && data[1] == 0x4F);
+    boolean hasTimeReset =
+        serialConnection.allWrittenData.stream()
+            .anyMatch(data -> data.length == 2 && data[0] == 0x54 && data[1] == 0x3B);
+
+    assertTrue("Should re-send pinModeRead on unexpected version", hasPinModeRead);
+    assertTrue("Should re-send pinModeWrite on unexpected version", hasPinModeWrite);
+    assertTrue("Should re-send time reset on unexpected version", hasTimeReset);
+  }
+
+  @Test
+  public void testUnexpectedHeartbeatResetFlag_ReinitializesPins() {
+    protocol.open();
+    byte[] versionMsg = {0x56, 2, 1, 0, 0, 0x3B};
+    serialConnection.injectData(versionMsg);
+    assertTrue("Should be verified and open", protocol.isOpen());
+
+    // Send initial heartbeat to satisfy expected reset (setting hwReset to 0)
+    byte[] initialHeartbeat = {0x54, 0, 0, 1, 0, 1, 0x3B};
+    serialConnection.injectData(initialHeartbeat);
+
+    serialConnection.allWrittenData.clear();
+
+    // Inject unexpected heartbeat with isReset = 1 while running normally
+    byte[] resetHeartbeat = {0x54, 0, 0, 2, 0, 1, 0x3B};
+    serialConnection.injectData(resetHeartbeat);
+
+    boolean hasPinModeRead =
+        serialConnection.allWrittenData.stream()
+            .anyMatch(data -> data.length > 1 && data[0] == 0x50 && data[1] == 0x49);
+    boolean hasPinModeWrite =
+        serialConnection.allWrittenData.stream()
+            .anyMatch(data -> data.length > 1 && data[0] == 0x50 && data[1] == 0x4F);
+    boolean hasTimeReset =
+        serialConnection.allWrittenData.stream()
+            .anyMatch(data -> data.length == 2 && data[0] == 0x54 && data[1] == 0x3B);
+
+    assertTrue("Should re-send pinModeRead on reset heartbeat", hasPinModeRead);
+    assertTrue("Should re-send pinModeWrite on reset heartbeat", hasPinModeWrite);
+    assertTrue("Should re-send time reset on reset heartbeat", hasTimeReset);
+  }
 }

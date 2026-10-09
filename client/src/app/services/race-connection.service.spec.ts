@@ -16,11 +16,13 @@ import { RaceParticipant } from "@app/race/race_participant";
 import { ChildWindowManagerService } from "./child-window-manager.service";
 import { RaceService } from "./race.service";
 import { RaceConnectionService } from "./race-connection.service";
+import { WakeLockService } from "./wake-lock.service";
 
 describe("RaceConnectionService", () => {
   let service: RaceConnectionService;
   let mockDataService: any;
   let mockRaceService: any;
+  let mockWakeLockService: jasmine.SpyObj<WakeLockService>;
 
   let interfaceEventsSubject: Subject<IInterfaceEvent>;
   let raceUpdateSubject: Subject<any>;
@@ -94,11 +96,19 @@ describe("RaceConnectionService", () => {
       ],
     });
 
+    mockWakeLockService = jasmine.createSpyObj("WakeLockService", [
+      "request",
+      "release",
+    ]);
+    mockWakeLockService.request.and.resolveTo(true);
+    mockWakeLockService.release.and.resolveTo();
+
     TestBed.configureTestingModule({
       providers: [
         RaceConnectionService,
         { provide: DataService, useValue: mockDataService },
         { provide: RaceService, useValue: mockRaceService },
+        { provide: WakeLockService, useValue: mockWakeLockService },
       ],
     });
     service = TestBed.inject(RaceConnectionService);
@@ -975,6 +985,46 @@ describe("RaceConnectionService", () => {
       expect((service as any).isRaceEnded).toBeFalse();
       expect(mockDataService.connectToInterfaceDataSocket).toHaveBeenCalled();
       expect(service["raceStateSubject"].value).toBe(RaceState.NOT_STARTED);
+    });
+  });
+
+  describe("WakeLock", () => {
+    it("should request wake lock when race enters active Raceday states", () => {
+      mockWakeLockService.request.calls.reset();
+      (service as any).raceStateSubject.next(RaceState.NOT_STARTED);
+      expect(mockWakeLockService.request).toHaveBeenCalled();
+
+      mockWakeLockService.request.calls.reset();
+      (service as any).raceStateSubject.next(RaceState.STARTING);
+      expect(mockWakeLockService.request).toHaveBeenCalled();
+
+      mockWakeLockService.request.calls.reset();
+      (service as any).raceStateSubject.next(RaceState.RACING);
+      expect(mockWakeLockService.request).toHaveBeenCalled();
+
+      mockWakeLockService.request.calls.reset();
+      (service as any).raceStateSubject.next(RaceState.PAUSED);
+      expect(mockWakeLockService.request).toHaveBeenCalled();
+
+      mockWakeLockService.request.calls.reset();
+      (service as any).raceStateSubject.next(RaceState.HEAT_OVER);
+      expect(mockWakeLockService.request).toHaveBeenCalled();
+
+      mockWakeLockService.request.calls.reset();
+      (service as any).raceStateSubject.next(RaceState.RACE_OVER);
+      expect(mockWakeLockService.request).toHaveBeenCalled();
+    });
+
+    it("should release wake lock when race enters inactive states", () => {
+      mockWakeLockService.release.calls.reset();
+      (service as any).raceStateSubject.next(RaceState.UNKNOWN_STATE);
+      expect(mockWakeLockService.release).toHaveBeenCalled();
+    });
+
+    it("should release wake lock on ngOnDestroy", () => {
+      mockWakeLockService.release.calls.reset();
+      service.ngOnDestroy();
+      expect(mockWakeLockService.release).toHaveBeenCalled();
     });
   });
 });

@@ -405,7 +405,40 @@ public class ArduinoProtocol extends AbstractSerialProtocol {
         logger.error(
             "Invalid firmware version: {}.{}.{}. Expected 2.1.0 or 1.0.0", major, minor, patch);
       }
+    } else {
+      logger.warn(
+          "Received VERSION ({}.{}.{}.{}) while already verified. Microcontroller may have"
+              + " rebooted. Re-initializing pins and hardware state.",
+          major,
+          minor,
+          patch,
+          build);
+      buildPinLookup();
+      sendPinModeRead();
+      sendPinModeWrite();
+      sendPinModeAnalogRead();
+      sendDebounce();
+      sendTimeReset();
+      initializeHardwareState();
     }
+  }
+
+  @Override
+  protected void handleHeartbeat(long timeInUse, byte isReset) {
+    boolean arduinoReset = isReset != 0;
+    boolean pcExpectedReset = hwReset != 0;
+    if (arduinoReset && !pcExpectedReset && versionVerified) {
+      logger.warn(
+          "Unexpected microcontroller reset flag received in heartbeat. Re-initializing pin"
+              + " modes.");
+      buildPinLookup();
+      sendPinModeRead();
+      sendPinModeWrite();
+      sendPinModeAnalogRead();
+      sendDebounce();
+      sendTimeReset();
+    }
+    super.handleHeartbeat(timeInUse, isReset);
   }
 
   @Override
