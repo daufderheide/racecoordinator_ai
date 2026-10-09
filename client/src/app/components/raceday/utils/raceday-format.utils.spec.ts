@@ -978,6 +978,68 @@ describe("RacedayFormatUtils", () => {
       expect(result).toBe("url-for-flag.race_over");
     });
 
+    it("should return warmup flag when all drivers finished and cooldown is active", () => {
+      ctx.getRace = () => ({ heat_scoring: { allow_finish: "Allow" } }) as any;
+      ctx.areAllDriversFinished = () => true;
+      ctx.isRaceOver = () => false;
+      ctx.isCooldown = () => true;
+      const mockHd = { isFinished: true } as any;
+      const result = RacedayFormatUtils.formatValue(
+        "flag",
+        RaceFlag.GREEN,
+        mockHd,
+        undefined,
+        ctx,
+      );
+      expect(result).toBe("url-for-flag.warmup");
+    });
+
+    it("should return warmup flag when all drivers finished and warmup flag is active via getFlagType", () => {
+      ctx.getRace = () => ({ heat_scoring: { allow_finish: "Allow" } }) as any;
+      ctx.areAllDriversFinished = () => true;
+      ctx.isRaceOver = () => false;
+      ctx.getFlagType = () => "flag.warmup";
+      const mockHd = { isFinished: true } as any;
+      const result = RacedayFormatUtils.formatValue(
+        "flag",
+        RaceFlag.GREEN,
+        mockHd,
+        undefined,
+        ctx,
+      );
+      expect(result).toBe("url-for-flag.warmup");
+    });
+
+    it("should return warmup flag when all drivers finished and hd.flag is GREEN_YELLOW", () => {
+      ctx.getRace = () => ({ heat_scoring: { allow_finish: "Allow" } }) as any;
+      ctx.areAllDriversFinished = () => true;
+      ctx.isRaceOver = () => false;
+      const mockHd = { isFinished: true, flag: RaceFlag.GREEN_YELLOW } as any;
+      const result = RacedayFormatUtils.formatValue(
+        "flag",
+        RaceFlag.GREEN,
+        mockHd,
+        undefined,
+        ctx,
+      );
+      expect(result).toBe("url-for-flag.warmup");
+    });
+
+    it("should return warmup flag when driver is finished in allow-finish during cooldown", () => {
+      ctx.getRace = () => ({ heat_scoring: { allow_finish: "Allow" } }) as any;
+      ctx.areAllDriversFinished = () => false;
+      ctx.isCooldown = () => true;
+      const mockHd = { isFinished: true } as any;
+      const result = RacedayFormatUtils.formatValue(
+        "flag",
+        RaceFlag.GREEN,
+        mockHd,
+        undefined,
+        ctx,
+      );
+      expect(result).toBe("url-for-flag.warmup");
+    });
+
     it("should return driver_finished even if hd.flag is RaceFlag.BLACK when finished in allow finish", () => {
       ctx.getRace = () => ({ heat_scoring: { allow_finish: "Allow" } }) as any;
       ctx.areAllDriversFinished = () => false;

@@ -229,6 +229,8 @@ public class HeatOver implements IRaceState {
                   logger.info("Auto-advance flag changed to: {}", currentFlag);
                   race.broadcastFlag(currentFlag);
                   race.updatePowerForFlag(currentFlag);
+                  syncDriverFlags(race);
+                  race.broadcast(race.createSnapshot());
                   lastFlag = currentFlag;
                 }
 

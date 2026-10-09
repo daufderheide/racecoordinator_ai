@@ -2266,6 +2266,23 @@ describe("DefaultRacedayComponent", () => {
       );
     });
 
+    it("should use warmup flag when all drivers finish in HeatOver during cooldown", () => {
+      mockRaceService.getRace.and.returnValue({
+        heat_scoring: { allow_finish: "Allow" },
+      } as any);
+      (component as any).raceState = RaceState.HEAT_OVER;
+      spyOnProperty(component, "isCooldown", "get").and.returnValue(true);
+      mockRaceFlagService.getFlagUrl.and.returnValue(
+        "http://localhost/warmup.png",
+      );
+      const finishedHd = { ...mockHd, isFinished: true } as any;
+      const result = component.formatValue("flag", RaceFlag.RED, finishedHd);
+      expect(result).toBe("http://localhost/warmup.png");
+      expect(mockRaceFlagService.getFlagUrl).toHaveBeenCalledWith(
+        "flag.warmup",
+      );
+    });
+
     it("should use race over flag when all drivers finish in RaceOver", () => {
       mockRaceService.getRace.and.returnValue({
         heat_scoring: { allow_finish: "Allow" },

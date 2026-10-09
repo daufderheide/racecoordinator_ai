@@ -688,7 +688,7 @@ export class RacedayLaneColumnComponent
     );
   }
 
-  getImageUrl(key: string = this.columnKey): string {
+  getImageUrl(key: string = this.columnKey, anchor?: string): string {
     const parent = this.parent();
     const hd = this.targetDriver;
     if (!parent || !hd) return "";
@@ -702,6 +702,10 @@ export class RacedayLaneColumnComponent
       return avatarUrl ? parent.getFullUrl(avatarUrl) : "";
     }
     if (key === "flag") {
+      if (parent.formatColumnValue) {
+        const colDef = parent.columns?.find((c: any) => c.propertyName === key);
+        return parent.formatColumnValue(hd, colDef, key, anchor);
+      }
       return parent.getCurrentFlagUrl ? parent.getCurrentFlagUrl() : "";
     }
     if (key === "qrCode") {
@@ -810,7 +814,7 @@ export class RacedayLaneColumnComponent
   getInsetImageUrl(anchor: string): string {
     const key = this.getInsetKey(anchor);
     if (!key || !this.isImageProperty(key)) return "";
-    return this.getImageUrl(key);
+    return this.getImageUrl(key, anchor);
   }
 
   hasAnchorValue(anchor: string): boolean {

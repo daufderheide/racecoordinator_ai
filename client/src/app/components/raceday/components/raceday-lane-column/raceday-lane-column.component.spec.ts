@@ -437,6 +437,17 @@ describe("RacedayLaneColumnComponent", () => {
     );
     fixture.detectChanges();
     expect(component.getImageUrl()).toBe("http://localhost/green-flag.png");
+
+    mockParent.formatColumnValue = jasmine
+      .createSpy("formatColumnValue")
+      .and.returnValue("http://localhost/custom-flag.png");
+    expect(component.getImageUrl()).toBe("http://localhost/custom-flag.png");
+    expect(mockParent.formatColumnValue).toHaveBeenCalledWith(
+      component.targetDriver,
+      undefined,
+      "flag",
+      undefined,
+    );
   });
 
   it("should detect drift lap on lastLapTime when driver has isLastLapDrift", () => {
@@ -755,6 +766,19 @@ describe("RacedayLaneColumnComponent", () => {
       expect(imgs.length).toBe(2);
       expect(imgs[0].src).toContain("avatar1.png");
       expect(imgs[1].src).toContain("green-flag.png");
+
+      mockParent.formatColumnValue = jasmine
+        .createSpy("formatColumnValue")
+        .and.returnValue("http://localhost/cooldown-flag.png");
+      expect(component.getInsetImageUrl("bottom-right")).toBe(
+        "http://localhost/cooldown-flag.png",
+      );
+      expect(mockParent.formatColumnValue).toHaveBeenCalledWith(
+        component.targetDriver,
+        undefined,
+        "flag",
+        "bottom-right",
+      );
     });
 
     it("should apply custom inset typography and text color", () => {

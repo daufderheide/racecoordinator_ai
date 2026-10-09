@@ -167,6 +167,31 @@ public class HeatOverTest {
   }
 
   @Test
+  public void testEnter_SyncsDriverFlags_WarmupWhenCooldown() {
+    com.antigravity.race.Heat currentHeat = mock(com.antigravity.race.Heat.class);
+    when(currentHeat.getStatistics()).thenReturn(new com.antigravity.race.RaceHeatStatistics());
+    com.antigravity.race.DriverHeatData dhd =
+        new com.antigravity.race.DriverHeatData(
+            new com.antigravity.race.RaceParticipant(
+                new com.antigravity.models.Driver("d1", "Driver 1", "id1", "1"), "id1"));
+    when(currentHeat.getDrivers()).thenReturn(java.util.Collections.singletonList(dhd));
+    when(race.getCurrentHeat()).thenReturn(currentHeat);
+    when(race.isAutoAdvanceFired()).thenReturn(false);
+    when(race.getAutoAdvanceRemaining()).thenReturn(2.0);
+    when(race.getRaceModel())
+        .thenReturn(
+            new com.antigravity.models.Race.Builder()
+                .withAutoAdvanceTime(2.0)
+                .withAutoAdvanceWarmupTime(3.0)
+                .withHeatScoring(new HeatScoring())
+                .build());
+
+    heatOver.enter(race);
+
+    assertEquals(RaceFlag.GREEN_YELLOW, dhd.getFlag());
+  }
+
+  @Test
   public void testPause_SyncsDriverFlags() {
     com.antigravity.race.Heat currentHeat = mock(com.antigravity.race.Heat.class);
     com.antigravity.race.DriverHeatData dhd =

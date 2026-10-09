@@ -6,6 +6,7 @@ import { RaceFlag, RaceState } from "@app/proto/antigravity";
 import { RaceService } from "./race.service";
 import { RaceConnectionService } from "./race-connection.service";
 import { RaceFlagService } from "./race-flag.service";
+import { RaceTimeService } from "./race-time.service";
 import { SettingsService } from "./settings.service";
 import { ThemeService } from "./theme.service";
 
@@ -29,8 +30,16 @@ describe("RaceFlagService", () => {
       },
     );
 
-    const raceServiceSpy = jasmine.createSpyObj("RaceService", [], {
+    const raceServiceSpy = jasmine.createSpyObj("RaceService", ["getRace"], {
       currentHeat$: currentHeatSubject.asObservable(),
+    });
+    raceServiceSpy.getRace.and.returnValue(null);
+
+    const raceTimeSpy = jasmine.createSpyObj("RaceTimeService", [], {
+      isWarmup$: of(false),
+      isCooldown$: of(false),
+      isWarmup: false,
+      isCooldown: false,
     });
 
     const themeServiceSpy = jasmine.createSpyObj("ThemeService", [
@@ -50,6 +59,7 @@ describe("RaceFlagService", () => {
         RaceFlagService,
         { provide: RaceConnectionService, useValue: raceConnectionSpy },
         { provide: RaceService, useValue: raceServiceSpy },
+        { provide: RaceTimeService, useValue: raceTimeSpy },
         { provide: ThemeService, useValue: themeServiceSpy },
         { provide: SettingsService, useValue: settingsServiceSpy },
         { provide: DataService, useValue: dataServiceSpy },
@@ -403,6 +413,74 @@ describe("RaceFlagService", () => {
       });
 
       raceFlagSubject.next(RaceFlag.GREEN);
+    });
+  });
+
+  describe("with RaceTimeService (cooldown & warmup)", () => {
+    let mockRaceTimeService: any;
+    let isCooldownSubject: BehaviorSubject<boolean>;
+    let isWarmupSubject: BehaviorSubject<boolean>;
+    let serviceWithTime: RaceFlagService;
+
+    beforeEach(() => {
+      isCooldownSubject = new BehaviorSubject<boolean>(false);
+      isWarmupSubject = new BehaviorSubject<boolean>(false);
+      mockRaceTimeService = {
+        isCooldown$: isCooldownSubject.asObservable(),
+        isWarmup$: isWarmupSubject.asObservable(),
+        isCooldown: false,
+        isWarmup: false,
+      };
+
+      serviceWithTime = new RaceFlagService(
+        TestBed.inject(RaceConnectionService),
+        TestBed.inject(RaceService),
+        TestBed.inject(ThemeService),
+        TestBed.inject(SettingsService),
+        TestBed.inject(DataService),
+        mockRaceTimeService,
+      );
+    });
+
+    it("should return flag.warmup when in HEAT_OVER during cooldown", () => {
+      raceStateSubject.next(RaceState.HEAT_OVER);
+      raceFlagSubject.next(RaceFlag.RED);
+      mockRaceTimeService.isCooldown = true;
+      expect(serviceWithTime.getFlagType()).toBe("flag.warmup");
+      expect(serviceWithTime.getFlagColor()).toBe("green");
+    });
+
+    it("should return flag.heat_over when in HEAT_OVER not during cooldown", () => {
+      raceStateSubject.next(RaceState.HEAT_OVER);
+      raceFlagSubject.next(RaceFlag.RED);
+      mockRaceTimeService.isCooldown = false;
+      expect(serviceWithTime.getFlagType()).toBe("flag.heat_over");
+      expect(serviceWithTime.getFlagColor()).toBe("red");
+    });
+
+    it("should return flag.warmup when in NOT_STARTED during warmup", () => {
+      raceStateSubject.next(RaceState.NOT_STARTED);
+      raceFlagSubject.next(RaceFlag.RED);
+      mockRaceTimeService.isWarmup = true;
+      expect(serviceWithTime.getFlagType()).toBe("flag.warmup");
+      expect(serviceWithTime.getFlagColor()).toBe("green");
+    });
+
+    it("should emit new flag url when isCooldown$ emits", (done) => {
+      raceStateSubject.next(RaceState.HEAT_OVER);
+      mockRaceTimeService.isCooldown = true;
+      spyOn(serviceWithTime, "getFlagUrl").and.returnValue(
+        "http://localhost:7070/assets/warmup.png",
+      );
+
+      serviceWithTime.currentFlagUrl$.subscribe((url) => {
+        if (url === "http://localhost:7070/assets/warmup.png") {
+          expect(url).toBe("http://localhost:7070/assets/warmup.png");
+          done();
+        }
+      });
+
+      isCooldownSubject.next(true);
     });
   });
 });
