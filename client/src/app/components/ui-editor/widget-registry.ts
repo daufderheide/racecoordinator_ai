@@ -84,6 +84,8 @@ export const WIDGET_REGISTRY: Record<string, WidgetRegistryEntry> = {
       insetTextColor: "",
       collapsedColumnGroups: {},
       columnDecimals: {},
+      columnOnlyShowSegmentsWhenNotRacing: {},
+      columnOnlyShowDecimalsIfSegments: {},
     }),
   },
   "lane-column": {
@@ -105,6 +107,8 @@ export const WIDGET_REGISTRY: Record<string, WidgetRegistryEntry> = {
       valueAlignment: "center",
       timeDecimalPlaces: 3,
       lapDecimalPlaces: 2,
+      onlyShowSegmentsWhenNotRacing: false,
+      onlyShowDecimalsIfSegments: false,
       insets: {},
       insetFontFamily: "",
       insetFontSize: 18,

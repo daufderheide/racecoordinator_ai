@@ -847,8 +847,15 @@ describe("RacedayLayoutUtils", () => {
     it("should correctly identify lap column keys", () => {
       expect(RacedayLayoutUtils.isLapColumnKey("lapCount")).toBeTrue();
       expect(RacedayLayoutUtils.isLapColumnKey("overallLapCount")).toBeTrue();
+      expect(RacedayLayoutUtils.isLapColumnKey("totalLaps")).toBeTrue();
+      expect(RacedayLayoutUtils.isLapColumnKey("heatTotalLaps")).toBeTrue();
+      expect(RacedayLayoutUtils.isLapColumnKey("raceTotalLaps")).toBeTrue();
+      expect(RacedayLayoutUtils.isLapColumnKey("overallTotalLaps")).toBeTrue();
       expect(
         RacedayLayoutUtils.isLapColumnKey("lapCount_center-center"),
+      ).toBeTrue();
+      expect(
+        RacedayLayoutUtils.isLapColumnKey("totalLaps_bottom-right"),
       ).toBeTrue();
 
       expect(RacedayLayoutUtils.isLapColumnKey("")).toBeFalse();

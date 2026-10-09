@@ -559,11 +559,11 @@
         <input
           type="checkbox"
           class="form-checkbox"
-          [(ngModel)]="currentSettings['onlyShowDecimalsIfSegments']"
+          [(ngModel)]="onlyShowDecimalsWhenNotRacing"
           (change)="onFieldChange()"
         />
         <span>{{
-          "UE_INSPECTOR_ONLY_SHOW_DECIMALS_IF_SEGMENTS" | translate
+          "UE_INSPECTOR_ONLY_SHOW_DECIMALS_WHEN_NOT_RACING" | translate
         }}</span>
       </label>
     </div>

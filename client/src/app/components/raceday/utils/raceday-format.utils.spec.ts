@@ -1,5 +1,5 @@
 import { AllowFinish } from "@app/models/heat_scoring";
-import { RaceFlag } from "@app/proto/antigravity";
+import { RaceFlag, RaceState } from "@app/proto/antigravity";
 
 import { DriverHeatData } from "../../../race/driver_heat_data";
 import { FormatContext, RacedayFormatUtils } from "./raceday-format.utils";
@@ -1337,6 +1337,18 @@ describe("RacedayFormatUtils", () => {
         RacedayFormatUtils.getPropertyValue(participantHd, "overallLapCount"),
       ).toBe(50.25);
       expect(
+        RacedayFormatUtils.getPropertyValue(participantHd, "totalLaps"),
+      ).toBe(50.25);
+      expect(
+        RacedayFormatUtils.getPropertyValue(participantHd, "raceTotalLaps"),
+      ).toBe(50.25);
+      expect(
+        RacedayFormatUtils.getPropertyValue(participantHd, "overallTotalLaps"),
+      ).toBe(50.25);
+      expect(
+        RacedayFormatUtils.getPropertyValue(participantHd, "heatTotalLaps"),
+      ).toBe(participantHd.lapCount);
+      expect(
         RacedayFormatUtils.getPropertyValue(
           participantHd,
           "overallPhysicalLapCount",
@@ -1808,15 +1820,14 @@ describe("RacedayFormatUtils", () => {
     });
   });
 
-  describe("formatValue - onlyShowDecimalsIfSegments", () => {
-    it("should show decimals by default when onlyShowDecimalsIfSegments is false or undefined", () => {
+  describe("formatValue - onlyShowDecimalsWhenNotRacing", () => {
+    it("should show decimals by default when onlyShowDecimalsWhenNotRacing is false or undefined", () => {
       ctx.laneViewWidgetSettings = {
         lapDecimalPlaces: 2,
       } as any;
+      ctx.raceState = RaceState.RACING;
 
       hd.reactionTime = 1;
-      (hd as any).userLaps = 0;
-      (hd as any).autoCalculatedLaps = 0;
 
       const result = RacedayFormatUtils.formatValue(
         "lapCount",
@@ -1828,17 +1839,14 @@ describe("RacedayFormatUtils", () => {
       expect(result).toBe("10.00");
     });
 
-    it("should omit decimals for lapCount when onlyShowDecimalsIfSegments is true and no segments are added", () => {
+    it("should keep old setting value when onlyShowDecimalsIfSegments was used", () => {
       ctx.laneViewWidgetSettings = {
         lapDecimalPlaces: 2,
-        columnOnlyShowDecimalsIfSegments: {
-          lapCount: true,
-        },
+        onlyShowDecimalsIfSegments: true,
       } as any;
+      ctx.raceState = RaceState.RACING;
 
       hd.reactionTime = 1;
-      (hd as any).userLaps = 0;
-      (hd as any).autoCalculatedLaps = 0;
 
       const result = RacedayFormatUtils.formatValue(
         "lapCount",
@@ -1850,16 +1858,34 @@ describe("RacedayFormatUtils", () => {
       expect(result).toBe("10");
     });
 
-    it("should display placeholder as -- without decimal points when no segments and onlyShowDecimalsIfSegments is true", () => {
+    it("should omit decimals for lapCount during RACING state when enabled", () => {
       ctx.laneViewWidgetSettings = {
         lapDecimalPlaces: 2,
-        onlyShowDecimalsIfSegments: true,
+        onlyShowDecimalsWhenNotRacing: true,
       } as any;
+      ctx.getRaceState = () => RaceState.RACING;
+
+      hd.reactionTime = 1;
+
+      const result = RacedayFormatUtils.formatValue(
+        "lapCount",
+        10,
+        hd,
+        undefined,
+        ctx,
+      );
+      expect(result).toBe("10");
+    });
+
+    it("should display placeholder as -- without decimal points during RACING state when enabled", () => {
+      ctx.laneViewWidgetSettings = {
+        lapDecimalPlaces: 2,
+        onlyShowDecimalsWhenNotRacing: true,
+      } as any;
+      ctx.raceState = RaceState.RACING;
 
       hd.reactionTime = 0;
       (hd as any).lapTimes = [];
-      (hd as any).userLaps = 0;
-      (hd as any).autoCalculatedLaps = 0;
 
       const result = RacedayFormatUtils.formatValue(
         "lapCount",
@@ -1871,15 +1897,14 @@ describe("RacedayFormatUtils", () => {
       expect(result).toBe("--");
     });
 
-    it("should show decimals for lapCount when userLaps are added", () => {
+    it("should show decimals for lapCount in PAUSED state when enabled", () => {
       ctx.laneViewWidgetSettings = {
         lapDecimalPlaces: 2,
-        onlyShowDecimalsIfSegments: true,
+        onlyShowDecimalsWhenNotRacing: true,
       } as any;
+      ctx.raceState = RaceState.PAUSED;
 
       hd.reactionTime = 1;
-      (hd as any).userLaps = 0.5;
-      (hd as any).autoCalculatedLaps = 0;
 
       const result = RacedayFormatUtils.formatValue(
         "lapCount",
@@ -1891,15 +1916,52 @@ describe("RacedayFormatUtils", () => {
       expect(result).toBe("10.50");
     });
 
-    it("should show decimals for lapCount even when userLaps sum to an exact whole number", () => {
+    it("should show decimals for lapCount in HEAT_OVER state when enabled", () => {
       ctx.laneViewWidgetSettings = {
         lapDecimalPlaces: 2,
-        onlyShowDecimalsIfSegments: true,
+        onlyShowDecimalsWhenNotRacing: true,
       } as any;
+      ctx.raceState = RaceState.HEAT_OVER;
 
       hd.reactionTime = 1;
-      (hd as any).userLaps = 1.0;
-      (hd as any).autoCalculatedLaps = 0;
+
+      const result = RacedayFormatUtils.formatValue(
+        "lapCount",
+        10.25,
+        hd,
+        undefined,
+        ctx,
+      );
+      expect(result).toBe("10.25");
+    });
+
+    it("should show decimals for lapCount in RACE_OVER state when enabled", () => {
+      ctx.laneViewWidgetSettings = {
+        lapDecimalPlaces: 2,
+        onlyShowDecimalsWhenNotRacing: true,
+      } as any;
+      ctx.raceState = RaceState.RACE_OVER;
+
+      hd.reactionTime = 1;
+
+      const result = RacedayFormatUtils.formatValue(
+        "lapCount",
+        10.75,
+        hd,
+        undefined,
+        ctx,
+      );
+      expect(result).toBe("10.75");
+    });
+
+    it("should show decimals for lapCount in NOT_STARTED state when enabled", () => {
+      ctx.laneViewWidgetSettings = {
+        lapDecimalPlaces: 2,
+        onlyShowDecimalsWhenNotRacing: true,
+      } as any;
+      ctx.raceState = RaceState.NOT_STARTED;
+
+      hd.reactionTime = 1;
 
       const result = RacedayFormatUtils.formatValue(
         "lapCount",
@@ -1911,35 +1973,14 @@ describe("RacedayFormatUtils", () => {
       expect(result).toBe("11.00");
     });
 
-    it("should show decimals for lapCount when temporary pause or end-of-heat autoCalculatedLaps are present", () => {
+    it("should omit decimals for lapCount in STARTING state when enabled", () => {
       ctx.laneViewWidgetSettings = {
         lapDecimalPlaces: 2,
-        onlyShowDecimalsIfSegments: true,
+        onlyShowDecimalsWhenNotRacing: true,
       } as any;
+      ctx.raceState = RaceState.STARTING;
 
       hd.reactionTime = 1;
-      (hd as any).userLaps = 0;
-      (hd as any).autoCalculatedLaps = 0.35;
-
-      const result = RacedayFormatUtils.formatValue(
-        "lapCount",
-        10.35,
-        hd,
-        undefined,
-        ctx,
-      );
-      expect(result).toBe("10.35");
-    });
-
-    it("should revert to whole numbers when temporary pause autoCalculatedLaps are removed upon resume", () => {
-      ctx.laneViewWidgetSettings = {
-        lapDecimalPlaces: 2,
-        onlyShowDecimalsIfSegments: true,
-      } as any;
-
-      hd.reactionTime = 1;
-      (hd as any).userLaps = 0;
-      (hd as any).autoCalculatedLaps = 0.0;
 
       const result = RacedayFormatUtils.formatValue(
         "lapCount",
@@ -1951,40 +1992,40 @@ describe("RacedayFormatUtils", () => {
       expect(result).toBe("10");
     });
 
-    it("should omit decimals for overallLapCount when participant has no segments", () => {
+    it("should omit decimals for overallLapCount during RACING state when column setting is true", () => {
       ctx.laneViewWidgetSettings = {
         lapDecimalPlaces: 2,
-        columnOnlyShowDecimalsIfSegments: {
+        columnOnlyShowDecimalsWhenNotRacing: {
           overallLapCount: true,
         },
       } as any;
+      ctx.raceState = RaceState.RACING;
 
       (hd as any).participant = {
         totalTime: 50.0,
-        hasSegments: false,
       };
 
       const result = RacedayFormatUtils.formatValue(
         "overallLapCount",
-        25,
+        25.5,
         hd,
         undefined,
         ctx,
       );
-      expect(result).toBe("25");
+      expect(result).toBe("26"); // rounded to whole number without decimals
     });
 
-    it("should show decimals for overallLapCount when participant has segments", () => {
+    it("should show decimals for overallLapCount when not racing (e.g. PAUSED)", () => {
       ctx.laneViewWidgetSettings = {
         lapDecimalPlaces: 2,
-        columnOnlyShowDecimalsIfSegments: {
+        columnOnlyShowDecimalsWhenNotRacing: {
           overallLapCount: true,
         },
       } as any;
+      ctx.raceState = RaceState.PAUSED;
 
       (hd as any).participant = {
         totalTime: 50.0,
-        hasSegments: true,
       };
 
       const result = RacedayFormatUtils.formatValue(
@@ -1997,27 +2038,86 @@ describe("RacedayFormatUtils", () => {
       expect(result).toBe("25.50");
     });
 
-    it("should show decimals for overallLapCount even when segment summation results in a whole number", () => {
+    it("should omit decimals for totalLaps during RACING state when column setting is true", () => {
       ctx.laneViewWidgetSettings = {
         lapDecimalPlaces: 2,
-        columnOnlyShowDecimalsIfSegments: {
-          overallLapCount: true,
+        columnOnlyShowDecimalsWhenNotRacing: {
+          totalLaps: true,
         },
       } as any;
+      ctx.raceState = RaceState.RACING;
 
       (hd as any).participant = {
         totalTime: 50.0,
-        hasSegments: true,
       };
 
       const result = RacedayFormatUtils.formatValue(
-        "overallLapCount",
-        26,
+        "totalLaps",
+        30,
         hd,
         undefined,
         ctx,
       );
-      expect(result).toBe("26.00");
+      expect(result).toBe("30");
+    });
+
+    it("should show decimals for totalLaps in PAUSED state when column setting is true", () => {
+      ctx.laneViewWidgetSettings = {
+        lapDecimalPlaces: 2,
+        onlyShowDecimalsWhenNotRacing: true,
+      } as any;
+      ctx.raceState = RaceState.PAUSED;
+
+      (hd as any).participant = {
+        totalTime: 50.0,
+      };
+
+      const result = RacedayFormatUtils.formatValue(
+        "totalLaps",
+        30.75,
+        hd,
+        undefined,
+        ctx,
+      );
+      expect(result).toBe("30.75");
+    });
+
+    it("should omit decimals for heatTotalLaps during RACING state when enabled", () => {
+      ctx.laneViewWidgetSettings = {
+        lapDecimalPlaces: 2,
+        onlyShowDecimalsWhenNotRacing: true,
+      } as any;
+      ctx.raceState = RaceState.RACING;
+
+      hd.reactionTime = 1;
+
+      const result = RacedayFormatUtils.formatValue(
+        "heatTotalLaps",
+        15,
+        hd,
+        undefined,
+        ctx,
+      );
+      expect(result).toBe("15");
+    });
+
+    it("should show decimals for heatTotalLaps when not racing", () => {
+      ctx.laneViewWidgetSettings = {
+        lapDecimalPlaces: 2,
+        onlyShowDecimalsWhenNotRacing: true,
+      } as any;
+      ctx.raceState = RaceState.PAUSED;
+
+      hd.reactionTime = 1;
+
+      const result = RacedayFormatUtils.formatValue(
+        "heatTotalLaps",
+        15.25,
+        hd,
+        undefined,
+        ctx,
+      );
+      expect(result).toBe("15.25");
     });
   });
 });

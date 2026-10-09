@@ -4306,6 +4306,7 @@ export class DefaultRacedayComponent
       isDriverFinished: (hd, scoring) => this.isDriverFinished(hd, scoring),
       areAllDriversFinished: () => this.areAllDriversFinished(),
       isRaceOver: () => this.isRaceOver(),
+      getRaceState: () => this.raceState,
       getLaneRecordEntry: (laneIndex) => this.getLaneRecordEntry(laneIndex),
       getBestRaceLapEntry: (laneIndex) => this.getBestRaceLapEntry(laneIndex),
       formatDate: (d: any) => this.dateTimeFormatService.formatDate(d, "short"),
@@ -4346,6 +4347,7 @@ export class DefaultRacedayComponent
       isDriverFinished: (hd, scoring) => this.isDriverFinished(hd, scoring),
       areAllDriversFinished: () => this.areAllDriversFinished(),
       isRaceOver: () => this.isRaceOver(),
+      getRaceState: () => this.raceState,
       formatDate: (d: any) => this.dateTimeFormatService.formatDate(d, "short"),
     };
 
@@ -6422,6 +6424,7 @@ export class DefaultRacedayComponent
       isDriverFinished: (hd, scoring) => this.isDriverFinished(hd, scoring),
       areAllDriversFinished: () => this.areAllDriversFinished(),
       isRaceOver: () => this.isRaceOver(),
+      getRaceState: () => this.raceState,
       getLaneRecordEntry: (laneIndex) => this.getLaneRecordEntry(laneIndex),
       getBestRaceLapEntry: (laneIndex) => this.getBestRaceLapEntry(laneIndex),
       formatDate: (d: any) => this.dateTimeFormatService.formatDate(d, "short"),

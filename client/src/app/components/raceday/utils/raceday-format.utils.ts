@@ -8,7 +8,7 @@ import { Driver } from "@app/models/driver";
 import { AllowFinish, FinishMethod } from "@app/models/heat_scoring";
 import { Race } from "@app/models/race";
 import { Track } from "@app/models/track";
-import { RaceFlag } from "@app/proto/antigravity";
+import { RaceFlag, RaceState } from "@app/proto/antigravity";
 import { DriverHeatData } from "@app/race/driver_heat_data";
 
 export interface FormatContext {
@@ -28,6 +28,8 @@ export interface FormatContext {
   isDriverFinished?: (hd: DriverHeatData, scoring?: any) => boolean;
   areAllDriversFinished?: () => boolean;
   isRaceOver?: () => boolean;
+  getRaceState?: () => RaceState | number | undefined;
+  raceState?: RaceState | number;
   getLaneRecordEntry?: (laneIndex: number) => any;
   getBestRaceLapEntry?: (laneIndex: number) => any;
   formatDate?: (date: any) => string;
@@ -84,6 +86,9 @@ export class RacedayFormatUtils {
   ): any {
     if (!heatDriver) return undefined;
     const baseKey = propertyPath.split(".")[0].split("_")[0];
+    if (baseKey === "heatTotalLaps") {
+      return heatDriver.lapCount;
+    }
     const p =
       heatDriver.participant ?? (heatDriver as any).actualDriver?.participant;
     const overallVal = RacedayFormatUtils.extractOverallPropertyValue(
@@ -110,8 +115,14 @@ export class RacedayFormatUtils {
   ): any {
     switch (baseKey) {
       case "overallLapCount":
+      case "totalLaps":
+      case "raceTotalLaps":
+      case "overallTotalLaps":
         return (
-          p?.totalLaps ?? heatDriver?.totalLaps ?? heatDriver?.overallLapCount
+          p?.totalLaps ??
+          heatDriver?.totalLaps ??
+          heatDriver?.overallLapCount ??
+          heatDriver?.lapCount
         );
       case "overallPhysicalLapCount":
         return (
@@ -262,7 +273,12 @@ export class RacedayFormatUtils {
       if (baseKey === "overallConsistencyScore") {
         return "--.-%";
       }
-      if (baseKey === "overallLapCount") {
+      if (
+        baseKey === "overallLapCount" ||
+        baseKey === "totalLaps" ||
+        baseKey === "raceTotalLaps" ||
+        baseKey === "overallTotalLaps"
+      ) {
         return lapPlaceholder;
       }
     }
@@ -328,7 +344,12 @@ export class RacedayFormatUtils {
       }
     }
 
-    if (baseKey === "overallLapCount") {
+    if (
+      baseKey === "overallLapCount" ||
+      baseKey === "totalLaps" ||
+      baseKey === "raceTotalLaps" ||
+      baseKey === "overallTotalLaps"
+    ) {
       const p = hd?.participant;
       const hasCompleted = p?.totalTime && p.totalTime > 0;
       if (
@@ -432,33 +453,49 @@ export class RacedayFormatUtils {
           ? Number(ctx.laneViewWidgetSettings.lapDecimalPlaces)
           : 2;
 
-    const onlyShowDecimalsIfSegments =
+    const onlyShowDecimalsWhenNotRacing =
+      ctx.laneViewWidgetSettings?.onlyShowDecimalsWhenNotRacing ??
+      ctx.laneViewWidgetSettings?.onlyShowSegmentsWhenNotRacing ??
       ctx.laneViewWidgetSettings?.onlyShowDecimalsIfSegments ??
+      ctx.laneViewWidgetSettings?.columnOnlyShowDecimalsWhenNotRacing?.[
+        column?.propertyName ?? ""
+      ] ??
+      ctx.laneViewWidgetSettings?.columnOnlyShowSegmentsWhenNotRacing?.[
+        column?.propertyName ?? ""
+      ] ??
       ctx.laneViewWidgetSettings?.columnOnlyShowDecimalsIfSegments?.[
         column?.propertyName ?? ""
       ] ??
+      ctx.laneViewWidgetSettings?.columnOnlyShowDecimalsWhenNotRacing?.[
+        colKey
+      ] ??
+      ctx.laneViewWidgetSettings?.columnOnlyShowSegmentsWhenNotRacing?.[
+        colKey
+      ] ??
       ctx.laneViewWidgetSettings?.columnOnlyShowDecimalsIfSegments?.[colKey] ??
+      ctx.laneViewWidgetSettings?.columnOnlyShowDecimalsWhenNotRacing?.[
+        baseKey
+      ] ??
+      ctx.laneViewWidgetSettings?.columnOnlyShowSegmentsWhenNotRacing?.[
+        baseKey
+      ] ??
       ctx.laneViewWidgetSettings?.columnOnlyShowDecimalsIfSegments?.[baseKey] ??
       false;
 
-    if (onlyShowDecimalsIfSegments) {
-      if (baseKey === "lapCount") {
-        const hasSegs =
-          hd?.hasSegments ??
-          ((hd?.userLaps !== undefined && hd.userLaps !== 0) ||
-            (hd?.autoCalculatedLaps !== undefined &&
-              hd.autoCalculatedLaps !== 0));
-        if (!hasSegs) {
-          lapDecimals = 0;
-        }
-      } else if (baseKey === "overallLapCount") {
-        const hasSegs =
-          hd?.participant?.hasSegments ??
-          hd?.hasSegments ??
-          ((hd?.userLaps !== undefined && hd.userLaps !== 0) ||
-            (hd?.autoCalculatedLaps !== undefined &&
-              hd.autoCalculatedLaps !== 0));
-        if (!hasSegs) {
+    if (onlyShowDecimalsWhenNotRacing) {
+      const isLapMetric =
+        baseKey === "lapCount" ||
+        baseKey === "heatTotalLaps" ||
+        baseKey === "overallLapCount" ||
+        baseKey === "totalLaps" ||
+        baseKey === "raceTotalLaps" ||
+        baseKey === "overallTotalLaps";
+
+      if (isLapMetric) {
+        const state = ctx.getRaceState ? ctx.getRaceState() : ctx.raceState;
+        const isRacingOrStarting =
+          state === RaceState.RACING || state === RaceState.STARTING;
+        if (isRacingOrStarting) {
           lapDecimals = 0;
         }
       }
@@ -469,7 +506,11 @@ export class RacedayFormatUtils {
     const lapPlaceholder =
       lapDecimals > 0 ? "--." + "-".repeat(lapDecimals) : "--";
 
-    if (baseKey.startsWith("overall")) {
+    if (
+      baseKey.startsWith("overall") ||
+      baseKey === "totalLaps" ||
+      baseKey === "raceTotalLaps"
+    ) {
       const overallStr = RacedayFormatUtils.formatOverallValue(
         baseKey,
         value,
@@ -619,7 +660,7 @@ export class RacedayFormatUtils {
         const sign = value > 0 ? "+" : "";
         return sign + value.toFixed(timeDecimals);
       }
-    } else if (baseKey === "lapCount") {
+    } else if (baseKey === "lapCount" || baseKey === "heatTotalLaps") {
       const hasReactionTime = hd.reactionTime > 0;
       const hasRealLap = hd.lapTimes && hd.lapTimes.length > 0;
       const hasAdjustment =
@@ -635,7 +676,7 @@ export class RacedayFormatUtils {
       ) {
         return lapPlaceholder;
       }
-      return value.toFixed(lapDecimals);
+      return Number(value).toFixed(lapDecimals);
     } else if (baseKey === "physicalLapCount") {
       const hasReactionTime = hd.reactionTime > 0;
       const hasRealLap = hd.lapTimes && hd.lapTimes.length > 0;

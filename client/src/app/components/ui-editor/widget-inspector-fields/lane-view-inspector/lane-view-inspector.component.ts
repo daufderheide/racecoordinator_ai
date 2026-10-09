@@ -321,6 +321,26 @@ export class LaneViewInspectorComponent implements OnInit {
     if (this.settings()?.columnDecimals) {
       delete this.settings().columnDecimals[colKey];
     }
+    if (
+      this.widget()?.customSettings?.["columnOnlyShowDecimalsWhenNotRacing"]
+    ) {
+      delete this.widget().customSettings[
+        "columnOnlyShowDecimalsWhenNotRacing"
+      ][colKey];
+    }
+    if (this.settings()?.columnOnlyShowDecimalsWhenNotRacing) {
+      delete this.settings().columnOnlyShowDecimalsWhenNotRacing[colKey];
+    }
+    if (
+      this.widget()?.customSettings?.["columnOnlyShowSegmentsWhenNotRacing"]
+    ) {
+      delete this.widget().customSettings[
+        "columnOnlyShowSegmentsWhenNotRacing"
+      ][colKey];
+    }
+    if (this.settings()?.columnOnlyShowSegmentsWhenNotRacing) {
+      delete this.settings().columnOnlyShowSegmentsWhenNotRacing[colKey];
+    }
     if (this.widget()?.customSettings?.["columnOnlyShowDecimalsIfSegments"]) {
       delete this.widget().customSettings["columnOnlyShowDecimalsIfSegments"][
         colKey
@@ -555,17 +575,29 @@ export class LaneViewInspectorComponent implements OnInit {
     this.change.emit();
   }
 
-  getColumnOnlyShowDecimalsIfSegments(colKey: string): boolean {
+  getColumnOnlyShowDecimalsWhenNotRacing(colKey: string): boolean {
     const s = this.settings?.() || this.widget?.()?.customSettings;
     const flags =
+      s?.columnOnlyShowDecimalsWhenNotRacing ||
+      s?.columnOnlyShowSegmentsWhenNotRacing ||
       s?.columnOnlyShowDecimalsIfSegments ||
+      this.widget?.()?.customSettings?.columnOnlyShowDecimalsWhenNotRacing ||
+      this.widget?.()?.customSettings?.columnOnlyShowSegmentsWhenNotRacing ||
       this.widget?.()?.customSettings?.columnOnlyShowDecimalsIfSegments;
     return Boolean(flags?.[colKey]);
   }
 
-  setColumnOnlyShowDecimalsIfSegments(colKey: string, value: boolean): void {
+  setColumnOnlyShowDecimalsWhenNotRacing(colKey: string, value: boolean): void {
     const s = this.settings?.() || this.widget?.()?.customSettings;
     if (s) {
+      if (!s.columnOnlyShowDecimalsWhenNotRacing) {
+        s.columnOnlyShowDecimalsWhenNotRacing = {};
+      }
+      s.columnOnlyShowDecimalsWhenNotRacing[colKey] = value;
+      if (!s.columnOnlyShowSegmentsWhenNotRacing) {
+        s.columnOnlyShowSegmentsWhenNotRacing = {};
+      }
+      s.columnOnlyShowSegmentsWhenNotRacing[colKey] = value;
       if (!s.columnOnlyShowDecimalsIfSegments) {
         s.columnOnlyShowDecimalsIfSegments = {};
       }
@@ -574,11 +606,35 @@ export class LaneViewInspectorComponent implements OnInit {
     const widget = this.widget?.();
     if (widget) {
       if (!widget.customSettings) widget.customSettings = {};
+      if (!widget.customSettings.columnOnlyShowDecimalsWhenNotRacing) {
+        widget.customSettings.columnOnlyShowDecimalsWhenNotRacing = {};
+      }
+      widget.customSettings.columnOnlyShowDecimalsWhenNotRacing[colKey] = value;
+      if (!widget.customSettings.columnOnlyShowSegmentsWhenNotRacing) {
+        widget.customSettings.columnOnlyShowSegmentsWhenNotRacing = {};
+      }
+      widget.customSettings.columnOnlyShowSegmentsWhenNotRacing[colKey] = value;
       if (!widget.customSettings.columnOnlyShowDecimalsIfSegments) {
         widget.customSettings.columnOnlyShowDecimalsIfSegments = {};
       }
       widget.customSettings.columnOnlyShowDecimalsIfSegments[colKey] = value;
     }
     this.change.emit();
+  }
+
+  getColumnOnlyShowSegmentsWhenNotRacing(colKey: string): boolean {
+    return this.getColumnOnlyShowDecimalsWhenNotRacing(colKey);
+  }
+
+  setColumnOnlyShowSegmentsWhenNotRacing(colKey: string, value: boolean): void {
+    this.setColumnOnlyShowDecimalsWhenNotRacing(colKey, value);
+  }
+
+  getColumnOnlyShowDecimalsIfSegments(colKey: string): boolean {
+    return this.getColumnOnlyShowDecimalsWhenNotRacing(colKey);
+  }
+
+  setColumnOnlyShowDecimalsIfSegments(colKey: string, value: boolean): void {
+    this.setColumnOnlyShowDecimalsWhenNotRacing(colKey, value);
   }
 }

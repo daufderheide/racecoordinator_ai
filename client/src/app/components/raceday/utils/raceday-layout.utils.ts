@@ -247,7 +247,12 @@ export class RacedayLayoutUtils {
     if (!key) return false;
     const baseKey = key.split("_")[0];
     const isLapBase = (k: string) =>
-      k === "lapCount" || k === "overallLapCount";
+      k === "lapCount" ||
+      k === "overallLapCount" ||
+      k === "totalLaps" ||
+      k === "heatTotalLaps" ||
+      k === "raceTotalLaps" ||
+      k === "overallTotalLaps";
     if (isLapBase(baseKey)) return true;
     const parts = key.split("_");
     return parts.some((p) => isLapBase(p));

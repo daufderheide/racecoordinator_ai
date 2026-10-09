@@ -536,34 +536,68 @@ describe("LaneColumnInspectorComponent", () => {
     });
   });
 
-  describe("onlyShowDecimalsIfSegments", () => {
-    it("should return true for isLapColumn when columnKey is lapCount or overallLapCount", () => {
+  describe("onlyShowDecimalsWhenNotRacing", () => {
+    it("should return true for isLapColumn when columnKey is lapCount, overallLapCount, totalLaps, heatTotalLaps, raceTotalLaps, or overallTotalLaps", () => {
       component.currentSettings["columnKey"] = "lapCount";
       expect(component.isLapColumn).toBeTrue();
 
       component.currentSettings["columnKey"] = "overallLapCount";
       expect(component.isLapColumn).toBeTrue();
 
+      component.currentSettings["columnKey"] = "totalLaps";
+      expect(component.isLapColumn).toBeTrue();
+
+      component.currentSettings["columnKey"] = "heatTotalLaps";
+      expect(component.isLapColumn).toBeTrue();
+
+      component.currentSettings["columnKey"] = "raceTotalLaps";
+      expect(component.isLapColumn).toBeTrue();
+
+      component.currentSettings["columnKey"] = "overallTotalLaps";
+      expect(component.isLapColumn).toBeTrue();
+
       component.currentSettings["columnKey"] = "lastLapTime";
       expect(component.isLapColumn).toBeFalse();
     });
 
-    it("should render onlyShowDecimalsIfSegments checkbox when column is lapCount", () => {
+    it("should keep the old value if onlyShowDecimalsIfSegments was previously set", () => {
+      mockSettings.onlyShowDecimalsIfSegments = true;
+      delete mockSettings.onlyShowDecimalsWhenNotRacing;
+      expect(component.onlyShowDecimalsWhenNotRacing).toBeTrue();
+
+      mockSettings.onlyShowDecimalsIfSegments = false;
+      expect(component.onlyShowDecimalsWhenNotRacing).toBeFalse();
+    });
+
+    it("should render onlyShowDecimalsWhenNotRacing checkbox when column is lapCount or totalLaps", () => {
       mockSettings.columnKey = "lapCount";
       fixture.detectChanges();
 
-      const allCheckboxes = fixture.nativeElement.querySelectorAll(
+      let allCheckboxes = fixture.nativeElement.querySelectorAll(
         'input[type="checkbox"]',
       );
-      const segmentCheckbox = Array.from(allCheckboxes).find((el: any) =>
+      let segmentCheckbox = Array.from(allCheckboxes).find((el: any) =>
         el.parentElement?.textContent?.includes(
-          "UE_INSPECTOR_ONLY_SHOW_DECIMALS_IF_SEGMENTS",
+          "UE_INSPECTOR_ONLY_SHOW_DECIMALS_WHEN_NOT_RACING",
+        ),
+      );
+      expect(segmentCheckbox).toBeTruthy();
+
+      mockSettings.columnKey = "totalLaps";
+      fixture.detectChanges();
+
+      allCheckboxes = fixture.nativeElement.querySelectorAll(
+        'input[type="checkbox"]',
+      );
+      segmentCheckbox = Array.from(allCheckboxes).find((el: any) =>
+        el.parentElement?.textContent?.includes(
+          "UE_INSPECTOR_ONLY_SHOW_DECIMALS_WHEN_NOT_RACING",
         ),
       );
       expect(segmentCheckbox).toBeTruthy();
     });
 
-    it("should not render onlyShowDecimalsIfSegments checkbox when column is lastLapTime", () => {
+    it("should not render onlyShowDecimalsWhenNotRacing checkbox when column is lastLapTime", () => {
       mockSettings.columnKey = "lastLapTime";
       fixture.detectChanges();
 
@@ -572,16 +606,16 @@ describe("LaneColumnInspectorComponent", () => {
       );
       const segmentCheckbox = Array.from(allCheckboxes).find((el: any) =>
         el.parentElement?.textContent?.includes(
-          "UE_INSPECTOR_ONLY_SHOW_DECIMALS_IF_SEGMENTS",
+          "UE_INSPECTOR_ONLY_SHOW_DECIMALS_WHEN_NOT_RACING",
         ),
       );
       expect(segmentCheckbox).toBeFalsy();
     });
 
-    it("should toggle onlyShowDecimalsIfSegments and emit change", () => {
+    it("should toggle onlyShowDecimalsWhenNotRacing and emit change", () => {
       spyOn(component.change, "emit");
       mockSettings.columnKey = "lapCount";
-      mockSettings.onlyShowDecimalsIfSegments = false;
+      mockSettings.onlyShowDecimalsWhenNotRacing = false;
       fixture.detectChanges();
 
       const allCheckboxes = fixture.nativeElement.querySelectorAll(
@@ -589,7 +623,7 @@ describe("LaneColumnInspectorComponent", () => {
       );
       const segmentCheckbox: any = Array.from(allCheckboxes).find((el: any) =>
         el.parentElement?.textContent?.includes(
-          "UE_INSPECTOR_ONLY_SHOW_DECIMALS_IF_SEGMENTS",
+          "UE_INSPECTOR_ONLY_SHOW_DECIMALS_WHEN_NOT_RACING",
         ),
       );
       expect(segmentCheckbox).toBeTruthy();

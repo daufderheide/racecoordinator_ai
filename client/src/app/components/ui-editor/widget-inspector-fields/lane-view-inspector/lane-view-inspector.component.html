@@ -311,13 +311,13 @@
               <label class="inspector-checkbox-label">
                 <input
                   type="checkbox"
-                  [ngModel]="getColumnOnlyShowDecimalsIfSegments(col)"
+                  [ngModel]="getColumnOnlyShowDecimalsWhenNotRacing(col)"
                   (ngModelChange)="
-                    setColumnOnlyShowDecimalsIfSegments(col, $event)
+                    setColumnOnlyShowDecimalsWhenNotRacing(col, $event)
                   "
                 />
                 <span>{{
-                  "UE_INSPECTOR_ONLY_SHOW_DECIMALS_IF_SEGMENTS" | translate
+                  "UE_INSPECTOR_ONLY_SHOW_DECIMALS_WHEN_NOT_RACING" | translate
                 }}</span>
               </label>
             </div>

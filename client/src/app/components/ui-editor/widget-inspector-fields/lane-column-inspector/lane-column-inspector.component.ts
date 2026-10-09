@@ -78,6 +78,38 @@ export class LaneColumnInspectorComponent {
     );
   }
 
+  get onlyShowDecimalsWhenNotRacing(): boolean {
+    if (this.currentSettings["onlyShowDecimalsWhenNotRacing"] !== undefined) {
+      return Boolean(this.currentSettings["onlyShowDecimalsWhenNotRacing"]);
+    }
+    if (this.currentSettings["onlyShowSegmentsWhenNotRacing"] !== undefined) {
+      return Boolean(this.currentSettings["onlyShowSegmentsWhenNotRacing"]);
+    }
+    return Boolean(this.currentSettings["onlyShowDecimalsIfSegments"]);
+  }
+
+  set onlyShowDecimalsWhenNotRacing(val: boolean) {
+    this.currentSettings["onlyShowDecimalsWhenNotRacing"] = val;
+    this.currentSettings["onlyShowSegmentsWhenNotRacing"] = val;
+    this.currentSettings["onlyShowDecimalsIfSegments"] = val;
+  }
+
+  get onlyShowSegmentsWhenNotRacing(): boolean {
+    return this.onlyShowDecimalsWhenNotRacing;
+  }
+
+  set onlyShowSegmentsWhenNotRacing(val: boolean) {
+    this.onlyShowDecimalsWhenNotRacing = val;
+  }
+
+  get onlyShowDecimalsIfSegments(): boolean {
+    return this.onlyShowDecimalsWhenNotRacing;
+  }
+
+  set onlyShowDecimalsIfSegments(val: boolean) {
+    this.onlyShowDecimalsWhenNotRacing = val;
+  }
+
   onFieldChange(): void {
     if (this.currentSettings["timeDecimalPlaces"] !== undefined) {
       this.currentSettings["timeDecimalPlaces"] = Math.min(

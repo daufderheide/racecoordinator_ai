@@ -681,6 +681,10 @@ describe("LaneViewInspectorComponent", () => {
 
       expect(component.isLapColumn("lapCount")).toBeTrue();
       expect(component.isLapColumn("overallLapCount")).toBeTrue();
+      expect(component.isLapColumn("totalLaps")).toBeTrue();
+      expect(component.isLapColumn("heatTotalLaps")).toBeTrue();
+      expect(component.isLapColumn("raceTotalLaps")).toBeTrue();
+      expect(component.isLapColumn("overallTotalLaps")).toBeTrue();
       expect(component.isLapColumn("lastLapTime")).toBeFalse();
       expect(component.isLapColumn("driver.name")).toBeFalse();
 
@@ -806,7 +810,7 @@ describe("LaneViewInspectorComponent", () => {
       expect(lapValues).toEqual(["0", "1", "2", "3"]);
     });
 
-    it("should render onlyShowDecimalsIfSegments checkbox for lap columns but not for time or other columns", () => {
+    it("should render onlyShowDecimalsWhenNotRacing checkbox for lap columns but not for time or other columns", () => {
       fixture.componentRef.setInput("globalSettings", {
         racedayColumns: ["driver.name", "lastLapTime", "lapCount"],
       });
@@ -827,27 +831,45 @@ describe("LaneViewInspectorComponent", () => {
       expect(lapToggle).toBeTruthy();
     });
 
-    it("should get and set columnOnlyShowDecimalsIfSegments correctly and emit change", () => {
+    it("should keep old value if columnOnlyShowDecimalsIfSegments was set", () => {
+      component.settings().columnOnlyShowDecimalsIfSegments = {
+        lapCount: true,
+      };
+      delete component.settings().columnOnlyShowDecimalsWhenNotRacing;
       expect(
-        component.getColumnOnlyShowDecimalsIfSegments("lapCount"),
+        component.getColumnOnlyShowDecimalsWhenNotRacing("lapCount"),
+      ).toBeTrue();
+    });
+
+    it("should get and set columnOnlyShowDecimalsWhenNotRacing correctly and emit change", () => {
+      expect(
+        component.getColumnOnlyShowDecimalsWhenNotRacing("lapCount"),
       ).toBeFalse();
 
-      component.setColumnOnlyShowDecimalsIfSegments("lapCount", true);
+      component.setColumnOnlyShowDecimalsWhenNotRacing("lapCount", true);
       expect(
-        component.getColumnOnlyShowDecimalsIfSegments("lapCount"),
+        component.getColumnOnlyShowDecimalsWhenNotRacing("lapCount"),
       ).toBeTrue();
       expect(changeSpy).toHaveBeenCalled();
     });
 
-    it("should clean up columnOnlyShowDecimalsIfSegments when deleteColumn is called", () => {
+    it("should clean up columnOnlyShowDecimalsWhenNotRacing and columnOnlyShowDecimalsIfSegments when deleteColumn is called", () => {
       fixture.componentRef.setInput("widget", {
         customSettings: {
+          columnOnlyShowDecimalsWhenNotRacing: {
+            lapCount: true,
+            overallLapCount: true,
+          },
           columnOnlyShowDecimalsIfSegments: {
             lapCount: true,
             overallLapCount: true,
           },
         },
       } as any);
+      component.settings().columnOnlyShowDecimalsWhenNotRacing = {
+        lapCount: true,
+        overallLapCount: true,
+      };
       component.settings().columnOnlyShowDecimalsIfSegments = {
         lapCount: true,
         overallLapCount: true,
@@ -856,20 +878,20 @@ describe("LaneViewInspectorComponent", () => {
       component.deleteColumn("lapCount");
 
       expect(
-        component.widget().customSettings["columnOnlyShowDecimalsIfSegments"][
-          "lapCount"
-        ],
+        component.widget().customSettings[
+          "columnOnlyShowDecimalsWhenNotRacing"
+        ]["lapCount"],
       ).toBeUndefined();
       expect(
-        component.widget().customSettings["columnOnlyShowDecimalsIfSegments"][
-          "overallLapCount"
-        ],
+        component.widget().customSettings[
+          "columnOnlyShowDecimalsWhenNotRacing"
+        ]["overallLapCount"],
       ).toBeTrue();
       expect(
-        component.settings().columnOnlyShowDecimalsIfSegments["lapCount"],
+        component.settings().columnOnlyShowDecimalsWhenNotRacing["lapCount"],
       ).toBeUndefined();
       expect(
-        component.settings().columnOnlyShowDecimalsIfSegments[
+        component.settings().columnOnlyShowDecimalsWhenNotRacing[
           "overallLapCount"
         ],
       ).toBeTrue();
