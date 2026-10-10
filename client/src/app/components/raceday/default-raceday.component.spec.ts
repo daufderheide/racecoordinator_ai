@@ -11409,6 +11409,67 @@ describe("DefaultRacedayComponent", () => {
       document.dispatchEvent(moveEvent);
       expect(emitSpy).not.toHaveBeenCalled();
     });
+
+    it("should calculate selectedGridBounds and selectedGridLabel when a grid widget is selected", () => {
+      fixture.componentRef.setInput("isUIEditorMode", true);
+      fixture.componentRef.setInput("gridSession", null);
+      (component as any).isCustomizing = true;
+
+      const widget1 = {
+        id: "col-1",
+        widgetType: "lane-column",
+        x: 100,
+        y: 100,
+        width: 150,
+        height: 60,
+        zIndex: 1,
+        customSettings: {
+          gridId: "g123",
+          gridLane: 0,
+          gridTotalLanes: 4,
+          bindingMode: "lane",
+        },
+      };
+      const widget2 = {
+        id: "col-2",
+        widgetType: "lane-column",
+        x: 100,
+        y: 170,
+        width: 150,
+        height: 60,
+        zIndex: 1,
+        customSettings: {
+          gridId: "g123",
+          gridLane: 1,
+          gridTotalLanes: 4,
+          bindingMode: "lane",
+        },
+      };
+
+      component.layout = {
+        baseWidth: 1920,
+        baseHeight: 1080,
+        widgets: [widget1, widget2],
+      };
+
+      // When no widget is selected
+      fixture.componentRef.setInput("selectedWidgetId", null);
+      expect(component.selectedGridBounds).toBeNull();
+
+      // When widget1 is selected
+      fixture.componentRef.setInput("selectedWidgetId", "col-1");
+      expect(component.selectedWidget).toBe(widget1);
+      const bounds = component.selectedGridBounds;
+      expect(bounds).toEqual({
+        x: 100,
+        y: 100,
+        width: 150,
+        height: 130,
+      });
+
+      // selectedGridLabel
+      expect(component.selectedGridLabel).toContain("4");
+    });
   });
 
   describe("Race Restart and Second Race Start Lifecycle", () => {

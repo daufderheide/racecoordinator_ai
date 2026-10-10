@@ -77,6 +77,21 @@
         ></app-raceday-absolute-widget>
       }
 
+      @if (selectedGridBounds; as gBounds) {
+        <div
+          class="selected-grid-container-outline"
+          [style.left.px]="gBounds.x"
+          [style.top.px]="gBounds.y"
+          [style.width.px]="gBounds.width"
+          [style.height.px]="gBounds.height"
+        >
+          <div class="selected-grid-tag">
+            <span class="material-icons" style="font-size: 13px">grid_on</span>
+            <span>{{ selectedGridLabel }}</span>
+          </div>
+        </div>
+      }
+
       @if (gridSession()) {
         <div
           class="lane-blueprint-overlay"

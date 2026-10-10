@@ -8064,6 +8064,42 @@ export class DefaultRacedayComponent
     return LaneGridReplicationHelper.computeHeaderRowBounds(s);
   }
 
+  get selectedWidget(): AbsoluteWidgetNode | null {
+    const id = this.selectedWidgetId();
+    if (!id || !this.layout?.widgets) return null;
+    return this.layout.widgets.find((w: any) => w.id === id) || null;
+  }
+
+  get selectedGridBounds(): LaneGridBounds | null {
+    const isEditing = this.isLayoutCustomizing || this.isUIEditorMode();
+    if (!isEditing || this.gridSession()) return null;
+    const sel = this.selectedWidget;
+    const gridId = sel?.customSettings?.["gridId"];
+    if (!gridId || !this.layout?.widgets) return null;
+    return LaneGridReplicationHelper.calculateGridBounds(
+      this.layout.widgets,
+      gridId,
+    );
+  }
+
+  get selectedGridLabel(): string {
+    const sel = this.selectedWidget;
+    const count =
+      sel?.customSettings?.["gridTotalLanes"] || this.track?.lanes?.length || 4;
+    const mode = sel?.customSettings?.["bindingMode"];
+    const key =
+      mode === "position"
+        ? "UE_GRID_POSITION_CONTAINER_LABEL"
+        : "UE_GRID_CONTAINER_LABEL";
+    const translated = this.translationService?.translate(key, { count });
+    if (translated && translated !== key) {
+      return translated;
+    }
+    return mode === "position"
+      ? `Position Grid (${count} Positions)`
+      : `Lane Grid (${count} Lanes)`;
+  }
+
   onGridResizeStart(event: PointerEvent, handle: GridResizeHandle): void {
     event.preventDefault();
     event.stopPropagation();

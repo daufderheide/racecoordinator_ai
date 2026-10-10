@@ -10,13 +10,17 @@ import {
 import { AbsoluteWidgetNode } from "@app/models/settings";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { FontService } from "@app/services/font.service";
+import { TranslationService } from "@app/services/translation.service";
 import { formatTimerDisplay } from "@app/utils/timer-format.utils";
 
 @Component({
   standalone: true,
   selector: "app-lane-column-inspector",
   templateUrl: "./lane-column-inspector.component.html",
-  styleUrls: ["../../ui-editor.component.css"],
+  styleUrls: [
+    "../../ui-editor.component.css",
+    "./lane-column-inspector.component.css",
+  ],
   imports: [
     CommonModule,
     FormsModule,
@@ -40,7 +44,65 @@ export class LaneColumnInspectorComponent {
   detachGrid = output<string>();
 
   fontService = inject(FontService);
+  translationService = inject(TranslationService);
   showReplicateModal = signal<boolean>(false);
+  activeScope = signal<"grid" | "column" | "cell">("grid");
+
+  setScope(scope: "grid" | "column" | "cell"): void {
+    this.activeScope.set(scope);
+  }
+
+  get isMasterCell(): boolean {
+    if (this.isHeaderWidget) {
+      return false;
+    }
+    const idx =
+      this.currentSettings["gridLane"] != null
+        ? this.currentSettings["gridLane"]
+        : this.currentSettings["targetIndex"] != null
+          ? this.currentSettings["targetIndex"]
+          : 0;
+    return Number(idx) === 0;
+  }
+
+  get gridBreadcrumbLabel(): string {
+    const count =
+      this.currentSettings["gridTotalLanes"] || this.totalLanes() || 4;
+    const mode = this.currentSettings["bindingMode"];
+    if (mode === "position") return `Grid (${count} Pos)`;
+    return `Grid (${count} Lanes)`;
+  }
+
+  get columnBreadcrumbLabel(): string {
+    if (this.currentSettings["customLabel"]) {
+      return this.currentSettings["customLabel"];
+    }
+    const colKey = this.currentSettings["columnKey"];
+    const col = this.availableColumns().find((c) => c.key === colKey);
+    const raw =
+      col?.label ||
+      (colKey ? RacedayLayoutUtils.COLUMN_LABELS[colKey] : undefined) ||
+      colKey ||
+      "Column";
+    return this.translationService.translate(raw);
+  }
+
+  get cellBreadcrumbLabel(): string {
+    if (this.isHeaderWidget) {
+      return "Header";
+    }
+    const mode = this.currentSettings["bindingMode"];
+    const idx =
+      (this.currentSettings["gridLane"] != null
+        ? this.currentSettings["gridLane"]
+        : this.currentSettings["targetIndex"] != null
+          ? this.currentSettings["targetIndex"]
+          : 0) + 1;
+    if (mode === "position") return `Pos ${idx}`;
+    if (mode === "overallPosition") return `Overall Pos ${idx}`;
+    if (mode === "seed") return `Seed ${idx}`;
+    return `Lane ${idx}`;
+  }
 
   get availableIndices(): number[] {
     const mode = this.currentSettings["bindingMode"];
@@ -64,7 +126,11 @@ export class LaneColumnInspectorComponent {
   ];
 
   get currentSettings(): any {
-    return this.settings() || {};
+    const s = this.settings() || {};
+    if (!s["layoutOrientation"]) {
+      s["layoutOrientation"] = "vertical";
+    }
+    return s;
   }
 
   get isTotalTimeColumn(): boolean {
@@ -312,6 +378,19 @@ export class LaneColumnInspectorComponent {
   set linkColumns(val: boolean) {
     this.currentSettings["linkColumns"] = Boolean(val);
     this.currentSettings["_linkColumnsChanged"] = true;
+    this.onFieldChange();
+  }
+
+  get gridLayoutOrientation(): "vertical" | "horizontal" {
+    return this.currentSettings["layoutOrientation"] === "horizontal"
+      ? "horizontal"
+      : "vertical";
+  }
+
+  onGridLayoutOrientationChange(val: "vertical" | "horizontal"): void {
+    const orientation = val === "horizontal" ? "horizontal" : "vertical";
+    this.currentSettings["layoutOrientation"] = orientation;
+    this.currentSettings["_layoutOrientationChanged"] = true;
     this.onFieldChange();
   }
 

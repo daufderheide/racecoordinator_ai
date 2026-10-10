@@ -944,5 +944,77 @@ describe("LaneGridReplicationHelper", () => {
       );
       expect(updatedPlacement[0].customSettings?.["showHeader"]).toBeTrue();
     });
+
+    it("should update grid layoutOrientation across all matching grid widgets", () => {
+      const widgets: AbsoluteWidgetNode[] = [
+        {
+          id: "col1",
+          widgetType: "lane-column",
+          x: 100,
+          y: 140,
+          width: 100,
+          height: 100,
+          zIndex: 1,
+          customSettings: {
+            gridId: "grid-test",
+            layoutOrientation: "vertical",
+          },
+        },
+        {
+          id: "col2",
+          widgetType: "lane-column",
+          x: 200,
+          y: 140,
+          width: 100,
+          height: 100,
+          zIndex: 1,
+          customSettings: {
+            gridId: "grid-test",
+            layoutOrientation: "vertical",
+          },
+        },
+        {
+          id: "standalone",
+          widgetType: "lane-column",
+          x: 300,
+          y: 140,
+          width: 100,
+          height: 100,
+          zIndex: 1,
+          customSettings: {
+            layoutOrientation: "vertical",
+          },
+        },
+      ];
+
+      const updated = LaneGridReplicationHelper.updateGridLayoutOrientation(
+        widgets,
+        "grid-test",
+        "horizontal",
+      );
+      expect(updated[0].customSettings?.["layoutOrientation"]).toBe(
+        "horizontal",
+      );
+      expect(updated[1].customSettings?.["layoutOrientation"]).toBe(
+        "horizontal",
+      );
+      expect(updated[2].customSettings?.["layoutOrientation"]).toBe("vertical");
+
+      // Invalid inputs
+      expect(
+        LaneGridReplicationHelper.updateGridLayoutOrientation(
+          null as any,
+          "grid-test",
+          "horizontal",
+        ),
+      ).toEqual([]);
+      expect(
+        LaneGridReplicationHelper.updateGridLayoutOrientation(
+          widgets,
+          "",
+          "horizontal",
+        ),
+      ).toBe(widgets);
+    });
   });
 });

@@ -86,6 +86,7 @@ import {
   cancelDeleteCustomUiModal,
   cancelDeleteThemeModal,
   cloneUIEditorState,
+  computeWidgetDisplayName,
   confirmReplicateLanesHelper,
   DEFAULT_SECTIONS_EXPANDED,
   DirectoryController,
@@ -563,9 +564,12 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   }
 
   getWidgetDisplayName(widget: AbsoluteWidgetNode): string {
-    const key = this.getWidgetTypeLabelKey(widget.widgetType);
-    const translated = this.translationService.translate(key);
-    return translated || widget.widgetType;
+    return computeWidgetDisplayName(
+      widget,
+      this.translationService,
+      this.availableColumns,
+      (w) => this.getWidgetTypeLabelKey(w),
+    );
   }
 
   onWidgetDropdownSelect(widgetId: string, ui?: CustomUI) {

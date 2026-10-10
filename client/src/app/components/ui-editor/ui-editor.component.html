@@ -469,7 +469,18 @@
                               [style.height.px]="getInspectorHeight(ui)"
                             >
                               <div class="inspector-header">
-                                <h2>{{ "UE_INSPECTOR_TITLE" | translate }}</h2>
+                                <div class="inspector-title-group">
+                                  <h2>
+                                    {{ "UE_INSPECTOR_TITLE" | translate }}
+                                  </h2>
+                                  <div class="inspector-widget-subtitle">
+                                    {{
+                                      getWidgetDisplayName(
+                                        currentSelectedWidget
+                                      )
+                                    }}
+                                  </div>
+                                </div>
                                 <button
                                   type="button"
                                   class="inspector-delete-btn"

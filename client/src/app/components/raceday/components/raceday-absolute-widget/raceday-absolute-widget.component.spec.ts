@@ -648,4 +648,109 @@ describe("RacedayAbsoluteWidgetComponent", () => {
       expect(message?.textContent?.trim()).toBe("Syntax error in template");
     });
   });
+
+  describe("Grid context & crosshair highlighting", () => {
+    it("should compute smart widgetLabel for lane-column widgets and default for other widgets", () => {
+      expect(component.widgetLabel).toBe("timer");
+
+      const headerWidget = {
+        ...mockWidget,
+        widgetType: "lane-column",
+        customSettings: {
+          gridId: "g1",
+          isHeaderWidget: true,
+          customLabel: "Nick",
+        },
+      };
+      fixture.componentRef.setInput("widget", headerWidget);
+      expect(component.widgetLabel).toBe("HEADER · NICK");
+
+      const emptyHeaderWidget = {
+        ...mockWidget,
+        widgetType: "lane-column",
+        customSettings: {
+          gridId: "g1",
+          isHeaderWidget: true,
+        },
+      };
+      fixture.componentRef.setInput("widget", emptyHeaderWidget);
+      expect(component.widgetLabel).toBe("HEADER");
+
+      const laneWidget = {
+        ...mockWidget,
+        widgetType: "lane-column",
+        customSettings: {
+          gridId: "g1",
+          gridLane: 2,
+          columnKey: "lastLapTime",
+        },
+      };
+      fixture.componentRef.setInput("widget", laneWidget);
+      expect(component.widgetLabel).toBe("L3 · LAST LAP TIME");
+
+      const posWidget = {
+        ...mockWidget,
+        widgetType: "lane-column",
+        customSettings: {
+          gridId: "g1",
+          bindingMode: "position",
+          targetIndex: 0,
+          customLabel: "Leader",
+        },
+      };
+      fixture.componentRef.setInput("widget", posWidget);
+      expect(component.widgetLabel).toBe("P1 · LEADER");
+    });
+
+    it("should correctly compute isSameGridColumn and isSameGridRow", () => {
+      const myColWidget = {
+        id: "w-col-1",
+        widgetType: "lane-column",
+        x: 10,
+        y: 10,
+        width: 100,
+        height: 50,
+        zIndex: 1,
+        customSettings: {
+          gridId: "g1",
+          columnKey: "driver.nickname",
+          gridLane: 1,
+        },
+      };
+      fixture.componentRef.setInput("widget", myColWidget);
+
+      mockParent.isLayoutCustomizing = true;
+      mockParent.selectedWidget = {
+        id: "w-col-2",
+        customSettings: {
+          gridId: "g1",
+          columnKey: "driver.nickname",
+          gridLane: 2,
+        },
+      };
+      fixture.componentRef.setInput("parentComponent", { ...mockParent });
+
+      // Same columnKey, different lane -> same column = true, same row = false
+      expect(component.isSameGridColumn).toBeTrue();
+      expect(component.isSameGridRow).toBeFalse();
+
+      // Same lane, different column -> same column = false, same row = true
+      mockParent.selectedWidget = {
+        id: "w-col-3",
+        customSettings: {
+          gridId: "g1",
+          columnKey: "lapTime",
+          gridLane: 1,
+        },
+      };
+      fixture.componentRef.setInput("parentComponent", { ...mockParent });
+      expect(component.isSameGridColumn).toBeFalse();
+      expect(component.isSameGridRow).toBeTrue();
+
+      // Selected widget itself -> neither column nor row crosshair
+      fixture.componentRef.setInput("selectedWidgetId", "w-col-1");
+      expect(component.isSameGridColumn).toBeFalse();
+      expect(component.isSameGridRow).toBeFalse();
+    });
+  });
 });

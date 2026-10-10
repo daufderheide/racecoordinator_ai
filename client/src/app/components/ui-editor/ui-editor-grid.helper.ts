@@ -130,6 +130,8 @@ export function handleStartGridSession(
     headerPlacement: options.headerPlacement ?? "individual",
     headerHeight: options.headerHeight ?? 36,
     linkColumns: options.linkColumns ?? true,
+    layoutOrientation:
+      sourceWidgets[0]?.customSettings?.["layoutOrientation"] || "vertical",
   };
 
   comp.activeGridSession = session;
@@ -233,6 +235,8 @@ export function handleEditGridTemplate(
     headerPlacement,
     headerHeight,
     linkColumns,
+    layoutOrientation:
+      first.customSettings?.["layoutOrientation"] || "vertical",
   };
 
   comp.activeGridSession = session;

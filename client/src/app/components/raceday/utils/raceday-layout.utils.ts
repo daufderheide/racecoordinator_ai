@@ -337,7 +337,7 @@ export class RacedayLayoutUtils {
     }
     return false;
   }
-  private static readonly COLUMN_LABELS: Record<string, string> = {
+  public static readonly COLUMN_LABELS: Record<string, string> = {
     lapCount: "RD_COL_LAP",
     physicalLapCount: "UI_EDITOR_COL_LAP_COUNT",
     lapsLed: "RD_COL_LAPS_LED",
@@ -364,6 +364,8 @@ export class RacedayLayoutUtils {
     reactionTime: "RD_COL_REACTION_TIME",
     "participant.team.name": "RD_COL_TEAM",
     "driver.name": "RD_COL_NAME",
+    name: "RD_COL_NAME",
+    column_name: "RD_COL_NAME",
     "driver.nickname": "RD_COL_NICKNAME",
     "participant.fuelLevel": "RD_COL_FUEL_LEVEL",
     fuelCapacity: "RD_COL_FUEL_CAPACITY",

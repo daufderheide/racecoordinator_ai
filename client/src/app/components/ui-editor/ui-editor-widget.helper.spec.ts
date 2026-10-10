@@ -3,12 +3,120 @@ import { LayoutConfig, Settings } from "@app/models/settings";
 
 import {
   applyWidgetDefaultSettings,
+  computeWidgetDisplayName,
   findDefaultWidgetId,
   resolveActiveLayout,
   updateLayoutOnModel,
 } from "./ui-editor-widget.helper";
 
 describe("ui-editor-widget.helper", () => {
+  describe("computeWidgetDisplayName", () => {
+    const mockTranslationService = {
+      translate: (key: string) => {
+        if (key === "UE_WIDGET_TYPE_FLAG") return "Flag";
+        if (key === "UE_WIDGET_TYPE_LANE_COLUMN") return "Lane Column";
+        if (key === "UE_GRID_HEADER_ROW_BADGE") return "Header";
+        if (key === "RD_BEST_LAP_TIME") return "Best Lap Time";
+        return key;
+      },
+    };
+
+    it("should return empty string if widget is null", () => {
+      expect(computeWidgetDisplayName(null, mockTranslationService)).toBe("");
+      expect(computeWidgetDisplayName(undefined, mockTranslationService)).toBe(
+        "",
+      );
+    });
+
+    it("should return translated type for non-lane-column widgets", () => {
+      const widget = { widgetType: "flag" };
+      expect(computeWidgetDisplayName(widget, mockTranslationService)).toBe(
+        "Flag",
+      );
+    });
+
+    it("should compute descriptive name for grid cell with lane binding", () => {
+      const widget = {
+        widgetType: "lane-column",
+        customSettings: {
+          gridId: "grid-1",
+          gridLane: 1,
+          customLabel: "Driver Name",
+        },
+      };
+      expect(computeWidgetDisplayName(widget, mockTranslationService)).toBe(
+        "Grid · Lane 2 · Driver Name",
+      );
+    });
+
+    it("should compute descriptive name for grid header widget", () => {
+      const widget = {
+        widgetType: "lane-column",
+        customSettings: {
+          gridId: "grid-1",
+          isHeaderWidget: true,
+          customLabel: "Best Lap",
+        },
+      };
+      expect(computeWidgetDisplayName(widget, mockTranslationService)).toBe(
+        "Grid · Header · Best Lap",
+      );
+    });
+
+    it("should compute descriptive name for position, overallPosition, and seed binding modes", () => {
+      const posWidget = {
+        widgetType: "lane-column",
+        customSettings: {
+          gridId: "grid-1",
+          bindingMode: "position",
+          gridLane: 0,
+          customLabel: "Time",
+        },
+      };
+      expect(computeWidgetDisplayName(posWidget, mockTranslationService)).toBe(
+        "Grid · Pos 1 · Time",
+      );
+
+      const opWidget = {
+        widgetType: "lane-column",
+        customSettings: {
+          bindingMode: "overallPosition",
+          targetIndex: 2,
+          customLabel: "Gap",
+        },
+      };
+      expect(computeWidgetDisplayName(opWidget, mockTranslationService)).toBe(
+        "Overall Pos 3 · Gap",
+      );
+
+      const seedWidget = {
+        widgetType: "lane-column",
+        customSettings: {
+          bindingMode: "seed",
+          targetIndex: 3,
+          customLabel: "Rank",
+        },
+      };
+      expect(computeWidgetDisplayName(seedWidget, mockTranslationService)).toBe(
+        "Seed 4 · Rank",
+      );
+    });
+
+    it("should resolve column label from availableColumns when customLabel is not set", () => {
+      const widget = {
+        widgetType: "lane-column",
+        customSettings: {
+          gridId: "grid-1",
+          gridLane: 0,
+          columnKey: "bestLapTime",
+        },
+      };
+      const availableCols = [{ key: "bestLapTime", label: "RD_BEST_LAP_TIME" }];
+      expect(
+        computeWidgetDisplayName(widget, mockTranslationService, availableCols),
+      ).toBe("Grid · Lane 1 · Best Lap Time");
+    });
+  });
   it("should find default widget id prioritizing lane-view", () => {
     const layout: LayoutConfig = {
       baseWidth: 1920,
@@ -412,5 +520,53 @@ describe("ui-editor-widget.helper", () => {
       layout,
       comp.activeCustomUi,
     );
+  });
+
+  it("should handle _layoutOrientationChanged and update all widgets in grid", () => {
+    const {
+      handleWidgetInspectorChange,
+    } = require("./ui-editor-widget.helper");
+    const masterCol: any = {
+      id: "col-1",
+      widgetType: "lane-column",
+      customSettings: {
+        gridId: "grid-test-orientation",
+        layoutOrientation: "horizontal",
+        _layoutOrientationChanged: true,
+      },
+    };
+    const col2: any = {
+      id: "col-2",
+      widgetType: "lane-column",
+      customSettings: {
+        gridId: "grid-test-orientation",
+        layoutOrientation: "vertical",
+      },
+    };
+    const layout = { widgets: [masterCol, col2] };
+    const comp: any = {
+      isSaving: false,
+      activeCustomUi: { entity_id: "ui1" },
+      currentSelectedWidget: masterCol,
+      activeGridSession: {
+        gridId: "grid-test-orientation",
+        layoutOrientation: "vertical",
+      },
+      getLayout: jasmine.createSpy("getLayout").and.returnValue(layout),
+      editingSettings: new Settings(),
+      isCurrentLayoutPractice: false,
+      parsedLayouts: new Map(),
+      captureState: jasmine.createSpy("captureState"),
+      cdr: { markForCheck: jasmine.createSpy("markForCheck") },
+      syncRacedayPreview: jasmine.createSpy("syncRacedayPreview"),
+    };
+
+    handleWidgetInspectorChange(comp, masterCol);
+
+    const updatedCol2 = layout.widgets.find((w: any) => w.id === "col-2");
+    expect(masterCol.customSettings._layoutOrientationChanged).toBeUndefined();
+    expect(masterCol.customSettings.layoutOrientation).toBe("horizontal");
+    expect(updatedCol2?.customSettings?.layoutOrientation).toBe("horizontal");
+    expect(comp.activeGridSession.layoutOrientation).toBe("horizontal");
   });
 });

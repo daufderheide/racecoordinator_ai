@@ -17,6 +17,63 @@ export function findDefaultWidgetId(
   return laneView ? laneView.id : widgets[0].id;
 }
 
+export function computeWidgetDisplayName(
+  widget: any,
+  translationService: any,
+  availableColumns?: { key: string; label: string }[],
+  getWidgetTypeLabelKey?: (w: string) => string,
+): string {
+  if (!widget) return "";
+  const type = widget.widgetType;
+  const key = getWidgetTypeLabelKey
+    ? getWidgetTypeLabelKey(type)
+    : "UE_WIDGET_TYPE_" + type?.toUpperCase().replace(/-/g, "_");
+  const translatedType = translationService?.translate?.(key) || type;
+
+  if (type === "lane-column") {
+    const s = widget.customSettings || {};
+    let colLabel = s.customLabel || "";
+    if (!colLabel && s.columnKey) {
+      const match = availableColumns?.find((c) => c.key === s.columnKey);
+      if (match?.label) {
+        colLabel = translationService?.translate?.(match.label) || match.label;
+      } else {
+        colLabel = s.columnKey
+          .replace(/^driver\./, "")
+          .replace(/([A-Z])/g, " $1")
+          .trim();
+      }
+    }
+    if (!colLabel) colLabel = translatedType;
+
+    if (s.isHeaderWidget) {
+      const headerText =
+        translationService?.translate?.("UE_GRID_HEADER_ROW_BADGE") || "Header";
+      return s.gridId
+        ? `Grid · ${headerText} · ${colLabel}`
+        : `${headerText} · ${colLabel}`;
+    }
+
+    const idx =
+      (s.gridLane != null
+        ? s.gridLane
+        : s.targetIndex != null
+          ? s.targetIndex
+          : 0) + 1;
+    const mode = s.bindingMode || "lane";
+    let prefix = `Lane ${idx}`;
+    if (mode === "position") prefix = `Pos ${idx}`;
+    else if (mode === "overallPosition") prefix = `Overall Pos ${idx}`;
+    else if (mode === "seed") prefix = `Seed ${idx}`;
+
+    return s.gridId
+      ? `Grid · ${prefix} · ${colLabel}`
+      : `${prefix} · ${colLabel}`;
+  }
+
+  return translatedType;
+}
+
 export function ensureWidgetSelectedHelper(comp: any, ui?: CustomUI): void {
   const layout = comp.getLayout(ui || comp.activeCustomUi);
   const widgets = layout?.widgets || [];
@@ -281,6 +338,20 @@ function handleGridStructureChanges(
     );
     if (comp.activeGridSession && comp.activeGridSession.gridId === gridId) {
       comp.activeGridSession.linkColumns = isLinked;
+    }
+  }
+
+  if (targetWidget.customSettings?.["_layoutOrientationChanged"]) {
+    delete targetWidget.customSettings["_layoutOrientationChanged"];
+    const orientation =
+      targetWidget.customSettings?.["layoutOrientation"] || "vertical";
+    layout.widgets = LaneGridReplicationHelper.updateGridLayoutOrientation(
+      layout.widgets,
+      gridId,
+      orientation,
+    );
+    if (comp.activeGridSession && comp.activeGridSession.gridId === gridId) {
+      comp.activeGridSession.layoutOrientation = orientation;
     }
   }
 }

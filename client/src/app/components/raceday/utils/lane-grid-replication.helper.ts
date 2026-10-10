@@ -20,6 +20,7 @@ export interface LaneGridSession {
   headerPlacement?: "top" | "individual" | "none";
   headerHeight?: number;
   linkColumns?: boolean;
+  layoutOrientation?: "vertical" | "horizontal";
 }
 
 export type GridResizeHandle =
@@ -173,6 +174,10 @@ export class LaneGridReplicationHelper {
         headerHeight,
         headerPlacement: session.headerPlacement ?? "top",
         linkColumns: session.linkColumns ?? true,
+        layoutOrientation:
+          masterWidget.customSettings?.["layoutOrientation"] ||
+          session.layoutOrientation ||
+          "vertical",
       },
     };
     return (allWidgets || []).map((w) =>
@@ -331,6 +336,10 @@ export class LaneGridReplicationHelper {
         headerPlacement: session.headerPlacement ?? "individual",
         headerHeight,
         linkColumns: session.linkColumns ?? true,
+        layoutOrientation:
+          masterWidget.customSettings?.["layoutOrientation"] ||
+          session.layoutOrientation ||
+          "vertical",
         isHeaderWidget: false,
       },
     };
@@ -610,6 +619,28 @@ export class LaneGridReplicationHelper {
           customSettings: {
             ...(w.customSettings || {}),
             linkColumns: link,
+          },
+        };
+      }
+      return w;
+    });
+  }
+
+  public static updateGridLayoutOrientation(
+    allWidgets: AbsoluteWidgetNode[],
+    gridId: string,
+    orientation: "vertical" | "horizontal",
+  ): AbsoluteWidgetNode[] {
+    if (!gridId || !allWidgets) return allWidgets || [];
+    const validOrientation =
+      orientation === "horizontal" ? "horizontal" : "vertical";
+    return allWidgets.map((w) => {
+      if (w.customSettings?.["gridId"] === gridId) {
+        return {
+          ...w,
+          customSettings: {
+            ...(w.customSettings || {}),
+            layoutOrientation: validOrientation,
           },
         };
       }

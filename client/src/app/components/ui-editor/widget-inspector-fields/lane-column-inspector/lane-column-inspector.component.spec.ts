@@ -226,6 +226,152 @@ describe("LaneColumnInspectorComponent", () => {
     expect(card).toBeNull();
   });
 
+  it("should provide scope breadcrumbs and switch scope between grid, column, and cell", () => {
+    fixture.componentRef.setInput("settings", {
+      ...mockSettings,
+      gridId: "grid-12345",
+      gridLane: 0,
+      gridTotalLanes: 4,
+      customLabel: "Driver",
+    });
+    fixture.detectChanges();
+
+    expect(component.activeScope()).toBe("grid");
+    expect(component.gridBreadcrumbLabel).toBe("Grid (4 Lanes)");
+    expect(component.columnBreadcrumbLabel).toBe("Driver");
+    expect(component.cellBreadcrumbLabel).toBe("Lane 1");
+
+    const scopeNav = fixture.debugElement.query(By.css(".grid-scope-nav"));
+    expect(scopeNav).toBeTruthy();
+
+    const breadcrumbs = fixture.debugElement.queryAll(
+      By.css(".breadcrumb-btn"),
+    );
+    expect(breadcrumbs.length).toBe(3);
+
+    // Switch to column scope
+    component.setScope("column");
+    fixture.detectChanges();
+    expect(component.activeScope()).toBe("column");
+    const columnBanner = fixture.debugElement.query(By.css(".column-banner"));
+    expect(columnBanner).toBeTruthy();
+
+    // Switch to cell scope
+    component.setScope("cell");
+    fixture.detectChanges();
+    expect(component.activeScope()).toBe("cell");
+    const cellBanner = fixture.debugElement.query(By.css(".cell-banner"));
+    expect(cellBanner).toBeTruthy();
+  });
+
+  it("should compute breadcrumb labels correctly for position and header widgets", () => {
+    fixture.componentRef.setInput("settings", {
+      ...mockSettings,
+      gridId: "grid-pos",
+      bindingMode: "position",
+      targetIndex: 2,
+      gridTotalLanes: 6,
+      columnKey: "lastLapTime",
+      isHeaderWidget: false,
+    });
+    fixture.detectChanges();
+
+    expect(component.gridBreadcrumbLabel).toBe("Grid (6 Pos)");
+    expect(component.columnBreadcrumbLabel).toBe("RD_LAST_LAP_TIME");
+    expect(component.cellBreadcrumbLabel).toBe("Pos 3");
+
+    fixture.componentRef.setInput("settings", {
+      ...mockSettings,
+      gridId: "grid-pos",
+      isHeaderWidget: true,
+      customLabel: "My Header",
+    });
+    fixture.detectChanges();
+    expect(component.cellBreadcrumbLabel).toBe("Header");
+    expect(component.columnBreadcrumbLabel).toBe("My Header");
+  });
+
+  it("should localize columnBreadcrumbLabel using translationService for RD_COL_NAME", () => {
+    mockTranslationService.translate.and.callFake((key: string) => {
+      if (key === "RD_COL_NAME") return "Driver Name";
+      return key;
+    });
+    fixture.componentRef.setInput("availableColumns", [
+      { key: "driver.name", label: "RD_COL_NAME" },
+    ]);
+    fixture.componentRef.setInput("settings", {
+      ...mockSettings,
+      gridId: "grid-pos",
+      columnKey: "driver.name",
+      customLabel: "",
+    });
+    fixture.detectChanges();
+
+    expect(component.columnBreadcrumbLabel).toBe("Driver Name");
+  });
+
+  it("should correctly identify isMasterCell and display master or mirrored badge", () => {
+    mockTranslationService.translate.and.callFake(
+      (key: string, params?: any) => {
+        if (key === "UE_GRID_POSITION_MASTER_BADGE")
+          return "Position 1 (Master)";
+        if (key === "UE_GRID_POSITION_MIRRORED_BADGE")
+          return `Position ${params?.index} (Mirrored)`;
+        if (key === "UE_GRID_LANE_MASTER_BADGE") return "Lane 1 (Master)";
+        return key;
+      },
+    );
+
+    // Master position cell (targetIndex: 0)
+    fixture.componentRef.setInput("settings", {
+      ...mockSettings,
+      gridId: "grid-pos",
+      bindingMode: "position",
+      targetIndex: 0,
+      isHeaderWidget: false,
+    });
+    fixture.detectChanges();
+    expect(component.isMasterCell).toBeTrue();
+    const badge = fixture.debugElement.query(By.css(".grid-card-badge"));
+    expect(badge.nativeElement.textContent.trim()).toBe("Position 1 (Master)");
+
+    // Mirrored position cell (targetIndex: 1)
+    fixture.componentRef.setInput("settings", {
+      ...mockSettings,
+      gridId: "grid-pos",
+      bindingMode: "position",
+      targetIndex: 1,
+      isHeaderWidget: false,
+    });
+    fixture.detectChanges();
+    expect(component.isMasterCell).toBeFalse();
+    expect(badge.nativeElement.textContent.trim()).toBe(
+      "Position 2 (Mirrored)",
+    );
+
+    // Master lane cell (gridLane: 0)
+    fixture.componentRef.setInput("settings", {
+      ...mockSettings,
+      gridId: "grid-lane",
+      bindingMode: "lane",
+      gridLane: 0,
+      isHeaderWidget: false,
+    });
+    fixture.detectChanges();
+    expect(component.isMasterCell).toBeTrue();
+    expect(badge.nativeElement.textContent.trim()).toBe("Lane 1 (Master)");
+
+    // Header widget is not master cell
+    fixture.componentRef.setInput("settings", {
+      ...mockSettings,
+      gridId: "grid-pos",
+      targetIndex: 0,
+      isHeaderWidget: true,
+    });
+    fixture.detectChanges();
+    expect(component.isMasterCell).toBeFalse();
+  });
+
   it("should get and set anchor values in settings.insets and emit change", () => {
     spyOn(component.change, "emit");
 
@@ -806,6 +952,23 @@ describe("LaneColumnInspectorComponent", () => {
       expect(mockSettings.headerBackgroundColor).toBeUndefined();
       expect(mockSettings._reset_headerBackgroundColor).toBeTrue();
       expect(mockSettings._syncAction).toBe("header");
+    });
+
+    it("should handle gridLayoutOrientation getter and onGridLayoutOrientationChange", () => {
+      spyOn(component.change, "emit");
+      delete mockSettings.layoutOrientation;
+      expect(component.gridLayoutOrientation).toBe("vertical");
+
+      component.onGridLayoutOrientationChange("horizontal");
+      expect(mockSettings.layoutOrientation).toBe("horizontal");
+      expect(mockSettings._layoutOrientationChanged).toBeTrue();
+      expect(component.change.emit).toHaveBeenCalled();
+      expect(component.gridLayoutOrientation).toBe("horizontal");
+
+      component.onGridLayoutOrientationChange("vertical");
+      expect(mockSettings.layoutOrientation).toBe("vertical");
+      expect(mockSettings._layoutOrientationChanged).toBeTrue();
+      expect(component.gridLayoutOrientation).toBe("vertical");
     });
   });
 });

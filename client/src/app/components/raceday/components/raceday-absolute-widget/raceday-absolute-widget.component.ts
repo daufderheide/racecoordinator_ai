@@ -132,6 +132,62 @@ export class RacedayAbsoluteWidgetComponent implements OnInit, OnDestroy {
     return w.zIndex || 100;
   }
 
+  get widgetLabel(): string {
+    const w = this.widget();
+    if (w.widgetType === "lane-column") {
+      const s = w.customSettings || {};
+      const col = ((s["customLabel"] || s["columnKey"] || "") as string)
+        .replace(/^driver\./, "")
+        .replace(/([A-Z])/g, " $1")
+        .trim()
+        .toUpperCase();
+      if (s["isHeaderWidget"]) {
+        return col ? `HEADER · ${col}` : "HEADER";
+      }
+      const idx =
+        (s["gridLane"] != null
+          ? s["gridLane"]
+          : s["targetIndex"] != null
+            ? s["targetIndex"]
+            : 0) + 1;
+      const mode = s["bindingMode"] || "lane";
+      const prefix = mode === "position" ? `P${idx}` : `L${idx}`;
+      return col ? `${prefix} · ${col}` : prefix;
+    }
+    return w.widgetType;
+  }
+
+  get isSameGridColumn(): boolean {
+    if (this.isSelected) return false;
+    const parent = this.parentComponent();
+    if (!parent?.isLayoutCustomizing) return false;
+    const sel = parent.selectedWidget;
+    if (!sel || !sel.customSettings?.["gridId"]) return false;
+    const myS = this.widget().customSettings;
+    if (myS?.["gridId"] !== sel.customSettings["gridId"]) return false;
+    return (
+      (myS?.["columnKey"] || "") === (sel.customSettings["columnKey"] || "")
+    );
+  }
+
+  get isSameGridRow(): boolean {
+    if (this.isSelected) return false;
+    const parent = this.parentComponent();
+    if (!parent?.isLayoutCustomizing) return false;
+    const sel = parent.selectedWidget;
+    if (!sel || !sel.customSettings?.["gridId"]) return false;
+    const myS = this.widget().customSettings;
+    if (myS?.["gridId"] !== sel.customSettings["gridId"]) return false;
+    if (sel.customSettings["isHeaderWidget"]) {
+      return !!myS?.["isHeaderWidget"];
+    }
+    if (myS?.["isHeaderWidget"]) return false;
+    const myRow = myS?.["gridLane"] ?? myS?.["targetIndex"];
+    const selRow =
+      sel.customSettings["gridLane"] ?? sel.customSettings["targetIndex"];
+    return myRow != null && selRow != null && myRow === selRow;
+  }
+
   private isResizing = false;
   private resizeStartWidth = 0;
   private resizeStartHeight = 0;
