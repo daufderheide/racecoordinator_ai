@@ -320,6 +320,93 @@ describe("ui-editor-widget.helper", () => {
     );
   });
 
+  it("should remove grid and clear activeGridSession when all elements in a grid are removed via handleRemoveSelectedWidget", () => {
+    const { handleRemoveSelectedWidget } = require("./ui-editor-widget.helper");
+    const {
+      LaneGridAnimationHelper,
+    } = require("@app/components/raceday/utils/lane-grid-animation.helper");
+    spyOn(LaneGridAnimationHelper, "reset");
+
+    const layout = {
+      widgets: [
+        {
+          id: "col1",
+          widgetType: "lane-column",
+          customSettings: { gridId: "grid-test-del" },
+        },
+        {
+          id: "col1_grid_lane_1",
+          widgetType: "lane-column",
+          customSettings: {
+            gridId: "grid-test-del",
+            gridMasterId: "col1",
+          },
+        },
+        {
+          id: "other",
+          widgetType: "clock",
+        },
+      ],
+    };
+    const comp = {
+      selectedWidgetId: "col1",
+      activeCustomUi: { entity_id: "ui1" },
+      activeGridSession: { gridId: "grid-test-del" },
+      getLayout: jasmine.createSpy("getLayout").and.returnValue(layout),
+      onLayoutChanged: jasmine.createSpy("onLayoutChanged"),
+    };
+
+    handleRemoveSelectedWidget(comp);
+
+    expect(comp.activeGridSession).toBeNull();
+    expect(LaneGridAnimationHelper.reset).toHaveBeenCalledWith("grid-test-del");
+    expect(comp.onLayoutChanged).toHaveBeenCalledWith(
+      { widgets: [{ id: "other", widgetType: "clock" }] },
+      comp.activeCustomUi,
+    );
+  });
+
+  it("should keep grid session when some elements remain in the grid via handleRemoveSelectedWidget", () => {
+    const { handleRemoveSelectedWidget } = require("./ui-editor-widget.helper");
+    const layout = {
+      widgets: [
+        {
+          id: "col1",
+          widgetType: "lane-column",
+          customSettings: { gridId: "grid-multi" },
+        },
+        {
+          id: "col1_grid_lane_1",
+          widgetType: "lane-column",
+          customSettings: { gridId: "grid-multi", gridMasterId: "col1" },
+        },
+        {
+          id: "col2",
+          widgetType: "lane-column",
+          customSettings: { gridId: "grid-multi" },
+        },
+        {
+          id: "col2_grid_lane_1",
+          widgetType: "lane-column",
+          customSettings: { gridId: "grid-multi", gridMasterId: "col2" },
+        },
+      ],
+    };
+    const comp = {
+      selectedWidgetId: "col1",
+      activeCustomUi: { entity_id: "ui1" },
+      activeGridSession: { gridId: "grid-multi" },
+      getLayout: jasmine.createSpy("getLayout").and.returnValue(layout),
+      onLayoutChanged: jasmine.createSpy("onLayoutChanged"),
+    };
+
+    handleRemoveSelectedWidget(comp);
+
+    expect(comp.activeGridSession).toBeDefined();
+    expect(comp.activeGridSession.gridId).toBe("grid-multi");
+    expect(comp.onLayoutChanged).toHaveBeenCalled();
+  });
+
   it("should handle nudging selected widget within bounds", () => {
     const { handleNudgeSelectedWidget } = require("./ui-editor-widget.helper");
     const widget = { id: "w1", x: 10, y: 20, width: 100, height: 100 };
@@ -396,6 +483,32 @@ describe("ui-editor-widget.helper", () => {
     expect(comp.selectedWidgetId).toBe("w1");
     expect(comp.captureState).toHaveBeenCalled();
     expect(comp.cdr.markForCheck).toHaveBeenCalled();
+  });
+
+  it("should clear activeGridSession and reset animation helper when handleLayoutChanged has no widgets for the grid", () => {
+    const { handleLayoutChanged } = require("./ui-editor-widget.helper");
+    const {
+      LaneGridAnimationHelper,
+    } = require("@app/components/raceday/utils/lane-grid-animation.helper");
+    spyOn(LaneGridAnimationHelper, "reset");
+
+    const newLayout = {
+      widgets: [{ id: "w-other", widgetType: "clock" }],
+    };
+    const comp = {
+      isSaving: false,
+      editingSettings: new Settings(),
+      isCurrentLayoutPractice: false,
+      parsedLayouts: new Map(),
+      activeGridSession: { gridId: "grid-empty" },
+      selectedWidgetId: null as string | null,
+      captureState: jasmine.createSpy("captureState"),
+      cdr: { markForCheck: jasmine.createSpy("markForCheck") },
+    };
+
+    handleLayoutChanged(comp, newLayout);
+    expect(comp.activeGridSession).toBeNull();
+    expect(LaneGridAnimationHelper.reset).toHaveBeenCalledWith("grid-empty");
   });
 
   it("should automatically activate countdown preview when countdown widget is selected in handleWidgetSelection", () => {

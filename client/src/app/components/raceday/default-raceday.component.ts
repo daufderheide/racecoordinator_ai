@@ -7997,15 +7997,34 @@ export class DefaultRacedayComponent
 
   removeWidget(id: string) {
     if (!this.layout?.widgets) return;
-    if (this.gridSession()) {
+    const session = this.gridSession();
+    const widgetToRemove = this.layout.widgets.find((w: any) => w.id === id);
+    const gridId =
+      session?.gridId || widgetToRemove?.customSettings?.["gridId"];
+
+    if (session) {
       this.layout.widgets =
         LaneGridReplicationHelper.removeMasterWidgetFromLanes(
           id,
-          this.gridSession()!,
+          session,
           this.layout.widgets,
         );
     } else {
       this.layout.widgets = this.layout.widgets.filter((w: any) => w.id !== id);
+    }
+
+    if (
+      gridId &&
+      !LaneGridReplicationHelper.hasGridWidgets(this.layout.widgets, gridId)
+    ) {
+      this.layout.widgets = LaneGridReplicationHelper.removeGrid(
+        this.layout.widgets,
+        gridId,
+      );
+      LaneGridAnimationHelper.reset(gridId);
+      if (this.gridSession()?.gridId === gridId) {
+        this.finishGrid.emit();
+      }
     }
     this.layoutChanged.emit(this.layout);
     if (this.selectedWidgetId() === id) {

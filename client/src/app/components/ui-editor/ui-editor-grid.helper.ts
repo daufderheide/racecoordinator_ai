@@ -1,3 +1,4 @@
+import { LaneGridAnimationHelper } from "@app/components/raceday/utils/lane-grid-animation.helper";
 import {
   LaneGridBounds,
   LaneGridReplicationHelper,
@@ -171,6 +172,26 @@ export function handleFinishGridSession(comp: any, ui?: CustomUI): void {
   const targetUi = ui || comp.activeCustomUi;
   const layout = comp.getLayout(targetUi);
   if (layout?.widgets) {
+    const gridId = comp.activeGridSession.gridId;
+    if (!LaneGridReplicationHelper.hasGridWidgets(layout.widgets, gridId)) {
+      layout.widgets = LaneGridReplicationHelper.removeGrid(
+        layout.widgets,
+        gridId,
+      );
+      LaneGridAnimationHelper.reset(gridId);
+      comp.activeGridSession = null;
+      updateLayoutOnModel(
+        layout,
+        targetUi,
+        comp.editingSettings,
+        comp.isCustomUiPractice(targetUi),
+        comp.parsedLayouts,
+      );
+      comp.syncRacedayPreview?.(layout, targetUi);
+      comp.captureState();
+      comp.cdr.markForCheck();
+      return;
+    }
     layout.widgets = LaneGridReplicationHelper.bakeGrid(
       layout.widgets,
       comp.activeGridSession,

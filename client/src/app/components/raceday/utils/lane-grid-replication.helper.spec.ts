@@ -346,6 +346,109 @@ describe("LaneGridReplicationHelper", () => {
     expect(remaining.length).toBe(0);
   });
 
+  it("should detect whether widgets in a grid exist with hasGridWidgets", () => {
+    const widgets: AbsoluteWidgetNode[] = [
+      {
+        id: "w-data",
+        widgetType: "lane-column",
+        x: 0,
+        y: 0,
+        width: 100,
+        height: 50,
+        zIndex: 10,
+        customSettings: { gridId: "g-test" },
+      },
+      {
+        id: "w-header",
+        widgetType: "lane-column",
+        x: 0,
+        y: 0,
+        width: 100,
+        height: 30,
+        zIndex: 10,
+        customSettings: { gridId: "g-test", isHeaderWidget: true },
+      },
+    ];
+
+    expect(
+      LaneGridReplicationHelper.hasGridWidgets(widgets, "g-test"),
+    ).toBeTrue();
+    expect(
+      LaneGridReplicationHelper.hasGridWidgets(widgets, "other-grid"),
+    ).toBeFalse();
+    expect(
+      LaneGridReplicationHelper.hasGridWidgets([widgets[1]], "g-test"),
+    ).toBeFalse();
+    expect(LaneGridReplicationHelper.hasGridWidgets([], "g-test")).toBeFalse();
+    expect(
+      LaneGridReplicationHelper.hasGridWidgets(null, "g-test"),
+    ).toBeFalse();
+  });
+
+  it("should remove all widgets for a grid with removeGrid", () => {
+    const widgets: AbsoluteWidgetNode[] = [
+      {
+        id: "w-1",
+        widgetType: "lane-column",
+        x: 0,
+        y: 0,
+        width: 100,
+        height: 50,
+        zIndex: 10,
+        customSettings: { gridId: "g-delete" },
+      },
+      {
+        id: "w-2",
+        widgetType: "clock",
+        x: 100,
+        y: 0,
+        width: 100,
+        height: 50,
+        zIndex: 10,
+      },
+    ];
+
+    const result = LaneGridReplicationHelper.removeGrid(widgets, "g-delete");
+    expect(result.length).toBe(1);
+    expect(result[0].id).toBe("w-2");
+  });
+
+  it("should remove lingering header when the last master widget in a grid is removed", () => {
+    const widgets: AbsoluteWidgetNode[] = [
+      {
+        id: "w-master",
+        widgetType: "lane-column",
+        x: 0,
+        y: 50,
+        width: 100,
+        height: 50,
+        zIndex: 10,
+        customSettings: { gridId: mockHorizontalSession.gridId },
+      },
+      {
+        id: "w-master_grid_header",
+        widgetType: "lane-column",
+        x: 0,
+        y: 0,
+        width: 100,
+        height: 36,
+        zIndex: 11,
+        customSettings: {
+          gridId: mockHorizontalSession.gridId,
+          isHeaderWidget: true,
+          gridMasterId: "w-master",
+        },
+      },
+    ];
+
+    const remaining = LaneGridReplicationHelper.removeMasterWidgetFromLanes(
+      "w-master",
+      mockHorizontalSession,
+      widgets,
+    );
+    expect(remaining.length).toBe(0);
+  });
+
   it("should calculate grid bounds from widgets with matching gridId", () => {
     const widgets: AbsoluteWidgetNode[] = [
       {

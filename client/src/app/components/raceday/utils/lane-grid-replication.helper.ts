@@ -443,28 +443,57 @@ export class LaneGridReplicationHelper {
     return currentWidgets;
   }
 
+  public static hasGridWidgets(
+    widgets: AbsoluteWidgetNode[] | null | undefined,
+    gridId: string | null | undefined,
+  ): boolean {
+    if (!widgets || !gridId) return false;
+    return widgets.some(
+      (w) =>
+        w.customSettings?.["gridId"] === gridId &&
+        !w.customSettings?.["isHeaderWidget"],
+    );
+  }
+
+  public static removeGrid(
+    widgets: AbsoluteWidgetNode[],
+    gridId: string,
+  ): AbsoluteWidgetNode[] {
+    if (!widgets || !gridId) return widgets || [];
+    return widgets.filter((w) => w.customSettings?.["gridId"] !== gridId);
+  }
+
   public static removeMasterWidgetFromLanes(
     masterWidgetId: string,
     session: LaneGridSession,
     allWidgets: AbsoluteWidgetNode[],
   ): AbsoluteWidgetNode[] {
     if (!masterWidgetId || !allWidgets) return allWidgets || [];
-    return allWidgets.filter((w) => {
-      if (w.id === masterWidgetId) return false;
+    const target = allWidgets.find((w) => w.id === masterWidgetId);
+    const resolvedMasterId =
+      target?.customSettings?.["gridMasterId"] || masterWidgetId;
+    const filtered = allWidgets.filter((w) => {
+      if (w.id === resolvedMasterId) return false;
       if (
         w.customSettings?.["gridId"] === session?.gridId &&
-        w.customSettings?.["gridMasterId"] === masterWidgetId
+        w.customSettings?.["gridMasterId"] === resolvedMasterId
       ) {
         return false;
       }
-      if (w.id.startsWith(`${masterWidgetId}_grid_lane_`)) {
+      if (w.id.startsWith(`${resolvedMasterId}_grid_lane_`)) {
         return false;
       }
-      if (w.id === `${masterWidgetId}_grid_header`) {
+      if (w.id === `${resolvedMasterId}_grid_header`) {
         return false;
       }
       return true;
     });
+
+    if (session?.gridId && !this.hasGridWidgets(filtered, session.gridId)) {
+      return this.removeGrid(filtered, session.gridId);
+    }
+
+    return filtered;
   }
 
   public static calculateGridBounds(

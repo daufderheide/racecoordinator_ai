@@ -1,3 +1,4 @@
+import { LaneGridAnimationHelper } from "@app/components/raceday/utils/lane-grid-animation.helper";
 import { LaneGridReplicationHelper } from "@app/components/raceday/utils/lane-grid-replication.helper";
 import {
   LaneReplicationHelper,
@@ -526,7 +527,29 @@ export function handleRemoveSelectedWidget(comp: any, ui?: CustomUI): void {
   if (!layout?.widgets) return;
 
   const idToRemove = comp.selectedWidgetId;
-  const newWidgets = layout.widgets.filter((w: any) => w.id !== idToRemove);
+  const targetWidget = layout.widgets.find((w: any) => w.id === idToRemove);
+  const gridId =
+    comp.activeGridSession?.gridId || targetWidget?.customSettings?.["gridId"];
+
+  let newWidgets: any[];
+  if (comp.activeGridSession && comp.activeGridSession.gridId === gridId) {
+    newWidgets = LaneGridReplicationHelper.removeMasterWidgetFromLanes(
+      idToRemove,
+      comp.activeGridSession,
+      layout.widgets,
+    );
+  } else {
+    newWidgets = layout.widgets.filter((w: any) => w.id !== idToRemove);
+  }
+
+  if (gridId && !LaneGridReplicationHelper.hasGridWidgets(newWidgets, gridId)) {
+    newWidgets = LaneGridReplicationHelper.removeGrid(newWidgets, gridId);
+    LaneGridAnimationHelper.reset(gridId);
+    if (comp.activeGridSession?.gridId === gridId) {
+      comp.activeGridSession = null;
+    }
+  }
+
   const updatedLayout = { ...layout, widgets: newWidgets };
 
   const laneView = newWidgets.find((w: any) => w.widgetType === "lane-view");
@@ -653,6 +676,22 @@ export function handleLayoutChanged(
     comp.parsedLayouts,
   );
   const widgets = newLayout?.widgets || [];
+  if (
+    comp.activeGridSession &&
+    !LaneGridReplicationHelper.hasGridWidgets(
+      widgets,
+      comp.activeGridSession.gridId,
+    )
+  ) {
+    if (newLayout?.widgets) {
+      newLayout.widgets = LaneGridReplicationHelper.removeGrid(
+        widgets,
+        comp.activeGridSession.gridId,
+      );
+    }
+    LaneGridAnimationHelper.reset(comp.activeGridSession.gridId);
+    comp.activeGridSession = null;
+  }
   if (
     widgets.length > 0 &&
     (!comp.selectedWidgetId ||

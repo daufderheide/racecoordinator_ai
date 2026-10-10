@@ -54,6 +54,7 @@ import { AuthService } from "@app/services/auth.service";
 import { RaceConnectionService } from "@app/services/race-connection.service";
 import * as _audio from "@app/utils/audio";
 
+import { LaneGridAnimationHelper } from "./utils/lane-grid-animation.helper";
 import { RacedayLayoutUtils } from "./utils/raceday-layout.utils";
 
 @Component({
@@ -8498,6 +8499,92 @@ describe("DefaultRacedayComponent", () => {
       (component as any).selectedWidgetId = () => "w1";
       component.removeWidget("w1");
       expect(component.widgetSelected.emit).toHaveBeenCalledWith("lane-view-1");
+    });
+
+    it("should remove grid and emit finishGrid when the last element in a grid session is removed", () => {
+      spyOn(component.finishGrid, "emit");
+      spyOn(LaneGridAnimationHelper, "reset");
+      fixture.componentRef.setInput("gridSession", {
+        gridId: "grid-test-remove",
+        bounds: { x: 0, y: 0, width: 400, height: 200 },
+        totalLanes: 2,
+        direction: "horizontal",
+        sourceLaneIndex: 0,
+        bindingMode: "lane",
+      });
+
+      component.layout = {
+        widgets: [
+          {
+            id: "m1",
+            widgetType: "lane-column",
+            customSettings: { gridId: "grid-test-remove" },
+          },
+          {
+            id: "m1_grid_lane_1",
+            widgetType: "lane-column",
+            customSettings: {
+              gridId: "grid-test-remove",
+              gridMasterId: "m1",
+            },
+          },
+          {
+            id: "m1_grid_header",
+            widgetType: "lane-column",
+            customSettings: {
+              gridId: "grid-test-remove",
+              isHeaderWidget: true,
+              gridMasterId: "m1",
+            },
+          },
+          {
+            id: "other-w",
+            widgetType: "clock",
+          },
+        ],
+      } as any;
+
+      component.removeWidget("m1");
+      expect(
+        component.layout.widgets.some(
+          (w: any) => w.customSettings?.gridId === "grid-test-remove",
+        ),
+      ).toBeFalse();
+      expect(component.finishGrid.emit).toHaveBeenCalled();
+      expect(LaneGridAnimationHelper.reset).toHaveBeenCalledWith(
+        "grid-test-remove",
+      );
+      expect(component.layout.widgets.length).toBe(1);
+      expect(component.layout.widgets[0].id).toBe("other-w");
+    });
+
+    it("should remove grid and reset animation helper when the last element in a baked grid is removed", () => {
+      spyOn(LaneGridAnimationHelper, "reset");
+      fixture.componentRef.setInput("gridSession", null);
+
+      component.layout = {
+        widgets: [
+          {
+            id: "cell-1",
+            widgetType: "lane-column",
+            customSettings: { gridId: "grid-baked" },
+          },
+          {
+            id: "clock-1",
+            widgetType: "clock",
+          },
+        ],
+      } as any;
+
+      component.removeWidget("cell-1");
+      expect(
+        component.layout.widgets.some(
+          (w: any) => w.customSettings?.gridId === "grid-baked",
+        ),
+      ).toBeFalse();
+      expect(LaneGridAnimationHelper.reset).toHaveBeenCalledWith("grid-baked");
+      expect(component.layout.widgets.length).toBe(1);
+      expect(component.layout.widgets[0].id).toBe("clock-1");
     });
   });
 
