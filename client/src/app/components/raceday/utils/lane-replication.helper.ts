@@ -13,6 +13,7 @@ export interface LaneReplicationOptions {
   headerPlacement?: "top" | "individual" | "none";
   headerHeight?: number;
   linkColumns?: boolean;
+  sortByBindingMode?: boolean;
 }
 
 export class LaneReplicationHelper {
@@ -130,6 +131,9 @@ export class LaneReplicationHelper {
         if (options.linkColumns != null) {
           clonedSettings["linkColumns"] = options.linkColumns;
         }
+        if (options.sortByBindingMode != null) {
+          clonedSettings["sortByBindingMode"] = options.sortByBindingMode;
+        }
 
         const newX = Math.max(
           0,
@@ -178,6 +182,9 @@ export class LaneReplicationHelper {
               : {}),
             ...(options.linkColumns != null
               ? { linkColumns: options.linkColumns }
+              : {}),
+            ...(options.sortByBindingMode != null
+              ? { sortByBindingMode: options.sortByBindingMode }
               : {}),
           },
         };

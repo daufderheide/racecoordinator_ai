@@ -197,7 +197,9 @@ export class RacedayLaneColumnComponent
       parent.heat?.heatDrivers ||
       [];
 
-    if (this.bindingMode === "overallPosition") {
+    const sortByBindingMode = this.settings.sortByBindingMode !== false;
+
+    if (sortByBindingMode && this.bindingMode === "overallPosition") {
       const targetRank = this.targetIndex + 1;
       const participants: any[] = parent.participants || [];
       const match =
@@ -212,7 +214,7 @@ export class RacedayLaneColumnComponent
       return activeHeatDriver || this.getOrCreateSyntheticDriver(match);
     }
 
-    if (this.bindingMode === "seed") {
+    if (sortByBindingMode && this.bindingMode === "seed") {
       const targetSeed = this.targetIndex + 1;
       const participants: any[] = parent.participants || [];
       const match =
@@ -227,7 +229,7 @@ export class RacedayLaneColumnComponent
       return activeHeatDriver || this.getOrCreateSyntheticDriver(match);
     }
 
-    if (this.bindingMode === "position") {
+    if (sortByBindingMode && this.bindingMode === "position") {
       const targetRank = this.targetIndex + 1;
       if (parent.driverRankings && parent.driverRankings.size > 0) {
         for (const d of drivers) {
@@ -278,8 +280,12 @@ export class RacedayLaneColumnComponent
       const bg = parent.getLaneColor(hd, "background_color");
       if (bg) return bg;
     }
+    const sortByBindingMode = this.settings.sortByBindingMode !== false;
     const laneIdx =
-      hd?.laneIndex ?? (this.bindingMode === "lane" ? this.targetIndex : 0);
+      hd?.laneIndex ??
+      (this.bindingMode === "lane" || !sortByBindingMode
+        ? this.targetIndex
+        : 0);
     const track =
       parent?.track ||
       parent?.race?.track ||
@@ -299,8 +305,12 @@ export class RacedayLaneColumnComponent
       const fg = parent.getLaneColor(hd, "foreground_color");
       if (fg) return fg;
     }
+    const sortByBindingMode = this.settings.sortByBindingMode !== false;
     const laneIdx =
-      hd?.laneIndex ?? (this.bindingMode === "lane" ? this.targetIndex : 0);
+      hd?.laneIndex ??
+      (this.bindingMode === "lane" || !sortByBindingMode
+        ? this.targetIndex
+        : 0);
     const track =
       parent?.track ||
       parent?.race?.track ||

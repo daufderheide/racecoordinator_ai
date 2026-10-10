@@ -1,5 +1,6 @@
 import { TestbedHarnessEnvironment } from "@angular/cdk/testing/testbed";
 import { ComponentFixture, TestBed } from "@angular/core/testing";
+import { LaneGridAnimationHelper } from "@app/components/raceday/utils/lane-grid-animation.helper";
 import { AbsoluteWidgetNode } from "@app/models/settings";
 import { TranslationService } from "@app/services/translation.service";
 import { mockTranslationService } from "@app/testing/unit-test-mocks";
@@ -751,6 +752,188 @@ describe("RacedayAbsoluteWidgetComponent", () => {
       fixture.componentRef.setInput("selectedWidgetId", "w-col-1");
       expect(component.isSameGridColumn).toBeFalse();
       expect(component.isSameGridRow).toBeFalse();
+    });
+  });
+
+  describe("Grid Standings Animation", () => {
+    beforeEach(() => {
+      LaneGridAnimationHelper.reset();
+      jasmine.clock().install();
+      fixture.componentRef.setInput("isCustomizing", false);
+    });
+
+    afterEach(() => {
+      jasmine.clock().uninstall();
+      LaneGridAnimationHelper.reset();
+    });
+
+    it("should animate widget into new position when standings change in position mode", async () => {
+      const gridWidget: AbsoluteWidgetNode = {
+        id: "w-grid-row0",
+        widgetType: "lane-column",
+        x: 100,
+        y: 200,
+        width: 150,
+        height: 50,
+        zIndex: 100,
+        customSettings: {
+          gridId: "grid-anim-test",
+          gridLane: 0,
+          targetIndex: 0,
+          bindingMode: "position",
+          columnKey: "driver.name",
+        },
+      };
+
+      const parentMock = {
+        heat: { objectId: "heat-100" },
+        driverRankings: new Map([
+          ["driver-a", 1],
+          ["driver-b", 2],
+        ]),
+        heatDrivers: [
+          { objectId: "driver-a", laneIndex: 0 },
+          { objectId: "driver-b", laneIndex: 1 },
+        ],
+      };
+
+      // Record baseline position for driver-b at row 1 (y=260)
+      const siblingRow1: AbsoluteWidgetNode = {
+        ...gridWidget,
+        id: "w-grid-row1",
+        y: 260,
+        customSettings: {
+          ...gridWidget.customSettings,
+          gridLane: 1,
+          targetIndex: 1,
+        },
+      };
+      LaneGridAnimationHelper.recordPosition(
+        siblingRow1,
+        "driver-b",
+        "heat-100",
+      );
+      await Promise.resolve();
+
+      fixture.componentRef.setInput("widget", gridWidget);
+      fixture.componentRef.setInput("parentComponent", parentMock);
+      fixture.detectChanges();
+
+      // Initially, widget was at row 0 with driver-a. No animation yet.
+      expect(component.isGridAnimating).toBeFalse();
+
+      // Now driver-b takes 1st place!
+      parentMock.driverRankings.set("driver-b", 1);
+      parentMock.driverRankings.set("driver-a", 2);
+      fixture.componentRef.setInput("parentComponent", { ...parentMock });
+      fixture.detectChanges();
+
+      // Driver changed from driver-a to driver-b (who was at y=260)
+      // DeltaY = 260 - 200 = 60px. isGridAnimating should be true!
+      expect(component.isGridAnimating).toBeTrue();
+      const el = component.wrapperRef()?.nativeElement;
+      expect(el?.classList.contains("grid-animating")).toBeTrue();
+
+      // Advance clock by 300ms
+      jasmine.clock().tick(300);
+      expect(component.isGridAnimating).toBeFalse();
+      expect(el?.classList.contains("grid-animating")).toBeFalse();
+    });
+
+    it("should not animate in lane binding mode", () => {
+      const laneWidget: AbsoluteWidgetNode = {
+        id: "w-lane-0",
+        widgetType: "lane-column",
+        x: 100,
+        y: 200,
+        width: 150,
+        height: 50,
+        zIndex: 100,
+        customSettings: {
+          gridId: "grid-anim-test",
+          gridLane: 0,
+          targetIndex: 0,
+          bindingMode: "lane",
+          columnKey: "driver.name",
+        },
+      };
+
+      const parentMock = {
+        heat: { objectId: "heat-100" },
+        driverRankings: new Map([["driver-a", 1]]),
+        heatDrivers: [{ objectId: "driver-a", laneIndex: 0 }],
+      };
+
+      fixture.componentRef.setInput("widget", laneWidget);
+      fixture.componentRef.setInput("parentComponent", parentMock);
+      fixture.detectChanges();
+
+      expect(component.isGridAnimating).toBeFalse();
+    });
+
+    it("should not animate when isCustomizing is true", () => {
+      const gridWidget: AbsoluteWidgetNode = {
+        id: "w-grid-0",
+        widgetType: "lane-column",
+        x: 100,
+        y: 200,
+        width: 150,
+        height: 50,
+        zIndex: 100,
+        customSettings: {
+          gridId: "grid-anim-test",
+          gridLane: 0,
+          targetIndex: 0,
+          bindingMode: "position",
+          columnKey: "driver.name",
+        },
+      };
+
+      const parentMock = {
+        heat: { objectId: "heat-100" },
+        driverRankings: new Map([["driver-a", 1]]),
+        heatDrivers: [{ objectId: "driver-a", laneIndex: 0 }],
+      };
+
+      fixture.componentRef.setInput("isCustomizing", true);
+      fixture.componentRef.setInput("widget", gridWidget);
+      fixture.componentRef.setInput("parentComponent", parentMock);
+      fixture.detectChanges();
+
+      expect(component.isGridAnimating).toBeFalse();
+    });
+
+    it("should not animate when sortByBindingMode is false", () => {
+      const gridWidget: AbsoluteWidgetNode = {
+        id: "w-grid-0",
+        widgetType: "lane-column",
+        x: 100,
+        y: 200,
+        width: 150,
+        height: 50,
+        zIndex: 100,
+        customSettings: {
+          gridId: "grid-anim-test",
+          gridLane: 0,
+          targetIndex: 0,
+          bindingMode: "position",
+          sortByBindingMode: false,
+          columnKey: "driver.name",
+        },
+      };
+
+      const parentMock = {
+        heat: { objectId: "heat-100" },
+        driverRankings: new Map([["driver-a", 1]]),
+        heatDrivers: [{ objectId: "driver-a", laneIndex: 0 }],
+      };
+
+      fixture.componentRef.setInput("isCustomizing", false);
+      fixture.componentRef.setInput("widget", gridWidget);
+      fixture.componentRef.setInput("parentComponent", parentMock);
+      fixture.detectChanges();
+
+      expect(component.isGridAnimating).toBeFalse();
     });
   });
 });

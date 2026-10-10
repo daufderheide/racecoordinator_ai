@@ -149,6 +149,7 @@ describe("ReplicateLaneDialogComponent", () => {
       headerPlacement: "top",
       headerHeight: 48,
       linkColumns: true,
+      sortByBindingMode: true,
       replaceExisting: false,
       sourceIndex: 1,
       sourceBindingMode: "position",
@@ -181,5 +182,19 @@ describe("ReplicateLaneDialogComponent", () => {
     fixture.detectChanges();
 
     expect(component.linkColumns()).toBeFalse();
+  });
+
+  it("should toggle sortByBindingMode when checkbox is toggled", () => {
+    fixture.componentRef.setInput("visible", true);
+    fixture.detectChanges();
+
+    expect(component.sortByBindingMode()).toBeTrue();
+    const checkbox = fixture.debugElement.query(
+      By.css("input.sort-grid-by-binding-mode-checkbox"),
+    );
+    checkbox.nativeElement.click();
+    fixture.detectChanges();
+
+    expect(component.sortByBindingMode()).toBeFalse();
   });
 });

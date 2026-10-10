@@ -2724,6 +2724,7 @@
   "UE_GRID_HEADER_PLACEMENT": "Header Placement",
   "UE_GRID_HEADER_HEIGHT": "Header Height",
   "UE_GRID_LINK_COLUMNS": "Link Columns",
+  "UE_GRID_SORT_BY_BINDING_MODE": "Sort grid by binding mode",
   "UE_GRID_APPLY_HEADER_TO_ALL": "Apply Header Style to All Columns",
   "UE_GRID_APPLY_VALUE_TO_ALL": "Apply Value Style to All Columns",
   "UE_GRID_APPLY_BORDER_TO_ALL": "Apply Border Style to All Columns",

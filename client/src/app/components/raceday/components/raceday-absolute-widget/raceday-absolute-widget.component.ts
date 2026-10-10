@@ -1,13 +1,16 @@
 import { DragDropModule } from "@angular/cdk/drag-drop";
 import { CommonModule, NgComponentOutlet } from "@angular/common";
 import {
+  AfterViewChecked,
   ChangeDetectorRef,
   Component,
+  ElementRef,
   inject,
   input,
   OnDestroy,
   OnInit,
   Type,
+  viewChild,
   ViewEncapsulation,
 } from "@angular/core";
 import { Subscription } from "rxjs";
@@ -34,6 +37,7 @@ import { RacedaySeasonNameComponent } from "@app/components/raceday/components/r
 import { RacedaySeasonRaceLeaderboardComponent } from "@app/components/raceday/components/raceday-season-race-leaderboard/raceday-season-race-leaderboard.component";
 import { RacedayTimerComponent } from "@app/components/raceday/components/raceday-timer/raceday-timer.component";
 import { RacedayTrackNameComponent } from "@app/components/raceday/components/raceday-track-name/raceday-track-name.component";
+import { LaneGridAnimationHelper } from "@app/components/raceday/utils/lane-grid-animation.helper";
 import { AbsoluteWidgetNode } from "@app/models/settings";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { CustomWidgetService } from "@app/services/custom-widget.service";
@@ -75,12 +79,19 @@ import { LoggerService } from "@app/services/logger.service";
     RacedayCountdownComponent,
   ],
 })
-export class RacedayAbsoluteWidgetComponent implements OnInit, OnDestroy {
+export class RacedayAbsoluteWidgetComponent
+  implements OnInit, OnDestroy, AfterViewChecked
+{
   widget = input.required<AbsoluteWidgetNode>();
   parentComponent = input<any>(undefined);
   isCustomizing = input<boolean>(false);
   selectedWidgetId = input<string | null>(null);
   isCountdownPreviewActive = input<boolean>(false);
+
+  wrapperRef = viewChild<ElementRef<HTMLElement>>("widgetWrapper");
+  isGridAnimating = false;
+  private lastAnimatedEntityId: string | null = null;
+  private gridAnimTimer?: any;
 
   private customWidgetService = inject(CustomWidgetService, { optional: true });
   private logger = inject(LoggerService, { optional: true });
@@ -222,8 +233,18 @@ export class RacedayAbsoluteWidgetComponent implements OnInit, OnDestroy {
     }
   }
 
+  ngAfterViewChecked(): void {
+    this.checkGridAnimation();
+  }
+
   ngOnDestroy() {
     this.widgetSub?.unsubscribe();
+    if (this.gridAnimTimer) {
+      clearTimeout(this.gridAnimTimer);
+      this.gridAnimTimer = undefined;
+    }
+    const el = this.wrapperRef()?.nativeElement;
+    el?.classList.remove("grid-animating");
   }
 
   private calculateResizedBounds(
@@ -546,5 +567,77 @@ export class RacedayAbsoluteWidgetComponent implements OnInit, OnDestroy {
       };
     }
     return this.cachedCustomInputs;
+  }
+
+  private checkGridAnimation(): void {
+    if (this.isCustomizing()) {
+      this.lastAnimatedEntityId = null;
+      return;
+    }
+    const w = this.widget();
+    if (!w || w.widgetType !== "lane-column") return;
+    const s = w.customSettings;
+    if (!s || !s["gridId"] || s["isHeaderWidget"]) return;
+    if (s["sortByBindingMode"] === false) return;
+    const mode = s["bindingMode"];
+    if (mode !== "position" && mode !== "overallPosition") return;
+
+    const entityId = LaneGridAnimationHelper.resolveEntityId(
+      w,
+      this.parentComponent(),
+    );
+    if (!entityId) return;
+
+    if (this.lastAnimatedEntityId === entityId) {
+      return;
+    }
+
+    const prevEntity = this.lastAnimatedEntityId;
+    this.lastAnimatedEntityId = entityId;
+
+    if (prevEntity !== null) {
+      const delta = LaneGridAnimationHelper.getShiftDelta(
+        w,
+        this.parentComponent(),
+        this.isCustomizing(),
+      );
+      if (delta) {
+        this.applyShiftAnimation(delta.deltaX, delta.deltaY);
+      }
+    } else {
+      LaneGridAnimationHelper.recordPosition(
+        w,
+        entityId,
+        this.parentComponent()?.heat?.objectId || null,
+      );
+    }
+  }
+
+  private applyShiftAnimation(deltaX: number, deltaY: number): void {
+    const el = this.wrapperRef()?.nativeElement;
+    if (!el) return;
+
+    if (this.gridAnimTimer) {
+      clearTimeout(this.gridAnimTimer);
+      this.gridAnimTimer = undefined;
+    }
+
+    this.isGridAnimating = true;
+    el.classList.add("grid-animating");
+    el.style.transition = "none";
+    el.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
+    void el.offsetHeight;
+    el.style.transition = "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)";
+    el.style.transform = "translate(0px, 0px)";
+
+    this.gridAnimTimer = setTimeout(() => {
+      if (el) {
+        el.classList.remove("grid-animating");
+        el.style.transition = "";
+        el.style.transform = "";
+      }
+      this.isGridAnimating = false;
+      this.gridAnimTimer = undefined;
+    }, 300);
   }
 }

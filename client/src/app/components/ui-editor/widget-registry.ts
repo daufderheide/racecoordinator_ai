@@ -103,6 +103,7 @@ export const WIDGET_REGISTRY: Record<string, WidgetRegistryEntry> = {
       headerHeight: 36,
       isHeaderWidget: false,
       linkColumns: true,
+      sortByBindingMode: true,
       highlightRowOnLap: true,
       customLabel: "",
       headerFontFamily: "",

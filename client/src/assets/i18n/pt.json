@@ -2724,6 +2724,7 @@
   "UE_GRID_HEADER_PLACEMENT": "Posicionamento do cabeçalho",
   "UE_GRID_HEADER_HEIGHT": "Altura do cabeçalho",
   "UE_GRID_LINK_COLUMNS": "Vincular colunas",
+  "UE_GRID_SORT_BY_BINDING_MODE": "Classificar grade por modo de vinculação",
   "UE_GRID_APPLY_HEADER_TO_ALL": "Aplicar estilo de cabeçalho a todas as colunas",
   "UE_GRID_APPLY_VALUE_TO_ALL": "Aplicar estilo de valor a todas as colunas",
   "UE_GRID_APPLY_BORDER_TO_ALL": "Aplicar estilo de borda a todas as colunas",

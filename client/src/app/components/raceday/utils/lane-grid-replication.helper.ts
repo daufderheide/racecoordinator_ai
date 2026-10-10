@@ -20,6 +20,7 @@ export interface LaneGridSession {
   headerPlacement?: "top" | "individual" | "none";
   headerHeight?: number;
   linkColumns?: boolean;
+  sortByBindingMode?: boolean;
   layoutOrientation?: "vertical" | "horizontal";
 }
 
@@ -614,11 +615,37 @@ export class LaneGridReplicationHelper {
     if (!gridId || !allWidgets) return allWidgets || [];
     return allWidgets.map((w) => {
       if (w.customSettings?.["gridId"] === gridId) {
+        if (w.customSettings) {
+          w.customSettings["linkColumns"] = link;
+        }
         return {
           ...w,
           customSettings: {
             ...(w.customSettings || {}),
             linkColumns: link,
+          },
+        };
+      }
+      return w;
+    });
+  }
+
+  public static updateGridSortByBindingMode(
+    allWidgets: AbsoluteWidgetNode[],
+    gridId: string,
+    sortByBindingMode: boolean,
+  ): AbsoluteWidgetNode[] {
+    if (!gridId || !allWidgets) return allWidgets || [];
+    return allWidgets.map((w) => {
+      if (w.customSettings?.["gridId"] === gridId) {
+        if (w.customSettings) {
+          w.customSettings["sortByBindingMode"] = sortByBindingMode;
+        }
+        return {
+          ...w,
+          customSettings: {
+            ...(w.customSettings || {}),
+            sortByBindingMode,
           },
         };
       }

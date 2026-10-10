@@ -341,6 +341,19 @@ function handleGridStructureChanges(
     }
   }
 
+  if (targetWidget.customSettings?.["_sortByBindingModeChanged"]) {
+    delete targetWidget.customSettings["_sortByBindingModeChanged"];
+    const sort = targetWidget.customSettings?.["sortByBindingMode"] !== false;
+    layout.widgets = LaneGridReplicationHelper.updateGridSortByBindingMode(
+      layout.widgets,
+      gridId,
+      sort,
+    );
+    if (comp.activeGridSession && comp.activeGridSession.gridId === gridId) {
+      comp.activeGridSession.sortByBindingMode = sort;
+    }
+  }
+
   if (targetWidget.customSettings?.["_layoutOrientationChanged"]) {
     delete targetWidget.customSettings["_layoutOrientationChanged"];
     const orientation =

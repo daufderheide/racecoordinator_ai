@@ -85,6 +85,7 @@ export interface LaneColumnWidgetSettings {
   headerHeight?: number;
   isHeaderWidget?: boolean;
   linkColumns?: boolean;
+  sortByBindingMode?: boolean;
   highlightRowOnLap?: boolean;
   customLabel: string;
   headerFontFamily: string;

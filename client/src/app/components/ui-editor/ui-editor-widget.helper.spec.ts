@@ -258,6 +258,45 @@ describe("ui-editor-widget.helper", () => {
     expect(comp.captureState).toHaveBeenCalled();
   });
 
+  it("should synchronize sortByBindingMode across grid widgets when _sortByBindingModeChanged is set", () => {
+    const {
+      handleWidgetInspectorChange,
+    } = require("./ui-editor-widget.helper");
+    const targetWidget = {
+      id: "w1",
+      customSettings: {
+        gridId: "grid-abc",
+        sortByBindingMode: false,
+        _sortByBindingModeChanged: true,
+      },
+    };
+    const widget2 = {
+      id: "w2",
+      customSettings: { gridId: "grid-abc", sortByBindingMode: true },
+    };
+    const layout = { widgets: [targetWidget, widget2] };
+    const comp = {
+      isSaving: false,
+      activeCustomUi: { entity_id: "ui1" },
+      currentSelectedWidget: targetWidget,
+      activeGridSession: { gridId: "grid-abc", sortByBindingMode: true },
+      getLayout: jasmine.createSpy("getLayout").and.returnValue(layout),
+      editingSettings: new Settings(),
+      isCurrentLayoutPractice: false,
+      parsedLayouts: new Map(),
+      captureState: jasmine.createSpy("captureState"),
+      cdr: { markForCheck: jasmine.createSpy("markForCheck") },
+    };
+
+    handleWidgetInspectorChange(comp, targetWidget);
+
+    expect(widget2.customSettings.sortByBindingMode).toBeFalse();
+    expect(comp.activeGridSession.sortByBindingMode).toBeFalse();
+    expect(
+      targetWidget.customSettings._sortByBindingModeChanged,
+    ).toBeUndefined();
+  });
+
   it("should handle removing selected widget", () => {
     const { handleRemoveSelectedWidget } = require("./ui-editor-widget.helper");
     const layout = {

@@ -2724,6 +2724,7 @@
   "UE_GRID_HEADER_PLACEMENT": "Kopplaatsing",
   "UE_GRID_HEADER_HEIGHT": "Kophoogte",
   "UE_GRID_LINK_COLUMNS": "Kolommen koppelen",
+  "UE_GRID_SORT_BY_BINDING_MODE": "Raster sorteren op bindingsmodus",
   "UE_GRID_APPLY_HEADER_TO_ALL": "Kopstijl toepassen op alle kolommen",
   "UE_GRID_APPLY_VALUE_TO_ALL": "Waardestijl toepassen op alle kolommen",
   "UE_GRID_APPLY_BORDER_TO_ALL": "Randstijl toepassen op alle kolommen",

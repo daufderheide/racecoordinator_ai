@@ -381,6 +381,16 @@ export class LaneColumnInspectorComponent {
     this.onFieldChange();
   }
 
+  get sortByBindingMode(): boolean {
+    return this.currentSettings["sortByBindingMode"] !== false;
+  }
+
+  set sortByBindingMode(val: boolean) {
+    this.currentSettings["sortByBindingMode"] = Boolean(val);
+    this.currentSettings["_sortByBindingModeChanged"] = true;
+    this.onFieldChange();
+  }
+
   get gridLayoutOrientation(): "vertical" | "horizontal" {
     return this.currentSettings["layoutOrientation"] === "horizontal"
       ? "horizontal"

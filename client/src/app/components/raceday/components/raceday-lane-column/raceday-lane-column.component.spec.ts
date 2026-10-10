@@ -267,6 +267,25 @@ describe("RacedayLaneColumnComponent", () => {
     expect(component.targetDriver?.objectId).toBe("driver-3");
   });
 
+  it("should fall back to lane index when sortByBindingMode is false even in position mode", () => {
+    mockParent.driverRankings = new Map([
+      ["driver-1", 2],
+      ["driver-2", 1],
+    ]);
+    fixture.componentRef.setInput("parent", mockParent);
+    fixture.componentRef.setInput(
+      "widget",
+      createWidget({
+        bindingMode: "position",
+        targetIndex: 0,
+        sortByBindingMode: false,
+      }),
+    );
+    fixture.detectChanges();
+    // targetIndex: 0 in lane mode resolves driver on laneIndex 0 (driver-1), not rank 1 (driver-2)
+    expect(component.targetDriver?.objectId).toBe("driver-1");
+  });
+
   it("should inherit background and foreground colors from lane by default", () => {
     fixture.componentRef.setInput("parent", mockParent);
     fixture.componentRef.setInput(

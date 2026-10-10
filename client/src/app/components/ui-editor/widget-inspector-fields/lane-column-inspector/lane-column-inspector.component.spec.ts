@@ -871,6 +871,16 @@ describe("LaneColumnInspectorComponent", () => {
       expect(component.change.emit).toHaveBeenCalled();
     });
 
+    it("should handle sortByBindingMode getter and setter with _sortByBindingModeChanged flag", () => {
+      spyOn(component.change, "emit");
+      expect(component.sortByBindingMode).toBeTrue();
+
+      component.sortByBindingMode = false;
+      expect(mockSettings.sortByBindingMode).toBeFalse();
+      expect(mockSettings._sortByBindingModeChanged).toBeTrue();
+      expect(component.change.emit).toHaveBeenCalled();
+    });
+
     it("should handle gridHeaderPlacement and gridHeaderHeight updates", () => {
       spyOn(component.change, "emit");
       expect(component.gridHeaderPlacement).toBe("individual");

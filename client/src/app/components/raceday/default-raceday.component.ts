@@ -131,6 +131,7 @@ import { AddLapSectionsDialogComponent } from "./components/add-lap-sections-dia
 import { RacedayAbsoluteWidgetComponent } from "./components/raceday-absolute-widget/raceday-absolute-widget.component";
 import { RacedayModalsComponent } from "./components/raceday-modals/raceday-modals.component";
 import { ToolboxGroup, ToolboxGroupHelper } from "./toolbox-group.helper";
+import { LaneGridAnimationHelper } from "./utils/lane-grid-animation.helper";
 import {
   GridResizeHandle,
   LaneGridBounds,
@@ -1726,6 +1727,9 @@ export class DefaultRacedayComponent
     this.subscriptions.push(
       this.raceService.currentHeat$.subscribe((heat) => {
         if (heat) {
+          if (this.heat?.objectId !== heat.objectId) {
+            LaneGridAnimationHelper.reset();
+          }
           this.heat = heat;
           if (
             !this.track ||
@@ -3365,6 +3369,7 @@ export class DefaultRacedayComponent
   }
 
   ngOnDestroy() {
+    LaneGridAnimationHelper.reset();
     this.lapHighlightTimers.forEach((timer) => clearTimeout(timer));
     this.lapHighlightTimers.clear();
     this.audioService.reset();
@@ -3518,6 +3523,7 @@ export class DefaultRacedayComponent
     this.hasRacedInCurrentHeat = false;
     this.resetFuelAudioTracking();
     this.audioService.reset();
+    LaneGridAnimationHelper.reset();
     this.dataService.restartHeat().subscribe(
       (success) => {
         if (success) {

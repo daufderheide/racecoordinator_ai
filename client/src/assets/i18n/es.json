@@ -2724,6 +2724,7 @@
   "UE_GRID_HEADER_PLACEMENT": "Ubicación del encabezado",
   "UE_GRID_HEADER_HEIGHT": "Altura del encabezado",
   "UE_GRID_LINK_COLUMNS": "Vincular columnas",
+  "UE_GRID_SORT_BY_BINDING_MODE": "Ordenar cuadrícula por modo de enlace",
   "UE_GRID_APPLY_HEADER_TO_ALL": "Aplicar estilo de encabezado a todas las columnas",
   "UE_GRID_APPLY_VALUE_TO_ALL": "Aplicar estilo de valor a todas las columnas",
   "UE_GRID_APPLY_BORDER_TO_ALL": "Aplicar estilo de borde a todas las columnas",

@@ -197,6 +197,18 @@ import { TranslatePipe } from "@app/pipes/translate.pipe";
             </label>
           </div>
 
+          <div class="form-check-group" style="margin-bottom: 12px;">
+            <label class="form-check-label">
+              <input
+                type="checkbox"
+                class="form-checkbox sort-grid-by-binding-mode-checkbox"
+                [checked]="sortByBindingMode()"
+                (change)="sortByBindingMode.set(!sortByBindingMode())"
+              />
+              <span>{{ "UE_GRID_SORT_BY_BINDING_MODE" | translate }}</span>
+            </label>
+          </div>
+
           <div class="form-check-group">
             <label class="form-check-label">
               <input
@@ -338,6 +350,7 @@ export class ReplicateLaneDialogComponent {
   headerPlacement = signal<"top" | "individual" | "none">("individual");
   headerHeight = signal<number>(36);
   linkColumns = signal<boolean>(true);
+  sortByBindingMode = signal<boolean>(true);
   replaceExisting = signal<boolean>(true);
 
   availableCounts = [2, 3, 4, 5, 6, 7, 8, 10, 12, 16, 20, 24, 32];
@@ -381,6 +394,7 @@ export class ReplicateLaneDialogComponent {
       headerPlacement: this.headerPlacement(),
       headerHeight: this.headerHeight(),
       linkColumns: this.linkColumns(),
+      sortByBindingMode: this.sortByBindingMode(),
       replaceExisting: this.replaceExisting(),
       sourceIndex: this.sourceIndex(),
       sourceBindingMode: this.bindingMode(),
