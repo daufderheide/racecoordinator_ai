@@ -9,6 +9,8 @@ import {
   NO_ERRORS_SCHEMA,
   OnDestroy,
   OnInit,
+  QueryList,
+  ViewChildren,
 } from "@angular/core";
 import { toSignal } from "@angular/core/rxjs-interop";
 import { FormsModule } from "@angular/forms";
@@ -609,33 +611,35 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     handleLayoutChanged(this, newLayout, ui);
   }
 
+  @ViewChildren(DefaultRacedayComponent)
+  racedayComponents!: QueryList<DefaultRacedayComponent>;
+
   onWidgetInspectorChange(widget?: any, ui?: CustomUI) {
     handleWidgetInspectorChange(this, widget, ui);
   }
 
-  onReplicateLanes(options: any, ui?: CustomUI) {
-    this.startGridSession(options, ui);
+  syncRacedayPreview(layout: any, targetUi?: CustomUI): void {
+    if (!layout || !this.racedayComponents) return;
+    const uiId = (targetUi || this.activeCustomUi)?.entity_id;
+    const targetComp =
+      this.racedayComponents.find(
+        (rc) => rc.activeCustomUi()?.entity_id === uiId,
+      ) || this.racedayComponents.first;
+    if (targetComp) {
+      targetComp.syncLayoutFromEditor(layout);
+    }
   }
 
-  startGridSession(options: any, ui?: CustomUI): void {
-    handleStartGridSession(this, options, ui);
-  }
-
-  finishGridSession(ui?: CustomUI): void {
-    handleFinishGridSession(this, ui);
-  }
-
-  onGridBoundsChange(bounds: LaneGridBounds, ui?: CustomUI): void {
-    handleUpdateGridBounds(this, bounds, ui);
-  }
-
-  onEditGridTemplate(gridId: string, ui?: CustomUI): void {
-    handleEditGridTemplate(this, gridId, ui);
-  }
-
-  onDetachGrid(gridId: string, ui?: CustomUI): void {
-    handleDetachGrid(this, gridId, ui);
-  }
+  onReplicateLanes = (opts: any, ui?: CustomUI) =>
+    this.startGridSession(opts, ui);
+  startGridSession = (opts: any, ui?: CustomUI) =>
+    handleStartGridSession(this, opts, ui);
+  finishGridSession = (ui?: CustomUI) => handleFinishGridSession(this, ui);
+  onGridBoundsChange = (b: LaneGridBounds, ui?: CustomUI) =>
+    handleUpdateGridBounds(this, b, ui);
+  onEditGridTemplate = (id: string, ui?: CustomUI) =>
+    handleEditGridTemplate(this, id, ui);
+  onDetachGrid = (id: string, ui?: CustomUI) => handleDetachGrid(this, id, ui);
 
   openReplicateLaneModal(ui?: CustomUI): void {
     openReplicateLaneModalHelper(this, ui);
@@ -902,61 +906,23 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     });
   }
 
-  clearCustomTemplate() {
-    handleClearCustomTemplate(this);
-  }
-
-  openTemplateVariablesModal() {
+  clearCustomTemplate = () => handleClearCustomTemplate(this);
+  openTemplateVariablesModal = () => {
     this.showTemplateVariablesModal = true;
-  }
-
-  downloadTemplate() {
-    handleDownloadTemplate(this);
-  }
-
-  testExport() {
-    handleTestExport(this);
-  }
-
-  onPageTransitionChange(transition: string) {
-    handlePageTransitionChange(this, transition);
-  }
-
-  onMasterVolumeChange(volume: number | string) {
-    handleMasterVolumeChange(this, volume);
-  }
-
-  onUrgentQueueTtlChange(ttl: number) {
-    handleUrgentQueueTtlChange(this, ttl);
-  }
-
-  onCalloutSpacingChange(spacing: number) {
-    handleCalloutSpacingChange(this, spacing);
-  }
-
-  loadAvailableVoices(): void {
-    initAvailableVoices(this);
-  }
-
-  onTtsVoiceChange(voice: string) {
-    handleTtsVoiceChange(this, voice);
-  }
-
-  onTtsRateChange(rate: number | string) {
-    handleTtsRateChange(this, rate);
-  }
-
-  onTtsPitchChange(pitch: number | string) {
-    handleTtsPitchChange(this, pitch);
-  }
-
-  onTtsVolumeChange(volume: number | string) {
-    handleTtsVolumeChange(this, volume);
-  }
-
-  testTtsVoice(): void {
-    executeTestTtsVoice(this);
-  }
+  };
+  downloadTemplate = () => handleDownloadTemplate(this);
+  testExport = () => handleTestExport(this);
+  onPageTransitionChange = (t: string) => handlePageTransitionChange(this, t);
+  onMasterVolumeChange = (v: number | string) =>
+    handleMasterVolumeChange(this, v);
+  onUrgentQueueTtlChange = (t: number) => handleUrgentQueueTtlChange(this, t);
+  onCalloutSpacingChange = (s: number) => handleCalloutSpacingChange(this, s);
+  loadAvailableVoices = () => initAvailableVoices(this);
+  onTtsVoiceChange = (v: string) => handleTtsVoiceChange(this, v);
+  onTtsRateChange = (r: number | string) => handleTtsRateChange(this, r);
+  onTtsPitchChange = (p: number | string) => handleTtsPitchChange(this, p);
+  onTtsVolumeChange = (v: number | string) => handleTtsVolumeChange(this, v);
+  testTtsVoice = () => executeTestTtsVoice(this);
 
   async onThemeSlotChanged(theme: Theme, slot: string, asset: any) {
     handleThemeSlotChange(this, theme, slot, asset);

@@ -81,6 +81,11 @@ export interface LaneColumnWidgetSettings {
   targetIndex: number;
   layoutOrientation: "vertical" | "horizontal";
   showHeader: boolean;
+  headerPlacement?: "top" | "individual" | "none";
+  headerHeight?: number;
+  isHeaderWidget?: boolean;
+  linkColumns?: boolean;
+  highlightRowOnLap?: boolean;
   customLabel: string;
   headerFontFamily: string;
   headerFontSize: number;

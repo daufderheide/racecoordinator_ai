@@ -708,4 +708,241 @@ describe("LaneGridReplicationHelper", () => {
       expect(resized.width).toBe(820); // 1020 - 200
     });
   });
+
+  describe("Header placement and cross-column synchronization", () => {
+    const topHeaderSession: LaneGridSession = {
+      gridId: "grid-top-headers",
+      bounds: { x: 100, y: 100, width: 400, height: 440 },
+      totalLanes: 4,
+      direction: "vertical",
+      sourceLaneIndex: 0,
+      bindingMode: "lane",
+      headerPlacement: "top",
+      headerHeight: 40,
+      linkColumns: true,
+    };
+
+    it("should account for headerHeight when computing pitch and lane cell bounds", () => {
+      // available height = 440 - 40 = 400. 4 lanes => pitch = 100
+      expect(LaneGridReplicationHelper.computePitch(topHeaderSession)).toBe(
+        100,
+      );
+
+      const headerBounds =
+        LaneGridReplicationHelper.computeHeaderRowBounds(topHeaderSession);
+      expect(headerBounds).toEqual({
+        x: 100,
+        y: 100,
+        width: 400,
+        height: 40,
+      });
+
+      const lane0Bounds = LaneGridReplicationHelper.computeLaneCellBounds(
+        topHeaderSession,
+        0,
+      );
+      expect(lane0Bounds).toEqual({
+        x: 100,
+        y: 140, // 100 + 40
+        width: 400,
+        height: 100,
+      });
+
+      const lane1Bounds = LaneGridReplicationHelper.computeLaneCellBounds(
+        topHeaderSession,
+        1,
+      );
+      expect(lane1Bounds).toEqual({
+        x: 100,
+        y: 240,
+        width: 400,
+        height: 100,
+      });
+    });
+
+    it("should identify header widgets and header widget IDs correctly", () => {
+      expect(LaneGridReplicationHelper.getHeaderWidgetId("col1")).toBe(
+        "col1_grid_header",
+      );
+      expect(
+        LaneGridReplicationHelper.isHeaderWidgetId("col1_grid_header"),
+      ).toBeTrue();
+      expect(
+        LaneGridReplicationHelper.isHeaderWidgetId("col1_lane1"),
+      ).toBeFalse();
+
+      const headerNode: AbsoluteWidgetNode = {
+        id: "col1_grid_header",
+        widgetType: "lane-column",
+        x: 100,
+        y: 100,
+        width: 200,
+        height: 40,
+        zIndex: 1,
+        customSettings: {
+          gridId: "grid-top-headers",
+          isHeaderWidget: true,
+        },
+      };
+      expect(LaneGridReplicationHelper.isHeaderWidget(headerNode)).toBeTrue();
+    });
+
+    it("should synchronize cross-column properties when syncCrossColumnProperty is called", () => {
+      const widgets: AbsoluteWidgetNode[] = [
+        {
+          id: "w1",
+          widgetType: "lane-column",
+          x: 100,
+          y: 140,
+          width: 100,
+          height: 100,
+          zIndex: 1,
+          customSettings: {
+            gridId: "grid-top-headers",
+            headerFontFamily: "Roboto",
+            headerFontSize: 16,
+            headerTextColor: "#ff0000",
+            headerBackgroundColor: "#333333",
+            valueFontFamily: "Roboto",
+            valueFontSize: 24,
+            borderColor: "#00ff00",
+            borderWidth: 2,
+            borderRadius: 6,
+            timeDisplayFormat: "seconds",
+            timeSubsecondMode: "always",
+            timeSubsecondDecimals: 3,
+          },
+        },
+        {
+          id: "w2",
+          widgetType: "lane-column",
+          x: 200,
+          y: 140,
+          width: 100,
+          height: 100,
+          zIndex: 1,
+          customSettings: {
+            gridId: "grid-top-headers",
+            headerFontFamily: "Arial",
+            headerFontSize: 12,
+            valueFontFamily: "Arial",
+            valueFontSize: 14,
+            borderColor: "#ffffff",
+            borderWidth: 1,
+            borderRadius: 2,
+          },
+        },
+      ];
+
+      // Sync header style from w1
+      const syncedHeader = LaneGridReplicationHelper.syncCrossColumnProperty(
+        "grid-top-headers",
+        "header",
+        widgets[0].customSettings!,
+        widgets,
+      );
+      expect(syncedHeader[1].customSettings?.["headerFontFamily"]).toBe(
+        "Roboto",
+      );
+      expect(syncedHeader[1].customSettings?.["headerFontSize"]).toBe(16);
+      expect(syncedHeader[1].customSettings?.["headerTextColor"]).toBe(
+        "#ff0000",
+      );
+
+      const resetSource = {
+        _reset_headerTextColor: true,
+      };
+      const syncedHeaderReset =
+        LaneGridReplicationHelper.syncCrossColumnProperty(
+          "grid-top-headers",
+          "header",
+          resetSource,
+          syncedHeader,
+        );
+      expect(
+        syncedHeaderReset[1].customSettings?.["headerTextColor"],
+      ).toBeUndefined();
+
+      // Sync value style from w1
+      const syncedValue = LaneGridReplicationHelper.syncCrossColumnProperty(
+        "grid-top-headers",
+        "value",
+        widgets[0].customSettings!,
+        widgets,
+      );
+      expect(syncedValue[1].customSettings?.["valueFontFamily"]).toBe("Roboto");
+      expect(syncedValue[1].customSettings?.["valueFontSize"]).toBe(24);
+
+      // Sync border style from w1
+      const syncedBorder = LaneGridReplicationHelper.syncCrossColumnProperty(
+        "grid-top-headers",
+        "border",
+        widgets[0].customSettings!,
+        widgets,
+      );
+      expect(syncedBorder[1].customSettings?.["borderColor"]).toBe("#00ff00");
+      expect(syncedBorder[1].customSettings?.["borderWidth"]).toBe(2);
+      expect(syncedBorder[1].customSettings?.["borderRadius"]).toBe(6);
+
+      // Sync time format from w1
+      const syncedTime = LaneGridReplicationHelper.syncCrossColumnProperty(
+        "grid-top-headers",
+        "time",
+        widgets[0].customSettings!,
+        widgets,
+      );
+      expect(syncedTime[1].customSettings?.["timeDisplayFormat"]).toBe(
+        "seconds",
+      );
+      expect(syncedTime[1].customSettings?.["timeSubsecondMode"]).toBe(
+        "always",
+      );
+      expect(syncedTime[1].customSettings?.["timeSubsecondDecimals"]).toBe(3);
+    });
+
+    it("should update grid linkColumns, headerHeight, and headerPlacement", () => {
+      const widgets: AbsoluteWidgetNode[] = [
+        {
+          id: "col1",
+          widgetType: "lane-column",
+          x: 100,
+          y: 140,
+          width: 100,
+          height: 100,
+          zIndex: 1,
+          customSettings: {
+            gridId: "grid-top-headers",
+            linkColumns: true,
+            headerHeight: 40,
+            headerPlacement: "top",
+          },
+        },
+      ];
+
+      const updatedLinks = LaneGridReplicationHelper.updateGridLinkColumns(
+        widgets,
+        "grid-top-headers",
+        false,
+      );
+      expect(updatedLinks[0].customSettings?.["linkColumns"]).toBeFalse();
+
+      const updatedHeight = LaneGridReplicationHelper.updateGridHeaderHeight(
+        widgets,
+        "grid-top-headers",
+        50,
+      );
+      expect(updatedHeight[0].customSettings?.["headerHeight"]).toBe(50);
+
+      const updatedPlacement =
+        LaneGridReplicationHelper.updateGridHeaderPlacement(
+          widgets,
+          "grid-top-headers",
+          "individual",
+        );
+      expect(updatedPlacement[0].customSettings?.["headerPlacement"]).toBe(
+        "individual",
+      );
+      expect(updatedPlacement[0].customSettings?.["showHeader"]).toBeTrue();
+    });
+  });
 });

@@ -402,6 +402,11 @@ app-default-raceday {
   background: rgba(59, 130, 246, 0.08);
 }
 
+.lane-blueprint-cell.header-cell {
+  border: 1px dashed rgba(59, 130, 246, 0.5);
+  background: rgba(59, 130, 246, 0.05);
+}
+
 .lane-blueprint-badge {
   position: absolute;
   top: 8px;

@@ -1004,6 +1004,14 @@ export class DefaultRacedayComponent
   isLayoutEditorMinimized = false;
   layoutEditorPosition = { x: 0, y: 0 };
   layout!: LayoutConfig;
+
+  public syncLayoutFromEditor(newLayout: LayoutConfig): void {
+    if (newLayout) {
+      this.layout = JSON.parse(JSON.stringify(newLayout));
+      this.cdr.markForCheck();
+    }
+  }
+
   draggedWidgetType: string | null = null;
   toolboxSearchTerm = "";
   toolboxGroupExpandedStates = new Map<string, boolean>();
@@ -8048,6 +8056,12 @@ export class DefaultRacedayComponent
       });
     }
     return cells;
+  }
+
+  getHeaderRowBounds(): LaneGridBounds | null {
+    const s = this.gridSession();
+    if (!s || s.headerPlacement !== "top") return null;
+    return LaneGridReplicationHelper.computeHeaderRowBounds(s);
   }
 
   onGridResizeStart(event: PointerEvent, handle: GridResizeHandle): void {

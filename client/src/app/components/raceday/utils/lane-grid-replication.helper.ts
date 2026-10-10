@@ -1,6 +1,8 @@
 import { AbsoluteWidgetNode } from "@app/models/settings";
 import { deepCopy } from "@app/utils/clone.utils";
 
+import { LaneGridGeometryHelper } from "./lane-grid-geometry.helper";
+
 export interface LaneGridBounds {
   x: number;
   y: number;
@@ -15,6 +17,9 @@ export interface LaneGridSession {
   direction: "horizontal" | "vertical";
   sourceLaneIndex: number;
   bindingMode: "lane" | "position" | "overallPosition" | "seed";
+  headerPlacement?: "top" | "individual" | "none";
+  headerHeight?: number;
+  linkColumns?: boolean;
 }
 
 export type GridResizeHandle =
@@ -30,17 +35,39 @@ export type GridResizeHandle =
 export class LaneGridReplicationHelper {
   public static computePitch(session: LaneGridSession): number {
     if (!session || session.totalLanes <= 0) return 0;
+    if (session.headerPlacement === "top") {
+      const headerH =
+        session.headerHeight != null ? Math.max(20, session.headerHeight) : 36;
+      const availH = Math.max(0, session.bounds.height - headerH);
+      return session.direction === "horizontal"
+        ? session.bounds.width / session.totalLanes
+        : availH / session.totalLanes;
+    }
     return session.direction === "horizontal"
       ? session.bounds.width / session.totalLanes
       : session.bounds.height / session.totalLanes;
   }
 
   public static computeGridDividers(session: LaneGridSession): number[] {
-    if (!session || session.totalLanes <= 1) return [];
+    if (!session || session.totalLanes <= 0) return [];
+    const dividers: number[] = [];
+    const headerH =
+      session.headerPlacement === "top"
+        ? session.headerHeight != null
+          ? Math.max(20, session.headerHeight)
+          : 36
+        : 0;
+
+    if (session.headerPlacement === "top") {
+      dividers.push(Math.round(session.bounds.y + headerH));
+    }
+    if (session.totalLanes <= 1) return dividers;
+
     const pitch = this.computePitch(session);
     const base =
-      session.direction === "horizontal" ? session.bounds.x : session.bounds.y;
-    const dividers: number[] = [];
+      session.direction === "horizontal"
+        ? session.bounds.x
+        : session.bounds.y + headerH;
     for (let k = 1; k < session.totalLanes; k++) {
       dividers.push(Math.round(base + k * pitch));
     }
@@ -56,21 +83,41 @@ export class LaneGridReplicationHelper {
     laneIndex: number,
   ): LaneGridBounds {
     const pitch = this.computePitch(session);
+    const headerH =
+      session.headerPlacement === "top"
+        ? session.headerHeight != null
+          ? Math.max(20, session.headerHeight)
+          : 36
+        : 0;
+
     if (session.direction === "horizontal") {
       return {
         x: Math.round(session.bounds.x + laneIndex * pitch),
-        y: session.bounds.y,
+        y: Math.round(session.bounds.y + headerH),
         width: Math.round(pitch),
-        height: session.bounds.height,
+        height: Math.round(Math.max(0, session.bounds.height - headerH)),
       };
     } else {
       return {
         x: session.bounds.x,
-        y: Math.round(session.bounds.y + laneIndex * pitch),
+        y: Math.round(session.bounds.y + headerH + laneIndex * pitch),
         width: session.bounds.width,
         height: Math.round(pitch),
       };
     }
+  }
+
+  public static computeHeaderRowBounds(
+    session: LaneGridSession,
+  ): LaneGridBounds {
+    const headerH =
+      session.headerHeight != null ? Math.max(20, session.headerHeight) : 36;
+    return {
+      x: session.bounds.x,
+      y: session.bounds.y,
+      width: session.bounds.width,
+      height: headerH,
+    };
   }
 
   public static getMirroredWidgetId(
@@ -80,6 +127,14 @@ export class LaneGridReplicationHelper {
     return `${masterId}_grid_lane_${targetLane}`;
   }
 
+  public static getHeaderWidgetId(masterId: string): string {
+    return `${masterId}_grid_header`;
+  }
+
+  public static isHeaderWidgetId(id: string): boolean {
+    return Boolean(id && id.endsWith("_grid_header"));
+  }
+
   public static isMasterWidget(
     widget: AbsoluteWidgetNode,
     session: LaneGridSession,
@@ -87,6 +142,7 @@ export class LaneGridReplicationHelper {
     if (!widget || !session) return false;
     const s = widget.customSettings;
     if (s?.["gridId"] === session.gridId) {
+      if (s?.["isHeaderWidget"]) return false;
       return (
         Number(s?.["gridLane"] ?? s?.["targetIndex"]) ===
         session.sourceLaneIndex
@@ -95,46 +151,45 @@ export class LaneGridReplicationHelper {
     return false;
   }
 
-  public static syncMasterWidgetToLanes(
+  public static isHeaderWidget(widget: AbsoluteWidgetNode): boolean {
+    return Boolean(widget?.customSettings?.["isHeaderWidget"]);
+  }
+
+  private static syncHeaderWidgetOnly(
     masterWidget: AbsoluteWidgetNode,
     session: LaneGridSession,
     allWidgets: AbsoluteWidgetNode[],
+    headerHeight: number,
   ): AbsoluteWidgetNode[] {
-    if (!masterWidget || !session) return allWidgets || [];
-
-    const masterCell = this.computeLaneCellBounds(
-      session,
-      session.sourceLaneIndex,
-    );
-    const offsetInCellX = masterWidget.x - masterCell.x;
-    const offsetInCellY = masterWidget.y - masterCell.y;
-
-    const effectiveBindingMode =
-      (masterWidget.customSettings?.["bindingMode"] as any) ||
-      session.bindingMode ||
-      "lane";
-    session.bindingMode = effectiveBindingMode;
-
-    const updatedMaster: AbsoluteWidgetNode = {
+    const updatedHeader: AbsoluteWidgetNode = {
       ...masterWidget,
+      y: session.bounds.y,
+      height: headerHeight,
       customSettings: {
         ...(masterWidget.customSettings || {}),
         gridId: session.gridId,
-        gridLane: session.sourceLaneIndex,
-        gridTotalLanes: session.totalLanes,
-        gridDirection: session.direction,
-        bindingMode: effectiveBindingMode,
-        targetIndex: session.sourceLaneIndex,
+        isHeaderWidget: true,
+        showHeader: true,
+        headerHeight,
+        headerPlacement: session.headerPlacement ?? "top",
+        linkColumns: session.linkColumns ?? true,
       },
     };
-
-    let result = (allWidgets || []).map((w) =>
-      w.id === masterWidget.id ? updatedMaster : w,
+    return (allWidgets || []).map((w) =>
+      w.id === masterWidget.id ? updatedHeader : w,
     );
-    if (!result.some((w) => w.id === masterWidget.id)) {
-      result.push(updatedMaster);
-    }
+  }
 
+  private static syncMirroredLanes(
+    masterWidget: AbsoluteWidgetNode,
+    updatedMaster: AbsoluteWidgetNode,
+    session: LaneGridSession,
+    offsetInCellX: number,
+    offsetInCellY: number,
+    effectiveBindingMode: "lane" | "position" | "overallPosition" | "seed",
+    showHeader: boolean,
+    result: AbsoluteWidgetNode[],
+  ): void {
     for (let k = 0; k < session.totalLanes; k++) {
       if (k === session.sourceLaneIndex) continue;
 
@@ -153,6 +208,8 @@ export class LaneGridReplicationHelper {
       clonedSettings["gridLane"] = k;
       clonedSettings["gridMasterId"] = masterWidget.id;
       clonedSettings["bindingMode"] = effectiveBindingMode;
+      clonedSettings["showHeader"] = showHeader;
+      clonedSettings["isHeaderWidget"] = false;
 
       const mirroredWidget: AbsoluteWidgetNode = {
         ...deepCopy(updatedMaster),
@@ -171,6 +228,138 @@ export class LaneGridReplicationHelper {
         result.push(mirroredWidget);
       }
     }
+  }
+
+  private static syncTopHeaderWidget(
+    masterWidget: AbsoluteWidgetNode,
+    updatedMaster: AbsoluteWidgetNode,
+    session: LaneGridSession,
+    headerHeight: number,
+    result: AbsoluteWidgetNode[],
+  ): void {
+    const headerId = this.getHeaderWidgetId(masterWidget.id);
+    const existingHeaderIdx = result.findIndex(
+      (w) =>
+        w.id === headerId ||
+        (w.customSettings?.["gridMasterId"] === masterWidget.id &&
+          w.customSettings?.["isHeaderWidget"]),
+    );
+
+    if (session.headerPlacement === "top") {
+      const headerSettings = deepCopy(updatedMaster.customSettings || {});
+      headerSettings["isHeaderWidget"] = true;
+      headerSettings["showHeader"] = true;
+      headerSettings["headerPlacement"] = "top";
+      headerSettings["headerHeight"] = headerHeight;
+      headerSettings["gridMasterId"] = masterWidget.id;
+      headerSettings["gridId"] = session.gridId;
+      delete headerSettings["targetIndex"];
+      delete headerSettings["gridLane"];
+
+      const headerWidget: AbsoluteWidgetNode = {
+        ...deepCopy(updatedMaster),
+        id: existingHeaderIdx >= 0 ? result[existingHeaderIdx].id : headerId,
+        x: masterWidget.x,
+        y: session.bounds.y,
+        width: masterWidget.width,
+        height: headerHeight,
+        zIndex: (masterWidget.zIndex ?? 10) + 1,
+        customSettings: {
+          ...(existingHeaderIdx >= 0
+            ? result[existingHeaderIdx].customSettings
+            : {}),
+          ...headerSettings,
+        },
+      };
+
+      if (existingHeaderIdx >= 0) {
+        result[existingHeaderIdx] = headerWidget;
+      } else {
+        result.push(headerWidget);
+      }
+    } else if (existingHeaderIdx >= 0) {
+      result.splice(existingHeaderIdx, 1);
+    }
+  }
+
+  public static syncMasterWidgetToLanes(
+    masterWidget: AbsoluteWidgetNode,
+    session: LaneGridSession,
+    allWidgets: AbsoluteWidgetNode[],
+  ): AbsoluteWidgetNode[] {
+    if (!masterWidget || !session) return allWidgets || [];
+
+    const isHeader = Boolean(masterWidget.customSettings?.["isHeaderWidget"]);
+    const headerHeight =
+      session.headerHeight != null ? Math.max(20, session.headerHeight) : 36;
+
+    if (isHeader) {
+      return this.syncHeaderWidgetOnly(
+        masterWidget,
+        session,
+        allWidgets,
+        headerHeight,
+      );
+    }
+
+    const masterCell = this.computeLaneCellBounds(
+      session,
+      session.sourceLaneIndex,
+    );
+    const offsetInCellX = masterWidget.x - masterCell.x;
+    const offsetInCellY = masterWidget.y - masterCell.y;
+
+    const effectiveBindingMode =
+      (masterWidget.customSettings?.["bindingMode"] as any) ||
+      session.bindingMode ||
+      "lane";
+    session.bindingMode = effectiveBindingMode;
+
+    const showHeader = session.headerPlacement === "individual";
+
+    const updatedMaster: AbsoluteWidgetNode = {
+      ...masterWidget,
+      customSettings: {
+        ...(masterWidget.customSettings || {}),
+        gridId: session.gridId,
+        gridLane: session.sourceLaneIndex,
+        gridTotalLanes: session.totalLanes,
+        gridDirection: session.direction,
+        bindingMode: effectiveBindingMode,
+        targetIndex: session.sourceLaneIndex,
+        showHeader,
+        headerPlacement: session.headerPlacement ?? "individual",
+        headerHeight,
+        linkColumns: session.linkColumns ?? true,
+        isHeaderWidget: false,
+      },
+    };
+
+    let result = (allWidgets || []).map((w) =>
+      w.id === masterWidget.id ? updatedMaster : w,
+    );
+    if (!result.some((w) => w.id === masterWidget.id)) {
+      result.push(updatedMaster);
+    }
+
+    this.syncMirroredLanes(
+      masterWidget,
+      updatedMaster,
+      session,
+      offsetInCellX,
+      offsetInCellY,
+      effectiveBindingMode,
+      showHeader,
+      result,
+    );
+
+    this.syncTopHeaderWidget(
+      masterWidget,
+      updatedMaster,
+      session,
+      headerHeight,
+      result,
+    );
 
     return result;
   }
@@ -184,6 +373,7 @@ export class LaneGridReplicationHelper {
     const masterBounds = this.computeMasterBounds(session);
     const masterWidgets = allWidgets.filter((w) => {
       if (w.customSettings?.["gridId"] === session.gridId) {
+        if (w.customSettings?.["isHeaderWidget"]) return false;
         return (
           Number(
             w.customSettings?.["gridLane"] ?? w.customSettings?.["targetIndex"],
@@ -191,6 +381,7 @@ export class LaneGridReplicationHelper {
         );
       }
       if (w.widgetType === "lane-column") {
+        if (w.customSettings?.["isHeaderWidget"]) return false;
         const midX = w.x + w.width / 2;
         const midY = w.y + w.height / 2;
         return (
@@ -222,6 +413,13 @@ export class LaneGridReplicationHelper {
     const masterIds = new Set(masterWidgets.map((m) => m.id));
     currentWidgets = currentWidgets.filter((w) => {
       if (w.customSettings?.["gridId"] === session.gridId) {
+        if (w.customSettings?.["isHeaderWidget"]) {
+          const masterId = w.customSettings?.["gridMasterId"];
+          return (
+            session.headerPlacement === "top" &&
+            (masterId ? masterIds.has(masterId) : true)
+          );
+        }
         const isMaster =
           Number(w.customSettings?.["gridLane"]) === session.sourceLaneIndex;
         if (!isMaster) {
@@ -250,6 +448,9 @@ export class LaneGridReplicationHelper {
         return false;
       }
       if (w.id.startsWith(`${masterWidgetId}_grid_lane_`)) {
+        return false;
+      }
+      if (w.id === `${masterWidgetId}_grid_header`) {
         return false;
       }
       return true;
@@ -292,6 +493,9 @@ export class LaneGridReplicationHelper {
         delete nextSettings["gridTotalLanes"];
         delete nextSettings["gridDirection"];
         delete nextSettings["gridMasterId"];
+        delete nextSettings["headerPlacement"];
+        delete nextSettings["headerHeight"];
+        delete nextSettings["linkColumns"];
         return {
           ...w,
           customSettings: nextSettings,
@@ -315,6 +519,9 @@ export class LaneGridReplicationHelper {
             gridId: session.gridId,
             gridTotalLanes: session.totalLanes,
             gridDirection: session.direction,
+            headerPlacement: session.headerPlacement ?? "individual",
+            headerHeight: session.headerHeight ?? 36,
+            linkColumns: session.linkColumns ?? true,
           },
         };
       }
@@ -322,112 +529,401 @@ export class LaneGridReplicationHelper {
     });
   }
 
-  private static extractObstacles(
+  public static syncCrossColumnProperty(
+    gridId: string,
+    propertyGroup: "header" | "value" | "border" | "time" | "highlight",
+    sourceSettings: Record<string, any>,
     allWidgets: AbsoluteWidgetNode[],
-    sourceWidgets: AbsoluteWidgetNode[],
-    replaceExisting: boolean,
-    sourceBindingMode: "lane" | "position" | "overallPosition" | "seed",
-    sourceIndex: number,
-    targetCount: number,
-    gridId?: string,
-  ): { x1: number; x2: number; y1: number; y2: number }[] {
-    const sourceIds = new Set(sourceWidgets.map((w) => w.id));
-    const obstacles: { x1: number; x2: number; y1: number; y2: number }[] = [];
-    for (const w of allWidgets || []) {
-      if (sourceIds.has(w.id)) continue;
-      if (gridId && w.customSettings?.["gridId"] === gridId) continue;
+  ): AbsoluteWidgetNode[] {
+    if (!gridId || !sourceSettings || !allWidgets) return allWidgets || [];
 
-      if (replaceExisting && w.widgetType === "lane-column") {
-        const idx = Number(w.customSettings?.["targetIndex"] ?? 0);
-        if (idx !== Number(sourceIndex) && idx < targetCount) {
-          continue;
+    const headerKeys = [
+      "headerFontFamily",
+      "headerFontSize",
+      "headerTextColor",
+      "headerBackgroundColor",
+      "headerAlignment",
+      "headerHeight",
+    ];
+    const valueKeys = [
+      "valueFontFamily",
+      "valueFontSize",
+      "valueTextColor",
+      "valueAlignment",
+    ];
+    const borderKeys = [
+      "showBorder",
+      "borderColor",
+      "borderWidth",
+      "borderRadius",
+      "useLaneColors",
+      "backgroundColor",
+      "textColor",
+    ];
+    const highlightKeys = ["highlightRowOnLap"];
+    const timeKeys = [
+      "timeDecimalPlaces",
+      "timeDisplayFormat",
+      "timeSubsecondMode",
+      "timeSubsecondThreshold",
+      "timeSubsecondDecimals",
+    ];
+
+    let targetKeys: string[] = [];
+    if (propertyGroup === "header") targetKeys = headerKeys;
+    else if (propertyGroup === "value") targetKeys = valueKeys;
+    else if (propertyGroup === "border") targetKeys = borderKeys;
+    else if (propertyGroup === "highlight") targetKeys = highlightKeys;
+    else if (propertyGroup === "time") targetKeys = timeKeys;
+
+    return allWidgets.map((w) => {
+      if (w.customSettings?.["gridId"] !== gridId) return w;
+      if (propertyGroup === "value" && w.customSettings?.["isHeaderWidget"]) {
+        return w;
+      }
+
+      const nextSettings = { ...(w.customSettings || {}) };
+      for (const k of targetKeys) {
+        if (sourceSettings[k] !== undefined) {
+          nextSettings[k] = sourceSettings[k];
+        } else if (sourceSettings["_reset_" + k]) {
+          delete nextSettings[k];
         }
       }
+      return {
+        ...w,
+        customSettings: nextSettings,
+      };
+    });
+  }
 
-      obstacles.push({
-        x1: w.x,
-        x2: w.x + w.width,
-        y1: w.y,
-        y2: w.y + w.height,
+  public static updateGridLinkColumns(
+    allWidgets: AbsoluteWidgetNode[],
+    gridId: string,
+    link: boolean,
+  ): AbsoluteWidgetNode[] {
+    if (!gridId || !allWidgets) return allWidgets || [];
+    return allWidgets.map((w) => {
+      if (w.customSettings?.["gridId"] === gridId) {
+        return {
+          ...w,
+          customSettings: {
+            ...(w.customSettings || {}),
+            linkColumns: link,
+          },
+        };
+      }
+      return w;
+    });
+  }
+
+  public static updateGridHeaderHeight(
+    allWidgets: AbsoluteWidgetNode[],
+    gridId: string,
+    newHeight: number,
+  ): AbsoluteWidgetNode[] {
+    if (!gridId || !allWidgets) return allWidgets || [];
+    const height = Math.max(20, Math.min(200, Number(newHeight) || 36));
+    const bounds = this.calculateGridBounds(allWidgets, gridId);
+    if (!bounds) return allWidgets;
+
+    const gridWidgets = allWidgets.filter(
+      (w) => w.customSettings?.["gridId"] === gridId,
+    );
+    const first = gridWidgets[0];
+    const totalLanes = Number(first?.customSettings?.["gridTotalLanes"]) || 4;
+    const direction = first?.customSettings?.["gridDirection"] || "vertical";
+    const headerPlacement =
+      first?.customSettings?.["headerPlacement"] || "individual";
+
+    if (headerPlacement !== "top") {
+      return allWidgets.map((w) => {
+        if (w.customSettings?.["gridId"] === gridId) {
+          return {
+            ...w,
+            customSettings: {
+              ...(w.customSettings || {}),
+              headerHeight: height,
+            },
+          };
+        }
+        return w;
       });
     }
-    return obstacles;
+
+    const availH = Math.max(0, bounds.height - height);
+    const pitch =
+      direction === "horizontal"
+        ? bounds.width / totalLanes
+        : availH / totalLanes;
+
+    return allWidgets.map((w) => {
+      if (w.customSettings?.["gridId"] !== gridId) return w;
+
+      if (w.customSettings?.["isHeaderWidget"]) {
+        return {
+          ...w,
+          y: bounds.y,
+          height,
+          customSettings: {
+            ...(w.customSettings || {}),
+            headerHeight: height,
+          },
+        };
+      }
+
+      if (direction === "vertical") {
+        const laneIndex = Number(
+          w.customSettings?.["gridLane"] ??
+            w.customSettings?.["targetIndex"] ??
+            0,
+        );
+        const newY = Math.round(bounds.y + height + laneIndex * pitch);
+        const newH = Math.round(pitch);
+        return {
+          ...w,
+          y: newY,
+          height: newH,
+          customSettings: {
+            ...(w.customSettings || {}),
+            headerHeight: height,
+          },
+        };
+      }
+
+      return {
+        ...w,
+        customSettings: {
+          ...(w.customSettings || {}),
+          headerHeight: height,
+        },
+      };
+    });
   }
 
-  private static expandVerticallyFirst(
-    seed: { x1: number; x2: number; y1: number; y2: number },
-    obstacles: { x1: number; x2: number; y1: number; y2: number }[],
-    baseWidth: number,
-    baseHeight: number,
-  ): LaneGridBounds {
-    let topY = 0;
-    let bottomY = baseHeight;
-    for (const o of obstacles) {
-      const xOverlap = Math.max(
-        0,
-        Math.min(seed.x2, o.x2) - Math.max(seed.x1, o.x1),
+  private static createMissingGridTopHeaders(
+    result: AbsoluteWidgetNode[],
+    gridId: string,
+    bounds: { x: number; y: number; width: number; height: number },
+    height: number,
+    sourceLaneIndex: number,
+  ): void {
+    const dataWidgets = result.filter(
+      (w) =>
+        w.customSettings?.["gridId"] === gridId &&
+        !w.customSettings?.["isHeaderWidget"],
+    );
+
+    const masterWidgets = dataWidgets.filter((w) => {
+      const lane = Number(
+        w.customSettings?.["gridLane"] ??
+          w.customSettings?.["targetIndex"] ??
+          0,
       );
-      if (xOverlap > 0) {
-        if (o.y2 <= seed.y1) topY = Math.max(topY, o.y2);
-        if (o.y1 >= seed.y2) bottomY = Math.min(bottomY, o.y1);
+      return lane === sourceLaneIndex;
+    });
+
+    for (const master of masterWidgets) {
+      const headerId = this.getHeaderWidgetId(master.id);
+      const exists = result.some(
+        (w) =>
+          w.id === headerId ||
+          (w.customSettings?.["gridMasterId"] === master.id &&
+            w.customSettings?.["isHeaderWidget"]),
+      );
+      if (!exists) {
+        const headerSettings = deepCopy(master.customSettings || {});
+        headerSettings["isHeaderWidget"] = true;
+        headerSettings["showHeader"] = true;
+        headerSettings["headerPlacement"] = "top";
+        headerSettings["headerHeight"] = height;
+        headerSettings["gridMasterId"] = master.id;
+        headerSettings["gridId"] = gridId;
+        delete headerSettings["targetIndex"];
+        delete headerSettings["gridLane"];
+
+        const headerWidget: AbsoluteWidgetNode = {
+          ...deepCopy(master),
+          id: headerId,
+          x: master.x,
+          y: bounds.y,
+          width: master.width,
+          height,
+          zIndex: (master.zIndex ?? 10) + 1,
+          customSettings: headerSettings,
+        };
+        result.push(headerWidget);
       }
     }
-    let leftX = 0;
-    let rightX = baseWidth;
-    for (const o of obstacles) {
-      const yOverlap = Math.max(
-        0,
-        Math.min(bottomY, o.y2) - Math.max(topY, o.y1),
-      );
-      if (yOverlap > 0) {
-        if (o.x2 <= seed.x1) leftX = Math.max(leftX, o.x2);
-        if (o.x1 >= seed.x2) rightX = Math.min(rightX, o.x1);
-      }
-    }
-    return {
-      x: leftX,
-      y: topY,
-      width: Math.max(100, rightX - leftX),
-      height: Math.max(50, bottomY - topY),
-    };
   }
 
-  private static expandHorizontallyFirst(
-    seed: { x1: number; x2: number; y1: number; y2: number },
-    obstacles: { x1: number; x2: number; y1: number; y2: number }[],
-    baseWidth: number,
-    baseHeight: number,
-  ): LaneGridBounds {
-    let leftX = 0;
-    let rightX = baseWidth;
-    for (const o of obstacles) {
-      const yOverlap = Math.max(
-        0,
-        Math.min(seed.y2, o.y2) - Math.max(seed.y1, o.y1),
-      );
-      if (yOverlap > 0) {
-        if (o.x2 <= seed.x1) leftX = Math.max(leftX, o.x2);
-        if (o.x1 >= seed.x2) rightX = Math.min(rightX, o.x1);
+  private static applyTopHeaderPlacement(
+    result: AbsoluteWidgetNode[],
+    gridId: string,
+    bounds: { x: number; y: number; width: number; height: number },
+    height: number,
+    direction: "horizontal" | "vertical",
+    totalLanes: number,
+    sourceLaneIndex: number,
+  ): AbsoluteWidgetNode[] {
+    this.createMissingGridTopHeaders(
+      result,
+      gridId,
+      bounds,
+      height,
+      sourceLaneIndex,
+    );
+
+    const availH = Math.max(0, bounds.height - height);
+    const pitch =
+      direction === "horizontal"
+        ? bounds.width / totalLanes
+        : availH / totalLanes;
+
+    return result.map((w) => {
+      if (w.customSettings?.["gridId"] !== gridId) return w;
+      if (w.customSettings?.["isHeaderWidget"]) {
+        return {
+          ...w,
+          y: bounds.y,
+          height,
+          customSettings: {
+            ...(w.customSettings || {}),
+            headerPlacement: "top",
+            headerHeight: height,
+            showHeader: true,
+          },
+        };
       }
-    }
-    let topY = 0;
-    let bottomY = baseHeight;
-    for (const o of obstacles) {
-      const xOverlap = Math.max(
-        0,
-        Math.min(rightX, o.x2) - Math.max(leftX, o.x1),
+
+      const laneIndex = Number(
+        w.customSettings?.["gridLane"] ??
+          w.customSettings?.["targetIndex"] ??
+          0,
       );
-      if (xOverlap > 0) {
-        if (o.y2 <= seed.y1) topY = Math.max(topY, o.y2);
-        if (o.y1 >= seed.y2) bottomY = Math.min(bottomY, o.y1);
+      const newY =
+        direction === "vertical"
+          ? Math.round(bounds.y + height + laneIndex * pitch)
+          : Math.round(bounds.y + height);
+      const newH =
+        direction === "vertical" ? Math.round(pitch) : Math.round(availH);
+
+      return {
+        ...w,
+        y: newY,
+        height: newH,
+        customSettings: {
+          ...(w.customSettings || {}),
+          showHeader: false,
+          headerPlacement: "top",
+          headerHeight: height,
+        },
+      };
+    });
+  }
+
+  private static applyNonTopHeaderPlacement(
+    result: AbsoluteWidgetNode[],
+    gridId: string,
+    bounds: { x: number; y: number; width: number; height: number },
+    direction: "horizontal" | "vertical",
+    totalLanes: number,
+    newPlacement: "individual" | "none",
+  ): AbsoluteWidgetNode[] {
+    const showHeader = newPlacement === "individual";
+    const pitch =
+      direction === "horizontal"
+        ? bounds.width / totalLanes
+        : bounds.height / totalLanes;
+
+    return result
+      .filter(
+        (w) =>
+          !(
+            w.customSettings?.["gridId"] === gridId &&
+            w.customSettings?.["isHeaderWidget"]
+          ),
+      )
+      .map((w) => {
+        if (w.customSettings?.["gridId"] !== gridId) return w;
+
+        const laneIndex = Number(
+          w.customSettings?.["gridLane"] ??
+            w.customSettings?.["targetIndex"] ??
+            0,
+        );
+        const newY =
+          direction === "vertical"
+            ? Math.round(bounds.y + laneIndex * pitch)
+            : bounds.y;
+        const newH =
+          direction === "vertical" ? Math.round(pitch) : bounds.height;
+
+        return {
+          ...w,
+          y: newY,
+          height: newH,
+          customSettings: {
+            ...(w.customSettings || {}),
+            showHeader,
+            headerPlacement: newPlacement,
+          },
+        };
+      });
+  }
+
+  public static updateGridHeaderPlacement(
+    allWidgets: AbsoluteWidgetNode[],
+    gridId: string,
+    newPlacement: "top" | "individual" | "none",
+    headerHeight?: number,
+  ): AbsoluteWidgetNode[] {
+    if (!gridId || !allWidgets) return allWidgets || [];
+
+    const height =
+      headerHeight != null
+        ? Math.max(20, Math.min(200, Number(headerHeight)))
+        : 36;
+    const bounds = this.calculateGridBounds(allWidgets, gridId);
+    if (!bounds) return allWidgets;
+
+    const gridWidgets = allWidgets.filter(
+      (w) => w.customSettings?.["gridId"] === gridId,
+    );
+    const first = gridWidgets[0];
+    const totalLanes = Number(first?.customSettings?.["gridTotalLanes"]) || 4;
+    const direction = first?.customSettings?.["gridDirection"] || "vertical";
+    const sourceLaneIndex = 0;
+
+    let result = allWidgets.filter((w) => {
+      if (
+        w.customSettings?.["gridId"] === gridId &&
+        w.customSettings?.["isHeaderWidget"]
+      ) {
+        return newPlacement === "top";
       }
+      return true;
+    });
+
+    if (newPlacement === "top") {
+      return this.applyTopHeaderPlacement(
+        result,
+        gridId,
+        bounds,
+        height,
+        direction,
+        totalLanes,
+        sourceLaneIndex,
+      );
     }
-    return {
-      x: leftX,
-      y: topY,
-      width: Math.max(100, rightX - leftX),
-      height: Math.max(50, bottomY - topY),
-    };
+    return this.applyNonTopHeaderPlacement(
+      result,
+      gridId,
+      bounds,
+      direction,
+      totalLanes,
+      newPlacement,
+    );
   }
 
   public static calculateAvailableGridBounds(
@@ -446,59 +942,18 @@ export class LaneGridReplicationHelper {
     targetCount: number = 4,
     gridId?: string,
   ): LaneGridBounds {
-    const obstacles = this.extractObstacles(
-      allWidgets,
+    return LaneGridGeometryHelper.calculateAvailableGridBounds(
       sourceWidgets,
+      allWidgets,
+      baseWidth,
+      baseHeight,
+      direction,
       replaceExisting,
       sourceBindingMode,
       sourceIndex,
       targetCount,
       gridId,
     );
-
-    let seed: { x1: number; x2: number; y1: number; y2: number };
-    if (sourceWidgets.length > 0) {
-      seed = {
-        x1: Math.min(...sourceWidgets.map((w) => w.x)),
-        x2: Math.max(...sourceWidgets.map((w) => w.x + w.width)),
-        y1: Math.min(...sourceWidgets.map((w) => w.y)),
-        y2: Math.max(...sourceWidgets.map((w) => w.y + w.height)),
-      };
-    } else {
-      seed = {
-        x1: Math.round(baseWidth * 0.1),
-        x2: Math.round(baseWidth * 0.9),
-        y1: Math.round(baseHeight * 0.1),
-        y2: Math.round(baseHeight * 0.9),
-      };
-    }
-
-    const cand1 = this.expandVerticallyFirst(
-      seed,
-      obstacles,
-      baseWidth,
-      baseHeight,
-    );
-    const cand2 = this.expandHorizontallyFirst(
-      seed,
-      obstacles,
-      baseWidth,
-      baseHeight,
-    );
-    const area1 = cand1.width * cand1.height;
-    const area2 = cand2.width * cand2.height;
-
-    if (direction === "horizontal") {
-      if (cand2.width >= cand1.width && area2 >= area1 * 0.85) {
-        return cand2;
-      }
-      return area1 >= area2 ? cand1 : cand2;
-    } else {
-      if (cand1.height >= cand2.height && area1 >= area2 * 0.85) {
-        return cand1;
-      }
-      return area2 >= area1 ? cand2 : cand1;
-    }
   }
 
   public static resizeGridBounds(
@@ -514,61 +969,18 @@ export class LaneGridReplicationHelper {
     snapEdgesY: number[] = [],
     snapThreshold = 10,
   ): LaneGridBounds {
-    let newX = current.x;
-    let newY = current.y;
-    let newW = current.width;
-    let newH = current.height;
-
-    // Helper for snapping
-    const snapValue = (val: number, edges: number[]): number => {
-      for (const edge of edges) {
-        if (Math.abs(val - edge) <= snapThreshold) {
-          return edge;
-        }
-      }
-      return val;
-    };
-
-    if (handle.includes("e")) {
-      let rawRight = current.x + current.width + deltaX;
-      rawRight = snapValue(rawRight, [...snapEdgesX, baseWidth]);
-      rawRight = Math.min(baseWidth, Math.max(current.x + minWidth, rawRight));
-      newW = rawRight - current.x;
-    } else if (handle.includes("w")) {
-      let rawLeft = current.x + deltaX;
-      rawLeft = snapValue(rawLeft, [...snapEdgesX, 0]);
-      rawLeft = Math.max(
-        0,
-        Math.min(current.x + current.width - minWidth, rawLeft),
-      );
-      newW = current.x + current.width - rawLeft;
-      newX = rawLeft;
-    }
-
-    if (handle.includes("s")) {
-      let rawBottom = current.y + current.height + deltaY;
-      rawBottom = snapValue(rawBottom, [...snapEdgesY, baseHeight]);
-      rawBottom = Math.min(
-        baseHeight,
-        Math.max(current.y + minHeight, rawBottom),
-      );
-      newH = rawBottom - current.y;
-    } else if (handle.includes("n")) {
-      let rawTop = current.y + deltaY;
-      rawTop = snapValue(rawTop, [...snapEdgesY, 0]);
-      rawTop = Math.max(
-        0,
-        Math.min(current.y + current.height - minHeight, rawTop),
-      );
-      newH = current.y + current.height - rawTop;
-      newY = rawTop;
-    }
-
-    return {
-      x: Math.round(newX),
-      y: Math.round(newY),
-      width: Math.round(newW),
-      height: Math.round(newH),
-    };
+    return LaneGridGeometryHelper.resizeGridBounds(
+      current,
+      handle,
+      deltaX,
+      deltaY,
+      baseWidth,
+      baseHeight,
+      minWidth,
+      minHeight,
+      snapEdgesX,
+      snapEdgesY,
+      snapThreshold,
+    );
   }
 }

@@ -190,6 +190,10 @@ export class LaneColumnInspectorComponent {
 
   resetColor(field: string): void {
     delete this.currentSettings[field];
+    this.currentSettings["_reset_" + field] = true;
+    if (field.startsWith("header") && this.linkColumns) {
+      this.currentSettings["_syncAction"] = "header";
+    }
     this.onFieldChange();
   }
 
@@ -203,6 +207,147 @@ export class LaneColumnInspectorComponent {
 
   resetInsetTextColor(): void {
     this.resetColor("insetTextColor");
+  }
+
+  get isHeaderWidget(): boolean {
+    return Boolean(this.currentSettings["isHeaderWidget"]);
+  }
+
+  get gridHeaderPlacement(): "top" | "individual" | "none" {
+    return this.currentSettings["headerPlacement"] || "individual";
+  }
+
+  get currentGridHeaderHeight(): number {
+    return Number(this.currentSettings["headerHeight"]) || 36;
+  }
+
+  get gridHeaderFontFamily(): string {
+    return this.currentSettings["headerFontFamily"] || "";
+  }
+
+  set gridHeaderFontFamily(val: string) {
+    this.currentSettings["headerFontFamily"] = val;
+    this.onHeaderStyleChange();
+  }
+
+  get gridHeaderFontSize(): number {
+    return Number(this.currentSettings["headerFontSize"]) || 14;
+  }
+
+  set gridHeaderFontSize(val: number) {
+    this.currentSettings["headerFontSize"] = Math.max(
+      8,
+      Math.min(72, Number(val) || 14),
+    );
+    this.onHeaderStyleChange();
+  }
+
+  get gridHeaderTextColor(): string {
+    return this.currentSettings["headerTextColor"] || "";
+  }
+
+  set gridHeaderTextColor(val: string) {
+    this.currentSettings["headerTextColor"] = val;
+    delete this.currentSettings["_reset_headerTextColor"];
+    this.onHeaderStyleChange();
+  }
+
+  get gridHeaderBackgroundColor(): string {
+    return this.currentSettings["headerBackgroundColor"] || "";
+  }
+
+  set gridHeaderBackgroundColor(val: string) {
+    this.currentSettings["headerBackgroundColor"] = val;
+    delete this.currentSettings["_reset_headerBackgroundColor"];
+    this.onHeaderStyleChange();
+  }
+
+  get gridHeaderAlignment(): "start" | "center" | "end" {
+    return this.currentSettings["headerAlignment"] || "center";
+  }
+
+  set gridHeaderAlignment(val: "start" | "center" | "end") {
+    this.currentSettings["headerAlignment"] = val;
+    this.onHeaderStyleChange();
+  }
+
+  onGridHeaderBgColorChange(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.gridHeaderBackgroundColor = input.value;
+  }
+
+  onGridHeaderTextColorChange(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.gridHeaderTextColor = input.value;
+  }
+
+  resetGridHeaderTextColor(): void {
+    this.resetColor("headerTextColor");
+  }
+
+  resetGridHeaderBackgroundColor(): void {
+    this.resetColor("headerBackgroundColor");
+  }
+
+  onHeaderStyleChange(): void {
+    if (this.linkColumns) {
+      this.currentSettings["_syncAction"] = "header";
+    }
+    this.onFieldChange();
+  }
+
+  get highlightRowOnLap(): boolean {
+    return this.currentSettings["highlightRowOnLap"] !== false;
+  }
+
+  set highlightRowOnLap(val: boolean) {
+    this.currentSettings["highlightRowOnLap"] = Boolean(val);
+    this.onFieldChange();
+  }
+
+  get linkColumns(): boolean {
+    return this.currentSettings["linkColumns"] !== false;
+  }
+
+  set linkColumns(val: boolean) {
+    this.currentSettings["linkColumns"] = Boolean(val);
+    this.currentSettings["_linkColumnsChanged"] = true;
+    this.onFieldChange();
+  }
+
+  onGridHeaderPlacementChange(placement: "top" | "individual" | "none"): void {
+    this.currentSettings["headerPlacement"] = placement;
+    this.currentSettings["_headerPlacementChanged"] = true;
+    this.onFieldChange();
+  }
+
+  onGridHeaderHeightChange(height: number): void {
+    this.currentSettings["headerHeight"] = Math.max(
+      20,
+      Math.min(200, Number(height) || 36),
+    );
+    this.currentSettings["_headerHeightChanged"] = true;
+    this.onFieldChange();
+  }
+
+  applyHeaderStyleToAll(): void {
+    this.currentSettings["_syncAction"] = "header";
+    this.onFieldChange();
+  }
+
+  applyValueStyleToAll(): void {
+    this.currentSettings["_syncAction"] = "value";
+    this.onFieldChange();
+  }
+
+  applyBorderStyleToAll(): void {
+    this.currentSettings["_syncAction"] = "border";
+    this.onFieldChange();
+  }
+
+  applyTimeFormatToAll(): void {
+    this.currentSettings["_syncAction"] = "time";
+    this.onFieldChange();
   }
 
   onEditGridTemplate(): void {

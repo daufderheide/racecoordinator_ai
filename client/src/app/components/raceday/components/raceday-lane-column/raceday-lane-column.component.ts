@@ -95,6 +95,7 @@ export class RacedayLaneColumnComponent
 
   ngAfterViewChecked(): void {
     if (
+      this.isHeaderWidget ||
       this.isLastLaps() ||
       this.isImageProperty() ||
       this.isPacingProperty()
@@ -134,6 +135,24 @@ export class RacedayLaneColumnComponent
       (this.widget()?.customSettings as LaneColumnWidgetSettings) ||
       ({} as LaneColumnWidgetSettings)
     );
+  }
+
+  get isHeaderWidget(): boolean {
+    return Boolean(this.settings.isHeaderWidget);
+  }
+
+  get isHighlighted(): boolean {
+    if (this.isHeaderWidget) {
+      return false;
+    }
+    if (this.settings.highlightRowOnLap === false) {
+      return false;
+    }
+    const driverId = this.targetDriver?.objectId;
+    if (!driverId) {
+      return false;
+    }
+    return Boolean(this.parent()?.highlightedDrivers?.has(driverId));
   }
 
   get columnKey(): string {
@@ -572,7 +591,7 @@ export class RacedayLaneColumnComponent
 
   fitContent(): void {
     const cardEl = this.cardRef()?.nativeElement;
-    if (!cardEl) return;
+    if (!cardEl || this.isHeaderWidget) return;
 
     if (this.isLastLaps()) {
       this.fitLastLaps();

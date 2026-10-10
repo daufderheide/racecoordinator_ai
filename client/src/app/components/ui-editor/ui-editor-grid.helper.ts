@@ -127,6 +127,9 @@ export function handleStartGridSession(
     direction: options.direction,
     sourceLaneIndex: physicalCellIndex,
     bindingMode: options.sourceBindingMode ?? "lane",
+    headerPlacement: options.headerPlacement ?? "individual",
+    headerHeight: options.headerHeight ?? 36,
+    linkColumns: options.linkColumns ?? true,
   };
 
   comp.activeGridSession = session;
@@ -156,6 +159,7 @@ export function handleStartGridSession(
     comp.isCustomUiPractice(targetUi),
     comp.parsedLayouts,
   );
+  comp.syncRacedayPreview?.(layout, targetUi);
   comp.captureState?.();
   comp.cdr.markForCheck();
 }
@@ -176,6 +180,7 @@ export function handleFinishGridSession(comp: any, ui?: CustomUI): void {
       comp.isCustomUiPractice(targetUi),
       comp.parsedLayouts,
     );
+    comp.syncRacedayPreview?.(layout, targetUi);
   }
   comp.activeGridSession = null;
   comp.captureState();
@@ -213,6 +218,10 @@ export function handleEditGridTemplate(
   const bindingMode = positionWidget
     ? "position"
     : first.customSettings?.["bindingMode"] || "lane";
+  const headerPlacement =
+    first.customSettings?.["headerPlacement"] || "individual";
+  const headerHeight = Number(first.customSettings?.["headerHeight"]) || 36;
+  const linkColumns = first.customSettings?.["linkColumns"] !== false;
 
   const session: LaneGridSession = {
     gridId,
@@ -221,6 +230,9 @@ export function handleEditGridTemplate(
     direction,
     sourceLaneIndex: 0,
     bindingMode,
+    headerPlacement,
+    headerHeight,
+    linkColumns,
   };
 
   comp.activeGridSession = session;
@@ -236,6 +248,7 @@ export function handleEditGridTemplate(
     comp.isCustomUiPractice(targetUi),
     comp.parsedLayouts,
   );
+  comp.syncRacedayPreview?.(layout, targetUi);
   comp.cdr.markForCheck();
 }
 
@@ -257,6 +270,7 @@ export function handleDetachGrid(
     comp.isCustomUiPractice(targetUi),
     comp.parsedLayouts,
   );
+  comp.syncRacedayPreview?.(layout, targetUi);
 
   if (comp.activeGridSession?.gridId === gridId) {
     comp.activeGridSession = null;
@@ -292,5 +306,6 @@ export function handleUpdateGridBounds(
     comp.isCustomUiPractice(targetUi),
     comp.parsedLayouts,
   );
+  comp.syncRacedayPreview?.(layout, targetUi);
   comp.cdr.markForCheck();
 }

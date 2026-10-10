@@ -123,11 +123,85 @@ import { TranslatePipe } from "@app/pipes/translate.pipe";
             </div>
           </div>
 
+          <div class="form-group">
+            <label class="form-label">{{
+              "UE_REPLICATE_HEADER_PLACEMENT" | translate
+            }}</label>
+            <div class="select-container">
+              <app-custom-select
+                [ngModel]="headerPlacement()"
+                (ngModelChange)="headerPlacement.set($event)"
+              >
+                <app-custom-option value="individual">
+                  {{ "UE_REPLICATE_HEADER_INDIVIDUAL" | translate }}
+                </app-custom-option>
+                <app-custom-option value="top">
+                  {{ "UE_REPLICATE_HEADER_TOP" | translate }}
+                </app-custom-option>
+                <app-custom-option value="none">
+                  {{ "UE_REPLICATE_HEADER_NONE" | translate }}
+                </app-custom-option>
+              </app-custom-select>
+            </div>
+          </div>
+
+          @if (headerPlacement() === "top") {
+            <div class="form-group">
+              <div
+                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;"
+              >
+                <label class="form-label" style="margin-bottom: 0;">{{
+                  "UE_REPLICATE_HEADER_HEIGHT" | translate
+                }}</label>
+                <span
+                  style="font-size: 0.75rem; color: #38bdf8; font-weight: 600;"
+                  >{{ headerHeight() }}px</span
+                >
+              </div>
+              <div style="display: flex; gap: 8px; align-items: center;">
+                <input
+                  type="range"
+                  min="20"
+                  max="200"
+                  [ngModel]="headerHeight()"
+                  (ngModelChange)="headerHeight.set(+$event)"
+                  style="flex: 1; accent-color: #38bdf8;"
+                />
+                <input
+                  type="number"
+                  min="20"
+                  max="200"
+                  [ngModel]="headerHeight()"
+                  (ngModelChange)="headerHeight.set(+$event)"
+                  style="width: 64px; padding: 4px 8px; background: #0f172a; border: 1px solid #334155; border-radius: 6px; color: #f8fafc; font-size: 0.8125rem; text-align: center;"
+                  autocomplete="off"
+                  data-dashlane-ignore="true"
+                  data-1p-ignore="true"
+                  data-lpignore="true"
+                  data-bwignore="true"
+                  data-form-type="other"
+                />
+              </div>
+            </div>
+          }
+
+          <div class="form-check-group" style="margin-bottom: 12px;">
+            <label class="form-check-label">
+              <input
+                type="checkbox"
+                class="form-checkbox link-columns-checkbox"
+                [checked]="linkColumns()"
+                (change)="linkColumns.set(!linkColumns())"
+              />
+              <span>{{ "UE_REPLICATE_LINK_COLUMNS" | translate }}</span>
+            </label>
+          </div>
+
           <div class="form-check-group">
             <label class="form-check-label">
               <input
                 type="checkbox"
-                class="form-checkbox"
+                class="form-checkbox replace-existing-checkbox"
                 [checked]="replaceExisting()"
                 (change)="replaceExisting.set(!replaceExisting())"
               />
@@ -261,6 +335,9 @@ export class ReplicateLaneDialogComponent {
   direction = signal<"horizontal" | "vertical">("horizontal");
   targetCount = signal<number>(4);
   distributionMode = signal<"auto-fit" | "preserve-spacing">("auto-fit");
+  headerPlacement = signal<"top" | "individual" | "none">("individual");
+  headerHeight = signal<number>(36);
+  linkColumns = signal<boolean>(true);
   replaceExisting = signal<boolean>(true);
 
   availableCounts = [2, 3, 4, 5, 6, 7, 8, 10, 12, 16, 20, 24, 32];
@@ -301,6 +378,9 @@ export class ReplicateLaneDialogComponent {
       direction: this.direction(),
       targetCount: this.targetCount(),
       distributionMode: this.distributionMode(),
+      headerPlacement: this.headerPlacement(),
+      headerHeight: this.headerHeight(),
+      linkColumns: this.linkColumns(),
       replaceExisting: this.replaceExisting(),
       sourceIndex: this.sourceIndex(),
       sourceBindingMode: this.bindingMode(),

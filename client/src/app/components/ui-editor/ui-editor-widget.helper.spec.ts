@@ -334,4 +334,83 @@ describe("ui-editor-widget.helper", () => {
     expect(comp.countdownPreviewActiveByUi["ui-1"]).toBeFalse();
     expect(comp.onLayoutChanged).toHaveBeenCalled();
   });
+
+  it("should sync customLabel across column widgets, clean _reset_ flags, and call syncRacedayPreview", () => {
+    const {
+      handleWidgetInspectorChange,
+    } = require("./ui-editor-widget.helper");
+    const masterCol = {
+      id: "col-1",
+      customSettings: {
+        gridId: "g1",
+        gridLane: 0,
+        customLabel: "Best Lap",
+        _reset_headerTextColor: true,
+      },
+    };
+    const headerWidget = {
+      id: "col-1_header",
+      customSettings: {
+        gridId: "g1",
+        gridMasterId: "col-1",
+        isHeaderWidget: true,
+        customLabel: "Old Label",
+      },
+    };
+    const lane2Widget = {
+      id: "col-1_lane_1",
+      customSettings: {
+        gridId: "g1",
+        gridMasterId: "col-1",
+        gridLane: 1,
+        customLabel: "Old Label",
+      },
+    };
+    const col2Widget = {
+      id: "col-2",
+      customSettings: {
+        gridId: "g1",
+        customLabel: "Position",
+      },
+    };
+    const layout = {
+      widgets: [masterCol, headerWidget, lane2Widget, col2Widget],
+    };
+    const comp = {
+      isSaving: false,
+      activeCustomUi: { entity_id: "ui1" },
+      currentSelectedWidget: masterCol,
+      getLayout: jasmine.createSpy("getLayout").and.returnValue(layout),
+      editingSettings: new Settings(),
+      isCurrentLayoutPractice: false,
+      parsedLayouts: new Map(),
+      captureState: jasmine.createSpy("captureState"),
+      cdr: { markForCheck: jasmine.createSpy("markForCheck") },
+      syncRacedayPreview: jasmine.createSpy("syncRacedayPreview"),
+    };
+
+    handleWidgetInspectorChange(comp, masterCol);
+
+    // customLabel should sync to headerWidget and lane2Widget, but NOT col2Widget
+    const updatedHeader = layout.widgets.find(
+      (w: any) => w.id === "col-1_header",
+    );
+    const updatedLane2 = layout.widgets.find(
+      (w: any) => w.id === "col-1_lane_1",
+    );
+    const updatedCol2 = layout.widgets.find((w: any) => w.id === "col-2");
+
+    expect(updatedHeader?.customSettings?.customLabel).toBe("Best Lap");
+    expect(updatedLane2?.customSettings?.customLabel).toBe("Best Lap");
+    expect(updatedCol2?.customSettings?.customLabel).toBe("Position");
+
+    // _reset_ flags should be cleaned up from target widget
+    expect(masterCol.customSettings._reset_headerTextColor).toBeUndefined();
+
+    // syncRacedayPreview should have been called
+    expect(comp.syncRacedayPreview).toHaveBeenCalledWith(
+      layout,
+      comp.activeCustomUi,
+    );
+  });
 });

@@ -60,6 +60,23 @@
   padding: 3px 10px;
 }
 
+.raceday-lane-column-card.header-widget-card {
+  align-items: stretch;
+  justify-content: stretch;
+}
+
+.raceday-lane-column-card.header-widget-card .lane-col-header.header-widget-only {
+  width: 100%;
+  height: 100%;
+  border-bottom: none;
+  border-right: none;
+  border-radius: inherit;
+}
+
+.raceday-lane-column-card.highlight {
+  filter: brightness(1.2) drop-shadow(0 0 10px rgba(255, 255, 255, 0.3));
+}
+
 .lane-col-body {
   flex: 1;
   display: flex;

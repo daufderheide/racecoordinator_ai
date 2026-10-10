@@ -199,6 +199,140 @@ export function handleWidgetColorChange(
   }
 }
 
+function handleGridBindingModeSync(
+  comp: any,
+  layout: any,
+  targetWidget: any,
+  gridId: string,
+): void {
+  const newBindingMode = targetWidget.customSettings?.["bindingMode"];
+  if (!newBindingMode) return;
+
+  if (comp.activeGridSession && comp.activeGridSession.gridId === gridId) {
+    comp.activeGridSession.bindingMode = newBindingMode;
+  }
+  for (const w of layout.widgets) {
+    if (w.customSettings?.["gridId"] === gridId && w.id !== targetWidget.id) {
+      if (!w.customSettings) w.customSettings = {};
+      w.customSettings["bindingMode"] = newBindingMode;
+    }
+  }
+}
+
+function handleGridSyncAction(
+  layout: any,
+  targetWidget: any,
+  gridId: string,
+): void {
+  if (!targetWidget.customSettings?.["_syncAction"]) return;
+  const syncAction = targetWidget.customSettings["_syncAction"];
+  delete targetWidget.customSettings["_syncAction"];
+  layout.widgets = LaneGridReplicationHelper.syncCrossColumnProperty(
+    gridId,
+    syncAction,
+    targetWidget.customSettings,
+    layout.widgets,
+  );
+}
+
+function handleGridStructureChanges(
+  comp: any,
+  layout: any,
+  targetWidget: any,
+  gridId: string,
+): void {
+  if (targetWidget.customSettings?.["_headerPlacementChanged"]) {
+    delete targetWidget.customSettings["_headerPlacementChanged"];
+    const newPlacement =
+      targetWidget.customSettings?.["headerPlacement"] || "individual";
+    const headerH = targetWidget.customSettings?.["headerHeight"] || 36;
+    layout.widgets = LaneGridReplicationHelper.updateGridHeaderPlacement(
+      layout.widgets,
+      gridId,
+      newPlacement,
+      headerH,
+    );
+    if (comp.activeGridSession && comp.activeGridSession.gridId === gridId) {
+      comp.activeGridSession.headerPlacement = newPlacement;
+      comp.activeGridSession.headerHeight = headerH;
+    }
+  }
+
+  if (targetWidget.customSettings?.["_headerHeightChanged"]) {
+    delete targetWidget.customSettings["_headerHeightChanged"];
+    const newH = targetWidget.customSettings?.["headerHeight"] || 36;
+    layout.widgets = LaneGridReplicationHelper.updateGridHeaderHeight(
+      layout.widgets,
+      gridId,
+      newH,
+    );
+    if (comp.activeGridSession && comp.activeGridSession.gridId === gridId) {
+      comp.activeGridSession.headerHeight = newH;
+    }
+  }
+
+  if (targetWidget.customSettings?.["_linkColumnsChanged"]) {
+    delete targetWidget.customSettings["_linkColumnsChanged"];
+    const isLinked = targetWidget.customSettings?.["linkColumns"] !== false;
+    layout.widgets = LaneGridReplicationHelper.updateGridLinkColumns(
+      layout.widgets,
+      gridId,
+      isLinked,
+    );
+    if (comp.activeGridSession && comp.activeGridSession.gridId === gridId) {
+      comp.activeGridSession.linkColumns = isLinked;
+    }
+  }
+}
+
+function handleCrossColumnLiveSync(
+  layout: any,
+  targetWidget: any,
+  gridId: string,
+): void {
+  if (targetWidget.customSettings?.["linkColumns"] === false) return;
+
+  if (targetWidget.customSettings?.["isHeaderWidget"]) {
+    layout.widgets = LaneGridReplicationHelper.syncCrossColumnProperty(
+      gridId,
+      "header",
+      targetWidget.customSettings,
+      layout.widgets,
+    );
+    layout.widgets = LaneGridReplicationHelper.syncCrossColumnProperty(
+      gridId,
+      "border",
+      targetWidget.customSettings,
+      layout.widgets,
+    );
+  } else {
+    layout.widgets = LaneGridReplicationHelper.syncCrossColumnProperty(
+      gridId,
+      "value",
+      targetWidget.customSettings,
+      layout.widgets,
+    );
+    layout.widgets = LaneGridReplicationHelper.syncCrossColumnProperty(
+      gridId,
+      "border",
+      targetWidget.customSettings,
+      layout.widgets,
+    );
+    layout.widgets = LaneGridReplicationHelper.syncCrossColumnProperty(
+      gridId,
+      "highlight",
+      targetWidget.customSettings,
+      layout.widgets,
+    );
+    layout.widgets = LaneGridReplicationHelper.syncCrossColumnProperty(
+      gridId,
+      "header",
+      targetWidget.customSettings,
+      layout.widgets,
+    );
+  }
+}
+
 export function handleWidgetInspectorChange(
   comp: any,
   widget?: any,
@@ -215,34 +349,50 @@ export function handleWidgetInspectorChange(
     }
 
     const gridId = targetWidget.customSettings?.["gridId"];
-    const newBindingMode = targetWidget.customSettings?.["bindingMode"];
-    if (gridId && newBindingMode) {
-      if (comp.activeGridSession && comp.activeGridSession.gridId === gridId) {
-        comp.activeGridSession.bindingMode = newBindingMode;
+    if (gridId) {
+      handleGridBindingModeSync(comp, layout, targetWidget, gridId);
+      handleGridSyncAction(layout, targetWidget, gridId);
+      handleGridStructureChanges(comp, layout, targetWidget, gridId);
+
+      if (
+        comp.activeGridSession &&
+        LaneGridReplicationHelper.isMasterWidget(
+          targetWidget,
+          comp.activeGridSession,
+        )
+      ) {
+        layout.widgets = LaneGridReplicationHelper.syncMasterWidgetToLanes(
+          targetWidget,
+          comp.activeGridSession,
+          layout.widgets,
+        );
       }
-      for (const w of layout.widgets) {
-        if (
-          w.customSettings?.["gridId"] === gridId &&
-          w.id !== targetWidget.id
-        ) {
-          if (!w.customSettings) w.customSettings = {};
-          w.customSettings["bindingMode"] = newBindingMode;
+
+      handleCrossColumnLiveSync(layout, targetWidget, gridId);
+
+      if (targetWidget.customSettings?.["customLabel"] !== undefined) {
+        const masterId =
+          targetWidget.customSettings?.["gridMasterId"] || targetWidget.id;
+        for (const w of layout.widgets) {
+          if (
+            w.customSettings?.["gridId"] === gridId &&
+            (w.id === masterId ||
+              w.customSettings?.["gridMasterId"] === masterId)
+          ) {
+            if (!w.customSettings) w.customSettings = {};
+            w.customSettings["customLabel"] =
+              targetWidget.customSettings["customLabel"];
+          }
         }
       }
-    }
 
-    if (
-      comp.activeGridSession &&
-      LaneGridReplicationHelper.isMasterWidget(
-        targetWidget,
-        comp.activeGridSession,
-      )
-    ) {
-      layout.widgets = LaneGridReplicationHelper.syncMasterWidgetToLanes(
-        targetWidget,
-        comp.activeGridSession,
-        layout.widgets,
-      );
+      if (targetWidget.customSettings) {
+        for (const k of Object.keys(targetWidget.customSettings)) {
+          if (k.startsWith("_reset_")) {
+            delete targetWidget.customSettings[k];
+          }
+        }
+      }
     }
     updateLayoutOnModel(
       layout,
@@ -251,6 +401,7 @@ export function handleWidgetInspectorChange(
       comp.isCurrentLayoutPractice,
       comp.parsedLayouts,
     );
+    comp.syncRacedayPreview?.(layout, targetUi);
   }
   comp.captureState();
   comp.cdr.markForCheck();

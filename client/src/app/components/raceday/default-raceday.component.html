@@ -118,6 +118,25 @@
             (pointerdown)="onGridResizeStart($event, 'w')"
           ></div>
 
+          @if (getHeaderRowBounds(); as headerBounds) {
+            <div
+              class="lane-blueprint-cell header-cell"
+              [style.left.px]="headerBounds.x - gridSession()!.bounds.x"
+              [style.top.px]="headerBounds.y - gridSession()!.bounds.y"
+              [style.width.px]="headerBounds.width"
+              [style.height.px]="headerBounds.height"
+            >
+              <div class="lane-blueprint-badge">
+                <span
+                  class="material-icons"
+                  style="font-size: 12px; margin-right: 2px"
+                  >view_headline</span
+                >
+                {{ "UE_GRID_HEADER_ROW_BADGE" | translate }}
+              </div>
+            </div>
+          }
+
           @for (cell of getGridCells(); track cell.laneIndex) {
             <div
               class="lane-blueprint-cell"

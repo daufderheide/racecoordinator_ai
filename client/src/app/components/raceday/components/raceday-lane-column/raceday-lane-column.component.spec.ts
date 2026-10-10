@@ -1758,5 +1758,77 @@ describe("RacedayLaneColumnComponent", () => {
       const headerEl = fixture.nativeElement.querySelector(".lane-col-header");
       expect(headerEl).toBeTruthy();
     });
+
+    it("should render header-only card when isHeaderWidget is true", () => {
+      fixture.componentRef.setInput("parent", mockParent);
+      fixture.componentRef.setInput(
+        "widget",
+        createWidget({
+          columnKey: "lastLapTime",
+          isHeaderWidget: true,
+          customLabel: "Lap Times",
+        }),
+      );
+      fixture.detectChanges();
+
+      const cardEl = fixture.nativeElement.querySelector(
+        ".raceday-lane-column-card",
+      );
+      expect(cardEl.classList.contains("header-widget-card")).toBeTrue();
+
+      const headerOnlyEl = fixture.nativeElement.querySelector(
+        ".lane-col-header.header-widget-only",
+      );
+      expect(headerOnlyEl).toBeTruthy();
+      expect(headerOnlyEl.textContent.trim()).toBe("Lap Times");
+
+      const bodyEl = fixture.nativeElement.querySelector(".lane-col-body");
+      expect(bodyEl).toBeNull();
+    });
+
+    it("should apply highlight class when driver is in parent.highlightedDrivers", () => {
+      mockParent.highlightedDrivers = new Set(["driver-1"]);
+      fixture.componentRef.setInput("parent", mockParent);
+      fixture.componentRef.setInput(
+        "widget",
+        createWidget({
+          columnKey: "lastLapTime",
+          targetIndex: 0,
+          highlightRowOnLap: true,
+        }),
+      );
+      fixture.detectChanges();
+
+      expect(component.isHighlighted).toBeTrue();
+      const cardEl = fixture.nativeElement.querySelector(
+        ".raceday-lane-column-card",
+      );
+      expect(cardEl.classList.contains("highlight")).toBeTrue();
+
+      // Should not highlight if highlightRowOnLap is disabled
+      fixture.componentRef.setInput(
+        "widget",
+        createWidget({
+          columnKey: "lastLapTime",
+          targetIndex: 0,
+          highlightRowOnLap: false,
+        }),
+      );
+      fixture.detectChanges();
+      expect(component.isHighlighted).toBeFalse();
+
+      // Should not highlight header widgets
+      fixture.componentRef.setInput(
+        "widget",
+        createWidget({
+          columnKey: "lastLapTime",
+          targetIndex: 0,
+          isHeaderWidget: true,
+          highlightRowOnLap: true,
+        }),
+      );
+      fixture.detectChanges();
+      expect(component.isHighlighted).toBeFalse();
+    });
   });
 });

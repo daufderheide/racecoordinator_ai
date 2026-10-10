@@ -701,4 +701,111 @@ describe("LaneColumnInspectorComponent", () => {
       expect(component.change.emit).toHaveBeenCalled();
     });
   });
+
+  describe("Header widget, highlightRowOnLap, and Grid group manipulation options", () => {
+    it("should detect isHeaderWidget correctly and toggle highlightRowOnLap", () => {
+      expect(component.isHeaderWidget).toBeFalse();
+      mockSettings.isHeaderWidget = true;
+      expect(component.isHeaderWidget).toBeTrue();
+
+      mockSettings.highlightRowOnLap = true;
+      expect(component.highlightRowOnLap).toBeTrue();
+      component.highlightRowOnLap = false;
+      expect(mockSettings.highlightRowOnLap).toBeFalse();
+      expect(component.highlightRowOnLap).toBeFalse();
+    });
+
+    it("should handle linkColumns getter and setter with _linkColumnsChanged flag", () => {
+      spyOn(component.change, "emit");
+      expect(component.linkColumns).toBeTrue();
+
+      component.linkColumns = false;
+      expect(mockSettings.linkColumns).toBeFalse();
+      expect(mockSettings._linkColumnsChanged).toBeTrue();
+      expect(component.change.emit).toHaveBeenCalled();
+    });
+
+    it("should handle gridHeaderPlacement and gridHeaderHeight updates", () => {
+      spyOn(component.change, "emit");
+      expect(component.gridHeaderPlacement).toBe("individual");
+      expect(component.currentGridHeaderHeight).toBe(36);
+
+      component.onGridHeaderPlacementChange("top");
+      expect(mockSettings.headerPlacement).toBe("top");
+      expect(mockSettings._headerPlacementChanged).toBeTrue();
+      expect(component.change.emit).toHaveBeenCalled();
+
+      component.onGridHeaderHeightChange(45);
+      expect(mockSettings.headerHeight).toBe(45);
+      expect(mockSettings._headerHeightChanged).toBeTrue();
+
+      // Should clamp between 20 and 200
+      component.onGridHeaderHeightChange(10);
+      expect(mockSettings.headerHeight).toBe(20);
+      component.onGridHeaderHeightChange(250);
+      expect(mockSettings.headerHeight).toBe(200);
+    });
+
+    it("should trigger group sync actions and set _syncAction", () => {
+      spyOn(component.change, "emit");
+
+      component.applyHeaderStyleToAll();
+      expect(mockSettings._syncAction).toBe("header");
+      expect(component.change.emit).toHaveBeenCalled();
+
+      component.applyValueStyleToAll();
+      expect(mockSettings._syncAction).toBe("value");
+
+      component.applyBorderStyleToAll();
+      expect(mockSettings._syncAction).toBe("border");
+
+      component.applyTimeFormatToAll();
+      expect(mockSettings._syncAction).toBe("time");
+    });
+
+    it("should handle grid header font family, font size, colors, alignment, and resets", () => {
+      spyOn(component.change, "emit");
+      mockSettings.linkColumns = true;
+
+      // Font Family
+      component.gridHeaderFontFamily = "Roboto";
+      expect(mockSettings.headerFontFamily).toBe("Roboto");
+      expect(mockSettings._syncAction).toBe("header");
+      expect(component.gridHeaderFontFamily).toBe("Roboto");
+
+      // Font Size with clamping
+      component.gridHeaderFontSize = 24;
+      expect(mockSettings.headerFontSize).toBe(24);
+      expect(component.gridHeaderFontSize).toBe(24);
+      component.gridHeaderFontSize = 4;
+      expect(mockSettings.headerFontSize).toBe(8);
+      component.gridHeaderFontSize = 100;
+      expect(mockSettings.headerFontSize).toBe(72);
+
+      // Alignment
+      component.gridHeaderAlignment = "end";
+      expect(mockSettings.headerAlignment).toBe("end");
+      expect(component.gridHeaderAlignment).toBe("end");
+
+      // Text color & reset
+      const fakeTextEvent = { target: { value: "#123456" } } as any;
+      component.onGridHeaderTextColorChange(fakeTextEvent);
+      expect(mockSettings.headerTextColor).toBe("#123456");
+      expect(component.gridHeaderTextColor).toBe("#123456");
+      component.resetGridHeaderTextColor();
+      expect(mockSettings.headerTextColor).toBeUndefined();
+      expect(mockSettings._reset_headerTextColor).toBeTrue();
+      expect(mockSettings._syncAction).toBe("header");
+
+      // Background color & reset
+      const fakeBgEvent = { target: { value: "#abcdef" } } as any;
+      component.onGridHeaderBgColorChange(fakeBgEvent);
+      expect(mockSettings.headerBackgroundColor).toBe("#abcdef");
+      expect(component.gridHeaderBackgroundColor).toBe("#abcdef");
+      component.resetGridHeaderBackgroundColor();
+      expect(mockSettings.headerBackgroundColor).toBeUndefined();
+      expect(mockSettings._reset_headerBackgroundColor).toBeTrue();
+      expect(mockSettings._syncAction).toBe("header");
+    });
+  });
 });
