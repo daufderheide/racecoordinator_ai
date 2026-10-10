@@ -82,6 +82,7 @@ public class HeatConverterTest {
     dhd.addLap(11.0, false, true);
     dhd.addLap(13.5, false, true);
     dhd.setUserLaps(2.0);
+    dhd.setUserTime(1.5);
     dhd.setPenaltyLaps(-1.0);
     dhd.setAutoCalculatedLaps(0.5);
     dhd.setFinished(true);
@@ -103,14 +104,16 @@ public class HeatConverterTest {
     assertEquals(100.0, proto.getInitialFuelLevel(), 0.001);
     assertEquals(10.0, proto.getBestLapTime(), 0.001);
     assertEquals(11.0, proto.getMedianLapTime(), 0.001);
-    assertEquals(11.5, proto.getAverageLapTime(), 0.001);
+    assertEquals(12.0, proto.getAverageLapTime(), 0.001);
     assertEquals(2.0, proto.getUserLaps(), 0.001);
+    assertEquals(1.5, proto.getUserTime(), 0.001);
+    assertEquals(36.0, proto.getTotalTime(), 0.001);
     assertEquals(-1.0, proto.getPenaltyLaps(), 0.001);
     assertEquals(0.5, proto.getAutoCalculatedLaps(), 0.001);
     assertEquals(6.5, proto.getAdjustedLapCount(), 0.001); // 3 (laps) + 2 - (-1) + 0.5 = 6.5
     assertEquals(3, proto.getTrackCalls());
-    assertEquals(84.324, proto.getConsistencyScore(), 0.01);
-    assertEquals(1.803, proto.getStandardDeviation(), 0.01);
+    assertEquals(84.134, proto.getConsistencyScore(), 0.01);
+    assertEquals(1.904, proto.getStandardDeviation(), 0.01);
     assertEquals(11.5, proto.getAverageTop5(), 0.001);
     assertEquals(21.0, proto.getTop2Consecutive(), 0.001);
     assertEquals(34.5, proto.getTop3Consecutive(), 0.001);

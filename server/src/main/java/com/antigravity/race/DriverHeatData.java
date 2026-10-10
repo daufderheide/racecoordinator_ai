@@ -100,6 +100,7 @@ public class DriverHeatData extends ServerToClientObject
   private CarLocation currentLocation;
   private double penaltyLaps = 0;
   private double userLaps = 0;
+  private double userTime = 0.0;
   private double autoCalculatedLaps = 0;
   private int falseStarts = 0;
   private boolean isRefueling = false;
@@ -260,15 +261,10 @@ public class DriverHeatData extends ServerToClientObject
   }
 
   public double getAverageLapTime() {
-    // TODO(aufderheide): Extract the calculation into a utility class
     if (laps.isEmpty()) {
-      return 0.0f;
+      return 0.0;
     }
-    double sum = 0.0f;
-    for (LapData lap : laps) {
-      sum += lap.getLapTime();
-    }
-    return sum / laps.size();
+    return getTotalTime() / laps.size();
   }
 
   public double getMedianLapTime() {
@@ -321,12 +317,16 @@ public class DriverHeatData extends ServerToClientObject
     this.reactionTime = reactionTime;
   }
 
-  public double getTotalTime() {
+  public double getPhysicalTotalTime() {
     double sum = 0.0f;
     for (LapData lap : laps) {
       sum += lap.getLapTime();
     }
     return sum;
+  }
+
+  public double getTotalTime() {
+    return getPhysicalTotalTime() + userTime;
   }
 
   public List<Double> getValidLapTimes() {
@@ -401,6 +401,8 @@ public class DriverHeatData extends ServerToClientObject
     falseStarts = 0;
     remainingFalseStartTimePenalty = 0.0;
     penaltyLaps = 0.0;
+    userLaps = 0.0;
+    userTime = 0.0;
     hasDriftTime = false;
     isFinished = false;
     trackCalls = 0;
@@ -410,10 +412,14 @@ public class DriverHeatData extends ServerToClientObject
     int savedFalseStarts = falseStarts;
     double savedRemainingPenalty = remainingFalseStartTimePenalty;
     double savedPenaltyLaps = penaltyLaps;
+    double savedUserLaps = userLaps;
+    double savedUserTime = userTime;
     reset();
     falseStarts = savedFalseStarts;
     remainingFalseStartTimePenalty = savedRemainingPenalty;
     penaltyLaps = savedPenaltyLaps;
+    userLaps = savedUserLaps;
+    userTime = savedUserTime;
   }
 
   @Override
@@ -519,6 +525,14 @@ public class DriverHeatData extends ServerToClientObject
 
   public void setUserLaps(double userLaps) {
     this.userLaps = userLaps;
+  }
+
+  public double getUserTime() {
+    return userTime;
+  }
+
+  public void setUserTime(double userTime) {
+    this.userTime = userTime;
   }
 
   public double getAutoCalculatedLaps() {

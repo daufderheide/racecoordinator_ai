@@ -110,7 +110,10 @@ describe("AddLapSectionsDialogComponent", () => {
     ) as HTMLButtonElement;
     applyBtn.click();
 
-    expect(component.confirm.emit).toHaveBeenCalledWith(0.25);
+    expect(component.confirm.emit).toHaveBeenCalledWith({
+      userLaps: 0.25,
+      userTime: 0,
+    });
   });
 
   it("should emit cancel event on cancel click", () => {
@@ -329,8 +332,8 @@ describe("AddLapSectionsDialogComponent", () => {
     expect(component.confirm.emit).toHaveBeenCalledWith({
       isBatch: true,
       updates: [
-        { heatNumber: 1, laneIndex: 0, userLaps: 0.5 },
-        { heatNumber: 1, laneIndex: 1, userLaps: 2.5 },
+        { heatNumber: 1, laneIndex: 0, userLaps: 0.5, userTime: 0 },
+        { heatNumber: 1, laneIndex: 1, userLaps: 2.5, userTime: 0 },
       ],
     });
   });
@@ -424,7 +427,7 @@ describe("AddLapSectionsDialogComponent", () => {
     // Verification: updates must only contain Heat 1 update, NOT Heat 2
     expect(component.confirm.emit).toHaveBeenCalledWith({
       isBatch: true,
-      updates: [{ heatNumber: 1, laneIndex: 0, userLaps: 1.5 }],
+      updates: [{ heatNumber: 1, laneIndex: 0, userLaps: 1.5, userTime: 0 }],
     });
   });
 
@@ -504,5 +507,89 @@ describe("AddLapSectionsDialogComponent", () => {
     expect(drivers.length).toBe(1);
     expect(drivers[0].laneIndex).toBe(2);
     expect(drivers[0].driverName).toBe("Historical Racer");
+  });
+
+  it("should update time adjustment and preview calculated total time", () => {
+    spyOn(component.confirm, "emit");
+
+    const participant = {
+      driver: { name: "Test Driver", entity_id: "driver-1" },
+    } as any;
+    const hd = new DriverHeatData("hd-1", participant, 0);
+    hd.totalTime = 60.0;
+    hd.userTime = 1.5;
+
+    fixture.componentRef.setInput("driverHeatData", hd);
+    fixture.componentRef.setInput("numTrackSections", 100);
+    fixture.componentRef.setInput("visible", true);
+    fixture.detectChanges();
+
+    const timeInput = fixture.nativeElement.querySelector(
+      "#timeAdjustmentInput",
+    ) as HTMLInputElement;
+    expect(timeInput).not.toBeNull();
+    expect(timeInput.value).toBe("1.5");
+
+    // Modify time adjustment to 3.250
+    timeInput.value = "3.250";
+    timeInput.dispatchEvent(new Event("input", { bubbles: true }));
+    fixture.detectChanges();
+
+    expect(component.timeAdjustmentInput()).toBe(3.25);
+    // Base physical time = 60.0 - 1.5 = 58.5. New total = 58.5 + 3.25 = 61.75
+    expect(component.calculatedTotalTime()).toBeCloseTo(61.75, 2);
+
+    const applyBtn = fixture.nativeElement.querySelector(
+      ".btn-confirm",
+    ) as HTMLButtonElement;
+    applyBtn.click();
+
+    expect(component.confirm.emit).toHaveBeenCalledWith({
+      userLaps: 0,
+      userTime: 3.25,
+    });
+  });
+
+  it("should display title Adjust Lap Sections/Time and arrange lap elements before time adjustment at the bottom", () => {
+    const participant = {
+      driver: { name: "Test Driver", entity_id: "driver-1" },
+    } as any;
+    const hd = new DriverHeatData("hd-1", participant, 0);
+
+    fixture.componentRef.setInput("driverHeatData", hd);
+    fixture.componentRef.setInput("numTrackSections", 100);
+    fixture.componentRef.setInput("visible", true);
+    fixture.detectChanges();
+
+    const titleEl = fixture.nativeElement.querySelector(".modal-title");
+    expect(titleEl).not.toBeNull();
+    expect(titleEl.textContent.trim()).toBe("RD_ADD_LAP_SECTIONS_TITLE");
+
+    const sectionsInput = fixture.nativeElement.querySelector(
+      "#sectionsInput",
+    ) as HTMLInputElement;
+    const timeInput = fixture.nativeElement.querySelector(
+      "#timeAdjustmentInput",
+    ) as HTMLInputElement;
+
+    expect(sectionsInput).not.toBeNull();
+    expect(timeInput).not.toBeNull();
+    expect(sectionsInput.classList.contains("selector-input")).toBeTrue();
+    expect(timeInput.classList.contains("selector-input")).toBeTrue();
+
+    // Verify DOM order: sectionsInput appears before timeAdjustmentInput
+    const inputRows = fixture.nativeElement.querySelectorAll(".input-row");
+    expect(inputRows.length).toBe(2);
+    expect(inputRows[0].contains(sectionsInput)).toBeTrue();
+    expect(inputRows[1].contains(timeInput)).toBeTrue();
+
+    // Verify time adjustment preview is at the bottom
+    const previewBoxes =
+      fixture.nativeElement.querySelectorAll(".result-preview");
+    expect(previewBoxes.length).toBe(2);
+    expect(previewBoxes[1].classList.contains("time-preview")).toBeTrue();
+    expect(previewBoxes[1].textContent).toContain(
+      "RD_ADD_LAP_SECTIONS_TOTAL_TIME_PREVIEW",
+    );
   });
 });

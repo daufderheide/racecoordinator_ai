@@ -46,6 +46,33 @@ Lo spazio di lavoro è suddiviso in due pannelli sincronizzati:
 - **Punteggio Generale**: Metodo di classifica generale, regole di spareggio e manche scartate.
 - **Punteggio Stagionale**: Distribuzione punti per posizione nei campionati.
 
+#### Regolazioni dei Giri e del Tempo (Impatto su Classifiche e Metriche)
+
+Race Coordinator AI consente ai direttori di gara di regolare manualmente il conteggio dei giri e il tempo totale della manche di un pilota durante o dopo una manche (facendo clic sulle colonne di giri/tempo, tramite scorciatoie da tastiera o dal menu Direttore di Gara). Poiché il server funge da unica fonte di verità per tutti i calcoli, le regolazioni manuali si riflettono in modo deterministico nelle classifiche di manche, nella classifica generale e nelle statistiche di telemetria:
+
+- **Giri Regolati (`userLaps`)**:
+  - **Formula**: $\text{Conteggio Giri Regolato} = \text{Giri Fisici} + \text{Giri di Penalità} + \text{Giri Utente} + \text{Segmenti Automatici}$.
+  - **Classifiche**: Quando il metodo di classifica è **Maggior Numero di Giri**, i giri regolati determinano direttamente le posizioni nella manche e nella classifica generale.
+  - **Metriche**: Il conteggio dei giri fisici non viene modificato (riflette i passaggi effettivi sui sensori). Il tempo medio sul giro ($\text{Tempo Totale} / \text{Giri Fisici}$), il miglior giro e il giro mediano non subiscono variazioni. I distacchi in giri si aggiornano immediatamente.
+- **Tempo Regolato (`userTime`)**:
+  - **Formula**: $\text{Tempo Totale Regolato} = \sum (\text{Tempi Giri Fisici}) + \text{Tempo Utente}$.
+  - **Classifiche**: Quando il metodo di classifica è **Tempo Totale Più Veloce**, il tempo regolato determina direttamente la posizione (un tempo inferiore si classifica meglio). In caso di classifica a **Maggior Numero di Giri**, il tempo regolato funge da criterio di spareggio principale per i piloti a pari giri. La classifica generale somma i tempi totali regolati di tutte le manche valide.
+  - **Metriche**: Il tempo medio sul giro ($\text{Tempo Totale Regolato} / \text{Giri Fisici}$) viene direttamente influenzato: l'aggiunta di penalità temporali aumenta il tempo medio sul giro (passo più lento). Le metriche di distacco (`gapLeader`, `gapPosition`, `gapLeaderF1`, `gapPositionF1`) si ricalcolano per riflettere la regolazione temporale.
+  - **Metriche Protette**: Il **miglior giro** e il **giro mediano** **NON sono influenzati** dalle regolazioni del tempo. Il miglior giro rappresenta rigorosamente il giro fisico individuale più veloce registrato, mentre il giro mediano rappresenta il tempo sul giro fisico mediano.
+
+| Metrica / Funzione di Classifica | Giri Regolati (`userLaps`) | Tempo Regolato (`userTime`) |
+| :--- | :--- | :--- |
+| **Conteggio Giri Regolato** | **Varia direttamente** ($\pm\text{settori}/\text{giri}$) | Invariato |
+| **Conteggio Giri Fisici** | Invariato (solo passaggi effettivi) | Invariato (solo passaggi effettivi) |
+| **Tempo Totale Manche** | Invariato | **Varia direttamente** ($+ \text{userTime}$) |
+| **Tempo Totale Generale** | Invariato | **Varia direttamente** (somma manche) |
+| **Classifica (Maggior Numero Giri)** | **Fattore principale di classifica** | **Fattore di spareggio** (tempo minore vince) |
+| **Classifica (Tempo Totale Più Veloce)** | Fattore di spareggio | **Fattore principale di classifica** (tempo minore vince) |
+| **Tempo Medio sul Giro** | Invariato ($\text{Tempo} / \text{Giri Fisici}$) | **Varia direttamente** ($\text{Tempo Regolato} / \text{Giri Fisici}$) |
+| **Miglior Giro** | **Nessun impatto** (giro fisico più rapido) | **Nessun impatto** (giro fisico più rapido) |
+| **Giro Mediano** | **Nessun impatto** (giro fisico mediano) | **Nessun impatto** (giro fisico mediano) |
+| **Distacchi (`gapLeader`, `gapPosition`)** | Aggiorna distacco in giri | Aggiorna distacco in tempo e passo |
+
 ### Impostazioni Timer
 - **Ritardo Partenza / Riavvio**: Secondi di conto alla rovescia prima del via.
 - **Tempo Minimo sul Giro**: Tempo minimo consentito per filtrare letture errate dei sensori.

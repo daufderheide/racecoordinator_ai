@@ -726,4 +726,37 @@ public class OverallStandingsTest {
         "Expected hasSegments to be false when auto-calculated laps are removed", p1.hasSegments());
     assertEquals(4.0, p1.getTotalLaps(), 0.001);
   }
+
+  @Test
+  public void testUserTimeImpactsOverallTotalTimeAverageLapTimeAndTiebreaker() {
+    HeatScoring heatScoring =
+        new HeatScoring(
+            FinishMethod.Timed, 10, HeatRanking.LAP_COUNT, HeatRankingTiebreaker.AVERAGE_LAP_TIME);
+    OverallScoring overallScoring =
+        new OverallScoring(0, OverallRanking.LAP_COUNT, OverallRankingTiebreaker.TOTAL_TIME);
+    OverallStandings os =
+        new OverallStandings(heatScoring, overallScoring, new GroupOptions(), false);
+
+    RaceParticipant p1 = createDriver("D1", "id1");
+    RaceParticipant p2 = createDriver("D2", "id2");
+    List<RaceParticipant> drivers = java.util.Arrays.asList(p1, p2);
+
+    Heat h1 = createHeat(1, p1, 5, 50.0, p2, 5, 52.0);
+    List<Heat> heats = java.util.Arrays.asList(h1);
+
+    os.recalculate(drivers, heats);
+    assertEquals(1, p1.getRank());
+    assertEquals(2, p2.getRank());
+    assertEquals(50.0, p1.getTotalTime(), 0.001);
+    assertEquals(10.0, p1.getAverageLapTime(), 0.001);
+
+    // Apply +5.0s user time adjustment to P1 (total becomes 55.0s, average becomes 11.0s)
+    h1.getDrivers().get(0).setUserTime(5.0);
+    os.recalculate(drivers, heats);
+
+    assertEquals(55.0, p1.getTotalTime(), 0.001);
+    assertEquals(11.0, p1.getAverageLapTime(), 0.001);
+    assertEquals(2, p1.getRank());
+    assertEquals(1, p2.getRank());
+  }
 }

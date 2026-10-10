@@ -2233,29 +2233,80 @@ export class DataService {
     );
   }
 
-  updateUserLaps(lane: number, userLaps: number): Observable<any> {
+  updateUserLaps(
+    lane: number,
+    userLaps?: number,
+    userTime?: number,
+  ): Observable<any> {
+    const body: Record<string, number> = {};
+    if (userLaps !== undefined) {
+      body["userLaps"] = userLaps;
+    }
+    if (userTime !== undefined) {
+      body["userTime"] = userTime;
+    }
     return this.http.post<any>(
       `${this.baseUrl}/api/races/current-heat/drivers/${lane}/user-laps`,
-      { userLaps },
+      body,
     );
   }
 
   updateHeatUserLaps(
     heatNumber: number,
     lane: number,
-    userLaps: number,
+    userLaps?: number,
+    userTime?: number,
   ): Observable<any> {
+    const body: Record<string, number> = {};
+    if (userLaps !== undefined) {
+      body["userLaps"] = userLaps;
+    }
+    if (userTime !== undefined) {
+      body["userTime"] = userTime;
+    }
     return this.http.post<any>(
       `${this.baseUrl}/api/races/heats/${heatNumber}/drivers/${lane}/user-laps`,
-      { userLaps },
+      body,
     );
   }
 
   updateBatchUserLaps(
-    updates: { heatNumber: number; laneIndex: number; userLaps: number }[],
+    updates: {
+      heatNumber: number;
+      laneIndex: number;
+      userLaps?: number;
+      userTime?: number;
+    }[],
   ): Observable<any> {
     return this.http.post<any>(
       `${this.baseUrl}/api/races/heats/user-laps/batch`,
+      updates,
+    );
+  }
+
+  updateUserTime(lane: number, userTime: number): Observable<any> {
+    return this.http.post<any>(
+      `${this.baseUrl}/api/races/current-heat/drivers/${lane}/user-time`,
+      { userTime },
+    );
+  }
+
+  updateHeatUserTime(
+    heatNumber: number,
+    lane: number,
+    userTime: number,
+  ): Observable<any> {
+    return this.http.post<any>(
+      `${this.baseUrl}/api/races/heats/${heatNumber}/drivers/${lane}/user-time`,
+      { userTime },
+    );
+  }
+
+  updateBatchUserTime(
+    updates: { heatNumber: number; laneIndex: number; userTime: number }[],
+  ): Observable<any> {
+    return this.http.post<any>(
+      `${this.baseUrl}/api/races/heats/user-time/batch`,
       updates,
     );
   }

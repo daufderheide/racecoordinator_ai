@@ -262,8 +262,6 @@ public class HistoryPredictionTaskHandler {
           u.containsKey("laneIndex")
               ? ((Number) u.get("laneIndex")).intValue()
               : ((Number) u.get("lane")).intValue();
-      double userLaps = ((Number) u.get("userLaps")).doubleValue();
-
       Heat targetHeat = null;
       for (Heat h : race.getHeats()) {
         if (h.getHeatNumber() == heatNumber) {
@@ -277,8 +275,20 @@ public class HistoryPredictionTaskHandler {
       if (lane < 0 || lane >= targetHeat.getDrivers().size()) {
         return "Invalid lane index: " + lane;
       }
-      targetHeat.getDrivers().get(lane).setUserLaps(userLaps);
-      heatsToRecalc.add(targetHeat);
+      boolean updated = false;
+      if (u.containsKey("userLaps")) {
+        double userLaps = ((Number) u.get("userLaps")).doubleValue();
+        targetHeat.getDrivers().get(lane).setUserLaps(userLaps);
+        updated = true;
+      }
+      if (u.containsKey("userTime")) {
+        double userTime = ((Number) u.get("userTime")).doubleValue();
+        targetHeat.getDrivers().get(lane).setUserTime(userTime);
+        updated = true;
+      }
+      if (updated) {
+        heatsToRecalc.add(targetHeat);
+      }
     }
 
     for (Heat h : heatsToRecalc) {

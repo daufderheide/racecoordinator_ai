@@ -136,14 +136,15 @@ import { DriverHeatData } from "@app/race/driver_heat_data";
               <span class="calc-value">{{ numTrackSections() }}</span>
             </div>
 
-            <div class="input-section">
+            <div class="input-row">
               <label for="sectionsInput" class="input-label">
-                {{ "RD_ADD_LAP_SECTIONS_INPUT_LABEL" | translate }}
+                {{ "RD_ADD_LAP_SECTIONS_INPUT_LABEL" | translate }}:
               </label>
               <input
                 #sectionsInputRef
                 id="sectionsInput"
                 type="number"
+                class="selector-input"
                 [value]="sectionsInput()"
                 (input)="onInputChange($event)"
                 (keyup.enter)="onConfirm()"
@@ -186,6 +187,55 @@ import { DriverHeatData } from "@app/race/driver_heat_data";
                   >
                 </div>
               }
+            </div>
+
+            <div class="input-row">
+              <label for="timeAdjustmentInput" class="input-label">
+                {{ "RD_ADD_LAP_SECTIONS_TIME_ADJ_LABEL" | translate }}:
+              </label>
+              <input
+                #timeAdjustmentInputRef
+                id="timeAdjustmentInput"
+                type="number"
+                step="0.001"
+                class="selector-input"
+                [value]="timeAdjustmentInput()"
+                (input)="onTimeInputChange($event)"
+                (keyup.enter)="onConfirm()"
+                placeholder="0.000"
+                autocomplete="off"
+                data-dashlane-ignore="true"
+                data-1p-ignore="true"
+                data-lpignore="true"
+                data-bwignore="true"
+                data-form-type="other"
+              />
+            </div>
+
+            <div class="result-preview time-preview">
+              <div class="preview-line">
+                <span class="preview-label"
+                  >{{
+                    "RD_ADD_LAP_SECTIONS_CURRENT_TIME_ADJ" | translate
+                  }}:</span
+                >
+                <span class="preview-value"
+                  >{{
+                    (timeAdjustmentInput() >= 0 ? "+" : "") +
+                      (timeAdjustmentInput() | number: "1.3-3")
+                  }}s</span
+                >
+              </div>
+              <div class="preview-line">
+                <span class="preview-label"
+                  >{{
+                    "RD_ADD_LAP_SECTIONS_TOTAL_TIME_PREVIEW" | translate
+                  }}:</span
+                >
+                <span class="preview-value"
+                  >{{ calculatedTotalTime() | number: "1.3-3" }}s</span
+                >
+              </div>
             </div>
           }
 
@@ -257,18 +307,19 @@ import { DriverHeatData } from "@app/race/driver_heat_data";
         gap: 0.75rem;
         box-sizing: border-box;
       }
+      app-custom-select,
       select {
         background: #090d16;
         border: 1.5px solid #334155;
         border-radius: 8px;
         color: #f1f5f9;
-        padding: 0.5rem 1rem;
         font-size: 0.95rem;
         outline: none;
         transition: all 0.2s;
         cursor: pointer;
         width: 180px;
       }
+      app-custom-select:focus,
       select:focus {
         border-color: #38bdf8;
         box-shadow: 0 0 10px rgba(56, 189, 248, 0.2);
@@ -312,7 +363,7 @@ import { DriverHeatData } from "@app/race/driver_heat_data";
         border: 1px dashed rgba(56, 189, 248, 0.2);
         border-radius: 8px;
         padding: 0.75rem 1rem;
-        margin-bottom: 1.5rem;
+        margin-bottom: 0.75rem;
         box-sizing: border-box;
       }
       .calc-label {
@@ -324,33 +375,38 @@ import { DriverHeatData } from "@app/race/driver_heat_data";
         color: #f1f5f9;
         font-weight: 700;
       }
-      .input-section {
+      .input-row {
         display: flex;
-        flex-direction: column;
-        gap: 0.5rem;
-        margin-bottom: 1.5rem;
-        box-sizing: border-box;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.625rem;
       }
       .input-label {
         color: #94a3b8;
         font-size: 0.875rem;
         font-weight: 500;
+        margin: 0;
+        flex: 1;
+        padding-right: 1rem;
       }
-      input {
+      input,
+      .selector-input {
         box-sizing: border-box;
-        width: 120px;
-        padding: 0.875rem 1.25rem;
+        width: 140px;
+        padding: 0.5rem 0.75rem;
         background: #090d16;
         border: 1.5px solid #334155;
-        border-radius: 10px;
+        border-radius: 8px;
         color: #f1f5f9;
-        font-size: 1.125rem;
+        font-size: 1rem;
         font-weight: 600;
+        text-align: right;
         outline: none;
         transition: all 0.2s;
         box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
       }
-      input:focus {
+      input:focus,
+      .selector-input:focus {
         border-color: #38bdf8;
         box-shadow:
           0 0 15px rgba(56, 189, 248, 0.25),
@@ -361,11 +417,14 @@ import { DriverHeatData } from "@app/race/driver_heat_data";
         border: 1px solid rgba(255, 255, 255, 0.03);
         border-radius: 8px;
         padding: 0.75rem 1rem;
-        margin-bottom: 1.5rem;
+        margin-bottom: 0.875rem;
         box-sizing: border-box;
         display: flex;
         flex-direction: column;
         gap: 0.5rem;
+      }
+      .result-preview.time-preview {
+        margin-bottom: 1.5rem;
       }
       .preview-line {
         display: flex;
@@ -458,13 +517,17 @@ export class AddLapSectionsDialogComponent {
 
   @ViewChild("sectionsInputRef")
   sectionsInputRef?: ElementRef<HTMLInputElement>;
+  @ViewChild("timeAdjustmentInputRef")
+  timeAdjustmentInputRef?: ElementRef<HTMLInputElement>;
 
   selectedHeatIndex = signal<number>(0);
   selectedLaneIndex = signal<number>(0);
 
   sectionsInput = signal<number>(0);
+  timeAdjustmentInput = signal<number>(0);
 
   private editedSectionsMap = new Map<string, number>();
+  private editedTimeMap = new Map<string, number>();
 
   activeHeats = computed(() => {
     return this.heats() || [];
@@ -541,12 +604,25 @@ export class AddLapSectionsDialogComponent {
     const divisor = this.numTrackSections() || 100;
     return sec / divisor;
   });
+  calculatedTotalTime = computed(() => {
+    const hd = this.activeDriverHeatData();
+    if (!hd) return 0;
+    let baseTime = 0;
+    if (typeof (hd as any).getPhysicalTotalTime === "function") {
+      baseTime = (hd as any).getPhysicalTotalTime();
+    }
+    if (baseTime === 0 && (hd.totalTime ?? 0) > 0) {
+      baseTime = Math.max(0, (hd.totalTime ?? 0) - (hd.userTime || 0));
+    }
+    return Math.max(0, baseTime + (this.timeAdjustmentInput() || 0));
+  });
 
   constructor() {
     effect(() => {
       if (this.visible()) {
         untracked(() => {
           this.editedSectionsMap.clear();
+          this.editedTimeMap.clear();
           if (this.isMenuMode()) {
             const allHeats = this.activeHeats();
             if (allHeats.length > 0) {
@@ -571,6 +647,7 @@ export class AddLapSectionsDialogComponent {
     const hd = this.activeDriverHeatData();
     if (!hd) {
       this.sectionsInput.set(0);
+      this.timeAdjustmentInput.set(0);
       return;
     }
     const heatsList = this.activeHeats();
@@ -583,6 +660,11 @@ export class AddLapSectionsDialogComponent {
     } else {
       const divisor = this.numTrackSections() || 100;
       this.sectionsInput.set(Math.round((hd.userLaps || 0) * divisor));
+    }
+    if (this.editedTimeMap.has(key)) {
+      this.timeAdjustmentInput.set(this.editedTimeMap.get(key)!);
+    } else {
+      this.timeAdjustmentInput.set(hd.userTime || 0);
     }
   }
 
@@ -610,6 +692,23 @@ export class AddLapSectionsDialogComponent {
     }
   }
 
+  onTimeInputChange(event: Event) {
+    const target = event.target as HTMLInputElement;
+    const val = parseFloat(target.value);
+    const timeAdj = isNaN(val) ? 0 : val;
+    this.timeAdjustmentInput.set(timeAdj);
+
+    const hd = this.activeDriverHeatData();
+    if (hd) {
+      const heatsList = this.activeHeats();
+      const heatNum = this.isMenuMode()
+        ? (heatsList[this.selectedHeatIndex()]?.heatNumber ?? 0)
+        : this.currentHeatNumber();
+      const key = `${heatNum}_${hd.laneIndex}`;
+      this.editedTimeMap.set(key, timeAdj);
+    }
+  }
+
   onHeatSelectChange(idx: number) {
     this.selectedHeatIndex.set(idx);
     this.selectedLaneIndex.set(0);
@@ -630,21 +729,46 @@ export class AddLapSectionsDialogComponent {
     }, 0);
   }
 
+  private getDriverByKey(heatNumber: number, laneIndex: number): any {
+    const heatsList = this.activeHeats();
+    const heat = heatsList.find((h) => h.heatNumber === heatNumber);
+    if (!heat) return null;
+    const rawDrivers = heat.heatDrivers || heat.drivers || [];
+    return rawDrivers.find(
+      (d: any, idx: number) =>
+        (d.laneIndex !== undefined
+          ? d.laneIndex
+          : d.lane !== undefined
+            ? d.lane
+            : idx) === laneIndex,
+    );
+  }
+
   onConfirm() {
     if (this.isMenuMode()) {
       const heatsList = this.activeHeats();
       if (heatsList && heatsList.length > 0) {
         const divisor = this.numTrackSections() || 100;
-        const updates = Array.from(this.editedSectionsMap.entries()).map(
-          ([key, sections]) => {
-            const [heatNumber, laneIndex] = key.split("_").map(Number);
-            return {
-              heatNumber,
-              laneIndex,
-              userLaps: sections / divisor,
-            };
-          },
-        );
+        const allKeys = new Set([
+          ...this.editedSectionsMap.keys(),
+          ...this.editedTimeMap.keys(),
+        ]);
+        const updates = Array.from(allKeys).map((key) => {
+          const [heatNumber, laneIndex] = key.split("_").map(Number);
+          const driver = this.getDriverByKey(heatNumber, laneIndex);
+          const sections = this.editedSectionsMap.has(key)
+            ? this.editedSectionsMap.get(key)!
+            : Math.round((driver?.userLaps || 0) * divisor);
+          const userTime = this.editedTimeMap.has(key)
+            ? this.editedTimeMap.get(key)!
+            : driver?.userTime || 0;
+          return {
+            heatNumber,
+            laneIndex,
+            userLaps: sections / divisor,
+            userTime,
+          };
+        });
 
         if (updates.length === 0) {
           const hd = this.activeDriverHeatData();
@@ -655,6 +779,7 @@ export class AddLapSectionsDialogComponent {
               heatNumber: heatNum,
               laneIndex: hd.laneIndex,
               userLaps: this.sectionsInput() / divisor,
+              userTime: this.timeAdjustmentInput(),
             });
           }
         }
@@ -668,7 +793,10 @@ export class AddLapSectionsDialogComponent {
       }
       return;
     }
-    this.confirm.emit(this.calculatedLaps());
+    this.confirm.emit({
+      userLaps: this.calculatedLaps(),
+      userTime: this.timeAdjustmentInput(),
+    });
   }
 
   onCancel() {

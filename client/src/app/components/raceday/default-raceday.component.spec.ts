@@ -1378,9 +1378,35 @@ describe("DefaultRacedayComponent", () => {
         2,
         0,
         1.5,
+        0,
       );
       expect(component["heats"][0].heatDrivers[0].adjustedLapCount).toBe(1.5);
       expect(component["heats"][0].heatDrivers[0].userLaps).toBe(1.5);
+    });
+
+    it("should update current heat driver userLaps and userTime when dialog emits object", () => {
+      fixture.detectChanges();
+      const mockHd: any = {
+        laneIndex: 0,
+        userLaps: 0,
+        userTime: 0,
+        totalTime: 10.0,
+      };
+      component["selectedHeatDriver"] = mockHd;
+      mockDataService.updateUserLaps.and.returnValue(
+        of({ adjustedLapCount: 2.0, totalTime: 12.5 }),
+      );
+
+      component["onAddLapSectionsConfirm"]({
+        userLaps: 2.0,
+        userTime: 2.5,
+      });
+
+      expect(mockDataService.updateUserLaps).toHaveBeenCalledWith(0, 2.0, 2.5);
+      expect(mockHd.adjustedLapCount).toBe(2.0);
+      expect(mockHd.userLaps).toBe(2.0);
+      expect(mockHd.userTime).toBe(2.5);
+      expect(mockHd.totalTime).toBe(12.5);
     });
 
     it("should call updateBatchUserLaps on batch confirm in menu mode", () => {
@@ -7899,6 +7925,29 @@ describe("DefaultRacedayComponent", () => {
       const col: any = { propertyName: "lapCount" };
       (component as any).heat = { started: false } as any;
       expect(component.isLapCountColumnClickable(hd, col)).toBeTrue();
+    });
+
+    it("should treat totalTime and overallTotalTime columns as clickable for adjustment", () => {
+      const hd: any = { laneIndex: 0 };
+      expect(
+        component.isLapCountColumnClickable(hd, {
+          propertyName: "totalTime",
+        } as any),
+      ).toBeTrue();
+      expect(
+        component.isLapCountColumnClickable(hd, {
+          propertyName: "overallTotalTime",
+        } as any),
+      ).toBeTrue();
+    });
+
+    it("should open dialog when totalTime column is clicked", () => {
+      const mockHd: any = { laneIndex: 0 };
+      const mockCol: any = { propertyName: "totalTime" };
+      const mockEvent = new MouseEvent("click");
+      component.onCellClick(mockHd, mockCol, mockEvent);
+      expect(component["showAddLapSectionsDialog"]).toBeTrue();
+      expect(component["selectedHeatDriver"]).toBe(mockHd);
     });
 
     it("should return sanitized dropdown arrow background", () => {

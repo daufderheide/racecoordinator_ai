@@ -179,4 +179,39 @@ describe("DriverHeatData", () => {
       expect(heatData.top3Consecutive).toBeNull();
     });
   });
+
+  describe("Total Time and User Time", () => {
+    it("should compute getPhysicalTotalTime as sum of lap times", () => {
+      expect(heatData.getPhysicalTotalTime()).toBe(0);
+
+      heatData.addLapTime(1, 10.5, 10.5, 10.5, 10.5, 1);
+      heatData.addLapTime(2, 9.5, 10.0, 10.0, 9.5, 1);
+      expect(heatData.getPhysicalTotalTime()).toBe(20.0);
+    });
+
+    it("should return physical time + userTime when server totalTime is not cached", () => {
+      heatData.addLapTime(1, 10.0, 10.0, 10.0, 10.0, 1);
+      heatData.addLapTime(2, 10.0, 10.0, 10.0, 10.0, 1);
+      heatData.userTime = 2.5;
+
+      expect(heatData.totalTime).toBe(22.5);
+    });
+
+    it("should return cached server totalTime when explicitly set", () => {
+      heatData.addLapTime(1, 10.0, 10.0, 10.0, 10.0, 1);
+      heatData.totalTime = 25.0;
+
+      expect(heatData.totalTime).toBe(25.0);
+    });
+
+    it("should reset userTime and cached totalTime on reset()", () => {
+      heatData.addLapTime(1, 10.0, 10.0, 10.0, 10.0, 1);
+      heatData.userTime = 5.0;
+      heatData.totalTime = 15.0;
+
+      heatData.reset();
+      expect(heatData.userTime).toBe(0);
+      expect(heatData.totalTime).toBe(0);
+    });
+  });
 });

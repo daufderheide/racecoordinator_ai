@@ -361,7 +361,10 @@ export class RacedayLaneColumnComponent
       } as ColumnDefinition);
     }
     return (
-      this.columnKey === "lapCount" || this.columnKey === "physicalLapCount"
+      this.columnKey === "lapCount" ||
+      this.columnKey === "physicalLapCount" ||
+      this.columnKey === "totalTime" ||
+      this.columnKey === "overallTotalTime"
     );
   }
 
@@ -448,13 +451,23 @@ export class RacedayLaneColumnComponent
   isInsetLapCount(anchor: string): boolean {
     if (this.isUIEditorMode) return false;
     const key = this.getInsetKey(anchor);
-    return key === "lapCount" || key === "physicalLapCount";
+    return (
+      key === "lapCount" ||
+      key === "physicalLapCount" ||
+      key === "totalTime" ||
+      key === "overallTotalTime"
+    );
   }
 
   onInsetClick(anchor: string, event: MouseEvent): void {
     if (this.isUIEditorMode) return;
     const key = this.getInsetKey(anchor);
-    if (key === "lapCount" || key === "physicalLapCount") {
+    if (
+      key === "lapCount" ||
+      key === "physicalLapCount" ||
+      key === "totalTime" ||
+      key === "overallTotalTime"
+    ) {
       event.stopPropagation();
       const p = this.parent();
       const hd = this.targetDriver;

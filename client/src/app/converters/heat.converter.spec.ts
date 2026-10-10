@@ -77,6 +77,8 @@ describe("HeatConverter", () => {
           gapPosition: 0.5,
           penaltyLaps: 1,
           userLaps: 2,
+          userTime: 3.5,
+          totalTime: 42.5,
           autoCalculatedLaps: 0.5,
           adjustedLapCount: 10.5,
           segments: [0.1, 0.2, 0.3],
@@ -94,6 +96,8 @@ describe("HeatConverter", () => {
     expect(driverData.gapPosition).toBe(0.5);
     expect(driverData.penaltyLaps).toBe(1);
     expect(driverData.userLaps).toBe(2);
+    expect(driverData.userTime).toBe(3.5);
+    expect(driverData.totalTime).toBe(42.5);
     expect(driverData.autoCalculatedLaps).toBe(0.5);
     expect(driverData.adjustedLapCount).toBe(10.5);
     expect(driverData.currentLapSegments).toEqual([0.1, 0.2, 0.3]);

@@ -311,12 +311,15 @@ public class LogReplayService {
         handleResetLaneHeatData(mapParams, race);
         break;
       case "updateUserLaps":
+      case "updateUserTime":
         handleUpdateUserLaps(mapParams, race);
         break;
       case "updateHeatUserLaps":
+      case "updateHeatUserTime":
         handleUpdateHeatUserLaps(mapParams, race);
         break;
       case "updateBatchUserLaps":
+      case "updateBatchUserTime":
         handleUpdateBatchUserLaps(mapParams, race);
         break;
       case "modifyHeats":
@@ -363,9 +366,7 @@ public class LogReplayService {
         List<DriverHeatData> drivers = currentHeat.getDrivers();
         if (lane >= 0 && lane < drivers.size()) {
           DriverHeatData dhd = drivers.get(lane);
-          if (body.containsKey("userLaps")) {
-            double value = ((Number) body.get("userLaps")).doubleValue();
-            dhd.setUserLaps(value);
+          if (applyAdjustment(dhd, body)) {
             currentHeat.initializeStandings(
                 race.getRaceModel().getHeatScoring(), race.getRaceModel().isPractice());
             race.updateAndBroadcastOverallStandings();
@@ -390,9 +391,7 @@ public class LogReplayService {
         List<DriverHeatData> drivers = heat.getDrivers();
         if (lane >= 0 && lane < drivers.size()) {
           DriverHeatData dhd = drivers.get(lane);
-          if (body.containsKey("userLaps")) {
-            double value = ((Number) body.get("userLaps")).doubleValue();
-            dhd.setUserLaps(value);
+          if (applyAdjustment(dhd, body)) {
             heat.initializeStandings(
                 race.getRaceModel().getHeatScoring(), race.getRaceModel().isPractice());
             race.updateAndBroadcastOverallStandings();
@@ -430,12 +429,12 @@ public class LogReplayService {
               break;
             }
           }
-          if (targetHeat != null && update.containsKey("userLaps")) {
+          if (targetHeat != null) {
             List<DriverHeatData> drivers = targetHeat.getDrivers();
             if (lane >= 0 && lane < drivers.size()) {
-              double value = ((Number) update.get("userLaps")).doubleValue();
-              drivers.get(lane).setUserLaps(value);
-              heatsToRecalculate.add(targetHeat);
+              if (applyAdjustment(drivers.get(lane), update)) {
+                heatsToRecalculate.add(targetHeat);
+              }
             }
           }
         }
@@ -449,6 +448,24 @@ public class LogReplayService {
       }
       ClientSubscriptionManager.getInstance().autoSave(race);
     }
+  }
+
+  private boolean applyAdjustment(DriverHeatData dhd, Map<String, Object> body) {
+    if (body == null) {
+      return false;
+    }
+    boolean updated = false;
+    if (body.containsKey("userLaps")) {
+      double value = ((Number) body.get("userLaps")).doubleValue();
+      dhd.setUserLaps(value);
+      updated = true;
+    }
+    if (body.containsKey("userTime")) {
+      double value = ((Number) body.get("userTime")).doubleValue();
+      dhd.setUserTime(value);
+      updated = true;
+    }
+    return updated;
   }
 
   private void handleModifyHeats(Map<String, Object> mapParams, Race race) throws Exception {

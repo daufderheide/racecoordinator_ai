@@ -46,6 +46,33 @@ De werkruimte is verdeeld in twee gesynchroniseerde panelen:
 - **Algemene score**: Algemene rangschikkingsmethode, tiebreaker-regels en schrapresultaten.
 - **Seizoensscore**: Puntenverdeling per positie voor kampioenschappen.
 
+#### Ronde- en Tijdaanpassingen (Impact op Rangschikking en Statistieken)
+
+Met Race Coordinator AI kunnen wedstrijdleiders handmatig het aantal ronden en de totale heattijd van een coureur aanpassen tijdens of na een heat (via klikken op ronde-/tijdcellen, sneltoetsen of via het Wedstrijdleidermenu). Aangezien de server de enige gezaghebbende bron is voor alle berekeningen, werken handmatige aanpassingen deterministisch door in heatstanden, het algemeen klassement en telemetriestatistieken:
+
+- **Aangepaste Ronden (`userLaps`)**:
+  - **Formule**: $\text{Aangepast Rondenaantal} = \text{Fysieke Ronden} + \text{Straf-ronden} + \text{Gebruikers-ronden} + \text{Automatische Segmenten}$.
+  - **Rangschikking**: Wanneer de scoringsmethode **Meeste Ronden** is, bepalen de aangepaste ronden rechtstreeks de positie in de heat en het algemeen klassement.
+  - **Statistieken**: Het aantal fysieke ronden blijft ongewijzigd (weerspiegelt daadwerkelijke sensordoorkomsten). De gemiddelde rondetijd ($\text{Totale Tijd} / \text{Fysieke Ronden}$), snelste ronde en mediaan-rondetijd worden niet beïnvloed. Rondeverschillen worden onmiddellijk bijgewerkt.
+- **Aangepaste Tijd (`userTime`)**:
+  - **Formule**: $\text{Aangepaste Totale Tijd} = \sum (\text{Fysieke Rondetijden}) + \text{Gebruikers-tijd}$.
+  - **Rangschikking**: Wanneer de scoringsmethode **Snelste Totale Tijd** is, bepaalt de aangepaste tijd rechtstreeks de positie (lagere tijd scoort beter). Bij **Meeste Ronden** fungeert de aangepaste tijd als de primaire tiebreaker voor coureurs met een gelijk aantal ronden. Het algemeen klassement sommeert de aangepaste totale tijden van alle meetellende heats.
+  - **Statistieken**: De gemiddelde rondetijd ($\text{Aangepaste Totale Tijd} / \text{Fysieke Ronden}$) wordt direct beïnvloed: het toevoegen van straftijd verhoogt de gemiddelde rondetijd (langzamere pace). Tijdsverschillen (`gapLeader`, `gapPosition`, `gapLeaderF1`, `gapPositionF1`) worden opnieuw berekend om de aanpassing weer te geven.
+  - **Beschermde Statistieken**: De **snelste ronde** en de **mediaan-rondetijd** worden **NIET beïnvloed** door tijdaanpassingen. De snelste ronde vertegenwoordigt strikt de snelste individuele fysieke ronde, en de mediaan-rondetijd vertegenwoordigt de middelste fysieke rondetijd.
+
+| Statistiek / Functie | Aangepaste Ronden (`userLaps`) | Aangepaste Tijd (`userTime`) |
+| :--- | :--- | :--- |
+| **Aangepast Rondenaantal** | **Verandert direct** ($\pm\text{segmenten}/\text{ronden}$) | Geen effect |
+| **Fysiek Rondenaantal** | Geen effect (alleen echte sensorronden) | Geen effect (alleen echte sensorronden) |
+| **Totale Heattijd** | Geen effect | **Verandert direct** ($+ \text{userTime}$) |
+| **Totale Algemene Tijd** | Geen effect | **Verandert direct** (som van heats) |
+| **Stand (Meeste Ronden)** | **Primaire rangschikkingsfactor** | **Tiebreaker-factor** (laagste tijd wint) |
+| **Stand (Snelste Totale Tijd)** | Tiebreaker-factor | **Primaire rangschikkingsfactor** (laagste tijd wint) |
+| **Gemiddelde Rondetijd** | Geen effect ($\text{Tijd} / \text{Fysieke Ronden}$) | **Verandert direct** ($\text{Aangepaste Tijd} / \text{Fysieke Ronden}$) |
+| **Snelste Ronde** | **Geen invloed** (snelste fysieke ronde) | **Geen invloed** (snelste fysieke ronde) |
+| **Mediaan-Rondetijd** | **Geen invloed** (mediaan fysieke ronde) | **Geen invloed** (mediaan fysieke ronde) |
+| **Gaps (`gapLeader`, `gapPosition`)** | Werkt rondeverschil bij | Werkt tijd- en pace-verschil bij |
+
 ### Timerinstellingen
 - **Start- / Herstartvertraging**: Afteltijd in seconden voor de start.
 - **Minimale rondetijd**: Minimale tijd om valse sensortriggers te filteren.

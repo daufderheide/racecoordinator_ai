@@ -867,6 +867,7 @@ public class HeatExecutionManager {
               .setType(Lap.LapType.REACTION_TIME)
               .setFlag(race.getState().getLaneFlagType(race, lane))
               .setFuelLevel(driverData.getDriver().getFuelLevel())
+              .setTotalTime(driverData.getTotalTime())
               .build();
       driverData.setFlag(rtMsg.getFlag());
 
@@ -979,6 +980,7 @@ public class HeatExecutionManager {
             .setRecordTier(recordTier)
             .setIsNewRaceLeader(isNewRaceLeader)
             .setIsNewHeatLeader(isNewHeatLeader)
+            .setTotalTime(driverData.getTotalTime())
             .build();
     driverData.setFlag(lapMsg.getFlag());
 

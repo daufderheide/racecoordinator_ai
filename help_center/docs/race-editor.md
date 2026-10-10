@@ -46,6 +46,33 @@ The editor workspace is split into two synchronized working panels:
 - **Overall Scoring**: Configure overall race standings ranking method, tiebreaker rules, and dropped heats.
 - **Season Scoring**: Assign points distribution per position for season-long championships.
 
+#### Lap and Time Adjustments (Impact on Rankings and Metrics)
+
+Race Coordinator AI allows race directors to manually adjust a driver's lap count and total heat time during or after a heat (via cell click on lap/time columns, keyboard shortcuts, or the Race Director Menu). Because the server acts as the authoritative source of truth for all calculations, manual adjustments flow deterministically into heat standings, overall rankings, and telemetry statistics:
+
+- **Adjusted Laps (`userLaps`)**:
+  - **Formula**: $\text{Adjusted Lap Count} = \text{Physical Laps} + \text{Penalty Laps} + \text{User Laps} + \text{Auto Segments}$.
+  - **Rankings**: When the ranking method is **Most Laps**, adjusted laps directly determine heat and overall standings.
+  - **Metrics**: Physical lap count remains untouched (reflects actual sensor crossings). Average lap time ($\text{Total Time} / \text{Physical Laps}$), best lap time, and median lap time are unaffected. Lap gaps update immediately.
+- **Adjusted Time (`userTime`)**:
+  - **Formula**: $\text{Adjusted Total Time} = \sum (\text{Physical Lap Times}) + \text{User Time}$.
+  - **Rankings**: When the ranking method is **Fastest Total Time**, adjusted time directly determines the standings (lower time ranks higher). When ranking by **Most Laps**, adjusted time serves as the primary tiebreaker for drivers tied on laps. Overall standings sum the adjusted total times across all scored heats.
+  - **Metrics**: Average lap time ($\text{Adjusted Total Time} / \text{Physical Laps}$) is directly impacted—adding penalty time increases average lap time (slower pace). Gap metrics (`gapLeader`, `gapPosition`, `gapLeaderF1`, `gapPositionF1`) recalculate to reflect the time adjustment.
+  - **Protected Metrics**: **Best lap time** and **median lap time** are **NOT impacted** by time adjustments. Best lap time strictly represents the fastest single physical lap recorded, and median lap time represents the middle physical lap time.
+
+| Metric / Standings Feature | Adjusted Laps (`userLaps`) | Adjusted Time (`userTime`) |
+| :--- | :--- | :--- |
+| **Adjusted Lap Count** | **Directly changes** ($\pm\text{sections}/\text{laps}$) | Unaffected |
+| **Physical Lap Count** | Unaffected (actual sensor laps only) | Unaffected (actual sensor laps only) |
+| **Heat Total Time** | Unaffected | **Directly changes** ($+ \text{userTime}$) |
+| **Overall Total Time** | Unaffected | **Directly changes** (sums heat total times) |
+| **Standings (Most Laps)** | **Primary ranking factor** | **Tiebreaker factor** (lower time wins) |
+| **Standings (Fastest Total Time)** | Tiebreaker factor | **Primary ranking factor** (lower time wins) |
+| **Average Lap Time** | Unaffected ($\text{Time} / \text{Physical Laps}$) | **Directly changes** ($\text{Adjusted Time} / \text{Physical Laps}$) |
+| **Best Lap Time** | **No impact** (fastest physical lap) | **No impact** (fastest physical lap) |
+| **Median Lap Time** | **No impact** (median physical lap) | **No impact** (median physical lap) |
+| **Gaps (`gapLeader`, `gapPosition`)** | Updates lap differential | Updates time and pace differential |
+
 ### Timer Settings
 - **Start / Restart Delay**: Countdown lead-in seconds before race starts or restarts after a yellow flag.
 - **Minimum Lap Time**: Minimum allowable lap time (in seconds) to filter out false or glitch sensor triggers.

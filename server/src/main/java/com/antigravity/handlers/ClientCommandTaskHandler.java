@@ -23,7 +23,14 @@ public class ClientCommandTaskHandler implements AnalyticsHelper {
     this.raceExportSaveHandler = new RaceExportSaveHandler(databaseContext);
     this.analyticsHandler = new AnalyticsHandler();
 
-    // Race Control Endpoints
+    registerRaceControlRoutes(app);
+    registerHardwareRoutes(app);
+    registerDriverLaneHeatRoutes(app);
+    registerExportRoutes(app);
+    registerAnalyticsRoutes(app);
+  }
+
+  private void registerRaceControlRoutes(Javalin app) {
     app.post("/api/initialize-race", raceControlHandler::initializeRace, Role.DIRECTOR);
     app.post("/api/start-race", raceControlHandler::startRace, Role.DIRECTOR);
     app.post("/api/pause-race", raceControlHandler::pauseRace, Role.DIRECTOR);
@@ -37,8 +44,9 @@ public class ClientCommandTaskHandler implements AnalyticsHelper {
     app.post("/api/modify-heats", raceControlHandler::modifyHeats, Role.DIRECTOR);
     app.post("/api/regenerate-heats", raceControlHandler::regenerateHeats, Role.DIRECTOR);
     app.post("/api/finalize-modify-heats", raceControlHandler::finalizeModifyHeats, Role.DIRECTOR);
+  }
 
-    // Interface Hardware & Power Endpoints
+  private void registerHardwareRoutes(Javalin app) {
     app.post(
         "/api/update-interface-config",
         interfaceHardwareHandler::updateInterfaceConfig,
@@ -59,8 +67,9 @@ public class ClientCommandTaskHandler implements AnalyticsHelper {
     app.get("/api/serial-ports", interfaceHardwareHandler::getSerialPorts, Role.VIEWER);
     app.get("/api/ble-devices", interfaceHardwareHandler::getBleDevices, Role.VIEWER);
     app.get("/api/phidgets", interfaceHardwareHandler::getPhidgetDevices, Role.VIEWER);
+  }
 
-    // Driver, Lane & Heat Endpoints
+  private void registerDriverLaneHeatRoutes(Javalin app) {
     app.post(
         "/api/races/current-heat/drivers/{lane}/actual-driver",
         driverLaneHeatHandler::changeActualDriver,
@@ -86,6 +95,18 @@ public class ClientCommandTaskHandler implements AnalyticsHelper {
         driverLaneHeatHandler::updateBatchUserLaps,
         Role.DIRECTOR);
     app.post(
+        "/api/races/current-heat/drivers/{lane}/user-time",
+        driverLaneHeatHandler::updateUserTime,
+        Role.DIRECTOR);
+    app.post(
+        "/api/races/heats/{heatNumber}/drivers/{lane}/user-time",
+        driverLaneHeatHandler::updateHeatUserTime,
+        Role.DIRECTOR);
+    app.post(
+        "/api/races/heats/user-time/batch",
+        driverLaneHeatHandler::updateBatchUserTime,
+        Role.DIRECTOR);
+    app.post(
         "/api/races/current-heat/drivers/{fromLane}/change-lane/{toLane}",
         driverLaneHeatHandler::changeLane,
         Role.DIRECTOR);
@@ -93,8 +114,9 @@ public class ClientCommandTaskHandler implements AnalyticsHelper {
         "/api/races/heats/{heatNumber}/drivers/{lane}/laps/{lapIndex}/record-status",
         driverLaneHeatHandler::updateLapRecordStatus,
         Role.DIRECTOR);
+  }
 
-    // Export & Save/Load Endpoints
+  private void registerExportRoutes(Javalin app) {
     app.get("/api/races/current/export-csv", raceExportSaveHandler::exportRaceCsv, Role.VIEWER);
     app.post("/api/races/current/export-xls", raceExportSaveHandler::exportRaceXls, Role.VIEWER);
     app.get(
@@ -111,8 +133,9 @@ public class ClientCommandTaskHandler implements AnalyticsHelper {
     app.post("/api/rename-saved-race", raceExportSaveHandler::renameSavedRace, Role.DIRECTOR);
     app.put("/api/saved-races/{filename}", raceExportSaveHandler::renameSavedRace, Role.DIRECTOR);
     app.post("/api/load-race", raceExportSaveHandler::loadRace, Role.DIRECTOR);
+  }
 
-    // Analytics Endpoints
+  private void registerAnalyticsRoutes(Javalin app) {
     app.post("/api/analytics/toggle", this::toggleAnalytics, Role.ADMIN);
     app.get("/api/analytics/config", this::getAnalyticsConfig, Role.VIEWER);
   }
@@ -181,6 +204,18 @@ public class ClientCommandTaskHandler implements AnalyticsHelper {
 
   private void updateBatchUserLaps(Context ctx) {
     driverLaneHeatHandler.updateBatchUserLaps(ctx);
+  }
+
+  void updateUserTime(Context ctx) {
+    driverLaneHeatHandler.updateUserTime(ctx);
+  }
+
+  void updateHeatUserTime(Context ctx) {
+    driverLaneHeatHandler.updateHeatUserTime(ctx);
+  }
+
+  void updateBatchUserTime(Context ctx) {
+    driverLaneHeatHandler.updateBatchUserTime(ctx);
   }
 
   private void resetLaneHeatData(Context ctx) {

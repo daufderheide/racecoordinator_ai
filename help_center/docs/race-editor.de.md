@@ -46,6 +46,33 @@ Der Arbeitsbereich ist in zwei synchronisierte Bereiche unterteilt:
 - **Gesamtwertung**: Ranglistenmethode, Tiebreaker-Regeln und Streichergebnisse.
 - **Saisonwertung**: Punkteverteilung pro Position für Meisterschaften.
 
+#### Runden- und Zeitanpassungen (Auswirkungen auf Ranglisten und Metriken)
+
+Race Coordinator AI ermöglicht es Rennleitern, die Rundenanzahl und die Gesamtlaufzeit eines Fahrers während oder nach einem Lauf manuell anzupassen (durch Klicken auf Runden-/Zeitspalten, Tastaturkürzel oder über das Rennleiter-Menü). Da der Server als maßgebliche Quelle für alle Berechnungen dient, fließen manuelle Anpassungen deterministisch in Laufranglisten, Gesamtwertungen und Telemetriestatistiken ein:
+
+- **Angepasste Runden (`userLaps`)**:
+  - **Formel**: $\text{Bereinigte Rundenzahl} = \text{Physische Runden} + \text{Strafe-Runden} + \text{Benutzer-Runden} + \text{Auto-Segmente}$.
+  - **Ranglisten**: Wenn die Wertungsmethode **Meiste Runden** ist, bestimmen die angepassten Runden direkt die Lauf- und Gesamtrangliste.
+  - **Metriken**: Die physische Rundenanzahl bleibt unberührt (spiegelt tatsächliche Sensordurchfahrten wider). Durchschnittliche Rundenzeit ($\text{Gesamtzeit} / \text{Physische Runden}$), beste Rundenzeit und Median-Rundenzeit bleiben unbeeinflusst. Rundenabstände werden sofort aktualisiert.
+- **Angepasste Zeit (`userTime`)**:
+  - **Formel**: $\text{Bereinigte Gesamtzeit} = \sum (\text{Physische Rundenzeiten}) + \text{Benutzer-Zeit}$.
+  - **Ranglisten**: Wenn die Wertungsmethode **Schnellste Gesamtzeit** ist, bestimmt die bereinigte Zeit direkt die Platzierung (geringere Zeit platziert weiter vorne). Bei Wertung nach **Meiste Runden** dient die bereinigte Zeit als primärer Tiebreaker für rundengleiche Fahrer. Die Gesamtwertung summiert die bereinigten Gesamtzeiten aller gewerteten Läufe.
+  - **Metriken**: Die durchschnittliche Rundenzeit ($\text{Bereinigte Gesamtzeit} / \text{Physische Runden}$) wird direkt beeinflusst – das Hinzufügen von Strafzeit erhöht die durchschnittliche Rundenzeit (langsamere Pace). Abstandswerte (`gapLeader`, `gapPosition`, `gapLeaderF1`, `gapPositionF1`) werden neu berechnet, um den Zeitunterschied widerzuspiegeln.
+  - **Geschützte Metriken**: **Beste Rundenzeit** und **Median-Rundenzeit** werden durch Zeitanpassungen **NICHT beeinflusst**. Die beste Rundenzeit repräsentiert strikt die schnellste einzelne physische Sensorrunde, und die Median-Rundenzeit stellt die statistische mittlere physische Rundenzeit dar.
+
+| Metrik / Wertungsmerkmal | Angepasste Runden (`userLaps`) | Angepasste Zeit (`userTime`) |
+| :--- | :--- | :--- |
+| **Bereinigte Rundenzahl** | **Ändert sich direkt** ($\pm\text{Segmente}/\text{Runden}$) | Unverändert |
+| **Physische Rundenanzahl** | Unverändert (nur tatsächliche Sensorrunden) | Unverändert (nur tatsächliche Sensorrunden) |
+| **Lauf-Gesamtzeit** | Unverändert | **Ändert sich direkt** ($+ \text{userTime}$) |
+| **Gesamtzeit (Rennen)** | Unverändert | **Ändert sich direkt** (summiert Laufzeiten) |
+| **Rangliste (Meiste Runden)** | **Primärer Rankingfaktor** | **Tiebreaker-Faktor** (geringere Zeit gewinnt) |
+| **Rangliste (Schnellste Gesamtzeit)** | Tiebreaker-Faktor | **Primärer Rankingfaktor** (geringere Zeit gewinnt) |
+| **Durchschnittliche Rundenzeit** | Unverändert ($\text{Zeit} / \text{Physische Runden}$) | **Ändert sich direkt** ($\text{Bereinigte Zeit} / \text{Physische Runden}$) |
+| **Beste Rundenzeit** | **Kein Einfluss** (schnellste physische Runde) | **Kein Einfluss** (schnellste physische Runde) |
+| **Median-Rundenzeit** | **Kein Einfluss** (mittlere physische Runde) | **Kein Einfluss** (mittlere physische Runde) |
+| **Abstände (`gapLeader`, `gapPosition`)** | Aktualisiert Rundenabstand | Aktualisiert Zeit- und Pace-Abstand |
+
 ### Zeiteinstellungen
 - **Start- / Neustartverzögerung**: Countdown-Vorlaufzeit in Sekunden.
 - **Minimale Rundenzeit**: Mindestrundenzeit zur Filterung von Fehlauslösungen.

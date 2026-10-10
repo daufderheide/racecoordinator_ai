@@ -299,11 +299,7 @@ public class OverallStandings {
     driver.setHasSegments(hasSegments);
 
     if (!allScoringLaps.isEmpty()) {
-      double sum = 0;
-      for (double lap : allScoringLaps) {
-        sum += lap;
-      }
-      driver.setAverageLapTime(sum / allScoringLaps.size());
+      driver.setAverageLapTime(totalTime / allScoringLaps.size());
 
       Collections.sort(allScoringLaps);
       int middle = allScoringLaps.size() / 2;

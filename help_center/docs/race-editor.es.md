@@ -46,6 +46,33 @@ El espacio de trabajo se divide en dos paneles sincronizados:
 - **Puntuación General**: Método de clasificación general, reglas de desempate y mangas descartadas.
 - **Puntuación de Temporada**: Distribución de puntos por posición para campeonatos.
 
+#### Ajustes de Vueltas y Tiempo (Impacto en Clasificaciones y Métricas)
+
+Race Coordinator AI permite a los directores de carrera ajustar manualmente la cantidad de vueltas y el tiempo total de una manga para un piloto durante o después de la carrera (haciendo clic en las celdas de vueltas/tiempo, mediante atajos de teclado o desde el Menú del Director de Carrera). Dado que el servidor actúa como la única fuente de verdad autorizada para todos los cálculos, los ajustes manuales se reflejan de forma determinista en las clasificaciones de la manga, la tabla general y las estadísticas de telemetría:
+
+- **Vueltas Ajustadas (`userLaps`)**:
+  - **Fórmula**: $\text{Recuento de Vueltas Ajustado} = \text{Vueltas Físicas} + \text{Vueltas de Penalización} + \text{Vueltas de Usuario} + \text{Segmentos Automáticos}$.
+  - **Clasificaciones**: Cuando el método de clasificación es **Mayor Número de Vueltas**, las vueltas ajustadas determinan directamente las posiciones en la manga y en la general.
+  - **Métricas**: El recuento de vueltas físicas no se modifica (refleja los pasos reales por sensor). El tiempo promedio de vuelta ($\text{Tiempo Total} / \text{Vueltas Físicas}$), la mejor vuelta y la vuelta mediana no se ven afectados. Las diferencias de vueltas se actualizan de inmediato.
+- **Tiempo Ajustado (`userTime`)**:
+  - **Fórmula**: $\text{Tiempo Total Ajustado} = \sum (\text{Tiempos de Vueltas Físicas}) + \text{Tiempo de Usuario}$.
+  - **Clasificaciones**: Cuando el método de clasificación es **Tiempo Total Más Rápido**, el tiempo ajustado determina directamente la posición (menor tiempo clasifica mejor). Cuando se clasifica por **Mayor Número de Vueltas**, el tiempo ajustado actúa como el criterio de desempate principal entre pilotos empatados en vueltas. La clasificación general suma los tiempos totales ajustados de todas las mangas puntuadas.
+  - **Métricas**: El tiempo promedio de vuelta ($\text{Tiempo Total Ajustado} / \text{Vueltas Físicas}$) se ve directamente impactado: agregar tiempo de penalización incrementa el promedio de vuelta (ritmo más lento). Las métricas de distancia (`gapLeader`, `gapPosition`, `gapLeaderF1`, `gapPositionF1`) se recalculan para reflejar el ajuste de tiempo.
+  - **Métricas Protegidas**: La **mejor vuelta** y la **vuelta mediana** **NO se ven afectadas** por los ajustes de tiempo. La mejor vuelta representa estrictamente la vuelta física individual más rápida registrada, y la vuelta mediana representa la vuelta física intermedia.
+
+| Métrica / Característica de Clasificación | Vueltas Ajustadas (`userLaps`) | Tiempo Ajustado (`userTime`) |
+| :--- | :--- | :--- |
+| **Recuento de Vueltas Ajustado** | **Cambia directamente** ($\pm\text{secciones}/\text{vueltas}$) | Sin efecto |
+| **Vueltas Físicas** | Sin efecto (solo pasos reales por sensor) | Sin efecto (solo pasos reales por sensor) |
+| **Tiempo Total de Manga** | Sin efecto | **Cambia directamente** ($+ \text{userTime}$) |
+| **Tiempo Total General** | Sin efecto | **Cambia directamente** (suma tiempos de mangas) |
+| **Clasificación (Mayor Número de Vueltas)** | **Factor principal de posición** | **Factor de desempate** (menor tiempo gana) |
+| **Clasificación (Tiempo Más Rápido)** | Factor de desempate | **Factor principal de posición** (menor tiempo gana) |
+| **Tiempo Promedio de Vuelta** | Sin efecto ($\text{Tiempo} / \text{Vueltas Físicas}$) | **Cambia directamente** ($\text{Tiempo Ajustado} / \text{Vueltas Físicas}$) |
+| **Mejor Vuelta** | **Sin impacto** (vuelta física más rápida) | **Sin impacto** (vuelta física más rápida) |
+| **Vuelta Mediana** | **Sin impacto** (vuelta física mediana) | **Sin impacto** (vuelta física mediana) |
+| **Diferencias (`gapLeader`, `gapPosition`)** | Actualiza diferencia de vueltas | Actualiza diferencia de tiempo y ritmo |
+
 ### Ajustes de Temporizador
 - **Retardo de Inicio / Reinicio**: Segundos de cuenta regresiva previa.
 - **Tiempo Mínimo de Vuelta**: Tiempo mínimo permitido para filtrar falsos disparos de sensores.

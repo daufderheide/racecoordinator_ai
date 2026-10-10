@@ -6530,7 +6530,9 @@ export class DefaultRacedayComponent
     }
     if (
       col.propertyName !== "lapCount" &&
-      col.propertyName !== "physicalLapCount"
+      col.propertyName !== "physicalLapCount" &&
+      col.propertyName !== "totalTime" &&
+      col.propertyName !== "overallTotalTime"
     ) {
       return false;
     }
@@ -7035,12 +7037,22 @@ export class DefaultRacedayComponent
     }
     if (
       col.propertyName === "lapCount" ||
-      col.propertyName === "physicalLapCount"
+      col.propertyName === "physicalLapCount" ||
+      col.propertyName === "totalTime" ||
+      col.propertyName === "overallTotalTime"
     ) {
-      if (event.shiftKey) {
+      if (
+        (col.propertyName === "lapCount" ||
+          col.propertyName === "physicalLapCount") &&
+        event.shiftKey
+      ) {
         event.preventDefault();
         this.updateUserLaps(hd, this.LAP_ADJUSTMENT_AMOUNT);
-      } else if (event.altKey) {
+      } else if (
+        (col.propertyName === "lapCount" ||
+          col.propertyName === "physicalLapCount") &&
+        event.altKey
+      ) {
         event.preventDefault();
         this.updateUserLaps(hd, -this.LAP_ADJUSTMENT_AMOUNT);
       } else {
@@ -7065,6 +7077,9 @@ export class DefaultRacedayComponent
             if (response && response.adjustedLapCount !== undefined) {
               hd.adjustedLapCount = response.adjustedLapCount;
               hd.userLaps = event;
+              if (response.totalTime !== undefined) {
+                hd.totalTime = response.totalTime;
+              }
               this.cdr.markForCheck();
             }
           },
@@ -7085,6 +7100,9 @@ export class DefaultRacedayComponent
               const hd = targetHeat.heatDrivers[u.laneIndex];
               if (hd) {
                 hd.userLaps = u.userLaps;
+                if (u.userTime !== undefined) {
+                  hd.userTime = u.userTime;
+                }
                 this.cdr.markForCheck();
               }
             }
@@ -7097,10 +7115,39 @@ export class DefaultRacedayComponent
           );
         },
       );
+    } else if (
+      event &&
+      typeof event === "object" &&
+      "userLaps" in event &&
+      !("heatNumber" in event)
+    ) {
+      if (this.selectedHeatDriver) {
+        const hd = this.selectedHeatDriver;
+        const userLaps = event.userLaps;
+        const userTime = event.userTime ?? 0;
+        this.dataService
+          .updateUserLaps(hd.laneIndex, userLaps, userTime)
+          .subscribe(
+            (response) => {
+              if (response && response.adjustedLapCount !== undefined) {
+                hd.adjustedLapCount = response.adjustedLapCount;
+                hd.userLaps = userLaps;
+                hd.userTime = userTime;
+                if (response.totalTime !== undefined) {
+                  hd.totalTime = response.totalTime;
+                }
+                this.cdr.markForCheck();
+              }
+            },
+            (error) => {
+              this.logger.error("Error updating user laps from dialog:", error);
+            },
+          );
+      }
     } else {
-      const { heatNumber, laneIndex, userLaps } = event;
+      const { heatNumber, laneIndex, userLaps, userTime } = event;
       this.dataService
-        .updateHeatUserLaps(heatNumber, laneIndex, userLaps)
+        .updateHeatUserLaps(heatNumber, laneIndex, userLaps, userTime ?? 0)
         .subscribe(
           (response) => {
             const targetHeat = this.heats.find(
@@ -7111,6 +7158,12 @@ export class DefaultRacedayComponent
               if (hd && response && response.adjustedLapCount !== undefined) {
                 hd.adjustedLapCount = response.adjustedLapCount;
                 hd.userLaps = userLaps;
+                if (userTime !== undefined) {
+                  hd.userTime = userTime;
+                }
+                if (response.totalTime !== undefined) {
+                  hd.totalTime = response.totalTime;
+                }
                 this.cdr.markForCheck();
               }
             }

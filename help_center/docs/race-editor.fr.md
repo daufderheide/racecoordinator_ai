@@ -46,6 +46,33 @@ L'espace de travail est divisé en deux panneaux synchronisés :
 - **Score Général** : Méthode de classement général, règles de départage et manches retirées.
 - **Score de Saison** : Distribution des points par position pour les championnats.
 
+#### Ajustements de Tours et de Temps (Impact sur les Classements et Métriques)
+
+Race Coordinator AI permet aux directeurs de course d'ajuster manuellement le nombre de tours et le temps total de manche d'un pilote pendant ou après une manche (en cliquant sur les colonnes de tours/temps, par raccourcis clavier ou via le menu Directeur de Course). Le serveur étant l'unique source faisant autorité pour tous les calculs, ces ajustements manuels se répercutent de façon déterministe sur les classements de manche, le classement général et les statistiques de télémétrie :
+
+- **Tours Ajustés (`userLaps`)** :
+  - **Formule** : $\text{Nombre de Tours Ajusté} = \text{Tours Physiques} + \text{Tours de Pénalité} + \text{Tours Utilisateur} + \text{Segments Automatiques}$.
+  - **Classements** : Lorsque la méthode de classement est **Plus Grand Nombre de Tours**, les tours ajustés déterminent directement les positions dans la manche et au général.
+  - **Métriques** : Le nombre de tours physiques reste inchangé (reflète les passages réels sur capteur). Le temps au tour moyen ($\text{Temps Total} / \text{Tours Physiques}$), le meilleur tour et le tour médian ne sont pas affectés. Les écarts en tours sont mis à jour immédiatement.
+- **Temps Ajusté (`userTime`)** :
+  - **Formule** : $\text{Temps Total Ajusté} = \sum (\text{Temps au Tour Physiques}) + \text{Temps Utilisateur}$.
+  - **Classements** : Lorsque la méthode de classement est **Temps Total le Plus Rapide**, le temps ajusté détermine directement le classement (un temps inférieur classe mieux). Lors d'un classement au **Plus Grand Nombre de Tours**, le temps ajusté sert de critère de départage principal pour les pilotes à égalité de tours. Le classement général additionne les temps totaux ajustés de toutes les manches comptabilisées.
+  - **Métriques** : Le temps au tour moyen ($\text{Temps Total Ajusté} / \text{Tours Physiques}$) est directement affecté : l'ajout d'une pénalité de temps augmente le temps au tour moyen (rythme plus lent). Les métriques d'écart (`gapLeader`, `gapPosition`, `gapLeaderF1`, `gapPositionF1`) sont recalculées pour refléter l'ajustement temporel.
+  - **Métriques Protégées** : Le **meilleur tour** et le **tour médian** ne sont **PAS impactés** par les ajustements de temps. Le meilleur tour représente strictement le tour physique individuel le plus rapide enregistré, et le tour médian représente le tour physique médian.
+
+| Métrique / Fonctionnalité de Classement | Tours Ajustés (`userLaps`) | Temps Ajusté (`userTime`) |
+| :--- | :--- | :--- |
+| **Nombre de Tours Ajusté** | **Modifié directement** ($\pm\text{sections}/\text{tours}$) | Aucun effet |
+| **Tours Physiques** | Aucun effet (passages réels uniquement) | Aucun effet (passages réels uniquement) |
+| **Temps Total de Manche** | Aucun effet | **Modifié directement** ($+ \text{userTime}$) |
+| **Temps Total Général** | Aucun effet | **Modifié directement** (somme des manches) |
+| **Classement (Plus Grand Nombre de Tours)** | **Critère principal de classement** | **Critère de départage** (temps inférieur gagne) |
+| **Classement (Temps Total le Plus Rapide)** | Critère de départage | **Critère principal de classement** (temps inférieur gagne) |
+| **Temps au Tour Moyen** | Aucun effet ($\text{Temps} / \text{Tours Physiques}$) | **Modifié directement** ($\text{Temps Ajusté} / \text{Tours Physiques}$) |
+| **Meilleur Tour** | **Aucun impact** (tour physique le plus rapide) | **Aucun impact** (tour physique le plus rapide) |
+| **Tour Médian** | **Aucun impact** (tour physique médian) | **Aucun impact** (tour physique médian) |
+| **Écarts (`gapLeader`, `gapPosition`)** | Met à jour l'écart en tours | Met à jour l'écart en temps et en rythme |
+
 ### Paramètres de Chronométrage
 - **Délai de Départ / Reprise** : Compte à rebours avant le départ ou la reprise.
 - **Temps de Tour Minimum** : Temps minimum de tour pour filtrer les faux déclenchements de capteurs.

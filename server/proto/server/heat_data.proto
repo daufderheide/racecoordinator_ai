@@ -53,5 +53,7 @@ message DriverHeatData {
   double average_top_15 = 33;
   double top_2_consecutive = 34;
   double top_3_consecutive = 35;
+  double user_time = 36;
+  double total_time = 37;
 }
 

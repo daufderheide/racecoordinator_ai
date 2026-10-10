@@ -1245,6 +1245,41 @@ describe("RacedayLaneColumnComponent", () => {
       );
     });
 
+    it("should recognize totalTime and overallTotalTime as clickable and trigger onCellClick on card/inset click", () => {
+      fixture.componentRef.setInput("parent", mockParent);
+      fixture.componentRef.setInput(
+        "widget",
+        createWidget({
+          columnKey: "totalTime",
+          targetIndex: 0,
+          insets: { "top-right": "overallTotalTime" },
+        }),
+      );
+      fixture.detectChanges();
+
+      expect(component.isLapCountClickable).toBeTrue();
+      expect(component.isInsetLapCount("top-right")).toBeTrue();
+
+      const mockEvent: any = {
+        preventDefault: jasmine.createSpy("preventDefault"),
+        stopPropagation: jasmine.createSpy("stopPropagation"),
+      };
+
+      component.onCardClick(mockEvent);
+      expect(mockParent.onCellClick).toHaveBeenCalledWith(
+        mockDrivers[0],
+        jasmine.objectContaining({ propertyName: "totalTime" }),
+        mockEvent,
+      );
+
+      component.onInsetClick("top-right", mockEvent);
+      expect(mockParent.onCellClick).toHaveBeenCalledWith(
+        mockDrivers[0],
+        jasmine.objectContaining({ propertyName: "overallTotalTime" }),
+        mockEvent,
+      );
+    });
+
     it("should activate teammate driver swap for name properties and call onTeammateChange", () => {
       fixture.componentRef.setInput("parent", mockParent);
       fixture.componentRef.setInput(

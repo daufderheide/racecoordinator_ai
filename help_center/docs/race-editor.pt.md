@@ -46,6 +46,33 @@ O espaço de trabalho é dividido em dois painéis sincronizados:
 - **Pontuação Geral**: Método de classificação geral, regras de desempate e baterias descartadas.
 - **Pontuação da Temporada**: Distribuição de pontos por posição para campeonatos.
 
+#### Ajustes de Voltas e Tempo (Impacto nas Classificações e Métricas)
+
+O Race Coordinator AI permite que os diretores de prova ajustem manualmente a contagem de voltas e o tempo total de bateria de um piloto durante ou após uma bateria (clicando nas células de volta/tempo, por atalhos de teclado ou pelo Menu do Diretor de Prova). Como o servidor é a única fonte autorizada para todos os cálculos, os ajustes manuais refletem-se de maneira determinística nas classificações da bateria, na classificação geral e nas estatísticas de telemetria:
+
+- **Voltas Ajustadas (`userLaps`)**:
+  - **Fórmula**: $\text{Contagem de Voltas Ajustada} = \text{Voltas Físicas} + \text{Voltas de Penalidade} + \text{Voltas do Usuário} + \text{Segmentos Automáticos}$.
+  - **Classificações**: Quando o método de classificação for **Maior Número de Voltas**, as voltas ajustadas determinam diretamente as posições na bateria e na classificação geral.
+  - **Métricas**: A contagem de voltas físicas permanece inalterada (reflete as passagens reais pelo sensor). O tempo médio de volta ($\text{Tempo Total} / \text{Voltas Físicas}$), a melhor volta e a volta mediana não são afetados. As diferenças de voltas são atualizadas imediatamente.
+- **Tempo Ajustado (`userTime`)**:
+  - **Fórmula**: $\text{Tempo Total Ajustado} = \sum (\text{Tempos das Voltas Físicas}) + \text{Tempo do Usuário}$.
+  - **Classificações**: Quando o método de classificação for **Tempo Total Mais Rápido**, o tempo ajustado determina diretamente a colocação (menor tempo classifica melhor). Quando classificado por **Maior Número de Voltas**, o tempo ajustado atua como critério de desempate principal para pilotos empatados em voltas. A classificação geral soma os tempos totais ajustados de todas as baterias pontuadas.
+  - **Métricas**: O tempo médio de volta ($\text{Tempo Total Ajustado} / \text{Voltas Físicas}$) é diretamente afetado: adicionar tempo de penalidade aumenta o tempo médio de volta (ritmo mais lento). As métricas de diferença (`gapLeader`, `gapPosition`, `gapLeaderF1`, `gapPositionF1`) são recalculadas para refletir o ajuste de tempo.
+  - **Métricas Protegidas**: A **melhor volta** e a **volta mediana** **NÃO são afetadas** por ajustes de tempo. A melhor volta representa estritamente a volta física individual mais rápida registrada, e a volta mediana representa a volta física intermediária.
+
+| Métrica / Recurso de Classificação | Voltas Ajustadas (`userLaps`) | Tempo Ajustado (`userTime`) |
+| :--- | :--- | :--- |
+| **Contagem de Voltas Ajustada** | **Muda diretamente** ($\pm\text{seções}/\text{voltas}$) | Sem efeito |
+| **Voltas Físicas** | Sem efeito (apenas passagens reais por sensor) | Sem efeito (apenas passagens reais por sensor) |
+| **Tempo Total da Bateria** | Sem efeito | **Muda diretamente** ($+ \text{userTime}$) |
+| **Tempo Total Geral** | Sem efeito | **Muda diretamente** (soma das baterias) |
+| **Classificação (Maior Número de Voltas)** | **Fator principal de classificação** | **Fator de desempate** (menor tempo vence) |
+| **Classificação (Tempo Mais Rápido)** | Fator de desempate | **Fator principal de classificação** (menor tempo vence) |
+| **Tempo Médio de Volta** | Sem efeito ($\text{Tempo} / \text{Voltas Físicas}$) | **Muda diretamente** ($\text{Tempo Ajustado} / \text{Voltas Físicas}$) |
+| **Melhor Volta** | **Sem impacto** (volta física mais rápida) | **Sem impacto** (volta física mais rápida) |
+| **Volta Mediana** | **Sem impacto** (volta física mediana) | **Sem impacto** (volta física mediana) |
+| **Diferenças (`gapLeader`, `gapPosition`)** | Atualiza diferença de voltas | Atualiza diferença de tempo e ritmo |
+
 ### Configurações de Temporizador
 - **Atraso de Início / Reinício**: Segundos de contagem regressiva prévia.
 - **Tempo Mínimo de Volta**: Tempo mínimo permitido para filtrar acionamentos falsos de sensores.

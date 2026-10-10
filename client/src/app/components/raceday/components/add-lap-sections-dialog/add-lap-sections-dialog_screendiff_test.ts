@@ -305,10 +305,10 @@ test.describe("Add Lap Sections Dialog Visuals", () => {
     const dropdown = page.locator(".menu-dropdown").first();
     await expect(dropdown).toBeVisible();
 
-    // 3. Click the Add Lap/Sections menu item
+    // 3. Click the Adjust Lap Sections/Time menu item
     const addLapItem = page
       .locator(".menu-item")
-      .filter({ hasText: "Add Lap/Sections" });
+      .filter({ hasText: "Adjust Lap Sections/Time" });
     await expect(addLapItem).toBeVisible();
     await expect(addLapItem).not.toHaveClass(/disabled/);
     await addLapItem.click();
@@ -393,7 +393,7 @@ test.describe("Add Lap Sections Dialog Visuals", () => {
 
     const addLapItem = page
       .locator(".menu-item")
-      .filter({ hasText: "Add Lap/Sections" });
+      .filter({ hasText: "Adjust Lap Sections/Time" });
     await expect(addLapItem).toBeVisible();
     await addLapItem.click();
 
