@@ -697,6 +697,49 @@ describe("RacedayLaneColumnComponent", () => {
     }
   });
 
+  it("should check fitTextValue for total time strings", () => {
+    fixture.componentRef.setInput("parent", mockParent);
+    fixture.componentRef.setInput(
+      "widget",
+      createWidget({
+        columnKey: "totalTime",
+        valueFontSize: 36,
+      }),
+    );
+    fixture.detectChanges();
+    const cardEl = component.cardRef()?.nativeElement;
+    if (cardEl) {
+      Object.defineProperty(cardEl, "clientWidth", {
+        value: 185,
+        configurable: true,
+      });
+      Object.defineProperty(cardEl, "clientHeight", {
+        value: 67,
+        configurable: true,
+      });
+    }
+
+    const spy = spyOnProperty(
+      component,
+      "formattedValue",
+      "get",
+    ).and.returnValue("00:00:21");
+    component.ngAfterViewChecked();
+    const sizeShort = cardEl?.style.getPropertyValue(
+      "--lane-col-value-font-size",
+    );
+
+    spy.and.returnValue("00:00:08.52");
+    component.ngAfterViewChecked();
+    const sizeLong = cardEl?.style.getPropertyValue(
+      "--lane-col-value-font-size",
+    );
+
+    expect(parseInt(sizeShort!, 10)).toBeGreaterThanOrEqual(30);
+    expect(parseInt(sizeLong!, 10)).toBeLessThan(parseInt(sizeShort!, 10));
+    expect(parseInt(sizeLong!, 10)).toBeGreaterThanOrEqual(10);
+  });
+
   describe("Insets and Anchor Drop Zones", () => {
     it("should render top, center, and bottom insets", () => {
       fixture.componentRef.setInput("parent", mockParent);

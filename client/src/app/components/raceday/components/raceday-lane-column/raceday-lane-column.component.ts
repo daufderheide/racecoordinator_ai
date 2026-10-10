@@ -577,6 +577,10 @@ export class RacedayLaneColumnComponent
     if (this.isLastLaps()) {
       this.fitLastLaps();
     } else if (!this.isImageProperty() && !this.isPacingProperty()) {
+      this.lastFittedText = this.formattedValue?.trim() || "";
+      this.lastFittedWidth = cardEl.clientWidth;
+      this.lastFittedHeight = cardEl.clientHeight;
+      this.lastFittedInsets = JSON.stringify(this.settings.insets || {});
       this.fitTextValue(cardEl);
     }
   }
@@ -585,7 +589,14 @@ export class RacedayLaneColumnComponent
     const text = this.formattedValue?.trim() || "";
     if (!text) return;
 
-    const baseFontSize = this.settings.valueFontSize || 36;
+    let baseFontSize = this.settings.valueFontSize || 36;
+    if (this.widget()?.scaleMode === "auto" && !this.settings.valueFontSize) {
+      const cardH = cardEl.clientHeight || 0;
+      if (cardH > 0) {
+        baseFontSize = Math.max(12, Math.min(48, Math.round(cardH * 0.45)));
+      }
+    }
+
     if (cardEl.clientWidth <= 0 || cardEl.clientHeight <= 0) {
       cardEl.style.setProperty(
         "--lane-col-value-font-size",
@@ -604,11 +615,17 @@ export class RacedayLaneColumnComponent
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    const fontFamily = this.settings.valueFontFamily || "sans-serif";
-    ctx.font = `700 ${baseFontSize}px ${fontFamily}`;
+    const computedFamily =
+      this.settings.valueFontFamily ||
+      (typeof window !== "undefined" && window.getComputedStyle
+        ? window.getComputedStyle(cardEl).fontFamily
+        : "") ||
+      "sans-serif";
+    ctx.font = `700 ${baseFontSize}px ${computedFamily}`;
     const textWidth = ctx.measureText(text).width || 1;
 
-    let availWidth = Math.max(10, cardEl.clientWidth - 24);
+    // Allocate 8px safety buffer so text never grazes the ellipsis clipping boundary
+    let availWidth = Math.max(10, cardEl.clientWidth - 24 - 8);
     let availHeight = Math.max(10, cardEl.clientHeight);
 
     if (this.settings.showHeader !== false) {
@@ -645,8 +662,31 @@ export class RacedayLaneColumnComponent
     }
 
     const minSize = 10;
-    const targetSize = Math.max(minSize, Math.floor(baseFontSize * scale));
+    let targetSize = Math.max(minSize, Math.floor(baseFontSize * scale));
     cardEl.style.setProperty("--lane-col-value-font-size", `${targetSize}px`);
+
+    // Ground-truth overflow safeguard:
+    // If the text element is physically overflowing its container in the DOM,
+    // progressively reduce font size until it fits without ellipsis clipping.
+    const textEl = cardEl.querySelector(".lane-col-text") as HTMLElement | null;
+    const valueEl = cardEl.querySelector(
+      ".lane-col-value",
+    ) as HTMLElement | null;
+    if (textEl && valueEl && valueEl.clientWidth > 0) {
+      let attempts = 0;
+      while (
+        textEl.scrollWidth > valueEl.clientWidth + 0.5 &&
+        targetSize > minSize &&
+        attempts < 10
+      ) {
+        targetSize--;
+        cardEl.style.setProperty(
+          "--lane-col-value-font-size",
+          `${targetSize}px`,
+        );
+        attempts++;
+      }
+    }
   }
 
   private applyInsetsAndPaddings(

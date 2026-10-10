@@ -273,7 +273,7 @@ export class RacedayFormatUtils {
     ) {
       return {
         format: colFormat || "dynamic",
-        subsecondMode: colSubMode || "threshold",
+        subsecondMode: colSubMode || "never",
         subsecondThreshold: colThresh !== undefined ? Number(colThresh) : 10,
         subsecondDecimals: colDec !== undefined ? Number(colDec) : 2,
       };
@@ -287,7 +287,7 @@ export class RacedayFormatUtils {
     ) {
       return {
         format: settings.timeDisplayFormat || "dynamic",
-        subsecondMode: settings.timeSubsecondMode || "threshold",
+        subsecondMode: settings.timeSubsecondMode || "never",
         subsecondThreshold:
           settings.timeSubsecondThreshold !== undefined
             ? Number(settings.timeSubsecondThreshold)

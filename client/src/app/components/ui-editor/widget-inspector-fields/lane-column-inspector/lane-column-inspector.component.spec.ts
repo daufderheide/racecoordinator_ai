@@ -680,6 +680,14 @@ describe("LaneColumnInspectorComponent", () => {
       expect(component.getPreview(8.45)).toBe("8.45");
     });
 
+    it("should default to never subsecond mode when timeSubsecondMode is unset", () => {
+      mockSettings.columnKey = "totalTime";
+      mockSettings.timeDisplayFormat = "hh_mm_ss";
+      delete mockSettings.timeSubsecondMode;
+
+      expect(component.getPreview(8.45)).toBe("00:00:08");
+    });
+
     it("should clamp subsecond threshold and decimals in onFieldChange", () => {
       spyOn(component.change, "emit");
       mockSettings.columnKey = "totalTime";

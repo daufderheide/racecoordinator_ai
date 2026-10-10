@@ -112,7 +112,7 @@ export const WIDGET_REGISTRY: Record<string, WidgetRegistryEntry> = {
       timeDecimalPlaces: 3,
       lapDecimalPlaces: 2,
       timeDisplayFormat: "dynamic",
-      timeSubsecondMode: "threshold",
+      timeSubsecondMode: "never",
       timeSubsecondThreshold: 10,
       timeSubsecondDecimals: 2,
       onlyShowSegmentsWhenNotRacing: false,

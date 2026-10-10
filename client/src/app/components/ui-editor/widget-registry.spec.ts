@@ -117,5 +117,7 @@ describe("WIDGET_REGISTRY", () => {
     expect(laneColumnSettings["insets"]).toEqual({});
     expect(laneColumnSettings["insetTimeDecimalPlaces"]).toBe(3);
     expect(laneColumnSettings["insetLapDecimalPlaces"]).toBe(2);
+    expect(laneColumnSettings["timeDisplayFormat"]).toBe("dynamic");
+    expect(laneColumnSettings["timeSubsecondMode"]).toBe("never");
   });
 });

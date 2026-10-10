@@ -557,25 +557,25 @@
     }}</label>
     <div class="select-container select-sm">
       <app-custom-select
-        [ngModel]="currentSettings['timeSubsecondMode'] || 'threshold'"
+        [ngModel]="currentSettings['timeSubsecondMode'] || 'never'"
         (ngModelChange)="
           currentSettings['timeSubsecondMode'] = $event; onFieldChange()
         "
       >
-        <app-custom-option value="threshold">
-          {{ "UE_INSPECTOR_TIMER_SUBSECOND_THRESHOLD_MODE" | translate }}
+        <app-custom-option value="never">
+          {{ "UE_INSPECTOR_TIMER_SUBSECOND_NEVER" | translate }}
         </app-custom-option>
         <app-custom-option value="always">
           {{ "UE_INSPECTOR_TIMER_SUBSECOND_ALWAYS" | translate }}
         </app-custom-option>
-        <app-custom-option value="never">
-          {{ "UE_INSPECTOR_TIMER_SUBSECOND_NEVER" | translate }}
+        <app-custom-option value="threshold">
+          {{ "UE_INSPECTOR_TIMER_SUBSECOND_THRESHOLD_MODE" | translate }}
         </app-custom-option>
       </app-custom-select>
     </div>
   </div>
 
-  @if ((currentSettings["timeSubsecondMode"] || "threshold") === "threshold") {
+  @if ((currentSettings["timeSubsecondMode"] || "never") === "threshold") {
     <div class="inspector-section">
       <label class="inspector-label">{{
         "UE_INSPECTOR_TIMER_SUBSECOND_THRESHOLD" | translate
@@ -609,7 +609,7 @@
     </div>
   }
 
-  @if ((currentSettings["timeSubsecondMode"] || "threshold") !== "never") {
+  @if ((currentSettings["timeSubsecondMode"] || "never") !== "never") {
     <div class="inspector-section">
       <div class="inspector-label-row">
         <label class="inspector-label">{{

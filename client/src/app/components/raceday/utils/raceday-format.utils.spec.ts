@@ -2203,6 +2203,31 @@ describe("RacedayFormatUtils", () => {
       });
     });
 
+    it("should default subsecondMode to never when omitted from settings", () => {
+      const opts = RacedayFormatUtils.resolveTimerFormatOptions("totalTime", {
+        timeDisplayFormat: "hh_mm_ss",
+      });
+      expect(opts).toEqual({
+        format: "hh_mm_ss",
+        subsecondMode: "never",
+        subsecondThreshold: 10,
+        subsecondDecimals: 2,
+      });
+
+      const colOpts = RacedayFormatUtils.resolveTimerFormatOptions(
+        "overallTotalTime",
+        {
+          columnTimeDisplayFormat: { overallTotalTime: "dynamic" },
+        },
+      );
+      expect(colOpts).toEqual({
+        format: "dynamic",
+        subsecondMode: "never",
+        subsecondThreshold: 10,
+        subsecondDecimals: 2,
+      });
+    });
+
     it("should resolve timer format options from lane-view per-column maps", () => {
       const settings = {
         columnTimeDisplayFormat: { overallTotalTime: "hh_mm_ss" },

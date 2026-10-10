@@ -160,7 +160,7 @@ export class LaneColumnInspectorComponent {
   getPreview(seconds: number): string {
     return formatTimerDisplay(seconds, {
       format: this.currentSettings["timeDisplayFormat"] || "dynamic",
-      subsecondMode: this.currentSettings["timeSubsecondMode"] || "threshold",
+      subsecondMode: this.currentSettings["timeSubsecondMode"] || "never",
       subsecondThreshold: this.currentSettings["timeSubsecondThreshold"] ?? 10,
       subsecondDecimals: this.currentSettings["timeSubsecondDecimals"] ?? 2,
     });

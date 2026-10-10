@@ -923,9 +923,7 @@ describe("LaneViewInspectorComponent", () => {
     });
 
     it("should get and set column subsecond mode, threshold, and decimals", () => {
-      expect(component.getColumnTimeSubsecondMode("totalTime")).toBe(
-        "threshold",
-      );
+      expect(component.getColumnTimeSubsecondMode("totalTime")).toBe("never");
       component.setColumnTimeSubsecondMode("totalTime", "always");
       expect(component.getColumnTimeSubsecondMode("totalTime")).toBe("always");
 

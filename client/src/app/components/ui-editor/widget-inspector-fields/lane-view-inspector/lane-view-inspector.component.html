@@ -357,17 +357,17 @@
                     [ngModel]="getColumnTimeSubsecondMode(col)"
                     (ngModelChange)="setColumnTimeSubsecondMode(col, $event)"
                   >
+                    <app-custom-option value="never">
+                      {{ "UE_INSPECTOR_TIMER_SUBSECOND_NEVER" | translate }}
+                    </app-custom-option>
+                    <app-custom-option value="always">
+                      {{ "UE_INSPECTOR_TIMER_SUBSECOND_ALWAYS" | translate }}
+                    </app-custom-option>
                     <app-custom-option value="threshold">
                       {{
                         "UE_INSPECTOR_TIMER_SUBSECOND_THRESHOLD_MODE"
                           | translate
                       }}
-                    </app-custom-option>
-                    <app-custom-option value="always">
-                      {{ "UE_INSPECTOR_TIMER_SUBSECOND_ALWAYS" | translate }}
-                    </app-custom-option>
-                    <app-custom-option value="never">
-                      {{ "UE_INSPECTOR_TIMER_SUBSECOND_NEVER" | translate }}
                     </app-custom-option>
                   </app-custom-select>
                 </div>

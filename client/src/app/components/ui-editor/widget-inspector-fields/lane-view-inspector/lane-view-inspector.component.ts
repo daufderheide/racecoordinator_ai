@@ -719,7 +719,7 @@ export class LaneViewInspectorComponent implements OnInit {
 
   getColumnTimeSubsecondMode(colKey: string): TimerSubsecondMode {
     const s = this.settings?.() || this.widget?.()?.customSettings;
-    return s?.columnTimeSubsecondMode?.[colKey] || "threshold";
+    return s?.columnTimeSubsecondMode?.[colKey] || "never";
   }
 
   setColumnTimeSubsecondMode(colKey: string, mode: TimerSubsecondMode): void {
