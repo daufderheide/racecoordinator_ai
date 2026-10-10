@@ -1576,6 +1576,7 @@
   "RR_BTN_ADD_LAP_SECTIONS": "Rondesecties/tijd aanpassen",
   "RR_BTN_EXPORT_CSV": "CSV exporteren",
   "RR_BTN_HEAT_RESULTS": "Heatresultaten",
+  "RR_HORIZONTAL_SCROLLBAR": "Horizontale schuifbalk voor raceresultaten",
   "RM_BTN_RESET_RECORDS": "Racerecords en geschiedenis resetten",
   "RM_COL_TRACK": "BAAN",
   "RM_CONFIRM_RESET_RECORDS_MSG": "Weet u zeker dat u alle records, geschiedenis, statistieken en opgeslagen sessies voor '{{name}}' wilt resetten? Dit kan niet ongedaan worden gemaakt.",

@@ -1576,6 +1576,7 @@
   "RR_BTN_ADD_LAP_SECTIONS": "Ajustar secciones de vuelta/tiempo",
   "RR_BTN_EXPORT_CSV": "Exportar CSV",
   "RR_BTN_HEAT_RESULTS": "Resultados de manga",
+  "RR_HORIZONTAL_SCROLLBAR": "Barra de desplazamiento horizontal de resultados de carrera",
   "RM_BTN_RESET_RECORDS": "Restablecer Registros e Historial",
   "RM_COL_TRACK": "PISTA",
   "RM_CONFIRM_RESET_RECORDS_MSG": "¿Está seguro de que desea restablecer todos los registros, historial, estadísticas y sesiones guardadas de '{{name}}'? La carrera volverá a un estado inicial. Esto no se puede deshacer.",

@@ -1576,6 +1576,7 @@
   "RR_BTN_ADD_LAP_SECTIONS": "Rundenabschnitte/Zeit anpassen",
   "RR_BTN_EXPORT_CSV": "CSV exportieren",
   "RR_BTN_HEAT_RESULTS": "Laufergebnisse",
+  "RR_HORIZONTAL_SCROLLBAR": "Horizontale Bildlaufleiste für Rennergebnisse",
   "RM_BTN_RESET_RECORDS": "Renndatensätze & Verlauf zurücksetzen",
   "RM_COL_TRACK": "STRECKE",
   "RM_CONFIRM_RESET_RECORDS_MSG": "Sind Sie sicher, dass Sie alle Datensätze, den Verlauf, Statistiken und gespeicherten Sitzungen für '{{name}}' zurücksetzen möchten? Dies kann nicht rückgängig gemacht werden.",

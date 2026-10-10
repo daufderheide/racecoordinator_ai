@@ -1576,6 +1576,7 @@
   "RR_BTN_ADD_LAP_SECTIONS": "Regola sezioni di giro/tempo",
   "RR_BTN_EXPORT_CSV": "Esporta CSV",
   "RR_BTN_HEAT_RESULTS": "Risultati manche",
+  "RR_HORIZONTAL_SCROLLBAR": "Barra di scorrimento orizzontale dei risultati della gara",
   "RM_BTN_RESET_RECORDS": "Reimposta Record e Cronologia Gara",
   "RM_COL_TRACK": "PISTA",
   "RM_CONFIRM_RESET_RECORDS_MSG": "Sei sicuro di voler reimpostare tutti i record, cronologia, statistiche e sessioni salvate per '{{name}}'? La gara tornerà allo stato iniziale. Questa operazione non può essere annullata.",

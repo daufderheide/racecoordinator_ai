@@ -1576,6 +1576,7 @@
   "RR_BTN_ADD_LAP_SECTIONS": "Ajustar seções de volta/tempo",
   "RR_BTN_EXPORT_CSV": "Exportar CSV",
   "RR_BTN_HEAT_RESULTS": "Resultados de bateria",
+  "RR_HORIZONTAL_SCROLLBAR": "Barra de rolagem horizontal dos resultados da corrida",
   "RM_BTN_RESET_RECORDS": "Redefinir Registros e Histórico da Corrida",
   "RM_COL_TRACK": "PISTA",
   "RM_CONFIRM_RESET_RECORDS_MSG": "Tem certeza de que deseja redefinir todos os registros, histórico, estatísticas e sessões salvas de '{{name}}'? A corrida retornará ao estado inicial. Isso não pode ser desfeito.",

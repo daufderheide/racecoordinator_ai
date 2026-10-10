@@ -1576,6 +1576,7 @@
   "RR_BTN_ADD_LAP_SECTIONS": "Ajuster les sections de tour/temps",
   "RR_BTN_EXPORT_CSV": "Exporter CSV",
   "RR_BTN_HEAT_RESULTS": "Résultats de manche",
+  "RR_HORIZONTAL_SCROLLBAR": "Barre de défilement horizontal des résultats de course",
   "RM_BTN_RESET_RECORDS": "Réinitialiser Records et Historique",
   "RM_COL_TRACK": "CIRCUIT",
   "RM_CONFIRM_RESET_RECORDS_MSG": "Êtes-vous sûr de vouloir réinitialiser tous les records, l'historique, les statistiques et les sessions enregistrées pour '{{name}}' ? La course reviendra à l'état initial. Cette action est irréversible.",

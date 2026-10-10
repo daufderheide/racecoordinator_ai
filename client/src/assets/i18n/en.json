@@ -1576,6 +1576,7 @@
   "RR_BTN_ADD_LAP_SECTIONS": "Adjust Lap Sections/Time",
   "RR_BTN_EXPORT_CSV": "Export CSV",
   "RR_BTN_HEAT_RESULTS": "Heat Results",
+  "RR_HORIZONTAL_SCROLLBAR": "Race results horizontal scrollbar",
   "RM_BTN_RESET_RECORDS": "Reset Race Records & History",
   "RM_COL_TRACK": "TRACK",
   "RM_CONFIRM_RESET_RECORDS_MSG": "Are you sure you want to reset all records, history, statistics, and saved sessions for '{{name}}'? The race will return to a clean slate. This cannot be undone.",
