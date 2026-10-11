@@ -59,10 +59,18 @@ if ($ChangedFlag) {
     }
     $ChangedCount = ($ChangedTests -split '\s+').Count
     Write-Host "Running $ChangedCount of $TotalTests screendiff tests..." -ForegroundColor Green
-    $PlaywrightArgs = "$ChangedTests " + ($RemainingArgs -join " ")
+    $EscapedRemaining = ($RemainingArgs | ForEach-Object {
+        if ($_ -match '\s') { "'$_'" } else { $_ }
+    }) -join " "
+    $PlaywrightArgs = "$ChangedTests $EscapedRemaining"
+} elseif ($args.Count -gt 0) {
+    Write-Host "Running screendiff tests with specified arguments..." -ForegroundColor Green
+    $PlaywrightArgs = ($args | ForEach-Object {
+        if ($_ -match '\s') { "'$_'" } else { $_ }
+    }) -join " "
 } else {
     Write-Host "Running all $TotalTests of $TotalTests screendiff tests..." -ForegroundColor Green
-    $PlaywrightArgs = $args -join " "
+    $PlaywrightArgs = ""
 }
 
 Write-Host "--- Running Client Visual Tests ---" -ForegroundColor Cyan
@@ -139,7 +147,8 @@ $DockerArgs = @(
 $TestExitCode = $LASTEXITCODE
 
 # If updating snapshots and tests succeeded, copy them back to the original source directory
-if ($TestExitCode -eq 0 -and ($args -contains "--update-snapshots" -or $PlaywrightArgs -like "*--update-snapshots*")) {
+$isUpdatingSnapshots = $args -contains "--update-snapshots" -or $args -contains "-u" -or ($PlaywrightArgs -like "*--update-snapshots*") -or ($PlaywrightArgs -like "*-u*")
+if ($TestExitCode -eq 0 -and $isUpdatingSnapshots) {
     Write-Host "Syncing updated snapshots back to source..." -ForegroundColor Cyan
     $FullIsolatedDir = (Get-Item $IsolatedDir).FullName
     $SnapshotDirs = Get-ChildItem -Path (Join-Path $FullIsolatedDir "src") -Filter "*-snapshots" -Recurse -Directory

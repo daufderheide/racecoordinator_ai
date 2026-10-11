@@ -33,10 +33,21 @@ if [ -n "$CHANGED_FLAG" ]; then
     fi
     NUM_CHANGED=$(echo "$CHANGED_TESTS" | wc -w | tr -d ' ')
     echo "Running $NUM_CHANGED of $TOTAL_TESTS screendiff tests..."
-    PLAYWRIGHT_ARGS="$CHANGED_TESTS ${REMAINING_ARGS[*]}"
+    ESCAPED_REMAINING=""
+    for r_arg in "${REMAINING_ARGS[@]}"; do
+        ESCAPED_REMAINING+=" $(printf '%q' "$r_arg")"
+    done
+    PLAYWRIGHT_ARGS="$CHANGED_TESTS$ESCAPED_REMAINING"
+elif [ $# -gt 0 ]; then
+    echo "Running screendiff tests with specified arguments..."
+    PLAYWRIGHT_ARGS=""
+    for arg in "$@"; do
+        PLAYWRIGHT_ARGS+=" $(printf '%q' "$arg")"
+    done
+    PLAYWRIGHT_ARGS="${PLAYWRIGHT_ARGS# }"
 else
     echo "Running all $TOTAL_TESTS of $TOTAL_TESTS screendiff tests..."
-    PLAYWRIGHT_ARGS="$*"
+    PLAYWRIGHT_ARGS=""
 fi
 
 export PW_REPORT_PATH="./playwright-report/pw-result.json"
@@ -113,8 +124,17 @@ docker run --rm \
   /bin/bash -c "$DOCKER_CMD"
 TEST_EXIT_CODE=$?
 
+# Check if snapshot update was requested
+IS_UPDATING_SNAPSHOTS=false
+for arg in "$@"; do
+    if [[ "$arg" == "-u" ]] || [[ "$arg" == "--update-snapshots" ]] || [[ "$arg" == --update-snapshots=* ]]; then
+        IS_UPDATING_SNAPSHOTS=true
+        break
+    fi
+done
+
 # If updating snapshots and tests succeeded, copy them back to the original source directory
-if [ $TEST_EXIT_CODE -eq 0 ] && ([[ "$*" == *"--update-snapshots"* ]] || [[ "$PLAYWRIGHT_ARGS" == *"--update-snapshots"* ]]); then
+if [ $TEST_EXIT_CODE -eq 0 ] && [ "$IS_UPDATING_SNAPSHOTS" = true ]; then
     echo "Syncing updated snapshots back to source..."
     cd "$ISOLATED_DIR/src" || exit
     find . -type d -name "*-snapshots" | while read -r dir; do
