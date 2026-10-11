@@ -721,4 +721,66 @@ describe("ui-editor-widget.helper", () => {
     expect(updatedCol2?.customSettings?.layoutOrientation).toBe("horizontal");
     expect(comp.activeGridSession.layoutOrientation).toBe("horizontal");
   });
+
+  it("should handle _gridTotalLanesChanged and update grid total lanes across layout", () => {
+    const {
+      handleWidgetInspectorChange,
+    } = require("./ui-editor-widget.helper");
+    const masterCol: any = {
+      id: "col-1",
+      widgetType: "lane-column",
+      x: 100,
+      y: 100,
+      width: 200,
+      height: 100,
+      customSettings: {
+        gridId: "grid-test-lanes",
+        gridLane: 0,
+        gridTotalLanes: 4,
+        _gridTotalLanesChanged: true,
+      },
+    };
+    const colLane1: any = {
+      id: "col-1_grid_lane_1",
+      widgetType: "lane-column",
+      x: 100,
+      y: 200,
+      width: 200,
+      height: 100,
+      customSettings: {
+        gridId: "grid-test-lanes",
+        gridLane: 1,
+        gridMasterId: "col-1",
+        gridTotalLanes: 2,
+      },
+    };
+    const layout = { widgets: [masterCol, colLane1] };
+    const comp: any = {
+      isSaving: false,
+      activeCustomUi: { entity_id: "ui1" },
+      currentSelectedWidget: masterCol,
+      activeGridSession: {
+        gridId: "grid-test-lanes",
+        totalLanes: 2,
+        direction: "vertical",
+        bounds: { x: 100, y: 100, width: 200, height: 200 },
+        sourceLaneIndex: 0,
+        bindingMode: "lane",
+      },
+      getLayout: jasmine.createSpy("getLayout").and.returnValue(layout),
+      editingSettings: new Settings(),
+      isCurrentLayoutPractice: false,
+      parsedLayouts: new Map(),
+      captureState: jasmine.createSpy("captureState"),
+      cdr: { markForCheck: jasmine.createSpy("markForCheck") },
+      syncRacedayPreview: jasmine.createSpy("syncRacedayPreview"),
+    };
+
+    handleWidgetInspectorChange(comp, masterCol);
+
+    expect(masterCol.customSettings._gridTotalLanesChanged).toBeUndefined();
+    expect(comp.activeGridSession.totalLanes).toBe(4);
+    expect(comp.captureState).toHaveBeenCalled();
+    expect(comp.cdr.markForCheck).toHaveBeenCalled();
+  });
 });

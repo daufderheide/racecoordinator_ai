@@ -11655,4 +11655,95 @@ describe("DefaultRacedayComponent", () => {
       expect(component.getLaneQrCodeUrl(0)).toContain("data:image/png;base64,");
     });
   });
+
+  describe("grid rendering and scrolling", () => {
+    it("should filter non-grid widgets with getNonGridWidgets()", () => {
+      const widget1 = { id: "w1", customSettings: {} } as any;
+      const widget2 = { id: "w2", customSettings: { gridId: "g1" } } as any;
+      const widget3 = { id: "w3" } as any;
+
+      (component as any).layout = { widgets: [widget1, widget2, widget3] };
+      const nonGrid = component.getNonGridWidgets();
+      expect(nonGrid.length).toBe(2);
+      expect(nonGrid.map((w: any) => w.id)).toEqual(["w1", "w3"]);
+    });
+
+    it("should compute grid descriptors and mark isScrollable when dataCount exceeds gridTotalLanes", () => {
+      const masterWidget = {
+        id: "grid-m",
+        widgetType: "lane-column",
+        x: 100,
+        y: 100,
+        width: 200,
+        height: 50,
+        customSettings: {
+          gridId: "scrollable-grid",
+          gridLane: 0,
+          gridTotalLanes: 2,
+          gridDirection: "vertical",
+          bindingMode: "lane",
+        },
+      } as any;
+      const mirroredWidget = {
+        id: "grid-lane-1",
+        widgetType: "lane-column",
+        x: 100,
+        y: 150,
+        width: 200,
+        height: 50,
+        customSettings: {
+          gridId: "scrollable-grid",
+          gridLane: 1,
+          gridMasterId: "grid-m",
+          gridTotalLanes: 2,
+          gridDirection: "vertical",
+          bindingMode: "lane",
+        },
+      } as any;
+
+      (component as any).layout = { widgets: [masterWidget, mirroredWidget] };
+      // 4 lanes on track, but grid is configured for 2 mirrored rows
+      (component as any).track = { lanes: [{}, {}, {}, {}] };
+      (component as any).race = { track: (component as any).track } as any;
+
+      const grids = component.getGrids();
+      expect(grids.length).toBe(1);
+      const grid = grids[0];
+      expect(grid.gridId).toBe("scrollable-grid");
+      expect(grid.hasScroll).toBeTrue();
+      expect(grid.dataCount).toBe(4);
+      // Generated virtual widgets for lanes 2 and 3
+      expect(grid.cellWidgets.length).toBe(4);
+    });
+
+    it("should not mark hasScroll when dataCount is within gridTotalLanes", () => {
+      const masterWidget = {
+        id: "grid-m",
+        widgetType: "lane-column",
+        x: 100,
+        y: 100,
+        width: 200,
+        height: 50,
+        customSettings: {
+          gridId: "non-scroll-grid",
+          gridLane: 0,
+          gridTotalLanes: 4,
+          gridDirection: "vertical",
+          bindingMode: "lane",
+        },
+      } as any;
+
+      (component as any).layout = { widgets: [masterWidget] };
+      // 2 lanes on track, grid is configured for 4 mirrored rows
+      (component as any).track = { lanes: [{}, {}] };
+      (component as any).race = { track: (component as any).track } as any;
+
+      const grids = component.getGrids();
+      expect(grids.length).toBe(1);
+      const grid = grids[0];
+      expect(grid.hasScroll).toBeFalse();
+      expect(grid.dataCount).toBe(2);
+      expect(grid.cellWidgets.length).toBe(1);
+    });
+  });
 });

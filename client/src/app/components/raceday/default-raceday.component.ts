@@ -153,6 +153,24 @@ import {
   createMockLaneRecordEntries,
 } from "./utils/raceday-mock.utils";
 
+export interface RacedayGridDescriptor {
+  gridId: string;
+  bounds: LaneGridBounds;
+  direction: "horizontal" | "vertical";
+  headerPlacement: "top" | "individual" | "none";
+  headerHeight: number;
+  gridTotalLanes: number;
+  dataCount: number;
+  hasScroll: boolean;
+  zIndex: number;
+  contentWidth: number;
+  contentHeight: number;
+  headerWidgets: AbsoluteWidgetNode[];
+  cellWidgets: AbsoluteWidgetNode[];
+  contentOffset: { x: number; y: number };
+  headerOffset: { x: number; y: number };
+}
+
 /**
  * The raceday component is the main component for the raceday screen.
  */
@@ -4015,6 +4033,126 @@ export class DefaultRacedayComponent
       }
     }
     return this.layout?.widgets || [];
+  }
+
+  getNonGridWidgets(): any[] {
+    if (this.gridSession()) {
+      return this.getWidgets();
+    }
+    return this.getWidgets().filter((w: any) => !w.customSettings?.["gridId"]);
+  }
+
+  getGrids(): RacedayGridDescriptor[] {
+    if (this.gridSession()) {
+      return [];
+    }
+    const widgets = this.getWidgets();
+    if (!widgets || widgets.length === 0) return [];
+
+    const gridIds = Array.from(
+      new Set(
+        widgets
+          .map((w: any) => w.customSettings?.["gridId"])
+          .filter((id): id is string => Boolean(id)),
+      ),
+    );
+
+    const descriptors: RacedayGridDescriptor[] = [];
+    for (const gridId of gridIds) {
+      const bounds = LaneGridReplicationHelper.calculateGridBounds(
+        widgets,
+        gridId,
+      );
+      if (!bounds) continue;
+
+      const gridWidgets = widgets.filter(
+        (w: any) => w.customSettings?.["gridId"] === gridId,
+      );
+      if (gridWidgets.length === 0) continue;
+
+      const first = gridWidgets[0];
+      const gridTotalLanes =
+        Number(first.customSettings?.["gridTotalLanes"]) || 4;
+      const direction = first.customSettings?.["gridDirection"] || "vertical";
+      const headerPlacement =
+        first.customSettings?.["headerPlacement"] || "individual";
+      const headerHeight = Number(first.customSettings?.["headerHeight"]) || 36;
+      const dataCount = LaneGridReplicationHelper.getGridDataCount(
+        widgets,
+        gridId,
+        this,
+      );
+      const allGridWidgets =
+        LaneGridReplicationHelper.generateScrollableGridWidgets(
+          widgets,
+          gridId,
+          dataCount,
+        );
+
+      const isVertical = direction === "vertical";
+      const availHeight =
+        headerPlacement === "top"
+          ? Math.max(0, bounds.height - headerHeight)
+          : bounds.height;
+      const pitch = isVertical
+        ? availHeight / gridTotalLanes
+        : bounds.width / gridTotalLanes;
+
+      const hasScroll = dataCount > gridTotalLanes;
+      const contentWidth = isVertical
+        ? bounds.width
+        : Math.round(dataCount * pitch);
+      const contentHeight = isVertical
+        ? Math.round(dataCount * pitch)
+        : bounds.height;
+
+      let headerWidgets: AbsoluteWidgetNode[] = [];
+      let cellWidgets: AbsoluteWidgetNode[] = [];
+
+      if (headerPlacement === "top" && isVertical) {
+        headerWidgets = allGridWidgets.filter(
+          (w) => w.customSettings?.["isHeaderWidget"],
+        );
+        cellWidgets = allGridWidgets.filter(
+          (w) => !w.customSettings?.["isHeaderWidget"],
+        );
+      } else {
+        cellWidgets = allGridWidgets;
+      }
+
+      const zIndex = Math.max(
+        1,
+        ...gridWidgets.map((w: any) => w.zIndex || 10),
+      );
+
+      descriptors.push({
+        gridId,
+        bounds,
+        direction,
+        headerPlacement,
+        headerHeight,
+        gridTotalLanes,
+        dataCount,
+        hasScroll,
+        zIndex,
+        contentWidth,
+        contentHeight,
+        headerWidgets,
+        cellWidgets,
+        contentOffset: {
+          x: bounds.x,
+          y:
+            headerPlacement === "top" && isVertical
+              ? bounds.y + headerHeight
+              : bounds.y,
+        },
+        headerOffset: {
+          x: bounds.x,
+          y: bounds.y,
+        },
+      });
+    }
+    return descriptors;
   }
 
   getTableBodyHeight(): number {

@@ -67,7 +67,7 @@
       style="position: relative; width: 100%; height: 100%"
       (pointerdown)="onCanvasPointerDown($event)"
     >
-      @for (widget of getWidgets(); track widget.id) {
+      @for (widget of getNonGridWidgets(); track widget.id) {
         <app-raceday-absolute-widget
           [widget]="widget"
           [parentComponent]="this"
@@ -75,6 +75,73 @@
           [selectedWidgetId]="selectedWidgetId()"
           [isCountdownPreviewActive]="isCountdownPreviewActive()"
         ></app-raceday-absolute-widget>
+      }
+
+      @for (grid of getGrids(); track grid.gridId) {
+        <div
+          class="raceday-grid-container"
+          [style.left.px]="grid.bounds.x"
+          [style.top.px]="grid.bounds.y"
+          [style.width.px]="grid.bounds.width"
+          [style.height.px]="grid.bounds.height"
+          [style.z-index]="grid.zIndex"
+        >
+          @if (
+            grid.headerPlacement === "top" && grid.direction === "vertical"
+          ) {
+            <div
+              class="raceday-grid-top-header"
+              [style.height.px]="grid.headerHeight"
+              [style.width.px]="grid.bounds.width"
+            >
+              @for (w of grid.headerWidgets; track w.id) {
+                <app-raceday-absolute-widget
+                  [widget]="w"
+                  [parentComponent]="this"
+                  [isCustomizing]="isLayoutCustomizing"
+                  [selectedWidgetId]="selectedWidgetId()"
+                  [gridContentOffset]="grid.headerOffset"
+                ></app-raceday-absolute-widget>
+              }
+            </div>
+          }
+          <div
+            class="raceday-grid-scroll-viewport"
+            [class.scroll-vertical]="
+              grid.direction === 'vertical' && grid.hasScroll
+            "
+            [class.scroll-horizontal]="
+              grid.direction === 'horizontal' && grid.hasScroll
+            "
+            [style.top.px]="
+              grid.headerPlacement === 'top' && grid.direction === 'vertical'
+                ? grid.headerHeight
+                : 0
+            "
+            [style.height.px]="
+              grid.headerPlacement === 'top' && grid.direction === 'vertical'
+                ? grid.bounds.height - grid.headerHeight
+                : grid.bounds.height
+            "
+            [style.width.px]="grid.bounds.width"
+          >
+            <div
+              class="raceday-grid-scroll-content"
+              [style.width.px]="grid.contentWidth"
+              [style.height.px]="grid.contentHeight"
+            >
+              @for (w of grid.cellWidgets; track w.id) {
+                <app-raceday-absolute-widget
+                  [widget]="w"
+                  [parentComponent]="this"
+                  [isCustomizing]="isLayoutCustomizing"
+                  [selectedWidgetId]="selectedWidgetId()"
+                  [gridContentOffset]="grid.contentOffset"
+                ></app-raceday-absolute-widget>
+              }
+            </div>
+          </div>
+        </div>
       }
 
       @if (selectedGridBounds; as gBounds) {

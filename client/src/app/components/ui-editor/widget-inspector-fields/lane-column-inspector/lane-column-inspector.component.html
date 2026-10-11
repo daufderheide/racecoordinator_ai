@@ -169,6 +169,53 @@
       </label>
     </div>
 
+    <!-- Mirrored Rows/Columns Count Control -->
+    <div class="inspector-section" style="margin-bottom: 8px">
+      <div class="inspector-label-row">
+        <label class="inspector-label">{{
+          (gridDirection === "horizontal"
+            ? "UE_GRID_MIRRORED_COLUMNS"
+            : "UE_GRID_MIRRORED_ROWS"
+          ) | translate
+        }}</label>
+        <span class="inspector-val-badge">{{ gridTotalLanes }}</span>
+      </div>
+      <div style="display: flex; gap: 8px; align-items: center">
+        <input
+          type="range"
+          min="1"
+          max="32"
+          step="1"
+          [ngModel]="gridTotalLanes"
+          (ngModelChange)="onGridTotalLanesChange($event)"
+          class="inspector-slider"
+          style="flex: 1"
+        />
+        <input
+          type="number"
+          min="1"
+          max="32"
+          step="1"
+          autocomplete="off"
+          data-dashlane-ignore="true"
+          data-1p-ignore="true"
+          data-lpignore="true"
+          data-bwignore="true"
+          data-form-type="other"
+          [ngModel]="gridTotalLanes"
+          (ngModelChange)="onGridTotalLanesChange($event)"
+          style="
+            width: 55px;
+            padding: 2px 4px;
+            font-size: 12px;
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(0, 0, 0, 0.25);
+            border-radius: 4px;
+          "
+        />
+      </div>
+    </div>
+
     <!-- Layout Orientation for the Grid -->
     <div class="inspector-section" style="margin-bottom: 8px">
       <label class="inspector-label">{{

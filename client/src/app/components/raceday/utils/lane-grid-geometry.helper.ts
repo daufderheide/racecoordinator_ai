@@ -251,4 +251,27 @@ export class LaneGridGeometryHelper {
       height: Math.round(newH),
     };
   }
+
+  public static calculateGridBounds(
+    widgets: AbsoluteWidgetNode[],
+    gridId: string,
+  ): LaneGridBounds | null {
+    if (!widgets || !gridId) return null;
+    const gridWidgets = widgets.filter(
+      (w) => w.customSettings?.["gridId"] === gridId,
+    );
+    if (gridWidgets.length === 0) return null;
+
+    const minX = Math.min(...gridWidgets.map((w) => w.x));
+    const maxX = Math.max(...gridWidgets.map((w) => w.x + w.width));
+    const minY = Math.min(...gridWidgets.map((w) => w.y));
+    const maxY = Math.max(...gridWidgets.map((w) => w.y + w.height));
+
+    return {
+      x: minX,
+      y: minY,
+      width: Math.max(100, maxX - minX),
+      height: Math.max(50, maxY - minY),
+    };
+  }
 }

@@ -87,6 +87,7 @@ export class RacedayAbsoluteWidgetComponent
   isCustomizing = input<boolean>(false);
   selectedWidgetId = input<string | null>(null);
   isCountdownPreviewActive = input<boolean>(false);
+  gridContentOffset = input<{ x: number; y: number } | null>(null);
 
   wrapperRef = viewChild<ElementRef<HTMLElement>>("widgetWrapper");
   isGridAnimating = false;

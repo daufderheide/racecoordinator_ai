@@ -567,3 +567,70 @@ app-default-raceday {
   letter-spacing: 0.03em;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
 }
+
+/* Raceday Grid Scroll Container */
+.raceday-grid-container {
+  position: absolute;
+  box-sizing: border-box;
+}
+
+.raceday-grid-top-header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.raceday-grid-scroll-viewport {
+  position: absolute;
+  left: 0;
+  right: 0;
+  box-sizing: border-box;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(56, 189, 248, 0.5) rgba(15, 23, 42, 0.4);
+}
+
+.raceday-grid-scroll-viewport.scroll-vertical {
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.raceday-grid-scroll-viewport.scroll-horizontal {
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.raceday-grid-scroll-viewport:not(.scroll-vertical):not(.scroll-horizontal) {
+  overflow: hidden;
+}
+
+.raceday-grid-scroll-viewport::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.raceday-grid-scroll-viewport::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.4);
+  border-radius: 4px;
+}
+
+.raceday-grid-scroll-viewport::-webkit-scrollbar-thumb {
+  background: rgba(56, 189, 248, 0.5);
+  border-radius: 4px;
+  border: 1px solid rgba(15, 23, 42, 0.2);
+}
+
+.raceday-grid-scroll-viewport::-webkit-scrollbar-thumb:hover {
+  background: rgba(56, 189, 248, 0.8);
+}
+
+.raceday-grid-scroll-viewport::-webkit-scrollbar-corner {
+  background: rgba(15, 23, 42, 0.4);
+}
+
+.raceday-grid-scroll-content {
+  position: relative;
+  box-sizing: border-box;
+}
+

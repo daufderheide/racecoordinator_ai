@@ -18,17 +18,28 @@
     isCountdownGhost || (!isCustomizing() && !isCountdownActive) ? 'none' : null
   "
   [style.left]="
-    (widget().x / (parentComponent().layout?.baseWidth || 1920)) * 100 + '%'
+    gridContentOffset()
+      ? widget().x - gridContentOffset()!.x + 'px'
+      : (widget().x / (parentComponent().layout?.baseWidth || 1920)) * 100 + '%'
   "
   [style.top]="
-    (widget().y / (parentComponent().layout?.baseHeight || 1080)) * 100 + '%'
+    gridContentOffset()
+      ? widget().y - gridContentOffset()!.y + 'px'
+      : (widget().y / (parentComponent().layout?.baseHeight || 1080)) * 100 +
+        '%'
   "
   [style.width]="
-    (widget().width / (parentComponent().layout?.baseWidth || 1920)) * 100 + '%'
+    gridContentOffset()
+      ? widget().width + 'px'
+      : (widget().width / (parentComponent().layout?.baseWidth || 1920)) * 100 +
+        '%'
   "
   [style.height]="
-    (widget().height / (parentComponent().layout?.baseHeight || 1080)) * 100 +
-    '%'
+    gridContentOffset()
+      ? widget().height + 'px'
+      : (widget().height / (parentComponent().layout?.baseHeight || 1080)) *
+          100 +
+        '%'
   "
   [style.z-index]="computedZIndex"
   [style.font-family]="widget().fontFamily || null"

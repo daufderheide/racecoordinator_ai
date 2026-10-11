@@ -980,5 +980,38 @@ describe("LaneColumnInspectorComponent", () => {
       expect(mockSettings._layoutOrientationChanged).toBeTrue();
       expect(component.gridLayoutOrientation).toBe("vertical");
     });
+
+    it("should handle gridTotalLanes getter, clamping and onGridTotalLanesChange", () => {
+      spyOn(component.change, "emit");
+      delete mockSettings.gridTotalLanes;
+      expect(component.gridTotalLanes).toBe(4);
+
+      component.onGridTotalLanesChange(6);
+      expect(mockSettings.gridTotalLanes).toBe(6);
+      expect(mockSettings._gridTotalLanesChanged).toBeTrue();
+      expect(component.change.emit).toHaveBeenCalled();
+      expect(component.gridTotalLanes).toBe(6);
+
+      // Clamp lower bound
+      component.onGridTotalLanesChange(0);
+      expect(mockSettings.gridTotalLanes).toBe(1);
+
+      // Clamp upper bound
+      component.onGridTotalLanesChange(50);
+      expect(mockSettings.gridTotalLanes).toBe(32);
+    });
+
+    it("should return gridDirection and gridTotalLanes from settings", () => {
+      delete mockSettings.gridDirection;
+      expect(component.gridDirection).toBe("vertical");
+
+      mockSettings.gridDirection = "horizontal";
+      expect(component.gridDirection).toBe("horizontal");
+
+      mockSettings.gridDirection = "vertical";
+      mockSettings.gridTotalLanes = 8;
+      expect(component.gridDirection).toBe("vertical");
+      expect(component.gridTotalLanes).toBe(8);
+    });
   });
 });

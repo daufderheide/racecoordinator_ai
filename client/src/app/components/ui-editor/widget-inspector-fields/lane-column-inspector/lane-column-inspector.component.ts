@@ -391,6 +391,31 @@ export class LaneColumnInspectorComponent {
     this.onFieldChange();
   }
 
+  get gridTotalLanes(): number {
+    return Math.max(
+      1,
+      Math.min(
+        32,
+        Number(this.currentSettings["gridTotalLanes"]) ||
+          this.totalLanes() ||
+          4,
+      ),
+    );
+  }
+
+  onGridTotalLanesChange(val: number): void {
+    const count = Math.max(1, Math.min(32, Math.round(Number(val) || 1)));
+    this.currentSettings["gridTotalLanes"] = count;
+    this.currentSettings["_gridTotalLanesChanged"] = true;
+    this.onFieldChange();
+  }
+
+  get gridDirection(): "horizontal" | "vertical" {
+    return this.currentSettings["gridDirection"] === "horizontal"
+      ? "horizontal"
+      : "vertical";
+  }
+
   get gridLayoutOrientation(): "vertical" | "horizontal" {
     return this.currentSettings["layoutOrientation"] === "horizontal"
       ? "horizontal"

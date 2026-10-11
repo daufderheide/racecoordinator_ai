@@ -1120,4 +1120,337 @@ describe("LaneGridReplicationHelper", () => {
       ).toBe(widgets);
     });
   });
+
+  describe("updateGridTotalLanes", () => {
+    const gridId = "test-grid-total-lanes";
+    const initialWidgets: AbsoluteWidgetNode[] = [
+      {
+        id: "w-master",
+        widgetType: "lane-column",
+        x: 100,
+        y: 100,
+        width: 300,
+        height: 100,
+        zIndex: 10,
+        customSettings: {
+          gridId,
+          gridLane: 0,
+          targetIndex: 0,
+          gridTotalLanes: 2,
+          gridDirection: "vertical",
+          headerPlacement: "individual",
+        },
+      },
+      {
+        id: "w-master_grid_lane_1",
+        widgetType: "lane-column",
+        x: 100,
+        y: 200,
+        width: 300,
+        height: 100,
+        zIndex: 10,
+        customSettings: {
+          gridId,
+          gridLane: 1,
+          gridMasterId: "w-master",
+          targetIndex: 1,
+          gridTotalLanes: 2,
+          gridDirection: "vertical",
+          headerPlacement: "individual",
+        },
+      },
+    ];
+
+    it("should handle null or invalid parameters safely", () => {
+      expect(
+        LaneGridReplicationHelper.updateGridTotalLanes([], gridId, 4),
+      ).toEqual([]);
+      expect(
+        LaneGridReplicationHelper.updateGridTotalLanes(null as any, gridId, 4),
+      ).toEqual([]);
+      expect(
+        LaneGridReplicationHelper.updateGridTotalLanes(initialWidgets, "", 4),
+      ).toBe(initialWidgets);
+      expect(
+        LaneGridReplicationHelper.updateGridTotalLanes(
+          initialWidgets,
+          gridId,
+          0,
+        ),
+      ).toBe(initialWidgets);
+      expect(
+        LaneGridReplicationHelper.updateGridTotalLanes(
+          initialWidgets,
+          gridId,
+          -1,
+        ),
+      ).toBe(initialWidgets);
+    });
+
+    it("should increase total lanes and replicate master widgets to new rows", () => {
+      const updated = LaneGridReplicationHelper.updateGridTotalLanes(
+        initialWidgets,
+        gridId,
+        4,
+      );
+
+      const gridWidgets = updated.filter(
+        (w) => w.customSettings?.["gridId"] === gridId,
+      );
+      expect(gridWidgets.length).toBe(4);
+      expect(
+        gridWidgets.every((w) => w.customSettings?.["gridTotalLanes"] === 4),
+      ).toBeTrue();
+
+      // Pitch for height 200 with 4 lanes is 50, so rows start at 100, 150, 200, 250
+      expect(gridWidgets[0].y).toBe(100);
+      expect(gridWidgets[1].y).toBe(150);
+      expect(gridWidgets[2].y).toBe(200);
+      expect(gridWidgets[3].y).toBe(250);
+
+      expect(gridWidgets[2].customSettings?.["gridLane"]).toBe(2);
+      expect(gridWidgets[3].customSettings?.["gridLane"]).toBe(3);
+    });
+
+    it("should decrease total lanes and prune extra mirrored rows", () => {
+      const fourLaneWidgets: AbsoluteWidgetNode[] = [
+        ...initialWidgets,
+        {
+          id: "w-master_grid_lane_2",
+          widgetType: "lane-column",
+          x: 100,
+          y: 300,
+          width: 300,
+          height: 100,
+          zIndex: 10,
+          customSettings: {
+            gridId,
+            gridLane: 2,
+            gridMasterId: "w-master",
+            targetIndex: 2,
+            gridTotalLanes: 4,
+            gridDirection: "vertical",
+          },
+        },
+        {
+          id: "w-master_grid_lane_3",
+          widgetType: "lane-column",
+          x: 100,
+          y: 400,
+          width: 300,
+          height: 100,
+          zIndex: 10,
+          customSettings: {
+            gridId,
+            gridLane: 3,
+            gridMasterId: "w-master",
+            targetIndex: 3,
+            gridTotalLanes: 4,
+            gridDirection: "vertical",
+          },
+        },
+      ];
+
+      const reduced = LaneGridReplicationHelper.updateGridTotalLanes(
+        fourLaneWidgets,
+        gridId,
+        2,
+      );
+
+      const gridWidgets = reduced.filter(
+        (w) => w.customSettings?.["gridId"] === gridId,
+      );
+      expect(gridWidgets.length).toBe(2);
+      expect(
+        gridWidgets.every((w) => w.customSettings?.["gridTotalLanes"] === 2),
+      ).toBeTrue();
+      expect(
+        gridWidgets.some((w) => Number(w.customSettings?.["gridLane"]) >= 2),
+      ).toBeFalse();
+    });
+  });
+
+  describe("getGridDataCount", () => {
+    const gridId = "count-grid";
+    const widgets: AbsoluteWidgetNode[] = [
+      {
+        id: "col-1",
+        widgetType: "lane-column",
+        x: 0,
+        y: 0,
+        width: 100,
+        height: 50,
+        zIndex: 1,
+        customSettings: {
+          gridId,
+          bindingMode: "lane",
+          gridTotalLanes: 4,
+        },
+      },
+    ];
+
+    it("should return 0 when widgets are empty or grid is not found", () => {
+      expect(LaneGridReplicationHelper.getGridDataCount([], gridId, {})).toBe(
+        0,
+      );
+      expect(
+        LaneGridReplicationHelper.getGridDataCount(widgets, "unknown", {}),
+      ).toBe(0);
+    });
+
+    it("should resolve count from track lanes for lane bindingMode", () => {
+      const parent = {
+        currentTrack: { lanes: [{}, {}, {}, {}, {}, {}] },
+      };
+      expect(
+        LaneGridReplicationHelper.getGridDataCount(widgets, gridId, parent),
+      ).toBe(6);
+    });
+
+    it("should resolve count from heat standings for position bindingMode", () => {
+      const posWidgets: AbsoluteWidgetNode[] = [
+        {
+          ...widgets[0],
+          customSettings: {
+            gridId,
+            bindingMode: "position",
+            gridTotalLanes: 3,
+          },
+        },
+      ];
+      const parent = {
+        heatStandings: [{ id: 1 }, { id: 2 }, { id: 3 }, { id: 4 }, { id: 5 }],
+      };
+      expect(
+        LaneGridReplicationHelper.getGridDataCount(posWidgets, gridId, parent),
+      ).toBe(5);
+    });
+
+    it("should resolve count from race standings for overallPosition bindingMode", () => {
+      const opWidgets: AbsoluteWidgetNode[] = [
+        {
+          ...widgets[0],
+          customSettings: {
+            gridId,
+            bindingMode: "overallPosition",
+            gridTotalLanes: 4,
+          },
+        },
+      ];
+      const parent = {
+        raceStandings: [{ id: "d1" }, { id: "d2" }, { id: "d3" }],
+      };
+      expect(
+        LaneGridReplicationHelper.getGridDataCount(opWidgets, gridId, parent),
+      ).toBe(3);
+    });
+
+    it("should resolve count from race participants for seed bindingMode", () => {
+      const seedWidgets: AbsoluteWidgetNode[] = [
+        {
+          ...widgets[0],
+          customSettings: {
+            gridId,
+            bindingMode: "seed",
+            gridTotalLanes: 4,
+          },
+        },
+      ];
+      const parent = {
+        raceParticipants: [
+          { id: 1 },
+          { id: 2 },
+          { id: 3 },
+          { id: 4 },
+          { id: 5 },
+          { id: 6 },
+          { id: 7 },
+        ],
+      };
+      expect(
+        LaneGridReplicationHelper.getGridDataCount(seedWidgets, gridId, parent),
+      ).toBe(7);
+    });
+
+    it("should fallback to gridTotalLanes when parent has no data", () => {
+      expect(
+        LaneGridReplicationHelper.getGridDataCount(widgets, gridId, null),
+      ).toBe(4);
+    });
+  });
+
+  describe("generateScrollableGridWidgets", () => {
+    const gridId = "scroll-grid";
+    const widgets: AbsoluteWidgetNode[] = [
+      {
+        id: "c-0",
+        widgetType: "lane-column",
+        x: 100,
+        y: 100,
+        width: 200,
+        height: 50,
+        zIndex: 5,
+        customSettings: {
+          gridId,
+          gridLane: 0,
+          targetIndex: 0,
+          gridTotalLanes: 2,
+          gridDirection: "vertical",
+        },
+      },
+      {
+        id: "c-0_grid_lane_1",
+        widgetType: "lane-column",
+        x: 100,
+        y: 150,
+        width: 200,
+        height: 50,
+        zIndex: 5,
+        customSettings: {
+          gridId,
+          gridLane: 1,
+          gridMasterId: "c-0",
+          targetIndex: 1,
+          gridTotalLanes: 2,
+          gridDirection: "vertical",
+        },
+      },
+    ];
+
+    it("should return unmodified widgets if dataCount is less than or equal to total lanes", () => {
+      const result = LaneGridReplicationHelper.generateScrollableGridWidgets(
+        widgets,
+        gridId,
+        2,
+      );
+      expect(result.length).toBe(2);
+      expect(result).toEqual(widgets);
+    });
+
+    it("should dynamically generate extra virtual rows when dataCount exceeds total lanes", () => {
+      const result = LaneGridReplicationHelper.generateScrollableGridWidgets(
+        widgets,
+        gridId,
+        4,
+      );
+
+      expect(result.length).toBe(4);
+      expect(result[0].id).toBe("c-0");
+      expect(result[1].id).toBe("c-0_grid_lane_1");
+
+      const generatedRow2 = result.find(
+        (w) => w.customSettings?.["gridLane"] === 2,
+      );
+      const generatedRow3 = result.find(
+        (w) => w.customSettings?.["gridLane"] === 3,
+      );
+
+      expect(generatedRow2).toBeDefined();
+      expect(generatedRow3).toBeDefined();
+      expect(generatedRow2?.y).toBe(200); // 100 + 2 * 50
+      expect(generatedRow3?.y).toBe(250); // 100 + 3 * 50
+      expect(generatedRow2?.customSettings?.["targetIndex"]).toBe(2);
+      expect(generatedRow3?.customSettings?.["targetIndex"]).toBe(3);
+    });
+  });
 });

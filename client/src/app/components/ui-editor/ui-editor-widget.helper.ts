@@ -368,6 +368,31 @@ function handleGridStructureChanges(
       comp.activeGridSession.layoutOrientation = orientation;
     }
   }
+
+  if (targetWidget.customSettings?.["_gridTotalLanesChanged"]) {
+    delete targetWidget.customSettings["_gridTotalLanesChanged"];
+    const newTotal = Math.max(
+      1,
+      Math.min(
+        32,
+        Number(targetWidget.customSettings?.["gridTotalLanes"]) || 4,
+      ),
+    );
+    layout.widgets = LaneGridReplicationHelper.updateGridTotalLanes(
+      layout.widgets,
+      gridId,
+      newTotal,
+    );
+    if (comp.activeGridSession && comp.activeGridSession.gridId === gridId) {
+      comp.activeGridSession.totalLanes = newTotal;
+      if (comp.activeGridSession.bounds) {
+        layout.widgets = LaneGridReplicationHelper.syncAllMasterWidgetsToLanes(
+          comp.activeGridSession,
+          layout.widgets,
+        );
+      }
+    }
+  }
 }
 
 function handleCrossColumnLiveSync(
