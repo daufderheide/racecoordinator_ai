@@ -42,6 +42,7 @@ export class LaneColumnInspectorComponent {
     output<Omit<LaneReplicationOptions, "baseWidth" | "baseHeight">>();
   editGrid = output<string>();
   detachGrid = output<string>();
+  deleteGrid = output<string>();
 
   fontService = inject(FontService);
   translationService = inject(TranslationService);
@@ -473,6 +474,12 @@ export class LaneColumnInspectorComponent {
   onDetachFromGrid(): void {
     if (this.currentSettings["gridId"]) {
       this.detachGrid.emit(this.currentSettings["gridId"]);
+    }
+  }
+
+  onDeleteGrid(): void {
+    if (this.currentSettings["gridId"]) {
+      this.deleteGrid.emit(this.currentSettings["gridId"]);
     }
   }
 

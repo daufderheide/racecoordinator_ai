@@ -119,4 +119,33 @@ describe("RaceParticipantConverter", () => {
     expect(p2).toBe(p1);
     expect(p1.hasSegments).toBeTrue();
   });
+
+  it("should convert group proto without corrupting overall rank of cached participant", () => {
+    const overallProto: IRaceParticipant = {
+      objectId: "p15",
+      driver: { model: { entityId: "d15" }, name: "Driver 15" },
+      rank: 15,
+      fuelLevel: 100,
+    };
+
+    const overallParticipant = RaceParticipantConverter.fromProto(overallProto);
+    expect(overallParticipant.rank).toBe(15);
+
+    const groupProto: IRaceParticipant = {
+      objectId: "p15",
+      driver: { model: { entityId: "d15" }, name: "Driver 15" },
+      rank: 5,
+      fuelLevel: 100,
+    };
+
+    const groupParticipant =
+      RaceParticipantConverter.fromGroupProto(groupProto);
+    expect(groupParticipant.rank).toBe(5);
+    expect(groupParticipant.groupRank).toBe(5);
+    expect(groupParticipant).not.toBe(overallParticipant);
+
+    // The cached overall participant's rank must NOT be corrupted to 5!
+    expect(overallParticipant.rank).toBe(15);
+    expect(overallParticipant.groupRank).toBe(5);
+  });
 });

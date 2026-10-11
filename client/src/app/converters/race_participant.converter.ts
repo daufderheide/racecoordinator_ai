@@ -69,6 +69,52 @@ export class RaceParticipantConverter {
     });
   }
 
+  static fromGroupProto(proto: IRaceParticipant): RaceParticipant {
+    const id = proto.objectId || "";
+    const driver = proto.driver
+      ? DriverConverter.fromProto(proto.driver)
+      : DriverConverter.getEmptyDriver();
+    const team = proto.team ? TeamConverter.fromProto(proto.team) : undefined;
+    const participant = new RaceParticipant(
+      id,
+      driver,
+      proto.rank || 0,
+      proto.totalLaps || 0,
+      proto.totalTime || 0,
+      proto.bestLapTime || 0,
+      proto.averageLapTime || 0,
+      proto.medianLapTime || 0,
+      proto.rankValue || 0,
+      proto.seed || 0,
+      proto.fuelLevel ?? (undefined as any),
+      proto.gapLeader || 0,
+      proto.gapPosition || 0,
+      team,
+      proto.gapLeaderF1 || 0,
+      proto.gapPositionF1 || 0,
+      proto.lapsDownLeader || 0,
+      proto.lapsDownPosition || 0,
+      proto.consistencyScore || 0,
+      proto.physicalLapCount || 0,
+      proto.standardDeviation || 0,
+      proto.lapsLed || 0,
+      proto.trackCalls || 0,
+      proto.totalPoints || 0,
+      proto.averageTop5 || 0,
+      proto.averageTop10 || 0,
+      proto.averageTop15 || 0,
+      proto.top2Consecutive || 0,
+      proto.top3Consecutive || 0,
+      proto.hasSegments || false,
+      proto.rank || 0,
+    );
+    const cached = this.cache.get(id);
+    if (cached && proto.rank !== undefined && proto.rank !== null) {
+      cached.groupRank = proto.rank;
+    }
+    return participant;
+  }
+
   private static updateCachedParticipant(
     cached: RaceParticipant,
     proto: IRaceParticipant,

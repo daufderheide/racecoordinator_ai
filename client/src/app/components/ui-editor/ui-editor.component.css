@@ -1264,6 +1264,27 @@
   color: #ffffff;
 }
 
+:host-context(.widget-inspector-panel) .btn-danger,
+.widget-inspector-panel .btn-danger,
+.inspector-body .btn-danger,
+.inspector-section .btn-danger,
+.grid-card-actions .btn-danger {
+  background: #dc2626;
+  border: 1px solid #b91c1c;
+  color: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+:host-context(.widget-inspector-panel) .btn-danger:hover:not(:disabled),
+.widget-inspector-panel .btn-danger:hover:not(:disabled),
+.inspector-body .btn-danger:hover:not(:disabled),
+.inspector-section .btn-danger:hover:not(:disabled),
+.grid-card-actions .btn-danger:hover:not(:disabled) {
+  background: #b91c1c;
+  border-color: #991b1b;
+  color: #ffffff;
+}
+
 
 /* Grid Scope Navigation */
 .grid-scope-nav {

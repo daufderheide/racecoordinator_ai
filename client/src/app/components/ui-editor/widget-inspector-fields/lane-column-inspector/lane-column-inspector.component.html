@@ -477,6 +477,15 @@
         >
         {{ "UE_GRID_DETACH" | translate }}
       </button>
+      <button
+        type="button"
+        class="btn btn-sm btn-danger w-100 grid-delete-btn"
+        (click)="onDeleteGrid()"
+        [title]="'UE_GRID_DELETE_TOOLTIP' | translate"
+      >
+        <span class="material-icons me-1" style="font-size: 14px">delete</span>
+        {{ "UE_GRID_DELETE" | translate }}
+      </button>
     </div>
   </div>
 </ng-template>

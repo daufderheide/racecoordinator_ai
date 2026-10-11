@@ -293,7 +293,7 @@ function handleGridSyncAction(
   );
 }
 
-function handleGridStructureChanges(
+function handleGridHeaderStructureChanges(
   comp: any,
   layout: any,
   targetWidget: any,
@@ -328,7 +328,14 @@ function handleGridStructureChanges(
       comp.activeGridSession.headerHeight = newH;
     }
   }
+}
 
+function handleGridColumnStructureChanges(
+  comp: any,
+  layout: any,
+  targetWidget: any,
+  gridId: string,
+): void {
   if (targetWidget.customSettings?.["_linkColumnsChanged"]) {
     delete targetWidget.customSettings["_linkColumnsChanged"];
     const isLinked = targetWidget.customSettings?.["linkColumns"] !== false;
@@ -378,10 +385,15 @@ function handleGridStructureChanges(
         Number(targetWidget.customSettings?.["gridTotalLanes"]) || 4,
       ),
     );
+    const existingBounds =
+      comp.activeGridSession && comp.activeGridSession.gridId === gridId
+        ? comp.activeGridSession.bounds
+        : null;
     layout.widgets = LaneGridReplicationHelper.updateGridTotalLanes(
       layout.widgets,
       gridId,
       newTotal,
+      existingBounds,
     );
     if (comp.activeGridSession && comp.activeGridSession.gridId === gridId) {
       comp.activeGridSession.totalLanes = newTotal;
@@ -393,6 +405,16 @@ function handleGridStructureChanges(
       }
     }
   }
+}
+
+function handleGridStructureChanges(
+  comp: any,
+  layout: any,
+  targetWidget: any,
+  gridId: string,
+): void {
+  handleGridHeaderStructureChanges(comp, layout, targetWidget, gridId);
+  handleGridColumnStructureChanges(comp, layout, targetWidget, gridId);
 }
 
 function handleCrossColumnLiveSync(
@@ -471,6 +493,10 @@ export function handleWidgetInspectorChange(
           comp.activeGridSession,
         )
       ) {
+        LaneGridReplicationHelper.updateWidgetCellRatios(
+          targetWidget,
+          comp.activeGridSession,
+        );
         layout.widgets = LaneGridReplicationHelper.syncMasterWidgetToLanes(
           targetWidget,
           comp.activeGridSession,

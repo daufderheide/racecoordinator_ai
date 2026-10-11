@@ -4172,6 +4172,16 @@ describe("UIEditorComponent", () => {
         width: 900,
         height: 500,
       });
+
+      // Delete grid test
+      component.onDeleteGrid("test-grid-spec", customUi);
+      expect(component.activeGridSession).toBeNull();
+      const afterDelete = JSON.parse(customUi.layoutJson);
+      expect(
+        afterDelete.widgets.some(
+          (w: any) => w.customSettings?.gridId === "test-grid-spec",
+        ),
+      ).toBeFalse();
     });
 
     it("should preserve collapsed column groups on lane-view widget per layout independently", () => {

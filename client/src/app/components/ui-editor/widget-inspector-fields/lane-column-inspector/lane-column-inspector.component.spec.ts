@@ -214,6 +214,12 @@ describe("LaneColumnInspectorComponent", () => {
     expect(detachBtn).toBeTruthy();
     detachBtn.triggerEventHandler("click", null);
     expect(component.detachGrid.emit).toHaveBeenCalledWith("grid-12345");
+
+    spyOn(component.deleteGrid, "emit");
+    const deleteBtn = fixture.debugElement.query(By.css(".grid-delete-btn"));
+    expect(deleteBtn).toBeTruthy();
+    deleteBtn.triggerEventHandler("click", null);
+    expect(component.deleteGrid.emit).toHaveBeenCalledWith("grid-12345");
   });
 
   it("should not display grid indicator card when widget does not have gridId", () => {

@@ -1918,10 +1918,27 @@ describe("DefaultRacedayComponent", () => {
     it("should fallback to hd.participant.rank if not found in overall list", () => {
       component["participants"] = [];
       const hd = {
-        driver: { entity_id: "d1" },
+        driver: { entity_id: "d1", name: "d1" },
         participant: { rank: 10 },
       } as any;
       expect(component.getDriverOverallRanking(hd)).toBe(10);
+    });
+
+    it("should return overall rank from leaderboardEntries or participants for unrun or active drivers", () => {
+      (component as any).leaderboardEntries = [
+        { entityId: "d15", rank: 15 } as any,
+      ];
+      component["participants"] = [
+        {
+          driver: { entity_id: "d15" },
+          rank: 15,
+        } as any,
+      ];
+      const hd = {
+        driver: { entity_id: "d15" },
+        participant: { rank: 5 },
+      } as any;
+      expect(component.getDriverOverallRanking(hd)).toBe(15);
     });
   });
 
@@ -11495,6 +11512,115 @@ describe("DefaultRacedayComponent", () => {
       emitSpy.calls.reset();
       document.dispatchEvent(moveEvent);
       expect(emitSpy).not.toHaveBeenCalled();
+    });
+
+    it("should handle onGridMoveStart and emit gridBoundsChange on pointermove", () => {
+      const session = {
+        gridId: "test-grid-move",
+        bounds: { x: 100, y: 100, width: 800, height: 400 },
+        totalLanes: 4,
+        direction: "horizontal" as const,
+        sourceLaneIndex: 0,
+        bindingMode: "lane" as const,
+      };
+      fixture.componentRef.setInput("isUIEditorMode", true);
+      fixture.componentRef.setInput("uiScale", 1);
+      fixture.componentRef.setInput("gridSession", session);
+      fixture.detectChanges();
+      component.layout = { baseWidth: 1920, baseHeight: 1080, widgets: [] };
+
+      const emitSpy = spyOn(component.gridBoundsChange, "emit");
+      const layoutSpy = spyOn(component.layoutChanged, "emit");
+
+      const pointerDownEvent = new PointerEvent("pointerdown", {
+        clientX: 500,
+        clientY: 300,
+      });
+      component.onGridMoveStart(pointerDownEvent);
+
+      const moveEvent = new PointerEvent("pointermove", {
+        clientX: 550,
+        clientY: 340,
+      });
+      document.dispatchEvent(moveEvent);
+
+      expect(emitSpy).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          x: 150,
+          y: 140,
+          width: 800,
+          height: 400,
+        }),
+      );
+
+      const upEvent = new PointerEvent("pointerup");
+      document.dispatchEvent(upEvent);
+
+      expect(layoutSpy).toHaveBeenCalledWith(component.layout);
+
+      emitSpy.calls.reset();
+      document.dispatchEvent(moveEvent);
+      expect(emitSpy).not.toHaveBeenCalled();
+    });
+
+    it("should emit deleteGrid when onDeleteGridClicked is called", () => {
+      const session = {
+        gridId: "test-grid-delete",
+        bounds: { x: 100, y: 100, width: 800, height: 400 },
+        totalLanes: 4,
+        direction: "horizontal" as const,
+        sourceLaneIndex: 0,
+        bindingMode: "lane" as const,
+      };
+      fixture.componentRef.setInput("gridSession", session);
+      fixture.detectChanges();
+
+      const deleteSpy = spyOn(component.deleteGrid, "emit");
+      component.onDeleteGridClicked();
+      expect(deleteSpy).toHaveBeenCalledWith("test-grid-delete");
+    });
+
+    it("should update cell ratios and sync layout when onMasterWidgetModified is called", () => {
+      const session = {
+        gridId: "test-grid-modify",
+        bounds: { x: 100, y: 100, width: 800, height: 400 },
+        totalLanes: 4,
+        direction: "horizontal" as const,
+        sourceLaneIndex: 0,
+        bindingMode: "lane" as const,
+      };
+      fixture.componentRef.setInput("gridSession", session);
+      fixture.detectChanges();
+
+      const masterWidget: any = {
+        id: "w-master-1",
+        widgetType: "lane-column",
+        x: 100,
+        y: 100,
+        width: 150,
+        height: 300,
+        customSettings: {
+          gridId: "test-grid-modify",
+          gridLane: 0,
+        },
+      };
+
+      (component as any).layout = {
+        widgets: [masterWidget],
+      };
+
+      const layoutSpy = spyOn(component.layoutChanged, "emit");
+      component.onMasterWidgetModified(masterWidget);
+
+      expect(masterWidget.customSettings["cellWidthRatio"]).toBeCloseTo(
+        150 / 200,
+        3,
+      );
+      expect(masterWidget.customSettings["cellHeightRatio"]).toBeCloseTo(
+        300 / 400,
+        3,
+      );
+      expect(layoutSpy).toHaveBeenCalled();
     });
 
     it("should calculate selectedGridBounds and selectedGridLabel when a grid widget is selected", () => {

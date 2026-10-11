@@ -252,6 +252,86 @@ export class LaneGridGeometryHelper {
     };
   }
 
+  public static moveGridBounds(
+    current: LaneGridBounds,
+    deltaX: number,
+    deltaY: number,
+    baseWidth: number,
+    baseHeight: number,
+    snapEdgesX: number[] = [],
+    snapEdgesY: number[] = [],
+    snapThreshold = 8,
+  ): LaneGridBounds {
+    const rawX = current.x + deltaX;
+    const rawY = current.y + deltaY;
+
+    const snapValue = (val: number, edges: number[]): number => {
+      for (const edge of edges) {
+        if (Math.abs(val - edge) <= snapThreshold) {
+          return edge;
+        }
+      }
+      return val;
+    };
+
+    let newX = rawX;
+    const snappedLeft = snapValue(rawX, [...snapEdgesX, 0]);
+    if (snappedLeft !== rawX) {
+      newX = snappedLeft;
+    } else {
+      const snappedRight = snapValue(rawX + current.width, [
+        ...snapEdgesX,
+        baseWidth,
+      ]);
+      if (snappedRight !== rawX + current.width) {
+        newX = snappedRight - current.width;
+      }
+    }
+
+    let newY = rawY;
+    const snappedTop = snapValue(rawY, [...snapEdgesY, 0]);
+    if (snappedTop !== rawY) {
+      newY = snappedTop;
+    } else {
+      const snappedBottom = snapValue(rawY + current.height, [
+        ...snapEdgesY,
+        baseHeight,
+      ]);
+      if (snappedBottom !== rawY + current.height) {
+        newY = snappedBottom - current.height;
+      }
+    }
+
+    let minX: number;
+    let maxX: number;
+    if (current.width <= baseWidth) {
+      minX = 0;
+      maxX = Math.max(0, baseWidth - current.width);
+    } else {
+      minX = baseWidth - current.width;
+      maxX = 0;
+    }
+    newX = Math.max(minX, Math.min(maxX, newX));
+
+    let minY: number;
+    let maxY: number;
+    if (current.height <= baseHeight) {
+      minY = 0;
+      maxY = Math.max(0, baseHeight - current.height);
+    } else {
+      minY = baseHeight - current.height;
+      maxY = 0;
+    }
+    newY = Math.max(minY, Math.min(maxY, newY));
+
+    return {
+      x: Math.round(newX),
+      y: Math.round(newY),
+      width: current.width,
+      height: current.height,
+    };
+  }
+
   public static calculateGridBounds(
     widgets: AbsoluteWidgetNode[],
     gridId: string,
@@ -261,6 +341,24 @@ export class LaneGridGeometryHelper {
       (w) => w.customSettings?.["gridId"] === gridId,
     );
     if (gridWidgets.length === 0) return null;
+
+    for (const w of gridWidgets) {
+      const saved = w.customSettings?.["gridBounds"];
+      if (
+        saved &&
+        typeof saved.x === "number" &&
+        typeof saved.y === "number" &&
+        typeof saved.width === "number" &&
+        typeof saved.height === "number"
+      ) {
+        return {
+          x: saved.x,
+          y: saved.y,
+          width: Math.max(100, saved.width),
+          height: Math.max(50, saved.height),
+        };
+      }
+    }
 
     const minX = Math.min(...gridWidgets.map((w) => w.x));
     const maxX = Math.max(...gridWidgets.map((w) => w.x + w.width));

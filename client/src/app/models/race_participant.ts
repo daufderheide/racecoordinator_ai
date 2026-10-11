@@ -33,5 +33,6 @@ export class RaceParticipant {
     public top2Consecutive: number = 0,
     public top3Consecutive: number = 0,
     public hasSegments?: boolean,
+    public groupRank?: number,
   ) {}
 }

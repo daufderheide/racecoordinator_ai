@@ -137,6 +137,10 @@ export function handleStartGridSession(
 
   comp.activeGridSession = session;
 
+  for (const sw of sourceWidgets) {
+    LaneGridReplicationHelper.updateWidgetCellRatios(sw, session);
+  }
+
   if (options.replaceExisting) {
     const sourceIds = new Set(sourceWidgets.map((w: any) => w.id));
     layout.widgets = layout.widgets.filter((w: any) => {
@@ -260,6 +264,17 @@ export function handleEditGridTemplate(
       first.customSettings?.["layoutOrientation"] || "vertical",
   };
 
+  for (const w of gridWidgets) {
+    if (LaneGridReplicationHelper.isMasterWidget(w, session)) {
+      if (
+        w.customSettings?.["cellWidthRatio"] === undefined ||
+        w.customSettings?.["cellHeightRatio"] === undefined
+      ) {
+        LaneGridReplicationHelper.updateWidgetCellRatios(w, session);
+      }
+    }
+  }
+
   comp.activeGridSession = session;
   layout.widgets = LaneGridReplicationHelper.syncAllMasterWidgetsToLanes(
     session,
@@ -314,6 +329,29 @@ export function handleUpdateGridBounds(
   const layout = comp.getLayout(targetUi);
   if (!layout?.widgets) return;
 
+  const oldBounds = comp.activeGridSession.bounds;
+  for (const w of layout.widgets) {
+    if (
+      w.customSettings?.["gridId"] === comp.activeGridSession.gridId &&
+      LaneGridReplicationHelper.isMasterWidget(w, comp.activeGridSession)
+    ) {
+      if (w.customSettings) {
+        if (!w.customSettings["gridBounds"]) {
+          w.customSettings["gridBounds"] = { ...oldBounds };
+        }
+        if (
+          w.customSettings["cellWidthRatio"] === undefined ||
+          w.customSettings["cellHeightRatio"] === undefined
+        ) {
+          LaneGridReplicationHelper.updateWidgetCellRatios(
+            w,
+            comp.activeGridSession,
+          );
+        }
+      }
+    }
+  }
+
   comp.activeGridSession = {
     ...comp.activeGridSession,
     bounds: newBounds,
@@ -332,5 +370,37 @@ export function handleUpdateGridBounds(
     comp.parsedLayouts,
   );
   comp.syncRacedayPreview?.(layout, targetUi);
+  comp.cdr.markForCheck();
+}
+
+export function handleDeleteGrid(
+  comp: any,
+  gridId: string,
+  ui?: CustomUI,
+): void {
+  if (!gridId) return;
+  const targetUi = ui || comp.activeCustomUi;
+  const layout = comp.getLayout(targetUi);
+  if (!layout?.widgets) return;
+
+  layout.widgets = LaneGridReplicationHelper.removeGrid(layout.widgets, gridId);
+  LaneGridAnimationHelper.reset(gridId);
+
+  if (comp.activeGridSession?.gridId === gridId) {
+    comp.activeGridSession = null;
+  }
+  if (comp.currentSelectedWidget?.customSettings?.["gridId"] === gridId) {
+    comp.currentSelectedWidget = null;
+  }
+
+  updateLayoutOnModel(
+    layout,
+    targetUi,
+    comp.editingSettings,
+    comp.isCustomUiPractice(targetUi),
+    comp.parsedLayouts,
+  );
+  comp.syncRacedayPreview?.(layout, targetUi);
+  comp.captureState?.();
   comp.cdr.markForCheck();
 }

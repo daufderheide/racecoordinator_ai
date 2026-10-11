@@ -507,7 +507,7 @@ export class RaceConnectionService implements OnDestroy {
         this.dataService.getGroupStandingsUpdate().subscribe((update) => {
           if (update && update.participants) {
             const participants = update.participants.map((p: any) =>
-              RaceParticipantConverter.fromProto(p),
+              RaceParticipantConverter.fromGroupProto(p),
             );
             this.raceService.setGroupParticipants(
               participants,

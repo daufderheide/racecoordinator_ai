@@ -447,6 +447,7 @@
                                   (layoutChanged)="onLayoutChanged($event, ui)"
                                   (columnsChanged)="onColumnsChanged(ui)"
                                   (finishGrid)="finishGridSession(ui)"
+                                  (deleteGrid)="onDeleteGrid($event, ui)"
                                   (gridBoundsChange)="
                                     onGridBoundsChange($event, ui)
                                   "
@@ -692,6 +693,7 @@
                                   (replicate)="onReplicateLanes($event, ui)"
                                   (editGrid)="onEditGridTemplate($event, ui)"
                                   (detachGrid)="onDetachGrid($event, ui)"
+                                  (deleteGrid)="onDeleteGrid($event, ui)"
                                 ></app-widget-inspector-fields>
                               </div>
                             </div>

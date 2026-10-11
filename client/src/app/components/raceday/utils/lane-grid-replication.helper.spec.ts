@@ -290,6 +290,59 @@ describe("LaneGridReplicationHelper", () => {
     expect(pos4.customSettings?.["targetIndex"]).toBe(3);
   });
 
+  it("should scale master and mirrored widgets proportionally when session bounds resize", () => {
+    const session: LaneGridSession = {
+      gridId: "scale-test",
+      bounds: { x: 100, y: 100, width: 800, height: 400 },
+      totalLanes: 4,
+      direction: "horizontal",
+      sourceLaneIndex: 0,
+      bindingMode: "lane",
+    };
+
+    const master: AbsoluteWidgetNode = {
+      id: "w-scale-master",
+      widgetType: "lane-column",
+      x: 100,
+      y: 100,
+      width: 200,
+      height: 400,
+      zIndex: 1,
+      customSettings: {
+        gridId: "scale-test",
+        gridLane: 0,
+        gridBounds: { x: 100, y: 100, width: 800, height: 400 },
+        cellWidthRatio: 1.0,
+        cellHeightRatio: 1.0,
+        cellOffsetXRatio: 0,
+        cellOffsetYRatio: 0,
+      },
+    };
+
+    // Resized session bounds: 1000 width (pitch 250), 500 height
+    const resizedSession: LaneGridSession = {
+      ...session,
+      bounds: { x: 100, y: 100, width: 1000, height: 500 },
+    };
+
+    const synced = LaneGridReplicationHelper.syncMasterWidgetToLanes(
+      master,
+      resizedSession,
+      [master],
+    );
+
+    const updatedMaster = synced.find((w) => w.id === master.id)!;
+    expect(updatedMaster.width).toBe(250);
+    expect(updatedMaster.height).toBe(500);
+
+    const mirroredLane1 = synced.find(
+      (w) => w.id === `${master.id}_grid_lane_1`,
+    )!;
+    expect(mirroredLane1.width).toBe(250);
+    expect(mirroredLane1.height).toBe(500);
+    expect(mirroredLane1.x).toBe(350); // 100 + 250
+  });
+
   it("should sync all master widgets and clean up orphans", () => {
     const w1: AbsoluteWidgetNode = {
       id: "w-1",
@@ -1268,6 +1321,85 @@ describe("LaneGridReplicationHelper", () => {
         gridWidgets.some((w) => Number(w.customSettings?.["gridLane"]) >= 2),
       ).toBeFalse();
     });
+
+    it("should preserve grid size and adjust widget heights when mirror count changes with existingBounds", () => {
+      const explicitBounds = { x: 100, y: 100, width: 300, height: 200 };
+      const updated = LaneGridReplicationHelper.updateGridTotalLanes(
+        initialWidgets,
+        gridId,
+        4,
+        explicitBounds,
+      );
+
+      const gridWidgets = updated.filter(
+        (w) => w.customSettings?.["gridId"] === gridId,
+      );
+      expect(gridWidgets.length).toBe(4);
+      // For height 200 with 4 lanes, pitch is 50, widgets adjust to 50
+      expect(gridWidgets[0].height).toBe(50);
+      expect(gridWidgets[1].height).toBe(50);
+      expect(gridWidgets[2].height).toBe(50);
+      expect(gridWidgets[3].height).toBe(50);
+      expect(gridWidgets[0].customSettings?.["gridBounds"]).toEqual(
+        explicitBounds,
+      );
+    });
+
+    it("should adjust widget widths and keep grid size unchanged in horizontal direction", () => {
+      const horizWidgets: AbsoluteWidgetNode[] = [
+        {
+          id: "hw-0",
+          widgetType: "lane-column",
+          x: 50,
+          y: 50,
+          width: 200,
+          height: 300,
+          zIndex: 1,
+          customSettings: {
+            gridId: "h-grid",
+            gridLane: 0,
+            targetIndex: 0,
+            gridTotalLanes: 2,
+            gridDirection: "horizontal",
+            gridBounds: { x: 50, y: 50, width: 400, height: 300 },
+          },
+        },
+        {
+          id: "hw-1",
+          widgetType: "lane-column",
+          x: 250,
+          y: 50,
+          width: 200,
+          height: 300,
+          zIndex: 1,
+          customSettings: {
+            gridId: "h-grid",
+            gridLane: 1,
+            gridMasterId: "hw-0",
+            targetIndex: 1,
+            gridTotalLanes: 2,
+            gridDirection: "horizontal",
+            gridBounds: { x: 50, y: 50, width: 400, height: 300 },
+          },
+        },
+      ];
+
+      const updated = LaneGridReplicationHelper.updateGridTotalLanes(
+        horizWidgets,
+        "h-grid",
+        4,
+      );
+      const gridWidgets = updated.filter(
+        (w) => w.customSettings?.["gridId"] === "h-grid",
+      );
+      expect(gridWidgets.length).toBe(4);
+      // In 400 width with 4 lanes, pitch is 100, width scales to 100
+      expect(gridWidgets[0].width).toBe(100);
+      expect(gridWidgets[1].width).toBe(100);
+      expect(gridWidgets[2].width).toBe(100);
+      expect(gridWidgets[3].width).toBe(100);
+      expect(gridWidgets[0].height).toBe(300);
+    });
   });
 
   describe("getGridDataCount", () => {
@@ -1451,6 +1583,20 @@ describe("LaneGridReplicationHelper", () => {
       expect(generatedRow3?.y).toBe(250); // 100 + 3 * 50
       expect(generatedRow2?.customSettings?.["targetIndex"]).toBe(2);
       expect(generatedRow3?.customSettings?.["targetIndex"]).toBe(3);
+    });
+  });
+
+  describe("moveGridBounds", () => {
+    it("should delegate to LaneGridGeometryHelper.moveGridBounds", () => {
+      const bounds = { x: 100, y: 100, width: 300, height: 200 };
+      const moved = LaneGridReplicationHelper.moveGridBounds(
+        bounds,
+        50,
+        50,
+        1920,
+        1080,
+      );
+      expect(moved).toEqual({ x: 150, y: 150, width: 300, height: 200 });
     });
   });
 });

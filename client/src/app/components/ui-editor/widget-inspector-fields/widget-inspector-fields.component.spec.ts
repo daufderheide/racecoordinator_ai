@@ -149,6 +149,32 @@ describe("WidgetInspectorFieldsComponent", () => {
     expect(component.requestReplicate.emit).toHaveBeenCalled();
   });
 
+  it("should forward deleteGrid when lane-column inspector emits deleteGrid", () => {
+    const laneColWidget: AbsoluteWidgetNode = {
+      id: "w-lane-col",
+      widgetType: "lane-column",
+      x: 0,
+      y: 0,
+      width: 200,
+      height: 120,
+      zIndex: 1,
+      customSettings: {
+        columnKey: "lastLapTime",
+        bindingMode: "lane",
+        targetIndex: 0,
+        gridId: "grid-test-fwd",
+      },
+    };
+    fixture.componentRef.setInput("widget", laneColWidget);
+    fixture.detectChanges();
+
+    spyOn(component.deleteGrid, "emit");
+    const laneColComp =
+      fixture.debugElement.children[0].children[0].componentInstance;
+    laneColComp.deleteGrid.emit("grid-test-fwd");
+    expect(component.deleteGrid.emit).toHaveBeenCalledWith("grid-test-fwd");
+  });
+
   it("should render action-button-inspector when widget is action-forward or action-close", () => {
     fixture.componentRef.setInput("widget", {
       id: "w-forward",

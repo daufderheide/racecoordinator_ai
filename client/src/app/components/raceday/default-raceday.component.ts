@@ -507,6 +507,36 @@ export class DefaultRacedayComponent
     );
   }
 
+  private syncHeatDriversWithParticipants(): void {
+    if (this.heat && this.heat.heatDrivers) {
+      this.heat.heatDrivers.forEach((hd) => {
+        const d = hd.actualDriver || hd.driver;
+        const driverId = d?.entity_id || d?.name;
+        const match = this.participants?.find(
+          (p) =>
+            p.driver?.entity_id === driverId || p.driver?.name === driverId,
+        );
+        if (match) {
+          if (match.rank) {
+            (hd as any).overallRank = match.rank;
+          }
+          if (match.fuelLevel != null) {
+            if (hd.participant) {
+              hd.participant.fuelLevel = match.fuelLevel;
+            }
+            if (hd.laneIndex != null) {
+              this.updateLaneFuel(
+                hd.laneIndex,
+                match.fuelLevel,
+                !!hd.isRefueling,
+              );
+            }
+          }
+        }
+      });
+    }
+  }
+
   protected getLeaderboardPosition(entry: any): number {
     // Sort all entries to determine their relative visual position (dense ranking)
     const sorted = [...this.leaderboardEntries].sort((a, b) => {
@@ -999,6 +1029,7 @@ export class DefaultRacedayComponent
   gridSession = input<LaneGridSession | null>(null);
   widgetSelected = output<string | null>();
   finishGrid = output<void>();
+  deleteGrid = output<string>();
   gridBoundsChange = output<LaneGridBounds>();
 
   get visualScale(): number {
@@ -1674,33 +1705,7 @@ export class DefaultRacedayComponent
       this.raceService.participants$.subscribe((participants) => {
         this.participants = participants || [];
         this.updateLeaderboardEntries();
-        if (this.heat && this.heat.heatDrivers) {
-          this.heat.heatDrivers.forEach((hd) => {
-            const d = hd.actualDriver || hd.driver;
-            const driverId = d?.entity_id || d?.name;
-            const match = this.participants.find(
-              (p) =>
-                p.driver?.entity_id === driverId || p.driver?.name === driverId,
-            );
-            if (match) {
-              if (match.rank) {
-                (hd as any).overallRank = match.rank;
-              }
-              if (match.fuelLevel != null) {
-                if (hd.participant) {
-                  hd.participant.fuelLevel = match.fuelLevel;
-                }
-                if (hd.laneIndex != null) {
-                  this.updateLaneFuel(
-                    hd.laneIndex,
-                    match.fuelLevel,
-                    !!hd.isRefueling,
-                  );
-                }
-              }
-            }
-          });
-        }
+        this.syncHeatDriversWithParticipants();
         if (!this.isDestroyed) {
           this.cdr.markForCheck();
         }
@@ -1764,6 +1769,7 @@ export class DefaultRacedayComponent
             this.dataService.updateRaceSubscription(true);
           }
           this.sortHeatDrivers();
+          this.syncHeatDriversWithParticipants();
           if (!this.isDestroyed) {
             this.cdr.markForCheck();
           }
@@ -4202,6 +4208,31 @@ export class DefaultRacedayComponent
     return RacedayLayoutUtils.getAnchorFontSize(anchor);
   }
   getDriverOverallRanking(hd: DriverHeatData): number | undefined {
+    if (!hd) return undefined;
+    let entityId: string | undefined;
+
+    if (hd.participant?.team) {
+      entityId = hd.participant.team.entity_id || hd.participant.team.name;
+    } else {
+      const d = hd.actualDriver || hd.driver;
+      entityId = d?.entity_id || d?.name;
+    }
+
+    const entry = this.leaderboardEntries?.find((e) => e.entityId === entityId);
+    if (entry && entry.rank > 0) return entry.rank;
+
+    const match = this.participants?.find((p) => {
+      if (hd.participant?.team) {
+        return p.team?.entity_id === entityId || p.team?.name === entityId;
+      }
+      return (
+        p.driver?.entity_id === entityId ||
+        p.driver?.name === entityId ||
+        p.objectId === hd.objectId
+      );
+    });
+    if (match?.rank && match.rank > 0) return match.rank;
+
     return (
       (hd as any).overallRank ??
       hd.participant?.rank ??
@@ -8316,9 +8347,73 @@ export class DefaultRacedayComponent
     document.addEventListener("pointerup", onPointerUp);
   }
 
+  onGridMoveStart(event: PointerEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    const session = this.gridSession();
+    if (!session) return;
+
+    const startX = event.clientX;
+    const startY = event.clientY;
+    const initialBounds = { ...session.bounds };
+    const scale = this.visualScale || 1;
+    const baseWidth = this.layout?.baseWidth || 1920;
+    const baseHeight = this.layout?.baseHeight || 1080;
+
+    const nonGridWidgets = (this.layout?.widgets || []).filter(
+      (w) => w.customSettings?.["gridId"] !== session.gridId,
+    );
+    const snapEdgesX: number[] = [0, baseWidth];
+    const snapEdgesY: number[] = [0, baseHeight];
+    for (const w of nonGridWidgets) {
+      snapEdgesX.push(w.x, w.x + w.width);
+      snapEdgesY.push(w.y, w.y + w.height);
+    }
+
+    let hasMoved = false;
+
+    const onPointerMove = (moveEvent: PointerEvent) => {
+      const deltaX = (moveEvent.clientX - startX) / scale;
+      const deltaY = (moveEvent.clientY - startY) / scale;
+
+      const newBounds = LaneGridReplicationHelper.moveGridBounds(
+        initialBounds,
+        deltaX,
+        deltaY,
+        baseWidth,
+        baseHeight,
+        snapEdgesX,
+        snapEdgesY,
+        8,
+      );
+
+      hasMoved = true;
+      this.gridBoundsChange.emit(newBounds);
+    };
+
+    const onPointerUp = () => {
+      document.removeEventListener("pointermove", onPointerMove);
+      document.removeEventListener("pointerup", onPointerUp);
+      if (hasMoved && this.layout) {
+        this.layoutChanged.emit(this.layout);
+      }
+    };
+
+    document.addEventListener("pointermove", onPointerMove);
+    document.addEventListener("pointerup", onPointerUp);
+  }
+
+  onDeleteGridClicked(): void {
+    const session = this.gridSession();
+    if (session) {
+      this.deleteGrid.emit(session.gridId);
+    }
+  }
+
   onMasterWidgetModified(widget: AbsoluteWidgetNode): void {
     const session = this.gridSession();
     if (!session || !this.layout?.widgets) return;
+    LaneGridReplicationHelper.updateWidgetCellRatios(widget, session);
     this.layout.widgets = LaneGridReplicationHelper.syncMasterWidgetToLanes(
       widget,
       session,

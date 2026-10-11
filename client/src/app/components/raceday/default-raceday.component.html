@@ -168,6 +168,15 @@
           [style.height.px]="gridSession()!.bounds.height"
         >
           <div
+            class="grid-move-handle-bar"
+            (pointerdown)="onGridMoveStart($event)"
+            [title]="'UE_GRID_MOVE_TOOLTIP' | translate"
+          >
+            <span class="material-icons move-icon">open_with</span>
+            <span class="move-label">{{ "UE_GRID_MOVE" | translate }}</span>
+          </div>
+
+          <div
             class="grid-resize-handle handle-nw"
             (pointerdown)="onGridResizeStart($event, 'nw')"
           ></div>
@@ -233,7 +242,9 @@
                 [class.master-badge]="cell.isMaster"
               >
                 @if (cell.isMaster) {
-                  <i class="fas fa-crown"></i>
+                  <span class="material-icons" style="font-size: 13px"
+                    >star</span
+                  >
                   {{
                     (gridSession()!.bindingMode === "position"
                       ? "UE_GRID_POSITION_MASTER_BADGE"
@@ -241,7 +252,9 @@
                     ) | translate
                   }}
                 } @else {
-                  <i class="fas fa-clone"></i>
+                  <span class="material-icons" style="font-size: 13px"
+                    >content_copy</span
+                  >
                   {{
                     (gridSession()!.bindingMode === "position"
                       ? "UE_GRID_POSITION_MIRRORED_BADGE"
@@ -255,8 +268,14 @@
         </div>
 
         <div class="lane-blueprint-toolbar">
-          <div class="lane-blueprint-title">
-            <i class="fas fa-layer-group me-1"></i>
+          <div
+            class="lane-blueprint-title draggable-grid-title"
+            (pointerdown)="onGridMoveStart($event)"
+            [title]="'UE_GRID_MOVE_TOOLTIP' | translate"
+          >
+            <span class="material-icons me-1" style="font-size: 16px"
+              >grid_view</span
+            >
             {{
               (gridSession()!.bindingMode === "position"
                 ? "UE_GRID_POSITION_MODE_TITLE"
@@ -267,10 +286,34 @@
           <div class="lane-blueprint-actions">
             <button
               type="button"
-              class="btn btn-sm btn-primary"
+              class="btn btn-sm btn-outline-primary grid-move-btn"
+              (pointerdown)="onGridMoveStart($event)"
+              [title]="'UE_GRID_MOVE_TOOLTIP' | translate"
+            >
+              <span class="material-icons me-1" style="font-size: 14px"
+                >open_with</span
+              >
+              {{ "UE_GRID_MOVE" | translate }}
+            </button>
+            <button
+              type="button"
+              class="btn btn-sm btn-danger grid-delete-btn"
+              (click)="onDeleteGridClicked()"
+              [title]="'UE_GRID_DELETE_TOOLTIP' | translate"
+            >
+              <span class="material-icons me-1" style="font-size: 14px"
+                >delete</span
+              >
+              {{ "UE_GRID_DELETE" | translate }}
+            </button>
+            <button
+              type="button"
+              class="btn btn-sm btn-primary grid-done-btn"
               (click)="finishGrid.emit()"
             >
-              <i class="fas fa-check me-1"></i>
+              <span class="material-icons me-1" style="font-size: 14px"
+                >check</span
+              >
               {{ "UE_GRID_MODE_DONE" | translate }}
             </button>
           </div>

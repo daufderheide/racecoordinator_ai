@@ -2,6 +2,7 @@ import { CustomUI } from "@app/models/custom-ui";
 import { AbsoluteWidgetNode } from "@app/models/settings";
 
 import {
+  handleDeleteGrid,
   handleDetachGrid,
   handleEditGridTemplate,
   handleFinishGridSession,
@@ -352,6 +353,99 @@ describe("ui-editor-grid.helper", () => {
       expect(mockComp.cdr.markForCheck).toHaveBeenCalled();
       const widgets = mockComp.getLayout().widgets;
       expect(widgets.length).toBeGreaterThanOrEqual(2);
+    });
+
+    it("should translate master widgets by dx and dy when bounds move", () => {
+      mockWidgets[0].customSettings = {
+        gridId: "test-grid-move",
+        gridLane: 0,
+        bindingMode: "lane",
+      };
+      mockWidgets[0].x = 100;
+      mockWidgets[0].y = 50;
+
+      mockComp.activeGridSession = {
+        gridId: "test-grid-move",
+        bounds: { x: 100, y: 50, width: 800, height: 400 },
+        totalLanes: 4,
+        direction: "horizontal",
+        sourceLaneIndex: 0,
+        bindingMode: "lane",
+      };
+
+      const newBounds = { x: 150, y: 80, width: 800, height: 400 };
+      handleUpdateGridBounds(mockComp, newBounds, mockUi);
+
+      const widgets = mockComp.getLayout().widgets;
+      const master = widgets.find((w: any) => w.id === mockWidgets[0].id);
+      expect(master.x).toBe(150);
+      expect(master.y).toBe(80);
+    });
+
+    it("should scale placed widgets when grid bounds resize", () => {
+      mockWidgets[0].customSettings = {
+        gridId: "test-grid-scale-bounds",
+        gridLane: 0,
+        bindingMode: "lane",
+        cellWidthRatio: 0.8,
+        cellHeightRatio: 0.5,
+      };
+      mockWidgets[0].x = 100;
+      mockWidgets[0].y = 50;
+      mockWidgets[0].width = 160;
+      mockWidgets[0].height = 200;
+
+      mockComp.activeGridSession = {
+        gridId: "test-grid-scale-bounds",
+        bounds: { x: 100, y: 50, width: 800, height: 400 },
+        totalLanes: 4,
+        direction: "horizontal",
+        sourceLaneIndex: 0,
+        bindingMode: "lane",
+      };
+
+      const newBounds = { x: 100, y: 50, width: 1200, height: 600 };
+      handleUpdateGridBounds(mockComp, newBounds, mockUi);
+
+      const widgets = mockComp.getLayout().widgets;
+      const master = widgets.find((w: any) => w.id === mockWidgets[0].id);
+      expect(master.width).toBe(240);
+      expect(master.height).toBe(300);
+    });
+  });
+
+  describe("handleDeleteGrid", () => {
+    it("should delete all widgets belonging to gridId in one shot", () => {
+      mockWidgets[0].customSettings = { gridId: "delete-me", gridLane: 0 };
+      mockWidgets[1].customSettings = { gridId: "keep-me", gridLane: 0 };
+      const mirroredWidget: AbsoluteWidgetNode = {
+        id: "w-mirrored-1",
+        widgetType: "lane-column",
+        x: 300,
+        y: 100,
+        width: 200,
+        height: 100,
+        zIndex: 10,
+        customSettings: { gridId: "delete-me", gridLane: 1 },
+      };
+      mockComp.getLayout().widgets.push(mirroredWidget);
+      mockComp.activeGridSession = { gridId: "delete-me" };
+      mockComp.currentSelectedWidget = mockWidgets[0];
+
+      handleDeleteGrid(mockComp, "delete-me", mockUi);
+
+      const remaining = mockComp.getLayout().widgets;
+      expect(remaining.length).toBe(1);
+      expect(remaining[0].id).toBe(mockWidgets[1].id);
+      expect(mockComp.activeGridSession).toBeNull();
+      expect(mockComp.currentSelectedWidget).toBeNull();
+      expect(mockComp.captureState).toHaveBeenCalled();
+      expect(mockComp.cdr.markForCheck).toHaveBeenCalled();
+    });
+
+    it("should handle empty or null gridId gracefully", () => {
+      handleDeleteGrid(mockComp, "", mockUi);
+      expect(mockComp.captureState).not.toHaveBeenCalled();
     });
   });
 });

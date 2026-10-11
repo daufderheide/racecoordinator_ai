@@ -1,5 +1,6 @@
 import { fakeAsync, flush, TestBed, tick } from "@angular/core/testing";
 import { of, Subject } from "rxjs";
+import { RaceParticipantConverter } from "@app/converters/race_participant.converter";
 import { DataService } from "@app/data.service";
 import { Driver } from "@app/models/driver";
 import {
@@ -28,12 +29,14 @@ describe("RaceConnectionService", () => {
   let raceUpdateSubject: Subject<any>;
   let lapsSubject: Subject<ILap>;
   let standingsUpdateSubject: Subject<any>;
+  let groupStandingsUpdateSubject: Subject<any>;
 
   beforeEach(() => {
     interfaceEventsSubject = new Subject<IInterfaceEvent>();
     raceUpdateSubject = new Subject<any>();
     lapsSubject = new Subject<ILap>();
     standingsUpdateSubject = new Subject<any>();
+    groupStandingsUpdateSubject = new Subject<any>();
 
     mockDataService = jasmine.createSpyObj("DataService", [
       "getInterfaceEvents",
@@ -71,7 +74,9 @@ describe("RaceConnectionService", () => {
       standingsUpdateSubject.asObservable(),
     );
     mockDataService.getOverallStandingsUpdate.and.returnValue(of({}));
-    mockDataService.getGroupStandingsUpdate.and.returnValue(of({}));
+    mockDataService.getGroupStandingsUpdate.and.returnValue(
+      groupStandingsUpdateSubject.asObservable(),
+    );
     mockDataService.getReactionTimes.and.returnValue(of({}));
     mockDataService.getSegments.and.returnValue(of(null));
     mockDataService.getRaceState.and.returnValue(of(RaceState.NOT_STARTED));
@@ -87,6 +92,9 @@ describe("RaceConnectionService", () => {
       "getCurrentHeat",
       "setCurrentHeat",
       "getHeats",
+      "setHeats",
+      "setParticipants",
+      "setGroupParticipants",
       "clear",
     ]);
     mockRaceService.getHeats.and.returnValue([]);
@@ -1025,6 +1033,40 @@ describe("RaceConnectionService", () => {
       mockWakeLockService.release.calls.reset();
       service.ngOnDestroy();
       expect(mockWakeLockService.release).toHaveBeenCalled();
+    });
+
+    it("should process group standings update without corrupting overall participant ranks", () => {
+      service.connect();
+
+      const overallProto = {
+        objectId: "p-d15",
+        driver: { model: { entityId: "d15" }, name: "Driver 15" },
+        rank: 15,
+      };
+      const overallParticipant =
+        RaceParticipantConverter.fromProto(overallProto);
+      expect(overallParticipant.rank).toBe(15);
+
+      groupStandingsUpdateSubject.next({
+        group: 2,
+        participants: [
+          {
+            objectId: "p-d15",
+            driver: { model: { entityId: "d15" }, name: "Driver 15" },
+            rank: 5,
+          },
+        ],
+      });
+
+      expect(mockRaceService.setGroupParticipants).toHaveBeenCalled();
+      const groupParticipants =
+        mockRaceService.setGroupParticipants.calls.mostRecent().args[0];
+      expect(groupParticipants[0].rank).toBe(5);
+      expect(groupParticipants[0].groupRank).toBe(5);
+
+      // The overall participant must retain its original rank 15!
+      expect(overallParticipant.rank).toBe(15);
+      expect(overallParticipant.groupRank).toBe(5);
     });
   });
 });

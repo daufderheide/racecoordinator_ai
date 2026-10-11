@@ -455,10 +455,55 @@ app-default-raceday {
   align-items: center;
 }
 
+.lane-blueprint-title.draggable-grid-title {
+  cursor: move;
+  user-select: none;
+  transition: color 0.15s ease;
+}
+
+.lane-blueprint-title.draggable-grid-title:hover {
+  color: #60a5fa;
+}
+
 .lane-blueprint-actions {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.lane-blueprint-toolbar .grid-move-btn {
+  border-color: #3b82f6;
+  color: #93c5fd;
+  cursor: move;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+}
+
+.lane-blueprint-toolbar .grid-move-btn:hover {
+  background: #1d4ed8;
+  color: #ffffff;
+}
+
+.lane-blueprint-toolbar .grid-delete-btn {
+  background: #ef4444;
+  border-color: #dc2626;
+  color: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lane-blueprint-toolbar .grid-delete-btn:hover {
+  background: #dc2626;
+  border-color: #b91c1c;
+}
+
+.lane-blueprint-toolbar .grid-done-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .lane-blueprint-toolbar .btn-outline-info {
@@ -469,6 +514,39 @@ app-default-raceday {
 .lane-blueprint-toolbar .btn-outline-info:hover {
   background: #38bdf8;
   color: #0f172a;
+}
+
+/* Grid Move Handle Bar (on Blueprint Overlay) */
+.grid-move-handle-bar {
+  position: absolute;
+  top: -30px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1e293b;
+  border: 1px solid #3b82f6;
+  border-radius: 6px;
+  padding: 3px 10px;
+  color: #93c5fd;
+  font-size: 11px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: move;
+  pointer-events: auto;
+  z-index: 70;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  user-select: none;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.grid-move-handle-bar:hover {
+  background: #2563eb;
+  color: #ffffff;
+}
+
+.grid-move-handle-bar .move-icon {
+  font-size: 14px;
 }
 
 /* Grid Perimeter Resize Handles */

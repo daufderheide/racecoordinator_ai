@@ -67,6 +67,7 @@ import {
   ThemeTemplateType,
 } from "./components/theme-template-modal/theme-template-modal";
 import {
+  handleDeleteGrid,
   handleDetachGrid,
   handleEditGridTemplate,
   handleFinishGridSession,
@@ -644,6 +645,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   onEditGridTemplate = (id: string, ui?: CustomUI) =>
     handleEditGridTemplate(this, id, ui);
   onDetachGrid = (id: string, ui?: CustomUI) => handleDetachGrid(this, id, ui);
+  onDeleteGrid = (id: string, ui?: CustomUI) => handleDeleteGrid(this, id, ui);
 
   openReplicateLaneModal(ui?: CustomUI): void {
     openReplicateLaneModalHelper(this, ui);
