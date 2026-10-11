@@ -62,9 +62,17 @@ Race Coordinator AI uses embedded SQLite (`sqlite-jdbc`) for all persistent data
 - **README Updates Restricted to Beta & Official Releases**: Automated README download link updates and PRs targeting `main` are strictly restricted to official stable releases (`vX.Y.Z`) and beta prereleases (`vX.Y.Z-beta.N`). Daily alpha and manual develop builds (`*-alpha.*`) must never update the main README or open documentation PRs.
 - **Release Sync PRs Must Use Merge Commits (Never Squash or Rebase)**: When an automated release sync PR (e.g. from `release/vX.Y.Z` into `develop`) encounters merge conflicts, it MUST be merged using a true two-parent merge commit ("Create a merge commit" in GitHub, or local `git merge`). NEVER squash or rebase a release sync PR, as squashing destroys the Git merge-base history and causes recurring merge conflicts on all subsequent releases.
 
-## Git Push Policy (No AI Agent Pushes)
-- **AI Agent must never push to git**: The AI agent must NEVER execute `git push` under any circumstances. All git changes will be reviewed and manually pushed by the user.
-- **Provide push commands**: When changes are ready to be pushed, provide the user with the exact git commands needed to push, especially when non-simple commands are required (e.g. `--force-with-lease`, `--no-verify`, upstream tracking, or specific tags).
+## Autonomous Read-Only Operations & Unit Test Execution
+- **Execute read-only operations without prompting**: The AI agent should autonomously run non-destructive diagnostic, inspection, and verification commands without pausing to ask the user for permission. This includes inspecting repository state (`git status`, `git log`, `git diff`, `git branch`), reading and searching files, checking build status, and executing unit tests.
+- **Run unit tests proactively**: Proactively execute client and server unit tests (`./run_client_unit_tests.sh`, `./run_server_tests.sh`, `mvn test`) as appropriate to verify code changes, satisfy test coverage gates, and check for regressions without asking the user beforehand.
+- **Visual & screendiff suite strictly prohibited by default**: Despite running unit tests autonomously, the AI agent must NEVER run the screendiff test suite (`./run_client_screendiff_tests.sh` or `run_client_screendiff_tests.ps1`) unless authoring a brand new visual test or explicitly requested by the user. Screendiffs take too long and require developer baseline review.
+
+## Git Commit & Push Policy (No AI Agent Commits or Pushes)
+- **AI Agent must never commit or push to git**: The AI agent must NEVER execute `git commit` or `git push` under any circumstances. All git changes must be reviewed, committed, and pushed manually by the user. The user needs time to verify code changes and ensure the commit message is formatted accurately for release logs.
+- **Provide commit suggestions & git commands**: When changes are complete and verified, provide the user with:
+  1. A suggested commit message adhering to the Conventional Commit Message Discipline (`feat:`, `fix:`, `refactor:`, etc.).
+  2. The list of modified, added, or deleted files.
+  3. The exact git commands needed to review (`git diff`), stage (`git add`), commit, and push.
 
 ## Meaningful Test Assertions & Mutation Resistance
 - **Test real behavior, not just line coverage**: New unit and integration tests must validate outputs, state changes, and boundary conditions with explicit assertions rather than writing trivial executions that only aim to pass line coverage counters. Tests must withstand mutation testing (PIT / Stryker).
