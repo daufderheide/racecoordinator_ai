@@ -2046,7 +2046,25 @@ export class DefaultRacedaySetupComponent implements OnInit {
   configureCustomUI() {
     this.closeDropdown();
     this.closeOptionsDropdown();
-    this.router.navigate(["/ui-editor"]);
+    let race = this.selectedRace;
+    if (!race && this.selectedEvent?.races?.length && this.races?.length) {
+      const raceId = this.getItemRaceId(this.selectedEvent.races[0]);
+      race = this.races.find((r) => r.entity_id === raceId);
+    }
+    if (!race && this.races?.length) {
+      const selectedId = this.settingsService.getSettings()?.selectedRaceId;
+      race =
+        this.races.find((r) => r.entity_id === selectedId) || this.races[0];
+    }
+    const themeInfo = this.themeService?.resolveThemeAndUiForRace?.(race);
+    const queryParams: Record<string, string> = { returnUrl: "/raceday-setup" };
+    if (themeInfo?.themeId) {
+      queryParams["themeId"] = themeInfo.themeId;
+    }
+    if (themeInfo?.uiId) {
+      queryParams["uiId"] = themeInfo.uiId;
+    }
+    this.router.navigate(["/ui-editor"], { queryParams });
   }
 
   openServerSettings() {

@@ -15,6 +15,7 @@ import {
   isLegacyPracticeUiName,
   isLegacyRacedayUiName,
 } from "./ui-editor-crud.helper";
+import { applyInitialExpanderState } from "./ui-editor-expander.helper";
 import { cloneSettings } from "./ui-editor-state.utils";
 
 export interface LoadedEditorData {
@@ -399,8 +400,32 @@ export function applyLoadedUiEditorData(comp: any, res: any): void {
   comp.editingState = loaded.initialState;
   comp.refreshDisplayProperties();
   comp.undoManager.initialize(comp.editingState);
+  applyInitialExpanderFromRoute(comp);
   comp.isLoading = false;
   if (!comp.isDestroyed) comp.cdr.markForCheck();
+}
+
+export function applyInitialExpanderFromRoute(comp: any): void {
+  const themeIdParam =
+    comp.route?.snapshot?.queryParamMap?.get("themeId") ||
+    comp.params?.()?.["themeId"];
+  const uiIdParam =
+    comp.route?.snapshot?.queryParamMap?.get("uiId") ||
+    comp.params?.()?.["uiId"];
+
+  if (themeIdParam || uiIdParam) {
+    const { newActiveUiId } = applyInitialExpanderState(
+      comp.sectionsExpanded,
+      comp.displayThemes,
+      comp.displayCustomUIs,
+      themeIdParam,
+      uiIdParam,
+    );
+    if (newActiveUiId) {
+      comp.activeCustomUiId = newActiveUiId;
+      comp.ensureWidgetSelected?.();
+    }
+  }
 }
 
 export function handleUiEditorDataLoadError(comp: any, err: any): void {
@@ -415,6 +440,7 @@ export function handleUiEditorDataLoadError(comp: any, err: any): void {
     comp.undoManager.initialize(comp.editingState);
   }
   comp.refreshDisplayProperties();
+  applyInitialExpanderFromRoute(comp);
   if (!comp.isDestroyed) comp.cdr.markForCheck();
 }
 

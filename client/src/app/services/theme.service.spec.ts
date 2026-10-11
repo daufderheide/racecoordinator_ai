@@ -356,4 +356,75 @@ describe("ThemeService", () => {
       });
     });
   });
+
+  describe("resolveThemeAndUiForRace", () => {
+    beforeEach(async () => {
+      mockThemes[1].uiId = "custom-ui-1";
+      await service.initialize();
+    });
+
+    it("should prioritize per-race theme override", () => {
+      const settings = new Settings();
+      settings.raceThemeOverrides = { "race-99": "theme-1" };
+      settingsServiceSpy.getSettings.and.returnValue(settings);
+
+      const result = service.resolveThemeAndUiForRace({
+        entity_id: "race-99",
+        theme_id: "theme-2",
+      });
+
+      expect(result.themeId).toBe("theme-1");
+      expect(result.uiId).toBe("custom-ui-1");
+    });
+
+    it("should use race theme_id when no override exists", () => {
+      const settings = new Settings();
+      settingsServiceSpy.getSettings.and.returnValue(settings);
+
+      const result = service.resolveThemeAndUiForRace({
+        entity_id: "race-99",
+        theme_id: "theme-1",
+      });
+
+      expect(result.themeId).toBe("theme-1");
+      expect(result.uiId).toBe("custom-ui-1");
+    });
+
+    it("should default to practice theme and practice layout for practice races", () => {
+      const settings = new Settings();
+      settingsServiceSpy.getSettings.and.returnValue(settings);
+
+      const result = service.resolveThemeAndUiForRace({
+        entity_id: "race-practice",
+        practice: true,
+      });
+
+      expect(result.themeId).toBe("practice_theme_rc_ai");
+      expect(result.uiId).toBe("practice_ui_layout_rc_ai");
+    });
+
+    it("should resolve fuel layout for default_fuel_theme_rc_ai", () => {
+      const settings = new Settings();
+      settingsServiceSpy.getSettings.and.returnValue(settings);
+
+      const result = service.resolveThemeAndUiForRace({
+        entity_id: "race-fuel",
+        theme_id: "default_fuel_theme_rc_ai",
+      });
+
+      expect(result.themeId).toBe("default_fuel_theme_rc_ai");
+      expect(result.uiId).toBe("default_fuel_ui_layout_rc_ai");
+    });
+
+    it("should fall back to active theme and default ui layout when no race is specified", () => {
+      const settings = new Settings();
+      settings.activeThemeId = "default_theme";
+      settingsServiceSpy.getSettings.and.returnValue(settings);
+
+      const result = service.resolveThemeAndUiForRace();
+
+      expect(result.themeId).toBe("default_theme");
+      expect(result.uiId).toBe("default_ui_layout_rc_ai");
+    });
+  });
 });

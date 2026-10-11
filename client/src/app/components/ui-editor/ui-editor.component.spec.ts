@@ -3792,6 +3792,103 @@ describe("UIEditorComponent", () => {
       });
     }));
 
+    describe("initial expander state from route query parameters", () => {
+      beforeEach(() => {
+        const theme1: Theme = {
+          entity_id: "t_race",
+          name: "Race Theme",
+          is_default: false,
+          slots: {},
+          audio_slots: {},
+          uiId: "ui_race",
+        };
+        const theme2: Theme = {
+          entity_id: "t_other",
+          name: "Other Theme",
+          is_default: false,
+          slots: {},
+          audio_slots: {},
+          uiId: "ui_other",
+        };
+        const ui1: CustomUI = {
+          entity_id: "ui_race",
+          name: "Race UI",
+          is_default: false,
+        };
+        const ui2: CustomUI = {
+          entity_id: "ui_other",
+          name: "Other UI",
+          is_default: false,
+        };
+
+        component.editingState.themes = [theme1, theme2];
+        component.editingState.customUIs = [ui1, ui2];
+        component.refreshDisplayProperties();
+      });
+
+      it("should expand corresponding theme and layout from route query parameters", () => {
+        (component as any).route = {
+          snapshot: {
+            queryParamMap: {
+              get: (key: string) => {
+                if (key === "themeId") return "t_race";
+                if (key === "uiId") return "ui_race";
+                return null;
+              },
+            },
+          },
+        };
+
+        component.applyInitialExpanderStateFromRoute();
+
+        expect(component.sectionsExpanded["themes"]).toBeTrue();
+        expect(component.sectionsExpanded["theme_t_race"]).toBeTrue();
+        expect(component.sectionsExpanded["theme_t_other"]).toBeFalse();
+
+        expect(component.sectionsExpanded["customUIs"]).toBeTrue();
+        expect(component.sectionsExpanded["ui_ui_race"]).toBeTrue();
+        expect(component.sectionsExpanded["ui_ui_other"]).toBeFalse();
+        expect(component.activeCustomUiId).toBe("ui_race");
+      });
+
+      it("should resolve uiId from theme when only themeId is passed", () => {
+        (component as any).route = {
+          snapshot: {
+            queryParamMap: {
+              get: (key: string) => (key === "themeId" ? "t_race" : null),
+            },
+          },
+        };
+
+        component.applyInitialExpanderStateFromRoute();
+
+        expect(component.sectionsExpanded["theme_t_race"]).toBeTrue();
+        expect(component.sectionsExpanded["ui_ui_race"]).toBeTrue();
+        expect(component.activeCustomUiId).toBe("ui_race");
+      });
+
+      it("should allow user to expand or collapse freely after initial state", () => {
+        (component as any).route = {
+          snapshot: {
+            queryParamMap: {
+              get: (key: string) => {
+                if (key === "themeId") return "t_race";
+                if (key === "uiId") return "ui_race";
+                return null;
+              },
+            },
+          },
+        };
+
+        component.applyInitialExpanderStateFromRoute();
+        expect(component.sectionsExpanded["theme_t_race"]).toBeTrue();
+
+        component.toggleThemeSection("t_other");
+        expect(component.sectionsExpanded["theme_t_other"]).toBeTrue();
+        expect(component.sectionsExpanded["theme_t_race"]).toBeFalse();
+      });
+    });
+
     it("should auto-save modified custom UIs and refresh customUiService", async () => {
       const customUi: CustomUI = {
         entity_id: "c_auto",

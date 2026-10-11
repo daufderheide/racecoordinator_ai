@@ -2,6 +2,7 @@ import { CustomUI } from "@app/models/custom-ui";
 import { Theme } from "@app/models/theme";
 
 import {
+  applyInitialExpanderState,
   loadExpanderStateFromStorage,
   saveExpanderStateToStorage,
   toggleThemeExpander,
@@ -77,5 +78,99 @@ describe("ui-editor-expander.helper", () => {
     setTimeout(() => {
       done();
     }, 10);
+  });
+
+  describe("applyInitialExpanderState", () => {
+    const themes: Theme[] = [
+      {
+        entity_id: "theme_1",
+        name: "Theme 1",
+        is_default: true,
+        slots: {},
+        audio_slots: {},
+        uiId: "ui_1",
+      },
+      {
+        entity_id: "theme_2",
+        name: "Theme 2",
+        is_default: false,
+        slots: {},
+        audio_slots: {},
+        uiId: "ui_2",
+      },
+    ];
+
+    const uis: CustomUI[] = [
+      { entity_id: "ui_1", name: "UI 1", is_default: true },
+      { entity_id: "ui_2", name: "UI 2", is_default: false },
+    ];
+
+    it("should return empty object and not modify state if no target IDs provided", () => {
+      const state: Record<string, boolean> = { theme_theme_1: true };
+      const res = applyInitialExpanderState(state, themes, uis, null, null);
+      expect(res).toEqual({});
+      expect(state["theme_theme_1"]).toBeTrue();
+    });
+
+    it("should expand target theme and UI and collapse others", () => {
+      const state: Record<string, boolean> = {
+        themes: false,
+        theme_theme_1: true,
+        theme_theme_2: false,
+        customUIs: false,
+        ui_ui_1: true,
+        ui_ui_2: false,
+      };
+
+      const res = applyInitialExpanderState(
+        state,
+        themes,
+        uis,
+        "theme_2",
+        "ui_2",
+      );
+
+      expect(res.newActiveUiId).toBe("ui_2");
+      expect(state["themes"]).toBeTrue();
+      expect(state["theme_theme_1"]).toBeFalse();
+      expect(state["theme_theme_2"]).toBeTrue();
+      expect(state["customUIs"]).toBeTrue();
+      expect(state["ui_ui_1"]).toBeFalse();
+      expect(state["ui_ui_2"]).toBeTrue();
+
+      const loaded = loadExpanderStateFromStorage({});
+      expect(loaded["theme_theme_2"]).toBeTrue();
+      expect(loaded["ui_ui_2"]).toBeTrue();
+    });
+
+    it("should resolve UI layout from theme when targetUiId is omitted", () => {
+      const state: Record<string, boolean> = {};
+      const res = applyInitialExpanderState(
+        state,
+        themes,
+        uis,
+        "theme_2",
+        undefined,
+      );
+
+      expect(res.newActiveUiId).toBe("ui_2");
+      expect(state["theme_theme_2"]).toBeTrue();
+      expect(state["ui_ui_2"]).toBeTrue();
+    });
+
+    it("should resolve theme from UI layout when targetThemeId is omitted", () => {
+      const state: Record<string, boolean> = {};
+      const res = applyInitialExpanderState(
+        state,
+        themes,
+        uis,
+        undefined,
+        "ui_2",
+      );
+
+      expect(res.newActiveUiId).toBe("ui_2");
+      expect(state["theme_theme_2"]).toBeTrue();
+      expect(state["ui_ui_2"]).toBeTrue();
+    });
   });
 });

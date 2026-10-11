@@ -2388,6 +2388,28 @@ describe("DefaultRacedaySetupComponent", () => {
       );
     });
 
+    it("should navigate to /ui-editor with themeId and uiId corresponding to selected race", () => {
+      const themeService = TestBed.inject(ThemeService);
+      spyOn(themeService, "resolveThemeAndUiForRace").and.returnValue({
+        themeId: "custom_theme_1",
+        uiId: "custom_ui_1",
+      });
+
+      component.selectedRace = { entity_id: "r1", name: "Race 1" } as any;
+      component.configureCustomUI();
+
+      expect(themeService.resolveThemeAndUiForRace).toHaveBeenCalledWith(
+        component.selectedRace,
+      );
+      expect(mockRouter.navigate).toHaveBeenCalledWith(["/ui-editor"], {
+        queryParams: {
+          returnUrl: "/raceday-setup",
+          themeId: "custom_theme_1",
+          uiId: "custom_ui_1",
+        },
+      });
+    });
+
     it("should handle event mode fallback and legacy unprefixed participant IDs", fakeAsync(() => {
       mockDataService.getEvents.and.returnValue(
         of([{ entity_id: "e1", name: "Event 1" }]),

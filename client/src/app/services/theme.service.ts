@@ -296,6 +296,59 @@ export class ThemeService {
   }
 
   /**
+   * Resolves the theme ID and UI layout ID that correspond to a given race,
+   * taking into account per-race overrides, race settings, active theme, and defaults.
+   */
+  resolveThemeAndUiForRace(race?: any): { themeId: string; uiId: string } {
+    const settings = this.settingsService?.getSettings?.() || {};
+    const overrideThemeId = race?.entity_id
+      ? settings?.raceThemeOverrides?.[race.entity_id]
+      : undefined;
+    const raceThemeId = race?.theme_id;
+    const isPractice = !!(
+      race?.practice || race?.heat_rotation_type === "Practice"
+    );
+
+    let themeId: string | undefined;
+    if (overrideThemeId) {
+      themeId = overrideThemeId;
+    } else if (raceThemeId) {
+      themeId = raceThemeId;
+    } else if (isPractice) {
+      themeId = "practice_theme_rc_ai";
+    } else {
+      themeId = this.activeTheme?.entity_id || settings?.activeThemeId;
+      if (!themeId) {
+        const defaultTheme = this.themes.find(
+          (t) => t.is_default || t.entity_id === "default_classic_rc_ai",
+        );
+        themeId = defaultTheme?.entity_id || "default_classic_rc_ai";
+      }
+    }
+    if (!themeId) {
+      themeId = "default_classic_rc_ai";
+    }
+
+    const theme =
+      this.themes.find(
+        (t) => (t.entity_id || (t as any).id || (t as any)._id) === themeId,
+      ) || (this.activeTheme?.entity_id === themeId ? this.activeTheme : null);
+
+    let uiId = theme?.uiId;
+    if (!uiId) {
+      if (themeId === "practice_theme_rc_ai" || isPractice) {
+        uiId = "practice_ui_layout_rc_ai";
+      } else if (themeId === "default_fuel_theme_rc_ai") {
+        uiId = "default_fuel_ui_layout_rc_ai";
+      } else {
+        uiId = "default_ui_layout_rc_ai";
+      }
+    }
+
+    return { themeId, uiId };
+  }
+
+  /**
    * Populate individual Settings overrides from the active theme's slots,
    * then clear the active theme. Used when user clicks "Detach Theme."
    */

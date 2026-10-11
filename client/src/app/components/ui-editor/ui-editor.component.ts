@@ -76,6 +76,7 @@ import {
 } from "./ui-editor-grid.helper";
 import {
   acknowledgeSuccessModal,
+  applyInitialExpanderFromRoute,
   applyLoadedUiEditorData,
   areSettingsEqual,
   areUIEditorStatesEqual,
@@ -514,6 +515,10 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     );
     this.ensureWidgetSelected();
     this.cdr.markForCheck();
+  }
+
+  applyInitialExpanderStateFromRoute(): void {
+    applyInitialExpanderFromRoute(this);
   }
 
   trackByThemeId(_index: number, theme: Theme) {

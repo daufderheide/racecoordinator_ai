@@ -102,3 +102,58 @@ export function scrollToThemeElement(themeId: string, cdr?: any): void {
     }
   });
 }
+
+/**
+ * Sets initial expander states when navigating into the UI Editor,
+ * expanding the target layout and theme (e.g. from the current race),
+ * collapsing non-target themes and layouts, and saving state.
+ */
+export function applyInitialExpanderState(
+  sectionsExpanded: Record<string, boolean>,
+  displayThemes: Theme[],
+  displayCustomUIs: CustomUI[],
+  targetThemeId?: string | null,
+  targetUiId?: string | null,
+): { newActiveUiId?: string } {
+  if (!targetThemeId && !targetUiId) {
+    return {};
+  }
+
+  let matchedTheme: Theme | undefined;
+  if (targetThemeId) {
+    matchedTheme = displayThemes.find(
+      (t) => (t.entity_id || (t as any).id || (t as any)._id) === targetThemeId,
+    );
+  } else if (targetUiId) {
+    matchedTheme = displayThemes.find((t) => t.uiId === targetUiId);
+  }
+
+  const resolvedThemeId = targetThemeId || matchedTheme?.entity_id;
+  let resolvedUiId = targetUiId;
+  if (!resolvedUiId && matchedTheme?.uiId) {
+    resolvedUiId = matchedTheme.uiId;
+  }
+  if (!resolvedUiId) {
+    resolvedUiId = "default_ui_layout_rc_ai";
+  }
+
+  if (resolvedThemeId) {
+    sectionsExpanded["themes"] = true;
+    displayThemes.forEach((t) => {
+      sectionsExpanded[`theme_${t.entity_id}`] =
+        t.entity_id === resolvedThemeId;
+    });
+  }
+
+  let newActiveUiId: string | undefined;
+  if (resolvedUiId) {
+    sectionsExpanded["customUIs"] = true;
+    displayCustomUIs.forEach((u) => {
+      sectionsExpanded[`ui_${u.entity_id}`] = u.entity_id === resolvedUiId;
+    });
+    newActiveUiId = resolvedUiId;
+  }
+
+  saveExpanderStateToStorage(sectionsExpanded);
+  return { newActiveUiId };
+}

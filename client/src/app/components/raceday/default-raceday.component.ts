@@ -4853,14 +4853,25 @@ export class DefaultRacedayComponent
     this.cdr.markForCheck();
   }
 
+  navigateToUiEditor() {
+    const returnUrl = this.router.url.split("?")[0];
+    const race = this.race || this.raceService?.getRace?.();
+    const themeInfo = this.themeService?.resolveThemeAndUiForRace?.(race);
+    const queryParams: Record<string, string> = { returnUrl };
+    if (themeInfo?.themeId) {
+      queryParams["themeId"] = themeInfo.themeId;
+    }
+    if (themeInfo?.uiId) {
+      queryParams["uiId"] = themeInfo.uiId;
+    }
+    this.router.navigate(["/ui-editor"], { queryParams });
+  }
+
   onOptionsSelect(action: string) {
     this.logger.debug("Options menu action:", action);
     this.isOptionsMenuOpen = false;
     if (action === "CUSTOMIZE_UI") {
-      const returnUrl = this.router.url.split("?")[0];
-      this.router.navigate(["/ui-editor"], {
-        queryParams: { returnUrl },
-      });
+      this.navigateToUiEditor();
     } else if (action === "CUSTOMIZE_LAYOUT") {
       this.toggleLayoutCustomize();
     }
@@ -5474,10 +5485,7 @@ export class DefaultRacedayComponent
     } else if (action === "EXPORT_PDF") {
       this.exportToPdf();
     } else if (action === "CUSTOMIZE_UI") {
-      const returnUrl = this.router.url.split("?")[0];
-      this.router.navigate(["/ui-editor"], {
-        queryParams: { returnUrl },
-      });
+      this.navigateToUiEditor();
     } else if (action === "SAVE") {
       this.saveRace();
     } else if (action === "RACE_HISTORY") {
