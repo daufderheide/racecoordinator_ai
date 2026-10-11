@@ -12,9 +12,20 @@ public class DriverImportResult {
   private int updatedCount;
   private int skippedCount;
   private List<String> createdDriverIds = new ArrayList<>();
+  private List<String> updatedDriverIds = new ArrayList<>();
   private List<String> messages = new ArrayList<>();
 
   public DriverImportResult() {}
+
+  public DriverImportResult(
+      boolean success,
+      int importedCount,
+      int updatedCount,
+      int skippedCount,
+      List<String> createdDriverIds,
+      List<String> messages) {
+    this(success, importedCount, updatedCount, skippedCount, createdDriverIds, null, messages);
+  }
 
   @JsonCreator
   public DriverImportResult(
@@ -23,6 +34,7 @@ public class DriverImportResult {
       @JsonProperty("updatedCount") int updatedCount,
       @JsonProperty("skippedCount") int skippedCount,
       @JsonProperty("createdDriverIds") List<String> createdDriverIds,
+      @JsonProperty("updatedDriverIds") List<String> updatedDriverIds,
       @JsonProperty("messages") List<String> messages) {
     this.success = success;
     this.importedCount = importedCount;
@@ -30,6 +42,9 @@ public class DriverImportResult {
     this.skippedCount = skippedCount;
     if (createdDriverIds != null) {
       this.createdDriverIds = new ArrayList<>(createdDriverIds);
+    }
+    if (updatedDriverIds != null) {
+      this.updatedDriverIds = new ArrayList<>(updatedDriverIds);
     }
     if (messages != null) {
       this.messages = new ArrayList<>(messages);
@@ -74,6 +89,14 @@ public class DriverImportResult {
 
   public void setCreatedDriverIds(List<String> createdDriverIds) {
     this.createdDriverIds = createdDriverIds != null ? createdDriverIds : new ArrayList<>();
+  }
+
+  public List<String> getUpdatedDriverIds() {
+    return updatedDriverIds;
+  }
+
+  public void setUpdatedDriverIds(List<String> updatedDriverIds) {
+    this.updatedDriverIds = updatedDriverIds != null ? updatedDriverIds : new ArrayList<>();
   }
 
   public List<String> getMessages() {

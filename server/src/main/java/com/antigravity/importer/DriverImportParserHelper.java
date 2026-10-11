@@ -401,7 +401,7 @@ public final class DriverImportParserHelper {
         || lower.endsWith(".gif");
   }
 
-  private static String getSimpleFileName(String path) {
+  public static String getSimpleFileName(String path) {
     int idx = Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\'));
     return idx >= 0 ? path.substring(idx + 1) : path;
   }

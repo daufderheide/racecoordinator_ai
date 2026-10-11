@@ -84,7 +84,9 @@ describe("ImportModalComponent", () => {
       "validateDriverImport",
       "commitDriverImport",
       "downloadDriverImportTemplate",
+      "listAssets",
     ]);
+    mockDataService.listAssets.and.returnValue(of([]));
 
     (mockDataService as any).serverUrl = "http://localhost:7070";
     (mockDataService as any).resolveAssetUrl = jasmine
@@ -747,6 +749,7 @@ describe("ImportModalComponent", () => {
       tick();
 
       expect(mockDataService.commitDriverImport).toHaveBeenCalled();
+      expect(mockDataService.listAssets).toHaveBeenCalled();
       expect(component.importResult).toBe(result);
       expect(component.step).toBe("summary");
       expect(component.isLoading).toBeFalse();

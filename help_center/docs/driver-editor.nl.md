@@ -21,6 +21,7 @@ De bovenste werkbalk biedt de volgende opties:
 - **Coureur kopiëren**: Dupliceert het geselecteerde profiel naar een nieuwe sjabloon.
 - **Bewerken / Klaar**: Schakelt tussen alleen-lezen modus en bewerkingsmodus (sneltoets: Cmd/Ctrl+E).
 - **Coureurs importeren**: Opent het dialoogvenster om coureurprofielen, avatars en audio-instellingen te importeren uit externe bestanden.
+- **Coureurs exporteren**: Opent het dialoogvenster om coureurs en hun bijbehorende audio- en avatarbestanden te exporteren naar een downloadbaar ZIP-archief in CSV-, Excel- of JSON-formaat.
 - **Alles uitvouwen / samenvouwen**: Vouwt alle accordeonsecties in één keer uit of samen.
 - **Coureur verwijderen**: Verwijdert het geselecteerde coureurprofiel na bevestiging.
 - **Help (?)**: Start de interactieve rondleiding door de verschillende onderdelen van de editor.
@@ -104,3 +105,21 @@ Wanneer een coureur in het bestand overeenkomt met een bestaande naam of bijnaam
 - **Overslaan**: Slaat de betreffende rij over tijdens de import.
 
 U kunt de actie per rij bepalen, op alle rijen tegelijk toepassen of namen en bijnamen direct in de tabel bewerken.
+
+## Coureurs exporteren
+
+Race Coordinator AI stelt u in staat om uw coureurs te exporteren naar een draagbaar ZIP-pakket dat kan worden geïmporteerd op elke andere computer met Race Coordinator AI of worden gebruikt voor massale bewerking in spreadsheets.
+
+### Exportformaat kiezen
+
+Wanneer u op **Coureurs exporteren** in de werkbalk klikt, kunt u kiezen uit drie gegevensformaten:
+- **CSV (`.csv`)**: Kommagescheiden indeling, ideaal voor spreadsheettoepassingen of teksteditors.
+- **Excel (`.xlsx`)**: Microsoft Excel-werkmapindeling met gestijlde kolomkoppen en opgemaakte gegevensrijen.
+- **JSON (`.json`)**: Gestructureerde JSON-array met volledige coureurprofielen en audioconfiguratie-objecten.
+
+### Bündeling van audio- en mediabestanden
+
+- Alle audiobestanden en aangepaste avatars waarnaar de geëxporteerde coureurs verwijzen, worden automatisch verzameld en verpakt in het ZIP-archief naast het gegevensbestand (`drivers.csv`, `drivers.xlsx` of `drivers.json`).
+- **Ontdubbeling**: Als twee of meer coureurs hetzelfde geluidseffect of dezelfde avatar gebruiken, wordt het bestand **slechts één keer** opgenomen in het ZIP-archief. Relatieve verwijzingen in het gegevensbestand verwijzen naar de gedeelde bestandsnaam.
+- **Presets & TTS behouden**: Systeempreset-geluiden (bijv. `default_beep`), gedempte slots en aangepaste tekst-naar-spraak (TTS) oproepen blijven behouden in het geëxporteerde bestand.
+- **Klaar voor herimport**: Het resulterende ZIP-pakket kan direct worden gesleept en neergezet in het dialoogvenster **Coureurs importeren** op elke computer.

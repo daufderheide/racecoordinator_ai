@@ -18,6 +18,13 @@
     [importTitleKey]="'DIM_TITLE'"
     [importHelpTitleKey]="'DE_HELP_IMPORT_TITLE'"
     [importHelpContentKey]="'DE_HELP_IMPORT_CONTENT'"
+    [showExport]="true"
+    [disabledExport]="
+      isEditMode || isSaving || !allDrivers || allDrivers.length === 0
+    "
+    [exportTitleKey]="'DEM_TITLE'"
+    [exportHelpTitleKey]="'DE_HELP_EXPORT_TITLE'"
+    [exportHelpContentKey]="'DE_HELP_EXPORT_CONTENT'"
     [disabledCopy]="!isConfigValid() || isSaving"
     [disabledDelete]="!selectedDriver || isSaving"
     [copyDisabledTooltipKey]="'DE_TOOLTIP_COPY_DISABLED'"
@@ -32,6 +39,7 @@
     (copy)="onCopyDriver()"
     (delete)="onDeleteDriver()"
     (import)="onOpenImportModal()"
+    (export)="onOpenExportModal()"
   >
   </app-editor-title>
 
@@ -461,4 +469,11 @@
     (imported)="onDriversImported($event)"
   >
   </app-import-modal>
+  <!-- Driver Export Modal -->
+  <app-driver-export-modal
+    [visible]="showExportModal"
+    [driverCount]="allDrivers ? allDrivers.length : 0"
+    (close)="showExportModal = false"
+  >
+  </app-driver-export-modal>
 </div>

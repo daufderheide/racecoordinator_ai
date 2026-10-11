@@ -38,6 +38,7 @@ public class DriverImportTaskHandler {
     app.post("/api/drivers/import/preview", this::handlePreview, Role.DIRECTOR);
     app.post("/api/drivers/import/commit", this::handleCommit, Role.DIRECTOR);
     app.get("/api/drivers/import/template", this::handleTemplate, Role.VIEWER);
+    app.get("/api/drivers/export", this::handleExport, Role.VIEWER);
   }
 
   private AssetService getAssetService() {
@@ -51,6 +52,11 @@ public class DriverImportTaskHandler {
 
   private DriverImporter createImporter() {
     return new DriverImporter(databaseContext, driverRepository, getAssetService());
+  }
+
+  private com.antigravity.importer.DriverExporter createExporter() {
+    return new com.antigravity.importer.DriverExporter(
+        databaseContext, driverRepository, getAssetService());
   }
 
   public void handlePreview(Context ctx) {
@@ -150,6 +156,41 @@ public class DriverImportTaskHandler {
     } catch (Exception e) {
       logger.error("Error generating driver template", e);
       ctx.status(500).result("Error generating template: " + e.getMessage());
+    }
+  }
+
+  public void handleExport(Context ctx) {
+    try {
+      String format = ctx.queryParam("format");
+      String driverIdsParam = ctx.queryParam("driverIds");
+
+      List<Driver> targetDrivers = null;
+      if (driverIdsParam != null && !driverIdsParam.trim().isEmpty()) {
+        String[] ids = driverIdsParam.split(",");
+        java.util.Set<String> idSet = new java.util.HashSet<>();
+        for (String id : ids) {
+          if (!id.trim().isEmpty()) {
+            idSet.add(id.trim());
+          }
+        }
+        List<Driver> all = driverRepository.findAll();
+        targetDrivers = new java.util.ArrayList<>();
+        for (Driver d : all) {
+          if (d != null && idSet.contains(d.getEntityId())) {
+            targetDrivers.add(d);
+          }
+        }
+      }
+
+      com.antigravity.importer.DriverExporter exporter = createExporter();
+      byte[] zipBytes = exporter.exportDriversZip(targetDrivers, format);
+
+      ctx.contentType("application/zip");
+      ctx.header("Content-Disposition", "attachment; filename=\"drivers_export.zip\"");
+      ctx.result(new ByteArrayInputStream(zipBytes));
+    } catch (Exception e) {
+      logger.error("Error exporting drivers", e);
+      ctx.status(500).result("Error exporting drivers: " + e.getMessage());
     }
   }
 

@@ -12,12 +12,12 @@ import { ActivatedRoute, Router } from "@angular/router";
 import { forkJoin, Subscription } from "rxjs";
 import { AudioSelectorComponent } from "@app/components/shared/audio-selector/audio-selector.component";
 import { ConfirmationModalComponent } from "@app/components/shared/confirmation-modal/confirmation-modal.component";
+import { DriverExportModalComponent } from "@app/components/shared/driver-export-modal/driver-export-modal.component";
 import { EditorSectionComponent } from "@app/components/shared/editor-section/editor-section.component";
 import { EditorTitleComponent } from "@app/components/shared/editor-title/editor-title.component";
 import { ImageSelectorComponent } from "@app/components/shared/image-selector/image-selector.component";
 import { ImportModalComponent } from "@app/components/shared/import-modal/import-modal.component";
 import { UndoManager } from "@app/components/shared/undo-redo-controls/undo-manager";
-import { DriverConverter } from "@app/converters/driver.converter";
 import { DataService } from "@app/data.service";
 import { AutoSelectDefaultDirective } from "@app/directives/auto-select-default.directive";
 import { DirtyComponent } from "@app/interfaces/dirty-component";
@@ -37,13 +37,10 @@ import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
 import { createTTSContext, mockTTSContext } from "@app/utils/audio";
 import { EditorLifecycleHelper } from "@app/utils/editor-lifecycle.helper";
-import { getNextSelectionAfterDelete } from "@app/utils/editor-utils";
-import { naturalSortCompare } from "@app/utils/sorting.utils";
 
 import {
   areDriversEqual,
   cloneDriver,
-  createNewDriverTemplate,
   DriverAudioSlot,
   focusDriverNameInput,
   generateUniqueDriverName,
@@ -52,16 +49,32 @@ import {
   getDriverUnsavedReasons,
   isDriverNameUnique,
   isDriverNicknameUnique,
-  loadDriverStorageJson,
   mergeDriverAsset,
   resolveDriverAvatarUrl,
-  saveDriverStorageJson,
   syncLinkedNameAndNickname,
   toDriver,
   updateDriverAudioText,
   updateDriverAudioType,
   updateDriverAudioUrl,
 } from "./driver-editor.helper";
+import {
+  applySavedDriver,
+  buildDriverSelectItems,
+  buildNewDriverTemplate,
+  formatSaveErrorMessage,
+  loadExpanderState,
+  loadLinkState,
+  mapRawDrivers,
+  navigateDriverEditorBack,
+  navigateNewDriver,
+  prepareDriverForSaveAsNew,
+  processImportedAssets,
+  removeDriverFromList,
+  resolveInitialDriverId,
+  resolveTargetDriverIdAfterImport,
+  saveExpanderState,
+  saveLinkState,
+} from "./driver-editor-actions.helper";
 import { buildDriverEditorHelpSteps } from "./driver-editor-help.helper";
 
 export { DriverAudioSlot } from "./driver-editor.helper";
@@ -81,6 +94,7 @@ export { DriverAudioSlot } from "./driver-editor.helper";
     TranslatePipe,
     ConfirmationModalComponent,
     ImportModalComponent,
+    DriverExportModalComponent,
   ],
 })
 export class DriverEditorComponent
@@ -157,9 +171,7 @@ export class DriverEditorComponent
   private connectionSubscription: Subscription | null = null;
   private subscriptions: Subscription[] = [];
 
-  sectionsExpanded = {
-    audio: true,
-  };
+  sectionsExpanded = { audio: true };
 
   isNameNicknameLinked: boolean = false;
 
@@ -192,39 +204,22 @@ export class DriverEditorComponent
   }
 
   saveExpanderState() {
-    saveDriverStorageJson(
-      "driver_editor_expanders",
-      this.sectionsExpanded,
-      this.logger,
-      "Error saving expander state",
-    );
+    saveExpanderState(this.sectionsExpanded, this.logger);
   }
 
   loadExpanderState() {
-    this.sectionsExpanded = loadDriverStorageJson(
-      "driver_editor_expanders",
+    this.sectionsExpanded = loadExpanderState(
       this.sectionsExpanded,
       this.logger,
-      "Error loading expander state",
     );
   }
 
   saveLinkState() {
-    saveDriverStorageJson(
-      "driver_editor_name_nickname_linked",
-      this.isNameNicknameLinked,
-      this.logger,
-      "Error saving link state",
-    );
+    saveLinkState(this.isNameNicknameLinked, this.logger);
   }
 
   loadLinkState() {
-    this.isNameNicknameLinked = loadDriverStorageJson(
-      "driver_editor_name_nickname_linked",
-      this.isNameNicknameLinked,
-      this.logger,
-      "Error loading link state",
-    );
+    this.isNameNicknameLinked = loadLinkState(false, this.logger);
   }
 
   toggleNameNicknameLink() {
@@ -384,15 +379,11 @@ export class DriverEditorComponent
   @HostListener("window:keydown", ["$event"])
   handleKeyboardEvent(event: KeyboardEvent) {
     if (!this.isEditMode) return;
-    if ((event.metaKey || event.ctrlKey) && event.key === "z") {
+    const isCtrlOrMeta = event.metaKey || event.ctrlKey;
+    if (isCtrlOrMeta && event.key === "z") {
       event.preventDefault();
-      if (event.shiftKey) {
-        this.redo();
-      } else {
-        this.undo();
-      }
-    }
-    if ((event.metaKey || event.ctrlKey) && event.key === "y") {
+      event.shiftKey ? this.redo() : this.undo();
+    } else if (isCtrlOrMeta && event.key === "y") {
       event.preventDefault();
       this.redo();
     }
@@ -439,27 +430,20 @@ export class DriverEditorComponent
     return !this.editingDriver.nickname?.trim() || !this.isNicknameUnique(true);
   }
 
-  areDriversEqual(d1: Driver, d2: Driver): boolean {
-    return areDriversEqual(d1, d2);
-  }
-
-  toDriver(d: any): Driver {
-    return toDriver(d);
-  }
+  areDriversEqual = areDriversEqual;
+  toDriver = toDriver;
 
   isNameUnique(excludeSelf: boolean = true): boolean {
-    return isDriverNameUnique(
-      this.allDrivers,
-      this.editingDriver?.name,
-      excludeSelf ? this.editingDriver?.entity_id : undefined,
-    );
+    const id = excludeSelf ? this.editingDriver?.entity_id : undefined;
+    return isDriverNameUnique(this.allDrivers, this.editingDriver?.name, id);
   }
 
   isNicknameUnique(excludeSelf: boolean = true): boolean {
+    const id = excludeSelf ? this.editingDriver?.entity_id : undefined;
     return isDriverNicknameUnique(
       this.allDrivers,
       this.editingDriver?.nickname,
-      excludeSelf ? this.editingDriver?.entity_id : undefined,
+      id,
     );
   }
 
@@ -490,17 +474,7 @@ export class DriverEditorComponent
   }
 
   onBack() {
-    const returnUrl = this.route.snapshot.queryParamMap.get("returnUrl");
-    const from = this.route.snapshot.queryParamMap.get("from");
-    if (returnUrl) {
-      this.router.navigateByUrl(returnUrl);
-    } else if (from === "modify-heats") {
-      this.router.navigate(["/default-raceday"], {
-        queryParams: { modifyHeats: "true" },
-      });
-    } else {
-      this.router.navigate(["/raceday-setup"]);
-    }
+    navigateDriverEditorBack(this.router, this.route);
   }
 
   isConfigValid(): boolean {
@@ -558,19 +532,15 @@ export class DriverEditorComponent
 
   saveAsNew() {
     if (!this.editingDriver) return;
-    this.editingDriver.name = this.generateUniqueName(
-      this.editingDriver.name,
-      true,
+    const { name, nickname } = prepareDriverForSaveAsNew(
+      this.editingDriver,
+      this.allDrivers,
     );
-    if (this.editingDriver.nickname) {
-      this.editingDriver.nickname = this.generateUniqueNickname(
-        this.editingDriver.nickname,
-        true,
-      );
-    }
+    this.editingDriver.name = name;
+    this.editingDriver.nickname = nickname;
     this.isEditMode = true;
-    this.defaultDriverName = this.editingDriver.name;
-    this.defaultDriverNickname = this.editingDriver.nickname || "";
+    this.defaultDriverName = name;
+    this.defaultDriverNickname = nickname;
     this.focusNameInput();
     this.updateDriver(true);
   }
@@ -598,82 +568,36 @@ export class DriverEditorComponent
   }
 
   updateDriver(isSaveAsNew: boolean = false, isAutoSave: boolean = false) {
-    if (!this.editingDriver) return;
-    if (!isSaveAsNew && !this.isDirtyState()) return;
-
-    if (!isAutoSave) {
-      this.isSaving = true;
-      this.isAutoSaving = false;
-    } else {
-      this.isSaving = true;
-      this.isAutoSaving = true;
-    }
+    if (!this.editingDriver || (!isSaveAsNew && !this.isDirtyState())) return;
+    this.isSaving = true;
+    this.isAutoSaving = isAutoSave;
     this.saveDriverData(isSaveAsNew, isAutoSave);
   }
 
   private loadDataInternal(rawDrivers: any[], assets: any[]) {
-    this.allDrivers = rawDrivers.map((d) => toDriver(d));
+    this.allDrivers = mapRawDrivers(rawDrivers);
     this.updateDriverSelectItems();
 
-    const allAssets = assets || [];
-    this.avatarAssets = allAssets.filter((a) => a.type === "image");
-    this.soundAssets = allAssets.filter(
-      (a) => normalizeAssetType(a.type) === AssetType.AUDIO,
-    );
+    const processed = processImportedAssets(assets);
+    this.avatarAssets = processed.avatarAssets;
+    this.soundAssets = processed.soundAssets;
 
     const idParam = this.route.snapshot.queryParamMap.get("id");
-
-    if (idParam === "new") {
+    const resolved = resolveInitialDriverId(
+      this.allDrivers,
+      idParam,
+      this.initialLastEditedId,
+      this.navigationService.getLastEditedId("driver"),
+    );
+    if (resolved.isNew || !resolved.target) {
       this.startNewDriver();
-    } else if (idParam) {
-      const found = this.allDrivers.find((d) => d.entity_id === idParam);
-      if (found) {
-        this.selectDriver(found);
-        this.isEditMode = false;
-        this.navigationService.setLastEditedId("driver", found.entity_id);
-      } else {
-        const lastEdited =
-          this.initialLastEditedId && this.initialLastEditedId !== idParam
-            ? this.initialLastEditedId
-            : this.navigationService.getLastEditedId("driver") !== idParam
-              ? this.navigationService.getLastEditedId("driver")
-              : null;
-        const foundLast = lastEdited
-          ? this.allDrivers.find((d) => d.entity_id === lastEdited)
-          : undefined;
-        if (foundLast) {
-          this.selectDriver(foundLast);
-          this.isEditMode = false;
-          this.navigationService.setLastEditedId("driver", foundLast.entity_id);
-        } else if (this.allDrivers.length > 0) {
-          this.selectDriver(this.allDrivers[0]);
-          this.isEditMode = false;
-          this.navigationService.setLastEditedId(
-            "driver",
-            this.allDrivers[0].entity_id,
-          );
-        } else {
-          this.startNewDriver();
-        }
-      }
     } else {
-      const lastEdited = this.navigationService.getLastEditedId("driver");
-      const found = lastEdited
-        ? this.allDrivers.find((d) => d.entity_id === lastEdited)
-        : undefined;
-      if (found) {
-        this.selectDriver(found);
-        this.isEditMode = false;
-      } else if (this.allDrivers.length > 0) {
-        this.selectDriver(this.allDrivers[0]);
-        this.isEditMode = false;
-        this.navigationService.setLastEditedId(
-          "driver",
-          this.allDrivers[0].entity_id,
-        );
-      } else {
-        this.startNewDriver();
-      }
+      this.selectDriver(resolved.target);
+      this.isEditMode = false;
+      this.navigationService.setLastEditedId(
+        "driver",
+        resolved.target.entity_id,
+      );
     }
 
     const isNew = this.route.snapshot.queryParamMap.get("isNew") === "true";
@@ -766,9 +690,7 @@ export class DriverEditorComponent
     this.cdr.markForCheck();
   }
 
-  getAudioSlotFallbackName(slot: DriverAudioSlot): string {
-    return getAudioSlotFallbackName(slot);
-  }
+  getAudioSlotFallbackName = getAudioSlotFallbackName;
 
   selectDriver(driver: Driver) {
     this.selectedDriver = driver;
@@ -779,20 +701,15 @@ export class DriverEditorComponent
   }
 
   updateDriverSelectItems() {
-    this.driverSelectItems = this.allDrivers
-      .slice()
-      .sort((a, b) => naturalSortCompare(a.name || "", b.name || ""))
-      .map((d) => ({
-        id: d.entity_id,
-        name: d.name,
-      }));
+    this.driverSelectItems = buildDriverSelectItems(this.allDrivers);
   }
 
-  onSelectDriverById(id: string) {
-    if (this.isEditMode) return;
-    if (this.selectedDriverId === id) return;
+  onSelectDriverById(id: string, force: boolean = false) {
+    if (this.isEditMode && !force) return;
+    if (this.selectedDriverId === id && !force) return;
     const found = this.allDrivers.find((d) => d.entity_id === id);
     if (found) {
+      this.isEditMode = false;
       this.selectDriver(found);
       this.navigationService.setLastEditedId("driver", found.entity_id);
       this.router.navigate([], {
@@ -829,11 +746,9 @@ export class DriverEditorComponent
 
   onAddNewDriver() {
     if (this.isEditMode && this.isDirtyState()) {
-      this.confirmDiscard().then((confirmed) => {
-        if (confirmed) {
-          this.startNewDriver();
-        }
-      });
+      this.confirmDiscard().then(
+        (confirmed) => confirmed && this.startNewDriver(),
+      );
     } else {
       this.startNewDriver();
     }
@@ -848,13 +763,11 @@ export class DriverEditorComponent
     const defaultNickname =
       this.translationService.translate("DM_DEFAULT_DRIVER_NICKNAME") ||
       "New Driver Nickname";
-    const uniqueName = this.generateUniqueName(defaultName, false);
-    const uniqueNickname = this.generateUniqueNickname(defaultNickname, false);
-
-    const template = createNewDriverTemplate();
-    template.name = uniqueName;
-    template.nickname = uniqueNickname;
-    delete (template as any).entity_id;
+    const template = buildNewDriverTemplate(
+      this.allDrivers,
+      defaultName,
+      defaultNickname,
+    );
 
     this.subscriptions.push(
       this.dataService.createDriver(template).subscribe({
@@ -873,6 +786,11 @@ export class DriverEditorComponent
   onCopyDriver() {
     if (!this.editingDriver || !this.isConfigValid()) return;
     this.saveAsNew();
+  }
+
+  deleteDriver() {
+    if (!this.editingDriver || this.editingDriver.entity_id === "new") return;
+    this.showDeleteConfirm = true;
   }
 
   onDeleteDriver() {
@@ -924,95 +842,55 @@ export class DriverEditorComponent
     this.isAutoSaving = false;
     this.navigationService.setLastEditedId("driver", result.entity_id);
 
-    const savedDriver = toDriver({
-      ...driverToSend,
-      entity_id: result.entity_id || driverToSend.entity_id,
+    const applied = applySavedDriver({
+      result,
+      driverToSend,
+      wasNew,
+      isSaveAsNew,
+      isAutoSave,
+      transitionToReadOnlyOnSave: this.transitionToReadOnlyOnSave,
+      editingDriver: this.editingDriver,
+      allDrivers: this.allDrivers,
     });
-    DriverConverter.register(savedDriver);
 
+    this.isEditMode = applied.isEditMode;
+    this.transitionToReadOnlyOnSave = applied.transitionToReadOnlyOnSave;
+    this.isPreservingEditModeOnNavigation =
+      applied.isPreservingEditModeOnNavigation;
+    this.editingDriver = applied.editingDriver;
+    this.allDrivers = applied.allDrivers;
+
+    const savedDriver = applied.savedDriver;
     if (wasNew || isSaveAsNew) {
-      this.isEditMode = true;
-      this.isPreservingEditModeOnNavigation = true;
       this.defaultDriverName = savedDriver.name;
       this.defaultDriverNickname = savedDriver.nickname || "";
-    } else if (!isAutoSave || this.transitionToReadOnlyOnSave) {
-      this.isEditMode = false;
-      this.transitionToReadOnlyOnSave = false;
-    }
-
-    if (wasNew || isSaveAsNew || !this.editingDriver) {
-      this.editingDriver = cloneDriver(savedDriver);
-    } else {
-      this.editingDriver.entity_id = savedDriver.entity_id;
     }
     this.selectedDriver = cloneDriver(savedDriver);
     this.originalDriver = cloneDriver(savedDriver);
     this.selectedDriverId = savedDriver.entity_id;
     this.undoManager.resetTracking(savedDriver);
-
-    const idx = this.allDrivers.findIndex(
-      (d) => d.entity_id === result.entity_id,
-    );
-    if (idx >= 0) {
-      this.allDrivers[idx] = cloneDriver(this.editingDriver);
-    } else {
-      this.allDrivers.push(cloneDriver(this.editingDriver));
-    }
     this.updateDriverSelectItems();
 
     this.cdr.detectChanges();
-    if (wasNew || isSaveAsNew) {
-      this.focusNameInput();
-    }
-
+    if (wasNew || isSaveAsNew) this.focusNameInput();
     if (wasNew) {
-      this.handleNewDriverNavigation(result.entity_id, isAutoSave);
-    }
-
-    if (this.navigateBackOnSave) {
-      this.onBack();
-    }
-
-    if (this.isDirtyState()) {
-      this.autoSaveDriver();
-    }
-
-    this.refreshDriverList();
-  }
-
-  private handleNewDriverNavigation(newId: string, isAutoSave: boolean) {
-    const queryParams = {
-      id: newId,
-      from: this.route.snapshot.queryParamMap.get("from"),
-      returnUrl: this.route.snapshot.queryParamMap.get("returnUrl"),
-    };
-    if (isAutoSave) {
-      const url = this.router.serializeUrl(
-        this.router.createUrlTree(["/driver-editor"], { queryParams }),
+      navigateNewDriver(
+        this.router,
+        this.route,
+        this.location,
+        result.entity_id,
+        isAutoSave,
       );
-      this.location.replaceState(url);
-    } else {
-      this.router.navigate(["/driver-editor"], {
-        queryParams,
-        replaceUrl: true,
-      });
     }
+    if (this.navigateBackOnSave) this.onBack();
+    if (this.isDirtyState()) this.autoSaveDriver();
+    this.refreshDriverList();
   }
 
   private handleSaveError(err: any, isAutoSave: boolean) {
     this.logger.error("Failed to save driver", err);
     if (!isAutoSave) {
-      if (err.status === 409) {
-        alert(
-          err.error ||
-            this.translationService.translate("DE_ERROR_NAME_EXISTS"),
-        );
-      } else {
-        alert(
-          this.translationService.translate("DE_ERROR_SAVE_FAILED") +
-            (err.error || err.message),
-        );
-      }
+      alert(formatSaveErrorMessage(err, this.translationService));
     }
     this.isSaving = false;
     this.isAutoSaving = false;
@@ -1020,15 +898,28 @@ export class DriverEditorComponent
     this.cdr.detectChanges();
   }
 
-  private refreshDriverList() {
-    this.dataService.getDrivers().subscribe({
-      next: (drivers) => {
-        this.allDrivers = drivers.map((d) => {
-          const driver = toDriver(d);
-          DriverConverter.register(driver);
-          return driver;
-        });
+  refreshDriverList(targetIdToSelect?: string) {
+    this.dataSubscription = forkJoin({
+      drivers: this.dataService.getDrivers(),
+      assets: this.dataService.listAssets(),
+    }).subscribe({
+      next: ({ drivers, assets }) => {
+        this.allDrivers = mapRawDrivers(drivers);
         this.updateDriverSelectItems();
+
+        const processed = processImportedAssets(assets);
+        this.avatarAssets = processed.avatarAssets;
+        this.soundAssets = processed.soundAssets;
+
+        if (targetIdToSelect) {
+          const found = this.allDrivers.find(
+            (d) => d.entity_id === targetIdToSelect,
+          );
+          if (found) {
+            this.isEditMode = false;
+            this.selectDriver(found);
+          }
+        }
         this.cdr.detectChanges();
       },
       error: (err) => this.logger.error("Failed to refresh driver list", err),
@@ -1042,15 +933,28 @@ export class DriverEditorComponent
   }
 
   onDriversImported(result: DriverImportResult) {
-    this.refreshDriverList();
-    if (result.createdDriverIds && result.createdDriverIds.length > 0) {
-      this.onSelectDriverById(result.createdDriverIds[0]);
+    const targetId = resolveTargetDriverIdAfterImport(
+      result,
+      this.selectedDriverId,
+    );
+    this.refreshDriverList(targetId);
+    if (targetId) {
+      this.onSelectDriverById(targetId, true);
     }
   }
 
-  deleteDriver() {
-    if (!this.editingDriver || this.editingDriver.entity_id === "new") return;
-    this.showDeleteConfirm = true;
+  showExportModal = false;
+
+  onOpenExportModal() {
+    if (
+      this.isEditMode ||
+      this.isSaving ||
+      !this.allDrivers ||
+      this.allDrivers.length === 0
+    ) {
+      return;
+    }
+    this.showExportModal = true;
   }
 
   onCancelDelete() {
@@ -1066,13 +970,11 @@ export class DriverEditorComponent
       next: () => {
         this.isSaving = false;
         this.isEditMode = false;
-        const nextDriver = getNextSelectionAfterDelete(
+        const { nextDriver, updatedDrivers } = removeDriverFromList(
           this.allDrivers,
           idToDelete,
         );
-        this.allDrivers = this.allDrivers.filter(
-          (d) => d.entity_id !== idToDelete,
-        );
+        this.allDrivers = updatedDrivers;
         this.updateDriverSelectItems();
         if (nextDriver) {
           this.selectDriver(nextDriver);

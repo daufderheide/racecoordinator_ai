@@ -65,6 +65,8 @@ export class ToolbarComponent implements OnInit {
   importRc1TitleKey = input("AM_BTN_IMPORT_RC1_ROTATION");
   importRc1Icon = input("file_download");
   exportTitleKey = input("DBM_BTN_EXPORT");
+  exportHelpTitleKey = input("TOOLBAR_HELP_EXPORT_TITLE");
+  exportHelpContentKey = input("TOOLBAR_HELP_EXPORT_CONTENT");
   showReset = input(false);
   resetTitleKey = input("DBM_BTN_RESET");
   resetDisabledTooltipKey = input("");
@@ -290,8 +292,8 @@ export class ToolbarComponent implements OnInit {
       steps.push(
         this.createGuideStep(
           "export-btn",
-          "TOOLBAR_HELP_EXPORT_TITLE",
-          "TOOLBAR_HELP_EXPORT_CONTENT",
+          this.exportHelpTitleKey(),
+          this.exportHelpContentKey(),
         ),
       );
     }

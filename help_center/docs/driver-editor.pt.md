@@ -21,6 +21,7 @@ A barra de ferramentas superior oferece as seguintes ações:
 - **Copiar Piloto**: Duplica o perfil do piloto selecionado.
 - **Editar / Concluir**: Alterna entre modo somente leitura e modo de edição (atalho de teclado: Cmd/Ctrl+E).
 - **Importar Pilotos**: Abre o diálogo para importar perfis de pilotos, avatares e configurações de áudio de arquivos externos.
+- **Exportar Pilotos**: Abre o diálogo para exportar pilotos e seus arquivos de áudio e avatar associados em um pacote ZIP baixável no formato CSV, Excel ou JSON.
 - **Expandir / Recolher tudo**: Expande ou recolhe todas as seções acordeão de uma vez.
 - **Excluir Piloto**: Remove o perfil do piloto selecionado após confirmação.
 - **Ajuda (?)**: Inicia o tour guiado interativo sobre as seções do editor.
@@ -104,3 +105,21 @@ Quando um piloto no arquivo coincidir com um nome ou apelido existente no banco 
 - **Ignorar**: Desconsidera a linha em conflito durante a importação.
 
 As resoluções podem ser definidas individualmente por linha, aplicadas a todos os conflitos de uma vez ou resolvidas editando nome e apelido diretamente na tabela.
+
+## Exportar Pilotos
+
+O Race Coordinator AI permite exportar seus pilotos em um pacote ZIP portátil que pode ser importado em qualquer outro computador executando o Race Coordinator AI ou usado para edição em massa em planilhas.
+
+### Seleção do Formato de Exportação
+
+Ao clicar em **Exportar Pilotos** na barra de ferramentas, você pode escolher entre três formatos de dados:
+- **CSV (`.csv`)**: Formato separado por vírgulas, ideal para aplicativos de planilha ou editores de texto.
+- **Excel (`.xlsx`)**: Formato de pasta de trabalho do Microsoft Excel com cabeçalhos com estilo e linhas de dados formatadas.
+- **JSON (`.json`)**: Array JSON estruturado contendo objetos completos de perfil de piloto e configuração de áudio.
+
+### Empacotamento de Arquivos de Áudio e Mídia
+
+- Todos os arquivos de áudio e avatares personalizados referenciados pelos pilotos exportados são automaticamente coletados e empacotados no arquivo ZIP junto com o arquivo de dados (`drivers.csv`, `drivers.xlsx` ou `drivers.json`).
+- **Desduplicação**: Se dois ou mais pilotos compartilharem o mesmo efeito sonoro ou imagem de avatar, o arquivo será empacotado **apenas uma vez** no arquivo ZIP. Referências relativas no arquivo de dados apontam para o nome do recurso compartilhado.
+- **Presets e TTS preservados**: Sons pré-definidos do sistema (ex: `default_beep`), slots silenciados e anúncios de texto para fala (TTS) personalizados são preservados no arquivo exportado.
+- **Pronto para reimportação**: O pacote ZIP resultante está imediatamente pronto para ser arrastado e solto no diálogo **Importar Pilotos** em qualquer computador.

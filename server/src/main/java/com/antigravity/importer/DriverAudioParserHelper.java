@@ -59,6 +59,14 @@ public final class DriverAudioParserHelper {
 
     if (lower.startsWith("preset:")) {
       String preset = val.substring(7).trim();
+      String presetLookupKey = preset.toLowerCase();
+      if (assetUrlLookup != null && assetUrlLookup.containsKey(presetLookupKey)) {
+        return new AudioConfig("preset", assetUrlLookup.get(presetLookupKey), "");
+      }
+      String simplePresetKey = DriverImportParserHelper.getSimpleFileName(preset).toLowerCase();
+      if (assetUrlLookup != null && assetUrlLookup.containsKey(simplePresetKey)) {
+        return new AudioConfig("preset", assetUrlLookup.get(simplePresetKey), "");
+      }
       return new AudioConfig("preset", preset, "");
     }
 
@@ -75,6 +83,11 @@ public final class DriverAudioParserHelper {
     String lookupKey = val.toLowerCase();
     if (assetUrlLookup != null && assetUrlLookup.containsKey(lookupKey)) {
       return new AudioConfig("preset", assetUrlLookup.get(lookupKey), "");
+    }
+
+    String simpleLookupKey = DriverImportParserHelper.getSimpleFileName(val).toLowerCase();
+    if (assetUrlLookup != null && assetUrlLookup.containsKey(simpleLookupKey)) {
+      return new AudioConfig("preset", assetUrlLookup.get(simpleLookupKey), "");
     }
 
     // Default to preset with provided value / url

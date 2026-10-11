@@ -675,6 +675,9 @@ export class ImportModalComponent {
         this.importResult = res;
         this.step = "summary";
         this.isLoading = false;
+        if (this.dataService?.listAssets) {
+          this.dataService.listAssets().subscribe();
+        }
         this.imported.emit(res);
         this.cdr.detectChanges();
       },

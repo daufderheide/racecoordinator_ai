@@ -51,5 +51,6 @@ export interface DriverImportResult {
   updatedCount: number;
   skippedCount: number;
   createdDriverIds: string[];
+  updatedDriverIds?: string[];
   messages: string[];
 }

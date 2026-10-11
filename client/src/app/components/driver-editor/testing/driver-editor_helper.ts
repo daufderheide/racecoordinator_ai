@@ -36,6 +36,7 @@ export class DriverEditorHelper {
       "validateDriverImport",
       "commitDriverImport",
       "downloadDriverImportTemplate",
+      "exportDrivers",
     ]);
     spy.updateRaceSubscription = jasmine.createSpy("updateRaceSubscription");
     spy.connectToInterfaceDataSocket = jasmine.createSpy(
@@ -115,6 +116,7 @@ export class DriverEditorHelper {
       }),
     );
     spy.downloadDriverImportTemplate.and.returnValue(of(new Blob([])));
+    spy.exportDrivers.and.returnValue(of(new Blob([])));
     spy.socketConnected$ = of(true);
 
     return spy;

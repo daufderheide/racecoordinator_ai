@@ -276,6 +276,16 @@ export class DataService {
     );
   }
 
+  exportDrivers(format: string, driverIds?: string[]): Observable<Blob> {
+    let url = `${this.driversUrl}/export?format=${encodeURIComponent(format)}`;
+    if (driverIds && driverIds.length > 0) {
+      url += `&driverIds=${encodeURIComponent(driverIds.join(","))}`;
+    }
+    return this.http.get(url, {
+      responseType: "blob",
+    });
+  }
+
   getRaces(): Observable<any[]> {
     return this.http.get<any[]>(this.racesUrl);
   }

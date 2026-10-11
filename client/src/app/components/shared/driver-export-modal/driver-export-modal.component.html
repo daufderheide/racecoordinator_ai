@@ -1,0 +1,164 @@
+@if (visible()) {
+  <div class="export-modal-backdrop" id="driver-export-modal-backdrop">
+    <div class="export-modal-dialog" id="driver-export-modal-dialog">
+      <!-- Modal Header -->
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <span class="material-icons modal-header-icon">upload</span>
+          <h2 class="modal-title">{{ "DEM_TITLE" | translate }}</h2>
+        </div>
+        <button
+          type="button"
+          class="btn-ghost-close"
+          (click)="onClose()"
+          [title]="'COMMON_CLOSE' | translate"
+          aria-label="Close"
+        >
+          <span class="material-icons">close</span>
+        </button>
+      </div>
+
+      <!-- Error Alert Banner -->
+      @if (errorMessage) {
+        <div class="alert-banner error" id="driver-export-error-banner">
+          <span class="material-icons alert-icon">error</span>
+          <span class="alert-text">{{ errorMessage | translate }}</span>
+        </div>
+      }
+
+      <!-- Modal Body -->
+      <div class="modal-body" id="driver-export-body">
+        <!-- Overview Banner -->
+        <div class="export-overview-card">
+          <div class="driver-count-badge">
+            <span class="material-icons count-icon">people</span>
+            <span class="count-text">{{
+              "DEM_DRIVER_COUNT" | translate: { count: driverCount() }
+            }}</span>
+          </div>
+          <p class="export-description">
+            {{ "DEM_EXPORT_INFO" | translate }}
+          </p>
+          <div class="export-note-banner">
+            <span class="material-icons note-icon">info</span>
+            <span class="note-text">{{
+              "DEM_SHARED_AUDIO_INFO" | translate
+            }}</span>
+          </div>
+        </div>
+
+        <!-- Format Selection Section -->
+        <div class="format-selection-section">
+          <label class="format-section-title">{{
+            "DEM_FORMAT_LABEL" | translate
+          }}</label>
+          <div class="format-cards-grid">
+            <!-- CSV Card -->
+            <div
+              class="format-card"
+              id="driver-export-format-csv"
+              [class.selected]="selectedFormat === 'csv'"
+              (click)="selectFormat('csv')"
+            >
+              <div class="card-radio">
+                <span
+                  class="radio-dot"
+                  [class.active]="selectedFormat === 'csv'"
+                ></span>
+              </div>
+              <div class="card-icon-wrap">
+                <span class="material-icons format-icon">description</span>
+              </div>
+              <div class="card-content">
+                <div class="card-title">{{ "DEM_FORMAT_CSV" | translate }}</div>
+                <div class="card-desc">
+                  {{ "DEM_FORMAT_CSV_DESC" | translate }}
+                </div>
+              </div>
+            </div>
+
+            <!-- Excel Card -->
+            <div
+              class="format-card"
+              id="driver-export-format-xlsx"
+              [class.selected]="selectedFormat === 'xlsx'"
+              (click)="selectFormat('xlsx')"
+            >
+              <div class="card-radio">
+                <span
+                  class="radio-dot"
+                  [class.active]="selectedFormat === 'xlsx'"
+                ></span>
+              </div>
+              <div class="card-icon-wrap">
+                <span class="material-icons format-icon">table_view</span>
+              </div>
+              <div class="card-content">
+                <div class="card-title">
+                  {{ "DEM_FORMAT_XLSX" | translate }}
+                </div>
+                <div class="card-desc">
+                  {{ "DEM_FORMAT_XLSX_DESC" | translate }}
+                </div>
+              </div>
+            </div>
+
+            <!-- JSON Card -->
+            <div
+              class="format-card"
+              id="driver-export-format-json"
+              [class.selected]="selectedFormat === 'json'"
+              (click)="selectFormat('json')"
+            >
+              <div class="card-radio">
+                <span
+                  class="radio-dot"
+                  [class.active]="selectedFormat === 'json'"
+                ></span>
+              </div>
+              <div class="card-icon-wrap">
+                <span class="material-icons format-icon">code</span>
+              </div>
+              <div class="card-content">
+                <div class="card-title">
+                  {{ "DEM_FORMAT_JSON" | translate }}
+                </div>
+                <div class="card-desc">
+                  {{ "DEM_FORMAT_JSON_DESC" | translate }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="modal-footer">
+        <button
+          type="button"
+          class="btn-secondary"
+          id="btn-driver-export-cancel"
+          [disabled]="isExporting"
+          (click)="onClose()"
+        >
+          {{ "COMMON_CANCEL" | translate }}
+        </button>
+        <button
+          type="button"
+          class="btn-primary"
+          id="btn-driver-export-confirm"
+          [disabled]="isExporting || driverCount() === 0"
+          (click)="onExport()"
+        >
+          @if (isExporting) {
+            <span class="spinner-small"></span>
+            <span>{{ "DEM_EXPORTING" | translate }}</span>
+          } @else {
+            <span class="material-icons">file_download</span>
+            <span>{{ "DEM_BTN_EXPORT" | translate }}</span>
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+}

@@ -385,6 +385,7 @@ public class DriverImporter {
     }
     Driver updated = buildDriverFromRow(existing.getEntityId(), row);
     driverRepository.replace(existing.getEntityId(), updated);
+    result.getUpdatedDriverIds().add(existing.getEntityId());
     result.setUpdatedCount(result.getUpdatedCount() + 1);
   }
 

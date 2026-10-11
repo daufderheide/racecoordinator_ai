@@ -118,6 +118,12 @@ class MockEditorTitleComponent {
   importHelpTitleKey = input<string>("");
   importHelpContentKey = input<string>("");
   import = output<void>();
+  showExport = input<boolean>(false);
+  disabledExport = input<boolean>(false);
+  exportTitleKey = input<string>("");
+  exportHelpTitleKey = input<string>("");
+  exportHelpContentKey = input<string>("");
+  export = output<void>();
 }
 
 @Component({
@@ -131,6 +137,18 @@ class MockImportModalComponent {
   entityType = input<string>("");
   close = output<void>();
   imported = output<any>();
+}
+
+@Component({
+  selector: "app-driver-export-modal",
+  standalone: true,
+  template: "",
+})
+class MockDriverExportModalComponent {
+  visible = input<boolean>(false);
+  driverCount = input<number>(0);
+  close = output<void>();
+  exported = output<any>();
 }
 
 @Component({
@@ -217,6 +235,7 @@ describe("DriverEditorComponent", () => {
         MockImageSelectorComponent,
         MockEditorTitleComponent,
         MockImportModalComponent,
+        MockDriverExportModalComponent,
         MockHelpOverlayComponent,
         MockTranslatePipe,
         MockAvatarUrlPipe,
@@ -1968,8 +1987,93 @@ describe("DriverEditorComponent", () => {
         messages: [],
       });
 
-      expect((component as any).refreshDriverList).toHaveBeenCalled();
-      expect(component.onSelectDriverById).toHaveBeenCalledWith("d-new-1");
+      expect((component as any).refreshDriverList).toHaveBeenCalledWith(
+        "d-new-1",
+      );
+      expect(component.onSelectDriverById).toHaveBeenCalledWith(
+        "d-new-1",
+        true,
+      );
+    });
+
+    it("should reload drivers and select updated driver when import completes with overwrite", () => {
+      component.onOpenImportModal();
+      expect(component.showImportModal).toBeTrue();
+
+      spyOn(component as any, "refreshDriverList");
+      spyOn(component, "onSelectDriverById");
+      component.selectedDriverId = "d1";
+
+      component.onDriversImported({
+        success: true,
+        importedCount: 1,
+        updatedCount: 1,
+        skippedCount: 0,
+        createdDriverIds: [],
+        updatedDriverIds: ["d1"],
+        messages: [],
+      });
+
+      expect((component as any).refreshDriverList).toHaveBeenCalledWith("d1");
+      expect(component.onSelectDriverById).toHaveBeenCalledWith("d1", true);
+    });
+
+    it("should refresh driver list and assets when refreshDriverList is called", () => {
+      const mockNewAsset = {
+        name: "custom.wav",
+        type: "sound",
+        url: "/assets/custom.wav",
+      };
+      const mockNewDriver = new Driver(
+        "d1",
+        "Updated Name",
+        "Updated Nick",
+        undefined,
+        {
+          lapAudio: { type: "preset", url: "/assets/custom.wav" },
+        },
+      );
+      dataService.getDrivers.and.returnValue(of([mockNewDriver]));
+      dataService.listAssets.and.returnValue(of([mockNewAsset]));
+
+      component.selectedDriverId = "d1";
+      (component as any).refreshDriverList("d1");
+
+      expect(dataService.getDrivers).toHaveBeenCalled();
+      expect(dataService.listAssets).toHaveBeenCalled();
+      expect(component.soundAssets.length).toBe(1);
+      expect(component.soundAssets[0].name).toBe("custom.wav");
+      expect(component.editingDriver?.name).toBe("Updated Name");
+      expect(component.editingDriver?.lapAudio?.url).toBe("/assets/custom.wav");
+    });
+  });
+
+  describe("Export Drivers Modal", () => {
+    it("should toggle showExportModal on open and close", () => {
+      expect(component.showExportModal).toBeFalse();
+      component.isEditMode = false;
+      component.isSaving = false;
+      component.allDrivers = [new Driver("d1", "Driver 1", "")];
+      component.onOpenExportModal();
+      expect(component.showExportModal).toBeTrue();
+      component.showExportModal = false;
+      expect(component.showExportModal).toBeFalse();
+    });
+
+    it("should not open export modal if editing, saving, or no drivers", () => {
+      component.allDrivers = [];
+      component.onOpenExportModal();
+      expect(component.showExportModal).toBeFalse();
+
+      component.allDrivers = [new Driver("d1", "Driver 1", "")];
+      component.isEditMode = true;
+      component.onOpenExportModal();
+      expect(component.showExportModal).toBeFalse();
+
+      component.isEditMode = false;
+      component.isSaving = true;
+      component.onOpenExportModal();
+      expect(component.showExportModal).toBeFalse();
     });
   });
 });

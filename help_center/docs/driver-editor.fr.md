@@ -21,6 +21,7 @@ La barre d'outils supérieure offre les actions suivantes :
 - **Copier le pilote** : Duplique le profil du pilote sélectionné.
 - **Modifier / Terminer** : Alterne entre le mode lecture seule et le mode édition (raccourci clavier : Cmd/Ctrl+E).
 - **Importer des pilotes** : Ouvre la boîte de dialogue pour importer des profils de pilotes, des avatars et des configurations audio à partir de fichiers externes.
+- **Exporter des pilotes** : Ouvre la boîte de dialogue pour exporter les pilotes et leurs fichiers audio et avatars associés dans une archive ZIP téléchargeable au format CSV, Excel ou JSON.
 - **Tout développer / réduire** : Développe ou réduit toutes les sections accordéon en une seule fois.
 - **Supprimer le pilote** : Supprime le profil après confirmation.
 - **Aide (?)** : Ouvre le guide interactif présentant les différentes sections.
@@ -104,3 +105,21 @@ Lorsqu'un pilote du fichier correspond à un nom ou surnom existant dans la base
 - **Ignorer** : Ignore la ligne en conflit lors de l'importation.
 
 Vous pouvez définir la résolution individuellement par ligne, l'appliquer à tous les conflits en bloc ou modifier directement le nom et le surnom dans le tableau.
+
+## Exporter des pilotes
+
+Race Coordinator AI vous permet d'exporter vos pilotes dans un package ZIP portable pouvant être importé sur tout autre ordinateur exécutant Race Coordinator AI ou utilisé pour l'édition en masse dans un tableur.
+
+### Choix du format d'exportation
+
+Lorsque vous cliquez sur **Exporter des pilotes** dans la barre d'outils, vous pouvez choisir parmi trois formats de données :
+- **CSV (`.csv`)** : Format avec valeurs séparées par des virgules, idéal pour les tableurs ou les éditeurs de texte.
+- **Excel (`.xlsx`)** : Format de classeur Microsoft Excel avec en-têtes stylisés et lignes de données formatées.
+- **JSON (`.json`)** : Tableau JSON structuré contenant les objets complets de profil de pilote et de configuration audio.
+
+### Regroupement des fichiers audio et multimédias
+
+- Tous les fichiers audio et avatars personnalisés référencés par les pilotes exportés sont automatiquement collectés et intégrés dans l'archive ZIP aux côtés du fichier de données (`drivers.csv`, `drivers.xlsx` ou `drivers.json`).
+- **Déduplication** : Si deux pilotes ou plus partagent le même effet sonore ou la même image d'avatar, le fichier n'est intégré **qu'une seule fois** dans l'archive ZIP. Les références relatives dans le fichier de données pointent vers le nom de ressource partagé.
+- **Préservation des préréglages et du TTS** : Les sons de préréglage du système (ex. `default_beep`), les emplacements désactivés et les annonces de synthèse vocale (TTS) personnalisées sont conservés dans le fichier exporté.
+- **Prêt pour la réimportation** : Le package ZIP obtenu est immédiatement prêt à être glissé-déposé dans la fenêtre **Importer des pilotes** sur n'importe quel ordinateur.
