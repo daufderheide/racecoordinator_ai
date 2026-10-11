@@ -1,6 +1,9 @@
 import { AbsoluteWidgetNode } from "@app/models/settings";
 
-import { LaneGridBounds } from "./lane-grid-replication.helper";
+import {
+  LaneGridBounds,
+  LaneGridSession,
+} from "./lane-grid-replication.helper";
 
 export class LaneGridGeometryHelper {
   public static extractObstacles(
@@ -370,6 +373,220 @@ export class LaneGridGeometryHelper {
       y: minY,
       width: Math.max(100, maxX - minX),
       height: Math.max(50, maxY - minY),
+    };
+  }
+
+  public static updateWidgetCellRatios(
+    widget: AbsoluteWidgetNode,
+    session: LaneGridSession,
+    masterCell: LaneGridBounds,
+  ): void {
+    if (!widget || !session) return;
+    if (!widget.customSettings) {
+      widget.customSettings = {};
+    }
+    const cellW = masterCell.width > 0 ? masterCell.width : 1;
+    const cellH = masterCell.height > 0 ? masterCell.height : 1;
+    widget.customSettings["cellWidthRatio"] = widget.width / cellW;
+    widget.customSettings["cellHeightRatio"] = widget.height / cellH;
+    widget.customSettings["cellOffsetXRatio"] =
+      (widget.x - masterCell.x) / cellW;
+    widget.customSettings["cellOffsetYRatio"] =
+      (widget.y - masterCell.y) / cellH;
+  }
+
+  public static isGridResized(
+    savedBounds: LaneGridBounds | undefined,
+    sessionBounds: LaneGridBounds,
+    savedTotalLanes: number,
+    sessionTotalLanes: number,
+    savedLabelPos: string,
+    currentLabelPos: string,
+    savedLabelSize: number,
+    currentLabelSize: number,
+  ): boolean {
+    const labelChanged =
+      savedLabelPos !== currentLabelPos ||
+      (currentLabelPos !== "none" && savedLabelSize !== currentLabelSize);
+
+    const boundsChanged =
+      Boolean(savedBounds) &&
+      (savedBounds!.x !== sessionBounds.x ||
+        savedBounds!.y !== sessionBounds.y ||
+        savedBounds!.width !== sessionBounds.width ||
+        savedBounds!.height !== sessionBounds.height);
+
+    const totalLanesChanged =
+      savedTotalLanes != null &&
+      savedTotalLanes > 0 &&
+      savedTotalLanes !== sessionTotalLanes;
+
+    return Boolean(boundsChanged || totalLanesChanged || labelChanged);
+  }
+
+  public static calculateFallbackRatiosForResizedGrid(
+    masterWidget: AbsoluteWidgetNode,
+    session: LaneGridSession,
+    masterCell: LaneGridBounds,
+    headerHeight: number,
+    savedBounds: LaneGridBounds | undefined,
+    savedTotalLanes: number,
+    cellW: number,
+    cellH: number,
+  ): {
+    cellWidthRatio: number;
+    cellHeightRatio: number;
+    cellOffsetXRatio: number;
+    cellOffsetYRatio: number;
+  } {
+    if (
+      savedTotalLanes &&
+      savedTotalLanes !== session.totalLanes &&
+      savedTotalLanes > 0
+    ) {
+      if (session.direction === "horizontal") {
+        const oldPitch =
+          (savedBounds?.width || session.bounds.width) / savedTotalLanes;
+        const safePitch = oldPitch > 0 ? oldPitch : 1;
+        return {
+          cellWidthRatio: masterWidget.width / safePitch,
+          cellHeightRatio: masterWidget.height / cellH,
+          cellOffsetXRatio:
+            (masterWidget.x - (savedBounds?.x || session.bounds.x)) / safePitch,
+          cellOffsetYRatio: (masterWidget.y - masterCell.y) / cellH,
+        };
+      }
+      const baseH = savedBounds?.height || session.bounds.height;
+      const availH =
+        session.headerPlacement === "top"
+          ? Math.max(0, baseH - headerHeight)
+          : baseH;
+      const oldPitch = availH / savedTotalLanes;
+      const safePitch = oldPitch > 0 ? oldPitch : 1;
+      const oldCellY =
+        (savedBounds?.y || session.bounds.y) +
+        (session.headerPlacement === "top" ? headerHeight : 0) +
+        (session.sourceLaneIndex ?? 0) * oldPitch;
+      return {
+        cellHeightRatio: masterWidget.height / safePitch,
+        cellWidthRatio: masterWidget.width / cellW,
+        cellOffsetXRatio: (masterWidget.x - masterCell.x) / cellW,
+        cellOffsetYRatio: (masterWidget.y - oldCellY) / safePitch,
+      };
+    }
+    return {
+      cellWidthRatio: masterWidget.width / cellW,
+      cellHeightRatio: masterWidget.height / cellH,
+      cellOffsetXRatio: (masterWidget.x - masterCell.x) / cellW,
+      cellOffsetYRatio: (masterWidget.y - masterCell.y) / cellH,
+    };
+  }
+
+  public static resolveCellRatios(
+    masterWidget: AbsoluteWidgetNode,
+    session: LaneGridSession,
+    masterCell: LaneGridBounds,
+    headerHeight: number,
+  ): {
+    cellWidthRatio: number;
+    cellHeightRatio: number;
+    cellOffsetXRatio: number;
+    cellOffsetYRatio: number;
+  } {
+    const cellW = masterCell.width > 0 ? masterCell.width : 1;
+    const cellH = masterCell.height > 0 ? masterCell.height : 1;
+
+    const savedBounds = masterWidget.customSettings?.["gridBounds"] as
+      | LaneGridBounds
+      | undefined;
+    const savedTotalLanes = Number(
+      masterWidget.customSettings?.["gridTotalLanes"],
+    );
+    const savedLabelPos =
+      masterWidget.customSettings?.["gridLabelPosition"] || "none";
+    const savedLabelSize =
+      Number(masterWidget.customSettings?.["gridLabelSize"]) || 40;
+
+    const currentLabelPos = session.gridLabelPosition || "none";
+    const currentLabelSize = Number(session.gridLabelSize) || 40;
+
+    const isGridResized = this.isGridResized(
+      savedBounds,
+      session.bounds,
+      savedTotalLanes,
+      session.totalLanes,
+      savedLabelPos,
+      currentLabelPos,
+      savedLabelSize,
+      currentLabelSize,
+    );
+
+    let cellWidthRatio =
+      masterWidget.customSettings?.["cellWidthRatio"] != null
+        ? Number(masterWidget.customSettings["cellWidthRatio"])
+        : undefined;
+    let cellHeightRatio =
+      masterWidget.customSettings?.["cellHeightRatio"] != null
+        ? Number(masterWidget.customSettings["cellHeightRatio"])
+        : undefined;
+    let cellOffsetXRatio =
+      masterWidget.customSettings?.["cellOffsetXRatio"] != null
+        ? Number(masterWidget.customSettings["cellOffsetXRatio"])
+        : undefined;
+    let cellOffsetYRatio =
+      masterWidget.customSettings?.["cellOffsetYRatio"] != null
+        ? Number(masterWidget.customSettings["cellOffsetYRatio"])
+        : undefined;
+
+    const hasExistingRatios =
+      cellWidthRatio != null &&
+      !isNaN(cellWidthRatio) &&
+      cellHeightRatio != null &&
+      !isNaN(cellHeightRatio);
+
+    if (savedBounds && !isGridResized) {
+      cellWidthRatio = masterWidget.width / cellW;
+      cellHeightRatio = masterWidget.height / cellH;
+      cellOffsetXRatio = (masterWidget.x - masterCell.x) / cellW;
+      cellOffsetYRatio = (masterWidget.y - masterCell.y) / cellH;
+    } else if (!hasExistingRatios) {
+      if (isGridResized) {
+        const fallback = this.calculateFallbackRatiosForResizedGrid(
+          masterWidget,
+          session,
+          masterCell,
+          headerHeight,
+          savedBounds,
+          savedTotalLanes,
+          cellW,
+          cellH,
+        );
+        cellWidthRatio = fallback.cellWidthRatio;
+        cellHeightRatio = fallback.cellHeightRatio;
+        cellOffsetXRatio = fallback.cellOffsetXRatio;
+        cellOffsetYRatio = fallback.cellOffsetYRatio;
+      } else {
+        cellWidthRatio = masterWidget.width / cellW;
+        cellHeightRatio = masterWidget.height / cellH;
+        cellOffsetXRatio = (masterWidget.x - masterCell.x) / cellW;
+        cellOffsetYRatio = (masterWidget.y - masterCell.y) / cellH;
+      }
+    }
+
+    if (cellOffsetXRatio == null || isNaN(cellOffsetXRatio)) {
+      cellOffsetXRatio = (masterWidget.x - masterCell.x) / cellW;
+    }
+    if (cellOffsetYRatio == null || isNaN(cellOffsetYRatio)) {
+      cellOffsetYRatio = (masterWidget.y - masterCell.y) / cellH;
+    }
+
+    return {
+      cellWidthRatio: cellWidthRatio ?? masterWidget.width / cellW,
+      cellHeightRatio: cellHeightRatio ?? masterWidget.height / cellH,
+      cellOffsetXRatio:
+        cellOffsetXRatio ?? (masterWidget.x - masterCell.x) / cellW,
+      cellOffsetYRatio:
+        cellOffsetYRatio ?? (masterWidget.y - masterCell.y) / cellH,
     };
   }
 }

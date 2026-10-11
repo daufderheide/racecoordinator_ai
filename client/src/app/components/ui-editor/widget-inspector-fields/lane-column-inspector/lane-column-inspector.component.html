@@ -101,16 +101,17 @@
           >view_column</span
         >
         {{
-          (currentSettings["bindingMode"] === "position"
-            ? "UE_GRID_POSITION_INSPECTOR_TITLE"
-            : currentSettings["bindingMode"] === "overallPosition"
-              ? "UE_GRID_OVERALL_POSITION_INSPECTOR_TITLE"
-              : currentSettings["bindingMode"] === "seed"
-                ? "UE_GRID_SEED_INSPECTOR_TITLE"
-                : "UE_GRID_INSPECTOR_TITLE"
-          )
-            | translate
-              : { count: currentSettings["gridTotalLanes"] || totalLanes() }
+          currentSettings["gridLabelText"]?.trim() ||
+            ((currentSettings["bindingMode"] === "position"
+              ? "UE_GRID_POSITION_INSPECTOR_TITLE"
+              : currentSettings["bindingMode"] === "overallPosition"
+                ? "UE_GRID_OVERALL_POSITION_INSPECTOR_TITLE"
+                : currentSettings["bindingMode"] === "seed"
+                  ? "UE_GRID_SEED_INSPECTOR_TITLE"
+                  : "UE_GRID_INSPECTOR_TITLE"
+            )
+              | translate
+                : { count: currentSettings["gridTotalLanes"] || totalLanes() })
         }}
       </span>
       <span class="grid-card-badge">
@@ -454,6 +455,261 @@
               {{ "UE_INSPECTOR_ALIGN_END" | translate }}
             </app-custom-option>
           </app-custom-select>
+        </div>
+      </div>
+    }
+
+    <!-- Grid Label / Title Settings -->
+    <div class="inspector-section" style="margin-bottom: 8px">
+      <label class="inspector-label">{{
+        "UE_GRID_LABEL_POSITION" | translate
+      }}</label>
+      <div class="select-container select-sm">
+        <app-custom-select
+          [ngModel]="gridLabelPosition"
+          (ngModelChange)="onGridLabelPositionChange($event)"
+        >
+          <app-custom-option value="none">
+            {{ "UE_GRID_LABEL_POS_NONE" | translate }}
+          </app-custom-option>
+          <app-custom-option value="top">
+            {{ "UE_GRID_LABEL_POS_TOP" | translate }}
+          </app-custom-option>
+          <app-custom-option value="bottom">
+            {{ "UE_GRID_LABEL_POS_BOTTOM" | translate }}
+          </app-custom-option>
+          <app-custom-option value="left">
+            {{ "UE_GRID_LABEL_POS_LEFT" | translate }}
+          </app-custom-option>
+          <app-custom-option value="right">
+            {{ "UE_GRID_LABEL_POS_RIGHT" | translate }}
+          </app-custom-option>
+        </app-custom-select>
+      </div>
+    </div>
+
+    @if (gridLabelPosition !== "none") {
+      <div class="inspector-section" style="margin-bottom: 8px">
+        <label class="inspector-label">{{
+          "UE_GRID_LABEL_TEXT" | translate
+        }}</label>
+        <input
+          type="text"
+          class="inspector-input"
+          [ngModel]="gridLabelText"
+          (ngModelChange)="gridLabelText = $event"
+          [placeholder]="'UE_GRID_LABEL_PLACEHOLDER' | translate"
+          autocomplete="off"
+          data-dashlane-ignore="true"
+          data-1p-ignore="true"
+          data-lpignore="true"
+          data-bwignore="true"
+          data-form-type="other"
+          style="
+            width: 100%;
+            padding: 4px 8px;
+            font-size: 12px;
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(0, 0, 0, 0.25);
+            border-radius: 4px;
+          "
+        />
+      </div>
+
+      <div class="inspector-section" style="margin-bottom: 8px">
+        <div class="inspector-label-row">
+          <label class="inspector-label">{{
+            "UE_GRID_LABEL_SIZE" | translate
+          }}</label>
+          <span class="inspector-val-badge">{{ gridLabelSize }}px</span>
+        </div>
+        <div style="display: flex; gap: 8px; align-items: center">
+          <input
+            type="range"
+            min="16"
+            max="200"
+            step="1"
+            [ngModel]="gridLabelSize"
+            (ngModelChange)="gridLabelSize = $event"
+            class="inspector-slider"
+            style="flex: 1"
+          />
+          <input
+            type="number"
+            min="16"
+            max="200"
+            step="1"
+            autocomplete="off"
+            data-dashlane-ignore="true"
+            data-1p-ignore="true"
+            data-lpignore="true"
+            data-bwignore="true"
+            data-form-type="other"
+            [ngModel]="gridLabelSize"
+            (ngModelChange)="gridLabelSize = $event"
+            style="
+              width: 55px;
+              padding: 2px 4px;
+              font-size: 12px;
+              background: rgba(255, 255, 255, 0.9);
+              border: 1px solid rgba(0, 0, 0, 0.25);
+              border-radius: 4px;
+            "
+          />
+        </div>
+      </div>
+
+      <div class="inspector-section" style="margin-bottom: 8px">
+        <label class="inspector-label">{{
+          "UE_INSPECTOR_FONT_FAMILY" | translate
+        }}</label>
+        <div class="select-container select-sm">
+          <app-custom-select
+            [ngModel]="gridLabelFontFamily"
+            (ngModelChange)="gridLabelFontFamily = $event"
+            (click)="fontService.loadLocalFonts()"
+          >
+            <app-custom-option value="">
+              {{ "UE_INSPECTOR_FONT_THEME_DEFAULT" | translate }}
+            </app-custom-option>
+            @for (font of fontService.availableFonts(); track font) {
+              <app-custom-option [value]="font">{{ font }}</app-custom-option>
+            }
+          </app-custom-select>
+        </div>
+      </div>
+
+      <div class="inspector-section" style="margin-bottom: 8px">
+        <div class="inspector-label-row">
+          <label class="inspector-label">{{
+            "UE_INSPECTOR_FONT_SIZE" | translate
+          }}</label>
+          <span class="inspector-val-badge">{{ gridLabelFontSize }}px</span>
+        </div>
+        <div style="display: flex; gap: 8px; align-items: center">
+          <input
+            type="range"
+            min="8"
+            max="72"
+            step="1"
+            [ngModel]="gridLabelFontSize"
+            (ngModelChange)="gridLabelFontSize = $event"
+            class="inspector-slider"
+            style="flex: 1"
+          />
+          <input
+            type="number"
+            min="8"
+            max="72"
+            step="1"
+            autocomplete="off"
+            data-dashlane-ignore="true"
+            data-1p-ignore="true"
+            data-lpignore="true"
+            data-bwignore="true"
+            data-form-type="other"
+            [ngModel]="gridLabelFontSize"
+            (ngModelChange)="gridLabelFontSize = $event"
+            style="
+              width: 55px;
+              padding: 2px 4px;
+              font-size: 12px;
+              background: rgba(255, 255, 255, 0.9);
+              border: 1px solid rgba(0, 0, 0, 0.25);
+              border-radius: 4px;
+            "
+          />
+        </div>
+      </div>
+
+      <div class="inspector-section" style="margin-bottom: 8px">
+        <label class="inspector-label">{{
+          "UE_INSPECTOR_TEXT_ALIGNMENT" | translate
+        }}</label>
+        <div class="select-container select-sm">
+          <app-custom-select
+            [ngModel]="gridLabelAlignment"
+            (ngModelChange)="gridLabelAlignment = $event"
+          >
+            <app-custom-option value="start">
+              {{ "UE_INSPECTOR_ALIGN_START" | translate }}
+            </app-custom-option>
+            <app-custom-option value="center">
+              {{ "UE_INSPECTOR_ALIGN_CENTER" | translate }}
+            </app-custom-option>
+            <app-custom-option value="end">
+              {{ "UE_INSPECTOR_ALIGN_END" | translate }}
+            </app-custom-option>
+          </app-custom-select>
+        </div>
+      </div>
+
+      <div class="inspector-section" style="margin-bottom: 8px">
+        <label class="form-check-label" style="margin-right: 12px">
+          <input
+            type="checkbox"
+            class="form-checkbox"
+            [ngModel]="gridLabelFontBold"
+            (ngModelChange)="gridLabelFontBold = $event"
+          />
+          <span>{{ "UE_INSPECTOR_FONT_BOLD" | translate }}</span>
+        </label>
+        <label class="form-check-label">
+          <input
+            type="checkbox"
+            class="form-checkbox"
+            [ngModel]="gridLabelFontItalic"
+            (ngModelChange)="gridLabelFontItalic = $event"
+          />
+          <span>{{ "UE_INSPECTOR_FONT_ITALIC" | translate }}</span>
+        </label>
+      </div>
+
+      <div class="inspector-section" style="margin-bottom: 8px">
+        <label class="inspector-label">{{
+          "UE_INSPECTOR_TEXT_COLOR" | translate
+        }}</label>
+        <div class="color-picker-row">
+          <input
+            type="color"
+            class="color-picker-input"
+            [value]="gridLabelTextColor"
+            (input)="onGridLabelTextColorChange($event)"
+          />
+          <button
+            type="button"
+            class="inspector-btn-ghost ms-1"
+            (click)="resetGridLabelTextColor()"
+            [title]="'UE_INSPECTOR_COLOR_RESET' | translate"
+          >
+            <span class="material-icons" style="font-size: 14px"
+              >restart_alt</span
+            >
+          </button>
+        </div>
+      </div>
+
+      <div class="inspector-section" style="margin-bottom: 8px">
+        <label class="inspector-label">{{
+          "UE_INSPECTOR_BACKGROUND_COLOR" | translate
+        }}</label>
+        <div class="color-picker-row">
+          <input
+            type="color"
+            class="color-picker-input"
+            [value]="gridLabelBackgroundColor"
+            (input)="onGridLabelBgColorChange($event)"
+          />
+          <button
+            type="button"
+            class="inspector-btn-ghost ms-1"
+            (click)="resetGridLabelBackgroundColor()"
+            [title]="'UE_INSPECTOR_COLOR_RESET' | translate"
+          >
+            <span class="material-icons" style="font-size: 14px"
+              >restart_alt</span
+            >
+          </button>
         </div>
       </div>
     }

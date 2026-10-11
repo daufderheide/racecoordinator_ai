@@ -1599,4 +1599,163 @@ describe("LaneGridReplicationHelper", () => {
       expect(moved).toEqual({ x: 150, y: 150, width: 300, height: 200 });
     });
   });
+
+  describe("Widget scaling on grid size change and mirror count change", () => {
+    it("should scale widgets proportionally when grid session bounds resize", () => {
+      const master: AbsoluteWidgetNode = {
+        id: "master-w1",
+        widgetType: "lane-column",
+        x: 100,
+        y: 100,
+        width: 200,
+        height: 100,
+        zIndex: 100,
+        customSettings: {
+          gridId: "g-scale-1",
+          gridLane: 0,
+          bindingMode: "lane",
+          cellWidthRatio: 1.0,
+          cellHeightRatio: 1.0,
+          cellOffsetXRatio: 0,
+          cellOffsetYRatio: 0,
+        },
+      };
+
+      const session: LaneGridSession = {
+        gridId: "g-scale-1",
+        bounds: { x: 100, y: 100, width: 400, height: 400 },
+        totalLanes: 4,
+        direction: "vertical",
+        sourceLaneIndex: 0,
+        bindingMode: "lane",
+        headerPlacement: "none",
+      };
+
+      const widgets = [master];
+      const result = LaneGridReplicationHelper.syncMasterWidgetToLanes(
+        master,
+        session,
+        widgets,
+      );
+
+      // In a 400x400 grid with 4 vertical lanes, each lane cell height is 100, width is 400
+      const updatedMaster = result.find((w) => w.id === "master-w1");
+      expect(updatedMaster).toBeDefined();
+      expect(updatedMaster?.width).toBe(400);
+      expect(updatedMaster?.height).toBe(100);
+
+      // Now expand session bounds to 800 width, 800 height (cell height becomes 200, width becomes 800)
+      const expandedSession: LaneGridSession = {
+        ...session,
+        bounds: { x: 100, y: 100, width: 800, height: 800 },
+      };
+
+      const expandedResult = LaneGridReplicationHelper.syncMasterWidgetToLanes(
+        updatedMaster!,
+        expandedSession,
+        result,
+      );
+
+      const scaledMaster = expandedResult.find((w) => w.id === "master-w1");
+      expect(scaledMaster?.width).toBe(800);
+      expect(scaledMaster?.height).toBe(200);
+
+      // Verify mirrored lanes also scaled to 800x200
+      const mirroredLane1 = expandedResult.find(
+        (w) => w.customSettings?.["gridLane"] === 1,
+      );
+      expect(mirroredLane1?.width).toBe(800);
+      expect(mirroredLane1?.height).toBe(200);
+      expect(mirroredLane1?.y).toBe(300); // 100 + 200
+    });
+
+    it("should adjust widget height when mirror count increases in vertical grid without expanding grid bounds", () => {
+      const master: AbsoluteWidgetNode = {
+        id: "master-vert",
+        widgetType: "lane-column",
+        x: 100,
+        y: 100,
+        width: 300,
+        height: 100,
+        zIndex: 100,
+        customSettings: {
+          gridId: "g-mirror-change",
+          gridLane: 0,
+          gridTotalLanes: 4,
+          bindingMode: "position",
+          cellWidthRatio: 1.0,
+          cellHeightRatio: 1.0,
+        },
+      };
+
+      // Initial grid: 4 lanes, bounds height 400 (each cell is 100px high)
+      const initialWidgets = [master];
+      const bounds = { x: 100, y: 100, width: 300, height: 400 };
+
+      // Change total lanes to 8 (each cell is now 50px high)
+      const updated = LaneGridReplicationHelper.updateGridTotalLanes(
+        initialWidgets,
+        "g-mirror-change",
+        8,
+        bounds,
+      );
+
+      const updatedMaster = updated.find((w) => w.id === "master-vert");
+      expect(updatedMaster).toBeDefined();
+      expect(updatedMaster?.height).toBe(50); // Scaled by 4/8 = 0.5
+
+      // All 8 rows should exist and fit within the original 400px bounds (100 to 500)
+      const allRows = updated.filter(
+        (w) => w.customSettings?.["gridId"] === "g-mirror-change",
+      );
+      expect(allRows.length).toBe(8);
+      const lastRow = updated.find((w) => w.customSettings?.["gridLane"] === 7);
+      expect(lastRow).toBeDefined();
+      expect(lastRow?.y).toBe(450); // 100 + 7 * 50
+      expect(lastRow!.y + lastRow!.height).toBe(500); // exactly bounds.y + bounds.height
+    });
+
+    it("should preserve authoritative gridBounds in customSettings", () => {
+      const master: AbsoluteWidgetNode = {
+        id: "m-b",
+        widgetType: "lane-column",
+        x: 100,
+        y: 100,
+        width: 300,
+        height: 100,
+        zIndex: 100,
+        customSettings: {
+          gridId: "g-bounds-save",
+          gridLane: 0,
+        },
+      };
+      const session: LaneGridSession = {
+        gridId: "g-bounds-save",
+        bounds: { x: 100, y: 100, width: 300, height: 400 },
+        totalLanes: 4,
+        direction: "vertical",
+        sourceLaneIndex: 0,
+        bindingMode: "lane",
+      };
+
+      const baked = LaneGridReplicationHelper.bakeGrid([master], session);
+      expect(baked[0].customSettings?.["gridBounds"]).toEqual({
+        x: 100,
+        y: 100,
+        width: 300,
+        height: 400,
+      });
+
+      const calculated = LaneGridReplicationHelper.calculateGridBounds(
+        baked,
+        "g-bounds-save",
+      );
+      expect(calculated).toEqual({
+        x: 100,
+        y: 100,
+        width: 300,
+        height: 400,
+      });
+    });
+  });
 });

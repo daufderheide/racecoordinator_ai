@@ -330,6 +330,74 @@ function handleGridHeaderStructureChanges(
   }
 }
 
+function handleGridTotalLanesStructureChange(
+  comp: any,
+  layout: any,
+  targetWidget: any,
+  gridId: string,
+): void {
+  delete targetWidget.customSettings["_gridTotalLanesChanged"];
+  const newTotal = Math.max(
+    1,
+    Math.min(32, Number(targetWidget.customSettings?.["gridTotalLanes"]) || 4),
+  );
+  const existingBounds =
+    comp.activeGridSession && comp.activeGridSession.gridId === gridId
+      ? comp.activeGridSession.bounds
+      : null;
+  layout.widgets = LaneGridReplicationHelper.updateGridTotalLanes(
+    layout.widgets,
+    gridId,
+    newTotal,
+    existingBounds,
+  );
+  if (comp.activeGridSession && comp.activeGridSession.gridId === gridId) {
+    comp.activeGridSession.totalLanes = newTotal;
+    if (comp.activeGridSession.bounds) {
+      layout.widgets = LaneGridReplicationHelper.syncAllMasterWidgetsToLanes(
+        comp.activeGridSession,
+        layout.widgets,
+      );
+    }
+  }
+}
+
+function handleGridLabelStructureChange(
+  comp: any,
+  layout: any,
+  targetWidget: any,
+  gridId: string,
+): void {
+  delete targetWidget.customSettings["_gridLabelChanged"];
+  const labelConfig = {
+    gridLabelPosition: targetWidget.customSettings?.["gridLabelPosition"],
+    gridLabelText: targetWidget.customSettings?.["gridLabelText"],
+    gridLabelSize: targetWidget.customSettings?.["gridLabelSize"],
+    gridLabelFontFamily: targetWidget.customSettings?.["gridLabelFontFamily"],
+    gridLabelFontSize: targetWidget.customSettings?.["gridLabelFontSize"],
+    gridLabelTextColor: targetWidget.customSettings?.["gridLabelTextColor"],
+    gridLabelBackgroundColor:
+      targetWidget.customSettings?.["gridLabelBackgroundColor"],
+    gridLabelFontBold: targetWidget.customSettings?.["gridLabelFontBold"],
+    gridLabelFontItalic: targetWidget.customSettings?.["gridLabelFontItalic"],
+    gridLabelAlignment: targetWidget.customSettings?.["gridLabelAlignment"],
+  };
+  layout.widgets = LaneGridReplicationHelper.updateGridLabel(
+    layout.widgets,
+    gridId,
+    labelConfig,
+  );
+  if (comp.activeGridSession && comp.activeGridSession.gridId === gridId) {
+    Object.assign(comp.activeGridSession, labelConfig);
+    if (comp.activeGridSession.bounds) {
+      layout.widgets = LaneGridReplicationHelper.syncAllMasterWidgetsToLanes(
+        comp.activeGridSession,
+        layout.widgets,
+      );
+    }
+  }
+}
+
 function handleGridColumnStructureChanges(
   comp: any,
   layout: any,
@@ -377,33 +445,11 @@ function handleGridColumnStructureChanges(
   }
 
   if (targetWidget.customSettings?.["_gridTotalLanesChanged"]) {
-    delete targetWidget.customSettings["_gridTotalLanesChanged"];
-    const newTotal = Math.max(
-      1,
-      Math.min(
-        32,
-        Number(targetWidget.customSettings?.["gridTotalLanes"]) || 4,
-      ),
-    );
-    const existingBounds =
-      comp.activeGridSession && comp.activeGridSession.gridId === gridId
-        ? comp.activeGridSession.bounds
-        : null;
-    layout.widgets = LaneGridReplicationHelper.updateGridTotalLanes(
-      layout.widgets,
-      gridId,
-      newTotal,
-      existingBounds,
-    );
-    if (comp.activeGridSession && comp.activeGridSession.gridId === gridId) {
-      comp.activeGridSession.totalLanes = newTotal;
-      if (comp.activeGridSession.bounds) {
-        layout.widgets = LaneGridReplicationHelper.syncAllMasterWidgetsToLanes(
-          comp.activeGridSession,
-          layout.widgets,
-        );
-      }
-    }
+    handleGridTotalLanesStructureChange(comp, layout, targetWidget, gridId);
+  }
+
+  if (targetWidget.customSettings?.["_gridLabelChanged"]) {
+    handleGridLabelStructureChange(comp, layout, targetWidget, gridId);
   }
 }
 

@@ -1019,5 +1019,81 @@ describe("LaneColumnInspectorComponent", () => {
       expect(component.gridDirection).toBe("vertical");
       expect(component.gridTotalLanes).toBe(8);
     });
+
+    it("should handle gridLabel typography and style properties", () => {
+      mockSettings.linkColumns = true;
+
+      // Font Family
+      component.gridLabelFontFamily = "Roboto";
+      expect(mockSettings.gridLabelFontFamily).toBe("Roboto");
+      expect(mockSettings._gridLabelChanged).toBeTrue();
+      expect(component.gridLabelFontFamily).toBe("Roboto");
+
+      // Font Size with clamping
+      component.gridLabelFontSize = 28;
+      expect(mockSettings.gridLabelFontSize).toBe(28);
+      expect(component.gridLabelFontSize).toBe(28);
+      component.gridLabelFontSize = 4;
+      expect(mockSettings.gridLabelFontSize).toBe(8);
+      component.gridLabelFontSize = 150;
+      expect(mockSettings.gridLabelFontSize).toBe(72);
+
+      // Bold & Italic
+      component.gridLabelFontBold = false;
+      expect(component.gridLabelFontBold).toBeFalse();
+      expect(mockSettings.gridLabelFontBold).toBeFalse();
+      component.gridLabelFontBold = true;
+      expect(component.gridLabelFontBold).toBeTrue();
+      expect(mockSettings.gridLabelFontBold).toBeTrue();
+
+      component.gridLabelFontItalic = true;
+      expect(component.gridLabelFontItalic).toBeTrue();
+      expect(mockSettings.gridLabelFontItalic).toBeTrue();
+      component.gridLabelFontItalic = false;
+      expect(component.gridLabelFontItalic).toBeFalse();
+      expect(mockSettings.gridLabelFontItalic).toBeFalse();
+
+      // Alignment
+      component.gridLabelAlignment = "end";
+      expect(mockSettings.gridLabelAlignment).toBe("end");
+      expect(component.gridLabelAlignment).toBe("end");
+
+      // Text Color & Reset
+      const fakeTextEvent = { target: { value: "#112233" } } as any;
+      component.onGridLabelTextColorChange(fakeTextEvent);
+      expect(mockSettings.gridLabelTextColor).toBe("#112233");
+      expect(component.gridLabelTextColor).toBe("#112233");
+      component.resetGridLabelTextColor();
+      expect(mockSettings.gridLabelTextColor).toBeUndefined();
+
+      // Background Color & Reset
+      const fakeBgEvent = { target: { value: "#445566" } } as any;
+      component.onGridLabelBgColorChange(fakeBgEvent);
+      expect(mockSettings.gridLabelBackgroundColor).toBe("#445566");
+      expect(component.gridLabelBackgroundColor).toBe("#445566");
+      component.resetGridLabelBackgroundColor();
+      expect(mockSettings.gridLabelBackgroundColor).toBeUndefined();
+    });
+
+    it("should handle gridLabelText getter and setter", () => {
+      mockSettings.gridLabelText = "My Custom Title";
+      expect(component.gridLabelText).toBe("My Custom Title");
+
+      component.gridLabelText = "Updated Title";
+      expect(mockSettings.gridLabelText).toBe("Updated Title");
+      expect(mockSettings._gridLabelChanged).toBeTrue();
+    });
+
+    it("should render custom grid card title if gridLabelText is provided", () => {
+      mockSettings.gridId = "grid-1";
+      mockSettings.linkColumns = true;
+      mockSettings.gridLabelText = "My Custom Leaderboard";
+      fixture.detectChanges();
+
+      const titleEl = fixture.debugElement.query(By.css(".grid-card-title"));
+      expect(titleEl.nativeElement.textContent).toContain(
+        "My Custom Leaderboard",
+      );
+    });
   });
 });

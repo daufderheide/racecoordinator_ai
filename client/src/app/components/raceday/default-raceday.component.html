@@ -86,13 +86,45 @@
           [style.height.px]="grid.bounds.height"
           [style.z-index]="grid.zIndex"
         >
+          @if (grid.labelBounds) {
+            <div
+              class="raceday-grid-label"
+              [class.horizontal-label]="
+                grid.labelPosition === 'top' || grid.labelPosition === 'bottom'
+              "
+              [class.vertical-label]="
+                grid.labelPosition === 'left' || grid.labelPosition === 'right'
+              "
+              [style.left.px]="grid.labelBounds.x - grid.bounds.x"
+              [style.top.px]="grid.labelBounds.y - grid.bounds.y"
+              [style.width.px]="grid.labelBounds.width"
+              [style.height.px]="grid.labelBounds.height"
+              [style.font-family]="grid.labelFontFamily || null"
+              [style.font-size.px]="grid.labelFontSize || 18"
+              [style.color]="grid.labelTextColor || '#ffffff'"
+              [style.background-color]="
+                grid.labelBackgroundColor || 'rgba(15, 23, 42, 0.85)'
+              "
+              [style.font-weight]="grid.labelFontBold ? 'bold' : 'normal'"
+              [style.font-style]="grid.labelFontItalic ? 'italic' : 'normal'"
+              [style.justify-content]="
+                getGridLabelJustify(grid.labelPosition, grid.labelAlignment)
+              "
+            >
+              <span class="grid-label-text">{{
+                grid.labelText || ("UE_GRID_LABEL_DEFAULT" | translate)
+              }}</span>
+            </div>
+          }
           @if (
             grid.headerPlacement === "top" && grid.direction === "vertical"
           ) {
             <div
               class="raceday-grid-top-header"
+              [style.left.px]="grid.dataBounds.x - grid.bounds.x"
+              [style.top.px]="grid.dataBounds.y - grid.bounds.y"
               [style.height.px]="grid.headerHeight"
-              [style.width.px]="grid.bounds.width"
+              [style.width.px]="grid.dataBounds.width"
             >
               @for (w of grid.headerWidgets; track w.id) {
                 <app-raceday-absolute-widget
@@ -113,17 +145,21 @@
             [class.scroll-horizontal]="
               grid.direction === 'horizontal' && grid.hasScroll
             "
+            [style.left.px]="grid.dataBounds.x - grid.bounds.x"
             [style.top.px]="
-              grid.headerPlacement === 'top' && grid.direction === 'vertical'
+              grid.dataBounds.y -
+              grid.bounds.y +
+              (grid.headerPlacement === 'top' && grid.direction === 'vertical'
                 ? grid.headerHeight
-                : 0
+                : 0)
             "
             [style.height.px]="
-              grid.headerPlacement === 'top' && grid.direction === 'vertical'
-                ? grid.bounds.height - grid.headerHeight
-                : grid.bounds.height
+              grid.dataBounds.height -
+              (grid.headerPlacement === 'top' && grid.direction === 'vertical'
+                ? grid.headerHeight
+                : 0)
             "
-            [style.width.px]="grid.bounds.width"
+            [style.width.px]="grid.dataBounds.width"
           >
             <div
               class="raceday-grid-scroll-content"
@@ -208,6 +244,46 @@
             class="grid-resize-handle handle-w"
             (pointerdown)="onGridResizeStart($event, 'w')"
           ></div>
+
+          @if (getGridLabelBounds(); as labelBounds) {
+            <div
+              class="lane-blueprint-cell grid-label-blueprint-cell"
+              [class.vertical-label]="
+                gridSession()!.gridLabelPosition === 'left' ||
+                gridSession()!.gridLabelPosition === 'right'
+              "
+              [style.left.px]="labelBounds.x - gridSession()!.bounds.x"
+              [style.top.px]="labelBounds.y - gridSession()!.bounds.y"
+              [style.width.px]="labelBounds.width"
+              [style.height.px]="labelBounds.height"
+              [style.font-family]="gridSession()!.gridLabelFontFamily || null"
+              [style.font-size.px]="gridSession()!.gridLabelFontSize || 18"
+              [style.color]="gridSession()!.gridLabelTextColor || '#ffffff'"
+              [style.background-color]="
+                gridSession()!.gridLabelBackgroundColor ||
+                'rgba(15, 23, 42, 0.85)'
+              "
+              [style.font-weight]="
+                gridSession()!.gridLabelFontBold !== false ? 'bold' : 'normal'
+              "
+              [style.font-style]="
+                gridSession()!.gridLabelFontItalic ? 'italic' : 'normal'
+              "
+              [style.justify-content]="
+                getGridLabelJustify(
+                  gridSession()!.gridLabelPosition,
+                  gridSession()!.gridLabelAlignment
+                )
+              "
+            >
+              <div class="grid-label-blueprint-text">
+                {{
+                  gridSession()!.gridLabelText ||
+                    ("UE_GRID_LABEL_DEFAULT" | translate)
+                }}
+              </div>
+            </div>
+          }
 
           @if (getHeaderRowBounds(); as headerBounds) {
             <div

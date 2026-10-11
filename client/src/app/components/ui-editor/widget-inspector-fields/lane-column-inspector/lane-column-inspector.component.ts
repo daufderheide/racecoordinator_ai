@@ -465,6 +465,139 @@ export class LaneColumnInspectorComponent {
     this.onFieldChange();
   }
 
+  get gridLabelPosition(): "none" | "top" | "bottom" | "left" | "right" {
+    return this.currentSettings["gridLabelPosition"] || "none";
+  }
+
+  onGridLabelPositionChange(
+    pos: "none" | "top" | "bottom" | "left" | "right",
+  ): void {
+    this.currentSettings["gridLabelPosition"] = pos;
+    this.currentSettings["_gridLabelChanged"] = true;
+    this.onFieldChange();
+  }
+
+  get gridLabelText(): string {
+    return this.currentSettings["gridLabelText"] || "";
+  }
+
+  set gridLabelText(val: string) {
+    this.currentSettings["gridLabelText"] = val;
+    this.currentSettings["_gridLabelChanged"] = true;
+    this.onFieldChange();
+  }
+
+  get gridLabelSize(): number {
+    return Number(this.currentSettings["gridLabelSize"]) || 40;
+  }
+
+  set gridLabelSize(val: number) {
+    this.currentSettings["gridLabelSize"] = Math.max(
+      16,
+      Math.min(200, Number(val) || 40),
+    );
+    this.currentSettings["_gridLabelChanged"] = true;
+    this.onFieldChange();
+  }
+
+  get gridLabelFontFamily(): string {
+    return this.currentSettings["gridLabelFontFamily"] || "";
+  }
+
+  set gridLabelFontFamily(val: string) {
+    this.currentSettings["gridLabelFontFamily"] = val;
+    this.currentSettings["_gridLabelChanged"] = true;
+    this.onFieldChange();
+  }
+
+  get gridLabelFontSize(): number {
+    return Number(this.currentSettings["gridLabelFontSize"]) || 18;
+  }
+
+  set gridLabelFontSize(val: number) {
+    this.currentSettings["gridLabelFontSize"] = Math.max(
+      8,
+      Math.min(72, Number(val) || 18),
+    );
+    this.currentSettings["_gridLabelChanged"] = true;
+    this.onFieldChange();
+  }
+
+  get gridLabelFontBold(): boolean {
+    return this.currentSettings["gridLabelFontBold"] !== false;
+  }
+
+  set gridLabelFontBold(val: boolean) {
+    this.currentSettings["gridLabelFontBold"] = Boolean(val);
+    this.currentSettings["_gridLabelChanged"] = true;
+    this.onFieldChange();
+  }
+
+  get gridLabelFontItalic(): boolean {
+    return Boolean(this.currentSettings["gridLabelFontItalic"]);
+  }
+
+  set gridLabelFontItalic(val: boolean) {
+    this.currentSettings["gridLabelFontItalic"] = Boolean(val);
+    this.currentSettings["_gridLabelChanged"] = true;
+    this.onFieldChange();
+  }
+
+  get gridLabelAlignment(): "start" | "center" | "end" {
+    return this.currentSettings["gridLabelAlignment"] || "center";
+  }
+
+  set gridLabelAlignment(val: "start" | "center" | "end") {
+    this.currentSettings["gridLabelAlignment"] = val;
+    this.currentSettings["_gridLabelChanged"] = true;
+    this.onFieldChange();
+  }
+
+  get gridLabelTextColor(): string {
+    return this.currentSettings["gridLabelTextColor"] || "#ffffff";
+  }
+
+  set gridLabelTextColor(val: string) {
+    this.currentSettings["gridLabelTextColor"] = val;
+    this.currentSettings["_gridLabelChanged"] = true;
+    this.onFieldChange();
+  }
+
+  get gridLabelBackgroundColor(): string {
+    return (
+      this.currentSettings["gridLabelBackgroundColor"] ||
+      "rgba(15, 23, 42, 0.85)"
+    );
+  }
+
+  set gridLabelBackgroundColor(val: string) {
+    this.currentSettings["gridLabelBackgroundColor"] = val;
+    this.currentSettings["_gridLabelChanged"] = true;
+    this.onFieldChange();
+  }
+
+  onGridLabelBgColorChange(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.gridLabelBackgroundColor = input.value;
+  }
+
+  onGridLabelTextColorChange(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.gridLabelTextColor = input.value;
+  }
+
+  resetGridLabelTextColor(): void {
+    delete this.currentSettings["gridLabelTextColor"];
+    this.currentSettings["_gridLabelChanged"] = true;
+    this.onFieldChange();
+  }
+
+  resetGridLabelBackgroundColor(): void {
+    delete this.currentSettings["gridLabelBackgroundColor"];
+    this.currentSettings["_gridLabelChanged"] = true;
+    this.onFieldChange();
+  }
+
   onEditGridTemplate(): void {
     if (this.currentSettings["gridId"]) {
       this.editGrid.emit(this.currentSettings["gridId"]);

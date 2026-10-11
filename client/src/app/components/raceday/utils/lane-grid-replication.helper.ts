@@ -3,8 +3,15 @@ import { deepCopy } from "@app/utils/clone.utils";
 
 import { LaneGridGeometryHelper } from "./lane-grid-geometry.helper";
 import { LaneGridHeaderHelper } from "./lane-grid-header.helper";
+import {
+  GridLabelConfig,
+  GridLabelPosition,
+  LaneGridLabelHelper,
+} from "./lane-grid-label.helper";
 import { LaneGridScrollHelper } from "./lane-grid-scroll.helper";
 import { LaneGridStyleHelper } from "./lane-grid-style.helper";
+
+export type { GridLabelConfig, GridLabelPosition };
 
 export interface LaneGridBounds {
   x: number;
@@ -25,6 +32,16 @@ export interface LaneGridSession {
   linkColumns?: boolean;
   sortByBindingMode?: boolean;
   layoutOrientation?: "vertical" | "horizontal";
+  gridLabelPosition?: GridLabelPosition;
+  gridLabelText?: string;
+  gridLabelSize?: number;
+  gridLabelFontFamily?: string;
+  gridLabelFontSize?: number;
+  gridLabelTextColor?: string;
+  gridLabelBackgroundColor?: string;
+  gridLabelFontBold?: boolean;
+  gridLabelFontItalic?: boolean;
+  gridLabelAlignment?: "left" | "center" | "right";
 }
 
 export type GridResizeHandle =
@@ -40,21 +57,23 @@ export type GridResizeHandle =
 export class LaneGridReplicationHelper {
   public static computePitch(session: LaneGridSession): number {
     if (!session || session.totalLanes <= 0) return 0;
+    const dataBounds = LaneGridLabelHelper.computeGridDataBounds(session);
     if (session.headerPlacement === "top") {
       const headerH =
         session.headerHeight != null ? Math.max(20, session.headerHeight) : 36;
-      const availH = Math.max(0, session.bounds.height - headerH);
+      const availH = Math.max(0, dataBounds.height - headerH);
       return session.direction === "horizontal"
-        ? session.bounds.width / session.totalLanes
+        ? dataBounds.width / session.totalLanes
         : availH / session.totalLanes;
     }
     return session.direction === "horizontal"
-      ? session.bounds.width / session.totalLanes
-      : session.bounds.height / session.totalLanes;
+      ? dataBounds.width / session.totalLanes
+      : dataBounds.height / session.totalLanes;
   }
 
   public static computeGridDividers(session: LaneGridSession): number[] {
     if (!session || session.totalLanes <= 0) return [];
+    const dataBounds = LaneGridLabelHelper.computeGridDataBounds(session);
     const dividers: number[] = [];
     const headerH =
       session.headerPlacement === "top"
@@ -64,15 +83,15 @@ export class LaneGridReplicationHelper {
         : 0;
 
     if (session.headerPlacement === "top") {
-      dividers.push(Math.round(session.bounds.y + headerH));
+      dividers.push(Math.round(dataBounds.y + headerH));
     }
     if (session.totalLanes <= 1) return dividers;
 
     const pitch = this.computePitch(session);
     const base =
       session.direction === "horizontal"
-        ? session.bounds.x
-        : session.bounds.y + headerH;
+        ? dataBounds.x
+        : dataBounds.y + headerH;
     for (let k = 1; k < session.totalLanes; k++) {
       dividers.push(Math.round(base + k * pitch));
     }
@@ -87,6 +106,7 @@ export class LaneGridReplicationHelper {
     session: LaneGridSession,
     laneIndex: number,
   ): LaneGridBounds {
+    const dataBounds = LaneGridLabelHelper.computeGridDataBounds(session);
     const pitch = this.computePitch(session);
     const headerH =
       session.headerPlacement === "top"
@@ -97,16 +117,16 @@ export class LaneGridReplicationHelper {
 
     if (session.direction === "horizontal") {
       return {
-        x: Math.round(session.bounds.x + laneIndex * pitch),
-        y: Math.round(session.bounds.y + headerH),
+        x: Math.round(dataBounds.x + laneIndex * pitch),
+        y: Math.round(dataBounds.y + headerH),
         width: Math.round(pitch),
-        height: Math.round(Math.max(0, session.bounds.height - headerH)),
+        height: Math.round(Math.max(0, dataBounds.height - headerH)),
       };
     } else {
       return {
-        x: session.bounds.x,
-        y: Math.round(session.bounds.y + headerH + laneIndex * pitch),
-        width: session.bounds.width,
+        x: dataBounds.x,
+        y: Math.round(dataBounds.y + headerH + laneIndex * pitch),
+        width: dataBounds.width,
         height: Math.round(pitch),
       };
     }
@@ -115,12 +135,13 @@ export class LaneGridReplicationHelper {
   public static computeHeaderRowBounds(
     session: LaneGridSession,
   ): LaneGridBounds {
+    const dataBounds = LaneGridLabelHelper.computeGridDataBounds(session);
     const headerH =
       session.headerHeight != null ? Math.max(20, session.headerHeight) : 36;
     return {
-      x: session.bounds.x,
-      y: session.bounds.y,
-      width: session.bounds.width,
+      x: dataBounds.x,
+      y: dataBounds.y,
+      width: dataBounds.width,
       height: headerH,
     };
   }
@@ -166,9 +187,10 @@ export class LaneGridReplicationHelper {
     allWidgets: AbsoluteWidgetNode[],
     headerHeight: number,
   ): AbsoluteWidgetNode[] {
+    const dataBounds = LaneGridLabelHelper.computeGridDataBounds(session);
     const updatedHeader: AbsoluteWidgetNode = {
       ...masterWidget,
-      y: session.bounds.y,
+      y: dataBounds.y,
       height: headerHeight,
       customSettings: {
         ...(masterWidget.customSettings || {}),
@@ -248,169 +270,7 @@ export class LaneGridReplicationHelper {
       session,
       session.sourceLaneIndex ?? 0,
     );
-    if (!widget.customSettings) {
-      widget.customSettings = {};
-    }
-    const cellW = masterCell.width > 0 ? masterCell.width : 1;
-    const cellH = masterCell.height > 0 ? masterCell.height : 1;
-    widget.customSettings["cellWidthRatio"] = widget.width / cellW;
-    widget.customSettings["cellHeightRatio"] = widget.height / cellH;
-    widget.customSettings["cellOffsetXRatio"] =
-      (widget.x - masterCell.x) / cellW;
-    widget.customSettings["cellOffsetYRatio"] =
-      (widget.y - masterCell.y) / cellH;
-  }
-
-  private static calculateFallbackRatiosForResizedGrid(
-    masterWidget: AbsoluteWidgetNode,
-    session: LaneGridSession,
-    masterCell: LaneGridBounds,
-    headerHeight: number,
-    savedBounds: LaneGridBounds | undefined,
-    savedTotalLanes: number,
-    cellW: number,
-    cellH: number,
-  ): {
-    cellWidthRatio: number;
-    cellHeightRatio: number;
-    cellOffsetXRatio: number;
-    cellOffsetYRatio: number;
-  } {
-    if (
-      savedTotalLanes &&
-      savedTotalLanes !== session.totalLanes &&
-      savedTotalLanes > 0
-    ) {
-      if (session.direction === "horizontal") {
-        const oldPitch =
-          (savedBounds?.width || session.bounds.width) / savedTotalLanes;
-        const safePitch = oldPitch > 0 ? oldPitch : 1;
-        return {
-          cellWidthRatio: masterWidget.width / safePitch,
-          cellHeightRatio: masterWidget.height / cellH,
-          cellOffsetXRatio:
-            (masterWidget.x - (savedBounds?.x || session.bounds.x)) / safePitch,
-          cellOffsetYRatio: (masterWidget.y - masterCell.y) / cellH,
-        };
-      }
-      const baseH = savedBounds?.height || session.bounds.height;
-      const availH =
-        session.headerPlacement === "top"
-          ? Math.max(0, baseH - headerHeight)
-          : baseH;
-      const oldPitch = availH / savedTotalLanes;
-      const safePitch = oldPitch > 0 ? oldPitch : 1;
-      const oldCellY =
-        (savedBounds?.y || session.bounds.y) +
-        (session.headerPlacement === "top" ? headerHeight : 0) +
-        (session.sourceLaneIndex ?? 0) * oldPitch;
-      return {
-        cellHeightRatio: masterWidget.height / safePitch,
-        cellWidthRatio: masterWidget.width / cellW,
-        cellOffsetXRatio: (masterWidget.x - masterCell.x) / cellW,
-        cellOffsetYRatio: (masterWidget.y - oldCellY) / safePitch,
-      };
-    }
-    return {
-      cellWidthRatio: masterWidget.width / cellW,
-      cellHeightRatio: masterWidget.height / cellH,
-      cellOffsetXRatio: (masterWidget.x - masterCell.x) / cellW,
-      cellOffsetYRatio: (masterWidget.y - masterCell.y) / cellH,
-    };
-  }
-
-  private static resolveCellRatios(
-    masterWidget: AbsoluteWidgetNode,
-    session: LaneGridSession,
-    masterCell: LaneGridBounds,
-    headerHeight: number,
-  ): {
-    cellWidthRatio: number;
-    cellHeightRatio: number;
-    cellOffsetXRatio: number;
-    cellOffsetYRatio: number;
-  } {
-    const cellW = masterCell.width > 0 ? masterCell.width : 1;
-    const cellH = masterCell.height > 0 ? masterCell.height : 1;
-
-    const savedBounds = masterWidget.customSettings?.["gridBounds"] as
-      | LaneGridBounds
-      | undefined;
-    const savedTotalLanes = Number(
-      masterWidget.customSettings?.["gridTotalLanes"],
-    );
-
-    const boundsChanged =
-      savedBounds &&
-      (savedBounds.x !== session.bounds.x ||
-        savedBounds.y !== session.bounds.y ||
-        savedBounds.width !== session.bounds.width ||
-        savedBounds.height !== session.bounds.height);
-
-    const totalLanesChanged =
-      savedTotalLanes != null &&
-      savedTotalLanes > 0 &&
-      savedTotalLanes !== session.totalLanes;
-
-    const isGridResized = boundsChanged || totalLanesChanged;
-
-    let cellWidthRatio =
-      masterWidget.customSettings?.["cellWidthRatio"] != null
-        ? Number(masterWidget.customSettings["cellWidthRatio"])
-        : undefined;
-    let cellHeightRatio =
-      masterWidget.customSettings?.["cellHeightRatio"] != null
-        ? Number(masterWidget.customSettings["cellHeightRatio"])
-        : undefined;
-    let cellOffsetXRatio =
-      masterWidget.customSettings?.["cellOffsetXRatio"] != null
-        ? Number(masterWidget.customSettings["cellOffsetXRatio"])
-        : undefined;
-    let cellOffsetYRatio =
-      masterWidget.customSettings?.["cellOffsetYRatio"] != null
-        ? Number(masterWidget.customSettings["cellOffsetYRatio"])
-        : undefined;
-
-    if (!isGridResized) {
-      cellWidthRatio = masterWidget.width / cellW;
-      cellHeightRatio = masterWidget.height / cellH;
-      cellOffsetXRatio = (masterWidget.x - masterCell.x) / cellW;
-      cellOffsetYRatio = (masterWidget.y - masterCell.y) / cellH;
-    } else if (
-      cellWidthRatio == null ||
-      isNaN(cellWidthRatio) ||
-      cellHeightRatio == null ||
-      isNaN(cellHeightRatio)
-    ) {
-      const fallback = this.calculateFallbackRatiosForResizedGrid(
-        masterWidget,
-        session,
-        masterCell,
-        headerHeight,
-        savedBounds,
-        savedTotalLanes,
-        cellW,
-        cellH,
-      );
-      cellWidthRatio = fallback.cellWidthRatio;
-      cellHeightRatio = fallback.cellHeightRatio;
-      cellOffsetXRatio = fallback.cellOffsetXRatio;
-      cellOffsetYRatio = fallback.cellOffsetYRatio;
-    }
-
-    if (cellOffsetXRatio == null || isNaN(cellOffsetXRatio)) {
-      cellOffsetXRatio = (masterWidget.x - masterCell.x) / cellW;
-    }
-    if (cellOffsetYRatio == null || isNaN(cellOffsetYRatio)) {
-      cellOffsetYRatio = (masterWidget.y - masterCell.y) / cellH;
-    }
-
-    return {
-      cellWidthRatio,
-      cellHeightRatio,
-      cellOffsetXRatio,
-      cellOffsetYRatio,
-    };
+    LaneGridGeometryHelper.updateWidgetCellRatios(widget, session, masterCell);
   }
 
   private static syncTopHeaderWidget(
@@ -439,11 +299,12 @@ export class LaneGridReplicationHelper {
       delete headerSettings["targetIndex"];
       delete headerSettings["gridLane"];
 
+      const dataBounds = LaneGridLabelHelper.computeGridDataBounds(session);
       const headerWidget: AbsoluteWidgetNode = {
         ...deepCopy(updatedMaster),
         id: existingHeaderIdx >= 0 ? result[existingHeaderIdx].id : headerId,
         x: updatedMaster.x,
-        y: session.bounds.y,
+        y: dataBounds.y,
         width: updatedMaster.width,
         height: headerHeight,
         zIndex: (updatedMaster.zIndex ?? 10) + 1,
@@ -507,6 +368,17 @@ export class LaneGridReplicationHelper {
           session.layoutOrientation ||
           "vertical",
         isHeaderWidget: false,
+        gridLabelPosition: session.gridLabelPosition || "none",
+        gridLabelText: session.gridLabelText || "",
+        gridLabelSize: session.gridLabelSize || 40,
+        gridLabelFontFamily: session.gridLabelFontFamily || "",
+        gridLabelFontSize: session.gridLabelFontSize || 18,
+        gridLabelTextColor: session.gridLabelTextColor || "#ffffff",
+        gridLabelBackgroundColor:
+          session.gridLabelBackgroundColor || "rgba(15, 23, 42, 0.85)",
+        gridLabelFontBold: session.gridLabelFontBold !== false,
+        gridLabelFontItalic: Boolean(session.gridLabelFontItalic),
+        gridLabelAlignment: session.gridLabelAlignment || "center",
       },
     };
   }
@@ -540,7 +412,12 @@ export class LaneGridReplicationHelper {
       cellHeightRatio,
       cellOffsetXRatio,
       cellOffsetYRatio,
-    } = this.resolveCellRatios(masterWidget, session, masterCell, headerHeight);
+    } = LaneGridGeometryHelper.resolveCellRatios(
+      masterWidget,
+      session,
+      masterCell,
+      headerHeight,
+    );
 
     const cellW = masterCell.width > 0 ? masterCell.width : 1;
     const cellH = masterCell.height > 0 ? masterCell.height : 1;
@@ -781,6 +658,17 @@ export class LaneGridReplicationHelper {
             headerPlacement: session.headerPlacement ?? "individual",
             headerHeight: session.headerHeight ?? 36,
             linkColumns: session.linkColumns ?? true,
+            gridLabelPosition: session.gridLabelPosition || "none",
+            gridLabelText: session.gridLabelText || "",
+            gridLabelSize: session.gridLabelSize || 40,
+            gridLabelFontFamily: session.gridLabelFontFamily || "",
+            gridLabelFontSize: session.gridLabelFontSize || 18,
+            gridLabelTextColor: session.gridLabelTextColor || "#ffffff",
+            gridLabelBackgroundColor:
+              session.gridLabelBackgroundColor || "rgba(15, 23, 42, 0.85)",
+            gridLabelFontBold: session.gridLabelFontBold !== false,
+            gridLabelFontItalic: Boolean(session.gridLabelFontItalic),
+            gridLabelAlignment: session.gridLabelAlignment || "center",
           },
         };
       }
@@ -876,6 +764,23 @@ export class LaneGridReplicationHelper {
       sortByBindingMode: first.customSettings?.["sortByBindingMode"] !== false,
       layoutOrientation:
         first.customSettings?.["layoutOrientation"] || "vertical",
+      gridLabelPosition: first.customSettings?.["gridLabelPosition"] || "none",
+      gridLabelText: first.customSettings?.["gridLabelText"] || "",
+      gridLabelSize: Number(first.customSettings?.["gridLabelSize"]) || 40,
+      gridLabelFontFamily: first.customSettings?.["gridLabelFontFamily"] || "",
+      gridLabelFontSize:
+        Number(first.customSettings?.["gridLabelFontSize"]) || 18,
+      gridLabelTextColor:
+        first.customSettings?.["gridLabelTextColor"] || "#ffffff",
+      gridLabelBackgroundColor:
+        first.customSettings?.["gridLabelBackgroundColor"] ||
+        "rgba(15, 23, 42, 0.85)",
+      gridLabelFontBold: first.customSettings?.["gridLabelFontBold"] !== false,
+      gridLabelFontItalic: Boolean(
+        first.customSettings?.["gridLabelFontItalic"],
+      ),
+      gridLabelAlignment:
+        first.customSettings?.["gridLabelAlignment"] || "center",
     };
 
     const synced = this.syncAllMasterWidgetsToLanes(session, allWidgets);
@@ -1005,6 +910,18 @@ export class LaneGridReplicationHelper {
       snapEdgesX,
       snapEdgesY,
       snapThreshold,
+    );
+  }
+
+  public static updateGridLabel(
+    allWidgets: AbsoluteWidgetNode[],
+    gridId: string,
+    config: GridLabelConfig,
+  ): AbsoluteWidgetNode[] {
+    return LaneGridLabelHelper.updateGridLabelSettings(
+      allWidgets,
+      gridId,
+      config,
     );
   }
 }

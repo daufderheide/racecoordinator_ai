@@ -69,6 +69,40 @@ function calculatePhysicalCellIndex(
   );
 }
 
+function createInitialGridSession(
+  options: any,
+  sourceWidgets: any[],
+  bounds: LaneGridBounds,
+  physicalCellIndex: number,
+): LaneGridSession {
+  const cs = sourceWidgets[0]?.customSettings || {};
+  return {
+    gridId: `grid-${Date.now()}`,
+    bounds,
+    totalLanes: options.targetCount,
+    direction: options.direction,
+    sourceLaneIndex: physicalCellIndex,
+    bindingMode: options.sourceBindingMode ?? "lane",
+    headerPlacement: options.headerPlacement ?? "individual",
+    headerHeight: options.headerHeight ?? 36,
+    linkColumns: options.linkColumns ?? true,
+    layoutOrientation: cs["layoutOrientation"] || "vertical",
+    gridLabelPosition: cs["gridLabelPosition"] || "none",
+    gridLabelText: cs["gridLabelText"] || "",
+    gridLabelSize:
+      cs["gridLabelSize"] != null ? Number(cs["gridLabelSize"]) : 40,
+    gridLabelFontFamily: cs["gridLabelFontFamily"] || "",
+    gridLabelFontSize:
+      cs["gridLabelFontSize"] != null ? Number(cs["gridLabelFontSize"]) : 18,
+    gridLabelTextColor: cs["gridLabelTextColor"] || "#ffffff",
+    gridLabelBackgroundColor:
+      cs["gridLabelBackgroundColor"] || "rgba(15, 23, 42, 0.85)",
+    gridLabelFontBold: cs["gridLabelFontBold"] !== false,
+    gridLabelFontItalic: Boolean(cs["gridLabelFontItalic"]),
+    gridLabelAlignment: cs["gridLabelAlignment"] || "center",
+  };
+}
+
 export function handleStartGridSession(
   comp: any,
   options: any,
@@ -120,21 +154,12 @@ export function handleStartGridSession(
     options.targetCount,
   );
 
-  const gridId = `grid-${Date.now()}`;
-  const session: LaneGridSession = {
-    gridId,
+  const session = createInitialGridSession(
+    options,
+    sourceWidgets,
     bounds,
-    totalLanes: options.targetCount,
-    direction: options.direction,
-    sourceLaneIndex: physicalCellIndex,
-    bindingMode: options.sourceBindingMode ?? "lane",
-    headerPlacement: options.headerPlacement ?? "individual",
-    headerHeight: options.headerHeight ?? 36,
-    linkColumns: options.linkColumns ?? true,
-    layoutOrientation:
-      sourceWidgets[0]?.customSettings?.["layoutOrientation"] || "vertical",
-  };
-
+    physicalCellIndex,
+  );
   comp.activeGridSession = session;
 
   for (const sw of sourceWidgets) {
@@ -262,6 +287,26 @@ export function handleEditGridTemplate(
     linkColumns,
     layoutOrientation:
       first.customSettings?.["layoutOrientation"] || "vertical",
+    gridLabelPosition: first.customSettings?.["gridLabelPosition"] || "none",
+    gridLabelText: first.customSettings?.["gridLabelText"] || "",
+    gridLabelSize:
+      first.customSettings?.["gridLabelSize"] != null
+        ? Number(first.customSettings["gridLabelSize"])
+        : 40,
+    gridLabelFontFamily: first.customSettings?.["gridLabelFontFamily"] || "",
+    gridLabelFontSize:
+      first.customSettings?.["gridLabelFontSize"] != null
+        ? Number(first.customSettings["gridLabelFontSize"])
+        : 18,
+    gridLabelTextColor:
+      first.customSettings?.["gridLabelTextColor"] || "#ffffff",
+    gridLabelBackgroundColor:
+      first.customSettings?.["gridLabelBackgroundColor"] ||
+      "rgba(15, 23, 42, 0.85)",
+    gridLabelFontBold: first.customSettings?.["gridLabelFontBold"] !== false,
+    gridLabelFontItalic: Boolean(first.customSettings?.["gridLabelFontItalic"]),
+    gridLabelAlignment:
+      first.customSettings?.["gridLabelAlignment"] || "center",
   };
 
   for (const w of gridWidgets) {

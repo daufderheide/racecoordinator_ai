@@ -132,6 +132,7 @@ import { RacedayAbsoluteWidgetComponent } from "./components/raceday-absolute-wi
 import { RacedayModalsComponent } from "./components/raceday-modals/raceday-modals.component";
 import { ToolboxGroup, ToolboxGroupHelper } from "./toolbox-group.helper";
 import { LaneGridAnimationHelper } from "./utils/lane-grid-animation.helper";
+import { LaneGridLabelHelper } from "./utils/lane-grid-label.helper";
 import {
   GridResizeHandle,
   LaneGridBounds,
@@ -169,6 +170,18 @@ export interface RacedayGridDescriptor {
   cellWidgets: AbsoluteWidgetNode[];
   contentOffset: { x: number; y: number };
   headerOffset: { x: number; y: number };
+  labelPosition: "none" | "top" | "bottom" | "left" | "right";
+  labelText: string;
+  labelSize: number;
+  labelFontFamily?: string;
+  labelFontSize?: number;
+  labelTextColor?: string;
+  labelBackgroundColor?: string;
+  labelFontBold?: boolean;
+  labelFontItalic?: boolean;
+  labelAlignment?: "left" | "center" | "right";
+  labelBounds: LaneGridBounds | null;
+  dataBounds: LaneGridBounds;
 }
 
 /**
@@ -4065,100 +4078,140 @@ export class DefaultRacedayComponent
 
     const descriptors: RacedayGridDescriptor[] = [];
     for (const gridId of gridIds) {
-      const bounds = LaneGridReplicationHelper.calculateGridBounds(
-        widgets,
-        gridId,
-      );
-      if (!bounds) continue;
-
-      const gridWidgets = widgets.filter(
-        (w: any) => w.customSettings?.["gridId"] === gridId,
-      );
-      if (gridWidgets.length === 0) continue;
-
-      const first = gridWidgets[0];
-      const gridTotalLanes =
-        Number(first.customSettings?.["gridTotalLanes"]) || 4;
-      const direction = first.customSettings?.["gridDirection"] || "vertical";
-      const headerPlacement =
-        first.customSettings?.["headerPlacement"] || "individual";
-      const headerHeight = Number(first.customSettings?.["headerHeight"]) || 36;
-      const dataCount = LaneGridReplicationHelper.getGridDataCount(
-        widgets,
-        gridId,
-        this,
-      );
-      const allGridWidgets =
-        LaneGridReplicationHelper.generateScrollableGridWidgets(
-          widgets,
-          gridId,
-          dataCount,
-        );
-
-      const isVertical = direction === "vertical";
-      const availHeight =
-        headerPlacement === "top"
-          ? Math.max(0, bounds.height - headerHeight)
-          : bounds.height;
-      const pitch = isVertical
-        ? availHeight / gridTotalLanes
-        : bounds.width / gridTotalLanes;
-
-      const hasScroll = dataCount > gridTotalLanes;
-      const contentWidth = isVertical
-        ? bounds.width
-        : Math.round(dataCount * pitch);
-      const contentHeight = isVertical
-        ? Math.round(dataCount * pitch)
-        : bounds.height;
-
-      let headerWidgets: AbsoluteWidgetNode[] = [];
-      let cellWidgets: AbsoluteWidgetNode[] = [];
-
-      if (headerPlacement === "top" && isVertical) {
-        headerWidgets = allGridWidgets.filter(
-          (w) => w.customSettings?.["isHeaderWidget"],
-        );
-        cellWidgets = allGridWidgets.filter(
-          (w) => !w.customSettings?.["isHeaderWidget"],
-        );
-      } else {
-        cellWidgets = allGridWidgets;
-      }
-
-      const zIndex = Math.max(
-        1,
-        ...gridWidgets.map((w: any) => w.zIndex || 10),
-      );
-
-      descriptors.push({
-        gridId,
-        bounds,
-        direction,
-        headerPlacement,
-        headerHeight,
-        gridTotalLanes,
-        dataCount,
-        hasScroll,
-        zIndex,
-        contentWidth,
-        contentHeight,
-        headerWidgets,
-        cellWidgets,
-        contentOffset: {
-          x: bounds.x,
-          y:
-            headerPlacement === "top" && isVertical
-              ? bounds.y + headerHeight
-              : bounds.y,
-        },
-        headerOffset: {
-          x: bounds.x,
-          y: bounds.y,
-        },
-      });
+      const desc = this.buildGridDescriptor(gridId, widgets);
+      if (desc) descriptors.push(desc);
     }
     return descriptors;
+  }
+
+  private buildGridDescriptor(
+    gridId: string,
+    widgets: AbsoluteWidgetNode[],
+  ): RacedayGridDescriptor | null {
+    const bounds = LaneGridReplicationHelper.calculateGridBounds(
+      widgets,
+      gridId,
+    );
+    if (!bounds) return null;
+
+    const gridWidgets = widgets.filter(
+      (w: any) => w.customSettings?.["gridId"] === gridId,
+    );
+    if (gridWidgets.length === 0) return null;
+
+    const first = gridWidgets[0];
+    const gridTotalLanes =
+      Number(first.customSettings?.["gridTotalLanes"]) || 4;
+    const direction = first.customSettings?.["gridDirection"] || "vertical";
+    const headerPlacement =
+      first.customSettings?.["headerPlacement"] || "individual";
+    const headerHeight = Number(first.customSettings?.["headerHeight"]) || 36;
+    const labelPosition =
+      (first.customSettings?.["gridLabelPosition"] as any) || "none";
+    const labelText = first.customSettings?.["gridLabelText"] || "";
+    const labelSize = Number(first.customSettings?.["gridLabelSize"]) || 40;
+
+    const sessionLike: LaneGridSession = {
+      gridId,
+      bounds,
+      totalLanes: gridTotalLanes,
+      direction,
+      sourceLaneIndex: 0,
+      bindingMode: first.customSettings?.["bindingMode"] || "lane",
+      headerPlacement,
+      headerHeight,
+      gridLabelPosition: labelPosition,
+      gridLabelText: labelText,
+      gridLabelSize: labelSize,
+    };
+
+    const labelBounds = LaneGridLabelHelper.computeGridLabelBounds(sessionLike);
+    const dataBounds = LaneGridLabelHelper.computeGridDataBounds(sessionLike);
+    const dataCount = LaneGridReplicationHelper.getGridDataCount(
+      widgets,
+      gridId,
+      this,
+    );
+    const allGridWidgets =
+      LaneGridReplicationHelper.generateScrollableGridWidgets(
+        widgets,
+        gridId,
+        dataCount,
+      );
+
+    const isVertical = direction === "vertical";
+    const availHeight =
+      headerPlacement === "top"
+        ? Math.max(0, dataBounds.height - headerHeight)
+        : dataBounds.height;
+    const pitch = isVertical
+      ? availHeight / gridTotalLanes
+      : dataBounds.width / gridTotalLanes;
+
+    const hasScroll = dataCount > gridTotalLanes;
+    const contentWidth = isVertical
+      ? dataBounds.width
+      : Math.round(dataCount * pitch);
+    const contentHeight = isVertical
+      ? Math.round(dataCount * pitch)
+      : dataBounds.height;
+
+    let headerWidgets: AbsoluteWidgetNode[] = [];
+    let cellWidgets: AbsoluteWidgetNode[] = [];
+
+    if (headerPlacement === "top" && isVertical) {
+      headerWidgets = allGridWidgets.filter(
+        (w) => w.customSettings?.["isHeaderWidget"],
+      );
+      cellWidgets = allGridWidgets.filter(
+        (w) => !w.customSettings?.["isHeaderWidget"],
+      );
+    } else {
+      cellWidgets = allGridWidgets;
+    }
+
+    const zIndex = Math.max(1, ...gridWidgets.map((w: any) => w.zIndex || 10));
+
+    return {
+      gridId,
+      bounds,
+      direction,
+      headerPlacement,
+      headerHeight,
+      gridTotalLanes,
+      dataCount,
+      hasScroll,
+      zIndex,
+      contentWidth,
+      contentHeight,
+      headerWidgets,
+      cellWidgets,
+      contentOffset: {
+        x: dataBounds.x,
+        y:
+          headerPlacement === "top" && isVertical
+            ? dataBounds.y + headerHeight
+            : dataBounds.y,
+      },
+      headerOffset: {
+        x: dataBounds.x,
+        y: dataBounds.y,
+      },
+      labelPosition,
+      labelText,
+      labelSize,
+      labelFontFamily: first.customSettings?.["gridLabelFontFamily"],
+      labelFontSize: Number(first.customSettings?.["gridLabelFontSize"]) || 18,
+      labelTextColor: first.customSettings?.["gridLabelTextColor"] || "#ffffff",
+      labelBackgroundColor:
+        first.customSettings?.["gridLabelBackgroundColor"] ||
+        "rgba(15, 23, 42, 0.85)",
+      labelFontBold: first.customSettings?.["gridLabelFontBold"] !== false,
+      labelFontItalic: Boolean(first.customSettings?.["gridLabelFontItalic"]),
+      labelAlignment: first.customSettings?.["gridLabelAlignment"] || "center",
+      labelBounds,
+      dataBounds,
+    };
   }
 
   getTableBodyHeight(): number {
@@ -8258,6 +8311,15 @@ export class DefaultRacedayComponent
     return LaneGridReplicationHelper.computeHeaderRowBounds(s);
   }
 
+  getGridLabelBounds(): LaneGridBounds | null {
+    const s = this.gridSession();
+    return s ? LaneGridLabelHelper.computeGridLabelBounds(s) : null;
+  }
+
+  getGridLabelJustify(position?: string, alignment?: string): string {
+    return LaneGridLabelHelper.getLabelJustifyContent(position, alignment);
+  }
+
   get selectedWidget(): AbsoluteWidgetNode | null {
     const id = this.selectedWidgetId();
     if (!id || !this.layout?.widgets) return null;
@@ -8278,6 +8340,23 @@ export class DefaultRacedayComponent
 
   get selectedGridLabel(): string {
     const sel = this.selectedWidget;
+    const customTitle =
+      sel?.customSettings?.["gridLabelText"]?.trim() ||
+      this.getGridCustomTitle(sel?.customSettings?.["gridId"]);
+    if (customTitle) {
+      return customTitle;
+    }
+    const labelPos =
+      sel?.customSettings?.["gridLabelPosition"] ||
+      this.getGridLabelPosition(sel?.customSettings?.["gridId"]);
+    if (labelPos && labelPos !== "none") {
+      const defaultLabel = this.translationService?.translate(
+        "UE_GRID_LABEL_DEFAULT",
+      );
+      if (defaultLabel && defaultLabel !== "UE_GRID_LABEL_DEFAULT") {
+        return defaultLabel;
+      }
+    }
     const count =
       sel?.customSettings?.["gridTotalLanes"] || this.track?.lanes?.length || 4;
     const mode = sel?.customSettings?.["bindingMode"];
@@ -8292,6 +8371,26 @@ export class DefaultRacedayComponent
     return mode === "position"
       ? `Position Grid (${count} Positions)`
       : `Lane Grid (${count} Lanes)`;
+  }
+
+  private getGridCustomTitle(gridId?: string): string | null {
+    if (!gridId || !this.layout?.widgets) return null;
+    const match = this.layout.widgets.find(
+      (w: any) =>
+        w.customSettings?.["gridId"] === gridId &&
+        w.customSettings?.["gridLabelText"]?.trim(),
+    );
+    return match?.customSettings?.["gridLabelText"]?.trim() || null;
+  }
+
+  private getGridLabelPosition(gridId?: string): string | null {
+    if (!gridId || !this.layout?.widgets) return null;
+    const match = this.layout.widgets.find(
+      (w: any) =>
+        w.customSettings?.["gridId"] === gridId &&
+        w.customSettings?.["gridLabelPosition"],
+    );
+    return match?.customSettings?.["gridLabelPosition"] || null;
   }
 
   onGridResizeStart(event: PointerEvent, handle: GridResizeHandle): void {

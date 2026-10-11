@@ -712,3 +712,64 @@ app-default-raceday {
   box-sizing: border-box;
 }
 
+.raceday-grid-label {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  user-select: none;
+  z-index: 2;
+  border-radius: 4px;
+}
+
+.raceday-grid-label.horizontal-label {
+  flex-direction: row;
+  white-space: nowrap;
+  padding: 4px 12px;
+}
+
+.raceday-grid-label.vertical-label {
+  flex-direction: column;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  transform: rotate(180deg);
+  white-space: nowrap;
+  padding: 12px 4px;
+}
+
+.grid-label-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lane-blueprint-cell.grid-label-blueprint-cell {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  border: 1.5px dashed rgba(56, 189, 248, 0.7);
+  z-index: 2;
+  overflow: hidden;
+  user-select: none;
+  border-radius: 4px;
+}
+
+.lane-blueprint-cell.grid-label-blueprint-cell.vertical-label {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  transform: rotate(180deg);
+  white-space: nowrap;
+}
+
+.grid-label-blueprint-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 4px 8px;
+}
+
+
