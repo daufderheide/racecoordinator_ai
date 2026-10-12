@@ -430,6 +430,7 @@
             class="color-picker-input"
             [value]="gridHeaderTextColor || '#ffffff'"
             (change)="onGridHeaderTextColorChange($event)"
+            (input)="onGridHeaderTextColorChange($event)"
           />
           @if (!gridHeaderTextColor) {
             <span class="color-picker-placeholder">{{
@@ -462,6 +463,7 @@
             class="color-picker-input"
             [value]="gridHeaderBackgroundColor || '#444444'"
             (change)="onGridHeaderBgColorChange($event)"
+            (input)="onGridHeaderBgColorChange($event)"
           />
           @if (!gridHeaderBackgroundColor) {
             <span class="color-picker-placeholder">{{
@@ -1138,6 +1140,7 @@
           type="color"
           [value]="currentSettings['headerTextColor'] || '#ffffff'"
           (change)="onColorChange('headerTextColor', $event)"
+          (input)="onColorChange('headerTextColor', $event)"
           class="color-picker-input"
         />
         @if (!currentSettings["headerTextColor"]) {
@@ -1170,6 +1173,7 @@
           type="color"
           [value]="currentSettings['headerBackgroundColor'] || '#444444'"
           (change)="onColorChange('headerBackgroundColor', $event)"
+          (input)="onColorChange('headerBackgroundColor', $event)"
           class="color-picker-input"
         />
         @if (!currentSettings["headerBackgroundColor"]) {

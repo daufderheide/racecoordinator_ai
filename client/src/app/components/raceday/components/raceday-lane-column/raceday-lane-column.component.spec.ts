@@ -1909,5 +1909,55 @@ describe("RacedayLaneColumnComponent", () => {
       fixture.detectChanges();
       expect(component.isHighlighted).toBeFalse();
     });
+
+    it("should default effectiveHeaderTextColor to #ffffff for isHeaderWidget even if lane colors are enabled", () => {
+      // mockParent lane 0 foreground_color is #ffcc00
+      fixture.componentRef.setInput("parent", mockParent);
+      fixture.componentRef.setInput(
+        "widget",
+        createWidget({
+          columnKey: "lapCount",
+          isHeaderWidget: true,
+          useLaneColors: true,
+          targetIndex: 0,
+          headerBackgroundColor: "#000000",
+        }),
+      );
+      fixture.detectChanges();
+
+      expect(component.effectiveHeaderTextColor).toBe("#ffffff");
+      expect(component.foregroundColor).toBe("#ffffff");
+      expect(component.backgroundColor).toBe("#000000");
+
+      const headerOnlyEl = fixture.nativeElement.querySelector(
+        ".lane-col-header.header-widget-only",
+      );
+      expect(headerOnlyEl.style.color).toBe("rgb(255, 255, 255)");
+      expect(headerOnlyEl.style.background).toBe("rgb(0, 0, 0)");
+    });
+
+    it("should use custom headerTextColor for isHeaderWidget when specified", () => {
+      fixture.componentRef.setInput("parent", mockParent);
+      fixture.componentRef.setInput(
+        "widget",
+        createWidget({
+          columnKey: "lapCount",
+          isHeaderWidget: true,
+          headerTextColor: "#38bdf8",
+          headerBackgroundColor: "#1e293b",
+        }),
+      );
+      fixture.detectChanges();
+
+      expect(component.effectiveHeaderTextColor).toBe("#38bdf8");
+      expect(component.foregroundColor).toBe("#38bdf8");
+      expect(component.backgroundColor).toBe("#1e293b");
+
+      const headerOnlyEl = fixture.nativeElement.querySelector(
+        ".lane-col-header.header-widget-only",
+      );
+      expect(headerOnlyEl.style.color).toBe("rgb(56, 189, 248)");
+      expect(headerOnlyEl.style.background).toBe("rgb(30, 41, 59)");
+    });
   });
 });

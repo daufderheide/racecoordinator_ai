@@ -279,6 +279,10 @@ export class LaneColumnInspectorComponent {
   onColorChange(field: string, event: Event): void {
     const input = event.target as HTMLInputElement;
     this.currentSettings[field] = input.value;
+    delete this.currentSettings["_reset_" + field];
+    if (field.startsWith("header") && this.linkColumns) {
+      this.currentSettings["_syncAction"] = "header";
+    }
     this.onFieldChange();
   }
 

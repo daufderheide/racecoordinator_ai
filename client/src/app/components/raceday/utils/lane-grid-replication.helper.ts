@@ -258,6 +258,7 @@ export class LaneGridReplicationHelper {
       headerSettings["headerHeight"] = headerHeight;
       headerSettings["gridMasterId"] = masterWidget.id;
       headerSettings["gridId"] = session.gridId;
+      headerSettings["useLaneColors"] = false;
       delete headerSettings["targetIndex"];
       delete headerSettings["gridLane"];
 

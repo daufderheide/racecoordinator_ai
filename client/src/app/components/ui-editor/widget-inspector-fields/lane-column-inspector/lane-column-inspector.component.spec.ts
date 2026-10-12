@@ -706,6 +706,7 @@ describe("LaneColumnInspectorComponent", () => {
       const eventText = { target: { value: "#123456" } } as any;
       component.onColorChange("headerTextColor", eventText);
       expect(component.currentSettings["headerTextColor"]).toBe("#123456");
+      expect(component.currentSettings["_syncAction"]).toBe("header");
       expect(component.change.emit).toHaveBeenCalled();
 
       const eventBg = { target: { value: "#654321" } } as any;
@@ -713,6 +714,7 @@ describe("LaneColumnInspectorComponent", () => {
       expect(component.currentSettings["headerBackgroundColor"]).toBe(
         "#654321",
       );
+      expect(component.currentSettings["_syncAction"]).toBe("header");
     });
 
     it("should reset header text color on resetHeaderTextColor", () => {

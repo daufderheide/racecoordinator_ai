@@ -268,6 +268,9 @@ export class RacedayLaneColumnComponent
   }
 
   get backgroundColor(): string {
+    if (this.isHeaderWidget) {
+      return this.effectiveHeaderBackgroundColor;
+    }
     if (this.settings.useLaneColors === false) {
       return this.settings.backgroundColor || "#000000";
     }
@@ -293,6 +296,9 @@ export class RacedayLaneColumnComponent
   }
 
   get foregroundColor(): string {
+    if (this.isHeaderWidget) {
+      return this.effectiveHeaderTextColor;
+    }
     if (this.settings.useLaneColors === false) {
       return this.settings.textColor || "#ffffff";
     }
@@ -320,6 +326,9 @@ export class RacedayLaneColumnComponent
   get effectiveHeaderTextColor(): string {
     if (this.settings.headerTextColor) {
       return this.settings.headerTextColor;
+    }
+    if (this.isHeaderWidget) {
+      return "#ffffff";
     }
     if (this.settings.useLaneColors !== false) {
       return this.foregroundColor;

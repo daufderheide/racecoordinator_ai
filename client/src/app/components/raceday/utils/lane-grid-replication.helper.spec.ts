@@ -1107,6 +1107,35 @@ describe("LaneGridReplicationHelper", () => {
       expect(updatedPlacement[0].customSettings?.["showHeader"]).toBeTrue();
     });
 
+    it("should set useLaneColors to false on top header widget when syncMasterWidgetToLanes executes with top placement", () => {
+      const master: AbsoluteWidgetNode = {
+        id: "master_col",
+        widgetType: "lane-column",
+        x: 100,
+        y: 140,
+        width: 100,
+        height: 100,
+        zIndex: 1,
+        customSettings: {
+          gridId: topHeaderSession.gridId,
+          useLaneColors: true,
+          gridLane: 0,
+        },
+      };
+
+      const result = LaneGridReplicationHelper.syncMasterWidgetToLanes(
+        master,
+        topHeaderSession,
+        [master],
+      );
+
+      const headerWidget = result.find(
+        (w) => w.customSettings?.["isHeaderWidget"],
+      );
+      expect(headerWidget).toBeDefined();
+      expect(headerWidget?.customSettings?.["useLaneColors"]).toBeFalse();
+    });
+
     it("should update grid layoutOrientation across all matching grid widgets", () => {
       const widgets: AbsoluteWidgetNode[] = [
         {

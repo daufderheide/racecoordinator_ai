@@ -135,6 +135,7 @@ describe("LaneGridHeaderHelper", () => {
       expect(headers[0].id).toBe("master-col_grid_header");
       expect(headers[0].height).toBe(40);
       expect(headers[0].customSettings?.["headerPlacement"]).toBe("top");
+      expect(headers[0].customSettings?.["useLaneColors"]).toBeFalse();
 
       const dataWidgets = updated.filter(
         (w) => !w.customSettings?.["isHeaderWidget"],

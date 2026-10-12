@@ -134,6 +134,7 @@ export class LaneGridHeaderHelper {
         headerSettings["headerHeight"] = height;
         headerSettings["gridMasterId"] = master.id;
         headerSettings["gridId"] = gridId;
+        headerSettings["useLaneColors"] = false;
         delete headerSettings["targetIndex"];
         delete headerSettings["gridLane"];
 
