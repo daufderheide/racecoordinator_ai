@@ -72,6 +72,7 @@ import {
   handleEditGridTemplate,
   handleFinishGridSession,
   handleStartGridSession,
+  handleSyncActiveGridSessionFromLayout,
   handleUpdateGridBounds,
 } from "./ui-editor-grid.helper";
 import {
@@ -405,6 +406,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
           syncEditorCoordinates(s.settings, this.editingState?.settings);
           this.editingState = s;
           this.refreshDisplayProperties();
+          handleSyncActiveGridSessionFromLayout(this);
         },
       },
       () => this.editingState,

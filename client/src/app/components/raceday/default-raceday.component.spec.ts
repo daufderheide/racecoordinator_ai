@@ -11517,6 +11517,7 @@ describe("DefaultRacedayComponent", () => {
       component.layout = { baseWidth: 1920, baseHeight: 1080, widgets: [] };
 
       const emitSpy = spyOn(component.gridBoundsChange, "emit");
+      const layoutSpy = spyOn(component.layoutChanged, "emit");
 
       const pointerDownEvent = new PointerEvent("pointerdown", {
         clientX: 900,
@@ -11542,10 +11543,41 @@ describe("DefaultRacedayComponent", () => {
       const upEvent = new PointerEvent("pointerup");
       document.dispatchEvent(upEvent);
 
+      expect(layoutSpy).toHaveBeenCalledWith(component.layout);
+
       // Verify listeners removed after pointerup
       emitSpy.calls.reset();
       document.dispatchEvent(moveEvent);
       expect(emitSpy).not.toHaveBeenCalled();
+    });
+
+    it("should not emit layoutChanged on pointerup if no resizing occurred during onGridResizeStart", () => {
+      const session = {
+        gridId: "test-grid-resize-static",
+        bounds: { x: 100, y: 100, width: 800, height: 400 },
+        totalLanes: 4,
+        direction: "horizontal" as const,
+        sourceLaneIndex: 0,
+        bindingMode: "lane" as const,
+      };
+      fixture.componentRef.setInput("isUIEditorMode", true);
+      fixture.componentRef.setInput("uiScale", 1);
+      fixture.componentRef.setInput("gridSession", session);
+      fixture.detectChanges();
+      component.layout = { baseWidth: 1920, baseHeight: 1080, widgets: [] };
+
+      const layoutSpy = spyOn(component.layoutChanged, "emit");
+
+      const pointerDownEvent = new PointerEvent("pointerdown", {
+        clientX: 900,
+        clientY: 300,
+      });
+      component.onGridResizeStart(pointerDownEvent, "e");
+
+      const upEvent = new PointerEvent("pointerup");
+      document.dispatchEvent(upEvent);
+
+      expect(layoutSpy).not.toHaveBeenCalled();
     });
 
     it("should handle onGridMoveStart and emit gridBoundsChange on pointermove", () => {

@@ -7,6 +7,7 @@ import {
   handleEditGridTemplate,
   handleFinishGridSession,
   handleStartGridSession,
+  handleSyncActiveGridSessionFromLayout,
   handleUpdateGridBounds,
 } from "./ui-editor-grid.helper";
 
@@ -74,6 +75,7 @@ describe("ui-editor-grid.helper", () => {
         .createSpy("isCustomUiPractice")
         .and.returnValue(false),
       captureState: jasmine.createSpy("captureState"),
+      syncRacedayPreview: jasmine.createSpy("syncRacedayPreview"),
       cdr: {
         markForCheck: jasmine.createSpy("markForCheck"),
       },
@@ -446,6 +448,97 @@ describe("ui-editor-grid.helper", () => {
     it("should handle empty or null gridId gracefully", () => {
       handleDeleteGrid(mockComp, "", mockUi);
       expect(mockComp.captureState).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("handleSyncActiveGridSessionFromLayout", () => {
+    it("should return early when activeGridSession is null", () => {
+      mockComp.activeGridSession = null;
+      handleSyncActiveGridSessionFromLayout(mockComp);
+      expect(mockComp.activeGridSession).toBeNull();
+      expect(mockComp.cdr.markForCheck).not.toHaveBeenCalled();
+    });
+
+    it("should clear activeGridSession and reset animation helper when grid widgets no longer exist in layout", () => {
+      mockComp.activeGridSession = {
+        gridId: "removed-grid",
+        bounds: { x: 100, y: 50, width: 800, height: 400 },
+      };
+      mockWidgets[0].customSettings = { gridId: "different-grid" };
+      mockWidgets[1].customSettings = { gridId: "different-grid" };
+
+      handleSyncActiveGridSessionFromLayout(mockComp);
+
+      expect(mockComp.activeGridSession).toBeNull();
+    });
+
+    it("should synchronize activeGridSession bounds and configuration from restored layout widgets", () => {
+      mockWidgets[0].customSettings = {
+        gridId: "sync-grid",
+        gridLane: 0,
+        gridTotalLanes: 6,
+        gridDirection: "vertical",
+        bindingMode: "position",
+        headerPlacement: "top",
+        headerHeight: 48,
+        linkColumns: true,
+        layoutOrientation: "horizontal",
+        gridLabelPosition: "top",
+        gridLabelText: "Leaderboard",
+        gridLabelSize: 50,
+        gridLabelFontFamily: "Roboto",
+        gridLabelFontSize: 20,
+        gridLabelTextColor: "#ffff00",
+        gridLabelBackgroundColor: "#000000",
+        gridLabelFontBold: true,
+        gridLabelFontItalic: true,
+        gridLabelAlignment: "left",
+        gridBounds: { x: 120, y: 80, width: 900, height: 450 },
+      };
+      mockWidgets[0].x = 120;
+      mockWidgets[0].y = 80;
+      mockWidgets[0].width = 150;
+      mockWidgets[0].height = 450;
+
+      mockComp.activeGridSession = {
+        gridId: "sync-grid",
+        bounds: { x: 100, y: 50, width: 800, height: 400 },
+        totalLanes: 4,
+        direction: "horizontal",
+        sourceLaneIndex: 0,
+        bindingMode: "lane",
+      };
+
+      handleSyncActiveGridSessionFromLayout(mockComp);
+
+      expect(mockComp.activeGridSession).toBeTruthy();
+      expect(mockComp.activeGridSession.bounds).toEqual({
+        x: 120,
+        y: 80,
+        width: 900,
+        height: 450,
+      });
+      expect(mockComp.activeGridSession.totalLanes).toBe(6);
+      expect(mockComp.activeGridSession.direction).toBe("vertical");
+      expect(mockComp.activeGridSession.bindingMode).toBe("position");
+      expect(mockComp.activeGridSession.headerPlacement).toBe("top");
+      expect(mockComp.activeGridSession.headerHeight).toBe(48);
+      expect(mockComp.activeGridSession.linkColumns).toBeTrue();
+      expect(mockComp.activeGridSession.layoutOrientation).toBe("horizontal");
+      expect(mockComp.activeGridSession.gridLabelPosition).toBe("top");
+      expect(mockComp.activeGridSession.gridLabelText).toBe("Leaderboard");
+      expect(mockComp.activeGridSession.gridLabelSize).toBe(50);
+      expect(mockComp.activeGridSession.gridLabelFontFamily).toBe("Roboto");
+      expect(mockComp.activeGridSession.gridLabelFontSize).toBe(20);
+      expect(mockComp.activeGridSession.gridLabelTextColor).toBe("#ffff00");
+      expect(mockComp.activeGridSession.gridLabelBackgroundColor).toBe(
+        "#000000",
+      );
+      expect(mockComp.activeGridSession.gridLabelFontBold).toBeTrue();
+      expect(mockComp.activeGridSession.gridLabelFontItalic).toBeTrue();
+      expect(mockComp.activeGridSession.gridLabelAlignment).toBe("left");
+      expect(mockComp.syncRacedayPreview).toHaveBeenCalled();
+      expect(mockComp.cdr.markForCheck).toHaveBeenCalled();
     });
   });
 });

@@ -449,3 +449,100 @@ export function handleDeleteGrid(
   comp.captureState?.();
   comp.cdr.markForCheck();
 }
+
+export function handleSyncActiveGridSessionFromLayout(comp: any): void {
+  if (!comp.activeGridSession) return;
+  const targetUi = comp.activeCustomUi;
+  const layout = comp.getLayout?.(targetUi);
+  const gridId = comp.activeGridSession.gridId;
+  if (
+    !layout?.widgets ||
+    !LaneGridReplicationHelper.hasGridWidgets(layout.widgets, gridId)
+  ) {
+    LaneGridAnimationHelper.reset(gridId);
+    comp.activeGridSession = null;
+    return;
+  }
+  const bounds = LaneGridReplicationHelper.calculateGridBounds(
+    layout.widgets,
+    gridId,
+  );
+  const gridWidgets = layout.widgets.filter(
+    (w: any) => w.customSettings?.["gridId"] === gridId,
+  );
+  const first = gridWidgets[0];
+  if (first?.customSettings) {
+    const cs = first.customSettings;
+    const totalLanes =
+      Number(cs["gridTotalLanes"]) || comp.activeGridSession.totalLanes;
+    const direction = cs["gridDirection"] || comp.activeGridSession.direction;
+    const positionWidget = gridWidgets.find(
+      (w: any) => w.customSettings?.["bindingMode"] === "position",
+    );
+    const bindingMode = positionWidget
+      ? "position"
+      : cs["bindingMode"] || comp.activeGridSession.bindingMode;
+
+    comp.activeGridSession = {
+      ...comp.activeGridSession,
+      bounds: bounds || comp.activeGridSession.bounds,
+      totalLanes,
+      direction,
+      bindingMode,
+      headerPlacement:
+        cs["headerPlacement"] || comp.activeGridSession.headerPlacement,
+      headerHeight:
+        cs["headerHeight"] != null
+          ? Number(cs["headerHeight"])
+          : comp.activeGridSession.headerHeight,
+      linkColumns: cs["linkColumns"] !== false,
+      layoutOrientation:
+        cs["layoutOrientation"] || comp.activeGridSession.layoutOrientation,
+      gridLabelPosition:
+        cs["gridLabelPosition"] ||
+        comp.activeGridSession.gridLabelPosition ||
+        "none",
+      gridLabelText:
+        cs["gridLabelText"] ?? comp.activeGridSession.gridLabelText ?? "",
+      gridLabelSize:
+        cs["gridLabelSize"] != null
+          ? Number(cs["gridLabelSize"])
+          : comp.activeGridSession.gridLabelSize,
+      gridLabelFontFamily:
+        cs["gridLabelFontFamily"] ??
+        comp.activeGridSession.gridLabelFontFamily ??
+        "",
+      gridLabelFontSize:
+        cs["gridLabelFontSize"] != null
+          ? Number(cs["gridLabelFontSize"])
+          : comp.activeGridSession.gridLabelFontSize,
+      gridLabelTextColor:
+        cs["gridLabelTextColor"] ??
+        comp.activeGridSession.gridLabelTextColor ??
+        "#ffffff",
+      gridLabelBackgroundColor:
+        cs["gridLabelBackgroundColor"] ??
+        comp.activeGridSession.gridLabelBackgroundColor ??
+        "rgba(15, 23, 42, 0.85)",
+      gridLabelFontBold:
+        cs["gridLabelFontBold"] !== undefined
+          ? cs["gridLabelFontBold"] !== false
+          : comp.activeGridSession.gridLabelFontBold,
+      gridLabelFontItalic:
+        cs["gridLabelFontItalic"] !== undefined
+          ? Boolean(cs["gridLabelFontItalic"])
+          : comp.activeGridSession.gridLabelFontItalic,
+      gridLabelAlignment:
+        cs["gridLabelAlignment"] ||
+        comp.activeGridSession.gridLabelAlignment ||
+        "center",
+    };
+  } else if (bounds) {
+    comp.activeGridSession = {
+      ...comp.activeGridSession,
+      bounds,
+    };
+  }
+  comp.syncRacedayPreview?.(layout, targetUi);
+  comp.cdr?.markForCheck();
+}

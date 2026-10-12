@@ -4281,6 +4281,91 @@ describe("UIEditorComponent", () => {
       ).toBeFalse();
     });
 
+    it("should capture state and auto-save when grid resize layoutChanged is received, and restore activeGridSession bounds on undo/redo", fakeAsync(() => {
+      const customUi: any = {
+        entity_id: "custom_ui_grid_resize",
+        name: "Grid Resize UI",
+        layoutJson: JSON.stringify({
+          baseWidth: 1920,
+          baseHeight: 1080,
+          widgets: [
+            {
+              id: "w-lane-master",
+              widgetType: "lane-column",
+              x: 100,
+              y: 100,
+              width: 200,
+              height: 400,
+              customSettings: {
+                gridId: "grid-resize-test",
+                gridLane: 0,
+                gridTotalLanes: 4,
+                gridDirection: "horizontal",
+                gridBounds: { x: 100, y: 100, width: 800, height: 400 },
+              },
+            },
+          ],
+        }),
+      };
+      component.displayCustomUIs = [customUi];
+      component.activeCustomUiId = customUi.entity_id;
+      component.editingState = {
+        settings: component.editingSettings,
+        themes: component.displayThemes,
+        customUIs: [customUi],
+      };
+      component.undoManager.initialize(component.editingState);
+      component.activeGridSession = {
+        gridId: "grid-resize-test",
+        bounds: { x: 100, y: 100, width: 800, height: 400 },
+        totalLanes: 4,
+        direction: "horizontal",
+        sourceLaneIndex: 0,
+        bindingMode: "lane",
+      };
+
+      spyOn(component.undoManager, "captureState").and.callThrough();
+      const initialUndoCount = component.undoManager.undoStackCount;
+
+      // 1. Resize grid bounds during active session
+      component.onGridBoundsChange(
+        { x: 120, y: 120, width: 950, height: 480 },
+        customUi,
+      );
+      expect(component.activeGridSession.bounds).toEqual({
+        x: 120,
+        y: 120,
+        width: 950,
+        height: 480,
+      });
+
+      // 2. Pointer up finishes resize -> layoutChanged emitted
+      const updatedLayout = JSON.parse(customUi.layoutJson);
+      component.onLayoutChanged(updatedLayout, customUi);
+      tick();
+
+      expect(component.undoManager.captureState).toHaveBeenCalled();
+      expect(component.undoManager.undoStackCount).toBe(initialUndoCount + 1);
+
+      // 3. Undo resize -> activeGridSession bounds should restore to initial 800x400
+      component.undoManager.undo();
+      expect(component.activeGridSession.bounds).toEqual({
+        x: 100,
+        y: 100,
+        width: 800,
+        height: 400,
+      });
+
+      // 4. Redo resize -> activeGridSession bounds should update to 950x480
+      component.undoManager.redo();
+      expect(component.activeGridSession.bounds).toEqual({
+        x: 120,
+        y: 120,
+        width: 950,
+        height: 480,
+      });
+    }));
+
     it("should preserve collapsed column groups on lane-view widget per layout independently", () => {
       spyOn(component.undoManager, "captureState");
       const customUi1: any = {

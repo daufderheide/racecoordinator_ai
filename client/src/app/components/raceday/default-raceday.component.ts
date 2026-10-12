@@ -8424,6 +8424,8 @@ export class DefaultRacedayComponent
       snapEdgesY.push(w.y, w.y + w.height);
     }
 
+    let hasResized = false;
+
     const onPointerMove = (moveEvent: PointerEvent) => {
       const deltaX = (moveEvent.clientX - startX) / scale;
       const deltaY = (moveEvent.clientY - startY) / scale;
@@ -8442,12 +8444,16 @@ export class DefaultRacedayComponent
         8,
       );
 
+      hasResized = true;
       this.gridBoundsChange.emit(newBounds);
     };
 
     const onPointerUp = () => {
       document.removeEventListener("pointermove", onPointerMove);
       document.removeEventListener("pointerup", onPointerUp);
+      if (hasResized && this.layout) {
+        this.layoutChanged.emit(this.layout);
+      }
     };
 
     document.addEventListener("pointermove", onPointerMove);
