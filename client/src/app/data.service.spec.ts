@@ -1692,6 +1692,31 @@ describe("DataService", () => {
       jasmine.clock().uninstall();
     });
 
+    it("should handle disconnectFromRaceDataSocket and disconnectAllSockets", () => {
+      const mockRaceWs: any = {
+        close: jasmine.createSpy("close"),
+      };
+      const mockInterfaceWs: any = {
+        close: jasmine.createSpy("close"),
+      };
+      (service as any).raceDataSocket = mockRaceWs;
+      (service as any).interfaceDataSocket = mockInterfaceWs;
+
+      service.disconnectFromRaceDataSocket();
+      expect(mockRaceWs.close).toHaveBeenCalled();
+      expect(
+        (service as any).isRaceDataSocketExplicitlyDisconnected,
+      ).toBeTrue();
+
+      (service as any).raceDataSocket = mockRaceWs;
+      spyOn(service, "disconnectFromRaceDataSocket").and.callThrough();
+      spyOn(service, "disconnectFromInterfaceDataSocket").and.callThrough();
+
+      service.disconnectAllSockets();
+      expect(service.disconnectFromRaceDataSocket).toHaveBeenCalled();
+      expect(service.disconnectFromInterfaceDataSocket).toHaveBeenCalled();
+    });
+
     it("should provide observable streams for race events, telemetry, and system state", () => {
       expect(service.getLaps()).toBeDefined();
       expect(service.getStandingsUpdate()).toBeDefined();

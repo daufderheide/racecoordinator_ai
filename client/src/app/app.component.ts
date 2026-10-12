@@ -224,4 +224,10 @@ export class AppComponent implements OnInit {
   onWindowDrop(event: DragEvent): void {
     event.preventDefault();
   }
+
+  @HostListener("window:pagehide")
+  @HostListener("window:beforeunload")
+  onWindowUnload(): void {
+    this.dataService.disconnectAllSockets();
+  }
 }
