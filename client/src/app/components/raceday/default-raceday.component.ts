@@ -1075,6 +1075,12 @@ export class DefaultRacedayComponent
   public syncLayoutFromEditor(newLayout: LayoutConfig): void {
     if (newLayout) {
       this.layout = JSON.parse(JSON.stringify(newLayout));
+      if (this.layout.widgets) {
+        this.layout.widgets =
+          LaneGridReplicationHelper.cleanOrphanedGridWidgets(
+            this.layout.widgets,
+          );
+      }
       this.cdr.markForCheck();
     }
   }
@@ -4127,9 +4133,8 @@ export class DefaultRacedayComponent
       gridLabelPosition: labelPosition,
       gridLabelText: labelText,
       gridLabelSize: labelSize,
-      gridLabelShowBorder: Boolean(
-        first.customSettings?.["gridLabelShowBorder"],
-      ),
+      gridLabelShowBorder:
+        first.customSettings?.["gridLabelShowBorder"] !== false,
       gridLabelBorderColor:
         first.customSettings?.["gridLabelBorderColor"] || "",
       gridLabelBorderWidth:
@@ -4144,14 +4149,32 @@ export class DefaultRacedayComponent
 
     const labelBounds = LaneGridLabelHelper.computeGridLabelBounds(sessionLike);
     const dataBounds = LaneGridLabelHelper.computeGridDataBounds(sessionLike);
+
+    const isAnyUnderLabel = gridWidgets.some((w: any) => {
+      if (w.customSettings?.["isHeaderWidget"]) return false;
+      return (
+        (labelPosition === "top" && w.y < dataBounds.y) ||
+        (labelPosition === "left" && w.x < dataBounds.x)
+      );
+    });
+    const effectiveWidgets = isAnyUnderLabel
+      ? LaneGridReplicationHelper.syncAllMasterWidgetsToLanes(
+          sessionLike,
+          widgets,
+        )
+      : widgets;
+    if (isAnyUnderLabel && this.layout?.widgets === widgets) {
+      this.layout.widgets = effectiveWidgets;
+    }
+
     const dataCount = LaneGridReplicationHelper.getGridDataCount(
-      widgets,
+      effectiveWidgets,
       gridId,
       this,
     );
     const allGridWidgets =
       LaneGridReplicationHelper.generateScrollableGridWidgets(
-        widgets,
+        effectiveWidgets,
         gridId,
         dataCount,
       );
@@ -4226,7 +4249,7 @@ export class DefaultRacedayComponent
       labelFontBold: first.customSettings?.["gridLabelFontBold"] !== false,
       labelFontItalic: Boolean(first.customSettings?.["gridLabelFontItalic"]),
       labelAlignment: first.customSettings?.["gridLabelAlignment"] || "center",
-      labelShowBorder: Boolean(first.customSettings?.["gridLabelShowBorder"]),
+      labelShowBorder: first.customSettings?.["gridLabelShowBorder"] !== false,
       labelBorderColor: first.customSettings?.["gridLabelBorderColor"] || "",
       labelBorderWidth:
         first.customSettings?.["gridLabelBorderWidth"] != null
@@ -8170,11 +8193,76 @@ export class DefaultRacedayComponent
     return Math.max(...nonCountdown.map((w: any) => w.zIndex || 0)) + 1;
   }
 
+  bringGridToFront(gridId: string): void {
+    if (!this.layout?.widgets || !gridId) return;
+
+    const gridWidgets = this.layout.widgets.filter(
+      (w: any) => w.customSettings?.["gridId"] === gridId,
+    );
+    if (gridWidgets.length === 0) return;
+
+    const otherNonCountdown = this.layout.widgets.filter(
+      (w: any) =>
+        w.customSettings?.["gridId"] !== gridId && w.widgetType !== "countdown",
+    );
+    const maxOtherZ =
+      otherNonCountdown.length > 0
+        ? Math.max(...otherNonCountdown.map((w: any) => w.zIndex || 0))
+        : 0;
+
+    const newBaseZ = maxOtherZ + 1;
+    let changed = false;
+
+    const minGridZ = Math.min(...gridWidgets.map((w: any) => w.zIndex || 10));
+    for (const gw of gridWidgets) {
+      const relativeOffset = Math.max(0, (gw.zIndex || 10) - minGridZ);
+      const targetZ = newBaseZ + relativeOffset;
+      if (gw.zIndex !== targetZ) {
+        gw.zIndex = targetZ;
+        changed = true;
+      }
+    }
+
+    const maxGridZ = Math.max(...gridWidgets.map((w: any) => w.zIndex || 0));
+    for (const cw of this.layout.widgets) {
+      if (cw.widgetType === "countdown") {
+        if (cw.zIndex == null || cw.zIndex <= maxGridZ) {
+          cw.zIndex = Math.max(2000, maxGridZ + 100);
+          changed = true;
+        }
+      }
+    }
+
+    if (changed) {
+      this.layoutChanged.emit(this.layout);
+      this.cdr.markForCheck();
+    }
+  }
+
+  getGridSessionZIndex(): number {
+    const session = this.gridSession();
+    if (!session || !this.layout?.widgets) return 200;
+    const gridWidgets = this.layout.widgets.filter(
+      (w: any) => w.customSettings?.["gridId"] === session.gridId,
+    );
+    const maxZ =
+      gridWidgets.length > 0
+        ? Math.max(...gridWidgets.map((w: any) => w.zIndex || 0))
+        : 100;
+    return maxZ + 10;
+  }
+
   bringToFront(id: string) {
     if (!this.layout?.widgets) return;
 
     const targetWidget = this.layout.widgets.find((w: any) => w.id === id);
     if (!targetWidget) return;
+
+    if (targetWidget.customSettings?.["gridId"]) {
+      this.bringGridToFront(targetWidget.customSettings["gridId"]);
+      this.widgetSelected.emit(id);
+      return;
+    }
 
     if (this.gridSession() && targetWidget.customSettings?.["gridMasterId"]) {
       const masterId = targetWidget.customSettings["gridMasterId"];
@@ -8259,7 +8347,7 @@ export class DefaultRacedayComponent
     const gridId =
       session?.gridId || widgetToRemove?.customSettings?.["gridId"];
 
-    if (session) {
+    if (session && session.gridId === gridId) {
       this.layout.widgets =
         LaneGridReplicationHelper.removeMasterWidgetFromLanes(
           id,
@@ -8267,8 +8355,32 @@ export class DefaultRacedayComponent
           this.layout.widgets,
         );
     } else {
-      this.layout.widgets = this.layout.widgets.filter((w: any) => w.id !== id);
+      const resolvedMasterId =
+        widgetToRemove?.customSettings?.["gridMasterId"] || id;
+      const isMasterWithReplicas = this.layout.widgets.some(
+        (w: any) =>
+          w.customSettings?.["gridMasterId"] === id ||
+          w.id.startsWith(`${id}_grid_lane_`),
+      );
+      if (isMasterWithReplicas) {
+        this.layout.widgets = this.layout.widgets.filter((w: any) => {
+          if (w.id === resolvedMasterId) return false;
+          if (w.customSettings?.["gridMasterId"] === resolvedMasterId)
+            return false;
+          if (w.id.startsWith(`${resolvedMasterId}_grid_lane_`)) return false;
+          if (w.id === `${resolvedMasterId}_grid_header`) return false;
+          return true;
+        });
+      } else {
+        this.layout.widgets = this.layout.widgets.filter(
+          (w: any) => w.id !== id,
+        );
+      }
     }
+
+    this.layout.widgets = LaneGridReplicationHelper.cleanOrphanedGridWidgets(
+      this.layout.widgets,
+    );
 
     if (
       gridId &&
@@ -8492,6 +8604,7 @@ export class DefaultRacedayComponent
     event.stopPropagation();
     const session = this.gridSession();
     if (!session) return;
+    this.bringGridToFront(session.gridId);
 
     const startX = event.clientX;
     const startY = event.clientY;

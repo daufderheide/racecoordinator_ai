@@ -935,5 +935,55 @@ describe("RacedayAbsoluteWidgetComponent", () => {
 
       expect(component.isGridAnimating).toBeFalse();
     });
+
+    it("should compute auto-calculated flags and display correct resize handles", () => {
+      const vertWidget: AbsoluteWidgetNode = {
+        id: "w-vert",
+        widgetType: "lane-column",
+        x: 100,
+        y: 200,
+        width: 150,
+        height: 50,
+        zIndex: 100,
+        customSettings: {
+          gridId: "grid-test",
+          gridLane: 0,
+          gridDirection: "vertical",
+        },
+      };
+
+      fixture.componentRef.setInput("isCustomizing", true);
+      fixture.componentRef.setInput("widget", vertWidget);
+      fixture.detectChanges();
+
+      expect(component.isHeightAutoCalculated).toBeTrue();
+      expect(component.isWidthAutoCalculated).toBeFalse();
+
+      const el = fixture.nativeElement as HTMLElement;
+      expect(el.querySelector(".resize-handle.e")).toBeTruthy();
+      expect(el.querySelector(".resize-handle.w")).toBeTruthy();
+      expect(el.querySelector(".resize-handle.n")).toBeNull();
+      expect(el.querySelector(".resize-handle.s")).toBeNull();
+
+      const horizWidget: AbsoluteWidgetNode = {
+        ...vertWidget,
+        id: "w-horiz",
+        customSettings: {
+          gridId: "grid-test",
+          gridLane: 0,
+          gridDirection: "horizontal",
+        },
+      };
+
+      fixture.componentRef.setInput("widget", horizWidget);
+      fixture.detectChanges();
+
+      expect(component.isHeightAutoCalculated).toBeFalse();
+      expect(component.isWidthAutoCalculated).toBeTrue();
+      expect(el.querySelector(".resize-handle.n")).toBeTruthy();
+      expect(el.querySelector(".resize-handle.s")).toBeTruthy();
+      expect(el.querySelector(".resize-handle.e")).toBeNull();
+      expect(el.querySelector(".resize-handle.w")).toBeNull();
+    });
   });
 });

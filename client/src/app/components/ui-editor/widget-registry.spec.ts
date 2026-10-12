@@ -112,6 +112,8 @@ describe("WIDGET_REGISTRY", () => {
     expect(laneColumnSettings["targetIndex"]).toBe(0);
     expect(laneColumnSettings["layoutOrientation"]).toBe("vertical");
     expect(laneColumnSettings["useLaneColors"]).toBe(true);
+    expect(laneColumnSettings["backgroundColor"]).toBe("#000000");
+    expect(laneColumnSettings["textColor"]).toBe("#ffffff");
     expect(laneColumnSettings["showBorder"]).toBe(true);
     expect(laneColumnSettings["borderRadius"]).toBe(8);
     expect(laneColumnSettings["insets"]).toEqual({});

@@ -145,6 +145,41 @@ describe("LaneColumnInspectorComponent", () => {
     expect(colorInputs.length).toBeGreaterThanOrEqual(2);
   });
 
+  it("should set default black background and white text when unchecking useLaneColors", () => {
+    const changeSpy = spyOn(component.change, "emit");
+    mockSettings.useLaneColors = false;
+    mockSettings.backgroundColor = "";
+    mockSettings.textColor = "";
+
+    component.onUseLaneColorsChange();
+
+    expect(mockSettings.backgroundColor).toBe("#000000");
+    expect(mockSettings.textColor).toBe("#ffffff");
+    expect(changeSpy).toHaveBeenCalled();
+  });
+
+  it("should fix both black text and background to white text when unchecking useLaneColors", () => {
+    const changeSpy = spyOn(component.change, "emit");
+    mockSettings.useLaneColors = false;
+    mockSettings.backgroundColor = "#000000";
+    mockSettings.textColor = "#000000";
+
+    component.onUseLaneColorsChange();
+
+    expect(mockSettings.backgroundColor).toBe("#000000");
+    expect(mockSettings.textColor).toBe("#ffffff");
+    expect(changeSpy).toHaveBeenCalled();
+  });
+
+  it("should emit change when re-checking useLaneColors", () => {
+    const changeSpy = spyOn(component.change, "emit");
+    mockSettings.useLaneColors = true;
+
+    component.onUseLaneColorsChange();
+
+    expect(changeSpy).toHaveBeenCalled();
+  });
+
   it("should format target lane options with 1-based lane numbers", () => {
     mockTranslationService.translate.and.callFake(
       (key: string, params?: any) => {
@@ -203,10 +238,11 @@ describe("LaneColumnInspectorComponent", () => {
     const card = fixture.debugElement.query(By.css(".grid-indicator-card"));
     expect(card).toBeTruthy();
 
-    spyOn(component.editGrid, "emit");
     const editBtn = fixture.debugElement.query(By.css(".grid-edit-btn"));
-    expect(editBtn).toBeTruthy();
-    editBtn.triggerEventHandler("click", null);
+    expect(editBtn).toBeNull();
+
+    spyOn(component.editGrid, "emit");
+    component.onEditGridTemplate();
     expect(component.editGrid.emit).toHaveBeenCalledWith("grid-12345");
 
     spyOn(component.detachGrid, "emit");
@@ -214,6 +250,14 @@ describe("LaneColumnInspectorComponent", () => {
     expect(detachBtn).toBeTruthy();
     detachBtn.triggerEventHandler("click", null);
     expect(component.detachGrid.emit).toHaveBeenCalledWith("grid-12345");
+
+    spyOn(component.bringGridToFront, "emit");
+    const bringFrontBtn = fixture.debugElement.query(
+      By.css(".grid-bring-front-btn"),
+    );
+    expect(bringFrontBtn).toBeTruthy();
+    bringFrontBtn.triggerEventHandler("click", null);
+    expect(component.bringGridToFront.emit).toHaveBeenCalledWith("grid-12345");
 
     spyOn(component.deleteGrid, "emit");
     const deleteBtn = fixture.debugElement.query(By.css(".grid-delete-btn"));
@@ -1097,12 +1141,15 @@ describe("LaneColumnInspectorComponent", () => {
     });
 
     it("should handle gridLabel border properties and clamping", () => {
-      // Show Border
+      // Show Border (defaults to true)
+      expect(component.gridLabelShowBorder).toBeTrue();
+      component.gridLabelShowBorder = false;
       expect(component.gridLabelShowBorder).toBeFalse();
+      expect(mockSettings.gridLabelShowBorder).toBeFalse();
+      expect(mockSettings._gridLabelChanged).toBeTrue();
       component.gridLabelShowBorder = true;
       expect(component.gridLabelShowBorder).toBeTrue();
       expect(mockSettings.gridLabelShowBorder).toBeTrue();
-      expect(mockSettings._gridLabelChanged).toBeTrue();
 
       // Border Color with default fallback and reset
       expect(component.gridLabelBorderColor).toBe("#ffffff");
@@ -1142,6 +1189,22 @@ describe("LaneColumnInspectorComponent", () => {
       expect(mockSettings.gridLabelBorderRadius).toBe(0);
       component.gridLabelBorderRadius = 50;
       expect(mockSettings.gridLabelBorderRadius).toBe(32);
+    });
+
+    it("should toggle mirrorRows and emit reMirrorGrid", () => {
+      fixture.componentRef.setInput("settings", mockSettings);
+      mockSettings.gridId = "grid-test-1";
+
+      expect(component.mirrorRows).toBeTrue();
+      component.mirrorRows = false;
+      expect(component.mirrorRows).toBeFalse();
+      expect(mockSettings.mirrorRows).toBeFalse();
+      expect(mockSettings._mirrorRowsChanged).toBeTrue();
+
+      spyOn(component.reMirrorGrid, "emit");
+      component.onReMirrorGrid();
+      expect(component.mirrorRows).toBeTrue();
+      expect(component.reMirrorGrid.emit).toHaveBeenCalledWith("grid-test-1");
     });
   });
 });

@@ -47,6 +47,12 @@
         (change)="onSettingsChange()"
       ></app-image-inspector>
     }
+    @case ("label") {
+      <app-label-inspector
+        [settings]="widget().customSettings"
+        (change)="onSettingsChange()"
+      ></app-label-inspector>
+    }
     @case ("lane-view") {
       <app-lane-view-inspector
         [settings]="widget().customSettings"
@@ -71,6 +77,8 @@
         (editGrid)="editGrid.emit($event)"
         (detachGrid)="detachGrid.emit($event)"
         (deleteGrid)="deleteGrid.emit($event)"
+        (reMirrorGrid)="reMirrorGrid.emit($event)"
+        (bringGridToFront)="bringGridToFront.emit($event)"
       ></app-lane-column-inspector>
     }
     @case ("on-deck") {

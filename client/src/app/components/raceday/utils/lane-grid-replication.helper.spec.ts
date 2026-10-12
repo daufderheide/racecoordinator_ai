@@ -1,6 +1,7 @@
 import { AbsoluteWidgetNode } from "@app/models/settings";
 
 import {
+  LaneGridBounds,
   LaneGridReplicationHelper,
   LaneGridSession,
 } from "./lane-grid-replication.helper";
@@ -149,16 +150,17 @@ describe("LaneGridReplicationHelper", () => {
 
     const lane1 = synced.find((w) => w.id === "w-1_grid_lane_1")!;
     expect(lane1).toBeDefined();
-    expect(lane1.x).toBe(310); // 110 + 200
+    expect(lane1.x).toBe(300); // 100 + 200 (auto-calculated for horizontal grid)
     expect(lane1.y).toBe(60);
-    expect(lane1.width).toBe(180);
+    expect(lane1.width).toBe(200); // auto-calculated for horizontal grid
     expect(lane1.height).toBe(90);
     expect(lane1.customSettings?.["targetIndex"]).toBe(1);
     expect(lane1.customSettings?.["gridMasterId"]).toBe("w-1");
 
     const lane3 = synced.find((w) => w.id === "w-1_grid_lane_3")!;
     expect(lane3).toBeDefined();
-    expect(lane3.x).toBe(710); // 110 + 3 * 200
+    expect(lane3.x).toBe(700); // 100 + 3 * 200 (auto-calculated for horizontal grid)
+    expect(lane3.width).toBe(200);
     expect(lane3.customSettings?.["targetIndex"]).toBe(3);
   });
 
@@ -235,9 +237,9 @@ describe("LaneGridReplicationHelper", () => {
 
     expect(widgets.length).toBe(4);
     const lane2 = widgets.find((w) => w.id === "w-1_grid_lane_2")!;
-    expect(lane2.x).toBe(520); // 120 + 2 * 200
+    expect(lane2.x).toBe(500); // 100 + 2 * 200 (auto-calculated for horizontal grid)
     expect(lane2.y).toBe(70);
-    expect(lane2.width).toBe(150);
+    expect(lane2.width).toBe(200); // auto-calculated for horizontal grid
     expect(lane2.height).toBe(100);
   });
 
@@ -269,24 +271,28 @@ describe("LaneGridReplicationHelper", () => {
     );
 
     expect(synced.length).toBe(4);
-    // Cell 0 should be at x = 110 (100 + 10)
+    // Cell 0 should be at x = 100 (auto-calculated column width and x)
     const pos1 = synced.find((w) => w.id === "w-pos-2_grid_lane_0")!;
-    expect(pos1.x).toBe(110);
+    expect(pos1.x).toBe(100);
+    expect(pos1.width).toBe(200);
     expect(pos1.customSettings?.["targetIndex"]).toBe(0);
 
-    // Cell 1 is master at x = 310
+    // Cell 1 is master at x = 300
     const master = synced.find((w) => w.id === "w-pos-2")!;
-    expect(master.x).toBe(310);
+    expect(master.x).toBe(300);
+    expect(master.width).toBe(200);
     expect(master.customSettings?.["targetIndex"]).toBe(1);
 
-    // Cell 2 should be at x = 510
+    // Cell 2 should be at x = 500
     const pos3 = synced.find((w) => w.id === "w-pos-2_grid_lane_2")!;
-    expect(pos3.x).toBe(510);
+    expect(pos3.x).toBe(500);
+    expect(pos3.width).toBe(200);
     expect(pos3.customSettings?.["targetIndex"]).toBe(2);
 
-    // Cell 3 should be at x = 710
+    // Cell 3 should be at x = 700
     const pos4 = synced.find((w) => w.id === "w-pos-2_grid_lane_3")!;
-    expect(pos4.x).toBe(710);
+    expect(pos4.x).toBe(700);
+    expect(pos4.width).toBe(200);
     expect(pos4.customSettings?.["targetIndex"]).toBe(3);
   });
 
@@ -1756,6 +1762,138 @@ describe("LaneGridReplicationHelper", () => {
         width: 300,
         height: 400,
       });
+    });
+
+    it("should adjust existing mirrored vertical grid rows when adding a top grid label so row 1 is below title and rows fill bounds", () => {
+      const gridId = "g-top-label";
+      const bounds: LaneGridBounds = {
+        x: 100,
+        y: 100,
+        width: 400,
+        height: 400,
+      };
+      const master: AbsoluteWidgetNode = {
+        id: "m-col",
+        widgetType: "lane-column",
+        x: 100,
+        y: 100,
+        width: 400,
+        height: 100,
+        zIndex: 10,
+        customSettings: {
+          gridId,
+          gridLane: 0,
+          gridTotalLanes: 4,
+          gridDirection: "vertical",
+          gridBounds: bounds,
+          gridLabelPosition: "none",
+        },
+      };
+
+      const initialSession: LaneGridSession = {
+        gridId,
+        bounds,
+        totalLanes: 4,
+        direction: "vertical",
+        sourceLaneIndex: 0,
+        bindingMode: "lane",
+        gridLabelPosition: "none",
+      };
+      const initialWidgets = LaneGridReplicationHelper.syncMasterWidgetToLanes(
+        master,
+        initialSession,
+        [master],
+      );
+      expect(initialWidgets.length).toBe(4);
+      expect(initialWidgets[0].y).toBe(100);
+      expect(initialWidgets[3].y).toBe(400);
+
+      const updated = LaneGridReplicationHelper.updateGridLabel(
+        initialWidgets,
+        gridId,
+        {
+          gridLabelPosition: "top",
+          gridLabelSize: 40,
+        },
+      );
+
+      const row0 = updated.find(
+        (w) => Number(w.customSettings?.["gridLane"]) === 0,
+      )!;
+      const row1 = updated.find(
+        (w) => Number(w.customSettings?.["gridLane"]) === 1,
+      )!;
+      const row2 = updated.find(
+        (w) => Number(w.customSettings?.["gridLane"]) === 2,
+      )!;
+      const row3 = updated.find(
+        (w) => Number(w.customSettings?.["gridLane"]) === 3,
+      )!;
+
+      expect(row0).toBeDefined();
+      expect(row0.y).toBe(140);
+      expect(row0.height).toBe(90);
+
+      expect(row1.y).toBe(230);
+      expect(row1.height).toBe(90);
+
+      expect(row2.y).toBe(320);
+      expect(row2.height).toBe(90);
+
+      expect(row3.y).toBe(410);
+      expect(row3.height).toBe(90);
+      expect(row3.y + row3.height).toBe(bounds.y + bounds.height);
+    });
+
+    it("should auto-heal corrupted layout where rows are placed under label", () => {
+      const gridId = "g-heal";
+      const bounds: LaneGridBounds = {
+        x: 50,
+        y: 100,
+        width: 300,
+        height: 400,
+      };
+      const corruptedMaster: AbsoluteWidgetNode = {
+        id: "m-corrupted",
+        widgetType: "lane-column",
+        x: 50,
+        y: 100,
+        width: 300,
+        height: 100,
+        zIndex: 10,
+        customSettings: {
+          gridId,
+          gridLane: 0,
+          gridTotalLanes: 4,
+          gridDirection: "vertical",
+          gridBounds: bounds,
+          gridLabelPosition: "top",
+          gridLabelSize: 40,
+          cellOffsetYRatio: -0.4,
+        },
+      };
+
+      const session: LaneGridSession = {
+        gridId,
+        bounds,
+        totalLanes: 4,
+        direction: "vertical",
+        sourceLaneIndex: 0,
+        bindingMode: "lane",
+        gridLabelPosition: "top",
+        gridLabelSize: 40,
+      };
+
+      const healed = LaneGridReplicationHelper.syncMasterWidgetToLanes(
+        corruptedMaster,
+        session,
+        [corruptedMaster],
+      );
+
+      const healedMaster = healed.find((w) => w.id === corruptedMaster.id)!;
+      expect(healedMaster.y).toBe(140);
+      expect(healedMaster.customSettings?.["cellOffsetYRatio"]).toBe(0);
+      expect(healedMaster.y >= 140).toBeTrue();
     });
   });
 });

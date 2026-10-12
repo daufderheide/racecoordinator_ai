@@ -1,5 +1,8 @@
 import { LaneGridAnimationHelper } from "@app/components/raceday/utils/lane-grid-animation.helper";
-import { LaneGridReplicationHelper } from "@app/components/raceday/utils/lane-grid-replication.helper";
+import {
+  LaneGridReplicationHelper,
+  LaneGridSession,
+} from "@app/components/raceday/utils/lane-grid-replication.helper";
 import {
   LaneReplicationHelper,
   LaneReplicationOptions,
@@ -149,6 +152,20 @@ export function applyWidgetDefaultSettings(widget: any): boolean {
         }
       }
     }
+    if (widget.widgetType === "lane-column" && widget.customSettings) {
+      if (!widget.customSettings["backgroundColor"]) {
+        widget.customSettings["backgroundColor"] = "#000000";
+        mutated = true;
+      }
+      if (
+        !widget.customSettings["textColor"] ||
+        (widget.customSettings["textColor"] === "#000000" &&
+          widget.customSettings["backgroundColor"] === "#000000")
+      ) {
+        widget.customSettings["textColor"] = "#ffffff";
+        mutated = true;
+      }
+    }
   }
   return mutated;
 }
@@ -238,6 +255,13 @@ export function handleWidgetSelection(
     if (uiId && comp.countdownPreviewActiveByUi) {
       comp.countdownPreviewActiveByUi[uiId] =
         selectedWidget.widgetType === "countdown";
+    }
+    const gridId = selectedWidget.customSettings?.gridId;
+    if (gridId && comp.activeGridSession?.gridId !== gridId) {
+      if (comp.activeGridSession && comp.finishGridSession) {
+        comp.finishGridSession(ui);
+      }
+      comp.onEditGridTemplate?.(gridId, ui);
     }
   } else if (uiId && comp.countdownPreviewActiveByUi) {
     comp.countdownPreviewActiveByUi[uiId] = false;
@@ -387,19 +411,19 @@ function handleGridLabelStructureChange(
     gridLabelBorderRadius:
       targetWidget.customSettings?.["gridLabelBorderRadius"],
   };
+  const existingBounds =
+    comp.activeGridSession && comp.activeGridSession.gridId === gridId
+      ? comp.activeGridSession.bounds
+      : LaneGridReplicationHelper.calculateGridBounds(layout.widgets, gridId);
+
   layout.widgets = LaneGridReplicationHelper.updateGridLabel(
     layout.widgets,
     gridId,
     labelConfig,
+    existingBounds,
   );
   if (comp.activeGridSession && comp.activeGridSession.gridId === gridId) {
     Object.assign(comp.activeGridSession, labelConfig);
-    if (comp.activeGridSession.bounds) {
-      layout.widgets = LaneGridReplicationHelper.syncAllMasterWidgetsToLanes(
-        comp.activeGridSession,
-        layout.widgets,
-      );
-    }
   }
 }
 
@@ -419,6 +443,20 @@ function handleGridColumnStructureChanges(
     );
     if (comp.activeGridSession && comp.activeGridSession.gridId === gridId) {
       comp.activeGridSession.linkColumns = isLinked;
+    }
+  }
+
+  if (targetWidget.customSettings?.["_mirrorRowsChanged"]) {
+    delete targetWidget.customSettings["_mirrorRowsChanged"];
+    const isMirrored = targetWidget.customSettings?.["mirrorRows"] !== false;
+    for (const w of layout.widgets) {
+      if (w.customSettings?.["gridId"] === gridId) {
+        if (!w.customSettings) w.customSettings = {};
+        w.customSettings["mirrorRows"] = isMirrored;
+      }
+    }
+    if (comp.activeGridSession && comp.activeGridSession.gridId === gridId) {
+      comp.activeGridSession.mirrorRows = isMirrored;
     }
   }
 
@@ -548,11 +586,13 @@ export function handleWidgetInspectorChange(
           targetWidget,
           comp.activeGridSession,
         );
-        layout.widgets = LaneGridReplicationHelper.syncMasterWidgetToLanes(
-          targetWidget,
-          comp.activeGridSession,
-          layout.widgets,
-        );
+        if (targetWidget.customSettings?.["mirrorRows"] !== false) {
+          layout.widgets = LaneGridReplicationHelper.syncMasterWidgetToLanes(
+            targetWidget,
+            comp.activeGridSession,
+            layout.widgets,
+          );
+        }
       }
 
       handleCrossColumnLiveSync(layout, targetWidget, gridId);
@@ -667,6 +707,30 @@ export function handleRemoveSelectedWidget(comp: any, ui?: CustomUI): void {
   comp.onLayoutChanged(updatedLayout, targetUi);
 }
 
+export function isWidgetHeightAutoCalculated(
+  widget: any,
+  session?: LaneGridSession | null,
+): boolean {
+  if (!widget?.customSettings?.["gridId"]) return false;
+  const dir =
+    session && session.gridId === widget.customSettings["gridId"]
+      ? session.direction
+      : widget.customSettings["gridDirection"] || "vertical";
+  return dir === "vertical";
+}
+
+export function isWidgetWidthAutoCalculated(
+  widget: any,
+  session?: LaneGridSession | null,
+): boolean {
+  if (!widget?.customSettings?.["gridId"]) return false;
+  const dir =
+    session && session.gridId === widget.customSettings["gridId"]
+      ? session.direction
+      : widget.customSettings["gridDirection"] || "vertical";
+  return dir === "horizontal";
+}
+
 export function handleNudgeSelectedWidget(
   comp: any,
   dx: number,
@@ -683,11 +747,29 @@ export function handleNudgeSelectedWidget(
   );
   if (!widget) return;
 
+  const canNudgeX = !isWidgetWidthAutoCalculated(
+    widget,
+    comp.activeGridSession,
+  );
+  const canNudgeY = !isWidgetHeightAutoCalculated(
+    widget,
+    comp.activeGridSession,
+  );
+  const effDx = canNudgeX ? dx : 0;
+  const effDy = canNudgeY ? dy : 0;
+  if (effDx === 0 && effDy === 0) return;
+
   const baseWidth = comp.getLayoutBaseWidth(targetUi);
   const baseHeight = comp.getLayoutBaseHeight(targetUi);
 
-  const newX = Math.max(0, Math.min(baseWidth - widget.width, widget.x + dx));
-  const newY = Math.max(0, Math.min(baseHeight - widget.height, widget.y + dy));
+  const newX = Math.max(
+    0,
+    Math.min(baseWidth - widget.width, widget.x + effDx),
+  );
+  const newY = Math.max(
+    0,
+    Math.min(baseHeight - widget.height, widget.y + effDy),
+  );
 
   if (newX !== widget.x || newY !== widget.y) {
     widget.x = newX;
@@ -702,7 +784,8 @@ export function handleWidgetXChange(
   widget: any,
   ui?: CustomUI,
 ): void {
-  if (!widget) return;
+  if (!widget || isWidgetWidthAutoCalculated(widget, comp.activeGridSession))
+    return;
   const baseWidth = comp.getLayoutBaseWidth(ui);
   const num = Number(value);
   const val = isNaN(num) ? 0 : num;
@@ -719,7 +802,8 @@ export function handleWidgetYChange(
   widget: any,
   ui?: CustomUI,
 ): void {
-  if (!widget) return;
+  if (!widget || isWidgetHeightAutoCalculated(widget, comp.activeGridSession))
+    return;
   const baseHeight = comp.getLayoutBaseHeight(ui);
   const num = Number(value);
   const val = isNaN(num) ? 0 : num;
@@ -736,7 +820,8 @@ export function handleWidgetWidthChange(
   widget: any,
   ui?: CustomUI,
 ): void {
-  if (!widget) return;
+  if (!widget || isWidgetWidthAutoCalculated(widget, comp.activeGridSession))
+    return;
   const baseWidth = comp.getLayoutBaseWidth(ui);
   const num = Number(value);
   const val = isNaN(num) ? 50 : num;
@@ -753,7 +838,8 @@ export function handleWidgetHeightChange(
   widget: any,
   ui?: CustomUI,
 ): void {
-  if (!widget) return;
+  if (!widget || isWidgetHeightAutoCalculated(widget, comp.activeGridSession))
+    return;
   const baseHeight = comp.getLayoutBaseHeight(ui);
   const num = Number(value);
   const val = isNaN(num) ? 50 : num;

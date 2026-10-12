@@ -2,10 +2,12 @@ import { CustomUI } from "@app/models/custom-ui";
 import { AbsoluteWidgetNode } from "@app/models/settings";
 
 import {
+  handleBringGridToFront,
   handleDeleteGrid,
   handleDetachGrid,
   handleEditGridTemplate,
   handleFinishGridSession,
+  handleReMirrorGrid,
   handleStartGridSession,
   handleSyncActiveGridSessionFromLayout,
   handleUpdateGridBounds,
@@ -98,6 +100,7 @@ describe("ui-editor-grid.helper", () => {
       expect(mockComp.activeGridSession).toBeDefined();
       expect(mockComp.activeGridSession.totalLanes).toBe(4);
       expect(mockComp.activeGridSession.direction).toBe("horizontal");
+      expect(mockComp.activeGridSession.gridLabelShowBorder).toBeTrue();
       expect(mockComp.cdr.markForCheck).toHaveBeenCalled();
 
       const widgets = mockComp.getLayout().widgets;
@@ -411,8 +414,39 @@ describe("ui-editor-grid.helper", () => {
 
       const widgets = mockComp.getLayout().widgets;
       const master = widgets.find((w: any) => w.id === mockWidgets[0].id);
-      expect(master.width).toBe(240);
-      expect(master.height).toBe(300);
+      expect(master.width).toBe(300); // Auto-calculated to column width (1200 / 4)
+      expect(master.height).toBe(300); // 600 * 0.5
+    });
+
+    it("should auto-calculate height for vertical stack grids when grid bounds resize", () => {
+      mockWidgets[0].customSettings = {
+        gridId: "test-grid-scale-vert",
+        gridLane: 0,
+        bindingMode: "lane",
+        cellWidthRatio: 0.8,
+        cellHeightRatio: 0.5,
+      };
+      mockWidgets[0].x = 100;
+      mockWidgets[0].y = 50;
+      mockWidgets[0].width = 160;
+      mockWidgets[0].height = 100;
+
+      mockComp.activeGridSession = {
+        gridId: "test-grid-scale-vert",
+        bounds: { x: 100, y: 50, width: 800, height: 400 },
+        totalLanes: 4,
+        direction: "vertical",
+        sourceLaneIndex: 0,
+        bindingMode: "lane",
+      };
+
+      const newBounds = { x: 100, y: 50, width: 1000, height: 800 };
+      handleUpdateGridBounds(mockComp, newBounds, mockUi);
+
+      const widgets = mockComp.getLayout().widgets;
+      const master = widgets.find((w: any) => w.id === mockWidgets[0].id);
+      expect(master.height).toBe(200); // Auto-calculated to row height (800 / 4)
+      expect(master.width).toBe(200); // 1000 * (160 / 800)
     });
   });
 
@@ -547,6 +581,130 @@ describe("ui-editor-grid.helper", () => {
       expect(mockComp.activeGridSession.gridLabelBorderRadius).toBe(6);
       expect(mockComp.syncRacedayPreview).toHaveBeenCalled();
       expect(mockComp.cdr.markForCheck).toHaveBeenCalled();
+    });
+
+    it("should respect gridLabelShowBorder as false or default to true when syncing from layout", () => {
+      mockWidgets[0].customSettings = {
+        gridId: "sync-grid-border",
+        gridLane: 0,
+        gridTotalLanes: 2,
+        gridDirection: "vertical",
+        gridLabelShowBorder: false,
+      };
+      mockComp.activeGridSession = {
+        gridId: "sync-grid-border",
+        bounds: { x: 0, y: 0, width: 200, height: 200 },
+        totalLanes: 2,
+        direction: "vertical",
+        sourceLaneIndex: 0,
+        bindingMode: "lane",
+      };
+
+      handleSyncActiveGridSessionFromLayout(mockComp);
+      expect(mockComp.activeGridSession.gridLabelShowBorder).toBeFalse();
+
+      delete mockWidgets[0].customSettings["gridLabelShowBorder"];
+      delete mockComp.activeGridSession.gridLabelShowBorder;
+      handleSyncActiveGridSessionFromLayout(mockComp);
+      expect(mockComp.activeGridSession.gridLabelShowBorder).toBeTrue();
+    });
+  });
+
+  describe("handleReMirrorGrid", () => {
+    it("should set mirrorRows to true on grid widgets and sync master to lanes", () => {
+      mockWidgets[0].customSettings = {
+        gridId: "test-grid",
+        gridLane: 0,
+        gridTotalLanes: 2,
+        mirrorRows: false,
+        backgroundColor: "#111111",
+      };
+      mockWidgets[1].customSettings = {
+        gridId: "test-grid",
+        gridLane: 1,
+        gridTotalLanes: 2,
+        gridMasterId: "w-lane-1",
+        mirrorRows: false,
+        backgroundColor: "#222222",
+      };
+
+      mockComp.activeGridSession = {
+        gridId: "test-grid",
+        bounds: { x: 100, y: 50, width: 800, height: 400 },
+        totalLanes: 2,
+        direction: "horizontal",
+        sourceLaneIndex: 0,
+        bindingMode: "lane",
+        mirrorRows: false,
+      };
+
+      handleReMirrorGrid(mockComp, "test-grid", mockUi);
+
+      expect(mockComp.activeGridSession.mirrorRows).toBeTrue();
+      expect(mockWidgets[0].customSettings?.["mirrorRows"]).toBeTrue();
+      expect(mockWidgets[1].customSettings?.["mirrorRows"]).toBeTrue();
+      expect(mockComp.captureState).toHaveBeenCalled();
+      expect(mockComp.cdr.markForCheck).toHaveBeenCalled();
+    });
+
+    it("should preserve grid label settings when activeGridSession is null and re-mirroring", () => {
+      mockWidgets[0].customSettings = {
+        gridId: "test-grid-label",
+        gridLane: 0,
+        gridTotalLanes: 2,
+        gridBounds: { x: 100, y: 50, width: 800, height: 400 },
+        mirrorRows: false,
+        gridLabelPosition: "top",
+        gridLabelText: "TOP TITLE",
+        gridLabelSize: 40,
+      };
+      mockWidgets[1].customSettings = {
+        gridId: "test-grid-label",
+        gridLane: 1,
+        gridTotalLanes: 2,
+        gridBounds: { x: 100, y: 50, width: 800, height: 400 },
+        gridMasterId: "w-lane-1",
+        mirrorRows: false,
+        gridLabelPosition: "top",
+        gridLabelText: "TOP TITLE",
+        gridLabelSize: 40,
+      };
+
+      mockComp.activeGridSession = null;
+
+      handleReMirrorGrid(mockComp, "test-grid-label", mockUi);
+
+      expect(mockWidgets[0].customSettings?.["mirrorRows"]).toBeTrue();
+      expect(mockWidgets[0].customSettings?.["gridLabelPosition"]).toBe("top");
+      expect(mockWidgets[0].customSettings?.["gridLabelText"]).toBe(
+        "TOP TITLE",
+      );
+    });
+  });
+
+  describe("handleBringGridToFront", () => {
+    it("should delegate to racedayComponent bringGridToFront", () => {
+      const mockRacedayComp = {
+        activeCustomUi: () => mockUi,
+        bringGridToFront: jasmine.createSpy("bringGridToFront"),
+      };
+      mockComp.racedayComponents = [mockRacedayComp];
+
+      handleBringGridToFront(mockComp, "grid-123", mockUi);
+
+      expect(mockRacedayComp.bringGridToFront).toHaveBeenCalledWith("grid-123");
+    });
+
+    it("should return early if gridId is empty", () => {
+      const mockRacedayComp = {
+        activeCustomUi: () => mockUi,
+        bringGridToFront: jasmine.createSpy("bringGridToFront"),
+      };
+      mockComp.racedayComponents = [mockRacedayComp];
+
+      handleBringGridToFront(mockComp, "", mockUi);
+
+      expect(mockRacedayComp.bringGridToFront).not.toHaveBeenCalled();
     });
   });
 });

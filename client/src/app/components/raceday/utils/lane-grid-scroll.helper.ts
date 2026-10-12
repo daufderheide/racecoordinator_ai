@@ -2,6 +2,8 @@ import { AbsoluteWidgetNode } from "@app/models/settings";
 import { deepCopy } from "@app/utils/clone.utils";
 
 import { LaneGridGeometryHelper } from "./lane-grid-geometry.helper";
+import { LaneGridLabelHelper } from "./lane-grid-label.helper";
+import { LaneGridSession } from "./lane-grid-replication.helper";
 
 export class LaneGridScrollHelper {
   public static getGridDataCount(
@@ -93,13 +95,27 @@ export class LaneGridScrollHelper {
       return lane === 0;
     });
 
+    const sessionLike: LaneGridSession = {
+      gridId,
+      bounds,
+      totalLanes: gridTotalLanes,
+      direction,
+      sourceLaneIndex: 0,
+      bindingMode,
+      headerPlacement,
+      headerHeight,
+      gridLabelPosition: first.customSettings?.["gridLabelPosition"] || "none",
+      gridLabelSize: Number(first.customSettings?.["gridLabelSize"]) || 40,
+    };
+    const dataBounds = LaneGridLabelHelper.computeGridDataBounds(sessionLike);
+
     const availHeight =
       headerPlacement === "top"
-        ? Math.max(0, bounds.height - headerHeight)
-        : bounds.height;
+        ? Math.max(0, dataBounds.height - headerHeight)
+        : dataBounds.height;
     const pitch =
       direction === "horizontal"
-        ? bounds.width / gridTotalLanes
+        ? dataBounds.width / gridTotalLanes
         : availHeight / gridTotalLanes;
 
     const result = [...gridWidgets];
@@ -112,13 +128,13 @@ export class LaneGridScrollHelper {
 
         if (direction === "vertical") {
           cellY = Math.round(
-            bounds.y +
+            dataBounds.y +
               (headerPlacement === "top" ? headerHeight : 0) +
               k * pitch,
           );
           cellH = Math.round(pitch);
         } else {
-          cellX = Math.round(bounds.x + k * pitch);
+          cellX = Math.round(dataBounds.x + k * pitch);
           cellW = Math.round(pitch);
         }
 

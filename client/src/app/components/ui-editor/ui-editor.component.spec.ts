@@ -4281,6 +4281,42 @@ describe("UIEditorComponent", () => {
       ).toBeFalse();
     });
 
+    it("should automatically apply edit grid template when selecting a widget in a grid", () => {
+      const customUi: any = {
+        entity_id: "custom_ui_grid_auto_edit",
+        name: "Grid Auto Edit UI",
+        layoutJson: JSON.stringify({
+          baseWidth: 1920,
+          baseHeight: 1080,
+          widgets: [
+            {
+              id: "w-grid-cell-1",
+              widgetType: "lane-column",
+              x: 100,
+              y: 100,
+              width: 200,
+              height: 50,
+              customSettings: {
+                gridId: "auto-edit-grid-id",
+                gridLane: 0,
+                gridTotalLanes: 4,
+              },
+            },
+          ],
+        }),
+      };
+      component.displayCustomUIs = [customUi];
+      component.activeCustomUiId = customUi.entity_id;
+      component.activeGridSession = null;
+
+      component.onWidgetSelected("w-grid-cell-1", customUi);
+
+      expect(component.activeGridSession).toBeDefined();
+      expect((component.activeGridSession as any)?.gridId).toBe(
+        "auto-edit-grid-id",
+      );
+    });
+
     it("should capture state and auto-save when grid resize layoutChanged is received, and restore activeGridSession bounds on undo/redo", fakeAsync(() => {
       const customUi: any = {
         entity_id: "custom_ui_grid_resize",
@@ -5046,6 +5082,44 @@ describe("UIEditorComponent", () => {
         expect(component.removeSelectedWidget).toHaveBeenCalledWith(
           testCustomUi,
         );
+      });
+
+      it("should disable height/y inputs for vertical grid widgets and width/x for horizontal grid widgets", () => {
+        component.sectionsExpanded["customUIs"] = true;
+        component.sectionsExpanded["ui_" + testCustomUi.entity_id] = true;
+        fixture.detectChanges();
+
+        const layoutObj = JSON.parse(testCustomUi.layoutJson);
+        const widget = layoutObj.widgets.find(
+          (w: any) => w.id === component.selectedWidgetId,
+        );
+        widget.customSettings = {
+          gridId: "test-grid-spec",
+          gridDirection: "vertical",
+        };
+        testCustomUi.layoutJson = JSON.stringify(layoutObj);
+        component.parsedLayouts.set(testCustomUi.entity_id, layoutObj);
+        fixture.detectChanges();
+
+        const hInput = fixture.nativeElement.querySelector("#inspector-pos-h");
+        const yInput = fixture.nativeElement.querySelector("#inspector-pos-y");
+        const wInput = fixture.nativeElement.querySelector("#inspector-pos-w");
+        const xInput = fixture.nativeElement.querySelector("#inspector-pos-x");
+
+        expect(hInput.disabled).toBeTrue();
+        expect(yInput.disabled).toBeTrue();
+        expect(wInput.disabled).toBeFalse();
+        expect(xInput.disabled).toBeFalse();
+
+        widget.customSettings.gridDirection = "horizontal";
+        testCustomUi.layoutJson = JSON.stringify(layoutObj);
+        component.parsedLayouts.set(testCustomUi.entity_id, layoutObj);
+        fixture.detectChanges();
+
+        expect(hInput.disabled).toBeFalse();
+        expect(yInput.disabled).toBeFalse();
+        expect(wInput.disabled).toBeTrue();
+        expect(xInput.disabled).toBeTrue();
       });
     });
   });

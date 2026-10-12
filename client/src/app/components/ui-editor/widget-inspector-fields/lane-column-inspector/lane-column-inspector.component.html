@@ -124,6 +124,24 @@
               : "UE_GRID_LANE_MASTER_BADGE"
             ) | translate
           }}
+        } @else if (!mirrorRows) {
+          {{
+            (currentSettings["bindingMode"] === "position"
+              ? "UE_GRID_POSITION_INDEPENDENT_BADGE"
+              : currentSettings["bindingMode"] === "overallPosition"
+                ? "UE_GRID_OVERALL_POSITION_INDEPENDENT_BADGE"
+                : currentSettings["bindingMode"] === "seed"
+                  ? "UE_GRID_SEED_INDEPENDENT_BADGE"
+                  : "UE_GRID_LANE_INDEPENDENT_BADGE"
+            )
+              | translate
+                : {
+                    index:
+                      (currentSettings["gridLane"] != null
+                        ? currentSettings["gridLane"]
+                        : currentSettings["targetIndex"]) + 1,
+                  }
+          }}
         } @else {
           {{
             (currentSettings["bindingMode"] === "position"
@@ -157,6 +175,33 @@
         <span>{{ "UE_GRID_LINK_COLUMNS" | translate }}</span>
       </label>
     </div>
+
+    <!-- Mirror Rows Toggle -->
+    <div class="inspector-section" style="margin-bottom: 8px">
+      <label class="form-check-label">
+        <input type="checkbox" class="form-checkbox" [(ngModel)]="mirrorRows" />
+        <span>{{
+          (gridDirection === "horizontal"
+            ? "UE_GRID_MIRROR_COLUMNS_TOGGLE"
+            : "UE_GRID_MIRROR_ROWS_TOGGLE"
+          ) | translate
+        }}</span>
+      </label>
+    </div>
+
+    @if (!mirrorRows) {
+      <div class="inspector-section" style="margin-bottom: 8px">
+        <button
+          type="button"
+          class="btn btn-sm btn-outline-primary w-100"
+          (click)="onReMirrorGrid()"
+          [title]="'UE_GRID_RE_MIRROR_BUTTON_TOOLTIP' | translate"
+        >
+          <span class="material-icons me-1" style="font-size: 14px">sync</span>
+          {{ "UE_GRID_RE_MIRROR_BUTTON" | translate }}
+        </button>
+      </div>
+    }
 
     <!-- Sort Grid by Binding Mode Toggle -->
     <div class="inspector-section" style="margin-bottom: 8px">
@@ -794,11 +839,14 @@
     <div class="grid-card-actions">
       <button
         type="button"
-        class="btn btn-sm btn-primary w-100 grid-edit-btn"
-        (click)="onEditGridTemplate()"
+        class="btn btn-sm btn-outline-primary w-100 grid-bring-front-btn"
+        (click)="onBringGridToFront()"
+        [title]="'UE_GRID_BRING_TO_FRONT_TOOLTIP' | translate"
       >
-        <span class="material-icons me-1" style="font-size: 14px">edit</span>
-        {{ "UE_GRID_EDIT_TEMPLATE" | translate }}
+        <span class="material-icons me-1" style="font-size: 14px"
+          >flip_to_front</span
+        >
+        {{ "UE_GRID_BRING_TO_FRONT" | translate }}
       </button>
       <button
         type="button"
@@ -1182,7 +1230,7 @@
           type="checkbox"
           class="form-checkbox"
           [(ngModel)]="currentSettings['useLaneColors']"
-          (change)="onFieldChange()"
+          (change)="onUseLaneColorsChange()"
         />
         <span>{{ "UE_INSPECTOR_USE_LANE_COLORS" | translate }}</span>
       </label>

@@ -203,8 +203,10 @@ describe("LaneGridLabelHelper", () => {
   });
 
   describe("updateGridLabelSettings", () => {
-    it("should update all widgets belonging to the specified gridId", () => {
-      const widgets: AbsoluteWidgetNode[] = [
+    let widgets: AbsoluteWidgetNode[];
+
+    beforeEach(() => {
+      widgets = [
         {
           id: "w1",
           widgetType: "lane-column",
@@ -236,7 +238,9 @@ describe("LaneGridLabelHelper", () => {
           customSettings: { gridId: "other-grid" },
         },
       ];
+    });
 
+    it("should update all widgets belonging to the specified gridId", () => {
       const config: GridLabelConfig = {
         gridLabelPosition: "top",
         gridLabelText: "LEADERBOARD",
@@ -282,6 +286,35 @@ describe("LaneGridLabelHelper", () => {
       expect(updated[1].customSettings?.["gridLabelShowBorder"]).toBeTrue();
       expect(updated[2].customSettings?.["gridLabelText"]).toBeUndefined();
     });
+
+    it("should default gridLabelShowBorder to true when omitted from config", () => {
+      const config: GridLabelConfig = {
+        gridLabelPosition: "top",
+        gridLabelText: "DEFAULT BORDER TEST",
+      };
+
+      const updated = LaneGridLabelHelper.updateGridLabelSettings(
+        widgets,
+        "test-grid",
+        config,
+      );
+      expect(updated[0].customSettings?.["gridLabelShowBorder"]).toBeTrue();
+    });
+
+    it("should respect gridLabelShowBorder when explicitly false in config", () => {
+      const config: GridLabelConfig = {
+        gridLabelPosition: "top",
+        gridLabelText: "NO BORDER TEST",
+        gridLabelShowBorder: false,
+      };
+
+      const updated = LaneGridLabelHelper.updateGridLabelSettings(
+        widgets,
+        "test-grid",
+        config,
+      );
+      expect(updated[0].customSettings?.["gridLabelShowBorder"]).toBeFalse();
+    });
   });
 
   describe("getLabelJustifyContent", () => {
@@ -306,6 +339,214 @@ describe("LaneGridLabelHelper", () => {
       );
       expect(LaneGridLabelHelper.getLabelJustifyContent("right", "right")).toBe(
         "flex-start",
+      );
+    });
+  });
+
+  describe("buildGridLabelSession", () => {
+    it("should return null for empty widgets or unknown gridId", () => {
+      expect(
+        LaneGridLabelHelper.buildGridLabelSession([], "grid-1", {}),
+      ).toBeNull();
+      const dummy: AbsoluteWidgetNode[] = [
+        {
+          id: "w-d",
+          widgetType: "lane-column",
+          x: 0,
+          y: 0,
+          width: 10,
+          height: 10,
+          zIndex: 1,
+          customSettings: { gridId: "other-grid" },
+        },
+      ];
+      expect(
+        LaneGridLabelHelper.buildGridLabelSession(dummy, "unknown-grid", {}),
+      ).toBeNull();
+    });
+
+    it("should build session using saved gridBounds and apply config overrides", () => {
+      const w: AbsoluteWidgetNode[] = [
+        {
+          id: "w1",
+          widgetType: "lane-column",
+          x: 100,
+          y: 50,
+          width: 200,
+          height: 100,
+          zIndex: 1,
+          customSettings: {
+            gridId: "test-build",
+            gridBounds: { x: 100, y: 50, width: 800, height: 400 },
+            gridTotalLanes: 4,
+            gridDirection: "vertical",
+            gridLane: 0,
+            gridLabelPosition: "none",
+          },
+        },
+      ];
+      const session = LaneGridLabelHelper.buildGridLabelSession(
+        w,
+        "test-build",
+        {
+          gridLabelPosition: "top",
+          gridLabelText: "Header Title",
+          gridLabelSize: 50,
+        },
+      );
+      expect(session).not.toBeNull();
+      expect(session!.gridId).toBe("test-build");
+      expect(session!.bounds).toEqual({
+        x: 100,
+        y: 50,
+        width: 800,
+        height: 400,
+      });
+      expect(session!.gridLabelPosition).toBe("top");
+      expect(session!.gridLabelText).toBe("Header Title");
+      expect(session!.gridLabelSize).toBe(50);
+      expect(session!.totalLanes).toBe(4);
+    });
+
+    it("should compute bounds from bounding box if no saved gridBounds", () => {
+      const w: AbsoluteWidgetNode[] = [
+        {
+          id: "w1",
+          widgetType: "lane-column",
+          x: 50,
+          y: 60,
+          width: 150,
+          height: 80,
+          zIndex: 1,
+          customSettings: {
+            gridId: "test-calc",
+            gridTotalLanes: 2,
+          },
+        },
+        {
+          id: "w2",
+          widgetType: "lane-column",
+          x: 50,
+          y: 140,
+          width: 150,
+          height: 80,
+          zIndex: 1,
+          customSettings: {
+            gridId: "test-calc",
+            gridTotalLanes: 2,
+          },
+        },
+      ];
+      const session = LaneGridLabelHelper.buildGridLabelSession(
+        w,
+        "test-calc",
+        {},
+      );
+      expect(session).not.toBeNull();
+      expect(session!.bounds).toEqual({
+        x: 50,
+        y: 60,
+        width: 150,
+        height: 160,
+      });
+    });
+
+    it("should use explicit existingBounds when provided", () => {
+      const w: AbsoluteWidgetNode[] = [
+        {
+          id: "w1",
+          widgetType: "lane-column",
+          x: 0,
+          y: 0,
+          width: 100,
+          height: 100,
+          zIndex: 1,
+          customSettings: {
+            gridId: "test-explicit",
+          },
+        },
+      ];
+      const customBounds = { x: 200, y: 300, width: 600, height: 400 };
+      const session = LaneGridLabelHelper.buildGridLabelSession(
+        w,
+        "test-explicit",
+        { gridLabelPosition: "top" },
+        customBounds,
+      );
+      expect(session).not.toBeNull();
+      expect(session!.bounds).toEqual(customBounds);
+    });
+  });
+
+  describe("updateGridLabelSettings", () => {
+    it("should update customSettings on all widgets in target grid", () => {
+      const widgets: AbsoluteWidgetNode[] = [
+        {
+          id: "w1",
+          widgetType: "lane-column",
+          x: 0,
+          y: 0,
+          width: 100,
+          height: 100,
+          zIndex: 1,
+          customSettings: { gridId: "target-grid" },
+        },
+        {
+          id: "w2",
+          widgetType: "text",
+          x: 0,
+          y: 0,
+          width: 50,
+          height: 50,
+          zIndex: 1,
+          customSettings: { gridId: "other-grid" },
+        },
+      ];
+
+      const updated = LaneGridLabelHelper.updateGridLabelSettings(
+        widgets,
+        "target-grid",
+        {
+          gridLabelPosition: "top",
+          gridLabelText: "New Title",
+          gridLabelSize: 48,
+          gridLabelTextColor: "#ff0000",
+        },
+      );
+
+      const w1Updated = updated.find((w) => w.id === "w1")!;
+      const w2Updated = updated.find((w) => w.id === "w2")!;
+
+      expect(w1Updated.customSettings?.["gridLabelPosition"]).toBe("top");
+      expect(w1Updated.customSettings?.["gridLabelText"]).toBe("New Title");
+      expect(w1Updated.customSettings?.["gridLabelSize"]).toBe(48);
+      expect(w1Updated.customSettings?.["gridLabelTextColor"]).toBe("#ff0000");
+
+      // Other grid is unchanged
+      expect(w2Updated.customSettings?.["gridLabelPosition"]).toBeUndefined();
+    });
+  });
+
+  describe("getLabelJustifyContent", () => {
+    it("should resolve flex alignment correctly for horizontal and vertical text", () => {
+      expect(LaneGridLabelHelper.getLabelJustifyContent("top", "left")).toBe(
+        "flex-start",
+      );
+      expect(LaneGridLabelHelper.getLabelJustifyContent("top", "right")).toBe(
+        "flex-end",
+      );
+      expect(LaneGridLabelHelper.getLabelJustifyContent("top", "center")).toBe(
+        "center",
+      );
+
+      expect(LaneGridLabelHelper.getLabelJustifyContent("left", "left")).toBe(
+        "flex-end",
+      );
+      expect(LaneGridLabelHelper.getLabelJustifyContent("left", "right")).toBe(
+        "flex-start",
+      );
+      expect(LaneGridLabelHelper.getLabelJustifyContent("left", "center")).toBe(
+        "center",
       );
     });
   });

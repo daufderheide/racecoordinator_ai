@@ -40,8 +40,9 @@ describe("ReplicateLaneDialogComponent", () => {
     fixture.detectChanges();
   });
 
-  it("should create", () => {
+  it("should create with vertical direction by default", () => {
     expect(component).toBeTruthy();
+    expect(component.direction()).toBe("vertical");
   });
 
   it("should not display content when not visible", () => {

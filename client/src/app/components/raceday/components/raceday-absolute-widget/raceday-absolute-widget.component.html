@@ -255,6 +255,9 @@
         @case ("image") {
           <app-raceday-image [widget]="widget()"></app-raceday-image>
         }
+        @case ("label") {
+          <app-raceday-label [widget]="widget()"></app-raceday-label>
+        }
         @case ("action-start-resume") {
           <app-raceday-action-button
             [widget]="widget()"
@@ -415,39 +418,59 @@
         </button>
       </div>
 
-      <!-- 8-way resize handles -->
-      <div
-        class="resize-handle n"
-        (pointerdown)="onResizeStart($event, 'n')"
-      ></div>
-      <div
-        class="resize-handle e"
-        (pointerdown)="onResizeStart($event, 'e')"
-      ></div>
-      <div
-        class="resize-handle s"
-        (pointerdown)="onResizeStart($event, 's')"
-      ></div>
-      <div
-        class="resize-handle w"
-        (pointerdown)="onResizeStart($event, 'w')"
-      ></div>
-      <div
-        class="resize-handle ne"
-        (pointerdown)="onResizeStart($event, 'ne')"
-      ></div>
-      <div
-        class="resize-handle nw"
-        (pointerdown)="onResizeStart($event, 'nw')"
-      ></div>
-      <div
-        class="resize-handle se"
-        (pointerdown)="onResizeStart($event, 'se')"
-      ></div>
-      <div
-        class="resize-handle sw"
-        (pointerdown)="onResizeStart($event, 'sw')"
-      ></div>
+      <!-- Resize handles (adapted for auto-calculated grid dimensions) -->
+      @if (isHeightAutoCalculated) {
+        <div
+          class="resize-handle e"
+          (pointerdown)="onResizeStart($event, 'e')"
+        ></div>
+        <div
+          class="resize-handle w"
+          (pointerdown)="onResizeStart($event, 'w')"
+        ></div>
+      } @else if (isWidthAutoCalculated) {
+        <div
+          class="resize-handle n"
+          (pointerdown)="onResizeStart($event, 'n')"
+        ></div>
+        <div
+          class="resize-handle s"
+          (pointerdown)="onResizeStart($event, 's')"
+        ></div>
+      } @else {
+        <div
+          class="resize-handle n"
+          (pointerdown)="onResizeStart($event, 'n')"
+        ></div>
+        <div
+          class="resize-handle e"
+          (pointerdown)="onResizeStart($event, 'e')"
+        ></div>
+        <div
+          class="resize-handle s"
+          (pointerdown)="onResizeStart($event, 's')"
+        ></div>
+        <div
+          class="resize-handle w"
+          (pointerdown)="onResizeStart($event, 'w')"
+        ></div>
+        <div
+          class="resize-handle ne"
+          (pointerdown)="onResizeStart($event, 'ne')"
+        ></div>
+        <div
+          class="resize-handle nw"
+          (pointerdown)="onResizeStart($event, 'nw')"
+        ></div>
+        <div
+          class="resize-handle se"
+          (pointerdown)="onResizeStart($event, 'se')"
+        ></div>
+        <div
+          class="resize-handle sw"
+          (pointerdown)="onResizeStart($event, 'sw')"
+        ></div>
+      }
     } @else {
       <div
         class="mirrored-widget-indicator"

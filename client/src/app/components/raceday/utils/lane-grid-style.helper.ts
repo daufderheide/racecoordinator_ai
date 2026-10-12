@@ -53,6 +53,17 @@ export class LaneGridStyleHelper {
       if (propertyGroup === "value" && w.customSettings?.["isHeaderWidget"]) {
         return w;
       }
+      if (
+        sourceSettings["mirrorRows"] === false &&
+        !sourceSettings["isHeaderWidget"] &&
+        !w.customSettings?.["isHeaderWidget"] &&
+        Number(
+          w.customSettings?.["gridLane"] ?? w.customSettings?.["targetIndex"],
+        ) !==
+          Number(sourceSettings["gridLane"] ?? sourceSettings["targetIndex"])
+      ) {
+        return w;
+      }
 
       const nextSettings = { ...(w.customSettings || {}) };
       for (const k of targetKeys) {

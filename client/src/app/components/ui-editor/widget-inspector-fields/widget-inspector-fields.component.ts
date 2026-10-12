@@ -8,6 +8,7 @@ import { CountdownInspectorComponent } from "./countdown-inspector/countdown-ins
 import { CustomWidgetInspectorComponent } from "./custom-widget-inspector/custom-widget-inspector.component";
 import { HeatListInspectorComponent } from "./heat-list-inspector/heat-list-inspector.component";
 import { ImageInspectorComponent } from "./image-inspector/image-inspector.component";
+import { LabelInspectorComponent } from "./label-inspector/label-inspector.component";
 import { LaneColumnInspectorComponent } from "./lane-column-inspector/lane-column-inspector.component";
 import { LaneViewInspectorComponent } from "./lane-view-inspector/lane-view-inspector.component";
 import { LeaderboardInspectorComponent } from "./leaderboard-inspector/leaderboard-inspector.component";
@@ -30,6 +31,7 @@ import { UpcomingInspectorComponent } from "./upcoming-inspector/upcoming-inspec
     TimerInspectorComponent,
     CountdownInspectorComponent,
     ImageInspectorComponent,
+    LabelInspectorComponent,
     UpcomingInspectorComponent,
     HeatListInspectorComponent,
     TextInfoInspectorComponent,
@@ -50,6 +52,8 @@ export class WidgetInspectorFieldsComponent {
   editGrid = output<string>();
   detachGrid = output<string>();
   deleteGrid = output<string>();
+  reMirrorGrid = output<string>();
+  bringGridToFront = output<string>();
 
   isCustomWidget(type: string | undefined): boolean {
     return type?.startsWith("custom:") ?? false;

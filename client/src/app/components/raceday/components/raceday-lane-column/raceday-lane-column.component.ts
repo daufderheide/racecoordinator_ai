@@ -268,11 +268,8 @@ export class RacedayLaneColumnComponent
   }
 
   get backgroundColor(): string {
-    if (
-      this.settings.useLaneColors === false &&
-      this.settings.backgroundColor
-    ) {
-      return this.settings.backgroundColor;
+    if (this.settings.useLaneColors === false) {
+      return this.settings.backgroundColor || "#000000";
     }
     const hd = this.targetDriver;
     const parent = this.parent();
@@ -292,12 +289,12 @@ export class RacedayLaneColumnComponent
       parent?.raceService?.getRace()?.track;
     const trackLaneBg =
       laneIdx >= 0 ? track?.lanes?.[laneIdx]?.background_color : undefined;
-    return trackLaneBg || this.settings.backgroundColor || "transparent";
+    return trackLaneBg || "transparent";
   }
 
   get foregroundColor(): string {
-    if (this.settings.useLaneColors === false && this.settings.textColor) {
-      return this.settings.textColor;
+    if (this.settings.useLaneColors === false) {
+      return this.settings.textColor || "#ffffff";
     }
     const hd = this.targetDriver;
     const parent = this.parent();
@@ -317,7 +314,7 @@ export class RacedayLaneColumnComponent
       parent?.raceService?.getRace()?.track;
     const trackLaneFg =
       laneIdx >= 0 ? track?.lanes?.[laneIdx]?.foreground_color : undefined;
-    return trackLaneFg || this.settings.textColor || "#ffffff";
+    return trackLaneFg || "#ffffff";
   }
 
   get effectiveHeaderTextColor(): string {

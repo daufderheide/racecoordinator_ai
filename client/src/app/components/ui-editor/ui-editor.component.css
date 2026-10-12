@@ -1243,6 +1243,28 @@
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
 }
 
+:host-context(.widget-inspector-panel) .btn-outline-primary,
+.widget-inspector-panel .btn-outline-primary,
+.inspector-body .btn-outline-primary,
+.inspector-section .btn-outline-primary,
+.grid-card-actions .btn-outline-primary {
+  background: rgba(30, 64, 175, 0.08);
+  border: 1px solid #1e40af;
+  color: #1e40af;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+:host-context(.widget-inspector-panel) .btn-outline-primary:hover:not(:disabled),
+.widget-inspector-panel .btn-outline-primary:hover:not(:disabled),
+.inspector-body .btn-outline-primary:hover:not(:disabled),
+.inspector-section .btn-outline-primary:hover:not(:disabled),
+.grid-card-actions .btn-outline-primary:hover:not(:disabled) {
+  background: #1e40af;
+  border-color: #1e3a8a;
+  color: #ffffff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
 :host-context(.widget-inspector-panel) .btn-primary,
 .widget-inspector-panel .btn-primary,
 .inspector-body .btn-primary,
@@ -1441,6 +1463,19 @@
   outline: none;
   border-color: #000;
   box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1);
+}
+
+.inspector-input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.auto-calc-badge {
+  font-size: 10px;
+  font-weight: 600;
+  color: #0284c7;
+  margin-left: 4px;
 }
 
 .inspector-checkbox-label {

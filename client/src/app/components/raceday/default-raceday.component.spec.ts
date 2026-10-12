@@ -8514,6 +8514,114 @@ describe("DefaultRacedayComponent", () => {
       expect(component.getNextZIndex()).toBe(106);
     });
 
+    it("should bring entire grid to front when bringGridToFront is called", () => {
+      const gw1: any = {
+        id: "gw1",
+        widgetType: "lane-column",
+        zIndex: 5,
+        customSettings: { gridId: "g-front", gridLane: 0 },
+      };
+      const gw2: any = {
+        id: "gw2",
+        widgetType: "lane-column",
+        zIndex: 5,
+        customSettings: { gridId: "g-front", gridLane: 1, gridMasterId: "gw1" },
+      };
+      const gwHeader: any = {
+        id: "gwHeader",
+        widgetType: "lane-column",
+        zIndex: 6,
+        customSettings: {
+          gridId: "g-front",
+          isHeaderWidget: true,
+          gridMasterId: "gw1",
+        },
+      };
+      component.layout.widgets.push(gw1, gw2, gwHeader);
+
+      component.bringGridToFront("g-front");
+
+      // Non-grid widgets w1 (100) and w2 (105) have maxOtherZ = 105.
+      // Grid widgets should be elevated above 105.
+      expect(gw1.zIndex).toBe(106);
+      expect(gw2.zIndex).toBe(106);
+      expect(gwHeader.zIndex).toBe(107);
+      expect(component.layoutChanged.emit).toHaveBeenCalledWith(
+        component.layout,
+      );
+    });
+
+    it("should delegate to bringGridToFront when bringToFront is called on a grid widget", () => {
+      spyOn(component, "bringGridToFront");
+      const gw1: any = {
+        id: "gw-delegate",
+        widgetType: "lane-column",
+        zIndex: 5,
+        customSettings: { gridId: "g-delegate", gridLane: 0 },
+      };
+      component.layout.widgets.push(gw1);
+
+      component.bringToFront("gw-delegate");
+
+      expect(component.bringGridToFront).toHaveBeenCalledWith("g-delegate");
+      expect(component.widgetSelected.emit).toHaveBeenCalledWith("gw-delegate");
+    });
+
+    it("should calculate getGridSessionZIndex above active grid widgets", () => {
+      fixture.componentRef.setInput("gridSession", { gridId: "g-sess" });
+      component.layout.widgets.push({
+        id: "gw-sess",
+        widgetType: "lane-column",
+        zIndex: 150,
+        customSettings: { gridId: "g-sess" },
+      } as any);
+
+      expect(component.getGridSessionZIndex()).toBe(160);
+    });
+
+    it("should remove master widget and all its replicas/headers on removeWidget", () => {
+      const m1: any = {
+        id: "m-parent",
+        widgetType: "lane-column",
+        customSettings: { gridId: "g-del", gridLane: 0 },
+      };
+      const r1: any = {
+        id: "m-parent_grid_lane_1",
+        widgetType: "lane-column",
+        customSettings: {
+          gridId: "g-del",
+          gridLane: 1,
+          gridMasterId: "m-parent",
+        },
+      };
+      const h1: any = {
+        id: "m-parent_grid_header",
+        widgetType: "lane-column",
+        customSettings: {
+          gridId: "g-del",
+          isHeaderWidget: true,
+          gridMasterId: "m-parent",
+        },
+      };
+      component.layout.widgets.push(m1, r1, h1);
+
+      component.removeWidget("m-parent");
+
+      expect(
+        component.layout.widgets.some((w: any) => w.id === "m-parent"),
+      ).toBeFalse();
+      expect(
+        component.layout.widgets.some(
+          (w: any) => w.id === "m-parent_grid_lane_1",
+        ),
+      ).toBeFalse();
+      expect(
+        component.layout.widgets.some(
+          (w: any) => w.id === "m-parent_grid_header",
+        ),
+      ).toBeFalse();
+    });
+
     it("should remove widget by id and emit layoutChanged", () => {
       component.removeWidget("w2");
       expect(
@@ -11678,10 +11786,8 @@ describe("DefaultRacedayComponent", () => {
       const layoutSpy = spyOn(component.layoutChanged, "emit");
       component.onMasterWidgetModified(masterWidget);
 
-      expect(masterWidget.customSettings["cellWidthRatio"]).toBeCloseTo(
-        150 / 200,
-        3,
-      );
+      expect(masterWidget.customSettings["cellWidthRatio"]).toBeCloseTo(1.0, 3);
+      expect(masterWidget.width).toBe(200);
       expect(masterWidget.customSettings["cellHeightRatio"]).toBeCloseTo(
         300 / 400,
         3,
@@ -11974,6 +12080,40 @@ describe("DefaultRacedayComponent", () => {
       expect(grid.labelBorderColor).toBe("#ef4444");
       expect(grid.labelBorderWidth).toBe(3);
       expect(grid.labelBorderRadius).toBe(10);
+    });
+
+    it("should auto-heal corrupt widgets positioned under top label on load", () => {
+      const corruptWidget = {
+        id: "corrupt-top-widget",
+        widgetType: "lane-column",
+        x: 50,
+        y: 50, // under the label!
+        width: 300,
+        height: 80,
+        customSettings: {
+          gridId: "corrupt-grid",
+          gridLane: 0,
+          gridTotalLanes: 2,
+          gridDirection: "vertical",
+          gridBounds: { x: 50, y: 50, width: 300, height: 200 },
+          gridLabelPosition: "top",
+          gridLabelText: "LEADERBOARD",
+          gridLabelSize: 40,
+        },
+      } as any;
+
+      (component as any).layout = { widgets: [corruptWidget] };
+      (component as any).track = { lanes: [{}, {}] };
+      (component as any).race = { track: (component as any).track } as any;
+
+      const grids = component.getGrids();
+      expect(grids.length).toBe(1);
+
+      // The layout widget MUST have been auto-healed so y >= 50 + 40 = 90
+      const healedWidget = (component as any).layout.widgets.find(
+        (w: any) => w.id === "corrupt-top-widget",
+      );
+      expect(healedWidget.y).toBe(90);
     });
   });
 });

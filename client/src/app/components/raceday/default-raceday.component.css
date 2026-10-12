@@ -471,6 +471,20 @@ app-default-raceday {
   gap: 8px;
 }
 
+.lane-blueprint-toolbar .grid-front-btn {
+  border-color: #3b82f6;
+  color: #93c5fd;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+}
+
+.lane-blueprint-toolbar .grid-front-btn:hover {
+  background: #1d4ed8;
+  color: #ffffff;
+}
+
 .lane-blueprint-toolbar .grid-move-btn {
   border-color: #3b82f6;
   color: #93c5fd;

@@ -281,6 +281,11 @@ export class ToolboxGroupHelper {
           icon: "",
           labelKey: "UE_WIDGET_TYPE_TRACK_NAME",
         },
+        {
+          type: "label",
+          icon: "",
+          labelKey: "UE_WIDGET_TYPE_LABEL",
+        },
       ],
     },
     {

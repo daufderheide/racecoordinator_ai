@@ -38,15 +38,16 @@ describe("ToolboxGroupHelper", () => {
     expect(standingsSg?.widgets.map((w) => w.type)).toContain("leaderboard");
 
     const titlesSg = rcAiGroup.subgroups.find((sg) => sg.id === "titles-info");
-    expect(titlesSg?.widgets.length).toBe(7);
+    expect(titlesSg?.widgets.length).toBe(8);
     expect(titlesSg?.widgets.map((w) => w.type)).toContain("timer");
     expect(titlesSg?.widgets.map((w) => w.type)).toContain("flag");
     expect(titlesSg?.widgets.map((w) => w.type)).toContain("heat-info");
+    expect(titlesSg?.widgets.map((w) => w.type)).toContain("label");
 
     const mediaSg = rcAiGroup.subgroups.find((sg) => sg.id === "media-chrome");
     expect(mediaSg?.widgets.length).toBe(4);
 
-    expect(rcAiGroup.totalCount).toBe(127);
+    expect(rcAiGroup.totalCount).toBe(128);
   });
 
   it("should exclude used widgets from root and subgroups", () => {
@@ -79,13 +80,13 @@ describe("ToolboxGroupHelper", () => {
     expect(
       titlesSg?.widgets.find((w) => w.type === "event-name"),
     ).toBeUndefined();
-    expect(titlesSg?.widgets.length).toBe(6);
+    expect(titlesSg?.widgets.length).toBe(7);
 
     const mediaSg = rcAiGroup.subgroups.find((sg) => sg.id === "media-chrome");
     expect(mediaSg?.widgets.find((w) => w.type === "branding")).toBeUndefined();
     expect(mediaSg?.widgets.length).toBe(3);
 
-    expect(rcAiGroup.totalCount).toBe(123);
+    expect(rcAiGroup.totalCount).toBe(124);
   });
 
   it("should organize custom widgets into groups, subgroups, and custom-root", () => {
@@ -254,6 +255,7 @@ describe("ToolboxGroupHelper", () => {
       UE_WIDGET_TYPE_RACE_NAME: "Race Name",
       UE_WIDGET_TYPE_SEASON_NAME: "Season Name",
       UE_WIDGET_TYPE_TRACK_NAME: "Track Name",
+      UE_WIDGET_TYPE_LABEL: "Title / Label",
     };
 
     const translate = (key: string) => mockTranslations[key] || key;
@@ -285,6 +287,7 @@ describe("ToolboxGroupHelper", () => {
       "Race State",
       "Season Name",
       "Timer",
+      "Title / Label",
       "Track Name",
     ]);
   });

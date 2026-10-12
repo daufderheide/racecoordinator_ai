@@ -173,6 +173,12 @@ describe("WidgetInspectorFieldsComponent", () => {
       fixture.debugElement.children[0].children[0].componentInstance;
     laneColComp.deleteGrid.emit("grid-test-fwd");
     expect(component.deleteGrid.emit).toHaveBeenCalledWith("grid-test-fwd");
+
+    spyOn(component.bringGridToFront, "emit");
+    laneColComp.bringGridToFront.emit("grid-test-fwd");
+    expect(component.bringGridToFront.emit).toHaveBeenCalledWith(
+      "grid-test-fwd",
+    );
   });
 
   it("should render action-button-inspector when widget is action-forward or action-close", () => {

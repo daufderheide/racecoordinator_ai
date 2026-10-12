@@ -5,6 +5,7 @@ import {
   applyWidgetDefaultSettings,
   computeWidgetDisplayName,
   findDefaultWidgetId,
+  handleWidgetInspectorChange,
   resolveActiveLayout,
   updateLayoutOnModel,
 } from "./ui-editor-widget.helper";
@@ -170,6 +171,21 @@ describe("ui-editor-widget.helper", () => {
     expect(widget.fontFamily).toBe("");
     expect(widget.scaleMode).toBe("auto");
     expect(widget.fontSize).toBe(24);
+  });
+
+  it("should default lane-column customSettings colors to black background and white text", () => {
+    const widget: any = {
+      widgetType: "lane-column",
+      customSettings: {
+        useLaneColors: true,
+        backgroundColor: "",
+        textColor: "",
+      },
+    };
+    const mutated = applyWidgetDefaultSettings(widget);
+    expect(mutated).toBeTrue();
+    expect(widget.customSettings.backgroundColor).toBe("#000000");
+    expect(widget.customSettings.textColor).toBe("#ffffff");
   });
 
   it("should resolve active layout from custom UI or settings", () => {
@@ -560,6 +576,71 @@ describe("ui-editor-widget.helper", () => {
     expect(comp.cdr.markForCheck).toHaveBeenCalled();
   });
 
+  it("should automatically apply edit grid template when selecting a widget in a grid", () => {
+    const { handleWidgetSelection } = require("./ui-editor-widget.helper");
+    const gridWidget = {
+      id: "w-grid-1",
+      widgetType: "lane-column",
+      customSettings: { gridId: "grid-test-42" },
+    };
+    const layout = { widgets: [gridWidget] };
+    const comp = {
+      activeCustomUiId: "ui-1",
+      activeGridSession: null,
+      onEditGridTemplate: jasmine.createSpy("onEditGridTemplate"),
+      getLayout: jasmine.createSpy("getLayout").and.returnValue(layout),
+      cdr: { markForCheck: jasmine.createSpy("markForCheck") },
+    };
+
+    handleWidgetSelection(comp, "w-grid-1");
+    expect(comp.onEditGridTemplate).toHaveBeenCalledWith(
+      "grid-test-42",
+      undefined,
+    );
+  });
+
+  it("should not trigger onEditGridTemplate if grid is already in edit mode", () => {
+    const { handleWidgetSelection } = require("./ui-editor-widget.helper");
+    const gridWidget = {
+      id: "w-grid-1",
+      widgetType: "lane-column",
+      customSettings: { gridId: "grid-test-42" },
+    };
+    const layout = { widgets: [gridWidget] };
+    const comp = {
+      activeCustomUiId: "ui-1",
+      activeGridSession: { gridId: "grid-test-42" },
+      onEditGridTemplate: jasmine.createSpy("onEditGridTemplate"),
+      getLayout: jasmine.createSpy("getLayout").and.returnValue(layout),
+      cdr: { markForCheck: jasmine.createSpy("markForCheck") },
+    };
+
+    handleWidgetSelection(comp, "w-grid-1");
+    expect(comp.onEditGridTemplate).not.toHaveBeenCalled();
+  });
+
+  it("should finish previous grid session when selecting a widget from a different grid", () => {
+    const { handleWidgetSelection } = require("./ui-editor-widget.helper");
+    const gridWidget = {
+      id: "w-grid-2",
+      widgetType: "lane-column",
+      customSettings: { gridId: "grid-new" },
+    };
+    const layout = { widgets: [gridWidget] };
+    const comp = {
+      activeCustomUiId: "ui-1",
+      activeGridSession: { gridId: "grid-old" },
+      finishGridSession: jasmine.createSpy("finishGridSession"),
+      onEditGridTemplate: jasmine.createSpy("onEditGridTemplate"),
+      getLayout: jasmine.createSpy("getLayout").and.returnValue(layout),
+      cdr: { markForCheck: jasmine.createSpy("markForCheck") },
+    };
+
+    handleWidgetSelection(comp, "w-grid-2");
+    expect(comp.finishGridSession).toHaveBeenCalledWith(undefined);
+    expect(comp.onEditGridTemplate).toHaveBeenCalledWith("grid-new", undefined);
+  });
+
   it("should automatically deactivate countdown preview in ensureWidgetSelectedHelper when non-countdown widget is selected", () => {
     const { ensureWidgetSelectedHelper } = require("./ui-editor-widget.helper");
     const laneWidget = { id: "w-lane", widgetType: "lane-view" };
@@ -782,5 +863,163 @@ describe("ui-editor-widget.helper", () => {
     expect(comp.activeGridSession.totalLanes).toBe(4);
     expect(comp.captureState).toHaveBeenCalled();
     expect(comp.cdr.markForCheck).toHaveBeenCalled();
+  });
+
+  it("should handle _gridLabelChanged and sync grid label and session", () => {
+    const masterCol: any = {
+      id: "lane-col-label",
+      widgetType: "lane-column",
+      x: 100,
+      y: 100,
+      width: 400,
+      height: 100,
+      zIndex: 10,
+      customSettings: {
+        gridId: "grid-lbl",
+        gridLane: 0,
+        gridTotalLanes: 4,
+        gridDirection: "vertical",
+        gridBounds: { x: 100, y: 100, width: 400, height: 400 },
+        gridLabelPosition: "top",
+        gridLabelSize: 40,
+        _gridLabelChanged: true,
+      },
+    };
+
+    const comp: any = {
+      activeCustomUi: {
+        layout: {
+          widgets: [masterCol],
+        },
+      },
+      getLayout: (ui: any) => ui.layout,
+      activeGridSession: {
+        gridId: "grid-lbl",
+        bounds: { x: 100, y: 100, width: 400, height: 400 },
+        totalLanes: 4,
+        direction: "vertical",
+        sourceLaneIndex: 0,
+        bindingMode: "lane",
+      },
+      editingSettings: { customUiList: [] },
+      captureState: jasmine.createSpy("captureState"),
+      cdr: { markForCheck: jasmine.createSpy("markForCheck") },
+      syncRacedayPreview: jasmine.createSpy("syncRacedayPreview"),
+    };
+
+    handleWidgetInspectorChange(comp, masterCol);
+
+    expect(masterCol.customSettings._gridLabelChanged).toBeUndefined();
+    expect(comp.activeGridSession.gridLabelPosition).toBe("top");
+    expect(comp.activeGridSession.gridLabelSize).toBe(40);
+    expect(comp.captureState).toHaveBeenCalled();
+  });
+
+  describe("auto-calculated dimensions for grid widgets", () => {
+    const {
+      isWidgetHeightAutoCalculated,
+      isWidgetWidthAutoCalculated,
+      handleWidgetXChange,
+      handleWidgetYChange,
+      handleWidgetWidthChange,
+      handleWidgetHeightChange,
+      handleNudgeSelectedWidget,
+    } = require("./ui-editor-widget.helper");
+
+    it("should correctly identify auto-calculated dimensions based on grid direction", () => {
+      const vertWidget = {
+        customSettings: { gridId: "g1", gridDirection: "vertical" },
+      };
+      const horizWidget = {
+        customSettings: { gridId: "g2", gridDirection: "horizontal" },
+      };
+      const nonGridWidget = { customSettings: {} };
+
+      expect(isWidgetHeightAutoCalculated(vertWidget)).toBeTrue();
+      expect(isWidgetWidthAutoCalculated(vertWidget)).toBeFalse();
+
+      expect(isWidgetHeightAutoCalculated(horizWidget)).toBeFalse();
+      expect(isWidgetWidthAutoCalculated(horizWidget)).toBeTrue();
+
+      expect(isWidgetHeightAutoCalculated(nonGridWidget)).toBeFalse();
+      expect(isWidgetWidthAutoCalculated(nonGridWidget)).toBeFalse();
+    });
+
+    it("should ignore manual height and y changes for vertical grid widgets", () => {
+      const widget = {
+        id: "w-vert",
+        x: 50,
+        y: 100,
+        width: 200,
+        height: 150,
+        customSettings: { gridId: "g1", gridDirection: "vertical" },
+      };
+      const comp = {
+        getLayoutBaseWidth: () => 1920,
+        getLayoutBaseHeight: () => 1080,
+        onWidgetInspectorChange: jasmine.createSpy("onWidgetInspectorChange"),
+      };
+
+      handleWidgetHeightChange(comp, 300, widget);
+      expect(widget.height).toBe(150);
+      handleWidgetYChange(comp, 200, widget);
+      expect(widget.y).toBe(100);
+      expect(comp.onWidgetInspectorChange).not.toHaveBeenCalled();
+
+      // Width and X should still be changeable
+      handleWidgetWidthChange(comp, 250, widget);
+      expect(widget.width).toBe(250);
+      expect(comp.onWidgetInspectorChange).toHaveBeenCalled();
+    });
+
+    it("should ignore manual width and x changes for horizontal grid widgets", () => {
+      const widget = {
+        id: "w-horiz",
+        x: 50,
+        y: 100,
+        width: 200,
+        height: 150,
+        customSettings: { gridId: "g2", gridDirection: "horizontal" },
+      };
+      const comp = {
+        getLayoutBaseWidth: () => 1920,
+        getLayoutBaseHeight: () => 1080,
+        onWidgetInspectorChange: jasmine.createSpy("onWidgetInspectorChange"),
+      };
+
+      handleWidgetWidthChange(comp, 300, widget);
+      expect(widget.width).toBe(200);
+      handleWidgetXChange(comp, 80, widget);
+      expect(widget.x).toBe(50);
+      expect(comp.onWidgetInspectorChange).not.toHaveBeenCalled();
+
+      // Height and Y should still be changeable
+      handleWidgetHeightChange(comp, 180, widget);
+      expect(widget.height).toBe(180);
+      expect(comp.onWidgetInspectorChange).toHaveBeenCalled();
+    });
+
+    it("should lock dy when nudging vertical grid widgets and dx when nudging horizontal grid widgets", () => {
+      const vertWidget = {
+        id: "w-vert",
+        x: 50,
+        y: 100,
+        width: 200,
+        height: 150,
+        customSettings: { gridId: "g1", gridDirection: "vertical" },
+      };
+      const compVert = {
+        selectedWidgetId: "w-vert",
+        activeCustomUi: { entity_id: "ui1" },
+        getLayout: () => ({ widgets: [vertWidget] }),
+        getLayoutBaseWidth: () => 1920,
+        getLayoutBaseHeight: () => 1080,
+        onWidgetInspectorChange: jasmine.createSpy("onWidgetInspectorChange"),
+      };
+
+      handleNudgeSelectedWidget(compVert, 10, 20);
+      expect(vertWidget.x).toBe(60);
+      expect(vertWidget.y).toBe(100); // dy locked!
+    });
   });
 });

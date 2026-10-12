@@ -1,7 +1,10 @@
 import { AbsoluteWidgetNode } from "@app/models/settings";
 
 import { LaneGridGeometryHelper } from "./lane-grid-geometry.helper";
-import { LaneGridBounds } from "./lane-grid-replication.helper";
+import {
+  LaneGridBounds,
+  LaneGridSession,
+} from "./lane-grid-replication.helper";
 
 describe("LaneGridGeometryHelper", () => {
   const baseWidth = 1920;
@@ -305,6 +308,395 @@ describe("LaneGridGeometryHelper", () => {
       );
       expect(movedSnapRight.x + movedSnapRight.width).toBe(600);
       expect(movedSnapRight.x).toBe(200);
+    });
+  });
+
+  describe("calculateGridBounds", () => {
+    it("should return null if widgets or gridId is invalid", () => {
+      expect(
+        LaneGridGeometryHelper.calculateGridBounds([], "grid-1"),
+      ).toBeNull();
+      expect(
+        LaneGridGeometryHelper.calculateGridBounds(null as any, "grid-1"),
+      ).toBeNull();
+      expect(
+        LaneGridGeometryHelper.calculateGridBounds(
+          [
+            {
+              id: "w1",
+              widgetType: "text",
+              x: 0,
+              y: 0,
+              width: 10,
+              height: 10,
+              zIndex: 1,
+            },
+          ],
+          "",
+        ),
+      ).toBeNull();
+    });
+
+    it("should return saved gridBounds from customSettings if present", () => {
+      const widgets: AbsoluteWidgetNode[] = [
+        {
+          id: "w1",
+          widgetType: "lane-column",
+          x: 10,
+          y: 20,
+          width: 50,
+          height: 50,
+          zIndex: 1,
+          customSettings: {
+            gridId: "g1",
+            gridBounds: { x: 100, y: 200, width: 500, height: 400 },
+          },
+        },
+      ];
+      const bounds = LaneGridGeometryHelper.calculateGridBounds(widgets, "g1");
+      expect(bounds).toEqual({ x: 100, y: 200, width: 500, height: 400 });
+    });
+
+    it("should fallback to bounding box of widgets if no saved gridBounds", () => {
+      const widgets: AbsoluteWidgetNode[] = [
+        {
+          id: "w1",
+          widgetType: "lane-column",
+          x: 50,
+          y: 60,
+          width: 200,
+          height: 100,
+          zIndex: 1,
+          customSettings: { gridId: "g1" },
+        },
+        {
+          id: "w2",
+          widgetType: "lane-column",
+          x: 50,
+          y: 160,
+          width: 200,
+          height: 100,
+          zIndex: 1,
+          customSettings: { gridId: "g1" },
+        },
+      ];
+      const bounds = LaneGridGeometryHelper.calculateGridBounds(widgets, "g1");
+      expect(bounds).toEqual({ x: 50, y: 60, width: 200, height: 200 });
+    });
+  });
+
+  describe("updateWidgetCellRatios", () => {
+    it("should auto-calculate height and y for vertical stack grids", () => {
+      const widget: AbsoluteWidgetNode = {
+        id: "w1",
+        widgetType: "lane-column",
+        x: 120,
+        y: 130,
+        width: 160,
+        height: 80,
+        zIndex: 1,
+      };
+      const session = {
+        gridId: "g1",
+        direction: "vertical",
+      } as LaneGridSession;
+      const cell = { x: 100, y: 100, width: 200, height: 100 };
+
+      LaneGridGeometryHelper.updateWidgetCellRatios(widget, session, cell);
+
+      expect(widget.height).toBe(100);
+      expect(widget.y).toBe(100);
+      expect(widget.customSettings?.["cellWidthRatio"]).toBe(0.8);
+      expect(widget.customSettings?.["cellHeightRatio"]).toBe(1.0);
+      expect(widget.customSettings?.["cellOffsetXRatio"]).toBe(0.1);
+      expect(widget.customSettings?.["cellOffsetYRatio"]).toBe(0);
+    });
+
+    it("should auto-calculate width and x for horizontal grids", () => {
+      const widget: AbsoluteWidgetNode = {
+        id: "w2",
+        widgetType: "lane-column",
+        x: 120,
+        y: 130,
+        width: 160,
+        height: 80,
+        zIndex: 1,
+      };
+      const session = {
+        gridId: "g2",
+        direction: "horizontal",
+      } as LaneGridSession;
+      const cell = { x: 100, y: 100, width: 200, height: 100 };
+
+      LaneGridGeometryHelper.updateWidgetCellRatios(widget, session, cell);
+
+      expect(widget.width).toBe(200);
+      expect(widget.x).toBe(100);
+      expect(widget.customSettings?.["cellWidthRatio"]).toBe(1.0);
+      expect(widget.customSettings?.["cellHeightRatio"]).toBe(0.8);
+      expect(widget.customSettings?.["cellOffsetXRatio"]).toBe(0);
+      expect(widget.customSettings?.["cellOffsetYRatio"]).toBe(0.3);
+    });
+  });
+
+  describe("isGridResized", () => {
+    const sessionBounds = { x: 100, y: 100, width: 400, height: 400 };
+
+    it("should return false when dimensions, lanes, and labels are unchanged", () => {
+      expect(
+        LaneGridGeometryHelper.isGridResized(
+          { ...sessionBounds },
+          sessionBounds,
+          4,
+          4,
+          "none",
+          "none",
+          40,
+          40,
+        ),
+      ).toBeFalse();
+    });
+
+    it("should return true when bounds change", () => {
+      expect(
+        LaneGridGeometryHelper.isGridResized(
+          { x: 100, y: 100, width: 300, height: 400 },
+          sessionBounds,
+          4,
+          4,
+          "none",
+          "none",
+          40,
+          40,
+        ),
+      ).toBeTrue();
+    });
+
+    it("should return true when total lanes change", () => {
+      expect(
+        LaneGridGeometryHelper.isGridResized(
+          { ...sessionBounds },
+          sessionBounds,
+          2,
+          4,
+          "none",
+          "none",
+          40,
+          40,
+        ),
+      ).toBeTrue();
+    });
+
+    it("should return true when label position or size changes", () => {
+      expect(
+        LaneGridGeometryHelper.isGridResized(
+          { ...sessionBounds },
+          sessionBounds,
+          4,
+          4,
+          "none",
+          "top",
+          40,
+          40,
+        ),
+      ).toBeTrue();
+
+      expect(
+        LaneGridGeometryHelper.isGridResized(
+          { ...sessionBounds },
+          sessionBounds,
+          4,
+          4,
+          "top",
+          "top",
+          40,
+          60,
+        ),
+      ).toBeTrue();
+    });
+  });
+
+  describe("computePitch & computeLaneCellBounds", () => {
+    it("should calculate pitch and cell bounds for vertical grid without label", () => {
+      const session: LaneGridSession = {
+        gridId: "g1",
+        bounds: { x: 100, y: 100, width: 300, height: 400 },
+        totalLanes: 4,
+        direction: "vertical",
+        sourceLaneIndex: 0,
+        bindingMode: "lane",
+      };
+
+      expect(LaneGridGeometryHelper.computePitch(session)).toBe(100);
+
+      const cell0 = LaneGridGeometryHelper.computeLaneCellBounds(session, 0);
+      expect(cell0).toEqual({ x: 100, y: 100, width: 300, height: 100 });
+
+      const cell3 = LaneGridGeometryHelper.computeLaneCellBounds(session, 3);
+      expect(cell3).toEqual({ x: 100, y: 400, width: 300, height: 100 });
+    });
+
+    it("should offset row 0 and reduce pitch when gridLabelPosition is top", () => {
+      const session: LaneGridSession = {
+        gridId: "g1",
+        bounds: { x: 100, y: 100, width: 300, height: 440 },
+        totalLanes: 4,
+        direction: "vertical",
+        sourceLaneIndex: 0,
+        bindingMode: "lane",
+        gridLabelPosition: "top",
+        gridLabelSize: 40,
+      };
+
+      // Remaining data height = 440 - 40 = 400, pitch = 400 / 4 = 100
+      expect(LaneGridGeometryHelper.computePitch(session)).toBe(100);
+
+      // Cell 0 MUST start at 100 + 40 = 140, not under the label!
+      const cell0 = LaneGridGeometryHelper.computeLaneCellBounds(session, 0);
+      expect(cell0).toEqual({ x: 100, y: 140, width: 300, height: 100 });
+
+      const cell3 = LaneGridGeometryHelper.computeLaneCellBounds(session, 3);
+      expect(cell3).toEqual({ x: 100, y: 440, width: 300, height: 100 });
+      expect(cell3.y + cell3.height).toBe(540); // bounds.y + bounds.height
+    });
+
+    it("should offset column 0 and reduce pitch when gridLabelPosition is left", () => {
+      const session: LaneGridSession = {
+        gridId: "g1",
+        bounds: { x: 100, y: 100, width: 450, height: 400 },
+        totalLanes: 4,
+        direction: "horizontal",
+        sourceLaneIndex: 0,
+        bindingMode: "lane",
+        gridLabelPosition: "left",
+        gridLabelSize: 50,
+      };
+
+      // Remaining data width = 450 - 50 = 400, pitch = 400 / 4 = 100
+      expect(LaneGridGeometryHelper.computePitch(session)).toBe(100);
+
+      const cell0 = LaneGridGeometryHelper.computeLaneCellBounds(session, 0);
+      expect(cell0).toEqual({ x: 150, y: 100, width: 100, height: 400 });
+    });
+  });
+
+  describe("computeGridDividers", () => {
+    it("should generate dividers within data bounds excluding top label", () => {
+      const session: LaneGridSession = {
+        gridId: "g1",
+        bounds: { x: 100, y: 100, width: 300, height: 440 },
+        totalLanes: 4,
+        direction: "vertical",
+        sourceLaneIndex: 0,
+        bindingMode: "lane",
+        gridLabelPosition: "top",
+        gridLabelSize: 40,
+      };
+
+      const dividers = LaneGridGeometryHelper.computeGridDividers(session);
+      // Dividers at 140 + 100 = 240, 140 + 200 = 340, 140 + 300 = 440
+      expect(dividers).toEqual([240, 340, 440]);
+    });
+  });
+
+  describe("isUnderLabel", () => {
+    const masterCell = { x: 100, y: 140, width: 300, height: 100 };
+
+    it("should return true when widget y is above cell y under top label", () => {
+      const widget: AbsoluteWidgetNode = {
+        id: "w1",
+        widgetType: "lane-column",
+        x: 100,
+        y: 100, // y is 100, but cell starts at 140 (under top label)
+        width: 300,
+        height: 100,
+        zIndex: 1,
+      };
+      expect(
+        LaneGridGeometryHelper.isUnderLabel("top", widget, masterCell),
+      ).toBeTrue();
+    });
+
+    it("should return true when cellOffsetYRatio is negative", () => {
+      const widget: AbsoluteWidgetNode = {
+        id: "w1",
+        widgetType: "lane-column",
+        x: 100,
+        y: 140,
+        width: 300,
+        height: 100,
+        zIndex: 1,
+      };
+      expect(
+        LaneGridGeometryHelper.isUnderLabel("top", widget, masterCell, 0, -0.2),
+      ).toBeTrue();
+    });
+
+    it("should return false when widget is at or below cell y", () => {
+      const widget: AbsoluteWidgetNode = {
+        id: "w1",
+        widgetType: "lane-column",
+        x: 100,
+        y: 140,
+        width: 300,
+        height: 100,
+        zIndex: 1,
+      };
+      expect(
+        LaneGridGeometryHelper.isUnderLabel("top", widget, masterCell),
+      ).toBeFalse();
+    });
+  });
+
+  describe("resolveCellRatios", () => {
+    it("should auto-heal corrupt widget that has masterWidget.y under top label", () => {
+      const masterWidget: AbsoluteWidgetNode = {
+        id: "w1",
+        widgetType: "lane-column",
+        x: 100,
+        y: 100, // Under the label!
+        width: 300,
+        height: 100,
+        zIndex: 1,
+        customSettings: {
+          gridId: "g1",
+          gridLane: 0,
+          gridTotalLanes: 4,
+          gridLabelPosition: "top",
+          gridLabelSize: 40,
+          cellWidthRatio: 1,
+          cellHeightRatio: 1,
+          cellOffsetXRatio: 0,
+          cellOffsetYRatio: -0.4, // Corrupt negative offset
+        },
+      };
+
+      const session: LaneGridSession = {
+        gridId: "g1",
+        bounds: { x: 100, y: 100, width: 300, height: 440 },
+        totalLanes: 4,
+        direction: "vertical",
+        sourceLaneIndex: 0,
+        bindingMode: "lane",
+        gridLabelPosition: "top",
+        gridLabelSize: 40,
+      };
+
+      const masterCell = LaneGridGeometryHelper.computeMasterBounds(session);
+      expect(masterCell.y).toBe(140);
+
+      const ratios = LaneGridGeometryHelper.resolveCellRatios(
+        masterWidget,
+        session,
+        masterCell,
+        0,
+      );
+
+      // Must be auto-healed with non-negative offset
+      expect(ratios.cellOffsetYRatio).toBeGreaterThanOrEqual(0);
+      expect(ratios.cellOffsetXRatio).toBeGreaterThanOrEqual(0);
+      expect(ratios.cellHeightRatio).toBeGreaterThan(0);
+      expect(ratios.cellWidthRatio).toBeGreaterThan(0);
     });
   });
 });

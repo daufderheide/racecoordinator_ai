@@ -67,10 +67,12 @@ import {
   ThemeTemplateType,
 } from "./components/theme-template-modal/theme-template-modal";
 import {
+  handleBringGridToFront,
   handleDeleteGrid,
   handleDetachGrid,
   handleEditGridTemplate,
   handleFinishGridSession,
+  handleReMirrorGrid,
   handleStartGridSession,
   handleSyncActiveGridSessionFromLayout,
   handleUpdateGridBounds,
@@ -175,6 +177,8 @@ import {
   isThemeDefault,
   isThemeNameDuplicate,
   isThemeNameInvalid,
+  isWidgetHeightAutoCalculated,
+  isWidgetWidthAutoCalculated,
   LayoutZoomController,
   loadExpanderStateFromStorage,
   MAIN_AUDIO_SLOTS,
@@ -580,21 +584,12 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     );
   }
 
-  onWidgetDropdownSelect(widgetId: string, ui?: CustomUI) {
-    if (widgetId) {
-      this.onWidgetSelected(widgetId, ui);
-    } else {
-      this.onWidgetSelected(null, ui);
-    }
-  }
-
-  onTextColorChange(event: Event) {
+  onWidgetDropdownSelect = (widgetId: string, ui?: CustomUI) =>
+    this.onWidgetSelected(widgetId || null, ui);
+  onTextColorChange = (event: Event) =>
     handleWidgetColorChange(this, "textColor", event);
-  }
-
-  onBackgroundColorChange(event: Event) {
+  onBackgroundColorChange = (event: Event) =>
     handleWidgetColorChange(this, "backgroundColor", event);
-  }
 
   isCustomUiPractice(ui?: CustomUI) {
     if (!ui) return this.isCurrentLayoutPractice;
@@ -653,6 +648,10 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     handleEditGridTemplate(this, id, ui);
   onDetachGrid = (id: string, ui?: CustomUI) => handleDetachGrid(this, id, ui);
   onDeleteGrid = (id: string, ui?: CustomUI) => handleDeleteGrid(this, id, ui);
+  onReMirrorGrid = (id: string, ui?: CustomUI) =>
+    handleReMirrorGrid(this, id, ui);
+  onBringGridToFront = (id: string, ui?: CustomUI) =>
+    handleBringGridToFront(this, id, ui);
 
   openReplicateLaneModal(ui?: CustomUI): void {
     openReplicateLaneModalHelper(this, ui);
@@ -686,48 +685,39 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     handleWidgetHeightChange(this, value, widget, ui);
   }
 
-  onRacedayLayoutChanged(newLayout: any) {
+  isWidgetHeightAutoCalculated = (widget: any) =>
+    isWidgetHeightAutoCalculated(widget, this.activeGridSession);
+
+  isWidgetWidthAutoCalculated = (widget: any) =>
+    isWidgetWidthAutoCalculated(widget, this.activeGridSession);
+
+  onRacedayLayoutChanged = (newLayout: any) =>
     this.onLayoutChanged(
       newLayout,
       this.displayCustomUIs.find(
         (u) => u.entity_id === "default_ui_layout_rc_ai",
       ),
     );
-  }
-
-  onPracticeRacedayLayoutChanged(newLayout: any) {
+  onPracticeRacedayLayoutChanged = (newLayout: any) =>
     this.onLayoutChanged(
       newLayout,
       this.displayCustomUIs.find(
         (u) => u.entity_id === "practice_ui_layout_rc_ai",
       ),
     );
-  }
-
-  getScaledDefaultLayout(isPractice = false) {
-    return getDefaultLayoutResetData(isPractice).defaultLayout;
-  }
-
-  getTargetCustomUi(kind?: "practice" | "raceday" | "current") {
-    return resolveTargetCustomUi(
+  getScaledDefaultLayout = (isPractice = false) =>
+    getDefaultLayoutResetData(isPractice).defaultLayout;
+  getTargetCustomUi = (kind?: "practice" | "raceday" | "current") =>
+    resolveTargetCustomUi(
       kind,
       this.activeCustomUiId,
       this.displayCustomUIs,
       this.isCurrentLayoutPractice,
     );
-  }
-
-  resetCurrentLayout() {
-    handleResetCurrentLayout(this);
-  }
-
-  exportCurrentLayout() {
-    handleExportCurrentLayout(this);
-  }
-
-  onImportCurrentLayout(event: Event) {
+  resetCurrentLayout = () => handleResetCurrentLayout(this);
+  exportCurrentLayout = () => handleExportCurrentLayout(this);
+  onImportCurrentLayout = (event: Event) =>
     handleImportCurrentLayout(this, event);
-  }
 
   onColumnsChanged(_ui?: CustomUI) {
     this.captureState();
@@ -966,12 +956,9 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     handleCustomUiSelection(this, uiId);
   }
 
-  getCustomUiDisplayNameKey(ui: CustomUI) {
-    return getCustomUiDisplayNameKey(ui, this.translationService);
-  }
-  isCustomUiDefault(ui: CustomUI) {
-    return isCustomUiDefault(ui);
-  }
+  getCustomUiDisplayNameKey = (ui: CustomUI) =>
+    getCustomUiDisplayNameKey(ui, this.translationService);
+  isCustomUiDefault = (ui: CustomUI) => isCustomUiDefault(ui);
   toggleUiSection(uiId: string) {
     toggleUiExpander(uiId, this.displayCustomUIs, this.sectionsExpanded, (id) =>
       this.onCustomUiSelected(id),
@@ -988,26 +975,21 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     this.refreshDisplayProperties();
     this.cdr.markForCheck();
   }
-  isCustomUiNameInvalid(ui: CustomUI) {
-    return isCustomUiNameInvalid(ui, this.displayCustomUIs);
-  }
-  isAnyCustomUiNameInvalid() {
-    return this.displayCustomUIs.some((ui) => this.isCustomUiNameInvalid(ui));
-  }
-  getThemeDisplayNameKey(theme: Theme) {
-    return getThemeDisplayNameKey(theme, this.translationService);
-  }
-  isThemeDefault(theme: Theme) {
-    return isThemeDefault(theme);
-  }
+  isCustomUiNameInvalid = (ui: CustomUI) =>
+    isCustomUiNameInvalid(ui, this.displayCustomUIs);
+  isAnyCustomUiNameInvalid = () =>
+    this.displayCustomUIs.some((ui) => this.isCustomUiNameInvalid(ui));
+  getThemeDisplayNameKey = (theme: Theme) =>
+    getThemeDisplayNameKey(theme, this.translationService);
+  isThemeDefault = (theme: Theme) => isThemeDefault(theme);
 
-  focusUiNameInput(entityId: string): void {
+  focusUiNameInput = (entityId: string): void => {
     focusUiEditorElement(`custom-ui-name-input-${entityId}`);
-  }
+  };
 
-  focusThemeNameInput(entityId: string): void {
+  focusThemeNameInput = (entityId: string): void => {
     focusUiEditorElement(`theme-name-input-${entityId}`);
-  }
+  };
 
   private openSuccessModal(
     params?: { title?: string; message?: string; params?: any },

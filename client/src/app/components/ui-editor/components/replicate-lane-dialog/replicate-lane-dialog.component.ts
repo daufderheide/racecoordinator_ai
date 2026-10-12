@@ -71,11 +71,11 @@ import { TranslatePipe } from "@app/pipes/translate.pipe";
                 [ngModel]="direction()"
                 (ngModelChange)="direction.set($event)"
               >
-                <app-custom-option value="horizontal">
-                  {{ "UE_REPLICATE_DIR_HORIZONTAL" | translate }}
-                </app-custom-option>
                 <app-custom-option value="vertical">
                   {{ "UE_REPLICATE_DIR_VERTICAL" | translate }}
+                </app-custom-option>
+                <app-custom-option value="horizontal">
+                  {{ "UE_REPLICATE_DIR_HORIZONTAL" | translate }}
                 </app-custom-option>
               </app-custom-select>
             </div>
@@ -344,7 +344,7 @@ export class ReplicateLaneDialogComponent {
   confirm = output<Omit<LaneReplicationOptions, "baseWidth" | "baseHeight">>();
   cancel = output<void>();
 
-  direction = signal<"horizontal" | "vertical">("horizontal");
+  direction = signal<"horizontal" | "vertical">("vertical");
   targetCount = signal<number>(4);
   distributionMode = signal<"auto-fit" | "preserve-spacing">("auto-fit");
   headerPlacement = signal<"top" | "individual" | "none">("individual");

@@ -43,6 +43,8 @@ export class LaneColumnInspectorComponent {
   editGrid = output<string>();
   detachGrid = output<string>();
   deleteGrid = output<string>();
+  reMirrorGrid = output<string>();
+  bringGridToFront = output<string>();
 
   fontService = inject(FontService);
   translationService = inject(TranslationService);
@@ -130,6 +132,15 @@ export class LaneColumnInspectorComponent {
     const s = this.settings() || {};
     if (!s["layoutOrientation"]) {
       s["layoutOrientation"] = "vertical";
+    }
+    if (!s["backgroundColor"]) {
+      s["backgroundColor"] = "#000000";
+    }
+    if (
+      !s["textColor"] ||
+      (s["textColor"] === "#000000" && s["backgroundColor"] === "#000000")
+    ) {
+      s["textColor"] = "#ffffff";
     }
     return s;
   }
@@ -222,6 +233,22 @@ export class LaneColumnInspectorComponent {
       );
     }
     this.change.emit();
+  }
+
+  onUseLaneColorsChange(): void {
+    if (!this.currentSettings["useLaneColors"]) {
+      if (!this.currentSettings["backgroundColor"]) {
+        this.currentSettings["backgroundColor"] = "#000000";
+      }
+      if (
+        !this.currentSettings["textColor"] ||
+        (this.currentSettings["textColor"] === "#000000" &&
+          this.currentSettings["backgroundColor"] === "#000000")
+      ) {
+        this.currentSettings["textColor"] = "#ffffff";
+      }
+    }
+    this.onFieldChange();
   }
 
   getPreview(seconds: number): string {
@@ -379,6 +406,16 @@ export class LaneColumnInspectorComponent {
   set linkColumns(val: boolean) {
     this.currentSettings["linkColumns"] = Boolean(val);
     this.currentSettings["_linkColumnsChanged"] = true;
+    this.onFieldChange();
+  }
+
+  get mirrorRows(): boolean {
+    return this.currentSettings["mirrorRows"] !== false;
+  }
+
+  set mirrorRows(val: boolean) {
+    this.currentSettings["mirrorRows"] = Boolean(val);
+    this.currentSettings["_mirrorRowsChanged"] = true;
     this.onFieldChange();
   }
 
@@ -599,7 +636,7 @@ export class LaneColumnInspectorComponent {
   }
 
   get gridLabelShowBorder(): boolean {
-    return Boolean(this.currentSettings["gridLabelShowBorder"]);
+    return this.currentSettings["gridLabelShowBorder"] !== false;
   }
 
   set gridLabelShowBorder(val: boolean) {
@@ -684,6 +721,19 @@ export class LaneColumnInspectorComponent {
   onDeleteGrid(): void {
     if (this.currentSettings["gridId"]) {
       this.deleteGrid.emit(this.currentSettings["gridId"]);
+    }
+  }
+
+  onReMirrorGrid(): void {
+    this.mirrorRows = true;
+    if (this.currentSettings["gridId"]) {
+      this.reMirrorGrid.emit(this.currentSettings["gridId"]);
+    }
+  }
+
+  onBringGridToFront(): void {
+    if (this.currentSettings["gridId"]) {
+      this.bringGridToFront.emit(this.currentSettings["gridId"]);
     }
   }
 

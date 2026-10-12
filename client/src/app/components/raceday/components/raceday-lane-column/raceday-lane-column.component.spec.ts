@@ -321,6 +321,66 @@ describe("RacedayLaneColumnComponent", () => {
     expect(component.borderColor).toBe("#ff0000");
   });
 
+  it("should default to black background and white text when useLaneColors is false without color overrides", () => {
+    fixture.componentRef.setInput("parent", mockParent);
+    fixture.componentRef.setInput(
+      "widget",
+      createWidget({
+        useLaneColors: false,
+        backgroundColor: "",
+        textColor: "",
+      }),
+    );
+    fixture.detectChanges();
+
+    expect(component.backgroundColor).toBe("#000000");
+    expect(component.foregroundColor).toBe("#ffffff");
+  });
+
+  it("should update colors when useLaneColors changes between true and false", () => {
+    fixture.componentRef.setInput("parent", mockParent);
+    const widget = createWidget({
+      useLaneColors: true,
+      targetIndex: 0,
+      backgroundColor: "#000000",
+      textColor: "#ffffff",
+    });
+    fixture.componentRef.setInput("widget", widget);
+    fixture.detectChanges();
+
+    // With useLaneColors: true, it uses lane 0 colors (#112233 / #ffcc00)
+    expect(component.backgroundColor).toBe("#112233");
+    expect(component.foregroundColor).toBe("#ffcc00");
+
+    // Uncheck: useLaneColors becomes false
+    const updatedWidget = {
+      ...widget,
+      customSettings: {
+        ...widget.customSettings,
+        useLaneColors: false,
+      },
+    };
+    fixture.componentRef.setInput("widget", updatedWidget);
+    fixture.detectChanges();
+
+    expect(component.backgroundColor).toBe("#000000");
+    expect(component.foregroundColor).toBe("#ffffff");
+
+    // Re-check: useLaneColors becomes true
+    const recheckedWidget = {
+      ...widget,
+      customSettings: {
+        ...widget.customSettings,
+        useLaneColors: true,
+      },
+    };
+    fixture.componentRef.setInput("widget", recheckedWidget);
+    fixture.detectChanges();
+
+    expect(component.backgroundColor).toBe("#112233");
+    expect(component.foregroundColor).toBe("#ffcc00");
+  });
+
   it("should dynamically switch colors in position mode when standings change", () => {
     fixture.componentRef.setInput("parent", mockParent);
     // P0 is currently driver-2 who is in Lane 1 (#223344 / #00ccff)

@@ -23,6 +23,7 @@ import { RacedayGroupLeaderboardComponent } from "@app/components/raceday/compon
 import { RacedayHeatInfoComponent } from "@app/components/raceday/components/raceday-heat-info/raceday-heat-info.component";
 import { RacedayHeatListComponent } from "@app/components/raceday/components/raceday-heat-list/raceday-heat-list.component";
 import { RacedayImageComponent } from "@app/components/raceday/components/raceday-image/raceday-image.component";
+import { RacedayLabelComponent } from "@app/components/raceday/components/raceday-label/raceday-label.component";
 import { RacedayLaneColumnComponent } from "@app/components/raceday/components/raceday-lane-column/raceday-lane-column.component";
 import { RacedayLaneViewComponent } from "@app/components/raceday/components/raceday-lane-view/raceday-lane-view.component";
 import { RacedayLeaderboardComponent } from "@app/components/raceday/components/raceday-leaderboard/raceday-leaderboard.component";
@@ -75,6 +76,7 @@ import { LoggerService } from "@app/services/logger.service";
     RacedayNextHeatComponent,
     RacedayHeatListComponent,
     RacedayImageComponent,
+    RacedayLabelComponent,
     RacedayActionButtonComponent,
     RacedayCountdownComponent,
   ],
@@ -124,13 +126,45 @@ export class RacedayAbsoluteWidgetComponent
   }
 
   get isGridMirrored(): boolean {
-    const session = this.parentComponent()?.gridSession?.();
-    if (!session) return false;
     const s = this.widget().customSettings;
+    if (s?.["mirrorRows"] === false) return false;
+    const session = this.parentComponent()?.gridSession?.();
+    if (!session || session.mirrorRows === false) return false;
+    if (s?.["gridId"] !== session.gridId) return false;
+
+    const masterId = s?.["gridMasterId"];
+    if (masterId) {
+      const allWidgets = this.parentComponent()?.layout?.widgets || [];
+      const masterExists = allWidgets.some((w: any) => w.id === masterId);
+      if (!masterExists) {
+        return false;
+      }
+    }
+
     return (
-      s?.["gridId"] === session.gridId &&
       Number(s?.["gridLane"] ?? s?.["targetIndex"]) !== session.sourceLaneIndex
     );
+  }
+
+  get isWidgetInGrid(): boolean {
+    return Boolean(this.widget().customSettings?.["gridId"]);
+  }
+
+  get gridDirection(): "vertical" | "horizontal" {
+    const s = this.widget().customSettings;
+    const session = this.parentComponent()?.gridSession?.();
+    if (session && session.gridId === s?.["gridId"]) {
+      return session.direction || "vertical";
+    }
+    return s?.["gridDirection"] || "vertical";
+  }
+
+  get isHeightAutoCalculated(): boolean {
+    return this.isWidgetInGrid && this.gridDirection === "vertical";
+  }
+
+  get isWidthAutoCalculated(): boolean {
+    return this.isWidgetInGrid && this.gridDirection === "horizontal";
   }
 
   get computedZIndex(): number {
@@ -304,6 +338,15 @@ export class RacedayAbsoluteWidgetComponent
       newH = 50;
     }
 
+    if (this.isHeightAutoCalculated) {
+      newH = this.resizeStartHeight;
+      newY = this.resizeStartY;
+    }
+    if (this.isWidthAutoCalculated) {
+      newW = this.resizeStartWidth;
+      newX = this.resizeStartX;
+    }
+
     let snapped = { x: newX, y: newY, w: newW, h: newH };
     if (this.parentComponent().snapToEdges) {
       snapped = this.parentComponent().snapToEdges(
@@ -318,10 +361,18 @@ export class RacedayAbsoluteWidgetComponent
       );
     }
 
-    const clampedX = Math.max(0, Math.min(baseWidth - 50, snapped.x));
-    const clampedY = Math.max(0, Math.min(baseHeight - 50, snapped.y));
-    const clampedW = Math.max(50, Math.min(baseWidth - clampedX, snapped.w));
-    const clampedH = Math.max(50, Math.min(baseHeight - clampedY, snapped.h));
+    const clampedX = this.isWidthAutoCalculated
+      ? this.resizeStartX
+      : Math.max(0, Math.min(baseWidth - 50, snapped.x));
+    const clampedY = this.isHeightAutoCalculated
+      ? this.resizeStartY
+      : Math.max(0, Math.min(baseHeight - 50, snapped.y));
+    const clampedW = this.isWidthAutoCalculated
+      ? this.resizeStartWidth
+      : Math.max(50, Math.min(baseWidth - clampedX, snapped.w));
+    const clampedH = this.isHeightAutoCalculated
+      ? this.resizeStartHeight
+      : Math.max(50, Math.min(baseHeight - clampedY, snapped.h));
 
     return {
       x: clampedX,
@@ -425,6 +476,13 @@ export class RacedayAbsoluteWidgetComponent
       const w = this.widget().width;
       const h = this.widget().height;
 
+      if (this.isHeightAutoCalculated) {
+        newY = initialWidgetY;
+      }
+      if (this.isWidthAutoCalculated) {
+        newX = initialWidgetX;
+      }
+
       let snapped = {
         x: newX,
         y: newY,
@@ -444,8 +502,12 @@ export class RacedayAbsoluteWidgetComponent
         );
       }
 
-      this.widget().x = Math.max(0, Math.min(baseWidth - w, snapped.x));
-      this.widget().y = Math.max(0, Math.min(baseHeight - h, snapped.y));
+      this.widget().x = this.isWidthAutoCalculated
+        ? initialWidgetX
+        : Math.max(0, Math.min(baseWidth - w, snapped.x));
+      this.widget().y = this.isHeightAutoCalculated
+        ? initialWidgetY
+        : Math.max(0, Math.min(baseHeight - h, snapped.y));
       this.cdr.detectChanges();
     };
 
@@ -483,7 +545,11 @@ export class RacedayAbsoluteWidgetComponent
   bringToFront() {
     if (this.parentComponent() && this.parentComponent().bringToFront) {
       const masterId = this.widget().customSettings?.["gridMasterId"];
-      if (this.isGridMirrored && masterId) {
+      const allWidgets = this.parentComponent()?.layout?.widgets || [];
+      const masterExists = masterId
+        ? allWidgets.some((w: any) => w.id === masterId)
+        : false;
+      if (this.isGridMirrored && masterId && masterExists) {
         this.parentComponent().bringToFront(masterId);
       } else {
         this.parentComponent().bringToFront(this.widget().id);

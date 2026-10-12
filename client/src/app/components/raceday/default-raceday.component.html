@@ -212,6 +212,7 @@
           [style.top.px]="gridSession()!.bounds.y"
           [style.width.px]="gridSession()!.bounds.width"
           [style.height.px]="gridSession()!.bounds.height"
+          [style.z-index]="getGridSessionZIndex()"
         >
           <div
             class="grid-move-handle-bar"
@@ -392,6 +393,17 @@
             }}
           </div>
           <div class="lane-blueprint-actions">
+            <button
+              type="button"
+              class="btn btn-sm btn-outline-primary grid-front-btn"
+              (click)="bringGridToFront(gridSession()!.gridId)"
+              [title]="'UE_GRID_BRING_TO_FRONT_TOOLTIP' | translate"
+            >
+              <span class="material-icons me-1" style="font-size: 14px"
+                >flip_to_front</span
+              >
+              {{ "UE_GRID_BRING_TO_FRONT" | translate }}
+            </button>
             <button
               type="button"
               class="btn btn-sm btn-outline-primary grid-move-btn"

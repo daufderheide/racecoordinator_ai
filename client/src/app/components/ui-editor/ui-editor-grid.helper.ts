@@ -1,4 +1,5 @@
 import { LaneGridAnimationHelper } from "@app/components/raceday/utils/lane-grid-animation.helper";
+import { LaneGridLabelHelper } from "@app/components/raceday/utils/lane-grid-label.helper";
 import {
   LaneGridBounds,
   LaneGridReplicationHelper,
@@ -80,12 +81,13 @@ function createInitialGridSession(
     gridId: `grid-${Date.now()}`,
     bounds,
     totalLanes: options.targetCount,
-    direction: options.direction,
+    direction: options.direction || "vertical",
     sourceLaneIndex: physicalCellIndex,
     bindingMode: options.sourceBindingMode ?? "lane",
     headerPlacement: options.headerPlacement ?? "individual",
     headerHeight: options.headerHeight ?? 36,
     linkColumns: options.linkColumns ?? true,
+    mirrorRows: options.mirrorRows !== false,
     layoutOrientation: cs["layoutOrientation"] || "vertical",
     gridLabelPosition: cs["gridLabelPosition"] || "none",
     gridLabelText: cs["gridLabelText"] || "",
@@ -100,7 +102,7 @@ function createInitialGridSession(
     gridLabelFontBold: cs["gridLabelFontBold"] !== false,
     gridLabelFontItalic: Boolean(cs["gridLabelFontItalic"]),
     gridLabelAlignment: cs["gridLabelAlignment"] || "center",
-    gridLabelShowBorder: Boolean(cs["gridLabelShowBorder"]),
+    gridLabelShowBorder: cs["gridLabelShowBorder"] !== false,
     gridLabelBorderColor: cs["gridLabelBorderColor"] || "",
     gridLabelBorderWidth:
       cs["gridLabelBorderWidth"] != null
@@ -111,6 +113,42 @@ function createInitialGridSession(
         ? Number(cs["gridLabelBorderRadius"])
         : 4,
   };
+}
+
+function isCandidateSourceWidget(w: any, options: any): boolean {
+  if (w.widgetType !== "lane-column") return false;
+  if (w.customSettings?.["isHeaderWidget"]) return false;
+  if (w.customSettings?.["gridMasterId"]) return false;
+  if (
+    options.gridId &&
+    w.customSettings?.["gridId"] &&
+    w.customSettings["gridId"] !== options.gridId
+  ) {
+    return false;
+  }
+  if (!options.gridId && w.customSettings?.["gridId"]) return false;
+  return true;
+}
+
+function resolveSourceWidgets(widgets: any[], options: any): any[] {
+  let matched = widgets.filter((w: any) => {
+    if (!isCandidateSourceWidget(w, options)) return false;
+    const mode = w.customSettings?.["bindingMode"] || "lane";
+    const idx = Number(w.customSettings?.["targetIndex"] ?? 0);
+    return (
+      mode === options.sourceBindingMode &&
+      idx === Number(options.sourceIndex ?? 0)
+    );
+  });
+
+  if (matched.length === 0) {
+    matched = widgets.filter((w: any) => {
+      if (!isCandidateSourceWidget(w, options)) return false;
+      const idx = Number(w.customSettings?.["targetIndex"] ?? 0);
+      return idx === Number(options.sourceIndex ?? 0);
+    });
+  }
+  return matched;
 }
 
 export function handleStartGridSession(
@@ -127,23 +165,7 @@ export function handleStartGridSession(
   const baseWidth = layout.baseWidth || 1920;
   const baseHeight = layout.baseHeight || 1080;
 
-  let sourceWidgets = layout.widgets.filter((w: any) => {
-    if (w.widgetType !== "lane-column") return false;
-    const mode = w.customSettings?.["bindingMode"] || "lane";
-    const idx = Number(w.customSettings?.["targetIndex"] ?? 0);
-    return (
-      mode === options.sourceBindingMode &&
-      idx === Number(options.sourceIndex ?? 0)
-    );
-  });
-
-  if (sourceWidgets.length === 0) {
-    sourceWidgets = layout.widgets.filter((w: any) => {
-      if (w.widgetType !== "lane-column") return false;
-      const idx = Number(w.customSettings?.["targetIndex"] ?? 0);
-      return idx === Number(options.sourceIndex ?? 0);
-    });
-  }
+  const sourceWidgets = resolveSourceWidgets(layout.widgets, options);
 
   for (const sw of sourceWidgets) {
     if (!sw.customSettings) sw.customSettings = {};
@@ -249,31 +271,16 @@ export function handleFinishGridSession(comp: any, ui?: CustomUI): void {
   comp.cdr.markForCheck();
 }
 
-export function handleEditGridTemplate(
-  comp: any,
+function buildEditGridSession(
   gridId: string,
-  ui?: CustomUI,
-): void {
-  if (!gridId) return;
-  const targetUi = ui || comp.activeCustomUi;
-  const layout = comp.getLayout(targetUi);
-  if (!layout?.widgets) return;
-
-  const gridWidgets = layout.widgets.filter(
-    (w: any) => w.customSettings?.["gridId"] === gridId,
-  );
-  if (gridWidgets.length === 0) return;
-
-  const bounds = LaneGridReplicationHelper.calculateGridBounds(
-    layout.widgets,
-    gridId,
-  );
-  if (!bounds) return;
-
+  bounds: LaneGridBounds,
+  gridWidgets: any[],
+  maxLanes: number,
+): LaneGridSession {
   const first = gridWidgets[0];
   const totalLanes =
-    Number(first.customSettings?.["gridTotalLanes"]) || comp.maxTrackLanes || 4;
-  const direction = first.customSettings?.["gridDirection"] || "horizontal";
+    Number(first.customSettings?.["gridTotalLanes"]) || maxLanes || 4;
+  const direction = first.customSettings?.["gridDirection"] || "vertical";
   const positionWidget = gridWidgets.find(
     (w: any) => w.customSettings?.["bindingMode"] === "position",
   );
@@ -285,7 +292,7 @@ export function handleEditGridTemplate(
   const headerHeight = Number(first.customSettings?.["headerHeight"]) || 36;
   const linkColumns = first.customSettings?.["linkColumns"] !== false;
 
-  const session: LaneGridSession = {
+  return {
     gridId,
     bounds,
     totalLanes,
@@ -295,6 +302,7 @@ export function handleEditGridTemplate(
     headerPlacement,
     headerHeight,
     linkColumns,
+    mirrorRows: first.customSettings?.["mirrorRows"] !== false,
     layoutOrientation:
       first.customSettings?.["layoutOrientation"] || "vertical",
     gridLabelPosition: first.customSettings?.["gridLabelPosition"] || "none",
@@ -317,7 +325,8 @@ export function handleEditGridTemplate(
     gridLabelFontItalic: Boolean(first.customSettings?.["gridLabelFontItalic"]),
     gridLabelAlignment:
       first.customSettings?.["gridLabelAlignment"] || "center",
-    gridLabelShowBorder: Boolean(first.customSettings?.["gridLabelShowBorder"]),
+    gridLabelShowBorder:
+      first.customSettings?.["gridLabelShowBorder"] !== false,
     gridLabelBorderColor: first.customSettings?.["gridLabelBorderColor"] || "",
     gridLabelBorderWidth:
       first.customSettings?.["gridLabelBorderWidth"] != null
@@ -328,6 +337,35 @@ export function handleEditGridTemplate(
         ? Number(first.customSettings["gridLabelBorderRadius"])
         : 4,
   };
+}
+
+export function handleEditGridTemplate(
+  comp: any,
+  gridId: string,
+  ui?: CustomUI,
+): void {
+  if (!gridId) return;
+  const targetUi = ui || comp.activeCustomUi;
+  const layout = comp.getLayout(targetUi);
+  if (!layout?.widgets) return;
+
+  const gridWidgets = layout.widgets.filter(
+    (w: any) => w.customSettings?.["gridId"] === gridId,
+  );
+  if (gridWidgets.length === 0) return;
+
+  const bounds = LaneGridReplicationHelper.calculateGridBounds(
+    layout.widgets,
+    gridId,
+  );
+  if (!bounds) return;
+
+  const session = buildEditGridSession(
+    gridId,
+    bounds,
+    gridWidgets,
+    comp.maxTrackLanes,
+  );
 
   for (const w of gridWidgets) {
     if (LaneGridReplicationHelper.isMasterWidget(w, session)) {
@@ -354,7 +392,24 @@ export function handleEditGridTemplate(
     comp.parsedLayouts,
   );
   comp.syncRacedayPreview?.(layout, targetUi);
+  handleBringGridToFront(comp, gridId, targetUi);
   comp.cdr.markForCheck();
+}
+
+export function handleBringGridToFront(
+  comp: any,
+  gridId: string,
+  ui?: CustomUI,
+): void {
+  if (!gridId) return;
+  const targetUi = ui || comp.activeCustomUi;
+  const targetComp =
+    comp.racedayComponents?.find(
+      (rc: any) => rc.activeCustomUi()?.entity_id === targetUi?.entity_id,
+    ) || comp.racedayComponents?.first;
+  if (targetComp?.bringGridToFront) {
+    targetComp.bringGridToFront(gridId);
+  }
 }
 
 export function handleDetachGrid(
@@ -508,8 +563,8 @@ function extractGridLabelSessionSettings(
       cs["gridLabelAlignment"] || currentSession.gridLabelAlignment || "center",
     gridLabelShowBorder:
       cs["gridLabelShowBorder"] !== undefined
-        ? Boolean(cs["gridLabelShowBorder"])
-        : currentSession.gridLabelShowBorder,
+        ? cs["gridLabelShowBorder"] !== false
+        : currentSession.gridLabelShowBorder !== false,
     gridLabelBorderColor:
       cs["gridLabelBorderColor"] ?? currentSession.gridLabelBorderColor ?? "",
     gridLabelBorderWidth:
@@ -569,6 +624,7 @@ export function handleSyncActiveGridSessionFromLayout(comp: any): void {
           ? Number(cs["headerHeight"])
           : comp.activeGridSession.headerHeight,
       linkColumns: cs["linkColumns"] !== false,
+      mirrorRows: cs["mirrorRows"] !== false,
       layoutOrientation:
         cs["layoutOrientation"] || comp.activeGridSession.layoutOrientation,
       ...extractGridLabelSessionSettings(cs, comp.activeGridSession),
@@ -580,5 +636,60 @@ export function handleSyncActiveGridSessionFromLayout(comp: any): void {
     };
   }
   comp.syncRacedayPreview?.(layout, targetUi);
+  comp.cdr?.markForCheck();
+}
+
+export function handleReMirrorGrid(
+  comp: any,
+  gridId: string,
+  ui?: CustomUI,
+): void {
+  if (!gridId) return;
+  const targetUi = ui || comp.activeCustomUi;
+  const layout = comp.getLayout(targetUi);
+  if (!layout?.widgets) return;
+
+  for (const w of layout.widgets) {
+    if (w.customSettings?.["gridId"] === gridId) {
+      if (!w.customSettings) w.customSettings = {};
+      w.customSettings["mirrorRows"] = true;
+    }
+  }
+
+  if (comp.activeGridSession && comp.activeGridSession.gridId === gridId) {
+    comp.activeGridSession.mirrorRows = true;
+    const synced = LaneGridReplicationHelper.syncAllMasterWidgetsToLanes(
+      comp.activeGridSession,
+      layout.widgets,
+    );
+    layout.widgets = LaneGridReplicationHelper.bakeGrid(
+      synced,
+      comp.activeGridSession,
+    );
+  } else {
+    const session = LaneGridLabelHelper.buildGridLabelSession(
+      layout.widgets,
+      gridId,
+      {},
+    );
+    if (session) {
+      session.mirrorRows = true;
+      const synced = LaneGridReplicationHelper.syncAllMasterWidgetsToLanes(
+        session,
+        layout.widgets,
+      );
+      layout.widgets = LaneGridReplicationHelper.bakeGrid(synced, session);
+    }
+  }
+
+  updateLayoutOnModel(
+    layout,
+    targetUi,
+    comp.editingSettings,
+    comp.isCustomUiPractice(targetUi),
+    comp.parsedLayouts,
+  );
+  comp.syncRacedayPreview?.(layout, targetUi);
+  comp.captureState?.();
   comp.cdr?.markForCheck();
 }

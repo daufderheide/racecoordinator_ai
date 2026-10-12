@@ -177,5 +177,37 @@ describe("LaneGridScrollHelper", () => {
       expect(result.length).toBe(2);
       expect(result[1].x).toBe(100);
     });
+
+    it("should generate extra rows taking grid label into account", () => {
+      const labeledWidgets: AbsoluteWidgetNode[] = [
+        {
+          id: "lbl-0",
+          widgetType: "lane-column",
+          x: 0,
+          y: 40,
+          width: 200,
+          height: 80,
+          zIndex: 5,
+          customSettings: {
+            gridId: "lbl-grid",
+            gridLane: 0,
+            targetIndex: 0,
+            gridTotalLanes: 1,
+            gridDirection: "vertical",
+            gridBounds: { x: 0, y: 0, width: 200, height: 200 },
+            gridLabelPosition: "top",
+            gridLabelSize: 40,
+          },
+        },
+      ];
+      const result = LaneGridScrollHelper.generateScrollableGridWidgets(
+        labeledWidgets,
+        "lbl-grid",
+        2,
+      );
+      expect(result.length).toBe(2);
+      expect(result[1].y).toBe(200);
+      expect(result[1].height).toBe(160);
+    });
   });
 });

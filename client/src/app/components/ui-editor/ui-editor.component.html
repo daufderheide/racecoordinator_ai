@@ -565,13 +565,50 @@
                                 </div>
                                 <div class="inspector-row-grid">
                                   <div class="inspector-section">
-                                    <label class="inspector-label">{{
-                                      "UE_INSPECTOR_POS_X" | translate
-                                    }}</label>
+                                    <label class="inspector-label">
+                                      {{ "UE_INSPECTOR_POS_X" | translate }}
+                                      @if (
+                                        isWidgetWidthAutoCalculated(
+                                          currentSelectedWidget
+                                        )
+                                      ) {
+                                        <span
+                                          class="auto-calc-badge"
+                                          [title]="
+                                            'UE_INSPECTOR_AUTO_CALCULATED'
+                                              | translate
+                                          "
+                                          >({{
+                                            "UE_INSPECTOR_AUTO_CALCULATED"
+                                              | translate
+                                          }})</span
+                                        >
+                                      }
+                                    </label>
                                     <input
                                       id="inspector-pos-x"
                                       type="number"
                                       class="inspector-input"
+                                      [disabled]="
+                                        isWidgetWidthAutoCalculated(
+                                          currentSelectedWidget
+                                        )
+                                      "
+                                      [attr.disabled]="
+                                        isWidgetWidthAutoCalculated(
+                                          currentSelectedWidget
+                                        )
+                                          ? ''
+                                          : null
+                                      "
+                                      [title]="
+                                        isWidgetWidthAutoCalculated(
+                                          currentSelectedWidget
+                                        )
+                                          ? ('UE_INSPECTOR_AUTO_CALCULATED'
+                                            | translate)
+                                          : ''
+                                      "
                                       [ngModel]="currentSelectedWidget.x"
                                       (ngModelChange)="
                                         onWidgetXChange(
@@ -594,13 +631,50 @@
                                     />
                                   </div>
                                   <div class="inspector-section">
-                                    <label class="inspector-label">{{
-                                      "UE_INSPECTOR_POS_Y" | translate
-                                    }}</label>
+                                    <label class="inspector-label">
+                                      {{ "UE_INSPECTOR_POS_Y" | translate }}
+                                      @if (
+                                        isWidgetHeightAutoCalculated(
+                                          currentSelectedWidget
+                                        )
+                                      ) {
+                                        <span
+                                          class="auto-calc-badge"
+                                          [title]="
+                                            'UE_INSPECTOR_AUTO_CALCULATED'
+                                              | translate
+                                          "
+                                          >({{
+                                            "UE_INSPECTOR_AUTO_CALCULATED"
+                                              | translate
+                                          }})</span
+                                        >
+                                      }
+                                    </label>
                                     <input
                                       id="inspector-pos-y"
                                       type="number"
                                       class="inspector-input"
+                                      [disabled]="
+                                        isWidgetHeightAutoCalculated(
+                                          currentSelectedWidget
+                                        )
+                                      "
+                                      [attr.disabled]="
+                                        isWidgetHeightAutoCalculated(
+                                          currentSelectedWidget
+                                        )
+                                          ? ''
+                                          : null
+                                      "
+                                      [title]="
+                                        isWidgetHeightAutoCalculated(
+                                          currentSelectedWidget
+                                        )
+                                          ? ('UE_INSPECTOR_AUTO_CALCULATED'
+                                            | translate)
+                                          : ''
+                                      "
                                       [ngModel]="currentSelectedWidget.y"
                                       (ngModelChange)="
                                         onWidgetYChange(
@@ -625,13 +699,50 @@
                                 </div>
                                 <div class="inspector-row-grid">
                                   <div class="inspector-section">
-                                    <label class="inspector-label">{{
-                                      "UE_INSPECTOR_WIDTH" | translate
-                                    }}</label>
+                                    <label class="inspector-label">
+                                      {{ "UE_INSPECTOR_WIDTH" | translate }}
+                                      @if (
+                                        isWidgetWidthAutoCalculated(
+                                          currentSelectedWidget
+                                        )
+                                      ) {
+                                        <span
+                                          class="auto-calc-badge"
+                                          [title]="
+                                            'UE_INSPECTOR_AUTO_CALCULATED'
+                                              | translate
+                                          "
+                                          >({{
+                                            "UE_INSPECTOR_AUTO_CALCULATED"
+                                              | translate
+                                          }})</span
+                                        >
+                                      }
+                                    </label>
                                     <input
                                       id="inspector-pos-w"
                                       type="number"
                                       class="inspector-input"
+                                      [disabled]="
+                                        isWidgetWidthAutoCalculated(
+                                          currentSelectedWidget
+                                        )
+                                      "
+                                      [attr.disabled]="
+                                        isWidgetWidthAutoCalculated(
+                                          currentSelectedWidget
+                                        )
+                                          ? ''
+                                          : null
+                                      "
+                                      [title]="
+                                        isWidgetWidthAutoCalculated(
+                                          currentSelectedWidget
+                                        )
+                                          ? ('UE_INSPECTOR_AUTO_CALCULATED'
+                                            | translate)
+                                          : ''
+                                      "
                                       [ngModel]="currentSelectedWidget.width"
                                       (ngModelChange)="
                                         onWidgetWidthChange(
@@ -651,13 +762,50 @@
                                     />
                                   </div>
                                   <div class="inspector-section">
-                                    <label class="inspector-label">{{
-                                      "UE_INSPECTOR_HEIGHT" | translate
-                                    }}</label>
+                                    <label class="inspector-label">
+                                      {{ "UE_INSPECTOR_HEIGHT" | translate }}
+                                      @if (
+                                        isWidgetHeightAutoCalculated(
+                                          currentSelectedWidget
+                                        )
+                                      ) {
+                                        <span
+                                          class="auto-calc-badge"
+                                          [title]="
+                                            'UE_INSPECTOR_AUTO_CALCULATED'
+                                              | translate
+                                          "
+                                          >({{
+                                            "UE_INSPECTOR_AUTO_CALCULATED"
+                                              | translate
+                                          }})</span
+                                        >
+                                      }
+                                    </label>
                                     <input
                                       id="inspector-pos-h"
                                       type="number"
                                       class="inspector-input"
+                                      [disabled]="
+                                        isWidgetHeightAutoCalculated(
+                                          currentSelectedWidget
+                                        )
+                                      "
+                                      [attr.disabled]="
+                                        isWidgetHeightAutoCalculated(
+                                          currentSelectedWidget
+                                        )
+                                          ? ''
+                                          : null
+                                      "
+                                      [title]="
+                                        isWidgetHeightAutoCalculated(
+                                          currentSelectedWidget
+                                        )
+                                          ? ('UE_INSPECTOR_AUTO_CALCULATED'
+                                            | translate)
+                                          : ''
+                                      "
                                       [ngModel]="currentSelectedWidget.height"
                                       (ngModelChange)="
                                         onWidgetHeightChange(
@@ -694,6 +842,10 @@
                                   (editGrid)="onEditGridTemplate($event, ui)"
                                   (detachGrid)="onDetachGrid($event, ui)"
                                   (deleteGrid)="onDeleteGrid($event, ui)"
+                                  (reMirrorGrid)="onReMirrorGrid($event, ui)"
+                                  (bringGridToFront)="
+                                    onBringGridToFront($event, ui)
+                                  "
                                 ></app-widget-inspector-fields>
                               </div>
                             </div>
