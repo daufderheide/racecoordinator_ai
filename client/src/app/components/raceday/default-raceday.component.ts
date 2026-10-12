@@ -180,6 +180,10 @@ export interface RacedayGridDescriptor {
   labelFontBold?: boolean;
   labelFontItalic?: boolean;
   labelAlignment?: "left" | "center" | "right";
+  labelShowBorder?: boolean;
+  labelBorderColor?: string;
+  labelBorderWidth?: number;
+  labelBorderRadius?: number;
   labelBounds: LaneGridBounds | null;
   dataBounds: LaneGridBounds;
 }
@@ -4123,6 +4127,19 @@ export class DefaultRacedayComponent
       gridLabelPosition: labelPosition,
       gridLabelText: labelText,
       gridLabelSize: labelSize,
+      gridLabelShowBorder: Boolean(
+        first.customSettings?.["gridLabelShowBorder"],
+      ),
+      gridLabelBorderColor:
+        first.customSettings?.["gridLabelBorderColor"] || "",
+      gridLabelBorderWidth:
+        first.customSettings?.["gridLabelBorderWidth"] != null
+          ? Number(first.customSettings["gridLabelBorderWidth"])
+          : 1,
+      gridLabelBorderRadius:
+        first.customSettings?.["gridLabelBorderRadius"] != null
+          ? Number(first.customSettings["gridLabelBorderRadius"])
+          : 4,
     };
 
     const labelBounds = LaneGridLabelHelper.computeGridLabelBounds(sessionLike);
@@ -4209,6 +4226,16 @@ export class DefaultRacedayComponent
       labelFontBold: first.customSettings?.["gridLabelFontBold"] !== false,
       labelFontItalic: Boolean(first.customSettings?.["gridLabelFontItalic"]),
       labelAlignment: first.customSettings?.["gridLabelAlignment"] || "center",
+      labelShowBorder: Boolean(first.customSettings?.["gridLabelShowBorder"]),
+      labelBorderColor: first.customSettings?.["gridLabelBorderColor"] || "",
+      labelBorderWidth:
+        first.customSettings?.["gridLabelBorderWidth"] != null
+          ? Number(first.customSettings["gridLabelBorderWidth"])
+          : 1,
+      labelBorderRadius:
+        first.customSettings?.["gridLabelBorderRadius"] != null
+          ? Number(first.customSettings["gridLabelBorderRadius"])
+          : 4,
       labelBounds,
       dataBounds,
     };

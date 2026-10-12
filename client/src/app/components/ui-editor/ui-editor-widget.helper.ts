@@ -381,6 +381,11 @@ function handleGridLabelStructureChange(
     gridLabelFontBold: targetWidget.customSettings?.["gridLabelFontBold"],
     gridLabelFontItalic: targetWidget.customSettings?.["gridLabelFontItalic"],
     gridLabelAlignment: targetWidget.customSettings?.["gridLabelAlignment"],
+    gridLabelShowBorder: targetWidget.customSettings?.["gridLabelShowBorder"],
+    gridLabelBorderColor: targetWidget.customSettings?.["gridLabelBorderColor"],
+    gridLabelBorderWidth: targetWidget.customSettings?.["gridLabelBorderWidth"],
+    gridLabelBorderRadius:
+      targetWidget.customSettings?.["gridLabelBorderRadius"],
   };
   layout.widgets = LaneGridReplicationHelper.updateGridLabel(
     layout.widgets,

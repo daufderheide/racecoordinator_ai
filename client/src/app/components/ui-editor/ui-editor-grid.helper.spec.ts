@@ -493,6 +493,10 @@ describe("ui-editor-grid.helper", () => {
         gridLabelFontBold: true,
         gridLabelFontItalic: true,
         gridLabelAlignment: "left",
+        gridLabelShowBorder: true,
+        gridLabelBorderColor: "#38bdf8",
+        gridLabelBorderWidth: 2,
+        gridLabelBorderRadius: 6,
         gridBounds: { x: 120, y: 80, width: 900, height: 450 },
       };
       mockWidgets[0].x = 120;
@@ -537,6 +541,10 @@ describe("ui-editor-grid.helper", () => {
       expect(mockComp.activeGridSession.gridLabelFontBold).toBeTrue();
       expect(mockComp.activeGridSession.gridLabelFontItalic).toBeTrue();
       expect(mockComp.activeGridSession.gridLabelAlignment).toBe("left");
+      expect(mockComp.activeGridSession.gridLabelShowBorder).toBeTrue();
+      expect(mockComp.activeGridSession.gridLabelBorderColor).toBe("#38bdf8");
+      expect(mockComp.activeGridSession.gridLabelBorderWidth).toBe(2);
+      expect(mockComp.activeGridSession.gridLabelBorderRadius).toBe(6);
       expect(mockComp.syncRacedayPreview).toHaveBeenCalled();
       expect(mockComp.cdr.markForCheck).toHaveBeenCalled();
     });

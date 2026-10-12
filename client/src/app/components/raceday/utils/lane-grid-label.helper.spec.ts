@@ -248,6 +248,10 @@ describe("LaneGridLabelHelper", () => {
         gridLabelFontBold: true,
         gridLabelFontItalic: false,
         gridLabelAlignment: "center",
+        gridLabelShowBorder: true,
+        gridLabelBorderColor: "#ff0055",
+        gridLabelBorderWidth: 3,
+        gridLabelBorderRadius: 10,
       };
 
       const updated = LaneGridLabelHelper.updateGridLabelSettings(
@@ -267,8 +271,15 @@ describe("LaneGridLabelHelper", () => {
       expect(updated[0].customSettings?.["gridLabelFontBold"]).toBeTrue();
       expect(updated[0].customSettings?.["gridLabelFontItalic"]).toBeFalse();
       expect(updated[0].customSettings?.["gridLabelAlignment"]).toBe("center");
+      expect(updated[0].customSettings?.["gridLabelShowBorder"]).toBeTrue();
+      expect(updated[0].customSettings?.["gridLabelBorderColor"]).toBe(
+        "#ff0055",
+      );
+      expect(updated[0].customSettings?.["gridLabelBorderWidth"]).toBe(3);
+      expect(updated[0].customSettings?.["gridLabelBorderRadius"]).toBe(10);
 
       expect(updated[1].customSettings?.["gridLabelText"]).toBe("LEADERBOARD");
+      expect(updated[1].customSettings?.["gridLabelShowBorder"]).toBeTrue();
       expect(updated[2].customSettings?.["gridLabelText"]).toBeUndefined();
     });
   });

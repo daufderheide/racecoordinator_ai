@@ -100,6 +100,16 @@ function createInitialGridSession(
     gridLabelFontBold: cs["gridLabelFontBold"] !== false,
     gridLabelFontItalic: Boolean(cs["gridLabelFontItalic"]),
     gridLabelAlignment: cs["gridLabelAlignment"] || "center",
+    gridLabelShowBorder: Boolean(cs["gridLabelShowBorder"]),
+    gridLabelBorderColor: cs["gridLabelBorderColor"] || "",
+    gridLabelBorderWidth:
+      cs["gridLabelBorderWidth"] != null
+        ? Number(cs["gridLabelBorderWidth"])
+        : 1,
+    gridLabelBorderRadius:
+      cs["gridLabelBorderRadius"] != null
+        ? Number(cs["gridLabelBorderRadius"])
+        : 4,
   };
 }
 
@@ -307,6 +317,16 @@ export function handleEditGridTemplate(
     gridLabelFontItalic: Boolean(first.customSettings?.["gridLabelFontItalic"]),
     gridLabelAlignment:
       first.customSettings?.["gridLabelAlignment"] || "center",
+    gridLabelShowBorder: Boolean(first.customSettings?.["gridLabelShowBorder"]),
+    gridLabelBorderColor: first.customSettings?.["gridLabelBorderColor"] || "",
+    gridLabelBorderWidth:
+      first.customSettings?.["gridLabelBorderWidth"] != null
+        ? Number(first.customSettings["gridLabelBorderWidth"])
+        : 1,
+    gridLabelBorderRadius:
+      first.customSettings?.["gridLabelBorderRadius"] != null
+        ? Number(first.customSettings["gridLabelBorderRadius"])
+        : 4,
   };
 
   for (const w of gridWidgets) {
@@ -450,6 +470,59 @@ export function handleDeleteGrid(
   comp.cdr.markForCheck();
 }
 
+function extractGridLabelSessionSettings(
+  cs: Record<string, any>,
+  currentSession: any,
+) {
+  return {
+    gridLabelPosition:
+      cs["gridLabelPosition"] || currentSession.gridLabelPosition || "none",
+    gridLabelText: cs["gridLabelText"] ?? currentSession.gridLabelText ?? "",
+    gridLabelSize:
+      cs["gridLabelSize"] != null
+        ? Number(cs["gridLabelSize"])
+        : currentSession.gridLabelSize,
+    gridLabelFontFamily:
+      cs["gridLabelFontFamily"] ?? currentSession.gridLabelFontFamily ?? "",
+    gridLabelFontSize:
+      cs["gridLabelFontSize"] != null
+        ? Number(cs["gridLabelFontSize"])
+        : currentSession.gridLabelFontSize,
+    gridLabelTextColor:
+      cs["gridLabelTextColor"] ??
+      currentSession.gridLabelTextColor ??
+      "#ffffff",
+    gridLabelBackgroundColor:
+      cs["gridLabelBackgroundColor"] ??
+      currentSession.gridLabelBackgroundColor ??
+      "rgba(15, 23, 42, 0.85)",
+    gridLabelFontBold:
+      cs["gridLabelFontBold"] !== undefined
+        ? cs["gridLabelFontBold"] !== false
+        : currentSession.gridLabelFontBold,
+    gridLabelFontItalic:
+      cs["gridLabelFontItalic"] !== undefined
+        ? Boolean(cs["gridLabelFontItalic"])
+        : currentSession.gridLabelFontItalic,
+    gridLabelAlignment:
+      cs["gridLabelAlignment"] || currentSession.gridLabelAlignment || "center",
+    gridLabelShowBorder:
+      cs["gridLabelShowBorder"] !== undefined
+        ? Boolean(cs["gridLabelShowBorder"])
+        : currentSession.gridLabelShowBorder,
+    gridLabelBorderColor:
+      cs["gridLabelBorderColor"] ?? currentSession.gridLabelBorderColor ?? "",
+    gridLabelBorderWidth:
+      cs["gridLabelBorderWidth"] != null
+        ? Number(cs["gridLabelBorderWidth"])
+        : currentSession.gridLabelBorderWidth,
+    gridLabelBorderRadius:
+      cs["gridLabelBorderRadius"] != null
+        ? Number(cs["gridLabelBorderRadius"])
+        : currentSession.gridLabelBorderRadius,
+  };
+}
+
 export function handleSyncActiveGridSessionFromLayout(comp: any): void {
   if (!comp.activeGridSession) return;
   const targetUi = comp.activeCustomUi;
@@ -498,44 +571,7 @@ export function handleSyncActiveGridSessionFromLayout(comp: any): void {
       linkColumns: cs["linkColumns"] !== false,
       layoutOrientation:
         cs["layoutOrientation"] || comp.activeGridSession.layoutOrientation,
-      gridLabelPosition:
-        cs["gridLabelPosition"] ||
-        comp.activeGridSession.gridLabelPosition ||
-        "none",
-      gridLabelText:
-        cs["gridLabelText"] ?? comp.activeGridSession.gridLabelText ?? "",
-      gridLabelSize:
-        cs["gridLabelSize"] != null
-          ? Number(cs["gridLabelSize"])
-          : comp.activeGridSession.gridLabelSize,
-      gridLabelFontFamily:
-        cs["gridLabelFontFamily"] ??
-        comp.activeGridSession.gridLabelFontFamily ??
-        "",
-      gridLabelFontSize:
-        cs["gridLabelFontSize"] != null
-          ? Number(cs["gridLabelFontSize"])
-          : comp.activeGridSession.gridLabelFontSize,
-      gridLabelTextColor:
-        cs["gridLabelTextColor"] ??
-        comp.activeGridSession.gridLabelTextColor ??
-        "#ffffff",
-      gridLabelBackgroundColor:
-        cs["gridLabelBackgroundColor"] ??
-        comp.activeGridSession.gridLabelBackgroundColor ??
-        "rgba(15, 23, 42, 0.85)",
-      gridLabelFontBold:
-        cs["gridLabelFontBold"] !== undefined
-          ? cs["gridLabelFontBold"] !== false
-          : comp.activeGridSession.gridLabelFontBold,
-      gridLabelFontItalic:
-        cs["gridLabelFontItalic"] !== undefined
-          ? Boolean(cs["gridLabelFontItalic"])
-          : comp.activeGridSession.gridLabelFontItalic,
-      gridLabelAlignment:
-        cs["gridLabelAlignment"] ||
-        comp.activeGridSession.gridLabelAlignment ||
-        "center",
+      ...extractGridLabelSessionSettings(cs, comp.activeGridSession),
     };
   } else if (bounds) {
     comp.activeGridSession = {

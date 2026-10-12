@@ -110,6 +110,16 @@
               [style.justify-content]="
                 getGridLabelJustify(grid.labelPosition, grid.labelAlignment)
               "
+              [style.border-color]="
+                grid.labelBorderColor || grid.labelTextColor || '#ffffff'
+              "
+              [style.border-width.px]="
+                grid.labelBorderWidth != null ? grid.labelBorderWidth : 1
+              "
+              [style.border-radius.px]="
+                grid.labelBorderRadius != null ? grid.labelBorderRadius : 4
+              "
+              [style.border-style]="grid.labelShowBorder ? 'solid' : 'none'"
             >
               <span class="grid-label-text">{{
                 grid.labelText || ("UE_GRID_LABEL_DEFAULT" | translate)
@@ -274,6 +284,28 @@
                   gridSession()!.gridLabelPosition,
                   gridSession()!.gridLabelAlignment
                 )
+              "
+              [style.border-radius.px]="
+                gridSession()!.gridLabelBorderRadius != null
+                  ? gridSession()!.gridLabelBorderRadius
+                  : 4
+              "
+              [style.border-style]="
+                gridSession()!.gridLabelShowBorder ? 'solid' : 'dashed'
+              "
+              [style.border-color]="
+                gridSession()!.gridLabelShowBorder
+                  ? gridSession()!.gridLabelBorderColor ||
+                    gridSession()!.gridLabelTextColor ||
+                    '#ffffff'
+                  : 'rgba(56, 189, 248, 0.7)'
+              "
+              [style.border-width.px]="
+                gridSession()!.gridLabelShowBorder
+                  ? gridSession()!.gridLabelBorderWidth != null
+                    ? gridSession()!.gridLabelBorderWidth
+                    : 1
+                  : 1.5
               "
             >
               <div class="grid-label-blueprint-text">

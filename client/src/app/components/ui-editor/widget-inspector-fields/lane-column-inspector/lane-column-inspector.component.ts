@@ -598,6 +598,77 @@ export class LaneColumnInspectorComponent {
     this.onFieldChange();
   }
 
+  get gridLabelShowBorder(): boolean {
+    return Boolean(this.currentSettings["gridLabelShowBorder"]);
+  }
+
+  set gridLabelShowBorder(val: boolean) {
+    this.currentSettings["gridLabelShowBorder"] = Boolean(val);
+    this.currentSettings["_gridLabelChanged"] = true;
+    this.onFieldChange();
+  }
+
+  get gridLabelBorderColor(): string {
+    return (
+      this.currentSettings["gridLabelBorderColor"] ||
+      this.gridLabelTextColor ||
+      "#ffffff"
+    );
+  }
+
+  set gridLabelBorderColor(val: string) {
+    this.currentSettings["gridLabelBorderColor"] = val;
+    this.currentSettings["_gridLabelChanged"] = true;
+    this.onFieldChange();
+  }
+
+  onGridLabelBorderColorChange(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.gridLabelBorderColor = input.value;
+  }
+
+  resetGridLabelBorderColor(): void {
+    delete this.currentSettings["gridLabelBorderColor"];
+    this.currentSettings["_gridLabelChanged"] = true;
+    this.onFieldChange();
+  }
+
+  get gridLabelBorderWidth(): number {
+    return this.currentSettings["gridLabelBorderWidth"] != null
+      ? Math.max(
+          0,
+          Math.min(10, Number(this.currentSettings["gridLabelBorderWidth"])),
+        )
+      : 1;
+  }
+
+  set gridLabelBorderWidth(val: number) {
+    this.currentSettings["gridLabelBorderWidth"] = Math.max(
+      0,
+      Math.min(10, Number(val) || 0),
+    );
+    this.currentSettings["_gridLabelChanged"] = true;
+    this.onFieldChange();
+  }
+
+  get gridLabelBorderRadius(): number {
+    return this.currentSettings["gridLabelBorderRadius"] != null
+      ? Math.max(
+          0,
+          Math.min(32, Number(this.currentSettings["gridLabelBorderRadius"])),
+        )
+      : 4;
+  }
+
+  set gridLabelBorderRadius(val: number) {
+    this.currentSettings["gridLabelBorderRadius"] = Math.max(
+      0,
+      Math.min(32, Number(val) || 0),
+    );
+    this.currentSettings["_gridLabelChanged"] = true;
+    this.onFieldChange();
+  }
+
   onEditGridTemplate(): void {
     if (this.currentSettings["gridId"]) {
       this.editGrid.emit(this.currentSettings["gridId"]);

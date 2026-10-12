@@ -712,6 +712,83 @@
           </button>
         </div>
       </div>
+
+      <!-- Grid Label Border Options -->
+      <div class="inspector-section" style="margin-bottom: 8px">
+        <label class="form-check-label">
+          <input
+            type="checkbox"
+            class="form-checkbox"
+            [ngModel]="gridLabelShowBorder"
+            (ngModelChange)="gridLabelShowBorder = $event"
+          />
+          <span>{{ "UE_INSPECTOR_SHOW_BORDER" | translate }}</span>
+        </label>
+      </div>
+
+      @if (gridLabelShowBorder) {
+        <div class="inspector-section" style="margin-bottom: 8px">
+          <label class="inspector-label">{{
+            "UE_INSPECTOR_BORDER_COLOR" | translate
+          }}</label>
+          <div class="color-picker-row">
+            <input
+              type="color"
+              class="color-picker-input inspector-color-input"
+              [value]="gridLabelBorderColor"
+              (input)="onGridLabelBorderColorChange($event)"
+            />
+            <button
+              type="button"
+              class="inspector-btn-ghost ms-1"
+              (click)="resetGridLabelBorderColor()"
+              [title]="'UE_INSPECTOR_COLOR_RESET' | translate"
+            >
+              <span class="material-icons" style="font-size: 14px"
+                >restart_alt</span
+              >
+            </button>
+          </div>
+        </div>
+
+        <div class="inspector-section" style="margin-bottom: 8px">
+          <div class="inspector-label-row">
+            <label class="inspector-label">{{
+              "UE_INSPECTOR_BORDER_WIDTH" | translate
+            }}</label>
+            <span class="inspector-val-badge"
+              >{{ gridLabelBorderWidth }}px</span
+            >
+          </div>
+          <input
+            type="range"
+            min="0"
+            max="10"
+            [ngModel]="gridLabelBorderWidth"
+            (ngModelChange)="gridLabelBorderWidth = $event"
+            class="inspector-slider"
+          />
+        </div>
+
+        <div class="inspector-section" style="margin-bottom: 8px">
+          <div class="inspector-label-row">
+            <label class="inspector-label">{{
+              "UE_INSPECTOR_BORDER_RADIUS" | translate
+            }}</label>
+            <span class="inspector-val-badge"
+              >{{ gridLabelBorderRadius }}px</span
+            >
+          </div>
+          <input
+            type="range"
+            min="0"
+            max="32"
+            [ngModel]="gridLabelBorderRadius"
+            (ngModelChange)="gridLabelBorderRadius = $event"
+            class="inspector-slider"
+          />
+        </div>
+      }
     }
 
     <div class="grid-card-actions">

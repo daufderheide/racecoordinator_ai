@@ -1095,5 +1095,53 @@ describe("LaneColumnInspectorComponent", () => {
         "My Custom Leaderboard",
       );
     });
+
+    it("should handle gridLabel border properties and clamping", () => {
+      // Show Border
+      expect(component.gridLabelShowBorder).toBeFalse();
+      component.gridLabelShowBorder = true;
+      expect(component.gridLabelShowBorder).toBeTrue();
+      expect(mockSettings.gridLabelShowBorder).toBeTrue();
+      expect(mockSettings._gridLabelChanged).toBeTrue();
+
+      // Border Color with default fallback and reset
+      expect(component.gridLabelBorderColor).toBe("#ffffff");
+      mockSettings.gridLabelTextColor = "#a0aec0";
+      expect(component.gridLabelBorderColor).toBe("#a0aec0");
+
+      component.gridLabelBorderColor = "#ff007f";
+      expect(mockSettings.gridLabelBorderColor).toBe("#ff007f");
+      expect(component.gridLabelBorderColor).toBe("#ff007f");
+
+      const fakeColorEvent = { target: { value: "#10b981" } } as any;
+      component.onGridLabelBorderColorChange(fakeColorEvent);
+      expect(mockSettings.gridLabelBorderColor).toBe("#10b981");
+
+      component.resetGridLabelBorderColor();
+      expect(mockSettings.gridLabelBorderColor).toBeUndefined();
+      expect(component.gridLabelBorderColor).toBe("#a0aec0");
+
+      // Border Width with default and clamping (0 to 10)
+      expect(component.gridLabelBorderWidth).toBe(1);
+      component.gridLabelBorderWidth = 5;
+      expect(mockSettings.gridLabelBorderWidth).toBe(5);
+      expect(component.gridLabelBorderWidth).toBe(5);
+
+      component.gridLabelBorderWidth = -3;
+      expect(mockSettings.gridLabelBorderWidth).toBe(0);
+      component.gridLabelBorderWidth = 15;
+      expect(mockSettings.gridLabelBorderWidth).toBe(10);
+
+      // Border Radius with default and clamping (0 to 32)
+      expect(component.gridLabelBorderRadius).toBe(4);
+      component.gridLabelBorderRadius = 12;
+      expect(mockSettings.gridLabelBorderRadius).toBe(12);
+      expect(component.gridLabelBorderRadius).toBe(12);
+
+      component.gridLabelBorderRadius = -5;
+      expect(mockSettings.gridLabelBorderRadius).toBe(0);
+      component.gridLabelBorderRadius = 50;
+      expect(mockSettings.gridLabelBorderRadius).toBe(32);
+    });
   });
 });

@@ -42,6 +42,10 @@ export interface LaneGridSession {
   gridLabelFontBold?: boolean;
   gridLabelFontItalic?: boolean;
   gridLabelAlignment?: "left" | "center" | "right";
+  gridLabelShowBorder?: boolean;
+  gridLabelBorderColor?: string;
+  gridLabelBorderWidth?: number;
+  gridLabelBorderRadius?: number;
 }
 
 export type GridResizeHandle =
@@ -379,6 +383,16 @@ export class LaneGridReplicationHelper {
         gridLabelFontBold: session.gridLabelFontBold !== false,
         gridLabelFontItalic: Boolean(session.gridLabelFontItalic),
         gridLabelAlignment: session.gridLabelAlignment || "center",
+        gridLabelShowBorder: Boolean(session.gridLabelShowBorder),
+        gridLabelBorderColor: session.gridLabelBorderColor || "",
+        gridLabelBorderWidth:
+          session.gridLabelBorderWidth != null
+            ? session.gridLabelBorderWidth
+            : 1,
+        gridLabelBorderRadius:
+          session.gridLabelBorderRadius != null
+            ? session.gridLabelBorderRadius
+            : 4,
       },
     };
   }
@@ -669,6 +683,16 @@ export class LaneGridReplicationHelper {
             gridLabelFontBold: session.gridLabelFontBold !== false,
             gridLabelFontItalic: Boolean(session.gridLabelFontItalic),
             gridLabelAlignment: session.gridLabelAlignment || "center",
+            gridLabelShowBorder: Boolean(session.gridLabelShowBorder),
+            gridLabelBorderColor: session.gridLabelBorderColor || "",
+            gridLabelBorderWidth:
+              session.gridLabelBorderWidth != null
+                ? session.gridLabelBorderWidth
+                : 1,
+            gridLabelBorderRadius:
+              session.gridLabelBorderRadius != null
+                ? session.gridLabelBorderRadius
+                : 4,
           },
         };
       }
@@ -781,6 +805,19 @@ export class LaneGridReplicationHelper {
       ),
       gridLabelAlignment:
         first.customSettings?.["gridLabelAlignment"] || "center",
+      gridLabelShowBorder: Boolean(
+        first.customSettings?.["gridLabelShowBorder"],
+      ),
+      gridLabelBorderColor:
+        first.customSettings?.["gridLabelBorderColor"] || "",
+      gridLabelBorderWidth:
+        first.customSettings?.["gridLabelBorderWidth"] != null
+          ? Number(first.customSettings["gridLabelBorderWidth"])
+          : 1,
+      gridLabelBorderRadius:
+        first.customSettings?.["gridLabelBorderRadius"] != null
+          ? Number(first.customSettings["gridLabelBorderRadius"])
+          : 4,
     };
 
     const synced = this.syncAllMasterWidgetsToLanes(session, allWidgets);

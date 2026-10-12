@@ -18,6 +18,10 @@ export interface GridLabelConfig {
   gridLabelFontBold?: boolean;
   gridLabelFontItalic?: boolean;
   gridLabelAlignment?: "left" | "center" | "right";
+  gridLabelShowBorder?: boolean;
+  gridLabelBorderColor?: string;
+  gridLabelBorderWidth?: number;
+  gridLabelBorderRadius?: number;
 }
 
 export class LaneGridLabelHelper {
@@ -148,6 +152,16 @@ export class LaneGridLabelHelper {
           gridLabelFontBold: config.gridLabelFontBold !== false,
           gridLabelFontItalic: Boolean(config.gridLabelFontItalic),
           gridLabelAlignment: config.gridLabelAlignment ?? "center",
+          gridLabelShowBorder: Boolean(config.gridLabelShowBorder),
+          gridLabelBorderColor: config.gridLabelBorderColor ?? "",
+          gridLabelBorderWidth:
+            config.gridLabelBorderWidth != null
+              ? Number(config.gridLabelBorderWidth)
+              : 1,
+          gridLabelBorderRadius:
+            config.gridLabelBorderRadius != null
+              ? Number(config.gridLabelBorderRadius)
+              : 4,
         },
       };
     });

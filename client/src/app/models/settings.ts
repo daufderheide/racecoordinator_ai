@@ -119,6 +119,10 @@ export interface LaneColumnWidgetSettings {
   borderColor: string;
   borderWidth: number;
   borderRadius: number;
+  gridLabelShowBorder?: boolean;
+  gridLabelBorderColor?: string;
+  gridLabelBorderWidth?: number;
+  gridLabelBorderRadius?: number;
 }
 
 export type LayoutScaleMode = "letterbox" | "stretch";

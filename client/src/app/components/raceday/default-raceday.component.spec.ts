@@ -11937,5 +11937,43 @@ describe("DefaultRacedayComponent", () => {
       expect(grid.dataCount).toBe(2);
       expect(grid.cellWidgets.length).toBe(1);
     });
+
+    it("should populate grid label border options in RacedayGridDescriptor", () => {
+      const masterWidget = {
+        id: "grid-border-widget",
+        widgetType: "lane-column",
+        x: 50,
+        y: 50,
+        width: 300,
+        height: 80,
+        customSettings: {
+          gridId: "border-test-grid",
+          gridLane: 0,
+          gridTotalLanes: 2,
+          gridDirection: "vertical",
+          gridLabelPosition: "top",
+          gridLabelText: "HEAT BOARD",
+          gridLabelSize: 40,
+          gridLabelShowBorder: true,
+          gridLabelBorderColor: "#ef4444",
+          gridLabelBorderWidth: 3,
+          gridLabelBorderRadius: 10,
+        },
+      } as any;
+
+      (component as any).layout = { widgets: [masterWidget] };
+      (component as any).track = { lanes: [{}, {}] };
+      (component as any).race = { track: (component as any).track } as any;
+
+      const grids = component.getGrids();
+      expect(grids.length).toBe(1);
+      const grid = grids[0];
+      expect(grid.labelPosition).toBe("top");
+      expect(grid.labelText).toBe("HEAT BOARD");
+      expect(grid.labelShowBorder).toBeTrue();
+      expect(grid.labelBorderColor).toBe("#ef4444");
+      expect(grid.labelBorderWidth).toBe(3);
+      expect(grid.labelBorderRadius).toBe(10);
+    });
   });
 });
