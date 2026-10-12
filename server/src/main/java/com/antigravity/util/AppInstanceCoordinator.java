@@ -233,7 +233,8 @@ public class AppInstanceCoordinator {
       return;
     }
 
-    if (headless || GraphicsEnvironment.isHeadless()) {
+    if (headless
+        || (prompter instanceof DefaultActionPrompter && GraphicsEnvironment.isHeadless())) {
       logger.info("Headless environment detected. Exiting new process cleanly.");
       exitHandler.exit(0);
       return;
