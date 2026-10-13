@@ -404,7 +404,10 @@ export class DefaultRacedaySetupComponent implements OnInit {
         }
 
         if (this.selectedRace?.entity_id) {
-          this.themeService.activateForRace(this.selectedRace.entity_id);
+          this.themeService.activateForRace(
+            this.selectedRace.entity_id,
+            this.selectedRace.theme_id,
+          );
         }
 
         // --- Participant Setup ---
@@ -1462,7 +1465,7 @@ export class DefaultRacedaySetupComponent implements OnInit {
     this.selectedRace = race;
     this.selectedEvent = undefined;
     if (race?.entity_id) {
-      this.themeService.activateForRace(race.entity_id);
+      this.themeService.activateForRace(race.entity_id, race.theme_id);
     }
     this.saveSettings();
     this.closeDropdown();

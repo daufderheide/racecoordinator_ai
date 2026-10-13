@@ -1618,8 +1618,12 @@ export class DefaultRacedayComponent
     this.subscriptions.push(
       this.themeService.activeTheme$.subscribe(() => {
         this.updateRacedayLayout();
+        this.refreshCountdownLampUrls();
         this.preloadCountdownAudio();
         this.updateTabTitle();
+        if (!this.isDestroyed) {
+          this.cdr.markForCheck();
+        }
       }),
     );
 
@@ -1672,6 +1676,7 @@ export class DefaultRacedayComponent
     }
 
     this.loadColumns();
+    this.assets = this.dataService?.loadedAssets || [];
 
     // Clear caches to ensure fresh data for new race
     RaceConverter.clearCache();
@@ -1684,43 +1689,60 @@ export class DefaultRacedayComponent
   }
 
   private subscribeToAssets() {
-    this.subscriptions.push(
-      this.dataService.socketConnected$.subscribe((connected) => {
-        if (connected) {
-          this.dataService.listAssets().subscribe({
-            next: (assets) => {
-              this.assets = assets || [];
-              this.loadColumns();
-              this.preloadCountdownAudio();
-              if (!this.isDestroyed) {
-                this.cdr.markForCheck();
-              }
-            },
-            error: (err) => {
-              this.logger.error(
-                "DefaultRacedayComponent: Failed to fetch assets",
-                err,
-              );
-            },
-          });
+    if (this.dataService?.assets$) {
+      this.subscriptions.push(
+        this.dataService.assets$.subscribe((assets) => {
+          if (assets && assets.length > 0) {
+            this.assets = assets;
+            this.refreshCountdownLampUrls();
+            if (!this.isDestroyed) {
+              this.cdr.markForCheck();
+            }
+          }
+        }),
+      );
+    }
 
-          this.dataService.getDrivers().subscribe({
-            next: (drivers) => {
-              this.allDrivers = drivers || [];
-              if (!this.isDestroyed) {
-                this.cdr.markForCheck();
-              }
-            },
-            error: (err) => {
-              this.logger.error(
-                "DefaultRacedayComponent: Failed to fetch drivers",
-                err,
-              );
-            },
-          });
-        }
-      }),
-    );
+    if (this.dataService?.socketConnected$) {
+      this.subscriptions.push(
+        this.dataService.socketConnected$.subscribe((connected) => {
+          if (connected && this.dataService?.listAssets) {
+            this.dataService.listAssets().subscribe({
+              next: (assets) => {
+                this.assets = assets || [];
+                this.refreshCountdownLampUrls();
+                this.loadColumns();
+                this.preloadCountdownAudio();
+                if (!this.isDestroyed) {
+                  this.cdr.markForCheck();
+                }
+              },
+              error: (err) => {
+                this.logger.error(
+                  "DefaultRacedayComponent: Failed to fetch assets",
+                  err,
+                );
+              },
+            });
+
+            this.dataService.getDrivers().subscribe({
+              next: (drivers) => {
+                this.allDrivers = drivers || [];
+                if (!this.isDestroyed) {
+                  this.cdr.markForCheck();
+                }
+              },
+              error: (err) => {
+                this.logger.error(
+                  "DefaultRacedayComponent: Failed to fetch drivers",
+                  err,
+                );
+              },
+            });
+          }
+        }),
+      );
+    }
   }
 
   private subscribeToRaceData() {
@@ -1945,13 +1967,15 @@ export class DefaultRacedayComponent
 
         // Update countdown overlay if active
         if (this.showCountdownOverlay) {
-          if (this.countdownTotalLamps === 0 && this.autoStartRemaining > 0) {
+          const countdownVal =
+            this.autoStartRemaining > 0 ? this.autoStartRemaining : time;
+          if (this.countdownTotalLamps === 0 && countdownVal > 0) {
             this.countdownTotalLamps = Math.min(
               this.getCountdownMaxLamps(),
-              Math.ceil(this.autoStartRemaining),
+              Math.ceil(countdownVal),
             );
           }
-          this.updateCountdownLamps(this.autoStartRemaining);
+          this.updateCountdownLamps(countdownVal);
         }
 
         const timerOpts = this.getTimerFormatOptions();
@@ -3923,7 +3947,7 @@ export class DefaultRacedayComponent
         !this.themeService?.getTransientThemeId?.() &&
         typeof this.themeService?.activateForRace === "function"
       ) {
-        this.themeService.activateForRace(race.entity_id);
+        this.themeService.activateForRace(race.entity_id, race.theme_id);
       }
       this.latestPredictionRecord = null;
       this.laneQrCodeCache.clear();
@@ -7730,7 +7754,7 @@ export class DefaultRacedayComponent
     this.countdownColor = "lime";
   }
 
-  private getAssetUrl(name: string): string {
+  getAssetUrl(name: string): string {
     const asset = (this.assets || []).find((a: any) => a.name === name);
     return asset ? this.getFullUrl(asset.url) : "";
   }
@@ -7741,18 +7765,43 @@ export class DefaultRacedayComponent
    * matching asset in the loaded assets list to get its URL.
    * Returns empty string if no theme is active or the slot/asset is not found.
    */
-  private resolveAssetUrlBySlot(slotKey: string): string {
+  resolveAssetUrlBySlot(slotKey: string): string {
     const assetId = this.themeService.resolveAssetId(slotKey);
     if (!assetId) return "";
 
     // Find the asset in the loaded assets list by entity ID
     const asset = (this.assets || []).find(
       (a: any) =>
-        a.model?.entityId === assetId ||
-        a.entity_id === assetId ||
-        a._id === assetId,
+        a?.model?.entityId === assetId ||
+        a?.entity_id === assetId ||
+        a?._id === assetId,
     );
     return asset ? this.getFullUrl(asset.url) : "";
+  }
+
+  refreshCountdownLampUrls(): void {
+    if (!this.countdownLamps || this.countdownLamps.length === 0) return;
+    for (const lamp of this.countdownLamps) {
+      if (lamp.state === "go") {
+        lamp.url =
+          this.resolveAssetUrlBySlot("lamp.green") ||
+          this.getAssetUrl("Start Lamp Green") ||
+          lamp.url;
+      } else if (lamp.state === "on") {
+        lamp.url =
+          this.resolveAssetUrlBySlot("lamp.red.on") ||
+          this.getAssetUrl("Start Lamp Red") ||
+          lamp.url;
+      } else if (lamp.state === "dim") {
+        lamp.url =
+          this.resolveAssetUrlBySlot("lamp.red.dim") ||
+          this.getAssetUrl("Start Lamp Dim") ||
+          lamp.url;
+      }
+    }
+    if (!this.isDestroyed) {
+      this.cdr.markForCheck();
+    }
   }
 
   protected onModifyHeatsClose(saved: boolean) {

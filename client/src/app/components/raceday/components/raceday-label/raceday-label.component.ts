@@ -1,7 +1,6 @@
 import { CommonModule } from "@angular/common";
 import { Component, input, ViewEncapsulation } from "@angular/core";
 import { AbsoluteWidgetNode } from "@app/models/settings";
-import { TranslatePipe } from "@app/pipes/translate.pipe";
 
 @Component({
   standalone: true,
@@ -9,7 +8,7 @@ import { TranslatePipe } from "@app/pipes/translate.pipe";
   templateUrl: "./raceday-label.component.html",
   styleUrls: ["./raceday-label.component.css"],
   encapsulation: ViewEncapsulation.None,
-  imports: [CommonModule, TranslatePipe],
+  imports: [CommonModule],
 })
 export class RacedayLabelComponent {
   widget = input<AbsoluteWidgetNode | null>(null);

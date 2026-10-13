@@ -10146,6 +10146,56 @@ describe("DefaultRacedayComponent", () => {
       delete (component as any).route.snapshot.queryParams["themeId"];
     });
 
+    it("should call activateForRace with race entity_id and theme_id", () => {
+      const themeService = TestBed.inject(ThemeService);
+      const raceService = TestBed.inject(RaceService);
+      (raceService.getRace as jasmine.Spy).and.returnValue({
+        entity_id: "race-123",
+        theme_id: "custom-theme-99",
+        track: { lanes: [] },
+      });
+      (themeService.getTransientThemeId as jasmine.Spy).and.returnValue(null);
+      (themeService.activateForRace as jasmine.Spy).calls.reset();
+
+      (component as any).loadRaceData();
+      expect(themeService.activateForRace).toHaveBeenCalledWith(
+        "race-123",
+        "custom-theme-99",
+      );
+    });
+
+    it("should refresh countdown lamp URLs when theme changes", () => {
+      (component as any).assets = [
+        { model: { entityId: "custom-red-id" }, url: "assets/custom_red.png" },
+        {
+          model: { entityId: "custom-green-id" },
+          url: "assets/custom_green.png",
+        },
+      ];
+      component.countdownLamps = [
+        { url: "assets/default_red.png", state: "on" },
+        { url: "assets/default_green.png", state: "go" },
+      ];
+
+      const themeService = TestBed.inject(ThemeService);
+      (themeService.resolveAssetId as jasmine.Spy).and.callFake(
+        (slotKey: string) => {
+          if (slotKey === "lamp.red.on") return "custom-red-id";
+          if (slotKey === "lamp.green") return "custom-green-id";
+          return null;
+        },
+      );
+
+      component.refreshCountdownLampUrls();
+
+      expect(component.countdownLamps[0].url).toContain(
+        "assets/custom_red.png",
+      );
+      expect(component.countdownLamps[1].url).toContain(
+        "assets/custom_green.png",
+      );
+    });
+
     it("should initialize customUiService and activate theme on themeId query param", async () => {
       const themeService = TestBed.inject(ThemeService);
       const customUiService = TestBed.inject(CustomUiService);

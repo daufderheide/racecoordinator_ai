@@ -611,6 +611,7 @@ describe("DefaultRacedaySetupComponent", () => {
     component.selectRace(testRace);
     expect(themeService.activateForRace).toHaveBeenCalledWith(
       testRace.entity_id,
+      "custom-theme-123",
     );
 
     component.selectedParticipants = [component.unselectedParticipants[0]];

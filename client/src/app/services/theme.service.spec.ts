@@ -45,8 +45,10 @@ describe("ThemeService", () => {
       "updateTheme",
       "duplicateTheme",
       "deleteTheme",
+      "getRaces",
     ]);
     dataSpy.socketConnected$ = of(true);
+    dataSpy.getRaces.and.returnValue(of([]));
     const settingsSpy = jasmine.createSpyObj("SettingsService", [
       "getSettings",
       "saveSettings",
@@ -126,6 +128,17 @@ describe("ThemeService", () => {
     await service.initialize();
     service.activateForRace("race-1");
     expect(service.getActiveTheme()?.entity_id).toBe("theme-1");
+  });
+
+  it("should activate knownThemeId immediately when provided without extra getRaces fetch", async () => {
+    const settings = new Settings();
+    settings.activeThemeId = "default_theme";
+    settingsServiceSpy.getSettings.and.returnValue(settings);
+
+    await service.initialize();
+    await service.activateForRace("race-1", "theme-2");
+    expect(service.getActiveTheme()?.entity_id).toBe("theme-2");
+    expect(dataServiceSpy.getRaces).not.toHaveBeenCalled();
   });
 
   it("should respect transient active theme over race theme in activateForRace", async () => {

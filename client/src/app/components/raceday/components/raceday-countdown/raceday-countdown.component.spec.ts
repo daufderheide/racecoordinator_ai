@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from "@angular/core/testing";
 import { AbsoluteWidgetNode } from "@app/models/settings";
+import { THEME_SLOT_KEYS } from "@app/models/theme";
 import { ThemeService } from "@app/services/theme.service";
 
 import { RacedayCountdownComponent } from "./raceday-countdown.component";
@@ -557,6 +558,42 @@ describe("RacedayCountdownComponent", () => {
     expect(lamps[0].url).toBe("assets/images/defaults/start_red_on.png");
     expect(lamps[lamps.length - 1].url).toBe(
       "assets/images/defaults/start_green.png",
+    );
+  });
+
+  it("should resolve theme custom asset with model.entityId in resolveLampUrl", () => {
+    const parentWithProtoAssets = {
+      assets: [
+        {
+          model: { entityId: "custom-red-proto-id" },
+          url: "assets/custom-square-red.png",
+        },
+        {
+          model: { entityId: "custom-green-proto-id" },
+          url: "assets/custom-square-green.png",
+        },
+      ],
+      getFullUrl: (url: string) => `http://localhost:7070/${url}`,
+    };
+    fixture.componentRef.setInput("parent", parentWithProtoAssets);
+    fixture.componentRef.setInput("isCustomizing", true);
+
+    const themeService = TestBed.inject(ThemeService);
+    spyOn(themeService, "resolveAssetId").and.callFake((slotKey: string) => {
+      if (slotKey === THEME_SLOT_KEYS.LAMP_RED_ON) return "custom-red-proto-id";
+      if (slotKey === THEME_SLOT_KEYS.LAMP_GREEN)
+        return "custom-green-proto-id";
+      return null;
+    });
+
+    fixture.detectChanges();
+    const lamps = component.displayLamps;
+    expect(lamps.length).toBeGreaterThan(0);
+    expect(lamps[0].url).toBe(
+      "http://localhost:7070/assets/custom-square-red.png",
+    );
+    expect(lamps[lamps.length - 1].url).toBe(
+      "http://localhost:7070/assets/custom-square-green.png",
     );
   });
 
