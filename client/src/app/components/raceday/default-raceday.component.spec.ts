@@ -3397,6 +3397,46 @@ describe("DefaultRacedayComponent", () => {
 
       expect(component["highlightedDrivers"].has("hd1")).toBeFalse();
     }));
+
+    it("should forward lap totalTime to addLapTime and call cdr.markForCheck when lap received even without highlight", fakeAsync(() => {
+      mockSettings.highlightRowOnLap = false;
+      const addLapTimeSpy = jasmine.createSpy("addLapTime");
+      const mockDriverHd = {
+        objectId: "driver1",
+        laneIndex: 0,
+        lapTimes: [],
+        driver: { lapAudio: {}, bestLapAudio: {} },
+        addLapTime: addLapTimeSpy,
+      };
+      const mockHeat = { heatDrivers: [mockDriverHd], heatNumber: 1 };
+      mockRaceService.getCurrentHeat.and.returnValue(mockHeat);
+      component["heat"] = mockHeat as any;
+      const cdrSpy = spyOn((component as any).cdr, "markForCheck");
+
+      lapsSubject.next({
+        objectId: "driver1",
+        lapNumber: 1,
+        lapTime: 2.345,
+        totalTime: 12.345,
+      });
+      tick();
+
+      expect(addLapTimeSpy).toHaveBeenCalledWith(
+        1,
+        2.345,
+        0,
+        0,
+        0,
+        0,
+        undefined,
+        undefined,
+        undefined,
+        jasmine.any(Array),
+        true,
+        12.345,
+      );
+      expect(cdrSpy).toHaveBeenCalled();
+    }));
   });
 
   describe("False Start", () => {

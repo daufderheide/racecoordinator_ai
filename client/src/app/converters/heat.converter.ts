@@ -75,8 +75,15 @@ export class HeatConverter {
     hd.userLaps = dProto.userLaps || 0;
     hd.userTime = dProto.userTime ?? (dProto as any).user_time ?? 0;
     hd.autoCalculatedLaps = dProto.autoCalculatedLaps || 0;
-    if (dProto.totalTime != null || (dProto as any).total_time != null) {
-      hd.totalTime = dProto.totalTime ?? (dProto as any).total_time;
+    const rawTotalTime = dProto.totalTime ?? (dProto as any).total_time;
+    if (
+      rawTotalTime !== undefined &&
+      rawTotalTime !== null &&
+      rawTotalTime > 0
+    ) {
+      hd.totalTime = rawTotalTime;
+    } else {
+      hd.totalTime = null;
     }
 
     const penalty =
@@ -233,8 +240,15 @@ export class HeatConverter {
       });
     }
 
-    if (dProto.totalTime != null || (dProto as any).total_time != null) {
-      hd.totalTime = dProto.totalTime ?? (dProto as any).total_time;
+    const rawTotalTime = dProto.totalTime ?? (dProto as any).total_time;
+    if (
+      rawTotalTime !== undefined &&
+      rawTotalTime !== null &&
+      rawTotalTime > 0
+    ) {
+      hd.totalTime = rawTotalTime;
+    } else {
+      hd.totalTime = null;
     }
   }
 

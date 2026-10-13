@@ -2020,6 +2020,12 @@ export class DefaultRacedayComponent
                 : Array.isArray((driverData as any).laps)
                   ? (driverData as any).laps.length
                   : (driverData as any).lapCount || 0;
+            const lapTotalTime =
+              lap.totalTime != null && lap.totalTime > 0
+                ? lap.totalTime
+                : (lap as any).total_time != null && (lap as any).total_time > 0
+                  ? (lap as any).total_time
+                  : undefined;
             if (lap.type === LapType.FALSE_START) {
               if (
                 lap.adjustedLapCount !== undefined &&
@@ -2076,6 +2082,7 @@ export class DefaultRacedayComponent
                 lap.type ?? undefined,
                 segmentsCopy,
                 lap.countTowardsRecords !== false,
+                lapTotalTime,
               );
             }
             if (
@@ -2112,6 +2119,7 @@ export class DefaultRacedayComponent
                   lap.type ?? undefined,
                   segmentsCopy,
                   lap.countTowardsRecords !== false,
+                  lapTotalTime,
                 );
               }
             }
@@ -2154,6 +2162,7 @@ export class DefaultRacedayComponent
                       lap.type ?? undefined,
                       segmentsCopy,
                       lap.countTowardsRecords !== false,
+                      lapTotalTime,
                     );
                   }
                 }
@@ -2173,6 +2182,9 @@ export class DefaultRacedayComponent
               }
             }
             this.handleLapEvent(lap, driverData);
+            if (!this.isDestroyed) {
+              this.cdr.markForCheck();
+            }
           }
         }
       }),

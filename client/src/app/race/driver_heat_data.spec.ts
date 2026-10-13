@@ -204,6 +204,61 @@ describe("DriverHeatData", () => {
       expect(heatData.totalTime).toBe(25.0);
     });
 
+    it("should sanitize totalTime setter so 0 or negative values reset to physical time", () => {
+      heatData.addLapTime(1, 10.0, 10.0, 10.0, 10.0, 1);
+      heatData.totalTime = 25.0;
+      expect(heatData.totalTime).toBe(25.0);
+
+      heatData.totalTime = 0;
+      expect(heatData.totalTime).toBe(10.0);
+
+      heatData.totalTime = -5;
+      expect(heatData.totalTime).toBe(10.0);
+
+      heatData.totalTime = null;
+      expect(heatData.totalTime).toBe(10.0);
+    });
+
+    it("should set totalTime when provided in addLapTime and clear it when omitted", () => {
+      // First lap with explicit server totalTime
+      heatData.addLapTime(
+        1,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        1,
+        undefined,
+        false,
+        undefined,
+        [],
+        true,
+        10.5,
+      );
+      expect(heatData.totalTime).toBe(10.5);
+
+      // Second lap without totalTime resets _totalTime to null, falling back to physical sum
+      heatData.addLapTime(2, 9.5, 9.75, 9.75, 9.5, 2);
+      expect(heatData.totalTime).toBe(19.5); // 10.0 + 9.5
+
+      // Third lap with explicit server totalTime updates cached _totalTime
+      heatData.addLapTime(
+        3,
+        9.0,
+        9.5,
+        9.5,
+        9.0,
+        3,
+        undefined,
+        false,
+        undefined,
+        [],
+        true,
+        29.2,
+      );
+      expect(heatData.totalTime).toBe(29.2);
+    });
+
     it("should reset userTime and cached totalTime on reset()", () => {
       heatData.addLapTime(1, 10.0, 10.0, 10.0, 10.0, 1);
       heatData.userTime = 5.0;

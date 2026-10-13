@@ -552,6 +552,49 @@ describe("RaceConnectionService", () => {
       expect(lane0Driver.addLapTime).not.toHaveBeenCalled();
     });
 
+    it("should forward lap totalTime to addLapTime", () => {
+      const driver = new Driver("d_test", "Driver Test", "DT");
+      const participant = new RaceParticipant("p_test", driver);
+      const hd = new DriverHeatData("dhd_test", participant, 0, driver);
+      spyOn(hd, "addLapTime");
+
+      mockRaceService.getCurrentHeat.and.returnValue({
+        objectId: "heat_test",
+        heatDrivers: [hd],
+      });
+
+      service.connect();
+
+      const lapData: ILap = {
+        objectId: "dhd_test",
+        interfaceId: 0,
+        driverId: "d_test",
+        lapNumber: 1,
+        lapTime: 3.456,
+        averageLapTime: 3.456,
+        medianLapTime: 3.456,
+        bestLapTime: 3.456,
+        adjustedLapCount: 1,
+        totalTime: 3.456,
+      };
+      lapsSubject.next(lapData);
+
+      expect(hd.addLapTime).toHaveBeenCalledWith(
+        1,
+        3.456,
+        3.456,
+        3.456,
+        3.456,
+        1,
+        "d_test",
+        undefined,
+        undefined,
+        jasmine.any(Array),
+        true,
+        3.456,
+      );
+    });
+
     it("should update driver adjustedLapCount when FALSE_START lap is received", () => {
       const driver = new Driver("d_fs", "False Starter", "FS");
       const participant = new RaceParticipant("p_fs", driver);

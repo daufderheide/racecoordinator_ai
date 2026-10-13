@@ -354,6 +354,13 @@ export class RaceConnectionService implements OnDestroy {
               this.lapSubject.next(lap);
             } else {
               const segmentsCopy = [...(driverData.currentLapSegments || [])];
+              const lapTotalTime =
+                lap.totalTime != null && lap.totalTime > 0
+                  ? lap.totalTime
+                  : (lap as any).total_time != null &&
+                      (lap as any).total_time > 0
+                    ? (lap as any).total_time
+                    : undefined;
               if (typeof driverData.addLapTime === "function") {
                 driverData.addLapTime(
                   lap.lapNumber!,
@@ -367,6 +374,7 @@ export class RaceConnectionService implements OnDestroy {
                   lap.type ?? undefined,
                   segmentsCopy,
                   lap.countTowardsRecords !== false,
+                  lapTotalTime,
                 );
               }
               if (lap.flag !== undefined && lap.flag !== null) {
@@ -402,6 +410,7 @@ export class RaceConnectionService implements OnDestroy {
                       lap.type ?? undefined,
                       segmentsCopy,
                       lap.countTowardsRecords !== false,
+                      lapTotalTime,
                     );
                     if (lap.flag !== undefined && lap.flag !== null) {
                       targetHd.flag = lap.flag;

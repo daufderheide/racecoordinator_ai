@@ -131,6 +131,7 @@ export class DriverHeatData {
     _type?: LapType,
     segments?: number[],
     countTowardsRecords: boolean = true,
+    totalTime?: number,
   ): void {
     if (
       adjustedLapCount !== undefined &&
@@ -191,6 +192,17 @@ export class DriverHeatData {
     // Only update lastLapTime if we just updated the latest lap
     if (lapIndex === this.laps.length - 1) {
       this._lastLapTime = lapTime;
+    }
+
+    if (
+      totalTime !== undefined &&
+      totalTime !== null &&
+      !isNaN(totalTime) &&
+      totalTime > 0
+    ) {
+      this._totalTime = totalTime;
+    } else {
+      this._totalTime = null;
     }
   }
 
@@ -259,7 +271,9 @@ export class DriverHeatData {
 
   set totalTime(value: number | null | undefined) {
     this._totalTime =
-      value !== null && value !== undefined && !isNaN(value) ? value : null;
+      value !== null && value !== undefined && !isNaN(value) && value > 0
+        ? value
+        : null;
   }
 
   get lapTimes(): number[] {
