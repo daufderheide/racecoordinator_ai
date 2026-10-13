@@ -576,6 +576,7 @@ describe("AddLapSectionsDialogComponent", () => {
     expect(timeInput).not.toBeNull();
     expect(sectionsInput.classList.contains("selector-input")).toBeTrue();
     expect(timeInput.classList.contains("selector-input")).toBeTrue();
+    expect(timeInput.getAttribute("step")).toBe("0.5");
 
     // Verify DOM order: sectionsInput appears before timeAdjustmentInput
     const inputRows = fixture.nativeElement.querySelectorAll(".input-row");
@@ -591,5 +592,37 @@ describe("AddLapSectionsDialogComponent", () => {
     expect(previewBoxes[1].textContent).toContain(
       "RD_ADD_LAP_SECTIONS_TOTAL_TIME_PREVIEW",
     );
+  });
+
+  it("should configure time adjustment input with step=0.5 and increment/decrement by 0.5s", () => {
+    const participant = {
+      driver: { name: "Test Driver", entity_id: "driver-1" },
+    } as any;
+    const hd = new DriverHeatData("hd-1", participant, 0);
+
+    fixture.componentRef.setInput("driverHeatData", hd);
+    fixture.componentRef.setInput("numTrackSections", 100);
+    fixture.componentRef.setInput("visible", true);
+    fixture.detectChanges();
+
+    const timeInput = fixture.nativeElement.querySelector(
+      "#timeAdjustmentInput",
+    ) as HTMLInputElement;
+
+    expect(timeInput).not.toBeNull();
+    expect(timeInput.getAttribute("step")).toBe("0.5");
+
+    timeInput.value = "0";
+    timeInput.stepUp();
+    timeInput.dispatchEvent(new Event("input", { bubbles: true }));
+    fixture.detectChanges();
+
+    expect(component.timeAdjustmentInput()).toBe(0.5);
+
+    timeInput.stepDown();
+    timeInput.dispatchEvent(new Event("input", { bubbles: true }));
+    fixture.detectChanges();
+
+    expect(component.timeAdjustmentInput()).toBe(0);
   });
 });

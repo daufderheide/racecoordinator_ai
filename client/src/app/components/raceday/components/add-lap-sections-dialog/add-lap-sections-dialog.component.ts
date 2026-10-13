@@ -197,7 +197,7 @@ import { DriverHeatData } from "@app/race/driver_heat_data";
                 #timeAdjustmentInputRef
                 id="timeAdjustmentInput"
                 type="number"
-                step="0.001"
+                step="0.5"
                 class="selector-input"
                 [value]="timeAdjustmentInput()"
                 (input)="onTimeInputChange($event)"
