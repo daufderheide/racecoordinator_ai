@@ -594,8 +594,12 @@ describe("LaneColumnInspectorComponent", () => {
       expect(optionValues).toEqual([0, 1, 2, 3]);
     });
 
-    it("should keep both inset time and lap decimal selectors with options [0, 3]", () => {
+    it("should keep both inset time and lap decimal selectors with options [0, 3] when corresponding insets are set", () => {
       mockSettings.columnKey = "lastLapTime";
+      mockSettings.insets = {
+        "top-left": "lastLapTime",
+        "bottom-right": "lapCount",
+      };
       fixture.detectChanges();
 
       const titles = fixture.debugElement.queryAll(
@@ -618,13 +622,13 @@ describe("LaneColumnInspectorComponent", () => {
       const insetTimeDecSection = insetSections.find((s) => {
         const label = s.query(By.css(".inspector-label"));
         return label?.nativeElement.textContent.includes(
-          "UE_INSPECTOR_TIME_DECIMALS",
+          "UE_INSPECTOR_INSET_TIME_DECIMALS",
         );
       });
       const insetLapDecSection = insetSections.find((s) => {
         const label = s.query(By.css(".inspector-label"));
         return label?.nativeElement.textContent.includes(
-          "UE_INSPECTOR_LAP_DECIMALS",
+          "UE_INSPECTOR_INSET_LAP_DECIMALS",
         );
       });
 
@@ -644,6 +648,196 @@ describe("LaneColumnInspectorComponent", () => {
       expect(lapOptions.map((opt) => opt.componentInstance.value())).toEqual([
         0, 1, 2, 3,
       ]);
+    });
+
+    it("should not display decimal selectors for non-numeric columns like driver.name or rankHeat", () => {
+      mockSettings.columnKey = "driver.name";
+      fixture.detectChanges();
+
+      const titles = fixture.debugElement.queryAll(
+        By.css(".inspector-geometry-title"),
+      );
+      const insetsTitle = titles.find((t) =>
+        t.nativeElement.textContent.includes(
+          "UE_INSPECTOR_LANE_VIEW_INSET_DATA_SECTION",
+        ),
+      )!;
+
+      const mainSections = fixture.debugElement
+        .queryAll(By.css(".inspector-section"))
+        .filter(
+          (s) =>
+            s.nativeElement.compareDocumentPosition(insetsTitle.nativeElement) &
+            Node.DOCUMENT_POSITION_FOLLOWING,
+        );
+
+      const mainTimeDecSection = mainSections.find((s) => {
+        const label = s.query(By.css(".inspector-label"));
+        return label?.nativeElement.textContent.includes(
+          "UE_INSPECTOR_TIME_DECIMALS",
+        );
+      });
+      const mainLapDecSection = mainSections.find((s) => {
+        const label = s.query(By.css(".inspector-label"));
+        return label?.nativeElement.textContent.includes(
+          "UE_INSPECTOR_LAP_DECIMALS",
+        );
+      });
+
+      expect(mainTimeDecSection).toBeFalsy();
+      expect(mainLapDecSection).toBeFalsy();
+    });
+
+    it("should not display inset typography, color, or decimal selectors when no insets are configured", () => {
+      mockSettings.columnKey = "lastLapTime";
+      mockSettings.insets = {};
+      fixture.detectChanges();
+
+      const titles = fixture.debugElement.queryAll(
+        By.css(".inspector-geometry-title"),
+      );
+      const insetsTitle = titles.find((t) =>
+        t.nativeElement.textContent.includes(
+          "UE_INSPECTOR_LANE_VIEW_INSET_DATA_SECTION",
+        ),
+      )!;
+
+      const insetSections = fixture.debugElement
+        .queryAll(By.css(".inspector-section"))
+        .filter(
+          (s) =>
+            s.nativeElement.compareDocumentPosition(insetsTitle.nativeElement) &
+            Node.DOCUMENT_POSITION_PRECEDING,
+        );
+
+      const insetTimeDecSection = insetSections.find((s) => {
+        const label = s.query(By.css(".inspector-label"));
+        return label?.nativeElement.textContent.includes(
+          "UE_INSPECTOR_INSET_TIME_DECIMALS",
+        );
+      });
+      const insetLapDecSection = insetSections.find((s) => {
+        const label = s.query(By.css(".inspector-label"));
+        return label?.nativeElement.textContent.includes(
+          "UE_INSPECTOR_INSET_LAP_DECIMALS",
+        );
+      });
+      const insetFontFamily = insetSections.find((s) => {
+        const label = s.query(By.css(".inspector-label"));
+        return label?.nativeElement.textContent.includes(
+          "UE_INSPECTOR_FONT_FAMILY",
+        );
+      });
+
+      expect(insetTimeDecSection).toBeFalsy();
+      expect(insetLapDecSection).toBeFalsy();
+      expect(insetFontFamily).toBeFalsy();
+    });
+
+    it("should hide typography and text color controls for image columns", () => {
+      mockSettings.columnKey = "driver.avatarUrl";
+      mockSettings.useLaneColors = false;
+      fixture.detectChanges();
+
+      expect(component.isImageColumn).toBeTrue();
+
+      const labels = fixture.debugElement
+        .queryAll(By.css(".inspector-label"))
+        .map((l) => l.nativeElement.textContent.trim());
+
+      expect(
+        labels.some((l) => l.includes("UE_INSPECTOR_VALUE_FONT_FAMILY")),
+      ).toBeFalse();
+      expect(
+        labels.some((l) => l.includes("UE_INSPECTOR_VALUE_FONT_SIZE")),
+      ).toBeFalse();
+      expect(
+        labels.some((l) => l.includes("UE_INSPECTOR_VALUE_ALIGNMENT")),
+      ).toBeFalse();
+      expect(
+        labels.some((l) => l.includes("UE_INSPECTOR_TEXT_COLOR")),
+      ).toBeFalse();
+      expect(
+        labels.some((l) => l.includes("UE_INSPECTOR_BACKGROUND_COLOR")),
+      ).toBeTrue();
+    });
+
+    it("should display only inset time decimals when only time insets are configured", () => {
+      mockSettings.columnKey = "lastLapTime";
+      mockSettings.insets = { "top-left": "lastLapTime" };
+      fixture.detectChanges();
+
+      const titles = fixture.debugElement.queryAll(
+        By.css(".inspector-geometry-title"),
+      );
+      const insetsTitle = titles.find((t) =>
+        t.nativeElement.textContent.includes(
+          "UE_INSPECTOR_LANE_VIEW_INSET_DATA_SECTION",
+        ),
+      )!;
+
+      const insetSections = fixture.debugElement
+        .queryAll(By.css(".inspector-section"))
+        .filter(
+          (s) =>
+            s.nativeElement.compareDocumentPosition(insetsTitle.nativeElement) &
+            Node.DOCUMENT_POSITION_PRECEDING,
+        );
+
+      const insetTimeDecSection = insetSections.find((s) => {
+        const label = s.query(By.css(".inspector-label"));
+        return label?.nativeElement.textContent.includes(
+          "UE_INSPECTOR_INSET_TIME_DECIMALS",
+        );
+      });
+      const insetLapDecSection = insetSections.find((s) => {
+        const label = s.query(By.css(".inspector-label"));
+        return label?.nativeElement.textContent.includes(
+          "UE_INSPECTOR_INSET_LAP_DECIMALS",
+        );
+      });
+
+      expect(insetTimeDecSection).toBeTruthy();
+      expect(insetLapDecSection).toBeFalsy();
+    });
+
+    it("should display only inset lap decimals when only lap insets are configured", () => {
+      mockSettings.columnKey = "lastLapTime";
+      mockSettings.insets = { "top-left": "lapCount" };
+      fixture.detectChanges();
+
+      const titles = fixture.debugElement.queryAll(
+        By.css(".inspector-geometry-title"),
+      );
+      const insetsTitle = titles.find((t) =>
+        t.nativeElement.textContent.includes(
+          "UE_INSPECTOR_LANE_VIEW_INSET_DATA_SECTION",
+        ),
+      )!;
+
+      const insetSections = fixture.debugElement
+        .queryAll(By.css(".inspector-section"))
+        .filter(
+          (s) =>
+            s.nativeElement.compareDocumentPosition(insetsTitle.nativeElement) &
+            Node.DOCUMENT_POSITION_PRECEDING,
+        );
+
+      const insetTimeDecSection = insetSections.find((s) => {
+        const label = s.query(By.css(".inspector-label"));
+        return label?.nativeElement.textContent.includes(
+          "UE_INSPECTOR_INSET_TIME_DECIMALS",
+        );
+      });
+      const insetLapDecSection = insetSections.find((s) => {
+        const label = s.query(By.css(".inspector-label"));
+        return label?.nativeElement.textContent.includes(
+          "UE_INSPECTOR_INSET_LAP_DECIMALS",
+        );
+      });
+
+      expect(insetTimeDecSection).toBeFalsy();
+      expect(insetLapDecSection).toBeTruthy();
     });
 
     it("should clamp decimal values to [0, 3] on onFieldChange", () => {

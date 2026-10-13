@@ -163,6 +163,34 @@ export class LaneColumnInspectorComponent {
     );
   }
 
+  get isImageColumn(): boolean {
+    return RacedayLayoutUtils.isImageProperty(
+      this.currentSettings["columnKey"] || "",
+    );
+  }
+
+  get hasAnyInsets(): boolean {
+    const insets = this.currentSettings["insets"];
+    if (!insets) return false;
+    return Object.values(insets).some((v) => Boolean(v));
+  }
+
+  get hasTimeInset(): boolean {
+    const insets = this.currentSettings["insets"];
+    if (!insets) return false;
+    return Object.values(insets).some((v) =>
+      Boolean(v && RacedayLayoutUtils.isTimeColumnKey(String(v))),
+    );
+  }
+
+  get hasLapInset(): boolean {
+    const insets = this.currentSettings["insets"];
+    if (!insets) return false;
+    return Object.values(insets).some((v) =>
+      Boolean(v && RacedayLayoutUtils.isLapColumnKey(String(v))),
+    );
+  }
+
   get onlyShowDecimalsWhenNotRacing(): boolean {
     if (this.currentSettings["onlyShowDecimalsWhenNotRacing"] !== undefined) {
       return Boolean(this.currentSettings["onlyShowDecimalsWhenNotRacing"]);

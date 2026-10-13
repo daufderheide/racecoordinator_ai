@@ -2318,6 +2318,8 @@
   "UE_INSPECTOR_IMAGE_SELECT": "Bildeinstellungen",
   "UE_INSPECTOR_INSET_NONE": "-- Keine --",
   "UE_INSPECTOR_INSETS_POSITIONS": "Einfügungspositionen",
+  "UE_INSPECTOR_INSET_TIME_DECIMALS": "Einsatz-Zeit-Dezimalstellen",
+  "UE_INSPECTOR_INSET_LAP_DECIMALS": "Einsatz-Runden-Dezimalstellen",
   "UE_INSPECTOR_LANE_VIEW_ADD_COLUMN_PLACEHOLDER": "Wählen Sie eine Spalte zum Hinzufügen aus...",
   "UE_INSPECTOR_LANE_VIEW_AVAILABLE_COLUMNS": "Verfügbare Spalten",
   "UE_INSPECTOR_LANE_VIEW_COLUMNS_SECTION": "Spalten-Einstellungen",

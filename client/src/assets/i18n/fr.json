@@ -2318,6 +2318,8 @@
   "UE_INSPECTOR_IMAGE_SELECT": "Paramètres d'image",
   "UE_INSPECTOR_INSET_NONE": "-- Aucun --",
   "UE_INSPECTOR_INSETS_POSITIONS": "Positions des encarts",
+  "UE_INSPECTOR_INSET_TIME_DECIMALS": "Décimales du Temps d'Encart",
+  "UE_INSPECTOR_INSET_LAP_DECIMALS": "Décimales des Tours d'Encart",
   "UE_INSPECTOR_LANE_VIEW_ADD_COLUMN_PLACEHOLDER": "Sélectionnez une colonne à ajouter...",
   "UE_INSPECTOR_LANE_VIEW_AVAILABLE_COLUMNS": "Colonnes Disponibles",
   "UE_INSPECTOR_LANE_VIEW_COLUMNS_SECTION": "Paramètres des Colonnes",

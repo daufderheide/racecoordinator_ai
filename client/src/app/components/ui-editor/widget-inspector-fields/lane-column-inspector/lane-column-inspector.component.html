@@ -1256,97 +1256,101 @@
         />
       </div>
 
-      <div class="inspector-section">
-        <label class="inspector-label">{{
-          "UE_INSPECTOR_TEXT_COLOR" | translate
-        }}</label>
-        <input
-          type="color"
-          [(ngModel)]="currentSettings['textColor']"
-          (change)="onFieldChange()"
-          class="inspector-color-input"
-        />
-      </div>
+      @if (!isImageColumn) {
+        <div class="inspector-section">
+          <label class="inspector-label">{{
+            "UE_INSPECTOR_TEXT_COLOR" | translate
+          }}</label>
+          <input
+            type="color"
+            [(ngModel)]="currentSettings['textColor']"
+            (change)="onFieldChange()"
+            class="inspector-color-input"
+          />
+        </div>
+      }
     }
 
-    <hr class="inspector-divider" />
+    @if (!isImageColumn) {
+      <hr class="inspector-divider" />
 
-    <!-- Typography Settings -->
-    <div class="inspector-section">
-      <label class="inspector-label">{{
-        "UE_INSPECTOR_VALUE_FONT_FAMILY" | translate
-      }}</label>
-      <div class="select-container select-sm">
-        <app-custom-select
-          [(ngModel)]="currentSettings['valueFontFamily']"
-          (change)="onFieldChange()"
-          (click)="fontService.loadLocalFonts()"
-        >
-          <app-custom-option value="">
-            {{ "UE_INSPECTOR_FONT_THEME_DEFAULT" | translate }}
-          </app-custom-option>
-          @for (font of fontService.availableFonts(); track font) {
-            <app-custom-option [value]="font">{{ font }}</app-custom-option>
-          }
-        </app-custom-select>
-      </div>
-    </div>
-
-    <div class="inspector-section">
-      <div class="inspector-label-row">
-        <label class="inspector-label">{{
-          "UE_INSPECTOR_VALUE_FONT_SIZE" | translate
-        }}</label>
-        <span class="inspector-val-badge"
-          >{{ currentSettings["valueFontSize"] || 36 }}px</span
-        >
-      </div>
-      <input
-        type="range"
-        min="10"
-        max="120"
-        [(ngModel)]="currentSettings['valueFontSize']"
-        [disabled]="disableFontSizes()"
-        (change)="onFieldChange()"
-        class="inspector-slider"
-      />
-    </div>
-
-    <div class="inspector-section">
-      <label class="inspector-label">{{
-        "UE_INSPECTOR_VALUE_ALIGNMENT" | translate
-      }}</label>
-      <div class="select-container select-sm">
-        <app-custom-select
-          [(ngModel)]="currentSettings['valueAlignment']"
-          (change)="onFieldChange()"
-        >
-          <app-custom-option value="start">
-            {{ "UE_INSPECTOR_ALIGN_START" | translate }}
-          </app-custom-option>
-          <app-custom-option value="center">
-            {{ "UE_INSPECTOR_ALIGN_CENTER" | translate }}
-          </app-custom-option>
-          <app-custom-option value="end">
-            {{ "UE_INSPECTOR_ALIGN_END" | translate }}
-          </app-custom-option>
-        </app-custom-select>
-      </div>
-    </div>
-
-    @if (currentSettings["gridId"]) {
+      <!-- Typography Settings -->
       <div class="inspector-section">
-        <button
-          type="button"
-          class="btn btn-sm btn-secondary w-100"
-          (click)="applyValueStyleToAll()"
-        >
-          <span class="material-icons me-1" style="font-size: 14px"
-            >format_paint</span
+        <label class="inspector-label">{{
+          "UE_INSPECTOR_VALUE_FONT_FAMILY" | translate
+        }}</label>
+        <div class="select-container select-sm">
+          <app-custom-select
+            [(ngModel)]="currentSettings['valueFontFamily']"
+            (change)="onFieldChange()"
+            (click)="fontService.loadLocalFonts()"
           >
-          {{ "UE_GRID_APPLY_VALUE_TO_ALL" | translate }}
-        </button>
+            <app-custom-option value="">
+              {{ "UE_INSPECTOR_FONT_THEME_DEFAULT" | translate }}
+            </app-custom-option>
+            @for (font of fontService.availableFonts(); track font) {
+              <app-custom-option [value]="font">{{ font }}</app-custom-option>
+            }
+          </app-custom-select>
+        </div>
       </div>
+
+      <div class="inspector-section">
+        <div class="inspector-label-row">
+          <label class="inspector-label">{{
+            "UE_INSPECTOR_VALUE_FONT_SIZE" | translate
+          }}</label>
+          <span class="inspector-val-badge"
+            >{{ currentSettings["valueFontSize"] || 36 }}px</span
+          >
+        </div>
+        <input
+          type="range"
+          min="10"
+          max="120"
+          [(ngModel)]="currentSettings['valueFontSize']"
+          [disabled]="disableFontSizes()"
+          (change)="onFieldChange()"
+          class="inspector-slider"
+        />
+      </div>
+
+      <div class="inspector-section">
+        <label class="inspector-label">{{
+          "UE_INSPECTOR_VALUE_ALIGNMENT" | translate
+        }}</label>
+        <div class="select-container select-sm">
+          <app-custom-select
+            [(ngModel)]="currentSettings['valueAlignment']"
+            (change)="onFieldChange()"
+          >
+            <app-custom-option value="start">
+              {{ "UE_INSPECTOR_ALIGN_START" | translate }}
+            </app-custom-option>
+            <app-custom-option value="center">
+              {{ "UE_INSPECTOR_ALIGN_CENTER" | translate }}
+            </app-custom-option>
+            <app-custom-option value="end">
+              {{ "UE_INSPECTOR_ALIGN_END" | translate }}
+            </app-custom-option>
+          </app-custom-select>
+        </div>
+      </div>
+
+      @if (currentSettings["gridId"]) {
+        <div class="inspector-section">
+          <button
+            type="button"
+            class="btn btn-sm btn-secondary w-100"
+            (click)="applyValueStyleToAll()"
+          >
+            <span class="material-icons me-1" style="font-size: 14px"
+              >format_paint</span
+            >
+            {{ "UE_GRID_APPLY_VALUE_TO_ALL" | translate }}
+          </button>
+        </div>
+      }
     }
   }
 
@@ -1433,185 +1437,188 @@
   }
 
   @if (!isHeaderWidget) {
-    <hr class="inspector-divider" />
+    @if (isTotalTimeColumn || isTimeColumn || isLapColumn) {
+      <hr class="inspector-divider" />
 
-    <!-- Decimals Settings -->
-    @if (isTotalTimeColumn) {
-      <!-- Format Preset Dropdown -->
-      <div class="inspector-section">
-        <label class="inspector-label">{{
-          "UE_INSPECTOR_TIMER_DISPLAY_FORMAT" | translate
-        }}</label>
-        <div class="select-container select-sm">
-          <app-custom-select
-            [ngModel]="currentSettings['timeDisplayFormat'] || 'dynamic'"
-            (ngModelChange)="
-              currentSettings['timeDisplayFormat'] = $event; onFieldChange()
-            "
-          >
-            <app-custom-option value="dynamic">
-              {{ "UE_INSPECTOR_TIMER_FORMAT_DYNAMIC" | translate }}
-            </app-custom-option>
-            <app-custom-option value="mm_ss">
-              {{ "UE_INSPECTOR_TIMER_FORMAT_MM_SS" | translate }}
-            </app-custom-option>
-            <app-custom-option value="m_ss">
-              {{ "UE_INSPECTOR_TIMER_FORMAT_M_SS" | translate }}
-            </app-custom-option>
-            <app-custom-option value="hh_mm_ss">
-              {{ "UE_INSPECTOR_TIMER_FORMAT_HH_MM_SS" | translate }}
-            </app-custom-option>
-            <app-custom-option value="seconds">
-              {{ "UE_INSPECTOR_TIMER_FORMAT_SECONDS" | translate }}
-            </app-custom-option>
-          </app-custom-select>
-        </div>
-      </div>
-
-      <!-- Subsecond Settings -->
-      <div class="inspector-section">
-        <label class="inspector-label">{{
-          "UE_INSPECTOR_TIMER_SUBSECOND_MODE" | translate
-        }}</label>
-        <div class="select-container select-sm">
-          <app-custom-select
-            [ngModel]="currentSettings['timeSubsecondMode'] || 'never'"
-            (ngModelChange)="
-              currentSettings['timeSubsecondMode'] = $event; onFieldChange()
-            "
-          >
-            <app-custom-option value="never">
-              {{ "UE_INSPECTOR_TIMER_SUBSECOND_NEVER" | translate }}
-            </app-custom-option>
-            <app-custom-option value="always">
-              {{ "UE_INSPECTOR_TIMER_SUBSECOND_ALWAYS" | translate }}
-            </app-custom-option>
-            <app-custom-option value="threshold">
-              {{ "UE_INSPECTOR_TIMER_SUBSECOND_THRESHOLD_MODE" | translate }}
-            </app-custom-option>
-          </app-custom-select>
-        </div>
-      </div>
-
-      @if ((currentSettings["timeSubsecondMode"] || "never") === "threshold") {
+      <!-- Decimals Settings -->
+      @if (isTotalTimeColumn) {
+        <!-- Format Preset Dropdown -->
         <div class="inspector-section">
           <label class="inspector-label">{{
-            "UE_INSPECTOR_TIMER_SUBSECOND_THRESHOLD" | translate
+            "UE_INSPECTOR_TIMER_DISPLAY_FORMAT" | translate
           }}</label>
-          <div style="display: flex; gap: 8px; align-items: center">
-            <input
-              type="number"
-              min="0"
-              step="1"
-              autocomplete="off"
-              data-dashlane-ignore="true"
-              data-1p-ignore="true"
-              data-lpignore="true"
-              data-bwignore="true"
-              data-form-type="other"
-              [ngModel]="currentSettings['timeSubsecondThreshold'] ?? 10"
+          <div class="select-container select-sm">
+            <app-custom-select
+              [ngModel]="currentSettings['timeDisplayFormat'] || 'dynamic'"
               (ngModelChange)="
-                currentSettings['timeSubsecondThreshold'] = $event;
+                currentSettings['timeDisplayFormat'] = $event; onFieldChange()
+              "
+            >
+              <app-custom-option value="dynamic">
+                {{ "UE_INSPECTOR_TIMER_FORMAT_DYNAMIC" | translate }}
+              </app-custom-option>
+              <app-custom-option value="mm_ss">
+                {{ "UE_INSPECTOR_TIMER_FORMAT_MM_SS" | translate }}
+              </app-custom-option>
+              <app-custom-option value="m_ss">
+                {{ "UE_INSPECTOR_TIMER_FORMAT_M_SS" | translate }}
+              </app-custom-option>
+              <app-custom-option value="hh_mm_ss">
+                {{ "UE_INSPECTOR_TIMER_FORMAT_HH_MM_SS" | translate }}
+              </app-custom-option>
+              <app-custom-option value="seconds">
+                {{ "UE_INSPECTOR_TIMER_FORMAT_SECONDS" | translate }}
+              </app-custom-option>
+            </app-custom-select>
+          </div>
+        </div>
+
+        <!-- Subsecond Settings -->
+        <div class="inspector-section">
+          <label class="inspector-label">{{
+            "UE_INSPECTOR_TIMER_SUBSECOND_MODE" | translate
+          }}</label>
+          <div class="select-container select-sm">
+            <app-custom-select
+              [ngModel]="currentSettings['timeSubsecondMode'] || 'never'"
+              (ngModelChange)="
+                currentSettings['timeSubsecondMode'] = $event; onFieldChange()
+              "
+            >
+              <app-custom-option value="never">
+                {{ "UE_INSPECTOR_TIMER_SUBSECOND_NEVER" | translate }}
+              </app-custom-option>
+              <app-custom-option value="always">
+                {{ "UE_INSPECTOR_TIMER_SUBSECOND_ALWAYS" | translate }}
+              </app-custom-option>
+              <app-custom-option value="threshold">
+                {{ "UE_INSPECTOR_TIMER_SUBSECOND_THRESHOLD_MODE" | translate }}
+              </app-custom-option>
+            </app-custom-select>
+          </div>
+        </div>
+
+        @if (
+          (currentSettings["timeSubsecondMode"] || "never") === "threshold"
+        ) {
+          <div class="inspector-section">
+            <label class="inspector-label">{{
+              "UE_INSPECTOR_TIMER_SUBSECOND_THRESHOLD" | translate
+            }}</label>
+            <div style="display: flex; gap: 8px; align-items: center">
+              <input
+                type="number"
+                min="0"
+                step="1"
+                autocomplete="off"
+                data-dashlane-ignore="true"
+                data-1p-ignore="true"
+                data-lpignore="true"
+                data-bwignore="true"
+                data-form-type="other"
+                [ngModel]="currentSettings['timeSubsecondThreshold'] ?? 10"
+                (ngModelChange)="
+                  currentSettings['timeSubsecondThreshold'] = $event;
+                  onFieldChange()
+                "
+                style="
+                  flex: 1;
+                  padding: 4px;
+                  background: var(--bg-level-3);
+                  border: 1px solid var(--border-color);
+                  color: var(--text-color);
+                  border-radius: 4px;
+                "
+              />
+              <span class="inspector-label" style="margin-bottom: 0">sec</span>
+            </div>
+          </div>
+        }
+
+        @if ((currentSettings["timeSubsecondMode"] || "never") !== "never") {
+          <div class="inspector-section">
+            <div class="inspector-label-row">
+              <label class="inspector-label">{{
+                "UE_INSPECTOR_TIMER_SUBSECOND_DECIMALS" | translate
+              }}</label>
+              <span class="inspector-val-badge">{{
+                currentSettings["timeSubsecondDecimals"] ?? 2
+              }}</span>
+            </div>
+            <input
+              type="range"
+              min="0"
+              max="3"
+              step="1"
+              [ngModel]="currentSettings['timeSubsecondDecimals'] ?? 2"
+              (ngModelChange)="
+                currentSettings['timeSubsecondDecimals'] = $event;
                 onFieldChange()
               "
-              style="
-                flex: 1;
-                padding: 4px;
-                background: var(--bg-level-3);
-                border: 1px solid var(--border-color);
-                color: var(--text-color);
-                border-radius: 4px;
-              "
+              class="inspector-slider"
             />
-            <span class="inspector-label" style="margin-bottom: 0">sec</span>
           </div>
-        </div>
-      }
+        }
 
-      @if ((currentSettings["timeSubsecondMode"] || "never") !== "never") {
+        <!-- Live Preview Section -->
         <div class="inspector-section">
-          <div class="inspector-label-row">
-            <label class="inspector-label">{{
-              "UE_INSPECTOR_TIMER_SUBSECOND_DECIMALS" | translate
-            }}</label>
-            <span class="inspector-val-badge">{{
-              currentSettings["timeSubsecondDecimals"] ?? 2
-            }}</span>
+          <label class="inspector-label">{{
+            "UE_INSPECTOR_TIMER_PREVIEW" | translate
+          }}</label>
+          <div class="timer-preview-grid">
+            <div class="timer-preview-item">
+              <span class="timer-preview-label">> 1 hr</span>
+              <span class="timer-preview-val">{{ getPreview(3665) }}</span>
+            </div>
+            <div class="timer-preview-item">
+              <span class="timer-preview-label">> 1 min</span>
+              <span class="timer-preview-val">{{ getPreview(75) }}</span>
+            </div>
+            <div class="timer-preview-item">
+              <span class="timer-preview-label">< 1 min</span>
+              <span class="timer-preview-val">{{ getPreview(45) }}</span>
+            </div>
+            <div class="timer-preview-item">
+              <span class="timer-preview-label">< 10s</span>
+              <span class="timer-preview-val">{{ getPreview(8.45) }}</span>
+            </div>
           </div>
-          <input
-            type="range"
-            min="0"
-            max="3"
-            step="1"
-            [ngModel]="currentSettings['timeSubsecondDecimals'] ?? 2"
-            (ngModelChange)="
-              currentSettings['timeSubsecondDecimals'] = $event; onFieldChange()
-            "
-            class="inspector-slider"
-          />
         </div>
-      }
+      } @else if (isTimeColumn) {
+        <div class="inspector-section">
+          <label class="inspector-label">{{
+            "UE_INSPECTOR_TIME_DECIMALS" | translate
+          }}</label>
+          <div class="select-container select-sm">
+            <app-custom-select
+              [(ngModel)]="currentSettings['timeDecimalPlaces']"
+              (change)="onFieldChange()"
+            >
+              <app-custom-option [value]="0">0</app-custom-option>
+              <app-custom-option [value]="1">1</app-custom-option>
+              <app-custom-option [value]="2">2</app-custom-option>
+              <app-custom-option [value]="3">3</app-custom-option>
+            </app-custom-select>
+          </div>
+        </div>
+      } @else if (isLapColumn) {
+        <div class="inspector-section">
+          <label class="inspector-label">{{
+            "UE_INSPECTOR_LAP_DECIMALS" | translate
+          }}</label>
+          <div class="select-container select-sm">
+            <app-custom-select
+              [(ngModel)]="currentSettings['lapDecimalPlaces']"
+              (change)="onFieldChange()"
+            >
+              <app-custom-option [value]="0">0</app-custom-option>
+              <app-custom-option [value]="1">1</app-custom-option>
+              <app-custom-option [value]="2">2</app-custom-option>
+              <app-custom-option [value]="3">3</app-custom-option>
+            </app-custom-select>
+          </div>
+        </div>
 
-      <!-- Live Preview Section -->
-      <div class="inspector-section">
-        <label class="inspector-label">{{
-          "UE_INSPECTOR_TIMER_PREVIEW" | translate
-        }}</label>
-        <div class="timer-preview-grid">
-          <div class="timer-preview-item">
-            <span class="timer-preview-label">> 1 hr</span>
-            <span class="timer-preview-val">{{ getPreview(3665) }}</span>
-          </div>
-          <div class="timer-preview-item">
-            <span class="timer-preview-label">> 1 min</span>
-            <span class="timer-preview-val">{{ getPreview(75) }}</span>
-          </div>
-          <div class="timer-preview-item">
-            <span class="timer-preview-label">< 1 min</span>
-            <span class="timer-preview-val">{{ getPreview(45) }}</span>
-          </div>
-          <div class="timer-preview-item">
-            <span class="timer-preview-label">< 10s</span>
-            <span class="timer-preview-val">{{ getPreview(8.45) }}</span>
-          </div>
-        </div>
-      </div>
-    } @else if (isTimeColumn) {
-      <div class="inspector-section">
-        <label class="inspector-label">{{
-          "UE_INSPECTOR_TIME_DECIMALS" | translate
-        }}</label>
-        <div class="select-container select-sm">
-          <app-custom-select
-            [(ngModel)]="currentSettings['timeDecimalPlaces']"
-            (change)="onFieldChange()"
-          >
-            <app-custom-option [value]="0">0</app-custom-option>
-            <app-custom-option [value]="1">1</app-custom-option>
-            <app-custom-option [value]="2">2</app-custom-option>
-            <app-custom-option [value]="3">3</app-custom-option>
-          </app-custom-select>
-        </div>
-      </div>
-    } @else {
-      <div class="inspector-section">
-        <label class="inspector-label">{{
-          "UE_INSPECTOR_LAP_DECIMALS" | translate
-        }}</label>
-        <div class="select-container select-sm">
-          <app-custom-select
-            [(ngModel)]="currentSettings['lapDecimalPlaces']"
-            (change)="onFieldChange()"
-          >
-            <app-custom-option [value]="0">0</app-custom-option>
-            <app-custom-option [value]="1">1</app-custom-option>
-            <app-custom-option [value]="2">2</app-custom-option>
-            <app-custom-option [value]="3">3</app-custom-option>
-          </app-custom-select>
-        </div>
-      </div>
-
-      @if (isLapColumn) {
         <div class="inspector-section">
           <label class="form-check-label">
             <input
@@ -1626,21 +1633,21 @@
           </label>
         </div>
       }
-    }
 
-    @if (currentSettings["gridId"]) {
-      <div class="inspector-section">
-        <button
-          type="button"
-          class="btn btn-sm btn-secondary w-100"
-          (click)="applyTimeFormatToAll()"
-        >
-          <span class="material-icons me-1" style="font-size: 14px"
-            >format_paint</span
+      @if (currentSettings["gridId"] && (isTotalTimeColumn || isTimeColumn)) {
+        <div class="inspector-section">
+          <button
+            type="button"
+            class="btn btn-sm btn-secondary w-100"
+            (click)="applyTimeFormatToAll()"
           >
-          {{ "UE_GRID_APPLY_TIME_FORMAT_TO_ALL" | translate }}
-        </button>
-      </div>
+            <span class="material-icons me-1" style="font-size: 14px"
+              >format_paint</span
+            >
+            {{ "UE_GRID_APPLY_TIME_FORMAT_TO_ALL" | translate }}
+          </button>
+        </div>
+      }
     }
 
     <hr class="inspector-divider" />
@@ -1648,110 +1655,6 @@
     <!-- Lane Inset Data Settings Section -->
     <div class="inspector-geometry-title">
       {{ "UE_INSPECTOR_LANE_VIEW_INSET_DATA_SECTION" | translate }}
-    </div>
-
-    <!-- Inset Typography -->
-    <div class="inspector-section">
-      <label class="inspector-label">{{
-        "UE_INSPECTOR_FONT_FAMILY" | translate
-      }}</label>
-      <div class="select-container select-sm">
-        <app-custom-select
-          [(ngModel)]="currentSettings['insetFontFamily']"
-          (change)="onFieldChange()"
-          (click)="fontService.loadLocalFonts()"
-        >
-          <app-custom-option value="">
-            {{ "UE_INSPECTOR_FONT_THEME_DEFAULT" | translate }}
-          </app-custom-option>
-          @for (font of fontService.availableFonts(); track font) {
-            <app-custom-option [value]="font">{{ font }}</app-custom-option>
-          }
-        </app-custom-select>
-      </div>
-    </div>
-
-    <div class="inspector-section">
-      <div class="inspector-label-row">
-        <label class="inspector-label">{{
-          "UE_INSPECTOR_FONT_SIZE" | translate
-        }}</label>
-        <span class="inspector-val-badge"
-          >{{ currentSettings["insetFontSize"] || 18 }}px</span
-        >
-      </div>
-      <input
-        type="range"
-        min="8"
-        max="36"
-        [(ngModel)]="currentSettings['insetFontSize']"
-        [disabled]="disableFontSizes()"
-        (change)="onFieldChange()"
-        class="inspector-slider"
-      />
-    </div>
-
-    <!-- Inset Text Color (override) -->
-    <div class="inspector-section">
-      <label class="inspector-label">{{
-        "UE_INSPECTOR_TEXT_COLOR" | translate
-      }}</label>
-      <div class="d-flex align-items-center gap-2">
-        <input
-          type="color"
-          [ngModel]="currentSettings['insetTextColor'] || '#ffffff'"
-          (ngModelChange)="
-            currentSettings['insetTextColor'] = $event; onFieldChange()
-          "
-          class="inspector-color-input"
-        />
-        @if (currentSettings["insetTextColor"]) {
-          <button
-            type="button"
-            class="color-reset-btn"
-            (click)="resetInsetTextColor()"
-            [title]="'UE_INSPECTOR_COLOR_RESET' | translate"
-          >
-            <span class="material-icons">restart_alt</span>
-          </button>
-        }
-      </div>
-    </div>
-
-    <!-- Inset Time Decimal Places -->
-    <div class="inspector-section">
-      <label class="inspector-label">{{
-        "UE_INSPECTOR_TIME_DECIMALS" | translate
-      }}</label>
-      <div class="select-container select-sm">
-        <app-custom-select
-          [(ngModel)]="currentSettings['insetTimeDecimalPlaces']"
-          (change)="onFieldChange()"
-        >
-          <app-custom-option [value]="0">0</app-custom-option>
-          <app-custom-option [value]="1">1</app-custom-option>
-          <app-custom-option [value]="2">2</app-custom-option>
-          <app-custom-option [value]="3">3</app-custom-option>
-        </app-custom-select>
-      </div>
-    </div>
-
-    <!-- Inset Lap Decimal Places -->
-    <div class="inspector-section">
-      <label class="inspector-label">{{
-        "UE_INSPECTOR_LAP_DECIMALS" | translate
-      }}</label>
-      <div class="select-container select-sm">
-        <app-custom-select
-          [(ngModel)]="currentSettings['insetLapDecimalPlaces']"
-          (change)="onFieldChange()"
-        >
-          <app-custom-option [value]="0">0</app-custom-option>
-          <app-custom-option [value]="1">1</app-custom-option>
-          <app-custom-option [value]="2">2</app-custom-option>
-          <app-custom-option [value]="3">3</app-custom-option>
-        </app-custom-select>
-      </div>
     </div>
 
     <!-- Inset Positions (8 positions) -->
@@ -1780,6 +1683,118 @@
           </app-custom-select>
         </div>
       </div>
+    }
+
+    @if (hasAnyInsets) {
+      <hr class="inspector-divider" />
+
+      <!-- Inset Typography -->
+      <div class="inspector-section">
+        <label class="inspector-label">{{
+          "UE_INSPECTOR_FONT_FAMILY" | translate
+        }}</label>
+        <div class="select-container select-sm">
+          <app-custom-select
+            [(ngModel)]="currentSettings['insetFontFamily']"
+            (change)="onFieldChange()"
+            (click)="fontService.loadLocalFonts()"
+          >
+            <app-custom-option value="">
+              {{ "UE_INSPECTOR_FONT_THEME_DEFAULT" | translate }}
+            </app-custom-option>
+            @for (font of fontService.availableFonts(); track font) {
+              <app-custom-option [value]="font">{{ font }}</app-custom-option>
+            }
+          </app-custom-select>
+        </div>
+      </div>
+
+      <div class="inspector-section">
+        <div class="inspector-label-row">
+          <label class="inspector-label">{{
+            "UE_INSPECTOR_FONT_SIZE" | translate
+          }}</label>
+          <span class="inspector-val-badge"
+            >{{ currentSettings["insetFontSize"] || 18 }}px</span
+          >
+        </div>
+        <input
+          type="range"
+          min="8"
+          max="36"
+          [(ngModel)]="currentSettings['insetFontSize']"
+          [disabled]="disableFontSizes()"
+          (change)="onFieldChange()"
+          class="inspector-slider"
+        />
+      </div>
+
+      <!-- Inset Text Color (override) -->
+      <div class="inspector-section">
+        <label class="inspector-label">{{
+          "UE_INSPECTOR_TEXT_COLOR" | translate
+        }}</label>
+        <div class="d-flex align-items-center gap-2">
+          <input
+            type="color"
+            [ngModel]="currentSettings['insetTextColor'] || '#ffffff'"
+            (ngModelChange)="
+              currentSettings['insetTextColor'] = $event; onFieldChange()
+            "
+            class="inspector-color-input"
+          />
+          @if (currentSettings["insetTextColor"]) {
+            <button
+              type="button"
+              class="color-reset-btn"
+              (click)="resetInsetTextColor()"
+              [title]="'UE_INSPECTOR_COLOR_RESET' | translate"
+            >
+              <span class="material-icons">restart_alt</span>
+            </button>
+          }
+        </div>
+      </div>
+
+      @if (hasTimeInset) {
+        <!-- Inset Time Decimal Places -->
+        <div class="inspector-section">
+          <label class="inspector-label">{{
+            "UE_INSPECTOR_INSET_TIME_DECIMALS" | translate
+          }}</label>
+          <div class="select-container select-sm">
+            <app-custom-select
+              [(ngModel)]="currentSettings['insetTimeDecimalPlaces']"
+              (change)="onFieldChange()"
+            >
+              <app-custom-option [value]="0">0</app-custom-option>
+              <app-custom-option [value]="1">1</app-custom-option>
+              <app-custom-option [value]="2">2</app-custom-option>
+              <app-custom-option [value]="3">3</app-custom-option>
+            </app-custom-select>
+          </div>
+        </div>
+      }
+
+      @if (hasLapInset) {
+        <!-- Inset Lap Decimal Places -->
+        <div class="inspector-section">
+          <label class="inspector-label">{{
+            "UE_INSPECTOR_INSET_LAP_DECIMALS" | translate
+          }}</label>
+          <div class="select-container select-sm">
+            <app-custom-select
+              [(ngModel)]="currentSettings['insetLapDecimalPlaces']"
+              (change)="onFieldChange()"
+            >
+              <app-custom-option [value]="0">0</app-custom-option>
+              <app-custom-option [value]="1">1</app-custom-option>
+              <app-custom-option [value]="2">2</app-custom-option>
+              <app-custom-option [value]="3">3</app-custom-option>
+            </app-custom-select>
+          </div>
+        </div>
+      }
     }
   }
 </ng-template>
