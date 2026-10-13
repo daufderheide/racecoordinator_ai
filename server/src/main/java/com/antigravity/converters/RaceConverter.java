@@ -186,7 +186,6 @@ public class RaceConverter {
       builder.setSoloLaneIndex(race.getSoloLaneIndex());
       builder.setPractice(race.isPractice());
       builder.setAdjustDriftLaps(race.isAdjustDriftLaps());
-      builder.setAutoSegmentsOnPause(race.isAutoSegmentsOnPause());
       if (race.getThemeId() != null) {
         builder.setThemeId(race.getThemeId());
       }

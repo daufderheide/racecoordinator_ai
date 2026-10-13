@@ -37,9 +37,7 @@ public class Paused implements IRaceState {
     race.broadcastTime();
     this.pauseStartTimeMillis = System.currentTimeMillis();
 
-    if (race.getRaceModel() != null && race.getRaceModel().isAutoSegmentsOnPause()) {
-      applyPauseAutoSegments(race);
-    }
+    applyPauseAutoSegments(race);
   }
 
   @Override
@@ -58,9 +56,7 @@ public class Paused implements IRaceState {
   @Override
   public void start(Race race) {
     logger.info("Paused.start() called. Resuming from Paused state.");
-    if (race.getRaceModel() != null && race.getRaceModel().isAutoSegmentsOnPause()) {
-      removePauseAutoSegments(race);
-    }
+    removePauseAutoSegments(race);
     race.changeState(new Starting());
   }
 
@@ -81,15 +77,13 @@ public class Paused implements IRaceState {
   @Override
   public void skipHeat(Race race) {
     logger.info("Paused.skipHeat() called. Skipping current heat and auto-advancing.");
-    if (race.getRaceModel() != null && race.getRaceModel().isAutoSegmentsOnPause()) {
-      HeatScoring scoring = race.getRaceModel().getHeatScoring();
-      boolean isAutoSegmentScoring =
-          scoring != null
-              && (scoring.getAllowFinish() == AllowFinish.NoneAutoSegments
-                  || scoring.getAllowFinish() == AllowFinish.SingleLapAutoSegments);
-      if (!isAutoSegmentScoring) {
-        removePauseAutoSegments(race);
-      }
+    HeatScoring scoring = race.getRaceModel() != null ? race.getRaceModel().getHeatScoring() : null;
+    boolean isAutoSegmentScoring =
+        scoring != null
+            && (scoring.getAllowFinish() == AllowFinish.NoneAutoSegments
+                || scoring.getAllowFinish() == AllowFinish.SingleLapAutoSegments);
+    if (!isAutoSegmentScoring) {
+      removePauseAutoSegments(race);
     }
     Common.advanceToNextHeat(race);
   }
@@ -110,9 +104,7 @@ public class Paused implements IRaceState {
         lapTime,
         interfaceId,
         () -> {
-          if (race.getRaceModel() != null && race.getRaceModel().isAutoSegmentsOnPause()) {
-            applyPauseAutoSegments(race);
-          }
+          applyPauseAutoSegments(race);
         });
   }
 

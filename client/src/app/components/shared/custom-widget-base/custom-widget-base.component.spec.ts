@@ -152,6 +152,42 @@ describe("CustomWidgetBaseComponent", () => {
       expect(standings[0].lapCount).toBe(5);
     });
 
+    it("should populate autoCalculatedLaps and adjustedLapCount in driverStandings and heatDrivers", () => {
+      const driver1 = new Driver("d1", "Sports Mode", "Sports Mode");
+      const p1 = new RaceParticipant(
+        "p1",
+        driver1,
+        1,
+        5,
+        20.0,
+        3.2,
+        4.0,
+        4.0,
+        5,
+        1,
+        100,
+      );
+      const hd1 = new DriverHeatData("hd1", p1 as any, 0, driver1);
+      hd1.autoCalculatedLaps = 0.75;
+      hd1.adjustedLapCount = 5.75;
+
+      const mockParent = {
+        participants: [p1],
+        sortedHeatDrivers: [hd1],
+      };
+
+      fixture.componentRef.setInput("parent", mockParent);
+      fixture.detectChanges();
+
+      const standings = component.driverStandings;
+      expect(standings[0].autoCalculatedLaps).toBe(0.75);
+      expect(standings[0].adjustedLapCount).toBe(5.75);
+
+      const heatDrivers = component.heatDrivers;
+      expect(heatDrivers[0].autoCalculatedLaps).toBe(0.75);
+      expect(heatDrivers[0].adjustedLapCount).toBe(5.75);
+    });
+
     it("should filter out empty driver slots", () => {
       const emptyDriver = new Driver("empty", "", "");
       const pEmpty = new RaceParticipant(

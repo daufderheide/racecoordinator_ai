@@ -112,10 +112,7 @@ public class PausedTest {
   }
 
   @Test
-  public void testEnter_AutoSegmentsOnPause_Calculates() {
-    com.antigravity.models.Race model =
-        new com.antigravity.models.Race.Builder().withAutoSegmentsOnPause(true).build();
-    when(race.getRaceModel()).thenReturn(model);
+  public void testEnter_CalculatesAutoSegments() {
     HeatExecutionManager heatMgr = mock(HeatExecutionManager.class);
     when(race.getHeatExecutionManager()).thenReturn(heatMgr);
 
@@ -125,23 +122,7 @@ public class PausedTest {
   }
 
   @Test
-  public void testEnter_AutoSegmentsOnPause_Disabled_DoesNotCalculate() {
-    com.antigravity.models.Race model =
-        new com.antigravity.models.Race.Builder().withAutoSegmentsOnPause(false).build();
-    when(race.getRaceModel()).thenReturn(model);
-    HeatExecutionManager heatMgr = mock(HeatExecutionManager.class);
-    when(race.getHeatExecutionManager()).thenReturn(heatMgr);
-
-    paused.enter(race);
-
-    verify(heatMgr, never()).calculateAutoSegments();
-  }
-
-  @Test
-  public void testStart_AutoSegmentsOnPause_RemovesPauseSegments() {
-    com.antigravity.models.Race model =
-        new com.antigravity.models.Race.Builder().withAutoSegmentsOnPause(true).build();
-    when(race.getRaceModel()).thenReturn(model);
+  public void testStart_RemovesPauseSegments() {
     HeatExecutionManager heatMgr = mock(HeatExecutionManager.class);
     when(race.getHeatExecutionManager()).thenReturn(heatMgr);
 
@@ -152,20 +133,7 @@ public class PausedTest {
   }
 
   @Test
-  public void testStart_AutoSegmentsOnPause_Disabled_DoesNotRemove() {
-    com.antigravity.models.Race model =
-        new com.antigravity.models.Race.Builder().withAutoSegmentsOnPause(false).build();
-    when(race.getRaceModel()).thenReturn(model);
-    HeatExecutionManager heatMgr = mock(HeatExecutionManager.class);
-    when(race.getHeatExecutionManager()).thenReturn(heatMgr);
-
-    paused.start(race);
-
-    verify(heatMgr, never()).removePauseAutoSegments();
-  }
-
-  @Test
-  public void testSkipHeat_AutoSegmentsOnPause_NonAutoFinish_RemovesPauseSegments() {
+  public void testSkipHeat_NonAutoFinish_RemovesPauseSegments() {
     HeatScoring scoring =
         new HeatScoring(
             HeatScoring.FinishMethod.Timed,
@@ -174,10 +142,7 @@ public class PausedTest {
             HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME,
             AllowFinish.Allow);
     com.antigravity.models.Race model =
-        new com.antigravity.models.Race.Builder()
-            .withHeatScoring(scoring)
-            .withAutoSegmentsOnPause(true)
-            .build();
+        new com.antigravity.models.Race.Builder().withHeatScoring(scoring).build();
     when(race.getRaceModel()).thenReturn(model);
     HeatExecutionManager heatMgr = mock(HeatExecutionManager.class);
     when(race.getHeatExecutionManager()).thenReturn(heatMgr);
@@ -188,7 +153,7 @@ public class PausedTest {
   }
 
   @Test
-  public void testSkipHeat_AutoSegmentsOnPause_AutoFinishNone_RetainsPauseSegments() {
+  public void testSkipHeat_AutoFinishNone_RetainsPauseSegments() {
     HeatScoring scoring =
         new HeatScoring(
             HeatScoring.FinishMethod.Timed,
@@ -197,10 +162,7 @@ public class PausedTest {
             HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME,
             AllowFinish.NoneAutoSegments);
     com.antigravity.models.Race model =
-        new com.antigravity.models.Race.Builder()
-            .withHeatScoring(scoring)
-            .withAutoSegmentsOnPause(true)
-            .build();
+        new com.antigravity.models.Race.Builder().withHeatScoring(scoring).build();
     when(race.getRaceModel()).thenReturn(model);
     HeatExecutionManager heatMgr = mock(HeatExecutionManager.class);
     when(race.getHeatExecutionManager()).thenReturn(heatMgr);
@@ -211,7 +173,7 @@ public class PausedTest {
   }
 
   @Test
-  public void testSkipHeat_AutoSegmentsOnPause_AutoFinishSingleLap_RetainsPauseSegments() {
+  public void testSkipHeat_AutoFinishSingleLap_RetainsPauseSegments() {
     HeatScoring scoring =
         new HeatScoring(
             HeatScoring.FinishMethod.Timed,
@@ -220,10 +182,7 @@ public class PausedTest {
             HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME,
             AllowFinish.SingleLapAutoSegments);
     com.antigravity.models.Race model =
-        new com.antigravity.models.Race.Builder()
-            .withHeatScoring(scoring)
-            .withAutoSegmentsOnPause(true)
-            .build();
+        new com.antigravity.models.Race.Builder().withHeatScoring(scoring).build();
     when(race.getRaceModel()).thenReturn(model);
     HeatExecutionManager heatMgr = mock(HeatExecutionManager.class);
     when(race.getHeatExecutionManager()).thenReturn(heatMgr);
@@ -234,12 +193,9 @@ public class PausedTest {
   }
 
   @Test
-  public void testOnLap_AutoSegmentsOnPause_Recalculates() {
+  public void testOnLap_RecalculatesAutoSegments() {
     com.antigravity.models.Race model =
-        new com.antigravity.models.Race.Builder()
-            .withDriftTime(5.0)
-            .withAutoSegmentsOnPause(true)
-            .build();
+        new com.antigravity.models.Race.Builder().withDriftTime(5.0).build();
     when(race.getRaceModel()).thenReturn(model);
     HeatExecutionManager heatMgr = mock(HeatExecutionManager.class);
     when(heatMgr.onLap(0, 10.0, 1, false, true, true)).thenReturn(true);
@@ -261,10 +217,7 @@ public class PausedTest {
             HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME,
             AllowFinish.NoneAutoSegments);
     com.antigravity.models.Race model =
-        new com.antigravity.models.Race.Builder()
-            .withHeatScoring(scoring)
-            .withAutoSegmentsOnPause(true)
-            .build();
+        new com.antigravity.models.Race.Builder().withHeatScoring(scoring).build();
     when(race.getRaceModel()).thenReturn(model);
 
     Heat heat = mock(Heat.class);

@@ -327,34 +327,6 @@ export class LaneViewInspectorComponent implements OnInit {
     if (this.settings()?.columnDecimals) {
       delete this.settings().columnDecimals[colKey];
     }
-    if (
-      this.widget()?.customSettings?.["columnOnlyShowDecimalsWhenNotRacing"]
-    ) {
-      delete this.widget().customSettings[
-        "columnOnlyShowDecimalsWhenNotRacing"
-      ][colKey];
-    }
-    if (this.settings()?.columnOnlyShowDecimalsWhenNotRacing) {
-      delete this.settings().columnOnlyShowDecimalsWhenNotRacing[colKey];
-    }
-    if (
-      this.widget()?.customSettings?.["columnOnlyShowSegmentsWhenNotRacing"]
-    ) {
-      delete this.widget().customSettings[
-        "columnOnlyShowSegmentsWhenNotRacing"
-      ][colKey];
-    }
-    if (this.settings()?.columnOnlyShowSegmentsWhenNotRacing) {
-      delete this.settings().columnOnlyShowSegmentsWhenNotRacing[colKey];
-    }
-    if (this.widget()?.customSettings?.["columnOnlyShowDecimalsIfSegments"]) {
-      delete this.widget().customSettings["columnOnlyShowDecimalsIfSegments"][
-        colKey
-      ];
-    }
-    if (this.settings()?.columnOnlyShowDecimalsIfSegments) {
-      delete this.settings().columnOnlyShowDecimalsIfSegments[colKey];
-    }
     if (this.widget()?.customSettings?.["columnTimeDisplayFormat"]) {
       delete this.widget().customSettings["columnTimeDisplayFormat"][colKey];
     }
@@ -608,69 +580,6 @@ export class LaneViewInspectorComponent implements OnInit {
       widget.customSettings.columnDecimals[colKey] = val;
     }
     this.change.emit();
-  }
-
-  getColumnOnlyShowDecimalsWhenNotRacing(colKey: string): boolean {
-    const s = this.settings?.() || this.widget?.()?.customSettings;
-    const flags =
-      s?.columnOnlyShowDecimalsWhenNotRacing ||
-      s?.columnOnlyShowSegmentsWhenNotRacing ||
-      s?.columnOnlyShowDecimalsIfSegments ||
-      this.widget?.()?.customSettings?.columnOnlyShowDecimalsWhenNotRacing ||
-      this.widget?.()?.customSettings?.columnOnlyShowSegmentsWhenNotRacing ||
-      this.widget?.()?.customSettings?.columnOnlyShowDecimalsIfSegments;
-    return Boolean(flags?.[colKey]);
-  }
-
-  setColumnOnlyShowDecimalsWhenNotRacing(colKey: string, value: boolean): void {
-    const s = this.settings?.() || this.widget?.()?.customSettings;
-    if (s) {
-      if (!s.columnOnlyShowDecimalsWhenNotRacing) {
-        s.columnOnlyShowDecimalsWhenNotRacing = {};
-      }
-      s.columnOnlyShowDecimalsWhenNotRacing[colKey] = value;
-      if (!s.columnOnlyShowSegmentsWhenNotRacing) {
-        s.columnOnlyShowSegmentsWhenNotRacing = {};
-      }
-      s.columnOnlyShowSegmentsWhenNotRacing[colKey] = value;
-      if (!s.columnOnlyShowDecimalsIfSegments) {
-        s.columnOnlyShowDecimalsIfSegments = {};
-      }
-      s.columnOnlyShowDecimalsIfSegments[colKey] = value;
-    }
-    const widget = this.widget?.();
-    if (widget) {
-      if (!widget.customSettings) widget.customSettings = {};
-      if (!widget.customSettings.columnOnlyShowDecimalsWhenNotRacing) {
-        widget.customSettings.columnOnlyShowDecimalsWhenNotRacing = {};
-      }
-      widget.customSettings.columnOnlyShowDecimalsWhenNotRacing[colKey] = value;
-      if (!widget.customSettings.columnOnlyShowSegmentsWhenNotRacing) {
-        widget.customSettings.columnOnlyShowSegmentsWhenNotRacing = {};
-      }
-      widget.customSettings.columnOnlyShowSegmentsWhenNotRacing[colKey] = value;
-      if (!widget.customSettings.columnOnlyShowDecimalsIfSegments) {
-        widget.customSettings.columnOnlyShowDecimalsIfSegments = {};
-      }
-      widget.customSettings.columnOnlyShowDecimalsIfSegments[colKey] = value;
-    }
-    this.change.emit();
-  }
-
-  getColumnOnlyShowSegmentsWhenNotRacing(colKey: string): boolean {
-    return this.getColumnOnlyShowDecimalsWhenNotRacing(colKey);
-  }
-
-  setColumnOnlyShowSegmentsWhenNotRacing(colKey: string, value: boolean): void {
-    this.setColumnOnlyShowDecimalsWhenNotRacing(colKey, value);
-  }
-
-  getColumnOnlyShowDecimalsIfSegments(colKey: string): boolean {
-    return this.getColumnOnlyShowDecimalsWhenNotRacing(colKey);
-  }
-
-  setColumnOnlyShowDecimalsIfSegments(colKey: string, value: boolean): void {
-    this.setColumnOnlyShowDecimalsWhenNotRacing(colKey, value);
   }
 
   isColumnTimeOptionsExpanded(colKey: string): boolean {

@@ -101,8 +101,6 @@ export interface LaneColumnWidgetSettings {
   timeDecimalPlaces: number;
   lapDecimalPlaces: number;
   columnDecimals?: Record<string, number>;
-  onlyShowDecimalsIfSegments?: boolean;
-  onlyShowSegmentsWhenNotRacing?: boolean;
   timeDisplayFormat?: TimerDisplayFormat;
   timeSubsecondMode?: TimerSubsecondMode;
   timeSubsecondThreshold?: number;
@@ -268,8 +266,6 @@ export class Settings {
     ghostPacingLeaderAvg: 200,
     averageLapTime: 310,
   };
-  columnOnlyShowDecimalsIfSegments?: { [columnKey: string]: boolean };
-  columnOnlyShowSegmentsWhenNotRacing?: { [columnKey: string]: boolean };
 
   racedayLayout?: LayoutConfig;
 

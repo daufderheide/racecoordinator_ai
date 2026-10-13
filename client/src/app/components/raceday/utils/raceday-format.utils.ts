@@ -532,54 +532,6 @@ export class RacedayFormatUtils {
           ? Number(ctx.laneViewWidgetSettings.lapDecimalPlaces)
           : 2;
 
-    const onlyShowDecimalsWhenNotRacing =
-      ctx.laneViewWidgetSettings?.onlyShowDecimalsWhenNotRacing ??
-      ctx.laneViewWidgetSettings?.onlyShowSegmentsWhenNotRacing ??
-      ctx.laneViewWidgetSettings?.onlyShowDecimalsIfSegments ??
-      ctx.laneViewWidgetSettings?.columnOnlyShowDecimalsWhenNotRacing?.[
-        column?.propertyName ?? ""
-      ] ??
-      ctx.laneViewWidgetSettings?.columnOnlyShowSegmentsWhenNotRacing?.[
-        column?.propertyName ?? ""
-      ] ??
-      ctx.laneViewWidgetSettings?.columnOnlyShowDecimalsIfSegments?.[
-        column?.propertyName ?? ""
-      ] ??
-      ctx.laneViewWidgetSettings?.columnOnlyShowDecimalsWhenNotRacing?.[
-        colKey
-      ] ??
-      ctx.laneViewWidgetSettings?.columnOnlyShowSegmentsWhenNotRacing?.[
-        colKey
-      ] ??
-      ctx.laneViewWidgetSettings?.columnOnlyShowDecimalsIfSegments?.[colKey] ??
-      ctx.laneViewWidgetSettings?.columnOnlyShowDecimalsWhenNotRacing?.[
-        baseKey
-      ] ??
-      ctx.laneViewWidgetSettings?.columnOnlyShowSegmentsWhenNotRacing?.[
-        baseKey
-      ] ??
-      ctx.laneViewWidgetSettings?.columnOnlyShowDecimalsIfSegments?.[baseKey] ??
-      false;
-
-    if (onlyShowDecimalsWhenNotRacing) {
-      const isLapMetric =
-        baseKey === "lapCount" ||
-        baseKey === "heatTotalLaps" ||
-        baseKey === "overallLapCount" ||
-        baseKey === "totalLaps" ||
-        baseKey === "raceTotalLaps" ||
-        baseKey === "overallTotalLaps";
-
-      if (isLapMetric) {
-        const state = ctx.getRaceState ? ctx.getRaceState() : ctx.raceState;
-        const isRacingOrStarting =
-          state === RaceState.RACING || state === RaceState.STARTING;
-        if (isRacingOrStarting) {
-          lapDecimals = 0;
-        }
-      }
-    }
-
     const timePlaceholder =
       timeDecimals > 0 ? "--." + "-".repeat(timeDecimals) : "--";
     const lapPlaceholder =

@@ -467,22 +467,6 @@
               </div>
             </div>
           }
-          @if (isLapColumn(col)) {
-            <div class="col-segments-toggle-row">
-              <label class="inspector-checkbox-label">
-                <input
-                  type="checkbox"
-                  [ngModel]="getColumnOnlyShowDecimalsWhenNotRacing(col)"
-                  (ngModelChange)="
-                    setColumnOnlyShowDecimalsWhenNotRacing(col, $event)
-                  "
-                />
-                <span>{{
-                  "UE_INSPECTOR_ONLY_SHOW_DECIMALS_WHEN_NOT_RACING" | translate
-                }}</span>
-              </label>
-            </div>
-          }
         </div>
       </div>
     }

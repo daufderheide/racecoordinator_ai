@@ -1618,20 +1618,6 @@
             </app-custom-select>
           </div>
         </div>
-
-        <div class="inspector-section">
-          <label class="form-check-label">
-            <input
-              type="checkbox"
-              class="form-checkbox"
-              [(ngModel)]="onlyShowDecimalsWhenNotRacing"
-              (change)="onFieldChange()"
-            />
-            <span>{{
-              "UE_INSPECTOR_ONLY_SHOW_DECIMALS_WHEN_NOT_RACING" | translate
-            }}</span>
-          </label>
-        </div>
       }
 
       @if (currentSettings["gridId"] && (isTotalTimeColumn || isTimeColumn)) {

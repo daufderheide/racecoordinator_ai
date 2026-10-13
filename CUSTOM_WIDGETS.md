@@ -168,6 +168,8 @@ An array of sorted participant standings. Each object in `driverStandings` conta
   gapLeader: number;         // Gap to current race leader in seconds
   gapPosition: number;       // Gap to preceding driver position in seconds
   lane: number;              // Assigned lane number (if heat driver)
+  adjustedLapCount: number;  // Lap count including fractional segments and penalties
+  autoCalculatedLaps: number;// Auto-calculated fractional segment on pause or heat end (e.g. 0.65)
   driver: Driver;            // Full driver domain object (id, avatar, car, etc.)
 }
 ```

@@ -166,6 +166,8 @@ export class CustomWidgetBaseComponent {
       totalPoints: p.totalPoints || 0,
       participant: p,
       heatData: matchingHd,
+      autoCalculatedLaps: matchingHd?.autoCalculatedLaps || 0,
+      adjustedLapCount: matchingHd?.adjustedLapCount ?? laps,
     };
   }
 
@@ -185,6 +187,8 @@ export class CustomWidgetBaseComponent {
       rankValue: hd.lapCount || 0,
       totalLaps: laps,
       lapCount: laps,
+      adjustedLapCount: hd.adjustedLapCount ?? laps,
+      autoCalculatedLaps: hd.autoCalculatedLaps || 0,
       totalTime: totalTime,
       bestLapTime: hd.bestLapTime || 0,
       lastLapTime: hd.lastLapTime || 0,
@@ -226,7 +230,8 @@ export class CustomWidgetBaseComponent {
           rank: hd.rank || 0,
           totalLaps: laps,
           lapCount: laps,
-          adjustedLapCount: laps,
+          adjustedLapCount: hd.adjustedLapCount ?? laps,
+          autoCalculatedLaps: hd.autoCalculatedLaps || 0,
           totalTime: totalTime,
           bestLapTime: hd.bestLapTime || 0,
           lastLapTime: hd.lastLapTime || 0,

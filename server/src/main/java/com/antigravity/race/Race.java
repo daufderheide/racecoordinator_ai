@@ -1075,10 +1075,8 @@ public class Race implements ProtocolListener {
     if (state instanceof RaceOver) {
       throw new IllegalStateException("Cannot skip race: Race is already over.");
     }
-    if (state instanceof Paused
-        && getRaceModel() != null
-        && getRaceModel().isAutoSegmentsOnPause()) {
-      HeatScoring scoring = getRaceModel().getHeatScoring();
+    if (state instanceof Paused) {
+      HeatScoring scoring = getRaceModel() != null ? getRaceModel().getHeatScoring() : null;
       boolean isAutoSegmentScoring =
           scoring != null
               && (scoring.getAllowFinish() == AllowFinish.NoneAutoSegments

@@ -810,7 +810,7 @@ describe("LaneViewInspectorComponent", () => {
       expect(lapValues).toEqual(["0", "1", "2", "3"]);
     });
 
-    it("should render onlyShowDecimalsWhenNotRacing checkbox for lap columns but not for time or other columns", () => {
+    it("should not render onlyShowDecimalsWhenNotRacing checkbox for lap columns", () => {
       fixture.componentRef.setInput("globalSettings", {
         racedayColumns: ["driver.name", "lastLapTime", "lapCount"],
       });
@@ -821,81 +821,8 @@ describe("LaneViewInspectorComponent", () => {
       );
       expect(items.length).toBe(3);
 
-      const nameToggle = items[0].querySelector(".col-segments-toggle-row");
-      expect(nameToggle).toBeNull();
-
-      const timeToggle = items[1].querySelector(".col-segments-toggle-row");
-      expect(timeToggle).toBeNull();
-
       const lapToggle = items[2].querySelector(".col-segments-toggle-row");
-      expect(lapToggle).toBeTruthy();
-    });
-
-    it("should keep old value if columnOnlyShowDecimalsIfSegments was set", () => {
-      component.settings().columnOnlyShowDecimalsIfSegments = {
-        lapCount: true,
-      };
-      delete component.settings().columnOnlyShowDecimalsWhenNotRacing;
-      expect(
-        component.getColumnOnlyShowDecimalsWhenNotRacing("lapCount"),
-      ).toBeTrue();
-    });
-
-    it("should get and set columnOnlyShowDecimalsWhenNotRacing correctly and emit change", () => {
-      expect(
-        component.getColumnOnlyShowDecimalsWhenNotRacing("lapCount"),
-      ).toBeFalse();
-
-      component.setColumnOnlyShowDecimalsWhenNotRacing("lapCount", true);
-      expect(
-        component.getColumnOnlyShowDecimalsWhenNotRacing("lapCount"),
-      ).toBeTrue();
-      expect(changeSpy).toHaveBeenCalled();
-    });
-
-    it("should clean up columnOnlyShowDecimalsWhenNotRacing and columnOnlyShowDecimalsIfSegments when deleteColumn is called", () => {
-      fixture.componentRef.setInput("widget", {
-        customSettings: {
-          columnOnlyShowDecimalsWhenNotRacing: {
-            lapCount: true,
-            overallLapCount: true,
-          },
-          columnOnlyShowDecimalsIfSegments: {
-            lapCount: true,
-            overallLapCount: true,
-          },
-        },
-      } as any);
-      component.settings().columnOnlyShowDecimalsWhenNotRacing = {
-        lapCount: true,
-        overallLapCount: true,
-      };
-      component.settings().columnOnlyShowDecimalsIfSegments = {
-        lapCount: true,
-        overallLapCount: true,
-      };
-
-      component.deleteColumn("lapCount");
-
-      expect(
-        component.widget().customSettings[
-          "columnOnlyShowDecimalsWhenNotRacing"
-        ]["lapCount"],
-      ).toBeUndefined();
-      expect(
-        component.widget().customSettings[
-          "columnOnlyShowDecimalsWhenNotRacing"
-        ]["overallLapCount"],
-      ).toBeTrue();
-      expect(
-        component.settings().columnOnlyShowDecimalsWhenNotRacing["lapCount"],
-      ).toBeUndefined();
-      expect(
-        component.settings().columnOnlyShowDecimalsWhenNotRacing[
-          "overallLapCount"
-        ],
-      ).toBeTrue();
-      expect(changeSpy).toHaveBeenCalled();
+      expect(lapToggle).toBeNull();
     });
   });
 
