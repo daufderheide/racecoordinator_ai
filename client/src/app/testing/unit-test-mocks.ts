@@ -66,6 +66,10 @@ export const mockDataService = {
     .createSpy("getServerVersion")
     .and.returnValue(of("1.0.0")),
   connectToRaceDataSocket: jasmine.createSpy("connectToRaceDataSocket"),
+  disconnectFromRaceDataSocket: jasmine.createSpy(
+    "disconnectFromRaceDataSocket",
+  ),
+  disconnectAllSockets: jasmine.createSpy("disconnectAllSockets"),
   getServerAnalyticsConfig: jasmine
     .createSpy("getServerAnalyticsConfig")
     .and.returnValue(of({ measurementId: "G-TEST", clientId: "test-client" })),
@@ -279,6 +283,8 @@ export function resetMocks() {
   mockDataService.resetLaneHeatData.and.returnValue(of(true));
   mockDataService.getDatabases.and.returnValue(of([]));
   mockDataService.connectToRaceDataSocket.and.stub();
+  mockDataService.disconnectFromRaceDataSocket.and.stub();
+  mockDataService.disconnectAllSockets.and.stub();
   mockDataService.getRaceUpdate.and.returnValue(new Subject().asObservable());
   mockDataService.getRaceTime.and.returnValue(new Subject().asObservable());
   mockDataService.getLaps.and.returnValue(new Subject().asObservable());

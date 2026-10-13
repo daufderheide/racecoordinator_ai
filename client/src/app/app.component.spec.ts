@@ -45,7 +45,9 @@ describe("AppComponent", () => {
       "getSystemState",
       "getServerLogLevel",
       "setServerLogLevel",
+      "disconnectAllSockets",
     ]);
+    mockDataService.disconnectAllSockets.and.stub();
     mockDataService.getThemes.and.returnValue(of([]));
     mockDataService.getServerVersion.and.returnValue(of("TEST-SERVER-VERSION"));
     mockDataService.connectToRaceDataSocket.and.stub();
@@ -299,6 +301,13 @@ describe("AppComponent", () => {
       component.onWindowDrop(event);
 
       expect(event.preventDefault).toHaveBeenCalled();
+    });
+  });
+
+  describe("Window Unload Lifecycle", () => {
+    it("should disconnect all sockets on window unload", () => {
+      component.onWindowUnload();
+      expect(mockDataService.disconnectAllSockets).toHaveBeenCalled();
     });
   });
 });

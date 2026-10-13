@@ -1730,6 +1730,7 @@ export class DataService {
 
   private shouldSubscribeToRaceData = false;
   private isInterfaceSocketExplicitlyDisconnected = false;
+  private isRaceDataSocketExplicitlyDisconnected = false;
 
   public clearRaceData() {
     this.raceStateSubject.next(RaceState.UNKNOWN_STATE);
@@ -1941,6 +1942,7 @@ export class DataService {
     if (this.connectionIntent) params.push(`intent=${this.connectionIntent}`);
     if (params.length > 0) wsUrl += "?" + params.join("&");
 
+    this.isRaceDataSocketExplicitlyDisconnected = false;
     this.logger.debug(`Connecting to Race Data WebSocket: ${wsUrl}`);
     this.raceDataSocket = new WebSocket(wsUrl);
     this.raceDataSocket.binaryType = "arraybuffer";
@@ -1960,13 +1962,20 @@ export class DataService {
 
     this.raceDataSocket.onclose = () => {
       this.logger.info(
-        "Race Data WebSocket closed. Reconnecting in 2 seconds...",
+        "Race Data WebSocket closed." +
+          (this.isRaceDataSocketExplicitlyDisconnected
+            ? ""
+            : " Reconnecting in 2 seconds..."),
       );
       this.socketConnectedSubject.next(false);
       this.raceDataSocket = undefined;
-      setTimeout(() => {
-        this.connectToRaceDataSocket();
-      }, 2000);
+      if (!this.isRaceDataSocketExplicitlyDisconnected) {
+        setTimeout(() => {
+          if (!this.isRaceDataSocketExplicitlyDisconnected) {
+            this.connectToRaceDataSocket();
+          }
+        }, 2000);
+      }
     };
 
     this.raceDataSocket.onerror = (err) => {
@@ -2066,6 +2075,23 @@ export class DataService {
       this.interfaceDataSocket.close();
       this.interfaceDataSocket = undefined;
     }
+  }
+
+  public disconnectFromRaceDataSocket() {
+    this.isRaceDataSocketExplicitlyDisconnected = true;
+    if (this.raceDataSocket) {
+      try {
+        this.raceDataSocket.close();
+      } catch (e) {
+        // Ignore
+      }
+      this.raceDataSocket = undefined;
+    }
+  }
+
+  public disconnectAllSockets() {
+    this.disconnectFromRaceDataSocket();
+    this.disconnectFromInterfaceDataSocket();
   }
 
   public getRaceTime(): Observable<IRaceTime> {

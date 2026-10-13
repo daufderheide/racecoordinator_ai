@@ -59,6 +59,7 @@ public class ClientSubscriptionManagerTest {
     // isn't directly exposed to clear without closing, we can pass null)
     manager.setProtocol(null);
     manager.setCleanupGracePeriodSeconds(0);
+    manager.cancelStartupWatchdog();
 
     // Since it's a singleton, we have to clear internal state for isolation
     clearPrivateSet("sessions");
@@ -904,5 +905,101 @@ public class ClientSubscriptionManagerTest {
             });
 
     future.get(2, TimeUnit.SECONDS);
+  }
+
+  @Test
+  public void testPruneDeadSessionRemovesFromAllSetsAndChecksShutdown() throws Exception {
+    manager.setAutoShutdownDelaySeconds(0);
+    java.util.concurrent.atomic.AtomicBoolean shutdownCalled =
+        new java.util.concurrent.atomic.AtomicBoolean(false);
+    manager.setAutoShutdownAction(() -> shutdownCalled.set(true));
+
+    WsContext mockContext = mock(WsContext.class);
+    org.eclipse.jetty.websocket.api.Session mockSession =
+        mock(org.eclipse.jetty.websocket.api.Session.class);
+    Field sessionField = WsContext.class.getDeclaredField("session");
+    sessionField.setAccessible(true);
+    sessionField.set(mockContext, mockSession);
+
+    manager.addSession(mockContext);
+    manager.pruneDeadSession(mockContext);
+
+    Thread.sleep(200);
+    assertTrue("Auto-shutdown should be called after dead session pruned", shutdownCalled.get());
+  }
+
+  @Test
+  public void testSendToRaceDataSubscribersPrunesFailedContext() throws Exception {
+    manager.setAutoShutdownDelaySeconds(0);
+    java.util.concurrent.atomic.AtomicBoolean shutdownCalled =
+        new java.util.concurrent.atomic.AtomicBoolean(false);
+    manager.setAutoShutdownAction(() -> shutdownCalled.set(true));
+
+    WsContext mockContext = mock(WsContext.class);
+    org.eclipse.jetty.websocket.api.Session mockSession =
+        mock(org.eclipse.jetty.websocket.api.Session.class);
+    Field sessionField = WsContext.class.getDeclaredField("session");
+    sessionField.setAccessible(true);
+    sessionField.set(mockContext, mockSession);
+
+    when(mockContext.send(org.mockito.ArgumentMatchers.any(ByteBuffer.class)))
+        .thenReturn(null)
+        .thenThrow(new RuntimeException("Connection closed"));
+
+    manager.addSession(mockContext);
+    RaceSubscriptionRequest req = RaceSubscriptionRequest.newBuilder().setSubscribe(true).build();
+    manager.handleRaceSubscription(mockContext, req);
+
+    RaceData dummyData = RaceData.newBuilder().build();
+    manager.broadcast(dummyData);
+    manager.flushBroadcasts();
+
+    Thread.sleep(200);
+    assertTrue(
+        "Failed subscriber should have been pruned and triggered shutdown", shutdownCalled.get());
+  }
+
+  @Test
+  public void testStartupWatchdogTriggersShutdownWhenNoClientConnects() throws Exception {
+    java.util.concurrent.atomic.AtomicBoolean shutdownCalled =
+        new java.util.concurrent.atomic.AtomicBoolean(false);
+    manager.setAutoShutdownAction(() -> shutdownCalled.set(true));
+    manager.setStartupWatchdogSeconds(1);
+
+    Field clientField = ClientSubscriptionManager.class.getDeclaredField("hasEverHadClient");
+    clientField.setAccessible(true);
+    clientField.set(manager, false);
+
+    manager.scheduleStartupWatchdog();
+    Thread.sleep(1200);
+
+    assertTrue(
+        "Startup watchdog should trigger shutdown when no client connects", shutdownCalled.get());
+  }
+
+  @Test
+  public void testStartupWatchdogCancelledOnClientConnect() throws Exception {
+    java.util.concurrent.atomic.AtomicBoolean shutdownCalled =
+        new java.util.concurrent.atomic.AtomicBoolean(false);
+    manager.setAutoShutdownAction(() -> shutdownCalled.set(true));
+    manager.setStartupWatchdogSeconds(1);
+
+    Field clientField = ClientSubscriptionManager.class.getDeclaredField("hasEverHadClient");
+    clientField.setAccessible(true);
+    clientField.set(manager, false);
+
+    manager.scheduleStartupWatchdog();
+
+    WsContext mockContext = mock(WsContext.class);
+    org.eclipse.jetty.websocket.api.Session mockSession =
+        mock(org.eclipse.jetty.websocket.api.Session.class);
+    Field sessionField = WsContext.class.getDeclaredField("session");
+    sessionField.setAccessible(true);
+    sessionField.set(mockContext, mockSession);
+
+    manager.addSession(mockContext);
+
+    Thread.sleep(1200);
+    assertFalse("Startup watchdog should be cancelled when client connects", shutdownCalled.get());
   }
 }
