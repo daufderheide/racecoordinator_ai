@@ -301,6 +301,47 @@ export function handleSetLayoutScaleMode(
   if (!comp.isDestroyed) comp.cdr.markForCheck();
 }
 
+export const UI_EDITOR_ZOOM_STORAGE_KEY = "ui_editor_layout_zoom";
+
+export function saveLayoutZoomToStorage(
+  zoomMap: Map<string, number>,
+  logger?: any,
+): void {
+  try {
+    if (typeof localStorage !== "undefined") {
+      const obj: Record<string, number> = {};
+      zoomMap.forEach((val, key) => {
+        obj[key] = val;
+      });
+      localStorage.setItem(UI_EDITOR_ZOOM_STORAGE_KEY, JSON.stringify(obj));
+    }
+  } catch (e) {
+    logger?.error?.("Failed to save layout zoom to storage", e);
+  }
+}
+
+export function loadLayoutZoomFromStorage(logger?: any): Map<string, number> {
+  const map = new Map<string, number>();
+  try {
+    if (typeof localStorage !== "undefined") {
+      const saved = localStorage.getItem(UI_EDITOR_ZOOM_STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && typeof parsed === "object") {
+          Object.entries(parsed).forEach(([key, val]) => {
+            if (typeof val === "number" && !isNaN(val)) {
+              map.set(key, Math.min(Math.max(Math.round(val), 75), 500));
+            }
+          });
+        }
+      }
+    }
+  } catch (e) {
+    logger?.error?.("Failed to load layout zoom from storage", e);
+  }
+  return map;
+}
+
 export function getLayoutZoomHelper(
   layoutZoomMap: Map<string, number>,
   targetId: string,
@@ -312,9 +353,11 @@ export function setLayoutZoomHelper(
   layoutZoomMap: Map<string, number>,
   targetId: string,
   zoom: number,
+  logger?: any,
 ): void {
   const clamped = Math.min(Math.max(Math.round(zoom), 75), 500);
   layoutZoomMap.set(targetId, clamped);
+  saveLayoutZoomToStorage(layoutZoomMap, logger);
 }
 
 export function getCanvasViewportMaxHeightHelper(): number {
@@ -365,24 +408,27 @@ export function getComponentPreviewContainerHeight(
 }
 
 export class LayoutZoomController {
-  layoutZoomMap = new Map<string, number>();
+  layoutZoomMap: Map<string, number>;
 
-  constructor(private comp: any) {}
+  constructor(private comp: any) {
+    this.layoutZoomMap = loadLayoutZoomFromStorage(comp?.logger);
+  }
 
   getZoom(ui?: CustomUI): number {
     return getLayoutZoomHelper(
       this.layoutZoomMap,
-      ui?.entity_id || this.comp.activeCustomUiId || "default",
+      ui?.entity_id || this.comp?.activeCustomUiId || "default",
     );
   }
 
   setZoom(zoom: number, ui?: CustomUI): void {
     setLayoutZoomHelper(
       this.layoutZoomMap,
-      ui?.entity_id || this.comp.activeCustomUiId || "default",
+      ui?.entity_id || this.comp?.activeCustomUiId || "default",
       zoom,
+      this.comp?.logger,
     );
-    if (!this.comp.isDestroyed) this.comp.cdr.markForCheck();
+    if (!this.comp?.isDestroyed) this.comp?.cdr?.markForCheck?.();
   }
 
   step(delta: number, ui?: CustomUI): void {

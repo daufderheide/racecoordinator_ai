@@ -4644,6 +4644,51 @@ describe("UIEditorComponent", () => {
       expect(inspectorHeight).toBeGreaterThanOrEqual(400);
       expect(inspectorHeight).toBeLessThanOrEqual(maxViewportHeight);
     });
+
+    it("should persist zoom setting for each layout and restore it when returning to the layout", () => {
+      const ui1: CustomUI = {
+        entity_id: "layout_1",
+        name: "Layout 1",
+        is_default: false,
+        layoutJson: JSON.stringify({ widgets: [] }),
+      };
+      const ui2: CustomUI = {
+        entity_id: "layout_2",
+        name: "Layout 2",
+        is_default: false,
+        layoutJson: JSON.stringify({ widgets: [] }),
+      };
+      component.editingState.customUIs = [ui1, ui2];
+
+      // Set different zooms for layout 1 and layout 2
+      component.setLayoutZoom(135, ui1);
+      component.setLayoutZoom(85, ui2);
+
+      expect(component.getLayoutZoom(ui1)).toBe(135);
+      expect(component.getLayoutZoom(ui2)).toBe(85);
+
+      // Verify persisted in localStorage
+      const saved = JSON.parse(
+        localStorage.getItem("ui_editor_layout_zoom") || "{}",
+      );
+      expect(saved["layout_1"]).toBe(135);
+      expect(saved["layout_2"]).toBe(85);
+
+      // Verify zoom is restored when returning to layout 1 and layout 2
+      expect(component.getLayoutZoom(ui1)).toBe(135);
+      expect(component.getLayoutZoom(ui2)).toBe(85);
+
+      // Verify reset updates zoom back to 100 for specific layout
+      component.resetLayoutZoom(ui1);
+      expect(component.getLayoutZoom(ui1)).toBe(100);
+      expect(component.getLayoutZoom(ui2)).toBe(85);
+
+      const savedAfterReset = JSON.parse(
+        localStorage.getItem("ui_editor_layout_zoom") || "{}",
+      );
+      expect(savedAfterReset["layout_1"]).toBe(100);
+      expect(savedAfterReset["layout_2"]).toBe(85);
+    });
   });
 
   describe("Widget Selector and Countdown Preview Toggle", () => {
