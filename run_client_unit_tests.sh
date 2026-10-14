@@ -15,11 +15,14 @@ mkdir -p "$ISOLATED_DIR"
 echo "Syncing source to $ISOLATED_DIR..."
 # Ensure the parent directory for server/proto exists for the relative path ../server/proto to work
 mkdir -p "$(dirname "$ISOLATED_DIR")/server"
+# Ensure custom_widgets node_modules is linked
+node "$CLIENT_DIR/scripts/link-custom-widgets-modules.js"
+
 # Use rsync for faster incremental syncs (only copies changed files)
 if command -v rsync &>/dev/null; then
   rsync -a --delete src/ "$ISOLATED_DIR/src/"
   rsync -a --delete "$PROJECT_ROOT/server/proto/" "$(dirname "$ISOLATED_DIR")/server/proto/"
-  rsync -a --delete "$PROJECT_ROOT/custom_widgets/" "$(dirname "$ISOLATED_DIR")/custom_widgets/"
+  rsync -a --delete --exclude 'node_modules' "$PROJECT_ROOT/custom_widgets/" "$(dirname "$ISOLATED_DIR")/custom_widgets/"
   rsync -a karma.conf.js package.json angular.json tsconfig.json tsconfig.app.json tsconfig.spec.json package-lock.json "$ISOLATED_DIR/"
 else
   rm -rf "$ISOLATED_DIR/src"
@@ -29,6 +32,7 @@ else
   mkdir -p "$(dirname "$ISOLATED_DIR")/server"
   cp -Rf "$PROJECT_ROOT/server/proto" "$(dirname "$ISOLATED_DIR")/server/"
   cp -Rf "$PROJECT_ROOT/custom_widgets" "$(dirname "$ISOLATED_DIR")/"
+  rm -rf "$(dirname "$ISOLATED_DIR")/custom_widgets/node_modules"
   cp -f karma.conf.js package.json angular.json tsconfig.json tsconfig.app.json tsconfig.spec.json package-lock.json "$ISOLATED_DIR/"
 fi
 

@@ -43,6 +43,9 @@ if (-not (Test-Path $env:HOME)) {
     New-Item -ItemType Directory -Path $env:HOME -Force | Out-Null
 }
 
+# Ensure custom_widgets node_modules is linked
+node scripts\link-custom-widgets-modules.js
+
 # Execute tests
 Write-Host "Executing unit tests..." -ForegroundColor Green
 # Explicitly specify project name and working directory for Windows compatibility
