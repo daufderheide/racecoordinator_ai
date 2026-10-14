@@ -164,6 +164,10 @@ public class CustomDirectoryTaskHandlerTest {
     handler.getWidgetFile(ctx);
     verify(ctx).result("{\"id\":\"my-widget\"}");
 
+    // Also create an empty directory without widget.json (e.g. dopamine) to verify it is not
+    // discovered
+    Files.createDirectories(widgetRoot.toPath().resolve("empty_folder"));
+
     // 3. List discovered widgets
     org.mockito.Mockito.reset(ctx);
     when(ctx.status(anyInt())).thenReturn(ctx);
@@ -244,5 +248,54 @@ public class CustomDirectoryTaskHandlerTest {
 
     handler.getWidgetFile(ctx);
     verify(ctx).status(400);
+  }
+
+  @Test
+  public void testHasWidgetFile() throws Exception {
+    File widgetRoot = tempFolder.newFolder("widgets_check_root");
+    when(configService.getCustomWidgetDirectory()).thenReturn(widgetRoot.getAbsolutePath());
+
+    File sampleDir = new File(widgetRoot, "sample");
+    sampleDir.mkdirs();
+    File widgetJson = new File(sampleDir, "widget.json");
+    Files.write(widgetJson.toPath(), "{}".getBytes());
+
+    // 1. Existing file
+    when(ctx.queryParam("path")).thenReturn("sample");
+    when(ctx.queryParam("file")).thenReturn("widget.json");
+    ArgumentCaptor<Map<String, Object>> captor = ArgumentCaptor.forClass(Map.class);
+    handler.hasWidgetFile(ctx);
+    verify(ctx).json(captor.capture());
+    assertEquals(true, captor.getValue().get("exists"));
+
+    // 2. Non-existent file
+    org.mockito.Mockito.reset(ctx);
+    when(ctx.status(anyInt())).thenReturn(ctx);
+    when(ctx.queryParam("path")).thenReturn("sample");
+    when(ctx.queryParam("file")).thenReturn("widget.css");
+    captor = ArgumentCaptor.forClass(Map.class);
+    handler.hasWidgetFile(ctx);
+    verify(ctx).json(captor.capture());
+    assertEquals(false, captor.getValue().get("exists"));
+
+    // 3. Path traversal blocked
+    org.mockito.Mockito.reset(ctx);
+    when(ctx.status(anyInt())).thenReturn(ctx);
+    when(ctx.queryParam("path")).thenReturn("../");
+    when(ctx.queryParam("file")).thenReturn("etc/passwd");
+    captor = ArgumentCaptor.forClass(Map.class);
+    handler.hasWidgetFile(ctx);
+    verify(ctx).json(captor.capture());
+    assertEquals(false, captor.getValue().get("exists"));
+
+    // 4. Missing file parameter
+    org.mockito.Mockito.reset(ctx);
+    when(ctx.status(anyInt())).thenReturn(ctx);
+    when(ctx.queryParam("path")).thenReturn("sample");
+    when(ctx.queryParam("file")).thenReturn("");
+    captor = ArgumentCaptor.forClass(Map.class);
+    handler.hasWidgetFile(ctx);
+    verify(ctx).json(captor.capture());
+    assertEquals(false, captor.getValue().get("exists"));
   }
 }

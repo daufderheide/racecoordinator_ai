@@ -257,4 +257,46 @@ describe("RacedayHeatDriversComponent", () => {
     fixture.detectChanges();
     expect(mockParent.onNextHeatTeammateChange).toHaveBeenCalled();
   });
+
+  describe("trackByDriver", () => {
+    it("should return lane-specific key for assigned driver", () => {
+      const hd: any = {
+        laneIndex: 0,
+        driver: { entity_id: "driver-1", name: "Alice" },
+      };
+      expect(component.trackByDriver(0, hd)).toBe("0-driver-1");
+    });
+
+    it("should return distinct keys for multiple empty lanes", () => {
+      const hdLane1: any = {
+        laneIndex: 1,
+        driver: { entity_id: "EMPTY_LANE", name: "Empty" },
+      };
+      const hdLane3: any = {
+        laneIndex: 3,
+        driver: { entity_id: "EMPTY_LANE", name: "Empty" },
+      };
+
+      const key1 = component.trackByDriver(1, hdLane1);
+      const key3 = component.trackByDriver(3, hdLane3);
+
+      expect(key1).toBe("lane-1");
+      expect(key3).toBe("lane-3");
+      expect(key1).not.toBe(key3);
+    });
+
+    it("should fallback to index when laneIndex is not provided", () => {
+      const hd: any = {
+        driver: { entity_id: "EMPTY_LANE", name: "Empty" },
+      };
+      expect(component.trackByDriver(2, hd)).toBe("lane-2");
+    });
+
+    it("should handle hd without driver", () => {
+      const hd: any = {
+        laneIndex: 1,
+      };
+      expect(component.trackByDriver(1, hd)).toBe("lane-1");
+    });
+  });
 });

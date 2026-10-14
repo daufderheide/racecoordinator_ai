@@ -18,6 +18,7 @@ describe("FileSystemService", () => {
       "clearDirectory",
       "listWidgets",
       "getWidgetFile",
+      "hasWidgetFile",
       "writeWidgetFile",
       "deleteWidgetDir",
       "hasCustomFiles",
@@ -572,6 +573,7 @@ describe("FileSystemService", () => {
       mockServerFs.getWidgetFile.and.returnValue(
         Promise.resolve("widget-content"),
       );
+      mockServerFs.hasWidgetFile.and.returnValue(Promise.resolve(true));
       mockServerFs.writeWidgetFile.and.returnValue(Promise.resolve(true));
       mockServerFs.deleteWidgetDir.and.returnValue(Promise.resolve(true));
 
@@ -584,6 +586,10 @@ describe("FileSystemService", () => {
 
       const exists = await service.hasWidgetFile("sample/w1", "widget.json");
       expect(exists).toBeTrue();
+      expect(mockServerFs.hasWidgetFile).toHaveBeenCalledWith(
+        "sample/w1",
+        "widget.json",
+      );
 
       await service.writeWidgetFile("sample/w1", "widget.json", "{}");
       expect(mockServerFs.writeWidgetFile).toHaveBeenCalledWith(
