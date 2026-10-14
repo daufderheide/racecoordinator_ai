@@ -1,0 +1,150 @@
+:host {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.advanced-laps-card {
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+  transition: border-color 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+}
+
+.advanced-laps-card.clickable {
+  cursor: pointer;
+}
+
+.advanced-laps-card.header-widget-card {
+  align-items: stretch;
+  justify-content: stretch;
+}
+
+.advanced-laps-card.header-widget-card .advanced-laps-header.header-widget-only {
+  width: 100%;
+  height: 100%;
+  border-bottom: none;
+  border-radius: inherit;
+}
+
+.advanced-laps-header {
+  background: rgba(68, 68, 68, 0.7);
+  color: #fff;
+  font-weight: bold;
+  font-size: 14px;
+  line-height: 1.2;
+  text-align: center;
+  user-select: none;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex-shrink: 0;
+  padding: 3px 8px;
+  min-width: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.25);
+  border-top-left-radius: inherit;
+  border-top-right-radius: inherit;
+}
+
+.advanced-laps-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  min-height: 0;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  position: relative;
+  overflow: hidden;
+  padding: 4px 8px;
+}
+
+.advanced-laps-value {
+  font-weight: 700;
+  line-height: 1;
+  user-select: none;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  max-width: 100%;
+}
+
+.advanced-laps-list {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  padding: 6px;
+  box-sizing: border-box;
+  gap: 4px;
+}
+
+.advanced-laps-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 8px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.05);
+  font-size: 14px;
+  transition: background-color 0.15s ease;
+}
+
+.advanced-laps-row.clickable {
+  cursor: pointer;
+}
+
+.advanced-laps-row.clickable:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.driver-lane-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: bold;
+  color: #fff;
+  min-width: 24px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+  margin-right: 6px;
+}
+
+.driver-name-text {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-right: 8px;
+  font-weight: 500;
+}
+
+.driver-lap-value {
+  font-weight: bold;
+  font-size: 15px;
+  white-space: nowrap;
+}
+
+.empty-state-message {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 18px;
+}
