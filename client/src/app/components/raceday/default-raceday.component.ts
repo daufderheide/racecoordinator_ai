@@ -116,6 +116,7 @@ import {
   createTTSContext,
   dispatchLapAudio,
   isAudioConfigured,
+  resolveAudioUrl,
   resolveLapAudio,
 } from "@app/utils/audio";
 import { saveFileAs } from "@app/utils/file-download.utils";
@@ -2418,7 +2419,9 @@ export class DefaultRacedayComponent
       if (config && config.type === "none") {
         return null;
       }
-      const playableUrl = config?.url ? this.getFullUrl(config.url) : undefined;
+      const playableUrl = config?.url
+        ? this.resolveAssetPlayableUrl(config.url)
+        : undefined;
       return {
         id: "halfway",
         config: config || { type: "preset" },
@@ -2454,17 +2457,25 @@ export class DefaultRacedayComponent
         (a) =>
           a.model?.entityId === config.url ||
           a.entity_id === config.url ||
-          a._id === config.url,
+          a._id === config.url ||
+          a.name === config.url,
       );
-      if (asset?.audioEntries && asset.audioEntries.length > 0) {
-        const filtered = asset.audioEntries.filter((e: any) => {
+      const entries = asset?.audioEntries || (asset as any)?.audio_entries;
+      if (entries && entries.length > 0) {
+        const filtered = entries.filter((e: any) => {
           const mode = e.triggerMode || e.trigger_mode || "remaining";
           return mode === triggerMode;
         });
         if (filtered.length > 0) {
           return filtered
             .map((e: any) =>
-              Math.round(e.timeSeconds != null ? e.timeSeconds : e.percentage),
+              Math.round(
+                e.timeSeconds != null
+                  ? e.timeSeconds
+                  : e.time_seconds != null
+                    ? e.time_seconds
+                    : e.percentage,
+              ),
             )
             .filter((t: number) => !isNaN(t) && t >= 0)
             .filter(
@@ -2592,16 +2603,26 @@ export class DefaultRacedayComponent
         (a) =>
           a.model?.entityId === config.url ||
           a.entity_id === config.url ||
-          a._id === config.url,
+          a._id === config.url ||
+          a.name === config.url,
       );
-      if (asset?.audioEntries && asset.audioEntries.length > 0) {
-        const filtered = asset.audioEntries.filter((e: any) => {
+      const entries = asset?.audioEntries || (asset as any)?.audio_entries;
+      if (entries && entries.length > 0) {
+        const filtered = entries.filter((e: any) => {
           const mode = e.triggerMode || e.trigger_mode || "remaining";
           return mode === triggerMode;
         });
         if (filtered.length > 0) {
           return filtered
-            .map((e: any) => Math.round(e.timeSeconds))
+            .map((e: any) =>
+              Math.round(
+                e.timeSeconds != null
+                  ? e.timeSeconds
+                  : e.time_seconds != null
+                    ? e.time_seconds
+                    : e.percentage,
+              ),
+            )
             .filter((t: number) => t > 0)
             .sort((a: number, b: number) =>
               triggerMode === "elapsed" ? a - b : b - a,
@@ -2677,16 +2698,26 @@ export class DefaultRacedayComponent
         (a) =>
           a.model?.entityId === config.url ||
           a.entity_id === config.url ||
-          a._id === config.url,
+          a._id === config.url ||
+          a.name === config.url,
       );
-      if (asset?.audioEntries && asset.audioEntries.length > 0) {
-        const filtered = asset.audioEntries.filter((e: any) => {
+      const entries = asset?.audioEntries || (asset as any)?.audio_entries;
+      if (entries && entries.length > 0) {
+        const filtered = entries.filter((e: any) => {
           const mode = e.triggerMode || e.trigger_mode || "remaining";
           return mode === triggerMode;
         });
         if (filtered.length > 0) {
           return filtered
-            .map((e: any) => Math.round(e.timeSeconds))
+            .map((e: any) =>
+              Math.round(
+                e.timeSeconds != null
+                  ? e.timeSeconds
+                  : e.time_seconds != null
+                    ? e.time_seconds
+                    : e.percentage,
+              ),
+            )
             .filter((t: number) => t > 0)
             .sort((a: number, b: number) =>
               triggerMode === "elapsed" ? a - b : b - a,
@@ -2813,9 +2844,9 @@ export class DefaultRacedayComponent
         a.name === urlOrId,
     );
     if (asset?.url) {
-      return this.getFullUrl(asset.url);
+      return resolveAudioUrl(asset.url, this.dataService.serverUrl);
     }
-    return this.getFullUrl(urlOrId);
+    return resolveAudioUrl(urlOrId, this.dataService.serverUrl);
   }
 
   private updateLaneFuel(
@@ -6776,11 +6807,12 @@ export class DefaultRacedayComponent
       (a) =>
         a.model?.entityId === assetId ||
         a.entity_id === assetId ||
-        a._id === assetId,
+        a._id === assetId ||
+        a.name === assetId,
     );
     if (!asset || asset.type !== "audio_set") return null;
 
-    const entries = asset.audioEntries || asset.audio_entries;
+    const entries = asset.audioEntries || (asset as any)?.audio_entries;
     const entry = entries?.find((e: any) => {
       const val =
         e.timeSeconds != null
@@ -6800,7 +6832,9 @@ export class DefaultRacedayComponent
     const entryType = entry.type || "preset";
     if (entryType === "none") return null;
 
-    const playableUrl = entry.url ? this.getFullUrl(entry.url) : undefined;
+    const playableUrl = entry.url
+      ? this.resolveAssetPlayableUrl(entry.url)
+      : undefined;
     return {
       config: {
         type: entryType,
@@ -7019,17 +7053,25 @@ export class DefaultRacedayComponent
         (a) =>
           a.model?.entityId === config.url ||
           a.entity_id === config.url ||
-          a._id === config.url,
+          a._id === config.url ||
+          a.name === config.url,
       );
-      if (asset?.audioEntries && asset.audioEntries.length > 0) {
-        const filtered = asset.audioEntries.filter((e: any) => {
+      const entries = asset?.audioEntries || (asset as any)?.audio_entries;
+      if (entries && entries.length > 0) {
+        const filtered = entries.filter((e: any) => {
           const mode = e.triggerMode || e.trigger_mode || "remaining";
           return mode === triggerMode;
         });
         if (filtered.length > 0) {
           return filtered
             .map((e: any) =>
-              Math.round(e.timeSeconds != null ? e.timeSeconds : e.percentage),
+              Math.round(
+                e.timeSeconds != null
+                  ? e.timeSeconds
+                  : e.time_seconds != null
+                    ? e.time_seconds
+                    : e.percentage,
+              ),
             )
             .filter((t: number) => !isNaN(t) && t >= 0)
             .filter(
@@ -7130,15 +7172,7 @@ export class DefaultRacedayComponent
 
     let playableUrl: string | undefined = config.url;
     if (config.type === "preset" && playableUrl) {
-      const asset = (this.assets || []).find(
-        (a) =>
-          a.model?.entityId === playableUrl ||
-          a.entity_id === playableUrl ||
-          a._id === playableUrl,
-      );
-      if (asset) {
-        playableUrl = this.getFullUrl(asset.url);
-      }
+      playableUrl = this.resolveAssetPlayableUrl(playableUrl);
     }
 
     let priority: AudioPriority = "normal";

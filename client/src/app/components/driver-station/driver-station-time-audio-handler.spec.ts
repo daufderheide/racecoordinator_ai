@@ -95,6 +95,21 @@ describe("DriverStationTimeAudioHandler", () => {
       const elapsed = handler.getSecondsLeftThresholds("elapsed");
       expect(elapsed).toEqual([10]);
     });
+
+    it("should resolve thresholds when asset is matched by name and has audio_entries", () => {
+      mockThemeService.resolveAudioConfig.and.returnValue({
+        url: "Time Left Set",
+      });
+      assetsArr = [
+        {
+          name: "Time Left Set",
+          audio_entries: [{ time_seconds: 45, trigger_mode: "remaining" }],
+        },
+      ];
+
+      const remaining = handler.getSecondsLeftThresholds("remaining");
+      expect(remaining).toEqual([45]);
+    });
   });
 
   describe("checkRaceTimeAnnouncements", () => {

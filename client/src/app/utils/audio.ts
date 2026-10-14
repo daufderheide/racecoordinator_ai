@@ -478,19 +478,43 @@ export function getDefaultAudioName(
   return undefined;
 }
 
+const UUID_REGEX =
+  /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+
 /** Resolves an audio URL or asset ID to a fully qualified URL for playback. */
 export function resolveAudioUrl(
   url: string | undefined,
   serverUrl: string,
 ): string {
   if (!url) return "";
+  const base = serverUrl.endsWith("/") ? serverUrl.slice(0, -1) : serverUrl;
+
   if (url.startsWith("http://") || url.startsWith("https://")) {
+    try {
+      const urlObj = new URL(url);
+      const path = urlObj.pathname.startsWith("/")
+        ? urlObj.pathname.slice(1)
+        : urlObj.pathname;
+      if (UUID_REGEX.test(path)) {
+        return `${urlObj.origin}/api/assets/download/${path}`;
+      }
+    } catch {
+      // invalid URL, fall through
+    }
     return url;
   }
-  const base = serverUrl.endsWith("/") ? serverUrl.slice(0, -1) : serverUrl;
+
   if (url.startsWith("/")) {
+    if (UUID_REGEX.test(url.slice(1))) {
+      return `${base}/api/assets/download/${url.slice(1)}`;
+    }
     return `${base}${url}`;
   }
+
+  if (url.startsWith("assets/") || url.startsWith("api/")) {
+    return `${base}/${url}`;
+  }
+
   if (DEFAULT_AUDIO_URLS[url]) {
     return `${base}${DEFAULT_AUDIO_URLS[url]}`;
   }
@@ -504,6 +528,7 @@ export function resolveAudioUrl(
       return `${base}${defaultUrl}`;
     }
   }
+
   return `${base}/api/assets/download/${url}`;
 }
 
