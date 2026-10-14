@@ -9,8 +9,8 @@ Mit dem UI-Editor können Sie benutzerdefinierte Renntag-Layouts erstellen, Fahr
 Benutzerdefinierte Widgets können zu Ihren Custom-UI-Layouts hinzugefügt werden:
 - **Ordner für benutzerdefinierte Widgets**: Legen Sie Ihren lokalen Widget-Ordner im Bereich **Benutzerdefinierte Benutzeroberfläche** unten im Editor fest.
 - **Beispiel-Widgets aktualisieren**: Klicken Sie auf **Beispiel-Widgets aktualisieren**, um einsatzbereite Beispiel-Widgets in einem `sample/`-Ordner zu erstellen oder zu aktualisieren (`sample-telemetry-gauge`, `sample-lap-delta`, `sample-sponsor-banner`, `sample-detailed-leaderboard`).
-- **Widget-Toolbox-Gruppen**: Die Widget-Toolbox organisiert Widgets in übergeordnete Gruppen (**Race Coordinator AI**, **Benutzerdefinierte Wurzel** und eigene Ordner wie **sample**) mit verschachtelten Untergruppen (wie **Aktionen** und **Durchgangsdaten** mit kategorisierten Unterordnern) und einem Sofort-Suchfilter.
-- **Dynamischer Inspektor**: Wenn ein benutzerdefiniertes Widget auf der Arbeitsfläche ausgewählt ist, erscheinen seine individuellen Eigenschaften (Farben, Schwellenwerte, Schalter, Textfelder) dynamisch im Widget-Inspektor.
+- **Widget-Bibliothek-Gruppen**: Die Widget-Bibliothek organisiert Widgets in übergeordnete Gruppen (**Race Coordinator AI**, **Benutzerdefinierte Wurzel** und eigene Ordner wie **sample**) mit verschachtelten Untergruppen (wie **Aktionen** und **Durchgangsdaten** mit kategorisierten Unterordnern) und einem Sofort-Suchfilter.
+- **Dynamische Konfiguration**: Wenn ein benutzerdefiniertes Widget auf der Arbeitsfläche ausgewählt ist, erscheinen seine individuellen Eigenschaften (Farben, Schwellenwerte, Schalter, Textfelder) dynamisch in der Widget-Konfiguration.
 
 Ausführliche Informationen zur Entwicklung finden Sie im [Leitfaden für benutzerdefinierte Widgets](custom-widgets.md).
 
@@ -18,9 +18,9 @@ Ausführliche Informationen zur Entwicklung finden Sie im [Leitfaden für benutz
 
 - Ziehen Sie Widgets aus der Palette per Drag & Drop auf die Leinwand.
 - Passen Sie Größe, Position und Ausrichtung der Widgets an Ihre Bildschirmauflösung an. Alle Widgets bleiben innerhalb des Leinwandbereichs begrenzt.
-- **Widget-Inspektor-Steuerung**:
+- **Widget-Konfigurations-Steuerung**:
   - **Position & Größe**: Positionieren und dimensionieren Sie das ausgewählte Widget präzise über die Eingabefelder für **X**, **Y**, **Breite** und **Höhe**.
-  - **Widget löschen**: Klicken Sie auf das Papierkorb-Symbol im Inspektor-Kopfbereich.
+  - **Widget löschen**: Klicken Sie auf das Papierkorb-Symbol im Konfigurations-Kopfbereich.
 - **Tastaturkurzbefehle**:
   - <kbd>Entf</kbd> oder <kbd>Rücktaste</kbd>: Entfernt das ausgewählte Widget aus dem Layout.
   - <kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd>: Verschiebt das ausgewählte Widget um 1px (oder 10px mit gedrückter <kbd>Umschalttaste</kbd>).
@@ -42,7 +42,7 @@ Das **Timer**-Widget zeigt die abgelaufene oder verbleibende Renn- bzw. Durchgan
   - **Unter Schwellenwert**: Zeigt Dezimalstellen (1 bis 3 Stellen) an, sobald die Zeit unter den konfigurierten Schwellenwert fällt (z. B. letzte 10 Sekunden).
   - **Immer**: Zeigt Sekundenbruchteile durchgehend während des gesamten Durchgangs an.
   - **Nie**: Beschränkt den Timer ausschließlich auf ganze Sekunden.
-- **Live-Vorschau**: Der Inspektor bietet eine sofortige Vorschau darauf, wie die ausgewählten Einstellungen an verschiedenen Zeitpunkten formatiert werden (`> 1 hr`, `> 1 min`, `< 1 min` und `< 10s`).
+- **Live-Vorschau**: Der Konfigurationsbereich bietet eine sofortige Vorschau darauf, wie die ausgewählten Einstellungen an verschiedenen Zeitpunkten formatiert werden (`> 1 hr`, `> 1 min`, `< 1 min` und `< 10s`).
 
 > [!NOTE]
 > Genau diese Zeitformatierungsoptionen (Anzeigeformat-Vorgaben, Subsekunden-Modi, Schwellenwert und Dezimalstellen-Schieberegler mit Live-Vorschau) werden auch für **Gesamtzeit-Widgets** (Heat-Gesamtzeit und Renn-/Gesamtzeit) sowie für **Gesamtzeit-Spalten** in der Spuransicht unterstützt. Klicken Sie in der Spaltenliste der Spuransicht auf das Symbol für Zeitoptionen (<span class="material-icons">more_time</span>) neben einer beliebigen Gesamtzeit-Spalte, um deren Zeitformat anzupassen.
@@ -72,10 +72,10 @@ Das **Spurspalten-Widget** ermöglicht es, einzelne Datenspalten aus der Spurans
   - **Text- und Hintergrundfarbe**: Sowohl die Hintergrundfarbe als auch die Textfarbe der Titelleiste können über Farbwähler angepasst und mit einem Klick auf die Standardwerte zurückgesetzt werden.
 - **Farbübernahme & Anpassungen**: Karten übernehmen standardmäßig die zugewiesenen Hintergrund- und Textfarben der jeweiligen Spur (`Spurfarben verwenden`) oder können mit benutzerdefinierten Farben und Rahmen gestaltet werden.
 - **Über Spuren / Positionen duplizieren**:
-  - Anstatt Karten für jede Spur manuell zu erstellen und auszurichten, konfigurieren Sie eine einzelne Spur oder Position und klicken im Inspektor auf **Über Spuren / Positionen duplizieren...**.
+  - Anstatt Karten für jede Spur manuell zu erstellen und auszurichten, konfigurieren Sie eine einzelne Spur oder Position und klicken im Konfigurationsbereich auf **Über Spuren / Positionen duplizieren...**.
   - Wählen Sie die Ausrichtung (**Horizontal** nebeneinander oder **Vertikal** übereinander), die Gesamtanzahl der Zielspuren/-positionen (standardmäßig die maximale Spurenanzahl aller Strecken in der Datenbank), den Abstandsmodus (**Automatisch an Arbeitsbereich anpassen** oder **Abstand beibehalten**) und optional das Überschreiben bestehender Widgets.
   - **Echtzeit-Duplizierungsmodus**: Beim Starten wechselt der Editor in einen interaktiven Blueprint-Modus mit visuellen Spurführungslinien und magnetischem Einrasten. In diesem Modus platzieren und verändern Sie Widgets direkt in Spur 1 (Master); alle Änderungen werden sofort in Echtzeit auf die übrigen Spuren gespiegelt. Gespiegelte Widgets in den Spuren 2..N sind schreibgeschützte Live-Vorschauen; ein Klick darauf leitet den Fokus automatisch auf den Master in Spur 1 weiter.
   - **Intelligenter Rasterbereich & Größenanpassung**: Der Duplizierungsbereich dehnt sich automatisch in alle vier Richtungen aus, um den verfügbaren Platz auf der Arbeitsfläche auszufüllen, bis er an die Begrenzung bestehender Widgets stößt, die nicht zum Raster gehören. Sie können die Gesamtgröße des Rasters interaktiv über die 8 Ziehpunkte am Rahmen des Overlays verändern.
   - Mit **Fertig** wird das Raster in eigenständige Widgets festgeschrieben.
-  - **Vorlage erneut bearbeiten & Lösen**: Beim Auswählen eines solchen Widgets zeigt der Inspektor eine Infokarte mit **Rastervorlage bearbeiten** (um jederzeit wieder in den Echtzeit-Modus zu wechseln) und **Vom Raster lösen** (um die Verknüpfung dauerhaft aufzuheben).
+  - **Vorlage erneut bearbeiten & Lösen**: Beim Auswählen eines solchen Widgets zeigt die Widget-Konfiguration eine Infokarte mit **Rastervorlage bearbeiten** (um jederzeit wieder in den Echtzeit-Modus zu wechseln) und **Vom Raster lösen** (um die Verknüpfung dauerhaft aufzuheben).
 

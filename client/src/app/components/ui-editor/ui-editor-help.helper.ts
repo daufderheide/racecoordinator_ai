@@ -171,7 +171,7 @@ export function getRacedayLayoutHelpSteps(
       title:
         translationService.translate(
           "UE_HELP_RACEDAY_WIDGET_INSPECTOR_TITLE",
-        ) || "Widget Inspector",
+        ) || "Widget Configuration",
       content: translationService.translate("UE_HELP_RACEDAY_WIDGET_INSPECTOR"),
       position: "left",
       onEnter: selectInspectorWidget,

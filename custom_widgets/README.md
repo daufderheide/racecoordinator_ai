@@ -23,5 +23,5 @@ custom_widgets/
 1. In Race Coordinator AI, navigate to **Options -> Custom UI (UI Editor)**.
 2. Under **Custom UI**, click **Select Folder** for **Custom Widgets Folder**.
 3. Select this `custom_widgets` directory (or download individual user library folders such as `dopamine/` into your chosen widgets folder).
-4. The application will scan and organize widgets by library name in the Widget Toolbox.
-5. Drag and drop widgets into your custom layouts and configure their properties in the Widget Inspector.
+4. The application will scan and organize widgets by library name in the Widget Library.
+5. Drag and drop widgets into your custom layouts and configure their properties in the Widget Configuration.

@@ -13,6 +13,8 @@ import {
   duplicateThemeEntity,
   handleConfirmDiscard,
   handleOperationError,
+  isCountdownPreviewActiveHelper,
+  toggleCountdownPreviewHelper,
 } from "./ui-editor-operations.helper";
 
 describe("ui-editor-operations.helper", () => {
@@ -196,5 +198,46 @@ describe("ui-editor-operations.helper", () => {
     const result = await handleConfirmDiscard(comp);
     expect(result).toBeTrue();
     expect(comp.undoManager.commitState).toHaveBeenCalled();
+  });
+
+  describe("countdown preview helpers", () => {
+    it("should return false if no id is resolved", () => {
+      const comp: any = { activeCustomUiId: null };
+      expect(isCountdownPreviewActiveHelper(comp)).toBeFalse();
+    });
+
+    it("should return recorded state if present in countdownPreviewActiveByUi", () => {
+      const comp: any = {
+        activeCustomUiId: "ui1",
+        countdownPreviewActiveByUi: { ui1: true },
+      };
+      expect(isCountdownPreviewActiveHelper(comp)).toBeTrue();
+    });
+
+    it("should check widgetType countdown if not recorded", () => {
+      const comp: any = {
+        activeCustomUiId: "ui1",
+        countdownPreviewActiveByUi: {},
+        selectedWidgetId: "w1",
+        getLayout: () => ({ widgets: [{ id: "w1", widgetType: "countdown" }] }),
+      };
+      expect(isCountdownPreviewActiveHelper(comp)).toBeTrue();
+    });
+
+    it("should toggle countdown preview state and call markForCheck", () => {
+      const comp: any = {
+        activeCustomUiId: "ui1",
+        countdownPreviewActiveByUi: {},
+        selectedWidgetId: "w1",
+        getLayout: () => ({ widgets: [{ id: "w1", widgetType: "countdown" }] }),
+        isCountdownPreviewActive: (ui?: any) =>
+          isCountdownPreviewActiveHelper(comp, ui),
+        cdr: { markForCheck: jasmine.createSpy("markForCheck") },
+      };
+
+      toggleCountdownPreviewHelper(comp);
+      expect(comp.countdownPreviewActiveByUi["ui1"]).toBeFalse();
+      expect(comp.cdr.markForCheck).toHaveBeenCalled();
+    });
   });
 });

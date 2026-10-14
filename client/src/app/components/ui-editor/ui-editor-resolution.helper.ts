@@ -107,10 +107,23 @@ export function getDefaultAspectRatioOptions(): AspectRatioOption[] {
 }
 
 export function getLayoutAspectRatio(layout?: LayoutConfig): string {
-  if (layout?.aspectRatio) {
+  if (layout?.aspectRatio && layout.aspectRatio !== "current") {
     return layout.aspectRatio;
   }
-  return "current";
+  if (layout?.baseWidth && layout?.baseHeight) {
+    const ratio = layout.baseWidth / layout.baseHeight;
+    if (Math.abs(ratio - 16 / 9) < 0.05) return "16:9";
+    if (Math.abs(ratio - 16 / 10) < 0.05) return "16:10";
+    if (Math.abs(ratio - 4 / 3) < 0.05) return "4:3";
+    if (Math.abs(ratio - 5 / 4) < 0.05) return "5:4";
+    if (Math.abs(ratio - 3 / 2) < 0.05) return "3:2";
+    if (Math.abs(ratio - 21 / 9) < 0.05) return "21:9";
+    if (Math.abs(ratio - 32 / 9) < 0.05) return "32:9";
+    if (Math.abs(ratio - 9 / 16) < 0.05) return "9:16";
+    if (Math.abs(ratio - 10 / 16) < 0.05) return "10:16";
+    if (Math.abs(ratio - 3 / 4) < 0.05) return "3:4";
+  }
+  return "16:9";
 }
 
 export function getLayoutAspectRatioOptions(
@@ -369,7 +382,7 @@ export function getInspectorHeightHelper(
   containerHeight: number,
   viewportMaxHeight: number,
 ): number {
-  return Math.max(Math.min(containerHeight, viewportMaxHeight), 400);
+  return Math.max(Math.min(containerHeight, viewportMaxHeight), 250);
 }
 
 export function getComponentPreviewScaleNumber(

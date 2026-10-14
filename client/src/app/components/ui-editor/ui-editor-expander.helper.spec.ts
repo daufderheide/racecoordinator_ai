@@ -80,6 +80,16 @@ describe("ui-editor-expander.helper", () => {
     }, 10);
   });
 
+  it("should execute scrollToUiElement without throwing", (done) => {
+    const cdr = { detectChanges: jasmine.createSpy("detectChanges") };
+    const { scrollToUiElement } = require("./ui-editor-expander.helper");
+    scrollToUiElement("u1", cdr);
+    expect(cdr.detectChanges).toHaveBeenCalled();
+    setTimeout(() => {
+      done();
+    }, 10);
+  });
+
   describe("applyInitialExpanderState", () => {
     const themes: Theme[] = [
       {

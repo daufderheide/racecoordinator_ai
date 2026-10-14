@@ -460,7 +460,7 @@
                             </div>
                           </div>
 
-                          <!-- Widget Inspector Sidebar -->
+                          <!-- Widget Configuration Sidebar -->
                           @if (
                             currentSelectedWidget &&
                             ui.entity_id === activeCustomUiId
@@ -859,7 +859,7 @@
                             </div>
                           }
 
-                          <!-- Widget Toolbox: Rendered at workspace level to always be on top of canvas and inspector -->
+                          <!-- Widget Library: Rendered at workspace level to always be on top of canvas and configuration -->
                           <ng-container
                             *ngTemplateOutlet="racedayComp?.toolboxTemplate"
                           ></ng-container>

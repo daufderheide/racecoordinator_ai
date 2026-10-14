@@ -115,9 +115,9 @@ describe("ui-editor-resolution.helper", () => {
     expect(portraitOpts.some((o) => o.ratio === "9:16")).toBeTrue();
   });
 
-  it("should determine layout aspect ratio from explicit field or default to current", () => {
-    expect(getLayoutAspectRatio(undefined)).toBe("current");
-    expect(getLayoutAspectRatio({ widgets: [] })).toBe("current");
+  it("should determine layout aspect ratio from explicit field or default to 16:9", () => {
+    expect(getLayoutAspectRatio(undefined)).toBe("16:9");
+    expect(getLayoutAspectRatio({ widgets: [] })).toBe("16:9");
     expect(getLayoutAspectRatio({ widgets: [], aspectRatio: "4:3" })).toBe(
       "4:3",
     );
@@ -128,7 +128,7 @@ describe("ui-editor-resolution.helper", () => {
       "16:9",
     );
     expect(getLayoutAspectRatio({ widgets: [], aspectRatio: "current" })).toBe(
-      "current",
+      "16:9",
     );
   });
 
@@ -278,8 +278,8 @@ describe("ui-editor-resolution.helper", () => {
     const vh = getCanvasViewportMaxHeightHelper();
     expect(vh).toBeGreaterThanOrEqual(500);
 
-    // Inspector height clamped between 400 and viewportMaxHeight
-    expect(getInspectorHeightHelper(300, 700)).toBe(400);
+    // Inspector height clamped between 250 and viewportMaxHeight
+    expect(getInspectorHeightHelper(200, 700)).toBe(250);
     expect(getInspectorHeightHelper(600, 700)).toBe(600);
     expect(getInspectorHeightHelper(900, 700)).toBe(700);
   });
@@ -423,7 +423,7 @@ describe("ui-editor-resolution.helper", () => {
       // Inspector height and preview scale
       expect(
         controllerInstance.getInspectorHeight(testUi),
-      ).toBeGreaterThanOrEqual(400);
+      ).toBeGreaterThanOrEqual(250);
       expect(controllerInstance.getPreviewScale(testUi)).toContain("scale(");
     });
 

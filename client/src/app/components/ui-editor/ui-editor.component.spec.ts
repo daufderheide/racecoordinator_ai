@@ -3010,7 +3010,7 @@ describe("UIEditorComponent", () => {
       expect(selectors).not.toContain("#add-item-btn");
     });
 
-    it("should select lane-view widget when onEnter is called on widget inspector step", () => {
+    it("should select lane-view widget when onEnter is called on widget configuration step", () => {
       const customUi: CustomUI = {
         entity_id: "custom_ui_1",
         name: "Custom UI 1",
@@ -3959,7 +3959,7 @@ describe("UIEditorComponent", () => {
       expect(scaleLaneView).toEqual(scaleTimer);
     });
 
-    it("should display widget inspector for selected widget on the layout and remain open across widget selections", () => {
+    it("should display widget configuration for selected widget on the layout and remain open across widget selections", () => {
       const defaultUi: CustomUI = {
         entity_id: "default_ui_layout_rc_ai",
         name: "Default UI",
@@ -4007,7 +4007,7 @@ describe("UIEditorComponent", () => {
       expect(inspector).toBeTruthy();
     });
 
-    it("should render widget toolbox at workspace level above canvas and widget inspector", () => {
+    it("should render widget library at workspace level above canvas and widget configuration", () => {
       component.activeCustomUiId = "default_ui_layout_rc_ai";
       component.sectionsExpanded["ui_default_ui_layout_rc_ai"] = true;
       component.editingSettings.racedayLayout = {
@@ -4534,7 +4534,7 @@ describe("UIEditorComponent", () => {
           widgets: [],
         }),
       };
-      expect(component.getLayoutAspectRatio(unspecifiedUi)).toBe("current");
+      expect(component.getLayoutAspectRatio(unspecifiedUi)).toBe("16:9");
       expect(component.getLayoutScaleMode(unspecifiedUi)).toBe("stretch");
 
       const options = component.getLayoutAspectRatioOptions(customUi);
@@ -4918,7 +4918,7 @@ describe("UIEditorComponent", () => {
       }, 200);
     });
 
-    describe("Widget Inspector Geometry & Deletion", () => {
+    describe("Widget Configuration Geometry & Deletion", () => {
       let testCustomUi: any;
 
       beforeEach(() => {

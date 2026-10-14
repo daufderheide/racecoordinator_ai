@@ -9,8 +9,8 @@ O Editor de Interface permite criar layouts personalizados para o dia de corrida
 Widgets personalizados podem ser adicionados aos seus layouts de interface personalizados:
 - **Pasta de widgets personalizados**: Defina a sua pasta local de widgets na seção **Interface personalizada** na parte inferior do editor.
 - **Atualizar widgets de amostra**: Clique em **Atualizar widgets de amostra** para gerar ou atualizar widgets de amostra prontos a usar numa pasta `sample/` (`sample-telemetry-gauge`, `sample-lap-delta`, `sample-sponsor-banner`, `sample-detailed-leaderboard`).
-- **Grupos da caixa de ferramentas de widgets**: A caixa de ferramentas organiza os widgets em grupos (**Race Coordinator AI**, **Raiz personalizada** e pastas personalizadas como **sample**) com subgrupos aninhados (como **Ações** e **Dados da manga** com subpastas categorizadas) e um filtro de pesquisa instantâneo.
-- **Inspetor dinâmico**: Quando um widget personalizado é selecionado na tela, as suas propriedades personalizadas (cores, limites, seletores, campos de texto) aparecem dinamicamente no Inspetor de widgets.
+- **Grupos da biblioteca de widgets**: A biblioteca de widgets organiza os widgets em grupos (**Race Coordinator AI**, **Raiz personalizada** e pastas personalizadas como **sample**) com subgrupos aninhados (como **Ações** e **Dados da manga** com subpastas categorizadas) e um filtro de pesquisa instantâneo.
+- **Configuração dinâmica**: Quando um widget personalizado é selecionado na tela, as suas propriedades personalizadas (cores, limites, seletores, campos de texto) aparecem dinamicamente na Configuração de widgets.
 
 Para mais detalhes sobre o desenvolvimento de widgets, consulte o [Guia de widgets personalizados](custom-widgets.md).
 
@@ -18,9 +18,9 @@ Para mais detalhes sobre o desenvolvimento de widgets, consulte o [Guia de widge
 
 - Arraste e solte widgets da paleta no ecrã.
 - Redimensione, reposicione e alinhe widgets de acordo com a resolução do ecrã. Todos os widgets permanecem delimitados dentro do ecrã.
-- **Controlos do Inspetor de Widgets**:
+- **Controlos da Configuração de Widgets**:
   - **Posição e tamanho**: Posicione e dimensione com precisão o widget selecionado utilizando os campos numéricos **X**, **Y**, **Largura** e **Altura**.
-  - **Excluir widget**: Clique no ícone do lixo no cabeçalho do inspetor.
+  - **Excluir widget**: Clique no ícone do lixo no cabeçalho de configuração.
 - **Atalhos de teclado**:
   - <kbd>Delete</kbd> ou <kbd>Backspace</kbd>: Remove o widget selecionado do layout.
   - <kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd>: Move o widget selecionado 1px (ou 10px mantendo <kbd>Shift</kbd> pressionado).
@@ -42,7 +42,7 @@ O widget **Cronómetro** exibe o tempo decorrido ou restante da manga/corrida co
   - **Abaixo do limite**: Exibe frações de segundo (1 a 3 casas decimais) assim que o tempo desce abaixo do limite configurado (por exemplo, últimos 10 segundos).
   - **Sempre**: Exibe frações de segundo continuamente durante toda a manga.
   - **Nunca**: Limita o cronómetro exclusivamente a segundos inteiros.
-- **Pré-visualização**: O inspetor inclui uma pré-visualização instantânea que demonstra a formatação das opções selecionadas em diferentes fases da corrida (`> 1 hr`, `> 1 min`, `< 1 min` e `< 10s`).
+- **Pré-visualização**: O painel de configuração inclui uma pré-visualização instantânea que demonstra a formatação das opções selecionadas em diferentes fases da corrida (`> 1 hr`, `> 1 min`, `< 1 min` e `< 10s`).
 
 > [!NOTE]
 > Estas opções exatas de formatação de tempo (predefinições de formato de exibição, modos de frações de segundo, limite e controlo deslizante de casas decimais com pré-visualização ao vivo) também são suportadas nos widgets de **Tempo Total** (Tempo Total da Bateria e Tempo Total da Corrida/Geral) e nas colunas de **Tempo Total** na Vista de Pistas. Na lista de colunas da Vista de Pistas, clique no ícone de opções de tempo (<span class="material-icons">more_time</span>) junto a qualquer coluna de Tempo Total para personalizar o seu formato.
@@ -72,10 +72,10 @@ O widget **Coluna de Pista** permite posicionar colunas individuais de dados da 
   - **Cor do Texto e do Fundo**: Personalize a cor de fundo e a cor do texto do cabeçalho com seletores de cores dedicados e botão de restauração padrão em um clique.
 - **Herança de Cores e Personalização**: Por padrão, os cartões herdam as cores de fundo e texto da pista atribuída (`Usar Cores da Pista`), ou podem receber cores personalizadas de fundo, texto e borda.
 - **Duplicar em Pistas / Posições**:
-  - Em vez de criar e alinhar cartões manualmente para cada pista, configure um único cartão para uma pista ou posição e clique em **Duplicar em Pistas / Posições...** no inspetor.
+  - Em vez de criar e alinhar cartões manualmente para cada pista, configure um único cartão para uma pista ou posição e clique em **Duplicar em Pistas / Posições...** no painel de configuração.
   - Escolha a direção (**Horizontal** lado a lado ou **Vertical** empilhado), o número total de pistas/posições de destino (por padrão o número máximo de pistas em todos os circuitos no banco de dados), o modo de espaçamento (**Ajustar à Tela** ou **Preservar Espaçamento**) e a substituição opcional dos widgets existentes.
   - **Modo de Replicação em Tempo Real**: Ao duplicar, o editor entra em um modo interativo de modelo com guias visuais de pista e alinhamento magnético. Nesse modo, você posiciona, redimensiona e edita widgets diretamente na Pista 1 (Mestre), e as alterações são espelhadas imediatamente em tempo real para todas as demais pistas. Os widgets espelhados nas pistas 2..N são pré-visualizações ativas somente leitura; clicar em qualquer widget espelhado direciona o foco para o mestre da Pista 1.
   - **Área Inteligente e Redimensionamento**: O espaço de replicação expande-se automaticamente em todas as quatro direções para preencher o espaço disponível na tela até encontrar os limites de qualquer widget existente fora da grade. Você pode ajustar a área total dinamicamente usando as 8 alças de redimensionamento no perímetro da sobreposição.
   - Clique em **Concluído** para consolidar a grade em widgets independentes.
-  - **Editar Modelo e Desvincular**: Ao selecionar qualquer widget da grade posteriormente, o inspetor exibe um cartão permitindo clicar em **Editar Modelo da Grade** (para reentrar no modo de replicação em tempo real a qualquer momento) ou **Desvincular da Grade** (para quebrar permanentemente o vínculo).
+  - **Editar Modelo e Desvincular**: Ao selecionar qualquer widget da grade posteriormente, a Configuração de widgets exibe um cartão permitindo clicar em **Editar Modelo da Grade** (para reentrar no modo de replicação em tempo real a qualquer momento) ou **Desvincular da Grade** (para quebrar permanentemente o vínculo).
 

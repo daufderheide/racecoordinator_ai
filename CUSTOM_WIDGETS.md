@@ -37,10 +37,10 @@ To enable custom widgets:
 
 ## Widget Structure & Groups
 
-Race Coordinator AI automatically organizes your custom widgets into groups and sub-groups within the Widget Toolbox based on your folder structure:
+Race Coordinator AI automatically organizes your custom widgets into groups and sub-groups within the Widget Library based on your folder structure:
 
 - **Root Folder**: You select a top-level folder for custom widgets.
-- **Groups**: Each folder directly under the root folder becomes a high-level **Group** in the Widget Toolbox (e.g. `sample/`, `my-club-pack/`).
+- **Groups**: Each folder directly under the root folder becomes a high-level **Group** in the Widget Library (e.g. `sample/`, `my-club-pack/`).
 - **Sub-Groups**: Any folder inside a group that contains further widget directories becomes a **Sub-Group** (e.g. `sample/telemetry/`).
 - **Group Root Widgets**: Widget folders located directly inside a group folder appear at the root of that group.
 - **Custom Root**: Any widget folders placed directly in the top-level root folder appear under a dedicated **Custom Root** group.
@@ -249,9 +249,9 @@ Dynamic widgets are compiled at runtime using Angular:
 
 1. Open **Options -> Custom UI**.
 2. Expand the **Custom UI Layouts** section and select a layout (or create a new one).
-3. In the widget toolbox on the left, your custom widgets will appear alongside standard widgets.
+3. In the widget library on the left, your custom widgets will appear alongside standard widgets.
 4. Drag the widget onto the preview canvas.
-5. Click on the widget to select it; the **Widget Inspector** on the right will dynamically render all properties defined in your `settingsSchema`.
+5. Click on the widget to select it; the **Widget Configuration** on the right will dynamically render all properties defined in your `settingsSchema`.
 6. Position, resize, and configure the properties as desired.
 
 ---

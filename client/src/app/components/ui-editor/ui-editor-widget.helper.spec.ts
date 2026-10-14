@@ -276,7 +276,7 @@ describe("ui-editor-widget.helper", () => {
     expect(JSON.parse(ui.layoutJson || "{}").baseWidth).toBe(1600);
   });
 
-  it("should handle widget inspector change and update layout", () => {
+  it("should handle widget configuration change and update layout", () => {
     const {
       handleWidgetInspectorChange,
     } = require("./ui-editor-widget.helper");

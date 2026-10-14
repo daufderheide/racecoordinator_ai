@@ -9,8 +9,8 @@ El Editor de Interfaz le permite diseñar diseños de pantalla personalizados pa
 Se pueden agregar widgets personalizados a sus diseños de interfaz personalizada:
 - **Carpeta de widgets personalizados**: Establezca su carpeta local de widgets en la sección **Interfaz personalizada** en la parte inferior del editor.
 - **Actualizar widgets de muestra**: Haga clic en **Actualizar widgets de muestra** para generar o actualizar widgets de muestra listos para usar en una carpeta `sample/` (`sample-telemetry-gauge`, `sample-lap-delta`, `sample-sponsor-banner`, `sample-detailed-leaderboard`).
-- **Grupos de la caja de herramientas de widgets**: La caja de herramientas organiza los widgets en grupos (**Race Coordinator AI**, **Raíz personalizada** y carpetas personalizadas como **sample**) con subgrupos anidados (como **Acciones** y **Datos de la tanda** con subcarpetas categorizadas) y un filtro de búsqueda instantánea.
-- **Inspector dinámico**: Cuando se selecciona un widget personalizado en el lienzo, sus propiedades personalizadas (colores, umbrales, selectores, campos de texto) aparecen dinámicamente en el Inspector de widgets.
+- **Grupos de la biblioteca de widgets**: La biblioteca de widgets organiza los widgets en grupos (**Race Coordinator AI**, **Raíz personalizada** y carpetas personalizadas como **sample**) con subgrupos anidados (como **Acciones** y **Datos de la tanda** con subcarpetas categorizadas) y un filtro de búsqueda instantánea.
+- **Configuración dinámica**: Cuando se selecciona un widget personalizado en el lienzo, sus propiedades personalizadas (colores, umbrales, selectores, campos de texto) aparecen dinámicamente en la Configuración de widgets.
 
 Para obtener detalles completos sobre el desarrollo de widgets, consulte la [Guía de widgets personalizados](custom-widgets.md).
 
@@ -18,9 +18,9 @@ Para obtener detalles completos sobre el desarrollo de widgets, consulte la [Gu�
 
 - Arrastre y suelte widgets desde la paleta hacia el lienzo.
 - Cambie el tamaño, reposicione y alinee widgets para adaptarse a su resolución. Todos los widgets están delimitados para no salirse del lienzo.
-- **Controles del Inspector de Widgets**:
+- **Controles de la Configuración de Widgets**:
   - **Posición y tamaño**: Ajuste con precisión la posición y dimensiones del widget seleccionado mediante los campos numéricos **X**, **Y**, **Ancho** y **Altura**.
-  - **Eliminar widget**: Haga clic en el icono de papelera en el encabezado del inspector.
+  - **Eliminar widget**: Haga clic en el icono de papelera en el encabezado de configuración.
 - **Atajos de teclado**:
   - <kbd>Supr</kbd> o <kbd>Retroceso</kbd>: Elimina el widget seleccionado del diseño.
   - <kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd>: Desplaza el widget seleccionado 1px (o 10px manteniendo pulsada <kbd>Mayús</kbd>).
@@ -42,7 +42,7 @@ El widget **Temporizador** muestra el tiempo transcurrido o restante de la manga
   - **Por debajo del umbral**: Muestra fracciones de segundo (1 a 3 decimales) cuando el tiempo desciende por debajo del umbral configurado (por ejemplo, últimos 10 segundos).
   - **Siempre**: Muestra fracciones de segundo continuamente durante toda la manga.
   - **Nunca**: Limita el temporizador exclusivamente a segundos enteros.
-- **Vista previa**: El inspector incluye una vista previa en tiempo real que demuestra cómo se muestran las opciones seleccionadas en distintos puntos de la carrera (`> 1 hr`, `> 1 min`, `< 1 min` y `< 10s`).
+- **Vista previa**: El panel de configuración incluye una vista previa en tiempo real que demuestra cómo se muestran las opciones seleccionadas en distintos puntos de la carrera (`> 1 hr`, `> 1 min`, `< 1 min` y `< 10s`).
 
 > [!NOTE]
 > Estas mismas opciones de formato de tiempo (preajustes de formato de visualización, modos de fracciones de segundo, umbral y control deslizante de decimales con vista previa en vivo) también son compatibles con los widgets de **Tiempo Total** (Tiempo Total de Manga y Tiempo Total de Carrera/General) y con las columnas de **Tiempo Total** en la Vista de Carril. En la lista de columnas de la Vista de Carril, haga clic en el icono de opciones de tiempo (<span class="material-icons">more_time</span>) junto a cualquier columna de Tiempo Total para personalizar su formato.
@@ -72,10 +72,10 @@ El widget de **Columna de Carril** permite colocar columnas individuales de dato
   - **Color de Texto y Fondo**: Ajuste libremente el color de fondo y de texto del encabezado mediante selectores de color, con opción de restablecimiento al valor predeterminado en un solo clic.
 - **Herencia de Color y Personalización**: Las tarjetas heredan de manera predeterminada los colores de fondo y texto del carril asignado (`Usar Colores de Carril`), o pueden personalizarse con colores de fondo, texto y bordes propios.
 - **Duplicar en Carriles / Posiciones**:
-  - En lugar de crear y alinear tarjetas manualmente para cada carril, configure una única tarjeta de carril o posición y haga clic en **Duplicar en Carriles / Posiciones...** en el inspector.
+  - En lugar de crear y alinear tarjetas manualmente para cada carril, configure una única tarjeta de carril o posición y haga clic en **Duplicar en Carriles / Posiciones...** en el panel de configuración.
   - Elija la dirección (**Horizontal** lado a lado o **Vertical** apilado), la cantidad total de carriles/posiciones destino (por defecto el número máximo de carriles de todas las pistas en la base de datos), el modo de espaciado (**Ajustar al Lienzo** o **Preservar Espaciado**) y opcionalmente reemplazar los widgets existentes.
   - **Modo de Replicación en Tiempo Real**: Al iniciar la replicación, el editor entra en un modo interactivo de plantilla con guías visuales de carriles y ajuste magnético. En este modo, coloca, redimensiona y diseña widgets directamente en el Carril 1 (Maestro), y los cambios se reflejan inmediatamente en tiempo real en todos los carriles restantes. Los widgets duplicados en los carriles 2..N son vistas previas en vivo de solo lectura; al hacer clic en cualquiera de ellos, el foco se redirige al maestro del Carril 1.
   - **Área Inteligente y Redimensionamiento**: El espacio de replicación se expande automáticamente en las cuatro direcciones para llenar el espacio disponible en el lienzo hasta encontrar el límite de cualquier widget existente fuera de la cuadrícula. Puede ajustar el área general interactivamente con los 8 controles perimetrales de cambio de tamaño en la superposición.
   - Al hacer clic en **Listo**, la cuadrícula se consolida en widgets independientes.
-  - **Editar Plantilla y Desvincular**: Al seleccionar cualquier widget de la cuadrícula, el inspector muestra una tarjeta para **Editar Plantilla de Cuadrícula** (para reingresar al modo de replicación en tiempo real en cualquier momento) o **Desvincular de Cuadrícula** (para separar permanentemente el widget).
+  - **Editar Plantilla y Desvincular**: Al seleccionar cualquier widget de la cuadrícula, la Configuración de widgets muestra una tarjeta para **Editar Plantilla de Cuadrícula** (para reingresar al modo de replicación en tiempo real en cualquier momento) o **Desvincular de Cuadrícula** (para separar permanentemente el widget).
 

@@ -9,8 +9,8 @@ Met de UI-Editor kunt u aangepaste racedag-layouts ontwerpen, de kolommen van he
 Aangepaste widgets kunnen worden toegevoegd aan uw aangepaste UI-lay-outs:
 - **Map voor aangepaste widgets**: Stel uw lokale widgetmap in via het gedeelte **Aangepaste gebruikersinterface** onderaan de editor.
 - **Voorbeeldwidgets bijwerken**: Klik op **Voorbeeldwidgets bijwerken** om kant-en-klare voorbeeldwidgets te genereren of bij te werken in een map `sample/` (`sample-telemetry-gauge`, `sample-lap-delta`, `sample-sponsor-banner`, `sample-detailed-leaderboard`).
-- **Widget-toolboxgroepen**: De widget-toolbox organiseert widgets in groepen (**Race Coordinator AI**, **Aangepaste hoofdmap** en eigen mappen zoals **sample**) met geneste subgroepen (zoals **Acties** en **Heatgegevens** met gecategoriseerde submappen) en een direct zoekfilter.
-- **Dynamische inspecteur**: Wanneer een aangepaste widget op het canvas wordt geselecteerd, verschijnen de aangepaste eigenschappen (kleuren, drempelwaarden, schakelaars, tekstvelden) dynamisch in de Widget-inspecteur.
+- **Widget-bibliotheekgroepen**: De widget-bibliotheek organiseert widgets in groepen (**Race Coordinator AI**, **Aangepaste hoofdmap** en eigen mappen zoals **sample**) met geneste subgroepen (zoals **Acties** en **Heatgegevens** met gecategoriseerde submappen) en een direct zoekfilter.
+- **Dynamische configuratie**: Wanneer een aangepaste widget op het canvas wordt geselecteerd, verschijnen de aangepaste eigenschappen (kleuren, drempelwaarden, schakelaars, tekstvelden) dynamisch in de Widget-configuratie.
 
 Raadpleeg de [Gids voor aangepaste widgets](custom-widgets.md) voor alle ontwikkelingsdetails.
 
@@ -18,9 +18,9 @@ Raadpleeg de [Gids voor aangepaste widgets](custom-widgets.md) voor alle ontwikk
 
 - Sleep widgets van het palet naar het canvas.
 - Pas grootte, positie en uitlijning van widgets aan op uw schermresolutie. Alle widgets blijven begrensd binnen het canvas.
-- **Widget-inspector bediening**:
+- **Widget-configuratie bediening**:
   - **Positie & grootte**: Positioneer en dimensioneer de geselecteerde widget nauwkeurig met de numerieke velden voor **X**, **Y**, **Breedte** en **Hoogte**.
-  - **Widget verwijderen**: Klik op het prullenbak-icoon in de koptekst van de inspector.
+  - **Widget verwijderen**: Klik op het prullenbak-icoon in de koptekst van de configuratie.
 - **Sneltoetsen**:
   - <kbd>Delete</kbd> of <kbd>Backspace</kbd>: Verwijdert de geselecteerde widget uit de layout.
   - <kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd>: Verplaatst de geselecteerde widget met 1px (of 10px met <kbd>Shift</kbd>).
@@ -42,7 +42,7 @@ De **Timer**-widget toont de verstreken of resterende heat-/racetijd in verschil
   - **Onder drempelwaarde**: Toont decimalen (1 tot 3 cijfers) zodra de tijd onder de ingestelde drempelwaarde zakt (bijv. laatste 10 seconden).
   - **Altijd**: Toont continu decimalen gedurende de hele heat.
   - **Nooit**: Beperkt de timer uitsluitend tot hele seconden.
-- **Live Voorbeeld**: De inspecteur bevat een direct voorbeeld waarin te zien is hoe de geselecteerde opmaak eruitziet op verschillende meetpunten (`> 1 hr`, `> 1 min`, `< 1 min` en `< 10s`).
+- **Live Voorbeeld**: Het configuratiepaneel bevat een direct voorbeeld waarin te zien is hoe de geselecteerde opmaak eruitziet op verschillende meetpunten (`> 1 hr`, `> 1 min`, `< 1 min` en `< 10s`).
 
 > [!NOTE]
 > Precies dezelfde tijdnotatie-opties (weergaveformaat-voorinstellingen, subseconde-modi, drempelwaarde en decimalenschuifregelaar met live voorbeeld) worden ook ondersteund voor **Totale Tijd**-widgets (Heat Totale Tijd en Race/Algemene Totale Tijd) en voor **Totale Tijd**-kolommen in de Baanweergave. Klik in de kolommenlijst van de Baanweergave op het pictogram voor tijdopties (<span class="material-icons">more_time</span>) naast een Totale Tijd-kolom om de tijdnotatie aan te passen.
@@ -72,10 +72,10 @@ De widget **Baankolom** maakt het mogelijk om individuele gegevenskolommen uit h
   - **Tekst- & Achtergrondkleur**: Pas de achtergrondkleur en tekstkleur van de titelbalk eenvoudig aan via kleurkiezers, met éénknops-herstel naar de standaardwaarden.
 - **Kleur-overname & Aanpassingen**: Kaarten nemen standaard de toegewezen achtergrond- en tekstkleur van de betreffende baan over (`Baankleuren Gebruiken`), of kunnen worden voorzien van aangepaste kleuren en randen.
 - **Dupliceren over Banen / Posities**:
-  - In plaats van kaarten handmatig voor elke baan te maken en uit te lijnen, configureert u één baan of positie en klikt u in de inspecteur op **Dupliceren over Banen / Posities...**.
+  - In plaats van kaarten handmatig voor elke baan te maken en uit te lijnen, configureert u één baan of positie en klikt u in het configuratiepaneel op **Dupliceren over Banen / Posities...**.
   - Kies de richting (**Horizontaal** naast elkaar of **Verticaal** boven elkaar), het totale aantal doelbanen/posities (standaard het maximale aantal banen over alle circuits in de database), de afstandsmodus (**Automatisch Passend Maken** of **Afstand Behouden**) en eventueel het overschrijven van bestaande widgets.
   - **Realtime Duplicatiemodus**: Bij het dupliceren schakelt de editor over naar een interactieve blauwdrukmodus met visuele baanrasterlijnen en magnetisch uitlijnen. In deze modus plaatst, schaalt en bewerkt u widgets direct in Baan 1 (Master); wijzigingen worden onmiddellijk in realtime gespiegeld naar alle overige banen. Gespiegelde widgets in banen 2..N zijn alleen-lezen live previews; klikken op een gespiegeld widget verplaatst de focus automatisch naar de master van Baan 1.
   - **Slim Rasterbereik & Formaat Wijzigen**: Het duplicatiegebied breidt zich automatisch in alle vier de richtingen uit om de beschikbare canvasruimte te vullen totdat het tegen de grenzen van bestaande widgets buiten het raster botst. U kunt de totale grootte van het raster aanpassen via de 8 handgrepen op de omtrek van het raster.
   - Klik op **Voltooid** om het raster vast te leggen als onafhankelijke widgets.
-  - **Sjabloon Opnieuw Bewerken & Loskoppelen**: Als u later een widget van het raster selecteert, toont de inspecteur een kaart waarmee u op **Rastersjabloon Bewerken** kunt klikken (om op elk moment weer naar realtime duplicatiemodus terug te keren) of **Loskoppelen van Raster** (om de koppeling permanent te verbreken).
+  - **Sjabloon Opnieuw Bewerken & Loskoppelen**: Als u later een widget van het raster selecteert, toont de Widget-configuratie een kaart waarmee u op **Rastersjabloon Bewerken** kunt klikken (om op elk moment weer naar realtime duplicatiemodus terug te keren) of **Loskoppelen van Raster** (om de koppeling permanent te verbreken).
 

@@ -9,8 +9,8 @@ L'Éditeur d'Interface vous permet de concevoir des mises en page de jour de cou
 Des widgets personnalisés peuvent être ajoutés à vos dispositions d'interface personnalisées :
 - **Dossier de widgets personnalisés** : Définissez votre dossier local de widgets dans la section **Interface personnalisée** au bas de l'éditeur.
 - **Mettre à jour les widgets d'exemple** : Cliquez sur **Mettre à jour les widgets d'exemple** pour générer ou mettre à jour des widgets d'exemple prêts à l'emploi dans un dossier `sample/` (`sample-telemetry-gauge`, `sample-lap-delta`, `sample-sponsor-banner`, `sample-detailed-leaderboard`).
-- **Groupes de la boîte à outils de widgets** : La boîte à outils organise les widgets en groupes (**Race Coordinator AI**, **Racine personnalisée** et dossiers personnalisés tels que **sample**) avec des sous-groupes imbriqués (comme **Actions** et **Données de manche** avec des sous-dossiers catégorisés) et un filtre de recherche instantané.
-- **Inspecteur dynamique** : Lorsqu'un widget personnalisé est sélectionné sur le canevas, ses propriétés personnalisées (couleurs, seuils, bascules, champs de texte) apparaissent dynamiquement dans l'Inspecteur de widgets.
+- **Groupes de la bibliothèque de widgets** : La bibliothèque de widgets organise les widgets en groupes (**Race Coordinator AI**, **Racine personnalisée** et dossiers personnalisés tels que **sample**) avec des sous-groupes imbriqués (comme **Actions** et **Données de manche** avec des sous-dossiers catégorisés) et un filtre de recherche instantané.
+- **Configuration dynamique** : Lorsqu'un widget personnalisé est sélectionné sur le canevas, ses propriétés personnalisées (couleurs, seuils, bascules, champs de texte) apparaissent dynamiquement dans la Configuration de widgets.
 
 Pour tous les détails sur le développement de widgets, consultez le [Guide des widgets personnalisés](custom-widgets.md).
 
@@ -18,9 +18,9 @@ Pour tous les détails sur le développement de widgets, consultez le [Guide des
 
 - Glissez-déposez des widgets depuis la palette sur le canevas.
 - Redimensionnez, repositionnez et alignez les widgets selon votre résolution. Tous les widgets restent délimités à l'intérieur du canevas.
-- **Contrôles de l'Inspecteur de Widgets** :
+- **Contrôles de la Configuration de Widgets** :
   - **Position & Taille** : Positionnez et dimensionnez avec précision le widget sélectionné à l'aide des entrées numériques **X**, **Y**, **Largeur** et **Hauteur**.
-  - **Supprimer le widget** : Cliquez sur l'icône de corbeille dans l'en-tête de l'inspecteur.
+  - **Supprimer le widget** : Cliquez sur l'icône de corbeille dans l'en-tête de configuration.
 - **Raccourcis clavier** :
   - <kbd>Suppr</kbd> ou <kbd>Retour arrière</kbd> : Supprime le widget sélectionné de la mise en page.
   - <kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd> : Déplace le widget sélectionné de 1px (ou 10px en maintenant <kbd>Maj</kbd>).
@@ -42,7 +42,7 @@ Le widget **Minuteur** affiche le temps écoulé ou restant de la manche/course 
   - **Sous le seuil** : Affiche les fractions de seconde (1 à 3 décimales) dès que le temps passe sous le seuil configuré (par exemple, 10 dernières secondes).
   - **Toujours** : Affiche les fractions de seconde en continu pendant toute la manche.
   - **Jamais** : Limite le minuteur uniquement aux secondes entières.
-- **Aperçu en direct** : L'inspecteur comprend un aperçu en direct immédiat montrant la mise en forme aux différents points de passage de la course (`> 1 hr`, `> 1 min`, `< 1 min` et `< 10s`).
+- **Aperçu en direct** : Le panneau de configuration comprend un aperçu en direct immédiat montrant la mise en forme aux différents points de passage de la course (`> 1 hr`, `> 1 min`, `< 1 min` et `< 10s`).
 
 > [!NOTE]
 > Ces mêmes options de formatage horaire (préréglages de format d'affichage, modes de sous-secondes, seuil et curseur de décimales avec aperçu en direct) sont également prises en charge pour les widgets de **Temps Total** (Temps Total de Manche et Temps Total de Course/Général) ainsi que pour les colonnes de **Temps Total** dans la Vue des Voies. Dans la liste des colonnes de la Vue des Voies, cliquez sur l'icône des options de temps (<span class="material-icons">more_time</span>) à côté de toute colonne de Temps Total pour personnaliser son format.
@@ -72,10 +72,10 @@ Le widget **Colonne de Voie** permet de positionner des colonnes individuelles d
   - **Couleur du Texte et d'Arrière-plan** : Modifiez la couleur de fond et la couleur du texte de l'en-tête avec des sélecteurs dédiés et un bouton de réinitialisation instantanée.
 - **Héritage des Couleurs et Personnalisation** : Par défaut, les cartes héritent des couleurs de fond et de texte de la voie attribuée (`Utiliser les Couleurs de Voie`), ou peuvent être personnalisées avec des couleurs d'arrière-plan, de texte et de bordure spécifiques.
 - **Dupliquer sur les Voies / Positions** :
-  - Au lieu de créer et d'aligner manuellement les cartes pour chaque voie, configurez un ensemble pour une seule voie ou position et cliquez sur **Dupliquer sur les Voies / Positions...** dans l'inspecteur.
+  - Au lieu de créer et d'aligner manuellement les cartes pour chaque voie, configurez un ensemble pour une seule voie ou position et cliquez sur **Dupliquer sur les Voies / Positions...** dans le panneau de configuration.
   - Choisissez la direction (**Horizontale** côte à côte ou **Verticale** superposée), le nombre total de voies/positions cibles (par défaut le nombre maximal de voies de tous les circuits de la base de données), le mode d'espacement (**Ajuster au Canevas** ou **Conserver l'Espacement**) et le remplacement facultatif des widgets existants.
   - **Mode de Réplication en Temps Réel** : Lors de la duplication, l'éditeur bascule dans un mode de modèle interactif avec repères visuels de voie et alignement magnétique. Dans ce mode, vous placez, redimensionnez et personnalisez les widgets directement sur la Voie 1 (Maître), et les modifications sont immédiatement répercutées en temps réel sur l'ensemble des voies. Les widgets clonés sur les voies 2..N sont des aperçus en direct non modifiables ; cliquer sur un widget cloné renvoie la sélection sur le maître de la Voie 1.
   - **Zone Intelligente et Redimensionnement** : L'espace de réplication s'agrandit automatiquement dans les quatre directions pour occuper l'espace disponible sur le canevas jusqu'à rencontrer les limites d'un widget extérieur à la grille. Vous pouvez ajuster la zone globale à l'aide des 8 poignées de redimensionnement périmétriques de la superposition.
   - Cliquez sur **Terminé** pour figer la grille en widgets indépendants.
-  - **Modifier le Modèle et Détacher** : En sélectionnant ultérieurement un widget de la grille, l'inspecteur propose un panneau permettant de cliquer sur **Modifier le Modèle de Grille** (pour réactiver à tout moment le mode de réplication en temps réel) ou **Détacher de la Grille** (pour rompre définitivement le lien).
+  - **Modifier le Modèle et Détacher** : En sélectionnant ultérieurement un widget de la grille, la Configuration de widgets propose un panneau permettant de cliquer sur **Modifier le Modèle de Grille** (pour réactiver à tout moment le mode de réplication en temps réel) ou **Détacher de la Grille** (pour rompre définitivement le lien).
 

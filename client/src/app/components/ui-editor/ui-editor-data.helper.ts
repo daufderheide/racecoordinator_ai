@@ -15,8 +15,10 @@ import {
   isLegacyPracticeUiName,
   isLegacyRacedayUiName,
 } from "./ui-editor-crud.helper";
+import { sortCustomUisForDisplay } from "./ui-editor-custom-ui.helper";
 import { applyInitialExpanderState } from "./ui-editor-expander.helper";
 import { cloneSettings } from "./ui-editor-state.utils";
+import { sortThemesForDisplay } from "./ui-editor-theme.helper";
 
 export interface LoadedEditorData {
   filteredAssets: any[];
@@ -426,6 +428,13 @@ export function applyInitialExpanderFromRoute(comp: any): void {
       comp.ensureWidgetSelected?.();
     }
   }
+
+  const targetLayoutId = uiIdParam || comp.activeCustomUiId;
+  if (targetLayoutId && comp.sectionsExpanded?.[`ui_${targetLayoutId}`]) {
+    comp.scrollToUi?.(targetLayoutId, 100);
+  } else if (themeIdParam) {
+    comp.scrollToTheme?.(themeIdParam);
+  }
 }
 
 export function handleUiEditorDataLoadError(comp: any, err: any): void {
@@ -523,4 +532,36 @@ export function handleUiEditorKeyboardShortcut(
       onNudge(dx, dy);
     }
   }
+}
+
+export function resolveBackNavigation(
+  params: any,
+  route: any,
+): { targetUrl: string; queryParams: Record<string, string> } {
+  const p = typeof params === "function" ? params() : params;
+  const from = p?.["from"] || route?.snapshot?.queryParamMap?.get("from");
+  const ret =
+    p?.["returnUrl"] || route?.snapshot?.queryParamMap?.get("returnUrl");
+  return {
+    targetUrl:
+      from === "modify-heats"
+        ? ret || "/default-raceday"
+        : ret || "/raceday-setup",
+    queryParams: from === "modify-heats" ? { modifyHeats: "true" } : {},
+  };
+}
+
+export function refreshUiEditorDisplayProperties(comp: any): void {
+  if (!comp.editingState) return;
+  comp.parsedLayouts?.clear();
+  comp.displayThemes = sortThemesForDisplay(comp.editingState.themes);
+  comp.displayCustomUIs = sortCustomUisForDisplay(
+    comp.editingState.customUIs || comp.customUiService?.getCustomUIs() || [],
+  );
+  comp.displayColumnSlots = buildDisplayColumnSlots(
+    comp.editingSettings?.racedayColumns,
+    comp.availableColumns,
+  );
+  comp.ensureWidgetSelected();
+  comp.cdr.markForCheck();
 }

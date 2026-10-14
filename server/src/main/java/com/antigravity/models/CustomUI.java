@@ -161,7 +161,7 @@ public class CustomUI extends Model {
             + "\"customSettings\":{\"orientation\":\"horizontal\",\"lampScale\":1.0,"
             + "\"blurArea\":\"fullscreen\",\"blurAmount\":50,\"lampSizingMode\":\"custom\","
             + "\"previewLampCount\":5,\"maxLamps\":5,\"fadeIn\":true,\"glowEffect\":true,\"glowOverlap\":30,"
-            + "\"glowRedOverlap\":30,\"glowGreenOverlap\":25}}]}";
+            + "\"glowRedOverlap\":30,\"glowGreenOverlap\":25}}],\"baseWidth\":1920,\"baseHeight\":1080,\"aspectRatio\":\"16:9\",\"scaleMode\":\"stretch\"}";
     String columnsJson =
         "[\"driver.nickname\",\"lapCount\",\"lastLapTime\",\"averageLapTime\",\"gapLeader\","
             + "\"ghostPacingLeaderAvg\"]";
@@ -190,13 +190,13 @@ public class CustomUI extends Model {
 
   public static CustomUI createPractice() {
     String layoutJson =
-        "{\"widgets\":[{\"id\":\"widget-menu-bar\",\"widgetType\":\"menu-bar\",\"x\":0,\"y\":0,\"width\":1728,\"height\":46,\"zIndex\":216,\"scaleMode\":\"auto\",\"fontFamily\":\"\",\"textColor\":\"\",\"backgroundColor\":\"\",\"fontSize\":24,\"textScaleFactor\":1},"
-            + "{\"id\":\"widget-timer\",\"widgetType\":\"timer\",\"x\":701,\"y\":41,\"width\":397,\"height\":93,\"zIndex\":222,\"scaleMode\":\"auto\",\"fontFamily\":\"\",\"textColor\":\"\",\"backgroundColor\":\"\",\"fontSize\":24,\"textScaleFactor\":1,\"customSettings\":{\"timeFontFamily\":\"\",\"timeFontSize\":100,\"timeTextColor\":\"\"}},"
-            + "{\"id\":\"widget-branding\",\"widgetType\":\"branding\",\"x\":0,\"y\":41,\"width\":422,\"height\":93,\"zIndex\":206,\"scaleMode\":\"auto\",\"fontFamily\":\"\",\"fontSize\":24,\"textColor\":\"\",\"textScaleFactor\":1,\"backgroundColor\":\"\"},"
-            + "{\"backgroundColor\":\"\",\"fontFamily\":\"\",\"fontSize\":24,\"height\":92,\"id\":\"widget-qr\",\"scaleMode\":\"auto\",\"textColor\":\"\",\"textScaleFactor\":1,\"widgetType\":\"qr\",\"width\":119,\"x\":422,\"y\":42,\"zIndex\":217},"
-            + "{\"id\":\"widget-1783269768449\",\"widgetType\":\"flag\",\"x\":541,\"y\":41,\"width\":160,\"height\":93,\"zIndex\":212,\"scaleMode\":\"auto\",\"fontFamily\":\"\",\"textColor\":\"\",\"backgroundColor\":\"\",\"fontSize\":24,\"textScaleFactor\":1},"
-            + "{\"id\":\"widget-1783269787601\",\"widgetType\":\"lane-view\",\"x\":0,\"y\":124,\"width\":1728,\"height\":775,\"zIndex\":221,\"scaleMode\":\"auto\",\"fontFamily\":\"\",\"textColor\":\"\",\"backgroundColor\":\"\",\"fontSize\":24,\"textScaleFactor\":1,\"customSettings\":{\"isVertical\":true,\"timeDecimalPlaces\":3,\"lapDecimalPlaces\":0,\"columnFontFamily\":\"\",\"columnFontSize\":24,\"columnTextColor\":\"\",\"dataFontFamily\":\"\",\"dataFontSize\":54,\"dataTextColor\":\"\",\"insetTimeDecimalPlaces\":3,\"insetLapDecimalPlaces\":2,\"insetFontFamily\":\"\",\"insetFontSize\":24,\"insetTextColor\":\"\"}},"
-            + "{\"id\":\"widget-countdown\",\"widgetType\":\"countdown\",\"x\":364,\"y\":324,\"width\":1000,\"height\":250,\"zIndex\":2000,\"scaleMode\":\"auto\",\"customSettings\":{\"orientation\":\"horizontal\",\"lampScale\":1.0,\"blurArea\":\"fullscreen\",\"blurAmount\":50,\"lampSizingMode\":\"custom\",\"previewLampCount\":5,\"maxLamps\":5,\"fadeIn\":true,\"glowEffect\":true,\"glowOverlap\":30,\"glowRedOverlap\":30,\"glowGreenOverlap\":25}}],\"baseWidth\":1728,\"baseHeight\":899}";
+        "{\"widgets\":[{\"id\":\"widget-menu-bar\",\"widgetType\":\"menu-bar\",\"x\":0,\"y\":0,\"width\":1920,\"height\":55,\"zIndex\":216,\"scaleMode\":\"auto\",\"fontFamily\":\"\",\"textColor\":\"\",\"backgroundColor\":\"\",\"fontSize\":24,\"textScaleFactor\":1},"
+            + "{\"id\":\"widget-timer\",\"widgetType\":\"timer\",\"x\":779,\"y\":49,\"width\":441,\"height\":112,\"zIndex\":218,\"scaleMode\":\"auto\",\"fontFamily\":\"\",\"textColor\":\"\",\"backgroundColor\":\"\",\"fontSize\":24,\"textScaleFactor\":1,\"customSettings\":{\"timeFontFamily\":\"\",\"timeFontSize\":100,\"timeTextColor\":\"\"}},"
+            + "{\"id\":\"widget-branding\",\"widgetType\":\"branding\",\"x\":0,\"y\":49,\"width\":469,\"height\":112,\"zIndex\":206,\"scaleMode\":\"auto\",\"fontFamily\":\"\",\"fontSize\":24,\"textColor\":\"\",\"textScaleFactor\":1,\"backgroundColor\":\"\"},"
+            + "{\"backgroundColor\":\"\",\"fontFamily\":\"\",\"fontSize\":24,\"height\":111,\"id\":\"widget-qr\",\"scaleMode\":\"auto\",\"textColor\":\"\",\"textScaleFactor\":1,\"widgetType\":\"qr\",\"width\":132,\"x\":469,\"y\":50,\"zIndex\":217},"
+            + "{\"id\":\"widget-1783269768449\",\"widgetType\":\"flag\",\"x\":601,\"y\":49,\"width\":178,\"height\":112,\"zIndex\":212,\"scaleMode\":\"auto\",\"fontFamily\":\"\",\"textColor\":\"\",\"backgroundColor\":\"\",\"fontSize\":24,\"textScaleFactor\":1},"
+            + "{\"id\":\"widget-1783269787601\",\"widgetType\":\"lane-view\",\"x\":0,\"y\":149,\"width\":1920,\"height\":931,\"zIndex\":180,\"scaleMode\":\"auto\",\"fontFamily\":\"\",\"textColor\":\"\",\"backgroundColor\":\"\",\"fontSize\":24,\"textScaleFactor\":1,\"customSettings\":{\"isVertical\":true,\"sortByStandings\":true,\"highlightRowOnLap\":true,\"timeDecimalPlaces\":3,\"lapDecimalPlaces\":0,\"columnFontFamily\":\"\",\"columnFontSize\":24,\"columnTextColor\":\"\",\"dataFontFamily\":\"\",\"dataFontSize\":54,\"dataTextColor\":\"\",\"insetTimeDecimalPlaces\":3,\"insetLapDecimalPlaces\":2,\"insetFontFamily\":\"\",\"insetFontSize\":24,\"insetTextColor\":\"\"}},"
+            + "{\"id\":\"widget-countdown\",\"widgetType\":\"countdown\",\"x\":404,\"y\":386,\"width\":1111,\"height\":298,\"zIndex\":2000,\"scaleMode\":\"auto\",\"customSettings\":{\"orientation\":\"horizontal\",\"lampScale\":1.0,\"blurArea\":\"fullscreen\",\"blurAmount\":50,\"lampSizingMode\":\"custom\",\"previewLampCount\":5,\"maxLamps\":5,\"fadeIn\":true,\"glowEffect\":true,\"glowOverlap\":30,\"glowRedOverlap\":30,\"glowGreenOverlap\":25}}],\"baseWidth\":1920,\"baseHeight\":1080,\"aspectRatio\":\"16:9\",\"scaleMode\":\"stretch\"}";
     String columnsJson =
         "[\"laneNumber\",\"lastLapTime\",\"bestLapTime\",\"lastLaps\",\"lapCount\"]";
     String columnLayoutsJson =
@@ -256,7 +256,7 @@ public class CustomUI extends Model {
             + "\"customSettings\":{\"orientation\":\"horizontal\",\"lampScale\":1.0,"
             + "\"blurArea\":\"fullscreen\",\"blurAmount\":50,\"lampSizingMode\":\"custom\","
             + "\"previewLampCount\":5,\"maxLamps\":5,\"fadeIn\":true,\"glowEffect\":true,\"glowOverlap\":30,"
-            + "\"glowRedOverlap\":30,\"glowGreenOverlap\":25}}]}";
+            + "\"glowRedOverlap\":30,\"glowGreenOverlap\":25}}],\"baseWidth\":1920,\"baseHeight\":1080,\"aspectRatio\":\"16:9\",\"scaleMode\":\"stretch\"}";
     String columnsJson =
         "[\"driver.nickname\",\"imageset_fuel-gauge-builtin\",\"lapCount\",\"lastLapTime\","
             + "\"gapLeader\"]";
@@ -298,6 +298,87 @@ public class CustomUI extends Model {
         this.columnAnchorsJson,
         this.getEntityId(),
         this.getId());
+  }
+
+  public static String ensureAspectRatioAndDimensions(String layoutJson) {
+    if (layoutJson == null || layoutJson.trim().isEmpty()) {
+      return layoutJson;
+    }
+    try {
+      com.fasterxml.jackson.databind.ObjectMapper mapper =
+          new com.fasterxml.jackson.databind.ObjectMapper();
+      com.fasterxml.jackson.databind.JsonNode root = mapper.readTree(layoutJson);
+      if (!root.isObject()) {
+        return layoutJson;
+      }
+      com.fasterxml.jackson.databind.node.ObjectNode rootObj =
+          (com.fasterxml.jackson.databind.node.ObjectNode) root;
+      boolean modified = false;
+
+      if (!rootObj.has("aspectRatio")
+          || rootObj.get("aspectRatio").isNull()
+          || "current".equalsIgnoreCase(rootObj.get("aspectRatio").asText())) {
+        rootObj.put("aspectRatio", "16:9");
+        modified = true;
+      }
+
+      int baseWidth = rootObj.has("baseWidth") ? rootObj.get("baseWidth").asInt(0) : 0;
+      int baseHeight = rootObj.has("baseHeight") ? rootObj.get("baseHeight").asInt(0) : 0;
+
+      if (baseWidth == 1728 && (baseHeight == 899 || baseHeight == 906)) {
+        scaleLayoutWidgets(rootObj, 1920.0 / baseWidth, 1080.0 / baseHeight);
+        rootObj.put("baseWidth", 1920);
+        rootObj.put("baseHeight", 1080);
+        rootObj.put("aspectRatio", "16:9");
+        rootObj.put("scaleMode", "stretch");
+        modified = true;
+      } else {
+        if (baseWidth <= 0) {
+          rootObj.put("baseWidth", 1920);
+          modified = true;
+        }
+        if (baseHeight <= 0) {
+          rootObj.put("baseHeight", 1080);
+          modified = true;
+        }
+      }
+
+      if (!rootObj.has("scaleMode") || rootObj.get("scaleMode").asText().isEmpty()) {
+        rootObj.put("scaleMode", "stretch");
+        modified = true;
+      }
+
+      return modified ? mapper.writeValueAsString(rootObj) : layoutJson;
+    } catch (Exception e) {
+      // Return original on error
+    }
+    return layoutJson;
+  }
+
+  private static void scaleLayoutWidgets(
+      com.fasterxml.jackson.databind.node.ObjectNode rootObj, double scaleX, double scaleY) {
+    if (rootObj.has("widgets") && rootObj.get("widgets").isArray()) {
+      com.fasterxml.jackson.databind.node.ArrayNode widgets =
+          (com.fasterxml.jackson.databind.node.ArrayNode) rootObj.get("widgets");
+      for (com.fasterxml.jackson.databind.JsonNode w : widgets) {
+        if (w.isObject()) {
+          com.fasterxml.jackson.databind.node.ObjectNode wo =
+              (com.fasterxml.jackson.databind.node.ObjectNode) w;
+          if (wo.has("x")) {
+            wo.put("x", (int) Math.round(wo.get("x").asDouble() * scaleX));
+          }
+          if (wo.has("y")) {
+            wo.put("y", (int) Math.round(wo.get("y").asDouble() * scaleY));
+          }
+          if (wo.has("width")) {
+            wo.put("width", (int) Math.round(wo.get("width").asDouble() * scaleX));
+          }
+          if (wo.has("height")) {
+            wo.put("height", (int) Math.round(wo.get("height").asDouble() * scaleY));
+          }
+        }
+      }
+    }
   }
 
   public static String ensureCountdownWidget(String layoutJson) {

@@ -967,6 +967,7 @@
   overflow: visible;
   position: relative;
   z-index: 20;
+  box-sizing: border-box;
 }
 
 .raceday-preview-scaler {

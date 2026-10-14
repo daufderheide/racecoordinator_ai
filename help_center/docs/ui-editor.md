@@ -9,8 +9,8 @@ The UI Editor allows you to design custom raceday layouts, configure driver lead
 Custom widgets can be added to your Custom UI layouts:
 - **Custom Widgets Folder**: Set your local widgets folder in the **Custom UI** section at the bottom of the editor.
 - **Update Sample Widgets**: Click **Update Sample Widgets** to generate or update ready-to-use sample widgets in a `sample/` folder (`sample-telemetry-gauge`, `sample-lap-delta`, `sample-sponsor-banner`, `sample-detailed-leaderboard`).
-- **Widget Toolbox Groups**: The Widget Toolbox organizes widgets into groups (**Race Coordinator AI**, **Custom Root**, and custom folders like **sample**) with nested sub-groups (such as **Actions** and **Heat Data** with categorized subfolders) and an instant search filter.
-- **Dynamic Inspector**: When a custom widget is selected on the canvas, its custom properties (colors, thresholds, toggles, text fields) appear dynamically in the Widget Inspector.
+- **Widget Library Groups**: The Widget Library organizes widgets into groups (**Race Coordinator AI**, **Custom Root**, and custom folders like **sample**) with nested sub-groups (such as **Actions** and **Heat Data** with categorized subfolders) and an instant search filter.
+- **Dynamic Configuration**: When a custom widget is selected on the canvas, its custom properties (colors, thresholds, toggles, text fields) appear dynamically in the Widget Configuration panel.
 
 For complete widget development details, see the [Custom Widgets Guide](custom-widgets.md).
 
@@ -18,9 +18,9 @@ For complete widget development details, see the [Custom Widgets Guide](custom-w
 
 - Drag and drop widgets from the palette onto the canvas.
 - Resize, reposition, and align widgets to match your screen resolution. All widgets are bounded to prevent dragging or resizing past the canvas frame.
-- **Widget Inspector Controls**:
+- **Widget Configuration Controls**:
   - **Position & Size**: Precisely position and dimension the selected widget using the **X**, **Y**, **Width**, and **Height** numeric inputs.
-  - **Delete Widget**: Click the trash icon in the inspector header to remove the selected widget.
+  - **Delete Widget**: Click the trash icon in the configuration header to remove the selected widget.
 - **Keyboard Shortcuts**:
   - <kbd>Delete</kbd> or <kbd>Backspace</kbd>: Removes the selected widget from the layout.
   - <kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd>: Nudges the selected widget by 1px (or 10px holding <kbd>Shift</kbd>).
@@ -42,7 +42,7 @@ The **Timer** widget displays the elapsed or remaining heat/race time with confi
   - **When Below Threshold**: Shows fractional seconds (1 to 3 decimal places) when time drops below the configured threshold (e.g. final 10 seconds).
   - **Always**: Displays fractional seconds continuously throughout the entire heat.
   - **Never**: Restricts the timer to whole seconds only.
-- **Live Preview**: The inspector includes an instant live preview demonstrating how the selected options format across different race time checkpoints (`> 1 hr`, `> 1 min`, `< 1 min`, and `< 10s`).
+- **Live Preview**: The configuration panel includes an instant live preview demonstrating how the selected options format across different race time checkpoints (`> 1 hr`, `> 1 min`, `< 1 min`, and `< 10s`).
 
 > [!NOTE]
 > These exact time formatting options (Display Format presets, Sub-second timing modes, threshold, and decimals slider with live preview) are also supported for **Total Time** widgets (Heat Total Time and Race/Overall Total Time) and for **Total Time** columns in the Lane View. In the Lane View column list, click the timer options icon (<span class="material-icons">more_time</span>) next to any Total Time column to customize its time format.
@@ -72,9 +72,9 @@ The **Lane Column** widget allows individual data columns from the lane view (su
   - **Header Text & Background Color**: Customize the title bar background color and text color with full color picker support and one-click reset to default.
 - **Color Inheritance & Overrides**: Cards default to inheriting the assigned lane's background and foreground colors (`Use Lane Colors`), or can be given custom background, text, and border color overrides.
 - **Replicate Across Lanes / Positions**:
-  - Rather than creating and aligning cards for each lane manually, configure a single lane or position setup and click **Replicate Across Lanes / Positions...** in the inspector.
+  - Rather than creating and aligning cards for each lane manually, configure a single lane or position setup and click **Replicate Across Lanes / Positions...** in the configuration panel.
   - Choose the layout direction (**Horizontal** side-by-side or **Vertical** stacked), total target lanes/positions (defaulting to the maximum lane count across all tracks in the database), spacing mode (**Auto-fit to Canvas** or **Preserve Spacing**), and optionally replace existing widgets on target lanes.
   - **Realtime Replication Mode**: When replicating, the editor enters an interactive blueprint replication mode with visual lane cell guides and magnetic snapping. While in this mode, you place, resize, and design widgets in Lane 1 (Master), and changes immediately mirror in real time across all lanes. Mirrored widgets in Lanes 2..N are non-editable live previews; clicking on any mirrored widget directs focus to the Lane 1 master.
   - **Intelligent Grid Bounds & Resizing**: The replication space automatically expands in all four directions to fill available canvas space until meeting the boundary of any existing non-grid widget. You can adjust the overall replication area dynamically using the 8 perimeter resize handles on the blueprint overlay.
   - Clicking **Done** bakes the layout into independent widgets.
-  - **Template Re-entry & Detach**: Selecting any baked grid widget later shows an inspector card allowing you to click **Edit Grid Template** to re-enter realtime replication mode anytime, or **Detach from Grid** to permanently break the link.
+  - **Template Re-entry & Detach**: Selecting any baked grid widget later shows a configuration card allowing you to click **Edit Grid Template** to re-enter realtime replication mode anytime, or **Detach from Grid** to permanently break the link.

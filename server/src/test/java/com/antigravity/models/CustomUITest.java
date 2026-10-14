@@ -82,6 +82,52 @@ public class CustomUITest {
     assertTrue(fuelUi.getLayoutJson().contains("\"glowOverlap\":30"));
     assertTrue(fuelUi.getLayoutJson().contains("\"glowRedOverlap\":30"));
     assertTrue(fuelUi.getLayoutJson().contains("\"glowGreenOverlap\":25"));
+
+    assertTrue(defaultUi.getLayoutJson().contains("\"baseWidth\":1920"));
+    assertTrue(defaultUi.getLayoutJson().contains("\"baseHeight\":1080"));
+    assertTrue(defaultUi.getLayoutJson().contains("\"aspectRatio\":\"16:9\""));
+    assertTrue(defaultUi.getLayoutJson().contains("\"scaleMode\":\"stretch\""));
+
+    assertTrue(practiceUi.getLayoutJson().contains("\"baseWidth\":1920"));
+    assertTrue(practiceUi.getLayoutJson().contains("\"baseHeight\":1080"));
+    assertTrue(practiceUi.getLayoutJson().contains("\"aspectRatio\":\"16:9\""));
+    assertTrue(practiceUi.getLayoutJson().contains("\"scaleMode\":\"stretch\""));
+
+    assertTrue(fuelUi.getLayoutJson().contains("\"baseWidth\":1920"));
+    assertTrue(fuelUi.getLayoutJson().contains("\"baseHeight\":1080"));
+    assertTrue(fuelUi.getLayoutJson().contains("\"aspectRatio\":\"16:9\""));
+    assertTrue(fuelUi.getLayoutJson().contains("\"scaleMode\":\"stretch\""));
+  }
+
+  @Test
+  public void testEnsureAspectRatioAndDimensions() {
+    String layoutWithCurrent =
+        "{\"widgets\":[{\"id\":\"w1\",\"x\":10,\"y\":10,\"width\":100,\"height\":50}],\"aspectRatio\":\"current\"}";
+    String fixedCurrent = CustomUI.ensureAspectRatioAndDimensions(layoutWithCurrent);
+    assertTrue(fixedCurrent.contains("\"aspectRatio\":\"16:9\""));
+    assertTrue(fixedCurrent.contains("\"baseWidth\":1920"));
+    assertTrue(fixedCurrent.contains("\"baseHeight\":1080"));
+    assertTrue(fixedCurrent.contains("\"scaleMode\":\"stretch\""));
+
+    // Legacy practice layout on MacBook 1728x899
+    String legacyMacBook =
+        "{\"widgets\":[{\"id\":\"w1\",\"x\":100,\"y\":100,\"width\":200,\"height\":100}],\"baseWidth\":1728,\"baseHeight\":899}";
+    String fixedMacBook = CustomUI.ensureAspectRatioAndDimensions(legacyMacBook);
+    assertTrue(fixedMacBook.contains("\"baseWidth\":1920"));
+    assertTrue(fixedMacBook.contains("\"baseHeight\":1080"));
+    assertTrue(fixedMacBook.contains("\"aspectRatio\":\"16:9\""));
+    assertTrue(fixedMacBook.contains("\"scaleMode\":\"stretch\""));
+    assertTrue(fixedMacBook.contains("\"width\":222"));
+
+    // Already 16:9 layout preserved
+    String standard169 =
+        "{\"widgets\":[],\"baseWidth\":1920,\"baseHeight\":1080,\"aspectRatio\":\"16:9\",\"scaleMode\":\"stretch\"}";
+    assertEquals(standard169, CustomUI.ensureAspectRatioAndDimensions(standard169));
+
+    // Null or invalid handled
+    assertEquals(null, CustomUI.ensureAspectRatioAndDimensions(null));
+    assertEquals("", CustomUI.ensureAspectRatioAndDimensions(""));
+    assertEquals("not-json", CustomUI.ensureAspectRatioAndDimensions("not-json"));
   }
 
   @Test

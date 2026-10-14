@@ -6,7 +6,7 @@ Race Coordinator AI allows you to create, customize, and place **Custom Widgets*
 
 ## Overview
 
-Custom Widgets are self-contained visual components (such as live telemetry dials, lap time delta indicators, or sponsor marquees) that can be dragged directly onto your Custom UI layouts. Each widget can define its own settings schema to provide interactive controls (colors, thresholds, text inputs, toggles) directly inside the UI Editor's **Widget Inspector**.
+Custom Widgets are self-contained visual components (such as live telemetry dials, lap time delta indicators, or sponsor marquees) that can be dragged directly onto your Custom UI layouts. Each widget can define its own settings schema to provide interactive controls (colors, thresholds, text inputs, toggles) directly inside the UI Editor's **Widget Configuration**.
 
 ---
 
@@ -25,13 +25,13 @@ To load or update the sample widgets:
 2. Scroll to the **Custom UI** section at the bottom.
 3. Under **Custom Widgets Folder**, click **Select Folder** and choose any folder on your computer.
 4. Click the **Update Sample Widgets** button.
-5. Race Coordinator AI will automatically generate/update the sample widgets inside a dedicated `sample/` folder in your selected directory and reload them into the **sample** group in the widget toolbox.
+5. Race Coordinator AI will automatically generate/update the sample widgets inside a dedicated `sample/` folder in your selected directory and reload them into the **sample** group in the widget library.
 
 ---
 
 ## Authoring Custom Widgets & Organizing Groups
 
-Custom widgets are organized into groups and sub-groups in the Widget Toolbox based on your folder structure:
+Custom widgets are organized into groups and sub-groups in the Widget Library based on your folder structure:
 - Folders directly under your selected root folder become **Groups** (e.g. `sample/`, `my-pack/`).
 - Subfolders within a group become **Sub-Groups** (e.g. `sample/telemetry/`).
 - Standalone widget folders directly under root appear under **Custom Root**.
@@ -49,7 +49,7 @@ MyCustomWidgets/
 ```
 
 ### Manifest Schema (`widget.json`)
-The manifest configures metadata and inspector controls:
+The manifest configures metadata and configuration controls:
 
 ```json
 {

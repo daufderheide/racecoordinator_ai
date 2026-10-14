@@ -8831,7 +8831,7 @@ export class DefaultRacedayComponent
   }
 
   onCanvasPointerDown(_event: PointerEvent) {
-    // Preserve widget selection so widget inspector remains open
+    // Preserve widget selection so widget configuration remains open
   }
 
   private getDefaultLayout(): LayoutConfig {

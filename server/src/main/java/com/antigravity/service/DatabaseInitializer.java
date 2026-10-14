@@ -697,6 +697,7 @@ public class DatabaseInitializer {
     String layoutJson = ui.getLayoutJson();
     if (layoutJson != null) {
       String updatedLayoutJson = CustomUI.ensureCountdownWidget(layoutJson);
+      updatedLayoutJson = CustomUI.ensureAspectRatioAndDimensions(updatedLayoutJson);
       if (!updatedLayoutJson.equals(layoutJson)) {
         layoutJson = updatedLayoutJson;
         updated = true;

@@ -3,11 +3,14 @@ import { Settings } from "@app/models/settings";
 import { Theme } from "@app/models/theme";
 
 import {
+  applyInitialExpanderFromRoute,
   ensureDefaultCustomUis,
   handleUiEditorKeyboardShortcut,
   normalizeLoadedCustomUis,
   normalizeLoadedThemes,
   processLoadedEditorData,
+  refreshUiEditorDisplayProperties,
+  resolveBackNavigation,
 } from "./ui-editor-data.helper";
 
 describe("ui-editor-data.helper", () => {
@@ -403,6 +406,132 @@ describe("ui-editor-data.helper", () => {
       );
       expect(shiftDownEvent.preventDefault).toHaveBeenCalled();
       expect(onNudge).toHaveBeenCalledWith(0, 10);
+    });
+  });
+
+  describe("applyInitialExpanderFromRoute", () => {
+    it("should expand theme and layout, reset zoom, and scroll to layout when both themeId and uiId are provided", () => {
+      const comp: any = {
+        route: {
+          snapshot: {
+            queryParamMap: {
+              get: (key: string) => {
+                if (key === "themeId") return "theme_1";
+                if (key === "uiId") return "layout_1";
+                return null;
+              },
+            },
+          },
+        },
+        sectionsExpanded: {},
+        displayThemes: [
+          { entity_id: "theme_1", uiId: "layout_1" },
+          { entity_id: "theme_2", uiId: "layout_2" },
+        ],
+        displayCustomUIs: [
+          { entity_id: "layout_1", name: "Layout 1" },
+          { entity_id: "layout_2", name: "Layout 2" },
+        ],
+        activeCustomUiId: null,
+        ensureWidgetSelected: jasmine.createSpy("ensureWidgetSelected"),
+        resetLayoutZoom: jasmine.createSpy("resetLayoutZoom"),
+        scrollToUi: jasmine.createSpy("scrollToUi"),
+        scrollToTheme: jasmine.createSpy("scrollToTheme"),
+      };
+
+      applyInitialExpanderFromRoute(comp);
+
+      expect(comp.sectionsExpanded["themes"]).toBeTrue();
+      expect(comp.sectionsExpanded["theme_theme_1"]).toBeTrue();
+      expect(comp.sectionsExpanded["customUIs"]).toBeTrue();
+      expect(comp.sectionsExpanded["ui_layout_1"]).toBeTrue();
+      expect(comp.activeCustomUiId).toBe("layout_1");
+      expect(comp.resetLayoutZoom).not.toHaveBeenCalled();
+      expect(comp.scrollToUi).toHaveBeenCalledWith("layout_1", 100);
+      expect(comp.scrollToTheme).not.toHaveBeenCalled();
+    });
+
+    it("should scroll to theme when only themeId is provided and no layout can be resolved", () => {
+      const comp: any = {
+        route: {
+          snapshot: {
+            queryParamMap: {
+              get: (key: string) =>
+                key === "themeId" ? "theme_standalone" : null,
+            },
+          },
+        },
+        sectionsExpanded: { theme_theme_standalone: true },
+        displayThemes: [{ entity_id: "theme_standalone" }],
+        displayCustomUIs: [],
+        activeCustomUiId: null,
+        scrollToUi: jasmine.createSpy("scrollToUi"),
+        scrollToTheme: jasmine.createSpy("scrollToTheme"),
+        resetLayoutZoom: jasmine.createSpy("resetLayoutZoom"),
+      };
+
+      applyInitialExpanderFromRoute(comp);
+
+      expect(comp.scrollToTheme).toHaveBeenCalledWith("theme_standalone");
+      expect(comp.scrollToUi).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("resolveBackNavigation", () => {
+    it("should resolve modify-heats returnUrl or fallback", () => {
+      const nav1 = resolveBackNavigation(
+        { from: "modify-heats", returnUrl: "/custom-return" },
+        null,
+      );
+      expect(nav1.targetUrl).toBe("/custom-return");
+      expect(nav1.queryParams).toEqual({ modifyHeats: "true" });
+
+      const nav2 = resolveBackNavigation({ from: "modify-heats" }, null);
+      expect(nav2.targetUrl).toBe("/default-raceday");
+      expect(nav2.queryParams).toEqual({ modifyHeats: "true" });
+    });
+
+    it("should resolve default setup route when from is not modify-heats", () => {
+      const nav = resolveBackNavigation(() => ({ from: "setup" }), null);
+      expect(nav.targetUrl).toBe("/raceday-setup");
+      expect(nav.queryParams).toEqual({});
+    });
+  });
+
+  describe("refreshUiEditorDisplayProperties", () => {
+    it("should sort themes and custom UIs and build column slots", () => {
+      const comp: any = {
+        editingState: {
+          themes: [
+            { entity_id: "t2", name: "B" },
+            { entity_id: "t1", name: "A" },
+          ],
+          customUIs: [
+            { entity_id: "u2", name: "UI B" },
+            { entity_id: "u1", name: "UI A" },
+          ],
+        },
+        parsedLayouts: new Map(),
+        displayThemes: [],
+        displayCustomUIs: [],
+        displayColumnSlots: [],
+        availableColumns: [{ key: "col1", label: "Col 1" }],
+        editingSettings: { racedayColumns: [] },
+        ensureWidgetSelected: jasmine.createSpy("ensureWidgetSelected"),
+        cdr: { markForCheck: jasmine.createSpy("markForCheck") },
+      };
+
+      refreshUiEditorDisplayProperties(comp);
+
+      expect(comp.displayThemes.length).toBe(2);
+      expect(comp.displayCustomUIs.length).toBe(2);
+      expect(comp.ensureWidgetSelected).toHaveBeenCalled();
+      expect(comp.cdr.markForCheck).toHaveBeenCalled();
+    });
+
+    it("should no-op when editingState is not present", () => {
+      const comp: any = { editingState: null };
+      expect(() => refreshUiEditorDisplayProperties(comp)).not.toThrow();
     });
   });
 });
