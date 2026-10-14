@@ -1201,9 +1201,47 @@ public class HeatExecutionManager {
           && race.getRaceTime() < 0) {
         overshoot = -race.getRaceTime();
       }
+      int heatNum =
+          (race != null && race.getCurrentHeat() != null)
+              ? race.getCurrentHeat().getHeatNumber()
+              : -1;
+      List<DriverHeatData> drivers =
+          (race != null && race.getCurrentHeat() != null)
+              ? race.getCurrentHeat().getDrivers()
+              : null;
+
+      logger.info(
+          "AutoSegments (SingleLapAutoSegments) capturing partial lap times for Heat {}: raceTime={}s, overshoot={}s",
+          heatNum,
+          race != null ? race.getRaceTime() : 0.0,
+          overshoot);
+
       for (int i = 0; i < timeSinceLastLap.length; i++) {
+        String driverName =
+            (drivers != null
+                    && i < drivers.size()
+                    && drivers.get(i) != null
+                    && drivers.get(i).getDriver() != null
+                    && drivers.get(i).getDriver().getDriver() != null)
+                ? drivers.get(i).getDriver().getDriver().getName()
+                : "Lane " + (i + 1);
+
         if (!finishedLanes.contains(i)) {
           partialLapTimes[i] = Math.max(0.0, timeSinceLastLap[i] - overshoot);
+          logger.info(
+              "AutoSegments (SingleLapAutoSegments) Heat {} Lane {} ({}): timeSinceLastLap={}s, overshoot={}s, capturedPartialLapTime={}s",
+              heatNum,
+              i,
+              driverName,
+              timeSinceLastLap[i],
+              overshoot,
+              partialLapTimes[i]);
+        } else {
+          logger.info(
+              "AutoSegments (SingleLapAutoSegments) Heat {} Lane {} ({}): already finished, skipped partial lap time capture",
+              heatNum,
+              i,
+              driverName);
         }
       }
     }
@@ -1232,8 +1270,10 @@ public class HeatExecutionManager {
     if (median > 0) {
       pctTraveled = partial / median;
     }
+    boolean capped = false;
     if (pctTraveled >= 1.0) {
       pctTraveled = 0.99;
+      capped = true;
     } else if (pctTraveled < 0.0) {
       pctTraveled = 0.0;
     }
@@ -1242,14 +1282,28 @@ public class HeatExecutionManager {
     finishedLanes.add(lane);
     driverData.setFinished(true);
     driverData.setFlag(race.getState().getLaneFlagType(race, lane));
+
+    int heatNum =
+        (race != null && race.getCurrentHeat() != null)
+            ? race.getCurrentHeat().getHeatNumber()
+            : -1;
+    String driverName =
+        (driverData.getDriver() != null && driverData.getDriver().getDriver() != null)
+            ? driverData.getDriver().getDriver().getName()
+            : "Lane " + (lane + 1);
+
     logger.info(
-        "Driver {} finished single lap (auto segments) on lane {}: partial={}s, lap={}s, median={}s, autoLaps={}",
-        driverData.getDriver().getDriver().getName(),
+        "AutoSegments (SingleLapAutoSegments) Heat {} Lane {} ({}): partialTime={}s, finalLapTime={}s, medianLapTime={}s, rawRatio={}, autoCalculatedLaps={}{}, totalAdjustedLaps={}",
+        heatNum,
         lane,
+        driverName,
         partial,
         finalLapTime,
         median,
-        pctTraveled);
+        median > 0 ? (partial / median) : 0.0,
+        pctTraveled,
+        capped ? " (capped at 0.99)" : "",
+        driverData.getAdjustedLapCount());
 
     race.setLanePower(false, lane);
 

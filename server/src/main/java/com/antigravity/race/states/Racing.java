@@ -516,32 +516,69 @@ public class Racing implements IRaceState {
     HeatScoring scoring = race.getRaceModel().getHeatScoring();
     if (scoring == null) return;
 
+    int heatNum = race.getCurrentHeat().getHeatNumber();
     boolean isLapBased = scoring.getFinishMethod() == FinishMethod.Lap;
     long limit = scoring.getFinishValue();
     double[] times = executionManager.getTimeSinceLastLap();
     List<DriverHeatData> drivers = race.getCurrentHeat().getDrivers();
     if (drivers == null) return;
 
+    logger.info(
+        "AutoSegments (NoneAutoSegments) calculating for Heat {}: isLapBased={}, finishValue={}",
+        heatNum,
+        isLapBased,
+        limit);
+
     for (int i = 0; i < drivers.size(); i++) {
       DriverHeatData dhd = drivers.get(i);
       if (dhd == null) continue;
+      String driverName =
+          (dhd.getDriver() != null && dhd.getDriver().getDriver() != null)
+              ? dhd.getDriver().getDriver().getName()
+              : "Lane " + (i + 1);
 
       // Lap based race: the driver that got to the lap limit ending the heat should
-      // get 0 auto
-      // segments
+      // get 0 auto segments
       if (isLapBased && dhd.getLapCount() >= limit) {
         dhd.setAutoCalculatedLaps(0.0);
+        logger.info(
+            "AutoSegments (NoneAutoSegments) Heat {} Lane {} ({}): reached lap limit {} (laps={}), autoCalculatedLaps=0.0",
+            heatNum,
+            i,
+            driverName,
+            limit,
+            dhd.getLapCount());
       } else {
         double median = dhd.getMedianLapTime();
         if (median <= 0) {
           dhd.setAutoCalculatedLaps(0.0);
+          logger.info(
+              "AutoSegments (NoneAutoSegments) Heat {} Lane {} ({}): median lap time <= 0 ({}), autoCalculatedLaps=0.0",
+              heatNum,
+              i,
+              driverName,
+              median);
         } else {
           double time = (times != null && i < times.length) ? times[i] : 0.0;
-          double segments = time / median;
+          double rawSegments = time / median;
+          double segments = rawSegments;
+          boolean capped = false;
           if (segments >= 1.0) {
             segments = 0.99;
+            capped = true;
           }
           dhd.setAutoCalculatedLaps(segments);
+          logger.info(
+              "AutoSegments (NoneAutoSegments) Heat {} Lane {} ({}): timeSinceLastLap={}s, medianLapTime={}s, rawRatio={}, autoCalculatedLaps={}{}, totalAdjustedLaps={}",
+              heatNum,
+              i,
+              driverName,
+              time,
+              median,
+              rawSegments,
+              segments,
+              capped ? " (capped at 0.99)" : "",
+              dhd.getAdjustedLapCount());
         }
       }
     }
