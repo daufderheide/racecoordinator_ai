@@ -219,6 +219,20 @@ export class RacedayLaneViewComponent implements AfterViewInit, OnDestroy {
       (this.parent() as any)?.currentRacedayLayout?.widgets?.find?.(
         (w: any) => w.widgetType === "lane-view",
       )?.customSettings;
+
+    const isInset = Boolean(
+      entry?.anchor && !entry.anchor.startsWith("center-"),
+    );
+    if (isInset) {
+      if (s?.["insetTimeDecimalPlaces"] !== undefined) {
+        return Math.min(3, Math.max(0, Number(s["insetTimeDecimalPlaces"])));
+      }
+      if (s?.["timeDecimalPlaces"] !== undefined) {
+        return Math.min(3, Math.max(0, Number(s["timeDecimalPlaces"])));
+      }
+      return 3;
+    }
+
     const customColDecimals =
       s?.["columnDecimals"] || s?.["columnDecimalPlaces"];
     const colKey = typeof col === "string" ? col : col?.propertyName;
@@ -271,10 +285,6 @@ export class RacedayLaneViewComponent implements AfterViewInit, OnDestroy {
       }
     }
 
-    const isInset = entry?.anchor && !entry.anchor.startsWith("center-");
-    if (isInset && s?.["insetTimeDecimalPlaces"] !== undefined) {
-      return Math.min(3, Math.max(0, Number(s["insetTimeDecimalPlaces"])));
-    }
     if (s?.["timeDecimalPlaces"] !== undefined) {
       return Math.min(3, Math.max(0, Number(s["timeDecimalPlaces"])));
     }

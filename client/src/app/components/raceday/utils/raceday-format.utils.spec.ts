@@ -2019,6 +2019,76 @@ describe("RacedayFormatUtils", () => {
       ).toBe("83.42");
     });
 
+    it("should format inset totalTime and overallTotalTime using insetTimeDecimalPlaces even when column decimal places is 1", () => {
+      ctx.laneViewWidgetSettings = {
+        timeDecimalPlaces: 3,
+        insetTimeDecimalPlaces: 3,
+        columnTimeDisplayFormat: { totalTime: "dynamic" },
+        columnTimeSubsecondMode: { totalTime: "always" },
+        columnTimeSubsecondDecimals: { totalTime: 1 },
+      };
+      const colDef = { propertyName: "totalTime" } as any;
+
+      // Main column value (center anchor): uses column decimal places (1) -> "21.0"
+      expect(
+        RacedayFormatUtils.formatValue(
+          "totalTime",
+          21.0,
+          hd,
+          colDef,
+          ctx,
+          "center-center",
+        ),
+      ).toBe("21.0");
+
+      // Inset overallTotalTime in totalTime column: uses insetTimeDecimalPlaces (3) -> "37.200"
+      expect(
+        RacedayFormatUtils.formatValue(
+          "overallTotalTime",
+          37.2,
+          hd,
+          colDef,
+          ctx,
+          "bottom-right",
+        ),
+      ).toBe("37.200");
+
+      // Inset totalTime in totalTime column: uses insetTimeDecimalPlaces (3) -> "21.000"
+      expect(
+        RacedayFormatUtils.formatValue(
+          "totalTime",
+          21.0,
+          hd,
+          colDef,
+          ctx,
+          "bottom-right",
+        ),
+      ).toBe("21.000");
+
+      // Empty driver placeholder: main cell has 1 dash "--.-", inset has 3 dashes "--.---"
+      const emptyHd = { isEmpty: true } as any;
+      expect(
+        RacedayFormatUtils.formatValue(
+          "totalTime",
+          0,
+          emptyHd,
+          colDef,
+          ctx,
+          "center-center",
+        ),
+      ).toBe("--.-");
+      expect(
+        RacedayFormatUtils.formatValue(
+          "overallTotalTime",
+          0,
+          emptyHd,
+          colDef,
+          ctx,
+          "bottom-right",
+        ),
+      ).toBe("--.---");
+    });
+
     it("should maintain backward compatibility when no timer options are set", () => {
       ctx.laneViewWidgetSettings = undefined;
       expect(

@@ -277,28 +277,89 @@ export class RacedayFormatUtils {
   static resolveTimerFormatOptions(
     colKey: string,
     settings: any,
+    isInset?: boolean,
+    insetDecimals?: number,
+    propertyKey?: string,
   ): TimerFormatOptions | undefined {
     if (!settings) return undefined;
     const baseKey = colKey ? colKey.split("_")[0] : "";
+    const propBase = propertyKey ? propertyKey.split("_")[0] : "";
     const isTotalTime =
       colKey === "totalTime" ||
       colKey === "overallTotalTime" ||
       baseKey === "totalTime" ||
-      baseKey === "overallTotalTime";
+      baseKey === "overallTotalTime" ||
+      propertyKey === "totalTime" ||
+      propertyKey === "overallTotalTime" ||
+      propBase === "totalTime" ||
+      propBase === "overallTotalTime";
     if (!isTotalTime) return undefined;
 
     const colFormat =
       settings.columnTimeDisplayFormat?.[colKey] ??
-      settings.columnTimeDisplayFormat?.[baseKey];
+      settings.columnTimeDisplayFormat?.[baseKey] ??
+      (propertyKey
+        ? settings.columnTimeDisplayFormat?.[propertyKey]
+        : undefined) ??
+      (propBase ? settings.columnTimeDisplayFormat?.[propBase] : undefined);
     const colSubMode =
       settings.columnTimeSubsecondMode?.[colKey] ??
-      settings.columnTimeSubsecondMode?.[baseKey];
+      settings.columnTimeSubsecondMode?.[baseKey] ??
+      (propertyKey
+        ? settings.columnTimeSubsecondMode?.[propertyKey]
+        : undefined) ??
+      (propBase ? settings.columnTimeSubsecondMode?.[propBase] : undefined);
     const colThresh =
       settings.columnTimeSubsecondThreshold?.[colKey] ??
-      settings.columnTimeSubsecondThreshold?.[baseKey];
+      settings.columnTimeSubsecondThreshold?.[baseKey] ??
+      (propertyKey
+        ? settings.columnTimeSubsecondThreshold?.[propertyKey]
+        : undefined) ??
+      (propBase
+        ? settings.columnTimeSubsecondThreshold?.[propBase]
+        : undefined);
     const colDec =
       settings.columnTimeSubsecondDecimals?.[colKey] ??
-      settings.columnTimeSubsecondDecimals?.[baseKey];
+      settings.columnTimeSubsecondDecimals?.[baseKey] ??
+      (propertyKey
+        ? settings.columnTimeSubsecondDecimals?.[propertyKey]
+        : undefined) ??
+      (propBase
+        ? settings.columnTimeSubsecondDecimals?.[propBase]
+        : undefined) ??
+      settings.columnDecimals?.[colKey] ??
+      settings.columnDecimals?.[baseKey];
+
+    const hasTimerConfig =
+      colFormat !== undefined ||
+      colSubMode !== undefined ||
+      colThresh !== undefined ||
+      colDec !== undefined ||
+      settings.timeDisplayFormat !== undefined ||
+      settings.timeSubsecondMode !== undefined ||
+      settings.timeSubsecondThreshold !== undefined ||
+      settings.timeSubsecondDecimals !== undefined;
+
+    if (!hasTimerConfig) {
+      return undefined;
+    }
+
+    if (isInset) {
+      const effDec =
+        insetDecimals !== undefined
+          ? insetDecimals
+          : settings.insetTimeDecimalPlaces !== undefined
+            ? Number(settings.insetTimeDecimalPlaces)
+            : settings.timeDecimalPlaces !== undefined
+              ? Number(settings.timeDecimalPlaces)
+              : 3;
+      return {
+        format: colFormat || settings.timeDisplayFormat || "dynamic",
+        subsecondMode: effDec > 0 ? "always" : "never",
+        subsecondThreshold: colThresh !== undefined ? Number(colThresh) : 10,
+        subsecondDecimals: effDec,
+      };
+    }
 
     if (
       colFormat !== undefined ||
@@ -347,6 +408,7 @@ export class RacedayFormatUtils {
     timeDecimals: number,
     lapDecimals: number,
     colKey?: string,
+    isInset?: boolean,
   ): string | null {
     if (RacedayFormatUtils.isEmptyDriver(hd)) {
       if (
@@ -409,6 +471,9 @@ export class RacedayFormatUtils {
         const timerOpts = RacedayFormatUtils.resolveTimerFormatOptions(
           colKey || baseKey,
           ctx.laneViewWidgetSettings,
+          isInset,
+          timeDecimals,
+          baseKey,
         );
         if (timerOpts) {
           return formatTimerDisplay(value, timerOpts);
@@ -550,15 +615,22 @@ export class RacedayFormatUtils {
             )?.[1]
           : undefined))
       : undefined;
+    const colSubsecondDec =
+      ctx.laneViewWidgetSettings?.columnTimeSubsecondDecimals?.[
+        column?.propertyName ?? ""
+      ] ??
+      ctx.laneViewWidgetSettings?.columnTimeSubsecondDecimals?.[colKey] ??
+      ctx.laneViewWidgetSettings?.columnTimeSubsecondDecimals?.[baseKey];
+    const effColDecimal = colDecimalOverride ?? colSubsecondDec;
 
     const timeDecimals = isInset
       ? ctx.laneViewWidgetSettings?.insetTimeDecimalPlaces !== undefined
         ? Number(ctx.laneViewWidgetSettings.insetTimeDecimalPlaces)
         : 3
-      : colDecimalOverride !== undefined &&
-          colDecimalOverride !== null &&
-          colDecimalOverride !== ""
-        ? Number(colDecimalOverride)
+      : effColDecimal !== undefined &&
+          effColDecimal !== null &&
+          effColDecimal !== ""
+        ? Number(effColDecimal)
         : ctx.laneViewWidgetSettings?.timeDecimalPlaces !== undefined
           ? Number(ctx.laneViewWidgetSettings.timeDecimalPlaces)
           : 3;
@@ -594,6 +666,7 @@ export class RacedayFormatUtils {
         timeDecimals,
         lapDecimals,
         colKey,
+        isInset,
       );
       if (overallStr !== null) {
         return overallStr;
@@ -712,6 +785,9 @@ export class RacedayFormatUtils {
         const timerOpts = RacedayFormatUtils.resolveTimerFormatOptions(
           colKey,
           ctx.laneViewWidgetSettings,
+          isInset,
+          timeDecimals,
+          baseKey,
         );
         if (timerOpts) {
           return formatTimerDisplay(value, timerOpts);

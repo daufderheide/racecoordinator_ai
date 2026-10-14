@@ -1378,6 +1378,25 @@ describe("RacedayLaneViewComponent", () => {
       ).toBe(1);
     });
 
+    it("should prioritize insetTimeDecimalPlaces for inset entry even if columnDecimals has an override for the parent column", () => {
+      fixture.componentRef.setInput("widget", {
+        id: "w1",
+        widgetType: "lane-view",
+        customSettings: {
+          columnDecimals: { totalTime: 1, ghostPacing: 1 },
+          insetTimeDecimalPlaces: 3,
+          timeDecimalPlaces: 2,
+        },
+      } as any);
+
+      expect(
+        component.getPacingDecimalPlaces(
+          { propertyName: "totalTime" },
+          { anchor: "bottom-right", property: "ghostPacing" },
+        ),
+      ).toBe(3);
+    });
+
     it("should fall back to timeDecimalPlaces when center entry and no override", () => {
       fixture.componentRef.setInput("widget", {
         id: "w1",
