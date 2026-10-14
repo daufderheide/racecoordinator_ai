@@ -131,6 +131,30 @@ describe("ServerFileSystemService", () => {
     expect(res).toBe('{"id":"widget1"}');
   });
 
+  it("should hasWidgetFile return true when file exists", async () => {
+    const promise = service.hasWidgetFile("sample/widget1", "widget.json");
+    const req = httpMock.expectOne(
+      "http://localhost:7070/api/filesystem/widgets/has-file?path=sample%2Fwidget1&file=widget.json",
+    );
+    expect(req.request.method).toBe("GET");
+    req.flush({ exists: true });
+
+    const res = await promise;
+    expect(res).toBeTrue();
+  });
+
+  it("should hasWidgetFile return false when file does not exist", async () => {
+    const promise = service.hasWidgetFile("sample/widget1", "missing.css");
+    const req = httpMock.expectOne(
+      "http://localhost:7070/api/filesystem/widgets/has-file?path=sample%2Fwidget1&file=missing.css",
+    );
+    expect(req.request.method).toBe("GET");
+    req.flush({ exists: false });
+
+    const res = await promise;
+    expect(res).toBeFalse();
+  });
+
   it("should writeWidgetFile", async () => {
     const promise = service.writeWidgetFile(
       "sample/widget1",

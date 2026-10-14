@@ -637,6 +637,25 @@ describe("playSound Utility", () => {
       );
     });
 
+    it("should resolve UUIDs to asset download endpoint", () => {
+      const uuid = "d637f861-ca0c-488e-87b4-ecef43800cb1";
+      expect(resolveAudioUrl(uuid, "http://server")).toBe(
+        `http://server/api/assets/download/${uuid}`,
+      );
+      expect(resolveAudioUrl(`/${uuid}`, "http://server")).toBe(
+        `http://server/api/assets/download/${uuid}`,
+      );
+      expect(
+        resolveAudioUrl(`http://localhost:7070/${uuid}`, "http://server"),
+      ).toBe(`http://localhost:7070/api/assets/download/${uuid}`);
+      expect(
+        resolveAudioUrl(
+          `http://localhost:7070/api/assets/download/${uuid}`,
+          "http://server",
+        ),
+      ).toBe(`http://localhost:7070/api/assets/download/${uuid}`);
+    });
+
     it("should return undefined if no special record or best lap is achieved", () => {
       expect(getLapAudioConfig(driver, 0, false)).toBeUndefined();
     });

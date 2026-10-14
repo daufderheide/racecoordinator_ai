@@ -5796,6 +5796,58 @@ describe("DefaultRacedayComponent", () => {
       );
     });
 
+    it("should play audio set entry referencing asset UUID without 404 URL", () => {
+      const assetUuid = "d637f861-ca0c-488e-87b4-ecef43800cb1";
+      const mockAssets = [
+        {
+          model: { entityId: "custom_time_left_set" },
+          type: "audio_set",
+          audioEntries: [{ url: assetUuid, timeSeconds: 120 }],
+          url: "/api/assets/download/custom_time_left_set",
+        },
+        {
+          model: { entityId: assetUuid },
+          type: "audio",
+          url: "/assets/2_minutes_remaining.wav",
+        },
+      ];
+      mockDataService.listAssets.and.returnValue(of(mockAssets));
+      component["assets"] = mockAssets;
+
+      mockThemeService.resolveAudioConfig.and.callFake((key: string) => {
+        if (key === THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT) {
+          return { type: "audio_set", url: "custom_time_left_set" };
+        }
+        return null;
+      });
+
+      const race = {
+        ...MOCK_RACES[0],
+        heat_scoring: {
+          finishMethod: FinishMethod.Timed,
+          finishValue: 300,
+        },
+        track: component["track"],
+      } as any;
+      component["race"] = race;
+      mockRaceService.getRace.and.returnValue(race);
+
+      fixture.detectChanges();
+      component["raceState"] = RaceState.RACING;
+
+      (window.Audio as any).calls.reset();
+
+      raceTimeSubject.next({ time: 300.0 });
+      raceTimeSubject.next({ time: 120.0 });
+
+      expect(window.Audio).toHaveBeenCalledWith(
+        `${mockDataService.serverUrl}assets/2_minutes_remaining.wav`,
+      );
+      expect(window.Audio).not.toHaveBeenCalledWith(
+        `${mockDataService.serverUrl}${assetUuid}`,
+      );
+    });
+
     it("should resolve Halfway vs 30s collision by playing Halfway (NORMAL) and dropping 30s (NORMAL)", () => {
       (window.Audio as any).calls.reset();
 

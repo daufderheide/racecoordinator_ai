@@ -433,17 +433,25 @@ export class DriverStationLapAudioHandler {
         (a) =>
           a.model?.entityId === config.url ||
           a.entity_id === config.url ||
-          a._id === config.url,
+          a._id === config.url ||
+          a.name === config.url,
       );
-      if (asset?.audioEntries && asset.audioEntries.length > 0) {
-        const filtered = asset.audioEntries.filter((e: any) => {
+      const entries = asset?.audioEntries || (asset as any)?.audio_entries;
+      if (entries && entries.length > 0) {
+        const filtered = entries.filter((e: any) => {
           const mode = e.triggerMode || e.trigger_mode || "remaining";
           return mode === triggerMode;
         });
         if (filtered.length > 0) {
           return filtered
             .map((e: any) =>
-              Math.round(e.timeSeconds != null ? e.timeSeconds : e.percentage),
+              Math.round(
+                e.timeSeconds != null
+                  ? e.timeSeconds
+                  : e.time_seconds != null
+                    ? e.time_seconds
+                    : e.percentage,
+              ),
             )
             .filter((t: number) => !isNaN(t) && t >= 0)
             .filter(
@@ -474,12 +482,19 @@ export class DriverStationLapAudioHandler {
       (a) =>
         a.model?.entityId === assetId ||
         a.entity_id === assetId ||
-        a._id === assetId,
+        a._id === assetId ||
+        a.name === assetId,
     );
     if (!asset || asset.type !== "audio_set") return null;
 
-    const entry = asset.audioEntries?.find((e: any) => {
-      const val = e.timeSeconds != null ? e.timeSeconds : e.percentage;
+    const entries = asset.audioEntries || (asset as any)?.audio_entries;
+    const entry = entries?.find((e: any) => {
+      const val =
+        e.timeSeconds != null
+          ? e.timeSeconds
+          : e.time_seconds != null
+            ? e.time_seconds
+            : e.percentage;
       const mode = e.triggerMode || e.trigger_mode || "remaining";
       return (
         val != null &&

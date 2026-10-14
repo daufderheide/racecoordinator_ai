@@ -133,6 +133,20 @@ export class ServerFileSystemService {
     return firstValueFrom(this.http.get(url, { responseType: "text" }));
   }
 
+  async hasWidgetFile(path: string, file: string): Promise<boolean> {
+    const url = `${this.baseUrl}/api/filesystem/widgets/has-file?path=${encodeURIComponent(
+      path || "",
+    )}&file=${encodeURIComponent(file)}`;
+    try {
+      const resp = await firstValueFrom(
+        this.http.get<{ exists?: boolean }>(url),
+      );
+      return !!resp?.exists;
+    } catch {
+      return false;
+    }
+  }
+
   async writeWidgetFile(
     path: string,
     file: string,

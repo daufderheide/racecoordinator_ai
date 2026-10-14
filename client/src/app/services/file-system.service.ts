@@ -489,15 +489,7 @@ export class FileSystemService {
 
   async hasWidgetFile(widgetPath: string, filename: string): Promise<boolean> {
     if (this.serverCustomWidgetPath) {
-      try {
-        const content = await this.serverFileSystem.getWidgetFile(
-          widgetPath,
-          filename,
-        );
-        return content !== undefined && content !== null;
-      } catch {
-        return false;
-      }
+      return await this.serverFileSystem.hasWidgetFile(widgetPath, filename);
     }
 
     const handle = await this.getCustomWidgetDirectoryHandle();
