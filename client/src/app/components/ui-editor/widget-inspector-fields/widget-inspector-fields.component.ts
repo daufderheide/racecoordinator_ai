@@ -46,6 +46,8 @@ export class WidgetInspectorFieldsComponent {
   customUi = input<CustomUI>();
   availableColumns = input<{ key: string; label: string }[]>([]);
   isPracticeMode = input<boolean>(false);
+  selectedAnchor = input<string | null>(null);
+  anchorChange = output<string | null>();
   change = output<AbsoluteWidgetNode>();
   replicate = output<any>();
   requestReplicate = output<void>();
@@ -57,6 +59,10 @@ export class WidgetInspectorFieldsComponent {
 
   isCustomWidget(type: string | undefined): boolean {
     return type?.startsWith("custom:") ?? false;
+  }
+
+  onAnchorChange(anchor: string | null): void {
+    this.anchorChange.emit(anchor);
   }
 
   isLaneColumnWidget(widget: AbsoluteWidgetNode | undefined): boolean {

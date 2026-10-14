@@ -118,6 +118,7 @@ import {
   getThemeDisplayNameKey,
   getUiEditorHelpSteps,
   getUnsavedReasonsHelper,
+  handleAnchorSelection,
   handleAutoSaveState,
   handleCalloutSpacingChange,
   handleClearCurrentLayout,
@@ -542,8 +543,22 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       : null;
   }
 
+  selectedAnchor: string | null = null;
+
   onWidgetSelected(id: string | null, ui?: CustomUI) {
     handleWidgetSelection(this, id, ui);
+  }
+
+  onAnchorSelected(
+    event: { widgetId: string; anchor: string | null },
+    ui?: CustomUI,
+  ) {
+    handleAnchorSelection(this, event, ui);
+  }
+
+  onSelectedAnchorChange(anchor: string | null) {
+    this.selectedAnchor = anchor;
+    this.cdr.markForCheck();
   }
 
   countdownPreviewActiveByUi: Record<string, boolean> = {};
@@ -581,6 +596,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       this.translationService,
       this.availableColumns,
       (w) => this.getWidgetTypeLabelKey(w),
+      this.selectedAnchor,
     );
   }
 

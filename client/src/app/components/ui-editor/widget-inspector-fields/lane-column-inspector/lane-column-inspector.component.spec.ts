@@ -1437,4 +1437,223 @@ describe("LaneColumnInspectorComponent", () => {
       expect(customInspector).toBeTruthy();
     });
   });
+
+  describe("Inset Scope & InsetConfig", () => {
+    beforeEach(() => {
+      mockSettings.insets = {
+        "top-left": "lastLapTime",
+        "top-right": "totalTime",
+      };
+      mockSettings.insetsConfig = {
+        "top-left": {
+          timeDecimalPlaces: 2,
+          fontFamily: "Courier",
+          fontSize: 14,
+          textColor: "#38bdf8",
+        },
+      };
+      fixture.detectChanges();
+    });
+
+    it("should switch activeScope to inset when selectedAnchor is set and back to column when cleared", () => {
+      component.setScope("column");
+      expect(component.activeScope()).toBe("column");
+
+      fixture.componentRef.setInput("selectedAnchor", "top-left");
+      fixture.detectChanges();
+      expect(component.activeScope()).toBe("inset");
+
+      fixture.componentRef.setInput("selectedAnchor", null);
+      fixture.detectChanges();
+      expect(component.activeScope()).toBe("column");
+    });
+
+    it("should return placedInsetAnchors with configured keys", () => {
+      expect(component.placedInsetAnchors).toEqual(["top-left", "top-right"]);
+    });
+
+    it("should resolve effectiveSelectedAnchor", () => {
+      fixture.componentRef.setInput("selectedAnchor", "top-right");
+      expect(component.effectiveSelectedAnchor).toBe("top-right");
+
+      fixture.componentRef.setInput("selectedAnchor", null);
+      expect(component.effectiveSelectedAnchor).toBe("top-left");
+    });
+
+    it("should compute insetBreadcrumbLabel", () => {
+      fixture.componentRef.setInput("selectedAnchor", "top-left");
+      expect(component.insetBreadcrumbLabel).toBe("Inset: RD_LAST_LAP_TIME");
+
+      component.setAnchorValue("top-left", "");
+      expect(component.insetBreadcrumbLabel).toContain("UE_ANCHOR_top-left");
+    });
+
+    it("should get and set anchor value", () => {
+      spyOn(component.change, "emit");
+      fixture.componentRef.setInput("selectedAnchor", "top-left");
+
+      expect(component.getAnchorValue("top-left")).toBe("lastLapTime");
+      component.setAnchorValue("top-left", "bestLapTime");
+      expect(mockSettings.insets["top-left"]).toBe("bestLapTime");
+      expect(component.change.emit).toHaveBeenCalled();
+    });
+
+    it("should get and set inset timer configuration", () => {
+      spyOn(component.change, "emit");
+      fixture.componentRef.setInput("selectedAnchor", "top-right");
+
+      expect(component.getInsetTimeDisplayFormat("top-right")).toBe("dynamic");
+      component.setInsetTimeDisplayFormat("top-right", "seconds");
+      expect(mockSettings.insetsConfig["top-right"]?.timeDisplayFormat).toBe(
+        "seconds",
+      );
+      expect(component.change.emit).toHaveBeenCalled();
+
+      expect(component.getInsetTimeSubsecondMode("top-right")).toBe("never");
+      component.setInsetTimeSubsecondMode("top-right", "always");
+      expect(mockSettings.insetsConfig["top-right"]?.timeSubsecondMode).toBe(
+        "always",
+      );
+
+      expect(component.getInsetTimeSubsecondThreshold("top-right")).toBe(10);
+      component.setInsetTimeSubsecondThreshold("top-right", 15);
+      expect(
+        mockSettings.insetsConfig["top-right"]?.timeSubsecondThreshold,
+      ).toBe(15);
+
+      expect(component.getInsetTimeSubsecondDecimals("top-right")).toBe(2);
+      component.setInsetTimeSubsecondDecimals("top-right", 3);
+      expect(
+        mockSettings.insetsConfig["top-right"]?.timeSubsecondDecimals,
+      ).toBe(3);
+    });
+
+    it("should get and set decimal places for insets", () => {
+      spyOn(component.change, "emit");
+      fixture.componentRef.setInput("selectedAnchor", "top-left");
+
+      expect(component.getInsetTimeDecimalPlaces("top-left")).toBe(2);
+      component.setInsetTimeDecimalPlaces("top-left", 3);
+      expect(mockSettings.insetsConfig["top-left"]?.timeDecimalPlaces).toBe(3);
+      expect(component.change.emit).toHaveBeenCalled();
+
+      expect(component.getInsetLapDecimalPlaces("top-left")).toBe(2);
+      component.setInsetLapDecimalPlaces("top-left", 1);
+      expect(mockSettings.insetsConfig["top-left"]?.lapDecimalPlaces).toBe(1);
+
+      expect(component.getInsetDecimalPlaces("top-left")).toBe(2);
+      component.setInsetDecimalPlaces("top-left", 0);
+      expect(mockSettings.insetsConfig["top-left"]?.decimalPlaces).toBe(0);
+
+      // Verify unconfigured anchor does not inherit from column settings
+      mockSettings.timeDecimalPlaces = 1;
+      mockSettings.lapDecimalPlaces = 0;
+      expect(component.getInsetTimeDecimalPlaces("bottom-right")).toBe(3);
+      expect(component.getInsetLapDecimalPlaces("bottom-right")).toBe(2);
+    });
+
+    it("should get, set, and reset inset typography", () => {
+      spyOn(component.change, "emit");
+      fixture.componentRef.setInput("selectedAnchor", "top-left");
+
+      expect(component.getInsetFontFamily("top-left")).toBe("Courier");
+      component.setInsetFontFamily("top-left", "Roboto");
+      expect(mockSettings.insetsConfig["top-left"]?.fontFamily).toBe("Roboto");
+
+      expect(component.getInsetFontSize("top-left")).toBe(14);
+      component.setInsetFontSize("top-left", 16);
+      expect(mockSettings.insetsConfig["top-left"]?.fontSize).toBe(16);
+
+      expect(component.getInsetTextColor("top-left")).toBe("#38bdf8");
+      component.setInsetTextColor("top-left", "#ffffff");
+      expect(mockSettings.insetsConfig["top-left"]?.textColor).toBe("#ffffff");
+
+      component.resetInsetCustomColor("top-left");
+      expect(mockSettings.insetsConfig["top-left"]?.textColor).toBeUndefined();
+      expect(component.change.emit).toHaveBeenCalled();
+    });
+
+    it("should emit anchorChange on selectInsetAnchor", () => {
+      const anchorSpy = spyOn(component.anchorChange, "emit");
+      component.selectInsetAnchor("bottom-right");
+      expect(anchorSpy).toHaveBeenCalledWith("bottom-right");
+    });
+
+    it("should configure inset and switch scope on configureInset", () => {
+      const anchorSpy = spyOn(component.anchorChange, "emit");
+      component.configureInset("top-right");
+      expect(component.activeScope()).toBe("inset");
+      expect(anchorSpy).toHaveBeenCalledWith("top-right");
+    });
+
+    it("should switch back to column scope on backToColumn", () => {
+      const anchorSpy = spyOn(component.anchorChange, "emit");
+      component.setScope("inset");
+      component.backToColumn();
+      expect(component.activeScope()).toBe("column");
+      expect(anchorSpy).toHaveBeenCalledWith(null);
+    });
+
+    it("should remove inset and clean up insetsConfig on removeInset", () => {
+      spyOn(component.change, "emit");
+      const anchorSpy = spyOn(component.anchorChange, "emit");
+      fixture.componentRef.setInput("selectedAnchor", "top-left");
+
+      component.removeInset("top-left");
+      expect(mockSettings.insets["top-left"]).toBeUndefined();
+      expect(mockSettings.insetsConfig["top-left"]).toBeUndefined();
+      expect(component.activeScope()).toBe("column");
+      expect(anchorSpy).toHaveBeenCalledWith(null);
+      expect(component.change.emit).toHaveBeenCalled();
+    });
+
+    it("should identify column types for insets", () => {
+      fixture.componentRef.setInput("selectedAnchor", "top-right"); // totalTime
+      expect(component.isInsetTotalTime("top-right")).toBeTrue();
+      expect(component.isInsetTimeColumn("top-right")).toBeFalse(); // totalTime is excluded from isInsetTimeColumn
+      expect(component.isInsetLapColumn("top-right")).toBeFalse();
+      expect(component.isInsetNumericColumn("top-right")).toBeFalse();
+
+      fixture.componentRef.setInput("selectedAnchor", "top-left"); // lastLapTime
+      expect(component.isInsetTotalTime("top-left")).toBeFalse();
+      expect(component.isInsetTimeColumn("top-left")).toBeTrue();
+      expect(component.isInsetLapColumn("top-left")).toBeFalse();
+      expect(component.isInsetNumericColumn("top-left")).toBeFalse();
+
+      mockSettings.insets["top-left"] = "lapCount";
+      expect(component.isInsetLapColumn("top-left")).toBeTrue();
+      expect(component.isInsetTimeColumn("top-left")).toBeFalse();
+
+      mockSettings.insets["top-left"] = "points";
+      expect(component.isInsetNumericColumn("top-left")).toBeTrue();
+    });
+
+    it("should produce formatted live preview from getInsetPreview", () => {
+      fixture.componentRef.setInput("selectedAnchor", "top-right");
+      component.setInsetTimeDisplayFormat("top-right", "mm_ss");
+      component.setInsetTimeSubsecondMode("top-right", "never");
+      expect(component.getInsetPreview("top-right", 83)).toBe("01:23");
+    });
+
+    it("should render timer-preview-grid with 4 items matching main column preview for inset totalTime", () => {
+      fixture.componentRef.setInput("selectedAnchor", "top-right");
+      component.selectInsetAnchor("top-right");
+      mockSettings.insets["top-right"] = "totalTime";
+      fixture.detectChanges();
+
+      const previewGrid = fixture.nativeElement.querySelector(
+        ".timer-preview-grid",
+      );
+      expect(previewGrid).toBeTruthy();
+
+      const previewItems = fixture.nativeElement.querySelectorAll(
+        ".timer-preview-item",
+      );
+      expect(previewItems.length).toBe(4);
+      const labels = Array.from(
+        fixture.nativeElement.querySelectorAll(".timer-preview-label"),
+      ).map((el: any) => el.textContent.trim());
+      expect(labels).toEqual(["> 1 hr", "> 1 min", "< 1 min", "< 10s"]);
+    });
+  });
 });

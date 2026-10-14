@@ -437,12 +437,16 @@
                                   [activeCustomUi]="ui"
                                   [uiScale]="getPreviewScaleNumber(ui)"
                                   [selectedWidgetId]="getSelectedWidgetId(ui)"
+                                  [selectedAnchor]="selectedAnchor"
                                   [isCountdownPreviewActive]="
                                     isCountdownPreviewActive(ui)
                                   "
                                   [gridSession]="activeGridSession"
                                   (widgetSelected)="
                                     onWidgetSelected($event, ui)
+                                  "
+                                  (anchorSelected)="
+                                    onAnchorSelected($event, ui)
                                   "
                                   (layoutChanged)="onLayoutChanged($event, ui)"
                                   (columnsChanged)="onColumnsChanged(ui)"
@@ -834,6 +838,10 @@
                                   [customUi]="ui"
                                   [availableColumns]="availableColumns"
                                   [isPracticeMode]="isCustomUiPractice(ui)"
+                                  [selectedAnchor]="selectedAnchor"
+                                  (anchorChange)="
+                                    onSelectedAnchorChange($event)
+                                  "
                                   (change)="onWidgetInspectorChange($event, ui)"
                                   (requestReplicate)="
                                     openReplicateLaneModal(ui)

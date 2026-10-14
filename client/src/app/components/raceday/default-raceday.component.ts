@@ -1043,12 +1043,21 @@ export class DefaultRacedayComponent
   editingSettings = input<Settings | undefined>(undefined);
   activeCustomUi = input<CustomUI | null>(null);
   selectedWidgetId = input<string | null>(null);
+  selectedAnchor = input<string | null>(null);
   isCountdownPreviewActive = input<boolean>(false);
   gridSession = input<LaneGridSession | null>(null);
   widgetSelected = output<string | null>();
+  anchorSelected = output<{ widgetId: string; anchor: string | null }>();
   finishGrid = output<void>();
   deleteGrid = output<string>();
   gridBoundsChange = output<LaneGridBounds>();
+
+  selectAnchor(widgetId: string, anchor: string | null): void {
+    if (this.selectedWidgetId() !== widgetId) {
+      this.widgetSelected.emit(widgetId);
+    }
+    this.anchorSelected.emit({ widgetId, anchor });
+  }
 
   get visualScale(): number {
     return this.isUIEditorMode() ? this.uiScale() : this.scale;

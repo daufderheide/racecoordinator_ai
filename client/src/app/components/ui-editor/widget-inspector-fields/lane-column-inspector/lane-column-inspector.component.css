@@ -52,3 +52,41 @@
   color: #f1f5f9;
 }
 
+.btn-danger {
+  background: #dc2626;
+  border: 1px solid #b91c1c;
+  color: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: #b91c1c;
+  border-color: #991b1b;
+  color: #ffffff;
+}
+
+.ghost-icon-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  color: #94a3b8;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+}
+
+.ghost-icon-btn:hover {
+  background: rgba(56, 189, 248, 0.15);
+  border-color: rgba(56, 189, 248, 0.3);
+  color: #38bdf8;
+}
+
+.ghost-icon-btn .material-icons {
+  font-size: 18px;
+}
+

@@ -312,4 +312,28 @@ describe("WidgetInspectorFieldsComponent", () => {
       fixture.nativeElement.querySelector("app-lane-column-inspector"),
     ).toBeNull();
   });
+
+  it("should forward selectedAnchor and emit anchorChange", () => {
+    const laneColWidget: AbsoluteWidgetNode = {
+      id: "w-lane-col",
+      widgetType: "lane-column",
+      x: 0,
+      y: 0,
+      width: 200,
+      height: 90,
+      zIndex: 1,
+      customSettings: {
+        columnKey: "lastLapTime",
+      },
+    };
+    fixture.componentRef.setInput("widget", laneColWidget);
+    fixture.componentRef.setInput("selectedAnchor", "top-left");
+    fixture.detectChanges();
+
+    expect(component.selectedAnchor()).toBe("top-left");
+
+    const spy = spyOn(component.anchorChange, "emit");
+    component.onAnchorChange("top-right");
+    expect(spy).toHaveBeenCalledWith("top-right");
+  });
 });

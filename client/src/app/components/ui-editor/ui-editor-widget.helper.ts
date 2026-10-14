@@ -26,6 +26,7 @@ export function computeWidgetDisplayName(
   translationService: any,
   availableColumns?: { key: string; label: string }[],
   getWidgetTypeLabelKey?: (w: string) => string,
+  selectedAnchor?: string | null,
 ): string {
   if (!widget) return "";
   const type = widget.widgetType;
@@ -50,29 +51,48 @@ export function computeWidgetDisplayName(
     }
     if (!colLabel) colLabel = translatedType;
 
+    let baseDisplayName = "";
     if (s.isHeaderWidget) {
       const headerText =
         translationService?.translate?.("UE_GRID_HEADER_ROW_BADGE") || "Header";
-      return s.gridId
+      baseDisplayName = s.gridId
         ? `Grid · ${headerText} · ${colLabel}`
         : `${headerText} · ${colLabel}`;
+    } else {
+      const idx =
+        (s.gridLane != null
+          ? s.gridLane
+          : s.targetIndex != null
+            ? s.targetIndex
+            : 0) + 1;
+      const mode = s.bindingMode || "lane";
+      let prefix = `Lane ${idx}`;
+      if (mode === "position") prefix = `Pos ${idx}`;
+      else if (mode === "overallPosition") prefix = `Overall Pos ${idx}`;
+      else if (mode === "seed") prefix = `Seed ${idx}`;
+
+      baseDisplayName = s.gridId
+        ? `Grid · ${prefix} · ${colLabel}`
+        : `${prefix} · ${colLabel}`;
     }
 
-    const idx =
-      (s.gridLane != null
-        ? s.gridLane
-        : s.targetIndex != null
-          ? s.targetIndex
-          : 0) + 1;
-    const mode = s.bindingMode || "lane";
-    let prefix = `Lane ${idx}`;
-    if (mode === "position") prefix = `Pos ${idx}`;
-    else if (mode === "overallPosition") prefix = `Overall Pos ${idx}`;
-    else if (mode === "seed") prefix = `Seed ${idx}`;
+    if (selectedAnchor && selectedAnchor !== "center-center") {
+      const insetKey = s.insets?.[selectedAnchor];
+      const anchorPosKey = "UE_ANCHOR_" + selectedAnchor;
+      const anchorPosName =
+        translationService?.translate?.(anchorPosKey) || selectedAnchor;
+      if (insetKey) {
+        const match = availableColumns?.find((c) => c.key === insetKey);
+        const insetLabel = match?.label
+          ? translationService?.translate?.(match.label) || match.label
+          : insetKey;
+        return `${baseDisplayName} · Inset (${anchorPosName}: ${insetLabel})`;
+      } else {
+        return `${baseDisplayName} · Inset (${anchorPosName})`;
+      }
+    }
 
-    return s.gridId
-      ? `Grid · ${prefix} · ${colLabel}`
-      : `${prefix} · ${colLabel}`;
+    return baseDisplayName;
   }
 
   return translatedType;
@@ -239,6 +259,9 @@ export function handleWidgetSelection(
   ui?: CustomUI,
 ): void {
   if (ui) comp.activeCustomUiId = ui.entity_id;
+  if (comp.selectedWidgetId !== id) {
+    comp.selectedAnchor = null;
+  }
   const layout = comp.getLayout(ui || comp.activeCustomUi);
   comp.selectedWidgetId = id || findDefaultWidgetId(layout);
   const selectedWidget =
@@ -896,5 +919,17 @@ export function handleLayoutChanged(
     }
   }
   comp.captureState();
+  comp.cdr.markForCheck();
+}
+
+export function handleAnchorSelection(
+  comp: any,
+  event: { widgetId: string; anchor: string | null },
+  ui?: CustomUI,
+): void {
+  if (comp.selectedWidgetId !== event.widgetId) {
+    handleWidgetSelection(comp, event.widgetId, ui);
+  }
+  comp.selectedAnchor = event.anchor;
   comp.cdr.markForCheck();
 }

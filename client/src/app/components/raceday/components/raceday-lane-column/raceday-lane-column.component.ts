@@ -8,6 +8,7 @@ import {
   inject,
   input,
   OnDestroy,
+  output,
   signal,
   viewChild,
   ViewEncapsulation,
@@ -66,6 +67,8 @@ export class RacedayLaneColumnComponent
 {
   parent = input<any>(undefined);
   widget = input<AbsoluteWidgetNode | null>(null);
+  selectedAnchor = input<string | null>(null);
+  anchorSelected = output<{ widgetId: string; anchor: string | null }>();
 
   protected translationService = inject(TranslationService);
 
@@ -378,6 +381,89 @@ export class RacedayLaneColumnComponent
       this.settings.textColor ||
       this.foregroundColor
     );
+  }
+
+  getInsetFontFamily(anchor: string): string | null {
+    return (
+      this.settings.insetsConfig?.[anchor]?.fontFamily ||
+      this.settings.insetFontFamily ||
+      null
+    );
+  }
+
+  getEffectiveInsetFontSize(anchor?: string): number {
+    if (anchor && this.settings.insetsConfig?.[anchor]?.fontSize) {
+      return this.settings.insetsConfig[anchor].fontSize!;
+    }
+    return this.effectiveInsetFontSize;
+  }
+
+  getEffectiveInsetTextColor(anchor?: string): string {
+    if (anchor && this.settings.insetsConfig?.[anchor]?.textColor) {
+      return this.settings.insetsConfig[anchor].textColor!;
+    }
+    return this.effectiveInsetTextColor;
+  }
+
+  get effectiveSelectedAnchor(): string | null {
+    if (this.selectedAnchor() !== null && this.selectedAnchor() !== undefined) {
+      return this.selectedAnchor();
+    }
+    const p = this.parent();
+    if (p) {
+      const pSelWidget =
+        typeof p.selectedWidgetId === "function"
+          ? p.selectedWidgetId()
+          : p.selectedWidgetId;
+      if (pSelWidget === this.widget()?.id) {
+        return typeof p.selectedAnchor === "function"
+          ? p.selectedAnchor()
+          : (p.selectedAnchor ?? null);
+      }
+    }
+    return null;
+  }
+
+  isAnchorSelected(anchor: string): boolean {
+    return this.effectiveSelectedAnchor === anchor;
+  }
+
+  onAnchorClick(anchor: string, event: MouseEvent): void {
+    if (!this.isUIEditorMode) return;
+    event.stopPropagation();
+    const wId = this.widget()?.id;
+    if (!wId) return;
+    const p = this.parent();
+    if (p?.selectAnchor) {
+      p.selectAnchor(wId, anchor);
+    } else {
+      if (p?.widgetSelected?.emit) {
+        p.widgetSelected.emit(wId);
+      }
+      if (p?.anchorSelected?.emit) {
+        p.anchorSelected.emit({ widgetId: wId, anchor });
+      }
+    }
+    this.anchorSelected.emit({ widgetId: wId, anchor });
+  }
+
+  onCenterZoneClick(event: MouseEvent): void {
+    if (!this.isUIEditorMode) return;
+    event.stopPropagation();
+    const wId = this.widget()?.id;
+    if (!wId) return;
+    const p = this.parent();
+    if (p?.selectAnchor) {
+      p.selectAnchor(wId, null);
+    } else {
+      if (p?.widgetSelected?.emit) {
+        p.widgetSelected.emit(wId);
+      }
+      if (p?.anchorSelected?.emit) {
+        p.anchorSelected.emit({ widgetId: wId, anchor: null });
+      }
+    }
+    this.anchorSelected.emit({ widgetId: wId, anchor: null });
   }
 
   get isUIEditorMode(): boolean {
@@ -693,16 +779,30 @@ export class RacedayLaneColumnComponent
     const parent = this.parent();
     if (!hd) return "--";
 
-    const insetSettings = {
-      ...this.settings,
-      timeDecimalPlaces:
-        this.settings.insetTimeDecimalPlaces !== undefined
-          ? this.settings.insetTimeDecimalPlaces
-          : this.settings.timeDecimalPlaces,
-      lapDecimalPlaces:
-        this.settings.insetLapDecimalPlaces !== undefined
-          ? this.settings.insetLapDecimalPlaces
-          : this.settings.lapDecimalPlaces,
+    const anchorCfg = this.settings.insetsConfig?.[anchor];
+    const insetTimeDec =
+      anchorCfg?.timeDecimalPlaces !== undefined
+        ? anchorCfg.timeDecimalPlaces
+        : 3;
+    const insetLapDec =
+      anchorCfg?.lapDecimalPlaces !== undefined
+        ? anchorCfg.lapDecimalPlaces
+        : 2;
+    const insetDec =
+      anchorCfg?.decimalPlaces !== undefined
+        ? anchorCfg.decimalPlaces
+        : undefined;
+
+    const insetSettings: any = {
+      insetTimeDecimalPlaces: insetTimeDec,
+      insetLapDecimalPlaces: insetLapDec,
+      timeDecimalPlaces: insetTimeDec,
+      lapDecimalPlaces: insetLapDec,
+      columnDecimals: insetDec !== undefined ? { [key]: insetDec } : {},
+      timeDisplayFormat: anchorCfg?.timeDisplayFormat || "dynamic",
+      timeSubsecondMode: anchorCfg?.timeSubsecondMode || "never",
+      timeSubsecondThreshold: anchorCfg?.timeSubsecondThreshold ?? 10,
+      timeSubsecondDecimals: anchorCfg?.timeSubsecondDecimals ?? 2,
     };
 
     if (parent?.formatValue) {
@@ -840,6 +940,16 @@ export class RacedayLaneColumnComponent
     }
     if (s.insets && s.insets[anchor]) {
       delete s.insets[anchor];
+    }
+    if (s.insetsConfig && s.insetsConfig[anchor]) {
+      delete s.insetsConfig[anchor];
+    }
+    const p = this.parent();
+    if (p?.selectedAnchor?.() === anchor || this.selectedAnchor() === anchor) {
+      if (p?.selectAnchor) {
+        p.selectAnchor(w.id, null);
+      }
+      this.anchorSelected.emit({ widgetId: w.id, anchor: null });
     }
     this.notifyChange();
   }

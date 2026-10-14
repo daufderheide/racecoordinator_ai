@@ -76,6 +76,20 @@ export interface AbsoluteWidgetNode {
   customSettings?: Record<string, any>;
 }
 
+export interface InsetConfig {
+  columnKey?: string;
+  timeDecimalPlaces?: number;
+  lapDecimalPlaces?: number;
+  decimalPlaces?: number;
+  timeDisplayFormat?: TimerDisplayFormat;
+  timeSubsecondMode?: TimerSubsecondMode;
+  timeSubsecondThreshold?: number;
+  timeSubsecondDecimals?: number;
+  fontFamily?: string;
+  fontSize?: number;
+  textColor?: string;
+}
+
 export interface LaneColumnWidgetSettings {
   columnKey: string;
   bindingMode: "lane" | "position" | "overallPosition" | "seed";
@@ -107,6 +121,7 @@ export interface LaneColumnWidgetSettings {
   timeSubsecondDecimals?: number;
   useLaneColors: boolean;
   insets?: Record<string, string>;
+  insetsConfig?: Record<string, InsetConfig>;
   insetFontFamily?: string;
   insetFontSize?: number;
   insetTextColor?: string;

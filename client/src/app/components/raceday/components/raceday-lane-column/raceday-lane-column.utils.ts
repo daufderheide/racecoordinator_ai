@@ -192,65 +192,15 @@ export function applyColumnInsetsAndPaddings(
   cardEl: HTMLElement,
   availWidth: number,
   availHeight: number,
-  hasLeftInsets: boolean,
-  hasRightInsets: boolean,
-  hasInset: (anchor: string) => boolean,
-  effectiveInsetFont: number,
+  _hasLeftInsets: boolean,
+  _hasRightInsets: boolean,
+  _hasInset: (anchor: string) => boolean,
+  _effectiveInsetFont: number,
 ): { availWidth: number; availHeight: number } {
-  let leftPad = 0;
-  if (hasLeftInsets && !hasInset("center-left")) {
-    const tlEl = cardEl.querySelector(".inset-cell.tl") as HTMLElement | null;
-    const blEl = cardEl.querySelector(".inset-cell.bl") as HTMLElement | null;
-    const lW =
-      Math.max(tlEl?.offsetWidth || 0, blEl?.offsetWidth || 0) ||
-      Math.round(effectiveInsetFont * 2.5);
-    leftPad = lW + 6;
-    availWidth = Math.max(10, availWidth - leftPad);
-  }
-
-  let rightPad = 0;
-  if (hasRightInsets && !hasInset("center-right")) {
-    const trEl = cardEl.querySelector(".inset-cell.tr") as HTMLElement | null;
-    const brEl = cardEl.querySelector(".inset-cell.br") as HTMLElement | null;
-    const rW =
-      Math.max(trEl?.offsetWidth || 0, brEl?.offsetWidth || 0) ||
-      Math.round(effectiveInsetFont * 2.5);
-    rightPad = rW + 6;
-    availWidth = Math.max(10, availWidth - rightPad);
-  }
-
-  let topPad = 0;
-  if (hasInset("top-center")) {
-    const tcEl = cardEl.querySelector(".inset-cell.tc") as HTMLElement | null;
-    const tcH = tcEl?.offsetHeight || Math.round(effectiveInsetFont * 1.2);
-    topPad = tcH + 2;
-    availHeight = Math.max(10, availHeight - topPad);
-  }
-
-  let bottomPad = 0;
-  if (hasInset("bottom-center")) {
-    const bcEl = cardEl.querySelector(".inset-cell.bc") as HTMLElement | null;
-    const bcH = bcEl?.offsetHeight || Math.round(effectiveInsetFont * 1.2);
-    bottomPad = bcH + 2;
-    availHeight = Math.max(10, availHeight - bottomPad);
-  }
-
-  cardEl.style.setProperty("--lane-col-pad-left", `${leftPad}px`);
-  cardEl.style.setProperty("--lane-col-pad-right", `${rightPad}px`);
-  cardEl.style.setProperty("--lane-col-pad-top", `${topPad}px`);
-  cardEl.style.setProperty("--lane-col-pad-bottom", `${bottomPad}px`);
-
-  if (hasInset("center-left")) {
-    const clEl = cardEl.querySelector(".inset-cell.cl") as HTMLElement | null;
-    const clW = clEl ? clEl.offsetWidth : 30;
-    availWidth = Math.max(10, availWidth - clW - 6);
-  }
-
-  if (hasInset("center-right")) {
-    const crEl = cardEl.querySelector(".inset-cell.cr") as HTMLElement | null;
-    const crW = crEl ? crEl.offsetWidth : 30;
-    availWidth = Math.max(10, availWidth - crW - 6);
-  }
+  cardEl.style.setProperty("--lane-col-pad-left", "0px");
+  cardEl.style.setProperty("--lane-col-pad-right", "0px");
+  cardEl.style.setProperty("--lane-col-pad-top", "0px");
+  cardEl.style.setProperty("--lane-col-pad-bottom", "0px");
 
   return { availWidth, availHeight };
 }

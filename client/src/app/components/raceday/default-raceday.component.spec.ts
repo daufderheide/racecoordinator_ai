@@ -7912,7 +7912,7 @@ describe("DefaultRacedayComponent", () => {
       } as any;
       const hd: any = { reactionTime: 1.0 };
 
-      // Without anchor or with center-* anchor, it's NOT an inset. Uses lapDecimalPlaces (1)
+      // Without anchor or with center-center anchor, it's NOT an inset. Uses lapDecimalPlaces (1)
       expect(component.formatValue("lapCount", 10.1234, hd)).toBe("10.1");
       expect(
         component.formatValue(
@@ -7923,6 +7923,8 @@ describe("DefaultRacedayComponent", () => {
           "center-center",
         ),
       ).toBe("10.1");
+
+      // With an inset anchor (including center-left, top-left), it IS an inset. Uses insetLapDecimalPlaces (3)
       expect(
         component.formatValue(
           "lapCount",
@@ -7931,9 +7933,7 @@ describe("DefaultRacedayComponent", () => {
           undefined,
           "center-left",
         ),
-      ).toBe("10.1");
-
-      // With an inset anchor, it IS an inset. Uses insetLapDecimalPlaces (3)
+      ).toBe("10.123");
       expect(
         component.formatValue("lapCount", 10.1234, hd, undefined, "top-left"),
       ).toBe("10.123");
@@ -12368,11 +12368,22 @@ describe("DefaultRacedayComponent", () => {
       const grids = component.getGrids();
       expect(grids.length).toBe(1);
 
-      // The layout widget MUST have been auto-healed so y >= 50 + 40 = 90
       const healedWidget = (component as any).layout.widgets.find(
         (w: any) => w.id === "corrupt-top-widget",
       );
       expect(healedWidget.y).toBe(90);
+    });
+
+    it("should emit widgetSelected and anchorSelected on selectAnchor", () => {
+      const widgetSpy = spyOn(component.widgetSelected, "emit");
+      const anchorSpy = spyOn(component.anchorSelected, "emit");
+
+      component.selectAnchor("w-test-1", "top-left");
+      expect(widgetSpy).toHaveBeenCalledWith("w-test-1");
+      expect(anchorSpy).toHaveBeenCalledWith({
+        widgetId: "w-test-1",
+        anchor: "top-left",
+      });
     });
   });
 });

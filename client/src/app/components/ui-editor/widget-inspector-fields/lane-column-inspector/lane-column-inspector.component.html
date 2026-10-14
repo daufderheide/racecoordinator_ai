@@ -35,6 +35,18 @@
         <span class="material-icons">crop_free</span>
         {{ cellBreadcrumbLabel }}
       </button>
+      @if (activeScope() === "inset" || hasAnyInsets) {
+        <span class="breadcrumb-sep">/</span>
+        <button
+          type="button"
+          class="breadcrumb-btn"
+          [class.active]="activeScope() === 'inset'"
+          (click)="setScope('inset')"
+        >
+          <span class="material-icons">open_in_new</span>
+          {{ insetBreadcrumbLabel }}
+        </button>
+      }
     </div>
 
     <div class="scope-mode-tabs">
@@ -65,6 +77,17 @@
         <span class="material-icons">crop_free</span>
         {{ "UE_SCOPE_TAB_CELL" | translate }}
       </button>
+      @if (activeScope() === "inset" || hasAnyInsets) {
+        <button
+          type="button"
+          class="scope-tab"
+          [class.active]="activeScope() === 'inset'"
+          (click)="setScope('inset')"
+        >
+          <span class="material-icons">open_in_new</span>
+          {{ "UE_SCOPE_TAB_INSET" | translate }}
+        </button>
+      }
     </div>
   </div>
 
@@ -80,17 +103,31 @@
       <span>{{ "UE_SCOPE_COLUMN_HINT" | translate }}</span>
     </div>
     <ng-container *ngTemplateOutlet="columnSettingsTemplate"></ng-container>
-  } @else {
+  } @else if (activeScope() === "cell") {
     <div class="scope-hint-banner cell-banner">
       <span class="material-icons">info</span>
       <span>{{ "UE_SCOPE_CELL_HINT" | translate }}</span>
     </div>
     <ng-container *ngTemplateOutlet="cellSettingsTemplate"></ng-container>
+  } @else if (activeScope() === "inset") {
+    <div class="scope-hint-banner inset-banner">
+      <span class="material-icons">info</span>
+      <span>{{ "UE_SCOPE_INSET_HINT" | translate }}</span>
+    </div>
+    <ng-container *ngTemplateOutlet="insetSettingsTemplate"></ng-container>
   }
 } @else {
-  <ng-container *ngTemplateOutlet="cellSettingsTemplate"></ng-container>
-  <hr class="inspector-divider" />
-  <ng-container *ngTemplateOutlet="columnSettingsTemplate"></ng-container>
+  @if (activeScope() === "inset") {
+    <div class="scope-hint-banner inset-banner">
+      <span class="material-icons">info</span>
+      <span>{{ "UE_SCOPE_INSET_HINT" | translate }}</span>
+    </div>
+    <ng-container *ngTemplateOutlet="insetSettingsTemplate"></ng-container>
+  } @else {
+    <ng-container *ngTemplateOutlet="cellSettingsTemplate"></ng-container>
+    <hr class="inspector-divider" />
+    <ng-container *ngTemplateOutlet="columnSettingsTemplate"></ng-container>
+  }
 }
 
 <ng-template #gridSettingsTemplate>
@@ -1674,20 +1711,32 @@
     @for (pos of ANCHOR_POSITIONS; track pos.key) {
       <div class="inspector-section">
         <label class="inspector-label">{{ pos.labelKey | translate }}</label>
-        <div class="select-container select-sm">
-          <app-custom-select
-            [ngModel]="getAnchorValue(pos.key)"
-            (ngModelChange)="setAnchorValue(pos.key, $event)"
-          >
-            <app-custom-option value="">
-              {{ "UE_INSPECTOR_INSET_NONE" | translate }}
-            </app-custom-option>
-            @for (col of availableColumns(); track col.key) {
-              <app-custom-option [value]="col.key">
-                {{ col.label | translate }}
+        <div class="d-flex align-items-center gap-2">
+          <div class="select-container select-sm flex-grow-1">
+            <app-custom-select
+              [ngModel]="getAnchorValue(pos.key)"
+              (ngModelChange)="setAnchorValue(pos.key, $event)"
+            >
+              <app-custom-option value="">
+                {{ "UE_INSPECTOR_INSET_NONE" | translate }}
               </app-custom-option>
-            }
-          </app-custom-select>
+              @for (col of availableColumns(); track col.key) {
+                <app-custom-option [value]="col.key">
+                  {{ col.label | translate }}
+                </app-custom-option>
+              }
+            </app-custom-select>
+          </div>
+          @if (getAnchorValue(pos.key)) {
+            <button
+              type="button"
+              class="ghost-icon-btn"
+              (click)="configureInset(pos.key)"
+              [title]="'UE_INSPECTOR_CONFIGURE_INSET' | translate"
+            >
+              <span class="material-icons">tune</span>
+            </button>
+          }
         </div>
       </div>
     }
@@ -1804,4 +1853,358 @@
       }
     }
   }
+</ng-template>
+
+<ng-template #insetSettingsTemplate>
+  <div class="inspector-geometry-title">
+    {{ "UE_INSPECTOR_INSET_SETTINGS" | translate }}
+  </div>
+
+  <!-- Inset Position Picker -->
+  <div class="inspector-section">
+    <label class="inspector-label">{{
+      "UE_INSPECTOR_INSET_POSITION" | translate
+    }}</label>
+    <div class="select-container select-sm">
+      <app-custom-select
+        [ngModel]="effectiveSelectedAnchor"
+        (ngModelChange)="selectInsetAnchor($event)"
+      >
+        @for (pos of ANCHOR_POSITIONS; track pos.key) {
+          <app-custom-option [value]="pos.key">
+            {{ pos.labelKey | translate }}
+            @if (getAnchorValue(pos.key)) {
+              ({{ getAnchorValue(pos.key) }})
+            }
+          </app-custom-option>
+        }
+      </app-custom-select>
+    </div>
+  </div>
+
+  <!-- Inset Value / Column Selection -->
+  <div class="inspector-section">
+    <label class="inspector-label">{{
+      "UE_INSPECTOR_INSET_VALUE" | translate
+    }}</label>
+    <div class="select-container select-sm">
+      <app-custom-select
+        [ngModel]="getAnchorValue(effectiveSelectedAnchor)"
+        (ngModelChange)="setAnchorValue(effectiveSelectedAnchor, $event)"
+      >
+        <app-custom-option value="">
+          {{ "UE_INSPECTOR_INSET_NONE" | translate }}
+        </app-custom-option>
+        @for (col of availableColumns(); track col.key) {
+          <app-custom-option [value]="col.key">
+            {{ col.label | translate }}
+          </app-custom-option>
+        }
+      </app-custom-select>
+    </div>
+  </div>
+
+  @if (getAnchorValue(effectiveSelectedAnchor)) {
+    <hr class="inspector-divider" />
+
+    <!-- Total Time Options (e.g. totalTime, overallTotalTime) -->
+    @if (isInsetTotalTime(effectiveSelectedAnchor)) {
+      <div class="inspector-section">
+        <label class="inspector-label">{{
+          "UE_INSPECTOR_TIMER_DISPLAY_FORMAT" | translate
+        }}</label>
+        <div class="select-container select-sm">
+          <app-custom-select
+            [ngModel]="getInsetTimeDisplayFormat(effectiveSelectedAnchor)"
+            (ngModelChange)="
+              setInsetTimeDisplayFormat(effectiveSelectedAnchor, $event)
+            "
+          >
+            <app-custom-option value="dynamic">
+              {{ "UE_INSPECTOR_TIMER_FORMAT_DYNAMIC" | translate }}
+            </app-custom-option>
+            <app-custom-option value="mm_ss">
+              {{ "UE_INSPECTOR_TIMER_FORMAT_MM_SS" | translate }}
+            </app-custom-option>
+            <app-custom-option value="m_ss">
+              {{ "UE_INSPECTOR_TIMER_FORMAT_M_SS" | translate }}
+            </app-custom-option>
+            <app-custom-option value="hh_mm_ss">
+              {{ "UE_INSPECTOR_TIMER_FORMAT_HH_MM_SS" | translate }}
+            </app-custom-option>
+            <app-custom-option value="seconds">
+              {{ "UE_INSPECTOR_TIMER_FORMAT_SECONDS" | translate }}
+            </app-custom-option>
+          </app-custom-select>
+        </div>
+      </div>
+
+      <div class="inspector-section">
+        <label class="inspector-label">{{
+          "UE_INSPECTOR_TIMER_SUBSECOND_MODE" | translate
+        }}</label>
+        <div class="select-container select-sm">
+          <app-custom-select
+            [ngModel]="getInsetTimeSubsecondMode(effectiveSelectedAnchor)"
+            (ngModelChange)="
+              setInsetTimeSubsecondMode(effectiveSelectedAnchor, $event)
+            "
+          >
+            <app-custom-option value="never">
+              {{ "UE_INSPECTOR_TIMER_SUBSECOND_NEVER" | translate }}
+            </app-custom-option>
+            <app-custom-option value="always">
+              {{ "UE_INSPECTOR_TIMER_SUBSECOND_ALWAYS" | translate }}
+            </app-custom-option>
+            <app-custom-option value="threshold">
+              {{ "UE_INSPECTOR_TIMER_SUBSECOND_THRESHOLD" | translate }}
+            </app-custom-option>
+          </app-custom-select>
+        </div>
+      </div>
+
+      @if (getInsetTimeSubsecondMode(effectiveSelectedAnchor) === "threshold") {
+        <div class="inspector-section">
+          <div class="inspector-label-row">
+            <label class="inspector-label">{{
+              "UE_INSPECTOR_TIMER_SUBSECOND_THRESHOLD" | translate
+            }}</label>
+            <span class="inspector-val-badge">
+              {{ getInsetTimeSubsecondThreshold(effectiveSelectedAnchor) }}s
+            </span>
+          </div>
+          <input
+            type="number"
+            min="0"
+            max="3600"
+            [ngModel]="getInsetTimeSubsecondThreshold(effectiveSelectedAnchor)"
+            (ngModelChange)="
+              setInsetTimeSubsecondThreshold(effectiveSelectedAnchor, $event)
+            "
+            class="inspector-input"
+          />
+        </div>
+      }
+
+      @if (getInsetTimeSubsecondMode(effectiveSelectedAnchor) !== "never") {
+        <div class="inspector-section">
+          <label class="inspector-label">{{
+            "UE_INSPECTOR_TIMER_SUBSECOND_DECIMALS" | translate
+          }}</label>
+          <div class="select-container select-sm">
+            <app-custom-select
+              [ngModel]="getInsetTimeSubsecondDecimals(effectiveSelectedAnchor)"
+              (ngModelChange)="
+                setInsetTimeSubsecondDecimals(effectiveSelectedAnchor, $event)
+              "
+            >
+              <app-custom-option [value]="0">0</app-custom-option>
+              <app-custom-option [value]="1">1</app-custom-option>
+              <app-custom-option [value]="2">2</app-custom-option>
+              <app-custom-option [value]="3">3</app-custom-option>
+            </app-custom-select>
+          </div>
+        </div>
+      }
+
+      <!-- Live Preview Section -->
+      <div class="inspector-section">
+        <label class="inspector-label">{{
+          "UE_INSPECTOR_TIMER_PREVIEW" | translate
+        }}</label>
+        <div class="timer-preview-grid">
+          <div class="timer-preview-item">
+            <span class="timer-preview-label">> 1 hr</span>
+            <span class="timer-preview-val">{{
+              getInsetPreview(effectiveSelectedAnchor, 3665)
+            }}</span>
+          </div>
+          <div class="timer-preview-item">
+            <span class="timer-preview-label">> 1 min</span>
+            <span class="timer-preview-val">{{
+              getInsetPreview(effectiveSelectedAnchor, 75)
+            }}</span>
+          </div>
+          <div class="timer-preview-item">
+            <span class="timer-preview-label">< 1 min</span>
+            <span class="timer-preview-val">{{
+              getInsetPreview(effectiveSelectedAnchor, 45)
+            }}</span>
+          </div>
+          <div class="timer-preview-item">
+            <span class="timer-preview-label">< 10s</span>
+            <span class="timer-preview-val">{{
+              getInsetPreview(effectiveSelectedAnchor, 8.45)
+            }}</span>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- Individual Time Decimals (e.g. bestLapTime, lastLapTime) -->
+    @if (isInsetTimeColumn(effectiveSelectedAnchor)) {
+      <div class="inspector-section">
+        <label class="inspector-label">{{
+          "UE_INSPECTOR_DECIMAL_PLACES" | translate
+        }}</label>
+        <div class="select-container select-sm">
+          <app-custom-select
+            [ngModel]="getInsetTimeDecimalPlaces(effectiveSelectedAnchor)"
+            (ngModelChange)="
+              setInsetTimeDecimalPlaces(effectiveSelectedAnchor, $event)
+            "
+          >
+            <app-custom-option [value]="0">0</app-custom-option>
+            <app-custom-option [value]="1">1</app-custom-option>
+            <app-custom-option [value]="2">2</app-custom-option>
+            <app-custom-option [value]="3">3</app-custom-option>
+          </app-custom-select>
+        </div>
+      </div>
+    }
+
+    <!-- Lap Decimals (e.g. laps, lapCount, totalLaps) -->
+    @if (isInsetLapColumn(effectiveSelectedAnchor)) {
+      <div class="inspector-section">
+        <label class="inspector-label">{{
+          "UE_INSPECTOR_DECIMAL_PLACES" | translate
+        }}</label>
+        <div class="select-container select-sm">
+          <app-custom-select
+            [ngModel]="getInsetLapDecimalPlaces(effectiveSelectedAnchor)"
+            (ngModelChange)="
+              setInsetLapDecimalPlaces(effectiveSelectedAnchor, $event)
+            "
+          >
+            <app-custom-option [value]="0">0</app-custom-option>
+            <app-custom-option [value]="1">1</app-custom-option>
+            <app-custom-option [value]="2">2</app-custom-option>
+            <app-custom-option [value]="3">3</app-custom-option>
+          </app-custom-select>
+        </div>
+      </div>
+    }
+
+    <!-- Other Numeric Decimals (e.g. points, speed) -->
+    @if (isInsetNumericColumn(effectiveSelectedAnchor)) {
+      <div class="inspector-section">
+        <label class="inspector-label">{{
+          "UE_INSPECTOR_DECIMAL_PLACES" | translate
+        }}</label>
+        <div class="select-container select-sm">
+          <app-custom-select
+            [ngModel]="getInsetDecimalPlaces(effectiveSelectedAnchor)"
+            (ngModelChange)="
+              setInsetDecimalPlaces(effectiveSelectedAnchor, $event)
+            "
+          >
+            <app-custom-option [value]="0">0</app-custom-option>
+            <app-custom-option [value]="1">1</app-custom-option>
+            <app-custom-option [value]="2">2</app-custom-option>
+            <app-custom-option [value]="3">3</app-custom-option>
+          </app-custom-select>
+        </div>
+      </div>
+    }
+
+    <hr class="inspector-divider" />
+
+    <!-- Inset Typography Section -->
+    <div class="inspector-geometry-title">
+      {{ "UE_INSPECTOR_INSET_TYPOGRAPHY" | translate }}
+    </div>
+
+    <!-- Font Family -->
+    <div class="inspector-section">
+      <label class="inspector-label">{{
+        "UE_INSPECTOR_FONT_FAMILY" | translate
+      }}</label>
+      <div class="select-container select-sm">
+        <app-custom-select
+          [ngModel]="getInsetFontFamily(effectiveSelectedAnchor)"
+          (ngModelChange)="setInsetFontFamily(effectiveSelectedAnchor, $event)"
+          (click)="fontService.loadLocalFonts()"
+        >
+          <app-custom-option value="">
+            {{ "UE_INSPECTOR_FONT_THEME_DEFAULT" | translate }}
+          </app-custom-option>
+          @for (font of fontService.availableFonts(); track font) {
+            <app-custom-option [value]="font">{{ font }}</app-custom-option>
+          }
+        </app-custom-select>
+      </div>
+    </div>
+
+    <!-- Font Size -->
+    <div class="inspector-section">
+      <div class="inspector-label-row">
+        <label class="inspector-label">{{
+          "UE_INSPECTOR_FONT_SIZE" | translate
+        }}</label>
+        <span class="inspector-val-badge">
+          {{ getInsetFontSize(effectiveSelectedAnchor) }}px
+        </span>
+      </div>
+      <input
+        type="range"
+        min="8"
+        max="36"
+        [ngModel]="getInsetFontSize(effectiveSelectedAnchor)"
+        (ngModelChange)="setInsetFontSize(effectiveSelectedAnchor, $event)"
+        [disabled]="disableFontSizes()"
+        class="inspector-slider"
+      />
+    </div>
+
+    <!-- Text Color -->
+    <div class="inspector-section">
+      <label class="inspector-label">{{
+        "UE_INSPECTOR_TEXT_COLOR" | translate
+      }}</label>
+      <div class="d-flex align-items-center gap-2">
+        <input
+          type="color"
+          [ngModel]="getInsetTextColor(effectiveSelectedAnchor)"
+          (ngModelChange)="setInsetTextColor(effectiveSelectedAnchor, $event)"
+          class="inspector-color-input"
+        />
+        @if (hasCustomInsetTextColor(effectiveSelectedAnchor)) {
+          <button
+            type="button"
+            class="color-reset-btn"
+            (click)="resetInsetCustomColor(effectiveSelectedAnchor)"
+            [title]="'UE_INSPECTOR_COLOR_RESET' | translate"
+          >
+            <span class="material-icons">restart_alt</span>
+          </button>
+        }
+      </div>
+    </div>
+
+    <hr class="inspector-divider" />
+
+    <!-- Remove Inset Action Button -->
+    <div class="inspector-section">
+      <button
+        type="button"
+        class="btn btn-sm btn-danger w-100 d-flex align-items-center justify-content-center gap-2"
+        (click)="removeInset(effectiveSelectedAnchor)"
+      >
+        <span class="material-icons">delete</span>
+        {{ "UE_INSPECTOR_REMOVE_INSET" | translate }}
+      </button>
+    </div>
+  }
+
+  <!-- Back to Column Button -->
+  <div class="inspector-section mt-2">
+    <button
+      type="button"
+      class="btn btn-sm btn-secondary w-100 d-flex align-items-center justify-content-center gap-2"
+      (click)="backToColumn()"
+    >
+      <span class="material-icons">arrow_back</span>
+      {{ "UE_BACK_TO_COLUMN" | translate }}
+    </button>
+  </div>
 </ng-template>

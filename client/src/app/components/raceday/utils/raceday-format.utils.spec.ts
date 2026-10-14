@@ -2089,6 +2089,86 @@ describe("RacedayFormatUtils", () => {
       ).toBe("--.---");
     });
 
+    it("should recognize center-left and center-right anchors as insets", () => {
+      ctx.laneViewWidgetSettings = {
+        timeDecimalPlaces: 1,
+        insetTimeDecimalPlaces: 3,
+        lapDecimalPlaces: 0,
+        insetLapDecimalPlaces: 2,
+      };
+      const colDef = { propertyName: "lastLapTime" } as any;
+
+      // Center-center is main value -> 1 decimal
+      expect(
+        RacedayFormatUtils.formatValue(
+          "lastLapTime",
+          8.123,
+          hd,
+          colDef,
+          ctx,
+          "center-center",
+        ),
+      ).toBe("8.1");
+
+      // Center-left is an inset -> 3 decimals
+      expect(
+        RacedayFormatUtils.formatValue(
+          "lastLapTime",
+          8.123,
+          hd,
+          colDef,
+          ctx,
+          "center-left",
+        ),
+      ).toBe("8.123");
+
+      // Center-right is an inset -> 3 decimals
+      expect(
+        RacedayFormatUtils.formatValue(
+          "lastLapTime",
+          8.123,
+          hd,
+          colDef,
+          ctx,
+          "center-right",
+        ),
+      ).toBe("8.123");
+    });
+
+    it("should resolve timer format options from direct settings when configured for insets", () => {
+      const insetSettings = {
+        timeDisplayFormat: "seconds",
+        timeSubsecondMode: "always" as const,
+        timeSubsecondThreshold: 10,
+        timeSubsecondDecimals: 3,
+      };
+      const opts = RacedayFormatUtils.resolveTimerFormatOptions(
+        "totalTime",
+        insetSettings,
+      );
+      expect(opts).toEqual({
+        format: "seconds",
+        subsecondMode: "always",
+        subsecondThreshold: 10,
+        subsecondDecimals: 3,
+      });
+    });
+
+    it("should resolve default timer options when isInset is true even without explicit timer settings", () => {
+      const opts = RacedayFormatUtils.resolveTimerFormatOptions(
+        "totalTime",
+        {},
+        true,
+        3,
+      );
+      expect(opts).toEqual({
+        format: "dynamic",
+        subsecondMode: "always",
+        subsecondThreshold: 10,
+        subsecondDecimals: 3,
+      });
+    });
+
     it("should maintain backward compatibility when no timer options are set", () => {
       ctx.laneViewWidgetSettings = undefined;
       expect(

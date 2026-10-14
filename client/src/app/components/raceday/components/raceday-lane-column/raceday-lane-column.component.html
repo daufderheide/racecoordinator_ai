@@ -96,6 +96,9 @@
         <div class="anchor-drop-grid">
           <div
             class="drop-zone tl"
+            [class.selected-inset]="isAnchorSelected('top-left')"
+            [class.has-inset]="hasAnchorValue('top-left')"
+            (click)="onAnchorClick('top-left', $event)"
             (dragover)="onAnchorDragOver($event)"
             (dragenter)="onAnchorDragEnter($event)"
             (dragleave)="onAnchorDragLeave($event)"
@@ -105,14 +108,18 @@
               <button
                 class="delete-anchor-btn"
                 (click)="deleteAnchor('top-left', $event)"
-                title="Remove item"
+                [title]="'UE_INSPECTOR_REMOVE_INSET' | translate"
+                [attr.aria-label]="'UE_INSPECTOR_REMOVE_INSET' | translate"
               >
-                ×
+                <span class="material-icons">delete</span>
               </button>
             }
           </div>
           <div
             class="drop-zone tc"
+            [class.selected-inset]="isAnchorSelected('top-center')"
+            [class.has-inset]="hasAnchorValue('top-center')"
+            (click)="onAnchorClick('top-center', $event)"
             (dragover)="onAnchorDragOver($event)"
             (dragenter)="onAnchorDragEnter($event)"
             (dragleave)="onAnchorDragLeave($event)"
@@ -122,14 +129,18 @@
               <button
                 class="delete-anchor-btn"
                 (click)="deleteAnchor('top-center', $event)"
-                title="Remove item"
+                [title]="'UE_INSPECTOR_REMOVE_INSET' | translate"
+                [attr.aria-label]="'UE_INSPECTOR_REMOVE_INSET' | translate"
               >
-                ×
+                <span class="material-icons">delete</span>
               </button>
             }
           </div>
           <div
             class="drop-zone tr"
+            [class.selected-inset]="isAnchorSelected('top-right')"
+            [class.has-inset]="hasAnchorValue('top-right')"
+            (click)="onAnchorClick('top-right', $event)"
             (dragover)="onAnchorDragOver($event)"
             (dragenter)="onAnchorDragEnter($event)"
             (dragleave)="onAnchorDragLeave($event)"
@@ -139,14 +150,18 @@
               <button
                 class="delete-anchor-btn"
                 (click)="deleteAnchor('top-right', $event)"
-                title="Remove item"
+                [title]="'UE_INSPECTOR_REMOVE_INSET' | translate"
+                [attr.aria-label]="'UE_INSPECTOR_REMOVE_INSET' | translate"
               >
-                ×
+                <span class="material-icons">delete</span>
               </button>
             }
           </div>
           <div
             class="drop-zone cl"
+            [class.selected-inset]="isAnchorSelected('center-left')"
+            [class.has-inset]="hasAnchorValue('center-left')"
+            (click)="onAnchorClick('center-left', $event)"
             (dragover)="onAnchorDragOver($event)"
             (dragenter)="onAnchorDragEnter($event)"
             (dragleave)="onAnchorDragLeave($event)"
@@ -156,14 +171,16 @@
               <button
                 class="delete-anchor-btn"
                 (click)="deleteAnchor('center-left', $event)"
-                title="Remove item"
+                [title]="'UE_INSPECTOR_REMOVE_INSET' | translate"
+                [attr.aria-label]="'UE_INSPECTOR_REMOVE_INSET' | translate"
               >
-                ×
+                <span class="material-icons">delete</span>
               </button>
             }
           </div>
           <div
             class="drop-zone cc"
+            (click)="onCenterZoneClick($event)"
             (dragover)="onAnchorDragOver($event)"
             (dragenter)="onAnchorDragEnter($event)"
             (dragleave)="onAnchorDragLeave($event)"
@@ -171,6 +188,9 @@
           ></div>
           <div
             class="drop-zone cr"
+            [class.selected-inset]="isAnchorSelected('center-right')"
+            [class.has-inset]="hasAnchorValue('center-right')"
+            (click)="onAnchorClick('center-right', $event)"
             (dragover)="onAnchorDragOver($event)"
             (dragenter)="onAnchorDragEnter($event)"
             (dragleave)="onAnchorDragLeave($event)"
@@ -180,14 +200,18 @@
               <button
                 class="delete-anchor-btn"
                 (click)="deleteAnchor('center-right', $event)"
-                title="Remove item"
+                [title]="'UE_INSPECTOR_REMOVE_INSET' | translate"
+                [attr.aria-label]="'UE_INSPECTOR_REMOVE_INSET' | translate"
               >
-                ×
+                <span class="material-icons">delete</span>
               </button>
             }
           </div>
           <div
             class="drop-zone bl"
+            [class.selected-inset]="isAnchorSelected('bottom-left')"
+            [class.has-inset]="hasAnchorValue('bottom-left')"
+            (click)="onAnchorClick('bottom-left', $event)"
             (dragover)="onAnchorDragOver($event)"
             (dragenter)="onAnchorDragEnter($event)"
             (dragleave)="onAnchorDragLeave($event)"
@@ -197,14 +221,18 @@
               <button
                 class="delete-anchor-btn"
                 (click)="deleteAnchor('bottom-left', $event)"
-                title="Remove item"
+                [title]="'UE_INSPECTOR_REMOVE_INSET' | translate"
+                [attr.aria-label]="'UE_INSPECTOR_REMOVE_INSET' | translate"
               >
-                ×
+                <span class="material-icons">delete</span>
               </button>
             }
           </div>
           <div
             class="drop-zone bc"
+            [class.selected-inset]="isAnchorSelected('bottom-center')"
+            [class.has-inset]="hasAnchorValue('bottom-center')"
+            (click)="onAnchorClick('bottom-center', $event)"
             (dragover)="onAnchorDragOver($event)"
             (dragenter)="onAnchorDragEnter($event)"
             (dragleave)="onAnchorDragLeave($event)"
@@ -214,14 +242,18 @@
               <button
                 class="delete-anchor-btn"
                 (click)="deleteAnchor('bottom-center', $event)"
-                title="Remove item"
+                [title]="'UE_INSPECTOR_REMOVE_INSET' | translate"
+                [attr.aria-label]="'UE_INSPECTOR_REMOVE_INSET' | translate"
               >
-                ×
+                <span class="material-icons">delete</span>
               </button>
             }
           </div>
           <div
             class="drop-zone br"
+            [class.selected-inset]="isAnchorSelected('bottom-right')"
+            [class.has-inset]="hasAnchorValue('bottom-right')"
+            (click)="onAnchorClick('bottom-right', $event)"
             (dragover)="onAnchorDragOver($event)"
             (dragenter)="onAnchorDragEnter($event)"
             (dragleave)="onAnchorDragLeave($event)"
@@ -231,9 +263,10 @@
               <button
                 class="delete-anchor-btn"
                 (click)="deleteAnchor('bottom-right', $event)"
-                title="Remove item"
+                [title]="'UE_INSPECTOR_REMOVE_INSET' | translate"
+                [attr.aria-label]="'UE_INSPECTOR_REMOVE_INSET' | translate"
               >
-                ×
+                <span class="material-icons">delete</span>
               </button>
             }
           </div>
@@ -251,6 +284,9 @@
           <div
             class="inset-cell tl"
             [class.clickable-lap-cell]="isInsetLapCount('top-left')"
+            [style.font-family]="getInsetFontFamily('top-left')"
+            [style.font-size.px]="getEffectiveInsetFontSize('top-left')"
+            [style.color]="getEffectiveInsetTextColor('top-left')"
             [attr.title]="
               isInsetLapCount('top-left')
                 ? ('RD_LAP_COLUMN_TOOLTIP' | translate)
@@ -273,6 +309,9 @@
           <div
             class="inset-cell tc"
             [class.clickable-lap-cell]="isInsetLapCount('top-center')"
+            [style.font-family]="getInsetFontFamily('top-center')"
+            [style.font-size.px]="getEffectiveInsetFontSize('top-center')"
+            [style.color]="getEffectiveInsetTextColor('top-center')"
             [attr.title]="
               isInsetLapCount('top-center')
                 ? ('RD_LAP_COLUMN_TOOLTIP' | translate)
@@ -295,6 +334,9 @@
           <div
             class="inset-cell tr"
             [class.clickable-lap-cell]="isInsetLapCount('top-right')"
+            [style.font-family]="getInsetFontFamily('top-right')"
+            [style.font-size.px]="getEffectiveInsetFontSize('top-right')"
+            [style.color]="getEffectiveInsetTextColor('top-right')"
             [attr.title]="
               isInsetLapCount('top-right')
                 ? ('RD_LAP_COLUMN_TOOLTIP' | translate)
@@ -329,9 +371,9 @@
                 : null
             "
             (click)="onInsetClick('center-left', $event)"
-            [style.font-family]="settings.insetFontFamily || null"
-            [style.font-size.px]="effectiveInsetFontSize"
-            [style.color]="effectiveInsetTextColor"
+            [style.font-family]="getInsetFontFamily('center-left')"
+            [style.font-size.px]="getEffectiveInsetFontSize('center-left')"
+            [style.color]="getEffectiveInsetTextColor('center-left')"
           >
             @if (isImageProperty(getInsetKey("center-left")!)) {
               <img
@@ -480,9 +522,9 @@
                 : null
             "
             (click)="onInsetClick('center-right', $event)"
-            [style.font-family]="settings.insetFontFamily || null"
-            [style.font-size.px]="effectiveInsetFontSize"
-            [style.color]="effectiveInsetTextColor"
+            [style.font-family]="getInsetFontFamily('center-right')"
+            [style.font-size.px]="getEffectiveInsetFontSize('center-right')"
+            [style.color]="getEffectiveInsetTextColor('center-right')"
           >
             @if (isImageProperty(getInsetKey("center-right")!)) {
               <img
@@ -508,6 +550,9 @@
           <div
             class="inset-cell bl"
             [class.clickable-lap-cell]="isInsetLapCount('bottom-left')"
+            [style.font-family]="getInsetFontFamily('bottom-left')"
+            [style.font-size.px]="getEffectiveInsetFontSize('bottom-left')"
+            [style.color]="getEffectiveInsetTextColor('bottom-left')"
             [attr.title]="
               isInsetLapCount('bottom-left')
                 ? ('RD_LAP_COLUMN_TOOLTIP' | translate)
@@ -530,6 +575,9 @@
           <div
             class="inset-cell bc"
             [class.clickable-lap-cell]="isInsetLapCount('bottom-center')"
+            [style.font-family]="getInsetFontFamily('bottom-center')"
+            [style.font-size.px]="getEffectiveInsetFontSize('bottom-center')"
+            [style.color]="getEffectiveInsetTextColor('bottom-center')"
             [attr.title]="
               isInsetLapCount('bottom-center')
                 ? ('RD_LAP_COLUMN_TOOLTIP' | translate)
@@ -552,6 +600,9 @@
           <div
             class="inset-cell br"
             [class.clickable-lap-cell]="isInsetLapCount('bottom-right')"
+            [style.font-family]="getInsetFontFamily('bottom-right')"
+            [style.font-size.px]="getEffectiveInsetFontSize('bottom-right')"
+            [style.color]="getEffectiveInsetTextColor('bottom-right')"
             [attr.title]="
               isInsetLapCount('bottom-right')
                 ? ('RD_LAP_COLUMN_TOOLTIP' | translate)

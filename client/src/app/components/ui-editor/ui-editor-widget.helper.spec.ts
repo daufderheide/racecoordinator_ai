@@ -117,6 +117,65 @@ describe("ui-editor-widget.helper", () => {
         computeWidgetDisplayName(widget, mockTranslationService, availableCols),
       ).toBe("Grid · Lane 1 · Best Lap Time");
     });
+
+    it("should append Inset name when selectedAnchor is specified on a lane-column widget", () => {
+      const widget = {
+        widgetType: "lane-column",
+        customSettings: {
+          gridId: "grid-1",
+          gridLane: 0,
+          columnKey: "lastLapTime",
+          insets: {
+            "top-left": "bestLapTime",
+            "bottom-right": "totalTime",
+          },
+        },
+      };
+      const availableCols = [
+        { key: "lastLapTime", label: "RD_LAST_LAP_TIME" },
+        { key: "bestLapTime", label: "RD_BEST_LAP_TIME" },
+      ];
+      mockTranslationService.translate = (key: string) => {
+        if (key === "RD_LAST_LAP_TIME") return "Last Lap";
+        if (key === "RD_BEST_LAP_TIME") return "Best Lap";
+        if (key === "UE_ANCHOR_top-left") return "Top Left";
+        if (key === "UE_ANCHOR_top-right") return "Top Right";
+        return key;
+      };
+
+      // With placed inset column found in availableColumns
+      expect(
+        computeWidgetDisplayName(
+          widget,
+          mockTranslationService,
+          availableCols,
+          undefined,
+          "top-left",
+        ),
+      ).toBe("Grid · Lane 1 · Last Lap · Inset (Top Left: Best Lap)");
+
+      // With empty inset slot
+      expect(
+        computeWidgetDisplayName(
+          widget,
+          mockTranslationService,
+          availableCols,
+          undefined,
+          "top-right",
+        ),
+      ).toBe("Grid · Lane 1 · Last Lap · Inset (Top Right)");
+
+      // Center-center anchor should not append Inset suffix
+      expect(
+        computeWidgetDisplayName(
+          widget,
+          mockTranslationService,
+          availableCols,
+          undefined,
+          "center-center",
+        ),
+      ).toBe("Grid · Lane 1 · Last Lap");
+    });
   });
   it("should find default widget id prioritizing lane-view", () => {
     const layout: LayoutConfig = {
@@ -639,6 +698,37 @@ describe("ui-editor-widget.helper", () => {
     handleWidgetSelection(comp, "w-grid-2");
     expect(comp.finishGridSession).toHaveBeenCalledWith(undefined);
     expect(comp.onEditGridTemplate).toHaveBeenCalledWith("grid-new", undefined);
+  });
+
+  it("should reset selectedAnchor when selecting a different widget in handleWidgetSelection", () => {
+    const { handleWidgetSelection } = require("./ui-editor-widget.helper");
+    const layout = { widgets: [{ id: "w-1", widgetType: "lane-column" }] };
+    const comp = {
+      selectedWidgetId: "w-0",
+      selectedAnchor: "top-left",
+      getLayout: jasmine.createSpy("getLayout").and.returnValue(layout),
+      cdr: { markForCheck: jasmine.createSpy("markForCheck") },
+    };
+
+    handleWidgetSelection(comp, "w-1");
+    expect(comp.selectedAnchor).toBeNull();
+    expect(comp.selectedWidgetId).toBe("w-1");
+  });
+
+  it("should handle handleAnchorSelection by selecting widget and setting anchor", () => {
+    const { handleAnchorSelection } = require("./ui-editor-widget.helper");
+    const layout = { widgets: [{ id: "w-1", widgetType: "lane-column" }] };
+    const comp = {
+      selectedWidgetId: "w-0",
+      selectedAnchor: null as string | null,
+      getLayout: jasmine.createSpy("getLayout").and.returnValue(layout),
+      cdr: { markForCheck: jasmine.createSpy("markForCheck") },
+    };
+
+    handleAnchorSelection(comp, { widgetId: "w-1", anchor: "top-right" });
+    expect(comp.selectedWidgetId).toBe("w-1");
+    expect(comp.selectedAnchor).toBe("top-right");
+    expect(comp.cdr.markForCheck).toHaveBeenCalled();
   });
 
   it("should automatically deactivate countdown preview in ensureWidgetSelectedHelper when non-countdown widget is selected", () => {

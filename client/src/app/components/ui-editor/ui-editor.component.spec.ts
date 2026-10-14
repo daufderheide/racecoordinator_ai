@@ -5166,6 +5166,28 @@ describe("UIEditorComponent", () => {
         expect(wInput.disabled).toBeTrue();
         expect(xInput.disabled).toBeTrue();
       });
+
+      it("should update selectedAnchor and selectedWidgetId on onAnchorSelected", () => {
+        component.selectedWidgetId = "other-widget";
+        component.selectedAnchor = null;
+
+        component.onAnchorSelected(
+          { widgetId: "w-lane-test", anchor: "top-left" },
+          testCustomUi,
+        );
+
+        expect(component.selectedWidgetId).toBe("w-lane-test");
+        expect(component.selectedAnchor as string | null).toBe("top-left");
+      });
+
+      it("should update selectedAnchor on onSelectedAnchorChange", () => {
+        component.selectedAnchor = null;
+        component.onSelectedAnchorChange("bottom-right");
+        expect(component.selectedAnchor as string | null).toBe("bottom-right");
+
+        component.onSelectedAnchorChange(null);
+        expect(component.selectedAnchor).toBeNull();
+      });
     });
   });
 });

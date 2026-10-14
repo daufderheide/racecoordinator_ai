@@ -330,6 +330,33 @@ export class RacedayFormatUtils {
       settings.columnDecimals?.[colKey] ??
       settings.columnDecimals?.[baseKey];
 
+    if (isInset) {
+      const effDec =
+        settings.timeSubsecondDecimals !== undefined
+          ? Number(settings.timeSubsecondDecimals)
+          : insetDecimals !== undefined
+            ? insetDecimals
+            : settings.insetTimeDecimalPlaces !== undefined
+              ? Number(settings.insetTimeDecimalPlaces)
+              : settings.timeDecimalPlaces !== undefined
+                ? Number(settings.timeDecimalPlaces)
+                : 3;
+      return {
+        format: settings.timeDisplayFormat || colFormat || "dynamic",
+        subsecondMode:
+          settings.timeSubsecondMode ||
+          colSubMode ||
+          (effDec > 0 ? "always" : "never"),
+        subsecondThreshold:
+          settings.timeSubsecondThreshold !== undefined
+            ? Number(settings.timeSubsecondThreshold)
+            : colThresh !== undefined
+              ? Number(colThresh)
+              : 10,
+        subsecondDecimals: effDec,
+      };
+    }
+
     const hasTimerConfig =
       colFormat !== undefined ||
       colSubMode !== undefined ||
@@ -342,23 +369,6 @@ export class RacedayFormatUtils {
 
     if (!hasTimerConfig) {
       return undefined;
-    }
-
-    if (isInset) {
-      const effDec =
-        insetDecimals !== undefined
-          ? insetDecimals
-          : settings.insetTimeDecimalPlaces !== undefined
-            ? Number(settings.insetTimeDecimalPlaces)
-            : settings.timeDecimalPlaces !== undefined
-              ? Number(settings.timeDecimalPlaces)
-              : 3;
-      return {
-        format: colFormat || settings.timeDisplayFormat || "dynamic",
-        subsecondMode: effDec > 0 ? "always" : "never",
-        subsecondThreshold: colThresh !== undefined ? Number(colThresh) : 10,
-        subsecondDecimals: effDec,
-      };
     }
 
     if (
@@ -599,7 +609,7 @@ export class RacedayFormatUtils {
     if (!propertyName) return "";
     const baseKey = propertyName.split("_")[0];
 
-    const isInset = anchor ? !anchor.startsWith("center-") : false;
+    const isInset = Boolean(anchor && anchor !== "center-center");
 
     const colKey = column?.propertyName || baseKey;
     const customColDecimals =

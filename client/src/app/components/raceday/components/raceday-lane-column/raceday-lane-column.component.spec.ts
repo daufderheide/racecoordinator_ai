@@ -1155,6 +1155,191 @@ describe("RacedayLaneColumnComponent", () => {
       expect(mockParent.columnsChanged.emit).toHaveBeenCalled();
     });
 
+    it("should clean up insetsConfig and notify anchorSelected when deleted anchor was selected", () => {
+      mockParent.isUIEditorMode = () => true;
+      mockParent.columnsChanged = { emit: jasmine.createSpy("emit") };
+      mockParent.selectAnchor = jasmine.createSpy("selectAnchor");
+      fixture.componentRef.setInput("parent", mockParent);
+      const widget = createWidget({
+        columnKey: "lastLapTime",
+        insets: { "top-left": "driver.nickname" },
+        insetsConfig: {
+          "top-left": { timeDecimalPlaces: 2, fontSize: 16 },
+        },
+      });
+      fixture.componentRef.setInput("widget", widget);
+      fixture.componentRef.setInput("selectedAnchor", "top-left");
+      fixture.detectChanges();
+
+      const anchorSelectedSpy = spyOn(component.anchorSelected, "emit");
+      const mockClickEvent = {
+        stopPropagation: jasmine.createSpy("stopPropagation"),
+      } as any;
+
+      component.deleteAnchor("top-left", mockClickEvent);
+      expect(component.settings.insets?.["top-left"]).toBeUndefined();
+      expect(component.settings.insetsConfig?.["top-left"]).toBeUndefined();
+      expect(mockParent.selectAnchor).toHaveBeenCalledWith(widget.id, null);
+      expect(anchorSelectedSpy).toHaveBeenCalledWith({
+        widgetId: widget.id,
+        anchor: null,
+      });
+    });
+
+    it("should handle onAnchorClick and onCenterZoneClick in UI editor mode", () => {
+      mockParent.isUIEditorMode = () => true;
+      mockParent.selectAnchor = jasmine.createSpy("selectAnchor");
+      fixture.componentRef.setInput("parent", mockParent);
+      const widget = createWidget({
+        columnKey: "lastLapTime",
+        insets: { "top-right": "bestLapTime" },
+      });
+      fixture.componentRef.setInput("widget", widget);
+      fixture.detectChanges();
+
+      const anchorSelectedSpy = spyOn(component.anchorSelected, "emit");
+      const mockEvent = {
+        stopPropagation: jasmine.createSpy("stopPropagation"),
+      } as any;
+
+      component.onAnchorClick("top-right", mockEvent);
+      expect(mockEvent.stopPropagation).toHaveBeenCalled();
+      expect(mockParent.selectAnchor).toHaveBeenCalledWith(
+        widget.id,
+        "top-right",
+      );
+      expect(anchorSelectedSpy).toHaveBeenCalledWith({
+        widgetId: widget.id,
+        anchor: "top-right",
+      });
+
+      component.onCenterZoneClick(mockEvent);
+      expect(mockParent.selectAnchor).toHaveBeenCalledWith(widget.id, null);
+      expect(anchorSelectedSpy).toHaveBeenCalledWith({
+        widgetId: widget.id,
+        anchor: null,
+      });
+    });
+
+    it("should resolve per-anchor typography settings from insetsConfig", () => {
+      fixture.componentRef.setInput("parent", mockParent);
+      const widget = createWidget({
+        columnKey: "lastLapTime",
+        insetFontFamily: "DefaultFont",
+        insetFontSize: 18,
+        insetTextColor: "#ffffff",
+        useLaneColors: false,
+        insets: { "top-left": "bestLapTime" },
+        insetsConfig: {
+          "top-left": {
+            fontFamily: "CustomFont",
+            fontSize: 22,
+            textColor: "#38bdf8",
+          },
+        },
+      });
+      fixture.componentRef.setInput("widget", widget);
+      fixture.detectChanges();
+
+      expect(component.getInsetFontFamily("top-left")).toBe("CustomFont");
+      expect(component.getEffectiveInsetFontSize("top-left")).toBe(22);
+      expect(component.getEffectiveInsetTextColor("top-left")).toBe("#38bdf8");
+
+      // Fallback for anchor without custom insetsConfig
+      expect(component.getInsetFontFamily("bottom-right")).toBe("DefaultFont");
+      expect(component.getEffectiveInsetFontSize("bottom-right")).toBe(18);
+      expect(component.getEffectiveInsetTextColor("bottom-right")).toBe(
+        "#ffffff",
+      );
+    });
+
+    it("should apply insetsConfig options to insetSettings in getInsetValue", () => {
+      let capturedSettings: any;
+      mockParent.formatValue = (
+        _key: string,
+        _val: any,
+        _hd: any,
+        _colDef: any,
+        _anchor: string,
+        settings: any,
+      ) => {
+        capturedSettings = settings;
+        return "formatted-inset";
+      };
+      fixture.componentRef.setInput("parent", mockParent);
+      const widget = createWidget({
+        columnKey: "driver.nickname",
+        timeDecimalPlaces: 3,
+        lapDecimalPlaces: 1,
+        insets: { "top-right": "totalTime" },
+        insetsConfig: {
+          "top-right": {
+            timeDisplayFormat: "seconds",
+            timeSubsecondMode: "always",
+            timeSubsecondThreshold: 5,
+            timeSubsecondDecimals: 3,
+            timeDecimalPlaces: 2,
+            lapDecimalPlaces: 0,
+            decimalPlaces: 1,
+          },
+        },
+      });
+      fixture.componentRef.setInput("widget", widget);
+      fixture.detectChanges();
+
+      const val = component.getInsetValue("top-right");
+      expect(val).toBe("formatted-inset");
+      expect(capturedSettings).toBeDefined();
+      expect(capturedSettings.timeDisplayFormat).toBe("seconds");
+      expect(capturedSettings.timeSubsecondMode).toBe("always");
+      expect(capturedSettings.timeSubsecondThreshold).toBe(5);
+      expect(capturedSettings.timeSubsecondDecimals).toBe(3);
+      expect(capturedSettings.timeDecimalPlaces).toBe(2);
+      expect(capturedSettings.lapDecimalPlaces).toBe(0);
+      expect(capturedSettings.columnDecimals?.["totalTime"]).toBe(1);
+    });
+
+    it("should not inherit center-center widget settings in getInsetValue when inset has no custom config", () => {
+      let capturedSettings: any;
+      mockParent.formatValue = (
+        _key: string,
+        _val: any,
+        _hd: any,
+        _colDef: any,
+        _anchor: string,
+        settings: any,
+      ) => {
+        capturedSettings = settings;
+        return "formatted-inset";
+      };
+      fixture.componentRef.setInput("parent", mockParent);
+      const widget = createWidget({
+        columnKey: "driver.nickname",
+        timeDisplayFormat: "seconds",
+        timeSubsecondMode: "always",
+        timeSubsecondThreshold: 99,
+        timeSubsecondDecimals: 1,
+        timeDecimalPlaces: 1,
+        lapDecimalPlaces: 0,
+        columnDecimals: { totalTime: 0 },
+        insets: { "top-left": "totalTime" },
+        insetsConfig: {},
+      });
+      fixture.componentRef.setInput("widget", widget);
+      fixture.detectChanges();
+
+      const val = component.getInsetValue("top-left");
+      expect(val).toBe("formatted-inset");
+      expect(capturedSettings).toBeDefined();
+      expect(capturedSettings.timeDisplayFormat).toBe("dynamic");
+      expect(capturedSettings.timeSubsecondMode).toBe("never");
+      expect(capturedSettings.timeSubsecondThreshold).toBe(10);
+      expect(capturedSettings.timeSubsecondDecimals).toBe(2);
+      expect(capturedSettings.timeDecimalPlaces).toBe(3);
+      expect(capturedSettings.lapDecimalPlaces).toBe(2);
+      expect(capturedSettings.columnDecimals).toEqual({});
+    });
+
     it("should adjust fitText headroom when insets are present", () => {
       fixture.componentRef.setInput("parent", mockParent);
       fixture.componentRef.setInput(
@@ -1242,12 +1427,10 @@ describe("RacedayLaneColumnComponent", () => {
         // Now it should remain large and legible (>= 25px).
         expect(numSize).toBeGreaterThanOrEqual(25);
 
-        // Right padding should be applied to prevent text overlapping corner insets
-        const rightPad = cardEl.style.getPropertyValue("--lane-col-pad-right");
-        expect(rightPad).not.toBe("0px");
-        expect(parseInt(rightPad, 10)).toBeGreaterThan(0);
-
-        // Top, bottom, and left paddings should remain 0px
+        // Paddings should remain 0px so configuring insets does not push center text or shrink its font
+        expect(cardEl.style.getPropertyValue("--lane-col-pad-right")).toBe(
+          "0px",
+        );
         expect(cardEl.style.getPropertyValue("--lane-col-pad-left")).toBe(
           "0px",
         );
@@ -1258,7 +1441,7 @@ describe("RacedayLaneColumnComponent", () => {
       }
     });
 
-    it("should apply top headroom and padding only when top-center inset is present", () => {
+    it("should preserve center/center styling and paddings when top-center inset is present", () => {
       fixture.componentRef.setInput("parent", mockParent);
       fixture.componentRef.setInput(
         "widget",
@@ -1290,9 +1473,16 @@ describe("RacedayLaneColumnComponent", () => {
       component.fitContent();
 
       if (cardEl) {
-        const topPad = cardEl.style.getPropertyValue("--lane-col-pad-top");
-        expect(topPad).not.toBe("0px");
-        expect(parseInt(topPad, 10)).toBeGreaterThan(0);
+        expect(cardEl.style.getPropertyValue("--lane-col-pad-top")).toBe("0px");
+        expect(cardEl.style.getPropertyValue("--lane-col-pad-bottom")).toBe(
+          "0px",
+        );
+        expect(cardEl.style.getPropertyValue("--lane-col-pad-left")).toBe(
+          "0px",
+        );
+        expect(cardEl.style.getPropertyValue("--lane-col-pad-right")).toBe(
+          "0px",
+        );
       }
     });
 

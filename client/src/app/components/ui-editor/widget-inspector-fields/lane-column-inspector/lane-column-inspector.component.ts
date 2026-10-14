@@ -1,5 +1,12 @@
 import { CommonModule } from "@angular/common";
-import { Component, inject, input, output, signal } from "@angular/core";
+import {
+  Component,
+  effect,
+  inject,
+  input,
+  output,
+  signal,
+} from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { LaneReplicationOptions } from "@app/components/raceday/utils/lane-replication.helper";
 import { RacedayLayoutUtils } from "@app/components/raceday/utils/raceday-layout.utils";
@@ -9,12 +16,16 @@ import {
 } from "@app/components/shared/custom-select/custom-select.component";
 import { CustomWidgetInspectorComponent } from "@app/components/ui-editor/widget-inspector-fields/custom-widget-inspector/custom-widget-inspector.component";
 import { CustomWidgetDefinition } from "@app/models/custom-widget.model";
-import { AbsoluteWidgetNode } from "@app/models/settings";
+import { AbsoluteWidgetNode, InsetConfig } from "@app/models/settings";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { CustomWidgetService } from "@app/services/custom-widget.service";
 import { FontService } from "@app/services/font.service";
 import { TranslationService } from "@app/services/translation.service";
-import { formatTimerDisplay } from "@app/utils/timer-format.utils";
+import {
+  formatTimerDisplay,
+  TimerDisplayFormat,
+  TimerSubsecondMode,
+} from "@app/utils/timer-format.utils";
 
 @Component({
   standalone: true,
@@ -39,6 +50,8 @@ export class LaneColumnInspectorComponent {
   availableColumns = input<{ key: string; label: string }[]>([]);
   disableFontSizes = input<boolean>(false);
   totalLanes = input<number>(4);
+  selectedAnchor = input<string | null>(null);
+  anchorChange = output<string | null>();
 
   change = output<void>();
   requestReplicate = output<void>();
@@ -54,7 +67,18 @@ export class LaneColumnInspectorComponent {
   translationService = inject(TranslationService);
   customWidgetService = inject(CustomWidgetService, { optional: true });
   showReplicateModal = signal<boolean>(false);
-  activeScope = signal<"grid" | "column" | "cell">("grid");
+  activeScope = signal<"grid" | "column" | "cell" | "inset">("grid");
+
+  constructor() {
+    effect(() => {
+      const anchor = this.selectedAnchor();
+      if (anchor && anchor !== "center-center") {
+        this.activeScope.set("inset");
+      } else if (anchor === null && this.activeScope() === "inset") {
+        this.activeScope.set("column");
+      }
+    });
+  }
 
   get isCustomWidget(): boolean {
     return this.widget()?.widgetType?.startsWith("custom:") ?? false;
@@ -75,8 +99,269 @@ export class LaneColumnInspectorComponent {
     );
   }
 
-  setScope(scope: "grid" | "column" | "cell"): void {
+  setScope(scope: "grid" | "column" | "cell" | "inset"): void {
+    if (scope === "inset") {
+      const anchor = this.effectiveSelectedAnchor;
+      this.anchorChange.emit(anchor);
+    } else if (this.activeScope() === "inset") {
+      this.anchorChange.emit(null);
+    }
     this.activeScope.set(scope);
+  }
+
+  get effectiveSelectedAnchor(): string {
+    const sel = this.selectedAnchor();
+    if (sel && sel !== "center-center") {
+      return sel;
+    }
+    const placed = this.placedInsetAnchors;
+    if (placed.length > 0) {
+      return placed[0];
+    }
+    return "top-right";
+  }
+
+  get placedInsetAnchors(): string[] {
+    const insets = this.currentSettings["insets"] || {};
+    return Object.keys(insets).filter(
+      (k) => k !== "center-center" && Boolean(insets[k]),
+    );
+  }
+
+  get insetBreadcrumbLabel(): string {
+    const anchor = this.effectiveSelectedAnchor;
+    const pos = this.ANCHOR_POSITIONS.find((p) => p.key === anchor);
+    const posLabel = pos
+      ? this.translationService.translate(pos.labelKey)
+      : anchor;
+    const colKey = this.getAnchorValue(anchor);
+    if (!colKey) return `Inset (${posLabel})`;
+    const colDef = this.availableColumns().find((c) => c.key === colKey);
+    const colName = colDef
+      ? this.translationService.translate(colDef.label)
+      : colKey;
+    return `Inset: ${colName}`;
+  }
+
+  selectInsetAnchor(anchor: string): void {
+    this.anchorChange.emit(anchor);
+    this.activeScope.set("inset");
+  }
+
+  configureInset(anchor: string): void {
+    this.anchorChange.emit(anchor);
+    this.activeScope.set("inset");
+  }
+
+  backToColumn(): void {
+    this.anchorChange.emit(null);
+    this.activeScope.set("column");
+  }
+
+  removeInset(anchor: string): void {
+    this.setAnchorValue(anchor, "");
+    if (this.currentSettings["insetsConfig"]?.[anchor]) {
+      delete this.currentSettings["insetsConfig"][anchor];
+    }
+    this.onFieldChange();
+    this.backToColumn();
+  }
+
+  getInsetConfig(anchor: string): InsetConfig {
+    if (!this.currentSettings["insetsConfig"]) {
+      this.currentSettings["insetsConfig"] = {};
+    }
+    if (!this.currentSettings["insetsConfig"][anchor]) {
+      this.currentSettings["insetsConfig"][anchor] = {};
+    }
+    return this.currentSettings["insetsConfig"][anchor];
+  }
+
+  getInsetTimeDisplayFormat(anchor: string): string {
+    return this.getInsetConfig(anchor).timeDisplayFormat || "dynamic";
+  }
+
+  setInsetTimeDisplayFormat(anchor: string, val: string): void {
+    this.getInsetConfig(anchor).timeDisplayFormat = val as TimerDisplayFormat;
+    this.onFieldChange();
+  }
+
+  getInsetTimeSubsecondMode(anchor: string): string {
+    return this.getInsetConfig(anchor).timeSubsecondMode || "never";
+  }
+
+  setInsetTimeSubsecondMode(anchor: string, val: string): void {
+    this.getInsetConfig(anchor).timeSubsecondMode = val as TimerSubsecondMode;
+    this.onFieldChange();
+  }
+
+  getInsetTimeSubsecondThreshold(anchor: string): number {
+    return this.getInsetConfig(anchor).timeSubsecondThreshold ?? 10;
+  }
+
+  setInsetTimeSubsecondThreshold(anchor: string, val: number): void {
+    this.getInsetConfig(anchor).timeSubsecondThreshold = Math.max(
+      0,
+      Number(val) || 0,
+    );
+    this.onFieldChange();
+  }
+
+  getInsetTimeSubsecondDecimals(anchor: string): number {
+    return this.getInsetConfig(anchor).timeSubsecondDecimals ?? 2;
+  }
+
+  setInsetTimeSubsecondDecimals(anchor: string, val: number): void {
+    this.getInsetConfig(anchor).timeSubsecondDecimals = Math.min(
+      3,
+      Math.max(0, Number(val) || 0),
+    );
+    this.onFieldChange();
+  }
+
+  getInsetTimeDecimalPlaces(anchor: string): number {
+    return this.getInsetConfig(anchor).timeDecimalPlaces ?? 3;
+  }
+
+  setInsetTimeDecimalPlaces(anchor: string, val: number): void {
+    this.getInsetConfig(anchor).timeDecimalPlaces = Math.min(
+      3,
+      Math.max(0, Number(val) || 0),
+    );
+    this.onFieldChange();
+  }
+
+  getInsetLapDecimalPlaces(anchor: string): number {
+    return this.getInsetConfig(anchor).lapDecimalPlaces ?? 2;
+  }
+
+  setInsetLapDecimalPlaces(anchor: string, val: number): void {
+    this.getInsetConfig(anchor).lapDecimalPlaces = Math.min(
+      3,
+      Math.max(0, Number(val) || 0),
+    );
+    this.onFieldChange();
+  }
+
+  getInsetDecimalPlaces(anchor: string): number {
+    return this.getInsetConfig(anchor).decimalPlaces ?? 2;
+  }
+
+  setInsetDecimalPlaces(anchor: string, val: number): void {
+    this.getInsetConfig(anchor).decimalPlaces = Math.min(
+      3,
+      Math.max(0, Number(val) || 0),
+    );
+    this.onFieldChange();
+  }
+
+  getInsetFontFamily(anchor: string): string {
+    return (
+      this.getInsetConfig(anchor).fontFamily ||
+      this.currentSettings["insetFontFamily"] ||
+      ""
+    );
+  }
+
+  setInsetFontFamily(anchor: string, val: string): void {
+    this.getInsetConfig(anchor).fontFamily = val;
+    this.onFieldChange();
+  }
+
+  getInsetFontSize(anchor: string): number {
+    return (
+      this.getInsetConfig(anchor).fontSize ??
+      this.currentSettings["insetFontSize"] ??
+      18
+    );
+  }
+
+  setInsetFontSize(anchor: string, val: number): void {
+    this.getInsetConfig(anchor).fontSize = Math.min(
+      36,
+      Math.max(8, Number(val) || 18),
+    );
+    this.onFieldChange();
+  }
+
+  getInsetTextColor(anchor: string): string {
+    return (
+      this.getInsetConfig(anchor).textColor ||
+      this.currentSettings["insetTextColor"] ||
+      "#ffffff"
+    );
+  }
+
+  setInsetTextColor(anchor: string, val: string): void {
+    this.getInsetConfig(anchor).textColor = val;
+    this.onFieldChange();
+  }
+
+  hasCustomInsetTextColor(anchor: string): boolean {
+    return Boolean(this.currentSettings["insetsConfig"]?.[anchor]?.textColor);
+  }
+
+  resetInsetCustomColor(anchor: string): void {
+    if (this.currentSettings["insetsConfig"]?.[anchor]) {
+      delete this.currentSettings["insetsConfig"][anchor].textColor;
+    }
+    this.onFieldChange();
+  }
+
+  getInsetPreview(anchor: string, seconds: number): string {
+    const cfg = this.getInsetConfig(anchor);
+    return formatTimerDisplay(seconds, {
+      format: cfg.timeDisplayFormat || "dynamic",
+      subsecondMode: cfg.timeSubsecondMode || "never",
+      subsecondThreshold: cfg.timeSubsecondThreshold ?? 10,
+      subsecondDecimals: cfg.timeSubsecondDecimals ?? 2,
+    });
+  }
+
+  isInsetTotalTime(anchor: string): boolean {
+    const key = this.getAnchorValue(anchor);
+    if (!key) return false;
+    const baseKey = key.split("_")[0];
+    return baseKey === "totalTime" || baseKey === "overallTotalTime";
+  }
+
+  isInsetTimeColumn(anchor: string): boolean {
+    const key = this.getAnchorValue(anchor);
+    if (!key) return false;
+    return (
+      RacedayLayoutUtils.isTimeColumnKey(key) && !this.isInsetTotalTime(anchor)
+    );
+  }
+
+  isInsetLapColumn(anchor: string): boolean {
+    const key = this.getAnchorValue(anchor);
+    if (!key) return false;
+    return RacedayLayoutUtils.isLapColumnKey(key);
+  }
+
+  isInsetNumericColumn(anchor: string): boolean {
+    const key = this.getAnchorValue(anchor);
+    if (!key) return false;
+    if (
+      this.isInsetTotalTime(anchor) ||
+      this.isInsetTimeColumn(anchor) ||
+      this.isInsetLapColumn(anchor)
+    ) {
+      return false;
+    }
+    return [
+      "points",
+      "overallPoints",
+      "trackCalls",
+      "overallTrackCalls",
+      "lapsLed",
+      "overallLapsLed",
+      "speed",
+      "topSpeed",
+      "averageSpeed",
+      "physicalLapCount",
+      "overallPhysicalLapCount",
+    ].includes(key.split("_")[0]);
   }
 
   get isMasterCell(): boolean {
@@ -316,6 +601,9 @@ export class LaneColumnInspectorComponent {
     }
     if (!val) {
       delete this.currentSettings["insets"][anchor];
+      if (this.currentSettings["insetsConfig"]?.[anchor]) {
+        delete this.currentSettings["insetsConfig"][anchor];
+      }
     } else {
       this.currentSettings["insets"][anchor] = val;
     }
