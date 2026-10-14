@@ -26,6 +26,7 @@
 .widget-wrapper.countdown-widget {
   background: transparent !important;
   background-color: transparent !important;
+  z-index: 100000 !important;
 }
 
 @media print {
@@ -168,7 +169,17 @@
 .widget-wrapper:has(.custom-select-container.open),
 .widget-content:has(.custom-select-container.open) {
   overflow: visible !important;
-  z-index: 1000 !important;
+}
+
+.widget-wrapper:has(app-custom-select.open),
+.widget-content:has(app-custom-select.open),
+.widget-wrapper:has(.custom-select-container.open),
+.widget-content:has(.custom-select-container.open) {
+  z-index: 9999 !important;
+}
+
+.widget-wrapper:has(app-raceday-menu-bar):not(.edit-mode) {
+  z-index: 99999 !important;
 }
 
 /* Selected state outline */

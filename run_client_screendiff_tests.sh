@@ -58,6 +58,25 @@ cd "$CLIENT_DIR" || exit
 
 # Ensure isolated directory exists and is prepared
 ISOLATED_DIR="${CLIENT_DIR}/.isolated-test"
+
+# Auto-prune Angular compilation cache if it exceeds 10 GB limit (10240 MB)
+prune_angular_cache_if_oversized() {
+  local target_dir="$1"
+  local max_mb="${2:-10240}"
+  local cache_dir="$target_dir/.angular/cache"
+  if [ -d "$cache_dir" ]; then
+    local size_mb
+    size_mb=$(du -sm "$cache_dir" 2>/dev/null | cut -f1)
+    if [ -n "$size_mb" ] && [ "$size_mb" -gt "$max_mb" ] 2>/dev/null; then
+      echo "🧹 Angular compilation cache at $cache_dir ($size_mb MB) exceeds 10 GB ceiling. Pruning..."
+      rm -rf "$cache_dir"
+    fi
+  fi
+}
+
+prune_angular_cache_if_oversized "$CLIENT_DIR" 10240
+prune_angular_cache_if_oversized "$ISOLATED_DIR" 10240
+
 mkdir -p "$ISOLATED_DIR"
 
 # Sync current source and configuration to isolated directory

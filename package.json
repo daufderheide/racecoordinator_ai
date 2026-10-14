@@ -25,7 +25,9 @@
     "test:client": "node -e \"try { process.platform === 'win32' ? require('child_process').execSync('pwsh -File ./run_client_unit_tests.ps1', {stdio: 'inherit'}) : require('child_process').execSync('./run_client_unit_tests.sh', {stdio: 'inherit'}) } catch (e) { process.exit(1); }\"",
     "test:visual": "node -e \"try { process.platform === 'win32' ? require('child_process').execSync('pwsh -File ./run_client_screendiff_tests.ps1', {stdio: 'inherit'}) : require('child_process').execSync('./run_client_screendiff_tests.sh', {stdio: 'inherit'}) } catch (e) { process.exit(1); }\"",
     "test:server": "node -e \"try { process.platform === 'win32' ? require('child_process').execSync('pwsh -File ./run_server_tests.ps1', {stdio: 'inherit'}) : require('child_process').execSync('./run_server_tests.sh', {stdio: 'inherit'}) } catch (e) { process.exit(1); }\"",
-    "kill:playwright": "node -e \"process.platform === 'win32' ? require('child_process').execSync('pwsh -File ./kill_playwright.ps1', {stdio: 'inherit'}) : require('child_process').execSync('./kill_playwright.sh', {stdio: 'inherit'})\""
+    "kill:playwright": "node -e \"process.platform === 'win32' ? require('child_process').execSync('pwsh -File ./kill_playwright.ps1', {stdio: 'inherit'}) : require('child_process').execSync('./kill_playwright.sh', {stdio: 'inherit'})\"",
+    "clean:cache": "node scripts/clean_cache.js",
+    "clean:all": "node scripts/clean_cache.js --all"
   },
   "lint-staged": {
     "client/**/*.{ts,tsx,js,jsx,html}": [

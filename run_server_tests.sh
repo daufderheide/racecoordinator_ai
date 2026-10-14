@@ -15,12 +15,14 @@ export PROTO_DEST_DIR="$SERVER_BUILD_DIR"
 export npm_config_cache="$SERVER_TMP/npm_cache"
 
 if [ "$1" = "--clean" ] || [ "$1" = "-c" ]; then
-  echo "🧹 Cleaning test build directory: $SERVER_BUILD_DIR"
-  rm -rf "$SERVER_BUILD_DIR"
+  echo "🧹 Cleaning test build directory: $SERVER_TMP"
+  rm -rf "$SERVER_TMP"
   shift
 fi
 
 mkdir -p "$SERVER_TMP"
+# Prune leftover test databases and temp directories from prior runs to keep target_tmp small
+rm -rf "$SERVER_TMP"/*_test_* "$SERVER_TMP"/testDB_* "$SERVER_TMP"/export_save_* 2>/dev/null || true
 # Pre-create all directories maven needs to avoid EPERM errors
 mkdir -p "$SERVER_BUILD_DIR/generated-sources/protobuf/java"
 mkdir -p "$SERVER_BUILD_DIR/classes"

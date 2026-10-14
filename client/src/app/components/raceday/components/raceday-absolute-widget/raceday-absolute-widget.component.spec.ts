@@ -413,7 +413,7 @@ describe("RacedayAbsoluteWidgetComponent", () => {
     expect(wrapper.style.zIndex).toBe("120");
   });
 
-  it("should always apply top zIndex (>= 10000) for countdown widget in both customizing and live modes", () => {
+  it("should always apply top zIndex (>= 100000) for countdown widget in both customizing and live modes", () => {
     mockWidget.widgetType = "countdown";
     mockWidget.zIndex = 105;
     fixture.componentRef.setInput("widget", { ...mockWidget });
@@ -421,11 +421,48 @@ describe("RacedayAbsoluteWidgetComponent", () => {
     fixture.detectChanges();
 
     const wrapper = fixture.nativeElement.querySelector(".widget-wrapper");
-    expect(parseInt(wrapper.style.zIndex, 10)).toBeGreaterThanOrEqual(10000);
+    expect(parseInt(wrapper.style.zIndex, 10)).toBeGreaterThanOrEqual(100000);
 
     fixture.componentRef.setInput("isCustomizing", false);
     fixture.detectChanges();
-    expect(parseInt(wrapper.style.zIndex, 10)).toBeGreaterThanOrEqual(10000);
+    expect(parseInt(wrapper.style.zIndex, 10)).toBeGreaterThanOrEqual(100000);
+  });
+
+  it("should ensure countdown widget has strictly higher zIndex than menu-bar in live mode", () => {
+    mockWidget.widgetType = "menu-bar";
+    mockWidget.zIndex = 100;
+    fixture.componentRef.setInput("widget", { ...mockWidget });
+    fixture.componentRef.setInput("isCustomizing", false);
+    fixture.detectChanges();
+    const menuZ = component.computedZIndex;
+
+    mockWidget.widgetType = "countdown";
+    mockWidget.zIndex = 100;
+    fixture.componentRef.setInput("widget", { ...mockWidget });
+    fixture.detectChanges();
+    const countdownZ = component.computedZIndex;
+
+    expect(menuZ).toBe(99999);
+    expect(countdownZ).toBeGreaterThan(menuZ);
+  });
+
+  it("should compute stylesheet z-index of 99999 for menu-bar and 100000 for countdown in DOM", () => {
+    mockWidget.widgetType = "menu-bar";
+    mockWidget.zIndex = 100;
+    fixture.componentRef.setInput("widget", { ...mockWidget });
+    fixture.componentRef.setInput("isCustomizing", false);
+    fixture.detectChanges();
+
+    const menuWrapper = fixture.nativeElement.querySelector(".widget-wrapper");
+    expect(window.getComputedStyle(menuWrapper).zIndex).toBe("99999");
+
+    mockWidget.widgetType = "countdown";
+    fixture.componentRef.setInput("widget", { ...mockWidget });
+    fixture.detectChanges();
+
+    const countdownWrapper =
+      fixture.nativeElement.querySelector(".widget-wrapper");
+    expect(window.getComputedStyle(countdownWrapper).zIndex).toBe("100000");
   });
 
   it("should render next-heat widget with custom settings in fixed scale mode", () => {

@@ -169,11 +169,11 @@ export class RacedayAbsoluteWidgetComponent
 
   get computedZIndex(): number {
     const w = this.widget();
+    if (w.widgetType === "countdown") {
+      return Math.max(100000, (w.zIndex || 2000) + 100000);
+    }
     if (!this.isCustomizing() && w.widgetType === "menu-bar") {
       return 99999;
-    }
-    if (w.widgetType === "countdown") {
-      return Math.max(10000, (w.zIndex || 2000) + 10000);
     }
     return w.zIndex || 100;
   }
