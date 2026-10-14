@@ -19,13 +19,16 @@ mkdir -p "$(dirname "$ISOLATED_DIR")/server"
 if command -v rsync &>/dev/null; then
   rsync -a --delete src/ "$ISOLATED_DIR/src/"
   rsync -a --delete "$PROJECT_ROOT/server/proto/" "$(dirname "$ISOLATED_DIR")/server/proto/"
+  rsync -a --delete "$PROJECT_ROOT/custom_widgets/" "$(dirname "$ISOLATED_DIR")/custom_widgets/"
   rsync -a karma.conf.js package.json angular.json tsconfig.json tsconfig.app.json tsconfig.spec.json package-lock.json "$ISOLATED_DIR/"
 else
   rm -rf "$ISOLATED_DIR/src"
   rm -rf "$(dirname "$ISOLATED_DIR")/server/proto"
+  rm -rf "$(dirname "$ISOLATED_DIR")/custom_widgets"
   cp -Rf src "$ISOLATED_DIR/"
   mkdir -p "$(dirname "$ISOLATED_DIR")/server"
   cp -Rf "$PROJECT_ROOT/server/proto" "$(dirname "$ISOLATED_DIR")/server/"
+  cp -Rf "$PROJECT_ROOT/custom_widgets" "$(dirname "$ISOLATED_DIR")/"
   cp -f karma.conf.js package.json angular.json tsconfig.json tsconfig.app.json tsconfig.spec.json package-lock.json "$ISOLATED_DIR/"
 fi
 

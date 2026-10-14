@@ -7932,7 +7932,7 @@ describe("DefaultRacedayComponent", () => {
       };
       expect(component.formatValue("lapCount", 0.25, hdUserLaps)).toBe("0.25");
 
-      // 5. Automatic lap adjustment
+      // 5. Automatic lap adjustment (at heat finish)
       const hdAutoLaps: any = {
         reactionTime: 0,
         lapTimes: [],
@@ -7940,6 +7940,7 @@ describe("DefaultRacedayComponent", () => {
         autoCalculatedLaps: 1,
         penaltyLaps: 0,
         adjustedLapCount: 0,
+        isFinished: true,
       };
       expect(component.formatValue("lapCount", 1, hdAutoLaps)).toBe("1.00");
 
@@ -8003,6 +8004,41 @@ describe("DefaultRacedayComponent", () => {
         lapTimes: [10.2],
       };
       expect(component.formatValue("physicalLapCount", 1, hdEmpty)).toBe("--");
+    });
+
+    it("should exclude on-pause auto-segments in lapCount and overallLapCount when PAUSED", () => {
+      component["raceState"] = RaceState.PAUSED;
+      const hd: any = {
+        actualDriver: { name: "Test Driver", entity_id: "driver-1" },
+        reactionTime: 1.0,
+        lapTimes: [10.5],
+        autoCalculatedLaps: 0.35,
+        userLaps: 0,
+        penaltyLaps: 0,
+        participant: { totalTime: 120.0, totalLaps: 25.35 },
+      };
+
+      expect(component.formatValue("lapCount", 10.35, hd)).toBe("10.00");
+      expect(component.formatValue("overallLapCount", 25.35, hd)).toBe("25.00");
+    });
+
+    it("should include auto-segments in lapCount and overallLapCount when HEAT_OVER or RACE_OVER", () => {
+      component["raceState"] = RaceState.HEAT_OVER;
+      const hd: any = {
+        actualDriver: { name: "Test Driver", entity_id: "driver-1" },
+        reactionTime: 1.0,
+        lapTimes: [10.5],
+        autoCalculatedLaps: 0.35,
+        userLaps: 0,
+        penaltyLaps: 0,
+        participant: { totalTime: 120.0, totalLaps: 25.35 },
+      };
+
+      expect(component.formatValue("lapCount", 10.35, hd)).toBe("10.35");
+      expect(component.formatValue("overallLapCount", 25.35, hd)).toBe("25.35");
+
+      component["raceState"] = RaceState.RACE_OVER;
+      expect(component.formatValue("overallLapCount", 25.35, hd)).toBe("25.35");
     });
 
     it("should treat physicalLapCount column as clickable for add lap sections", () => {
@@ -9772,6 +9808,87 @@ describe("DefaultRacedayComponent", () => {
       const dropped = component.layout.widgets[0];
       expect(dropped.x).toBe(1920 - dropped.width);
       expect(dropped.y).toBe(1080 - dropped.height);
+    });
+
+    it("should replicate custom widget across lanes and create header when dropped into an active grid session", () => {
+      const scalableContent = document.createElement("div");
+      scalableContent.className = "scalable-content";
+      Object.defineProperty(scalableContent, "offsetWidth", { value: 1920 });
+      Object.defineProperty(scalableContent, "offsetHeight", { value: 1080 });
+      spyOn(scalableContent, "getBoundingClientRect").and.returnValue({
+        left: 0,
+        top: 0,
+        width: 1920,
+        height: 1080,
+      } as any);
+      (component as any).el.nativeElement.appendChild(scalableContent);
+
+      const session: any = {
+        gridId: "grid-test",
+        bounds: { x: 100, y: 100, width: 800, height: 400 },
+        totalLanes: 4,
+        direction: "vertical",
+        sourceLaneIndex: 0,
+        bindingMode: "lane",
+        headerPlacement: "top",
+        headerHeight: 36,
+      };
+      fixture.componentRef.setInput("gridSession", session);
+
+      const mockCustomDef: any = {
+        manifest: {
+          id: "advanced-laps",
+          name: "Advanced Laps",
+          defaultWidth: 200,
+          defaultHeight: 90,
+          defaultSettings: {
+            mode: "heat",
+            customLabel: "Heat Laps",
+            decimalPlaces: 0,
+          },
+        },
+      };
+      (component as any).customWidgetService = {
+        getWidgetDefinition: () => mockCustomDef,
+        getCustomWidgets: () => [],
+      };
+
+      component.isLayoutCustomizing = true;
+      component.draggedWidgetType = "custom:dopamine:advanced-laps";
+      component.layout = {
+        baseWidth: 1920,
+        baseHeight: 1080,
+        widgets: [],
+      } as any;
+
+      const event = {
+        preventDefault: jasmine.createSpy("preventDefault"),
+        clientX: 200,
+        clientY: 200,
+      } as any;
+      component.onCanvasDrop(event);
+
+      expect(component.layout.widgets.length).toBe(5); // Master + 3 mirrored + 1 top header
+      const master = component.layout.widgets.find(
+        (w: any) =>
+          w.customSettings?.["gridLane"] === 0 &&
+          !w.customSettings?.["isHeaderWidget"],
+      );
+      expect(master).toBeTruthy();
+      expect(master?.customSettings?.["customLabel"]).toBe("Heat Laps");
+      expect(master?.customSettings?.["gridId"]).toBe("grid-test");
+
+      const header = component.layout.widgets.find(
+        (w: any) => w.customSettings?.["isHeaderWidget"],
+      );
+      expect(header).toBeTruthy();
+      expect(header?.height).toBe(36);
+      expect(header?.customSettings?.["customLabel"]).toBe("Heat Laps");
+
+      const lanes = component.layout.widgets.filter(
+        (w: any) => !w.customSettings?.["isHeaderWidget"],
+      );
+      expect(lanes.length).toBe(4);
     });
   });
 

@@ -702,7 +702,7 @@ export class ToolboxGroupHelper {
     const customByGroup = new Map<string, CustomWidgetDefinition[]>();
     for (const cw of customWidgets) {
       const fullType = `custom:${cw.manifest.id}`;
-      if (usedWidgetTypes.has(fullType)) continue;
+      if (usedWidgetTypes.has(fullType) && !cw.manifest.allowMultiple) continue;
 
       const groupName = cw.group || ToolboxGroupHelper.CUSTOM_ROOT_GROUP_ID;
       if (!customByGroup.has(groupName)) {

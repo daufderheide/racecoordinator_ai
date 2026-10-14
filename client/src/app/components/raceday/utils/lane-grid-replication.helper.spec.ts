@@ -379,6 +379,34 @@ describe("LaneGridReplicationHelper", () => {
     expect(synced.length).toBe(8); // 2 master * 4 lanes
   });
 
+  it("should sync master custom widget without gridId positioned within master bounds", () => {
+    const masterBounds = LaneGridReplicationHelper.computeMasterBounds(
+      mockHorizontalSession,
+    );
+    const customWidget: AbsoluteWidgetNode = {
+      id: "cw-master",
+      widgetType: "custom:dopamine:advanced-laps",
+      x: masterBounds.x + 10,
+      y: masterBounds.y + 10,
+      width: 180,
+      height: 70,
+      zIndex: 100,
+      customSettings: {},
+    };
+
+    const synced = LaneGridReplicationHelper.syncAllMasterWidgetsToLanes(
+      mockHorizontalSession,
+      [customWidget],
+    );
+
+    expect(synced.length).toBe(4);
+    const master = synced.find((w) => w.id === "cw-master");
+    expect(master?.customSettings?.["gridId"]).toBe(
+      mockHorizontalSession.gridId,
+    );
+    expect(master?.customSettings?.["gridLane"]).toBe(0);
+  });
+
   it("should remove master widget and all its mirrored widgets", () => {
     const masterWidget: AbsoluteWidgetNode = {
       id: "w-1",

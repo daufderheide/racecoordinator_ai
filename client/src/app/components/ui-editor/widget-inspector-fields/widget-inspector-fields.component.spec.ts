@@ -212,4 +212,104 @@ describe("WidgetInspectorFieldsComponent", () => {
       fixture.nativeElement.querySelector("app-action-button-inspector"),
     ).toBeTruthy();
   });
+
+  it("should identify lane column widgets including custom widgets in grids", () => {
+    const standardCol: AbsoluteWidgetNode = {
+      id: "w-std",
+      widgetType: "lane-column",
+      x: 0,
+      y: 0,
+      width: 100,
+      height: 50,
+      zIndex: 1,
+    };
+    expect(component.isLaneColumnWidget(standardCol)).toBeTrue();
+
+    const customInGrid: AbsoluteWidgetNode = {
+      id: "w-custom-grid",
+      widgetType: "custom:advanced-laps",
+      x: 0,
+      y: 0,
+      width: 100,
+      height: 50,
+      zIndex: 1,
+      customSettings: { gridId: "grid-123" },
+    };
+    expect(component.isLaneColumnWidget(customInGrid)).toBeTrue();
+
+    const customWithLane: AbsoluteWidgetNode = {
+      id: "w-custom-lane",
+      widgetType: "custom:advanced-laps",
+      x: 0,
+      y: 0,
+      width: 100,
+      height: 50,
+      zIndex: 1,
+      customSettings: { gridLane: 0 },
+    };
+    expect(component.isLaneColumnWidget(customWithLane)).toBeTrue();
+
+    const standaloneCustom: AbsoluteWidgetNode = {
+      id: "w-custom-solo",
+      widgetType: "custom:banner",
+      x: 0,
+      y: 0,
+      width: 100,
+      height: 50,
+      zIndex: 1,
+      customSettings: {},
+    };
+    expect(component.isLaneColumnWidget(standaloneCustom)).toBeFalse();
+  });
+
+  it("should render lane-column-inspector when custom widget is in a grid", () => {
+    const customGridWidget: AbsoluteWidgetNode = {
+      id: "w-custom-grid",
+      widgetType: "custom:advanced-laps",
+      x: 0,
+      y: 0,
+      width: 200,
+      height: 90,
+      zIndex: 1,
+      customSettings: {
+        gridId: "grid-test",
+        gridLane: 0,
+        targetIndex: 0,
+        useLaneColors: true,
+      },
+    };
+    fixture.componentRef.setInput("widget", customGridWidget);
+    fixture.detectChanges();
+
+    expect(
+      fixture.nativeElement.querySelector("app-lane-column-inspector"),
+    ).toBeTruthy();
+    expect(
+      fixture.nativeElement.querySelector(
+        ":scope > app-custom-widget-inspector",
+      ),
+    ).toBeNull();
+  });
+
+  it("should render custom-widget-inspector when custom widget is not in a grid or lane", () => {
+    const customSoloWidget: AbsoluteWidgetNode = {
+      id: "w-custom-solo",
+      widgetType: "custom:banner",
+      x: 0,
+      y: 0,
+      width: 300,
+      height: 100,
+      zIndex: 1,
+      customSettings: {},
+    };
+    fixture.componentRef.setInput("widget", customSoloWidget);
+    fixture.detectChanges();
+
+    expect(
+      fixture.nativeElement.querySelector("app-custom-widget-inspector"),
+    ).toBeTruthy();
+    expect(
+      fixture.nativeElement.querySelector("app-lane-column-inspector"),
+    ).toBeNull();
+  });
 });

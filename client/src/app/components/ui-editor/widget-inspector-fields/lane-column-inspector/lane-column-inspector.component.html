@@ -973,24 +973,45 @@
 </ng-template>
 
 <ng-template #columnSettingsTemplate>
-  <!-- Column Selection -->
-  <div class="inspector-section">
-    <label class="inspector-label">{{
-      "UE_INSPECTOR_COLUMN" | translate
-    }}</label>
-    <div class="select-container select-sm">
-      <app-custom-select
-        [(ngModel)]="currentSettings['columnKey']"
-        (change)="onFieldChange()"
-      >
-        @for (col of availableColumns(); track col.key) {
-          <app-custom-option [value]="col.key">
-            {{ col.label | translate }}
-          </app-custom-option>
-        }
-      </app-custom-select>
+  @if (!isCustomWidget) {
+    <!-- Column Selection -->
+    <div class="inspector-section">
+      <label class="inspector-label">{{
+        "UE_INSPECTOR_COLUMN" | translate
+      }}</label>
+      <div class="select-container select-sm">
+        <app-custom-select
+          [(ngModel)]="currentSettings['columnKey']"
+          (change)="onFieldChange()"
+        >
+          @for (col of availableColumns(); track col.key) {
+            <app-custom-option [value]="col.key">
+              {{ col.label | translate }}
+            </app-custom-option>
+          }
+        </app-custom-select>
+      </div>
     </div>
-  </div>
+  } @else {
+    <!-- Custom Widget Identifier / Title -->
+    <div class="inspector-section">
+      <label class="inspector-label">{{
+        "UE_INSPECTOR_CUSTOM_WIDGET" | translate
+      }}</label>
+      <div class="custom-widget-badge">
+        <span class="material-icons custom-widget-icon">extension</span>
+        <span class="custom-widget-name">{{ customWidgetName }}</span>
+      </div>
+    </div>
+
+    <!-- Embedded Custom Widget Properties Inspector (Schema Settings) -->
+    <app-custom-widget-inspector
+      [widget]="widget()!"
+      (change)="onCustomWidgetChange($event)"
+    />
+
+    <hr class="inspector-divider" />
+  }
 
   @if (!currentSettings["gridId"]) {
     <!-- Layout Orientation -->

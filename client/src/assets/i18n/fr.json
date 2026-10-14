@@ -2244,6 +2244,7 @@
   "UE_INSPECTOR_COUNTDOWN_SIZING_FIT": "Ajuster à la taille",
   "UE_INSPECTOR_COUNTDOWN_SIZING_MODE": "Mode de mise à l'échelle des feux",
   "UE_INSPECTOR_CUSTOM_PROPERTIES": "Propriétés personnalisées",
+  "UE_INSPECTOR_CUSTOM_WIDGET": "Widget personnalisé",
   "UE_INSPECTOR_DECIMAL_PLACES": "Décimales",
   "UE_INSPECTOR_ONLY_SHOW_SEGMENTS_WHEN_NOT_RACING": "Afficher les décimales uniquement lorsqu'il n'y a pas de course",
   "UE_INSPECTOR_FONT_BOLD": "Gras",

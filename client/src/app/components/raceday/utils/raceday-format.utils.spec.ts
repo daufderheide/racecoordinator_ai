@@ -1,5 +1,5 @@
 import { AllowFinish } from "@app/models/heat_scoring";
-import { RaceFlag } from "@app/proto/antigravity";
+import { RaceFlag, RaceState } from "@app/proto/antigravity";
 
 import { DriverHeatData } from "../../../race/driver_heat_data";
 import { FormatContext, RacedayFormatUtils } from "./raceday-format.utils";
@@ -2039,6 +2039,175 @@ describe("RacedayFormatUtils", () => {
           ctx,
         ),
       ).toBe("320.456");
+    });
+  });
+
+  describe("RC AI lap widgets auto-segments on pause", () => {
+    it("should exclude on-pause auto-segments in heat lap widgets when race state is PAUSED", () => {
+      ctx.raceState = RaceState.PAUSED;
+      hd.reactionTime = 1.0;
+      hd.autoCalculatedLaps = 0.35;
+      hd.adjustedLapCount = 10.35;
+
+      expect(
+        RacedayFormatUtils.formatValue("lapCount", 10.35, hd, undefined, ctx),
+      ).toBe("10.00");
+
+      expect(
+        RacedayFormatUtils.formatValue(
+          "heatTotalLaps",
+          10.35,
+          hd,
+          undefined,
+          ctx,
+        ),
+      ).toBe("10.00");
+    });
+
+    it("should include auto-segments in heat lap widgets when race state is HEAT_OVER", () => {
+      ctx.raceState = RaceState.HEAT_OVER;
+      hd.reactionTime = 1.0;
+      hd.autoCalculatedLaps = 0.35;
+      hd.adjustedLapCount = 10.35;
+
+      expect(
+        RacedayFormatUtils.formatValue("lapCount", 10.35, hd, undefined, ctx),
+      ).toBe("10.35");
+
+      expect(
+        RacedayFormatUtils.formatValue(
+          "heatTotalLaps",
+          10.35,
+          hd,
+          undefined,
+          ctx,
+        ),
+      ).toBe("10.35");
+    });
+
+    it("should include auto-segments in heat lap widgets when race state is RACE_OVER", () => {
+      ctx.raceState = RaceState.RACE_OVER;
+      hd.reactionTime = 1.0;
+      hd.autoCalculatedLaps = 0.42;
+
+      expect(
+        RacedayFormatUtils.formatValue("lapCount", 25.42, hd, undefined, ctx),
+      ).toBe("25.42");
+    });
+
+    it("should include auto-segments when driver isFinished is true even if state is RACING", () => {
+      ctx.raceState = RaceState.RACING;
+      hd.reactionTime = 1.0;
+      hd.isFinished = true;
+      hd.autoCalculatedLaps = 0.5;
+
+      expect(
+        RacedayFormatUtils.formatValue("lapCount", 15.5, hd, undefined, ctx),
+      ).toBe("15.50");
+    });
+
+    it("should show adjusted lap values with userLaps and penaltyLaps without pause segments when PAUSED", () => {
+      ctx.raceState = RaceState.PAUSED;
+      hd.reactionTime = 1.0;
+      hd.userLaps = 1.0;
+      hd.penaltyLaps = 0.5;
+      hd.autoCalculatedLaps = 0.25;
+
+      // 10 physical - 0.5 penalty + 1.0 user + 0.25 auto = 10.75 raw value
+      // Without pause auto-segment: 10.75 - 0.25 = 10.50 adjust lap value
+      expect(
+        RacedayFormatUtils.formatValue("lapCount", 10.75, hd, undefined, ctx),
+      ).toBe("10.50");
+    });
+
+    it("should exclude current heat on-pause auto-segments in race lap widgets when PAUSED", () => {
+      ctx.raceState = RaceState.PAUSED;
+      hd.autoCalculatedLaps = 0.35;
+      const participant = { totalTime: 120.5 } as any;
+      (hd as any).participant = participant;
+
+      // Raw value from server overall standings includes current heat pause segments (e.g. 50.35)
+      expect(
+        RacedayFormatUtils.formatValue(
+          "overallLapCount",
+          50.35,
+          hd,
+          undefined,
+          ctx,
+        ),
+      ).toBe("50.00");
+
+      expect(
+        RacedayFormatUtils.formatValue("totalLaps", 50.35, hd, undefined, ctx),
+      ).toBe("50.00");
+
+      expect(
+        RacedayFormatUtils.formatValue(
+          "raceTotalLaps",
+          50.35,
+          hd,
+          undefined,
+          ctx,
+        ),
+      ).toBe("50.00");
+
+      expect(
+        RacedayFormatUtils.formatValue(
+          "overallTotalLaps",
+          50.35,
+          hd,
+          undefined,
+          ctx,
+        ),
+      ).toBe("50.00");
+    });
+
+    it("should include auto-segments in race lap widgets when heat is HEAT_OVER or RACE_OVER", () => {
+      ctx.raceState = RaceState.HEAT_OVER;
+      hd.autoCalculatedLaps = 0.35;
+      (hd as any).participant = { totalTime: 120.5 } as any;
+
+      expect(
+        RacedayFormatUtils.formatValue(
+          "overallLapCount",
+          50.35,
+          hd,
+          undefined,
+          ctx,
+        ),
+      ).toBe("50.35");
+
+      ctx.raceState = RaceState.RACE_OVER;
+      expect(
+        RacedayFormatUtils.formatValue(
+          "overallLapCount",
+          50.35,
+          hd,
+          undefined,
+          ctx,
+        ),
+      ).toBe("50.35");
+    });
+
+    it("should correctly handle one lap to go without pause auto-segments", () => {
+      ctx.raceState = RaceState.PAUSED;
+      ctx.getFlagUrl = (k: string) => "url-for-" + k;
+      ctx.getRace = () =>
+        ({
+          heatScoring: { finishMethod: "Lap", finishValue: 10 },
+        }) as any;
+      (hd as any).lapCount = 9.35;
+      hd.adjustedLapCount = 9.35;
+      hd.autoCalculatedLaps = 0.35;
+
+      const flag = RacedayFormatUtils.formatValue(
+        "flag",
+        RaceFlag.GREEN,
+        hd,
+        undefined,
+        ctx,
+      );
+      expect(flag).toBe(ctx.getFlagUrl("flag.one_lap_to_go"));
     });
   });
 });

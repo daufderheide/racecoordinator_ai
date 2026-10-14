@@ -19,6 +19,7 @@ import { Component, Injectable, Type } from "@angular/core";
 import { FormsModule, ReactiveFormsModule } from "@angular/forms";
 import { RouterLink, RouterModule } from "@angular/router";
 import { LoginDialogComponent } from "@app/components/login-dialog/login-dialog.component";
+import { RacedayFormatUtils } from "@app/components/raceday/utils/raceday-format.utils";
 import { AboutDialogComponent } from "@app/components/shared/about-dialog/about-dialog.component";
 import { AcknowledgementModalComponent } from "@app/components/shared/acknowledgement-modal/acknowledgement-modal.component";
 import { ConfirmationModalComponent } from "@app/components/shared/confirmation-modal/confirmation-modal.component";
@@ -26,8 +27,10 @@ import { DemoConfigModalComponent } from "@app/components/shared/demo-config-mod
 import { LanguageSelectorComponent } from "@app/components/shared/language-selector/language-selector.component";
 import { ToolbarComponent } from "@app/components/shared/toolbar/toolbar.component";
 import { UpdateSelectorComponent } from "@app/components/shared/update-selector/update-selector.component";
+import { Driver } from "@app/models/driver";
 import { AvatarUrlPipe } from "@app/pipes/avatar-url.pipe";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
+import { RaceState } from "@app/proto/antigravity";
 
 @Injectable({
   providedIn: "root",
@@ -156,9 +159,22 @@ export class DynamicComponentService {
         fnBody = `${jsCode}\nreturn ${className};`;
       }
 
-      const createClass = new Function("baseClass", "exports", fnBody);
+      const createClass = new Function(
+        "baseClass",
+        "exports",
+        "Driver",
+        "RaceState",
+        "RacedayFormatUtils",
+        fnBody,
+      );
       const exportsObj: Record<string, any> = {};
-      const UserComponent = createClass(baseClass, exportsObj);
+      const UserComponent = createClass(
+        baseClass,
+        exportsObj,
+        Driver,
+        RaceState,
+        RacedayFormatUtils,
+      );
       if (
         UserComponent &&
         (UserComponent.prototype instanceof baseClass ||

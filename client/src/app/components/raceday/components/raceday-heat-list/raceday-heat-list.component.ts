@@ -426,7 +426,7 @@ export class RacedayHeatListComponent implements AfterViewInit, OnDestroy {
           }
         }
 
-        lapCount = this.extractDriverLaps(hd);
+        lapCount = this.extractDriverLaps(hd, isCompleted);
         formattedLaps =
           lapDecSetting === "auto"
             ? lapCount % 1 !== 0
@@ -483,20 +483,25 @@ export class RacedayHeatListComponent implements AfterViewInit, OnDestroy {
     };
   }
 
-  private extractDriverLaps(hd: any): number {
+  private extractDriverLaps(hd: any, isCompleted = false): number {
+    let laps = 0;
     if (typeof hd.lapCount === "number") {
-      return hd.lapCount;
+      laps = hd.lapCount;
+    } else if (
+      typeof hd.adjustedLapCount === "number" &&
+      hd.adjustedLapCount !== 0
+    ) {
+      laps = hd.adjustedLapCount;
+    } else if (Array.isArray(hd.laps)) {
+      laps = hd.laps.length;
+    } else if (Array.isArray(hd.lapTimes)) {
+      laps = hd.lapTimes.length;
     }
-    if (typeof hd.adjustedLapCount === "number" && hd.adjustedLapCount !== 0) {
-      return hd.adjustedLapCount;
+    if (!isCompleted && !hd?.isFinished && (hd?.autoCalculatedLaps || 0) > 0) {
+      laps =
+        Math.round((laps - hd.autoCalculatedLaps + Number.EPSILON) * 1e6) / 1e6;
     }
-    if (Array.isArray(hd.laps)) {
-      return hd.laps.length;
-    }
-    if (Array.isArray(hd.lapTimes)) {
-      return hd.lapTimes.length;
-    }
-    return 0;
+    return laps;
   }
 
   private buildLanesFromLegacyLanes(

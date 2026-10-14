@@ -252,18 +252,19 @@ public class AppInstanceCoordinatorTest {
   }
 
   @Test
-  public void testHandleAlreadyRunningLayer3OpenBrowserWhenExistingStopped() {
+  public void testHandleAlreadyRunningLayer3OpenBrowserWhenExistingStopped() throws Exception {
+    int port = findFreePort();
     AtomicBoolean restarted = new AtomicBoolean(false);
     AtomicReference<String> launchedUrl = new AtomicReference<>();
     AtomicInteger exitCode = new AtomicInteger(-1);
 
     AppInstanceCoordinator.setStatusQuerier(
-        port -> new AppInstanceCoordinator.ServerStatus(true, "1.0.1", 1, false));
-    AppInstanceCoordinator.setPrompter(port -> AppInstanceCoordinator.ACTION_OPEN_BROWSER);
+        p -> new AppInstanceCoordinator.ServerStatus(true, "1.0.1", 1, false));
+    AppInstanceCoordinator.setPrompter(p -> AppInstanceCoordinator.ACTION_OPEN_BROWSER);
     AppInstanceCoordinator.setBrowserLauncher(launchedUrl::set);
     AppInstanceCoordinator.setExitHandler(exitCode::set);
 
-    AppInstanceCoordinator.handleAlreadyRunning(7070, false, () -> restarted.set(true));
+    AppInstanceCoordinator.handleAlreadyRunning(port, false, () -> restarted.set(true));
     assertTrue(
         "Should start this instance when old instance stopped during prompt", restarted.get());
     assertEquals("Should not launch browser when old instance died", null, launchedUrl.get());

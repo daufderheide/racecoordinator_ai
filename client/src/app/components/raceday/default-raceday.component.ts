@@ -8214,6 +8214,13 @@ export class DefaultRacedayComponent
         ? registryEntry.defaultSettings()
         : {};
       newWidget.customSettings.columnKey = laneColumnKey;
+    } else if (actualWidgetType.startsWith("custom:")) {
+      const def =
+        this.customWidgetService?.getWidgetDefinition(actualWidgetType);
+      const manifestDefaults = def?.manifest?.defaultSettings
+        ? { ...def.manifest.defaultSettings }
+        : {};
+      newWidget.customSettings = { ...manifestDefaults };
     } else {
       const registryEntry = WIDGET_REGISTRY[this.draggedWidgetType as string];
       if (registryEntry?.defaultSettings) {
@@ -8229,7 +8236,11 @@ export class DefaultRacedayComponent
 
     if (this.gridSession()) {
       const session = this.gridSession()!;
-      if (isLaneColumn || actualWidgetType === "lane-column") {
+      if (
+        isLaneColumn ||
+        actualWidgetType === "lane-column" ||
+        actualWidgetType.startsWith("custom:")
+      ) {
         this.layout.widgets = LaneGridReplicationHelper.syncMasterWidgetToLanes(
           newWidget,
           session,

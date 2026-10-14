@@ -2244,6 +2244,7 @@
   "UE_INSPECTOR_COUNTDOWN_SIZING_FIT": "Ajustar al tamaño",
   "UE_INSPECTOR_COUNTDOWN_SIZING_MODE": "Modo de escalado de luces",
   "UE_INSPECTOR_CUSTOM_PROPERTIES": "Propiedades personalizadas",
+  "UE_INSPECTOR_CUSTOM_WIDGET": "Widget personalizado",
   "UE_INSPECTOR_DECIMAL_PLACES": "Decimales",
   "UE_INSPECTOR_ONLY_SHOW_SEGMENTS_WHEN_NOT_RACING": "Mostrar decimales solo cuando no se esté compitiendo",
   "UE_INSPECTOR_FONT_BOLD": "Negrita",

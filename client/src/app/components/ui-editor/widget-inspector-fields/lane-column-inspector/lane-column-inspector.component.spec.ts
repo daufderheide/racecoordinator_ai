@@ -1335,4 +1335,106 @@ describe("LaneColumnInspectorComponent", () => {
       expect(component.reMirrorGrid.emit).toHaveBeenCalledWith("grid-test-1");
     });
   });
+
+  describe("Custom Widget integration", () => {
+    it("should identify custom widget and provide appropriate name and breadcrumb", () => {
+      const customWidget: AbsoluteWidgetNode = {
+        id: "w-custom-1",
+        widgetType: "custom:advanced-laps",
+        x: 0,
+        y: 0,
+        width: 150,
+        height: 60,
+        zIndex: 2,
+        customSettings: {
+          gridId: "grid-test",
+          gridLane: 0,
+          targetIndex: 0,
+          useLaneColors: true,
+        },
+      };
+
+      fixture.componentRef.setInput("widget", customWidget);
+      fixture.componentRef.setInput("settings", customWidget.customSettings);
+      fixture.detectChanges();
+
+      expect(component.isCustomWidget).toBeTrue();
+      expect(component.customWidgetName).toBe("advanced-laps");
+      expect(component.columnBreadcrumbLabel).toBe("advanced-laps");
+    });
+
+    it("should use customLabel for columnBreadcrumbLabel if configured", () => {
+      const customWidget: AbsoluteWidgetNode = {
+        id: "w-custom-1",
+        widgetType: "custom:advanced-laps",
+        x: 0,
+        y: 0,
+        width: 150,
+        height: 60,
+        zIndex: 2,
+        customSettings: {
+          gridId: "grid-test",
+          customLabel: "Super Laps",
+        },
+      };
+
+      fixture.componentRef.setInput("widget", customWidget);
+      fixture.componentRef.setInput("settings", customWidget.customSettings);
+      fixture.detectChanges();
+
+      expect(component.columnBreadcrumbLabel).toBe("Super Laps");
+    });
+
+    it("should update currentSettings and emit change on onCustomWidgetChange", () => {
+      spyOn(component.change, "emit");
+      const updatedNode: AbsoluteWidgetNode = {
+        id: "w-custom-1",
+        widgetType: "custom:advanced-laps",
+        x: 0,
+        y: 0,
+        width: 150,
+        height: 60,
+        zIndex: 2,
+        customSettings: {
+          decimalPlaces: 3,
+          mode: "overall",
+        },
+      };
+
+      component.onCustomWidgetChange(updatedNode);
+      expect(component.currentSettings["decimalPlaces"]).toBe(3);
+      expect(component.currentSettings["mode"]).toBe("overall");
+      expect(component.change.emit).toHaveBeenCalled();
+    });
+
+    it("should render custom widget badge and custom-widget-inspector in column scope", () => {
+      const customWidget: AbsoluteWidgetNode = {
+        id: "w-custom-1",
+        widgetType: "custom:advanced-laps",
+        x: 0,
+        y: 0,
+        width: 150,
+        height: 60,
+        zIndex: 2,
+        customSettings: {
+          gridId: "grid-test",
+          gridLane: 0,
+        },
+      };
+
+      fixture.componentRef.setInput("widget", customWidget);
+      fixture.componentRef.setInput("settings", customWidget.customSettings);
+      component.setScope("column");
+      fixture.detectChanges();
+
+      const badge = fixture.nativeElement.querySelector(".custom-widget-badge");
+      expect(badge).toBeTruthy();
+      expect(badge.textContent).toContain("advanced-laps");
+
+      const customInspector = fixture.nativeElement.querySelector(
+        "app-custom-widget-inspector",
+      );
+      expect(customInspector).toBeTruthy();
+    });
+  });
 });

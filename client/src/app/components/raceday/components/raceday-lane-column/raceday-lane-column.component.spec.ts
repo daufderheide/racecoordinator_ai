@@ -478,6 +478,37 @@ describe("RacedayLaneColumnComponent", () => {
     expect(component.formattedValue).toBe("25");
   });
 
+  it("should exclude on-pause auto segments in fallback formattedValue when parent.formatValue is absent", () => {
+    const testDriver: any = {
+      objectId: "driver-test",
+      laneIndex: 0,
+      lapCount: 10.35,
+      totalLaps: 10.35,
+      autoCalculatedLaps: 0.35,
+      adjustedLapCount: 10.35,
+      isFinished: false,
+    };
+    fixture.componentRef.setInput("parent", {
+      heatDrivers: [testDriver],
+      track: { lanes: [] },
+      columns: [],
+    } as any);
+
+    fixture.componentRef.setInput(
+      "widget",
+      createWidget({ columnKey: "lapCount", targetIndex: 0 }),
+    );
+    fixture.detectChanges();
+    expect(component.formattedValue).toBe("10");
+
+    fixture.componentRef.setInput(
+      "widget",
+      createWidget({ columnKey: "totalLaps", targetIndex: 0 }),
+    );
+    fixture.detectChanges();
+    expect(component.formattedValue).toBe("10");
+  });
+
   it("should identify lastLaps and fetch lap list", () => {
     fixture.componentRef.setInput("parent", mockParent);
     fixture.componentRef.setInput(

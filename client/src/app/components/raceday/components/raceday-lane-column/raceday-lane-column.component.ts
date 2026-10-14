@@ -32,9 +32,14 @@ import { GhostBenchmarkType } from "@app/services/ghost-pacing.service";
 import { TranslationService } from "@app/services/translation.service";
 
 import {
-  applyColumnInsetsAndPaddings,
   computeHeatDataLastLaps,
+  fitColumnLastLaps,
+  fitColumnTextValue,
+  formatAdjustedLapValue,
   HeatDataLapItem,
+  isLaneColumnImageProperty,
+  resolveColumnHeaderLabel,
+  resolveLaneColumnImageUrl,
   resolvePacingBenchmarkType,
   resolvePacingDecimalPlaces,
 } from "./raceday-lane-column.utils";
@@ -536,30 +541,12 @@ export class RacedayLaneColumnComponent
   }
 
   get headerLabel(): string {
-    if (this.settings.customLabel && this.settings.customLabel.trim()) {
-      return this.settings.customLabel;
-    }
-    const key = this.columnKey;
-    const parent = this.parent();
-    const labelKey = RacedayLayoutUtils.getLabelKeyForColumn(key);
-    const resolvedLabelKey =
-      labelKey && labelKey !== "UNKNOWN"
-        ? labelKey
-        : `RD_COL_${key.toUpperCase()}`;
-
-    if (parent?.getColumnLabel) {
-      const colDef = parent.columns?.find(
-        (c: any) => c.propertyName === key,
-      ) || {
-        propertyName: key,
-        labelKey: resolvedLabelKey,
-      };
-      return parent.getColumnLabel(colDef);
-    }
-    if (labelKey && labelKey !== "UNKNOWN") {
-      return this.translationService.translate(labelKey);
-    }
-    return key;
+    return resolveColumnHeaderLabel(
+      this.columnKey,
+      this.settings,
+      this.parent(),
+      (k) => this.translationService.translate(k),
+    );
   }
 
   get formattedValue(): string {
@@ -581,7 +568,7 @@ export class RacedayLaneColumnComponent
     }
 
     const raw = RacedayFormatUtils.getPropertyValue(hd, key);
-    return raw != null ? String(raw) : "--";
+    return formatAdjustedLapValue(raw, hd, key);
   }
 
   isLastLaps(): boolean {
@@ -621,118 +608,12 @@ export class RacedayLaneColumnComponent
   }
 
   private fitTextValue(cardEl: HTMLElement): void {
-    const text = this.formattedValue?.trim() || "";
-    if (!text) return;
-
-    let baseFontSize = this.settings.valueFontSize || 36;
-    if (this.widget()?.scaleMode === "auto" && !this.settings.valueFontSize) {
-      const cardH = cardEl.clientHeight || 0;
-      if (cardH > 0) {
-        baseFontSize = Math.max(12, Math.min(48, Math.round(cardH * 0.45)));
-      }
-    }
-
-    if (cardEl.clientWidth <= 0 || cardEl.clientHeight <= 0) {
-      cardEl.style.setProperty(
-        "--lane-col-value-font-size",
-        `${baseFontSize}px`,
-      );
-      cardEl.style.setProperty("--lane-col-pad-left", "0px");
-      cardEl.style.setProperty("--lane-col-pad-right", "0px");
-      cardEl.style.setProperty("--lane-col-pad-top", "0px");
-      cardEl.style.setProperty("--lane-col-pad-bottom", "0px");
-      return;
-    }
-
-    const isHorizontal = this.layoutOrientation === "horizontal";
-
-    const canvas = document.createElement("canvas");
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    const computedFamily =
-      this.settings.valueFontFamily ||
-      (typeof window !== "undefined" && window.getComputedStyle
-        ? window.getComputedStyle(cardEl).fontFamily
-        : "") ||
-      "sans-serif";
-    ctx.font = `700 ${baseFontSize}px ${computedFamily}`;
-    const textWidth = ctx.measureText(text).width || 1;
-
-    // Allocate 8px safety buffer so text never grazes the ellipsis clipping boundary
-    let availWidth = Math.max(10, cardEl.clientWidth - 24 - 8);
-    let availHeight = Math.max(10, cardEl.clientHeight);
-
-    if (this.settings.showHeader !== false) {
-      if (isHorizontal) {
-        const headerEl = cardEl.querySelector(
-          ".lane-col-header",
-        ) as HTMLElement | null;
-        const headerW = headerEl ? headerEl.offsetWidth + 8 : 60;
-        availWidth = Math.max(10, availWidth - headerW);
-        availHeight = Math.max(10, availHeight - 12);
-      } else {
-        const headerEl = cardEl.querySelector(
-          ".lane-col-header",
-        ) as HTMLElement | null;
-        const headerH = headerEl
-          ? headerEl.offsetHeight
-          : (this.settings.headerFontSize || 14) * 1.2;
-        availHeight = Math.max(10, availHeight - headerH - 8);
-      }
-    } else {
-      availHeight = Math.max(10, availHeight - 16);
-    }
-
-    const dims = this.applyInsetsAndPaddings(cardEl, availWidth, availHeight);
-    availWidth = dims.availWidth;
-    availHeight = dims.availHeight;
-
-    let scale = 1;
-    if (availWidth > 0 && textWidth > availWidth) {
-      scale = Math.min(scale, availWidth / textWidth);
-    }
-    if (availHeight > 0 && baseFontSize > availHeight) {
-      scale = Math.min(scale, availHeight / baseFontSize);
-    }
-
-    const minSize = 10;
-    let targetSize = Math.max(minSize, Math.floor(baseFontSize * scale));
-    cardEl.style.setProperty("--lane-col-value-font-size", `${targetSize}px`);
-
-    // Ground-truth overflow safeguard:
-    // If the text element is physically overflowing its container in the DOM,
-    // progressively reduce font size until it fits without ellipsis clipping.
-    const textEl = cardEl.querySelector(".lane-col-text") as HTMLElement | null;
-    const valueEl = cardEl.querySelector(
-      ".lane-col-value",
-    ) as HTMLElement | null;
-    if (textEl && valueEl && valueEl.clientWidth > 0) {
-      let attempts = 0;
-      while (
-        textEl.scrollWidth > valueEl.clientWidth + 0.5 &&
-        targetSize > minSize &&
-        attempts < 10
-      ) {
-        targetSize--;
-        cardEl.style.setProperty(
-          "--lane-col-value-font-size",
-          `${targetSize}px`,
-        );
-        attempts++;
-      }
-    }
-  }
-
-  private applyInsetsAndPaddings(
-    cardEl: HTMLElement,
-    availWidth: number,
-    availHeight: number,
-  ): { availWidth: number; availHeight: number } {
-    return applyColumnInsetsAndPaddings(
+    fitColumnTextValue(
       cardEl,
-      availWidth,
-      availHeight,
+      this.lastFittedText,
+      this.settings,
+      this.widget()?.scaleMode,
+      this.layoutOrientation,
       this.hasLeftInsets(),
       this.hasRightInsets(),
       (anchor) => this.hasInset(anchor),
@@ -743,79 +624,20 @@ export class RacedayLaneColumnComponent
   private fitLastLaps(): void {
     const lapsEl = this.lastLapsRef()?.nativeElement;
     if (!lapsEl) return;
-
-    const isHorizontal = this.layoutOrientation === "horizontal";
-    if (isHorizontal) {
-      const containerW = lapsEl.clientWidth;
-      const firstItem = lapsEl.querySelector(
-        ".last-lap-item",
-      ) as HTMLElement | null;
-      const itemW = firstItem ? firstItem.offsetWidth + 8 : 80;
-      if (containerW > 0 && itemW > 0) {
-        this.maxVisibleLaps.set(Math.max(1, Math.floor(containerW / itemW)));
-      }
-    } else {
-      const containerH = lapsEl.clientHeight;
-      const firstItem = lapsEl.querySelector(
-        ".last-lap-item",
-      ) as HTMLElement | null;
-      const itemH = firstItem ? firstItem.offsetHeight + 4 : 26;
-      if (containerH > 0 && itemH > 0) {
-        this.maxVisibleLaps.set(Math.max(1, Math.floor(containerH / itemH)));
-      }
-    }
+    this.maxVisibleLaps.set(fitColumnLastLaps(lapsEl, this.layoutOrientation));
   }
 
   isImageProperty(key: string = this.columnKey): boolean {
-    return (
-      key === "driver.avatarUrl" ||
-      key === "flag" ||
-      key === "qrCode" ||
-      key === "driverViewQrCode" ||
-      key.startsWith("imageset_")
-    );
+    return isLaneColumnImageProperty(key);
   }
 
   getImageUrl(key: string = this.columnKey, anchor?: string): string {
-    const parent = this.parent();
-    const hd = this.targetDriver;
-    if (!parent || !hd) return "";
-
-    if (key === "driver.avatarUrl") {
-      const avatarUrl =
-        hd.driver?.avatarUrl ||
-        (hd.driver as any)?.avatar_url ||
-        hd.participant?.driver?.avatarUrl ||
-        (hd.participant?.driver as any)?.avatar_url;
-      return avatarUrl ? parent.getFullUrl(avatarUrl) : "";
-    }
-    if (key === "flag") {
-      if (parent.formatColumnValue) {
-        const colDef = parent.columns?.find((c: any) => c.propertyName === key);
-        return parent.formatColumnValue(hd, colDef, key, anchor);
-      }
-      return parent.getCurrentFlagUrl ? parent.getCurrentFlagUrl() : "";
-    }
-    if (key === "qrCode") {
-      return parent.getLaneQrCodeUrl
-        ? parent.getLaneQrCodeUrl(hd.laneIndex)
-        : "";
-    }
-    if (key === "driverViewQrCode") {
-      return parent.getDriverViewQrCodeUrl
-        ? parent.getDriverViewQrCodeUrl(hd.laneIndex)
-        : "";
-    }
-    if (key.startsWith("imageset_")) {
-      const assetId = key.replace("imageset_", "");
-      const asset = parent.findAssetById
-        ? parent.findAssetById(assetId)
-        : undefined;
-      return parent.getSelectedImageFromSet
-        ? parent.getSelectedImageFromSet(asset, null, hd)
-        : "";
-    }
-    return "";
+    return resolveLaneColumnImageUrl(
+      key,
+      this.targetDriver,
+      this.parent(),
+      anchor,
+    );
   }
 
   getInsetKey(anchor: string): string | undefined {
@@ -896,7 +718,7 @@ export class RacedayLaneColumnComponent
     }
 
     const raw = RacedayFormatUtils.getPropertyValue(hd, key);
-    return raw != null ? String(raw) : "--";
+    return formatAdjustedLapValue(raw, hd, key);
   }
 
   getInsetImageUrl(anchor: string): string {

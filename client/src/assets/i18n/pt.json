@@ -2244,6 +2244,7 @@
   "UE_INSPECTOR_COUNTDOWN_SIZING_FIT": "Ajustar ao tamanho",
   "UE_INSPECTOR_COUNTDOWN_SIZING_MODE": "Modo de dimensionamento das lâmpadas",
   "UE_INSPECTOR_CUSTOM_PROPERTIES": "Propriedades personalizadas",
+  "UE_INSPECTOR_CUSTOM_WIDGET": "Widget personalizado",
   "UE_INSPECTOR_DECIMAL_PLACES": "Casas Decimais",
   "UE_INSPECTOR_ONLY_SHOW_SEGMENTS_WHEN_NOT_RACING": "Mostrar decimais apenas quando não estiver correndo",
   "UE_INSPECTOR_FONT_BOLD": "Negrito",

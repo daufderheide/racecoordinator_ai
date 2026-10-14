@@ -43,3 +43,11 @@ declare const require: {
 const context = require.context("./", true, /\.spec\.ts$/);
 // And load the modules.
 context.keys().map(context);
+
+// Also discover and execute test specs co-located within custom_widgets
+const customWidgetsContext = require.context(
+  "../../custom_widgets",
+  true,
+  /\.spec\.ts$/,
+);
+customWidgetsContext.keys().map(customWidgetsContext);

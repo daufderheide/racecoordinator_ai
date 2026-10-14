@@ -137,6 +137,43 @@ describe("ToolboxGroupHelper", () => {
     expect(groups[3].subgroups[0].widgets[0].type).toBe("custom:sample-delta");
   });
 
+  it("should keep custom widgets in toolbox if allowMultiple is true even when used", () => {
+    const used = new Set<string>([
+      "custom:single-widget",
+      "custom:multi-widget",
+    ]);
+    const customWidgets: CustomWidgetDefinition[] = [
+      {
+        folderName: "single-widget",
+        group: "custom-root",
+        manifest: {
+          id: "single-widget",
+          name: "Single Widget",
+          allowMultiple: false,
+        },
+      },
+      {
+        folderName: "multi-widget",
+        group: "custom-root",
+        manifest: {
+          id: "multi-widget",
+          name: "Multi Widget",
+          allowMultiple: true,
+        },
+      },
+    ];
+
+    const groups = ToolboxGroupHelper.buildToolboxGroups(used, customWidgets);
+    const customRoot = groups.find(
+      (g) => g.id === ToolboxGroupHelper.CUSTOM_ROOT_GROUP_ID,
+    );
+
+    expect(customRoot).toBeDefined();
+    // single-widget should be filtered out, multi-widget should remain
+    expect(customRoot?.rootWidgets.length).toBe(1);
+    expect(customRoot?.rootWidgets[0].type).toBe("custom:multi-widget");
+  });
+
   it("should filter widgets across groups and subgroups by search term", () => {
     const used = new Set<string>();
     const customWidgets: CustomWidgetDefinition[] = [

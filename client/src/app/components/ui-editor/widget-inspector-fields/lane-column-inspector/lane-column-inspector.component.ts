@@ -7,8 +7,11 @@ import {
   CustomOptionComponent,
   CustomSelectComponent,
 } from "@app/components/shared/custom-select/custom-select.component";
+import { CustomWidgetInspectorComponent } from "@app/components/ui-editor/widget-inspector-fields/custom-widget-inspector/custom-widget-inspector.component";
+import { CustomWidgetDefinition } from "@app/models/custom-widget.model";
 import { AbsoluteWidgetNode } from "@app/models/settings";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
+import { CustomWidgetService } from "@app/services/custom-widget.service";
 import { FontService } from "@app/services/font.service";
 import { TranslationService } from "@app/services/translation.service";
 import { formatTimerDisplay } from "@app/utils/timer-format.utils";
@@ -27,6 +30,7 @@ import { formatTimerDisplay } from "@app/utils/timer-format.utils";
     TranslatePipe,
     CustomSelectComponent,
     CustomOptionComponent,
+    CustomWidgetInspectorComponent,
   ],
 })
 export class LaneColumnInspectorComponent {
@@ -48,8 +52,28 @@ export class LaneColumnInspectorComponent {
 
   fontService = inject(FontService);
   translationService = inject(TranslationService);
+  customWidgetService = inject(CustomWidgetService, { optional: true });
   showReplicateModal = signal<boolean>(false);
   activeScope = signal<"grid" | "column" | "cell">("grid");
+
+  get isCustomWidget(): boolean {
+    return this.widget()?.widgetType?.startsWith("custom:") ?? false;
+  }
+
+  get customWidgetDefinition(): CustomWidgetDefinition | undefined {
+    const type = this.widget()?.widgetType;
+    return type && this.customWidgetService
+      ? this.customWidgetService.getWidgetDefinition(type)
+      : undefined;
+  }
+
+  get customWidgetName(): string {
+    return (
+      this.customWidgetDefinition?.manifest?.name ||
+      this.widget()?.widgetType?.replace(/^custom:/, "") ||
+      "Custom Widget"
+    );
+  }
 
   setScope(scope: "grid" | "column" | "cell"): void {
     this.activeScope.set(scope);
@@ -86,6 +110,7 @@ export class LaneColumnInspectorComponent {
       col?.label ||
       (colKey ? RacedayLayoutUtils.COLUMN_LABELS[colKey] : undefined) ||
       colKey ||
+      (this.isCustomWidget ? this.customWidgetName : undefined) ||
       "Column";
     return this.translationService.translate(raw);
   }
@@ -203,6 +228,20 @@ export class LaneColumnInspectorComponent {
         3,
         Math.max(0, Number(this.currentSettings["lapDecimalPlaces"])),
       );
+      if (this.isCustomWidget) {
+        this.currentSettings["decimalPlaces"] =
+          this.currentSettings["lapDecimalPlaces"];
+      }
+    }
+    if (this.currentSettings["decimalPlaces"] !== undefined) {
+      this.currentSettings["decimalPlaces"] = Math.min(
+        3,
+        Math.max(0, Number(this.currentSettings["decimalPlaces"])),
+      );
+      if (this.isCustomWidget) {
+        this.currentSettings["lapDecimalPlaces"] =
+          this.currentSettings["decimalPlaces"];
+      }
     }
     if (this.currentSettings["insetTimeDecimalPlaces"] !== undefined) {
       this.currentSettings["insetTimeDecimalPlaces"] = Math.min(
@@ -242,6 +281,17 @@ export class LaneColumnInspectorComponent {
           this.currentSettings["backgroundColor"] === "#000000")
       ) {
         this.currentSettings["textColor"] = "#ffffff";
+      }
+    }
+    this.onFieldChange();
+  }
+
+  onCustomWidgetChange(updatedWidget?: AbsoluteWidgetNode): void {
+    if (updatedWidget?.customSettings) {
+      Object.assign(this.currentSettings, updatedWidget.customSettings);
+      if (this.currentSettings["decimalPlaces"] !== undefined) {
+        this.currentSettings["lapDecimalPlaces"] =
+          this.currentSettings["decimalPlaces"];
       }
     }
     this.onFieldChange();

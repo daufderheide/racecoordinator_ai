@@ -59,6 +59,22 @@ export class WidgetInspectorFieldsComponent {
     return type?.startsWith("custom:") ?? false;
   }
 
+  isLaneColumnWidget(widget: AbsoluteWidgetNode | undefined): boolean {
+    if (!widget) return false;
+    if (widget.widgetType === "lane-column") return true;
+    if (widget.customSettings?.["gridId"]) return true;
+    if (this.isCustomWidget(widget.widgetType)) {
+      const s = widget.customSettings;
+      return Boolean(
+        s?.["gridId"] ||
+        s?.["bindingMode"] !== undefined ||
+        s?.["gridLane"] !== undefined ||
+        s?.["targetIndex"] !== undefined,
+      );
+    }
+    return false;
+  }
+
   onSettingsChange(node?: AbsoluteWidgetNode) {
     this.change.emit(node || this.widget());
   }

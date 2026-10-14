@@ -483,7 +483,10 @@ export class LaneGridReplicationHelper {
           ) === session.sourceLaneIndex
         );
       }
-      if (w.widgetType === "lane-column") {
+      if (
+        w.widgetType === "lane-column" ||
+        w.widgetType.startsWith("custom:")
+      ) {
         if (w.customSettings?.["isHeaderWidget"]) return false;
         if (w.customSettings?.["gridMasterId"]) return false;
         if (

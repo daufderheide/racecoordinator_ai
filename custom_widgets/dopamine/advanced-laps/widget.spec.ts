@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from "@angular/core/testing";
-import { RacedayFormatUtils } from "@app/components/raceday/utils/raceday-format.utils";
+import { AdvancedLapsComponent } from "./widget";
 import { DataService } from "@app/data.service";
 import { AllowFinish, FinishMethod } from "@app/models/heat_scoring";
 import { Race } from "@app/models/race";
@@ -15,9 +15,7 @@ import { SettingsService } from "@app/services/settings.service";
 import { ThemeService } from "@app/services/theme.service";
 import { TranslationService } from "@app/services/translation.service";
 
-import { AdvancedLapsComponent } from "./widget";
-
-describe("AdvancedLapsComponent (custom_widgets/dopamine/advanced-laps)", () => {
+describe("AdvancedLapsComponent Integration & Requirements Verification", () => {
   let component: AdvancedLapsComponent;
   let fixture: ComponentFixture<AdvancedLapsComponent>;
   let mockParent: any;
@@ -95,8 +93,14 @@ describe("AdvancedLapsComponent (custom_widgets/dopamine/advanced-laps)", () => 
     });
   });
 
-  it("should be created", () => {
+  it("should create component and apply default settings", () => {
     expect(component).toBeTruthy();
+    expect(component.mode).toBe("heat");
+    expect(component.decimalPlaces).toBe(0);
+    expect(component.hideSegmentsForFinishingDrivers).toBeFalse();
+    expect(component.bindingMode).toBe("lane");
+    expect(component.targetIndex).toBe(1);
+    expect(component.headerLabel).toBe("LAP");
   });
 
   describe("Requirement 1: Only show auto-segments when the heat is not racing", () => {
@@ -167,6 +171,159 @@ describe("AdvancedLapsComponent (custom_widgets/dopamine/advanced-laps)", () => 
       const laps = component.getEffectiveLaps(driver);
       expect(laps).toBeCloseTo(20.82, 4);
       expect(component.formatLaps(laps, driver)).toBe("20.82");
+    });
+
+    it("should not double count pause auto-segments when adjustedLapCount already includes autoCalculatedLaps", () => {
+      mockParent.raceState = RaceState.PAUSED;
+      fixture.componentRef.setInput("widget", {
+        id: "widget-1",
+        widgetType: "custom:advanced-laps",
+        customSettings: { decimalPlaces: 2 },
+      });
+
+      const driver = {
+        name: "Driver 1",
+        heatData: {
+          physicalLapCount: 15,
+          lapCount: 15.65,
+          adjustedLapCount: 15.65,
+          userLaps: 0,
+          penaltyLaps: 0,
+          autoCalculatedLaps: 0.65,
+        },
+      };
+
+      const laps = component.getEffectiveLaps(driver);
+      expect(laps).toBeCloseTo(15.65, 4);
+      expect(component.formatLaps(laps, driver)).toBe("15.65");
+    });
+
+    it("should not double count auto-segments when heat is HEAT_OVER with DriverHeatData", () => {
+      mockParent.raceState = RaceState.HEAT_OVER;
+      fixture.componentRef.setInput("widget", {
+        id: "widget-1",
+        widgetType: "custom:advanced-laps",
+        customSettings: { decimalPlaces: 2 },
+      });
+
+      const driver = {
+        name: "Driver 1",
+        heatData: {
+          physicalLapCount: 20,
+          laps: new Array(20).fill({ lapTime: 10 }),
+          lapCount: 20.82,
+          adjustedLapCount: 20.82,
+          userLaps: 0,
+          penaltyLaps: 0,
+          autoCalculatedLaps: 0.82,
+        },
+      };
+
+      const laps = component.getEffectiveLaps(driver);
+      expect(laps).toBeCloseTo(20.82, 4);
+      expect(component.formatLaps(laps, driver)).toBe("20.82");
+    });
+
+    it("should include pause auto-segments in overall mode when paused without double counting", () => {
+      mockParent.raceState = RaceState.PAUSED;
+      fixture.componentRef.setInput("widget", {
+        id: "widget-1",
+        widgetType: "custom:advanced-laps",
+        customSettings: { mode: "overall", decimalPlaces: 2 },
+      });
+
+      const driver = {
+        name: "Driver 1",
+        participant: {
+          totalLaps: 35.45,
+        },
+        heatData: {
+          autoCalculatedLaps: 0.45,
+        },
+      };
+
+      const laps = component.getEffectiveLaps(driver);
+      expect(laps).toBeCloseTo(35.45, 4);
+      expect(component.formatLaps(laps, driver)).toBe("35.45");
+    });
+
+    it("should exclude pause auto-segments in overall mode when racing", () => {
+      mockParent.raceState = RaceState.RACING;
+      fixture.componentRef.setInput("widget", {
+        id: "widget-1",
+        widgetType: "custom:advanced-laps",
+        customSettings: { mode: "overall", decimalPlaces: 2 },
+      });
+
+      const driver = {
+        name: "Driver 1",
+        participant: {
+          totalLaps: 35.45,
+        },
+        heatData: {
+          autoCalculatedLaps: 0.45,
+        },
+      };
+
+      const laps = component.getEffectiveLaps(driver);
+      expect(laps).toBeCloseTo(35.0, 4);
+      expect(component.formatLaps(laps, driver)).toBe("35.00");
+    });
+
+    it("should support lapDecimalPlaces from lane column inspector settings", () => {
+      mockParent.raceState = RaceState.PAUSED;
+      fixture.componentRef.setInput("widget", {
+        id: "widget-1",
+        widgetType: "custom:advanced-laps",
+        customSettings: { lapDecimalPlaces: 3 },
+      });
+
+      const driver = {
+        name: "Driver 1",
+        heatData: {
+          lapCount: 15,
+          autoCalculatedLaps: 0.654,
+        },
+      };
+
+      const laps = component.getEffectiveLaps(driver);
+      expect(laps).toBeCloseTo(15.654, 4);
+      expect(component.formatLaps(laps, driver)).toBe("15.654");
+    });
+
+    it("should round to configured decimal places when not racing (e.g. 0, 1, 2, 3)", () => {
+      mockParent.raceState = RaceState.PAUSED;
+      const driver = {
+        name: "Driver 1",
+        heatData: {
+          lapCount: 15,
+          autoCalculatedLaps: 0.654,
+        },
+      };
+
+      fixture.componentRef.setInput("widget", {
+        id: "widget-1",
+        widgetType: "custom:advanced-laps",
+        customSettings: { decimalPlaces: 0 },
+      });
+      let laps = component.getEffectiveLaps(driver);
+      expect(component.formatLaps(laps, driver)).toBe("16");
+
+      fixture.componentRef.setInput("widget", {
+        id: "widget-1",
+        widgetType: "custom:advanced-laps",
+        customSettings: { decimalPlaces: 1 },
+      });
+      laps = component.getEffectiveLaps(driver);
+      expect(component.formatLaps(laps, driver)).toBe("15.7");
+
+      fixture.componentRef.setInput("widget", {
+        id: "widget-1",
+        widgetType: "custom:advanced-laps",
+        customSettings: { decimalPlaces: 2 },
+      });
+      laps = component.getEffectiveLaps(driver);
+      expect(component.formatLaps(laps, driver)).toBe("15.65");
     });
   });
 
@@ -364,7 +521,6 @@ describe("AdvancedLapsComponent (custom_widgets/dopamine/advanced-laps)", () => 
       mockParent.heatDrivers = [d1, d2];
       expect(component.isAllowFinishLap()).toBeFalse();
 
-      // Mid-race pause with no finished drivers: auto-segments shown
       expect(component.getEffectiveLaps(d1)).toBeCloseTo(3.5, 4);
       expect(component.getEffectiveLaps(d2)).toBeCloseTo(3.6, 4);
     });
@@ -427,7 +583,7 @@ describe("AdvancedLapsComponent (custom_widgets/dopamine/advanced-laps)", () => 
     });
   });
 
-  describe("Requirement 5: Multi-instance and Driver / Lane binding modes", () => {
+  describe("Requirement 5: Driver / Lane binding modes & multi-instance placement", () => {
     it("should resolve target driver by lane index", () => {
       const d1 = {
         laneIndex: 0,
@@ -513,6 +669,34 @@ describe("AdvancedLapsComponent (custom_widgets/dopamine/advanced-laps)", () => 
         { propertyName: "lapCount" },
         event,
       );
+    });
+
+    it("should render all active drivers when bindingMode is all", () => {
+      const d1 = {
+        laneIndex: 0,
+        lane: 1,
+        name: "Driver One",
+        heatData: { lapCount: 10 },
+      };
+      const d2 = {
+        laneIndex: 1,
+        lane: 2,
+        name: "Driver Two",
+        heatData: { lapCount: 12 },
+      };
+      mockParent.heatDrivers = [d1, d2];
+
+      fixture.componentRef.setInput("widget", {
+        id: "widget-all-lanes",
+        widgetType: "custom:advanced-laps",
+        customSettings: { bindingMode: "all", mode: "heat" },
+      });
+
+      expect(component.allDisplayDrivers.length).toBe(2);
+      expect(component.getDriverLaneLabel(d1)).toBe("L1");
+      expect(component.getDriverLaneLabel(d2)).toBe("L2");
+      expect(component.getLaneColor(d1)).toBe("#ef4444");
+      expect(component.getLaneColor(d2)).toBe("#3b82f6");
     });
 
     it("should render as header widget with headerLabel and without card body when isHeaderWidget is true", () => {

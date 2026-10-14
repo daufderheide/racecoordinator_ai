@@ -5,10 +5,12 @@ import {
   inject,
   input,
 } from "@angular/core";
+import { RacedayFormatUtils } from "@app/components/raceday/utils/raceday-format.utils";
 import { DataService } from "@app/data.service";
 import { Driver } from "@app/models/driver";
 import { RaceParticipant } from "@app/models/race_participant";
 import { AbsoluteWidgetNode } from "@app/models/settings";
+import { RaceState } from "@app/proto/antigravity";
 import { DriverHeatData } from "@app/race/driver_heat_data";
 import { AuthService } from "@app/services/auth.service";
 import { HelpService } from "@app/services/help.service";
@@ -99,6 +101,10 @@ export class CustomWidgetBaseComponent {
       return heatDataList
         .filter((hd: any) => hd && hd.driver && !Driver.isEmpty(hd.driver))
         .map((hd: any) => this.mapHeatDriverStanding(hd));
+    }
+
+    if (parentObj?.driverStandings && parentObj.driverStandings.length > 0) {
+      return parentObj.driverStandings;
     }
 
     return [];
@@ -332,5 +338,150 @@ export class CustomWidgetBaseComponent {
       ...customContext,
     };
     return interpolate(text, defaultContext);
+  }
+
+  getLaneColor(
+    driverOrIndex: any,
+    property: "background_color" | "foreground_color" = "background_color",
+  ): string {
+    const parent = this.parent();
+    const d = driverOrIndex?.heatData || driverOrIndex;
+    if (d && typeof d === "object" && parent?.getLaneColor) {
+      const col = parent.getLaneColor(d, property);
+      if (col) return col;
+    }
+    const laneIdx =
+      typeof driverOrIndex === "number"
+        ? driverOrIndex
+        : (driverOrIndex?.laneIndex ??
+          (driverOrIndex?.lane != null ? driverOrIndex.lane - 1 : -1));
+    const track =
+      this.track ||
+      parent?.track ||
+      parent?.race?.track ||
+      this.raceService?.getRace()?.track;
+    if (laneIdx >= 0 && track?.lanes?.[laneIdx]) {
+      const lane = track.lanes[laneIdx];
+      if (property === "foreground_color") {
+        if (lane.foreground_color) return lane.foreground_color;
+      } else {
+        const val = lane.background_color || lane.color;
+        if (val) return val;
+      }
+    }
+    const defaultBgs = [
+      "#ef4444",
+      "#3b82f6",
+      "#22c55e",
+      "#eab308",
+      "#a855f7",
+      "#ec4899",
+      "#14b8a6",
+      "#f97316",
+    ];
+    const defaultFgs = [
+      "#ffffff",
+      "#ffffff",
+      "#ffffff",
+      "#000000",
+      "#ffffff",
+      "#ffffff",
+      "#000000",
+      "#ffffff",
+    ];
+    if (laneIdx >= 0) {
+      const idx = laneIdx % defaultBgs.length;
+      return property === "foreground_color"
+        ? defaultFgs[idx]
+        : defaultBgs[idx];
+    }
+    return "";
+  }
+
+  isEmptyDriver(driver: any): boolean {
+    if (!driver) return true;
+    const d = driver.driver || driver;
+    return Driver.isEmpty(d);
+  }
+
+  isHeatRacing(): boolean {
+    const parent = this.parent();
+    if (
+      parent?.raceState !== undefined &&
+      parent.raceState !== RaceState.UNKNOWN_STATE
+    ) {
+      return parent.raceState === RaceState.RACING;
+    }
+    const raceState =
+      (this.race as any)?.state ?? (this.race as any)?.raceState;
+    if (raceState !== undefined && raceState !== RaceState.UNKNOWN_STATE) {
+      return raceState === RaceState.RACING;
+    }
+    const flag = this.raceFlagService?.getFlagType?.();
+    return flag === "flag.racing";
+  }
+
+  isHeatPaused(): boolean {
+    const parent = this.parent();
+    if (
+      parent?.raceState !== undefined &&
+      parent.raceState !== RaceState.UNKNOWN_STATE
+    ) {
+      return parent.raceState === RaceState.PAUSED;
+    }
+    const raceState =
+      (this.race as any)?.state ?? (this.race as any)?.raceState;
+    if (raceState !== undefined && raceState !== RaceState.UNKNOWN_STATE) {
+      return raceState === RaceState.PAUSED;
+    }
+    const flag = this.raceFlagService?.getFlagType?.();
+    return flag === "flag.heat_paused";
+  }
+
+  isAllowFinishLap(): boolean {
+    const race = this.race;
+    if (!race || !RacedayFormatUtils.isAllowFinish(race)) {
+      return false;
+    }
+    const flag = this.raceFlagService?.getFlagType?.();
+    if (flag === "flag.heat_finishing") {
+      return true;
+    }
+    const rawDrivers =
+      this.parent()?.sortedHeatDrivers ||
+      this.parent()?.heat?.heatDrivers ||
+      this.parent()?.heatDrivers ||
+      [];
+    const drivers =
+      this.heatDrivers.length > 0
+        ? this.heatDrivers
+        : rawDrivers.filter((d: any) => !this.isEmptyDriver(d));
+    if (drivers && drivers.length > 0) {
+      const anyFinished = drivers.some((d: any) => this.isDriverFinished(d));
+      const allFinished = drivers.every((d: any) => this.isDriverFinished(d));
+      if (anyFinished && !allFinished) {
+        return true;
+      }
+    }
+    const scoring: any = race.heat_scoring ?? (race as any).heatScoring;
+    const finishMethod = scoring?.finishMethod ?? scoring?.finish_method;
+    if (finishMethod === "Timed" || finishMethod === 2) {
+      const remaining =
+        this.parent()?.heatTimeRemaining ?? this.parent()?.timeRemaining;
+      if (remaining !== undefined && remaining <= 0) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  isDriverFinished(driver: any): boolean {
+    if (!driver) return false;
+    if (driver.isFinished !== undefined) return Boolean(driver.isFinished);
+    const hd = driver.heatData || driver;
+    if (hd.isFinished !== undefined) return Boolean(hd.isFinished);
+    const p = driver.participant || driver;
+    if (p?.isFinished !== undefined) return Boolean(p.isFinished);
+    return false;
   }
 }

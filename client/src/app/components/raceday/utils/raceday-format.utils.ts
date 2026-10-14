@@ -86,6 +86,41 @@ export class RacedayFormatUtils {
     );
   }
 
+  static isHeatOrRaceOver(ctx?: FormatContext, hd?: DriverHeatData): boolean {
+    if (hd?.isFinished) {
+      return true;
+    }
+    if (!ctx) {
+      return false;
+    }
+    const state = ctx.getRaceState ? ctx.getRaceState() : ctx.raceState;
+    if (
+      state === RaceState.HEAT_OVER ||
+      state === RaceState.RACE_OVER ||
+      state === 5 ||
+      state === 6
+    ) {
+      return true;
+    }
+    if (ctx.isRaceOver && ctx.isRaceOver()) {
+      return true;
+    }
+    if (ctx.areAllDriversFinished && ctx.areAllDriversFinished()) {
+      return true;
+    }
+    if (
+      hd &&
+      ctx.isDriverFinished &&
+      ctx.isDriverFinished(
+        hd,
+        ctx.getRace()?.heat_scoring ?? (ctx.getRace() as any)?.heatScoring,
+      )
+    ) {
+      return true;
+    }
+    return false;
+  }
+
   static getPropertyValue(
     heatDriver: DriverHeatData,
     propertyPath: string,
@@ -438,7 +473,14 @@ export class RacedayFormatUtils {
       ) {
         return lapPlaceholder;
       }
-      return Number(value).toFixed(lapDecimals);
+      let lapVal = Number(value);
+      const isOver = RacedayFormatUtils.isHeatOrRaceOver(ctx, hd);
+      if (!isOver && (hd?.autoCalculatedLaps || 0) > 0) {
+        lapVal =
+          Math.round((lapVal - hd.autoCalculatedLaps + Number.EPSILON) * 1e6) /
+          1e6;
+      }
+      return Number(lapVal).toFixed(lapDecimals);
     }
 
     if (baseKey === "overallPhysicalLapCount") {
@@ -704,9 +746,12 @@ export class RacedayFormatUtils {
     } else if (baseKey === "lapCount" || baseKey === "heatTotalLaps") {
       const hasReactionTime = hd.reactionTime > 0;
       const hasRealLap = hd.lapTimes && hd.lapTimes.length > 0;
+      const isOver = RacedayFormatUtils.isHeatOrRaceOver(ctx, hd);
       const hasAdjustment =
         (hd.userLaps !== undefined && hd.userLaps !== 0) ||
-        (hd.autoCalculatedLaps !== undefined && hd.autoCalculatedLaps !== 0) ||
+        (isOver &&
+          hd.autoCalculatedLaps !== undefined &&
+          hd.autoCalculatedLaps !== 0) ||
         (hd.penaltyLaps !== undefined && hd.penaltyLaps !== 0) ||
         (hd.adjustedLapCount !== undefined && hd.adjustedLapCount !== 0);
 
@@ -717,7 +762,13 @@ export class RacedayFormatUtils {
       ) {
         return lapPlaceholder;
       }
-      return Number(value).toFixed(lapDecimals);
+      let lapVal = Number(value);
+      if (!isOver && (hd.autoCalculatedLaps || 0) > 0) {
+        lapVal =
+          Math.round((lapVal - hd.autoCalculatedLaps + Number.EPSILON) * 1e6) /
+          1e6;
+      }
+      return Number(lapVal).toFixed(lapDecimals);
     } else if (baseKey === "physicalLapCount") {
       const hasReactionTime = hd.reactionTime > 0;
       const hasRealLap = hd.lapTimes && hd.lapTimes.length > 0;
@@ -1020,7 +1071,11 @@ export class RacedayFormatUtils {
           finishMethod === FinishMethod.Lap) &&
         finishValue !== undefined &&
         finishValue > 0 &&
-        hd?.lapCount === finishValue - 1,
+        (hd?.lapCount ?? 0) -
+          (!RacedayFormatUtils.isHeatOrRaceOver(ctx, hd)
+            ? (hd?.autoCalculatedLaps ?? 0)
+            : 0) ===
+          finishValue - 1,
       );
 
     if (isOneLapToGo) {

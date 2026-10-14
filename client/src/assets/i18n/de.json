@@ -2244,6 +2244,7 @@
   "UE_INSPECTOR_COUNTDOWN_SIZING_FIT": "An Größe anpassen",
   "UE_INSPECTOR_COUNTDOWN_SIZING_MODE": "Lampen-Skalierungsmodus",
   "UE_INSPECTOR_CUSTOM_PROPERTIES": "Benutzerdefinierte Eigenschaften",
+  "UE_INSPECTOR_CUSTOM_WIDGET": "Benutzerdefiniertes Widget",
   "UE_INSPECTOR_DECIMAL_PLACES": "Dezimalstellen",
   "UE_INSPECTOR_ONLY_SHOW_SEGMENTS_WHEN_NOT_RACING": "Dezimalstellen nur anzeigen, wenn kein Rennen läuft",
   "UE_INSPECTOR_FONT_BOLD": "Fett",
