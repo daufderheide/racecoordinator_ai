@@ -1,6 +1,6 @@
 # Changelog
 
-## [v1.0.1-beta.23] - 2026-10-13
+## [v1.0.1-beta.24] - 2026-10-14
 
 ### 🚀 New Features
 
@@ -14,6 +14,8 @@
 
 ### 🐛 Bug Fixes
 
+- **audio**: resolve asset UUIDs in audio set entries to download endpoint [#973](https://github.com/daufderheide/racecoordinator_ai/issues/973) [skip-screendiffs] ([dc152413](https://github.com/daufderheide/racecoordinator_ai/commit/dc152413))
+- resolve widget discovery 404 errors and duplicate empty lane tracking keys" [skip-screendiffs] ([cd2677f3](https://github.com/daufderheide/racecoordinator_ai/commit/cd2677f3))
 - add core server app entry point and client subscription management logic.  This helps shutdown and startup when rc ai is already running [#908](https://github.com/daufderheide/racecoordinator_ai/issues/908) [skip-screendiffs] ([8e02bf37](https://github.com/daufderheide/racecoordinator_ai/commit/8e02bf37))
 - **race**: prevent racetime reset on restart during auto segment finish lap [#958](https://github.com/daufderheide/racecoordinator_ai/issues/958) ([18a9c09f](https://github.com/daufderheide/racecoordinator_ai/commit/18a9c09f))
 - **serial**: prevent host sleep, add serial write timeout, and auto-recover on microcontroller reboot [#934](https://github.com/daufderheide/racecoordinator_ai/issues/934) ([22fff6d4](https://github.com/daufderheide/racecoordinator_ai/commit/22fff6d4))
@@ -72,7 +74,7 @@
 <details>
 <summary>🔍 <b>Full Commit History</b></summary>
 
-<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0...v1.0.1-beta.23">GitHub</a></p>
+<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0...v1.0.1-beta.24">GitHub</a></p>
 </details>
 
 ## [v1.0.0] - 2026-09-27
