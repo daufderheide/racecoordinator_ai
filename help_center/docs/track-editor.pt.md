@@ -274,3 +274,8 @@ A barra de ferramentas superior do Editor de Pistas disponibiliza ferramentas es
 
 ### Tiras LED FastLED Não Acendem
 - **Solução**: Certifique-se de que o Arduino está a correr o **sketch oficial `v2.1.0.x`**, que o tipo de LED e a ordem de cores estão corretos e que a massa (GND) da fonte de alimentação de 5V está ligada à massa do Arduino.
+
+### Desconexão da Interface Entre Baterias (Suspensão USB / Economia de Energia)
+- **Sintoma**: A interface (Arduino, Phidget ou Trackmate) desliga-se durante pausas entre baterias ou em períodos de inatividade, e volta a ligar-se no início da corrida com a mensagem *"A conexão com a interface foi restaurada."*
+- **Solução**: O Windows, Linux e macOS desligam portas USB e dispositivos HID inativos mesmo com o PC ligado. Consulte a seção [Suspensão da Interface USB e Desconexões](troubleshooting.pt.md#usb-sleep-prevention) na Solução de Problemas para desativar a economia de energia no Gerenciador de Dispositivos.
+

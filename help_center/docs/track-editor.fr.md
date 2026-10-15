@@ -274,3 +274,8 @@ La barre d'outils supérieure de l'Éditeur de Circuits propose les outils de ge
 
 ### Bandeaux LED FastLED Éteints
 - **Solution** : Vérifiez que l'Arduino utilise le **sketch officiel `v2.1.0.x`**, que le type de LED et l'ordre des couleurs sont exacts, et que la masse (GND) de l'alimentation 5V externe est reliée à la masse de l'Arduino.
+
+### Déconnexion de l'Interface Entre les Manches (Mise en Veille USB / Économie d'Énergie)
+- **Symptôme** : L'interface (Arduino, Phidget ou Trackmate) se déconnecte pendant les pauses entre les manches ou après une période d'inactivité, puis se reconnecte dès le départ avec le message *"La connexion avec l'interface a été rétablie."*
+- **Solution** : Windows, Linux et macOS coupent l'alimentation des ports USB et des contrôleurs HID inactifs même lorsque le PC est allumé. Consultez la section [Mise en Veille de l'Interface USB et Déconnexions](troubleshooting.fr.md#usb-sleep-prevention) dans le guide de dépannage pour désactiver l'économie d'énergie dans le Gestionnaire de périphériques.
+
