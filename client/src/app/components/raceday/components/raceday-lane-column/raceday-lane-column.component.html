@@ -424,8 +424,26 @@
         }
 
         <div class="lane-col-main-content">
-          <!-- Case 1: Last Laps List -->
-          @if (isLastLaps()) {
+          <!-- Case 0: Custom Widget as Main Column Center/Center Widget -->
+          @if (isCustomWidget(columnKey)) {
+            <div class="lane-col-main-custom-widget-wrapper">
+              @if (getCustomWidgetComponent(columnKey)) {
+                <ng-container
+                  *ngComponentOutlet="
+                    getCustomWidgetComponent(columnKey);
+                    inputs: getCustomWidgetInputsForMain()
+                  "
+                />
+              } @else {
+                <div
+                  class="custom-widget-missing-placeholder lane-col-custom-placeholder"
+                >
+                  <span class="material-icons">extension_off</span>
+                  <span>{{ columnKey }}</span>
+                </div>
+              }
+            </div>
+          } @else if (isLastLaps()) {
             <div class="lane-col-last-laps" #lastLapsContainer>
               @if (getLastLaps().length === 0) {
                 <div class="lane-col-empty">--</div>

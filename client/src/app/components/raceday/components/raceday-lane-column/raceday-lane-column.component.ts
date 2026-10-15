@@ -35,6 +35,7 @@ import { TranslationService } from "@app/services/translation.service";
 
 import {
   buildSyntheticInsetWidgetInputs,
+  buildSyntheticMainWidgetInputs,
   computeHeatDataLastLaps,
   fitColumnLastLaps,
   fitColumnTextValue,
@@ -82,6 +83,11 @@ export class RacedayLaneColumnComponent
     string,
     { widget: AbsoluteWidgetNode; parent: any; isCustomizing: boolean }
   >();
+  private mainCustomInputs?: {
+    widget: AbsoluteWidgetNode;
+    parent: any;
+    isCustomizing: boolean;
+  };
 
   cardRef = viewChild<ElementRef<HTMLElement>>("cardElement");
   lastLapsRef = viewChild<ElementRef<HTMLElement>>("lastLapsContainer");
@@ -175,7 +181,14 @@ export class RacedayLaneColumnComponent
   }
 
   get columnKey(): string {
-    return this.settings.columnKey || "lastLapTime";
+    if (this.settings.columnKey) {
+      return this.settings.columnKey;
+    }
+    const type = this.widget()?.widgetType;
+    if (type && isCustomWidgetKey(type)) {
+      return type;
+    }
+    return "lastLapTime";
   }
 
   get bindingMode(): "lane" | "position" | "overallPosition" | "seed" {
@@ -1056,5 +1069,33 @@ export class RacedayLaneColumnComponent
     );
     this.insetCustomInputs.set(anchor, inputs);
     return inputs;
+  }
+
+  getCustomWidgetInputsForMain() {
+    const key = this.columnKey;
+    const parent = this.parent();
+    const isCustomizing = this.isUIEditorMode;
+    const w = this.widget();
+
+    if (
+      this.mainCustomInputs &&
+      this.mainCustomInputs.parent === parent &&
+      this.mainCustomInputs.isCustomizing === isCustomizing &&
+      this.mainCustomInputs.widget?.widgetType === key &&
+      this.mainCustomInputs.widget?.customSettings?.["gridLane"] ===
+        this.targetIndex
+    ) {
+      return this.mainCustomInputs;
+    }
+
+    this.mainCustomInputs = buildSyntheticMainWidgetInputs(
+      key,
+      w,
+      this.bindingMode,
+      this.targetIndex,
+      parent,
+      isCustomizing,
+    );
+    return this.mainCustomInputs;
   }
 }

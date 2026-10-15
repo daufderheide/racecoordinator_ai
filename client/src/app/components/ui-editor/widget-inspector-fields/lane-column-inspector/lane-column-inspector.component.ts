@@ -23,6 +23,7 @@ import { FontService } from "@app/services/font.service";
 import { TranslationService } from "@app/services/translation.service";
 import { formatTimerDisplay } from "@app/utils/timer-format.utils";
 
+import { LaneColumnGridHelper } from "./lane-column-grid.helper";
 import {
   INSET_ANCHOR_POSITIONS,
   LaneColumnInsetHelper,
@@ -84,22 +85,76 @@ export class LaneColumnInspectorComponent {
   }
 
   get isCustomWidget(): boolean {
-    return this.widget()?.widgetType?.startsWith("custom:") ?? false;
+    const type = this.widget()?.widgetType;
+    const colKey = this.currentSettings["columnKey"];
+    return Boolean(
+      (type && type.startsWith("custom:")) ||
+      (colKey && colKey.startsWith("custom:")),
+    );
   }
 
   get customWidgetDefinition(): CustomWidgetDefinition | undefined {
-    const type = this.widget()?.widgetType;
+    const colKey = this.currentSettings["columnKey"];
+    const type =
+      colKey && colKey.startsWith("custom:")
+        ? colKey
+        : this.widget()?.widgetType;
     return type && this.customWidgetService
       ? this.customWidgetService.getWidgetDefinition(type)
       : undefined;
   }
 
   get customWidgetName(): string {
+    const colKey = this.currentSettings["columnKey"];
+    const type =
+      colKey && colKey.startsWith("custom:")
+        ? colKey
+        : this.widget()?.widgetType;
     return (
       this.customWidgetDefinition?.manifest?.name ||
-      this.widget()?.widgetType?.replace(/^custom:/, "") ||
+      type?.replace(/^custom:/, "") ||
       "Custom Widget"
     );
+  }
+
+  get allAvailableColumns(): { key: string; label: string }[] {
+    const base = [...this.availableColumns()];
+    if (
+      this.customWidgetService &&
+      typeof this.customWidgetService.getCustomWidgets === "function"
+    ) {
+      const customWidgets = this.customWidgetService.getCustomWidgets() || [];
+      for (const cw of customWidgets) {
+        const key = `custom:${cw.manifest.id}`;
+        if (!base.some((b) => b.key === key)) {
+          base.push({
+            key,
+            label: cw.manifest?.name || cw.manifest?.id || key,
+          });
+        }
+      }
+    }
+    return base;
+  }
+
+  isCustomWidgetKey(key?: string): boolean {
+    return LaneColumnInsetHelper.isCustomWidget(key);
+  }
+
+  get mainCustomWidgetNode(): AbsoluteWidgetNode {
+    const colKey = this.currentSettings["columnKey"];
+    const targetType =
+      colKey && colKey.startsWith("custom:")
+        ? colKey
+        : this.widget()?.widgetType || "lane-column";
+    if (this.widget()?.widgetType === targetType) {
+      return this.widget()!;
+    }
+    return {
+      ...(this.widget() || ({} as AbsoluteWidgetNode)),
+      widgetType: targetType as any,
+      customSettings: this.currentSettings,
+    };
   }
 
   setScope(scope: "widget" | "grid" | "column" | "cell" | "inset"): void {
@@ -113,25 +168,16 @@ export class LaneColumnInspectorComponent {
   }
 
   get effectiveSelectedAnchor(): string {
-    const local = this.activeInspectorAnchor();
-    if (local && local !== "center-center") {
-      return local;
-    }
-    const sel = this.selectedAnchor();
-    if (sel && sel !== "center-center") {
-      return sel;
-    }
-    const placed = this.placedInsetAnchors;
-    if (placed.length > 0) {
-      return placed[0];
-    }
-    return "top-right";
+    return LaneColumnInsetHelper.getEffectiveSelectedAnchor(
+      this.activeInspectorAnchor(),
+      this.selectedAnchor(),
+      this.currentSettings["insets"],
+    );
   }
 
   get placedInsetAnchors(): string[] {
-    const insets = this.currentSettings["insets"] || {};
-    return Object.keys(insets).filter(
-      (k) => k !== "center-center" && Boolean(insets[k]),
+    return LaneColumnInsetHelper.getPlacedInsetAnchors(
+      this.currentSettings["insets"],
     );
   }
 
@@ -157,13 +203,14 @@ export class LaneColumnInspectorComponent {
   }
 
   configureInset(anchor: string): void {
-    this.activeInspectorAnchor.set(anchor);
-    this.anchorChange.emit(anchor);
-    this.activeScope.set("inset");
+    this.selectInsetAnchor(anchor);
   }
 
   selectAnchorFromMap(anchor: string): void {
-    if (anchor === "center-center") return;
+    if (anchor === "center-center") {
+      this.setScope("column");
+      return;
+    }
     this.activeInspectorAnchor.set(anchor);
     this.anchorChange.emit(anchor);
   }
@@ -175,24 +222,15 @@ export class LaneColumnInspectorComponent {
   }
 
   onInspectorDragOver(event: DragEvent): void {
-    event.preventDefault();
-    if (event.dataTransfer) {
-      event.dataTransfer.dropEffect = "copy";
-    }
+    LaneColumnInsetHelper.handleDragOver(event);
   }
 
   onInspectorDragEnter(event: DragEvent): void {
-    event.preventDefault();
-    ((event.currentTarget || event.target) as HTMLElement)?.classList.add(
-      "drag-over",
-    );
+    LaneColumnInsetHelper.handleDragEnter(event);
   }
 
   onInspectorDragLeave(event: DragEvent): void {
-    event.preventDefault();
-    ((event.currentTarget || event.target) as HTMLElement)?.classList.remove(
-      "drag-over",
-    );
+    LaneColumnInsetHelper.handleDragLeave(event);
   }
 
   onInspectorDrop(event: DragEvent, anchor: string): void {
@@ -203,9 +241,33 @@ export class LaneColumnInspectorComponent {
     );
     const droppedKey = LaneColumnInsetHelper.extractDroppedWidgetKey(event);
     if (droppedKey) {
-      this.activeInspectorAnchor.set(anchor);
+      if (anchor !== "center-center") {
+        this.activeInspectorAnchor.set(anchor);
+      }
       this.setAnchorValue(anchor, droppedKey);
     }
+  }
+
+  getInsetCustomWidgetNode(anchor: string): AbsoluteWidgetNode {
+    const key = this.getAnchorValue(anchor);
+    const config = this.getInsetConfig(anchor);
+    return LaneColumnInsetHelper.buildSyntheticInsetCustomWidgetNode(
+      this.widget(),
+      anchor,
+      key,
+      config,
+    );
+  }
+
+  onInsetCustomWidgetChange(
+    anchor: string,
+    updatedWidget?: AbsoluteWidgetNode,
+  ): void {
+    if (updatedWidget?.customSettings) {
+      const config = this.getInsetConfig(anchor);
+      Object.assign(config, updatedWidget.customSettings);
+    }
+    this.onFieldChange();
   }
 
   getWidgetDisplayName(key: string): string {
@@ -388,14 +450,18 @@ export class LaneColumnInspectorComponent {
   }
 
   hasCustomInsetTextColor(anchor: string): boolean {
-    return Boolean(this.currentSettings["insetsConfig"]?.[anchor]?.textColor);
+    return LaneColumnInsetHelper.hasCustomInsetTextColor(
+      this.currentSettings,
+      anchor,
+    );
   }
 
   resetInsetCustomColor(anchor: string): void {
-    if (this.currentSettings["insetsConfig"]?.[anchor]) {
-      delete this.currentSettings["insetsConfig"][anchor].textColor;
-    }
-    this.onFieldChange();
+    LaneColumnInsetHelper.resetInsetCustomColor(
+      this.currentSettings,
+      anchor,
+      () => this.onFieldChange(),
+    );
   }
 
   getInsetPreview(anchor: string, seconds: number): string {
@@ -407,62 +473,28 @@ export class LaneColumnInspectorComponent {
   }
 
   isInsetTotalTime(anchor: string): boolean {
-    const key = this.getAnchorValue(anchor);
-    if (!key) return false;
-    const baseKey = key.split("_")[0];
-    return baseKey === "totalTime" || baseKey === "overallTotalTime";
+    return LaneColumnInsetHelper.isInsetTotalTime(this.getAnchorValue(anchor));
   }
 
   isInsetTimeColumn(anchor: string): boolean {
-    const key = this.getAnchorValue(anchor);
-    if (!key) return false;
-    return (
-      RacedayLayoutUtils.isTimeColumnKey(key) && !this.isInsetTotalTime(anchor)
-    );
+    return LaneColumnInsetHelper.isInsetTimeColumn(this.getAnchorValue(anchor));
   }
 
   isInsetLapColumn(anchor: string): boolean {
-    const key = this.getAnchorValue(anchor);
-    if (!key) return false;
-    return RacedayLayoutUtils.isLapColumnKey(key);
+    return LaneColumnInsetHelper.isInsetLapColumn(this.getAnchorValue(anchor));
   }
 
   isInsetNumericColumn(anchor: string): boolean {
-    const key = this.getAnchorValue(anchor);
-    if (!key) return false;
-    if (
-      this.isInsetTotalTime(anchor) ||
-      this.isInsetTimeColumn(anchor) ||
-      this.isInsetLapColumn(anchor)
-    ) {
-      return false;
-    }
-    return [
-      "points",
-      "overallPoints",
-      "trackCalls",
-      "overallTrackCalls",
-      "lapsLed",
-      "overallLapsLed",
-      "speed",
-      "topSpeed",
-      "averageSpeed",
-      "physicalLapCount",
-      "overallPhysicalLapCount",
-    ].includes(key.split("_")[0]);
+    return LaneColumnInsetHelper.isInsetNumericColumn(
+      this.getAnchorValue(anchor),
+    );
   }
 
   get isMasterCell(): boolean {
-    if (this.isHeaderWidget) {
-      return false;
-    }
-    const idx =
-      this.currentSettings["gridLane"] != null
-        ? this.currentSettings["gridLane"]
-        : this.currentSettings["targetIndex"] != null
-          ? this.currentSettings["targetIndex"]
-          : 0;
-    return Number(idx) === 0;
+    return LaneColumnGridHelper.isMasterCell(
+      this.currentSettings,
+      this.isHeaderWidget,
+    );
   }
 
   get widgetBreadcrumbLabel(): string {
@@ -480,11 +512,10 @@ export class LaneColumnInspectorComponent {
   }
 
   get gridBreadcrumbLabel(): string {
-    const count =
-      this.currentSettings["gridTotalLanes"] || this.totalLanes() || 4;
-    const mode = this.currentSettings["bindingMode"];
-    if (mode === "position") return `Grid (${count} Pos)`;
-    return `Grid (${count} Lanes)`;
+    return LaneColumnGridHelper.getGridBreadcrumbLabel(
+      this.currentSettings,
+      this.totalLanes(),
+    );
   }
 
   get columnBreadcrumbLabel(): string {
@@ -503,49 +534,23 @@ export class LaneColumnInspectorComponent {
   }
 
   get cellBreadcrumbLabel(): string {
-    if (this.isHeaderWidget) {
-      return "Header";
-    }
-    const mode = this.currentSettings["bindingMode"];
-    const idx =
-      (this.currentSettings["gridLane"] != null
-        ? this.currentSettings["gridLane"]
-        : this.currentSettings["targetIndex"] != null
-          ? this.currentSettings["targetIndex"]
-          : 0) + 1;
-    if (mode === "position") return `Pos ${idx}`;
-    if (mode === "overallPosition") return `Overall Pos ${idx}`;
-    if (mode === "seed") return `Seed ${idx}`;
-    return `Lane ${idx}`;
+    return LaneColumnGridHelper.getCellBreadcrumbLabel(
+      this.currentSettings,
+      this.isHeaderWidget,
+    );
   }
 
   get availableIndices(): number[] {
-    const mode = this.currentSettings["bindingMode"];
-    if (mode === "overallPosition" || mode === "seed") {
-      const count = Math.max(16, Math.min(64, (this.totalLanes() || 4) * 4));
-      return Array.from({ length: count }, (_, i) => i);
-    }
-    const laneCount = Math.max(8, this.totalLanes() || 8);
-    return Array.from({ length: laneCount }, (_, i) => i);
+    return LaneColumnGridHelper.getAvailableIndices(
+      this.currentSettings,
+      this.totalLanes(),
+    );
   }
 
   readonly ANCHOR_POSITIONS = INSET_ANCHOR_POSITIONS;
 
   get currentSettings(): any {
-    const s = this.settings() || {};
-    if (!s["layoutOrientation"]) {
-      s["layoutOrientation"] = "vertical";
-    }
-    if (!s["backgroundColor"]) {
-      s["backgroundColor"] = "#000000";
-    }
-    if (
-      !s["textColor"] ||
-      (s["textColor"] === "#000000" && s["backgroundColor"] === "#000000")
-    ) {
-      s["textColor"] = "#ffffff";
-    }
-    return s;
+    return LaneColumnInsetHelper.normalizeSettings(this.settings());
   }
 
   get isTotalTimeColumn(): boolean {
@@ -574,77 +579,34 @@ export class LaneColumnInspectorComponent {
 
   get hasAnyInsets(): boolean {
     const insets = this.currentSettings["insets"];
-    if (!insets) return false;
-    return Object.values(insets).some((v) => Boolean(v));
+    return Boolean(insets && Object.values(insets).some(Boolean));
   }
 
   get hasTimeInset(): boolean {
     const insets = this.currentSettings["insets"];
-    if (!insets) return false;
-    return Object.values(insets).some((v) =>
-      Boolean(v && RacedayLayoutUtils.isTimeColumnKey(String(v))),
+    return Boolean(
+      insets &&
+      Object.values(insets).some((v) =>
+        RacedayLayoutUtils.isTimeColumnKey(String(v || "")),
+      ),
     );
   }
 
   get hasLapInset(): boolean {
     const insets = this.currentSettings["insets"];
-    if (!insets) return false;
-    return Object.values(insets).some((v) =>
-      Boolean(v && RacedayLayoutUtils.isLapColumnKey(String(v))),
+    return Boolean(
+      insets &&
+      Object.values(insets).some((v) =>
+        RacedayLayoutUtils.isLapColumnKey(String(v || "")),
+      ),
     );
   }
 
   onFieldChange(): void {
-    if (this.currentSettings["timeDecimalPlaces"] !== undefined) {
-      this.currentSettings["timeDecimalPlaces"] = Math.min(
-        3,
-        Math.max(0, Number(this.currentSettings["timeDecimalPlaces"])),
-      );
-    }
-    if (this.currentSettings["lapDecimalPlaces"] !== undefined) {
-      this.currentSettings["lapDecimalPlaces"] = Math.min(
-        3,
-        Math.max(0, Number(this.currentSettings["lapDecimalPlaces"])),
-      );
-      if (this.isCustomWidget) {
-        this.currentSettings["decimalPlaces"] =
-          this.currentSettings["lapDecimalPlaces"];
-      }
-    }
-    if (this.currentSettings["decimalPlaces"] !== undefined) {
-      this.currentSettings["decimalPlaces"] = Math.min(
-        3,
-        Math.max(0, Number(this.currentSettings["decimalPlaces"])),
-      );
-      if (this.isCustomWidget) {
-        this.currentSettings["lapDecimalPlaces"] =
-          this.currentSettings["decimalPlaces"];
-      }
-    }
-    if (this.currentSettings["insetTimeDecimalPlaces"] !== undefined) {
-      this.currentSettings["insetTimeDecimalPlaces"] = Math.min(
-        3,
-        Math.max(0, Number(this.currentSettings["insetTimeDecimalPlaces"])),
-      );
-    }
-    if (this.currentSettings["insetLapDecimalPlaces"] !== undefined) {
-      this.currentSettings["insetLapDecimalPlaces"] = Math.min(
-        3,
-        Math.max(0, Number(this.currentSettings["insetLapDecimalPlaces"])),
-      );
-    }
-    if (this.currentSettings["timeSubsecondThreshold"] !== undefined) {
-      this.currentSettings["timeSubsecondThreshold"] = Math.max(
-        0,
-        Number(this.currentSettings["timeSubsecondThreshold"]),
-      );
-    }
-    if (this.currentSettings["timeSubsecondDecimals"] !== undefined) {
-      this.currentSettings["timeSubsecondDecimals"] = Math.min(
-        3,
-        Math.max(0, Number(this.currentSettings["timeSubsecondDecimals"])),
-      );
-    }
+    LaneColumnInsetHelper.sanitizeSettings(
+      this.currentSettings,
+      this.isCustomWidget,
+    );
     this.change.emit();
   }
 
@@ -685,22 +647,20 @@ export class LaneColumnInspectorComponent {
   }
 
   getAnchorValue(anchor: string): string {
-    return this.currentSettings["insets"]?.[anchor] || "";
+    return LaneColumnInsetHelper.getAnchorValue(
+      this.currentSettings,
+      this.widget(),
+      anchor,
+    );
   }
 
   setAnchorValue(anchor: string, val: string): void {
-    if (!this.currentSettings["insets"]) {
-      this.currentSettings["insets"] = {};
-    }
-    if (!val) {
-      delete this.currentSettings["insets"][anchor];
-      if (this.currentSettings["insetsConfig"]?.[anchor]) {
-        delete this.currentSettings["insetsConfig"][anchor];
-      }
-    } else {
-      this.currentSettings["insets"][anchor] = val;
-    }
-    this.onFieldChange();
+    LaneColumnInsetHelper.setAnchorValue(
+      this.currentSettings,
+      anchor,
+      val,
+      () => this.onFieldChange(),
+    );
   }
 
   onColorChange(field: string, event: Event): void {
@@ -739,79 +699,75 @@ export class LaneColumnInspectorComponent {
   }
 
   get gridHeaderPlacement(): "top" | "individual" | "none" {
-    return this.currentSettings["headerPlacement"] || "individual";
+    return LaneColumnGridHelper.getGridHeaderPlacement(this.currentSettings);
   }
 
   get currentGridHeaderHeight(): number {
-    return Number(this.currentSettings["headerHeight"]) || 36;
+    return LaneColumnGridHelper.getGridHeaderHeight(this.currentSettings);
   }
 
   get gridHeaderFontFamily(): string {
-    return this.currentSettings["headerFontFamily"] || "";
+    return LaneColumnGridHelper.getGridHeaderFontFamily(this.currentSettings);
   }
-
   set gridHeaderFontFamily(val: string) {
-    this.currentSettings["headerFontFamily"] = val;
-    this.onHeaderStyleChange();
+    LaneColumnGridHelper.setGridHeaderFontFamily(
+      this.currentSettings,
+      val,
+      () => this.onHeaderStyleChange(),
+    );
   }
 
   get gridHeaderFontSize(): number {
-    return Number(this.currentSettings["headerFontSize"]) || 14;
+    return LaneColumnGridHelper.getGridHeaderFontSize(this.currentSettings);
   }
-
   set gridHeaderFontSize(val: number) {
-    this.currentSettings["headerFontSize"] = Math.max(
-      8,
-      Math.min(72, Number(val) || 14),
+    LaneColumnGridHelper.setGridHeaderFontSize(this.currentSettings, val, () =>
+      this.onHeaderStyleChange(),
     );
-    this.onHeaderStyleChange();
   }
 
   get gridHeaderTextColor(): string {
-    return this.currentSettings["headerTextColor"] || "";
+    return LaneColumnGridHelper.getGridHeaderTextColor(this.currentSettings);
   }
-
   set gridHeaderTextColor(val: string) {
-    this.currentSettings["headerTextColor"] = val;
-    delete this.currentSettings["_reset_headerTextColor"];
-    this.onHeaderStyleChange();
+    LaneColumnGridHelper.setGridHeaderTextColor(this.currentSettings, val, () =>
+      this.onHeaderStyleChange(),
+    );
   }
 
   get gridHeaderBackgroundColor(): string {
-    return this.currentSettings["headerBackgroundColor"] || "";
+    return LaneColumnGridHelper.getGridHeaderBackgroundColor(
+      this.currentSettings,
+    );
   }
-
   set gridHeaderBackgroundColor(val: string) {
-    this.currentSettings["headerBackgroundColor"] = val;
-    delete this.currentSettings["_reset_headerBackgroundColor"];
-    this.onHeaderStyleChange();
+    LaneColumnGridHelper.setGridHeaderBackgroundColor(
+      this.currentSettings,
+      val,
+      () => this.onHeaderStyleChange(),
+    );
   }
 
   get gridHeaderAlignment(): "start" | "center" | "end" {
-    return this.currentSettings["headerAlignment"] || "center";
+    return LaneColumnGridHelper.getGridHeaderAlignment(this.currentSettings);
   }
-
   set gridHeaderAlignment(val: "start" | "center" | "end") {
-    this.currentSettings["headerAlignment"] = val;
-    this.onHeaderStyleChange();
+    LaneColumnGridHelper.setGridHeaderAlignment(this.currentSettings, val, () =>
+      this.onHeaderStyleChange(),
+    );
   }
 
   onGridHeaderBgColorChange(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    this.gridHeaderBackgroundColor = input.value;
+    this.gridHeaderBackgroundColor = (event.target as HTMLInputElement).value;
   }
-
   onGridHeaderTextColorChange(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    this.gridHeaderTextColor = input.value;
+    this.gridHeaderTextColor = (event.target as HTMLInputElement).value;
   }
-
   resetGridHeaderTextColor(): void {
-    this.resetColor("headerTextColor");
+    this.resetHeaderTextColor();
   }
-
   resetGridHeaderBackgroundColor(): void {
-    this.resetColor("headerBackgroundColor");
+    this.resetHeaderBackgroundColor();
   }
 
   onHeaderStyleChange(): void {
@@ -822,95 +778,82 @@ export class LaneColumnInspectorComponent {
   }
 
   get highlightRowOnLap(): boolean {
-    return this.currentSettings["highlightRowOnLap"] !== false;
+    return LaneColumnGridHelper.getHighlightRowOnLap(this.currentSettings);
   }
-
   set highlightRowOnLap(val: boolean) {
-    this.currentSettings["highlightRowOnLap"] = Boolean(val);
-    this.onFieldChange();
+    LaneColumnGridHelper.setHighlightRowOnLap(this.currentSettings, val, () =>
+      this.onFieldChange(),
+    );
   }
 
   get linkColumns(): boolean {
-    return this.currentSettings["linkColumns"] !== false;
+    return LaneColumnGridHelper.getLinkColumns(this.currentSettings);
   }
-
   set linkColumns(val: boolean) {
-    this.currentSettings["linkColumns"] = Boolean(val);
-    this.currentSettings["_linkColumnsChanged"] = true;
-    this.onFieldChange();
+    LaneColumnGridHelper.setLinkColumns(this.currentSettings, val, () =>
+      this.onFieldChange(),
+    );
   }
 
   get mirrorRows(): boolean {
-    return this.currentSettings["mirrorRows"] !== false;
+    return LaneColumnGridHelper.getMirrorRows(this.currentSettings);
   }
-
   set mirrorRows(val: boolean) {
-    this.currentSettings["mirrorRows"] = Boolean(val);
-    this.currentSettings["_mirrorRowsChanged"] = true;
-    this.onFieldChange();
+    LaneColumnGridHelper.setMirrorRows(this.currentSettings, val, () =>
+      this.onFieldChange(),
+    );
   }
 
   get sortByBindingMode(): boolean {
-    return this.currentSettings["sortByBindingMode"] !== false;
+    return LaneColumnGridHelper.getSortByBindingMode(this.currentSettings);
   }
-
   set sortByBindingMode(val: boolean) {
-    this.currentSettings["sortByBindingMode"] = Boolean(val);
-    this.currentSettings["_sortByBindingModeChanged"] = true;
-    this.onFieldChange();
+    LaneColumnGridHelper.setSortByBindingMode(this.currentSettings, val, () =>
+      this.onFieldChange(),
+    );
   }
 
   get gridTotalLanes(): number {
-    return Math.max(
-      1,
-      Math.min(
-        32,
-        Number(this.currentSettings["gridTotalLanes"]) ||
-          this.totalLanes() ||
-          4,
-      ),
+    return LaneColumnGridHelper.getGridTotalLanes(
+      this.currentSettings,
+      this.totalLanes(),
     );
   }
 
   onGridTotalLanesChange(val: number): void {
-    const count = Math.max(1, Math.min(32, Math.round(Number(val) || 1)));
-    this.currentSettings["gridTotalLanes"] = count;
-    this.currentSettings["_gridTotalLanesChanged"] = true;
-    this.onFieldChange();
+    LaneColumnGridHelper.setGridTotalLanes(this.currentSettings, val, () =>
+      this.onFieldChange(),
+    );
   }
 
   get gridDirection(): "horizontal" | "vertical" {
-    return this.currentSettings["gridDirection"] === "horizontal"
-      ? "horizontal"
-      : "vertical";
+    return LaneColumnGridHelper.getGridDirection(this.currentSettings);
   }
 
   get gridLayoutOrientation(): "vertical" | "horizontal" {
-    return this.currentSettings["layoutOrientation"] === "horizontal"
-      ? "horizontal"
-      : "vertical";
+    return LaneColumnGridHelper.getGridLayoutOrientation(this.currentSettings);
   }
 
   onGridLayoutOrientationChange(val: "vertical" | "horizontal"): void {
-    const orientation = val === "horizontal" ? "horizontal" : "vertical";
-    this.currentSettings["layoutOrientation"] = orientation;
-    this.currentSettings["_layoutOrientationChanged"] = true;
-    this.onFieldChange();
+    LaneColumnGridHelper.setGridLayoutOrientation(
+      this.currentSettings,
+      val,
+      () => this.onFieldChange(),
+    );
   }
 
   onGridHeaderPlacementChange(placement: "top" | "individual" | "none"): void {
-    this.currentSettings["headerPlacement"] = placement;
-    this.currentSettings["_headerPlacementChanged"] = true;
-    this.onFieldChange();
+    LaneColumnGridHelper.setGridHeaderPlacement(
+      this.currentSettings,
+      placement,
+      () => this.onFieldChange(),
+    );
   }
 
   onGridHeaderHeightChange(height: number): void {
-    this.currentSettings["headerHeight"] = Math.max(
-      20,
-      Math.min(200, Number(height) || 36),
+    LaneColumnGridHelper.setGridHeaderHeight(this.currentSettings, height, () =>
+      this.onFieldChange(),
     );
-    this.currentSettings["_headerHeightChanged"] = true;
-    this.onFieldChange();
   }
 
   applyHeaderStyleToAll(): void {
@@ -934,207 +877,169 @@ export class LaneColumnInspectorComponent {
   }
 
   get gridLabelPosition(): "none" | "top" | "bottom" | "left" | "right" {
-    return this.currentSettings["gridLabelPosition"] || "none";
+    return LaneColumnGridHelper.getGridLabelPosition(this.currentSettings);
   }
 
   onGridLabelPositionChange(
     pos: "none" | "top" | "bottom" | "left" | "right",
   ): void {
-    this.currentSettings["gridLabelPosition"] = pos;
-    this.currentSettings["_gridLabelChanged"] = true;
-    this.onFieldChange();
+    LaneColumnGridHelper.setGridLabelPosition(this.currentSettings, pos, () =>
+      this.onFieldChange(),
+    );
   }
 
   get gridLabelText(): string {
-    return this.currentSettings["gridLabelText"] || "";
+    return LaneColumnGridHelper.getGridLabelText(this.currentSettings);
   }
-
   set gridLabelText(val: string) {
-    this.currentSettings["gridLabelText"] = val;
-    this.currentSettings["_gridLabelChanged"] = true;
-    this.onFieldChange();
+    LaneColumnGridHelper.setGridLabelText(this.currentSettings, val, () =>
+      this.onFieldChange(),
+    );
   }
 
   get gridLabelSize(): number {
-    return Number(this.currentSettings["gridLabelSize"]) || 40;
+    return LaneColumnGridHelper.getGridLabelSize(this.currentSettings);
   }
-
   set gridLabelSize(val: number) {
-    this.currentSettings["gridLabelSize"] = Math.max(
-      16,
-      Math.min(200, Number(val) || 40),
+    LaneColumnGridHelper.setGridLabelSize(this.currentSettings, val, () =>
+      this.onFieldChange(),
     );
-    this.currentSettings["_gridLabelChanged"] = true;
-    this.onFieldChange();
   }
 
   get gridLabelFontFamily(): string {
-    return this.currentSettings["gridLabelFontFamily"] || "";
+    return LaneColumnGridHelper.getGridLabelFontFamily(this.currentSettings);
   }
-
   set gridLabelFontFamily(val: string) {
-    this.currentSettings["gridLabelFontFamily"] = val;
-    this.currentSettings["_gridLabelChanged"] = true;
-    this.onFieldChange();
+    LaneColumnGridHelper.setGridLabelFontFamily(this.currentSettings, val, () =>
+      this.onFieldChange(),
+    );
   }
 
   get gridLabelFontSize(): number {
-    return Number(this.currentSettings["gridLabelFontSize"]) || 18;
+    return LaneColumnGridHelper.getGridLabelFontSize(this.currentSettings);
   }
-
   set gridLabelFontSize(val: number) {
-    this.currentSettings["gridLabelFontSize"] = Math.max(
-      8,
-      Math.min(72, Number(val) || 18),
+    LaneColumnGridHelper.setGridLabelFontSize(this.currentSettings, val, () =>
+      this.onFieldChange(),
     );
-    this.currentSettings["_gridLabelChanged"] = true;
-    this.onFieldChange();
   }
 
   get gridLabelFontBold(): boolean {
-    return this.currentSettings["gridLabelFontBold"] !== false;
+    return LaneColumnGridHelper.getGridLabelFontBold(this.currentSettings);
   }
-
   set gridLabelFontBold(val: boolean) {
-    this.currentSettings["gridLabelFontBold"] = Boolean(val);
-    this.currentSettings["_gridLabelChanged"] = true;
-    this.onFieldChange();
+    LaneColumnGridHelper.setGridLabelFontBold(this.currentSettings, val, () =>
+      this.onFieldChange(),
+    );
   }
 
   get gridLabelFontItalic(): boolean {
-    return Boolean(this.currentSettings["gridLabelFontItalic"]);
+    return LaneColumnGridHelper.getGridLabelFontItalic(this.currentSettings);
   }
-
   set gridLabelFontItalic(val: boolean) {
-    this.currentSettings["gridLabelFontItalic"] = Boolean(val);
-    this.currentSettings["_gridLabelChanged"] = true;
-    this.onFieldChange();
+    LaneColumnGridHelper.setGridLabelFontItalic(this.currentSettings, val, () =>
+      this.onFieldChange(),
+    );
   }
 
   get gridLabelAlignment(): "start" | "center" | "end" {
-    return this.currentSettings["gridLabelAlignment"] || "center";
+    return LaneColumnGridHelper.getGridLabelAlignment(this.currentSettings);
   }
-
   set gridLabelAlignment(val: "start" | "center" | "end") {
-    this.currentSettings["gridLabelAlignment"] = val;
-    this.currentSettings["_gridLabelChanged"] = true;
-    this.onFieldChange();
+    LaneColumnGridHelper.setGridLabelAlignment(this.currentSettings, val, () =>
+      this.onFieldChange(),
+    );
   }
 
   get gridLabelTextColor(): string {
-    return this.currentSettings["gridLabelTextColor"] || "#ffffff";
+    return LaneColumnGridHelper.getGridLabelTextColor(this.currentSettings);
   }
-
   set gridLabelTextColor(val: string) {
-    this.currentSettings["gridLabelTextColor"] = val;
-    this.currentSettings["_gridLabelChanged"] = true;
-    this.onFieldChange();
+    LaneColumnGridHelper.setGridLabelTextColor(this.currentSettings, val, () =>
+      this.onFieldChange(),
+    );
   }
 
   get gridLabelBackgroundColor(): string {
-    return (
-      this.currentSettings["gridLabelBackgroundColor"] ||
-      "rgba(15, 23, 42, 0.85)"
+    return LaneColumnGridHelper.getGridLabelBackgroundColor(
+      this.currentSettings,
     );
   }
-
   set gridLabelBackgroundColor(val: string) {
-    this.currentSettings["gridLabelBackgroundColor"] = val;
-    this.currentSettings["_gridLabelChanged"] = true;
-    this.onFieldChange();
+    LaneColumnGridHelper.setGridLabelBackgroundColor(
+      this.currentSettings,
+      val,
+      () => this.onFieldChange(),
+    );
   }
 
   onGridLabelBgColorChange(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    this.gridLabelBackgroundColor = input.value;
+    this.gridLabelBackgroundColor = (event.target as HTMLInputElement).value;
   }
-
   onGridLabelTextColorChange(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    this.gridLabelTextColor = input.value;
+    this.gridLabelTextColor = (event.target as HTMLInputElement).value;
   }
-
   resetGridLabelTextColor(): void {
-    delete this.currentSettings["gridLabelTextColor"];
-    this.currentSettings["_gridLabelChanged"] = true;
-    this.onFieldChange();
+    LaneColumnGridHelper.resetGridLabelTextColor(this.currentSettings, () =>
+      this.onFieldChange(),
+    );
   }
-
   resetGridLabelBackgroundColor(): void {
-    delete this.currentSettings["gridLabelBackgroundColor"];
-    this.currentSettings["_gridLabelChanged"] = true;
-    this.onFieldChange();
+    LaneColumnGridHelper.resetGridLabelBackgroundColor(
+      this.currentSettings,
+      () => this.onFieldChange(),
+    );
   }
 
   get gridLabelShowBorder(): boolean {
-    return this.currentSettings["gridLabelShowBorder"] !== false;
+    return LaneColumnGridHelper.getGridLabelShowBorder(this.currentSettings);
   }
-
   set gridLabelShowBorder(val: boolean) {
-    this.currentSettings["gridLabelShowBorder"] = Boolean(val);
-    this.currentSettings["_gridLabelChanged"] = true;
-    this.onFieldChange();
+    LaneColumnGridHelper.setGridLabelShowBorder(this.currentSettings, val, () =>
+      this.onFieldChange(),
+    );
   }
 
   get gridLabelBorderColor(): string {
-    return (
-      this.currentSettings["gridLabelBorderColor"] ||
-      this.gridLabelTextColor ||
-      "#ffffff"
-    );
+    return LaneColumnGridHelper.getGridLabelBorderColor(this.currentSettings);
   }
-
   set gridLabelBorderColor(val: string) {
-    this.currentSettings["gridLabelBorderColor"] = val;
-    this.currentSettings["_gridLabelChanged"] = true;
-    this.onFieldChange();
+    LaneColumnGridHelper.setGridLabelBorderColor(
+      this.currentSettings,
+      val,
+      () => this.onFieldChange(),
+    );
   }
 
   onGridLabelBorderColorChange(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    this.gridLabelBorderColor = input.value;
+    this.gridLabelBorderColor = (event.target as HTMLInputElement).value;
   }
-
   resetGridLabelBorderColor(): void {
-    delete this.currentSettings["gridLabelBorderColor"];
-    this.currentSettings["_gridLabelChanged"] = true;
-    this.onFieldChange();
+    LaneColumnGridHelper.resetGridLabelBorderColor(this.currentSettings, () =>
+      this.onFieldChange(),
+    );
   }
 
   get gridLabelBorderWidth(): number {
-    return this.currentSettings["gridLabelBorderWidth"] != null
-      ? Math.max(
-          0,
-          Math.min(10, Number(this.currentSettings["gridLabelBorderWidth"])),
-        )
-      : 1;
+    return LaneColumnGridHelper.getGridLabelBorderWidth(this.currentSettings);
   }
-
   set gridLabelBorderWidth(val: number) {
-    this.currentSettings["gridLabelBorderWidth"] = Math.max(
-      0,
-      Math.min(10, Number(val) || 0),
+    LaneColumnGridHelper.setGridLabelBorderWidth(
+      this.currentSettings,
+      val,
+      () => this.onFieldChange(),
     );
-    this.currentSettings["_gridLabelChanged"] = true;
-    this.onFieldChange();
   }
 
   get gridLabelBorderRadius(): number {
-    return this.currentSettings["gridLabelBorderRadius"] != null
-      ? Math.max(
-          0,
-          Math.min(32, Number(this.currentSettings["gridLabelBorderRadius"])),
-        )
-      : 4;
+    return LaneColumnGridHelper.getGridLabelBorderRadius(this.currentSettings);
   }
-
   set gridLabelBorderRadius(val: number) {
-    this.currentSettings["gridLabelBorderRadius"] = Math.max(
-      0,
-      Math.min(32, Number(val) || 0),
+    LaneColumnGridHelper.setGridLabelBorderRadius(
+      this.currentSettings,
+      val,
+      () => this.onFieldChange(),
     );
-    this.currentSettings["_gridLabelChanged"] = true;
-    this.onFieldChange();
   }
 
   onEditGridTemplate(): void {

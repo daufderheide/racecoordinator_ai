@@ -2237,4 +2237,75 @@ describe("RacedayLaneColumnComponent", () => {
       expect(headerOnlyEl.style.background).toBe("rgb(30, 41, 59)");
     });
   });
+
+  describe("Custom Widget as Main Column", () => {
+    it("should resolve columnKey from widgetType if widgetType starts with custom:", () => {
+      fixture.componentRef.setInput("parent", mockParent);
+      fixture.componentRef.setInput("widget", {
+        id: "w-custom",
+        widgetType: "custom:lap-counter" as any,
+        scaleMode: "fixed",
+        x: 0,
+        y: 0,
+        width: 100,
+        height: 100,
+        zIndex: 1,
+        customSettings: {
+          insets: { "top-right": "lastLapTime" },
+        } as any,
+      });
+      fixture.detectChanges();
+
+      expect(component.columnKey).toBe("custom:lap-counter");
+      expect(component.isCustomWidget(component.columnKey)).toBeTrue();
+      expect(component.hasInset("top-right")).toBeTrue();
+    });
+
+    it("should generate and cache synthetic inputs for custom widget as main", () => {
+      fixture.componentRef.setInput("parent", mockParent);
+      fixture.componentRef.setInput("widget", {
+        id: "w-main",
+        widgetType: "lane-column",
+        scaleMode: "fixed",
+        x: 0,
+        y: 0,
+        width: 100,
+        height: 100,
+        zIndex: 1,
+        customSettings: {
+          columnKey: "custom:my-widget",
+          bindingMode: "position",
+          targetIndex: 2,
+          myOption: "value1",
+        } as any,
+      });
+      fixture.detectChanges();
+
+      const inputs = component.getCustomWidgetInputsForMain();
+      expect(inputs).toBeDefined();
+      expect(inputs?.widget.customSettings?.["gridLane"]).toBe(2);
+      expect(inputs?.widget.customSettings?.["showHeader"]).toBeFalse();
+      expect(inputs?.widget.customSettings?.["myOption"]).toBe("value1");
+
+      // Verify cached reference
+      expect(component.getCustomWidgetInputsForMain()).toBe(inputs);
+    });
+
+    it("should render placeholder or component for custom widget in main content", () => {
+      fixture.componentRef.setInput("parent", mockParent);
+      fixture.componentRef.setInput(
+        "widget",
+        createWidget({
+          columnKey: "custom:unregistered-widget",
+        }),
+      );
+      fixture.detectChanges();
+
+      const placeholder = fixture.nativeElement.querySelector(
+        ".lane-col-custom-placeholder",
+      );
+      expect(placeholder).toBeTruthy();
+      expect(placeholder.textContent).toContain("custom:unregistered-widget");
+    });
+  });
 });

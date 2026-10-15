@@ -30,6 +30,7 @@ describe("WidgetInspectorFieldsComponent", () => {
 
     const mockCustomWidgetService = {
       getWidgetDefinition: () => undefined,
+      getCustomWidgets: () => [],
       isCustomWidget: (type: string) => type?.startsWith("custom:") ?? false,
     };
 
@@ -279,6 +280,32 @@ describe("WidgetInspectorFieldsComponent", () => {
       },
     };
     fixture.componentRef.setInput("widget", customGridWidget);
+    fixture.detectChanges();
+
+    expect(
+      fixture.nativeElement.querySelector("app-lane-column-inspector"),
+    ).toBeTruthy();
+    expect(
+      fixture.nativeElement.querySelector(
+        ":scope > app-custom-widget-inspector",
+      ),
+    ).toBeNull();
+  });
+
+  it("should render lane-column-inspector when custom widget has insets configured", () => {
+    const customInsetWidget: AbsoluteWidgetNode = {
+      id: "w-custom-inset",
+      widgetType: "custom:lap-gauge",
+      x: 0,
+      y: 0,
+      width: 250,
+      height: 120,
+      zIndex: 1,
+      customSettings: {
+        insets: { "top-right": "lastLapTime" },
+      },
+    };
+    fixture.componentRef.setInput("widget", customInsetWidget);
     fixture.detectChanges();
 
     expect(

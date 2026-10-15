@@ -1,4 +1,5 @@
-import { InsetConfig } from "@app/models/settings";
+import { RacedayLayoutUtils } from "@app/components/raceday/utils/raceday-layout.utils";
+import { AbsoluteWidgetNode, InsetConfig } from "@app/models/settings";
 import { CustomWidgetService } from "@app/services/custom-widget.service";
 import { TranslationService } from "@app/services/translation.service";
 import {
@@ -323,5 +324,249 @@ export class LaneColumnInsetHelper {
       subsecondThreshold: cfg.timeSubsecondThreshold ?? 10,
       subsecondDecimals: cfg.timeSubsecondDecimals ?? 2,
     });
+  }
+
+  public static isInsetTotalTime(key: string | undefined): boolean {
+    if (!key) return false;
+    const baseKey = key.split("_")[0];
+    return baseKey === "totalTime" || baseKey === "overallTotalTime";
+  }
+
+  public static isInsetTimeColumn(key: string | undefined): boolean {
+    if (!key) return false;
+    return (
+      RacedayLayoutUtils.isTimeColumnKey(key) && !this.isInsetTotalTime(key)
+    );
+  }
+
+  public static isInsetLapColumn(key: string | undefined): boolean {
+    if (!key) return false;
+    return RacedayLayoutUtils.isLapColumnKey(key);
+  }
+
+  public static isInsetNumericColumn(key: string | undefined): boolean {
+    if (!key) return false;
+    if (
+      this.isInsetTotalTime(key) ||
+      this.isInsetTimeColumn(key) ||
+      this.isInsetLapColumn(key)
+    ) {
+      return false;
+    }
+    return [
+      "points",
+      "overallPoints",
+      "trackCalls",
+      "overallTrackCalls",
+      "lapsLed",
+      "overallLapsLed",
+      "speed",
+      "topSpeed",
+      "averageSpeed",
+      "physicalLapCount",
+      "overallPhysicalLapCount",
+    ].includes(key.split("_")[0]);
+  }
+
+  public static buildSyntheticInsetCustomWidgetNode(
+    widget: AbsoluteWidgetNode | undefined,
+    anchor: string,
+    key: string,
+    config: InsetConfig,
+  ): AbsoluteWidgetNode {
+    return {
+      ...(widget || ({} as AbsoluteWidgetNode)),
+      id: `${widget?.id || "lane-col"}-inset-${anchor}`,
+      widgetType: key as any,
+      customSettings: config as any,
+      scaleMode: "fixed",
+      x: 0,
+      y: 0,
+      width: 100,
+      height: 100,
+      zIndex: 1,
+    };
+  }
+
+  public static normalizeSettings(s: any): any {
+    const current = s || {};
+    if (!current["layoutOrientation"]) {
+      current["layoutOrientation"] = "vertical";
+    }
+    if (!current["backgroundColor"]) {
+      current["backgroundColor"] = "#000000";
+    }
+    if (
+      !current["textColor"] ||
+      (current["textColor"] === "#000000" &&
+        current["backgroundColor"] === "#000000")
+    ) {
+      current["textColor"] = "#ffffff";
+    }
+    return current;
+  }
+
+  public static sanitizeSettings(
+    currentSettings: any,
+    isCustomWidget: boolean,
+  ): void {
+    if (currentSettings["timeDecimalPlaces"] !== undefined) {
+      currentSettings["timeDecimalPlaces"] = Math.min(
+        3,
+        Math.max(0, Number(currentSettings["timeDecimalPlaces"])),
+      );
+    }
+    if (currentSettings["decimalPlaces"] !== undefined) {
+      currentSettings["decimalPlaces"] = Math.min(
+        3,
+        Math.max(0, Number(currentSettings["decimalPlaces"])),
+      );
+      if (isCustomWidget) {
+        currentSettings["lapDecimalPlaces"] = currentSettings["decimalPlaces"];
+      }
+    } else if (
+      isCustomWidget &&
+      currentSettings["lapDecimalPlaces"] !== undefined
+    ) {
+      currentSettings["lapDecimalPlaces"] = Math.min(
+        3,
+        Math.max(0, Number(currentSettings["lapDecimalPlaces"])),
+      );
+      currentSettings["decimalPlaces"] = currentSettings["lapDecimalPlaces"];
+    } else if (currentSettings["lapDecimalPlaces"] !== undefined) {
+      currentSettings["lapDecimalPlaces"] = Math.min(
+        3,
+        Math.max(0, Number(currentSettings["lapDecimalPlaces"])),
+      );
+    }
+    if (currentSettings["insetTimeDecimalPlaces"] !== undefined) {
+      currentSettings["insetTimeDecimalPlaces"] = Math.min(
+        3,
+        Math.max(0, Number(currentSettings["insetTimeDecimalPlaces"])),
+      );
+    }
+    if (currentSettings["insetLapDecimalPlaces"] !== undefined) {
+      currentSettings["insetLapDecimalPlaces"] = Math.min(
+        3,
+        Math.max(0, Number(currentSettings["insetLapDecimalPlaces"])),
+      );
+    }
+    if (currentSettings["timeSubsecondThreshold"] !== undefined) {
+      currentSettings["timeSubsecondThreshold"] = Math.max(
+        0,
+        Number(currentSettings["timeSubsecondThreshold"]),
+      );
+    }
+    if (currentSettings["timeSubsecondDecimals"] !== undefined) {
+      currentSettings["timeSubsecondDecimals"] = Math.min(
+        3,
+        Math.max(0, Number(currentSettings["timeSubsecondDecimals"])),
+      );
+    }
+  }
+
+  public static getPlacedInsetAnchors(
+    insets: Record<string, any> | undefined,
+  ): string[] {
+    if (!insets) return [];
+    return Object.keys(insets).filter(
+      (k) => k !== "center-center" && Boolean(insets[k]),
+    );
+  }
+
+  public static getEffectiveSelectedAnchor(
+    activeInspectorAnchor: string | null,
+    selectedAnchor: string | null,
+    insets: Record<string, any> | undefined,
+  ): string {
+    if (activeInspectorAnchor && activeInspectorAnchor !== "center-center") {
+      return activeInspectorAnchor;
+    }
+    if (selectedAnchor && selectedAnchor !== "center-center") {
+      return selectedAnchor;
+    }
+    const placed = this.getPlacedInsetAnchors(insets);
+    if (placed.length > 0) {
+      return placed[0];
+    }
+    return "top-right";
+  }
+
+  public static handleDragOver(event: DragEvent): void {
+    event.preventDefault();
+    if (event.dataTransfer) {
+      event.dataTransfer.dropEffect = "copy";
+    }
+  }
+
+  public static handleDragEnter(event: DragEvent): void {
+    event.preventDefault();
+    ((event.currentTarget || event.target) as HTMLElement)?.classList.add(
+      "drag-over",
+    );
+  }
+
+  public static handleDragLeave(event: DragEvent): void {
+    event.preventDefault();
+    ((event.currentTarget || event.target) as HTMLElement)?.classList.remove(
+      "drag-over",
+    );
+  }
+
+  public static getAnchorValue(
+    currentSettings: any,
+    widget: AbsoluteWidgetNode | undefined,
+    anchor: string,
+  ): string {
+    if (anchor === "center-center") {
+      return (
+        currentSettings["columnKey"] ||
+        (widget?.widgetType?.startsWith("custom:") ? widget.widgetType : "")
+      );
+    }
+    return currentSettings["insets"]?.[anchor] || "";
+  }
+
+  public static setAnchorValue(
+    currentSettings: any,
+    anchor: string,
+    val: string,
+    onFieldChange: () => void,
+  ): void {
+    if (anchor === "center-center") {
+      currentSettings["columnKey"] = val;
+      onFieldChange();
+      return;
+    }
+    if (!currentSettings["insets"]) {
+      currentSettings["insets"] = {};
+    }
+    if (!val) {
+      delete currentSettings["insets"][anchor];
+      if (currentSettings["insetsConfig"]?.[anchor]) {
+        delete currentSettings["insetsConfig"][anchor];
+      }
+    } else {
+      currentSettings["insets"][anchor] = val;
+    }
+    onFieldChange();
+  }
+
+  public static hasCustomInsetTextColor(
+    currentSettings: any,
+    anchor: string,
+  ): boolean {
+    return Boolean(currentSettings["insetsConfig"]?.[anchor]?.textColor);
+  }
+
+  public static resetInsetCustomColor(
+    currentSettings: any,
+    anchor: string,
+    onFieldChange: () => void,
+  ): void {
+    if (currentSettings["insetsConfig"]?.[anchor]) {
+      delete currentSettings["insetsConfig"][anchor].textColor;
+    }
+    onFieldChange();
   }
 }

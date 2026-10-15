@@ -568,6 +568,21 @@ export class RacedayAbsoluteWidgetComponent
     return type.startsWith("custom:");
   }
 
+  shouldRenderAsLaneColumn(widget: AbsoluteWidgetNode): boolean {
+    if (widget.widgetType === "lane-column") return true;
+    if (this.isCustomWidget(widget.widgetType)) {
+      const s = widget.customSettings;
+      return Boolean(
+        s?.["gridId"] ||
+        s?.["bindingMode"] !== undefined ||
+        s?.["gridLane"] !== undefined ||
+        s?.["targetIndex"] !== undefined ||
+        (s?.["insets"] && Object.values(s["insets"]).some((v) => Boolean(v))),
+      );
+    }
+    return false;
+  }
+
   getCustomWidgetComponent(type: string | undefined): Type<any> | null {
     if (
       this.customWidgetService &&

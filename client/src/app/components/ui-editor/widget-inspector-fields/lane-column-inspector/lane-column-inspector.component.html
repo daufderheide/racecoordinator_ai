@@ -1110,7 +1110,7 @@
           [(ngModel)]="currentSettings['columnKey']"
           (change)="onFieldChange()"
         >
-          @for (col of availableColumns(); track col.key) {
+          @for (col of allAvailableColumns; track col.key) {
             <app-custom-option [value]="col.key">
               {{ col.label | translate }}
             </app-custom-option>
@@ -1337,7 +1337,7 @@
 
     <!-- Embedded Custom Widget Properties Inspector (Schema Settings) -->
     <app-custom-widget-inspector
-      [widget]="widget()!"
+      [widget]="mainCustomWidgetNode"
       (change)="onCustomWidgetChange($event)"
     />
   }
@@ -1941,15 +1941,25 @@
           }
         </button>
 
-        <div
-          class="inset-map-center-cell"
+        <button
+          type="button"
+          class="inset-map-cell inset-map-center-cell"
+          [class.active-anchor]="activeScope() === 'column'"
+          [class.filled-anchor]="!!getAnchorValue('center-center')"
+          (click)="selectAnchorFromMap('center-center')"
+          (dragover)="onInspectorDragOver($event)"
+          (dragenter)="onInspectorDragEnter($event)"
+          (dragleave)="onInspectorDragLeave($event)"
+          (drop)="onInspectorDrop($event, 'center-center')"
           [title]="'UE_INSPECTOR_INSET_MAIN_COLUMN' | translate"
         >
-          <span class="material-icons inset-map-center-icon">view_column</span>
-          <span class="inset-map-center-text">{{
-            "UE_INSPECTOR_INSET_MAIN_COLUMN" | translate
+          <span class="inset-map-label">CC</span>
+          <span class="material-icons inset-map-icon">{{
+            getAnchorValue("center-center")
+              ? getWidgetIcon(getAnchorValue("center-center"))
+              : "view_column"
           }}</span>
-        </div>
+        </button>
 
         <button
           type="button"
@@ -2324,6 +2334,14 @@
 
   @if (getAnchorValue(effectiveSelectedAnchor)) {
     <hr class="inspector-divider" />
+
+    @if (isCustomWidgetKey(getAnchorValue(effectiveSelectedAnchor))) {
+      <!-- Custom Widget Properties for Inset -->
+      <app-custom-widget-inspector
+        [widget]="getInsetCustomWidgetNode(effectiveSelectedAnchor)"
+        (change)="onInsetCustomWidgetChange(effectiveSelectedAnchor, $event)"
+      />
+    }
 
     <!-- Total Time Options (e.g. totalTime, overallTotalTime) -->
     @if (isInsetTotalTime(effectiveSelectedAnchor)) {

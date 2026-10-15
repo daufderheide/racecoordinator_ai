@@ -1817,9 +1817,9 @@ describe("LaneColumnInspectorComponent", () => {
       expect(component.effectiveSelectedAnchor).toBe("top-left");
       expect(component.anchorChange.emit).toHaveBeenCalledWith("top-left");
 
-      // Center-center is ignored
+      // Center-center switches to column scope
       component.selectAnchorFromMap("center-center");
-      expect(component.effectiveSelectedAnchor).toBe("top-left");
+      expect(component.activeScope()).toBe("column");
     });
 
     it("should return localized label for selected anchor", () => {
@@ -1877,10 +1877,73 @@ describe("LaneColumnInspectorComponent", () => {
       expect(component.effectiveSelectedAnchor).toBe("top-center");
     });
 
+    it("should drop widget onto center-center anchor to set main columnKey", () => {
+      const target = document.createElement("div");
+      const dropEvent = {
+        preventDefault: jasmine.createSpy("preventDefault"),
+        stopPropagation: jasmine.createSpy("stopPropagation"),
+        currentTarget: target,
+        dataTransfer: {
+          getData: (type: string) => {
+            if (type === "application/json") {
+              return JSON.stringify({ key: "custom:my-main-widget" });
+            }
+            return "";
+          },
+        },
+      } as unknown as DragEvent;
+
+      component.onInspectorDrop(dropEvent, "center-center");
+      expect(component.getAnchorValue("center-center")).toBe(
+        "custom:my-main-widget",
+      );
+      expect(component.currentSettings["columnKey"]).toBe(
+        "custom:my-main-widget",
+      );
+    });
+
+    it("should include custom widgets in allAvailableColumns", () => {
+      const cols = component.allAvailableColumns;
+      expect(cols.length).toBeGreaterThanOrEqual(
+        component.availableColumns().length,
+      );
+    });
+
+    it("should build mainCustomWidgetNode and handle custom widget changes", () => {
+      component.currentSettings["columnKey"] = "custom:gauge";
+      const node = component.mainCustomWidgetNode;
+      expect(node.widgetType).toBe("custom:gauge" as any);
+
+      component.onCustomWidgetChange({
+        id: "w1",
+        widgetType: "custom:gauge" as any,
+        customSettings: { decimalPlaces: 2 },
+      } as any);
+      expect(component.currentSettings["decimalPlaces"]).toBe(2);
+      expect(component.currentSettings["lapDecimalPlaces"]).toBe(2);
+    });
+
+    it("should build inset custom widget node and handle inset changes", () => {
+      component.setAnchorValue("top-right", "custom:fuel");
+      const insetNode = component.getInsetCustomWidgetNode("top-right");
+      expect(insetNode.widgetType).toBe("custom:fuel" as any);
+
+      component.onInsetCustomWidgetChange("top-right", {
+        id: "inset-w",
+        widgetType: "custom:fuel" as any,
+        customSettings: { fuelCapacity: 50 },
+      } as any);
+      expect(
+        (component.getInsetConfig("top-right") as any)["fuelCapacity"],
+      ).toBe(50);
+    });
+
     it("should resolve display name and icon for widgets", () => {
       expect(component.getWidgetIcon("custom:widget")).toBe("extension");
       expect(component.getWidgetIcon("bestLapTime")).toBe("schedule");
       expect(component.getWidgetDisplayName("")).toBe("");
+      expect(component.isCustomWidgetKey("custom:my-widget")).toBeTrue();
+      expect(component.isCustomWidgetKey("lap")).toBeFalse();
     });
 
     it("should remove inset when removeInset is invoked", () => {

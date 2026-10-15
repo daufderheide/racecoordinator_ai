@@ -75,7 +75,8 @@ export class WidgetInspectorFieldsComponent {
         s?.["gridId"] ||
         s?.["bindingMode"] !== undefined ||
         s?.["gridLane"] !== undefined ||
-        s?.["targetIndex"] !== undefined,
+        s?.["targetIndex"] !== undefined ||
+        (s?.["insets"] && Object.values(s["insets"]).some((v) => Boolean(v))),
       );
     }
     return false;

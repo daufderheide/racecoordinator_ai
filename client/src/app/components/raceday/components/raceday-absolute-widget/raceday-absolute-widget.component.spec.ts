@@ -1022,5 +1022,63 @@ describe("RacedayAbsoluteWidgetComponent", () => {
       expect(el.querySelector(".resize-handle.e")).toBeNull();
       expect(el.querySelector(".resize-handle.w")).toBeNull();
     });
+
+    it("should correctly determine shouldRenderAsLaneColumn", () => {
+      expect(
+        component.shouldRenderAsLaneColumn({
+          id: "w1",
+          widgetType: "lane-column",
+        } as any),
+      ).toBeTrue();
+
+      expect(
+        component.shouldRenderAsLaneColumn({
+          id: "w2",
+          widgetType: "timer",
+        } as any),
+      ).toBeFalse();
+
+      // Custom widget without grid/insets
+      expect(
+        component.shouldRenderAsLaneColumn({
+          id: "w3",
+          widgetType: "custom:gauge" as any,
+          customSettings: {},
+        } as any),
+      ).toBeFalse();
+
+      // Custom widget with insets
+      expect(
+        component.shouldRenderAsLaneColumn({
+          id: "w4",
+          widgetType: "custom:gauge" as any,
+          customSettings: {
+            insets: { "top-right": "bestLapTime" },
+          },
+        } as any),
+      ).toBeTrue();
+
+      // Custom widget with gridId
+      expect(
+        component.shouldRenderAsLaneColumn({
+          id: "w5",
+          widgetType: "custom:gauge" as any,
+          customSettings: {
+            gridId: "grid-123",
+          },
+        } as any),
+      ).toBeTrue();
+
+      // Custom widget with bindingMode
+      expect(
+        component.shouldRenderAsLaneColumn({
+          id: "w6",
+          widgetType: "custom:gauge" as any,
+          customSettings: {
+            bindingMode: "position",
+          },
+        } as any),
+      ).toBeTrue();
+    });
   });
 });

@@ -51,7 +51,12 @@
   window-id="absolute-widget"
 >
   <div class="widget-content">
-    @if (isCustomWidget(widget().widgetType)) {
+    @if (shouldRenderAsLaneColumn(widget())) {
+      <app-raceday-lane-column
+        [parent]="parentComponent()"
+        [widget]="widget()"
+      ></app-raceday-lane-column>
+    } @else if (isCustomWidget(widget().widgetType)) {
       @if (getCustomWidgetComponent(widget().widgetType)) {
         <ng-container
           *ngComponentOutlet="

@@ -43,6 +43,36 @@ export function buildSyntheticInsetWidgetInputs(
   };
 }
 
+export function buildSyntheticMainWidgetInputs(
+  key: string | undefined,
+  widget: AbsoluteWidgetNode | null,
+  bindingMode: string,
+  targetIndex: number,
+  parent: any,
+  isCustomizing: boolean,
+): { widget: AbsoluteWidgetNode; parent: any; isCustomizing: boolean } {
+  const customSettings: Record<string, any> = {
+    ...(widget?.customSettings || {}),
+    showHeader: false,
+    bindingMode,
+    gridLane: targetIndex,
+    targetIndex: targetIndex + 1,
+  };
+
+  const syntheticWidget: AbsoluteWidgetNode = {
+    ...(widget || ({} as AbsoluteWidgetNode)),
+    id: `${widget?.id || "lane-col"}-main`,
+    widgetType: (key as any) || "lane-column",
+    customSettings,
+  };
+
+  return {
+    widget: syntheticWidget,
+    parent,
+    isCustomizing,
+  };
+}
+
 export function formatAdjustedLapValue(
   raw: any,
   hd: DriverHeatData,
@@ -75,6 +105,13 @@ export function resolveColumnHeaderLabel(
 ): string {
   if (settings.customLabel && settings.customLabel.trim()) {
     return settings.customLabel;
+  }
+  if (isCustomWidgetKey(key)) {
+    const customDef = parent?.customWidgetService?.getWidgetDefinition?.(key);
+    if (customDef?.manifest?.name) {
+      return customDef.manifest.name;
+    }
+    return key.substring("custom:".length);
   }
   const labelKey = RacedayLayoutUtils.getLabelKeyForColumn(key);
   const resolvedLabelKey =

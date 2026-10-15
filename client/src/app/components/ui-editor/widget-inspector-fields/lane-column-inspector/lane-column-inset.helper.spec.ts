@@ -412,5 +412,173 @@ describe("LaneColumnInsetHelper", () => {
       );
       expect(preview).toContain("01:15");
     });
+
+    it("should check inset column types", () => {
+      expect(LaneColumnInsetHelper.isInsetTotalTime("totalTime")).toBeTrue();
+      expect(
+        LaneColumnInsetHelper.isInsetTotalTime("overallTotalTime"),
+      ).toBeTrue();
+      expect(LaneColumnInsetHelper.isInsetTotalTime("lapTime")).toBeFalse();
+
+      expect(LaneColumnInsetHelper.isInsetTimeColumn("bestLapTime")).toBeTrue();
+      expect(LaneColumnInsetHelper.isInsetTimeColumn("totalTime")).toBeFalse();
+
+      expect(LaneColumnInsetHelper.isInsetLapColumn("lapCount")).toBeTrue();
+      expect(LaneColumnInsetHelper.isInsetLapColumn("totalLaps")).toBeTrue();
+      expect(LaneColumnInsetHelper.isInsetLapColumn("driver.name")).toBeFalse();
+
+      expect(LaneColumnInsetHelper.isInsetNumericColumn("points")).toBeTrue();
+      expect(LaneColumnInsetHelper.isInsetNumericColumn("speed")).toBeTrue();
+      expect(
+        LaneColumnInsetHelper.isInsetNumericColumn("driver.name"),
+      ).toBeFalse();
+    });
+
+    it("should normalize and sanitize settings", () => {
+      const normalized = LaneColumnInsetHelper.normalizeSettings({});
+      expect(normalized.layoutOrientation).toBe("vertical");
+      expect(normalized.backgroundColor).toBe("#000000");
+      expect(normalized.textColor).toBe("#ffffff");
+
+      const s = {
+        timeDecimalPlaces: 5,
+        lapDecimalPlaces: -1,
+        decimalPlaces: 4,
+        insetTimeDecimalPlaces: 5,
+        insetLapDecimalPlaces: -2,
+        timeSubsecondThreshold: -5,
+        timeSubsecondDecimals: 10,
+      };
+      LaneColumnInsetHelper.sanitizeSettings(s, true);
+      expect(s.timeDecimalPlaces).toBe(3);
+      expect(s.lapDecimalPlaces).toBe(3);
+      expect(s.decimalPlaces).toBe(3);
+      expect(s.insetTimeDecimalPlaces).toBe(3);
+      expect(s.insetLapDecimalPlaces).toBe(0);
+      expect(s.timeSubsecondThreshold).toBe(0);
+      expect(s.timeSubsecondDecimals).toBe(3);
+    });
+
+    it("should manage placed and effective selected anchors", () => {
+      expect(LaneColumnInsetHelper.getPlacedInsetAnchors(undefined)).toEqual(
+        [],
+      );
+      const insets = {
+        "top-left": "laps",
+        "bottom-right": "points",
+        "center-center": "main",
+      };
+      expect(LaneColumnInsetHelper.getPlacedInsetAnchors(insets)).toEqual([
+        "top-left",
+        "bottom-right",
+      ]);
+
+      expect(
+        LaneColumnInsetHelper.getEffectiveSelectedAnchor(
+          "bottom-left",
+          null,
+          insets,
+        ),
+      ).toBe("bottom-left");
+      expect(
+        LaneColumnInsetHelper.getEffectiveSelectedAnchor(
+          "center-center",
+          "top-center",
+          insets,
+        ),
+      ).toBe("top-center");
+      expect(
+        LaneColumnInsetHelper.getEffectiveSelectedAnchor(null, null, insets),
+      ).toBe("top-left");
+      expect(
+        LaneColumnInsetHelper.getEffectiveSelectedAnchor(null, null, {}),
+      ).toBe("top-right");
+    });
+
+    it("should get and set anchor values", () => {
+      const s: any = { columnKey: "laps", insets: {} };
+      expect(
+        LaneColumnInsetHelper.getAnchorValue(s, undefined, "center-center"),
+      ).toBe("laps");
+
+      let changed = false;
+      LaneColumnInsetHelper.setAnchorValue(
+        s,
+        "center-center",
+        "bestLapTime",
+        () => {
+          changed = true;
+        },
+      );
+      expect(s.columnKey).toBe("bestLapTime");
+      expect(changed).toBeTrue();
+
+      LaneColumnInsetHelper.setAnchorValue(
+        s,
+        "top-right",
+        "custom:fuel",
+        () => {},
+      );
+      expect(
+        LaneColumnInsetHelper.getAnchorValue(s, undefined, "top-right"),
+      ).toBe("custom:fuel");
+
+      LaneColumnInsetHelper.setAnchorValue(s, "top-right", "", () => {});
+      expect(s.insets["top-right"]).toBeUndefined();
+    });
+
+    it("should handle custom inset text color and reset", () => {
+      const s: any = { insetsConfig: { "top-left": { textColor: "#123456" } } };
+      expect(
+        LaneColumnInsetHelper.hasCustomInsetTextColor(s, "top-left"),
+      ).toBeTrue();
+      expect(
+        LaneColumnInsetHelper.hasCustomInsetTextColor(s, "top-right"),
+      ).toBeFalse();
+
+      let changed = false;
+      LaneColumnInsetHelper.resetInsetCustomColor(s, "top-left", () => {
+        changed = true;
+      });
+      expect(s.insetsConfig["top-left"].textColor).toBeUndefined();
+      expect(changed).toBeTrue();
+    });
+
+    it("should handle drag over, enter, leave events", () => {
+      const el = document.createElement("div");
+      const dragOverEvent = {
+        preventDefault: jasmine.createSpy("preventDefault"),
+        dataTransfer: { dropEffect: "none" },
+      } as any;
+      LaneColumnInsetHelper.handleDragOver(dragOverEvent);
+      expect(dragOverEvent.preventDefault).toHaveBeenCalled();
+      expect(dragOverEvent.dataTransfer.dropEffect).toBe("copy");
+
+      const dragEnterEvent = {
+        preventDefault: jasmine.createSpy("preventDefault"),
+        currentTarget: el,
+      } as any;
+      LaneColumnInsetHelper.handleDragEnter(dragEnterEvent);
+      expect(el.classList.contains("drag-over")).toBeTrue();
+
+      const dragLeaveEvent = {
+        preventDefault: jasmine.createSpy("preventDefault"),
+        currentTarget: el,
+      } as any;
+      LaneColumnInsetHelper.handleDragLeave(dragLeaveEvent);
+      expect(el.classList.contains("drag-over")).toBeFalse();
+    });
+
+    it("should build synthetic inset custom widget node", () => {
+      const node = LaneColumnInsetHelper.buildSyntheticInsetCustomWidgetNode(
+        { id: "parent-col", widgetType: "lane-column" } as any,
+        "top-right",
+        "custom:fuel_gauge",
+        { textColor: "#ff0000" } as any,
+      );
+      expect(node.id).toBe("parent-col-inset-top-right");
+      expect(node.widgetType).toBe("custom:fuel_gauge" as any);
+      expect((node.customSettings as any).textColor).toBe("#ff0000");
+    });
   });
 });
