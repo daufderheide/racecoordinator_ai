@@ -197,16 +197,29 @@ import { TranslatePipe } from "@app/pipes/translate.pipe";
             </label>
           </div>
 
-          <div class="form-check-group" style="margin-bottom: 12px;">
-            <label class="form-check-label">
-              <input
-                type="checkbox"
-                class="form-checkbox sort-grid-by-binding-mode-checkbox"
-                [checked]="sortByBindingMode()"
-                (change)="sortByBindingMode.set(!sortByBindingMode())"
-              />
-              <span>{{ "UE_GRID_SORT_BY_BINDING_MODE" | translate }}</span>
-            </label>
+          <div class="form-group" style="margin-bottom: 12px;">
+            <label class="form-label">{{
+              "UE_GRID_SORT_ORDER" | translate
+            }}</label>
+            <div class="select-container">
+              <app-custom-select
+                [ngModel]="selectedSortOrder()"
+                (ngModelChange)="selectedSortOrder.set($event)"
+              >
+                <app-custom-option value="lane">
+                  {{ "UE_GRID_SORT_ORDER_LANE" | translate }}
+                </app-custom-option>
+                <app-custom-option value="position">
+                  {{ "UE_GRID_SORT_ORDER_HEAT_POSITION" | translate }}
+                </app-custom-option>
+                <app-custom-option value="overallPosition">
+                  {{ "UE_GRID_SORT_ORDER_OVERALL_POSITION" | translate }}
+                </app-custom-option>
+                <app-custom-option value="seed">
+                  {{ "UE_GRID_SORT_ORDER_SEED" | translate }}
+                </app-custom-option>
+              </app-custom-select>
+            </div>
           </div>
 
           <div class="form-check-group">
@@ -351,6 +364,9 @@ export class ReplicateLaneDialogComponent {
   headerHeight = signal<number>(36);
   linkColumns = signal<boolean>(true);
   sortByBindingMode = signal<boolean>(true);
+  selectedSortOrder = signal<"lane" | "position" | "overallPosition" | "seed">(
+    "lane",
+  );
   replaceExisting = signal<boolean>(true);
 
   availableCounts = [2, 3, 4, 5, 6, 7, 8, 10, 12, 16, 20, 24, 32];
@@ -363,6 +379,7 @@ export class ReplicateLaneDialogComponent {
           if (def >= 2 && def <= 8) {
             this.targetCount.set(def);
           }
+          this.selectedSortOrder.set(this.bindingMode() || "lane");
         }
       },
       { allowSignalWrites: true },
@@ -397,7 +414,7 @@ export class ReplicateLaneDialogComponent {
       sortByBindingMode: this.sortByBindingMode(),
       replaceExisting: this.replaceExisting(),
       sourceIndex: this.sourceIndex(),
-      sourceBindingMode: this.bindingMode(),
+      sourceBindingMode: this.selectedSortOrder(),
     });
   }
 }

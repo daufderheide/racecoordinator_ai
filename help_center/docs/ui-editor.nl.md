@@ -60,9 +60,13 @@ De **Aftel-widget** toont de visuele startlichten en regelt de startgeluiden tij
 
 De widget **Baankolom** maakt het mogelijk om individuele gegevenskolommen uit het baanoverzicht (zoals coureur-info, laatste rondetijd, beste ronde / persoonlijk record, brandstof %, rondehistorie, sectorsnelheden, positie enz.) overal op het canvas te plaatsen als zelfstandige modulaire kaarten.
 
-- **Koppelingsmodi**:
-  - **Fysieke Baan**: Koppelt de kaart aan een specifieke baan van het circuit (Baan 1 t/m Baan 8). De kaart toont gedurende de hele race de gegevens van die baan.
-  - **Positie in Stand**: Koppelt de kaart aan een huidige positie in het klassement (1e plaats, 2e plaats, enz.). De kaart volgt automatisch positiewisselingen en inhaalacties en past de achtergrond- en tekstkleur aan de baan van de betreffende coureur aan.
+- **Doelcoureur & Raster Sortering**:
+  - **Losse Kaarten (Doelcoureur)**: Losse kaarten buiten een raster kiezen welke coureur wordt weergegeven: op **Baan** (Baan 1 t/m Baan 8), op **Heat-positie** (1e, 2e, etc.), op positie in het **Algemeen Klassement** of op **Coureur Seed**.
+  - **Rasters (Raster Sortering / Rijenvolgorde)**: In een gedupliceerd raster vertegenwoordigen alle kolommen binnen een rij dezelfde coureur. De rijenvolgorde wordt bepaald door de keuzelijst **Raster Sortering** op het tabblad Raster:
+    - **Baan**: Statische volgorde op baannummer (Baan 1, Baan 2, ...).
+    - **Heat-positie**: Live hersortering tijdens inhaalacties in de actieve heat.
+    - **Algemeen Klassement**: Live hersortering op basis van het toernooi-/evenementklassement.
+    - **Coureur Seed**: Statische volgorde op basis van de oorspronkelijke kwalificatie-/plaatsingspositie.
 - **Layout-oriëntatie**: Ondersteunt **Verticaal** (kop boven de waarde) en **Horizontaal** (kop en waarde naast elkaar).
 - **Vormgeving & Aanpassing van de Titelbalk**:
   - De titelbalk is standaard vormgegeven volgens de kolomkop in de baanweergave (half-transparante donkere achtergrond `rgba(68, 68, 68, 0.7)`, vette witte tekst, afgeronde bovenhoeken en een scheidingsrand).

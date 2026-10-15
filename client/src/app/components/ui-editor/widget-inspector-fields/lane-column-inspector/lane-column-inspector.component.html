@@ -35,16 +35,7 @@
         <span class="material-icons">view_column</span>
         {{ columnBreadcrumbLabel }}
       </button>
-      <span class="breadcrumb-sep">/</span>
-      <button
-        type="button"
-        class="breadcrumb-btn"
-        [class.active]="activeScope() === 'cell'"
-        (click)="setScope('cell')"
-      >
-        <span class="material-icons">crop_free</span>
-        {{ cellBreadcrumbLabel }}
-      </button>
+
       @if (activeScope() === "inset" || hasAnyInsets) {
         <span class="breadcrumb-sep">/</span>
         <button
@@ -96,18 +87,7 @@
           "UE_SCOPE_TAB_COLUMN" | translate
         }}</span>
       </button>
-      <button
-        type="button"
-        class="scope-tab"
-        [class.active]="activeScope() === 'cell'"
-        (click)="setScope('cell')"
-        [title]="'UE_SCOPE_TAB_CELL' | translate"
-      >
-        <span class="material-icons">crop_free</span>
-        <span class="scope-tab-label">{{
-          "UE_SCOPE_TAB_CELL" | translate
-        }}</span>
-      </button>
+
       @if (activeScope() === "inset" || hasAnyInsets) {
         <button
           type="button"
@@ -143,12 +123,6 @@
       <span>{{ "UE_SCOPE_COLUMN_HINT" | translate }}</span>
     </div>
     <ng-container *ngTemplateOutlet="columnSettingsTemplate"></ng-container>
-  } @else if (activeScope() === "cell") {
-    <div class="scope-hint-banner cell-banner">
-      <span class="material-icons">info</span>
-      <span>{{ "UE_SCOPE_CELL_HINT" | translate }}</span>
-    </div>
-    <ng-container *ngTemplateOutlet="cellSettingsTemplate"></ng-container>
   } @else if (activeScope() === "inset") {
     <div class="scope-hint-banner inset-banner">
       <span class="material-icons">info</span>
@@ -164,8 +138,6 @@
     </div>
     <ng-container *ngTemplateOutlet="insetSettingsTemplate"></ng-container>
   } @else {
-    <ng-container *ngTemplateOutlet="cellSettingsTemplate"></ng-container>
-    <hr class="inspector-divider" />
     <ng-container *ngTemplateOutlet="widgetSettingsTemplate"></ng-container>
     <hr class="inspector-divider" />
     <ng-container *ngTemplateOutlet="columnSettingsTemplate"></ng-container>
@@ -312,6 +284,29 @@
             </app-custom-option>
             <app-custom-option value="horizontal">
               {{ "UE_INSPECTOR_ORIENT_HORIZONTAL" | translate }}
+            </app-custom-option>
+          </app-custom-select>
+        </div>
+      </div>
+
+      <!-- Grid Sorting / Row Order Control -->
+      <div class="inspector-section" style="margin-bottom: 8px">
+        <label class="inspector-label">{{
+          "UE_GRID_SORT_ORDER" | translate
+        }}</label>
+        <div class="select-container select-sm">
+          <app-custom-select [(ngModel)]="gridSortOrder">
+            <app-custom-option value="lane">
+              {{ "UE_GRID_SORT_ORDER_LANE" | translate }}
+            </app-custom-option>
+            <app-custom-option value="position">
+              {{ "UE_GRID_SORT_ORDER_HEAT_POSITION" | translate }}
+            </app-custom-option>
+            <app-custom-option value="overallPosition">
+              {{ "UE_GRID_SORT_ORDER_OVERALL_POSITION" | translate }}
+            </app-custom-option>
+            <app-custom-option value="seed">
+              {{ "UE_GRID_SORT_ORDER_SEED" | translate }}
             </app-custom-option>
           </app-custom-select>
         </div>
@@ -979,92 +974,77 @@
   </div>
 </ng-template>
 
-<ng-template #cellSettingsTemplate>
-  @if (isHeaderWidget) {
-    <div class="inspector-section">
-      <div class="inspector-hint">
-        {{ "UE_GRID_HEADER_ROW_BADGE" | translate }}
+<ng-template #widgetSettingsTemplate>
+  @if (!currentSettings["gridId"]) {
+    <div class="inspector-section-group" style="margin-bottom: 12px">
+      <div class="inspector-group-title">
+        <span class="material-icons">person</span>
+        <span>{{ "UE_INSPECTOR_TARGET_DRIVER" | translate }}</span>
       </div>
-    </div>
-  } @else {
-    <div class="inspector-geometry-title">
-      <span class="material-icons">tag</span>
-      {{
-        (currentSettings["gridId"]
-          ? "UE_INSPECTOR_ROW_BINDING_SECTION"
-          : "UE_INSPECTOR_DATA_SOURCE_SECTION"
-        ) | translate
-      }}
-    </div>
 
-    <!-- Binding Mode & Target Index -->
-    <div class="inspector-section">
-      <label class="inspector-label">{{
-        (currentSettings["gridId"]
-          ? "UE_INSPECTOR_BINDING_MODE"
-          : "UE_INSPECTOR_DATA_SOURCE"
-        ) | translate
-      }}</label>
-      <div class="select-container select-sm">
-        <app-custom-select
-          [(ngModel)]="currentSettings['bindingMode']"
-          (change)="onFieldChange()"
-        >
-          <app-custom-option value="lane">
-            {{ "UE_INSPECTOR_BINDING_LANE" | translate }}
-          </app-custom-option>
-          <app-custom-option value="position">
-            {{ "UE_INSPECTOR_BINDING_POSITION" | translate }}
-          </app-custom-option>
-          <app-custom-option value="overallPosition">
-            {{ "UE_INSPECTOR_BINDING_OVERALL_POSITION" | translate }}
-          </app-custom-option>
-          <app-custom-option value="seed">
-            {{ "UE_INSPECTOR_BINDING_SEED" | translate }}
-          </app-custom-option>
-        </app-custom-select>
-      </div>
-    </div>
-
-    <div class="inspector-section">
-      <label class="inspector-label">
-        {{
-          (currentSettings["bindingMode"] === "position"
-            ? "UE_INSPECTOR_TARGET_POSITION"
-            : currentSettings["bindingMode"] === "overallPosition"
-              ? "UE_INSPECTOR_TARGET_OVERALL_POSITION"
-              : currentSettings["bindingMode"] === "seed"
-                ? "UE_INSPECTOR_TARGET_SEED"
-                : "UE_INSPECTOR_TARGET_LANE"
-          ) | translate
-        }}
-      </label>
-      <div class="select-container select-sm">
-        <app-custom-select
-          [(ngModel)]="currentSettings['targetIndex']"
-          (change)="onFieldChange()"
-        >
-          @for (idx of availableIndices; track idx) {
-            <app-custom-option [value]="idx">
-              {{
-                (currentSettings["bindingMode"] === "position"
-                  ? "UE_INSPECTOR_POSITION_INDEX"
-                  : currentSettings["bindingMode"] === "overallPosition"
-                    ? "UE_INSPECTOR_OVERALL_POSITION_INDEX"
-                    : currentSettings["bindingMode"] === "seed"
-                      ? "UE_INSPECTOR_SEED_INDEX"
-                      : "UE_INSPECTOR_LANE_INDEX"
-                ) | translate: { index: idx + 1 }
-              }}
+      <div class="inspector-section" style="margin-bottom: 8px">
+        <label class="inspector-label">{{
+          "UE_INSPECTOR_TARGET_DRIVER_BY" | translate
+        }}</label>
+        <div class="select-container select-sm">
+          <app-custom-select
+            [(ngModel)]="currentSettings['bindingMode']"
+            (change)="onFieldChange()"
+          >
+            <app-custom-option value="lane">
+              {{ "UE_GRID_SORT_ORDER_LANE" | translate }}
             </app-custom-option>
-          }
-        </app-custom-select>
+            <app-custom-option value="position">
+              {{ "UE_GRID_SORT_ORDER_HEAT_POSITION" | translate }}
+            </app-custom-option>
+            <app-custom-option value="overallPosition">
+              {{ "UE_GRID_SORT_ORDER_OVERALL_POSITION" | translate }}
+            </app-custom-option>
+            <app-custom-option value="seed">
+              {{ "UE_GRID_SORT_ORDER_SEED" | translate }}
+            </app-custom-option>
+          </app-custom-select>
+        </div>
+      </div>
+
+      <div class="inspector-section" style="margin-bottom: 8px">
+        <label class="inspector-label">
+          {{
+            (currentSettings["bindingMode"] === "position"
+              ? "UE_INSPECTOR_TARGET_POSITION"
+              : currentSettings["bindingMode"] === "overallPosition"
+                ? "UE_INSPECTOR_TARGET_OVERALL_POSITION"
+                : currentSettings["bindingMode"] === "seed"
+                  ? "UE_INSPECTOR_TARGET_SEED"
+                  : "UE_INSPECTOR_TARGET_LANE"
+            ) | translate
+          }}
+        </label>
+        <div class="select-container select-sm">
+          <app-custom-select
+            [(ngModel)]="currentSettings['targetIndex']"
+            (change)="onFieldChange()"
+          >
+            @for (idx of availableIndices; track idx) {
+              <app-custom-option [value]="idx">
+                {{
+                  (currentSettings["bindingMode"] === "position"
+                    ? "UE_INSPECTOR_POSITION_INDEX"
+                    : currentSettings["bindingMode"] === "overallPosition"
+                      ? "UE_INSPECTOR_OVERALL_POSITION_INDEX"
+                      : currentSettings["bindingMode"] === "seed"
+                        ? "UE_INSPECTOR_SEED_INDEX"
+                        : "UE_INSPECTOR_LANE_INDEX"
+                  ) | translate: { index: idx + 1 }
+                }}
+              </app-custom-option>
+            }
+          </app-custom-select>
+        </div>
       </div>
     </div>
   }
-</ng-template>
 
-<ng-template #widgetSettingsTemplate>
   <div class="inspector-geometry-title">
     <span class="material-icons">{{
       isCustomWidget ? "extension" : "widgets"

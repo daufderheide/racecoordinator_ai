@@ -372,6 +372,43 @@ describe("ui-editor-widget.helper", () => {
     ).toBeUndefined();
   });
 
+  it("should synchronize gridSortOrder across grid widgets when _gridSortOrderChanged is set", () => {
+    const {
+      handleWidgetInspectorChange,
+    } = require("./ui-editor-widget.helper");
+    const targetWidget = {
+      id: "w1",
+      customSettings: {
+        gridId: "grid-abc",
+        bindingMode: "position",
+        _gridSortOrderChanged: true,
+      },
+    };
+    const widget2 = {
+      id: "w2",
+      customSettings: { gridId: "grid-abc", bindingMode: "lane" },
+    };
+    const layout = { widgets: [targetWidget, widget2] };
+    const comp = {
+      isSaving: false,
+      activeCustomUi: { entity_id: "ui1" },
+      currentSelectedWidget: targetWidget,
+      activeGridSession: { gridId: "grid-abc", bindingMode: "lane" },
+      getLayout: jasmine.createSpy("getLayout").and.returnValue(layout),
+      editingSettings: new Settings(),
+      isCurrentLayoutPractice: false,
+      parsedLayouts: new Map(),
+      captureState: jasmine.createSpy("captureState"),
+      cdr: { markForCheck: jasmine.createSpy("markForCheck") },
+    };
+
+    handleWidgetInspectorChange(comp, targetWidget);
+
+    expect(widget2.customSettings.bindingMode).toBe("position");
+    expect(comp.activeGridSession.bindingMode).toBe("position");
+    expect(targetWidget.customSettings._gridSortOrderChanged).toBeUndefined();
+  });
+
   it("should handle removing selected widget", () => {
     const { handleRemoveSelectedWidget } = require("./ui-editor-widget.helper");
     const layout = {

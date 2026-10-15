@@ -126,6 +126,29 @@ export class LaneGridStyleHelper {
     });
   }
 
+  public static updateGridSortOrder(
+    allWidgets: AbsoluteWidgetNode[],
+    gridId: string,
+    sortOrder: "lane" | "position" | "overallPosition" | "seed",
+  ): AbsoluteWidgetNode[] {
+    if (!gridId || !allWidgets) return allWidgets || [];
+    return allWidgets.map((w) => {
+      if (w.customSettings?.["gridId"] === gridId) {
+        if (w.customSettings) {
+          w.customSettings["bindingMode"] = sortOrder;
+        }
+        return {
+          ...w,
+          customSettings: {
+            ...(w.customSettings || {}),
+            bindingMode: sortOrder,
+          },
+        };
+      }
+      return w;
+    });
+  }
+
   public static updateGridLayoutOrientation(
     allWidgets: AbsoluteWidgetNode[],
     gridId: string,

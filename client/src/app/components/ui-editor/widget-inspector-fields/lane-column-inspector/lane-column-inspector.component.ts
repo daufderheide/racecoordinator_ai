@@ -69,7 +69,7 @@ export class LaneColumnInspectorComponent {
   translationService = inject(TranslationService);
   customWidgetService = inject(CustomWidgetService, { optional: true });
   showReplicateModal = signal<boolean>(false);
-  activeScope = signal<"widget" | "grid" | "column" | "cell" | "inset">("grid");
+  activeScope = signal<"widget" | "grid" | "column" | "inset">("grid");
   activeInspectorAnchor = signal<string | null>(null);
 
   constructor() {
@@ -157,7 +157,7 @@ export class LaneColumnInspectorComponent {
     };
   }
 
-  setScope(scope: "widget" | "grid" | "column" | "cell" | "inset"): void {
+  setScope(scope: "widget" | "grid" | "column" | "inset"): void {
     if (scope === "inset") {
       const anchor = this.effectiveSelectedAnchor;
       this.anchorChange.emit(anchor);
@@ -800,6 +800,15 @@ export class LaneColumnInspectorComponent {
   }
   set mirrorRows(val: boolean) {
     LaneColumnGridHelper.setMirrorRows(this.currentSettings, val, () =>
+      this.onFieldChange(),
+    );
+  }
+
+  get gridSortOrder(): "lane" | "position" | "overallPosition" | "seed" {
+    return LaneColumnGridHelper.getGridSortOrder(this.currentSettings);
+  }
+  set gridSortOrder(val: "lane" | "position" | "overallPosition" | "seed") {
+    LaneColumnGridHelper.setGridSortOrder(this.currentSettings, val, () =>
       this.onFieldChange(),
     );
   }

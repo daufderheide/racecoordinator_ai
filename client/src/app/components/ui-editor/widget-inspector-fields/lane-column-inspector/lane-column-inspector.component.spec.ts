@@ -298,7 +298,7 @@ describe("LaneColumnInspectorComponent", () => {
     const breadcrumbs = fixture.debugElement.queryAll(
       By.css(".breadcrumb-btn"),
     );
-    expect(breadcrumbs.length).toBe(4);
+    expect(breadcrumbs.length).toBe(3);
 
     // Switch to widget scope
     component.setScope("widget");
@@ -314,20 +314,13 @@ describe("LaneColumnInspectorComponent", () => {
     const columnBanner = fixture.debugElement.query(By.css(".column-banner"));
     expect(columnBanner).toBeTruthy();
 
-    // Switch to cell scope
-    component.setScope("cell");
-    fixture.detectChanges();
-    expect(component.activeScope()).toBe("cell");
-    const cellBanner = fixture.debugElement.query(By.css(".cell-banner"));
-    expect(cellBanner).toBeTruthy();
-
     // Switch to inset scope
     fixture.componentRef.setInput("selectedAnchor", "top-left");
     fixture.detectChanges();
     expect(component.activeScope()).toBe("inset");
     const scopeTabs = fixture.debugElement.queryAll(By.css(".scope-tab"));
-    expect(scopeTabs.length).toBe(5);
-    const insetTab = scopeTabs[4];
+    expect(scopeTabs.length).toBe(4);
+    const insetTab = scopeTabs[3];
     expect(insetTab.nativeElement.getAttribute("title")).toBe(
       "UE_SCOPE_TAB_INSET",
     );
@@ -1068,6 +1061,16 @@ describe("LaneColumnInspectorComponent", () => {
       expect(component.change.emit).toHaveBeenCalled();
     });
 
+    it("should handle gridSortOrder getter and setter with _gridSortOrderChanged flag", () => {
+      spyOn(component.change, "emit");
+      expect(component.gridSortOrder).toBe("lane");
+
+      component.gridSortOrder = "position";
+      expect(mockSettings.bindingMode).toBe("position");
+      expect(mockSettings._gridSortOrderChanged).toBeTrue();
+      expect(component.change.emit).toHaveBeenCalled();
+    });
+
     it("should handle sortByBindingMode getter and setter with _sortByBindingModeChanged flag", () => {
       spyOn(component.change, "emit");
       expect(component.sortByBindingMode).toBeTrue();
@@ -1794,18 +1797,18 @@ describe("LaneColumnInspectorComponent", () => {
       ).toBeTrue();
     });
 
-    it("should render Row Binding geometry title in cell scope", () => {
-      mockSettings.gridId = "grid-1";
-      component.setScope("cell");
+    it("should render Target Driver title for standalone widget", () => {
+      delete mockSettings.gridId;
+      component.setScope("widget");
       fixture.detectChanges();
 
       const titles = fixture.debugElement.queryAll(
-        By.css(".inspector-geometry-title"),
+        By.css(".inspector-group-title"),
       );
       const titleTexts = titles.map((t) => t.nativeElement.textContent.trim());
 
       expect(
-        titleTexts.some((t) => t.includes("UE_INSPECTOR_ROW_BINDING_SECTION")),
+        titleTexts.some((t) => t.includes("UE_INSPECTOR_TARGET_DRIVER")),
       ).toBeTrue();
     });
   });

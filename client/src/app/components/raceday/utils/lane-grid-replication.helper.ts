@@ -705,6 +705,18 @@ export class LaneGridReplicationHelper {
     );
   }
 
+  public static updateGridSortOrder(
+    allWidgets: AbsoluteWidgetNode[],
+    gridId: string,
+    sortOrder: "lane" | "position" | "overallPosition" | "seed",
+  ): AbsoluteWidgetNode[] {
+    return LaneGridStyleHelper.updateGridSortOrder(
+      allWidgets,
+      gridId,
+      sortOrder,
+    );
+  }
+
   public static updateGridLayoutOrientation(
     allWidgets: AbsoluteWidgetNode[],
     gridId: string,

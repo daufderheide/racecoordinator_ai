@@ -60,9 +60,13 @@ The **Countdown** widget displays visual start lights and triggers start audio d
 
 The **Lane Column** widget allows individual data columns from the lane view (such as Driver Info, Last Lap Time, Best Lap / Personal Record, Fuel %, Last Laps history, Sector Speeds, Position, etc.) to be placed anywhere on the canvas as independent modular cards.
 
-- **Binding Modes**:
-  - **Physical Lane**: Binds the card to a specific track lane (Lane 1 through Lane 8). The card maintains that lane's data throughout the race.
-  - **Heat Standings Position**: Binds the card to a current standings rank (1st Place, 2nd Place, etc.). The card dynamically follows position changes, leader overtakes, and adjusts its background/accent colors to match the lane of whoever is currently in that position.
+- **Target Driver & Grid Sorting**:
+  - **Standalone Cards (Target Driver)**: Individual cards placed outside of a grid select which driver to display: by **Track Lane** (Lane 1 through Lane 8), by **Heat Position** (1st, 2nd, etc.), by **Overall Standings** rank, or by **Driver Seed**.
+  - **Grids (Grid Sorting / Row Order)**: In a replicated grid, all columns within a row represent the same driver, and the order of rows is determined by the **Grid Sorting** dropdown on the Grid tab:
+    - **Track Lane**: Static ordering by lane number (Lane 1, Lane 2, ...).
+    - **Heat Position**: Live reordering as drivers pass each other on track in the active heat.
+    - **Overall Standings**: Live reordering based on tournament/event standings.
+    - **Driver Seed**: Static ordering by initial qualifying/seed position.
 - **Orientation**: Supports **Vertical** (stacked header over value) and **Horizontal** (side-by-side header and value) layouts.
 - **Title Bar Styling & Customization**:
   - The title bar is styled identically to the Lane View column header by default (semi-transparent dark background `rgba(68, 68, 68, 0.7)`, bold white text, rounded top corners, and divider border).

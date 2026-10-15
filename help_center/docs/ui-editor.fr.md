@@ -60,9 +60,13 @@ Le widget **Compte à rebours** affiche les feux visuels de départ et déclench
 
 Le widget **Colonne de Voie** permet de positionner des colonnes individuelles de données provenant de la vue de voie (telles que les informations du pilote, le temps du dernier tour, le meilleur tour / record personnel, le niveau de carburant %, l'historique des tours, les vitesses de secteur, la position, etc.) n'importe où sur le canevas sous la forme de cartes modulaires indépendantes.
 
-- **Modes de Liaison** :
-  - **Voie Physique** : Associe la carte à une voie spécifique du circuit (Voie 1 à Voie 8). La carte conserve les données de cette voie pendant toute la durée de la course.
-  - **Position au Classement** : Associe la carte à un rang actuel du classement (1ère place, 2e place, etc.). La carte s'adapte dynamiquement aux dépassements et aux changements de position, tout en ajustant ses couleurs de fond et de texte à la voie du pilote occupant ce rang.
+- **Pilote Cible et Tri de la Grille** :
+  - **Cartes Individuelles (Pilote Cible)** : Les cartes placées hors grille sélectionnent le pilote à afficher : par **Voie de Piste** (Voie 1 à Voie 8), par **Position de Série** (1ère, 2e, etc.), par rang au **Classement Général** ou par **Tête de Série**.
+  - **Grilles (Tri de la Grille / Ordre des Lignes)** : Dans une grille dupliquée, toutes les colonnes d'une ligne représentent le même pilote. L'ordre des lignes est déterminé par le menu déroulant **Tri de la Grille** dans l'onglet Grille :
+    - **Voie de Piste** : Ordre statique par numéro de voie (Voie 1, Voie 2, ...).
+    - **Position de Série** : Réordonnancement dynamique lors des dépassements dans la série en cours.
+    - **Classement Général** : Réordonnancement dynamique selon le classement général de l'épreuve.
+    - **Tête de Série** : Ordre statique selon la position initiale de qualification/classement.
 - **Orientation** : Prend en charge les dispositions **Verticale** (en-tête au-dessus de la valeur) et **Horizontale** (en-tête et valeur côte à côte).
 - **Style et Personnalisation de la Barre de Titre** :
   - La barre de titre reprend par défaut l'apparence exacte de l'en-tête de colonne de la vue de voie (arrière-plan sombre semi-transparent `rgba(68, 68, 68, 0.7)`, texte blanc en gras, coins supérieurs arrondis et bordure de séparation).

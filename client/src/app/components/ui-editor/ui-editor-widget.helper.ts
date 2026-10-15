@@ -485,6 +485,19 @@ function handleGridColumnStructureChanges(
     }
   }
 
+  if (targetWidget.customSettings?.["_gridSortOrderChanged"]) {
+    delete targetWidget.customSettings["_gridSortOrderChanged"];
+    const sortOrder = targetWidget.customSettings?.["bindingMode"] || "lane";
+    layout.widgets = LaneGridReplicationHelper.updateGridSortOrder(
+      layout.widgets,
+      gridId,
+      sortOrder,
+    );
+    if (comp.activeGridSession && comp.activeGridSession.gridId === gridId) {
+      comp.activeGridSession.bindingMode = sortOrder;
+    }
+  }
+
   if (targetWidget.customSettings?.["_sortByBindingModeChanged"]) {
     delete targetWidget.customSettings["_sortByBindingModeChanged"];
     const sort = targetWidget.customSettings?.["sortByBindingMode"] !== false;

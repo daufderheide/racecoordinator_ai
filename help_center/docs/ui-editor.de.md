@@ -60,9 +60,13 @@ Das **Countdown**-Widget stellt die visuelle Startampel dar und steuert die Star
 
 Das **Spurspalten-Widget** ermöglicht es, einzelne Datenspalten aus der Spuransicht (wie Fahrerinfo, letzte Rundenzeit, beste Rundenzeit / persönlicher Rekord, Tankfüllstand in %, Rundenhistorie, Sektorgeschwindigkeiten, Platzierung usw.) als eigenständige modulare Karten auf der Arbeitsfläche zu platzieren.
 
-- **Bindungsmodi**:
-  - **Physische Spur**: Bindet die Karte an eine feste Spur (Spur 1 bis Spur 8). Die Karte zeigt während des gesamten Rennens die Daten dieser Spur an.
-  - **Laufplatzierung (Position)**: Bindet die Karte an einen aktuellen Rang in der Platzierung (1. Platz, 2. Platz usw.). Die Karte folgt dynamisch Positionswechseln und Überholmanövern und passt Hintergrund- und Akzentfarben an die Spur des jeweiligen Fahrers auf diesem Rang an.
+- **Zielfahrer & Raster-Sortierung**:
+  - **Einzelkarten (Zielfahrer)**: Einzelne Karten außerhalb eines Rasters wählen den anzuzeigenden Fahrer: nach **Spur** (Spur 1 bis Spur 8), nach **Lauf-Position** (1., 2. usw.), nach Rang in der **Gesamtwertung** oder nach **Fahrer-Setzung**.
+  - **Raster (Raster-Sortierung / Zeilenreihenfolge)**: In einem duplizierten Raster stellen alle Spalten innerhalb einer Zeile denselben Fahrer dar. Die Zeilenreihenfolge wird über das Dropdown-Menü **Raster-Sortierung** im Reiter „Raster“ festgelegt:
+    - **Spur**: Statische Sortierung nach Spurnummer (Spur 1, Spur 2, ...).
+    - **Lauf-Position**: Dynamische Neusortierung bei Überholvorgängen im aktuellen Lauf.
+    - **Gesamtwertung**: Dynamische Neusortierung basierend auf der Gesamt- bzw. Meisterschaftswertung.
+    - **Fahrer-Setzung**: Statische Sortierung nach anfänglicher Qualifikations-/Setzungsposition.
 - **Ausrichtung**: Unterstützt **Vertikal** (Überschrift über dem Wert) und **Horizontal** (Überschrift und Wert nebeneinander).
 - **Titelleisten-Design & Anpassung**:
   - Die Titelleiste ist standardmäßig identisch zur Spaltenüberschrift der Spuransicht gestaltet (halbtransparenter dunkler Hintergrund `rgba(68, 68, 68, 0.7)`, weiße Fettschrift, abgerundete obere Ecken und Trennlinie).

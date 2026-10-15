@@ -195,6 +195,11 @@ describe("LaneColumnGridHelper", () => {
       LaneColumnGridHelper.setSortByBindingMode(settings, false, onChange);
       expect(LaneColumnGridHelper.getSortByBindingMode(settings)).toBeFalse();
       expect(settings._sortByBindingModeChanged).toBeTrue();
+
+      expect(LaneColumnGridHelper.getGridSortOrder(settings)).toBe("lane");
+      LaneColumnGridHelper.setGridSortOrder(settings, "position", onChange);
+      expect(LaneColumnGridHelper.getGridSortOrder(settings)).toBe("position");
+      expect(settings._gridSortOrderChanged).toBeTrue();
     });
 
     it("should get and set total lanes and layout orientation", () => {

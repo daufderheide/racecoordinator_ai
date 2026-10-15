@@ -60,9 +60,13 @@ El widget **Cuenta atrás** muestra el semáforo visual de salida y reproduce el
 
 El widget de **Columna de Carril** permite colocar columnas individuales de datos de la vista de carril (como información del piloto, tiempo de última vuelta, mejor vuelta / récord personal, combustible %, historial de vueltas, velocidades de sector, posición, etc.) en cualquier parte del lienzo como tarjetas modulares independientes.
 
-- **Modos de Vinculación**:
-  - **Carril Físico**: Vincula la tarjeta a un carril específico de la pista (Carril 1 a Carril 8). La tarjeta mantiene los datos de ese carril durante toda la carrera.
-  - **Posición en la Carrera**: Vincula la tarjeta a la clasificación actual (1º Lugar, 2º Lugar, etc.). La tarjeta sigue dinámicamente los cambios de posición y adelantamientos, adaptando sus colores de fondo y acento al carril del piloto que se encuentra en esa posición.
+- **Piloto Objetivo y Ordenación de Cuadrícula**:
+  - **Tarjetas Individuales (Piloto Objetivo)**: Las tarjetas individuales colocadas fuera de una cuadrícula eligen qué piloto mostrar: por **Carril de Pista** (Carril 1 a Carril 8), por **Posición de Ronda** (1º, 2º, etc.), por puesto en la **Clasificación General** o por **Clasificación Previa**.
+  - **Cuadrículas (Ordenación de Cuadrícula / Orden de Filas)**: En una cuadrícula duplicada, todas las columnas dentro de una fila representan al mismo piloto. El orden de las filas se define en el menú desplegable **Ordenación de Cuadrícula** de la pestaña Cuadrícula:
+    - **Carril de Pista**: Orden estático por número de carril (Carril 1, Carril 2, ...).
+    - **Posición de Ronda**: Reordenación en vivo según los adelantamientos en la ronda actual.
+    - **Clasificación General**: Reordenación en vivo según la tabla general del torneo o carrera.
+    - **Clasificación Previa**: Orden estático según la posición inicial de cabezas de serie/clasificación.
 - **Orientación**: Admite diseños **Vertical** (encabezado encima del valor) y **Horizontal** (encabezado y valor lado a lado).
 - **Diseño y Personalización de la Barra de Título**:
   - La barra de título tiene el mismo estilo que el encabezado de columna de la vista de carril de forma predeterminada (fondo oscuro semitransparente `rgba(68, 68, 68, 0.7)`, texto blanco en negrita, esquinas superiores redondeadas y borde divisor).

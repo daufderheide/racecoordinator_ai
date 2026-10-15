@@ -66,6 +66,16 @@ describe("LaneGridStyleHelper", () => {
     expect(updated[1].customSettings?.["sortByBindingMode"]).toBeTrue();
   });
 
+  it("should update grid sort order across grid widgets", () => {
+    const updated = LaneGridStyleHelper.updateGridSortOrder(
+      widgets,
+      gridId,
+      "position",
+    );
+    expect(updated[0].customSettings?.["bindingMode"]).toBe("position");
+    expect(updated[1].customSettings?.["bindingMode"]).toBe("position");
+  });
+
   it("should update layoutOrientation across grid widgets", () => {
     const updated = LaneGridStyleHelper.updateGridLayoutOrientation(
       widgets,

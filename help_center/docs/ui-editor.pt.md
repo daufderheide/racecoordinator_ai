@@ -60,9 +60,13 @@ O widget **Contagem Decrescente** exibe o semáforo visual de partida e aciona o
 
 O widget **Coluna de Pista** permite posicionar colunas individuais de dados da visualização de pista (como informações do piloto, tempo da última volta, melhor volta / recorde pessoal, combustível %, histórico de voltas, velocidades de setor, posição, etc.) em qualquer lugar da tela como cartões modulares independentes.
 
-- **Modos de Associação**:
-  - **Pista Física**: Vincula o cartão a uma pista específica do circuito (Pista 1 a Pista 8). O cartão mantém os dados dessa pista durante toda a corrida.
-  - **Posição na Classificação**: Vincula o cartão a uma classificação atual (1º Lugar, 2º Lugar, etc.). O cartão acompanha dinamicamente ultrapassagens e alterações de posição, adaptando as cores de fundo e texto à pista do piloto que ocupa essa colocação.
+- **Piloto Alvo e Classificação da Grade**:
+  - **Cartões Individuais (Piloto Alvo)**: Cartões individuais colocados fora de uma grade escolhem qual piloto exibir: por **Pista** (Pista 1 a Pista 8), por **Posição da Bateria** (1º, 2º, etc.), por posto na **Classificação Geral** ou por **Chaveamento do Piloto**.
+  - **Grades (Classificação da Grade / Ordem das Linhas)**: Em uma grade duplicada, todas as colunas dentro de uma linha representam o mesmo piloto, e a ordem das linhas é definida no menu suspenso **Classificação da Grade** na aba Grade:
+    - **Pista**: Ordenação estática pelo número da pista (Pista 1, Pista 2, ...).
+    - **Posição da Bateria**: Reordenação em tempo real conforme os pilotos se ultrapassam na bateria ativa.
+    - **Classificação Geral**: Reordenação em tempo real com base na classificação geral do torneio/evento.
+    - **Chaveamento do Piloto**: Ordenação estática pela posição inicial de classificação/chaveamento.
 - **Orientação**: Suporta layouts **Vertical** (cabeçalho acima do valor) e **Horizontal** (cabeçalho e valor lado a lado).
 - **Estilo e Personalização da Barra de Título**:
   - A barra de título segue por padrão o mesmo estilo do cabeçalho de coluna da visualização de pista (fundo escuro semitransparente `rgba(68, 68, 68, 0.7)`, texto branco em negrito, cantos superiores arredondados e borda divisória).

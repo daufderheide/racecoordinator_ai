@@ -60,9 +60,13 @@ Il widget **Conto alla rovescia** mostra il semaforo visivo di partenza ed emett
 
 Il widget **Colonna Corsia** consente di posizionare le singole colonne di dati della vista corsia (come informazioni pilota, tempo dell'ultimo giro, miglior giro / record personale, livello carburante %, storico dei giri, velocità di settore, posizione, ecc.) in qualsiasi punto dell'area di lavoro sotto forma di schede modulari indipendenti.
 
-- **Modalità di Associazione**:
-  - **Corsia Fisica**: Associa la scheda a una corsia specifica della pista (Corsia 1 fino a Corsia 8). La scheda mantiene i dati di tale corsia durante l'intera gara.
-  - **Posizione in Classifica**: Associa la scheda a una posizione attuale della classifica (1° posto, 2° posto, ecc.). La scheda segue dinamicamente cambi di posizione e sorpassi, adattando i colori di sfondo e testo alla corsia del pilota che occupa quella posizione.
+- **Pilota di Riferimento e Ordinamento Griglia**:
+  - **Schede Singole (Pilota di Riferimento)**: Le singole schede posizionate fuori da una griglia scelgono quale pilota mostrare: per **Corsia Pista** (Corsia 1 fino a Corsia 8), per **Posizione Manche** (1°, 2°, ecc.), per posizione nella **Classifica Generale** o per **Testa di Serie**.
+  - **Griglie (Ordinamento Griglia / Ordine Righe)**: In una griglia duplicata, tutte le colonne all'interno di una riga rappresentano lo stesso pilota. L'ordine delle righe è determinato dal menu a discesa **Ordinamento Griglia** nella scheda Griglia:
+    - **Corsia Pista**: Ordinamento statico per numero di corsia (Corsia 1, Corsia 2, ...).
+    - **Posizione Manche**: Riordinamento dinamico in tempo reale durante i sorpassi nella manche attuale.
+    - **Classifica Generale**: Riordinamento dinamico basato sulla classifica generale della manifestazione.
+    - **Testa di Serie**: Ordinamento statico in base alla posizione iniziale di qualificazione/seeding.
 - **Orientamento**: Supporta layout **Verticale** (intestazione sopra il valore) e **Orizzontale** (intestazione e valore affiancati).
 - **Stile e Personalizzazione della Barra del Titolo**:
   - La barra del titolo segue per impostazione predefinita lo stesso stile dell'intestazione della colonna nella vista corsia (sfondo scuro semitrasparente `rgba(68, 68, 68, 0.7)`, testo bianco in grassetto, angoli superiori arrotondati e bordo divisore).

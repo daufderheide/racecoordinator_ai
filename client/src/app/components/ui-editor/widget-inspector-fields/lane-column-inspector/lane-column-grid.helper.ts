@@ -377,6 +377,22 @@ export class LaneColumnGridHelper {
     onFieldChange();
   }
 
+  public static getGridSortOrder(
+    currentSettings: any,
+  ): "lane" | "position" | "overallPosition" | "seed" {
+    return currentSettings["bindingMode"] || "lane";
+  }
+
+  public static setGridSortOrder(
+    currentSettings: any,
+    val: "lane" | "position" | "overallPosition" | "seed",
+    onFieldChange: () => void,
+  ): void {
+    currentSettings["bindingMode"] = val;
+    currentSettings["_gridSortOrderChanged"] = true;
+    onFieldChange();
+  }
+
   public static getSortByBindingMode(currentSettings: any): boolean {
     return currentSettings["sortByBindingMode"] !== false;
   }
