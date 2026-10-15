@@ -90,3 +90,83 @@
   font-size: 18px;
 }
 
+.inspector-section-group {
+  background: rgba(255, 255, 255, 0.45);
+  border: 1px solid rgba(15, 23, 42, 0.15);
+  border-radius: 6px;
+  padding: 10px 10px 6px 10px;
+  margin-bottom: 12px;
+}
+
+.inspector-section-group.title-bar-group {
+  background: rgba(14, 165, 233, 0.08);
+  border-color: rgba(14, 165, 233, 0.35);
+}
+
+.inspector-section-group.header-row-group {
+  background: rgba(99, 102, 241, 0.08);
+  border-color: rgba(99, 102, 241, 0.35);
+}
+
+.inspector-section-group.layout-group {
+  background: rgba(16, 185, 129, 0.08);
+  border-color: rgba(16, 185, 129, 0.35);
+}
+
+.inspector-section-group.actions-group {
+  background: rgba(15, 23, 42, 0.04);
+  border-color: rgba(15, 23, 42, 0.18);
+}
+
+.inspector-group-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #1e3a8a;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 10px;
+  padding-bottom: 5px;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.1);
+}
+
+.inspector-group-title .material-icons {
+  font-size: 16px;
+  color: #2563eb;
+}
+
+.inspector-geometry-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.inspector-geometry-title .material-icons {
+  font-size: 15px;
+  color: #64748b;
+}
+
+.custom-widget-column-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: 6px;
+}
+
+.custom-widget-column-info .custom-widget-name {
+  color: #0f172a;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.custom-widget-column-info .custom-widget-icon {
+  font-size: 18px;
+  color: #d97706;
+}
+
+

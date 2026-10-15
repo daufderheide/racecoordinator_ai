@@ -287,6 +287,7 @@ describe("LaneColumnInspectorComponent", () => {
     fixture.detectChanges();
 
     expect(component.activeScope()).toBe("grid");
+    expect(component.widgetBreadcrumbLabel).toBeTruthy();
     expect(component.gridBreadcrumbLabel).toBe("Grid (4 Lanes)");
     expect(component.columnBreadcrumbLabel).toBe("Driver");
     expect(component.cellBreadcrumbLabel).toBe("Lane 1");
@@ -297,7 +298,14 @@ describe("LaneColumnInspectorComponent", () => {
     const breadcrumbs = fixture.debugElement.queryAll(
       By.css(".breadcrumb-btn"),
     );
-    expect(breadcrumbs.length).toBe(3);
+    expect(breadcrumbs.length).toBe(4);
+
+    // Switch to widget scope
+    component.setScope("widget");
+    fixture.detectChanges();
+    expect(component.activeScope()).toBe("widget");
+    const widgetBanner = fixture.debugElement.query(By.css(".widget-banner"));
+    expect(widgetBanner).toBeTruthy();
 
     // Switch to column scope
     component.setScope("column");
@@ -1430,7 +1438,7 @@ describe("LaneColumnInspectorComponent", () => {
       expect(component.change.emit).toHaveBeenCalled();
     });
 
-    it("should render custom widget badge and custom-widget-inspector in column scope", () => {
+    it("should render custom widget badge and custom-widget-inspector in widget scope, and compact info in column scope", () => {
       const customWidget: AbsoluteWidgetNode = {
         id: "w-custom-1",
         widgetType: "custom:advanced-laps",
@@ -1447,7 +1455,7 @@ describe("LaneColumnInspectorComponent", () => {
 
       fixture.componentRef.setInput("widget", customWidget);
       fixture.componentRef.setInput("settings", customWidget.customSettings);
-      component.setScope("column");
+      component.setScope("widget");
       fixture.detectChanges();
 
       const badge = fixture.nativeElement.querySelector(".custom-widget-badge");
@@ -1458,6 +1466,16 @@ describe("LaneColumnInspectorComponent", () => {
         "app-custom-widget-inspector",
       );
       expect(customInspector).toBeTruthy();
+
+      component.setScope("column");
+      fixture.detectChanges();
+      const columnInfo = fixture.nativeElement.querySelector(
+        ".custom-widget-column-info",
+      );
+      expect(columnInfo).toBeTruthy();
+      expect(
+        fixture.nativeElement.querySelector("app-custom-widget-inspector"),
+      ).toBeNull();
     });
   });
 
@@ -1677,6 +1695,107 @@ describe("LaneColumnInspectorComponent", () => {
         fixture.nativeElement.querySelectorAll(".timer-preview-label"),
       ).map((el: any) => el.textContent.trim());
       expect(labels).toEqual(["> 1 hr", "> 1 min", "< 1 min", "< 10s"]);
+    });
+  });
+
+  describe("Phase 1 Section Groups and Geometry Titles", () => {
+    it("should render all 4 section groups in grid scope", () => {
+      mockSettings.gridId = "grid-1";
+      component.setScope("grid");
+      fixture.detectChanges();
+
+      const groups = fixture.debugElement.queryAll(
+        By.css(".inspector-section-group"),
+      );
+      expect(groups.length).toBe(4);
+
+      const layoutGroup = fixture.debugElement.query(
+        By.css(".inspector-section-group.layout-group"),
+      );
+      expect(layoutGroup).toBeTruthy();
+      expect(layoutGroup.nativeElement.textContent).toContain(
+        "UE_GRID_SECTION_LAYOUT",
+      );
+
+      const titleGroup = fixture.debugElement.query(
+        By.css(".inspector-section-group.title-bar-group"),
+      );
+      expect(titleGroup).toBeTruthy();
+      expect(titleGroup.nativeElement.textContent).toContain(
+        "UE_GRID_SECTION_TITLE",
+      );
+
+      const headerGroup = fixture.debugElement.query(
+        By.css(".inspector-section-group.header-row-group"),
+      );
+      expect(headerGroup).toBeTruthy();
+      expect(headerGroup.nativeElement.textContent).toContain(
+        "UE_GRID_SECTION_COLUMN_HEADERS",
+      );
+
+      const actionsGroup = fixture.debugElement.query(
+        By.css(".inspector-section-group.actions-group"),
+      );
+      expect(actionsGroup).toBeTruthy();
+      expect(actionsGroup.nativeElement.textContent).toContain(
+        "UE_GRID_SECTION_ACTIONS",
+      );
+    });
+
+    it("should render Column Header, Data Styling, and Border geometry titles in column scope", () => {
+      mockSettings.gridId = "grid-1";
+      mockSettings.columnKey = "totalTime";
+      mockSettings.showHeader = true;
+      component.setScope("column");
+      fixture.detectChanges();
+
+      const titles = fixture.debugElement.queryAll(
+        By.css(".inspector-geometry-title"),
+      );
+      const titleTexts = titles.map((t) => t.nativeElement.textContent.trim());
+
+      expect(
+        titleTexts.some((t) => t.includes("UE_INSPECTOR_TITLE_BAR_SETTINGS")),
+      ).toBeTrue();
+      expect(
+        titleTexts.some((t) =>
+          t.includes("UE_INSPECTOR_DATA_STYLING_SETTINGS"),
+        ),
+      ).toBeTrue();
+      expect(
+        titleTexts.some((t) => t.includes("UE_INSPECTOR_BORDER_SECTION")),
+      ).toBeTrue();
+    });
+
+    it("should render Format geometry title in widget scope for time columns", () => {
+      mockSettings.gridId = "grid-1";
+      mockSettings.columnKey = "totalTime";
+      component.setScope("widget");
+      fixture.detectChanges();
+
+      const titles = fixture.debugElement.queryAll(
+        By.css(".inspector-geometry-title"),
+      );
+      const titleTexts = titles.map((t) => t.nativeElement.textContent.trim());
+
+      expect(
+        titleTexts.some((t) => t.includes("UE_INSPECTOR_FORMAT_SECTION")),
+      ).toBeTrue();
+    });
+
+    it("should render Row Binding geometry title in cell scope", () => {
+      mockSettings.gridId = "grid-1";
+      component.setScope("cell");
+      fixture.detectChanges();
+
+      const titles = fixture.debugElement.queryAll(
+        By.css(".inspector-geometry-title"),
+      );
+      const titleTexts = titles.map((t) => t.nativeElement.textContent.trim());
+
+      expect(
+        titleTexts.some((t) => t.includes("UE_INSPECTOR_ROW_BINDING_SECTION")),
+      ).toBeTrue();
     });
   });
 });

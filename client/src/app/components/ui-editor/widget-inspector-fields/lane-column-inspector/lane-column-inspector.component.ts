@@ -67,7 +67,7 @@ export class LaneColumnInspectorComponent {
   translationService = inject(TranslationService);
   customWidgetService = inject(CustomWidgetService, { optional: true });
   showReplicateModal = signal<boolean>(false);
-  activeScope = signal<"grid" | "column" | "cell" | "inset">("grid");
+  activeScope = signal<"widget" | "grid" | "column" | "cell" | "inset">("grid");
 
   constructor() {
     effect(() => {
@@ -99,7 +99,7 @@ export class LaneColumnInspectorComponent {
     );
   }
 
-  setScope(scope: "grid" | "column" | "cell" | "inset"): void {
+  setScope(scope: "widget" | "grid" | "column" | "cell" | "inset"): void {
     if (scope === "inset") {
       const anchor = this.effectiveSelectedAnchor;
       this.anchorChange.emit(anchor);
@@ -375,6 +375,20 @@ export class LaneColumnInspectorComponent {
           ? this.currentSettings["targetIndex"]
           : 0;
     return Number(idx) === 0;
+  }
+
+  get widgetBreadcrumbLabel(): string {
+    if (this.isCustomWidget) {
+      return this.customWidgetName;
+    }
+    const colKey = this.currentSettings["columnKey"];
+    const col = this.availableColumns().find((c) => c.key === colKey);
+    const raw =
+      col?.label ||
+      (colKey ? RacedayLayoutUtils.COLUMN_LABELS[colKey] : undefined) ||
+      colKey ||
+      "Widget";
+    return this.translationService.translate(raw);
   }
 
   get gridBreadcrumbLabel(): string {
