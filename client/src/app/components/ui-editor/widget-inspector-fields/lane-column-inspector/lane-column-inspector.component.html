@@ -319,230 +319,6 @@
       </div>
     </div>
 
-    <!-- Header Placement Control for the Grid -->
-    <div class="inspector-section" style="margin-bottom: 8px">
-      <label class="inspector-label">{{
-        "UE_GRID_HEADER_PLACEMENT" | translate
-      }}</label>
-      <div class="select-container select-sm">
-        <app-custom-select
-          [ngModel]="gridHeaderPlacement"
-          (ngModelChange)="onGridHeaderPlacementChange($event)"
-        >
-          <app-custom-option value="top">
-            {{ "UE_REPLICATE_HEADER_TOP" | translate }}
-          </app-custom-option>
-          <app-custom-option value="individual">
-            {{ "UE_REPLICATE_HEADER_INDIVIDUAL" | translate }}
-          </app-custom-option>
-          <app-custom-option value="none">
-            {{ "UE_REPLICATE_HEADER_NONE" | translate }}
-          </app-custom-option>
-        </app-custom-select>
-      </div>
-    </div>
-
-    <!-- Header Settings for the Grid -->
-    @if (gridHeaderPlacement !== "none") {
-      @if (gridHeaderPlacement === "top") {
-        <div class="inspector-section" style="margin-bottom: 8px">
-          <div class="inspector-label-row">
-            <label class="inspector-label">{{
-              "UE_GRID_HEADER_HEIGHT" | translate
-            }}</label>
-            <span class="inspector-val-badge"
-              >{{ currentGridHeaderHeight }}px</span
-            >
-          </div>
-          <div style="display: flex; gap: 8px; align-items: center">
-            <input
-              type="range"
-              min="20"
-              max="200"
-              step="1"
-              [ngModel]="currentGridHeaderHeight"
-              (ngModelChange)="onGridHeaderHeightChange($event)"
-              class="inspector-slider"
-              style="flex: 1"
-            />
-            <input
-              type="number"
-              min="20"
-              max="200"
-              step="1"
-              autocomplete="off"
-              data-dashlane-ignore="true"
-              data-1p-ignore="true"
-              data-lpignore="true"
-              data-bwignore="true"
-              data-form-type="other"
-              [ngModel]="currentGridHeaderHeight"
-              (ngModelChange)="onGridHeaderHeightChange($event)"
-              style="
-                width: 55px;
-                padding: 2px 4px;
-                font-size: 12px;
-                background: rgba(255, 255, 255, 0.9);
-                border: 1px solid rgba(0, 0, 0, 0.25);
-                border-radius: 4px;
-              "
-            />
-          </div>
-        </div>
-      }
-
-      <div class="inspector-section" style="margin-bottom: 8px">
-        <label class="inspector-label">{{
-          "UE_INSPECTOR_HEADER_FONT_FAMILY" | translate
-        }}</label>
-        <div class="select-container select-sm">
-          <app-custom-select
-            [ngModel]="gridHeaderFontFamily"
-            (ngModelChange)="gridHeaderFontFamily = $event"
-            (click)="fontService.loadLocalFonts()"
-          >
-            <app-custom-option value="">
-              {{ "UE_INSPECTOR_FONT_THEME_DEFAULT" | translate }}
-            </app-custom-option>
-            @for (font of fontService.availableFonts(); track font) {
-              <app-custom-option [value]="font">{{ font }}</app-custom-option>
-            }
-          </app-custom-select>
-        </div>
-      </div>
-
-      <div class="inspector-section" style="margin-bottom: 8px">
-        <div class="inspector-label-row">
-          <label class="inspector-label">{{
-            "UE_INSPECTOR_HEADER_FONT_SIZE" | translate
-          }}</label>
-          <span class="inspector-val-badge">{{ gridHeaderFontSize }}px</span>
-        </div>
-        <div style="display: flex; gap: 8px; align-items: center">
-          <input
-            type="range"
-            min="8"
-            max="72"
-            step="1"
-            [ngModel]="gridHeaderFontSize"
-            (ngModelChange)="gridHeaderFontSize = $event"
-            class="inspector-slider"
-            style="flex: 1"
-          />
-          <input
-            type="number"
-            min="8"
-            max="72"
-            step="1"
-            autocomplete="off"
-            data-dashlane-ignore="true"
-            data-1p-ignore="true"
-            data-lpignore="true"
-            data-bwignore="true"
-            data-form-type="other"
-            [ngModel]="gridHeaderFontSize"
-            (ngModelChange)="gridHeaderFontSize = $event"
-            style="
-              width: 55px;
-              padding: 2px 4px;
-              font-size: 12px;
-              background: rgba(255, 255, 255, 0.9);
-              border: 1px solid rgba(0, 0, 0, 0.25);
-              border-radius: 4px;
-            "
-          />
-        </div>
-      </div>
-
-      <div class="inspector-section" style="margin-bottom: 8px">
-        <label class="inspector-label">{{
-          "UE_INSPECTOR_HEADER_TEXT_COLOR" | translate
-        }}</label>
-        <div
-          class="color-picker-wrapper"
-          [class.is-null]="!gridHeaderTextColor"
-        >
-          <input
-            type="color"
-            class="color-picker-input"
-            [value]="gridHeaderTextColor || '#ffffff'"
-            (change)="onGridHeaderTextColorChange($event)"
-            (input)="onGridHeaderTextColorChange($event)"
-          />
-          @if (!gridHeaderTextColor) {
-            <span class="color-picker-placeholder">{{
-              "UE_INSPECTOR_COLOR_DEFAULT" | translate
-            }}</span>
-          }
-          @if (gridHeaderTextColor) {
-            <button
-              type="button"
-              class="color-reset-btn"
-              (click)="resetGridHeaderTextColor()"
-              [title]="'UE_INSPECTOR_COLOR_RESET' | translate"
-            >
-              <span class="material-icons">restart_alt</span>
-            </button>
-          }
-        </div>
-      </div>
-
-      <div class="inspector-section" style="margin-bottom: 8px">
-        <label class="inspector-label">{{
-          "UE_INSPECTOR_HEADER_BACKGROUND_COLOR" | translate
-        }}</label>
-        <div
-          class="color-picker-wrapper"
-          [class.is-null]="!gridHeaderBackgroundColor"
-        >
-          <input
-            type="color"
-            class="color-picker-input"
-            [value]="gridHeaderBackgroundColor || '#444444'"
-            (change)="onGridHeaderBgColorChange($event)"
-            (input)="onGridHeaderBgColorChange($event)"
-          />
-          @if (!gridHeaderBackgroundColor) {
-            <span class="color-picker-placeholder">{{
-              "UE_INSPECTOR_COLOR_DEFAULT" | translate
-            }}</span>
-          }
-          @if (gridHeaderBackgroundColor) {
-            <button
-              type="button"
-              class="color-reset-btn"
-              (click)="resetGridHeaderBackgroundColor()"
-              [title]="'UE_INSPECTOR_COLOR_RESET' | translate"
-            >
-              <span class="material-icons">restart_alt</span>
-            </button>
-          }
-        </div>
-      </div>
-
-      <div class="inspector-section" style="margin-bottom: 8px">
-        <label class="inspector-label">{{
-          "UE_INSPECTOR_HEADER_ALIGNMENT" | translate
-        }}</label>
-        <div class="select-container select-sm">
-          <app-custom-select
-            [ngModel]="gridHeaderAlignment"
-            (ngModelChange)="gridHeaderAlignment = $event"
-          >
-            <app-custom-option value="start">
-              {{ "UE_INSPECTOR_ALIGN_START" | translate }}
-            </app-custom-option>
-            <app-custom-option value="center">
-              {{ "UE_INSPECTOR_ALIGN_CENTER" | translate }}
-            </app-custom-option>
-            <app-custom-option value="end">
-              {{ "UE_INSPECTOR_ALIGN_END" | translate }}
-            </app-custom-option>
-          </app-custom-select>
-        </div>
-      </div>
-    }
-
     <!-- Grid Label / Title Settings -->
     <div class="inspector-section" style="margin-bottom: 8px">
       <label class="inspector-label">{{
@@ -873,6 +649,230 @@
           />
         </div>
       }
+    }
+
+    <!-- Header Placement Control for the Grid -->
+    <div class="inspector-section" style="margin-bottom: 8px">
+      <label class="inspector-label">{{
+        "UE_GRID_HEADER_PLACEMENT" | translate
+      }}</label>
+      <div class="select-container select-sm">
+        <app-custom-select
+          [ngModel]="gridHeaderPlacement"
+          (ngModelChange)="onGridHeaderPlacementChange($event)"
+        >
+          <app-custom-option value="top">
+            {{ "UE_REPLICATE_HEADER_TOP" | translate }}
+          </app-custom-option>
+          <app-custom-option value="individual">
+            {{ "UE_REPLICATE_HEADER_INDIVIDUAL" | translate }}
+          </app-custom-option>
+          <app-custom-option value="none">
+            {{ "UE_REPLICATE_HEADER_NONE" | translate }}
+          </app-custom-option>
+        </app-custom-select>
+      </div>
+    </div>
+
+    <!-- Header Settings for the Grid -->
+    @if (gridHeaderPlacement !== "none") {
+      @if (gridHeaderPlacement === "top") {
+        <div class="inspector-section" style="margin-bottom: 8px">
+          <div class="inspector-label-row">
+            <label class="inspector-label">{{
+              "UE_GRID_HEADER_HEIGHT" | translate
+            }}</label>
+            <span class="inspector-val-badge"
+              >{{ currentGridHeaderHeight }}px</span
+            >
+          </div>
+          <div style="display: flex; gap: 8px; align-items: center">
+            <input
+              type="range"
+              min="20"
+              max="200"
+              step="1"
+              [ngModel]="currentGridHeaderHeight"
+              (ngModelChange)="onGridHeaderHeightChange($event)"
+              class="inspector-slider"
+              style="flex: 1"
+            />
+            <input
+              type="number"
+              min="20"
+              max="200"
+              step="1"
+              autocomplete="off"
+              data-dashlane-ignore="true"
+              data-1p-ignore="true"
+              data-lpignore="true"
+              data-bwignore="true"
+              data-form-type="other"
+              [ngModel]="currentGridHeaderHeight"
+              (ngModelChange)="onGridHeaderHeightChange($event)"
+              style="
+                width: 55px;
+                padding: 2px 4px;
+                font-size: 12px;
+                background: rgba(255, 255, 255, 0.9);
+                border: 1px solid rgba(0, 0, 0, 0.25);
+                border-radius: 4px;
+              "
+            />
+          </div>
+        </div>
+      }
+
+      <div class="inspector-section" style="margin-bottom: 8px">
+        <label class="inspector-label">{{
+          "UE_INSPECTOR_HEADER_FONT_FAMILY" | translate
+        }}</label>
+        <div class="select-container select-sm">
+          <app-custom-select
+            [ngModel]="gridHeaderFontFamily"
+            (ngModelChange)="gridHeaderFontFamily = $event"
+            (click)="fontService.loadLocalFonts()"
+          >
+            <app-custom-option value="">
+              {{ "UE_INSPECTOR_FONT_THEME_DEFAULT" | translate }}
+            </app-custom-option>
+            @for (font of fontService.availableFonts(); track font) {
+              <app-custom-option [value]="font">{{ font }}</app-custom-option>
+            }
+          </app-custom-select>
+        </div>
+      </div>
+
+      <div class="inspector-section" style="margin-bottom: 8px">
+        <div class="inspector-label-row">
+          <label class="inspector-label">{{
+            "UE_INSPECTOR_HEADER_FONT_SIZE" | translate
+          }}</label>
+          <span class="inspector-val-badge">{{ gridHeaderFontSize }}px</span>
+        </div>
+        <div style="display: flex; gap: 8px; align-items: center">
+          <input
+            type="range"
+            min="8"
+            max="72"
+            step="1"
+            [ngModel]="gridHeaderFontSize"
+            (ngModelChange)="gridHeaderFontSize = $event"
+            class="inspector-slider"
+            style="flex: 1"
+          />
+          <input
+            type="number"
+            min="8"
+            max="72"
+            step="1"
+            autocomplete="off"
+            data-dashlane-ignore="true"
+            data-1p-ignore="true"
+            data-lpignore="true"
+            data-bwignore="true"
+            data-form-type="other"
+            [ngModel]="gridHeaderFontSize"
+            (ngModelChange)="gridHeaderFontSize = $event"
+            style="
+              width: 55px;
+              padding: 2px 4px;
+              font-size: 12px;
+              background: rgba(255, 255, 255, 0.9);
+              border: 1px solid rgba(0, 0, 0, 0.25);
+              border-radius: 4px;
+            "
+          />
+        </div>
+      </div>
+
+      <div class="inspector-section" style="margin-bottom: 8px">
+        <label class="inspector-label">{{
+          "UE_INSPECTOR_HEADER_TEXT_COLOR" | translate
+        }}</label>
+        <div
+          class="color-picker-wrapper"
+          [class.is-null]="!gridHeaderTextColor"
+        >
+          <input
+            type="color"
+            class="color-picker-input"
+            [value]="gridHeaderTextColor || '#ffffff'"
+            (change)="onGridHeaderTextColorChange($event)"
+            (input)="onGridHeaderTextColorChange($event)"
+          />
+          @if (!gridHeaderTextColor) {
+            <span class="color-picker-placeholder">{{
+              "UE_INSPECTOR_COLOR_DEFAULT" | translate
+            }}</span>
+          }
+          @if (gridHeaderTextColor) {
+            <button
+              type="button"
+              class="color-reset-btn"
+              (click)="resetGridHeaderTextColor()"
+              [title]="'UE_INSPECTOR_COLOR_RESET' | translate"
+            >
+              <span class="material-icons">restart_alt</span>
+            </button>
+          }
+        </div>
+      </div>
+
+      <div class="inspector-section" style="margin-bottom: 8px">
+        <label class="inspector-label">{{
+          "UE_INSPECTOR_HEADER_BACKGROUND_COLOR" | translate
+        }}</label>
+        <div
+          class="color-picker-wrapper"
+          [class.is-null]="!gridHeaderBackgroundColor"
+        >
+          <input
+            type="color"
+            class="color-picker-input"
+            [value]="gridHeaderBackgroundColor || '#444444'"
+            (change)="onGridHeaderBgColorChange($event)"
+            (input)="onGridHeaderBgColorChange($event)"
+          />
+          @if (!gridHeaderBackgroundColor) {
+            <span class="color-picker-placeholder">{{
+              "UE_INSPECTOR_COLOR_DEFAULT" | translate
+            }}</span>
+          }
+          @if (gridHeaderBackgroundColor) {
+            <button
+              type="button"
+              class="color-reset-btn"
+              (click)="resetGridHeaderBackgroundColor()"
+              [title]="'UE_INSPECTOR_COLOR_RESET' | translate"
+            >
+              <span class="material-icons">restart_alt</span>
+            </button>
+          }
+        </div>
+      </div>
+
+      <div class="inspector-section" style="margin-bottom: 8px">
+        <label class="inspector-label">{{
+          "UE_INSPECTOR_HEADER_ALIGNMENT" | translate
+        }}</label>
+        <div class="select-container select-sm">
+          <app-custom-select
+            [ngModel]="gridHeaderAlignment"
+            (ngModelChange)="gridHeaderAlignment = $event"
+          >
+            <app-custom-option value="start">
+              {{ "UE_INSPECTOR_ALIGN_START" | translate }}
+            </app-custom-option>
+            <app-custom-option value="center">
+              {{ "UE_INSPECTOR_ALIGN_CENTER" | translate }}
+            </app-custom-option>
+            <app-custom-option value="end">
+              {{ "UE_INSPECTOR_ALIGN_END" | translate }}
+            </app-custom-option>
+          </app-custom-select>
+        </div>
+      </div>
     }
 
     <div class="grid-card-actions">

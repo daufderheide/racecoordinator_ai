@@ -1268,6 +1268,29 @@ describe("LaneColumnInspectorComponent", () => {
       );
     });
 
+    it("should render grid label position control before header placement control in grid scope", () => {
+      mockSettings.gridId = "grid-1";
+      component.setScope("grid");
+      fixture.detectChanges();
+
+      const labels = Array.from(
+        fixture.nativeElement.querySelectorAll(".inspector-label"),
+      ).map((el: any) => el.textContent.trim());
+
+      const gridLabelIndex = labels.findIndex(
+        (text) =>
+          text === "Grid Label Position" || text === "UE_GRID_LABEL_POSITION",
+      );
+      const headerPlacementIndex = labels.findIndex(
+        (text) =>
+          text === "Header Placement" || text === "UE_GRID_HEADER_PLACEMENT",
+      );
+
+      expect(gridLabelIndex).toBeGreaterThan(-1);
+      expect(headerPlacementIndex).toBeGreaterThan(-1);
+      expect(gridLabelIndex).toBeLessThan(headerPlacementIndex);
+    });
+
     it("should handle gridLabel border properties and clamping", () => {
       // Show Border (defaults to true)
       expect(component.gridLabelShowBorder).toBeTrue();
