@@ -268,19 +268,16 @@
                   class="heats-grid"
                   [style.zoom]="zoomLevel / 100"
                   cdkDropList
-                  cdkDropListOrientation="horizontal"
+                  cdkDropListOrientation="mixed"
                   [cdkDropListData]="rotation.heats || []"
-                  [cdkDropListAutoScrollDisabled]="true"
-                  [cdkDropListSortingDisabled]="true"
                   (cdkDropListDropped)="dropHeat(rotation, $event)"
                 >
-                  @for (
-                    heat of rotation.heats;
-                    track $index;
-                    let hIdx = $index
-                  ) {
+                  @for (heat of rotation.heats; track heat; let hIdx = $index) {
                     <div
                       class="heat-card"
+                      cdkDrag
+                      [cdkDragData]="heat"
+                      cdkDragPreviewContainer="parent"
                       [class.heat-error]="
                         heatHasError(rotation, hIdx) ||
                         heatHasGroupConflict(rotation, hIdx)
@@ -288,7 +285,9 @@
                     >
                       <div class="heat-header">
                         <div class="header-title">
-                          <span class="material-icons drag-handle-icon"
+                          <span
+                            class="material-icons drag-handle-icon"
+                            cdkDragHandle
                             >drag_indicator</span
                           >
                           <h4>
