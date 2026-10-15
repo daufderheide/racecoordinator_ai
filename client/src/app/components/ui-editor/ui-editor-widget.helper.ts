@@ -285,6 +285,8 @@ export function handleWidgetSelection(
         comp.finishGridSession(ui);
       }
       comp.onEditGridTemplate?.(gridId, ui);
+    } else if (!gridId && comp.activeGridSession && comp.finishGridSession) {
+      comp.finishGridSession(ui);
     }
   } else if (uiId && comp.countdownPreviewActiveByUi) {
     comp.countdownPreviewActiveByUi[uiId] = false;

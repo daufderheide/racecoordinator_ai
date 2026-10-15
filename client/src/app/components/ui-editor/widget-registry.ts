@@ -64,6 +64,9 @@ export const WIDGET_REGISTRY: Record<string, WidgetRegistryEntry> = {
       imageUrl: "",
     }),
   },
+  grid: {
+    defaultSettings: () => ({}),
+  },
   "lane-view": {
     defaultSettings: () => ({
       isVertical: false,

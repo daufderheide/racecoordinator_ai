@@ -700,6 +700,28 @@ describe("ui-editor-widget.helper", () => {
     expect(comp.onEditGridTemplate).toHaveBeenCalledWith("grid-new", undefined);
   });
 
+  it("should finish previous grid session when selecting a widget without gridId", () => {
+    const { handleWidgetSelection } = require("./ui-editor-widget.helper");
+    const standaloneWidget = {
+      id: "w-standalone",
+      widgetType: "lane-column",
+      customSettings: {},
+    };
+    const layout = { widgets: [standaloneWidget] };
+    const comp = {
+      activeCustomUiId: "ui-1",
+      activeGridSession: { gridId: "grid-old" },
+      finishGridSession: jasmine.createSpy("finishGridSession"),
+      onEditGridTemplate: jasmine.createSpy("onEditGridTemplate"),
+      getLayout: jasmine.createSpy("getLayout").and.returnValue(layout),
+      cdr: { markForCheck: jasmine.createSpy("markForCheck") },
+    };
+
+    handleWidgetSelection(comp, "w-standalone");
+    expect(comp.finishGridSession).toHaveBeenCalledWith(undefined);
+    expect(comp.onEditGridTemplate).not.toHaveBeenCalled();
+  });
+
   it("should reset selectedAnchor when selecting a different widget in handleWidgetSelection", () => {
     const { handleWidgetSelection } = require("./ui-editor-widget.helper");
     const layout = { widgets: [{ id: "w-1", widgetType: "lane-column" }] };

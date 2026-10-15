@@ -9942,6 +9942,94 @@ describe("DefaultRacedayComponent", () => {
       );
       expect(lanes.length).toBe(4);
     });
+
+    it("should create new data grid with replicated widgets when grid widget is dropped on canvas", () => {
+      const scalableContent = document.createElement("div");
+      scalableContent.className = "scalable-content";
+      Object.defineProperty(scalableContent, "offsetWidth", { value: 1920 });
+      Object.defineProperty(scalableContent, "offsetHeight", { value: 1080 });
+      spyOn(scalableContent, "getBoundingClientRect").and.returnValue({
+        left: 0,
+        top: 0,
+        width: 1920,
+        height: 1080,
+      } as any);
+      (component as any).el.nativeElement.appendChild(scalableContent);
+
+      component.isLayoutCustomizing = true;
+      component.draggedWidgetType = "grid";
+      (component as any).track = { lanes: [{}, {}, {}, {}] } as any;
+      component.layout = {
+        baseWidth: 1920,
+        baseHeight: 1080,
+        widgets: [],
+      } as any;
+
+      spyOn(component.layoutChanged, "emit");
+      spyOn(component.widgetSelected, "emit");
+
+      const event = {
+        preventDefault: jasmine.createSpy("preventDefault"),
+        clientX: 400,
+        clientY: 200,
+      } as any;
+      component.onCanvasDrop(event);
+
+      // 4 lanes * 3 columns = 12 widgets
+      expect(component.layout.widgets.length).toBe(12);
+      expect(component.layoutChanged.emit).toHaveBeenCalled();
+      expect(component.widgetSelected.emit).toHaveBeenCalled();
+
+      const master = component.layout.widgets.find(
+        (w: any) =>
+          w.customSettings?.["gridLane"] === 0 &&
+          w.customSettings?.["columnKey"] === "driver.name",
+      );
+      expect(master).toBeTruthy();
+      expect(master?.customSettings?.["gridId"]).toMatch(/^grid-/);
+      expect(component.widgetSelected.emit).toHaveBeenCalledWith(master!.id);
+    });
+
+    it("should create single standalone widget without grid replication when lane-col widget is dropped without an active grid session", () => {
+      const scalableContent = document.createElement("div");
+      scalableContent.className = "scalable-content";
+      Object.defineProperty(scalableContent, "offsetWidth", { value: 1920 });
+      Object.defineProperty(scalableContent, "offsetHeight", { value: 1080 });
+      spyOn(scalableContent, "getBoundingClientRect").and.returnValue({
+        left: 0,
+        top: 0,
+        width: 1920,
+        height: 1080,
+      } as any);
+      (component as any).el.nativeElement.appendChild(scalableContent);
+
+      component.isLayoutCustomizing = true;
+      component.draggedWidgetType = "lane-col:driver.name";
+      fixture.componentRef.setInput("gridSession", null);
+      component.layout = {
+        baseWidth: 1920,
+        baseHeight: 1080,
+        widgets: [],
+      } as any;
+
+      spyOn(component.layoutChanged, "emit");
+      spyOn(component.widgetSelected, "emit");
+
+      const event = {
+        preventDefault: jasmine.createSpy("preventDefault"),
+        clientX: 400,
+        clientY: 200,
+      } as any;
+      component.onCanvasDrop(event);
+
+      // Single standalone widget only
+      expect(component.layout.widgets.length).toBe(1);
+      const widget = component.layout.widgets[0];
+      expect(widget.widgetType).toBe("lane-column");
+      expect(widget.customSettings?.["columnKey"]).toBe("driver.name");
+      expect(widget.customSettings?.["gridId"]).toBeUndefined();
+      expect(component.widgetSelected.emit).toHaveBeenCalledWith(widget.id);
+    });
   });
 
   describe("Printing", () => {

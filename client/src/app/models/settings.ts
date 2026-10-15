@@ -35,6 +35,7 @@ export type WidgetType =
   | "heat-list"
   | "image"
   | "label"
+  | "grid"
   | "action-start-resume"
   | "action-pause"
   | "action-next-heat"

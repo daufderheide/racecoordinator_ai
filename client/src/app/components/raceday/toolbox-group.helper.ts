@@ -195,6 +195,11 @@ export class ToolboxGroupHelper {
           labelKey: "UE_WIDGET_TYPE_COUNTDOWN",
         },
         {
+          type: "grid",
+          icon: "",
+          labelKey: "UE_WIDGET_TYPE_GRID",
+        },
+        {
           type: "group-leaderboard",
           icon: "",
           labelKey: "UE_WIDGET_TYPE_GROUP_LEADERBOARD",

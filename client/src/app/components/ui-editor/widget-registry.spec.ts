@@ -8,6 +8,7 @@ describe("WIDGET_REGISTRY", () => {
     expect(keys).toContain("records");
     expect(keys).toContain("timer");
     expect(keys).toContain("image");
+    expect(keys).toContain("grid");
     expect(keys).toContain("lane-view");
     expect(keys).toContain("lane-column");
     expect(keys).toContain("on-deck");

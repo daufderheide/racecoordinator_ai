@@ -986,13 +986,21 @@
   } @else {
     <div class="inspector-geometry-title">
       <span class="material-icons">tag</span>
-      {{ "UE_INSPECTOR_ROW_BINDING_SECTION" | translate }}
+      {{
+        (currentSettings["gridId"]
+          ? "UE_INSPECTOR_ROW_BINDING_SECTION"
+          : "UE_INSPECTOR_DATA_SOURCE_SECTION"
+        ) | translate
+      }}
     </div>
 
     <!-- Binding Mode & Target Index -->
     <div class="inspector-section">
       <label class="inspector-label">{{
-        "UE_INSPECTOR_BINDING_MODE" | translate
+        (currentSettings["gridId"]
+          ? "UE_INSPECTOR_BINDING_MODE"
+          : "UE_INSPECTOR_DATA_SOURCE"
+        ) | translate
       }}</label>
       <div class="select-container select-sm">
         <app-custom-select
@@ -1062,20 +1070,6 @@
           }
         </app-custom-select>
       </div>
-    </div>
-
-    <!-- Replicate Layout Action Button -->
-    <div class="inspector-section">
-      <button
-        type="button"
-        class="btn btn-secondary w-100"
-        (click)="openReplicateModal()"
-      >
-        <span class="material-icons me-1" style="font-size: 14px"
-          >content_copy</span
-        >
-        {{ "UE_REPLICATE_BUTTON" | translate }}
-      </button>
     </div>
   }
 </ng-template>

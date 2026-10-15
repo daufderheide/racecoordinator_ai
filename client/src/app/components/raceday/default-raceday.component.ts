@@ -133,6 +133,7 @@ import { RacedayAbsoluteWidgetComponent } from "./components/raceday-absolute-wi
 import { RacedayModalsComponent } from "./components/raceday-modals/raceday-modals.component";
 import { ToolboxGroup, ToolboxGroupHelper } from "./toolbox-group.helper";
 import { LaneGridAnimationHelper } from "./utils/lane-grid-animation.helper";
+import { LaneGridFactoryHelper } from "./utils/lane-grid-factory.helper";
 import { LaneGridLabelHelper } from "./utils/lane-grid-label.helper";
 import {
   GridResizeHandle,
@@ -8159,6 +8160,61 @@ export class DefaultRacedayComponent
     if (!scalableContent) return;
 
     const rect = scalableContent.getBoundingClientRect();
+    if (this.draggedWidgetType === "grid") {
+      const totalLanes = Math.max(2, this.track?.lanes?.length || 4);
+      const width = 500;
+      const height = Math.max(160, totalLanes * 50);
+      const scaleX = rect.width / scalableContent.offsetWidth || 1;
+      const scaleY = rect.height / scalableContent.offsetHeight || 1;
+      const baseWidth = this.layout?.baseWidth || 1920;
+      const baseHeight = this.layout?.baseHeight || 1080;
+      const clampedX = Math.max(
+        0,
+        Math.min(
+          baseWidth - width,
+          Math.round((event.clientX - rect.left) / scaleX - width / 2),
+        ),
+      );
+      const clampedY = Math.max(
+        0,
+        Math.min(
+          baseHeight - height,
+          Math.round((event.clientY - rect.top) / scaleY),
+        ),
+      );
+
+      const bounds: LaneGridBounds = {
+        x: clampedX,
+        y: clampedY,
+        width,
+        height,
+      };
+      const { session, widgets } = LaneGridFactoryHelper.createNewGrid(
+        bounds,
+        totalLanes,
+        this.getNextZIndex(),
+      );
+
+      if (!this.layout) {
+        this.layout = this.getDefaultLayout();
+      }
+      if (!this.layout.widgets) this.layout.widgets = [];
+      this.layout.widgets.push(...widgets);
+
+      const master = widgets.find((w) =>
+        LaneGridReplicationHelper.isMasterWidget(w, session),
+      );
+
+      this.draggedWidgetType = null;
+      this.layoutChanged.emit(this.layout);
+      if (master) {
+        this.widgetSelected.emit(master.id);
+      }
+      this.updateAudioRelevance();
+      this.cdr.markForCheck();
+      return;
+    }
+
     const isLeaderboardOrDeck =
       this.draggedWidgetType === "leaderboard" ||
       this.draggedWidgetType === "group-leaderboard" ||

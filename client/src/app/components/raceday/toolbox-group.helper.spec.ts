@@ -32,8 +32,9 @@ describe("ToolboxGroupHelper", () => {
     const standingsSg = rcAiGroup.subgroups.find(
       (sg) => sg.id === "standings-heats",
     );
-    expect(standingsSg?.widgets.length).toBe(10);
+    expect(standingsSg?.widgets.length).toBe(11);
     expect(standingsSg?.widgets.map((w) => w.type)).toContain("countdown");
+    expect(standingsSg?.widgets.map((w) => w.type)).toContain("grid");
     expect(standingsSg?.widgets.map((w) => w.type)).toContain("lane-view");
     expect(standingsSg?.widgets.map((w) => w.type)).toContain("leaderboard");
 
@@ -47,7 +48,7 @@ describe("ToolboxGroupHelper", () => {
     const mediaSg = rcAiGroup.subgroups.find((sg) => sg.id === "media-chrome");
     expect(mediaSg?.widgets.length).toBe(4);
 
-    expect(rcAiGroup.totalCount).toBe(128);
+    expect(rcAiGroup.totalCount).toBe(129);
   });
 
   it("should exclude used widgets from root and subgroups", () => {
@@ -68,7 +69,7 @@ describe("ToolboxGroupHelper", () => {
     expect(
       standingsSg?.widgets.find((w) => w.type === "lane-view"),
     ).toBeUndefined();
-    expect(standingsSg?.widgets.length).toBe(9);
+    expect(standingsSg?.widgets.length).toBe(10);
 
     const actionsSg = rcAiGroup.subgroups.find((sg) => sg.id === "actions");
     expect(
@@ -86,7 +87,7 @@ describe("ToolboxGroupHelper", () => {
     expect(mediaSg?.widgets.find((w) => w.type === "branding")).toBeUndefined();
     expect(mediaSg?.widgets.length).toBe(3);
 
-    expect(rcAiGroup.totalCount).toBe(124);
+    expect(rcAiGroup.totalCount).toBe(125);
   });
 
   it("should organize custom widgets into groups, subgroups, and custom-root", () => {
