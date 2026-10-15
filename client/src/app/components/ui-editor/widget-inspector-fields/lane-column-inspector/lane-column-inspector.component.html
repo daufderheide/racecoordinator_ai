@@ -65,36 +65,48 @@
         class="scope-tab"
         [class.active]="activeScope() === 'widget'"
         (click)="setScope('widget')"
+        [title]="'UE_SCOPE_TAB_WIDGET' | translate"
       >
         <span class="material-icons">widgets</span>
-        {{ "UE_SCOPE_TAB_WIDGET" | translate }}
+        <span class="scope-tab-label">{{
+          "UE_SCOPE_TAB_WIDGET" | translate
+        }}</span>
       </button>
       <button
         type="button"
         class="scope-tab"
         [class.active]="activeScope() === 'grid'"
         (click)="setScope('grid')"
+        [title]="'UE_SCOPE_TAB_GRID' | translate"
       >
         <span class="material-icons">grid_on</span>
-        {{ "UE_SCOPE_TAB_GRID" | translate }}
+        <span class="scope-tab-label">{{
+          "UE_SCOPE_TAB_GRID" | translate
+        }}</span>
       </button>
       <button
         type="button"
         class="scope-tab"
         [class.active]="activeScope() === 'column'"
         (click)="setScope('column')"
+        [title]="'UE_SCOPE_TAB_COLUMN' | translate"
       >
         <span class="material-icons">view_column</span>
-        {{ "UE_SCOPE_TAB_COLUMN" | translate }}
+        <span class="scope-tab-label">{{
+          "UE_SCOPE_TAB_COLUMN" | translate
+        }}</span>
       </button>
       <button
         type="button"
         class="scope-tab"
         [class.active]="activeScope() === 'cell'"
         (click)="setScope('cell')"
+        [title]="'UE_SCOPE_TAB_CELL' | translate"
       >
         <span class="material-icons">crop_free</span>
-        {{ "UE_SCOPE_TAB_CELL" | translate }}
+        <span class="scope-tab-label">{{
+          "UE_SCOPE_TAB_CELL" | translate
+        }}</span>
       </button>
       @if (activeScope() === "inset" || hasAnyInsets) {
         <button
@@ -102,9 +114,12 @@
           class="scope-tab"
           [class.active]="activeScope() === 'inset'"
           (click)="setScope('inset')"
+          [title]="'UE_SCOPE_TAB_INSET' | translate"
         >
           <span class="material-icons">open_in_new</span>
-          {{ "UE_SCOPE_TAB_INSET" | translate }}
+          <span class="scope-tab-label">{{
+            "UE_SCOPE_TAB_INSET" | translate
+          }}</span>
         </button>
       }
     </div>
@@ -1830,45 +1845,272 @@
       {{ "UE_INSPECTOR_LANE_VIEW_INSET_DATA_SECTION" | translate }}
     </div>
 
-    <!-- Inset Positions (8 positions) -->
+    <!-- Inset Map Section -->
     <div class="inspector-section-header mt-3">
       <label class="inspector-label font-weight-bold">{{
-        "UE_INSPECTOR_INSETS_POSITIONS" | translate
+        "UE_INSPECTOR_INSET_MAP_TITLE" | translate
       }}</label>
     </div>
 
-    @for (pos of ANCHOR_POSITIONS; track pos.key) {
-      <div class="inspector-section">
-        <label class="inspector-label">{{ pos.labelKey | translate }}</label>
-        <div class="d-flex align-items-center gap-2">
-          <div class="select-container select-sm flex-grow-1">
-            <app-custom-select
-              [ngModel]="getAnchorValue(pos.key)"
-              (ngModelChange)="setAnchorValue(pos.key, $event)"
-            >
-              <app-custom-option value="">
-                {{ "UE_INSPECTOR_INSET_NONE" | translate }}
-              </app-custom-option>
-              @for (col of availableColumns(); track col.key) {
-                <app-custom-option [value]="col.key">
-                  {{ col.label | translate }}
-                </app-custom-option>
-              }
-            </app-custom-select>
-          </div>
-          @if (getAnchorValue(pos.key)) {
-            <button
-              type="button"
-              class="ghost-icon-btn"
-              (click)="configureInset(pos.key)"
-              [title]="'UE_INSPECTOR_CONFIGURE_INSET' | translate"
-            >
-              <span class="material-icons">tune</span>
-            </button>
+    <!-- 3x3 Interactive Inset Map -->
+    <div class="inspector-section">
+      <div
+        class="inset-map-grid"
+        role="grid"
+        [attr.aria-label]="'UE_INSPECTOR_INSET_MAP_TITLE' | translate"
+      >
+        <!-- Top Row: top-left, top-center, top-right -->
+        <button
+          type="button"
+          class="inset-map-cell"
+          [class.active-anchor]="effectiveSelectedAnchor === 'top-left'"
+          [class.filled-anchor]="!!getAnchorValue('top-left')"
+          (click)="selectAnchorFromMap('top-left')"
+          (dragover)="onInspectorDragOver($event)"
+          (dragenter)="onInspectorDragEnter($event)"
+          (dragleave)="onInspectorDragLeave($event)"
+          (drop)="onInspectorDrop($event, 'top-left')"
+          [title]="'UE_ANCHOR_top-left' | translate"
+        >
+          <span class="inset-map-label">TL</span>
+          @if (getAnchorValue("top-left")) {
+            <span class="material-icons inset-map-icon">{{
+              getWidgetIcon(getAnchorValue("top-left"))
+            }}</span>
+          }
+        </button>
+
+        <button
+          type="button"
+          class="inset-map-cell"
+          [class.active-anchor]="effectiveSelectedAnchor === 'top-center'"
+          [class.filled-anchor]="!!getAnchorValue('top-center')"
+          (click)="selectAnchorFromMap('top-center')"
+          (dragover)="onInspectorDragOver($event)"
+          (dragenter)="onInspectorDragEnter($event)"
+          (dragleave)="onInspectorDragLeave($event)"
+          (drop)="onInspectorDrop($event, 'top-center')"
+          [title]="'UE_ANCHOR_top-center' | translate"
+        >
+          <span class="inset-map-label">TC</span>
+          @if (getAnchorValue("top-center")) {
+            <span class="material-icons inset-map-icon">{{
+              getWidgetIcon(getAnchorValue("top-center"))
+            }}</span>
+          }
+        </button>
+
+        <button
+          type="button"
+          class="inset-map-cell"
+          [class.active-anchor]="effectiveSelectedAnchor === 'top-right'"
+          [class.filled-anchor]="!!getAnchorValue('top-right')"
+          (click)="selectAnchorFromMap('top-right')"
+          (dragover)="onInspectorDragOver($event)"
+          (dragenter)="onInspectorDragEnter($event)"
+          (dragleave)="onInspectorDragLeave($event)"
+          (drop)="onInspectorDrop($event, 'top-right')"
+          [title]="'UE_ANCHOR_top-right' | translate"
+        >
+          <span class="inset-map-label">TR</span>
+          @if (getAnchorValue("top-right")) {
+            <span class="material-icons inset-map-icon">{{
+              getWidgetIcon(getAnchorValue("top-right"))
+            }}</span>
+          }
+        </button>
+
+        <!-- Middle Row: center-left, Center (Main Column), center-right -->
+        <button
+          type="button"
+          class="inset-map-cell"
+          [class.active-anchor]="effectiveSelectedAnchor === 'center-left'"
+          [class.filled-anchor]="!!getAnchorValue('center-left')"
+          (click)="selectAnchorFromMap('center-left')"
+          (dragover)="onInspectorDragOver($event)"
+          (dragenter)="onInspectorDragEnter($event)"
+          (dragleave)="onInspectorDragLeave($event)"
+          (drop)="onInspectorDrop($event, 'center-left')"
+          [title]="'UE_ANCHOR_center-left' | translate"
+        >
+          <span class="inset-map-label">CL</span>
+          @if (getAnchorValue("center-left")) {
+            <span class="material-icons inset-map-icon">{{
+              getWidgetIcon(getAnchorValue("center-left"))
+            }}</span>
+          }
+        </button>
+
+        <div
+          class="inset-map-center-cell"
+          [title]="'UE_INSPECTOR_INSET_MAIN_COLUMN' | translate"
+        >
+          <span class="material-icons inset-map-center-icon">view_column</span>
+          <span class="inset-map-center-text">{{
+            "UE_INSPECTOR_INSET_MAIN_COLUMN" | translate
+          }}</span>
+        </div>
+
+        <button
+          type="button"
+          class="inset-map-cell"
+          [class.active-anchor]="effectiveSelectedAnchor === 'center-right'"
+          [class.filled-anchor]="!!getAnchorValue('center-right')"
+          (click)="selectAnchorFromMap('center-right')"
+          (dragover)="onInspectorDragOver($event)"
+          (dragenter)="onInspectorDragEnter($event)"
+          (dragleave)="onInspectorDragLeave($event)"
+          (drop)="onInspectorDrop($event, 'center-right')"
+          [title]="'UE_ANCHOR_center-right' | translate"
+        >
+          <span class="inset-map-label">CR</span>
+          @if (getAnchorValue("center-right")) {
+            <span class="material-icons inset-map-icon">{{
+              getWidgetIcon(getAnchorValue("center-right"))
+            }}</span>
+          }
+        </button>
+
+        <!-- Bottom Row: bottom-left, bottom-center, bottom-right -->
+        <button
+          type="button"
+          class="inset-map-cell"
+          [class.active-anchor]="effectiveSelectedAnchor === 'bottom-left'"
+          [class.filled-anchor]="!!getAnchorValue('bottom-left')"
+          (click)="selectAnchorFromMap('bottom-left')"
+          (dragover)="onInspectorDragOver($event)"
+          (dragenter)="onInspectorDragEnter($event)"
+          (dragleave)="onInspectorDragLeave($event)"
+          (drop)="onInspectorDrop($event, 'bottom-left')"
+          [title]="'UE_ANCHOR_bottom-left' | translate"
+        >
+          <span class="inset-map-label">BL</span>
+          @if (getAnchorValue("bottom-left")) {
+            <span class="material-icons inset-map-icon">{{
+              getWidgetIcon(getAnchorValue("bottom-left"))
+            }}</span>
+          }
+        </button>
+
+        <button
+          type="button"
+          class="inset-map-cell"
+          [class.active-anchor]="effectiveSelectedAnchor === 'bottom-center'"
+          [class.filled-anchor]="!!getAnchorValue('bottom-center')"
+          (click)="selectAnchorFromMap('bottom-center')"
+          (dragover)="onInspectorDragOver($event)"
+          (dragenter)="onInspectorDragEnter($event)"
+          (dragleave)="onInspectorDragLeave($event)"
+          (drop)="onInspectorDrop($event, 'bottom-center')"
+          [title]="'UE_ANCHOR_bottom-center' | translate"
+        >
+          <span class="inset-map-label">BC</span>
+          @if (getAnchorValue("bottom-center")) {
+            <span class="material-icons inset-map-icon">{{
+              getWidgetIcon(getAnchorValue("bottom-center"))
+            }}</span>
+          }
+        </button>
+
+        <button
+          type="button"
+          class="inset-map-cell"
+          [class.active-anchor]="effectiveSelectedAnchor === 'bottom-right'"
+          [class.filled-anchor]="!!getAnchorValue('bottom-right')"
+          (click)="selectAnchorFromMap('bottom-right')"
+          (dragover)="onInspectorDragOver($event)"
+          (dragenter)="onInspectorDragEnter($event)"
+          (dragleave)="onInspectorDragLeave($event)"
+          (drop)="onInspectorDrop($event, 'bottom-right')"
+          [title]="'UE_ANCHOR_bottom-right' | translate"
+        >
+          <span class="inset-map-label">BR</span>
+          @if (getAnchorValue("bottom-right")) {
+            <span class="material-icons inset-map-icon">{{
+              getWidgetIcon(getAnchorValue("bottom-right"))
+            }}</span>
+          }
+        </button>
+      </div>
+    </div>
+
+    <!-- Hero Drop Zone Card for effectiveSelectedAnchor -->
+    <div class="inspector-section mt-2">
+      <div class="hero-inset-container">
+        <div class="hero-inset-header">
+          <span class="hero-anchor-badge">{{ getSelectedAnchorLabel() }}</span>
+          @if (getAnchorValue(effectiveSelectedAnchor)) {
+            <div class="hero-header-actions">
+              <button
+                type="button"
+                class="ghost-icon-btn"
+                (click)="configureInset(effectiveSelectedAnchor)"
+                [title]="'UE_INSPECTOR_CONFIGURE_INSET' | translate"
+              >
+                <span class="material-icons">tune</span>
+              </button>
+              <button
+                type="button"
+                class="ghost-icon-btn text-danger"
+                (click)="removeInset(effectiveSelectedAnchor)"
+                [title]="'UE_INSPECTOR_INSET_CLEAR' | translate"
+              >
+                <span class="material-icons">delete</span>
+              </button>
+            </div>
+          }
+        </div>
+
+        <div
+          class="hero-inset-dropzone"
+          [class.has-widget]="!!getAnchorValue(effectiveSelectedAnchor)"
+          (dragover)="onInspectorDragOver($event)"
+          (dragenter)="onInspectorDragEnter($event)"
+          (dragleave)="onInspectorDragLeave($event)"
+          (drop)="onInspectorDrop($event, effectiveSelectedAnchor)"
+        >
+          @if (!getAnchorValue(effectiveSelectedAnchor)) {
+            <div class="hero-empty-state">
+              <span class="material-icons hero-drop-icon"
+                >add_circle_outline</span
+              >
+              <div class="hero-drop-title">
+                {{ "UE_INSPECTOR_INSET_DROP_PROMPT" | translate }}
+              </div>
+              <div class="hero-drop-subtitle">
+                {{ "UE_INSPECTOR_INSET_DROP_SUBTITLE" | translate }}
+              </div>
+            </div>
+          } @else {
+            <div class="hero-filled-state">
+              <div class="hero-widget-row">
+                <span class="material-icons hero-widget-icon">
+                  {{ getWidgetIcon(getAnchorValue(effectiveSelectedAnchor)) }}
+                </span>
+                <div class="hero-widget-info">
+                  <div class="hero-widget-label">
+                    {{ "UE_INSPECTOR_INSET_CURRENT_WIDGET" | translate }}
+                  </div>
+                  <div class="hero-widget-name">
+                    {{
+                      getWidgetDisplayName(
+                        getAnchorValue(effectiveSelectedAnchor)
+                      )
+                    }}
+                  </div>
+                </div>
+              </div>
+              <div class="hero-drop-hint">
+                <span class="material-icons hero-hint-icon"
+                  >drag_indicator</span
+                >
+                <span>{{ "UE_INSPECTOR_INSET_REPLACE_HINT" | translate }}</span>
+              </div>
+            </div>
           }
         </div>
       </div>
-    }
+    </div>
 
     @if (hasAnyInsets) {
       <hr class="inspector-divider" />
@@ -2012,25 +2254,71 @@
     </div>
   </div>
 
-  <!-- Inset Value / Column Selection -->
+  <!-- Inset Hero Drop Zone Card -->
   <div class="inspector-section">
-    <label class="inspector-label">{{
-      "UE_INSPECTOR_INSET_VALUE" | translate
-    }}</label>
-    <div class="select-container select-sm">
-      <app-custom-select
-        [ngModel]="getAnchorValue(effectiveSelectedAnchor)"
-        (ngModelChange)="setAnchorValue(effectiveSelectedAnchor, $event)"
-      >
-        <app-custom-option value="">
-          {{ "UE_INSPECTOR_INSET_NONE" | translate }}
-        </app-custom-option>
-        @for (col of availableColumns(); track col.key) {
-          <app-custom-option [value]="col.key">
-            {{ col.label | translate }}
-          </app-custom-option>
+    <div class="hero-inset-container">
+      <div class="hero-inset-header">
+        <span class="hero-anchor-badge">{{ getSelectedAnchorLabel() }}</span>
+        @if (getAnchorValue(effectiveSelectedAnchor)) {
+          <div class="hero-header-actions">
+            <button
+              type="button"
+              class="ghost-icon-btn text-danger"
+              (click)="removeInset(effectiveSelectedAnchor)"
+              [title]="'UE_INSPECTOR_INSET_CLEAR' | translate"
+            >
+              <span class="material-icons">delete</span>
+            </button>
+          </div>
         }
-      </app-custom-select>
+      </div>
+
+      <div
+        class="hero-inset-dropzone"
+        [class.has-widget]="!!getAnchorValue(effectiveSelectedAnchor)"
+        (dragover)="onInspectorDragOver($event)"
+        (dragenter)="onInspectorDragEnter($event)"
+        (dragleave)="onInspectorDragLeave($event)"
+        (drop)="onInspectorDrop($event, effectiveSelectedAnchor)"
+      >
+        @if (!getAnchorValue(effectiveSelectedAnchor)) {
+          <div class="hero-empty-state">
+            <span class="material-icons hero-drop-icon"
+              >add_circle_outline</span
+            >
+            <div class="hero-drop-title">
+              {{ "UE_INSPECTOR_INSET_DROP_PROMPT" | translate }}
+            </div>
+            <div class="hero-drop-subtitle">
+              {{ "UE_INSPECTOR_INSET_DROP_SUBTITLE" | translate }}
+            </div>
+          </div>
+        } @else {
+          <div class="hero-filled-state">
+            <div class="hero-widget-row">
+              <span class="material-icons hero-widget-icon">
+                {{ getWidgetIcon(getAnchorValue(effectiveSelectedAnchor)) }}
+              </span>
+              <div class="hero-widget-info">
+                <div class="hero-widget-label">
+                  {{ "UE_INSPECTOR_INSET_CURRENT_WIDGET" | translate }}
+                </div>
+                <div class="hero-widget-name">
+                  {{
+                    getWidgetDisplayName(
+                      getAnchorValue(effectiveSelectedAnchor)
+                    )
+                  }}
+                </div>
+              </div>
+            </div>
+            <div class="hero-drop-hint">
+              <span class="material-icons hero-hint-icon">drag_indicator</span>
+              <span>{{ "UE_INSPECTOR_INSET_REPLACE_HINT" | translate }}</span>
+            </div>
+          </div>
+        }
+      </div>
     </div>
   </div>
 

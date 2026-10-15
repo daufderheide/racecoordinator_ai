@@ -295,7 +295,16 @@
             (click)="onInsetClick('top-left', $event)"
           >
             @if (hasInset("top-left")) {
-              @if (isImageProperty(getInsetKey("top-left")!)) {
+              @if (isCustomWidget(getInsetKey("top-left")!)) {
+                <div class="lane-col-inset-custom-widget-wrapper">
+                  <ng-container
+                    *ngComponentOutlet="
+                      getCustomWidgetComponent(getInsetKey('top-left')!);
+                      inputs: getCustomWidgetInputsForInset('top-left')
+                    "
+                  />
+                </div>
+              } @else if (isImageProperty(getInsetKey("top-left")!)) {
                 <img
                   [src]="getInsetImageUrl('top-left')"
                   class="lane-col-inset-image"
@@ -320,7 +329,16 @@
             (click)="onInsetClick('top-center', $event)"
           >
             @if (hasInset("top-center")) {
-              @if (isImageProperty(getInsetKey("top-center")!)) {
+              @if (isCustomWidget(getInsetKey("top-center")!)) {
+                <div class="lane-col-inset-custom-widget-wrapper">
+                  <ng-container
+                    *ngComponentOutlet="
+                      getCustomWidgetComponent(getInsetKey('top-center')!);
+                      inputs: getCustomWidgetInputsForInset('top-center')
+                    "
+                  />
+                </div>
+              } @else if (isImageProperty(getInsetKey("top-center")!)) {
                 <img
                   [src]="getInsetImageUrl('top-center')"
                   class="lane-col-inset-image"
@@ -345,7 +363,16 @@
             (click)="onInsetClick('top-right', $event)"
           >
             @if (hasInset("top-right")) {
-              @if (isImageProperty(getInsetKey("top-right")!)) {
+              @if (isCustomWidget(getInsetKey("top-right")!)) {
+                <div class="lane-col-inset-custom-widget-wrapper">
+                  <ng-container
+                    *ngComponentOutlet="
+                      getCustomWidgetComponent(getInsetKey('top-right')!);
+                      inputs: getCustomWidgetInputsForInset('top-right')
+                    "
+                  />
+                </div>
+              } @else if (isImageProperty(getInsetKey("top-right")!)) {
                 <img
                   [src]="getInsetImageUrl('top-right')"
                   class="lane-col-inset-image"
@@ -375,7 +402,16 @@
             [style.font-size.px]="getEffectiveInsetFontSize('center-left')"
             [style.color]="getEffectiveInsetTextColor('center-left')"
           >
-            @if (isImageProperty(getInsetKey("center-left")!)) {
+            @if (isCustomWidget(getInsetKey("center-left")!)) {
+              <div class="lane-col-inset-custom-widget-wrapper">
+                <ng-container
+                  *ngComponentOutlet="
+                    getCustomWidgetComponent(getInsetKey('center-left')!);
+                    inputs: getCustomWidgetInputsForInset('center-left')
+                  "
+                />
+              </div>
+            } @else if (isImageProperty(getInsetKey("center-left")!)) {
               <img
                 [src]="getInsetImageUrl('center-left')"
                 class="lane-col-inset-image"
@@ -526,7 +562,16 @@
             [style.font-size.px]="getEffectiveInsetFontSize('center-right')"
             [style.color]="getEffectiveInsetTextColor('center-right')"
           >
-            @if (isImageProperty(getInsetKey("center-right")!)) {
+            @if (isCustomWidget(getInsetKey("center-right")!)) {
+              <div class="lane-col-inset-custom-widget-wrapper">
+                <ng-container
+                  *ngComponentOutlet="
+                    getCustomWidgetComponent(getInsetKey('center-right')!);
+                    inputs: getCustomWidgetInputsForInset('center-right')
+                  "
+                />
+              </div>
+            } @else if (isImageProperty(getInsetKey("center-right")!)) {
               <img
                 [src]="getInsetImageUrl('center-right')"
                 class="lane-col-inset-image"
@@ -561,7 +606,16 @@
             (click)="onInsetClick('bottom-left', $event)"
           >
             @if (hasInset("bottom-left")) {
-              @if (isImageProperty(getInsetKey("bottom-left")!)) {
+              @if (isCustomWidget(getInsetKey("bottom-left")!)) {
+                <div class="lane-col-inset-custom-widget-wrapper">
+                  <ng-container
+                    *ngComponentOutlet="
+                      getCustomWidgetComponent(getInsetKey('bottom-left')!);
+                      inputs: getCustomWidgetInputsForInset('bottom-left')
+                    "
+                  />
+                </div>
+              } @else if (isImageProperty(getInsetKey("bottom-left")!)) {
                 <img
                   [src]="getInsetImageUrl('bottom-left')"
                   class="lane-col-inset-image"
@@ -586,7 +640,16 @@
             (click)="onInsetClick('bottom-center', $event)"
           >
             @if (hasInset("bottom-center")) {
-              @if (isImageProperty(getInsetKey("bottom-center")!)) {
+              @if (isCustomWidget(getInsetKey("bottom-center")!)) {
+                <div class="lane-col-inset-custom-widget-wrapper">
+                  <ng-container
+                    *ngComponentOutlet="
+                      getCustomWidgetComponent(getInsetKey('bottom-center')!);
+                      inputs: getCustomWidgetInputsForInset('bottom-center')
+                    "
+                  />
+                </div>
+              } @else if (isImageProperty(getInsetKey("bottom-center")!)) {
                 <img
                   [src]="getInsetImageUrl('bottom-center')"
                   class="lane-col-inset-image"
@@ -611,7 +674,16 @@
             (click)="onInsetClick('bottom-right', $event)"
           >
             @if (hasInset("bottom-right")) {
-              @if (isImageProperty(getInsetKey("bottom-right")!)) {
+              @if (isCustomWidget(getInsetKey("bottom-right")!)) {
+                <div class="lane-col-inset-custom-widget-wrapper">
+                  <ng-container
+                    *ngComponentOutlet="
+                      getCustomWidgetComponent(getInsetKey('bottom-right')!);
+                      inputs: getCustomWidgetInputsForInset('bottom-right')
+                    "
+                  />
+                </div>
+              } @else if (isImageProperty(getInsetKey("bottom-right")!)) {
                 <img
                   [src]="getInsetImageUrl('bottom-right')"
                   class="lane-col-inset-image"

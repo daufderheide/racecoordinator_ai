@@ -5475,7 +5475,9 @@ export class DefaultRacedayComponent
     const isEditing = this.isUIEditorMode() || this.isLayoutCustomizing;
     if (!isEditing) return false;
     return (
-      !this.draggedWidgetType || this.draggedWidgetType.startsWith("lane-col:")
+      !this.draggedWidgetType ||
+      this.draggedWidgetType.startsWith("lane-col:") ||
+      this.draggedWidgetType.startsWith("custom:")
     );
   }
 
@@ -5512,7 +5514,10 @@ export class DefaultRacedayComponent
 
     let droppedKey: string | undefined;
 
-    if (event.dataTransfer) {
+    if (
+      event.dataTransfer &&
+      typeof event.dataTransfer.getData === "function"
+    ) {
       try {
         const dataStr = event.dataTransfer.getData("application/json");
         if (dataStr) {
@@ -5537,8 +5542,12 @@ export class DefaultRacedayComponent
       }
     }
 
-    if (!droppedKey && this.draggedWidgetType?.startsWith("lane-col:")) {
-      droppedKey = this.draggedWidgetType.substring("lane-col:".length);
+    if (!droppedKey && this.draggedWidgetType) {
+      if (this.draggedWidgetType.startsWith("lane-col:")) {
+        droppedKey = this.draggedWidgetType.substring("lane-col:".length);
+      } else if (this.draggedWidgetType.startsWith("custom:")) {
+        droppedKey = this.draggedWidgetType;
+      }
     }
 
     if (this.draggedWidgetType) {
@@ -8142,6 +8151,13 @@ export class DefaultRacedayComponent
     if (event.dataTransfer) {
       event.dataTransfer.effectAllowed = "all";
       event.dataTransfer.setData("text/plain", type);
+      const key = type.startsWith("lane-col:")
+        ? type.substring("lane-col:".length)
+        : type;
+      event.dataTransfer.setData(
+        "application/json",
+        JSON.stringify({ type, key }),
+      );
     }
   }
 

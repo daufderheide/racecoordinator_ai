@@ -320,6 +320,17 @@ describe("LaneColumnInspectorComponent", () => {
     expect(component.activeScope()).toBe("cell");
     const cellBanner = fixture.debugElement.query(By.css(".cell-banner"));
     expect(cellBanner).toBeTruthy();
+
+    // Switch to inset scope
+    fixture.componentRef.setInput("selectedAnchor", "top-left");
+    fixture.detectChanges();
+    expect(component.activeScope()).toBe("inset");
+    const scopeTabs = fixture.debugElement.queryAll(By.css(".scope-tab"));
+    expect(scopeTabs.length).toBe(5);
+    const insetTab = scopeTabs[4];
+    expect(insetTab.nativeElement.getAttribute("title")).toBe(
+      "UE_SCOPE_TAB_INSET",
+    );
   });
 
   it("should compute breadcrumb labels correctly for position and header widgets", () => {
@@ -1796,6 +1807,87 @@ describe("LaneColumnInspectorComponent", () => {
       expect(
         titleTexts.some((t) => t.includes("UE_INSPECTOR_ROW_BINDING_SECTION")),
       ).toBeTrue();
+    });
+  });
+
+  describe("Inset Map and Drop Zone Card", () => {
+    it("should select anchor when selectAnchorFromMap is called", () => {
+      spyOn(component.anchorChange, "emit");
+      component.selectAnchorFromMap("top-left");
+      expect(component.effectiveSelectedAnchor).toBe("top-left");
+      expect(component.anchorChange.emit).toHaveBeenCalledWith("top-left");
+
+      // Center-center is ignored
+      component.selectAnchorFromMap("center-center");
+      expect(component.effectiveSelectedAnchor).toBe("top-left");
+    });
+
+    it("should return localized label for selected anchor", () => {
+      expect(component.getSelectedAnchorLabel("top-left")).toBeDefined();
+    });
+
+    it("should handle inspector dragover and dragenter/dragleave classes", () => {
+      const target = document.createElement("div");
+      const dragOverEvent = {
+        preventDefault: jasmine.createSpy("preventDefault"),
+        dataTransfer: { dropEffect: "none" },
+      } as unknown as DragEvent;
+
+      component.onInspectorDragOver(dragOverEvent);
+      expect(dragOverEvent.preventDefault).toHaveBeenCalled();
+      expect(dragOverEvent.dataTransfer!.dropEffect).toBe("copy");
+
+      const enterEvent = {
+        preventDefault: jasmine.createSpy("preventDefault"),
+        currentTarget: target,
+      } as unknown as DragEvent;
+      component.onInspectorDragEnter(enterEvent);
+      expect(target.classList.contains("drag-over")).toBeTrue();
+
+      const leaveEvent = {
+        preventDefault: jasmine.createSpy("preventDefault"),
+        currentTarget: target,
+      } as unknown as DragEvent;
+      component.onInspectorDragLeave(leaveEvent);
+      expect(target.classList.contains("drag-over")).toBeFalse();
+    });
+
+    it("should drop widget onto anchor and update settings", () => {
+      const target = document.createElement("div");
+      target.classList.add("drag-over");
+      const dropEvent = {
+        preventDefault: jasmine.createSpy("preventDefault"),
+        stopPropagation: jasmine.createSpy("stopPropagation"),
+        currentTarget: target,
+        dataTransfer: {
+          getData: (type: string) => {
+            if (type === "application/json") {
+              return JSON.stringify({ key: "custom:dopamine:advanced-laps" });
+            }
+            return "";
+          },
+        },
+      } as unknown as DragEvent;
+
+      component.onInspectorDrop(dropEvent, "top-center");
+      expect(target.classList.contains("drag-over")).toBeFalse();
+      expect(component.getAnchorValue("top-center")).toBe(
+        "custom:dopamine:advanced-laps",
+      );
+      expect(component.effectiveSelectedAnchor).toBe("top-center");
+    });
+
+    it("should resolve display name and icon for widgets", () => {
+      expect(component.getWidgetIcon("custom:widget")).toBe("extension");
+      expect(component.getWidgetIcon("bestLapTime")).toBe("schedule");
+      expect(component.getWidgetDisplayName("")).toBe("");
+    });
+
+    it("should remove inset when removeInset is invoked", () => {
+      component.setAnchorValue("top-center", "lap-time");
+      expect(component.getAnchorValue("top-center")).toBe("lap-time");
+      component.removeInset("top-center");
+      expect(component.getAnchorValue("top-center")).toBe("");
     });
   });
 });

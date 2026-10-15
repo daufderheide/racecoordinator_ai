@@ -1134,6 +1134,62 @@ describe("RacedayLaneColumnComponent", () => {
       );
     });
 
+    it("should accept custom widget on drop", () => {
+      mockParent.isUIEditorMode = () => true;
+      fixture.componentRef.setInput("parent", mockParent);
+      const widget = createWidget({ columnKey: "lastLapTime", insets: {} });
+      fixture.componentRef.setInput("widget", widget);
+      fixture.detectChanges();
+
+      const mockEvent: any = {
+        preventDefault: jasmine.createSpy("preventDefault"),
+        stopPropagation: jasmine.createSpy("stopPropagation"),
+        dataTransfer: {
+          getData: jasmine.createSpy("getData").and.callFake((type: string) => {
+            if (type === "application/json") {
+              return JSON.stringify({ key: "custom:dopamine:advanced-laps" });
+            }
+            return "";
+          }),
+        },
+        target: {
+          classList: { remove: jasmine.createSpy("remove") },
+        },
+      };
+
+      component.onAnchorDrop(mockEvent, "top-left");
+      expect(component.settings.insets?.["top-left"]).toBe(
+        "custom:dopamine:advanced-laps",
+      );
+    });
+
+    it("should build synthetic inputs with scaled font size and driver binding for custom widgets", () => {
+      const widget = createWidget({
+        columnKey: "lastLapTime",
+        targetIndex: 2,
+        bindingMode: "lane",
+        insets: { "top-left": "custom:dopamine:advanced-laps" },
+        insetFontSize: 14,
+      });
+      fixture.componentRef.setInput("widget", widget);
+      fixture.componentRef.setInput("parent", mockParent);
+      fixture.detectChanges();
+
+      expect(
+        component.isCustomWidget("custom:dopamine:advanced-laps"),
+      ).toBeTrue();
+      expect(component.isCustomWidget("lastLapTime")).toBeFalse();
+
+      const inputs = component.getCustomWidgetInputsForInset("top-left");
+      expect(inputs).toBeDefined();
+      expect(inputs.widget.widgetType).toBe("custom:dopamine:advanced-laps");
+      expect(inputs.widget.customSettings?.["showHeader"]).toBeFalse();
+      expect(inputs.widget.customSettings?.["valueFontSize"]).toBe(14);
+      expect(inputs.widget.customSettings?.["gridLane"]).toBe(2);
+      expect(inputs.widget.customSettings?.["targetIndex"]).toBe(3);
+      expect(inputs.widget.customSettings?.["bindingMode"]).toBe("lane");
+    });
+
     it("should delete anchor value and notify parent", () => {
       mockParent.isUIEditorMode = () => true;
       mockParent.columnsChanged = { emit: jasmine.createSpy("emit") };

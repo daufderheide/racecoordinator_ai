@@ -1,7 +1,47 @@
 import { RacedayLayoutUtils } from "@app/components/raceday/utils/raceday-layout.utils";
-import { LaneColumnWidgetSettings } from "@app/models/settings";
+import {
+  AbsoluteWidgetNode,
+  LaneColumnWidgetSettings,
+} from "@app/models/settings";
 import { DriverHeatData } from "@app/race/driver_heat_data";
 import { GhostBenchmarkType } from "@app/services/ghost-pacing.service";
+
+export function isCustomWidgetKey(key: string | undefined): boolean {
+  return Boolean(key && key.startsWith("custom:"));
+}
+
+export function buildSyntheticInsetWidgetInputs(
+  anchor: string,
+  key: string | undefined,
+  widget: AbsoluteWidgetNode | null,
+  bindingMode: string,
+  targetIndex: number,
+  insetFontSize: number,
+  parent: any,
+  isCustomizing: boolean,
+): { widget: AbsoluteWidgetNode; parent: any; isCustomizing: boolean } {
+  const customSettings: Record<string, any> = {
+    ...(widget?.customSettings?.["insetsConfig"]?.[anchor] || {}),
+    showHeader: false,
+    bindingMode,
+    gridLane: targetIndex,
+    targetIndex: targetIndex + 1,
+    valueFontSize: insetFontSize,
+  };
+
+  const syntheticWidget: AbsoluteWidgetNode = {
+    ...(widget || ({} as AbsoluteWidgetNode)),
+    id: `${widget?.id || "lane-col"}-inset-${anchor}`,
+    widgetType: (key as any) || "lane-column",
+    customSettings,
+  };
+
+  return {
+    widget: syntheticWidget,
+    parent,
+    isCustomizing,
+  };
+}
 
 export function formatAdjustedLapValue(
   raw: any,

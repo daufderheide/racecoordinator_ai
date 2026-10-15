@@ -29,15 +29,18 @@ import {
 } from "@app/models/settings";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { DriverHeatData } from "@app/race/driver_heat_data";
+import { CustomWidgetService } from "@app/services/custom-widget.service";
 import { GhostBenchmarkType } from "@app/services/ghost-pacing.service";
 import { TranslationService } from "@app/services/translation.service";
 
 import {
+  buildSyntheticInsetWidgetInputs,
   computeHeatDataLastLaps,
   fitColumnLastLaps,
   fitColumnTextValue,
   formatAdjustedLapValue,
   HeatDataLapItem,
+  isCustomWidgetKey,
   isLaneColumnImageProperty,
   resolveColumnHeaderLabel,
   resolveLaneColumnImageUrl,
@@ -71,6 +74,14 @@ export class RacedayLaneColumnComponent
   anchorSelected = output<{ widgetId: string; anchor: string | null }>();
 
   protected translationService = inject(TranslationService);
+  protected customWidgetService = inject(CustomWidgetService, {
+    optional: true,
+  });
+  isCustomWidget = isCustomWidgetKey;
+  private insetCustomInputs = new Map<
+    string,
+    { widget: AbsoluteWidgetNode; parent: any; isCustomizing: boolean }
+  >();
 
   cardRef = viewChild<ElementRef<HTMLElement>>("cardElement");
   lastLapsRef = viewChild<ElementRef<HTMLElement>>("lastLapsContainer");
@@ -898,8 +909,12 @@ export class RacedayLaneColumnComponent
     }
 
     const parent = this.parent();
-    if (!droppedKey && parent?.draggedWidgetType?.startsWith("lane-col:")) {
-      droppedKey = parent.draggedWidgetType.substring("lane-col:".length);
+    if (!droppedKey && parent?.draggedWidgetType) {
+      if (parent.draggedWidgetType.startsWith("lane-col:")) {
+        droppedKey = parent.draggedWidgetType.substring("lane-col:".length);
+      } else {
+        droppedKey = parent.draggedWidgetType;
+      }
     }
 
     if (droppedKey) {
@@ -1003,5 +1018,43 @@ export class RacedayLaneColumnComponent
       hd.isLastLapDrift &&
       (this.columnKey === "lastLapTime" || this.columnKey === "lapTime"),
     );
+  }
+
+  getCustomWidgetComponent(key: string | undefined): any {
+    if (!key) return null;
+    return this.customWidgetService?.getWidgetComponent(key) || null;
+  }
+
+  getCustomWidgetInputsForInset(anchor: string) {
+    const key = this.getInsetKey(anchor);
+    const existing = this.insetCustomInputs.get(anchor);
+    const parent = this.parent();
+    const isCustomizing = this.isUIEditorMode;
+    const w = this.widget();
+    const fontSize = this.getEffectiveInsetFontSize(anchor);
+
+    if (
+      existing &&
+      existing.parent === parent &&
+      existing.isCustomizing === isCustomizing &&
+      existing.widget?.widgetType === key &&
+      existing.widget?.customSettings?.["valueFontSize"] === fontSize &&
+      existing.widget?.customSettings?.["gridLane"] === this.targetIndex
+    ) {
+      return existing;
+    }
+
+    const inputs = buildSyntheticInsetWidgetInputs(
+      anchor,
+      key,
+      w,
+      this.bindingMode,
+      this.targetIndex,
+      fontSize,
+      parent,
+      isCustomizing,
+    );
+    this.insetCustomInputs.set(anchor, inputs);
+    return inputs;
   }
 }
