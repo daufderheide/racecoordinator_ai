@@ -3983,17 +3983,88 @@ public class RaceTest {
       assertEquals(5.1, dhdHeat1.getLastLapTime(), 0.001);
     }
 
+    @Test
+    public void testStartAtCurrent_AdjustDriftLaps_FirstLapInSubsequentHeatExcludesFromRecords() {
+      ProtocolDelegate mockProtocol = mock(ProtocolDelegate.class);
+      Race raceModel = buildDriftRaceModel(true, true);
+      race = createDriftRace(raceModel, mockProtocol);
+
+      race.setCurrentHeat(race.getHeats().get(0));
+      race.prepareHeat();
+      race.changeState(new Racing());
+
+      DriverHeatData dhdHeat0 = race.getCurrentHeat().getDrivers().get(0);
+      String driverId = dhdHeat0.getDriver().getStableId();
+
+      // Heat 0 is the driver's first heat
+      race.onLap(0, 1.0, 1, 0); // reaction time
+      race.onLap(0, 4.0, 1, 0); // lap 1: 4.0s (+ 1.0s rt = 5.0s)
+      assertEquals(1, dhdHeat0.getLapCount());
+      assertTrue(dhdHeat0.getLaps().get(0).isCountTowardsRecords());
+      assertEquals(5.0, dhdHeat0.getBestLapTime(), 0.001);
+
+      // Heat ends with unfinished lap (3.5s carry-over time)
+      race.getHeatExecutionManager().processTicker(3.5f);
+      when(mockProtocol.stopTimer())
+          .thenReturn(Collections.singletonList(new PartialTime(0, 3.5, 3.5)));
+      race.changeState(new HeatOver());
+      assertEquals(3.5, dhdHeat0.getCarryOverTime(), 0.001);
+
+      // Advance to next heat (not driver's first heat, startAtCurrent = true, adjustDriftLaps =
+      // true)
+      Common.advanceToNextHeat(race);
+      race.prepareHeat();
+      race.changeState(new Racing());
+
+      DriverHeatData dhdHeat1 = null;
+      int laneInHeat1 = -1;
+      for (int i = 0; i < race.getCurrentHeat().getDrivers().size(); i++) {
+        DriverHeatData d = race.getCurrentHeat().getDrivers().get(i);
+        if (d != null && d.getDriver() != null && d.getDriver().getStableId().equals(driverId)) {
+          dhdHeat1 = d;
+          laneInHeat1 = i;
+          break;
+        }
+      }
+
+      assertNotNull(dhdHeat1);
+      assertTrue(laneInHeat1 != -1);
+      assertEquals(3.5, dhdHeat1.getPendingLapTime(), 0.001);
+      assertTrue(dhdHeat1.isHasDriftTime());
+
+      // Driver completes first lap in Heat 1 (0.5s + 3.5s pending = 4.0s, which is faster than
+      // 5.0s)
+      race.onLap(laneInHeat1, 0.5, 1, 0);
+      assertEquals(1, dhdHeat1.getLapCount());
+      assertEquals(4.0, dhdHeat1.getLastLapTime(), 0.001);
+      // Because startAtCurrent carries drift time and adjustDriftLaps is true:
+      assertFalse(dhdHeat1.getLaps().get(0).isCountTowardsRecords());
+      assertEquals(0.0, dhdHeat1.getBestLapTime(), 0.001);
+
+      // Driver completes second lap in Heat 1 (normal lap, 3.0s)
+      race.onLap(laneInHeat1, 3.0, 1, 0);
+      assertEquals(2, dhdHeat1.getLapCount());
+      assertEquals(3.0, dhdHeat1.getLastLapTime(), 0.001);
+      assertTrue(dhdHeat1.getLaps().get(1).isCountTowardsRecords());
+      assertEquals(3.0, dhdHeat1.getBestLapTime(), 0.001);
+    }
+
     private Race buildDriftRaceModel() {
       return buildDriftRaceModel(true);
     }
 
     private Race buildDriftRaceModel(boolean startAtCurrent) {
+      return buildDriftRaceModel(startAtCurrent, false);
+    }
+
+    private Race buildDriftRaceModel(boolean startAtCurrent, boolean adjustDriftLaps) {
       return new Race.Builder()
           .withName("Drift MultiHeat Test")
           .withTrackEntityId("track1")
           .withMinLapTime(2.0)
           .withDriftTime(2.0)
           .withStartAtCurrent(startAtCurrent)
+          .withAdjustDriftLaps(adjustDriftLaps)
           .withStartBehindSensor(true)
           .withHeatRotationType(HeatRotationType.RoundRobin)
           .withHeatScoring(
