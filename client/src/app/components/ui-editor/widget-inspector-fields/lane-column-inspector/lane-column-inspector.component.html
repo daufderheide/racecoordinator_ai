@@ -317,18 +317,6 @@
         </div>
       </div>
 
-      <!-- Sort Grid by Binding Mode Toggle -->
-      <div class="inspector-section" style="margin-bottom: 8px">
-        <label class="form-check-label">
-          <input
-            type="checkbox"
-            class="form-checkbox"
-            [(ngModel)]="sortByBindingMode"
-          />
-          <span>{{ "UE_GRID_SORT_BY_BINDING_MODE" | translate }}</span>
-        </label>
-      </div>
-
       <!-- Link Columns Toggle -->
       <div class="inspector-section" style="margin-bottom: 8px">
         <label class="form-check-label">
@@ -1037,19 +1025,6 @@
         </app-custom-select>
       </div>
     </div>
-
-    @if (currentSettings["gridId"]) {
-      <div class="inspector-section" style="margin-bottom: 8px">
-        <label class="form-check-label">
-          <input
-            type="checkbox"
-            class="form-checkbox"
-            [(ngModel)]="sortByBindingMode"
-          />
-          <span>{{ "UE_GRID_SORT_BY_BINDING_MODE" | translate }}</span>
-        </label>
-      </div>
-    }
 
     <div class="inspector-section">
       <label class="inspector-label">

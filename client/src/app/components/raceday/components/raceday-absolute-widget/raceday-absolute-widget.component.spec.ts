@@ -940,10 +940,10 @@ describe("RacedayAbsoluteWidgetComponent", () => {
       expect(component.isGridAnimating).toBeFalse();
     });
 
-    it("should not animate when sortByBindingMode is false", () => {
-      const gridWidget: AbsoluteWidgetNode = {
-        id: "w-grid-0",
-        widgetType: "lane-column",
+    it("should animate custom widget in grid when position rank changes", async () => {
+      const customWidget0: AbsoluteWidgetNode = {
+        id: "w-c0",
+        widgetType: "custom:gauge" as any,
         x: 100,
         y: 200,
         width: 150,
@@ -954,22 +954,63 @@ describe("RacedayAbsoluteWidgetComponent", () => {
           gridLane: 0,
           targetIndex: 0,
           bindingMode: "position",
-          sortByBindingMode: false,
-          columnKey: "driver.name",
+        },
+      };
+
+      const customWidget1: AbsoluteWidgetNode = {
+        id: "w-c1",
+        widgetType: "custom:gauge" as any,
+        x: 100,
+        y: 260,
+        width: 150,
+        height: 50,
+        zIndex: 100,
+        customSettings: {
+          gridId: "grid-anim-test",
+          gridLane: 1,
+          targetIndex: 1,
+          bindingMode: "position",
         },
       };
 
       const parentMock = {
         heat: { objectId: "heat-100" },
-        driverRankings: new Map([["driver-a", 1]]),
-        heatDrivers: [{ objectId: "driver-a", laneIndex: 0 }],
+        driverRankings: new Map([
+          ["driver-a", 1],
+          ["driver-b", 2],
+        ]),
+        heatDrivers: [
+          { objectId: "driver-a", laneIndex: 0 },
+          { objectId: "driver-b", laneIndex: 1 },
+        ],
       };
 
+      LaneGridAnimationHelper.recordPosition(
+        customWidget0,
+        "driver-a",
+        "heat-100",
+      );
+      LaneGridAnimationHelper.recordPosition(
+        customWidget1,
+        "driver-b",
+        "heat-100",
+      );
+      await Promise.resolve();
+
       fixture.componentRef.setInput("isCustomizing", false);
-      fixture.componentRef.setInput("widget", gridWidget);
+      fixture.componentRef.setInput("widget", customWidget0);
       fixture.componentRef.setInput("parentComponent", parentMock);
       fixture.detectChanges();
 
+      expect(component.isGridAnimating).toBeFalse();
+
+      parentMock.driverRankings.set("driver-b", 1);
+      parentMock.driverRankings.set("driver-a", 2);
+      fixture.componentRef.setInput("parentComponent", { ...parentMock });
+      fixture.detectChanges();
+
+      expect(component.isGridAnimating).toBeTrue();
+      jasmine.clock().tick(300);
       expect(component.isGridAnimating).toBeFalse();
     });
 

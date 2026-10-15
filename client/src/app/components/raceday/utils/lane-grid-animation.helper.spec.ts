@@ -67,7 +67,7 @@ describe("LaneGridAnimationHelper", () => {
       ).toBeNull();
     });
 
-    it("should return null if sortByBindingMode is false", () => {
+    it("should resolve entityId in position mode regardless of sortByBindingMode setting", () => {
       const widget = createWidget(
         {},
         { targetIndex: 0, bindingMode: "position", sortByBindingMode: false },
@@ -76,9 +76,9 @@ describe("LaneGridAnimationHelper", () => {
         driverRankings: new Map([["driver-a", 1]]),
         heatDrivers: [{ objectId: "driver-a", laneIndex: 0 }],
       };
-      expect(
-        LaneGridAnimationHelper.resolveEntityId(widget, parent),
-      ).toBeNull();
+      expect(LaneGridAnimationHelper.resolveEntityId(widget, parent)).toBe(
+        "driver-a",
+      );
     });
 
     it("should resolve entityId in position mode using driverRankings map", () => {
@@ -236,11 +236,8 @@ describe("LaneGridAnimationHelper", () => {
       expect(delta).toBeNull();
     });
 
-    it("should return null if sortByBindingMode is false", () => {
-      const widget = createWidget(
-        {},
-        { targetIndex: 0, bindingMode: "position", sortByBindingMode: false },
-      );
+    it("should return null if bindingMode is lane", () => {
+      const widget = createWidget({}, { targetIndex: 0, bindingMode: "lane" });
       const parent = {
         heat: { objectId: "heat-1" },
         driverRankings: new Map([["driver-a", 1]]),
@@ -469,6 +466,51 @@ describe("LaneGridAnimationHelper", () => {
 
       expect(deltaName0).toEqual({ deltaX: 0, deltaY: 80 });
       expect(deltaLaps0).toEqual({ deltaX: 0, deltaY: 80 });
+    });
+
+    it("should animate custom widgets in grids using widgetType as fallback columnKey", async () => {
+      const customRow0 = createWidget(
+        { id: "w-c0", widgetType: "custom:gauge" as any, x: 100, y: 100 },
+        {
+          gridId: "grid-test",
+          targetIndex: 0,
+          gridLane: 0,
+          bindingMode: "position",
+        },
+      );
+      const customRow1 = createWidget(
+        { id: "w-c1", widgetType: "custom:gauge" as any, x: 100, y: 160 },
+        {
+          gridId: "grid-test",
+          targetIndex: 1,
+          gridLane: 1,
+          bindingMode: "position",
+        },
+      );
+
+      LaneGridAnimationHelper.recordPosition(customRow0, "driver-1", "heat-1");
+      LaneGridAnimationHelper.recordPosition(customRow1, "driver-2", "heat-1");
+      await Promise.resolve();
+
+      // Driver 2 takes lead -> moves to Row 0
+      const parent = {
+        heat: { objectId: "heat-1" },
+        driverRankings: new Map([
+          ["driver-2", 1],
+          ["driver-1", 2],
+        ]),
+        heatDrivers: [
+          { objectId: "driver-1", laneIndex: 0 },
+          { objectId: "driver-2", laneIndex: 1 },
+        ],
+      };
+
+      const deltaRow0 = LaneGridAnimationHelper.getShiftDelta(
+        customRow0,
+        parent,
+        false,
+      );
+      expect(deltaRow0).toEqual({ deltaX: 0, deltaY: 60 });
     });
   });
 });

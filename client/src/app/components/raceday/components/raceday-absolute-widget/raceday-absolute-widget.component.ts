@@ -657,10 +657,9 @@ export class RacedayAbsoluteWidgetComponent
       return;
     }
     const w = this.widget();
-    if (!w || w.widgetType !== "lane-column") return;
+    if (!w || !this.shouldRenderAsLaneColumn(w)) return;
     const s = w.customSettings;
     if (!s || !s["gridId"] || s["isHeaderWidget"]) return;
-    if (s["sortByBindingMode"] === false) return;
     const mode = s["bindingMode"];
     if (mode !== "position" && mode !== "overallPosition") return;
 

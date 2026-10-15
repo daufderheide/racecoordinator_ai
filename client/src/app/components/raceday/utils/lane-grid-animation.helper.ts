@@ -37,7 +37,6 @@ export class LaneGridAnimationHelper {
     if (!widget || !parent) return null;
     const s = widget.customSettings;
     if (!s || !s["gridId"] || s["isHeaderWidget"]) return null;
-    if (s["sortByBindingMode"] === false) return null;
     const mode = s["bindingMode"] || "lane";
     if (mode !== "position" && mode !== "overallPosition") return null;
 
@@ -128,6 +127,7 @@ export class LaneGridAnimationHelper {
     );
     const colKey = (widget.customSettings?.["columnKey"] ||
       widget.customSettings?.["gridMasterId"] ||
+      widget.widgetType ||
       "default") as string;
 
     state.currentEntityToRow.set(entityId, rowIndex);
@@ -150,7 +150,6 @@ export class LaneGridAnimationHelper {
     if (isCustomizing) return null;
     const s = widget.customSettings;
     if (!s || !s["gridId"] || s["isHeaderWidget"]) return null;
-    if (s["sortByBindingMode"] === false) return null;
     const mode = s["bindingMode"];
     if (mode !== "position" && mode !== "overallPosition") return null;
 
@@ -162,7 +161,10 @@ export class LaneGridAnimationHelper {
     const state = this.getOrCreateState(gridId, heatId);
 
     const rowIndex = Number(s["targetIndex"] ?? s["gridLane"] ?? 0);
-    const colKey = (s["columnKey"] || s["gridMasterId"] || "default") as string;
+    const colKey = (s["columnKey"] ||
+      s["gridMasterId"] ||
+      widget.widgetType ||
+      "default") as string;
 
     state.currentEntityToRow.set(entityId, rowIndex);
     let colMap = state.coordinatesByColumnAndRow.get(colKey);
