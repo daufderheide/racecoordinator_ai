@@ -468,7 +468,6 @@
             (cdkDropListDropped)="drop($event)"
             #availScrollContainer
             cdkScrollable
-            (mouseleave)="onAvailableListMouseLeave()"
           >
             @if (!isRefreshingList) {
               @for (
@@ -484,7 +483,6 @@
                   "
                   [class.active]="isParticipantSelected(participant)"
                   (click)="selectParticipant(participant, i)"
-                  (mouseenter)="onAvailableItemMouseEnter(participant, i)"
                   cdkDrag
                   [cdkDragScale]="scale"
                   [cdkDragData]="participant"
@@ -632,7 +630,6 @@
             #racingScrollContainer
             cdkScrollable
             (selectstart)="preventSelection($event)"
-            (mouseleave)="onRacingListMouseLeave()"
           >
             @if (!isRefreshingList) {
               @for (
@@ -648,7 +645,6 @@
                   "
                   [class.active]="isParticipantSelected(participant)"
                   (click)="selectParticipant(participant, i)"
-                  (mouseenter)="onRacingItemMouseEnter(participant, i)"
                   cdkDrag
                   [cdkDragScale]="scale"
                   [cdkDragData]="participant"

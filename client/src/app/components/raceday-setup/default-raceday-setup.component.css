@@ -375,10 +375,21 @@
   box-sizing: border-box;
 }
 
-.driver-item:hover,
+.driver-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
 .driver-item.keyboard-active,
 .driver-item.active {
   background: rgba(56, 189, 248, 0.15);
+  border-color: #38bdf8;
+  transform: translateX(4px);
+}
+
+.driver-item.keyboard-active:hover,
+.driver-item.active:hover {
+  background: rgba(56, 189, 248, 0.22);
   border-color: #38bdf8;
   transform: translateX(4px);
 }
