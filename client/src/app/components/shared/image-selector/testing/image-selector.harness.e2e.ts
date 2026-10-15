@@ -1,18 +1,32 @@
-import { Locator } from '@playwright/test';
+import { Locator } from "@playwright/test";
 
-import { ImageSelectorHarnessBase } from './image-selector.harness.base';
+import { ImageSelectorHarnessBase } from "./image-selector.harness.base";
 
 export class ImageSelectorHarnessE2e implements ImageSelectorHarnessBase {
   constructor(private locator: Locator) {}
 
-  private get base() { return ImageSelectorHarnessBase; }
+  private get base() {
+    return ImageSelectorHarnessBase;
+  }
 
-  private get labelElement() { return this.locator.locator(this.base.selectors.label); }
-  private get previewImage() { return this.locator.locator(this.base.selectors.previewImage); }
-  private get previewContainer() { return this.locator.locator(this.base.selectors.previewContainer); }
-  private get removeButton() { return this.locator.locator(this.base.selectors.removeButton); }
-  private get uploadOverlay() { return this.locator.locator(this.base.selectors.uploadOverlay); }
-  private get dragHint() { return this.locator.locator(this.base.selectors.dragHint); }
+  private get labelElement() {
+    return this.locator.locator(this.base.selectors.label);
+  }
+  private get previewImage() {
+    return this.locator.locator(this.base.selectors.previewImage);
+  }
+  private get previewContainer() {
+    return this.locator.locator(this.base.selectors.previewContainer);
+  }
+  private get removeButton() {
+    return this.locator.locator(this.base.selectors.removeButton);
+  }
+  private get uploadOverlay() {
+    return this.locator.locator(this.base.selectors.uploadOverlay);
+  }
+  private get dragHint() {
+    return this.locator.locator(this.base.selectors.dragHint);
+  }
 
   async getLabel(): Promise<string | null> {
     if (await this.labelElement.isVisible()) {
@@ -42,11 +56,28 @@ export class ImageSelectorHarnessE2e implements ImageSelectorHarnessBase {
   }
 
   async simulateDragOver(): Promise<void> {
-    await this.previewContainer.dispatchEvent('dragover');
+    await this.previewContainer.dispatchEvent("dragover");
   }
 
   async hasDraggingState(): Promise<boolean> {
-    const classList = await this.previewContainer.getAttribute('class') || '';
-    return classList.includes('dragging');
+    const classList = (await this.previewContainer.getAttribute("class")) || "";
+    return classList.includes("dragging");
+  }
+
+  async isDisabled(): Promise<boolean> {
+    const classList = (await this.previewContainer.getAttribute("class")) || "";
+    return classList.includes("disabled");
+  }
+
+  async getDragHintText(): Promise<string | null> {
+    if (await this.dragHint.isVisible()) {
+      return await this.dragHint.innerText();
+    }
+    return null;
+  }
+
+  async isDragHintDisabled(): Promise<boolean> {
+    const classList = (await this.dragHint.getAttribute("class")) || "";
+    return classList.includes("disabled-hint");
   }
 }

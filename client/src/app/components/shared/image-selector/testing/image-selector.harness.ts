@@ -1,16 +1,31 @@
-import { ComponentHarness } from '@angular/cdk/testing';
+import { ComponentHarness } from "@angular/cdk/testing";
 
-import { ImageSelectorHarnessBase } from './image-selector.harness.base';
+import { ImageSelectorHarnessBase } from "./image-selector.harness.base";
 
-export class ImageSelectorHarness extends ComponentHarness implements ImageSelectorHarnessBase {
+export class ImageSelectorHarness
+  extends ComponentHarness
+  implements ImageSelectorHarnessBase
+{
   static hostSelector = ImageSelectorHarnessBase.hostSelector;
 
-  protected getLabelElement = this.locatorForOptional(ImageSelectorHarnessBase.selectors.label);
-  protected getPreviewImage = this.locatorForOptional(ImageSelectorHarnessBase.selectors.previewImage);
-  protected getPreviewContainer = this.locatorFor(ImageSelectorHarnessBase.selectors.previewContainer);
-  protected getRemoveButton = this.locatorForOptional(ImageSelectorHarnessBase.selectors.removeButton);
-  protected getUploadOverlay = this.locatorForOptional(ImageSelectorHarnessBase.selectors.uploadOverlay);
-  protected getDragHint = this.locatorForOptional(ImageSelectorHarnessBase.selectors.dragHint);
+  protected getLabelElement = this.locatorForOptional(
+    ImageSelectorHarnessBase.selectors.label,
+  );
+  protected getPreviewImage = this.locatorForOptional(
+    ImageSelectorHarnessBase.selectors.previewImage,
+  );
+  protected getPreviewContainer = this.locatorFor(
+    ImageSelectorHarnessBase.selectors.previewContainer,
+  );
+  protected getRemoveButton = this.locatorForOptional(
+    ImageSelectorHarnessBase.selectors.removeButton,
+  );
+  protected getUploadOverlay = this.locatorForOptional(
+    ImageSelectorHarnessBase.selectors.uploadOverlay,
+  );
+  protected getDragHint = this.locatorForOptional(
+    ImageSelectorHarnessBase.selectors.dragHint,
+  );
 
   async getLabel(): Promise<string | null> {
     const el = await this.getLabelElement();
@@ -44,11 +59,26 @@ export class ImageSelectorHarness extends ComponentHarness implements ImageSelec
 
   async simulateDragOver(): Promise<void> {
     const el = await this.getPreviewContainer();
-    await el.dispatchEvent('dragover');
+    await el.dispatchEvent("dragover");
   }
 
   async hasDraggingState(): Promise<boolean> {
     const el = await this.getPreviewContainer();
-    return await el.hasClass('dragging');
+    return await el.hasClass("dragging");
+  }
+
+  async isDisabled(): Promise<boolean> {
+    const el = await this.getPreviewContainer();
+    return await el.hasClass("disabled");
+  }
+
+  async getDragHintText(): Promise<string | null> {
+    const el = await this.getDragHint();
+    return el ? await el.text() : null;
+  }
+
+  async isDragHintDisabled(): Promise<boolean> {
+    const el = await this.getDragHint();
+    return el ? await el.hasClass("disabled-hint") : false;
   }
 }

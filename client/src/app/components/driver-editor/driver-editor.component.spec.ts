@@ -51,6 +51,7 @@ class MockImageSelectorComponent {
   imageUrl = input<string | undefined>();
   assets = input<any[]>([]);
   size = input<string | undefined>();
+  disabled = input<boolean>(false);
   imageUrlChange = output<string | undefined>();
   assetSelected = output<any>();
   uploadStarted = output<void>();
