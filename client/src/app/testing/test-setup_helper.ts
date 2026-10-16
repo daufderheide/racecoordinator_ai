@@ -2796,4 +2796,25 @@ export class TestSetupHelper {
       }
     }, widgetFilesByFolder);
   }
+
+  /**
+   * Deterministically blurs all inputs, selects, textareas, and active elements,
+   * yielding to the browser macrotask queue (setTimeout 0) so any component focusNameInput()
+   * timers scheduled during user interactions (e.g. edit mode toggle, add item) complete
+   * before the elements are blurred, avoiding focus ring and cursor blink race conditions.
+   */
+  static async blurActiveElement(page: Page): Promise<void> {
+    await page.evaluate(
+      () =>
+        new Promise((resolve) => {
+          setTimeout(() => {
+            (document.activeElement as HTMLElement)?.blur();
+            document
+              .querySelectorAll("input, select, textarea, button")
+              .forEach((el: any) => el.blur());
+            resolve(true);
+          }, 0);
+        }),
+    );
+  }
 }

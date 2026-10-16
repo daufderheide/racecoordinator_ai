@@ -13,7 +13,7 @@ test.describe("Team Editor Visuals", () => {
   async function enterEditMode(page: any) {
     await page.locator("#edit-track-btn").click();
     await expect(page.locator("#team-name-input")).toBeEnabled();
-    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+    await TestSetupHelper.blurActiveElement(page);
     await TestSetupHelper.disableAnimations(page);
   }
 

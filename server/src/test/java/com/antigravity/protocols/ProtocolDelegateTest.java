@@ -222,7 +222,8 @@ public class ProtocolDelegateTest {
     PhidgetProtocol phidget = new PhidgetProtocol(phidgetConfig, 2, null);
     phidget.setInterfaceIndex(1);
 
-    ProtocolDelegate pitDelegate = new ProtocolDelegate(Arrays.asList(arduino, phidget));
+    ProtocolDelegate pitDelegate =
+        new ProtocolDelegate(Arrays.asList(arduino, phidget), () -> scheduler);
     MockProtocolListener listener = new MockProtocolListener();
     pitDelegate.setListener(listener);
     pitDelegate.open();
@@ -295,7 +296,8 @@ public class ProtocolDelegateTest {
         new TestableTrackmateProtocol(tmConfig, 2, tmSerial, scheduler2);
     trackmate.setInterfaceIndex(1);
 
-    ProtocolDelegate pitDelegate = new ProtocolDelegate(Arrays.asList(arduino, trackmate));
+    ProtocolDelegate pitDelegate =
+        new ProtocolDelegate(Arrays.asList(arduino, trackmate), () -> scheduler1);
     MockProtocolListener listener = new MockProtocolListener();
     pitDelegate.setListener(listener);
     pitDelegate.open();
@@ -349,7 +351,8 @@ public class ProtocolDelegateTest {
         new TestableArduinoProtocol(arduinoConfig, 2, arduinoSerial, scheduler);
     arduino.setInterfaceIndex(1);
 
-    ProtocolDelegate pitDelegate = new ProtocolDelegate(Arrays.asList(bart, arduino));
+    ProtocolDelegate pitDelegate =
+        new ProtocolDelegate(Arrays.asList(bart, arduino), () -> scheduler);
     MockProtocolListener listener = new MockProtocolListener();
     pitDelegate.setListener(listener);
     pitDelegate.open();
