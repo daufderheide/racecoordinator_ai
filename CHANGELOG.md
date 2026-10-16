@@ -1,6 +1,6 @@
 # Changelog
 
-## [v1.0.1-beta.24] - 2026-10-14
+## [v1.0.1-beta.25] - 2026-10-16
 
 ### 🚀 New Features
 
@@ -14,6 +14,9 @@
 
 ### 🐛 Bug Fixes
 
+- Fixed custom rotation editor heat drag and drop [#986](https://github.com/daufderheide/racecoordinator_ai/issues/986) [skip-screendiffs] ([bd00af24](https://github.com/daufderheide/racecoordinator_ai/commit/bd00af24))
+- Clarify text on team and driver avatar when no image is selected [#982](https://github.com/daufderheide/racecoordinator_ai/issues/982) ([e14739e6](https://github.com/daufderheide/racecoordinator_ai/commit/e14739e6))
+- adjust mouse over/left click and keyboard handleing for the racing and available lists on the raceday setup page [#983](https://github.com/daufderheide/racecoordinator_ai/issues/983) ([ddb62208](https://github.com/daufderheide/racecoordinator_ai/commit/ddb62208))
 - **audio**: resolve asset UUIDs in audio set entries to download endpoint [#973](https://github.com/daufderheide/racecoordinator_ai/issues/973) [skip-screendiffs] ([dc152413](https://github.com/daufderheide/racecoordinator_ai/commit/dc152413))
 - resolve widget discovery 404 errors and duplicate empty lane tracking keys" [skip-screendiffs] ([cd2677f3](https://github.com/daufderheide/racecoordinator_ai/commit/cd2677f3))
 - add core server app entry point and client subscription management logic.  This helps shutdown and startup when rc ai is already running [#908](https://github.com/daufderheide/racecoordinator_ai/issues/908) [skip-screendiffs] ([8e02bf37](https://github.com/daufderheide/racecoordinator_ai/commit/8e02bf37))
@@ -74,7 +77,7 @@
 <details>
 <summary>🔍 <b>Full Commit History</b></summary>
 
-<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0...v1.0.1-beta.24">GitHub</a></p>
+<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0...v1.0.1-beta.25">GitHub</a></p>
 </details>
 
 ## [v1.0.0] - 2026-09-27
