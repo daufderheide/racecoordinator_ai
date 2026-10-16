@@ -517,6 +517,8 @@ export class DefaultRacedaySetupComponent implements OnInit {
         return;
       }
       this.handleEnterKey(event);
+    } else if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+      this.handleArrowKey(event);
     }
   }
 
@@ -683,6 +685,93 @@ export class DefaultRacedaySetupComponent implements OnInit {
     return false;
   }
 
+  handleArrowKey(event: KeyboardEvent): boolean {
+    if (this.isAnyModalOrDropdownOpen()) {
+      return false;
+    }
+
+    const participant =
+      this.selectedParticipantItem || this.clickedParticipantItem;
+    if (!participant) {
+      return false;
+    }
+
+    const isDown = event.key === "ArrowDown";
+    if (this.isParticipantInAvailable(participant)) {
+      event.preventDefault();
+      this.navigateAvailableParticipants(participant, isDown);
+      return true;
+    }
+
+    if (this.isParticipantInRacing(participant)) {
+      event.preventDefault();
+      this.navigateRacingParticipants(participant, isDown);
+      return true;
+    }
+
+    return false;
+  }
+
+  private navigateAvailableParticipants(
+    participant: Participant,
+    isDown: boolean,
+  ): void {
+    const list = this.filteredAvailableParticipants;
+    if (list.length === 0) return;
+
+    let currentIndex = list.findIndex(
+      (p) =>
+        this.getParticipantUniqueId(p) ===
+        this.getParticipantUniqueId(participant),
+    );
+    if (currentIndex === -1) {
+      currentIndex = Math.min(
+        Math.max(0, this.availableActiveIndex),
+        list.length - 1,
+      );
+    }
+
+    const nextIndex = isDown
+      ? Math.min(currentIndex + 1, list.length - 1)
+      : Math.max(currentIndex - 1, 0);
+
+    this.availableActiveIndex = nextIndex;
+    this.selectedParticipantItem = list[nextIndex] || null;
+    this.clickedParticipantItem = this.selectedParticipantItem;
+    this.cdr.detectChanges();
+    this.scrollActiveAvailableItemIntoView();
+  }
+
+  private navigateRacingParticipants(
+    participant: Participant,
+    isDown: boolean,
+  ): void {
+    const list = this.filteredRacingParticipants;
+    if (list.length === 0) return;
+
+    let currentIndex = list.findIndex(
+      (p) =>
+        this.getParticipantUniqueId(p) ===
+        this.getParticipantUniqueId(participant),
+    );
+    if (currentIndex === -1) {
+      currentIndex = Math.min(
+        Math.max(0, this.racingActiveIndex),
+        list.length - 1,
+      );
+    }
+
+    const nextIndex = isDown
+      ? Math.min(currentIndex + 1, list.length - 1)
+      : Math.max(currentIndex - 1, 0);
+
+    this.racingActiveIndex = nextIndex;
+    this.selectedParticipantItem = list[nextIndex] || null;
+    this.clickedParticipantItem = this.selectedParticipantItem;
+    this.cdr.detectChanges();
+    this.scrollActiveRacingItemIntoView();
+  }
+
   selectParticipant(participant: Participant, index?: number) {
     this.selectedParticipantItem = participant;
     this.clickedParticipantItem = participant;
@@ -709,49 +798,6 @@ export class DefaultRacedaySetupComponent implements OnInit {
         if (racingIdx !== -1) {
           this.racingActiveIndex = racingIdx;
         }
-      }
-    }
-  }
-
-  onAvailableItemMouseEnter(participant: Participant, index: number): void {
-    this.availableActiveIndex = index;
-    this.selectedParticipantItem = participant;
-  }
-
-  onRacingItemMouseEnter(participant: Participant, index: number): void {
-    this.racingActiveIndex = index;
-    this.selectedParticipantItem = participant;
-  }
-
-  onAvailableListMouseLeave(): void {
-    if (!this.availableSearchQuery?.trim()) {
-      if (this.clickedParticipantItem) {
-        this.selectedParticipantItem = this.clickedParticipantItem;
-        this.availableActiveIndex =
-          this.filteredAvailableParticipants.findIndex(
-            (p) =>
-              p.entity_id === this.clickedParticipantItem!.entity_id &&
-              this.isDriver(p) === this.isDriver(this.clickedParticipantItem!),
-          );
-      } else {
-        this.selectedParticipantItem = null;
-        this.availableActiveIndex = -1;
-      }
-    }
-  }
-
-  onRacingListMouseLeave(): void {
-    if (!this.racingSearchQuery?.trim()) {
-      if (this.clickedParticipantItem) {
-        this.selectedParticipantItem = this.clickedParticipantItem;
-        this.racingActiveIndex = this.filteredRacingParticipants.findIndex(
-          (p) =>
-            p.entity_id === this.clickedParticipantItem!.entity_id &&
-            this.isDriver(p) === this.isDriver(this.clickedParticipantItem!),
-        );
-      } else {
-        this.selectedParticipantItem = null;
-        this.racingActiveIndex = -1;
       }
     }
   }

@@ -274,3 +274,8 @@ La barra degli strumenti superiore dell'Editor dei Tracciati fornisce strumenti 
 
 ### Strisce LED FastLED Non Si Accendono
 - **Soluzione**: Assicurati che su Arduino sia installato lo **sketch ufficiale `v2.1.0.x`**, che il modello di LED e l'ordine dei colori siano corretti e che la massa (GND) dell'alimentatore a 5V sia collegata alla massa di Arduino.
+
+### Disconnessione dell'Interfaccia tra le Manche (Sospensione USB / Risparmio Energetico)
+- **Sintomo**: L'interfaccia (Arduino, Phidget o Trackmate) si disconnette durante le pause tra le manche o dopo periodi di inattività, e si riconnette all'avvio della gara con il messaggio *"La connessione all'interfaccia è stata ripristinata."*
+- **Soluzione**: Windows, Linux e macOS disattivano porte USB e dispositivi HID inattivi anche con il PC acceso. Consulta la sezione [Sospensione dell'Interfaccia USB e Disconnessioni](troubleshooting.it.md#usb-sleep-prevention) nella Risoluzione dei Problemi per disattivare il risparmio energetico in Gestione dispositivi.
+

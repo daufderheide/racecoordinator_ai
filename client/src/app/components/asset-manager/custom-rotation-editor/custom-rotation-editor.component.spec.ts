@@ -11,6 +11,7 @@ import { ActivatedRoute, Router } from "@angular/router";
 import { of } from "rxjs";
 import { DataService } from "@app/data.service";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
+import { ICustomHeat } from "@app/proto/antigravity";
 import { LoggerService } from "@app/services/logger.service";
 import { TranslationService } from "@app/services/translation.service";
 import { MOCK_TRACK_INSTANCES } from "@app/testing/data/tracks_data";
@@ -1100,6 +1101,84 @@ describe("CustomRotationEditorComponent", () => {
       component.onDrop(event);
 
       expect(rotation.heats[0].driverIndices![2]).toBe(0);
+    });
+
+    it("should reorder heats when dropHeat is called with different previous and current indices", () => {
+      fixture.detectChanges();
+      const rotation = component.internalRotations[0];
+      const heat1: ICustomHeat = { driverIndices: [1, 2, 3, 4], group: 0 };
+      const heat2: ICustomHeat = { driverIndices: [5, 6, 7, 8], group: 1 };
+      const heat3: ICustomHeat = { driverIndices: [9, 10, 11, 12], group: 2 };
+      rotation.heats = [heat1, heat2, heat3];
+
+      const captureSpy = spyOn(component, "captureState").and.callThrough();
+      const connSpy = spyOn(
+        component,
+        "updateDropListConnections",
+      ).and.callThrough();
+
+      const event = {
+        previousIndex: 0,
+        currentIndex: 2,
+      } as any;
+
+      component.dropHeat(rotation, event);
+
+      expect(rotation.heats[0]).toBe(heat2);
+      expect(rotation.heats[1]).toBe(heat3);
+      expect(rotation.heats[2]).toBe(heat1);
+      expect(captureSpy).toHaveBeenCalled();
+      expect(connSpy).toHaveBeenCalled();
+    });
+
+    it("should not reorder heats or capture state when dropHeat is called with identical indices", () => {
+      fixture.detectChanges();
+      const rotation = component.internalRotations[0];
+      const heat1: ICustomHeat = { driverIndices: [1, 2, 3, 4], group: 0 };
+      const heat2: ICustomHeat = { driverIndices: [5, 6, 7, 8], group: 1 };
+      rotation.heats = [heat1, heat2];
+
+      const captureSpy = spyOn(component, "captureState").and.callThrough();
+
+      const event = {
+        previousIndex: 1,
+        currentIndex: 1,
+      } as any;
+
+      component.dropHeat(rotation, event);
+
+      expect(rotation.heats[0]).toBe(heat1);
+      expect(rotation.heats[1]).toBe(heat2);
+      expect(captureSpy).not.toHaveBeenCalled();
+    });
+
+    it("should render heat cards with cdkDrag and drag-handle-icon with cdkDragHandle", () => {
+      const rotation = component.internalRotations[0];
+      rotation.heats = [
+        { driverIndices: [1, 2, 3, 4], group: 0 },
+        { driverIndices: [5, 6, 7, 8], group: 1 },
+      ];
+      rotation.isExpanded = true;
+      fixture.detectChanges();
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      const heatsGrid = compiled.querySelector(".heats-grid");
+      expect(heatsGrid).toBeTruthy();
+      expect(heatsGrid?.hasAttribute("cdkdroplist")).toBeTrue();
+      expect(heatsGrid?.getAttribute("cdkdroplistorientation")).toBe("mixed");
+      expect(heatsGrid?.hasAttribute("cdkdroplistsortingdisabled")).toBeFalse();
+
+      const heatCards = compiled.querySelectorAll(".heat-card");
+      expect(heatCards.length).toBe(2);
+      expect(heatCards[0].hasAttribute("cdkdrag")).toBeTrue();
+      expect(heatCards[1].hasAttribute("cdkdrag")).toBeTrue();
+
+      const dragHandles = compiled.querySelectorAll(
+        ".heat-card .drag-handle-icon",
+      );
+      expect(dragHandles.length).toBe(2);
+      expect(dragHandles[0].hasAttribute("cdkdraghandle")).toBeTrue();
+      expect(dragHandles[1].hasAttribute("cdkdraghandle")).toBeTrue();
     });
   });
 

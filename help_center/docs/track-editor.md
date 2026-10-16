@@ -300,3 +300,8 @@ The top toolbar of the Track Editor provides essential management tools:
     1. Ensure the Arduino is running the official **Race Coordinator AI sketch (`v2.1.0.x`)**; legacy `v1.0.0.x` sketches do not support FastLED control.
     2. Check that the **LED Type** (e.g., `WS2812B`) and **Color Order** (e.g., `GRB`) match your physical strip specifications.
     3. Verify that the 5V power supply ground is bonded to the Arduino ground (common ground). Powering long LED strips directly from the Arduino's 5V pin will cause voltage drops and brownouts.
+
+### Interface Disconnects Between Heats (USB Sleep / Selective Suspend)
+- **Symptom**: Your interface (Arduino, Phidget, or Trackmate) disconnects during pauses between heats or after sitting idle, then reconnects when racing resumes with a message saying *"Connection to the interface has been restored."*
+- **Solution**: Windows, Linux, and macOS aggressively power down idle USB and HID devices even when the PC is awake. Refer to the [USB Interface Sleep & Power Saving](troubleshooting.md#usb-sleep-prevention) guide in Troubleshooting to disable USB power saving on your USB Root Hubs and Human Interface Devices in Device Manager.
+

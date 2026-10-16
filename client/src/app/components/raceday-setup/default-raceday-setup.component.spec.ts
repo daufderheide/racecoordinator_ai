@@ -3101,158 +3101,38 @@ describe("DefaultRacedaySetupComponent", () => {
       expect(component.isParticipantSelected(d1)).toBeFalse();
     });
 
-    it("should update selection and undo previous selection when hovering over a driver in available or racing list", () => {
+    it("should update selection when clicking a driver in available or racing list", () => {
       const d1 = new Driver("d1", "Dave", "D");
       const d2 = new Driver("d2", "Dan", "D");
       component.unselectedParticipants = [d1];
       component.selectedParticipants = [d2];
 
-      component.onAvailableItemMouseEnter(d1, 0);
+      component.selectParticipant(d1, 0);
       expect(component.selectedParticipantItem).toBe(d1);
       expect(component.availableActiveIndex).toBe(0);
       expect(component.isParticipantSelected(d1)).toBeTrue();
       expect(component.isParticipantSelected(d2)).toBeFalse();
 
-      component.onRacingItemMouseEnter(d2, 0);
+      component.selectParticipant(d2, 0);
       expect(component.selectedParticipantItem).toBe(d2);
       expect(component.racingActiveIndex).toBe(0);
       expect(component.isParticipantSelected(d2)).toBeTrue();
       expect(component.isParticipantSelected(d1)).toBeFalse();
     });
 
-    describe("mouse leave behavior on list boxes", () => {
-      it("should remove selection when mouse leaves available list box if there is no search string", () => {
-        const d1 = new Driver("d1", "Dave", "D");
-        component.unselectedParticipants = [d1];
-        component.availableSearchQuery = "";
-        component.onAvailableItemMouseEnter(d1, 0);
+    it("should reflect active selection in DOM when participant is clicked", () => {
+      const driver = new Driver("d1", "Dave", "D");
+      component.unselectedParticipants = [driver];
+      component.availableSearchQuery = "";
+      fixture.detectChanges();
 
-        expect(component.selectedParticipantItem).toBe(d1);
-        expect(component.isParticipantSelected(d1)).toBeTrue();
+      const availItem = fixture.nativeElement.querySelector("#avail-item-0");
+      expect(availItem).toBeTruthy();
+      availItem.click();
+      fixture.detectChanges();
 
-        component.onAvailableListMouseLeave();
-
-        expect(component.selectedParticipantItem).toBeNull();
-        expect(component.availableActiveIndex).toBe(-1);
-        expect(component.isParticipantSelected(d1)).toBeFalse();
-      });
-
-      it("should retain selection when mouse leaves available list box if there is a search string", () => {
-        const d1 = new Driver("d1", "Dave", "D");
-        component.unselectedParticipants = [d1];
-        component.availableSearchQuery = "Dave";
-        component.onAvailableItemMouseEnter(d1, 0);
-
-        component.onAvailableListMouseLeave();
-
-        expect(component.selectedParticipantItem).toBe(d1);
-        expect(component.availableActiveIndex).toBe(0);
-        expect(component.isParticipantSelected(d1)).toBeTrue();
-      });
-
-      it("should remove selection when mouse leaves available list box if search string is whitespace only", () => {
-        const d1 = new Driver("d1", "Dave", "D");
-        component.unselectedParticipants = [d1];
-        component.availableSearchQuery = "   ";
-        component.onAvailableItemMouseEnter(d1, 0);
-
-        component.onAvailableListMouseLeave();
-
-        expect(component.selectedParticipantItem).toBeNull();
-        expect(component.availableActiveIndex).toBe(-1);
-        expect(component.isParticipantSelected(d1)).toBeFalse();
-      });
-
-      it("should remove selection when mouse leaves racing list box if there is no search string", () => {
-        const d2 = new Driver("d2", "Dan", "D");
-        component.selectedParticipants = [d2];
-        component.racingSearchQuery = "";
-        component.onRacingItemMouseEnter(d2, 0);
-
-        expect(component.selectedParticipantItem).toBe(d2);
-        expect(component.isParticipantSelected(d2)).toBeTrue();
-
-        component.onRacingListMouseLeave();
-
-        expect(component.selectedParticipantItem).toBeNull();
-        expect(component.racingActiveIndex).toBe(-1);
-        expect(component.isParticipantSelected(d2)).toBeFalse();
-      });
-
-      it("should retain selection when mouse leaves racing list box if there is a search string", () => {
-        const d2 = new Driver("d2", "Dan", "D");
-        component.selectedParticipants = [d2];
-        component.racingSearchQuery = "Dan";
-        component.onRacingItemMouseEnter(d2, 0);
-
-        component.onRacingListMouseLeave();
-
-        expect(component.selectedParticipantItem).toBe(d2);
-        expect(component.racingActiveIndex).toBe(0);
-        expect(component.isParticipantSelected(d2)).toBeTrue();
-      });
-
-      it("should remove selection when mouse leaves racing list box if search string is whitespace only", () => {
-        const d2 = new Driver("d2", "Dan", "D");
-        component.selectedParticipants = [d2];
-        component.racingSearchQuery = "   ";
-        component.onRacingItemMouseEnter(d2, 0);
-
-        component.onRacingListMouseLeave();
-
-        expect(component.selectedParticipantItem).toBeNull();
-        expect(component.racingActiveIndex).toBe(-1);
-        expect(component.isParticipantSelected(d2)).toBeFalse();
-      });
-
-      it("should remove selection in template when mouseleave event is dispatched on available-list with no search query", () => {
-        const driver = new Driver("d1", "Dave", "D");
-        component.unselectedParticipants = [driver];
-        component.availableSearchQuery = "";
-        fixture.detectChanges();
-
-        const availItem = fixture.nativeElement.querySelector("#avail-item-0");
-        expect(availItem).toBeTruthy();
-        availItem.dispatchEvent(new MouseEvent("mouseenter"));
-        fixture.detectChanges();
-
-        expect(component.selectedParticipantItem).toBe(driver);
-        expect(availItem.classList.contains("active")).toBeTrue();
-
-        const availableList =
-          fixture.nativeElement.querySelector("#available-list");
-        expect(availableList).toBeTruthy();
-        availableList.dispatchEvent(new MouseEvent("mouseleave"));
-        fixture.detectChanges();
-
-        expect(component.selectedParticipantItem).toBeNull();
-        expect(availItem.classList.contains("active")).toBeFalse();
-      });
-
-      it("should remove selection in template when mouseleave event is dispatched on selected-list with no search query", () => {
-        const driver = new Driver("d2", "Dan", "D");
-        component.selectedParticipants = [driver];
-        component.racingSearchQuery = "";
-        fixture.detectChanges();
-
-        const racingItem =
-          fixture.nativeElement.querySelector("#racing-item-0");
-        expect(racingItem).toBeTruthy();
-        racingItem.dispatchEvent(new MouseEvent("mouseenter"));
-        fixture.detectChanges();
-
-        expect(component.selectedParticipantItem).toBe(driver);
-        expect(racingItem.classList.contains("active")).toBeTrue();
-
-        const selectedList =
-          fixture.nativeElement.querySelector("#selected-list");
-        expect(selectedList).toBeTruthy();
-        selectedList.dispatchEvent(new MouseEvent("mouseleave"));
-        fixture.detectChanges();
-
-        expect(component.selectedParticipantItem).toBeNull();
-        expect(racingItem.classList.contains("active")).toBeFalse();
-      });
+      expect(component.selectedParticipantItem).toBe(driver);
+      expect(availItem.classList.contains("active")).toBeTrue();
     });
 
     it("should navigate to driver-editor with query param when participant is selected", () => {
@@ -3451,23 +3331,6 @@ describe("DefaultRacedaySetupComponent", () => {
       expect(component.isParticipantSelected(d2)).toBeTrue();
     }));
 
-    it("should retain click selection when mouse leaves available list and add driver on Enter", fakeAsync(() => {
-      component.selectParticipant(d1, 0);
-      expect(component.selectedParticipantItem).toBe(d1);
-
-      // Mouse leaves available list
-      component.onAvailableListMouseLeave();
-      expect(component.selectedParticipantItem).toBe(d1);
-      expect(component.isParticipantSelected(d1)).toBeTrue();
-
-      const enterEvent = new KeyboardEvent("keydown", { key: "Enter" });
-      window.dispatchEvent(enterEvent);
-      tick(50);
-
-      expect(component.selectedParticipants).toContain(d1);
-      expect(component.unselectedParticipants).not.toContain(d1);
-    }));
-
     it("should remove racing driver from race on window Enter key when selected by mouse click", fakeAsync(() => {
       component.selectParticipant(d3, 0);
       expect(component.selectedParticipantItem).toBe(d3);
@@ -3480,46 +3343,6 @@ describe("DefaultRacedaySetupComponent", () => {
       expect(component.selectedParticipants).not.toContain(d3);
       expect(component.unselectedParticipants).toContain(d3);
       expect(component.selectedParticipants.length).toBe(0);
-    }));
-
-    it("should retain click selection when mouse leaves racing list and remove driver on Enter", fakeAsync(() => {
-      component.selectParticipant(d3, 0);
-      expect(component.selectedParticipantItem).toBe(d3);
-
-      // Mouse leaves racing list
-      component.onRacingListMouseLeave();
-      expect(component.selectedParticipantItem).toBe(d3);
-      expect(component.isParticipantSelected(d3)).toBeTrue();
-
-      const enterEvent = new KeyboardEvent("keydown", { key: "Enter" });
-      window.dispatchEvent(enterEvent);
-      tick(50);
-
-      expect(component.selectedParticipants).not.toContain(d3);
-      expect(component.unselectedParticipants).toContain(d3);
-    }));
-
-    it("should add available driver on Enter when selected via mouse hover", fakeAsync(() => {
-      component.onAvailableItemMouseEnter(d2, 1);
-      expect(component.selectedParticipantItem).toBe(d2);
-
-      const enterEvent = new KeyboardEvent("keydown", { key: "Enter" });
-      window.dispatchEvent(enterEvent);
-      tick(50);
-
-      expect(component.selectedParticipants).toContain(d2);
-      expect(component.unselectedParticipants).not.toContain(d2);
-    }));
-
-    it("should remove racing driver on Enter when selected via mouse hover", fakeAsync(() => {
-      component.onRacingItemMouseEnter(d3, 0);
-      expect(component.selectedParticipantItem).toBe(d3);
-
-      const enterEvent = new KeyboardEvent("keydown", { key: "Enter" });
-      window.dispatchEvent(enterEvent);
-      tick(50);
-
-      expect(component.selectedParticipants).not.toContain(d3);
     }));
 
     it("should do nothing on Enter when no participant is selected", fakeAsync(() => {
@@ -3601,6 +3424,219 @@ describe("DefaultRacedaySetupComponent", () => {
       tick(50);
       expect(component.selectedParticipants).toContain(d2);
       expect(component.selectedParticipantItem).toBeNull();
+    }));
+
+    it("should move selection down and up the available list with arrow keys after mouse selection and prevent default scroll", fakeAsync(() => {
+      component.selectParticipant(d1, 0);
+      expect(component.selectedParticipantItem).toBe(d1);
+
+      const downEvent = new KeyboardEvent("keydown", {
+        key: "ArrowDown",
+        cancelable: true,
+      });
+      spyOn(downEvent, "preventDefault").and.callThrough();
+      window.dispatchEvent(downEvent);
+      tick(50);
+
+      expect(downEvent.preventDefault).toHaveBeenCalled();
+      expect(component.selectedParticipantItem).toBe(d2);
+      expect(component.isParticipantSelected(d2)).toBeTrue();
+
+      const upEvent = new KeyboardEvent("keydown", {
+        key: "ArrowUp",
+        cancelable: true,
+      });
+      spyOn(upEvent, "preventDefault").and.callThrough();
+      window.dispatchEvent(upEvent);
+      tick(50);
+
+      expect(upEvent.preventDefault).toHaveBeenCalled();
+      expect(component.selectedParticipantItem).toBe(d1);
+      expect(component.isParticipantSelected(d1)).toBeTrue();
+    }));
+
+    it("should clamp selection at list bounds when pressing arrow keys in available list", fakeAsync(() => {
+      component.selectParticipant(d1, 0);
+
+      // Press ArrowUp at index 0: should stay at d1 and prevent default scroll
+      const upEvent = new KeyboardEvent("keydown", {
+        key: "ArrowUp",
+        cancelable: true,
+      });
+      spyOn(upEvent, "preventDefault").and.callThrough();
+      window.dispatchEvent(upEvent);
+      tick(50);
+
+      expect(upEvent.preventDefault).toHaveBeenCalled();
+      expect(component.selectedParticipantItem).toBe(d1);
+
+      // Move down to d2 (last item)
+      const downEvent1 = new KeyboardEvent("keydown", {
+        key: "ArrowDown",
+        cancelable: true,
+      });
+      window.dispatchEvent(downEvent1);
+      tick(50);
+      expect(component.selectedParticipantItem).toBe(d2);
+
+      // Press ArrowDown again: should clamp at d2 and prevent default scroll
+      const downEvent2 = new KeyboardEvent("keydown", {
+        key: "ArrowDown",
+        cancelable: true,
+      });
+      spyOn(downEvent2, "preventDefault").and.callThrough();
+      window.dispatchEvent(downEvent2);
+      tick(50);
+
+      expect(downEvent2.preventDefault).toHaveBeenCalled();
+      expect(component.selectedParticipantItem).toBe(d2);
+    }));
+
+    it("should move selection down and up the racing list with arrow keys after mouse selection and prevent default scroll", fakeAsync(() => {
+      const d4 = new Driver("d4", "Driver 4", "Quad");
+      component.allDrivers = [d1, d2, d3, d4];
+      component.selectedParticipants = [d3, d4];
+      fixture.detectChanges();
+
+      component.selectParticipant(d3, 0);
+      expect(component.selectedParticipantItem).toBe(d3);
+
+      const downEvent = new KeyboardEvent("keydown", {
+        key: "ArrowDown",
+        cancelable: true,
+      });
+      spyOn(downEvent, "preventDefault").and.callThrough();
+      window.dispatchEvent(downEvent);
+      tick(50);
+
+      expect(downEvent.preventDefault).toHaveBeenCalled();
+      expect(component.selectedParticipantItem).toBe(d4);
+      expect(component.isParticipantSelected(d4)).toBeTrue();
+
+      const upEvent = new KeyboardEvent("keydown", {
+        key: "ArrowUp",
+        cancelable: true,
+      });
+      spyOn(upEvent, "preventDefault").and.callThrough();
+      window.dispatchEvent(upEvent);
+      tick(50);
+
+      expect(upEvent.preventDefault).toHaveBeenCalled();
+      expect(component.selectedParticipantItem).toBe(d3);
+      expect(component.isParticipantSelected(d3)).toBeTrue();
+    }));
+
+    it("should add the navigated driver on Enter after using arrow keys", fakeAsync(() => {
+      component.selectParticipant(d1, 0);
+
+      // Arrow down to d2
+      const downEvent = new KeyboardEvent("keydown", { key: "ArrowDown" });
+      window.dispatchEvent(downEvent);
+      tick(50);
+      expect(component.selectedParticipantItem).toBe(d2);
+
+      // Enter adds d2, not d1
+      const enterEvent = new KeyboardEvent("keydown", { key: "Enter" });
+      window.dispatchEvent(enterEvent);
+      tick(50);
+
+      expect(component.selectedParticipants).toContain(d2);
+      expect(component.unselectedParticipants).not.toContain(d2);
+      expect(component.unselectedParticipants).toContain(d1);
+    }));
+
+    it("should remove the navigated driver on Enter after using arrow keys in racing list", fakeAsync(() => {
+      const d4 = new Driver("d4", "Driver 4", "Quad");
+      component.allDrivers = [d1, d2, d3, d4];
+      component.selectedParticipants = [d3, d4];
+      fixture.detectChanges();
+
+      component.selectParticipant(d3, 0);
+
+      // Arrow down to d4
+      const downEvent = new KeyboardEvent("keydown", { key: "ArrowDown" });
+      window.dispatchEvent(downEvent);
+      tick(50);
+      expect(component.selectedParticipantItem).toBe(d4);
+
+      // Enter removes d4, not d3
+      const enterEvent = new KeyboardEvent("keydown", { key: "Enter" });
+      window.dispatchEvent(enterEvent);
+      tick(50);
+
+      expect(component.selectedParticipants).not.toContain(d4);
+      expect(component.selectedParticipants).toContain(d3);
+      expect(component.unselectedParticipants).toContain(d4);
+    }));
+
+    it("should retain selection and navigate with arrow keys across multiple steps", fakeAsync(() => {
+      component.selectParticipant(d1, 0);
+      expect(component.selectedParticipantItem).toBe(d1);
+
+      const downEvent = new KeyboardEvent("keydown", {
+        key: "ArrowDown",
+        cancelable: true,
+      });
+      spyOn(downEvent, "preventDefault").and.callThrough();
+      window.dispatchEvent(downEvent);
+      tick(50);
+
+      expect(downEvent.preventDefault).toHaveBeenCalled();
+      expect(component.selectedParticipantItem).toBe(d2);
+    }));
+
+    it("should not navigate or prevent default on arrow keys when no participant is selected", fakeAsync(() => {
+      expect(component.selectedParticipantItem).toBeNull();
+
+      const downEvent = new KeyboardEvent("keydown", {
+        key: "ArrowDown",
+        cancelable: true,
+      });
+      spyOn(downEvent, "preventDefault").and.callThrough();
+      window.dispatchEvent(downEvent);
+      tick(50);
+
+      expect(downEvent.preventDefault).not.toHaveBeenCalled();
+      expect(component.selectedParticipantItem).toBeNull();
+    }));
+
+    it("should not navigate on arrow keys when a modal or menu is open", fakeAsync(() => {
+      component.selectParticipant(d1, 0);
+      component.showErrorModal = true;
+
+      const downEvent = new KeyboardEvent("keydown", {
+        key: "ArrowDown",
+        cancelable: true,
+      });
+      spyOn(downEvent, "preventDefault").and.callThrough();
+      window.dispatchEvent(downEvent);
+      tick(50);
+
+      expect(downEvent.preventDefault).not.toHaveBeenCalled();
+      expect(component.selectedParticipantItem).toBe(d1);
+    }));
+
+    it("should not intercept arrow keys when focus is inside an input element", fakeAsync(() => {
+      component.selectParticipant(d1, 0);
+
+      const inputEl = document.createElement("input");
+      document.body.appendChild(inputEl);
+      inputEl.focus();
+
+      try {
+        const downEvent = new KeyboardEvent("keydown", {
+          key: "ArrowDown",
+          cancelable: true,
+        });
+        spyOn(downEvent, "preventDefault").and.callThrough();
+        window.dispatchEvent(downEvent);
+        tick(50);
+
+        expect(downEvent.preventDefault).not.toHaveBeenCalled();
+        expect(component.selectedParticipantItem).toBe(d1);
+      } finally {
+        document.body.removeChild(inputEl);
+      }
     }));
   });
 });

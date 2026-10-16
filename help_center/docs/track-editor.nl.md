@@ -274,3 +274,8 @@ De bovenste werkbalk van de Baan-Editor biedt essentiële beheertools:
 
 ### FastLED RGB-Strips Gaan Niet Aan
 - **Oplossing**: Zorg dat de officiële **Race Coordinator AI sketch (`v2.1.0.x`)** is geladen, controleer het LED-type en de kleurvolgorde, en controleer of de massa (GND) van de externe 5V-voeding verbonden is met de massa van de Arduino.
+
+### Interface Verbinding Verbreekt Tussen Heats (USB Slaapstand / Energiebesparing)
+- **Symptoom**: De interface (Arduino, Phidget of Trackmate) verbreekt de verbinding tijdens pauzes tussen heats of bij inactiviteit en herstelt zich bij de start met de melding *"De verbinding met de interface is hersteld."*
+- **Oplossing**: Windows, Linux en macOS schakelen inactieve USB-poorten en HID-apparaten uit, zelfs als de pc wakker is. Raadpleeg het gedeelte [USB-interface Slaapstand & Verbindingsverlies](troubleshooting.nl.md#usb-sleep-prevention) in Probleemoplossing om energiebesparing in Apparaatbeheer uit te schakelen.
+

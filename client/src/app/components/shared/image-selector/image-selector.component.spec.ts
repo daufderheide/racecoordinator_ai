@@ -285,6 +285,71 @@ describe("ImageSelectorComponent", () => {
     expect(removeBtn).toBeNull();
   });
 
+  it("should display UE_HINT_DRAG_IMAGE when not disabled and no image is selected", async () => {
+    fixture.componentRef.setInput("imageUrl", undefined);
+    fixture.componentRef.setInput("disabled", false);
+    fixture.detectChanges();
+
+    expect(await harness.hasDragHint()).toBeTrue();
+    expect(await harness.getDragHintText()).toBe(
+      "Drag image to add or click to select",
+    );
+    expect(await harness.isDragHintDisabled()).toBeFalse();
+    expect(await harness.isDisabled()).toBeFalse();
+  });
+
+  it("should display UE_HINT_NO_IMAGE with disabled-hint class and .disabled class on container when disabled and no image", async () => {
+    fixture.componentRef.setInput("imageUrl", undefined);
+    fixture.componentRef.setInput("disabled", true);
+    fixture.detectChanges();
+
+    expect(await harness.hasDragHint()).toBeTrue();
+    expect(await harness.getDragHintText()).toBe("No image");
+    expect(await harness.isDragHintDisabled()).toBeTrue();
+    expect(await harness.isDisabled()).toBeTrue();
+  });
+
+  it("should set disabled class on preview container when disabled with image selected", async () => {
+    fixture.componentRef.setInput("imageUrl", "/assets/test.png");
+    fixture.componentRef.setInput("disabled", true);
+    fixture.detectChanges();
+
+    expect(await harness.isDisabled()).toBeTrue();
+  });
+
+  it("should not open selector on click when disabled", async () => {
+    fixture.componentRef.setInput("disabled", true);
+    fixture.detectChanges();
+
+    await harness.clickPreviewToOpenSelector();
+    expect(component.showSelector).toBeFalse();
+  });
+
+  it("should ignore dragenter, dragover, and drop when disabled", () => {
+    fixture.componentRef.setInput("disabled", true);
+    fixture.detectChanges();
+
+    const enterEvent = new DragEvent("dragenter", { cancelable: true });
+    spyOn(enterEvent, "preventDefault");
+    component.onDragEnter(enterEvent);
+    expect(component.isDragging).toBeFalse();
+    expect(enterEvent.preventDefault).not.toHaveBeenCalled();
+
+    const overEvent = new DragEvent("dragover", { cancelable: true });
+    spyOn(overEvent, "preventDefault");
+    component.onDragOver(overEvent);
+    expect(component.isDragging).toBeFalse();
+    expect(overEvent.preventDefault).not.toHaveBeenCalled();
+
+    const file = new File(["upload"], "test.png", { type: "image/png" });
+    const dataTransfer = new DataTransfer();
+    dataTransfer.items.add(file);
+    const dropEvent = new DragEvent("drop", { dataTransfer });
+    spyOn(component, "processFile");
+    component.onDrop(dropEvent);
+    expect(component.processFile).not.toHaveBeenCalled();
+  });
+
   it("should open and close selector", async () => {
     await harness.clickPreviewToOpenSelector();
     expect(component.showSelector).toBeTrue();

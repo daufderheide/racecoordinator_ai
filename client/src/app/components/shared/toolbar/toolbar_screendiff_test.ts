@@ -14,7 +14,7 @@ test.describe("Toolbar Component Visuals", () => {
     await page.locator(".loader-overlay").waitFor({ state: "hidden" });
     await page.locator("#edit-track-btn").click();
     await expect(page.locator("#track-name-input")).toBeEnabled();
-    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+    await TestSetupHelper.blurActiveElement(page);
     await TestSetupHelper.disableAnimations(page);
   }
 
