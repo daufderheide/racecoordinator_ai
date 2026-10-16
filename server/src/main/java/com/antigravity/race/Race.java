@@ -728,6 +728,7 @@ public class Race implements ProtocolListener {
   }
 
   public void setMainPower(boolean on) {
+    logger.info("Race.setMainPower called: on={}", on);
     this.mainPower = on;
     if (hardwareManager.getProtocols() != null) {
       hardwareManager.getProtocols().setMainPower(on);
@@ -736,6 +737,7 @@ public class Race implements ProtocolListener {
   }
 
   public void forceUserMainPower(boolean on) {
+    logger.info("Race.forceUserMainPower (manual power toggle) called: on={}", on);
     this.mainPower = on;
     if (hardwareManager.getProtocols() != null) {
       hardwareManager.getProtocols().setMainPower(on);
@@ -936,6 +938,10 @@ public class Race implements ProtocolListener {
     if (this.stopped) {
       return;
     }
+    logger.info(
+        "Race state transition: {} -> {}",
+        this.state != null ? this.state.getClass().getSimpleName() : "null",
+        newState != null ? newState.getClass().getSimpleName() : "null");
     if (this.state != null) {
       this.state.exit(this);
     }
@@ -1101,6 +1107,7 @@ public class Race implements ProtocolListener {
   }
 
   public void setLanePower(boolean on, int lane) {
+    logger.info("Race.setLanePower called: on={}, lane={}", on, lane);
     if (lane < 0) {
       for (int i = 0; i < track.getLanes().size(); i++) {
         if (lanePower != null && i < lanePower.length) lanePower[i] = on;
