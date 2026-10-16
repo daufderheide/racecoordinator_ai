@@ -3792,7 +3792,7 @@ describe("UIEditorComponent", () => {
       });
     }));
 
-    describe("initial expander state from route query parameters", () => {
+    describe("restore open layout state and scroll on entry", () => {
       beforeEach(() => {
         const theme1: Theme = {
           entity_id: "t_race",
@@ -3826,61 +3826,40 @@ describe("UIEditorComponent", () => {
         component.refreshDisplayProperties();
       });
 
-      it("should expand corresponding theme and layout from route query parameters", () => {
-        (component as any).route = {
-          snapshot: {
-            queryParamMap: {
-              get: (key: string) => {
-                if (key === "themeId") return "t_race";
-                if (key === "uiId") return "ui_race";
-                return null;
-              },
-            },
-          },
+      it("should restore activeCustomUiId and scroll to layout when layout section is expanded", () => {
+        spyOn(component, "scrollToUi");
+        spyOn(component, "ensureWidgetSelected");
+        component.sectionsExpanded = {
+          customUIs: true,
+          ui_ui_race: true,
         };
 
-        component.applyInitialExpanderStateFromRoute();
+        component.restoreOpenLayoutStateAndScroll();
 
-        expect(component.sectionsExpanded["themes"]).toBeTrue();
-        expect(component.sectionsExpanded["theme_t_race"]).toBeTrue();
-        expect(component.sectionsExpanded["theme_t_other"]).toBeFalse();
-
-        expect(component.sectionsExpanded["customUIs"]).toBeTrue();
-        expect(component.sectionsExpanded["ui_ui_race"]).toBeTrue();
-        expect(component.sectionsExpanded["ui_ui_other"]).toBeFalse();
         expect(component.activeCustomUiId).toBe("ui_race");
+        expect(component.ensureWidgetSelected).toHaveBeenCalled();
+        expect(component.scrollToUi).toHaveBeenCalledWith("ui_race", 100);
       });
 
-      it("should resolve uiId from theme when only themeId is passed", () => {
-        (component as any).route = {
-          snapshot: {
-            queryParamMap: {
-              get: (key: string) => (key === "themeId" ? "t_race" : null),
-            },
-          },
+      it("should not scroll when customUIs section is collapsed", () => {
+        spyOn(component, "scrollToUi");
+        component.sectionsExpanded = {
+          customUIs: false,
+          ui_ui_race: true,
         };
 
-        component.applyInitialExpanderStateFromRoute();
+        component.restoreOpenLayoutStateAndScroll();
 
-        expect(component.sectionsExpanded["theme_t_race"]).toBeTrue();
-        expect(component.sectionsExpanded["ui_ui_race"]).toBeTrue();
         expect(component.activeCustomUiId).toBe("ui_race");
+        expect(component.scrollToUi).not.toHaveBeenCalled();
       });
 
-      it("should allow user to expand or collapse freely after initial state", () => {
-        (component as any).route = {
-          snapshot: {
-            queryParamMap: {
-              get: (key: string) => {
-                if (key === "themeId") return "t_race";
-                if (key === "uiId") return "ui_race";
-                return null;
-              },
-            },
-          },
+      it("should allow user to expand or collapse freely after restored state", () => {
+        component.sectionsExpanded = {
+          theme_t_race: true,
         };
 
-        component.applyInitialExpanderStateFromRoute();
+        component.restoreOpenLayoutStateAndScroll();
         expect(component.sectionsExpanded["theme_t_race"]).toBeTrue();
 
         component.toggleThemeSection("t_other");

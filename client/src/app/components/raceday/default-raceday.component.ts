@@ -4982,16 +4982,9 @@ export class DefaultRacedayComponent
 
   navigateToUiEditor() {
     const returnUrl = this.router.url.split("?")[0];
-    const race = this.race || this.raceService?.getRace?.();
-    const themeInfo = this.themeService?.resolveThemeAndUiForRace?.(race);
-    const queryParams: Record<string, string> = { returnUrl };
-    if (themeInfo?.themeId) {
-      queryParams["themeId"] = themeInfo.themeId;
-    }
-    if (themeInfo?.uiId) {
-      queryParams["uiId"] = themeInfo.uiId;
-    }
-    this.router.navigate(["/ui-editor"], { queryParams });
+    this.router.navigate(["/ui-editor"], {
+      queryParams: { returnUrl },
+    });
   }
 
   onOptionsSelect(action: string) {

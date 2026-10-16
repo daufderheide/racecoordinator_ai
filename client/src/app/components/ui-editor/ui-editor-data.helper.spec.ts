@@ -3,8 +3,9 @@ import { Settings } from "@app/models/settings";
 import { Theme } from "@app/models/theme";
 
 import {
-  applyInitialExpanderFromRoute,
+  applyLoadedUiEditorData,
   ensureDefaultCustomUis,
+  handleUiEditorDataLoadError,
   handleUiEditorKeyboardShortcut,
   normalizeLoadedCustomUis,
   normalizeLoadedThemes,
@@ -409,71 +410,70 @@ describe("ui-editor-data.helper", () => {
     });
   });
 
-  describe("applyInitialExpanderFromRoute", () => {
-    it("should expand theme and layout, reset zoom, and scroll to layout when both themeId and uiId are provided", () => {
+  describe("applyLoadedUiEditorData and handleUiEditorDataLoadError", () => {
+    it("should process loaded data, refresh display properties, and restore open layout", () => {
+      const mockSettings = new Settings();
       const comp: any = {
-        route: {
-          snapshot: {
-            queryParamMap: {
-              get: (key: string) => {
-                if (key === "themeId") return "theme_1";
-                if (key === "uiId") return "layout_1";
-                return null;
-              },
-            },
-          },
-        },
-        sectionsExpanded: {},
-        displayThemes: [
-          { entity_id: "theme_1", uiId: "layout_1" },
-          { entity_id: "theme_2", uiId: "layout_2" },
-        ],
-        displayCustomUIs: [
-          { entity_id: "layout_1", name: "Layout 1" },
-          { entity_id: "layout_2", name: "Layout 2" },
-        ],
-        activeCustomUiId: null,
+        settingsService: { getSettings: () => mockSettings },
+        themeService: { setActiveTheme: jasmine.createSpy("setActiveTheme") },
+        sortAvailableColumns: jasmine.createSpy("sortAvailableColumns"),
+        refreshDisplayProperties: jasmine
+          .createSpy("refreshDisplayProperties")
+          .and.callFake(() => {
+            comp.displayCustomUIs = comp.editingState.customUIs;
+            comp.displayThemes = comp.editingState.themes;
+          }),
+        undoManager: { initialize: jasmine.createSpy("initialize") },
+        cdr: { markForCheck: jasmine.createSpy("markForCheck") },
+        sectionsExpanded: { customUIs: true, ui_layout_1: true },
         ensureWidgetSelected: jasmine.createSpy("ensureWidgetSelected"),
-        resetLayoutZoom: jasmine.createSpy("resetLayoutZoom"),
         scrollToUi: jasmine.createSpy("scrollToUi"),
-        scrollToTheme: jasmine.createSpy("scrollToTheme"),
+        isLoading: true,
+        isDestroyed: false,
       };
 
-      applyInitialExpanderFromRoute(comp);
+      const res = {
+        assets: [],
+        themes: [{ entity_id: "t1", name: "Theme 1", is_default: true }],
+        customUIs: [{ entity_id: "layout_1", name: "Layout 1" }],
+        tracks: [],
+      };
 
-      expect(comp.sectionsExpanded["themes"]).toBeTrue();
-      expect(comp.sectionsExpanded["theme_theme_1"]).toBeTrue();
-      expect(comp.sectionsExpanded["customUIs"]).toBeTrue();
-      expect(comp.sectionsExpanded["ui_layout_1"]).toBeTrue();
+      applyLoadedUiEditorData(comp, res);
+
+      expect(comp.isLoading).toBeFalse();
+      expect(comp.sortAvailableColumns).toHaveBeenCalled();
+      expect(comp.refreshDisplayProperties).toHaveBeenCalled();
+      expect(comp.undoManager.initialize).toHaveBeenCalledWith(
+        comp.editingState,
+      );
       expect(comp.activeCustomUiId).toBe("layout_1");
-      expect(comp.resetLayoutZoom).not.toHaveBeenCalled();
+      expect(comp.ensureWidgetSelected).toHaveBeenCalled();
       expect(comp.scrollToUi).toHaveBeenCalledWith("layout_1", 100);
-      expect(comp.scrollToTheme).not.toHaveBeenCalled();
+      expect(comp.cdr.markForCheck).toHaveBeenCalled();
     });
 
-    it("should scroll to theme when only themeId is provided and no layout can be resolved", () => {
+    it("should handle error, initialize fallback state, and restore open layout", () => {
+      const mockSettings = new Settings();
       const comp: any = {
-        route: {
-          snapshot: {
-            queryParamMap: {
-              get: (key: string) =>
-                key === "themeId" ? "theme_standalone" : null,
-            },
-          },
-        },
-        sectionsExpanded: { theme_theme_standalone: true },
-        displayThemes: [{ entity_id: "theme_standalone" }],
+        logger: { error: jasmine.createSpy("error") },
+        settingsService: { getSettings: () => mockSettings },
+        refreshDisplayProperties: jasmine.createSpy("refreshDisplayProperties"),
+        undoManager: { initialize: jasmine.createSpy("initialize") },
+        cdr: { markForCheck: jasmine.createSpy("markForCheck") },
+        sectionsExpanded: {},
         displayCustomUIs: [],
-        activeCustomUiId: null,
-        scrollToUi: jasmine.createSpy("scrollToUi"),
-        scrollToTheme: jasmine.createSpy("scrollToTheme"),
-        resetLayoutZoom: jasmine.createSpy("resetLayoutZoom"),
+        isLoading: true,
+        isDestroyed: false,
       };
 
-      applyInitialExpanderFromRoute(comp);
+      handleUiEditorDataLoadError(comp, new Error("network error"));
 
-      expect(comp.scrollToTheme).toHaveBeenCalledWith("theme_standalone");
-      expect(comp.scrollToUi).not.toHaveBeenCalled();
+      expect(comp.logger.error).toHaveBeenCalled();
+      expect(comp.isLoading).toBeFalse();
+      expect(comp.editingState).toBeDefined();
+      expect(comp.refreshDisplayProperties).toHaveBeenCalled();
+      expect(comp.cdr.markForCheck).toHaveBeenCalled();
     });
   });
 

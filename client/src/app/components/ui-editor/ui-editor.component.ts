@@ -68,7 +68,6 @@ import {
 } from "./components/theme-template-modal/theme-template-modal";
 import {
   acknowledgeSuccessModal,
-  applyInitialExpanderFromRoute,
   applyLoadedUiEditorData,
   areSettingsEqual,
   areUIEditorStatesEqual,
@@ -194,6 +193,7 @@ import {
   resolveThemeFlag,
   resolveThemeFuelGauge,
   resolveThemeLamp,
+  restoreOpenLayoutOnEntry,
   saveExpanderStateToStorage,
   scrollToThemeElement,
   scrollToUiElement,
@@ -505,8 +505,8 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     refreshUiEditorDisplayProperties(this);
   }
 
-  applyInitialExpanderStateFromRoute(): void {
-    applyInitialExpanderFromRoute(this);
+  restoreOpenLayoutStateAndScroll(): void {
+    restoreOpenLayoutOnEntry(this);
   }
 
   trackByThemeId(_index: number, theme: Theme) {

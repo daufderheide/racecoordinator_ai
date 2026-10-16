@@ -2,8 +2,8 @@ import { CustomUI } from "@app/models/custom-ui";
 import { Theme } from "@app/models/theme";
 
 import {
-  applyInitialExpanderState,
   loadExpanderStateFromStorage,
+  restoreOpenLayoutOnEntry,
   saveExpanderStateToStorage,
   toggleThemeExpander,
   toggleUiExpander,
@@ -90,97 +90,67 @@ describe("ui-editor-expander.helper", () => {
     }, 10);
   });
 
-  describe("applyInitialExpanderState", () => {
-    const themes: Theme[] = [
-      {
-        entity_id: "theme_1",
-        name: "Theme 1",
-        is_default: true,
-        slots: {},
-        audio_slots: {},
-        uiId: "ui_1",
-      },
-      {
-        entity_id: "theme_2",
-        name: "Theme 2",
-        is_default: false,
-        slots: {},
-        audio_slots: {},
-        uiId: "ui_2",
-      },
-    ];
-
+  describe("restoreOpenLayoutOnEntry", () => {
     const uis: CustomUI[] = [
       { entity_id: "ui_1", name: "UI 1", is_default: true },
       { entity_id: "ui_2", name: "UI 2", is_default: false },
     ];
 
-    it("should return empty object and not modify state if no target IDs provided", () => {
-      const state: Record<string, boolean> = { theme_theme_1: true };
-      const res = applyInitialExpanderState(state, themes, uis, null, null);
-      expect(res).toEqual({});
-      expect(state["theme_theme_1"]).toBeTrue();
-    });
-
-    it("should expand target theme and UI and collapse others", () => {
-      const state: Record<string, boolean> = {
-        themes: false,
-        theme_theme_1: true,
-        theme_theme_2: false,
-        customUIs: false,
-        ui_ui_1: true,
-        ui_ui_2: false,
+    it("should set activeCustomUiId to open layout and scroll when customUIs is expanded", () => {
+      const scrollToUiSpy = jasmine.createSpy("scrollToUi");
+      const ensureWidgetSelectedSpy = jasmine.createSpy("ensureWidgetSelected");
+      const comp: any = {
+        displayCustomUIs: uis,
+        sectionsExpanded: { customUIs: true, ui_ui_2: true },
+        activeCustomUiId: "ui_1",
+        ensureWidgetSelected: ensureWidgetSelectedSpy,
+        scrollToUi: scrollToUiSpy,
       };
 
-      const res = applyInitialExpanderState(
-        state,
-        themes,
-        uis,
-        "theme_2",
-        "ui_2",
-      );
+      const res = restoreOpenLayoutOnEntry(comp);
 
-      expect(res.newActiveUiId).toBe("ui_2");
-      expect(state["themes"]).toBeTrue();
-      expect(state["theme_theme_1"]).toBeFalse();
-      expect(state["theme_theme_2"]).toBeTrue();
-      expect(state["customUIs"]).toBeTrue();
-      expect(state["ui_ui_1"]).toBeFalse();
-      expect(state["ui_ui_2"]).toBeTrue();
-
-      const loaded = loadExpanderStateFromStorage({});
-      expect(loaded["theme_theme_2"]).toBeTrue();
-      expect(loaded["ui_ui_2"]).toBeTrue();
+      expect(res.openUiId).toBe("ui_2");
+      expect(comp.activeCustomUiId).toBe("ui_2");
+      expect(ensureWidgetSelectedSpy).toHaveBeenCalled();
+      expect(scrollToUiSpy).toHaveBeenCalledWith("ui_2", 100);
     });
 
-    it("should resolve UI layout from theme when targetUiId is omitted", () => {
-      const state: Record<string, boolean> = {};
-      const res = applyInitialExpanderState(
-        state,
-        themes,
-        uis,
-        "theme_2",
-        undefined,
-      );
+    it("should set activeCustomUiId to open layout but not scroll when customUIs is collapsed", () => {
+      const scrollToUiSpy = jasmine.createSpy("scrollToUi");
+      const ensureWidgetSelectedSpy = jasmine.createSpy("ensureWidgetSelected");
+      const comp: any = {
+        displayCustomUIs: uis,
+        sectionsExpanded: { customUIs: false, ui_ui_2: true },
+        activeCustomUiId: "ui_1",
+        ensureWidgetSelected: ensureWidgetSelectedSpy,
+        scrollToUi: scrollToUiSpy,
+      };
 
-      expect(res.newActiveUiId).toBe("ui_2");
-      expect(state["theme_theme_2"]).toBeTrue();
-      expect(state["ui_ui_2"]).toBeTrue();
+      const res = restoreOpenLayoutOnEntry(comp);
+
+      expect(res.openUiId).toBe("ui_2");
+      expect(comp.activeCustomUiId).toBe("ui_2");
+      expect(ensureWidgetSelectedSpy).toHaveBeenCalled();
+      expect(scrollToUiSpy).not.toHaveBeenCalled();
     });
 
-    it("should resolve theme from UI layout when targetThemeId is omitted", () => {
-      const state: Record<string, boolean> = {};
-      const res = applyInitialExpanderState(
-        state,
-        themes,
-        uis,
-        undefined,
-        "ui_2",
-      );
+    it("should return empty object and not modify state or scroll when no layout expander is open", () => {
+      const scrollToUiSpy = jasmine.createSpy("scrollToUi");
+      const ensureWidgetSelectedSpy = jasmine.createSpy("ensureWidgetSelected");
+      const comp: any = {
+        displayCustomUIs: uis,
+        sectionsExpanded: { customUIs: true, ui_ui_1: false, ui_ui_2: false },
+        activeCustomUiId: "ui_1",
+        ensureWidgetSelected: ensureWidgetSelectedSpy,
+        scrollToUi: scrollToUiSpy,
+      };
 
-      expect(res.newActiveUiId).toBe("ui_2");
-      expect(state["theme_theme_2"]).toBeTrue();
-      expect(state["ui_ui_2"]).toBeTrue();
+      const res = restoreOpenLayoutOnEntry(comp);
+
+      expect(res).toEqual({});
+      expect(comp.activeCustomUiId).toBe("ui_1");
+      expect(ensureWidgetSelectedSpy).not.toHaveBeenCalled();
+      expect(scrollToUiSpy).not.toHaveBeenCalled();
     });
   });
 });

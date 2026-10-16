@@ -404,9 +404,6 @@ describe("DefaultRacedayComponent", () => {
         .createSpy("initialize")
         .and.returnValue(Promise.resolve()),
       getThemes: jasmine.createSpy("getThemes").and.returnValue([]),
-      resolveThemeAndUiForRace: jasmine
-        .createSpy("resolveThemeAndUiForRace")
-        .and.returnValue({ themeId: "t1", uiId: "default_ui_layout_rc_ai" }),
       activeTheme$: of(null),
     };
 
@@ -4275,35 +4272,6 @@ describe("DefaultRacedayComponent", () => {
       expect(mockRouter.navigate).toHaveBeenCalledWith(["/ui-editor"], {
         queryParams: {
           returnUrl: "/raceday",
-          themeId: "t1",
-          uiId: "default_ui_layout_rc_ai",
-        },
-      });
-    });
-
-    it("should pass theme and ui corresponding to running race when navigating to /ui-editor", () => {
-      const themeService = TestBed.inject(ThemeService) as any;
-      (mockRouter as any).url = "/raceday";
-      const customRace = {
-        entity_id: "race-42",
-        theme_id: "custom-theme",
-      } as any;
-      component["race"] = customRace;
-      themeService.resolveThemeAndUiForRace.and.returnValue({
-        themeId: "custom-theme",
-        uiId: "custom-ui",
-      });
-
-      component.navigateToUiEditor();
-
-      expect(themeService.resolveThemeAndUiForRace).toHaveBeenCalledWith(
-        customRace,
-      );
-      expect(mockRouter.navigate).toHaveBeenCalledWith(["/ui-editor"], {
-        queryParams: {
-          returnUrl: "/raceday",
-          themeId: "custom-theme",
-          uiId: "custom-ui",
         },
       });
     });

@@ -16,7 +16,7 @@ import {
   isLegacyRacedayUiName,
 } from "./ui-editor-crud.helper";
 import { sortCustomUisForDisplay } from "./ui-editor-custom-ui.helper";
-import { applyInitialExpanderState } from "./ui-editor-expander.helper";
+import { restoreOpenLayoutOnEntry } from "./ui-editor-expander.helper";
 import { cloneSettings } from "./ui-editor-state.utils";
 import { sortThemesForDisplay } from "./ui-editor-theme.helper";
 
@@ -402,39 +402,9 @@ export function applyLoadedUiEditorData(comp: any, res: any): void {
   comp.editingState = loaded.initialState;
   comp.refreshDisplayProperties();
   comp.undoManager.initialize(comp.editingState);
-  applyInitialExpanderFromRoute(comp);
+  restoreOpenLayoutOnEntry(comp);
   comp.isLoading = false;
   if (!comp.isDestroyed) comp.cdr.markForCheck();
-}
-
-export function applyInitialExpanderFromRoute(comp: any): void {
-  const themeIdParam =
-    comp.route?.snapshot?.queryParamMap?.get("themeId") ||
-    comp.params?.()?.["themeId"];
-  const uiIdParam =
-    comp.route?.snapshot?.queryParamMap?.get("uiId") ||
-    comp.params?.()?.["uiId"];
-
-  if (themeIdParam || uiIdParam) {
-    const { newActiveUiId } = applyInitialExpanderState(
-      comp.sectionsExpanded,
-      comp.displayThemes,
-      comp.displayCustomUIs,
-      themeIdParam,
-      uiIdParam,
-    );
-    if (newActiveUiId) {
-      comp.activeCustomUiId = newActiveUiId;
-      comp.ensureWidgetSelected?.();
-    }
-  }
-
-  const targetLayoutId = uiIdParam || comp.activeCustomUiId;
-  if (targetLayoutId && comp.sectionsExpanded?.[`ui_${targetLayoutId}`]) {
-    comp.scrollToUi?.(targetLayoutId, 100);
-  } else if (themeIdParam) {
-    comp.scrollToTheme?.(themeIdParam);
-  }
 }
 
 export function handleUiEditorDataLoadError(comp: any, err: any): void {
@@ -449,7 +419,7 @@ export function handleUiEditorDataLoadError(comp: any, err: any): void {
     comp.undoManager.initialize(comp.editingState);
   }
   comp.refreshDisplayProperties();
-  applyInitialExpanderFromRoute(comp);
+  restoreOpenLayoutOnEntry(comp);
   if (!comp.isDestroyed) comp.cdr.markForCheck();
 }
 
