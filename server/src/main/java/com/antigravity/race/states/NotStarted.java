@@ -53,7 +53,15 @@ public class NotStarted implements IRaceState {
 
   @Override
   public void enter(Race race) {
-    logger.info("NotStarted state entered.");
+    double autoStartTime = race.getRaceModel() != null ? race.getRaceModel().getAutoStartTime() : 0;
+    double autoStartWarmupTime =
+        race.getRaceModel() != null ? race.getRaceModel().getAutoStartWarmupTime() : 0;
+    boolean isHot = race.getRaceModel() != null && race.getRaceModel().isHotStart();
+    logger.info(
+        "NotStarted state entered: autoStartTime={}, autoStartWarmupTime={}, isHotStart={}",
+        autoStartTime,
+        autoStartWarmupTime,
+        isHot);
     this.race = race;
     if (race.getCurrentHeat() != null && race.getCurrentHeat().isEmpty()) {
       logger.info(
@@ -64,7 +72,6 @@ public class NotStarted implements IRaceState {
     }
     race.setHasRacedInCurrentHeat(false);
     race.prepareHeat();
-    double autoStartTime = race.getRaceModel().getAutoStartTime();
 
     if (autoStartTime > 0 && !race.isAutoStartFired()) {
       race.setAutoStartRemaining(autoStartTime);

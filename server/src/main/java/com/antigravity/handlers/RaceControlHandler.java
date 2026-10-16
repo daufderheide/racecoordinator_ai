@@ -282,7 +282,14 @@ public class RaceControlHandler {
       ClientSubscriptionManager.getInstance().setRace(runtimeRace);
       runtimeRace.init();
 
-      logger.info("Initialized race: {}", runtimeRace.getRaceModel().getName());
+      logger.info(
+          "Initialized race: name={}, id={}, isHotStart={}, startTime={}, autoStartTime={}, autoStartWarmupTime={}",
+          runtimeRace.getRaceModel().getName(),
+          runtimeRace.getRaceModel().getEntityId(),
+          runtimeRace.getRaceModel().isHotStart(),
+          runtimeRace.getRaceModel().getStartTime(),
+          runtimeRace.getRaceModel().getAutoStartTime(),
+          runtimeRace.getRaceModel().getAutoStartWarmupTime());
       AnalyticsService.getInstance().trackRaceStart(runtimeRace);
 
       RaceData raceDataSnapshot = runtimeRace.createSnapshot();

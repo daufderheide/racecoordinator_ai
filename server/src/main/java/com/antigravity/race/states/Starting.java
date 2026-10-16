@@ -37,7 +37,11 @@ public class Starting implements IRaceState {
   @Override
   public void enter(Race race) {
     this.race = race;
-    logger.info("Starting state entered. Countdown initiating.");
+    boolean isHot = race.getRaceModel() != null && race.getRaceModel().isHotStart();
+    logger.info(
+        "Starting state entered. Countdown initiating. isHotStart={}, hasRacedInCurrentHeat={}",
+        isHot,
+        race.hasRacedInCurrentHeat());
     race.broadcastFlag(getFlagType(race));
     syncDriverFlags(race);
 
