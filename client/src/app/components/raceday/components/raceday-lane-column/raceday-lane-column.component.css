@@ -129,29 +129,23 @@
 }
 
 .lane-col-insets-row {
-  display: flex;
-  flex-direction: row;
+  position: absolute;
+  left: 0;
+  right: 0;
   width: 100%;
-  align-items: center;
-  justify-content: space-between;
   line-height: 1.2;
-  overflow: hidden;
+  overflow: visible;
   z-index: 2;
   pointer-events: none;
+  box-sizing: border-box;
 }
 
 .lane-col-insets-top {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
+  top: 2px;
 }
 
 .lane-col-insets-bottom {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
+  bottom: 2px;
 }
 
 .inset-cell {
@@ -160,8 +154,20 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 40%;
   pointer-events: auto;
+}
+
+.lane-col-insets-row .inset-cell {
+  position: absolute;
+  max-width: calc(100% - 12px);
+}
+
+.lane-col-insets-top .inset-cell {
+  top: 0;
+}
+
+.lane-col-insets-bottom .inset-cell {
+  bottom: 0;
 }
 
 .inset-cell.tl,
@@ -171,11 +177,34 @@
   text-align: left;
 }
 
+.lane-col-insets-row .inset-cell.tl,
+.lane-col-insets-row .inset-cell.bl {
+  left: 6px;
+  z-index: 1;
+}
+
+.inset-cell.tl > span,
+.inset-cell.bl > span,
+.inset-cell.cl > span {
+  text-align: left;
+}
+
 .inset-cell.tc,
 .inset-cell.bc {
   justify-content: center;
   text-align: center;
-  flex: 1;
+}
+
+.lane-col-insets-row .inset-cell.tc,
+.lane-col-insets-row .inset-cell.bc {
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+}
+
+.inset-cell.tc > span,
+.inset-cell.bc > span {
+  text-align: center;
 }
 
 .inset-cell.tr,
@@ -185,12 +214,33 @@
   text-align: right;
 }
 
+.lane-col-insets-row .inset-cell.tr,
+.lane-col-insets-row .inset-cell.br {
+  right: 6px;
+  z-index: 3;
+}
+
+.inset-cell.tr > span,
+.inset-cell.br > span,
+.inset-cell.cr > span {
+  text-align: right;
+}
+
 .inset-cell.cl {
   margin-right: 4px;
+  max-width: 40%;
 }
 
 .inset-cell.cr {
   margin-left: 4px;
+  max-width: 40%;
+}
+
+.inset-cell > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
 }
 
 .lane-col-inset-image {
@@ -201,6 +251,7 @@
 
 .lane-col-inset-custom-widget-wrapper {
   display: flex;
+  flex-direction: row;
   align-items: center;
   justify-content: inherit;
   max-width: 100%;
@@ -213,6 +264,11 @@
 .lane-col-inset-custom-widget-wrapper > * {
   max-width: 100%;
   max-height: 100%;
+  display: flex !important;
+  flex-direction: row !important;
+  width: auto !important;
+  justify-content: inherit !important;
+  align-items: center !important;
 }
 
 /* Ensure custom widget cards scale down and fit smoothly within inset slots */
@@ -226,7 +282,24 @@
   width: auto !important;
   height: auto !important;
   display: flex !important;
+  flex-direction: row !important;
   align-items: center !important;
+  justify-content: inherit !important;
+  color: inherit !important;
+}
+
+.lane-col-inset-custom-widget-wrapper [class*="-body"],
+.lane-col-inset-custom-widget-wrapper .advanced-laps-body {
+  padding: 0 !important;
+  width: auto !important;
+  height: auto !important;
+  flex: none !important;
+  overflow: visible !important;
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: inherit !important;
+  color: inherit !important;
 }
 
 .lane-col-inset-custom-widget-wrapper .advanced-laps-header {
@@ -237,6 +310,9 @@
 .lane-col-inset-custom-widget-wrapper .advanced-laps-value {
   font-size: inherit !important;
   line-height: 1.1 !important;
+  white-space: nowrap !important;
+  text-align: inherit !important;
+  color: inherit !important;
 }
 
 .lane-col-main-custom-widget-wrapper {

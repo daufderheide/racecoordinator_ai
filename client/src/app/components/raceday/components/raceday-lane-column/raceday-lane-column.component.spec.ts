@@ -1050,6 +1050,94 @@ describe("RacedayLaneColumnComponent", () => {
       expect(crCell).toBeTruthy();
     });
 
+    it("should allow inset to span across multiple inset slots without empty cell constraints", () => {
+      fixture.componentRef.setInput("parent", mockParent);
+      fixture.componentRef.setInput(
+        "widget",
+        createWidget({
+          columnKey: "lastLapTime",
+          insets: {
+            "bottom-right": "lastLapTime",
+          },
+        }),
+      );
+      fixture.detectChanges();
+
+      const bottomRow = fixture.nativeElement.querySelector(
+        ".lane-col-insets-bottom",
+      );
+      expect(bottomRow).toBeTruthy();
+
+      const brCell = fixture.nativeElement.querySelector(".inset-cell.br");
+      const blCell = fixture.nativeElement.querySelector(".inset-cell.bl");
+      const bcCell = fixture.nativeElement.querySelector(".inset-cell.bc");
+
+      expect(brCell).toBeTruthy();
+      expect(blCell).toBeNull();
+      expect(bcCell).toBeNull();
+      expect(brCell.textContent).toContain("7.863");
+    });
+
+    it("should allow top inset to span across row when only top-right is present", () => {
+      fixture.componentRef.setInput("parent", mockParent);
+      fixture.componentRef.setInput(
+        "widget",
+        createWidget({
+          columnKey: "lastLapTime",
+          insets: {
+            "top-right": "bestLapTime",
+          },
+        }),
+      );
+      fixture.detectChanges();
+
+      const topRow = fixture.nativeElement.querySelector(
+        ".lane-col-insets-top",
+      );
+      expect(topRow).toBeTruthy();
+
+      const trCell = fixture.nativeElement.querySelector(".inset-cell.tr");
+      const tlCell = fixture.nativeElement.querySelector(".inset-cell.tl");
+      const tcCell = fixture.nativeElement.querySelector(".inset-cell.tc");
+
+      expect(trCell).toBeTruthy();
+      expect(tlCell).toBeNull();
+      expect(tcCell).toBeNull();
+      expect(trCell.textContent).toContain("7.481");
+    });
+
+    it("should assign directional default valueAlignment for inset custom widgets based on placement anchor", () => {
+      fixture.componentRef.setInput("parent", mockParent);
+      fixture.componentRef.setInput(
+        "widget",
+        createWidget({
+          columnKey: "lastLapTime",
+          insets: {
+            "bottom-left": "custom:dopamine:advanced-laps",
+            "bottom-center": "custom:dopamine:advanced-laps",
+            "bottom-right": "custom:dopamine:advanced-laps",
+          },
+        }),
+      );
+      fixture.detectChanges();
+
+      const leftInputs = component.getCustomWidgetInputsForInset("bottom-left");
+      const centerInputs =
+        component.getCustomWidgetInputsForInset("bottom-center");
+      const rightInputs =
+        component.getCustomWidgetInputsForInset("bottom-right");
+
+      expect(leftInputs?.widget.customSettings?.["valueAlignment"]).toBe(
+        "left",
+      );
+      expect(centerInputs?.widget.customSettings?.["valueAlignment"]).toBe(
+        "center",
+      );
+      expect(rightInputs?.widget.customSettings?.["valueAlignment"]).toBe(
+        "right",
+      );
+    });
+
     it("should render image insets when inset key is an image property", () => {
       fixture.componentRef.setInput("parent", mockParent);
       fixture.componentRef.setInput(

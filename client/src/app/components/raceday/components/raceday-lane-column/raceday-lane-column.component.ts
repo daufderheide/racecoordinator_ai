@@ -935,6 +935,9 @@ export class RacedayLaneColumnComponent
     const isCustomizing = this.isUIEditorMode;
     const w = this.widget();
     const fontSize = this.getEffectiveInsetFontSize(anchor);
+    const targetDriver = this.targetDriver;
+    const laneFg = this.getEffectiveInsetTextColor(anchor);
+    const laneBg = this.backgroundColor;
 
     if (
       existing &&
@@ -942,7 +945,10 @@ export class RacedayLaneColumnComponent
       existing.isCustomizing === isCustomizing &&
       existing.widget?.widgetType === key &&
       existing.widget?.customSettings?.["valueFontSize"] === fontSize &&
-      existing.widget?.customSettings?.["gridLane"] === this.targetIndex
+      existing.widget?.customSettings?.["gridLane"] === this.targetIndex &&
+      existing.widget?.customSettings?.["targetDriver"] === targetDriver &&
+      existing.widget?.customSettings?.["laneForegroundColor"] === laneFg &&
+      existing.widget?.customSettings?.["laneBackgroundColor"] === laneBg
     ) {
       return existing;
     }
@@ -956,6 +962,9 @@ export class RacedayLaneColumnComponent
       fontSize,
       parent,
       isCustomizing,
+      targetDriver,
+      laneFg,
+      laneBg,
     );
     this.insetCustomInputs.set(anchor, inputs);
     return inputs;
@@ -966,6 +975,9 @@ export class RacedayLaneColumnComponent
     const parent = this.parent();
     const isCustomizing = this.isUIEditorMode;
     const w = this.widget();
+    const targetDriver = this.targetDriver;
+    const laneFg = this.effectiveValueTextColor;
+    const laneBg = this.backgroundColor;
 
     if (
       this.mainCustomInputs &&
@@ -973,7 +985,13 @@ export class RacedayLaneColumnComponent
       this.mainCustomInputs.isCustomizing === isCustomizing &&
       this.mainCustomInputs.widget?.widgetType === key &&
       this.mainCustomInputs.widget?.customSettings?.["gridLane"] ===
-        this.targetIndex
+        this.targetIndex &&
+      this.mainCustomInputs.widget?.customSettings?.["targetDriver"] ===
+        targetDriver &&
+      this.mainCustomInputs.widget?.customSettings?.["laneForegroundColor"] ===
+        laneFg &&
+      this.mainCustomInputs.widget?.customSettings?.["laneBackgroundColor"] ===
+        laneBg
     ) {
       return this.mainCustomInputs;
     }
@@ -985,6 +1003,9 @@ export class RacedayLaneColumnComponent
       this.targetIndex,
       parent,
       isCustomizing,
+      targetDriver,
+      laneFg,
+      laneBg,
     );
     return this.mainCustomInputs;
   }

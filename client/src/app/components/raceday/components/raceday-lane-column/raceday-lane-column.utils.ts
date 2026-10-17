@@ -10,6 +10,14 @@ export function isCustomWidgetKey(key: string | undefined): boolean {
   return Boolean(key && key.startsWith("custom:"));
 }
 
+export function getInsetDefaultAlignment(
+  anchor: string,
+): "left" | "center" | "right" {
+  if (anchor.endsWith("-left") || anchor.startsWith("left")) return "left";
+  if (anchor.endsWith("-right") || anchor.startsWith("right")) return "right";
+  return "center";
+}
+
 export function buildSyntheticInsetWidgetInputs(
   anchor: string,
   key: string | undefined,
@@ -19,6 +27,9 @@ export function buildSyntheticInsetWidgetInputs(
   insetFontSize: number,
   parent: any,
   isCustomizing: boolean,
+  targetDriver?: any,
+  laneForegroundColor?: string,
+  laneBackgroundColor?: string,
 ): { widget: AbsoluteWidgetNode; parent: any; isCustomizing: boolean } {
   const anchorCfg = widget?.customSettings?.["insetsConfig"]?.[anchor] || {};
   const parentInsetLapDec = widget?.customSettings?.["insetLapDecimalPlaces"];
@@ -31,7 +42,11 @@ export function buildSyntheticInsetWidgetInputs(
     parentInsetLapDec ??
     2;
 
+  const defaultAlignment = getInsetDefaultAlignment(anchor);
+  const resolvedAlignment = anchorCfg.valueAlignment || defaultAlignment;
+
   const customSettings: Record<string, any> = {
+    valueAlignment: resolvedAlignment,
     ...anchorCfg,
     showHeader: false,
     bindingMode,
@@ -39,6 +54,19 @@ export function buildSyntheticInsetWidgetInputs(
     targetIndex: targetIndex + 1,
     valueFontSize: insetFontSize,
   };
+  if (!customSettings["valueAlignment"]) {
+    customSettings["valueAlignment"] = resolvedAlignment;
+  }
+
+  if (targetDriver) {
+    customSettings["targetDriver"] = targetDriver;
+  }
+  if (laneForegroundColor) {
+    customSettings["laneForegroundColor"] = laneForegroundColor;
+  }
+  if (laneBackgroundColor) {
+    customSettings["laneBackgroundColor"] = laneBackgroundColor;
+  }
 
   if (customSettings["decimalPlaces"] === undefined) {
     customSettings["decimalPlaces"] = resolvedDecimalPlaces;
@@ -80,6 +108,9 @@ export function buildSyntheticMainWidgetInputs(
   targetIndex: number,
   parent: any,
   isCustomizing: boolean,
+  targetDriver?: any,
+  laneForegroundColor?: string,
+  laneBackgroundColor?: string,
 ): { widget: AbsoluteWidgetNode; parent: any; isCustomizing: boolean } {
   const customSettings: Record<string, any> = {
     ...(widget?.customSettings || {}),
@@ -88,6 +119,16 @@ export function buildSyntheticMainWidgetInputs(
     gridLane: targetIndex,
     targetIndex: targetIndex + 1,
   };
+
+  if (targetDriver) {
+    customSettings["targetDriver"] = targetDriver;
+  }
+  if (laneForegroundColor) {
+    customSettings["laneForegroundColor"] = laneForegroundColor;
+  }
+  if (laneBackgroundColor) {
+    customSettings["laneBackgroundColor"] = laneBackgroundColor;
+  }
 
   const syntheticWidget: AbsoluteWidgetNode = {
     ...(widget || ({} as AbsoluteWidgetNode)),

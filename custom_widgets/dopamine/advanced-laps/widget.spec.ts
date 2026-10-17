@@ -142,7 +142,7 @@ describe("AdvancedLapsComponent Integration & Requirements Verification", () => 
 
       const laps = component.getEffectiveLaps(driver);
       expect(laps).toBe(15);
-      expect(component.formatLaps(laps, driver)).toBe("15.00");
+      expect(component.formatLaps(laps, driver)).toBe("15");
     });
 
     it("should include auto-segments when race state is PAUSED", () => {
@@ -285,7 +285,7 @@ describe("AdvancedLapsComponent Integration & Requirements Verification", () => 
 
       const laps = component.getEffectiveLaps(driver);
       expect(laps).toBeCloseTo(35.0, 4);
-      expect(component.formatLaps(laps, driver)).toBe("35.00");
+      expect(component.formatLaps(laps, driver)).toBe("35");
     });
 
     it("should support lapDecimalPlaces from lane column inspector settings", () => {
@@ -393,7 +393,7 @@ describe("AdvancedLapsComponent Integration & Requirements Verification", () => 
       expect(component.formatLaps(laps, driver)).toBe("11");
     });
 
-    it("should format with requested decimal places when decimalPlaces > 0", () => {
+    it("should show whole number truncated without decimals when racing even if decimalPlaces > 0", () => {
       mockParent.raceState = RaceState.RACING;
       fixture.componentRef.setInput("widget", {
         id: "widget-1",
@@ -412,6 +412,30 @@ describe("AdvancedLapsComponent Integration & Requirements Verification", () => 
       };
 
       const laps = component.getEffectiveLaps(driver);
+      // 10.5 truncated to whole number 10 when racing (no decimals)
+      expect(component.formatLaps(laps, driver)).toBe("10");
+    });
+
+    it("should show partial laps with decimal places when heat is not racing", () => {
+      mockParent.raceState = RaceState.PAUSED;
+      fixture.componentRef.setInput("widget", {
+        id: "widget-1",
+        widgetType: "custom:advanced-laps",
+        customSettings: { decimalPlaces: 2 },
+      });
+
+      const driver = {
+        name: "Driver 1",
+        heatData: {
+          lapCount: 10,
+          userLaps: 0.5,
+          penaltyLaps: 0,
+          autoCalculatedLaps: 0,
+        },
+      };
+
+      const laps = component.getEffectiveLaps(driver);
+      // When not racing, shows decimal places
       expect(component.formatLaps(laps, driver)).toBe("10.50");
     });
   });
@@ -879,6 +903,85 @@ describe("AdvancedLapsComponent Integration & Requirements Verification", () => 
       expect(component.cardTextColor).toBe("#ffffff");
     });
 
+    it("should honor laneForegroundColor and laneBackgroundColor passed in customSettings", () => {
+      fixture.componentRef.setInput("widget", {
+        id: "widget-lane-colors-override",
+        widgetType: "custom:advanced-laps",
+        customSettings: {
+          useLaneColors: true,
+          laneForegroundColor: "#000000",
+          laneBackgroundColor: "#3b82f6",
+        },
+      });
+
+      expect(component.cardBackgroundColor).toBe("#3b82f6");
+      expect(component.cardTextColor).toBe("#000000");
+    });
+
+    it("should use track lane foreground_color when defined on lane", () => {
+      mockParent.track.lanes[0] = {
+        index: 0,
+        color: "#ef4444",
+        background_color: "#ef4444",
+        foreground_color: "black",
+      };
+
+      fixture.componentRef.setInput("widget", {
+        id: "widget-lane-0",
+        widgetType: "custom:advanced-laps",
+        customSettings: {
+          bindingMode: "lane",
+          targetIndex: 1,
+          useLaneColors: true,
+        },
+      });
+
+      expect(component.cardTextColor).toBe("black");
+    });
+
+    it("should use targetDriver passed directly in customSettings", () => {
+      const customDriver = { name: "Custom Driver", laneIndex: 1, lapCount: 15 };
+      fixture.componentRef.setInput("widget", {
+        id: "widget-passed-driver",
+        widgetType: "custom:advanced-laps",
+        customSettings: {
+          targetDriver: customDriver,
+        },
+      });
+
+      expect(component.targetDriver).toBe(customDriver);
+    });
+
+    it("should resolve heat driver lane color when targetDriver is an overall participant matched to heat", () => {
+      mockParent.heatDrivers = [
+        {
+          driver: { entity_id: "d-2" },
+          actualDriver: { entity_id: "d-2" },
+          laneIndex: 1,
+        },
+      ];
+      mockParent.track.lanes[1] = {
+        index: 1,
+        background_color: "#3b82f6",
+        foreground_color: "black",
+      };
+
+      fixture.componentRef.setInput("widget", {
+        id: "widget-overall-participant",
+        widgetType: "custom:advanced-laps",
+        customSettings: {
+          targetDriver: {
+            driver: { entity_id: "d-2" },
+            name: "Driver 2",
+          },
+          useLaneColors: true,
+        },
+      });
+
+      expect(component.cardBackgroundColor).toBe("#3b82f6");
+      expect(component.cardTextColor).toBe("black");
+    });
+
     it("should fall back to custom backgroundColor and textColor when useLaneColors is false", () => {
       fixture.componentRef.setInput("widget", {
         id: "widget-custom-colors",
@@ -909,6 +1012,32 @@ describe("AdvancedLapsComponent Integration & Requirements Verification", () => 
       });
 
       expect(component.cardBorderColor).toBe("#ff0099");
+    });
+
+    it("should resolve valueJustifyContent according to valueAlignment", () => {
+      fixture.componentRef.setInput("widget", {
+        id: "widget-align-right",
+        widgetType: "custom:advanced-laps",
+        customSettings: { valueAlignment: "right" },
+      });
+      expect(component.valueAlignment).toBe("right");
+      expect(component.valueJustifyContent).toBe("flex-end");
+
+      fixture.componentRef.setInput("widget", {
+        id: "widget-align-left",
+        widgetType: "custom:advanced-laps",
+        customSettings: { valueAlignment: "left" },
+      });
+      expect(component.valueAlignment).toBe("left");
+      expect(component.valueJustifyContent).toBe("flex-start");
+
+      fixture.componentRef.setInput("widget", {
+        id: "widget-align-center",
+        widgetType: "custom:advanced-laps",
+        customSettings: { valueAlignment: "center" },
+      });
+      expect(component.valueAlignment).toBe("center");
+      expect(component.valueJustifyContent).toBe("center");
     });
   });
 });

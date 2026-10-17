@@ -350,11 +350,43 @@ export class CustomWidgetBaseComponent {
       const col = parent.getLaneColor(d, property);
       if (col) return col;
     }
-    const laneIdx =
+    let laneIdx =
       typeof driverOrIndex === "number"
         ? driverOrIndex
-        : (driverOrIndex?.laneIndex ??
-          (driverOrIndex?.lane != null ? driverOrIndex.lane - 1 : -1));
+        : (driverOrIndex?.laneIndex ?? -1);
+
+    if (laneIdx < 0 && d && typeof d === "object") {
+      const heatDrivers =
+        parent?.sortedHeatDrivers ||
+        parent?.heatDrivers ||
+        parent?.heat?.heatDrivers ||
+        [];
+      const entityId =
+        d.driver?.entity_id ||
+        d.actualDriver?.entity_id ||
+        d.entityId ||
+        d.driverId ||
+        d.objectId;
+      if (entityId) {
+        const foundHd = heatDrivers.find(
+          (hd: any) =>
+            hd.driver?.entity_id === entityId ||
+            hd.actualDriver?.entity_id === entityId ||
+            hd.objectId === entityId,
+        );
+        if (foundHd && foundHd.laneIndex !== undefined) {
+          laneIdx = foundHd.laneIndex;
+        }
+      }
+      if (
+        laneIdx < 0 &&
+        driverOrIndex?.lane != null &&
+        driverOrIndex.laneIndex !== undefined
+      ) {
+        laneIdx = driverOrIndex.lane - 1;
+      }
+    }
+
     const track =
       this.track ||
       parent?.track ||
@@ -406,11 +438,9 @@ export class CustomWidgetBaseComponent {
 
   isHeatRacing(): boolean {
     const parent = this.parent();
-    if (
-      parent?.raceState !== undefined &&
-      parent.raceState !== RaceState.UNKNOWN_STATE
-    ) {
-      return parent.raceState === RaceState.RACING;
+    const parentState = parent?.raceState ?? parent?.parent?.raceState;
+    if (parentState !== undefined && parentState !== RaceState.UNKNOWN_STATE) {
+      return parentState === RaceState.RACING;
     }
     const raceState =
       (this.race as any)?.state ?? (this.race as any)?.raceState;
@@ -423,11 +453,9 @@ export class CustomWidgetBaseComponent {
 
   isHeatPaused(): boolean {
     const parent = this.parent();
-    if (
-      parent?.raceState !== undefined &&
-      parent.raceState !== RaceState.UNKNOWN_STATE
-    ) {
-      return parent.raceState === RaceState.PAUSED;
+    const parentState = parent?.raceState ?? parent?.parent?.raceState;
+    if (parentState !== undefined && parentState !== RaceState.UNKNOWN_STATE) {
+      return parentState === RaceState.PAUSED;
     }
     const raceState =
       (this.race as any)?.state ?? (this.race as any)?.raceState;

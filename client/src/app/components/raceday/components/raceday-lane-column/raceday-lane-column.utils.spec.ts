@@ -2,6 +2,7 @@ import {
   buildSyntheticInsetWidgetInputs,
   buildSyntheticMainWidgetInputs,
   formatAdjustedLapValue,
+  getInsetDefaultAlignment,
   isCustomWidgetKey,
   resolveColumnHeaderLabel,
 } from "./raceday-lane-column.utils";
@@ -48,6 +49,35 @@ describe("raceday-lane-column.utils", () => {
       expect(result.widget.customSettings?.["testParam"]).toBe(42);
       expect(result.parent.parentProp).toBeTrue();
       expect(result.isCustomizing).toBeFalse();
+    });
+
+    it("should pass targetDriver, laneForegroundColor, and laneBackgroundColor into customSettings", () => {
+      const widget: any = {
+        id: "w1",
+        widgetType: "lane-column",
+        customSettings: {},
+      };
+      const mockDriver = { name: "Driver 2", laneIndex: 2 };
+
+      const result = buildSyntheticMainWidgetInputs(
+        "custom:advanced-laps",
+        widget,
+        "lane",
+        0,
+        null,
+        false,
+        mockDriver,
+        "#000000",
+        "#3b82f6",
+      );
+
+      expect(result.widget.customSettings?.["targetDriver"]).toBe(mockDriver);
+      expect(result.widget.customSettings?.["laneForegroundColor"]).toBe(
+        "#000000",
+      );
+      expect(result.widget.customSettings?.["laneBackgroundColor"]).toBe(
+        "#3b82f6",
+      );
     });
 
     it("should handle null widget gracefully", () => {
@@ -100,6 +130,7 @@ describe("raceday-lane-column.utils", () => {
       expect(result.widget.customSettings?.["gridLane"]).toBe(1);
       expect(result.widget.customSettings?.["decimalPlaces"]).toBe(2);
       expect(result.widget.customSettings?.["lapDecimalPlaces"]).toBe(2);
+      expect(result.widget.customSettings?.["valueAlignment"]).toBe("right");
     });
 
     it("should inherit parent insetLapDecimalPlaces when anchor decimals are omitted", () => {
@@ -131,6 +162,33 @@ describe("raceday-lane-column.utils", () => {
       expect(result.widget.customSettings?.["lapDecimalPlaces"]).toBe(3);
       expect(result.widget.customSettings?.["insetLapDecimalPlaces"]).toBe(3);
       expect(result.widget.customSettings?.["insetTimeDecimalPlaces"]).toBe(1);
+      expect(result.widget.customSettings?.["valueAlignment"]).toBe("right");
+    });
+
+    it("should honor explicit valueAlignment in insetsConfig", () => {
+      const widget: any = {
+        id: "w-align",
+        customSettings: {
+          insetsConfig: {
+            "top-left": {
+              valueAlignment: "center",
+            },
+          },
+        },
+      };
+
+      const result = buildSyntheticInsetWidgetInputs(
+        "top-left",
+        "custom:dopamine:advanced-laps",
+        widget,
+        "lane",
+        0,
+        18,
+        null,
+        false,
+      );
+
+      expect(result.widget.customSettings?.["valueAlignment"]).toBe("center");
     });
 
     it("should prioritize anchorCfg.decimalPlaces or lapDecimalPlaces over parent insetLapDecimalPlaces", () => {
@@ -160,6 +218,55 @@ describe("raceday-lane-column.utils", () => {
 
       expect(result.widget.customSettings?.["decimalPlaces"]).toBe(0);
       expect(result.widget.customSettings?.["lapDecimalPlaces"]).toBe(0);
+    });
+
+    it("should pass targetDriver, laneForegroundColor, and laneBackgroundColor into customSettings", () => {
+      const widget: any = {
+        id: "w-colors",
+        customSettings: {},
+      };
+      const mockDriver = { name: "Driver 1", laneIndex: 1 };
+
+      const result = buildSyntheticInsetWidgetInputs(
+        "bottom-right",
+        "custom:advanced-laps",
+        widget,
+        "overallPosition",
+        1,
+        14,
+        null,
+        false,
+        mockDriver,
+        "#000000",
+        "#ffffff",
+      );
+
+      expect(result.widget.customSettings?.["targetDriver"]).toBe(mockDriver);
+      expect(result.widget.customSettings?.["laneForegroundColor"]).toBe(
+        "#000000",
+      );
+      expect(result.widget.customSettings?.["laneBackgroundColor"]).toBe(
+        "#ffffff",
+      );
+    });
+  });
+
+  describe("getInsetDefaultAlignment", () => {
+    it("should return left for left-positioned anchors", () => {
+      expect(getInsetDefaultAlignment("top-left")).toBe("left");
+      expect(getInsetDefaultAlignment("center-left")).toBe("left");
+      expect(getInsetDefaultAlignment("bottom-left")).toBe("left");
+    });
+
+    it("should return right for right-positioned anchors", () => {
+      expect(getInsetDefaultAlignment("top-right")).toBe("right");
+      expect(getInsetDefaultAlignment("center-right")).toBe("right");
+      expect(getInsetDefaultAlignment("bottom-right")).toBe("right");
+    });
+
+    it("should return center for center-positioned anchors", () => {
+      expect(getInsetDefaultAlignment("top-center")).toBe("center");
+      expect(getInsetDefaultAlignment("bottom-center")).toBe("center");
     });
   });
 

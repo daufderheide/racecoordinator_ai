@@ -281,20 +281,20 @@
           [style.font-size.px]="effectiveInsetFontSize"
           [style.color]="effectiveInsetTextColor"
         >
-          <div
-            class="inset-cell tl"
-            [class.clickable-lap-cell]="isInsetLapCount('top-left')"
-            [style.font-family]="getInsetFontFamily('top-left')"
-            [style.font-size.px]="getEffectiveInsetFontSize('top-left')"
-            [style.color]="getEffectiveInsetTextColor('top-left')"
-            [attr.title]="
-              isInsetLapCount('top-left')
-                ? ('RD_LAP_COLUMN_TOOLTIP' | translate)
-                : null
-            "
-            (click)="onInsetClick('top-left', $event)"
-          >
-            @if (hasInset("top-left")) {
+          @if (hasInset("top-left")) {
+            <div
+              class="inset-cell tl"
+              [class.clickable-lap-cell]="isInsetLapCount('top-left')"
+              [style.font-family]="getInsetFontFamily('top-left')"
+              [style.font-size.px]="getEffectiveInsetFontSize('top-left')"
+              [style.color]="getEffectiveInsetTextColor('top-left')"
+              [attr.title]="
+                isInsetLapCount('top-left')
+                  ? ('RD_LAP_COLUMN_TOOLTIP' | translate)
+                  : null
+              "
+              (click)="onInsetClick('top-left', $event)"
+            >
               @if (isCustomWidget(getInsetKey("top-left")!)) {
                 <div class="lane-col-inset-custom-widget-wrapper">
                   <ng-container
@@ -313,22 +313,22 @@
               } @else {
                 <span>{{ getInsetValue("top-left") }}</span>
               }
-            }
-          </div>
-          <div
-            class="inset-cell tc"
-            [class.clickable-lap-cell]="isInsetLapCount('top-center')"
-            [style.font-family]="getInsetFontFamily('top-center')"
-            [style.font-size.px]="getEffectiveInsetFontSize('top-center')"
-            [style.color]="getEffectiveInsetTextColor('top-center')"
-            [attr.title]="
-              isInsetLapCount('top-center')
-                ? ('RD_LAP_COLUMN_TOOLTIP' | translate)
-                : null
-            "
-            (click)="onInsetClick('top-center', $event)"
-          >
-            @if (hasInset("top-center")) {
+            </div>
+          }
+          @if (hasInset("top-center")) {
+            <div
+              class="inset-cell tc"
+              [class.clickable-lap-cell]="isInsetLapCount('top-center')"
+              [style.font-family]="getInsetFontFamily('top-center')"
+              [style.font-size.px]="getEffectiveInsetFontSize('top-center')"
+              [style.color]="getEffectiveInsetTextColor('top-center')"
+              [attr.title]="
+                isInsetLapCount('top-center')
+                  ? ('RD_LAP_COLUMN_TOOLTIP' | translate)
+                  : null
+              "
+              (click)="onInsetClick('top-center', $event)"
+            >
               @if (isCustomWidget(getInsetKey("top-center")!)) {
                 <div class="lane-col-inset-custom-widget-wrapper">
                   <ng-container
@@ -347,22 +347,22 @@
               } @else {
                 <span>{{ getInsetValue("top-center") }}</span>
               }
-            }
-          </div>
-          <div
-            class="inset-cell tr"
-            [class.clickable-lap-cell]="isInsetLapCount('top-right')"
-            [style.font-family]="getInsetFontFamily('top-right')"
-            [style.font-size.px]="getEffectiveInsetFontSize('top-right')"
-            [style.color]="getEffectiveInsetTextColor('top-right')"
-            [attr.title]="
-              isInsetLapCount('top-right')
-                ? ('RD_LAP_COLUMN_TOOLTIP' | translate)
-                : null
-            "
-            (click)="onInsetClick('top-right', $event)"
-          >
-            @if (hasInset("top-right")) {
+            </div>
+          }
+          @if (hasInset("top-right")) {
+            <div
+              class="inset-cell tr"
+              [class.clickable-lap-cell]="isInsetLapCount('top-right')"
+              [style.font-family]="getInsetFontFamily('top-right')"
+              [style.font-size.px]="getEffectiveInsetFontSize('top-right')"
+              [style.color]="getEffectiveInsetTextColor('top-right')"
+              [attr.title]="
+                isInsetLapCount('top-right')
+                  ? ('RD_LAP_COLUMN_TOOLTIP' | translate)
+                  : null
+              "
+              (click)="onInsetClick('top-right', $event)"
+            >
               @if (isCustomWidget(getInsetKey("top-right")!)) {
                 <div class="lane-col-inset-custom-widget-wrapper">
                   <ng-container
@@ -381,8 +381,8 @@
               } @else {
                 <span>{{ getInsetValue("top-right") }}</span>
               }
-            }
-          </div>
+            </div>
+          }
         </div>
       }
 
@@ -610,20 +610,20 @@
           [style.font-size.px]="effectiveInsetFontSize"
           [style.color]="effectiveInsetTextColor"
         >
-          <div
-            class="inset-cell bl"
-            [class.clickable-lap-cell]="isInsetLapCount('bottom-left')"
-            [style.font-family]="getInsetFontFamily('bottom-left')"
-            [style.font-size.px]="getEffectiveInsetFontSize('bottom-left')"
-            [style.color]="getEffectiveInsetTextColor('bottom-left')"
-            [attr.title]="
-              isInsetLapCount('bottom-left')
-                ? ('RD_LAP_COLUMN_TOOLTIP' | translate)
-                : null
-            "
-            (click)="onInsetClick('bottom-left', $event)"
-          >
-            @if (hasInset("bottom-left")) {
+          @if (hasInset("bottom-left")) {
+            <div
+              class="inset-cell bl"
+              [class.clickable-lap-cell]="isInsetLapCount('bottom-left')"
+              [style.font-family]="getInsetFontFamily('bottom-left')"
+              [style.font-size.px]="getEffectiveInsetFontSize('bottom-left')"
+              [style.color]="getEffectiveInsetTextColor('bottom-left')"
+              [attr.title]="
+                isInsetLapCount('bottom-left')
+                  ? ('RD_LAP_COLUMN_TOOLTIP' | translate)
+                  : null
+              "
+              (click)="onInsetClick('bottom-left', $event)"
+            >
               @if (isCustomWidget(getInsetKey("bottom-left")!)) {
                 <div class="lane-col-inset-custom-widget-wrapper">
                   <ng-container
@@ -642,22 +642,22 @@
               } @else {
                 <span>{{ getInsetValue("bottom-left") }}</span>
               }
-            }
-          </div>
-          <div
-            class="inset-cell bc"
-            [class.clickable-lap-cell]="isInsetLapCount('bottom-center')"
-            [style.font-family]="getInsetFontFamily('bottom-center')"
-            [style.font-size.px]="getEffectiveInsetFontSize('bottom-center')"
-            [style.color]="getEffectiveInsetTextColor('bottom-center')"
-            [attr.title]="
-              isInsetLapCount('bottom-center')
-                ? ('RD_LAP_COLUMN_TOOLTIP' | translate)
-                : null
-            "
-            (click)="onInsetClick('bottom-center', $event)"
-          >
-            @if (hasInset("bottom-center")) {
+            </div>
+          }
+          @if (hasInset("bottom-center")) {
+            <div
+              class="inset-cell bc"
+              [class.clickable-lap-cell]="isInsetLapCount('bottom-center')"
+              [style.font-family]="getInsetFontFamily('bottom-center')"
+              [style.font-size.px]="getEffectiveInsetFontSize('bottom-center')"
+              [style.color]="getEffectiveInsetTextColor('bottom-center')"
+              [attr.title]="
+                isInsetLapCount('bottom-center')
+                  ? ('RD_LAP_COLUMN_TOOLTIP' | translate)
+                  : null
+              "
+              (click)="onInsetClick('bottom-center', $event)"
+            >
               @if (isCustomWidget(getInsetKey("bottom-center")!)) {
                 <div class="lane-col-inset-custom-widget-wrapper">
                   <ng-container
@@ -676,22 +676,22 @@
               } @else {
                 <span>{{ getInsetValue("bottom-center") }}</span>
               }
-            }
-          </div>
-          <div
-            class="inset-cell br"
-            [class.clickable-lap-cell]="isInsetLapCount('bottom-right')"
-            [style.font-family]="getInsetFontFamily('bottom-right')"
-            [style.font-size.px]="getEffectiveInsetFontSize('bottom-right')"
-            [style.color]="getEffectiveInsetTextColor('bottom-right')"
-            [attr.title]="
-              isInsetLapCount('bottom-right')
-                ? ('RD_LAP_COLUMN_TOOLTIP' | translate)
-                : null
-            "
-            (click)="onInsetClick('bottom-right', $event)"
-          >
-            @if (hasInset("bottom-right")) {
+            </div>
+          }
+          @if (hasInset("bottom-right")) {
+            <div
+              class="inset-cell br"
+              [class.clickable-lap-cell]="isInsetLapCount('bottom-right')"
+              [style.font-family]="getInsetFontFamily('bottom-right')"
+              [style.font-size.px]="getEffectiveInsetFontSize('bottom-right')"
+              [style.color]="getEffectiveInsetTextColor('bottom-right')"
+              [attr.title]="
+                isInsetLapCount('bottom-right')
+                  ? ('RD_LAP_COLUMN_TOOLTIP' | translate)
+                  : null
+              "
+              (click)="onInsetClick('bottom-right', $event)"
+            >
               @if (isCustomWidget(getInsetKey("bottom-right")!)) {
                 <div class="lane-col-inset-custom-widget-wrapper">
                   <ng-container
@@ -710,8 +710,8 @@
               } @else {
                 <span>{{ getInsetValue("bottom-right") }}</span>
               }
-            }
-          </div>
+            </div>
+          }
         </div>
       }
     </div>

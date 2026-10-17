@@ -39,7 +39,10 @@
     }
 
     @if (bindingMode !== "all") {
-      <div class="advanced-laps-body">
+      <div
+        class="advanced-laps-body"
+        [style.align-items]="valueJustifyContent"
+      >
         <span
           class="advanced-laps-value"
           [style.font-family]="valueFontFamily || null"
