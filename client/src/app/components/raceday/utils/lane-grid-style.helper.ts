@@ -28,9 +28,6 @@ export class LaneGridStyleHelper {
       "borderColor",
       "borderWidth",
       "borderRadius",
-      "useLaneColors",
-      "backgroundColor",
-      "textColor",
     ];
     const highlightKeys = ["highlightRowOnLap"];
     const timeKeys = [
@@ -50,7 +47,19 @@ export class LaneGridStyleHelper {
 
     return allWidgets.map((w) => {
       if (w.customSettings?.["gridId"] !== gridId) return w;
-      if (propertyGroup === "value" && w.customSettings?.["isHeaderWidget"]) {
+      if (
+        (propertyGroup === "value" ||
+          propertyGroup === "highlight" ||
+          propertyGroup === "time") &&
+        w.customSettings?.["isHeaderWidget"]
+      ) {
+        return w;
+      }
+      if (
+        sourceSettings["isHeaderWidget"] &&
+        propertyGroup !== "header" &&
+        propertyGroup !== "border"
+      ) {
         return w;
       }
       if (

@@ -1101,6 +1101,93 @@ describe("ui-editor-widget.helper", () => {
     expect(comp.captureState).toHaveBeenCalled();
   });
 
+  it("should sync master and mirrored lanes and preserve useLaneColors when moving a column header widget", () => {
+    const masterCol: any = {
+      id: "col-1",
+      widgetType: "lane-column",
+      x: 100,
+      y: 100,
+      width: 80,
+      height: 200,
+      zIndex: 1,
+      customSettings: {
+        gridId: "grid-test-header-move",
+        gridLane: 0,
+        gridTotalLanes: 2,
+        useLaneColors: true,
+        mirrorRows: true,
+      },
+    };
+    const mirroredLane: any = {
+      id: "col-1_grid_lane_1",
+      widgetType: "lane-column",
+      x: 100,
+      y: 300,
+      width: 80,
+      height: 200,
+      zIndex: 1,
+      customSettings: {
+        gridId: "grid-test-header-move",
+        gridMasterId: "col-1",
+        gridLane: 1,
+        gridTotalLanes: 2,
+        useLaneColors: true,
+      },
+    };
+    const headerWidget: any = {
+      id: "col-1_header",
+      widgetType: "lane-column",
+      x: 150,
+      y: 60,
+      width: 90,
+      height: 40,
+      zIndex: 2,
+      customSettings: {
+        gridId: "grid-test-header-move",
+        gridMasterId: "col-1",
+        isHeaderWidget: true,
+        useLaneColors: false,
+      },
+    };
+
+    const layout = {
+      widgets: [masterCol, mirroredLane, headerWidget],
+    };
+
+    const comp: any = {
+      activeCustomUi: { layout },
+      getLayout: () => layout,
+      activeGridSession: {
+        gridId: "grid-test-header-move",
+        direction: "vertical",
+        totalLanes: 2,
+        bounds: { x: 100, y: 100, width: 400, height: 400 },
+        sourceLaneIndex: 0,
+        bindingMode: "lane",
+      },
+      editingSettings: new Settings(),
+      isCurrentLayoutPractice: false,
+      parsedLayouts: new Map(),
+      captureState: jasmine.createSpy("captureState"),
+      cdr: { markForCheck: jasmine.createSpy("markForCheck") },
+      syncRacedayPreview: jasmine.createSpy("syncRacedayPreview"),
+    };
+
+    handleWidgetInspectorChange(comp, headerWidget);
+
+    expect(masterCol.x).toBe(150);
+    expect(masterCol.width).toBe(90);
+
+    const updatedLane1 = layout.widgets.find(
+      (w: any) => w.id === "col-1_grid_lane_1",
+    );
+    expect(updatedLane1?.x).toBe(150);
+    expect(updatedLane1?.width).toBe(90);
+
+    expect(masterCol.customSettings.useLaneColors).toBeTrue();
+    expect(updatedLane1?.customSettings.useLaneColors).toBeTrue();
+  });
+
   describe("auto-calculated dimensions for grid widgets", () => {
     const {
       isWidgetHeightAutoCalculated,

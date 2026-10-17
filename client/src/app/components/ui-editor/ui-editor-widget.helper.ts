@@ -605,6 +605,84 @@ function handleCrossColumnLiveSync(
   }
 }
 
+function handleGridSessionWidgetSync(
+  comp: any,
+  layout: any,
+  targetWidget: any,
+): void {
+  if (
+    comp.activeGridSession &&
+    LaneGridReplicationHelper.isMasterWidget(
+      targetWidget,
+      comp.activeGridSession,
+    )
+  ) {
+    LaneGridReplicationHelper.updateWidgetCellRatios(
+      targetWidget,
+      comp.activeGridSession,
+    );
+    if (targetWidget.customSettings?.["mirrorRows"] !== false) {
+      layout.widgets = LaneGridReplicationHelper.syncMasterWidgetToLanes(
+        targetWidget,
+        comp.activeGridSession,
+        layout.widgets,
+      );
+    }
+  } else if (
+    comp.activeGridSession &&
+    targetWidget.customSettings?.["isHeaderWidget"]
+  ) {
+    const masterId = targetWidget.customSettings?.["gridMasterId"];
+    const masterWidget = masterId
+      ? layout.widgets.find((w: any) => w.id === masterId)
+      : null;
+    if (masterWidget) {
+      const isHoriz =
+        comp.activeGridSession.direction === "horizontal" ||
+        targetWidget.customSettings?.["gridDirection"] === "horizontal";
+      if (isHoriz) {
+        masterWidget.y = targetWidget.y;
+        masterWidget.height = targetWidget.height;
+      } else {
+        masterWidget.x = targetWidget.x;
+        masterWidget.width = targetWidget.width;
+      }
+      LaneGridReplicationHelper.updateWidgetCellRatios(
+        masterWidget,
+        comp.activeGridSession,
+      );
+      if (masterWidget.customSettings?.["mirrorRows"] !== false) {
+        layout.widgets = LaneGridReplicationHelper.syncMasterWidgetToLanes(
+          masterWidget,
+          comp.activeGridSession,
+          layout.widgets,
+        );
+      }
+    }
+  }
+}
+
+function handleCustomLabelSync(
+  layout: any,
+  targetWidget: any,
+  gridId: string,
+): void {
+  if (targetWidget.customSettings?.["customLabel"] !== undefined) {
+    const masterId =
+      targetWidget.customSettings?.["gridMasterId"] || targetWidget.id;
+    for (const w of layout.widgets) {
+      if (
+        w.customSettings?.["gridId"] === gridId &&
+        (w.id === masterId || w.customSettings?.["gridMasterId"] === masterId)
+      ) {
+        if (!w.customSettings) w.customSettings = {};
+        w.customSettings["customLabel"] =
+          targetWidget.customSettings["customLabel"];
+      }
+    }
+  }
+}
+
 export function handleWidgetInspectorChange(
   comp: any,
   widget?: any,
@@ -625,44 +703,9 @@ export function handleWidgetInspectorChange(
       handleGridBindingModeSync(comp, layout, targetWidget, gridId);
       handleGridSyncAction(layout, targetWidget, gridId);
       handleGridStructureChanges(comp, layout, targetWidget, gridId);
-
-      if (
-        comp.activeGridSession &&
-        LaneGridReplicationHelper.isMasterWidget(
-          targetWidget,
-          comp.activeGridSession,
-        )
-      ) {
-        LaneGridReplicationHelper.updateWidgetCellRatios(
-          targetWidget,
-          comp.activeGridSession,
-        );
-        if (targetWidget.customSettings?.["mirrorRows"] !== false) {
-          layout.widgets = LaneGridReplicationHelper.syncMasterWidgetToLanes(
-            targetWidget,
-            comp.activeGridSession,
-            layout.widgets,
-          );
-        }
-      }
-
+      handleGridSessionWidgetSync(comp, layout, targetWidget);
       handleCrossColumnLiveSync(layout, targetWidget, gridId);
-
-      if (targetWidget.customSettings?.["customLabel"] !== undefined) {
-        const masterId =
-          targetWidget.customSettings?.["gridMasterId"] || targetWidget.id;
-        for (const w of layout.widgets) {
-          if (
-            w.customSettings?.["gridId"] === gridId &&
-            (w.id === masterId ||
-              w.customSettings?.["gridMasterId"] === masterId)
-          ) {
-            if (!w.customSettings) w.customSettings = {};
-            w.customSettings["customLabel"] =
-              targetWidget.customSettings["customLabel"];
-          }
-        }
-      }
+      handleCustomLabelSync(layout, targetWidget, gridId);
 
       if (targetWidget.customSettings) {
         for (const k of Object.keys(targetWidget.customSettings)) {

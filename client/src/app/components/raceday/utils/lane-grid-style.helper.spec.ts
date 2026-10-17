@@ -95,4 +95,115 @@ describe("LaneGridStyleHelper", () => {
     expect(updated[0].customSettings?.["gridType"]).toBe("overall");
     expect(updated[1].customSettings?.["gridType"]).toBe("overall");
   });
+
+  it("should not overwrite useLaneColors, backgroundColor, or textColor when syncing border properties", () => {
+    const dataWidgets: AbsoluteWidgetNode[] = [
+      {
+        id: "w-0",
+        widgetType: "lane-column",
+        x: 0,
+        y: 0,
+        width: 100,
+        height: 100,
+        zIndex: 1,
+        customSettings: {
+          gridId,
+          gridLane: 0,
+          useLaneColors: true,
+          backgroundColor: "#112233",
+          textColor: "#ffffff",
+        },
+      },
+      {
+        id: "w-1",
+        widgetType: "lane-column",
+        x: 100,
+        y: 0,
+        width: 100,
+        height: 100,
+        zIndex: 1,
+        customSettings: {
+          gridId,
+          gridLane: 1,
+          useLaneColors: true,
+          backgroundColor: "#445566",
+          textColor: "#ffffff",
+        },
+      },
+    ];
+
+    const updated = LaneGridStyleHelper.syncCrossColumnProperty(
+      gridId,
+      "border",
+      {
+        showBorder: true,
+        borderColor: "#ff0000",
+        borderWidth: 2,
+        borderRadius: 4,
+        useLaneColors: false,
+        backgroundColor: "#000000",
+        textColor: "#000000",
+      },
+      dataWidgets,
+    );
+
+    expect(updated[0].customSettings?.["showBorder"]).toBeTrue();
+    expect(updated[0].customSettings?.["borderColor"]).toBe("#ff0000");
+    expect(updated[0].customSettings?.["useLaneColors"]).toBeTrue();
+    expect(updated[0].customSettings?.["backgroundColor"]).toBe("#112233");
+    expect(updated[1].customSettings?.["showBorder"]).toBeTrue();
+    expect(updated[1].customSettings?.["useLaneColors"]).toBeTrue();
+    expect(updated[1].customSettings?.["backgroundColor"]).toBe("#445566");
+  });
+
+  it("should not sync data properties to or from header widgets", () => {
+    const mixedWidgets: AbsoluteWidgetNode[] = [
+      {
+        id: "data-0",
+        widgetType: "lane-column",
+        x: 0,
+        y: 0,
+        width: 100,
+        height: 100,
+        zIndex: 1,
+        customSettings: {
+          gridId,
+          gridLane: 0,
+          valueFontSize: 16,
+        },
+      },
+      {
+        id: "header-0",
+        widgetType: "lane-column",
+        x: 0,
+        y: 0,
+        width: 100,
+        height: 30,
+        zIndex: 2,
+        customSettings: {
+          gridId,
+          isHeaderWidget: true,
+        },
+      },
+    ];
+
+    // Data to header
+    const updated1 = LaneGridStyleHelper.syncCrossColumnProperty(
+      gridId,
+      "value",
+      { valueFontSize: 24 },
+      mixedWidgets,
+    );
+    expect(updated1[0].customSettings?.["valueFontSize"]).toBe(24);
+    expect(updated1[1].customSettings?.["valueFontSize"]).toBeUndefined();
+
+    // Header to data
+    const updated2 = LaneGridStyleHelper.syncCrossColumnProperty(
+      gridId,
+      "value",
+      { isHeaderWidget: true, valueFontSize: 28 },
+      mixedWidgets,
+    );
+    expect(updated2[0].customSettings?.["valueFontSize"]).toBe(16);
+  });
 });

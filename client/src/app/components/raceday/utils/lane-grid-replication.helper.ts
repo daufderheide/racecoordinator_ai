@@ -278,10 +278,17 @@ export class LaneGridReplicationHelper {
         height: headerHeight,
         zIndex: (updatedMaster.zIndex ?? 10) + 1,
         customSettings: {
+          ...headerSettings,
           ...(existingHeaderIdx >= 0
             ? result[existingHeaderIdx].customSettings
             : {}),
-          ...headerSettings,
+          isHeaderWidget: true,
+          showHeader: true,
+          headerPlacement: "top",
+          headerHeight,
+          gridMasterId: masterWidget.id,
+          gridId: session.gridId,
+          useLaneColors: false,
         },
       };
 
