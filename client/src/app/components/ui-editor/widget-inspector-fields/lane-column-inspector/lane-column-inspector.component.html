@@ -289,6 +289,23 @@
         </div>
       </div>
 
+      <!-- Grid Data Source Control -->
+      <div class="inspector-section" style="margin-bottom: 8px">
+        <label class="inspector-label">{{
+          "UE_INSPECTOR_DATA_SOURCE" | translate
+        }}</label>
+        <div class="select-container select-sm">
+          <app-custom-select [(ngModel)]="gridType">
+            <app-custom-option value="heat">
+              {{ "UE_TOOLBOX_GROUP_HEAT_DATA" | translate }}
+            </app-custom-option>
+            <app-custom-option value="overall">
+              {{ "UE_TOOLBOX_GROUP_OVERALL_DATA" | translate }}
+            </app-custom-option>
+          </app-custom-select>
+        </div>
+      </div>
+
       <!-- Grid Sorting / Row Order Control -->
       <div class="inspector-section" style="margin-bottom: 8px">
         <label class="inspector-label">{{

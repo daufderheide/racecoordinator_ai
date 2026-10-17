@@ -37,6 +37,7 @@ import {
   buildSyntheticInsetWidgetInputs,
   buildSyntheticMainWidgetInputs,
   computeHeatDataLastLaps,
+  extractDroppedColumnKey,
   fitColumnLastLaps,
   fitColumnTextValue,
   formatAdjustedLapValue,
@@ -47,6 +48,7 @@ import {
   resolveLaneColumnImageUrl,
   resolvePacingBenchmarkType,
   resolvePacingDecimalPlaces,
+  resolveTargetDriver,
 } from "./raceday-lane-column.utils";
 
 export { HeatDataLapItem };
@@ -220,81 +222,12 @@ export class RacedayLaneColumnComponent
   }
 
   get targetDriver(): DriverHeatData | undefined {
-    const parent = this.parent();
-    if (!parent) return undefined;
-
-    const drivers: DriverHeatData[] =
-      parent.sortedHeatDrivers ||
-      parent.heatDrivers ||
-      parent.heat?.heatDrivers ||
-      [];
-
-    if (this.bindingMode === "overallPosition") {
-      const targetRank = this.targetIndex + 1;
-      const participants: any[] = parent.participants || [];
-      const match =
-        participants.find((p: any) => p.rank === targetRank) ||
-        participants[this.targetIndex];
-      if (!match) return undefined;
-      const activeHeatDriver = drivers.find(
-        (d) =>
-          d.objectId === match.objectId ||
-          d.participant?.objectId === match.objectId,
-      );
-      return activeHeatDriver || this.getOrCreateSyntheticDriver(match);
-    }
-
-    if (this.bindingMode === "seed") {
-      const targetSeed = this.targetIndex + 1;
-      const participants: any[] = parent.participants || [];
-      const match =
-        participants.find((p: any) => p.seed === targetSeed) ||
-        participants[this.targetIndex];
-      if (!match) return undefined;
-      const activeHeatDriver = drivers.find(
-        (d) =>
-          d.objectId === match.objectId ||
-          d.participant?.objectId === match.objectId,
-      );
-      return activeHeatDriver || this.getOrCreateSyntheticDriver(match);
-    }
-
-    if (this.bindingMode === "position") {
-      const targetRank = this.targetIndex + 1;
-      if (parent.driverRankings && parent.driverRankings.size > 0) {
-        for (const d of drivers) {
-          if (parent.driverRankings.get(d.objectId) === targetRank) {
-            return d;
-          }
-        }
-      }
-      if (parent.heat?.standings && parent.heat.standings.length > 0) {
-        const targetId = parent.heat.standings[this.targetIndex];
-        if (targetId) {
-          const found = drivers.find((d) => d.objectId === targetId);
-          if (found) return found;
-        }
-      }
-      const sortedByRank = [...drivers].sort((a, b) => {
-        const rankA = parent.driverRankings?.get(a.objectId) ?? 999;
-        const rankB = parent.driverRankings?.get(b.objectId) ?? 999;
-        if (rankA !== rankB) return rankA - rankB;
-
-        const lapsA = (a as any).lapCount ?? a.lapTimes?.length ?? 0;
-        const lapsB = (b as any).lapCount ?? b.lapTimes?.length ?? 0;
-        if (lapsA !== lapsB) return (lapsB as number) - (lapsA as number);
-
-        const timeA = (a as any).totalTime ?? 0;
-        const timeB = (b as any).totalTime ?? 0;
-        return (timeA as number) - (timeB as number);
-      });
-      return sortedByRank[this.targetIndex];
-    } else {
-      return (
-        drivers.find((d) => d.laneIndex === this.targetIndex) ||
-        drivers[this.targetIndex]
-      );
-    }
+    return resolveTargetDriver(
+      this.settings,
+      this.columnKey,
+      this.parent(),
+      (p) => this.getOrCreateSyntheticDriver(p),
+    );
   }
 
   get backgroundColor(): string {
@@ -884,41 +817,8 @@ export class RacedayLaneColumnComponent
       "drag-over",
     );
 
-    let droppedKey: string | undefined;
-
-    if (event.dataTransfer) {
-      try {
-        const dataStr = event.dataTransfer.getData("application/json");
-        if (dataStr) {
-          const data = JSON.parse(dataStr);
-          if (data.type === "new-column" && data.key) {
-            droppedKey = data.key;
-          } else if (data.key) {
-            droppedKey = data.key;
-          }
-        }
-      } catch (_) {}
-
-      if (!droppedKey) {
-        const text = event.dataTransfer.getData("text/plain");
-        if (text) {
-          if (text.startsWith("lane-col:")) {
-            droppedKey = text.substring("lane-col:".length);
-          } else {
-            droppedKey = text;
-          }
-        }
-      }
-    }
-
     const parent = this.parent();
-    if (!droppedKey && parent?.draggedWidgetType) {
-      if (parent.draggedWidgetType.startsWith("lane-col:")) {
-        droppedKey = parent.draggedWidgetType.substring("lane-col:".length);
-      } else {
-        droppedKey = parent.draggedWidgetType;
-      }
-    }
+    const droppedKey = extractDroppedColumnKey(event, parent);
 
     if (droppedKey) {
       if (parent) {

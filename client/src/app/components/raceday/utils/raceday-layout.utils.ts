@@ -805,4 +805,19 @@ export class RacedayLayoutUtils {
       },
     };
   }
+
+  static isOverallColumnKey(key: string | undefined): boolean {
+    if (!key) return false;
+    if (key.startsWith("overall")) return true;
+    const overallKeys = new Set([
+      "rankOverall",
+      "rankGroup",
+      "bestRaceLapTime",
+      "recordLapTime",
+      "winProbability",
+      "projectedRank",
+      "projectedLaps",
+    ]);
+    return overallKeys.has(key);
+  }
 }

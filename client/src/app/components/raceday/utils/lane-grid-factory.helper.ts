@@ -11,10 +11,16 @@ export class LaneGridFactoryHelper {
     bounds: LaneGridBounds,
     totalLanes: number,
     baseZIndex: number,
+    gridType: "heat" | "overall" = "heat",
   ): { session: LaneGridSession; widgets: AbsoluteWidgetNode[] } {
     const gridId = `grid-${Date.now()}`;
     const rowHeight = Math.max(20, Math.round(bounds.height / totalLanes));
-    const session = this.createDefaultSession(gridId, bounds, totalLanes);
+    const session = this.createDefaultSession(
+      gridId,
+      bounds,
+      totalLanes,
+      gridType,
+    );
 
     const masterWidgets = this.createMasterColumns(
       gridId,
@@ -22,6 +28,7 @@ export class LaneGridFactoryHelper {
       rowHeight,
       totalLanes,
       baseZIndex,
+      gridType,
     );
 
     for (const master of masterWidgets) {
@@ -45,10 +52,14 @@ export class LaneGridFactoryHelper {
     rowHeight: number,
     totalLanes: number,
     baseZIndex: number,
+    gridType: "heat" | "overall" = "heat",
   ): AbsoluteWidgetNode[] {
     const col1Width = 260;
     const col2Width = 100;
     const col3Width = Math.max(80, bounds.width - col1Width - col2Width);
+    const col2Key = gridType === "overall" ? "overallLapCount" : "lapCount";
+    const col3Key =
+      gridType === "overall" ? "overallBestLapTime" : "lastLapTime";
 
     return [
       this.createMasterNode(
@@ -61,10 +72,11 @@ export class LaneGridFactoryHelper {
         baseZIndex,
         gridId,
         totalLanes,
+        gridType,
       ),
       this.createMasterNode(
         `${Date.now()}-2`,
-        "lapCount",
+        col2Key,
         bounds.x + col1Width,
         bounds.y,
         col2Width,
@@ -72,10 +84,11 @@ export class LaneGridFactoryHelper {
         baseZIndex,
         gridId,
         totalLanes,
+        gridType,
       ),
       this.createMasterNode(
         `${Date.now()}-3`,
-        "lastLapTime",
+        col3Key,
         bounds.x + col1Width + col2Width,
         bounds.y,
         col3Width,
@@ -83,6 +96,7 @@ export class LaneGridFactoryHelper {
         baseZIndex,
         gridId,
         totalLanes,
+        gridType,
       ),
     ];
   }
@@ -97,6 +111,7 @@ export class LaneGridFactoryHelper {
     zIndex: number,
     gridId: string,
     totalLanes: number,
+    gridType: "heat" | "overall" = "heat",
   ): AbsoluteWidgetNode {
     return {
       id: `widget-${idSuffix}`,
@@ -114,7 +129,8 @@ export class LaneGridFactoryHelper {
         targetIndex: 0,
         gridTotalLanes: totalLanes,
         gridDirection: "vertical",
-        bindingMode: "lane",
+        gridType,
+        bindingMode: gridType === "overall" ? "overallPosition" : "lane",
         showHeader: true,
         headerPlacement: "individual",
         layoutOrientation: "vertical",
@@ -126,6 +142,7 @@ export class LaneGridFactoryHelper {
     gridId: string,
     bounds: LaneGridBounds,
     totalLanes: number,
+    gridType: "heat" | "overall" = "heat",
   ): LaneGridSession {
     return {
       gridId,
@@ -133,7 +150,8 @@ export class LaneGridFactoryHelper {
       totalLanes,
       direction: "vertical",
       sourceLaneIndex: 0,
-      bindingMode: "lane",
+      gridType,
+      bindingMode: gridType === "overall" ? "overallPosition" : "lane",
       headerPlacement: "individual",
       headerHeight: 36,
       linkColumns: true,

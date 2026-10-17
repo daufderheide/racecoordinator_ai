@@ -1,6 +1,8 @@
 import { AbsoluteWidgetNode } from "@app/models/settings";
 import { DriverHeatData } from "@app/race/driver_heat_data";
 
+import { RacedayLayoutUtils } from "./raceday-layout.utils";
+
 export interface GridSlotCoordinate {
   x: number;
   y: number;
@@ -42,21 +44,97 @@ export class LaneGridAnimationHelper {
 
     const targetIndex = Number(s["targetIndex"] ?? s["gridLane"] ?? 0);
     const targetRank = targetIndex + 1;
+    const isOverallGrid =
+      s["gridType"] === "overall" ||
+      (!s["gridType"] && RacedayLayoutUtils.isOverallColumnKey(s["columnKey"]));
 
+    if (isOverallGrid) {
+      return this.resolveOverallGridEntityId(
+        mode,
+        targetIndex,
+        targetRank,
+        parent,
+      );
+    }
+
+    return this.resolveHeatGridEntityId(mode, targetIndex, targetRank, parent);
+  }
+
+  private static resolveOverallGridEntityId(
+    mode: string,
+    targetIndex: number,
+    targetRank: number,
+    parent: any,
+  ): string | null {
+    const participants: any[] = parent.participants || [];
     if (mode === "overallPosition") {
-      const participants: any[] = parent.participants || [];
       const match =
         participants.find((p: any) => p.rank === targetRank) ||
         participants[targetIndex];
       return match?.driver?.entity_id || match?.objectId || null;
     }
 
-    // mode === "position" (Heat Standings)
     const drivers: DriverHeatData[] =
       parent.sortedHeatDrivers ||
       parent.heatDrivers ||
       parent.heat?.heatDrivers ||
       [];
+    const sorted = [...participants].sort((a, b) => {
+      const getHeatRank = (p: any) => {
+        const d = drivers.find(
+          (driver) =>
+            driver.objectId === p.objectId ||
+            driver.participant?.objectId === p.objectId ||
+            driver.driver?.entity_id === (p.driver?.entity_id || p.objectId),
+        );
+        if (!d) return 999;
+        return parent.driverRankings?.get(d.objectId) ?? 999;
+      };
+      const rankA = getHeatRank(a);
+      const rankB = getHeatRank(b);
+      if (rankA !== rankB) return rankA - rankB;
+      return (a.rank ?? 999) - (b.rank ?? 999);
+    });
+    const match = sorted[targetIndex];
+    return match?.driver?.entity_id || match?.objectId || null;
+  }
+
+  private static resolveHeatGridEntityId(
+    mode: string,
+    targetIndex: number,
+    targetRank: number,
+    parent: any,
+  ): string | null {
+    const drivers: DriverHeatData[] =
+      parent.sortedHeatDrivers ||
+      parent.heatDrivers ||
+      parent.heat?.heatDrivers ||
+      [];
+
+    if (mode === "overallPosition") {
+      const getOverallRank = (d: DriverHeatData): number => {
+        if (typeof parent.getDriverOverallRanking === "function") {
+          const r = parent.getDriverOverallRanking(d);
+          if (r != null && r > 0) return r;
+        }
+        const match = (parent.participants || []).find(
+          (p: any) =>
+            p.objectId === d.objectId ||
+            p.participant?.objectId === d.objectId ||
+            p.driver?.entity_id === (d.driver?.entity_id || d.objectId) ||
+            p.driver?.name === d.driver?.name,
+        );
+        if (match?.rank && match.rank > 0) return match.rank;
+        return (d as any).overallRank ?? d.participant?.rank ?? 999;
+      };
+      const sorted = [...drivers].sort((a, b) => {
+        const rankA = getOverallRank(a);
+        const rankB = getOverallRank(b);
+        if (rankA !== rankB) return rankA - rankB;
+        return (a.laneIndex ?? 0) - (b.laneIndex ?? 0);
+      });
+      return sorted[targetIndex]?.objectId || null;
+    }
 
     if (parent.driverRankings && parent.driverRankings.size > 0) {
       for (const d of drivers) {

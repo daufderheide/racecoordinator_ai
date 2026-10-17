@@ -50,5 +50,32 @@ describe("LaneGridFactoryHelper", () => {
         expect(w.y).toBe(150); // 100 + 200/4
       }
     });
+
+    it("should create overall grid with overall columns and bindingMode", () => {
+      const bounds = { x: 50, y: 100, width: 500, height: 200 };
+      const { session, widgets } = LaneGridFactoryHelper.createNewGrid(
+        bounds,
+        4,
+        100,
+        "overall",
+      );
+
+      expect(session.gridType).toBe("overall");
+      expect(session.bindingMode).toBe("overallPosition");
+
+      const masters = widgets.filter((w) =>
+        LaneGridReplicationHelper.isMasterWidget(w, session),
+      );
+      expect(masters.length).toBe(3);
+      expect(masters.map((m) => m.customSettings?.["columnKey"])).toEqual([
+        "driver.name",
+        "overallLapCount",
+        "overallBestLapTime",
+      ]);
+      expect(masters[0].customSettings?.["gridType"]).toBe("overall");
+      expect(masters[0].customSettings?.["bindingMode"]).toBe(
+        "overallPosition",
+      );
+    });
   });
 });

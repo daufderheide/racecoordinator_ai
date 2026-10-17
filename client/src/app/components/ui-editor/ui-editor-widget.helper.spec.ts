@@ -409,6 +409,43 @@ describe("ui-editor-widget.helper", () => {
     expect(targetWidget.customSettings._gridSortOrderChanged).toBeUndefined();
   });
 
+  it("should synchronize gridType across grid widgets when _gridTypeChanged is set", () => {
+    const {
+      handleWidgetInspectorChange,
+    } = require("./ui-editor-widget.helper");
+    const targetWidget = {
+      id: "w1",
+      customSettings: {
+        gridId: "grid-abc",
+        gridType: "overall",
+        _gridTypeChanged: true,
+      },
+    };
+    const widget2 = {
+      id: "w2",
+      customSettings: { gridId: "grid-abc", gridType: "heat" },
+    };
+    const layout = { widgets: [targetWidget, widget2] };
+    const comp = {
+      isSaving: false,
+      activeCustomUi: { entity_id: "ui1" },
+      currentSelectedWidget: targetWidget,
+      activeGridSession: { gridId: "grid-abc", gridType: "heat" },
+      getLayout: jasmine.createSpy("getLayout").and.returnValue(layout),
+      editingSettings: new Settings(),
+      isCurrentLayoutPractice: false,
+      parsedLayouts: new Map(),
+      captureState: jasmine.createSpy("captureState"),
+      cdr: { markForCheck: jasmine.createSpy("markForCheck") },
+    };
+
+    handleWidgetInspectorChange(comp, targetWidget);
+
+    expect(widget2.customSettings.gridType).toBe("overall");
+    expect(comp.activeGridSession.gridType).toBe("overall");
+    expect(targetWidget.customSettings._gridTypeChanged).toBeUndefined();
+  });
+
   it("should handle removing selected widget", () => {
     const { handleRemoveSelectedWidget } = require("./ui-editor-widget.helper");
     const layout = {

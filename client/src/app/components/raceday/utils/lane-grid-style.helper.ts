@@ -170,4 +170,28 @@ export class LaneGridStyleHelper {
       return w;
     });
   }
+
+  public static updateGridType(
+    allWidgets: AbsoluteWidgetNode[],
+    gridId: string,
+    gridType: "heat" | "overall",
+  ): AbsoluteWidgetNode[] {
+    if (!gridId || !allWidgets) return allWidgets || [];
+    const validGridType = gridType === "overall" ? "overall" : "heat";
+    return allWidgets.map((w) => {
+      if (w.customSettings?.["gridId"] === gridId) {
+        if (w.customSettings) {
+          w.customSettings["gridType"] = validGridType;
+        }
+        return {
+          ...w,
+          customSettings: {
+            ...(w.customSettings || {}),
+            gridType: validGridType,
+          },
+        };
+      }
+      return w;
+    });
+  }
 }

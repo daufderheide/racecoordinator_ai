@@ -279,5 +279,24 @@ describe("LaneColumnGridHelper", () => {
       );
       expect(overallIndices.length).toBe(16);
     });
+
+    it("should get and set gridType correctly", () => {
+      expect(LaneColumnGridHelper.getGridType(settings)).toBe("heat");
+      LaneColumnGridHelper.setGridType(settings, "overall", onChange);
+      expect(LaneColumnGridHelper.getGridType(settings)).toBe("overall");
+      expect(settings._gridTypeChanged).toBeTrue();
+      expect(changed).toBeTrue();
+
+      // Test fallback to column key
+      const fallbackSettings: any = { columnKey: "overallLapCount" };
+      expect(LaneColumnGridHelper.getGridType(fallbackSettings)).toBe(
+        "overall",
+      );
+
+      const heatFallbackSettings: any = { columnKey: "lapCount" };
+      expect(LaneColumnGridHelper.getGridType(heatFallbackSettings)).toBe(
+        "heat",
+      );
+    });
   });
 });

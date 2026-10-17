@@ -142,10 +142,10 @@ describe("LaneGridAnimationHelper", () => {
       );
     });
 
-    it("should resolve entityId in overallPosition mode using participants rank", () => {
+    it("should resolve entityId in overallPosition mode on overall grid using participants rank", () => {
       const widget = createWidget(
         {},
-        { targetIndex: 0, bindingMode: "overallPosition" },
+        { targetIndex: 0, bindingMode: "overallPosition", gridType: "overall" },
       );
       const parent = {
         participants: [
@@ -160,10 +160,30 @@ describe("LaneGridAnimationHelper", () => {
       );
     });
 
-    it("should fallback to participant index in overallPosition mode when rank is not matched", () => {
+    it("should resolve entityId in overallPosition mode on heat grid using heat drivers overall rank", () => {
       const widget = createWidget(
         {},
-        { targetIndex: 1, bindingMode: "overallPosition" },
+        { targetIndex: 0, bindingMode: "overallPosition", gridType: "heat" },
+      );
+      const parent = {
+        heatDrivers: [
+          { objectId: "heat-driver-a", laneIndex: 0 },
+          { objectId: "heat-driver-b", laneIndex: 1 },
+        ],
+        getDriverOverallRanking: (hd: any) =>
+          hd.objectId === "heat-driver-a" ? 5 : 2,
+      };
+
+      // TargetIndex 0 -> best overall rank among heat drivers -> heat-driver-b (rank 2 vs 5)
+      expect(LaneGridAnimationHelper.resolveEntityId(widget, parent)).toBe(
+        "heat-driver-b",
+      );
+    });
+
+    it("should fallback to participant index in overallPosition mode when rank is not matched on overall grid", () => {
+      const widget = createWidget(
+        {},
+        { targetIndex: 1, bindingMode: "overallPosition", gridType: "overall" },
       );
       const parent = {
         participants: [

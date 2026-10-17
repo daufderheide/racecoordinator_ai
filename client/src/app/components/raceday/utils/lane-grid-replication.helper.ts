@@ -12,6 +12,7 @@ import {
 } from "./lane-grid-label.helper";
 import { LaneGridScrollHelper } from "./lane-grid-scroll.helper";
 import { LaneGridStyleHelper } from "./lane-grid-style.helper";
+import { RacedayLayoutUtils } from "./raceday-layout.utils";
 
 export type { GridLabelConfig, GridLabelPosition };
 
@@ -29,6 +30,7 @@ export interface LaneGridSession {
   direction: "horizontal" | "vertical";
   sourceLaneIndex: number;
   bindingMode: "lane" | "position" | "overallPosition" | "seed";
+  gridType?: "heat" | "overall";
   headerPlacement?: "top" | "individual" | "none";
   headerHeight?: number;
   linkColumns?: boolean;
@@ -183,6 +185,9 @@ export class LaneGridReplicationHelper {
       clonedSettings["bindingMode"] = effectiveBindingMode;
       clonedSettings["showHeader"] = showHeader;
       clonedSettings["isHeaderWidget"] = false;
+      if (session.gridType) {
+        clonedSettings["gridType"] = session.gridType;
+      }
 
       if (session.mirrorRows === false && existingIndex >= 0) {
         const existing = result[existingIndex];
@@ -200,6 +205,7 @@ export class LaneGridReplicationHelper {
             bindingMode: effectiveBindingMode,
             showHeader,
             isHeaderWidget: false,
+            ...(session.gridType ? { gridType: session.gridType } : {}),
           },
         };
       } else {
@@ -637,6 +643,7 @@ export class LaneGridReplicationHelper {
             gridId: session.gridId,
             gridTotalLanes: session.totalLanes,
             gridDirection: session.direction,
+            gridType: session.gridType || "heat",
             gridBounds: { ...session.bounds },
             headerPlacement: session.headerPlacement ?? "individual",
             headerHeight: session.headerHeight ?? 36,
@@ -717,6 +724,14 @@ export class LaneGridReplicationHelper {
     );
   }
 
+  public static updateGridType(
+    allWidgets: AbsoluteWidgetNode[],
+    gridId: string,
+    gridType: "heat" | "overall",
+  ): AbsoluteWidgetNode[] {
+    return LaneGridStyleHelper.updateGridType(allWidgets, gridId, gridType);
+  }
+
   public static updateGridLayoutOrientation(
     allWidgets: AbsoluteWidgetNode[],
     gridId: string,
@@ -764,6 +779,13 @@ export class LaneGridReplicationHelper {
       direction: first.customSettings?.["gridDirection"] || "vertical",
       sourceLaneIndex: 0,
       bindingMode: first.customSettings?.["bindingMode"] || "lane",
+      gridType:
+        first.customSettings?.["gridType"] ||
+        (RacedayLayoutUtils.isOverallColumnKey(
+          first.customSettings?.["columnKey"],
+        )
+          ? "overall"
+          : "heat"),
       headerPlacement:
         first.customSettings?.["headerPlacement"] || "individual",
       headerHeight: Number(first.customSettings?.["headerHeight"]) || 36,

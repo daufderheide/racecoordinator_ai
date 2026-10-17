@@ -634,6 +634,14 @@ describe("LaneGridReplicationHelper", () => {
     );
     expect(baked[0].customSettings?.["gridTotalLanes"]).toBe(4);
     expect(baked[0].customSettings?.["gridDirection"]).toBe("horizontal");
+    expect(baked[0].customSettings?.["gridType"]).toBe("heat");
+
+    const updated = LaneGridReplicationHelper.updateGridType(
+      baked,
+      "test-grid-1",
+      "overall",
+    );
+    expect(updated[0].customSettings?.["gridType"]).toBe("overall");
   });
 
   describe("calculateAvailableGridBounds", () => {

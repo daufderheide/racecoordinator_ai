@@ -85,4 +85,14 @@ describe("LaneGridStyleHelper", () => {
     expect(updated[0].customSettings?.["layoutOrientation"]).toBe("horizontal");
     expect(updated[1].customSettings?.["layoutOrientation"]).toBe("horizontal");
   });
+
+  it("should update gridType across grid widgets", () => {
+    const updated = LaneGridStyleHelper.updateGridType(
+      widgets,
+      gridId,
+      "overall",
+    );
+    expect(updated[0].customSettings?.["gridType"]).toBe("overall");
+    expect(updated[1].customSettings?.["gridType"]).toBe("overall");
+  });
 });

@@ -97,6 +97,8 @@ export interface LaneColumnWidgetSettings {
   targetIndex: number;
   layoutOrientation: "vertical" | "horizontal";
   showHeader: boolean;
+  gridType?: "heat" | "overall";
+  gridId?: string;
   headerPlacement?: "top" | "individual" | "none";
   headerHeight?: number;
   isHeaderWidget?: boolean;

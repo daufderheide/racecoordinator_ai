@@ -8344,6 +8344,12 @@ export class DefaultRacedayComponent
 
     if (this.gridSession()) {
       const session = this.gridSession()!;
+      if (session.gridType && newWidget.customSettings) {
+        newWidget.customSettings["gridType"] = session.gridType;
+      }
+      if (session.bindingMode && newWidget.customSettings) {
+        newWidget.customSettings["bindingMode"] = session.bindingMode;
+      }
       if (
         isLaneColumn ||
         actualWidgetType === "lane-column" ||

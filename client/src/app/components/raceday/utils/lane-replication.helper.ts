@@ -14,6 +14,7 @@ export interface LaneReplicationOptions {
   headerHeight?: number;
   linkColumns?: boolean;
   sortByBindingMode?: boolean;
+  gridType?: "heat" | "overall";
 }
 
 export class LaneReplicationHelper {
@@ -133,6 +134,13 @@ export class LaneReplicationHelper {
         }
         if (options.sortByBindingMode != null) {
           clonedSettings["sortByBindingMode"] = options.sortByBindingMode;
+        }
+        if (
+          options.gridType != null ||
+          src.customSettings?.["gridType"] != null
+        ) {
+          clonedSettings["gridType"] =
+            options.gridType ?? src.customSettings?.["gridType"];
         }
 
         const newX = Math.max(

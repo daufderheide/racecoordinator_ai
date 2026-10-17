@@ -285,6 +285,165 @@ describe("RacedayLaneColumnComponent", () => {
     expect(component.targetDriver?.objectId).toBe("driver-2");
   });
 
+  describe("Grid data source and sorting decoupling", () => {
+    beforeEach(() => {
+      mockParent.participants = [
+        {
+          objectId: "driver-1", // in heat, lane 0
+          rank: 5,
+          seed: 2,
+          driver: { name: "Driver One" },
+        },
+        {
+          objectId: "driver-2", // in heat, lane 1
+          rank: 2,
+          seed: 4,
+          driver: { name: "Driver Two" },
+        },
+        {
+          objectId: "driver-3", // NOT in heat
+          rank: 1,
+          seed: 1,
+          driver: { name: "Driver Three" },
+        },
+        {
+          objectId: "driver-4", // NOT in heat
+          rank: 3,
+          seed: 3,
+          driver: { name: "Driver Four" },
+        },
+      ];
+      mockParent.getDriverOverallRanking = (hd: any) => {
+        if (hd.objectId === "driver-1") return 5;
+        if (hd.objectId === "driver-2") return 2;
+        return 999;
+      };
+      mockParent.driverRankings = new Map([
+        ["driver-1", 1],
+        ["driver-2", 2],
+      ]);
+    });
+
+    it("Heat Grid: should ONLY show heat drivers even when sorted by overallPosition", () => {
+      fixture.componentRef.setInput("parent", mockParent);
+
+      // targetIndex 0 on Heat Grid sorted by overallPosition:
+      // Heat drivers are driver-1 (overall #5) and driver-2 (overall #2).
+      // Sorted by overall rank: driver-2 (#2) comes before driver-1 (#5).
+      // Driver-3 (#1 overall) is NOT in heat and MUST NOT be shown!
+      fixture.componentRef.setInput(
+        "widget",
+        createWidget({
+          gridId: "grid-heat-1",
+          gridType: "heat",
+          bindingMode: "overallPosition",
+          targetIndex: 0,
+        }),
+      );
+      fixture.detectChanges();
+      expect(component.targetDriver?.objectId).toBe("driver-2");
+
+      // targetIndex 1 on Heat Grid sorted by overallPosition: driver-1 (#5)
+      fixture.componentRef.setInput(
+        "widget",
+        createWidget({
+          gridId: "grid-heat-1",
+          gridType: "heat",
+          bindingMode: "overallPosition",
+          targetIndex: 1,
+        }),
+      );
+      fixture.detectChanges();
+      expect(component.targetDriver?.objectId).toBe("driver-1");
+    });
+
+    it("Heat Grid: should sort heat drivers by seed when bindingMode is seed", () => {
+      fixture.componentRef.setInput("parent", mockParent);
+      // driver-1 has seed 2, driver-2 has seed 4.
+      // Sorted by seed: driver-1 (seed 2) is targetIndex 0, driver-2 (seed 4) is targetIndex 1.
+      fixture.componentRef.setInput(
+        "widget",
+        createWidget({
+          gridId: "grid-heat-1",
+          gridType: "heat",
+          bindingMode: "seed",
+          targetIndex: 0,
+        }),
+      );
+      fixture.detectChanges();
+      expect(component.targetDriver?.objectId).toBe("driver-1");
+
+      fixture.componentRef.setInput(
+        "widget",
+        createWidget({
+          gridId: "grid-heat-1",
+          gridType: "heat",
+          bindingMode: "seed",
+          targetIndex: 1,
+        }),
+      );
+      fixture.detectChanges();
+      expect(component.targetDriver?.objectId).toBe("driver-2");
+    });
+
+    it("Overall Grid: should show all participants sorted by overallPosition", () => {
+      fixture.componentRef.setInput("parent", mockParent);
+      // Overall participants ranks: driver-3 (rank 1), driver-2 (rank 2), driver-4 (rank 3), driver-1 (rank 5)
+      fixture.componentRef.setInput(
+        "widget",
+        createWidget({
+          gridId: "grid-overall-1",
+          gridType: "overall",
+          bindingMode: "overallPosition",
+          targetIndex: 0,
+        }),
+      );
+      fixture.detectChanges();
+      expect(component.targetDriver?.objectId).toBe("driver-3");
+
+      fixture.componentRef.setInput(
+        "widget",
+        createWidget({
+          gridId: "grid-overall-1",
+          gridType: "overall",
+          bindingMode: "overallPosition",
+          targetIndex: 1,
+        }),
+      );
+      fixture.detectChanges();
+      expect(component.targetDriver?.objectId).toBe("driver-2");
+    });
+
+    it("Overall Grid: should sort participants with active heat participants first when bindingMode is position", () => {
+      fixture.componentRef.setInput("parent", mockParent);
+      // Heat drivers are driver-1 (heat pos 1) and driver-2 (heat pos 2).
+      // Driver-3 and driver-4 are not in heat.
+      fixture.componentRef.setInput(
+        "widget",
+        createWidget({
+          gridId: "grid-overall-1",
+          gridType: "overall",
+          bindingMode: "position",
+          targetIndex: 0,
+        }),
+      );
+      fixture.detectChanges();
+      expect(component.targetDriver?.objectId).toBe("driver-1");
+
+      fixture.componentRef.setInput(
+        "widget",
+        createWidget({
+          gridId: "grid-overall-1",
+          gridType: "overall",
+          bindingMode: "position",
+          targetIndex: 1,
+        }),
+      );
+      fixture.detectChanges();
+      expect(component.targetDriver?.objectId).toBe("driver-2");
+    });
+  });
+
   it("should inherit background and foreground colors from lane by default", () => {
     fixture.componentRef.setInput("parent", mockParent);
     fixture.componentRef.setInput(

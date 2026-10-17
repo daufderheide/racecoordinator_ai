@@ -804,6 +804,15 @@ export class LaneColumnInspectorComponent {
     );
   }
 
+  get gridType(): "heat" | "overall" {
+    return LaneColumnGridHelper.getGridType(this.currentSettings);
+  }
+  set gridType(val: "heat" | "overall") {
+    LaneColumnGridHelper.setGridType(this.currentSettings, val, () =>
+      this.onFieldChange(),
+    );
+  }
+
   get gridSortOrder(): "lane" | "position" | "overallPosition" | "seed" {
     return LaneColumnGridHelper.getGridSortOrder(this.currentSettings);
   }

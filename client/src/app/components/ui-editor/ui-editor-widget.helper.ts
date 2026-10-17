@@ -498,6 +498,19 @@ function handleGridColumnStructureChanges(
     }
   }
 
+  if (targetWidget.customSettings?.["_gridTypeChanged"]) {
+    delete targetWidget.customSettings["_gridTypeChanged"];
+    const gridType = targetWidget.customSettings?.["gridType"] || "heat";
+    layout.widgets = LaneGridReplicationHelper.updateGridType(
+      layout.widgets,
+      gridId,
+      gridType,
+    );
+    if (comp.activeGridSession && comp.activeGridSession.gridId === gridId) {
+      comp.activeGridSession.gridType = gridType;
+    }
+  }
+
   if (targetWidget.customSettings?.["_sortByBindingModeChanged"]) {
     delete targetWidget.customSettings["_sortByBindingModeChanged"];
     const sort = targetWidget.customSettings?.["sortByBindingMode"] !== false;

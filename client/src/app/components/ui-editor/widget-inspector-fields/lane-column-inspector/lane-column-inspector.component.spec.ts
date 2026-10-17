@@ -1061,6 +1061,16 @@ describe("LaneColumnInspectorComponent", () => {
       expect(component.change.emit).toHaveBeenCalled();
     });
 
+    it("should handle gridType getter and setter with _gridTypeChanged flag", () => {
+      spyOn(component.change, "emit");
+      expect(component.gridType).toBe("heat");
+
+      component.gridType = "overall";
+      expect(mockSettings.gridType).toBe("overall");
+      expect(mockSettings._gridTypeChanged).toBeTrue();
+      expect(component.change.emit).toHaveBeenCalled();
+    });
+
     it("should handle gridSortOrder getter and setter with _gridSortOrderChanged flag", () => {
       spyOn(component.change, "emit");
       expect(component.gridSortOrder).toBe("lane");
