@@ -233,8 +233,8 @@ export class LaneColumnInsetHelper {
     anchor: string,
     val: number,
   ): void {
-    this.getOrCreateInsetConfig(currentSettings, anchor).lapDecimalPlaces =
-      Math.min(3, Math.max(0, Number(val) || 0));
+    const cfg = this.getOrCreateInsetConfig(currentSettings, anchor);
+    cfg.lapDecimalPlaces = Math.min(3, Math.max(0, Number(val) || 0));
   }
 
   public static getInsetDecimalPlaces(
@@ -251,8 +251,8 @@ export class LaneColumnInsetHelper {
     anchor: string,
     val: number,
   ): void {
-    this.getOrCreateInsetConfig(currentSettings, anchor).decimalPlaces =
-      Math.min(3, Math.max(0, Number(val) || 0));
+    const cfg = this.getOrCreateInsetConfig(currentSettings, anchor);
+    cfg.decimalPlaces = Math.min(3, Math.max(0, Number(val) || 0));
   }
 
   public static getInsetFontFamily(
@@ -340,7 +340,7 @@ export class LaneColumnInsetHelper {
   }
 
   public static isInsetLapColumn(key: string | undefined): boolean {
-    if (!key) return false;
+    if (!key || this.isCustomWidget(key)) return false;
     return RacedayLayoutUtils.isLapColumnKey(key);
   }
 
@@ -374,11 +374,21 @@ export class LaneColumnInsetHelper {
     key: string,
     config: InsetConfig,
   ): AbsoluteWidgetNode {
+    const customSettings: Record<string, any> = {
+      ...(config as any),
+    };
+    if (customSettings["decimalPlaces"] === undefined) {
+      const parentInsetLapDec =
+        widget?.customSettings?.["insetLapDecimalPlaces"];
+      if (parentInsetLapDec !== undefined) {
+        customSettings["decimalPlaces"] = parentInsetLapDec;
+      }
+    }
     return {
       ...(widget || ({} as AbsoluteWidgetNode)),
       id: `${widget?.id || "lane-col"}-inset-${anchor}`,
       widgetType: key as any,
-      customSettings: config as any,
+      customSettings,
       scaleMode: "fixed",
       x: 0,
       y: 0,

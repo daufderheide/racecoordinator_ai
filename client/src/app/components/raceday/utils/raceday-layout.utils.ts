@@ -252,7 +252,9 @@ export class RacedayLayoutUtils {
       k === "totalLaps" ||
       k === "heatTotalLaps" ||
       k === "raceTotalLaps" ||
-      k === "overallTotalLaps";
+      k === "overallTotalLaps" ||
+      k === "custom:dopamine:advanced-laps" ||
+      k.includes("advanced-laps");
     if (isLapBase(baseKey)) return true;
     const parts = key.split("_");
     return parts.some((p) => isLapBase(p));

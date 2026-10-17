@@ -20,14 +20,44 @@ export function buildSyntheticInsetWidgetInputs(
   parent: any,
   isCustomizing: boolean,
 ): { widget: AbsoluteWidgetNode; parent: any; isCustomizing: boolean } {
+  const anchorCfg = widget?.customSettings?.["insetsConfig"]?.[anchor] || {};
+  const parentInsetLapDec = widget?.customSettings?.["insetLapDecimalPlaces"];
+  const parentInsetTimeDec = widget?.customSettings?.["insetTimeDecimalPlaces"];
+
+  const resolvedDecimalPlaces =
+    anchorCfg.decimalPlaces ??
+    anchorCfg.lapDecimalPlaces ??
+    anchorCfg.lapDecimals ??
+    parentInsetLapDec ??
+    2;
+
   const customSettings: Record<string, any> = {
-    ...(widget?.customSettings?.["insetsConfig"]?.[anchor] || {}),
+    ...anchorCfg,
     showHeader: false,
     bindingMode,
     gridLane: targetIndex,
     targetIndex: targetIndex + 1,
     valueFontSize: insetFontSize,
   };
+
+  if (customSettings["decimalPlaces"] === undefined) {
+    customSettings["decimalPlaces"] = resolvedDecimalPlaces;
+  }
+  if (customSettings["lapDecimalPlaces"] === undefined) {
+    customSettings["lapDecimalPlaces"] = resolvedDecimalPlaces;
+  }
+  if (
+    parentInsetLapDec !== undefined &&
+    customSettings["insetLapDecimalPlaces"] === undefined
+  ) {
+    customSettings["insetLapDecimalPlaces"] = parentInsetLapDec;
+  }
+  if (
+    parentInsetTimeDec !== undefined &&
+    customSettings["insetTimeDecimalPlaces"] === undefined
+  ) {
+    customSettings["insetTimeDecimalPlaces"] = parentInsetTimeDec;
+  }
 
   const syntheticWidget: AbsoluteWidgetNode = {
     ...(widget || ({} as AbsoluteWidgetNode)),

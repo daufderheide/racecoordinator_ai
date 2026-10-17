@@ -68,7 +68,7 @@ export function calculateOptimalSummaryHeaderFontSize(params: {
   const maxFontH = Math.max(8, (rowHeight - vertPad) / 1.15);
 
   let explicitPct = 0;
-  if (columns.pos) explicitPct += 0.12;
+  if (columns.pos) explicitPct += 0.14;
   if (columns.laps) explicitPct += 0.16;
   if (columns.bestLap) explicitPct += 0.28;
   if (columns.gap) explicitPct += 0.18;
@@ -92,7 +92,7 @@ export function calculateOptimalSummaryHeaderFontSize(params: {
     limits.push(maxFont);
   };
 
-  checkCol(columns.pos, 0.12, 3.2); // "POS"
+  checkCol(columns.pos, 0.14, 3.2); // "POS"
   checkCol(columns.driver, driverPct, 6.0); // "DRIVER"
   checkCol(columns.laps, 0.16, 4.2); // "LAPS"
   checkCol(columns.bestLap, 0.28, 8.2); // "BEST LAP"

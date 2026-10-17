@@ -98,6 +98,68 @@ describe("raceday-lane-column.utils", () => {
       expect(result.widget.customSettings?.["showHeader"]).toBeFalse();
       expect(result.widget.customSettings?.["valueFontSize"]).toBe(14);
       expect(result.widget.customSettings?.["gridLane"]).toBe(1);
+      expect(result.widget.customSettings?.["decimalPlaces"]).toBe(2);
+      expect(result.widget.customSettings?.["lapDecimalPlaces"]).toBe(2);
+    });
+
+    it("should inherit parent insetLapDecimalPlaces when anchor decimals are omitted", () => {
+      const widget: any = {
+        id: "w-parent",
+        customSettings: {
+          insetLapDecimalPlaces: 3,
+          insetTimeDecimalPlaces: 1,
+          insetsConfig: {
+            "bottom-right": {
+              mode: "overall",
+            },
+          },
+        },
+      };
+
+      const result = buildSyntheticInsetWidgetInputs(
+        "bottom-right",
+        "custom:dopamine:advanced-laps",
+        widget,
+        "lane",
+        0,
+        18,
+        null,
+        false,
+      );
+
+      expect(result.widget.customSettings?.["decimalPlaces"]).toBe(3);
+      expect(result.widget.customSettings?.["lapDecimalPlaces"]).toBe(3);
+      expect(result.widget.customSettings?.["insetLapDecimalPlaces"]).toBe(3);
+      expect(result.widget.customSettings?.["insetTimeDecimalPlaces"]).toBe(1);
+    });
+
+    it("should prioritize anchorCfg.decimalPlaces or lapDecimalPlaces over parent insetLapDecimalPlaces", () => {
+      const widget: any = {
+        id: "w-override",
+        customSettings: {
+          insetLapDecimalPlaces: 3,
+          insetsConfig: {
+            "bottom-right": {
+              mode: "overall",
+              decimalPlaces: 0,
+            },
+          },
+        },
+      };
+
+      const result = buildSyntheticInsetWidgetInputs(
+        "bottom-right",
+        "custom:dopamine:advanced-laps",
+        widget,
+        "lane",
+        0,
+        18,
+        null,
+        false,
+      );
+
+      expect(result.widget.customSettings?.["decimalPlaces"]).toBe(0);
+      expect(result.widget.customSettings?.["lapDecimalPlaces"]).toBe(0);
     });
   });
 

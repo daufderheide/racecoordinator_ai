@@ -22,11 +22,12 @@ export class AdvancedLapsComponent extends CustomWidgetBaseComponent {
       this.getSetting("decimalPlaces") ??
       this.getSetting("lapDecimalPlaces") ??
       this.getSetting("lapDecimals") ??
-      this.getSetting("decimals");
+      this.getSetting("decimals") ??
+      this.getSetting("insetLapDecimalPlaces");
     if (val !== undefined && val !== null && val !== "") {
       return Math.max(0, Math.min(3, Number(val)));
     }
-    return 0;
+    return 2;
   }
 
   get hideSegmentsForFinishingDrivers(): boolean {

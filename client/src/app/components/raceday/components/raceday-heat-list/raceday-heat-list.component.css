@@ -352,8 +352,8 @@
 .summary-col-pos,
 .summary-cell-pos {
   text-align: center;
-  width: 10%;
-  min-width: 26px;
+  width: 14%;
+  min-width: 46px;
   font-weight: 700;
 }
 
@@ -626,7 +626,7 @@
 
 .raceday-heat-list-container.scale-to-window .summary-col-pos,
 .raceday-heat-list-container.scale-to-window .summary-cell-pos {
-  width: 12%;
+  width: 14%;
 }
 
 .raceday-heat-list-container.scale-to-window .summary-header-row {

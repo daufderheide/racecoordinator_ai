@@ -920,7 +920,7 @@ export class RacedayHeatListComponent implements AfterViewInit, OnDestroy {
     if (hasSummary) {
       let tableDemand = 0;
       if (this.summaryShowPosition()) {
-        tableDemand += 36;
+        tableDemand += 46;
       }
       if (this.summaryShowDriver()) {
         tableDemand += 155;

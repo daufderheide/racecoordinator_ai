@@ -970,6 +970,25 @@ describe("RacedayHeatListComponent", () => {
       expect(heat1.querySelector(".summary-col-best-lap")).toBeTruthy();
     });
 
+    it("should render the Pos column header when summaryShowPosition is enabled", () => {
+      fixture.componentRef.setInput("heats", mockTelemetryHeats);
+      fixture.componentRef.setInput("currentHeat", { heatNumber: 2 } as Heat);
+      fixture.componentRef.setInput("widget", {
+        ...mockWidget,
+        customSettings: {
+          ...mockWidget.customSettings,
+          showCompletedSummary: true,
+          summaryShowPosition: true,
+        },
+      });
+      fixture.detectChanges();
+
+      const heat1 = fixture.nativeElement.querySelector("#heat-card-1");
+      const posHeader = heat1.querySelector(".summary-col-pos");
+      expect(posHeader).toBeTruthy();
+      expect(posHeader.textContent.trim()).toBe("HL_SUMMARY_POS");
+    });
+
     it("should respect lap and time decimal places settings", () => {
       fixture.componentRef.setInput("heats", mockTelemetryHeats);
       fixture.componentRef.setInput("currentHeat", { heatNumber: 2 } as Heat);

@@ -96,11 +96,29 @@ describe("AdvancedLapsComponent Integration & Requirements Verification", () => 
   it("should create component and apply default settings", () => {
     expect(component).toBeTruthy();
     expect(component.mode).toBe("heat");
-    expect(component.decimalPlaces).toBe(0);
+    expect(component.decimalPlaces).toBe(2);
     expect(component.hideSegmentsForFinishingDrivers).toBeFalse();
     expect(component.bindingMode).toBe("lane");
     expect(component.targetIndex).toBe(1);
     expect(component.headerLabel).toBe("LAP");
+  });
+
+  it("should support insetLapDecimalPlaces when decimalPlaces is omitted", () => {
+    fixture.componentRef.setInput("widget", {
+      id: "widget-inset",
+      widgetType: "custom:advanced-laps",
+      customSettings: { insetLapDecimalPlaces: 3 },
+    });
+    expect(component.decimalPlaces).toBe(3);
+  });
+
+  it("should respect explicit 0 decimalPlaces", () => {
+    fixture.componentRef.setInput("widget", {
+      id: "widget-zero",
+      widgetType: "custom:advanced-laps",
+      customSettings: { decimalPlaces: 0 },
+    });
+    expect(component.decimalPlaces).toBe(0);
   });
 
   describe("Requirement 1: Only show auto-segments when the heat is not racing", () => {

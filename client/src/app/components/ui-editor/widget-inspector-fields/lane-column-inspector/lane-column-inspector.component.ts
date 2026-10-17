@@ -266,6 +266,11 @@ export class LaneColumnInspectorComponent {
     if (updatedWidget?.customSettings) {
       const config = this.getInsetConfig(anchor);
       Object.assign(config, updatedWidget.customSettings);
+      if (config.decimalPlaces !== undefined) {
+        config.lapDecimalPlaces = config.decimalPlaces;
+      } else if (config.lapDecimalPlaces !== undefined) {
+        config.decimalPlaces = config.lapDecimalPlaces;
+      }
     }
     this.onFieldChange();
   }

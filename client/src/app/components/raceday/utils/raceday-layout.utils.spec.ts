@@ -858,6 +858,15 @@ describe("RacedayLayoutUtils", () => {
         RacedayLayoutUtils.isLapColumnKey("totalLaps_bottom-right"),
       ).toBeTrue();
 
+      expect(
+        RacedayLayoutUtils.isLapColumnKey("custom:dopamine:advanced-laps"),
+      ).toBeTrue();
+      expect(
+        RacedayLayoutUtils.isLapColumnKey(
+          "custom:dopamine:advanced-laps_bottom-right",
+        ),
+      ).toBeTrue();
+
       expect(RacedayLayoutUtils.isLapColumnKey("")).toBeFalse();
       expect(RacedayLayoutUtils.isLapColumnKey(null as any)).toBeFalse();
       expect(RacedayLayoutUtils.isLapColumnKey("lastLapTime")).toBeFalse();

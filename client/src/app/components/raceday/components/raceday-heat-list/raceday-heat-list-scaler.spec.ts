@@ -45,9 +45,28 @@ describe("raceday-heat-list-scaler", () => {
         columns: defaultCols,
       });
 
-      // Header font should be comfortably sized (e.g. 15-22px) so POS (3 chars) fits in 12% width
+      // Header font should be comfortably sized (e.g. 15-22px) so POS (3 chars) fits in 14% width
       expect(headerFont).toBeGreaterThanOrEqual(14);
       expect(headerFont).toBeLessThanOrEqual(25);
+    });
+
+    it("should calculate appropriate font size when pos column is enabled with 14% width allocation", () => {
+      const fontWithPos = calculateOptimalSummaryHeaderFontSize({
+        contentWidth: 350,
+        contentHeight: 200,
+        scale: 1.0,
+        maxLanes: 4,
+        columns: { ...defaultCols, pos: true },
+      });
+      const fontWithoutPos = calculateOptimalSummaryHeaderFontSize({
+        contentWidth: 350,
+        contentHeight: 200,
+        scale: 1.0,
+        maxLanes: 4,
+        columns: { ...defaultCols, pos: false },
+      });
+      expect(fontWithPos).toBeGreaterThanOrEqual(10);
+      expect(fontWithoutPos).toBeGreaterThanOrEqual(10);
     });
 
     it("should reduce header font size when columns with long titles like MEDIAN LAP are enabled", () => {

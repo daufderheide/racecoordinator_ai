@@ -426,6 +426,9 @@ describe("LaneColumnInsetHelper", () => {
       expect(LaneColumnInsetHelper.isInsetLapColumn("lapCount")).toBeTrue();
       expect(LaneColumnInsetHelper.isInsetLapColumn("totalLaps")).toBeTrue();
       expect(LaneColumnInsetHelper.isInsetLapColumn("driver.name")).toBeFalse();
+      expect(
+        LaneColumnInsetHelper.isInsetLapColumn("custom:dopamine:advanced-laps"),
+      ).toBeFalse();
 
       expect(LaneColumnInsetHelper.isInsetNumericColumn("points")).toBeTrue();
       expect(LaneColumnInsetHelper.isInsetNumericColumn("speed")).toBeTrue();
@@ -569,9 +572,13 @@ describe("LaneColumnInsetHelper", () => {
       expect(el.classList.contains("drag-over")).toBeFalse();
     });
 
-    it("should build synthetic inset custom widget node", () => {
+    it("should build synthetic inset custom widget node and inherit parent insetLapDecimalPlaces", () => {
       const node = LaneColumnInsetHelper.buildSyntheticInsetCustomWidgetNode(
-        { id: "parent-col", widgetType: "lane-column" } as any,
+        {
+          id: "parent-col",
+          widgetType: "lane-column",
+          customSettings: { insetLapDecimalPlaces: 2 },
+        } as any,
         "top-right",
         "custom:fuel_gauge",
         { textColor: "#ff0000" } as any,
@@ -579,6 +586,36 @@ describe("LaneColumnInsetHelper", () => {
       expect(node.id).toBe("parent-col-inset-top-right");
       expect(node.widgetType).toBe("custom:fuel_gauge" as any);
       expect((node.customSettings as any).textColor).toBe("#ff0000");
+      expect((node.customSettings as any).decimalPlaces).toBe(2);
+    });
+
+    it("should set lapDecimalPlaces and decimalPlaces in setInsetLapDecimalPlaces and setInsetDecimalPlaces", () => {
+      const settings: any = {};
+      LaneColumnInsetHelper.setInsetLapDecimalPlaces(
+        settings,
+        "bottom-right",
+        3,
+      );
+      expect(
+        LaneColumnInsetHelper.getInsetLapDecimalPlaces(
+          settings,
+          "bottom-right",
+        ),
+      ).toBe(3);
+      expect(
+        LaneColumnInsetHelper.getInsetDecimalPlaces(settings, "bottom-right"),
+      ).toBe(2);
+
+      LaneColumnInsetHelper.setInsetDecimalPlaces(settings, "bottom-right", 1);
+      expect(
+        LaneColumnInsetHelper.getInsetLapDecimalPlaces(
+          settings,
+          "bottom-right",
+        ),
+      ).toBe(3);
+      expect(
+        LaneColumnInsetHelper.getInsetDecimalPlaces(settings, "bottom-right"),
+      ).toBe(1);
     });
   });
 });

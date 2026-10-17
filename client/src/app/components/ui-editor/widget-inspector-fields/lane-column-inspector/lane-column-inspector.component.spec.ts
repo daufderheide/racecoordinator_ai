@@ -1944,11 +1944,17 @@ describe("LaneColumnInspectorComponent", () => {
       component.onInsetCustomWidgetChange("top-right", {
         id: "inset-w",
         widgetType: "custom:fuel" as any,
-        customSettings: { fuelCapacity: 50 },
+        customSettings: { fuelCapacity: 50, decimalPlaces: 3 },
       } as any);
       expect(
         (component.getInsetConfig("top-right") as any)["fuelCapacity"],
       ).toBe(50);
+      expect(
+        (component.getInsetConfig("top-right") as any)["decimalPlaces"],
+      ).toBe(3);
+      expect(
+        (component.getInsetConfig("top-right") as any)["lapDecimalPlaces"],
+      ).toBe(3);
     });
 
     it("should resolve display name and icon for widgets", () => {
