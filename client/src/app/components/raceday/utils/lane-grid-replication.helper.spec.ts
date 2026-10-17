@@ -1580,6 +1580,68 @@ describe("LaneGridReplicationHelper", () => {
         LaneGridReplicationHelper.getGridDataCount(widgets, gridId, null),
       ).toBe(4);
     });
+
+    it("should count heat data rather than overall standings when gridType is heat", () => {
+      const heatWidgets: AbsoluteWidgetNode[] = [
+        {
+          ...widgets[0],
+          customSettings: {
+            gridId,
+            gridType: "heat",
+            bindingMode: "overallPosition",
+            gridTotalLanes: 4,
+          },
+        },
+      ];
+      const parent = {
+        raceStandings: [
+          { id: "d1" },
+          { id: "d2" },
+          { id: "d3" },
+          { id: "d4" },
+          { id: "d5" },
+        ],
+        heat: {
+          heatDrivers: [{ id: "h1" }, { id: "h2" }, { id: "h3" }, { id: "h4" }],
+        },
+        currentTrack: { lanes: [{}, {}, {}, {}] },
+      };
+      expect(
+        LaneGridReplicationHelper.getGridDataCount(heatWidgets, gridId, parent),
+      ).toBe(4);
+    });
+
+    it("should count overall participants when gridType is overall even with lane bindingMode", () => {
+      const overallWidgets: AbsoluteWidgetNode[] = [
+        {
+          ...widgets[0],
+          customSettings: {
+            gridId,
+            gridType: "overall",
+            bindingMode: "lane",
+            gridTotalLanes: 4,
+          },
+        },
+      ];
+      const parent = {
+        raceParticipants: [
+          { id: 1 },
+          { id: 2 },
+          { id: 3 },
+          { id: 4 },
+          { id: 5 },
+          { id: 6 },
+        ],
+        currentTrack: { lanes: [{}, {}, {}, {}] },
+      };
+      expect(
+        LaneGridReplicationHelper.getGridDataCount(
+          overallWidgets,
+          gridId,
+          parent,
+        ),
+      ).toBe(6);
+    });
   });
 
   describe("generateScrollableGridWidgets", () => {

@@ -409,6 +409,9 @@ export class LaneColumnGridHelper {
     val: "lane" | "position" | "overallPosition" | "seed",
     onFieldChange: () => void,
   ): void {
+    if (!currentSettings["gridType"]) {
+      currentSettings["gridType"] = this.getGridType(currentSettings);
+    }
     currentSettings["bindingMode"] = val;
     currentSettings["_gridSortOrderChanged"] = true;
     onFieldChange();

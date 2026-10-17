@@ -76,6 +76,27 @@ describe("LaneGridStyleHelper", () => {
     expect(updated[1].customSettings?.["bindingMode"]).toBe("position");
   });
 
+  it("should sync existing gridType across widgets during updateGridSortOrder", () => {
+    const mixedWidgets: AbsoluteWidgetNode[] = [
+      {
+        ...widgets[0],
+        customSettings: { ...widgets[0].customSettings, gridType: "heat" },
+      },
+      {
+        ...widgets[1],
+        customSettings: { ...widgets[1].customSettings },
+      },
+    ];
+    const updated = LaneGridStyleHelper.updateGridSortOrder(
+      mixedWidgets,
+      gridId,
+      "overallPosition",
+    );
+    expect(updated[0].customSettings?.["bindingMode"]).toBe("overallPosition");
+    expect(updated[1].customSettings?.["bindingMode"]).toBe("overallPosition");
+    expect(updated[1].customSettings?.["gridType"]).toBe("heat");
+  });
+
   it("should update layoutOrientation across grid widgets", () => {
     const updated = LaneGridStyleHelper.updateGridLayoutOrientation(
       widgets,

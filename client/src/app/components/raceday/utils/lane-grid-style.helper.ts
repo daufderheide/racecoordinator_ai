@@ -141,16 +141,27 @@ export class LaneGridStyleHelper {
     sortOrder: "lane" | "position" | "overallPosition" | "seed",
   ): AbsoluteWidgetNode[] {
     if (!gridId || !allWidgets) return allWidgets || [];
+    const existingType = allWidgets.find(
+      (w) =>
+        w.customSettings?.["gridId"] === gridId &&
+        w.customSettings?.["gridType"],
+    )?.customSettings?.["gridType"];
     return allWidgets.map((w) => {
       if (w.customSettings?.["gridId"] === gridId) {
         if (w.customSettings) {
           w.customSettings["bindingMode"] = sortOrder;
+          if (existingType && !w.customSettings["gridType"]) {
+            w.customSettings["gridType"] = existingType;
+          }
         }
         return {
           ...w,
           customSettings: {
             ...(w.customSettings || {}),
             bindingMode: sortOrder,
+            ...(existingType && !w.customSettings?.["gridType"]
+              ? { gridType: existingType }
+              : {}),
           },
         };
       }

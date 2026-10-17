@@ -199,6 +199,7 @@ describe("LaneColumnGridHelper", () => {
       expect(LaneColumnGridHelper.getGridSortOrder(settings)).toBe("lane");
       LaneColumnGridHelper.setGridSortOrder(settings, "position", onChange);
       expect(LaneColumnGridHelper.getGridSortOrder(settings)).toBe("position");
+      expect(settings.gridType).toBe("heat");
       expect(settings._gridSortOrderChanged).toBeTrue();
     });
 

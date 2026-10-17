@@ -4205,6 +4205,13 @@ export class DefaultRacedayComponent
       direction,
       sourceLaneIndex: 0,
       bindingMode: first.customSettings?.["bindingMode"] || "lane",
+      gridType:
+        first.customSettings?.["gridType"] ||
+        (RacedayLayoutUtils.isOverallColumnKey(
+          first.customSettings?.["columnKey"],
+        )
+          ? "overall"
+          : "heat"),
       headerPlacement,
       headerHeight,
       gridLabelPosition: labelPosition,

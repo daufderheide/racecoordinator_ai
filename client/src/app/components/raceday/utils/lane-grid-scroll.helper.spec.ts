@@ -105,6 +105,74 @@ describe("LaneGridScrollHelper", () => {
         2,
       );
     });
+
+    it("should count heat data items rather than overall race participants when gridType is heat even with overallPosition bindingMode", () => {
+      const heatWidgets = [
+        {
+          ...widgets[0],
+          customSettings: {
+            ...widgets[0].customSettings,
+            gridType: "heat",
+            bindingMode: "overallPosition",
+            gridTotalLanes: 4,
+          },
+        },
+      ];
+      const parent = {
+        participants: [{}, {}, {}, {}, {}, {}, {}, {}], // 8 overall drivers
+        track: { lanes: [{}, {}, {}, {}] }, // 4 lanes
+        heat: { heatDrivers: [{}, {}, {}, {}] }, // 4 heat drivers
+      };
+      expect(
+        LaneGridScrollHelper.getGridDataCount(heatWidgets, gridId, parent),
+      ).toBe(4);
+    });
+
+    it("should count overall race participants when gridType is overall even with lane bindingMode", () => {
+      const overallWidgets = [
+        {
+          ...widgets[0],
+          customSettings: {
+            ...widgets[0].customSettings,
+            gridType: "overall",
+            bindingMode: "lane",
+            gridTotalLanes: 4,
+          },
+        },
+      ];
+      const parent = {
+        participants: [{}, {}, {}, {}, {}, {}, {}, {}], // 8 overall drivers
+        track: { lanes: [{}, {}, {}, {}] }, // 4 lanes
+      };
+      expect(
+        LaneGridScrollHelper.getGridDataCount(overallWidgets, gridId, parent),
+      ).toBe(8);
+    });
+
+    it("should count overall race participants when columnKey is an overall column key", () => {
+      const overallColWidgets = [
+        {
+          ...widgets[0],
+          customSettings: {
+            ...widgets[0].customSettings,
+            columnKey: "overallLapCount",
+            bindingMode: "lane",
+            gridTotalLanes: 4,
+          },
+        },
+      ];
+      const parent = {
+        participants: [{}, {}, {}, {}, {}, {}], // 6 overall drivers
+        track: { lanes: [{}, {}, {}, {}] }, // 4 lanes
+      };
+      expect(
+        LaneGridScrollHelper.getGridDataCount(
+          overallColWidgets,
+          gridId,
+          parent,
+        ),
+      ).toBe(6);
+    });
   });
 
   describe("generateScrollableGridWidgets", () => {
