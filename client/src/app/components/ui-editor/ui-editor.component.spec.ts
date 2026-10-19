@@ -5169,4 +5169,122 @@ describe("UIEditorComponent", () => {
       });
     });
   });
+
+  describe("migration banner lifecycle and confirmation modals", () => {
+    let testUi: CustomUI;
+
+    beforeEach(() => {
+      testUi = {
+        entity_id: "test_ui_migration",
+        name: "Test Layout",
+        is_default: false,
+        layoutJson: JSON.stringify({
+          baseWidth: 1920,
+          baseHeight: 1080,
+          widgets: [
+            {
+              id: "w-grid-header",
+              widgetType: "heat-header",
+              x: 0,
+              y: 0,
+              width: 800,
+              height: 50,
+            },
+          ],
+        }),
+      };
+      component.displayCustomUIs = [testUi];
+      component.dismissedMigrationUis.clear();
+      localStorage.removeItem("rc_dismissed_migration_uis");
+    });
+
+    it("should correctly identify if a layout has a pre-migration backup available", () => {
+      expect(component.hasAvailablePreMigrationBackup(testUi)).toBeFalse();
+
+      (testUi as any)._wasMigrated = true;
+      expect(component.hasAvailablePreMigrationBackup(testUi)).toBeTrue();
+      expect(component.isMigratedLayout(testUi)).toBeTrue();
+
+      delete (testUi as any)._wasMigrated;
+      const backupUi: CustomUI = {
+        entity_id: "test_ui_backup",
+        name: "Test Layout (Pre-Migration Backup)",
+        is_default: false,
+        layoutJson: "{}",
+      };
+      component.displayCustomUIs = [testUi, backupUi];
+      expect(component.hasAvailablePreMigrationBackup(testUi)).toBeTrue();
+      expect(component.isMigratedLayout(testUi)).toBeTrue();
+
+      expect(component.hasAvailablePreMigrationBackup(backupUi)).toBeFalse();
+      expect(component.isMigratedLayout(backupUi)).toBeFalse();
+    });
+
+    it("should recognize default and practice layouts as having available pre-migration backup", () => {
+      const defaultUi: CustomUI = {
+        entity_id: "default_ui_layout_rc_ai",
+        name: "Default UI",
+        is_default: true,
+        layoutJson: JSON.stringify({ widgets: [] }),
+      };
+      expect(component.hasAvailablePreMigrationBackup(defaultUi)).toBeTrue();
+      expect(component.isMigratedLayout(defaultUi)).toBeTrue();
+    });
+
+    it("should dismiss and reopen migration banners", () => {
+      (testUi as any)._wasMigrated = true;
+      expect(component.isMigratedLayout(testUi)).toBeTrue();
+      expect(component.canReopenMigrationBanner(testUi)).toBeFalse();
+
+      component.dismissMigrationBanner(testUi);
+      expect(component.dismissedMigrationUis.has(testUi.entity_id)).toBeTrue();
+      expect(component.isMigratedLayout(testUi)).toBeFalse();
+      expect(component.canReopenMigrationBanner(testUi)).toBeTrue();
+
+      component.reopenMigrationBanner(testUi);
+      expect(component.dismissedMigrationUis.has(testUi.entity_id)).toBeFalse();
+      expect(component.isMigratedLayout(testUi)).toBeTrue();
+      expect(component.canReopenMigrationBanner(testUi)).toBeFalse();
+    });
+
+    it("should handle restore pre-migration backup confirmation modal workflow", () => {
+      expect(component.showRestoreBackupConfirm).toBeFalse();
+      expect(component.pendingRestoreBackupUi).toBeNull();
+
+      component.restorePreMigrationBackup(testUi);
+      expect(component.showRestoreBackupConfirm).toBeTrue();
+      expect(component.pendingRestoreBackupUi).toBe(testUi);
+
+      component.cancelRestorePreMigrationBackup();
+      expect(component.showRestoreBackupConfirm).toBeFalse();
+      expect(component.pendingRestoreBackupUi).toBeNull();
+
+      component.restorePreMigrationBackup(testUi);
+      expect(component.showRestoreBackupConfirm).toBeTrue();
+
+      component.confirmRestorePreMigrationBackup();
+      expect(component.showRestoreBackupConfirm).toBeFalse();
+      expect(component.pendingRestoreBackupUi).toBeNull();
+    });
+
+    it("should handle upgrade legacy heat view confirmation modal workflow", () => {
+      expect(component.showUpgradeHeatViewConfirm).toBeFalse();
+      expect(component.pendingUpgradeHeatViewUi).toBeNull();
+
+      component.upgradeLegacyHeatView(testUi);
+      expect(component.showUpgradeHeatViewConfirm).toBeTrue();
+      expect(component.pendingUpgradeHeatViewUi).toBe(testUi);
+
+      component.cancelUpgradeLegacyHeatView();
+      expect(component.showUpgradeHeatViewConfirm).toBeFalse();
+      expect(component.pendingUpgradeHeatViewUi).toBeNull();
+
+      component.upgradeLegacyHeatView(testUi);
+      expect(component.showUpgradeHeatViewConfirm).toBeTrue();
+
+      component.confirmUpgradeLegacyHeatView();
+      expect(component.showUpgradeHeatViewConfirm).toBeFalse();
+      expect(component.pendingUpgradeHeatViewUi).toBeNull();
+    });
+  });
 });

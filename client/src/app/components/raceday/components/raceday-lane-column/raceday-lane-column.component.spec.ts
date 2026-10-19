@@ -776,23 +776,23 @@ describe("RacedayLaneColumnComponent", () => {
     fixture.detectChanges();
 
     const laps = component.getLastLaps();
-    expect(laps.length).toBe(3);
-    // Most recent completed lap (lap 3) first
-    expect(laps[0].lapNumber).toBe(3);
-    expect(laps[0].lapTime).toBe("7.950");
+    expect(laps.length).toBe(5);
+    // Previous completed lap (lap 2) first
+    expect(laps[0].lapNumber).toBe(2);
+    expect(laps[0].lapTime).toBe("8.123");
     expect(laps[0].isBest).toBeFalse();
-    expect(laps[0].segments).toEqual(["2.200", "5.750"]);
-
-    // Lap 2
-    expect(laps[1].lapNumber).toBe(2);
-    expect(laps[1].lapTime).toBe("8.123");
-    expect(laps[1].isBest).toBeFalse();
+    expect(laps[0].segments).toEqual(["2.345", "5.778"]);
 
     // Lap 1 (best lap)
-    expect(laps[2].lapNumber).toBe(1);
-    expect(laps[2].lapTime).toBe("7.481");
-    expect(laps[2].isBest).toBeTrue();
-    expect(laps[2].segments).toEqual(["2.123", "5.358"]);
+    expect(laps[1].lapNumber).toBe(1);
+    expect(laps[1].lapTime).toBe("7.481");
+    expect(laps[1].isBest).toBeTrue();
+    expect(laps[1].segments).toEqual(["2.123", "5.358"]);
+
+    // Unregistered lap slots padded with placeholder
+    expect(laps[2].lapTime).toBe("--.---");
+    expect(laps[3].lapTime).toBe("--.---");
+    expect(laps[4].lapTime).toBe("--.---");
   });
 
   it("should slice visible last laps according to maxVisibleLaps", () => {
@@ -808,7 +808,7 @@ describe("RacedayLaneColumnComponent", () => {
     expect(visible[1].lapNumber).toBe(2);
   });
 
-  it("should render -- empty indicator when driver has no completed laps", () => {
+  it("should render 5 placeholder laps when driver has no completed laps", () => {
     const driverNoLaps = {
       ...mockDrivers[0],
       lapTimes: [],
@@ -818,16 +818,181 @@ describe("RacedayLaneColumnComponent", () => {
     mockParent.heat.heatDrivers = [driverNoLaps];
     delete mockParent.getLastLaps;
     fixture.componentRef.setInput("parent", mockParent);
+    const widgetNoLaps = createWidget({
+      columnKey: "lastLaps",
+      targetIndex: 0,
+    });
+    widgetNoLaps.width = 200;
+    widgetNoLaps.height = 500;
+    fixture.componentRef.setInput("widget", widgetNoLaps);
+    fixture.detectChanges();
+
+    const laps = component.getLastLaps();
+    expect(laps.length).toBe(5);
+    expect(laps.every((l) => l.lapTime === "--.---")).toBeTrue();
+
+    const lapItemEls = fixture.nativeElement.querySelectorAll(".last-lap-item");
+    expect(lapItemEls.length).toBe(5);
+    lapItemEls.forEach((el: Element) => {
+      expect(el.textContent.trim()).toBe("--.---");
+    });
+  });
+
+  it("should render 5 placeholder laps when driver has only 1 lap (displayed as current lap)", () => {
+    const driverOneLap = {
+      ...mockDrivers[0],
+      lapTimes: [7.863],
+      lapsWithDetails: [{ segments: [2.5, 5.363] }],
+    };
+    mockParent.heatDrivers = [driverOneLap];
+    mockParent.heat.heatDrivers = [driverOneLap];
+    delete mockParent.getLastLaps;
+    fixture.componentRef.setInput("parent", mockParent);
+    const widgetOneLap = createWidget({
+      columnKey: "lastLaps",
+      targetIndex: 0,
+    });
+    widgetOneLap.width = 200;
+    widgetOneLap.height = 500;
+    fixture.componentRef.setInput("widget", widgetOneLap);
+    fixture.detectChanges();
+
+    const laps = component.getLastLaps();
+    expect(laps.length).toBe(5);
+    expect(laps.every((l) => l.lapTime === "--.---")).toBeTrue();
+
+    const lapItemEls = fixture.nativeElement.querySelectorAll(".last-lap-item");
+    expect(lapItemEls.length).toBe(5);
+    lapItemEls.forEach((el: Element) => {
+      expect(el.textContent.trim()).toBe("--.---");
+    });
+  });
+
+  it("should render -- fallback when getLastLaps returns empty array", () => {
+    spyOn(component, "getLastLaps").and.returnValue([]);
     fixture.componentRef.setInput(
       "widget",
       createWidget({ columnKey: "lastLaps", targetIndex: 0 }),
     );
     fixture.detectChanges();
 
-    expect(component.getLastLaps().length).toBe(0);
     const emptyEl = fixture.nativeElement.querySelector(".lane-col-empty");
     expect(emptyEl).toBeTruthy();
     expect(emptyEl.textContent.trim()).toBe("--");
+  });
+
+  it("should determine isVerticalLapsFlow correctly based on gridDirection and aspect ratio", () => {
+    // 1. When gridDirection is horizontal (lanes side-by-side, cells are tall rows)
+    fixture.componentRef.setInput(
+      "widget",
+      createWidget({
+        columnKey: "lastLaps",
+        gridDirection: "horizontal",
+      }),
+    );
+    fixture.detectChanges();
+    expect(component.isVerticalLapsFlow).toBeTrue();
+
+    // 2. When gridDirection is vertical (lanes are rows, cells are wide columns)
+    fixture.componentRef.setInput(
+      "widget",
+      createWidget({
+        columnKey: "lastLaps",
+        gridDirection: "vertical",
+      }),
+    );
+    fixture.detectChanges();
+    expect(component.isVerticalLapsFlow).toBeFalse();
+
+    // 3. Standalone widget: based on aspect ratio
+    const tallWidget = createWidget({ columnKey: "lastLaps" });
+    tallWidget.width = 200;
+    tallWidget.height = 400;
+    delete tallWidget.customSettings?.["gridDirection"];
+    fixture.componentRef.setInput("widget", tallWidget);
+    fixture.detectChanges();
+    expect(component.isVerticalLapsFlow).toBeTrue();
+
+    const wideWidget = createWidget({ columnKey: "lastLaps" });
+    wideWidget.width = 400;
+    wideWidget.height = 100;
+    delete wideWidget.customSettings?.["gridDirection"];
+    fixture.componentRef.setInput("widget", wideWidget);
+    fixture.detectChanges();
+    expect(component.isVerticalLapsFlow).toBeFalse();
+  });
+
+  it("should render lastLaps with lap times and stacked segments", () => {
+    const driverWithLaps = {
+      ...mockDrivers[0],
+      bestLapTime: 2.0,
+      lapTimes: [2.0, 2.2, 2.1],
+      lapsWithDetails: [
+        { time: 2.0, segments: [0.4, 0.6, 0.4, 0.6] },
+        { time: 2.2, segments: [0.44, 0.66, 0.44, 0.66] },
+        { time: 2.1, segments: [0.42, 0.63, 0.42, 0.63] },
+      ],
+    };
+    mockParent.heatDrivers = [driverWithLaps];
+    mockParent.heat.heatDrivers = [driverWithLaps];
+    fixture.componentRef.setInput("parent", mockParent);
+    const widget = createWidget({
+      columnKey: "lastLaps",
+      targetIndex: 0,
+      gridDirection: "horizontal",
+    });
+    widget.width = 200;
+    widget.height = 500;
+    fixture.componentRef.setInput("widget", widget);
+    fixture.detectChanges();
+
+    const lapItems = fixture.nativeElement.querySelectorAll(".last-lap-item");
+    expect(lapItems.length).toBe(5);
+
+    const firstLapTime = lapItems[0].querySelector(".last-lap-time");
+    expect(firstLapTime).toBeTruthy();
+    expect(firstLapTime.textContent.trim()).toBe("2.200");
+
+    const firstSegments = lapItems[0].querySelectorAll(".last-lap-seg");
+    expect(firstSegments.length).toBe(4);
+    expect(firstSegments[0].textContent.trim()).toBe("0.440");
+    expect(firstSegments[1].textContent.trim()).toBe("0.660");
+
+    // Second lap is lap 1
+    const secondLapTime = lapItems[1].querySelector(".last-lap-time");
+    expect(secondLapTime?.textContent.trim()).toBe("2.000");
+
+    // Unregistered laps are padded with placeholder dashes
+    expect(
+      lapItems[2].querySelector(".last-lap-time")?.textContent.trim(),
+    ).toBe("--.---");
+    expect(
+      lapItems[3].querySelector(".last-lap-time")?.textContent.trim(),
+    ).toBe("--.---");
+    expect(
+      lapItems[4].querySelector(".last-lap-time")?.textContent.trim(),
+    ).toBe("--.---");
+  });
+
+  it("should scale header text down for header widgets when width is constrained", () => {
+    fixture.componentRef.setInput("parent", mockParent);
+    const hw = createWidget({
+      columnKey: "lastLaps",
+      isHeaderWidget: true,
+      showHeader: true,
+      headerPlacement: "left",
+      headerFontSize: 24,
+    });
+    hw.width = 60;
+    hw.height = 55;
+    fixture.componentRef.setInput("widget", hw);
+    fixture.detectChanges();
+
+    component.fitContent();
+    const headerEl = fixture.nativeElement.querySelector(".lane-col-header");
+    expect(headerEl).toBeTruthy();
+    const computedFs = parseFloat(headerEl.style.fontSize);
+    expect(computedFs).toBeLessThanOrEqual(24);
   });
 
   it("should scale font size down when text is wider than container width", () => {
@@ -2386,6 +2551,25 @@ describe("RacedayLaneColumnComponent", () => {
 
       const bodyEl = fixture.nativeElement.querySelector(".lane-col-body");
       expect(bodyEl).toBeNull();
+    });
+
+    it("should render vertically centered header widget for lastLaps without align-top", () => {
+      fixture.componentRef.setInput("parent", mockParent);
+      fixture.componentRef.setInput(
+        "widget",
+        createWidget({
+          columnKey: "lastLaps",
+          isHeaderWidget: true,
+          customLabel: "Last Laps",
+        }),
+      );
+      fixture.detectChanges();
+
+      const headerOnlyEl = fixture.nativeElement.querySelector(
+        ".lane-col-header.header-widget-only",
+      );
+      expect(headerOnlyEl).toBeTruthy();
+      expect(headerOnlyEl.textContent.trim()).toBe("Last Laps");
     });
 
     it("should apply highlight class when driver is in parent.highlightedDrivers", () => {

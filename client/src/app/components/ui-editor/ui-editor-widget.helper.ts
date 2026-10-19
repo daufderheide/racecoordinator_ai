@@ -353,15 +353,18 @@ function handleGridHeaderStructureChanges(
     const newPlacement =
       targetWidget.customSettings?.["headerPlacement"] || "individual";
     const headerH = targetWidget.customSettings?.["headerHeight"] || 36;
+    const headerW = targetWidget.customSettings?.["headerWidth"] || 200;
     layout.widgets = LaneGridReplicationHelper.updateGridHeaderPlacement(
       layout.widgets,
       gridId,
       newPlacement,
       headerH,
+      headerW,
     );
     if (comp.activeGridSession && comp.activeGridSession.gridId === gridId) {
       comp.activeGridSession.headerPlacement = newPlacement;
       comp.activeGridSession.headerHeight = headerH;
+      comp.activeGridSession.headerWidth = headerW;
     }
   }
 
@@ -375,6 +378,19 @@ function handleGridHeaderStructureChanges(
     );
     if (comp.activeGridSession && comp.activeGridSession.gridId === gridId) {
       comp.activeGridSession.headerHeight = newH;
+    }
+  }
+
+  if (targetWidget.customSettings?.["_headerWidthChanged"]) {
+    delete targetWidget.customSettings["_headerWidthChanged"];
+    const newW = targetWidget.customSettings?.["headerWidth"] || 200;
+    layout.widgets = LaneGridReplicationHelper.updateGridHeaderWidth(
+      layout.widgets,
+      gridId,
+      newW,
+    );
+    if (comp.activeGridSession && comp.activeGridSession.gridId === gridId) {
+      comp.activeGridSession.headerWidth = newW;
     }
   }
 }

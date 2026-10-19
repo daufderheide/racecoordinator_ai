@@ -61,8 +61,12 @@ test.describe("Text Info Inspector Visuals", () => {
     await harness.setLabelFontSize(22);
     await harness.setValueFontSize(26);
 
-    // Blur any active element and move mouse to remove hover states
-    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+    // Blur any active element, clear hover, and scroll inspector panel so text info fields are at the top
+    await page.evaluate(() => {
+      (document.activeElement as HTMLElement)?.blur();
+      const fields = document.querySelector("app-text-info-inspector");
+      fields?.scrollIntoView({ block: "start", inline: "nearest" });
+    });
     await page.mouse.move(0, 0);
 
     // Take screenshot of the inspector panel

@@ -11225,7 +11225,8 @@ describe("DefaultRacedayComponent", () => {
       const standings = rcAiGroup?.subgroups.find(
         (s) => s.id === "standings-heats",
       );
-      expect(standings?.widgets.map((w) => w.type)).toContain("lane-view");
+      expect(standings?.widgets.map((w) => w.type)).toContain("leaderboard");
+      expect(standings?.widgets.map((w) => w.type)).not.toContain("lane-view");
       const titles = rcAiGroup?.subgroups.find((s) => s.id === "titles-info");
       expect(titles?.widgets.map((w) => w.type)).toContain("timer");
 

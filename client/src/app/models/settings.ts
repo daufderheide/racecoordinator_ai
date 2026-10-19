@@ -99,8 +99,13 @@ export interface LaneColumnWidgetSettings {
   showHeader: boolean;
   gridType?: "heat" | "overall";
   gridId?: string;
-  headerPlacement?: "top" | "individual" | "none";
+  gridDirection?: "vertical" | "horizontal";
+  gridLane?: number;
+  gridTotalLanes?: number;
+  gridMasterId?: string;
+  headerPlacement?: "top" | "left" | "individual" | "none";
   headerHeight?: number;
+  headerWidth?: number;
   isHeaderWidget?: boolean;
   linkColumns?: boolean;
   sortByBindingMode?: boolean;
@@ -154,6 +159,7 @@ export interface LayoutConfig {
   collapsedToolboxSubgroups?: Record<string, boolean> | string[];
   toolboxGroupExpandedStates?: Record<string, boolean>;
   toolboxSubgroupExpandedStates?: Record<string, boolean>;
+  preserveLegacyHeatView?: boolean;
 }
 
 export class Settings {
@@ -513,7 +519,7 @@ export class Settings {
         x: 0,
         y: 0,
         width: 1920,
-        height: 55,
+        height: 38,
         zIndex: 216,
         scaleMode: "auto",
         fontFamily: "",
@@ -526,9 +532,9 @@ export class Settings {
         id: "widget-timer",
         widgetType: "timer",
         x: 779,
-        y: 49,
+        y: 38,
         width: 441,
-        height: 112,
+        height: 111,
         zIndex: 218,
         scaleMode: "auto",
         fontFamily: "",
@@ -546,9 +552,9 @@ export class Settings {
         id: "widget-branding",
         widgetType: "branding",
         x: 0,
-        y: 49,
+        y: 38,
         width: 469,
-        height: 112,
+        height: 111,
         zIndex: 206,
         scaleMode: "auto",
         fontFamily: "",
@@ -569,16 +575,16 @@ export class Settings {
         widgetType: "qr",
         width: 132,
         x: 469,
-        y: 50,
+        y: 38,
         zIndex: 217,
       },
       {
         id: "widget-1783269768449",
         widgetType: "flag",
         x: 601,
-        y: 49,
+        y: 38,
         width: 178,
-        height: 112,
+        height: 111,
         zIndex: 212,
         scaleMode: "auto",
         fontFamily: "",

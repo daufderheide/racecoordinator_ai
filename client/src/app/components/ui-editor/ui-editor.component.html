@@ -395,6 +395,22 @@
                               >
                                 <span class="material-icons">upload</span>
                               </button>
+                              @if (canReopenMigrationBanner(ui)) {
+                                <button
+                                  class="icon-btn canvas-action-icon-btn migration-restore-icon-btn"
+                                  (click)="reopenMigrationBanner(ui)"
+                                  [title]="
+                                    'UE_MIGRATION_SHOW_BANNER_BTN' | translate
+                                  "
+                                  [attr.aria-label]="
+                                    'UE_MIGRATION_SHOW_BANNER_BTN' | translate
+                                  "
+                                >
+                                  <span class="material-icons"
+                                    >auto_awesome</span
+                                  >
+                                </button>
+                              }
                               <input
                                 #layoutFileInput
                                 type="file"
@@ -405,6 +421,117 @@
                             </div>
                           </div>
                         </div>
+
+                        @if (isMigratedLayout(ui)) {
+                          <div class="migration-notice-banner">
+                            <div class="migration-notice-info">
+                              <span class="material-icons migration-icon"
+                                >auto_awesome</span
+                              >
+                              <div class="migration-notice-text">
+                                <span class="migration-notice-title">{{
+                                  "UE_MIGRATION_BANNER_TITLE" | translate
+                                }}</span>
+                                <span class="migration-notice-desc">{{
+                                  "UE_MIGRATION_BANNER_DESC" | translate
+                                }}</span>
+                              </div>
+                            </div>
+                            <div class="migration-notice-actions">
+                              <button
+                                type="button"
+                                class="migration-btn migration-btn-restore"
+                                (click)="restorePreMigrationBackup(ui)"
+                                [title]="
+                                  'UE_MIGRATION_RESTORE_BACKUP_BTN' | translate
+                                "
+                              >
+                                <span class="material-icons">restore</span>
+                                {{
+                                  "UE_MIGRATION_RESTORE_BACKUP_BTN" | translate
+                                }}
+                              </button>
+                              <button
+                                type="button"
+                                class="migration-btn migration-btn-diagnostics"
+                                (click)="exportMigrationDiagnostics(ui)"
+                                [title]="
+                                  'UE_MIGRATION_EXPORT_DIAGNOSTICS_BTN'
+                                    | translate
+                                "
+                              >
+                                <span class="material-icons">bug_report</span>
+                                {{
+                                  "UE_MIGRATION_EXPORT_DIAGNOSTICS_BTN"
+                                    | translate
+                                }}
+                              </button>
+                              <button
+                                type="button"
+                                class="migration-btn-close"
+                                (click)="dismissMigrationBanner(ui)"
+                                [title]="'UE_MIGRATION_DISMISS_BTN' | translate"
+                              >
+                                <span class="material-icons">close</span>
+                              </button>
+                            </div>
+                          </div>
+                        }
+
+                        @if (canUpgradeLegacyHeatView(ui)) {
+                          <div
+                            class="migration-notice-banner legacy-preserved-banner"
+                          >
+                            <div class="migration-notice-info">
+                              <span
+                                class="material-icons migration-icon warning-icon"
+                                >schedule</span
+                              >
+                              <div class="migration-notice-text">
+                                <span class="migration-notice-title">{{
+                                  "UE_MIGRATION_PRESERVED_TITLE" | translate
+                                }}</span>
+                                <span class="migration-notice-desc">{{
+                                  "UE_MIGRATION_PRESERVED_DESC" | translate
+                                }}</span>
+                              </div>
+                            </div>
+                            <div class="migration-notice-actions">
+                              <button
+                                type="button"
+                                class="migration-btn migration-btn-upgrade"
+                                (click)="upgradeLegacyHeatView(ui)"
+                                [title]="'UE_MIGRATION_UPGRADE_BTN' | translate"
+                              >
+                                <span class="material-icons">upgrade</span>
+                                {{ "UE_MIGRATION_UPGRADE_BTN" | translate }}
+                              </button>
+                              <button
+                                type="button"
+                                class="migration-btn migration-btn-diagnostics"
+                                (click)="exportMigrationDiagnostics(ui)"
+                                [title]="
+                                  'UE_MIGRATION_EXPORT_DIAGNOSTICS_BTN'
+                                    | translate
+                                "
+                              >
+                                <span class="material-icons">bug_report</span>
+                                {{
+                                  "UE_MIGRATION_EXPORT_DIAGNOSTICS_BTN"
+                                    | translate
+                                }}
+                              </button>
+                              <button
+                                type="button"
+                                class="migration-btn-close"
+                                (click)="dismissMigrationBanner(ui)"
+                                [title]="'UE_MIGRATION_DISMISS_BTN' | translate"
+                              >
+                                <span class="material-icons">close</span>
+                              </button>
+                            </div>
+                          </div>
+                        }
 
                         <div class="raceday-editor-workspace">
                           <!-- Raceday Full Integration -->
@@ -1924,6 +2051,30 @@
     [message]="discardMessage"
     (confirm)="onConfirmDiscard()"
     (cancel)="onCancelDiscard()"
+  >
+  </app-confirmation-modal>
+
+  <!-- Restore Pre-Migration Backup Confirmation -->
+  <app-confirmation-modal
+    [visible]="showRestoreBackupConfirm"
+    title="UE_CONFIRM_RESTORE_BACKUP_TITLE"
+    message="UE_CONFIRM_RESTORE_BACKUP_MSG"
+    confirmText="COMMON_RESTORE"
+    cancelText="COMMON_CANCEL"
+    (confirm)="confirmRestorePreMigrationBackup()"
+    (cancel)="cancelRestorePreMigrationBackup()"
+  >
+  </app-confirmation-modal>
+
+  <!-- Upgrade Legacy Heat View Confirmation -->
+  <app-confirmation-modal
+    [visible]="showUpgradeHeatViewConfirm"
+    title="UE_CONFIRM_UPGRADE_TITLE"
+    message="UE_CONFIRM_UPGRADE_MSG"
+    confirmText="UE_MIGRATION_UPGRADE_BTN"
+    cancelText="COMMON_CANCEL"
+    (confirm)="confirmUpgradeLegacyHeatView()"
+    (cancel)="cancelUpgradeLegacyHeatView()"
   >
   </app-confirmation-modal>
 

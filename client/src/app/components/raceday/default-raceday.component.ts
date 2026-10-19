@@ -145,6 +145,7 @@ import {
   LaneReplicationHelper,
   LaneReplicationOptions,
 } from "./utils/lane-replication.helper";
+import { LaneViewMigrationHelper } from "./utils/lane-view-migration.helper";
 import {
   FormatContext,
   RacedayFormatUtils,
@@ -1231,6 +1232,23 @@ export class DefaultRacedayComponent
           "layoutJson",
           settings.racedayLayout,
         );
+    if (
+      !this.isUIEditorMode() &&
+      LaneViewMigrationHelper.hasLegacyLaneView(resolvedLayout)
+    ) {
+      const migration = LaneViewMigrationHelper.convertLegacyLaneViewLayout({
+        layout: resolvedLayout,
+        columns: this.currentRacedayColumns,
+        columnLayouts: this.currentColumnLayouts,
+        columnWidths: this.currentColumnWidths,
+        columnAnchors: this.currentColumnAnchors,
+        totalLanes: this.track?.lanes?.length || 4,
+        isPractice: this.isPracticeLayout,
+      });
+      if (migration.migrated) {
+        return migration.layout;
+      }
+    }
     return resolvedLayout;
   }
   set currentRacedayLayout(layout: LayoutConfig | undefined) {
@@ -2919,7 +2937,8 @@ export class DefaultRacedayComponent
 
   private handleLapHighlight(lap: any) {
     const laneViewWidget = this.currentRacedayLayout?.widgets?.find(
-      (w: any) => w.widgetType === "lane-view",
+      (w: any) =>
+        w.widgetType === "lane-view" || w.widgetType === "lane-column",
     );
     const settings = this.settingsService.getSettings();
     const shouldHighlight =
@@ -3235,7 +3254,8 @@ export class DefaultRacedayComponent
     const entry = this.getLaneRecordEntry(hd);
     const isInset = anchor ? !anchor.startsWith("center-") : false;
     const laneViewWidget = this.currentRacedayLayout?.widgets?.find(
-      (w: any) => w.widgetType === "lane-view",
+      (w: any) =>
+        w.widgetType === "lane-view" || w.widgetType === "lane-column",
     );
     const colDecimals =
       laneViewWidget?.customSettings?.["columnDecimals"]?.["recordLapTime"] ??
@@ -3297,7 +3317,8 @@ export class DefaultRacedayComponent
     const entry = this.getBestRaceLapEntry(hd);
     const isInset = anchor ? !anchor.startsWith("center-") : false;
     const laneViewWidget = this.currentRacedayLayout?.widgets?.find(
-      (w: any) => w.widgetType === "lane-view",
+      (w: any) =>
+        w.widgetType === "lane-view" || w.widgetType === "lane-column",
     );
     const colDecimals =
       laneViewWidget?.customSettings?.["columnDecimals"]?.["bestRaceLapTime"] ??
@@ -3742,12 +3763,15 @@ export class DefaultRacedayComponent
     );
 
     const laneViewWidget = this.currentRacedayLayout?.widgets?.find(
-      (w: any) => w.widgetType === "lane-view",
+      (w: any) =>
+        w.widgetType === "lane-view" || w.widgetType === "lane-column",
     );
     const sortByStandings =
       laneViewWidget?.customSettings?.["sortByStandings"] !== undefined
         ? laneViewWidget.customSettings["sortByStandings"]
-        : this.settingsService.getSettings().sortByStandings;
+        : laneViewWidget?.customSettings?.["bindingMode"] !== undefined
+          ? laneViewWidget.customSettings["bindingMode"] === "position"
+          : this.settingsService.getSettings().sortByStandings;
 
     if (sortByStandings && !this.isDragging) {
       // Sort a separate copy to determine visual positions using the server-provided standings list
@@ -4652,12 +4676,12 @@ export class DefaultRacedayComponent
 
   formatColumnValue(
     heatDriver: DriverHeatData,
-    column: ColumnDefinition,
+    column?: ColumnDefinition,
     propertyName?: string,
     anchor?: string,
   ): string {
     const laneViewWidget = this.currentRacedayLayout?.widgets?.find(
-      (w) => w.widgetType === "lane-view",
+      (w) => w.widgetType === "lane-view" || w.widgetType === "lane-column",
     );
     const ctx: FormatContext = {
       translate: (key) => this.translationService.translate(key),
@@ -4702,7 +4726,7 @@ export class DefaultRacedayComponent
     const n = laps.length;
     const result: LapDisplayInfo[] = [];
     const laneViewWidget = this.currentRacedayLayout?.widgets?.find(
-      (w) => w.widgetType === "lane-view",
+      (w) => w.widgetType === "lane-view" || w.widgetType === "lane-column",
     );
     const ctx: FormatContext = {
       translate: (key) => this.translationService.translate(key),
@@ -6789,7 +6813,8 @@ export class DefaultRacedayComponent
     widgetSettings?: any,
   ): string {
     const laneViewWidget = this.currentRacedayLayout?.widgets?.find(
-      (w: any) => w.widgetType === "lane-view",
+      (w: any) =>
+        w.widgetType === "lane-view" || w.widgetType === "lane-column",
     );
     const ctx: FormatContext = {
       translate: (key) => this.translationService.translate(key),
@@ -8647,7 +8672,8 @@ export class DefaultRacedayComponent
 
   getHeaderRowBounds(): LaneGridBounds | null {
     const s = this.gridSession();
-    if (!s || s.headerPlacement !== "top") return null;
+    if (!s || (s.headerPlacement !== "top" && s.headerPlacement !== "left"))
+      return null;
     return LaneGridReplicationHelper.computeHeaderRowBounds(s);
   }
 

@@ -96,7 +96,6 @@ import {
   getComponentPreviewScaleNumber,
   getCustomUiDisplayNameKey,
   getDefaultAspectRatioOptions,
-  getDefaultLayoutResetData,
   getLayoutAspectRatio,
   getLayoutAspectRatioOptions,
   getLayoutScaleMode,
@@ -109,9 +108,7 @@ import {
   handleAutoSaveState,
   handleBringGridToFront,
   handleCalloutSpacingChange,
-  handleClearCurrentLayout,
   handleClearCustomTemplate,
-  handleClearLayout,
   handleConfirmDeleteCustomUi,
   handleConfirmDeleteTheme,
   handleConfirmDiscard,
@@ -125,25 +122,13 @@ import {
   handleDuplicateCustomUi,
   handleDuplicateTheme,
   handleEditGridTemplate,
-  handleExportCurrentLayout,
-  handleExportLayout,
-  handleExportPracticeRacedayLayout,
-  handleExportRacedayLayout,
   handleFinishGridSession,
-  handleImportCurrentLayout,
-  handleImportLayout,
-  handleImportPracticeRacedayLayout,
-  handleImportRacedayLayout,
   handleLayoutChanged,
   handleMasterVolumeChange,
   handleNudgeSelectedWidget,
   handlePageTransitionChange,
   handleReMirrorGrid,
   handleRemoveSelectedWidget,
-  handleResetCurrentLayout,
-  handleResetLayout,
-  handleResetPracticeRacedayLayout,
-  handleResetRacedayLayout,
   handleSetLayoutAspectRatio,
   handleSetLayoutScaleMode,
   handleStartGridSession,
@@ -177,9 +162,11 @@ import {
   isThemeNameInvalid,
   isWidgetHeightAutoCalculated,
   isWidgetWidthAutoCalculated,
+  LayoutActionsController,
   LayoutZoomController,
   loadExpanderStateFromStorage,
   MAIN_AUDIO_SLOTS,
+  MigrationController,
   MOCK_RACEDAY_PROPERTIES,
   openDeleteCustomUiModal,
   openDeleteThemeModal,
@@ -188,7 +175,6 @@ import {
   refreshUiEditorDisplayProperties,
   resolveActiveLayout,
   resolveBackNavigation,
-  resolveTargetCustomUi,
   resolveThemeAsset,
   resolveThemeFlag,
   resolveThemeFuelGauge,
@@ -311,6 +297,46 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     return !!this.getLayout(this.activeCustomUi)?.widgets?.some(
       (w) => w.widgetType === "lane-view",
     );
+  }
+
+  migrationController = new MigrationController(this);
+
+  get dismissedMigrationUis(): Set<string> {
+    return this.migrationController.dismissedMigrationUis;
+  }
+  set dismissedMigrationUis(val: Set<string>) {
+    this.migrationController.dismissedMigrationUis = val;
+  }
+  saveDismissedMigrationUis(): void {
+    this.migrationController.saveDismissedMigrationUis();
+  }
+  isPreMigrationBackup(ui: CustomUI): boolean {
+    return this.migrationController.isPreMigrationBackup(ui);
+  }
+  hasAvailablePreMigrationBackup(ui: CustomUI): boolean {
+    return this.migrationController.hasAvailablePreMigrationBackup(ui);
+  }
+
+  get customUIs(): CustomUI[] {
+    return this.displayCustomUIs?.length > 0
+      ? this.displayCustomUIs
+      : this.editingState?.customUIs || [];
+  }
+
+  isMigratedLayout(ui: CustomUI): boolean {
+    return this.migrationController.isMigratedLayout(ui);
+  }
+  canUpgradeLegacyHeatView(ui: CustomUI): boolean {
+    return this.migrationController.canUpgradeLegacyHeatView(ui);
+  }
+  canReopenMigrationBanner(ui: CustomUI): boolean {
+    return this.migrationController.canReopenMigrationBanner(ui);
+  }
+  dismissMigrationBanner(ui: CustomUI): void {
+    this.migrationController.dismissMigrationBanner(ui);
+  }
+  reopenMigrationBanner(ui: CustomUI): void {
+    this.migrationController.reopenMigrationBanner(ui);
   }
 
   showSuccessModal = false;
@@ -662,54 +688,67 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   isWidgetWidthAutoCalculated = (widget: any) =>
     isWidgetWidthAutoCalculated(widget, this.activeGridSession);
 
+  layoutActionsController = new LayoutActionsController(this);
+
   onRacedayLayoutChanged = (newLayout: any) =>
-    this.onLayoutChanged(
-      newLayout,
-      this.displayCustomUIs.find(
-        (u) => u.entity_id === "default_ui_layout_rc_ai",
-      ),
-    );
+    this.layoutActionsController.onRacedayLayoutChanged(newLayout);
   onPracticeRacedayLayoutChanged = (newLayout: any) =>
-    this.onLayoutChanged(
-      newLayout,
-      this.displayCustomUIs.find(
-        (u) => u.entity_id === "practice_ui_layout_rc_ai",
-      ),
-    );
+    this.layoutActionsController.onPracticeRacedayLayoutChanged(newLayout);
   getScaledDefaultLayout = (isPractice = false) =>
-    getDefaultLayoutResetData(isPractice).defaultLayout;
+    this.layoutActionsController.getScaledDefaultLayout(isPractice);
   getTargetCustomUi = (kind?: "practice" | "raceday" | "current") =>
-    resolveTargetCustomUi(
-      kind,
-      this.activeCustomUiId,
-      this.displayCustomUIs,
-      this.isCurrentLayoutPractice,
-    );
-  resetCurrentLayout = () => handleResetCurrentLayout(this);
-  exportCurrentLayout = () => handleExportCurrentLayout(this);
+    this.layoutActionsController.getTargetCustomUi(kind);
+
+  resetCurrentLayout = () => this.layoutActionsController.resetCurrentLayout();
+  exportCurrentLayout = () =>
+    this.layoutActionsController.exportCurrentLayout();
   onImportCurrentLayout = (event: Event) =>
-    handleImportCurrentLayout(this, event);
+    this.layoutActionsController.onImportCurrentLayout(event);
 
   onColumnsChanged(_ui?: CustomUI) {
     this.captureState();
   }
 
-  resetLayout = (ui: CustomUI) => handleResetLayout(this, ui);
-  clearLayout = (ui: CustomUI) => handleClearLayout(this, ui);
-  clearCurrentLayout = () => handleClearCurrentLayout(this);
-  resetRacedayLayout = () => handleResetRacedayLayout(this);
-  resetPracticeRacedayLayout = () => handleResetPracticeRacedayLayout(this);
-  exportLayout = (ui: CustomUI) => handleExportLayout(this, ui);
+  resetLayout = (ui: CustomUI) => this.layoutActionsController.resetLayout(ui);
+  clearLayout = (ui: CustomUI) => this.layoutActionsController.clearLayout(ui);
+  clearCurrentLayout = () => this.layoutActionsController.clearCurrentLayout();
+  resetRacedayLayout = () => this.layoutActionsController.resetRacedayLayout();
+  resetPracticeRacedayLayout = () =>
+    this.layoutActionsController.resetPracticeRacedayLayout();
+  exportLayout = (ui: CustomUI) =>
+    this.layoutActionsController.exportLayout(ui);
   downloadJson = (data: any, filename: string) =>
     downloadJsonFile(data, filename);
-  exportRacedayLayout = () => handleExportRacedayLayout(this);
-  exportPracticeRacedayLayout = () => handleExportPracticeRacedayLayout(this);
+  exportRacedayLayout = () =>
+    this.layoutActionsController.exportRacedayLayout();
+  exportPracticeRacedayLayout = () =>
+    this.layoutActionsController.exportPracticeRacedayLayout();
   onImportLayout = (event: Event, ui: CustomUI) =>
-    handleImportLayout(this, event, ui);
+    this.layoutActionsController.onImportLayout(event, ui);
   onImportRacedayLayout = (event: Event) =>
-    handleImportRacedayLayout(this, event);
+    this.layoutActionsController.onImportRacedayLayout(event);
   onImportPracticeRacedayLayout = (event: Event) =>
-    handleImportPracticeRacedayLayout(this, event);
+    this.layoutActionsController.onImportPracticeRacedayLayout(event);
+
+  showRestoreBackupConfirm = false;
+  pendingRestoreBackupUi: CustomUI | null = null;
+  showUpgradeHeatViewConfirm = false;
+  pendingUpgradeHeatViewUi: CustomUI | null = null;
+
+  restorePreMigrationBackup = (ui: CustomUI) =>
+    this.migrationController.restorePreMigrationBackup(ui);
+  confirmRestorePreMigrationBackup = () =>
+    this.migrationController.confirmRestorePreMigrationBackup();
+  cancelRestorePreMigrationBackup = () =>
+    this.migrationController.cancelRestorePreMigrationBackup();
+  upgradeLegacyHeatView = (ui: CustomUI) =>
+    this.migrationController.upgradeLegacyHeatView(ui);
+  confirmUpgradeLegacyHeatView = () =>
+    this.migrationController.confirmUpgradeLegacyHeatView();
+  cancelUpgradeLegacyHeatView = () =>
+    this.migrationController.cancelUpgradeLegacyHeatView();
+  exportMigrationDiagnostics = (ui: CustomUI) =>
+    this.migrationController.exportMigrationDiagnostics(ui);
 
   areSettingsEqual(a: Settings, b: Settings) {
     return areSettingsEqual(a, b);

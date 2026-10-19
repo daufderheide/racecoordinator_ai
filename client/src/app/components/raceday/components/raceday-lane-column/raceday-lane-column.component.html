@@ -444,21 +444,47 @@
               }
             </div>
           } @else if (isLastLaps()) {
-            <div class="lane-col-last-laps" #lastLapsContainer>
+            <div
+              class="lane-col-last-laps"
+              #lastLapsContainer
+              [class.vertical-laps]="isVerticalLapsFlow"
+              [class.horizontal-laps]="!isVerticalLapsFlow"
+              [style.color]="effectiveValueTextColor"
+            >
               @if (getLastLaps().length === 0) {
                 <div class="lane-col-empty">--</div>
               } @else {
-                @for (lap of getVisibleLastLaps(); track lap.lapNumber) {
-                  <div class="last-lap-item" [class.best-lap]="lap.isBest">
-                    <div class="last-lap-main">
-                      <span class="lap-number">{{ lap.lapNumber }}.</span>
-                      <span class="lap-time">{{ lap.lapTime }}</span>
-                    </div>
-                    @if (lap.segments.length > 0) {
+                @for (lap of getVisibleLastLaps(); track $index) {
+                  <div
+                    class="last-lap-item"
+                    [class.best-lap]="lap.isBest"
+                    [style.border-bottom]="
+                      !$last && isVerticalLapsFlow
+                        ? '1px solid ' +
+                          (effectiveValueTextColor || 'currentColor')
+                        : null
+                    "
+                    [style.border-right]="
+                      !$last && !isVerticalLapsFlow
+                        ? '1px solid ' +
+                          (effectiveValueTextColor || 'currentColor')
+                        : null
+                    "
+                  >
+                    <span class="last-lap-time">{{ lap.lapTime }}</span>
+                    @if (lap.segments && lap.segments.length > 0) {
                       <div class="last-lap-segments">
                         @for (seg of lap.segments; track $index) {
-                          <span class="lap-seg"
-                            >S{{ $index + 1 }}: {{ seg }}</span
+                          <span
+                            class="last-lap-seg"
+                            [style.font-size]="
+                              'calc(1em / ' +
+                              (lap.segments.length < 2
+                                ? 2
+                                : lap.segments.length) +
+                              ')'
+                            "
+                            >{{ seg }}</span
                           >
                         }
                       </div>

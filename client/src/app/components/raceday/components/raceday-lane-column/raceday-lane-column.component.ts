@@ -205,6 +205,19 @@ export class RacedayLaneColumnComponent
     return this.settings.layoutOrientation || "vertical";
   }
 
+  get isVerticalLapsFlow(): boolean {
+    if (this.settings.gridDirection === "horizontal") return true;
+    if (this.settings.gridDirection === "vertical") return false;
+    const w = this.widget()?.width || 0;
+    const h = this.widget()?.height || 0;
+    if (h > 0 && w > 0) return h >= w * 0.75;
+    const cardEl = this.cardRef()?.nativeElement;
+    if (cardEl && cardEl.clientHeight > 0 && cardEl.clientWidth > 0) {
+      return cardEl.clientHeight >= cardEl.clientWidth * 0.75;
+    }
+    return false;
+  }
+
   private syntheticHeatDrivers = new Map<string, DriverHeatData>();
 
   private getOrCreateSyntheticDriver(participant: any): DriverHeatData {
@@ -627,7 +640,12 @@ export class RacedayLaneColumnComponent
 
   fitContent(): void {
     const cardEl = this.cardRef()?.nativeElement;
-    if (!cardEl || this.isHeaderWidget) return;
+    if (!cardEl) return;
+
+    if (this.isHeaderWidget) {
+      this.fitHeaderText(cardEl);
+      return;
+    }
 
     if (this.isLastLaps()) {
       this.fitLastLaps();
@@ -638,6 +656,44 @@ export class RacedayLaneColumnComponent
       this.lastFittedInsets = JSON.stringify(this.settings.insets || {});
       this.fitTextValue(cardEl);
     }
+  }
+
+  private fitHeaderText(cardEl: HTMLElement): void {
+    const headerEl = cardEl.querySelector(
+      ".lane-col-header",
+    ) as HTMLElement | null;
+    if (!headerEl) return;
+
+    const baseFontSize = Number(
+      this.settings.headerFontSize ||
+        (this.widget()?.fontSize ? this.widget()!.fontSize : 24),
+    );
+    const availWidth = Math.max(10, cardEl.clientWidth - 16);
+    const availHeight = Math.max(10, cardEl.clientHeight - 8);
+
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    const family =
+      this.settings.headerFontFamily ||
+      (typeof window !== "undefined" && window.getComputedStyle
+        ? window.getComputedStyle(headerEl).fontFamily
+        : "") ||
+      "sans-serif";
+    ctx.font = `700 ${baseFontSize}px ${family}`;
+    const textWidth = ctx.measureText(this.headerLabel || "").width || 1;
+
+    let scale = 1.0;
+    if (textWidth > availWidth) {
+      scale = Math.min(scale, availWidth / textWidth);
+    }
+    if (baseFontSize > availHeight) {
+      scale = Math.min(scale, availHeight / baseFontSize);
+    }
+
+    const fittedSize = Math.max(10, Math.floor(baseFontSize * scale));
+    headerEl.style.fontSize = `${fittedSize}px`;
   }
 
   private fitTextValue(cardEl: HTMLElement): void {
@@ -655,9 +711,29 @@ export class RacedayLaneColumnComponent
   }
 
   private fitLastLaps(): void {
-    const lapsEl = this.lastLapsRef()?.nativeElement;
-    if (!lapsEl) return;
-    this.maxVisibleLaps.set(fitColumnLastLaps(lapsEl, this.layoutOrientation));
+    const cardEl = this.cardRef()?.nativeElement;
+    if (!cardEl) return;
+
+    const baseFontSize = Number(
+      this.settings.valueFontSize ||
+        (this.widget()?.fontSize ? this.widget()!.fontSize : 54),
+    );
+    const allLaps = this.getLastLaps();
+    const explicitW = this.widget()?.width;
+    const explicitH = this.widget()?.height;
+    const fit = fitColumnLastLaps(
+      cardEl,
+      this.isVerticalLapsFlow,
+      baseFontSize,
+      allLaps.length,
+      explicitW,
+      explicitH,
+    );
+    this.maxVisibleLaps.set(fit.maxLaps);
+    cardEl.style.setProperty(
+      "--lane-col-last-laps-font-size",
+      `${fit.fontSize}px`,
+    );
   }
 
   isImageProperty(key: string = this.columnKey): boolean {

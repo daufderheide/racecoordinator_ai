@@ -1196,13 +1196,13 @@ export class RacedayFormatUtils {
 
   static formatColumnValue(
     heatDriver: DriverHeatData,
-    column: ColumnDefinition,
+    column: ColumnDefinition | undefined,
     propertyName: string | undefined,
     ctx: FormatContext,
     anchor?: string,
   ): string {
-    const prop = propertyName || column.propertyName;
-    if (prop === column.propertyName && column.formatter) {
+    const prop = propertyName || column?.propertyName || "";
+    if (column && prop === column.propertyName && column.formatter) {
       return column.formatter(
         RacedayFormatUtils.getPropertyValue(heatDriver, prop),
         heatDriver,

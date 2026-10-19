@@ -447,6 +447,15 @@ export class LaneGridGeometryHelper {
         ? dataBounds.width / session.totalLanes
         : availH / session.totalLanes;
     }
+    if (
+      session.headerPlacement === "left" &&
+      session.direction === "horizontal"
+    ) {
+      const headerW =
+        session.headerWidth != null ? Math.max(40, session.headerWidth) : 200;
+      const availW = Math.max(0, dataBounds.width - headerW);
+      return availW / session.totalLanes;
+    }
     return session.direction === "horizontal"
       ? dataBounds.width / session.totalLanes
       : dataBounds.height / session.totalLanes;
@@ -462,16 +471,28 @@ export class LaneGridGeometryHelper {
           ? Math.max(20, session.headerHeight)
           : 36
         : 0;
+    const headerW =
+      session.headerPlacement === "left" && session.direction === "horizontal"
+        ? session.headerWidth != null
+          ? Math.max(40, session.headerWidth)
+          : 200
+        : 0;
 
     if (session.headerPlacement === "top") {
       dividers.push(Math.round(dataBounds.y + headerH));
+    }
+    if (
+      session.headerPlacement === "left" &&
+      session.direction === "horizontal"
+    ) {
+      dividers.push(Math.round(dataBounds.x + headerW));
     }
     if (session.totalLanes <= 1) return dividers;
 
     const pitch = this.computePitch(session);
     const base =
       session.direction === "horizontal"
-        ? dataBounds.x
+        ? dataBounds.x + headerW
         : dataBounds.y + headerH;
     for (let k = 1; k < session.totalLanes; k++) {
       dividers.push(Math.round(base + k * pitch));
@@ -495,12 +516,23 @@ export class LaneGridGeometryHelper {
           ? Math.max(20, session.headerHeight)
           : 36
         : 0;
+    const headerW =
+      session.headerPlacement === "left" && session.direction === "horizontal"
+        ? session.headerWidth != null
+          ? Math.max(40, session.headerWidth)
+          : 200
+        : 0;
 
     if (session.direction === "horizontal") {
+      const x = Math.round(dataBounds.x + headerW + laneIndex * pitch);
+      const isLastLane = laneIndex === session.totalLanes - 1;
+      const width = isLastLane
+        ? Math.round(dataBounds.x + dataBounds.width - x)
+        : Math.round(pitch);
       return {
-        x: Math.round(dataBounds.x + laneIndex * pitch),
+        x,
         y: Math.round(dataBounds.y + headerH),
-        width: Math.round(pitch),
+        width: Math.max(10, width),
         height: Math.round(Math.max(0, dataBounds.height - headerH)),
       };
     } else {
@@ -517,6 +549,19 @@ export class LaneGridGeometryHelper {
     session: LaneGridSession,
   ): LaneGridBounds {
     const dataBounds = LaneGridLabelHelper.computeGridDataBounds(session);
+    if (
+      session.headerPlacement === "left" &&
+      session.direction === "horizontal"
+    ) {
+      const headerW =
+        session.headerWidth != null ? Math.max(40, session.headerWidth) : 200;
+      return {
+        x: dataBounds.x,
+        y: dataBounds.y,
+        width: headerW,
+        height: dataBounds.height,
+      };
+    }
     const headerH =
       session.headerHeight != null ? Math.max(20, session.headerHeight) : 36;
     return {
@@ -580,16 +625,16 @@ export class LaneGridGeometryHelper {
       const oldH = oldCell.height > 0 ? oldCell.height : cellH;
 
       return {
-        cellWidthRatio: Math.max(0.1, masterWidget.width / oldW),
-        cellHeightRatio: Math.max(0.1, masterWidget.height / oldH),
+        cellWidthRatio: Math.max(0.001, masterWidget.width / oldW),
+        cellHeightRatio: Math.max(0.001, masterWidget.height / oldH),
         cellOffsetXRatio: Math.max(0, (masterWidget.x - oldCell.x) / oldW),
         cellOffsetYRatio: Math.max(0, (masterWidget.y - oldCell.y) / oldH),
       };
     }
 
     return {
-      cellWidthRatio: Math.max(0.1, masterWidget.width / cellW),
-      cellHeightRatio: Math.max(0.1, masterWidget.height / cellH),
+      cellWidthRatio: Math.max(0.001, masterWidget.width / cellW),
+      cellHeightRatio: Math.max(0.001, masterWidget.height / cellH),
       cellOffsetXRatio: Math.max(0, (masterWidget.x - masterCell.x) / cellW),
       cellOffsetYRatio: Math.max(0, (masterWidget.y - masterCell.y) / cellH),
     };
@@ -734,11 +779,11 @@ export class LaneGridGeometryHelper {
     const isVertical = session.direction === "vertical";
     return {
       cellWidthRatio: isVertical
-        ? Math.max(0.1, cellWidthRatio ?? masterWidget.width / cellW)
+        ? Math.max(0.001, cellWidthRatio ?? masterWidget.width / cellW)
         : 1.0,
       cellHeightRatio: isVertical
         ? 1.0
-        : Math.max(0.1, cellHeightRatio ?? masterWidget.height / cellH),
+        : Math.max(0.001, cellHeightRatio ?? masterWidget.height / cellH),
       cellOffsetXRatio: isVertical ? Math.max(0, cellOffsetXRatio ?? 0) : 0,
       cellOffsetYRatio: isVertical ? 0 : Math.max(0, cellOffsetYRatio ?? 0),
     };

@@ -735,6 +735,9 @@
             <app-custom-option value="top">
               {{ "UE_REPLICATE_HEADER_TOP" | translate }}
             </app-custom-option>
+            <app-custom-option value="left">
+              {{ "UE_REPLICATE_HEADER_LEFT" | translate }}
+            </app-custom-option>
             <app-custom-option value="individual">
               {{ "UE_REPLICATE_HEADER_INDIVIDUAL" | translate }}
             </app-custom-option>
@@ -781,6 +784,53 @@
                 data-form-type="other"
                 [ngModel]="currentGridHeaderHeight"
                 (ngModelChange)="onGridHeaderHeightChange($event)"
+                style="
+                  width: 55px;
+                  padding: 2px 4px;
+                  font-size: 12px;
+                  background: rgba(255, 255, 255, 0.9);
+                  border: 1px solid rgba(0, 0, 0, 0.25);
+                  border-radius: 4px;
+                "
+              />
+            </div>
+          </div>
+        }
+
+        @if (gridHeaderPlacement === "left") {
+          <div class="inspector-section" style="margin-bottom: 8px">
+            <div class="inspector-label-row">
+              <label class="inspector-label">{{
+                "UE_REPLICATE_HEADER_WIDTH" | translate
+              }}</label>
+              <span class="inspector-val-badge"
+                >{{ currentGridHeaderWidth }}px</span
+              >
+            </div>
+            <div style="display: flex; gap: 8px; align-items: center">
+              <input
+                type="range"
+                min="40"
+                max="600"
+                step="5"
+                [ngModel]="currentGridHeaderWidth"
+                (ngModelChange)="onGridHeaderWidthChange($event)"
+                class="inspector-slider"
+                style="flex: 1"
+              />
+              <input
+                type="number"
+                min="40"
+                max="600"
+                step="1"
+                autocomplete="off"
+                data-dashlane-ignore="true"
+                data-1p-ignore="true"
+                data-lpignore="true"
+                data-bwignore="true"
+                data-form-type="other"
+                [ngModel]="currentGridHeaderWidth"
+                (ngModelChange)="onGridHeaderWidthChange($event)"
                 style="
                   width: 55px;
                   padding: 2px 4px;
@@ -1398,7 +1448,8 @@
   }
 
   @if (
-    (currentSettings["gridId"] && gridHeaderPlacement === "top") ||
+    (currentSettings["gridId"] &&
+      (gridHeaderPlacement === "top" || gridHeaderPlacement === "left")) ||
     isHeaderWidget ||
     currentSettings["showHeader"] !== false
   ) {

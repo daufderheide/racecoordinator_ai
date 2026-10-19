@@ -210,11 +210,6 @@ export class ToolboxGroupHelper {
           labelKey: "UE_WIDGET_TYPE_HEAT_LIST",
         },
         {
-          type: "lane-view",
-          icon: "",
-          labelKey: "UE_WIDGET_TYPE_LANE_VIEW",
-        },
-        {
           type: "leaderboard",
           icon: "",
           labelKey: "UE_WIDGET_TYPE_LEADERBOARD",

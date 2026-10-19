@@ -31,8 +31,9 @@ export interface LaneGridSession {
   sourceLaneIndex: number;
   bindingMode: "lane" | "position" | "overallPosition" | "seed";
   gridType?: "heat" | "overall";
-  headerPlacement?: "top" | "individual" | "none";
+  headerPlacement?: "top" | "individual" | "none" | "left";
   headerHeight?: number;
+  headerWidth?: number;
   linkColumns?: boolean;
   mirrorRows?: boolean;
   sortByBindingMode?: boolean;
@@ -241,67 +242,6 @@ export class LaneGridReplicationHelper {
     LaneGridGeometryHelper.updateWidgetCellRatios(widget, session, masterCell);
   }
 
-  private static syncTopHeaderWidget(
-    masterWidget: AbsoluteWidgetNode,
-    updatedMaster: AbsoluteWidgetNode,
-    session: LaneGridSession,
-    headerHeight: number,
-    result: AbsoluteWidgetNode[],
-  ): void {
-    const headerId = this.getHeaderWidgetId(masterWidget.id);
-    const existingHeaderIdx = result.findIndex(
-      (w) =>
-        w.id === headerId ||
-        (w.customSettings?.["gridMasterId"] === masterWidget.id &&
-          w.customSettings?.["isHeaderWidget"]),
-    );
-
-    if (session.headerPlacement === "top") {
-      const headerSettings = deepCopy(updatedMaster.customSettings || {});
-      headerSettings["isHeaderWidget"] = true;
-      headerSettings["showHeader"] = true;
-      headerSettings["headerPlacement"] = "top";
-      headerSettings["headerHeight"] = headerHeight;
-      headerSettings["gridMasterId"] = masterWidget.id;
-      headerSettings["gridId"] = session.gridId;
-      headerSettings["useLaneColors"] = false;
-      delete headerSettings["targetIndex"];
-      delete headerSettings["gridLane"];
-
-      const dataBounds = LaneGridLabelHelper.computeGridDataBounds(session);
-      const headerWidget: AbsoluteWidgetNode = {
-        ...deepCopy(updatedMaster),
-        id: existingHeaderIdx >= 0 ? result[existingHeaderIdx].id : headerId,
-        x: updatedMaster.x,
-        y: dataBounds.y,
-        width: updatedMaster.width,
-        height: headerHeight,
-        zIndex: (updatedMaster.zIndex ?? 10) + 1,
-        customSettings: {
-          ...headerSettings,
-          ...(existingHeaderIdx >= 0
-            ? result[existingHeaderIdx].customSettings
-            : {}),
-          isHeaderWidget: true,
-          showHeader: true,
-          headerPlacement: "top",
-          headerHeight,
-          gridMasterId: masterWidget.id,
-          gridId: session.gridId,
-          useLaneColors: false,
-        },
-      };
-
-      if (existingHeaderIdx >= 0) {
-        result[existingHeaderIdx] = headerWidget;
-      } else {
-        result.push(headerWidget);
-      }
-    } else if (existingHeaderIdx >= 0) {
-      result.splice(existingHeaderIdx, 1);
-    }
-  }
-
   private static buildUpdatedMaster(
     masterWidget: AbsoluteWidgetNode,
     session: LaneGridSession,
@@ -466,7 +406,7 @@ export class LaneGridReplicationHelper {
       result,
     );
 
-    this.syncTopHeaderWidget(
+    LaneGridHeaderHelper.syncPlacementHeaderWidget(
       masterWidget,
       updatedMaster,
       session,
@@ -542,7 +482,8 @@ export class LaneGridReplicationHelper {
         if (w.customSettings?.["isHeaderWidget"]) {
           const masterId = w.customSettings?.["gridMasterId"];
           return (
-            session.headerPlacement === "top" &&
+            (session.headerPlacement === "top" ||
+              session.headerPlacement === "left") &&
             Boolean(masterId && masterIds.has(masterId))
           );
         }
@@ -654,6 +595,7 @@ export class LaneGridReplicationHelper {
             gridBounds: { ...session.bounds },
             headerPlacement: session.headerPlacement ?? "individual",
             headerHeight: session.headerHeight ?? 36,
+            headerWidth: session.headerWidth ?? 200,
             linkColumns: session.linkColumns ?? true,
             mirrorRows: session.mirrorRows !== false,
             gridLabelPosition: session.gridLabelPosition || "none",
@@ -870,14 +812,28 @@ export class LaneGridReplicationHelper {
   public static updateGridHeaderPlacement(
     allWidgets: AbsoluteWidgetNode[],
     gridId: string,
-    newPlacement: "top" | "individual" | "none",
+    newPlacement: "top" | "individual" | "none" | "left",
     headerHeight?: number,
+    headerWidth?: number,
   ): AbsoluteWidgetNode[] {
     return LaneGridHeaderHelper.updateGridHeaderPlacement(
       allWidgets,
       gridId,
       newPlacement,
       headerHeight,
+      headerWidth,
+    );
+  }
+
+  public static updateGridHeaderWidth(
+    allWidgets: AbsoluteWidgetNode[],
+    gridId: string,
+    newWidth: number,
+  ): AbsoluteWidgetNode[] {
+    return LaneGridHeaderHelper.updateGridHeaderWidth(
+      allWidgets,
+      gridId,
+      newWidth,
     );
   }
 

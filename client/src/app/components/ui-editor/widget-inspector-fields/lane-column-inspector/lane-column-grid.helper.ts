@@ -3,7 +3,7 @@ import { RacedayLayoutUtils } from "@app/components/raceday/utils/raceday-layout
 export class LaneColumnGridHelper {
   public static getGridHeaderPlacement(
     currentSettings: any,
-  ): "top" | "individual" | "none" {
+  ): "top" | "individual" | "none" | "left" {
     return currentSettings["headerPlacement"] || "individual";
   }
 
@@ -484,11 +484,28 @@ export class LaneColumnGridHelper {
 
   public static setGridHeaderPlacement(
     currentSettings: any,
-    placement: "top" | "individual" | "none",
+    placement: "top" | "individual" | "none" | "left",
     onFieldChange: () => void,
   ): void {
     currentSettings["headerPlacement"] = placement;
     currentSettings["_headerPlacementChanged"] = true;
+    onFieldChange();
+  }
+
+  public static getGridHeaderWidth(currentSettings: any): number {
+    return Number(currentSettings["headerWidth"]) || 200;
+  }
+
+  public static setGridHeaderWidth(
+    currentSettings: any,
+    width: number,
+    onFieldChange: () => void,
+  ): void {
+    currentSettings["headerWidth"] = Math.max(
+      40,
+      Math.min(600, Number(width) || 200),
+    );
+    currentSettings["_headerWidthChanged"] = true;
     onFieldChange();
   }
 

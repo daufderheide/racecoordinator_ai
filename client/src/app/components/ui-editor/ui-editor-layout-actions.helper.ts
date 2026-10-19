@@ -1,3 +1,4 @@
+import { LaneViewMigrationHelper } from "@app/components/raceday/utils/lane-view-migration.helper";
 import { CustomUI } from "@app/models/custom-ui";
 import { Settings } from "@app/models/settings";
 import { deepCopy } from "@app/utils/clone.utils";
@@ -5,8 +6,12 @@ import { deepCopy } from "@app/utils/clone.utils";
 import {
   buildLayoutExport,
   downloadJsonFile,
+  exportMigrationDiagnostics,
   getDefaultLayoutResetData,
   parseLayoutImport,
+  preMigrationLayoutCache,
+  restorePreMigrationLayout,
+  upgradePreservedHeatViewLayout,
 } from "./ui-editor-io.helper";
 
 export function applyResetLayout(
@@ -307,4 +312,269 @@ export function handleImportPracticeRacedayLayout(
 ): void {
   const u = comp.getTargetCustomUi("practice");
   if (u) comp.onImportLayout(event, u);
+}
+
+export function handleRestorePreMigrationBackup(comp: any, ui: CustomUI): void {
+  const res = restorePreMigrationLayout(ui, comp.customUIs);
+  if (res.restored && res.layout) {
+    comp.activeGridSession = null;
+    comp.dismissedMigrationUis?.delete(ui.entity_id);
+    comp.saveDismissedMigrationUis?.();
+    comp.onLayoutChanged(res.layout, ui);
+    comp.syncRacedayPreview(res.layout, ui);
+    comp.showSuccessModal = true;
+    comp.successModalTitle = "COMMON_RESTORE";
+    comp.successModalMessage = "UE_MIGRATION_RESTORE_SUCCESS";
+    comp.cdr?.markForCheck();
+  } else {
+    comp.logger?.warn(
+      "Could not find pre-migration layout to restore for",
+      ui?.name,
+    );
+  }
+}
+
+export function handleUpgradeLegacyHeatView(comp: any, ui: CustomUI): void {
+  const isPractice =
+    ui.entity_id === "practice_ui_layout_rc_ai" ||
+    ui.name?.toLowerCase().includes("practice");
+  const res = upgradePreservedHeatViewLayout(ui, isPractice);
+  if (res.upgraded && res.layout) {
+    comp.dismissedMigrationUis?.delete(ui.entity_id);
+    comp.saveDismissedMigrationUis?.();
+    comp.onLayoutChanged(res.layout, ui);
+    comp.syncRacedayPreview(res.layout, ui);
+    comp.showSuccessModal = true;
+    comp.successModalTitle = "COMMON_SUCCESS";
+    comp.successModalMessage = "UE_MIGRATION_UPGRADE_SUCCESS";
+    comp.cdr?.markForCheck();
+  }
+}
+
+export function handleExportMigrationDiagnostics(
+  comp: any,
+  ui: CustomUI,
+): void {
+  exportMigrationDiagnostics(ui, comp.getLayout(ui));
+}
+
+export class MigrationController {
+  private readonly DISMISSED_MIGRATION_STORAGE_KEY =
+    "rc_dismissed_migration_uis";
+  dismissedMigrationUis: Set<string> = this.loadDismissedMigrationUis();
+
+  constructor(private comp: any) {}
+
+  public loadDismissedMigrationUis(): Set<string> {
+    try {
+      const raw = localStorage.getItem(this.DISMISSED_MIGRATION_STORAGE_KEY);
+      if (raw) {
+        const arr = JSON.parse(raw);
+        if (Array.isArray(arr)) {
+          return new Set(arr);
+        }
+      }
+    } catch {
+      // ignore
+    }
+    return new Set<string>();
+  }
+
+  public saveDismissedMigrationUis(): void {
+    try {
+      localStorage.setItem(
+        this.DISMISSED_MIGRATION_STORAGE_KEY,
+        JSON.stringify(Array.from(this.dismissedMigrationUis)),
+      );
+    } catch {
+      // ignore
+    }
+  }
+
+  public isPreMigrationBackup(ui: CustomUI): boolean {
+    return Boolean(ui?.name && ui.name.endsWith(" (Pre-Migration Backup)"));
+  }
+
+  public hasAvailablePreMigrationBackup(ui: CustomUI): boolean {
+    if (!ui || this.isPreMigrationBackup(ui)) {
+      return false;
+    }
+    const layout = this.comp.getLayout(ui);
+    if (
+      layout?.preserveLegacyHeatView ||
+      layout?.widgets?.some((w: any) => w.widgetType === "lane-view")
+    ) {
+      return false;
+    }
+    if ((ui as any)?._wasMigrated || (ui as any)?._preMigrationLayout) {
+      return true;
+    }
+    if (ui.entity_id && preMigrationLayoutCache.has(ui.entity_id)) {
+      return true;
+    }
+    const backupName =
+      `${(ui.name || "").trim()} (Pre-Migration Backup)`.toLowerCase();
+    if (
+      this.comp.customUIs?.some(
+        (u: CustomUI) => (u.name || "").trim().toLowerCase() === backupName,
+      )
+    ) {
+      return true;
+    }
+    if (
+      ui.entity_id === "default_ui_layout_rc_ai" ||
+      ui.entity_id === "practice_ui_layout_rc_ai" ||
+      ui.is_default
+    ) {
+      return true;
+    }
+    return false;
+  }
+
+  public isMigratedLayout(ui: CustomUI): boolean {
+    if (!ui?.entity_id) {
+      return false;
+    }
+    if (this.dismissedMigrationUis.has(ui.entity_id)) {
+      return false;
+    }
+    return this.hasAvailablePreMigrationBackup(ui);
+  }
+
+  public canUpgradeLegacyHeatView(ui: CustomUI): boolean {
+    if (!ui?.entity_id) {
+      return false;
+    }
+    if (this.dismissedMigrationUis.has(ui.entity_id)) {
+      return false;
+    }
+    const layout = this.comp.getLayout(ui);
+    return LaneViewMigrationHelper.canUpgradeLegacyHeatView(layout, ui?.name);
+  }
+
+  public canReopenMigrationBanner(ui: CustomUI): boolean {
+    if (!ui?.entity_id) {
+      return false;
+    }
+    if (!this.dismissedMigrationUis.has(ui.entity_id)) {
+      return false;
+    }
+    const layout = this.comp.getLayout(ui);
+    const canUpgrade = LaneViewMigrationHelper.canUpgradeLegacyHeatView(
+      layout,
+      ui?.name,
+    );
+    const canRestore = this.hasAvailablePreMigrationBackup(ui);
+    return canUpgrade || canRestore;
+  }
+
+  public dismissMigrationBanner(ui: CustomUI): void {
+    if (ui?.entity_id) {
+      this.dismissedMigrationUis.add(ui.entity_id);
+      this.saveDismissedMigrationUis();
+      this.comp.cdr?.markForCheck();
+    }
+  }
+
+  public reopenMigrationBanner(ui: CustomUI): void {
+    if (ui?.entity_id) {
+      this.dismissedMigrationUis.delete(ui.entity_id);
+      this.saveDismissedMigrationUis();
+      this.comp.cdr?.markForCheck();
+    }
+  }
+
+  public restorePreMigrationBackup(ui: CustomUI): void {
+    this.comp.pendingRestoreBackupUi = ui;
+    this.comp.showRestoreBackupConfirm = true;
+    this.comp.cdr?.markForCheck();
+  }
+
+  public confirmRestorePreMigrationBackup(): void {
+    if (this.comp.pendingRestoreBackupUi) {
+      const ui = this.comp.pendingRestoreBackupUi;
+      this.comp.pendingRestoreBackupUi = null;
+      this.comp.showRestoreBackupConfirm = false;
+      handleRestorePreMigrationBackup(this.comp, ui);
+    }
+  }
+
+  public cancelRestorePreMigrationBackup(): void {
+    this.comp.pendingRestoreBackupUi = null;
+    this.comp.showRestoreBackupConfirm = false;
+    this.comp.cdr?.markForCheck();
+  }
+
+  public upgradeLegacyHeatView(ui: CustomUI): void {
+    this.comp.pendingUpgradeHeatViewUi = ui;
+    this.comp.showUpgradeHeatViewConfirm = true;
+    this.comp.cdr?.markForCheck();
+  }
+
+  public confirmUpgradeLegacyHeatView(): void {
+    if (this.comp.pendingUpgradeHeatViewUi) {
+      const ui = this.comp.pendingUpgradeHeatViewUi;
+      this.comp.pendingUpgradeHeatViewUi = null;
+      this.comp.showUpgradeHeatViewConfirm = false;
+      handleUpgradeLegacyHeatView(this.comp, ui);
+    }
+  }
+
+  public cancelUpgradeLegacyHeatView(): void {
+    this.comp.pendingUpgradeHeatViewUi = null;
+    this.comp.showUpgradeHeatViewConfirm = false;
+    this.comp.cdr?.markForCheck();
+  }
+
+  public exportMigrationDiagnostics(ui: CustomUI): void {
+    handleExportMigrationDiagnostics(this.comp, ui);
+  }
+}
+
+export class LayoutActionsController {
+  constructor(private comp: any) {}
+
+  resetLayout = (ui: CustomUI) => handleResetLayout(this.comp, ui);
+  clearLayout = (ui: CustomUI) => handleClearLayout(this.comp, ui);
+  clearCurrentLayout = () => handleClearCurrentLayout(this.comp);
+  resetCurrentLayout = () => handleResetCurrentLayout(this.comp);
+  resetRacedayLayout = () => handleResetRacedayLayout(this.comp);
+  resetPracticeRacedayLayout = () =>
+    handleResetPracticeRacedayLayout(this.comp);
+  exportCurrentLayout = () => handleExportCurrentLayout(this.comp);
+  exportLayout = (ui: CustomUI) => handleExportLayout(this.comp, ui);
+  exportRacedayLayout = () => handleExportRacedayLayout(this.comp);
+  exportPracticeRacedayLayout = () =>
+    handleExportPracticeRacedayLayout(this.comp);
+  onImportCurrentLayout = (event: Event) =>
+    handleImportCurrentLayout(this.comp, event);
+  onImportLayout = (event: Event, ui: CustomUI) =>
+    handleImportLayout(this.comp, event, ui);
+  onImportRacedayLayout = (event: Event) =>
+    handleImportRacedayLayout(this.comp, event);
+  onImportPracticeRacedayLayout = (event: Event) =>
+    handleImportPracticeRacedayLayout(this.comp, event);
+  onRacedayLayoutChanged = (newLayout: any) =>
+    this.comp.onLayoutChanged(
+      newLayout,
+      this.comp.displayCustomUIs.find(
+        (u: any) => u.entity_id === "default_ui_layout_rc_ai",
+      ),
+    );
+  onPracticeRacedayLayoutChanged = (newLayout: any) =>
+    this.comp.onLayoutChanged(
+      newLayout,
+      this.comp.displayCustomUIs.find(
+        (u: any) => u.entity_id === "practice_ui_layout_rc_ai",
+      ),
+    );
+  getScaledDefaultLayout = (isPractice = false) =>
+    getDefaultLayoutResetData(isPractice).defaultLayout;
+  getTargetCustomUi = (kind?: "practice" | "raceday" | "current") =>
+    resolveTargetCustomUi(
+      kind,
+      this.comp.activeCustomUiId,
+      this.comp.displayCustomUIs,
+      this.comp.isCurrentLayoutPractice,
+    );
 }

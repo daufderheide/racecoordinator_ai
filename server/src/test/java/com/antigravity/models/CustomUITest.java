@@ -2,6 +2,7 @@ package com.antigravity.models;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
@@ -219,5 +220,39 @@ public class CustomUITest {
     assertTrue(CustomUI.isLegacyFuelName("Fuel UI Layout"));
     assertTrue(CustomUI.isLegacyFuelName("default fuel ui layout"));
     assertFalse(CustomUI.isLegacyFuelName("Custom Leaderboard"));
+  }
+
+  @Test
+  public void testHasLaneView() {
+    assertFalse(CustomUI.hasLaneView(null));
+    assertFalse(CustomUI.hasLaneView(""));
+    assertFalse(CustomUI.hasLaneView("{\"widgets\":[{\"widgetType\":\"leaderboard\"}]}"));
+    assertTrue(CustomUI.hasLaneView("{\"widgets\":[{\"widgetType\":\"lane-view\"}]}"));
+    assertTrue(CustomUI.hasLaneView("{\"widgets\":[{\"widgetType\": \"lane-view\"}]}"));
+    assertFalse(
+        CustomUI.hasLaneView(
+            "{\"preserveLegacyHeatView\":true,\"widgets\":[{\"widgetType\":\"lane-view\"}]}"));
+    assertEquals(" (Pre-Migration Backup)", CustomUI.PRE_MIGRATION_BACKUP_SUFFIX);
+  }
+
+  @Test
+  public void testEnsurePracticeTopRowCoordinates() {
+    assertNull(CustomUI.ensurePracticeTopRowCoordinates(null));
+    assertEquals("", CustomUI.ensurePracticeTopRowCoordinates(""));
+    assertEquals("not json", CustomUI.ensurePracticeTopRowCoordinates("not json"));
+
+    String input =
+        "{\"widgets\":["
+            + "{\"id\":\"widget-menu-bar\",\"widgetType\":\"menu-bar\",\"x\":0,\"y\":0,\"width\":1920,\"height\":55},"
+            + "{\"id\":\"widget-timer\",\"widgetType\":\"timer\",\"x\":779,\"y\":49,\"width\":441,\"height\":112},"
+            + "{\"id\":\"widget-qr\",\"widgetType\":\"qr\",\"x\":469,\"y\":50,\"width\":132,\"height\":111}"
+            + "]}";
+
+    String result = CustomUI.ensurePracticeTopRowCoordinates(input);
+    assertTrue(result.contains("\"height\":38"));
+    assertTrue(result.contains("\"y\":38"));
+    assertTrue(result.contains("\"height\":111"));
+    assertFalse(result.contains("\"y\":49"));
+    assertFalse(result.contains("\"y\":50"));
   }
 }

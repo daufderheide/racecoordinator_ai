@@ -7,6 +7,7 @@ import {
   executeClearLayout,
   handleClearCurrentLayout,
   handleClearLayout,
+  handleExportMigrationDiagnostics,
   handleExportPracticeRacedayLayout,
   handleExportRacedayLayout,
   handleImportPracticeRacedayLayout,
@@ -14,6 +15,8 @@ import {
   handleResetCurrentLayout,
   handleResetPracticeRacedayLayout,
   handleResetRacedayLayout,
+  handleRestorePreMigrationBackup,
+  handleUpgradeLegacyHeatView,
 } from "./ui-editor-layout-actions.helper";
 
 describe("ui-editor-layout-actions.helper", () => {
@@ -254,6 +257,107 @@ describe("ui-editor-layout-actions.helper", () => {
 
       handleImportPracticeRacedayLayout(mockComp, event);
       expect(mockComp.onImportLayout).toHaveBeenCalledWith(event, ui);
+    });
+  });
+
+  describe("migration layout actions", () => {
+    let mockComp: any;
+    let customUi: CustomUI;
+
+    beforeEach(() => {
+      customUi = {
+        entity_id: "ui_migrate_test",
+        name: "Test Layout",
+        is_default: false,
+        layoutJson: JSON.stringify({
+          preserveLegacyHeatView: true,
+          widgets: [
+            {
+              id: "w-lane",
+              widgetType: "lane-view",
+              x: 0,
+              y: 0,
+              width: 800,
+              height: 400,
+              zIndex: 100,
+            },
+          ],
+        }),
+      };
+
+      mockComp = {
+        customUIs: [customUi],
+        dismissedMigrationUis: new Set<string>(["ui_migrate_test"]),
+        saveDismissedMigrationUis: jasmine.createSpy(
+          "saveDismissedMigrationUis",
+        ),
+        onLayoutChanged: jasmine.createSpy("onLayoutChanged"),
+        syncRacedayPreview: jasmine.createSpy("syncRacedayPreview"),
+        cdr: { markForCheck: jasmine.createSpy("markForCheck") },
+        getLayout: jasmine
+          .createSpy("getLayout")
+          .and.returnValue({ widgets: [] }),
+        logger: { warn: jasmine.createSpy("warn") },
+      };
+    });
+
+    it("should handle upgrade legacy heat view and un-dismiss migration banner", () => {
+      handleUpgradeLegacyHeatView(mockComp, customUi);
+
+      expect(mockComp.dismissedMigrationUis.has("ui_migrate_test")).toBeFalse();
+      expect(mockComp.saveDismissedMigrationUis).toHaveBeenCalled();
+      expect(mockComp.onLayoutChanged).toHaveBeenCalled();
+      expect(mockComp.syncRacedayPreview).toHaveBeenCalled();
+      expect(mockComp.showSuccessModal).toBeTrue();
+      expect(mockComp.successModalTitle).toBe("COMMON_SUCCESS");
+      expect(mockComp.successModalMessage).toBe("UE_MIGRATION_UPGRADE_SUCCESS");
+      expect(mockComp.cdr.markForCheck).toHaveBeenCalled();
+    });
+
+    it("should handle restore pre-migration backup and un-dismiss migration banner", () => {
+      const backupUi: CustomUI = {
+        entity_id: "ui_backup",
+        name: "Test Layout (Pre-Migration Backup)",
+        is_default: false,
+        layoutJson: JSON.stringify({
+          widgets: [{ id: "legacy-w", widgetType: "lane-view" }],
+        }),
+      };
+      mockComp.customUIs.push(backupUi);
+
+      handleRestorePreMigrationBackup(mockComp, customUi);
+
+      expect(mockComp.dismissedMigrationUis.has("ui_migrate_test")).toBeFalse();
+      expect(mockComp.saveDismissedMigrationUis).toHaveBeenCalled();
+      expect(mockComp.onLayoutChanged).toHaveBeenCalled();
+      expect(mockComp.syncRacedayPreview).toHaveBeenCalled();
+      expect(mockComp.showSuccessModal).toBeTrue();
+      expect(mockComp.successModalTitle).toBe("COMMON_RESTORE");
+      expect(mockComp.successModalMessage).toBe("UE_MIGRATION_RESTORE_SUCCESS");
+      expect(mockComp.cdr.markForCheck).toHaveBeenCalled();
+    });
+
+    it("should log warning if pre-migration layout cannot be restored", () => {
+      const nonRestorableUi: CustomUI = {
+        entity_id: "no_backup",
+        name: "Non-Restorable",
+        is_default: false,
+      };
+
+      handleRestorePreMigrationBackup(mockComp, nonRestorableUi);
+
+      expect(mockComp.logger.warn).toHaveBeenCalledWith(
+        "Could not find pre-migration layout to restore for",
+        "Non-Restorable",
+      );
+      expect(mockComp.onLayoutChanged).not.toHaveBeenCalled();
+    });
+
+    it("should handle export migration diagnostics", () => {
+      expect(() =>
+        handleExportMigrationDiagnostics(mockComp, customUi),
+      ).not.toThrow();
+      expect(mockComp.getLayout).toHaveBeenCalledWith(customUi);
     });
   });
 });

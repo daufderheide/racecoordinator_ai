@@ -215,62 +215,111 @@ export function computeHeatDataLastLaps(
   settings: LaneColumnWidgetSettings,
   parent: any,
 ): HeatDataLapItem[] {
-  if (!targetDriver) return [];
+  const decimals =
+    settings.timeDecimalPlaces !== undefined
+      ? Number(settings.timeDecimalPlaces)
+      : 3;
+  const emptyLapPlaceholder =
+    decimals > 0 ? "--." + "-".repeat(decimals) : "--";
+
+  if (!targetDriver) {
+    if (parent?.getLastLaps) {
+      const colDef = parent.columns?.find(
+        (c: any) => c.propertyName === "lastLaps",
+      );
+      const parentLaps = parent.getLastLaps(
+        targetDriver,
+        colDef,
+        "center-center",
+      );
+      if (
+        parentLaps &&
+        parentLaps.length > 0 &&
+        parentLaps[0]?.lapNumber !== undefined
+      ) {
+        return parentLaps.map((l: any, idx: number) => ({
+          lapNumber: l.lapNumber ?? idx + 1,
+          lapTime: l.lapTime ?? emptyLapPlaceholder,
+          isBest: Boolean(l.isBest),
+          segments: l.segments ?? [],
+        }));
+      }
+    }
+    return Array.from({ length: 5 }, () => ({
+      lapNumber: 0,
+      lapTime: emptyLapPlaceholder,
+      isBest: false,
+      segments: [],
+    }));
+  }
 
   const laps = targetDriver.lapTimes || [];
   const lapsDetails = targetDriver.lapsWithDetails || [];
   const n = laps.length;
 
-  if (n > 0) {
-    const decimals =
-      settings.timeDecimalPlaces !== undefined
-        ? Number(settings.timeDecimalPlaces)
-        : 3;
-    const bestTime = targetDriver.bestLapTime || 0;
+  if (n === 0 && parent?.getLastLaps) {
+    const colDef = parent.columns?.find(
+      (c: any) => c.propertyName === "lastLaps",
+    );
+    const parentLaps = parent.getLastLaps(
+      targetDriver,
+      colDef,
+      "center-center",
+    );
+    if (
+      parentLaps &&
+      parentLaps.length > 0 &&
+      parentLaps[0]?.lapNumber !== undefined
+    ) {
+      return parentLaps.map((l: any, idx: number) => ({
+        lapNumber: l.lapNumber ?? idx + 1,
+        lapTime: l.lapTime ?? emptyLapPlaceholder,
+        isBest: Boolean(l.isBest),
+        segments: l.segments ?? [],
+      }));
+    }
+  }
+  const bestTime = targetDriver.bestLapTime || 0;
 
-    const result: HeatDataLapItem[] = [];
-    for (let i = n - 1; i >= 0; i--) {
-      const val = laps[i] || 0;
-      if (val <= 0) continue;
-
+  const result: HeatDataLapItem[] = [];
+  for (let i = 1; i <= 5; i++) {
+    const index = n - 1 - i;
+    if (index >= 0 && laps[index] && laps[index] > 0) {
+      const val = laps[index];
       const formattedLapTime = val.toFixed(decimals);
       const isBest = bestTime > 0 && Math.abs(val - bestTime) < 0.0001;
 
       const segments: string[] = [];
-      const detail = lapsDetails[i];
+      const detail = lapsDetails[index];
       if (detail?.segments && detail.segments.length > 0) {
-        for (const seg of detail.segments) {
+        const numToDisplay = Math.min(detail.segments.length, 4);
+        for (let s = 0; s < numToDisplay; s++) {
+          const seg = detail.segments[s];
           if (seg > 0) {
             segments.push(seg.toFixed(decimals));
+          } else {
+            segments.push(emptyLapPlaceholder);
           }
         }
       }
 
       result.push({
-        lapNumber: i + 1,
+        lapNumber: index + 1,
         lapTime: formattedLapTime,
         isBest,
         segments,
       });
+    } else {
+      result.push({
+        lapNumber: index >= 0 ? index + 1 : 0,
+        lapTime: emptyLapPlaceholder,
+        isBest: false,
+        segments: [],
+      });
     }
-    return result;
   }
 
-  if (parent?.getLastLaps) {
-    const colDef = parent.columns?.find(
-      (c: any) => c.propertyName === "lastLaps",
-    );
-    const parentLaps =
-      parent.getLastLaps(targetDriver, colDef, "center-center") || [];
-    return parentLaps.map((l: any, idx: number) => ({
-      lapNumber: l.lapNumber ?? idx + 1,
-      lapTime: l.lapTime ?? "--",
-      isBest: Boolean(l.isBest),
-      segments: l.segments ?? [],
-    }));
-  }
-
-  return [];
+  return result;
 }
 
 export function resolvePacingBenchmarkType(
@@ -529,30 +578,52 @@ export function fitColumnTextValue(
 }
 
 export function fitColumnLastLaps(
-  lapsEl: HTMLElement,
-  layoutOrientation: "vertical" | "horizontal",
-): number {
-  const isHorizontal = layoutOrientation === "horizontal";
-  if (isHorizontal) {
-    const containerW = lapsEl.clientWidth;
-    const firstItem = lapsEl.querySelector(
-      ".last-lap-item",
-    ) as HTMLElement | null;
-    const itemW = firstItem ? firstItem.offsetWidth + 8 : 80;
-    if (containerW > 0 && itemW > 0) {
-      return Math.max(1, Math.floor(containerW / itemW));
-    }
-  } else {
-    const containerH = lapsEl.clientHeight;
-    const firstItem = lapsEl.querySelector(
-      ".last-lap-item",
-    ) as HTMLElement | null;
-    const itemH = firstItem ? firstItem.offsetHeight + 4 : 26;
-    if (containerH > 0 && itemH > 0) {
-      return Math.max(1, Math.floor(containerH / itemH));
-    }
+  cardEl: HTMLElement,
+  isVerticalFlow: boolean,
+  baseFontSize: number = 54,
+  lapCount: number = 5,
+  explicitWidth?: number,
+  explicitHeight?: number,
+): { maxLaps: number; fontSize: number } {
+  const containerW =
+    explicitWidth && explicitWidth > 0 ? explicitWidth : cardEl.clientWidth;
+  const containerH =
+    explicitHeight && explicitHeight > 0 ? explicitHeight : cardEl.clientHeight;
+  const totalLaps = Math.min(5, Math.max(1, lapCount || 5));
+
+  if (containerW <= 0 || containerH <= 0) {
+    return { maxLaps: totalLaps, fontSize: baseFontSize };
   }
-  return 1;
+
+  if (isVerticalFlow) {
+    const heightPerLap = (containerH - (totalLaps - 1) * 8) / totalLaps;
+    const maxFontSizeByHeight = Math.floor(heightPerLap * 0.75);
+    const maxFontSizeByWidth = Math.floor((containerW * 0.9 - 20) / 4.5);
+    const targetFontSize = Math.max(
+      12,
+      Math.min(baseFontSize, maxFontSizeByHeight, maxFontSizeByWidth),
+    );
+    const lapHeight = targetFontSize * 1.3 + 8;
+    const maxLaps = Math.max(
+      1,
+      Math.min(totalLaps, Math.floor(containerH / lapHeight)),
+    );
+    return { maxLaps, fontSize: targetFontSize };
+  } else {
+    const maxFontSizeByHeight = Math.floor(containerH * 0.75);
+    const widthPerLap = (containerW - (totalLaps - 1) * 12) / totalLaps;
+    const maxFontSizeByWidth = Math.floor((widthPerLap * 0.9 - 20) / 4.5);
+    const targetFontSize = Math.max(
+      12,
+      Math.min(baseFontSize, maxFontSizeByHeight, maxFontSizeByWidth),
+    );
+    const lapWidth = targetFontSize * 4.5 + 24;
+    const maxLaps = Math.max(
+      1,
+      Math.min(totalLaps, Math.floor(containerW / lapWidth)),
+    );
+    return { maxLaps, fontSize: targetFontSize };
+  }
 }
 
 export function resolveHeatDriverByPosition(

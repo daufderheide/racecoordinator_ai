@@ -50,6 +50,20 @@ public class CustomUI extends Model {
         || "default fuel ui layout".equals(n);
   }
 
+  public static final String PRE_MIGRATION_BACKUP_SUFFIX = " (Pre-Migration Backup)";
+
+  public static boolean hasLaneView(String layoutJson) {
+    if (layoutJson == null || layoutJson.isEmpty()) {
+      return false;
+    }
+    if (layoutJson.contains("\"preserveLegacyHeatView\":true")
+        || layoutJson.contains("\"preserveLegacyHeatView\": true")) {
+      return false;
+    }
+    return layoutJson.contains("\"widgetType\":\"lane-view\"")
+        || layoutJson.contains("\"widgetType\": \"lane-view\"");
+  }
+
   private final String name;
   private final boolean isDefault;
   private final String layoutJson;
@@ -190,11 +204,11 @@ public class CustomUI extends Model {
 
   public static CustomUI createPractice() {
     String layoutJson =
-        "{\"widgets\":[{\"id\":\"widget-menu-bar\",\"widgetType\":\"menu-bar\",\"x\":0,\"y\":0,\"width\":1920,\"height\":55,\"zIndex\":216,\"scaleMode\":\"auto\",\"fontFamily\":\"\",\"textColor\":\"\",\"backgroundColor\":\"\",\"fontSize\":24,\"textScaleFactor\":1},"
-            + "{\"id\":\"widget-timer\",\"widgetType\":\"timer\",\"x\":779,\"y\":49,\"width\":441,\"height\":112,\"zIndex\":218,\"scaleMode\":\"auto\",\"fontFamily\":\"\",\"textColor\":\"\",\"backgroundColor\":\"\",\"fontSize\":24,\"textScaleFactor\":1,\"customSettings\":{\"timeFontFamily\":\"\",\"timeFontSize\":100,\"timeTextColor\":\"\"}},"
-            + "{\"id\":\"widget-branding\",\"widgetType\":\"branding\",\"x\":0,\"y\":49,\"width\":469,\"height\":112,\"zIndex\":206,\"scaleMode\":\"auto\",\"fontFamily\":\"\",\"fontSize\":24,\"textColor\":\"\",\"textScaleFactor\":1,\"backgroundColor\":\"\"},"
-            + "{\"backgroundColor\":\"\",\"fontFamily\":\"\",\"fontSize\":24,\"height\":111,\"id\":\"widget-qr\",\"scaleMode\":\"auto\",\"textColor\":\"\",\"textScaleFactor\":1,\"widgetType\":\"qr\",\"width\":132,\"x\":469,\"y\":50,\"zIndex\":217},"
-            + "{\"id\":\"widget-1783269768449\",\"widgetType\":\"flag\",\"x\":601,\"y\":49,\"width\":178,\"height\":112,\"zIndex\":212,\"scaleMode\":\"auto\",\"fontFamily\":\"\",\"textColor\":\"\",\"backgroundColor\":\"\",\"fontSize\":24,\"textScaleFactor\":1},"
+        "{\"widgets\":[{\"id\":\"widget-menu-bar\",\"widgetType\":\"menu-bar\",\"x\":0,\"y\":0,\"width\":1920,\"height\":38,\"zIndex\":216,\"scaleMode\":\"auto\",\"fontFamily\":\"\",\"textColor\":\"\",\"backgroundColor\":\"\",\"fontSize\":24,\"textScaleFactor\":1},"
+            + "{\"id\":\"widget-timer\",\"widgetType\":\"timer\",\"x\":779,\"y\":38,\"width\":441,\"height\":111,\"zIndex\":218,\"scaleMode\":\"auto\",\"fontFamily\":\"\",\"textColor\":\"\",\"backgroundColor\":\"\",\"fontSize\":24,\"textScaleFactor\":1,\"customSettings\":{\"timeFontFamily\":\"\",\"timeFontSize\":100,\"timeTextColor\":\"\"}},"
+            + "{\"id\":\"widget-branding\",\"widgetType\":\"branding\",\"x\":0,\"y\":38,\"width\":469,\"height\":111,\"zIndex\":206,\"scaleMode\":\"auto\",\"fontFamily\":\"\",\"fontSize\":24,\"textColor\":\"\",\"textScaleFactor\":1,\"backgroundColor\":\"\"},"
+            + "{\"backgroundColor\":\"\",\"fontFamily\":\"\",\"fontSize\":24,\"height\":111,\"id\":\"widget-qr\",\"scaleMode\":\"auto\",\"textColor\":\"\",\"textScaleFactor\":1,\"widgetType\":\"qr\",\"width\":132,\"x\":469,\"y\":38,\"zIndex\":217},"
+            + "{\"id\":\"widget-1783269768449\",\"widgetType\":\"flag\",\"x\":601,\"y\":38,\"width\":178,\"height\":111,\"zIndex\":212,\"scaleMode\":\"auto\",\"fontFamily\":\"\",\"textColor\":\"\",\"backgroundColor\":\"\",\"fontSize\":24,\"textScaleFactor\":1},"
             + "{\"id\":\"widget-1783269787601\",\"widgetType\":\"lane-view\",\"x\":0,\"y\":149,\"width\":1920,\"height\":931,\"zIndex\":180,\"scaleMode\":\"auto\",\"fontFamily\":\"\",\"textColor\":\"\",\"backgroundColor\":\"\",\"fontSize\":24,\"textScaleFactor\":1,\"customSettings\":{\"isVertical\":true,\"sortByStandings\":true,\"highlightRowOnLap\":true,\"timeDecimalPlaces\":3,\"lapDecimalPlaces\":0,\"columnFontFamily\":\"\",\"columnFontSize\":24,\"columnTextColor\":\"\",\"dataFontFamily\":\"\",\"dataFontSize\":54,\"dataTextColor\":\"\",\"insetTimeDecimalPlaces\":3,\"insetLapDecimalPlaces\":2,\"insetFontFamily\":\"\",\"insetFontSize\":24,\"insetTextColor\":\"\"}},"
             + "{\"id\":\"widget-countdown\",\"widgetType\":\"countdown\",\"x\":404,\"y\":386,\"width\":1111,\"height\":298,\"zIndex\":2000,\"scaleMode\":\"auto\",\"customSettings\":{\"orientation\":\"horizontal\",\"lampScale\":1.0,\"blurArea\":\"fullscreen\",\"blurAmount\":50,\"lampSizingMode\":\"custom\",\"previewLampCount\":5,\"maxLamps\":5,\"fadeIn\":true,\"glowEffect\":true,\"glowOverlap\":30,\"glowRedOverlap\":30,\"glowGreenOverlap\":25}}],\"baseWidth\":1920,\"baseHeight\":1080,\"aspectRatio\":\"16:9\",\"scaleMode\":\"stretch\"}";
     String columnsJson =
@@ -503,5 +517,48 @@ public class CustomUI extends Model {
     customSettings.put("glowGreenOverlap", 25);
     countdownWidget.set("customSettings", customSettings);
     return countdownWidget;
+  }
+
+  public static String ensurePracticeTopRowCoordinates(String layoutJson) {
+    if (layoutJson == null || layoutJson.trim().isEmpty()) {
+      return layoutJson;
+    }
+    try {
+      com.fasterxml.jackson.databind.ObjectMapper mapper =
+          new com.fasterxml.jackson.databind.ObjectMapper();
+      com.fasterxml.jackson.databind.JsonNode root = mapper.readTree(layoutJson);
+      if (!root.isObject()) {
+        return layoutJson;
+      }
+      com.fasterxml.jackson.databind.node.ObjectNode rootObj =
+          (com.fasterxml.jackson.databind.node.ObjectNode) root;
+      com.fasterxml.jackson.databind.JsonNode widgetsNode = rootObj.get("widgets");
+      if (widgetsNode != null && widgetsNode.isArray()) {
+        boolean modified = false;
+        com.fasterxml.jackson.databind.node.ArrayNode widgetsArray =
+            (com.fasterxml.jackson.databind.node.ArrayNode) widgetsNode;
+        for (com.fasterxml.jackson.databind.JsonNode widgetNode : widgetsArray) {
+          if (widgetNode.isObject()) {
+            com.fasterxml.jackson.databind.node.ObjectNode wObj =
+                (com.fasterxml.jackson.databind.node.ObjectNode) widgetNode;
+            int y = wObj.has("y") ? wObj.get("y").asInt() : -1;
+            int h = wObj.has("height") ? wObj.get("height").asInt() : -1;
+            String type = wObj.has("widgetType") ? wObj.get("widgetType").asText() : "";
+            if ("menu-bar".equals(type) && h == 55) {
+              wObj.put("height", 38);
+              modified = true;
+            } else if ((y == 49 || y == 50) && (h == 112 || h == 111)) {
+              wObj.put("y", 38);
+              wObj.put("height", 111);
+              modified = true;
+            }
+          }
+        }
+        return modified ? mapper.writeValueAsString(rootObj) : layoutJson;
+      }
+    } catch (Exception e) {
+      // Return original on error
+    }
+    return layoutJson;
   }
 }

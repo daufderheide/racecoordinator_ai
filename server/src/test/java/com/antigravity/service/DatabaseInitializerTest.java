@@ -586,4 +586,68 @@ public class DatabaseInitializerTest {
     SqliteRepository<Race> raceRepo = new SqliteRepository<>(context, "races", Race.class);
     assertEquals(4, raceRepo.findAll().size());
   }
+
+  @Test
+  public void testEnsurePreMigrationBackups() {
+    SqliteRepository<CustomUI> uiRepo =
+        new SqliteRepository<>(context, "custom_uis", CustomUI.class);
+    uiRepo.drop();
+
+    CustomUI customUi =
+        new CustomUI(
+            "My Club Layout",
+            false,
+            "{\"widgets\":[{\"widgetType\":\"lane-view\"}]}",
+            "[]",
+            "{}",
+            "{}",
+            "{}",
+            "{}",
+            "custom_1",
+            null);
+    uiRepo.save(customUi);
+
+    initializer.ensurePreMigrationBackups(context, uiRepo);
+
+    List<CustomUI> uis = uiRepo.findAll();
+    assertEquals(2, uis.size());
+    CustomUI backup =
+        uis.stream()
+            .filter(u -> "My Club Layout (Pre-Migration Backup)".equals(u.getName()))
+            .findFirst()
+            .orElse(null);
+    assertNotNull(backup);
+    assertEquals(
+        "{\"preserveLegacyHeatView\":true,\"widgets\":[{\"widgetType\":\"lane-view\"}]}",
+        backup.getLayoutJson());
+
+    // Verify default UI does NOT get backed up (defaults are restored via built-in definitions)
+    CustomUI defaultUi =
+        new CustomUI(
+            "RaceCoordinator AI",
+            true,
+            "{\"widgets\":[{\"widgetType\":\"lane-view\"}]}",
+            "[]",
+            "{}",
+            "{}",
+            "{}",
+            "{}",
+            CustomUI.DEFAULT_UI_ID,
+            null);
+    uiRepo.save(defaultUi);
+
+    initializer.ensurePreMigrationBackups(context, uiRepo);
+
+    List<CustomUI> uisAfter = uiRepo.findAll();
+    // Size should still be 3 (custom_1, backup, defaultUi)
+    assertEquals(3, uisAfter.size());
+    boolean hasDefaultBackup =
+        uisAfter.stream()
+            .anyMatch(u -> "RaceCoordinator AI (Pre-Migration Backup)".equals(u.getName()));
+    assertFalse(hasDefaultBackup);
+
+    // Running again does not duplicate user backups
+    initializer.ensurePreMigrationBackups(context, uiRepo);
+    assertEquals(3, uiRepo.findAll().size());
+  }
 }

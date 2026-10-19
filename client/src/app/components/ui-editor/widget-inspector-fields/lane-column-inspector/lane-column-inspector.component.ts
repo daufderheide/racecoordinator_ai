@@ -703,12 +703,16 @@ export class LaneColumnInspectorComponent {
     return Boolean(this.currentSettings["isHeaderWidget"]);
   }
 
-  get gridHeaderPlacement(): "top" | "individual" | "none" {
+  get gridHeaderPlacement(): "top" | "individual" | "none" | "left" {
     return LaneColumnGridHelper.getGridHeaderPlacement(this.currentSettings);
   }
 
   get currentGridHeaderHeight(): number {
     return LaneColumnGridHelper.getGridHeaderHeight(this.currentSettings);
+  }
+
+  get currentGridHeaderWidth(): number {
+    return LaneColumnGridHelper.getGridHeaderWidth(this.currentSettings);
   }
 
   get gridHeaderFontFamily(): string {
@@ -865,11 +869,19 @@ export class LaneColumnInspectorComponent {
     );
   }
 
-  onGridHeaderPlacementChange(placement: "top" | "individual" | "none"): void {
+  onGridHeaderPlacementChange(
+    placement: "top" | "individual" | "none" | "left",
+  ): void {
     LaneColumnGridHelper.setGridHeaderPlacement(
       this.currentSettings,
       placement,
       () => this.onFieldChange(),
+    );
+  }
+
+  onGridHeaderWidthChange(width: number): void {
+    LaneColumnGridHelper.setGridHeaderWidth(this.currentSettings, width, () =>
+      this.onFieldChange(),
     );
   }
 
