@@ -1,6 +1,6 @@
 # Changelog
 
-## [v1.0.1-beta.26] - 2026-10-16
+## [v1.0.1-beta.27] - 2026-10-19
 
 ### 🚀 New Features
 
@@ -14,6 +14,7 @@
 
 ### 🐛 Bug Fixes
 
+- **race**: preserve active race during browser refresh grace period ([d4446765](https://github.com/daufderheide/racecoordinator_ai/commit/d4446765))
 - Fixed custom rotation editor heat drag and drop [#986](https://github.com/daufderheide/racecoordinator_ai/issues/986) [skip-screendiffs] ([bd00af24](https://github.com/daufderheide/racecoordinator_ai/commit/bd00af24))
 - Clarify text on team and driver avatar when no image is selected [#982](https://github.com/daufderheide/racecoordinator_ai/issues/982) ([e14739e6](https://github.com/daufderheide/racecoordinator_ai/commit/e14739e6))
 - adjust mouse over/left click and keyboard handleing for the racing and available lists on the raceday setup page [#983](https://github.com/daufderheide/racecoordinator_ai/issues/983) ([ddb62208](https://github.com/daufderheide/racecoordinator_ai/commit/ddb62208))
@@ -77,7 +78,7 @@
 <details>
 <summary>🔍 <b>Full Commit History</b></summary>
 
-<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0...v1.0.1-beta.26">GitHub</a></p>
+<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0...v1.0.1-beta.27">GitHub</a></p>
 </details>
 
 ## [v1.0.0] - 2026-09-27
