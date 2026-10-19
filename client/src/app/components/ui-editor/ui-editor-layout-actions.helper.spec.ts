@@ -59,6 +59,9 @@ describe("ui-editor-layout-actions.helper", () => {
       activeGridSession: { gridId: "grid-test" },
       parsedLayouts: new Map(),
       syncRacedayPreview: jasmine.createSpy("syncRacedayPreview"),
+      captureState: jasmine
+        .createSpy("captureState")
+        .and.callFake(() => mockComp.undoManager.captureState()),
       undoManager: { captureState: jasmine.createSpy("captureState") },
       refreshDisplayProperties: jasmine.createSpy("refreshDisplayProperties"),
       cdr: { detectChanges: jasmine.createSpy("detectChanges") },

@@ -209,7 +209,11 @@ export function handleResetLayout(comp: any, ui?: CustomUI): void {
   if (resetData?.defaultLayout) {
     comp.syncRacedayPreview?.(resetData.defaultLayout, targetUi);
   }
-  comp.undoManager?.captureState?.() || comp.captureState?.();
+  if (typeof comp.captureState === "function") {
+    comp.captureState();
+  } else if (typeof comp.undoManager?.captureState === "function") {
+    comp.undoManager.captureState();
+  }
   comp.refreshDisplayProperties?.();
   comp.cdr?.detectChanges?.() || comp.cdr?.markForCheck?.();
 }
@@ -245,7 +249,11 @@ export function handleClearLayout(comp: any, ui?: CustomUI): void {
     comp.countdownPreviewActiveByUi[uiId] = false;
   }
   comp.syncRacedayPreview?.(clearedLayout, targetUi);
-  comp.undoManager?.captureState?.() || comp.captureState?.();
+  if (typeof comp.captureState === "function") {
+    comp.captureState();
+  } else if (typeof comp.undoManager?.captureState === "function") {
+    comp.undoManager.captureState();
+  }
   comp.refreshDisplayProperties?.();
   comp.cdr?.detectChanges?.() || comp.cdr?.markForCheck?.();
 }
@@ -278,7 +286,11 @@ export function handleImportLayout(
       comp.parsedLayouts.set(ui.entity_id, layout);
     }
     comp.syncRacedayPreview?.(layout, ui);
-    comp.undoManager?.captureState?.() || comp.captureState?.();
+    if (typeof comp.captureState === "function") {
+      comp.captureState();
+    } else if (typeof comp.undoManager?.captureState === "function") {
+      comp.undoManager.captureState();
+    }
     comp.refreshDisplayProperties?.();
     comp.cdr?.detectChanges?.() || comp.cdr?.markForCheck?.();
   });

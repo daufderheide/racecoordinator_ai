@@ -3451,13 +3451,44 @@ describe("UIEditorComponent", () => {
         jasmine.objectContaining({ widgets: [] }),
         customUi,
       );
-      expect(component.undoManager.captureState).toHaveBeenCalled();
+      expect(component.undoManager.captureState).toHaveBeenCalledTimes(1);
 
       spyOn(component, "clearLayout");
       const targetUi = component.getTargetCustomUi("raceday");
       expect(targetUi).toBeDefined();
       component.clearCurrentLayout();
       expect(component.clearLayout).toHaveBeenCalledWith(targetUi!);
+    });
+
+    it("should push exactly one undo state when clearing layout and restore with single undo", () => {
+      const customUi: CustomUI = {
+        entity_id: "default_ui_layout_rc_ai",
+        name: "Default UI",
+        is_default: true,
+        layoutJson: JSON.stringify({
+          baseWidth: 1920,
+          baseHeight: 1080,
+          widgets: [{ id: "w1", widgetType: "lane-view" }],
+        }),
+      };
+      component.displayCustomUIs = [customUi];
+      component.editingState.customUIs = [deepCopy(customUi)];
+      component.editingSettings.racedayLayout = JSON.parse(
+        customUi.layoutJson!,
+      );
+      component.activeCustomUiId = "default_ui_layout_rc_ai";
+      component.undoManager.initialize(component.editingState);
+
+      const initialCount = component.undoManager.undoStackCount;
+      component.clearLayout(customUi);
+
+      expect(component.undoManager.undoStackCount).toBe(initialCount + 1);
+      expect(JSON.parse(customUi.layoutJson!).widgets.length).toBe(0);
+
+      component.undo();
+      const restoredLayout = component.getLayout(customUi);
+      expect(restoredLayout?.widgets.length).toBe(1);
+      expect(restoredLayout?.widgets[0].id).toBe("w1");
     });
   });
 
