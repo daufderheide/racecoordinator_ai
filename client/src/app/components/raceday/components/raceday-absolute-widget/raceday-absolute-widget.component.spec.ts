@@ -738,6 +738,99 @@ describe("RacedayAbsoluteWidgetComponent", () => {
       };
       fixture.componentRef.setInput("widget", posWidget);
       expect(component.widgetLabel).toBe("P1 · LEADER");
+
+      const overallPosWidget = {
+        ...mockWidget,
+        widgetType: "lane-column",
+        customSettings: {
+          gridId: "g1",
+          bindingMode: "overallPosition",
+          targetIndex: 0,
+          customLabel: "Leader",
+        },
+      };
+      fixture.componentRef.setInput("widget", overallPosWidget);
+      expect(component.widgetLabel).toBe("OP1 · LEADER");
+
+      const seedWidget = {
+        ...mockWidget,
+        widgetType: "lane-column",
+        customSettings: {
+          gridId: "g1",
+          bindingMode: "seed",
+          targetIndex: 1,
+          customLabel: "Seed Two",
+        },
+      };
+      fixture.componentRef.setInput("widget", seedWidget);
+      expect(component.widgetLabel).toBe("S2 · SEED TWO");
+    });
+
+    it("should correctly compute isGridMirrored and never mark header widgets as mirrored", () => {
+      const mockSession = {
+        gridId: "g1",
+        sourceLaneIndex: 0,
+        mirrorRows: true,
+      };
+      mockParent.gridSession = () => mockSession;
+      mockParent.layout = {
+        widgets: [{ id: "master-1", customSettings: { gridId: "g1" } }],
+      };
+      fixture.componentRef.setInput("parentComponent", { ...mockParent });
+
+      // Master widget (lane 0)
+      const masterWidget = {
+        id: "master-1",
+        widgetType: "lane-column",
+        customSettings: {
+          gridId: "g1",
+          gridLane: 0,
+          targetIndex: 0,
+        },
+      };
+      fixture.componentRef.setInput("widget", masterWidget);
+      expect(component.isGridMirrored).toBeFalse();
+
+      // Mirrored lane widget (lane 1)
+      const mirroredWidget = {
+        id: "mirror-1",
+        widgetType: "lane-column",
+        customSettings: {
+          gridId: "g1",
+          gridMasterId: "master-1",
+          gridLane: 1,
+          targetIndex: 1,
+        },
+      };
+      fixture.componentRef.setInput("widget", mirroredWidget);
+      expect(component.isGridMirrored).toBeTrue();
+
+      // Header widget: isHeaderWidget is true, gridLane & targetIndex are undefined
+      const headerWidget = {
+        id: "header-1",
+        widgetType: "lane-column",
+        customSettings: {
+          gridId: "g1",
+          gridMasterId: "master-1",
+          isHeaderWidget: true,
+          showHeader: true,
+        },
+      };
+      fixture.componentRef.setInput("widget", headerWidget);
+      expect(component.isGridMirrored).toBeFalse();
+
+      // Disabled mirrorRows
+      const nonMirroredRowWidget = {
+        id: "row-1",
+        widgetType: "lane-column",
+        customSettings: {
+          gridId: "g1",
+          gridLane: 1,
+          mirrorRows: false,
+        },
+      };
+      fixture.componentRef.setInput("widget", nonMirroredRowWidget);
+      expect(component.isGridMirrored).toBeFalse();
     });
 
     it("should correctly compute isSameGridColumn and isSameGridRow", () => {

@@ -83,6 +83,7 @@ function createInitialGridSession(
     totalLanes: options.targetCount,
     direction: options.direction || "vertical",
     sourceLaneIndex: physicalCellIndex,
+    gridType: options.gridType || cs["gridType"] || "heat",
     bindingMode: options.sourceBindingMode ?? "lane",
     headerPlacement: options.headerPlacement ?? "individual",
     headerHeight: options.headerHeight ?? 36,
@@ -292,12 +293,19 @@ function buildEditGridSession(
   const headerHeight = Number(first.customSettings?.["headerHeight"]) || 36;
   const linkColumns = first.customSettings?.["linkColumns"] !== false;
 
+  const gridType =
+    first.customSettings?.["gridType"] ||
+    (gridWidgets.some((w: any) => w.customSettings?.["gridType"] === "overall")
+      ? "overall"
+      : "heat");
+
   return {
     gridId,
     bounds,
     totalLanes,
     direction,
     sourceLaneIndex: 0,
+    gridType,
     bindingMode,
     headerPlacement,
     headerHeight,

@@ -12,7 +12,6 @@ import {
 } from "./lane-grid-label.helper";
 import { LaneGridScrollHelper } from "./lane-grid-scroll.helper";
 import { LaneGridStyleHelper } from "./lane-grid-style.helper";
-import { RacedayLayoutUtils } from "./raceday-layout.utils";
 
 export type { GridLabelConfig, GridLabelPosition };
 
@@ -186,9 +185,7 @@ export class LaneGridReplicationHelper {
       clonedSettings["bindingMode"] = effectiveBindingMode;
       clonedSettings["showHeader"] = showHeader;
       clonedSettings["isHeaderWidget"] = false;
-      if (session.gridType) {
-        clonedSettings["gridType"] = session.gridType;
-      }
+      clonedSettings["gridType"] = session.gridType || "heat";
 
       if (session.mirrorRows === false && existingIndex >= 0) {
         const existing = result[existingIndex];
@@ -206,7 +203,7 @@ export class LaneGridReplicationHelper {
             bindingMode: effectiveBindingMode,
             showHeader,
             isHeaderWidget: false,
-            ...(session.gridType ? { gridType: session.gridType } : {}),
+            gridType: session.gridType || "heat",
           },
         };
       } else {
@@ -273,6 +270,7 @@ export class LaneGridReplicationHelper {
         cellHeightRatio: ratios.cellHeightRatio,
         cellOffsetXRatio: ratios.cellOffsetXRatio,
         cellOffsetYRatio: ratios.cellOffsetYRatio,
+        gridType: session.gridType || "heat",
         bindingMode,
         targetIndex: session.sourceLaneIndex,
         showHeader,
@@ -460,11 +458,17 @@ export class LaneGridReplicationHelper {
       return false;
     });
 
-    const bindingModeOverride = masterWidgets.find(
-      (m) => m.customSettings?.["bindingMode"],
-    )?.customSettings?.["bindingMode"];
-    if (bindingModeOverride) {
-      session.bindingMode = bindingModeOverride as any;
+    if (!session.bindingMode) {
+      const bindingModeOverride = masterWidgets.find(
+        (m) => m.customSettings?.["bindingMode"],
+      )?.customSettings?.["bindingMode"];
+      session.bindingMode = (bindingModeOverride as any) || "lane";
+    }
+    if (!session.gridType) {
+      const gridTypeOverride = masterWidgets.find(
+        (m) => m.customSettings?.["gridType"],
+      )?.customSettings?.["gridType"];
+      session.gridType = (gridTypeOverride as any) || "heat";
     }
 
     let currentWidgets = [...allWidgets];
@@ -730,9 +734,7 @@ export class LaneGridReplicationHelper {
       bindingMode: first.customSettings?.["bindingMode"] || "lane",
       gridType:
         first.customSettings?.["gridType"] ||
-        (RacedayLayoutUtils.isOverallColumnKey(
-          first.customSettings?.["columnKey"],
-        )
+        (gridWidgets.some((w) => w.customSettings?.["gridType"] === "overall")
           ? "overall"
           : "heat"),
       headerPlacement:

@@ -288,11 +288,9 @@ describe("LaneColumnGridHelper", () => {
       expect(settings._gridTypeChanged).toBeTrue();
       expect(changed).toBeTrue();
 
-      // Test fallback to column key
+      // Overall column keys default to "heat" when gridType is not explicitly overall
       const fallbackSettings: any = { columnKey: "overallLapCount" };
-      expect(LaneColumnGridHelper.getGridType(fallbackSettings)).toBe(
-        "overall",
-      );
+      expect(LaneColumnGridHelper.getGridType(fallbackSettings)).toBe("heat");
 
       const heatFallbackSettings: any = { columnKey: "lapCount" };
       expect(LaneColumnGridHelper.getGridType(heatFallbackSettings)).toBe(

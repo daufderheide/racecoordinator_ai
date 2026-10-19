@@ -127,6 +127,7 @@ export class RacedayAbsoluteWidgetComponent
 
   get isGridMirrored(): boolean {
     const s = this.widget().customSettings;
+    if (s?.["isHeaderWidget"]) return false;
     if (s?.["mirrorRows"] === false) return false;
     const session = this.parentComponent()?.gridSession?.();
     if (!session || session.mirrorRows === false) return false;
@@ -182,9 +183,11 @@ export class RacedayAbsoluteWidgetComponent
     const w = this.widget();
     if (w.widgetType === "lane-column") {
       const s = w.customSettings || {};
-      const col = ((s["customLabel"] || s["columnKey"] || "") as string)
+      const rawText = (s["customLabel"] || s["columnKey"] || "") as string;
+      const col = rawText
         .replace(/^driver\./, "")
-        .replace(/([A-Z])/g, " $1")
+        .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+        .replace(/\s+/g, " ")
         .trim()
         .toUpperCase();
       if (s["isHeaderWidget"]) {
@@ -197,7 +200,14 @@ export class RacedayAbsoluteWidgetComponent
             ? s["targetIndex"]
             : 0) + 1;
       const mode = s["bindingMode"] || "lane";
-      const prefix = mode === "position" ? `P${idx}` : `L${idx}`;
+      const prefix =
+        mode === "position"
+          ? `P${idx}`
+          : mode === "overallPosition"
+            ? `OP${idx}`
+            : mode === "seed"
+              ? `S${idx}`
+              : `L${idx}`;
       return col ? `${prefix} · ${col}` : prefix;
     }
     return w.widgetType;

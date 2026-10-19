@@ -442,6 +442,66 @@ describe("RacedayLaneColumnComponent", () => {
       fixture.detectChanges();
       expect(component.targetDriver?.objectId).toBe("driver-2");
     });
+
+    it("Heat Grid: should resolve the heat driver and lane color by lane even for rankOverall, rankHeat, and rankGroup", () => {
+      fixture.componentRef.setInput("parent", mockParent);
+
+      // rankOverall column in Heat Grid Lane 0 -> must resolve driver-1 in Lane 0 with lane color #112233
+      fixture.componentRef.setInput(
+        "widget",
+        createWidget({
+          gridId: "grid-heat-ranks",
+          columnKey: "rankOverall",
+          bindingMode: "lane",
+          targetIndex: 0,
+        }),
+      );
+      fixture.detectChanges();
+      expect(component.targetDriver?.objectId).toBe("driver-1");
+      expect(component.backgroundColor).toBe("#112233");
+
+      // rankOverall column in Heat Grid Lane 1 -> must resolve driver-2 in Lane 1 with lane color #445566
+      fixture.componentRef.setInput(
+        "widget",
+        createWidget({
+          gridId: "grid-heat-ranks",
+          columnKey: "rankOverall",
+          bindingMode: "lane",
+          targetIndex: 1,
+        }),
+      );
+      fixture.detectChanges();
+      expect(component.targetDriver?.objectId).toBe("driver-2");
+      expect(component.backgroundColor).toBe("#223344");
+
+      // rankGroup column in Heat Grid Lane 0 -> must resolve driver-1 in Lane 0 with lane color #112233
+      fixture.componentRef.setInput(
+        "widget",
+        createWidget({
+          gridId: "grid-heat-ranks",
+          columnKey: "rankGroup",
+          bindingMode: "lane",
+          targetIndex: 0,
+        }),
+      );
+      fixture.detectChanges();
+      expect(component.targetDriver?.objectId).toBe("driver-1");
+      expect(component.backgroundColor).toBe("#112233");
+
+      // rankHeat column in Heat Grid Lane 1 -> must resolve driver-2 in Lane 1 with lane color #445566
+      fixture.componentRef.setInput(
+        "widget",
+        createWidget({
+          gridId: "grid-heat-ranks",
+          columnKey: "rankHeat",
+          bindingMode: "lane",
+          targetIndex: 1,
+        }),
+      );
+      fixture.detectChanges();
+      expect(component.targetDriver?.objectId).toBe("driver-2");
+      expect(component.backgroundColor).toBe("#223344");
+    });
   });
 
   it("should inherit background and foreground colors from lane by default", () => {

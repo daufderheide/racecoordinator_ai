@@ -210,6 +210,47 @@ export interface HeatDataLapItem {
   segments: string[];
 }
 
+function tryGetParentLastLaps(
+  targetDriver: DriverHeatData | undefined,
+  parent: any,
+  placeholder: string,
+): HeatDataLapItem[] | undefined {
+  if (!parent?.getLastLaps) return undefined;
+  const colDef = parent.columns?.find(
+    (c: any) => c.propertyName === "lastLaps",
+  );
+  const parentLaps = parent.getLastLaps(targetDriver, colDef, "center-center");
+  if (
+    parentLaps &&
+    parentLaps.length > 0 &&
+    parentLaps[0]?.lapNumber !== undefined
+  ) {
+    return parentLaps.map((l: any, idx: number) => ({
+      lapNumber: l.lapNumber ?? idx + 1,
+      lapTime: l.lapTime ?? placeholder,
+      isBest: Boolean(l.isBest),
+      segments: l.segments ?? [],
+    }));
+  }
+  return undefined;
+}
+
+function extractLapSegments(
+  detail: any,
+  decimals: number,
+  placeholder: string,
+): string[] {
+  const segments: string[] = [];
+  if (detail?.segments && detail.segments.length > 0) {
+    const numToDisplay = Math.min(detail.segments.length, 4);
+    for (let s = 0; s < numToDisplay; s++) {
+      const seg = detail.segments[s];
+      segments.push(seg > 0 ? seg.toFixed(decimals) : placeholder);
+    }
+  }
+  return segments;
+}
+
 export function computeHeatDataLastLaps(
   targetDriver: DriverHeatData | undefined,
   settings: LaneColumnWidgetSettings,
@@ -223,28 +264,12 @@ export function computeHeatDataLastLaps(
     decimals > 0 ? "--." + "-".repeat(decimals) : "--";
 
   if (!targetDriver) {
-    if (parent?.getLastLaps) {
-      const colDef = parent.columns?.find(
-        (c: any) => c.propertyName === "lastLaps",
-      );
-      const parentLaps = parent.getLastLaps(
-        targetDriver,
-        colDef,
-        "center-center",
-      );
-      if (
-        parentLaps &&
-        parentLaps.length > 0 &&
-        parentLaps[0]?.lapNumber !== undefined
-      ) {
-        return parentLaps.map((l: any, idx: number) => ({
-          lapNumber: l.lapNumber ?? idx + 1,
-          lapTime: l.lapTime ?? emptyLapPlaceholder,
-          isBest: Boolean(l.isBest),
-          segments: l.segments ?? [],
-        }));
-      }
-    }
+    const parentLaps = tryGetParentLastLaps(
+      targetDriver,
+      parent,
+      emptyLapPlaceholder,
+    );
+    if (parentLaps) return parentLaps;
     return Array.from({ length: 5 }, () => ({
       lapNumber: 0,
       lapTime: emptyLapPlaceholder,
@@ -257,27 +282,13 @@ export function computeHeatDataLastLaps(
   const lapsDetails = targetDriver.lapsWithDetails || [];
   const n = laps.length;
 
-  if (n === 0 && parent?.getLastLaps) {
-    const colDef = parent.columns?.find(
-      (c: any) => c.propertyName === "lastLaps",
-    );
-    const parentLaps = parent.getLastLaps(
+  if (n === 0) {
+    const parentLaps = tryGetParentLastLaps(
       targetDriver,
-      colDef,
-      "center-center",
+      parent,
+      emptyLapPlaceholder,
     );
-    if (
-      parentLaps &&
-      parentLaps.length > 0 &&
-      parentLaps[0]?.lapNumber !== undefined
-    ) {
-      return parentLaps.map((l: any, idx: number) => ({
-        lapNumber: l.lapNumber ?? idx + 1,
-        lapTime: l.lapTime ?? emptyLapPlaceholder,
-        isBest: Boolean(l.isBest),
-        segments: l.segments ?? [],
-      }));
-    }
+    if (parentLaps) return parentLaps;
   }
   const bestTime = targetDriver.bestLapTime || 0;
 
@@ -286,28 +297,16 @@ export function computeHeatDataLastLaps(
     const index = n - 1 - i;
     if (index >= 0 && laps[index] && laps[index] > 0) {
       const val = laps[index];
-      const formattedLapTime = val.toFixed(decimals);
       const isBest = bestTime > 0 && Math.abs(val - bestTime) < 0.0001;
-
-      const segments: string[] = [];
-      const detail = lapsDetails[index];
-      if (detail?.segments && detail.segments.length > 0) {
-        const numToDisplay = Math.min(detail.segments.length, 4);
-        for (let s = 0; s < numToDisplay; s++) {
-          const seg = detail.segments[s];
-          if (seg > 0) {
-            segments.push(seg.toFixed(decimals));
-          } else {
-            segments.push(emptyLapPlaceholder);
-          }
-        }
-      }
-
       result.push({
         lapNumber: index + 1,
-        lapTime: formattedLapTime,
+        lapTime: val.toFixed(decimals),
         isBest,
-        segments,
+        segments: extractLapSegments(
+          lapsDetails[index],
+          decimals,
+          emptyLapPlaceholder,
+        ),
       });
     } else {
       result.push({
@@ -876,7 +875,8 @@ export function resolveTargetDriver(
   const isOverallGrid =
     isGrid &&
     (settings.gridType === "overall" ||
-      (!settings.gridType && RacedayLayoutUtils.isOverallColumnKey(columnKey)));
+      parent?.gridSession?.()?.gridType === "overall" ||
+      parent?.activeGridSession?.gridType === "overall");
 
   const bindingMode = settings.bindingMode || "lane";
   const targetIndex = settings.targetIndex ?? 0;

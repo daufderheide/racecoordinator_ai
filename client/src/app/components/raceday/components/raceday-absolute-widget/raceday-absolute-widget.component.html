@@ -481,11 +481,23 @@
         class="mirrored-widget-indicator"
         [title]="'UE_GRID_MASTER_HINT' | translate"
       >
-        <i class="fas fa-link me-1"></i>
+        <span class="material-icons me-1" style="font-size: 14px">link</span>
         <span>{{
-          "UE_GRID_LANE_MIRRORED_BADGE"
+          (widget().customSettings?.["bindingMode"] === "position"
+            ? "UE_GRID_POSITION_MIRRORED_BADGE"
+            : widget().customSettings?.["bindingMode"] === "overallPosition"
+              ? "UE_GRID_OVERALL_POSITION_MIRRORED_BADGE"
+              : widget().customSettings?.["bindingMode"] === "seed"
+                ? "UE_GRID_SEED_MIRRORED_BADGE"
+                : "UE_GRID_LANE_MIRRORED_BADGE"
+          )
             | translate
-              : { index: (widget().customSettings?.["gridLane"] || 0) + 1 }
+              : {
+                  index:
+                    (widget().customSettings?.["gridLane"] ??
+                      widget().customSettings?.["targetIndex"] ??
+                      0) + 1,
+                }
         }}</span>
       </div>
     }

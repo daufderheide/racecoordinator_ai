@@ -1,5 +1,3 @@
-import { RacedayLayoutUtils } from "@app/components/raceday/utils/raceday-layout.utils";
-
 export class LaneColumnGridHelper {
   public static getGridHeaderPlacement(
     currentSettings: any,
@@ -382,9 +380,6 @@ export class LaneColumnGridHelper {
   public static getGridType(currentSettings: any): "heat" | "overall" {
     if (currentSettings["gridType"] === "overall") return "overall";
     if (currentSettings["gridType"] === "heat") return "heat";
-    if (RacedayLayoutUtils.isOverallColumnKey(currentSettings["columnKey"])) {
-      return "overall";
-    }
     return "heat";
   }
 
