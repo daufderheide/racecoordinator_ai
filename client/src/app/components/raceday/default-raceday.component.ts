@@ -134,6 +134,7 @@ import { RacedayModalsComponent } from "./components/raceday-modals/raceday-moda
 import { ToolboxGroup, ToolboxGroupHelper } from "./toolbox-group.helper";
 import { LaneGridAnimationHelper } from "./utils/lane-grid-animation.helper";
 import { LaneGridFactoryHelper } from "./utils/lane-grid-factory.helper";
+import { LaneGridHeaderHelper } from "./utils/lane-grid-header.helper";
 import { LaneGridLabelHelper } from "./utils/lane-grid-label.helper";
 import {
   GridResizeHandle,
@@ -8884,11 +8885,27 @@ export class DefaultRacedayComponent
     const session = this.gridSession();
     if (!session || !this.layout?.widgets) return;
     LaneGridReplicationHelper.updateWidgetCellRatios(widget, session);
-    this.layout.widgets = LaneGridReplicationHelper.syncMasterWidgetToLanes(
-      widget,
-      session,
-      this.layout.widgets,
-    );
+    if (session.mirrorRows !== false) {
+      this.layout.widgets = LaneGridReplicationHelper.syncMasterWidgetToLanes(
+        widget,
+        session,
+        this.layout.widgets,
+      );
+    } else {
+      const idx = this.layout.widgets.findIndex((w: any) => w.id === widget.id);
+      if (idx >= 0) {
+        this.layout.widgets[idx] = widget;
+      }
+      const headerHeight =
+        session.headerHeight != null ? Math.max(20, session.headerHeight) : 36;
+      LaneGridHeaderHelper.syncPlacementHeaderWidget(
+        widget,
+        widget,
+        session,
+        headerHeight,
+        this.layout.widgets,
+      );
+    }
     this.layoutChanged.emit(this.layout);
     this.cdr.markForCheck();
   }

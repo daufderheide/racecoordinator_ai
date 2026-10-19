@@ -116,3 +116,68 @@ De keuzelijst **Raster Sortering** op het tabblad Raster bepaalt de rijenvolgord
   - Klik op **Voltooid** om het raster vast te leggen als onafhankelijke widgets.
   - **Sjabloon Opnieuw Bewerken & Loskoppelen**: Als u later een widget van het raster selecteert, toont de Widget-configuratie een kaart waarmee u op **Rastersjabloon Bewerken** kunt klikken (om op elk moment weer naar realtime duplicatiemodus terug te keren) of **Loskoppelen van Raster** (om de koppeling permanent te verbreken).
 
+### Rastersynchronisatie: Kolommen koppelen vs. Rijen spiegelen
+
+Een raster in Race Coordinator AI is een tweedimensionale matrix bestaande uit:
+
+- **Rijen (Deelnemersposities)**: Vertegenwoordigen elke fysieke circuitbaan (**Baan 1, Baan 2, ...**) of racepositie (**Positie 1, Positie 2, ...**). Bij een horizontale rasterrichting worden deze posities als verticale kolommen weergegeven.
+- **Kolommen (Gegevensvelden)**: Vertegenwoordigen afzonderlijke gegevensstatistieken binnen een positie (bijv. *Coureurnaam, Heat-rondenaantal, Laatste Rondetijd, Beste Ronde, Verschil, Autobewijzing*).
+
+De Raster-inspector biedt twee essentiële synchronisatieknoppen in de sectie **Rasterstructuur & Layout**: **Kolommen koppelen** en **Rijen spiegelen** (aangeduid als **Kolommen spiegelen** bij een horizontale layout).
+
+#### Kolommen koppelen
+
+**Kolommen koppelen** regelt de synchronisatie van de visuele stijl over alle verschillende gegevenskolommen in het raster.
+
+- **Ingeschakeld (Standaard)**:
+  - Alle gegevenskolommen delen een identieke visuele stijl.
+  - Het wijzigen van een stijleigenschap op een willekeurige kolom wordt onmiddellijk en automatisch gesynchroniseerd naar alle kolommen in het raster.
+  - **Gesynchroniseerde Eigenschappen**:
+    - **Kopstijl**: Lettertype, lettergrootte, tekstkleur, achtergrondkleur, tekstuitlijning en kophoogte.
+    - **Gegevenscelstijl**: Lettertype, lettergrootte, tekstkleur, achtergrondkleur, wisselen van baankleuren (`useLaneColors`) en waarde-uitlijning.
+    - **Randstijl**: Randweergave, randkleur, randbreedte en hoekafronding.
+    - **Tijdnotatie**: Aantal decimalen, weergaveformaat en subseconde-precisiedrempels.
+    - **Telemetrie-accent**: Rijmarkering bij doorkomst/ronde.
+  - **Interactie met niet-gespiegelde rijen**: Wanneer **Rijen spiegelen** is uitgeschakeld, zijn de rijen van elkaar ontkoppeld. Als **Kolommen koppelen** is ingeschakeld, worden visuele stijlwijzigingen (zoals achtergrondkleur, tekstkleur of lettertypen) op een kolom doorgevoerd naar alle kolommen *binnen die specifieke rij*, zonder andere rijen te beïnvloeden.
+- **Uitgeschakeld**:
+  - Ontkoppelt de stijl van de kolommen. Elke kolom kan een eigen lettergrootte, kleur, rand en uitlijning krijgen (bijv. een grote, vette gele tekst met kader voor de *Coureurnaam*, terwijl het *Rondenaantal* een kleine witte tekst zonder rand behoudt).
+  - Indien uitgeschakeld verschijnen er in de inspector onder elk stijlgedeelte knoppen (**Kopstijl / Waardestijl / Randstijl / Formaat toepassen op alle kolommen**) om selectief en op aanvraag een specifieke stijlcategorie naar alle kolommen door te voeren.
+- **Gedrag bij Uitschakelen**:
+  - Wordt direct in de configuratie opgeslagen.
+  - **Visuele Toestand van het Raster**: Bestaande kolomstijlen veranderen **niet** direct bij het uitschakelen; het raster behoudt zijn huidige uiterlijk.
+  - **Gebruikersactie Vereist**: Om visuele verschillen te zien, moet de gebruiker een specifieke kolom selecteren en de stijlinstellingen aanpassen. Alleen de bewerkte kolom past zich aan.
+- **Gedrag bij Opnieuw Inschakelen**:
+  - Activeert de automatische synchronisatie voor toekomstige bewerkingen.
+  - **Visuele Toestand van het Raster**: Het opnieuw aanvinken van het selectievakje overschrijft andere kolommen **niet** direct met de stijlen van de actieve kolom; bestaande stijlen blijven ongewijzigd.
+  - **Gebruikersactie Vereist**: De gebruiker moet een stijleigenschap wijzigen (bijv. de lettergrootte met 1px aanpassen, een kleur wijzigen of een rand in-/uitschakelen) op een willekeurige kolom. Zodra deze bewerking plaatsvindt, wordt de nieuwe eigenschap direct naar alle kolommen in het raster verspreid. Men kan ook op een van de expliciete knoppen «Toepassen op alle kolommen» klikken.
+
+#### Rijen spiegelen (of Kolommen spiegelen)
+
+**Rijen spiegelen** beheert de duplicatie en geometrische synchronisatie van rij naar rij, uitgaande van de **Hoofdrij (Baan 1 / Positie 1 Master)** naar alle overige rijen (**Banen 2..N**).
+
+- **Ingeschakeld (Standaard)**:
+  - Alle niet-master rijen spiegelen exact de hoofdrij.
+  - Elke verschuiving, formaataanpassing, layoutwijziging of eigenschapsverandering in de master-cel wordt onmiddellijk in realtime gerepliceerd naar alle overige banen of posities.
+  - Niet-master widgets in het raster zijn gekoppeld aan de master en tonen de status **Gespiegeld** (bijv. `Baan 2 (Gespiegeld)`).
+- **Uitgeschakeld**:
+  - Ontkoppelt de niet-master rijen van het mastersjabloon.
+  - Niet-master widgets tonen de status **Onafhankelijk** (bijv. `Baan 2 (Onafhankelijk)`).
+  - De gebruiker kan op elke afzonderlijke rij klikken (bijv. Baan 2 of Positie 3) en de eigenschappen, tekstkleuren, achtergrondkleuren of datatoewijzingen onafhankelijk aanpassen, zonder de master of andere banen te beïnvloeden.
+  - Onder het selectievakje in de inspector verschijnt de knop **Opnieuw spiegelen naar alle rijen**.
+- **Gedrag bij Uitschakelen**:
+  - Treedt direct in werking in de configuratie.
+  - **Visuele Toestand van het Raster**: De layout en celposities verschuiven of veranderen **niet** direct; de huidige posities en stijlen blijven behouden.
+  - **Gebruikersactie Vereist**: De gebruiker moet een niet-master cel selecteren en bewerken om baanspecifieke aanpassingen door te voeren.
+- **Gedrag bij Opnieuw Inschakelen**:
+  - Schakelt de master-replicatie in het raster weer in.
+  - **Onmiddellijke Update**:
+    - Vinkt de gebruiker het selectievakje **Rijen spiegelen** opnieuw aan terwijl een **master-widget** is geselecteerd, dan wordt de master-layout direct opnieuw naar alle gespiegelde banen doorgevoerd, waardoor individuele rij-aanpassingen worden overschreven.
+    - Klikt de gebruiker op de knop **Opnieuw spiegelen naar alle rijen**, dan voert de editor onmiddellijk een volledige rastersynchronisatie uit (`syncAllMasterWidgetsToLanes`), legt het raster vast en werkt zowel het canvas van de UI-editor als de live racepreview direct bij zonder verdere handelingen.
+
+#### Vergelijkingstabel
+
+| Bediening | Richting / Bereik | Wat wordt gesynchroniseerd | Gedrag bij Uitschakelen | Gedrag bij Opnieuw Inschakelen | Direct vs. Gebruikersactie Vereist |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Kolommen koppelen** | Horizontaal (Tussen Kolommen) | Visuele stijl: lettertypen, groottes, tekst-/achtergrondkleuren, randen, koppen, tijdnotaties, markeringen | Kolommen worden onafhankelijk; bestaande stijlen blijven bewaard; knoppen «Toepassen op alle kolommen» verschijnen | Activeert auto-sync voor toekomstige aanpassingen; overschrijft andere kolommen niet direct | **Gebruikersactie Vereist**: Het omzetten van het vinkje wijzigt bestaande stijlen niet. De gebruiker moet een stijleigenschap bewerken om de koppeling actief te maken. |
+| **Rijen spiegelen** | Verticaal (Tussen Rijen / Banen) | Geometrie en instellingen: celbreedte/-hoogte, marges, bindingen gekopieerd van Baan 1 Master naar Banen 2..N | Rijen worden onafhankelijk; inspector toont status `Onafhankelijk`; banen individueel aanpasbaar; knop `Opnieuw spiegelen` verschijnt | Herstelt master-replicatie; master-sjabloon overschrijft individuele baanaanpassingen | **Direct bij Master-selectie of klik op knop**: Klikken op `Opnieuw spiegelen naar alle rijen` of opnieuw activeren op de Master lijnt alle rijen direct uit. Uitschakelen behoudt layout tot bewerking. |
+

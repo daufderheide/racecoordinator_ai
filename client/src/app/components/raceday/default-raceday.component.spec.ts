@@ -12111,6 +12111,59 @@ describe("DefaultRacedayComponent", () => {
       expect(layoutSpy).toHaveBeenCalled();
     });
 
+    it("should not mirror master widget geometry to other lanes when session.mirrorRows is false", () => {
+      const session = {
+        gridId: "test-grid-nomirror",
+        bounds: { x: 100, y: 100, width: 800, height: 400 },
+        totalLanes: 4,
+        direction: "vertical" as const,
+        sourceLaneIndex: 0,
+        bindingMode: "lane" as const,
+        mirrorRows: false,
+      };
+      fixture.componentRef.setInput("gridSession", session);
+      fixture.detectChanges();
+
+      const masterWidget: any = {
+        id: "w-master-1",
+        widgetType: "lane-column",
+        x: 100,
+        y: 100,
+        width: 300,
+        height: 100,
+        customSettings: {
+          gridId: "test-grid-nomirror",
+          gridLane: 0,
+          mirrorRows: false,
+        },
+      };
+
+      const lane1Widget: any = {
+        id: "w-master-1_lane_1",
+        widgetType: "lane-column",
+        x: 100,
+        y: 200,
+        width: 200,
+        height: 80,
+        customSettings: {
+          gridId: "test-grid-nomirror",
+          gridMasterId: "w-master-1",
+          gridLane: 1,
+          mirrorRows: false,
+        },
+      };
+
+      (component as any).layout = {
+        widgets: [masterWidget, lane1Widget],
+      };
+
+      component.onMasterWidgetModified(masterWidget);
+
+      expect(masterWidget.width).toBe(300);
+      expect(lane1Widget.width).toBe(200);
+      expect(lane1Widget.height).toBe(80);
+    });
+
     it("should calculate selectedGridBounds and selectedGridLabel when a grid widget is selected", () => {
       fixture.componentRef.setInput("isUIEditorMode", true);
       fixture.componentRef.setInput("gridSession", null);

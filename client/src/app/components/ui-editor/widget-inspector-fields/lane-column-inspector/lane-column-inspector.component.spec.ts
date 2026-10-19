@@ -938,6 +938,21 @@ describe("LaneColumnInspectorComponent", () => {
       expect(component.currentSettings["headerBackgroundColor"]).toBeFalsy();
       expect(component.change.emit).toHaveBeenCalled();
     });
+
+    it("should set _syncAction = 'header' even when linkColumns is false", () => {
+      component.currentSettings["linkColumns"] = false;
+      const eventText = { target: { value: "#333333" } } as any;
+      component.onColorChange("headerTextColor", eventText);
+      expect(component.currentSettings["_syncAction"]).toBe("header");
+
+      component.currentSettings["_syncAction"] = null;
+      component.resetHeaderTextColor();
+      expect(component.currentSettings["_syncAction"]).toBe("header");
+
+      component.currentSettings["_syncAction"] = null;
+      component.onHeaderStyleChange();
+      expect(component.currentSettings["_syncAction"]).toBe("header");
+    });
   });
 
   describe("isLapColumn", () => {
@@ -1117,16 +1132,24 @@ describe("LaneColumnInspectorComponent", () => {
 
       component.applyHeaderStyleToAll();
       expect(mockSettings._syncAction).toBe("header");
+      expect(mockSettings._forceAllColumns).toBeTrue();
       expect(component.change.emit).toHaveBeenCalled();
 
       component.applyValueStyleToAll();
       expect(mockSettings._syncAction).toBe("value");
+      expect(mockSettings._forceAllColumns).toBeTrue();
 
       component.applyBorderStyleToAll();
       expect(mockSettings._syncAction).toBe("border");
+      expect(mockSettings._forceAllColumns).toBeTrue();
 
       component.applyTimeFormatToAll();
       expect(mockSettings._syncAction).toBe("time");
+      expect(mockSettings._forceAllColumns).toBeTrue();
+
+      component.resetColor("textColor");
+      expect(mockSettings._syncAction).toBe("value");
+      expect(mockSettings._reset_textColor).toBeTrue();
     });
 
     it("should handle grid header font family, font size, colors, alignment, and resets", () => {

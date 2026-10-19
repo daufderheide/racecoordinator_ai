@@ -442,4 +442,80 @@ describe("LaneGridHeaderHelper", () => {
       expect(topL0c1.height).toBe(80);
     });
   });
+
+  describe("syncPlacementHeaderWidget", () => {
+    it("should update existing header widget styling and dimensions from updatedMaster", () => {
+      const master: AbsoluteWidgetNode = {
+        id: "master-c1",
+        widgetType: "lane-column",
+        x: 100,
+        y: 140,
+        width: 150,
+        height: 60,
+        zIndex: 10,
+        customSettings: {
+          gridId: "g-header-sync",
+          gridLane: 0,
+          headerPlacement: "top",
+          headerFontSize: 24,
+          headerTextColor: "#ff0000",
+          headerBackgroundColor: "#000000",
+          headerFontFamily: "Roboto",
+        },
+      };
+
+      const existingHeader: AbsoluteWidgetNode = {
+        id: "master-c1_grid_header",
+        widgetType: "lane-column",
+        x: 100,
+        y: 100,
+        width: 120,
+        height: 40,
+        zIndex: 11,
+        customSettings: {
+          gridId: "g-header-sync",
+          gridMasterId: "master-c1",
+          isHeaderWidget: true,
+          headerPlacement: "top",
+          headerHeight: 40,
+          headerFontSize: 14,
+          headerTextColor: "#ffffff",
+          headerBackgroundColor: "#333333",
+        },
+      };
+
+      const session: any = {
+        gridId: "g-header-sync",
+        headerPlacement: "top",
+        headerHeight: 40,
+        bounds: { x: 100, y: 100, width: 500, height: 300 },
+      };
+
+      const result = [master, existingHeader];
+
+      LaneGridHeaderHelper.syncPlacementHeaderWidget(
+        master,
+        master,
+        session,
+        40,
+        result,
+      );
+
+      const updatedHeader = result.find(
+        (w) => w.id === "master-c1_grid_header",
+      );
+      expect(updatedHeader).toBeDefined();
+      expect(updatedHeader?.width).toBe(150);
+      expect(updatedHeader?.customSettings?.["headerFontSize"]).toBe(24);
+      expect(updatedHeader?.customSettings?.["headerTextColor"]).toBe(
+        "#ff0000",
+      );
+      expect(updatedHeader?.customSettings?.["headerBackgroundColor"]).toBe(
+        "#000000",
+      );
+      expect(updatedHeader?.customSettings?.["headerFontFamily"]).toBe(
+        "Roboto",
+      );
+    });
+  });
 });

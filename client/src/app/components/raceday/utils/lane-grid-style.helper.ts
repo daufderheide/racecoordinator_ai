@@ -6,6 +6,7 @@ export class LaneGridStyleHelper {
     propertyGroup: "header" | "value" | "border" | "time" | "highlight",
     sourceSettings: Record<string, any>,
     allWidgets: AbsoluteWidgetNode[],
+    sourceWidgetId?: string,
   ): AbsoluteWidgetNode[] {
     if (!gridId || !sourceSettings || !allWidgets) return allWidgets || [];
 
@@ -22,6 +23,9 @@ export class LaneGridStyleHelper {
       "valueFontSize",
       "valueTextColor",
       "valueAlignment",
+      "backgroundColor",
+      "textColor",
+      "useLaneColors",
     ];
     const borderKeys = [
       "showBorder",
@@ -45,6 +49,10 @@ export class LaneGridStyleHelper {
     else if (propertyGroup === "highlight") targetKeys = highlightKeys;
     else if (propertyGroup === "time") targetKeys = timeKeys;
 
+    const sourceMasterId =
+      sourceSettings["gridMasterId"] || sourceWidgetId || "";
+    const forceAll = Boolean(sourceSettings["_forceAllColumns"]);
+
     return allWidgets.map((w) => {
       if (w.customSettings?.["gridId"] !== gridId) return w;
       if (
@@ -61,6 +69,12 @@ export class LaneGridStyleHelper {
         propertyGroup !== "border"
       ) {
         return w;
+      }
+      if (!forceAll && sourceSettings["linkColumns"] === false) {
+        const wMasterId = w.customSettings?.["gridMasterId"] || w.id;
+        if (sourceMasterId && wMasterId !== sourceMasterId) {
+          return w;
+        }
       }
       if (
         sourceSettings["mirrorRows"] === false &&

@@ -161,10 +161,16 @@ export class RacedayAbsoluteWidgetComponent
   }
 
   get isHeightAutoCalculated(): boolean {
+    if (this.widget().customSettings?.["mirrorRows"] === false) return false;
+    const session = this.parentComponent()?.gridSession?.();
+    if (session && session.mirrorRows === false) return false;
     return this.isWidgetInGrid && this.gridDirection === "vertical";
   }
 
   get isWidthAutoCalculated(): boolean {
+    if (this.widget().customSettings?.["mirrorRows"] === false) return false;
+    const session = this.parentComponent()?.gridSession?.();
+    if (session && session.mirrorRows === false) return false;
     return this.isWidgetInGrid && this.gridDirection === "horizontal";
   }
 

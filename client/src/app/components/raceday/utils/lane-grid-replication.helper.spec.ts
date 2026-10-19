@@ -2022,5 +2022,117 @@ describe("LaneGridReplicationHelper", () => {
       expect(healedMaster.customSettings?.["cellOffsetYRatio"]).toBe(0);
       expect(healedMaster.y >= 140).toBeTrue();
     });
+
+    it("should preserve width and height of existing non-master widgets when mirrorRows is false", () => {
+      const master: AbsoluteWidgetNode = {
+        id: "m-col-1",
+        widgetType: "lane-column",
+        x: 100,
+        y: 100,
+        width: 250,
+        height: 50,
+        zIndex: 10,
+        customSettings: {
+          gridId: "g-nomirror",
+          gridLane: 0,
+          targetIndex: 0,
+          mirrorRows: false,
+          linkColumns: false,
+          cellWidthRatio: 250 / 600,
+          cellHeightRatio: 1.0,
+        },
+      };
+
+      const existingLane1: AbsoluteWidgetNode = {
+        id: "m-col-1_lane_1",
+        widgetType: "lane-column",
+        x: 100,
+        y: 150,
+        width: 180,
+        height: 40,
+        zIndex: 10,
+        customSettings: {
+          gridId: "g-nomirror",
+          gridMasterId: "m-col-1",
+          gridLane: 1,
+          targetIndex: 1,
+          mirrorRows: false,
+          linkColumns: false,
+        },
+      };
+
+      const session: LaneGridSession = {
+        gridId: "g-nomirror",
+        bounds: { x: 100, y: 100, width: 600, height: 200 },
+        totalLanes: 4,
+        direction: "vertical",
+        sourceLaneIndex: 0,
+        headerPlacement: "none",
+        bindingMode: "lane",
+        mirrorRows: false,
+        linkColumns: false,
+      };
+
+      // Resizing master column width to 300
+      const resizedMaster: AbsoluteWidgetNode = {
+        ...master,
+        width: 300,
+        customSettings: {
+          ...master.customSettings,
+          cellWidthRatio: 300 / 600,
+        },
+      };
+
+      const result = LaneGridReplicationHelper.syncMasterWidgetToLanes(
+        resizedMaster,
+        session,
+        [resizedMaster, existingLane1],
+      );
+
+      const updatedLane1 = result.find((w) => w.id === "m-col-1_lane_1");
+      expect(updatedLane1).toBeDefined();
+      expect(updatedLane1?.width).toBe(180);
+      expect(updatedLane1?.height).toBe(40);
+    });
+
+    it("should allow independent column widths for horizontal grids when mirrorRows is false", () => {
+      const master: AbsoluteWidgetNode = {
+        id: "m-col-horiz",
+        widgetType: "lane-column",
+        x: 100,
+        y: 100,
+        width: 80,
+        height: 200,
+        zIndex: 10,
+        customSettings: {
+          gridId: "g-horiz-nomirror",
+          gridLane: 0,
+          targetIndex: 0,
+          mirrorRows: false,
+          cellWidthRatio: 80 / 150,
+          cellHeightRatio: 1.0,
+        },
+      };
+
+      const session: LaneGridSession = {
+        gridId: "g-horiz-nomirror",
+        bounds: { x: 100, y: 100, width: 600, height: 200 },
+        totalLanes: 4,
+        direction: "horizontal",
+        sourceLaneIndex: 0,
+        headerPlacement: "none",
+        bindingMode: "lane",
+        mirrorRows: false,
+      };
+
+      const result = LaneGridReplicationHelper.syncMasterWidgetToLanes(
+        master,
+        session,
+        [master],
+      );
+
+      const updatedMaster = result.find((w) => w.id === "m-col-horiz");
+      expect(updatedMaster?.width).toBe(80);
+    });
   });
 });

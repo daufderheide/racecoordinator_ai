@@ -227,4 +227,255 @@ describe("LaneGridStyleHelper", () => {
     );
     expect(updated2[0].customSettings?.["valueFontSize"]).toBe(16);
   });
+
+  it("should scope header style sync to the target column when linkColumns is false", () => {
+    const multiColWidgets: AbsoluteWidgetNode[] = [
+      {
+        id: "col-1",
+        widgetType: "lane-column",
+        x: 0,
+        y: 36,
+        width: 150,
+        height: 50,
+        zIndex: 1,
+        customSettings: {
+          gridId,
+          gridLane: 0,
+          linkColumns: false,
+        },
+      },
+      {
+        id: "col-1_grid_header",
+        widgetType: "lane-column",
+        x: 0,
+        y: 0,
+        width: 150,
+        height: 36,
+        zIndex: 2,
+        customSettings: {
+          gridId,
+          gridMasterId: "col-1",
+          isHeaderWidget: true,
+          linkColumns: false,
+        },
+      },
+      {
+        id: "col-2",
+        widgetType: "lane-column",
+        x: 150,
+        y: 36,
+        width: 100,
+        height: 50,
+        zIndex: 1,
+        customSettings: {
+          gridId,
+          gridLane: 0,
+          linkColumns: false,
+        },
+      },
+      {
+        id: "col-2_grid_header",
+        widgetType: "lane-column",
+        x: 150,
+        y: 0,
+        width: 100,
+        height: 36,
+        zIndex: 2,
+        customSettings: {
+          gridId,
+          gridMasterId: "col-2",
+          isHeaderWidget: true,
+          linkColumns: false,
+        },
+      },
+    ];
+
+    const updated = LaneGridStyleHelper.syncCrossColumnProperty(
+      gridId,
+      "header",
+      { linkColumns: false, headerFontSize: 24, headerTextColor: "#00ff00" },
+      multiColWidgets,
+      "col-1",
+    );
+
+    expect(updated[0].customSettings?.["headerFontSize"]).toBe(24);
+    expect(updated[0].customSettings?.["headerTextColor"]).toBe("#00ff00");
+    expect(updated[1].customSettings?.["headerFontSize"]).toBe(24);
+    expect(updated[1].customSettings?.["headerTextColor"]).toBe("#00ff00");
+
+    expect(updated[2].customSettings?.["headerFontSize"]).toBeUndefined();
+    expect(updated[2].customSettings?.["headerTextColor"]).toBeUndefined();
+    expect(updated[3].customSettings?.["headerFontSize"]).toBeUndefined();
+    expect(updated[3].customSettings?.["headerTextColor"]).toBeUndefined();
+
+    const updatedFromHeader = LaneGridStyleHelper.syncCrossColumnProperty(
+      gridId,
+      "header",
+      {
+        gridMasterId: "col-2",
+        isHeaderWidget: true,
+        linkColumns: false,
+        headerFontSize: 18,
+        headerTextColor: "#ff00ff",
+      },
+      updated,
+      "col-2_grid_header",
+    );
+
+    expect(updatedFromHeader[0].customSettings?.["headerFontSize"]).toBe(24);
+    expect(updatedFromHeader[1].customSettings?.["headerFontSize"]).toBe(24);
+    expect(updatedFromHeader[2].customSettings?.["headerFontSize"]).toBe(18);
+    expect(updatedFromHeader[2].customSettings?.["headerTextColor"]).toBe(
+      "#ff00ff",
+    );
+    expect(updatedFromHeader[3].customSettings?.["headerFontSize"]).toBe(18);
+    expect(updatedFromHeader[3].customSettings?.["headerTextColor"]).toBe(
+      "#ff00ff",
+    );
+  });
+
+  it("should sync backgroundColor, textColor, and useLaneColors across columns in the same lane when mirrorRows is false", () => {
+    const gridWidgets: AbsoluteWidgetNode[] = [
+      {
+        id: "l0-c1",
+        widgetType: "lane-column",
+        x: 0,
+        y: 0,
+        width: 100,
+        height: 50,
+        zIndex: 1,
+        customSettings: {
+          gridId,
+          gridLane: 0,
+          linkColumns: true,
+          mirrorRows: false,
+        },
+      },
+      {
+        id: "l0-c2",
+        widgetType: "lane-column",
+        x: 100,
+        y: 0,
+        width: 100,
+        height: 50,
+        zIndex: 1,
+        customSettings: {
+          gridId,
+          gridLane: 0,
+          linkColumns: true,
+          mirrorRows: false,
+        },
+      },
+      {
+        id: "l1-c1",
+        widgetType: "lane-column",
+        x: 0,
+        y: 50,
+        width: 100,
+        height: 50,
+        zIndex: 1,
+        customSettings: {
+          gridId,
+          gridLane: 1,
+          linkColumns: true,
+          mirrorRows: false,
+        },
+      },
+      {
+        id: "l1-c2",
+        widgetType: "lane-column",
+        x: 100,
+        y: 50,
+        width: 100,
+        height: 50,
+        zIndex: 1,
+        customSettings: {
+          gridId,
+          gridLane: 1,
+          linkColumns: true,
+          mirrorRows: false,
+        },
+      },
+    ];
+
+    const updated = LaneGridStyleHelper.syncCrossColumnProperty(
+      gridId,
+      "value",
+      {
+        gridLane: 0,
+        linkColumns: true,
+        mirrorRows: false,
+        useLaneColors: false,
+        backgroundColor: "#112233",
+        textColor: "#ffffff",
+      },
+      gridWidgets,
+      "l0-c1",
+    );
+
+    // Lane 0 columns should receive the updated colors
+    expect(updated[0].customSettings?.["backgroundColor"]).toBe("#112233");
+    expect(updated[0].customSettings?.["textColor"]).toBe("#ffffff");
+    expect(updated[0].customSettings?.["useLaneColors"]).toBeFalse();
+    expect(updated[1].customSettings?.["backgroundColor"]).toBe("#112233");
+    expect(updated[1].customSettings?.["textColor"]).toBe("#ffffff");
+    expect(updated[1].customSettings?.["useLaneColors"]).toBeFalse();
+
+    // Lane 1 columns should remain completely untouched
+    expect(updated[2].customSettings?.["backgroundColor"]).toBeUndefined();
+    expect(updated[2].customSettings?.["textColor"]).toBeUndefined();
+    expect(updated[3].customSettings?.["backgroundColor"]).toBeUndefined();
+    expect(updated[3].customSettings?.["textColor"]).toBeUndefined();
+  });
+
+  it("should apply value style to all columns when _forceAllColumns is true even if linkColumns is false", () => {
+    const unlinkedWidgets: AbsoluteWidgetNode[] = [
+      {
+        id: "c1",
+        widgetType: "lane-column",
+        x: 0,
+        y: 0,
+        width: 100,
+        height: 50,
+        zIndex: 1,
+        customSettings: {
+          gridId,
+          gridLane: 0,
+          linkColumns: false,
+        },
+      },
+      {
+        id: "c2",
+        widgetType: "lane-column",
+        x: 100,
+        y: 0,
+        width: 100,
+        height: 50,
+        zIndex: 1,
+        customSettings: {
+          gridId,
+          gridLane: 0,
+          linkColumns: false,
+        },
+      },
+    ];
+
+    const updated = LaneGridStyleHelper.syncCrossColumnProperty(
+      gridId,
+      "value",
+      {
+        linkColumns: false,
+        _forceAllColumns: true,
+        backgroundColor: "#990000",
+        textColor: "#00ff00",
+      },
+      unlinkedWidgets,
+      "c1",
+    );
+
+    expect(updated[0].customSettings?.["backgroundColor"]).toBe("#990000");
+    expect(updated[0].customSettings?.["textColor"]).toBe("#00ff00");
+    expect(updated[1].customSettings?.["backgroundColor"]).toBe("#990000");
+    expect(updated[1].customSettings?.["textColor"]).toBe("#00ff00");
+  });
 });

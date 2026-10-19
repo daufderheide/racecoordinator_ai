@@ -1155,6 +1155,21 @@ describe("RacedayAbsoluteWidgetComponent", () => {
       expect(el.querySelector(".resize-handle.s")).toBeTruthy();
       expect(el.querySelector(".resize-handle.e")).toBeNull();
       expect(el.querySelector(".resize-handle.w")).toBeNull();
+
+      const noMirrorWidget: AbsoluteWidgetNode = {
+        ...vertWidget,
+        id: "w-nomirror",
+        customSettings: {
+          gridId: "grid-test",
+          gridLane: 0,
+          gridDirection: "vertical",
+          mirrorRows: false,
+        },
+      };
+      fixture.componentRef.setInput("widget", noMirrorWidget);
+      fixture.detectChanges();
+      expect(component.isHeightAutoCalculated).toBeFalse();
+      expect(component.isWidthAutoCalculated).toBeFalse();
     });
 
     it("should correctly determine shouldRenderAsLaneColumn", () => {

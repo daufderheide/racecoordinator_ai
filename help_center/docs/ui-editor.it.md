@@ -108,11 +108,76 @@ Il menu a discesa **Ordinamento Griglia** nella scheda Griglia controlla l'ordin
   - **Tipografia e Allineamento**: Configura famiglia di caratteri, dimensione del testo e allineamento (Sinistra, Centro, Destra).
   - **Colore del Testo e di Sfondo**: Personalizza il colore di sfondo e del testo dell'intestazione tramite selettori colore dedicati, con pulsante per ripristinare i valori predefiniti in un clic.
 - **Ereditarietà Colori e Personalizzazioni**: Le schede ereditano in modo predefinito i colori di sfondo e testo della corsia assegnata (`Usa Colori Corsia`), oppure possono essere personalizzate con colori di sfondo, testo e bordi dedicati.
-- **Duplica su Corsie / Posiciones**:
+- **Duplica su Corsie / Posizioni**:
   - Invece di creare e allineare manualmente le schede per ciascuna corsia, configura una singola scheda per corsia o posizione e fai clic su **Duplica su Corsie / Posizioni...** nel pannello di configurazione.
   - Seleziona la direzione (**Orizzontale** affiancato o **Verticale** incolonnato), il numero totale di corsie/posizioni di destinazione (predefinito al numero massimo di corsie su tutte le piste nel database), la modalità di spaziatura (**Adatta allo Schermo** o **Mantieni Spaziatura**) e l'eventuale sostituzione dei widget esistenti.
   - **Modalità di Duplicazione in Tempo Reale**: All'avvio della duplicazione, l'editor entra in una modalità modello interattiva con guide visive di corsia e allineamento magnetico. In questa modalità posizioni, ridimensioni e modifichi i widget direttamente sulla Corsia 1 (Master), e le modifiche vengono riflesse immediatamente in tempo reale su tutte le restanti corsie. I widget duplicati sulle corsie 2..N sono anteprime in sola lettura; facendo clic su qualsiasi widget speculare, la selezione si sposta automaticamente sul master della Corsia 1.
   - **Area Intelligente e Ridimensionamento**: Lo spazio di duplicazione si estende automaticamente in tutte e quattro le direzioni per riempire lo spazio disponibile sulla tela fino a toccare il bordo di qualsiasi widget esterno alla griglia. È possibile regolare l'area complessiva utilizzando le 8 maniglie perimetrali di ridimensionamento sulla sovrapposizione.
   - Fai clic su **Fine** per convertire la griglia in widget indipendenti.
   - **Modifica Modello e Scollega**: Selezionando successivamente qualsiasi widget della griglia, la Configurazione widget visualizza una scheda per **Modifica Modello Griglia** (per rientrare in qualsiasi momento nella modalità in tempo reale) o **Scollega dalla Griglia** (per rimuovere definitivamente il collegamento).
+
+### Sincronizzazione Griglia: Collega colonne vs. Rifletti righe
+
+Una griglia in Race Coordinator AI è una matrice bidimensionale strutturata in:
+
+- **Righe (Postazioni Concorrenti)**: Rappresentano ciascuna corsia fisica della pista (**Corsia 1, Corsia 2, ...**) o posizione di gara (**Posizione 1, Posizione 2, ...**). Se la griglia è orientata orizzontalmente, queste postazioni appaiono come colonne verticali.
+- **Colonne (Campi Dati)**: Rappresentano le singole metriche di dati all'interno di ciascuna postazione (ad esempio *Nome Pilota, Giri Manche, Ultimo Giro, Giro Migliore, Distacco, Immagine Auto*).
+
+L'Ispettore widget offre due controlli fondamentali nella sezione **Struttura e layout della griglia**: **Collega colonne** e **Rifletti righe** (denominato **Rifletti colonne** con layout orizzontale).
+
+#### Collega colonne
+
+**Collega colonne** controlla la sincronizzazione dello stile grafico tra tutte le colonne di dati della griglia.
+
+- **Selezionato (Predefinito)**:
+  - Tutte le colonne di dati condividono un aspetto visivo identico.
+  - Qualsiasi modifica alle proprietà grafiche apportata su una colonna viene sincronizzata istantaneamente e in automatico su tutte le colonne della griglia.
+  - **Proprietà Sincronizzate**:
+    - **Stile Intestazione**: Famiglia di caratteri, dimensione testo, colore testo, colore di sfondo, allineamento testo e altezza intestazione.
+    - **Stile Cella Dati**: Famiglia di caratteri, dimensione testo, colore testo, colore di sfondo, commutazione dei colori corsia (`useLaneColors`) e allineamento valori.
+    - **Stile Bordo**: Visibilità del bordo, colore bordo, spessore bordo e raggio angoli.
+    - **Formato Tempo**: Cifre decimali, formato di visualizzazione e soglie di precisione sub-secondo.
+    - **Evidenziazione Telemetria**: Evidenziazione della riga al passaggio del giro.
+  - **Interazione con le righe non replicate**: Quando **Replica righe** è deselezionato, le righe sono disaccoppiate tra loro. Se **Collega colonne** è abilitato, la modifica degli stili visivi (come colore di sfondo, colore del testo o font) su una colonna propaga tale modifica a tutte le colonne *all'interno di quella specifica riga*, senza alterare le altre righe.
+- **Deselezionato**:
+  - Scollega lo stile delle colonne. Ciascuna colonna può avere dimensioni testo, colori, bordi e allineamenti del tutto indipendenti (ad esempio un testo grande e in grassetto con bordo per il *Nome Pilota*, mentre i *Giri* mantengono un testo piccolo con sfondo trasparente).
+  - Quando deselezionato, nell'ispettore compaiono pulsanti dedicati (**Applica stile intestazione / valore / bordo / formato a tutte le colonne**) per propagare manualmente e a comando una categoria di stili su tutte le colonne.
+- **Comportamento alla Deselezione**:
+  - Viene salvato immediatamente nella configurazione.
+  - **Stato Grafico della Griglia**: Gli stili attuali delle colonne **non** cambiano immediatamente; la griglia conserva l'aspetto corrente.
+  - **Azione Richiesta dall'Utente**: Per visualizzare differenze grafiche, l'utente deve selezionare una colonna e modificarne lo stile. Solo la colonna modificata adotterà le nuove impostazioni.
+- **Comportamento alla Nuova Selezione**:
+  - Riattiva la sincronizzazione automatica per le future modifiche.
+  - **Stato Grafico della Griglia**: La semplice riselezione della casella **non** sovrascrive subito le altre colonne con lo stile di quella selezionata; gli stili esistenti restano inalterati.
+  - **Azione Richiesta dall'Utente**: L'utente deve modificare una proprietà di stile (ad es. variare la dimensione del testo di 1px, cambiare colore o attivare/disattivare un bordo) su una colonna qualsiasi. Non appena viene effettuata la modifica, la proprietà si propaga istantaneamente a tutte le colonne della griglia. In alternativa, è possibile fare clic su uno dei pulsanti espliciti «Applica a tutte le colonne».
+
+#### Rifletti righe (o Rifletti colonne)
+
+**Rifletti righe** gestisce la duplicazione e la geometria riga per riga a partire dalla **Riga Master (Corsia 1 / Posizione 1)** verso tutte le altre righe (**Corsie 2..N**).
+
+- **Selezionato (Predefinito)**:
+  - Tutte le righe non master rispecchiano fedelmente la riga master.
+  - Qualsiasi spostamento, ridimensionamento, regolazione di layout o modifica impostata sulla cella master si replica istantaneamente in tempo reale su tutte le altre corsie o posizioni.
+  - I widget non master nella griglia sono vincolati al master e mostrano il badge **Speculare** (ad es. `Corsia 2 (Speculare)`).
+- **Deselezionato**:
+  - Scollega le righe non master dal modello master.
+  - I widget non master mostrano il badge **Indipendente** (ad es. `Corsia 2 (Indipendente)`).
+  - L'utente può fare clic su qualsiasi riga individuale (ad es. Corsia 2 o Posizione 3) e personalizzarne proprietà, colori del testo, colori di sfondo o associazioni dati in modo autonomo, senza modificare il master o le altre corsie.
+  - Sotto la casella di controllo nell'ispettore compare il pulsante **Rifletti su tutte le righe**.
+- **Comportamento alla Deselezione**:
+  - Ha effetto immediato nella configurazione.
+  - **Stato Grafico della Griglia**: Il layout e le posizioni delle celle **non** si muovono né cambiano subito; posizioni e stili attuali vengono mantenuti.
+  - **Azione Richiesta dall'Utente**: L'utente deve selezionare una cella non master e modificarne le proprietà per personalizzare la singola corsia.
+- **Comportamento alla Nuova Selezione**:
+  - Riabilita la replicazione master nella griglia.
+  - **Aggiornamento Immediato**:
+    - Se l'utente riseleziona la casella **Rifletti righe** mentre è selezionato un **widget master**, il layout e le impostazioni del master vengono immediatamente applicati a tutte le corsie speculari, sovrascrivendo le modifiche indipendenti.
+    - Se l'utente fa clic sul pulsante **Rifletti su tutte le righe**, l'editor risincronizza immediatamente tutte le colonne master su tutte le righe della griglia (`syncAllMasterWidgetsToLanes`), fissa la griglia e aggiorna la tela dell'Editor UI e l'anteprima di gara all'istante senza ulteriori azioni.
+
+#### Schema Riassuntivo
+
+| Controllo | Direzione / Ambito | Cosa Sincronizza | Comportamento quando Deselezionato | Comportamento alla Riselezione | Immediato vs. Azione Richiesta |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Collega colonne** | Orizzontale (Tra Colonne) | Stile visivo: caratteri, dimensioni, colori testo/sfondo, bordi, intestazioni, formati orari, evidenziazioni | Le colonne diventano indipendenti; gli stili attuali vengono mantenuti; compaiono i pulsanti «Applica a tutte» | Riattiva l'auto-sync per modifiche future; non sovrascrive subito le altre colonne | **Azione Richiesta**: Modificare la casella non altera gli stili correnti. L'utente deve modificare una proprietà grafica affinché il collegamento abbia effetto tra le colonne. |
+| **Rifletti righe** | Verticale (Tra Righe / Corsie) | Geometria e impostazioni: larghezza/altezza cella, scostamenti, associazioni duplicate dalla Corsia 1 Master alle Corsie 2..N | Le righe si rendono indipendenti; l'ispettore mostra lo stato `Indipendente`; corsie personalizzabili singolarmente; compare il pulsante `Rifletti su tutte le righe` | Ripristina la replicazione master; il modello master sovrascrive le personalizzazioni delle singole corsie | **Immediato se il Master è selezionato o al clic sul pulsante**: Facendo clic su `Rifletti su tutte le righe` o riselezionando sul Master si allineano immediatamente tutte le righe. La deselezione mantiene il layout fino alla modifica. |
 

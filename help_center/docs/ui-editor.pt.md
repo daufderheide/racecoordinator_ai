@@ -116,3 +116,68 @@ O menu suspenso **Classificação da Grade** na aba Grade controla a ordem das l
   - Clique em **Concluído** para consolidar a grade em widgets independentes.
   - **Editar Modelo e Desvincular**: Ao selecionar qualquer widget da grade posteriormente, a Configuração de widgets exibe um cartão permitindo clicar em **Editar Modelo da Grade** (para reentrar no modo de replicação em tempo real a qualquer momento) ou **Desvincular da Grade** (para quebrar permanentemente o vínculo).
 
+### Sincronização de Grade: Vincular colunas vs. Espelhar Linhas
+
+Uma grade no Race Coordinator AI é uma matriz bidimensional estruturada em:
+
+- **Linhas (Posições dos Competidores)**: Representam cada pista física individual (**Pista 1, Pista 2, ...**) ou posição na corrida (**Posição 1, Posição 2, ...**). Se a orientação da grade for horizontal, essas posições aparecem como colunas verticais.
+- **Colunas (Campos de Dados)**: Representam cada métrica de dados exibida em uma posição (por exemplo, *Nome do Piloto, Voltas da Bateria, Tempo da Última Volta, Melhor Volta, Diferença, Imagem do Carro*).
+
+O Inspetor de grade oferece dois controles primordiais na seção **Estrutura e layout da grade**: **Vincular colunas** e **Espelhar Linhas** (denominado **Espelhar Colunas** com layout horizontal).
+
+#### Vincular colunas
+
+**Vincular colunas** controla a sincronização do estilo visual entre todas as colunas de dados da grade.
+
+- **Marcado (Padrão)**:
+  - Todas as colunas de dados compartilham um estilo visual idêntico.
+  - Qualquer alteração em propriedades de estilo em qualquer coluna é sincronizada automática e imediatamente para todas as colunas da grade.
+  - **Propriedades Sincronizadas**:
+    - **Estilo do Cabeçalho**: Família da fonte, tamanho da fonte, cor do texto, cor de fundo, alinhamento do texto e altura do cabeçalho.
+    - **Estilo da Célula de Dados**: Família da fonte, tamanho da fonte, cor do texto, cor de fundo, alternância de cores de pista (`useLaneColors`) e alinhamento dos valores.
+    - **Estilo de Borda**: Exibição de borda, cor da borda, espessura da borda e raio dos cantos.
+    - **Formatação de Tempo**: Casas decimais, formato de exibição e limites de precisão de subsegundos.
+    - **Destaque de Telemetria**: Destaque de linha na passagem de volta.
+  - **Interação com linhas não espelhadas**: Quando **Espelhar linhas** está desmarcado, as linhas são desacopladas entre si. Se **Vincular colunas** estiver ativado, a modificação de estilos visuais (como cor de fundo, cor do texto ou fontes) em qualquer coluna propaga essa alteração para todas as colunas *dentro daquela linha específica*, sem alterar nenhuma outra linha.
+- **Desmarcado**:
+  - Desvincula o estilo das colunas. Cada coluna pode ter seus próprios tamanhos de fonte, cores, bordas e alinhamentos de forma independente (por exemplo, um texto grande em negrito com borda para o *Nome do Piloto*, enquanto o *Contador de Voltas* mantém texto menor e fundo transparente).
+  - Quando desmarcado, surgem botões dedicados (**Aplicar estilo de cabeçalho / valor / borda / formato a todas as colunas**) no inspetor para transmitir sob demanda uma categoria específica de estilos para todas as colunas.
+- **Comportamento ao Desmarcar**:
+  - Salva imediatamente na configuração.
+  - **Estado Visual da Grade**: Os estilos existentes das colunas **não** mudam de imediato; a grade preserva sua aparência atual.
+  - **Ação do Usuário Necessária**: Para visualizar diferenças, o usuário deve selecionar uma coluna específica e modificar suas opções de estilo. Apenas a coluna selecionada assumirá as novas edições.
+- **Comportamento ao Marcar Novamente**:
+  - Reativa a sincronização automática para edições futuras.
+  - **Estado Visual da Grade**: Apenas remarcar a caixa **não** sobrescreve de imediato as outras colunas com os estilos da coluna selecionada; os estilos existentes permanecem intactos.
+  - **Ação do Usuário Necessária**: O usuário deve modificar uma propriedade de estilo (por exemplo, alterar o tamanho da fonte em 1px, trocar uma cor ou alternar uma borda) em qualquer coluna. Assim que a alteração ocorre, a nova propriedade propaga-se imediatamente para todas as colunas da grade. Alternativamente, é possível clicar em um dos botões explícitos «Aplicar a todas as colunas».
+
+#### Espelhar Linhas (ou Espelhar Colunas)
+
+**Espelhar Linhas** gerencia a replicação e a geometria linha a linha partindo da **Linha Mestre (Pista 1 / Posição 1)** para todas as demais linhas (**Pistas 2..N**).
+
+- **Marcado (Padrão)**:
+  - Todas as linhas não mestres espelham rigorosamente a linha mestre.
+  - Qualquer movimentação, redimensionamento, ajuste de layout ou alteração de configurações na célula mestre replica-se imediatamente em tempo real para todas as outras pistas ou posições.
+  - Os widgets não mestres na grade ficam vinculados ao mestre e exibem o indicador **Espelhado** (por exemplo, `Pista 2 (Espelhado)`).
+- **Desmarcado**:
+  - Desacopla as linhas não mestres do modelo mestre.
+  - Os widgets não mestres passam a exibir o indicador **Independente** (por exemplo, `Pista 2 (Independente)`).
+  - O usuário pode clicar em qualquer linha individual (por exemplo, Pista 2 ou Posição 3) e personalizar suas propriedades, cores de texto, cores de fundo ou atribuições de dados de forma autônoma, sem afetar o mestre nem as demais pistas.
+  - O botão **Reespelhar em todas as linhas** surge diretamente abaixo da caixa de seleção no inspetor.
+- **Comportamento ao Desmarcar**:
+  - Entra em vigor imediatamente na configuração.
+  - **Estado Visual da Grade**: O layout e as posições das células **não** se movem nem mudam imediatamente; posições e estilos atuais são preservados.
+  - **Ação do Usuário Necessária**: O usuário deve selecionar uma célula não mestre e editar suas propriedades para criar configurações de pista independentes.
+- **Comportamento ao Marcar Novamente**:
+  - Reativa a replicação mestre na grade.
+  - **Atualização Imediata**:
+    - Se o usuário remarcar a caixa **Espelhar Linhas** com um **widget mestre** selecionado, o layout e os ajustes do mestre são imediatamente sincronizados para todas as pistas espelhadas, substituindo personalizações individuais de linha.
+    - Se o usuário clicar no botão **Reespelhar em todas as linhas**, o editor ressincroniza instantaneamente todas as colunas mestre em todas as linhas da grade (`syncAllMasterWidgetsToLanes`), consolida a grade e atualiza a tela do Editor de UI e a pré-visualização de corrida de imediato, sem necessidade de ações extras.
+
+#### Tabela Comparativa
+
+| Controle | Direção / Escopo | O Que Sincroniza | Comportamento ao Desmarcar | Comportamento ao Marcar Novamente | Imediato vs. Ação do Usuário Necessária |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Vincular colunas** | Horizontal (Entre Colunas) | Estilo visual: fontes, tamanhos, cores de texto/fundo, bordas, cabeçalhos, formatos de tempo, destaques | As colunas tornam-se independentes; estilos existentes são mantidos; botões manuais «Aplicar a todas» aparecem | Reativa a sincronização automática para alterações futuras; não sobrescreve de imediato outras colunas | **Ação do Usuário Necessária**: Alternar a caixa não altera os estilos existentes. O usuário deve editar uma propriedade de estilo para que a sincronização passe a atuar entre colunas. |
+| **Espelhar Linhas** | Vertical (Entre Linhas / Pistas) | Geometria e configurações: largura/altura da célula, deslocamentos, vínculos replicados da Pista 1 Mestre para Pistas 2..N | As linhas tornam-se independentes; o inspetor exibe o indicador `Independente`; pistas podem ser personalizadas individualmente; botão `Reespelhar` aparece | Restabelece a replicação mestre; o modelo mestre substitui personalizações individuais das pistas | **Imediato se o Mestre estiver selecionado ou ao clicar no botão**: Clicar em `Reespelhar em todas as linhas` ou remarcar no Mestre alinha imediatamente todas as linhas. Desmarcar mantém o layout até ser editado. |
+

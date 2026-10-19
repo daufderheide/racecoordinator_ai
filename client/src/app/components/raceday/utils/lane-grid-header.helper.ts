@@ -649,9 +649,6 @@ export class LaneGridHeaderHelper {
       zIndex: (updatedMaster.zIndex ?? 10) + 1,
       customSettings: {
         ...headerSettings,
-        ...(existingHeaderIdx >= 0
-          ? result[existingHeaderIdx].customSettings
-          : {}),
         isHeaderWidget: true,
         showHeader: true,
         headerPlacement: "top",
@@ -706,9 +703,6 @@ export class LaneGridHeaderHelper {
       zIndex: (updatedMaster.zIndex ?? 10) + 1,
       customSettings: {
         ...headerSettings,
-        ...(existingHeaderIdx >= 0
-          ? result[existingHeaderIdx].customSettings
-          : {}),
         isHeaderWidget: true,
         showHeader: true,
         headerPlacement: "left",

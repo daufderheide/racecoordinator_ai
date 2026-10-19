@@ -116,3 +116,68 @@ Le menu déroulant **Tri de la Grille** dans l'onglet Grille détermine l'ordre 
   - Cliquez sur **Terminé** pour figer la grille en widgets indépendants.
   - **Modifier le Modèle et Détacher** : En sélectionnant ultérieurement un widget de la grille, la Configuration de widgets propose un panneau permettant de cliquer sur **Modifier le Modèle de Grille** (pour réactiver à tout moment le mode de réplication en temps réel) ou **Détacher de la Grille** (pour rompre définitivement le lien).
 
+### Synchronisation de Grille : Lier les colonnes vs. Refléter les lignes
+
+Une grille dans Race Coordinator AI est une matrice à deux dimensions articulée autour de :
+
+- **Lignes (Emplacements des Concurrents)** : Représentent chaque voie physique du circuit (**Voie 1, Voie 2, ...**) ou chaque position de course (**Position 1, Position 2, ...**). Lorsque l'orientation de la grille est horizontale, ces emplacements s'affichent sous forme de colonnes verticales.
+- **Colonnes (Champs de Données)** : Représentent chaque métrique de données affichée dans un emplacement (par exemple, *Nom du Pilote, Nombre de Tours, Dernier Tour, Meilleur Tour, Écart, Image du Véhicule*).
+
+L'Inspecteur de grille met à disposition deux commandes clés dans la section **Structure et disposition de la grille** : **Lier les colonnes** et **Refléter les lignes** (nommé **Refléter les colonnes** lorsque la disposition est horizontale).
+
+#### Lier les colonnes
+
+**Lier les colonnes** régit la synchronisation du style visuel sur toutes les colonnes de données de la grille.
+
+- **Coché (Par défaut)** :
+  - Toutes les colonnes de données partagent un style visuel identique.
+  - Toute modification apportée au style d'une colonne quelconque est immédiatement et automatiquement répercutée sur toutes les colonnes de la grille.
+  - **Propriétés Synchronisées** :
+    - **Style d'En-tête** : Police, taille du texte, couleur du texte, couleur de fond, alignement du texte et hauteur de l'en-tête.
+    - **Style de Cellule de Données** : Police, taille du texte, couleur du texte, couleur d'arrière-plan, bascule des couleurs de voie (`useLaneColors`) et alignement des valeurs.
+    - **Style de Bordure** : Affichage de la bordure, couleur, épaisseur et rayon des coins.
+    - **Format de Temps** : Nombre de décimales, format d'affichage et seuils de précision sub-seconde.
+    - **Mise en Valeur Télémétrique** : Surbrillance de ligne au passage de tour.
+  - **Interaction avec les lignes non dupliquées** : Lorsque **Dupliquer les lignes** est décoché, les lignes sont découplées les unes des autres. Si **Lier les colonnes** est activé, la modification d'un style visuel (comme la couleur d'arrière-plan, la couleur du texte ou les polices) sur une colonne d'une ligne propage cette modification à toutes les colonnes *au sein de cette ligne spécifique*, sans affecter aucune autre ligne.
+- **Décoché** :
+  - Dissocie le style des colonnes. Chaque colonne peut disposer de ses propres polices, couleurs, bordures et alignements personnalisés (par exemple, une police grande et en gras avec bordure pour le *Nom du Pilote*, tandis que le *Nombre de Tours* conserve un petit texte blanc sans bordure).
+  - En mode dissocié, des boutons dédiés (**Appliquer le style d'en-tête / de valeur / de bordure / le format à toutes les colonnes**) apparaissent sous chaque section de l'inspecteur pour diffuser sélectivement une catégorie de style à la demande.
+- **Comportement lors de la Décochage** :
+  - Enregistré immédiatement dans la configuration.
+  - **État Visuel de la Grille** : Les styles existants des colonnes ne changent **pas** immédiatement ; la grille conserve son apparence actuelle.
+  - **Action Utilisateur Requise** : Pour constater des différences visuelles, l'utilisateur doit sélectionner une colonne et en modifier le style. Seule la colonne modifiée adoptera les nouveaux réglages.
+- **Comportement lors du Recochage** :
+  - Réactive la synchronisation automatique pour les modifications ultérieures.
+  - **État Visuel de la Grille** : Recocher la case n'écrase **pas** immédiatement les autres colonnes avec le style de la colonne sélectionnée ; les styles existants restent intacts.
+  - **Action Utilisateur Requise** : L'utilisateur doit modifier une propriété de style (par exemple, changer la taille de police d'un pixel, ajuster une couleur ou activer/désactiver une bordure) sur n'importe quelle colonne. Dès cette modification, le nouveau réglage se propage instantanément à toutes les colonnes de la grille. L'utilisateur peut aussi cliquer sur l'un des boutons explicites « Appliquer à toutes les colonnes ».
+
+#### Refléter les lignes (ou Refléter les colonnes)
+
+**Refléter les lignes** pilote la réplication de ligne à ligne et la géométrie depuis la **Ligne Maître (Voie 1 / Position 1)** vers l'ensemble des autres lignes (**Voies 2..N**).
+
+- **Coché (Par défaut)** :
+  - Toutes les lignes non-maîtres reflètent fidèlement la ligne maître.
+  - Tout déplacement, redimensionnement, réalignement ou changement de réglage sur la cellule maître se répercute instantanément en direct sur l'ensemble des autres voies ou positions.
+  - Les widgets non-maîtres de la grille sont asservis au maître et portent le badge **Cloné** (par exemple, `Voie 2 (Cloné)`).
+- **Décoché** :
+  - Désolidarise les lignes non-maîtres du modèle maître.
+  - Les widgets non-maîtres affichent le badge **Indépendant** (par exemple, `Voie 2 (Indépendant)`).
+  - L'utilisateur peut cliquer sur n'importe quelle ligne individuelle (par exemple, Voie 2 ou Position 3) et ajuster ses propriétés, couleurs ou affectations de données indépendamment, sans impacter la ligne maître ni les autres voies.
+  - Le bouton **Refléter à nouveau sur toutes les lignes** apparaît sous la case à cocher dans l'inspecteur.
+- **Comportement lors de la Décochage** :
+  - Prend effet immédiatement dans la configuration.
+  - **État Visuel de la Grille** : L'agencement et la position des cellules ne bougent **pas** immédiatement ; les positions et styles actuels sont préservés.
+  - **Action Utilisateur Requise** : L'utilisateur doit sélectionner une cellule non-maître et modifier ses paramètres pour créer des styles de voie spécifiques.
+- **Comportement lors du Recochage** :
+  - Rétablit la réplication maître au sein de la grille.
+  - **Mise à Jour Immédiate** :
+    - Si l'utilisateur recoche la case **Refléter les lignes** alors qu'un **widget maître** est sélectionné, la géométrie et les réglages du maître sont immédiatement appliqués à toutes les voies clonées, écrasant les personnalisations individuelles.
+    - Si l'utilisateur clique sur le bouton **Refléter à nouveau sur toutes les lignes**, l'éditeur synchronise immédiatement toutes les colonnes maîtres sur toutes les lignes de la grille (`syncAllMasterWidgetsToLanes`), fige la grille et met à jour instantanément la zone de travail de l'Éditeur d'IU et l'aperçu de course sans autre intervention requise.
+
+#### Tableau Récapitulatif
+
+| Contrôle | Axe / Portée | Éléments Synchronisés | Comportement lorsque Décoché | Comportement lors du Recochage | Immédiat vs. Action Requise |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Lier les colonnes** | Horizontal (Entre Colonnes) | Style visuel : polices, tailles, couleurs de texte/fond, bordures, en-têtes, formats horaires, surbrillances | Les colonnes deviennent indépendantes ; les styles actuels sont conservés ; boutons « Appliquer à toutes » affichés | Réactive la synchronisation automatique pour les futures éditions ; n'écrase pas immédiatement les autres colonnes | **Action Requise** : Changer la case ne modifie pas les styles actuels. L'utilisateur doit modifier une propriété de style pour que la liaison s'applique aux colonnes. |
+| **Refléter les lignes** | Vertical (Entre Lignes / Voies) | Géométrie et paramètres : largeur/hauteur de cellule, décalages, liaisons de données répliquées de la Voie 1 Maître aux Voies 2..N | Les lignes deviennent indépendantes ; l'inspecteur affiche le badge `Indépendant` ; voies personnalisables individuellement ; bouton `Refléter à nouveau` affiché | Rétablit la réplication maître ; le modèle maître remplace les personnalisations individuelles des lignes | **Immédiat si le Maître est sélectionné ou au clic sur le bouton** : Cliquer sur `Refléter à nouveau sur toutes les lignes` ou recocher sur le Maître synchronise immédiatement toutes les lignes. Décocher préserve la disposition jusqu'à édition. |
+

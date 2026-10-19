@@ -1188,6 +1188,62 @@ describe("ui-editor-widget.helper", () => {
     expect(updatedLane1?.customSettings.useLaneColors).toBeTrue();
   });
 
+  it("should process _syncAction with _forceAllColumns and clean up flags", () => {
+    const col1: any = {
+      id: "c1",
+      widgetType: "lane-column",
+      x: 0,
+      y: 0,
+      width: 100,
+      height: 50,
+      customSettings: {
+        gridId: "force-grid",
+        gridLane: 0,
+        linkColumns: false,
+        _syncAction: "value",
+        _forceAllColumns: true,
+        backgroundColor: "#abcdef",
+        textColor: "#123456",
+      },
+    };
+    const col2: any = {
+      id: "c2",
+      widgetType: "lane-column",
+      x: 100,
+      y: 0,
+      width: 100,
+      height: 50,
+      customSettings: {
+        gridId: "force-grid",
+        gridLane: 0,
+        linkColumns: false,
+      },
+    };
+
+    const comp: any = {
+      activeCustomUi: {
+        layout: {
+          widgets: [col1, col2],
+        },
+      },
+      getLayout: (ui: any) => ui.layout,
+      captureState: jasmine.createSpy("captureState"),
+      cdr: { markForCheck: jasmine.createSpy("markForCheck") },
+      syncRacedayPreview: jasmine.createSpy("syncRacedayPreview"),
+    };
+
+    handleWidgetInspectorChange(comp, col1);
+
+    expect(col1.customSettings._syncAction).toBeUndefined();
+    expect(col1.customSettings._forceAllColumns).toBeUndefined();
+    expect(
+      comp.activeCustomUi.layout.widgets[1].customSettings.backgroundColor,
+    ).toBe("#abcdef");
+    expect(comp.activeCustomUi.layout.widgets[1].customSettings.textColor).toBe(
+      "#123456",
+    );
+  });
+
   describe("auto-calculated dimensions for grid widgets", () => {
     const {
       isWidgetHeightAutoCalculated,
@@ -1216,6 +1272,23 @@ describe("ui-editor-widget.helper", () => {
 
       expect(isWidgetHeightAutoCalculated(nonGridWidget)).toBeFalse();
       expect(isWidgetWidthAutoCalculated(nonGridWidget)).toBeFalse();
+
+      const vertNoMirror = {
+        customSettings: {
+          gridId: "g1",
+          gridDirection: "vertical",
+          mirrorRows: false,
+        },
+      };
+      const horizNoMirror = {
+        customSettings: {
+          gridId: "g2",
+          gridDirection: "horizontal",
+          mirrorRows: false,
+        },
+      };
+      expect(isWidgetHeightAutoCalculated(vertNoMirror)).toBeFalse();
+      expect(isWidgetWidthAutoCalculated(horizNoMirror)).toBeFalse();
     });
 
     it("should ignore manual height and y changes for vertical grid widgets", () => {

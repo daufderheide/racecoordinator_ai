@@ -672,7 +672,7 @@ export class LaneColumnInspectorComponent {
     const input = event.target as HTMLInputElement;
     this.currentSettings[field] = input.value;
     delete this.currentSettings["_reset_" + field];
-    if (field.startsWith("header") && this.linkColumns) {
+    if (field.startsWith("header")) {
       this.currentSettings["_syncAction"] = "header";
     }
     this.onFieldChange();
@@ -681,8 +681,10 @@ export class LaneColumnInspectorComponent {
   resetColor(field: string): void {
     delete this.currentSettings[field];
     this.currentSettings["_reset_" + field] = true;
-    if (field.startsWith("header") && this.linkColumns) {
+    if (field.startsWith("header")) {
       this.currentSettings["_syncAction"] = "header";
+    } else {
+      this.currentSettings["_syncAction"] = "value";
     }
     this.onFieldChange();
   }
@@ -780,9 +782,7 @@ export class LaneColumnInspectorComponent {
   }
 
   onHeaderStyleChange(): void {
-    if (this.linkColumns) {
-      this.currentSettings["_syncAction"] = "header";
-    }
+    this.currentSettings["_syncAction"] = "header";
     this.onFieldChange();
   }
 
@@ -892,21 +892,25 @@ export class LaneColumnInspectorComponent {
   }
 
   applyHeaderStyleToAll(): void {
+    this.currentSettings["_forceAllColumns"] = true;
     this.currentSettings["_syncAction"] = "header";
     this.onFieldChange();
   }
 
   applyValueStyleToAll(): void {
+    this.currentSettings["_forceAllColumns"] = true;
     this.currentSettings["_syncAction"] = "value";
     this.onFieldChange();
   }
 
   applyBorderStyleToAll(): void {
+    this.currentSettings["_forceAllColumns"] = true;
     this.currentSettings["_syncAction"] = "border";
     this.onFieldChange();
   }
 
   applyTimeFormatToAll(): void {
+    this.currentSettings["_forceAllColumns"] = true;
     this.currentSettings["_syncAction"] = "time";
     this.onFieldChange();
   }

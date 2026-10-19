@@ -115,3 +115,68 @@ The **Grid Sorting** dropdown on the Grid tab controls the row ordering. Its beh
   - **Intelligent Grid Bounds & Resizing**: The replication space automatically expands in all four directions to fill available canvas space until meeting the boundary of any existing non-grid widget. You can adjust the overall replication area dynamically using the 8 perimeter resize handles on the blueprint overlay.
   - Clicking **Done** bakes the layout into independent widgets.
   - **Template Re-entry & Detach**: Selecting any baked grid widget later shows a configuration card allowing you to click **Edit Grid Template** to re-enter realtime replication mode anytime, or **Detach from Grid** to permanently break the link.
+
+### Grid Synchronization: Link Columns vs. Mirror Rows
+
+A grid in Race Coordinator AI is a two-dimensional matrix organized into:
+
+- **Rows (Competitor Slots)**: Representing each individual physical track lane (**Lane 1, Lane 2, ...**) or race running position (**Position 1, Position 2, ...**). When the grid layout direction is horizontal, these competitor slots are displayed as vertical columns.
+- **Columns (Data Fields)**: Representing each data metric displayed within a slot (e.g. *Driver Name, Heat Lap Count, Last Lap Time, Best Lap, Gap, Car Image*).
+
+The Grid Inspector provides two core synchronization controls in the **Grid Structure & Layout** section: **Link Columns** and **Mirror Rows** (labeled **Mirror Columns** when grid layout direction is horizontal).
+
+#### Link Columns
+
+**Link Columns** governs visual styling synchronization across all the different data columns in the grid.
+
+- **Checked (Default)**:
+  - All data columns share identical visual styling.
+  - Modifying any styling property on any column automatically and immediately synchronizes that change across all columns in the grid.
+  - **Synchronized Properties**:
+    - **Header Styling**: Font family, font size, text color, background color, text alignment, and header height.
+    - **Data Cell Styling**: Font family, font size, text color, background color, lane color toggling (`useLaneColors`), and value alignment.
+    - **Border Styling**: Border visibility, border color, border width, and corner radius.
+    - **Time Formatting**: Decimal places, display format, and subsecond precision settings.
+    - **Lap Telemetry Highlights**: Row highlight on lap trigger.
+  - **Interaction with Unmirrored Rows**: When **Mirror Rows** is unchecked, rows are decoupled from each other. If **Link Columns** is enabled, modifying visual styles (such as background color, text color, or fonts) on any column within a row propagates that change across all columns in that specific row, without altering any other rows.
+- **Unchecked**:
+  - Uncouples column styling. Each column can have its own independent font sizes, colors, borders, and alignments (e.g. you can make the *Driver Name* column large and bold with a bright background, while keeping the *Laps* column smaller with a transparent background).
+  - When unchecked, dedicated **Apply [Header / Value / Border / Format] Style to All Columns** buttons appear in the inspector under each styling section, allowing you to selectively push one specific category of styles across all columns on demand.
+- **Unchecking Behavior**:
+  - Takes effect immediately in configuration.
+  - **Grid Visual State**: Existing column styles do **not** change immediately upon unchecking; the grid maintains its current appearance.
+  - **User Action Required**: To see visual differences, the user must select a specific column and edit its style settings. Only the selected column will reflect the new edits.
+- **Re-checking Behavior**:
+  - Re-engages automatic synchronization for future edits.
+  - **Grid Visual State**: Simply re-checking the box does **not** immediately overwrite other columns with the currently selected column's styling; existing column styles remain untouched.
+  - **User Action Required**: The user must modify a styling property (e.g. change a font size by 1px, adjust a color, or toggle a border) on any column. As soon as that edit occurs, the updated property immediately propagates across all columns in the grid. Alternatively, the user can click any of the explicit "Apply Style to All Columns" buttons.
+
+#### Mirror Rows (or Mirror Columns)
+
+**Mirror Rows** governs row-to-row replication and geometry synchronization from the **Master Row (Lane 1 / Position 1)** to all other rows (**Lanes 2..N**).
+
+- **Checked (Default)**:
+  - All non-master rows strictly mirror the Master row.
+  - Any movement, resizing, layout adjustments, or property changes made to the Master cell immediately replicate to all other lanes/positions in real time.
+  - Non-master widgets in the grid are locked to the master and display the **Mirrored** badge (e.g. `Lane 2 (Mirrored)`).
+- **Unchecked**:
+  - Decouples non-master rows from the master template.
+  - Non-master widgets display the **Independent** badge (e.g. `Lane 2 (Independent)`).
+  - The user can click on any individual row (e.g. Lane 2 or Position 3) and customize its properties, text colors, background colors, or specific data overrides independently without altering the Master row or other lanes.
+  - A **Re-mirror to All Rows** button appears directly beneath the checkbox in the inspector.
+- **Unchecking Behavior**:
+  - Takes effect immediately in configuration.
+  - **Grid Visual State**: The grid layout and existing cell positions do **not** move or change immediately; current positions and styles are preserved.
+  - **User Action Required**: The user must select a non-master cell (e.g. Lane 2) and modify its properties to introduce independent customizations.
+- **Re-checking Behavior**:
+  - Re-enables master replication across the grid.
+  - **Immediate Grid Update**:
+    - If the user re-checks the **Mirror Rows** checkbox while editing the **Master widget**, the Master row's layout and settings immediately re-synchronize down to all mirrored lanes, replacing any independent lane overrides.
+    - If the user clicks the **Re-mirror to All Rows** button, the editor immediately re-synchronizes all master columns across all rows in the entire grid (`syncAllMasterWidgetsToLanes`), bakes the grid, and updates both the UI Editor canvas and the live raceday preview instantly without requiring any further action.
+
+#### Summary Comparison
+
+| Control | Direction / Scope | What It Synchronizes | Behavior When Unchecked | Behavior When Re-checked | Immediate vs. User Action Required |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Link Columns** | Horizontal (Across Columns) | Visual styling: fonts, sizes, text/bg colors, borders, header styles, time formats, highlights | Columns become independent; existing styles are retained; manual "Apply to All" buttons appear | Re-engages auto-sync for subsequent edits; does not instantly overwrite other columns | **User Action Required**: Changing the checkbox does not alter existing column styles. The user must edit a styling property for the new linking behavior to take effect across columns. |
+| **Mirror Rows** | Vertical (Across Rows / Lanes) | Geometry and properties: cell width/height, offsets, bindings, and settings replicated from Lane 1 Master to Lanes 2..N | Rows become independent; inspector displays `Independent` badges; individual lanes can be customized; `Re-mirror to All Rows` button appears | Re-establishes master replication; master template overwrites independent lane customizations | **Immediate when Master is selected or button clicked**: Clicking `Re-mirror to All Rows` or re-checking on Master immediately snaps all rows to the Master. Unchecking preserves current layout until a row is edited. |

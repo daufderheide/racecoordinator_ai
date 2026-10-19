@@ -191,10 +191,10 @@ export class LaneGridReplicationHelper {
         const existing = result[existingIndex];
         result[existingIndex] = {
           ...existing,
-          x: Math.round(targetCell.x + offsetInCellX),
-          y: Math.round(targetCell.y + offsetInCellY),
-          width: updatedMaster.width,
-          height: updatedMaster.height,
+          x: existing.x,
+          y: existing.y,
+          width: existing.width,
+          height: existing.height,
           customSettings: {
             ...(existing.customSettings || {}),
             targetIndex: k,
@@ -346,12 +346,14 @@ export class LaneGridReplicationHelper {
     const cellW = masterCell.width > 0 ? masterCell.width : 1;
     const cellH = masterCell.height > 0 ? masterCell.height : 1;
     const isVertical = session.direction === "vertical";
-    const targetWidth = isVertical
-      ? Math.max(10, Math.round(cellW * cellWidthRatio))
-      : cellW;
-    const targetHeight = isVertical
-      ? cellH
-      : Math.max(10, Math.round(cellH * cellHeightRatio));
+    const targetWidth =
+      isVertical || session.mirrorRows === false
+        ? Math.max(10, Math.round(cellW * cellWidthRatio))
+        : cellW;
+    const targetHeight =
+      !isVertical || session.mirrorRows === false
+        ? Math.max(10, Math.round(cellH * cellHeightRatio))
+        : cellH;
     const targetX = isVertical
       ? Math.max(
           masterCell.x,
@@ -636,12 +638,14 @@ export class LaneGridReplicationHelper {
     propertyGroup: "header" | "value" | "border" | "time" | "highlight",
     sourceSettings: Record<string, any>,
     allWidgets: AbsoluteWidgetNode[],
+    sourceWidgetId?: string,
   ): AbsoluteWidgetNode[] {
     return LaneGridStyleHelper.syncCrossColumnProperty(
       gridId,
       propertyGroup,
       sourceSettings,
       allWidgets,
+      sourceWidgetId,
     );
   }
 

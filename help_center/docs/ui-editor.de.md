@@ -116,3 +116,68 @@ Das Dropdown-Menü **Raster-Sortierung** im Reiter „Raster“ steuert die Zeil
   - Mit **Fertig** wird das Raster in eigenständige Widgets festgeschrieben.
   - **Vorlage erneut bearbeiten & Lösen**: Beim Auswählen eines solchen Widgets zeigt die Widget-Konfiguration eine Infokarte mit **Rastervorlage bearbeiten** (um jederzeit wieder in den Echtzeit-Modus zu wechseln) und **Vom Raster lösen** (um die Verknüpfung dauerhaft aufzuheben).
 
+### Raster-Synchronisierung: Spalten verknüpfen vs. Zeilen spiegeln
+
+Ein Raster im Race Coordinator AI ist eine zweidimensionale Matrix, die sich wie folgt zusammensetzt:
+
+- **Zeilen (Teilnehmer-Plätze)**: Repräsentieren jede einzelne physische Rennspur (**Spur 1, Spur 2, ...**) oder Rennposition (**Position 1, Position 2, ...**). Bei horizontaler Ausrichtung des Rasters erscheinen diese Plätze als Spalten.
+- **Spalten (Datenfelder)**: Repräsentieren einzelne Datenmetriken innerhalb eines Platzes (z. B. *Fahrername, Rundenanzahl, Letzte Rundenzeit, Beste Runde, Abstand, Fahrzeugbild*).
+
+Der Widget-Inspektor bietet im Abschnitt **Rasterstruktur & Layout** zwei wesentliche Synchronisierungsoptionen: **Spalten verknüpfen** und **Zeilen spiegeln** (bei horizontaler Ausrichtung als **Spalten spiegeln** bezeichnet).
+
+#### Spalten verknüpfen
+
+**Spalten verknüpfen** steuert die optische Stil-Synchronisierung über alle verschiedenen Datenspalten im Raster hinweg.
+
+- **Aktiviert (Standard)**:
+  - Alle Datenspalten teilen sich ein identisches Erscheinungsbild.
+  - Das Ändern einer Stileigenschaft an einer beliebigen Spalte synchronisiert diese Anpassung sofort und automatisch auf alle Spalten des Rasters.
+  - **Synchronisierte Eigenschaften**:
+    - **Kopfzeilenstil**: Schriftart, Schriftgröße, Textfarbe, Hintergrundfarbe, Textausrichtung und Kopfzeilenhöhe.
+    - **Datenzellenstil**: Schriftart, Schriftgröße, Textfarbe, Hintergrundfarbe, Umschalten der Spurfarben (`useLaneColors`) und Wertausrichtung.
+    - **Rahmenstil**: Rahmenanzeige, Rahmenfarbe, Rahmenbreite und Eckenradius.
+    - **Zeitformatierung**: Nachkommastellen, Anzeigeformat und Schwellenwerte für Subsekunden-Präzision.
+    - **Runden-Telemetrie-Hervorhebung**: Zeilenhervorhebung beim Auslösen einer Runde.
+  - **Zusammenspiel mit nicht gespiegelten Zeilen**: Wenn **Zeilen spiegeln** deaktiviert ist, sind die Zeilen voneinander entkoppelt. Wenn **Spalten verknüpfen** aktiviert ist, überträgt das Ändern optischer Stile (wie Hintergrundfarbe, Textfarbe oder Schriftarten) an einer Spalte diese Änderung auf alle Spalten *innerhalb dieser spezifischen Zeile*, ohne andere Zeilen zu beeinflussen.
+- **Deaktiviert**:
+  - Hebt die Verknüpfung der Spaltenstile auf. Jede Spalte kann eigene Schriftgrößen, Farben, Rahmen und Ausrichtungen erhalten (z. B. eine große, fette gelbe Schrift mit Rahmen für den *Fahrernamen*, während die *Rundenanzahl* klein und transparent bleibt).
+  - Bei Deaktivierung erscheinen im Inspektor unter jedem Stilbereich Schaltflächen zum manuellen Anwenden (**Kopfzeilenstil / Wertstil / Rahmenstil / Format auf alle Spalten anwenden**), um gezielt einzelne Stilkategorien bei Bedarf auf alle Spalten zu übertragen.
+- **Verhalten beim Deaktivieren**:
+  - Wird sofort in den Einstellungen gespeichert.
+  - **Visueller Zustand des Rasters**: Bestehende Spaltenstile ändern sich beim Deaktivieren **nicht** sofort; das Raster behält sein bisheriges Aussehen bei.
+  - **Benutzeraktion erforderlich**: Um optische Unterschiede zu sehen, muss der Benutzer eine bestimmte Spalte auswählen und deren Stileinstellungen anpassen. Nur die gewählte Spalte übernimmt die Änderungen.
+- **Verhalten beim erneuten Aktivieren**:
+  - Reaktiviert die automatische Synchronisierung für künftige Bearbeitungen.
+  - **Visueller Zustand des Rasters**: Das bloße erneute Setzen des Häkchens überschreibt andere Spalten **nicht** sofort mit den Stilen der aktuell gewählten Spalte; bestehende Spaltenstile bleiben unangetastet.
+  - **Benutzeraktion erforderlich**: Der Benutzer muss eine Stileigenschaft (z. B. Schriftgröße um 1px verstellen, Farbe ändern oder Rahmen umschalten) an einer Spalte verändern. Sobald diese Änderung erfolgt, wird die Eigenschaft sofort auf alle Spalten des Rasters übertragen. Alternativ kann eine der expliziten Schaltflächen „Auf alle Spalten anwenden“ angeklickt werden.
+
+#### Zeilen spiegeln (oder Spalten spiegeln)
+
+**Zeilen spiegeln** regelt die Replikation und Geometrie-Synchronisierung von Zeile zu Zeile ausgehend von der **Hauptzeile (Spur 1 / Position 1 Master)** auf alle übrigen Zeilen (**Spuren 2..N**).
+
+- **Aktiviert (Standard)**:
+  - Alle Nicht-Master-Zeilen spiegeln strikt die Hauptzeile (Master).
+  - Jede Verschiebung, Größenänderung, Layoutanpassung oder Einstellungsänderung an der Master-Zelle wird sofort in Echtzeit auf alle übrigen Spuren/Positionen übertragen.
+  - Nicht-Master-Widgets im Raster sind an den Master gekoppelt und tragen das Kennzeichen **Gespiegelt** (z. B. `Spur 2 (Gespiegelt)`).
+- **Deaktiviert**:
+  - Entkoppelt die Nicht-Master-Zeilen von der Master-Vorlage.
+  - Nicht-Master-Widgets zeigen das Kennzeichen **Unabhängig** (z. B. `Spur 2 (Unabhängig)`).
+  - Der Benutzer kann einzelne Zeilen (z. B. Spur 2 oder Position 3) anklicken und deren Eigenschaften, Textfarben, Hintergrundfarben oder Datenzuweisungen unabhängig anpassen, ohne den Master oder andere Spuren zu verändern.
+  - Im Inspektor erscheint direkt unter dem Kontrollkästchen die Schaltfläche **Auf alle Zeilen spiegeln**.
+- **Verhalten beim Deaktivieren**:
+  - Wird sofort in der Konfiguration wirksam.
+  - **Visueller Zustand des Rasters**: Das Rasterlayout und bestehende Zellenpositionen verschieben oder verändern sich **nicht** sofort; bestehende Positionen und Stile bleiben erhalten.
+  - **Benutzeraktion erforderlich**: Der Benutzer muss eine Nicht-Master-Zelle auswählen und bearbeiten, um spurindividuelle Anpassungen vorzunehmen.
+- **Verhalten beim erneuten Aktivieren**:
+  - Schaltet die Master-Replikation im Raster wieder ein.
+  - **Sofortige Aktualisierung**:
+    - Aktiviert der Benutzer das Kontrollkästchen **Zeilen spiegeln** erneut, während ein **Master-Widget** ausgewählt ist, wird das Master-Layout sofort wieder auf alle gespiegelten Spuren übertragen, wodurch individuelle Zeilenanpassungen überschrieben werden.
+    - Klickt der Benutzer auf die Schaltfläche **Auf alle Zeilen spiegeln**, führt der Editor sofort eine vollständige Rastersynchronisierung durch (`syncAllMasterWidgetsToLanes`), schreibt das Raster fest und aktualisiert sowohl die Arbeitsfläche des UI-Editors als auch die Rennansichtsvorschau augenblicklich ohne weitere Benutzeraktionen.
+
+#### Vergleichsübersicht
+
+| Option | Richtung / Geltungsbereich | Was synchronisiert wird | Verhalten bei Deaktivierung | Verhalten bei erneuter Aktivierung | Sofort vs. Benutzeraktion erforderlich |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Spalten verknüpfen** | Horizontal (Über Spalten) | Optischer Stil: Schriften, Größen, Farben, Rahmen, Kopfzeilen, Zeitformate, Hervorhebungen | Spalten werden unabhängig; bestehende Stile bleiben erhalten; manuelle Schaltflächen „Auf alle Spalten anwenden“ erscheinen | Aktiviert Auto-Sync für künftige Änderungen; überschreibt bestehende Spalten nicht sofort | **Benutzeraktion erforderlich**: Das Umschalten ändert bestehende Stile nicht. Der Benutzer muss eine Stileigenschaft bearbeiten, damit die Verknüpfung wirksam wird. |
+| **Zeilen spiegeln** | Vertikal (Über Zeilen / Spuren) | Geometrie & Einstellungen: Zellenbreite/-höhe, Offsets, Bindungen von Spur 1 Master auf Spuren 2..N | Zeilen werden unabhängig; Inspektor zeigt Status `Unabhängig`; Spuren einzeln anpassbar; Schaltfläche `Auf alle Zeilen spiegeln` erscheint | Stellt Master-Replikation wieder her; Master-Vorlage überschreibt individuelle Zeilenanpassungen | **Sofort bei Master-Auswahl oder Klick auf Button**: Klick auf `Auf alle Zeilen spiegeln` oder Reaktivieren am Master synchronisiert sofort alle Zeilen. Deaktivieren behält das Layout bis zur Bearbeitung bei. |
+

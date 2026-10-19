@@ -1,4 +1,5 @@
 import { LaneGridAnimationHelper } from "@app/components/raceday/utils/lane-grid-animation.helper";
+import { LaneGridHeaderHelper } from "@app/components/raceday/utils/lane-grid-header.helper";
 import {
   LaneGridReplicationHelper,
   LaneGridSession,
@@ -339,7 +340,9 @@ function handleGridSyncAction(
     syncAction,
     targetWidget.customSettings,
     layout.widgets,
+    targetWidget.id,
   );
+  delete targetWidget.customSettings?.["_forceAllColumns"];
 }
 
 function handleGridHeaderStructureChanges(
@@ -643,6 +646,18 @@ function handleGridSessionWidgetSync(
         comp.activeGridSession,
         layout.widgets,
       );
+    } else {
+      const headerHeight =
+        comp.activeGridSession.headerHeight != null
+          ? Math.max(20, comp.activeGridSession.headerHeight)
+          : 36;
+      LaneGridHeaderHelper.syncPlacementHeaderWidget(
+        targetWidget,
+        targetWidget,
+        comp.activeGridSession,
+        headerHeight,
+        layout.widgets,
+      );
     }
   } else if (
     comp.activeGridSession &&
@@ -671,6 +686,18 @@ function handleGridSessionWidgetSync(
         layout.widgets = LaneGridReplicationHelper.syncMasterWidgetToLanes(
           masterWidget,
           comp.activeGridSession,
+          layout.widgets,
+        );
+      } else {
+        const headerHeight =
+          comp.activeGridSession.headerHeight != null
+            ? Math.max(20, comp.activeGridSession.headerHeight)
+            : 36;
+        LaneGridHeaderHelper.syncPlacementHeaderWidget(
+          masterWidget,
+          masterWidget,
+          comp.activeGridSession,
+          headerHeight,
           layout.widgets,
         );
       }
@@ -822,6 +849,11 @@ export function isWidgetHeightAutoCalculated(
   session?: LaneGridSession | null,
 ): boolean {
   if (!widget?.customSettings?.["gridId"]) return false;
+  const isMirrored =
+    session && session.gridId === widget.customSettings["gridId"]
+      ? session.mirrorRows !== false
+      : widget.customSettings["mirrorRows"] !== false;
+  if (!isMirrored) return false;
   const dir =
     session && session.gridId === widget.customSettings["gridId"]
       ? session.direction
@@ -834,6 +866,11 @@ export function isWidgetWidthAutoCalculated(
   session?: LaneGridSession | null,
 ): boolean {
   if (!widget?.customSettings?.["gridId"]) return false;
+  const isMirrored =
+    session && session.gridId === widget.customSettings["gridId"]
+      ? session.mirrorRows !== false
+      : widget.customSettings["mirrorRows"] !== false;
+  if (!isMirrored) return false;
   const dir =
     session && session.gridId === widget.customSettings["gridId"]
       ? session.direction

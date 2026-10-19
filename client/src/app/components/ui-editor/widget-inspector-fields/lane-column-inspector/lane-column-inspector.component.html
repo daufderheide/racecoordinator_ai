@@ -1616,6 +1616,7 @@
         <input
           type="color"
           [(ngModel)]="currentSettings['backgroundColor']"
+          (input)="onFieldChange()"
           (change)="onFieldChange()"
           class="inspector-color-input"
         />
@@ -1629,6 +1630,7 @@
           <input
             type="color"
             [(ngModel)]="currentSettings['textColor']"
+            (input)="onFieldChange()"
             (change)="onFieldChange()"
             class="inspector-color-input"
           />
