@@ -623,6 +623,23 @@ describe("RacedayLaneColumnComponent", () => {
     expect(component.foregroundColor).toBe("#ffcc00");
   });
 
+  it("should not apply lane 0 color to empty row when bindingMode is position and useLaneColors is true", () => {
+    fixture.componentRef.setInput("parent", mockParent);
+    // targetIndex: 5 has no driver in heat.standings or heatDrivers
+    fixture.componentRef.setInput(
+      "widget",
+      createWidget({
+        bindingMode: "position",
+        targetIndex: 5,
+        useLaneColors: true,
+      }),
+    );
+    fixture.detectChanges();
+
+    expect(component.backgroundColor).toBe("transparent");
+    expect(component.foregroundColor).toBe("#ffffff");
+  });
+
   it("should render header with customLabel or fallback to column label", () => {
     fixture.componentRef.setInput("parent", mockParent);
     fixture.componentRef.setInput(

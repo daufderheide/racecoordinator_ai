@@ -306,18 +306,21 @@ export function resolveLaneColumnBackgroundColor(
   if (settings.useLaneColors === false) {
     return settings.backgroundColor || "#000000";
   }
+  if (bindingMode !== "lane" && (!hd || RacedayFormatUtils.isEmptyDriver(hd))) {
+    return settings.backgroundColor || "transparent";
+  }
   if (hd && parent?.getLaneColor) {
     const bg = parent.getLaneColor(hd, "background_color");
     if (bg) return bg;
   }
-  const laneIdx = hd?.laneIndex ?? (bindingMode === "lane" ? targetIndex : 0);
+  const laneIdx = hd?.laneIndex ?? (bindingMode === "lane" ? targetIndex : -1);
   const track =
     parent?.track ||
     parent?.race?.track ||
     parent?.raceService?.getRace()?.track;
   const trackLaneBg =
     laneIdx >= 0 ? track?.lanes?.[laneIdx]?.background_color : undefined;
-  return trackLaneBg || "transparent";
+  return trackLaneBg || settings.backgroundColor || "transparent";
 }
 
 export function resolveLaneColumnForegroundColor(
@@ -330,16 +333,19 @@ export function resolveLaneColumnForegroundColor(
   if (settings.useLaneColors === false) {
     return settings.textColor || "#ffffff";
   }
+  if (bindingMode !== "lane" && (!hd || RacedayFormatUtils.isEmptyDriver(hd))) {
+    return settings.textColor || "#ffffff";
+  }
   if (hd && parent?.getLaneColor) {
     const fg = parent.getLaneColor(hd, "foreground_color");
     if (fg) return fg;
   }
-  const laneIdx = hd?.laneIndex ?? (bindingMode === "lane" ? targetIndex : 0);
+  const laneIdx = hd?.laneIndex ?? (bindingMode === "lane" ? targetIndex : -1);
   const track =
     parent?.track ||
     parent?.race?.track ||
     parent?.raceService?.getRace()?.track;
   const trackLaneFg =
     laneIdx >= 0 ? track?.lanes?.[laneIdx]?.foreground_color : undefined;
-  return trackLaneFg || "#ffffff";
+  return trackLaneFg || settings.textColor || "#ffffff";
 }

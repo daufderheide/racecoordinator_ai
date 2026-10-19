@@ -544,8 +544,10 @@ export class RacedayLaneColumnComponent
     const hd = this.targetDriver;
     if (!p || !hd) return;
     const lane =
-      hd.laneIndex ?? (this.bindingMode === "lane" ? this.targetIndex : 0);
-    p.resetLane?.(lane, event);
+      hd.laneIndex ?? (this.bindingMode === "lane" ? this.targetIndex : -1);
+    if (lane >= 0) {
+      p.resetLane?.(lane, event);
+    }
   }
 
   onTeammateChange(event: any): void {

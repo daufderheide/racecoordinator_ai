@@ -525,5 +525,151 @@ describe("raceday-lane-column-interaction.helper", () => {
         resolveLaneColumnForegroundColor({} as any, mockHd, parent, "lane", 0),
       ).toBe("#lane0Fg");
     });
+
+    it("should not apply lane 0 color to empty row or undefined driver in position mode", () => {
+      const parent = {
+        track: {
+          lanes: [
+            { background_color: "#lane0Bg", foreground_color: "#lane0Fg" },
+          ],
+        },
+      };
+      const settings = {
+        useLaneColors: true,
+        backgroundColor: "#defaultBg",
+        textColor: "#defaultFg",
+      };
+
+      expect(
+        resolveLaneColumnBackgroundColor(
+          settings as any,
+          undefined,
+          parent,
+          "position",
+          5,
+        ),
+      ).toBe("#defaultBg");
+      expect(
+        resolveLaneColumnForegroundColor(
+          settings as any,
+          undefined,
+          parent,
+          "position",
+          5,
+        ),
+      ).toBe("#defaultFg");
+
+      // Without explicit settings fallback, defaults to transparent and white
+      expect(
+        resolveLaneColumnBackgroundColor(
+          {} as any,
+          undefined,
+          parent,
+          "position",
+          5,
+        ),
+      ).toBe("transparent");
+      expect(
+        resolveLaneColumnForegroundColor(
+          {} as any,
+          undefined,
+          parent,
+          "position",
+          5,
+        ),
+      ).toBe("#ffffff");
+    });
+
+    it("should not apply lane 0 color to empty driver in position mode", () => {
+      const parent = {
+        track: {
+          lanes: [
+            { background_color: "#lane0Bg", foreground_color: "#lane0Fg" },
+          ],
+        },
+      };
+      const emptyHd: any = { isEmpty: true, laneIndex: 0 };
+
+      expect(
+        resolveLaneColumnBackgroundColor(
+          {} as any,
+          emptyHd,
+          parent,
+          "position",
+          4,
+        ),
+      ).toBe("transparent");
+      expect(
+        resolveLaneColumnForegroundColor(
+          {} as any,
+          emptyHd,
+          parent,
+          "position",
+          4,
+        ),
+      ).toBe("#ffffff");
+    });
+
+    it("should not apply lane 0 color to non-heat driver with laneIndex -1 in position mode", () => {
+      const parent = {
+        track: {
+          lanes: [
+            { background_color: "#lane0Bg", foreground_color: "#lane0Fg" },
+          ],
+        },
+      };
+      const nonHeatHd = new DriverHeatData(
+        "d2",
+        { objectId: "d2", name: "Driver 2" } as any,
+        -1,
+      );
+
+      expect(
+        resolveLaneColumnBackgroundColor(
+          {} as any,
+          nonHeatHd,
+          parent,
+          "overallPosition",
+          3,
+        ),
+      ).toBe("transparent");
+      expect(
+        resolveLaneColumnForegroundColor(
+          {} as any,
+          nonHeatHd,
+          parent,
+          "overallPosition",
+          3,
+        ),
+      ).toBe("#ffffff");
+    });
+
+    it("should still retrieve lane color in lane mode when driver is undefined", () => {
+      const parent = {
+        track: {
+          lanes: [
+            { background_color: "#lane0Bg", foreground_color: "#lane0Fg" },
+          ],
+        },
+      };
+      expect(
+        resolveLaneColumnBackgroundColor(
+          {} as any,
+          undefined,
+          parent,
+          "lane",
+          0,
+        ),
+      ).toBe("#lane0Bg");
+      expect(
+        resolveLaneColumnForegroundColor(
+          {} as any,
+          undefined,
+          parent,
+          "lane",
+          0,
+        ),
+      ).toBe("#lane0Fg");
+    });
   });
 });
