@@ -2,6 +2,17 @@
 
 This directory contains community and user-contributed widget libraries for **Race Coordinator AI**.
 
+## 📥 Download Widgets as ZIP
+
+GitHub does not provide a built-in button to download a single subfolder, but you can download this entire directory or individual libraries as a ZIP archive using the direct 1-click links below:
+
+- **Download All Custom Widgets**:
+  - [📥 **Download `custom_widgets.zip`** (Direct)](https://download-directory.github.io/?url=https://github.com/daufderheide/racecoordinator_ai/tree/develop/custom_widgets)
+  - [Alternative Mirror (DownGit)](https://minhaskamal.github.io/DownGit/#/home?url=https://github.com/daufderheide/racecoordinator_ai/tree/develop/custom_widgets)
+
+- **Download by Library**:
+  - **dopamine**: [📥 Download `dopamine.zip`](https://download-directory.github.io/?url=https://github.com/daufderheide/racecoordinator_ai/tree/develop/custom_widgets/dopamine) ([DownGit Mirror](https://minhaskamal.github.io/DownGit/#/home?url=https://github.com/daufderheide/racecoordinator_ai/tree/develop/custom_widgets/dopamine))
+
 ## Directory Structure
 
 Each top-level directory represents a **Library** created and maintained by a user, club, or developer:

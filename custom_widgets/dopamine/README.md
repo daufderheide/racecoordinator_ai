@@ -2,6 +2,17 @@
 
 User-contributed custom widget pack created and maintained by **dopamine**.
 
+## 📥 Download Dopamine Widgets as ZIP
+
+GitHub does not have a native button to download a single subfolder, but you can download the `dopamine` library folder or individual widgets as a ZIP archive using the direct links below:
+
+- **Download Entire Library**:
+  - [📥 **Download `dopamine.zip`** (Direct)](https://download-directory.github.io/?url=https://github.com/daufderheide/racecoordinator_ai/tree/develop/custom_widgets/dopamine)
+  - [Alternative Mirror (DownGit)](https://minhaskamal.github.io/DownGit/#/home?url=https://github.com/daufderheide/racecoordinator_ai/tree/develop/custom_widgets/dopamine)
+
+- **Download Individual Widgets**:
+  - **advanced-laps**: [📥 Download `advanced-laps.zip`](https://download-directory.github.io/?url=https://github.com/daufderheide/racecoordinator_ai/tree/develop/custom_widgets/dopamine/advanced-laps) ([DownGit Mirror](https://minhaskamal.github.io/DownGit/#/home?url=https://github.com/daufderheide/racecoordinator_ai/tree/develop/custom_widgets/dopamine/advanced-laps))
+
 ## Widgets Included
 
 ### 1. Advanced Laps (`advanced-laps`)
