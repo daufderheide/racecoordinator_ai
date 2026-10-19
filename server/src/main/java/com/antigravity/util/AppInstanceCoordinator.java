@@ -248,7 +248,8 @@ public class AppInstanceCoordinator {
     if (choice == ACTION_OPEN_BROWSER) {
       // Layer 3: Check if existing instance is still live before exiting
       if (isRaceCoordinatorRunning(port)) {
-        logger.info("User selected 'Open Web Browser'. Opening browser and exiting new process.");
+        logger.info(
+            "User selected 'Run in existing session'. Opening browser and exiting new process.");
         browserLauncher.openBrowser("http://localhost:" + port);
         exitHandler.exit(0);
       } else {
@@ -268,13 +269,15 @@ public class AppInstanceCoordinator {
     } else if (choice == ACTION_RESTART) {
       handleRestartChoice(port, onRestart);
     } else {
-      logger.info("User selected 'Exit' (or closed dialog). Exiting new process cleanly.");
+      logger.info(
+          "User selected 'Do nothing, abort' (or closed dialog). Exiting new process cleanly.");
       exitHandler.exit(0);
     }
   }
 
   private static void handleRestartChoice(int port, Runnable onRestart) {
-    logger.info("User selected 'Restart Application'. Requesting existing instance to stop...");
+    logger.info(
+        "User selected 'Stop current session and restart'. Requesting existing instance to stop...");
     boolean stopped = stopper.stopInstance(port);
     if (stopped) {
       logger.info(
@@ -292,6 +295,27 @@ public class AppInstanceCoordinator {
   }
 
   static class DefaultActionPrompter implements InstanceActionPrompter {
+    static final Object[] OPTIONS =
+        new Object[] {
+          "Run in existing session", "Stop current session and restart", "Do nothing, abort"
+        };
+
+    static String buildMessage(int port) {
+      return "Race Coordinator AI is already running on port "
+          + port
+          + "\nHow do you want to proceed?";
+    }
+
+    static int resolveAction(Object value) {
+      if ("Run in existing session".equals(value) || "Open Web Browser".equals(value)) {
+        return ACTION_OPEN_BROWSER;
+      } else if ("Stop current session and restart".equals(value)
+          || "Restart Application".equals(value)) {
+        return ACTION_RESTART;
+      }
+      return ACTION_EXIT;
+    }
+
     @Override
     public int promptUser(int port) {
       if (GraphicsEnvironment.isHeadless()) {
@@ -299,13 +323,8 @@ public class AppInstanceCoordinator {
       }
       ScheduledExecutorService monitor = null;
       try {
-        String message =
-            "Race Coordinator AI is already running on port "
-                + port
-                + ".\n\n"
-                + "Another instance of Race Coordinator AI was detected.\n"
-                + "How would you like to proceed?";
-        Object[] options = new Object[] {"Open Web Browser", "Restart Application", "Exit"};
+        String message = buildMessage(port);
+        Object[] options = OPTIONS.clone();
         JOptionPane pane =
             new JOptionPane(
                 message,
@@ -345,11 +364,7 @@ public class AppInstanceCoordinator {
         }
 
         Object value = pane.getValue();
-        if ("Open Web Browser".equals(value)) {
-          return ACTION_OPEN_BROWSER;
-        } else if ("Restart Application".equals(value)) {
-          return ACTION_RESTART;
-        }
+        return resolveAction(value);
       } catch (Exception e) {
         logger.error("Failed to display Already Running dialog: {}", e.getMessage());
       } finally {

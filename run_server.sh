@@ -213,44 +213,44 @@ coordinate_already_running() {
 
   local choice=""
   if [ "$(uname)" = "Darwin" ]; then
-    choice=$(osascript <<'EOF' 2>/dev/null
+    choice=$(osascript <<EOF 2>/dev/null
 try
-  set theDialog to display dialog "Race Coordinator AI is already running.\n\nAnother instance of Race Coordinator AI was detected.\n\nHow would you like to proceed?" with title "Race Coordinator AI - Already Running" buttons {"Exit", "Restart Application", "Open Web Browser"} default button "Open Web Browser" with icon note
+  set theDialog to display dialog "Race Coordinator AI is already running on port ${SERVER_PORT}\nHow do you want to proceed?" with title "Race Coordinator AI - Already Running" buttons {"Do nothing, abort", "Stop current session and restart", "Run in existing session"} default button "Run in existing session" with icon note
   return button returned of theDialog
 on error
-  return "Exit"
+  return "Do nothing, abort"
 end try
 EOF
     )
   elif command -v zenity >/dev/null 2>&1; then
     choice=$(zenity --list --title="Race Coordinator AI - Already Running" \
-      --text="Race Coordinator AI is already running.\n\nAnother instance of Race Coordinator AI was detected.\n\nHow would you like to proceed?" \
+      --text="Race Coordinator AI is already running on port ${SERVER_PORT}\nHow do you want to proceed?" \
       --column="Action" \
-      "Open Web Browser" \
-      "Restart Application" \
-      "Exit" \
+      "Run in existing session" \
+      "Stop current session and restart" \
+      "Do nothing, abort" \
       --height=240 --width=360 2>/dev/null)
-    if [ -z "$choice" ]; then choice="Exit"; fi
+    if [ -z "$choice" ]; then choice="Do nothing, abort"; fi
   elif command -v kdialog >/dev/null 2>&1; then
-    choice=$(kdialog --combobox "Race Coordinator AI is already running.\n\nHow would you like to proceed?" "Open Web Browser" "Restart Application" "Exit" --default "Open Web Browser" --title "Race Coordinator AI - Already Running" 2>/dev/null)
-    if [ -z "$choice" ]; then choice="Exit"; fi
+    choice=$(kdialog --combobox "Race Coordinator AI is already running on port ${SERVER_PORT}\nHow do you want to proceed?" "Run in existing session" "Stop current session and restart" "Do nothing, abort" --default "Run in existing session" --title "Race Coordinator AI - Already Running" 2>/dev/null)
+    if [ -z "$choice" ]; then choice="Do nothing, abort"; fi
   else
     echo ""
-    echo "Race Coordinator AI is already running."
-    echo "Select an option:"
-    echo "  1) Open Web Browser"
-    echo "  2) Restart Application"
-    echo "  3) Exit"
+    echo "Race Coordinator AI is already running on port ${SERVER_PORT}"
+    echo "How do you want to proceed?"
+    echo "  1) Run in existing session"
+    echo "  2) Stop current session and restart"
+    echo "  3) Do nothing, abort"
     read -r -p "Enter choice [1-3] (default 1): " term_choice
     case "$term_choice" in
-      2) choice="Restart Application" ;;
-      3) choice="Exit" ;;
-      *) choice="Open Web Browser" ;;
+      2) choice="Stop current session and restart" ;;
+      3) choice="Do nothing, abort" ;;
+      *) choice="Run in existing session" ;;
     esac
   fi
 
-  if [ "$choice" = "Open Web Browser" ]; then
-    echo "User selected 'Open Web Browser'."
+  if [ "$choice" = "Run in existing session" ] || [ "$choice" = "Open Web Browser" ]; then
+    echo "User selected 'Run in existing session'."
     local target_url="http://localhost:7070"
     if is_port_in_use "$CLIENT_PORT"; then
       target_url="http://localhost:$CLIENT_PORT"
@@ -261,8 +261,8 @@ EOF
       xdg-open "$target_url"
     fi
     exit 0
-  elif [ "$choice" = "Restart Application" ]; then
-    echo "User selected 'Restart Application'. Stopping existing instance..."
+  elif [ "$choice" = "Stop current session and restart" ] || [ "$choice" = "Restart Application" ]; then
+    echo "User selected 'Stop current session and restart'. Stopping existing instance..."
     curl -s -m 2 -X POST "http://localhost:${SERVER_PORT}/api/server/shutdown" >/dev/null 2>&1 || true
     local c_pid=$(get_port_listening_pid "$CLIENT_PORT")
     if [ -n "$c_pid" ]; then
@@ -288,7 +288,7 @@ EOF
     echo "Existing instance stopped. Starting new instance..."
     return 0
   else
-    echo "User selected 'Exit' (or closed dialog). Exiting cleanly."
+    echo "User selected 'Do nothing, abort' (or closed dialog). Exiting cleanly."
     exit 0
   fi
 }

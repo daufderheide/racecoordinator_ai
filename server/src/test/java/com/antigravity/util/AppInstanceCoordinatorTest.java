@@ -1,5 +1,6 @@
 package com.antigravity.util;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -367,6 +368,56 @@ public class AppInstanceCoordinatorTest {
     assertEquals(1, AppInstanceCoordinator.ACTION_RESTART);
     assertEquals(2, AppInstanceCoordinator.ACTION_EXIT);
     assertEquals(3, AppInstanceCoordinator.ACTION_TAKE_OVER);
+  }
+
+  @Test
+  public void testDefaultActionPrompterMessageAndOptions() {
+    assertEquals(
+        "Race Coordinator AI is already running on port 7070\nHow do you want to proceed?",
+        AppInstanceCoordinator.DefaultActionPrompter.buildMessage(7070));
+    assertArrayEquals(
+        new Object[] {
+          "Run in existing session", "Stop current session and restart", "Do nothing, abort"
+        },
+        AppInstanceCoordinator.DefaultActionPrompter.OPTIONS);
+  }
+
+  @Test
+  public void testDefaultActionPrompterResolveAction() {
+    assertEquals(
+        AppInstanceCoordinator.ACTION_OPEN_BROWSER,
+        AppInstanceCoordinator.DefaultActionPrompter.resolveAction("Run in existing session"));
+    assertEquals(
+        AppInstanceCoordinator.ACTION_OPEN_BROWSER,
+        AppInstanceCoordinator.DefaultActionPrompter.resolveAction("Open Web Browser"));
+    assertEquals(
+        AppInstanceCoordinator.ACTION_RESTART,
+        AppInstanceCoordinator.DefaultActionPrompter.resolveAction(
+            "Stop current session and restart"));
+    assertEquals(
+        AppInstanceCoordinator.ACTION_RESTART,
+        AppInstanceCoordinator.DefaultActionPrompter.resolveAction("Restart Application"));
+    assertEquals(
+        AppInstanceCoordinator.ACTION_EXIT,
+        AppInstanceCoordinator.DefaultActionPrompter.resolveAction("Do nothing, abort"));
+    assertEquals(
+        AppInstanceCoordinator.ACTION_EXIT,
+        AppInstanceCoordinator.DefaultActionPrompter.resolveAction("Exit"));
+    assertEquals(
+        AppInstanceCoordinator.ACTION_EXIT,
+        AppInstanceCoordinator.DefaultActionPrompter.resolveAction(null));
+    assertEquals(
+        AppInstanceCoordinator.ACTION_EXIT,
+        AppInstanceCoordinator.DefaultActionPrompter.resolveAction("Unknown Option"));
+  }
+
+  @Test
+  public void testDefaultActionPrompterPromptUserInHeadless() {
+    AppInstanceCoordinator.DefaultActionPrompter prompter =
+        new AppInstanceCoordinator.DefaultActionPrompter();
+    if (java.awt.GraphicsEnvironment.isHeadless()) {
+      assertEquals(AppInstanceCoordinator.ACTION_EXIT, prompter.promptUser(7070));
+    }
   }
 
   @Test
