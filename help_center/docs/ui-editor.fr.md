@@ -60,13 +60,46 @@ Le widget **Compte à rebours** affiche les feux visuels de départ et déclench
 
 Le widget **Colonne de Voie** permet de positionner des colonnes individuelles de données provenant de la vue de voie (telles que les informations du pilote, le temps du dernier tour, le meilleur tour / record personnel, le niveau de carburant %, l'historique des tours, les vitesses de secteur, la position, etc.) n'importe où sur le canevas sous la forme de cartes modulaires indépendantes.
 
-- **Pilote Cible et Tri de la Grille** :
-  - **Cartes Individuelles (Pilote Cible)** : Les cartes placées hors grille sélectionnent le pilote à afficher : par **Voie de Piste** (Voie 1 à Voie 8), par **Position de Série** (1ère, 2e, etc.), par rang au **Classement Général** ou par **Tête de Série**.
-  - **Grilles (Tri de la Grille / Ordre des Lignes)** : Dans une grille dupliquée, toutes les colonnes d'une ligne représentent le même pilote. L'ordre des lignes est déterminé par le menu déroulant **Tri de la Grille** dans l'onglet Grille :
-    - **Voie de Piste** : Ordre statique par numéro de voie (Voie 1, Voie 2, ...).
-    - **Position de Série** : Réordonnancement dynamique lors des dépassements dans la série en cours.
-    - **Classement Général** : Réordonnancement dynamique selon le classement général de l'épreuve.
-    - **Tête de Série** : Ordre statique selon la position initiale de qualification/classement.
+- **Pilote Cible et Cartes Individuelles** :
+  - Les cartes placées hors grille sélectionnent le pilote à afficher : par **Voie de Piste** (Voie 1 à Voie 8), par **Position de Série** (1ère, 2e, etc.), par rang au **Classement Général** ou par **Tête de Série**.
+
+### Sources de Données de Grille : Données de Série vs. Données Générales de Course
+
+Chaque grille de données dans l'Éditeur d'Interface dispose d'un paramètre **Source de données** dans l'onglet Grille, qui définit quels pilotes alimentent les lignes :
+
+- **Données de Série (`heat`)** :
+  - **Portée des Pilotes** : Lié exclusivement aux participants en compétition dans la série en cours sur la piste (`heatDrivers`).
+  - **Comportement d'Affichage** : Seuls les pilotes actuellement en piste dans la série active sont affichés. Les pilotes au repos ou programmés dans d'autres séries sont exclus.
+  - **Pagination & Défilement** : Le nombre de lignes est strictement restreint aux pilotes de la série active et aux voies physiques. La grille ne défile jamais au-delà des participants actifs vers des lignes vides.
+- **Données Générales de Course (`overall`)** :
+  - **Portée des Pilotes** : Lié à **tous les participants inscrits** sur l'ensemble de l'épreuve ou du tournoi (`participants`).
+  - **Comportement d'Affichage** : Tout pilote inscrit peut être affiché dans la grille, qu'il soit en piste dans la série active ou en pause aux stands.
+  - **Pagination & Défilement** : Le décompte des lignes reflète l'ensemble des engagés du tournoi (ex. 16, 24 ou 32 pilotes répartis sur plusieurs séries). Si la grille comporte moins de lignes visibles que de participants au total, elle prend en charge le défilement automatique multipage pour faire défiler tout le classement général.
+  - **Pilotes Hors Piste** : Pour les pilotes qui ne sont pas en piste, les statistiques cumulées de l'épreuve sont renseignées automatiquement.
+
+### Widgets : Widgets de Données de Série vs. Widgets de Données Générales
+
+La Boîte à outils organise les colonnes et cartes de données en groupes **Données de Série** et **Données Générales**. Le choix du widget détermine quelles statistiques sont calculées et présentées pour chaque ligne :
+
+- **Widgets de Données de Série** (ex. *Compteur de Tours, Temps du Dernier Tour, Meilleur Tour de Série, Temps de Secteur, Temps de Réaction, Position / Rang de Série, Écarts de Série, Carburant / Télémétrie, Rythme Fantôme*) :
+  - Extraient des métriques calculées strictement pour la **série active**.
+  - **Dans une Grille de Données de Série** : Chaque ligne affiche la télémétrie en temps réel et les temps au tour des véhicules actuellement en course.
+  - **Dans une Grille de Données Générales** : Les pilotes en piste affichent leur télémétrie en direct ; les pilotes au repos ou inactifs affichent des tirets (`--`) ou des zéros pour les métriques de série, car ils n'ont pas de données de série en cours.
+- **Widgets de Données Générales de Course** (ex. *Rang Général, Tours Totaux, Tours Physiques Totaux, Temps Total Général, Meilleur Tour de Course, Moyenne Générale, Médiane Générale, Régularité Générale, Écarts Généraux, Probabilité de Victoire / Prédictions*) :
+  - Extraient les performances cumulées sur **toutes les séries terminées** du tournoi.
+  - **Dans une Grille de Données Générales** : Chaque ligne de pilote (qu'il soit en piste ou aux stands entre deux séries) affiche l'intégralité de ses statistiques globales, ses tours cumulés, son record de l'épreuve et son rang général.
+  - **Dans une Grille de Données de Série** : Les pilotes actifs affichent leur rang général et leurs statistiques globales aux côtés de leurs tours de série en direct (ex. observer la position générale tout en suivant la course en cours).
+
+### Tri de Grille & Matrice d'Interaction
+
+Le menu déroulant **Tri de la Grille** dans l'onglet Grille détermine l'ordre des lignes. Son comportement dépend directement du réglage de la **Source de données** (**Données de Série** ou **Données Générales**) :
+
+| Option de Tri | Dans une Grille de Série (`gridType: heat`) | Dans une Grille Générale (`gridType: overall`) |
+| :--- | :--- | :--- |
+| **Voie de Piste** | Ordre statique par voie physique (Voie 1, Voie 2, ...). Chaque ligne est attachée à une voie spécifique et à son pilote en piste. | Les pilotes actifs en piste apparaissent en premier par numéro de voie (Voie 1, Voie 2, ...), suivis de tous les participants inactifs classés selon leur rang général. |
+| **Position de Série** | Réordonnancement dynamique en temps réel selon la position dans la série en cours (1ère, 2e, 3e de la série). Les lignes permutent en direct lors des passages sur la ligne ou des dépassements. | Les pilotes actifs apparaissent en haut classés selon leur position dans la série (1er, 2e, ...), suivis de tous les participants inactifs triés selon le classement général. |
+| **Classement Général** | Trie **uniquement les pilotes de la série active** selon leur classement général dans l'épreuve. (Par exemple, si les 2e, 5e, 8e et 14e au général courent ensemble, les 4 lignes les classent #2, #5, #8, #14). Aucun pilote extérieur n'apparaît et aucune ligne vide n'est générée. | Trie **l'ensemble des participants du tournoi** selon le classement général de l'épreuve (1er général, 2e général, 3e général, ...). L'ensemble du tableau se réorganise en direct lors des mises à jour de points et de tours. |
+| **Tête de Série** | Trie les pilotes de la série active selon leur numéro initial de qualification/classement (plus petit numéro en premier). | Trie tous les participants de l'épreuve par leur numéro initial de tête de série (1, 2, 3, ...) sur l'ensemble du plateau. |
 - **Orientation** : Prend en charge les dispositions **Verticale** (en-tête au-dessus de la valeur) et **Horizontale** (en-tête et valeur côte à côte).
 - **Style et Personnalisation de la Barre de Titre** :
   - La barre de titre reprend par défaut l'apparence exacte de l'en-tête de colonne de la vue de voie (arrière-plan sombre semi-transparent `rgba(68, 68, 68, 0.7)`, texte blanc en gras, coins supérieurs arrondis et bordure de séparation).

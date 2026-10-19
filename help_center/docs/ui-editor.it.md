@@ -60,13 +60,46 @@ Il widget **Conto alla rovescia** mostra il semaforo visivo di partenza ed emett
 
 Il widget **Colonna Corsia** consente di posizionare le singole colonne di dati della vista corsia (come informazioni pilota, tempo dell'ultimo giro, miglior giro / record personale, livello carburante %, storico dei giri, velocità di settore, posizione, ecc.) in qualsiasi punto dell'area di lavoro sotto forma di schede modulari indipendenti.
 
-- **Pilota di Riferimento e Ordinamento Griglia**:
-  - **Schede Singole (Pilota di Riferimento)**: Le singole schede posizionate fuori da una griglia scelgono quale pilota mostrare: per **Corsia Pista** (Corsia 1 fino a Corsia 8), per **Posizione Manche** (1°, 2°, ecc.), per posizione nella **Classifica Generale** o per **Testa di Serie**.
-  - **Griglie (Ordinamento Griglia / Ordine Righe)**: In una griglia duplicata, tutte le colonne all'interno di una riga rappresentano lo stesso pilota. L'ordine delle righe è determinato dal menu a discesa **Ordinamento Griglia** nella scheda Griglia:
-    - **Corsia Pista**: Ordinamento statico per numero di corsia (Corsia 1, Corsia 2, ...).
-    - **Posizione Manche**: Riordinamento dinamico in tempo reale durante i sorpassi nella manche attuale.
-    - **Classifica Generale**: Riordinamento dinamico basato sulla classifica generale della manifestazione.
-    - **Testa di Serie**: Ordinamento statico in base alla posizione iniziale di qualificazione/seeding.
+- **Pilota di Riferimento e Schede Singole**:
+  - Le singole schede posizionate fuori da una griglia scelgono quale pilota mostrare: per **Corsia Pista** (Corsia 1 fino a Corsia 8), per **Posizione Manche** (1°, 2°, ecc.), per posizione nella **Classifica Generale** o per **Testa di Serie**.
+
+### Origini Dati Griglia: Dati Manche vs. Dati Generali di Gara
+
+Ogni griglia di dati nell'Editor UI dispone di un'impostazione **Origine dati** nella scheda Griglia, che determina quali piloti popolano le righe:
+
+- **Dati Manche (`heat`)**:
+  - **Ambito Piloti**: Vincolato esclusivamente ai partecipanti che gareggiano attivamente nella manche corrente sulla pista (`heatDrivers`).
+  - **Visualizzazione**: Vengono mostrati solo i piloti attualmente in pista nella manche attiva. I piloti a riposo o assegnati ad altre manche vengono omessi.
+  - **Paginazione e Scorrimento**: Il conteggio delle righe è limitato ai piloti della manche attiva e alle corsie fisiche. La griglia non scorre mai oltre i partecipanti attivi su righe vuote.
+- **Dati Generali di Gara (`overall`)**:
+  - **Ambito Piloti**: Vincolato a **tutti i partecipanti iscritti** all'intero torneo o evento (`participants`).
+  - **Visualizzazione**: Qualsiasi pilota iscritto all'evento può essere visualizzato nella griglia, sia che stia gareggiando nella manche corrente o sia in pausa ai box.
+  - **Paginazione e Scorrimento**: Il conteggio delle righe riflette l'intero schieramento dell'evento (es. 16, 24 o 32 piloti su più manche). Se la griglia ha meno righe visibili rispetto ai partecipanti totali, supporta lo scorrimento automatico multipagina per mostrare l'intera classifica generale.
+  - **Piloti Fuori Pista**: Per i piloti che non sono attualmente in pista, vengono fornite automaticamente le statistiche complessive accumulate.
+
+### Widget: Widget Dati Manche vs. Widget Dati Generali
+
+La Casella degli strumenti suddivide le colonne e le schede dati nei gruppi **Dati Manche** e **Dati Generali**. La scelta del widget determina quali statistiche vengono calcolate e visualizzate per ciascuna riga:
+
+- **Widget Dati Manche** (es. *Conteggio Giri, Tempo Ultimo Giro, Miglior Giro Manche, Tempo Settore, Tempo Reazione, Posizione Manche / Piazzamento, Distacchi Manche, Carburante / Telemetria, Ritmo Fantasma*):
+  - Calcolano le metriche prestazionali riferite esclusivamente alla **manche attiva**.
+  - **In una Griglia Dati Manche**: Ciascuna riga mostra la telemetria in tempo reale e i tempi sul giro delle vetture attualmente in pista.
+  - **In una Griglia Dati Generali**: I piloti in pista mostrano la loro telemetria in tempo reale; i piloti a riposo o inattivi mostrano trattini (`--`) o zeri per le metriche di manche, in quanto non producono dati nella manche in corso.
+- **Widget Dati Generali di Gara** (es. *Piazzamento Generale, Giri Totali, Giri Fisici Totali, Tempo Totale Generale, Miglior Giro Assoluto, Media Generale, Mediana Generale, Regolarità Generale, Distacchi Generali, Probabilità di Vittoria / Previsioni*):
+  - Calcolano le metriche prestazionali complessive su **tutte le manche disputate** nel torneo.
+  - **In una Griglia Dati Generali**: Ogni riga di pilota (in pista o ai box tra una manche e l'altra) mostra le statistiche complete dell'evento, i giri totali del torneo, il miglior giro assoluto e la posizione generale.
+  - **In una Griglia Dati Manche**: I piloti attivi mostrano la loro posizione generale e le statistiche complessive dell'evento accanto ai giri della manche in corso (es. seguire la posizione in classifica generale mentre si corre la manche).
+
+### Ordinamento Griglia e Matrice di Interazione
+
+Il menu a discesa **Ordinamento Griglia** nella scheda Griglia controlla l'ordine delle righe. Il suo comportamento dipende direttamente dall'impostazione dell'**Origine dati** (**Dati Manche** o **Dati Generali**):
+
+| Opzione Ordinamento | In Griglia Dati Manche (`gridType: heat`) | In Griglia Dati Generali (`gridType: overall`) |
+| :--- | :--- | :--- |
+| **Corsia Pista** | Ordinamento statico per corsia fisica (Corsia 1, Corsia 2, ...). Ciascuna riga è legata a una specifica corsia e al suo pilota assegnato. | I piloti attivi in pista appaiono per primi in ordine di corsia (Corsia 1, Corsia 2, ...), seguiti da tutti i partecipanti inattivi ordinati per posizione nella classifica generale. |
+| **Posizione Manche** | Riordinamento dinamico in tempo reale in base alla posizione nella manche attiva (1°, 2°, 3° nella manche). Le righe si scambiano in tempo reale ai passaggi sul traguardo e durante i sorpassi. | I piloti attivi appaiono in cima ordinati per posizione nella manche (1°, 2°, ...), seguiti da tutti i partecipanti inattivi ordinati per classifica generale. |
+| **Classifica Generale** | Ordina **esclusivamente i piloti della manche attiva** in base alla loro posizione nella classifica generale del torneo. (Ad esempio, se nella manche corrono il 2°, 5°, 8° e 14° della generale, le 4 righe li ordinano #2, #5, #8, #14). Non mostra piloti estranei né genera righe vuote. | Ordina l'**intero schieramento dei partecipanti** in base alla classifica generale dell'evento (1° generale, 2° generale, 3° generale, ...). L'intera tabella si riordina in tempo reale con l'aggiornamento di punti e giri. |
+| **Testa di Serie** | Ordina i piloti della manche attiva in base al loro numero di qualificazione/seeding iniziale (numero più basso per primo). | Ordina tutti i partecipanti dell'evento in base alla loro testa di serie iniziale (1, 2, 3, ...) sull'intero schieramento. |
 - **Orientamento**: Supporta layout **Verticale** (intestazione sopra il valore) e **Orizzontale** (intestazione e valore affiancati).
 - **Stile e Personalizzazione della Barra del Titolo**:
   - La barra del titolo segue per impostazione predefinita lo stesso stile dell'intestazione della colonna nella vista corsia (sfondo scuro semitrasparente `rgba(68, 68, 68, 0.7)`, testo bianco in grassetto, angoli superiori arrotondati e bordo divisore).

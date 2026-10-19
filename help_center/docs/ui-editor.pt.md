@@ -60,13 +60,46 @@ O widget **Contagem Decrescente** exibe o semáforo visual de partida e aciona o
 
 O widget **Coluna de Pista** permite posicionar colunas individuais de dados da visualização de pista (como informações do piloto, tempo da última volta, melhor volta / recorde pessoal, combustível %, histórico de voltas, velocidades de setor, posição, etc.) em qualquer lugar da tela como cartões modulares independentes.
 
-- **Piloto Alvo e Classificação da Grade**:
-  - **Cartões Individuais (Piloto Alvo)**: Cartões individuais colocados fora de uma grade escolhem qual piloto exibir: por **Pista** (Pista 1 a Pista 8), por **Posição da Bateria** (1º, 2º, etc.), por posto na **Classificação Geral** ou por **Chaveamento do Piloto**.
-  - **Grades (Classificação da Grade / Ordem das Linhas)**: Em uma grade duplicada, todas as colunas dentro de uma linha representam o mesmo piloto, e a ordem das linhas é definida no menu suspenso **Classificação da Grade** na aba Grade:
-    - **Pista**: Ordenação estática pelo número da pista (Pista 1, Pista 2, ...).
-    - **Posição da Bateria**: Reordenação em tempo real conforme os pilotos se ultrapassam na bateria ativa.
-    - **Classificação Geral**: Reordenação em tempo real com base na classificação geral do torneio/evento.
-    - **Chaveamento do Piloto**: Ordenação estática pela posição inicial de classificação/chaveamento.
+- **Piloto Alvo e Cartões Individuais**:
+  - Cartões individuais colocados fora de uma grade escolhem qual piloto exibir: por **Pista** (Pista 1 a Pista 8), por **Posição da Bateria** (1º, 2º, etc.), por posto na **Classificação Geral** ou por **Chaveamento do Piloto**.
+
+### Origens de Dados da Grade: Dados da Bateria vs. Dados Gerais da Corrida
+
+Toda grade de dados no Editor de UI possui uma configuração de **Origem de dados** na aba Grade, que define quais pilotos preenchem as linhas da grade:
+
+- **Dados da Bateria (`heat`)**:
+  - **Escopo de Pilotos**: Vinculado exclusivamente aos participantes que competem ativamente na bateria atual na pista (`heatDrivers`).
+  - **Comportamento de Exibição**: Apenas os pilotos atualmente na pista na bateria ativa são mostrados. Pilotos em descanso ou escalados em outras baterias são omitidos.
+  - **Paginação e Rolagem**: A contagem de linhas é estritamente limitada aos pilotos da bateria ativa e às pistas físicas. A grade nunca rola além dos participantes ativos para linhas vazias.
+- **Dados Gerais da Corrida (`overall`)**:
+  - **Escopo de Pilotos**: Vinculado a **todos os participantes inscritos** em todo o torneio ou evento (`participants`).
+  - **Comportamento de Exibição**: Qualquer piloto inscrito no evento pode ser exibido na grade, esteja correndo na pista na bateria atual ou aguardando nos boxes.
+  - **Paginação e Rolagem**: A contagem de linhas reflete todo o grid do torneio (ex. 16, 24 ou 32 pilotos distribuídos em várias baterias). Se a grade tiver menos linhas visíveis do que o total de participantes, ela suporta rolagem automática multipágina para percorrer toda a classificação geral.
+  - **Pilotos Fora da Pista**: Para os pilotos que não estão na pista no momento, estatísticas acumuladas da competição são fornecidas automaticamente.
+
+### Widgets: Widgets de Dados da Bateria vs. Widgets de Dados Gerais
+
+A Caixa de ferramentas organiza as colunas e cartões de dados nos grupos **Dados da Bateria** e **Dados Gerais**. A escolha do widget determina quais estatísticas são calculadas e exibidas em cada linha:
+
+- **Widgets de Dados da Bateria** (ex. *Contador de Voltas, Tempo da Última Volta, Melhor Volta da Bateria, Tempo de Setor, Tempo de Reação, Posição / Colocação na Bateria, Diferenças da Bateria, Combustível / Telemetria, Ritmo Fantasma*):
+  - Extraem métricas de desempenho estritamente da **bateria ativa**.
+  - **Em uma Grade de Dados da Bateria**: Cada linha exibe telemetria em tempo real e tempos de volta dos carros que estão competindo na pista.
+  - **Em uma Grade de Dados Gerais**: Os pilotos em pista exibem sua telemetria ao vivo; pilotos inativos ou descansando exibem traços (`--`) ou zeros para métricas específicas da bateria, pois não produzem dados na bateria em andamento.
+- **Widgets de Dados Gerais da Corrida** (ex. *Classificação Geral, Total de Voltas, Voltas Físicas Totais, Tempo Total Geral, Melhor Volta da Corrida, Média Geral, Mediana Geral, Consistência Geral, Diferenças Gerais, Probabilidade de Vitória / Previsões*):
+  - Extraem métricas de desempenho acumuladas de **todas as baterias concluídas** no evento.
+  - **Em uma Grade de Dados Gerais**: Cada linha de piloto (na pista ou nos boxes entre baterias) exibe suas estatísticas gerais completas, total de voltas no torneio, melhor volta da prova e colocação na classificação geral.
+  - **Em uma Grade de Dados da Bateria**: Os pilotos ativos exibem sua classificação geral e estatísticas acumuladas ao lado de suas voltas na bateria ao vivo (ex. acompanhar a classificação global do evento durante a corrida ativa).
+
+### Ordenação da Grade e Matriz de Interação
+
+O menu suspenso **Classificação da Grade** na aba Grade controla a ordem das linhas. Seu comportamento depende diretamente da **Origem de dados** selecionada (**Dados da Bateria** ou **Dados Gerais**):
+
+| Opção de Ordenação | Em Grade de Dados da Bateria (`gridType: heat`) | Em Grade de Dados Gerais (`gridType: overall`) |
+| :--- | :--- | :--- |
+| **Pista** | Ordenação estática por pista física (Pista 1, Pista 2, ...). Cada linha está vinculada a uma pista específica e ao seu piloto designado. | Pilotos ativos na pista aparecem primeiro por número de pista (Pista 1, Pista 2, ...), seguidos por todos os participantes inativos ordenados por sua posição na classificação geral. |
+| **Posição da Bateria** | Reordenação dinâmica em tempo real por posição na bateria ativa (1º, 2º, 3º na bateria). As linhas alternam de posição ao vivo nas ultrapassagens ou passagens na linha de chegada. | Pilotos ativos aparecem no topo ordenados pela posição na bateria (1º, 2º, ...), seguidos por todos os participantes inativos ordenados pela classificação geral. |
+| **Classificação Geral** | Ordena **exclusivamente os pilotos da bateria ativa** por sua posição na classificação geral do torneio. (Por exemplo, se competem na bateria os pilotos 2º, 5º, 8º e 14º na geral, as 4 linhas os ordenam #2, #5, #8, #14). Nunca exibe pilotos fora da bateria nem gera linhas vazias. | Ordena **todo o grid de participantes** de acordo com a classificação geral da prova (1º geral, 2º geral, 3º geral, ...). Todo o painel se reordena ao vivo conforme pontos e voltas são atualizados. |
+| **Chaveamento do Piloto** | Ordena os pilotos da bateria ativa por sua posição inicial de qualificação/chaveamento (menor número primeiro). | Ordena todos os participantes da prova por sua posição inicial de chaveamento (1, 2, 3, ...) em todo o grid. |
 - **Orientação**: Suporta layouts **Vertical** (cabeçalho acima do valor) e **Horizontal** (cabeçalho e valor lado a lado).
 - **Estilo e Personalização da Barra de Título**:
   - A barra de título segue por padrão o mesmo estilo do cabeçalho de coluna da visualização de pista (fundo escuro semitransparente `rgba(68, 68, 68, 0.7)`, texto branco em negrito, cantos superiores arredondados e borda divisória).

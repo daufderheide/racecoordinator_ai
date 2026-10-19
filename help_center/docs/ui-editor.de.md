@@ -60,13 +60,46 @@ Das **Countdown**-Widget stellt die visuelle Startampel dar und steuert die Star
 
 Das **Spurspalten-Widget** ermöglicht es, einzelne Datenspalten aus der Spuransicht (wie Fahrerinfo, letzte Rundenzeit, beste Rundenzeit / persönlicher Rekord, Tankfüllstand in %, Rundenhistorie, Sektorgeschwindigkeiten, Platzierung usw.) als eigenständige modulare Karten auf der Arbeitsfläche zu platzieren.
 
-- **Zielfahrer & Raster-Sortierung**:
-  - **Einzelkarten (Zielfahrer)**: Einzelne Karten außerhalb eines Rasters wählen den anzuzeigenden Fahrer: nach **Spur** (Spur 1 bis Spur 8), nach **Lauf-Position** (1., 2. usw.), nach Rang in der **Gesamtwertung** oder nach **Fahrer-Setzung**.
-  - **Raster (Raster-Sortierung / Zeilenreihenfolge)**: In einem duplizierten Raster stellen alle Spalten innerhalb einer Zeile denselben Fahrer dar. Die Zeilenreihenfolge wird über das Dropdown-Menü **Raster-Sortierung** im Reiter „Raster“ festgelegt:
-    - **Spur**: Statische Sortierung nach Spurnummer (Spur 1, Spur 2, ...).
-    - **Lauf-Position**: Dynamische Neusortierung bei Überholvorgängen im aktuellen Lauf.
-    - **Gesamtwertung**: Dynamische Neusortierung basierend auf der Gesamt- bzw. Meisterschaftswertung.
-    - **Fahrer-Setzung**: Statische Sortierung nach anfänglicher Qualifikations-/Setzungsposition.
+- **Zielfahrer & Einzelkarten**:
+  - Einzelne Karten außerhalb eines Rasters wählen den anzuzeigenden Fahrer: nach **Spur** (Spur 1 bis Spur 8), nach **Lauf-Position** (1., 2. usw.), nach Rang in der **Gesamtwertung** oder nach **Fahrer-Setzung**.
+
+### Raster-Datenquellen: Lauf-Daten vs. Gesamtwertungs-Daten
+
+Jedes Datenraster im UI-Editor verfügt im Reiter „Raster“ über eine Einstellung **Datenquelle**, die festlegt, welche Fahrer die Zeilen des Rasters füllen:
+
+- **Lauf-Daten (`heat`)**:
+  - **Fahrerbereich**: Bindet ausschließlich an die Fahrer, die aktiv im aktuellen Lauf auf der Strecke antreten (`heatDrivers`).
+  - **Anzeigeverhalten**: Es werden nur Fahrer angezeigt, die sich im laufenden Lauf auf der Strecke befinden. Pausierende oder in anderen Läufen eingeteilte Teilnehmer werden ausgeblendet.
+  - **Paginierung & Scrollen**: Die Zeilenanzahl ist strikt auf die Fahrer des aktiven Laufs und die physischen Spuren begrenzt. Das Raster scrollt niemals über die aktiven Teilnehmer hinaus in leere Zeilen.
+- **Gesamtwertungs-Daten (`overall`)**:
+  - **Fahrerbereich**: Bindet an **alle registrierten Teilnehmer** des gesamten Turniers bzw. Rennens (`participants`).
+  - **Anzeigeverhalten**: Jeder im Event registrierte Fahrer kann im Raster dargestellt werden, unabhängig davon, ob er im aktuellen Lauf auf der Strecke fährt oder in den Boxen pausiert.
+  - **Paginierung & Scrollen**: Die Zeilenanzahl spiegelt das gesamte Teilnehmerfeld wider (z. B. 16, 24 oder 32 Fahrer über mehrere Läufe hinweg). Hat das Raster weniger sichtbare Zeilen als Teilnehmer vorhanden sind, unterstützt es automatisches mehrseitiges Scrollen durch das gesamte Gesamtklassement.
+  - **Pausierende Fahrer**: Für Fahrer, die sich nicht auf der Strecke befinden, werden kumulierte Teilnehmerstatistiken automatisch bereitgestellt.
+
+### Widgets: Lauf-Daten-Widgets vs. Gesamtwertungs-Widgets
+
+Die Toolbox unterteilt Datenspalten und -karten in die Gruppen **Lauf-Daten** und **Gesamtwertung**. Die Auswahl des Widgets bestimmt, welche Kennzahlen für jede Zeile berechnet und angezeigt werden:
+
+- **Lauf-Daten-Widgets** (z. B. *Rundenzahl, Letzte Rundenzeit, Beste Lauf-Rundenzeit, Sektorzeit, Reaktionszeit, Lauf-Position / Rang, Lauf-Abstände, Tank / Telemetrie, Ghost-Pacing*):
+  - Berechnen Leistungskennzahlen ausschließlich für den **aktiven Lauf**.
+  - **In einem Lauf-Daten-Raster**: Jede Zeile zeigt Live-Echtzeit-Telemetrie und Rundenzeiten der aktuell auf der Strecke fahrenden Fahrzeuge.
+  - **In einem Gesamtwertungs-Raster**: Fahrer, die aktuell auf der Strecke sind, zeigen ihre Live-Telemetrie; pausierende oder inaktive Fahrer zeigen für laufsเนินezifische Werte Striche (`--`) oder Nullen, da sie im laufenden Lauf keine Daten erzeugen.
+- **Gesamtwertungs-Widgets** (z. B. *Gesamtrang, Gesamte Runden, Physische Runden, Gesamtzeit, Renn-Rekordrunde, Gesamte Durchschnitts-/Medianzeit, Gesamt-Konsistenz, Gesamt-Abstände, Siegchancen / Prognosen*):
+  - Berechnen kumulierte Leistungskennzahlen über **alle absolvierten Läufe** des Turniers hinweg.
+  - **In einem Gesamtwertungs-Raster**: Jede Fahrerzeile (egal ob auf der Strecke oder pausierend in den Boxen) zeigt die vollständigen Gesamtstatistiken, die Gesamtrundenzahl des Turniers, die beste Rennrunde und den Gesamtplatz.
+  - **In einem Lauf-Daten-Raster**: Die aktiven Fahrer zeigen ihre Gesamtplatzierung und turnierweiten Statistiken direkt neben ihren aktuellen Laufrunden an (z. B. Verfolgen des Gesamtplatzes während des laufenden Rennens).
+
+### Raster-Sortierung & Interaktionsmatrix
+
+Das Dropdown-Menü **Raster-Sortierung** im Reiter „Raster“ steuert die Zeilenreihenfolge. Das Verhalten hängt direkt davon ab, ob die **Datenquelle** des Rasters auf **Lauf-Daten** oder **Gesamtwertung** eingestellt ist:
+
+| Sortieroption | Im Lauf-Daten-Raster (`gridType: heat`) | Im Gesamtwertungs-Raster (`gridType: overall`) |
+| :--- | :--- | :--- |
+| **Spur** | Statische Sortierung nach physischer Spur (Spur 1, Spur 2, ...). Jede Zeile ist fest an eine Spur und den dort fahrenden Fahrer gebunden. | Aktive Fahrer auf der Strecke erscheinen zuerst in Spurnummer-Reihenfolge (Spur 1, Spur 2, ...), gefolgt von allen pausierenden Teilnehmern, sortiert nach ihrem Rang in der Gesamtwertung. |
+| **Lauf-Position** | Dynamische Neusortierung in Echtzeit nach Rennposition im aktuellen Lauf (1., 2., 3. im Lauf). Zeilen tauschen live die Plätze, wenn Autos die Ziellinie überqueren oder sich überholen. | Aktive Fahrer erscheinen ganz oben, sortiert nach ihrer Lauf-Position (1., 2., ...), gefolgt von allen inaktiven Teilnehmern, sortiert nach Gesamtwertungsrang. |
+| **Gesamtwertung** | Sortiert **ausschließlich die Fahrer des aktiven Laufs** nach deren Rang im Gesamtklassement. (Fahren z. B. die Gesamtränge 2, 5, 8 und 14 im aktuellen Lauf, ordnen die 4 Zeilen diese als #2, #5, #8, #14). Es werden keine rennfremden Fahrer angezeigt und es entstehen keine Leerzeilen. | Sortiert das **gesamte Teilnehmerfeld** nach der aktuellen Gesamtwertung (1. Gesamt, 2. Gesamt, 3. Gesamt, ...). Das gesamte Feld sortiert sich live neu, wenn Punkte und Runden aktualisiert werden. |
+| **Fahrer-Setzung** | Sortiert die Fahrer des aktiven Laufs nach ihrer Qualifikations-/Setzungsnummer (niedrigste Setzung zuerst). | Sortiert alle Event-Teilnehmer nach ihrer anfänglichen Setzungsposition (Setzung 1, Setzung 2, Setzung 3, ...) über das gesamte Feld hinweg. |
 - **Ausrichtung**: Unterstützt **Vertikal** (Überschrift über dem Wert) und **Horizontal** (Überschrift und Wert nebeneinander).
 - **Titelleisten-Design & Anpassung**:
   - Die Titelleiste ist standardmäßig identisch zur Spaltenüberschrift der Spuransicht gestaltet (halbtransparenter dunkler Hintergrund `rgba(68, 68, 68, 0.7)`, weiße Fettschrift, abgerundete obere Ecken und Trennlinie).

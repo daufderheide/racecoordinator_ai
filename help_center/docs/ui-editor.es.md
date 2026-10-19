@@ -60,13 +60,46 @@ El widget **Cuenta atrás** muestra el semáforo visual de salida y reproduce el
 
 El widget de **Columna de Carril** permite colocar columnas individuales de datos de la vista de carril (como información del piloto, tiempo de última vuelta, mejor vuelta / récord personal, combustible %, historial de vueltas, velocidades de sector, posición, etc.) en cualquier parte del lienzo como tarjetas modulares independientes.
 
-- **Piloto Objetivo y Ordenación de Cuadrícula**:
-  - **Tarjetas Individuales (Piloto Objetivo)**: Las tarjetas individuales colocadas fuera de una cuadrícula eligen qué piloto mostrar: por **Carril de Pista** (Carril 1 a Carril 8), por **Posición de Ronda** (1º, 2º, etc.), por puesto en la **Clasificación General** o por **Clasificación Previa**.
-  - **Cuadrículas (Ordenación de Cuadrícula / Orden de Filas)**: En una cuadrícula duplicada, todas las columnas dentro de una fila representan al mismo piloto. El orden de las filas se define en el menú desplegable **Ordenación de Cuadrícula** de la pestaña Cuadrícula:
-    - **Carril de Pista**: Orden estático por número de carril (Carril 1, Carril 2, ...).
-    - **Posición de Ronda**: Reordenación en vivo según los adelantamientos en la ronda actual.
-    - **Clasificación General**: Reordenación en vivo según la tabla general del torneo o carrera.
-    - **Clasificación Previa**: Orden estático según la posición inicial de cabezas de serie/clasificación.
+- **Piloto Objetivo y Tarjetas Individuales**:
+  - Las tarjetas individuales colocadas fuera de una cuadrícula eligen qué piloto mostrar: por **Carril de Pista** (Carril 1 a Carril 8), por **Posición de Ronda** (1º, 2º, etc.), por puesto en la **Clasificación General** o por **Clasificación Previa**.
+
+### Fuentes de Datos de Cuadrícula: Datos de Ronda vs. Datos Generales de Carrera
+
+Cada cuadrícula de datos en el Editor de UI cuenta con el ajuste **Fuente de datos** en la pestaña Cuadrícula, que determina qué pilotos ocupan las filas:
+
+- **Datos de Ronda (`heat`)**:
+  - **Ámbito de Pilotos**: Se vincula exclusivamente a los pilotos que compiten activamente en la ronda actual sobre la pista (`heatDrivers`).
+  - **Comportamiento**: Solo se muestran los pilotos en pista en la ronda activa. Se omiten los pilotos que están descansando o asignados a otras rondas.
+  - **Paginación y Desplazamiento**: El número de filas se limita estrictamente a los pilotos de la ronda activa y a los carriles físicos. La cuadrícula nunca se desplazará más allá de los participantes activos hacia filas vacías.
+- **Datos Generales de Carrera (`overall`)**:
+  - **Ámbito de Pilotos**: Se vincula a **todos los participantes inscritos** en todo el torneo o evento (`participants`).
+  - **Comportamiento**: Cualquier piloto inscrito puede mostrarse en la cuadrícula, tanto si está compitiendo en la ronda actual como si descansa en boxes.
+  - **Paginación y Desplazamiento**: El recuento de filas refleja todo el plantel del torneo (ej. 16, 24 o 32 pilotos a lo largo de varias rondas). Si la cuadrícula tiene menos filas visibles que participantes totales, admite desplazamiento automático multipágina para recorrer toda la clasificación general.
+  - **Pilotos Fuera de Pista**: Para los pilotos que no están corriendo en la ronda actual, se proporcionan automáticamente sus estadísticas acumuladas.
+
+### Widgets: Widgets de Datos de Ronda vs. Widgets de Datos Generales
+
+La Caja de herramientas clasifica las columnas y tarjetas de datos en los grupos **Datos de Ronda** y **Datos Generales**. La elección del widget determina qué estadísticas se calculan y se muestran en cada fila:
+
+- **Widgets de Datos de Ronda** (ej. *Contador de Vueltas, Última Vuelta, Mejor Vuelta de Ronda, Tiempo de Sector, Tiempo de Reacción, Posición / Puesto de Ronda, Diferencias de Ronda, Combustible / Telemetría, Ritmo Fantasma*):
+  - Extraen métricas de rendimiento estrictamente de la **ronda activa**.
+  - **En una Cuadrícula de Datos de Ronda**: Cada fila muestra telemetría en tiempo real y tiempos de vuelta de los coches que están compitiendo en pista.
+  - **En una Cuadrícula de Datos Generales**: Los pilotos en pista muestran su telemetría en vivo; los pilotos inactivos o descansando muestran guiones (`--`) o ceros en las métricas de ronda, ya que no generan datos en la ronda en curso.
+- **Widgets de Datos Generales de Carrera** (ej. *Puesto General, Vueltas Totales, Vueltas Físicas Totales, Tiempo Total General, Mejor Vuelta de Carrera, Promedio General, Mediana General, Consistencia General, Diferencias Generales, Probabilidad de Victoria / Predicciones*):
+  - Extraen métricas de rendimiento acumuladas a lo largo de **todas las rondas completadas** en el evento.
+  - **En una Cuadrícula de Datos Generales**: Cada fila de piloto (ya esté en pista o en boxes entre rondas) muestra sus estadísticas generales completas, vueltas acumuladas, récord de carrera y puesto global.
+  - **En una Cuadrícula de Datos de Ronda**: Los pilotos activos muestran su puesto general y estadísticas acumuladas junto a sus vueltas de ronda en tiempo real (ej. observar la clasificación global mientras se compite en la ronda).
+
+### Ordenación de Cuadrícula y Matriz de Interacción
+
+El menú desplegable **Ordenación de Cuadrícula** en la pestaña Cuadrícula controla el orden de las filas. Su comportamiento depende directamente de si la **Fuente de datos** está establecida en **Datos de Ronda** o **Datos Generales**:
+
+| Opción de Ordenación | En Cuadrícula de Ronda (`gridType: heat`) | En Cuadrícula General (`gridType: overall`) |
+| :--- | :--- | :--- |
+| **Carril de Pista** | Orden estático por carril físico (Carril 1, Carril 2, ...). Cada fila está ligada a un carril específico y su piloto asignado. | Los pilotos activos en pista aparecen primero por número de carril (Carril 1, Carril 2, ...), seguidos de todos los participantes inactivos ordenados por su puesto en la clasificación general. |
+| **Posición de Ronda** | Reordenación dinámica en tiempo real por puesto en la ronda activa (1º, 2º, 3º en la ronda). Las filas se intercambian en vivo a medida que los coches cruzan la meta o se adelantan. | Los pilotos activos aparecen en las primeras posiciones ordenados por su puesto en la ronda (1º, 2º, ...), seguidos de los participantes inactivos ordenados por clasificación general. |
+| **Clasificación General** | Ordena **únicamente a los pilotos de la ronda activa** según su puesto en la clasificación general. (Por ejemplo, si en la ronda compiten los puestos generales 2º, 5º, 8º y 14º, las 4 filas los ordenan #2, #5, #8, #14). Nunca muestra pilotos ajenos a la ronda ni genera filas vacías. | Ordena al **plantel completo de participantes** según la clasificación general del evento (1º general, 2º general, 3º general, ...). Todo el panel se reordena en vivo conforme se actualizan los puntos y vueltas. |
+| **Clasificación Previa** | Ordena a los pilotos de la ronda activa según su posición inicial de cabezas de serie/clasificación (menor número primero). | Ordena a todos los participantes del evento por su posición inicial de clasificación previa (1, 2, 3, ...) en todo el plantel. |
 - **Orientación**: Admite diseños **Vertical** (encabezado encima del valor) y **Horizontal** (encabezado y valor lado a lado).
 - **Diseño y Personalización de la Barra de Título**:
   - La barra de título tiene el mismo estilo que el encabezado de columna de la vista de carril de forma predeterminada (fondo oscuro semitransparente `rgba(68, 68, 68, 0.7)`, texto blanco en negrita, esquinas superiores redondeadas y borde divisor).

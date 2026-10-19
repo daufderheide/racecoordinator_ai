@@ -60,13 +60,46 @@ De **Aftel-widget** toont de visuele startlichten en regelt de startgeluiden tij
 
 De widget **Baankolom** maakt het mogelijk om individuele gegevenskolommen uit het baanoverzicht (zoals coureur-info, laatste rondetijd, beste ronde / persoonlijk record, brandstof %, rondehistorie, sectorsnelheden, positie enz.) overal op het canvas te plaatsen als zelfstandige modulaire kaarten.
 
-- **Doelcoureur & Raster Sortering**:
-  - **Losse Kaarten (Doelcoureur)**: Losse kaarten buiten een raster kiezen welke coureur wordt weergegeven: op **Baan** (Baan 1 t/m Baan 8), op **Heat-positie** (1e, 2e, etc.), op positie in het **Algemeen Klassement** of op **Coureur Seed**.
-  - **Rasters (Raster Sortering / Rijenvolgorde)**: In een gedupliceerd raster vertegenwoordigen alle kolommen binnen een rij dezelfde coureur. De rijenvolgorde wordt bepaald door de keuzelijst **Raster Sortering** op het tabblad Raster:
-    - **Baan**: Statische volgorde op baannummer (Baan 1, Baan 2, ...).
-    - **Heat-positie**: Live hersortering tijdens inhaalacties in de actieve heat.
-    - **Algemeen Klassement**: Live hersortering op basis van het toernooi-/evenementklassement.
-    - **Coureur Seed**: Statische volgorde op basis van de oorspronkelijke kwalificatie-/plaatsingspositie.
+- **Doelcoureur & Losse Kaarten**:
+  - Losse kaarten buiten een raster kiezen welke coureur wordt weergegeven: op **Baan** (Baan 1 t/m Baan 8), op **Heat-positie** (1e, 2e, etc.), op positie in het **Algemeen Klassement** of op **Coureur Seed**.
+
+### Raster Gegevensbronnen: Heat-gegevens vs. Algemene Racegegevens
+
+Elk gegevensraster in de UI-editor beschikt op het tabblad Raster over de instelling **Gegevensbron**, die bepaalt welke coureurs de rijen vullen:
+
+- **Heat-gegevens (`heat`)**:
+  - **Coureurbereik**: Exclusief gekoppeld aan de coureurs die actief deelnemen aan de huidige heat op de baan (`heatDrivers`).
+  - **Weergavegedrag**: Alleen coureurs die momenteel op de baan rijden in de actieve heat worden getoond. Coureurs die rusten of in andere heats zijn ingedeeld, worden weggelaten.
+  - **Paginering & Scrollen**: Het aantal rijen is strikt begrensd door de coureurs van de actieve heat en de fysieke banen. Het raster scrollt nooit voorbij actieve deelnemers naar lege rijen.
+- **Algemene Racegegevens (`overall`)**:
+  - **Coureurbereik**: Gekoppeld aan **alle geregistreerde deelnemers** van het gehele toernooi of evenement (`participants`).
+  - **Weergavegedrag**: Iedere geregistreerde deelnemer kan in het raster worden getoond, ongeacht of hij/zij actief op de baan rijdt of rust in de pits.
+  - **Paginering & Scrollen**: Het aantal rijen weerspiegelt het gehele toernooiveld (bijv. 16, 24 of 32 coureurs over meerdere heats). Als het raster minder zichtbare rijen heeft dan het totale aantal deelnemers, ondersteunt het automatisch scrollen over meerdere pagina's om het volledige klassement te doorlopen.
+  - **Coureurs Buiten de Baan**: Voor coureurs die momenteel niet op de baan rijden, worden cumulatieve deelnemerstatistieken automatisch aangeleverd.
+
+### Widgets: Heat-gegevenswidgets vs. Algemene Gegevenswidgets
+
+De Toolbox verdeelt gegevenskolommen en -kaarten in de groepen **Heat-gegevens** en **Algemene Gegevens**. De keuze van het widget bepaalt welke statistieken voor elke rij worden berekend en getoond:
+
+- **Heat-gegevenswidgets** (bijv. *Rondeteller, Laatste Rondetijd, Beste Heat-rondetijd, Sectortijd, Reactietijd, Heat-positie / Stand, Heat-verschillen, Brandstof / Telemetrie, Ghost Pacing*):
+  - Berekenen prestatiemetingen uitsluitend voor de **actieve heat**.
+  - **In een Heat-gegevensraster**: Elke rij toont live realtime-telemetrie en rondetijden van de voertuigen die op de baan rijden.
+  - **In een Algemeen Gegevensraster**: Coureurs op de baan tonen hun live heat-telemetrie; coureurs die rusten of inactief zijn tonen streepjes (`--`) of nullen voor heat-specifieke waarden, aangezien zij geen gegevens produceren in de lopende heat.
+- **Algemene Gegevenswidgets** (bijv. *Algemene Stand / Positie, Totaal Aantal Ronden, Fysieke Ronden, Totale Tijd, Baanrecord, Algemeen Gemiddelde, Algemene Mediaan, Algemene Consistentie, Algemene Tijdsverschillen, Winkans / Voorspellingen*):
+  - Berekenen cumulatieve prestatiemetingen over **alle voltooide heats** in het toernooi.
+  - **In een Algemeen Gegevensraster**: Elke coureurrij (actief op de baan of rustend tussen heats) toont zijn volledige toernooidata, totaal gereden ronden, snelste toernooironde en positie in het algemeen klassement.
+  - **In een Heat-gegevensraster**: De actieve heat-coureurs tonen hun algemene toernooistand en evenementstatistieken zij aan zij met hun actieve heat-ronden (bijv. het toernooiklassement volgen tijdens de actieve race).
+
+### Rastersortering & Interactiematrix
+
+De keuzelijst **Raster Sortering** op het tabblad Raster bepaalt de rijenvolgorde. De werking hangt direct af van de gekozen **Gegevensbron** (**Heat-gegevens** of **Algemene Gegevens**):
+
+| Sorteeroptie | In een Heat-gegevensraster (`gridType: heat`) | In een Algemeen Gegevensraster (`gridType: overall`) |
+| :--- | :--- | :--- |
+| **Baan** | Statische volgorde op fysieke baan (Baan 1, Baan 2, ...). Elke rij is gekoppeld aan een specifieke baan en de actieve coureur daarop. | Actieve coureurs op de baan verschijnen eerst op baannummer (Baan 1, Baan 2, ...), gevolgd door alle rustende deelnemers gesorteerd op positie in het algemeen klassement. |
+| **Heat-positie** | Dynamische live hersortering op positie in de actieve heat (1e, 2e, 3e in de heat). Rijen wisselen direct van positie bij doorkomsten of inhaalacties. | Actieve coureurs verschijnen bovenaan gesorteerd op heat-positie (1e, 2e, ...), gevolgd door alle inactieve deelnemers gesorteerd op algemeen klassement. |
+| **Algemeen Klassement** | Sorteert **uitsluitend de coureurs van de actieve heat** op basis van hun algemene toernooiklassement. (Rijden bijv. de nummers 2, 5, 8 en 14 van het klassement in de heat, dan sorteren de 4 rijen hen als #2, #5, #8, #14). Toont nooit deelnemers van buiten de heat en veroorzaakt geen lege rijen. | Sorteert het **volledige deelnemersveld** op basis van het algemeen raceklassement (1e algemeen, 2e algemeen, 3e algemeen, ...). Het gehele veld sorteert live opnieuw wanneer punten en ronden worden bijgewerkt. |
+| **Coureur Seed** | Sorteert de actieve heat-coureurs op hun oorspronkelijke kwalificatie-/plaatsingsnummer (laagste seed eerst). | Sorteert alle toernooideelnemers op hun initiële plaatsingspositie (Seed 1, Seed 2, Seed 3, ...) over het gehele veld. |
 - **Layout-oriëntatie**: Ondersteunt **Verticaal** (kop boven de waarde) en **Horizontaal** (kop en waarde naast elkaar).
 - **Vormgeving & Aanpassing van de Titelbalk**:
   - De titelbalk is standaard vormgegeven volgens de kolomkop in de baanweergave (half-transparante donkere achtergrond `rgba(68, 68, 68, 0.7)`, vette witte tekst, afgeronde bovenhoeken en een scheidingsrand).

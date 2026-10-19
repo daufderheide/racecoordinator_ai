@@ -60,13 +60,46 @@ The **Countdown** widget displays visual start lights and triggers start audio d
 
 The **Lane Column** widget allows individual data columns from the lane view (such as Driver Info, Last Lap Time, Best Lap / Personal Record, Fuel %, Last Laps history, Sector Speeds, Position, etc.) to be placed anywhere on the canvas as independent modular cards.
 
-- **Target Driver & Grid Sorting**:
-  - **Standalone Cards (Target Driver)**: Individual cards placed outside of a grid select which driver to display: by **Track Lane** (Lane 1 through Lane 8), by **Heat Position** (1st, 2nd, etc.), by **Overall Standings** rank, or by **Driver Seed**.
-  - **Grids (Grid Sorting / Row Order)**: In a replicated grid, all columns within a row represent the same driver, and the order of rows is determined by the **Grid Sorting** dropdown on the Grid tab:
-    - **Track Lane**: Static ordering by lane number (Lane 1, Lane 2, ...).
-    - **Heat Position**: Live reordering as drivers pass each other on track in the active heat.
-    - **Overall Standings**: Live reordering based on tournament/event standings.
-    - **Driver Seed**: Static ordering by initial qualifying/seed position.
+- **Target Driver & Standalone Cards**:
+  - Individual cards placed outside of a grid select which driver to display: by **Track Lane** (Lane 1 through Lane 8), by **Heat Position** (1st, 2nd, etc.), by **Overall Standings** rank, or by **Driver Seed**.
+
+### Grid Data Sources: Heat Data vs. Overall Race Data
+
+Every data grid in the UI Editor has a **Data Source** setting on the Grid tab that dictates which drivers populate the grid rows:
+
+- **Heat Data (`heat`)**:
+  - **Driver Scope**: Binds exclusively to the participants actively racing in the current heat (`heatDrivers`).
+  - **Display Behavior**: Only drivers currently on track in the active heat are shown. Resting drivers or participants scheduled in other heats are omitted.
+  - **Paging & Scrolling**: Row count is bounded by the active heat drivers and physical track lanes. The grid will never scroll past the active heat participants into empty rows.
+- **Overall Race Data (`overall`)**:
+  - **Driver Scope**: Binds to **all registered participants** across the entire tournament or event (`participants`).
+  - **Display Behavior**: Every driver registered in the event can be displayed in the grid, regardless of whether they are on track in the current heat or resting.
+  - **Paging & Scrolling**: Row count reflects the entire tournament field (e.g. 16, 24, or 32 racers across multiple heats). If the grid has fewer visible rows than total participants, it automatically supports multi-page auto-scrolling to cycle through the full event standings.
+  - **Off-Track Drivers**: For drivers not currently on track, cumulative participant statistics are supplied automatically.
+
+### Widgets: Heat Data Widgets vs. Overall Race Data Widgets
+
+The Toolbox organizes data columns and cards into **Heat Data** and **Overall Data** groups. The choice of widget determines what statistics are calculated and displayed for each row:
+
+- **Heat Data Widgets** (e.g. *Lap Count, Last Lap Time, Heat Best Lap, Segment Time, Reaction Time, Heat Position / Rank, Heat Gaps, Fuel / Telemetry, Ghost Pacing*):
+  - Extract performance metrics strictly from the **active heat**.
+  - **In a Heat Data Grid**: Every row displays live, real-time telemetry and lap times for the cars currently racing on track.
+  - **In an Overall Race Data Grid**: Drivers currently on track display their live heat telemetry; however, inactive or resting drivers who are not on track in this heat display dashes (`--`) or zeros for heat-specific metrics because they have no live heat data.
+- **Overall Race Data Widgets** (e.g. *Overall Rank, Overall Total Laps, Overall Physical Laps, Overall Total Time, Best Race Lap Time, Overall Average Lap Time, Overall Median Lap Time, Overall Consistency, Overall Gaps, Win Probability / Predictions*):
+  - Extract cumulative performance metrics across **all completed heats** in the tournament.
+  - **In an Overall Race Data Grid**: Every driver row (whether currently racing or resting in the pits between heats) displays their full cumulative race statistics, total tournament laps, event-best lap time, and tournament standing.
+  - **In a Heat Data Grid**: The active heat drivers display their cumulative overall standings and event-wide statistics alongside their live heat metrics (e.g. showing a driver's overall tournament rank while watching their active heat laps).
+
+### Grid Sorting & Interaction Matrix
+
+The **Grid Sorting** dropdown on the Grid tab controls the row ordering. Its behavior depends directly on whether the grid's **Data Source** is set to **Heat Data** or **Overall Data**:
+
+| Sorting Option | In a Heat Data Grid (`gridType: heat`) | In an Overall Data Grid (`gridType: overall`) |
+| :--- | :--- | :--- |
+| **Track Lane** | Static ordering by physical track lane (Lane 1, Lane 2, ...). Each row is tied to a specific lane and its active driver. | Active drivers currently on track appear first in physical lane order (Lane 1, Lane 2, ...), followed by all resting/off-track participants sorted by their overall standings rank. |
+| **Heat Position** | Dynamic live reordering by running position in the active heat (1st, 2nd, 3rd in the heat). Rows reorder live as cars cross the finish line and pass each other. | Active heat drivers appear at the top sorted by their live heat position (1st, 2nd, ...), followed by all inactive participants sorted by overall tournament rank. |
+| **Overall Standings** | Sorts the **active heat drivers only** by their tournament/event standing. (For example, if drivers ranked 2nd, 5th, 8th, and 14th overall are competing in the heat, the 4 rows order them #2, #5, #8, #14). The grid never displays non-heat drivers or scrolls into empty rows. | Sorts the **entire field of event participants** by their overall race standings (1st overall, 2nd overall, 3rd overall, ...). The entire field dynamically reorders as cumulative points and laps update across the event. |
+| **Driver Seed** | Sorts the active heat drivers by their initial qualifying/seed number (lowest seed first). | Sorts all event participants by initial qualifying/seed position (Seed 1, Seed 2, Seed 3, ...) across the entire field. |
 - **Orientation**: Supports **Vertical** (stacked header over value) and **Horizontal** (side-by-side header and value) layouts.
 - **Title Bar Styling & Customization**:
   - The title bar is styled identically to the Lane View column header by default (semi-transparent dark background `rgba(68, 68, 68, 0.7)`, bold white text, rounded top corners, and divider border).
