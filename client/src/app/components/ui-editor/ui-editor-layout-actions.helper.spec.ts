@@ -1,3 +1,4 @@
+import { LaneGridAnimationHelper } from "@app/components/raceday/utils/lane-grid-animation.helper";
 import { CustomUI } from "@app/models/custom-ui";
 import { Settings } from "@app/models/settings";
 
@@ -13,6 +14,7 @@ import {
   handleImportPracticeRacedayLayout,
   handleImportRacedayLayout,
   handleResetCurrentLayout,
+  handleResetLayout,
   handleResetPracticeRacedayLayout,
   handleResetRacedayLayout,
   handleRestorePreMigrationBackup,
@@ -53,6 +55,10 @@ describe("ui-editor-layout-actions.helper", () => {
       editingSettings: settings,
       editingState: { settings: new Settings() },
       selectedWidgetId: "w1",
+      selectedAnchor: "top",
+      activeGridSession: { gridId: "grid-test" },
+      parsedLayouts: new Map(),
+      syncRacedayPreview: jasmine.createSpy("syncRacedayPreview"),
       undoManager: { captureState: jasmine.createSpy("captureState") },
       refreshDisplayProperties: jasmine.createSpy("refreshDisplayProperties"),
       cdr: { detectChanges: jasmine.createSpy("detectChanges") },
@@ -154,11 +160,84 @@ describe("ui-editor-layout-actions.helper", () => {
       handleClearLayout(mockComp, ui);
 
       expect(mockComp.selectedWidgetId).toBeNull();
+      expect(mockComp.selectedAnchor).toBeNull();
+      expect(mockComp.activeGridSession).toBeNull();
+      expect(mockComp.syncRacedayPreview).toHaveBeenCalledWith(
+        jasmine.objectContaining({ widgets: [] }),
+        ui,
+      );
+      expect(mockComp.parsedLayouts.get(ui.entity_id)?.widgets).toEqual([]);
       expect(mockComp.countdownPreviewActiveByUi[ui.entity_id]).toBeFalse();
       expect(mockComp.undoManager.captureState).toHaveBeenCalled();
       expect(mockComp.refreshDisplayProperties).toHaveBeenCalled();
       expect(mockComp.cdr.detectChanges).toHaveBeenCalled();
       expect(JSON.parse(ui.layoutJson!).widgets).toEqual([]);
+    });
+
+    it("should remove grid by clearing activeGridSession, resetting animation helper, and synchronizing preview when layout has grid widgets", () => {
+      const gridUi: CustomUI = {
+        entity_id: "grid_ui",
+        name: "Grid UI",
+        is_default: false,
+        layoutJson: JSON.stringify({
+          baseWidth: 1920,
+          baseHeight: 1080,
+          widgets: [
+            {
+              id: "w-grid-1",
+              widgetType: "lane-column",
+              customSettings: { gridId: "grid-test" },
+            },
+            {
+              id: "w-grid-2",
+              widgetType: "lane-column",
+              customSettings: { gridId: "grid-test" },
+            },
+          ],
+        }),
+      };
+      mockComp.activeGridSession = { gridId: "grid-test" };
+      mockComp.currentSelectedWidget = { id: "w-grid-1" };
+      spyOn(LaneGridAnimationHelper, "reset").and.callThrough();
+
+      handleClearLayout(mockComp, gridUi);
+
+      expect(mockComp.activeGridSession).toBeNull();
+      expect(LaneGridAnimationHelper.reset).toHaveBeenCalled();
+      expect(mockComp.currentSelectedWidget).toBeNull();
+      expect(mockComp.syncRacedayPreview).toHaveBeenCalledWith(
+        jasmine.objectContaining({ widgets: [] }),
+        gridUi,
+      );
+      expect(JSON.parse(gridUi.layoutJson!).widgets).toEqual([]);
+    });
+
+    it("should fall back to activeCustomUi when ui parameter is not passed", () => {
+      handleClearLayout(mockComp);
+
+      expect(mockComp.activeGridSession).toBeNull();
+      expect(mockComp.syncRacedayPreview).toHaveBeenCalledWith(
+        jasmine.objectContaining({ widgets: [] }),
+        ui,
+      );
+      expect(JSON.parse(ui.layoutJson!).widgets).toEqual([]);
+    });
+  });
+
+  describe("handleResetLayout", () => {
+    it("should reset layout, clear activeGridSession, reset animation helper, and sync preview", () => {
+      mockComp.activeGridSession = { gridId: "grid-test" };
+      spyOn(LaneGridAnimationHelper, "reset").and.callThrough();
+
+      handleResetLayout(mockComp, ui);
+
+      expect(mockComp.activeGridSession).toBeNull();
+      expect(LaneGridAnimationHelper.reset).toHaveBeenCalled();
+      expect(mockComp.syncRacedayPreview).toHaveBeenCalled();
+      expect(mockComp.undoManager.captureState).toHaveBeenCalled();
+      expect(mockComp.refreshDisplayProperties).toHaveBeenCalled();
+      expect(mockComp.cdr.detectChanges).toHaveBeenCalled();
+      expect(ui.layoutJson).toBeDefined();
     });
   });
 

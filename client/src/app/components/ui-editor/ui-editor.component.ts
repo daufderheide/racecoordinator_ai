@@ -430,6 +430,10 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
           this.editingState = s;
           this.refreshDisplayProperties();
           handleSyncActiveGridSessionFromLayout(this);
+          const currentLayout = this.getLayout(this.activeCustomUi);
+          if (currentLayout) {
+            this.syncRacedayPreview(currentLayout, this.activeCustomUi);
+          }
         },
       },
       () => this.editingState,

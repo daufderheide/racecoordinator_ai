@@ -1,6 +1,7 @@
+import { LaneGridAnimationHelper } from "@app/components/raceday/utils/lane-grid-animation.helper";
 import { LaneViewMigrationHelper } from "@app/components/raceday/utils/lane-view-migration.helper";
 import { CustomUI } from "@app/models/custom-ui";
-import { Settings } from "@app/models/settings";
+import { LayoutConfig, Settings } from "@app/models/settings";
 import { deepCopy } from "@app/utils/clone.utils";
 
 import {
@@ -19,7 +20,7 @@ export function applyResetLayout(
   editingSettings: Settings,
   windowWidth?: number,
   windowHeight?: number,
-): void {
+): any {
   const isPractice = ui.entity_id === "practice_ui_layout_rc_ai";
   const data = getDefaultLayoutResetData(isPractice, windowWidth, windowHeight);
 
@@ -45,6 +46,7 @@ export function applyResetLayout(
     editingSettings.practiceColumnWidths = data.columnWidths;
     editingSettings.practiceColumnAnchors = data.columnAnchors;
   }
+  return data;
 }
 
 export function applyImportLayout(
@@ -84,7 +86,7 @@ export function applyImportLayout(
 export function applyClearLayout(
   ui: CustomUI,
   editingSettings: Settings,
-): void {
+): LayoutConfig {
   let layout: any = undefined;
   if (ui.layoutJson) {
     try {
@@ -110,20 +112,23 @@ export function applyClearLayout(
   } else if (ui.entity_id === "practice_ui_layout_rc_ai" && editingSettings) {
     editingSettings.practiceRacedayLayout = layout;
   }
+  return layout;
 }
 
 export function executeClearLayout(
   ui: CustomUI,
   editingSettings: Settings,
-): void {
-  applyClearLayout(ui, editingSettings);
+): LayoutConfig {
+  return applyClearLayout(ui, editingSettings);
 }
 
 export function executeResetLayout(
   ui: CustomUI,
   editingSettings: Settings,
-): void {
-  applyResetLayout(ui, editingSettings);
+  windowWidth?: number,
+  windowHeight?: number,
+): any {
+  return applyResetLayout(ui, editingSettings, windowWidth, windowHeight);
 }
 
 export function executeExportLayout(
@@ -186,29 +191,63 @@ export function resolveTargetCustomUi(
   );
 }
 
-export function handleResetLayout(comp: any, ui: CustomUI): void {
-  executeResetLayout(ui, comp.editingSettings);
+export function handleResetLayout(comp: any, ui?: CustomUI): void {
+  const targetUi = ui || comp.activeCustomUi;
+  if (!targetUi) return;
+  const resetData = executeResetLayout(targetUi, comp.editingSettings);
   if (comp.editingState?.settings) {
     comp.editingState.settings = deepCopy(comp.editingSettings);
   }
-  comp.undoManager.captureState();
-  comp.refreshDisplayProperties();
-  comp.cdr.detectChanges();
+  if (comp.parsedLayouts && targetUi.entity_id && resetData?.defaultLayout) {
+    comp.parsedLayouts.set(targetUi.entity_id, resetData.defaultLayout);
+  }
+  comp.activeGridSession = null;
+  LaneGridAnimationHelper.reset();
+  if (comp.selectedAnchor !== undefined) {
+    comp.selectedAnchor = null;
+  }
+  if (resetData?.defaultLayout) {
+    comp.syncRacedayPreview?.(resetData.defaultLayout, targetUi);
+  }
+  comp.undoManager?.captureState?.() || comp.captureState?.();
+  comp.refreshDisplayProperties?.();
+  comp.cdr?.detectChanges?.() || comp.cdr?.markForCheck?.();
 }
 
-export function handleClearLayout(comp: any, ui: CustomUI): void {
-  executeClearLayout(ui, comp.editingSettings);
+export function handleClearLayout(comp: any, ui?: CustomUI): void {
+  const targetUi = ui || comp.activeCustomUi;
+  if (!targetUi) return;
+  const clearedLayout = executeClearLayout(targetUi, comp.editingSettings);
   if (comp.editingState?.settings) {
     comp.editingState.settings = deepCopy(comp.editingSettings);
   }
+  if (comp.parsedLayouts && targetUi.entity_id) {
+    comp.parsedLayouts.set(targetUi.entity_id, clearedLayout);
+  }
+  comp.activeGridSession = null;
+  LaneGridAnimationHelper.reset();
   comp.selectedWidgetId = null;
-  const uiId = ui?.entity_id || comp.activeCustomUiId;
+  if (comp.selectedAnchor !== undefined) {
+    comp.selectedAnchor = null;
+  }
+  if (
+    "currentSelectedWidget" in comp &&
+    typeof comp.currentSelectedWidget !== "function"
+  ) {
+    try {
+      comp.currentSelectedWidget = null;
+    } catch {
+      // ignore if currentSelectedWidget is a getter
+    }
+  }
+  const uiId = targetUi.entity_id || comp.activeCustomUiId;
   if (uiId && comp.countdownPreviewActiveByUi) {
     comp.countdownPreviewActiveByUi[uiId] = false;
   }
-  comp.undoManager.captureState();
-  comp.refreshDisplayProperties();
-  comp.cdr.detectChanges();
+  comp.syncRacedayPreview?.(clearedLayout, targetUi);
+  comp.undoManager?.captureState?.() || comp.captureState?.();
+  comp.refreshDisplayProperties?.();
+  comp.cdr?.detectChanges?.() || comp.cdr?.markForCheck?.();
 }
 
 export function handleExportLayout(comp: any, ui: CustomUI): void {
@@ -232,9 +271,16 @@ export function handleImportLayout(
     if (comp.editingState?.settings) {
       comp.editingState.settings = deepCopy(comp.editingSettings);
     }
-    comp.undoManager.captureState();
-    comp.refreshDisplayProperties();
-    comp.cdr.detectChanges();
+    comp.activeGridSession = null;
+    LaneGridAnimationHelper.reset();
+    const layout = comp.getLayout(ui);
+    if (comp.parsedLayouts && ui?.entity_id) {
+      comp.parsedLayouts.set(ui.entity_id, layout);
+    }
+    comp.syncRacedayPreview?.(layout, ui);
+    comp.undoManager?.captureState?.() || comp.captureState?.();
+    comp.refreshDisplayProperties?.();
+    comp.cdr?.detectChanges?.() || comp.cdr?.markForCheck?.();
   });
 }
 

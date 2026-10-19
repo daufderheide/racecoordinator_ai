@@ -3409,8 +3409,9 @@ describe("UIEditorComponent", () => {
       );
     });
 
-    it("should delegate clearLayout and clearCurrentLayout properly", () => {
+    it("should delegate clearLayout and clearCurrentLayout properly and clear activeGridSession", () => {
       spyOn(component.undoManager, "captureState");
+      spyOn(component, "syncRacedayPreview").and.callThrough();
       const customUi: CustomUI = {
         entity_id: "default_ui_layout_rc_ai",
         name: "Default UI",
@@ -3418,16 +3419,38 @@ describe("UIEditorComponent", () => {
         layoutJson: JSON.stringify({
           baseWidth: 1920,
           baseHeight: 1080,
-          widgets: [{ id: "w1", widgetType: "lane-view" }],
+          widgets: [
+            {
+              id: "w1",
+              widgetType: "lane-view",
+              customSettings: { gridId: "grid-test" },
+            },
+            {
+              id: "w2",
+              widgetType: "lane-column",
+              customSettings: { gridId: "grid-test" },
+            },
+          ],
         }),
       };
       component.displayCustomUIs = [customUi];
       component.activeCustomUiId = "default_ui_layout_rc_ai";
       component.selectedWidgetId = "w1";
+      component.activeGridSession = {
+        gridId: "grid-test",
+        totalLanes: 4,
+        direction: "vertical",
+        bindingMode: "lane",
+      } as any;
 
       component.clearLayout(customUi);
       expect(JSON.parse(customUi.layoutJson!).widgets).toEqual([]);
       expect(component.selectedWidgetId).toBeNull();
+      expect(component.activeGridSession).toBeNull();
+      expect(component.syncRacedayPreview).toHaveBeenCalledWith(
+        jasmine.objectContaining({ widgets: [] }),
+        customUi,
+      );
       expect(component.undoManager.captureState).toHaveBeenCalled();
 
       spyOn(component, "clearLayout");
