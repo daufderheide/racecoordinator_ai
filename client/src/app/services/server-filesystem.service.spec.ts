@@ -23,6 +23,7 @@ describe("ServerFileSystemService", () => {
       debug: jasmine.createSpy("debug"),
       error: jasmine.createSpy("error"),
       info: jasmine.createSpy("info"),
+      warn: jasmine.createSpy("warn"),
     };
 
     TestBed.configureTestingModule({
@@ -62,6 +63,19 @@ describe("ServerFileSystemService", () => {
     expect(res.customUiDirectory).toBe("/path/ui");
     expect(res.customWidgetDirectory).toBe("/path/widgets");
     expect(res.isLocalhost).toBeTrue();
+  });
+
+  it("should return failed: true when getDirectories encounters an HTTP error", async () => {
+    const promise = service.getDirectories();
+    const req = httpMock.expectOne(
+      "http://localhost:7070/api/filesystem/directories",
+    );
+    expect(req.request.method).toBe("GET");
+    req.flush("Connection refused", { status: 0, statusText: "Unknown Error" });
+
+    const res = await promise;
+    expect(res.isLocalhost).toBeFalse();
+    expect(res.failed).toBeTrue();
   });
 
   it("should chooseFolder", async () => {

@@ -1583,6 +1583,16 @@ export class DefaultRacedayComponent
       this.customWidgetService.reloadCustomWidgets().catch(() => {});
     }
 
+    if (this.customWidgetService?.customWidgets$) {
+      this.subscriptions.push(
+        this.customWidgetService.customWidgets$.subscribe(() => {
+          if (!this.isDestroyed) {
+            this.cdr.markForCheck();
+          }
+        }),
+      );
+    }
+
     if (
       typeof window !== "undefined" &&
       window.visualViewport &&

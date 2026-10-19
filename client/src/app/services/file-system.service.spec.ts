@@ -640,5 +640,67 @@ describe("FileSystemService", () => {
         service.ensureServerDirectoriesInitialized(),
       ).toBeResolved();
     });
+
+    it("should retry ensureServerDirectoriesInitialized when previous attempt failed and now succeeds", async () => {
+      (service as any).serverDirectoriesFetchedSuccessfully = false;
+      (service as any).serverCustomWidgetPath = undefined;
+      (service as any).serverCustomUiPath = undefined;
+      mockServerFs.getDirectories.and.returnValue(
+        Promise.resolve({
+          isLocalhost: true,
+          customWidgetDirectory: "/server/widgets",
+          customUiDirectory: "/server/ui",
+        }),
+      );
+
+      await service.ensureServerDirectoriesInitialized(true);
+      expect(mockServerFs.getDirectories).toHaveBeenCalled();
+      expect(service.getServerCustomWidgetPath()).toBe("/server/widgets");
+      expect(service.getServerCustomUiPath()).toBe("/server/ui");
+    });
+
+    it("should emit serverDirectoriesChanged$ when server directories update", async () => {
+      let emitted = false;
+      service.serverDirectoriesChanged$.subscribe(() => {
+        emitted = true;
+      });
+
+      mockServerFs.getDirectories.and.returnValue(
+        Promise.resolve({
+          isLocalhost: true,
+          customWidgetDirectory: "/brand/new/widgets",
+        }),
+      );
+
+      await service.initServerDirectories();
+      expect(emitted).toBeTrue();
+      expect(service.getServerCustomWidgetPath()).toBe("/brand/new/widgets");
+    });
+
+    it("should re-fetch server directories when socket connects", async () => {
+      const { Subject } = await import("rxjs");
+      const socketSubject = new Subject<boolean>();
+      const mockDataService = {
+        socketConnected$: socketSubject.asObservable(),
+      };
+      const mockLogger = jasmine.createSpyObj("LoggerService", [
+        "info",
+        "warn",
+        "error",
+      ]);
+      const fsWithSocket = new FileSystemService(
+        mockServerFs,
+        mockLogger,
+        mockDataService as any,
+      );
+      spyOn(fsWithSocket, "ensureServerDirectoriesInitialized").and.returnValue(
+        Promise.resolve(),
+      );
+
+      socketSubject.next(true);
+      expect(
+        fsWithSocket.ensureServerDirectoriesInitialized,
+      ).toHaveBeenCalledWith(true);
+    });
   });
 });

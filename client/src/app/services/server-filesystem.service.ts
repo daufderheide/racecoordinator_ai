@@ -8,6 +8,7 @@ export interface ServerDirectoriesResponse {
   customUiDirectory?: string;
   customWidgetDirectory?: string;
   isLocalhost: boolean;
+  failed?: boolean;
 }
 
 export interface ChooseFolderResult {
@@ -52,8 +53,8 @@ export class ServerFileSystemService {
         ),
       );
     } catch (err) {
-      this.logger.warn("Failed to get server directories", err);
-      return { isLocalhost: false };
+      this.logger?.warn?.("Failed to get server directories", err);
+      return { isLocalhost: false, failed: true };
     }
   }
 
