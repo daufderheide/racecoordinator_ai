@@ -255,20 +255,19 @@ export class LaneGridHeaderHelper {
         const newX =
           direction === "horizontal"
             ? Math.round(bounds.x + laneIndex * pitch)
-            : bounds.x;
+            : w.x;
         const isLastLane = laneIndex === totalLanes - 1;
         const newW =
           direction === "horizontal"
             ? isLastLane
               ? Math.max(10, bounds.x + bounds.width - newX)
               : Math.round(pitch)
-            : bounds.width;
+            : w.width;
         const newY =
           direction === "vertical"
             ? Math.round(bounds.y + laneIndex * pitch)
-            : bounds.y;
-        const newH =
-          direction === "vertical" ? Math.round(pitch) : bounds.height;
+            : w.y;
+        const newH = direction === "vertical" ? Math.round(pitch) : w.height;
 
         return {
           ...w,
@@ -394,14 +393,14 @@ export class LaneGridHeaderHelper {
       const newX =
         direction === "horizontal"
           ? Math.round(bounds.x + width + laneIndex * pitch)
-          : bounds.x;
+          : w.x;
       const isLastLane = laneIndex === totalLanes - 1;
       const newW =
         direction === "horizontal"
           ? isLastLane
             ? Math.max(10, bounds.x + bounds.width - newX)
             : Math.round(pitch)
-          : bounds.width;
+          : w.width;
 
       return {
         ...w,

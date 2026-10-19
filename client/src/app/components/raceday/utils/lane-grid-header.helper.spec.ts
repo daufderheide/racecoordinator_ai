@@ -182,5 +182,264 @@ describe("LaneGridHeaderHelper", () => {
       expect(noneWidgets[0].customSettings?.["showHeader"]).toBeFalse();
       expect(noneWidgets[0].customSettings?.["headerPlacement"]).toBe("none");
     });
+
+    it("should preserve column x and width when transitioning multi-column grid from top to none", () => {
+      const multiColWidgets: AbsoluteWidgetNode[] = [
+        // Top header widgets
+        {
+          id: "col1_grid_header",
+          widgetType: "lane-column",
+          x: 100,
+          y: 100,
+          width: 120,
+          height: 40,
+          zIndex: 11,
+          customSettings: {
+            gridId: "multi-col-grid",
+            gridMasterId: "lane0-col1",
+            isHeaderWidget: true,
+            headerPlacement: "top",
+            headerHeight: 40,
+            gridTotalLanes: 2,
+            gridDirection: "vertical",
+          },
+        },
+        {
+          id: "col2_grid_header",
+          widgetType: "lane-column",
+          x: 220,
+          y: 100,
+          width: 80,
+          height: 40,
+          zIndex: 11,
+          customSettings: {
+            gridId: "multi-col-grid",
+            gridMasterId: "lane0-col2",
+            isHeaderWidget: true,
+            headerPlacement: "top",
+            headerHeight: 40,
+            gridTotalLanes: 2,
+            gridDirection: "vertical",
+          },
+        },
+        {
+          id: "col3_grid_header",
+          widgetType: "lane-column",
+          x: 300,
+          y: 100,
+          width: 100,
+          height: 40,
+          zIndex: 11,
+          customSettings: {
+            gridId: "multi-col-grid",
+            gridMasterId: "lane0-col3",
+            isHeaderWidget: true,
+            headerPlacement: "top",
+            headerHeight: 40,
+            gridTotalLanes: 2,
+            gridDirection: "vertical",
+          },
+        },
+        // Lane 0 data widgets
+        {
+          id: "lane0-col1",
+          widgetType: "lane-column",
+          x: 100,
+          y: 140,
+          width: 120,
+          height: 80,
+          zIndex: 10,
+          customSettings: {
+            gridId: "multi-col-grid",
+            gridLane: 0,
+            gridTotalLanes: 2,
+            gridDirection: "vertical",
+            headerPlacement: "top",
+            headerHeight: 40,
+            showHeader: false,
+          },
+        },
+        {
+          id: "lane0-col2",
+          widgetType: "lane-column",
+          x: 220,
+          y: 140,
+          width: 80,
+          height: 80,
+          zIndex: 10,
+          customSettings: {
+            gridId: "multi-col-grid",
+            gridLane: 0,
+            gridTotalLanes: 2,
+            gridDirection: "vertical",
+            headerPlacement: "top",
+            headerHeight: 40,
+            showHeader: false,
+          },
+        },
+        {
+          id: "lane0-col3",
+          widgetType: "lane-column",
+          x: 300,
+          y: 140,
+          width: 100,
+          height: 80,
+          zIndex: 10,
+          customSettings: {
+            gridId: "multi-col-grid",
+            gridLane: 0,
+            gridTotalLanes: 2,
+            gridDirection: "vertical",
+            headerPlacement: "top",
+            headerHeight: 40,
+            showHeader: false,
+          },
+        },
+        // Lane 1 data widgets
+        {
+          id: "lane1-col1",
+          widgetType: "lane-column",
+          x: 100,
+          y: 220,
+          width: 120,
+          height: 80,
+          zIndex: 10,
+          customSettings: {
+            gridId: "multi-col-grid",
+            gridLane: 1,
+            gridTotalLanes: 2,
+            gridDirection: "vertical",
+            headerPlacement: "top",
+            headerHeight: 40,
+            showHeader: false,
+          },
+        },
+        {
+          id: "lane1-col2",
+          widgetType: "lane-column",
+          x: 220,
+          y: 220,
+          width: 80,
+          height: 80,
+          zIndex: 10,
+          customSettings: {
+            gridId: "multi-col-grid",
+            gridLane: 1,
+            gridTotalLanes: 2,
+            gridDirection: "vertical",
+            headerPlacement: "top",
+            headerHeight: 40,
+            showHeader: false,
+          },
+        },
+        {
+          id: "lane1-col3",
+          widgetType: "lane-column",
+          x: 300,
+          y: 220,
+          width: 100,
+          height: 80,
+          zIndex: 10,
+          customSettings: {
+            gridId: "multi-col-grid",
+            gridLane: 1,
+            gridTotalLanes: 2,
+            gridDirection: "vertical",
+            headerPlacement: "top",
+            headerHeight: 40,
+            showHeader: false,
+          },
+        },
+      ];
+
+      const resultNone = LaneGridHeaderHelper.updateGridHeaderPlacement(
+        multiColWidgets,
+        "multi-col-grid",
+        "none",
+      );
+
+      // Header widgets removed
+      expect(
+        resultNone.filter((w) => w.customSettings?.["isHeaderWidget"]).length,
+      ).toBe(0);
+      expect(resultNone.length).toBe(6);
+
+      // Verify lane 0 columns retained their distinct X and width
+      const l0c1 = resultNone.find((w) => w.id === "lane0-col1")!;
+      const l0c2 = resultNone.find((w) => w.id === "lane0-col2")!;
+      const l0c3 = resultNone.find((w) => w.id === "lane0-col3")!;
+      expect(l0c1.x).toBe(100);
+      expect(l0c1.width).toBe(120);
+      expect(l0c1.y).toBe(100);
+      expect(l0c1.height).toBe(100);
+
+      expect(l0c2.x).toBe(220);
+      expect(l0c2.width).toBe(80);
+      expect(l0c2.y).toBe(100);
+      expect(l0c2.height).toBe(100);
+
+      expect(l0c3.x).toBe(300);
+      expect(l0c3.width).toBe(100);
+      expect(l0c3.y).toBe(100);
+      expect(l0c3.height).toBe(100);
+
+      // Verify lane 1 columns retained their distinct X and width
+      const l1c1 = resultNone.find((w) => w.id === "lane1-col1")!;
+      const l1c2 = resultNone.find((w) => w.id === "lane1-col2")!;
+      const l1c3 = resultNone.find((w) => w.id === "lane1-col3")!;
+      expect(l1c1.x).toBe(100);
+      expect(l1c1.width).toBe(120);
+      expect(l1c1.y).toBe(200);
+      expect(l1c1.height).toBe(100);
+
+      expect(l1c2.x).toBe(220);
+      expect(l1c2.width).toBe(80);
+      expect(l1c2.y).toBe(200);
+      expect(l1c2.height).toBe(100);
+
+      expect(l1c3.x).toBe(300);
+      expect(l1c3.width).toBe(100);
+      expect(l1c3.y).toBe(200);
+      expect(l1c3.height).toBe(100);
+
+      // Now transition back to "top"
+      const resultTop = LaneGridHeaderHelper.updateGridHeaderPlacement(
+        resultNone,
+        "multi-col-grid",
+        "top",
+        40,
+      );
+
+      // Headers recreated for all 3 columns with matching x and width
+      const headers = resultTop.filter(
+        (w) => w.customSettings?.["isHeaderWidget"],
+      );
+      expect(headers.length).toBe(3);
+
+      const h1 = headers.find((h) => h.id === "lane0-col1_grid_header")!;
+      expect(h1.x).toBe(100);
+      expect(h1.width).toBe(120);
+      expect(h1.y).toBe(100);
+      expect(h1.height).toBe(40);
+
+      const h2 = headers.find((h) => h.id === "lane0-col2_grid_header")!;
+      expect(h2.x).toBe(220);
+      expect(h2.width).toBe(80);
+      expect(h2.y).toBe(100);
+      expect(h2.height).toBe(40);
+
+      const h3 = headers.find((h) => h.id === "lane0-col3_grid_header")!;
+      expect(h3.x).toBe(300);
+      expect(h3.width).toBe(100);
+      expect(h3.y).toBe(100);
+      expect(h3.height).toBe(40);
+
+      // Data widgets shifted down and height adjusted, while x and width remain intact
+      const topL0c1 = resultTop.find((w) => w.id === "lane0-col1")!;
+      expect(topL0c1.x).toBe(100);
+      expect(topL0c1.width).toBe(120);
+      expect(topL0c1.y).toBe(140);
+      expect(topL0c1.height).toBe(80);
+    });
   });
 });

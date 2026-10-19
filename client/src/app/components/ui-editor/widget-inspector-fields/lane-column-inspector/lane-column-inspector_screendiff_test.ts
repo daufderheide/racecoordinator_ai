@@ -1,11 +1,13 @@
 import { expect, test } from "@playwright/test";
+import { LaneGridHeaderHelper } from "@app/components/raceday/utils/lane-grid-header.helper";
+import { AbsoluteWidgetNode } from "@app/models/settings";
 import { TestSetupHelper } from "@app/testing/test-setup_helper";
 
 test.describe("Lane Column and Grid Inspector Visuals", () => {
   const gridId = "grid-test-session";
   const totalLanes = 4;
 
-  const testWidgets = [
+  const testWidgets: AbsoluteWidgetNode[] = [
     // Lane 0 (Master row)
     {
       id: "grid-w-0-name",
@@ -525,6 +527,309 @@ test.describe("Lane Column and Grid Inspector Visuals", () => {
         animations: "disabled",
         maxDiffPixelRatio: 0.05,
         maxDiffPixels: 10000,
+      },
+    );
+  });
+
+  test("should display replicated lane grid with top column headers on canvas", async ({
+    page,
+  }) => {
+    const topWidgets = LaneGridHeaderHelper.updateGridHeaderPlacement(
+      testWidgets,
+      gridId,
+      "top",
+    );
+
+    await TestSetupHelper.setupSettings(page, {
+      columnEditorMinimized: true,
+      columnEditorPositionX: 9999,
+      columnEditorPositionY: 9999,
+      layoutEditorMinimized: true,
+      layoutEditorPositionX: 9999,
+      layoutEditorPositionY: 9999,
+      racedayLayout: {
+        widgets: topWidgets,
+      },
+    });
+
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/ui-editor"),
+    );
+    await page.locator(".ue-container").waitFor({ state: "visible" });
+
+    const previewContainer = page.locator(".raceday-preview-container").first();
+    await previewContainer.waitFor({ state: "visible" });
+
+    await page
+      .locator(".raceday-grid-top-header")
+      .first()
+      .waitFor({ state: "visible" });
+    await page
+      .locator("app-raceday-lane-column")
+      .first()
+      .waitFor({ state: "visible" });
+
+    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+    await page.mouse.move(0, 0);
+
+    await expect(previewContainer).toHaveScreenshot(
+      "ui-editor-grid-header-top.png",
+      {
+        animations: "disabled",
+        maxDiffPixelRatio: 0.05,
+        maxDiffPixels: 10000,
+      },
+    );
+  });
+
+  test("should display replicated lane grid with no column headers on canvas", async ({
+    page,
+  }) => {
+    const topWidgets = LaneGridHeaderHelper.updateGridHeaderPlacement(
+      testWidgets,
+      gridId,
+      "top",
+    );
+    const noneWidgets = LaneGridHeaderHelper.updateGridHeaderPlacement(
+      topWidgets,
+      gridId,
+      "none",
+    );
+
+    await TestSetupHelper.setupSettings(page, {
+      columnEditorMinimized: true,
+      columnEditorPositionX: 9999,
+      columnEditorPositionY: 9999,
+      layoutEditorMinimized: true,
+      layoutEditorPositionX: 9999,
+      layoutEditorPositionY: 9999,
+      racedayLayout: {
+        widgets: noneWidgets,
+      },
+    });
+
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/ui-editor"),
+    );
+    await page.locator(".ue-container").waitFor({ state: "visible" });
+
+    const previewContainer = page.locator(".raceday-preview-container").first();
+    await previewContainer.waitFor({ state: "visible" });
+
+    await page
+      .locator("app-raceday-lane-column")
+      .first()
+      .waitFor({ state: "visible" });
+
+    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+    await page.mouse.move(0, 0);
+
+    await expect(previewContainer).toHaveScreenshot(
+      "ui-editor-grid-header-none.png",
+      {
+        animations: "disabled",
+        maxDiffPixelRatio: 0.05,
+        maxDiffPixels: 10000,
+      },
+    );
+  });
+
+  test("should display replicated lane grid on canvas after changing header placement to none in inspector", async ({
+    page,
+  }) => {
+    const topWidgets = LaneGridHeaderHelper.updateGridHeaderPlacement(
+      testWidgets,
+      gridId,
+      "top",
+    );
+
+    await TestSetupHelper.setupSettings(page, {
+      columnEditorMinimized: true,
+      columnEditorPositionX: 9999,
+      columnEditorPositionY: 9999,
+      layoutEditorMinimized: true,
+      layoutEditorPositionX: 9999,
+      layoutEditorPositionY: 9999,
+      racedayLayout: {
+        widgets: topWidgets,
+      },
+    });
+
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/ui-editor"),
+    );
+    await page.locator(".ue-container").waitFor({ state: "visible" });
+
+    const previewContainer = page.locator(".raceday-preview-container").first();
+    await previewContainer.waitFor({ state: "visible" });
+
+    // Select the first grid cell widget within the grid container
+    const gridWidget = page
+      .locator(".raceday-grid-scroll-content .widget-wrapper")
+      .first();
+    await gridWidget.dispatchEvent("pointerdown");
+
+    const inspectorPanel = page.locator(".widget-inspector-panel");
+    await inspectorPanel.waitFor({ state: "visible" });
+
+    // Scroll inspector so lane column fields are in view
+    await page.evaluate(() => {
+      const fields = document.querySelector("app-lane-column-inspector");
+      fields?.scrollIntoView({ block: "start", inline: "nearest" });
+    });
+
+    // Open Header Placement select and choose none
+    const placementSelect = inspectorPanel.locator(
+      "app-custom-select:has(app-custom-option[value='individual'])",
+    );
+    await placementSelect.scrollIntoViewIfNeeded();
+    await placementSelect.locator(".custom-select-trigger").click();
+
+    const noneOption = placementSelect.locator(
+      ".custom-select-dropdown .custom-select-option[data-value='none']",
+    );
+    await noneOption.waitFor({ state: "visible" });
+    await noneOption.click();
+
+    // Verify top header is detached
+    await page
+      .locator(".raceday-grid-top-header")
+      .waitFor({ state: "detached" });
+
+    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+    await page.mouse.move(0, 0);
+
+    await expect(previewContainer).toHaveScreenshot(
+      "ui-editor-grid-header-switched-none.png",
+      {
+        animations: "disabled",
+        maxDiffPixelRatio: 0.05,
+        maxDiffPixels: 10000,
+      },
+    );
+  });
+
+  test("should display grid inspector with top header placement options", async ({
+    page,
+  }) => {
+    const topWidgets = LaneGridHeaderHelper.updateGridHeaderPlacement(
+      testWidgets,
+      gridId,
+      "top",
+    );
+
+    await TestSetupHelper.setupSettings(page, {
+      columnEditorMinimized: true,
+      columnEditorPositionX: 9999,
+      columnEditorPositionY: 9999,
+      layoutEditorMinimized: true,
+      layoutEditorPositionX: 9999,
+      layoutEditorPositionY: 9999,
+      racedayLayout: {
+        widgets: topWidgets,
+      },
+    });
+
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/ui-editor"),
+    );
+    await page.locator(".ue-container").waitFor({ state: "visible" });
+
+    const gridWidget = page
+      .locator(".raceday-grid-scroll-content .widget-wrapper")
+      .first();
+    await gridWidget.dispatchEvent("pointerdown");
+
+    const inspectorPanel = page.locator(".widget-inspector-panel");
+    await inspectorPanel.waitFor({ state: "visible" });
+
+    await inspectorPanel
+      .locator(".grid-indicator-card")
+      .waitFor({ state: "visible" });
+
+    await page.evaluate(() => {
+      (document.activeElement as HTMLElement)?.blur();
+      const el = document.querySelector(
+        "app-lane-column-inspector app-custom-select:has(app-custom-option[value='individual'])",
+      );
+      el?.scrollIntoView({ block: "center", inline: "nearest" });
+    });
+    await page.mouse.move(0, 0);
+
+    await expect(inspectorPanel).toHaveScreenshot(
+      "lane-column-inspector-header-top-options.png",
+      {
+        animations: "disabled",
+      },
+    );
+  });
+
+  test("should display grid inspector with none header placement options", async ({
+    page,
+  }) => {
+    const topWidgets = LaneGridHeaderHelper.updateGridHeaderPlacement(
+      testWidgets,
+      gridId,
+      "top",
+    );
+    const noneWidgets = LaneGridHeaderHelper.updateGridHeaderPlacement(
+      topWidgets,
+      gridId,
+      "none",
+    );
+
+    await TestSetupHelper.setupSettings(page, {
+      columnEditorMinimized: true,
+      columnEditorPositionX: 9999,
+      columnEditorPositionY: 9999,
+      layoutEditorMinimized: true,
+      layoutEditorPositionX: 9999,
+      layoutEditorPositionY: 9999,
+      racedayLayout: {
+        widgets: noneWidgets,
+      },
+    });
+
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/ui-editor"),
+    );
+    await page.locator(".ue-container").waitFor({ state: "visible" });
+
+    const gridWidget = page
+      .locator(".raceday-grid-scroll-content .widget-wrapper")
+      .first();
+    await gridWidget.dispatchEvent("pointerdown");
+
+    const inspectorPanel = page.locator(".widget-inspector-panel");
+    await inspectorPanel.waitFor({ state: "visible" });
+
+    await inspectorPanel
+      .locator(".grid-indicator-card")
+      .waitFor({ state: "visible" });
+
+    await page.evaluate(() => {
+      (document.activeElement as HTMLElement)?.blur();
+      const el = document.querySelector(
+        "app-lane-column-inspector app-custom-select:has(app-custom-option[value='individual'])",
+      );
+      el?.scrollIntoView({ block: "center", inline: "nearest" });
+    });
+    await page.mouse.move(0, 0);
+
+    await expect(inspectorPanel).toHaveScreenshot(
+      "lane-column-inspector-header-none-options.png",
+      {
+        animations: "disabled",
       },
     );
   });
