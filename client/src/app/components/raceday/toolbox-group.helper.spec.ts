@@ -48,7 +48,7 @@ describe("ToolboxGroupHelper", () => {
     const mediaSg = rcAiGroup.subgroups.find((sg) => sg.id === "media-chrome");
     expect(mediaSg?.widgets.length).toBe(4);
 
-    expect(rcAiGroup.totalCount).toBe(128);
+    expect(rcAiGroup.totalCount).toBe(126);
   });
 
   it("should exclude used widgets from root and subgroups", () => {
@@ -87,7 +87,7 @@ describe("ToolboxGroupHelper", () => {
     expect(mediaSg?.widgets.find((w) => w.type === "branding")).toBeUndefined();
     expect(mediaSg?.widgets.length).toBe(3);
 
-    expect(rcAiGroup.totalCount).toBe(124);
+    expect(rcAiGroup.totalCount).toBe(122);
   });
 
   it("should organize custom widgets into groups, subgroups, and custom-root", () => {
@@ -503,6 +503,58 @@ describe("ToolboxGroupHelper", () => {
         (w) => w.type === "lane-col:imageset_custom_gauge",
       ),
     ).toBeTrue();
+  });
+
+  it("should place fuel gauge only in telemetry subgroup and exclude from media-custom in Heat Data", () => {
+    const groups = ToolboxGroupHelper.buildToolboxGroups(new Set(), []);
+    const rcGroup = groups.find(
+      (g) => g.id === ToolboxGroupHelper.RC_AI_GROUP_ID,
+    );
+    const heatDataSubgroup = rcGroup!.subgroups.find(
+      (sg) => sg.id === ToolboxGroupHelper.HEAT_DATA_GROUP_ID,
+    );
+    expect(heatDataSubgroup).toBeDefined();
+
+    const telemetrySg = heatDataSubgroup!.subgroups?.find(
+      (sg) => sg.id === "heat-data-sg-telemetry",
+    );
+    expect(telemetrySg).toBeDefined();
+    expect(
+      telemetrySg!.widgets.some(
+        (w) => w.type === "lane-col:imageset_fuel-gauge-builtin",
+      ),
+    ).toBeTrue();
+
+    const mediaCustomSg = heatDataSubgroup!.subgroups?.find(
+      (sg) => sg.id === "heat-data-sg-media-custom",
+    );
+    expect(mediaCustomSg).toBeDefined();
+    expect(
+      mediaCustomSg!.widgets.some(
+        (w) => w.type === "lane-col:imageset_fuel-gauge-builtin",
+      ),
+    ).toBeFalse();
+  });
+
+  it("should exclude fuel gauge from media-custom subgroup of Overall Race Data", () => {
+    const groups = ToolboxGroupHelper.buildToolboxGroups(new Set(), []);
+    const rcGroup = groups.find(
+      (g) => g.id === ToolboxGroupHelper.RC_AI_GROUP_ID,
+    );
+    const overallDataSubgroup = rcGroup!.subgroups.find(
+      (sg) => sg.id === ToolboxGroupHelper.OVERALL_DATA_GROUP_ID,
+    );
+    expect(overallDataSubgroup).toBeDefined();
+
+    const mediaCustomSg = overallDataSubgroup!.subgroups?.find(
+      (sg) => sg.id === "overall-data-sg-media-custom",
+    );
+    expect(mediaCustomSg).toBeDefined();
+    expect(
+      mediaCustomSg!.widgets.some(
+        (w) => w.type === "lane-col:imageset_fuel-gauge-builtin",
+      ),
+    ).toBeFalse();
   });
 
   it("should expand Heat Data subgroup when legacy lane-columns id is saved in expanded states", () => {

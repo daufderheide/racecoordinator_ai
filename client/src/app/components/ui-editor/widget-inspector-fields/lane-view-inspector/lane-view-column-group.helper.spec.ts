@@ -173,9 +173,65 @@ describe("LaneViewColumnGroupHelper", () => {
           "imageset_fuel-gauge-builtin",
         ),
       ).toBe("telemetry");
+      expect(
+        LaneViewColumnGroupHelper.getGroupIdForColumn(
+          "imageset_default_fuel-gauge-builtin",
+        ),
+      ).toBe("telemetry");
+      expect(
+        LaneViewColumnGroupHelper.getGroupIdForColumn(
+          "imageset_default_fuel_gauge",
+        ),
+      ).toBe("telemetry");
+      expect(
+        LaneViewColumnGroupHelper.getGroupIdForColumn("fuel-gauge-builtin"),
+      ).toBe("telemetry");
+      expect(
+        LaneViewColumnGroupHelper.getGroupIdForColumn("default_fuel_gauge"),
+      ).toBe("telemetry");
       expect(LaneViewColumnGroupHelper.getGroupIdForColumn("mph")).toBe(
         "telemetry",
       );
+    });
+
+    it("should correctly identify fuel gauge columns with isFuelGaugeColumn", () => {
+      expect(
+        LaneViewColumnGroupHelper.isFuelGaugeColumn(
+          "imageset_fuel-gauge-builtin",
+        ),
+      ).toBeTrue();
+      expect(
+        LaneViewColumnGroupHelper.isFuelGaugeColumn(
+          "imageset_default_fuel-gauge-builtin",
+        ),
+      ).toBeTrue();
+      expect(
+        LaneViewColumnGroupHelper.isFuelGaugeColumn(
+          "imageset_default_fuel_gauge",
+        ),
+      ).toBeTrue();
+      expect(
+        LaneViewColumnGroupHelper.isFuelGaugeColumn("fuel-gauge-builtin"),
+      ).toBeTrue();
+      expect(
+        LaneViewColumnGroupHelper.isFuelGaugeColumn("default_fuel_gauge"),
+      ).toBeTrue();
+      expect(
+        LaneViewColumnGroupHelper.isFuelGaugeColumn("Default Fuel Gauge"),
+      ).toBeTrue();
+      expect(
+        LaneViewColumnGroupHelper.isFuelGaugeColumn("default fuel guage"),
+      ).toBeTrue();
+      expect(
+        LaneViewColumnGroupHelper.isFuelGaugeColumn("imageset_custom_gauge"),
+      ).toBeFalse();
+      expect(
+        LaneViewColumnGroupHelper.isFuelGaugeColumn("imageset_custom"),
+      ).toBeFalse();
+      expect(
+        LaneViewColumnGroupHelper.isFuelGaugeColumn("participant.fuelLevel"),
+      ).toBeFalse();
+      expect(LaneViewColumnGroupHelper.isFuelGaugeColumn("")).toBeFalse();
     });
 
     it("should return predictions for prediction columns", () => {
@@ -364,6 +420,65 @@ describe("LaneViewColumnGroupHelper", () => {
         dummyTranslate,
       );
       expect(groups.length).toBe(0);
+    });
+
+    it("should place fuel gauge only in telemetry and exclude it from media-custom", () => {
+      const unused = [
+        { key: "imageset_fuel-gauge-builtin", label: "RD_COL_FUEL_GAUGE" },
+        { key: "imageset_custom", label: "Custom Asset" },
+        { key: "qrCode", label: "RD_COL_LANE_QR" },
+      ];
+      const groups = LaneViewColumnGroupHelper.buildColumnGroups(
+        unused,
+        "",
+        new Map(),
+        dummyTranslate,
+      );
+
+      const heatGroup = groups.find((g) => g.id === "heat-data");
+      expect(heatGroup).toBeDefined();
+
+      const telemetrySg = heatGroup!.subgroups.find(
+        (sg) => sg.id === "heat-data-sg-telemetry",
+      );
+      expect(telemetrySg).toBeDefined();
+      expect(
+        telemetrySg!.columns.some(
+          (c) => c.key === "imageset_fuel-gauge-builtin",
+        ),
+      ).toBeTrue();
+
+      const mediaCustomHeatSg = heatGroup!.subgroups.find(
+        (sg) => sg.id === "heat-data-sg-media-custom",
+      );
+      expect(mediaCustomHeatSg).toBeDefined();
+      expect(
+        mediaCustomHeatSg!.columns.some(
+          (c) => c.key === "imageset_fuel-gauge-builtin",
+        ),
+      ).toBeFalse();
+      expect(
+        mediaCustomHeatSg!.columns.some((c) => c.key === "imageset_custom"),
+      ).toBeTrue();
+      expect(
+        mediaCustomHeatSg!.columns.some((c) => c.key === "qrCode"),
+      ).toBeTrue();
+
+      const overallGroup = groups.find((g) => g.id === "overall-data");
+      expect(overallGroup).toBeDefined();
+
+      const mediaCustomOverallSg = overallGroup!.subgroups.find(
+        (sg) => sg.id === "overall-data-sg-media-custom",
+      );
+      expect(mediaCustomOverallSg).toBeDefined();
+      expect(
+        mediaCustomOverallSg!.columns.some(
+          (c) => c.key === "imageset_fuel-gauge-builtin",
+        ),
+      ).toBeFalse();
+      expect(
+        mediaCustomOverallSg!.columns.some((c) => c.key === "imageset_custom"),
+      ).toBeTrue();
     });
   });
 });
