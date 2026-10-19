@@ -1224,6 +1224,28 @@ describe("LaneColumnInspectorComponent", () => {
       expect(component.gridTotalLanes).toBe(8);
     });
 
+    it("should render inspector-number-input controls for mirrored lanes count without redundant badge", () => {
+      fixture.componentRef.setInput("settings", {
+        ...mockSettings,
+        gridId: "grid-12345",
+        gridLane: 0,
+        gridTotalLanes: 3,
+      });
+      component.setScope("grid");
+      fixture.detectChanges();
+      const numberInput = fixture.debugElement.query(
+        By.css("input.inspector-number-input"),
+      );
+      expect(numberInput).toBeTruthy();
+      expect(numberInput.nativeElement.getAttribute("type")).toBe("number");
+      expect(numberInput.nativeElement.getAttribute("min")).toBe("1");
+      expect(numberInput.nativeElement.getAttribute("max")).toBe("32");
+
+      const mirrorSection =
+        numberInput.nativeElement.closest(".inspector-section");
+      expect(mirrorSection.querySelector(".inspector-val-badge")).toBeNull();
+    });
+
     it("should handle gridLabel typography and style properties", () => {
       mockSettings.linkColumns = true;
 

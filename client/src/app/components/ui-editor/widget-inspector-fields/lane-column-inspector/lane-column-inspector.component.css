@@ -555,4 +555,48 @@
   flex-shrink: 0;
 }
 
+.inspector-number-input {
+  color-scheme: light !important;
+  width: 64px;
+  padding: 3px 4px 3px 6px;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: inherit;
+  color: #0f172a;
+  background: #ffffff;
+  border: 1px solid rgba(15, 23, 42, 0.35);
+  border-radius: 4px;
+  box-sizing: border-box;
+  text-align: center;
+  transition: border-color 0.15s, box-shadow 0.15s, background-color 0.15s;
+}
+
+.inspector-number-input:hover:not(:disabled) {
+  border-color: #1e40af;
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.inspector-number-input:focus {
+  outline: none;
+  border-color: #2563eb;
+  background: #ffffff;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.25);
+}
+
+.inspector-number-input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: rgba(0, 0, 0, 0.05);
+  border-color: rgba(15, 23, 42, 0.15);
+}
+
+.inspector-number-input::-webkit-inner-spin-button,
+.inspector-number-input::-webkit-outer-spin-button {
+  opacity: 1;
+  cursor: pointer;
+  margin-left: 2px;
+}
+
+
 

@@ -224,15 +224,12 @@
 
       <!-- Mirrored Rows/Columns Count Control -->
       <div class="inspector-section" style="margin-bottom: 8px">
-        <div class="inspector-label-row">
-          <label class="inspector-label">{{
-            (gridDirection === "horizontal"
-              ? "UE_GRID_MIRRORED_COLUMNS"
-              : "UE_GRID_MIRRORED_ROWS"
-            ) | translate
-          }}</label>
-          <span class="inspector-val-badge">{{ gridTotalLanes }}</span>
-        </div>
+        <label class="inspector-label">{{
+          (gridDirection === "horizontal"
+            ? "UE_GRID_MIRRORED_COLUMNS"
+            : "UE_GRID_MIRRORED_ROWS"
+          ) | translate
+        }}</label>
         <div style="display: flex; gap: 8px; align-items: center">
           <input
             type="range"
@@ -257,14 +254,7 @@
             data-form-type="other"
             [ngModel]="gridTotalLanes"
             (ngModelChange)="onGridTotalLanesChange($event)"
-            style="
-              width: 55px;
-              padding: 2px 4px;
-              font-size: 12px;
-              background: rgba(255, 255, 255, 0.9);
-              border: 1px solid rgba(0, 0, 0, 0.25);
-              border-radius: 4px;
-            "
+            class="inspector-number-input"
           />
         </div>
       </div>
@@ -428,14 +418,6 @@
             data-lpignore="true"
             data-bwignore="true"
             data-form-type="other"
-            style="
-              width: 100%;
-              padding: 4px 8px;
-              font-size: 12px;
-              background: rgba(255, 255, 255, 0.9);
-              border: 1px solid rgba(0, 0, 0, 0.25);
-              border-radius: 4px;
-            "
           />
         </div>
 
@@ -470,14 +452,7 @@
               data-form-type="other"
               [ngModel]="gridLabelSize"
               (ngModelChange)="gridLabelSize = $event"
-              style="
-                width: 55px;
-                padding: 2px 4px;
-                font-size: 12px;
-                background: rgba(255, 255, 255, 0.9);
-                border: 1px solid rgba(0, 0, 0, 0.25);
-                border-radius: 4px;
-              "
+              class="inspector-number-input"
             />
           </div>
         </div>
@@ -533,14 +508,7 @@
               data-form-type="other"
               [ngModel]="gridLabelFontSize"
               (ngModelChange)="gridLabelFontSize = $event"
-              style="
-                width: 55px;
-                padding: 2px 4px;
-                font-size: 12px;
-                background: rgba(255, 255, 255, 0.9);
-                border: 1px solid rgba(0, 0, 0, 0.25);
-                border-radius: 4px;
-              "
+              class="inspector-number-input"
             />
           </div>
         </div>
@@ -784,14 +752,7 @@
                 data-form-type="other"
                 [ngModel]="currentGridHeaderHeight"
                 (ngModelChange)="onGridHeaderHeightChange($event)"
-                style="
-                  width: 55px;
-                  padding: 2px 4px;
-                  font-size: 12px;
-                  background: rgba(255, 255, 255, 0.9);
-                  border: 1px solid rgba(0, 0, 0, 0.25);
-                  border-radius: 4px;
-                "
+                class="inspector-number-input"
               />
             </div>
           </div>
@@ -831,14 +792,7 @@
                 data-form-type="other"
                 [ngModel]="currentGridHeaderWidth"
                 (ngModelChange)="onGridHeaderWidthChange($event)"
-                style="
-                  width: 55px;
-                  padding: 2px 4px;
-                  font-size: 12px;
-                  background: rgba(255, 255, 255, 0.9);
-                  border: 1px solid rgba(0, 0, 0, 0.25);
-                  border-radius: 4px;
-                "
+                class="inspector-number-input"
               />
             </div>
           </div>
@@ -895,14 +849,7 @@
               data-form-type="other"
               [ngModel]="gridHeaderFontSize"
               (ngModelChange)="gridHeaderFontSize = $event"
-              style="
-                width: 55px;
-                padding: 2px 4px;
-                font-size: 12px;
-                background: rgba(255, 255, 255, 0.9);
-                border: 1px solid rgba(0, 0, 0, 0.25);
-                border-radius: 4px;
-              "
+              class="inspector-number-input"
             />
           </div>
         </div>
