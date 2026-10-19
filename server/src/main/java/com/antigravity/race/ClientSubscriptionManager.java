@@ -421,6 +421,9 @@ public class ClientSubscriptionManager {
 
   private synchronized void checkAutoShutdown() {
     if (sessions.isEmpty() && hasEverHadClient) {
+      if (currentRace != null) {
+        return;
+      }
       if (autoShutdownFuture == null || autoShutdownFuture.isDone()) {
         logger.info(
             "No active sessions. Scheduling auto-shutdown in {} seconds...",
@@ -428,7 +431,7 @@ public class ClientSubscriptionManager {
         autoShutdownFuture =
             scheduler.schedule(
                 () -> {
-                  if (sessions.isEmpty()) {
+                  if (sessions.isEmpty() && currentRace == null) {
                     logger.info("Auto-shutting down server due to 0 connected clients.");
                     if (autoShutdownAction != null) {
                       autoShutdownAction.run();
@@ -489,45 +492,27 @@ public class ClientSubscriptionManager {
     if (currentRace != null && !hasDirectorSubscribers()) {
       if (!isShuttingDown) {
         boolean immediateCleanup = explicitUnsubscribe || lastDirectorExplicitlyUnsubscribed;
-        // If there are NO sessions at all (not even splash screen), we should stop quickly
-        long gracePeriod =
-            immediateCleanup
-                ? 0
-                : (sessions.isEmpty()
-                    ? Math.min(1, cleanupGracePeriodSeconds)
-                    : cleanupGracePeriodSeconds);
+        long gracePeriod = immediateCleanup ? 0 : cleanupGracePeriodSeconds;
 
         if (gracePeriod <= 0) {
           cancelPendingCleanup();
           performCleanup();
-        } else {
-          if (cleanupFuture != null && !cleanupFuture.isDone()) {
-            // If sessions became empty, we want to clean up quickly,
-            // but the existing task might have been scheduled with a longer grace period.
-            if (sessions.isEmpty() && gracePeriod < cleanupGracePeriodSeconds) {
-              logger.info(
-                  "Sessions are now empty. Shortening grace period to {} seconds.", gracePeriod);
-              cancelPendingCleanup();
-            }
-          }
-
-          if (cleanupFuture == null || cleanupFuture.isDone()) {
-            logger.info(
-                "No director subscribers left (Total Sessions: {}). Scheduling race cleanup in {} seconds...",
-                sessions.size(),
-                gracePeriod);
-            cleanupFuture =
-                scheduler.schedule(
-                    () -> {
-                      try {
-                        performCleanup();
-                      } catch (Throwable t) {
-                        logger.error("Error during scheduled race cleanup", t);
-                      }
-                    },
-                    gracePeriod,
-                    TimeUnit.SECONDS);
-          }
+        } else if (cleanupFuture == null || cleanupFuture.isDone()) {
+          logger.info(
+              "No director subscribers left (Total Sessions: {}). Scheduling race cleanup in {} seconds...",
+              sessions.size(),
+              gracePeriod);
+          cleanupFuture =
+              scheduler.schedule(
+                  () -> {
+                    try {
+                      performCleanup();
+                    } catch (Throwable t) {
+                      logger.error("Error during scheduled race cleanup", t);
+                    }
+                  },
+                  gracePeriod,
+                  TimeUnit.SECONDS);
         }
       } else {
         logger.info("Server is shutting down, preserving race state and auto-save.");
@@ -541,6 +526,7 @@ public class ClientSubscriptionManager {
           "Last director client disconnected/unsubscribed. Stopping and clearing current race.");
       deleteAutoSave(currentRace.getRaceModel().getEntityId(), currentRace.isDemoMode());
       setRace(null);
+      checkAutoShutdown();
     }
   }
 
