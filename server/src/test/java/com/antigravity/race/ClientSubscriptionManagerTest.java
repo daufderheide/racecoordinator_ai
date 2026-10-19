@@ -59,7 +59,21 @@ public class ClientSubscriptionManagerTest {
     // isn't directly exposed to clear without closing, we can pass null)
     manager.setProtocol(null);
     manager.setCleanupGracePeriodSeconds(0);
+    manager.setAutoShutdownDelaySeconds(5);
     manager.cancelStartupWatchdog();
+
+    try {
+      Field autoShutdownFutureField =
+          ClientSubscriptionManager.class.getDeclaredField("autoShutdownFuture");
+      autoShutdownFutureField.setAccessible(true);
+      java.util.concurrent.ScheduledFuture<?> future =
+          (java.util.concurrent.ScheduledFuture<?>) autoShutdownFutureField.get(manager);
+      if (future != null) {
+        future.cancel(true);
+        autoShutdownFutureField.set(manager, null);
+      }
+    } catch (Exception ignored) {
+    }
 
     // Since it's a singleton, we have to clear internal state for isolation
     clearPrivateSet("sessions");
@@ -277,8 +291,24 @@ public class ClientSubscriptionManagerTest {
     verify(mockProtocol).close();
   }
 
+  private WsContext createMockDirectorContext() throws Exception {
+    WsContext mockContext = mock(WsContext.class);
+    org.eclipse.jetty.websocket.api.Session mockSession =
+        mock(org.eclipse.jetty.websocket.api.Session.class);
+    java.net.InetSocketAddress mockAddress = new java.net.InetSocketAddress("127.0.0.1", 12345);
+    when(mockSession.getRemoteAddress()).thenReturn(mockAddress);
+    when(mockSession.isOpen()).thenReturn(true);
+    when(mockSession.getRemote())
+        .thenReturn(mock(org.eclipse.jetty.websocket.api.RemoteEndpoint.class));
+
+    Field sessionField = WsContext.class.getDeclaredField("session");
+    sessionField.setAccessible(true);
+    sessionField.set(mockContext, mockSession);
+    return mockContext;
+  }
+
   @Test
-  public void testFastCleanupWhenNoSessions() throws Exception {
+  public void testRacePreservedDuringGracePeriodOnDisconnectAndBrowserRefresh() throws Exception {
     Race mockRace = mock(Race.class);
     com.antigravity.models.Race realModel =
         new com.antigravity.models.Race.Builder().withName("Race").withEntityId("testId").build();
@@ -290,32 +320,104 @@ public class ClientSubscriptionManagerTest {
     manager.setRace(mockRace);
     manager.setCleanupGracePeriodSeconds(10); // Normal grace is 10s
 
-    // Mock database context to avoid NPE in performCleanup
     DatabaseContext mockDbCtx = mock(DatabaseContext.class);
     manager.setDatabaseContext(mockDbCtx);
 
-    // 1. Mock NO sessions and NO subscribers
-    Field sessionsField = ClientSubscriptionManager.class.getDeclaredField("sessions");
-    sessionsField.setAccessible(true);
-    ((Set<?>) sessionsField.get(manager)).clear();
-
-    Field subscribersField =
-        ClientSubscriptionManager.class.getDeclaredField("raceDataSubscribers");
-    subscribersField.setAccessible(true);
-    ((Set<?>) subscribersField.get(manager)).clear();
-
-    // 2. Trigger checkAndStopRace
-    WsContext mockContext = mock(WsContext.class);
+    WsContext mockContext1 = createMockDirectorContext();
+    manager.addSession(mockContext1);
     manager.handleRaceSubscription(
-        mockContext, RaceSubscriptionRequest.newBuilder().setSubscribe(false).build());
+        mockContext1, RaceSubscriptionRequest.newBuilder().setSubscribe(true).build());
 
-    // 3. Since we set grace to 10s, but sessions is empty, it should use 1s.
-    // In our test, we set cleanupGracePeriodSeconds to 0 in setUp, but here we set it to 10.
-    // If it uses 1, it will still take 1s.
-    // If we want to verify it's NOT 10, we could wait a bit.
-    // But since we are unit testing, we can't easily check the scheduled time without mocking the
-    // scheduler.
-    // However, the test passing eventually (or within a short timeout) suggests it's working.
+    assertTrue("Should have director subscribers", manager.hasDirectorSubscribers());
+
+    // Simulate browser refresh disconnecting socket without explicit unsubscribe
+    manager.removeSession(mockContext1);
+
+    // Race must NOT be cleared immediately - it is held for the refresh!
+    assertNotNull("Race should be preserved during grace period on refresh", manager.getRace());
+
+    Field cleanupFutureField = ClientSubscriptionManager.class.getDeclaredField("cleanupFuture");
+    cleanupFutureField.setAccessible(true);
+    java.util.concurrent.ScheduledFuture<?> cleanupFuture =
+        (java.util.concurrent.ScheduledFuture<?>) cleanupFutureField.get(manager);
+    assertNotNull("Cleanup should be scheduled", cleanupFuture);
+    assertFalse("Cleanup future should not be done yet", cleanupFuture.isDone());
+
+    // Refreshed page reconnects within grace period
+    WsContext mockContext2 = createMockDirectorContext();
+    manager.addSession(mockContext2);
+    manager.handleRaceSubscription(
+        mockContext2, RaceSubscriptionRequest.newBuilder().setSubscribe(true).build());
+
+    // Cleanup should be cancelled and race preserved
+    cleanupFuture = (java.util.concurrent.ScheduledFuture<?>) cleanupFutureField.get(manager);
+    assertNull("Pending cleanup should be cancelled after reconnect", cleanupFuture);
+    assertNotNull("Race should still be active after reconnect", manager.getRace());
+  }
+
+  @Test
+  public void testRaceCleanedUpAfterGracePeriodExpiresWithoutReconnect() throws Exception {
+    Race mockRace = mock(Race.class);
+    com.antigravity.models.Race realModel =
+        new com.antigravity.models.Race.Builder().withName("Race").withEntityId("testId").build();
+    when(mockRace.getRaceModel()).thenReturn(realModel);
+    when(mockRace.getHeats()).thenReturn(Collections.emptyList());
+    when(mockRace.createSnapshot()).thenReturn(RaceData.getDefaultInstance());
+    when(mockRace.getState()).thenReturn(mock(IRaceState.class));
+
+    manager.setRace(mockRace);
+    manager.setCleanupGracePeriodSeconds(1);
+
+    DatabaseContext mockDbCtx = mock(DatabaseContext.class);
+    manager.setDatabaseContext(mockDbCtx);
+
+    WsContext mockContext = createMockDirectorContext();
+    manager.addSession(mockContext);
+    manager.handleRaceSubscription(
+        mockContext, RaceSubscriptionRequest.newBuilder().setSubscribe(true).build());
+
+    // Disconnect without explicit unsubscribe
+    manager.removeSession(mockContext);
+
+    // Immediately, race should still be active
+    assertNotNull("Race should still be present immediately after disconnect", manager.getRace());
+
+    // Wait for the 1-second grace period to expire
+    Thread.sleep(1300);
+
+    assertNull("Race should be cleaned up after grace period expires", manager.getRace());
+  }
+
+  @Test
+  public void testAutoShutdownDoesNotTriggerWhenRaceIsActive() throws Exception {
+    Race mockRace = mock(Race.class);
+    com.antigravity.models.Race realModel =
+        new com.antigravity.models.Race.Builder().withName("Race").withEntityId("testId").build();
+    when(mockRace.getRaceModel()).thenReturn(realModel);
+    when(mockRace.getHeats()).thenReturn(Collections.emptyList());
+    when(mockRace.createSnapshot()).thenReturn(RaceData.getDefaultInstance());
+    when(mockRace.getState()).thenReturn(mock(IRaceState.class));
+
+    manager.setRace(mockRace);
+    manager.setCleanupGracePeriodSeconds(10);
+    manager.setAutoShutdownDelaySeconds(0);
+
+    java.util.concurrent.atomic.AtomicBoolean shutdownCalled =
+        new java.util.concurrent.atomic.AtomicBoolean(false);
+    manager.setAutoShutdownAction(() -> shutdownCalled.set(true));
+
+    WsContext mockContext = createMockDirectorContext();
+    manager.addSession(mockContext);
+    manager.handleRaceSubscription(
+        mockContext, RaceSubscriptionRequest.newBuilder().setSubscribe(true).build());
+
+    // Disconnect session while race is active
+    manager.removeSession(mockContext);
+
+    Thread.sleep(200);
+    assertFalse(
+        "Auto-shutdown should NOT trigger while race is active and grace period is running",
+        shutdownCalled.get());
   }
 
   @Test
@@ -536,6 +638,9 @@ public class ClientSubscriptionManagerTest {
     WsContext mockContext2 = mock(WsContext.class);
     org.eclipse.jetty.websocket.api.Session mockSession =
         mock(org.eclipse.jetty.websocket.api.Session.class);
+    when(mockSession.isOpen()).thenReturn(true);
+    when(mockSession.getRemote())
+        .thenReturn(mock(org.eclipse.jetty.websocket.api.RemoteEndpoint.class));
 
     Field sessionField = WsContext.class.getDeclaredField("session");
     sessionField.setAccessible(true);
@@ -993,6 +1098,9 @@ public class ClientSubscriptionManagerTest {
     WsContext mockContext = mock(WsContext.class);
     org.eclipse.jetty.websocket.api.Session mockSession =
         mock(org.eclipse.jetty.websocket.api.Session.class);
+    when(mockSession.isOpen()).thenReturn(true);
+    when(mockSession.getRemote())
+        .thenReturn(mock(org.eclipse.jetty.websocket.api.RemoteEndpoint.class));
     Field sessionField = WsContext.class.getDeclaredField("session");
     sessionField.setAccessible(true);
     sessionField.set(mockContext, mockSession);
