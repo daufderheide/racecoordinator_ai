@@ -39,4 +39,7 @@ message RaceParticipant {
   double top2_consecutive = 28;
   double top3_consecutive = 29;
   bool has_segments = 30;
+  int32 heats_raced = 31;
+  int32 heats_remaining = 32;
+  int32 total_heats = 33;
 }

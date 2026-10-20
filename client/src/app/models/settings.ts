@@ -89,6 +89,7 @@ export interface InsetConfig {
   fontFamily?: string;
   fontSize?: number;
   textColor?: string;
+  heatsDisplayMode?: "raced" | "remaining";
 }
 
 export interface LaneColumnWidgetSettings {
@@ -127,6 +128,7 @@ export interface LaneColumnWidgetSettings {
   timeSubsecondMode?: TimerSubsecondMode;
   timeSubsecondThreshold?: number;
   timeSubsecondDecimals?: number;
+  heatsDisplayMode?: "raced" | "remaining";
   useLaneColors: boolean;
   insets?: Record<string, string>;
   insetsConfig?: Record<string, InsetConfig>;

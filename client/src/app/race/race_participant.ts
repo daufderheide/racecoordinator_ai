@@ -37,6 +37,10 @@ export class RaceParticipant {
     public top2Consecutive: number = 0,
     public top3Consecutive: number = 0,
     public hasSegments?: boolean,
+    public groupRank?: number,
+    public heatsRaced: number = 0,
+    public heatsRemaining: number = 0,
+    public totalHeats: number = 0,
   ) {
     this.driver = driver;
     this.objectId = objectId;

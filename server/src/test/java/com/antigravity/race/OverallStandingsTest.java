@@ -759,4 +759,94 @@ public class OverallStandingsTest {
     assertEquals(2, p1.getRank());
     assertEquals(1, p2.getRank());
   }
+
+  @Test
+  public void testHeatsRacedAndRemainingCalculation() {
+    OverallStandings os =
+        new OverallStandings(new HeatScoring(), new OverallScoring(), new GroupOptions(), false);
+
+    RaceParticipant p1 = createDriver("D1", "id1");
+    RaceParticipant p2 = createDriver("D2", "id2");
+    RaceParticipant p3 = createDriver("D3", "id3");
+    RaceParticipant pEmpty = new RaceParticipant(Driver.EMPTY_DRIVER);
+
+    List<RaceParticipant> drivers = java.util.Arrays.asList(p1, p2, p3, pEmpty);
+
+    // Heat 1: P1 and P2
+    DriverHeatData dhd1_1 = new DriverHeatData(p1);
+    DriverHeatData dhd1_2 = new DriverHeatData(p2);
+    Heat h1 = new Heat(1, java.util.Arrays.asList(dhd1_1, dhd1_2), false);
+
+    // Heat 2: P2 and P3
+    DriverHeatData dhd2_2 = new DriverHeatData(p2);
+    DriverHeatData dhd2_3 = new DriverHeatData(p3);
+    Heat h2 = new Heat(2, java.util.Arrays.asList(dhd2_2, dhd2_3), false);
+
+    // Heat 3: P1 and P3
+    DriverHeatData dhd3_1 = new DriverHeatData(p1);
+    DriverHeatData dhd3_3 = new DriverHeatData(p3);
+    Heat h3 = new Heat(3, java.util.Arrays.asList(dhd3_1, dhd3_3), false);
+
+    List<Heat> heats = java.util.Arrays.asList(h1, h2, h3);
+
+    // Initial state: no heats started, no laps
+    os.recalculate(drivers, heats);
+
+    assertEquals(2, p1.getTotalHeats());
+    assertEquals(0, p1.getHeatsRaced());
+    assertEquals(2, p1.getHeatsRemaining());
+
+    assertEquals(2, p2.getTotalHeats());
+    assertEquals(0, p2.getHeatsRaced());
+    assertEquals(2, p2.getHeatsRemaining());
+
+    assertEquals(2, p3.getTotalHeats());
+    assertEquals(0, p3.getHeatsRaced());
+    assertEquals(2, p3.getHeatsRemaining());
+
+    assertEquals(0, pEmpty.getTotalHeats());
+    assertEquals(0, pEmpty.getHeatsRaced());
+    assertEquals(0, pEmpty.getHeatsRemaining());
+
+    // Heat 1 is started
+    h1.setStarted(true);
+    os.recalculate(drivers, heats);
+
+    assertEquals(1, p1.getHeatsRaced());
+    assertEquals(1, p1.getHeatsRemaining());
+
+    assertEquals(1, p2.getHeatsRaced());
+    assertEquals(1, p2.getHeatsRemaining());
+
+    assertEquals(0, p3.getHeatsRaced());
+    assertEquals(2, p3.getHeatsRemaining());
+
+    // Heat 2 has laps recorded (even if setStarted is false)
+    dhd2_2.addLap(10.0, false, true);
+    dhd2_3.addLap(11.0, false, true);
+    os.recalculate(drivers, heats);
+
+    assertEquals(1, p1.getHeatsRaced());
+    assertEquals(1, p1.getHeatsRemaining());
+
+    assertEquals(2, p2.getHeatsRaced());
+    assertEquals(0, p2.getHeatsRemaining());
+
+    assertEquals(1, p3.getHeatsRaced());
+    assertEquals(1, p3.getHeatsRemaining());
+
+    // Heat 3 finishes
+    dhd3_1.setFinished(true);
+    dhd3_3.setFinished(true);
+    os.recalculate(drivers, heats);
+
+    assertEquals(2, p1.getHeatsRaced());
+    assertEquals(0, p1.getHeatsRemaining());
+
+    assertEquals(2, p2.getHeatsRaced());
+    assertEquals(0, p2.getHeatsRemaining());
+
+    assertEquals(2, p3.getHeatsRaced());
+    assertEquals(0, p3.getHeatsRemaining());
+  }
 }

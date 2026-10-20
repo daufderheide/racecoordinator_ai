@@ -32,6 +32,9 @@ public class RaceParticipant extends ServerToClientObject
   private int lapsDownPosition;
   private List<Double> allScoringLaps;
   private boolean hasSegments;
+  private int heatsRaced;
+  private int heatsRemaining;
+  private int totalHeats;
 
   public RaceParticipant(Driver driver) {
     super();
@@ -525,5 +528,29 @@ public class RaceParticipant extends ServerToClientObject
       return getObjectId();
     }
     return "";
+  }
+
+  public int getHeatsRaced() {
+    return heatsRaced;
+  }
+
+  public void setHeatsRaced(int heatsRaced) {
+    this.heatsRaced = heatsRaced;
+  }
+
+  public int getHeatsRemaining() {
+    return heatsRemaining;
+  }
+
+  public void setHeatsRemaining(int heatsRemaining) {
+    this.heatsRemaining = heatsRemaining;
+  }
+
+  public int getTotalHeats() {
+    return totalHeats;
+  }
+
+  public void setTotalHeats(int totalHeats) {
+    this.totalHeats = totalHeats;
   }
 }

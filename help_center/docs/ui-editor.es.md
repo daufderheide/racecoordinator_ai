@@ -85,10 +85,18 @@ La Caja de herramientas clasifica las columnas y tarjetas de datos en los grupos
   - Extraen métricas de rendimiento estrictamente de la **ronda activa**.
   - **En una Cuadrícula de Datos de Ronda**: Cada fila muestra telemetría en tiempo real y tiempos de vuelta de los coches que están compitiendo en pista.
   - **En una Cuadrícula de Datos Generales**: Los pilotos en pista muestran su telemetría en vivo; los pilotos inactivos o descansando muestran guiones (`--`) o ceros en las métricas de ronda, ya que no generan datos en la ronda en curso.
-- **Widgets de Datos Generales de Carrera** (ej. *Puesto General, Vueltas Totales, Vueltas Físicas Totales, Tiempo Total General, Mejor Vuelta de Carrera, Promedio General, Mediana General, Consistencia General, Diferencias Generales, Probabilidad de Victoria / Predicciones*):
+- **Widgets de Datos Generales de Carrera** (ej. *Puesto General, Vueltas Totales, Vueltas Físicas Totales, Tiempo Total General, Mejor Vuelta de Carrera, Promedio General, Mediana General, Consistencia General, Diferencias Generales, Probabilidad de Victoria / Predicciones, Mangas Disputadas / Mangas Restantes*):
   - Extraen métricas de rendimiento acumuladas a lo largo de **todas las rondas completadas** en el evento.
   - **En una Cuadrícula de Datos Generales**: Cada fila de piloto (ya esté en pista o en boxes entre rondas) muestra sus estadísticas generales completas, vueltas acumuladas, récord de carrera y puesto global.
   - **En una Cuadrícula de Datos de Ronda**: Los pilotos activos muestran su puesto general y estadísticas acumuladas junto a sus vueltas de ronda en tiempo real (ej. observar la clasificación global mientras se compite en la ronda).
+
+#### Widget de Mangas Disputadas y Restantes
+
+El widget **Mangas Disputadas** (`heatsRaced`) muestra el progreso de participación de cada piloto en las mangas:
+
+- **Mangas Disputadas (Modo por Defecto)**: Muestra la cantidad de mangas que el piloto ya ha completado o que está disputando actualmente en el evento.
+- **Modo Mangas Restantes**: Cuando el ajuste **Modo de visualización de mangas** cambia de *Mangas disputadas* a *Mangas restantes*, la tarjeta muestra cuántas mangas programadas le quedan por correr al piloto. Si no se define una etiqueta personalizada de cabecera, el título cambia automáticamente de `MANGAS DISPUTADAS` a `MANGAS RESTANTES`.
+- Esta configuración también está disponible para elementos secundarios (insets) en cualquier tarjeta de columna.
 
 #### Widgets de Diferencias (Gaps e Intervalos)
 

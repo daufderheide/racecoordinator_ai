@@ -85,10 +85,18 @@ The Toolbox organizes data columns and cards into **Heat Data** and **Overall Da
   - Extract performance metrics strictly from the **active heat**.
   - **In a Heat Data Grid**: Every row displays live, real-time telemetry and lap times for the cars currently racing on track.
   - **In an Overall Race Data Grid**: Drivers currently on track display their live heat telemetry; however, inactive or resting drivers who are not on track in this heat display dashes (`--`) or zeros for heat-specific metrics because they have no live heat data.
-- **Overall Race Data Widgets** (e.g. *Overall Rank, Overall Total Laps, Overall Physical Laps, Overall Total Time, Best Race Lap Time, Overall Average Lap Time, Overall Median Lap Time, Overall Consistency, Overall Gaps, Win Probability / Predictions*):
+- **Overall Race Data Widgets** (e.g. *Overall Rank, Overall Total Laps, Overall Physical Laps, Overall Total Time, Best Race Lap Time, Overall Average Lap Time, Overall Median Lap Time, Overall Consistency, Overall Gaps, Win Probability / Predictions, Heats Raced / Heats Remaining*):
   - Extract cumulative performance metrics across **all completed heats** in the tournament.
   - **In an Overall Race Data Grid**: Every driver row (whether currently racing or resting in the pits between heats) displays their full cumulative race statistics, total tournament laps, event-best lap time, and tournament standing.
   - **In a Heat Data Grid**: The active heat drivers display their cumulative overall standings and event-wide statistics alongside their live heat metrics (e.g. showing a driver's overall tournament rank while watching their active heat laps).
+
+#### Heats Raced & Remaining Widget
+
+The **Heats Raced** (`heatsRaced`) widget displays heat participation progress for each competitor:
+
+- **Heats Raced (Default Mode)**: Displays the number of heats the competitor has already completed or is currently racing in during the event.
+- **Heats Remaining Mode**: When the widget's **Heats Display Mode** setting is toggled from *Heats Raced* to *Heats Remaining*, the card displays how many scheduled heats the driver still has left to run. If no custom column header label is provided, the header automatically changes from `HEATS RACED` to `HEATS REMAINING`.
+- This configuration is also available for insets attached to any lane column card.
 
 #### Gap Widgets (Gaps & Intervals)
 

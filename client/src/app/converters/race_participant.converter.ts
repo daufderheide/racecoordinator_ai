@@ -65,6 +65,10 @@ export class RaceParticipantConverter {
         proto.top2Consecutive || 0,
         proto.top3Consecutive || 0,
         proto.hasSegments || false,
+        undefined,
+        proto.heatsRaced || 0,
+        proto.heatsRemaining || 0,
+        proto.totalHeats || 0,
       );
     });
   }
@@ -107,6 +111,9 @@ export class RaceParticipantConverter {
       proto.top3Consecutive || 0,
       proto.hasSegments || false,
       proto.rank || 0,
+      proto.heatsRaced || 0,
+      proto.heatsRemaining || 0,
+      proto.totalHeats || 0,
     );
     const cached = this.cache.get(id);
     if (cached && proto.rank !== undefined && proto.rank !== null) {
@@ -179,6 +186,12 @@ export class RaceParticipantConverter {
       cached.top3Consecutive = proto.top3Consecutive;
     if (proto.hasSegments !== undefined && proto.hasSegments !== null)
       cached.hasSegments = proto.hasSegments;
+    if (proto.heatsRaced !== undefined && proto.heatsRaced !== null)
+      cached.heatsRaced = proto.heatsRaced;
+    if (proto.heatsRemaining !== undefined && proto.heatsRemaining !== null)
+      cached.heatsRemaining = proto.heatsRemaining;
+    if (proto.totalHeats !== undefined && proto.totalHeats !== null)
+      cached.totalHeats = proto.totalHeats;
 
     if (proto.team) {
       cached.team = TeamConverter.fromProto(proto.team);

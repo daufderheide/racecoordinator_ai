@@ -85,10 +85,18 @@ La Casella degli strumenti suddivide le colonne e le schede dati nei gruppi **Da
   - Calcolano le metriche prestazionali riferite esclusivamente alla **manche attiva**.
   - **In una Griglia Dati Manche**: Ciascuna riga mostra la telemetria in tempo reale e i tempi sul giro delle vetture attualmente in pista.
   - **In una Griglia Dati Generali**: I piloti in pista mostrano la loro telemetria in tempo reale; i piloti a riposo o inattivi mostrano trattini (`--`) o zeri per le metriche di manche, in quanto non producono dati nella manche in corso.
-- **Widget Dati Generali di Gara** (es. *Piazzamento Generale, Giri Totali, Giri Fisici Totali, Tempo Totale Generale, Miglior Giro Assoluto, Media Generale, Mediana Generale, Regolarità Generale, Distacchi Generali, Probabilità di Vittoria / Previsioni*):
+- **Widget Dati Generali di Gara** (es. *Piazzamento Generale, Giri Totali, Giri Fisici Totali, Tempo Totale Generale, Miglior Giro Assoluto, Media Generale, Mediana Generale, Regolarità Generale, Distacchi Generali, Probabilità di Vittoria / Previsioni, Manche Disputate / Manche Rimanenti*):
   - Calcolano le metriche prestazionali complessive su **tutte le manche disputate** nel torneo.
   - **In una Griglia Dati Generali**: Ogni riga di pilota (in pista o ai box tra una manche e l'altra) mostra le statistiche complete dell'evento, i giri totali del torneo, il miglior giro assoluto e la posizione generale.
   - **In una Griglia Dati Manche**: I piloti attivi mostrano la loro posizione generale e le statistiche complessive dell'evento accanto ai giri della manche in corso (es. seguire la posizione in classifica generale mentre si corre la manche).
+
+#### Widget Manche Disputate e Rimanenti
+
+Il widget **Manche Disputate** (`heatsRaced`) mostra l'avanzamento della partecipazione alle manche di ciascun pilota:
+
+- **Manche Disputate (Modalità Predefinita)**: Visualizza il numero di manche che il pilota ha già completato o che sta disputando nell'evento.
+- **Modalità Manche Rimanenti**: Quando l'opzione **Modalità visualizzazione manche** viene commutata da *Manche disputate* a *Manche rimanenti*, la scheda visualizza quante manche programmate restano ancora da correre per il pilota. Se non è specificata un'etichetta personalizzata per l'intestazione, il titolo passa automaticamente da `MANCHE DISPUTATE` a `MANCHE RIMANENTI`.
+- Questa configurazione è disponibile anche per gli elementi inset associati a qualsiasi scheda colonna.
 
 #### Widget Distacchi (Gaps e Intervalli)
 

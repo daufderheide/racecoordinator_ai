@@ -63,6 +63,9 @@ public class RaceParticipantConverterTest {
     participant.setTop2Consecutive(21.0);
     participant.setTop3Consecutive(33.0);
     participant.setHasSegments(true);
+    participant.setHeatsRaced(3);
+    participant.setHeatsRemaining(2);
+    participant.setTotalHeats(5);
 
     RaceParticipant proto = RaceParticipantConverter.toProto(participant, new HashSet<>());
 
@@ -79,5 +82,8 @@ public class RaceParticipantConverterTest {
     assertEquals(11.8, proto.getAverageTop15(), 0.01);
     assertEquals(21.0, proto.getTop2Consecutive(), 0.01);
     assertEquals(33.0, proto.getTop3Consecutive(), 0.01);
+    assertEquals(3, proto.getHeatsRaced());
+    assertEquals(2, proto.getHeatsRemaining());
+    assertEquals(5, proto.getTotalHeats());
   }
 }

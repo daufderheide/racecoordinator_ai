@@ -85,10 +85,18 @@ Die Toolbox unterteilt Datenspalten und -karten in die Gruppen **Lauf-Daten** un
   - Berechnen Leistungskennzahlen ausschließlich für den **aktiven Lauf**.
   - **In einem Lauf-Daten-Raster**: Jede Zeile zeigt Live-Echtzeit-Telemetrie und Rundenzeiten der aktuell auf der Strecke fahrenden Fahrzeuge.
   - **In einem Gesamtwertungs-Raster**: Fahrer, die aktuell auf der Strecke sind, zeigen ihre Live-Telemetrie; pausierende oder inaktive Fahrer zeigen für laufsเนินezifische Werte Striche (`--`) oder Nullen, da sie im laufenden Lauf keine Daten erzeugen.
-- **Gesamtwertungs-Widgets** (z. B. *Gesamtrang, Gesamte Runden, Physische Runden, Gesamtzeit, Renn-Rekordrunde, Gesamte Durchschnitts-/Medianzeit, Gesamt-Konsistenz, Gesamt-Abstände, Siegchancen / Prognosen*):
+- **Gesamtwertungs-Widgets** (z. B. *Gesamtrang, Gesamte Runden, Physische Runden, Gesamtzeit, Renn-Rekordrunde, Gesamte Durchschnitts-/Medianzeit, Gesamt-Konsistenz, Gesamt-Abstände, Siegchancen / Prognosen, Gefahrene Heats / Verbleibende Heats*):
   - Berechnen kumulierte Leistungskennzahlen über **alle absolvierten Läufe** des Turniers hinweg.
   - **In einem Gesamtwertungs-Raster**: Jede Fahrerzeile (egal ob auf der Strecke oder pausierend in den Boxen) zeigt die vollständigen Gesamtstatistiken, die Gesamtrundenzahl des Turniers, die beste Rennrunde und den Gesamtplatz.
   - **In einem Lauf-Daten-Raster**: Die aktiven Fahrer zeigen ihre Gesamtplatzierung und turnierweiten Statistiken direkt neben ihren aktuellen Laufrunden an (z. B. Verfolgen des Gesamtplatzes während des laufenden Rennens).
+
+#### Gefahrene & Verbleibende Heats Widget
+
+Das **Gefahrene Heats** (`heatsRaced`)-Widget zeigt den Rennlauf-Fortschritt jedes Teilnehmers an:
+
+- **Gefahrene Heats (Standardmodus)**: Zeigt an, wie viele Läufe der Fahrer im aktuellen Event bereits absolviert hat oder gerade bestreitet.
+- **Verbleibende Heats Modus**: Wenn die Einstellung **Heat-Anzeigemodus** von *Gefahrene Heats* auf *Verbleibende Heats* umgeschaltet wird, zeigt die Karte an, wie viele geplante Läufe der Fahrer noch vor sich hat. Sofern kein benutzerdefinierter Spaltentitel festgelegt wurde, wechselt die Überschrift automatisch von `HEATS GEFAHREN` zu `HEATS VERBLEIBEND`.
+- Diese Konfiguration steht auch für Insets auf allen Spaltenkarten zur Verfügung.
 
 #### Abstands-Widgets (Gaps & Intervalle)
 

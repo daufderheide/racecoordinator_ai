@@ -69,6 +69,7 @@ export const BASE_AVAILABLE_COLUMNS: readonly {
   { key: "overallLapsLed", label: "RD_COL_OVERALL_LAPS_LED" },
   { key: "overallTrackCalls", label: "RD_COL_OVERALL_TRACK_CALLS" },
   { key: "overallPoints", label: "RD_COL_OVERALL_POINTS" },
+  { key: "heatsRaced", label: "RD_COL_HEATS_RACED" },
   { key: "participant.team.name", label: "RD_COL_TEAM" },
   { key: "participant.fuelLevel", label: "RD_COL_FUEL_LEVEL" },
   { key: "fuelCapacity", label: "RD_COL_FUEL_CAPACITY" },

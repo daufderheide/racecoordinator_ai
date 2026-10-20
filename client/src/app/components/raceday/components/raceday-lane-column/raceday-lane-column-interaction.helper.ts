@@ -138,6 +138,7 @@ export function formatLaneColumnInsetValue(
     timeSubsecondMode: anchorCfg?.timeSubsecondMode || "never",
     timeSubsecondThreshold: anchorCfg?.timeSubsecondThreshold ?? 10,
     timeSubsecondDecimals: anchorCfg?.timeSubsecondDecimals ?? 2,
+    heatsDisplayMode: anchorCfg?.heatsDisplayMode || "raced",
   };
 
   if (parent?.formatValue) {

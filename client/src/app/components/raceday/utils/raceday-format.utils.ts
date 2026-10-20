@@ -269,6 +269,27 @@ export class RacedayFormatUtils {
         return (
           p?.totalPoints ?? heatDriver?.totalPoints ?? heatDriver?.overallPoints
         );
+      case "heatsRaced":
+      case "overallHeatsRaced":
+        return (
+          p?.heatsRaced ??
+          heatDriver?.heatsRaced ??
+          heatDriver?.overallHeatsRaced
+        );
+      case "heatsRemaining":
+      case "overallHeatsRemaining":
+        return (
+          p?.heatsRemaining ??
+          heatDriver?.heatsRemaining ??
+          heatDriver?.overallHeatsRemaining
+        );
+      case "totalHeats":
+      case "overallTotalHeats":
+        return (
+          p?.totalHeats ??
+          heatDriver?.totalHeats ??
+          heatDriver?.overallTotalHeats
+        );
       default:
         return undefined;
     }
@@ -419,6 +440,7 @@ export class RacedayFormatUtils {
     lapDecimals: number,
     colKey?: string,
     isInset?: boolean,
+    column?: ColumnDefinition | any,
   ): string | null {
     if (RacedayFormatUtils.isEmptyDriver(hd)) {
       if (
@@ -595,6 +617,77 @@ export class RacedayFormatUtils {
       return String(points);
     }
 
+    if (baseKey === "heatsRaced" || baseKey === "heatsRemaining") {
+      if (RacedayFormatUtils.isEmptyDriver(hd)) {
+        return "--";
+      }
+      const mode =
+        (column as any)?.heatsDisplayMode ||
+        (column as any)?.customSettings?.heatsDisplayMode ||
+        ctx.laneViewWidgetSettings?.heatsDisplayMode ||
+        (baseKey === "heatsRemaining" ? "remaining" : "raced");
+      const p = (hd?.participant ??
+        (hd as any)?.actualDriver?.participant) as any;
+      let count: number | undefined =
+        mode === "remaining" ? p?.heatsRemaining : p?.heatsRaced;
+
+      if (
+        mode === "remaining" &&
+        (!count || count === 0) &&
+        p?.totalHeats &&
+        p.totalHeats > (p.heatsRaced || 0)
+      ) {
+        count = Math.max(0, p.totalHeats - (p.heatsRaced || 0));
+      }
+
+      if (count === undefined || count === null) {
+        const race = ctx.getRace?.() as any;
+        const driverId =
+          (hd?.driver as any)?.driverId ||
+          (p?.driver as any)?.entity_id ||
+          (p?.driver as any)?.id ||
+          (hd as any)?.driverId;
+        if (race?.heats && driverId) {
+          let driverTotalHeats = 0;
+          let driverHeatsRaced = 0;
+          for (const heat of race.heats) {
+            const inHeat = heat.heatDrivers?.some(
+              (d: any) =>
+                d.driver?.driverId === driverId ||
+                d.actualDriver?.id === driverId ||
+                d.actualDriver?.entity_id === driverId ||
+                d.participant?.driver?.entity_id === driverId ||
+                d.participant?.driver?.id === driverId,
+            );
+            if (inHeat) {
+              driverTotalHeats++;
+              if (
+                heat.started ||
+                heat.heatDrivers?.some(
+                  (d: any) =>
+                    (d.driver?.driverId === driverId ||
+                      d.actualDriver?.id === driverId ||
+                      d.actualDriver?.entity_id === driverId ||
+                      d.participant?.driver?.entity_id === driverId ||
+                      d.participant?.driver?.id === driverId) &&
+                    (d.lapCount > 0 || d.totalTime > 0),
+                )
+              ) {
+                driverHeatsRaced++;
+              }
+            }
+          }
+          count =
+            mode === "remaining"
+              ? Math.max(0, driverTotalHeats - driverHeatsRaced)
+              : driverHeatsRaced;
+        } else {
+          count = 0;
+        }
+      }
+      return String(count);
+    }
+
     return null;
   }
 
@@ -664,7 +757,9 @@ export class RacedayFormatUtils {
     if (
       baseKey.startsWith("overall") ||
       baseKey === "totalLaps" ||
-      baseKey === "raceTotalLaps"
+      baseKey === "raceTotalLaps" ||
+      baseKey === "heatsRaced" ||
+      baseKey === "heatsRemaining"
     ) {
       const overallStr = RacedayFormatUtils.formatOverallValue(
         baseKey,
@@ -677,6 +772,7 @@ export class RacedayFormatUtils {
         lapDecimals,
         colKey,
         isInset,
+        column,
       );
       if (overallStr !== null) {
         return overallStr;

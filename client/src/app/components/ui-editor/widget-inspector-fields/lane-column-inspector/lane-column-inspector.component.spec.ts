@@ -2016,5 +2016,30 @@ describe("LaneColumnInspectorComponent", () => {
       component.removeInset("top-center");
       expect(component.getAnchorValue("top-center")).toBe("");
     });
+
+    it("should correctly identify heats count column and handle display mode", () => {
+      component.currentSettings["columnKey"] = "lastLapTime";
+      expect(component.isHeatsCountColumn).toBeFalse();
+
+      component.currentSettings["columnKey"] = "heatsRaced";
+      expect(component.isHeatsCountColumn).toBeTrue();
+
+      component.currentSettings["columnKey"] = "heatsRemaining";
+      expect(component.isHeatsCountColumn).toBeTrue();
+    });
+
+    it("should manage inset heats display mode correctly", () => {
+      component.setAnchorValue("top-left", "heatsRaced");
+      expect(component.isInsetHeatsCount("top-left")).toBeTrue();
+      expect(component.getInsetHeatsDisplayMode("top-left")).toBe("raced");
+
+      spyOn(component.change, "emit");
+      component.setInsetHeatsDisplayMode("top-left", "remaining");
+      expect(component.getInsetHeatsDisplayMode("top-left")).toBe("remaining");
+      expect(component.change.emit).toHaveBeenCalled();
+
+      expect(component.isInsetHeatsCount("bottom-right")).toBeFalse();
+      expect(component.getInsetHeatsDisplayMode("bottom-right")).toBe("raced");
+    });
   });
 });

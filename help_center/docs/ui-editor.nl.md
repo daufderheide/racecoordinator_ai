@@ -85,10 +85,18 @@ De Toolbox verdeelt gegevenskolommen en -kaarten in de groepen **Heat-gegevens**
   - Berekenen prestatiemetingen uitsluitend voor de **actieve heat**.
   - **In een Heat-gegevensraster**: Elke rij toont live realtime-telemetrie en rondetijden van de voertuigen die op de baan rijden.
   - **In een Algemeen Gegevensraster**: Coureurs op de baan tonen hun live heat-telemetrie; coureurs die rusten of inactief zijn tonen streepjes (`--`) of nullen voor heat-specifieke waarden, aangezien zij geen gegevens produceren in de lopende heat.
-- **Algemene Gegevenswidgets** (bijv. *Algemene Stand / Positie, Totaal Aantal Ronden, Fysieke Ronden, Totale Tijd, Baanrecord, Algemeen Gemiddelde, Algemene Mediaan, Algemene Consistentie, Algemene Tijdsverschillen, Winkans / Voorspellingen*):
+- **Algemene Gegevenswidgets** (bijv. *Algemene Stand / Positie, Totaal Aantal Ronden, Fysieke Ronden, Totale Tijd, Baanrecord, Algemeen Gemiddelde, Algemene Mediaan, Algemene Consistentie, Algemene Tijdsverschillen, Winkans / Voorspellingen, Heats Gereden / Heats Resterend*):
   - Berekenen cumulatieve prestatiemetingen over **alle voltooide heats** in het toernooi.
   - **In een Algemeen Gegevensraster**: Elke coureurrij (actief op de baan of rustend tussen heats) toont zijn volledige toernooidata, totaal gereden ronden, snelste toernooironde en positie in het algemeen klassement.
   - **In een Heat-gegevensraster**: De actieve heat-coureurs tonen hun algemene toernooistand en evenementstatistieken zij aan zij met hun actieve heat-ronden (bijv. het toernooiklassement volgen tijdens de actieve race).
+
+#### Heats Gereden & Resterend Widget
+
+Het widget **Heats Gereden** (`heatsRaced`) toont de voortgang van de deelname aan heats voor elke deelnemer:
+
+- **Heats Gereden (Standaardmodus)**: Toont het aantal heats dat de coureur reeds heeft voltooid of momenteel rijdt in het toernooi.
+- **Modus Heats Resterend**: Wanneer de instelling **Heat-weergavemodus** wordt omgeschakeld van *Gereden heats* naar *Resterende heats*, toont de kaart hoeveel geplande heats de coureur nog moet rijden. Als er geen aangepast kolomkoplabel is ingesteld, verandert de kop automatisch van `HEATS GEREDEN` naar `HEATS RESTEREND`.
+- Deze configuratie is tevens beschikbaar voor insets op elke kolomkaart.
 
 #### Verschil-Widgets (Gaps & Intervallen)
 

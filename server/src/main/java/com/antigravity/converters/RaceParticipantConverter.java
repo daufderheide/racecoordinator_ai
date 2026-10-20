@@ -56,6 +56,9 @@ public class RaceParticipantConverter {
         .setTop2Consecutive(participant.getTop2Consecutive())
         .setTop3Consecutive(participant.getTop3Consecutive())
         .setHasSegments(participant.hasSegments())
+        .setHeatsRaced(participant.getHeatsRaced())
+        .setHeatsRemaining(participant.getHeatsRemaining())
+        .setTotalHeats(participant.getTotalHeats())
         .build();
   }
 }

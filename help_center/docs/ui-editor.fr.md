@@ -85,10 +85,18 @@ La Boîte à outils organise les colonnes et cartes de données en groupes **Don
   - Extraient des métriques calculées strictement pour la **série active**.
   - **Dans une Grille de Données de Série** : Chaque ligne affiche la télémétrie en temps réel et les temps au tour des véhicules actuellement en course.
   - **Dans une Grille de Données Générales** : Les pilotes en piste affichent leur télémétrie en direct ; les pilotes au repos ou inactifs affichent des tirets (`--`) ou des zéros pour les métriques de série, car ils n'ont pas de données de série en cours.
-- **Widgets de Données Générales de Course** (ex. *Rang Général, Tours Totaux, Tours Physiques Totaux, Temps Total Général, Meilleur Tour de Course, Moyenne Générale, Médiane Générale, Régularité Générale, Écarts Généraux, Probabilité de Victoire / Prédictions*) :
+- **Widgets de Données Générales de Course** (ex. *Rang Général, Tours Totaux, Tours Physiques Totaux, Temps Total Général, Meilleur Tour de Course, Moyenne Générale, Médiane Générale, Régularité Générale, Écarts Généraux, Probabilité de Victoire / Prédictions, Manches Disputées / Manches Restantes*) :
   - Extraient les performances cumulées sur **toutes les séries terminées** du tournoi.
   - **Dans une Grille de Données Générales** : Chaque ligne de pilote (qu'il soit en piste ou aux stands entre deux séries) affiche l'intégralité de ses statistiques globales, ses tours cumulés, son record de l'épreuve et son rang général.
   - **Dans une Grille de Données de Série** : Les pilotes actifs affichent leur rang général et leurs statistiques globales aux côtés de leurs tours de série en direct (ex. observer la position générale tout en suivant la course en cours).
+
+#### Widget Manches Disputées & Restantes
+
+Le widget **Manches Disputées** (`heatsRaced`) présente l'état d'avancement des manches pour chaque concurrent :
+
+- **Manches Disputées (Mode par Défaut)** : Affiche le nombre de manches que le pilote a déjà disputées ou dispute actuellement dans l'épreuve.
+- **Mode Manches Restantes** : Lorsque le paramètre **Mode d'affichage des manches** passe de *Manches disputées* à *Manches restantes*, la carte indique le nombre de manches programmées qu'il lui reste à courir. Sans étiquette d'en-tête personnalisée, l'intitulé passe automatiquement de `MANCHES DISPUTÉES` à `MANCHES RESTANTES`.
+- Ce réglage est également disponible pour les encarts (insets) associés aux cartes de colonnes.
 
 #### Widgets d'Écarts (Gaps et Intervalles)
 

@@ -82,6 +82,9 @@ describe("RaceParticipantConverter", () => {
       top2Consecutive: 9.12,
       top3Consecutive: 13.84,
       hasSegments: true,
+      heatsRaced: 3,
+      heatsRemaining: 2,
+      totalHeats: 5,
     };
 
     const p = RaceParticipantConverter.fromProto(proto);
@@ -97,6 +100,38 @@ describe("RaceParticipantConverter", () => {
     expect(p.top2Consecutive).toBe(9.12);
     expect(p.top3Consecutive).toBe(13.84);
     expect(p.hasSegments).toBeTrue();
+    expect(p.heatsRaced).toBe(3);
+    expect(p.heatsRemaining).toBe(2);
+    expect(p.totalHeats).toBe(5);
+  });
+
+  it("should update heats counts in place when updating cached participant", () => {
+    const proto1: IRaceParticipant = {
+      objectId: "p1",
+      driver: { model: { entityId: "d1" }, name: "Alice" },
+      heatsRaced: 1,
+      heatsRemaining: 4,
+      totalHeats: 5,
+    };
+
+    const p1 = RaceParticipantConverter.fromProto(proto1);
+    expect(p1.heatsRaced).toBe(1);
+    expect(p1.heatsRemaining).toBe(4);
+    expect(p1.totalHeats).toBe(5);
+
+    const proto2: IRaceParticipant = {
+      objectId: "p1",
+      driver: { model: { entityId: "d1" }, name: "Alice" },
+      heatsRaced: 2,
+      heatsRemaining: 3,
+      totalHeats: 5,
+    };
+
+    const p2 = RaceParticipantConverter.fromProto(proto2);
+    expect(p2).toBe(p1);
+    expect(p1.heatsRaced).toBe(2);
+    expect(p1.heatsRemaining).toBe(3);
+    expect(p1.totalHeats).toBe(5);
   });
 
   it("should update hasSegments in place when updating cached participant", () => {

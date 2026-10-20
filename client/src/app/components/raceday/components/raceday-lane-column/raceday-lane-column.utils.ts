@@ -178,6 +178,9 @@ export function resolveColumnHeaderLabel(
   if (settings.customLabel && settings.customLabel.trim()) {
     return settings.customLabel;
   }
+  if (key === "heatsRaced" && settings.heatsDisplayMode === "remaining") {
+    return translate("RD_COL_HEATS_REMAINING");
+  }
   if (isCustomWidgetKey(key)) {
     const customDef = parent?.customWidgetService?.getWidgetDefinition?.(key);
     if (customDef?.manifest?.name) {

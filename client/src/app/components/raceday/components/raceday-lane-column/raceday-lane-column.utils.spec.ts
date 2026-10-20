@@ -315,6 +315,26 @@ describe("raceday-lane-column.utils", () => {
       );
       expect(label).toBe("My Best Lap");
     });
+
+    it("should resolve RD_COL_HEATS_REMAINING when heatsDisplayMode is remaining and no customLabel", () => {
+      const label = resolveColumnHeaderLabel(
+        "heatsRaced",
+        { heatsDisplayMode: "remaining" } as any,
+        {},
+        (k) => k,
+      );
+      expect(label).toBe("RD_COL_HEATS_REMAINING");
+    });
+
+    it("should resolve RD_COL_HEATS_RACED when heatsDisplayMode is raced and no customLabel", () => {
+      const label = resolveColumnHeaderLabel(
+        "heatsRaced",
+        { heatsDisplayMode: "raced" } as any,
+        {},
+        (k) => k,
+      );
+      expect(label).toBe("RD_COL_HEATS_RACED");
+    });
   });
 
   describe("formatAdjustedLapValue", () => {

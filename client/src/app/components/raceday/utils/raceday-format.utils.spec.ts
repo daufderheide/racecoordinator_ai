@@ -2360,4 +2360,150 @@ describe("RacedayFormatUtils", () => {
       expect(flag).toBe(ctx.getFlagUrl("flag.one_lap_to_go"));
     });
   });
+
+  describe("formatValue & formatOverallValue - Heats Raced & Remaining", () => {
+    it("should format heatsRaced in raced mode (default) and remaining mode via formatValue", () => {
+      const mockParticipant: any = {
+        objectId: "p1",
+        driver: { name: "Driver 1" },
+        heatsRaced: 4,
+        heatsRemaining: 2,
+        totalHeats: 6,
+      };
+      (hd as any).participant = mockParticipant;
+
+      // Default / raced mode
+      expect(
+        RacedayFormatUtils.formatValue(
+          "heatsRaced",
+          undefined,
+          hd,
+          undefined,
+          ctx,
+        ),
+      ).toBe("4");
+
+      expect(
+        RacedayFormatUtils.formatValue(
+          "heatsRaced",
+          undefined,
+          hd,
+          { heatsDisplayMode: "raced" } as any,
+          ctx,
+        ),
+      ).toBe("4");
+
+      // Remaining mode
+      expect(
+        RacedayFormatUtils.formatValue(
+          "heatsRaced",
+          undefined,
+          hd,
+          { heatsDisplayMode: "remaining" } as any,
+          ctx,
+        ),
+      ).toBe("2");
+    });
+
+    it("should compute remaining heats from totalHeats - heatsRaced when heatsRemaining is 0", () => {
+      const mockParticipant: any = {
+        objectId: "p1",
+        driver: { name: "Driver 1" },
+        heatsRaced: 3,
+        heatsRemaining: 0,
+        totalHeats: 7,
+      };
+      (hd as any).participant = mockParticipant;
+
+      expect(
+        RacedayFormatUtils.formatValue(
+          "heatsRaced",
+          undefined,
+          hd,
+          { heatsDisplayMode: "remaining" } as any,
+          ctx,
+        ),
+      ).toBe("4");
+    });
+
+    it("should format heatsRaced and heatsRemaining via formatValue with participant on hd", () => {
+      const mockParticipant: any = {
+        objectId: "p1",
+        driver: { name: "Driver 1" },
+        heatsRaced: 5,
+        heatsRemaining: 1,
+        totalHeats: 6,
+      };
+      (hd as any).participant = mockParticipant;
+
+      expect(
+        RacedayFormatUtils.formatValue(
+          "heatsRaced",
+          undefined,
+          hd,
+          undefined,
+          ctx,
+        ),
+      ).toBe("5");
+
+      expect(
+        RacedayFormatUtils.formatValue(
+          "heatsRaced",
+          undefined,
+          hd,
+          { heatsDisplayMode: "remaining" } as any,
+          ctx,
+        ),
+      ).toBe("1");
+
+      expect(
+        RacedayFormatUtils.formatValue(
+          "heatsRemaining",
+          undefined,
+          hd,
+          undefined,
+          ctx,
+        ),
+      ).toBe("1");
+    });
+
+    it("should extract overall property value correctly for heatsRaced", () => {
+      const mockParticipant: any = {
+        objectId: "p1",
+        driver: { name: "Driver 1" },
+        heatsRaced: 3,
+      };
+
+      expect(
+        (RacedayFormatUtils as any).extractOverallPropertyValue(
+          mockParticipant,
+          undefined,
+          "heatsRaced",
+        ),
+      ).toBe(3);
+    });
+
+    it("should return -- for null or empty driver", () => {
+      expect(
+        RacedayFormatUtils.formatValue(
+          "heatsRaced",
+          undefined,
+          null as any,
+          undefined,
+          ctx,
+        ),
+      ).toBe("--");
+
+      const emptyHd: any = { isEmptyLane: true };
+      expect(
+        RacedayFormatUtils.formatValue(
+          "heatsRaced",
+          undefined,
+          emptyHd,
+          undefined,
+          ctx,
+        ),
+      ).toBe("--");
+    });
+  });
 });

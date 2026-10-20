@@ -401,6 +401,8 @@ export class RacedayLayoutUtils {
     overallLapsLed: "RD_COL_LAPS_LED",
     overallTrackCalls: "RD_COL_TRACK_CALLS",
     overallPoints: "RD_COL_POINTS",
+    heatsRaced: "RD_COL_HEATS_RACED",
+    heatsRemaining: "RD_COL_HEATS_REMAINING",
     winProbability: "RD_COL_WIN_PROB",
     projectedRank: "RD_COL_PROJ_RANK",
     projectedLaps: "RD_COL_PROJ_LAPS",
@@ -450,6 +452,8 @@ export class RacedayLayoutUtils {
     overallLapsLed: 216,
     overallTrackCalls: 216,
     overallPoints: 216,
+    heatsRaced: 120,
+    heatsRemaining: 120,
     reactionTime: 330,
     lastLapTime: 330,
     lastLaps: 1650,
@@ -819,6 +823,8 @@ export class RacedayLayoutUtils {
       "winProbability",
       "projectedRank",
       "projectedLaps",
+      "heatsRaced",
+      "heatsRemaining",
     ]);
     return overallKeys.has(key);
   }

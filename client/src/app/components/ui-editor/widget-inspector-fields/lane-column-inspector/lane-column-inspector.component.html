@@ -1292,6 +1292,34 @@
         </div>
       }
     }
+
+    @if (isHeatsCountColumn) {
+      <hr class="inspector-divider" />
+      <div class="inspector-geometry-title">
+        <span class="material-icons">tune</span>
+        {{ "UE_INSPECTOR_HEATS_SECTION" | translate }}
+      </div>
+      <div class="inspector-section">
+        <label class="inspector-label">{{
+          "UE_INSPECTOR_HEATS_MODE" | translate
+        }}</label>
+        <div class="select-container select-sm">
+          <app-custom-select
+            [ngModel]="currentSettings['heatsDisplayMode'] || 'raced'"
+            (ngModelChange)="
+              currentSettings['heatsDisplayMode'] = $event; onFieldChange()
+            "
+          >
+            <app-custom-option value="raced">
+              {{ "UE_INSPECTOR_HEATS_MODE_RACED" | translate }}
+            </app-custom-option>
+            <app-custom-option value="remaining">
+              {{ "UE_INSPECTOR_HEATS_MODE_REMAINING" | translate }}
+            </app-custom-option>
+          </app-custom-select>
+        </div>
+      </div>
+    }
   } @else {
     <!-- Custom Widget Identifier / Title -->
     <div class="inspector-section">
@@ -2510,6 +2538,29 @@
             <app-custom-option [value]="1">1</app-custom-option>
             <app-custom-option [value]="2">2</app-custom-option>
             <app-custom-option [value]="3">3</app-custom-option>
+          </app-custom-select>
+        </div>
+      </div>
+    }
+
+    @if (isInsetHeatsCount(effectiveSelectedAnchor)) {
+      <div class="inspector-section">
+        <label class="inspector-label">{{
+          "UE_INSPECTOR_HEATS_MODE" | translate
+        }}</label>
+        <div class="select-container select-sm">
+          <app-custom-select
+            [ngModel]="getInsetHeatsDisplayMode(effectiveSelectedAnchor)"
+            (ngModelChange)="
+              setInsetHeatsDisplayMode(effectiveSelectedAnchor, $event)
+            "
+          >
+            <app-custom-option value="raced">
+              {{ "UE_INSPECTOR_HEATS_MODE_RACED" | translate }}
+            </app-custom-option>
+            <app-custom-option value="remaining">
+              {{ "UE_INSPECTOR_HEATS_MODE_REMAINING" | translate }}
+            </app-custom-option>
           </app-custom-select>
         </div>
       </div>

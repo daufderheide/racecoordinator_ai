@@ -44,11 +44,15 @@ public class OverallStandings {
       List<RaceParticipant> drivers, List<Heat> heats, HeatRotationType rotationType) {
     Map<String, Map<Integer, List<DriverHeatData>>> driverHeatsByNumber = new HashMap<>();
     Map<String, Integer> driverToGroup = new HashMap<>();
+    Map<Integer, Boolean> heatStartedByNumber = new HashMap<>();
 
     // 1. Strings heats to drivers and index by heat number and group
     for (Heat heat : heats) {
       int heatNum = heat.getHeatNumber();
       int heatGroup = heat.getGroup();
+      if (heat.isStarted()) {
+        heatStartedByNumber.put(heatNum, true);
+      }
       for (DriverHeatData dhd : heat.getDrivers()) {
         if (dhd.getDriver() != null) {
           String stableId = dhd.getDriver().getStableId();
@@ -65,7 +69,7 @@ public class OverallStandings {
     for (RaceParticipant driver : drivers) {
       Map<Integer, List<DriverHeatData>> heatsByNumber =
           driverHeatsByNumber.getOrDefault(driver.getStableId(), Collections.emptyMap());
-      calculateDriverStats(driver, heatsByNumber, rotationType);
+      calculateDriverStats(driver, heatsByNumber, rotationType, heatStartedByNumber);
     }
 
     // 3. Rank drivers
@@ -244,9 +248,12 @@ public class OverallStandings {
   private void calculateDriverStats(
       RaceParticipant driver,
       Map<Integer, List<DriverHeatData>> heatsByNumber,
-      HeatRotationType rotationType) {
+      HeatRotationType rotationType,
+      Map<Integer, Boolean> heatStartedByNumber) {
     List<DriverHeatData> myHeats = consolidateDriverHeats(heatsByNumber, rotationType);
     List<DriverHeatData> scoringHeats = getScoringHeats(myHeats);
+
+    populateDriverHeatCounts(driver, heatsByNumber, heatStartedByNumber);
 
     double totalLaps = 0.0;
     double totalTime = 0.0;
@@ -319,6 +326,45 @@ public class OverallStandings {
       driver.setAverageTop10(0.0);
       driver.setAverageTop15(0.0);
     }
+  }
+
+  private void populateDriverHeatCounts(
+      RaceParticipant driver,
+      Map<Integer, List<DriverHeatData>> heatsByNumber,
+      Map<Integer, Boolean> heatStartedByNumber) {
+    int totalHeats = 0;
+    int heatsRaced = 0;
+    if (driver.getDriver() != null && !driver.getDriver().isEmpty()) {
+      totalHeats = heatsByNumber != null ? heatsByNumber.size() : 0;
+      if (heatsByNumber != null) {
+        for (Map.Entry<Integer, List<DriverHeatData>> entry : heatsByNumber.entrySet()) {
+          int heatNum = entry.getKey();
+          boolean raced =
+              heatStartedByNumber != null && Boolean.TRUE.equals(heatStartedByNumber.get(heatNum));
+          if (!raced && entry.getValue() != null) {
+            for (DriverHeatData dhd : entry.getValue()) {
+              if (dhd != null
+                  && (dhd.isFinished()
+                      || dhd.getAdjustedLapCount() > 0
+                      || dhd.getTotalTime() > 0
+                      || dhd.getUserLaps() > 0
+                      || dhd.getUserTime() > 0
+                      || (dhd.getLaps() != null && !dhd.getLaps().isEmpty()))) {
+                raced = true;
+                break;
+              }
+            }
+          }
+          if (raced) {
+            heatsRaced++;
+          }
+        }
+      }
+    }
+    int heatsRemaining = Math.max(0, totalHeats - heatsRaced);
+    driver.setHeatsRaced(heatsRaced);
+    driver.setHeatsRemaining(heatsRemaining);
+    driver.setTotalHeats(totalHeats);
   }
 
   private List<DriverHeatData> consolidateDriverHeats(

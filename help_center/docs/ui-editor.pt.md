@@ -85,10 +85,18 @@ A Caixa de ferramentas organiza as colunas e cartões de dados nos grupos **Dado
   - Extraem métricas de desempenho estritamente da **bateria ativa**.
   - **Em uma Grade de Dados da Bateria**: Cada linha exibe telemetria em tempo real e tempos de volta dos carros que estão competindo na pista.
   - **Em uma Grade de Dados Gerais**: Os pilotos em pista exibem sua telemetria ao vivo; pilotos inativos ou descansando exibem traços (`--`) ou zeros para métricas específicas da bateria, pois não produzem dados na bateria em andamento.
-- **Widgets de Dados Gerais da Corrida** (ex. *Classificação Geral, Total de Voltas, Voltas Físicas Totais, Tempo Total Geral, Melhor Volta da Corrida, Média Geral, Mediana Geral, Consistência Geral, Diferenças Gerais, Probabilidade de Vitória / Previsões*):
+- **Widgets de Dados Gerais da Corrida** (ex. *Classificação Geral, Total de Voltas, Voltas Físicas Totais, Tempo Total Geral, Melhor Volta da Corrida, Média Geral, Mediana Geral, Consistência Geral, Diferenças Gerais, Probabilidade de Vitória / Previsões, Baterias Disputadas / Baterias Restantes*):
   - Extraem métricas de desempenho acumuladas de **todas as baterias concluídas** no evento.
   - **Em uma Grade de Dados Gerais**: Cada linha de piloto (na pista ou nos boxes entre baterias) exibe suas estatísticas gerais completas, total de voltas no torneio, melhor volta da prova e colocação na classificação geral.
   - **Em uma Grade de Dados da Bateria**: Os pilotos ativos exibem sua classificação geral e estatísticas acumuladas ao lado de suas voltas na bateria ao vivo (ex. acompanhar a classificação global do evento durante a corrida ativa).
+
+#### Widget de Baterias Disputadas e Restantes
+
+O widget **Baterias Disputadas** (`heatsRaced`) exibe o progresso de participação nas baterias de cada piloto:
+
+- **Baterias Disputadas (Modo Padrão)**: Exibe a quantidade de baterias que o piloto já disputou ou está disputando no momento no evento.
+- **Modo Baterias Restantes**: Quando a opção **Modo de exibição de baterias** é alternada de *Baterias disputadas* para *Baterias restantes*, o cartão exibe quantas baterias programadas o piloto ainda tem por disputar. Se nenhum rótulo de cabeçalho personalizado for definido, o título muda automaticamente de `BATERIAS DISPUTADAS` para `BATERIAS RESTANTES`.
+- Essa configuração também está disponível para itens inset vinculados a qualquer cartão de coluna.
 
 #### Widgets de Diferença (Gaps e Intervalos)
 

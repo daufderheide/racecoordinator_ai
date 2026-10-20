@@ -90,6 +90,7 @@ export const LANE_VIEW_COLUMN_GROUPS: readonly ColumnGroupDefinition[] = [
       "overallPoints",
       "overallLapsLed",
       "overallTrackCalls",
+      "heatsRaced",
     ],
   },
   {

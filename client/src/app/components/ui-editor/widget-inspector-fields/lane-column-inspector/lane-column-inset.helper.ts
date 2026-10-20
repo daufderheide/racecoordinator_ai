@@ -255,6 +255,25 @@ export class LaneColumnInsetHelper {
     cfg.decimalPlaces = Math.min(3, Math.max(0, Number(val) || 0));
   }
 
+  public static getInsetHeatsDisplayMode(
+    currentSettings: any,
+    anchor: string,
+  ): "raced" | "remaining" {
+    return (
+      this.getOrCreateInsetConfig(currentSettings, anchor).heatsDisplayMode ||
+      "raced"
+    );
+  }
+
+  public static setInsetHeatsDisplayMode(
+    currentSettings: any,
+    anchor: string,
+    val: "raced" | "remaining",
+  ): void {
+    const cfg = this.getOrCreateInsetConfig(currentSettings, anchor);
+    cfg.heatsDisplayMode = val;
+  }
+
   public static getInsetFontFamily(
     currentSettings: any,
     anchor: string,
@@ -344,12 +363,19 @@ export class LaneColumnInsetHelper {
     return RacedayLayoutUtils.isLapColumnKey(key);
   }
 
+  public static isInsetHeatsCountColumn(key: string | undefined): boolean {
+    if (!key) return false;
+    const baseKey = key.split("_")[0];
+    return baseKey === "heatsRaced" || baseKey === "heatsRemaining";
+  }
+
   public static isInsetNumericColumn(key: string | undefined): boolean {
     if (!key) return false;
     if (
       this.isInsetTotalTime(key) ||
       this.isInsetTimeColumn(key) ||
-      this.isInsetLapColumn(key)
+      this.isInsetLapColumn(key) ||
+      this.isInsetHeatsCountColumn(key)
     ) {
       return false;
     }
