@@ -90,6 +90,17 @@ The Toolbox organizes data columns and cards into **Heat Data** and **Overall Da
   - **In an Overall Race Data Grid**: Every driver row (whether currently racing or resting in the pits between heats) displays their full cumulative race statistics, total tournament laps, event-best lap time, and tournament standing.
   - **In a Heat Data Grid**: The active heat drivers display their cumulative overall standings and event-wide statistics alongside their live heat metrics (e.g. showing a driver's overall tournament rank while watching their active heat laps).
 
+#### Gap Widgets (Gaps & Intervals)
+
+Race Coordinator AI supports **4 distinct gap widgets** across both Heat Data and Overall Race Data:
+
+1. **Gap to Leader (`gapLeader` / `overallGapLeader`)**: Standard continuous projected time gap behind the current race leader (P1).
+2. **Gap to Position Ahead (`gapPosition` / `overallGapPosition`)**: Standard continuous projected time gap behind the car running immediately ahead in the standings.
+3. **Formula 1 Gap to Leader (`gapLeaderF1` / `overallGapLeaderF1`)**: Exact start/finish line time differential behind the leader on the same lap, or lap deficit (`+1 Lap`, `+N Laps`) when lapped.
+4. **Formula 1 Gap to Position Ahead (`gapPositionF1` / `overallGapPositionF1`)**: Exact start/finish line time differential behind the car ahead on the same lap, or lap deficit (`+1 Lap`, `+N Laps`) when lapped.
+
+For complete mathematical formulas, finish type adaptations, and timing specifications, see the [Gap Calculations Guide](gap-calculations.md).
+
 ### Grid Sorting & Interaction Matrix
 
 The **Grid Sorting** dropdown on the Grid tab controls the row ordering. Its behavior depends directly on whether the grid's **Data Source** is set to **Heat Data** or **Overall Data**:

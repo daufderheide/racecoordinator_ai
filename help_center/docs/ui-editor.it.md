@@ -90,6 +90,17 @@ La Casella degli strumenti suddivide le colonne e le schede dati nei gruppi **Da
   - **In una Griglia Dati Generali**: Ogni riga di pilota (in pista o ai box tra una manche e l'altra) mostra le statistiche complete dell'evento, i giri totali del torneo, il miglior giro assoluto e la posizione generale.
   - **In una Griglia Dati Manche**: I piloti attivi mostrano la loro posizione generale e le statistiche complessive dell'evento accanto ai giri della manche in corso (es. seguire la posizione in classifica generale mentre si corre la manche).
 
+#### Widget Distacchi (Gaps e Intervalli)
+
+Race Coordinator AI supporta **4 widget distacco specifici** sia per i Dati Manche che per i Dati Generali:
+
+1. **Distacco dal Leader (`gapLeader` / `overallGapLeader`)**: Proiezione matematica continua del tempo di ritardo stimato rispetto al leader (P1).
+2. **Distacco dal Pilota che Precede (`gapPosition` / `overallGapPosition`)**: Proiezione matematica continua del tempo di ritardo rispetto all'auto immediatamente avanti.
+3. **Distacco Formula 1 dal Leader (`gapLeaderF1` / `overallGapLeaderF1`)**: Distacco esatto sul traguardo nello stesso giro o giri di ritardo (`+1 Giro`, `+N Giri`) in caso di doppiaggio.
+4. **Distacco Formula 1 dal Pilota che Precede (`gapPositionF1` / `overallGapPositionF1`)**: Distacco esatto sul traguardo rispetto all'auto precedente nello stesso giro o giri di ritardo (`+1 Giro`, `+N Giri`).
+
+Per consultare le formule matematiche complete e le specifiche di cronometraggio, consultare la [Guida ai Calcoli dei Distacchi](gap-calculations.md).
+
 ### Ordinamento Griglia e Matrice di Interazione
 
 Il menu a discesa **Ordinamento Griglia** nella scheda Griglia controlla l'ordine delle righe. Il suo comportamento dipende direttamente dall'impostazione dell'**Origine dati** (**Dati Manche** o **Dati Generali**):

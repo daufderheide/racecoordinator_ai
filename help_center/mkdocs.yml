@@ -69,8 +69,10 @@ nav:
     - Race Results: race-results.md
     - Driver Results: driver-results.md
     - Race Predictions: race-predictions.md
+    - Gap Calculations: gap-calculations.md
   - Customization:
     - UI Editor: ui-editor.md
+    - Custom Widgets: custom-widgets.md
     - Themes: themes.md
     - Custom Rotations: custom-rotations.md
     - Custom Raceday: custom-raceday.md

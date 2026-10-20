@@ -90,6 +90,17 @@ La Boîte à outils organise les colonnes et cartes de données en groupes **Don
   - **Dans une Grille de Données Générales** : Chaque ligne de pilote (qu'il soit en piste ou aux stands entre deux séries) affiche l'intégralité de ses statistiques globales, ses tours cumulés, son record de l'épreuve et son rang général.
   - **Dans une Grille de Données de Série** : Les pilotes actifs affichent leur rang général et leurs statistiques globales aux côtés de leurs tours de série en direct (ex. observer la position générale tout en suivant la course en cours).
 
+#### Widgets d'Écarts (Gaps et Intervalles)
+
+Race Coordinator AI prend en charge **4 widgets d'écart distincts** aussi bien pour les Données de Série que pour les Données Générales :
+
+1. **Écart avec le Meneur (`gapLeader` / `overallGapLeader`)** : Projection continue du retard chronométrique estimé par rapport au meneur (P1).
+2. **Écart avec la Position Précédente (`gapPosition` / `overallGapPosition`)** : Projection continue du retard chronométrique estimé par rapport à la voiture immédiatement devant.
+3. **Écart Formule 1 avec le Meneur (`gapLeaderF1` / `overallGapLeaderF1`)** : Différentiel exact sur la ligne d'arrivée dans le même tour ou retard en tours (`+1 Tour`, `+N Tours`) en cas de dépassement.
+4. **Écart Formule 1 avec la Position Précédente (`gapPositionF1` / `overallGapPositionF1`)** : Différentiel exact sur la ligne d'arrivée par rapport à la voiture précédente dans le même tour ou retard en tours (`+1 Tour`, `+N Tours`).
+
+Pour consulter les formules mathématiques complètes et les spécifications de chronométrage, reportez-vous au [Guide des Calculs d'Écarts](gap-calculations.md).
+
 ### Tri de Grille & Matrice d'Interaction
 
 Le menu déroulant **Tri de la Grille** dans l'onglet Grille détermine l'ordre des lignes. Son comportement dépend directement du réglage de la **Source de données** (**Données de Série** ou **Données Générales**) :

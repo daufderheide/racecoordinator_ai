@@ -90,6 +90,17 @@ De Toolbox verdeelt gegevenskolommen en -kaarten in de groepen **Heat-gegevens**
   - **In een Algemeen Gegevensraster**: Elke coureurrij (actief op de baan of rustend tussen heats) toont zijn volledige toernooidata, totaal gereden ronden, snelste toernooironde en positie in het algemeen klassement.
   - **In een Heat-gegevensraster**: De actieve heat-coureurs tonen hun algemene toernooistand en evenementstatistieken zij aan zij met hun actieve heat-ronden (bijv. het toernooiklassement volgen tijdens de actieve race).
 
+#### Verschil-Widgets (Gaps & Intervallen)
+
+Race Coordinator AI ondersteunt **4 afzonderlijke verschil-widgets** voor zowel Heat-gegevens als Algemene Gegevens:
+
+1. **Verschil met de Leider (`gapLeader` / `overallGapLeader`)**: Continue pace-projectie van het berekende tijdsverschil met de leider (P1).
+2. **Verschil met de Voorligger (`gapPosition` / `overallGapPosition`)**: Continue pace-projectie van het berekende tijdsverschil met de directe voorligger.
+3. **Formule 1-verschil met de Leider (`gapLeaderF1` / `overallGapLeaderF1`)**: Exact tijdsverschil aan de finishlijn in dezelfde ronde of rondenachterstand (`+1 Ronde`, `+N Ronden`) bij een dubbeling.
+4. **Formule 1-verschil met de Voorligger (`gapPositionF1` / `overallGapPositionF1`)**: Exact tijdsverschil aan de finishlijn met de voorligger in dezelfde ronde of rondenachterstand (`+1 Ronde`, `+N Ronden`).
+
+Voor gedetailleerde wiskundige formules en tijdmetingsspecificaties, zie de [Gids voor Verschilberekeningen](gap-calculations.md).
+
 ### Rastersortering & Interactiematrix
 
 De keuzelijst **Raster Sortering** op het tabblad Raster bepaalt de rijenvolgorde. De werking hangt direct af van de gekozen **Gegevensbron** (**Heat-gegevens** of **Algemene Gegevens**):

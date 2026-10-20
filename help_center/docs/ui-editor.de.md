@@ -90,6 +90,17 @@ Die Toolbox unterteilt Datenspalten und -karten in die Gruppen **Lauf-Daten** un
   - **In einem Gesamtwertungs-Raster**: Jede Fahrerzeile (egal ob auf der Strecke oder pausierend in den Boxen) zeigt die vollständigen Gesamtstatistiken, die Gesamtrundenzahl des Turniers, die beste Rennrunde und den Gesamtplatz.
   - **In einem Lauf-Daten-Raster**: Die aktiven Fahrer zeigen ihre Gesamtplatzierung und turnierweiten Statistiken direkt neben ihren aktuellen Laufrunden an (z. B. Verfolgen des Gesamtplatzes während des laufenden Rennens).
 
+#### Abstands-Widgets (Gaps & Intervalle)
+
+Race Coordinator AI unterstützt **4 verschiedene Abstands-Widgets** sowohl für Durchgangsdaten als auch für Gesamtwertungsdaten:
+
+1. **Abstand zum Führenden (`gapLeader` / `overallGapLeader`)**: Standardmäßige kontinuierliche Pace-Projektion des Zeitabstands zum Führenden (P1).
+2. **Abstand zum Vordermann (`gapPosition` / `overallGapPosition`)**: Standardmäßige kontinuierliche Pace-Projektion des Zeitabstands zum unmittelbar vorausfahrenden Fahrzeug.
+3. **Formel-1-Abstand zum Führenden (`gapLeaderF1` / `overallGapLeaderF1`)**: Exakter Zeitabstand an der Start-/Ziellinie in derselben Runde oder Rundenrückstand (`+1 Runde`, `+N Runden`) bei Überrundung.
+4. **Formel-1-Abstand zum Vordermann (`gapPositionF1` / `overallGapPositionF1`)**: Exakter Zeitabstand an der Start-/Ziellinie zum vorausfahrenden Fahrzeug in derselben Runde oder Rundenrückstand (`+1 Runde`, `+N Runden`).
+
+Für detaillierte mathematische Formeln und Zeitmessungsspezifikationen siehe den [Leitfaden zu Abstandsberechnungen](gap-calculations.md).
+
 ### Raster-Sortierung & Interaktionsmatrix
 
 Das Dropdown-Menü **Raster-Sortierung** im Reiter „Raster“ steuert die Zeilenreihenfolge. Das Verhalten hängt direkt davon ab, ob die **Datenquelle** des Rasters auf **Lauf-Daten** oder **Gesamtwertung** eingestellt ist:

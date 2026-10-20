@@ -90,6 +90,17 @@ La Caja de herramientas clasifica las columnas y tarjetas de datos en los grupos
   - **En una Cuadrícula de Datos Generales**: Cada fila de piloto (ya esté en pista o en boxes entre rondas) muestra sus estadísticas generales completas, vueltas acumuladas, récord de carrera y puesto global.
   - **En una Cuadrícula de Datos de Ronda**: Los pilotos activos muestran su puesto general y estadísticas acumuladas junto a sus vueltas de ronda en tiempo real (ej. observar la clasificación global mientras se compite en la ronda).
 
+#### Widgets de Diferencias (Gaps e Intervalos)
+
+Race Coordinator AI soporta **4 widgets de diferencias específicos** tanto para Datos de Ronda como para Datos Generales:
+
+1. **Diferencia con el Líder (`gapLeader` / `overallGapLeader`)**: Proyección matemática continua del tiempo de desventaja respecto al líder (P1).
+2. **Diferencia con la Posición Precedente (`gapPosition` / `overallGapPosition`)**: Proyección matemática continua del tiempo de desventaja respecto al coche inmediatamente anterior.
+3. **Diferencia Fórmula 1 con el Líder (`gapLeaderF1` / `overallGapLeaderF1`)**: Diferencia exacta en la línea de meta en la misma vuelta o vueltas perdidas (`+1 Vuelta`, `+N Vueltas`) en caso de estar doblado.
+4. **Diferencia Fórmula 1 con la Posición Precedente (`gapPositionF1` / `overallGapPositionF1`)**: Diferencia exacta en la línea de meta respecto al coche anterior en la misma vuelta o vueltas perdidas (`+1 Vuelta`, `+N Vueltas`).
+
+Para conocer las fórmulas matemáticas completas y especificaciones de cronometraje, consulte la [Guía de Cálculos de Diferencias](gap-calculations.md).
+
 ### Ordenación de Cuadrícula y Matriz de Interacción
 
 El menú desplegable **Ordenación de Cuadrícula** en la pestaña Cuadrícula controla el orden de las filas. Su comportamiento depende directamente de si la **Fuente de datos** está establecida en **Datos de Ronda** o **Datos Generales**:

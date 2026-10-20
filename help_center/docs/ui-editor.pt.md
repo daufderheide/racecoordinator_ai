@@ -90,6 +90,17 @@ A Caixa de ferramentas organiza as colunas e cartões de dados nos grupos **Dado
   - **Em uma Grade de Dados Gerais**: Cada linha de piloto (na pista ou nos boxes entre baterias) exibe suas estatísticas gerais completas, total de voltas no torneio, melhor volta da prova e colocação na classificação geral.
   - **Em uma Grade de Dados da Bateria**: Os pilotos ativos exibem sua classificação geral e estatísticas acumuladas ao lado de suas voltas na bateria ao vivo (ex. acompanhar a classificação global do evento durante a corrida ativa).
 
+#### Widgets de Diferença (Gaps e Intervalos)
+
+O Race Coordinator AI suporta **4 widgets de diferença distintos** tanto para Dados da Bateria quanto para Dados Gerais:
+
+1. **Diferença para o Líder (`gapLeader` / `overallGapLeader`)**: Projeção matemática contínua da desvantagem temporal calculada em relação ao líder (P1).
+2. **Diferença para o Carro da Frente (`gapPosition` / `overallGapPosition`)**: Projeção matemática contínua da desvantagem temporal em relação ao concorrente imediatamente à frente.
+3. **Diferença Fórmula 1 para o Líder (`gapLeaderF1` / `overallGapLeaderF1`)**: Diferencial exato na linha de chegada na mesma volta ou desvantagem de voltas (`+1 Volta`, `+N Voltas`) em caso de voltas perdidas.
+4. **Diferença Fórmula 1 para o Carro da Frente (`gapPositionF1` / `overallGapPositionF1`)**: Diferencial exato na linha de chegada em relação ao carro da frente na mesma volta ou desvantagem de voltas (`+1 Volta`, `+N Voltas`).
+
+Para consultar as fórmulas matemáticas completas e as especificações de cronometragem, consulte o [Guia de Cálculos de Diferenças](gap-calculations.md).
+
 ### Ordenação da Grade e Matriz de Interação
 
 O menu suspenso **Classificação da Grade** na aba Grade controla a ordem das linhas. Seu comportamento depende diretamente da **Origem de dados** selecionada (**Dados da Bateria** ou **Dados Gerais**):
