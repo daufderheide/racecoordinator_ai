@@ -25,4 +25,5 @@ message DriverModel {
   AudioConfig newHeatLeaderAudio = 14;
   AudioConfig pitInAudio = 15;
   AudioConfig fuelAudio = 16;
+  AudioConfig driftLapAudio = 17;
 }

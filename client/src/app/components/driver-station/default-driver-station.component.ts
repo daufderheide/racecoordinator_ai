@@ -701,8 +701,7 @@ export class DefaultDriverStationComponent implements OnInit, OnDestroy {
       slotKey === THEME_SLOT_KEYS.AUDIO_YELLOW_FLAG ||
       slotKey === THEME_SLOT_KEYS.AUDIO_HEAT_OVER ||
       slotKey === THEME_SLOT_KEYS.AUDIO_RACE_OVER ||
-      slotKey === THEME_SLOT_KEYS.AUDIO_MIN_LAP_TIME ||
-      slotKey === THEME_SLOT_KEYS.AUDIO_DRIFT_LAP
+      slotKey === THEME_SLOT_KEYS.AUDIO_MIN_LAP_TIME
     ) {
       priority = "urgent";
     }

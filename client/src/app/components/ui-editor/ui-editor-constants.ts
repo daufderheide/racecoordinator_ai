@@ -198,10 +198,4 @@ export const MAIN_AUDIO_SLOTS: {
     mode: "single",
     helpId: "help-audio-min-lap-time",
   },
-  {
-    key: "audio.drift_lap",
-    label: "UE_LABEL_DRIFT_LAP_AUDIO",
-    mode: "single",
-    helpId: "help-audio-drift-lap",
-  },
 ];

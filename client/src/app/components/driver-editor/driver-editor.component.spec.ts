@@ -1090,6 +1090,22 @@ describe("DriverEditorComponent", () => {
 
       component.onToggleEditMode();
       expect(component.isEditMode).toBeFalse();
+
+      component.isEditMode = true;
+      dataService.updateDriver.calls.reset();
+      component.onAudioTypeChange("driftLap", "preset");
+      component.onAudioUrlChange("driftLap", "drift_sound.wav");
+      expect(component.editingDriver!.driftLapAudio.type).toBe("preset");
+      expect(component.editingDriver!.driftLapAudio.url).toBe(
+        "drift_sound.wav",
+      );
+      expect(dataService.updateDriver).toHaveBeenCalled();
+      expect(component.isSaving).toBeFalse();
+      expect(component.isDirtyState()).toBeFalse();
+      expect(component.isEditMode).toBeTrue();
+
+      component.onToggleEditMode();
+      expect(component.isEditMode).toBeFalse();
     }));
 
     it("should preserve preset and TTS values when toggling between types in driver editor", fakeAsync(() => {
@@ -1241,7 +1257,7 @@ describe("DriverEditorComponent", () => {
       const audioSelectors = fixture.debugElement.queryAll(
         By.css("app-audio-selector"),
       );
-      expect(audioSelectors.length).toBe(12);
+      expect(audioSelectors.length).toBe(13);
       expect(audioSelectors[0].componentInstance.label()).toBe(
         "DE_LABEL_LAP_SOUND",
       );
@@ -1277,6 +1293,9 @@ describe("DriverEditorComponent", () => {
       );
       expect(audioSelectors[11].componentInstance.label()).toBe(
         "DE_LABEL_FALSE_START_SOUND",
+      );
+      expect(audioSelectors[12].componentInstance.label()).toBe(
+        "DE_LABEL_DRIFT_LAP_SOUND",
       );
     });
 
@@ -1364,7 +1383,7 @@ describe("DriverEditorComponent", () => {
 
     it("should provide all guide steps including the name and nickname link step in correct order", () => {
       const steps = component.getHelpSteps();
-      expect(steps.length).toBe(19);
+      expect(steps.length).toBe(20);
 
       const selectors = steps.map((s) => s.selector).filter(Boolean);
       expect(selectors).toEqual([
@@ -1386,6 +1405,7 @@ describe("DriverEditorComponent", () => {
         "#driver-pit-in-audio",
         "#driver-fuel-audio",
         "#driver-false-start-audio",
+        "#driver-drift-lap-audio",
       ]);
 
       const linkStep = steps.find(

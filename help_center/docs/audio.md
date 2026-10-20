@@ -199,6 +199,7 @@ The following reference tables detail all audio events in Race Coordinator AI, t
 | **Pit In Sound** | Played when the car enters the pit lane or refueling area. | `default_pit_in` | **Voice Callout** | `urgent` (Weight 4) | `lane-view`: Plays on Main Raceday and Driver Station for that specific lane/driver. |
 | **Fuel Level Sounds** | Played when fuel drops into warning, critical, or empty thresholds. | `default_fuel_level` (Audio Set) | **Voice Callout** | `urgent` (Weight 4) | `lane-view`: Plays on Main Raceday and Driver Station for that specific lane/driver. |
 | **False Start Sound** | Played when a false start or start-line infraction is detected. | `default_penalty` | **Voice Callout** | `urgent` (Weight 4) | `lane-view`: Plays on Main Raceday and Driver Station for that specific lane/driver. |
+| **Drift Lap Sound** | Played when the driver completes a lap while drifting. | TTS (`Drift lap for {driver.nickname}`) | **Voice Callout** | `urgent` (Weight 4) | `lane-view`: Plays on Main Raceday and Driver Station for that specific lane/driver. |
 
 ### Theme Audio Events (Configured in Theme Manager / Editor)
 
@@ -215,7 +216,6 @@ The following reference tables detail all audio events in Race Coordinator AI, t
 | **Auto-Advance Seconds Left** | `audio.auto_advance` | **Voice Callout** / Audio Set (Default: TTS) | `normal` (Weight 2) | `timer`: Plays on Main Raceday (if Timer widget is present) and on all Driver Stations. |
 | **Race Finished** | `audio.race_over` | **Voice Callout** | `urgent` (Weight 4) | `flag`: Plays on Main Raceday (if Flag widget is present) and on all Driver Stations. |
 | **Minimum Lap Time** | `audio.min_lap_time` | **Voice Callout** | `urgent` (Weight 4) | `lane-view`: Plays on Main Raceday and Driver Station for that specific lane/driver. |
-| **Drift Lap** | `audio.drift_lap` | **Voice Callout** | `urgent` (Weight 4) | `lane-view`: Plays on Main Raceday and Driver Station for that specific lane/driver. |
 
 ---
 
@@ -255,6 +255,6 @@ Here is a quick summary of where different audio features are configured across 
 | Configuration Area | What You Can Configure |
 | :--- | :--- |
 | **UI Editor -> Audio Settings** | Master volume, Urgent queue timeout (TTL), Callout spacing cadence pause, TTS voice selection, speech speed (rate), speech pitch, TTS volume, and voice preview test. |
-| **Theme Editor** | System-wide event sounds: start countdown sequence beeps, green lamp GO tone, yellow flag caution sirens, halfway callout, remaining seconds callout, heat finished sound, race finished sound, minimum lap time violation sound, and drift lap violation sound. |
-| **Driver Editor** | Driver-specific sounds: lap sound, personal best lap sound, race best lap sound, race lane best lap sound, heat best lap sound, new race leader sound, new heat leader sound, overall record lap sound, overall lane record lap sound, pit in sound, fuel level sounds, and false start sound. |
+| **Theme Editor** | System-wide event sounds: start countdown sequence beeps, green lamp GO tone, yellow flag caution sirens, halfway callout, remaining seconds callout, heat finished sound, race finished sound, and minimum lap time violation sound. |
+| **Driver Editor** | Driver-specific sounds: lap sound, personal best lap sound, race best lap sound, race lane best lap sound, heat best lap sound, new race leader sound, new heat leader sound, overall record lap sound, overall lane record lap sound, pit in sound, fuel level sounds, false start sound, and drift lap sound. |
 | **Asset Manager** | Uploading and organizing custom WAV, MP3, and OGG audio files, and configuring multi-sound Audio Sets with context-dependent trigger values (seconds, laps, or percentage). Clicking an uploaded audio file instantly plays a preview. |

@@ -131,15 +131,6 @@ export function getThemeAudioConfigForSlot(
     return ttsConfig;
   }
 
-  if (slot === "audio.drift_lap") {
-    const ttsConfig: AudioConfig = {
-      type: "tts",
-      text: "Drift lap for {driver.nickname}",
-    };
-    theme.audio_slots[slot] = ttsConfig;
-    return ttsConfig;
-  }
-
   let defaultAssetId: string | undefined;
   if (isSet) {
     if (slot === "audio.countdown") defaultAssetId = "default_countdown";

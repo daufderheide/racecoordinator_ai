@@ -53,7 +53,8 @@ public class DriverImporter {
     "overallBestLap",
     "overallLaneBestLap",
     "pitIn",
-    "fuel"
+    "fuel",
+    "driftLap"
   };
 
   private final DatabaseContext databaseContext;
@@ -439,6 +440,7 @@ public class DriverImporter {
         .withOverallLaneBestLapAudio(audio.get("overallLaneBestLap"))
         .withPitInAudio(audio.get("pitIn"))
         .withFuelAudio(audio.get("fuel"))
+        .withDriftLapAudio(audio.get("driftLap"))
         .build();
   }
 

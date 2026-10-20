@@ -24,6 +24,7 @@ export interface DriverAudioConfig {
   newHeatLeaderAudio?: AudioConfig;
   pitInAudio?: AudioConfig;
   fuelAudio?: AudioConfig;
+  driftLapAudio?: AudioConfig;
 }
 
 export interface DriverInit extends DriverAudioConfig {
@@ -39,8 +40,12 @@ export function sanitizeDriverAudio(
   audio?: AudioConfig,
   defaultUrl: string = "default_beep",
   defaultType: "preset" | "tts" | "none" | "audio_set" = "preset",
+  defaultText?: string,
 ): AudioConfig {
   if (!audio || !audio.type) {
+    if (defaultType === "tts") {
+      return { type: defaultType, text: defaultText };
+    }
     return { type: defaultType, url: defaultUrl };
   }
   let type = audio.type;
@@ -56,7 +61,12 @@ export function sanitizeDriverAudio(
   return {
     type,
     url: cleanUrl,
-    text: audio.text,
+    text:
+      audio.text !== undefined
+        ? audio.text
+        : type === "tts"
+          ? defaultText
+          : undefined,
   };
 }
 
@@ -74,6 +84,7 @@ function resolveAudioConfig(
   newHeatLeaderAudio?: AudioConfig,
   pitInAudio?: AudioConfig,
   fuelAudio?: AudioConfig,
+  driftLapAudio?: AudioConfig,
 ): DriverAudioConfig {
   if (audioOrLap && typeof audioOrLap === "object" && !("type" in audioOrLap)) {
     return audioOrLap as DriverAudioConfig;
@@ -92,7 +103,66 @@ function resolveAudioConfig(
     newHeatLeaderAudio,
     pitInAudio,
     fuelAudio,
+    driftLapAudio,
   };
+}
+
+function initDriverAudioConfigs(
+  driver: Driver,
+  audioConfig?: DriverAudioConfig,
+): void {
+  driver.lapAudio = sanitizeDriverAudio(audioConfig?.lapAudio, "default_beep");
+  driver.bestLapAudio = sanitizeDriverAudio(
+    audioConfig?.bestLapAudio,
+    "default_driveby",
+  );
+  driver.penaltyAudio = sanitizeDriverAudio(
+    audioConfig?.falseStartAudio || audioConfig?.penaltyAudio,
+    "default_penalty",
+  );
+  driver.overallBestLapAudio = sanitizeDriverAudio(
+    audioConfig?.overallBestLapAudio,
+    "default_record_lap",
+  );
+  driver.overallLaneBestLapAudio = sanitizeDriverAudio(
+    audioConfig?.overallLaneBestLapAudio,
+    "default_record_lane_lap",
+  );
+  driver.raceBestLapAudio = sanitizeDriverAudio(
+    audioConfig?.raceBestLapAudio,
+    "default_best_race_lap",
+  );
+  driver.raceLaneBestLapAudio = sanitizeDriverAudio(
+    audioConfig?.raceLaneBestLapAudio,
+    "default_best_race_lane_lap",
+  );
+  driver.heatBestLapAudio = sanitizeDriverAudio(
+    audioConfig?.heatBestLapAudio,
+    "default_best_heat_lap",
+  );
+  driver.newRaceLeaderAudio = sanitizeDriverAudio(
+    audioConfig?.newRaceLeaderAudio,
+    "default_new_race_leader",
+  );
+  driver.newHeatLeaderAudio = sanitizeDriverAudio(
+    audioConfig?.newHeatLeaderAudio,
+    "default_new_heat_leader",
+  );
+  driver.pitInAudio = sanitizeDriverAudio(
+    audioConfig?.pitInAudio,
+    "default_pit_in",
+  );
+  driver.fuelAudio = sanitizeDriverAudio(
+    audioConfig?.fuelAudio,
+    "default_fuel_level",
+    "audio_set",
+  );
+  driver.driftLapAudio = sanitizeDriverAudio(
+    audioConfig?.driftLapAudio,
+    "default_beep",
+    "tts",
+    "Drift lap for {driver.nickname}",
+  );
 }
 
 export class Driver implements Model {
@@ -100,18 +170,19 @@ export class Driver implements Model {
   name: string;
   nickname: string;
   avatarUrl?: string;
-  lapAudio: AudioConfig;
-  bestLapAudio: AudioConfig;
-  penaltyAudio: AudioConfig;
-  overallBestLapAudio: AudioConfig;
-  overallLaneBestLapAudio: AudioConfig;
-  raceBestLapAudio: AudioConfig;
-  raceLaneBestLapAudio: AudioConfig;
-  heatBestLapAudio: AudioConfig;
-  newRaceLeaderAudio: AudioConfig;
-  newHeatLeaderAudio: AudioConfig;
-  pitInAudio: AudioConfig;
-  fuelAudio: AudioConfig;
+  lapAudio!: AudioConfig;
+  bestLapAudio!: AudioConfig;
+  penaltyAudio!: AudioConfig;
+  overallBestLapAudio!: AudioConfig;
+  overallLaneBestLapAudio!: AudioConfig;
+  raceBestLapAudio!: AudioConfig;
+  raceLaneBestLapAudio!: AudioConfig;
+  heatBestLapAudio!: AudioConfig;
+  newRaceLeaderAudio!: AudioConfig;
+  newHeatLeaderAudio!: AudioConfig;
+  pitInAudio!: AudioConfig;
+  fuelAudio!: AudioConfig;
+  driftLapAudio!: AudioConfig;
 
   constructor(init: DriverInit);
   constructor(
@@ -139,6 +210,7 @@ export class Driver implements Model {
     newHeatLeaderAudio?: AudioConfig,
     pitInAudio?: AudioConfig,
     fuelAudio?: AudioConfig,
+    driftLapAudio?: AudioConfig,
   );
   constructor(
     entity_idOrInit: string | DriverInit,
@@ -158,6 +230,7 @@ export class Driver implements Model {
     newHeatLeaderAudio?: AudioConfig,
     pitInAudio?: AudioConfig,
     fuelAudio?: AudioConfig,
+    driftLapAudio?: AudioConfig,
   ) {
     let audioConfig: DriverAudioConfig | undefined;
 
@@ -186,55 +259,11 @@ export class Driver implements Model {
         newHeatLeaderAudio,
         pitInAudio,
         fuelAudio,
+        driftLapAudio,
       );
     }
 
-    this.lapAudio = sanitizeDriverAudio(audioConfig?.lapAudio, "default_beep");
-    this.bestLapAudio = sanitizeDriverAudio(
-      audioConfig?.bestLapAudio,
-      "default_driveby",
-    );
-    this.penaltyAudio = sanitizeDriverAudio(
-      audioConfig?.falseStartAudio || audioConfig?.penaltyAudio,
-      "default_penalty",
-    );
-    this.overallBestLapAudio = sanitizeDriverAudio(
-      audioConfig?.overallBestLapAudio,
-      "default_record_lap",
-    );
-    this.overallLaneBestLapAudio = sanitizeDriverAudio(
-      audioConfig?.overallLaneBestLapAudio,
-      "default_record_lane_lap",
-    );
-    this.raceBestLapAudio = sanitizeDriverAudio(
-      audioConfig?.raceBestLapAudio,
-      "default_best_race_lap",
-    );
-    this.raceLaneBestLapAudio = sanitizeDriverAudio(
-      audioConfig?.raceLaneBestLapAudio,
-      "default_best_race_lane_lap",
-    );
-    this.heatBestLapAudio = sanitizeDriverAudio(
-      audioConfig?.heatBestLapAudio,
-      "default_best_heat_lap",
-    );
-    this.newRaceLeaderAudio = sanitizeDriverAudio(
-      audioConfig?.newRaceLeaderAudio,
-      "default_new_race_leader",
-    );
-    this.newHeatLeaderAudio = sanitizeDriverAudio(
-      audioConfig?.newHeatLeaderAudio,
-      "default_new_heat_leader",
-    );
-    this.pitInAudio = sanitizeDriverAudio(
-      audioConfig?.pitInAudio,
-      "default_pit_in",
-    );
-    this.fuelAudio = sanitizeDriverAudio(
-      audioConfig?.fuelAudio,
-      "default_fuel_level",
-      "audio_set",
-    );
+    initDriverAudioConfigs(this, audioConfig);
   }
 
   static createDefault(

@@ -2600,8 +2600,13 @@ describe("DefaultRacedayComponent", () => {
       expect((component as any).playThemedSound).not.toHaveBeenCalled();
     });
 
-    it("should play themed drift lap sound when receiving drift lap", () => {
-      spyOn(component as any, "playThemedSound");
+    it("should play driver drift lap sound when receiving drift lap", () => {
+      spyOn((component as any).audioService, "playCallout");
+
+      (component as any).heat.heatDrivers[0].driver.driftLapAudio = {
+        type: "tts",
+        text: "{driver.nickname} drift lap",
+      } as any;
 
       lapsSubject.next({
         objectId: "hd1",
@@ -2610,11 +2615,14 @@ describe("DefaultRacedayComponent", () => {
         isDrift: true,
       });
 
-      expect((component as any).playThemedSound).toHaveBeenCalledWith(
-        THEME_SLOT_KEYS.AUDIO_DRIFT_LAP,
+      expect((component as any).audioService.playCallout).toHaveBeenCalledWith(
+        jasmine.objectContaining({ type: "tts" }),
+        "urgent",
         jasmine.objectContaining({
           driver: jasmine.objectContaining({ nickname: "The Rocket" }),
         }),
+        undefined,
+        jasmine.objectContaining({ widgetType: "lane-view" }),
       );
     });
   });

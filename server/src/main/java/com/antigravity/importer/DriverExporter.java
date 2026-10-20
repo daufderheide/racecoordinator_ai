@@ -53,7 +53,8 @@ public class DriverExporter {
     "overallBestLap",
     "overallLaneBestLap",
     "pitIn",
-    "fuel"
+    "fuel",
+    "driftLap"
   };
 
   private final DatabaseContext databaseContext;
@@ -562,6 +563,8 @@ public class DriverExporter {
         return driver.getPitInAudio();
       case "fuel":
         return driver.getFuelAudio();
+      case "driftLap":
+        return driver.getDriftLapAudio();
       default:
         return null;
     }

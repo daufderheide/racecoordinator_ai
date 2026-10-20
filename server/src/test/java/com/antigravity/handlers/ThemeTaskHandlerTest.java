@@ -97,11 +97,6 @@ public class ThemeTaskHandlerTest {
         "Min lap time for {driver.nickname}",
         defaultTheme.getAudioSlots().get("audio.min_lap_time").getText());
     org.junit.Assert.assertEquals(
-        "tts", defaultTheme.getAudioSlots().get("audio.drift_lap").getType());
-    org.junit.Assert.assertEquals(
-        "Drift lap for {driver.nickname}",
-        defaultTheme.getAudioSlots().get("audio.drift_lap").getText());
-    org.junit.Assert.assertEquals(
         "default_yellow_flag", defaultTheme.getAudioSlots().get("audio.yellowflag").getUrl());
 
     Theme practiceTheme =

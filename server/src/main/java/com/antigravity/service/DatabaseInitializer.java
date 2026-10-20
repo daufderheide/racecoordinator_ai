@@ -209,6 +209,7 @@ public class DatabaseInitializer {
         .withNewHeatLeaderAudio(new AudioConfig("preset", "default_new_heat_leader", ""))
         .withPitInAudio(new AudioConfig("preset", "default_pit_in", ""))
         .withFuelAudio(new AudioConfig("audio_set", "default_fuel_level", ""))
+        .withDriftLapAudio(new AudioConfig("tts", null, "Drift lap for {driver.nickname}"))
         .withEntityId(sequenceId)
         .build();
   }
@@ -226,7 +227,11 @@ public class DatabaseInitializer {
 
   public void backfillDrivers(DatabaseContext context) {
     SqliteRepository<Driver> driverRepo = new SqliteRepository<>(context, "drivers", Driver.class);
+    SqliteRepository<Theme> themeRepo = new SqliteRepository<>(context, "themes", Theme.class);
     List<Driver> drivers = driverRepo.findAll();
+    List<Theme> themes = themeRepo.findAll();
+    AudioConfig preservedThemeDriftAudio = preserveAndRemoveThemeDriftLapAudio(themeRepo, themes);
+
     Set<String> needsUpdateIds = new HashSet<>();
 
     try (Statement stmt = context.getConnection().createStatement();
@@ -236,6 +241,7 @@ public class DatabaseInitializer {
         if (json == null
             || !json.contains("pitInAudio")
             || !json.contains("fuelAudio")
+            || !json.contains("driftLapAudio")
             || !json.contains("overallBestLapAudio")
             || !json.contains("newRaceLeaderAudio")
             || !json.contains("newHeatLeaderAudio")
@@ -249,81 +255,122 @@ public class DatabaseInitializer {
     }
 
     for (Driver driver : drivers) {
-      boolean needsUpdate = needsUpdateIds.contains(driver.getEntityId());
-      Driver.Builder builder = Driver.Builder.from(driver);
+      boolean missingInRawJson = needsUpdateIds.contains(driver.getEntityId());
+      backfillSingleDriver(driver, missingInRawJson, preservedThemeDriftAudio, driverRepo);
+    }
+  }
 
-      if (isAudioConfigMissing(driver.getLapAudio())) {
-        builder.withLapAudio(new AudioConfig("preset", "default_beep", ""));
-        needsUpdate = true;
-      }
-      if (isAudioConfigMissing(driver.getBestLapAudio())) {
-        builder.withBestLapAudio(new AudioConfig("preset", "default_driveby", ""));
-        needsUpdate = true;
-      }
-      if (isAudioConfigMissing(driver.getPenaltyAudio())) {
-        builder.withPenaltyAudio(new AudioConfig("preset", "default_penalty", ""));
-        needsUpdate = true;
-      }
-      if (isAudioConfigMissing(driver.getOverallBestLapAudio())) {
-        builder.withOverallBestLapAudio(new AudioConfig("preset", "default_record_lap", ""));
-        needsUpdate = true;
-      }
-      if (isAudioConfigMissing(driver.getOverallLaneBestLapAudio())) {
-        builder.withOverallLaneBestLapAudio(
-            new AudioConfig("preset", "default_record_lane_lap", ""));
-        needsUpdate = true;
-      }
-      if (isAudioConfigMissing(driver.getRaceBestLapAudio())) {
-        builder.withRaceBestLapAudio(new AudioConfig("preset", "default_best_race_lap", ""));
-        needsUpdate = true;
-      }
-      if (isAudioConfigMissing(driver.getRaceLaneBestLapAudio())) {
-        builder.withRaceLaneBestLapAudio(
-            new AudioConfig("preset", "default_best_race_lane_lap", ""));
-        needsUpdate = true;
-      }
-      if (isAudioConfigMissing(driver.getHeatBestLapAudio())) {
-        builder.withHeatBestLapAudio(new AudioConfig("preset", "default_best_heat_lap", ""));
-        needsUpdate = true;
-      }
-      if (isAudioConfigMissing(driver.getNewRaceLeaderAudio())) {
-        builder.withNewRaceLeaderAudio(new AudioConfig("preset", "default_new_race_leader", ""));
-        needsUpdate = true;
-      }
-      if (isAudioConfigMissing(driver.getNewHeatLeaderAudio())) {
-        builder.withNewHeatLeaderAudio(new AudioConfig("preset", "default_new_heat_leader", ""));
-        needsUpdate = true;
-      }
-      if (isAudioConfigMissing(driver.getPitInAudio())) {
-        builder.withPitInAudio(new AudioConfig("preset", "default_pit_in", ""));
-        needsUpdate = true;
-      }
-      if (isAudioConfigMissing(driver.getFuelAudio())
-          || (driver.getFuelAudio() != null
-              && "preset".equalsIgnoreCase(driver.getFuelAudio().getType()))) {
-        builder.withFuelAudio(new AudioConfig("audio_set", "default_fuel_level", ""));
-        needsUpdate = true;
-      }
-      if (driver.getAvatarUrl() != null
-          && !driver.getAvatarUrl().isEmpty()
-          && !driver.getAvatarUrl().startsWith("/")
-          && !driver.getAvatarUrl().startsWith("http")) {
-        String resolvedAvatar =
-            AssetDefaultsInitializer.resolveDefaultAssetUrl(driver.getAvatarUrl());
-        if (resolvedAvatar != null && !resolvedAvatar.equals(driver.getAvatarUrl())) {
-          builder.withAvatarUrl(resolvedAvatar);
-          needsUpdate = true;
-        }
-      }
+  private void backfillSingleDriver(
+      Driver driver,
+      boolean missingInRawJson,
+      AudioConfig preservedThemeDriftAudio,
+      SqliteRepository<Driver> driverRepo) {
+    boolean needsUpdate = missingInRawJson;
+    Driver.Builder builder = Driver.Builder.from(driver);
 
-      if (needsUpdate) {
-        driverRepo.replace(driver.getEntityId(), builder.build());
-        logger.info(
-            "Backfilled audio/avatar settings for driver '{}' ({})",
-            driver.getName(),
-            driver.getEntityId());
+    if (isAudioConfigMissing(driver.getLapAudio())) {
+      builder.withLapAudio(new AudioConfig("preset", "default_beep", ""));
+      needsUpdate = true;
+    }
+    if (isAudioConfigMissing(driver.getBestLapAudio())) {
+      builder.withBestLapAudio(new AudioConfig("preset", "default_driveby", ""));
+      needsUpdate = true;
+    }
+    if (isAudioConfigMissing(driver.getPenaltyAudio())) {
+      builder.withPenaltyAudio(new AudioConfig("preset", "default_penalty", ""));
+      needsUpdate = true;
+    }
+    if (isAudioConfigMissing(driver.getOverallBestLapAudio())) {
+      builder.withOverallBestLapAudio(new AudioConfig("preset", "default_record_lap", ""));
+      needsUpdate = true;
+    }
+    if (isAudioConfigMissing(driver.getOverallLaneBestLapAudio())) {
+      builder.withOverallLaneBestLapAudio(new AudioConfig("preset", "default_record_lane_lap", ""));
+      needsUpdate = true;
+    }
+    if (isAudioConfigMissing(driver.getRaceBestLapAudio())) {
+      builder.withRaceBestLapAudio(new AudioConfig("preset", "default_best_race_lap", ""));
+      needsUpdate = true;
+    }
+    if (isAudioConfigMissing(driver.getRaceLaneBestLapAudio())) {
+      builder.withRaceLaneBestLapAudio(new AudioConfig("preset", "default_best_race_lane_lap", ""));
+      needsUpdate = true;
+    }
+    if (isAudioConfigMissing(driver.getHeatBestLapAudio())) {
+      builder.withHeatBestLapAudio(new AudioConfig("preset", "default_best_heat_lap", ""));
+      needsUpdate = true;
+    }
+    if (isAudioConfigMissing(driver.getNewRaceLeaderAudio())) {
+      builder.withNewRaceLeaderAudio(new AudioConfig("preset", "default_new_race_leader", ""));
+      needsUpdate = true;
+    }
+    if (isAudioConfigMissing(driver.getNewHeatLeaderAudio())) {
+      builder.withNewHeatLeaderAudio(new AudioConfig("preset", "default_new_heat_leader", ""));
+      needsUpdate = true;
+    }
+    if (isAudioConfigMissing(driver.getPitInAudio())) {
+      builder.withPitInAudio(new AudioConfig("preset", "default_pit_in", ""));
+      needsUpdate = true;
+    }
+    if (isAudioConfigMissing(driver.getFuelAudio())
+        || (driver.getFuelAudio() != null
+            && "preset".equalsIgnoreCase(driver.getFuelAudio().getType()))) {
+      builder.withFuelAudio(new AudioConfig("audio_set", "default_fuel_level", ""));
+      needsUpdate = true;
+    }
+    if (missingInRawJson || isAudioConfigMissing(driver.getDriftLapAudio())) {
+      builder.withDriftLapAudio(preservedThemeDriftAudio);
+      needsUpdate = true;
+    }
+    if (driver.getAvatarUrl() != null
+        && !driver.getAvatarUrl().isEmpty()
+        && !driver.getAvatarUrl().startsWith("/")
+        && !driver.getAvatarUrl().startsWith("http")) {
+      String resolvedAvatar =
+          AssetDefaultsInitializer.resolveDefaultAssetUrl(driver.getAvatarUrl());
+      if (resolvedAvatar != null && !resolvedAvatar.equals(driver.getAvatarUrl())) {
+        builder.withAvatarUrl(resolvedAvatar);
+        needsUpdate = true;
       }
     }
+
+    if (needsUpdate) {
+      driverRepo.replace(driver.getEntityId(), builder.build());
+      logger.info(
+          "Backfilled audio/avatar settings for driver '{}' ({})",
+          driver.getName(),
+          driver.getEntityId());
+    }
+  }
+
+  private AudioConfig preserveAndRemoveThemeDriftLapAudio(
+      SqliteRepository<Theme> themeRepo, List<Theme> themes) {
+    AudioConfig preserved = null;
+    for (Theme theme : themes) {
+      if (theme.getAudioSlots() != null && theme.getAudioSlots().containsKey("audio.drift_lap")) {
+        AudioConfig ac = theme.getAudioSlots().get("audio.drift_lap");
+        if (ac != null && preserved == null) {
+          preserved = ac;
+        }
+        if (ac != null
+            && (!"Drift lap for {driver.nickname}".equals(ac.getText())
+                || !"tts".equalsIgnoreCase(ac.getType()))) {
+          preserved = ac;
+          break;
+        }
+      }
+    }
+    for (Theme theme : themes) {
+      if (theme.getAudioSlots() != null && theme.getAudioSlots().containsKey("audio.drift_lap")) {
+        theme.getAudioSlots().remove("audio.drift_lap");
+        themeRepo.replace(theme.getEntityId(), theme);
+        logger.info(
+            "Removed 'audio.drift_lap' from theme '{}' ({})", theme.getName(), theme.getEntityId());
+      }
+    }
+    return preserved != null
+        ? preserved
+        : new AudioConfig("tts", null, "Drift lap for {driver.nickname}");
   }
 
   public Track resetTracks(DatabaseContext context) {
@@ -570,7 +617,6 @@ public class DatabaseInitializer {
     as.put("audio.race_over", new AudioConfig("preset", "default_race_over", null));
     as.put(
         "audio.min_lap_time", new AudioConfig("tts", null, "Min lap time for {driver.nickname}"));
-    as.put("audio.drift_lap", new AudioConfig("tts", null, "Drift lap for {driver.nickname}"));
     return as;
   }
 

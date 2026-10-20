@@ -45,6 +45,8 @@ public class DriverConverter {
             toProtoAudio(driver.getNewHeatLeaderAudio(), "default_new_heat_leader"))
         .setPitInAudio(toProtoAudio(driver.getPitInAudio(), "default_pit_in"))
         .setFuelAudio(toProtoAudio(driver.getFuelAudio(), "default_fuel_level", "audio_set"))
+        .setDriftLapAudio(
+            toProtoAudio(driver.getDriftLapAudio(), null, "tts", "Drift lap for {driver.nickname}"))
         .setModel(
             Model.newBuilder()
                 .setEntityId(driver.getEntityId() != null ? driver.getEntityId() : "")
@@ -54,13 +56,21 @@ public class DriverConverter {
 
   private static AudioConfig toProtoAudio(
       com.antigravity.models.AudioConfig config, String defaultUrl) { // fqn-collision
-    return toProtoAudio(config, defaultUrl, "preset");
+    return toProtoAudio(config, defaultUrl, "preset", null);
   }
 
   private static AudioConfig toProtoAudio(
       com.antigravity.models.AudioConfig config, // fqn-collision
       String defaultUrl,
       String defaultType) {
+    return toProtoAudio(config, defaultUrl, defaultType, null);
+  }
+
+  private static AudioConfig toProtoAudio(
+      com.antigravity.models.AudioConfig config, // fqn-collision
+      String defaultUrl,
+      String defaultType,
+      String defaultText) {
     String type = config != null && config.getType() != null ? config.getType() : defaultType;
     if ("audio_set".equals(defaultType) && "preset".equals(type)) {
       type = "audio_set";
@@ -73,7 +83,12 @@ public class DriverConverter {
         && defaultUrl != null) {
       url = defaultUrl;
     }
-    String text = config != null && config.getText() != null ? config.getText() : "";
+    String text = "";
+    if (config != null && config.getText() != null) {
+      text = config.getText();
+    } else if ("tts".equalsIgnoreCase(type) && defaultText != null) {
+      text = defaultText;
+    }
     return AudioConfig.newBuilder().setType(type).setUrl(url).setText(text).build();
   }
 
@@ -143,6 +158,9 @@ public class DriverConverter {
     }
     if (proto.hasFuelAudio()) {
       builder.withFuelAudio(fromProtoAudio(proto.getFuelAudio()));
+    }
+    if (proto.hasDriftLapAudio()) {
+      builder.withDriftLapAudio(fromProtoAudio(proto.getDriftLapAudio()));
     }
 
     return builder.build();

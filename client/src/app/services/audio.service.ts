@@ -106,6 +106,8 @@ export class AudioService implements OnDestroy {
       "audio.race_over",
       "audio.min_lap_time",
       "audio.drift_lap",
+      "driftLap",
+      "drift_lap",
       "penalty",
       "falseStart",
       "false_start",

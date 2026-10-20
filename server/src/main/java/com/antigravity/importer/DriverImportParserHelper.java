@@ -138,6 +138,12 @@ public final class DriverImportParserHelper {
       case "fuel":
       case "fuelsound":
         return "fuel";
+      case "driftlap":
+      case "driftlapsound":
+      case "driftlapaudio":
+      case "driftaudio":
+      case "driftsound":
+        return "driftLap";
       default:
         return header.trim();
     }
@@ -328,7 +334,8 @@ public final class DriverImportParserHelper {
           "overallBestLap",
           "overallLaneBestLap",
           "pitIn",
-          "fuel"
+          "fuel",
+          "driftLap"
         };
         for (String slot : slots) {
           String key = slot + "Audio";

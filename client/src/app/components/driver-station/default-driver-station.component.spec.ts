@@ -518,12 +518,18 @@ describe("DefaultDriverStationComponent", () => {
 
     it("should trigger min lap time and drift lap with driver lane association", () => {
       spyOn(component as any, "playThemedSound");
+      const audioService = (component as any).audioService as AudioService;
+      spyOn(audioService, "playCallout");
       const lapsSubject = new Subject<any>();
       mockRaceConnectionService.laps$ = lapsSubject.asObservable();
 
       const mockDriver = {
         entity_id: "d1",
         name: "Test Driver",
+        driftLapAudio: {
+          type: "tts" as const,
+          text: "Drift lap for Test Driver",
+        },
       };
       const driverData = {
         objectId: "hd1",
@@ -578,9 +584,11 @@ describe("DefaultDriverStationComponent", () => {
         lapTime: 3.5,
       });
 
-      expect((component as any).playThemedSound).toHaveBeenCalledWith(
-        THEME_SLOT_KEYS.AUDIO_DRIFT_LAP,
+      expect(audioService.playCallout).toHaveBeenCalledWith(
+        mockDriver.driftLapAudio,
+        "urgent",
         jasmine.any(Object),
+        undefined,
         {
           widgetType: "lane-view",
           laneIndex: 1,

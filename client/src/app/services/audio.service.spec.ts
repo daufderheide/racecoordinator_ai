@@ -155,6 +155,9 @@ describe("AudioService", () => {
         service.isVoiceCallout("audio.drift_lap", presetConfig),
       ).toBeTrue();
       expect(
+        service.isVoiceCallout("driver.driftLapAudio", presetConfig),
+      ).toBeTrue();
+      expect(
         service.isVoiceCallout("driver.penaltyAudio", presetConfig),
       ).toBeTrue();
       expect(

@@ -62,45 +62,11 @@ export class DriverStationLapAudioHandler {
         driver?.entity_id || (driver as any)?.id || (driver as any)?.objectId,
     };
 
-    if (isCurrentStationDriver) {
-      if (lap.type === LapType.FALSE_START) {
-        const audio = driver.falseStartAudio || driver.penaltyAudio;
-        if (
-          audio?.type &&
-          audio.type !== "none" &&
-          ((audio.type === "tts" && audio.text?.trim()) ||
-            (audio.type !== "tts" && audio.url?.trim()))
-        ) {
-          this.deps.audioService.playCallout(
-            audio,
-            "urgent",
-            ttsContext,
-            undefined,
-            association,
-          );
-        }
-        return;
-      }
-
-      if (lap.type === LapType.MIN_LAP_TIME) {
-        if ((lap.lapTime ?? 0) > 0.25) {
-          this.playThemedSound(
-            THEME_SLOT_KEYS.AUDIO_MIN_LAP_TIME,
-            ttsContext,
-            association,
-          );
-        }
-        return;
-      }
-
-      if (lap.isDrift) {
-        this.playThemedSound(
-          THEME_SLOT_KEYS.AUDIO_DRIFT_LAP,
-          ttsContext,
-          association,
-        );
-        return;
-      }
+    if (
+      isCurrentStationDriver &&
+      this.handleImmediateSpecialLap(lap, driver, ttsContext, association)
+    ) {
+      return;
     }
 
     // 1. Collect candidate callouts for this lap event
@@ -155,6 +121,59 @@ export class DriverStationLapAudioHandler {
         arbitration.winner?.id === "milestone"
           ? arbitration.winner.config
           : undefined,
+      );
+    }
+  }
+
+  private handleImmediateSpecialLap(
+    lap: any,
+    driver: any,
+    ttsContext: any,
+    association: AudioAssociation,
+  ): boolean {
+    if (lap.type === LapType.FALSE_START) {
+      const audio = driver.falseStartAudio || driver.penaltyAudio;
+      this.playUrgentCalloutIfValid(audio, ttsContext, association);
+      return true;
+    }
+
+    if (lap.type === LapType.MIN_LAP_TIME) {
+      if ((lap.lapTime ?? 0) > 0.25) {
+        this.playThemedSound(
+          THEME_SLOT_KEYS.AUDIO_MIN_LAP_TIME,
+          ttsContext,
+          association,
+        );
+      }
+      return true;
+    }
+
+    if (lap.isDrift) {
+      const audio = driver.driftLapAudio;
+      this.playUrgentCalloutIfValid(audio, ttsContext, association);
+      return true;
+    }
+
+    return false;
+  }
+
+  private playUrgentCalloutIfValid(
+    audio: any,
+    ttsContext: any,
+    association: AudioAssociation,
+  ): void {
+    if (
+      audio?.type &&
+      audio.type !== "none" &&
+      ((audio.type === "tts" && audio.text?.trim()) ||
+        (audio.type !== "tts" && audio.url?.trim()))
+    ) {
+      this.deps.audioService.playCallout(
+        audio,
+        "urgent",
+        ttsContext,
+        undefined,
+        association,
       );
     }
   }

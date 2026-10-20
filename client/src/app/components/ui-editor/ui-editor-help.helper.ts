@@ -338,13 +338,6 @@ export function getAudioHelpSteps(ctx: UiEditorHelpContext): GuideStep[] {
       position: "bottom",
       onEnter: () => expandThemeSection(ctx, "audio"),
     },
-    {
-      selector: "#help-audio-drift-lap",
-      title: translationService.translate("UE_LABEL_DRIFT_LAP_AUDIO"),
-      content: translationService.translate("UE_HELP_AUDIO_DRIFT_LAP"),
-      position: "bottom",
-      onEnter: () => expandThemeSection(ctx, "audio"),
-    },
   ];
 }
 

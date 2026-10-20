@@ -2315,7 +2315,21 @@ export class DefaultRacedayComponent
     }
 
     if (lap.isDrift) {
-      this.playThemedSound(THEME_SLOT_KEYS.AUDIO_DRIFT_LAP, ttsContext);
+      const audio = driver?.driftLapAudio;
+      if (
+        audio?.type &&
+        audio.type !== "none" &&
+        ((audio.type === "tts" && audio.text?.trim()) ||
+          (audio.type !== "tts" && audio.url?.trim()))
+      ) {
+        this.audioService.playCallout(
+          audio,
+          "urgent",
+          ttsContext,
+          undefined,
+          association,
+        );
+      }
       this.handleLapHighlight(lap, driverData);
       return;
     }
@@ -2432,7 +2446,21 @@ export class DefaultRacedayComponent
     }
 
     if (lap.isDrift) {
-      this.playThemedSound(THEME_SLOT_KEYS.AUDIO_DRIFT_LAP, ttsContext);
+      const audio = driver?.driftLapAudio;
+      if (
+        audio?.type &&
+        audio.type !== "none" &&
+        ((audio.type === "tts" && audio.text?.trim()) ||
+          (audio.type !== "tts" && audio.url?.trim()))
+      ) {
+        this.audioService.playCallout(
+          audio,
+          "urgent",
+          ttsContext,
+          undefined,
+          association,
+        );
+      }
       return;
     }
 
@@ -7857,8 +7885,7 @@ export class DefaultRacedayComponent
       slotKey === THEME_SLOT_KEYS.AUDIO_YELLOW_FLAG ||
       slotKey === THEME_SLOT_KEYS.AUDIO_HEAT_OVER ||
       slotKey === THEME_SLOT_KEYS.AUDIO_RACE_OVER ||
-      slotKey === THEME_SLOT_KEYS.AUDIO_MIN_LAP_TIME ||
-      slotKey === THEME_SLOT_KEYS.AUDIO_DRIFT_LAP
+      slotKey === THEME_SLOT_KEYS.AUDIO_MIN_LAP_TIME
     ) {
       priority = "urgent";
     }
@@ -7879,10 +7906,7 @@ export class DefaultRacedayComponent
         slotKey === THEME_SLOT_KEYS.AUDIO_AUTO_ADVANCE
       ) {
         defaultAssoc = { widgetType: "timer" };
-      } else if (
-        slotKey === THEME_SLOT_KEYS.AUDIO_MIN_LAP_TIME ||
-        slotKey === THEME_SLOT_KEYS.AUDIO_DRIFT_LAP
-      ) {
+      } else if (slotKey === THEME_SLOT_KEYS.AUDIO_MIN_LAP_TIME) {
         defaultAssoc = {
           widgetType: "lane-view",
           laneIndex: context?.driver?.lane,

@@ -419,4 +419,28 @@ public class DriverImporterTest {
     assertNotNull(updated.getLapAudio());
     assertEquals("/assets/custom_sound.wav", updated.getLapAudio().getUrl());
   }
+
+  @Test
+  public void testParseAndValidateCsvDriftLapSound() throws Exception {
+    String csv = "Name,Nickname,Drift Lap Sound\n" + "Takumi Fujiwara,Takumi,tts:Initial D drift\n";
+
+    ByteArrayInputStream bais = new ByteArrayInputStream(csv.getBytes(StandardCharsets.UTF_8));
+    DriverImportPreview preview = importer.parseAndValidate(bais, "drifters.csv", null);
+
+    assertEquals(1, preview.getTotalRows());
+    assertEquals(1, preview.getValidCount());
+    DriverImportRow row = preview.getRows().get(0);
+    assertNotNull(row.getAudioSlots().get("driftLap"));
+    assertEquals("tts", row.getAudioSlots().get("driftLap").getType());
+    assertEquals("Initial D drift", row.getAudioSlots().get("driftLap").getText());
+
+    DriverImportCommitRequest req = new DriverImportCommitRequest(preview.getRows());
+    DriverImportResult result = importer.commitImport(req);
+    assertTrue(result.isSuccess());
+    Driver imported = driverRepository.findByEntityId(result.getCreatedDriverIds().get(0));
+    assertNotNull(imported);
+    assertNotNull(imported.getDriftLapAudio());
+    assertEquals("tts", imported.getDriftLapAudio().getType());
+    assertEquals("Initial D drift", imported.getDriftLapAudio().getText());
+  }
 }

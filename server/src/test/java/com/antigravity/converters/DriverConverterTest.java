@@ -103,6 +103,13 @@ public class DriverConverterTest {
             .setUrl("fuel_set_url")
             .build();
 
+    com.antigravity.proto.AudioConfig driftLapAudioProto =
+        com.antigravity.proto.AudioConfig.newBuilder()
+            .setType("tts")
+            .setUrl("drift_url")
+            .setText("drift_text")
+            .build();
+
     DriverModel proto =
         DriverModel.newBuilder()
             .setName("Alice")
@@ -120,6 +127,7 @@ public class DriverConverterTest {
             .setNewHeatLeaderAudio(newHeatLeaderAudioProto)
             .setPitInAudio(pitInAudioProto)
             .setFuelAudio(fuelAudioProto)
+            .setDriftLapAudio(driftLapAudioProto)
             .setModel(Model.newBuilder().setEntityId("d1").build())
             .build();
 
@@ -183,6 +191,11 @@ public class DriverConverterTest {
     assertNotNull(driver.getFuelAudio());
     assertEquals("audio_set", driver.getFuelAudio().getType());
     assertEquals("fuel_set_url", driver.getFuelAudio().getUrl());
+
+    assertNotNull(driver.getDriftLapAudio());
+    assertEquals("tts", driver.getDriftLapAudio().getType());
+    assertEquals("drift_url", driver.getDriftLapAudio().getUrl());
+    assertEquals("drift_text", driver.getDriftLapAudio().getText());
   }
 
   @Test
@@ -345,6 +358,10 @@ public class DriverConverterTest {
     assertNotNull(driver.getFuelAudio());
     assertEquals("audio_set", driver.getFuelAudio().getType());
     assertEquals("default_fuel_level", driver.getFuelAudio().getUrl());
+
+    assertNotNull(driver.getDriftLapAudio());
+    assertEquals("tts", driver.getDriftLapAudio().getType());
+    assertEquals("Drift lap for {driver.nickname}", driver.getDriftLapAudio().getText());
   }
 
   @Test
@@ -367,6 +384,7 @@ public class DriverConverterTest {
     assertEquals(driver.getNewHeatLeaderAudio().getUrl(), copy.getNewHeatLeaderAudio().getUrl());
     assertEquals(driver.getPitInAudio().getUrl(), copy.getPitInAudio().getUrl());
     assertEquals(driver.getFuelAudio().getUrl(), copy.getFuelAudio().getUrl());
+    assertEquals(driver.getDriftLapAudio().getText(), copy.getDriftLapAudio().getText());
   }
 
   @Test
@@ -489,5 +507,22 @@ public class DriverConverterTest {
     Driver converted = DriverConverter.fromProto(proto);
     assertNotNull(converted);
     assertEquals(proto.getAvatarUrl(), converted.getAvatarUrl());
+  }
+
+  @Test
+  public void testDriftLapAudioRoundTrip() {
+    com.antigravity.models.AudioConfig driftLapAudio =
+        new com.antigravity.models.AudioConfig("tts", "dl_url", "dl_text"); // fqn-collision
+    Driver original =
+        new Driver.Builder().withName("Drifter").withDriftLapAudio(driftLapAudio).build();
+
+    DriverModel proto = DriverConverter.toProto(original, new HashSet<>());
+    Driver reconstructed = DriverConverter.fromProto(proto);
+
+    assertNotNull(reconstructed);
+    assertNotNull(reconstructed.getDriftLapAudio());
+    assertEquals("tts", reconstructed.getDriftLapAudio().getType());
+    assertEquals("dl_url", reconstructed.getDriftLapAudio().getUrl());
+    assertEquals("dl_text", reconstructed.getDriftLapAudio().getText());
   }
 }

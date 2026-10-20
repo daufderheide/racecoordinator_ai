@@ -64,6 +64,10 @@ describe("Driver Model", () => {
       type: "preset",
       url: "default_new_heat_leader",
     });
+    expect(driver.driftLapAudio).toEqual({
+      type: "tts",
+      text: "Drift lap for {driver.nickname}",
+    });
   });
 
   it("should not set default preset sound urls when type is none", () => {

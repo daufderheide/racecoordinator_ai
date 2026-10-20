@@ -165,6 +165,7 @@ Le seguenti tabelle descrivono in dettaglio tutti gli eventi audio in Race Coord
 | **Suono Entrata ai Box** | Riprodotto quando l'auto entra nella corsia dei box o nell'area di rifornimento. | `default_pit_in` | **Annuncio Vocale** | `urgent` (Peso 4) | `lane-view`: Ripreso su Schermata Principale e su Postazione Pilota di quella corsia/pilota. |
 | **Suoni Livello Carburante** | Riprodotti quando il livello di carburante scende alle soglie di avviso, critico o riserva/vuoto. | `default_fuel_level` (Set Audio) | **Annuncio Vocale** | `urgent` (Peso 4) | `lane-view`: Ripreso su Schermata Principale e su Postazione Pilota di quella corsia/pilota. |
 | **Suono di Falsa Partenza** | Riprodotto quando viene rilevata una falsa partenza o infrazione al via. | `default_penalty` | **Annuncio Vocale** | `urgent` (Peso 4) | `lane-view`: Ripreso su Schermata Principale e su Postazione Pilota di quella corsia/pilota. |
+| **Suono giro in derapata** | Viene riprodotto quando il pilota completa un giro in derapata. | TTS (`Drift lap for {driver.nickname}`) | **Annuncio Vocale** | `urgent` (Peso 4) | `lane-view`: Ripreso su Schermata Principale e su Postazione Pilota di quella corsia/pilota. |
 
 ### Eventi Audio dei Temi (Configurati nell'Editor Temi)
 
@@ -181,7 +182,6 @@ Le seguenti tabelle descrivono in dettaglio tutti gli eventi audio in Race Coord
 | **Secondi Rimanenti Avanzamento Automatico** | `audio.auto_advance` | **Annuncio Vocale** / Set Audio (Predefinito: TTS) | `normal` (Peso 2) | `timer`: Ripreso su Schermata Principale (se presente widget timer) e su tutte le Postazioni Pilota. |
 | **Gara Conclusa** | `audio.race_over` | **Annuncio Vocale** | `urgent` (Peso 4) | `flag`: Ripreso su Schermata Principale (se presente widget bandiera) e su tutte le Postazioni Pilota. |
 | **Tempo Minimo sul Giro** | `audio.min_lap_time` | **Annuncio Vocale** | `urgent` (Peso 4) | `lane-view`: Ripreso su Schermata Principale e su Postazione Pilota di quella corsia/pilota. |
-| **Giro Drift** | `audio.drift_lap` | **Annuncio Vocale** | `urgent` (Peso 4) | `lane-view`: Ripreso su Schermata Principale e su Postazione Pilota di quella corsia/pilota. |
 
 ---
 
@@ -219,6 +219,6 @@ Durante l'anteprima di un Set Audio nel Gestore Asset o nel Selettore Audio, le 
 | Sezione | Cosa è possibile configurare |
 | :--- | :--- |
 | **Editor Interfaccia -> Impostazioni Audio** | Volume principale, tempo di attesa coda urgente, spaziatura annunci, voce TTS, velocità, tonalità, volume voce e test audio. |
-| **Editor Temi** | Suoni di sistema: conto alla rovescia, luce verde, sirena bandiera gialla, tempo residuo, metà manche, fine manche, fine gara, tempo minimo e giro drift. |
-| **Editor Piloti** | Suoni specifici del pilota: Suono Giro, Suono Miglior Giro Personale, Suono Miglior Giro della Gara, Suono Miglior Giro di Corsia della Gara, Suono Miglior Giro della Manche, Suono nuovo leader della gara, Suono nuovo leader di manche, Suono Record Assoluto del Giro, Suono Record di Corsia Assoluto del Giro, Suono Entrata ai Box, Suoni Livello Carburante e Suono di Falsa Partenza. |
+| **Editor Temi** | Suoni di sistema: conto alla rovescia, luce verde, sirena bandiera gialla, tempo residuo, metà manche, fine manche, fine gara e tempo minimo. |
+| **Editor Piloti** | Suoni specifici del pilota: Suono Giro, Suono Miglior Giro Personale, Suono Miglior Giro della Gara, Suono Miglior Giro di Corsia della Gara, Suono Miglior Giro della Manche, Suono nuovo leader della gara, Suono nuovo leader di manche, Suono Record Assoluto del Giro, Suono Record di Corsia Assoluto del Giro, Suono Entrata ai Box, Suoni Livello Carburante, Suono di Falsa Partenza e Suono giro in derapata. |
 | **Gestore Asset** | Caricamento e gestione dei file WAV, MP3 e OGG, e configurazione di set audio con valori di attivazione dipendenti dal contesto (secondi, giri o percentuale), con ascolto rapido dell'anteprima. |

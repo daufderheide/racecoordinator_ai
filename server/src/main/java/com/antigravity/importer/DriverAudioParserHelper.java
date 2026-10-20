@@ -23,6 +23,7 @@ public final class DriverAudioParserHelper {
     presets.put("newHeatLeader", "default_new_heat_leader");
     presets.put("pitIn", "default_pit_in");
     presets.put("fuel", "default_fuel_level");
+    presets.put("driftLap", "default_beep");
     DEFAULT_PRESETS = Collections.unmodifiableMap(presets);
   }
 
@@ -97,6 +98,13 @@ public final class DriverAudioParserHelper {
   public static AudioConfig createDefaultAudio(String slotKey, String defaultAudioMode) {
     if ("none".equalsIgnoreCase(defaultAudioMode) || "mute".equalsIgnoreCase(defaultAudioMode)) {
       return new AudioConfig("none", "", "");
+    }
+
+    if ("driftLap".equals(slotKey)) {
+      if ("preset".equalsIgnoreCase(defaultAudioMode)) {
+        return new AudioConfig("preset", "default_beep", "");
+      }
+      return new AudioConfig("tts", null, "Drift lap for {driver.nickname}");
     }
 
     String preset = DEFAULT_PRESETS.getOrDefault(slotKey, "default_beep");

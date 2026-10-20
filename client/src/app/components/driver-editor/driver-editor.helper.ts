@@ -14,7 +14,8 @@ export type DriverAudioSlot =
   | "newRaceLeader"
   | "newHeatLeader"
   | "pitIn"
-  | "fuel";
+  | "fuel"
+  | "driftLap";
 
 export function getAudioSlotInfo(slot: DriverAudioSlot): {
   key: keyof Driver;
@@ -64,6 +65,11 @@ export function getAudioSlotInfo(slot: DriverAudioSlot): {
         key: "fuelAudio",
         defaultUrl: "default_fuel_level",
       };
+    case "driftLap":
+      return {
+        key: "driftLapAudio",
+        defaultUrl: "default_beep",
+      };
   }
 }
 
@@ -79,6 +85,7 @@ export function mapSoundType(
   if (defaultType === "audio_set" && (type === "preset" || !type)) {
     return "audio_set";
   }
+  if (type === "preset") return "preset";
   if (type === "audio_set") return "audio_set";
   if (type === "tts") return "tts";
   if (type === "none") return "none";
@@ -147,6 +154,11 @@ export function toDriver(d: any): Driver {
       url: d.fuelAudio?.url || "default_fuel_level",
       text: d.fuelAudio?.text,
     },
+    driftLapAudio: {
+      type: mapSoundType(d.driftLapAudio?.type, "tts"),
+      url: d.driftLapAudio?.url,
+      text: d.driftLapAudio?.text,
+    },
   });
 }
 
@@ -191,6 +203,9 @@ export function cloneDriver(driver: Driver): Driver {
         : undefined,
       pitInAudio: driver.pitInAudio ? { ...driver.pitInAudio } : undefined,
       fuelAudio: driver.fuelAudio ? { ...driver.fuelAudio } : undefined,
+      driftLapAudio: driver.driftLapAudio
+        ? { ...driver.driftLapAudio }
+        : undefined,
     },
   );
 }
@@ -232,7 +247,8 @@ export function areDriversEqual(d1: Driver, d2: Driver): boolean {
     checkAudio(d1.newRaceLeaderAudio, d2.newRaceLeaderAudio) &&
     checkAudio(d1.newHeatLeaderAudio, d2.newHeatLeaderAudio) &&
     checkAudio(d1.pitInAudio, d2.pitInAudio) &&
-    checkAudio(d1.fuelAudio, d2.fuelAudio)
+    checkAudio(d1.fuelAudio, d2.fuelAudio) &&
+    checkAudio(d1.driftLapAudio, d2.driftLapAudio)
   );
 }
 

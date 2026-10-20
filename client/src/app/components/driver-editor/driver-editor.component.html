@@ -416,6 +416,25 @@
                   </app-audio-selector>
                 }
               </div>
+              <div class="audio-section" id="driver-drift-lap-audio">
+                @if (editingDriver.driftLapAudio) {
+                  <app-audio-selector
+                    [readonly]="!isEditMode"
+                    [label]="'DE_LABEL_DRIFT_LAP_SOUND' | translate"
+                    [fallbackName]="getAudioSlotFallbackName('driftLap')"
+                    [assets]="soundAssets"
+                    [type]="editingDriver.driftLapAudio.type"
+                    (typeChange)="onAudioTypeChange('driftLap', $event)"
+                    [url]="editingDriver.driftLapAudio.url"
+                    (urlChange)="onAudioUrlChange('driftLap', $event)"
+                    (assetSelected)="onAssetSelected($event)"
+                    [text]="editingDriver.driftLapAudio.text"
+                    (textChange)="onAudioTextChange('driftLap', $event)"
+                    [context]="ttsContext"
+                  >
+                  </app-audio-selector>
+                }
+              </div>
             </div>
           </div>
         </app-editor-section>

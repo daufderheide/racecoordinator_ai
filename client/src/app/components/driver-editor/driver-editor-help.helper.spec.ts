@@ -14,7 +14,7 @@ describe("DriverEditorHelpHelper", () => {
       },
     });
 
-    expect(steps.length).toBe(19);
+    expect(steps.length).toBe(20);
     expect(steps[0].title).toBe("translated_DE_HELP_WELCOME_TITLE");
     expect(steps[0].position).toBe("center");
 
@@ -38,6 +38,7 @@ describe("DriverEditorHelpHelper", () => {
       "#driver-pit-in-audio",
       "#driver-fuel-audio",
       "#driver-false-start-audio",
+      "#driver-drift-lap-audio",
     ]);
 
     // Test onEnter for an audio step
