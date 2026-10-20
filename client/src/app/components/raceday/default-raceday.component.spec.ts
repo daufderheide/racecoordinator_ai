@@ -3328,6 +3328,39 @@ describe("DefaultRacedayComponent", () => {
       expect(component["highlightedDrivers"].has("hd1")).toBeFalse();
     }));
 
+    it("should reset highlight timer when a successive lap is received for the same driver", fakeAsync(() => {
+      mockSettings.highlightRowOnLap = true;
+
+      lapsSubject.next({
+        objectId: "hd1",
+        lapTime: 1.234,
+        bestLapTime: 1.0,
+      });
+      fixture.detectChanges();
+
+      expect(component["highlightedDrivers"].has("hd1")).toBeTrue();
+
+      // Advance 250ms (first timer has not fired yet)
+      tick(250);
+      expect(component["highlightedDrivers"].has("hd1")).toBeTrue();
+
+      // Successive lap arrives for hd1
+      lapsSubject.next({
+        objectId: "hd1",
+        lapTime: 1.2,
+        bestLapTime: 1.0,
+      });
+      fixture.detectChanges();
+
+      // Advance another 200ms (450ms total from start; first timer would have fired at 400ms)
+      tick(200);
+      expect(component["highlightedDrivers"].has("hd1")).toBeTrue();
+
+      // Advance remaining 200ms (400ms from second lap)
+      tick(200);
+      expect(component["highlightedDrivers"].has("hd1")).toBeFalse();
+    }));
+
     it("should not highlight driver when lap is received but disabled", fakeAsync(() => {
       mockSettings.highlightRowOnLap = false;
 
@@ -12494,6 +12527,49 @@ describe("DefaultRacedayComponent", () => {
         widgetId: "w-test-1",
         anchor: "top-left",
       });
+    });
+
+    it("should return cached reference for getGrids and getNonGridWidgets when inputs are unchanged", () => {
+      const masterWidget = {
+        id: "grid-m1",
+        widgetType: "lane-column",
+        x: 100,
+        y: 100,
+        width: 200,
+        height: 50,
+        customSettings: {
+          gridId: "cache-grid",
+          gridLane: 0,
+          gridTotalLanes: 4,
+          gridDirection: "vertical",
+          bindingMode: "lane",
+        },
+      } as any;
+      const nonGridWidget = {
+        id: "banner-1",
+        widgetType: "custom-label",
+        x: 0,
+        y: 0,
+        width: 100,
+        height: 30,
+      } as any;
+
+      (component as any).layout = { widgets: [masterWidget, nonGridWidget] };
+      (component as any).track = { lanes: [{}, {}] };
+      (component as any).race = { track: (component as any).track } as any;
+
+      const grids1 = component.getGrids();
+      const grids2 = component.getGrids();
+      expect(grids1).toBe(grids2);
+
+      const nonGrid1 = component.getNonGridWidgets();
+      const nonGrid2 = component.getNonGridWidgets();
+      expect(nonGrid1).toBe(nonGrid2);
+
+      component.invalidateGridCache();
+      const grids3 = component.getGrids();
+      expect(grids3).not.toBe(grids1);
+      expect(grids3.length).toBe(1);
     });
   });
 });

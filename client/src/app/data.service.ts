@@ -1884,9 +1884,6 @@ export class DataService {
   }
 
   private dispatchTelemetryUpdates(raceData: RaceData): void {
-    if (raceData.lap) {
-      this.lapSubject.next(raceData.lap);
-    }
     if (raceData.standingsUpdate) {
       this.standingsSubject.next(raceData.standingsUpdate);
     }
@@ -1895,6 +1892,9 @@ export class DataService {
     }
     if (raceData.groupStandingsUpdate) {
       this.groupStandingsSubject.next(raceData.groupStandingsUpdate);
+    }
+    if (raceData.lap) {
+      this.lapSubject.next(raceData.lap);
     }
     if (raceData.carData) {
       this.carDataSubject.next(raceData.carData);

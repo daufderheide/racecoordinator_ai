@@ -1028,7 +1028,14 @@ export class DefaultRacedayComponent
   protected assets: any[] = [];
   protected hasRacedInCurrentHeat: boolean = false;
   protected highlightedDrivers: Set<string> = new Set();
-  private lapHighlightTimers: Set<any> = new Set();
+  private lapHighlightTimers: Map<string, any> = new Map();
+  private cachedNonGridWidgets: any[] = [];
+  private cachedNonGridWidgetsRef: any[] | null = null;
+  private cachedNonGridSession: boolean = false;
+  private cachedGrids: RacedayGridDescriptor[] = [];
+  private cachedGridsWidgetsRef: any[] | null = null;
+  private cachedGridsSession: boolean = false;
+  private cachedGridsDataCounts: string = "";
   private carLocations = new Map<number, number>();
   private fuelAudioTracker: FuelAudioTracker;
   private get laneFuelAudioStates(): Map<number, any> {
@@ -2295,7 +2302,7 @@ export class DefaultRacedayComponent
           association,
         );
       }
-      this.handleLapHighlight(lap);
+      this.handleLapHighlight(lap, driverData);
       return;
     }
 
@@ -2303,13 +2310,13 @@ export class DefaultRacedayComponent
       if ((lap.lapTime ?? 0) > 0.25) {
         this.playThemedSound(THEME_SLOT_KEYS.AUDIO_MIN_LAP_TIME, ttsContext);
       }
-      this.handleLapHighlight(lap);
+      this.handleLapHighlight(lap, driverData);
       return;
     }
 
     if (lap.isDrift) {
       this.playThemedSound(THEME_SLOT_KEYS.AUDIO_DRIFT_LAP, ttsContext);
-      this.handleLapHighlight(lap);
+      this.handleLapHighlight(lap, driverData);
       return;
     }
 
@@ -2366,7 +2373,7 @@ export class DefaultRacedayComponent
       );
     }
 
-    this.handleLapHighlight(lap);
+    this.handleLapHighlight(lap, driverData);
   }
 
   private handleLapAudio(
@@ -2946,7 +2953,10 @@ export class DefaultRacedayComponent
     }
   }
 
-  private handleLapHighlight(lap: any) {
+  private handleLapHighlight(lap: any, driverData?: DriverHeatData) {
+    const driverId = lap?.objectId || driverData?.objectId;
+    if (!driverId) return;
+
     const laneViewWidget = this.currentRacedayLayout?.widgets?.find(
       (w: any) =>
         w.widgetType === "lane-view" || w.widgetType === "lane-column",
@@ -2959,18 +2969,23 @@ export class DefaultRacedayComponent
           ? settings.highlightPracticeRowOnLap
           : settings.highlightRowOnLap;
     if (shouldHighlight) {
-      this.highlightedDrivers.add(lap.objectId!);
+      const existingTimer = this.lapHighlightTimers.get(driverId);
+      if (existingTimer) {
+        clearTimeout(existingTimer);
+        this.lapHighlightTimers.delete(driverId);
+      }
+      this.highlightedDrivers.add(driverId);
       if (!this.isDestroyed) {
         this.cdr.markForCheck();
       }
       const timer = setTimeout(() => {
-        this.lapHighlightTimers.delete(timer);
-        this.highlightedDrivers.delete(lap.objectId!);
+        this.lapHighlightTimers.delete(driverId);
+        this.highlightedDrivers.delete(driverId);
         if (!this.isDestroyed) {
           this.cdr.markForCheck();
         }
       }, 400);
-      this.lapHighlightTimers.add(timer);
+      this.lapHighlightTimers.set(driverId, timer);
     }
   }
 
@@ -3528,6 +3543,7 @@ export class DefaultRacedayComponent
     LaneGridAnimationHelper.reset();
     this.lapHighlightTimers.forEach((timer) => clearTimeout(timer));
     this.lapHighlightTimers.clear();
+    this.highlightedDrivers.clear();
     this.audioService.reset();
     if (
       typeof window !== "undefined" &&
@@ -4176,19 +4192,55 @@ export class DefaultRacedayComponent
     return this.layout?.widgets || [];
   }
 
+  invalidateGridCache(): void {
+    this.cachedGridsWidgetsRef = null;
+    this.cachedNonGridWidgetsRef = null;
+    this.cachedGridsDataCounts = "";
+  }
+
   getNonGridWidgets(): any[] {
-    if (this.gridSession()) {
-      return this.getWidgets();
+    if (this.isLayoutCustomizing) {
+      this.invalidateGridCache();
     }
-    return this.getWidgets().filter((w: any) => !w.customSettings?.["gridId"]);
+    const session = Boolean(this.gridSession());
+    const widgets = this.getWidgets();
+    if (
+      !this.isLayoutCustomizing &&
+      widgets === this.cachedNonGridWidgetsRef &&
+      session === this.cachedNonGridSession
+    ) {
+      return this.cachedNonGridWidgets;
+    }
+    this.cachedNonGridWidgetsRef = widgets;
+    this.cachedNonGridSession = session;
+    if (session) {
+      this.cachedNonGridWidgets = widgets;
+    } else {
+      this.cachedNonGridWidgets = widgets.filter(
+        (w: any) => !w.customSettings?.["gridId"],
+      );
+    }
+    return this.cachedNonGridWidgets;
   }
 
   getGrids(): RacedayGridDescriptor[] {
-    if (this.gridSession()) {
+    if (this.isLayoutCustomizing) {
+      this.invalidateGridCache();
+    }
+    const session = Boolean(this.gridSession());
+    if (session) {
+      this.cachedGrids = [];
+      this.cachedGridsWidgetsRef = null;
+      this.cachedGridsDataCounts = "";
       return [];
     }
     const widgets = this.getWidgets();
-    if (!widgets || widgets.length === 0) return [];
+    if (!widgets || widgets.length === 0) {
+      this.cachedGrids = [];
+      this.cachedGridsWidgetsRef = null;
+      this.cachedGridsDataCounts = "";
+      return [];
+    }
 
     const gridIds = Array.from(
       new Set(
@@ -4198,12 +4250,34 @@ export class DefaultRacedayComponent
       ),
     );
 
+    const dataCountsKey = gridIds
+      .map(
+        (id) =>
+          `${id}:${LaneGridReplicationHelper.getGridDataCount(widgets, id, this)}`,
+      )
+      .join("|");
+
+    if (
+      !this.isLayoutCustomizing &&
+      widgets === this.cachedGridsWidgetsRef &&
+      session === this.cachedGridsSession &&
+      dataCountsKey === this.cachedGridsDataCounts
+    ) {
+      return this.cachedGrids;
+    }
+
     const descriptors: RacedayGridDescriptor[] = [];
     for (const gridId of gridIds) {
       const desc = this.buildGridDescriptor(gridId, widgets);
       if (desc) descriptors.push(desc);
     }
-    return descriptors;
+
+    this.cachedGrids = descriptors;
+    this.cachedGridsWidgetsRef = widgets;
+    this.cachedGridsSession = session;
+    this.cachedGridsDataCounts = dataCountsKey;
+
+    return this.cachedGrids;
   }
 
   private buildGridDescriptor(

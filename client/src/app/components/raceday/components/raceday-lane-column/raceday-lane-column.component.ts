@@ -4,7 +4,6 @@ import {
   AfterViewInit,
   ChangeDetectorRef,
   Component,
-  effect,
   ElementRef,
   inject,
   input,
@@ -121,11 +120,6 @@ export class RacedayLaneColumnComponent
   private lastFittedInsets = "";
 
   constructor() {
-    effect(() => {
-      this.widget();
-      this.parent();
-      setTimeout(() => this.fitContent(), 0);
-    });
     if (this.customWidgetService?.customWidgets$) {
       this.customWidgetSub = this.customWidgetService.customWidgets$.subscribe(
         () => {
@@ -615,7 +609,7 @@ export class RacedayLaneColumnComponent
     return all;
   }
 
-  fitContent(): void {
+  fitContent(force = false): void {
     const cardEl = this.cardRef()?.nativeElement;
     if (!cardEl) return;
 
@@ -627,10 +621,25 @@ export class RacedayLaneColumnComponent
     if (this.isLastLaps()) {
       this.fitLastLaps();
     } else if (!this.isImageProperty() && !this.isPacingProperty()) {
-      this.lastFittedText = this.formattedValue?.trim() || "";
-      this.lastFittedWidth = cardEl.clientWidth;
-      this.lastFittedHeight = cardEl.clientHeight;
-      this.lastFittedInsets = JSON.stringify(this.settings.insets || {});
+      const text = this.formattedValue?.trim() || "";
+      const w = cardEl.clientWidth;
+      const h = cardEl.clientHeight;
+      const insetsKey = JSON.stringify(this.settings.insets || {});
+      if (
+        !force &&
+        w > 0 &&
+        h > 0 &&
+        text === this.lastFittedText &&
+        w === this.lastFittedWidth &&
+        h === this.lastFittedHeight &&
+        insetsKey === this.lastFittedInsets
+      ) {
+        return;
+      }
+      this.lastFittedText = text;
+      this.lastFittedWidth = w;
+      this.lastFittedHeight = h;
+      this.lastFittedInsets = insetsKey;
       this.fitTextValue(cardEl);
     }
   }

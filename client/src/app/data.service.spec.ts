@@ -1453,6 +1453,34 @@ describe("DataService", () => {
       });
     });
 
+    it("should dispatch standingsUpdate before lap event to ensure rankings precede highlight", () => {
+      const dispatchOrder: string[] = [];
+      const sub1 = service.getStandingsUpdate().subscribe(() => {
+        dispatchOrder.push("standings");
+      });
+      const sub2 = service.getOverallStandingsUpdate().subscribe(() => {
+        dispatchOrder.push("overallStandings");
+      });
+      const sub3 = service.getLaps().subscribe(() => {
+        dispatchOrder.push("lap");
+      });
+
+      const mockRaceData = RaceData.encode({
+        lap: { driverId: "d1", lapTime: 4.5 },
+        standingsUpdate: { updates: [] },
+        overallStandingsUpdate: { participants: [] },
+      }).finish();
+
+      (service as any).handleRaceDataMessage({
+        data: mockRaceData.slice().buffer,
+      });
+
+      expect(dispatchOrder).toEqual(["standings", "overallStandings", "lap"]);
+      sub1.unsubscribe();
+      sub2.unsubscribe();
+      sub3.unsubscribe();
+    });
+
     it("should warn on browser main-thread freeze when dispatchDelay exceeds 100ms", () => {
       const mockRaceData = RaceData.encode({
         raceTime: {

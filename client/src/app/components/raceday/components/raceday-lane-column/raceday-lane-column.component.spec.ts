@@ -1154,6 +1154,44 @@ describe("RacedayLaneColumnComponent", () => {
     }
   });
 
+  it("should skip font fitting when text, dimensions, and insets are unchanged", () => {
+    fixture.componentRef.setInput("parent", mockParent);
+    fixture.componentRef.setInput(
+      "widget",
+      createWidget({
+        columnKey: "driver.nickname",
+        valueFontSize: 36,
+      }),
+    );
+    const cardEl = component.cardRef()?.nativeElement;
+    if (cardEl) {
+      Object.defineProperty(cardEl, "clientWidth", {
+        value: 160,
+        configurable: true,
+      });
+      Object.defineProperty(cardEl, "clientHeight", {
+        value: 60,
+        configurable: true,
+      });
+    }
+    spyOnProperty(component, "formattedValue", "get").and.returnValue(
+      "Unchanged Text",
+    );
+    const fitSpy = spyOn<any>(component, "fitTextValue").and.callThrough();
+
+    // First call: fits text
+    component.fitContent();
+    expect(fitSpy).toHaveBeenCalledTimes(1);
+
+    // Second call without any dimension or text change: skips fitTextValue
+    component.fitContent();
+    expect(fitSpy).toHaveBeenCalledTimes(1);
+
+    // Force call: executes fitTextValue
+    component.fitContent(true);
+    expect(fitSpy).toHaveBeenCalledTimes(2);
+  });
+
   it("should render value inside .lane-col-text with proper text alignment", () => {
     fixture.componentRef.setInput("parent", mockParent);
     fixture.componentRef.setInput(
