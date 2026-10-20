@@ -1,10 +1,16 @@
+import { RaceState } from "@app/proto/antigravity";
+import { DriverHeatData } from "@app/race/driver_heat_data";
+
 import {
   buildSyntheticInsetWidgetInputs,
   buildSyntheticMainWidgetInputs,
   formatAdjustedLapValue,
   getInsetDefaultAlignment,
   isCustomWidgetKey,
+  isOverallDataSource,
+  isParentRaceOver,
   resolveColumnHeaderLabel,
+  resolveOverallGridDriver,
 } from "./raceday-lane-column.utils";
 
 describe("raceday-lane-column.utils", () => {
@@ -324,6 +330,152 @@ describe("raceday-lane-column.utils", () => {
     it("should adjust lap value when autoCalculatedLaps > 0 and not finished", () => {
       const hd: any = { autoCalculatedLaps: 2, isFinished: false };
       expect(formatAdjustedLapValue(10, hd, "lapCount")).toBe("8");
+    });
+  });
+
+  describe("isParentRaceOver", () => {
+    it("should return false if parent is undefined", () => {
+      expect(isParentRaceOver(undefined)).toBeFalse();
+    });
+
+    it("should prioritize parent.isRaceOver() if defined", () => {
+      expect(isParentRaceOver({ isRaceOver: () => true })).toBeTrue();
+      expect(isParentRaceOver({ isRaceOver: () => false })).toBeFalse();
+    });
+
+    it("should check parent.raceState", () => {
+      expect(isParentRaceOver({ raceState: RaceState.RACE_OVER })).toBeTrue();
+      expect(isParentRaceOver({ raceState: RaceState.RACING })).toBeFalse();
+    });
+
+    it("should check parent.race.raceState", () => {
+      expect(
+        isParentRaceOver({ race: { raceState: RaceState.RACE_OVER } }),
+      ).toBeTrue();
+      expect(
+        isParentRaceOver({ race: { raceState: RaceState.RACING } }),
+      ).toBeFalse();
+    });
+
+    it("should check parent.raceService.getRace().raceState", () => {
+      expect(
+        isParentRaceOver({
+          raceService: { getRace: () => ({ raceState: RaceState.RACE_OVER }) },
+        }),
+      ).toBeTrue();
+    });
+  });
+
+  describe("isOverallDataSource", () => {
+    it("should return true when gridType is overall", () => {
+      expect(isOverallDataSource({ gridType: "overall" } as any)).toBeTrue();
+    });
+
+    it("should return true when parent gridSession has gridType overall", () => {
+      const parent = { gridSession: () => ({ gridType: "overall" }) };
+      expect(
+        isOverallDataSource({ gridId: "grid-1" } as any, parent),
+      ).toBeTrue();
+    });
+
+    it("should return true when bindingMode is overallPosition for standalone widgets", () => {
+      expect(
+        isOverallDataSource({ bindingMode: "overallPosition" } as any),
+      ).toBeTrue();
+      expect(
+        isOverallDataSource({} as any, undefined, "overallPosition"),
+      ).toBeTrue();
+    });
+
+    it("should return true when columnKey is an overall column key without explicit gridType on standalone widgets", () => {
+      expect(
+        isOverallDataSource({ columnKey: "overallLapCount" } as any),
+      ).toBeTrue();
+      expect(
+        isOverallDataSource({ columnKey: "rankOverall" } as any),
+      ).toBeTrue();
+    });
+
+    it("should return false when gridType is explicitly heat even with overallPosition or overall columns", () => {
+      expect(
+        isOverallDataSource({ gridType: "heat", columnKey: "lapCount" } as any),
+      ).toBeFalse();
+      expect(
+        isOverallDataSource({
+          gridType: "heat",
+          gridId: "grid-1",
+          bindingMode: "overallPosition",
+        } as any),
+      ).toBeFalse();
+      expect(
+        isOverallDataSource({
+          gridType: "heat",
+          gridId: "grid-1",
+          columnKey: "overallLapCount",
+        } as any),
+      ).toBeFalse();
+    });
+
+    it("should return false for a grid with gridId that is not overall even if bindingMode is overallPosition", () => {
+      expect(
+        isOverallDataSource({
+          gridId: "grid-1",
+          bindingMode: "overallPosition",
+        } as any),
+      ).toBeFalse();
+      expect(
+        isOverallDataSource({
+          gridId: "grid-1",
+          columnKey: "overallLapCount",
+        } as any),
+      ).toBeFalse();
+    });
+  });
+
+  describe("resolveOverallGridDriver when race is over", () => {
+    const mockDriverInHeat = new DriverHeatData(
+      "p1",
+      { objectId: "p1", name: "Driver 1", rank: 1 } as any,
+      0,
+    );
+    const mockDrivers = [mockDriverInHeat];
+    const syntheticCreator = (p: any) =>
+      new DriverHeatData(p.objectId, p, -1, p.driver);
+
+    it("should return active heat driver with lane index during racing", () => {
+      const parent = {
+        participants: [{ objectId: "p1", rank: 1 }],
+        raceState: RaceState.RACING,
+      };
+
+      const result = resolveOverallGridDriver(
+        mockDrivers,
+        parent,
+        "overallPosition",
+        0,
+        syntheticCreator,
+      );
+
+      expect(result).toBe(mockDriverInHeat);
+      expect(result?.laneIndex).toBe(0);
+    });
+
+    it("should consider all positions not in a lane (laneIndex -1) when race is over", () => {
+      const parent = {
+        participants: [{ objectId: "p1", rank: 1 }],
+        raceState: RaceState.RACE_OVER,
+      };
+
+      const result = resolveOverallGridDriver(
+        mockDrivers,
+        parent,
+        "overallPosition",
+        0,
+        syntheticCreator,
+      );
+
+      expect(result).not.toBe(mockDriverInHeat);
+      expect(result?.laneIndex).toBe(-1);
     });
   });
 });

@@ -5,6 +5,7 @@ import {
   LaneColumnWidgetSettings,
 } from "@app/models/settings";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
+import { RaceState } from "@app/proto/antigravity";
 import { DriverHeatData } from "@app/race/driver_heat_data";
 
 import { RacedayLaneColumnComponent } from "./raceday-lane-column.component";
@@ -638,6 +639,51 @@ describe("RacedayLaneColumnComponent", () => {
 
     expect(component.backgroundColor).toBe("transparent");
     expect(component.foregroundColor).toBe("#ffffff");
+  });
+
+  it("should style overall grid rows like non-lane rows when race is over and useLaneColors is true", () => {
+    mockParent.raceState = RaceState.RACE_OVER;
+    mockParent.participants = [
+      { objectId: "driver-2", rank: 1, driver: { name: "Driver Two" } },
+      { objectId: "driver-1", rank: 2, driver: { name: "Driver One" } },
+    ];
+    fixture.componentRef.setInput("parent", mockParent);
+    fixture.componentRef.setInput(
+      "widget",
+      createWidget({
+        gridId: "overall-grid",
+        gridType: "overall",
+        bindingMode: "overallPosition",
+        targetIndex: 0,
+        useLaneColors: true,
+      }),
+    );
+    fixture.detectChanges();
+
+    // Even though driver-2 is in mockDrivers (laneIndex 1), when race is over with overall data source,
+    // they are considered not in a lane and styled like non-lane rows.
+    expect(component.backgroundColor).toBe("transparent");
+    expect(component.foregroundColor).toBe("#ffffff");
+  });
+
+  it("should preserve lane colors for a grid using the heat data source when race is over", () => {
+    mockParent.raceState = RaceState.RACE_OVER;
+    fixture.componentRef.setInput("parent", mockParent);
+    fixture.componentRef.setInput(
+      "widget",
+      createWidget({
+        gridId: "heat-grid",
+        gridType: "heat",
+        bindingMode: "overallPosition",
+        targetIndex: 0,
+        useLaneColors: true,
+      }),
+    );
+    fixture.detectChanges();
+
+    // Heat grid rows represent heat drivers and must retain their lane colors
+    expect(component.backgroundColor).toBe("#112233");
+    expect(component.foregroundColor).toBe("#ffcc00");
   });
 
   it("should render header with customLabel or fallback to column label", () => {

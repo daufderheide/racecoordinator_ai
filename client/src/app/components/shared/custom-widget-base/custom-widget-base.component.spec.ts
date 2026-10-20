@@ -2,6 +2,7 @@ import { TestBed } from "@angular/core/testing";
 import { DataService } from "@app/data.service";
 import { Driver } from "@app/models/driver";
 import { RaceParticipant } from "@app/models/race_participant";
+import { RaceState } from "@app/proto/antigravity";
 import { DriverHeatData } from "@app/race/driver_heat_data";
 import { AuthService } from "@app/services/auth.service";
 import { HelpService } from "@app/services/help.service";
@@ -370,6 +371,37 @@ describe("CustomWidgetBaseComponent", () => {
       expect(component.interpolate("Unknown: ${unknown.field}")).toBe(
         "Unknown: ${unknown.field}",
       );
+    });
+  });
+
+  describe("isRaceOver", () => {
+    it("should return true when parent.raceState is RACE_OVER", () => {
+      fixture.componentRef.setInput("parent", {
+        raceState: RaceState.RACE_OVER,
+      });
+      expect(component.isRaceOver()).toBeTrue();
+    });
+
+    it("should return false when parent.raceState is RACING", () => {
+      fixture.componentRef.setInput("parent", {
+        raceState: RaceState.RACING,
+      });
+      expect(component.isRaceOver()).toBeFalse();
+    });
+
+    it("should fallback to parent.isRaceOver function", () => {
+      fixture.componentRef.setInput("parent", {
+        isRaceOver: () => true,
+      });
+      expect(component.isRaceOver()).toBeTrue();
+    });
+
+    it("should return true when raceFlagService flag is flag.race_over", () => {
+      (component as any).raceFlagService = {
+        getFlagType: () => "flag.race_over",
+      };
+      fixture.componentRef.setInput("parent", null);
+      expect(component.isRaceOver()).toBeTrue();
     });
   });
 });

@@ -8,7 +8,11 @@ import {
 import { DriverHeatData } from "@app/race/driver_heat_data";
 import { TranslationService } from "@app/services/translation.service";
 
-import { formatAdjustedLapValue } from "./raceday-lane-column.utils";
+import {
+  formatAdjustedLapValue,
+  isOverallDataSource,
+  isParentRaceOver,
+} from "./raceday-lane-column.utils";
 
 export function isLaneColumnLapCountClickable(
   parent: any,
@@ -309,6 +313,12 @@ export function resolveLaneColumnBackgroundColor(
   if (bindingMode !== "lane" && (!hd || RacedayFormatUtils.isEmptyDriver(hd))) {
     return settings.backgroundColor || "transparent";
   }
+  if (
+    isOverallDataSource(settings, parent, bindingMode) &&
+    isParentRaceOver(parent)
+  ) {
+    return settings.backgroundColor || "transparent";
+  }
   if (hd && parent?.getLaneColor) {
     const bg = parent.getLaneColor(hd, "background_color");
     if (bg) return bg;
@@ -334,6 +344,12 @@ export function resolveLaneColumnForegroundColor(
     return settings.textColor || "#ffffff";
   }
   if (bindingMode !== "lane" && (!hd || RacedayFormatUtils.isEmptyDriver(hd))) {
+    return settings.textColor || "#ffffff";
+  }
+  if (
+    isOverallDataSource(settings, parent, bindingMode) &&
+    isParentRaceOver(parent)
+  ) {
     return settings.textColor || "#ffffff";
   }
   if (hd && parent?.getLaneColor) {

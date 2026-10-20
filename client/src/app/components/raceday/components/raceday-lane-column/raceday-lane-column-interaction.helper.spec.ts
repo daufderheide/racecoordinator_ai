@@ -1,4 +1,5 @@
 import { Role } from "@app/models/role";
+import { RaceState } from "@app/proto/antigravity";
 import { DriverHeatData } from "@app/race/driver_heat_data";
 
 import {
@@ -667,6 +668,162 @@ describe("raceday-lane-column-interaction.helper", () => {
           undefined,
           parent,
           "lane",
+          0,
+        ),
+      ).toBe("#lane0Fg");
+    });
+
+    it("should consider all positions not in a lane and style like non-lane rows when race is over with overall data source", () => {
+      const parent = {
+        raceState: RaceState.RACE_OVER,
+        track: {
+          lanes: [
+            { background_color: "#lane0Bg", foreground_color: "#lane0Fg" },
+          ],
+        },
+      };
+      const activeHd = new DriverHeatData(
+        "d1",
+        { objectId: "d1", name: "Driver 1" } as any,
+        0,
+      );
+      const settings = {
+        useLaneColors: true,
+        gridType: "overall",
+        backgroundColor: "#defaultBg",
+        textColor: "#defaultFg",
+      };
+
+      // Even though hd has laneIndex: 0, it should be considered not in a lane and use fallback colors
+      expect(
+        resolveLaneColumnBackgroundColor(
+          settings as any,
+          activeHd,
+          parent,
+          "position",
+          0,
+        ),
+      ).toBe("#defaultBg");
+      expect(
+        resolveLaneColumnForegroundColor(
+          settings as any,
+          activeHd,
+          parent,
+          "position",
+          0,
+        ),
+      ).toBe("#defaultFg");
+
+      // Without explicit settings colors, defaults to transparent and #ffffff
+      expect(
+        resolveLaneColumnBackgroundColor(
+          { useLaneColors: true, gridType: "overall" } as any,
+          activeHd,
+          parent,
+          "overallPosition",
+          0,
+        ),
+      ).toBe("transparent");
+      expect(
+        resolveLaneColumnForegroundColor(
+          { useLaneColors: true, gridType: "overall" } as any,
+          activeHd,
+          parent,
+          "overallPosition",
+          0,
+        ),
+      ).toBe("#ffffff");
+    });
+
+    it("should keep lane color when race is NOT over with overall data source", () => {
+      const parent = {
+        raceState: RaceState.RACING,
+        track: {
+          lanes: [
+            { background_color: "#lane0Bg", foreground_color: "#lane0Fg" },
+          ],
+        },
+      };
+      const activeHd = new DriverHeatData(
+        "d1",
+        {
+          objectId: "d1",
+          name: "Driver 1",
+          driver: { entity_id: "d1", name: "Driver 1" },
+        } as any,
+        0,
+        { entity_id: "d1", name: "Driver 1" } as any,
+      );
+      const settings = {
+        useLaneColors: true,
+        gridType: "overall",
+        backgroundColor: "#defaultBg",
+        textColor: "#defaultFg",
+      };
+
+      expect(
+        resolveLaneColumnBackgroundColor(
+          settings as any,
+          activeHd,
+          parent,
+          "position",
+          0,
+        ),
+      ).toBe("#lane0Bg");
+      expect(
+        resolveLaneColumnForegroundColor(
+          settings as any,
+          activeHd,
+          parent,
+          "position",
+          0,
+        ),
+      ).toBe("#lane0Fg");
+    });
+
+    it("should keep lane color when race is over with heat data source", () => {
+      const parent = {
+        raceState: RaceState.RACE_OVER,
+        track: {
+          lanes: [
+            { background_color: "#lane0Bg", foreground_color: "#lane0Fg" },
+          ],
+        },
+      };
+      const activeHd = new DriverHeatData(
+        "d1",
+        {
+          objectId: "d1",
+          name: "Driver 1",
+          driver: { entity_id: "d1", name: "Driver 1" },
+        } as any,
+        0,
+        { entity_id: "d1", name: "Driver 1" } as any,
+      );
+      const heatSettings = {
+        useLaneColors: true,
+        gridType: "heat",
+        gridId: "grid-heat-1",
+        bindingMode: "overallPosition",
+        backgroundColor: "#defaultBg",
+        textColor: "#defaultFg",
+      };
+
+      expect(
+        resolveLaneColumnBackgroundColor(
+          heatSettings as any,
+          activeHd,
+          parent,
+          "overallPosition",
+          0,
+        ),
+      ).toBe("#lane0Bg");
+      expect(
+        resolveLaneColumnForegroundColor(
+          heatSettings as any,
+          activeHd,
+          parent,
+          "overallPosition",
           0,
         ),
       ).toBe("#lane0Fg");

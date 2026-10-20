@@ -466,6 +466,24 @@ export class CustomWidgetBaseComponent {
     return flag === "flag.heat_paused";
   }
 
+  isRaceOver(): boolean {
+    const parent = this.parent();
+    const parentState = parent?.raceState ?? parent?.parent?.raceState;
+    if (parentState !== undefined && parentState !== RaceState.UNKNOWN_STATE) {
+      return parentState === RaceState.RACE_OVER;
+    }
+    const raceState =
+      (this.race as any)?.state ?? (this.race as any)?.raceState;
+    if (raceState !== undefined && raceState !== RaceState.UNKNOWN_STATE) {
+      return raceState === RaceState.RACE_OVER;
+    }
+    if (typeof parent?.isRaceOver === "function") {
+      return Boolean(parent.isRaceOver());
+    }
+    const flag = this.raceFlagService?.getFlagType?.();
+    return flag === "flag.race_over";
+  }
+
   isAllowFinishLap(): boolean {
     const race = this.race;
     if (!race || !RacedayFormatUtils.isAllowFinish(race)) {

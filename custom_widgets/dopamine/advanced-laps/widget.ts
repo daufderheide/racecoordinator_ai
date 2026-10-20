@@ -132,6 +132,14 @@ export class AdvancedLapsComponent extends CustomWidgetBaseComponent {
       const customLaneBg = this.getSetting<string>("laneBackgroundColor");
       if (customLaneBg) return customLaneBg;
 
+      const isOverall =
+        this.getSetting("gridType") === "heat"
+          ? false
+          : this.mode === "overall";
+      if (isOverall && this.isRaceOver()) {
+        return this.backgroundColor || "#000000";
+      }
+
       const driver = this.targetDriver;
       const gridLane = this.getSetting("gridLane");
       const fallbackIdx =
@@ -167,6 +175,14 @@ export class AdvancedLapsComponent extends CustomWidgetBaseComponent {
     if (this.useLaneColors) {
       const customLaneFg = this.getSetting<string>("laneForegroundColor");
       if (customLaneFg) return customLaneFg;
+
+      const isOverall =
+        this.getSetting("gridType") === "heat"
+          ? false
+          : this.mode === "overall";
+      if (isOverall && this.isRaceOver()) {
+        return this.textColor || "#ffffff";
+      }
 
       const driver = this.targetDriver;
       const gridLane = this.getSetting("gridLane");
@@ -212,7 +228,6 @@ export class AdvancedLapsComponent extends CustomWidgetBaseComponent {
       (this.mode === "overall" ? "OVERALL LAPS" : "LAP")
     );
   }
-
 
   getEffectiveLaps(driver: any): number {
     if (!driver || this.isEmptyDriver(driver)) return 0;
@@ -266,8 +281,7 @@ export class AdvancedLapsComponent extends CustomWidgetBaseComponent {
           driver.lapCount ??
           0,
       );
-      const hasFraction =
-        Math.abs(rawOverall - Math.round(rawOverall)) > 1e-5;
+      const hasFraction = Math.abs(rawOverall - Math.round(rawOverall)) > 1e-5;
       if (hasFraction && autoSegments > 0) {
         fullLaps = Math.max(0, rawOverall);
         baseLaps = Math.max(
@@ -387,7 +401,9 @@ export class AdvancedLapsComponent extends CustomWidgetBaseComponent {
 
     if (mode === "position") {
       const targetRank = hasGrid ? Number(gridLane) + 1 : this.targetIndex;
-      const match = this.activeHeatDrivers.find((d: any) => d.rank === targetRank);
+      const match = this.activeHeatDrivers.find(
+        (d: any) => d.rank === targetRank,
+      );
       if (match) return match;
       if (this.activeHeatDrivers.length > 0) {
         const idx = targetRank - 1;
@@ -400,7 +416,9 @@ export class AdvancedLapsComponent extends CustomWidgetBaseComponent {
 
     if (mode === "overallPosition") {
       const targetRank = hasGrid ? Number(gridLane) + 1 : this.targetIndex;
-      const match = this.allDisplayDrivers.find((d: any) => d.rank === targetRank);
+      const match = this.allDisplayDrivers.find(
+        (d: any) => d.rank === targetRank,
+      );
       if (match) return match;
       if (this.allDisplayDrivers.length > 0) {
         const idx = targetRank - 1;
@@ -465,7 +483,8 @@ export class AdvancedLapsComponent extends CustomWidgetBaseComponent {
 
   getDriverLaneLabel(driver: any): string {
     const lane =
-      driver?.lane ?? (driver?.laneIndex !== undefined ? driver.laneIndex + 1 : 1);
+      driver?.lane ??
+      (driver?.laneIndex !== undefined ? driver.laneIndex + 1 : 1);
     return `L${lane}`;
   }
 

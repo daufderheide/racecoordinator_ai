@@ -3,6 +3,7 @@ import {
   AbsoluteWidgetNode,
   LaneColumnWidgetSettings,
 } from "@app/models/settings";
+import { RaceState } from "@app/proto/antigravity";
 import { DriverHeatData } from "@app/race/driver_heat_data";
 import { GhostBenchmarkType } from "@app/services/ghost-pacing.service";
 
@@ -720,6 +721,7 @@ export function resolveStandaloneDriver(
   bindingMode: string,
   targetIndex: number,
   getOrCreateSyntheticDriver: (p: any) => DriverHeatData,
+  settings?: LaneColumnWidgetSettings,
 ): DriverHeatData | undefined {
   if (bindingMode === "overallPosition") {
     const targetRank = targetIndex + 1;
@@ -728,6 +730,9 @@ export function resolveStandaloneDriver(
       participants.find((p: any) => p.rank === targetRank) ||
       participants[targetIndex];
     if (!match) return undefined;
+    if (isParentRaceOver(parent)) {
+      return getOrCreateSyntheticDriver(match);
+    }
     const activeHeatDriver = drivers.find(
       (d) =>
         d.objectId === match.objectId ||
@@ -743,6 +748,12 @@ export function resolveStandaloneDriver(
       participants.find((p: any) => p.seed === targetSeed) ||
       participants[targetIndex];
     if (!match) return undefined;
+    if (
+      isParentRaceOver(parent) &&
+      isOverallDataSource(settings, parent, bindingMode)
+    ) {
+      return getOrCreateSyntheticDriver(match);
+    }
     const activeHeatDriver = drivers.find(
       (d) =>
         d.objectId === match.objectId ||
@@ -807,6 +818,65 @@ export function resolveHeatGridDriver(
   return drivers[targetIndex];
 }
 
+export function isParentRaceOver(parent: any): boolean {
+  if (!parent) return false;
+  if (typeof parent.isRaceOver === "function") {
+    return Boolean(parent.isRaceOver());
+  }
+  if (
+    parent.raceState !== undefined &&
+    parent.raceState !== RaceState.UNKNOWN_STATE
+  ) {
+    return parent.raceState === RaceState.RACE_OVER;
+  }
+  const race = parent.race || parent.raceService?.getRace?.();
+  const raceState = race?.raceState ?? race?.state;
+  if (raceState !== undefined && raceState !== RaceState.UNKNOWN_STATE) {
+    return raceState === RaceState.RACE_OVER;
+  }
+  return false;
+}
+
+export function isOverallDataSource(
+  settings: LaneColumnWidgetSettings | undefined,
+  parent?: any,
+  bindingMode?: string,
+): boolean {
+  if (!settings) return false;
+
+  // Explicit gridType takes precedence
+  if (settings.gridType === "heat") return false;
+  if (settings.gridType === "overall") return true;
+
+  // If part of a grid, check if the grid session or siblings declare overall
+  if (settings.gridId) {
+    if (
+      parent?.gridSession?.()?.gridType === "overall" ||
+      parent?.activeGridSession?.gridType === "overall" ||
+      Boolean(
+        parent?.layout?.widgets?.some(
+          (w: any) =>
+            w.customSettings?.gridId === settings.gridId &&
+            w.customSettings?.gridType === "overall",
+        ),
+      )
+    ) {
+      return true;
+    }
+    // Any grid that is not overall is a Heat Data grid
+    return false;
+  }
+
+  // Standalone widgets (not part of a grid)
+  const mode = bindingMode || settings.bindingMode;
+  if (mode === "overallPosition") return true;
+  if (RacedayLayoutUtils.isOverallColumnKey(settings.columnKey)) {
+    return true;
+  }
+
+  return false;
+}
+
 export function resolveOverallGridDriver(
   drivers: DriverHeatData[],
   parent: any,
@@ -849,6 +919,9 @@ export function resolveOverallGridDriver(
   }
 
   if (!match) return undefined;
+  if (isParentRaceOver(parent)) {
+    return getOrCreateSyntheticDriver(match);
+  }
   const activeHeatDriver = drivers.find(
     (d) =>
       d.objectId === match.objectId ||
@@ -876,7 +949,14 @@ export function resolveTargetDriver(
     isGrid &&
     (settings.gridType === "overall" ||
       parent?.gridSession?.()?.gridType === "overall" ||
-      parent?.activeGridSession?.gridType === "overall");
+      parent?.activeGridSession?.gridType === "overall" ||
+      Boolean(
+        parent?.layout?.widgets?.some(
+          (w: any) =>
+            w.customSettings?.gridId === settings.gridId &&
+            w.customSettings?.gridType === "overall",
+        ),
+      ));
 
   const bindingMode = settings.bindingMode || "lane";
   const targetIndex = settings.targetIndex ?? 0;
@@ -888,6 +968,7 @@ export function resolveTargetDriver(
       bindingMode,
       targetIndex,
       getOrCreateSyntheticDriver,
+      settings,
     );
   }
 

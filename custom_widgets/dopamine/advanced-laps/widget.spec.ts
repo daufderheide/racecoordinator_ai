@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from "@angular/core/testing";
-import { AdvancedLapsComponent } from "./widget";
 import { DataService } from "@app/data.service";
 import { AllowFinish, FinishMethod } from "@app/models/heat_scoring";
 import { Race } from "@app/models/race";
@@ -14,6 +13,8 @@ import { RacePredictionService } from "@app/services/race-prediction.service";
 import { SettingsService } from "@app/services/settings.service";
 import { ThemeService } from "@app/services/theme.service";
 import { TranslationService } from "@app/services/translation.service";
+
+import { AdvancedLapsComponent } from "./widget";
 
 describe("AdvancedLapsComponent Integration & Requirements Verification", () => {
   let component: AdvancedLapsComponent;
@@ -49,7 +50,9 @@ describe("AdvancedLapsComponent Integration & Requirements Verification", () => 
     };
 
     mockRaceFlagService = {
-      getFlagType: jasmine.createSpy("getFlagType").and.returnValue("flag.racing"),
+      getFlagType: jasmine
+        .createSpy("getFlagType")
+        .and.returnValue("flag.racing"),
     };
 
     mockTranslationService = {
@@ -577,7 +580,9 @@ describe("AdvancedLapsComponent Integration & Requirements Verification", () => 
       });
 
       expect(component.headerLabel).toBe("LAP");
-      expect(mockTranslationService.translate).toHaveBeenCalledWith("RD_COL_LAP");
+      expect(mockTranslationService.translate).toHaveBeenCalledWith(
+        "RD_COL_LAP",
+      );
     });
 
     it("should use customLabel when configured", () => {
@@ -940,7 +945,11 @@ describe("AdvancedLapsComponent Integration & Requirements Verification", () => 
     });
 
     it("should use targetDriver passed directly in customSettings", () => {
-      const customDriver = { name: "Custom Driver", laneIndex: 1, lapCount: 15 };
+      const customDriver = {
+        name: "Custom Driver",
+        laneIndex: 1,
+        lapCount: 15,
+      };
       fixture.componentRef.setInput("widget", {
         id: "widget-passed-driver",
         widgetType: "custom:advanced-laps",
@@ -975,6 +984,58 @@ describe("AdvancedLapsComponent Integration & Requirements Verification", () => 
             name: "Driver 2",
           },
           useLaneColors: true,
+        },
+      });
+
+      expect(component.cardBackgroundColor).toBe("#3b82f6");
+      expect(component.cardTextColor).toBe("black");
+    });
+
+    it("should consider all positions not in a lane when race is over in overall mode", () => {
+      mockParent.raceState = RaceState.RACE_OVER;
+      const d1 = {
+        laneIndex: 0,
+        name: "Lane 1 Driver",
+        heatData: { lapCount: 10 },
+      };
+      mockParent.heatDrivers = [d1];
+
+      fixture.componentRef.setInput("widget", {
+        id: "widget-overall-over",
+        widgetType: "custom:advanced-laps",
+        customSettings: {
+          mode: "overall",
+          bindingMode: "overallPosition",
+          targetIndex: 1,
+          useLaneColors: true,
+          backgroundColor: "#1e293b",
+          textColor: "#f8fafc",
+        },
+      });
+
+      expect(component.cardBackgroundColor).toBe("#1e293b");
+      expect(component.cardTextColor).toBe("#f8fafc");
+    });
+
+    it("should preserve lane colors when race is over with heat gridType or mode heat", () => {
+      mockParent.raceState = RaceState.RACE_OVER;
+      const d1 = {
+        laneIndex: 0,
+        name: "Lane 1 Driver",
+        heatData: { lapCount: 10 },
+      };
+      mockParent.heatDrivers = [d1];
+
+      fixture.componentRef.setInput("widget", {
+        id: "widget-heat-over",
+        widgetType: "custom:advanced-laps",
+        customSettings: {
+          gridType: "heat",
+          mode: "heat",
+          targetIndex: 1,
+          useLaneColors: true,
+          backgroundColor: "#1e293b",
+          textColor: "#f8fafc",
         },
       });
 
@@ -1041,5 +1102,3 @@ describe("AdvancedLapsComponent Integration & Requirements Verification", () => 
     });
   });
 });
-
-
