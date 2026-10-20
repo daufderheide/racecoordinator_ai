@@ -1940,6 +1940,66 @@ describe("DefaultRacedayComponent", () => {
       } as any;
       expect(component.getDriverOverallRanking(hd)).toBe(15);
     });
+
+    it("should return distinct overall ranks for multiple drivers sharing the same team affiliation", () => {
+      (component as any).leaderboardEntries = [
+        { entityId: "d1", rank: 1 } as any,
+        { entityId: "d2", rank: 2 } as any,
+      ];
+      component["participants"] = [
+        {
+          objectId: "p1",
+          driver: { entity_id: "d1", name: "Mario" },
+          team: { entity_id: "t_mk", name: "Mushroom Kingdom" },
+          rank: 1,
+        } as any,
+        {
+          objectId: "p2",
+          driver: { entity_id: "d2", name: "Luigi" },
+          team: { entity_id: "t_mk", name: "Mushroom Kingdom" },
+          rank: 2,
+        } as any,
+      ];
+      const hd1 = {
+        objectId: "hd1",
+        driver: { entity_id: "d1", name: "Mario" },
+        participant: {
+          objectId: "p1",
+          team: { entity_id: "t_mk", name: "Mushroom Kingdom" },
+          rank: 1,
+        },
+      } as any;
+      const hd2 = {
+        objectId: "hd2",
+        driver: { entity_id: "d2", name: "Luigi" },
+        participant: {
+          objectId: "p2",
+          team: { entity_id: "t_mk", name: "Mushroom Kingdom" },
+          rank: 1,
+        },
+      } as any;
+
+      expect(component.getDriverOverallRanking(hd1)).toBe(1);
+      expect(component.getDriverOverallRanking(hd2)).toBe(2);
+    });
+
+    it("should provide distinct overall ranks for all 4 lanes in editor preview", () => {
+      (component as any).setupMockDataForEditor();
+      const heatDrivers: DriverHeatData[] =
+        (component as any).heat?.heatDrivers || [];
+      expect(heatDrivers.length).toBeGreaterThanOrEqual(4);
+      const ranks = heatDrivers
+        .slice(0, 4)
+        .map((hd: DriverHeatData) => component.getDriverOverallRanking(hd));
+      expect(ranks).toEqual([1, 2, 3, 4]);
+
+      const formattedRanks = heatDrivers
+        .slice(0, 4)
+        .map((hd: DriverHeatData) =>
+          component.formatValue("rankOverall", 0, hd),
+        );
+      expect(formattedRanks).toEqual(["1", "2", "3", "4"]);
+    });
   });
 
   describe("getDriverGroupRanking", () => {
@@ -1990,6 +2050,48 @@ describe("DefaultRacedayComponent", () => {
       } as any;
 
       expect(component.getDriverGroupRanking(hd1)).toBe(3);
+    });
+
+    it("should return distinct group ranks for multiple drivers sharing the same team affiliation", () => {
+      (component as any).groupLeaderboardEntries = [
+        { entityId: "d1", rank: 1 } as any,
+        { entityId: "d2", rank: 2 } as any,
+      ];
+      component["groupParticipants"] = [
+        {
+          objectId: "p1",
+          driver: { entity_id: "d1", name: "Mario" },
+          team: { entity_id: "t_mk", name: "Mushroom Kingdom" },
+          groupRank: 1,
+        } as any,
+        {
+          objectId: "p2",
+          driver: { entity_id: "d2", name: "Luigi" },
+          team: { entity_id: "t_mk", name: "Mushroom Kingdom" },
+          groupRank: 2,
+        } as any,
+      ];
+      const hd1 = {
+        objectId: "hd1",
+        driver: { entity_id: "d1", name: "Mario" },
+        participant: {
+          objectId: "p1",
+          team: { entity_id: "t_mk", name: "Mushroom Kingdom" },
+          groupRank: 1,
+        },
+      } as any;
+      const hd2 = {
+        objectId: "hd2",
+        driver: { entity_id: "d2", name: "Luigi" },
+        participant: {
+          objectId: "p2",
+          team: { entity_id: "t_mk", name: "Mushroom Kingdom" },
+          groupRank: 1,
+        },
+      } as any;
+
+      expect(component.getDriverGroupRanking(hd1)).toBe(1);
+      expect(component.getDriverGroupRanking(hd2)).toBe(2);
     });
 
     it("should return undefined if not found in group list", () => {

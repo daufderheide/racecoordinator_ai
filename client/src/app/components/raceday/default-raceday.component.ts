@@ -3536,6 +3536,7 @@ export class DefaultRacedayComponent
     this.sortHeatDrivers();
     this.updateLeaderboardEntries();
     this.updateGroupLeaderboardEntries();
+    this.syncHeatDriversWithParticipants();
     this.cdr.markForCheck();
   }
 
@@ -4505,28 +4506,41 @@ export class DefaultRacedayComponent
   }
   getDriverOverallRanking(hd: DriverHeatData): number | undefined {
     if (!hd) return undefined;
-    let entityId: string | undefined;
+    const d = hd.actualDriver || hd.driver;
+    const driverId = d?.entity_id || d?.name;
+    const teamId = hd.participant?.team?.entity_id;
 
-    if (hd.participant?.team) {
-      entityId = hd.participant.team.entity_id || hd.participant.team.name;
-    } else {
-      const d = hd.actualDriver || hd.driver;
-      entityId = d?.entity_id || d?.name;
-    }
-
-    const entry = this.leaderboardEntries?.find((e) => e.entityId === entityId);
+    const entry =
+      (driverId
+        ? this.leaderboardEntries?.find((e) => e.entityId === driverId)
+        : undefined) ||
+      (teamId
+        ? this.leaderboardEntries?.find((e) => e.entityId === teamId)
+        : undefined);
     if (entry && entry.rank > 0) return entry.rank;
 
-    const match = this.participants?.find((p) => {
-      if (hd.participant?.team) {
-        return p.team?.entity_id === entityId || p.team?.name === entityId;
-      }
-      return (
-        p.driver?.entity_id === entityId ||
-        p.driver?.name === entityId ||
-        p.objectId === hd.objectId
-      );
-    });
+    const match =
+      this.participants?.find((p) => {
+        if (
+          hd.participant?.objectId &&
+          p.objectId === hd.participant.objectId
+        ) {
+          return true;
+        }
+        if (hd.objectId && p.objectId === hd.objectId) {
+          return true;
+        }
+        if (
+          driverId &&
+          (p.driver?.entity_id === driverId || p.driver?.name === driverId)
+        ) {
+          return true;
+        }
+        return false;
+      }) ||
+      (teamId
+        ? this.participants?.find((p) => p.team?.entity_id === teamId)
+        : undefined);
     if (match?.rank && match.rank > 0) return match.rank;
 
     return (
@@ -4537,27 +4551,45 @@ export class DefaultRacedayComponent
   }
 
   getDriverGroupRanking(hd: DriverHeatData): number | undefined {
-    let entityId: string | undefined;
+    if (!hd) return undefined;
+    const d = hd.actualDriver || hd.driver;
+    const driverId = d?.entity_id || d?.name;
+    const teamId = hd.participant?.team?.entity_id;
 
-    if (hd.participant?.team) {
-      entityId = hd.participant.team.entity_id || hd.participant.team.name;
-    } else {
-      const d = hd.actualDriver || hd.driver;
-      entityId = d?.entity_id || d?.name;
-    }
-
-    const entry = this.groupLeaderboardEntries?.find(
-      (e) => e.entityId === entityId,
-    );
+    const entry =
+      (driverId
+        ? this.groupLeaderboardEntries?.find((e) => e.entityId === driverId)
+        : undefined) ||
+      (teamId
+        ? this.groupLeaderboardEntries?.find((e) => e.entityId === teamId)
+        : undefined);
     if (entry && entry.rank > 0) return entry.rank;
 
-    const match = this.groupParticipants?.find((p) => {
-      if (hd.participant?.team) {
-        return p.team?.entity_id === entityId || p.team?.name === entityId;
-      }
-      return p.driver?.entity_id === entityId || p.driver?.name === entityId;
-    });
-    return match?.rank && match.rank > 0 ? match.rank : undefined;
+    const match =
+      this.groupParticipants?.find((p) => {
+        if (
+          hd.participant?.objectId &&
+          p.objectId === hd.participant.objectId
+        ) {
+          return true;
+        }
+        if (hd.objectId && p.objectId === hd.objectId) {
+          return true;
+        }
+        if (
+          driverId &&
+          (p.driver?.entity_id === driverId || p.driver?.name === driverId)
+        ) {
+          return true;
+        }
+        return false;
+      }) ||
+      (teamId
+        ? this.groupParticipants?.find((p) => p.team?.entity_id === teamId)
+        : undefined);
+    if (match?.groupRank && match.groupRank > 0) return match.groupRank;
+    if (match?.rank && match.rank > 0) return match.rank;
+    return (hd as any).groupRank ?? (hd.participant as any)?.groupRank;
   }
 
   protected loadPredictionsForCurrentRace() {
