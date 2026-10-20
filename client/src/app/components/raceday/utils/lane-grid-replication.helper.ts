@@ -12,6 +12,7 @@ import {
 } from "./lane-grid-label.helper";
 import { LaneGridScrollHelper } from "./lane-grid-scroll.helper";
 import { LaneGridStyleHelper } from "./lane-grid-style.helper";
+import { RacedayLayoutUtils } from "./raceday-layout.utils";
 
 export type { GridLabelConfig, GridLabelPosition };
 
@@ -467,10 +468,17 @@ export class LaneGridReplicationHelper {
       session.bindingMode = (bindingModeOverride as any) || "lane";
     }
     if (!session.gridType) {
-      const gridTypeOverride = masterWidgets.find(
-        (m) => m.customSettings?.["gridType"],
-      )?.customSettings?.["gridType"];
-      session.gridType = (gridTypeOverride as any) || "heat";
+      const hasOverall = masterWidgets.some(
+        (m) =>
+          m.customSettings?.["gridType"] === "overall" ||
+          RacedayLayoutUtils.isOverallColumnKey(
+            m.customSettings?.["columnKey"],
+          ),
+      );
+      session.gridType = hasOverall
+        ? "overall"
+        : (masterWidgets.find((m) => m.customSettings?.["gridType"])
+            ?.customSettings?.["gridType"] as any) || "heat";
     }
 
     let currentWidgets = [...allWidgets];
@@ -588,6 +596,17 @@ export class LaneGridReplicationHelper {
     session: LaneGridSession,
   ): AbsoluteWidgetNode[] {
     if (!widgets || !session) return widgets || [];
+    const hasOverall = widgets.some(
+      (w) =>
+        w.customSettings?.["gridId"] === session.gridId &&
+        (w.customSettings?.["gridType"] === "overall" ||
+          RacedayLayoutUtils.isOverallColumnKey(
+            w.customSettings?.["columnKey"],
+          )),
+    );
+    const effectiveGridType = hasOverall
+      ? "overall"
+      : session.gridType || "heat";
     const mapped = widgets.map((w) => {
       if (w.customSettings?.["gridId"] === session.gridId) {
         return {
@@ -597,7 +616,7 @@ export class LaneGridReplicationHelper {
             gridId: session.gridId,
             gridTotalLanes: session.totalLanes,
             gridDirection: session.direction,
-            gridType: session.gridType || "heat",
+            gridType: effectiveGridType,
             gridBounds: { ...session.bounds },
             headerPlacement: session.headerPlacement ?? "individual",
             headerHeight: session.headerHeight ?? 36,

@@ -313,6 +313,84 @@ describe("ui-editor-grid.helper", () => {
       expect(mockComp.activeGridSession.bindingMode).toBe("position");
     });
 
+    it("should resolve gridType as overall when a widget in the grid has gridType overall even if first widget is heat", () => {
+      mockWidgets = [
+        {
+          id: "w-heat",
+          widgetType: "lane-column",
+          x: 100,
+          y: 50,
+          width: 200,
+          height: 100,
+          zIndex: 100,
+          customSettings: {
+            gridId: "overall-grid-1",
+            gridLane: 0,
+            gridTotalLanes: 4,
+            gridDirection: "vertical",
+            gridType: "heat",
+          },
+        },
+        {
+          id: "w-overall",
+          widgetType: "lane-column",
+          x: 300,
+          y: 50,
+          width: 200,
+          height: 100,
+          zIndex: 100,
+          customSettings: {
+            gridId: "overall-grid-1",
+            gridLane: 0,
+            gridTotalLanes: 4,
+            gridDirection: "vertical",
+            gridType: "overall",
+          },
+        },
+      ];
+      mockComp.getLayout.and.returnValue({
+        baseWidth: 1920,
+        baseHeight: 1080,
+        widgets: mockWidgets,
+      });
+
+      handleEditGridTemplate(mockComp, "overall-grid-1", mockUi);
+
+      expect(mockComp.activeGridSession).toBeDefined();
+      expect(mockComp.activeGridSession.gridType).toBe("overall");
+    });
+
+    it("should resolve gridType as overall when a widget has an overall columnKey", () => {
+      mockWidgets = [
+        {
+          id: "w-col",
+          widgetType: "lane-column",
+          x: 100,
+          y: 50,
+          width: 200,
+          height: 100,
+          zIndex: 100,
+          customSettings: {
+            gridId: "overall-grid-2",
+            gridLane: 0,
+            gridTotalLanes: 4,
+            gridDirection: "vertical",
+            columnKey: "overallLapCount",
+          },
+        },
+      ];
+      mockComp.getLayout.and.returnValue({
+        baseWidth: 1920,
+        baseHeight: 1080,
+        widgets: mockWidgets,
+      });
+
+      handleEditGridTemplate(mockComp, "overall-grid-2", mockUi);
+
+      expect(mockComp.activeGridSession).toBeDefined();
+      expect(mockComp.activeGridSession.gridType).toBe("overall");
+    });
+
     it("should ignore invalid or non-existent gridId", () => {
       handleEditGridTemplate(mockComp, "unknown-grid", mockUi);
       expect(mockComp.activeGridSession).toBeNull();
@@ -607,6 +685,27 @@ describe("ui-editor-grid.helper", () => {
       delete mockComp.activeGridSession.gridLabelShowBorder;
       handleSyncActiveGridSessionFromLayout(mockComp);
       expect(mockComp.activeGridSession.gridLabelShowBorder).toBeTrue();
+    });
+
+    it("should synchronize gridType as overall when layout contains overall grid widgets", () => {
+      mockWidgets[0].customSettings = {
+        gridId: "sync-grid-overall",
+        gridLane: 0,
+        gridTotalLanes: 2,
+        gridType: "overall",
+      };
+      mockComp.activeGridSession = {
+        gridId: "sync-grid-overall",
+        bounds: { x: 0, y: 0, width: 200, height: 200 },
+        totalLanes: 2,
+        direction: "vertical",
+        sourceLaneIndex: 0,
+        bindingMode: "lane",
+        gridType: "heat",
+      };
+
+      handleSyncActiveGridSessionFromLayout(mockComp);
+      expect(mockComp.activeGridSession.gridType).toBe("overall");
     });
   });
 

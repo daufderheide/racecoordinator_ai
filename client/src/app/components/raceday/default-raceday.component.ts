@@ -160,6 +160,7 @@ import {
 
 export interface RacedayGridDescriptor {
   gridId: string;
+  gridType?: "heat" | "overall";
   bounds: LaneGridBounds;
   direction: "horizontal" | "vertical";
   headerPlacement: "top" | "individual" | "none";
@@ -4343,13 +4344,15 @@ export class DefaultRacedayComponent
       direction,
       sourceLaneIndex: 0,
       bindingMode: first.customSettings?.["bindingMode"] || "lane",
-      gridType:
-        first.customSettings?.["gridType"] ||
-        (RacedayLayoutUtils.isOverallColumnKey(
-          first.customSettings?.["columnKey"],
-        )
-          ? "overall"
-          : "heat"),
+      gridType: gridWidgets.some(
+        (w: any) =>
+          w.customSettings?.["gridType"] === "overall" ||
+          RacedayLayoutUtils.isOverallColumnKey(
+            w.customSettings?.["columnKey"],
+          ),
+      )
+        ? "overall"
+        : first.customSettings?.["gridType"] || "heat",
       headerPlacement,
       headerHeight,
       gridLabelPosition: labelPosition,
@@ -4421,21 +4424,37 @@ export class DefaultRacedayComponent
     let headerWidgets: AbsoluteWidgetNode[] = [];
     let cellWidgets: AbsoluteWidgetNode[] = [];
 
+    const normalizedGridWidgets =
+      sessionLike.gridType === "overall"
+        ? allGridWidgets.map((w) =>
+            w.customSettings?.["gridType"] === "overall"
+              ? w
+              : {
+                  ...w,
+                  customSettings: {
+                    ...(w.customSettings || {}),
+                    gridType: "overall",
+                  },
+                },
+          )
+        : allGridWidgets;
+
     if (headerPlacement === "top" && isVertical) {
-      headerWidgets = allGridWidgets.filter(
+      headerWidgets = normalizedGridWidgets.filter(
         (w) => w.customSettings?.["isHeaderWidget"],
       );
-      cellWidgets = allGridWidgets.filter(
+      cellWidgets = normalizedGridWidgets.filter(
         (w) => !w.customSettings?.["isHeaderWidget"],
       );
     } else {
-      cellWidgets = allGridWidgets;
+      cellWidgets = normalizedGridWidgets;
     }
 
     const zIndex = Math.max(1, ...gridWidgets.map((w: any) => w.zIndex || 10));
 
     return {
       gridId,
+      gridType: sessionLike.gridType,
       bounds,
       direction,
       headerPlacement,

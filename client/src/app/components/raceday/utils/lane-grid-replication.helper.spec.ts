@@ -644,6 +644,69 @@ describe("LaneGridReplicationHelper", () => {
     expect(updated[0].customSettings?.["gridType"]).toBe("overall");
   });
 
+  it("should preserve gridType as overall in bakeGrid when widget in grid is overall", () => {
+    const overallWidgets: AbsoluteWidgetNode[] = [
+      {
+        id: "w-pos",
+        widgetType: "lane-column",
+        x: 100,
+        y: 50,
+        width: 200,
+        height: 100,
+        zIndex: 100,
+        customSettings: {
+          gridId: "test-grid-overall",
+          gridType: "overall",
+        },
+      },
+    ];
+    const sessionWithoutType: LaneGridSession = {
+      gridId: "test-grid-overall",
+      bounds: { x: 100, y: 50, width: 800, height: 400 },
+      totalLanes: 4,
+      direction: "vertical",
+      sourceLaneIndex: 0,
+      bindingMode: "lane",
+    };
+    const baked = LaneGridReplicationHelper.bakeGrid(
+      overallWidgets,
+      sessionWithoutType,
+    );
+    expect(baked[0].customSettings?.["gridType"]).toBe("overall");
+  });
+
+  it("should resolve session.gridType as overall in syncAllMasterWidgetsToLanes when a master widget has gridType overall", () => {
+    const masterWidgets: AbsoluteWidgetNode[] = [
+      {
+        id: "m-1",
+        widgetType: "lane-column",
+        x: 100,
+        y: 50,
+        width: 200,
+        height: 100,
+        zIndex: 100,
+        customSettings: {
+          gridId: "sync-overall-grid",
+          gridLane: 0,
+          gridType: "overall",
+        },
+      },
+    ];
+    const sessionWithoutType: LaneGridSession = {
+      gridId: "sync-overall-grid",
+      bounds: { x: 100, y: 50, width: 800, height: 400 },
+      totalLanes: 2,
+      direction: "vertical",
+      sourceLaneIndex: 0,
+      bindingMode: "lane",
+    };
+    LaneGridReplicationHelper.syncAllMasterWidgetsToLanes(
+      sessionWithoutType,
+      masterWidgets,
+    );
+    expect(sessionWithoutType.gridType).toBe("overall");
+  });
+
   describe("calculateAvailableGridBounds", () => {
     it("should expand to full canvas when no obstacles exist", () => {
       const source: AbsoluteWidgetNode[] = [

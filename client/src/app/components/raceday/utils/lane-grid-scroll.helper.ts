@@ -20,72 +20,72 @@ export class LaneGridScrollHelper {
     const gridTotalLanes =
       Number(first.customSettings?.["gridTotalLanes"]) || 4;
     const mode = first.customSettings?.["bindingMode"] || "lane";
-    const explicitGridType =
-      gridWidgets.find((w) => w.customSettings?.["gridType"])?.customSettings?.[
-        "gridType"
-      ] || first.customSettings?.["gridType"];
+    const hasOverall = gridWidgets.some(
+      (w) =>
+        w.customSettings?.["gridType"] === "overall" ||
+        RacedayLayoutUtils.isOverallColumnKey(w.customSettings?.["columnKey"]),
+    );
+    const explicitGridType = hasOverall
+      ? "overall"
+      : gridWidgets.find((w) => w.customSettings?.["gridType"])
+          ?.customSettings?.["gridType"] || first.customSettings?.["gridType"];
 
     let count = 0;
-    if (explicitGridType === "heat") {
+    if (explicitGridType === "overall") {
+      count =
+        parent?.race?.standings?.length ||
+        parent?.raceStandings?.length ||
+        parent?.participants?.length ||
+        parent?.race?.participants?.length ||
+        parent?.raceParticipants?.length ||
+        0;
+    } else if (explicitGridType === "heat") {
       const heatCount =
-        parent?.heat?.heatDrivers?.length ??
-        parent?.heatDrivers?.length ??
-        parent?.sortedHeatDrivers?.length ??
-        parent?.heat?.standings?.length ??
-        parent?.heatStandings?.length ??
+        parent?.heat?.heatDrivers?.length ||
+        parent?.heatDrivers?.length ||
+        parent?.sortedHeatDrivers?.length ||
+        parent?.heat?.standings?.length ||
+        parent?.heatStandings?.length ||
         0;
       const trackCount =
-        parent?.track?.lanes?.length ??
-        parent?.currentTrack?.lanes?.length ??
-        parent?.race?.track?.lanes?.length ??
-        parent?.maxTrackLanes ??
+        parent?.track?.lanes?.length ||
+        parent?.currentTrack?.lanes?.length ||
+        parent?.race?.track?.lanes?.length ||
+        parent?.maxTrackLanes ||
         0;
       count = Math.max(heatCount, trackCount);
-    } else if (
-      explicitGridType === "overall" ||
-      gridWidgets.some((w) =>
-        RacedayLayoutUtils.isOverallColumnKey(w.customSettings?.["columnKey"]),
-      )
-    ) {
-      count =
-        parent?.race?.standings?.length ??
-        parent?.raceStandings?.length ??
-        parent?.participants?.length ??
-        parent?.race?.participants?.length ??
-        parent?.raceParticipants?.length ??
-        0;
     } else {
       if (mode === "lane") {
         count =
-          parent?.track?.lanes?.length ??
-          parent?.currentTrack?.lanes?.length ??
-          parent?.race?.track?.lanes?.length ??
-          parent?.maxTrackLanes ??
+          parent?.track?.lanes?.length ||
+          parent?.currentTrack?.lanes?.length ||
+          parent?.race?.track?.lanes?.length ||
+          parent?.maxTrackLanes ||
           0;
       } else if (mode === "position") {
         count =
-          parent?.heat?.standings?.length ??
-          parent?.heatStandings?.length ??
-          parent?.heat?.heatDrivers?.length ??
-          parent?.heatDrivers?.length ??
-          parent?.track?.lanes?.length ??
-          parent?.currentTrack?.lanes?.length ??
-          parent?.race?.track?.lanes?.length ??
-          parent?.maxTrackLanes ??
+          parent?.heat?.standings?.length ||
+          parent?.heatStandings?.length ||
+          parent?.heat?.heatDrivers?.length ||
+          parent?.heatDrivers?.length ||
+          parent?.track?.lanes?.length ||
+          parent?.currentTrack?.lanes?.length ||
+          parent?.race?.track?.lanes?.length ||
+          parent?.maxTrackLanes ||
           0;
       } else if (mode === "overallPosition") {
         count =
-          parent?.race?.standings?.length ??
-          parent?.raceStandings?.length ??
-          parent?.participants?.length ??
-          parent?.race?.participants?.length ??
-          parent?.raceParticipants?.length ??
+          parent?.race?.standings?.length ||
+          parent?.raceStandings?.length ||
+          parent?.participants?.length ||
+          parent?.race?.participants?.length ||
+          parent?.raceParticipants?.length ||
           0;
       } else if (mode === "seed") {
         count =
-          parent?.race?.participants?.length ??
-          parent?.participants?.length ??
-          parent?.raceParticipants?.length ??
+          parent?.race?.participants?.length ||
+          parent?.participants?.length ||
+          parent?.raceParticipants?.length ||
           0;
       }
     }
@@ -130,10 +130,15 @@ export class LaneGridScrollHelper {
       return lane === 0;
     });
 
-    const explicitGridType =
-      gridWidgets.find((w) => w.customSettings?.["gridType"])?.customSettings?.[
-        "gridType"
-      ] || first.customSettings?.["gridType"];
+    const hasOverall = gridWidgets.some(
+      (w) =>
+        w.customSettings?.["gridType"] === "overall" ||
+        RacedayLayoutUtils.isOverallColumnKey(w.customSettings?.["columnKey"]),
+    );
+    const explicitGridType = hasOverall
+      ? "overall"
+      : gridWidgets.find((w) => w.customSettings?.["gridType"])
+          ?.customSettings?.["gridType"] || first.customSettings?.["gridType"];
 
     const sessionLike: LaneGridSession = {
       gridId,

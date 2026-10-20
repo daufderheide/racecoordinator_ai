@@ -405,7 +405,10 @@ export class LaneColumnGridHelper {
     onFieldChange: () => void,
   ): void {
     if (!currentSettings["gridType"]) {
-      currentSettings["gridType"] = this.getGridType(currentSettings);
+      currentSettings["gridType"] =
+        val === "overallPosition"
+          ? "overall"
+          : this.getGridType(currentSettings);
     }
     currentSettings["bindingMode"] = val;
     currentSettings["_gridSortOrderChanged"] = true;

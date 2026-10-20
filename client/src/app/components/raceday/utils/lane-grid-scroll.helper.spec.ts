@@ -173,6 +173,34 @@ describe("LaneGridScrollHelper", () => {
         ),
       ).toBe(6);
     });
+
+    it("should count overall race participants when any widget has gridType overall even if first widget is heat", () => {
+      const mixedWidgets = [
+        {
+          ...widgets[0],
+          customSettings: {
+            ...widgets[0].customSettings,
+            gridType: "heat",
+            gridTotalLanes: 2,
+          },
+        },
+        {
+          ...widgets[1],
+          customSettings: {
+            ...widgets[1].customSettings,
+            gridType: "overall",
+            gridTotalLanes: 2,
+          },
+        },
+      ];
+      const parent = {
+        participants: [{}, {}, {}, {}, {}, {}], // 6 overall drivers
+        track: { lanes: [{}, {}] }, // 2 lanes
+      };
+      expect(
+        LaneGridScrollHelper.getGridDataCount(mixedWidgets, gridId, parent),
+      ).toBe(6);
+    });
   });
 
   describe("generateScrollableGridWidgets", () => {
@@ -276,6 +304,56 @@ describe("LaneGridScrollHelper", () => {
       expect(result.length).toBe(2);
       expect(result[1].y).toBe(200);
       expect(result[1].height).toBe(160);
+    });
+
+    it("should set explicitGridType to overall on generated widgets when any widget has gridType overall", () => {
+      const mixedWidgets: AbsoluteWidgetNode[] = [
+        {
+          id: "m-0",
+          widgetType: "lane-column",
+          x: 100,
+          y: 100,
+          width: 200,
+          height: 50,
+          zIndex: 5,
+          customSettings: {
+            gridId,
+            gridLane: 0,
+            targetIndex: 0,
+            gridTotalLanes: 2,
+            gridDirection: "vertical",
+            gridType: "heat",
+          },
+        },
+        {
+          id: "m-1",
+          widgetType: "lane-column",
+          x: 300,
+          y: 100,
+          width: 200,
+          height: 50,
+          zIndex: 5,
+          customSettings: {
+            gridId,
+            gridLane: 0,
+            targetIndex: 0,
+            gridTotalLanes: 2,
+            gridDirection: "vertical",
+            gridType: "overall",
+          },
+        },
+      ];
+      const result = LaneGridScrollHelper.generateScrollableGridWidgets(
+        mixedWidgets,
+        gridId,
+        4,
+      );
+      const generatedRow = result.filter(
+        (w) => w.customSettings?.["gridLane"] === 2,
+      );
+      expect(generatedRow.length).toBe(2);
+      expect(generatedRow[0].customSettings?.["gridType"]).toBe("overall");
+      expect(generatedRow[1].customSettings?.["gridType"]).toBe("overall");
     });
   });
 });

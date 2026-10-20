@@ -297,5 +297,21 @@ describe("LaneColumnGridHelper", () => {
         "heat",
       );
     });
+
+    it("should set gridType to overall when sort order is overallPosition and gridType is unset", () => {
+      const unsetSettings: any = {};
+      let orderChanged = false;
+      LaneColumnGridHelper.setGridSortOrder(
+        unsetSettings,
+        "overallPosition",
+        () => {
+          orderChanged = true;
+        },
+      );
+      expect(unsetSettings.bindingMode).toBe("overallPosition");
+      expect(unsetSettings.gridType).toBe("overall");
+      expect(unsetSettings._gridSortOrderChanged).toBeTrue();
+      expect(orderChanged).toBeTrue();
+    });
   });
 });

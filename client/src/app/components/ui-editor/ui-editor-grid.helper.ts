@@ -5,6 +5,7 @@ import {
   LaneGridReplicationHelper,
   LaneGridSession,
 } from "@app/components/raceday/utils/lane-grid-replication.helper";
+import { RacedayLayoutUtils } from "@app/components/raceday/utils/raceday-layout.utils";
 import { CustomUI } from "@app/models/custom-ui";
 
 import { updateLayoutOnModel } from "./ui-editor-widget.helper";
@@ -293,11 +294,14 @@ function buildEditGridSession(
   const headerHeight = Number(first.customSettings?.["headerHeight"]) || 36;
   const linkColumns = first.customSettings?.["linkColumns"] !== false;
 
-  const gridType =
-    first.customSettings?.["gridType"] ||
-    (gridWidgets.some((w: any) => w.customSettings?.["gridType"] === "overall")
-      ? "overall"
-      : "heat");
+  const hasOverallWidget = gridWidgets.some(
+    (w: any) =>
+      w.customSettings?.["gridType"] === "overall" ||
+      RacedayLayoutUtils.isOverallColumnKey(w.customSettings?.["columnKey"]),
+  );
+  const gridType = hasOverallWidget
+    ? "overall"
+    : first.customSettings?.["gridType"] || "heat";
 
   return {
     gridId,
@@ -619,12 +623,23 @@ export function handleSyncActiveGridSessionFromLayout(comp: any): void {
       ? "position"
       : cs["bindingMode"] || comp.activeGridSession.bindingMode;
 
+    const hasOverallWidget = gridWidgets.some(
+      (w: any) =>
+        w.customSettings?.["gridType"] === "overall" ||
+        RacedayLayoutUtils.isOverallColumnKey(w.customSettings?.["columnKey"]),
+    );
+    const gridType =
+      comp.activeGridSession.gridType === "overall" || hasOverallWidget
+        ? "overall"
+        : cs["gridType"] || comp.activeGridSession.gridType || "heat";
+
     comp.activeGridSession = {
       ...comp.activeGridSession,
       bounds: bounds || comp.activeGridSession.bounds,
       totalLanes,
       direction,
       bindingMode,
+      gridType,
       headerPlacement:
         cs["headerPlacement"] || comp.activeGridSession.headerPlacement,
       headerHeight:

@@ -12681,5 +12681,55 @@ describe("DefaultRacedayComponent", () => {
       expect(grids3).not.toBe(grids1);
       expect(grids3.length).toBe(1);
     });
+
+    it("should resolve gridType as overall in grid descriptor when any grid widget is overall", () => {
+      const widget1 = {
+        id: "grid-w1",
+        widgetType: "lane-column",
+        x: 100,
+        y: 100,
+        width: 200,
+        height: 50,
+        customSettings: {
+          gridId: "overall-desc-grid",
+          gridLane: 0,
+          gridTotalLanes: 2,
+          gridDirection: "vertical",
+          gridType: "heat",
+          columnKey: "driver.name",
+        },
+      } as any;
+      const widget2 = {
+        id: "grid-w2",
+        widgetType: "lane-column",
+        x: 300,
+        y: 100,
+        width: 200,
+        height: 50,
+        customSettings: {
+          gridId: "overall-desc-grid",
+          gridLane: 0,
+          gridTotalLanes: 2,
+          gridDirection: "vertical",
+          gridType: "overall",
+          columnKey: "overallLapCount",
+        },
+      } as any;
+
+      (component as any).layout = { widgets: [widget1, widget2] };
+      (component as any).track = { lanes: [{}, {}] };
+      (component as any).race = {
+        track: (component as any).track,
+        participants: [{}, {}, {}, {}],
+      } as any;
+
+      const grids = component.getGrids();
+      expect(grids.length).toBe(1);
+      expect(grids[0].gridType).toBe("overall");
+      expect(grids[0].dataCount).toBe(4);
+      expect(grids[0].cellWidgets[0].customSettings?.["gridType"]).toBe(
+        "overall",
+      );
+    });
   });
 });
