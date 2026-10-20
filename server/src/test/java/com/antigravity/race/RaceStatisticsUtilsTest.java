@@ -261,14 +261,15 @@ public class RaceStatisticsUtilsTest {
     try (org.apache.poi.xssf.usermodel.XSSFWorkbook resultWb =
         new org.apache.poi.xssf.usermodel.XSSFWorkbook(
             new java.io.ByteArrayInputStream(outBytes))) {
-      assertEquals(7, resultWb.getNumberOfSheets());
+      assertEquals(8, resultWb.getNumberOfSheets());
       assertEquals("Race Information", resultWb.getSheetName(0));
       assertEquals("Heat List", resultWb.getSheetName(1));
       assertEquals("Overall Standings", resultWb.getSheetName(2));
-      assertEquals("Lap Data", resultWb.getSheetName(3));
-      assertEquals("Heat 1", resultWb.getSheetName(4));
-      assertEquals("Lotus 98T #12", resultWb.getSheetName(5));
-      assertEquals("Williams FW11", resultWb.getSheetName(6));
+      assertEquals("Fastest Lap Times", resultWb.getSheetName(3));
+      assertEquals("Lap Data", resultWb.getSheetName(4));
+      assertEquals("Heat 1", resultWb.getSheetName(5));
+      assertEquals("Lotus 98T #12", resultWb.getSheetName(6));
+      assertEquals("Williams FW11", resultWb.getSheetName(7));
 
       for (int i = 0; i < resultWb.getNumberOfSheets(); i++) {
         org.apache.poi.xssf.usermodel.XSSFSheet sheet = resultWb.getSheetAt(i);
@@ -363,6 +364,10 @@ public class RaceStatisticsUtilsTest {
         new org.apache.poi.xssf.usermodel.XSSFWorkbook(rawIs)) {
       assertEquals("Heat List", wb.getSheetName(2));
       assertEquals("Overall Standings", wb.getSheetName(3));
+      assertEquals("Heat Template", wb.getSheetName(4));
+      assertEquals("Fastest Lap Times", wb.getSheetName(5));
+      assertEquals("Driver Template", wb.getSheetName(6));
+      assertEquals("Lap Data", wb.getSheetName(7));
 
       org.apache.poi.ss.usermodel.Sheet heatListSheet = wb.getSheetAt(2);
       org.apache.poi.ss.usermodel.Row row3 = heatListSheet.getRow(3);
@@ -490,12 +495,21 @@ public class RaceStatisticsUtilsTest {
     try (org.apache.poi.xssf.usermodel.XSSFWorkbook resultWb =
         new org.apache.poi.xssf.usermodel.XSSFWorkbook(
             new java.io.ByteArrayInputStream(outBytes))) {
-      org.apache.poi.ss.usermodel.Sheet standingsSheet = resultWb.getSheetAt(2);
+      org.apache.poi.ss.usermodel.Sheet standingsSheet = resultWb.getSheet("Overall Standings");
+      assertNotNull(standingsSheet);
       org.apache.poi.ss.usermodel.Row headerRow = standingsSheet.getRow(3);
       assertEquals("Lane 1 Laps", headerRow.getCell(4).getStringCellValue());
       assertEquals("Lane 2 Laps", headerRow.getCell(5).getStringCellValue());
       assertEquals("Lane 3 Laps", headerRow.getCell(6).getStringCellValue());
       assertEquals("Lane 4 Laps", headerRow.getCell(7).getStringCellValue());
+
+      org.apache.poi.ss.usermodel.Sheet fastestLapSheet = resultWb.getSheet("Fastest Lap Times");
+      assertNotNull(fastestLapSheet);
+      org.apache.poi.ss.usermodel.Row fastHdrRow = fastestLapSheet.getRow(2);
+      assertEquals("Lane 1", fastHdrRow.getCell(1).getStringCellValue());
+      assertEquals("Lane 2", fastHdrRow.getCell(2).getStringCellValue());
+      assertEquals("Lane 3", fastHdrRow.getCell(3).getStringCellValue());
+      assertEquals("Lane 4", fastHdrRow.getCell(4).getStringCellValue());
     }
   }
 
@@ -554,7 +568,7 @@ public class RaceStatisticsUtilsTest {
     try (org.apache.poi.xssf.usermodel.XSSFWorkbook resultWb =
         new org.apache.poi.xssf.usermodel.XSSFWorkbook(
             new java.io.ByteArrayInputStream(outBytes))) {
-      assertEquals(8, resultWb.getNumberOfSheets());
+      assertEquals(9, resultWb.getNumberOfSheets());
     }
   }
 

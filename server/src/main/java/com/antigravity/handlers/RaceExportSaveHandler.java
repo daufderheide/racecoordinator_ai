@@ -9,6 +9,7 @@ import com.antigravity.models.Track;
 import com.antigravity.race.ClientSubscriptionManager;
 import com.antigravity.race.DriverAnalysisSummary;
 import com.antigravity.race.DriverHeatData;
+import com.antigravity.race.FastestLapsSummary;
 import com.antigravity.race.Heat;
 import com.antigravity.race.OverallStandings;
 import com.antigravity.race.Race;
@@ -90,7 +91,8 @@ public class RaceExportSaveHandler {
     return seasonRepo.findByEntityId(race.getSeasonEntityId());
   }
 
-  private byte[] postProcessExportWorkbook(byte[] rawBytes, Race race) {
+  private byte[] postProcessExportWorkbook(
+      byte[] rawBytes, Race race, List<String> heatSheetNames, List<String> driverSheetNames) {
     try (org.apache.poi.xssf.usermodel.XSSFWorkbook outputWb =
         new org.apache.poi.xssf.usermodel.XSSFWorkbook(new ByteArrayInputStream(rawBytes))) {
       RaceStatisticsUtils.applyPostJxlsLaneColors(outputWb, race);
@@ -100,6 +102,58 @@ public class RaceExportSaveHandler {
       RaceStatisticsUtils.enforceMaxThreeDecimalPlaces(outputWb);
       RaceStatisticsUtils.leftJustifyAllCells(outputWb);
       RaceStatisticsUtils.autoSizeAllColumns(outputWb);
+
+      int fastestLapIdx = outputWb.getSheetIndex("Fastest Lap Times");
+      if (fastestLapIdx == -1) {
+        fastestLapIdx = outputWb.getSheetIndex("Fastest Lap");
+      }
+      if (fastestLapIdx != -1) {
+        String fastestLapName = outputWb.getSheetName(fastestLapIdx);
+
+        int lastHeatIdx = -1;
+        for (int i = 0; i < outputWb.getNumberOfSheets(); i++) {
+          if (i == fastestLapIdx) {
+            continue;
+          }
+          String sName = outputWb.getSheetName(i);
+          if (heatSheetNames != null && heatSheetNames.contains(sName)) {
+            lastHeatIdx = Math.max(lastHeatIdx, i);
+          } else if (sName.matches("(?i)^Heat\\s+\\d+$")) {
+            lastHeatIdx = Math.max(lastHeatIdx, i);
+          }
+        }
+
+        int firstDriverIdx = -1;
+        for (int i = 0; i < outputWb.getNumberOfSheets(); i++) {
+          if (i == fastestLapIdx) {
+            continue;
+          }
+          String sName = outputWb.getSheetName(i);
+          if (driverSheetNames != null && driverSheetNames.contains(sName)) {
+            firstDriverIdx = i;
+            break;
+          } else if (firstDriverIdx == -1 && sName.matches("(?i)^Driver\\s+\\d+$")) {
+            firstDriverIdx = i;
+          }
+        }
+
+        if (lastHeatIdx != -1) {
+          int targetPos = (fastestLapIdx < lastHeatIdx) ? lastHeatIdx : lastHeatIdx + 1;
+          targetPos = Math.max(0, Math.min(targetPos, outputWb.getNumberOfSheets() - 1));
+          outputWb.setSheetOrder(fastestLapName, targetPos);
+        } else if (firstDriverIdx != -1) {
+          int targetPos = (fastestLapIdx < firstDriverIdx) ? firstDriverIdx - 1 : firstDriverIdx;
+          targetPos = Math.max(0, Math.min(targetPos, outputWb.getNumberOfSheets() - 1));
+          outputWb.setSheetOrder(fastestLapName, targetPos);
+        } else {
+          int heatListIdx = outputWb.getSheetIndex("Heat List");
+          if (heatListIdx != -1) {
+            int targetPos = (fastestLapIdx < heatListIdx) ? heatListIdx : heatListIdx + 1;
+            targetPos = Math.max(0, Math.min(targetPos, outputWb.getNumberOfSheets() - 1));
+            outputWb.setSheetOrder(fastestLapName, targetPos);
+          }
+        }
+      }
 
       int lapDataIdx = outputWb.getSheetIndex("Lap Data");
       if (lapDataIdx != -1) {
@@ -264,6 +318,9 @@ public class RaceExportSaveHandler {
   private byte[] renderXlsExport(Race race, InputStream is) throws Exception {
     ByteArrayOutputStream os = new ByteArrayOutputStream();
 
+    List<String> heatSheetNames = new ArrayList<>();
+    List<String> driverSheetNames = new ArrayList<>();
+
     synchronized (race) {
       List<RaceParticipant> driversCopy = new ArrayList<>();
       for (RaceParticipant rp : race.getDrivers()) {
@@ -285,7 +342,6 @@ public class RaceExportSaveHandler {
       jxlsContext.putVar("standings", driversCopy);
 
       List<Heat> runHeats = new ArrayList<>();
-      List<String> heatSheetNames = new ArrayList<>();
       for (Heat h : race.getHeats()) {
         if (h.isStarted()
             || race.getCurrentHeat() != null
@@ -309,7 +365,6 @@ public class RaceExportSaveHandler {
       jxlsContext.putVar("allHeats", allHeats);
 
       List<DriverAnalysisSummary> driverSummaries = new ArrayList<>();
-      List<String> driverSheetNames = new ArrayList<>();
       RaceStatisticsUtils.prepareExportData(
           race, driversCopy, runHeats, driverSummaries, driverSheetNames);
 
@@ -326,12 +381,15 @@ public class RaceExportSaveHandler {
       jxlsContext.putVar("laps", buildExportLapData(runHeats));
 
       List<Integer> activeLanes = RaceStatisticsUtils.determineActiveLanes(race, runHeats);
+      FastestLapsSummary fastestLaps = FastestLapsSummary.from(race, runHeats, activeLanes);
+      jxlsContext.putVar("fastestLaps", fastestLaps);
+
       InputStream sanitizedIs = RaceStatisticsUtils.sanitizeWorkbookTemplate(is, activeLanes, race);
       org.jxls.util.JxlsHelper.getInstance().processTemplate(sanitizedIs, os, jxlsContext);
     }
 
     byte[] rawBytes = os.toByteArray();
-    return postProcessExportWorkbook(rawBytes, race);
+    return postProcessExportWorkbook(rawBytes, race, heatSheetNames, driverSheetNames);
   }
 
   @SuppressWarnings("unchecked")

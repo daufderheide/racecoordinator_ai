@@ -101,6 +101,7 @@ Available on the `Overall Standings` sheet. Each item is a `RaceParticipant`.
 | `${driver.gapLeader}` | String | `+1.240` / `+2 Laps` | Gap to the overall race leader |
 | `${driver.gapPosition}` | String | `+0.410` | Gap to the car in the next position ahead |
 | `${driver.laneLaps[0]}` | Decimal | `12.0` | Total laps completed on **Lane 1** (0-indexed: `[0]` = Lane 1) |
+| `${driver.laneFastestLaps[0]}` | Decimal | `3.912` | Fastest single lap time recorded on **Lane 1** (0-indexed: `[0]` = Lane 1) |
 | `${driver.laneLaps[1]}` | Decimal | `11.5` | Total laps completed on **Lane 2** |
 | `${driver.laneLaps[2]}` | Decimal | `11.2` | Total laps completed on **Lane 3** |
 | `${driver.laneLaps[3]}` | Decimal | `11.12` | Total laps completed on **Lane 4** |
@@ -240,7 +241,24 @@ Available on the `Race Information` sheet.
 
 ---
 
-## Dissection of the 7 Default Template Sheets
+### 8. Fastest Laps & Track Records (`var="fastestLaps"`)
+
+Available on the `Fastest Lap Times` sheet. Provides overall track records, per-lane track records, and current race best laps:
+
+| Variable Expression | Type | Example | Description |
+| :--- | :--- | :--- | :--- |
+| `${fastestLaps.overallRecordLapName}` | String | `David` | Driver name holding the overall track record fastest lap |
+| `${fastestLaps.overallRecordLapTime}` | Decimal | `5.237` | Overall track record fastest lap time in seconds |
+| `${fastestLaps.overallRecordLapDate}` | String | `2025-06-28T16:15:27` | ISO timestamp when the overall track record was set |
+| `${fastestLaps.recordLapNames[0]}` | String | `Steve A` | Driver name holding the track record on **Lane 1** (0-indexed: `[0]` = Lane 1) |
+| `${fastestLaps.recordLapTimes[0]}` | Decimal | `5.239` | Track record fastest lap time on **Lane 1** in seconds |
+| `${fastestLaps.recordLapDates[0]}` | String | `2025-04-26T16:00:06` | ISO timestamp when the track record on **Lane 1** was set |
+| `${fastestLaps.bestLapNames[0]}` | String | `David` | Driver name holding the best lap in this race on **Lane 1** |
+| `${fastestLaps.bestLapTimes[0]}` | Decimal | `6.737` | Best lap time recorded in this race on **Lane 1** in seconds |
+
+---
+
+## Dissection of the 8 Default Template Sheets
 
 Here is how each sheet in `race_export_template.xlsx` works under the hood:
 
@@ -259,12 +277,21 @@ Here is how each sheet in `race_export_template.xlsx` works under the hood:
 - **Cell `A5` Note**: `jx:each(items="allHeats", var="heat", lastCell="C5")`
 - **Explanation**: Uses `${heat.getDriverNameOnLane(0)}`, `${heat.getDriverNameOnLane(1)}`, etc., to build a grid of which driver is on which lane for every scheduled heat. Race Coordinator AI dynamically inserts additional lane columns based on how many lanes your track has.
 
-### 4. `Overall Standings`
+### 4. `Fastest Lap Times`
+- **Cell `A1` Note**: `jx:area(lastCell="H12")`
+- **Cell `A4` Note**: `jx:each(items="standings", var="driver", lastCell="G4")`
+- **Explanation**: Placed immediately after `Heat List`, this sheet displays:
+  - **Table 1 (Driver Fastest Laps)**: Each driver's personal fastest lap time across each active lane (`${driver.laneFastestLaps[0]}`, etc.) and overall best lap (`${driver.bestLapTime}`).
+  - **Table 2 (Track Records)**: Track record holder name, time, and date per lane (`${fastestLaps.recordLapNames[0]}`, `${fastestLaps.recordLapTimes[0]}`, `${fastestLaps.recordLapDates[0]}`) alongside the overall track record (`${fastestLaps.overallRecordLapName}`, `${fastestLaps.overallRecordLapTime}`, `${fastestLaps.overallRecordLapDate}`).
+  - **Table 3 (Current Race Best Laps)**: The fastest driver and lap time achieved in this race per lane (`${fastestLaps.bestLapNames[0]}`, `${fastestLaps.bestLapTimes[0]}`).
+- **Lane Coloring**: Race Coordinator AI dynamically applies your track's configured lane colors (e.g. Red, Blue, Green, Yellow) to headers and cells.
+
+### 5. `Overall Standings`
 - **Cell `A1` Note**: `jx:area(lastCell="P5")`
 - **Cell `A5` Note**: `jx:each(items="standings", var="driver", lastCell="P5")`
 - **Explanation**: The main leaderboard. Columns `E` and `F` reference `${driver.laneLaps[0]}` and `${driver.laneLaps[1]}`. When your track has 4, 6, or 8 lanes, Race Coordinator AI automatically expands columns and copies cell styles to accommodate all lanes.
 
-### 5. `Heat Template` (Dual-Table Sheet)
+### 6. `Heat Template` (Dual-Table Sheet)
 - **Cell `A1` Note**: `jx:area(lastCell="I11")` and `jx:each(items="heats", var="heat", multisheet="heatSheetNames", lastCell="I11")`
 - **Table 1 (Driver Summaries, Rows 4–5)**:
   - Cell `A5` Note: `jx:each(items="heat.drivers", var="heatDriver", lastCell="I5")`
@@ -277,12 +304,12 @@ Here is how each sheet in `race_export_template.xlsx` works under the hood:
   - Cell `B11` Note: `jx:each(items="lap.values", var="val", direction="RIGHT", lastCell="B11")` (expands lap & segment times horizontally across the columns).
 - **Lane Coloring**: Race Coordinator AI automatically detects lane numbers and applies your track's configured lane colors (e.g. Red, White, Blue, Yellow) to both Table 1 rows and Table 2 columns.
 
-### 6. `Driver Template`
+### 7. `Driver Template`
 - **Cell `A1` Note**: `jx:area(lastCell="B16")` and `jx:each(items="driverSummaries", var="ds", multisheet="driverSheetNames", lastCell="B16")`
 - **Cell `B4` Note**: `jx:each(items="ds.laneStats", var="ls", direction="RIGHT", lastCell="B16")`
 - **Explanation**: Clones one sheet per driver. Loops horizontally across columns `B`, `C`, `D`... to place each lane's statistics side-by-side.
 
-### 7. `Lap Data`
+### 8. `Lap Data`
 - **Cell `A1` Note**: `jx:area(lastCell="H2")`
 - **Cell `A2` Note**: `jx:each(items="laps", var="lap", lastCell="H2")`
 - **Cell `H2` Note**: `jx:each(items="lap.segments", var="segment", direction="RIGHT", lastCell="H2")`

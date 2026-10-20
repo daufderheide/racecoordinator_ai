@@ -417,6 +417,23 @@ public class RaceParticipant extends ServerToClientObject
     this.laneLaps = laneLaps != null ? laneLaps : new ArrayList<>();
   }
 
+  private List<Double> laneFastestLaps = new ArrayList<>();
+
+  public List<Double> getLaneFastestLaps() {
+    return laneFastestLaps;
+  }
+
+  public void setLaneFastestLaps(List<Double> laneFastestLaps) {
+    this.laneFastestLaps = laneFastestLaps != null ? laneFastestLaps : new ArrayList<>();
+  }
+
+  public Double getLaneFastestLap(int laneIndex) {
+    if (laneIndex >= 0 && laneIndex < laneFastestLaps.size()) {
+      return laneFastestLaps.get(laneIndex);
+    }
+    return null;
+  }
+
   private double positionPoints;
   private double overallBonusPoints;
   private double heatPositionPoints;
