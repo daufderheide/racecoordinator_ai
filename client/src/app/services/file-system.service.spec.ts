@@ -138,6 +138,82 @@ describe("FileSystemService", () => {
         },
       );
     });
+
+    it("should get file size before creating writable stream", async () => {
+      const callOrder: string[] = [];
+      mockFileHandle.getFile.and.callFake(() => {
+        callOrder.push("getFile");
+        return Promise.resolve({
+          text: () => Promise.resolve("test"),
+          size: 4,
+        });
+      });
+      mockFileHandle.createWritable.and.callFake(() => {
+        callOrder.push("createWritable");
+        return Promise.resolve({
+          seek: jasmine.createSpy("seek"),
+          write: jasmine.createSpy("write"),
+          close: jasmine.createSpy("close"),
+        });
+      });
+
+      await service.appendToFile("log.txt", "more content");
+
+      expect(callOrder).toEqual(["getFile", "createWritable"]);
+    });
+
+    it("should recover from InvalidStateError by reading existing content and rewriting clean", async () => {
+      const cleanWritable = {
+        seek: jasmine.createSpy("seek"),
+        write: jasmine.createSpy("write"),
+        close: jasmine.createSpy("close").and.resolveTo(),
+      };
+
+      let attempt = 0;
+      mockFileHandle.createWritable.and.callFake(
+        (opts?: { keepExistingData?: boolean }) => {
+          attempt++;
+          if (attempt === 1) {
+            // First attempt with keepExistingData: true throws InvalidStateError
+            const err = new Error(
+              "An operation that depends on state cached in an interface object was made but the state had changed since it was read from disk.",
+            );
+            err.name = "InvalidStateError";
+            return Promise.reject(err);
+          }
+          // Recovery attempt with keepExistingData: false succeeds
+          expect(opts?.keepExistingData).toBeFalse();
+          return Promise.resolve(cleanWritable);
+        },
+      );
+
+      mockFileHandle.getFile.and.returnValue(
+        Promise.resolve({
+          text: () => Promise.resolve("previous content\n"),
+          size: 17,
+        }),
+      );
+
+      await service.appendToFile("race_coordinator_client.log", "new line\n");
+
+      expect(cleanWritable.write).toHaveBeenCalledWith(
+        "previous content\nnew line\n",
+      );
+      expect(cleanWritable.close).toHaveBeenCalled();
+    });
+
+    it("should handle error when recovery also fails", async () => {
+      spyOn(console, "error");
+      const err = new Error(
+        "An operation that depends on state cached in an interface object was made but the state had changed since it was read from disk.",
+      );
+      err.name = "InvalidStateError";
+      mockFileHandle.createWritable.and.rejectWith(err);
+
+      await service.appendToFile("log.txt", "content");
+
+      expect(console.error).toHaveBeenCalled();
+    });
   });
 
   describe("deleteFile", () => {

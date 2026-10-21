@@ -726,29 +726,90 @@ export class FileSystemService {
     const permission = await this.verifyPermission(handle, true);
     if (!permission) return;
 
-    try {
-      let targetDir = handle;
-      if (subfolder) {
+    let targetDir = handle;
+    if (subfolder) {
+      try {
         targetDir = await handle.getDirectoryHandle(subfolder, {
           create: true,
         });
+      } catch (err) {
+        console.error(`Error accessing subfolder ${subfolder}:`, err);
+        return;
       }
+    }
 
-      const fileHandle = await targetDir.getFileHandle(filename, {
-        create: true,
-      });
-      const writable = await fileHandle.createWritable({
-        keepExistingData: true,
-      });
-
-      const file = await fileHandle.getFile();
-      await writable.seek(file.size);
-
-      await writable.write(content);
-      await writable.close();
-    } catch (err) {
+    try {
+      await this.writeAppendContent(targetDir, filename, content);
+    } catch (err: any) {
+      if (
+        err?.name === "InvalidStateError" ||
+        err?.message?.includes?.("state cached")
+      ) {
+        try {
+          await this.recoverAndAppendFile(targetDir, filename, content);
+          return;
+        } catch (recoverErr: any) {
+          console.error(
+            `Error appending to file ${filename} after recovery:`,
+            recoverErr,
+          );
+          return;
+        }
+      }
       console.error(`Error appending to file ${filename}:`, err);
     }
+  }
+
+  private async writeAppendContent(
+    targetDir: FileSystemDirectoryHandle,
+    filename: string,
+    content: string,
+  ): Promise<void> {
+    const fileHandle = await targetDir.getFileHandle(filename, {
+      create: true,
+    });
+
+    let existingSize = 0;
+    try {
+      const file = await fileHandle.getFile();
+      existingSize = file.size;
+    } catch {
+      existingSize = 0;
+    }
+
+    const writable = await fileHandle.createWritable({
+      keepExistingData: true,
+    });
+
+    if (existingSize > 0) {
+      await writable.seek(existingSize);
+    }
+
+    await writable.write(content);
+    await writable.close();
+  }
+
+  private async recoverAndAppendFile(
+    targetDir: FileSystemDirectoryHandle,
+    filename: string,
+    content: string,
+  ): Promise<void> {
+    const fileHandle = await targetDir.getFileHandle(filename, {
+      create: true,
+    });
+    let existingContent = "";
+    try {
+      const file = await fileHandle.getFile();
+      existingContent = await file.text();
+    } catch {
+      existingContent = "";
+    }
+
+    const writable = await fileHandle.createWritable({
+      keepExistingData: false,
+    });
+    await writable.write(existingContent + content);
+    await writable.close();
   }
 
   async deleteFile(filename: string, subfolder?: string): Promise<void> {
