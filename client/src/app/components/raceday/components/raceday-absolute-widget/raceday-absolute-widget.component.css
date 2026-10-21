@@ -17,6 +17,16 @@
   background-color: rgba(59, 130, 246, 0.02);
 }
 
+.widget-wrapper.edit-mode.grid-cell-unselected {
+  outline: 1px dashed rgba(59, 130, 246, 0.25);
+  cursor: pointer;
+}
+
+.widget-wrapper.edit-mode.grid-cell-unselected:hover {
+  outline: 1.5px dashed rgba(56, 189, 248, 0.6);
+  background-color: rgba(56, 189, 248, 0.05);
+}
+
 .widget-wrapper.countdown-ghost {
   outline: 1px dashed rgba(255, 255, 255, 0.2) !important;
   background-color: transparent !important;

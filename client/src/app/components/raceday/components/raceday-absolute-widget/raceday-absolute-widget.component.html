@@ -13,6 +13,7 @@
   [class.has-custom-bg]="!!widget().backgroundColor"
   [class.scale-auto]="widget().scaleMode === 'auto'"
   [class.scale-fixed]="widget().scaleMode !== 'auto'"
+  [class.grid-cell-unselected]="isWidgetInGrid && !isGridSelected"
   [style.display]="!isCountdownActive ? 'none' : null"
   [style.pointer-events]="
     isCountdownGhost || (!isCustomizing() && !isCountdownActive) ? 'none' : null
@@ -403,7 +404,7 @@
   </div>
 
   @if (isCustomizing() && !isCountdownGhost) {
-    @if (!isGridMirrored) {
+    @if (canModifyWidget) {
       <div class="customizing-widget-overlay">
         <div
           class="widget-header-drag"
@@ -476,7 +477,7 @@
           (pointerdown)="onResizeStart($event, 'sw')"
         ></div>
       }
-    } @else {
+    } @else if (isGridMirrored) {
       <div
         class="mirrored-widget-indicator"
         [title]="'UE_GRID_MASTER_HINT' | translate"

@@ -8806,6 +8806,62 @@ describe("DefaultRacedayComponent", () => {
       expect(component.widgetSelected.emit).toHaveBeenCalledWith("gw-delegate");
     });
 
+    it("should handle onGridContainerPointerDown to elevate grid and select master widget", () => {
+      spyOn(component, "bringGridToFront");
+      (component.widgetSelected.emit as jasmine.Spy).calls.reset();
+      component.isLayoutCustomizing = true;
+
+      const masterWidget: any = {
+        id: "w-grid-m1",
+        widgetType: "lane-column",
+        customSettings: { gridId: "g-pointer-test", gridLane: 0 },
+      };
+      const headerWidget: any = {
+        id: "w-grid-h1",
+        widgetType: "lane-column",
+        customSettings: {
+          gridId: "g-pointer-test",
+          isHeaderWidget: true,
+          gridMasterId: "w-grid-m1",
+        },
+      };
+      component.layout.widgets.push(masterWidget, headerWidget);
+
+      const mockEvent = {
+        target: document.createElement("div"),
+      } as any;
+
+      component.onGridContainerPointerDown(mockEvent, "g-pointer-test");
+
+      expect(component.bringGridToFront).toHaveBeenCalledWith("g-pointer-test");
+      expect(component.widgetSelected.emit).toHaveBeenCalledWith("w-grid-m1");
+    });
+
+    it("should not handle onGridContainerPointerDown if grid is already active or target is inside widget", () => {
+      spyOn(component, "bringGridToFront");
+      (component.widgetSelected.emit as jasmine.Spy).calls.reset();
+      component.isLayoutCustomizing = true;
+      fixture.componentRef.setInput("gridSession", { gridId: "g-active" });
+
+      const mockEvent = {
+        target: document.createElement("div"),
+      } as any;
+
+      // Already active grid session
+      component.onGridContainerPointerDown(mockEvent, "g-active");
+      expect(component.bringGridToFront).not.toHaveBeenCalled();
+
+      // Target is inside an app-raceday-absolute-widget
+      const widgetHost = document.createElement("app-raceday-absolute-widget");
+      const childDiv = document.createElement("div");
+      widgetHost.appendChild(childDiv);
+      const mockInsideEvent = { target: childDiv } as any;
+
+      component.onGridContainerPointerDown(mockInsideEvent, "g-other");
+      expect(component.bringGridToFront).not.toHaveBeenCalled();
+      expect(component.widgetSelected.emit).not.toHaveBeenCalled();
+    });
+
     it("should calculate getGridSessionZIndex above active grid widgets", () => {
       fixture.componentRef.setInput("gridSession", { gridId: "g-sess" });
       component.layout.widgets.push({
@@ -12462,6 +12518,61 @@ describe("DefaultRacedayComponent", () => {
       expect(childWidget.customSettings["insets"]).toEqual({
         "top-left": "flag",
       });
+    });
+
+    it("should update master widget geometry and synchronize lanes when onMasterWidgetModified is called on a header widget", () => {
+      const session = {
+        gridId: "test-grid-header-sync",
+        bounds: { x: 100, y: 100, width: 400, height: 400 },
+        totalLanes: 2,
+        direction: "vertical" as const,
+        sourceLaneIndex: 0,
+        bindingMode: "lane" as const,
+        mirrorRows: true,
+        headerPlacement: "top",
+        headerHeight: 36,
+      };
+      fixture.componentRef.setInput("gridSession", session);
+      fixture.detectChanges();
+
+      const masterWidget: any = {
+        id: "w-master-col",
+        widgetType: "lane-column",
+        x: 100,
+        y: 100,
+        width: 150,
+        height: 200,
+        customSettings: {
+          gridId: "test-grid-header-sync",
+          gridLane: 0,
+          columnKey: "driver.name",
+        },
+      };
+
+      const headerWidget: any = {
+        id: "w-header-col",
+        widgetType: "lane-column",
+        x: 120,
+        y: 64,
+        width: 180,
+        height: 36,
+        customSettings: {
+          gridId: "test-grid-header-sync",
+          isHeaderWidget: true,
+          gridMasterId: "w-master-col",
+        },
+      };
+
+      (component as any).layout = {
+        widgets: [masterWidget, headerWidget],
+      };
+
+      spyOn(component.layoutChanged, "emit");
+      component.onMasterWidgetModified(headerWidget);
+
+      expect(masterWidget.x).toBe(120);
+      expect(masterWidget.width).toBe(180);
+      expect(component.layoutChanged.emit).toHaveBeenCalled();
     });
 
     it("should calculate selectedGridBounds and selectedGridLabel when a grid widget is selected", () => {

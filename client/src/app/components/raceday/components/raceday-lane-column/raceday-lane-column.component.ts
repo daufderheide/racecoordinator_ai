@@ -481,6 +481,15 @@ export class RacedayLaneColumnComponent
     return inEditor || Boolean(p.isLayoutCustomizing);
   }
 
+  get isGridCellUnselected(): boolean {
+    const gridId = this.widget()?.customSettings?.["gridId"];
+    if (!gridId) return false;
+    const parent = this.parent();
+    const session =
+      typeof parent?.gridSession === "function" ? parent.gridSession() : null;
+    return !session || session.gridId !== gridId;
+  }
+
   get isLapCountClickable(): boolean {
     return isLaneColumnLapCountClickable(
       this.parent(),
@@ -825,7 +834,7 @@ export class RacedayLaneColumnComponent
   }
 
   onAnchorDragOver(event: DragEvent): void {
-    if (!this.isUIEditorMode) return;
+    if (!this.isUIEditorMode || this.isGridCellUnselected) return;
     event.preventDefault();
     event.stopPropagation();
     if (event.dataTransfer) {
@@ -835,7 +844,7 @@ export class RacedayLaneColumnComponent
   }
 
   onAnchorDragEnter(event: DragEvent): void {
-    if (!this.isUIEditorMode) return;
+    if (!this.isUIEditorMode || this.isGridCellUnselected) return;
     event.preventDefault();
     event.stopPropagation();
     ((event.currentTarget || event.target) as HTMLElement)?.classList.add(
@@ -853,7 +862,7 @@ export class RacedayLaneColumnComponent
   }
 
   onAnchorDrop(event: DragEvent, anchor: string): void {
-    if (!this.isUIEditorMode) return;
+    if (!this.isUIEditorMode || this.isGridCellUnselected) return;
     event.preventDefault();
     event.stopPropagation();
     ((event.currentTarget || event.target) as HTMLElement)?.classList.remove(
@@ -877,6 +886,7 @@ export class RacedayLaneColumnComponent
   }
 
   deleteAnchor(anchor: string, event?: Event): void {
+    if (this.isGridCellUnselected) return;
     if (event) {
       event.stopPropagation();
     }

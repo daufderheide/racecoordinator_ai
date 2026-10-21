@@ -3021,5 +3021,65 @@ describe("RacedayLaneColumnComponent", () => {
       expect(placeholder).toBeTruthy();
       expect(placeholder.textContent).toContain("custom:unregistered-widget");
     });
+
+    it("should compute isGridCellUnselected and prevent anchor modifications when grid is not selected", () => {
+      mockParent.isUIEditorMode = () => true;
+      mockParent.gridSession = () => null;
+      mockParent.columnsChanged = { emit: jasmine.createSpy("emit") };
+      fixture.componentRef.setInput("parent", mockParent);
+
+      const gridWidget = createWidget({
+        columnKey: "lastLapTime",
+        insets: { "top-left": "driver.nickname" },
+      });
+      gridWidget.customSettings = {
+        ...(gridWidget.customSettings || {}),
+        gridId: "grid-unselected-lane-col",
+      };
+      fixture.componentRef.setInput("widget", gridWidget);
+      fixture.detectChanges();
+
+      expect(component.isGridCellUnselected).toBeTrue();
+
+      // anchor-drop-grid should not be rendered when isGridCellUnselected is true
+      const dropGrid = fixture.nativeElement.querySelector(".anchor-drop-grid");
+      expect(dropGrid).toBeNull();
+
+      // deleteAnchor should be blocked
+      const mockClickEvent = {
+        stopPropagation: jasmine.createSpy("stopPropagation"),
+      } as any;
+      component.deleteAnchor("top-left", mockClickEvent);
+      expect(component.settings.insets?.["top-left"]).toBe("driver.nickname");
+      expect(mockParent.columnsChanged.emit).not.toHaveBeenCalled();
+
+      // onAnchorDrop should be blocked
+      const mockDropEvent = {
+        preventDefault: jasmine.createSpy("preventDefault"),
+        stopPropagation: jasmine.createSpy("stopPropagation"),
+        dataTransfer: {
+          getData: () => "bestLapTime",
+        },
+      } as any;
+      component.onAnchorDrop(mockDropEvent, "top-right");
+      expect(component.settings.insets?.["top-right"]).toBeUndefined();
+
+      // Now activate grid session
+      mockParent.gridSession = () => ({
+        gridId: "grid-unselected-lane-col",
+        sourceLaneIndex: 0,
+      });
+      fixture.detectChanges();
+
+      expect(component.isGridCellUnselected).toBeFalse();
+      const dropGridActive =
+        fixture.nativeElement.querySelector(".anchor-drop-grid");
+      expect(dropGridActive).toBeTruthy();
+
+      // deleteAnchor now succeeds
+      component.deleteAnchor("top-left", mockClickEvent);
+      expect(component.settings.insets?.["top-left"]).toBeUndefined();
+      expect(mockParent.columnsChanged.emit).toHaveBeenCalled();
+    });
   });
 });

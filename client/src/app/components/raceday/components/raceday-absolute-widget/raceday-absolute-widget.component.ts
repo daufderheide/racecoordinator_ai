@@ -39,6 +39,7 @@ import { RacedaySeasonRaceLeaderboardComponent } from "@app/components/raceday/c
 import { RacedayTimerComponent } from "@app/components/raceday/components/raceday-timer/raceday-timer.component";
 import { RacedayTrackNameComponent } from "@app/components/raceday/components/raceday-track-name/raceday-track-name.component";
 import { LaneGridAnimationHelper } from "@app/components/raceday/utils/lane-grid-animation.helper";
+import { LaneGridReplicationHelper } from "@app/components/raceday/utils/lane-grid-replication.helper";
 import { AbsoluteWidgetNode } from "@app/models/settings";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { CustomWidgetService } from "@app/services/custom-widget.service";
@@ -151,11 +152,24 @@ export class RacedayAbsoluteWidgetComponent
     return Boolean(this.widget().customSettings?.["gridId"]);
   }
 
+  get isGridSelected(): boolean {
+    const gridId = this.widget().customSettings?.["gridId"];
+    if (!gridId) return false;
+    const session = this.parentComponent()?.gridSession?.();
+    return Boolean(session && session.gridId === gridId);
+  }
+
+  get canModifyWidget(): boolean {
+    if (!this.isCustomizing() || this.isCountdownGhost) return false;
+    if (this.isWidgetInGrid && !this.isGridSelected) return false;
+    return !this.isGridMirrored;
+  }
+
   get gridDirection(): "vertical" | "horizontal" {
     const s = this.widget().customSettings;
     const session = this.parentComponent()?.gridSession?.();
     if (session && session.gridId === s?.["gridId"]) {
-      return session.direction || "vertical";
+      return session.direction || s?.["gridDirection"] || "vertical";
     }
     return s?.["gridDirection"] || "vertical";
   }
@@ -399,7 +413,7 @@ export class RacedayAbsoluteWidgetComponent
   }
 
   onResizeStart(event: PointerEvent, handle: string) {
-    if (!this.isCustomizing() || this.isGridMirrored) return;
+    if (!this.canModifyWidget) return;
     event.preventDefault();
     event.stopPropagation();
 
@@ -444,8 +458,9 @@ export class RacedayAbsoluteWidgetComponent
         const session = this.parentComponent().gridSession();
         if (
           this.widget().customSettings?.["gridId"] === session.gridId &&
-          Number(this.widget().customSettings?.["gridLane"]) ===
-            session.sourceLaneIndex
+          (Number(this.widget().customSettings?.["gridLane"]) ===
+            session.sourceLaneIndex ||
+            LaneGridReplicationHelper.isHeaderWidget(this.widget()))
         ) {
           this.parentComponent().onMasterWidgetModified?.(this.widget());
         }
@@ -463,11 +478,11 @@ export class RacedayAbsoluteWidgetComponent
 
   // Handle dragging manually to support snapping better than cdkDrag might out of the box
   onDragStart(event: PointerEvent) {
-    if (!this.isCustomizing() || this.isGridMirrored) return;
+    if (!this.canModifyWidget) return;
     // Don't drag if clicking a resize handle
-    if ((event.target as HTMLElement).classList.contains("resize-handle"))
+    if ((event.target as HTMLElement)?.classList?.contains("resize-handle"))
       return;
-    if ((event.target as HTMLElement).tagName === "BUTTON") return;
+    if ((event.target as HTMLElement)?.tagName === "BUTTON") return;
 
     event.preventDefault();
     event.stopPropagation();
@@ -534,8 +549,9 @@ export class RacedayAbsoluteWidgetComponent
         const session = this.parentComponent().gridSession();
         if (
           this.widget().customSettings?.["gridId"] === session.gridId &&
-          Number(this.widget().customSettings?.["gridLane"]) ===
-            session.sourceLaneIndex
+          (Number(this.widget().customSettings?.["gridLane"]) ===
+            session.sourceLaneIndex ||
+            LaneGridReplicationHelper.isHeaderWidget(this.widget()))
         ) {
           this.parentComponent().onMasterWidgetModified?.(this.widget());
         }
@@ -553,6 +569,7 @@ export class RacedayAbsoluteWidgetComponent
 
   removeWidget(event: Event) {
     event.stopPropagation();
+    if (!this.canModifyWidget) return;
     if (this.parentComponent().removeWidget) {
       this.parentComponent().removeWidget(this.widget().id);
     }

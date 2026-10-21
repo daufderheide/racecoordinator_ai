@@ -1108,6 +1108,10 @@ describe("RacedayAbsoluteWidgetComponent", () => {
     });
 
     it("should compute auto-calculated flags and display correct resize handles", () => {
+      mockParent.gridSession = () => ({
+        gridId: "grid-test",
+        sourceLaneIndex: 0,
+      });
       const vertWidget: AbsoluteWidgetNode = {
         id: "w-vert",
         widgetType: "lane-column",
@@ -1228,6 +1232,126 @@ describe("RacedayAbsoluteWidgetComponent", () => {
           },
         } as any),
       ).toBeTrue();
+    });
+
+    it("should prevent modification of grid cells and headers before grid is selected", () => {
+      mockParent.gridSession = () => null;
+
+      const gridCellWidget: AbsoluteWidgetNode = {
+        id: "w-cell-0",
+        widgetType: "lane-column",
+        x: 100,
+        y: 200,
+        width: 150,
+        height: 50,
+        zIndex: 100,
+        customSettings: {
+          gridId: "grid-unselected",
+          gridLane: 0,
+        },
+      };
+
+      fixture.componentRef.setInput("isCustomizing", true);
+      fixture.componentRef.setInput("widget", gridCellWidget);
+      fixture.detectChanges();
+
+      expect(component.isWidgetInGrid).toBeTrue();
+      expect(component.isGridSelected).toBeFalse();
+      expect(component.canModifyWidget).toBeFalse();
+
+      const el = fixture.nativeElement as HTMLElement;
+      expect(el.querySelector(".customizing-widget-overlay")).toBeNull();
+      expect(el.querySelector(".resize-handle")).toBeNull();
+      expect(
+        el.querySelector(".widget-wrapper.grid-cell-unselected"),
+      ).toBeTruthy();
+
+      // Attempts to drag, resize, or remove when unselected should be blocked
+      const mockEvent = new PointerEvent("pointerdown", {
+        clientX: 100,
+        clientY: 200,
+      });
+      component.onDragStart(mockEvent);
+      expect(gridCellWidget.x).toBe(100);
+
+      component.onResizeStart(mockEvent, "e");
+      expect(gridCellWidget.width).toBe(150);
+
+      component.removeWidget(mockEvent);
+      expect(mockParent.removeWidget).not.toHaveBeenCalled();
+
+      // Now select the grid
+      mockParent.gridSession = () => ({
+        gridId: "grid-unselected",
+        sourceLaneIndex: 0,
+        mirrorRows: true,
+      });
+      fixture.detectChanges();
+
+      expect(component.isGridSelected).toBeTrue();
+      expect(component.canModifyWidget).toBeTrue();
+      expect(el.querySelector(".customizing-widget-overlay")).toBeTruthy();
+      expect(el.querySelector(".resize-handle")).toBeTruthy();
+      expect(
+        el.querySelector(".widget-wrapper.grid-cell-unselected"),
+      ).toBeNull();
+    });
+
+    it("should prevent modification of column headers before grid is selected and allow when selected", () => {
+      mockParent.gridSession = () => null;
+
+      const headerWidget: AbsoluteWidgetNode = {
+        id: "w-header-col1",
+        widgetType: "lane-column",
+        x: 100,
+        y: 50,
+        width: 150,
+        height: 36,
+        zIndex: 105,
+        customSettings: {
+          gridId: "grid-header-test",
+          isHeaderWidget: true,
+          gridMasterId: "master-col1",
+        },
+      };
+
+      fixture.componentRef.setInput("isCustomizing", true);
+      fixture.componentRef.setInput("widget", headerWidget);
+      fixture.detectChanges();
+
+      expect(component.isWidgetInGrid).toBeTrue();
+      expect(component.isGridSelected).toBeFalse();
+      expect(component.canModifyWidget).toBeFalse();
+
+      const el = fixture.nativeElement as HTMLElement;
+      expect(el.querySelector(".customizing-widget-overlay")).toBeNull();
+      expect(el.querySelector(".resize-handle")).toBeNull();
+
+      // Selecting the grid enables header modifications and calls onMasterWidgetModified on drag/resize
+      mockParent.gridSession = () => ({
+        gridId: "grid-header-test",
+        sourceLaneIndex: 0,
+      });
+      mockParent.onMasterWidgetModified = jasmine.createSpy(
+        "onMasterWidgetModified",
+      );
+      fixture.detectChanges();
+
+      expect(component.isGridSelected).toBeTrue();
+      expect(component.canModifyWidget).toBeTrue();
+      expect(el.querySelector(".customizing-widget-overlay")).toBeTruthy();
+
+      // Trigger drag and pointerup
+      const pointerEvent = new PointerEvent("pointerdown", {
+        clientX: 100,
+        clientY: 50,
+      });
+      component.onDragStart(pointerEvent);
+      document.dispatchEvent(new PointerEvent("pointerup"));
+
+      expect(mockParent.onMasterWidgetModified).toHaveBeenCalledWith(
+        headerWidget,
+      );
     });
   });
 });

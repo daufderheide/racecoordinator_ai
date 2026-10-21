@@ -666,6 +666,14 @@ app-default-raceday {
   box-sizing: border-box;
 }
 
+.raceday-grid-container.customizing-unselected {
+  cursor: pointer;
+}
+
+.raceday-grid-container.customizing-unselected:hover {
+  outline: 1.5px dashed rgba(56, 189, 248, 0.4);
+}
+
 .raceday-grid-top-header {
   position: absolute;
   top: 0;

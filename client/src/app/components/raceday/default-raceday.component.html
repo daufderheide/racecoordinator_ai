@@ -80,6 +80,10 @@
       @for (grid of getGrids(); track grid.gridId) {
         <div
           class="raceday-grid-container"
+          [class.customizing-unselected]="
+            isLayoutCustomizing && gridSession()?.gridId !== grid.gridId
+          "
+          (pointerdown)="onGridContainerPointerDown($event, grid.gridId)"
           [style.left.px]="grid.bounds.x"
           [style.top.px]="grid.bounds.y"
           [style.width.px]="grid.bounds.width"

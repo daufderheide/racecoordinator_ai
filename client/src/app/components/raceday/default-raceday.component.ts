@@ -8663,6 +8663,32 @@ export class DefaultRacedayComponent
     }
   }
 
+  onGridContainerPointerDown(event: PointerEvent, gridId: string): void {
+    if (!this.isLayoutCustomizing && !this.isUIEditorMode()) return;
+    if (this.gridSession()?.gridId === gridId) return;
+
+    const target = event.target as HTMLElement | null;
+    if (target?.closest("app-raceday-absolute-widget")) {
+      return;
+    }
+
+    this.bringGridToFront(gridId);
+
+    const gridWidgets = (this.layout?.widgets || []).filter(
+      (w: any) => w.customSettings?.["gridId"] === gridId,
+    );
+    const masterWidget =
+      gridWidgets.find(
+        (w: any) =>
+          !w.customSettings?.["gridMasterId"] &&
+          !w.customSettings?.["isHeaderWidget"],
+      ) || gridWidgets[0];
+
+    if (masterWidget) {
+      this.widgetSelected.emit(masterWidget.id);
+    }
+  }
+
   getGridSessionZIndex(): number {
     const session = this.gridSession();
     if (!session || !this.layout?.widgets) return 200;
@@ -9099,6 +9125,21 @@ export class DefaultRacedayComponent
     }
 
     if (LaneGridReplicationHelper.isHeaderWidget(widget)) {
+      const masterId = widget.customSettings?.["gridMasterId"];
+      const masterWidget = masterId
+        ? this.layout.widgets.find((w: any) => w.id === masterId)
+        : null;
+      if (masterWidget && masterWidget.id !== widget.id) {
+        if (session.headerPlacement === "left") {
+          masterWidget.y = widget.y;
+          masterWidget.height = widget.height;
+        } else {
+          masterWidget.x = widget.x;
+          masterWidget.width = widget.width;
+        }
+        this.onMasterWidgetModified(masterWidget);
+        return;
+      }
       this.layout.widgets = LaneGridReplicationHelper.syncMasterWidgetToLanes(
         widget,
         session,
