@@ -12683,6 +12683,53 @@ describe("DefaultRacedayComponent", () => {
       expect(grid.cellWidgets.length).toBe(4);
     });
 
+    it("should not generate scrollable virtual widgets in getGrids when isUIEditorMode is true", () => {
+      fixture.componentRef.setInput("isUIEditorMode", true);
+      const masterWidget = {
+        id: "grid-m",
+        widgetType: "lane-column",
+        x: 100,
+        y: 100,
+        width: 200,
+        height: 50,
+        customSettings: {
+          gridId: "editor-grid",
+          gridLane: 0,
+          gridTotalLanes: 2,
+          gridDirection: "vertical",
+          bindingMode: "lane",
+        },
+      } as any;
+      const mirroredWidget = {
+        id: "grid-l1",
+        widgetType: "lane-column",
+        x: 100,
+        y: 150,
+        width: 200,
+        height: 50,
+        customSettings: {
+          gridId: "editor-grid",
+          gridLane: 1,
+          gridTotalLanes: 2,
+          gridDirection: "vertical",
+          bindingMode: "lane",
+        },
+      } as any;
+
+      (component as any).layout = { widgets: [masterWidget, mirroredWidget] };
+      // 4 lanes on track, but in editor mode preview should stay at authored 2 lanes
+      (component as any).track = { lanes: [{}, {}, {}, {}] };
+      (component as any).race = { track: (component as any).track } as any;
+
+      const grids = component.getGrids();
+      expect(grids.length).toBe(1);
+      const grid = grids[0];
+      expect(grid.gridId).toBe("editor-grid");
+      expect(grid.hasScroll).toBeFalse();
+      expect(grid.dataCount).toBe(2);
+      expect(grid.cellWidgets.length).toBe(2);
+    });
+
     it("should not mark hasScroll when dataCount is within gridTotalLanes", () => {
       const masterWidget = {
         id: "grid-m",

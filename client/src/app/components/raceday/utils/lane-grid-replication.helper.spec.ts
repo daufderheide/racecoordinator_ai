@@ -1644,6 +1644,16 @@ describe("LaneGridReplicationHelper", () => {
       ).toBe(4);
     });
 
+    it("should return gridTotalLanes when parent is in UI editor mode", () => {
+      const parent = {
+        isUIEditorMode: () => true,
+        currentTrack: { lanes: [{}, {}, {}, {}, {}, {}] },
+      };
+      expect(
+        LaneGridReplicationHelper.getGridDataCount(widgets, gridId, parent),
+      ).toBe(4);
+    });
+
     it("should count heat data rather than overall standings when gridType is heat", () => {
       const heatWidgets: AbsoluteWidgetNode[] = [
         {

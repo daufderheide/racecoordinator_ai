@@ -17,6 +17,7 @@ import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, NavigationStart, Router } from "@angular/router";
 import { Subscription } from "rxjs";
 import { DefaultRacedayComponent } from "@app/components/raceday/default-raceday.component";
+import { StackedColumnIssue } from "@app/components/raceday/utils/lane-grid-repair.helper";
 import {
   LaneGridBounds,
   LaneGridSession,
@@ -61,6 +62,7 @@ import { EditorLifecycleHelper } from "@app/utils/editor-lifecycle.helper";
 
 import { EnterPathModalComponent } from "./components/enter-path-modal/enter-path-modal";
 import { ReplicateLaneDialogComponent } from "./components/replicate-lane-dialog/replicate-lane-dialog.component";
+import { ReviewStackedColumnsModalComponent } from "./components/review-stacked-columns-modal/review-stacked-columns-modal.component";
 import { TemplateVariablesModalComponent } from "./components/template-variables-modal/template-variables-modal.component";
 import {
   ThemeTemplateModalComponent,
@@ -189,6 +191,7 @@ import {
   toggleUiExpander,
   UIEditorState,
 } from "./ui-editor-helpers";
+import { StackedColumnsController } from "./ui-editor-stacked-columns.helper";
 import { WidgetInspectorFieldsComponent } from "./widget-inspector-fields/widget-inspector-fields.component";
 
 export { BASE_AVAILABLE_COLUMNS, UIEditorState } from "./ui-editor-constants";
@@ -214,6 +217,7 @@ export { BASE_AVAILABLE_COLUMNS, UIEditorState } from "./ui-editor-constants";
     TemplateVariablesModalComponent,
     EnterPathModalComponent,
     ReplicateLaneDialogComponent,
+    ReviewStackedColumnsModalComponent,
     CustomSelectComponent,
     CustomOptionComponent,
     AutoSelectDefaultDirective,
@@ -344,6 +348,48 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   }
   reopenMigrationBanner(ui: CustomUI): void {
     this.migrationController.reopenMigrationBanner(ui);
+  }
+
+  stackedColumnsController = new StackedColumnsController(this);
+  detectedStackedIssues: StackedColumnIssue[] = [];
+  pendingRepairStackedUi: CustomUI | null = null;
+  showReviewStackedColumnsModal = false;
+  showImportStackedConfirm = false;
+  pendingImportStacked: any = null;
+  importStackedCount = 0;
+
+  hasStackedColumns(ui: CustomUI): boolean {
+    return this.stackedColumnsController.hasStackedColumns(ui);
+  }
+  getStackedColumnsIssueCount(ui: CustomUI): number {
+    return this.stackedColumnsController.getStackedColumnsIssueCount(ui);
+  }
+  getStackedColumnsBannerDesc(ui: CustomUI): string {
+    return this.stackedColumnsController.getStackedColumnsBannerDesc(ui);
+  }
+  canReopenStackedColumnsBanner(ui: CustomUI): boolean {
+    return this.stackedColumnsController.canReopenStackedColumnsBanner(ui);
+  }
+  dismissStackedColumnsBanner(ui: CustomUI): void {
+    this.stackedColumnsController.dismissStackedColumnsBanner(ui);
+  }
+  reopenStackedColumnsBanner(ui: CustomUI): void {
+    this.stackedColumnsController.reopenStackedColumnsBanner(ui);
+  }
+  openReviewStackedColumnsModal(ui: CustomUI): void {
+    this.stackedColumnsController.openReviewStackedColumnsModal(ui);
+  }
+  quickFixStackedColumns(ui: CustomUI): void {
+    this.stackedColumnsController.quickFixStackedColumns(ui);
+  }
+  confirmRepairStackedColumns(): void {
+    this.stackedColumnsController.confirmRepairStackedColumns();
+  }
+  confirmRepairImportedLayout(): void {
+    this.stackedColumnsController.confirmRepairImportedLayout();
+  }
+  cancelRepairImportedLayout(importAsIs = false): void {
+    this.stackedColumnsController.cancelRepairImportedLayout(importAsIs);
   }
 
   showSuccessModal = false;

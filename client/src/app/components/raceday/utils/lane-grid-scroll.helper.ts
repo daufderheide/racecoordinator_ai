@@ -17,8 +17,20 @@ export class LaneGridScrollHelper {
     );
     if (gridWidgets.length === 0) return 0;
     const first = gridWidgets[0];
-    const gridTotalLanes =
-      Number(first.customSettings?.["gridTotalLanes"]) || 4;
+    const rawTotalLanes =
+      gridWidgets.find((w) => w.customSettings?.["gridTotalLanes"] != null)
+        ?.customSettings?.["gridTotalLanes"] ??
+      first.customSettings?.["gridTotalLanes"];
+    const gridTotalLanes = Number(rawTotalLanes) || 4;
+
+    const isEditor = Boolean(
+      (typeof parent?.isUIEditorMode === "function"
+        ? parent.isUIEditorMode()
+        : parent?.isUIEditorMode) || parent?.isLayoutCustomizing,
+    );
+    if (isEditor) {
+      return gridTotalLanes;
+    }
     const mode = first.customSettings?.["bindingMode"] || "lane";
     const hasOverall = gridWidgets.some(
       (w) =>

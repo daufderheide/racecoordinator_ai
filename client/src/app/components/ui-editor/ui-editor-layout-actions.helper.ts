@@ -149,13 +149,24 @@ export function executeImportLayout(
   editingSettings: Settings,
   logger: any,
   onSuccess: () => void,
+  stackedColumnsController?: any,
 ): void {
   const input = event?.target as HTMLInputElement;
   if (!input?.files || input.files.length === 0) return;
   const reader = new FileReader();
   reader.onload = (e) => {
     try {
-      if (applyImportLayout(e.target?.result as string, ui, editingSettings)) {
+      const rawJson = e.target?.result as string;
+      if (
+        stackedColumnsController?.promptRepairImportedLayout(
+          rawJson,
+          ui,
+          onSuccess,
+        )
+      ) {
+        return;
+      }
+      if (applyImportLayout(rawJson, ui, editingSettings)) {
         onSuccess();
       }
     } catch (err) {
@@ -275,25 +286,32 @@ export function handleImportLayout(
   event: Event,
   ui: CustomUI,
 ): void {
-  executeImportLayout(event, ui, comp.editingSettings, comp.logger, () => {
-    if (comp.editingState?.settings) {
-      comp.editingState.settings = deepCopy(comp.editingSettings);
-    }
-    comp.activeGridSession = null;
-    LaneGridAnimationHelper.reset();
-    const layout = comp.getLayout(ui);
-    if (comp.parsedLayouts && ui?.entity_id) {
-      comp.parsedLayouts.set(ui.entity_id, layout);
-    }
-    comp.syncRacedayPreview?.(layout, ui);
-    if (typeof comp.captureState === "function") {
-      comp.captureState();
-    } else if (typeof comp.undoManager?.captureState === "function") {
-      comp.undoManager.captureState();
-    }
-    comp.refreshDisplayProperties?.();
-    comp.cdr?.detectChanges?.() || comp.cdr?.markForCheck?.();
-  });
+  executeImportLayout(
+    event,
+    ui,
+    comp.editingSettings,
+    comp.logger,
+    () => {
+      if (comp.editingState?.settings) {
+        comp.editingState.settings = deepCopy(comp.editingSettings);
+      }
+      comp.activeGridSession = null;
+      LaneGridAnimationHelper.reset();
+      const layout = comp.getLayout(ui);
+      if (comp.parsedLayouts && ui?.entity_id) {
+        comp.parsedLayouts.set(ui.entity_id, layout);
+      }
+      comp.syncRacedayPreview?.(layout, ui);
+      if (typeof comp.captureState === "function") {
+        comp.captureState();
+      } else if (typeof comp.undoManager?.captureState === "function") {
+        comp.undoManager.captureState();
+      }
+      comp.refreshDisplayProperties?.();
+      comp.cdr?.detectChanges?.() || comp.cdr?.markForCheck?.();
+    },
+    comp.stackedColumnsController,
+  );
 }
 
 export function handleResetCurrentLayout(comp: any): void {

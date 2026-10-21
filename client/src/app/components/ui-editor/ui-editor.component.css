@@ -1975,3 +1975,17 @@
   background: rgba(56, 189, 248, 0.15) !important;
   color: #7dd3fc !important;
 }
+
+.migration-notice-banner.stacked-columns-banner {
+  background: rgba(245, 158, 11, 0.12);
+  border-color: rgba(245, 158, 11, 0.35);
+}
+
+.stacked-columns-restore-icon-btn {
+  color: #f59e0b !important;
+}
+
+.stacked-columns-restore-icon-btn:hover {
+  background: rgba(245, 158, 11, 0.15) !important;
+  color: #fbbf24 !important;
+}

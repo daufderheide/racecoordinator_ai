@@ -411,6 +411,24 @@
                                   >
                                 </button>
                               }
+                              @if (canReopenStackedColumnsBanner(ui)) {
+                                <button
+                                  class="icon-btn canvas-action-icon-btn stacked-columns-restore-icon-btn"
+                                  (click)="reopenStackedColumnsBanner(ui)"
+                                  [title]="
+                                    'UE_STACKED_COLUMNS_REOPEN_TOOLTIP'
+                                      | translate
+                                  "
+                                  [attr.aria-label]="
+                                    'UE_STACKED_COLUMNS_REOPEN_TOOLTIP'
+                                      | translate
+                                  "
+                                >
+                                  <span class="material-icons"
+                                    >layers_clear</span
+                                  >
+                                </button>
+                              }
                               <input
                                 #layoutFileInput
                                 type="file"
@@ -525,6 +543,68 @@
                                 type="button"
                                 class="migration-btn-close"
                                 (click)="dismissMigrationBanner(ui)"
+                                [title]="'UE_MIGRATION_DISMISS_BTN' | translate"
+                              >
+                                <span class="material-icons">close</span>
+                              </button>
+                            </div>
+                          </div>
+                        }
+
+                        @if (hasStackedColumns(ui)) {
+                          <div
+                            class="migration-notice-banner stacked-columns-banner"
+                            id="ue-stacked-columns-banner"
+                          >
+                            <div class="migration-notice-info">
+                              <span
+                                class="material-icons migration-icon warning-icon"
+                                >layers_clear</span
+                              >
+                              <div class="migration-notice-text">
+                                <span class="migration-notice-title">{{
+                                  "UE_STACKED_COLUMNS_BANNER_TITLE" | translate
+                                }}</span>
+                                <span class="migration-notice-desc">{{
+                                  getStackedColumnsBannerDesc(ui)
+                                }}</span>
+                              </div>
+                            </div>
+                            <div class="migration-notice-actions">
+                              <button
+                                type="button"
+                                class="migration-btn migration-btn-upgrade"
+                                id="ue-btn-review-stacked-columns"
+                                (click)="openReviewStackedColumnsModal(ui)"
+                                [title]="
+                                  'UE_STACKED_COLUMNS_REVIEW_BTN' | translate
+                                "
+                              >
+                                <span class="material-icons">visibility</span>
+                                {{
+                                  "UE_STACKED_COLUMNS_REVIEW_BTN" | translate
+                                }}
+                              </button>
+                              <button
+                                type="button"
+                                class="migration-btn migration-btn-restore"
+                                id="ue-btn-quick-fix-stacked-columns"
+                                (click)="quickFixStackedColumns(ui)"
+                                [title]="
+                                  'UE_STACKED_COLUMNS_QUICK_FIX_BTN' | translate
+                                "
+                              >
+                                <span class="material-icons"
+                                  >auto_fix_high</span
+                                >
+                                {{
+                                  "UE_STACKED_COLUMNS_QUICK_FIX_BTN" | translate
+                                }}
+                              </button>
+                              <button
+                                type="button"
+                                class="migration-btn-close"
+                                (click)="dismissStackedColumnsBanner(ui)"
                                 [title]="'UE_MIGRATION_DISMISS_BTN' | translate"
                               >
                                 <span class="material-icons">close</span>
@@ -2123,4 +2203,31 @@
     (confirm)="onConfirmReplicateLanes($event)"
     (cancel)="showReplicateLaneModal = false"
   ></app-replicate-lane-dialog>
+
+  <!-- Review Stacked Columns Modal -->
+  <app-review-stacked-columns-modal
+    [visible]="showReviewStackedColumnsModal"
+    [issues]="detectedStackedIssues"
+    [layoutName]="
+      activeCustomUi
+        ? (getCustomUiDisplayNameKey(activeCustomUi) | translate)
+        : ''
+    "
+    [availableColumns]="availableColumns"
+    (fix)="confirmRepairStackedColumns()"
+    (cancel)="showReviewStackedColumnsModal = false"
+  ></app-review-stacked-columns-modal>
+
+  <!-- Import Stacked Columns Confirmation Modal -->
+  <app-confirmation-modal
+    [visible]="showImportStackedConfirm"
+    title="UE_STACKED_COLUMNS_IMPORT_ALERT_TITLE"
+    message="UE_STACKED_COLUMNS_IMPORT_ALERT_MSG"
+    [messageParams]="{ count: importStackedCount }"
+    confirmText="UE_STACKED_COLUMNS_IMPORT_REPAIR_BTN"
+    cancelText="UE_STACKED_COLUMNS_IMPORT_AS_IS_BTN"
+    (confirm)="confirmRepairImportedLayout()"
+    (cancel)="cancelRepairImportedLayout(true)"
+  >
+  </app-confirmation-modal>
 </div>

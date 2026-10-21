@@ -106,6 +106,26 @@ describe("LaneGridScrollHelper", () => {
       );
     });
 
+    it("should return gridTotalLanes when parent is in UI editor mode", () => {
+      const parent = {
+        isUIEditorMode: () => true,
+        track: { lanes: [{}, {}, {}, {}] },
+      };
+      expect(
+        LaneGridScrollHelper.getGridDataCount(widgets, gridId, parent),
+      ).toBe(2);
+    });
+
+    it("should return gridTotalLanes when parent isLayoutCustomizing is true", () => {
+      const parent = {
+        isLayoutCustomizing: true,
+        track: { lanes: [{}, {}, {}, {}] },
+      };
+      expect(
+        LaneGridScrollHelper.getGridDataCount(widgets, gridId, parent),
+      ).toBe(2);
+    });
+
     it("should count heat data items rather than overall race participants when gridType is heat even with overallPosition bindingMode", () => {
       const heatWidgets = [
         {

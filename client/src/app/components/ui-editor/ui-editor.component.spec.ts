@@ -5382,5 +5382,87 @@ describe("UIEditorComponent", () => {
       expect(component.showUpgradeHeatViewConfirm).toBeFalse();
       expect(component.pendingUpgradeHeatViewUi).toBeNull();
     });
+
+    describe("stacked columns detection and repair", () => {
+      let stackedUi: CustomUI;
+
+      beforeEach(() => {
+        stackedUi = {
+          entity_id: "custom_ui_stacked_test",
+          name: "Stacked Test UI",
+          layoutJson: JSON.stringify({
+            widgets: [
+              {
+                id: "w1",
+                widgetType: "lane-column",
+                x: 20,
+                y: 100,
+                width: 300,
+                height: 80,
+                zIndex: 100,
+                customSettings: {
+                  gridId: "grid-1",
+                  columnKey: "driver.name",
+                  gridLane: 0,
+                  insets: { "bottom-left": "flag" },
+                },
+              },
+              {
+                id: "w1_grid_lane_1",
+                widgetType: "lane-column",
+                x: 20,
+                y: 100,
+                width: 300,
+                height: 80,
+                zIndex: 100,
+                customSettings: {
+                  gridId: "grid-1",
+                  columnKey: "driver.name",
+                  gridLane: 0,
+                  insets: { "bottom-right": "photo" },
+                },
+              },
+            ],
+          }),
+        } as CustomUI;
+      });
+
+      it("should detect stacked columns and toggle banner visibility", () => {
+        expect(component.hasStackedColumns(stackedUi)).toBeTrue();
+        expect(component.getStackedColumnsIssueCount(stackedUi)).toBe(1);
+        expect(component.canReopenStackedColumnsBanner(stackedUi)).toBeFalse();
+
+        component.dismissStackedColumnsBanner(stackedUi);
+        expect(component.hasStackedColumns(stackedUi)).toBeFalse();
+        expect(component.canReopenStackedColumnsBanner(stackedUi)).toBeTrue();
+
+        component.reopenStackedColumnsBanner(stackedUi);
+        expect(component.hasStackedColumns(stackedUi)).toBeTrue();
+        expect(component.canReopenStackedColumnsBanner(stackedUi)).toBeFalse();
+      });
+
+      it("should open review stacked columns modal", () => {
+        expect(component.showReviewStackedColumnsModal).toBeFalse();
+        component.openReviewStackedColumnsModal(stackedUi);
+        expect(component.showReviewStackedColumnsModal).toBeTrue();
+        expect(component.pendingRepairStackedUi).toBe(stackedUi);
+        expect(component.detectedStackedIssues.length).toBe(1);
+      });
+
+      it("should quick-fix stacked columns and display success modal", () => {
+        component.quickFixStackedColumns(stackedUi);
+        expect(component.showSuccessModal).toBeTrue();
+        expect(component.successModalTitle).toBe(
+          "UE_STACKED_COLUMNS_MODAL_TITLE",
+        );
+
+        const parsed = JSON.parse(stackedUi.layoutJson || "{}");
+        expect(parsed.widgets.length).toBe(1);
+        expect(parsed.widgets[0].customSettings.insets).toEqual({
+          "bottom-left": "flag",
+          "bottom-right": "photo",
+        });
+      });
+    });
   });
 });
