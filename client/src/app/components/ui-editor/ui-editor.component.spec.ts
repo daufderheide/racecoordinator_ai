@@ -2425,6 +2425,30 @@ describe("UIEditorComponent", () => {
       expect(mockSettingsService.saveSettings).toHaveBeenCalled();
     }));
 
+    it("should await in-flight activeAutoSavePromise during confirmDiscard and exit cleanly", async () => {
+      component.isLoading = false;
+      (component as any).isSaving = true;
+
+      let inFlightFinished = false;
+      const inFlightSave = new Promise<void>((resolve) => {
+        setTimeout(() => {
+          inFlightFinished = true;
+          component.undoManager.resetTracking(component.editingState);
+          (component as any).isSaving = false;
+          resolve();
+        }, 20);
+      });
+      component.activeAutoSavePromise = inFlightSave;
+
+      spyOn(component, "hasChanges").and.callFake(() => !inFlightFinished);
+
+      const result = await component.confirmDiscard();
+
+      expect(inFlightFinished).toBeTrue();
+      expect(result).toBeTrue();
+      expect(component.showDiscardConfirm).toBeFalse();
+    });
+
     it("should show modal if auto-save fails", async () => {
       const logger = TestBed.inject(LoggerService);
       component.isLoading = false;
@@ -2448,6 +2472,7 @@ describe("UIEditorComponent", () => {
 
       const promise = component.confirmDiscard();
       // Wait for the auto-save promise chain to settle
+      await Promise.resolve();
       await Promise.resolve();
 
       expect(component.showDiscardConfirm).toBeTrue();

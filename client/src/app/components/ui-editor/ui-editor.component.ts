@@ -111,7 +111,6 @@ import {
   handleClearCustomTemplate,
   handleConfirmDeleteCustomUi,
   handleConfirmDeleteTheme,
-  handleConfirmDiscard,
   handleCreateCustomUi,
   handleCreateTheme,
   handleCustomUiSelection,
@@ -232,6 +231,14 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   saveTimeout: any;
   autoSaveTimeout: any;
   isAutoSaving = false;
+  get activeAutoSavePromise(): Promise<any> | null {
+    return this.lifecycle?.activeSavePromise ?? null;
+  }
+  set activeAutoSavePromise(p: Promise<any> | null) {
+    if (this.lifecycle) {
+      this.lifecycle.activeSavePromise = p;
+    }
+  }
   scale = 1;
   assets: any[] = [];
   private params = toSignal(this.route.queryParams);
@@ -443,6 +450,14 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       cdr: this.cdr,
       translationService: this.translationService,
       getUnsavedReasons: () => this.getUnsavedReasons(),
+      undoManager: this.undoManager,
+      hasChanges: () => this.hasChanges(),
+      isSaveValid: () =>
+        !this.isAnyThemeNameInvalid() && !this.isAnyCustomUiNameInvalid(),
+      isSaving: () => this.isSaving,
+      onAutoSave: () => this.autoSaveState(),
+      autoSaveOnDiscard: true,
+      logger: this.logger,
     });
   }
 
@@ -460,7 +475,9 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     }
     this.raceConnectionService.connect();
 
-    this.undoManager?.stateCommitted$.subscribe(() => this.autoSaveState());
+    this.undoManager?.stateCommitted$.subscribe(() =>
+      this.autoSaveState().catch(() => {}),
+    );
     this.translationSubscription = this.translationService
       .getTranslationsLoaded()
       .subscribe((loaded) => {
@@ -795,8 +812,8 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     return this.lifecycle.discardMessage;
   }
 
-  async confirmDiscard(): Promise<boolean> {
-    return handleConfirmDiscard(this);
+  confirmDiscard(): Promise<boolean> {
+    return this.lifecycle.confirmDiscard();
   }
 
   onConfirmDiscard() {

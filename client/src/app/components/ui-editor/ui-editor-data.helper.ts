@@ -492,6 +492,7 @@ export function handleUiEditorDestroy(comp: any): void {
   comp.isDestroyed = true;
   if (comp.saveTimeout) clearTimeout(comp.saveTimeout);
   if (comp.autoSaveTimeout) clearTimeout(comp.autoSaveTimeout);
+  comp.activeAutoSavePromise = null;
   comp.raceConnectionService.disconnect();
   comp.dataSubscription?.unsubscribe();
   comp.translationSubscription?.unsubscribe();

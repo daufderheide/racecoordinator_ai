@@ -120,4 +120,98 @@ describe("ui-editor-persistence.helper", () => {
 
     await expectAsync(handleAutoSaveState(comp)).toBeResolved();
   });
+
+  it("should await activeAutoSavePromise when a save is already in flight", async () => {
+    let resolvedInFlight = false;
+    const inFlightPromise = new Promise<void>((resolve) => {
+      setTimeout(() => {
+        resolvedInFlight = true;
+        resolve();
+      }, 10);
+    });
+
+    const comp: any = {
+      activeAutoSavePromise: inFlightPromise,
+      hasChanges: jasmine.createSpy("hasChanges").and.returnValue(false),
+      isAnyThemeNameInvalid: () => false,
+      isAnyCustomUiNameInvalid: () => false,
+    };
+
+    await handleAutoSaveState(comp);
+    expect(resolvedInFlight).toBeTrue();
+    expect(comp.hasChanges).toHaveBeenCalled();
+  });
+
+  it("should trigger a follow-up save if changes remain after in-flight save completes", async () => {
+    let followUpSaved = false;
+    const inFlightPromise = Promise.resolve();
+
+    let dirty = true;
+    const comp: any = {
+      activeAutoSavePromise: inFlightPromise,
+      hasChanges: () => dirty,
+      isAnyThemeNameInvalid: () => false,
+      isAnyCustomUiNameInvalid: () => false,
+      isLoading: false,
+      isSaving: false,
+      editingSettings: new Settings(),
+      displayThemes: [],
+      displayCustomUIs: [],
+      undoManager: {
+        getInitialState: () => undefined,
+        resetTracking: jasmine.createSpy("resetTracking").and.callFake(() => {
+          dirty = false;
+        }),
+      },
+      editingState: {},
+      dataService: {},
+      settingsService: {
+        saveSettings: jasmine.createSpy("saveSettings").and.callFake(() => {
+          followUpSaved = true;
+        }),
+      },
+      themeService: { getActiveTheme: () => null },
+      customUiService: { initialize: jasmine.createSpy("initialize") },
+      logger: {},
+      translationService: {},
+      getSaveDelay: () => 0,
+      cdr: { markForCheck: jasmine.createSpy("markForCheck") },
+    };
+
+    await handleAutoSaveState(comp);
+    expect(followUpSaved).toBeTrue();
+    expect(comp.undoManager.resetTracking).toHaveBeenCalled();
+    expect(comp.activeAutoSavePromise).toBeNull();
+  });
+
+  it("should reset isSaving to false immediately on success", async () => {
+    const comp: any = {
+      activeAutoSavePromise: null,
+      hasChanges: () => true,
+      isAnyThemeNameInvalid: () => false,
+      isAnyCustomUiNameInvalid: () => false,
+      isLoading: false,
+      isSaving: false,
+      editingSettings: new Settings(),
+      displayThemes: [],
+      displayCustomUIs: [],
+      undoManager: {
+        getInitialState: () => undefined,
+        resetTracking: jasmine.createSpy("resetTracking"),
+      },
+      editingState: {},
+      dataService: {},
+      settingsService: { saveSettings: jasmine.createSpy("saveSettings") },
+      themeService: { getActiveTheme: () => null },
+      customUiService: { initialize: jasmine.createSpy("initialize") },
+      logger: {},
+      translationService: {},
+      getSaveDelay: () => 500,
+      cdr: { markForCheck: jasmine.createSpy("markForCheck") },
+    };
+
+    await handleAutoSaveState(comp);
+    expect(comp.isSaving).toBeFalse();
+    expect(comp.isAutoSaving).toBeTrue();
+  });
 });

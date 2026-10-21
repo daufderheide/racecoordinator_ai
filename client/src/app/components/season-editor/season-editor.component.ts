@@ -175,6 +175,12 @@ export class SeasonEditorComponent
       cdr: this.cdr,
       translationService: this.translationService,
       getUnsavedReasons: () => this.getUnsavedReasons(),
+      undoManager: this.undoManager,
+      hasChanges: () => this.hasChanges(),
+      isSaveValid: () => this.isFormValid,
+      isSaving: () => this.isSaving,
+      onAutoSave: () => this.autoSaveSeason(),
+      logger: this.logger,
     });
   }
 
@@ -856,8 +862,13 @@ export class SeasonEditorComponent
     );
   }
 
-  autoSaveSeason(): void {
-    if (!this.isFormValid || this.isSaving) return;
+  autoSaveSeason(): Promise<any> {
+    if (!this.isFormValid) return Promise.resolve();
+    return this.lifecycle.scheduleAutoSave(() => this.performSaveSeason());
+  }
+
+  private performSaveSeason(): Promise<any> {
+    if (this.isSaving) return Promise.resolve();
     this.isSaving = true;
 
     const payload: Season = {
@@ -870,53 +881,57 @@ export class SeasonEditorComponent
       ? this.dataService.updateSeason(payload.entity_id, payload)
       : this.dataService.createSeason(payload);
 
-    this.subscriptions.push(
-      op.subscribe({
-        next: (savedSeason) => {
-          if (savedSeason) {
-            const isNew = !payload.entity_id;
-            if (savedSeason.entity_id) {
-              this.editingSeason.entity_id = savedSeason.entity_id;
-              this.navigationService.setLastEditedId(
-                "season",
-                savedSeason.entity_id,
+    return new Promise((resolve, reject) => {
+      this.subscriptions.push(
+        op.subscribe({
+          next: (savedSeason) => {
+            if (savedSeason) {
+              const isNew = !payload.entity_id;
+              if (savedSeason.entity_id) {
+                this.editingSeason.entity_id = savedSeason.entity_id;
+                this.navigationService.setLastEditedId(
+                  "season",
+                  savedSeason.entity_id,
+                );
+              }
+              this.undoManager.resetTracking(this.editingSeason);
+              const idx = this.existingSeasons.findIndex(
+                (s) => s.entity_id === savedSeason.entity_id,
               );
-            }
-            this.undoManager.resetTracking(this.editingSeason);
-            const idx = this.existingSeasons.findIndex(
-              (s) => s.entity_id === savedSeason.entity_id,
-            );
-            if (idx !== -1) {
-              this.existingSeasons[idx] = savedSeason;
-            } else {
-              this.existingSeasons.push(savedSeason);
-            }
-            this.updateSeasonSelectItems();
+              if (idx !== -1) {
+                this.existingSeasons[idx] = savedSeason;
+              } else {
+                this.existingSeasons.push(savedSeason);
+              }
+              this.updateSeasonSelectItems();
 
-            if (isNew && savedSeason.entity_id) {
-              this.isReverting = true;
-              this.router.navigate([], {
-                relativeTo: this.route,
-                queryParams: { id: savedSeason.entity_id },
-                queryParamsHandling: "merge",
-                replaceUrl: true,
-              });
+              if (isNew && savedSeason.entity_id) {
+                this.isReverting = true;
+                this.router.navigate([], {
+                  relativeTo: this.route,
+                  queryParams: { id: savedSeason.entity_id },
+                  queryParamsHandling: "merge",
+                  replaceUrl: true,
+                });
+              }
             }
-          }
-          if (this.transitionToReadOnlyOnSave) {
-            this.isEditMode = false;
-            this.transitionToReadOnlyOnSave = false;
-          }
-          this.isSaving = false;
-          this.cdr.detectChanges();
-        },
-        error: (err) => {
-          this.logger.error("Failed to auto-save season", err);
-          this.isSaving = false;
-          this.cdr.detectChanges();
-        },
-      }),
-    );
+            if (this.transitionToReadOnlyOnSave) {
+              this.isEditMode = false;
+              this.transitionToReadOnlyOnSave = false;
+            }
+            this.isSaving = false;
+            this.cdr.detectChanges();
+            resolve(savedSeason);
+          },
+          error: (err) => {
+            this.logger.error("Failed to auto-save season", err);
+            this.isSaving = false;
+            this.cdr.detectChanges();
+            reject(err);
+          },
+        }),
+      );
+    });
   }
 
   onSave(): void {

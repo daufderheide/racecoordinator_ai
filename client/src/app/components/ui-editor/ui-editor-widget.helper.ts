@@ -312,7 +312,6 @@ export function handleWidgetInspectorChange(
   widget?: any,
   ui?: CustomUI,
 ): void {
-  if (comp.isSaving) return;
   const targetUi = ui || comp.activeCustomUi;
   const targetWidget = widget || comp.currentSelectedWidget;
   const layout = comp.getLayout(targetUi);
@@ -570,7 +569,6 @@ export function handleLayoutChanged(
   newLayout: any,
   ui?: CustomUI,
 ): void {
-  if (comp.isSaving) return;
   updateLayoutOnModel(
     newLayout,
     ui,

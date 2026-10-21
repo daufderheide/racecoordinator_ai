@@ -151,20 +151,58 @@ export function buildAutoSaveContext(comp: any): any {
       comp.isSaving = true;
     },
     onSuccess: () => {
+      comp.isSaving = false;
+      comp.activeAutoSavePromise = null;
       comp.autoSaveTimeout = setTimeout(() => {
         comp.isAutoSaving = false;
-        comp.isSaving = false;
         if (!comp.isDestroyed) comp.cdr.markForCheck();
       }, comp.getSaveDelay());
     },
     onError: () => {
       comp.isAutoSaving = false;
       comp.isSaving = false;
+      comp.activeAutoSavePromise = null;
       if (!comp.isDestroyed) comp.cdr.markForCheck();
     },
   };
 }
 
 export function handleAutoSaveState(comp: any): Promise<void> {
-  return executeAutoSaveState(buildAutoSaveContext(comp));
+  if (comp.activeAutoSavePromise) {
+    const currentPromise = comp.activeAutoSavePromise;
+    return currentPromise.then(
+      (): Promise<void> => {
+        if (comp.activeAutoSavePromise === currentPromise) {
+          comp.activeAutoSavePromise = null;
+        }
+        if (
+          comp.hasChanges() &&
+          !comp.isAnyThemeNameInvalid() &&
+          !comp.isAnyCustomUiNameInvalid()
+        ) {
+          return handleAutoSaveState(comp);
+        }
+        return Promise.resolve();
+      },
+      (err: any): Promise<void> => {
+        if (comp.activeAutoSavePromise === currentPromise) {
+          comp.activeAutoSavePromise = null;
+        }
+        return Promise.reject(err);
+      },
+    );
+  }
+
+  const ctx = buildAutoSaveContext(comp);
+  const savePromise = executeAutoSaveState(ctx).finally(() => {
+    if (comp.activeAutoSavePromise === savePromise) {
+      comp.activeAutoSavePromise = null;
+    }
+  });
+
+  if (comp.isSaving) {
+    comp.activeAutoSavePromise = savePromise;
+  }
+
+  return savePromise;
 }

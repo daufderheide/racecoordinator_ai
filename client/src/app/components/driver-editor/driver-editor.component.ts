@@ -266,6 +266,12 @@ export class DriverEditorComponent
       cdr: this.cdr,
       translationService: this.translationService,
       getUnsavedReasons: () => this.getUnsavedReasons(),
+      undoManager: this.undoManager,
+      hasChanges: () => this.hasChanges(),
+      isSaveValid: () => !this.isNameInvalid && !this.isNicknameInvalid,
+      isSaving: () => this.isSaving,
+      onAutoSave: () => this.updateDriver(false, true),
+      logger: this.logger,
     });
   }
 
@@ -560,18 +566,24 @@ export class DriverEditorComponent
     );
   }
 
-  private autoSaveDriver() {
-    if (!this.editingDriver) return;
-    if (this.isNameInvalid || this.isNicknameInvalid) return;
-    if (this.isSaving) return;
-    this.updateDriver(false, true);
+  private autoSaveDriver(): Promise<any> {
+    if (!this.editingDriver) return Promise.resolve();
+    if (this.isNameInvalid || this.isNicknameInvalid) return Promise.resolve();
+    return this.lifecycle.scheduleAutoSave(() =>
+      this.updateDriver(false, true),
+    );
   }
 
-  updateDriver(isSaveAsNew: boolean = false, isAutoSave: boolean = false) {
-    if (!this.editingDriver || (!isSaveAsNew && !this.isDirtyState())) return;
+  updateDriver(
+    isSaveAsNew: boolean = false,
+    isAutoSave: boolean = false,
+  ): Promise<any> {
+    if (!this.editingDriver || (!isSaveAsNew && !this.isDirtyState()))
+      return Promise.resolve();
+    if (this.isSaving) return Promise.resolve();
     this.isSaving = true;
     this.isAutoSaving = isAutoSave;
-    this.saveDriverData(isSaveAsNew, isAutoSave);
+    return this.saveDriverData(isSaveAsNew, isAutoSave);
   }
 
   private loadDataInternal(rawDrivers: any[], assets: any[]) {
@@ -800,8 +812,8 @@ export class DriverEditorComponent
   private saveDriverData(
     isSaveAsNew: boolean = false,
     isAutoSave: boolean = false,
-  ) {
-    if (!this.editingDriver) return;
+  ): Promise<any> {
+    if (!this.editingDriver) return Promise.resolve();
 
     const driverToSend = { ...this.editingDriver };
     const wasNew = isSaveAsNew || driverToSend.entity_id === "new";
@@ -815,19 +827,23 @@ export class DriverEditorComponent
         ? this.dataService.createDriver(driverToSend)
         : this.dataService.updateDriver(driverToSend.entity_id, driverToSend);
 
-    obs.subscribe({
-      next: (result) => {
-        this.handleSaveSuccess(
-          result,
-          driverToSend,
-          wasNew,
-          isSaveAsNew,
-          isAutoSave,
-        );
-      },
-      error: (err) => {
-        this.handleSaveError(err, isAutoSave);
-      },
+    return new Promise((resolve, reject) => {
+      obs.subscribe({
+        next: (result) => {
+          this.handleSaveSuccess(
+            result,
+            driverToSend,
+            wasNew,
+            isSaveAsNew,
+            isAutoSave,
+          );
+          resolve(result);
+        },
+        error: (err) => {
+          this.handleSaveError(err, isAutoSave);
+          reject(err);
+        },
+      });
     });
   }
 

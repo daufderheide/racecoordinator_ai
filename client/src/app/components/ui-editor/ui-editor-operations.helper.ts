@@ -121,6 +121,9 @@ export async function executeConfirmDiscard(params: {
 }
 
 export function handleConfirmDiscard(comp: any): Promise<boolean> {
+  if (comp.lifecycle) {
+    return comp.lifecycle.confirmDiscard();
+  }
   return new Promise((resolve) => {
     executeConfirmDiscard({
       undoManager: comp.undoManager,

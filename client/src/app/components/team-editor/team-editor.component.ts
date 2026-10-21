@@ -168,6 +168,12 @@ export class TeamEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       cdr: this.cdr,
       translationService: this.translationService,
       getUnsavedReasons: () => this.getUnsavedReasons(),
+      undoManager: this.undoManager,
+      hasChanges: () => this.hasChanges(),
+      isSaveValid: () => !this.isNameInvalid,
+      isSaving: () => this.isSaving,
+      onAutoSave: () => this.updateTeam(false, true),
+      logger: this.logger,
     });
   }
 
@@ -662,22 +668,18 @@ export class TeamEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     this.cdr.detectChanges();
   }
 
-  private autoSaveTeam() {
+  private autoSaveTeam(): Promise<any> {
     this.logger.debug("autoSaveTeam triggered");
     if (!this.editingTeam) {
       this.logger.debug("autoSaveTeam: no editingTeam");
-      return;
+      return Promise.resolve();
     }
     if (this.isNameInvalid) {
       this.logger.debug("autoSaveTeam: name invalid");
-      return;
-    }
-    if (this.isSaving) {
-      this.logger.debug("autoSaveTeam: isSaving is true");
-      return;
+      return Promise.resolve();
     }
     this.logger.debug("autoSaveTeam Triggering updateTeam");
-    this.updateTeam(false, true);
+    return this.lifecycle.scheduleAutoSave(() => this.updateTeam(false, true));
   }
 
   onBackClicked() {
@@ -771,9 +773,12 @@ export class TeamEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     this.lifecycle.onCancelDiscard();
   }
 
-  updateTeam(isSaveAsNew: boolean = false, isAutoSave: boolean = false) {
-    if (!this.editingTeam || this.isSaving) return;
-    if (!isSaveAsNew && !this.isDirtyState()) return;
+  updateTeam(
+    isSaveAsNew: boolean = false,
+    isAutoSave: boolean = false,
+  ): Promise<any> {
+    if (!this.editingTeam || this.isSaving) return Promise.resolve();
+    if (!isSaveAsNew && !this.isDirtyState()) return Promise.resolve();
 
     if (!isAutoSave) {
       this.isSaving = true;
@@ -782,14 +787,14 @@ export class TeamEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       this.isSaving = true;
       this.isAutoSaving = true;
     }
-    this.saveTeamData(isSaveAsNew, isAutoSave);
+    return this.saveTeamData(isSaveAsNew, isAutoSave);
   }
 
   private saveTeamData(
     isSaveAsNew: boolean = false,
     isAutoSave: boolean = false,
-  ) {
-    if (!this.editingTeam) return;
+  ): Promise<any> {
+    if (!this.editingTeam) return Promise.resolve();
 
     const teamToSend = this.cloneTeam(this.editingTeam);
     const wasNew = isSaveAsNew || teamToSend.entity_id === "new";
@@ -803,10 +808,17 @@ export class TeamEditorComponent implements OnInit, OnDestroy, DirtyComponent {
         ? this.dataService.createTeam(teamToSend)
         : this.dataService.updateTeam(teamToSend.entity_id, teamToSend);
 
-    obs.subscribe({
-      next: (result) =>
-        this.handleSaveSuccess(result, teamToSend, wasNew, isAutoSave),
-      error: (err) => this.handleSaveError(err, isAutoSave),
+    return new Promise((resolve, reject) => {
+      obs.subscribe({
+        next: (result) => {
+          this.handleSaveSuccess(result, teamToSend, wasNew, isAutoSave);
+          resolve(result);
+        },
+        error: (err) => {
+          this.handleSaveError(err, isAutoSave);
+          reject(err);
+        },
+      });
     });
   }
 

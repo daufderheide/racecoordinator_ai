@@ -200,6 +200,30 @@ describe("ui-editor-operations.helper", () => {
     expect(comp.undoManager.commitState).toHaveBeenCalled();
   });
 
+  it("should auto-save and approve deactivation when changes exist and autoSaveState clears them", async () => {
+    let hasChangesValue = true;
+    const comp: any = {
+      undoManager: { commitState: jasmine.createSpy("commitState") },
+      hasChanges: () => hasChangesValue,
+      isAnyThemeNameInvalid: () => false,
+      isAnyCustomUiNameInvalid: () => false,
+      autoSaveState: jasmine
+        .createSpy("autoSaveState")
+        .and.callFake(async () => {
+          hasChangesValue = false;
+        }),
+      logger: loggerSpy,
+      showDiscardConfirm: false,
+      pendingDeactivate: null,
+      cdr: { markForCheck: jasmine.createSpy("markForCheck") },
+    };
+
+    const result = await handleConfirmDiscard(comp);
+    expect(result).toBeTrue();
+    expect(comp.autoSaveState).toHaveBeenCalled();
+    expect(comp.showDiscardConfirm).toBeFalse();
+  });
+
   describe("countdown preview helpers", () => {
     it("should return false if no id is resolved", () => {
       const comp: any = { activeCustomUiId: null };

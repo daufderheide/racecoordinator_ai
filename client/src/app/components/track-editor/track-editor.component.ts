@@ -380,6 +380,13 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       cdr: this.cdr,
       translationService: this.translationService,
       getUnsavedReasons: () => this.getUnsavedReasons(),
+      undoManager: this.undoManager,
+      hasChanges: () => this.hasChanges(),
+      isSaveValid: () =>
+        Boolean(this.trackName?.trim() && this.isNameUnique(true)),
+      isSaving: () => this.isSaving,
+      onAutoSave: () => this.updateTrack(false, true),
+      logger: this.logger,
     });
   }
 
@@ -2237,43 +2244,45 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     }
   }
 
-  private autoSaveTrack() {
+  private autoSaveTrack(): Promise<any> {
     this.logger.debug("autoSaveTrack triggered");
     if (!this.editingTrack) {
       this.logger.debug("autoSaveTrack: no editingTrack");
-      return;
+      return Promise.resolve();
     }
-    if (!this.trackName.trim() || !this.isNameUnique(true)) {
+    if (!this.trackName?.trim() || !this.isNameUnique(true)) {
       this.logger.debug("autoSaveTrack: name invalid");
-      return;
-    }
-    if (this.isSaving) {
-      this.logger.debug("autoSaveTrack: isSaving is true");
-      return;
+      return Promise.resolve();
     }
     this.logger.debug("autoSaveTrack: triggering updateTrack");
-    this.updateTrack(false, true);
+    return this.lifecycle.scheduleAutoSave(() => this.updateTrack(false, true));
   }
 
-  updateTrack(isSaveAsNew: boolean = false, isAutoSave: boolean = false) {
-    if (!this.editingTrack || this.isSaving) return;
+  updateTrack(
+    isSaveAsNew: boolean = false,
+    isAutoSave: boolean = false,
+  ): Promise<any> {
+    if (!this.editingTrack || this.isSaving) return Promise.resolve();
     const wasNew = isSaveAsNew || this.editingTrack.entity_id === "new";
-    if (!wasNew && !this.isDirtyState()) return;
+    if (!wasNew && !this.isDirtyState()) return Promise.resolve();
 
     // Validate
-    if (!this.trackName.trim()) {
+    if (!this.trackName?.trim()) {
       if (!isAutoSave) {
         alert(this.translationService.translate("TE_ERROR_NAME_REQUIRED"));
       }
-      return;
+      return Promise.resolve();
     }
 
     this.isSaving = true;
     this.isAutoSaving = isAutoSave;
-    this.saveTrackData(isSaveAsNew, isAutoSave);
+    return this.saveTrackData(isSaveAsNew, isAutoSave);
   }
 
-  private saveTrackData(isSaveAsNew: boolean, isAutoSave: boolean) {
+  private saveTrackData(
+    isSaveAsNew: boolean,
+    isAutoSave: boolean,
+  ): Promise<any> {
     const finalTrack = this.createSnapshot();
     const wasNew = isSaveAsNew || finalTrack.entity_id === "new";
 
@@ -2291,19 +2300,25 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       ? this.dataService.createTrack({ ...payload, entity_id: "new" })
       : this.dataService.updateTrack(payload.entity_id, payload);
 
-    this.subscriptions.push(
-      obs.subscribe({
-        next: (result) => {
-          const merged = {
-            ...payload,
-            ...result,
-            entity_id: result?.entity_id || payload?.entity_id,
-          };
-          this.handleSaveSuccess(merged, wasNew, isAutoSave);
-        },
-        error: (err) => this.handleSaveError(err, isAutoSave),
-      }),
-    );
+    return new Promise((resolve, reject) => {
+      this.subscriptions.push(
+        obs.subscribe({
+          next: (result) => {
+            const merged = {
+              ...payload,
+              ...result,
+              entity_id: result?.entity_id || payload?.entity_id,
+            };
+            this.handleSaveSuccess(merged, wasNew, isAutoSave);
+            resolve(merged);
+          },
+          error: (err) => {
+            this.handleSaveError(err, isAutoSave);
+            reject(err);
+          },
+        }),
+      );
+    });
   }
 
   private handleSaveSuccess(result: any, wasNew: boolean, isAutoSave: boolean) {
