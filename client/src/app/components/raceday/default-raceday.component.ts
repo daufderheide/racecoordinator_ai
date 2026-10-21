@@ -3537,10 +3537,40 @@ export class DefaultRacedayComponent
     this.qrCodeUrl =
       "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='80' height='80'><rect width='80' height='80' fill='white'/><rect x='10' y='10' width='20' height='20' fill='black'/><rect x='50' y='10' width='20' height='20' fill='black'/><rect x='10' y='50' width='20' height='20' fill='black'/><rect x='40' y='40' width='10' height='10' fill='black'/><rect x='30' y='30' width='20' height='20' fill='black'/></svg>";
 
-    // Populate mock lane QR codes for UI Editor
+    // Populate mock lane QR codes for UI Editor (support tracks/grids up to 16 lanes)
     this.laneQrCodeCache.clear();
-    for (let i = 0; i < (this.track?.lanes?.length || 8); i++) {
+    for (let i = 0; i < 16; i++) {
       this.laneQrCodeCache.set(i, this.qrCodeUrl);
+    }
+    this.driverViewQrCodeCache.clear();
+    if (this.heat?.heatDrivers) {
+      for (const hd of this.heat.heatDrivers) {
+        const entityId =
+          hd.actualDriver?.entity_id ||
+          hd.driver?.entity_id ||
+          hd.actualDriver?.name ||
+          hd.driver?.name ||
+          hd.participant?.team?.entity_id ||
+          hd.participant?.team?.name ||
+          hd.participant?.objectId ||
+          hd.objectId;
+        if (entityId) {
+          this.driverViewQrCodeCache.set(entityId, this.qrCodeUrl);
+        }
+      }
+    }
+    if (this.participants) {
+      for (const p of this.participants) {
+        const entityId =
+          p.driver?.entity_id ||
+          p.driver?.name ||
+          p.team?.entity_id ||
+          p.team?.name ||
+          p.objectId;
+        if (entityId) {
+          this.driverViewQrCodeCache.set(entityId, this.qrCodeUrl);
+        }
+      }
     }
 
     // Populate mock data for the 4 race records
@@ -4782,6 +4812,13 @@ export class DefaultRacedayComponent
   getLaneQrCodeUrl(laneIndex: number): string {
     const cached = this.laneQrCodeCache.get(laneIndex);
     if (cached) return cached;
+    const isEditor =
+      typeof this.isUIEditorMode === "function"
+        ? this.isUIEditorMode()
+        : Boolean(this.isUIEditorMode);
+    if (isEditor) {
+      return this.qrCodeUrl || "";
+    }
     if (!this.serverUrlBase || this.generatingLaneQrCodes.has(laneIndex)) {
       return "";
     }
@@ -4803,7 +4840,18 @@ export class DefaultRacedayComponent
     return "";
   }
 
-  getDriverViewQrCodeUrl(hd: DriverHeatData): string {
+  getDriverViewQrCodeUrl(hd: DriverHeatData | number): string {
+    const isEditor =
+      typeof this.isUIEditorMode === "function"
+        ? this.isUIEditorMode()
+        : Boolean(this.isUIEditorMode);
+    if (isEditor) {
+      return this.qrCodeUrl || "";
+    }
+    if (typeof hd === "number") {
+      return this.getLaneQrCodeUrl(hd);
+    }
+    if (!hd) return "";
     const entityId =
       hd.actualDriver?.entity_id ||
       hd.driver?.entity_id ||
@@ -9042,7 +9090,71 @@ export class DefaultRacedayComponent
 
   onMasterWidgetModified(widget: AbsoluteWidgetNode): void {
     const session = this.gridSession();
-    if (!session || !this.layout?.widgets) return;
+    if (!session || !this.layout?.widgets || !widget) return;
+    if (
+      widget.customSettings?.["gridId"] &&
+      widget.customSettings["gridId"] !== session.gridId
+    ) {
+      return;
+    }
+
+    if (LaneGridReplicationHelper.isHeaderWidget(widget)) {
+      this.layout.widgets = LaneGridReplicationHelper.syncMasterWidgetToLanes(
+        widget,
+        session,
+        this.layout.widgets,
+      );
+      this.layoutChanged.emit(this.layout);
+      this.cdr.markForCheck();
+      return;
+    }
+
+    const isMaster = LaneGridReplicationHelper.isMasterWidget(widget, session);
+
+    if (!isMaster) {
+      if (session.mirrorRows !== false) {
+        const masterId =
+          widget.customSettings?.["gridMasterId"] ||
+          widget.id.replace(/_grid_lane_\d+.*$/, "");
+        const masterWidget = this.layout.widgets.find(
+          (w: any) => w.id === masterId,
+        );
+        if (masterWidget && masterWidget.id !== widget.id) {
+          masterWidget.customSettings = masterWidget.customSettings || {};
+          if (widget.customSettings?.["insets"]) {
+            masterWidget.customSettings["insets"] = {
+              ...widget.customSettings["insets"],
+            };
+          } else {
+            delete masterWidget.customSettings["insets"];
+          }
+          if (widget.customSettings?.["insetsConfig"]) {
+            masterWidget.customSettings["insetsConfig"] = {
+              ...widget.customSettings["insetsConfig"],
+            };
+          } else {
+            delete masterWidget.customSettings["insetsConfig"];
+          }
+          if (widget.customSettings?.["columnKey"]) {
+            masterWidget.customSettings["columnKey"] =
+              widget.customSettings["columnKey"];
+          }
+          this.onMasterWidgetModified(masterWidget);
+        }
+        return;
+      } else {
+        const idx = this.layout.widgets.findIndex(
+          (w: any) => w.id === widget.id,
+        );
+        if (idx >= 0) {
+          this.layout.widgets[idx] = widget;
+        }
+        this.layoutChanged.emit(this.layout);
+        this.cdr.markForCheck();
+        return;
+      }
+    }
+
     LaneGridReplicationHelper.updateWidgetCellRatios(widget, session);
     if (session.mirrorRows !== false) {
       this.layout.widgets = LaneGridReplicationHelper.syncMasterWidgetToLanes(

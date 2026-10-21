@@ -118,6 +118,9 @@ export class RacedayLaneColumnComponent
   private lastFittedWidth = 0;
   private lastFittedHeight = 0;
   private lastFittedInsets = "";
+  private lastFittedValueFontSize?: number;
+  private lastFittedValueFontFamily?: string;
+  private lastFittedScaleMode?: string;
 
   constructor() {
     if (this.customWidgetService?.customWidgets$) {
@@ -160,7 +163,6 @@ export class RacedayLaneColumnComponent
   ngAfterViewChecked(): void {
     if (
       this.isHeaderWidget ||
-      this.isLastLaps() ||
       this.isImageProperty() ||
       this.isPacingProperty()
     ) {
@@ -168,22 +170,54 @@ export class RacedayLaneColumnComponent
     }
     const cardEl = this.cardRef()?.nativeElement;
     if (!cardEl) return;
+
+    if (this.isLastLaps()) {
+      const w = cardEl.clientWidth;
+      const h = cardEl.clientHeight;
+      const valSize = this.settings.valueFontSize ?? 0;
+      const scaleMode = this.widget()?.scaleMode || "";
+      if (
+        w > 0 &&
+        h > 0 &&
+        (w !== this.lastFittedWidth ||
+          h !== this.lastFittedHeight ||
+          valSize !== this.lastFittedValueFontSize ||
+          scaleMode !== this.lastFittedScaleMode)
+      ) {
+        this.lastFittedWidth = w;
+        this.lastFittedHeight = h;
+        this.lastFittedValueFontSize = valSize;
+        this.lastFittedScaleMode = scaleMode;
+        this.fitLastLaps();
+      }
+      return;
+    }
+
     const text = this.formattedValue?.trim() || "";
     const w = cardEl.clientWidth;
     const h = cardEl.clientHeight;
     const insetsKey = JSON.stringify(this.settings.insets || {});
+    const valSize = this.settings.valueFontSize ?? 0;
+    const valFamily = this.settings.valueFontFamily || "";
+    const scaleMode = this.widget()?.scaleMode || "";
     if (
       w > 0 &&
       h > 0 &&
       (text !== this.lastFittedText ||
         w !== this.lastFittedWidth ||
         h !== this.lastFittedHeight ||
-        insetsKey !== this.lastFittedInsets)
+        insetsKey !== this.lastFittedInsets ||
+        valSize !== this.lastFittedValueFontSize ||
+        valFamily !== this.lastFittedValueFontFamily ||
+        scaleMode !== this.lastFittedScaleMode)
     ) {
       this.lastFittedText = text;
       this.lastFittedWidth = w;
       this.lastFittedHeight = h;
       this.lastFittedInsets = insetsKey;
+      this.lastFittedValueFontSize = valSize;
+      this.lastFittedValueFontFamily = valFamily;
+      this.lastFittedScaleMode = scaleMode;
       this.fitTextValue(cardEl);
     }
   }
@@ -625,6 +659,9 @@ export class RacedayLaneColumnComponent
       const w = cardEl.clientWidth;
       const h = cardEl.clientHeight;
       const insetsKey = JSON.stringify(this.settings.insets || {});
+      const valSize = this.settings.valueFontSize ?? 0;
+      const valFamily = this.settings.valueFontFamily || "";
+      const scaleMode = this.widget()?.scaleMode || "";
       if (
         !force &&
         w > 0 &&
@@ -632,7 +669,10 @@ export class RacedayLaneColumnComponent
         text === this.lastFittedText &&
         w === this.lastFittedWidth &&
         h === this.lastFittedHeight &&
-        insetsKey === this.lastFittedInsets
+        insetsKey === this.lastFittedInsets &&
+        valSize === this.lastFittedValueFontSize &&
+        valFamily === this.lastFittedValueFontFamily &&
+        scaleMode === this.lastFittedScaleMode
       ) {
         return;
       }
@@ -640,6 +680,9 @@ export class RacedayLaneColumnComponent
       this.lastFittedWidth = w;
       this.lastFittedHeight = h;
       this.lastFittedInsets = insetsKey;
+      this.lastFittedValueFontSize = valSize;
+      this.lastFittedValueFontFamily = valFamily;
+      this.lastFittedScaleMode = scaleMode;
       this.fitTextValue(cardEl);
     }
   }
@@ -678,19 +721,30 @@ export class RacedayLaneColumnComponent
     const allLaps = this.getLastLaps();
     const explicitW = this.widget()?.width;
     const explicitH = this.widget()?.height;
-    const fit = fitColumnLastLaps(
-      cardEl,
-      this.isVerticalLapsFlow,
-      baseFontSize,
-      allLaps.length,
-      explicitW,
-      explicitH,
-    );
-    this.maxVisibleLaps.set(fit.maxLaps);
-    cardEl.style.setProperty(
-      "--lane-col-last-laps-font-size",
-      `${fit.fontSize}px`,
-    );
+
+    const scaleMode = this.widget()?.scaleMode;
+    const isCustomScaling = scaleMode !== undefined && scaleMode !== "auto";
+    if (isCustomScaling) {
+      this.maxVisibleLaps.set(allLaps.length || 5);
+      cardEl.style.setProperty(
+        "--lane-col-last-laps-font-size",
+        `${baseFontSize}px`,
+      );
+    } else {
+      const fit = fitColumnLastLaps(
+        cardEl,
+        this.isVerticalLapsFlow,
+        baseFontSize,
+        allLaps.length,
+        explicitW,
+        explicitH,
+      );
+      this.maxVisibleLaps.set(fit.maxLaps);
+      cardEl.style.setProperty(
+        "--lane-col-last-laps-font-size",
+        `${fit.fontSize}px`,
+      );
+    }
   }
 
   isImageProperty(key: string = this.columnKey): boolean {
@@ -703,6 +757,7 @@ export class RacedayLaneColumnComponent
       this.targetDriver,
       this.parent(),
       anchor,
+      this.targetIndex,
     );
   }
 

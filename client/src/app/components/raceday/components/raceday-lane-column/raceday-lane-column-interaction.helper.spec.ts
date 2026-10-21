@@ -482,6 +482,65 @@ describe("raceday-lane-column-interaction.helper", () => {
       expect(parent.onWidgetSettingsChanged).toHaveBeenCalledWith(node);
       expect(parent.cdr.markForCheck).toHaveBeenCalled();
     });
+
+    it("should not call onMasterWidgetModified when widget is null", () => {
+      const parent = {
+        gridSession: () => ({ gridId: "grid-1" }),
+        onMasterWidgetModified: jasmine.createSpy(),
+      };
+      notifyLaneColumnParentChange(parent, null);
+      expect(parent.onMasterWidgetModified).not.toHaveBeenCalled();
+    });
+
+    it("should not call onMasterWidgetModified when widget gridId does not match session gridId", () => {
+      const parent = {
+        gridSession: () => ({ gridId: "grid-1" }),
+        onMasterWidgetModified: jasmine.createSpy(),
+      };
+      const node: any = {
+        id: "w1",
+        customSettings: { gridId: "other-grid" },
+      };
+      notifyLaneColumnParentChange(parent, node);
+      expect(parent.onMasterWidgetModified).not.toHaveBeenCalled();
+    });
+
+    it("should resolve master widget and transfer insets when modifying a mirrored child widget", () => {
+      const masterNode: any = {
+        id: "w-master",
+        customSettings: { gridId: "grid-1", gridLane: 0 },
+      };
+      const childNode: any = {
+        id: "w-master_grid_lane_1",
+        customSettings: {
+          gridId: "grid-1",
+          gridMasterId: "w-master",
+          gridLane: 1,
+          insets: { "bottom-right": "qrCode" },
+          insetsConfig: { "bottom-right": { timeDecimalPlaces: 2 } },
+          columnKey: "driver.name",
+        },
+      };
+      const parent = {
+        gridSession: () => ({
+          gridId: "grid-1",
+          sourceLaneIndex: 0,
+          mirrorRows: true,
+        }),
+        onMasterWidgetModified: jasmine.createSpy(),
+        layout: { widgets: [masterNode, childNode] },
+      };
+
+      notifyLaneColumnParentChange(parent, childNode);
+      expect(parent.onMasterWidgetModified).toHaveBeenCalledWith(masterNode);
+      expect(masterNode.customSettings["insets"]).toEqual({
+        "bottom-right": "qrCode",
+      });
+      expect(masterNode.customSettings["insetsConfig"]).toEqual({
+        "bottom-right": { timeDecimalPlaces: 2 },
+      });
+      expect(masterNode.customSettings["columnKey"]).toBe("driver.name");
+    });
   });
 
   describe("resolveLaneColumnBackgroundColor and resolveLaneColumnForegroundColor", () => {

@@ -12307,6 +12307,158 @@ describe("DefaultRacedayComponent", () => {
       expect(lane1Widget.height).toBe(80);
     });
 
+    it("should ignore onMasterWidgetModified when widget is null or from another grid", () => {
+      const session = {
+        gridId: "test-grid-safety",
+        bounds: { x: 100, y: 100, width: 800, height: 400 },
+        totalLanes: 2,
+        direction: "vertical" as const,
+        sourceLaneIndex: 0,
+        bindingMode: "lane" as const,
+      };
+      fixture.componentRef.setInput("gridSession", session);
+      fixture.detectChanges();
+
+      const layoutSpy = spyOn(component.layoutChanged, "emit");
+      component.onMasterWidgetModified(null as any);
+      expect(layoutSpy).not.toHaveBeenCalled();
+
+      const otherWidget: any = {
+        id: "w-other",
+        customSettings: { gridId: "completely-different-grid" },
+      };
+      component.onMasterWidgetModified(otherWidget);
+      expect(layoutSpy).not.toHaveBeenCalled();
+    });
+
+    it("should resolve to master widget and replicate when onMasterWidgetModified is called on a mirrored child widget", () => {
+      const session = {
+        gridId: "test-grid-child-sync",
+        bounds: { x: 100, y: 100, width: 400, height: 400 },
+        totalLanes: 2,
+        direction: "vertical" as const,
+        sourceLaneIndex: 0,
+        bindingMode: "lane" as const,
+        mirrorRows: true,
+      };
+      fixture.componentRef.setInput("gridSession", session);
+      fixture.detectChanges();
+
+      const masterWidget: any = {
+        id: "w-master-1",
+        widgetType: "lane-column",
+        x: 100,
+        y: 100,
+        width: 400,
+        height: 200,
+        customSettings: {
+          gridId: "test-grid-child-sync",
+          gridLane: 0,
+          columnKey: "driver.name",
+        },
+      };
+
+      const childWidget: any = {
+        id: "w-master-1_grid_lane_1",
+        widgetType: "lane-column",
+        x: 100,
+        y: 300,
+        width: 400,
+        height: 200,
+        customSettings: {
+          gridId: "test-grid-child-sync",
+          gridMasterId: "w-master-1",
+          gridLane: 1,
+          columnKey: "driver.name",
+          insets: { "bottom-right": "qrCode" },
+          insetsConfig: { "bottom-right": { timeDecimalPlaces: 2 } },
+        },
+      };
+
+      (component as any).layout = {
+        widgets: [masterWidget, childWidget],
+      };
+
+      component.onMasterWidgetModified(childWidget);
+
+      // Master widget should have inherited the insets
+      expect(masterWidget.customSettings["insets"]).toEqual({
+        "bottom-right": "qrCode",
+      });
+      // There should not be duplicate master widgets at y: 100
+      const atY100 = (component as any).layout.widgets.filter(
+        (w: any) => w.y === 100 && !w.customSettings?.["isHeaderWidget"],
+      );
+      expect(atY100.length).toBe(1);
+      expect(atY100[0].id).toBe("w-master-1");
+
+      // The child widget at y: 300 should also have the insets mirrored
+      const atY300 = (component as any).layout.widgets.find(
+        (w: any) => w.y === 300,
+      );
+      expect(atY300).toBeTruthy();
+      expect(atY300.customSettings["insets"]).toEqual({
+        "bottom-right": "qrCode",
+      });
+    });
+
+    it("should update child widget in place without replication when mirrorRows is false", () => {
+      const session = {
+        gridId: "test-grid-nomirror-child",
+        bounds: { x: 100, y: 100, width: 400, height: 400 },
+        totalLanes: 2,
+        direction: "vertical" as const,
+        sourceLaneIndex: 0,
+        bindingMode: "lane" as const,
+        mirrorRows: false,
+      };
+      fixture.componentRef.setInput("gridSession", session);
+      fixture.detectChanges();
+
+      const masterWidget: any = {
+        id: "w-master-1",
+        widgetType: "lane-column",
+        x: 100,
+        y: 100,
+        width: 400,
+        height: 200,
+        customSettings: {
+          gridId: "test-grid-nomirror-child",
+          gridLane: 0,
+          mirrorRows: false,
+        },
+      };
+
+      const childWidget: any = {
+        id: "w-master-1_grid_lane_1",
+        widgetType: "lane-column",
+        x: 100,
+        y: 300,
+        width: 400,
+        height: 200,
+        customSettings: {
+          gridId: "test-grid-nomirror-child",
+          gridMasterId: "w-master-1",
+          gridLane: 1,
+          mirrorRows: false,
+          insets: { "top-left": "flag" },
+        },
+      };
+
+      (component as any).layout = {
+        widgets: [masterWidget, childWidget],
+      };
+
+      component.onMasterWidgetModified(childWidget);
+
+      // In unmirrored mode, master is not touched
+      expect(masterWidget.customSettings["insets"]).toBeUndefined();
+      // Child widget is updated in place
+      expect(childWidget.customSettings["insets"]).toEqual({
+        "top-left": "flag",
+      });
+    });
+
     it("should calculate selectedGridBounds and selectedGridLabel when a grid widget is selected", () => {
       fixture.componentRef.setInput("isUIEditorMode", true);
       fixture.componentRef.setInput("gridSession", null);

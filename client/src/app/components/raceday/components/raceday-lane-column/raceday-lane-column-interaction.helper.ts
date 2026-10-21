@@ -187,6 +187,11 @@ export function fitLaneColumnHeaderText(
   ctx.font = `700 ${baseFontSize}px ${family}`;
   const textWidth = ctx.measureText(headerLabel || "").width || 1;
 
+  if (widget?.scaleMode !== undefined && widget?.scaleMode !== "auto") {
+    headerEl.style.fontSize = `${baseFontSize}px`;
+    return;
+  }
+
   let scale = 1.0;
   if (textWidth > availWidth) {
     scale = Math.min(scale, availWidth / textWidth);
@@ -281,8 +286,62 @@ export function notifyLaneColumnParentChange(
   widget: AbsoluteWidgetNode | null,
 ): void {
   if (!parent) return;
-  if (parent.gridSession?.() && parent.onMasterWidgetModified) {
-    parent.onMasterWidgetModified(widget);
+  if (widget && parent.gridSession?.() && parent.onMasterWidgetModified) {
+    const session = parent.gridSession();
+    const sessionGridId =
+      session && typeof session === "object" ? session.gridId : null;
+    const widgetGridId = widget.customSettings?.["gridId"];
+    if (!sessionGridId || !widgetGridId || widgetGridId === sessionGridId) {
+      let targetWidget = widget;
+      const isMirroredChild = Boolean(
+        (widget.customSettings?.["gridMasterId"] &&
+          widget.customSettings["gridMasterId"] !== widget.id) ||
+        widget.id.includes("_grid_lane_") ||
+        (session &&
+          typeof session === "object" &&
+          session.sourceLaneIndex != null &&
+          widget.customSettings?.["gridLane"] != null &&
+          Number(widget.customSettings["gridLane"]) !==
+            session.sourceLaneIndex),
+      );
+
+      if (
+        isMirroredChild &&
+        session?.mirrorRows !== false &&
+        parent.layout?.widgets
+      ) {
+        const masterId =
+          widget.customSettings?.["gridMasterId"] ||
+          widget.id.replace(/_grid_lane_\d+.*$/, "");
+        const master = parent.layout.widgets.find(
+          (w: any) => w.id === masterId,
+        );
+        if (master) {
+          master.customSettings = master.customSettings || {};
+          if (widget.customSettings?.["insets"]) {
+            master.customSettings["insets"] = {
+              ...widget.customSettings["insets"],
+            };
+          } else {
+            delete master.customSettings["insets"];
+          }
+          if (widget.customSettings?.["insetsConfig"]) {
+            master.customSettings["insetsConfig"] = {
+              ...widget.customSettings["insetsConfig"],
+            };
+          } else {
+            delete master.customSettings["insetsConfig"];
+          }
+          if (widget.customSettings?.["columnKey"]) {
+            master.customSettings["columnKey"] =
+              widget.customSettings["columnKey"];
+          }
+          targetWidget = master;
+        }
+      }
+
+      parent.onMasterWidgetModified(targetWidget);
+    }
   }
   if (parent.layoutChanged?.emit && parent.layout) {
     parent.layoutChanged.emit(parent.layout);

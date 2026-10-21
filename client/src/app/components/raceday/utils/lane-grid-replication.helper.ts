@@ -113,6 +113,9 @@ export class LaneGridReplicationHelper {
     const s = widget.customSettings;
     if (s?.["gridId"] === session.gridId) {
       if (s?.["isHeaderWidget"]) return false;
+      if (s?.["gridMasterId"] && s?.["gridMasterId"] !== widget.id)
+        return false;
+      if (widget.id.includes("_grid_lane_")) return false;
       return (
         Number(s?.["gridLane"] ?? s?.["targetIndex"]) ===
         session.sourceLaneIndex
@@ -658,6 +661,7 @@ export class LaneGridReplicationHelper {
     sourceSettings: Record<string, any>,
     allWidgets: AbsoluteWidgetNode[],
     sourceWidgetId?: string,
+    sourceScaleMode?: "auto" | "fixed" | "",
   ): AbsoluteWidgetNode[] {
     return LaneGridStyleHelper.syncCrossColumnProperty(
       gridId,
@@ -665,6 +669,7 @@ export class LaneGridReplicationHelper {
       sourceSettings,
       allWidgets,
       sourceWidgetId,
+      sourceScaleMode,
     );
   }
 

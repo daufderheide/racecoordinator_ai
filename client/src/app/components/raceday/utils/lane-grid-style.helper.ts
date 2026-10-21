@@ -7,6 +7,7 @@ export class LaneGridStyleHelper {
     sourceSettings: Record<string, any>,
     allWidgets: AbsoluteWidgetNode[],
     sourceWidgetId?: string,
+    sourceScaleMode?: "auto" | "fixed" | "",
   ): AbsoluteWidgetNode[] {
     if (!gridId || !sourceSettings || !allWidgets) return allWidgets || [];
 
@@ -98,6 +99,9 @@ export class LaneGridStyleHelper {
       }
       return {
         ...w,
+        ...(sourceScaleMode !== undefined
+          ? { scaleMode: sourceScaleMode }
+          : {}),
         customSettings: nextSettings,
       };
     });

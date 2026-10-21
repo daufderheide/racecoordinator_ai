@@ -46,6 +46,21 @@ describe("LaneGridStyleHelper", () => {
     expect(updated[1].customSettings?.["headerTextColor"]).toBe("#ff0000");
   });
 
+  it("should sync scaleMode when sourceScaleMode is provided to syncCrossColumnProperty", () => {
+    const updated = LaneGridStyleHelper.syncCrossColumnProperty(
+      gridId,
+      "value",
+      { valueFontSize: 48 },
+      widgets,
+      "w-0",
+      "",
+    );
+    expect(updated[0].scaleMode).toBe("");
+    expect(updated[1].scaleMode).toBe("");
+    expect(updated[0].customSettings?.["valueFontSize"]).toBe(48);
+    expect(updated[1].customSettings?.["valueFontSize"]).toBe(48);
+  });
+
   it("should update linkColumns flag across grid widgets", () => {
     const updated = LaneGridStyleHelper.updateGridLinkColumns(
       widgets,

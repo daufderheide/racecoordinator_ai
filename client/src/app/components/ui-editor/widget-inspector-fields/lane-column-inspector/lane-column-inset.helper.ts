@@ -32,26 +32,30 @@ export const INSET_ANCHOR_POSITIONS: readonly InsetAnchorDef[] = [
 export class LaneColumnInsetHelper {
   public static extractDroppedWidgetKey(event: DragEvent): string | undefined {
     if (!event.dataTransfer) return undefined;
+    let key: string | undefined;
     try {
       const dataStr = event.dataTransfer.getData("application/json");
       if (dataStr) {
         const data = JSON.parse(dataStr);
-        if (data.key) return data.key;
-        if (data.type) {
-          return data.type.startsWith("lane-col:")
-            ? data.type.substring("lane-col:".length)
-            : data.type;
+        if (data.key) {
+          key = data.key;
+        } else if (data.type) {
+          key = data.type;
         }
       }
     } catch (_) {}
 
-    const text = event.dataTransfer.getData("text/plain");
-    if (text) {
-      return text.startsWith("lane-col:")
-        ? text.substring("lane-col:".length)
-        : text;
+    if (!key) {
+      const text = event.dataTransfer.getData("text/plain");
+      if (text) {
+        key = text;
+      }
     }
-    return undefined;
+
+    if (key && key.startsWith("lane-col:")) {
+      key = key.substring("lane-col:".length);
+    }
+    return key;
   }
 
   public static getWidgetDisplayName(
@@ -61,51 +65,89 @@ export class LaneColumnInsetHelper {
     translationService?: TranslationService,
   ): string {
     if (!key) return "";
-    if (key.startsWith("custom:")) {
-      const def = customWidgetService?.getWidgetDefinition(key);
+    const normalizedKey = key.startsWith("lane-col:")
+      ? key.substring("lane-col:".length)
+      : key;
+    if (normalizedKey.startsWith("custom:")) {
+      const def = customWidgetService?.getWidgetDefinition(normalizedKey);
       if (def?.manifest?.name) return def.manifest.name;
-      return key.substring("custom:".length);
+      return normalizedKey.substring("custom:".length);
     }
-    const colDef = availableColumns.find((c) => c.key === key);
+    const colDef = availableColumns.find((c) => c.key === normalizedKey);
     if (colDef && translationService) {
       return translationService.translate(colDef.label);
     }
-    return colDef ? colDef.label : key;
+    return colDef ? colDef.label : normalizedKey;
   }
 
   public static getWidgetIcon(key: string): string {
     if (!key) return "add_circle_outline";
-    if (key.startsWith("custom:")) return "extension";
-    if (key.includes("Time") || key === "totalTime" || key === "segmentTime") {
+    const normalizedKey = key.startsWith("lane-col:")
+      ? key.substring("lane-col:".length)
+      : key;
+    if (normalizedKey.startsWith("custom:")) return "extension";
+    if (
+      normalizedKey.includes("Time") ||
+      normalizedKey === "totalTime" ||
+      normalizedKey === "segmentTime"
+    ) {
       return "schedule";
     }
-    if (key.includes("lap") || key.includes("Lap")) return "flag";
-    if (key.includes("driver") || key.includes("participant")) return "person";
-    if (key.includes("gap") || key.includes("rank") || key.includes("seed")) {
+    if (normalizedKey.includes("lap") || normalizedKey.includes("Lap")) {
+      return "flag";
+    }
+    if (
+      normalizedKey.startsWith("imageset_") ||
+      normalizedKey === "flag" ||
+      normalizedKey === "qrCode" ||
+      normalizedKey === "driverViewQrCode" ||
+      normalizedKey === "driver.avatarUrl"
+    ) {
+      return "image";
+    }
+    if (
+      normalizedKey.includes("driver") ||
+      normalizedKey.includes("participant")
+    ) {
+      return "person";
+    }
+    if (
+      normalizedKey.includes("gap") ||
+      normalizedKey.includes("rank") ||
+      normalizedKey.includes("seed")
+    ) {
       return "leaderboard";
     }
-    if (key.includes("fuel")) return "local_gas_station";
-    if (key.includes("mph") || key.includes("kph") || key.includes("fph")) {
+    if (normalizedKey.includes("fuel")) return "local_gas_station";
+    if (
+      normalizedKey.includes("mph") ||
+      normalizedKey.includes("kph") ||
+      normalizedKey.includes("fph")
+    ) {
       return "speed";
-    }
-    if (key.startsWith("imageset_") || key === "flag" || key === "qrCode") {
-      return "image";
     }
     return "widgets";
   }
 
   public static isCustomWidget(key: string | undefined): boolean {
-    return Boolean(key && key.startsWith("custom:"));
+    if (!key) return false;
+    const normalizedKey = key.startsWith("lane-col:")
+      ? key.substring("lane-col:".length)
+      : key;
+    return normalizedKey.startsWith("custom:");
   }
 
   public static isImageProperty(key: string | undefined): boolean {
     if (!key) return false;
+    const normalizedKey = key.startsWith("lane-col:")
+      ? key.substring("lane-col:".length)
+      : key;
     return (
-      key.startsWith("imageset_") ||
-      key === "driver.avatarUrl" ||
-      key === "flag" ||
-      key === "qrCode" ||
-      key === "driverViewQrCode"
+      normalizedKey.startsWith("imageset_") ||
+      normalizedKey === "driver.avatarUrl" ||
+      normalizedKey === "flag" ||
+      normalizedKey === "qrCode" ||
+      normalizedKey === "driverViewQrCode"
     );
   }
 

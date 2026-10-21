@@ -1488,6 +1488,7 @@
         max="48"
         [(ngModel)]="currentSettings['headerFontSize']"
         [disabled]="disableFontSizes()"
+        (input)="onFieldChange()"
         (change)="onFieldChange()"
         class="inspector-slider"
       />
@@ -1705,6 +1706,7 @@
           max="120"
           [(ngModel)]="currentSettings['valueFontSize']"
           [disabled]="disableFontSizes()"
+          (input)="onFieldChange()"
           (change)="onFieldChange()"
           class="inspector-slider"
         />

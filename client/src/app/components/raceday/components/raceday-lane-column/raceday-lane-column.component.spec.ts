@@ -1192,6 +1192,124 @@ describe("RacedayLaneColumnComponent", () => {
     expect(fitSpy).toHaveBeenCalledTimes(2);
   });
 
+  it("should apply exact custom valueFontSize without height clamping when scaleMode is custom", () => {
+    fixture.componentRef.setInput("parent", mockParent);
+    const widget = createWidget({
+      columnKey: "driver.nickname",
+      valueFontSize: 64,
+    });
+    widget.scaleMode = "";
+    fixture.componentRef.setInput("widget", widget);
+    const cardEl = component.cardRef()?.nativeElement;
+    if (cardEl) {
+      Object.defineProperty(cardEl, "clientWidth", {
+        value: 160,
+        configurable: true,
+      });
+      Object.defineProperty(cardEl, "clientHeight", {
+        value: 30,
+        configurable: true,
+      });
+    }
+    spyOnProperty(component, "formattedValue", "get").and.returnValue(
+      "Swamper Gene",
+    );
+    component.fitContent();
+
+    if (cardEl) {
+      const fontSizeVar = cardEl.style.getPropertyValue(
+        "--lane-col-value-font-size",
+      );
+      expect(fontSizeVar).toBe("64px");
+    }
+  });
+
+  it("should re-fit and update font size when valueFontSize changes in custom scaling mode", () => {
+    fixture.componentRef.setInput("parent", mockParent);
+    const widget = createWidget({
+      columnKey: "driver.nickname",
+      valueFontSize: 40,
+    });
+    widget.scaleMode = "";
+    fixture.componentRef.setInput("widget", widget);
+    const cardEl = component.cardRef()?.nativeElement;
+    if (cardEl) {
+      Object.defineProperty(cardEl, "clientWidth", {
+        value: 160,
+        configurable: true,
+      });
+      Object.defineProperty(cardEl, "clientHeight", {
+        value: 30,
+        configurable: true,
+      });
+    }
+    spyOnProperty(component, "formattedValue", "get").and.returnValue(
+      "Driver Name",
+    );
+    component.fitContent();
+
+    expect(cardEl?.style.getPropertyValue("--lane-col-value-font-size")).toBe(
+      "40px",
+    );
+
+    // Update valueFontSize without dimension change
+    const updatedWidget = createWidget({
+      columnKey: "driver.nickname",
+      valueFontSize: 55,
+    });
+    updatedWidget.scaleMode = "";
+    fixture.componentRef.setInput("widget", updatedWidget);
+    component.fitContent();
+
+    expect(cardEl?.style.getPropertyValue("--lane-col-value-font-size")).toBe(
+      "55px",
+    );
+  });
+
+  it("should re-fit when scaleMode switches between auto and custom", () => {
+    fixture.componentRef.setInput("parent", mockParent);
+    const widget = createWidget({
+      columnKey: "driver.nickname",
+      valueFontSize: 50,
+    });
+    widget.scaleMode = "auto";
+    fixture.componentRef.setInput("widget", widget);
+    const cardEl = component.cardRef()?.nativeElement;
+    if (cardEl) {
+      Object.defineProperty(cardEl, "clientWidth", {
+        value: 160,
+        configurable: true,
+      });
+      Object.defineProperty(cardEl, "clientHeight", {
+        value: 30,
+        configurable: true,
+      });
+    }
+    spyOnProperty(component, "formattedValue", "get").and.returnValue(
+      "Driver Name",
+    );
+    component.fitContent();
+
+    const autoSizeVar = cardEl?.style.getPropertyValue(
+      "--lane-col-value-font-size",
+    );
+    const autoNum = parseInt(autoSizeVar || "0", 10);
+    expect(autoNum).toBeLessThanOrEqual(30);
+
+    // Switch to custom scaling mode ("")
+    const updatedWidget = createWidget({
+      columnKey: "driver.nickname",
+      valueFontSize: 50,
+    });
+    updatedWidget.scaleMode = "";
+    fixture.componentRef.setInput("widget", updatedWidget);
+    component.fitContent();
+
+    expect(cardEl?.style.getPropertyValue("--lane-col-value-font-size")).toBe(
+      "50px",
+    );
+  });
+
   it("should render value inside .lane-col-text with proper text alignment", () => {
     fixture.componentRef.setInput("parent", mockParent);
     fixture.componentRef.setInput(
@@ -1491,6 +1609,11 @@ describe("RacedayLaneColumnComponent", () => {
       expect(imgs.length).toBe(2);
       expect(imgs[0].src).toContain("avatar1.png");
       expect(imgs[1].src).toContain("green-flag.png");
+
+      const tlCell = fixture.nativeElement.querySelector(".inset-cell.tl");
+      const brCell = fixture.nativeElement.querySelector(".inset-cell.br");
+      expect(tlCell.classList.contains("has-image")).toBeTrue();
+      expect(brCell.classList.contains("has-image")).toBeTrue();
 
       mockParent.formatColumnValue = jasmine
         .createSpy("formatColumnValue")

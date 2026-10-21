@@ -147,11 +147,15 @@
 }
 
 .lane-col-insets-top {
-  top: 2px;
+  top: 0;
+  height: 33.333%;
+  max-height: 33.333%;
 }
 
 .lane-col-insets-bottom {
-  bottom: 2px;
+  bottom: 0;
+  height: 33.333%;
+  max-height: 33.333%;
 }
 
 .inset-cell {
@@ -168,12 +172,42 @@
   max-width: calc(100% - 12px);
 }
 
-.lane-col-insets-top .inset-cell {
-  top: 0;
+.lane-col-insets-top .inset-cell:not(.has-image) {
+  top: 2px;
 }
 
-.lane-col-insets-bottom .inset-cell {
-  bottom: 0;
+.lane-col-insets-bottom .inset-cell:not(.has-image) {
+  bottom: 2px;
+}
+
+/* Image insets occupy the full 1/3 x 1/3 inset bounding box */
+.lane-col-insets-row .inset-cell.has-image,
+.lane-col-insets-row .inset-cell:has(.lane-col-inset-image) {
+  width: calc(33.333% - 8px);
+  max-width: calc(33.333% - 8px);
+  height: calc(100% - 4px);
+  max-height: 100%;
+  box-sizing: border-box;
+}
+
+.lane-col-insets-top .inset-cell.has-image,
+.lane-col-insets-top .inset-cell:has(.lane-col-inset-image) {
+  top: 2px;
+}
+
+.lane-col-insets-bottom .inset-cell.has-image,
+.lane-col-insets-bottom .inset-cell:has(.lane-col-inset-image) {
+  bottom: 2px;
+}
+
+.lane-col-main-row .inset-cell.has-image,
+.lane-col-main-row .inset-cell:has(.lane-col-inset-image) {
+  width: calc(33.333% - 8px);
+  max-width: calc(33.333% - 8px);
+  height: 100%;
+  max-height: 100%;
+  flex-shrink: 0;
+  box-sizing: border-box;
 }
 
 .inset-cell.tl,
@@ -181,6 +215,18 @@
 .inset-cell.cl {
   justify-content: flex-start;
   text-align: left;
+}
+
+.inset-cell.tl {
+  align-items: flex-start;
+}
+
+.inset-cell.bl {
+  align-items: flex-end;
+}
+
+.inset-cell.cl {
+  align-items: center;
 }
 
 .lane-col-insets-row .inset-cell.tl,
@@ -201,6 +247,14 @@
   text-align: center;
 }
 
+.inset-cell.tc {
+  align-items: flex-start;
+}
+
+.inset-cell.bc {
+  align-items: flex-end;
+}
+
 .lane-col-insets-row .inset-cell.tc,
 .lane-col-insets-row .inset-cell.bc {
   left: 50%;
@@ -218,6 +272,18 @@
 .inset-cell.cr {
   justify-content: flex-end;
   text-align: right;
+}
+
+.inset-cell.tr {
+  align-items: flex-start;
+}
+
+.inset-cell.br {
+  align-items: flex-end;
+}
+
+.inset-cell.cr {
+  align-items: center;
 }
 
 .lane-col-insets-row .inset-cell.tr,
@@ -249,10 +315,47 @@
   max-width: 100%;
 }
 
+/* Image insets scale uniformly to fit the entire inset bounding box */
 .lane-col-inset-image {
-  max-height: 24px;
-  max-width: 32px;
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
   object-fit: contain;
+  display: block;
+}
+
+/* Position image flush with each respective corner or edge */
+.inset-cell.tl .lane-col-inset-image {
+  object-position: left top;
+}
+
+.inset-cell.tc .lane-col-inset-image {
+  object-position: center top;
+}
+
+.inset-cell.tr .lane-col-inset-image {
+  object-position: right top;
+}
+
+.inset-cell.cl .lane-col-inset-image {
+  object-position: left center;
+}
+
+.inset-cell.cr .lane-col-inset-image {
+  object-position: right center;
+}
+
+.inset-cell.bl .lane-col-inset-image {
+  object-position: left bottom;
+}
+
+.inset-cell.bc .lane-col-inset-image {
+  object-position: center bottom;
+}
+
+.inset-cell.br .lane-col-inset-image {
+  object-position: right bottom;
 }
 
 .lane-col-inset-custom-widget-wrapper {

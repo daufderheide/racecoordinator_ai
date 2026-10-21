@@ -69,7 +69,7 @@ export interface AbsoluteWidgetNode {
   height: number;
   zIndex: number;
   fontFamily?: string;
-  scaleMode?: "auto" | "fixed";
+  scaleMode?: "auto" | "fixed" | "";
   fontSize?: number;
   textScaleFactor?: number;
   textColor?: string;

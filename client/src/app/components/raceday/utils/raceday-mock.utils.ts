@@ -300,8 +300,10 @@ export function createMockLaneRecordEntries(): IRecordEntry[] {
 function createMockHeatDrivers(
   participants: RaceParticipant[],
 ): DriverHeatData[] {
-  return participants.slice(0, 4).map((p: any, index) => {
-    const hd = new DriverHeatData(`mock_hd_${index}`, p, p.lane - 1);
+  const count = Math.min(participants.length, 16);
+  return participants.slice(0, count).map((p: any, index) => {
+    const laneIndex = index;
+    const hd = new DriverHeatData(`mock_hd_${index}`, p, laneIndex);
     for (let i = 1; i <= p.lap_count; i++) {
       const isLast = i === p.lap_count;
       const lapTime = isLast
@@ -582,7 +584,7 @@ function createMockRaceParticipants(): RaceParticipant[] {
         char.nickname,
         `https://api.dicebear.com/7.x/pixel-art/svg?seed=${char.avatar}`,
       ),
-      lane: rank <= 4 ? rank : 0,
+      lane: rank <= 16 ? rank : 0,
       total_time: totalTime,
       lap_count: lapCount,
       last_lap_time: lastLap,

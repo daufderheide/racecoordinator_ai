@@ -284,6 +284,7 @@
           @if (hasInset("top-left")) {
             <div
               class="inset-cell tl"
+              [class.has-image]="isImageProperty(getInsetKey('top-left')!)"
               [class.clickable-lap-cell]="isInsetLapCount('top-left')"
               [style.font-family]="getInsetFontFamily('top-left')"
               [style.font-size.px]="getEffectiveInsetFontSize('top-left')"
@@ -318,6 +319,7 @@
           @if (hasInset("top-center")) {
             <div
               class="inset-cell tc"
+              [class.has-image]="isImageProperty(getInsetKey('top-center')!)"
               [class.clickable-lap-cell]="isInsetLapCount('top-center')"
               [style.font-family]="getInsetFontFamily('top-center')"
               [style.font-size.px]="getEffectiveInsetFontSize('top-center')"
@@ -352,6 +354,7 @@
           @if (hasInset("top-right")) {
             <div
               class="inset-cell tr"
+              [class.has-image]="isImageProperty(getInsetKey('top-right')!)"
               [class.clickable-lap-cell]="isInsetLapCount('top-right')"
               [style.font-family]="getInsetFontFamily('top-right')"
               [style.font-size.px]="getEffectiveInsetFontSize('top-right')"
@@ -391,6 +394,7 @@
         @if (hasInset("center-left")) {
           <div
             class="inset-cell cl"
+            [class.has-image]="isImageProperty(getInsetKey('center-left')!)"
             [class.clickable-lap-cell]="isInsetLapCount('center-left')"
             [attr.title]="
               isInsetLapCount('center-left')
@@ -595,6 +599,7 @@
         @if (hasInset("center-right")) {
           <div
             class="inset-cell cr"
+            [class.has-image]="isImageProperty(getInsetKey('center-right')!)"
             [class.clickable-lap-cell]="isInsetLapCount('center-right')"
             [attr.title]="
               isInsetLapCount('center-right')
@@ -639,6 +644,7 @@
           @if (hasInset("bottom-left")) {
             <div
               class="inset-cell bl"
+              [class.has-image]="isImageProperty(getInsetKey('bottom-left')!)"
               [class.clickable-lap-cell]="isInsetLapCount('bottom-left')"
               [style.font-family]="getInsetFontFamily('bottom-left')"
               [style.font-size.px]="getEffectiveInsetFontSize('bottom-left')"
@@ -673,6 +679,7 @@
           @if (hasInset("bottom-center")) {
             <div
               class="inset-cell bc"
+              [class.has-image]="isImageProperty(getInsetKey('bottom-center')!)"
               [class.clickable-lap-cell]="isInsetLapCount('bottom-center')"
               [style.font-family]="getInsetFontFamily('bottom-center')"
               [style.font-size.px]="getEffectiveInsetFontSize('bottom-center')"
@@ -707,6 +714,7 @@
           @if (hasInset("bottom-right")) {
             <div
               class="inset-cell br"
+              [class.has-image]="isImageProperty(getInsetKey('bottom-right')!)"
               [class.clickable-lap-cell]="isInsetLapCount('bottom-right')"
               [style.font-family]="getInsetFontFamily('bottom-right')"
               [style.font-size.px]="getEffectiveInsetFontSize('bottom-right')"

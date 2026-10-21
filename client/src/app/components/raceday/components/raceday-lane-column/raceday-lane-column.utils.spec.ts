@@ -4,12 +4,18 @@ import { DriverHeatData } from "@app/race/driver_heat_data";
 import {
   buildSyntheticInsetWidgetInputs,
   buildSyntheticMainWidgetInputs,
+  extractDroppedColumnKey,
+  fitColumnTextValue,
   formatAdjustedLapValue,
   getInsetDefaultAlignment,
   isCustomWidgetKey,
+  isEditorMode,
+  isLaneColumnImageProperty,
   isOverallDataSource,
   isParentRaceOver,
   resolveColumnHeaderLabel,
+  resolveHeatGridDriver,
+  resolveLaneColumnImageUrl,
   resolveOverallGridDriver,
 } from "./raceday-lane-column.utils";
 
@@ -496,6 +502,461 @@ describe("raceday-lane-column.utils", () => {
 
       expect(result).not.toBe(mockDriverInHeat);
       expect(result?.laneIndex).toBe(-1);
+    });
+  });
+
+  describe("isLaneColumnImageProperty", () => {
+    it("should return true for standard image properties", () => {
+      expect(isLaneColumnImageProperty("driver.avatarUrl")).toBeTrue();
+      expect(isLaneColumnImageProperty("flag")).toBeTrue();
+      expect(isLaneColumnImageProperty("qrCode")).toBeTrue();
+      expect(isLaneColumnImageProperty("driverViewQrCode")).toBeTrue();
+      expect(isLaneColumnImageProperty("imageset_sample")).toBeTrue();
+    });
+
+    it("should normalize and strip lane-col: prefix", () => {
+      expect(isLaneColumnImageProperty("lane-col:driver.avatarUrl")).toBeTrue();
+      expect(isLaneColumnImageProperty("lane-col:qrCode")).toBeTrue();
+      expect(isLaneColumnImageProperty("lane-col:driverViewQrCode")).toBeTrue();
+    });
+
+    it("should return false for non-image properties", () => {
+      expect(isLaneColumnImageProperty("driver.name")).toBeFalse();
+      expect(isLaneColumnImageProperty("lapCount")).toBeFalse();
+      expect(isLaneColumnImageProperty("")).toBeFalse();
+    });
+  });
+
+  describe("resolveLaneColumnImageUrl", () => {
+    const mockDriverWithAvatar = new DriverHeatData(
+      "p1",
+      {
+        objectId: "p1",
+        driver: { avatarUrl: "avatars/driver1.png" },
+      } as any,
+      0,
+    );
+
+    const mockDriverWithoutAvatar = new DriverHeatData(
+      "p2",
+      {
+        objectId: "p2",
+        driver: { avatarUrl: "" },
+      } as any,
+      1,
+    );
+
+    it("should return empty string if parent is undefined", () => {
+      expect(
+        resolveLaneColumnImageUrl(
+          "driver.avatarUrl",
+          mockDriverWithAvatar,
+          undefined,
+        ),
+      ).toBe("");
+    });
+
+    it("should resolve driver.avatarUrl with full URL", () => {
+      const parent = {
+        getFullUrl: (url: string) => `http://server/${url}`,
+        isUIEditorMode: false,
+      };
+      expect(
+        resolveLaneColumnImageUrl(
+          "driver.avatarUrl",
+          mockDriverWithAvatar,
+          parent,
+        ),
+      ).toBe("http://server/avatars/driver1.png");
+    });
+
+    it("should fallback to default avatar in UI Editor mode when driver has no avatar", () => {
+      const parent = {
+        getFullUrl: (url: string) => `http://server/${url}`,
+        isUIEditorMode: true,
+      };
+      expect(
+        resolveLaneColumnImageUrl(
+          "driver.avatarUrl",
+          mockDriverWithoutAvatar,
+          parent,
+        ),
+      ).toBe("http://server/assets/images/default_avatar.svg");
+    });
+
+    it("should fallback to default avatar in UI Editor mode when targetDriver is undefined", () => {
+      const parent = {
+        getFullUrl: (url: string) => `http://server/${url}`,
+        isUIEditorMode: true,
+      };
+      expect(
+        resolveLaneColumnImageUrl("driver.avatarUrl", undefined, parent),
+      ).toBe("http://server/assets/images/default_avatar.svg");
+    });
+
+    it("should return empty string for driver.avatarUrl when missing in race mode", () => {
+      const parent = {
+        getFullUrl: (url: string) => `http://server/${url}`,
+        isUIEditorMode: false,
+      };
+      expect(
+        resolveLaneColumnImageUrl(
+          "driver.avatarUrl",
+          mockDriverWithoutAvatar,
+          parent,
+        ),
+      ).toBe("");
+    });
+
+    it("should resolve qrCode using parent.getLaneQrCodeUrl", () => {
+      const parent = {
+        getLaneQrCodeUrl: (lane: number) => `data:image/svg;lane=${lane}`,
+        isUIEditorMode: false,
+      };
+      expect(
+        resolveLaneColumnImageUrl("qrCode", mockDriverWithAvatar, parent),
+      ).toBe("data:image/svg;lane=0");
+    });
+
+    it("should fallback to parent.qrCodeUrl in UI Editor mode for qrCode if cache is empty or driver is undefined", () => {
+      const parent = {
+        getLaneQrCodeUrl: () => "",
+        qrCodeUrl: "data:image/svg;mock-qr",
+        isUIEditorMode: true,
+      };
+      expect(
+        resolveLaneColumnImageUrl("qrCode", undefined, parent, undefined, 2),
+      ).toBe("data:image/svg;mock-qr");
+    });
+
+    it("should resolve driverViewQrCode by passing DriverHeatData object to getDriverViewQrCodeUrl", () => {
+      let passedArg: any = null;
+      const parent = {
+        getDriverViewQrCodeUrl: (arg: any) => {
+          passedArg = arg;
+          return "data:image/svg;dv-qr";
+        },
+        isUIEditorMode: false,
+      };
+      const result = resolveLaneColumnImageUrl(
+        "driverViewQrCode",
+        mockDriverWithAvatar,
+        parent,
+      );
+      expect(result).toBe("data:image/svg;dv-qr");
+      expect(passedArg).toBe(mockDriverWithAvatar);
+    });
+
+    it("should fallback to parent.qrCodeUrl in UI Editor mode for driverViewQrCode if driver is undefined", () => {
+      const parent = {
+        getDriverViewQrCodeUrl: () => "",
+        qrCodeUrl: "data:image/svg;mock-qr",
+        isUIEditorMode: true,
+      };
+      expect(
+        resolveLaneColumnImageUrl("driverViewQrCode", undefined, parent),
+      ).toBe("data:image/svg;mock-qr");
+    });
+
+    it("should strip lane-col: prefix seamlessly", () => {
+      const parent = {
+        getFullUrl: (url: string) => `http://server/${url}`,
+        isUIEditorMode: false,
+      };
+      expect(
+        resolveLaneColumnImageUrl(
+          "lane-col:driver.avatarUrl",
+          mockDriverWithAvatar,
+          parent,
+        ),
+      ).toBe("http://server/avatars/driver1.png");
+    });
+
+    it("should support isUIEditorMode as a signal function, a boolean, or isLayoutCustomizing", () => {
+      const parentWithSignal = {
+        getFullUrl: (url: string) => `http://server/${url}`,
+        isUIEditorMode: () => true,
+      };
+      const parentWithBool = {
+        getFullUrl: (url: string) => `http://server/${url}`,
+        isUIEditorMode: true,
+      };
+      const parentWithCustomizing = {
+        getFullUrl: (url: string) => `http://server/${url}`,
+        isLayoutCustomizing: true,
+      };
+
+      expect(
+        resolveLaneColumnImageUrl(
+          "driver.avatarUrl",
+          undefined,
+          parentWithSignal,
+        ),
+      ).toBe("http://server/assets/images/default_avatar.svg");
+      expect(
+        resolveLaneColumnImageUrl(
+          "driver.avatarUrl",
+          undefined,
+          parentWithBool,
+        ),
+      ).toBe("http://server/assets/images/default_avatar.svg");
+      expect(
+        resolveLaneColumnImageUrl(
+          "driver.avatarUrl",
+          undefined,
+          parentWithCustomizing,
+        ),
+      ).toBe("http://server/assets/images/default_avatar.svg");
+    });
+  });
+
+  describe("isEditorMode", () => {
+    it("should return false when parent is undefined or null", () => {
+      expect(isEditorMode(undefined)).toBeFalse();
+      expect(isEditorMode(null)).toBeFalse();
+    });
+
+    it("should return true when isUIEditorMode is a function returning true", () => {
+      expect(isEditorMode({ isUIEditorMode: () => true })).toBeTrue();
+      expect(isEditorMode({ isUIEditorMode: () => false })).toBeFalse();
+    });
+
+    it("should return true when isUIEditorMode is a boolean true", () => {
+      expect(isEditorMode({ isUIEditorMode: true })).toBeTrue();
+      expect(isEditorMode({ isUIEditorMode: false })).toBeFalse();
+    });
+
+    it("should return true when isLayoutCustomizing is true", () => {
+      expect(isEditorMode({ isLayoutCustomizing: true })).toBeTrue();
+      expect(isEditorMode({ isLayoutCustomizing: false })).toBeFalse();
+    });
+  });
+
+  describe("extractDroppedColumnKey", () => {
+    it("should extract key from application/json payload and strip lane-col: prefix", () => {
+      const event = {
+        dataTransfer: {
+          getData: (type: string) => {
+            if (type === "application/json") {
+              return JSON.stringify({ key: "lane-col:driver.avatarUrl" });
+            }
+            return "";
+          },
+        },
+      } as any;
+
+      expect(extractDroppedColumnKey(event, null)).toBe("driver.avatarUrl");
+    });
+
+    it("should extract type from application/json payload and strip lane-col: prefix", () => {
+      const event = {
+        dataTransfer: {
+          getData: (type: string) => {
+            if (type === "application/json") {
+              return JSON.stringify({ type: "lane-col:qrCode" });
+            }
+            return "";
+          },
+        },
+      } as any;
+
+      expect(extractDroppedColumnKey(event, null)).toBe("qrCode");
+    });
+
+    it("should fallback to text/plain and strip lane-col: prefix", () => {
+      const event = {
+        dataTransfer: {
+          getData: (type: string) => {
+            if (type === "text/plain") return "lane-col:driverViewQrCode";
+            return "";
+          },
+        },
+      } as any;
+
+      expect(extractDroppedColumnKey(event, null)).toBe("driverViewQrCode");
+    });
+
+    it("should fallback to parent.draggedWidgetType and strip lane-col: prefix", () => {
+      const event = {
+        dataTransfer: {
+          getData: () => "",
+        },
+      } as any;
+      const parent = { draggedWidgetType: "lane-col:flag" };
+
+      expect(extractDroppedColumnKey(event, parent)).toBe("flag");
+    });
+  });
+
+  describe("resolveHeatGridDriver editor mode fallback", () => {
+    const mockDriverInHeat = new DriverHeatData(
+      "p1",
+      { objectId: "p1", name: "Driver 1" } as any,
+      0,
+    );
+    const mockDrivers = [mockDriverInHeat];
+    const syntheticCreator = (p: any) =>
+      new DriverHeatData(p.objectId, p, -1, p.driver);
+
+    it("should fallback to synthetic participant driver in UI Editor mode when targetIndex exceeds active drivers", () => {
+      const parent = {
+        participants: [
+          { objectId: "p1", name: "Driver 1" },
+          { objectId: "p2", name: "Driver 2" },
+        ],
+        isUIEditorMode: true,
+      };
+
+      const result = resolveHeatGridDriver(
+        mockDrivers,
+        parent,
+        "lane",
+        1,
+        syntheticCreator,
+      );
+
+      expect(result).toBeDefined();
+      expect(result?.objectId).toBe("p2");
+    });
+  });
+
+  describe("fitColumnTextValue", () => {
+    let cardEl: HTMLElement;
+
+    beforeEach(() => {
+      cardEl = document.createElement("div");
+    });
+
+    it("should return early when text is empty", () => {
+      fitColumnTextValue(
+        cardEl,
+        "",
+        { valueFontSize: 36 } as any,
+        "auto",
+        "vertical",
+        false,
+        false,
+        () => false,
+        14,
+      );
+      expect(cardEl.style.getPropertyValue("--lane-col-value-font-size")).toBe(
+        "",
+      );
+    });
+
+    it("should set base font size and zero paddings when card dimensions are zero", () => {
+      Object.defineProperty(cardEl, "clientWidth", {
+        value: 0,
+        configurable: true,
+      });
+      Object.defineProperty(cardEl, "clientHeight", {
+        value: 0,
+        configurable: true,
+      });
+
+      fitColumnTextValue(
+        cardEl,
+        "123",
+        { valueFontSize: 42 } as any,
+        "auto",
+        "vertical",
+        false,
+        false,
+        () => false,
+        14,
+      );
+
+      expect(cardEl.style.getPropertyValue("--lane-col-value-font-size")).toBe(
+        "42px",
+      );
+      expect(cardEl.style.getPropertyValue("--lane-col-pad-left")).toBe("0px");
+      expect(cardEl.style.getPropertyValue("--lane-col-pad-right")).toBe("0px");
+    });
+
+    it("should apply exact valueFontSize directly without height clamping in custom scaling mode (scaleMode: '')", () => {
+      // Simulate a compact grid row (height: 25px)
+      Object.defineProperty(cardEl, "clientWidth", {
+        value: 120,
+        configurable: true,
+      });
+      Object.defineProperty(cardEl, "clientHeight", {
+        value: 25,
+        configurable: true,
+      });
+
+      fitColumnTextValue(
+        cardEl,
+        "42",
+        { valueFontSize: 72 } as any,
+        "",
+        "vertical",
+        false,
+        false,
+        () => false,
+        14,
+      );
+
+      // In custom scaling mode, font size must NOT be clamped to 25px
+      expect(cardEl.style.getPropertyValue("--lane-col-value-font-size")).toBe(
+        "72px",
+      );
+    });
+
+    it("should apply exact valueFontSize directly in custom scaling mode (scaleMode: 'fixed')", () => {
+      Object.defineProperty(cardEl, "clientWidth", {
+        value: 120,
+        configurable: true,
+      });
+      Object.defineProperty(cardEl, "clientHeight", {
+        value: 25,
+        configurable: true,
+      });
+
+      fitColumnTextValue(
+        cardEl,
+        "42",
+        { valueFontSize: 60 } as any,
+        "fixed",
+        "vertical",
+        false,
+        false,
+        () => false,
+        14,
+      );
+
+      expect(cardEl.style.getPropertyValue("--lane-col-value-font-size")).toBe(
+        "60px",
+      );
+    });
+
+    it("should scale down font size in auto scaling mode when card height is smaller than base font size", () => {
+      Object.defineProperty(cardEl, "clientWidth", {
+        value: 120,
+        configurable: true,
+      });
+      Object.defineProperty(cardEl, "clientHeight", {
+        value: 25,
+        configurable: true,
+      });
+
+      fitColumnTextValue(
+        cardEl,
+        "42",
+        { valueFontSize: 72 } as any,
+        "auto",
+        "vertical",
+        false,
+        false,
+        () => false,
+        14,
+      );
+
+      const sizeVar = cardEl.style.getPropertyValue(
+        "--lane-col-value-font-size",
+      );
+      const numSize = parseInt(sizeVar, 10);
+      expect(numSize).toBeLessThanOrEqual(25);
+      expect(numSize).toBeGreaterThanOrEqual(10);
     });
   });
 });
