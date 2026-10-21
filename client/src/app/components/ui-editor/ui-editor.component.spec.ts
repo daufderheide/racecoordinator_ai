@@ -11,6 +11,7 @@ import { By } from "@angular/platform-browser";
 import { ActivatedRoute, Router } from "@angular/router";
 import { BehaviorSubject, delay, of, Subject, throwError } from "rxjs";
 import { AnchorPoint } from "@app/components/raceday/column_definition";
+import { DefaultRacedayComponent } from "@app/components/raceday/default-raceday.component";
 import { RacedayLayoutUtils } from "@app/components/raceday/utils/raceday-layout.utils";
 import { DataService } from "@app/data.service";
 import { CustomUI } from "@app/models/custom-ui";
@@ -358,6 +359,13 @@ describe("UIEditorComponent", () => {
     mockThemeService.getThemes.and.returnValue([]);
     mockThemeService.resolveAssetId.and.returnValue(null);
 
+    TestBed.overrideComponent(DefaultRacedayComponent, {
+      set: {
+        template:
+          '<ng-template #toolboxTemplate><div class="layout-customizer-toolbox-wrapper"></div></ng-template>',
+      },
+    });
+
     await TestBed.configureTestingModule({
       imports: [
         FormsModule,
@@ -406,6 +414,7 @@ describe("UIEditorComponent", () => {
   beforeEach(async () => {
     fixture = TestBed.createComponent(UIEditorComponent);
     component = fixture.componentInstance;
+    spyOn(component, "scrollToUi");
     fixture.detectChanges();
     await fixture.whenStable();
   });
@@ -3906,7 +3915,11 @@ describe("UIEditorComponent", () => {
       });
 
       it("should restore activeCustomUiId and scroll to layout when layout section is expanded", () => {
-        spyOn(component, "scrollToUi");
+        if (!jasmine.isSpy(component.scrollToUi)) {
+          spyOn(component, "scrollToUi");
+        } else {
+          (component.scrollToUi as jasmine.Spy).calls.reset();
+        }
         spyOn(component, "ensureWidgetSelected");
         component.sectionsExpanded = {
           customUIs: true,
@@ -3921,7 +3934,11 @@ describe("UIEditorComponent", () => {
       });
 
       it("should not scroll when customUIs section is collapsed", () => {
-        spyOn(component, "scrollToUi");
+        if (!jasmine.isSpy(component.scrollToUi)) {
+          spyOn(component, "scrollToUi");
+        } else {
+          (component.scrollToUi as jasmine.Spy).calls.reset();
+        }
         component.sectionsExpanded = {
           customUIs: false,
           ui_ui_race: true,
