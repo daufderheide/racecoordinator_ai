@@ -1,3 +1,4 @@
+import { RacedayFormatUtils } from "@app/components/raceday/utils/raceday-format.utils";
 import { RacedayLayoutUtils } from "@app/components/raceday/utils/raceday-layout.utils";
 import {
   AbsoluteWidgetNode,
@@ -444,15 +445,17 @@ export function resolveLaneColumnImageUrl(
   const laneIndex = hd?.laneIndex ?? targetIndex ?? 0;
 
   if (normalizedKey === "driver.avatarUrl") {
-    const avatarUrl =
+    const rawAvatarUrl =
       hd?.driver?.avatarUrl ||
       (hd?.driver as any)?.avatar_url ||
       hd?.participant?.driver?.avatarUrl ||
       (hd?.participant?.driver as any)?.avatar_url;
+    const avatarUrl =
+      typeof rawAvatarUrl === "string" ? rawAvatarUrl.trim() : rawAvatarUrl;
     if (avatarUrl) {
       return parent.getFullUrl ? parent.getFullUrl(avatarUrl) : avatarUrl;
     }
-    if (isEditor) {
+    if (isEditor || (hd && !RacedayFormatUtils.isEmptyDriver(hd))) {
       const defaultAvatar = "assets/images/default_avatar.svg";
       return parent.getFullUrl
         ? parent.getFullUrl(defaultAvatar)
@@ -499,6 +502,29 @@ export function resolveLaneColumnImageUrl(
       : "";
   }
   return "";
+}
+
+export function getSvgPreserveAspectRatio(anchor?: string): string {
+  switch (anchor) {
+    case "top-left":
+      return "xMinYMin meet";
+    case "top-center":
+      return "xMidYMin meet";
+    case "top-right":
+      return "xMaxYMin meet";
+    case "center-left":
+      return "xMinYMid meet";
+    case "center-right":
+      return "xMaxYMid meet";
+    case "bottom-left":
+      return "xMinYMax meet";
+    case "bottom-center":
+      return "xMidYMax meet";
+    case "bottom-right":
+      return "xMaxYMax meet";
+    default:
+      return "xMidYMid meet";
+  }
 }
 
 function calculateBaseDimensions(

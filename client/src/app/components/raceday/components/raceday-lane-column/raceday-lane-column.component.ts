@@ -41,6 +41,7 @@ import {
   fitColumnLastLaps,
   fitColumnTextValue,
   formatAdjustedLapValue,
+  getSvgPreserveAspectRatio,
   HeatDataLapItem,
   isCustomWidgetKey,
   isLaneColumnImageProperty,
@@ -824,6 +825,53 @@ export class RacedayLaneColumnComponent
     const key = this.getInsetKey(anchor);
     if (!key || !this.isImageProperty(key)) return "";
     return this.getImageUrl(key, anchor);
+  }
+
+  imageErrors = new Set<string>();
+  mainImageError = false;
+  private lastDriverId?: string;
+
+  private checkDriverChange(currentDriver?: DriverHeatData): void {
+    const currentId =
+      currentDriver?.objectId ||
+      currentDriver?.driver?.entity_id ||
+      (currentDriver?.driver as any)?.id;
+    if (this.lastDriverId !== currentId) {
+      this.lastDriverId = currentId;
+      this.imageErrors.clear();
+      this.mainImageError = false;
+    }
+  }
+
+  isPlaceholderAvatar(url?: string, key?: string, anchor?: string): boolean {
+    this.checkDriverChange(this.targetDriver);
+    if (anchor && this.imageErrors.has(anchor)) {
+      return true;
+    }
+    if (!anchor && this.mainImageError) {
+      return true;
+    }
+    if (!url) {
+      return false;
+    }
+    return url.includes("default_avatar.svg");
+  }
+
+  getSvgPreserveAspectRatio(anchor?: string): string {
+    return getSvgPreserveAspectRatio(anchor);
+  }
+
+  onImageError(event: Event, anchor?: string): void {
+    if (anchor) {
+      this.imageErrors.add(anchor);
+    } else {
+      this.mainImageError = true;
+    }
+    const target = event?.target as HTMLImageElement;
+    if (target && !target.src?.includes("default_avatar.svg")) {
+      target.src = "assets/images/default_avatar.svg";
+    }
+    this.cdr.markForCheck();
   }
 
   hasAnchorValue(anchor: string): boolean {

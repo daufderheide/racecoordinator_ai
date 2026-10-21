@@ -2506,4 +2506,65 @@ describe("RacedayFormatUtils", () => {
       ).toBe("--");
     });
   });
+
+  describe("formatValue - driver.avatarUrl", () => {
+    it("should resolve custom avatar URL via ctx.getFullUrl", () => {
+      const customCtx = {
+        ...ctx,
+        getFullUrl: (url: string) => `http://mock-server/${url}`,
+      };
+      const result = RacedayFormatUtils.formatValue(
+        "driver.avatarUrl",
+        "custom/avatar.png",
+        hd,
+        undefined,
+        customCtx as any,
+      );
+      expect(result).toBe("http://mock-server/custom/avatar.png");
+    });
+
+    it("should fallback to default avatar for valid driver when avatar URL is missing or whitespace", () => {
+      const customCtx = {
+        ...ctx,
+        getFullUrl: (url: string) => `http://mock-server/${url}`,
+      };
+      const result1 = RacedayFormatUtils.formatValue(
+        "driver.avatarUrl",
+        undefined,
+        hd,
+        undefined,
+        customCtx as any,
+      );
+      expect(result1).toBe(
+        "http://mock-server/assets/images/default_avatar.svg",
+      );
+
+      const result2 = RacedayFormatUtils.formatValue(
+        "driver.avatarUrl",
+        "   ",
+        hd,
+        undefined,
+        customCtx as any,
+      );
+      expect(result2).toBe(
+        "http://mock-server/assets/images/default_avatar.svg",
+      );
+    });
+
+    it("should return empty string when driver is empty", () => {
+      const customCtx = {
+        ...ctx,
+        getFullUrl: (url: string) => `http://mock-server/${url}`,
+      };
+      const emptyHd = { isEmpty: true } as any;
+      const result = RacedayFormatUtils.formatValue(
+        "driver.avatarUrl",
+        undefined,
+        emptyHd,
+        undefined,
+        customCtx as any,
+      );
+      expect(result).toBe("");
+    });
+  });
 });

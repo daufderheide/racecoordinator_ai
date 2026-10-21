@@ -1629,6 +1629,128 @@ describe("RacedayLaneColumnComponent", () => {
       );
     });
 
+    it("should render default avatar for image insets when driver has no avatar specified", () => {
+      const driverWithNoAvatar = new DriverHeatData(
+        "hd-no-avatar",
+        {
+          objectId: "hd-no-avatar",
+          laneIndex: 0,
+          driver: {
+            id: "d-no-avatar",
+            name: "No Avatar Driver",
+            avatarUrl: "",
+          },
+        } as any,
+        0,
+      );
+      fixture.componentRef.setInput("parent", mockParent);
+      spyOnProperty(component, "targetDriver", "get").and.returnValue(
+        driverWithNoAvatar,
+      );
+      fixture.componentRef.setInput(
+        "widget",
+        createWidget({
+          columnKey: "lastLapTime",
+          insets: {
+            "top-left": "driver.avatarUrl",
+          },
+        }),
+      );
+      fixture.detectChanges();
+
+      expect(component.getInsetImageUrl("top-left")).toBe(
+        "http://localhost/assets/images/default_avatar.svg",
+      );
+      const svg = fixture.nativeElement.querySelector(
+        "svg.lane-col-inset-image.placeholder-avatar",
+      );
+      expect(svg).toBeTruthy();
+      expect(["#ffcc00", "rgb(255, 204, 0)"]).toContain(svg.style.color);
+    });
+
+    it("should not render inset image tag when driver is empty", () => {
+      const emptyDriver = new DriverHeatData(
+        "empty",
+        {
+          objectId: "empty",
+          isEmpty: true,
+          driver: { id: "EMPTY_DRIVER", name: "rd_empty_lane", avatarUrl: "" },
+        } as any,
+        0,
+      );
+      fixture.componentRef.setInput("parent", mockParent);
+      spyOnProperty(component, "targetDriver", "get").and.returnValue(
+        emptyDriver,
+      );
+      fixture.componentRef.setInput(
+        "widget",
+        createWidget({
+          columnKey: "lastLapTime",
+          insets: {
+            "top-left": "driver.avatarUrl",
+          },
+        }),
+      );
+      fixture.detectChanges();
+
+      expect(component.getInsetImageUrl("top-left")).toBe("");
+      const img = fixture.nativeElement.querySelector(".lane-col-inset-image");
+      expect(img).toBeFalsy();
+    });
+
+    it("should fallback to default avatar on image error in onImageError", () => {
+      const mockImg = document.createElement("img");
+      mockImg.src = "http://localhost/broken-avatar.png";
+      const event = { target: mockImg } as unknown as Event;
+
+      component.onImageError(event, "top-left");
+      expect(mockImg.src).toContain("assets/images/default_avatar.svg");
+      expect(component.imageErrors.has("top-left")).toBeTrue();
+    });
+
+    it("should render placeholder avatar in lane text color when inset image errors", () => {
+      const driverWithAvatar = new DriverHeatData(
+        "d1",
+        {
+          objectId: "d1",
+          driver: {
+            id: "d-1",
+            name: "Driver 1",
+            avatarUrl: "/avatars/broken.png",
+          },
+        } as any,
+        0,
+      );
+      fixture.componentRef.setInput("parent", mockParent);
+      spyOnProperty(component, "targetDriver", "get").and.returnValue(
+        driverWithAvatar,
+      );
+      fixture.componentRef.setInput(
+        "widget",
+        createWidget({
+          columnKey: "lastLapTime",
+          insets: {
+            "top-left": "driver.avatarUrl",
+          },
+        }),
+      );
+      fixture.detectChanges();
+
+      const img = fixture.nativeElement.querySelector(
+        "img.lane-col-inset-image",
+      );
+      expect(img).toBeTruthy();
+
+      component.onImageError({ target: img } as any, "top-left");
+      fixture.detectChanges();
+
+      const svg = fixture.nativeElement.querySelector(
+        "svg.lane-col-inset-image.placeholder-avatar",
+      );
+      expect(svg).toBeTruthy();
+      expect(["#ffcc00", "rgb(255, 204, 0)"]).toContain(svg.style.color);
+    });
+
     it("should apply custom inset typography and text color", () => {
       fixture.componentRef.setInput("parent", mockParent);
       fixture.componentRef.setInput(

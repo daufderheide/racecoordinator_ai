@@ -1041,7 +1041,14 @@ export class RacedayFormatUtils {
       }
       return "--%";
     } else if (baseKey === "driver.avatarUrl") {
-      return ctx.getFullUrl(value);
+      if (value && typeof value === "string" && value.trim()) {
+        return ctx.getFullUrl ? ctx.getFullUrl(value.trim()) : value.trim();
+      }
+      if (!RacedayFormatUtils.isEmptyDriver(hd)) {
+        const defaultAvatar = "assets/images/default_avatar.svg";
+        return ctx.getFullUrl ? ctx.getFullUrl(defaultAvatar) : defaultAvatar;
+      }
+      return "";
     } else if (baseKey === "seed") {
       const seed = hd.participant?.seed ?? (hd.driver as any)?.seed;
       return seed ? `(${seed})` : "--";

@@ -2175,11 +2175,21 @@ describe("DefaultRacedayComponent", () => {
       expect(result).toBe("http://localhost/assets/avatars/driver1.png");
     });
 
-    it("should return empty string for driver.avatarUrl if value is missing", () => {
+    it("should return default avatar for driver.avatarUrl if value is missing for valid driver", () => {
       const result = component.formatValue(
         "driver.avatarUrl",
         undefined,
         mockHd,
+      );
+      expect(result).toBe("assets/images/default_avatar.svg");
+    });
+
+    it("should return empty string for driver.avatarUrl if driver is empty", () => {
+      const emptyHd = { isEmpty: true } as any;
+      const result = component.formatValue(
+        "driver.avatarUrl",
+        undefined,
+        emptyHd,
       );
       expect(result).toBe("");
     });
@@ -2230,17 +2240,22 @@ describe("DefaultRacedayComponent", () => {
       expect(result).toBe("01:01:05");
     });
 
-    it("should not render img tag in the table when avatarUrl is empty", () => {
+    it("should render default avatar img tag in the table when avatarUrl is empty for valid driver", () => {
       mockSettings.racedayColumns = ["driver.avatarUrl"];
       (component as any).loadColumns();
 
       const mockHdWithNoAvatar = {
         objectId: "hd-no-avatar",
         laneIndex: 0,
-        driver: { name: "No Avatar Driver", avatarUrl: "" },
+        driver: { id: "d-no-avatar", name: "No Avatar Driver", avatarUrl: "" },
         participant: {},
         currentLapSegments: [],
       };
+      mockRaceService.getCurrentHeat.and.returnValue({
+        heatNumber: 1,
+        heatDrivers: [mockHdWithNoAvatar],
+      } as any);
+      component["heat"] = { heatDrivers: [mockHdWithNoAvatar] } as any;
       component["sortedHeatDrivers"] = [mockHdWithNoAvatar as any];
 
       fixture.detectChanges();
@@ -2251,9 +2266,43 @@ describe("DefaultRacedayComponent", () => {
       );
       expect(anchorDiv).toBeTruthy();
 
-      // But the img tag should be missing
-      const img = anchorDiv.querySelector("img");
-      expect(img).toBeFalsy();
+      // The placeholder avatar SVG should render with the lane text color
+      const svg = anchorDiv.querySelector("svg.lane-view-placeholder-avatar");
+      expect(svg).toBeTruthy();
+      expect(anchorDiv.style.color).toBe(
+        component.getLaneColor(mockHdWithNoAvatar as any, "foreground_color") ||
+          "rgb(255, 255, 255)",
+      );
+    });
+
+    it("should not render img tag in the table when driver is empty", () => {
+      mockSettings.racedayColumns = ["driver.avatarUrl"];
+      (component as any).loadColumns();
+
+      const mockEmptyHd = {
+        objectId: "empty-lane",
+        laneIndex: 0,
+        isEmpty: true,
+        driver: { id: "EMPTY_DRIVER", name: "rd_empty_lane", avatarUrl: "" },
+        participant: {},
+        currentLapSegments: [],
+      };
+      mockRaceService.getCurrentHeat.and.returnValue({
+        heatNumber: 1,
+        heatDrivers: [mockEmptyHd],
+      } as any);
+      component["heat"] = { heatDrivers: [mockEmptyHd] } as any;
+      component["sortedHeatDrivers"] = [mockEmptyHd as any];
+
+      fixture.detectChanges();
+
+      const anchorDiv = fixture.nativeElement.querySelector(
+        ".body-cell .anchor-center-center",
+      );
+      expect(anchorDiv).toBeTruthy();
+
+      const imgOrSvg = anchorDiv.querySelector("img, svg");
+      expect(imgOrSvg).toBeFalsy();
     });
 
     it("should format seed in (#) format", () => {

@@ -317,17 +317,23 @@
   box-sizing: border-box;
 }
 
-.body-cell img {
+.body-cell img,
+.body-cell svg.lane-view-placeholder-avatar {
   max-height: 80%;
   max-width: 90%;
   object-fit: contain;
 }
 
 /* Specific scaling for corner/edge anchors to fit in their 1/3 area */
-.body-cell [class*="anchor-"] img {
+.body-cell [class*="anchor-"] img,
+.body-cell [class*="anchor-"] svg.lane-view-placeholder-avatar {
   width: 100%;
   height: 100%;
-  image-rendering: pixelated;
+}
+
+.body-cell svg.lane-view-placeholder-avatar {
+  fill: currentColor;
+  pointer-events: none;
 }
 
 .anchor-top-left img {

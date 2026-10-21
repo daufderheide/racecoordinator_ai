@@ -1443,5 +1443,51 @@ describe("RacedayLaneViewComponent", () => {
         component.getPacingDecimalPlaces({ propertyName: "ghostPacing" }),
       ).toBe(3);
     });
+
+    it("should fallback to default avatar on image error in onImageError", () => {
+      const mockImg = document.createElement("img");
+      mockImg.src = "http://localhost/broken-avatar.png";
+      const event = { target: mockImg } as unknown as Event;
+
+      component.onImageError(event, "err-key-1");
+      expect(mockImg.src).toContain("assets/images/default_avatar.svg");
+      expect(component.imageErrors.has("err-key-1")).toBeTrue();
+    });
+
+    it("should identify placeholder avatars correctly", () => {
+      expect(
+        component.isPlaceholderAvatar("assets/images/default_avatar.svg"),
+      ).toBeTrue();
+      expect(
+        component.isPlaceholderAvatar(
+          "http://localhost/assets/images/default_avatar.svg",
+        ),
+      ).toBeTrue();
+      expect(
+        component.isPlaceholderAvatar("http://localhost/custom.png"),
+      ).toBeFalse();
+      expect(component.isPlaceholderAvatar("")).toBeFalse();
+
+      component.imageErrors.add("err-key-2");
+      expect(
+        component.isPlaceholderAvatar(
+          "http://localhost/custom.png",
+          "driver.avatarUrl",
+          "err-key-2",
+        ),
+      ).toBeTrue();
+    });
+
+    it("should resolve correct SVG preserveAspectRatio for anchors", () => {
+      expect(component.getSvgPreserveAspectRatio("top-left")).toBe(
+        "xMinYMin meet",
+      );
+      expect(component.getSvgPreserveAspectRatio("bottom-right")).toBe(
+        "xMaxYMax meet",
+      );
+      expect(component.getSvgPreserveAspectRatio("center-center")).toBe(
+        "xMidYMid meet",
+      );
+    });
   });
 });

@@ -306,11 +306,35 @@
                   />
                 </div>
               } @else if (isImageProperty(getInsetKey("top-left")!)) {
-                <img
-                  [src]="getInsetImageUrl('top-left')"
-                  class="lane-col-inset-image"
-                  alt=""
-                />
+                @if (
+                  isPlaceholderAvatar(
+                    getInsetImageUrl("top-left"),
+                    getInsetKey("top-left"),
+                    "top-left"
+                  )
+                ) {
+                  <svg
+                    viewBox="0 0 24 24"
+                    class="lane-col-inset-image placeholder-avatar"
+                    [style.color]="getEffectiveInsetTextColor('top-left')"
+                    [attr.preserveAspectRatio]="
+                      getSvgPreserveAspectRatio('top-left')
+                    "
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
+                      fill="currentColor"
+                    />
+                  </svg>
+                } @else if (getInsetImageUrl("top-left")) {
+                  <img
+                    [src]="getInsetImageUrl('top-left')"
+                    class="lane-col-inset-image"
+                    alt=""
+                    (error)="onImageError($event, 'top-left')"
+                  />
+                }
               } @else {
                 <span>{{ getInsetValue("top-left") }}</span>
               }
@@ -341,11 +365,35 @@
                   />
                 </div>
               } @else if (isImageProperty(getInsetKey("top-center")!)) {
-                <img
-                  [src]="getInsetImageUrl('top-center')"
-                  class="lane-col-inset-image"
-                  alt=""
-                />
+                @if (
+                  isPlaceholderAvatar(
+                    getInsetImageUrl("top-center"),
+                    getInsetKey("top-center"),
+                    "top-center"
+                  )
+                ) {
+                  <svg
+                    viewBox="0 0 24 24"
+                    class="lane-col-inset-image placeholder-avatar"
+                    [style.color]="getEffectiveInsetTextColor('top-center')"
+                    [attr.preserveAspectRatio]="
+                      getSvgPreserveAspectRatio('top-center')
+                    "
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
+                      fill="currentColor"
+                    />
+                  </svg>
+                } @else if (getInsetImageUrl("top-center")) {
+                  <img
+                    [src]="getInsetImageUrl('top-center')"
+                    class="lane-col-inset-image"
+                    alt=""
+                    (error)="onImageError($event, 'top-center')"
+                  />
+                }
               } @else {
                 <span>{{ getInsetValue("top-center") }}</span>
               }
@@ -376,11 +424,35 @@
                   />
                 </div>
               } @else if (isImageProperty(getInsetKey("top-right")!)) {
-                <img
-                  [src]="getInsetImageUrl('top-right')"
-                  class="lane-col-inset-image"
-                  alt=""
-                />
+                @if (
+                  isPlaceholderAvatar(
+                    getInsetImageUrl("top-right"),
+                    getInsetKey("top-right"),
+                    "top-right"
+                  )
+                ) {
+                  <svg
+                    viewBox="0 0 24 24"
+                    class="lane-col-inset-image placeholder-avatar"
+                    [style.color]="getEffectiveInsetTextColor('top-right')"
+                    [attr.preserveAspectRatio]="
+                      getSvgPreserveAspectRatio('top-right')
+                    "
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
+                      fill="currentColor"
+                    />
+                  </svg>
+                } @else if (getInsetImageUrl("top-right")) {
+                  <img
+                    [src]="getInsetImageUrl('top-right')"
+                    class="lane-col-inset-image"
+                    alt=""
+                    (error)="onImageError($event, 'top-right')"
+                  />
+                }
               } @else {
                 <span>{{ getInsetValue("top-right") }}</span>
               }
@@ -416,11 +488,35 @@
                 />
               </div>
             } @else if (isImageProperty(getInsetKey("center-left")!)) {
-              <img
-                [src]="getInsetImageUrl('center-left')"
-                class="lane-col-inset-image"
-                alt=""
-              />
+              @if (
+                isPlaceholderAvatar(
+                  getInsetImageUrl("center-left"),
+                  getInsetKey("center-left"),
+                  "center-left"
+                )
+              ) {
+                <svg
+                  viewBox="0 0 24 24"
+                  class="lane-col-inset-image placeholder-avatar"
+                  [style.color]="getEffectiveInsetTextColor('center-left')"
+                  [attr.preserveAspectRatio]="
+                    getSvgPreserveAspectRatio('center-left')
+                  "
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
+                    fill="currentColor"
+                  />
+                </svg>
+              } @else if (getInsetImageUrl("center-left")) {
+                <img
+                  [src]="getInsetImageUrl('center-left')"
+                  class="lane-col-inset-image"
+                  alt=""
+                  (error)="onImageError($event, 'center-left')"
+                />
+              }
             } @else {
               <span>{{ getInsetValue("center-left") }}</span>
             }
@@ -500,8 +596,26 @@
           } @else if (isImageProperty()) {
             <!-- Case 2: Images, Avatars, QR Codes, Flags -->
             <div class="lane-col-image-wrapper">
-              @if (getImageUrl()) {
-                <img [src]="getImageUrl()" class="lane-col-image" alt="" />
+              @if (isPlaceholderAvatar(getImageUrl(), columnKey)) {
+                <svg
+                  viewBox="0 0 24 24"
+                  class="lane-col-image placeholder-avatar"
+                  [style.color]="effectiveValueTextColor"
+                  preserveAspectRatio="xMidYMid meet"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
+                    fill="currentColor"
+                  />
+                </svg>
+              } @else if (getImageUrl()) {
+                <img
+                  [src]="getImageUrl()"
+                  class="lane-col-image"
+                  alt=""
+                  (error)="onImageError($event)"
+                />
               }
             </div>
           } @else if (isPacingProperty()) {
@@ -621,11 +735,35 @@
                 />
               </div>
             } @else if (isImageProperty(getInsetKey("center-right")!)) {
-              <img
-                [src]="getInsetImageUrl('center-right')"
-                class="lane-col-inset-image"
-                alt=""
-              />
+              @if (
+                isPlaceholderAvatar(
+                  getInsetImageUrl("center-right"),
+                  getInsetKey("center-right"),
+                  "center-right"
+                )
+              ) {
+                <svg
+                  viewBox="0 0 24 24"
+                  class="lane-col-inset-image placeholder-avatar"
+                  [style.color]="getEffectiveInsetTextColor('center-right')"
+                  [attr.preserveAspectRatio]="
+                    getSvgPreserveAspectRatio('center-right')
+                  "
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
+                    fill="currentColor"
+                  />
+                </svg>
+              } @else if (getInsetImageUrl("center-right")) {
+                <img
+                  [src]="getInsetImageUrl('center-right')"
+                  class="lane-col-inset-image"
+                  alt=""
+                  (error)="onImageError($event, 'center-right')"
+                />
+              }
             } @else {
               <span>{{ getInsetValue("center-right") }}</span>
             }
@@ -666,11 +804,35 @@
                   />
                 </div>
               } @else if (isImageProperty(getInsetKey("bottom-left")!)) {
-                <img
-                  [src]="getInsetImageUrl('bottom-left')"
-                  class="lane-col-inset-image"
-                  alt=""
-                />
+                @if (
+                  isPlaceholderAvatar(
+                    getInsetImageUrl("bottom-left"),
+                    getInsetKey("bottom-left"),
+                    "bottom-left"
+                  )
+                ) {
+                  <svg
+                    viewBox="0 0 24 24"
+                    class="lane-col-inset-image placeholder-avatar"
+                    [style.color]="getEffectiveInsetTextColor('bottom-left')"
+                    [attr.preserveAspectRatio]="
+                      getSvgPreserveAspectRatio('bottom-left')
+                    "
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
+                      fill="currentColor"
+                    />
+                  </svg>
+                } @else if (getInsetImageUrl("bottom-left")) {
+                  <img
+                    [src]="getInsetImageUrl('bottom-left')"
+                    class="lane-col-inset-image"
+                    alt=""
+                    (error)="onImageError($event, 'bottom-left')"
+                  />
+                }
               } @else {
                 <span>{{ getInsetValue("bottom-left") }}</span>
               }
@@ -701,11 +863,35 @@
                   />
                 </div>
               } @else if (isImageProperty(getInsetKey("bottom-center")!)) {
-                <img
-                  [src]="getInsetImageUrl('bottom-center')"
-                  class="lane-col-inset-image"
-                  alt=""
-                />
+                @if (
+                  isPlaceholderAvatar(
+                    getInsetImageUrl("bottom-center"),
+                    getInsetKey("bottom-center"),
+                    "bottom-center"
+                  )
+                ) {
+                  <svg
+                    viewBox="0 0 24 24"
+                    class="lane-col-inset-image placeholder-avatar"
+                    [style.color]="getEffectiveInsetTextColor('bottom-center')"
+                    [attr.preserveAspectRatio]="
+                      getSvgPreserveAspectRatio('bottom-center')
+                    "
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
+                      fill="currentColor"
+                    />
+                  </svg>
+                } @else if (getInsetImageUrl("bottom-center")) {
+                  <img
+                    [src]="getInsetImageUrl('bottom-center')"
+                    class="lane-col-inset-image"
+                    alt=""
+                    (error)="onImageError($event, 'bottom-center')"
+                  />
+                }
               } @else {
                 <span>{{ getInsetValue("bottom-center") }}</span>
               }
@@ -736,11 +922,35 @@
                   />
                 </div>
               } @else if (isImageProperty(getInsetKey("bottom-right")!)) {
-                <img
-                  [src]="getInsetImageUrl('bottom-right')"
-                  class="lane-col-inset-image"
-                  alt=""
-                />
+                @if (
+                  isPlaceholderAvatar(
+                    getInsetImageUrl("bottom-right"),
+                    getInsetKey("bottom-right"),
+                    "bottom-right"
+                  )
+                ) {
+                  <svg
+                    viewBox="0 0 24 24"
+                    class="lane-col-inset-image placeholder-avatar"
+                    [style.color]="getEffectiveInsetTextColor('bottom-right')"
+                    [attr.preserveAspectRatio]="
+                      getSvgPreserveAspectRatio('bottom-right')
+                    "
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
+                      fill="currentColor"
+                    />
+                  </svg>
+                } @else if (getInsetImageUrl("bottom-right")) {
+                  <img
+                    [src]="getInsetImageUrl('bottom-right')"
+                    class="lane-col-inset-image"
+                    alt=""
+                    (error)="onImageError($event, 'bottom-right')"
+                  />
+                }
               } @else {
                 <span>{{ getInsetValue("bottom-right") }}</span>
               }

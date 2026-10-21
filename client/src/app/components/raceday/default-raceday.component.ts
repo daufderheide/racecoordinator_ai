@@ -6635,6 +6635,10 @@ export class DefaultRacedayComponent
       return url;
     }
 
+    if (url.startsWith("assets/images/") || url.startsWith("/assets/images/")) {
+      return url.startsWith("/") ? url.slice(1) : url;
+    }
+
     const serverUrl = this.dataService.serverUrl;
     if (!serverUrl || serverUrl.includes("undefined")) return url;
 

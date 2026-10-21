@@ -8,6 +8,7 @@ import {
   fitColumnTextValue,
   formatAdjustedLapValue,
   getInsetDefaultAlignment,
+  getSvgPreserveAspectRatio,
   isCustomWidgetKey,
   isEditorMode,
   isLaneColumnImageProperty,
@@ -532,7 +533,11 @@ describe("raceday-lane-column.utils", () => {
       "p1",
       {
         objectId: "p1",
-        driver: { avatarUrl: "avatars/driver1.png" },
+        driver: {
+          id: "d1",
+          name: "Driver 1",
+          avatarUrl: "avatars/driver1.png",
+        },
       } as any,
       0,
     );
@@ -541,7 +546,7 @@ describe("raceday-lane-column.utils", () => {
       "p2",
       {
         objectId: "p2",
-        driver: { avatarUrl: "" },
+        driver: { id: "d2", name: "Driver 2", avatarUrl: "" },
       } as any,
       1,
     );
@@ -594,7 +599,7 @@ describe("raceday-lane-column.utils", () => {
       ).toBe("http://server/assets/images/default_avatar.svg");
     });
 
-    it("should return empty string for driver.avatarUrl when missing in race mode", () => {
+    it("should fallback to default avatar for driver.avatarUrl when missing in race mode for valid driver", () => {
       const parent = {
         getFullUrl: (url: string) => `http://server/${url}`,
         isUIEditorMode: false,
@@ -605,6 +610,27 @@ describe("raceday-lane-column.utils", () => {
           mockDriverWithoutAvatar,
           parent,
         ),
+      ).toBe("http://server/assets/images/default_avatar.svg");
+    });
+
+    it("should return empty string for driver.avatarUrl in race mode when driver is empty or undefined", () => {
+      const parent = {
+        getFullUrl: (url: string) => `http://server/${url}`,
+        isUIEditorMode: false,
+      };
+      const mockEmptyDriver = new DriverHeatData(
+        "empty",
+        {
+          objectId: "empty",
+          isEmpty: true,
+        } as any,
+        1,
+      );
+      expect(
+        resolveLaneColumnImageUrl("driver.avatarUrl", mockEmptyDriver, parent),
+      ).toBe("");
+      expect(
+        resolveLaneColumnImageUrl("driver.avatarUrl", undefined, parent),
       ).toBe("");
     });
 
@@ -957,6 +983,21 @@ describe("raceday-lane-column.utils", () => {
       const numSize = parseInt(sizeVar, 10);
       expect(numSize).toBeLessThanOrEqual(25);
       expect(numSize).toBeGreaterThanOrEqual(10);
+    });
+  });
+
+  describe("getSvgPreserveAspectRatio", () => {
+    it("should return correct preserveAspectRatio strings for all anchors", () => {
+      expect(getSvgPreserveAspectRatio("top-left")).toBe("xMinYMin meet");
+      expect(getSvgPreserveAspectRatio("top-center")).toBe("xMidYMin meet");
+      expect(getSvgPreserveAspectRatio("top-right")).toBe("xMaxYMin meet");
+      expect(getSvgPreserveAspectRatio("center-left")).toBe("xMinYMid meet");
+      expect(getSvgPreserveAspectRatio("center-right")).toBe("xMaxYMid meet");
+      expect(getSvgPreserveAspectRatio("bottom-left")).toBe("xMinYMax meet");
+      expect(getSvgPreserveAspectRatio("bottom-center")).toBe("xMidYMax meet");
+      expect(getSvgPreserveAspectRatio("bottom-right")).toBe("xMaxYMax meet");
+      expect(getSvgPreserveAspectRatio(undefined)).toBe("xMidYMid meet");
+      expect(getSvgPreserveAspectRatio("unknown")).toBe("xMidYMid meet");
     });
   });
 });
