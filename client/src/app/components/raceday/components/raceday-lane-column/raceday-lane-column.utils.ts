@@ -527,29 +527,42 @@ export function getSvgPreserveAspectRatio(anchor?: string): string {
   }
 }
 
+let sharedCanvas: HTMLCanvasElement | null = null;
+let sharedCtx: CanvasRenderingContext2D | null = null;
+
+export function getSharedCanvasContext(): CanvasRenderingContext2D | null {
+  if (typeof document === "undefined") return null;
+  if (!sharedCanvas) {
+    sharedCanvas = document.createElement("canvas");
+    sharedCtx = sharedCanvas.getContext("2d");
+  }
+  return sharedCtx;
+}
+
 function calculateBaseDimensions(
   cardEl: HTMLElement,
   settings: LaneColumnWidgetSettings,
   isHorizontal: boolean,
+  explicitWidth?: number,
+  explicitHeight?: number,
 ): { availWidth: number; availHeight: number } {
-  let availWidth = Math.max(10, cardEl.clientWidth - 24 - 8);
-  let availHeight = Math.max(10, cardEl.clientHeight);
+  const cardW =
+    explicitWidth && explicitWidth > 0 ? explicitWidth : cardEl.clientWidth;
+  const cardH =
+    explicitHeight && explicitHeight > 0 ? explicitHeight : cardEl.clientHeight;
+  let availWidth = Math.max(10, cardW - 24 - 8);
+  let availHeight = Math.max(10, cardH);
 
   if (settings.showHeader !== false) {
     if (isHorizontal) {
-      const headerEl = cardEl.querySelector(
-        ".lane-col-header",
-      ) as HTMLElement | null;
+      const headerEl = explicitWidth
+        ? null
+        : (cardEl.querySelector(".lane-col-header") as HTMLElement | null);
       const headerW = headerEl ? headerEl.offsetWidth + 8 : 60;
       availWidth = Math.max(10, availWidth - headerW);
       availHeight = Math.max(10, availHeight - 12);
     } else {
-      const headerEl = cardEl.querySelector(
-        ".lane-col-header",
-      ) as HTMLElement | null;
-      const headerH = headerEl
-        ? headerEl.offsetHeight
-        : (settings.headerFontSize || 14) * 1.2;
+      const headerH = (settings.headerFontSize || 14) * 1.2;
       availHeight = Math.max(10, availHeight - headerH - 8);
     }
   } else {
@@ -562,21 +575,20 @@ function safeguardTextOverflow(
   cardEl: HTMLElement,
   initialTargetSize: number,
   minSize: number,
+  skipDomCheck = false,
 ): void {
+  if (skipDomCheck) return;
   const textEl = cardEl.querySelector(".lane-col-text") as HTMLElement | null;
   const valueEl = cardEl.querySelector(".lane-col-value") as HTMLElement | null;
   if (!textEl || !valueEl || valueEl.clientWidth <= 0) return;
 
-  let targetSize = initialTargetSize;
-  let attempts = 0;
-  while (
-    textEl.scrollWidth > valueEl.clientWidth + 0.5 &&
-    targetSize > minSize &&
-    attempts < 10
-  ) {
-    targetSize--;
-    cardEl.style.setProperty("--lane-col-value-font-size", `${targetSize}px`);
-    attempts++;
+  const overflow = textEl.scrollWidth - valueEl.clientWidth;
+  if (overflow > 0.5 && initialTargetSize > minSize) {
+    const ratio = valueEl.clientWidth / textEl.scrollWidth;
+    const targetSize = Math.max(minSize, Math.floor(initialTargetSize * ratio));
+    if (targetSize < initialTargetSize) {
+      cardEl.style.setProperty("--lane-col-value-font-size", `${targetSize}px`);
+    }
   }
 }
 
@@ -590,18 +602,24 @@ export function fitColumnTextValue(
   hasRightInsets: boolean,
   hasInset: (anchor: string) => boolean,
   effectiveInsetFontSize: number,
+  explicitWidth?: number,
+  explicitHeight?: number,
 ): void {
   if (!text) return;
 
+  const cardW =
+    explicitWidth && explicitWidth > 0 ? explicitWidth : cardEl.clientWidth;
+  const cardH =
+    explicitHeight && explicitHeight > 0 ? explicitHeight : cardEl.clientHeight;
+
   let baseFontSize = settings.valueFontSize || 36;
   if (scaleMode === "auto" && !settings.valueFontSize) {
-    const cardH = cardEl.clientHeight || 0;
     if (cardH > 0) {
       baseFontSize = Math.max(12, Math.min(48, Math.round(cardH * 0.45)));
     }
   }
 
-  if (cardEl.clientWidth <= 0 || cardEl.clientHeight <= 0) {
+  if (cardW <= 0 || cardH <= 0) {
     cardEl.style.setProperty("--lane-col-value-font-size", `${baseFontSize}px`);
     cardEl.style.setProperty("--lane-col-pad-left", "0px");
     cardEl.style.setProperty("--lane-col-pad-right", "0px");
@@ -611,20 +629,25 @@ export function fitColumnTextValue(
   }
 
   const isHorizontal = layoutOrientation === "horizontal";
-  const canvas = document.createElement("canvas");
-  const ctx = canvas.getContext("2d");
+  const ctx = getSharedCanvasContext();
   if (!ctx) return;
 
   const computedFamily =
     settings.valueFontFamily ||
-    (typeof window !== "undefined" && window.getComputedStyle
+    (!explicitWidth && typeof window !== "undefined" && window.getComputedStyle
       ? window.getComputedStyle(cardEl).fontFamily
       : "") ||
     "sans-serif";
   ctx.font = `700 ${baseFontSize}px ${computedFamily}`;
   const textWidth = ctx.measureText(text).width || 1;
 
-  const baseDims = calculateBaseDimensions(cardEl, settings, isHorizontal);
+  const baseDims = calculateBaseDimensions(
+    cardEl,
+    settings,
+    isHorizontal,
+    explicitWidth,
+    explicitHeight,
+  );
   const dims = applyColumnInsetsAndPaddings(
     cardEl,
     baseDims.availWidth,
@@ -651,7 +674,7 @@ export function fitColumnTextValue(
     const minSize = 10;
     const targetSize = Math.max(minSize, Math.floor(baseFontSize * scale));
     cardEl.style.setProperty("--lane-col-value-font-size", `${targetSize}px`);
-    safeguardTextOverflow(cardEl, targetSize, minSize);
+    safeguardTextOverflow(cardEl, targetSize, minSize, Boolean(explicitWidth));
   }
 }
 

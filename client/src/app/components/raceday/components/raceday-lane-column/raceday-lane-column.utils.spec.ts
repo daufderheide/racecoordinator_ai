@@ -8,6 +8,7 @@ import {
   fitColumnTextValue,
   formatAdjustedLapValue,
   getInsetDefaultAlignment,
+  getSharedCanvasContext,
   getSvgPreserveAspectRatio,
   isCustomWidgetKey,
   isEditorMode,
@@ -983,6 +984,40 @@ describe("raceday-lane-column.utils", () => {
       const numSize = parseInt(sizeVar, 10);
       expect(numSize).toBeLessThanOrEqual(25);
       expect(numSize).toBeGreaterThanOrEqual(10);
+    });
+
+    it("should use explicitWidth and explicitHeight without reading card dimensions", () => {
+      // cardEl has no clientWidth or clientHeight defined
+      fitColumnTextValue(
+        cardEl,
+        "99.123",
+        { valueFontSize: 40 } as any,
+        "auto",
+        "vertical",
+        false,
+        false,
+        () => false,
+        14,
+        200,
+        80,
+      );
+
+      const sizeVar = cardEl.style.getPropertyValue(
+        "--lane-col-value-font-size",
+      );
+      expect(sizeVar).toBeTruthy();
+      const numSize = parseInt(sizeVar, 10);
+      expect(numSize).toBeGreaterThanOrEqual(10);
+      expect(numSize).toBeLessThanOrEqual(40);
+    });
+  });
+
+  describe("getSharedCanvasContext", () => {
+    it("should return a CanvasRenderingContext2D and reuse the same instance", () => {
+      const ctx1 = getSharedCanvasContext();
+      const ctx2 = getSharedCanvasContext();
+      expect(ctx1).toBeTruthy();
+      expect(ctx1).toBe(ctx2);
     });
   });
 

@@ -136,8 +136,10 @@ export class RacedayAbsoluteWidgetComponent
 
     const masterId = s?.["gridMasterId"];
     if (masterId) {
-      const allWidgets = this.parentComponent()?.layout?.widgets || [];
-      const masterExists = allWidgets.some((w: any) => w.id === masterId);
+      const parent = this.parentComponent();
+      const masterExists = parent?.hasWidgetId
+        ? parent.hasWidgetId(masterId)
+        : (parent?.layout?.widgets || []).some((w: any) => w.id === masterId);
       if (!masterExists) {
         return false;
       }

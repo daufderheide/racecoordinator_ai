@@ -115,6 +115,10 @@ export class RacedayLaneColumnComponent
   teammateSelect = viewChild(CustomSelectComponent);
   maxVisibleLaps = signal<number | undefined>(undefined);
   private resizeObserver?: ResizeObserver;
+  private cachedWidth = 0;
+  private cachedHeight = 0;
+  private lastInsetsRef: any = null;
+  private lastInsetsKey = "";
   private lastFittedText = "";
   private lastFittedWidth = 0;
   private lastFittedHeight = 0;
@@ -136,7 +140,12 @@ export class RacedayLaneColumnComponent
   ngAfterViewInit(): void {
     const cardEl = this.cardRef()?.nativeElement;
     if (cardEl && typeof ResizeObserver !== "undefined") {
-      this.resizeObserver = new ResizeObserver(() => {
+      this.resizeObserver = new ResizeObserver((entries) => {
+        if (entries && entries[0] && entries[0].contentRect) {
+          const rect = entries[0].contentRect;
+          this.cachedWidth = Math.round(rect.width);
+          this.cachedHeight = Math.round(rect.height);
+        }
         this.fitContent();
       });
       this.resizeObserver.observe(cardEl);
@@ -172,9 +181,10 @@ export class RacedayLaneColumnComponent
     const cardEl = this.cardRef()?.nativeElement;
     if (!cardEl) return;
 
+    const w = this.cachedWidth || cardEl.clientWidth;
+    const h = this.cachedHeight || cardEl.clientHeight;
+
     if (this.isLastLaps()) {
-      const w = cardEl.clientWidth;
-      const h = cardEl.clientHeight;
       const valSize = this.settings.valueFontSize ?? 0;
       const scaleMode = this.widget()?.scaleMode || "";
       if (
@@ -195,9 +205,12 @@ export class RacedayLaneColumnComponent
     }
 
     const text = this.formattedValue?.trim() || "";
-    const w = cardEl.clientWidth;
-    const h = cardEl.clientHeight;
-    const insetsKey = JSON.stringify(this.settings.insets || {});
+    let insetsKey = this.lastInsetsKey;
+    if (this.settings.insets !== this.lastInsetsRef) {
+      this.lastInsetsRef = this.settings.insets;
+      insetsKey = JSON.stringify(this.settings.insets || {});
+      this.lastInsetsKey = insetsKey;
+    }
     const valSize = this.settings.valueFontSize ?? 0;
     const valFamily = this.settings.valueFontFamily || "";
     const scaleMode = this.widget()?.scaleMode || "";
@@ -364,6 +377,7 @@ export class RacedayLaneColumnComponent
       this.settings,
       this.widget(),
       this.cardRef()?.nativeElement,
+      this.cachedHeight,
     );
   }
 
@@ -666,9 +680,14 @@ export class RacedayLaneColumnComponent
       this.fitLastLaps();
     } else if (!this.isImageProperty() && !this.isPacingProperty()) {
       const text = this.formattedValue?.trim() || "";
-      const w = cardEl.clientWidth;
-      const h = cardEl.clientHeight;
-      const insetsKey = JSON.stringify(this.settings.insets || {});
+      const w = this.cachedWidth || cardEl.clientWidth;
+      const h = this.cachedHeight || cardEl.clientHeight;
+      let insetsKey = this.lastInsetsKey;
+      if (this.settings.insets !== this.lastInsetsRef) {
+        this.lastInsetsRef = this.settings.insets;
+        insetsKey = JSON.stringify(this.settings.insets || {});
+        this.lastInsetsKey = insetsKey;
+      }
       const valSize = this.settings.valueFontSize ?? 0;
       const valFamily = this.settings.valueFontFamily || "";
       const scaleMode = this.widget()?.scaleMode || "";
@@ -698,15 +717,21 @@ export class RacedayLaneColumnComponent
   }
 
   private fitHeaderText(cardEl: HTMLElement): void {
+    const explicitW = this.cachedWidth || cardEl.clientWidth;
+    const explicitH = this.cachedHeight || cardEl.clientHeight;
     fitLaneColumnHeaderText(
       cardEl,
       this.settings,
       this.widget(),
       this.headerLabel,
+      explicitW,
+      explicitH,
     );
   }
 
   private fitTextValue(cardEl: HTMLElement): void {
+    const explicitW = this.cachedWidth || cardEl.clientWidth;
+    const explicitH = this.cachedHeight || cardEl.clientHeight;
     fitColumnTextValue(
       cardEl,
       this.lastFittedText,
@@ -717,6 +742,8 @@ export class RacedayLaneColumnComponent
       this.hasRightInsets(),
       (anchor) => this.hasInset(anchor),
       this.effectiveInsetFontSize,
+      explicitW,
+      explicitH,
     );
   }
 
@@ -808,6 +835,7 @@ export class RacedayLaneColumnComponent
       this.settings,
       this.widget(),
       this.cardRef()?.nativeElement,
+      this.cachedHeight,
     );
   }
 

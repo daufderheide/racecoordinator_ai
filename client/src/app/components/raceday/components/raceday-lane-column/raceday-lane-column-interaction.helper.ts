@@ -10,6 +10,7 @@ import { TranslationService } from "@app/services/translation.service";
 
 import {
   formatAdjustedLapValue,
+  getSharedCanvasContext,
   isOverallDataSource,
   isParentRaceOver,
 } from "./raceday-lane-column.utils";
@@ -162,25 +163,31 @@ export function fitLaneColumnHeaderText(
   settings: LaneColumnWidgetSettings,
   widget: AbsoluteWidgetNode | null,
   headerLabel: string,
+  explicitWidth?: number,
+  explicitHeight?: number,
 ): void {
   const headerEl = cardEl.querySelector(
     ".lane-col-header",
   ) as HTMLElement | null;
   if (!headerEl) return;
 
+  const cardW =
+    explicitWidth && explicitWidth > 0 ? explicitWidth : cardEl.clientWidth;
+  const cardH =
+    explicitHeight && explicitHeight > 0 ? explicitHeight : cardEl.clientHeight;
+
   const baseFontSize = Number(
     settings.headerFontSize || (widget?.fontSize ? widget.fontSize : 24),
   );
-  const availWidth = Math.max(10, cardEl.clientWidth - 16);
-  const availHeight = Math.max(10, cardEl.clientHeight - 8);
+  const availWidth = Math.max(10, cardW - 16);
+  const availHeight = Math.max(10, cardH - 8);
 
-  const canvas = document.createElement("canvas");
-  const ctx = canvas.getContext("2d");
+  const ctx = getSharedCanvasContext();
   if (!ctx) return;
 
   const family =
     settings.headerFontFamily ||
-    (typeof window !== "undefined" && window.getComputedStyle
+    (!explicitWidth && typeof window !== "undefined" && window.getComputedStyle
       ? window.getComputedStyle(headerEl).fontFamily
       : "") ||
     "sans-serif";
@@ -208,10 +215,15 @@ export function resolveEffectiveHeaderFontSize(
   settings: LaneColumnWidgetSettings,
   widget: AbsoluteWidgetNode | null,
   cardEl?: HTMLElement | null,
+  cachedHeight?: number,
 ): number {
   const custom = settings.headerFontSize;
   if (widget?.scaleMode === "auto") {
-    const cardH = cardEl?.clientHeight || 0;
+    const cardH =
+      cachedHeight && cachedHeight > 0
+        ? cachedHeight
+        : cardEl?.clientHeight ||
+          (widget?.height && widget.height > 0 ? widget.height : 0);
     if (cardH > 0) {
       const autoSize = Math.round(cardH * 0.18);
       return Math.max(10, Math.min(28, autoSize));
@@ -224,10 +236,15 @@ export function resolveEffectiveInsetFontSize(
   settings: LaneColumnWidgetSettings,
   widget: AbsoluteWidgetNode | null,
   cardEl?: HTMLElement | null,
+  cachedHeight?: number,
 ): number {
   const custom = settings.insetFontSize;
   if (widget?.scaleMode === "auto") {
-    const cardH = cardEl?.clientHeight || 0;
+    const cardH =
+      cachedHeight && cachedHeight > 0
+        ? cachedHeight
+        : cardEl?.clientHeight ||
+          (widget?.height && widget.height > 0 ? widget.height : 0);
     if (cardH > 0) {
       const autoSize = Math.round(cardH * 0.28);
       return Math.max(14, Math.min(24, autoSize));

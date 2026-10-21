@@ -1095,6 +1095,7 @@ export class DefaultRacedayComponent
 
   public syncLayoutFromEditor(newLayout: LayoutConfig): void {
     if (newLayout) {
+      this.invalidateGridCache();
       this.layout = JSON.parse(JSON.stringify(newLayout));
       if (this.layout.widgets) {
         this.layout.widgets =
@@ -1564,8 +1565,10 @@ export class DefaultRacedayComponent
         }
       }
       if (this.currentRacedayLayout?.widgets) {
+        this.invalidateGridCache();
         this.layout = JSON.parse(JSON.stringify(this.currentRacedayLayout));
       } else {
+        this.invalidateGridCache();
         this.layout = this.getDefaultLayout();
       }
       this.updateScale();
@@ -4256,16 +4259,19 @@ export class DefaultRacedayComponent
     this.cachedGridsWidgetsRef = null;
     this.cachedNonGridWidgetsRef = null;
     this.cachedGridsDataCounts = "";
+    this.cachedSelectedWidgetWidgetsRef = null;
+    this.cachedSelectedWidget = null;
+    this.cachedWidgetIdSetWidgetsRef = null;
+    this.cachedWidgetIdSet.clear();
+    this.cachedGridBoundsWidgetsRef = null;
+    this.cachedGridBoundsSelWidget = null;
+    this.cachedGridBounds = null;
   }
 
   getNonGridWidgets(): any[] {
-    if (this.isLayoutCustomizing) {
-      this.invalidateGridCache();
-    }
     const session = Boolean(this.gridSession());
     const widgets = this.getWidgets();
     if (
-      !this.isLayoutCustomizing &&
       widgets === this.cachedNonGridWidgetsRef &&
       session === this.cachedNonGridSession
     ) {
@@ -4284,9 +4290,6 @@ export class DefaultRacedayComponent
   }
 
   getGrids(): RacedayGridDescriptor[] {
-    if (this.isLayoutCustomizing) {
-      this.invalidateGridCache();
-    }
     const session = Boolean(this.gridSession());
     if (session) {
       this.cachedGrids = [];
@@ -4318,7 +4321,6 @@ export class DefaultRacedayComponent
       .join("|");
 
     if (
-      !this.isLayoutCustomizing &&
       widgets === this.cachedGridsWidgetsRef &&
       session === this.cachedGridsSession &&
       dataCountsKey === this.cachedGridsDataCounts
@@ -8922,22 +8924,63 @@ export class DefaultRacedayComponent
     return LaneGridLabelHelper.getLabelJustifyContent(position, alignment);
   }
 
+  private cachedSelectedWidgetId: string | null = null;
+  private cachedSelectedWidgetWidgetsRef: any = null;
+  private cachedSelectedWidget: AbsoluteWidgetNode | null = null;
+
   get selectedWidget(): AbsoluteWidgetNode | null {
     const id = this.selectedWidgetId();
-    if (!id || !this.layout?.widgets) return null;
-    return this.layout.widgets.find((w: any) => w.id === id) || null;
+    const widgets = this.layout?.widgets;
+    if (!id || !widgets) return null;
+    if (
+      id === this.cachedSelectedWidgetId &&
+      widgets === this.cachedSelectedWidgetWidgetsRef
+    ) {
+      return this.cachedSelectedWidget;
+    }
+    this.cachedSelectedWidgetId = id;
+    this.cachedSelectedWidgetWidgetsRef = widgets;
+    this.cachedSelectedWidget = widgets.find((w: any) => w.id === id) || null;
+    return this.cachedSelectedWidget;
   }
+
+  private cachedWidgetIdSetWidgetsRef: any = null;
+  private cachedWidgetIdSet = new Set<string>();
+
+  hasWidgetId(id: string): boolean {
+    const widgets = this.layout?.widgets;
+    if (!widgets) return false;
+    if (widgets !== this.cachedWidgetIdSetWidgetsRef) {
+      this.cachedWidgetIdSetWidgetsRef = widgets;
+      this.cachedWidgetIdSet = new Set(widgets.map((w: any) => w.id));
+    }
+    return this.cachedWidgetIdSet.has(id);
+  }
+
+  private cachedGridBoundsSelWidget: any = null;
+  private cachedGridBoundsWidgetsRef: any = null;
+  private cachedGridBounds: LaneGridBounds | null = null;
 
   get selectedGridBounds(): LaneGridBounds | null {
     const isEditing = this.isLayoutCustomizing || this.isUIEditorMode();
     if (!isEditing || this.gridSession()) return null;
     const sel = this.selectedWidget;
     const gridId = sel?.customSettings?.["gridId"];
-    if (!gridId || !this.layout?.widgets) return null;
-    return LaneGridReplicationHelper.calculateGridBounds(
-      this.layout.widgets,
+    const widgets = this.layout?.widgets;
+    if (!gridId || !widgets) return null;
+    if (
+      sel === this.cachedGridBoundsSelWidget &&
+      widgets === this.cachedGridBoundsWidgetsRef
+    ) {
+      return this.cachedGridBounds;
+    }
+    this.cachedGridBoundsSelWidget = sel;
+    this.cachedGridBoundsWidgetsRef = widgets;
+    this.cachedGridBounds = LaneGridReplicationHelper.calculateGridBounds(
+      widgets,
       gridId,
     );
+    return this.cachedGridBounds;
   }
 
   get selectedGridLabel(): string {
@@ -9127,6 +9170,7 @@ export class DefaultRacedayComponent
     ) {
       return;
     }
+    this.invalidateGridCache();
 
     if (LaneGridReplicationHelper.isHeaderWidget(widget)) {
       const masterId = widget.customSettings?.["gridMasterId"];

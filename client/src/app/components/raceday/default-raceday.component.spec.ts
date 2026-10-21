@@ -13095,5 +13095,81 @@ describe("DefaultRacedayComponent", () => {
         "overall",
       );
     });
+
+    it("should preserve getGrids and getNonGridWidgets caching when isLayoutCustomizing is true", () => {
+      const masterWidget = {
+        id: "grid-m1",
+        widgetType: "lane-column",
+        x: 100,
+        y: 100,
+        width: 200,
+        height: 50,
+        customSettings: {
+          gridId: "customizing-cache-grid",
+          gridLane: 0,
+          gridTotalLanes: 4,
+          gridDirection: "vertical",
+          bindingMode: "lane",
+        },
+      } as any;
+
+      (component as any).layout = { widgets: [masterWidget] };
+      (component as any).track = { lanes: [{}, {}] };
+      (component as any).race = { track: (component as any).track } as any;
+      component.isLayoutCustomizing = true;
+
+      const grids1 = component.getGrids();
+      const grids2 = component.getGrids();
+      expect(grids1).toBe(grids2);
+
+      const nonGrid1 = component.getNonGridWidgets();
+      const nonGrid2 = component.getNonGridWidgets();
+      expect(nonGrid1).toBe(nonGrid2);
+    });
+
+    it("should check widget existence with hasWidgetId in O(1) time and update when layout changes", () => {
+      const w1 = { id: "wid-1", widgetType: "lane-column" } as any;
+      const w2 = { id: "wid-2", widgetType: "label" } as any;
+      (component as any).layout = { widgets: [w1, w2] };
+
+      expect(component.hasWidgetId("wid-1")).toBeTrue();
+      expect(component.hasWidgetId("wid-2")).toBeTrue();
+      expect(component.hasWidgetId("wid-3")).toBeFalse();
+
+      // Update layout widgets
+      const w3 = { id: "wid-3", widgetType: "timer" } as any;
+      (component as any).layout = { widgets: [w3] };
+      expect(component.hasWidgetId("wid-1")).toBeFalse();
+      expect(component.hasWidgetId("wid-3")).toBeTrue();
+    });
+
+    it("should memoize selectedWidget and selectedGridBounds and clear them on invalidateGridCache", () => {
+      const w1 = {
+        id: "sel-w1",
+        widgetType: "lane-column",
+        x: 10,
+        y: 20,
+        width: 100,
+        height: 50,
+        customSettings: { gridId: "g-test" },
+      } as any;
+      (component as any).layout = { widgets: [w1] };
+      fixture.componentRef.setInput("selectedWidgetId", "sel-w1");
+      component.isLayoutCustomizing = true;
+
+      const sel1 = component.selectedWidget;
+      const sel2 = component.selectedWidget;
+      expect(sel1).toBe(w1);
+      expect(sel1).toBe(sel2);
+
+      const bounds1 = component.selectedGridBounds;
+      const bounds2 = component.selectedGridBounds;
+      expect(bounds1).toBeTruthy();
+      expect(bounds1).toBe(bounds2);
+
+      component.invalidateGridCache();
+      const sel3 = component.selectedWidget;
+      expect(sel3).toBe(w1);
+    });
   });
 });
