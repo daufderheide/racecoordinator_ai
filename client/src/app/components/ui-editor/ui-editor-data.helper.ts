@@ -18,6 +18,7 @@ import {
 } from "./ui-editor-crud.helper";
 import { sortCustomUisForDisplay } from "./ui-editor-custom-ui.helper";
 import { restoreOpenLayoutOnEntry } from "./ui-editor-expander.helper";
+import { handleUiEditorHelpStep } from "./ui-editor-help.helper";
 import { preMigrationLayoutCache } from "./ui-editor-io.helper";
 import { cloneSettings } from "./ui-editor-state.utils";
 import { sortThemesForDisplay } from "./ui-editor-theme.helper";
@@ -486,6 +487,42 @@ export function handleUiEditorDataLoadError(comp: any, err: any): void {
   comp.refreshDisplayProperties();
   restoreOpenLayoutOnEntry(comp);
   if (!comp.isDestroyed) comp.cdr.markForCheck();
+}
+
+export function handleUiEditorInit(comp: any): void {
+  comp.loadAvailableVoices();
+  comp.sortAvailableColumns();
+  comp.updateScale();
+  comp.loadExpanderState();
+  comp.loadData();
+  if (
+    comp.customWidgetService &&
+    comp.customWidgetService.getCustomWidgets().length === 0
+  ) {
+    comp.customWidgetService.reloadCustomWidgets().catch(() => {});
+  }
+  comp.raceConnectionService.connect();
+
+  comp.undoManager?.stateCommitted$.subscribe(() =>
+    comp.autoSaveState().catch(() => {}),
+  );
+  comp.translationSubscription = comp.translationService
+    .getTranslationsLoaded()
+    .subscribe((loaded: boolean) => {
+      if (loaded) {
+        comp.sortAvailableColumns();
+        if (!comp.isDestroyed) comp.cdr.markForCheck();
+      }
+    });
+
+  comp.helpSubscription = comp.helpService.currentStep$.subscribe(
+    (step: any) => {
+      if (handleUiEditorHelpStep(step, comp.sectionsExpanded)) {
+        comp.saveExpanderState();
+        comp.cdr.markForCheck();
+      }
+    },
+  );
 }
 
 export function handleUiEditorDestroy(comp: any): void {

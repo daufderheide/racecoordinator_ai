@@ -72,16 +72,16 @@ import {
   acknowledgeSuccessModal,
   applyLoadedUiEditorData,
   areSettingsEqual,
-  areUIEditorStatesEqual,
   AspectRatioOption,
   AVAILABLE_TRANSITIONS,
   BASE_AVAILABLE_COLUMNS,
   buildUiEditorHelpContext,
   cancelDeleteCustomUiModal,
   cancelDeleteThemeModal,
-  cloneUIEditorState,
   computeWidgetDisplayName,
   confirmReplicateLanesHelper,
+  createUiEditorLifecycle,
+  createUiEditorUndoManager,
   DEFAULT_SECTIONS_EXPANDED,
   DirectoryController,
   downloadJsonFile,
@@ -133,7 +133,6 @@ import {
   handleSetLayoutAspectRatio,
   handleSetLayoutScaleMode,
   handleStartGridSession,
-  handleSyncActiveGridSessionFromLayout,
   handleTestExport,
   handleThemeAudioChange,
   handleThemeSlotChange,
@@ -143,7 +142,7 @@ import {
   handleTtsVolumeChange,
   handleUiEditorDataLoadError,
   handleUiEditorDestroy,
-  handleUiEditorHelpStep,
+  handleUiEditorInit,
   handleUiEditorKeyboardShortcut,
   handleUpdateGridBounds,
   handleUrgentQueueTtlChange,
@@ -185,7 +184,6 @@ import {
   scrollToThemeElement,
   scrollToUiElement,
   sortAvailableColumnsList,
-  syncEditorCoordinates,
   toggleCountdownPreviewHelper,
   toggleThemeExpander,
   toggleUiExpander,
@@ -334,21 +332,16 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       : this.editingState?.customUIs || [];
   }
 
-  isMigratedLayout(ui: CustomUI): boolean {
-    return this.migrationController.isMigratedLayout(ui);
-  }
-  canUpgradeLegacyHeatView(ui: CustomUI): boolean {
-    return this.migrationController.canUpgradeLegacyHeatView(ui);
-  }
-  canReopenMigrationBanner(ui: CustomUI): boolean {
-    return this.migrationController.canReopenMigrationBanner(ui);
-  }
-  dismissMigrationBanner(ui: CustomUI): void {
+  isMigratedLayout = (ui: CustomUI) =>
+    this.migrationController.isMigratedLayout(ui);
+  canUpgradeLegacyHeatView = (ui: CustomUI) =>
+    this.migrationController.canUpgradeLegacyHeatView(ui);
+  canReopenMigrationBanner = (ui: CustomUI) =>
+    this.migrationController.canReopenMigrationBanner(ui);
+  dismissMigrationBanner = (ui: CustomUI) =>
     this.migrationController.dismissMigrationBanner(ui);
-  }
-  reopenMigrationBanner(ui: CustomUI): void {
+  reopenMigrationBanner = (ui: CustomUI) =>
     this.migrationController.reopenMigrationBanner(ui);
-  }
 
   stackedColumnsController = new StackedColumnsController(this);
   detectedStackedIssues: StackedColumnIssue[] = [];
@@ -358,39 +351,28 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   pendingImportStacked: any = null;
   importStackedCount = 0;
 
-  hasStackedColumns(ui: CustomUI): boolean {
-    return this.stackedColumnsController.hasStackedColumns(ui);
-  }
-  getStackedColumnsIssueCount(ui: CustomUI): number {
-    return this.stackedColumnsController.getStackedColumnsIssueCount(ui);
-  }
-  getStackedColumnsBannerDesc(ui: CustomUI): string {
-    return this.stackedColumnsController.getStackedColumnsBannerDesc(ui);
-  }
-  canReopenStackedColumnsBanner(ui: CustomUI): boolean {
-    return this.stackedColumnsController.canReopenStackedColumnsBanner(ui);
-  }
-  dismissStackedColumnsBanner(ui: CustomUI): void {
+  hasStackedColumns = (ui: CustomUI) =>
+    this.stackedColumnsController.hasStackedColumns(ui);
+  getStackedColumnsIssueCount = (ui: CustomUI) =>
+    this.stackedColumnsController.getStackedColumnsIssueCount(ui);
+  getStackedColumnsBannerDesc = (ui: CustomUI) =>
+    this.stackedColumnsController.getStackedColumnsBannerDesc(ui);
+  canReopenStackedColumnsBanner = (ui: CustomUI) =>
+    this.stackedColumnsController.canReopenStackedColumnsBanner(ui);
+  dismissStackedColumnsBanner = (ui: CustomUI) =>
     this.stackedColumnsController.dismissStackedColumnsBanner(ui);
-  }
-  reopenStackedColumnsBanner(ui: CustomUI): void {
+  reopenStackedColumnsBanner = (ui: CustomUI) =>
     this.stackedColumnsController.reopenStackedColumnsBanner(ui);
-  }
-  openReviewStackedColumnsModal(ui: CustomUI): void {
+  openReviewStackedColumnsModal = (ui: CustomUI) =>
     this.stackedColumnsController.openReviewStackedColumnsModal(ui);
-  }
-  quickFixStackedColumns(ui: CustomUI): void {
+  quickFixStackedColumns = (ui: CustomUI) =>
     this.stackedColumnsController.quickFixStackedColumns(ui);
-  }
-  confirmRepairStackedColumns(): void {
+  confirmRepairStackedColumns = () =>
     this.stackedColumnsController.confirmRepairStackedColumns();
-  }
-  confirmRepairImportedLayout(): void {
+  confirmRepairImportedLayout = () =>
     this.stackedColumnsController.confirmRepairImportedLayout();
-  }
-  cancelRepairImportedLayout(importAsIs = false): void {
+  cancelRepairImportedLayout = (importAsIs = false) =>
     this.stackedColumnsController.cancelRepairImportedLayout(importAsIs);
-  }
 
   showSuccessModal = false;
   successModalTitle = "";
@@ -474,71 +456,12 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
         this.pendingNavigationUrl = event.url;
     });
 
-    this.undoManager = new UndoManager<UIEditorState>(
-      {
-        clonner: (s) => cloneUIEditorState(s),
-        equalizer: (a, b) => areUIEditorStatesEqual(a, b),
-        applier: (s) => {
-          syncEditorCoordinates(s.settings, this.editingState?.settings);
-          this.editingState = s;
-          this.refreshDisplayProperties();
-          handleSyncActiveGridSessionFromLayout(this);
-          const currentLayout = this.getLayout(this.activeCustomUi);
-          if (currentLayout) {
-            this.syncRacedayPreview(currentLayout, this.activeCustomUi);
-          }
-        },
-      },
-      () => this.editingState,
-    );
-
-    this.lifecycle = new EditorLifecycleHelper({
-      cdr: this.cdr,
-      translationService: this.translationService,
-      getUnsavedReasons: () => this.getUnsavedReasons(),
-      undoManager: this.undoManager,
-      hasChanges: () => this.hasChanges(),
-      isSaveValid: () =>
-        !this.isAnyThemeNameInvalid() && !this.isAnyCustomUiNameInvalid(),
-      isSaving: () => this.isSaving,
-      onAutoSave: () => this.autoSaveState(),
-      autoSaveOnDiscard: true,
-      logger: this.logger,
-    });
+    this.undoManager = createUiEditorUndoManager(this);
+    this.lifecycle = createUiEditorLifecycle(this);
   }
 
   ngOnInit() {
-    this.loadAvailableVoices();
-    this.sortAvailableColumns();
-    this.updateScale();
-    this.loadExpanderState();
-    this.loadData();
-    if (
-      this.customWidgetService &&
-      this.customWidgetService.getCustomWidgets().length === 0
-    ) {
-      this.customWidgetService.reloadCustomWidgets().catch(() => {});
-    }
-    this.raceConnectionService.connect();
-
-    this.undoManager?.stateCommitted$.subscribe(() =>
-      this.autoSaveState().catch(() => {}),
-    );
-    this.translationSubscription = this.translationService
-      .getTranslationsLoaded()
-      .subscribe((loaded) => {
-        if (loaded) {
-          this.sortAvailableColumns();
-          if (!this.isDestroyed) this.cdr.markForCheck();
-        }
-      });
-
-    this.helpSubscription = this.helpService.currentStep$.subscribe((step) => {
-      if (handleUiEditorHelpStep(step, this.sectionsExpanded)) {
-        this.saveExpanderState();
-        this.cdr.markForCheck();
-      }
-    });
+    handleUiEditorInit(this);
   }
 
   ngOnDestroy() {
@@ -577,7 +500,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     );
   }
 
-  private updateScale() {
+  updateScale() {
     this.scale = Math.min(window.innerWidth / 1600, window.innerHeight / 900);
   }
 
@@ -846,7 +769,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     }, this.getSaveDelay());
   }
 
-  private autoSaveState(): Promise<void> {
+  autoSaveState(): Promise<void> {
     return handleAutoSaveState(this);
   }
 
@@ -858,17 +781,9 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     return this.lifecycle.discardMessage;
   }
 
-  confirmDiscard(): Promise<boolean> {
-    return this.lifecycle.confirmDiscard();
-  }
-
-  onConfirmDiscard() {
-    this.lifecycle.onConfirmDiscard();
-  }
-
-  onCancelDiscard() {
-    this.lifecycle.onCancelDiscard();
-  }
+  confirmDiscard = (): Promise<boolean> => this.lifecycle.confirmDiscard();
+  onConfirmDiscard = () => this.lifecycle.onConfirmDiscard();
+  onCancelDiscard = () => this.lifecycle.onCancelDiscard();
 
   async onBack() {
     if (this.hasChanges()) {
@@ -946,7 +861,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     return this.themeService.isThemeActive();
   }
 
-  private sortAvailableColumns() {
+  sortAvailableColumns() {
     sortAvailableColumnsList(this.availableColumns, this.translationService);
   }
 
@@ -1103,39 +1018,26 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   get layoutZoomMap(): Map<string, number> {
     return this.zoomController.layoutZoomMap;
   }
-  getLayoutZoom(ui?: CustomUI): number {
-    return this.zoomController.getZoom(ui);
-  }
-  setLayoutZoom(zoom: number, ui?: CustomUI): void {
+  getLayoutZoom = (ui?: CustomUI): number => this.zoomController.getZoom(ui);
+  setLayoutZoom = (zoom: number, ui?: CustomUI): void =>
     this.zoomController.setZoom(zoom, ui);
-  }
-  stepZoom(delta: number, ui?: CustomUI): void {
+  stepZoom = (delta: number, ui?: CustomUI): void =>
     this.zoomController.step(delta, ui);
-  }
-  resetLayoutZoom(ui?: CustomUI): void {
-    this.zoomController.reset(ui);
-  }
-  onZoomInput(event: Event, ui?: CustomUI): void {
+  resetLayoutZoom = (ui?: CustomUI): void => this.zoomController.reset(ui);
+  onZoomInput = (event: Event, ui?: CustomUI): void =>
     this.zoomController.onInput(event, ui);
-  }
-  getCanvasViewportMaxHeight(_ui?: CustomUI): number {
-    return getCanvasViewportMaxHeightHelper();
-  }
-  getInspectorHeight(ui?: CustomUI): number {
-    return this.zoomController.getInspectorHeight(ui);
-  }
-  getPreviewScale(ui?: CustomUI): string {
-    return this.zoomController.getPreviewScale(ui);
-  }
-  getPreviewScaleNumber(ui?: CustomUI): number {
-    return getComponentPreviewScaleNumber(this, ui);
-  }
-  getPreviewContainerWidth(ui?: CustomUI): number {
-    return getComponentPreviewContainerWidth(this, ui);
-  }
-  getPreviewContainerHeight(ui?: CustomUI): number {
-    return getComponentPreviewContainerHeight(this, ui);
-  }
+  getCanvasViewportMaxHeight = (_ui?: CustomUI): number =>
+    getCanvasViewportMaxHeightHelper();
+  getInspectorHeight = (ui?: CustomUI): number =>
+    this.zoomController.getInspectorHeight(ui);
+  getPreviewScale = (ui?: CustomUI): string =>
+    this.zoomController.getPreviewScale(ui);
+  getPreviewScaleNumber = (ui?: CustomUI): number =>
+    getComponentPreviewScaleNumber(this, ui);
+  getPreviewContainerWidth = (ui?: CustomUI): number =>
+    getComponentPreviewContainerWidth(this, ui);
+  getPreviewContainerHeight = (ui?: CustomUI): number =>
+    getComponentPreviewContainerHeight(this, ui);
 
   getHelpSteps(): GuideStep[] {
     return getUiEditorHelpSteps(buildUiEditorHelpContext(this));
