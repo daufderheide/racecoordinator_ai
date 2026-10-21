@@ -9233,8 +9233,14 @@ export class DefaultRacedayComponent
       ),
     ) as LayoutConfig;
 
-    const targetW = window.innerWidth;
-    const targetH = window.innerHeight;
+    const targetW =
+      typeof window !== "undefined" && window.innerWidth > 0
+        ? window.innerWidth
+        : layout.baseWidth || 1920;
+    const targetH =
+      typeof window !== "undefined" && window.innerHeight > 0
+        ? window.innerHeight
+        : layout.baseHeight || 1080;
     const oldWidth = layout.baseWidth || 1920;
     const oldHeight = layout.baseHeight || 1080;
 

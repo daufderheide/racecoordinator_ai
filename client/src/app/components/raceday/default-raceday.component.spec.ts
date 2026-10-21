@@ -9299,6 +9299,11 @@ describe("DefaultRacedayComponent", () => {
   });
 
   describe("Layout Editor Panel Persistence", () => {
+    beforeEach(() => {
+      spyOnProperty(window, "innerWidth", "get").and.returnValue(1920);
+      spyOnProperty(window, "innerHeight", "get").and.returnValue(1080);
+    });
+
     it("should initialize layout editor minimized state and position from settings", () => {
       mockSettings.layoutEditorMinimized = true;
       mockSettings.layoutEditorPositionX = 10;

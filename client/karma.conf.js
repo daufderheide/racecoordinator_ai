@@ -61,6 +61,7 @@ module.exports = function (config) {
     "--disable-extensions",
     "--disable-features=Translate,PasswordImport,AutofillServerCommunication,Dial",
     "--js-flags=--max-old-space-size=4096",
+    "--window-size=1920,1080",
   ];
 
   var timingReporterPlugin = {
