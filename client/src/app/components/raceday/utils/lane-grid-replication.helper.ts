@@ -38,6 +38,9 @@ export interface LaneGridSession {
   mirrorRows?: boolean;
   sortByBindingMode?: boolean;
   layoutOrientation?: "vertical" | "horizontal";
+  useLaneColors?: boolean;
+  backgroundColor?: string;
+  textColor?: string;
   gridLabelPosition?: GridLabelPosition;
   gridLabelText?: string;
   gridLabelSize?: number;
@@ -319,6 +322,9 @@ export class LaneGridReplicationHelper {
     if (!masterWidget || !session) return allWidgets || [];
 
     const isHeader = Boolean(masterWidget.customSettings?.["isHeaderWidget"]);
+    if (!isHeader && !masterWidget.customSettings?.["gridId"]) {
+      LaneGridStyleHelper.inheritGridStyles(masterWidget, session, allWidgets);
+    }
     const headerHeight =
       session.headerHeight != null ? Math.max(20, session.headerHeight) : 36;
 

@@ -90,6 +90,9 @@ function createInitialGridSession(
     headerHeight: options.headerHeight ?? 36,
     linkColumns: options.linkColumns ?? true,
     mirrorRows: options.mirrorRows !== false,
+    useLaneColors: options.useLaneColors ?? cs["useLaneColors"] ?? true,
+    backgroundColor: options.backgroundColor || cs["backgroundColor"],
+    textColor: options.textColor || cs["textColor"],
     layoutOrientation: cs["layoutOrientation"] || "vertical",
     gridLabelPosition: cs["gridLabelPosition"] || "none",
     gridLabelText: cs["gridLabelText"] || "",
@@ -303,6 +306,16 @@ function buildEditGridSession(
     ? "overall"
     : first.customSettings?.["gridType"] || "heat";
 
+  const dataWidget = gridWidgets.find(
+    (w: any) => !w.customSettings?.["isHeaderWidget"],
+  );
+  const useLaneColors =
+    dataWidget?.customSettings?.["useLaneColors"] !== undefined
+      ? Boolean(dataWidget.customSettings["useLaneColors"])
+      : true;
+  const backgroundColor = dataWidget?.customSettings?.["backgroundColor"];
+  const textColor = dataWidget?.customSettings?.["textColor"];
+
   return {
     gridId,
     bounds,
@@ -315,6 +328,9 @@ function buildEditGridSession(
     headerHeight,
     linkColumns,
     mirrorRows: first.customSettings?.["mirrorRows"] !== false,
+    useLaneColors,
+    backgroundColor,
+    textColor,
     layoutOrientation:
       first.customSettings?.["layoutOrientation"] || "vertical",
     gridLabelPosition: first.customSettings?.["gridLabelPosition"] || "none",
@@ -633,6 +649,20 @@ export function handleSyncActiveGridSessionFromLayout(comp: any): void {
         ? "overall"
         : cs["gridType"] || comp.activeGridSession.gridType || "heat";
 
+    const dataWidget = gridWidgets.find(
+      (w: any) => !w.customSettings?.["isHeaderWidget"],
+    );
+    const useLaneColors =
+      dataWidget?.customSettings?.["useLaneColors"] !== undefined
+        ? Boolean(dataWidget.customSettings["useLaneColors"])
+        : comp.activeGridSession.useLaneColors;
+    const backgroundColor =
+      dataWidget?.customSettings?.["backgroundColor"] ||
+      comp.activeGridSession.backgroundColor;
+    const textColor =
+      dataWidget?.customSettings?.["textColor"] ||
+      comp.activeGridSession.textColor;
+
     comp.activeGridSession = {
       ...comp.activeGridSession,
       bounds: bounds || comp.activeGridSession.bounds,
@@ -640,6 +670,9 @@ export function handleSyncActiveGridSessionFromLayout(comp: any): void {
       direction,
       bindingMode,
       gridType,
+      useLaneColors,
+      backgroundColor,
+      textColor,
       headerPlacement:
         cs["headerPlacement"] || comp.activeGridSession.headerPlacement,
       headerHeight:

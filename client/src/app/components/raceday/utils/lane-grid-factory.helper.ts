@@ -156,6 +156,7 @@ export class LaneGridFactoryHelper {
       headerHeight: 36,
       linkColumns: true,
       mirrorRows: true,
+      useLaneColors: true,
       layoutOrientation: "vertical",
       gridLabelPosition: "none",
       gridLabelText: "",

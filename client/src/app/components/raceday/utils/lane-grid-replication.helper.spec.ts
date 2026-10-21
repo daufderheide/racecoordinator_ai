@@ -2207,5 +2207,72 @@ describe("LaneGridReplicationHelper", () => {
       const updatedMaster = result.find((w) => w.id === "m-col-horiz");
       expect(updatedMaster?.width).toBe(80);
     });
+
+    it("should inherit useLaneColors false and background color when new master widget joins grid with lane colors disabled", () => {
+      const existingCol: AbsoluteWidgetNode = {
+        id: "existing-col-0",
+        widgetType: "lane-column",
+        x: 100,
+        y: 100,
+        width: 100,
+        height: 50,
+        zIndex: 10,
+        customSettings: {
+          gridId: "g-test",
+          gridLane: 0,
+          useLaneColors: false,
+          backgroundColor: "#222222",
+          textColor: "#ffffff",
+        },
+      };
+
+      const newMaster: AbsoluteWidgetNode = {
+        id: "new-master-col",
+        widgetType: "lane-column",
+        x: 200,
+        y: 100,
+        width: 100,
+        height: 50,
+        zIndex: 10,
+        customSettings: {
+          useLaneColors: true,
+          backgroundColor: "#ff0000",
+          textColor: "#000000",
+        },
+      };
+
+      const session: LaneGridSession = {
+        gridId: "g-test",
+        bounds: { x: 100, y: 100, width: 400, height: 200 },
+        totalLanes: 2,
+        direction: "vertical",
+        sourceLaneIndex: 0,
+        headerPlacement: "none",
+        bindingMode: "lane",
+        useLaneColors: false,
+        backgroundColor: "#222222",
+      };
+
+      const result = LaneGridReplicationHelper.syncMasterWidgetToLanes(
+        newMaster,
+        session,
+        [existingCol, newMaster],
+      );
+
+      const updatedMaster = result.find((w) => w.id === "new-master-col");
+      expect(updatedMaster?.customSettings?.["useLaneColors"]).toBeFalse();
+      expect(updatedMaster?.customSettings?.["backgroundColor"]).toBe(
+        "#222222",
+      );
+
+      const mirroredId = LaneGridReplicationHelper.getMirroredWidgetId(
+        newMaster.id,
+        1,
+      );
+      const mirrored = result.find((w) => w.id === mirroredId);
+      expect(mirrored).toBeDefined();
+      expect(mirrored?.customSettings?.["useLaneColors"]).toBeFalse();
+      expect(mirrored?.customSettings?.["backgroundColor"]).toBe("#222222");
+    });
   });
 });

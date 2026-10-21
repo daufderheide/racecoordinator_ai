@@ -247,6 +247,9 @@ describe("ui-editor-grid.helper", () => {
             gridTotalLanes: 4,
             gridDirection: "horizontal",
             bindingMode: "lane",
+            useLaneColors: false,
+            backgroundColor: "#202020",
+            textColor: "#e0e0e0",
           },
         },
         {
@@ -279,6 +282,9 @@ describe("ui-editor-grid.helper", () => {
       expect(mockComp.activeGridSession.gridId).toBe("existing-grid-42");
       expect(mockComp.activeGridSession.totalLanes).toBe(4);
       expect(mockComp.activeGridSession.direction).toBe("horizontal");
+      expect(mockComp.activeGridSession.useLaneColors).toBeFalse();
+      expect(mockComp.activeGridSession.backgroundColor).toBe("#202020");
+      expect(mockComp.activeGridSession.textColor).toBe("#e0e0e0");
       expect(mockComp.cdr.markForCheck).toHaveBeenCalled();
     });
 
@@ -610,6 +616,9 @@ describe("ui-editor-grid.helper", () => {
         gridLabelBorderWidth: 2,
         gridLabelBorderRadius: 6,
         gridBounds: { x: 120, y: 80, width: 900, height: 450 },
+        useLaneColors: false,
+        backgroundColor: "#123456",
+        textColor: "#654321",
       };
       mockWidgets[0].x = 120;
       mockWidgets[0].y = 80;
@@ -657,6 +666,9 @@ describe("ui-editor-grid.helper", () => {
       expect(mockComp.activeGridSession.gridLabelBorderColor).toBe("#38bdf8");
       expect(mockComp.activeGridSession.gridLabelBorderWidth).toBe(2);
       expect(mockComp.activeGridSession.gridLabelBorderRadius).toBe(6);
+      expect(mockComp.activeGridSession.useLaneColors).toBeFalse();
+      expect(mockComp.activeGridSession.backgroundColor).toBe("#123456");
+      expect(mockComp.activeGridSession.textColor).toBe("#654321");
       expect(mockComp.syncRacedayPreview).toHaveBeenCalled();
       expect(mockComp.cdr.markForCheck).toHaveBeenCalled();
     });

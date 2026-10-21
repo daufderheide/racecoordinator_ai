@@ -142,6 +142,7 @@ import {
   LaneGridReplicationHelper,
   LaneGridSession,
 } from "./utils/lane-grid-replication.helper";
+import { LaneGridStyleHelper } from "./utils/lane-grid-style.helper";
 import {
   LaneReplicationHelper,
   LaneReplicationOptions,
@@ -8599,6 +8600,11 @@ export class DefaultRacedayComponent
         actualWidgetType === "lane-column" ||
         actualWidgetType.startsWith("custom:")
       ) {
+        LaneGridStyleHelper.inheritGridStyles(
+          newWidget,
+          session,
+          this.layout.widgets,
+        );
         this.layout.widgets = LaneGridReplicationHelper.syncMasterWidgetToLanes(
           newWidget,
           session,

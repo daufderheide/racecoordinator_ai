@@ -1,5 +1,6 @@
 import { AbsoluteWidgetNode } from "@app/models/settings";
 
+import { LaneGridSession } from "./lane-grid-replication.helper";
 import { LaneGridStyleHelper } from "./lane-grid-style.helper";
 
 describe("LaneGridStyleHelper", () => {
@@ -492,5 +493,215 @@ describe("LaneGridStyleHelper", () => {
     expect(updated[0].customSettings?.["textColor"]).toBe("#00ff00");
     expect(updated[1].customSettings?.["backgroundColor"]).toBe("#990000");
     expect(updated[1].customSettings?.["textColor"]).toBe("#00ff00");
+  });
+
+  describe("inheritGridStyles", () => {
+    const mockSession: LaneGridSession = {
+      gridId: "test-grid",
+      bounds: { x: 0, y: 0, width: 600, height: 400 },
+      totalLanes: 4,
+      direction: "vertical",
+      sourceLaneIndex: 0,
+      bindingMode: "lane",
+      linkColumns: true,
+      mirrorRows: true,
+    };
+
+    it("should inherit useLaneColors false, backgroundColor, and textColor when existing grid widgets have lane colors disabled", () => {
+      const existingMaster: AbsoluteWidgetNode = {
+        id: "col-existing",
+        widgetType: "lane-column",
+        x: 0,
+        y: 0,
+        width: 200,
+        height: 100,
+        zIndex: 1,
+        customSettings: {
+          gridId: "test-grid",
+          gridLane: 0,
+          useLaneColors: false,
+          backgroundColor: "#112233",
+          textColor: "#ffffff",
+          linkColumns: true,
+        },
+      };
+
+      const newTarget: AbsoluteWidgetNode = {
+        id: "col-new",
+        widgetType: "lane-column",
+        x: 200,
+        y: 0,
+        width: 200,
+        height: 100,
+        zIndex: 1,
+        customSettings: {
+          columnKey: "laneNumber",
+          useLaneColors: true,
+        },
+      };
+
+      LaneGridStyleHelper.inheritGridStyles(newTarget, mockSession, [
+        existingMaster,
+        newTarget,
+      ]);
+
+      expect(newTarget.customSettings?.["useLaneColors"]).toBeFalse();
+      expect(newTarget.customSettings?.["backgroundColor"]).toBe("#112233");
+      expect(newTarget.customSettings?.["textColor"]).toBe("#ffffff");
+    });
+
+    it("should inherit useLaneColors false from session when no existing data widgets exist in allWidgets", () => {
+      const sessionWithDisabledLaneColors: LaneGridSession = {
+        ...mockSession,
+        useLaneColors: false,
+        backgroundColor: "#222222",
+        textColor: "#eeeeee",
+      };
+
+      const newTarget: AbsoluteWidgetNode = {
+        id: "col-new",
+        widgetType: "lane-column",
+        x: 0,
+        y: 0,
+        width: 200,
+        height: 100,
+        zIndex: 1,
+        customSettings: {
+          columnKey: "driver.name",
+          useLaneColors: true,
+        },
+      };
+
+      LaneGridStyleHelper.inheritGridStyles(
+        newTarget,
+        sessionWithDisabledLaneColors,
+        [newTarget],
+      );
+
+      expect(newTarget.customSettings?.["useLaneColors"]).toBeFalse();
+      expect(newTarget.customSettings?.["backgroundColor"]).toBe("#222222");
+      expect(newTarget.customSettings?.["textColor"]).toBe("#eeeeee");
+    });
+
+    it("should inherit linked value, border, header, and timer properties when linkColumns is true", () => {
+      const existingMaster: AbsoluteWidgetNode = {
+        id: "col-existing",
+        widgetType: "lane-column",
+        x: 0,
+        y: 0,
+        width: 200,
+        height: 100,
+        zIndex: 1,
+        scaleMode: "fixed",
+        customSettings: {
+          gridId: "test-grid",
+          gridLane: 0,
+          useLaneColors: false,
+          valueFontFamily: "Roboto",
+          valueFontSize: 24,
+          valueTextColor: "#33ff33",
+          valueAlignment: "center",
+          showBorder: true,
+          borderColor: "#ff0000",
+          borderWidth: 3,
+          borderRadius: 12,
+          highlightRowOnLap: true,
+          headerFontFamily: "Inter",
+          headerFontSize: 16,
+          headerTextColor: "#888888",
+          headerBackgroundColor: "#444444",
+          headerAlignment: "left",
+          headerHeight: 42,
+          timeDecimalPlaces: 4,
+          timeDisplayFormat: "seconds",
+          timeSubsecondMode: "always",
+          timeSubsecondThreshold: 5,
+          timeSubsecondDecimals: 3,
+          linkColumns: true,
+        },
+      };
+
+      const newTarget: AbsoluteWidgetNode = {
+        id: "col-new",
+        widgetType: "lane-column",
+        x: 200,
+        y: 0,
+        width: 200,
+        height: 100,
+        zIndex: 1,
+        customSettings: {
+          columnKey: "lastLapTime",
+          useLaneColors: true,
+        },
+      };
+
+      LaneGridStyleHelper.inheritGridStyles(newTarget, mockSession, [
+        existingMaster,
+        newTarget,
+      ]);
+
+      expect(newTarget.customSettings?.["valueFontFamily"]).toBe("Roboto");
+      expect(newTarget.customSettings?.["valueFontSize"]).toBe(24);
+      expect(newTarget.customSettings?.["valueTextColor"]).toBe("#33ff33");
+      expect(newTarget.customSettings?.["valueAlignment"]).toBe("center");
+      expect(newTarget.customSettings?.["showBorder"]).toBeTrue();
+      expect(newTarget.customSettings?.["borderColor"]).toBe("#ff0000");
+      expect(newTarget.customSettings?.["borderWidth"]).toBe(3);
+      expect(newTarget.customSettings?.["borderRadius"]).toBe(12);
+      expect(newTarget.customSettings?.["highlightRowOnLap"]).toBeTrue();
+      expect(newTarget.customSettings?.["headerFontFamily"]).toBe("Inter");
+      expect(newTarget.customSettings?.["headerFontSize"]).toBe(16);
+      expect(newTarget.customSettings?.["headerTextColor"]).toBe("#888888");
+      expect(newTarget.customSettings?.["headerBackgroundColor"]).toBe(
+        "#444444",
+      );
+      expect(newTarget.customSettings?.["headerAlignment"]).toBe("left");
+      expect(newTarget.customSettings?.["headerHeight"]).toBe(42);
+      expect(newTarget.customSettings?.["timeDecimalPlaces"]).toBe(4);
+      expect(newTarget.customSettings?.["timeDisplayFormat"]).toBe("seconds");
+      expect(newTarget.customSettings?.["timeSubsecondMode"]).toBe("always");
+      expect(newTarget.customSettings?.["timeSubsecondThreshold"]).toBe(5);
+      expect(newTarget.customSettings?.["timeSubsecondDecimals"]).toBe(3);
+      expect(newTarget.scaleMode).toBe("fixed");
+    });
+
+    it("should initialize customSettings if target widget has none", () => {
+      const newTarget: AbsoluteWidgetNode = {
+        id: "col-new",
+        widgetType: "lane-column",
+        x: 0,
+        y: 0,
+        width: 200,
+        height: 100,
+        zIndex: 1,
+      };
+
+      LaneGridStyleHelper.inheritGridStyles(newTarget, mockSession, [
+        newTarget,
+      ]);
+      expect(newTarget.customSettings).toBeDefined();
+    });
+
+    it("should do nothing when allWidgets is empty and session.useLaneColors is undefined", () => {
+      const newTarget: AbsoluteWidgetNode = {
+        id: "col-new",
+        widgetType: "lane-column",
+        x: 0,
+        y: 0,
+        width: 200,
+        height: 100,
+        zIndex: 1,
+        customSettings: {
+          useLaneColors: true,
+          customCustomProp: "val",
+        },
+      };
+
+      LaneGridStyleHelper.inheritGridStyles(newTarget, mockSession, [
+        newTarget,
+      ]);
+      expect(newTarget.customSettings?.["useLaneColors"]).toBeTrue();
+      expect(newTarget.customSettings?.["customCustomProp"]).toBe("val");
+    });
   });
 });

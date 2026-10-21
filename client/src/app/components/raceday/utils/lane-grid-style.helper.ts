@@ -1,5 +1,7 @@
 import { AbsoluteWidgetNode } from "@app/models/settings";
 
+import type { LaneGridSession } from "./lane-grid-replication.helper";
+
 export class LaneGridStyleHelper {
   public static syncCrossColumnProperty(
     gridId: string,
@@ -231,5 +233,153 @@ export class LaneGridStyleHelper {
       }
       return w;
     });
+  }
+
+  public static inheritGridStyles(
+    targetWidget: AbsoluteWidgetNode,
+    session: LaneGridSession,
+    allWidgets: AbsoluteWidgetNode[],
+  ): void {
+    if (!targetWidget || !session) return;
+    if (!targetWidget.customSettings) {
+      targetWidget.customSettings = {};
+    }
+
+    const existing = (allWidgets || []).filter(
+      (w) =>
+        w.id !== targetWidget.id &&
+        w.customSettings?.["gridMasterId"] !== targetWidget.id &&
+        w.customSettings?.["gridId"] === session.gridId &&
+        !w.customSettings?.["isHeaderWidget"],
+    );
+
+    if (existing.length === 0 && session.useLaneColors === undefined) {
+      return;
+    }
+
+    const ref =
+      existing.find((w) => {
+        const s = w.customSettings;
+        return Boolean(
+          s &&
+          (!s["gridMasterId"] || s["gridMasterId"] === w.id) &&
+          !w.id.includes("_grid_lane_") &&
+          Number(s["gridLane"] ?? s["targetIndex"]) === session.sourceLaneIndex,
+        );
+      }) || existing[0];
+
+    const refSettings = ref?.customSettings;
+    const isLinked =
+      session.linkColumns !== false && refSettings?.["linkColumns"] !== false;
+
+    this.applyGridColorInheritance(
+      targetWidget,
+      session,
+      refSettings,
+      existing,
+      isLinked,
+    );
+
+    if (refSettings && isLinked) {
+      this.applyGridValueAndBorderInheritance(targetWidget, refSettings);
+      this.applyGridHeaderAndTimerInheritance(targetWidget, refSettings);
+      if (ref.scaleMode !== undefined) {
+        targetWidget.scaleMode = ref.scaleMode;
+      }
+    }
+  }
+
+  private static applyGridColorInheritance(
+    targetWidget: AbsoluteWidgetNode,
+    session: LaneGridSession,
+    refSettings: Record<string, any> | undefined,
+    existing: AbsoluteWidgetNode[],
+    isLinked: boolean,
+  ): void {
+    const target = targetWidget.customSettings!;
+    const gridHasLaneColorsDisabled =
+      session.useLaneColors === false ||
+      (existing.length > 0 &&
+        existing.every((w) => w.customSettings?.["useLaneColors"] === false));
+
+    const useLaneColors = gridHasLaneColorsDisabled
+      ? false
+      : isLinked && refSettings?.["useLaneColors"] !== undefined
+        ? refSettings["useLaneColors"]
+        : session.useLaneColors !== undefined
+          ? session.useLaneColors
+          : refSettings?.["useLaneColors"] !== undefined
+            ? refSettings["useLaneColors"]
+            : true;
+
+    target["useLaneColors"] = useLaneColors;
+
+    if (!useLaneColors) {
+      target["backgroundColor"] =
+        refSettings?.["backgroundColor"] ||
+        session.backgroundColor ||
+        target["backgroundColor"] ||
+        "#000000";
+      target["textColor"] =
+        refSettings?.["textColor"] ||
+        session.textColor ||
+        target["textColor"] ||
+        "#ffffff";
+    } else {
+      if (refSettings?.["backgroundColor"] !== undefined) {
+        target["backgroundColor"] = refSettings["backgroundColor"];
+      }
+      if (refSettings?.["textColor"] !== undefined) {
+        target["textColor"] = refSettings["textColor"];
+      }
+    }
+  }
+
+  private static applyGridValueAndBorderInheritance(
+    targetWidget: AbsoluteWidgetNode,
+    refSettings: Record<string, any>,
+  ): void {
+    const target = targetWidget.customSettings!;
+    const copyKeys = [
+      "valueFontFamily",
+      "valueFontSize",
+      "valueTextColor",
+      "valueAlignment",
+      "showBorder",
+      "borderColor",
+      "borderWidth",
+      "borderRadius",
+      "highlightRowOnLap",
+    ];
+    for (const key of copyKeys) {
+      if (refSettings[key] !== undefined) {
+        target[key] = refSettings[key];
+      }
+    }
+  }
+
+  private static applyGridHeaderAndTimerInheritance(
+    targetWidget: AbsoluteWidgetNode,
+    refSettings: Record<string, any>,
+  ): void {
+    const target = targetWidget.customSettings!;
+    const copyKeys = [
+      "headerFontFamily",
+      "headerFontSize",
+      "headerTextColor",
+      "headerBackgroundColor",
+      "headerAlignment",
+      "headerHeight",
+      "timeDecimalPlaces",
+      "timeDisplayFormat",
+      "timeSubsecondMode",
+      "timeSubsecondThreshold",
+      "timeSubsecondDecimals",
+    ];
+    for (const key of copyKeys) {
+      if (refSettings[key] !== undefined) {
+        target[key] = refSettings[key];
+      }
+    }
   }
 }

@@ -10251,6 +10251,55 @@ describe("DefaultRacedayComponent", () => {
       expect(widget.customSettings?.["gridId"]).toBeUndefined();
       expect(component.widgetSelected.emit).toHaveBeenCalledWith(widget.id);
     });
+
+    it("should inherit useLaneColors false when lane-col widget is dropped into active grid with lane colors disabled", () => {
+      const scalableContent = document.createElement("div");
+      scalableContent.className = "scalable-content";
+      Object.defineProperty(scalableContent, "offsetWidth", { value: 1920 });
+      Object.defineProperty(scalableContent, "offsetHeight", { value: 1080 });
+      spyOn(scalableContent, "getBoundingClientRect").and.returnValue({
+        left: 0,
+        top: 0,
+        width: 1920,
+        height: 1080,
+      } as any);
+      (component as any).el.nativeElement.appendChild(scalableContent);
+
+      const session = {
+        gridId: "grid-no-colors",
+        bounds: { x: 100, y: 100, width: 800, height: 400 },
+        totalLanes: 3,
+        direction: "vertical",
+        sourceLaneIndex: 0,
+        bindingMode: "lane",
+        headerPlacement: "none",
+        useLaneColors: false,
+        backgroundColor: "#1e1e1e",
+        textColor: "#f0f0f0",
+      };
+      fixture.componentRef.setInput("gridSession", session);
+
+      component.isLayoutCustomizing = true;
+      component.draggedWidgetType = "lane-col:driver.name";
+      component.layout = {
+        baseWidth: 1920,
+        baseHeight: 1080,
+        widgets: [],
+      } as any;
+
+      const event = {
+        preventDefault: jasmine.createSpy("preventDefault"),
+        clientX: 200,
+        clientY: 200,
+      } as any;
+      component.onCanvasDrop(event);
+
+      expect(component.layout.widgets.length).toBe(3);
+      component.layout.widgets.forEach((w: any) => {
+        expect(w.customSettings?.["useLaneColors"]).toBeFalse();
+        expect(w.customSettings?.["backgroundColor"]).toBe("#1e1e1e");
+      });
+    });
   });
 
   describe("Printing", () => {
