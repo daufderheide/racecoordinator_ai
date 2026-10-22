@@ -39,6 +39,12 @@ describe('update_readme_downloads', () => {
       assert.strictEqual(latestBeta, 'v1.0.1-beta.2');
     });
 
+    test('should return null when beta release is older than or equal to official release', () => {
+      const tags = ['v1.0.0', 'v1.0.1', 'v1.0.1-beta.27'];
+      const latestBeta = getLatestBetaRelease(tags);
+      assert.strictEqual(latestBeta, null);
+    });
+
     test('should return null when no beta tags exist', () => {
       const tags = ['v1.0.0', 'v1.0.1'];
       const latestBeta = getLatestBetaRelease(tags);
@@ -94,6 +100,14 @@ describe('update_readme_downloads', () => {
       const betaIdx = section.indexOf('### 🧪 Beta Preview Releases');
       assert.ok(officialIdx !== -1 && betaIdx !== -1);
       assert.ok(officialIdx < betaIdx);
+    });
+
+    test('should omit beta section when official release is published and beta is retired', () => {
+      const customTags = ['v1.0.0', 'v1.0.1', 'v1.0.1-beta.27'];
+      const section = generateDownloadSection('v1.0.1', false, { customTags });
+      assert.ok(section.includes('#### Release `v1.0.1` *(Official Stable Release)*'));
+      assert.ok(!section.includes('Beta Preview Releases'));
+      assert.ok(!section.includes('v1.0.1-beta.27'));
     });
 
     test('should reject alpha tags and throw an error', () => {
