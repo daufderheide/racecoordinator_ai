@@ -3202,6 +3202,29 @@ describe("RacedayLaneColumnComponent", () => {
       component.deleteAnchor("top-left", mockClickEvent);
       expect(component.settings.insets?.["top-left"]).toBeUndefined();
       expect(mockParent.columnsChanged.emit).toHaveBeenCalled();
+
+      // Only selected widget or active drag renders anchor-drop-grid
+      mockParent.selectedWidgetId = () => "other-selected-widget-id";
+      fixture.detectChanges();
+      expect(component.shouldRenderAnchorDropGrid).toBeFalse();
+      expect(
+        fixture.nativeElement.querySelector(".anchor-drop-grid"),
+      ).toBeNull();
+
+      mockParent.selectedWidgetId = () => gridWidget.id;
+      fixture.detectChanges();
+      expect(component.shouldRenderAnchorDropGrid).toBeTrue();
+      expect(
+        fixture.nativeElement.querySelector(".anchor-drop-grid"),
+      ).toBeTruthy();
+
+      mockParent.selectedWidgetId = () => "other-selected-widget-id";
+      mockParent.draggedWidgetType = "lane-column";
+      fixture.detectChanges();
+      expect(component.shouldRenderAnchorDropGrid).toBeTrue();
+      expect(
+        fixture.nativeElement.querySelector(".anchor-drop-grid"),
+      ).toBeTruthy();
     });
   });
 });

@@ -4906,6 +4906,18 @@ describe("UIEditorComponent", () => {
         zIndex: 100,
       });
       expect(name).toBeTruthy();
+
+      // Repeated calls should return cached value
+      const nameCached = component.getWidgetDisplayName({
+        id: "widget-countdown",
+        widgetType: "countdown",
+        x: 0,
+        y: 0,
+        width: 100,
+        height: 100,
+        zIndex: 100,
+      });
+      expect(nameCached).toBe(name);
     });
 
     it("should update urgentQueueTtl and calloutSpacing on editingSettings", () => {

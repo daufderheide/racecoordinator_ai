@@ -572,14 +572,36 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     return layout?.widgets || [];
   }
 
+  private widgetDisplayNameCache = new Map<
+    string,
+    { key: string; name: string }
+  >();
+
   getWidgetDisplayName(widget: AbsoluteWidgetNode): string {
-    return computeWidgetDisplayName(
+    if (!widget) return "";
+    const s = widget.customSettings;
+    const currentLang =
+      this.translationService?.getCurrentLanguageValue?.() || "";
+    const colKey = s?.["columnKey"] || "";
+    const label = s?.["customLabel"] || "";
+    const mode = s?.["bindingMode"] || "";
+    const lane = s?.["gridLane"] ?? s?.["targetIndex"] ?? "";
+    const header = s?.["isHeaderWidget"] ? "1" : "0";
+    const inset = s?.["insets"]?.[this.selectedAnchor || ""] || "";
+    const cacheKey = `${widget.id}_${widget.widgetType}_${this.selectedAnchor || ""}_${currentLang}_${colKey}_${label}_${mode}_${lane}_${header}_${inset}`;
+    const cached = this.widgetDisplayNameCache.get(widget.id);
+    if (cached && cached.key === cacheKey) {
+      return cached.name;
+    }
+    const name = computeWidgetDisplayName(
       widget,
       this.translationService,
       this.availableColumns,
       (w) => this.getWidgetTypeLabelKey(w),
       this.selectedAnchor,
     );
+    this.widgetDisplayNameCache.set(widget.id, { key: cacheKey, name });
+    return name;
   }
 
   onWidgetDropdownSelect = (widgetId: string, ui?: CustomUI) =>

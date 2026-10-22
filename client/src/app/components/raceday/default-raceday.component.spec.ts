@@ -8839,6 +8839,29 @@ describe("DefaultRacedayComponent", () => {
       );
     });
 
+    it("should not modify z-indices or emit layoutChanged when grid is already in front", () => {
+      const gw1: any = {
+        id: "gw-top1",
+        widgetType: "lane-column",
+        zIndex: 200,
+        customSettings: { gridId: "g-already-top", gridLane: 0 },
+      };
+      const gw2: any = {
+        id: "gw-top2",
+        widgetType: "lane-column",
+        zIndex: 201,
+        customSettings: { gridId: "g-already-top", gridLane: 1 },
+      };
+      component.layout.widgets.push(gw1, gw2);
+      (component.layoutChanged.emit as jasmine.Spy).calls.reset();
+
+      component.bringGridToFront("g-already-top");
+
+      expect(gw1.zIndex).toBe(200);
+      expect(gw2.zIndex).toBe(201);
+      expect(component.layoutChanged.emit).not.toHaveBeenCalled();
+    });
+
     it("should delegate to bringGridToFront when bringToFront is called on a grid widget", () => {
       spyOn(component, "bringGridToFront");
       const gw1: any = {

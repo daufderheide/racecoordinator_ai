@@ -473,6 +473,41 @@ export class RacedayLaneColumnComponent
     return !session || session.gridId !== gridId;
   }
 
+  get isWidgetInGrid(): boolean {
+    return Boolean(this.widget()?.customSettings?.["gridId"]);
+  }
+
+  get isSelectedWidget(): boolean {
+    const p = this.parent();
+    if (!p) return false;
+    const selId =
+      typeof p.selectedWidgetId === "function"
+        ? p.selectedWidgetId()
+        : p.selectedWidgetId;
+    return Boolean(selId && selId === this.widget()?.id);
+  }
+
+  get shouldRenderAnchorDropGrid(): boolean {
+    if (!this.isUIEditorMode || this.isGridCellUnselected) {
+      return false;
+    }
+    if (!this.isWidgetInGrid) {
+      return true;
+    }
+    const parent = this.parent();
+    if (parent?.draggedWidgetType) {
+      return true;
+    }
+    const selId =
+      typeof parent?.selectedWidgetId === "function"
+        ? parent.selectedWidgetId()
+        : parent?.selectedWidgetId;
+    if (!selId) {
+      return true;
+    }
+    return this.isSelectedWidget;
+  }
+
   get isLapCountClickable(): boolean {
     return isLaneColumnLapCountClickable(
       this.parent(),

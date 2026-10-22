@@ -8733,12 +8733,14 @@ export class DefaultRacedayComponent
     let changed = false;
 
     const minGridZ = Math.min(...gridWidgets.map((w: any) => w.zIndex || 10));
-    for (const gw of gridWidgets) {
-      const relativeOffset = Math.max(0, (gw.zIndex || 10) - minGridZ);
-      const targetZ = newBaseZ + relativeOffset;
-      if (gw.zIndex !== targetZ) {
-        gw.zIndex = targetZ;
-        changed = true;
+    if (minGridZ <= maxOtherZ) {
+      for (const gw of gridWidgets) {
+        const relativeOffset = Math.max(0, (gw.zIndex || 10) - minGridZ);
+        const targetZ = newBaseZ + relativeOffset;
+        if (gw.zIndex !== targetZ) {
+          gw.zIndex = targetZ;
+          changed = true;
+        }
       }
     }
 

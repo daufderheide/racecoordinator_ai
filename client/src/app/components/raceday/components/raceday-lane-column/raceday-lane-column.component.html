@@ -92,7 +92,7 @@
       }
 
       <!-- 3x3 Drop Zones overlay for editing -->
-      @if (isUIEditorMode && !isGridCellUnselected) {
+      @if (shouldRenderAnchorDropGrid) {
         <div class="anchor-drop-grid">
           <div
             class="drop-zone tl"
