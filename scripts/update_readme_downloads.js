@@ -65,7 +65,7 @@ function getOfficialReleasesToShow(tags) {
   return selected;
 }
 
-function getLatestBetaRelease(tags) {
+function getLatestBetaRelease(tags, officialTags) {
   const betaTags = tags.filter(t => {
     const p = parseSemver(t);
     return p.prereleaseType === 'beta' && p.major >= 1;
@@ -74,7 +74,17 @@ function getLatestBetaRelease(tags) {
   if (betaTags.length === 0) return null;
 
   betaTags.sort(compareSemver);
-  return betaTags[0];
+  const newestBeta = betaTags[0];
+
+  const officials = officialTags !== undefined ? officialTags : getOfficialReleasesToShow(tags);
+  if (officials && officials.length > 0) {
+    const highestOfficial = officials[0];
+    if (compareSemver(newestBeta, highestOfficial) >= 0) {
+      return null;
+    }
+  }
+
+  return newestBeta;
 }
 
 function renderDownloadTable(tag) {
@@ -101,7 +111,7 @@ function generateDownloadSection(tag, isPrerelease, options = {}) {
   const allTags = Array.from(new Set([tag, ...existingTags].filter(Boolean)));
 
   const officialReleases = getOfficialReleasesToShow(allTags);
-  const latestBeta = getLatestBetaRelease(allTags);
+  const latestBeta = getLatestBetaRelease(allTags, officialReleases);
 
   let officialContent = '';
   if (officialReleases.length === 0) {

@@ -39,6 +39,12 @@ describe('update_readme_downloads', () => {
       assert.strictEqual(latestBeta, 'v1.0.1-beta.2');
     });
 
+    test('should return null when beta release is older than or equal to official release', () => {
+      const tags = ['v1.0.0', 'v1.0.1', 'v1.0.1-beta.27'];
+      const latestBeta = getLatestBetaRelease(tags);
+      assert.strictEqual(latestBeta, null);
+    });
+
     test('should return null when no beta tags exist', () => {
       const tags = ['v1.0.0', 'v1.0.1'];
       const latestBeta = getLatestBetaRelease(tags);
@@ -48,7 +54,7 @@ describe('update_readme_downloads', () => {
 
   describe('generateDownloadSection', () => {
     test('should generate download section for beta prereleases', () => {
-      const section = generateDownloadSection('v1.0.0-beta.7', true);
+      const section = generateDownloadSection('v1.0.0-beta.7', true, { customTags: [] });
       assert.ok(section.includes('v1.0.0-beta.7'));
       assert.ok(section.includes('*(Beta Preview — Help us test upcoming features!)*'));
       assert.ok(section.includes('🐧 Linux / Raspberry Pi / Arduino Uno Q (ARM64)'));
@@ -62,7 +68,7 @@ describe('update_readme_downloads', () => {
     });
 
     test('should generate download section for official stable releases', () => {
-      const section = generateDownloadSection('v1.0.0', false);
+      const section = generateDownloadSection('v1.0.0', false, { customTags: [] });
       assert.ok(section.includes('v1.0.0'));
       assert.ok(section.includes('*(Official Stable Release)*'));
       assert.ok(section.includes('🐧 Linux / Raspberry Pi / Arduino Uno Q (ARM64)'));
@@ -96,6 +102,14 @@ describe('update_readme_downloads', () => {
       assert.ok(officialIdx < betaIdx);
     });
 
+    test('should omit beta section when official release is published and beta is retired', () => {
+      const customTags = ['v1.0.0', 'v1.0.1', 'v1.0.1-beta.27'];
+      const section = generateDownloadSection('v1.0.1', false, { customTags });
+      assert.ok(section.includes('#### Release `v1.0.1` *(Official Stable Release)*'));
+      assert.ok(!section.includes('Beta Preview Releases'));
+      assert.ok(!section.includes('v1.0.1-beta.27'));
+    });
+
     test('should reject alpha tags and throw an error', () => {
       assert.throws(() => {
         generateDownloadSection('v1.0.0-alpha.20260819', true);
@@ -113,7 +127,7 @@ Old content here
 
 ## 🚀 Quick Start Guide
 `;
-      const updated = updateReadmeContent(initial, 'v1.0.0-beta.8', true);
+      const updated = updateReadmeContent(initial, 'v1.0.0-beta.8', true, { customTags: [] });
       assert.ok(updated.includes('v1.0.0-beta.8'));
       assert.ok(!updated.includes('Old content here'));
       assert.ok(updated.includes('## 🚀 Quick Start Guide'));
@@ -128,7 +142,7 @@ Old un-marked download table
 
 ## 🚀 Quick Start Guide
 `;
-      const updated = updateReadmeContent(initial, 'v1.0.0', false);
+      const updated = updateReadmeContent(initial, 'v1.0.0', false, { customTags: [] });
       assert.ok(updated.includes('<!-- DOWNLOAD_SECTION_START -->'));
       assert.ok(updated.includes('<!-- DOWNLOAD_SECTION_END -->'));
       assert.ok(updated.includes('v1.0.0'));
@@ -139,7 +153,7 @@ Old un-marked download table
   describe('updateReadmeFile', () => {
     test('should throw error if file does not exist', () => {
       assert.throws(() => {
-        updateReadmeFile('/non/existent/path/README.md', 'v1.0.0', false);
+        updateReadmeFile('/non/existent/path/README.md', 'v1.0.0', false, { customTags: [] });
       }, /README file not found/);
     });
 
@@ -148,7 +162,7 @@ Old un-marked download table
       const initial = `# Header\n<!-- DOWNLOAD_SECTION_START -->\nold\n<!-- DOWNLOAD_SECTION_END -->\n# Footer`;
       fs.writeFileSync(tempPath, initial, 'utf8');
       try {
-        const res = updateReadmeFile(tempPath, 'v1.0.0-beta.7', true);
+        const res = updateReadmeFile(tempPath, 'v1.0.0-beta.7', true, { customTags: [] });
         assert.ok(res.includes('v1.0.0-beta.7'));
         const fileContent = fs.readFileSync(tempPath, 'utf8');
         assert.ok(fileContent.includes('v1.0.0-beta.7'));

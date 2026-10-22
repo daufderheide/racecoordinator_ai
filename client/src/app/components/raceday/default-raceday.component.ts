@@ -5283,8 +5283,8 @@ export class DefaultRacedayComponent
 
     let { x, y } = pos;
     const scale = 1; // Always 1 in normal mode
-    const toolboxWidth = 260; // Base width from CSS
-    const toolboxHeight = 400; // Approximate max height
+    const toolboxWidth = this.isLayoutEditorMinimized ? 160 : 260; // Base width from CSS
+    const toolboxHeight = this.isLayoutEditorMinimized ? 40 : 400; // Approximate max height
 
     // Calculate max X/Y in the local coordinate space of the scaled wrapper
     const maxX = Math.max(
