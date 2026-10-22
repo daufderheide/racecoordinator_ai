@@ -2305,18 +2305,21 @@ export class DefaultRacedayComponent
     };
 
     if (lap.type === LapType.FALSE_START) {
-      const audio = driver.falseStartAudio || driver.penaltyAudio;
+      const audio = driver?.falseStartAudio || driver?.penaltyAudio;
       if (
         audio?.type &&
         audio.type !== "none" &&
         ((audio.type === "tts" && audio.text?.trim()) ||
           (audio.type !== "tts" && audio.url?.trim()))
       ) {
+        const playableUrl = audio.url
+          ? this.resolveAssetPlayableUrl(audio.url)
+          : undefined;
         this.audioService.playCallout(
           audio,
           "urgent",
           ttsContext,
-          undefined,
+          playableUrl,
           association,
         );
       }
@@ -2340,12 +2343,15 @@ export class DefaultRacedayComponent
         ((audio.type === "tts" && audio.text?.trim()) ||
           (audio.type !== "tts" && audio.url?.trim()))
       ) {
+        const playableUrl = audio.url
+          ? this.resolveAssetPlayableUrl(audio.url)
+          : undefined;
         this.audioService.playCallout(
           audio,
           "urgent",
           ttsContext,
-          undefined,
-          association,
+          playableUrl,
+          { ...association, eventType: "drift_lap" },
         );
       }
       this.handleLapHighlight(lap, driverData);
@@ -2445,11 +2451,14 @@ export class DefaultRacedayComponent
         ((audio.type === "tts" && audio.text?.trim()) ||
           (audio.type !== "tts" && audio.url?.trim()))
       ) {
+        const playableUrl = audio.url
+          ? this.resolveAssetPlayableUrl(audio.url)
+          : undefined;
         this.audioService.playCallout(
           audio,
           "urgent",
           ttsContext,
-          undefined,
+          playableUrl,
           association,
         );
       }
@@ -2471,12 +2480,15 @@ export class DefaultRacedayComponent
         ((audio.type === "tts" && audio.text?.trim()) ||
           (audio.type !== "tts" && audio.url?.trim()))
       ) {
+        const playableUrl = audio.url
+          ? this.resolveAssetPlayableUrl(audio.url)
+          : undefined;
         this.audioService.playCallout(
           audio,
           "urgent",
           ttsContext,
-          undefined,
-          association,
+          playableUrl,
+          { ...association, eventType: "drift_lap" },
         );
       }
       return;
@@ -2492,6 +2504,7 @@ export class DefaultRacedayComponent
         lap.isNewHeatLeader,
         ttsContext,
         association,
+        lap.isDrift,
       );
     }
   }

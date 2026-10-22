@@ -783,6 +783,29 @@ describe("playSound Utility", () => {
       expect(resultTts!.isVoice).toBeTrue();
       expect(resultTts!.priority).toBe("high");
     });
+
+    it("should resolve drift lap as verbal callout with urgent priority", () => {
+      const driftDriver = {
+        ...driver,
+        driftLapAudio: { type: "tts", text: "{driver.name} drift lap" },
+      };
+      const result = resolveLapAudio(driftDriver, 0, false, false, false, true);
+      expect(result).toBeDefined();
+      expect(result!.config.text).toBe("{driver.name} drift lap");
+      expect(result!.isVoice).toBeTrue();
+      expect(result!.priority).toBe("urgent");
+    });
+
+    it("should prioritize drift lap audio as urgent even if tier 6 record is also present", () => {
+      const driftDriver = {
+        ...driver,
+        driftLapAudio: { type: "preset", url: "drift.wav" },
+      };
+      const result = resolveLapAudio(driftDriver, 6, true, true, true, true);
+      expect(result).toBeDefined();
+      expect(result!.config.url).toBe("drift.wav");
+      expect(result!.priority).toBe("urgent");
+    });
   });
 
   describe("dispatchLapAudio Utility", () => {
@@ -1059,6 +1082,59 @@ describe("playSound Utility", () => {
         undefined,
         association,
       );
+    });
+
+    it("should dispatch drift lap with urgent priority and drift_lap eventType", () => {
+      const driftDriver = {
+        ...driver,
+        driftLapAudio: { type: "tts", text: "Drift!" },
+      };
+      dispatchLapAudio(
+        mockPlayer,
+        driftDriver,
+        0,
+        false,
+        false,
+        false,
+        undefined,
+        { widgetType: "lane-view", laneIndex: 0 },
+        true,
+      );
+
+      expect(mockPlayer.playCallout).toHaveBeenCalledWith(
+        driftDriver.driftLapAudio,
+        "urgent",
+        undefined,
+        undefined,
+        jasmine.objectContaining({
+          widgetType: "lane-view",
+          laneIndex: 0,
+          eventType: "drift_lap",
+        }),
+      );
+      expect(mockPlayer.playSfx).not.toHaveBeenCalled();
+    });
+
+    it("should not fallback to normal or best lap SFX for drift laps when callout fails", () => {
+      mockPlayer.playCallout.and.returnValue(false);
+      const driftDriver = {
+        ...driver,
+        driftLapAudio: { type: "tts", text: "Drift!" },
+      };
+      dispatchLapAudio(
+        mockPlayer,
+        driftDriver,
+        0,
+        true,
+        false,
+        false,
+        undefined,
+        undefined,
+        true,
+      );
+
+      expect(mockPlayer.playCallout).toHaveBeenCalled();
+      expect(mockPlayer.playSfx).not.toHaveBeenCalled();
     });
   });
 

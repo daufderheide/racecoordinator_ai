@@ -136,4 +136,27 @@ describe("DriverStationLapAudioHandler", () => {
 
     expect(handler.playedLapsLeft.has(5)).toBeTrue();
   });
+
+  it("should play drift lap callout with urgent priority and drift_lap eventType", () => {
+    mockDriverData.driver.driftLapAudio = {
+      type: "tts",
+      text: "Drift Lap for Driver 1",
+    };
+
+    handler.handleLapEvent(
+      { objectId: "hd-1", isDrift: true, lapNumber: 20 },
+      mockDriverData,
+    );
+
+    expect(mockAudioService.playCallout).toHaveBeenCalledWith(
+      mockDriverData.driver.driftLapAudio,
+      "urgent",
+      jasmine.any(Object),
+      undefined,
+      jasmine.objectContaining({
+        widgetType: "lane-view",
+        eventType: "drift_lap",
+      }),
+    );
+  });
 });

@@ -2671,7 +2671,61 @@ describe("DefaultRacedayComponent", () => {
           driver: jasmine.objectContaining({ nickname: "The Rocket" }),
         }),
         undefined,
-        jasmine.objectContaining({ widgetType: "lane-view" }),
+        jasmine.objectContaining({
+          widgetType: "lane-view",
+          eventType: "drift_lap",
+        }),
+      );
+    });
+
+    it("should dispatch urgent drift lap callout for every driver who gets a drift lap at heat end", () => {
+      spyOn((component as any).audioService, "playCallout");
+
+      (component as any).heat.heatDrivers[0].driver.driftLapAudio = {
+        type: "tts",
+        text: "{driver.name} drift 1",
+      } as any;
+      (component as any).heat.heatDrivers[1].driver.driftLapAudio = {
+        type: "tts",
+        text: "{driver.name} drift 2",
+      } as any;
+
+      lapsSubject.next({
+        objectId: "hd1",
+        lapTime: 5.0,
+        type: LapType.LAP,
+        isDrift: true,
+      });
+
+      lapsSubject.next({
+        objectId: "hd2",
+        lapTime: 5.2,
+        type: LapType.LAP,
+        isDrift: true,
+      });
+
+      expect((component as any).audioService.playCallout).toHaveBeenCalledTimes(
+        2,
+      );
+      expect((component as any).audioService.playCallout).toHaveBeenCalledWith(
+        (component as any).heat.heatDrivers[0].driver.driftLapAudio,
+        "urgent",
+        jasmine.any(Object),
+        undefined,
+        jasmine.objectContaining({
+          widgetType: "lane-view",
+          eventType: "drift_lap",
+        }),
+      );
+      expect((component as any).audioService.playCallout).toHaveBeenCalledWith(
+        (component as any).heat.heatDrivers[1].driver.driftLapAudio,
+        "urgent",
+        jasmine.any(Object),
+        undefined,
+        jasmine.objectContaining({
+          widgetType: "lane-view",
+          eventType: "drift_lap",
+        }),
       );
     });
   });

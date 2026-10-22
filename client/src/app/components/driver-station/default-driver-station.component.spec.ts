@@ -593,6 +593,7 @@ describe("DefaultDriverStationComponent", () => {
           widgetType: "lane-view",
           laneIndex: 1,
           driverId: "d1",
+          eventType: "drift_lap",
         },
       );
     });

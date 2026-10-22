@@ -150,7 +150,10 @@ export class DriverStationLapAudioHandler {
 
     if (lap.isDrift) {
       const audio = driver.driftLapAudio;
-      this.playUrgentCalloutIfValid(audio, ttsContext, association);
+      this.playUrgentCalloutIfValid(audio, ttsContext, {
+        ...association,
+        eventType: "drift_lap",
+      });
       return true;
     }
 
@@ -168,11 +171,14 @@ export class DriverStationLapAudioHandler {
       ((audio.type === "tts" && audio.text?.trim()) ||
         (audio.type !== "tts" && audio.url?.trim()))
     ) {
+      const playableUrl = audio.url
+        ? this.deps.resolvePlayableUrl(audio.url)
+        : undefined;
       this.deps.audioService.playCallout(
         audio,
         "urgent",
         ttsContext,
-        undefined,
+        playableUrl,
         association,
       );
     }

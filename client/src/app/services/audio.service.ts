@@ -23,6 +23,7 @@ export interface AudioAssociation {
   widgetType?: "lane-view" | "timer" | "flag" | "countdown" | string;
   laneIndex?: number;
   driverId?: string;
+  eventType?: string;
 }
 
 export type DriverAudioMode = "all" | "none" | "scoped";
@@ -508,7 +509,11 @@ export class AudioService implements OnDestroy {
 
   private getOrCreatePresetAudio(playableUrl: string): HTMLAudioElement {
     const cached = this.preloadedAudioMap.get(playableUrl);
-    if (cached && (cached.paused || cached.ended)) {
+    if (
+      cached &&
+      cached !== this.activeAudioElement &&
+      (cached.paused || cached.ended)
+    ) {
       try {
         cached.currentTime = 0;
       } catch {
@@ -658,13 +663,6 @@ export class AudioService implements OnDestroy {
       return;
     }
 
-    if (window.speechSynthesis.speaking || window.speechSynthesis.pending) {
-      try {
-        window.speechSynthesis.cancel();
-      } catch {
-        // ignore
-      }
-    }
     const utterance = new SpeechSynthesisUtterance(interpolatedText);
     retainUtterance(utterance);
     this.activeUtterance = utterance;
@@ -911,9 +909,17 @@ export class AudioService implements OnDestroy {
     const now = Date.now();
 
     // 1. Prune expired urgent items
-    this.urgentQueue = this.urgentQueue.filter(
-      (item) => now - item.enqueuedAt <= ttl,
-    );
+    this.urgentQueue = this.urgentQueue.filter((item) => {
+      // Drift lap callouts are rare, critical events and are protected from premature expiry
+      if (
+        item.association?.eventType === "drift_lap" ||
+        item.config === (item.context?.driver?.driver as any)?.driftLapAudio ||
+        item.config === (item.context?.driver as any)?.driftLapAudio
+      ) {
+        return now - item.enqueuedAt <= 60000;
+      }
+      return now - item.enqueuedAt <= ttl;
+    });
 
     if (this.urgentQueue.length > 0) {
       const nextUrgent = this.urgentQueue.shift()!;

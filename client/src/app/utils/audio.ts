@@ -79,6 +79,7 @@ export function isAudioConfigured(config?: AudioConfig | null): boolean {
  * based on record tiers, leader status, and personal best status.
  *
  * All candidate milestone events are evaluated in descending priority order:
+ * 0. Drift Lap - urgent
  * 1. Overall Best (Tier 6) - high
  * 2. Overall Lane Best (Tier 5 or 6) - high
  * 3. New Race Leader - high
@@ -97,8 +98,18 @@ export function resolveLapAudio(
   isBestLap?: boolean | null,
   isNewRaceLeader?: boolean | null,
   isNewHeatLeader?: boolean | null,
+  isDrift?: boolean | null,
 ): LapAudioCalloutInfo | undefined {
   if (!driver) return undefined;
+
+  // 0. Drift Lap (urgent)
+  if (isDrift && isAudioConfigured(driver.driftLapAudio)) {
+    return {
+      config: driver.driftLapAudio,
+      isVoice: true,
+      priority: "urgent",
+    };
+  }
 
   const tier =
     typeof recordTier === "string"
@@ -209,6 +220,7 @@ export function getLapAudioConfig(
   isBestLap?: boolean | null,
   isNewRaceLeader?: boolean | null,
   isNewHeatLeader?: boolean | null,
+  isDrift?: boolean | null,
 ): AudioConfig | undefined {
   return resolveLapAudio(
     driver,
@@ -216,6 +228,7 @@ export function getLapAudioConfig(
     isBestLap,
     isNewRaceLeader,
     isNewHeatLeader,
+    isDrift,
   )?.config;
 }
 
@@ -252,6 +265,7 @@ export function dispatchLapAudio(
   isNewHeatLeader?: boolean | null,
   ttsContext?: any,
   association?: AudioAssociation,
+  isDrift?: boolean | null,
 ): void {
   if (!driver) return;
 
@@ -262,29 +276,38 @@ export function dispatchLapAudio(
     isBestLap,
     isNewRaceLeader,
     isNewHeatLeader,
+    isDrift,
   );
 
   if (specialAudio && isAudioConfigured(specialAudio.config)) {
     const config = specialAudio.config;
+    const resolvedAssociation = isDrift
+      ? { ...association, eventType: "drift_lap" }
+      : association;
     if (specialAudio.isVoice) {
-      const result = association
+      const result = resolvedAssociation
         ? audioPlayer.playCallout(
             config,
             specialAudio.priority,
             ttsContext,
             undefined,
-            association,
+            resolvedAssociation,
           )
         : audioPlayer.playCallout(config, specialAudio.priority, ttsContext);
       played = result !== false;
     } else {
-      if (association) {
-        audioPlayer.playSfx(config.url, association);
+      if (resolvedAssociation) {
+        audioPlayer.playSfx(config.url, resolvedAssociation);
       } else {
         audioPlayer.playSfx(config.url);
       }
       played = true;
     }
+  }
+
+  // Drift laps at heat end must not trigger normal or personal best lap sound fallbacks
+  if (isDrift) {
+    return;
   }
 
   // If the sound for that lap wasn't played (either because of priority, set to none, or missing),
