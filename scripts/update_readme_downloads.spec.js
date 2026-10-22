@@ -48,7 +48,7 @@ describe('update_readme_downloads', () => {
 
   describe('generateDownloadSection', () => {
     test('should generate download section for beta prereleases', () => {
-      const section = generateDownloadSection('v1.0.0-beta.7', true);
+      const section = generateDownloadSection('v1.0.0-beta.7', true, { customTags: [] });
       assert.ok(section.includes('v1.0.0-beta.7'));
       assert.ok(section.includes('*(Beta Preview — Help us test upcoming features!)*'));
       assert.ok(section.includes('🐧 Linux / Raspberry Pi / Arduino Uno Q (ARM64)'));
@@ -62,7 +62,7 @@ describe('update_readme_downloads', () => {
     });
 
     test('should generate download section for official stable releases', () => {
-      const section = generateDownloadSection('v1.0.0', false);
+      const section = generateDownloadSection('v1.0.0', false, { customTags: [] });
       assert.ok(section.includes('v1.0.0'));
       assert.ok(section.includes('*(Official Stable Release)*'));
       assert.ok(section.includes('🐧 Linux / Raspberry Pi / Arduino Uno Q (ARM64)'));
@@ -113,7 +113,7 @@ Old content here
 
 ## 🚀 Quick Start Guide
 `;
-      const updated = updateReadmeContent(initial, 'v1.0.0-beta.8', true);
+      const updated = updateReadmeContent(initial, 'v1.0.0-beta.8', true, { customTags: [] });
       assert.ok(updated.includes('v1.0.0-beta.8'));
       assert.ok(!updated.includes('Old content here'));
       assert.ok(updated.includes('## 🚀 Quick Start Guide'));
@@ -128,7 +128,7 @@ Old un-marked download table
 
 ## 🚀 Quick Start Guide
 `;
-      const updated = updateReadmeContent(initial, 'v1.0.0', false);
+      const updated = updateReadmeContent(initial, 'v1.0.0', false, { customTags: [] });
       assert.ok(updated.includes('<!-- DOWNLOAD_SECTION_START -->'));
       assert.ok(updated.includes('<!-- DOWNLOAD_SECTION_END -->'));
       assert.ok(updated.includes('v1.0.0'));
@@ -139,7 +139,7 @@ Old un-marked download table
   describe('updateReadmeFile', () => {
     test('should throw error if file does not exist', () => {
       assert.throws(() => {
-        updateReadmeFile('/non/existent/path/README.md', 'v1.0.0', false);
+        updateReadmeFile('/non/existent/path/README.md', 'v1.0.0', false, { customTags: [] });
       }, /README file not found/);
     });
 
@@ -148,7 +148,7 @@ Old un-marked download table
       const initial = `# Header\n<!-- DOWNLOAD_SECTION_START -->\nold\n<!-- DOWNLOAD_SECTION_END -->\n# Footer`;
       fs.writeFileSync(tempPath, initial, 'utf8');
       try {
-        const res = updateReadmeFile(tempPath, 'v1.0.0-beta.7', true);
+        const res = updateReadmeFile(tempPath, 'v1.0.0-beta.7', true, { customTags: [] });
         assert.ok(res.includes('v1.0.0-beta.7'));
         const fileContent = fs.readFileSync(tempPath, 'utf8');
         assert.ok(fileContent.includes('v1.0.0-beta.7'));
