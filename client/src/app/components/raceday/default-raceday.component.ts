@@ -116,6 +116,7 @@ import {
   createTTSContext,
   dispatchLapAudio,
   isAudioConfigured,
+  resolveAudioUrl,
   resolveLapAudio,
 } from "@app/utils/audio";
 import { saveFileAs } from "@app/utils/file-download.utils";
@@ -131,16 +132,25 @@ import { AddLapSectionsDialogComponent } from "./components/add-lap-sections-dia
 import { RacedayAbsoluteWidgetComponent } from "./components/raceday-absolute-widget/raceday-absolute-widget.component";
 import { RacedayModalsComponent } from "./components/raceday-modals/raceday-modals.component";
 import { ToolboxGroup, ToolboxGroupHelper } from "./toolbox-group.helper";
+import { LaneGridAnimationHelper } from "./utils/lane-grid-animation.helper";
+import { LaneGridFactoryHelper } from "./utils/lane-grid-factory.helper";
+import { LaneGridHeaderHelper } from "./utils/lane-grid-header.helper";
+import {
+  GridLabelPosition,
+  LaneGridLabelHelper,
+} from "./utils/lane-grid-label.helper";
 import {
   GridResizeHandle,
   LaneGridBounds,
   LaneGridReplicationHelper,
   LaneGridSession,
 } from "./utils/lane-grid-replication.helper";
+import { LaneGridStyleHelper } from "./utils/lane-grid-style.helper";
 import {
   LaneReplicationHelper,
   LaneReplicationOptions,
 } from "./utils/lane-replication.helper";
+import { LaneViewMigrationHelper } from "./utils/lane-view-migration.helper";
 import {
   FormatContext,
   RacedayFormatUtils,
@@ -151,6 +161,41 @@ import {
   createMockEditorData,
   createMockLaneRecordEntries,
 } from "./utils/raceday-mock.utils";
+
+export interface RacedayGridDescriptor {
+  gridId: string;
+  gridType?: "heat" | "overall";
+  bounds: LaneGridBounds;
+  direction: "horizontal" | "vertical";
+  headerPlacement: "top" | "individual" | "none";
+  headerHeight: number;
+  gridTotalLanes: number;
+  dataCount: number;
+  hasScroll: boolean;
+  zIndex: number;
+  contentWidth: number;
+  contentHeight: number;
+  headerWidgets: AbsoluteWidgetNode[];
+  cellWidgets: AbsoluteWidgetNode[];
+  contentOffset: { x: number; y: number };
+  headerOffset: { x: number; y: number };
+  labelPosition: "none" | "top" | "bottom" | "left" | "right";
+  labelText: string;
+  labelSize: number;
+  labelFontFamily?: string;
+  labelFontSize?: number;
+  labelTextColor?: string;
+  labelBackgroundColor?: string;
+  labelFontBold?: boolean;
+  labelFontItalic?: boolean;
+  labelAlignment?: "left" | "center" | "right";
+  labelShowBorder?: boolean;
+  labelBorderColor?: string;
+  labelBorderWidth?: number;
+  labelBorderRadius?: number;
+  labelBounds: LaneGridBounds | null;
+  dataBounds: LaneGridBounds;
+}
 
 /**
  * The raceday component is the main component for the raceday screen.
@@ -488,6 +533,36 @@ export class DefaultRacedayComponent
     this.groupLeaderboardEntries = this.groupLeaderboardEntries.filter((e) =>
       incomingIds.has(e.entityId),
     );
+  }
+
+  private syncHeatDriversWithParticipants(): void {
+    if (this.heat && this.heat.heatDrivers) {
+      this.heat.heatDrivers.forEach((hd) => {
+        const d = hd.actualDriver || hd.driver;
+        const driverId = d?.entity_id || d?.name;
+        const match = this.participants?.find(
+          (p) =>
+            p.driver?.entity_id === driverId || p.driver?.name === driverId,
+        );
+        if (match) {
+          if (match.rank) {
+            (hd as any).overallRank = match.rank;
+          }
+          if (match.fuelLevel != null) {
+            if (hd.participant) {
+              hd.participant.fuelLevel = match.fuelLevel;
+            }
+            if (hd.laneIndex != null) {
+              this.updateLaneFuel(
+                hd.laneIndex,
+                match.fuelLevel,
+                !!hd.isRefueling,
+              );
+            }
+          }
+        }
+      });
+    }
   }
 
   protected getLeaderboardPosition(entry: any): number {
@@ -960,7 +1035,24 @@ export class DefaultRacedayComponent
   protected assets: any[] = [];
   protected hasRacedInCurrentHeat: boolean = false;
   protected highlightedDrivers: Set<string> = new Set();
-  private lapHighlightTimers: Set<any> = new Set();
+  private lapHighlightTimers: Map<string, any> = new Map();
+  private cachedNonGridWidgets: any[] = [];
+  private cachedNonGridWidgetsRef: any[] | null = null;
+  private cachedNonGridSession: boolean = false;
+  private cachedNonGridActiveGridId: string | undefined = undefined;
+  private cachedGrids: RacedayGridDescriptor[] = [];
+  private cachedGridsWidgetsRef: any[] | null = null;
+  private cachedGridsSession: boolean = false;
+  private cachedGridsActiveGridId: string | undefined = undefined;
+  private cachedGridsDataCounts: string = "";
+  private cachedGridsParticipantsCount = -1;
+  private cachedGridsHeatDriversCount = -1;
+  private cachedGridIds: string[] = [];
+  private cachedGridIdsWidgetsRef: any[] | null = null;
+  private cachedOverallGridIds?: Set<string>;
+  private cachedOverallGridWidgetsRef: any = null;
+  private cachedDefaultLaneWidgetSettings: any = null;
+  private cachedDefaultLaneWidgetsRef: any = null;
   private carLocations = new Map<number, number>();
   private fuelAudioTracker: FuelAudioTracker;
   private get laneFuelAudioStates(): Map<number, any> {
@@ -978,11 +1070,21 @@ export class DefaultRacedayComponent
   editingSettings = input<Settings | undefined>(undefined);
   activeCustomUi = input<CustomUI | null>(null);
   selectedWidgetId = input<string | null>(null);
+  selectedAnchor = input<string | null>(null);
   isCountdownPreviewActive = input<boolean>(false);
   gridSession = input<LaneGridSession | null>(null);
   widgetSelected = output<string | null>();
+  anchorSelected = output<{ widgetId: string; anchor: string | null }>();
   finishGrid = output<void>();
+  deleteGrid = output<string>();
   gridBoundsChange = output<LaneGridBounds>();
+
+  selectAnchor(widgetId: string, anchor: string | null): void {
+    if (this.selectedWidgetId() !== widgetId) {
+      this.widgetSelected.emit(widgetId);
+    }
+    this.anchorSelected.emit({ widgetId, anchor });
+  }
 
   get visualScale(): number {
     return this.isUIEditorMode() ? this.uiScale() : this.scale;
@@ -1006,6 +1108,21 @@ export class DefaultRacedayComponent
   isLayoutEditorMinimized = false;
   layoutEditorPosition = { x: 0, y: 0 };
   layout!: LayoutConfig;
+
+  public syncLayoutFromEditor(newLayout: LayoutConfig): void {
+    if (newLayout) {
+      this.invalidateGridCache();
+      this.layout = JSON.parse(JSON.stringify(newLayout));
+      if (this.layout.widgets) {
+        this.layout.widgets =
+          LaneGridReplicationHelper.cleanOrphanedGridWidgets(
+            this.layout.widgets,
+          );
+      }
+      this.cdr.markForCheck();
+    }
+  }
+
   draggedWidgetType: string | null = null;
   toolboxSearchTerm = "";
   toolboxGroupExpandedStates = new Map<string, boolean>();
@@ -1141,6 +1258,23 @@ export class DefaultRacedayComponent
           "layoutJson",
           settings.racedayLayout,
         );
+    if (
+      !this.isUIEditorMode() &&
+      LaneViewMigrationHelper.hasLegacyLaneView(resolvedLayout)
+    ) {
+      const migration = LaneViewMigrationHelper.convertLegacyLaneViewLayout({
+        layout: resolvedLayout,
+        columns: this.currentRacedayColumns,
+        columnLayouts: this.currentColumnLayouts,
+        columnWidths: this.currentColumnWidths,
+        columnAnchors: this.currentColumnAnchors,
+        totalLanes: this.track?.lanes?.length || 4,
+        isPractice: this.isPracticeLayout,
+      });
+      if (migration.migrated) {
+        return migration.layout;
+      }
+    }
     return resolvedLayout;
   }
   set currentRacedayLayout(layout: LayoutConfig | undefined) {
@@ -1447,8 +1581,10 @@ export class DefaultRacedayComponent
         }
       }
       if (this.currentRacedayLayout?.widgets) {
+        this.invalidateGridCache();
         this.layout = JSON.parse(JSON.stringify(this.currentRacedayLayout));
       } else {
+        this.invalidateGridCache();
         this.layout = this.getDefaultLayout();
       }
       this.updateScale();
@@ -1472,6 +1608,16 @@ export class DefaultRacedayComponent
       this.customWidgetService.getCustomWidgets().length === 0
     ) {
       this.customWidgetService.reloadCustomWidgets().catch(() => {});
+    }
+
+    if (this.customWidgetService?.customWidgets$) {
+      this.subscriptions.push(
+        this.customWidgetService.customWidgets$.subscribe(() => {
+          if (!this.isDestroyed) {
+            this.cdr.markForCheck();
+          }
+        }),
+      );
     }
 
     if (
@@ -1539,8 +1685,12 @@ export class DefaultRacedayComponent
     this.subscriptions.push(
       this.themeService.activeTheme$.subscribe(() => {
         this.updateRacedayLayout();
+        this.refreshCountdownLampUrls();
         this.preloadCountdownAudio();
         this.updateTabTitle();
+        if (!this.isDestroyed) {
+          this.cdr.markForCheck();
+        }
       }),
     );
 
@@ -1593,6 +1743,7 @@ export class DefaultRacedayComponent
     }
 
     this.loadColumns();
+    this.assets = this.dataService?.loadedAssets || [];
 
     // Clear caches to ensure fresh data for new race
     RaceConverter.clearCache();
@@ -1605,43 +1756,60 @@ export class DefaultRacedayComponent
   }
 
   private subscribeToAssets() {
-    this.subscriptions.push(
-      this.dataService.socketConnected$.subscribe((connected) => {
-        if (connected) {
-          this.dataService.listAssets().subscribe({
-            next: (assets) => {
-              this.assets = assets || [];
-              this.loadColumns();
-              this.preloadCountdownAudio();
-              if (!this.isDestroyed) {
-                this.cdr.markForCheck();
-              }
-            },
-            error: (err) => {
-              this.logger.error(
-                "DefaultRacedayComponent: Failed to fetch assets",
-                err,
-              );
-            },
-          });
+    if (this.dataService?.assets$) {
+      this.subscriptions.push(
+        this.dataService.assets$.subscribe((assets) => {
+          if (assets && assets.length > 0) {
+            this.assets = assets;
+            this.refreshCountdownLampUrls();
+            if (!this.isDestroyed) {
+              this.cdr.markForCheck();
+            }
+          }
+        }),
+      );
+    }
 
-          this.dataService.getDrivers().subscribe({
-            next: (drivers) => {
-              this.allDrivers = drivers || [];
-              if (!this.isDestroyed) {
-                this.cdr.markForCheck();
-              }
-            },
-            error: (err) => {
-              this.logger.error(
-                "DefaultRacedayComponent: Failed to fetch drivers",
-                err,
-              );
-            },
-          });
-        }
-      }),
-    );
+    if (this.dataService?.socketConnected$) {
+      this.subscriptions.push(
+        this.dataService.socketConnected$.subscribe((connected) => {
+          if (connected && this.dataService?.listAssets) {
+            this.dataService.listAssets().subscribe({
+              next: (assets) => {
+                this.assets = assets || [];
+                this.refreshCountdownLampUrls();
+                this.loadColumns();
+                this.preloadCountdownAudio();
+                if (!this.isDestroyed) {
+                  this.cdr.markForCheck();
+                }
+              },
+              error: (err) => {
+                this.logger.error(
+                  "DefaultRacedayComponent: Failed to fetch assets",
+                  err,
+                );
+              },
+            });
+
+            this.dataService.getDrivers().subscribe({
+              next: (drivers) => {
+                this.allDrivers = drivers || [];
+                if (!this.isDestroyed) {
+                  this.cdr.markForCheck();
+                }
+              },
+              error: (err) => {
+                this.logger.error(
+                  "DefaultRacedayComponent: Failed to fetch drivers",
+                  err,
+                );
+              },
+            });
+          }
+        }),
+      );
+    }
   }
 
   private subscribeToRaceData() {
@@ -1649,33 +1817,7 @@ export class DefaultRacedayComponent
       this.raceService.participants$.subscribe((participants) => {
         this.participants = participants || [];
         this.updateLeaderboardEntries();
-        if (this.heat && this.heat.heatDrivers) {
-          this.heat.heatDrivers.forEach((hd) => {
-            const d = hd.actualDriver || hd.driver;
-            const driverId = d?.entity_id || d?.name;
-            const match = this.participants.find(
-              (p) =>
-                p.driver?.entity_id === driverId || p.driver?.name === driverId,
-            );
-            if (match) {
-              if (match.rank) {
-                (hd as any).overallRank = match.rank;
-              }
-              if (match.fuelLevel != null) {
-                if (hd.participant) {
-                  hd.participant.fuelLevel = match.fuelLevel;
-                }
-                if (hd.laneIndex != null) {
-                  this.updateLaneFuel(
-                    hd.laneIndex,
-                    match.fuelLevel,
-                    !!hd.isRefueling,
-                  );
-                }
-              }
-            }
-          });
-        }
+        this.syncHeatDriversWithParticipants();
         if (!this.isDestroyed) {
           this.cdr.markForCheck();
         }
@@ -1720,6 +1862,9 @@ export class DefaultRacedayComponent
     this.subscriptions.push(
       this.raceService.currentHeat$.subscribe((heat) => {
         if (heat) {
+          if (this.heat?.objectId !== heat.objectId) {
+            LaneGridAnimationHelper.reset();
+          }
           this.heat = heat;
           if (
             !this.track ||
@@ -1736,6 +1881,7 @@ export class DefaultRacedayComponent
             this.dataService.updateRaceSubscription(true);
           }
           this.sortHeatDrivers();
+          this.syncHeatDriversWithParticipants();
           if (!this.isDestroyed) {
             this.cdr.markForCheck();
           }
@@ -1889,13 +2035,15 @@ export class DefaultRacedayComponent
 
         // Update countdown overlay if active
         if (this.showCountdownOverlay) {
-          if (this.countdownTotalLamps === 0 && this.autoStartRemaining > 0) {
+          const countdownVal =
+            this.autoStartRemaining > 0 ? this.autoStartRemaining : time;
+          if (this.countdownTotalLamps === 0 && countdownVal > 0) {
             this.countdownTotalLamps = Math.min(
               this.getCountdownMaxLamps(),
-              Math.ceil(this.autoStartRemaining),
+              Math.ceil(countdownVal),
             );
           }
-          this.updateCountdownLamps(this.autoStartRemaining);
+          this.updateCountdownLamps(countdownVal);
         }
 
         const timerOpts = this.getTimerFormatOptions();
@@ -1964,6 +2112,12 @@ export class DefaultRacedayComponent
                 : Array.isArray((driverData as any).laps)
                   ? (driverData as any).laps.length
                   : (driverData as any).lapCount || 0;
+            const lapTotalTime =
+              lap.totalTime != null && lap.totalTime > 0
+                ? lap.totalTime
+                : (lap as any).total_time != null && (lap as any).total_time > 0
+                  ? (lap as any).total_time
+                  : undefined;
             if (lap.type === LapType.FALSE_START) {
               if (
                 lap.adjustedLapCount !== undefined &&
@@ -2020,6 +2174,7 @@ export class DefaultRacedayComponent
                 lap.type ?? undefined,
                 segmentsCopy,
                 lap.countTowardsRecords !== false,
+                lapTotalTime,
               );
             }
             if (
@@ -2056,6 +2211,7 @@ export class DefaultRacedayComponent
                   lap.type ?? undefined,
                   segmentsCopy,
                   lap.countTowardsRecords !== false,
+                  lapTotalTime,
                 );
               }
             }
@@ -2098,6 +2254,7 @@ export class DefaultRacedayComponent
                       lap.type ?? undefined,
                       segmentsCopy,
                       lap.countTowardsRecords !== false,
+                      lapTotalTime,
                     );
                   }
                 }
@@ -2117,6 +2274,9 @@ export class DefaultRacedayComponent
               }
             }
             this.handleLapEvent(lap, driverData);
+            if (!this.isDestroyed) {
+              this.cdr.markForCheck();
+            }
           }
         }
       }),
@@ -2148,22 +2308,25 @@ export class DefaultRacedayComponent
     };
 
     if (lap.type === LapType.FALSE_START) {
-      const audio = driver.falseStartAudio || driver.penaltyAudio;
+      const audio = driver?.falseStartAudio || driver?.penaltyAudio;
       if (
         audio?.type &&
         audio.type !== "none" &&
         ((audio.type === "tts" && audio.text?.trim()) ||
           (audio.type !== "tts" && audio.url?.trim()))
       ) {
+        const playableUrl = audio.url
+          ? this.resolveAssetPlayableUrl(audio.url)
+          : undefined;
         this.audioService.playCallout(
           audio,
           "urgent",
           ttsContext,
-          undefined,
+          playableUrl,
           association,
         );
       }
-      this.handleLapHighlight(lap);
+      this.handleLapHighlight(lap, driverData);
       return;
     }
 
@@ -2171,13 +2334,30 @@ export class DefaultRacedayComponent
       if ((lap.lapTime ?? 0) > 0.25) {
         this.playThemedSound(THEME_SLOT_KEYS.AUDIO_MIN_LAP_TIME, ttsContext);
       }
-      this.handleLapHighlight(lap);
+      this.handleLapHighlight(lap, driverData);
       return;
     }
 
     if (lap.isDrift) {
-      this.playThemedSound(THEME_SLOT_KEYS.AUDIO_DRIFT_LAP, ttsContext);
-      this.handleLapHighlight(lap);
+      const audio = driver?.driftLapAudio;
+      if (
+        audio?.type &&
+        audio.type !== "none" &&
+        ((audio.type === "tts" && audio.text?.trim()) ||
+          (audio.type !== "tts" && audio.url?.trim()))
+      ) {
+        const playableUrl = audio.url
+          ? this.resolveAssetPlayableUrl(audio.url)
+          : undefined;
+        this.audioService.playCallout(
+          audio,
+          "urgent",
+          ttsContext,
+          playableUrl,
+          { ...association, eventType: "drift_lap" },
+        );
+      }
+      this.handleLapHighlight(lap, driverData);
       return;
     }
 
@@ -2234,7 +2414,7 @@ export class DefaultRacedayComponent
       );
     }
 
-    this.handleLapHighlight(lap);
+    this.handleLapHighlight(lap, driverData);
   }
 
   private handleLapAudio(
@@ -2274,11 +2454,14 @@ export class DefaultRacedayComponent
         ((audio.type === "tts" && audio.text?.trim()) ||
           (audio.type !== "tts" && audio.url?.trim()))
       ) {
+        const playableUrl = audio.url
+          ? this.resolveAssetPlayableUrl(audio.url)
+          : undefined;
         this.audioService.playCallout(
           audio,
           "urgent",
           ttsContext,
-          undefined,
+          playableUrl,
           association,
         );
       }
@@ -2293,7 +2476,24 @@ export class DefaultRacedayComponent
     }
 
     if (lap.isDrift) {
-      this.playThemedSound(THEME_SLOT_KEYS.AUDIO_DRIFT_LAP, ttsContext);
+      const audio = driver?.driftLapAudio;
+      if (
+        audio?.type &&
+        audio.type !== "none" &&
+        ((audio.type === "tts" && audio.text?.trim()) ||
+          (audio.type !== "tts" && audio.url?.trim()))
+      ) {
+        const playableUrl = audio.url
+          ? this.resolveAssetPlayableUrl(audio.url)
+          : undefined;
+        this.audioService.playCallout(
+          audio,
+          "urgent",
+          ttsContext,
+          playableUrl,
+          { ...association, eventType: "drift_lap" },
+        );
+      }
       return;
     }
 
@@ -2307,6 +2507,7 @@ export class DefaultRacedayComponent
         lap.isNewHeatLeader,
         ttsContext,
         association,
+        lap.isDrift,
       );
     }
   }
@@ -2448,7 +2649,9 @@ export class DefaultRacedayComponent
       if (config && config.type === "none") {
         return null;
       }
-      const playableUrl = config?.url ? this.getFullUrl(config.url) : undefined;
+      const playableUrl = config?.url
+        ? this.resolveAssetPlayableUrl(config.url)
+        : undefined;
       return {
         id: "halfway",
         config: config || { type: "preset" },
@@ -2484,17 +2687,25 @@ export class DefaultRacedayComponent
         (a) =>
           a.model?.entityId === config.url ||
           a.entity_id === config.url ||
-          a._id === config.url,
+          a._id === config.url ||
+          a.name === config.url,
       );
-      if (asset?.audioEntries && asset.audioEntries.length > 0) {
-        const filtered = asset.audioEntries.filter((e: any) => {
+      const entries = asset?.audioEntries || (asset as any)?.audio_entries;
+      if (entries && entries.length > 0) {
+        const filtered = entries.filter((e: any) => {
           const mode = e.triggerMode || e.trigger_mode || "remaining";
           return mode === triggerMode;
         });
         if (filtered.length > 0) {
           return filtered
             .map((e: any) =>
-              Math.round(e.timeSeconds != null ? e.timeSeconds : e.percentage),
+              Math.round(
+                e.timeSeconds != null
+                  ? e.timeSeconds
+                  : e.time_seconds != null
+                    ? e.time_seconds
+                    : e.percentage,
+              ),
             )
             .filter((t: number) => !isNaN(t) && t >= 0)
             .filter(
@@ -2622,16 +2833,26 @@ export class DefaultRacedayComponent
         (a) =>
           a.model?.entityId === config.url ||
           a.entity_id === config.url ||
-          a._id === config.url,
+          a._id === config.url ||
+          a.name === config.url,
       );
-      if (asset?.audioEntries && asset.audioEntries.length > 0) {
-        const filtered = asset.audioEntries.filter((e: any) => {
+      const entries = asset?.audioEntries || (asset as any)?.audio_entries;
+      if (entries && entries.length > 0) {
+        const filtered = entries.filter((e: any) => {
           const mode = e.triggerMode || e.trigger_mode || "remaining";
           return mode === triggerMode;
         });
         if (filtered.length > 0) {
           return filtered
-            .map((e: any) => Math.round(e.timeSeconds))
+            .map((e: any) =>
+              Math.round(
+                e.timeSeconds != null
+                  ? e.timeSeconds
+                  : e.time_seconds != null
+                    ? e.time_seconds
+                    : e.percentage,
+              ),
+            )
             .filter((t: number) => t > 0)
             .sort((a: number, b: number) =>
               triggerMode === "elapsed" ? a - b : b - a,
@@ -2707,16 +2928,26 @@ export class DefaultRacedayComponent
         (a) =>
           a.model?.entityId === config.url ||
           a.entity_id === config.url ||
-          a._id === config.url,
+          a._id === config.url ||
+          a.name === config.url,
       );
-      if (asset?.audioEntries && asset.audioEntries.length > 0) {
-        const filtered = asset.audioEntries.filter((e: any) => {
+      const entries = asset?.audioEntries || (asset as any)?.audio_entries;
+      if (entries && entries.length > 0) {
+        const filtered = entries.filter((e: any) => {
           const mode = e.triggerMode || e.trigger_mode || "remaining";
           return mode === triggerMode;
         });
         if (filtered.length > 0) {
           return filtered
-            .map((e: any) => Math.round(e.timeSeconds))
+            .map((e: any) =>
+              Math.round(
+                e.timeSeconds != null
+                  ? e.timeSeconds
+                  : e.time_seconds != null
+                    ? e.time_seconds
+                    : e.percentage,
+              ),
+            )
             .filter((t: number) => t > 0)
             .sort((a: number, b: number) =>
               triggerMode === "elapsed" ? a - b : b - a,
@@ -2784,9 +3015,13 @@ export class DefaultRacedayComponent
     }
   }
 
-  private handleLapHighlight(lap: any) {
+  private handleLapHighlight(lap: any, driverData?: DriverHeatData) {
+    const driverId = lap?.objectId || driverData?.objectId;
+    if (!driverId) return;
+
     const laneViewWidget = this.currentRacedayLayout?.widgets?.find(
-      (w: any) => w.widgetType === "lane-view",
+      (w: any) =>
+        w.widgetType === "lane-view" || w.widgetType === "lane-column",
     );
     const settings = this.settingsService.getSettings();
     const shouldHighlight =
@@ -2796,18 +3031,23 @@ export class DefaultRacedayComponent
           ? settings.highlightPracticeRowOnLap
           : settings.highlightRowOnLap;
     if (shouldHighlight) {
-      this.highlightedDrivers.add(lap.objectId!);
+      const existingTimer = this.lapHighlightTimers.get(driverId);
+      if (existingTimer) {
+        clearTimeout(existingTimer);
+        this.lapHighlightTimers.delete(driverId);
+      }
+      this.highlightedDrivers.add(driverId);
       if (!this.isDestroyed) {
         this.cdr.markForCheck();
       }
       const timer = setTimeout(() => {
-        this.lapHighlightTimers.delete(timer);
-        this.highlightedDrivers.delete(lap.objectId!);
+        this.lapHighlightTimers.delete(driverId);
+        this.highlightedDrivers.delete(driverId);
         if (!this.isDestroyed) {
           this.cdr.markForCheck();
         }
       }, 400);
-      this.lapHighlightTimers.add(timer);
+      this.lapHighlightTimers.set(driverId, timer);
     }
   }
 
@@ -2843,9 +3083,9 @@ export class DefaultRacedayComponent
         a.name === urlOrId,
     );
     if (asset?.url) {
-      return this.getFullUrl(asset.url);
+      return resolveAudioUrl(asset.url, this.dataService.serverUrl);
     }
-    return this.getFullUrl(urlOrId);
+    return resolveAudioUrl(urlOrId, this.dataService.serverUrl);
   }
 
   private updateLaneFuel(
@@ -3102,7 +3342,8 @@ export class DefaultRacedayComponent
     const entry = this.getLaneRecordEntry(hd);
     const isInset = anchor ? !anchor.startsWith("center-") : false;
     const laneViewWidget = this.currentRacedayLayout?.widgets?.find(
-      (w: any) => w.widgetType === "lane-view",
+      (w: any) =>
+        w.widgetType === "lane-view" || w.widgetType === "lane-column",
     );
     const colDecimals =
       laneViewWidget?.customSettings?.["columnDecimals"]?.["recordLapTime"] ??
@@ -3164,7 +3405,8 @@ export class DefaultRacedayComponent
     const entry = this.getBestRaceLapEntry(hd);
     const isInset = anchor ? !anchor.startsWith("center-") : false;
     const laneViewWidget = this.currentRacedayLayout?.widgets?.find(
-      (w: any) => w.widgetType === "lane-view",
+      (w: any) =>
+        w.widgetType === "lane-view" || w.widgetType === "lane-column",
     );
     const colDecimals =
       laneViewWidget?.customSettings?.["columnDecimals"]?.["bestRaceLapTime"] ??
@@ -3333,10 +3575,40 @@ export class DefaultRacedayComponent
     this.cameraQrCodeUrl =
       "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='80' height='80'><rect width='80' height='80' fill='white'/><rect x='10' y='10' width='20' height='20' fill='black'/><rect x='50' y='10' width='20' height='20' fill='black'/><rect x='10' y='50' width='20' height='20' fill='black'/><rect x='40' y='40' width='10' height='10' fill='black'/><circle cx='40' cy='40' r='8' fill='%230284c7'/></svg>";
 
-    // Populate mock lane QR codes for UI Editor
+    // Populate mock lane QR codes for UI Editor (support tracks/grids up to 16 lanes)
     this.laneQrCodeCache.clear();
-    for (let i = 0; i < (this.track?.lanes?.length || 8); i++) {
+    for (let i = 0; i < 16; i++) {
       this.laneQrCodeCache.set(i, this.qrCodeUrl);
+    }
+    this.driverViewQrCodeCache.clear();
+    if (this.heat?.heatDrivers) {
+      for (const hd of this.heat.heatDrivers) {
+        const entityId =
+          hd.actualDriver?.entity_id ||
+          hd.driver?.entity_id ||
+          hd.actualDriver?.name ||
+          hd.driver?.name ||
+          hd.participant?.team?.entity_id ||
+          hd.participant?.team?.name ||
+          hd.participant?.objectId ||
+          hd.objectId;
+        if (entityId) {
+          this.driverViewQrCodeCache.set(entityId, this.qrCodeUrl);
+        }
+      }
+    }
+    if (this.participants) {
+      for (const p of this.participants) {
+        const entityId =
+          p.driver?.entity_id ||
+          p.driver?.name ||
+          p.team?.entity_id ||
+          p.team?.name ||
+          p.objectId;
+        if (entityId) {
+          this.driverViewQrCodeCache.set(entityId, this.qrCodeUrl);
+        }
+      }
     }
 
     // Populate mock data for the 4 race records
@@ -3361,12 +3633,15 @@ export class DefaultRacedayComponent
     this.sortHeatDrivers();
     this.updateLeaderboardEntries();
     this.updateGroupLeaderboardEntries();
+    this.syncHeatDriversWithParticipants();
     this.cdr.markForCheck();
   }
 
   ngOnDestroy() {
+    LaneGridAnimationHelper.reset();
     this.lapHighlightTimers.forEach((timer) => clearTimeout(timer));
     this.lapHighlightTimers.clear();
+    this.highlightedDrivers.clear();
     this.audioService.reset();
     if (
       typeof window !== "undefined" &&
@@ -3518,6 +3793,7 @@ export class DefaultRacedayComponent
     this.hasRacedInCurrentHeat = false;
     this.resetFuelAudioTracking();
     this.audioService.reset();
+    LaneGridAnimationHelper.reset();
     this.dataService.restartHeat().subscribe(
       (success) => {
         if (success) {
@@ -3612,12 +3888,15 @@ export class DefaultRacedayComponent
     );
 
     const laneViewWidget = this.currentRacedayLayout?.widgets?.find(
-      (w: any) => w.widgetType === "lane-view",
+      (w: any) =>
+        w.widgetType === "lane-view" || w.widgetType === "lane-column",
     );
     const sortByStandings =
       laneViewWidget?.customSettings?.["sortByStandings"] !== undefined
         ? laneViewWidget.customSettings["sortByStandings"]
-        : this.settingsService.getSettings().sortByStandings;
+        : laneViewWidget?.customSettings?.["bindingMode"] !== undefined
+          ? laneViewWidget.customSettings["bindingMode"] === "position"
+          : this.settingsService.getSettings().sortByStandings;
 
     if (sortByStandings && !this.isDragging) {
       // Sort a separate copy to determine visual positions using the server-provided standings list
@@ -3858,7 +4137,7 @@ export class DefaultRacedayComponent
         !this.themeService?.getTransientThemeId?.() &&
         typeof this.themeService?.activateForRace === "function"
       ) {
-        this.themeService.activateForRace(race.entity_id);
+        this.themeService.activateForRace(race.entity_id, race.theme_id);
       }
       this.latestPredictionRecord = null;
       this.laneQrCodeCache.clear();
@@ -4014,6 +4293,404 @@ export class DefaultRacedayComponent
     return this.layout?.widgets || [];
   }
 
+  invalidateGridCache(): void {
+    this.cachedGridsWidgetsRef = null;
+    this.cachedNonGridWidgetsRef = null;
+    this.cachedNonGridActiveGridId = undefined;
+    this.cachedGridsActiveGridId = undefined;
+    this.cachedGridsDataCounts = "";
+    this.cachedGridsParticipantsCount = -1;
+    this.cachedGridsHeatDriversCount = -1;
+    this.cachedGridIdsWidgetsRef = null;
+    this.cachedGridIds = [];
+    this.cachedOverallGridIds = undefined;
+    this.cachedOverallGridWidgetsRef = null;
+    this.cachedDefaultLaneWidgetSettings = null;
+    this.cachedDefaultLaneWidgetsRef = null;
+    this.cachedSelectedWidgetWidgetsRef = null;
+    this.cachedSelectedWidget = null;
+    this.cachedWidgetIdSetWidgetsRef = null;
+    this.cachedWidgetIdSet.clear();
+    this.cachedGridBoundsWidgetsRef = null;
+    this.cachedGridBoundsSelWidget = null;
+    this.cachedGridBounds = null;
+  }
+
+  isGridOverall(gridId?: string): boolean {
+    if (!gridId) return false;
+    if (this.gridSession()?.gridType === "overall") return true;
+
+    const widgets = this.getWidgets();
+    if (
+      widgets !== this.cachedOverallGridWidgetsRef ||
+      !this.cachedOverallGridIds
+    ) {
+      this.cachedOverallGridWidgetsRef = widgets;
+      const set = new Set<string>();
+      if (widgets) {
+        for (let i = 0; i < widgets.length; i++) {
+          const s = widgets[i]?.customSettings;
+          if (
+            s?.["gridId"] &&
+            (s["gridType"] === "overall" ||
+              s["bindingMode"] === "overallPosition" ||
+              RacedayLayoutUtils.isOverallColumnKey(s["columnKey"]))
+          ) {
+            set.add(s["gridId"]);
+          }
+        }
+      }
+      this.cachedOverallGridIds = set;
+    }
+    return this.cachedOverallGridIds.has(gridId);
+  }
+
+  getDefaultLaneWidgetSettings(): any {
+    const widgets = this.currentRacedayLayout?.widgets;
+    if (widgets !== this.cachedDefaultLaneWidgetsRef) {
+      this.cachedDefaultLaneWidgetsRef = widgets;
+      const found = widgets?.find(
+        (w: any) =>
+          w.widgetType === "lane-view" || w.widgetType === "lane-column",
+      );
+      this.cachedDefaultLaneWidgetSettings = found?.customSettings || null;
+    }
+    return this.cachedDefaultLaneWidgetSettings;
+  }
+
+  getNonGridWidgets(): any[] {
+    const activeGridId = this.gridSession()?.gridId;
+    const session = Boolean(activeGridId);
+    const widgets = this.getWidgets();
+    if (
+      widgets === this.cachedNonGridWidgetsRef &&
+      session === this.cachedNonGridSession &&
+      activeGridId === this.cachedNonGridActiveGridId
+    ) {
+      return this.cachedNonGridWidgets;
+    }
+    this.cachedNonGridWidgetsRef = widgets;
+    this.cachedNonGridSession = session;
+    this.cachedNonGridActiveGridId = activeGridId;
+    if (activeGridId) {
+      this.cachedNonGridWidgets = widgets.filter(
+        (w: any) =>
+          !w.customSettings?.["gridId"] ||
+          w.customSettings?.["gridId"] === activeGridId,
+      );
+    } else {
+      this.cachedNonGridWidgets = widgets.filter(
+        (w: any) => !w.customSettings?.["gridId"],
+      );
+    }
+    return this.cachedNonGridWidgets;
+  }
+
+  getGrids(): RacedayGridDescriptor[] {
+    const activeGridId = this.gridSession()?.gridId;
+    const session = Boolean(activeGridId);
+    const widgets = this.getWidgets();
+    if (!widgets || widgets.length === 0) {
+      this.cachedGrids = [];
+      this.cachedGridsWidgetsRef = null;
+      this.cachedGridsDataCounts = "";
+      this.cachedGridsParticipantsCount = -1;
+      this.cachedGridsHeatDriversCount = -1;
+      this.cachedGridsActiveGridId = undefined;
+      return [];
+    }
+
+    const participantsCount = this.participants?.length || 0;
+    const heatDriversCount =
+      this.sortedHeatDrivers?.length || this.heat?.heatDrivers?.length || 0;
+
+    if (
+      widgets === this.cachedGridsWidgetsRef &&
+      session === this.cachedGridsSession &&
+      activeGridId === this.cachedGridsActiveGridId &&
+      participantsCount === this.cachedGridsParticipantsCount &&
+      heatDriversCount === this.cachedGridsHeatDriversCount
+    ) {
+      return this.cachedGrids;
+    }
+
+    if (widgets !== this.cachedGridIdsWidgetsRef) {
+      this.cachedGridIdsWidgetsRef = widgets;
+      const seen = new Set<string>();
+      const ids: string[] = [];
+      for (let i = 0; i < widgets.length; i++) {
+        const id = widgets[i]?.customSettings?.["gridId"];
+        if (id && !seen.has(id)) {
+          seen.add(id);
+          ids.push(id);
+        }
+      }
+      this.cachedGridIds = ids;
+    }
+    const gridIds = this.cachedGridIds;
+
+    const dataCountsKey = gridIds
+      .map(
+        (id) =>
+          `${id}:${LaneGridReplicationHelper.getGridDataCount(widgets, id, this)}`,
+      )
+      .join("|");
+
+    if (
+      widgets === this.cachedGridsWidgetsRef &&
+      session === this.cachedGridsSession &&
+      activeGridId === this.cachedGridsActiveGridId &&
+      dataCountsKey === this.cachedGridsDataCounts
+    ) {
+      this.cachedGridsParticipantsCount = participantsCount;
+      this.cachedGridsHeatDriversCount = heatDriversCount;
+      return this.cachedGrids;
+    }
+
+    const descriptors: RacedayGridDescriptor[] = [];
+    const targetGridIds = activeGridId
+      ? gridIds.filter((id) => id !== activeGridId)
+      : gridIds;
+    for (const gridId of targetGridIds) {
+      const desc = this.buildGridDescriptor(gridId, widgets);
+      if (desc) descriptors.push(desc);
+    }
+
+    this.cachedGrids = descriptors;
+    this.cachedGridsWidgetsRef = widgets;
+    this.cachedGridsSession = session;
+    this.cachedGridsActiveGridId = activeGridId;
+    this.cachedGridsDataCounts = dataCountsKey;
+    this.cachedGridsParticipantsCount = participantsCount;
+    this.cachedGridsHeatDriversCount = heatDriversCount;
+
+    return this.cachedGrids;
+  }
+
+  private buildGridDescriptor(
+    gridId: string,
+    widgets: AbsoluteWidgetNode[],
+  ): RacedayGridDescriptor | null {
+    const bounds = LaneGridReplicationHelper.calculateGridBounds(
+      widgets,
+      gridId,
+    );
+    if (!bounds) return null;
+
+    const gridWidgets = widgets.filter(
+      (w: any) => w.customSettings?.["gridId"] === gridId,
+    );
+    if (gridWidgets.length === 0) return null;
+
+    const first = gridWidgets[0];
+    const gridTotalLanes =
+      Number(first.customSettings?.["gridTotalLanes"]) || 4;
+    const direction = first.customSettings?.["gridDirection"] || "vertical";
+    const headerPlacement =
+      first.customSettings?.["headerPlacement"] || "individual";
+    const headerHeight = Number(first.customSettings?.["headerHeight"]) || 36;
+    const labelWidget =
+      gridWidgets.find(
+        (w: any) =>
+          w.customSettings?.["gridLabelPosition"] &&
+          w.customSettings?.["gridLabelPosition"] !== "none",
+      ) ||
+      gridWidgets.find(
+        (w: any) =>
+          w.customSettings?.["gridLabelText"] &&
+          String(w.customSettings["gridLabelText"]).trim() !== "",
+      ) ||
+      gridWidgets.find((w: any) => !w.customSettings?.["isHeaderWidget"]) ||
+      first;
+
+    const labelPosition: GridLabelPosition =
+      (labelWidget?.customSettings?.["gridLabelPosition"] as any) ||
+      (this.getGridLabelPosition(gridId) as any) ||
+      "none";
+    const labelText =
+      labelWidget?.customSettings?.["gridLabelText"] ??
+      this.getGridCustomTitle(gridId) ??
+      "";
+    const labelSize =
+      Number(labelWidget?.customSettings?.["gridLabelSize"]) || 40;
+
+    const sessionLike: LaneGridSession = {
+      gridId,
+      bounds,
+      totalLanes: gridTotalLanes,
+      direction,
+      sourceLaneIndex: 0,
+      bindingMode: first.customSettings?.["bindingMode"] || "lane",
+      gridType: gridWidgets.some(
+        (w: any) =>
+          w.customSettings?.["gridType"] === "overall" ||
+          w.customSettings?.["bindingMode"] === "overallPosition" ||
+          RacedayLayoutUtils.isOverallColumnKey(
+            w.customSettings?.["columnKey"],
+          ),
+      )
+        ? "overall"
+        : first.customSettings?.["gridType"] || "heat",
+      headerPlacement,
+      headerHeight,
+      gridLabelPosition: labelPosition,
+      gridLabelText: labelText,
+      gridLabelSize: labelSize,
+      gridLabelShowBorder:
+        labelWidget?.customSettings?.["gridLabelShowBorder"] !== false,
+      gridLabelBorderColor:
+        labelWidget?.customSettings?.["gridLabelBorderColor"] || "",
+      gridLabelBorderWidth:
+        labelWidget?.customSettings?.["gridLabelBorderWidth"] != null
+          ? Number(labelWidget.customSettings["gridLabelBorderWidth"])
+          : 1,
+      gridLabelBorderRadius:
+        labelWidget?.customSettings?.["gridLabelBorderRadius"] != null
+          ? Number(labelWidget.customSettings["gridLabelBorderRadius"])
+          : 4,
+    };
+
+    const labelBounds = LaneGridLabelHelper.computeGridLabelBounds(sessionLike);
+    const dataBounds = LaneGridLabelHelper.computeGridDataBounds(sessionLike);
+
+    const isAnyUnderLabel = gridWidgets.some((w: any) => {
+      if (w.customSettings?.["isHeaderWidget"]) return false;
+      return (
+        (labelPosition === "top" && w.y < dataBounds.y) ||
+        (labelPosition === "left" && w.x < dataBounds.x)
+      );
+    });
+    const effectiveWidgets = isAnyUnderLabel
+      ? LaneGridReplicationHelper.syncAllMasterWidgetsToLanes(
+          sessionLike,
+          widgets,
+        )
+      : widgets;
+    if (isAnyUnderLabel && this.layout?.widgets === widgets) {
+      this.layout.widgets = effectiveWidgets;
+    }
+
+    const dataCount = LaneGridReplicationHelper.getGridDataCount(
+      effectiveWidgets,
+      gridId,
+      this,
+    );
+    const allGridWidgets =
+      LaneGridReplicationHelper.generateScrollableGridWidgets(
+        effectiveWidgets,
+        gridId,
+        dataCount,
+      );
+
+    const isVertical = direction === "vertical";
+    const availHeight =
+      headerPlacement === "top"
+        ? Math.max(0, dataBounds.height - headerHeight)
+        : dataBounds.height;
+    const pitch = isVertical
+      ? availHeight / gridTotalLanes
+      : dataBounds.width / gridTotalLanes;
+
+    const hasScroll = dataCount > gridTotalLanes;
+    const contentWidth = isVertical
+      ? dataBounds.width
+      : Math.round(dataCount * pitch);
+    const contentHeight = isVertical
+      ? Math.round(dataCount * pitch)
+      : dataBounds.height;
+
+    let headerWidgets: AbsoluteWidgetNode[] = [];
+    let cellWidgets: AbsoluteWidgetNode[] = [];
+
+    const normalizedGridWidgets =
+      sessionLike.gridType === "overall"
+        ? allGridWidgets.map((w) =>
+            w.customSettings?.["gridType"] === "overall"
+              ? w
+              : {
+                  ...w,
+                  customSettings: {
+                    ...(w.customSettings || {}),
+                    gridType: "overall",
+                  },
+                },
+          )
+        : allGridWidgets;
+
+    if (headerPlacement === "top" && isVertical) {
+      headerWidgets = normalizedGridWidgets.filter(
+        (w) => w.customSettings?.["isHeaderWidget"],
+      );
+      cellWidgets = normalizedGridWidgets.filter(
+        (w) => !w.customSettings?.["isHeaderWidget"],
+      );
+    } else {
+      cellWidgets = normalizedGridWidgets;
+    }
+
+    const zIndex = Math.max(1, ...gridWidgets.map((w: any) => w.zIndex || 10));
+
+    return {
+      gridId,
+      gridType: sessionLike.gridType,
+      bounds,
+      direction,
+      headerPlacement,
+      headerHeight,
+      gridTotalLanes,
+      dataCount,
+      hasScroll,
+      zIndex,
+      contentWidth,
+      contentHeight,
+      headerWidgets,
+      cellWidgets,
+      contentOffset: {
+        x: dataBounds.x,
+        y:
+          headerPlacement === "top" && isVertical
+            ? dataBounds.y + headerHeight
+            : dataBounds.y,
+      },
+      headerOffset: {
+        x: dataBounds.x,
+        y: dataBounds.y,
+      },
+      labelPosition,
+      labelText,
+      labelSize,
+      labelFontFamily: labelWidget?.customSettings?.["gridLabelFontFamily"],
+      labelFontSize:
+        Number(labelWidget?.customSettings?.["gridLabelFontSize"]) || 18,
+      labelTextColor:
+        labelWidget?.customSettings?.["gridLabelTextColor"] || "#ffffff",
+      labelBackgroundColor:
+        labelWidget?.customSettings?.["gridLabelBackgroundColor"] ||
+        "rgba(15, 23, 42, 0.85)",
+      labelFontBold:
+        labelWidget?.customSettings?.["gridLabelFontBold"] !== false,
+      labelFontItalic: Boolean(
+        labelWidget?.customSettings?.["gridLabelFontItalic"],
+      ),
+      labelAlignment:
+        labelWidget?.customSettings?.["gridLabelAlignment"] || "center",
+      labelShowBorder:
+        labelWidget?.customSettings?.["gridLabelShowBorder"] !== false,
+      labelBorderColor:
+        labelWidget?.customSettings?.["gridLabelBorderColor"] || "",
+      labelBorderWidth:
+        labelWidget?.customSettings?.["gridLabelBorderWidth"] != null
+          ? Number(labelWidget.customSettings["gridLabelBorderWidth"])
+          : 1,
+      labelBorderRadius:
+        labelWidget?.customSettings?.["gridLabelBorderRadius"] != null
+          ? Number(labelWidget.customSettings["gridLabelBorderRadius"])
+          : 4,
+      labelBounds,
+      dataBounds,
+    };
+  }
+
   getTableBodyHeight(): number {
     return RacedayLayoutUtils.getTableBodyHeight(this.layout);
   }
@@ -4061,6 +4738,44 @@ export class DefaultRacedayComponent
     return RacedayLayoutUtils.getAnchorFontSize(anchor);
   }
   getDriverOverallRanking(hd: DriverHeatData): number | undefined {
+    if (!hd) return undefined;
+    const d = hd.actualDriver || hd.driver;
+    const driverId = d?.entity_id || d?.name;
+    const teamId = hd.participant?.team?.entity_id;
+
+    const entry =
+      (driverId
+        ? this.leaderboardEntries?.find((e) => e.entityId === driverId)
+        : undefined) ||
+      (teamId
+        ? this.leaderboardEntries?.find((e) => e.entityId === teamId)
+        : undefined);
+    if (entry && entry.rank > 0) return entry.rank;
+
+    const match =
+      this.participants?.find((p) => {
+        if (
+          hd.participant?.objectId &&
+          p.objectId === hd.participant.objectId
+        ) {
+          return true;
+        }
+        if (hd.objectId && p.objectId === hd.objectId) {
+          return true;
+        }
+        if (
+          driverId &&
+          (p.driver?.entity_id === driverId || p.driver?.name === driverId)
+        ) {
+          return true;
+        }
+        return false;
+      }) ||
+      (teamId
+        ? this.participants?.find((p) => p.team?.entity_id === teamId)
+        : undefined);
+    if (match?.rank && match.rank > 0) return match.rank;
+
     return (
       (hd as any).overallRank ??
       hd.participant?.rank ??
@@ -4069,27 +4784,45 @@ export class DefaultRacedayComponent
   }
 
   getDriverGroupRanking(hd: DriverHeatData): number | undefined {
-    let entityId: string | undefined;
+    if (!hd) return undefined;
+    const d = hd.actualDriver || hd.driver;
+    const driverId = d?.entity_id || d?.name;
+    const teamId = hd.participant?.team?.entity_id;
 
-    if (hd.participant?.team) {
-      entityId = hd.participant.team.entity_id || hd.participant.team.name;
-    } else {
-      const d = hd.actualDriver || hd.driver;
-      entityId = d?.entity_id || d?.name;
-    }
-
-    const entry = this.groupLeaderboardEntries?.find(
-      (e) => e.entityId === entityId,
-    );
+    const entry =
+      (driverId
+        ? this.groupLeaderboardEntries?.find((e) => e.entityId === driverId)
+        : undefined) ||
+      (teamId
+        ? this.groupLeaderboardEntries?.find((e) => e.entityId === teamId)
+        : undefined);
     if (entry && entry.rank > 0) return entry.rank;
 
-    const match = this.groupParticipants?.find((p) => {
-      if (hd.participant?.team) {
-        return p.team?.entity_id === entityId || p.team?.name === entityId;
-      }
-      return p.driver?.entity_id === entityId || p.driver?.name === entityId;
-    });
-    return match?.rank && match.rank > 0 ? match.rank : undefined;
+    const match =
+      this.groupParticipants?.find((p) => {
+        if (
+          hd.participant?.objectId &&
+          p.objectId === hd.participant.objectId
+        ) {
+          return true;
+        }
+        if (hd.objectId && p.objectId === hd.objectId) {
+          return true;
+        }
+        if (
+          driverId &&
+          (p.driver?.entity_id === driverId || p.driver?.name === driverId)
+        ) {
+          return true;
+        }
+        return false;
+      }) ||
+      (teamId
+        ? this.groupParticipants?.find((p) => p.team?.entity_id === teamId)
+        : undefined);
+    if (match?.groupRank && match.groupRank > 0) return match.groupRank;
+    if (match?.rank && match.rank > 0) return match.rank;
+    return (hd as any).groupRank ?? (hd.participant as any)?.groupRank;
   }
 
   protected loadPredictionsForCurrentRace() {
@@ -4322,6 +5055,13 @@ export class DefaultRacedayComponent
   getLaneQrCodeUrl(laneIndex: number): string {
     const cached = this.laneQrCodeCache.get(laneIndex);
     if (cached) return cached;
+    const isEditor =
+      typeof this.isUIEditorMode === "function"
+        ? this.isUIEditorMode()
+        : Boolean(this.isUIEditorMode);
+    if (isEditor) {
+      return this.qrCodeUrl || "";
+    }
     if (!this.serverUrlBase || this.generatingLaneQrCodes.has(laneIndex)) {
       return "";
     }
@@ -4343,7 +5083,18 @@ export class DefaultRacedayComponent
     return "";
   }
 
-  getDriverViewQrCodeUrl(hd: DriverHeatData): string {
+  getDriverViewQrCodeUrl(hd: DriverHeatData | number): string {
+    const isEditor =
+      typeof this.isUIEditorMode === "function"
+        ? this.isUIEditorMode()
+        : Boolean(this.isUIEditorMode);
+    if (isEditor) {
+      return this.qrCodeUrl || "";
+    }
+    if (typeof hd === "number") {
+      return this.getLaneQrCodeUrl(hd);
+    }
+    if (!hd) return "";
     const entityId =
       hd.actualDriver?.entity_id ||
       hd.driver?.entity_id ||
@@ -4380,12 +5131,12 @@ export class DefaultRacedayComponent
 
   formatColumnValue(
     heatDriver: DriverHeatData,
-    column: ColumnDefinition,
+    column?: ColumnDefinition,
     propertyName?: string,
     anchor?: string,
   ): string {
     const laneViewWidget = this.currentRacedayLayout?.widgets?.find(
-      (w) => w.widgetType === "lane-view",
+      (w) => w.widgetType === "lane-view" || w.widgetType === "lane-column",
     );
     const ctx: FormatContext = {
       translate: (key) => this.translationService.translate(key),
@@ -4404,6 +5155,9 @@ export class DefaultRacedayComponent
       isDriverFinished: (hd, scoring) => this.isDriverFinished(hd, scoring),
       areAllDriversFinished: () => this.areAllDriversFinished(),
       isRaceOver: () => this.isRaceOver(),
+      getRaceState: () => this.raceState,
+      isWarmup: () => this.isWarmup,
+      isCooldown: () => this.isCooldown,
       getLaneRecordEntry: (laneIndex) => this.getLaneRecordEntry(laneIndex),
       getBestRaceLapEntry: (laneIndex) => this.getBestRaceLapEntry(laneIndex),
       formatDate: (d: any) => this.dateTimeFormatService.formatDate(d, "short"),
@@ -4427,7 +5181,7 @@ export class DefaultRacedayComponent
     const n = laps.length;
     const result: LapDisplayInfo[] = [];
     const laneViewWidget = this.currentRacedayLayout?.widgets?.find(
-      (w) => w.widgetType === "lane-view",
+      (w) => w.widgetType === "lane-view" || w.widgetType === "lane-column",
     );
     const ctx: FormatContext = {
       translate: (key) => this.translationService.translate(key),
@@ -4444,6 +5198,9 @@ export class DefaultRacedayComponent
       isDriverFinished: (hd, scoring) => this.isDriverFinished(hd, scoring),
       areAllDriversFinished: () => this.areAllDriversFinished(),
       isRaceOver: () => this.isRaceOver(),
+      getRaceState: () => this.raceState,
+      isWarmup: () => this.isWarmup,
+      isCooldown: () => this.isCooldown,
       formatDate: (d: any) => this.dateTimeFormatService.formatDate(d, "short"),
     };
 
@@ -4624,8 +5381,8 @@ export class DefaultRacedayComponent
 
     let { x, y } = pos;
     const scale = 1; // Always 1 in normal mode
-    const toolboxWidth = 260; // Base width from CSS
-    const toolboxHeight = 400; // Approximate max height
+    const toolboxWidth = this.isLayoutEditorMinimized ? 160 : 260; // Base width from CSS
+    const toolboxHeight = this.isLayoutEditorMinimized ? 40 : 400; // Approximate max height
 
     // Calculate max X/Y in the local coordinate space of the scaled wrapper
     const maxX = Math.max(
@@ -4709,14 +5466,18 @@ export class DefaultRacedayComponent
     this.cdr.markForCheck();
   }
 
+  navigateToUiEditor() {
+    const returnUrl = this.router.url.split("?")[0];
+    this.router.navigate(["/ui-editor"], {
+      queryParams: { returnUrl },
+    });
+  }
+
   onOptionsSelect(action: string) {
     this.logger.debug("Options menu action:", action);
     this.isOptionsMenuOpen = false;
     if (action === "CUSTOMIZE_UI") {
-      const returnUrl = this.router.url.split("?")[0];
-      this.router.navigate(["/ui-editor"], {
-        queryParams: { returnUrl },
-      });
+      this.navigateToUiEditor();
     } else if (action === "CUSTOMIZE_LAYOUT") {
       this.toggleLayoutCustomize();
     }
@@ -5193,7 +5954,9 @@ export class DefaultRacedayComponent
     const isEditing = this.isUIEditorMode() || this.isLayoutCustomizing;
     if (!isEditing) return false;
     return (
-      !this.draggedWidgetType || this.draggedWidgetType.startsWith("lane-col:")
+      !this.draggedWidgetType ||
+      this.draggedWidgetType.startsWith("lane-col:") ||
+      this.draggedWidgetType.startsWith("custom:")
     );
   }
 
@@ -5230,7 +5993,10 @@ export class DefaultRacedayComponent
 
     let droppedKey: string | undefined;
 
-    if (event.dataTransfer) {
+    if (
+      event.dataTransfer &&
+      typeof event.dataTransfer.getData === "function"
+    ) {
       try {
         const dataStr = event.dataTransfer.getData("application/json");
         if (dataStr) {
@@ -5255,8 +6021,12 @@ export class DefaultRacedayComponent
       }
     }
 
-    if (!droppedKey && this.draggedWidgetType?.startsWith("lane-col:")) {
-      droppedKey = this.draggedWidgetType.substring("lane-col:".length);
+    if (!droppedKey && this.draggedWidgetType) {
+      if (this.draggedWidgetType.startsWith("lane-col:")) {
+        droppedKey = this.draggedWidgetType.substring("lane-col:".length);
+      } else if (this.draggedWidgetType.startsWith("custom:")) {
+        droppedKey = this.draggedWidgetType;
+      }
     }
 
     if (this.draggedWidgetType) {
@@ -5330,10 +6100,7 @@ export class DefaultRacedayComponent
     } else if (action === "EXPORT_PDF") {
       this.exportToPdf();
     } else if (action === "CUSTOMIZE_UI") {
-      const returnUrl = this.router.url.split("?")[0];
-      this.router.navigate(["/ui-editor"], {
-        queryParams: { returnUrl },
-      });
+      this.navigateToUiEditor();
     } else if (action === "SAVE") {
       this.saveRace();
     } else if (action === "RACE_HISTORY") {
@@ -6111,6 +6878,10 @@ export class DefaultRacedayComponent
       return url;
     }
 
+    if (url.startsWith("assets/images/") || url.startsWith("/assets/images/")) {
+      return url.startsWith("/") ? url.slice(1) : url;
+    }
+
     const serverUrl = this.dataService.serverUrl;
     if (!serverUrl || serverUrl.includes("undefined")) return url;
 
@@ -6500,9 +7271,21 @@ export class DefaultRacedayComponent
     anchor?: string,
     widgetSettings?: any,
   ): string {
-    const laneViewWidget = this.currentRacedayLayout?.widgets?.find(
-      (w: any) => w.widgetType === "lane-view",
-    );
+    let laneViewSettings =
+      widgetSettings || this.getDefaultLaneWidgetSettings();
+    if (
+      laneViewSettings?.gridType !== "overall" &&
+      (widgetSettings?.gridType === "overall" ||
+        widgetSettings?.bindingMode === "overallPosition" ||
+        laneViewSettings?.bindingMode === "overallPosition" ||
+        RacedayLayoutUtils.isOverallColumnKey(propertyName) ||
+        (widgetSettings?.gridId && this.isGridOverall(widgetSettings.gridId)))
+    ) {
+      laneViewSettings = {
+        ...(laneViewSettings || {}),
+        gridType: "overall",
+      };
+    }
     const ctx: FormatContext = {
       translate: (key) => this.translationService.translate(key),
       getRace: () => this.raceService.getRace(),
@@ -6512,7 +7295,7 @@ export class DefaultRacedayComponent
       getFlagUrl: (flag) => this.getFlagUrl(flag),
       getFullUrl: (url) => this.getFullUrl(url),
       getImageSetUrl: (hd, prop) => this.getImageUrl(prop, hd),
-      laneViewWidgetSettings: widgetSettings || laneViewWidget?.customSettings,
+      laneViewWidgetSettings: laneViewSettings,
       getDriverOverallRanking: (hd) => this.getDriverOverallRanking(hd),
       getDriverGroupRanking: (hd) => this.getDriverGroupRanking(hd),
       getLaneQrCodeUrl: (laneIndex) => this.getLaneQrCodeUrl(laneIndex),
@@ -6520,6 +7303,9 @@ export class DefaultRacedayComponent
       isDriverFinished: (hd, scoring) => this.isDriverFinished(hd, scoring),
       areAllDriversFinished: () => this.areAllDriversFinished(),
       isRaceOver: () => this.isRaceOver(),
+      getRaceState: () => this.raceState,
+      isWarmup: () => this.isWarmup,
+      isCooldown: () => this.isCooldown,
       getLaneRecordEntry: (laneIndex) => this.getLaneRecordEntry(laneIndex),
       getBestRaceLapEntry: (laneIndex) => this.getBestRaceLapEntry(laneIndex),
       formatDate: (d: any) => this.dateTimeFormatService.formatDate(d, "short"),
@@ -6619,7 +7405,9 @@ export class DefaultRacedayComponent
     }
     if (
       col.propertyName !== "lapCount" &&
-      col.propertyName !== "physicalLapCount"
+      col.propertyName !== "physicalLapCount" &&
+      col.propertyName !== "totalTime" &&
+      col.propertyName !== "overallTotalTime"
     ) {
       return false;
     }
@@ -6992,11 +7780,12 @@ export class DefaultRacedayComponent
       (a) =>
         a.model?.entityId === assetId ||
         a.entity_id === assetId ||
-        a._id === assetId,
+        a._id === assetId ||
+        a.name === assetId,
     );
     if (!asset || asset.type !== "audio_set") return null;
 
-    const entries = asset.audioEntries || asset.audio_entries;
+    const entries = asset.audioEntries || (asset as any)?.audio_entries;
     const entry = entries?.find((e: any) => {
       const val =
         e.timeSeconds != null
@@ -7016,7 +7805,9 @@ export class DefaultRacedayComponent
     const entryType = entry.type || "preset";
     if (entryType === "none") return null;
 
-    const playableUrl = entry.url ? this.getFullUrl(entry.url) : undefined;
+    const playableUrl = entry.url
+      ? this.resolveAssetPlayableUrl(entry.url)
+      : undefined;
     return {
       config: {
         type: entryType,
@@ -7124,12 +7915,22 @@ export class DefaultRacedayComponent
     }
     if (
       col.propertyName === "lapCount" ||
-      col.propertyName === "physicalLapCount"
+      col.propertyName === "physicalLapCount" ||
+      col.propertyName === "totalTime" ||
+      col.propertyName === "overallTotalTime"
     ) {
-      if (event.shiftKey) {
+      if (
+        (col.propertyName === "lapCount" ||
+          col.propertyName === "physicalLapCount") &&
+        event.shiftKey
+      ) {
         event.preventDefault();
         this.updateUserLaps(hd, this.LAP_ADJUSTMENT_AMOUNT);
-      } else if (event.altKey) {
+      } else if (
+        (col.propertyName === "lapCount" ||
+          col.propertyName === "physicalLapCount") &&
+        event.altKey
+      ) {
         event.preventDefault();
         this.updateUserLaps(hd, -this.LAP_ADJUSTMENT_AMOUNT);
       } else {
@@ -7154,6 +7955,9 @@ export class DefaultRacedayComponent
             if (response && response.adjustedLapCount !== undefined) {
               hd.adjustedLapCount = response.adjustedLapCount;
               hd.userLaps = event;
+              if (response.totalTime !== undefined) {
+                hd.totalTime = response.totalTime;
+              }
               this.cdr.markForCheck();
             }
           },
@@ -7174,6 +7978,9 @@ export class DefaultRacedayComponent
               const hd = targetHeat.heatDrivers[u.laneIndex];
               if (hd) {
                 hd.userLaps = u.userLaps;
+                if (u.userTime !== undefined) {
+                  hd.userTime = u.userTime;
+                }
                 this.cdr.markForCheck();
               }
             }
@@ -7186,10 +7993,39 @@ export class DefaultRacedayComponent
           );
         },
       );
+    } else if (
+      event &&
+      typeof event === "object" &&
+      "userLaps" in event &&
+      !("heatNumber" in event)
+    ) {
+      if (this.selectedHeatDriver) {
+        const hd = this.selectedHeatDriver;
+        const userLaps = event.userLaps;
+        const userTime = event.userTime ?? 0;
+        this.dataService
+          .updateUserLaps(hd.laneIndex, userLaps, userTime)
+          .subscribe(
+            (response) => {
+              if (response && response.adjustedLapCount !== undefined) {
+                hd.adjustedLapCount = response.adjustedLapCount;
+                hd.userLaps = userLaps;
+                hd.userTime = userTime;
+                if (response.totalTime !== undefined) {
+                  hd.totalTime = response.totalTime;
+                }
+                this.cdr.markForCheck();
+              }
+            },
+            (error) => {
+              this.logger.error("Error updating user laps from dialog:", error);
+            },
+          );
+      }
     } else {
-      const { heatNumber, laneIndex, userLaps } = event;
+      const { heatNumber, laneIndex, userLaps, userTime } = event;
       this.dataService
-        .updateHeatUserLaps(heatNumber, laneIndex, userLaps)
+        .updateHeatUserLaps(heatNumber, laneIndex, userLaps, userTime ?? 0)
         .subscribe(
           (response) => {
             const targetHeat = this.heats.find(
@@ -7200,6 +8036,12 @@ export class DefaultRacedayComponent
               if (hd && response && response.adjustedLapCount !== undefined) {
                 hd.adjustedLapCount = response.adjustedLapCount;
                 hd.userLaps = userLaps;
+                if (userTime !== undefined) {
+                  hd.userTime = userTime;
+                }
+                if (response.totalTime !== undefined) {
+                  hd.totalTime = response.totalTime;
+                }
                 this.cdr.markForCheck();
               }
             }
@@ -7241,17 +8083,25 @@ export class DefaultRacedayComponent
         (a) =>
           a.model?.entityId === config.url ||
           a.entity_id === config.url ||
-          a._id === config.url,
+          a._id === config.url ||
+          a.name === config.url,
       );
-      if (asset?.audioEntries && asset.audioEntries.length > 0) {
-        const filtered = asset.audioEntries.filter((e: any) => {
+      const entries = asset?.audioEntries || (asset as any)?.audio_entries;
+      if (entries && entries.length > 0) {
+        const filtered = entries.filter((e: any) => {
           const mode = e.triggerMode || e.trigger_mode || "remaining";
           return mode === triggerMode;
         });
         if (filtered.length > 0) {
           return filtered
             .map((e: any) =>
-              Math.round(e.timeSeconds != null ? e.timeSeconds : e.percentage),
+              Math.round(
+                e.timeSeconds != null
+                  ? e.timeSeconds
+                  : e.time_seconds != null
+                    ? e.time_seconds
+                    : e.percentage,
+              ),
             )
             .filter((t: number) => !isNaN(t) && t >= 0)
             .filter(
@@ -7352,15 +8202,7 @@ export class DefaultRacedayComponent
 
     let playableUrl: string | undefined = config.url;
     if (config.type === "preset" && playableUrl) {
-      const asset = (this.assets || []).find(
-        (a) =>
-          a.model?.entityId === playableUrl ||
-          a.entity_id === playableUrl ||
-          a._id === playableUrl,
-      );
-      if (asset) {
-        playableUrl = this.getFullUrl(asset.url);
-      }
+      playableUrl = this.resolveAssetPlayableUrl(playableUrl);
     }
 
     let priority: AudioPriority = "normal";
@@ -7368,8 +8210,7 @@ export class DefaultRacedayComponent
       slotKey === THEME_SLOT_KEYS.AUDIO_YELLOW_FLAG ||
       slotKey === THEME_SLOT_KEYS.AUDIO_HEAT_OVER ||
       slotKey === THEME_SLOT_KEYS.AUDIO_RACE_OVER ||
-      slotKey === THEME_SLOT_KEYS.AUDIO_MIN_LAP_TIME ||
-      slotKey === THEME_SLOT_KEYS.AUDIO_DRIFT_LAP
+      slotKey === THEME_SLOT_KEYS.AUDIO_MIN_LAP_TIME
     ) {
       priority = "urgent";
     }
@@ -7390,10 +8231,7 @@ export class DefaultRacedayComponent
         slotKey === THEME_SLOT_KEYS.AUDIO_AUTO_ADVANCE
       ) {
         defaultAssoc = { widgetType: "timer" };
-      } else if (
-        slotKey === THEME_SLOT_KEYS.AUDIO_MIN_LAP_TIME ||
-        slotKey === THEME_SLOT_KEYS.AUDIO_DRIFT_LAP
-      ) {
+      } else if (slotKey === THEME_SLOT_KEYS.AUDIO_MIN_LAP_TIME) {
         defaultAssoc = {
           widgetType: "lane-view",
           laneIndex: context?.driver?.lane,
@@ -7460,7 +8298,7 @@ export class DefaultRacedayComponent
     this.countdownColor = "lime";
   }
 
-  private getAssetUrl(name: string): string {
+  getAssetUrl(name: string): string {
     const asset = (this.assets || []).find((a: any) => a.name === name);
     return asset ? this.getFullUrl(asset.url) : "";
   }
@@ -7471,18 +8309,43 @@ export class DefaultRacedayComponent
    * matching asset in the loaded assets list to get its URL.
    * Returns empty string if no theme is active or the slot/asset is not found.
    */
-  private resolveAssetUrlBySlot(slotKey: string): string {
+  resolveAssetUrlBySlot(slotKey: string): string {
     const assetId = this.themeService.resolveAssetId(slotKey);
     if (!assetId) return "";
 
     // Find the asset in the loaded assets list by entity ID
     const asset = (this.assets || []).find(
       (a: any) =>
-        a.model?.entityId === assetId ||
-        a.entity_id === assetId ||
-        a._id === assetId,
+        a?.model?.entityId === assetId ||
+        a?.entity_id === assetId ||
+        a?._id === assetId,
     );
     return asset ? this.getFullUrl(asset.url) : "";
+  }
+
+  refreshCountdownLampUrls(): void {
+    if (!this.countdownLamps || this.countdownLamps.length === 0) return;
+    for (const lamp of this.countdownLamps) {
+      if (lamp.state === "go") {
+        lamp.url =
+          this.resolveAssetUrlBySlot("lamp.green") ||
+          this.getAssetUrl("Start Lamp Green") ||
+          lamp.url;
+      } else if (lamp.state === "on") {
+        lamp.url =
+          this.resolveAssetUrlBySlot("lamp.red.on") ||
+          this.getAssetUrl("Start Lamp Red") ||
+          lamp.url;
+      } else if (lamp.state === "dim") {
+        lamp.url =
+          this.resolveAssetUrlBySlot("lamp.red.dim") ||
+          this.getAssetUrl("Start Lamp Dim") ||
+          lamp.url;
+      }
+    }
+    if (!this.isDestroyed) {
+      this.cdr.markForCheck();
+    }
   }
 
   protected onModifyHeatsClose(saved: boolean) {
@@ -7780,6 +8643,13 @@ export class DefaultRacedayComponent
     if (event.dataTransfer) {
       event.dataTransfer.effectAllowed = "all";
       event.dataTransfer.setData("text/plain", type);
+      const key = type.startsWith("lane-col:")
+        ? type.substring("lane-col:".length)
+        : type;
+      event.dataTransfer.setData(
+        "application/json",
+        JSON.stringify({ type, key }),
+      );
     }
   }
 
@@ -7798,6 +8668,61 @@ export class DefaultRacedayComponent
     if (!scalableContent) return;
 
     const rect = scalableContent.getBoundingClientRect();
+    if (this.draggedWidgetType === "grid") {
+      const totalLanes = Math.max(2, this.track?.lanes?.length || 4);
+      const width = 500;
+      const height = Math.max(160, totalLanes * 50);
+      const scaleX = rect.width / scalableContent.offsetWidth || 1;
+      const scaleY = rect.height / scalableContent.offsetHeight || 1;
+      const baseWidth = this.layout?.baseWidth || 1920;
+      const baseHeight = this.layout?.baseHeight || 1080;
+      const clampedX = Math.max(
+        0,
+        Math.min(
+          baseWidth - width,
+          Math.round((event.clientX - rect.left) / scaleX - width / 2),
+        ),
+      );
+      const clampedY = Math.max(
+        0,
+        Math.min(
+          baseHeight - height,
+          Math.round((event.clientY - rect.top) / scaleY),
+        ),
+      );
+
+      const bounds: LaneGridBounds = {
+        x: clampedX,
+        y: clampedY,
+        width,
+        height,
+      };
+      const { session, widgets } = LaneGridFactoryHelper.createNewGrid(
+        bounds,
+        totalLanes,
+        this.getNextZIndex(),
+      );
+
+      if (!this.layout) {
+        this.layout = this.getDefaultLayout();
+      }
+      if (!this.layout.widgets) this.layout.widgets = [];
+      this.layout.widgets.push(...widgets);
+
+      const master = widgets.find((w) =>
+        LaneGridReplicationHelper.isMasterWidget(w, session),
+      );
+
+      this.draggedWidgetType = null;
+      this.layoutChanged.emit(this.layout);
+      if (master) {
+        this.widgetSelected.emit(master.id);
+      }
+      this.updateAudioRelevance();
+      this.cdr.markForCheck();
+      return;
+    }
+
     const isLeaderboardOrDeck =
       this.draggedWidgetType === "leaderboard" ||
       this.draggedWidgetType === "group-leaderboard" ||
@@ -7896,6 +8821,13 @@ export class DefaultRacedayComponent
         ? registryEntry.defaultSettings()
         : {};
       newWidget.customSettings.columnKey = laneColumnKey;
+    } else if (actualWidgetType.startsWith("custom:")) {
+      const def =
+        this.customWidgetService?.getWidgetDefinition(actualWidgetType);
+      const manifestDefaults = def?.manifest?.defaultSettings
+        ? { ...def.manifest.defaultSettings }
+        : {};
+      newWidget.customSettings = { ...manifestDefaults };
     } else {
       const registryEntry = WIDGET_REGISTRY[this.draggedWidgetType as string];
       if (registryEntry?.defaultSettings) {
@@ -7911,7 +8843,20 @@ export class DefaultRacedayComponent
 
     if (this.gridSession()) {
       const session = this.gridSession()!;
-      if (isLaneColumn || actualWidgetType === "lane-column") {
+      if (newWidget.customSettings) {
+        newWidget.customSettings["gridType"] = session.gridType || "heat";
+        newWidget.customSettings["bindingMode"] = session.bindingMode || "lane";
+      }
+      if (
+        isLaneColumn ||
+        actualWidgetType === "lane-column" ||
+        actualWidgetType.startsWith("custom:")
+      ) {
+        LaneGridStyleHelper.inheritGridStyles(
+          newWidget,
+          session,
+          this.layout.widgets,
+        );
         this.layout.widgets = LaneGridReplicationHelper.syncMasterWidgetToLanes(
           newWidget,
           session,
@@ -7936,11 +8881,104 @@ export class DefaultRacedayComponent
     return Math.max(...nonCountdown.map((w: any) => w.zIndex || 0)) + 1;
   }
 
+  bringGridToFront(gridId: string): void {
+    if (!this.layout?.widgets || !gridId) return;
+
+    const gridWidgets = this.layout.widgets.filter(
+      (w: any) => w.customSettings?.["gridId"] === gridId,
+    );
+    if (gridWidgets.length === 0) return;
+
+    const otherNonCountdown = this.layout.widgets.filter(
+      (w: any) =>
+        w.customSettings?.["gridId"] !== gridId && w.widgetType !== "countdown",
+    );
+    const maxOtherZ =
+      otherNonCountdown.length > 0
+        ? Math.max(...otherNonCountdown.map((w: any) => w.zIndex || 0))
+        : 0;
+
+    const newBaseZ = maxOtherZ + 1;
+    let changed = false;
+
+    const minGridZ = Math.min(...gridWidgets.map((w: any) => w.zIndex || 10));
+    if (minGridZ <= maxOtherZ) {
+      for (const gw of gridWidgets) {
+        const relativeOffset = Math.max(0, (gw.zIndex || 10) - minGridZ);
+        const targetZ = newBaseZ + relativeOffset;
+        if (gw.zIndex !== targetZ) {
+          gw.zIndex = targetZ;
+          changed = true;
+        }
+      }
+    }
+
+    const maxGridZ = Math.max(...gridWidgets.map((w: any) => w.zIndex || 0));
+    for (const cw of this.layout.widgets) {
+      if (cw.widgetType === "countdown") {
+        if (cw.zIndex == null || cw.zIndex <= maxGridZ) {
+          cw.zIndex = Math.max(2000, maxGridZ + 100);
+          changed = true;
+        }
+      }
+    }
+
+    if (changed) {
+      this.layoutChanged.emit(this.layout);
+      this.cdr.markForCheck();
+    }
+  }
+
+  onGridContainerPointerDown(event: PointerEvent, gridId: string): void {
+    if (!this.isLayoutCustomizing && !this.isUIEditorMode()) return;
+    if (this.gridSession()?.gridId === gridId) return;
+
+    const target = event.target as HTMLElement | null;
+    if (target?.closest("app-raceday-absolute-widget")) {
+      return;
+    }
+
+    this.bringGridToFront(gridId);
+
+    const gridWidgets = (this.layout?.widgets || []).filter(
+      (w: any) => w.customSettings?.["gridId"] === gridId,
+    );
+    const masterWidget =
+      gridWidgets.find(
+        (w: any) =>
+          !w.customSettings?.["gridMasterId"] &&
+          !w.customSettings?.["isHeaderWidget"],
+      ) || gridWidgets[0];
+
+    if (masterWidget) {
+      this.widgetSelected.emit(masterWidget.id);
+    }
+  }
+
+  getGridSessionZIndex(): number {
+    const session = this.gridSession();
+    if (!session || !this.layout?.widgets) return 200;
+    const gridWidgets = this.layout.widgets.filter(
+      (w: any) => w.customSettings?.["gridId"] === session.gridId,
+    );
+    const maxZ =
+      gridWidgets.length > 0
+        ? Math.max(...gridWidgets.map((w: any) => w.zIndex || 0))
+        : 100;
+    return maxZ + 10;
+  }
+
   bringToFront(id: string) {
     if (!this.layout?.widgets) return;
 
     const targetWidget = this.layout.widgets.find((w: any) => w.id === id);
     if (!targetWidget) return;
+
+    if (targetWidget.customSettings?.["gridId"]) {
+      this.bringGridToFront(targetWidget.customSettings["gridId"]);
+      this.widgetSelected.emit(id);
+      return;
+    }
 
     if (this.gridSession() && targetWidget.customSettings?.["gridMasterId"]) {
       const masterId = targetWidget.customSettings["gridMasterId"];
@@ -8020,23 +9058,79 @@ export class DefaultRacedayComponent
 
   removeWidget(id: string) {
     if (!this.layout?.widgets) return;
-    if (this.gridSession()) {
+    const widgetsBefore = [...this.layout.widgets];
+    const session = this.gridSession();
+    const widgetToRemove = this.layout.widgets.find((w: any) => w.id === id);
+    const gridId =
+      session?.gridId || widgetToRemove?.customSettings?.["gridId"];
+
+    if (session && session.gridId === gridId) {
       this.layout.widgets =
         LaneGridReplicationHelper.removeMasterWidgetFromLanes(
           id,
-          this.gridSession()!,
+          session,
           this.layout.widgets,
         );
     } else {
-      this.layout.widgets = this.layout.widgets.filter((w: any) => w.id !== id);
+      const resolvedMasterId =
+        widgetToRemove?.customSettings?.["gridMasterId"] || id;
+      const isMasterWithReplicas = this.layout.widgets.some(
+        (w: any) =>
+          w.customSettings?.["gridMasterId"] === id ||
+          w.id.startsWith(`${id}_grid_lane_`),
+      );
+      if (isMasterWithReplicas) {
+        this.layout.widgets = this.layout.widgets.filter((w: any) => {
+          if (w.id === resolvedMasterId) return false;
+          if (w.customSettings?.["gridMasterId"] === resolvedMasterId)
+            return false;
+          if (w.id.startsWith(`${resolvedMasterId}_grid_lane_`)) return false;
+          if (w.id === `${resolvedMasterId}_grid_header`) return false;
+          return true;
+        });
+      } else {
+        this.layout.widgets = this.layout.widgets.filter(
+          (w: any) => w.id !== id,
+        );
+      }
+    }
+
+    this.layout.widgets = LaneGridReplicationHelper.cleanOrphanedGridWidgets(
+      this.layout.widgets,
+    );
+
+    if (
+      gridId &&
+      !LaneGridReplicationHelper.hasGridWidgets(this.layout.widgets, gridId)
+    ) {
+      this.layout.widgets = LaneGridReplicationHelper.removeGrid(
+        this.layout.widgets,
+        gridId,
+      );
+      LaneGridAnimationHelper.reset(gridId);
+      if (this.gridSession()?.gridId === gridId) {
+        this.finishGrid.emit();
+      }
     }
     this.layoutChanged.emit(this.layout);
-    if (this.selectedWidgetId() === id) {
-      const laneView = this.layout.widgets.find(
-        (w: any) => w.widgetType === "lane-view",
-      );
-      const nextWidget = laneView || this.layout.widgets[0];
-      this.widgetSelected.emit(nextWidget ? nextWidget.id : null);
+    const resolvedMasterId =
+      widgetToRemove?.customSettings?.["gridMasterId"] || id;
+    const currentSelectedId = this.selectedWidgetId();
+    const isSelectedDeleted =
+      currentSelectedId === id ||
+      currentSelectedId === resolvedMasterId ||
+      (currentSelectedId != null &&
+        !this.layout.widgets.some((w: any) => w.id === currentSelectedId));
+
+    if (isSelectedDeleted) {
+      const nextWidgetId =
+        LaneGridReplicationHelper.findNextWidgetAfterDeletion(
+          id,
+          widgetsBefore,
+          this.layout.widgets,
+          session,
+        );
+      this.widgetSelected.emit(nextWidgetId);
     }
     this.updateAudioRelevance();
   }
@@ -8087,6 +9181,136 @@ export class DefaultRacedayComponent
     return cells;
   }
 
+  getHeaderRowBounds(): LaneGridBounds | null {
+    const s = this.gridSession();
+    if (!s || (s.headerPlacement !== "top" && s.headerPlacement !== "left"))
+      return null;
+    return LaneGridReplicationHelper.computeHeaderRowBounds(s);
+  }
+
+  getGridLabelBounds(): LaneGridBounds | null {
+    const s = this.gridSession();
+    return s ? LaneGridLabelHelper.computeGridLabelBounds(s) : null;
+  }
+
+  getGridLabelJustify(position?: string, alignment?: string): string {
+    return LaneGridLabelHelper.getLabelJustifyContent(position, alignment);
+  }
+
+  private cachedSelectedWidgetId: string | null = null;
+  private cachedSelectedWidgetWidgetsRef: any = null;
+  private cachedSelectedWidget: AbsoluteWidgetNode | null = null;
+
+  get selectedWidget(): AbsoluteWidgetNode | null {
+    const id = this.selectedWidgetId();
+    const widgets = this.layout?.widgets;
+    if (!id || !widgets) return null;
+    if (
+      id === this.cachedSelectedWidgetId &&
+      widgets === this.cachedSelectedWidgetWidgetsRef
+    ) {
+      return this.cachedSelectedWidget;
+    }
+    this.cachedSelectedWidgetId = id;
+    this.cachedSelectedWidgetWidgetsRef = widgets;
+    this.cachedSelectedWidget = widgets.find((w: any) => w.id === id) || null;
+    return this.cachedSelectedWidget;
+  }
+
+  private cachedWidgetIdSetWidgetsRef: any = null;
+  private cachedWidgetIdSet = new Set<string>();
+
+  hasWidgetId(id: string): boolean {
+    const widgets = this.layout?.widgets;
+    if (!widgets) return false;
+    if (widgets !== this.cachedWidgetIdSetWidgetsRef) {
+      this.cachedWidgetIdSetWidgetsRef = widgets;
+      this.cachedWidgetIdSet = new Set(widgets.map((w: any) => w.id));
+    }
+    return this.cachedWidgetIdSet.has(id);
+  }
+
+  private cachedGridBoundsSelWidget: any = null;
+  private cachedGridBoundsWidgetsRef: any = null;
+  private cachedGridBounds: LaneGridBounds | null = null;
+
+  get selectedGridBounds(): LaneGridBounds | null {
+    const isEditing = this.isLayoutCustomizing || this.isUIEditorMode();
+    if (!isEditing || this.gridSession()) return null;
+    const sel = this.selectedWidget;
+    const gridId = sel?.customSettings?.["gridId"];
+    const widgets = this.layout?.widgets;
+    if (!gridId || !widgets) return null;
+    if (
+      sel === this.cachedGridBoundsSelWidget &&
+      widgets === this.cachedGridBoundsWidgetsRef
+    ) {
+      return this.cachedGridBounds;
+    }
+    this.cachedGridBoundsSelWidget = sel;
+    this.cachedGridBoundsWidgetsRef = widgets;
+    this.cachedGridBounds = LaneGridReplicationHelper.calculateGridBounds(
+      widgets,
+      gridId,
+    );
+    return this.cachedGridBounds;
+  }
+
+  get selectedGridLabel(): string {
+    const sel = this.selectedWidget;
+    const customTitle =
+      sel?.customSettings?.["gridLabelText"]?.trim() ||
+      this.getGridCustomTitle(sel?.customSettings?.["gridId"]);
+    if (customTitle) {
+      return customTitle;
+    }
+    const labelPos =
+      sel?.customSettings?.["gridLabelPosition"] ||
+      this.getGridLabelPosition(sel?.customSettings?.["gridId"]);
+    if (labelPos && labelPos !== "none") {
+      const defaultLabel = this.translationService?.translate(
+        "UE_GRID_LABEL_DEFAULT",
+      );
+      if (defaultLabel && defaultLabel !== "UE_GRID_LABEL_DEFAULT") {
+        return defaultLabel;
+      }
+    }
+    const count =
+      sel?.customSettings?.["gridTotalLanes"] || this.track?.lanes?.length || 4;
+    const mode = sel?.customSettings?.["bindingMode"];
+    const key =
+      mode === "position"
+        ? "UE_GRID_POSITION_CONTAINER_LABEL"
+        : "UE_GRID_CONTAINER_LABEL";
+    const translated = this.translationService?.translate(key, { count });
+    if (translated && translated !== key) {
+      return translated;
+    }
+    return mode === "position"
+      ? `Position Grid (${count} Positions)`
+      : `Lane Grid (${count} Lanes)`;
+  }
+
+  private getGridCustomTitle(gridId?: string): string | null {
+    if (!gridId || !this.layout?.widgets) return null;
+    const match = this.layout.widgets.find(
+      (w: any) =>
+        w.customSettings?.["gridId"] === gridId &&
+        w.customSettings?.["gridLabelText"]?.trim(),
+    );
+    return match?.customSettings?.["gridLabelText"]?.trim() || null;
+  }
+
+  private getGridLabelPosition(gridId?: string): string | null {
+    if (!gridId || !this.layout?.widgets) return null;
+    const match = this.layout.widgets.find(
+      (w: any) =>
+        w.customSettings?.["gridId"] === gridId &&
+        w.customSettings?.["gridLabelPosition"],
+    );
+    return match?.customSettings?.["gridLabelPosition"] || null;
+  }
+
   onGridResizeStart(event: PointerEvent, handle: GridResizeHandle): void {
     event.preventDefault();
     event.stopPropagation();
@@ -8110,6 +9334,8 @@ export class DefaultRacedayComponent
       snapEdgesY.push(w.y, w.y + w.height);
     }
 
+    let hasResized = false;
+
     const onPointerMove = (moveEvent: PointerEvent) => {
       const deltaX = (moveEvent.clientX - startX) / scale;
       const deltaY = (moveEvent.clientY - startY) / scale;
@@ -8128,26 +9354,191 @@ export class DefaultRacedayComponent
         8,
       );
 
+      hasResized = true;
       this.gridBoundsChange.emit(newBounds);
     };
 
     const onPointerUp = () => {
       document.removeEventListener("pointermove", onPointerMove);
       document.removeEventListener("pointerup", onPointerUp);
+      if (hasResized && this.layout) {
+        this.layoutChanged.emit(this.layout);
+      }
     };
 
     document.addEventListener("pointermove", onPointerMove);
     document.addEventListener("pointerup", onPointerUp);
   }
 
+  onGridMoveStart(event: PointerEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    const session = this.gridSession();
+    if (!session) return;
+    this.bringGridToFront(session.gridId);
+
+    const startX = event.clientX;
+    const startY = event.clientY;
+    const initialBounds = { ...session.bounds };
+    const scale = this.visualScale || 1;
+    const baseWidth = this.layout?.baseWidth || 1920;
+    const baseHeight = this.layout?.baseHeight || 1080;
+
+    const nonGridWidgets = (this.layout?.widgets || []).filter(
+      (w) => w.customSettings?.["gridId"] !== session.gridId,
+    );
+    const snapEdgesX: number[] = [0, baseWidth];
+    const snapEdgesY: number[] = [0, baseHeight];
+    for (const w of nonGridWidgets) {
+      snapEdgesX.push(w.x, w.x + w.width);
+      snapEdgesY.push(w.y, w.y + w.height);
+    }
+
+    let hasMoved = false;
+
+    const onPointerMove = (moveEvent: PointerEvent) => {
+      const deltaX = (moveEvent.clientX - startX) / scale;
+      const deltaY = (moveEvent.clientY - startY) / scale;
+
+      const newBounds = LaneGridReplicationHelper.moveGridBounds(
+        initialBounds,
+        deltaX,
+        deltaY,
+        baseWidth,
+        baseHeight,
+        snapEdgesX,
+        snapEdgesY,
+        8,
+      );
+
+      hasMoved = true;
+      this.gridBoundsChange.emit(newBounds);
+    };
+
+    const onPointerUp = () => {
+      document.removeEventListener("pointermove", onPointerMove);
+      document.removeEventListener("pointerup", onPointerUp);
+      if (hasMoved && this.layout) {
+        this.layoutChanged.emit(this.layout);
+      }
+    };
+
+    document.addEventListener("pointermove", onPointerMove);
+    document.addEventListener("pointerup", onPointerUp);
+  }
+
+  onDeleteGridClicked(): void {
+    const session = this.gridSession();
+    if (session) {
+      this.deleteGrid.emit(session.gridId);
+    }
+  }
+
   onMasterWidgetModified(widget: AbsoluteWidgetNode): void {
     const session = this.gridSession();
-    if (!session || !this.layout?.widgets) return;
-    this.layout.widgets = LaneGridReplicationHelper.syncMasterWidgetToLanes(
-      widget,
-      session,
-      this.layout.widgets,
-    );
+    if (!session || !this.layout?.widgets || !widget) return;
+    if (
+      widget.customSettings?.["gridId"] &&
+      widget.customSettings["gridId"] !== session.gridId
+    ) {
+      return;
+    }
+    this.invalidateGridCache();
+
+    if (LaneGridReplicationHelper.isHeaderWidget(widget)) {
+      const masterId = widget.customSettings?.["gridMasterId"];
+      const masterWidget = masterId
+        ? this.layout.widgets.find((w: any) => w.id === masterId)
+        : null;
+      if (masterWidget && masterWidget.id !== widget.id) {
+        if (session.headerPlacement === "left") {
+          masterWidget.y = widget.y;
+          masterWidget.height = widget.height;
+        } else {
+          masterWidget.x = widget.x;
+          masterWidget.width = widget.width;
+        }
+        this.onMasterWidgetModified(masterWidget);
+        return;
+      }
+      this.layout.widgets = LaneGridReplicationHelper.syncMasterWidgetToLanes(
+        widget,
+        session,
+        this.layout.widgets,
+      );
+      this.layoutChanged.emit(this.layout);
+      this.cdr.markForCheck();
+      return;
+    }
+
+    const isMaster = LaneGridReplicationHelper.isMasterWidget(widget, session);
+
+    if (!isMaster) {
+      if (session.mirrorRows !== false) {
+        const masterId =
+          widget.customSettings?.["gridMasterId"] ||
+          widget.id.replace(/_grid_lane_\d+.*$/, "");
+        const masterWidget = this.layout.widgets.find(
+          (w: any) => w.id === masterId,
+        );
+        if (masterWidget && masterWidget.id !== widget.id) {
+          masterWidget.customSettings = masterWidget.customSettings || {};
+          if (widget.customSettings?.["insets"]) {
+            masterWidget.customSettings["insets"] = {
+              ...widget.customSettings["insets"],
+            };
+          } else {
+            delete masterWidget.customSettings["insets"];
+          }
+          if (widget.customSettings?.["insetsConfig"]) {
+            masterWidget.customSettings["insetsConfig"] = {
+              ...widget.customSettings["insetsConfig"],
+            };
+          } else {
+            delete masterWidget.customSettings["insetsConfig"];
+          }
+          if (widget.customSettings?.["columnKey"]) {
+            masterWidget.customSettings["columnKey"] =
+              widget.customSettings["columnKey"];
+          }
+          this.onMasterWidgetModified(masterWidget);
+        }
+        return;
+      } else {
+        const idx = this.layout.widgets.findIndex(
+          (w: any) => w.id === widget.id,
+        );
+        if (idx >= 0) {
+          this.layout.widgets[idx] = widget;
+        }
+        this.layoutChanged.emit(this.layout);
+        this.cdr.markForCheck();
+        return;
+      }
+    }
+
+    LaneGridReplicationHelper.updateWidgetCellRatios(widget, session);
+    if (session.mirrorRows !== false) {
+      this.layout.widgets = LaneGridReplicationHelper.syncMasterWidgetToLanes(
+        widget,
+        session,
+        this.layout.widgets,
+      );
+    } else {
+      const idx = this.layout.widgets.findIndex((w: any) => w.id === widget.id);
+      if (idx >= 0) {
+        this.layout.widgets[idx] = widget;
+      }
+      const headerHeight =
+        session.headerHeight != null ? Math.max(20, session.headerHeight) : 36;
+      LaneGridHeaderHelper.syncPlacementHeaderWidget(
+        widget,
+        widget,
+        session,
+        headerHeight,
+        this.layout.widgets,
+      );
+    }
     this.layoutChanged.emit(this.layout);
     this.cdr.markForCheck();
   }
@@ -8192,7 +9583,7 @@ export class DefaultRacedayComponent
   }
 
   onCanvasPointerDown(_event: PointerEvent) {
-    // Preserve widget selection so widget inspector remains open
+    // Preserve widget selection so widget configuration remains open
   }
 
   private getDefaultLayout(): LayoutConfig {
@@ -8204,8 +9595,14 @@ export class DefaultRacedayComponent
       ),
     ) as LayoutConfig;
 
-    const targetW = window.innerWidth;
-    const targetH = window.innerHeight;
+    const targetW =
+      typeof window !== "undefined" && window.innerWidth > 0
+        ? window.innerWidth
+        : layout.baseWidth || 1920;
+    const targetH =
+      typeof window !== "undefined" && window.innerHeight > 0
+        ? window.innerHeight
+        : layout.baseHeight || 1080;
     const oldWidth = layout.baseWidth || 1920;
     const oldHeight = layout.baseHeight || 1080;
 

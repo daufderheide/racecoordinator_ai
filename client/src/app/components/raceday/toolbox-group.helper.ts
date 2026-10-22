@@ -1,5 +1,8 @@
 import { BASE_AVAILABLE_COLUMNS } from "@app/components/ui-editor/ui-editor-constants";
-import { LANE_VIEW_COLUMN_GROUPS } from "@app/components/ui-editor/widget-inspector-fields/lane-view-inspector/lane-view-column-group.helper";
+import {
+  LANE_VIEW_COLUMN_GROUPS,
+  LaneViewColumnGroupHelper,
+} from "@app/components/ui-editor/widget-inspector-fields/lane-view-inspector/lane-view-column-group.helper";
 import { CustomWidgetDefinition } from "@app/models/custom-widget.model";
 import { WidgetType } from "@app/models/settings";
 import { naturalSortCompare } from "@app/utils/sorting.utils";
@@ -195,6 +198,11 @@ export class ToolboxGroupHelper {
           labelKey: "UE_WIDGET_TYPE_COUNTDOWN",
         },
         {
+          type: "grid",
+          icon: "",
+          labelKey: "UE_WIDGET_TYPE_GRID",
+        },
+        {
           type: "group-leaderboard",
           icon: "",
           labelKey: "UE_WIDGET_TYPE_GROUP_LEADERBOARD",
@@ -203,11 +211,6 @@ export class ToolboxGroupHelper {
           type: "heat-list",
           icon: "",
           labelKey: "UE_WIDGET_TYPE_HEAT_LIST",
-        },
-        {
-          type: "lane-view",
-          icon: "",
-          labelKey: "UE_WIDGET_TYPE_LANE_VIEW",
         },
         {
           type: "leaderboard",
@@ -280,6 +283,11 @@ export class ToolboxGroupHelper {
           type: "track-name",
           icon: "",
           labelKey: "UE_WIDGET_TYPE_TRACK_NAME",
+        },
+        {
+          type: "label",
+          icon: "",
+          labelKey: "UE_WIDGET_TYPE_LABEL",
         },
       ],
     },
@@ -354,6 +362,72 @@ export class ToolboxGroupHelper {
     return groups;
   }
 
+  private static getWidgetsForColumnGroup(
+    grp: (typeof LANE_VIEW_COLUMN_GROUPS)[number],
+    cols: readonly { key: string; label: string }[],
+    colMap: Map<string, { key: string; label: string }>,
+    term: string,
+    translateFn?: (key: string) => string,
+  ): ToolboxWidgetItem[] {
+    const items: ToolboxWidgetItem[] = [];
+    for (const colKey of grp.columnKeys) {
+      const col = colMap.get(colKey);
+      if (!col) continue;
+      if (items.some((item) => item.type === `lane-col:${col.key}`)) continue;
+
+      const widgetItem: ToolboxWidgetItem = {
+        type: `lane-col:${col.key}`,
+        labelKey: col.label,
+        icon: "",
+      };
+
+      if (ToolboxGroupHelper.matchesSearch(widgetItem, term, translateFn)) {
+        items.push(widgetItem);
+      }
+    }
+
+    if (grp.id === "telemetry") {
+      for (const col of cols) {
+        if (
+          LaneViewColumnGroupHelper.isFuelGaugeColumn(col.key) &&
+          !items.some((item) => item.type === `lane-col:${col.key}`)
+        ) {
+          const widgetItem: ToolboxWidgetItem = {
+            type: `lane-col:${col.key}`,
+            labelKey: col.label,
+            icon: "",
+          };
+          if (ToolboxGroupHelper.matchesSearch(widgetItem, term, translateFn)) {
+            items.push(widgetItem);
+          }
+        }
+      }
+    }
+
+    if (grp.id === "media-custom") {
+      for (const col of cols) {
+        if (
+          col.key.startsWith("imageset_") &&
+          !grp.columnKeys.includes(col.key) &&
+          !LaneViewColumnGroupHelper.isFuelGaugeColumn(col.key)
+        ) {
+          const widgetItem: ToolboxWidgetItem = {
+            type: `lane-col:${col.key}`,
+            labelKey: col.label,
+            icon: "",
+          };
+          if (ToolboxGroupHelper.matchesSearch(widgetItem, term, translateFn)) {
+            items.push(widgetItem);
+          }
+        }
+      }
+    }
+
+    items.sort((a, b) => ToolboxGroupHelper.compareWidgets(a, b, translateFn));
+
+    return items;
+  }
+
   public static buildScopedDataSubgroup(
     groupId: string,
     nameKey: string,
@@ -378,44 +452,12 @@ export class ToolboxGroupHelper {
     for (const grp of LANE_VIEW_COLUMN_GROUPS) {
       if (!allowedGroupIds.includes(grp.id)) continue;
 
-      const items: ToolboxWidgetItem[] = [];
-      for (const colKey of grp.columnKeys) {
-        const col = colMap.get(colKey);
-        if (!col) continue;
-
-        const widgetItem: ToolboxWidgetItem = {
-          type: `lane-col:${col.key}`,
-          labelKey: col.label,
-          icon: "",
-        };
-
-        if (ToolboxGroupHelper.matchesSearch(widgetItem, term, translateFn)) {
-          items.push(widgetItem);
-        }
-      }
-
-      if (grp.id === "media-custom") {
-        for (const col of cols) {
-          if (
-            col.key.startsWith("imageset_") &&
-            !grp.columnKeys.includes(col.key)
-          ) {
-            const widgetItem: ToolboxWidgetItem = {
-              type: `lane-col:${col.key}`,
-              labelKey: col.label,
-              icon: "",
-            };
-            if (
-              ToolboxGroupHelper.matchesSearch(widgetItem, term, translateFn)
-            ) {
-              items.push(widgetItem);
-            }
-          }
-        }
-      }
-
-      items.sort((a, b) =>
-        ToolboxGroupHelper.compareWidgets(a, b, translateFn),
+      const items = ToolboxGroupHelper.getWidgetsForColumnGroup(
+        grp,
+        cols,
+        colMap,
+        term,
+        translateFn,
       );
 
       if (items.length > 0) {
@@ -702,7 +744,7 @@ export class ToolboxGroupHelper {
     const customByGroup = new Map<string, CustomWidgetDefinition[]>();
     for (const cw of customWidgets) {
       const fullType = `custom:${cw.manifest.id}`;
-      if (usedWidgetTypes.has(fullType)) continue;
+      if (usedWidgetTypes.has(fullType) && !cw.manifest.allowMultiple) continue;
 
       const groupName = cw.group || ToolboxGroupHelper.CUSTOM_ROOT_GROUP_ID;
       if (!customByGroup.has(groupName)) {

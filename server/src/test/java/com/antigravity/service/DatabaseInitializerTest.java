@@ -1,6 +1,7 @@
 package com.antigravity.service;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -294,8 +295,38 @@ public class DatabaseInitializerTest {
 
     CustomUI updated = uiRepo.findByEntityId("legacy_ui_id");
     assertNotNull(updated);
+    assertFalse(updated.getLayoutJson().contains("widget-countdown"));
+    assertFalse(updated.getLayoutJson().contains("\"widgetType\":\"countdown\""));
+  }
+
+  @Test
+  public void testBackfillCustomUIs_BackfillsExistingCountdownWidgetSettings() {
+    SqliteRepository<CustomUI> uiRepo =
+        new SqliteRepository<>(context, "custom_uis", CustomUI.class);
+    uiRepo.drop();
+
+    CustomUI uiWithOldCountdown =
+        new CustomUI(
+            "Legacy Countdown UI",
+            false,
+            "{\"widgets\":[{\"id\":\"widget-countdown\",\"widgetType\":\"countdown\",\"customSettings\":{\"lampScale\":1.0,\"previewLampCount\":5}}]}",
+            "[]",
+            "{}",
+            "{}",
+            "{}",
+            "{}",
+            "legacy_countdown_id",
+            null);
+    uiRepo.save(uiWithOldCountdown);
+
+    initializer.backfillCustomUIs(context);
+
+    CustomUI updated = uiRepo.findByEntityId("legacy_countdown_id");
+    assertNotNull(updated);
     assertTrue(updated.getLayoutJson().contains("widget-countdown"));
     assertTrue(updated.getLayoutJson().contains("\"widgetType\":\"countdown\""));
+    assertTrue(updated.getLayoutJson().contains("\"lampSizingMode\":\"custom\""));
+    assertTrue(updated.getLayoutJson().contains("\"maxLamps\":5"));
   }
 
   @Test
@@ -520,5 +551,133 @@ public class DatabaseInitializerTest {
     CustomUI defaultUiAfter = uiRepo.findByEntityId(CustomUI.DEFAULT_UI_ID);
     assertNotNull(defaultUiAfter);
     assertEquals(CustomUI.DEFAULT_UI_NAME, defaultUiAfter.getName());
+  }
+
+  @Test
+  public void testBackfillRaces_SkipsDeletedDefaults() {
+    Track track = initializer.resetTracks(context);
+    initializer.resetRaces(context, track);
+    SqliteRepository<Race> raceRepo = new SqliteRepository<>(context, "races", Race.class);
+    List<Race> races = raceRepo.findAll();
+    assertEquals(4, races.size());
+
+    Race practice =
+        races.stream().filter(r -> "Practice".equals(r.getName())).findFirst().orElse(null);
+    Race fuel =
+        races.stream().filter(r -> "Fuel Race".equals(r.getName())).findFirst().orElse(null);
+    assertNotNull(practice);
+    assertNotNull(fuel);
+    raceRepo.delete(practice.getEntityId());
+    raceRepo.delete(fuel.getEntityId());
+    context.markDefaultArtifactDeleted("race", "Practice");
+    context.markDefaultArtifactDeleted("race", "Fuel Race");
+
+    initializer.backfillRaces(context);
+
+    List<Race> remaining = raceRepo.findAll();
+    assertEquals(2, remaining.size());
+    assertTrue(remaining.stream().noneMatch(r -> "Practice".equals(r.getName())));
+    assertTrue(remaining.stream().noneMatch(r -> "Fuel Race".equals(r.getName())));
+  }
+
+  @Test
+  public void testBackfillCustomUIs_SkipsDeletedDefaults() {
+    initializer.resetCustomUIs(context);
+    SqliteRepository<CustomUI> uiRepo =
+        new SqliteRepository<>(context, "custom_uis", CustomUI.class);
+    assertEquals(3, uiRepo.findAll().size());
+
+    uiRepo.delete(CustomUI.PRACTICE_UI_ID);
+    uiRepo.delete(CustomUI.FUEL_UI_ID);
+    context.markDefaultArtifactDeleted("custom_ui", CustomUI.PRACTICE_UI_ID);
+    context.markDefaultArtifactDeleted("custom_ui", CustomUI.FUEL_UI_ID);
+
+    initializer.backfillCustomUIs(context);
+
+    List<CustomUI> remaining = uiRepo.findAll();
+    assertEquals(1, remaining.size());
+    assertEquals(CustomUI.DEFAULT_UI_ID, remaining.get(0).getEntityId());
+  }
+
+  @Test
+  public void testResetToFactory_ClearsDeletedDefaultArtifacts() {
+    context.markDefaultArtifactDeleted("race", "Practice");
+    context.markDefaultArtifactDeleted("race", "Fuel Race");
+    context.markDefaultArtifactDeleted("custom_ui", CustomUI.PRACTICE_UI_ID);
+    context.markDefaultArtifactDeleted("theme", Theme.PRACTICE_THEME_ID);
+
+    initializer.resetToFactory(context);
+
+    assertFalse(context.isDefaultArtifactDeleted("race", "Practice"));
+    assertFalse(context.isDefaultArtifactDeleted("race", "Fuel Race"));
+    assertFalse(context.isDefaultArtifactDeleted("custom_ui", CustomUI.PRACTICE_UI_ID));
+    assertFalse(context.isDefaultArtifactDeleted("theme", Theme.PRACTICE_THEME_ID));
+
+    SqliteRepository<Race> raceRepo = new SqliteRepository<>(context, "races", Race.class);
+    assertEquals(4, raceRepo.findAll().size());
+  }
+
+  @Test
+  public void testEnsurePreMigrationBackups() {
+    SqliteRepository<CustomUI> uiRepo =
+        new SqliteRepository<>(context, "custom_uis", CustomUI.class);
+    uiRepo.drop();
+
+    CustomUI customUi =
+        new CustomUI(
+            "My Club Layout",
+            false,
+            "{\"widgets\":[{\"widgetType\":\"lane-view\"}]}",
+            "[]",
+            "{}",
+            "{}",
+            "{}",
+            "{}",
+            "custom_1",
+            null);
+    uiRepo.save(customUi);
+
+    initializer.ensurePreMigrationBackups(context, uiRepo);
+
+    List<CustomUI> uis = uiRepo.findAll();
+    assertEquals(2, uis.size());
+    CustomUI backup =
+        uis.stream()
+            .filter(u -> "My Club Layout (Pre-Migration Backup)".equals(u.getName()))
+            .findFirst()
+            .orElse(null);
+    assertNotNull(backup);
+    assertEquals(
+        "{\"preserveLegacyHeatView\":true,\"widgets\":[{\"widgetType\":\"lane-view\"}]}",
+        backup.getLayoutJson());
+
+    // Verify default UI does NOT get backed up (defaults are restored via built-in definitions)
+    CustomUI defaultUi =
+        new CustomUI(
+            "RaceCoordinator AI",
+            true,
+            "{\"widgets\":[{\"widgetType\":\"lane-view\"}]}",
+            "[]",
+            "{}",
+            "{}",
+            "{}",
+            "{}",
+            CustomUI.DEFAULT_UI_ID,
+            null);
+    uiRepo.save(defaultUi);
+
+    initializer.ensurePreMigrationBackups(context, uiRepo);
+
+    List<CustomUI> uisAfter = uiRepo.findAll();
+    // Size should still be 3 (custom_1, backup, defaultUi)
+    assertEquals(3, uisAfter.size());
+    boolean hasDefaultBackup =
+        uisAfter.stream()
+            .anyMatch(u -> "RaceCoordinator AI (Pre-Migration Backup)".equals(u.getName()));
+    assertFalse(hasDefaultBackup);
+
+    // Running again does not duplicate user backups
+    initializer.ensurePreMigrationBackups(context, uiRepo);
+    assertEquals(3, uiRepo.findAll().size());
   }
 }

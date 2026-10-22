@@ -129,6 +129,7 @@
                 wrapperClass="setup-menu-dropdown-item"
                 itemClass="setup-menu-dropdown-item"
                 (checkForUpdatesRequested)="onCheckForUpdates()"
+                (channelSelected)="onChannelSelected($event)"
               ></app-update-selector>
               <hr class="setup-menu-dropdown-divider" />
               <div class="setup-menu-dropdown-item" (click)="configureDemo()">
@@ -467,7 +468,6 @@
             (cdkDropListDropped)="drop($event)"
             #availScrollContainer
             cdkScrollable
-            (mouseleave)="onAvailableListMouseLeave()"
           >
             @if (!isRefreshingList) {
               @for (
@@ -483,7 +483,6 @@
                   "
                   [class.active]="isParticipantSelected(participant)"
                   (click)="selectParticipant(participant, i)"
-                  (mouseenter)="onAvailableItemMouseEnter(participant, i)"
                   cdkDrag
                   [cdkDragScale]="scale"
                   [cdkDragData]="participant"
@@ -631,7 +630,6 @@
             #racingScrollContainer
             cdkScrollable
             (selectstart)="preventSelection($event)"
-            (mouseleave)="onRacingListMouseLeave()"
           >
             @if (!isRefreshingList) {
               @for (
@@ -647,7 +645,6 @@
                   "
                   [class.active]="isParticipantSelected(participant)"
                   (click)="selectParticipant(participant, i)"
-                  (mouseenter)="onRacingItemMouseEnter(participant, i)"
                   cdkDrag
                   [cdkDragScale]="scale"
                   [cdkDragData]="participant"
@@ -1236,6 +1233,19 @@
   cancelText="GEN_NO"
   (confirm)="onConfirmTrackEditor()"
   (cancel)="onCancelTrackEditor()"
+>
+</app-confirmation-modal>
+
+<!-- Delete Saved Race Confirmation Modal -->
+<app-confirmation-modal
+  [visible]="showDeleteSavedRaceConfirm"
+  title="RDS_CONFIRM_DELETE_SAVED_RACE_TITLE"
+  message="RDS_CONFIRM_DELETE_SAVED_RACE_MSG"
+  [messageParams]="{ filename: savedRaceToDelete?.filename || '' }"
+  confirmText="GEN_YES"
+  cancelText="GEN_NO"
+  (confirm)="onConfirmDeleteSavedRace()"
+  (cancel)="onCancelDeleteSavedRace()"
 >
 </app-confirmation-modal>
 

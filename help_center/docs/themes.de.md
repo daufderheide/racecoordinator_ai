@@ -16,6 +16,6 @@ Designs ermöglichen die Anpassung systemweiter Soundeffekte und Sprachansagen f
 - **Rennhälfte:** Ansage beim Erreichen der Halbzeit eines Durchgangs – sowohl für zeitbasierte Rennen (Halbzeit der Dauer) als auch für rundenbasierte Rennen (sobald der Führende die Hälfte der Runden absolviert hat) (`audio.seconds_left.halfway`).
 - **Durchgang & Rennen beendet:** Signale für das Ende eines Durchgangs (`audio.heat_over`) oder des Rennens (`audio.race_over`).
 - **Automatisches Weiterschalten verbleibende Sekunden:** Countdown-Ansagen für die verbleibende Zeit bis zum automatischen Weiterschalten zum nächsten Durchgang (`audio.auto_advance`).
-- **Regelverstöße:** Töne bei Unterschreitung der Mindestrundenzeit (`audio.min_lap_time`) oder Driftrunden (`audio.drift_lap`).
+- **Regelverstöße:** Töne bei Unterschreitung der Mindestrundenzeit (`audio.min_lap_time`).
 
 Ausführliche Informationen zu Audio-Ducking, Prioritäten und Multi-Display-Filterung finden Sie in der Dokumentation zum [Audiosystem](audio.md).

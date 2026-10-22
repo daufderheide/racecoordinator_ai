@@ -102,6 +102,9 @@ Write-Host "--- Running Server Tests (PowerShell) ---" -ForegroundColor Cyan
 
 if (-not (Test-Path $ServerTmp)) {
     New-Item -ItemType Directory -Path $ServerTmp -Force | Out-Null
+} else {
+    # Prune leftover test databases and temp folders from prior runs to keep target_tmp small
+    Get-ChildItem -Path $ServerTmp -Include "*_test_*","testDB_*","export_save_*" -Directory -ErrorAction SilentlyContinue | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
 }
 
 # Pre-create all directories maven needs to avoid EPERM errors

@@ -1,0 +1,88 @@
+<div
+  class="advanced-laps-card"
+  [class.clickable]="isClickable"
+  [class.multi-lane]="bindingMode === 'all'"
+  [class.header-widget-card]="isHeaderWidget"
+  [style.background]="cardBackgroundColor"
+  [style.border-color]="cardBorderColor"
+  [style.border-width.px]="showBorder ? borderWidth : 0"
+  [style.border-style]="showBorder ? 'solid' : 'none'"
+  [style.border-radius.px]="borderRadius"
+  [style.color]="cardTextColor"
+  (click)="bindingMode !== 'all' ? onLapClick($event, targetDriver) : null"
+>
+  @if (isHeaderWidget) {
+    <div
+      class="advanced-laps-header header-widget-only"
+      [style.background]="headerBackgroundColor"
+      [style.font-family]="headerFontFamily || null"
+      [style.font-size.px]="headerFontSize"
+      [style.color]="headerTextColor"
+      [style.justify-content]="headerJustifyContent"
+      [style.text-align]="headerAlignment"
+    >
+      {{ headerLabel }}
+    </div>
+  } @else {
+    @if (showHeader) {
+      <div
+        class="advanced-laps-header"
+        [style.background]="headerBackgroundColor"
+        [style.font-family]="headerFontFamily || null"
+        [style.font-size.px]="headerFontSize"
+        [style.color]="headerTextColor"
+        [style.justify-content]="headerJustifyContent"
+        [style.text-align]="headerAlignment"
+      >
+        {{ headerLabel }}
+      </div>
+    }
+
+    @if (bindingMode !== "all") {
+      <div
+        class="advanced-laps-body"
+        [style.align-items]="valueJustifyContent"
+      >
+        <span
+          class="advanced-laps-value"
+          [style.font-family]="valueFontFamily || null"
+          [style.font-size.px]="valueFontSize"
+          [style.color]="cardTextColor"
+          [style.text-align]="valueAlignment"
+        >
+          {{ formattedTargetValue }}
+        </span>
+      </div>
+    } @else {
+      <div class="advanced-laps-list">
+        @for (driver of allDisplayDrivers; track trackByDriver($index, driver)) {
+          <div
+            class="advanced-laps-row"
+            [class.clickable]="isClickable"
+            (click)="onLapClick($event, driver)"
+          >
+            <span
+              class="driver-lane-badge"
+              [style.background-color]="getLaneColor(driver)"
+            >
+              {{ getDriverLaneLabel(driver) }}
+            </span>
+            <span class="driver-name-text">{{ driver.name }}</span>
+            <span
+              class="driver-lap-value"
+              [style.font-family]="valueFontFamily || null"
+              [style.color]="cardTextColor"
+            >
+              {{ formatLaps(getEffectiveLaps(driver), driver) }}
+            </span>
+          </div>
+        }
+        @if (allDisplayDrivers.length === 0) {
+          <div class="empty-state-message">
+            <span>--</span>
+          </div>
+        }
+      </div>
+    }
+  }
+</div>

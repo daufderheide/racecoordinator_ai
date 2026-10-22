@@ -1,7 +1,10 @@
 <div
+  #widgetWrapper
   class="widget-wrapper"
   [class.edit-mode]="isCustomizing() && !isCountdownGhost"
   [class.selected]="isSelected"
+  [class.same-grid-column]="isSameGridColumn"
+  [class.same-grid-row]="isSameGridRow"
   [class.countdown-ghost]="isCountdownGhost"
   [class.countdown-widget]="isCountdownWidget"
   [class.no-print]="isCountdownWidget"
@@ -10,22 +13,34 @@
   [class.has-custom-bg]="!!widget().backgroundColor"
   [class.scale-auto]="widget().scaleMode === 'auto'"
   [class.scale-fixed]="widget().scaleMode !== 'auto'"
-  [style.display]="!isCountdownActive ? 'none' : null"
+  [class.grid-cell-unselected]="isWidgetInGrid && !isGridSelected"
+  [style.display]="!isCountdownActive || isOverallNoDataRow ? 'none' : null"
   [style.pointer-events]="
     isCountdownGhost || (!isCustomizing() && !isCountdownActive) ? 'none' : null
   "
   [style.left]="
-    (widget().x / (parentComponent().layout?.baseWidth || 1920)) * 100 + '%'
+    gridContentOffset()
+      ? widget().x - gridContentOffset()!.x + 'px'
+      : (widget().x / (parentComponent().layout?.baseWidth || 1920)) * 100 + '%'
   "
   [style.top]="
-    (widget().y / (parentComponent().layout?.baseHeight || 1080)) * 100 + '%'
+    gridContentOffset()
+      ? widget().y - gridContentOffset()!.y + 'px'
+      : (widget().y / (parentComponent().layout?.baseHeight || 1080)) * 100 +
+        '%'
   "
   [style.width]="
-    (widget().width / (parentComponent().layout?.baseWidth || 1920)) * 100 + '%'
+    gridContentOffset()
+      ? widget().width + 'px'
+      : (widget().width / (parentComponent().layout?.baseWidth || 1920)) * 100 +
+        '%'
   "
   [style.height]="
-    (widget().height / (parentComponent().layout?.baseHeight || 1080)) * 100 +
-    '%'
+    gridContentOffset()
+      ? widget().height + 'px'
+      : (widget().height / (parentComponent().layout?.baseHeight || 1080)) *
+          100 +
+        '%'
   "
   [style.z-index]="computedZIndex"
   [style.font-family]="widget().fontFamily || null"
@@ -37,7 +52,12 @@
   window-id="absolute-widget"
 >
   <div class="widget-content">
-    @if (isCustomWidget(widget().widgetType)) {
+    @if (shouldRenderAsLaneColumn(widget())) {
+      <app-raceday-lane-column
+        [parent]="parentComponent()"
+        [widget]="widget()"
+      ></app-raceday-lane-column>
+    } @else if (isCustomWidget(widget().widgetType)) {
       @if (getCustomWidgetComponent(widget().widgetType)) {
         <ng-container
           *ngComponentOutlet="
@@ -247,6 +267,9 @@
         @case ("image") {
           <app-raceday-image [widget]="widget()"></app-raceday-image>
         }
+        @case ("label") {
+          <app-raceday-label [widget]="widget()"></app-raceday-label>
+        }
         @case ("action-start-resume") {
           <app-raceday-action-button
             [widget]="widget()"
@@ -387,14 +410,14 @@
   </div>
 
   @if (isCustomizing() && !isCountdownGhost) {
-    @if (!isGridMirrored) {
+    @if (canModifyWidget) {
       <div class="customizing-widget-overlay">
         <div
           class="widget-header-drag"
           (pointerdown)="onDragStart($event)"
           title="Drag to reposition widget"
         >
-          <span class="widget-label">{{ widget().widgetType }}</span>
+          <span class="widget-label">{{ widgetLabel }}</span>
           <span class="material-icons grab-icon">drag_indicator</span>
         </div>
 
@@ -407,49 +430,81 @@
         </button>
       </div>
 
-      <!-- 8-way resize handles -->
-      <div
-        class="resize-handle n"
-        (pointerdown)="onResizeStart($event, 'n')"
-      ></div>
-      <div
-        class="resize-handle e"
-        (pointerdown)="onResizeStart($event, 'e')"
-      ></div>
-      <div
-        class="resize-handle s"
-        (pointerdown)="onResizeStart($event, 's')"
-      ></div>
-      <div
-        class="resize-handle w"
-        (pointerdown)="onResizeStart($event, 'w')"
-      ></div>
-      <div
-        class="resize-handle ne"
-        (pointerdown)="onResizeStart($event, 'ne')"
-      ></div>
-      <div
-        class="resize-handle nw"
-        (pointerdown)="onResizeStart($event, 'nw')"
-      ></div>
-      <div
-        class="resize-handle se"
-        (pointerdown)="onResizeStart($event, 'se')"
-      ></div>
-      <div
-        class="resize-handle sw"
-        (pointerdown)="onResizeStart($event, 'sw')"
-      ></div>
-    } @else {
+      <!-- Resize handles (adapted for auto-calculated grid dimensions) -->
+      @if (isHeightAutoCalculated) {
+        <div
+          class="resize-handle e"
+          (pointerdown)="onResizeStart($event, 'e')"
+        ></div>
+        <div
+          class="resize-handle w"
+          (pointerdown)="onResizeStart($event, 'w')"
+        ></div>
+      } @else if (isWidthAutoCalculated) {
+        <div
+          class="resize-handle n"
+          (pointerdown)="onResizeStart($event, 'n')"
+        ></div>
+        <div
+          class="resize-handle s"
+          (pointerdown)="onResizeStart($event, 's')"
+        ></div>
+      } @else {
+        <div
+          class="resize-handle n"
+          (pointerdown)="onResizeStart($event, 'n')"
+        ></div>
+        <div
+          class="resize-handle e"
+          (pointerdown)="onResizeStart($event, 'e')"
+        ></div>
+        <div
+          class="resize-handle s"
+          (pointerdown)="onResizeStart($event, 's')"
+        ></div>
+        <div
+          class="resize-handle w"
+          (pointerdown)="onResizeStart($event, 'w')"
+        ></div>
+        <div
+          class="resize-handle ne"
+          (pointerdown)="onResizeStart($event, 'ne')"
+        ></div>
+        <div
+          class="resize-handle nw"
+          (pointerdown)="onResizeStart($event, 'nw')"
+        ></div>
+        <div
+          class="resize-handle se"
+          (pointerdown)="onResizeStart($event, 'se')"
+        ></div>
+        <div
+          class="resize-handle sw"
+          (pointerdown)="onResizeStart($event, 'sw')"
+        ></div>
+      }
+    } @else if (isGridMirrored) {
       <div
         class="mirrored-widget-indicator"
         [title]="'UE_GRID_MASTER_HINT' | translate"
       >
-        <i class="fas fa-link me-1"></i>
+        <span class="material-icons me-1" style="font-size: 14px">link</span>
         <span>{{
-          "UE_GRID_LANE_MIRRORED_BADGE"
+          (widget().customSettings?.["bindingMode"] === "position"
+            ? "UE_GRID_POSITION_MIRRORED_BADGE"
+            : widget().customSettings?.["bindingMode"] === "overallPosition"
+              ? "UE_GRID_OVERALL_POSITION_MIRRORED_BADGE"
+              : widget().customSettings?.["bindingMode"] === "seed"
+                ? "UE_GRID_SEED_MIRRORED_BADGE"
+                : "UE_GRID_LANE_MIRRORED_BADGE"
+          )
             | translate
-              : { index: (widget().customSettings?.["gridLane"] || 0) + 1 }
+              : {
+                  index:
+                    (widget().customSettings?.["gridLane"] ??
+                      widget().customSettings?.["targetIndex"] ??
+                      0) + 1,
+                }
         }}</span>
       </div>
     }

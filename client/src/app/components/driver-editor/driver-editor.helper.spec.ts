@@ -62,6 +62,10 @@ describe("driver-editor.helper", () => {
         key: "fuelAudio",
         defaultUrl: "default_fuel_level",
       });
+      expect(getAudioSlotInfo("driftLap")).toEqual({
+        key: "driftLapAudio",
+        defaultUrl: "default_beep",
+      });
     });
   });
 
@@ -86,6 +90,7 @@ describe("driver-editor.helper", () => {
       expect(getAudioSlotFallbackName("newHeatLeader")).toBe("New Heat Leader");
       expect(getAudioSlotFallbackName("pitIn")).toBe("Pit In");
       expect(getAudioSlotFallbackName("fuel")).toBe("Default Fuel Level");
+      expect(getAudioSlotFallbackName("driftLap")).toBe("Lap Beep");
     });
   });
 
@@ -95,7 +100,9 @@ describe("driver-editor.helper", () => {
       expect(mapSoundType("none")).toBe("none");
       expect(mapSoundType("audio_set")).toBe("audio_set");
       expect(mapSoundType("preset")).toBe("preset");
+      expect(mapSoundType("preset", "tts")).toBe("preset");
       expect(mapSoundType(undefined, "audio_set")).toBe("audio_set");
+      expect(mapSoundType(undefined, "tts")).toBe("tts");
       expect(mapSoundType(undefined)).toBe("preset");
     });
   });

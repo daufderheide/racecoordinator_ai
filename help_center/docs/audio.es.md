@@ -164,6 +164,7 @@ Las siguientes tablas detallan todos los eventos de audio en Race Coordinator AI
 | **Sonido de Entrada a Boxes** | Se reproduce cuando el coche entra en el carril de boxes o zona de repostaje. | `default_pit_in` | **Aviso de Voz** | `urgent` (Peso 4) | `lane-view`: Suena en Pantalla Principal y en el Puesto de Piloto de ese carril/piloto. |
 | **Sonidos de Nivel de Combustible** | Se reproduce cuando el nivel de combustible baja al umbral de advertencia, crítico o vacío. | `default_fuel_level` (Conjunto de Audio) | **Aviso de Voz** | `urgent` (Peso 4) | `lane-view`: Suena en Pantalla Principal y en el Puesto de Piloto de ese carril/piloto. |
 | **Sonido de Salida en Falso** | Se reproduce cuando se detecta una salida en falso o infracción en la línea de salida. | `default_penalty` | **Aviso de Voz** | `urgent` (Peso 4) | `lane-view`: Suena en Pantalla Principal y en el Puesto de Piloto de ese carril/piloto. |
+| **Sonido de vuelta de derrape** | Se reproduce cuando el piloto completa una vuelta derrapando. | TTS (`Drift lap for {driver.nickname}`) | **Aviso de Voz** | `urgent` (Peso 4) | `lane-view`: Suena en Pantalla Principal y en el Puesto de Piloto de ese carril/piloto. |
 
 ### Eventos de Audio de Tema (Configurados en el Gestor de Temas)
 
@@ -180,7 +181,6 @@ Las siguientes tablas detallan todos los eventos de audio en Race Coordinator AI
 | **Segundos Restantes de Avance Automático** | `audio.auto_advance` | **Aviso de Voz** / Conjunto de Audio (Predeterminado: TTS) | `normal` (Peso 2) | `timer`: Suena en Pantalla Principal (si hay widget de temporizador) y en todos los Puestos de Piloto. |
 | **Carrera Terminada** | `audio.race_over` | **Aviso de Voz** | `urgent` (Peso 4) | `flag`: Suena en Pantalla Principal (si hay widget de bandera) y en todos los Puestos de Piloto. |
 | **Tiempo Mínimo de Vuelta** | `audio.min_lap_time` | **Aviso de Voz** | `urgent` (Peso 4) | `lane-view`: Suena en Pantalla Principal y en el Puesto de Piloto de ese carril/piloto. |
-| **Vuelta de Drift** | `audio.drift_lap` | **Aviso de Voz** | `urgent` (Peso 4) | `lane-view`: Suena en Pantalla Principal y en el Puesto de Piloto de ese carril/piloto. |
 
 ---
 
@@ -218,6 +218,6 @@ Al previsualizar un Conjunto de Audio en el Gestor de Activos o en el Selector d
 | Ubicación | Qué se puede configurar |
 | :--- | :--- |
 | **Editor de Interfaz -> Ajustes de Audio** | Volumen maestro, tiempo límite de cola urgente, espaciado de avisos, voz TTS, velocidad, tono, volumen TTS y botón de prueba. |
-| **Editor de Temas** | Sonidos globales: cuenta atrás, semáforo verde, bandera amarilla, tiempo restante, mitad de manga, fin de manga, fin de carrera, tiempo mínimo y vuelta de drift. |
-| **Editor de Pilotos** | Sonidos específicos del piloto: Sonido de Vuelta, Sonido de Mejor Vuelta Personal, Sonido de Mejor Vuelta de Carrera, Sonido de Mejor Vuelta de Carril de Carrera, Sonido de Mejor Vuelta de Manga, Sonido de nuevo líder de carrera, Sonido de nuevo líder de manga, Sonido de Récord de Vuelta General, Sonido de Récord de Vuelta de Carril General, Sonido de Entrada a Boxes, Sonidos de Nivel de Combustible y Sonido de Salida en Falso. |
+| **Editor de Temas** | Sonidos globales: cuenta atrás, semáforo verde, bandera amarilla, tiempo restante, mitad de manga, fin de manga, fin de carrera y tiempo mínimo. |
+| **Editor de Pilotos** | Sonidos específicos del piloto: Sonido de Vuelta, Sonido de Mejor Vuelta Personal, Sonido de Mejor Vuelta de Carrera, Sonido de Mejor Vuelta de Carril de Carrera, Sonido de Mejor Vuelta de Manga, Sonido de nuevo líder de carrera, Sonido de nuevo líder de manga, Sonido de Récord de Vuelta General, Sonido de Récord de Vuelta de Carril General, Sonido de Entrada a Boxes, Sonidos de Nivel de Combustible, Sonido de Salida en Falso y Sonido de vuelta de derrape. |
 | **Gestor de Activos** | Subida y administración de archivos WAV, MP3 y OGG, y configuración de conjuntos de audio con valores de activación según el contexto (segundos, vueltas o porcentaje), con previsualización inmediata. |

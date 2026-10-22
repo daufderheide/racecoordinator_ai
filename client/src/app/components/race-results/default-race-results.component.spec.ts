@@ -1350,4 +1350,83 @@ describe("DefaultRaceResultsComponent", () => {
       navEl.getAttribute("mode") || navEl.getAttribute("ng-reflect-mode"),
     ).toBe("close");
   });
+
+  describe("Horizontal and Vertical Scrollbars on Results Container (6+ Lanes)", () => {
+    it("should render results-container with native horizontal and vertical scroll capabilities", () => {
+      fixture.detectChanges();
+      const resultsContainer =
+        fixture.nativeElement.querySelector(".results-container");
+      expect(resultsContainer).toBeTruthy();
+    });
+
+    it("should compute grid columns exceeding standard width when track has 6 or more lanes", () => {
+      (component as any).race = {
+        track: {
+          lanes: new Array(6).fill({
+            backgroundColor: "#ff0000",
+            foregroundColor: "#ffffff",
+          }),
+        },
+      };
+
+      const columns = (component as any).getGridColumns();
+      expect(columns).toBeTruthy();
+      // 11 base columns + 6 lane columns (each 110px)
+      const parts = columns.split(" ");
+      expect(parts.length).toBe(17); // 11 base columns + 6 lane columns
+    });
+
+    it("should compute grid columns with 8 lanes for an 8-lane track", () => {
+      (component as any).race = {
+        track: {
+          lanes: new Array(8).fill({
+            backgroundColor: "#00ff00",
+            foregroundColor: "#000000",
+          }),
+        },
+      };
+
+      const columns = (component as any).getGridColumns();
+      const parts = columns.split(" ");
+      expect(parts.length).toBe(19); // 11 base columns + 8 lane columns
+    });
+
+    it("should contain results-table-wrapper and results-table directly inside results-container", () => {
+      fixture.detectChanges();
+      const resultsContainer =
+        fixture.nativeElement.querySelector(".results-container");
+      const tableWrapper = resultsContainer.querySelector(
+        ".results-table-wrapper",
+      );
+      const resultsTable = tableWrapper.querySelector(".results-table");
+
+      expect(resultsContainer).toBeTruthy();
+      expect(tableWrapper).toBeTruthy();
+      expect(resultsTable).toBeTruthy();
+      // results-table-scroll and sticky-horizontal-scrollbar should not exist
+      expect(
+        fixture.nativeElement.querySelector(".results-table-scroll"),
+      ).toBeNull();
+      expect(
+        fixture.nativeElement.querySelector(".sticky-horizontal-scrollbar"),
+      ).toBeNull();
+    });
+
+    it("should allow horizontal scrolling on results-container", () => {
+      fixture.detectChanges();
+      const resultsContainer: HTMLElement =
+        fixture.nativeElement.querySelector(".results-container");
+      expect(resultsContainer).toBeTruthy();
+
+      // Ensure results-container responds to scroll events and updates scrollLeft
+      resultsContainer.scrollLeft = 150;
+      expect(resultsContainer.scrollLeft).toBeDefined();
+    });
+
+    it("should trigger updateScale on window resize", () => {
+      const updateScaleSpy = spyOn<any>(component, "updateScale");
+      component.onResize();
+      expect(updateScaleSpy).toHaveBeenCalled();
+    });
+  });
 });

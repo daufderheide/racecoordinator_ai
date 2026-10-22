@@ -1,5 +1,6 @@
 import { forkJoin, of } from "rxjs";
 import { catchError } from "rxjs/operators";
+import { LaneViewMigrationHelper } from "@app/components/raceday/utils/lane-view-migration.helper";
 import { AssetType, normalizeAssetType } from "@app/models/asset";
 import { CustomUI } from "@app/models/custom-ui";
 import { Settings } from "@app/models/settings";
@@ -15,7 +16,12 @@ import {
   isLegacyPracticeUiName,
   isLegacyRacedayUiName,
 } from "./ui-editor-crud.helper";
+import { sortCustomUisForDisplay } from "./ui-editor-custom-ui.helper";
+import { restoreOpenLayoutOnEntry } from "./ui-editor-expander.helper";
+import { handleUiEditorHelpStep } from "./ui-editor-help.helper";
+import { preMigrationLayoutCache } from "./ui-editor-io.helper";
 import { cloneSettings } from "./ui-editor-state.utils";
+import { sortThemesForDisplay } from "./ui-editor-theme.helper";
 
 export interface LoadedEditorData {
   filteredAssets: any[];
@@ -123,7 +129,10 @@ export function processLoadedEditorData(
   }
 
   const customUIs: CustomUI[] = (result.customUIs as CustomUI[]) || [];
-  ensureDefaultCustomUis(customUIs, editingSettings);
+  if (customUIs.length === 0) {
+    ensureDefaultCustomUis(customUIs, editingSettings);
+  }
+  normalizeLoadedCustomUis(customUIs, editingSettings);
 
   const initialState: UIEditorState = {
     settings: editingSettings,
@@ -141,6 +150,108 @@ export function processLoadedEditorData(
     maxTrackLanes,
     initialState,
   };
+}
+
+export function normalizeLoadedCustomUis(
+  customUIs: CustomUI[],
+  editingSettings?: Settings,
+): void {
+  const hasFuelUi = customUIs.some(
+    (u: any) => u.entity_id === "default_fuel_ui_layout_rc_ai",
+  );
+  if (!hasFuelUi) {
+    const legacyFuelUi = customUIs.find(
+      (u: any) =>
+        u.entity_id === "2" && (u.is_default || isLegacyFuelUiName(u.name)),
+    );
+    if (legacyFuelUi) {
+      legacyFuelUi.entity_id = "default_fuel_ui_layout_rc_ai";
+      (legacyFuelUi as any)._id = "default_fuel_ui_layout_rc_ai";
+      if (isLegacyFuelUiName(legacyFuelUi.name)) {
+        legacyFuelUi.name = "RaceCoordinator AI (Fuel)";
+      }
+    }
+  }
+
+  for (const ui of customUIs) {
+    if (
+      ui.entity_id === "default_ui_layout_rc_ai" &&
+      isLegacyRacedayUiName(ui.name)
+    ) {
+      ui.name = "RaceCoordinator AI";
+    } else if (
+      ui.entity_id === "practice_ui_layout_rc_ai" &&
+      isLegacyPracticeUiName(ui.name)
+    ) {
+      ui.name = "RaceCoordinator AI (Practice)";
+    } else if (
+      ui.entity_id === "default_fuel_ui_layout_rc_ai" &&
+      isLegacyFuelUiName(ui.name)
+    ) {
+      ui.name = "RaceCoordinator AI (Fuel)";
+    }
+
+    let layout: any;
+    try {
+      if (ui.layoutJson) {
+        layout = JSON.parse(ui.layoutJson);
+      }
+    } catch {
+      // ignore
+    }
+
+    if (LaneViewMigrationHelper.hasLegacyLaneView(layout, ui.name)) {
+      const isPractice =
+        ui.entity_id === "practice_ui_layout_rc_ai" ||
+        ui.name?.toLowerCase().includes("practice");
+      let columns: string[] | undefined;
+      let columnLayouts: any;
+      let columnVisibility: any;
+      let columnWidths: any;
+      let columnAnchors: any;
+      try {
+        if (ui.columnsJson) columns = JSON.parse(ui.columnsJson);
+        if (ui.columnLayoutsJson)
+          columnLayouts = JSON.parse(ui.columnLayoutsJson);
+        if (ui.columnVisibilityJson)
+          columnVisibility = JSON.parse(ui.columnVisibilityJson);
+        if (ui.columnWidthsJson) columnWidths = JSON.parse(ui.columnWidthsJson);
+        if (ui.columnAnchorsJson)
+          columnAnchors = JSON.parse(ui.columnAnchorsJson);
+      } catch {
+        // ignore
+      }
+
+      const migration = LaneViewMigrationHelper.convertLegacyLaneViewLayout({
+        layout,
+        columns,
+        columnLayouts,
+        columnVisibility,
+        columnWidths,
+        columnAnchors,
+        isPractice,
+      });
+      if (migration.migrated) {
+        (ui as any)._wasMigrated = true;
+        (ui as any)._preMigrationLayout = layout;
+        if (ui.entity_id) {
+          preMigrationLayoutCache.set(
+            ui.entity_id,
+            JSON.parse(JSON.stringify(layout)),
+          );
+        }
+        ui.layoutJson = JSON.stringify(migration.layout);
+        if (ui.entity_id === "default_ui_layout_rc_ai" && editingSettings) {
+          editingSettings.racedayLayout = migration.layout;
+        } else if (
+          ui.entity_id === "practice_ui_layout_rc_ai" &&
+          editingSettings
+        ) {
+          editingSettings.practiceRacedayLayout = migration.layout;
+        }
+      }
+    }
+  }
 }
 
 export function normalizeLoadedThemes(themes: Theme[]): void {
@@ -357,6 +468,7 @@ export function applyLoadedUiEditorData(comp: any, res: any): void {
   comp.editingState = loaded.initialState;
   comp.refreshDisplayProperties();
   comp.undoManager.initialize(comp.editingState);
+  restoreOpenLayoutOnEntry(comp);
   comp.isLoading = false;
   if (!comp.isDestroyed) comp.cdr.markForCheck();
 }
@@ -373,13 +485,51 @@ export function handleUiEditorDataLoadError(comp: any, err: any): void {
     comp.undoManager.initialize(comp.editingState);
   }
   comp.refreshDisplayProperties();
+  restoreOpenLayoutOnEntry(comp);
   if (!comp.isDestroyed) comp.cdr.markForCheck();
+}
+
+export function handleUiEditorInit(comp: any): void {
+  comp.loadAvailableVoices();
+  comp.sortAvailableColumns();
+  comp.updateScale();
+  comp.loadExpanderState();
+  comp.loadData();
+  if (
+    comp.customWidgetService &&
+    comp.customWidgetService.getCustomWidgets().length === 0
+  ) {
+    comp.customWidgetService.reloadCustomWidgets().catch(() => {});
+  }
+  comp.raceConnectionService.connect();
+
+  comp.undoManager?.stateCommitted$.subscribe(() =>
+    comp.autoSaveState().catch(() => {}),
+  );
+  comp.translationSubscription = comp.translationService
+    .getTranslationsLoaded()
+    .subscribe((loaded: boolean) => {
+      if (loaded) {
+        comp.sortAvailableColumns();
+        if (!comp.isDestroyed) comp.cdr.markForCheck();
+      }
+    });
+
+  comp.helpSubscription = comp.helpService.currentStep$.subscribe(
+    (step: any) => {
+      if (handleUiEditorHelpStep(step, comp.sectionsExpanded)) {
+        comp.saveExpanderState();
+        comp.cdr.markForCheck();
+      }
+    },
+  );
 }
 
 export function handleUiEditorDestroy(comp: any): void {
   comp.isDestroyed = true;
   if (comp.saveTimeout) clearTimeout(comp.saveTimeout);
   if (comp.autoSaveTimeout) clearTimeout(comp.autoSaveTimeout);
+  comp.activeAutoSavePromise = null;
   comp.raceConnectionService.disconnect();
   comp.dataSubscription?.unsubscribe();
   comp.translationSubscription?.unsubscribe();
@@ -455,4 +605,36 @@ export function handleUiEditorKeyboardShortcut(
       onNudge(dx, dy);
     }
   }
+}
+
+export function resolveBackNavigation(
+  params: any,
+  route: any,
+): { targetUrl: string; queryParams: Record<string, string> } {
+  const p = typeof params === "function" ? params() : params;
+  const from = p?.["from"] || route?.snapshot?.queryParamMap?.get("from");
+  const ret =
+    p?.["returnUrl"] || route?.snapshot?.queryParamMap?.get("returnUrl");
+  return {
+    targetUrl:
+      from === "modify-heats"
+        ? ret || "/default-raceday"
+        : ret || "/raceday-setup",
+    queryParams: from === "modify-heats" ? { modifyHeats: "true" } : {},
+  };
+}
+
+export function refreshUiEditorDisplayProperties(comp: any): void {
+  if (!comp.editingState) return;
+  comp.parsedLayouts?.clear();
+  comp.displayThemes = sortThemesForDisplay(comp.editingState.themes);
+  comp.displayCustomUIs = sortCustomUisForDisplay(
+    comp.editingState.customUIs || comp.customUiService?.getCustomUIs() || [],
+  );
+  comp.displayColumnSlots = buildDisplayColumnSlots(
+    comp.editingSettings?.racedayColumns,
+    comp.availableColumns,
+  );
+  comp.ensureWidgetSelected();
+  comp.cdr.markForCheck();
 }

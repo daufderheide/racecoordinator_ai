@@ -1,4 +1,21 @@
-@if (isCustomWidget(widget().widgetType)) {
+@if (isLaneColumnWidget(widget())) {
+  <app-lane-column-inspector
+    [settings]="widget().customSettings"
+    [widget]="widget()"
+    [availableColumns]="availableColumns()"
+    [disableFontSizes]="widget().scaleMode === 'auto'"
+    [selectedAnchor]="selectedAnchor()"
+    (anchorChange)="onAnchorChange($event)"
+    (change)="onSettingsChange()"
+    (requestReplicate)="requestReplicate.emit()"
+    (replicate)="replicate.emit($event)"
+    (editGrid)="editGrid.emit($event)"
+    (detachGrid)="detachGrid.emit($event)"
+    (deleteGrid)="deleteGrid.emit($event)"
+    (reMirrorGrid)="reMirrorGrid.emit($event)"
+    (bringGridToFront)="bringGridToFront.emit($event)"
+  ></app-lane-column-inspector>
+} @else if (isCustomWidget(widget().widgetType)) {
   <app-custom-widget-inspector
     [widget]="widget()"
     (change)="onSettingsChange($event)"
@@ -47,6 +64,12 @@
         (change)="onSettingsChange()"
       ></app-image-inspector>
     }
+    @case ("label") {
+      <app-label-inspector
+        [settings]="widget().customSettings"
+        (change)="onSettingsChange()"
+      ></app-label-inspector>
+    }
     @case ("lane-view") {
       <app-lane-view-inspector
         [settings]="widget().customSettings"
@@ -65,11 +88,16 @@
         [widget]="widget()"
         [availableColumns]="availableColumns()"
         [disableFontSizes]="widget().scaleMode === 'auto'"
+        [selectedAnchor]="selectedAnchor()"
+        (anchorChange)="onAnchorChange($event)"
         (change)="onSettingsChange()"
         (requestReplicate)="requestReplicate.emit()"
         (replicate)="replicate.emit($event)"
         (editGrid)="editGrid.emit($event)"
         (detachGrid)="detachGrid.emit($event)"
+        (deleteGrid)="deleteGrid.emit($event)"
+        (reMirrorGrid)="reMirrorGrid.emit($event)"
+        (bringGridToFront)="bringGridToFront.emit($event)"
       ></app-lane-column-inspector>
     }
     @case ("on-deck") {

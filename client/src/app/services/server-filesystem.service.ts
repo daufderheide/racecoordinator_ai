@@ -8,6 +8,7 @@ export interface ServerDirectoriesResponse {
   customUiDirectory?: string;
   customWidgetDirectory?: string;
   isLocalhost: boolean;
+  failed?: boolean;
 }
 
 export interface ChooseFolderResult {
@@ -52,8 +53,8 @@ export class ServerFileSystemService {
         ),
       );
     } catch (err) {
-      this.logger.warn("Failed to get server directories", err);
-      return { isLocalhost: false };
+      this.logger?.warn?.("Failed to get server directories", err);
+      return { isLocalhost: false, failed: true };
     }
   }
 
@@ -131,6 +132,20 @@ export class ServerFileSystemService {
       path || "",
     )}&file=${encodeURIComponent(file)}`;
     return firstValueFrom(this.http.get(url, { responseType: "text" }));
+  }
+
+  async hasWidgetFile(path: string, file: string): Promise<boolean> {
+    const url = `${this.baseUrl}/api/filesystem/widgets/has-file?path=${encodeURIComponent(
+      path || "",
+    )}&file=${encodeURIComponent(file)}`;
+    try {
+      const resp = await firstValueFrom(
+        this.http.get<{ exists?: boolean }>(url),
+      );
+      return !!resp?.exists;
+    } catch {
+      return false;
+    }
   }
 
   async writeWidgetFile(

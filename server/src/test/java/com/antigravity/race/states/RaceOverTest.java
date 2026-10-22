@@ -2,6 +2,7 @@ package com.antigravity.race.states;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.antigravity.models.HeatScoring;
@@ -130,5 +131,27 @@ public class RaceOverTest {
 
     raceOver.enter(race);
     assertEquals(RaceFlag.CHECKERED, dhd.getFlag());
+  }
+
+  @Test
+  public void testEnter_AppliesEndHeatAutoSegments_WhenNoneAutoSegments() {
+    com.antigravity.race.HeatExecutionManager em =
+        mock(com.antigravity.race.HeatExecutionManager.class);
+    when(race.getHeatExecutionManager()).thenReturn(em);
+    when(race.getRaceModel())
+        .thenReturn(
+            new com.antigravity.models.Race.Builder()
+                .withHeatScoring(
+                    new HeatScoring(
+                        HeatScoring.FinishMethod.Timed,
+                        60L,
+                        HeatScoring.HeatRanking.LAP_COUNT,
+                        HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME,
+                        HeatScoring.AllowFinish.NoneAutoSegments))
+                .build());
+
+    raceOver.enter(race);
+
+    verify(em).applyEndHeatAutoSegments();
   }
 }

@@ -26,6 +26,7 @@ public class TemplateVariableParityTest {
             "getGapLeader",
             "getGapPosition",
             "getLaneLaps",
+            "getLaneFastestLaps",
             "getPositionPoints",
             "getOverallBonusPoints",
             "getHeatPositionPoints",
@@ -102,7 +103,9 @@ public class TemplateVariableParityTest {
             "getRaceModel",
             "getDrivers",
             "getHeats",
-            "getLaneCount");
+            "getLaneCount",
+            "getCustomRotationAssetName",
+            "getCustomRotationsDisplay");
 
     for (String getterName : requiredGetters) {
       Method m = clazz.getMethod(getterName);
@@ -124,6 +127,33 @@ public class TemplateVariableParityTest {
   }
 
   @Test
+  public void testFastestLapsSummaryExposesUnifiedProperties() throws Exception {
+    Class<?> clazz = FastestLapsSummary.class;
+
+    List<String> requiredGetters =
+        Arrays.asList(
+            "getRecordLapNames",
+            "getRecordLapTimes",
+            "getRecordLapDates",
+            "getOverallRecordLapName",
+            "getOverallRecordLapTime",
+            "getOverallRecordLapDate",
+            "getBestLapNames",
+            "getBestLapTimes");
+
+    for (String getterName : requiredGetters) {
+      Method m = clazz.getMethod(getterName);
+      assertNotNull("Expected FastestLapsSummary to have method: " + getterName, m);
+    }
+
+    assertNotNull(clazz.getMethod("getRecordLapName", int.class));
+    assertNotNull(clazz.getMethod("getRecordLapTime", int.class));
+    assertNotNull(clazz.getMethod("getRecordLapDate", int.class));
+    assertNotNull(clazz.getMethod("getBestLapName", int.class));
+    assertNotNull(clazz.getMethod("getBestLapTime", int.class));
+  }
+
+  @Test
   public void testVariableSyntaxEquivalence() {
     List<String> expressions =
         Arrays.asList(
@@ -136,6 +166,15 @@ public class TemplateVariableParityTest {
             "driver.gapLeader",
             "driver.gapPosition",
             "driver.laneLaps[0]",
+            "driver.laneFastestLaps[0]",
+            "fastestLaps.overallRecordLapName",
+            "fastestLaps.overallRecordLapTime",
+            "fastestLaps.overallRecordLapDate",
+            "fastestLaps.recordLapNames[0]",
+            "fastestLaps.recordLapTimes[0]",
+            "fastestLaps.recordLapDates[0]",
+            "fastestLaps.bestLapNames[0]",
+            "fastestLaps.bestLapTimes[0]",
             "heatDriver.lane",
             "heatDriver.adjustedLapCount",
             "heatDriver.totalTime",

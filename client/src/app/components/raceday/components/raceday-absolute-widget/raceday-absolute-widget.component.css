@@ -3,6 +3,11 @@
   box-sizing: border-box;
 }
 
+.widget-wrapper.grid-animating {
+  will-change: transform;
+  z-index: 1005 !important;
+}
+
 .widget-wrapper:has(.custom-select-container.open) {
   z-index: 9999 !important;
 }
@@ -10,6 +15,16 @@
 .widget-wrapper.edit-mode {
   outline: 1px dashed rgba(59, 130, 246, 0.4);
   background-color: rgba(59, 130, 246, 0.02);
+}
+
+.widget-wrapper.edit-mode.grid-cell-unselected {
+  outline: 1px dashed rgba(59, 130, 246, 0.25);
+  cursor: pointer;
+}
+
+.widget-wrapper.edit-mode.grid-cell-unselected:hover {
+  outline: 1.5px dashed rgba(56, 189, 248, 0.6);
+  background-color: rgba(56, 189, 248, 0.05);
 }
 
 .widget-wrapper.countdown-ghost {
@@ -21,6 +36,7 @@
 .widget-wrapper.countdown-widget {
   background: transparent !important;
   background-color: transparent !important;
+  z-index: 100000 !important;
 }
 
 @media print {
@@ -163,13 +179,40 @@
 .widget-wrapper:has(.custom-select-container.open),
 .widget-content:has(.custom-select-container.open) {
   overflow: visible !important;
-  z-index: 1000 !important;
+}
+
+.widget-wrapper:has(app-custom-select.open),
+.widget-content:has(app-custom-select.open),
+.widget-wrapper:has(.custom-select-container.open),
+.widget-content:has(.custom-select-container.open) {
+  z-index: 9999 !important;
+}
+
+.widget-wrapper:has(app-raceday-menu-bar):not(.edit-mode) {
+  z-index: 99999 !important;
 }
 
 /* Selected state outline */
 .widget-wrapper.edit-mode.selected {
   outline: 2px solid #38bdf8 !important;
-  box-shadow: 0 0 12px rgba(56, 189, 248, 0.5) !important;
+  box-shadow: 0 0 14px rgba(56, 189, 248, 0.6) !important;
+  z-index: 1050 !important;
+}
+
+/* Grid Crosshair Track Highlights */
+.widget-wrapper.edit-mode.same-grid-column:not(.selected) {
+  outline: 1.5px dashed rgba(56, 189, 248, 0.5) !important;
+  background-color: rgba(56, 189, 248, 0.05) !important;
+}
+
+.widget-wrapper.edit-mode.same-grid-row:not(.selected) {
+  outline: 1.5px dashed rgba(168, 85, 247, 0.5) !important;
+  background-color: rgba(168, 85, 247, 0.05) !important;
+}
+
+.widget-wrapper.edit-mode.same-grid-column.same-grid-row:not(.selected) {
+  outline: 1.5px dashed rgba(56, 189, 248, 0.7) !important;
+  background-color: rgba(56, 189, 248, 0.08) !important;
 }
 
 /* Custom font inheritance */

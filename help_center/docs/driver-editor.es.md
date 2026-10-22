@@ -9,7 +9,7 @@ El Editor de Pilotos integra la selección y edición de pilotos en una interfaz
 - **Selector de Pilotos**: Ubicado en el encabezado superior junto al título, este menú desplegable enumera todos los pilotos existentes y permite cambiar rápidamente entre ellos.
 - **Modo de Solo Lectura**: De forma predeterminada, el editor muestra los detalles en modo de solo lectura. Los campos están bloqueados para evitar cambios accidentales, permitiendo probar los sonidos de audio.
 - **Modo de Edición**: Al hacer clic en el icono **Editar** (lápiz) de la barra de herramientas, se desbloquean los campos. Durante la edición, el selector de pilotos se bloquea para evitar perder cambios no guardados.
-- **Guardar Cambios**: Al hacer clic en el icono **Terminar Edición** (ojo / listo), se validan los cambios, se guardan en el servidor y el editor vuelve al modo de solo lectura.
+- **Guardar Cambios**: Al hacer clic en el icono **Terminar Edición** (marca de verificación), se validan los cambios, se guardan en el servidor y el editor vuelve al modo de solo lectura.
 - **Descartar Cambios**: Si intenta salir con cambios sin guardar, el cuadro de diálogo le pedirá confirmación. Al descartar, todos los cambios volverán a la versión guardada anteriormente.
 
 ## Acciones de la Barra de Herramientas
@@ -19,8 +19,9 @@ La barra de herramientas superior proporciona las siguientes acciones:
 - **Volver**: Regresa a la vista anterior o a la Configuración del Día de Carrera.
 - **Añadir Piloto (+)**: Crea una nueva plantilla de piloto y entra en el modo de edición.
 - **Copiar Piloto**: Duplica el perfil del piloto seleccionado en una nueva plantilla.
-- **Editar / Terminar Edición**: Alterna entre el modo de solo lectura y el modo de edición.
+- **Editar / Terminar Edición**: Alterna entre el modo de solo lectura y el modo de edición (atajo de teclado: Cmd/Ctrl+E).
 - **Importar Pilotos**: Abre el cuadro de diálogo para importar perfiles de pilotos, avatares y configuraciones de audio desde archivos externos.
+- **Exportar Pilotos**: Abre el cuadro de diálogo para exportar pilotos y sus archivos asociados de audio y avatar a un archivo ZIP descargable en formato CSV, Excel o JSON.
 - **Expandir / Contraer todo**: Expande o contrae todas las secciones de acordeón a la vez.
 - **Eliminar Piloto**: Elimina el perfil del piloto seleccionado tras su confirmación.
 - **Ayuda (?)**: Abre la guía interactiva que explica cada sección del editor.
@@ -104,3 +105,21 @@ Si un piloto en el archivo coincide con un nombre o apodo existente en la base d
 - **Omitir**: Descarta la fila en conflicto.
 
 Las resoluciones pueden configurarse individualmente por fila, aplicarse en masa o resolverse editando el nombre y apodo directamente en la tabla.
+
+## Exportar Pilotos
+
+Race Coordinator AI le permite exportar sus pilotos a un paquete ZIP portátil que puede importarse en cualquier otra computadora con Race Coordinator AI o usarse para edición masiva en hojas de cálculo.
+
+### Selección del Formato de Exportación
+
+Al hacer clic en **Exportar Pilotos** en la barra de herramientas, puede elegir entre tres formatos:
+- **CSV (`.csv`)**: Formato separado por comas, idóneo para hojas de cálculo o editores de texto.
+- **Excel (`.xlsx`)**: Formato de libro de Microsoft Excel con encabezados con estilo y filas de datos formateadas.
+- **JSON (`.json`)**: Matriz JSON formateada con objetos completos de perfil de piloto y configuración de audio.
+
+### Empaquetado de Audio y Archivos Multimedia
+
+- Todos los archivos de audio y avatares personalizados referenciados por los pilotos exportados se recopilan automáticamente y se empaquetan en el archivo ZIP junto con el archivo de datos (`drivers.csv`, `drivers.xlsx` o `drivers.json`).
+- **Deduplicación**: Si dos o más pilotos comparten el mismo efecto de sonido o avatar, el archivo se empaqueta **solo una vez** en el archivo ZIP. Las referencias relativas en el archivo de datos apuntan al nombre de recurso compartido.
+- **Valores predeterminados y TTS preservados**: Los sonidos preestablecidos del sistema (ej. `default_beep`), las ranuras silenciadas y los avisos de texto a voz (TTS) se conservan en el archivo exportado.
+- **Listo para reimportar**: El archivo ZIP resultante está inmediatamente listo para arrastrarse y soltarse en el cuadro de diálogo **Importar Pilotos** en cualquier equipo.

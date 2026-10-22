@@ -16,6 +16,6 @@ I temi consentono di personalizzare gli effetti sonori e gli annunci vocali per 
 - **Metà manche:** Notifica al raggiungimento della metà della manche — sia per le gare a tempo (metà durata trascorsa) sia per le gare a giri (quando il leader completa la metà dei giri previsti) (`audio.seconds_left.halfway`).
 - **Manche e gara concluse:** Segnali acustici di fine manche (`audio.heat_over`) o fine gara (`audio.race_over`).
 - **Secondi rimanenti avanzamento automatico:** Annunci del conto alla rovescia per il tempo rimanente prima dell'avanzamento automatico alla manche successiva (`audio.auto_advance`).
-- **Avvisi di infrazione:** Toni per tempo sul giro inferiore al minimo (`audio.min_lap_time`) o giro drift (`audio.drift_lap`).
+- **Avvisi di infrazione:** Toni per tempo sul giro inferiore al minimo (`audio.min_lap_time`).
 
 Per maggiori dettagli su attenuazione automatica, priorità e rilevanza multischermo, consultare la documentazione del [Sistema Audio](audio.md).

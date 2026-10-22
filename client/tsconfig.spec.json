@@ -19,7 +19,9 @@
     "src/**/*.e2e.ts",
     "src/**/*_helper.ts",
     "src/**/*.d.ts",
-    "playwright.config.ts"
+    "playwright.config.ts",
+    "../custom_widgets/**/*.ts",
+    "../custom_widgets/**/*.spec.ts"
   ],
   "exclude": []
 }

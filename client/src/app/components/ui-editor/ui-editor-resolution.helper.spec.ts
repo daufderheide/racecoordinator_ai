@@ -13,9 +13,13 @@ import {
   getLayoutAspectRatioOptions,
   getLayoutScaleMode,
   getLayoutZoomHelper,
+  LayoutZoomController,
+  loadLayoutZoomFromStorage,
   persistLayoutState,
+  saveLayoutZoomToStorage,
   scaleLayoutDimensions,
   setLayoutZoomHelper,
+  UI_EDITOR_ZOOM_STORAGE_KEY,
 } from "./ui-editor-resolution.helper";
 
 describe("ui-editor-resolution.helper", () => {
@@ -111,9 +115,9 @@ describe("ui-editor-resolution.helper", () => {
     expect(portraitOpts.some((o) => o.ratio === "9:16")).toBeTrue();
   });
 
-  it("should determine layout aspect ratio from explicit field or default to current", () => {
-    expect(getLayoutAspectRatio(undefined)).toBe("current");
-    expect(getLayoutAspectRatio({ widgets: [] })).toBe("current");
+  it("should determine layout aspect ratio from explicit field or default to 16:9", () => {
+    expect(getLayoutAspectRatio(undefined)).toBe("16:9");
+    expect(getLayoutAspectRatio({ widgets: [] })).toBe("16:9");
     expect(getLayoutAspectRatio({ widgets: [], aspectRatio: "4:3" })).toBe(
       "4:3",
     );
@@ -124,7 +128,7 @@ describe("ui-editor-resolution.helper", () => {
       "16:9",
     );
     expect(getLayoutAspectRatio({ widgets: [], aspectRatio: "current" })).toBe(
-      "current",
+      "16:9",
     );
   });
 
@@ -274,8 +278,8 @@ describe("ui-editor-resolution.helper", () => {
     const vh = getCanvasViewportMaxHeightHelper();
     expect(vh).toBeGreaterThanOrEqual(500);
 
-    // Inspector height clamped between 400 and viewportMaxHeight
-    expect(getInspectorHeightHelper(300, 700)).toBe(400);
+    // Inspector height clamped between 250 and viewportMaxHeight
+    expect(getInspectorHeightHelper(200, 700)).toBe(250);
     expect(getInspectorHeightHelper(600, 700)).toBe(600);
     expect(getInspectorHeightHelper(900, 700)).toBe(700);
   });
@@ -303,5 +307,154 @@ describe("ui-editor-resolution.helper", () => {
 
     const height = getComponentPreviewContainerHeight(comp);
     expect(height).toBe(540);
+  });
+
+  describe("layout zoom storage & LayoutZoomController", () => {
+    beforeEach(() => {
+      localStorage.clear();
+    });
+
+    afterEach(() => {
+      localStorage.clear();
+    });
+
+    it("should save zoom map to localStorage and load it back", () => {
+      const zoomMap = new Map<string, number>();
+      zoomMap.set("layout_1", 150);
+      zoomMap.set("layout_2", 80);
+
+      saveLayoutZoomToStorage(zoomMap);
+
+      const savedJson = localStorage.getItem(UI_EDITOR_ZOOM_STORAGE_KEY);
+      expect(savedJson).toBe(JSON.stringify({ layout_1: 150, layout_2: 80 }));
+
+      const loadedMap = loadLayoutZoomFromStorage();
+      expect(loadedMap.get("layout_1")).toBe(150);
+      expect(loadedMap.get("layout_2")).toBe(80);
+    });
+
+    it("should clamp loaded zoom values between 75 and 500 and ignore non-numeric entries", () => {
+      localStorage.setItem(
+        UI_EDITOR_ZOOM_STORAGE_KEY,
+        JSON.stringify({
+          normal: 120,
+          tooHigh: 700,
+          tooLow: 30,
+          invalidStr: "not-a-number",
+          nanVal: NaN,
+        }),
+      );
+
+      const loaded = loadLayoutZoomFromStorage();
+      expect(loaded.get("normal")).toBe(120);
+      expect(loaded.get("tooHigh")).toBe(500);
+      expect(loaded.get("tooLow")).toBe(75);
+      expect(loaded.has("invalidStr")).toBeFalse();
+    });
+
+    it("should handle corrupt JSON and storage errors gracefully", () => {
+      const mockLogger = { error: jasmine.createSpy("error") };
+      localStorage.setItem(UI_EDITOR_ZOOM_STORAGE_KEY, "{corrupt json");
+
+      const loaded = loadLayoutZoomFromStorage(mockLogger);
+      expect(loaded.size).toBe(0);
+      expect(mockLogger.error).toHaveBeenCalled();
+
+      // Test save error handling
+      spyOn(localStorage, "setItem").and.throwError("QuotaExceeded");
+      const zoomMap = new Map<string, number>([["layout_1", 100]]);
+      expect(() => saveLayoutZoomToStorage(zoomMap, mockLogger)).not.toThrow();
+      expect(mockLogger.error).toHaveBeenCalled();
+    });
+
+    it("should operate LayoutZoomController with persistence and change detection", () => {
+      localStorage.setItem(
+        UI_EDITOR_ZOOM_STORAGE_KEY,
+        JSON.stringify({ ui_test: 140 }),
+      );
+
+      let controllerInstance: LayoutZoomController;
+      const mockComp = {
+        activeCustomUiId: "ui_test",
+        isDestroyed: false,
+        cdr: { markForCheck: jasmine.createSpy("markForCheck") },
+        getPreviewContainerHeight: () => 600,
+        getLayout: () => ({ baseWidth: 1920, baseHeight: 1080 }),
+        currentSelectedWidget: null,
+        getLayoutZoom: (u?: any) => controllerInstance.getZoom(u),
+      };
+
+      controllerInstance = new LayoutZoomController(mockComp);
+      const testUi: CustomUI = {
+        _id: "ui_test",
+        entity_id: "ui_test",
+        name: "Test UI",
+        is_default: false,
+        layoutJson: "{}",
+      };
+
+      // Restored from localStorage
+      expect(controllerInstance.getZoom(testUi)).toBe(140);
+
+      // setZoom
+      controllerInstance.setZoom(175, testUi);
+      expect(controllerInstance.getZoom(testUi)).toBe(175);
+      expect(mockComp.cdr.markForCheck).toHaveBeenCalled();
+      expect(
+        JSON.parse(localStorage.getItem(UI_EDITOR_ZOOM_STORAGE_KEY) || "{}")
+          .ui_test,
+      ).toBe(175);
+
+      // step zoom
+      controllerInstance.step(15, testUi);
+      expect(controllerInstance.getZoom(testUi)).toBe(190);
+
+      // reset zoom
+      controllerInstance.reset(testUi);
+      expect(controllerInstance.getZoom(testUi)).toBe(100);
+
+      // onInput
+      controllerInstance.onInput(
+        { target: { value: "220" } } as unknown as Event,
+        testUi,
+      );
+      expect(controllerInstance.getZoom(testUi)).toBe(220);
+
+      // Inspector height and preview scale
+      expect(
+        controllerInstance.getInspectorHeight(testUi),
+      ).toBeGreaterThanOrEqual(250);
+      expect(controllerInstance.getPreviewScale(testUi)).toContain("scale(");
+    });
+
+    it("should handle default fallback and null/primitive JSON values gracefully", () => {
+      // Primitive JSON (number)
+      localStorage.setItem(UI_EDITOR_ZOOM_STORAGE_KEY, "12345");
+      const loadedPrimitive = loadLayoutZoomFromStorage();
+      expect(loadedPrimitive.size).toBe(0);
+
+      // Default fallback when ui and activeCustomUiId are undefined
+      const minimalComp = {
+        isDestroyed: true,
+      };
+      const controller = new LayoutZoomController(minimalComp);
+      expect(controller.getZoom()).toBe(100);
+
+      controller.setZoom(130);
+      expect(controller.getZoom()).toBe(130);
+
+      controller.step(10);
+      expect(controller.getZoom()).toBe(140);
+
+      controller.reset();
+      expect(controller.getZoom()).toBe(100);
+
+      // Save/load error handling without logger provided
+      spyOn(localStorage, "setItem").and.throwError("StorageError");
+      expect(() => saveLayoutZoomToStorage(new Map())).not.toThrow();
+
+      spyOn(localStorage, "getItem").and.throwError("StorageError");
+      expect(() => loadLayoutZoomFromStorage()).not.toThrow();
+    });
   });
 });

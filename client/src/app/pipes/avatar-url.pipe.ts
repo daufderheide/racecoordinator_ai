@@ -15,7 +15,8 @@ export class AvatarUrlPipe implements PipeTransform {
       ? this.dataService.resolveAssetUrl(url)
       : url;
     if (resolved && resolved.startsWith("/")) {
-      return `${this.dataService.serverUrl}${resolved}`;
+      const server = this.dataService?.serverUrl || "";
+      return `${server}${resolved}`;
     }
     return resolved;
   }

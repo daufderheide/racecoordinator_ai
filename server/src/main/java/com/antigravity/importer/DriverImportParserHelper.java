@@ -138,6 +138,12 @@ public final class DriverImportParserHelper {
       case "fuel":
       case "fuelsound":
         return "fuel";
+      case "driftlap":
+      case "driftlapsound":
+      case "driftlapaudio":
+      case "driftaudio":
+      case "driftsound":
+        return "driftLap";
       default:
         return header.trim();
     }
@@ -328,7 +334,8 @@ public final class DriverImportParserHelper {
           "overallBestLap",
           "overallLaneBestLap",
           "pitIn",
-          "fuel"
+          "fuel",
+          "driftLap"
         };
         for (String slot : slots) {
           String key = slot + "Audio";
@@ -401,7 +408,7 @@ public final class DriverImportParserHelper {
         || lower.endsWith(".gif");
   }
 
-  private static String getSimpleFileName(String path) {
+  public static String getSimpleFileName(String path) {
     int idx = Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\'));
     return idx >= 0 ? path.substring(idx + 1) : path;
   }

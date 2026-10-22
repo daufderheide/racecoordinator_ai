@@ -155,7 +155,152 @@ EOF
   fi
 }
 
-# Pre-flight port availability checks
+is_rc_running() {
+  if command -v curl >/dev/null 2>&1; then
+    local ver=$(curl -s -m 1 "http://localhost:${SERVER_PORT}/api/version" 2>/dev/null)
+    if [ -n "$ver" ]; then
+      return 0
+    fi
+  fi
+  local server_pid=$(get_port_listening_pid "$SERVER_PORT")
+  if [ -n "$server_pid" ]; then
+    local cmd=$(ps -p "$server_pid" -o command= 2>/dev/null | tr '[:upper:]' '[:lower:]')
+    if [[ "$cmd" =~ racecoordinator|com\.antigravity\.app ]]; then
+      return 0
+    fi
+  fi
+  local client_pid=$(get_port_listening_pid "$CLIENT_PORT")
+  if [ -n "$client_pid" ]; then
+    local cmd=$(ps -p "$client_pid" -o command= 2>/dev/null | tr '[:upper:]' '[:lower:]')
+    if [[ "$cmd" =~ racecoordinator|ng[[:space:]]+serve ]]; then
+      return 0
+    fi
+  fi
+  return 1
+}
+
+coordinate_already_running() {
+  local status_json=""
+  if command -v curl >/dev/null 2>&1; then
+    status_json=$(curl -s -m 1 "http://localhost:${SERVER_PORT}/api/server/status" 2>/dev/null)
+  fi
+
+  local active_clients=$(echo "$status_json" | grep -o '"activeClients":[0-9]*' | cut -d: -f2)
+  local is_pending_shutdown=$(echo "$status_json" | grep -o '"pendingShutdown":true')
+
+  # Layer 1: Instant takeover if 0 clients or already shutting down
+  if [ "$is_pending_shutdown" = '"pendingShutdown":true' ] || [ "$active_clients" = "0" ]; then
+    echo "Existing Race Coordinator AI instance has 0 active clients (or is shutting down). Taking over..."
+    curl -s -m 2 -X POST "http://localhost:${SERVER_PORT}/api/server/shutdown" >/dev/null 2>&1 || true
+    local c_pid=$(get_port_listening_pid "$CLIENT_PORT")
+    if [ -n "$c_pid" ]; then
+      pkill -P "$c_pid" 2>/dev/null || true
+      kill -TERM "$c_pid" 2>/dev/null || true
+    fi
+    for i in {1..20}; do
+      if ! is_port_in_use "$CLIENT_PORT" && ! is_port_in_use "$SERVER_PORT"; then
+        break
+      fi
+      sleep 0.2
+    done
+    return 0
+  fi
+
+  if [ "$HEADLESS" = true ]; then
+    echo "Race Coordinator AI is already running on port ${SERVER_PORT}. Headless mode detected, exiting cleanly."
+    exit 0
+  fi
+
+  local choice=""
+  if [ "$(uname)" = "Darwin" ]; then
+    choice=$(osascript <<EOF 2>/dev/null
+try
+  set theDialog to display dialog "Race Coordinator AI is already running on port ${SERVER_PORT}\nHow do you want to proceed?" with title "Race Coordinator AI - Already Running" buttons {"Do nothing, abort", "Stop current session and restart", "Run in existing session"} default button "Run in existing session" with icon note
+  return button returned of theDialog
+on error
+  return "Do nothing, abort"
+end try
+EOF
+    )
+  elif command -v zenity >/dev/null 2>&1; then
+    choice=$(zenity --list --title="Race Coordinator AI - Already Running" \
+      --text="Race Coordinator AI is already running on port ${SERVER_PORT}\nHow do you want to proceed?" \
+      --column="Action" \
+      "Run in existing session" \
+      "Stop current session and restart" \
+      "Do nothing, abort" \
+      --height=240 --width=360 2>/dev/null)
+    if [ -z "$choice" ]; then choice="Do nothing, abort"; fi
+  elif command -v kdialog >/dev/null 2>&1; then
+    choice=$(kdialog --combobox "Race Coordinator AI is already running on port ${SERVER_PORT}\nHow do you want to proceed?" "Run in existing session" "Stop current session and restart" "Do nothing, abort" --default "Run in existing session" --title "Race Coordinator AI - Already Running" 2>/dev/null)
+    if [ -z "$choice" ]; then choice="Do nothing, abort"; fi
+  else
+    echo ""
+    echo "Race Coordinator AI is already running on port ${SERVER_PORT}"
+    echo "How do you want to proceed?"
+    echo "  1) Run in existing session"
+    echo "  2) Stop current session and restart"
+    echo "  3) Do nothing, abort"
+    read -r -p "Enter choice [1-3] (default 1): " term_choice
+    case "$term_choice" in
+      2) choice="Stop current session and restart" ;;
+      3) choice="Do nothing, abort" ;;
+      *) choice="Run in existing session" ;;
+    esac
+  fi
+
+  if [ "$choice" = "Run in existing session" ] || [ "$choice" = "Open Web Browser" ]; then
+    echo "User selected 'Run in existing session'."
+    local target_url="http://localhost:7070"
+    if is_port_in_use "$CLIENT_PORT"; then
+      target_url="http://localhost:$CLIENT_PORT"
+    fi
+    if [ "$(uname)" = "Darwin" ]; then
+      open "$target_url"
+    elif command -v xdg-open >/dev/null 2>&1; then
+      xdg-open "$target_url"
+    fi
+    exit 0
+  elif [ "$choice" = "Stop current session and restart" ] || [ "$choice" = "Restart Application" ]; then
+    echo "User selected 'Stop current session and restart'. Stopping existing instance..."
+    curl -s -m 2 -X POST "http://localhost:${SERVER_PORT}/api/server/shutdown" >/dev/null 2>&1 || true
+    local c_pid=$(get_port_listening_pid "$CLIENT_PORT")
+    if [ -n "$c_pid" ]; then
+      pkill -P "$c_pid" 2>/dev/null || true
+      kill -TERM "$c_pid" 2>/dev/null || true
+    fi
+    local s_pid=$(get_port_listening_pid "$SERVER_PORT")
+    if [ -n "$s_pid" ]; then
+      kill -TERM "$s_pid" 2>/dev/null || true
+    fi
+    for i in {1..25}; do
+      if ! is_port_in_use "$CLIENT_PORT" && ! is_port_in_use "$SERVER_PORT"; then
+        break
+      fi
+      sleep 0.2
+    done
+    if is_port_in_use "$CLIENT_PORT" || is_port_in_use "$SERVER_PORT"; then
+      if command -v lsof >/dev/null 2>&1; then
+        lsof -ti :"$CLIENT_PORT" 2>/dev/null | xargs kill -9 2>/dev/null || true
+        lsof -ti :"$SERVER_PORT" 2>/dev/null | xargs kill -9 2>/dev/null || true
+      fi
+    fi
+    echo "Existing instance stopped. Starting new instance..."
+    return 0
+  else
+    echo "User selected 'Do nothing, abort' (or closed dialog). Exiting cleanly."
+    exit 0
+  fi
+}
+
+# Coordinate if Race Coordinator AI is already running
+if { [ "$HEADLESS" = false ] && is_port_in_use "$CLIENT_PORT"; } || is_port_in_use "$SERVER_PORT"; then
+  if is_rc_running; then
+    coordinate_already_running
+  fi
+fi
+
+# Pre-flight port availability checks for foreign / third-party processes
 if [ "$HEADLESS" = false ] && is_port_in_use "$CLIENT_PORT"; then
   conflict_msg=$(build_port_conflict_message "$CLIENT_PORT" "Angular Client")
   show_gui_error "Race Coordinator AI - Client Port Conflict" "$conflict_msg"

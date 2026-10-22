@@ -1,0 +1,33 @@
+:host {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.raceday-label-widget {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  padding: 4px 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 1.2;
+}
+
+.raceday-label-widget.vertical-label {
+  flex-direction: column;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  transform: rotate(180deg);
+  white-space: nowrap;
+  padding: 8px 4px;
+}
+
+.label-widget-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

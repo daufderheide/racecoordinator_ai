@@ -18,6 +18,13 @@
     [importTitleKey]="'DIM_TITLE'"
     [importHelpTitleKey]="'DE_HELP_IMPORT_TITLE'"
     [importHelpContentKey]="'DE_HELP_IMPORT_CONTENT'"
+    [showExport]="true"
+    [disabledExport]="
+      isEditMode || isSaving || !allDrivers || allDrivers.length === 0
+    "
+    [exportTitleKey]="'DEM_TITLE'"
+    [exportHelpTitleKey]="'DE_HELP_EXPORT_TITLE'"
+    [exportHelpContentKey]="'DE_HELP_EXPORT_CONTENT'"
     [disabledCopy]="!isConfigValid() || isSaving"
     [disabledDelete]="!selectedDriver || isSaving"
     [copyDisabledTooltipKey]="'DE_TOOLTIP_COPY_DISABLED'"
@@ -32,6 +39,7 @@
     (copy)="onCopyDriver()"
     (delete)="onDeleteDriver()"
     (import)="onOpenImportModal()"
+    (export)="onOpenExportModal()"
   >
   </app-editor-title>
 
@@ -408,6 +416,25 @@
                   </app-audio-selector>
                 }
               </div>
+              <div class="audio-section" id="driver-drift-lap-audio">
+                @if (editingDriver.driftLapAudio) {
+                  <app-audio-selector
+                    [readonly]="!isEditMode"
+                    [label]="'DE_LABEL_DRIFT_LAP_SOUND' | translate"
+                    [fallbackName]="getAudioSlotFallbackName('driftLap')"
+                    [assets]="soundAssets"
+                    [type]="editingDriver.driftLapAudio.type"
+                    (typeChange)="onAudioTypeChange('driftLap', $event)"
+                    [url]="editingDriver.driftLapAudio.url"
+                    (urlChange)="onAudioUrlChange('driftLap', $event)"
+                    (assetSelected)="onAssetSelected($event)"
+                    [text]="editingDriver.driftLapAudio.text"
+                    (textChange)="onAudioTextChange('driftLap', $event)"
+                    [context]="ttsContext"
+                  >
+                  </app-audio-selector>
+                }
+              </div>
             </div>
           </div>
         </app-editor-section>
@@ -442,6 +469,17 @@
   >
   </app-confirmation-modal>
 
+  <!-- Delete Driver Confirmation -->
+  <app-confirmation-modal
+    [visible]="showDeleteConfirm"
+    title="DE_CONFIRM_DELETE_TITLE"
+    message="DE_CONFIRM_DELETE"
+    confirmText="CD_YES"
+    cancelText="CD_NO"
+    (confirm)="onConfirmDelete()"
+    (cancel)="onCancelDelete()"
+  >
+  </app-confirmation-modal>
   <!-- Driver Import Modal -->
   <app-import-modal
     [visible]="showImportModal"
@@ -450,4 +488,11 @@
     (imported)="onDriversImported($event)"
   >
   </app-import-modal>
+  <!-- Driver Export Modal -->
+  <app-driver-export-modal
+    [visible]="showExportModal"
+    [driverCount]="allDrivers ? allDrivers.length : 0"
+    (close)="showExportModal = false"
+  >
+  </app-driver-export-modal>
 </div>

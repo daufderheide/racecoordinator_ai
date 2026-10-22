@@ -8,6 +8,7 @@ describe("WIDGET_REGISTRY", () => {
     expect(keys).toContain("records");
     expect(keys).toContain("timer");
     expect(keys).toContain("image");
+    expect(keys).toContain("grid");
     expect(keys).toContain("lane-view");
     expect(keys).toContain("lane-column");
     expect(keys).toContain("on-deck");
@@ -112,10 +113,14 @@ describe("WIDGET_REGISTRY", () => {
     expect(laneColumnSettings["targetIndex"]).toBe(0);
     expect(laneColumnSettings["layoutOrientation"]).toBe("vertical");
     expect(laneColumnSettings["useLaneColors"]).toBe(true);
+    expect(laneColumnSettings["backgroundColor"]).toBe("#000000");
+    expect(laneColumnSettings["textColor"]).toBe("#ffffff");
     expect(laneColumnSettings["showBorder"]).toBe(true);
     expect(laneColumnSettings["borderRadius"]).toBe(8);
     expect(laneColumnSettings["insets"]).toEqual({});
     expect(laneColumnSettings["insetTimeDecimalPlaces"]).toBe(3);
     expect(laneColumnSettings["insetLapDecimalPlaces"]).toBe(2);
+    expect(laneColumnSettings["timeDisplayFormat"]).toBe("dynamic");
+    expect(laneColumnSettings["timeSubsecondMode"]).toBe("never");
   });
 });

@@ -3,692 +3,2696 @@
 </div>
 
 @if (currentSettings["gridId"]) {
+  <!-- Grid Scope Navigation & Breadcrumbs -->
+  <div class="grid-scope-nav">
+    <div class="breadcrumb-trail">
+      <button
+        type="button"
+        class="breadcrumb-btn"
+        [class.active]="activeScope() === 'widget'"
+        (click)="setScope('widget')"
+      >
+        <span class="material-icons">widgets</span>
+        {{ widgetBreadcrumbLabel }}
+      </button>
+      <span class="breadcrumb-sep">/</span>
+      <button
+        type="button"
+        class="breadcrumb-btn"
+        [class.active]="activeScope() === 'grid'"
+        (click)="setScope('grid')"
+      >
+        <span class="material-icons">grid_on</span>
+        {{ gridBreadcrumbLabel }}
+      </button>
+      <span class="breadcrumb-sep">/</span>
+      <button
+        type="button"
+        class="breadcrumb-btn"
+        [class.active]="activeScope() === 'column'"
+        (click)="setScope('column')"
+      >
+        <span class="material-icons">view_column</span>
+        {{ columnBreadcrumbLabel }}
+      </button>
+
+      @if (activeScope() === "inset" || hasAnyInsets) {
+        <span class="breadcrumb-sep">/</span>
+        <button
+          type="button"
+          class="breadcrumb-btn"
+          [class.active]="activeScope() === 'inset'"
+          (click)="setScope('inset')"
+        >
+          <span class="material-icons">open_in_new</span>
+          {{ insetBreadcrumbLabel }}
+        </button>
+      }
+    </div>
+
+    <div class="scope-mode-tabs">
+      <button
+        type="button"
+        class="scope-tab"
+        [class.active]="activeScope() === 'widget'"
+        (click)="setScope('widget')"
+        [title]="'UE_SCOPE_TAB_WIDGET' | translate"
+      >
+        <span class="material-icons">widgets</span>
+        <span class="scope-tab-label">{{
+          "UE_SCOPE_TAB_WIDGET" | translate
+        }}</span>
+      </button>
+      <button
+        type="button"
+        class="scope-tab"
+        [class.active]="activeScope() === 'grid'"
+        (click)="setScope('grid')"
+        [title]="'UE_SCOPE_TAB_GRID' | translate"
+      >
+        <span class="material-icons">grid_on</span>
+        <span class="scope-tab-label">{{
+          "UE_SCOPE_TAB_GRID" | translate
+        }}</span>
+      </button>
+      <button
+        type="button"
+        class="scope-tab"
+        [class.active]="activeScope() === 'column'"
+        (click)="setScope('column')"
+        [title]="'UE_SCOPE_TAB_COLUMN' | translate"
+      >
+        <span class="material-icons">view_column</span>
+        <span class="scope-tab-label">{{
+          "UE_SCOPE_TAB_COLUMN" | translate
+        }}</span>
+      </button>
+
+      @if (activeScope() === "inset" || hasAnyInsets) {
+        <button
+          type="button"
+          class="scope-tab"
+          [class.active]="activeScope() === 'inset'"
+          (click)="setScope('inset')"
+          [title]="'UE_SCOPE_TAB_INSET' | translate"
+        >
+          <span class="material-icons">open_in_new</span>
+          <span class="scope-tab-label">{{
+            "UE_SCOPE_TAB_INSET" | translate
+          }}</span>
+        </button>
+      }
+    </div>
+  </div>
+
+  @if (activeScope() === "widget") {
+    <div class="scope-hint-banner widget-banner">
+      <span class="material-icons">info</span>
+      <span>{{ "UE_SCOPE_WIDGET_HINT" | translate }}</span>
+    </div>
+    <ng-container *ngTemplateOutlet="widgetSettingsTemplate"></ng-container>
+  } @else if (activeScope() === "grid") {
+    <div class="scope-hint-banner grid-banner">
+      <span class="material-icons">info</span>
+      <span>{{ "UE_SCOPE_GRID_HINT" | translate }}</span>
+    </div>
+    <ng-container *ngTemplateOutlet="gridSettingsTemplate"></ng-container>
+  } @else if (activeScope() === "column") {
+    <div class="scope-hint-banner column-banner">
+      <span class="material-icons">info</span>
+      <span>{{ "UE_SCOPE_COLUMN_HINT" | translate }}</span>
+    </div>
+    <ng-container *ngTemplateOutlet="columnSettingsTemplate"></ng-container>
+  } @else if (activeScope() === "inset") {
+    <div class="scope-hint-banner inset-banner">
+      <span class="material-icons">info</span>
+      <span>{{ "UE_SCOPE_INSET_HINT" | translate }}</span>
+    </div>
+    <ng-container *ngTemplateOutlet="insetSettingsTemplate"></ng-container>
+  }
+} @else {
+  @if (activeScope() === "inset") {
+    <div class="scope-hint-banner inset-banner">
+      <span class="material-icons">info</span>
+      <span>{{ "UE_SCOPE_INSET_HINT" | translate }}</span>
+    </div>
+    <ng-container *ngTemplateOutlet="insetSettingsTemplate"></ng-container>
+  } @else {
+    <ng-container *ngTemplateOutlet="widgetSettingsTemplate"></ng-container>
+    <hr class="inspector-divider" />
+    <ng-container *ngTemplateOutlet="columnSettingsTemplate"></ng-container>
+  }
+}
+
+<ng-template #gridSettingsTemplate>
   <div class="inspector-section grid-indicator-card">
     <div class="grid-card-header">
       <span class="grid-card-title">
-        <i class="fas fa-layer-group me-1"></i>
+        <span class="material-icons me-1" style="font-size: 16px"
+          >view_column</span
+        >
         {{
-          (currentSettings["bindingMode"] === "position"
-            ? "UE_GRID_POSITION_INSPECTOR_TITLE"
-            : currentSettings["bindingMode"] === "overallPosition"
-              ? "UE_GRID_OVERALL_POSITION_INSPECTOR_TITLE"
-              : currentSettings["bindingMode"] === "seed"
-                ? "UE_GRID_SEED_INSPECTOR_TITLE"
-                : "UE_GRID_INSPECTOR_TITLE"
-          )
-            | translate
-              : { count: currentSettings["gridTotalLanes"] || totalLanes() }
+          currentSettings["gridLabelText"]?.trim() ||
+            ((currentSettings["bindingMode"] === "position"
+              ? "UE_GRID_POSITION_INSPECTOR_TITLE"
+              : currentSettings["bindingMode"] === "overallPosition"
+                ? "UE_GRID_OVERALL_POSITION_INSPECTOR_TITLE"
+                : currentSettings["bindingMode"] === "seed"
+                  ? "UE_GRID_SEED_INSPECTOR_TITLE"
+                  : "UE_GRID_INSPECTOR_TITLE"
+            )
+              | translate
+                : { count: currentSettings["gridTotalLanes"] || totalLanes() })
         }}
       </span>
       <span class="grid-card-badge">
-        {{
-          (currentSettings["bindingMode"] === "position"
-            ? "UE_GRID_POSITION_MIRRORED_BADGE"
-            : currentSettings["bindingMode"] === "overallPosition"
-              ? "UE_GRID_OVERALL_POSITION_MIRRORED_BADGE"
-              : currentSettings["bindingMode"] === "seed"
-                ? "UE_GRID_SEED_MIRRORED_BADGE"
-                : "UE_GRID_LANE_MIRRORED_BADGE"
-          )
-            | translate
-              : {
-                  index:
-                    (currentSettings["gridLane"] != null
-                      ? currentSettings["gridLane"]
-                      : currentSettings["targetIndex"]) + 1,
-                }
-        }}
-      </span>
-    </div>
-    <div class="grid-card-actions">
-      <button
-        type="button"
-        class="btn btn-sm btn-primary w-100 grid-edit-btn"
-        (click)="onEditGridTemplate()"
-      >
-        <i class="fas fa-edit me-1"></i>
-        {{ "UE_GRID_EDIT_TEMPLATE" | translate }}
-      </button>
-      <button
-        type="button"
-        class="btn btn-sm btn-secondary w-100 grid-detach-btn"
-        (click)="onDetachFromGrid()"
-      >
-        <i class="fas fa-unlink me-1"></i>
-        {{ "UE_GRID_DETACH" | translate }}
-      </button>
-    </div>
-  </div>
-  <hr class="inspector-divider" />
-}
-
-<!-- Binding Mode & Target Index -->
-<div class="inspector-section">
-  <label class="inspector-label">{{
-    "UE_INSPECTOR_BINDING_MODE" | translate
-  }}</label>
-  <div class="select-container select-sm">
-    <app-custom-select
-      [(ngModel)]="currentSettings['bindingMode']"
-      (change)="onFieldChange()"
-    >
-      <app-custom-option value="lane">
-        {{ "UE_INSPECTOR_BINDING_LANE" | translate }}
-      </app-custom-option>
-      <app-custom-option value="position">
-        {{ "UE_INSPECTOR_BINDING_POSITION" | translate }}
-      </app-custom-option>
-      <app-custom-option value="overallPosition">
-        {{ "UE_INSPECTOR_BINDING_OVERALL_POSITION" | translate }}
-      </app-custom-option>
-      <app-custom-option value="seed">
-        {{ "UE_INSPECTOR_BINDING_SEED" | translate }}
-      </app-custom-option>
-    </app-custom-select>
-  </div>
-</div>
-
-<div class="inspector-section">
-  <label class="inspector-label">
-    {{
-      (currentSettings["bindingMode"] === "position"
-        ? "UE_INSPECTOR_TARGET_POSITION"
-        : currentSettings["bindingMode"] === "overallPosition"
-          ? "UE_INSPECTOR_TARGET_OVERALL_POSITION"
-          : currentSettings["bindingMode"] === "seed"
-            ? "UE_INSPECTOR_TARGET_SEED"
-            : "UE_INSPECTOR_TARGET_LANE"
-      ) | translate
-    }}
-  </label>
-  <div class="select-container select-sm">
-    <app-custom-select
-      [(ngModel)]="currentSettings['targetIndex']"
-      (change)="onFieldChange()"
-    >
-      @for (idx of availableIndices; track idx) {
-        <app-custom-option [value]="idx">
+        @if (isHeaderWidget) {
+          {{ "UE_GRID_HEADER_ROW_BADGE" | translate }}
+        } @else if (isMasterCell) {
           {{
             (currentSettings["bindingMode"] === "position"
-              ? "UE_INSPECTOR_POSITION_INDEX"
-              : currentSettings["bindingMode"] === "overallPosition"
-                ? "UE_INSPECTOR_OVERALL_POSITION_INDEX"
-                : currentSettings["bindingMode"] === "seed"
-                  ? "UE_INSPECTOR_SEED_INDEX"
-                  : "UE_INSPECTOR_LANE_INDEX"
-            ) | translate: { index: idx + 1 }
+              ? "UE_GRID_POSITION_MASTER_BADGE"
+              : "UE_GRID_LANE_MASTER_BADGE"
+            ) | translate
           }}
-        </app-custom-option>
-      }
-    </app-custom-select>
-  </div>
-</div>
-
-<!-- Replicate Layout Action Button -->
-<div class="inspector-section">
-  <button
-    type="button"
-    class="btn btn-secondary w-100"
-    (click)="openReplicateModal()"
-  >
-    <i class="fas fa-clone me-1"></i>
-    {{ "UE_REPLICATE_BUTTON" | translate }}
-  </button>
-</div>
-
-<hr class="inspector-divider" />
-
-<!-- Column Selection -->
-<div class="inspector-section">
-  <label class="inspector-label">{{ "UE_INSPECTOR_COLUMN" | translate }}</label>
-  <div class="select-container select-sm">
-    <app-custom-select
-      [(ngModel)]="currentSettings['columnKey']"
-      (change)="onFieldChange()"
-    >
-      @for (col of availableColumns(); track col.key) {
-        <app-custom-option [value]="col.key">
-          {{ col.label | translate }}
-        </app-custom-option>
-      }
-    </app-custom-select>
-  </div>
-</div>
-
-<!-- Layout Orientation -->
-<div class="inspector-section">
-  <label class="inspector-label">{{
-    "UE_INSPECTOR_ORIENTATION" | translate
-  }}</label>
-  <div class="select-container select-sm">
-    <app-custom-select
-      [(ngModel)]="currentSettings['layoutOrientation']"
-      (change)="onFieldChange()"
-    >
-      <app-custom-option value="vertical">
-        {{ "UE_INSPECTOR_ORIENT_VERTICAL" | translate }}
-      </app-custom-option>
-      <app-custom-option value="horizontal">
-        {{ "UE_INSPECTOR_ORIENT_HORIZONTAL" | translate }}
-      </app-custom-option>
-    </app-custom-select>
-  </div>
-</div>
-
-<!-- Title Bar Settings Section -->
-<div class="inspector-geometry-title">
-  {{ "UE_INSPECTOR_TITLE_BAR_SETTINGS" | translate }}
-</div>
-
-<div class="inspector-section">
-  <label class="form-check-label">
-    <input
-      type="checkbox"
-      class="form-checkbox"
-      [(ngModel)]="currentSettings['showHeader']"
-      (change)="onFieldChange()"
-    />
-    <span>{{ "UE_INSPECTOR_SHOW_HEADER" | translate }}</span>
-  </label>
-</div>
-
-@if (currentSettings["showHeader"] !== false) {
-  <div class="inspector-section">
-    <label class="inspector-label">{{
-      "UE_INSPECTOR_CUSTOM_LABEL" | translate
-    }}</label>
-    <input
-      type="text"
-      class="inspector-input"
-      [(ngModel)]="currentSettings['customLabel']"
-      (input)="onFieldChange()"
-      [placeholder]="'UE_INSPECTOR_LABEL_PLACEHOLDER' | translate"
-      autocomplete="off"
-      data-dashlane-ignore="true"
-      data-1p-ignore="true"
-      data-lpignore="true"
-      data-bwignore="true"
-      data-form-type="other"
-    />
-  </div>
-
-  <div class="inspector-section">
-    <label class="inspector-label">{{
-      "UE_INSPECTOR_HEADER_FONT_FAMILY" | translate
-    }}</label>
-    <div class="select-container select-sm">
-      <app-custom-select
-        [(ngModel)]="currentSettings['headerFontFamily']"
-        (change)="onFieldChange()"
-        (click)="fontService.loadLocalFonts()"
-      >
-        <app-custom-option value="">
-          {{ "UE_INSPECTOR_FONT_THEME_DEFAULT" | translate }}
-        </app-custom-option>
-        @for (font of fontService.availableFonts(); track font) {
-          <app-custom-option [value]="font">{{ font }}</app-custom-option>
+        } @else if (!mirrorRows) {
+          {{
+            (currentSettings["bindingMode"] === "position"
+              ? "UE_GRID_POSITION_INDEPENDENT_BADGE"
+              : currentSettings["bindingMode"] === "overallPosition"
+                ? "UE_GRID_OVERALL_POSITION_INDEPENDENT_BADGE"
+                : currentSettings["bindingMode"] === "seed"
+                  ? "UE_GRID_SEED_INDEPENDENT_BADGE"
+                  : "UE_GRID_LANE_INDEPENDENT_BADGE"
+            )
+              | translate
+                : {
+                    index:
+                      (currentSettings["gridLane"] != null
+                        ? currentSettings["gridLane"]
+                        : currentSettings["targetIndex"]) + 1,
+                  }
+          }}
+        } @else {
+          {{
+            (currentSettings["bindingMode"] === "position"
+              ? "UE_GRID_POSITION_MIRRORED_BADGE"
+              : currentSettings["bindingMode"] === "overallPosition"
+                ? "UE_GRID_OVERALL_POSITION_MIRRORED_BADGE"
+                : currentSettings["bindingMode"] === "seed"
+                  ? "UE_GRID_SEED_MIRRORED_BADGE"
+                  : "UE_GRID_LANE_MIRRORED_BADGE"
+            )
+              | translate
+                : {
+                    index:
+                      (currentSettings["gridLane"] != null
+                        ? currentSettings["gridLane"]
+                        : currentSettings["targetIndex"]) + 1,
+                  }
+          }}
         }
-      </app-custom-select>
+      </span>
     </div>
-  </div>
 
-  <div class="inspector-section">
-    <div class="inspector-label-row">
-      <label class="inspector-label">{{
-        "UE_INSPECTOR_HEADER_FONT_SIZE" | translate
-      }}</label>
-      <span class="inspector-val-badge"
-        >{{ currentSettings["headerFontSize"] || 14 }}px</span
-      >
-    </div>
-    <input
-      type="range"
-      min="8"
-      max="48"
-      [(ngModel)]="currentSettings['headerFontSize']"
-      [disabled]="disableFontSizes()"
-      (change)="onFieldChange()"
-      class="inspector-slider"
-    />
-  </div>
+    <!-- Section 1: Grid Structure & Layout -->
+    <div class="inspector-section-group layout-group">
+      <div class="inspector-group-title">
+        <span class="material-icons">grid_view</span>
+        <span>{{ "UE_GRID_SECTION_LAYOUT" | translate }}</span>
+      </div>
 
-  <div class="inspector-section">
-    <label class="inspector-label">{{
-      "UE_INSPECTOR_HEADER_ALIGNMENT" | translate
-    }}</label>
-    <div class="select-container select-sm">
-      <app-custom-select
-        [(ngModel)]="currentSettings['headerAlignment']"
-        (change)="onFieldChange()"
-      >
-        <app-custom-option value="start">
-          {{ "UE_INSPECTOR_ALIGN_START" | translate }}
-        </app-custom-option>
-        <app-custom-option value="center">
-          {{ "UE_INSPECTOR_ALIGN_CENTER" | translate }}
-        </app-custom-option>
-        <app-custom-option value="end">
-          {{ "UE_INSPECTOR_ALIGN_END" | translate }}
-        </app-custom-option>
-      </app-custom-select>
-    </div>
-  </div>
+      <!-- Mirrored Rows/Columns Count Control -->
+      <div class="inspector-section" style="margin-bottom: 8px">
+        <label class="inspector-label">{{
+          (gridDirection === "horizontal"
+            ? "UE_GRID_MIRRORED_COLUMNS"
+            : "UE_GRID_MIRRORED_ROWS"
+          ) | translate
+        }}</label>
+        <div style="display: flex; gap: 8px; align-items: center">
+          <input
+            type="range"
+            min="1"
+            max="32"
+            step="1"
+            [ngModel]="gridTotalLanes"
+            (ngModelChange)="onGridTotalLanesChange($event)"
+            class="inspector-slider"
+            style="flex: 1"
+          />
+          <input
+            type="number"
+            min="1"
+            max="32"
+            step="1"
+            autocomplete="off"
+            data-dashlane-ignore="true"
+            data-1p-ignore="true"
+            data-lpignore="true"
+            data-bwignore="true"
+            data-form-type="other"
+            [ngModel]="gridTotalLanes"
+            (ngModelChange)="onGridTotalLanesChange($event)"
+            class="inspector-number-input"
+          />
+        </div>
+      </div>
 
-  <div class="inspector-section">
-    <label class="inspector-label">{{
-      "UE_INSPECTOR_HEADER_TEXT_COLOR" | translate
-    }}</label>
-    <div
-      class="color-picker-wrapper"
-      [class.is-null]="!currentSettings['headerTextColor']"
-    >
-      <input
-        type="color"
-        [value]="currentSettings['headerTextColor'] || '#ffffff'"
-        (change)="onColorChange('headerTextColor', $event)"
-        class="color-picker-input"
-      />
-      @if (!currentSettings["headerTextColor"]) {
-        <span class="color-picker-placeholder">{{
-          "UE_INSPECTOR_COLOR_DEFAULT" | translate
-        }}</span>
+      <!-- Layout Orientation for the Grid -->
+      <div class="inspector-section" style="margin-bottom: 8px">
+        <label class="inspector-label">{{
+          "UE_INSPECTOR_ORIENTATION" | translate
+        }}</label>
+        <div class="select-container select-sm">
+          <app-custom-select
+            [ngModel]="gridLayoutOrientation"
+            (ngModelChange)="onGridLayoutOrientationChange($event)"
+          >
+            <app-custom-option value="vertical">
+              {{ "UE_INSPECTOR_ORIENT_VERTICAL" | translate }}
+            </app-custom-option>
+            <app-custom-option value="horizontal">
+              {{ "UE_INSPECTOR_ORIENT_HORIZONTAL" | translate }}
+            </app-custom-option>
+          </app-custom-select>
+        </div>
+      </div>
+
+      <!-- Grid Data Source Control -->
+      <div class="inspector-section" style="margin-bottom: 8px">
+        <label class="inspector-label">{{
+          "UE_INSPECTOR_DATA_SOURCE" | translate
+        }}</label>
+        <div class="select-container select-sm">
+          <app-custom-select [(ngModel)]="gridType">
+            <app-custom-option value="heat">
+              {{ "UE_TOOLBOX_GROUP_HEAT_DATA" | translate }}
+            </app-custom-option>
+            <app-custom-option value="overall">
+              {{ "UE_TOOLBOX_GROUP_OVERALL_DATA" | translate }}
+            </app-custom-option>
+          </app-custom-select>
+        </div>
+      </div>
+
+      <!-- Grid Sorting / Row Order Control -->
+      <div class="inspector-section" style="margin-bottom: 8px">
+        <label class="inspector-label">{{
+          "UE_GRID_SORT_ORDER" | translate
+        }}</label>
+        <div class="select-container select-sm">
+          <app-custom-select [(ngModel)]="gridSortOrder">
+            <app-custom-option value="lane">
+              {{ "UE_GRID_SORT_ORDER_LANE" | translate }}
+            </app-custom-option>
+            <app-custom-option value="position">
+              {{ "UE_GRID_SORT_ORDER_HEAT_POSITION" | translate }}
+            </app-custom-option>
+            <app-custom-option value="overallPosition">
+              {{ "UE_GRID_SORT_ORDER_OVERALL_POSITION" | translate }}
+            </app-custom-option>
+            <app-custom-option value="seed">
+              {{ "UE_GRID_SORT_ORDER_SEED" | translate }}
+            </app-custom-option>
+          </app-custom-select>
+        </div>
+      </div>
+
+      <!-- Link Columns Toggle -->
+      <div class="inspector-section" style="margin-bottom: 8px">
+        <label class="form-check-label">
+          <input
+            type="checkbox"
+            class="form-checkbox"
+            [(ngModel)]="linkColumns"
+          />
+          <span>{{ "UE_GRID_LINK_COLUMNS" | translate }}</span>
+        </label>
+      </div>
+
+      <!-- Mirror Rows Toggle -->
+      <div class="inspector-section" style="margin-bottom: 8px">
+        <label class="form-check-label">
+          <input
+            type="checkbox"
+            class="form-checkbox"
+            [(ngModel)]="mirrorRows"
+          />
+          <span>{{
+            (gridDirection === "horizontal"
+              ? "UE_GRID_MIRROR_COLUMNS_TOGGLE"
+              : "UE_GRID_MIRROR_ROWS_TOGGLE"
+            ) | translate
+          }}</span>
+        </label>
+      </div>
+
+      @if (!mirrorRows) {
+        <div class="inspector-section" style="margin-bottom: 8px">
+          <button
+            type="button"
+            class="btn btn-sm btn-outline-primary w-100"
+            (click)="onReMirrorGrid()"
+            [title]="'UE_GRID_RE_MIRROR_BUTTON_TOOLTIP' | translate"
+          >
+            <span class="material-icons me-1" style="font-size: 14px"
+              >sync</span
+            >
+            {{ "UE_GRID_RE_MIRROR_BUTTON" | translate }}
+          </button>
+        </div>
       }
-      @if (currentSettings["headerTextColor"]) {
+    </div>
+
+    <!-- Section 2: Grid Title Bar (Overall Table Header) -->
+    <div class="inspector-section-group title-bar-group">
+      <div class="inspector-group-title">
+        <span class="material-icons">title</span>
+        <span>{{ "UE_GRID_SECTION_TITLE" | translate }}</span>
+      </div>
+
+      <!-- Grid Label / Title Settings -->
+      <div class="inspector-section" style="margin-bottom: 8px">
+        <label class="inspector-label">{{
+          "UE_GRID_LABEL_POSITION" | translate
+        }}</label>
+        <div class="select-container select-sm">
+          <app-custom-select
+            [ngModel]="gridLabelPosition"
+            (ngModelChange)="onGridLabelPositionChange($event)"
+          >
+            <app-custom-option value="none">
+              {{ "UE_GRID_LABEL_POS_NONE" | translate }}
+            </app-custom-option>
+            <app-custom-option value="top">
+              {{ "UE_GRID_LABEL_POS_TOP" | translate }}
+            </app-custom-option>
+            <app-custom-option value="bottom">
+              {{ "UE_GRID_LABEL_POS_BOTTOM" | translate }}
+            </app-custom-option>
+            <app-custom-option value="left">
+              {{ "UE_GRID_LABEL_POS_LEFT" | translate }}
+            </app-custom-option>
+            <app-custom-option value="right">
+              {{ "UE_GRID_LABEL_POS_RIGHT" | translate }}
+            </app-custom-option>
+          </app-custom-select>
+        </div>
+      </div>
+
+      @if (gridLabelPosition !== "none") {
+        <div class="inspector-section" style="margin-bottom: 8px">
+          <label class="inspector-label">{{
+            "UE_GRID_LABEL_TEXT" | translate
+          }}</label>
+          <input
+            type="text"
+            class="inspector-input"
+            [ngModel]="gridLabelText"
+            (ngModelChange)="gridLabelText = $event"
+            [placeholder]="'UE_GRID_LABEL_PLACEHOLDER' | translate"
+            autocomplete="off"
+            data-dashlane-ignore="true"
+            data-1p-ignore="true"
+            data-lpignore="true"
+            data-bwignore="true"
+            data-form-type="other"
+          />
+        </div>
+
+        <div class="inspector-section" style="margin-bottom: 8px">
+          <div class="inspector-label-row">
+            <label class="inspector-label">{{
+              "UE_GRID_LABEL_SIZE" | translate
+            }}</label>
+            <span class="inspector-val-badge">{{ gridLabelSize }}px</span>
+          </div>
+          <div style="display: flex; gap: 8px; align-items: center">
+            <input
+              type="range"
+              min="16"
+              max="200"
+              step="1"
+              [ngModel]="gridLabelSize"
+              (ngModelChange)="gridLabelSize = $event"
+              class="inspector-slider"
+              style="flex: 1"
+            />
+            <input
+              type="number"
+              min="16"
+              max="200"
+              step="1"
+              autocomplete="off"
+              data-dashlane-ignore="true"
+              data-1p-ignore="true"
+              data-lpignore="true"
+              data-bwignore="true"
+              data-form-type="other"
+              [ngModel]="gridLabelSize"
+              (ngModelChange)="gridLabelSize = $event"
+              class="inspector-number-input"
+            />
+          </div>
+        </div>
+
+        <div class="inspector-section" style="margin-bottom: 8px">
+          <label class="inspector-label">{{
+            "UE_INSPECTOR_FONT_FAMILY" | translate
+          }}</label>
+          <div class="select-container select-sm">
+            <app-custom-select
+              [ngModel]="gridLabelFontFamily"
+              (ngModelChange)="gridLabelFontFamily = $event"
+              (click)="fontService.loadLocalFonts()"
+            >
+              <app-custom-option value="">
+                {{ "UE_INSPECTOR_FONT_THEME_DEFAULT" | translate }}
+              </app-custom-option>
+              @for (font of fontService.availableFonts(); track font) {
+                <app-custom-option [value]="font">{{ font }}</app-custom-option>
+              }
+            </app-custom-select>
+          </div>
+        </div>
+
+        <div class="inspector-section" style="margin-bottom: 8px">
+          <div class="inspector-label-row">
+            <label class="inspector-label">{{
+              "UE_INSPECTOR_FONT_SIZE" | translate
+            }}</label>
+            <span class="inspector-val-badge">{{ gridLabelFontSize }}px</span>
+          </div>
+          <div style="display: flex; gap: 8px; align-items: center">
+            <input
+              type="range"
+              min="8"
+              max="72"
+              step="1"
+              [ngModel]="gridLabelFontSize"
+              (ngModelChange)="gridLabelFontSize = $event"
+              class="inspector-slider"
+              style="flex: 1"
+            />
+            <input
+              type="number"
+              min="8"
+              max="72"
+              step="1"
+              autocomplete="off"
+              data-dashlane-ignore="true"
+              data-1p-ignore="true"
+              data-lpignore="true"
+              data-bwignore="true"
+              data-form-type="other"
+              [ngModel]="gridLabelFontSize"
+              (ngModelChange)="gridLabelFontSize = $event"
+              class="inspector-number-input"
+            />
+          </div>
+        </div>
+
+        <div class="inspector-section" style="margin-bottom: 8px">
+          <label class="inspector-label">{{
+            "UE_INSPECTOR_TEXT_ALIGNMENT" | translate
+          }}</label>
+          <div class="select-container select-sm">
+            <app-custom-select
+              [ngModel]="gridLabelAlignment"
+              (ngModelChange)="gridLabelAlignment = $event"
+            >
+              <app-custom-option value="start">
+                {{ "UE_INSPECTOR_ALIGN_START" | translate }}
+              </app-custom-option>
+              <app-custom-option value="center">
+                {{ "UE_INSPECTOR_ALIGN_CENTER" | translate }}
+              </app-custom-option>
+              <app-custom-option value="end">
+                {{ "UE_INSPECTOR_ALIGN_END" | translate }}
+              </app-custom-option>
+            </app-custom-select>
+          </div>
+        </div>
+
+        <div class="inspector-section" style="margin-bottom: 8px">
+          <label class="form-check-label" style="margin-right: 12px">
+            <input
+              type="checkbox"
+              class="form-checkbox"
+              [ngModel]="gridLabelFontBold"
+              (ngModelChange)="gridLabelFontBold = $event"
+            />
+            <span>{{ "UE_INSPECTOR_FONT_BOLD" | translate }}</span>
+          </label>
+          <label class="form-check-label">
+            <input
+              type="checkbox"
+              class="form-checkbox"
+              [ngModel]="gridLabelFontItalic"
+              (ngModelChange)="gridLabelFontItalic = $event"
+            />
+            <span>{{ "UE_INSPECTOR_FONT_ITALIC" | translate }}</span>
+          </label>
+        </div>
+
+        <div class="inspector-section" style="margin-bottom: 8px">
+          <label class="inspector-label">{{
+            "UE_INSPECTOR_TEXT_COLOR" | translate
+          }}</label>
+          <div class="color-picker-row">
+            <input
+              type="color"
+              class="color-picker-input"
+              [value]="toValidHexColor(gridLabelTextColor, '#ffffff')"
+              (input)="onGridLabelTextColorChange($event)"
+            />
+            <button
+              type="button"
+              class="inspector-btn-ghost ms-1"
+              (click)="resetGridLabelTextColor()"
+              [title]="'UE_INSPECTOR_COLOR_RESET' | translate"
+            >
+              <span class="material-icons" style="font-size: 14px"
+                >restart_alt</span
+              >
+            </button>
+          </div>
+        </div>
+
+        <div class="inspector-section" style="margin-bottom: 8px">
+          <label class="inspector-label">{{
+            "UE_INSPECTOR_BACKGROUND_COLOR" | translate
+          }}</label>
+          <div class="color-picker-row">
+            <input
+              type="color"
+              class="color-picker-input"
+              [value]="toValidHexColor(gridLabelBackgroundColor, '#0f172a')"
+              (input)="onGridLabelBgColorChange($event)"
+            />
+            <button
+              type="button"
+              class="inspector-btn-ghost ms-1"
+              (click)="resetGridLabelBackgroundColor()"
+              [title]="'UE_INSPECTOR_COLOR_RESET' | translate"
+            >
+              <span class="material-icons" style="font-size: 14px"
+                >restart_alt</span
+              >
+            </button>
+          </div>
+        </div>
+
+        <!-- Grid Label Border Options -->
+        <div class="inspector-section" style="margin-bottom: 8px">
+          <label class="form-check-label">
+            <input
+              type="checkbox"
+              class="form-checkbox"
+              [ngModel]="gridLabelShowBorder"
+              (ngModelChange)="gridLabelShowBorder = $event"
+            />
+            <span>{{ "UE_INSPECTOR_SHOW_BORDER" | translate }}</span>
+          </label>
+        </div>
+
+        @if (gridLabelShowBorder) {
+          <div class="inspector-section" style="margin-bottom: 8px">
+            <label class="inspector-label">{{
+              "UE_INSPECTOR_BORDER_COLOR" | translate
+            }}</label>
+            <div class="color-picker-row">
+              <input
+                type="color"
+                class="color-picker-input inspector-color-input"
+                [value]="toValidHexColor(gridLabelBorderColor, '#ffffff')"
+                (input)="onGridLabelBorderColorChange($event)"
+              />
+              <button
+                type="button"
+                class="inspector-btn-ghost ms-1"
+                (click)="resetGridLabelBorderColor()"
+                [title]="'UE_INSPECTOR_COLOR_RESET' | translate"
+              >
+                <span class="material-icons" style="font-size: 14px"
+                  >restart_alt</span
+                >
+              </button>
+            </div>
+          </div>
+
+          <div class="inspector-section" style="margin-bottom: 8px">
+            <div class="inspector-label-row">
+              <label class="inspector-label">{{
+                "UE_INSPECTOR_BORDER_WIDTH" | translate
+              }}</label>
+              <span class="inspector-val-badge"
+                >{{ gridLabelBorderWidth }}px</span
+              >
+            </div>
+            <input
+              type="range"
+              min="0"
+              max="10"
+              [ngModel]="gridLabelBorderWidth"
+              (ngModelChange)="gridLabelBorderWidth = $event"
+              class="inspector-slider"
+            />
+          </div>
+
+          <div class="inspector-section" style="margin-bottom: 8px">
+            <div class="inspector-label-row">
+              <label class="inspector-label">{{
+                "UE_INSPECTOR_BORDER_RADIUS" | translate
+              }}</label>
+              <span class="inspector-val-badge"
+                >{{ gridLabelBorderRadius }}px</span
+              >
+            </div>
+            <input
+              type="range"
+              min="0"
+              max="32"
+              [ngModel]="gridLabelBorderRadius"
+              (ngModelChange)="gridLabelBorderRadius = $event"
+              class="inspector-slider"
+            />
+          </div>
+        }
+      }
+    </div>
+
+    <!-- Section 3: Column Header Row (Defaults) -->
+    <div class="inspector-section-group header-row-group">
+      <div class="inspector-group-title">
+        <span class="material-icons">table_rows</span>
+        <span>{{ "UE_GRID_SECTION_COLUMN_HEADERS" | translate }}</span>
+      </div>
+
+      <!-- Header Placement Control for the Grid -->
+      <div class="inspector-section" style="margin-bottom: 8px">
+        <label class="inspector-label">{{
+          "UE_GRID_HEADER_PLACEMENT" | translate
+        }}</label>
+        <div class="select-container select-sm">
+          <app-custom-select
+            [ngModel]="gridHeaderPlacement"
+            (ngModelChange)="onGridHeaderPlacementChange($event)"
+          >
+            <app-custom-option value="top">
+              {{ "UE_REPLICATE_HEADER_TOP" | translate }}
+            </app-custom-option>
+            <app-custom-option value="left">
+              {{ "UE_REPLICATE_HEADER_LEFT" | translate }}
+            </app-custom-option>
+            <app-custom-option value="individual">
+              {{ "UE_REPLICATE_HEADER_INDIVIDUAL" | translate }}
+            </app-custom-option>
+            <app-custom-option value="none">
+              {{ "UE_REPLICATE_HEADER_NONE" | translate }}
+            </app-custom-option>
+          </app-custom-select>
+        </div>
+      </div>
+
+      <!-- Header Settings for the Grid -->
+      @if (gridHeaderPlacement !== "none") {
+        @if (gridHeaderPlacement === "top") {
+          <div class="inspector-section" style="margin-bottom: 8px">
+            <div class="inspector-label-row">
+              <label class="inspector-label">{{
+                "UE_GRID_HEADER_HEIGHT" | translate
+              }}</label>
+              <span class="inspector-val-badge"
+                >{{ currentGridHeaderHeight }}px</span
+              >
+            </div>
+            <div style="display: flex; gap: 8px; align-items: center">
+              <input
+                type="range"
+                min="20"
+                max="200"
+                step="1"
+                [ngModel]="currentGridHeaderHeight"
+                (ngModelChange)="onGridHeaderHeightChange($event)"
+                class="inspector-slider"
+                style="flex: 1"
+              />
+              <input
+                type="number"
+                min="20"
+                max="200"
+                step="1"
+                autocomplete="off"
+                data-dashlane-ignore="true"
+                data-1p-ignore="true"
+                data-lpignore="true"
+                data-bwignore="true"
+                data-form-type="other"
+                [ngModel]="currentGridHeaderHeight"
+                (ngModelChange)="onGridHeaderHeightChange($event)"
+                class="inspector-number-input"
+              />
+            </div>
+          </div>
+        }
+
+        @if (gridHeaderPlacement === "left") {
+          <div class="inspector-section" style="margin-bottom: 8px">
+            <div class="inspector-label-row">
+              <label class="inspector-label">{{
+                "UE_REPLICATE_HEADER_WIDTH" | translate
+              }}</label>
+              <span class="inspector-val-badge"
+                >{{ currentGridHeaderWidth }}px</span
+              >
+            </div>
+            <div style="display: flex; gap: 8px; align-items: center">
+              <input
+                type="range"
+                min="40"
+                max="600"
+                step="5"
+                [ngModel]="currentGridHeaderWidth"
+                (ngModelChange)="onGridHeaderWidthChange($event)"
+                class="inspector-slider"
+                style="flex: 1"
+              />
+              <input
+                type="number"
+                min="40"
+                max="600"
+                step="1"
+                autocomplete="off"
+                data-dashlane-ignore="true"
+                data-1p-ignore="true"
+                data-lpignore="true"
+                data-bwignore="true"
+                data-form-type="other"
+                [ngModel]="currentGridHeaderWidth"
+                (ngModelChange)="onGridHeaderWidthChange($event)"
+                class="inspector-number-input"
+              />
+            </div>
+          </div>
+        }
+
+        <div class="inspector-section" style="margin-bottom: 8px">
+          <label class="inspector-label">{{
+            "UE_INSPECTOR_HEADER_FONT_FAMILY" | translate
+          }}</label>
+          <div class="select-container select-sm">
+            <app-custom-select
+              [ngModel]="gridHeaderFontFamily"
+              (ngModelChange)="gridHeaderFontFamily = $event"
+              (click)="fontService.loadLocalFonts()"
+            >
+              <app-custom-option value="">
+                {{ "UE_INSPECTOR_FONT_THEME_DEFAULT" | translate }}
+              </app-custom-option>
+              @for (font of fontService.availableFonts(); track font) {
+                <app-custom-option [value]="font">{{ font }}</app-custom-option>
+              }
+            </app-custom-select>
+          </div>
+        </div>
+
+        <div class="inspector-section" style="margin-bottom: 8px">
+          <div class="inspector-label-row">
+            <label class="inspector-label">{{
+              "UE_INSPECTOR_HEADER_FONT_SIZE" | translate
+            }}</label>
+            <span class="inspector-val-badge">{{ gridHeaderFontSize }}px</span>
+          </div>
+          <div style="display: flex; gap: 8px; align-items: center">
+            <input
+              type="range"
+              min="8"
+              max="72"
+              step="1"
+              [ngModel]="gridHeaderFontSize"
+              (ngModelChange)="gridHeaderFontSize = $event"
+              class="inspector-slider"
+              style="flex: 1"
+            />
+            <input
+              type="number"
+              min="8"
+              max="72"
+              step="1"
+              autocomplete="off"
+              data-dashlane-ignore="true"
+              data-1p-ignore="true"
+              data-lpignore="true"
+              data-bwignore="true"
+              data-form-type="other"
+              [ngModel]="gridHeaderFontSize"
+              (ngModelChange)="gridHeaderFontSize = $event"
+              class="inspector-number-input"
+            />
+          </div>
+        </div>
+
+        <div class="inspector-section" style="margin-bottom: 8px">
+          <label class="inspector-label">{{
+            "UE_INSPECTOR_HEADER_TEXT_COLOR" | translate
+          }}</label>
+          <div
+            class="color-picker-wrapper"
+            [class.is-null]="!gridHeaderTextColor"
+          >
+            <input
+              type="color"
+              class="color-picker-input"
+              [value]="toValidHexColor(gridHeaderTextColor, '#ffffff')"
+              (change)="onGridHeaderTextColorChange($event)"
+              (input)="onGridHeaderTextColorChange($event)"
+            />
+            @if (!gridHeaderTextColor) {
+              <span class="color-picker-placeholder">{{
+                "UE_INSPECTOR_COLOR_DEFAULT" | translate
+              }}</span>
+            }
+            @if (gridHeaderTextColor) {
+              <button
+                type="button"
+                class="color-reset-btn"
+                (click)="resetGridHeaderTextColor()"
+                [title]="'UE_INSPECTOR_COLOR_RESET' | translate"
+              >
+                <span class="material-icons">restart_alt</span>
+              </button>
+            }
+          </div>
+        </div>
+
+        <div class="inspector-section" style="margin-bottom: 8px">
+          <label class="inspector-label">{{
+            "UE_INSPECTOR_HEADER_BACKGROUND_COLOR" | translate
+          }}</label>
+          <div
+            class="color-picker-wrapper"
+            [class.is-null]="!gridHeaderBackgroundColor"
+          >
+            <input
+              type="color"
+              class="color-picker-input"
+              [value]="toValidHexColor(gridHeaderBackgroundColor, '#444444')"
+              (change)="onGridHeaderBgColorChange($event)"
+              (input)="onGridHeaderBgColorChange($event)"
+            />
+            @if (!gridHeaderBackgroundColor) {
+              <span class="color-picker-placeholder">{{
+                "UE_INSPECTOR_COLOR_DEFAULT" | translate
+              }}</span>
+            }
+            @if (gridHeaderBackgroundColor) {
+              <button
+                type="button"
+                class="color-reset-btn"
+                (click)="resetGridHeaderBackgroundColor()"
+                [title]="'UE_INSPECTOR_COLOR_RESET' | translate"
+              >
+                <span class="material-icons">restart_alt</span>
+              </button>
+            }
+          </div>
+        </div>
+
+        <div class="inspector-section" style="margin-bottom: 8px">
+          <label class="inspector-label">{{
+            "UE_INSPECTOR_HEADER_ALIGNMENT" | translate
+          }}</label>
+          <div class="select-container select-sm">
+            <app-custom-select
+              [ngModel]="gridHeaderAlignment"
+              (ngModelChange)="gridHeaderAlignment = $event"
+            >
+              <app-custom-option value="start">
+                {{ "UE_INSPECTOR_ALIGN_START" | translate }}
+              </app-custom-option>
+              <app-custom-option value="center">
+                {{ "UE_INSPECTOR_ALIGN_CENTER" | translate }}
+              </app-custom-option>
+              <app-custom-option value="end">
+                {{ "UE_INSPECTOR_ALIGN_END" | translate }}
+              </app-custom-option>
+            </app-custom-select>
+          </div>
+        </div>
+      }
+    </div>
+
+    <!-- Section 4: Grid Management Actions -->
+    <div class="inspector-section-group actions-group">
+      <div class="inspector-group-title">
+        <span class="material-icons">settings</span>
+        <span>{{ "UE_GRID_SECTION_ACTIONS" | translate }}</span>
+      </div>
+      <div class="grid-card-actions">
         <button
           type="button"
-          class="color-reset-btn"
-          (click)="resetHeaderTextColor()"
-          [title]="'UE_INSPECTOR_COLOR_RESET' | translate"
+          class="btn btn-sm btn-outline-primary w-100 grid-bring-front-btn"
+          (click)="onBringGridToFront()"
+          [title]="'UE_GRID_BRING_TO_FRONT_TOOLTIP' | translate"
         >
-          <span class="material-icons">restart_alt</span>
+          <span class="material-icons me-1" style="font-size: 14px"
+            >flip_to_front</span
+          >
+          {{ "UE_GRID_BRING_TO_FRONT" | translate }}
         </button>
-      }
-    </div>
-  </div>
-
-  <div class="inspector-section">
-    <label class="inspector-label">{{
-      "UE_INSPECTOR_HEADER_BACKGROUND_COLOR" | translate
-    }}</label>
-    <div
-      class="color-picker-wrapper"
-      [class.is-null]="!currentSettings['headerBackgroundColor']"
-    >
-      <input
-        type="color"
-        [value]="currentSettings['headerBackgroundColor'] || '#444444'"
-        (change)="onColorChange('headerBackgroundColor', $event)"
-        class="color-picker-input"
-      />
-      @if (!currentSettings["headerBackgroundColor"]) {
-        <span class="color-picker-placeholder">{{
-          "UE_INSPECTOR_COLOR_DEFAULT" | translate
-        }}</span>
-      }
-      @if (currentSettings["headerBackgroundColor"]) {
         <button
           type="button"
-          class="color-reset-btn"
-          (click)="resetHeaderBackgroundColor()"
-          [title]="'UE_INSPECTOR_COLOR_RESET' | translate"
+          class="btn btn-sm btn-secondary w-100 grid-detach-btn"
+          (click)="onDetachFromGrid()"
         >
-          <span class="material-icons">restart_alt</span>
+          <span class="material-icons me-1" style="font-size: 14px"
+            >link_off</span
+          >
+          {{ "UE_GRID_DETACH" | translate }}
         </button>
-      }
+        <button
+          type="button"
+          class="btn btn-sm btn-danger w-100 grid-delete-btn"
+          (click)="onDeleteGrid()"
+          [title]="'UE_GRID_DELETE_TOOLTIP' | translate"
+        >
+          <span class="material-icons me-1" style="font-size: 14px"
+            >delete</span
+          >
+          {{ "UE_GRID_DELETE" | translate }}
+        </button>
+      </div>
     </div>
   </div>
-}
+</ng-template>
 
-<hr class="inspector-divider" />
+<ng-template #widgetSettingsTemplate>
+  @if (!currentSettings["gridId"]) {
+    <div class="inspector-section-group" style="margin-bottom: 12px">
+      <div class="inspector-group-title">
+        <span class="material-icons">person</span>
+        <span>{{ "UE_INSPECTOR_TARGET_DRIVER" | translate }}</span>
+      </div>
 
-<!-- Color Settings -->
-<div class="inspector-section">
-  <label class="form-check-label">
-    <input
-      type="checkbox"
-      class="form-checkbox"
-      [(ngModel)]="currentSettings['useLaneColors']"
-      (change)="onFieldChange()"
-    />
-    <span>{{ "UE_INSPECTOR_USE_LANE_COLORS" | translate }}</span>
-  </label>
-  <div class="inspector-hint">
-    {{ "UE_INSPECTOR_USE_LANE_COLORS_DESC" | translate }}
-  </div>
-</div>
+      <div class="inspector-section" style="margin-bottom: 8px">
+        <label class="inspector-label">{{
+          "UE_INSPECTOR_TARGET_DRIVER_BY" | translate
+        }}</label>
+        <div class="select-container select-sm">
+          <app-custom-select
+            [(ngModel)]="currentSettings['bindingMode']"
+            (change)="onFieldChange()"
+          >
+            <app-custom-option value="lane">
+              {{ "UE_GRID_SORT_ORDER_LANE" | translate }}
+            </app-custom-option>
+            <app-custom-option value="position">
+              {{ "UE_GRID_SORT_ORDER_HEAT_POSITION" | translate }}
+            </app-custom-option>
+            <app-custom-option value="overallPosition">
+              {{ "UE_GRID_SORT_ORDER_OVERALL_POSITION" | translate }}
+            </app-custom-option>
+            <app-custom-option value="seed">
+              {{ "UE_GRID_SORT_ORDER_SEED" | translate }}
+            </app-custom-option>
+          </app-custom-select>
+        </div>
+      </div>
 
-@if (!currentSettings["useLaneColors"]) {
-  <div class="inspector-section">
-    <label class="inspector-label">{{
-      "UE_INSPECTOR_BACKGROUND_COLOR" | translate
-    }}</label>
-    <input
-      type="color"
-      [(ngModel)]="currentSettings['backgroundColor']"
-      (change)="onFieldChange()"
-      class="inspector-color-input"
-    />
-  </div>
+      <div class="inspector-section" style="margin-bottom: 8px">
+        <label class="inspector-label">
+          {{
+            (currentSettings["bindingMode"] === "position"
+              ? "UE_INSPECTOR_TARGET_POSITION"
+              : currentSettings["bindingMode"] === "overallPosition"
+                ? "UE_INSPECTOR_TARGET_OVERALL_POSITION"
+                : currentSettings["bindingMode"] === "seed"
+                  ? "UE_INSPECTOR_TARGET_SEED"
+                  : "UE_INSPECTOR_TARGET_LANE"
+            ) | translate
+          }}
+        </label>
+        <div class="select-container select-sm">
+          <app-custom-select
+            [(ngModel)]="currentSettings['targetIndex']"
+            (change)="onFieldChange()"
+          >
+            @for (idx of availableIndices; track idx) {
+              <app-custom-option [value]="idx">
+                {{
+                  (currentSettings["bindingMode"] === "position"
+                    ? "UE_INSPECTOR_POSITION_INDEX"
+                    : currentSettings["bindingMode"] === "overallPosition"
+                      ? "UE_INSPECTOR_OVERALL_POSITION_INDEX"
+                      : currentSettings["bindingMode"] === "seed"
+                        ? "UE_INSPECTOR_SEED_INDEX"
+                        : "UE_INSPECTOR_LANE_INDEX"
+                  ) | translate: { index: idx + 1 }
+                }}
+              </app-custom-option>
+            }
+          </app-custom-select>
+        </div>
+      </div>
+    </div>
+  }
 
-  <div class="inspector-section">
-    <label class="inspector-label">{{
-      "UE_INSPECTOR_TEXT_COLOR" | translate
-    }}</label>
-    <input
-      type="color"
-      [(ngModel)]="currentSettings['textColor']"
-      (change)="onFieldChange()"
-      class="inspector-color-input"
-    />
-  </div>
-}
-
-<hr class="inspector-divider" />
-
-<!-- Typography Settings -->
-<div class="inspector-section">
-  <label class="inspector-label">{{
-    "UE_INSPECTOR_VALUE_FONT_FAMILY" | translate
-  }}</label>
-  <div class="select-container select-sm">
-    <app-custom-select
-      [(ngModel)]="currentSettings['valueFontFamily']"
-      (change)="onFieldChange()"
-      (click)="fontService.loadLocalFonts()"
-    >
-      <app-custom-option value="">
-        {{ "UE_INSPECTOR_FONT_THEME_DEFAULT" | translate }}
-      </app-custom-option>
-      @for (font of fontService.availableFonts(); track font) {
-        <app-custom-option [value]="font">{{ font }}</app-custom-option>
-      }
-    </app-custom-select>
-  </div>
-</div>
-
-<div class="inspector-section">
-  <div class="inspector-label-row">
-    <label class="inspector-label">{{
-      "UE_INSPECTOR_VALUE_FONT_SIZE" | translate
-    }}</label>
-    <span class="inspector-val-badge"
-      >{{ currentSettings["valueFontSize"] || 36 }}px</span
-    >
-  </div>
-  <input
-    type="range"
-    min="10"
-    max="120"
-    [(ngModel)]="currentSettings['valueFontSize']"
-    [disabled]="disableFontSizes()"
-    (change)="onFieldChange()"
-    class="inspector-slider"
-  />
-</div>
-
-<div class="inspector-section">
-  <label class="inspector-label">{{
-    "UE_INSPECTOR_VALUE_ALIGNMENT" | translate
-  }}</label>
-  <div class="select-container select-sm">
-    <app-custom-select
-      [(ngModel)]="currentSettings['valueAlignment']"
-      (change)="onFieldChange()"
-    >
-      <app-custom-option value="start">
-        {{ "UE_INSPECTOR_ALIGN_START" | translate }}
-      </app-custom-option>
-      <app-custom-option value="center">
-        {{ "UE_INSPECTOR_ALIGN_CENTER" | translate }}
-      </app-custom-option>
-      <app-custom-option value="end">
-        {{ "UE_INSPECTOR_ALIGN_END" | translate }}
-      </app-custom-option>
-    </app-custom-select>
-  </div>
-</div>
-
-<hr class="inspector-divider" />
-
-<!-- Card & Border Styling -->
-<div class="inspector-section">
-  <label class="form-check-label">
-    <input
-      type="checkbox"
-      class="form-checkbox"
-      [(ngModel)]="currentSettings['showBorder']"
-      (change)="onFieldChange()"
-    />
-    <span>{{ "UE_INSPECTOR_SHOW_BORDER" | translate }}</span>
-  </label>
-</div>
-
-@if (currentSettings["showBorder"]) {
-  <div class="inspector-section">
-    <label class="inspector-label">{{
-      "UE_INSPECTOR_BORDER_COLOR" | translate
-    }}</label>
-    <input
-      type="color"
-      [(ngModel)]="currentSettings['borderColor']"
-      (change)="onFieldChange()"
-      class="inspector-color-input"
-    />
+  <div class="inspector-geometry-title">
+    <span class="material-icons">{{
+      isCustomWidget ? "extension" : "widgets"
+    }}</span>
+    {{
+      isCustomWidget ? customWidgetName : ("UE_SCOPE_TAB_WIDGET" | translate)
+    }}
   </div>
 
-  <div class="inspector-section">
-    <div class="inspector-label-row">
+  @if (!isCustomWidget) {
+    <!-- Column Selection -->
+    <div class="inspector-section">
       <label class="inspector-label">{{
-        "UE_INSPECTOR_BORDER_WIDTH" | translate
+        "UE_INSPECTOR_COLUMN" | translate
       }}</label>
-      <span class="inspector-val-badge"
-        >{{ currentSettings["borderWidth"] ?? 1 }}px</span
-      >
+      <div class="select-container select-sm">
+        <app-custom-select
+          [(ngModel)]="currentSettings['columnKey']"
+          (change)="onFieldChange()"
+        >
+          @for (col of allAvailableColumns; track col.key) {
+            <app-custom-option [value]="col.key">
+              {{ col.label | translate }}
+            </app-custom-option>
+          }
+        </app-custom-select>
+      </div>
     </div>
-    <input
-      type="range"
-      min="0"
-      max="10"
-      [(ngModel)]="currentSettings['borderWidth']"
-      (change)="onFieldChange()"
-      class="inspector-slider"
-    />
-  </div>
 
-  <div class="inspector-section">
-    <div class="inspector-label-row">
-      <label class="inspector-label">{{
-        "UE_INSPECTOR_BORDER_RADIUS" | translate
-      }}</label>
-      <span class="inspector-val-badge"
-        >{{ currentSettings["borderRadius"] ?? 8 }}px</span
-      >
-    </div>
-    <input
-      type="range"
-      min="0"
-      max="32"
-      [(ngModel)]="currentSettings['borderRadius']"
-      (change)="onFieldChange()"
-      class="inspector-slider"
-    />
-  </div>
-}
+    @if (isTotalTimeColumn || isTimeColumn || isLapColumn) {
+      <hr class="inspector-divider" />
 
-<hr class="inspector-divider" />
+      <!-- Format & Decimals Section -->
+      <div class="inspector-geometry-title">
+        <span class="material-icons">schedule</span>
+        {{ "UE_INSPECTOR_FORMAT_SECTION" | translate }}
+      </div>
 
-<!-- Decimals Settings -->
-@if (isTimeColumn) {
-  <div class="inspector-section">
-    <label class="inspector-label">{{
-      "UE_INSPECTOR_TIME_DECIMALS" | translate
-    }}</label>
-    <div class="select-container select-sm">
-      <app-custom-select
-        [(ngModel)]="currentSettings['timeDecimalPlaces']"
-        (change)="onFieldChange()"
-      >
-        <app-custom-option [value]="0">0</app-custom-option>
-        <app-custom-option [value]="1">1</app-custom-option>
-        <app-custom-option [value]="2">2</app-custom-option>
-        <app-custom-option [value]="3">3</app-custom-option>
-      </app-custom-select>
-    </div>
-  </div>
-} @else {
-  <div class="inspector-section">
-    <label class="inspector-label">{{
-      "UE_INSPECTOR_LAP_DECIMALS" | translate
-    }}</label>
-    <div class="select-container select-sm">
-      <app-custom-select
-        [(ngModel)]="currentSettings['lapDecimalPlaces']"
-        (change)="onFieldChange()"
-      >
-        <app-custom-option [value]="0">0</app-custom-option>
-        <app-custom-option [value]="1">1</app-custom-option>
-        <app-custom-option [value]="2">2</app-custom-option>
-        <app-custom-option [value]="3">3</app-custom-option>
-      </app-custom-select>
-    </div>
-  </div>
-}
+      <!-- Decimals Settings -->
+      @if (isTotalTimeColumn) {
+        <!-- Format Preset Dropdown -->
+        <div class="inspector-section">
+          <label class="inspector-label">{{
+            "UE_INSPECTOR_TIMER_DISPLAY_FORMAT" | translate
+          }}</label>
+          <div class="select-container select-sm">
+            <app-custom-select
+              [ngModel]="currentSettings['timeDisplayFormat'] || 'dynamic'"
+              (ngModelChange)="
+                currentSettings['timeDisplayFormat'] = $event; onFieldChange()
+              "
+            >
+              <app-custom-option value="dynamic">
+                {{ "UE_INSPECTOR_TIMER_FORMAT_DYNAMIC" | translate }}
+              </app-custom-option>
+              <app-custom-option value="mm_ss">
+                {{ "UE_INSPECTOR_TIMER_FORMAT_MM_SS" | translate }}
+              </app-custom-option>
+              <app-custom-option value="m_ss">
+                {{ "UE_INSPECTOR_TIMER_FORMAT_M_SS" | translate }}
+              </app-custom-option>
+              <app-custom-option value="hh_mm_ss">
+                {{ "UE_INSPECTOR_TIMER_FORMAT_HH_MM_SS" | translate }}
+              </app-custom-option>
+              <app-custom-option value="seconds">
+                {{ "UE_INSPECTOR_TIMER_FORMAT_SECONDS" | translate }}
+              </app-custom-option>
+            </app-custom-select>
+          </div>
+        </div>
 
-<hr class="inspector-divider" />
+        <!-- Subsecond Settings -->
+        <div class="inspector-section">
+          <label class="inspector-label">{{
+            "UE_INSPECTOR_TIMER_SUBSECOND_MODE" | translate
+          }}</label>
+          <div class="select-container select-sm">
+            <app-custom-select
+              [ngModel]="currentSettings['timeSubsecondMode'] || 'never'"
+              (ngModelChange)="
+                currentSettings['timeSubsecondMode'] = $event; onFieldChange()
+              "
+            >
+              <app-custom-option value="never">
+                {{ "UE_INSPECTOR_TIMER_SUBSECOND_NEVER" | translate }}
+              </app-custom-option>
+              <app-custom-option value="always">
+                {{ "UE_INSPECTOR_TIMER_SUBSECOND_ALWAYS" | translate }}
+              </app-custom-option>
+              <app-custom-option value="threshold">
+                {{ "UE_INSPECTOR_TIMER_SUBSECOND_THRESHOLD_MODE" | translate }}
+              </app-custom-option>
+            </app-custom-select>
+          </div>
+        </div>
 
-<!-- Lane Inset Data Settings Section -->
-<div class="inspector-geometry-title">
-  {{ "UE_INSPECTOR_LANE_VIEW_INSET_DATA_SECTION" | translate }}
-</div>
+        @if (
+          (currentSettings["timeSubsecondMode"] || "never") === "threshold"
+        ) {
+          <div class="inspector-section">
+            <label class="inspector-label">{{
+              "UE_INSPECTOR_TIMER_SUBSECOND_THRESHOLD" | translate
+            }}</label>
+            <div style="display: flex; gap: 8px; align-items: center">
+              <input
+                type="number"
+                min="0"
+                step="1"
+                autocomplete="off"
+                data-dashlane-ignore="true"
+                data-1p-ignore="true"
+                data-lpignore="true"
+                data-bwignore="true"
+                data-form-type="other"
+                [ngModel]="currentSettings['timeSubsecondThreshold'] ?? 10"
+                (ngModelChange)="
+                  currentSettings['timeSubsecondThreshold'] = $event;
+                  onFieldChange()
+                "
+                style="
+                  flex: 1;
+                  padding: 4px;
+                  background: var(--bg-level-3);
+                  border: 1px solid var(--border-color);
+                  color: var(--text-color);
+                  border-radius: 4px;
+                "
+              />
+              <span class="inspector-label" style="margin-bottom: 0">sec</span>
+            </div>
+          </div>
+        }
 
-<!-- Inset Typography -->
-<div class="inspector-section">
-  <label class="inspector-label">{{
-    "UE_INSPECTOR_FONT_FAMILY" | translate
-  }}</label>
-  <div class="select-container select-sm">
-    <app-custom-select
-      [(ngModel)]="currentSettings['insetFontFamily']"
-      (change)="onFieldChange()"
-      (click)="fontService.loadLocalFonts()"
-    >
-      <app-custom-option value="">
-        {{ "UE_INSPECTOR_FONT_THEME_DEFAULT" | translate }}
-      </app-custom-option>
-      @for (font of fontService.availableFonts(); track font) {
-        <app-custom-option [value]="font">{{ font }}</app-custom-option>
+        @if ((currentSettings["timeSubsecondMode"] || "never") !== "never") {
+          <div class="inspector-section">
+            <div class="inspector-label-row">
+              <label class="inspector-label">{{
+                "UE_INSPECTOR_TIMER_SUBSECOND_DECIMALS" | translate
+              }}</label>
+              <span class="inspector-val-badge">{{
+                currentSettings["timeSubsecondDecimals"] ?? 2
+              }}</span>
+            </div>
+            <input
+              type="range"
+              min="0"
+              max="3"
+              step="1"
+              [ngModel]="currentSettings['timeSubsecondDecimals'] ?? 2"
+              (ngModelChange)="
+                currentSettings['timeSubsecondDecimals'] = $event;
+                onFieldChange()
+              "
+              class="inspector-slider"
+            />
+          </div>
+        }
+
+        <!-- Live Preview Section -->
+        <div class="inspector-section">
+          <label class="inspector-label">{{
+            "UE_INSPECTOR_TIMER_PREVIEW" | translate
+          }}</label>
+          <div class="timer-preview-grid">
+            <div class="timer-preview-item">
+              <span class="timer-preview-label">> 1 hr</span>
+              <span class="timer-preview-val">{{ getPreview(3665) }}</span>
+            </div>
+            <div class="timer-preview-item">
+              <span class="timer-preview-label">> 1 min</span>
+              <span class="timer-preview-val">{{ getPreview(75) }}</span>
+            </div>
+            <div class="timer-preview-item">
+              <span class="timer-preview-label">< 1 min</span>
+              <span class="timer-preview-val">{{ getPreview(45) }}</span>
+            </div>
+            <div class="timer-preview-item">
+              <span class="timer-preview-label">< 10s</span>
+              <span class="timer-preview-val">{{ getPreview(8.45) }}</span>
+            </div>
+          </div>
+        </div>
+      } @else if (isTimeColumn) {
+        <div class="inspector-section">
+          <label class="inspector-label">{{
+            "UE_INSPECTOR_TIME_DECIMALS" | translate
+          }}</label>
+          <div class="select-container select-sm">
+            <app-custom-select
+              [(ngModel)]="currentSettings['timeDecimalPlaces']"
+              (change)="onFieldChange()"
+            >
+              <app-custom-option [value]="0">0</app-custom-option>
+              <app-custom-option [value]="1">1</app-custom-option>
+              <app-custom-option [value]="2">2</app-custom-option>
+              <app-custom-option [value]="3">3</app-custom-option>
+            </app-custom-select>
+          </div>
+        </div>
+      } @else if (isLapColumn) {
+        <div class="inspector-section">
+          <label class="inspector-label">{{
+            "UE_INSPECTOR_LAP_DECIMALS" | translate
+          }}</label>
+          <div class="select-container select-sm">
+            <app-custom-select
+              [(ngModel)]="currentSettings['lapDecimalPlaces']"
+              (change)="onFieldChange()"
+            >
+              <app-custom-option [value]="0">0</app-custom-option>
+              <app-custom-option [value]="1">1</app-custom-option>
+              <app-custom-option [value]="2">2</app-custom-option>
+              <app-custom-option [value]="3">3</app-custom-option>
+            </app-custom-select>
+          </div>
+        </div>
       }
-    </app-custom-select>
-  </div>
-</div>
 
-<div class="inspector-section">
-  <div class="inspector-label-row">
-    <label class="inspector-label">{{
-      "UE_INSPECTOR_FONT_SIZE" | translate
-    }}</label>
-    <span class="inspector-val-badge"
-      >{{ currentSettings["insetFontSize"] || 18 }}px</span
-    >
-  </div>
-  <input
-    type="range"
-    min="8"
-    max="36"
-    [(ngModel)]="currentSettings['insetFontSize']"
-    [disabled]="disableFontSizes()"
-    (change)="onFieldChange()"
-    class="inspector-slider"
-  />
-</div>
+      @if (currentSettings["gridId"] && (isTotalTimeColumn || isTimeColumn)) {
+        <div class="inspector-section">
+          <button
+            type="button"
+            class="btn btn-sm btn-secondary w-100"
+            (click)="applyTimeFormatToAll()"
+          >
+            <span class="material-icons me-1" style="font-size: 14px"
+              >format_paint</span
+            >
+            {{ "UE_GRID_APPLY_TIME_FORMAT_TO_ALL" | translate }}
+          </button>
+        </div>
+      }
+    }
 
-<!-- Inset Text Color (override) -->
-<div class="inspector-section">
-  <label class="inspector-label">{{
-    "UE_INSPECTOR_TEXT_COLOR" | translate
-  }}</label>
-  <div class="d-flex align-items-center gap-2">
-    <input
-      type="color"
-      [ngModel]="currentSettings['insetTextColor'] || '#ffffff'"
-      (ngModelChange)="
-        currentSettings['insetTextColor'] = $event; onFieldChange()
-      "
-      class="inspector-color-input"
+    @if (isHeatsCountColumn) {
+      <hr class="inspector-divider" />
+      <div class="inspector-geometry-title">
+        <span class="material-icons">tune</span>
+        {{ "UE_INSPECTOR_HEATS_SECTION" | translate }}
+      </div>
+      <div class="inspector-section">
+        <label class="inspector-label">{{
+          "UE_INSPECTOR_HEATS_MODE" | translate
+        }}</label>
+        <div class="select-container select-sm">
+          <app-custom-select
+            [ngModel]="currentSettings['heatsDisplayMode'] || 'raced'"
+            (ngModelChange)="
+              currentSettings['heatsDisplayMode'] = $event; onFieldChange()
+            "
+          >
+            <app-custom-option value="raced">
+              {{ "UE_INSPECTOR_HEATS_MODE_RACED" | translate }}
+            </app-custom-option>
+            <app-custom-option value="remaining">
+              {{ "UE_INSPECTOR_HEATS_MODE_REMAINING" | translate }}
+            </app-custom-option>
+          </app-custom-select>
+        </div>
+      </div>
+    }
+  } @else {
+    <!-- Custom Widget Identifier / Title -->
+    <div class="inspector-section">
+      <label class="inspector-label">{{
+        "UE_INSPECTOR_CUSTOM_WIDGET" | translate
+      }}</label>
+      <div class="custom-widget-badge">
+        <span class="material-icons custom-widget-icon">extension</span>
+        <span class="custom-widget-name">{{ customWidgetName }}</span>
+      </div>
+    </div>
+
+    <!-- Embedded Custom Widget Properties Inspector (Schema Settings) -->
+    <app-custom-widget-inspector
+      [widget]="mainCustomWidgetNode"
+      (change)="onCustomWidgetChange($event)"
     />
-    @if (currentSettings["insetTextColor"]) {
+  }
+</ng-template>
+
+<ng-template #columnSettingsTemplate>
+  @if (isCustomWidget) {
+    <!-- Compact Custom Widget Indicator with Jump Button to Widget Scope -->
+    <div class="inspector-section">
+      <div class="custom-widget-column-info">
+        <div class="d-flex align-items-center gap-2">
+          <span class="material-icons custom-widget-icon">extension</span>
+          <span class="custom-widget-name">{{ customWidgetName }}</span>
+        </div>
+        <button
+          type="button"
+          class="btn btn-xs btn-outline-primary"
+          (click)="setScope('widget')"
+        >
+          {{ "UE_SCOPE_TAB_WIDGET" | translate }}
+        </button>
+      </div>
+    </div>
+  } @else {
+    <!-- Compact Column Info with Jump Button to Widget Scope -->
+    <div class="inspector-section">
+      <div class="custom-widget-column-info">
+        <div class="d-flex align-items-center gap-2">
+          <span class="material-icons custom-widget-icon">widgets</span>
+          <span class="custom-widget-name">{{ widgetBreadcrumbLabel }}</span>
+        </div>
+        <button
+          type="button"
+          class="btn btn-xs btn-outline-primary"
+          (click)="setScope('widget')"
+        >
+          {{ "UE_SCOPE_TAB_WIDGET" | translate }}
+        </button>
+      </div>
+    </div>
+  }
+
+  @if (!currentSettings["gridId"]) {
+    <!-- Layout Orientation -->
+    <div class="inspector-section">
+      <label class="inspector-label">{{
+        "UE_INSPECTOR_ORIENTATION" | translate
+      }}</label>
+      <div class="select-container select-sm">
+        <app-custom-select
+          [(ngModel)]="currentSettings['layoutOrientation']"
+          (change)="onFieldChange()"
+        >
+          <app-custom-option value="vertical">
+            {{ "UE_INSPECTOR_ORIENT_VERTICAL" | translate }}
+          </app-custom-option>
+          <app-custom-option value="horizontal">
+            {{ "UE_INSPECTOR_ORIENT_HORIZONTAL" | translate }}
+          </app-custom-option>
+        </app-custom-select>
+      </div>
+    </div>
+  }
+
+  <!-- Title Bar Settings Section -->
+  <div class="inspector-geometry-title">
+    <span class="material-icons">view_column</span>
+    {{ "UE_INSPECTOR_TITLE_BAR_SETTINGS" | translate }}
+  </div>
+
+  @if (
+    !isHeaderWidget &&
+    (!currentSettings["gridId"] || gridHeaderPlacement === "individual")
+  ) {
+    <div class="inspector-section">
+      <label class="form-check-label">
+        <input
+          type="checkbox"
+          class="form-checkbox"
+          [(ngModel)]="currentSettings['showHeader']"
+          (change)="onFieldChange()"
+        />
+        <span>{{ "UE_INSPECTOR_SHOW_HEADER" | translate }}</span>
+      </label>
+    </div>
+  }
+
+  @if (
+    (currentSettings["gridId"] &&
+      (gridHeaderPlacement === "top" || gridHeaderPlacement === "left")) ||
+    isHeaderWidget ||
+    currentSettings["showHeader"] !== false
+  ) {
+    <div class="inspector-section">
+      <label class="inspector-label">{{
+        "UE_INSPECTOR_CUSTOM_LABEL" | translate
+      }}</label>
+      <input
+        type="text"
+        class="inspector-input"
+        [(ngModel)]="currentSettings['customLabel']"
+        (input)="onFieldChange()"
+        [placeholder]="'UE_INSPECTOR_LABEL_PLACEHOLDER' | translate"
+        autocomplete="off"
+        data-dashlane-ignore="true"
+        data-1p-ignore="true"
+        data-lpignore="true"
+        data-bwignore="true"
+        data-form-type="other"
+      />
+    </div>
+  }
+
+  @if (
+    currentSettings["showHeader"] !== false &&
+    (!currentSettings["gridId"] ||
+      (gridHeaderPlacement === "individual" && !linkColumns))
+  ) {
+    <div class="inspector-section">
+      <label class="inspector-label">{{
+        "UE_INSPECTOR_HEADER_FONT_FAMILY" | translate
+      }}</label>
+      <div class="select-container select-sm">
+        <app-custom-select
+          [(ngModel)]="currentSettings['headerFontFamily']"
+          (change)="onFieldChange()"
+          (click)="fontService.loadLocalFonts()"
+        >
+          <app-custom-option value="">
+            {{ "UE_INSPECTOR_FONT_THEME_DEFAULT" | translate }}
+          </app-custom-option>
+          @for (font of fontService.availableFonts(); track font) {
+            <app-custom-option [value]="font">{{ font }}</app-custom-option>
+          }
+        </app-custom-select>
+      </div>
+    </div>
+
+    <div class="inspector-section">
+      <div class="inspector-label-row">
+        <label class="inspector-label">{{
+          "UE_INSPECTOR_HEADER_FONT_SIZE" | translate
+        }}</label>
+        <span class="inspector-val-badge"
+          >{{ currentSettings["headerFontSize"] || 14 }}px</span
+        >
+      </div>
+      <input
+        type="range"
+        min="8"
+        max="48"
+        [(ngModel)]="currentSettings['headerFontSize']"
+        [disabled]="disableFontSizes()"
+        (input)="onFieldChange()"
+        (change)="onFieldChange()"
+        class="inspector-slider"
+      />
+    </div>
+
+    <div class="inspector-section">
+      <label class="inspector-label">{{
+        "UE_INSPECTOR_HEADER_ALIGNMENT" | translate
+      }}</label>
+      <div class="select-container select-sm">
+        <app-custom-select
+          [(ngModel)]="currentSettings['headerAlignment']"
+          (change)="onFieldChange()"
+        >
+          <app-custom-option value="start">
+            {{ "UE_INSPECTOR_ALIGN_START" | translate }}
+          </app-custom-option>
+          <app-custom-option value="center">
+            {{ "UE_INSPECTOR_ALIGN_CENTER" | translate }}
+          </app-custom-option>
+          <app-custom-option value="end">
+            {{ "UE_INSPECTOR_ALIGN_END" | translate }}
+          </app-custom-option>
+        </app-custom-select>
+      </div>
+    </div>
+
+    <div class="inspector-section">
+      <label class="inspector-label">{{
+        "UE_INSPECTOR_HEADER_TEXT_COLOR" | translate
+      }}</label>
+      <div
+        class="color-picker-wrapper"
+        [class.is-null]="!currentSettings['headerTextColor']"
+      >
+        <input
+          type="color"
+          [value]="
+            toValidHexColor(currentSettings['headerTextColor'], '#ffffff')
+          "
+          (change)="onColorChange('headerTextColor', $event)"
+          (input)="onColorChange('headerTextColor', $event)"
+          class="color-picker-input"
+        />
+        @if (!currentSettings["headerTextColor"]) {
+          <span class="color-picker-placeholder">{{
+            "UE_INSPECTOR_COLOR_DEFAULT" | translate
+          }}</span>
+        }
+        @if (currentSettings["headerTextColor"]) {
+          <button
+            type="button"
+            class="color-reset-btn"
+            (click)="resetHeaderTextColor()"
+            [title]="'UE_INSPECTOR_COLOR_RESET' | translate"
+          >
+            <span class="material-icons">restart_alt</span>
+          </button>
+        }
+      </div>
+    </div>
+
+    <div class="inspector-section">
+      <label class="inspector-label">{{
+        "UE_INSPECTOR_HEADER_BACKGROUND_COLOR" | translate
+      }}</label>
+      <div
+        class="color-picker-wrapper"
+        [class.is-null]="!currentSettings['headerBackgroundColor']"
+      >
+        <input
+          type="color"
+          [value]="
+            toValidHexColor(currentSettings['headerBackgroundColor'], '#444444')
+          "
+          (change)="onColorChange('headerBackgroundColor', $event)"
+          (input)="onColorChange('headerBackgroundColor', $event)"
+          class="color-picker-input"
+        />
+        @if (!currentSettings["headerBackgroundColor"]) {
+          <span class="color-picker-placeholder">{{
+            "UE_INSPECTOR_COLOR_DEFAULT" | translate
+          }}</span>
+        }
+        @if (currentSettings["headerBackgroundColor"]) {
+          <button
+            type="button"
+            class="color-reset-btn"
+            (click)="resetHeaderBackgroundColor()"
+            [title]="'UE_INSPECTOR_COLOR_RESET' | translate"
+          >
+            <span class="material-icons">restart_alt</span>
+          </button>
+        }
+      </div>
+    </div>
+
+    @if (currentSettings["gridId"]) {
+      <div class="inspector-section">
+        <button
+          type="button"
+          class="btn btn-sm btn-secondary w-100"
+          (click)="applyHeaderStyleToAll()"
+        >
+          <span class="material-icons me-1" style="font-size: 14px"
+            >format_paint</span
+          >
+          {{ "UE_GRID_APPLY_HEADER_TO_ALL" | translate }}
+        </button>
+      </div>
+    }
+  }
+
+  @if (!isHeaderWidget) {
+    <hr class="inspector-divider" />
+
+    <!-- Data Cell Styling Section -->
+    <div class="inspector-geometry-title">
+      <span class="material-icons">palette</span>
+      {{ "UE_INSPECTOR_DATA_STYLING_SETTINGS" | translate }}
+    </div>
+
+    <!-- Lap Flash Highlight -->
+    <div class="inspector-section">
+      <label class="form-check-label">
+        <input
+          type="checkbox"
+          class="form-checkbox"
+          [(ngModel)]="highlightRowOnLap"
+        />
+        <span>{{ "UE_INSPECTOR_LANE_VIEW_HIGHLIGHT_LAP" | translate }}</span>
+      </label>
+    </div>
+
+    <hr class="inspector-divider" />
+
+    <!-- Color Settings -->
+    <div class="inspector-section">
+      <label class="form-check-label">
+        <input
+          type="checkbox"
+          class="form-checkbox"
+          [(ngModel)]="currentSettings['useLaneColors']"
+          (change)="onUseLaneColorsChange()"
+        />
+        <span>{{ "UE_INSPECTOR_USE_LANE_COLORS" | translate }}</span>
+      </label>
+      <div class="inspector-hint">
+        {{ "UE_INSPECTOR_USE_LANE_COLORS_DESC" | translate }}
+      </div>
+    </div>
+
+    @if (!currentSettings["useLaneColors"]) {
+      <div class="inspector-section">
+        <label class="inspector-label">{{
+          "UE_INSPECTOR_BACKGROUND_COLOR" | translate
+        }}</label>
+        <input
+          type="color"
+          [value]="
+            toValidHexColor(currentSettings['backgroundColor'], '#000000')
+          "
+          (input)="onColorChange('backgroundColor', $event)"
+          (change)="onColorChange('backgroundColor', $event)"
+          class="inspector-color-input"
+        />
+      </div>
+
+      @if (!isImageColumn) {
+        <div class="inspector-section">
+          <label class="inspector-label">{{
+            "UE_INSPECTOR_TEXT_COLOR" | translate
+          }}</label>
+          <input
+            type="color"
+            [value]="toValidHexColor(currentSettings['textColor'], '#ffffff')"
+            (input)="onColorChange('textColor', $event)"
+            (change)="onColorChange('textColor', $event)"
+            class="inspector-color-input"
+          />
+        </div>
+      }
+    }
+
+    @if (!isImageColumn) {
+      <hr class="inspector-divider" />
+
+      <!-- Typography Settings -->
+      <div class="inspector-section">
+        <label class="inspector-label">{{
+          "UE_INSPECTOR_VALUE_FONT_FAMILY" | translate
+        }}</label>
+        <div class="select-container select-sm">
+          <app-custom-select
+            [(ngModel)]="currentSettings['valueFontFamily']"
+            (change)="onFieldChange()"
+            (click)="fontService.loadLocalFonts()"
+          >
+            <app-custom-option value="">
+              {{ "UE_INSPECTOR_FONT_THEME_DEFAULT" | translate }}
+            </app-custom-option>
+            @for (font of fontService.availableFonts(); track font) {
+              <app-custom-option [value]="font">{{ font }}</app-custom-option>
+            }
+          </app-custom-select>
+        </div>
+      </div>
+
+      <div class="inspector-section">
+        <div class="inspector-label-row">
+          <label class="inspector-label">{{
+            "UE_INSPECTOR_VALUE_FONT_SIZE" | translate
+          }}</label>
+          <span class="inspector-val-badge"
+            >{{ currentSettings["valueFontSize"] || 36 }}px</span
+          >
+        </div>
+        <input
+          type="range"
+          min="10"
+          max="120"
+          [(ngModel)]="currentSettings['valueFontSize']"
+          [disabled]="disableFontSizes()"
+          (input)="onFieldChange()"
+          (change)="onFieldChange()"
+          class="inspector-slider"
+        />
+      </div>
+
+      <div class="inspector-section">
+        <label class="inspector-label">{{
+          "UE_INSPECTOR_VALUE_ALIGNMENT" | translate
+        }}</label>
+        <div class="select-container select-sm">
+          <app-custom-select
+            [(ngModel)]="currentSettings['valueAlignment']"
+            (change)="onFieldChange()"
+          >
+            <app-custom-option value="start">
+              {{ "UE_INSPECTOR_ALIGN_START" | translate }}
+            </app-custom-option>
+            <app-custom-option value="center">
+              {{ "UE_INSPECTOR_ALIGN_CENTER" | translate }}
+            </app-custom-option>
+            <app-custom-option value="end">
+              {{ "UE_INSPECTOR_ALIGN_END" | translate }}
+            </app-custom-option>
+          </app-custom-select>
+        </div>
+      </div>
+
+      @if (currentSettings["gridId"]) {
+        <div class="inspector-section">
+          <button
+            type="button"
+            class="btn btn-sm btn-secondary w-100"
+            (click)="applyValueStyleToAll()"
+          >
+            <span class="material-icons me-1" style="font-size: 14px"
+              >format_paint</span
+            >
+            {{ "UE_GRID_APPLY_VALUE_TO_ALL" | translate }}
+          </button>
+        </div>
+      }
+    }
+  }
+
+  <hr class="inspector-divider" />
+
+  <!-- Card & Border Styling -->
+  <div class="inspector-geometry-title">
+    <span class="material-icons">border_style</span>
+    {{ "UE_INSPECTOR_BORDER_SECTION" | translate }}
+  </div>
+
+  <div class="inspector-section">
+    <label class="form-check-label">
+      <input
+        type="checkbox"
+        class="form-checkbox"
+        [(ngModel)]="currentSettings['showBorder']"
+        (change)="onFieldChange()"
+      />
+      <span>{{ "UE_INSPECTOR_SHOW_BORDER" | translate }}</span>
+    </label>
+  </div>
+
+  @if (currentSettings["showBorder"]) {
+    <div class="inspector-section">
+      <label class="inspector-label">{{
+        "UE_INSPECTOR_BORDER_COLOR" | translate
+      }}</label>
+      <input
+        type="color"
+        [value]="toValidHexColor(currentSettings['borderColor'], '#ffffff')"
+        (input)="onColorChange('borderColor', $event)"
+        (change)="onColorChange('borderColor', $event)"
+        class="inspector-color-input"
+      />
+    </div>
+
+    <div class="inspector-section">
+      <div class="inspector-label-row">
+        <label class="inspector-label">{{
+          "UE_INSPECTOR_BORDER_WIDTH" | translate
+        }}</label>
+        <span class="inspector-val-badge"
+          >{{ currentSettings["borderWidth"] ?? 1 }}px</span
+        >
+      </div>
+      <input
+        type="range"
+        min="0"
+        max="10"
+        [(ngModel)]="currentSettings['borderWidth']"
+        (change)="onFieldChange()"
+        class="inspector-slider"
+      />
+    </div>
+
+    <div class="inspector-section">
+      <div class="inspector-label-row">
+        <label class="inspector-label">{{
+          "UE_INSPECTOR_BORDER_RADIUS" | translate
+        }}</label>
+        <span class="inspector-val-badge"
+          >{{ currentSettings["borderRadius"] ?? 8 }}px</span
+        >
+      </div>
+      <input
+        type="range"
+        min="0"
+        max="32"
+        [(ngModel)]="currentSettings['borderRadius']"
+        (change)="onFieldChange()"
+        class="inspector-slider"
+      />
+    </div>
+  }
+
+  @if (currentSettings["gridId"]) {
+    <div class="inspector-section">
       <button
         type="button"
-        class="color-reset-btn"
-        (click)="resetInsetTextColor()"
-        [title]="'UE_INSPECTOR_COLOR_RESET' | translate"
+        class="btn btn-sm btn-secondary w-100"
+        (click)="applyBorderStyleToAll()"
       >
-        <span class="material-icons">restart_alt</span>
+        <span class="material-icons me-1" style="font-size: 14px"
+          >format_paint</span
+        >
+        {{ "UE_GRID_APPLY_BORDER_TO_ALL" | translate }}
       </button>
+    </div>
+  }
+
+  @if (!isHeaderWidget) {
+    <hr class="inspector-divider" />
+
+    <!-- Lane Inset Data Settings Section -->
+    <div class="inspector-geometry-title">
+      <span class="material-icons">open_in_new</span>
+      {{ "UE_INSPECTOR_LANE_VIEW_INSET_DATA_SECTION" | translate }}
+    </div>
+
+    <!-- Inset Map Section -->
+    <div class="inspector-section-header mt-3">
+      <label class="inspector-label font-weight-bold">{{
+        "UE_INSPECTOR_INSET_MAP_TITLE" | translate
+      }}</label>
+    </div>
+
+    <!-- 3x3 Interactive Inset Map -->
+    <div class="inspector-section">
+      <div
+        class="inset-map-grid"
+        role="grid"
+        [attr.aria-label]="'UE_INSPECTOR_INSET_MAP_TITLE' | translate"
+      >
+        <!-- Top Row: top-left, top-center, top-right -->
+        <button
+          type="button"
+          class="inset-map-cell"
+          [class.active-anchor]="selectedMapAnchor === 'top-left'"
+          [class.filled-anchor]="!!getAnchorValue('top-left')"
+          (click)="selectAnchorFromMap('top-left')"
+          (dragover)="onInspectorDragOver($event)"
+          (dragenter)="onInspectorDragEnter($event)"
+          (dragleave)="onInspectorDragLeave($event)"
+          (drop)="onInspectorDrop($event, 'top-left')"
+          [title]="'UE_ANCHOR_top-left' | translate"
+        >
+          <span class="inset-map-label">TL</span>
+          @if (getAnchorValue("top-left")) {
+            <span class="material-icons inset-map-icon">{{
+              getWidgetIcon(getAnchorValue("top-left"))
+            }}</span>
+          }
+        </button>
+
+        <button
+          type="button"
+          class="inset-map-cell"
+          [class.active-anchor]="selectedMapAnchor === 'top-center'"
+          [class.filled-anchor]="!!getAnchorValue('top-center')"
+          (click)="selectAnchorFromMap('top-center')"
+          (dragover)="onInspectorDragOver($event)"
+          (dragenter)="onInspectorDragEnter($event)"
+          (dragleave)="onInspectorDragLeave($event)"
+          (drop)="onInspectorDrop($event, 'top-center')"
+          [title]="'UE_ANCHOR_top-center' | translate"
+        >
+          <span class="inset-map-label">TC</span>
+          @if (getAnchorValue("top-center")) {
+            <span class="material-icons inset-map-icon">{{
+              getWidgetIcon(getAnchorValue("top-center"))
+            }}</span>
+          }
+        </button>
+
+        <button
+          type="button"
+          class="inset-map-cell"
+          [class.active-anchor]="selectedMapAnchor === 'top-right'"
+          [class.filled-anchor]="!!getAnchorValue('top-right')"
+          (click)="selectAnchorFromMap('top-right')"
+          (dragover)="onInspectorDragOver($event)"
+          (dragenter)="onInspectorDragEnter($event)"
+          (dragleave)="onInspectorDragLeave($event)"
+          (drop)="onInspectorDrop($event, 'top-right')"
+          [title]="'UE_ANCHOR_top-right' | translate"
+        >
+          <span class="inset-map-label">TR</span>
+          @if (getAnchorValue("top-right")) {
+            <span class="material-icons inset-map-icon">{{
+              getWidgetIcon(getAnchorValue("top-right"))
+            }}</span>
+          }
+        </button>
+
+        <!-- Middle Row: center-left, Center (Main Column), center-right -->
+        <button
+          type="button"
+          class="inset-map-cell"
+          [class.active-anchor]="selectedMapAnchor === 'center-left'"
+          [class.filled-anchor]="!!getAnchorValue('center-left')"
+          (click)="selectAnchorFromMap('center-left')"
+          (dragover)="onInspectorDragOver($event)"
+          (dragenter)="onInspectorDragEnter($event)"
+          (dragleave)="onInspectorDragLeave($event)"
+          (drop)="onInspectorDrop($event, 'center-left')"
+          [title]="'UE_ANCHOR_center-left' | translate"
+        >
+          <span class="inset-map-label">CL</span>
+          @if (getAnchorValue("center-left")) {
+            <span class="material-icons inset-map-icon">{{
+              getWidgetIcon(getAnchorValue("center-left"))
+            }}</span>
+          }
+        </button>
+
+        <button
+          type="button"
+          class="inset-map-cell inset-map-center-cell"
+          [class.active-anchor]="selectedMapAnchor === 'center-center'"
+          [class.filled-anchor]="!!getAnchorValue('center-center')"
+          (click)="selectAnchorFromMap('center-center')"
+          (dragover)="onInspectorDragOver($event)"
+          (dragenter)="onInspectorDragEnter($event)"
+          (dragleave)="onInspectorDragLeave($event)"
+          (drop)="onInspectorDrop($event, 'center-center')"
+          [title]="'UE_INSPECTOR_INSET_MAIN_COLUMN' | translate"
+        >
+          <span class="inset-map-label">CC</span>
+          <span class="material-icons inset-map-icon">{{
+            getAnchorValue("center-center")
+              ? getWidgetIcon(getAnchorValue("center-center"))
+              : "view_column"
+          }}</span>
+        </button>
+
+        <button
+          type="button"
+          class="inset-map-cell"
+          [class.active-anchor]="selectedMapAnchor === 'center-right'"
+          [class.filled-anchor]="!!getAnchorValue('center-right')"
+          (click)="selectAnchorFromMap('center-right')"
+          (dragover)="onInspectorDragOver($event)"
+          (dragenter)="onInspectorDragEnter($event)"
+          (dragleave)="onInspectorDragLeave($event)"
+          (drop)="onInspectorDrop($event, 'center-right')"
+          [title]="'UE_ANCHOR_center-right' | translate"
+        >
+          <span class="inset-map-label">CR</span>
+          @if (getAnchorValue("center-right")) {
+            <span class="material-icons inset-map-icon">{{
+              getWidgetIcon(getAnchorValue("center-right"))
+            }}</span>
+          }
+        </button>
+
+        <!-- Bottom Row: bottom-left, bottom-center, bottom-right -->
+        <button
+          type="button"
+          class="inset-map-cell"
+          [class.active-anchor]="selectedMapAnchor === 'bottom-left'"
+          [class.filled-anchor]="!!getAnchorValue('bottom-left')"
+          (click)="selectAnchorFromMap('bottom-left')"
+          (dragover)="onInspectorDragOver($event)"
+          (dragenter)="onInspectorDragEnter($event)"
+          (dragleave)="onInspectorDragLeave($event)"
+          (drop)="onInspectorDrop($event, 'bottom-left')"
+          [title]="'UE_ANCHOR_bottom-left' | translate"
+        >
+          <span class="inset-map-label">BL</span>
+          @if (getAnchorValue("bottom-left")) {
+            <span class="material-icons inset-map-icon">{{
+              getWidgetIcon(getAnchorValue("bottom-left"))
+            }}</span>
+          }
+        </button>
+
+        <button
+          type="button"
+          class="inset-map-cell"
+          [class.active-anchor]="selectedMapAnchor === 'bottom-center'"
+          [class.filled-anchor]="!!getAnchorValue('bottom-center')"
+          (click)="selectAnchorFromMap('bottom-center')"
+          (dragover)="onInspectorDragOver($event)"
+          (dragenter)="onInspectorDragEnter($event)"
+          (dragleave)="onInspectorDragLeave($event)"
+          (drop)="onInspectorDrop($event, 'bottom-center')"
+          [title]="'UE_ANCHOR_bottom-center' | translate"
+        >
+          <span class="inset-map-label">BC</span>
+          @if (getAnchorValue("bottom-center")) {
+            <span class="material-icons inset-map-icon">{{
+              getWidgetIcon(getAnchorValue("bottom-center"))
+            }}</span>
+          }
+        </button>
+
+        <button
+          type="button"
+          class="inset-map-cell"
+          [class.active-anchor]="selectedMapAnchor === 'bottom-right'"
+          [class.filled-anchor]="!!getAnchorValue('bottom-right')"
+          (click)="selectAnchorFromMap('bottom-right')"
+          (dragover)="onInspectorDragOver($event)"
+          (dragenter)="onInspectorDragEnter($event)"
+          (dragleave)="onInspectorDragLeave($event)"
+          (drop)="onInspectorDrop($event, 'bottom-right')"
+          [title]="'UE_ANCHOR_bottom-right' | translate"
+        >
+          <span class="inset-map-label">BR</span>
+          @if (getAnchorValue("bottom-right")) {
+            <span class="material-icons inset-map-icon">{{
+              getWidgetIcon(getAnchorValue("bottom-right"))
+            }}</span>
+          }
+        </button>
+      </div>
+    </div>
+
+    <!-- Hero Drop Zone Card for selectedMapAnchor -->
+    <div class="inspector-section mt-2">
+      <div class="hero-inset-container">
+        <div class="hero-inset-header">
+          <span class="hero-anchor-badge">{{
+            getSelectedAnchorLabel(selectedMapAnchor)
+          }}</span>
+          @if (
+            getAnchorValue(selectedMapAnchor) &&
+            selectedMapAnchor !== "center-center"
+          ) {
+            <div class="hero-header-actions">
+              <button
+                type="button"
+                class="ghost-icon-btn"
+                (click)="configureInset(selectedMapAnchor)"
+                [title]="'UE_INSPECTOR_CONFIGURE_INSET' | translate"
+              >
+                <span class="material-icons">tune</span>
+              </button>
+              <button
+                type="button"
+                class="ghost-icon-btn text-danger"
+                (click)="removeInset(selectedMapAnchor)"
+                [title]="'UE_INSPECTOR_INSET_CLEAR' | translate"
+              >
+                <span class="material-icons">delete</span>
+              </button>
+            </div>
+          }
+        </div>
+
+        <div
+          class="hero-inset-dropzone"
+          [class.has-widget]="!!getAnchorValue(selectedMapAnchor)"
+          (dragover)="onInspectorDragOver($event)"
+          (dragenter)="onInspectorDragEnter($event)"
+          (dragleave)="onInspectorDragLeave($event)"
+          (drop)="onInspectorDrop($event, selectedMapAnchor)"
+        >
+          @if (!getAnchorValue(selectedMapAnchor)) {
+            <div class="hero-empty-state">
+              <span class="material-icons hero-drop-icon"
+                >add_circle_outline</span
+              >
+              <div class="hero-drop-title">
+                {{ "UE_INSPECTOR_INSET_DROP_PROMPT" | translate }}
+              </div>
+              <div class="hero-drop-subtitle">
+                {{ "UE_INSPECTOR_INSET_DROP_SUBTITLE" | translate }}
+              </div>
+            </div>
+          } @else {
+            <div class="hero-filled-state">
+              <div class="hero-widget-row">
+                <span class="material-icons hero-widget-icon">
+                  {{ getWidgetIcon(getAnchorValue(selectedMapAnchor)) }}
+                </span>
+                <div class="hero-widget-info">
+                  <div class="hero-widget-label">
+                    {{ "UE_INSPECTOR_INSET_CURRENT_WIDGET" | translate }}
+                  </div>
+                  <div class="hero-widget-name">
+                    {{
+                      getWidgetDisplayName(getAnchorValue(selectedMapAnchor))
+                    }}
+                  </div>
+                </div>
+              </div>
+              <div class="hero-drop-hint">
+                <span class="material-icons hero-hint-icon"
+                  >drag_indicator</span
+                >
+                <span>{{ "UE_INSPECTOR_INSET_REPLACE_HINT" | translate }}</span>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    @if (hasAnyInsets) {
+      <hr class="inspector-divider" />
+
+      <!-- Inset Typography -->
+      <div class="inspector-section">
+        <label class="inspector-label">{{
+          "UE_INSPECTOR_FONT_FAMILY" | translate
+        }}</label>
+        <div class="select-container select-sm">
+          <app-custom-select
+            [(ngModel)]="currentSettings['insetFontFamily']"
+            (change)="onFieldChange()"
+            (click)="fontService.loadLocalFonts()"
+          >
+            <app-custom-option value="">
+              {{ "UE_INSPECTOR_FONT_THEME_DEFAULT" | translate }}
+            </app-custom-option>
+            @for (font of fontService.availableFonts(); track font) {
+              <app-custom-option [value]="font">{{ font }}</app-custom-option>
+            }
+          </app-custom-select>
+        </div>
+      </div>
+
+      <div class="inspector-section">
+        <div class="inspector-label-row">
+          <label class="inspector-label">{{
+            "UE_INSPECTOR_FONT_SIZE" | translate
+          }}</label>
+          <span class="inspector-val-badge"
+            >{{ currentSettings["insetFontSize"] || 18 }}px</span
+          >
+        </div>
+        <input
+          type="range"
+          min="8"
+          max="36"
+          [(ngModel)]="currentSettings['insetFontSize']"
+          [disabled]="disableFontSizes()"
+          (change)="onFieldChange()"
+          class="inspector-slider"
+        />
+      </div>
+
+      <!-- Inset Text Color (override) -->
+      <div class="inspector-section">
+        <label class="inspector-label">{{
+          "UE_INSPECTOR_TEXT_COLOR" | translate
+        }}</label>
+        <div class="d-flex align-items-center gap-2">
+          <input
+            type="color"
+            [value]="
+              toValidHexColor(currentSettings['insetTextColor'], '#ffffff')
+            "
+            (input)="onColorChange('insetTextColor', $event)"
+            (change)="onColorChange('insetTextColor', $event)"
+            class="inspector-color-input"
+          />
+          @if (currentSettings["insetTextColor"]) {
+            <button
+              type="button"
+              class="color-reset-btn"
+              (click)="resetInsetTextColor()"
+              [title]="'UE_INSPECTOR_COLOR_RESET' | translate"
+            >
+              <span class="material-icons">restart_alt</span>
+            </button>
+          }
+        </div>
+      </div>
+
+      @if (hasTimeInset) {
+        <!-- Inset Time Decimal Places -->
+        <div class="inspector-section">
+          <label class="inspector-label">{{
+            "UE_INSPECTOR_INSET_TIME_DECIMALS" | translate
+          }}</label>
+          <div class="select-container select-sm">
+            <app-custom-select
+              [(ngModel)]="currentSettings['insetTimeDecimalPlaces']"
+              (change)="onFieldChange()"
+            >
+              <app-custom-option [value]="0">0</app-custom-option>
+              <app-custom-option [value]="1">1</app-custom-option>
+              <app-custom-option [value]="2">2</app-custom-option>
+              <app-custom-option [value]="3">3</app-custom-option>
+            </app-custom-select>
+          </div>
+        </div>
+      }
+
+      @if (hasLapInset) {
+        <!-- Inset Lap Decimal Places -->
+        <div class="inspector-section">
+          <label class="inspector-label">{{
+            "UE_INSPECTOR_INSET_LAP_DECIMALS" | translate
+          }}</label>
+          <div class="select-container select-sm">
+            <app-custom-select
+              [(ngModel)]="currentSettings['insetLapDecimalPlaces']"
+              (change)="onFieldChange()"
+            >
+              <app-custom-option [value]="0">0</app-custom-option>
+              <app-custom-option [value]="1">1</app-custom-option>
+              <app-custom-option [value]="2">2</app-custom-option>
+              <app-custom-option [value]="3">3</app-custom-option>
+            </app-custom-select>
+          </div>
+        </div>
+      }
     }
+  }
+</ng-template>
+
+<ng-template #insetSettingsTemplate>
+  <div class="inspector-geometry-title">
+    <span class="material-icons">open_in_new</span>
+    {{ "UE_INSPECTOR_INSET_SETTINGS" | translate }}
   </div>
-</div>
 
-<!-- Inset Time Decimal Places -->
-<div class="inspector-section">
-  <label class="inspector-label">{{
-    "UE_INSPECTOR_TIME_DECIMALS" | translate
-  }}</label>
-  <div class="select-container select-sm">
-    <app-custom-select
-      [(ngModel)]="currentSettings['insetTimeDecimalPlaces']"
-      (change)="onFieldChange()"
-    >
-      <app-custom-option [value]="0">0</app-custom-option>
-      <app-custom-option [value]="1">1</app-custom-option>
-      <app-custom-option [value]="2">2</app-custom-option>
-      <app-custom-option [value]="3">3</app-custom-option>
-    </app-custom-select>
-  </div>
-</div>
-
-<!-- Inset Lap Decimal Places -->
-<div class="inspector-section">
-  <label class="inspector-label">{{
-    "UE_INSPECTOR_LAP_DECIMALS" | translate
-  }}</label>
-  <div class="select-container select-sm">
-    <app-custom-select
-      [(ngModel)]="currentSettings['insetLapDecimalPlaces']"
-      (change)="onFieldChange()"
-    >
-      <app-custom-option [value]="0">0</app-custom-option>
-      <app-custom-option [value]="1">1</app-custom-option>
-      <app-custom-option [value]="2">2</app-custom-option>
-      <app-custom-option [value]="3">3</app-custom-option>
-    </app-custom-select>
-  </div>
-</div>
-
-<!-- Inset Positions (8 positions) -->
-<div class="inspector-section-header mt-3">
-  <label class="inspector-label font-weight-bold">{{
-    "UE_INSPECTOR_INSETS_POSITIONS" | translate
-  }}</label>
-</div>
-
-@for (pos of ANCHOR_POSITIONS; track pos.key) {
+  <!-- Inset Position Picker -->
   <div class="inspector-section">
-    <label class="inspector-label">{{ pos.labelKey | translate }}</label>
+    <label class="inspector-label">{{
+      "UE_INSPECTOR_INSET_POSITION" | translate
+    }}</label>
     <div class="select-container select-sm">
       <app-custom-select
-        [ngModel]="getAnchorValue(pos.key)"
-        (ngModelChange)="setAnchorValue(pos.key, $event)"
+        [ngModel]="effectiveSelectedAnchor"
+        (ngModelChange)="selectInsetAnchor($event)"
       >
-        <app-custom-option value="">
-          {{ "UE_INSPECTOR_INSET_NONE" | translate }}
-        </app-custom-option>
-        @for (col of availableColumns(); track col.key) {
-          <app-custom-option [value]="col.key">
-            {{ col.label | translate }}
+        @for (pos of ANCHOR_POSITIONS; track pos.key) {
+          <app-custom-option [value]="pos.key">
+            {{ pos.labelKey | translate }}
+            @if (getAnchorValue(pos.key)) {
+              ({{ getAnchorValue(pos.key) }})
+            }
           </app-custom-option>
         }
       </app-custom-select>
     </div>
   </div>
-}
+
+  <!-- Inset Hero Drop Zone Card -->
+  <div class="inspector-section">
+    <div class="hero-inset-container">
+      <div class="hero-inset-header">
+        <span class="hero-anchor-badge">{{ getSelectedAnchorLabel() }}</span>
+        @if (getAnchorValue(effectiveSelectedAnchor)) {
+          <div class="hero-header-actions">
+            <button
+              type="button"
+              class="ghost-icon-btn text-danger"
+              (click)="removeInset(effectiveSelectedAnchor)"
+              [title]="'UE_INSPECTOR_INSET_CLEAR' | translate"
+            >
+              <span class="material-icons">delete</span>
+            </button>
+          </div>
+        }
+      </div>
+
+      <div
+        class="hero-inset-dropzone"
+        [class.has-widget]="!!getAnchorValue(effectiveSelectedAnchor)"
+        (dragover)="onInspectorDragOver($event)"
+        (dragenter)="onInspectorDragEnter($event)"
+        (dragleave)="onInspectorDragLeave($event)"
+        (drop)="onInspectorDrop($event, effectiveSelectedAnchor)"
+      >
+        @if (!getAnchorValue(effectiveSelectedAnchor)) {
+          <div class="hero-empty-state">
+            <span class="material-icons hero-drop-icon"
+              >add_circle_outline</span
+            >
+            <div class="hero-drop-title">
+              {{ "UE_INSPECTOR_INSET_DROP_PROMPT" | translate }}
+            </div>
+            <div class="hero-drop-subtitle">
+              {{ "UE_INSPECTOR_INSET_DROP_SUBTITLE" | translate }}
+            </div>
+          </div>
+        } @else {
+          <div class="hero-filled-state">
+            <div class="hero-widget-row">
+              <span class="material-icons hero-widget-icon">
+                {{ getWidgetIcon(getAnchorValue(effectiveSelectedAnchor)) }}
+              </span>
+              <div class="hero-widget-info">
+                <div class="hero-widget-label">
+                  {{ "UE_INSPECTOR_INSET_CURRENT_WIDGET" | translate }}
+                </div>
+                <div class="hero-widget-name">
+                  {{
+                    getWidgetDisplayName(
+                      getAnchorValue(effectiveSelectedAnchor)
+                    )
+                  }}
+                </div>
+              </div>
+            </div>
+            <div class="hero-drop-hint">
+              <span class="material-icons hero-hint-icon">drag_indicator</span>
+              <span>{{ "UE_INSPECTOR_INSET_REPLACE_HINT" | translate }}</span>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+
+  @if (getAnchorValue(effectiveSelectedAnchor)) {
+    <hr class="inspector-divider" />
+
+    @if (isCustomWidgetKey(getAnchorValue(effectiveSelectedAnchor))) {
+      <!-- Custom Widget Properties for Inset -->
+      <app-custom-widget-inspector
+        [widget]="getInsetCustomWidgetNode(effectiveSelectedAnchor)"
+        (change)="onInsetCustomWidgetChange(effectiveSelectedAnchor, $event)"
+      />
+    }
+
+    <!-- Total Time Options (e.g. totalTime, overallTotalTime) -->
+    @if (isInsetTotalTime(effectiveSelectedAnchor)) {
+      <div class="inspector-section">
+        <label class="inspector-label">{{
+          "UE_INSPECTOR_TIMER_DISPLAY_FORMAT" | translate
+        }}</label>
+        <div class="select-container select-sm">
+          <app-custom-select
+            [ngModel]="getInsetTimeDisplayFormat(effectiveSelectedAnchor)"
+            (ngModelChange)="
+              setInsetTimeDisplayFormat(effectiveSelectedAnchor, $event)
+            "
+          >
+            <app-custom-option value="dynamic">
+              {{ "UE_INSPECTOR_TIMER_FORMAT_DYNAMIC" | translate }}
+            </app-custom-option>
+            <app-custom-option value="mm_ss">
+              {{ "UE_INSPECTOR_TIMER_FORMAT_MM_SS" | translate }}
+            </app-custom-option>
+            <app-custom-option value="m_ss">
+              {{ "UE_INSPECTOR_TIMER_FORMAT_M_SS" | translate }}
+            </app-custom-option>
+            <app-custom-option value="hh_mm_ss">
+              {{ "UE_INSPECTOR_TIMER_FORMAT_HH_MM_SS" | translate }}
+            </app-custom-option>
+            <app-custom-option value="seconds">
+              {{ "UE_INSPECTOR_TIMER_FORMAT_SECONDS" | translate }}
+            </app-custom-option>
+          </app-custom-select>
+        </div>
+      </div>
+
+      <div class="inspector-section">
+        <label class="inspector-label">{{
+          "UE_INSPECTOR_TIMER_SUBSECOND_MODE" | translate
+        }}</label>
+        <div class="select-container select-sm">
+          <app-custom-select
+            [ngModel]="getInsetTimeSubsecondMode(effectiveSelectedAnchor)"
+            (ngModelChange)="
+              setInsetTimeSubsecondMode(effectiveSelectedAnchor, $event)
+            "
+          >
+            <app-custom-option value="never">
+              {{ "UE_INSPECTOR_TIMER_SUBSECOND_NEVER" | translate }}
+            </app-custom-option>
+            <app-custom-option value="always">
+              {{ "UE_INSPECTOR_TIMER_SUBSECOND_ALWAYS" | translate }}
+            </app-custom-option>
+            <app-custom-option value="threshold">
+              {{ "UE_INSPECTOR_TIMER_SUBSECOND_THRESHOLD" | translate }}
+            </app-custom-option>
+          </app-custom-select>
+        </div>
+      </div>
+
+      @if (getInsetTimeSubsecondMode(effectiveSelectedAnchor) === "threshold") {
+        <div class="inspector-section">
+          <div class="inspector-label-row">
+            <label class="inspector-label">{{
+              "UE_INSPECTOR_TIMER_SUBSECOND_THRESHOLD" | translate
+            }}</label>
+            <span class="inspector-val-badge">
+              {{ getInsetTimeSubsecondThreshold(effectiveSelectedAnchor) }}s
+            </span>
+          </div>
+          <input
+            type="number"
+            min="0"
+            max="3600"
+            [ngModel]="getInsetTimeSubsecondThreshold(effectiveSelectedAnchor)"
+            (ngModelChange)="
+              setInsetTimeSubsecondThreshold(effectiveSelectedAnchor, $event)
+            "
+            class="inspector-input"
+          />
+        </div>
+      }
+
+      @if (getInsetTimeSubsecondMode(effectiveSelectedAnchor) !== "never") {
+        <div class="inspector-section">
+          <label class="inspector-label">{{
+            "UE_INSPECTOR_TIMER_SUBSECOND_DECIMALS" | translate
+          }}</label>
+          <div class="select-container select-sm">
+            <app-custom-select
+              [ngModel]="getInsetTimeSubsecondDecimals(effectiveSelectedAnchor)"
+              (ngModelChange)="
+                setInsetTimeSubsecondDecimals(effectiveSelectedAnchor, $event)
+              "
+            >
+              <app-custom-option [value]="0">0</app-custom-option>
+              <app-custom-option [value]="1">1</app-custom-option>
+              <app-custom-option [value]="2">2</app-custom-option>
+              <app-custom-option [value]="3">3</app-custom-option>
+            </app-custom-select>
+          </div>
+        </div>
+      }
+
+      <!-- Live Preview Section -->
+      <div class="inspector-section">
+        <label class="inspector-label">{{
+          "UE_INSPECTOR_TIMER_PREVIEW" | translate
+        }}</label>
+        <div class="timer-preview-grid">
+          <div class="timer-preview-item">
+            <span class="timer-preview-label">> 1 hr</span>
+            <span class="timer-preview-val">{{
+              getInsetPreview(effectiveSelectedAnchor, 3665)
+            }}</span>
+          </div>
+          <div class="timer-preview-item">
+            <span class="timer-preview-label">> 1 min</span>
+            <span class="timer-preview-val">{{
+              getInsetPreview(effectiveSelectedAnchor, 75)
+            }}</span>
+          </div>
+          <div class="timer-preview-item">
+            <span class="timer-preview-label">< 1 min</span>
+            <span class="timer-preview-val">{{
+              getInsetPreview(effectiveSelectedAnchor, 45)
+            }}</span>
+          </div>
+          <div class="timer-preview-item">
+            <span class="timer-preview-label">< 10s</span>
+            <span class="timer-preview-val">{{
+              getInsetPreview(effectiveSelectedAnchor, 8.45)
+            }}</span>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- Individual Time Decimals (e.g. bestLapTime, lastLapTime) -->
+    @if (isInsetTimeColumn(effectiveSelectedAnchor)) {
+      <div class="inspector-section">
+        <label class="inspector-label">{{
+          "UE_INSPECTOR_DECIMAL_PLACES" | translate
+        }}</label>
+        <div class="select-container select-sm">
+          <app-custom-select
+            [ngModel]="getInsetTimeDecimalPlaces(effectiveSelectedAnchor)"
+            (ngModelChange)="
+              setInsetTimeDecimalPlaces(effectiveSelectedAnchor, $event)
+            "
+          >
+            <app-custom-option [value]="0">0</app-custom-option>
+            <app-custom-option [value]="1">1</app-custom-option>
+            <app-custom-option [value]="2">2</app-custom-option>
+            <app-custom-option [value]="3">3</app-custom-option>
+          </app-custom-select>
+        </div>
+      </div>
+    }
+
+    <!-- Lap Decimals (e.g. laps, lapCount, totalLaps) -->
+    @if (isInsetLapColumn(effectiveSelectedAnchor)) {
+      <div class="inspector-section">
+        <label class="inspector-label">{{
+          "UE_INSPECTOR_DECIMAL_PLACES" | translate
+        }}</label>
+        <div class="select-container select-sm">
+          <app-custom-select
+            [ngModel]="getInsetLapDecimalPlaces(effectiveSelectedAnchor)"
+            (ngModelChange)="
+              setInsetLapDecimalPlaces(effectiveSelectedAnchor, $event)
+            "
+          >
+            <app-custom-option [value]="0">0</app-custom-option>
+            <app-custom-option [value]="1">1</app-custom-option>
+            <app-custom-option [value]="2">2</app-custom-option>
+            <app-custom-option [value]="3">3</app-custom-option>
+          </app-custom-select>
+        </div>
+      </div>
+    }
+
+    <!-- Other Numeric Decimals (e.g. points, speed) -->
+    @if (isInsetNumericColumn(effectiveSelectedAnchor)) {
+      <div class="inspector-section">
+        <label class="inspector-label">{{
+          "UE_INSPECTOR_DECIMAL_PLACES" | translate
+        }}</label>
+        <div class="select-container select-sm">
+          <app-custom-select
+            [ngModel]="getInsetDecimalPlaces(effectiveSelectedAnchor)"
+            (ngModelChange)="
+              setInsetDecimalPlaces(effectiveSelectedAnchor, $event)
+            "
+          >
+            <app-custom-option [value]="0">0</app-custom-option>
+            <app-custom-option [value]="1">1</app-custom-option>
+            <app-custom-option [value]="2">2</app-custom-option>
+            <app-custom-option [value]="3">3</app-custom-option>
+          </app-custom-select>
+        </div>
+      </div>
+    }
+
+    @if (isInsetHeatsCount(effectiveSelectedAnchor)) {
+      <div class="inspector-section">
+        <label class="inspector-label">{{
+          "UE_INSPECTOR_HEATS_MODE" | translate
+        }}</label>
+        <div class="select-container select-sm">
+          <app-custom-select
+            [ngModel]="getInsetHeatsDisplayMode(effectiveSelectedAnchor)"
+            (ngModelChange)="
+              setInsetHeatsDisplayMode(effectiveSelectedAnchor, $event)
+            "
+          >
+            <app-custom-option value="raced">
+              {{ "UE_INSPECTOR_HEATS_MODE_RACED" | translate }}
+            </app-custom-option>
+            <app-custom-option value="remaining">
+              {{ "UE_INSPECTOR_HEATS_MODE_REMAINING" | translate }}
+            </app-custom-option>
+          </app-custom-select>
+        </div>
+      </div>
+    }
+
+    <hr class="inspector-divider" />
+
+    <!-- Inset Typography Section -->
+    <div class="inspector-geometry-title">
+      {{ "UE_INSPECTOR_INSET_TYPOGRAPHY" | translate }}
+    </div>
+
+    <!-- Font Family -->
+    <div class="inspector-section">
+      <label class="inspector-label">{{
+        "UE_INSPECTOR_FONT_FAMILY" | translate
+      }}</label>
+      <div class="select-container select-sm">
+        <app-custom-select
+          [ngModel]="getInsetFontFamily(effectiveSelectedAnchor)"
+          (ngModelChange)="setInsetFontFamily(effectiveSelectedAnchor, $event)"
+          (click)="fontService.loadLocalFonts()"
+        >
+          <app-custom-option value="">
+            {{ "UE_INSPECTOR_FONT_THEME_DEFAULT" | translate }}
+          </app-custom-option>
+          @for (font of fontService.availableFonts(); track font) {
+            <app-custom-option [value]="font">{{ font }}</app-custom-option>
+          }
+        </app-custom-select>
+      </div>
+    </div>
+
+    <!-- Font Size -->
+    <div class="inspector-section">
+      <div class="inspector-label-row">
+        <label class="inspector-label">{{
+          "UE_INSPECTOR_FONT_SIZE" | translate
+        }}</label>
+        <span class="inspector-val-badge">
+          {{ getInsetFontSize(effectiveSelectedAnchor) }}px
+        </span>
+      </div>
+      <input
+        type="range"
+        min="8"
+        max="36"
+        [ngModel]="getInsetFontSize(effectiveSelectedAnchor)"
+        (ngModelChange)="setInsetFontSize(effectiveSelectedAnchor, $event)"
+        [disabled]="disableFontSizes()"
+        class="inspector-slider"
+      />
+    </div>
+
+    <!-- Text Color -->
+    <div class="inspector-section">
+      <label class="inspector-label">{{
+        "UE_INSPECTOR_TEXT_COLOR" | translate
+      }}</label>
+      <div class="d-flex align-items-center gap-2">
+        <input
+          type="color"
+          [value]="
+            toValidHexColor(
+              getInsetTextColor(effectiveSelectedAnchor),
+              '#ffffff'
+            )
+          "
+          (input)="
+            setInsetTextColor(
+              effectiveSelectedAnchor,
+              $any($event.target).value
+            )
+          "
+          (change)="
+            setInsetTextColor(
+              effectiveSelectedAnchor,
+              $any($event.target).value
+            )
+          "
+          class="inspector-color-input"
+        />
+        @if (hasCustomInsetTextColor(effectiveSelectedAnchor)) {
+          <button
+            type="button"
+            class="color-reset-btn"
+            (click)="resetInsetCustomColor(effectiveSelectedAnchor)"
+            [title]="'UE_INSPECTOR_COLOR_RESET' | translate"
+          >
+            <span class="material-icons">restart_alt</span>
+          </button>
+        }
+      </div>
+    </div>
+
+    <hr class="inspector-divider" />
+
+    <!-- Remove Inset Action Button -->
+    <div class="inspector-section">
+      <button
+        type="button"
+        class="btn btn-sm btn-danger w-100 d-flex align-items-center justify-content-center gap-2"
+        (click)="removeInset(effectiveSelectedAnchor)"
+      >
+        <span class="material-icons">delete</span>
+        {{ "UE_INSPECTOR_REMOVE_INSET" | translate }}
+      </button>
+    </div>
+  }
+
+  <!-- Back to Column Button -->
+  <div class="inspector-section mt-2">
+    <button
+      type="button"
+      class="btn btn-sm btn-secondary w-100 d-flex align-items-center justify-content-center gap-2"
+      (click)="backToColumn()"
+    >
+      <span class="material-icons">arrow_back</span>
+      {{ "UE_BACK_TO_COLUMN" | translate }}
+    </button>
+  </div>
+</ng-template>

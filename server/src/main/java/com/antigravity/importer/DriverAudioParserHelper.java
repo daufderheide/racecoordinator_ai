@@ -23,6 +23,7 @@ public final class DriverAudioParserHelper {
     presets.put("newHeatLeader", "default_new_heat_leader");
     presets.put("pitIn", "default_pit_in");
     presets.put("fuel", "default_fuel_level");
+    presets.put("driftLap", "default_beep");
     DEFAULT_PRESETS = Collections.unmodifiableMap(presets);
   }
 
@@ -59,6 +60,14 @@ public final class DriverAudioParserHelper {
 
     if (lower.startsWith("preset:")) {
       String preset = val.substring(7).trim();
+      String presetLookupKey = preset.toLowerCase();
+      if (assetUrlLookup != null && assetUrlLookup.containsKey(presetLookupKey)) {
+        return new AudioConfig("preset", assetUrlLookup.get(presetLookupKey), "");
+      }
+      String simplePresetKey = DriverImportParserHelper.getSimpleFileName(preset).toLowerCase();
+      if (assetUrlLookup != null && assetUrlLookup.containsKey(simplePresetKey)) {
+        return new AudioConfig("preset", assetUrlLookup.get(simplePresetKey), "");
+      }
       return new AudioConfig("preset", preset, "");
     }
 
@@ -77,6 +86,11 @@ public final class DriverAudioParserHelper {
       return new AudioConfig("preset", assetUrlLookup.get(lookupKey), "");
     }
 
+    String simpleLookupKey = DriverImportParserHelper.getSimpleFileName(val).toLowerCase();
+    if (assetUrlLookup != null && assetUrlLookup.containsKey(simpleLookupKey)) {
+      return new AudioConfig("preset", assetUrlLookup.get(simpleLookupKey), "");
+    }
+
     // Default to preset with provided value / url
     return new AudioConfig("preset", val, "");
   }
@@ -84,6 +98,13 @@ public final class DriverAudioParserHelper {
   public static AudioConfig createDefaultAudio(String slotKey, String defaultAudioMode) {
     if ("none".equalsIgnoreCase(defaultAudioMode) || "mute".equalsIgnoreCase(defaultAudioMode)) {
       return new AudioConfig("none", "", "");
+    }
+
+    if ("driftLap".equals(slotKey)) {
+      if ("preset".equalsIgnoreCase(defaultAudioMode)) {
+        return new AudioConfig("preset", "default_beep", "");
+      }
+      return new AudioConfig("tts", null, "Drift lap for {driver.nickname}");
     }
 
     String preset = DEFAULT_PRESETS.getOrDefault(slotKey, "default_beep");

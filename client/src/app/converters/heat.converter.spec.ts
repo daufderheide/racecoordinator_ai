@@ -77,6 +77,8 @@ describe("HeatConverter", () => {
           gapPosition: 0.5,
           penaltyLaps: 1,
           userLaps: 2,
+          userTime: 3.5,
+          totalTime: 42.5,
           autoCalculatedLaps: 0.5,
           adjustedLapCount: 10.5,
           segments: [0.1, 0.2, 0.3],
@@ -94,6 +96,8 @@ describe("HeatConverter", () => {
     expect(driverData.gapPosition).toBe(0.5);
     expect(driverData.penaltyLaps).toBe(1);
     expect(driverData.userLaps).toBe(2);
+    expect(driverData.userTime).toBe(3.5);
+    expect(driverData.totalTime).toBe(42.5);
     expect(driverData.autoCalculatedLaps).toBe(0.5);
     expect(driverData.adjustedLapCount).toBe(10.5);
     expect(driverData.currentLapSegments).toEqual([0.1, 0.2, 0.3]);
@@ -469,5 +473,51 @@ describe("HeatConverter", () => {
     const hd = heat.heatDrivers[0]!;
     expect(hd.physicalLapCount).toBe(3);
     expect(hd.lapCount).toBe(3);
+  });
+
+  it("should ignore totalTime in proto when it is 0 or non-positive so physical time fallback works", () => {
+    const proto: IHeat = {
+      objectId: "heat_zero_total_time",
+      heatNumber: 1,
+      heatDrivers: [
+        {
+          objectId: "hd_zero_time",
+          driver: {
+            objectId: "p1",
+            driver: { name: "Driver 1" },
+          },
+          laps: [{ lapTime: 2.5 }, { lapTime: 2.5 }] as any,
+          totalTime: 0,
+        } as any,
+      ],
+    };
+
+    const heat = HeatConverter.fromProto(proto);
+    const hd = heat.heatDrivers[0]!;
+    // Since totalTime was 0 in proto, it should not lock _totalTime to 0.
+    // Instead it should fall back to physical sum of laps: 2.5 + 2.5 = 5.0
+    expect(hd.totalTime).toBe(5.0);
+  });
+
+  it("should populate totalTime in proto when positive", () => {
+    const proto: IHeat = {
+      objectId: "heat_positive_total_time",
+      heatNumber: 1,
+      heatDrivers: [
+        {
+          objectId: "hd_pos_time",
+          driver: {
+            objectId: "p1",
+            driver: { name: "Driver 1" },
+          },
+          laps: [{ lapTime: 2.5 }] as any,
+          totalTime: 12.34,
+        } as any,
+      ],
+    };
+
+    const heat = HeatConverter.fromProto(proto);
+    const hd = heat.heatDrivers[0]!;
+    expect(hd.totalTime).toBe(12.34);
   });
 });

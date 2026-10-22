@@ -20,7 +20,7 @@ La barra degli strumenti superiore fornisce le seguenti azioni:
 - **Indietro**: Ritorna alla visualizzazione precedente o a Configurazione Giorno di Gara.
 - **Aggiungi Team (+)**: Crea un nuovo modello di team ed entra in modalità di modifica.
 - **Duplica Team**: Duplica il team attualmente selezionato assegnandogli un nome univoco.
-- **Modifica / Termina Modifica**: Alterna tra la modalità sola lettura e la modalità modifica.
+- **Modifica / Termina Modifica**: Alterna tra la modalità sola lettura e la modalità modifica (scorciatoia da tastiera: Cmd/Ctrl+E).
 - **Elimina Team**: Elimina il team selezionato previa conferma.
 - **Annulla / Ripeti**: Annulla o riapplica le modifiche recenti effettuate durante la sessione.
 - **Guida (?)**: Apre la guida interattiva che evidenzia ogni sezione dell'editor.

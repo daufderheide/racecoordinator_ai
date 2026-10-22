@@ -38,8 +38,10 @@ export class DriverHeatData {
   private _lapsDownPosition: number = 0;
   public penaltyLaps: number = 0;
   public userLaps: number = 0;
+  public userTime: number = 0;
   public autoCalculatedLaps: number = 0;
   private _adjustedLapCount: number | null = null;
+  private _totalTime: number | null = null;
   public isRefueling: boolean = false;
   public currentLocation: number = -1;
   public rank: number = 0;
@@ -73,6 +75,13 @@ export class DriverHeatData {
     return this.actualDriver ?? this.participant?.driver;
   }
 
+  get hasSegments(): boolean {
+    return (
+      (this.userLaps !== undefined && this.userLaps !== 0) ||
+      (this.autoCalculatedLaps !== undefined && this.autoCalculatedLaps !== 0)
+    );
+  }
+
   reset(): void {
     this.laps = [];
     this._lapsWithDetails = [];
@@ -91,8 +100,10 @@ export class DriverHeatData {
     this._currentLapSegments = [];
     this.penaltyLaps = 0;
     this.userLaps = 0;
+    this.userTime = 0;
     this.autoCalculatedLaps = 0;
     this._adjustedLapCount = null;
+    this._totalTime = null;
     this.isRefueling = false;
     this.currentLocation = -1;
     this.flag = 0;
@@ -120,6 +131,7 @@ export class DriverHeatData {
     _type?: LapType,
     segments?: number[],
     countTowardsRecords: boolean = true,
+    totalTime?: number,
   ): void {
     if (
       adjustedLapCount !== undefined &&
@@ -181,6 +193,17 @@ export class DriverHeatData {
     if (lapIndex === this.laps.length - 1) {
       this._lastLapTime = lapTime;
     }
+
+    if (
+      totalTime !== undefined &&
+      totalTime !== null &&
+      !isNaN(totalTime) &&
+      totalTime > 0
+    ) {
+      this._totalTime = totalTime;
+    } else {
+      this._totalTime = null;
+    }
   }
 
   updateLapRecordStatus(lapIndex: number, countTowardsRecords: boolean): void {
@@ -235,8 +258,22 @@ export class DriverHeatData {
       value !== null && value !== undefined && !isNaN(value) ? value : null;
   }
 
+  getPhysicalTotalTime(): number {
+    return this.laps ? this.laps.reduce((acc, curr) => acc + curr, 0) : 0;
+  }
+
   get totalTime(): number {
-    return this.laps.reduce((acc, curr) => acc + curr, 0);
+    if (this._totalTime !== null && this._totalTime !== undefined) {
+      return this._totalTime;
+    }
+    return this.getPhysicalTotalTime() + (this.userTime || 0);
+  }
+
+  set totalTime(value: number | null | undefined) {
+    this._totalTime =
+      value !== null && value !== undefined && !isNaN(value) && value > 0
+        ? value
+        : null;
   }
 
   get lapTimes(): number[] {

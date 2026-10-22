@@ -101,6 +101,12 @@ export class DriverConverter {
       "default_fuel_level",
       "audio_set",
     );
+    target.driftLapAudio = sanitizeDriverAudio(
+      this.mapAudio(source.driftLapAudio),
+      "default_beep",
+      "tts",
+      "Drift lap for {driver.nickname}",
+    );
   }
 
   static fromProto(proto: IDriverModel): Driver {
@@ -156,6 +162,7 @@ export class DriverConverter {
           newHeatLeaderAudio: this.mapAudio(proto.newHeatLeaderAudio),
           pitInAudio: this.mapAudio(proto.pitInAudio),
           fuelAudio: this.mapAudio(proto.fuelAudio, "audio_set"),
+          driftLapAudio: this.mapAudio(proto.driftLapAudio),
         },
       );
     });
@@ -189,6 +196,7 @@ export class DriverConverter {
         newHeatLeaderAudio: this.mapAudio(json.newHeatLeaderAudio),
         pitInAudio: this.mapAudio(json.pitInAudio),
         fuelAudio: this.mapAudio(json.fuelAudio, "audio_set"),
+        driftLapAudio: this.mapAudio(json.driftLapAudio),
       },
     );
     this.cache.process(id, false, () => d);
@@ -216,6 +224,7 @@ export class DriverConverter {
       existing.newHeatLeaderAudio = driver.newHeatLeaderAudio;
       existing.pitInAudio = driver.pitInAudio;
       existing.fuelAudio = driver.fuelAudio;
+      existing.driftLapAudio = driver.driftLapAudio;
     } else {
       // Manually populate cache using process to ensure valid state
       // access private cache if possible, or use a workaround.

@@ -37,7 +37,11 @@ public class Starting implements IRaceState {
   @Override
   public void enter(Race race) {
     this.race = race;
-    logger.info("Starting state entered. Countdown initiating.");
+    boolean isHot = race.getRaceModel() != null && race.getRaceModel().isHotStart();
+    logger.info(
+        "Starting state entered. Countdown initiating. isHotStart={}, hasRacedInCurrentHeat={}",
+        isHot,
+        race.hasRacedInCurrentHeat());
     race.broadcastFlag(getFlagType(race));
     syncDriverFlags(race);
 
@@ -246,6 +250,7 @@ public class Starting implements IRaceState {
             .setFlag(getLaneFlagType(race, lane))
             .setFuelLevel(dhd.getDriver().getFuelLevel())
             .setAdjustedLapCount(dhd.getAdjustedLapCount())
+            .setTotalTime(dhd.getTotalTime())
             .build();
     dhd.setFlag(falseStartMsg.getFlag());
 
@@ -309,10 +314,19 @@ public class Starting implements IRaceState {
     if (race != null
         && race.getCurrentHeat() != null
         && lane < race.getCurrentHeat().getDrivers().size()) {
-      if (race.getCurrentHeat().getDrivers().get(lane).getRemainingFalseStartTimePenalty() > 0) {
+      DriverHeatData dhd = race.getCurrentHeat().getDrivers().get(lane);
+      if (dhd.getRemainingFalseStartTimePenalty() > 0) {
         return race.getTheme() != null
             ? race.getTheme().resolveFlag("flag.penalty", RaceFlag.BLACK, race.getDatabaseContext())
             : RaceFlag.BLACK;
+      }
+      if (isAllowFinish(race)
+          && isDriverFinished(race, lane, dhd)
+          && !areAllDriversFinished(race)) {
+        return race.getTheme() != null
+            ? race.getTheme()
+                .resolveFlag("flag.driver_finished", RaceFlag.RED, race.getDatabaseContext())
+            : RaceFlag.RED;
       }
     }
     return getFlagType(race);

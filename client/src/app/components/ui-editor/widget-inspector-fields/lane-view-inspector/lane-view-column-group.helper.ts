@@ -90,6 +90,7 @@ export const LANE_VIEW_COLUMN_GROUPS: readonly ColumnGroupDefinition[] = [
       "overallPoints",
       "overallLapsLed",
       "overallTrackCalls",
+      "heatsRaced",
     ],
   },
   {
@@ -148,6 +149,10 @@ export const LANE_VIEW_COLUMN_GROUPS: readonly ColumnGroupDefinition[] = [
       "fuelCapacity",
       "fuelPercentage",
       "imageset_fuel-gauge-builtin",
+      "imageset_default_fuel-gauge-builtin",
+      "imageset_default_fuel_gauge",
+      "fuel-gauge-builtin",
+      "default_fuel_gauge",
       "mph",
       "kph",
       "fph",
@@ -221,7 +226,23 @@ export class LaneViewColumnGroupHelper {
     return map;
   }
 
+  static isFuelGaugeColumn(key: string): boolean {
+    if (!key) return false;
+    const lower = key.toLowerCase();
+    return (
+      lower.startsWith("imageset_fuel-gauge") ||
+      lower.startsWith("imageset_default_fuel") ||
+      lower.includes("fuel-gauge") ||
+      lower.includes("fuel_gauge") ||
+      lower === "default fuel gauge" ||
+      lower === "default fuel guage"
+    );
+  }
+
   static getGroupIdForColumn(key: string): string {
+    if (this.isFuelGaugeColumn(key)) {
+      return "telemetry";
+    }
     return this.KEY_TO_GROUP_ID_MAP.get(key) || "media-custom";
   }
 
@@ -299,6 +320,52 @@ export class LaneViewColumnGroupHelper {
     return true;
   }
 
+  private static getColumnsForSubgroup(
+    subgroupId: string,
+    groupDef: ColumnGroupDefinition,
+    unusedMap: Map<string, { key: string; label: string }>,
+    unusedColumns: { key: string; label: string }[],
+  ): { key: string; label: string }[] {
+    const cols: { key: string; label: string }[] = [];
+    if (subgroupId === "media-custom") {
+      for (const key of groupDef.columnKeys) {
+        const col = unusedMap.get(key);
+        if (col) cols.push(col);
+      }
+      for (const col of unusedColumns) {
+        if (
+          !LaneViewColumnGroupHelper.isFuelGaugeColumn(col.key) &&
+          (col.key.startsWith("imageset_") ||
+            LaneViewColumnGroupHelper.getGroupIdForColumn(col.key) ===
+              "media-custom") &&
+          !groupDef.columnKeys.includes(col.key) &&
+          !cols.some((c) => c.key === col.key)
+        ) {
+          cols.push(col);
+        }
+      }
+    } else if (subgroupId === "telemetry") {
+      for (const key of groupDef.columnKeys) {
+        const col = unusedMap.get(key);
+        if (col && !cols.some((c) => c.key === col.key)) cols.push(col);
+      }
+      for (const col of unusedColumns) {
+        if (
+          LaneViewColumnGroupHelper.isFuelGaugeColumn(col.key) &&
+          !cols.some((c) => c.key === col.key)
+        ) {
+          cols.push(col);
+        }
+      }
+    } else {
+      for (const key of groupDef.columnKeys) {
+        const col = unusedMap.get(key);
+        if (col) cols.push(col);
+      }
+    }
+    return cols;
+  }
+
   private static buildScopedGroup(
     groupId: string,
     nameKey: string,
@@ -320,29 +387,12 @@ export class LaneViewColumnGroupHelper {
       const groupDef = LANE_VIEW_COLUMN_GROUPS.find((g) => g.id === subgroupId);
       if (!groupDef) continue;
 
-      let cols: { key: string; label: string }[] = [];
-      if (subgroupId === "media-custom") {
-        for (const key of groupDef.columnKeys) {
-          const col = unusedMap.get(key);
-          if (col) cols.push(col);
-        }
-        for (const col of unusedColumns) {
-          if (
-            (col.key.startsWith("imageset_") ||
-              LaneViewColumnGroupHelper.getGroupIdForColumn(col.key) ===
-                "media-custom") &&
-            !groupDef.columnKeys.includes(col.key) &&
-            !cols.some((c) => c.key === col.key)
-          ) {
-            cols.push(col);
-          }
-        }
-      } else {
-        for (const key of groupDef.columnKeys) {
-          const col = unusedMap.get(key);
-          if (col) cols.push(col);
-        }
-      }
+      let cols = LaneViewColumnGroupHelper.getColumnsForSubgroup(
+        subgroupId,
+        groupDef,
+        unusedMap,
+        unusedColumns,
+      );
 
       if (term) {
         cols = cols.filter((col) => {

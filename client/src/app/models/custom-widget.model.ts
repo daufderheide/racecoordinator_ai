@@ -39,6 +39,7 @@ export interface CustomWidgetManifest {
   defaultWidth?: number;
   defaultHeight?: number;
   fullscreenCapable?: boolean;
+  allowMultiple?: boolean;
   defaultSettings?: Record<string, any>;
   settingsSchema?: CustomWidgetSettingField[];
 }

@@ -15,6 +15,7 @@ pit-reports/
 
 # Node modules and dependency files
 /node_modules/
+custom_widgets/node_modules
 /yarn.lock
 
 # Environment files
@@ -77,6 +78,7 @@ client/.chrome-home/
 .karma-profile/
 client/browsers/
 client/server/
+client/custom_widgets/
 client/tmp-isolated-test-*
 
 
@@ -147,3 +149,4 @@ server/checkstyle_report_final.txt
 .idea/
 
 server/racecoordinator.db
+custom_widgets/sample

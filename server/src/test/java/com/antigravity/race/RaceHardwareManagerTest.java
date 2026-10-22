@@ -308,6 +308,36 @@ public class RaceHardwareManagerTest {
   }
 
   @Test
+  public void testHotStartPowerControlsWhenNotStarting() {
+    ProtocolDelegate hotProtocols = mock(ProtocolDelegate.class);
+    when(hotProtocols.hasPerLaneRelays()).thenReturn(true);
+
+    com.antigravity.race.Race hotRace = createHotStartRace(hotProtocols);
+    hotRace.changeState(new com.antigravity.race.states.NotStarted());
+    RaceHardwareManager hotManager = hotRace.getHardwareManager();
+
+    hotManager.updatePowerForFlag(RaceFlag.RED);
+    assertFalse(
+        "Main power should be OFF during NotStarted even with hot start enabled",
+        hotRace.isMainPower());
+  }
+
+  @Test
+  public void testHotStartPowerControlsWhenAlreadyRaced() {
+    ProtocolDelegate hotProtocols = mock(ProtocolDelegate.class);
+    when(hotProtocols.hasPerLaneRelays()).thenReturn(true);
+
+    com.antigravity.race.Race hotRace = createHotStartRace(hotProtocols);
+    hotRace.setHasRacedInCurrentHeat(true);
+    RaceHardwareManager hotManager = hotRace.getHardwareManager();
+
+    hotManager.updatePowerForFlag(RaceFlag.RED);
+    assertFalse(
+        "Main power should be OFF if hasRacedInCurrentHeat is true (restart)",
+        hotRace.isMainPower());
+  }
+
+  @Test
   public void testInitializeHardwareState() {
     hardwareManager.initializeHardwareState();
     verify(mockProtocols).initializeHardwareState();

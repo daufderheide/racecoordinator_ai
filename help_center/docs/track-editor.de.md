@@ -262,7 +262,7 @@ Die obere Symbolleiste des Strecken-Editors bietet wichtige Steuerungsfunktionen
 - **Zurück**: Kehrt zur vorherigen Ansicht oder zum Raceday-Setup zurück.
 - **Strecke hinzufügen (+)**: Erstellt eine neue Streckenvorlage und öffnet den Bearbeitungsmodus.
 - **Strecke duplizieren**: Erstellt eine exakte Kopie der aktuellen Strecke unter einem neuen Namen, ideal zum Testen alternativer Einstellungen.
-- **Bearbeiten / Bearbeitung abschließen**: Schaltet zwischen schreibgeschütztem Modus und Bearbeitungsmodus um. Beim Verlassen des Bearbeitungsmodus werden Änderungen validiert und gespeichert.
+- **Bearbeiten / Bearbeitung abschließen (`Cmd/Ctrl+E`)**: Schaltet zwischen schreibgeschütztem Modus und Bearbeitungsmodus um. Beim Verlassen des Bearbeitungsmodus werden Änderungen validiert und gespeichert.
 - **Alle erweitern / reduzieren**: Erweitert oder reduziert alle Konfigurationsabschnitte und Hardware-Schnittstellen auf einmal.
 - **Strecke löschen**: Löscht die ausgewählte Strecke nach Sicherheitsbestätigung.
 - **Rückgängig (`Ctrl+Z`) / Wiederholen (`Ctrl+Y`)**: Schritthafte Wiederherstellung aller Spur-, Farb- und Pin-Änderungen.
@@ -289,3 +289,8 @@ Die obere Symbolleiste des Strecken-Editors bietet wichtige Steuerungsfunktionen
 
 ### FastLED RGB-Streifen leuchten nicht
 - **Lösung**: Sicherstellen, dass der offizielle **Race Coordinator AI Sketch (`v2.1.0.x`)** geladen ist, LED-Typ und Farbreihenfolge stimmen und das externe 5V-Netzteil eine gemeinsame Masseverbindung (GND) mit dem Arduino hat.
+
+### Schnittstellen-Verbindungsabbruch zwischen den Heats (USB-Ruhezustand / Selektives Energiesparen)
+- **Symptom**: Ihre Schnittstelle (Arduino, Phidget oder Trackmate) trennt die Verbindung in den Pausen zwischen den Heats oder bei Inaktivität und verbindet sich bei Rennstart wieder mit der Meldung *"Die Verbindung zur Schnittstelle wurde wiederhergestellt."*
+- **Lösung**: Windows, Linux und macOS schalten ungenutzte USB- und HID-Geräte auch bei laufendem PC ab. Beachten Sie den Abschnitt [USB-Schnittstellen-Ruhezustand & Energiesparen](troubleshooting.de.md#usb-sleep-prevention) in der Fehlerbehebung, um das Energiesparen im Geräte-Manager zu deaktivieren.
+

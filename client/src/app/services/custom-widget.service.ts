@@ -1,8 +1,9 @@
 import { HttpClient } from "@angular/common/http";
-import { Injectable, Type } from "@angular/core";
+import { Injectable, Optional, Type } from "@angular/core";
 import { BehaviorSubject, firstValueFrom } from "rxjs";
 import { CustomWidgetBaseComponent } from "@app/components/shared/custom-widget-base/custom-widget-base.component";
 import { WIDGET_REGISTRY } from "@app/components/ui-editor/widget-registry";
+import { DataService } from "@app/data.service";
 import {
   CustomWidgetDefinition,
   CustomWidgetManifest,
@@ -30,6 +31,7 @@ export class CustomWidgetService {
 
   private widgetDefinitions = new Map<string, CustomWidgetDefinition>();
   private reloadPromise?: Promise<void>;
+  private queuedReload = false;
   private warnedMissingWidgets = new Set<string>();
 
   constructor(
@@ -37,6 +39,7 @@ export class CustomWidgetService {
     private dynamicComponentService: DynamicComponentService,
     private logger: LoggerService,
     private http: HttpClient,
+    @Optional() private dataService?: DataService,
   ) {
     this.reloadCustomWidgets().catch((err) => {
       this.logger.error(
@@ -44,6 +47,36 @@ export class CustomWidgetService {
         err,
       );
     });
+
+    if (this.fileSystem.serverDirectoriesChanged$) {
+      this.fileSystem.serverDirectoriesChanged$.subscribe(() => {
+        this.logger.info(
+          "CustomWidgetService: Server directories changed, reloading custom widgets...",
+        );
+        this.reloadCustomWidgets().catch((err) => {
+          this.logger.error(
+            "CustomWidgetService: Error reloading on directory change",
+            err,
+          );
+        });
+      });
+    }
+
+    if (this.dataService?.socketConnected$) {
+      this.dataService.socketConnected$.subscribe((connected) => {
+        if (connected) {
+          this.logger.info(
+            "CustomWidgetService: Socket connected, ensuring custom widgets loaded...",
+          );
+          this.reloadCustomWidgets().catch((err) => {
+            this.logger.error(
+              "CustomWidgetService: Error reloading on socket connect",
+              err,
+            );
+          });
+        }
+      });
+    }
   }
 
   async initialize(): Promise<void> {
@@ -88,10 +121,15 @@ export class CustomWidgetService {
 
   reloadCustomWidgets(): Promise<void> {
     if (this.reloadPromise) {
+      this.queuedReload = true;
       return this.reloadPromise;
     }
-    this.reloadPromise = this.doReloadCustomWidgets().finally(() => {
+    this.reloadPromise = this.doReloadCustomWidgets().finally(async () => {
       this.reloadPromise = undefined;
+      if (this.queuedReload) {
+        this.queuedReload = false;
+        await this.reloadCustomWidgets();
+      }
     });
     return this.reloadPromise;
   }

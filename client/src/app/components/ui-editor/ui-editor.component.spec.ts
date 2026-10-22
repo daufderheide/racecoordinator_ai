@@ -11,6 +11,7 @@ import { By } from "@angular/platform-browser";
 import { ActivatedRoute, Router } from "@angular/router";
 import { BehaviorSubject, delay, of, Subject, throwError } from "rxjs";
 import { AnchorPoint } from "@app/components/raceday/column_definition";
+import { DefaultRacedayComponent } from "@app/components/raceday/default-raceday.component";
 import { RacedayLayoutUtils } from "@app/components/raceday/utils/raceday-layout.utils";
 import { DataService } from "@app/data.service";
 import { CustomUI } from "@app/models/custom-ui";
@@ -358,6 +359,13 @@ describe("UIEditorComponent", () => {
     mockThemeService.getThemes.and.returnValue([]);
     mockThemeService.resolveAssetId.and.returnValue(null);
 
+    TestBed.overrideComponent(DefaultRacedayComponent, {
+      set: {
+        template:
+          '<ng-template #toolboxTemplate><div class="layout-customizer-toolbox-wrapper"></div></ng-template>',
+      },
+    });
+
     await TestBed.configureTestingModule({
       imports: [
         FormsModule,
@@ -406,6 +414,7 @@ describe("UIEditorComponent", () => {
   beforeEach(async () => {
     fixture = TestBed.createComponent(UIEditorComponent);
     component = fixture.componentInstance;
+    spyOn(component, "scrollToUi");
     fixture.detectChanges();
     await fixture.whenStable();
   });
@@ -2425,6 +2434,30 @@ describe("UIEditorComponent", () => {
       expect(mockSettingsService.saveSettings).toHaveBeenCalled();
     }));
 
+    it("should await in-flight activeAutoSavePromise during confirmDiscard and exit cleanly", async () => {
+      component.isLoading = false;
+      (component as any).isSaving = true;
+
+      let inFlightFinished = false;
+      const inFlightSave = new Promise<void>((resolve) => {
+        setTimeout(() => {
+          inFlightFinished = true;
+          component.undoManager.resetTracking(component.editingState);
+          (component as any).isSaving = false;
+          resolve();
+        }, 20);
+      });
+      component.activeAutoSavePromise = inFlightSave;
+
+      spyOn(component, "hasChanges").and.callFake(() => !inFlightFinished);
+
+      const result = await component.confirmDiscard();
+
+      expect(inFlightFinished).toBeTrue();
+      expect(result).toBeTrue();
+      expect(component.showDiscardConfirm).toBeFalse();
+    });
+
     it("should show modal if auto-save fails", async () => {
       const logger = TestBed.inject(LoggerService);
       component.isLoading = false;
@@ -2448,6 +2481,7 @@ describe("UIEditorComponent", () => {
 
       const promise = component.confirmDiscard();
       // Wait for the auto-save promise chain to settle
+      await Promise.resolve();
       await Promise.resolve();
 
       expect(component.showDiscardConfirm).toBeTrue();
@@ -2492,6 +2526,39 @@ describe("UIEditorComponent", () => {
 
       // discardMessage contains bullet points
       expect(component.discardMessage).toContain("•");
+    });
+
+    it("should conditionally render discard confirmation modal only when showDiscardConfirm is true", () => {
+      component.showDiscardConfirm = false;
+      fixture.detectChanges();
+
+      let discardModals = fixture.debugElement
+        .queryAll(By.css("app-confirmation-modal"))
+        .filter(
+          (el) => el.componentInstance.title() === "UE_CONFIRM_DISCARD_TITLE",
+        );
+      expect(discardModals.length).toBe(0);
+
+      component.showDiscardConfirm = true;
+      fixture.detectChanges();
+
+      discardModals = fixture.debugElement
+        .queryAll(By.css("app-confirmation-modal"))
+        .filter(
+          (el) => el.componentInstance.title() === "UE_CONFIRM_DISCARD_TITLE",
+        );
+      expect(discardModals.length).toBe(1);
+      expect(discardModals[0].componentInstance.message()).toBe(
+        component.discardMessage,
+      );
+
+      // Verify that toggling isSaving while showDiscardConfirm is false does not cause expression changed errors
+      component.showDiscardConfirm = false;
+      fixture.detectChanges();
+      component.isSaving = true;
+      expect(() => fixture.detectChanges()).not.toThrow();
+      component.isSaving = false;
+      expect(() => fixture.detectChanges()).not.toThrow();
     });
   });
 
@@ -3010,7 +3077,7 @@ describe("UIEditorComponent", () => {
       expect(selectors).not.toContain("#add-item-btn");
     });
 
-    it("should select lane-view widget when onEnter is called on widget inspector step", () => {
+    it("should select lane-view widget when onEnter is called on widget configuration step", () => {
       const customUi: CustomUI = {
         entity_id: "custom_ui_1",
         name: "Custom UI 1",
@@ -3409,8 +3476,58 @@ describe("UIEditorComponent", () => {
       );
     });
 
-    it("should delegate clearLayout and clearCurrentLayout properly", () => {
+    it("should delegate clearLayout and clearCurrentLayout properly and clear activeGridSession", () => {
       spyOn(component.undoManager, "captureState");
+      spyOn(component, "syncRacedayPreview").and.callThrough();
+      const customUi: CustomUI = {
+        entity_id: "default_ui_layout_rc_ai",
+        name: "Default UI",
+        is_default: true,
+        layoutJson: JSON.stringify({
+          baseWidth: 1920,
+          baseHeight: 1080,
+          widgets: [
+            {
+              id: "w1",
+              widgetType: "lane-view",
+              customSettings: { gridId: "grid-test" },
+            },
+            {
+              id: "w2",
+              widgetType: "lane-column",
+              customSettings: { gridId: "grid-test" },
+            },
+          ],
+        }),
+      };
+      component.displayCustomUIs = [customUi];
+      component.activeCustomUiId = "default_ui_layout_rc_ai";
+      component.selectedWidgetId = "w1";
+      component.activeGridSession = {
+        gridId: "grid-test",
+        totalLanes: 4,
+        direction: "vertical",
+        bindingMode: "lane",
+      } as any;
+
+      component.clearLayout(customUi);
+      expect(JSON.parse(customUi.layoutJson!).widgets).toEqual([]);
+      expect(component.selectedWidgetId).toBeNull();
+      expect(component.activeGridSession).toBeNull();
+      expect(component.syncRacedayPreview).toHaveBeenCalledWith(
+        jasmine.objectContaining({ widgets: [] }),
+        customUi,
+      );
+      expect(component.undoManager.captureState).toHaveBeenCalledTimes(1);
+
+      spyOn(component, "clearLayout");
+      const targetUi = component.getTargetCustomUi("raceday");
+      expect(targetUi).toBeDefined();
+      component.clearCurrentLayout();
+      expect(component.clearLayout).toHaveBeenCalledWith(targetUi!);
+    });
+
+    it("should push exactly one undo state when clearing layout and restore with single undo", () => {
       const customUi: CustomUI = {
         entity_id: "default_ui_layout_rc_ai",
         name: "Default UI",
@@ -3422,19 +3539,23 @@ describe("UIEditorComponent", () => {
         }),
       };
       component.displayCustomUIs = [customUi];
+      component.editingState.customUIs = [deepCopy(customUi)];
+      component.editingSettings.racedayLayout = JSON.parse(
+        customUi.layoutJson!,
+      );
       component.activeCustomUiId = "default_ui_layout_rc_ai";
-      component.selectedWidgetId = "w1";
+      component.undoManager.initialize(component.editingState);
 
+      const initialCount = component.undoManager.undoStackCount;
       component.clearLayout(customUi);
-      expect(JSON.parse(customUi.layoutJson!).widgets).toEqual([]);
-      expect(component.selectedWidgetId).toBeNull();
-      expect(component.undoManager.captureState).toHaveBeenCalled();
 
-      spyOn(component, "clearLayout");
-      const targetUi = component.getTargetCustomUi("raceday");
-      expect(targetUi).toBeDefined();
-      component.clearCurrentLayout();
-      expect(component.clearLayout).toHaveBeenCalledWith(targetUi!);
+      expect(component.undoManager.undoStackCount).toBe(initialCount + 1);
+      expect(JSON.parse(customUi.layoutJson!).widgets.length).toBe(0);
+
+      component.undo();
+      const restoredLayout = component.getLayout(customUi);
+      expect(restoredLayout?.widgets.length).toBe(1);
+      expect(restoredLayout?.widgets[0].id).toBe("w1");
     });
   });
 
@@ -3792,6 +3913,90 @@ describe("UIEditorComponent", () => {
       });
     }));
 
+    describe("restore open layout state and scroll on entry", () => {
+      beforeEach(() => {
+        const theme1: Theme = {
+          entity_id: "t_race",
+          name: "Race Theme",
+          is_default: false,
+          slots: {},
+          audio_slots: {},
+          uiId: "ui_race",
+        };
+        const theme2: Theme = {
+          entity_id: "t_other",
+          name: "Other Theme",
+          is_default: false,
+          slots: {},
+          audio_slots: {},
+          uiId: "ui_other",
+        };
+        const ui1: CustomUI = {
+          entity_id: "ui_race",
+          name: "Race UI",
+          is_default: false,
+        };
+        const ui2: CustomUI = {
+          entity_id: "ui_other",
+          name: "Other UI",
+          is_default: false,
+        };
+
+        component.editingState.themes = [theme1, theme2];
+        component.editingState.customUIs = [ui1, ui2];
+        component.refreshDisplayProperties();
+      });
+
+      it("should restore activeCustomUiId and scroll to layout when layout section is expanded", () => {
+        if (!jasmine.isSpy(component.scrollToUi)) {
+          spyOn(component, "scrollToUi");
+        } else {
+          (component.scrollToUi as jasmine.Spy).calls.reset();
+        }
+        spyOn(component, "ensureWidgetSelected");
+        component.sectionsExpanded = {
+          customUIs: true,
+          ui_ui_race: true,
+        };
+
+        component.restoreOpenLayoutStateAndScroll();
+
+        expect(component.activeCustomUiId).toBe("ui_race");
+        expect(component.ensureWidgetSelected).toHaveBeenCalled();
+        expect(component.scrollToUi).toHaveBeenCalledWith("ui_race", 100);
+      });
+
+      it("should not scroll when customUIs section is collapsed", () => {
+        if (!jasmine.isSpy(component.scrollToUi)) {
+          spyOn(component, "scrollToUi");
+        } else {
+          (component.scrollToUi as jasmine.Spy).calls.reset();
+        }
+        component.sectionsExpanded = {
+          customUIs: false,
+          ui_ui_race: true,
+        };
+
+        component.restoreOpenLayoutStateAndScroll();
+
+        expect(component.activeCustomUiId).toBe("ui_race");
+        expect(component.scrollToUi).not.toHaveBeenCalled();
+      });
+
+      it("should allow user to expand or collapse freely after restored state", () => {
+        component.sectionsExpanded = {
+          theme_t_race: true,
+        };
+
+        component.restoreOpenLayoutStateAndScroll();
+        expect(component.sectionsExpanded["theme_t_race"]).toBeTrue();
+
+        component.toggleThemeSection("t_other");
+        expect(component.sectionsExpanded["theme_t_other"]).toBeTrue();
+        expect(component.sectionsExpanded["theme_t_race"]).toBeFalse();
+      });
+    });
+
     it("should auto-save modified custom UIs and refresh customUiService", async () => {
       const customUi: CustomUI = {
         entity_id: "c_auto",
@@ -3862,7 +4067,7 @@ describe("UIEditorComponent", () => {
       expect(scaleLaneView).toEqual(scaleTimer);
     });
 
-    it("should display widget inspector for selected widget on the layout and remain open across widget selections", () => {
+    it("should display widget configuration for selected widget on the layout and remain open across widget selections", () => {
       const defaultUi: CustomUI = {
         entity_id: "default_ui_layout_rc_ai",
         name: "Default UI",
@@ -3910,7 +4115,7 @@ describe("UIEditorComponent", () => {
       expect(inspector).toBeTruthy();
     });
 
-    it("should render widget toolbox at workspace level above canvas and widget inspector", () => {
+    it("should render widget library at workspace level above canvas and widget configuration", () => {
       component.activeCustomUiId = "default_ui_layout_rc_ai";
       component.sectionsExpanded["ui_default_ui_layout_rc_ai"] = true;
       component.editingSettings.racedayLayout = {
@@ -4172,7 +4377,138 @@ describe("UIEditorComponent", () => {
         width: 900,
         height: 500,
       });
+
+      // Delete grid test
+      component.onDeleteGrid("test-grid-spec", customUi);
+      expect(component.activeGridSession).toBeNull();
+      const afterDelete = JSON.parse(customUi.layoutJson);
+      expect(
+        afterDelete.widgets.some(
+          (w: any) => w.customSettings?.gridId === "test-grid-spec",
+        ),
+      ).toBeFalse();
     });
+
+    it("should automatically apply edit grid template when selecting a widget in a grid", () => {
+      const customUi: any = {
+        entity_id: "custom_ui_grid_auto_edit",
+        name: "Grid Auto Edit UI",
+        layoutJson: JSON.stringify({
+          baseWidth: 1920,
+          baseHeight: 1080,
+          widgets: [
+            {
+              id: "w-grid-cell-1",
+              widgetType: "lane-column",
+              x: 100,
+              y: 100,
+              width: 200,
+              height: 50,
+              customSettings: {
+                gridId: "auto-edit-grid-id",
+                gridLane: 0,
+                gridTotalLanes: 4,
+              },
+            },
+          ],
+        }),
+      };
+      component.displayCustomUIs = [customUi];
+      component.activeCustomUiId = customUi.entity_id;
+      component.activeGridSession = null;
+
+      component.onWidgetSelected("w-grid-cell-1", customUi);
+
+      expect(component.activeGridSession).toBeDefined();
+      expect((component.activeGridSession as any)?.gridId).toBe(
+        "auto-edit-grid-id",
+      );
+    });
+
+    it("should capture state and auto-save when grid resize layoutChanged is received, and restore activeGridSession bounds on undo/redo", fakeAsync(() => {
+      const customUi: any = {
+        entity_id: "custom_ui_grid_resize",
+        name: "Grid Resize UI",
+        layoutJson: JSON.stringify({
+          baseWidth: 1920,
+          baseHeight: 1080,
+          widgets: [
+            {
+              id: "w-lane-master",
+              widgetType: "lane-column",
+              x: 100,
+              y: 100,
+              width: 200,
+              height: 400,
+              customSettings: {
+                gridId: "grid-resize-test",
+                gridLane: 0,
+                gridTotalLanes: 4,
+                gridDirection: "horizontal",
+                gridBounds: { x: 100, y: 100, width: 800, height: 400 },
+              },
+            },
+          ],
+        }),
+      };
+      component.displayCustomUIs = [customUi];
+      component.activeCustomUiId = customUi.entity_id;
+      component.editingState = {
+        settings: component.editingSettings,
+        themes: component.displayThemes,
+        customUIs: [customUi],
+      };
+      component.undoManager.initialize(component.editingState);
+      component.activeGridSession = {
+        gridId: "grid-resize-test",
+        bounds: { x: 100, y: 100, width: 800, height: 400 },
+        totalLanes: 4,
+        direction: "horizontal",
+        sourceLaneIndex: 0,
+        bindingMode: "lane",
+      };
+
+      spyOn(component.undoManager, "captureState").and.callThrough();
+      const initialUndoCount = component.undoManager.undoStackCount;
+
+      // 1. Resize grid bounds during active session
+      component.onGridBoundsChange(
+        { x: 120, y: 120, width: 950, height: 480 },
+        customUi,
+      );
+      expect(component.activeGridSession.bounds).toEqual({
+        x: 120,
+        y: 120,
+        width: 950,
+        height: 480,
+      });
+
+      // 2. Pointer up finishes resize -> layoutChanged emitted
+      const updatedLayout = JSON.parse(customUi.layoutJson);
+      component.onLayoutChanged(updatedLayout, customUi);
+      tick();
+
+      expect(component.undoManager.captureState).toHaveBeenCalled();
+      expect(component.undoManager.undoStackCount).toBe(initialUndoCount + 1);
+
+      // 3. Undo resize -> activeGridSession bounds should restore to initial 800x400
+      component.undoManager.undo();
+      expect(component.activeGridSession.bounds).toEqual({
+        x: 100,
+        y: 100,
+        width: 800,
+        height: 400,
+      });
+
+      // 4. Redo resize -> activeGridSession bounds should update to 950x480
+      component.undoManager.redo();
+      expect(component.activeGridSession.bounds).toEqual({
+        x: 120,
+        y: 120,
+        width: 950,
+        height: 480,
+      });
+    }));
 
     it("should preserve collapsed column groups on lane-view widget per layout independently", () => {
       spyOn(component.undoManager, "captureState");
@@ -4306,7 +4642,7 @@ describe("UIEditorComponent", () => {
           widgets: [],
         }),
       };
-      expect(component.getLayoutAspectRatio(unspecifiedUi)).toBe("current");
+      expect(component.getLayoutAspectRatio(unspecifiedUi)).toBe("16:9");
       expect(component.getLayoutScaleMode(unspecifiedUi)).toBe("stretch");
 
       const options = component.getLayoutAspectRatioOptions(customUi);
@@ -4415,6 +4751,51 @@ describe("UIEditorComponent", () => {
       const inspectorHeight = component.getInspectorHeight(customUi);
       expect(inspectorHeight).toBeGreaterThanOrEqual(400);
       expect(inspectorHeight).toBeLessThanOrEqual(maxViewportHeight);
+    });
+
+    it("should persist zoom setting for each layout and restore it when returning to the layout", () => {
+      const ui1: CustomUI = {
+        entity_id: "layout_1",
+        name: "Layout 1",
+        is_default: false,
+        layoutJson: JSON.stringify({ widgets: [] }),
+      };
+      const ui2: CustomUI = {
+        entity_id: "layout_2",
+        name: "Layout 2",
+        is_default: false,
+        layoutJson: JSON.stringify({ widgets: [] }),
+      };
+      component.editingState.customUIs = [ui1, ui2];
+
+      // Set different zooms for layout 1 and layout 2
+      component.setLayoutZoom(135, ui1);
+      component.setLayoutZoom(85, ui2);
+
+      expect(component.getLayoutZoom(ui1)).toBe(135);
+      expect(component.getLayoutZoom(ui2)).toBe(85);
+
+      // Verify persisted in localStorage
+      const saved = JSON.parse(
+        localStorage.getItem("ui_editor_layout_zoom") || "{}",
+      );
+      expect(saved["layout_1"]).toBe(135);
+      expect(saved["layout_2"]).toBe(85);
+
+      // Verify zoom is restored when returning to layout 1 and layout 2
+      expect(component.getLayoutZoom(ui1)).toBe(135);
+      expect(component.getLayoutZoom(ui2)).toBe(85);
+
+      // Verify reset updates zoom back to 100 for specific layout
+      component.resetLayoutZoom(ui1);
+      expect(component.getLayoutZoom(ui1)).toBe(100);
+      expect(component.getLayoutZoom(ui2)).toBe(85);
+
+      const savedAfterReset = JSON.parse(
+        localStorage.getItem("ui_editor_layout_zoom") || "{}",
+      );
+      expect(savedAfterReset["layout_1"]).toBe(100);
+      expect(savedAfterReset["layout_2"]).toBe(85);
     });
   });
 
@@ -4525,6 +4906,18 @@ describe("UIEditorComponent", () => {
         zIndex: 100,
       });
       expect(name).toBeTruthy();
+
+      // Repeated calls should return cached value
+      const nameCached = component.getWidgetDisplayName({
+        id: "widget-countdown",
+        widgetType: "countdown",
+        x: 0,
+        y: 0,
+        width: 100,
+        height: 100,
+        zIndex: 100,
+      });
+      expect(nameCached).toBe(name);
     });
 
     it("should update urgentQueueTtl and calloutSpacing on editingSettings", () => {
@@ -4645,7 +5038,7 @@ describe("UIEditorComponent", () => {
       }, 200);
     });
 
-    describe("Widget Inspector Geometry & Deletion", () => {
+    describe("Widget Configuration Geometry & Deletion", () => {
       let testCustomUi: any;
 
       beforeEach(() => {
@@ -4854,6 +5247,266 @@ describe("UIEditorComponent", () => {
         expect(component.removeSelectedWidget).toHaveBeenCalledWith(
           testCustomUi,
         );
+      });
+
+      it("should disable height/y inputs for vertical grid widgets and width/x for horizontal grid widgets", () => {
+        component.sectionsExpanded["customUIs"] = true;
+        component.sectionsExpanded["ui_" + testCustomUi.entity_id] = true;
+        fixture.detectChanges();
+
+        const layoutObj = JSON.parse(testCustomUi.layoutJson);
+        const widget = layoutObj.widgets.find(
+          (w: any) => w.id === component.selectedWidgetId,
+        );
+        widget.customSettings = {
+          gridId: "test-grid-spec",
+          gridDirection: "vertical",
+        };
+        testCustomUi.layoutJson = JSON.stringify(layoutObj);
+        component.parsedLayouts.set(testCustomUi.entity_id, layoutObj);
+        fixture.detectChanges();
+
+        const hInput = fixture.nativeElement.querySelector("#inspector-pos-h");
+        const yInput = fixture.nativeElement.querySelector("#inspector-pos-y");
+        const wInput = fixture.nativeElement.querySelector("#inspector-pos-w");
+        const xInput = fixture.nativeElement.querySelector("#inspector-pos-x");
+
+        expect(hInput.disabled).toBeTrue();
+        expect(yInput.disabled).toBeTrue();
+        expect(wInput.disabled).toBeFalse();
+        expect(xInput.disabled).toBeFalse();
+
+        widget.customSettings.gridDirection = "horizontal";
+        testCustomUi.layoutJson = JSON.stringify(layoutObj);
+        component.parsedLayouts.set(testCustomUi.entity_id, layoutObj);
+        fixture.detectChanges();
+
+        expect(hInput.disabled).toBeFalse();
+        expect(yInput.disabled).toBeFalse();
+        expect(wInput.disabled).toBeTrue();
+        expect(xInput.disabled).toBeTrue();
+      });
+
+      it("should update selectedAnchor and selectedWidgetId on onAnchorSelected", () => {
+        component.selectedWidgetId = "other-widget";
+        component.selectedAnchor = null;
+
+        component.onAnchorSelected(
+          { widgetId: "w-lane-test", anchor: "top-left" },
+          testCustomUi,
+        );
+
+        expect(component.selectedWidgetId).toBe("w-lane-test");
+        expect(component.selectedAnchor as string | null).toBe("top-left");
+      });
+
+      it("should update selectedAnchor on onSelectedAnchorChange", () => {
+        component.selectedAnchor = null;
+        component.onSelectedAnchorChange("bottom-right");
+        expect(component.selectedAnchor as string | null).toBe("bottom-right");
+
+        component.onSelectedAnchorChange(null);
+        expect(component.selectedAnchor).toBeNull();
+      });
+    });
+  });
+
+  describe("migration banner lifecycle and confirmation modals", () => {
+    let testUi: CustomUI;
+
+    beforeEach(() => {
+      testUi = {
+        entity_id: "test_ui_migration",
+        name: "Test Layout",
+        is_default: false,
+        layoutJson: JSON.stringify({
+          baseWidth: 1920,
+          baseHeight: 1080,
+          widgets: [
+            {
+              id: "w-grid-header",
+              widgetType: "heat-header",
+              x: 0,
+              y: 0,
+              width: 800,
+              height: 50,
+            },
+          ],
+        }),
+      };
+      component.displayCustomUIs = [testUi];
+      component.dismissedMigrationUis.clear();
+      localStorage.removeItem("rc_dismissed_migration_uis");
+    });
+
+    it("should correctly identify if a layout has a pre-migration backup available", () => {
+      expect(component.hasAvailablePreMigrationBackup(testUi)).toBeFalse();
+
+      (testUi as any)._wasMigrated = true;
+      expect(component.hasAvailablePreMigrationBackup(testUi)).toBeTrue();
+      expect(component.isMigratedLayout(testUi)).toBeTrue();
+
+      delete (testUi as any)._wasMigrated;
+      const backupUi: CustomUI = {
+        entity_id: "test_ui_backup",
+        name: "Test Layout (Pre-Migration Backup)",
+        is_default: false,
+        layoutJson: "{}",
+      };
+      component.displayCustomUIs = [testUi, backupUi];
+      expect(component.hasAvailablePreMigrationBackup(testUi)).toBeTrue();
+      expect(component.isMigratedLayout(testUi)).toBeTrue();
+
+      expect(component.hasAvailablePreMigrationBackup(backupUi)).toBeFalse();
+      expect(component.isMigratedLayout(backupUi)).toBeFalse();
+    });
+
+    it("should recognize default and practice layouts as having available pre-migration backup", () => {
+      const defaultUi: CustomUI = {
+        entity_id: "default_ui_layout_rc_ai",
+        name: "Default UI",
+        is_default: true,
+        layoutJson: JSON.stringify({ widgets: [] }),
+      };
+      expect(component.hasAvailablePreMigrationBackup(defaultUi)).toBeTrue();
+      expect(component.isMigratedLayout(defaultUi)).toBeTrue();
+    });
+
+    it("should dismiss and reopen migration banners", () => {
+      (testUi as any)._wasMigrated = true;
+      expect(component.isMigratedLayout(testUi)).toBeTrue();
+      expect(component.canReopenMigrationBanner(testUi)).toBeFalse();
+
+      component.dismissMigrationBanner(testUi);
+      expect(component.dismissedMigrationUis.has(testUi.entity_id)).toBeTrue();
+      expect(component.isMigratedLayout(testUi)).toBeFalse();
+      expect(component.canReopenMigrationBanner(testUi)).toBeTrue();
+
+      component.reopenMigrationBanner(testUi);
+      expect(component.dismissedMigrationUis.has(testUi.entity_id)).toBeFalse();
+      expect(component.isMigratedLayout(testUi)).toBeTrue();
+      expect(component.canReopenMigrationBanner(testUi)).toBeFalse();
+    });
+
+    it("should handle restore pre-migration backup confirmation modal workflow", () => {
+      expect(component.showRestoreBackupConfirm).toBeFalse();
+      expect(component.pendingRestoreBackupUi).toBeNull();
+
+      component.restorePreMigrationBackup(testUi);
+      expect(component.showRestoreBackupConfirm).toBeTrue();
+      expect(component.pendingRestoreBackupUi).toBe(testUi);
+
+      component.cancelRestorePreMigrationBackup();
+      expect(component.showRestoreBackupConfirm).toBeFalse();
+      expect(component.pendingRestoreBackupUi).toBeNull();
+
+      component.restorePreMigrationBackup(testUi);
+      expect(component.showRestoreBackupConfirm).toBeTrue();
+
+      component.confirmRestorePreMigrationBackup();
+      expect(component.showRestoreBackupConfirm).toBeFalse();
+      expect(component.pendingRestoreBackupUi).toBeNull();
+    });
+
+    it("should handle upgrade legacy heat view confirmation modal workflow", () => {
+      expect(component.showUpgradeHeatViewConfirm).toBeFalse();
+      expect(component.pendingUpgradeHeatViewUi).toBeNull();
+
+      component.upgradeLegacyHeatView(testUi);
+      expect(component.showUpgradeHeatViewConfirm).toBeTrue();
+      expect(component.pendingUpgradeHeatViewUi).toBe(testUi);
+
+      component.cancelUpgradeLegacyHeatView();
+      expect(component.showUpgradeHeatViewConfirm).toBeFalse();
+      expect(component.pendingUpgradeHeatViewUi).toBeNull();
+
+      component.upgradeLegacyHeatView(testUi);
+      expect(component.showUpgradeHeatViewConfirm).toBeTrue();
+
+      component.confirmUpgradeLegacyHeatView();
+      expect(component.showUpgradeHeatViewConfirm).toBeFalse();
+      expect(component.pendingUpgradeHeatViewUi).toBeNull();
+    });
+
+    describe("stacked columns detection and repair", () => {
+      let stackedUi: CustomUI;
+
+      beforeEach(() => {
+        stackedUi = {
+          entity_id: "custom_ui_stacked_test",
+          name: "Stacked Test UI",
+          layoutJson: JSON.stringify({
+            widgets: [
+              {
+                id: "w1",
+                widgetType: "lane-column",
+                x: 20,
+                y: 100,
+                width: 300,
+                height: 80,
+                zIndex: 100,
+                customSettings: {
+                  gridId: "grid-1",
+                  columnKey: "driver.name",
+                  gridLane: 0,
+                  insets: { "bottom-left": "flag" },
+                },
+              },
+              {
+                id: "w1_grid_lane_1",
+                widgetType: "lane-column",
+                x: 20,
+                y: 100,
+                width: 300,
+                height: 80,
+                zIndex: 100,
+                customSettings: {
+                  gridId: "grid-1",
+                  columnKey: "driver.name",
+                  gridLane: 0,
+                  insets: { "bottom-right": "photo" },
+                },
+              },
+            ],
+          }),
+        } as CustomUI;
+      });
+
+      it("should detect stacked columns and toggle banner visibility", () => {
+        expect(component.hasStackedColumns(stackedUi)).toBeTrue();
+        expect(component.getStackedColumnsIssueCount(stackedUi)).toBe(1);
+        expect(component.canReopenStackedColumnsBanner(stackedUi)).toBeFalse();
+
+        component.dismissStackedColumnsBanner(stackedUi);
+        expect(component.hasStackedColumns(stackedUi)).toBeFalse();
+        expect(component.canReopenStackedColumnsBanner(stackedUi)).toBeTrue();
+
+        component.reopenStackedColumnsBanner(stackedUi);
+        expect(component.hasStackedColumns(stackedUi)).toBeTrue();
+        expect(component.canReopenStackedColumnsBanner(stackedUi)).toBeFalse();
+      });
+
+      it("should open review stacked columns modal", () => {
+        expect(component.showReviewStackedColumnsModal).toBeFalse();
+        component.openReviewStackedColumnsModal(stackedUi);
+        expect(component.showReviewStackedColumnsModal).toBeTrue();
+        expect(component.pendingRepairStackedUi).toBe(stackedUi);
+        expect(component.detectedStackedIssues.length).toBe(1);
+      });
+
+      it("should quick-fix stacked columns and display success modal", () => {
+        component.quickFixStackedColumns(stackedUi);
+        expect(component.showSuccessModal).toBeTrue();
+        expect(component.successModalTitle).toBe(
+          "UE_STACKED_COLUMNS_MODAL_TITLE",
+        );
+
+        const parsed = JSON.parse(stackedUi.layoutJson || "{}");
+        expect(parsed.widgets.length).toBe(1);
+        expect(parsed.widgets[0].customSettings.insets).toEqual({
+          "bottom-left": "flag",
+          "bottom-right": "photo",
+        });
       });
     });
   });

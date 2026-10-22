@@ -261,14 +261,15 @@ public class RaceStatisticsUtilsTest {
     try (org.apache.poi.xssf.usermodel.XSSFWorkbook resultWb =
         new org.apache.poi.xssf.usermodel.XSSFWorkbook(
             new java.io.ByteArrayInputStream(outBytes))) {
-      assertEquals(7, resultWb.getNumberOfSheets());
+      assertEquals(8, resultWb.getNumberOfSheets());
       assertEquals("Race Information", resultWb.getSheetName(0));
       assertEquals("Heat List", resultWb.getSheetName(1));
       assertEquals("Overall Standings", resultWb.getSheetName(2));
-      assertEquals("Lap Data", resultWb.getSheetName(3));
-      assertEquals("Heat 1", resultWb.getSheetName(4));
-      assertEquals("Lotus 98T #12", resultWb.getSheetName(5));
-      assertEquals("Williams FW11", resultWb.getSheetName(6));
+      assertEquals("Fastest Lap Times", resultWb.getSheetName(3));
+      assertEquals("Lap Data", resultWb.getSheetName(4));
+      assertEquals("Heat 1", resultWb.getSheetName(5));
+      assertEquals("Lotus 98T #12", resultWb.getSheetName(6));
+      assertEquals("Williams FW11", resultWb.getSheetName(7));
 
       for (int i = 0; i < resultWb.getNumberOfSheets(); i++) {
         org.apache.poi.xssf.usermodel.XSSFSheet sheet = resultWb.getSheetAt(i);
@@ -363,6 +364,10 @@ public class RaceStatisticsUtilsTest {
         new org.apache.poi.xssf.usermodel.XSSFWorkbook(rawIs)) {
       assertEquals("Heat List", wb.getSheetName(2));
       assertEquals("Overall Standings", wb.getSheetName(3));
+      assertEquals("Heat Template", wb.getSheetName(4));
+      assertEquals("Fastest Lap Times", wb.getSheetName(5));
+      assertEquals("Driver Template", wb.getSheetName(6));
+      assertEquals("Lap Data", wb.getSheetName(7));
 
       org.apache.poi.ss.usermodel.Sheet heatListSheet = wb.getSheetAt(2);
       org.apache.poi.ss.usermodel.Row row3 = heatListSheet.getRow(3);
@@ -490,12 +495,21 @@ public class RaceStatisticsUtilsTest {
     try (org.apache.poi.xssf.usermodel.XSSFWorkbook resultWb =
         new org.apache.poi.xssf.usermodel.XSSFWorkbook(
             new java.io.ByteArrayInputStream(outBytes))) {
-      org.apache.poi.ss.usermodel.Sheet standingsSheet = resultWb.getSheetAt(2);
+      org.apache.poi.ss.usermodel.Sheet standingsSheet = resultWb.getSheet("Overall Standings");
+      assertNotNull(standingsSheet);
       org.apache.poi.ss.usermodel.Row headerRow = standingsSheet.getRow(3);
       assertEquals("Lane 1 Laps", headerRow.getCell(4).getStringCellValue());
       assertEquals("Lane 2 Laps", headerRow.getCell(5).getStringCellValue());
       assertEquals("Lane 3 Laps", headerRow.getCell(6).getStringCellValue());
       assertEquals("Lane 4 Laps", headerRow.getCell(7).getStringCellValue());
+
+      org.apache.poi.ss.usermodel.Sheet fastestLapSheet = resultWb.getSheet("Fastest Lap Times");
+      assertNotNull(fastestLapSheet);
+      org.apache.poi.ss.usermodel.Row fastHdrRow = fastestLapSheet.getRow(2);
+      assertEquals("Lane 1", fastHdrRow.getCell(1).getStringCellValue());
+      assertEquals("Lane 2", fastHdrRow.getCell(2).getStringCellValue());
+      assertEquals("Lane 3", fastHdrRow.getCell(3).getStringCellValue());
+      assertEquals("Lane 4", fastHdrRow.getCell(4).getStringCellValue());
     }
   }
 
@@ -554,7 +568,7 @@ public class RaceStatisticsUtilsTest {
     try (org.apache.poi.xssf.usermodel.XSSFWorkbook resultWb =
         new org.apache.poi.xssf.usermodel.XSSFWorkbook(
             new java.io.ByteArrayInputStream(outBytes))) {
-      assertEquals(8, resultWb.getNumberOfSheets());
+      assertEquals(9, resultWb.getNumberOfSheets());
     }
   }
 
@@ -1720,5 +1734,95 @@ public class RaceStatisticsUtilsTest {
     assertEquals(
         "${race.track.getLaneCount()}",
         RaceStatisticsUtils.normalizeTemplateVariables("${race.laneCount}"));
+  }
+
+  @Test
+  public void testAdjustPostExportRaceInformation_RemovesAssetIdAndSetsAssetName() {
+    try (XSSFWorkbook wb = new XSSFWorkbook()) {
+      Sheet sheet = wb.createSheet("Race Information");
+      Row r0 = sheet.createRow(0);
+      r0.createCell(0).setCellValue("custom_rotation_sequence");
+      r0.createCell(1).setCellValue("[]");
+
+      Row r1 = sheet.createRow(1);
+      r1.createCell(0).setCellValue("custom_rotation_asset_id");
+      r1.createCell(1).setCellValue("82c1bfa2-4c74-480b-af39-36b677ec62c4");
+
+      Row r2 = sheet.createRow(2);
+      r2.createCell(0).setCellValue("custom_rotations");
+      r2.createCell(1).setCellValue("[]");
+
+      Row r3 = sheet.createRow(3);
+      r3.createCell(0).setCellValue("heat_times_through");
+      r3.createCell(1).setCellValue(1.0);
+
+      com.antigravity.race.Race mockRace = mock(com.antigravity.race.Race.class);
+      when(mockRace.getCustomRotationAssetName()).thenReturn("Single Heat Practice");
+
+      RaceStatisticsUtils.adjustPostExportRaceInformation(wb, mockRace);
+
+      boolean foundAssetId = false;
+      String rotationsVal = null;
+      for (int r = 0; r <= sheet.getLastRowNum(); r++) {
+        Row row = sheet.getRow(r);
+        if (row != null && row.getCell(0) != null) {
+          String key = row.getCell(0).getStringCellValue();
+          if ("custom_rotation_asset_id".equalsIgnoreCase(key)) {
+            foundAssetId = true;
+          } else if ("custom_rotations".equalsIgnoreCase(key)) {
+            rotationsVal = row.getCell(1).getStringCellValue();
+          }
+        }
+      }
+
+      assertFalse("custom_rotation_asset_id must be removed", foundAssetId);
+      assertEquals("Single Heat Practice", rotationsVal);
+    } catch (Exception e) {
+      org.junit.Assert.fail("Unexpected exception: " + e.getMessage());
+    }
+  }
+
+  @Test
+  public void testSanitizeWorkbookTemplate_RemovesCustomRotationAssetId() {
+    try (XSSFWorkbook wb = new XSSFWorkbook()) {
+      Sheet sheet = wb.createSheet("Race Information");
+      Row r0 = sheet.createRow(0);
+      r0.createCell(0).setCellValue("custom_rotation_asset_id");
+      r0.createCell(1).setCellValue("${race.raceModel.customRotationAssetId}");
+
+      Row r1 = sheet.createRow(1);
+      r1.createCell(0).setCellValue("custom_rotations");
+      r1.createCell(1).setCellValue("${race.customRotationsDisplay}");
+
+      java.io.ByteArrayOutputStream bos = new java.io.ByteArrayOutputStream();
+      wb.write(bos);
+
+      com.antigravity.models.Race model = new com.antigravity.models.Race.Builder().build();
+      com.antigravity.race.Race mockRace = mock(com.antigravity.race.Race.class);
+      when(mockRace.getRaceModel()).thenReturn(model);
+
+      java.io.InputStream sanitized =
+          RaceStatisticsUtils.sanitizeWorkbookTemplate(
+              new java.io.ByteArrayInputStream(bos.toByteArray()),
+              Collections.emptyList(),
+              mockRace);
+
+      try (XSSFWorkbook resultWb = new XSSFWorkbook(sanitized)) {
+        Sheet resultSheet = resultWb.getSheet("Race Information");
+        boolean foundAssetId = false;
+        for (int r = 0; r <= resultSheet.getLastRowNum(); r++) {
+          Row row = resultSheet.getRow(r);
+          if (row != null && row.getCell(0) != null) {
+            String key = row.getCell(0).getStringCellValue();
+            if ("custom_rotation_asset_id".equalsIgnoreCase(key)) {
+              foundAssetId = true;
+            }
+          }
+        }
+        assertFalse("custom_rotation_asset_id must be removed during sanitization", foundAssetId);
+      }
+    } catch (Exception e) {
+      org.junit.Assert.fail("Unexpected exception: " + e.getMessage());
+    }
   }
 }

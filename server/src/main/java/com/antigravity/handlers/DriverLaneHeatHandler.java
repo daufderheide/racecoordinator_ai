@@ -302,6 +302,16 @@ public class DriverLaneHeatHandler {
     }
   }
 
+  @SuppressWarnings("unchecked")
+  public void updateUserTime(Context ctx) {
+    logger.info("ClientCommand received: update-user-time");
+    try {
+      updateUserLaps(ctx, ctx.pathParamMap(), ctx.bodyAsClass(HashMap.class));
+    } catch (Exception e) {
+      ctx.status(500).result("Error: " + e.getMessage());
+    }
+  }
+
   public void updateUserLaps(
       Context ctx, Map<String, String> pathParams, Map<String, Object> body) {
     try {
@@ -323,24 +333,15 @@ public class DriverLaneHeatHandler {
       List<DriverHeatData> drivers = currentHeat.getDrivers();
       if (lane >= 0 && lane < drivers.size()) {
         DriverHeatData dhd = drivers.get(lane);
-        if (body.containsKey("userLaps")) {
-          double value = ((Number) body.get("userLaps")).doubleValue();
-          dhd.setUserLaps(value);
-
-          currentHeat.initializeStandings(
-              race.getRaceModel().getHeatScoring(), race.getRaceModel().isPractice());
-          race.updateAndBroadcastOverallStandings();
-          race.updateScoreRecords();
-          race.broadcast(race.createSnapshot());
-
-          if (race.getHistoryRecordId() != null && !race.getHistoryRecordId().isEmpty()) {
-            postProcessHistoryRaceAlteration(race);
-          }
-
-          ctx.status(200)
-              .json(Collections.singletonMap("adjustedLapCount", dhd.getAdjustedLapCount()));
+        if (applyAdjustment(dhd, body)) {
+          recalculateAndBroadcast(race, currentHeat);
+          Map<String, Object> resp = new HashMap<>();
+          resp.put("adjustedLapCount", dhd.getAdjustedLapCount());
+          resp.put("totalTime", dhd.getTotalTime());
+          resp.put("userTime", dhd.getUserTime());
+          ctx.status(200).json(resp);
         } else {
-          ctx.status(400).result("Missing userLaps in body");
+          ctx.status(400).result("Missing userLaps or userTime in body");
         }
       } else {
         ctx.status(400).result("Invalid lane index: " + lane);
@@ -352,12 +353,20 @@ public class DriverLaneHeatHandler {
 
   @SuppressWarnings("unchecked")
   public void updateHeatUserLaps(Context ctx) {
+    logger.info("ClientCommand received: update-heat-user-laps");
+    handleHeatAdjustment(ctx, ctx.bodyAsClass(HashMap.class));
+  }
+
+  @SuppressWarnings("unchecked")
+  public void updateHeatUserTime(Context ctx) {
+    logger.info("ClientCommand received: update-heat-user-time");
+    handleHeatAdjustment(ctx, ctx.bodyAsClass(HashMap.class));
+  }
+
+  private void handleHeatAdjustment(Context ctx, Map<String, Object> body) {
     try {
       int heatNumber = Integer.parseInt(ctx.pathParam("heatNumber"));
       int lane = Integer.parseInt(ctx.pathParam("lane"));
-      Map<String, Object> body = ctx.bodyAsClass(HashMap.class);
-      logger.info(
-          "ClientCommand received: update-heat-user-laps heat {} lane {}", heatNumber, lane);
       ReplayLogger.logReplayCommand(
           "updateHeatUserLaps",
           ReplayLogger.mapOf("heatNumber", heatNumber, "lane", lane, "body", body));
@@ -368,14 +377,7 @@ public class DriverLaneHeatHandler {
         return;
       }
 
-      Heat targetHeat = null;
-      for (Heat h : race.getHeats()) {
-        if (h.getHeatNumber() == heatNumber) {
-          targetHeat = h;
-          break;
-        }
-      }
-
+      Heat targetHeat = findHeat(race, heatNumber);
       if (targetHeat == null) {
         ctx.status(404).result("Heat not found: " + heatNumber);
         return;
@@ -384,24 +386,15 @@ public class DriverLaneHeatHandler {
       List<DriverHeatData> drivers = targetHeat.getDrivers();
       if (lane >= 0 && lane < drivers.size()) {
         DriverHeatData dhd = drivers.get(lane);
-        if (body.containsKey("userLaps")) {
-          double value = ((Number) body.get("userLaps")).doubleValue();
-          dhd.setUserLaps(value);
-
-          targetHeat.initializeStandings(
-              race.getRaceModel().getHeatScoring(), race.getRaceModel().isPractice());
-          race.updateAndBroadcastOverallStandings();
-          race.updateScoreRecords();
-          race.broadcast(race.createSnapshot());
-
-          if (race.getHistoryRecordId() != null && !race.getHistoryRecordId().isEmpty()) {
-            postProcessHistoryRaceAlteration(race);
-          }
-
-          ctx.status(200)
-              .json(Collections.singletonMap("adjustedLapCount", dhd.getAdjustedLapCount()));
+        if (applyAdjustment(dhd, body)) {
+          recalculateAndBroadcast(race, targetHeat);
+          Map<String, Object> resp = new HashMap<>();
+          resp.put("adjustedLapCount", dhd.getAdjustedLapCount());
+          resp.put("totalTime", dhd.getTotalTime());
+          resp.put("userTime", dhd.getUserTime());
+          ctx.status(200).json(resp);
         } else {
-          ctx.status(400).result("Missing userLaps in body");
+          ctx.status(400).result("Missing userLaps or userTime in body");
         }
       } else {
         ctx.status(400).result("Invalid lane index: " + lane);
@@ -414,6 +407,17 @@ public class DriverLaneHeatHandler {
   @SuppressWarnings("unchecked")
   public void updateBatchUserLaps(Context ctx) {
     logger.info("ClientCommand received: update-batch-user-laps");
+    handleBatchAdjustment(ctx);
+  }
+
+  @SuppressWarnings("unchecked")
+  public void updateBatchUserTime(Context ctx) {
+    logger.info("ClientCommand received: update-batch-user-time");
+    handleBatchAdjustment(ctx);
+  }
+
+  @SuppressWarnings("unchecked")
+  private void handleBatchAdjustment(Context ctx) {
     try {
       List<Map<String, Object>> updates = ctx.bodyAsClass(List.class);
       ReplayLogger.logReplayCommand("updateBatchUserLaps", ReplayLogger.mapOf("updates", updates));
@@ -424,20 +428,11 @@ public class DriverLaneHeatHandler {
       }
 
       Set<Heat> heatsToRecalculate = new HashSet<>();
-
       for (Map<String, Object> update : updates) {
         int heatNumber = ((Number) update.get("heatNumber")).intValue();
         int lane = ((Number) update.get("laneIndex")).intValue();
-        double userLaps = ((Number) update.get("userLaps")).doubleValue();
 
-        Heat targetHeat = null;
-        for (Heat h : race.getHeats()) {
-          if (h.getHeatNumber() == heatNumber) {
-            targetHeat = h;
-            break;
-          }
-        }
-
+        Heat targetHeat = findHeat(race, heatNumber);
         if (targetHeat == null) {
           ctx.status(404).result("Heat not found: " + heatNumber);
           return;
@@ -446,8 +441,9 @@ public class DriverLaneHeatHandler {
         List<DriverHeatData> drivers = targetHeat.getDrivers();
         if (lane >= 0 && lane < drivers.size()) {
           DriverHeatData dhd = drivers.get(lane);
-          dhd.setUserLaps(userLaps);
-          heatsToRecalculate.add(targetHeat);
+          if (applyAdjustment(dhd, update)) {
+            heatsToRecalculate.add(targetHeat);
+          }
         } else {
           ctx.status(400).result("Invalid lane index: " + lane + " for heat " + heatNumber);
           return;
@@ -470,6 +466,42 @@ public class DriverLaneHeatHandler {
     } catch (Exception e) {
       ctx.status(500).result("Error: " + e.getMessage());
     }
+  }
+
+  private boolean applyAdjustment(DriverHeatData dhd, Map<String, Object> body) {
+    boolean updated = false;
+    if (body.containsKey("userLaps")) {
+      double value = ((Number) body.get("userLaps")).doubleValue();
+      dhd.setUserLaps(value);
+      updated = true;
+    }
+    if (body.containsKey("userTime")) {
+      double value = ((Number) body.get("userTime")).doubleValue();
+      dhd.setUserTime(value);
+      updated = true;
+    }
+    return updated;
+  }
+
+  private void recalculateAndBroadcast(Race race, Heat heat) {
+    heat.initializeStandings(
+        race.getRaceModel().getHeatScoring(), race.getRaceModel().isPractice());
+    race.updateAndBroadcastOverallStandings();
+    race.updateScoreRecords();
+    race.broadcast(race.createSnapshot());
+
+    if (race.getHistoryRecordId() != null && !race.getHistoryRecordId().isEmpty()) {
+      postProcessHistoryRaceAlteration(race);
+    }
+  }
+
+  private Heat findHeat(Race race, int heatNumber) {
+    for (Heat h : race.getHeats()) {
+      if (h.getHeatNumber() == heatNumber) {
+        return h;
+      }
+    }
+    return null;
   }
 
   private void postProcessHistoryRaceAlteration(Race race) {

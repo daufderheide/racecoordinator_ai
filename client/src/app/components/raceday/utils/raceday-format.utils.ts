@@ -8,8 +8,14 @@ import { Driver } from "@app/models/driver";
 import { AllowFinish, FinishMethod } from "@app/models/heat_scoring";
 import { Race } from "@app/models/race";
 import { Track } from "@app/models/track";
-import { RaceFlag } from "@app/proto/antigravity";
+import { RaceFlag, RaceState } from "@app/proto/antigravity";
 import { DriverHeatData } from "@app/race/driver_heat_data";
+import {
+  formatTimerDisplay,
+  TimerFormatOptions,
+} from "@app/utils/timer-format.utils";
+
+import { RacedayLayoutUtils } from "./raceday-layout.utils";
 
 export interface FormatContext {
   translate: (key: string) => string;
@@ -28,6 +34,10 @@ export interface FormatContext {
   isDriverFinished?: (hd: DriverHeatData, scoring?: any) => boolean;
   areAllDriversFinished?: () => boolean;
   isRaceOver?: () => boolean;
+  getRaceState?: () => RaceState | number | undefined;
+  raceState?: RaceState | number;
+  isWarmup?: () => boolean;
+  isCooldown?: () => boolean;
   getLaneRecordEntry?: (laneIndex: number) => any;
   getBestRaceLapEntry?: (laneIndex: number) => any;
   formatDate?: (date: any) => string;
@@ -78,12 +88,50 @@ export class RacedayFormatUtils {
     );
   }
 
+  static isHeatOrRaceOver(ctx?: FormatContext, hd?: DriverHeatData): boolean {
+    if (hd?.isFinished) {
+      return true;
+    }
+    if (!ctx) {
+      return false;
+    }
+    const state = ctx.getRaceState ? ctx.getRaceState() : ctx.raceState;
+    if (
+      state === RaceState.HEAT_OVER ||
+      state === RaceState.RACE_OVER ||
+      state === 5 ||
+      state === 6
+    ) {
+      return true;
+    }
+    if (ctx.isRaceOver && ctx.isRaceOver()) {
+      return true;
+    }
+    if (ctx.areAllDriversFinished && ctx.areAllDriversFinished()) {
+      return true;
+    }
+    if (
+      hd &&
+      ctx.isDriverFinished &&
+      ctx.isDriverFinished(
+        hd,
+        ctx.getRace()?.heat_scoring ?? (ctx.getRace() as any)?.heatScoring,
+      )
+    ) {
+      return true;
+    }
+    return false;
+  }
+
   static getPropertyValue(
     heatDriver: DriverHeatData,
     propertyPath: string,
   ): any {
     if (!heatDriver) return undefined;
     const baseKey = propertyPath.split(".")[0].split("_")[0];
+    if (baseKey === "heatTotalLaps") {
+      return heatDriver.lapCount;
+    }
     const p =
       heatDriver.participant ?? (heatDriver as any).actualDriver?.participant;
     const overallVal = RacedayFormatUtils.extractOverallPropertyValue(
@@ -110,8 +158,14 @@ export class RacedayFormatUtils {
   ): any {
     switch (baseKey) {
       case "overallLapCount":
+      case "totalLaps":
+      case "raceTotalLaps":
+      case "overallTotalLaps":
         return (
-          p?.totalLaps ?? heatDriver?.totalLaps ?? heatDriver?.overallLapCount
+          p?.totalLaps ??
+          heatDriver?.totalLaps ??
+          heatDriver?.overallLapCount ??
+          heatDriver?.lapCount
         );
       case "overallPhysicalLapCount":
         return (
@@ -217,9 +271,176 @@ export class RacedayFormatUtils {
         return (
           p?.totalPoints ?? heatDriver?.totalPoints ?? heatDriver?.overallPoints
         );
+      case "heatsRaced":
+      case "overallHeatsRaced":
+        return (
+          p?.heatsRaced ??
+          heatDriver?.heatsRaced ??
+          heatDriver?.overallHeatsRaced
+        );
+      case "heatsRemaining":
+      case "overallHeatsRemaining":
+        return (
+          p?.heatsRemaining ??
+          heatDriver?.heatsRemaining ??
+          heatDriver?.overallHeatsRemaining
+        );
+      case "totalHeats":
+      case "overallTotalHeats":
+        return (
+          p?.totalHeats ??
+          heatDriver?.totalHeats ??
+          heatDriver?.overallTotalHeats
+        );
       default:
         return undefined;
     }
+  }
+
+  static resolveTimerFormatOptions(
+    colKey: string,
+    settings: any,
+    isInset?: boolean,
+    insetDecimals?: number,
+    propertyKey?: string,
+  ): TimerFormatOptions | undefined {
+    if (!settings) return undefined;
+    const baseKey = colKey ? colKey.split("_")[0] : "";
+    const propBase = propertyKey ? propertyKey.split("_")[0] : "";
+    const isTotalTime =
+      colKey === "totalTime" ||
+      colKey === "overallTotalTime" ||
+      baseKey === "totalTime" ||
+      baseKey === "overallTotalTime" ||
+      propertyKey === "totalTime" ||
+      propertyKey === "overallTotalTime" ||
+      propBase === "totalTime" ||
+      propBase === "overallTotalTime";
+    if (!isTotalTime) return undefined;
+
+    const colFormat =
+      settings.columnTimeDisplayFormat?.[colKey] ??
+      settings.columnTimeDisplayFormat?.[baseKey] ??
+      (propertyKey
+        ? settings.columnTimeDisplayFormat?.[propertyKey]
+        : undefined) ??
+      (propBase ? settings.columnTimeDisplayFormat?.[propBase] : undefined);
+    const colSubMode =
+      settings.columnTimeSubsecondMode?.[colKey] ??
+      settings.columnTimeSubsecondMode?.[baseKey] ??
+      (propertyKey
+        ? settings.columnTimeSubsecondMode?.[propertyKey]
+        : undefined) ??
+      (propBase ? settings.columnTimeSubsecondMode?.[propBase] : undefined);
+    const colThresh =
+      settings.columnTimeSubsecondThreshold?.[colKey] ??
+      settings.columnTimeSubsecondThreshold?.[baseKey] ??
+      (propertyKey
+        ? settings.columnTimeSubsecondThreshold?.[propertyKey]
+        : undefined) ??
+      (propBase
+        ? settings.columnTimeSubsecondThreshold?.[propBase]
+        : undefined);
+    const colDec =
+      settings.columnTimeSubsecondDecimals?.[colKey] ??
+      settings.columnTimeSubsecondDecimals?.[baseKey] ??
+      (propertyKey
+        ? settings.columnTimeSubsecondDecimals?.[propertyKey]
+        : undefined) ??
+      (propBase
+        ? settings.columnTimeSubsecondDecimals?.[propBase]
+        : undefined) ??
+      settings.columnDecimals?.[colKey] ??
+      settings.columnDecimals?.[baseKey];
+
+    if (isInset) {
+      const effDec =
+        settings.timeSubsecondDecimals !== undefined
+          ? Number(settings.timeSubsecondDecimals)
+          : insetDecimals !== undefined
+            ? insetDecimals
+            : settings.insetTimeDecimalPlaces !== undefined
+              ? Number(settings.insetTimeDecimalPlaces)
+              : settings.timeDecimalPlaces !== undefined
+                ? Number(settings.timeDecimalPlaces)
+                : 3;
+      return {
+        format: settings.timeDisplayFormat || colFormat || "dynamic",
+        subsecondMode:
+          settings.timeSubsecondMode ||
+          colSubMode ||
+          (effDec > 0 ? "always" : "never"),
+        subsecondThreshold:
+          settings.timeSubsecondThreshold !== undefined
+            ? Number(settings.timeSubsecondThreshold)
+            : colThresh !== undefined
+              ? Number(colThresh)
+              : 10,
+        subsecondDecimals: effDec,
+      };
+    }
+
+    const hasTimerConfig =
+      colFormat !== undefined ||
+      colSubMode !== undefined ||
+      colThresh !== undefined ||
+      colDec !== undefined ||
+      settings.timeDisplayFormat !== undefined ||
+      settings.timeSubsecondMode !== undefined ||
+      settings.timeSubsecondThreshold !== undefined ||
+      settings.timeSubsecondDecimals !== undefined;
+
+    if (!hasTimerConfig) {
+      return undefined;
+    }
+
+    if (
+      colFormat !== undefined ||
+      colSubMode !== undefined ||
+      colThresh !== undefined ||
+      colDec !== undefined
+    ) {
+      return {
+        format: colFormat || "dynamic",
+        subsecondMode: colSubMode || "never",
+        subsecondThreshold: colThresh !== undefined ? Number(colThresh) : 10,
+        subsecondDecimals: colDec !== undefined ? Number(colDec) : 2,
+      };
+    }
+
+    if (
+      settings.timeDisplayFormat !== undefined ||
+      settings.timeSubsecondMode !== undefined ||
+      settings.timeSubsecondThreshold !== undefined ||
+      settings.timeSubsecondDecimals !== undefined
+    ) {
+      return {
+        format: settings.timeDisplayFormat || "dynamic",
+        subsecondMode: settings.timeSubsecondMode || "never",
+        subsecondThreshold:
+          settings.timeSubsecondThreshold !== undefined
+            ? Number(settings.timeSubsecondThreshold)
+            : 10,
+        subsecondDecimals:
+          settings.timeSubsecondDecimals !== undefined
+            ? Number(settings.timeSubsecondDecimals)
+            : 2,
+      };
+    }
+
+    return undefined;
+  }
+
+  private static isOverallFormatContext(
+    ctx: FormatContext,
+    propertyName: string,
+  ): boolean {
+    const s = ctx.laneViewWidgetSettings;
+    return Boolean(
+      s?.gridType === "overall" ||
+      s?.bindingMode === "overallPosition" ||
+      RacedayLayoutUtils.isOverallColumnKey(propertyName),
+    );
   }
 
   private static formatOverallValue(
@@ -231,6 +452,9 @@ export class RacedayFormatUtils {
     lapPlaceholder: string,
     timeDecimals: number,
     lapDecimals: number,
+    colKey?: string,
+    isInset?: boolean,
+    column?: ColumnDefinition | any,
   ): string | null {
     if (RacedayFormatUtils.isEmptyDriver(hd)) {
       if (
@@ -262,7 +486,12 @@ export class RacedayFormatUtils {
       if (baseKey === "overallConsistencyScore") {
         return "--.-%";
       }
-      if (baseKey === "overallLapCount") {
+      if (
+        baseKey === "overallLapCount" ||
+        baseKey === "totalLaps" ||
+        baseKey === "raceTotalLaps" ||
+        baseKey === "overallTotalLaps"
+      ) {
         return lapPlaceholder;
       }
     }
@@ -284,6 +513,18 @@ export class RacedayFormatUtils {
         value !== null &&
         value !== undefined &&
         (isStdDev ? value >= 0 : value > 0);
+      if (isValid && baseKey === "overallTotalTime") {
+        const timerOpts = RacedayFormatUtils.resolveTimerFormatOptions(
+          colKey || baseKey,
+          ctx.laneViewWidgetSettings,
+          isInset,
+          timeDecimals,
+          baseKey,
+        );
+        if (timerOpts) {
+          return formatTimerDisplay(value, timerOpts);
+        }
+      }
       return isValid ? value.toFixed(timeDecimals) : timePlaceholder;
     }
 
@@ -328,7 +569,12 @@ export class RacedayFormatUtils {
       }
     }
 
-    if (baseKey === "overallLapCount") {
+    if (
+      baseKey === "overallLapCount" ||
+      baseKey === "totalLaps" ||
+      baseKey === "raceTotalLaps" ||
+      baseKey === "overallTotalLaps"
+    ) {
       const p = hd?.participant;
       const hasCompleted = p?.totalTime && p.totalTime > 0;
       if (
@@ -338,7 +584,14 @@ export class RacedayFormatUtils {
       ) {
         return lapPlaceholder;
       }
-      return Number(value).toFixed(lapDecimals);
+      let lapVal = Number(value);
+      const isOver = RacedayFormatUtils.isHeatOrRaceOver(ctx, hd);
+      if (!isOver && (hd?.autoCalculatedLaps || 0) > 0) {
+        lapVal =
+          Math.round((lapVal - hd.autoCalculatedLaps + Number.EPSILON) * 1e6) /
+          1e6;
+      }
+      return Number(lapVal).toFixed(lapDecimals);
     }
 
     if (baseKey === "overallPhysicalLapCount") {
@@ -378,6 +631,77 @@ export class RacedayFormatUtils {
       return String(points);
     }
 
+    if (baseKey === "heatsRaced" || baseKey === "heatsRemaining") {
+      if (RacedayFormatUtils.isEmptyDriver(hd)) {
+        return "--";
+      }
+      const mode =
+        (column as any)?.heatsDisplayMode ||
+        (column as any)?.customSettings?.heatsDisplayMode ||
+        ctx.laneViewWidgetSettings?.heatsDisplayMode ||
+        (baseKey === "heatsRemaining" ? "remaining" : "raced");
+      const p = (hd?.participant ??
+        (hd as any)?.actualDriver?.participant) as any;
+      let count: number | undefined =
+        mode === "remaining" ? p?.heatsRemaining : p?.heatsRaced;
+
+      if (
+        mode === "remaining" &&
+        (!count || count === 0) &&
+        p?.totalHeats &&
+        p.totalHeats > (p.heatsRaced || 0)
+      ) {
+        count = Math.max(0, p.totalHeats - (p.heatsRaced || 0));
+      }
+
+      if (count === undefined || count === null) {
+        const race = ctx.getRace?.() as any;
+        const driverId =
+          (hd?.driver as any)?.driverId ||
+          (p?.driver as any)?.entity_id ||
+          (p?.driver as any)?.id ||
+          (hd as any)?.driverId;
+        if (race?.heats && driverId) {
+          let driverTotalHeats = 0;
+          let driverHeatsRaced = 0;
+          for (const heat of race.heats) {
+            const inHeat = heat.heatDrivers?.some(
+              (d: any) =>
+                d.driver?.driverId === driverId ||
+                d.actualDriver?.id === driverId ||
+                d.actualDriver?.entity_id === driverId ||
+                d.participant?.driver?.entity_id === driverId ||
+                d.participant?.driver?.id === driverId,
+            );
+            if (inHeat) {
+              driverTotalHeats++;
+              if (
+                heat.started ||
+                heat.heatDrivers?.some(
+                  (d: any) =>
+                    (d.driver?.driverId === driverId ||
+                      d.actualDriver?.id === driverId ||
+                      d.actualDriver?.entity_id === driverId ||
+                      d.participant?.driver?.entity_id === driverId ||
+                      d.participant?.driver?.id === driverId) &&
+                    (d.lapCount > 0 || d.totalTime > 0),
+                )
+              ) {
+                driverHeatsRaced++;
+              }
+            }
+          }
+          count =
+            mode === "remaining"
+              ? Math.max(0, driverTotalHeats - driverHeatsRaced)
+              : driverHeatsRaced;
+        } else {
+          count = 0;
+        }
+      }
+      return String(count);
+    }
+
     return null;
   }
 
@@ -392,7 +716,7 @@ export class RacedayFormatUtils {
     if (!propertyName) return "";
     const baseKey = propertyName.split("_")[0];
 
-    const isInset = anchor ? !anchor.startsWith("center-") : false;
+    const isInset = Boolean(anchor && anchor !== "center-center");
 
     const colKey = column?.propertyName || baseKey;
     const customColDecimals =
@@ -408,19 +732,26 @@ export class RacedayFormatUtils {
             )?.[1]
           : undefined))
       : undefined;
+    const colSubsecondDec =
+      ctx.laneViewWidgetSettings?.columnTimeSubsecondDecimals?.[
+        column?.propertyName ?? ""
+      ] ??
+      ctx.laneViewWidgetSettings?.columnTimeSubsecondDecimals?.[colKey] ??
+      ctx.laneViewWidgetSettings?.columnTimeSubsecondDecimals?.[baseKey];
+    const effColDecimal = colDecimalOverride ?? colSubsecondDec;
 
     const timeDecimals = isInset
       ? ctx.laneViewWidgetSettings?.insetTimeDecimalPlaces !== undefined
         ? Number(ctx.laneViewWidgetSettings.insetTimeDecimalPlaces)
         : 3
-      : colDecimalOverride !== undefined &&
-          colDecimalOverride !== null &&
-          colDecimalOverride !== ""
-        ? Number(colDecimalOverride)
+      : effColDecimal !== undefined &&
+          effColDecimal !== null &&
+          effColDecimal !== ""
+        ? Number(effColDecimal)
         : ctx.laneViewWidgetSettings?.timeDecimalPlaces !== undefined
           ? Number(ctx.laneViewWidgetSettings.timeDecimalPlaces)
           : 3;
-    const lapDecimals = isInset
+    let lapDecimals = isInset
       ? ctx.laneViewWidgetSettings?.insetLapDecimalPlaces !== undefined
         ? Number(ctx.laneViewWidgetSettings.insetLapDecimalPlaces)
         : 2
@@ -437,7 +768,13 @@ export class RacedayFormatUtils {
     const lapPlaceholder =
       lapDecimals > 0 ? "--." + "-".repeat(lapDecimals) : "--";
 
-    if (baseKey.startsWith("overall")) {
+    if (
+      baseKey.startsWith("overall") ||
+      baseKey === "totalLaps" ||
+      baseKey === "raceTotalLaps" ||
+      baseKey === "heatsRaced" ||
+      baseKey === "heatsRemaining"
+    ) {
       const overallStr = RacedayFormatUtils.formatOverallValue(
         baseKey,
         value,
@@ -447,6 +784,9 @@ export class RacedayFormatUtils {
         lapPlaceholder,
         timeDecimals,
         lapDecimals,
+        colKey,
+        isInset,
+        column,
       );
       if (overallStr !== null) {
         return overallStr;
@@ -561,6 +901,18 @@ export class RacedayFormatUtils {
         value !== null &&
         value !== undefined &&
         (isStdDev ? value >= 0 : value > 0);
+      if (isValid && baseKey === "totalTime") {
+        const timerOpts = RacedayFormatUtils.resolveTimerFormatOptions(
+          colKey,
+          ctx.laneViewWidgetSettings,
+          isInset,
+          timeDecimals,
+          baseKey,
+        );
+        if (timerOpts) {
+          return formatTimerDisplay(value, timerOpts);
+        }
+      }
       return isValid ? value.toFixed(timeDecimals) : timePlaceholder;
     } else if (baseKey === "consistencyScore") {
       if (RacedayFormatUtils.isEmptyDriver(hd)) return "--.-%";
@@ -587,12 +939,15 @@ export class RacedayFormatUtils {
         const sign = value > 0 ? "+" : "";
         return sign + value.toFixed(timeDecimals);
       }
-    } else if (baseKey === "lapCount") {
+    } else if (baseKey === "lapCount" || baseKey === "heatTotalLaps") {
       const hasReactionTime = hd.reactionTime > 0;
       const hasRealLap = hd.lapTimes && hd.lapTimes.length > 0;
+      const isOver = RacedayFormatUtils.isHeatOrRaceOver(ctx, hd);
       const hasAdjustment =
         (hd.userLaps !== undefined && hd.userLaps !== 0) ||
-        (hd.autoCalculatedLaps !== undefined && hd.autoCalculatedLaps !== 0) ||
+        (isOver &&
+          hd.autoCalculatedLaps !== undefined &&
+          hd.autoCalculatedLaps !== 0) ||
         (hd.penaltyLaps !== undefined && hd.penaltyLaps !== 0) ||
         (hd.adjustedLapCount !== undefined && hd.adjustedLapCount !== 0);
 
@@ -603,7 +958,13 @@ export class RacedayFormatUtils {
       ) {
         return lapPlaceholder;
       }
-      return value.toFixed(lapDecimals);
+      let lapVal = Number(value);
+      if (!isOver && (hd.autoCalculatedLaps || 0) > 0) {
+        lapVal =
+          Math.round((lapVal - hd.autoCalculatedLaps + Number.EPSILON) * 1e6) /
+          1e6;
+      }
+      return Number(lapVal).toFixed(lapDecimals);
     } else if (baseKey === "physicalLapCount") {
       const hasReactionTime = hd.reactionTime > 0;
       const hasRealLap = hd.lapTimes && hd.lapTimes.length > 0;
@@ -647,13 +1008,21 @@ export class RacedayFormatUtils {
       }
       return "--";
     } else if (baseKey === "driver.name") {
-      if (RacedayFormatUtils.isEmptyDriver(hd))
+      if (RacedayFormatUtils.isEmptyDriver(hd)) {
+        if (RacedayFormatUtils.isOverallFormatContext(ctx, propertyName)) {
+          return "";
+        }
         return ctx.translate("RD_EMPTY_LANE");
+      }
       const d = hd.actualDriver || (hd.driver as any)?.driver || hd.driver;
       return d?.name || "";
     } else if (baseKey === "driver.nickname") {
-      if (RacedayFormatUtils.isEmptyDriver(hd))
+      if (RacedayFormatUtils.isEmptyDriver(hd)) {
+        if (RacedayFormatUtils.isOverallFormatContext(ctx, propertyName)) {
+          return "";
+        }
         return ctx.translate("RD_EMPTY_LANE");
+      }
       const d = hd.actualDriver || (hd.driver as any)?.driver || hd.driver;
       return d?.nickname || d?.name || "";
     } else if (baseKey === "participant.team.name") {
@@ -661,6 +1030,9 @@ export class RacedayFormatUtils {
         return "";
       }
       if (RacedayFormatUtils.isEmptyDriver(hd)) {
+        if (RacedayFormatUtils.isOverallFormatContext(ctx, propertyName)) {
+          return "";
+        }
         if (
           column &&
           column.layout[AnchorPoint.CenterCenter] === propertyName
@@ -694,7 +1066,14 @@ export class RacedayFormatUtils {
       }
       return "--%";
     } else if (baseKey === "driver.avatarUrl") {
-      return ctx.getFullUrl(value);
+      if (value && typeof value === "string" && value.trim()) {
+        return ctx.getFullUrl ? ctx.getFullUrl(value.trim()) : value.trim();
+      }
+      if (!RacedayFormatUtils.isEmptyDriver(hd)) {
+        const defaultAvatar = "assets/images/default_avatar.svg";
+        return ctx.getFullUrl ? ctx.getFullUrl(defaultAvatar) : defaultAvatar;
+      }
+      return "";
     } else if (baseKey === "seed") {
       const seed = hd.participant?.seed ?? (hd.driver as any)?.seed;
       return seed ? `(${seed})` : "--";
@@ -734,97 +1113,7 @@ export class RacedayFormatUtils {
       if (RacedayFormatUtils.isEmptyDriver(hd)) return "--";
       return "--";
     } else if (baseKey === "flag") {
-      const race = ctx.getRace?.();
-      const isFuelEnabled =
-        (race?.fuel_options && race.fuel_options.enabled) ||
-        (race?.digital_fuel_options && race.digital_fuel_options.enabled) ||
-        (race as any)?.fuelOptions?.enabled ||
-        (race as any)?.digitalFuelOptions?.enabled;
-
-      const isOutOfFuel =
-        Boolean(isFuelEnabled) &&
-        ((hd?.participant &&
-          hd.participant.fuelLevel !== undefined &&
-          hd.participant.fuelLevel <= 0) ||
-          (hd?.driver &&
-            (hd.driver as any).fuelLevel !== undefined &&
-            (hd.driver as any).fuelLevel <= 0));
-
-      const isPenalized = Boolean(
-        hd && ((hd as any).remainingFalseStartTimePenalty > 0 || isOutOfFuel),
-      );
-
-      if (isPenalized) {
-        return ctx.getFlagUrl("flag.penalty");
-      }
-
-      const allFinished =
-        ctx.areAllDriversFinished !== undefined
-          ? ctx.areAllDriversFinished()
-          : false;
-
-      if (allFinished) {
-        const isRaceOver = ctx.isRaceOver ? ctx.isRaceOver() : false;
-        return ctx.getFlagUrl(isRaceOver ? "flag.race_over" : "flag.heat_over");
-      }
-
-      const isFinished =
-        Boolean(hd?.isFinished) ||
-        Boolean(
-          ctx.isDriverFinished &&
-          ctx.isDriverFinished(
-            hd,
-            ctx.getRace()?.heat_scoring ?? (ctx.getRace() as any)?.heatScoring,
-          ),
-        );
-
-      if (isFinished && RacedayFormatUtils.isAllowFinish(ctx.getRace())) {
-        return ctx.getFlagUrl("flag.driver_finished");
-      }
-
-      // Check for one lap to go
-      const scoring: any = race?.heat_scoring ?? (race as any)?.heatScoring;
-      const finishMethod = scoring?.finishMethod ?? scoring?.finish_method;
-      const finishValue = scoring?.finishValue ?? scoring?.finish_value;
-      const isOneLapToGo =
-        value === RaceFlag.WHITE ||
-        hd?.flag === RaceFlag.WHITE ||
-        Boolean(
-          (finishMethod === "Lap" ||
-            finishMethod === 1 ||
-            finishMethod === FinishMethod.Lap) &&
-          finishValue !== undefined &&
-          finishValue > 0 &&
-          hd?.lapCount === finishValue - 1,
-        );
-
-      if (isOneLapToGo) {
-        return ctx.getFlagUrl("flag.one_lap_to_go");
-      }
-
-      // If actively racing in allow-finish heat_finishing period,
-      // an unfinished driver who is still racing displays flag.racing.
-      const flagType = ctx.getFlagType?.();
-      if (flagType === "flag.heat_finishing") {
-        return ctx.getFlagUrl("flag.racing");
-      }
-
-      if (
-        value === RaceFlag.GREEN_YELLOW ||
-        hd?.flag === RaceFlag.GREEN_YELLOW
-      ) {
-        return ctx.getFlagUrl("flag.warmup");
-      }
-
-      if (value === RaceFlag.BLACK || hd?.flag === RaceFlag.BLACK) {
-        return ctx.getFlagUrl("flag.penalty");
-      }
-
-      const flag =
-        value === RaceFlag.UNKNOWN_FLAG || value === 0
-          ? ctx.getFlagType()
-          : value;
-      return ctx.getFlagUrl(flag);
+      return RacedayFormatUtils.formatFlagValue(value, hd, column, ctx);
     } else if (baseKey === "segmentTime") {
       const parts = propertyName.split("_");
       const index = parts.length > 1 ? parseInt(parts[1], 10) : 0;
@@ -915,15 +1204,133 @@ export class RacedayFormatUtils {
     return value?.toString() ?? "";
   }
 
+  private static formatFlagValue(
+    value: any,
+    hd: DriverHeatData | undefined,
+    _column: ColumnDefinition | undefined,
+    ctx: FormatContext,
+  ): string {
+    const race = ctx.getRace?.();
+    const isFuelEnabled =
+      (race?.fuel_options && race.fuel_options.enabled) ||
+      (race?.digital_fuel_options && race.digital_fuel_options.enabled) ||
+      (race as any)?.fuelOptions?.enabled ||
+      (race as any)?.digitalFuelOptions?.enabled;
+
+    const isOutOfFuel =
+      Boolean(isFuelEnabled) &&
+      ((hd?.participant &&
+        hd.participant.fuelLevel !== undefined &&
+        hd.participant.fuelLevel <= 0) ||
+        (hd?.driver &&
+          (hd.driver as any).fuelLevel !== undefined &&
+          (hd.driver as any).fuelLevel <= 0));
+
+    const isPenalized = Boolean(
+      hd && ((hd as any).remainingFalseStartTimePenalty > 0 || isOutOfFuel),
+    );
+
+    if (isPenalized) {
+      return ctx.getFlagUrl("flag.penalty");
+    }
+
+    const isWarmupOrCooldown =
+      Boolean(ctx.isWarmup?.()) ||
+      Boolean(ctx.isCooldown?.()) ||
+      ctx.getFlagType?.() === "flag.warmup" ||
+      value === RaceFlag.GREEN_YELLOW ||
+      hd?.flag === RaceFlag.GREEN_YELLOW;
+
+    const allFinished =
+      ctx.areAllDriversFinished !== undefined
+        ? ctx.areAllDriversFinished()
+        : false;
+
+    if (allFinished) {
+      if (isWarmupOrCooldown) {
+        return ctx.getFlagUrl("flag.warmup");
+      }
+      const isRaceOver = ctx.isRaceOver ? ctx.isRaceOver() : false;
+      return ctx.getFlagUrl(isRaceOver ? "flag.race_over" : "flag.heat_over");
+    }
+
+    const isFinished =
+      Boolean(hd?.isFinished) ||
+      Boolean(
+        hd &&
+        ctx.isDriverFinished &&
+        ctx.isDriverFinished(
+          hd,
+          ctx.getRace()?.heat_scoring ?? (ctx.getRace() as any)?.heatScoring,
+        ),
+      );
+
+    if (isFinished && RacedayFormatUtils.isAllowFinish(ctx.getRace())) {
+      if (isWarmupOrCooldown) {
+        return ctx.getFlagUrl("flag.warmup");
+      }
+      return ctx.getFlagUrl("flag.driver_finished");
+    }
+
+    // Check for one lap to go
+    const scoring: any = race?.heat_scoring ?? (race as any)?.heatScoring;
+    const finishMethod = scoring?.finishMethod ?? scoring?.finish_method;
+    const finishValue = scoring?.finishValue ?? scoring?.finish_value;
+    const isOneLapToGo =
+      value === RaceFlag.WHITE ||
+      hd?.flag === RaceFlag.WHITE ||
+      Boolean(
+        (finishMethod === "Lap" ||
+          finishMethod === 1 ||
+          finishMethod === FinishMethod.Lap) &&
+        finishValue !== undefined &&
+        finishValue > 0 &&
+        (hd?.lapCount ?? 0) -
+          (!RacedayFormatUtils.isHeatOrRaceOver(ctx, hd)
+            ? (hd?.autoCalculatedLaps ?? 0)
+            : 0) ===
+          finishValue - 1,
+      );
+
+    if (isOneLapToGo) {
+      return ctx.getFlagUrl("flag.one_lap_to_go");
+    }
+
+    // If actively racing in allow-finish heat_finishing period,
+    // an unfinished driver who is still racing displays flag.racing.
+    const flagType = ctx.getFlagType?.();
+    if (flagType === "flag.heat_finishing") {
+      return ctx.getFlagUrl("flag.racing");
+    }
+
+    if (
+      value === RaceFlag.GREEN_YELLOW ||
+      hd?.flag === RaceFlag.GREEN_YELLOW ||
+      isWarmupOrCooldown
+    ) {
+      return ctx.getFlagUrl("flag.warmup");
+    }
+
+    if (value === RaceFlag.BLACK || hd?.flag === RaceFlag.BLACK) {
+      return ctx.getFlagUrl("flag.penalty");
+    }
+
+    const flag =
+      value === RaceFlag.UNKNOWN_FLAG || value === 0
+        ? ctx.getFlagType()
+        : value;
+    return ctx.getFlagUrl(flag);
+  }
+
   static formatColumnValue(
     heatDriver: DriverHeatData,
-    column: ColumnDefinition,
+    column: ColumnDefinition | undefined,
     propertyName: string | undefined,
     ctx: FormatContext,
     anchor?: string,
   ): string {
-    const prop = propertyName || column.propertyName;
-    if (prop === column.propertyName && column.formatter) {
+    const prop = propertyName || column?.propertyName || "";
+    if (column && prop === column.propertyName && column.formatter) {
       return column.formatter(
         RacedayFormatUtils.getPropertyValue(heatDriver, prop),
         heatDriver,

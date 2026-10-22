@@ -661,6 +661,13 @@
                   <div
                     #fitTextTarget
                     [class]="parent().getAnchorClass(entry.anchor)"
+                    [style.color]="
+                      (entry.anchor?.startsWith('center-')
+                        ? widget()?.customSettings?.['dataTextColor']
+                        : widget()?.customSettings?.['insetTextColor']) ||
+                      parent().getLaneColor(hd, 'foreground_color') ||
+                      '#ffffff'
+                    "
                   >
                     @let imageUrl =
                       parent().formatColumnValue(
@@ -669,8 +676,34 @@
                         entry.property,
                         entry.anchor
                       );
-                    @if (imageUrl) {
-                      <img [src]="imageUrl" alt="" />
+                    @let errorKey =
+                      (hd?.objectId || "lane-" + hd?.laneIndex) +
+                      "-" +
+                      col?.propertyName +
+                      "-" +
+                      entry?.anchor;
+                    @if (
+                      isPlaceholderAvatar(imageUrl, entry.property, errorKey)
+                    ) {
+                      <svg
+                        viewBox="0 0 24 24"
+                        class="lane-view-placeholder-avatar"
+                        [attr.preserveAspectRatio]="
+                          getSvgPreserveAspectRatio(entry.anchor)
+                        "
+                        aria-hidden="true"
+                      >
+                        <path
+                          d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
+                          fill="currentColor"
+                        />
+                      </svg>
+                    } @else if (imageUrl) {
+                      <img
+                        [src]="imageUrl"
+                        alt=""
+                        (error)="onImageError($event, errorKey)"
+                      />
                     }
                   </div>
                 }

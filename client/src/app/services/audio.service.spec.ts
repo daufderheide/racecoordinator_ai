@@ -155,6 +155,9 @@ describe("AudioService", () => {
         service.isVoiceCallout("audio.drift_lap", presetConfig),
       ).toBeTrue();
       expect(
+        service.isVoiceCallout("driver.driftLapAudio", presetConfig),
+      ).toBeTrue();
+      expect(
         service.isVoiceCallout("driver.penaltyAudio", presetConfig),
       ).toBeTrue();
       expect(
@@ -395,6 +398,65 @@ describe("AudioService", () => {
       expect(service.getUrgentQueue().length).toBe(0);
       expect(service.getActiveVoice()).toBeNull();
     }));
+
+    it("should not prune drift lap callouts from urgentQueue when beyond normal urgentQueueTtl", fakeAsync(() => {
+      const urgent1: AudioConfig = { type: "preset", url: "yellowflag.wav" };
+      const driftAudio: AudioConfig = {
+        type: "tts",
+        text: "Drift lap for Driver 2",
+      };
+
+      service.playCallout(urgent1, "urgent");
+      service.playCallout(driftAudio, "urgent", undefined, undefined, {
+        eventType: "drift_lap",
+      });
+      expect(service.getUrgentQueue().length).toBe(1);
+
+      // Advance time beyond normal urgentQueueTtl (5000ms)
+      tick(6000);
+
+      // Finish urgent1
+      mockAudioInstance.onended();
+
+      // Drift lap should NOT have been pruned and should now be playing
+      expect(mockSpeechSynthesis.speak).toHaveBeenCalled();
+      const utterance = mockSpeechSynthesis.speak.calls.mostRecent().args[0];
+      expect(utterance.text).toBe("Drift lap for Driver 2");
+    }));
+
+    it("should play multiple drift lap TTS callouts sequentially from urgentQueue without cancelling each other", () => {
+      const driftAudio1: AudioConfig = {
+        type: "tts",
+        text: "Drift lap for Driver 1",
+      };
+      const driftAudio2: AudioConfig = {
+        type: "tts",
+        text: "Drift lap for Driver 2",
+      };
+
+      service.playCallout(driftAudio1, "urgent", undefined, undefined, {
+        eventType: "drift_lap",
+      });
+      expect(mockSpeechSynthesis.speak).toHaveBeenCalledTimes(1);
+      const utterance1 = mockSpeechSynthesis.speak.calls.mostRecent().args[0];
+      expect(utterance1.text).toBe("Drift lap for Driver 1");
+
+      // While driver 1 is speaking, driver 2 drift lap arrives
+      service.playCallout(driftAudio2, "urgent", undefined, undefined, {
+        eventType: "drift_lap",
+      });
+      expect(service.getUrgentQueue().length).toBe(1);
+
+      // Finish driver 1
+      mockSpeechSynthesis.cancel.calls.reset();
+      utterance1.onend();
+
+      // Driver 2 should now be spoken without cancel() being called right before it
+      expect(mockSpeechSynthesis.speak).toHaveBeenCalledTimes(2);
+      const utterance2 = mockSpeechSynthesis.speak.calls.mostRecent().args[0];
+      expect(utterance2.text).toBe("Drift lap for Driver 2");
+      expect(mockSpeechSynthesis.cancel).not.toHaveBeenCalled();
+    });
   });
 
   describe("Cadence Spacing (Option B)", () => {

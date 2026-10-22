@@ -637,6 +637,25 @@ describe("playSound Utility", () => {
       );
     });
 
+    it("should resolve UUIDs to asset download endpoint", () => {
+      const uuid = "d637f861-ca0c-488e-87b4-ecef43800cb1";
+      expect(resolveAudioUrl(uuid, "http://server")).toBe(
+        `http://server/api/assets/download/${uuid}`,
+      );
+      expect(resolveAudioUrl(`/${uuid}`, "http://server")).toBe(
+        `http://server/api/assets/download/${uuid}`,
+      );
+      expect(
+        resolveAudioUrl(`http://localhost:7070/${uuid}`, "http://server"),
+      ).toBe(`http://localhost:7070/api/assets/download/${uuid}`);
+      expect(
+        resolveAudioUrl(
+          `http://localhost:7070/api/assets/download/${uuid}`,
+          "http://server",
+        ),
+      ).toBe(`http://localhost:7070/api/assets/download/${uuid}`);
+    });
+
     it("should return undefined if no special record or best lap is achieved", () => {
       expect(getLapAudioConfig(driver, 0, false)).toBeUndefined();
     });
@@ -763,6 +782,29 @@ describe("playSound Utility", () => {
       expect(resultTts).toBeDefined();
       expect(resultTts!.isVoice).toBeTrue();
       expect(resultTts!.priority).toBe("high");
+    });
+
+    it("should resolve drift lap as verbal callout with urgent priority", () => {
+      const driftDriver = {
+        ...driver,
+        driftLapAudio: { type: "tts", text: "{driver.name} drift lap" },
+      };
+      const result = resolveLapAudio(driftDriver, 0, false, false, false, true);
+      expect(result).toBeDefined();
+      expect(result!.config.text).toBe("{driver.name} drift lap");
+      expect(result!.isVoice).toBeTrue();
+      expect(result!.priority).toBe("urgent");
+    });
+
+    it("should prioritize drift lap audio as urgent even if tier 6 record is also present", () => {
+      const driftDriver = {
+        ...driver,
+        driftLapAudio: { type: "preset", url: "drift.wav" },
+      };
+      const result = resolveLapAudio(driftDriver, 6, true, true, true, true);
+      expect(result).toBeDefined();
+      expect(result!.config.url).toBe("drift.wav");
+      expect(result!.priority).toBe("urgent");
     });
   });
 
@@ -1040,6 +1082,59 @@ describe("playSound Utility", () => {
         undefined,
         association,
       );
+    });
+
+    it("should dispatch drift lap with urgent priority and drift_lap eventType", () => {
+      const driftDriver = {
+        ...driver,
+        driftLapAudio: { type: "tts", text: "Drift!" },
+      };
+      dispatchLapAudio(
+        mockPlayer,
+        driftDriver,
+        0,
+        false,
+        false,
+        false,
+        undefined,
+        { widgetType: "lane-view", laneIndex: 0 },
+        true,
+      );
+
+      expect(mockPlayer.playCallout).toHaveBeenCalledWith(
+        driftDriver.driftLapAudio,
+        "urgent",
+        undefined,
+        undefined,
+        jasmine.objectContaining({
+          widgetType: "lane-view",
+          laneIndex: 0,
+          eventType: "drift_lap",
+        }),
+      );
+      expect(mockPlayer.playSfx).not.toHaveBeenCalled();
+    });
+
+    it("should not fallback to normal or best lap SFX for drift laps when callout fails", () => {
+      mockPlayer.playCallout.and.returnValue(false);
+      const driftDriver = {
+        ...driver,
+        driftLapAudio: { type: "tts", text: "Drift!" },
+      };
+      dispatchLapAudio(
+        mockPlayer,
+        driftDriver,
+        0,
+        true,
+        false,
+        false,
+        undefined,
+        undefined,
+        true,
+      );
+
+      expect(mockPlayer.playCallout).toHaveBeenCalled();
+      expect(mockPlayer.playSfx).not.toHaveBeenCalled();
     });
   });
 

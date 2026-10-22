@@ -333,6 +333,178 @@ public class HeatExecutionManagerTest {
   }
 
   @Test
+  public void testTimedRace_AllowFinish_NoneAutoSegments_CalculatesSegmentsOnHeatEnd() {
+    heatScoring =
+        new HeatScoring(
+            HeatScoring.FinishMethod.Timed,
+            60L,
+            HeatScoring.HeatRanking.LAP_COUNT,
+            HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME,
+            HeatScoring.AllowFinish.NoneAutoSegments);
+
+    Race raceModel =
+        new Race.Builder()
+            .withName("Timed Race NoneAutoSegments End")
+            .withTrackEntityId("track1")
+            .withHeatScoring(heatScoring)
+            .withOverallScoring(new OverallScoring())
+            .withEntityId("race_timed_auto_end")
+            .build();
+    race =
+        new com.antigravity.race.Race.Builder()
+            .model(raceModel)
+            .drivers(participants)
+            .track(track)
+            .isDemoMode(true)
+            .build();
+    executionManager = race.getHeatExecutionManager();
+    executionManager.initialize(track.getLanes().size());
+    race.changeState(new com.antigravity.race.states.Racing());
+
+    // Lane 0: reaction time (1.0s) + lap 1 (4.0s + 1.0s reaction = 5.0s) + lap 2 (5.0s) -> median =
+    // 5.0s
+    executionManager.onLap(0, 1.0, 1, false, true, false);
+    executionManager.onLap(0, 4.0, 1, false, true, false);
+    executionManager.onLap(0, 5.0, 1, false, true, false);
+
+    // Lane 1: reaction time (1.0s) + lap 1 (9.0s + 1.0s reaction = 10.0s) + lap 2 (10.0s) -> median
+    // = 10.0s
+    executionManager.onLap(1, 1.0, 1, false, true, false);
+    executionManager.onLap(1, 9.0, 1, false, true, false);
+    executionManager.onLap(1, 10.0, 1, false, true, false);
+
+    // Simulate 4.0s elapsed on lane 1
+    executionManager.getTimeSinceLastLap()[1] = 4.0;
+
+    // Time expired
+    race.resetRaceTime();
+
+    // Lane 0 crosses the finish line, triggering heat end
+    executionManager.onLap(0, 5.0, 1, false, true, false);
+    assertTrue(
+        "Heat should end immediately for NoneAutoSegments", race.getState() instanceof HeatOver);
+
+    DriverHeatData d0 = race.getCurrentHeat().getDrivers().get(0);
+    DriverHeatData d1 = race.getCurrentHeat().getDrivers().get(1);
+
+    assertEquals(
+        "Lane 0 finished at line, auto-segments should be 0.0",
+        0.0,
+        d0.getAutoCalculatedLaps(),
+        0.001);
+    assertEquals(
+        "Lane 1 should calculate 4.0 / 10.0 = 0.4 auto-segments",
+        0.4,
+        d1.getAutoCalculatedLaps(),
+        0.001);
+    assertEquals("Lane 1 adjusted lap count should be 2.4", 2.4, d1.getAdjustedLapCount(), 0.001);
+  }
+
+  @Test
+  public void testLapRace_AllowFinish_NoneAutoSegments_CalculatesSegmentsOnHeatEnd() {
+    heatScoring =
+        new HeatScoring(
+            HeatScoring.FinishMethod.Lap,
+            3L,
+            HeatScoring.HeatRanking.LAP_COUNT,
+            HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME,
+            HeatScoring.AllowFinish.NoneAutoSegments);
+
+    Race raceModel =
+        new Race.Builder()
+            .withName("Lap Race NoneAutoSegments End")
+            .withTrackEntityId("track1")
+            .withHeatScoring(heatScoring)
+            .withOverallScoring(new OverallScoring())
+            .withEntityId("race_lap_auto_end")
+            .build();
+    race =
+        new com.antigravity.race.Race.Builder()
+            .model(raceModel)
+            .drivers(participants)
+            .track(track)
+            .isDemoMode(true)
+            .build();
+    executionManager = race.getHeatExecutionManager();
+    executionManager.initialize(track.getLanes().size());
+    race.changeState(new com.antigravity.race.states.Racing());
+
+    // Lane 0: reaction time (1.0s) + lap 1 (4.0s + 1.0s reaction = 5.0s) + lap 2 (5.0s)
+    executionManager.onLap(0, 1.0, 1, false, true, false);
+    executionManager.onLap(0, 4.0, 1, false, true, false);
+    executionManager.onLap(0, 5.0, 1, false, true, false);
+
+    // Lane 1: reaction time (1.0s) + lap 1 (7.0s + 1.0s reaction = 8.0s) (median = 8.0s)
+    executionManager.onLap(1, 1.0, 1, false, true, false);
+    executionManager.onLap(1, 7.0, 1, false, true, false);
+
+    // Simulate 6.0s elapsed on lane 1
+    executionManager.getTimeSinceLastLap()[1] = 6.0;
+
+    // Lane 0 completes 3rd lap (reaches finish value 3)
+    executionManager.onLap(0, 5.0, 1, false, true, false);
+    assertTrue(
+        "Heat should end immediately for NoneAutoSegments", race.getState() instanceof HeatOver);
+
+    DriverHeatData d0 = race.getCurrentHeat().getDrivers().get(0);
+    DriverHeatData d1 = race.getCurrentHeat().getDrivers().get(1);
+
+    assertEquals(
+        "Lane 0 finished all laps, auto-segments should be 0.0",
+        0.0,
+        d0.getAutoCalculatedLaps(),
+        0.001);
+    assertEquals(
+        "Lane 1 should calculate 6.0 / 8.0 = 0.75 auto-segments",
+        0.75,
+        d1.getAutoCalculatedLaps(),
+        0.001);
+    assertEquals("Lane 1 adjusted lap count should be 1.75", 1.75, d1.getAdjustedLapCount(), 0.001);
+  }
+
+  @Test
+  public void testApplyEndHeatAutoSegments_SkipsIfNotNoneAutoSegments() {
+    heatScoring =
+        new HeatScoring(
+            HeatScoring.FinishMethod.Timed,
+            60L,
+            HeatScoring.HeatRanking.LAP_COUNT,
+            HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME,
+            HeatScoring.AllowFinish.None);
+
+    Race raceModel =
+        new Race.Builder()
+            .withName("Timed Race None")
+            .withTrackEntityId("track1")
+            .withHeatScoring(heatScoring)
+            .withOverallScoring(new OverallScoring())
+            .withEntityId("race_timed_none")
+            .build();
+    race =
+        new com.antigravity.race.Race.Builder()
+            .model(raceModel)
+            .drivers(participants)
+            .track(track)
+            .isDemoMode(true)
+            .build();
+    executionManager = race.getHeatExecutionManager();
+    executionManager.initialize(track.getLanes().size());
+
+    // Lane 0: 2 laps of 5.0s, elapsed 3.0s
+    DriverHeatData d0 = race.getCurrentHeat().getDrivers().get(0);
+    d0.addLap(5.0, false, true);
+    d0.addLap(5.0, false, true);
+    executionManager.getTimeSinceLastLap()[0] = 3.0;
+
+    executionManager.applyEndHeatAutoSegments();
+    assertEquals(
+        "Should not calculate auto segments when AllowFinish is None",
+        0.0,
+        d0.getAutoCalculatedLaps(),
+        0.001);
+  }
+
+  @Test
   public void testTimedRace_AllowFinish_SingleLapAutoSegments() {
     heatScoring =
         new HeatScoring(
@@ -426,6 +598,233 @@ public class HeatExecutionManagerTest {
     assertTrue(
         "Heat should transition to HeatOver once all active drivers finish",
         race.getState() instanceof HeatOver);
+    assertFalse("Master power must be OFF when all drivers finished", race.isMainPower());
+    assertFalse("Lane 0 power should be OFF", race.isLanePower(0));
+    assertFalse("Lane 1 power should be OFF", race.isLanePower(1));
+  }
+
+  @Test
+  public void testTimedRace_TrackCallDuringAutoSegmentsLap_RestartDoesNotResetRaceTime() {
+    heatScoring =
+        new HeatScoring(
+            HeatScoring.FinishMethod.Timed,
+            60L,
+            HeatScoring.HeatRanking.LAP_COUNT,
+            HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME,
+            HeatScoring.AllowFinish.SingleLapAutoSegments);
+
+    Race raceModel =
+        new Race.Builder()
+            .withName("Timed Race SingleLapAutoSegments YellowFlag")
+            .withTrackEntityId("track1")
+            .withHeatScoring(heatScoring)
+            .withOverallScoring(new OverallScoring())
+            .withEntityId("race_timed_sl_auto_yellow")
+            .build();
+    race =
+        new com.antigravity.race.Race.Builder()
+            .model(raceModel)
+            .drivers(participants)
+            .track(track)
+            .isDemoMode(true)
+            .build();
+    executionManager = race.getHeatExecutionManager();
+    executionManager.initialize(track.getLanes().size());
+    race.changeState(new com.antigravity.race.states.Racing());
+    race.updatePowerForFlag(com.antigravity.proto.RaceFlag.GREEN);
+
+    // Initial laps
+    race.addRaceTime(30.0f);
+    executionManager.onLap(0, 1.0, 1, false, true, false);
+    executionManager.onLap(1, 1.0, 1, false, true, false);
+    executionManager.onLap(0, 5.0, 1, false, true, false); // median = 6.0
+    executionManager.onLap(1, 3.0, 1, false, true, false); // median = 4.0
+
+    DriverHeatData d0 = race.getCurrentHeat().getDrivers().get(0);
+    DriverHeatData d1 = race.getCurrentHeat().getDrivers().get(1);
+
+    // 3s elapsed on current lap before time expires
+    executionManager.processTicker(3.0f);
+
+    // Heat time expires (raceTime reaches 0)
+    race.resetRaceTime();
+    executionManager.capturePartialLapTimes();
+    assertEquals(0.0f, race.getRaceTime(), 0.001f);
+
+    // Driver 0 crosses finish line and finishes
+    boolean lapCounted0 = executionManager.onLap(0, 8.0, 2, false, true, false);
+    assertFalse(lapCounted0);
+    assertTrue(executionManager.getFinishedLanes().contains(0));
+    assertTrue(d0.isFinished());
+    assertFalse(race.isLanePower(0));
+    assertTrue(race.isLanePower(1));
+
+    // Yellow flag / track call occurs during auto segments lap
+    race.getState().pause(race);
+    assertTrue(
+        "Race should be in Paused state",
+        race.getState() instanceof com.antigravity.race.states.Paused);
+    assertEquals(0.0f, race.getRaceTime(), 0.001f);
+
+    // Restart race
+    race.getState().start(race);
+    assertTrue(
+        "Race should be in Starting state",
+        race.getState() instanceof com.antigravity.race.states.Starting);
+    assertEquals(
+        "Finished driver 0 should show RED driver_finished flag during restart",
+        com.antigravity.proto.RaceFlag.RED,
+        race.getState().getLaneFlagType(race, 0));
+    assertEquals(
+        "Unfinished driver 1 should show YELLOW restarting flag",
+        com.antigravity.proto.RaceFlag.YELLOW,
+        race.getState().getLaneFlagType(race, 1));
+
+    // Countdown finishes -> re-enters Racing state
+    race.changeState(new com.antigravity.race.states.Racing());
+    assertTrue(
+        "Race should be in Racing state",
+        race.getState() instanceof com.antigravity.race.states.Racing);
+
+    // VERIFY CRITICAL BUG FIX: Racetime must NOT be reset to 60.0f; it must stay 0.0f!
+    assertEquals(
+        "Race time must remain 0.0s after restart in auto segments lap",
+        0.0f,
+        race.getRaceTime(),
+        0.001f);
+    assertEquals(
+        "Flag should remain CHECKERED for finishing lap",
+        com.antigravity.proto.RaceFlag.CHECKERED,
+        race.getState().getFlagType(race));
+
+    // Driver 0 must remain finished and lane 0 power must remain OFF
+    assertTrue(executionManager.getFinishedLanes().contains(0));
+    assertTrue(d0.isFinished());
+    assertFalse("Lane 0 power must remain OFF for finished driver", race.isLanePower(0));
+    assertTrue("Lane 1 power must be ON for unfinished driver", race.isLanePower(1));
+
+    // Driver 1 now crosses finish line with 7.0s lapTime: partial=3.0, median=4.0 -> 0.75 auto laps
+    boolean lapCounted1 = executionManager.onLap(1, 7.0, 2, false, true, false);
+    assertFalse("Single lap should NOT count as full lap", lapCounted1);
+    assertEquals(1, d1.getLapCount());
+    assertEquals(0.75, d1.getAutoCalculatedLaps(), 0.001);
+    assertTrue(executionManager.getFinishedLanes().contains(1));
+    assertTrue(d1.isFinished());
+
+    // All drivers finished -> transitions to HeatOver
+    assertTrue(
+        "Heat should transition to HeatOver once all active drivers finish",
+        race.getState() instanceof com.antigravity.race.states.HeatOver);
+    assertFalse("Master power must be OFF when all drivers finished", race.isMainPower());
+    assertFalse("Lane 0 power should be OFF", race.isLanePower(0));
+    assertFalse("Lane 1 power should be OFF", race.isLanePower(1));
+  }
+
+  @Test
+  public void
+      testTimedRace_TrackCallDuringAutoSegmentsLap_BeforeAnyDriverCrosses_RestartPreservesAutoSegments() {
+    heatScoring =
+        new HeatScoring(
+            HeatScoring.FinishMethod.Timed,
+            60L,
+            HeatScoring.HeatRanking.LAP_COUNT,
+            HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME,
+            HeatScoring.AllowFinish.SingleLapAutoSegments);
+
+    Race raceModel =
+        new Race.Builder()
+            .withName("Timed Race SingleLapAutoSegments YellowFlag Before Any Crosses")
+            .withTrackEntityId("track1")
+            .withHeatScoring(heatScoring)
+            .withOverallScoring(new OverallScoring())
+            .withEntityId("race_timed_sl_auto_yellow_none_crossed")
+            .build();
+    race =
+        new com.antigravity.race.Race.Builder()
+            .model(raceModel)
+            .drivers(participants)
+            .track(track)
+            .isDemoMode(true)
+            .build();
+    executionManager = race.getHeatExecutionManager();
+    executionManager.initialize(track.getLanes().size());
+    race.changeState(new com.antigravity.race.states.Racing());
+    race.updatePowerForFlag(com.antigravity.proto.RaceFlag.GREEN);
+
+    // Initial laps
+    race.addRaceTime(30.0f);
+    executionManager.onLap(0, 1.0, 1, false, true, false);
+    executionManager.onLap(1, 1.0, 1, false, true, false);
+    executionManager.onLap(0, 5.0, 1, false, true, false); // median = 6.0
+    executionManager.onLap(1, 3.0, 1, false, true, false); // median = 4.0
+
+    DriverHeatData d0 = race.getCurrentHeat().getDrivers().get(0);
+    DriverHeatData d1 = race.getCurrentHeat().getDrivers().get(1);
+
+    // 3s elapsed on current lap before time expires
+    executionManager.processTicker(3.0f);
+
+    // Heat time expires (raceTime reaches 0)
+    race.resetRaceTime();
+    executionManager.capturePartialLapTimes();
+    assertEquals(0.0f, race.getRaceTime(), 0.001f);
+
+    // Yellow flag / track call occurs before any driver has crossed
+    race.getState().pause(race);
+    assertTrue(
+        "Race should be in Paused state",
+        race.getState() instanceof com.antigravity.race.states.Paused);
+    assertEquals(0.0f, race.getRaceTime(), 0.001f);
+
+    // Restart race
+    race.getState().start(race);
+    assertTrue(
+        "Race should be in Starting state",
+        race.getState() instanceof com.antigravity.race.states.Starting);
+
+    // Countdown finishes -> re-enters Racing state
+    race.changeState(new com.antigravity.race.states.Racing());
+    assertTrue(
+        "Race should be in Racing state",
+        race.getState() instanceof com.antigravity.race.states.Racing);
+
+    // Racetime must remain 0.0s
+    assertEquals(
+        "Race time must remain 0.0s after restart in auto segments lap",
+        0.0f,
+        race.getRaceTime(),
+        0.001f);
+    assertEquals(
+        "Flag should remain CHECKERED for finishing lap",
+        com.antigravity.proto.RaceFlag.CHECKERED,
+        race.getState().getFlagType(race));
+
+    // Both lanes power must be ON since neither has finished
+    assertTrue("Lane 0 power must be ON for Driver 0", race.isLanePower(0));
+    assertTrue("Lane 1 power must be ON for Driver 1", race.isLanePower(1));
+
+    // Driver 0 crosses finish line with 8.0s lapTime: partial=3.0, median=6.0 -> 0.5 auto laps
+    boolean lapCounted0 = executionManager.onLap(0, 8.0, 2, false, true, false);
+    assertFalse(lapCounted0);
+    assertEquals(1, d0.getLapCount());
+    assertEquals(0.5, d0.getAutoCalculatedLaps(), 0.001);
+    assertTrue(executionManager.getFinishedLanes().contains(0));
+    assertTrue(d0.isFinished());
+    assertFalse("Lane 0 power must be OFF after finishing", race.isLanePower(0));
+    assertTrue("Lane 1 power must still be ON", race.isLanePower(1));
+
+    // Driver 1 crosses finish line with 7.0s lapTime: partial=3.0, median=4.0 -> 0.75 auto laps
+    boolean lapCounted1 = executionManager.onLap(1, 7.0, 2, false, true, false);
+    assertFalse(lapCounted1);
+    assertEquals(1, d1.getLapCount());
+    assertEquals(0.75, d1.getAutoCalculatedLaps(), 0.001);
+    assertTrue(executionManager.getFinishedLanes().contains(1));
+    assertTrue(d1.isFinished());
+
+    // All drivers finished -> transitions to HeatOver
+    assertTrue(
+        "Heat should transition to HeatOver once all active drivers finish",
+        race.getState() instanceof com.antigravity.race.states.HeatOver);
     assertFalse("Master power must be OFF when all drivers finished", race.isMainPower());
     assertFalse("Lane 0 power should be OFF", race.isLanePower(0));
     assertFalse("Lane 1 power should be OFF", race.isLanePower(1));
@@ -1168,6 +1567,79 @@ public class HeatExecutionManagerTest {
   }
 
   @Test
+  public void testDriftLap_WithPendingLapTime_ExceedsMinLapTime_CountsAndClearsCarryOver() {
+    race =
+        new com.antigravity.race.Race.Builder()
+            .model(
+                new Race.Builder()
+                    .withName("Test Race")
+                    .withTrackEntityId("track1")
+                    .withMinLapTime(2.0)
+                    .withDriftTime(3.0)
+                    .withHeatScoring(heatScoring)
+                    .withOverallScoring(new OverallScoring())
+                    .withEntityId("race1")
+                    .build())
+            .drivers(participants)
+            .track(track)
+            .isDemoMode(true)
+            .build();
+    executionManager = race.getHeatExecutionManager();
+    executionManager.initialize(1);
+    race.changeState(new com.antigravity.race.states.HeatOver());
+
+    DriverHeatData dhd = race.getCurrentHeat().getDrivers().get(0);
+    dhd.setReactionTime(0.0);
+    dhd.setPendingLapTime(4.8);
+    dhd.setCarryOverTime(4.8);
+
+    boolean counted = executionManager.onLap(0, 0.2, 1, false, true, true);
+
+    assertTrue(counted);
+    assertEquals(1, dhd.getLaps().size());
+    assertEquals(5.0, dhd.getLaps().get(0).getLapTime(), 0.001);
+    assertTrue(dhd.getLaps().get(0).isDrift());
+    assertEquals(0.0, dhd.getPendingLapTime(), 0.001);
+    assertEquals(0.0, dhd.getCarryOverTime(), 0.001);
+    assertTrue(dhd.isFinished());
+    assertEquals(1, race.getStatistics().getDriftLapCount());
+    assertEquals(0, race.getStatistics().getMinLapTimeRejectionCount());
+  }
+
+  @Test
+  public void testDriftLap_WithPendingLapTime_BelowMinLapTime_Rejected() {
+    race =
+        new com.antigravity.race.Race.Builder()
+            .model(
+                new Race.Builder()
+                    .withName("Test Race")
+                    .withTrackEntityId("track1")
+                    .withMinLapTime(2.0)
+                    .withDriftTime(3.0)
+                    .withHeatScoring(heatScoring)
+                    .withOverallScoring(new OverallScoring())
+                    .withEntityId("race1")
+                    .build())
+            .drivers(participants)
+            .track(track)
+            .isDemoMode(true)
+            .build();
+    executionManager = race.getHeatExecutionManager();
+    executionManager.initialize(1);
+    race.changeState(new com.antigravity.race.states.HeatOver());
+
+    DriverHeatData dhd = race.getCurrentHeat().getDrivers().get(0);
+    dhd.setReactionTime(0.5);
+    dhd.setPendingLapTime(0.3);
+
+    boolean counted = executionManager.onLap(0, 0.2, 1, false, true, true);
+
+    assertFalse(counted);
+    assertEquals(0, dhd.getLaps().size());
+    assertEquals(1, race.getStatistics().getMinLapTimeRejectionCount());
+  }
+
+  @Test
   public void testHeatEndsWithEmptyLane_AllowFinish() {
     heatScoring =
         new HeatScoring(
@@ -1830,6 +2302,76 @@ public class HeatExecutionManagerTest {
       // Since it's hard to test without mockStatic, we will just ignore if mockStatic is
       // unavailable.
       System.out.println("mockStatic not supported, skipping defensive copy strict verification.");
+    }
+  }
+
+  @Test
+  public void testUpdateRealtimePredictionCoalescing() throws Exception {
+    executionManager.initialize(2);
+
+    com.antigravity.service.RacePredictionService mockService =
+        org.mockito.Mockito.mock(com.antigravity.service.RacePredictionService.class);
+
+    // Make updateRealtimePrediction take 25ms to simulate realistic work and allow subsequent laps
+    // to coalesce
+    org.mockito.Mockito.doAnswer(
+            invocation -> {
+              Thread.sleep(25);
+              return null;
+            })
+        .when(mockService)
+        .updateRealtimePrediction(
+            org.mockito.ArgumentMatchers.any(),
+            org.mockito.ArgumentMatchers.anyString(),
+            org.mockito.ArgumentMatchers.any(),
+            org.mockito.ArgumentMatchers.any(),
+            org.mockito.ArgumentMatchers.any(),
+            org.mockito.ArgumentMatchers.anyInt(),
+            org.mockito.ArgumentMatchers.any(),
+            org.mockito.ArgumentMatchers.anyBoolean());
+
+    try (org.mockito.MockedStatic<com.antigravity.service.RacePredictionService> mockedStatic =
+        org.mockito.Mockito.mockStatic(com.antigravity.service.RacePredictionService.class)) {
+      mockedStatic
+          .when(com.antigravity.service.RacePredictionService::getInstance)
+          .thenReturn(mockService);
+
+      // Initial reaction times
+      executionManager.onLap(0, 1.0, 1, false, true, false);
+      executionManager.onLap(1, 1.0, 1, false, true, false);
+
+      // Fire 6 consecutive laps in rapid succession
+      for (int i = 0; i < 6; i++) {
+        executionManager.onLap(i % 2, 10.0 + i, 1, false, true, false);
+      }
+
+      HeatExecutionManager.flushPredictions();
+
+      // Because the laps were submitted rapidly while the worker was processing,
+      // the tasks should be coalesced to significantly fewer invocations than the 8 total laps
+      org.mockito.Mockito.verify(mockService, org.mockito.Mockito.atMost(3))
+          .updateRealtimePrediction(
+              org.mockito.ArgumentMatchers.any(),
+              org.mockito.ArgumentMatchers.anyString(),
+              org.mockito.ArgumentMatchers.any(),
+              org.mockito.ArgumentMatchers.any(),
+              org.mockito.ArgumentMatchers.any(),
+              org.mockito.ArgumentMatchers.anyInt(),
+              org.mockito.ArgumentMatchers.any(),
+              org.mockito.ArgumentMatchers.anyBoolean());
+
+      org.mockito.Mockito.verify(mockService, org.mockito.Mockito.atLeastOnce())
+          .updateRealtimePrediction(
+              org.mockito.ArgumentMatchers.any(),
+              org.mockito.ArgumentMatchers.anyString(),
+              org.mockito.ArgumentMatchers.any(),
+              org.mockito.ArgumentMatchers.any(),
+              org.mockito.ArgumentMatchers.any(),
+              org.mockito.ArgumentMatchers.anyInt(),
+              org.mockito.ArgumentMatchers.any(),
+              org.mockito.ArgumentMatchers.anyBoolean());
+    } catch (org.mockito.exceptions.base.MockitoException e) {
+      System.out.println("mockStatic not supported, skipping coalescing strict verification.");
     }
   }
 

@@ -1,4 +1,6 @@
-import { inject, Injectable } from "@angular/core";
+import { Injectable, Optional } from "@angular/core";
+import { Subject } from "rxjs";
+import { DataService } from "@app/data.service";
 import { LoggerService } from "@app/services/logger.service";
 import { ServerFileSystemService } from "@app/services/server-filesystem.service";
 
@@ -25,29 +27,67 @@ export class FileSystemService {
   private serverCustomWidgetPath?: string;
   private serverCustomWidgetName?: string;
   private isLocalhost: boolean = false;
+  private serverDirectoriesFetchedSuccessfully = false;
+  private serverDirectoriesChangedSubject = new Subject<void>();
+  readonly serverDirectoriesChanged$ =
+    this.serverDirectoriesChangedSubject.asObservable();
   private initServerDirectoriesPromise: Promise<void>;
 
   constructor(
     private serverFileSystem: ServerFileSystemService,
-    private logger?: LoggerService,
+    @Optional() private logger?: LoggerService,
+    @Optional() private dataService?: DataService,
   ) {
-    if (!this.logger) {
-      this.logger = inject(LoggerService, { optional: true }) ?? undefined;
-    }
     this.dbPromise = this.initDB();
     this.initServerDirectoriesPromise = this.initServerDirectories().catch(
       () => {},
     );
+
+    if (this.dataService?.socketConnected$) {
+      this.dataService.socketConnected$.subscribe((connected) => {
+        if (connected) {
+          this.logger?.info(
+            "FileSystemService: Socket connected, refreshing server directories...",
+          );
+          this.ensureServerDirectoriesInitialized(true).catch((err) => {
+            this.logger?.warn(
+              "FileSystemService: Error re-fetching server directories on socket connect",
+              err,
+            );
+          });
+        }
+      });
+    }
   }
 
-  async ensureServerDirectoriesInitialized(): Promise<void> {
-    await this.initServerDirectoriesPromise;
+  async ensureServerDirectoriesInitialized(forceRetry = false): Promise<void> {
+    if (this.initServerDirectoriesPromise) {
+      await this.initServerDirectoriesPromise;
+    }
+    if (!this.serverDirectoriesFetchedSuccessfully || forceRetry) {
+      this.initServerDirectoriesPromise = this.initServerDirectories().catch(
+        () => {},
+      );
+      await this.initServerDirectoriesPromise;
+    }
   }
 
   async initServerDirectories(): Promise<void> {
     this.logger?.info("FileSystemService: Initializing server directories...");
     try {
       const dirs = await this.serverFileSystem.getDirectories();
+      if (dirs.failed) {
+        this.serverDirectoriesFetchedSuccessfully = false;
+        this.logger?.warn(
+          "FileSystemService: Failed to fetch server directories (offline fallback)",
+        );
+        return;
+      }
+      this.serverDirectoriesFetchedSuccessfully = true;
+      const prevWidgetPath = this.serverCustomWidgetPath;
+      const prevUiPath = this.serverCustomUiPath;
+      const prevLocalhost = this.isLocalhost;
+
       this.isLocalhost = dirs.isLocalhost;
       if (dirs.customUiDirectory) {
         this.serverCustomUiPath = dirs.customUiDirectory;
@@ -66,7 +106,16 @@ export class FileSystemService {
         customUiDirectory: dirs.customUiDirectory,
         customWidgetDirectory: dirs.customWidgetDirectory,
       });
+
+      if (
+        prevWidgetPath !== this.serverCustomWidgetPath ||
+        prevUiPath !== this.serverCustomUiPath ||
+        prevLocalhost !== this.isLocalhost
+      ) {
+        this.serverDirectoriesChangedSubject.next();
+      }
     } catch (err) {
+      this.serverDirectoriesFetchedSuccessfully = false;
       this.logger?.warn(
         "FileSystemService: Failed to fetch server directories (offline fallback)",
         err,
@@ -489,15 +538,7 @@ export class FileSystemService {
 
   async hasWidgetFile(widgetPath: string, filename: string): Promise<boolean> {
     if (this.serverCustomWidgetPath) {
-      try {
-        const content = await this.serverFileSystem.getWidgetFile(
-          widgetPath,
-          filename,
-        );
-        return content !== undefined && content !== null;
-      } catch {
-        return false;
-      }
+      return await this.serverFileSystem.hasWidgetFile(widgetPath, filename);
     }
 
     const handle = await this.getCustomWidgetDirectoryHandle();
@@ -685,29 +726,90 @@ export class FileSystemService {
     const permission = await this.verifyPermission(handle, true);
     if (!permission) return;
 
-    try {
-      let targetDir = handle;
-      if (subfolder) {
+    let targetDir = handle;
+    if (subfolder) {
+      try {
         targetDir = await handle.getDirectoryHandle(subfolder, {
           create: true,
         });
+      } catch (err) {
+        console.error(`Error accessing subfolder ${subfolder}:`, err);
+        return;
       }
+    }
 
-      const fileHandle = await targetDir.getFileHandle(filename, {
-        create: true,
-      });
-      const writable = await fileHandle.createWritable({
-        keepExistingData: true,
-      });
-
-      const file = await fileHandle.getFile();
-      await writable.seek(file.size);
-
-      await writable.write(content);
-      await writable.close();
-    } catch (err) {
+    try {
+      await this.writeAppendContent(targetDir, filename, content);
+    } catch (err: any) {
+      if (
+        err?.name === "InvalidStateError" ||
+        err?.message?.includes?.("state cached")
+      ) {
+        try {
+          await this.recoverAndAppendFile(targetDir, filename, content);
+          return;
+        } catch (recoverErr: any) {
+          console.error(
+            `Error appending to file ${filename} after recovery:`,
+            recoverErr,
+          );
+          return;
+        }
+      }
       console.error(`Error appending to file ${filename}:`, err);
     }
+  }
+
+  private async writeAppendContent(
+    targetDir: FileSystemDirectoryHandle,
+    filename: string,
+    content: string,
+  ): Promise<void> {
+    const fileHandle = await targetDir.getFileHandle(filename, {
+      create: true,
+    });
+
+    let existingSize = 0;
+    try {
+      const file = await fileHandle.getFile();
+      existingSize = file.size;
+    } catch {
+      existingSize = 0;
+    }
+
+    const writable = await fileHandle.createWritable({
+      keepExistingData: true,
+    });
+
+    if (existingSize > 0) {
+      await writable.seek(existingSize);
+    }
+
+    await writable.write(content);
+    await writable.close();
+  }
+
+  private async recoverAndAppendFile(
+    targetDir: FileSystemDirectoryHandle,
+    filename: string,
+    content: string,
+  ): Promise<void> {
+    const fileHandle = await targetDir.getFileHandle(filename, {
+      create: true,
+    });
+    let existingContent = "";
+    try {
+      const file = await fileHandle.getFile();
+      existingContent = await file.text();
+    } catch {
+      existingContent = "";
+    }
+
+    const writable = await fileHandle.createWritable({
+      keepExistingData: false,
+    });
+    await writable.write(existingContent + content);
+    await writable.close();
   }
 
   async deleteFile(filename: string, subfolder?: string): Promise<void> {

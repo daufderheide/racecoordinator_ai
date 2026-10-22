@@ -56,6 +56,8 @@ import {
 })
 export class EventEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   lifecycle!: EditorLifecycleHelper;
+  // Delete Event Confirmation Modal
+  showDeleteConfirm = false;
 
   get showDiscardConfirm(): boolean {
     return this.lifecycle.showDiscardConfirm;
@@ -113,6 +115,8 @@ export class EventEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   selectedRaceToAddId = "";
 
   undoManager: UndoManager<Event>;
+  private isReverting = false;
+  private isSwitchingSelection = false;
   private subscriptions: Subscription[] = [];
 
   private dataService = inject(DataService);
@@ -156,12 +160,73 @@ export class EventEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       cdr: this.cdr,
       translationService: this.translationService,
       getUnsavedReasons: () => this.getUnsavedReasons(),
+      undoManager: this.undoManager,
+      hasChanges: () => this.hasChanges(),
+      isSaveValid: () => this.isConfigValid(),
+      isSaving: () => this.isSaving,
+      onAutoSave: () => this.autoSaveEvent(),
+      logger: this.logger,
     });
   }
 
   ngOnInit(): void {
     this.updateScale();
-    this.loadData();
+
+    if (this.route.queryParamMap) {
+      this.subscriptions.push(
+        this.route.queryParamMap.subscribe((paramMap) => {
+          if (this.isReverting) {
+            this.isReverting = false;
+            return;
+          }
+          const isEditorRoute =
+            !this.router.url ||
+            this.router.url === "/" ||
+            this.router.url.startsWith("/event-editor") ||
+            this.router.url.includes("mock");
+          if (!isEditorRoute) {
+            return;
+          }
+          if (this.isSwitchingSelection) {
+            this.isSwitchingSelection = false;
+            return;
+          }
+          const nextId = paramMap.get("id");
+          if (nextId && nextId !== "new") {
+            this.navigationService.setLastEditedId("event", nextId);
+          }
+          const currentId = this.editingEvent?.entity_id;
+          if (
+            currentId &&
+            nextId !== currentId &&
+            this.hasChanges() &&
+            !this.isNavigationApproved
+          ) {
+            this.confirmDiscard().then((confirmed) => {
+              if (confirmed) {
+                this.loadData();
+              } else {
+                this.isReverting = true;
+                this.router.navigate([], {
+                  relativeTo: this.route,
+                  queryParams: {
+                    id: currentId,
+                    from: this.route.snapshot.queryParamMap.get("from"),
+                    returnUrl:
+                      this.route.snapshot.queryParamMap.get("returnUrl"),
+                  },
+                  queryParamsHandling: "merge",
+                });
+              }
+            });
+          } else if (!currentId || nextId !== currentId) {
+            this.loadData();
+          }
+        }),
+      );
+    } else {
+      this.loadData();
+    }
   }
 
   ngOnDestroy(): void {
@@ -257,7 +322,11 @@ export class EventEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     if (this.selectedEventId === id) return;
     const found = this.existingEvents.find((e) => e.entity_id === id);
     if (found) {
+      this.isSwitchingSelection = true;
       this.selectEvent(found);
+      if (found.entity_id) {
+        this.navigationService.setLastEditedId("event", found.entity_id);
+      }
       this.router.navigate([], {
         relativeTo: this.route,
         queryParams: { id: found.entity_id },
@@ -560,47 +629,60 @@ export class EventEditorComponent implements OnInit, OnDestroy, DirtyComponent {
 
   onDeleteEvent(): void {
     if (!this.editingEvent?.entity_id) return;
-    if (confirm(this.translationService.translate("EE_CONFIRM_DELETE"))) {
-      this.isSaving = true;
-      const idToDelete = this.editingEvent.entity_id;
-      this.subscriptions.push(
-        this.dataService.deleteEvent(idToDelete).subscribe({
-          next: () => {
-            this.isSaving = false;
-            this.isEditMode = false;
-            const nextEvent = getNextSelectionAfterDelete(
-              this.existingEvents,
-              idToDelete,
-            );
-            this.existingEvents = this.existingEvents.filter(
-              (e) => e.entity_id !== idToDelete,
-            );
-            this.updateEventSelectItems();
-            if (nextEvent) {
-              this.selectEvent(nextEvent);
-              this.router.navigate([], {
-                relativeTo: this.route,
-                queryParams: { id: nextEvent.entity_id },
-                queryParamsHandling: "merge",
-                replaceUrl: true,
-              });
-            } else {
-              this.startNewEvent();
-            }
-            this.cdr.detectChanges();
-          },
-          error: (err) => {
-            this.logger.error("Failed to delete event", err);
-            this.isSaving = false;
-            this.cdr.detectChanges();
-          },
-        }),
-      );
-    }
+    this.showDeleteConfirm = true;
   }
 
-  autoSaveEvent(): void {
-    if (!this.isConfigValid() || this.isSaving) return;
+  onCancelDelete(): void {
+    this.showDeleteConfirm = false;
+  }
+
+  onConfirmDelete(): void {
+    this.showDeleteConfirm = false;
+    if (!this.editingEvent?.entity_id) return;
+    this.isSaving = true;
+    const idToDelete = this.editingEvent.entity_id;
+    this.subscriptions.push(
+      this.dataService.deleteEvent(idToDelete).subscribe({
+        next: () => {
+          this.isSaving = false;
+          this.isEditMode = false;
+          const nextEvent = getNextSelectionAfterDelete(
+            this.existingEvents,
+            idToDelete,
+          );
+          this.existingEvents = this.existingEvents.filter(
+            (e) => e.entity_id !== idToDelete,
+          );
+          this.updateEventSelectItems();
+          if (nextEvent) {
+            this.selectEvent(nextEvent);
+            this.router.navigate([], {
+              relativeTo: this.route,
+              queryParams: { id: nextEvent.entity_id },
+              queryParamsHandling: "merge",
+              replaceUrl: true,
+            });
+          } else {
+            this.startNewEvent();
+          }
+          this.cdr.detectChanges();
+        },
+        error: (err) => {
+          this.logger.error("Failed to delete event", err);
+          this.isSaving = false;
+          this.cdr.detectChanges();
+        },
+      }),
+    );
+  }
+
+  autoSaveEvent(): Promise<any> {
+    if (!this.isConfigValid()) return Promise.resolve();
+    return this.lifecycle.scheduleAutoSave(() => this.performSaveEvent());
+  }
+
+  private performSaveEvent(): Promise<any> {
+    if (this.isSaving) return Promise.resolve();
     this.isSaving = true;
 
     const op = this.editingEvent.entity_id
@@ -610,40 +692,47 @@ export class EventEditorComponent implements OnInit, OnDestroy, DirtyComponent {
         )
       : this.dataService.createEvent(this.editingEvent);
 
-    this.subscriptions.push(
-      op.subscribe({
-        next: (saved) => {
-          if (saved) {
-            if (saved.entity_id) {
-              this.editingEvent.entity_id = saved.entity_id;
-              this.navigationService.setLastEditedId("event", saved.entity_id);
+    return new Promise((resolve, reject) => {
+      this.subscriptions.push(
+        op.subscribe({
+          next: (saved) => {
+            if (saved) {
+              if (saved.entity_id) {
+                this.editingEvent.entity_id = saved.entity_id;
+                this.navigationService.setLastEditedId(
+                  "event",
+                  saved.entity_id,
+                );
+              }
+              const idx = this.existingEvents.findIndex(
+                (e) => e.entity_id === saved.entity_id,
+              );
+              if (idx >= 0) {
+                this.existingEvents[idx] = saved;
+              } else {
+                this.existingEvents.push(saved);
+              }
+              this.updateEventSelectItems();
+              this.originalEvent = this.cloneEvent(this.editingEvent);
+              this.undoManager.resetTracking(this.editingEvent);
             }
-            const idx = this.existingEvents.findIndex(
-              (e) => e.entity_id === saved.entity_id,
-            );
-            if (idx >= 0) {
-              this.existingEvents[idx] = saved;
-            } else {
-              this.existingEvents.push(saved);
+            this.isSaving = false;
+            if (this.transitionToReadOnlyOnSave) {
+              this.isEditMode = false;
+              this.transitionToReadOnlyOnSave = false;
             }
-            this.updateEventSelectItems();
-            this.originalEvent = this.cloneEvent(this.editingEvent);
-            this.undoManager.resetTracking(this.editingEvent);
-          }
-          this.isSaving = false;
-          if (this.transitionToReadOnlyOnSave) {
-            this.isEditMode = false;
-            this.transitionToReadOnlyOnSave = false;
-          }
-          this.cdr.detectChanges();
-        },
-        error: (err) => {
-          this.logger.error("Failed to auto-save event", err);
-          this.isSaving = false;
-          this.cdr.detectChanges();
-        },
-      }),
-    );
+            this.cdr.detectChanges();
+            resolve(saved);
+          },
+          error: (err) => {
+            this.logger.error("Failed to auto-save event", err);
+            this.isSaving = false;
+            this.cdr.detectChanges();
+            reject(err);
+          },
+        }),
+      );
+    });
   }
 
   saveEvent(): void {

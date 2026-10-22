@@ -2,6 +2,7 @@ package com.antigravity.models;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
@@ -82,6 +83,52 @@ public class CustomUITest {
     assertTrue(fuelUi.getLayoutJson().contains("\"glowOverlap\":30"));
     assertTrue(fuelUi.getLayoutJson().contains("\"glowRedOverlap\":30"));
     assertTrue(fuelUi.getLayoutJson().contains("\"glowGreenOverlap\":25"));
+
+    assertTrue(defaultUi.getLayoutJson().contains("\"baseWidth\":1920"));
+    assertTrue(defaultUi.getLayoutJson().contains("\"baseHeight\":1080"));
+    assertTrue(defaultUi.getLayoutJson().contains("\"aspectRatio\":\"16:9\""));
+    assertTrue(defaultUi.getLayoutJson().contains("\"scaleMode\":\"stretch\""));
+
+    assertTrue(practiceUi.getLayoutJson().contains("\"baseWidth\":1920"));
+    assertTrue(practiceUi.getLayoutJson().contains("\"baseHeight\":1080"));
+    assertTrue(practiceUi.getLayoutJson().contains("\"aspectRatio\":\"16:9\""));
+    assertTrue(practiceUi.getLayoutJson().contains("\"scaleMode\":\"stretch\""));
+
+    assertTrue(fuelUi.getLayoutJson().contains("\"baseWidth\":1920"));
+    assertTrue(fuelUi.getLayoutJson().contains("\"baseHeight\":1080"));
+    assertTrue(fuelUi.getLayoutJson().contains("\"aspectRatio\":\"16:9\""));
+    assertTrue(fuelUi.getLayoutJson().contains("\"scaleMode\":\"stretch\""));
+  }
+
+  @Test
+  public void testEnsureAspectRatioAndDimensions() {
+    String layoutWithCurrent =
+        "{\"widgets\":[{\"id\":\"w1\",\"x\":10,\"y\":10,\"width\":100,\"height\":50}],\"aspectRatio\":\"current\"}";
+    String fixedCurrent = CustomUI.ensureAspectRatioAndDimensions(layoutWithCurrent);
+    assertTrue(fixedCurrent.contains("\"aspectRatio\":\"16:9\""));
+    assertTrue(fixedCurrent.contains("\"baseWidth\":1920"));
+    assertTrue(fixedCurrent.contains("\"baseHeight\":1080"));
+    assertTrue(fixedCurrent.contains("\"scaleMode\":\"stretch\""));
+
+    // Legacy practice layout on MacBook 1728x899
+    String legacyMacBook =
+        "{\"widgets\":[{\"id\":\"w1\",\"x\":100,\"y\":100,\"width\":200,\"height\":100}],\"baseWidth\":1728,\"baseHeight\":899}";
+    String fixedMacBook = CustomUI.ensureAspectRatioAndDimensions(legacyMacBook);
+    assertTrue(fixedMacBook.contains("\"baseWidth\":1920"));
+    assertTrue(fixedMacBook.contains("\"baseHeight\":1080"));
+    assertTrue(fixedMacBook.contains("\"aspectRatio\":\"16:9\""));
+    assertTrue(fixedMacBook.contains("\"scaleMode\":\"stretch\""));
+    assertTrue(fixedMacBook.contains("\"width\":222"));
+
+    // Already 16:9 layout preserved
+    String standard169 =
+        "{\"widgets\":[],\"baseWidth\":1920,\"baseHeight\":1080,\"aspectRatio\":\"16:9\",\"scaleMode\":\"stretch\"}";
+    assertEquals(standard169, CustomUI.ensureAspectRatioAndDimensions(standard169));
+
+    // Null or invalid handled
+    assertEquals(null, CustomUI.ensureAspectRatioAndDimensions(null));
+    assertEquals("", CustomUI.ensureAspectRatioAndDimensions(""));
+    assertEquals("not-json", CustomUI.ensureAspectRatioAndDimensions("not-json"));
   }
 
   @Test
@@ -89,15 +136,9 @@ public class CustomUITest {
     String layoutWithoutCountdown =
         "{\"widgets\":[{\"id\":\"w1\",\"widgetType\":\"timer\"}],\"baseWidth\":1920,\"baseHeight\":1080}";
     String backfilled = CustomUI.ensureCountdownWidget(layoutWithoutCountdown);
-    assertTrue(backfilled.contains("widget-countdown"));
-    assertTrue(backfilled.contains("\"widgetType\":\"countdown\""));
-    assertTrue(backfilled.contains("\"orientation\":\"horizontal\""));
-    assertTrue(backfilled.contains("\"maxLamps\":5"));
-    assertTrue(backfilled.contains("\"fadeIn\":true"));
-    assertTrue(backfilled.contains("\"glowEffect\":true"));
-    assertTrue(backfilled.contains("\"glowOverlap\":30"));
-    assertTrue(backfilled.contains("\"glowRedOverlap\":30"));
-    assertTrue(backfilled.contains("\"glowGreenOverlap\":25"));
+    assertFalse(backfilled.contains("widget-countdown"));
+    assertFalse(backfilled.contains("\"widgetType\":\"countdown\""));
+    assertEquals(layoutWithoutCountdown, backfilled);
 
     // Existing countdown widget without glowEffect backfills glowEffect, maxLamps, fadeIn and
     // glowOverlap
@@ -128,8 +169,8 @@ public class CustomUITest {
     assertTrue(preservedCustom.contains("\"glowGreenOverlap\":55"));
 
     // Calling again should not duplicate
-    String alreadyPresent = CustomUI.ensureCountdownWidget(backfilled);
-    assertEquals(backfilled, alreadyPresent);
+    String alreadyPresent = CustomUI.ensureCountdownWidget(backfilledExisting);
+    assertEquals(backfilledExisting, alreadyPresent);
 
     // Null or invalid returns input
     assertEquals(null, CustomUI.ensureCountdownWidget(null));
@@ -173,5 +214,39 @@ public class CustomUITest {
     assertTrue(CustomUI.isLegacyFuelName("Fuel UI Layout"));
     assertTrue(CustomUI.isLegacyFuelName("default fuel ui layout"));
     assertFalse(CustomUI.isLegacyFuelName("Custom Leaderboard"));
+  }
+
+  @Test
+  public void testHasLaneView() {
+    assertFalse(CustomUI.hasLaneView(null));
+    assertFalse(CustomUI.hasLaneView(""));
+    assertFalse(CustomUI.hasLaneView("{\"widgets\":[{\"widgetType\":\"leaderboard\"}]}"));
+    assertTrue(CustomUI.hasLaneView("{\"widgets\":[{\"widgetType\":\"lane-view\"}]}"));
+    assertTrue(CustomUI.hasLaneView("{\"widgets\":[{\"widgetType\": \"lane-view\"}]}"));
+    assertFalse(
+        CustomUI.hasLaneView(
+            "{\"preserveLegacyHeatView\":true,\"widgets\":[{\"widgetType\":\"lane-view\"}]}"));
+    assertEquals(" (Pre-Migration Backup)", CustomUI.PRE_MIGRATION_BACKUP_SUFFIX);
+  }
+
+  @Test
+  public void testEnsurePracticeTopRowCoordinates() {
+    assertNull(CustomUI.ensurePracticeTopRowCoordinates(null));
+    assertEquals("", CustomUI.ensurePracticeTopRowCoordinates(""));
+    assertEquals("not json", CustomUI.ensurePracticeTopRowCoordinates("not json"));
+
+    String input =
+        "{\"widgets\":["
+            + "{\"id\":\"widget-menu-bar\",\"widgetType\":\"menu-bar\",\"x\":0,\"y\":0,\"width\":1920,\"height\":55},"
+            + "{\"id\":\"widget-timer\",\"widgetType\":\"timer\",\"x\":779,\"y\":49,\"width\":441,\"height\":112},"
+            + "{\"id\":\"widget-qr\",\"widgetType\":\"qr\",\"x\":469,\"y\":50,\"width\":132,\"height\":111}"
+            + "]}";
+
+    String result = CustomUI.ensurePracticeTopRowCoordinates(input);
+    assertTrue(result.contains("\"height\":38"));
+    assertTrue(result.contains("\"y\":38"));
+    assertTrue(result.contains("\"height\":111"));
+    assertFalse(result.contains("\"y\":49"));
+    assertFalse(result.contains("\"y\":50"));
   }
 }

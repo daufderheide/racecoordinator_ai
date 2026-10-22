@@ -18,6 +18,7 @@ test.describe("Lane View Inspector Visuals", () => {
       layoutEditorPositionX: 9999,
       layoutEditorPositionY: 9999,
       racedayLayout: {
+        preserveLegacyHeatView: true,
         widgets: [
           {
             id: "widget-lane-view",
@@ -54,7 +55,7 @@ test.describe("Lane View Inspector Visuals", () => {
     // Select the lane-view widget by dispatching pointerdown
     const laneViewWidget = page
       .locator(".widget-wrapper")
-      .filter({ hasText: "lane-view" })
+      .filter({ has: page.locator("app-raceday-lane-view") })
       .first();
     await laneViewWidget.dispatchEvent("pointerdown");
 

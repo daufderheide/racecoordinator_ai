@@ -360,7 +360,29 @@
                     <td class="col-avatar">
                       @if (row.avatarUrl) {
                         <div class="avatar-cell">
-                          <span class="material-icons avatar-icon">image</span>
+                          <div
+                            class="avatar-thumb-wrap"
+                            [title]="row.avatarUrl"
+                          >
+                            @if (!avatarErrors.has(row.rowIndex)) {
+                              <img
+                                class="avatar-thumbnail"
+                                [src]="row.avatarUrl | avatarUrl"
+                                [alt]="
+                                  row.resolvedName ||
+                                  row.rawName ||
+                                  ('DIM_COL_AVATAR' | translate)
+                                "
+                                (error)="onAvatarError(row.rowIndex)"
+                              />
+                            } @else {
+                              <span
+                                class="material-icons avatar-fallback-icon"
+                                [title]="'DIM_AVATAR_LOAD_ERROR' | translate"
+                                >broken_image</span
+                              >
+                            }
+                          </div>
                           <span class="avatar-text" [title]="row.avatarUrl">{{
                             row.avatarUrl
                           }}</span>

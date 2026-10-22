@@ -2,6 +2,7 @@ import { TestBed } from "@angular/core/testing";
 import { DataService } from "@app/data.service";
 import { Driver } from "@app/models/driver";
 import { RaceParticipant } from "@app/models/race_participant";
+import { RaceState } from "@app/proto/antigravity";
 import { DriverHeatData } from "@app/race/driver_heat_data";
 import { AuthService } from "@app/services/auth.service";
 import { HelpService } from "@app/services/help.service";
@@ -150,6 +151,42 @@ describe("CustomWidgetBaseComponent", () => {
       expect(standings.length).toBe(1);
       expect(standings[0].name).toBe("Sports Mode");
       expect(standings[0].lapCount).toBe(5);
+    });
+
+    it("should populate autoCalculatedLaps and adjustedLapCount in driverStandings and heatDrivers", () => {
+      const driver1 = new Driver("d1", "Sports Mode", "Sports Mode");
+      const p1 = new RaceParticipant(
+        "p1",
+        driver1,
+        1,
+        5,
+        20.0,
+        3.2,
+        4.0,
+        4.0,
+        5,
+        1,
+        100,
+      );
+      const hd1 = new DriverHeatData("hd1", p1 as any, 0, driver1);
+      hd1.autoCalculatedLaps = 0.75;
+      hd1.adjustedLapCount = 5.75;
+
+      const mockParent = {
+        participants: [p1],
+        sortedHeatDrivers: [hd1],
+      };
+
+      fixture.componentRef.setInput("parent", mockParent);
+      fixture.detectChanges();
+
+      const standings = component.driverStandings;
+      expect(standings[0].autoCalculatedLaps).toBe(0.75);
+      expect(standings[0].adjustedLapCount).toBe(5.75);
+
+      const heatDrivers = component.heatDrivers;
+      expect(heatDrivers[0].autoCalculatedLaps).toBe(0.75);
+      expect(heatDrivers[0].adjustedLapCount).toBe(5.75);
     });
 
     it("should filter out empty driver slots", () => {
@@ -334,6 +371,37 @@ describe("CustomWidgetBaseComponent", () => {
       expect(component.interpolate("Unknown: ${unknown.field}")).toBe(
         "Unknown: ${unknown.field}",
       );
+    });
+  });
+
+  describe("isRaceOver", () => {
+    it("should return true when parent.raceState is RACE_OVER", () => {
+      fixture.componentRef.setInput("parent", {
+        raceState: RaceState.RACE_OVER,
+      });
+      expect(component.isRaceOver()).toBeTrue();
+    });
+
+    it("should return false when parent.raceState is RACING", () => {
+      fixture.componentRef.setInput("parent", {
+        raceState: RaceState.RACING,
+      });
+      expect(component.isRaceOver()).toBeFalse();
+    });
+
+    it("should fallback to parent.isRaceOver function", () => {
+      fixture.componentRef.setInput("parent", {
+        isRaceOver: () => true,
+      });
+      expect(component.isRaceOver()).toBeTrue();
+    });
+
+    it("should return true when raceFlagService flag is flag.race_over", () => {
+      (component as any).raceFlagService = {
+        getFlagType: () => "flag.race_over",
+      };
+      fixture.componentRef.setInput("parent", null);
+      expect(component.isRaceOver()).toBeTrue();
     });
   });
 });

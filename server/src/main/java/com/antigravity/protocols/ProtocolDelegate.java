@@ -33,6 +33,11 @@ public class ProtocolDelegate implements IProtocol {
   }
 
   public ProtocolDelegate(
+      List<IProtocol> protocols, Supplier<ScheduledExecutorService> schedulerSupplier) {
+    this(protocols, null, schedulerSupplier);
+  }
+
+  public ProtocolDelegate(
       List<IProtocol> protocols, LongSupplier timeSupplier, ScheduledExecutorService scheduler) {
     this(protocols, timeSupplier, scheduler != null ? () -> scheduler : null);
   }

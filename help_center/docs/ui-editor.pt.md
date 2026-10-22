@@ -9,8 +9,8 @@ O Editor de Interface permite criar layouts personalizados para o dia de corrida
 Widgets personalizados podem ser adicionados aos seus layouts de interface personalizados:
 - **Pasta de widgets personalizados**: Defina a sua pasta local de widgets na seção **Interface personalizada** na parte inferior do editor.
 - **Atualizar widgets de amostra**: Clique em **Atualizar widgets de amostra** para gerar ou atualizar widgets de amostra prontos a usar numa pasta `sample/` (`sample-telemetry-gauge`, `sample-lap-delta`, `sample-sponsor-banner`, `sample-detailed-leaderboard`).
-- **Grupos da caixa de ferramentas de widgets**: A caixa de ferramentas organiza os widgets em grupos (**Race Coordinator AI**, **Raiz personalizada** e pastas personalizadas como **sample**) com subgrupos aninhados (como **Ações** e **Dados da manga** com subpastas categorizadas) e um filtro de pesquisa instantâneo.
-- **Inspetor dinâmico**: Quando um widget personalizado é selecionado na tela, as suas propriedades personalizadas (cores, limites, seletores, campos de texto) aparecem dinamicamente no Inspetor de widgets.
+- **Grupos da biblioteca de widgets**: A biblioteca de widgets organiza os widgets em grupos (**Race Coordinator AI**, **Raiz personalizada** e pastas personalizadas como **sample**) com subgrupos aninhados (como **Ações** e **Dados da manga** com subpastas categorizadas) e um filtro de pesquisa instantâneo.
+- **Configuração dinâmica**: Quando um widget personalizado é selecionado na tela, as suas propriedades personalizadas (cores, limites, seletores, campos de texto) aparecem dinamicamente na Configuração de widgets.
 
 Para mais detalhes sobre o desenvolvimento de widgets, consulte o [Guia de widgets personalizados](custom-widgets.md).
 
@@ -18,9 +18,9 @@ Para mais detalhes sobre o desenvolvimento de widgets, consulte o [Guia de widge
 
 - Arraste e solte widgets da paleta no ecrã.
 - Redimensione, reposicione e alinhe widgets de acordo com a resolução do ecrã. Todos os widgets permanecem delimitados dentro do ecrã.
-- **Controlos do Inspetor de Widgets**:
+- **Controlos da Configuração de Widgets**:
   - **Posição e tamanho**: Posicione e dimensione com precisão o widget selecionado utilizando os campos numéricos **X**, **Y**, **Largura** e **Altura**.
-  - **Excluir widget**: Clique no ícone do lixo no cabeçalho do inspetor.
+  - **Excluir widget**: Clique no ícone do lixo no cabeçalho de configuração.
 - **Atalhos de teclado**:
   - <kbd>Delete</kbd> ou <kbd>Backspace</kbd>: Remove o widget selecionado do layout.
   - <kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd>: Move o widget selecionado 1px (ou 10px mantendo <kbd>Shift</kbd> pressionado).
@@ -42,7 +42,10 @@ O widget **Cronómetro** exibe o tempo decorrido ou restante da manga/corrida co
   - **Abaixo do limite**: Exibe frações de segundo (1 a 3 casas decimais) assim que o tempo desce abaixo do limite configurado (por exemplo, últimos 10 segundos).
   - **Sempre**: Exibe frações de segundo continuamente durante toda a manga.
   - **Nunca**: Limita o cronómetro exclusivamente a segundos inteiros.
-- **Pré-visualização**: O inspetor inclui uma pré-visualização instantânea que demonstra a formatação das opções selecionadas em diferentes fases da corrida (`> 1 hr`, `> 1 min`, `< 1 min` e `< 10s`).
+- **Pré-visualização**: O painel de configuração inclui uma pré-visualização instantânea que demonstra a formatação das opções selecionadas em diferentes fases da corrida (`> 1 hr`, `> 1 min`, `< 1 min` e `< 10s`).
+
+> [!NOTE]
+> Estas opções exatas de formatação de tempo (predefinições de formato de exibição, modos de frações de segundo, limite e controlo deslizante de casas decimais com pré-visualização ao vivo) também são suportadas nos widgets de **Tempo Total** (Tempo Total da Bateria e Tempo Total da Corrida/Geral) e nas colunas de **Tempo Total** na Vista de Pistas. Na lista de colunas da Vista de Pistas, clique no ícone de opções de tempo (<span class="material-icons">more_time</span>) junto a qualquer coluna de Tempo Total para personalizar o seu formato.
 
 ## Widget Código QR da câmara
 
@@ -65,9 +68,65 @@ O widget **Contagem Decrescente** exibe o semáforo visual de partida e aciona o
 
 O widget **Coluna de Pista** permite posicionar colunas individuais de dados da visualização de pista (como informações do piloto, tempo da última volta, melhor volta / recorde pessoal, combustível %, histórico de voltas, velocidades de setor, posição, etc.) em qualquer lugar da tela como cartões modulares independentes.
 
-- **Modos de Associação**:
-  - **Pista Física**: Vincula o cartão a uma pista específica do circuito (Pista 1 a Pista 8). O cartão mantém os dados dessa pista durante toda a corrida.
-  - **Posição na Classificação**: Vincula o cartão a uma classificação atual (1º Lugar, 2º Lugar, etc.). O cartão acompanha dinamicamente ultrapassagens e alterações de posição, adaptando as cores de fundo e texto à pista do piloto que ocupa essa colocação.
+- **Piloto Alvo e Cartões Individuais**:
+  - Cartões individuais colocados fora de uma grade escolhem qual piloto exibir: por **Pista** (Pista 1 a Pista 8), por **Posição da Bateria** (1º, 2º, etc.), por posto na **Classificação Geral** ou por **Chaveamento do Piloto**.
+
+### Origens de Dados da Grade: Dados da Bateria vs. Dados Gerais da Corrida
+
+Toda grade de dados no Editor de UI possui uma configuração de **Origem de dados** na aba Grade, que define quais pilotos preenchem as linhas da grade:
+
+- **Dados da Bateria (`heat`)**:
+  - **Escopo de Pilotos**: Vinculado exclusivamente aos participantes que competem ativamente na bateria atual na pista (`heatDrivers`).
+  - **Comportamento de Exibição**: Apenas os pilotos atualmente na pista na bateria ativa são mostrados. Pilotos em descanso ou escalados em outras baterias são omitidos.
+  - **Paginação e Rolagem**: A contagem de linhas é estritamente limitada aos pilotos da bateria ativa e às pistas físicas. A grade nunca rola além dos participantes ativos para linhas vazias.
+- **Dados Gerais da Corrida (`overall`)**:
+  - **Escopo de Pilotos**: Vinculado a **todos os participantes inscritos** em todo o torneio ou evento (`participants`).
+  - **Comportamento de Exibição**: Qualquer piloto inscrito no evento pode ser exibido na grade, esteja correndo na pista na bateria atual ou aguardando nos boxes.
+  - **Paginação e Rolagem**: A contagem de linhas reflete todo o grid do torneio (ex. 16, 24 ou 32 pilotos distribuídos em várias baterias). Se a grade tiver menos linhas visíveis do que o total de participantes, ela suporta rolagem automática multipágina para percorrer toda a classificação geral.
+  - **Pilotos Fora da Pista**: Para os pilotos que não estão na pista no momento, estatísticas acumuladas da competição são fornecidas automaticamente.
+
+### Widgets: Widgets de Dados da Bateria vs. Widgets de Dados Gerais
+
+A Caixa de ferramentas organiza as colunas e cartões de dados nos grupos **Dados da Bateria** e **Dados Gerais**. A escolha do widget determina quais estatísticas são calculadas e exibidas em cada linha:
+
+- **Widgets de Dados da Bateria** (ex. *Contador de Voltas, Tempo da Última Volta, Melhor Volta da Bateria, Tempo de Setor, Tempo de Reação, Posição / Colocação na Bateria, Diferenças da Bateria, Combustível / Telemetria, Ritmo Fantasma*):
+  - Extraem métricas de desempenho estritamente da **bateria ativa**.
+  - **Em uma Grade de Dados da Bateria**: Cada linha exibe telemetria em tempo real e tempos de volta dos carros que estão competindo na pista.
+  - **Em uma Grade de Dados Gerais**: Os pilotos em pista exibem sua telemetria ao vivo; pilotos inativos ou descansando exibem traços (`--`) ou zeros para métricas específicas da bateria, pois não produzem dados na bateria em andamento.
+- **Widgets de Dados Gerais da Corrida** (ex. *Classificação Geral, Total de Voltas, Voltas Físicas Totais, Tempo Total Geral, Melhor Volta da Corrida, Média Geral, Mediana Geral, Consistência Geral, Diferenças Gerais, Probabilidade de Vitória / Previsões, Baterias Disputadas / Baterias Restantes*):
+  - Extraem métricas de desempenho acumuladas de **todas as baterias concluídas** no evento.
+  - **Em uma Grade de Dados Gerais**: Cada linha de piloto (na pista ou nos boxes entre baterias) exibe suas estatísticas gerais completas, total de voltas no torneio, melhor volta da prova e colocação na classificação geral.
+  - **Em uma Grade de Dados da Bateria**: Os pilotos ativos exibem sua classificação geral e estatísticas acumuladas ao lado de suas voltas na bateria ao vivo (ex. acompanhar a classificação global do evento durante a corrida ativa).
+
+#### Widget de Baterias Disputadas e Restantes
+
+O widget **Baterias Disputadas** (`heatsRaced`) exibe o progresso de participação nas baterias de cada piloto:
+
+- **Baterias Disputadas (Modo Padrão)**: Exibe a quantidade de baterias que o piloto já disputou ou está disputando no momento no evento.
+- **Modo Baterias Restantes**: Quando a opção **Modo de exibição de baterias** é alternada de *Baterias disputadas* para *Baterias restantes*, o cartão exibe quantas baterias programadas o piloto ainda tem por disputar. Se nenhum rótulo de cabeçalho personalizado for definido, o título muda automaticamente de `BATERIAS DISPUTADAS` para `BATERIAS RESTANTES`.
+- Essa configuração também está disponível para itens inset vinculados a qualquer cartão de coluna.
+
+#### Widgets de Diferença (Gaps e Intervalos)
+
+O Race Coordinator AI suporta **4 widgets de diferença distintos** tanto para Dados da Bateria quanto para Dados Gerais:
+
+1. **Diferença para o Líder (`gapLeader` / `overallGapLeader`)**: Projeção matemática contínua da desvantagem temporal calculada em relação ao líder (P1).
+2. **Diferença para o Carro da Frente (`gapPosition` / `overallGapPosition`)**: Projeção matemática contínua da desvantagem temporal em relação ao concorrente imediatamente à frente.
+3. **Diferença Fórmula 1 para o Líder (`gapLeaderF1` / `overallGapLeaderF1`)**: Diferencial exato na linha de chegada na mesma volta ou desvantagem de voltas (`+1 Volta`, `+N Voltas`) em caso de voltas perdidas.
+4. **Diferença Fórmula 1 para o Carro da Frente (`gapPositionF1` / `overallGapPositionF1`)**: Diferencial exato na linha de chegada em relação ao carro da frente na mesma volta ou desvantagem de voltas (`+1 Volta`, `+N Voltas`).
+
+Para consultar as fórmulas matemáticas completas e as especificações de cronometragem, consulte o [Guia de Cálculos de Diferenças](gap-calculations.md).
+
+### Ordenação da Grade e Matriz de Interação
+
+O menu suspenso **Classificação da Grade** na aba Grade controla a ordem das linhas. Seu comportamento depende diretamente da **Origem de dados** selecionada (**Dados da Bateria** ou **Dados Gerais**):
+
+| Opção de Ordenação | Em Grade de Dados da Bateria (`gridType: heat`) | Em Grade de Dados Gerais (`gridType: overall`) |
+| :--- | :--- | :--- |
+| **Pista** | Ordenação estática por pista física (Pista 1, Pista 2, ...). Cada linha está vinculada a uma pista específica e ao seu piloto designado. | Pilotos ativos na pista aparecem primeiro por número de pista (Pista 1, Pista 2, ...), seguidos por todos os participantes inativos ordenados por sua posição na classificação geral. |
+| **Posição da Bateria** | Reordenação dinâmica em tempo real por posição na bateria ativa (1º, 2º, 3º na bateria). As linhas alternam de posição ao vivo nas ultrapassagens ou passagens na linha de chegada. | Pilotos ativos aparecem no topo ordenados pela posição na bateria (1º, 2º, ...), seguidos por todos os participantes inativos ordenados pela classificação geral. |
+| **Classificação Geral** | Ordena **exclusivamente os pilotos da bateria ativa** por sua posição na classificação geral do torneio. (Por exemplo, se competem na bateria os pilotos 2º, 5º, 8º e 14º na geral, as 4 linhas os ordenam #2, #5, #8, #14). Nunca exibe pilotos fora da bateria nem gera linhas vazias. | Ordena **todo o grid de participantes** de acordo com a classificação geral da prova (1º geral, 2º geral, 3º geral, ...). Todo o painel se reordena ao vivo conforme pontos e voltas são atualizados. |
+| **Chaveamento do Piloto** | Ordena os pilotos da bateria ativa por sua posição inicial de qualificação/chaveamento (menor número primeiro). | Ordena todos os participantes da prova por sua posição inicial de chaveamento (1, 2, 3, ...) em todo o grid. |
 - **Orientação**: Suporta layouts **Vertical** (cabeçalho acima do valor) e **Horizontal** (cabeçalho e valor lado a lado).
 - **Estilo e Personalização da Barra de Título**:
   - A barra de título segue por padrão o mesmo estilo do cabeçalho de coluna da visualização de pista (fundo escuro semitransparente `rgba(68, 68, 68, 0.7)`, texto branco em negrito, cantos superiores arredondados e borda divisória).
@@ -77,11 +136,75 @@ O widget **Coluna de Pista** permite posicionar colunas individuais de dados da 
   - **Cor do Texto e do Fundo**: Personalize a cor de fundo e a cor do texto do cabeçalho com seletores de cores dedicados e botão de restauração padrão em um clique.
 - **Herança de Cores e Personalização**: Por padrão, os cartões herdam as cores de fundo e texto da pista atribuída (`Usar Cores da Pista`), ou podem receber cores personalizadas de fundo, texto e borda.
 - **Duplicar em Pistas / Posições**:
-  - Em vez de criar e alinhar cartões manualmente para cada pista, configure um único cartão para uma pista ou posição e clique em **Duplicar em Pistas / Posições...** no inspetor.
+  - Em vez de criar e alinhar cartões manualmente para cada pista, configure um único cartão para uma pista ou posição e clique em **Duplicar em Pistas / Posições...** no painel de configuração.
   - Escolha a direção (**Horizontal** lado a lado ou **Vertical** empilhado), o número total de pistas/posições de destino (por padrão o número máximo de pistas em todos os circuitos no banco de dados), o modo de espaçamento (**Ajustar à Tela** ou **Preservar Espaçamento**) e a substituição opcional dos widgets existentes.
   - **Modo de Replicação em Tempo Real**: Ao duplicar, o editor entra em um modo interativo de modelo com guias visuais de pista e alinhamento magnético. Nesse modo, você posiciona, redimensiona e edita widgets diretamente na Pista 1 (Mestre), e as alterações são espelhadas imediatamente em tempo real para todas as demais pistas. Os widgets espelhados nas pistas 2..N são pré-visualizações ativas somente leitura; clicar em qualquer widget espelhado direciona o foco para o mestre da Pista 1.
   - **Área Inteligente e Redimensionamento**: O espaço de replicação expande-se automaticamente em todas as quatro direções para preencher o espaço disponível na tela até encontrar os limites de qualquer widget existente fora da grade. Você pode ajustar a área total dinamicamente usando as 8 alças de redimensionamento no perímetro da sobreposição.
   - Clique em **Concluído** para consolidar a grade em widgets independentes.
-  - **Editar Modelo e Desvincular**: Ao selecionar qualquer widget da grade posteriormente, o inspetor exibe um cartão permitindo clicar em **Editar Modelo da Grade** (para reentrar no modo de replicação em tempo real a qualquer momento) ou **Desvincular da Grade** (para quebrar permanentemente o vínculo).
->>>>>>> develop
+  - **Editar Modelo e Desvincular**: Ao selecionar qualquer widget da grade posteriormente, a Configuração de widgets exibe um cartão permitindo clicar em **Editar Modelo da Grade** (para reentrar no modo de replicação em tempo real a qualquer momento) ou **Desvincular da Grade** (para quebrar permanentemente o vínculo).
+
+### Sincronização de Grade: Vincular colunas vs. Espelhar Linhas
+
+Uma grade no Race Coordinator AI é uma matriz bidimensional estruturada em:
+
+- **Linhas (Posições dos Competidores)**: Representam cada pista física individual (**Pista 1, Pista 2, ...**) ou posição na corrida (**Posição 1, Posição 2, ...**). Se a orientação da grade for horizontal, essas posições aparecem como colunas verticais.
+- **Colunas (Campos de Dados)**: Representam cada métrica de dados exibida em uma posição (por exemplo, *Nome do Piloto, Voltas da Bateria, Tempo da Última Volta, Melhor Volta, Diferença, Imagem do Carro*).
+
+O Inspetor de grade oferece dois controles primordiais na seção **Estrutura e layout da grade**: **Vincular colunas** e **Espelhar Linhas** (denominado **Espelhar Colunas** com layout horizontal).
+
+#### Vincular colunas
+
+**Vincular colunas** controla a sincronização do estilo visual entre todas as colunas de dados da grade.
+
+- **Marcado (Padrão)**:
+  - Todas as colunas de dados compartilham um estilo visual idêntico.
+  - Qualquer alteração em propriedades de estilo em qualquer coluna é sincronizada automática e imediatamente para todas as colunas da grade.
+  - **Propriedades Sincronizadas**:
+    - **Estilo do Cabeçalho**: Família da fonte, tamanho da fonte, cor do texto, cor de fundo, alinhamento do texto e altura do cabeçalho.
+    - **Estilo da Célula de Dados**: Família da fonte, tamanho da fonte, cor do texto, cor de fundo, alternância de cores de pista (`useLaneColors`) e alinhamento dos valores.
+    - **Estilo de Borda**: Exibição de borda, cor da borda, espessura da borda e raio dos cantos.
+    - **Formatação de Tempo**: Casas decimais, formato de exibição e limites de precisão de subsegundos.
+    - **Destaque de Telemetria**: Destaque de linha na passagem de volta.
+  - **Interação com linhas não espelhadas**: Quando **Espelhar linhas** está desmarcado, as linhas são desacopladas entre si. Se **Vincular colunas** estiver ativado, a modificação de estilos visuais (como cor de fundo, cor do texto ou fontes) em qualquer coluna propaga essa alteração para todas as colunas *dentro daquela linha específica*, sem alterar nenhuma outra linha.
+- **Desmarcado**:
+  - Desvincula o estilo das colunas. Cada coluna pode ter seus próprios tamanhos de fonte, cores, bordas e alinhamentos de forma independente (por exemplo, um texto grande em negrito com borda para o *Nome do Piloto*, enquanto o *Contador de Voltas* mantém texto menor e fundo transparente).
+  - Quando desmarcado, surgem botões dedicados (**Aplicar estilo de cabeçalho / valor / borda / formato a todas as colunas**) no inspetor para transmitir sob demanda uma categoria específica de estilos para todas as colunas.
+- **Comportamento ao Desmarcar**:
+  - Salva imediatamente na configuração.
+  - **Estado Visual da Grade**: Os estilos existentes das colunas **não** mudam de imediato; a grade preserva sua aparência atual.
+  - **Ação do Usuário Necessária**: Para visualizar diferenças, o usuário deve selecionar uma coluna específica e modificar suas opções de estilo. Apenas a coluna selecionada assumirá as novas edições.
+- **Comportamento ao Marcar Novamente**:
+  - Reativa a sincronização automática para edições futuras.
+  - **Estado Visual da Grade**: Apenas remarcar a caixa **não** sobrescreve de imediato as outras colunas com os estilos da coluna selecionada; os estilos existentes permanecem intactos.
+  - **Ação do Usuário Necessária**: O usuário deve modificar uma propriedade de estilo (por exemplo, alterar o tamanho da fonte em 1px, trocar uma cor ou alternar uma borda) em qualquer coluna. Assim que a alteração ocorre, a nova propriedade propaga-se imediatamente para todas as colunas da grade. Alternativamente, é possível clicar em um dos botões explícitos «Aplicar a todas as colunas».
+
+#### Espelhar Linhas (ou Espelhar Colunas)
+
+**Espelhar Linhas** gerencia a replicação e a geometria linha a linha partindo da **Linha Mestre (Pista 1 / Posição 1)** para todas as demais linhas (**Pistas 2..N**).
+
+- **Marcado (Padrão)**:
+  - Todas as linhas não mestres espelham rigorosamente a linha mestre.
+  - Qualquer movimentação, redimensionamento, ajuste de layout ou alteração de configurações na célula mestre replica-se imediatamente em tempo real para todas as outras pistas ou posições.
+  - Os widgets não mestres na grade ficam vinculados ao mestre e exibem o indicador **Espelhado** (por exemplo, `Pista 2 (Espelhado)`).
+- **Desmarcado**:
+  - Desacopla as linhas não mestres do modelo mestre.
+  - Os widgets não mestres passam a exibir o indicador **Independente** (por exemplo, `Pista 2 (Independente)`).
+  - O usuário pode clicar em qualquer linha individual (por exemplo, Pista 2 ou Posição 3) e personalizar suas propriedades, cores de texto, cores de fundo ou atribuições de dados de forma autônoma, sem afetar o mestre nem as demais pistas.
+  - O botão **Reespelhar em todas as linhas** surge diretamente abaixo da caixa de seleção no inspetor.
+- **Comportamento ao Desmarcar**:
+  - Entra em vigor imediatamente na configuração.
+  - **Estado Visual da Grade**: O layout e as posições das células **não** se movem nem mudam imediatamente; posições e estilos atuais são preservados.
+  - **Ação do Usuário Necessária**: O usuário deve selecionar uma célula não mestre e editar suas propriedades para criar configurações de pista independentes.
+- **Comportamento ao Marcar Novamente**:
+  - Reativa a replicação mestre na grade.
+  - **Atualização Imediata**:
+    - Se o usuário remarcar a caixa **Espelhar Linhas** com um **widget mestre** selecionado, o layout e os ajustes do mestre são imediatamente sincronizados para todas as pistas espelhadas, substituindo personalizações individuais de linha.
+    - Se o usuário clicar no botão **Reespelhar em todas as linhas**, o editor ressincroniza instantaneamente todas as colunas mestre em todas as linhas da grade (`syncAllMasterWidgetsToLanes`), consolida a grade e atualiza a tela do Editor de UI e a pré-visualização de corrida de imediato, sem necessidade de ações extras.
+
+#### Tabela Comparativa
+
+| Controle | Direção / Escopo | O Que Sincroniza | Comportamento ao Desmarcar | Comportamento ao Marcar Novamente | Imediato vs. Ação do Usuário Necessária |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Vincular colunas** | Horizontal (Entre Colunas) | Estilo visual: fontes, tamanhos, cores de texto/fundo, bordas, cabeçalhos, formatos de tempo, destaques | As colunas tornam-se independentes; estilos existentes são mantidos; botões manuais «Aplicar a todas» aparecem | Reativa a sincronização automática para alterações futuras; não sobrescreve de imediato outras colunas | **Ação do Usuário Necessária**: Alternar a caixa não altera os estilos existentes. O usuário deve editar uma propriedade de estilo para que a sincronização passe a atuar entre colunas. |
+| **Espelhar Linhas** | Vertical (Entre Linhas / Pistas) | Geometria e configurações: largura/altura da célula, deslocamentos, vínculos replicados da Pista 1 Mestre para Pistas 2..N | As linhas tornam-se independentes; o inspetor exibe o indicador `Independente`; pistas podem ser personalizadas individualmente; botão `Reespelhar` aparece | Restabelece a replicação mestre; o modelo mestre substitui personalizações individuais das pistas | **Imediato se o Mestre estiver selecionado ou ao clicar no botão**: Clicar em `Reespelhar em todas as linhas` ou remarcar no Mestre alinha imediatamente todas as linhas. Desmarcar mantém o layout até ser editado. |
 

@@ -9,12 +9,15 @@ import {
   NO_ERRORS_SCHEMA,
   OnDestroy,
   OnInit,
+  QueryList,
+  ViewChildren,
 } from "@angular/core";
 import { toSignal } from "@angular/core/rxjs-interop";
 import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, NavigationStart, Router } from "@angular/router";
 import { Subscription } from "rxjs";
 import { DefaultRacedayComponent } from "@app/components/raceday/default-raceday.component";
+import { StackedColumnIssue } from "@app/components/raceday/utils/lane-grid-repair.helper";
 import {
   LaneGridBounds,
   LaneGridSession,
@@ -59,32 +62,26 @@ import { EditorLifecycleHelper } from "@app/utils/editor-lifecycle.helper";
 
 import { EnterPathModalComponent } from "./components/enter-path-modal/enter-path-modal";
 import { ReplicateLaneDialogComponent } from "./components/replicate-lane-dialog/replicate-lane-dialog.component";
+import { ReviewStackedColumnsModalComponent } from "./components/review-stacked-columns-modal/review-stacked-columns-modal.component";
 import { TemplateVariablesModalComponent } from "./components/template-variables-modal/template-variables-modal.component";
 import {
   ThemeTemplateModalComponent,
   ThemeTemplateType,
 } from "./components/theme-template-modal/theme-template-modal";
 import {
-  handleDetachGrid,
-  handleEditGridTemplate,
-  handleFinishGridSession,
-  handleStartGridSession,
-  handleUpdateGridBounds,
-} from "./ui-editor-grid.helper";
-import {
   acknowledgeSuccessModal,
   applyLoadedUiEditorData,
   areSettingsEqual,
-  areUIEditorStatesEqual,
   AspectRatioOption,
   AVAILABLE_TRANSITIONS,
   BASE_AVAILABLE_COLUMNS,
-  buildDisplayColumnSlots,
   buildUiEditorHelpContext,
   cancelDeleteCustomUiModal,
   cancelDeleteThemeModal,
-  cloneUIEditorState,
+  computeWidgetDisplayName,
   confirmReplicateLanesHelper,
+  createUiEditorLifecycle,
+  createUiEditorUndoManager,
   DEFAULT_SECTIONS_EXPANDED,
   DirectoryController,
   downloadJsonFile,
@@ -101,7 +98,6 @@ import {
   getComponentPreviewScaleNumber,
   getCustomUiDisplayNameKey,
   getDefaultAspectRatioOptions,
-  getDefaultLayoutResetData,
   getLayoutAspectRatio,
   getLayoutAspectRatioOptions,
   getLayoutScaleMode,
@@ -110,40 +106,33 @@ import {
   getThemeDisplayNameKey,
   getUiEditorHelpSteps,
   getUnsavedReasonsHelper,
+  handleAnchorSelection,
   handleAutoSaveState,
+  handleBringGridToFront,
   handleCalloutSpacingChange,
-  handleClearCurrentLayout,
   handleClearCustomTemplate,
-  handleClearLayout,
   handleConfirmDeleteCustomUi,
   handleConfirmDeleteTheme,
-  handleConfirmDiscard,
   handleCreateCustomUi,
   handleCreateTheme,
   handleCustomUiSelection,
+  handleDeleteGrid,
+  handleDetachGrid,
   handleDetachTheme,
   handleDownloadTemplate,
   handleDuplicateCustomUi,
   handleDuplicateTheme,
-  handleExportCurrentLayout,
-  handleExportLayout,
-  handleExportPracticeRacedayLayout,
-  handleExportRacedayLayout,
-  handleImportCurrentLayout,
-  handleImportLayout,
-  handleImportPracticeRacedayLayout,
-  handleImportRacedayLayout,
+  handleEditGridTemplate,
+  handleFinishGridSession,
   handleLayoutChanged,
   handleMasterVolumeChange,
   handleNudgeSelectedWidget,
   handlePageTransitionChange,
+  handleReMirrorGrid,
   handleRemoveSelectedWidget,
-  handleResetCurrentLayout,
-  handleResetLayout,
-  handleResetPracticeRacedayLayout,
-  handleResetRacedayLayout,
   handleSetLayoutAspectRatio,
   handleSetLayoutScaleMode,
+  handleStartGridSession,
   handleTestExport,
   handleThemeAudioChange,
   handleThemeSlotChange,
@@ -153,8 +142,9 @@ import {
   handleTtsVolumeChange,
   handleUiEditorDataLoadError,
   handleUiEditorDestroy,
-  handleUiEditorHelpStep,
+  handleUiEditorInit,
   handleUiEditorKeyboardShortcut,
+  handleUpdateGridBounds,
   handleUrgentQueueTtlChange,
   handleWidgetColorChange,
   handleWidgetHeightChange,
@@ -164,35 +154,42 @@ import {
   handleWidgetXChange,
   handleWidgetYChange,
   initAvailableVoices,
+  isCountdownPreviewActiveHelper,
   isCustomUiDefault,
   isCustomUiNameInvalid,
   isThemeDefault,
   isThemeNameDuplicate,
   isThemeNameInvalid,
+  isWidgetHeightAutoCalculated,
+  isWidgetWidthAutoCalculated,
+  LayoutActionsController,
   LayoutZoomController,
   loadExpanderStateFromStorage,
   MAIN_AUDIO_SLOTS,
+  MigrationController,
   MOCK_RACEDAY_PROPERTIES,
   openDeleteCustomUiModal,
   openDeleteThemeModal,
   openReplicateLaneModalHelper,
   openSuccessModal,
+  refreshUiEditorDisplayProperties,
   resolveActiveLayout,
-  resolveTargetCustomUi,
+  resolveBackNavigation,
   resolveThemeAsset,
   resolveThemeFlag,
   resolveThemeFuelGauge,
   resolveThemeLamp,
+  restoreOpenLayoutOnEntry,
   saveExpanderStateToStorage,
   scrollToThemeElement,
+  scrollToUiElement,
   sortAvailableColumnsList,
-  sortCustomUisForDisplay,
-  sortThemesForDisplay,
-  syncEditorCoordinates,
+  toggleCountdownPreviewHelper,
   toggleThemeExpander,
   toggleUiExpander,
   UIEditorState,
 } from "./ui-editor-helpers";
+import { StackedColumnsController } from "./ui-editor-stacked-columns.helper";
 import { WidgetInspectorFieldsComponent } from "./widget-inspector-fields/widget-inspector-fields.component";
 
 export { BASE_AVAILABLE_COLUMNS, UIEditorState } from "./ui-editor-constants";
@@ -218,6 +215,7 @@ export { BASE_AVAILABLE_COLUMNS, UIEditorState } from "./ui-editor-constants";
     TemplateVariablesModalComponent,
     EnterPathModalComponent,
     ReplicateLaneDialogComponent,
+    ReviewStackedColumnsModalComponent,
     CustomSelectComponent,
     CustomOptionComponent,
     AutoSelectDefaultDirective,
@@ -235,25 +233,25 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   saveTimeout: any;
   autoSaveTimeout: any;
   isAutoSaving = false;
+  get activeAutoSavePromise(): Promise<any> | null {
+    return this.lifecycle?.activeSavePromise ?? null;
+  }
+  set activeAutoSavePromise(p: Promise<any> | null) {
+    if (this.lifecycle) {
+      this.lifecycle.activeSavePromise = p;
+    }
+  }
   scale = 1;
   assets: any[] = [];
   private params = toSignal(this.route.queryParams);
 
-  backTargetUrl = computed(() => {
-    const p = this.params();
-    const from = p?.["from"] || this.route.snapshot.queryParamMap.get("from");
-    const ret =
-      p?.["returnUrl"] || this.route.snapshot.queryParamMap.get("returnUrl");
-    return from === "modify-heats"
-      ? ret || "/default-raceday"
-      : ret || "/raceday-setup";
-  });
+  backTargetUrl = computed(
+    () => resolveBackNavigation(this.params, this.route).targetUrl,
+  );
 
-  backQueryParams = computed(() => {
-    const from =
-      this.params()?.["from"] || this.route.snapshot.queryParamMap.get("from");
-    return from === "modify-heats" ? { modifyHeats: "true" } : {};
-  });
+  backQueryParams = computed(
+    () => resolveBackNavigation(this.params, this.route).queryParams,
+  );
 
   state!: UIEditorState;
   editingState!: UIEditorState;
@@ -309,6 +307,72 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       (w) => w.widgetType === "lane-view",
     );
   }
+
+  migrationController = new MigrationController(this);
+
+  get dismissedMigrationUis(): Set<string> {
+    return this.migrationController.dismissedMigrationUis;
+  }
+  set dismissedMigrationUis(val: Set<string>) {
+    this.migrationController.dismissedMigrationUis = val;
+  }
+  saveDismissedMigrationUis(): void {
+    this.migrationController.saveDismissedMigrationUis();
+  }
+  isPreMigrationBackup(ui: CustomUI): boolean {
+    return this.migrationController.isPreMigrationBackup(ui);
+  }
+  hasAvailablePreMigrationBackup(ui: CustomUI): boolean {
+    return this.migrationController.hasAvailablePreMigrationBackup(ui);
+  }
+
+  get customUIs(): CustomUI[] {
+    return this.displayCustomUIs?.length > 0
+      ? this.displayCustomUIs
+      : this.editingState?.customUIs || [];
+  }
+
+  isMigratedLayout = (ui: CustomUI) =>
+    this.migrationController.isMigratedLayout(ui);
+  canUpgradeLegacyHeatView = (ui: CustomUI) =>
+    this.migrationController.canUpgradeLegacyHeatView(ui);
+  canReopenMigrationBanner = (ui: CustomUI) =>
+    this.migrationController.canReopenMigrationBanner(ui);
+  dismissMigrationBanner = (ui: CustomUI) =>
+    this.migrationController.dismissMigrationBanner(ui);
+  reopenMigrationBanner = (ui: CustomUI) =>
+    this.migrationController.reopenMigrationBanner(ui);
+
+  stackedColumnsController = new StackedColumnsController(this);
+  detectedStackedIssues: StackedColumnIssue[] = [];
+  pendingRepairStackedUi: CustomUI | null = null;
+  showReviewStackedColumnsModal = false;
+  showImportStackedConfirm = false;
+  pendingImportStacked: any = null;
+  importStackedCount = 0;
+
+  hasStackedColumns = (ui: CustomUI) =>
+    this.stackedColumnsController.hasStackedColumns(ui);
+  getStackedColumnsIssueCount = (ui: CustomUI) =>
+    this.stackedColumnsController.getStackedColumnsIssueCount(ui);
+  getStackedColumnsBannerDesc = (ui: CustomUI) =>
+    this.stackedColumnsController.getStackedColumnsBannerDesc(ui);
+  canReopenStackedColumnsBanner = (ui: CustomUI) =>
+    this.stackedColumnsController.canReopenStackedColumnsBanner(ui);
+  dismissStackedColumnsBanner = (ui: CustomUI) =>
+    this.stackedColumnsController.dismissStackedColumnsBanner(ui);
+  reopenStackedColumnsBanner = (ui: CustomUI) =>
+    this.stackedColumnsController.reopenStackedColumnsBanner(ui);
+  openReviewStackedColumnsModal = (ui: CustomUI) =>
+    this.stackedColumnsController.openReviewStackedColumnsModal(ui);
+  quickFixStackedColumns = (ui: CustomUI) =>
+    this.stackedColumnsController.quickFixStackedColumns(ui);
+  confirmRepairStackedColumns = () =>
+    this.stackedColumnsController.confirmRepairStackedColumns();
+  confirmRepairImportedLayout = () =>
+    this.stackedColumnsController.confirmRepairImportedLayout();
+  cancelRepairImportedLayout = (importAsIs = false) =>
+    this.stackedColumnsController.cancelRepairImportedLayout(importAsIs);
 
   showSuccessModal = false;
   successModalTitle = "";
@@ -392,56 +456,12 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
         this.pendingNavigationUrl = event.url;
     });
 
-    this.undoManager = new UndoManager<UIEditorState>(
-      {
-        clonner: (s) => cloneUIEditorState(s),
-        equalizer: (a, b) => areUIEditorStatesEqual(a, b),
-        applier: (s) => {
-          syncEditorCoordinates(s.settings, this.editingState?.settings);
-          this.editingState = s;
-          this.refreshDisplayProperties();
-        },
-      },
-      () => this.editingState,
-    );
-
-    this.lifecycle = new EditorLifecycleHelper({
-      cdr: this.cdr,
-      translationService: this.translationService,
-      getUnsavedReasons: () => this.getUnsavedReasons(),
-    });
+    this.undoManager = createUiEditorUndoManager(this);
+    this.lifecycle = createUiEditorLifecycle(this);
   }
 
   ngOnInit() {
-    this.loadAvailableVoices();
-    this.sortAvailableColumns();
-    this.updateScale();
-    this.loadExpanderState();
-    this.loadData();
-    if (
-      this.customWidgetService &&
-      this.customWidgetService.getCustomWidgets().length === 0
-    ) {
-      this.customWidgetService.reloadCustomWidgets().catch(() => {});
-    }
-    this.raceConnectionService.connect();
-
-    this.undoManager?.stateCommitted$.subscribe(() => this.autoSaveState());
-    this.translationSubscription = this.translationService
-      .getTranslationsLoaded()
-      .subscribe((loaded) => {
-        if (loaded) {
-          this.sortAvailableColumns();
-          if (!this.isDestroyed) this.cdr.markForCheck();
-        }
-      });
-
-    this.helpSubscription = this.helpService.currentStep$.subscribe((step) => {
-      if (handleUiEditorHelpStep(step, this.sectionsExpanded)) {
-        this.saveExpanderState();
-        this.cdr.markForCheck();
-      }
-    });
+    handleUiEditorInit(this);
   }
 
   ngOnDestroy() {
@@ -480,7 +500,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     );
   }
 
-  private updateScale() {
+  updateScale() {
     this.scale = Math.min(window.innerWidth / 1600, window.innerHeight / 900);
   }
 
@@ -498,18 +518,11 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   parsedLayouts = new Map<string, LayoutConfig>();
 
   refreshDisplayProperties() {
-    if (!this.editingState) return;
-    this.parsedLayouts.clear();
-    this.displayThemes = sortThemesForDisplay(this.editingState.themes);
-    this.displayCustomUIs = sortCustomUisForDisplay(
-      this.editingState.customUIs || this.customUiService?.getCustomUIs() || [],
-    );
-    this.displayColumnSlots = buildDisplayColumnSlots(
-      this.editingSettings?.racedayColumns,
-      this.availableColumns,
-    );
-    this.ensureWidgetSelected();
-    this.cdr.markForCheck();
+    refreshUiEditorDisplayProperties(this);
+  }
+
+  restoreOpenLayoutStateAndScroll(): void {
+    restoreOpenLayoutOnEntry(this);
   }
 
   trackByThemeId(_index: number, theme: Theme) {
@@ -527,60 +540,76 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       : null;
   }
 
+  selectedAnchor: string | null = null;
+
   onWidgetSelected(id: string | null, ui?: CustomUI) {
     handleWidgetSelection(this, id, ui);
   }
 
+  onAnchorSelected(
+    event: { widgetId: string; anchor: string | null },
+    ui?: CustomUI,
+  ) {
+    handleAnchorSelection(this, event, ui);
+  }
+
+  onSelectedAnchorChange(anchor: string | null) {
+    this.selectedAnchor = anchor;
+    this.cdr.markForCheck();
+  }
+
   countdownPreviewActiveByUi: Record<string, boolean> = {};
 
-  isCountdownPreviewActive(ui?: CustomUI): boolean {
-    const id = ui?.entity_id || this.activeCustomUiId;
-    if (!id) return false;
-    if (this.countdownPreviewActiveByUi[id] !== undefined) {
-      return !!this.countdownPreviewActiveByUi[id];
-    }
-    const layout = this.getLayout(ui || this.activeCustomUi);
-    const selected =
-      this.selectedWidgetId && layout?.widgets
-        ? layout.widgets.find((w: any) => w.id === this.selectedWidgetId)
-        : null;
-    return selected?.widgetType === "countdown";
-  }
+  isCountdownPreviewActive = (ui?: CustomUI): boolean =>
+    isCountdownPreviewActiveHelper(this, ui);
 
-  toggleCountdownPreview(ui?: CustomUI) {
-    const id = ui?.entity_id || this.activeCustomUiId;
-    if (id) {
-      this.countdownPreviewActiveByUi[id] = !this.isCountdownPreviewActive(ui);
-      this.cdr.markForCheck();
-    }
-  }
+  toggleCountdownPreview = (ui?: CustomUI): void => {
+    toggleCountdownPreviewHelper(this, ui);
+  };
 
   getLayoutWidgets(ui?: CustomUI): AbsoluteWidgetNode[] {
     const layout = this.getLayout(ui);
     return layout?.widgets || [];
   }
 
+  private widgetDisplayNameCache = new Map<
+    string,
+    { key: string; name: string }
+  >();
+
   getWidgetDisplayName(widget: AbsoluteWidgetNode): string {
-    const key = this.getWidgetTypeLabelKey(widget.widgetType);
-    const translated = this.translationService.translate(key);
-    return translated || widget.widgetType;
-  }
-
-  onWidgetDropdownSelect(widgetId: string, ui?: CustomUI) {
-    if (widgetId) {
-      this.onWidgetSelected(widgetId, ui);
-    } else {
-      this.onWidgetSelected(null, ui);
+    if (!widget) return "";
+    const s = widget.customSettings;
+    const currentLang =
+      this.translationService?.getCurrentLanguageValue?.() || "";
+    const colKey = s?.["columnKey"] || "";
+    const label = s?.["customLabel"] || "";
+    const mode = s?.["bindingMode"] || "";
+    const lane = s?.["gridLane"] ?? s?.["targetIndex"] ?? "";
+    const header = s?.["isHeaderWidget"] ? "1" : "0";
+    const inset = s?.["insets"]?.[this.selectedAnchor || ""] || "";
+    const cacheKey = `${widget.id}_${widget.widgetType}_${this.selectedAnchor || ""}_${currentLang}_${colKey}_${label}_${mode}_${lane}_${header}_${inset}`;
+    const cached = this.widgetDisplayNameCache.get(widget.id);
+    if (cached && cached.key === cacheKey) {
+      return cached.name;
     }
+    const name = computeWidgetDisplayName(
+      widget,
+      this.translationService,
+      this.availableColumns,
+      (w) => this.getWidgetTypeLabelKey(w),
+      this.selectedAnchor,
+    );
+    this.widgetDisplayNameCache.set(widget.id, { key: cacheKey, name });
+    return name;
   }
 
-  onTextColorChange(event: Event) {
+  onWidgetDropdownSelect = (widgetId: string, ui?: CustomUI) =>
+    this.onWidgetSelected(widgetId || null, ui);
+  onTextColorChange = (event: Event) =>
     handleWidgetColorChange(this, "textColor", event);
-  }
-
-  onBackgroundColorChange(event: Event) {
+  onBackgroundColorChange = (event: Event) =>
     handleWidgetColorChange(this, "backgroundColor", event);
-  }
 
   isCustomUiPractice(ui?: CustomUI) {
     if (!ui) return this.isCurrentLayoutPractice;
@@ -609,129 +638,129 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     handleLayoutChanged(this, newLayout, ui);
   }
 
+  @ViewChildren(DefaultRacedayComponent)
+  racedayComponents!: QueryList<DefaultRacedayComponent>;
+
   onWidgetInspectorChange(widget?: any, ui?: CustomUI) {
     handleWidgetInspectorChange(this, widget, ui);
   }
 
-  onReplicateLanes(options: any, ui?: CustomUI) {
-    this.startGridSession(options, ui);
+  syncRacedayPreview(layout: any, targetUi?: CustomUI): void {
+    if (!layout || !this.racedayComponents) return;
+    const uiId = (targetUi || this.activeCustomUi)?.entity_id;
+    const targetComp =
+      this.racedayComponents.find(
+        (rc) => rc.activeCustomUi()?.entity_id === uiId,
+      ) || this.racedayComponents.first;
+    if (targetComp) {
+      targetComp.syncLayoutFromEditor(layout);
+    }
   }
 
-  startGridSession(options: any, ui?: CustomUI): void {
-    handleStartGridSession(this, options, ui);
-  }
+  onReplicateLanes = (opts: any, ui?: CustomUI) =>
+    this.startGridSession(opts, ui);
+  startGridSession = (opts: any, ui?: CustomUI) =>
+    handleStartGridSession(this, opts, ui);
+  finishGridSession = (ui?: CustomUI) => handleFinishGridSession(this, ui);
+  onGridBoundsChange = (b: LaneGridBounds, ui?: CustomUI) =>
+    handleUpdateGridBounds(this, b, ui);
+  onEditGridTemplate = (id: string, ui?: CustomUI) =>
+    handleEditGridTemplate(this, id, ui);
+  onDetachGrid = (id: string, ui?: CustomUI) => handleDetachGrid(this, id, ui);
+  onDeleteGrid = (id: string, ui?: CustomUI) => handleDeleteGrid(this, id, ui);
+  onReMirrorGrid = (id: string, ui?: CustomUI) =>
+    handleReMirrorGrid(this, id, ui);
+  onBringGridToFront = (id: string, ui?: CustomUI) =>
+    handleBringGridToFront(this, id, ui);
 
-  finishGridSession(ui?: CustomUI): void {
-    handleFinishGridSession(this, ui);
-  }
-
-  onGridBoundsChange(bounds: LaneGridBounds, ui?: CustomUI): void {
-    handleUpdateGridBounds(this, bounds, ui);
-  }
-
-  onEditGridTemplate(gridId: string, ui?: CustomUI): void {
-    handleEditGridTemplate(this, gridId, ui);
-  }
-
-  onDetachGrid(gridId: string, ui?: CustomUI): void {
-    handleDetachGrid(this, gridId, ui);
-  }
-
-  openReplicateLaneModal(ui?: CustomUI): void {
+  openReplicateLaneModal = (ui?: CustomUI): void => {
     openReplicateLaneModalHelper(this, ui);
-  }
+  };
 
-  onConfirmReplicateLanes(options: any): void {
+  onConfirmReplicateLanes = (options: any): void => {
     confirmReplicateLanesHelper(this, options);
-  }
+  };
 
-  removeSelectedWidget(ui?: CustomUI) {
+  removeSelectedWidget = (ui?: CustomUI) =>
     handleRemoveSelectedWidget(this, ui);
-  }
-
-  nudgeSelectedWidget(dx: number, dy: number, ui?: CustomUI) {
+  nudgeSelectedWidget = (dx: number, dy: number, ui?: CustomUI) =>
     handleNudgeSelectedWidget(this, dx, dy, ui);
-  }
-
-  onWidgetXChange(value: any, widget: any, ui?: CustomUI) {
+  onWidgetXChange = (value: any, widget: any, ui?: CustomUI) =>
     handleWidgetXChange(this, value, widget, ui);
-  }
-
-  onWidgetYChange(value: any, widget: any, ui?: CustomUI) {
+  onWidgetYChange = (value: any, widget: any, ui?: CustomUI) =>
     handleWidgetYChange(this, value, widget, ui);
-  }
-
-  onWidgetWidthChange(value: any, widget: any, ui?: CustomUI) {
+  onWidgetWidthChange = (value: any, widget: any, ui?: CustomUI) =>
     handleWidgetWidthChange(this, value, widget, ui);
-  }
-
-  onWidgetHeightChange(value: any, widget: any, ui?: CustomUI) {
+  onWidgetHeightChange = (value: any, widget: any, ui?: CustomUI) =>
     handleWidgetHeightChange(this, value, widget, ui);
-  }
 
-  onRacedayLayoutChanged(newLayout: any) {
-    this.onLayoutChanged(
-      newLayout,
-      this.displayCustomUIs.find(
-        (u) => u.entity_id === "default_ui_layout_rc_ai",
-      ),
-    );
-  }
+  isWidgetHeightAutoCalculated = (widget: any) =>
+    isWidgetHeightAutoCalculated(widget, this.activeGridSession);
 
-  onPracticeRacedayLayoutChanged(newLayout: any) {
-    this.onLayoutChanged(
-      newLayout,
-      this.displayCustomUIs.find(
-        (u) => u.entity_id === "practice_ui_layout_rc_ai",
-      ),
-    );
-  }
+  isWidgetWidthAutoCalculated = (widget: any) =>
+    isWidgetWidthAutoCalculated(widget, this.activeGridSession);
 
-  getScaledDefaultLayout(isPractice = false) {
-    return getDefaultLayoutResetData(isPractice).defaultLayout;
-  }
+  layoutActionsController = new LayoutActionsController(this);
 
-  getTargetCustomUi(kind?: "practice" | "raceday" | "current") {
-    return resolveTargetCustomUi(
-      kind,
-      this.activeCustomUiId,
-      this.displayCustomUIs,
-      this.isCurrentLayoutPractice,
-    );
-  }
+  onRacedayLayoutChanged = (newLayout: any) =>
+    this.layoutActionsController.onRacedayLayoutChanged(newLayout);
+  onPracticeRacedayLayoutChanged = (newLayout: any) =>
+    this.layoutActionsController.onPracticeRacedayLayoutChanged(newLayout);
+  getScaledDefaultLayout = (isPractice = false) =>
+    this.layoutActionsController.getScaledDefaultLayout(isPractice);
+  getTargetCustomUi = (kind?: "practice" | "raceday" | "current") =>
+    this.layoutActionsController.getTargetCustomUi(kind);
 
-  resetCurrentLayout() {
-    handleResetCurrentLayout(this);
-  }
-
-  exportCurrentLayout() {
-    handleExportCurrentLayout(this);
-  }
-
-  onImportCurrentLayout(event: Event) {
-    handleImportCurrentLayout(this, event);
-  }
+  resetCurrentLayout = () => this.layoutActionsController.resetCurrentLayout();
+  exportCurrentLayout = () =>
+    this.layoutActionsController.exportCurrentLayout();
+  onImportCurrentLayout = (event: Event) =>
+    this.layoutActionsController.onImportCurrentLayout(event);
 
   onColumnsChanged(_ui?: CustomUI) {
     this.captureState();
   }
 
-  resetLayout = (ui: CustomUI) => handleResetLayout(this, ui);
-  clearLayout = (ui: CustomUI) => handleClearLayout(this, ui);
-  clearCurrentLayout = () => handleClearCurrentLayout(this);
-  resetRacedayLayout = () => handleResetRacedayLayout(this);
-  resetPracticeRacedayLayout = () => handleResetPracticeRacedayLayout(this);
-  exportLayout = (ui: CustomUI) => handleExportLayout(this, ui);
+  resetLayout = (ui: CustomUI) => this.layoutActionsController.resetLayout(ui);
+  clearLayout = (ui: CustomUI) => this.layoutActionsController.clearLayout(ui);
+  clearCurrentLayout = () => this.layoutActionsController.clearCurrentLayout();
+  resetRacedayLayout = () => this.layoutActionsController.resetRacedayLayout();
+  resetPracticeRacedayLayout = () =>
+    this.layoutActionsController.resetPracticeRacedayLayout();
+  exportLayout = (ui: CustomUI) =>
+    this.layoutActionsController.exportLayout(ui);
   downloadJson = (data: any, filename: string) =>
     downloadJsonFile(data, filename);
-  exportRacedayLayout = () => handleExportRacedayLayout(this);
-  exportPracticeRacedayLayout = () => handleExportPracticeRacedayLayout(this);
+  exportRacedayLayout = () =>
+    this.layoutActionsController.exportRacedayLayout();
+  exportPracticeRacedayLayout = () =>
+    this.layoutActionsController.exportPracticeRacedayLayout();
   onImportLayout = (event: Event, ui: CustomUI) =>
-    handleImportLayout(this, event, ui);
+    this.layoutActionsController.onImportLayout(event, ui);
   onImportRacedayLayout = (event: Event) =>
-    handleImportRacedayLayout(this, event);
+    this.layoutActionsController.onImportRacedayLayout(event);
   onImportPracticeRacedayLayout = (event: Event) =>
-    handleImportPracticeRacedayLayout(this, event);
+    this.layoutActionsController.onImportPracticeRacedayLayout(event);
+
+  showRestoreBackupConfirm = false;
+  pendingRestoreBackupUi: CustomUI | null = null;
+  showUpgradeHeatViewConfirm = false;
+  pendingUpgradeHeatViewUi: CustomUI | null = null;
+
+  restorePreMigrationBackup = (ui: CustomUI) =>
+    this.migrationController.restorePreMigrationBackup(ui);
+  confirmRestorePreMigrationBackup = () =>
+    this.migrationController.confirmRestorePreMigrationBackup();
+  cancelRestorePreMigrationBackup = () =>
+    this.migrationController.cancelRestorePreMigrationBackup();
+  upgradeLegacyHeatView = (ui: CustomUI) =>
+    this.migrationController.upgradeLegacyHeatView(ui);
+  confirmUpgradeLegacyHeatView = () =>
+    this.migrationController.confirmUpgradeLegacyHeatView();
+  cancelUpgradeLegacyHeatView = () =>
+    this.migrationController.cancelUpgradeLegacyHeatView();
+  exportMigrationDiagnostics = (ui: CustomUI) =>
+    this.migrationController.exportMigrationDiagnostics(ui);
 
   areSettingsEqual(a: Settings, b: Settings) {
     return areSettingsEqual(a, b);
@@ -762,7 +791,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     }, this.getSaveDelay());
   }
 
-  private autoSaveState(): Promise<void> {
+  autoSaveState(): Promise<void> {
     return handleAutoSaveState(this);
   }
 
@@ -774,17 +803,9 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     return this.lifecycle.discardMessage;
   }
 
-  async confirmDiscard(): Promise<boolean> {
-    return handleConfirmDiscard(this);
-  }
-
-  onConfirmDiscard() {
-    this.lifecycle.onConfirmDiscard();
-  }
-
-  onCancelDiscard() {
-    this.lifecycle.onCancelDiscard();
-  }
+  confirmDiscard = (): Promise<boolean> => this.lifecycle.confirmDiscard();
+  onConfirmDiscard = () => this.lifecycle.onConfirmDiscard();
+  onCancelDiscard = () => this.lifecycle.onCancelDiscard();
 
   async onBack() {
     if (this.hasChanges()) {
@@ -829,16 +850,13 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     }
   }
 
-  scrollToTheme(themeId: string) {
-    scrollToThemeElement(themeId, this.cdr);
-  }
+  scrollToTheme = (themeId: string) => scrollToThemeElement(themeId, this.cdr);
 
-  saveExpanderState() {
+  saveExpanderState = () =>
     saveExpanderStateToStorage(this.sectionsExpanded, this.logger);
-  }
-  loadExpanderState() {
+  loadExpanderState = () => {
     this.sectionsExpanded = loadExpanderStateFromStorage(this.sectionsExpanded);
-  }
+  };
   isThemeNameInvalid(theme: Theme) {
     return isThemeNameInvalid(theme, this.displayThemes);
   }
@@ -865,7 +883,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     return this.themeService.isThemeActive();
   }
 
-  private sortAvailableColumns() {
+  sortAvailableColumns() {
     sortAvailableColumnsList(this.availableColumns, this.translationService);
   }
 
@@ -879,105 +897,57 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     if (!this.isDestroyed) this.cdr.markForCheck();
   }
 
-  getFlagUrl(slot: string, theme?: Theme) {
-    return resolveThemeFlag(this, slot, theme);
-  }
-  getLampUrl(slot: string, theme?: Theme) {
-    return resolveThemeLamp(this, slot, theme);
-  }
-  getFuelGaugeUrl(theme?: Theme) {
-    return resolveThemeFuelGauge(this, theme);
-  }
-  getAudioUrl(slot: string, theme: Theme) {
-    return getThemeAudioUrl(slot, theme, this.dataService, this.assets);
-  }
-  getAssetForSlot(slot: string, theme?: Theme) {
-    return resolveThemeAsset(this, slot, theme);
-  }
+  getFlagUrl = (slot: string, theme?: Theme) =>
+    resolveThemeFlag(this, slot, theme);
+  getLampUrl = (slot: string, theme?: Theme) =>
+    resolveThemeLamp(this, slot, theme);
+  getFuelGaugeUrl = (theme?: Theme) => resolveThemeFuelGauge(this, theme);
+  getAudioUrl = (slot: string, theme: Theme) =>
+    getThemeAudioUrl(slot, theme, this.dataService, this.assets);
+  getAssetForSlot = (slot: string, theme?: Theme) =>
+    resolveThemeAsset(this, slot, theme);
 
-  onTemplateFileSelected(event: Event) {
+  onTemplateFileSelected = (event: Event) => {
     executeTemplateFileSelected(event, this.editingSettings, () => {
       this.captureState();
       this.cdr.markForCheck();
     });
-  }
+  };
 
-  clearCustomTemplate() {
-    handleClearCustomTemplate(this);
-  }
-
-  openTemplateVariablesModal() {
+  clearCustomTemplate = () => handleClearCustomTemplate(this);
+  openTemplateVariablesModal = () => {
     this.showTemplateVariablesModal = true;
-  }
+  };
+  downloadTemplate = () => handleDownloadTemplate(this);
+  testExport = () => handleTestExport(this);
+  onPageTransitionChange = (t: string) => handlePageTransitionChange(this, t);
+  onMasterVolumeChange = (v: number | string) =>
+    handleMasterVolumeChange(this, v);
+  onUrgentQueueTtlChange = (t: number) => handleUrgentQueueTtlChange(this, t);
+  onCalloutSpacingChange = (s: number) => handleCalloutSpacingChange(this, s);
+  loadAvailableVoices = () => initAvailableVoices(this);
+  onTtsVoiceChange = (v: string) => handleTtsVoiceChange(this, v);
+  onTtsRateChange = (r: number | string) => handleTtsRateChange(this, r);
+  onTtsPitchChange = (p: number | string) => handleTtsPitchChange(this, p);
+  onTtsVolumeChange = (v: number | string) => handleTtsVolumeChange(this, v);
+  testTtsVoice = () => executeTestTtsVoice(this);
 
-  downloadTemplate() {
-    handleDownloadTemplate(this);
-  }
-
-  testExport() {
-    handleTestExport(this);
-  }
-
-  onPageTransitionChange(transition: string) {
-    handlePageTransitionChange(this, transition);
-  }
-
-  onMasterVolumeChange(volume: number | string) {
-    handleMasterVolumeChange(this, volume);
-  }
-
-  onUrgentQueueTtlChange(ttl: number) {
-    handleUrgentQueueTtlChange(this, ttl);
-  }
-
-  onCalloutSpacingChange(spacing: number) {
-    handleCalloutSpacingChange(this, spacing);
-  }
-
-  loadAvailableVoices(): void {
-    initAvailableVoices(this);
-  }
-
-  onTtsVoiceChange(voice: string) {
-    handleTtsVoiceChange(this, voice);
-  }
-
-  onTtsRateChange(rate: number | string) {
-    handleTtsRateChange(this, rate);
-  }
-
-  onTtsPitchChange(pitch: number | string) {
-    handleTtsPitchChange(this, pitch);
-  }
-
-  onTtsVolumeChange(volume: number | string) {
-    handleTtsVolumeChange(this, volume);
-  }
-
-  testTtsVoice(): void {
-    executeTestTtsVoice(this);
-  }
-
-  async onThemeSlotChanged(theme: Theme, slot: string, asset: any) {
+  onThemeSlotChanged = (theme: Theme, slot: string, asset: any) =>
     handleThemeSlotChange(this, theme, slot, asset);
-  }
 
-  getAudioConfigForSlot(slot: string, theme: Theme): AudioConfig {
-    return getThemeAudioConfigForSlot(slot, theme);
-  }
+  getAudioConfigForSlot = (slot: string, theme: Theme): AudioConfig =>
+    getThemeAudioConfigForSlot(slot, theme);
 
-  onAudioConfigChanged(
+  onAudioConfigChanged = (
     theme: Theme,
     slot: string,
     field: "type" | "url" | "text",
     value: any,
-  ) {
-    handleThemeAudioChange(this, theme, slot, field, value);
-  }
+  ) => handleThemeAudioChange(this, theme, slot, field, value);
 
-  onAudioAssetSelected(theme: Theme, slot: string, asset: any) {
+  onAudioAssetSelected = (theme: Theme, slot: string, asset: any) => {
     this.onAudioConfigChanged(theme, slot, "url", extractAssetId(asset));
-  }
+  };
 
   ensureWidgetSelected(ui?: CustomUI) {
     ensureWidgetSelectedHelper(this, ui);
@@ -987,63 +957,59 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     handleCustomUiSelection(this, uiId);
   }
 
-  getCustomUiDisplayNameKey(ui: CustomUI) {
-    return getCustomUiDisplayNameKey(ui, this.translationService);
-  }
-  isCustomUiDefault(ui: CustomUI) {
-    return isCustomUiDefault(ui);
-  }
+  getCustomUiDisplayNameKey = (ui: CustomUI) =>
+    getCustomUiDisplayNameKey(ui, this.translationService);
+  isCustomUiDefault = (ui: CustomUI) => isCustomUiDefault(ui);
   toggleUiSection(uiId: string) {
+    const isExpanding = !this.sectionsExpanded[`ui_${uiId}`];
     toggleUiExpander(uiId, this.displayCustomUIs, this.sectionsExpanded, (id) =>
       this.onCustomUiSelected(id),
     );
+    if (isExpanding) {
+      this.scrollToUi(uiId);
+    }
   }
+
+  scrollToUi = (uiId: string, delay = 50) => {
+    scrollToUiElement(uiId, this.cdr, delay);
+  };
 
   createNewCustomUi = () => handleCreateCustomUi(this);
   onDuplicateCustomUi = (ui: CustomUI) => handleDuplicateCustomUi(this, ui);
   onDeleteCustomUi = (ui: CustomUI) => openDeleteCustomUiModal(this, ui);
   cancelDeleteCustomUi = () => cancelDeleteCustomUiModal(this);
   confirmDeleteCustomUi = () => handleConfirmDeleteCustomUi(this);
-  onCustomUiNameChanged(_ui: CustomUI) {
-    this.captureState();
-    this.refreshDisplayProperties();
-    this.cdr.markForCheck();
-  }
-  isCustomUiNameInvalid(ui: CustomUI) {
-    return isCustomUiNameInvalid(ui, this.displayCustomUIs);
-  }
-  isAnyCustomUiNameInvalid() {
-    return this.displayCustomUIs.some((ui) => this.isCustomUiNameInvalid(ui));
-  }
-  getThemeDisplayNameKey(theme: Theme) {
-    return getThemeDisplayNameKey(theme, this.translationService);
-  }
-  isThemeDefault(theme: Theme) {
-    return isThemeDefault(theme);
-  }
+  onCustomUiNameChanged = (_ui: CustomUI) => this.onEntityNameChanged();
+  isCustomUiNameInvalid = (ui: CustomUI) =>
+    isCustomUiNameInvalid(ui, this.displayCustomUIs);
+  isAnyCustomUiNameInvalid = () =>
+    this.displayCustomUIs.some((ui) => this.isCustomUiNameInvalid(ui));
+  getThemeDisplayNameKey = (theme: Theme) =>
+    getThemeDisplayNameKey(theme, this.translationService);
+  isThemeDefault = (theme: Theme) => isThemeDefault(theme);
 
-  focusUiNameInput(entityId: string): void {
+  focusUiNameInput = (entityId: string): void => {
     focusUiEditorElement(`custom-ui-name-input-${entityId}`);
-  }
+  };
 
-  focusThemeNameInput(entityId: string): void {
+  focusThemeNameInput = (entityId: string): void => {
     focusUiEditorElement(`theme-name-input-${entityId}`);
-  }
+  };
 
-  private openSuccessModal(
+  openSuccessModal = (
     params?: { title?: string; message?: string; params?: any },
     collapseThemeId: string | null = null,
     focusThemeId: string | null = null,
-  ) {
-    openSuccessModal(this, params, collapseThemeId, focusThemeId);
-  }
+  ) => openSuccessModal(this, params, collapseThemeId, focusThemeId);
 
   createNewTheme = () => handleCreateTheme(this);
   async onConfirmThemeTemplate(_templateType: ThemeTemplateType) {
     this.showThemeTemplateModal = false;
     await this.createNewTheme();
   }
-  onThemeNameChanged(_theme: Theme) {
+  onThemeNameChanged = (_theme: Theme) => this.onEntityNameChanged();
+
+  private onEntityNameChanged() {
     this.captureState();
     this.refreshDisplayProperties();
     this.cdr.markForCheck();
@@ -1074,39 +1040,26 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   get layoutZoomMap(): Map<string, number> {
     return this.zoomController.layoutZoomMap;
   }
-  getLayoutZoom(ui?: CustomUI): number {
-    return this.zoomController.getZoom(ui);
-  }
-  setLayoutZoom(zoom: number, ui?: CustomUI): void {
+  getLayoutZoom = (ui?: CustomUI): number => this.zoomController.getZoom(ui);
+  setLayoutZoom = (zoom: number, ui?: CustomUI): void =>
     this.zoomController.setZoom(zoom, ui);
-  }
-  stepZoom(delta: number, ui?: CustomUI): void {
+  stepZoom = (delta: number, ui?: CustomUI): void =>
     this.zoomController.step(delta, ui);
-  }
-  resetLayoutZoom(ui?: CustomUI): void {
-    this.zoomController.reset(ui);
-  }
-  onZoomInput(event: Event, ui?: CustomUI): void {
+  resetLayoutZoom = (ui?: CustomUI): void => this.zoomController.reset(ui);
+  onZoomInput = (event: Event, ui?: CustomUI): void =>
     this.zoomController.onInput(event, ui);
-  }
-  getCanvasViewportMaxHeight(_ui?: CustomUI): number {
-    return getCanvasViewportMaxHeightHelper();
-  }
-  getInspectorHeight(ui?: CustomUI): number {
-    return this.zoomController.getInspectorHeight(ui);
-  }
-  getPreviewScale(ui?: CustomUI): string {
-    return this.zoomController.getPreviewScale(ui);
-  }
-  getPreviewScaleNumber(ui?: CustomUI): number {
-    return getComponentPreviewScaleNumber(this, ui);
-  }
-  getPreviewContainerWidth(ui?: CustomUI): number {
-    return getComponentPreviewContainerWidth(this, ui);
-  }
-  getPreviewContainerHeight(ui?: CustomUI): number {
-    return getComponentPreviewContainerHeight(this, ui);
-  }
+  getCanvasViewportMaxHeight = (_ui?: CustomUI): number =>
+    getCanvasViewportMaxHeightHelper();
+  getInspectorHeight = (ui?: CustomUI): number =>
+    this.zoomController.getInspectorHeight(ui);
+  getPreviewScale = (ui?: CustomUI): string =>
+    this.zoomController.getPreviewScale(ui);
+  getPreviewScaleNumber = (ui?: CustomUI): number =>
+    getComponentPreviewScaleNumber(this, ui);
+  getPreviewContainerWidth = (ui?: CustomUI): number =>
+    getComponentPreviewContainerWidth(this, ui);
+  getPreviewContainerHeight = (ui?: CustomUI): number =>
+    getComponentPreviewContainerHeight(this, ui);
 
   getHelpSteps(): GuideStep[] {
     return getUiEditorHelpSteps(buildUiEditorHelpContext(this));

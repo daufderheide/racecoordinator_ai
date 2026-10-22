@@ -78,6 +78,31 @@ export function toggleUiExpander(
   saveExpanderStateToStorage(sectionsExpanded);
 }
 
+export function scrollToUiElement(uiId: string, cdr?: any, delay = 0): void {
+  cdr?.detectChanges();
+  setTimeout(() => {
+    const container = document.querySelector(
+      ".sections-wrapper",
+    ) as HTMLElement;
+    const element = document.querySelector(
+      `[data-ui-id="${uiId}"]`,
+    ) as HTMLElement;
+    if (element && container) {
+      const topPos =
+        element.getBoundingClientRect().top -
+        container.getBoundingClientRect().top +
+        container.scrollTop;
+
+      container.scrollTo({
+        top: Math.max(0, topPos - 15),
+        behavior: "smooth",
+      });
+    } else if (element) {
+      element.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, delay);
+}
+
 export function scrollToThemeElement(themeId: string, cdr?: any): void {
   cdr?.detectChanges();
   setTimeout(() => {
@@ -101,4 +126,29 @@ export function scrollToThemeElement(themeId: string, cdr?: any): void {
       element.scrollIntoView({ behavior: "smooth", block: "start" });
     }
   });
+}
+
+/**
+ * Restores the active custom UI layout and scrolls to it upon entering the UI editor,
+ * based on saved expander settings.
+ */
+export function restoreOpenLayoutOnEntry(comp: {
+  displayCustomUIs?: CustomUI[];
+  sectionsExpanded: Record<string, boolean>;
+  activeCustomUiId?: string;
+  ensureWidgetSelected?: () => void;
+  scrollToUi?: (uiId: string, delay?: number) => void;
+}): { openUiId?: string } {
+  const openUi = comp.displayCustomUIs?.find(
+    (u) => !!comp.sectionsExpanded?.[`ui_${u.entity_id}`],
+  );
+  if (openUi) {
+    comp.activeCustomUiId = openUi.entity_id;
+    comp.ensureWidgetSelected?.();
+    if (comp.sectionsExpanded?.["customUIs"] !== false) {
+      comp.scrollToUi?.(openUi.entity_id, 100);
+    }
+    return { openUiId: openUi.entity_id };
+  }
+  return {};
 }

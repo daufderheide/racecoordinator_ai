@@ -32,5 +32,10 @@ export class RaceParticipant {
     public averageTop15: number = 0,
     public top2Consecutive: number = 0,
     public top3Consecutive: number = 0,
+    public hasSegments?: boolean,
+    public groupRank?: number,
+    public heatsRaced: number = 0,
+    public heatsRemaining: number = 0,
+    public totalHeats: number = 0,
   ) {}
 }

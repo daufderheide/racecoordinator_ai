@@ -212,4 +212,55 @@ public class ThemeTest {
     assertEquals("2", theme.getUiId());
     assertEquals("3", theme.getEntityId());
   }
+
+  @Test
+  public void testPrewarmFlagCache() throws Exception {
+    java.io.File tempDir = java.nio.file.Files.createTempDirectory("theme_test_prewarm").toFile();
+    com.antigravity.context.DatabaseContext dbCtx =
+        new com.antigravity.context.DatabaseContext(
+            "test_db_prewarm", null, tempDir.getAbsolutePath());
+
+    try {
+      dbCtx.ensureTable("assets");
+      String insertSql = "INSERT INTO assets (entity_id, json_data) VALUES (?, ?)";
+      try (java.sql.PreparedStatement pstmt = dbCtx.getConnection().prepareStatement(insertSql)) {
+        pstmt.setString(1, "custom-asset-uuid-racing");
+        pstmt.setString(
+            2, "{\"name\":\"super_green_flag.png\",\"url\":\"/assets/super_green.png\"}");
+        pstmt.executeUpdate();
+      }
+
+      Map<String, String> slots = new HashMap<>();
+      slots.put("flag.racing", "custom-asset-uuid-racing");
+      slots.put("flag.heat_paused", "default_flag_yellow");
+      slots.put("flag.heat_finishing", "default_flag_checkered");
+
+      Theme theme = new Theme("Prewarmed Theme", false, slots, null, "theme-prewarm", "id-prewarm");
+      theme.prewarmFlagCache(dbCtx);
+
+      // Verify that all flags resolve even when dbCtx is null because cache was prewarmed
+      assertEquals(RaceFlag.GREEN, theme.resolveFlag("flag.racing", RaceFlag.RED, null));
+      assertEquals(RaceFlag.YELLOW, theme.resolveFlag("flag.heat_paused", RaceFlag.RED, null));
+      assertEquals(
+          RaceFlag.CHECKERED, theme.resolveFlag("flag.heat_finishing", RaceFlag.RED, null));
+      assertEquals(RaceFlag.RED, theme.resolveFlag("flag.heat_over", RaceFlag.RED, null));
+    } finally {
+      if (dbCtx.getConnection() != null) {
+        dbCtx.getConnection().close();
+      }
+      tempDir.delete();
+    }
+  }
+
+  @Test
+  public void testPrewarmFlagCacheWithNullOrEmptySlots() {
+    Theme emptyTheme = new Theme("Empty Theme", false, null, null, "empty", "empty");
+    emptyTheme.prewarmFlagCache(null);
+    assertEquals(RaceFlag.GREEN, emptyTheme.resolveFlag("flag.racing", RaceFlag.GREEN, null));
+
+    Theme emptySlotsTheme =
+        new Theme("Empty Slots", false, new HashMap<>(), null, "empty", "empty");
+    emptySlotsTheme.prewarmFlagCache(null);
+    assertEquals(RaceFlag.RED, emptySlotsTheme.resolveFlag("flag.heat_over", RaceFlag.RED, null));
+  }
 }

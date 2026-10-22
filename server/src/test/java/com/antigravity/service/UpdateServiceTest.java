@@ -391,6 +391,66 @@ public class UpdateServiceTest {
 
     UpdateService.UpdateCheckResult result = service.checkForUpdates();
     assertTrue(result.updateAvailable);
+    assertEquals("v0.0.0-alpha.20260710", result.latestVersion);
+  }
+
+  @Test
+  public void testCheckForUpdates_AlphaChannel_IgnoresNewerProductionAndBeta() throws Exception {
+    when(mockConfigService.getUpdateChannel()).thenReturn("ALPHA");
+    UpdateService service = spy(new UpdateService("v0.0.0-alpha.20260715", mockConfigService));
+
+    String json =
+        "[\n"
+            + "  {\n"
+            + "    \"tag_name\": \"v1.0.0\",\n"
+            + "    \"published_at\": \"2026-07-20T14:00:00Z\",\n"
+            + "    \"assets\": []\n"
+            + "  },\n"
+            + "  {\n"
+            + "    \"tag_name\": \"v1.0.0-beta.1\",\n"
+            + "    \"published_at\": \"2026-07-18T14:00:00Z\",\n"
+            + "    \"assets\": []\n"
+            + "  },\n"
+            + "  {\n"
+            + "    \"tag_name\": \"v0.0.0-alpha.20260710\",\n"
+            + "    \"published_at\": \"2026-07-10T14:00:00Z\",\n"
+            + "    \"assets\": []\n"
+            + "  }\n"
+            + "]";
+    JsonNode releases = mapper.readTree(json);
+    doReturn(releases).when(service).fetchReleasesNode();
+
+    UpdateService.UpdateCheckResult result = service.checkForUpdates();
+    assertFalse(
+        "Alpha channel should stay on alpha and ignore production/beta", result.updateAvailable);
+  }
+
+  @Test
+  public void testCheckForUpdates_SwitchFromAlphaToProduction_AllowsTargetOffered()
+      throws Exception {
+    when(mockConfigService.getUpdateChannel()).thenReturn("PRODUCTION");
+    UpdateService service = spy(new UpdateService("v0.0.0-alpha.20260725", mockConfigService));
+
+    String json =
+        "[\n"
+            + "  {\n"
+            + "    \"tag_name\": \"v0.0.0-alpha.20260725\",\n"
+            + "    \"published_at\": \"2026-07-25T14:00:00Z\",\n"
+            + "    \"assets\": []\n"
+            + "  },\n"
+            + "  {\n"
+            + "    \"tag_name\": \"v1.0.0\",\n"
+            + "    \"published_at\": \"2026-07-20T14:00:00Z\",\n"
+            + "    \"assets\": []\n"
+            + "  }\n"
+            + "]";
+    JsonNode releases = mapper.readTree(json);
+    doReturn(releases).when(service).fetchReleasesNode();
+
+    UpdateService.UpdateCheckResult result = service.checkForUpdates();
+    assertTrue(
+        "Switching from alpha to production should offer production release",
+        result.updateAvailable);
     assertEquals("v1.0.0", result.latestVersion);
   }
 
@@ -478,6 +538,7 @@ public class UpdateServiceTest {
 
   @Test
   public void testCheckForUpdates_SnoozedUpdate_SuppressedUntilExpired() throws Exception {
+    when(mockConfigService.getUpdateChannel()).thenReturn("PRODUCTION");
     when(mockConfigService.getSnoozedUpdateVersion()).thenReturn("v1.0.1");
     // Snooze active for next 7 days
     when(mockConfigService.getSnoozedUpdateUntil())
@@ -508,6 +569,7 @@ public class UpdateServiceTest {
 
   @Test
   public void testCheckForUpdates_SnoozedUpdate_NewerVersionBypassesSnooze() throws Exception {
+    when(mockConfigService.getUpdateChannel()).thenReturn("PRODUCTION");
     when(mockConfigService.getSnoozedUpdateVersion()).thenReturn("v1.0.1");
     when(mockConfigService.getSnoozedUpdateUntil())
         .thenReturn(System.currentTimeMillis() + 7 * 86400000L);
@@ -545,6 +607,26 @@ public class UpdateServiceTest {
     assertFalse(UpdateService.matchesChannel(alphaNode, null));
     assertTrue(UpdateService.matchesChannel(betaNode, null));
     assertTrue(UpdateService.matchesChannel(prodNode, null));
+  }
+
+  @Test
+  public void testMatchesChannel_AlphaOnlyMatchesAlpha() throws Exception {
+    JsonNode alphaNode = mapper.readTree("{\"tag_name\": \"v1.0.0-alpha.20261001\"}");
+    JsonNode betaNode = mapper.readTree("{\"tag_name\": \"v1.0.0-beta.1\"}");
+    JsonNode prodNode = mapper.readTree("{\"tag_name\": \"v1.0.0\"}");
+
+    assertTrue(UpdateService.matchesChannel(alphaNode, "ALPHA"));
+    assertFalse(UpdateService.matchesChannel(betaNode, "ALPHA"));
+    assertFalse(UpdateService.matchesChannel(prodNode, "ALPHA"));
+  }
+
+  @Test
+  public void testExtractAlphaDate() {
+    assertEquals("20261007", UpdateService.extractAlphaDate("v1.0.0-alpha.20261007"));
+    assertEquals("20261007", UpdateService.extractAlphaDate("1.0.0-alpha.20261007.hash"));
+    org.junit.Assert.assertNull(UpdateService.extractAlphaDate("v1.0.0-beta.1"));
+    org.junit.Assert.assertNull(UpdateService.extractAlphaDate("v1.0.0"));
+    org.junit.Assert.assertNull(UpdateService.extractAlphaDate(null));
   }
 
   @Test

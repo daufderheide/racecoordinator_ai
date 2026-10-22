@@ -77,6 +77,18 @@ export class ImportModalHarnessE2e implements ImportModalHarnessBase {
     return this.locator.locator(this.base.selectors.nickInputs);
   }
 
+  get avatarThumbnails() {
+    return this.locator.locator(this.base.selectors.avatarThumbnail);
+  }
+
+  get avatarFallbackIcons() {
+    return this.locator.locator(this.base.selectors.avatarFallbackIcon);
+  }
+
+  get avatarTexts() {
+    return this.locator.locator(this.base.selectors.avatarText);
+  }
+
   get commitBtn() {
     return this.locator.locator(this.base.selectors.commitBtn);
   }

@@ -34,14 +34,16 @@ describe("ToolboxGroupHelper", () => {
     );
     expect(standingsSg?.widgets.length).toBe(10);
     expect(standingsSg?.widgets.map((w) => w.type)).toContain("countdown");
-    expect(standingsSg?.widgets.map((w) => w.type)).toContain("lane-view");
+    expect(standingsSg?.widgets.map((w) => w.type)).toContain("grid");
+    expect(standingsSg?.widgets.map((w) => w.type)).not.toContain("lane-view");
     expect(standingsSg?.widgets.map((w) => w.type)).toContain("leaderboard");
 
     const titlesSg = rcAiGroup.subgroups.find((sg) => sg.id === "titles-info");
-    expect(titlesSg?.widgets.length).toBe(7);
+    expect(titlesSg?.widgets.length).toBe(8);
     expect(titlesSg?.widgets.map((w) => w.type)).toContain("timer");
     expect(titlesSg?.widgets.map((w) => w.type)).toContain("flag");
     expect(titlesSg?.widgets.map((w) => w.type)).toContain("heat-info");
+    expect(titlesSg?.widgets.map((w) => w.type)).toContain("label");
 
     const mediaSg = rcAiGroup.subgroups.find((sg) => sg.id === "media-chrome");
     expect(mediaSg?.widgets.length).toBe(5);
@@ -52,7 +54,7 @@ describe("ToolboxGroupHelper", () => {
 
   it("should exclude used widgets from root and subgroups", () => {
     const used = new Set<string>([
-      "lane-view",
+      "leaderboard",
       "action-start-resume",
       "branding",
       "event-name",
@@ -66,7 +68,7 @@ describe("ToolboxGroupHelper", () => {
       (sg) => sg.id === "standings-heats",
     );
     expect(
-      standingsSg?.widgets.find((w) => w.type === "lane-view"),
+      standingsSg?.widgets.find((w) => w.type === "leaderboard"),
     ).toBeUndefined();
     expect(standingsSg?.widgets.length).toBe(9);
 
@@ -80,7 +82,7 @@ describe("ToolboxGroupHelper", () => {
     expect(
       titlesSg?.widgets.find((w) => w.type === "event-name"),
     ).toBeUndefined();
-    expect(titlesSg?.widgets.length).toBe(6);
+    expect(titlesSg?.widgets.length).toBe(7);
 
     const mediaSg = rcAiGroup.subgroups.find((sg) => sg.id === "media-chrome");
     expect(mediaSg?.widgets.find((w) => w.type === "branding")).toBeUndefined();
@@ -135,6 +137,43 @@ describe("ToolboxGroupHelper", () => {
     expect(groups[3].subgroups[0].id).toBe("sample:timing");
     expect(groups[3].subgroups[0].nameKey).toBe("timing");
     expect(groups[3].subgroups[0].widgets[0].type).toBe("custom:sample-delta");
+  });
+
+  it("should keep custom widgets in toolbox if allowMultiple is true even when used", () => {
+    const used = new Set<string>([
+      "custom:single-widget",
+      "custom:multi-widget",
+    ]);
+    const customWidgets: CustomWidgetDefinition[] = [
+      {
+        folderName: "single-widget",
+        group: "custom-root",
+        manifest: {
+          id: "single-widget",
+          name: "Single Widget",
+          allowMultiple: false,
+        },
+      },
+      {
+        folderName: "multi-widget",
+        group: "custom-root",
+        manifest: {
+          id: "multi-widget",
+          name: "Multi Widget",
+          allowMultiple: true,
+        },
+      },
+    ];
+
+    const groups = ToolboxGroupHelper.buildToolboxGroups(used, customWidgets);
+    const customRoot = groups.find(
+      (g) => g.id === ToolboxGroupHelper.CUSTOM_ROOT_GROUP_ID,
+    );
+
+    expect(customRoot).toBeDefined();
+    // single-widget should be filtered out, multi-widget should remain
+    expect(customRoot?.rootWidgets.length).toBe(1);
+    expect(customRoot?.rootWidgets[0].type).toBe("custom:multi-widget");
   });
 
   it("should filter widgets across groups and subgroups by search term", () => {
@@ -255,6 +294,7 @@ describe("ToolboxGroupHelper", () => {
       UE_WIDGET_TYPE_RACE_NAME: "Race Name",
       UE_WIDGET_TYPE_SEASON_NAME: "Season Name",
       UE_WIDGET_TYPE_TRACK_NAME: "Track Name",
+      UE_WIDGET_TYPE_LABEL: "Title / Label",
     };
 
     const translate = (key: string) => mockTranslations[key] || key;
@@ -286,6 +326,7 @@ describe("ToolboxGroupHelper", () => {
       "Race State",
       "Season Name",
       "Timer",
+      "Title / Label",
       "Track Name",
     ]);
   });
@@ -463,6 +504,58 @@ describe("ToolboxGroupHelper", () => {
         (w) => w.type === "lane-col:imageset_custom_gauge",
       ),
     ).toBeTrue();
+  });
+
+  it("should place fuel gauge only in telemetry subgroup and exclude from media-custom in Heat Data", () => {
+    const groups = ToolboxGroupHelper.buildToolboxGroups(new Set(), []);
+    const rcGroup = groups.find(
+      (g) => g.id === ToolboxGroupHelper.RC_AI_GROUP_ID,
+    );
+    const heatDataSubgroup = rcGroup!.subgroups.find(
+      (sg) => sg.id === ToolboxGroupHelper.HEAT_DATA_GROUP_ID,
+    );
+    expect(heatDataSubgroup).toBeDefined();
+
+    const telemetrySg = heatDataSubgroup!.subgroups?.find(
+      (sg) => sg.id === "heat-data-sg-telemetry",
+    );
+    expect(telemetrySg).toBeDefined();
+    expect(
+      telemetrySg!.widgets.some(
+        (w) => w.type === "lane-col:imageset_fuel-gauge-builtin",
+      ),
+    ).toBeTrue();
+
+    const mediaCustomSg = heatDataSubgroup!.subgroups?.find(
+      (sg) => sg.id === "heat-data-sg-media-custom",
+    );
+    expect(mediaCustomSg).toBeDefined();
+    expect(
+      mediaCustomSg!.widgets.some(
+        (w) => w.type === "lane-col:imageset_fuel-gauge-builtin",
+      ),
+    ).toBeFalse();
+  });
+
+  it("should exclude fuel gauge from media-custom subgroup of Overall Race Data", () => {
+    const groups = ToolboxGroupHelper.buildToolboxGroups(new Set(), []);
+    const rcGroup = groups.find(
+      (g) => g.id === ToolboxGroupHelper.RC_AI_GROUP_ID,
+    );
+    const overallDataSubgroup = rcGroup!.subgroups.find(
+      (sg) => sg.id === ToolboxGroupHelper.OVERALL_DATA_GROUP_ID,
+    );
+    expect(overallDataSubgroup).toBeDefined();
+
+    const mediaCustomSg = overallDataSubgroup!.subgroups?.find(
+      (sg) => sg.id === "overall-data-sg-media-custom",
+    );
+    expect(mediaCustomSg).toBeDefined();
+    expect(
+      mediaCustomSg!.widgets.some(
+        (w) => w.type === "lane-col:imageset_fuel-gauge-builtin",
+      ),
+    ).toBeFalse();
   });
 
   it("should expand Heat Data subgroup when legacy lane-columns id is saved in expanded states", () => {

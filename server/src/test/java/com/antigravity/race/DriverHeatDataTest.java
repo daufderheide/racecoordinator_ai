@@ -265,4 +265,42 @@ public class DriverHeatDataTest {
     assertEquals(8.7, varied.getTop2Consecutive(), 0.01);
     assertEquals(15.0, varied.getTop3Consecutive(), 0.01);
   }
+
+  @Test
+  public void testUserTimeAffectsTotalTimeAndAverageLapTimeNotBestOrMedian() {
+    Driver driverModel = new Driver("Time Adj Driver", "Adjuster");
+    RaceParticipant driver = new RaceParticipant(driverModel);
+    DriverHeatData dhd = new DriverHeatData(driver);
+
+    dhd.addLap(5.0, false, true);
+    dhd.addLap(7.0, false, true);
+
+    assertEquals(12.0, dhd.getPhysicalTotalTime(), 0.001);
+    assertEquals(12.0, dhd.getTotalTime(), 0.001);
+    assertEquals(6.0, dhd.getAverageLapTime(), 0.001);
+    assertEquals(5.0, dhd.getBestLapTime(), 0.001);
+    assertEquals(6.0, dhd.getMedianLapTime(), 0.001);
+
+    // Apply positive user time adjustment (+2.0s)
+    dhd.setUserTime(2.0);
+    assertEquals(2.0, dhd.getUserTime(), 0.001);
+    assertEquals(12.0, dhd.getPhysicalTotalTime(), 0.001);
+    assertEquals(14.0, dhd.getTotalTime(), 0.001);
+    assertEquals(7.0, dhd.getAverageLapTime(), 0.001);
+    assertEquals(5.0, dhd.getBestLapTime(), 0.001);
+    assertEquals(6.0, dhd.getMedianLapTime(), 0.001);
+
+    // resetForFalseStart preserves userTime and userLaps
+    dhd.setUserLaps(0.5);
+    dhd.resetForFalseStart();
+    assertEquals(2.0, dhd.getUserTime(), 0.001);
+    assertEquals(0.5, dhd.getUserLaps(), 0.001);
+
+    // reset clears userTime and userLaps
+    dhd.reset();
+    assertEquals(0.0, dhd.getUserTime(), 0.001);
+    assertEquals(0.0, dhd.getUserLaps(), 0.001);
+    assertEquals(0.0, dhd.getTotalTime(), 0.001);
+    assertEquals(0.0, dhd.getAverageLapTime(), 0.001);
+  }
 }

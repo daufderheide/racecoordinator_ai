@@ -2,7 +2,7 @@ import {
   AnchorPoint,
   ColumnDefinition,
 } from "@app/components/raceday/column_definition";
-import { AbsoluteWidgetNode, LayoutConfig } from "@app/models/settings";
+import { LayoutConfig } from "@app/models/settings";
 
 export class RacedayLayoutUtils {
   static getColumnX(columns: ColumnDefinition[], columnIndex: number): number {
@@ -247,10 +247,27 @@ export class RacedayLayoutUtils {
     if (!key) return false;
     const baseKey = key.split("_")[0];
     const isLapBase = (k: string) =>
-      k === "lapCount" || k === "overallLapCount";
+      k === "lapCount" ||
+      k === "overallLapCount" ||
+      k === "totalLaps" ||
+      k === "heatTotalLaps" ||
+      k === "raceTotalLaps" ||
+      k === "overallTotalLaps" ||
+      k === "custom:dopamine:advanced-laps" ||
+      k.includes("advanced-laps");
     if (isLapBase(baseKey)) return true;
     const parts = key.split("_");
     return parts.some((p) => isLapBase(p));
+  }
+
+  static isTotalTimeColumnKey(key: string): boolean {
+    if (!key) return false;
+    const baseKey = key.split("_")[0];
+    const isTotalTimeBase = (k: string) =>
+      k === "totalTime" || k === "overallTotalTime";
+    if (isTotalTimeBase(baseKey)) return true;
+    const parts = key.split("_");
+    return parts.some((p) => isTotalTimeBase(p));
   }
 
   static isLapOrTimeColumnKey(key: string): boolean {
@@ -322,7 +339,7 @@ export class RacedayLayoutUtils {
     }
     return false;
   }
-  private static readonly COLUMN_LABELS: Record<string, string> = {
+  public static readonly COLUMN_LABELS: Record<string, string> = {
     lapCount: "RD_COL_LAP",
     physicalLapCount: "UI_EDITOR_COL_LAP_COUNT",
     lapsLed: "RD_COL_LAPS_LED",
@@ -349,6 +366,8 @@ export class RacedayLayoutUtils {
     reactionTime: "RD_COL_REACTION_TIME",
     "participant.team.name": "RD_COL_TEAM",
     "driver.name": "RD_COL_NAME",
+    name: "RD_COL_NAME",
+    column_name: "RD_COL_NAME",
     "driver.nickname": "RD_COL_NICKNAME",
     "participant.fuelLevel": "RD_COL_FUEL_LEVEL",
     fuelCapacity: "RD_COL_FUEL_CAPACITY",
@@ -382,6 +401,8 @@ export class RacedayLayoutUtils {
     overallLapsLed: "RD_COL_LAPS_LED",
     overallTrackCalls: "RD_COL_TRACK_CALLS",
     overallPoints: "RD_COL_POINTS",
+    heatsRaced: "RD_COL_HEATS_RACED",
+    heatsRemaining: "RD_COL_HEATS_REMAINING",
     winProbability: "RD_COL_WIN_PROB",
     projectedRank: "RD_COL_PROJ_RANK",
     projectedLaps: "RD_COL_PROJ_LAPS",
@@ -431,6 +452,8 @@ export class RacedayLayoutUtils {
     overallLapsLed: 216,
     overallTrackCalls: 216,
     overallPoints: 216,
+    heatsRaced: 120,
+    heatsRemaining: 120,
     reactionTime: 330,
     lastLapTime: 330,
     lastLaps: 1650,
@@ -684,26 +707,16 @@ export class RacedayLayoutUtils {
     const hasCountdown = layout.widgets.some(
       (w) => w.widgetType === "countdown",
     );
-    if (hasCountdown) {
-      for (const w of layout.widgets) {
-        if (w.widgetType === "countdown") {
-          w.customSettings = this.backfillCountdownSettings(w.customSettings);
-        }
-      }
+    if (!hasCountdown) {
       return layout;
     }
 
-    const baseWidth = layout.baseWidth || 1920;
-    const baseHeight = layout.baseHeight || 1080;
-    const countdownWidget = this.createDefaultCountdownWidget(
-      baseWidth,
-      baseHeight,
-    );
-
-    return {
-      ...layout,
-      widgets: [...layout.widgets, countdownWidget],
-    };
+    for (const w of layout.widgets) {
+      if (w.widgetType === "countdown") {
+        w.customSettings = this.backfillCountdownSettings(w.customSettings);
+      }
+    }
+    return layout;
   }
 
   private static backfillCountdownSettings(
@@ -753,39 +766,20 @@ export class RacedayLayoutUtils {
     return s;
   }
 
-  private static createDefaultCountdownWidget(
-    baseWidth: number,
-    baseHeight: number,
-  ): AbsoluteWidgetNode {
-    const isPortrait = baseWidth < baseHeight;
-    const widgetWidth = isPortrait ? 250 : 1000;
-    const widgetHeight = isPortrait ? 800 : 250;
-    const x = Math.max(0, Math.round((baseWidth - widgetWidth) / 2));
-    const y = Math.max(0, Math.round((baseHeight - widgetHeight) / 2));
-
-    return {
-      id: "widget-countdown",
-      widgetType: "countdown",
-      x,
-      y,
-      width: widgetWidth,
-      height: widgetHeight,
-      zIndex: 2000,
-      scaleMode: "auto",
-      customSettings: {
-        orientation: isPortrait ? "vertical" : "horizontal",
-        lampScale: 1.0,
-        blurArea: "fullscreen",
-        blurAmount: 50,
-        lampSizingMode: "custom",
-        previewLampCount: 5,
-        maxLamps: 5,
-        fadeIn: true,
-        glowEffect: true,
-        glowOverlap: 30,
-        glowRedOverlap: 30,
-        glowGreenOverlap: 25,
-      },
-    };
+  static isOverallColumnKey(key: string | undefined): boolean {
+    if (!key) return false;
+    if (key.startsWith("overall")) return true;
+    const overallKeys = new Set([
+      "rankOverall",
+      "rankGroup",
+      "bestRaceLapTime",
+      "recordLapTime",
+      "winProbability",
+      "projectedRank",
+      "projectedLaps",
+      "heatsRaced",
+      "heatsRemaining",
+    ]);
+    return overallKeys.has(key);
   }
 }

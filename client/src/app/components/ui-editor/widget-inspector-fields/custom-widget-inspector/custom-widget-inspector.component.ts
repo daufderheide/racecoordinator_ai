@@ -65,6 +65,26 @@ export class CustomWidgetInspectorComponent {
     return node.customSettings[key];
   }
 
+  toValidHexColor(color: any, fallback: string = "#ffffff"): string {
+    if (typeof color !== "string" || !color) return fallback;
+    const trimmed = color.trim();
+    if (/^#[0-9a-fA-F]{6}$/.test(trimmed)) {
+      return trimmed;
+    }
+    if (/^#[0-9a-fA-F]{3}$/.test(trimmed)) {
+      return (
+        "#" +
+        trimmed[1] +
+        trimmed[1] +
+        trimmed[2] +
+        trimmed[2] +
+        trimmed[3] +
+        trimmed[3]
+      );
+    }
+    return fallback;
+  }
+
   onSettingChanged(key: string, value: any) {
     const node = this.widget();
     if (!node) return;

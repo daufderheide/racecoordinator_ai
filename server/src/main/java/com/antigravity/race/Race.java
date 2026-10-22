@@ -9,10 +9,13 @@ import com.antigravity.models.CustomRotation;
 import com.antigravity.models.Driver;
 import com.antigravity.models.FuelOptions;
 import com.antigravity.models.HeatRotationType;
+import com.antigravity.models.HeatScoring;
+import com.antigravity.models.HeatScoring.AllowFinish;
 import com.antigravity.models.OverallScoring.OverallRanking;
 import com.antigravity.models.RaceConfigDump;
 import com.antigravity.models.Theme;
 import com.antigravity.models.Track;
+import com.antigravity.proto.AssetMessage;
 import com.antigravity.proto.CallbuttonEvent;
 import com.antigravity.proto.DemoConfig;
 import com.antigravity.proto.GroupStandingsUpdate;
@@ -43,6 +46,7 @@ import com.antigravity.race.states.Starting;
 import com.antigravity.repository.SqliteRepository;
 import com.antigravity.service.AssetService;
 import com.antigravity.service.DatabaseService;
+import com.antigravity.service.SleepPreventionService;
 import com.google.protobuf.GeneratedMessageV3;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -74,6 +78,7 @@ public class Race implements ProtocolListener {
   private Heat currentHeat;
   private final OverallStandings overallStandings;
   private final List<CustomRotation> customRotations;
+  private String customRotationAssetName;
 
   private final RaceHardwareManager hardwareManager;
   private final RaceRecords recordsManager;
@@ -126,10 +131,14 @@ public class Race implements ProtocolListener {
     this.historyRecordId = builder.historyRecordId;
     this.drivers = builder.drivers != null ? new ArrayList<>(builder.drivers) : new ArrayList<>();
     this.databaseContext = builder.databaseContext;
+    if (this.theme != null && this.databaseContext != null) {
+      this.theme.prewarmFlagCache(this.databaseContext);
+    }
     this.customRotations =
         builder.customRotations != null
             ? new ArrayList<>(builder.customRotations)
             : new ArrayList<>();
+    this.customRotationAssetName = builder.customRotationAssetName;
 
     this.recordsManager = new RaceRecords(this);
     loadExistingRecords(builder.isDemoMode, builder.existingRecords);
@@ -189,6 +198,9 @@ public class Race implements ProtocolListener {
                 && builder.stateClassName.equals(RaceOver.class.getName()));
     if (!isFinishedRace) {
       this.hardwareManager.createProtocols(builder.isDemoMode, builder.demoConfig);
+    }
+    if (this.hardwareManager.getProtocols() != null) {
+      SleepPreventionService.getInstance().acquireSleepLock();
     }
     this.isDemoMode = builder.isDemoMode;
 
@@ -288,6 +300,7 @@ public class Race implements ProtocolListener {
       if (this.hardwareManager.open()) {
         initializeHardwareState();
       }
+      SleepPreventionService.getInstance().acquireSleepLock();
     }
   }
 
@@ -316,6 +329,12 @@ public class Race implements ProtocolListener {
     private String historyRecordId;
     private Theme theme;
     private boolean skipHardwareInterface = false;
+    private String customRotationAssetName;
+
+    public Builder customRotationAssetName(String customRotationAssetName) {
+      this.customRotationAssetName = customRotationAssetName;
+      return this;
+    }
 
     public Builder historyRecordId(String historyRecordId) {
       this.historyRecordId = historyRecordId;
@@ -431,6 +450,9 @@ public class Race implements ProtocolListener {
 
   public synchronized void setTheme(Theme theme) {
     this.theme = theme;
+    if (this.theme != null && this.databaseContext != null) {
+      this.theme.prewarmFlagCache(this.databaseContext);
+    }
     syncRaceState();
   }
 
@@ -708,6 +730,7 @@ public class Race implements ProtocolListener {
   }
 
   public void setMainPower(boolean on) {
+    logger.info("Race.setMainPower called: on={}", on);
     this.mainPower = on;
     if (hardwareManager.getProtocols() != null) {
       hardwareManager.getProtocols().setMainPower(on);
@@ -716,6 +739,7 @@ public class Race implements ProtocolListener {
   }
 
   public void forceUserMainPower(boolean on) {
+    logger.info("Race.forceUserMainPower (manual power toggle) called: on={}", on);
     this.mainPower = on;
     if (hardwareManager.getProtocols() != null) {
       hardwareManager.getProtocols().setMainPower(on);
@@ -736,6 +760,54 @@ public class Race implements ProtocolListener {
 
   public List<CustomRotation> getCustomRotations() {
     return customRotations;
+  }
+
+  public String getCustomRotationAssetName() {
+    if (this.customRotationAssetName != null && !this.customRotationAssetName.isEmpty()) {
+      return this.customRotationAssetName;
+    }
+    if (this.model == null
+        || this.model.getCustomRotationAssetId() == null
+        || this.model.getCustomRotationAssetId().isEmpty()) {
+      return null;
+    }
+    if (databaseContext == null) {
+      return null;
+    }
+    try {
+      AssetService assetService =
+          new AssetService(
+              databaseContext,
+              databaseContext.getDataRoot() + databaseContext.getCurrentDatabaseName() + "/assets");
+      AssetMessage asset = assetService.getAssetById(this.model.getCustomRotationAssetId());
+      if (asset != null && asset.getName() != null && !asset.getName().isEmpty()) {
+        this.customRotationAssetName = asset.getName();
+        return this.customRotationAssetName;
+      }
+    } catch (Exception e) {
+      logger.warn(
+          "Failed to resolve custom rotation asset name for ID {}",
+          this.model.getCustomRotationAssetId(),
+          e);
+    }
+    return null;
+  }
+
+  public void setCustomRotationAssetName(String customRotationAssetName) {
+    this.customRotationAssetName = customRotationAssetName;
+  }
+
+  public Object getCustomRotationsDisplay() {
+    String assetName = getCustomRotationAssetName();
+    if (assetName != null && !assetName.isEmpty()) {
+      return assetName;
+    }
+    if (this.model != null
+        && this.model.getCustomRotations() != null
+        && !this.model.getCustomRotations().isEmpty()) {
+      return this.model.getCustomRotations();
+    }
+    return "[]";
   }
 
   public DatabaseContext getDatabaseContext() {
@@ -775,8 +847,12 @@ public class Race implements ProtocolListener {
         new AssetService(
             databaseContext,
             databaseContext.getDataRoot() + databaseContext.getCurrentDatabaseName() + "/assets");
-    com.antigravity.proto.AssetMessage asset = assetService.getAssetById(assetId); // fqn-collision
-    if (asset == null || asset.getCustomRotationsCount() == 0) return null;
+    AssetMessage asset = assetService.getAssetById(assetId);
+    if (asset == null) return null;
+    if (asset.getName() != null && !asset.getName().isEmpty()) {
+      this.customRotationAssetName = asset.getName();
+    }
+    if (asset.getCustomRotationsCount() == 0) return null;
     List<CustomRotation> result = new ArrayList<>();
     for (com.antigravity.proto.CustomRotation protoRot : // fqn-collision
         asset.getCustomRotationsList()) { // fqn-collision
@@ -864,6 +940,10 @@ public class Race implements ProtocolListener {
     if (this.stopped) {
       return;
     }
+    logger.info(
+        "Race state transition: {} -> {}",
+        this.state != null ? this.state.getClass().getSimpleName() : "null",
+        newState != null ? newState.getClass().getSimpleName() : "null");
     if (this.state != null) {
       this.state.exit(this);
     }
@@ -1001,6 +1081,16 @@ public class Race implements ProtocolListener {
     if (state instanceof RaceOver) {
       throw new IllegalStateException("Cannot skip race: Race is already over.");
     }
+    if (state instanceof Paused) {
+      HeatScoring scoring = getRaceModel() != null ? getRaceModel().getHeatScoring() : null;
+      boolean isAutoSegmentScoring =
+          scoring != null
+              && (scoring.getAllowFinish() == AllowFinish.NoneAutoSegments
+                  || scoring.getAllowFinish() == AllowFinish.SingleLapAutoSegments);
+      if (!isAutoSegmentScoring && executionManager != null) {
+        executionManager.removePauseAutoSegments();
+      }
+    }
     changeState(new RaceOver());
   }
 
@@ -1014,6 +1104,7 @@ public class Race implements ProtocolListener {
 
   public synchronized void stop() {
     this.stopped = true;
+    SleepPreventionService.getInstance().releaseSleepLock();
     if (state != null) {
       state.exit(this);
     }
@@ -1028,6 +1119,7 @@ public class Race implements ProtocolListener {
   }
 
   public void setLanePower(boolean on, int lane) {
+    logger.info("Race.setLanePower called: on={}, lane={}", on, lane);
     if (lane < 0) {
       for (int i = 0; i < track.getLanes().size(); i++) {
         if (lanePower != null && i < lanePower.length) lanePower[i] = on;
@@ -1190,6 +1282,7 @@ public class Race implements ProtocolListener {
 
   public void resetCurrentHeat() {
     if (currentHeat != null) {
+      this.hasRacedInCurrentHeat = false;
       statistics.incrementRestartCount();
       for (DriverHeatData driverData : currentHeat.getDrivers()) driverData.reset();
       currentHeat.resetTrackCalls();
@@ -1225,6 +1318,7 @@ public class Race implements ProtocolListener {
 
   public void restartHeatForFalseStart() {
     if (currentHeat != null) {
+      this.hasRacedInCurrentHeat = false;
       statistics.incrementRestartCount();
       for (DriverHeatData driverData : currentHeat.getDrivers()) {
         driverData.resetForFalseStart();

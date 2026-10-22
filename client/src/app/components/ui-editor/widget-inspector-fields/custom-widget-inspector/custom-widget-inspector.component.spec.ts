@@ -136,6 +136,29 @@ describe("CustomWidgetInspectorComponent", () => {
     expect(component.widget().customSettings?.["accentColor"]).toBe("");
   });
 
+  it("should validate and sanitize color values with toValidHexColor", () => {
+    expect(component.toValidHexColor("#123456", "#ffffff")).toBe("#123456");
+    expect(component.toValidHexColor("#f00", "#000000")).toBe("#ff0000");
+    expect(component.toValidHexColor("", "#ffffff")).toBe("#ffffff");
+    expect(component.toValidHexColor(undefined, "#112233")).toBe("#112233");
+    expect(component.toValidHexColor(null, "#223344")).toBe("#223344");
+    expect(component.toValidHexColor("rgba(15, 23, 42, 0.85)", "#0f172a")).toBe(
+      "#0f172a",
+    );
+    expect(component.toValidHexColor("not-a-color", "#ffffff")).toBe("#ffffff");
+  });
+
+  it("should fall back to valid hex color when customSettings color is empty string", () => {
+    component.widget().customSettings!["accentColor"] = "";
+    fixture.detectChanges();
+
+    const colorInput = fixture.nativeElement.querySelector(
+      ".color-picker-input",
+    );
+    expect(colorInput).toBeTruthy();
+    expect(colorInput.value).toBe("#ffffff");
+  });
+
   it("should handle checkbox, number, text, and select events", () => {
     spyOn(component.change, "emit");
 

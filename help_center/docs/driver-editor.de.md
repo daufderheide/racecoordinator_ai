@@ -9,7 +9,7 @@ Der Fahrer-Editor vereint die Fahrerauswahl und -bearbeitung in einer zentralen 
 - **Fahrerauswahl**: Dieses Dropdown-Menü in der oberen Kopfzeile neben dem Seitentitel listet alle vorhandenen Fahrer auf und ermöglicht den schnellen Wechsel zwischen Fahrern.
 - **Schreibgeschützter Modus**: Standardmäßig zeigt der Editor Fahrerdetails im schreibgeschützten Modus an. Die Formularfelder sind gesperrt, um versehentliche Änderungen zu vermeiden, während Audiowiedergaben weiterhin getestet werden können.
 - **Bearbeitungsmodus**: Durch Klicken auf das **Bearbeiten**-Symbol (Stift) in der Symbolleiste werden die Formularfelder zur Bearbeitung freigegeben. Im Bearbeitungsmodus ist die Fahrerauswahl gesperrt, um unbeabsichtigtes Verlassen ungespeicherter Daten zu verhindern.
-- **Änderungen speichern**: Durch Klicken auf das Symbol **Bearbeitung beenden** (Auge / Fertig) werden die Änderungen validiert, auf dem Server gespeichert und der Editor kehrt in den schreibgeschützten Modus zurück.
+- **Änderungen speichern**: Durch Klicken auf das Symbol **Bearbeitung beenden** (Häkchen) werden die Änderungen validiert, auf dem Server gespeichert und der Editor kehrt in den schreibgeschützten Modus zurück.
 - **Änderungen verwerfen**: Wenn Sie versuchen, den Editor mit ungespeicherten Änderungen zu verlassen, fordert Sie der Bestätigungsdialog auf, das Verwerfen zu bestätigen. Beim Verwerfen werden alle Änderungen auf die zuletzt gespeicherte Version zurückgesetzt.
 
 ## Symbolleisten-Aktionen
@@ -19,8 +19,9 @@ Die obere Symbolleiste bietet folgende Aktionen:
 - **Zurück**: Kehrt zur vorherigen Ansicht oder zur Renntag-Einrichtung zurück.
 - **Fahrer hinzufügen (+)**: Erstellt eine neue Fahrervorlage und wechselt in den Bearbeitungsmodus.
 - **Fahrer kopieren**: Dupliziert das aktuell ausgewählte Fahrerprofil in eine neue Vorlage.
-- **Bearbeiten / Fertig**: Schaltet zwischen schreibgeschütztem Modus und Bearbeitungsmodus um.
+- **Bearbeiten / Fertig**: Schaltet zwischen schreibgeschütztem Modus und Bearbeitungsmodus um (Tastenkombination: Cmd/Ctrl+E).
 - **Fahrer importieren**: Öffnet das Dialogfeld zum Importieren von Fahrerprofilen, Avataren und Audioeinstellungen aus externen Dateien.
+- **Fahrer exportieren**: Öffnet das Dialogfeld zum Exportieren von Fahrern und ihren zugehörigen Audio- und Avatardateien in ein herunterladbares ZIP-Archiv im CSV-, Excel- oder JSON-Format.
 - **Alle erweitern / reduzieren**: Erweitert oder reduziert alle Akkordeon-Abschnitte auf einmal.
 - **Fahrer löschen**: Löscht das ausgewählte Fahrerprofil nach Bestätigung.
 - **Hilfe (?)**: Startet die interaktive Einführungstour für die Bereiche des Editors.
@@ -104,3 +105,21 @@ Wenn ein Fahrer in der Datei mit einem vorhandenen Fahrernamen oder Spitznamen i
 - **Überspringen**: Ignoriert die betroffene Zeile beim Import.
 
 Sie können Lösungen zeilenweise festlegen, eine Lösung auf alle Konflikte gleichzeitig anwenden oder Namen und Spitznamen direkt in der Vorschautabelle bearbeiten.
+
+## Fahrer exportieren
+
+Race Coordinator AI ermöglicht das Exportieren Ihrer Fahrer in ein portables ZIP-Paket, das auf jeden anderen Computer mit Race Coordinator AI übertragen oder für die Massenbearbeitung in Tabellenkalkulationen verwendet werden kann.
+
+### Exportformat auswählen
+
+Wenn Sie in der Symbolleiste auf **Fahrer exportieren** klicken, können Sie aus drei Dateiformaten wählen:
+- **CSV (`.csv`)**: Kommagetrenntes Format, ideal für Tabellenkalkulationen oder Texteditoren.
+- **Excel (`.xlsx`)**: Microsoft Excel-Arbeitsmappenformat mit formatierten Spaltenüberschriften und Datenzeilen.
+- **JSON (`.json`)**: Formatiertes JSON-Array mit vollständigen Fahrerprofil- und Audiokonfigurationsobjekten.
+
+### Bündelung von Audio- und Mediendateien
+
+- Alle Audiodateien und benutzerdefinierten Avatare, die von den exportierten Fahrern referenziert werden, werden automatisch gesammelt und zusammen mit der Datendatei (`drivers.csv`, `drivers.xlsx` oder `drivers.json`) in das ZIP-Archiv gepackt.
+- **Deduplizierung**: Wenn zwei oder mehr Fahrer denselben Soundeffekt oder dasselbe Avatarbild verwenden, wird die Datei **nur einmal** im ZIP-Archiv gespeichert. Relative Referenzen in der Datendatei verweisen auf den gemeinsamen Dateinamen.
+- **Voreinstellungen & TTS erhalten**: System-Preset-Sounds (z. B. `default_beep`), stummgeschaltete Slots und benutzerdefinierte Text-to-Speech-Ansagen (TTS) bleiben in der Exportdatei erhalten.
+- **Sofort wieder importierbar**: Das resultierende ZIP-Paket kann direkt per Drag & Drop in das Dialogfeld **Fahrer importieren** auf jedem beliebigen Computer geladen werden.

@@ -258,7 +258,7 @@ A barra de ferramentas superior do Editor de Pistas disponibiliza ferramentas es
 - **Voltar**: Regressa à vista anterior ou à Configuração do Dia de Corrida.
 - **Adicionar Pista (+)**: Cria um novo modelo de pista e entra no modo de edição.
 - **Duplicar Pista**: Cria uma cópia exata com outro nome único, ideal para testar configurações sem alterar a original.
-- **Editar / Concluir Edição**: Alterna entre o modo somente leitura e o modo de edição. Ao sair do modo de edição, as alterações são validadas e gravadas.
+- **Editar / Concluir Edição (`Cmd/Ctrl+E`)**: Alterna entre o modo somente leitura e o modo de edição. Ao sair do modo de edição, as alterações são validadas e gravadas.
 - **Expandir / Recolher tudo**: Expande ou recolhe todas as seções de configuração e painéis de interfaces de uma vez.
 - **Eliminar Pista**: Elimina a pista selecionada após confirmação.
 - **Anular (`Ctrl+Z`) / Refazer (`Ctrl+Y`)**: Reversão imediata de qualquer alteração nas calhas, cores ou pinos.
@@ -285,3 +285,8 @@ A barra de ferramentas superior do Editor de Pistas disponibiliza ferramentas es
 
 ### Tiras LED FastLED Não Acendem
 - **Solução**: Certifique-se de que o Arduino está a correr o **sketch oficial `v2.1.0.x`**, que o tipo de LED e a ordem de cores estão corretos e que a massa (GND) da fonte de alimentação de 5V está ligada à massa do Arduino.
+
+### Desconexão da Interface Entre Baterias (Suspensão USB / Economia de Energia)
+- **Sintoma**: A interface (Arduino, Phidget ou Trackmate) desliga-se durante pausas entre baterias ou em períodos de inatividade, e volta a ligar-se no início da corrida com a mensagem *"A conexão com a interface foi restaurada."*
+- **Solução**: O Windows, Linux e macOS desligam portas USB e dispositivos HID inativos mesmo com o PC ligado. Consulte a seção [Suspensão da Interface USB e Desconexões](troubleshooting.pt.md#usb-sleep-prevention) na Solução de Problemas para desativar a economia de energia no Gerenciador de Dispositivos.
+

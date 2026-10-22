@@ -112,13 +112,6 @@ describe("ui-editor-theme-assets.helper", () => {
     );
     expect(minLapConfig.type).toBe("tts");
     expect(minLapConfig.text).toBe("Min lap time for {driver.nickname}");
-
-    const driftLapConfig = getThemeAudioConfigForSlot(
-      "audio.drift_lap",
-      emptyTheme,
-    );
-    expect(driftLapConfig.type).toBe("tts");
-    expect(driftLapConfig.text).toBe("Drift lap for {driver.nickname}");
   });
 
   it("should resolve audio url from theme slot or assets", () => {

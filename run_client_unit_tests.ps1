@@ -14,6 +14,21 @@ Write-Host "--- Running Client Unit Tests ---" -ForegroundColor Cyan
 
 Set-Location $ClientDir
 
+# Auto-prune Angular compilation cache if it exceeds 10 GB limit
+function Prune-AngularCacheIfOversized($Dir, [long]$MaxBytes = 10GB) {
+    $CacheDir = Join-Path $Dir ".angular\cache"
+    if (Test-Path $CacheDir) {
+        $CacheSize = (Get-ChildItem -Path $CacheDir -Recurse -Force -ErrorAction SilentlyContinue | Measure-Object -Property Length -Sum).Sum
+        if ($CacheSize -and $CacheSize -gt $MaxBytes) {
+            $SizeMb = [math]::Round($CacheSize / 1MB)
+            Write-Host "🧹 Angular cache at $CacheDir ($SizeMb MB) exceeds 10 GB ceiling. Pruning..." -ForegroundColor Yellow
+            Remove-Item -Path $CacheDir -Recurse -Force -ErrorAction SilentlyContinue
+        }
+    }
+}
+
+Prune-AngularCacheIfOversized -Dir $ClientDir
+
 # Find the Chrome binary from Playwright browsers
 $env:PLAYWRIGHT_BROWSERS_PATH = Join-Path $ClientDir "browsers"
 if (-not (Test-Path $env:PLAYWRIGHT_BROWSERS_PATH)) {
@@ -42,6 +57,9 @@ $env:HOME = Join-Path $ClientDir "test-home"
 if (-not (Test-Path $env:HOME)) {
     New-Item -ItemType Directory -Path $env:HOME -Force | Out-Null
 }
+
+# Ensure custom_widgets node_modules is linked
+node scripts\link-custom-widgets-modules.js
 
 # Execute tests
 Write-Host "Executing unit tests..." -ForegroundColor Green

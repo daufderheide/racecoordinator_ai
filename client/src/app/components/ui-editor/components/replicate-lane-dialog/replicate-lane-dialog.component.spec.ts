@@ -40,8 +40,9 @@ describe("ReplicateLaneDialogComponent", () => {
     fixture.detectChanges();
   });
 
-  it("should create", () => {
+  it("should create with vertical direction by default", () => {
     expect(component).toBeTruthy();
+    expect(component.direction()).toBe("vertical");
   });
 
   it("should not display content when not visible", () => {
@@ -133,6 +134,9 @@ describe("ReplicateLaneDialogComponent", () => {
     component.direction.set("vertical");
     component.targetCount.set(4);
     component.distributionMode.set("preserve-spacing");
+    component.headerPlacement.set("top");
+    component.headerHeight.set(48);
+    component.linkColumns.set(true);
     component.replaceExisting.set(false);
     fixture.detectChanges();
 
@@ -143,6 +147,10 @@ describe("ReplicateLaneDialogComponent", () => {
       direction: "vertical",
       targetCount: 4,
       distributionMode: "preserve-spacing",
+      headerPlacement: "top",
+      headerHeight: 48,
+      linkColumns: true,
+      sortByBindingMode: true,
       replaceExisting: false,
       sourceIndex: 1,
       sourceBindingMode: "position",
@@ -154,10 +162,38 @@ describe("ReplicateLaneDialogComponent", () => {
     fixture.detectChanges();
 
     expect(component.replaceExisting()).toBeTrue();
-    const checkbox = fixture.debugElement.query(By.css("input.form-checkbox"));
+    const checkbox = fixture.debugElement.query(
+      By.css("input.replace-existing-checkbox"),
+    );
     checkbox.nativeElement.click();
     fixture.detectChanges();
 
     expect(component.replaceExisting()).toBeFalse();
+  });
+
+  it("should toggle linkColumns when checkbox is toggled", () => {
+    fixture.componentRef.setInput("visible", true);
+    fixture.detectChanges();
+
+    expect(component.linkColumns()).toBeTrue();
+    const checkbox = fixture.debugElement.query(
+      By.css("input.link-columns-checkbox"),
+    );
+    checkbox.nativeElement.click();
+    fixture.detectChanges();
+
+    expect(component.linkColumns()).toBeFalse();
+  });
+
+  it("should initialize and allow changing selectedSortOrder", () => {
+    fixture.componentRef.setInput("bindingMode", "position");
+    fixture.componentRef.setInput("visible", true);
+    fixture.detectChanges();
+
+    expect(component.selectedSortOrder()).toBe("position");
+    component.selectedSortOrder.set("overallPosition");
+    fixture.detectChanges();
+
+    expect(component.selectedSortOrder()).toBe("overallPosition");
   });
 });

@@ -21,7 +21,7 @@ import { IDemoConfig } from "@app/proto/antigravity";
                 <label>{{ "RDS_DEMO_MIN_LAP_TIME" | translate }}</label>
                 <input
                   type="number"
-                  step="0.001"
+                  step="0.5"
                   [(ngModel)]="uiConfig.minLapTime"
                 />
               </div>
@@ -29,7 +29,7 @@ import { IDemoConfig } from "@app/proto/antigravity";
                 <label>{{ "RDS_DEMO_MAX_LAP_TIME" | translate }}</label>
                 <input
                   type="number"
-                  step="0.001"
+                  step="0.5"
                   [(ngModel)]="uiConfig.maxLapTime"
                 />
               </div>
@@ -37,7 +37,7 @@ import { IDemoConfig } from "@app/proto/antigravity";
                 <label>{{ "RDS_DEMO_MIN_REFUEL_TIME" | translate }}</label>
                 <input
                   type="number"
-                  step="0.001"
+                  step="0.5"
                   [(ngModel)]="uiConfig.minRefuelTime"
                 />
               </div>
@@ -45,7 +45,7 @@ import { IDemoConfig } from "@app/proto/antigravity";
                 <label>{{ "RDS_DEMO_MAX_REFUEL_TIME" | translate }}</label>
                 <input
                   type="number"
-                  step="0.001"
+                  step="0.5"
                   [(ngModel)]="uiConfig.maxRefuelTime"
                 />
               </div>
@@ -75,7 +75,7 @@ import { IDemoConfig } from "@app/proto/antigravity";
                 <label>{{ "RDS_DEMO_MIN_REACTION_TIME" | translate }}</label>
                 <input
                   type="number"
-                  step="0.001"
+                  step="0.5"
                   [(ngModel)]="uiConfig.minReactionTime"
                 />
               </div>
@@ -83,7 +83,7 @@ import { IDemoConfig } from "@app/proto/antigravity";
                 <label>{{ "RDS_DEMO_MAX_REACTION_TIME" | translate }}</label>
                 <input
                   type="number"
-                  step="0.001"
+                  step="0.5"
                   [(ngModel)]="uiConfig.maxReactionTime"
                 />
               </div>
@@ -91,7 +91,7 @@ import { IDemoConfig } from "@app/proto/antigravity";
                 <label>{{ "RDS_DEMO_MIN_PIT_ENTRY_OFFSET" | translate }}</label>
                 <input
                   type="number"
-                  step="0.001"
+                  step="0.5"
                   [(ngModel)]="uiConfig.minPitEntryOffset"
                 />
               </div>
@@ -99,7 +99,7 @@ import { IDemoConfig } from "@app/proto/antigravity";
                 <label>{{ "RDS_DEMO_MAX_PIT_ENTRY_OFFSET" | translate }}</label>
                 <input
                   type="number"
-                  step="0.001"
+                  step="0.5"
                   [(ngModel)]="uiConfig.maxPitEntryOffset"
                 />
               </div>
@@ -315,19 +315,33 @@ export class DemoConfigModalComponent implements OnInit {
   }
 
   onConfirm() {
-    this.config.minLapTimeMs = (this.uiConfig.minLapTime || 0) * 1000;
-    this.config.maxLapTimeMs = (this.uiConfig.maxLapTime || 0) * 1000;
-    this.config.minRefuelTimeMs = (this.uiConfig.minRefuelTime || 0) * 1000;
-    this.config.maxRefuelTimeMs = (this.uiConfig.maxRefuelTime || 0) * 1000;
+    this.config.minLapTimeMs = Math.round(
+      (this.uiConfig.minLapTime || 0) * 1000,
+    );
+    this.config.maxLapTimeMs = Math.round(
+      (this.uiConfig.maxLapTime || 0) * 1000,
+    );
+    this.config.minRefuelTimeMs = Math.round(
+      (this.uiConfig.minRefuelTime || 0) * 1000,
+    );
+    this.config.maxRefuelTimeMs = Math.round(
+      (this.uiConfig.maxRefuelTime || 0) * 1000,
+    );
     this.config.numSegments = this.uiConfig.numSegments;
     this.config.minLapsBetweenPits = this.uiConfig.minLapsBetweenPits;
     this.config.maxLapsBetweenPits = this.uiConfig.maxLapsBetweenPits;
-    this.config.minReactionTimeMs = (this.uiConfig.minReactionTime || 0) * 1000;
-    this.config.maxReactionTimeMs = (this.uiConfig.maxReactionTime || 0) * 1000;
-    this.config.minPitEntryOffsetMs =
-      (this.uiConfig.minPitEntryOffset || 0) * 1000;
-    this.config.maxPitEntryOffsetMs =
-      (this.uiConfig.maxPitEntryOffset || 0) * 1000;
+    this.config.minReactionTimeMs = Math.round(
+      (this.uiConfig.minReactionTime || 0) * 1000,
+    );
+    this.config.maxReactionTimeMs = Math.round(
+      (this.uiConfig.maxReactionTime || 0) * 1000,
+    );
+    this.config.minPitEntryOffsetMs = Math.round(
+      (this.uiConfig.minPitEntryOffset || 0) * 1000,
+    );
+    this.config.maxPitEntryOffsetMs = Math.round(
+      (this.uiConfig.maxPitEntryOffset || 0) * 1000,
+    );
 
     this.confirm.emit(this.config);
   }

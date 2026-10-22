@@ -30,6 +30,7 @@ describe("DriverConverter", () => {
       newHeatLeaderAudio: { type: "preset", url: "new_heat_leader_url" },
       pitInAudio: { type: "preset", url: "pit_in_url" },
       fuelAudio: { type: "audio_set", url: "default_fuel_level" },
+      driftLapAudio: { type: "tts", text: "drift_text" },
     };
 
     const driver = DriverConverter.fromProto(proto);
@@ -48,6 +49,8 @@ describe("DriverConverter", () => {
     expect(driver.newHeatLeaderAudio?.url).toBe("new_heat_leader_url");
     expect(driver.pitInAudio?.url).toBe("pit_in_url");
     expect(driver.fuelAudio?.url).toBe("default_fuel_level");
+    expect(driver.driftLapAudio?.type).toBe("tts");
+    expect(driver.driftLapAudio?.text).toBe("drift_text");
   });
 
   it("should update cached driver in-place during fromProto", () => {
@@ -134,6 +137,7 @@ describe("DriverConverter", () => {
       heatBestLapAudio: { type: "none" },
       pitInAudio: { type: "none" },
       fuelAudio: { type: "none" },
+      driftLapAudio: { type: "none" },
     };
 
     const driver = DriverConverter.fromProto(proto);
@@ -157,6 +161,8 @@ describe("DriverConverter", () => {
     expect(driver.pitInAudio.url).toBeUndefined();
     expect(driver.fuelAudio.type).toBe("none");
     expect(driver.fuelAudio.url).toBeUndefined();
+    expect(driver.driftLapAudio.type).toBe("none");
+    expect(driver.driftLapAudio.url).toBeUndefined();
 
     // In-place update
     const updateProto: IDriverModel = {
@@ -172,6 +178,7 @@ describe("DriverConverter", () => {
       heatBestLapAudio: { type: "none" },
       pitInAudio: { type: "none" },
       fuelAudio: { type: "none" },
+      driftLapAudio: { type: "none" },
     };
     const updatedDriver = DriverConverter.fromProto(updateProto);
     expect(updatedDriver.lapAudio.type).toBe("none");
@@ -184,6 +191,7 @@ describe("DriverConverter", () => {
     expect(updatedDriver.heatBestLapAudio.type).toBe("none");
     expect(updatedDriver.pitInAudio.type).toBe("none");
     expect(updatedDriver.fuelAudio.type).toBe("none");
+    expect(updatedDriver.driftLapAudio.type).toBe("none");
   });
 
   it("should coerce fuelAudio preset type to audio_set in fromProto and fromJSON", () => {
@@ -225,6 +233,7 @@ describe("DriverConverter", () => {
       heatBestLapAudio: { type: "none" },
       pitInAudio: { type: "none" },
       fuelAudio: { type: "none" },
+      driftLapAudio: { type: "none" },
     };
 
     const driver = DriverConverter.fromJSON(json);
@@ -241,6 +250,7 @@ describe("DriverConverter", () => {
     expect(driver.heatBestLapAudio.type).toBe("none");
     expect(driver.pitInAudio.type).toBe("none");
     expect(driver.fuelAudio.type).toBe("none");
+    expect(driver.driftLapAudio.type).toBe("none");
   });
 
   it("should synchronize all audio properties in register() into cached instances", () => {
@@ -268,6 +278,7 @@ describe("DriverConverter", () => {
       newHeatLeaderAudio: { type: "none" },
       pitInAudio: { type: "none" },
       fuelAudio: { type: "none" },
+      driftLapAudio: { type: "none" },
     });
 
     DriverConverter.register(updated);
@@ -277,6 +288,7 @@ describe("DriverConverter", () => {
     expect(original.bestLapAudio.type).toBe("none");
     expect(original.pitInAudio.type).toBe("none");
     expect(original.fuelAudio.type).toBe("none");
+    expect(original.driftLapAudio.type).toBe("none");
   });
 
   it("should sanitize audio and supply default URLs on in-place cache updates in fromProto", () => {

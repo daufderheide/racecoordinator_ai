@@ -100,6 +100,7 @@ public final class RaceStatisticsUtils {
 
       adjustOverallStandingsSheet(workbook, activeLanes, hasSeason);
       adjustHeatListSheet(workbook, activeLanes, race, hasSeason);
+      adjustFastestLapSheet(workbook, activeLanes, race);
       adjustRaceInformationSheet(workbook, race);
 
       if (!hasSeason) {
@@ -162,7 +163,10 @@ public final class RaceStatisticsUtils {
       String fieldName = cell0.getStringCellValue().trim();
 
       boolean removeRow = false;
-      if (fieldName.startsWith("fuel_options.") && !fieldName.equals("fuel_options.enabled")) {
+      if ("custom_rotation_asset_id".equalsIgnoreCase(fieldName)) {
+        removeRow = true;
+      } else if (fieldName.startsWith("fuel_options.")
+          && !fieldName.equals("fuel_options.enabled")) {
         if (!analogFuelEnabled) {
           removeRow = true;
         }
@@ -272,6 +276,53 @@ public final class RaceStatisticsUtils {
     updateLaneCountCell(c1, laneCount);
     copyStylesFromTrackSections(sheet, trackSectionsRow, c0, c1);
     cleanupExcessSpacerRows(sheet, targetRowIdx);
+  }
+
+  public static void adjustPostExportRaceInformation(Workbook workbook, Race race) {
+    if (workbook == null) {
+      return;
+    }
+    Sheet sheet = workbook.getSheet("Race Information");
+    if (sheet == null && workbook.getNumberOfSheets() > 0) {
+      for (Sheet s : workbook) {
+        if ("Race Information".equalsIgnoreCase(s.getSheetName())) {
+          sheet = s;
+          break;
+        }
+      }
+    }
+    if (sheet == null) {
+      return;
+    }
+
+    String assetName = race != null ? race.getCustomRotationAssetName() : null;
+
+    int lastRow = sheet.getLastRowNum();
+    for (int r = lastRow; r >= 0; r--) {
+      Row row = sheet.getRow(r);
+      if (row == null) {
+        continue;
+      }
+      Cell c0 = row.getCell(0);
+      if (c0 == null || c0.getCellType() != CellType.STRING) {
+        continue;
+      }
+      String fieldName = c0.getStringCellValue().trim();
+      if ("custom_rotation_asset_id".equalsIgnoreCase(fieldName)) {
+        sheet.removeRow(row);
+        if (r < sheet.getLastRowNum()) {
+          sheet.shiftRows(r + 1, sheet.getLastRowNum(), -1);
+        }
+      } else if ("custom_rotations".equalsIgnoreCase(fieldName)) {
+        if (assetName != null && !assetName.trim().isEmpty()) {
+          Cell c1 = row.getCell(1);
+          if (c1 == null) {
+            c1 = row.createCell(1);
+          }
+          c1.setCellValue(assetName);
+        }
+      }
+    }
   }
 
   private static void copyStylesFromTrackSections(
@@ -708,6 +759,9 @@ public final class RaceStatisticsUtils {
     }
     Map<CellStyle, CellStyle> styleCache = new HashMap<>();
     for (Sheet sheet : workbook) {
+      if (sheet == null) {
+        continue;
+      }
       for (Row row : sheet) {
         for (Cell cell : row) {
           if (cell == null) {
@@ -1155,8 +1209,10 @@ public final class RaceStatisticsUtils {
 
     for (RaceParticipant p : drivers) {
       List<Double> laneLaps = new ArrayList<>();
+      List<Double> laneFastestLaps = new ArrayList<>();
       for (int l : activeLanes) {
         double totalLapsOnLane = 0.0;
+        double fastestLapOnLane = Double.MAX_VALUE;
         for (Heat h : runHeats) {
           if (h.getDrivers() != null && l < h.getDrivers().size()) {
             DriverHeatData dhd = h.getDrivers().get(l);
@@ -1164,12 +1220,22 @@ public final class RaceStatisticsUtils {
                 && dhd.getDriver() != null
                 && p.getStableId().equals(dhd.getDriver().getStableId())) {
               totalLapsOnLane += dhd.getAdjustedLapCount();
+              if (dhd.getLaps() != null) {
+                for (DriverHeatData.LapData lap : dhd.getLaps()) {
+                  if (lap.getLapTime() > 0.0 && lap.getLapTime() < fastestLapOnLane) {
+                    fastestLapOnLane = lap.getLapTime();
+                  }
+                }
+              }
             }
           }
         }
         laneLaps.add(totalLapsOnLane);
+        laneFastestLaps.add(
+            fastestLapOnLane != Double.MAX_VALUE ? roundToThreeDecimals(fastestLapOnLane) : null);
       }
       p.setLaneLaps(laneLaps);
+      p.setLaneFastestLaps(laneFastestLaps);
     }
 
     populateParticipantPoints(race, drivers);
@@ -1257,7 +1323,7 @@ public final class RaceStatisticsUtils {
     }
   }
 
-  private static final Pattern LANE_HEADER_PATTERN =
+  static final Pattern LANE_HEADER_PATTERN =
       Pattern.compile("^Lane\\s+(\\d+)(?:\\s+(?:Laps|Segments?|Seg))?$", Pattern.CASE_INSENSITIVE);
 
   public static void applyPostJxlsLaneColors(XSSFWorkbook workbook, Race race) {
@@ -1276,6 +1342,8 @@ public final class RaceStatisticsUtils {
         colorLapDataSheet(workbook, sheet, lanes, styleCache);
       } else if (isHeatSheet(sheet)) {
         colorHeatSheet(workbook, sheet, lanes, styleCache);
+      } else if (isFastestLapSheet(sheet)) {
+        colorFastestLapSheet(workbook, sheet, lanes, styleCache);
       } else {
         colorStandardSheet(workbook, sheet, lanes, styleCache);
       }
@@ -1534,7 +1602,7 @@ public final class RaceStatisticsUtils {
     }
   }
 
-  private static boolean isTitleOrSubtitleRow(Row row) {
+  static boolean isTitleOrSubtitleRow(Row row) {
     if (row == null) {
       return false;
     }
@@ -1571,7 +1639,7 @@ public final class RaceStatisticsUtils {
     return false;
   }
 
-  private static String getCellString(Cell cell) {
+  static String getCellString(Cell cell) {
     if (cell == null) {
       return "";
     }
@@ -1597,7 +1665,7 @@ public final class RaceStatisticsUtils {
     return -1;
   }
 
-  private static void colorCell(
+  static void colorCell(
       XSSFWorkbook workbook,
       Cell cell,
       Lane lane,
@@ -1662,5 +1730,19 @@ public final class RaceStatisticsUtils {
             .matcher(normalized)
             .replaceAll("\\${race.track.getNumTrackSections()}");
     return LANE_COUNT_PATTERN.matcher(withSections).replaceAll("\\${race.track.getLaneCount()}");
+  }
+
+  public static void adjustFastestLapSheet(
+      XSSFWorkbook workbook, List<Integer> activeLanes, Race race) {
+    FastestLapExportUtils.adjustFastestLapSheet(workbook, activeLanes, race);
+  }
+
+  public static boolean isFastestLapSheet(Sheet sheet) {
+    return FastestLapExportUtils.isFastestLapSheet(sheet);
+  }
+
+  public static void colorFastestLapSheet(
+      XSSFWorkbook workbook, Sheet sheet, List<Lane> lanes, Map<String, CellStyle> styleCache) {
+    FastestLapExportUtils.colorFastestLapSheet(workbook, sheet, lanes, styleCache);
   }
 }

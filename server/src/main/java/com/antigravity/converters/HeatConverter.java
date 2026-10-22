@@ -110,6 +110,8 @@ public class HeatConverter {
         .setAverageTop15(data.getAverageTop15())
         .setTop2Consecutive(data.getTop2Consecutive())
         .setTop3Consecutive(data.getTop3Consecutive())
+        .setUserTime(data.getUserTime())
+        .setTotalTime(data.getTotalTime())
         .build();
   }
 }

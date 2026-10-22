@@ -209,7 +209,7 @@ export class ThemeService {
    * Called when a race is selected (e.g., on Raceday Setup).
    * Checks for a race-specific theme override and activates it.
    */
-  async activateForRace(raceId: string): Promise<void> {
+  async activateForRace(raceId: string, knownThemeId?: string): Promise<void> {
     if (this.transientThemeId) {
       if (!this.initialized) {
         await this.initialize();
@@ -242,6 +242,15 @@ export class ThemeService {
       // Override points to a deleted theme — clean up
       delete settings.raceThemeOverrides[raceId];
       this.settingsService.saveSettings(settings);
+    }
+
+    // Fast path: if knownThemeId is provided, check if it matches in loaded themes
+    if (knownThemeId) {
+      const t = this.themes.find((t) => t.entity_id === knownThemeId) || null;
+      if (t) {
+        this.setActiveThemeInternal(t);
+        return;
+      }
     }
 
     // Fallback to the Race's defined themeId

@@ -323,6 +323,16 @@ export class DataService {
     );
   }
 
+  exportDrivers(format: string, driverIds?: string[]): Observable<Blob> {
+    let url = `${this.driversUrl}/export?format=${encodeURIComponent(format)}`;
+    if (driverIds && driverIds.length > 0) {
+      url += `&driverIds=${encodeURIComponent(driverIds.join(","))}`;
+    }
+    return this.http.get(url, {
+      responseType: "blob",
+    });
+  }
+
   getRaces(): Observable<any[]> {
     return this.http.get<any[]>(this.racesUrl);
   }
@@ -1767,6 +1777,7 @@ export class DataService {
 
   private shouldSubscribeToRaceData = false;
   private isInterfaceSocketExplicitlyDisconnected = false;
+  private isRaceDataSocketExplicitlyDisconnected = false;
 
   public clearRaceData() {
     this.raceStateSubject.next(RaceState.UNKNOWN_STATE);
@@ -1920,9 +1931,6 @@ export class DataService {
   }
 
   private dispatchTelemetryUpdates(raceData: RaceData): void {
-    if (raceData.lap) {
-      this.lapSubject.next(raceData.lap);
-    }
     if (raceData.standingsUpdate) {
       this.standingsSubject.next(raceData.standingsUpdate);
     }
@@ -1931,6 +1939,9 @@ export class DataService {
     }
     if (raceData.groupStandingsUpdate) {
       this.groupStandingsSubject.next(raceData.groupStandingsUpdate);
+    }
+    if (raceData.lap) {
+      this.lapSubject.next(raceData.lap);
     }
     if (raceData.carData) {
       this.carDataSubject.next(raceData.carData);
@@ -1983,6 +1994,7 @@ export class DataService {
     if (this.connectionIntent) params.push(`intent=${this.connectionIntent}`);
     if (params.length > 0) wsUrl += "?" + params.join("&");
 
+    this.isRaceDataSocketExplicitlyDisconnected = false;
     this.logger.debug(`Connecting to Race Data WebSocket: ${wsUrl}`);
     this.raceDataSocket = new WebSocket(wsUrl);
     this.raceDataSocket.binaryType = "arraybuffer";
@@ -2002,13 +2014,20 @@ export class DataService {
 
     this.raceDataSocket.onclose = () => {
       this.logger.info(
-        "Race Data WebSocket closed. Reconnecting in 2 seconds...",
+        "Race Data WebSocket closed." +
+          (this.isRaceDataSocketExplicitlyDisconnected
+            ? ""
+            : " Reconnecting in 2 seconds..."),
       );
       this.socketConnectedSubject.next(false);
       this.raceDataSocket = undefined;
-      setTimeout(() => {
-        this.connectToRaceDataSocket();
-      }, 2000);
+      if (!this.isRaceDataSocketExplicitlyDisconnected) {
+        setTimeout(() => {
+          if (!this.isRaceDataSocketExplicitlyDisconnected) {
+            this.connectToRaceDataSocket();
+          }
+        }, 2000);
+      }
     };
 
     this.raceDataSocket.onerror = (err) => {
@@ -2113,6 +2132,23 @@ export class DataService {
       this.interfaceDataSocket.close();
       this.interfaceDataSocket = undefined;
     }
+  }
+
+  public disconnectFromRaceDataSocket() {
+    this.isRaceDataSocketExplicitlyDisconnected = true;
+    if (this.raceDataSocket) {
+      try {
+        this.raceDataSocket.close();
+      } catch (e) {
+        // Ignore
+      }
+      this.raceDataSocket = undefined;
+    }
+  }
+
+  public disconnectAllSockets() {
+    this.disconnectFromRaceDataSocket();
+    this.disconnectFromInterfaceDataSocket();
   }
 
   public getRaceTime(): Observable<IRaceTime> {
@@ -2290,29 +2326,80 @@ export class DataService {
     );
   }
 
-  updateUserLaps(lane: number, userLaps: number): Observable<any> {
+  updateUserLaps(
+    lane: number,
+    userLaps?: number,
+    userTime?: number,
+  ): Observable<any> {
+    const body: Record<string, number> = {};
+    if (userLaps !== undefined) {
+      body["userLaps"] = userLaps;
+    }
+    if (userTime !== undefined) {
+      body["userTime"] = userTime;
+    }
     return this.http.post<any>(
       `${this.baseUrl}/api/races/current-heat/drivers/${lane}/user-laps`,
-      { userLaps },
+      body,
     );
   }
 
   updateHeatUserLaps(
     heatNumber: number,
     lane: number,
-    userLaps: number,
+    userLaps?: number,
+    userTime?: number,
   ): Observable<any> {
+    const body: Record<string, number> = {};
+    if (userLaps !== undefined) {
+      body["userLaps"] = userLaps;
+    }
+    if (userTime !== undefined) {
+      body["userTime"] = userTime;
+    }
     return this.http.post<any>(
       `${this.baseUrl}/api/races/heats/${heatNumber}/drivers/${lane}/user-laps`,
-      { userLaps },
+      body,
     );
   }
 
   updateBatchUserLaps(
-    updates: { heatNumber: number; laneIndex: number; userLaps: number }[],
+    updates: {
+      heatNumber: number;
+      laneIndex: number;
+      userLaps?: number;
+      userTime?: number;
+    }[],
   ): Observable<any> {
     return this.http.post<any>(
       `${this.baseUrl}/api/races/heats/user-laps/batch`,
+      updates,
+    );
+  }
+
+  updateUserTime(lane: number, userTime: number): Observable<any> {
+    return this.http.post<any>(
+      `${this.baseUrl}/api/races/current-heat/drivers/${lane}/user-time`,
+      { userTime },
+    );
+  }
+
+  updateHeatUserTime(
+    heatNumber: number,
+    lane: number,
+    userTime: number,
+  ): Observable<any> {
+    return this.http.post<any>(
+      `${this.baseUrl}/api/races/heats/${heatNumber}/drivers/${lane}/user-time`,
+      { userTime },
+    );
+  }
+
+  updateBatchUserTime(
+    updates: { heatNumber: number; laneIndex: number; userTime: number }[],
+  ): Observable<any> {
+    return this.http.post<any>(
+      `${this.baseUrl}/api/races/heats/user-time/batch`,
       updates,
     );
   }

@@ -45,6 +45,7 @@ module.exports = function (config) {
     "--disable-gpu",
     "--disable-dev-shm-usage",
     "--disable-software-rasterizer",
+    "--window-size=1920,1080",
     "--user-data-dir=" + chromeUserData,
     "--disable-crash-reporter",
     "--disable-breakpad",
@@ -61,18 +62,75 @@ module.exports = function (config) {
     "--disable-extensions",
     "--disable-features=Translate,PasswordImport,AutofillServerCommunication,Dial",
     "--js-flags=--max-old-space-size=4096",
+    "--window-size=1920,1080",
   ];
+
+  var timingReporterPlugin = {
+    "reporter:timing": [
+      "type",
+      function (baseReporterDecorator) {
+        baseReporterDecorator(this);
+        var suiteTimes = {};
+        var currentSuite = "";
+        var currentSuiteStart = Date.now();
+
+        this.onSpecComplete = function (browser, result) {
+          var suiteName = (result.suite && result.suite[0]) || "unknown";
+          if (suiteName !== currentSuite) {
+            if (currentSuite) {
+              suiteTimes[currentSuite] =
+                (suiteTimes[currentSuite] || 0) +
+                (Date.now() - currentSuiteStart);
+            }
+            currentSuite = suiteName;
+            currentSuiteStart = Date.now();
+          }
+        };
+
+        this.onRunComplete = function (browsers, results) {
+          if (currentSuite) {
+            suiteTimes[currentSuite] =
+              (suiteTimes[currentSuite] || 0) +
+              (Date.now() - currentSuiteStart);
+          }
+          var sorted = Object.entries(suiteTimes)
+            .sort(function (a, b) {
+              return b[1] - a[1];
+            })
+            .slice(0, 15);
+          console.log(
+            "\n================ TOP 15 SLOWEST SUITES (WALL CLOCK) ================",
+          );
+          sorted.forEach(function (pair, idx) {
+            console.log(
+              idx +
+                1 +
+                ". " +
+                pair[0] +
+                ": " +
+                (pair[1] / 1000).toFixed(2) +
+                "s",
+            );
+          });
+          console.log(
+            "====================================================================\n",
+          );
+        };
+      },
+    ],
+  };
 
   config.set({
     basePath: "",
     frameworks: ["jasmine", "@angular-devkit/build-angular"],
-    reporters: ["progress", "kjhtml", "coverage"],
+    reporters: ["progress", "timing", "coverage"],
     plugins: [
       require("karma-jasmine"),
       require("karma-chrome-launcher"),
       require("karma-jasmine-html-reporter"),
       require("karma-coverage"),
       require("@angular-devkit/build-angular/plugins/karma"),
+      timingReporterPlugin,
     ],
     client: {
       jasmine: {

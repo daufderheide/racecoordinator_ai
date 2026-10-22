@@ -9,23 +9,56 @@ cd "$CLIENT_DIR" || exit
 
 # Ensure isolated directory exists and is prepared
 ISOLATED_DIR="$PROJECT_ROOT/client/tmp-isolated-test-$(id -u)"
+
+# Auto-prune Angular compilation cache if it exceeds 10 GB limit (10240 MB)
+prune_angular_cache_if_oversized() {
+  local target_dir="$1"
+  local max_mb="${2:-10240}"
+  local cache_dir="$target_dir/.angular/cache"
+  if [ -d "$cache_dir" ]; then
+    local size_mb
+    size_mb=$(du -sm "$cache_dir" 2>/dev/null | cut -f1)
+    if [ -n "$size_mb" ] && [ "$size_mb" -gt "$max_mb" ] 2>/dev/null; then
+      echo "🧹 Angular compilation cache at $cache_dir ($size_mb MB) exceeds 10 GB ceiling. Pruning..."
+      rm -rf "$cache_dir"
+    fi
+  fi
+}
+
+if [ "$1" = "--clean" ] || [ "$1" = "-c" ]; then
+  echo "🧹 Cleaning isolated unit test workspace: $ISOLATED_DIR"
+  rm -rf "$ISOLATED_DIR"
+  rm -rf "$CLIENT_DIR/.angular/cache"
+  shift
+fi
+
+prune_angular_cache_if_oversized "$CLIENT_DIR" 10240
+prune_angular_cache_if_oversized "$ISOLATED_DIR" 10240
+
 mkdir -p "$ISOLATED_DIR"
 
 # Sync current source and configuration to isolated directory
 echo "Syncing source to $ISOLATED_DIR..."
 # Ensure the parent directory for server/proto exists for the relative path ../server/proto to work
 mkdir -p "$(dirname "$ISOLATED_DIR")/server"
+# Ensure custom_widgets node_modules is linked
+node "$CLIENT_DIR/scripts/link-custom-widgets-modules.js"
+
 # Use rsync for faster incremental syncs (only copies changed files)
 if command -v rsync &>/dev/null; then
   rsync -a --delete src/ "$ISOLATED_DIR/src/"
   rsync -a --delete "$PROJECT_ROOT/server/proto/" "$(dirname "$ISOLATED_DIR")/server/proto/"
+  rsync -a --delete --exclude 'node_modules' "$PROJECT_ROOT/custom_widgets/" "$(dirname "$ISOLATED_DIR")/custom_widgets/"
   rsync -a karma.conf.js package.json angular.json tsconfig.json tsconfig.app.json tsconfig.spec.json package-lock.json "$ISOLATED_DIR/"
 else
   rm -rf "$ISOLATED_DIR/src"
   rm -rf "$(dirname "$ISOLATED_DIR")/server/proto"
+  rm -rf "$(dirname "$ISOLATED_DIR")/custom_widgets"
   cp -Rf src "$ISOLATED_DIR/"
   mkdir -p "$(dirname "$ISOLATED_DIR")/server"
   cp -Rf "$PROJECT_ROOT/server/proto" "$(dirname "$ISOLATED_DIR")/server/"
+  cp -Rf "$PROJECT_ROOT/custom_widgets" "$(dirname "$ISOLATED_DIR")/"
+  rm -rf "$(dirname "$ISOLATED_DIR")/custom_widgets/node_modules"
   cp -f karma.conf.js package.json angular.json tsconfig.json tsconfig.app.json tsconfig.spec.json package-lock.json "$ISOLATED_DIR/"
 fi
 

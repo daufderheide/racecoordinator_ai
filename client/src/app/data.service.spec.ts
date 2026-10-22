@@ -1458,6 +1458,34 @@ describe("DataService", () => {
       });
     });
 
+    it("should dispatch standingsUpdate before lap event to ensure rankings precede highlight", () => {
+      const dispatchOrder: string[] = [];
+      const sub1 = service.getStandingsUpdate().subscribe(() => {
+        dispatchOrder.push("standings");
+      });
+      const sub2 = service.getOverallStandingsUpdate().subscribe(() => {
+        dispatchOrder.push("overallStandings");
+      });
+      const sub3 = service.getLaps().subscribe(() => {
+        dispatchOrder.push("lap");
+      });
+
+      const mockRaceData = RaceData.encode({
+        lap: { driverId: "d1", lapTime: 4.5 },
+        standingsUpdate: { updates: [] },
+        overallStandingsUpdate: { participants: [] },
+      }).finish();
+
+      (service as any).handleRaceDataMessage({
+        data: mockRaceData.slice().buffer,
+      });
+
+      expect(dispatchOrder).toEqual(["standings", "overallStandings", "lap"]);
+      sub1.unsubscribe();
+      sub2.unsubscribe();
+      sub3.unsubscribe();
+    });
+
     it("should warn on browser main-thread freeze when dispatchDelay exceeds 100ms", () => {
       const mockRaceData = RaceData.encode({
         raceTime: {
@@ -1695,6 +1723,31 @@ describe("DataService", () => {
         (service as any).isInterfaceSocketExplicitlyDisconnected,
       ).toBeTrue();
       jasmine.clock().uninstall();
+    });
+
+    it("should handle disconnectFromRaceDataSocket and disconnectAllSockets", () => {
+      const mockRaceWs: any = {
+        close: jasmine.createSpy("close"),
+      };
+      const mockInterfaceWs: any = {
+        close: jasmine.createSpy("close"),
+      };
+      (service as any).raceDataSocket = mockRaceWs;
+      (service as any).interfaceDataSocket = mockInterfaceWs;
+
+      service.disconnectFromRaceDataSocket();
+      expect(mockRaceWs.close).toHaveBeenCalled();
+      expect(
+        (service as any).isRaceDataSocketExplicitlyDisconnected,
+      ).toBeTrue();
+
+      (service as any).raceDataSocket = mockRaceWs;
+      spyOn(service, "disconnectFromRaceDataSocket").and.callThrough();
+      spyOn(service, "disconnectFromInterfaceDataSocket").and.callThrough();
+
+      service.disconnectAllSockets();
+      expect(service.disconnectFromRaceDataSocket).toHaveBeenCalled();
+      expect(service.disconnectFromInterfaceDataSocket).toHaveBeenCalled();
     });
 
     it("should provide observable streams for race events, telemetry, and system state", () => {

@@ -1,4 +1,5 @@
 import { forkJoin, Observable, of } from "rxjs";
+import { UndoManager } from "@app/components/shared/undo-redo-controls/undo-manager";
 import { DataService } from "@app/data.service";
 import { CustomUI } from "@app/models/custom-ui";
 import { Settings } from "@app/models/settings";
@@ -6,8 +7,15 @@ import { Theme } from "@app/models/theme";
 import { CustomUiService } from "@app/services/custom-ui.service";
 import { SettingsService } from "@app/services/settings.service";
 import { ThemeService } from "@app/services/theme.service";
+import { EditorLifecycleHelper } from "@app/utils/editor-lifecycle.helper";
 
 import { UIEditorState } from "./ui-editor-constants";
+import { handleSyncActiveGridSessionFromLayout } from "./ui-editor-grid.helper";
+import {
+  areUIEditorStatesEqual,
+  cloneUIEditorState,
+  syncEditorCoordinates,
+} from "./ui-editor-state.utils";
 
 export interface AutoSaveContext {
   isLoading: boolean;
@@ -151,20 +159,96 @@ export function buildAutoSaveContext(comp: any): any {
       comp.isSaving = true;
     },
     onSuccess: () => {
+      comp.isSaving = false;
+      comp.activeAutoSavePromise = null;
       comp.autoSaveTimeout = setTimeout(() => {
         comp.isAutoSaving = false;
-        comp.isSaving = false;
         if (!comp.isDestroyed) comp.cdr.markForCheck();
       }, comp.getSaveDelay());
     },
     onError: () => {
       comp.isAutoSaving = false;
       comp.isSaving = false;
+      comp.activeAutoSavePromise = null;
       if (!comp.isDestroyed) comp.cdr.markForCheck();
     },
   };
 }
 
 export function handleAutoSaveState(comp: any): Promise<void> {
-  return executeAutoSaveState(buildAutoSaveContext(comp));
+  if (comp.activeAutoSavePromise) {
+    const currentPromise = comp.activeAutoSavePromise;
+    return currentPromise.then(
+      (): Promise<void> => {
+        if (comp.activeAutoSavePromise === currentPromise) {
+          comp.activeAutoSavePromise = null;
+        }
+        if (
+          comp.hasChanges() &&
+          !comp.isAnyThemeNameInvalid() &&
+          !comp.isAnyCustomUiNameInvalid()
+        ) {
+          return handleAutoSaveState(comp);
+        }
+        return Promise.resolve();
+      },
+      (err: any): Promise<void> => {
+        if (comp.activeAutoSavePromise === currentPromise) {
+          comp.activeAutoSavePromise = null;
+        }
+        return Promise.reject(err);
+      },
+    );
+  }
+
+  const ctx = buildAutoSaveContext(comp);
+  const savePromise = executeAutoSaveState(ctx).finally(() => {
+    if (comp.activeAutoSavePromise === savePromise) {
+      comp.activeAutoSavePromise = null;
+    }
+  });
+
+  if (comp.isSaving) {
+    comp.activeAutoSavePromise = savePromise;
+  }
+
+  return savePromise;
+}
+
+export function createUiEditorUndoManager(
+  comp: any,
+): UndoManager<UIEditorState> {
+  return new UndoManager<UIEditorState>(
+    {
+      clonner: (s) => cloneUIEditorState(s),
+      equalizer: (a, b) => areUIEditorStatesEqual(a, b),
+      applier: (s) => {
+        syncEditorCoordinates(s.settings, comp.editingState?.settings);
+        comp.editingState = s;
+        comp.refreshDisplayProperties();
+        handleSyncActiveGridSessionFromLayout(comp);
+        const currentLayout = comp.getLayout(comp.activeCustomUi);
+        if (currentLayout) {
+          comp.syncRacedayPreview(currentLayout, comp.activeCustomUi);
+        }
+      },
+    },
+    () => comp.editingState,
+  );
+}
+
+export function createUiEditorLifecycle(comp: any): EditorLifecycleHelper {
+  return new EditorLifecycleHelper({
+    cdr: comp.cdr,
+    translationService: comp.translationService,
+    getUnsavedReasons: () => comp.getUnsavedReasons(),
+    undoManager: comp.undoManager,
+    hasChanges: () => comp.hasChanges(),
+    isSaveValid: () =>
+      !comp.isAnyThemeNameInvalid() && !comp.isAnyCustomUiNameInvalid(),
+    isSaving: () => comp.isSaving,
+    onAutoSave: () => comp.autoSaveState(),
+    autoSaveOnDiscard: true,
+    logger: comp.logger,
+  });
 }

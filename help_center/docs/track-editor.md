@@ -277,7 +277,7 @@ The top toolbar of the Track Editor provides essential management tools:
 - **Back**: Returns to the previous view or Race Day Setup.
 - **Add Track (+)**: Creates a new track template and enters Edit Mode.
 - **Duplicate Track**: Creates an exact copy of the currently selected track under a new unique name. Ideal for creating alternate configurations (e.g., standard racing vs. digital fuel layout) without rebuilding lane dimensions and pin assignments from scratch.
-- **Edit / Done Editing**: Toggles between Read-Only Mode and Edit Mode. When exiting Edit Mode, changes are validated and persisted.
+- **Edit / Done Editing (`Cmd/Ctrl+E`)**: Toggles between Read-Only Mode and Edit Mode. When exiting Edit Mode, changes are validated and persisted.
 - **Expand / Collapse All**: Expands or collapses all configuration sections and hardware interface panels at once.
 - **Delete Track**: Deletes the selected track after confirmation.
 - **Undo (`Ctrl+Z`) / Redo (`Ctrl+Y`)**: Seamlessly revert or restore changes across lane dimensions, color adjustments, pin reassignments, and interface additions.
@@ -311,3 +311,8 @@ The top toolbar of the Track Editor provides essential management tools:
     1. Ensure the Arduino is running the official **Race Coordinator AI sketch (`v2.1.0.x`)**; legacy `v1.0.0.x` sketches do not support FastLED control.
     2. Check that the **LED Type** (e.g., `WS2812B`) and **Color Order** (e.g., `GRB`) match your physical strip specifications.
     3. Verify that the 5V power supply ground is bonded to the Arduino ground (common ground). Powering long LED strips directly from the Arduino's 5V pin will cause voltage drops and brownouts.
+
+### Interface Disconnects Between Heats (USB Sleep / Selective Suspend)
+- **Symptom**: Your interface (Arduino, Phidget, or Trackmate) disconnects during pauses between heats or after sitting idle, then reconnects when racing resumes with a message saying *"Connection to the interface has been restored."*
+- **Solution**: Windows, Linux, and macOS aggressively power down idle USB and HID devices even when the PC is awake. Refer to the [USB Interface Sleep & Power Saving](troubleshooting.md#usb-sleep-prevention) guide in Troubleshooting to disable USB power saving on your USB Root Hubs and Human Interface Devices in Device Manager.
+

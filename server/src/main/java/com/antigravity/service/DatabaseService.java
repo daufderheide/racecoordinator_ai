@@ -85,6 +85,18 @@ public class DatabaseService {
     databaseInitializer.backfillDrivers(context);
   }
 
+  public void markDefaultArtifactDeleted(DatabaseContext context, String type, String id) {
+    context.markDefaultArtifactDeleted(type, id);
+  }
+
+  public boolean isDefaultArtifactDeleted(DatabaseContext context, String type, String id) {
+    return context.isDefaultArtifactDeleted(type, id);
+  }
+
+  public void clearDefaultArtifactDeleted(DatabaseContext context, String type, String id) {
+    context.clearDefaultArtifactDeleted(type, id);
+  }
+
   public Track getFactoryTrack() {
     return databaseInitializer.getFactoryTrack();
   }

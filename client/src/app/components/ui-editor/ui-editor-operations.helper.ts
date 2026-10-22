@@ -121,6 +121,9 @@ export async function executeConfirmDiscard(params: {
 }
 
 export function handleConfirmDiscard(comp: any): Promise<boolean> {
+  if (comp.lifecycle) {
+    return comp.lifecycle.confirmDiscard();
+  }
   return new Promise((resolve) => {
     executeConfirmDiscard({
       undoManager: comp.undoManager,
@@ -138,4 +141,29 @@ export function handleConfirmDiscard(comp: any): Promise<boolean> {
       if (canDeactivate) resolve(true);
     });
   });
+}
+
+export function isCountdownPreviewActiveHelper(
+  comp: any,
+  ui?: CustomUI,
+): boolean {
+  const id = ui?.entity_id || comp.activeCustomUiId;
+  if (!id) return false;
+  if (comp.countdownPreviewActiveByUi[id] !== undefined) {
+    return !!comp.countdownPreviewActiveByUi[id];
+  }
+  const layout = comp.getLayout(ui || comp.activeCustomUi);
+  const selected =
+    comp.selectedWidgetId && layout?.widgets
+      ? layout.widgets.find((w: any) => w.id === comp.selectedWidgetId)
+      : null;
+  return selected?.widgetType === "countdown";
+}
+
+export function toggleCountdownPreviewHelper(comp: any, ui?: CustomUI): void {
+  const id = ui?.entity_id || comp.activeCustomUiId;
+  if (id) {
+    comp.countdownPreviewActiveByUi[id] = !comp.isCountdownPreviewActive(ui);
+    comp.cdr.markForCheck();
+  }
 }

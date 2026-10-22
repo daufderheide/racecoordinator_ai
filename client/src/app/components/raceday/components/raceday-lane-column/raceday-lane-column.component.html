@@ -6,6 +6,8 @@
   [class.orientation-vertical]="layoutOrientation === 'vertical'"
   [class.orientation-horizontal]="layoutOrientation === 'horizontal'"
   [class.has-header]="settings.showHeader !== false"
+  [class.header-widget-card]="isHeaderWidget"
+  [class.highlight]="isHighlighted"
   [attr.title]="cardTooltip"
   (click)="onCardClick($event)"
   [style.background]="backgroundColor"
@@ -23,11 +25,11 @@
       ? borderColor
       : 'rgba(255, 255, 255, 0.25)'
   "
+  [style.display]="isOverallNoDataRow ? 'none' : null"
 >
-  <!-- Optional Header / Label -->
-  @if (settings.showHeader !== false) {
+  @if (isHeaderWidget) {
     <div
-      class="lane-col-header"
+      class="lane-col-header header-widget-only"
       [style.background]="effectiveHeaderBackgroundColor"
       [style.font-family]="settings.headerFontFamily || null"
       [style.font-size.px]="settings.headerFontSize || 14"
@@ -49,500 +51,914 @@
     >
       {{ headerLabel }}
     </div>
-  }
-
-  <!-- Body Content -->
-  <div class="lane-col-body">
-    <!-- Drift Lap Badge -->
-    @if (isDriftLap()) {
+  } @else {
+    <!-- Optional Header / Label -->
+    @if (settings.showHeader !== false) {
       <div
-        class="drift-indicator"
-        [style.background-color]="foregroundColor"
-        [style.color]="backgroundColor"
+        class="lane-col-header"
+        [style.background]="effectiveHeaderBackgroundColor"
+        [style.font-family]="settings.headerFontFamily || null"
+        [style.font-size.px]="settings.headerFontSize || 14"
+        [style.color]="effectiveHeaderTextColor"
+        [style.justify-content]="
+          settings.headerAlignment === 'start'
+            ? 'flex-start'
+            : settings.headerAlignment === 'end'
+              ? 'flex-end'
+              : 'center'
+        "
+        [style.text-align]="
+          settings.headerAlignment === 'start'
+            ? 'left'
+            : settings.headerAlignment === 'end'
+              ? 'right'
+              : 'center'
+        "
       >
-        {{ "RD_DRIFT_LAP" | translate }}
+        {{ headerLabel }}
       </div>
     }
 
-    <!-- 3x3 Drop Zones overlay for editing -->
-    @if (isUIEditorMode) {
-      <div class="anchor-drop-grid">
+    <!-- Body Content -->
+    <div class="lane-col-body">
+      <!-- Drift Lap Badge -->
+      @if (isDriftLap()) {
         <div
-          class="drop-zone tl"
-          (dragover)="onAnchorDragOver($event)"
-          (dragenter)="onAnchorDragEnter($event)"
-          (dragleave)="onAnchorDragLeave($event)"
-          (drop)="onAnchorDrop($event, 'top-left')"
+          class="drift-indicator"
+          [style.background-color]="foregroundColor"
+          [style.color]="backgroundColor"
         >
-          @if (hasAnchorValue("top-left")) {
-            <button
-              class="delete-anchor-btn"
-              (click)="deleteAnchor('top-left', $event)"
-              title="Remove item"
-            >
-              ×
-            </button>
-          }
+          {{ "RD_DRIFT_LAP" | translate }}
         </div>
-        <div
-          class="drop-zone tc"
-          (dragover)="onAnchorDragOver($event)"
-          (dragenter)="onAnchorDragEnter($event)"
-          (dragleave)="onAnchorDragLeave($event)"
-          (drop)="onAnchorDrop($event, 'top-center')"
-        >
-          @if (hasAnchorValue("top-center")) {
-            <button
-              class="delete-anchor-btn"
-              (click)="deleteAnchor('top-center', $event)"
-              title="Remove item"
-            >
-              ×
-            </button>
-          }
-        </div>
-        <div
-          class="drop-zone tr"
-          (dragover)="onAnchorDragOver($event)"
-          (dragenter)="onAnchorDragEnter($event)"
-          (dragleave)="onAnchorDragLeave($event)"
-          (drop)="onAnchorDrop($event, 'top-right')"
-        >
-          @if (hasAnchorValue("top-right")) {
-            <button
-              class="delete-anchor-btn"
-              (click)="deleteAnchor('top-right', $event)"
-              title="Remove item"
-            >
-              ×
-            </button>
-          }
-        </div>
-        <div
-          class="drop-zone cl"
-          (dragover)="onAnchorDragOver($event)"
-          (dragenter)="onAnchorDragEnter($event)"
-          (dragleave)="onAnchorDragLeave($event)"
-          (drop)="onAnchorDrop($event, 'center-left')"
-        >
-          @if (hasAnchorValue("center-left")) {
-            <button
-              class="delete-anchor-btn"
-              (click)="deleteAnchor('center-left', $event)"
-              title="Remove item"
-            >
-              ×
-            </button>
-          }
-        </div>
-        <div
-          class="drop-zone cc"
-          (dragover)="onAnchorDragOver($event)"
-          (dragenter)="onAnchorDragEnter($event)"
-          (dragleave)="onAnchorDragLeave($event)"
-          (drop)="onAnchorDrop($event, 'center-center')"
-        ></div>
-        <div
-          class="drop-zone cr"
-          (dragover)="onAnchorDragOver($event)"
-          (dragenter)="onAnchorDragEnter($event)"
-          (dragleave)="onAnchorDragLeave($event)"
-          (drop)="onAnchorDrop($event, 'center-right')"
-        >
-          @if (hasAnchorValue("center-right")) {
-            <button
-              class="delete-anchor-btn"
-              (click)="deleteAnchor('center-right', $event)"
-              title="Remove item"
-            >
-              ×
-            </button>
-          }
-        </div>
-        <div
-          class="drop-zone bl"
-          (dragover)="onAnchorDragOver($event)"
-          (dragenter)="onAnchorDragEnter($event)"
-          (dragleave)="onAnchorDragLeave($event)"
-          (drop)="onAnchorDrop($event, 'bottom-left')"
-        >
-          @if (hasAnchorValue("bottom-left")) {
-            <button
-              class="delete-anchor-btn"
-              (click)="deleteAnchor('bottom-left', $event)"
-              title="Remove item"
-            >
-              ×
-            </button>
-          }
-        </div>
-        <div
-          class="drop-zone bc"
-          (dragover)="onAnchorDragOver($event)"
-          (dragenter)="onAnchorDragEnter($event)"
-          (dragleave)="onAnchorDragLeave($event)"
-          (drop)="onAnchorDrop($event, 'bottom-center')"
-        >
-          @if (hasAnchorValue("bottom-center")) {
-            <button
-              class="delete-anchor-btn"
-              (click)="deleteAnchor('bottom-center', $event)"
-              title="Remove item"
-            >
-              ×
-            </button>
-          }
-        </div>
-        <div
-          class="drop-zone br"
-          (dragover)="onAnchorDragOver($event)"
-          (dragenter)="onAnchorDragEnter($event)"
-          (dragleave)="onAnchorDragLeave($event)"
-          (drop)="onAnchorDrop($event, 'bottom-right')"
-        >
-          @if (hasAnchorValue("bottom-right")) {
-            <button
-              class="delete-anchor-btn"
-              (click)="deleteAnchor('bottom-right', $event)"
-              title="Remove item"
-            >
-              ×
-            </button>
-          }
-        </div>
-      </div>
-    }
+      }
 
-    <!-- Insets Top Row -->
-    @if (hasTopInsets()) {
-      <div
-        class="lane-col-insets-row lane-col-insets-top"
-        [style.font-family]="settings.insetFontFamily || null"
-        [style.font-size.px]="effectiveInsetFontSize"
-        [style.color]="effectiveInsetTextColor"
-      >
-        <div
-          class="inset-cell tl"
-          [class.clickable-lap-cell]="isInsetLapCount('top-left')"
-          [attr.title]="
-            isInsetLapCount('top-left')
-              ? ('RD_LAP_COLUMN_TOOLTIP' | translate)
-              : null
-          "
-          (click)="onInsetClick('top-left', $event)"
-        >
-          @if (hasInset("top-left")) {
-            @if (isImageProperty(getInsetKey("top-left")!)) {
-              <img
-                [src]="getInsetImageUrl('top-left')"
-                class="lane-col-inset-image"
-                alt=""
-              />
-            } @else {
-              <span>{{ getInsetValue("top-left") }}</span>
+      <!-- 3x3 Drop Zones overlay for editing -->
+      @if (shouldRenderAnchorDropGrid) {
+        <div class="anchor-drop-grid">
+          <div
+            class="drop-zone tl"
+            [class.selected-inset]="isAnchorSelected('top-left')"
+            [class.has-inset]="hasAnchorValue('top-left')"
+            (click)="onAnchorClick('top-left', $event)"
+            (dragover)="onAnchorDragOver($event)"
+            (dragenter)="onAnchorDragEnter($event)"
+            (dragleave)="onAnchorDragLeave($event)"
+            (drop)="onAnchorDrop($event, 'top-left')"
+          >
+            @if (hasAnchorValue("top-left")) {
+              <button
+                class="delete-anchor-btn"
+                (click)="deleteAnchor('top-left', $event)"
+                [title]="'UE_INSPECTOR_REMOVE_INSET' | translate"
+                [attr.aria-label]="'UE_INSPECTOR_REMOVE_INSET' | translate"
+              >
+                <span class="material-icons">delete</span>
+              </button>
             }
-          }
-        </div>
-        <div
-          class="inset-cell tc"
-          [class.clickable-lap-cell]="isInsetLapCount('top-center')"
-          [attr.title]="
-            isInsetLapCount('top-center')
-              ? ('RD_LAP_COLUMN_TOOLTIP' | translate)
-              : null
-          "
-          (click)="onInsetClick('top-center', $event)"
-        >
-          @if (hasInset("top-center")) {
-            @if (isImageProperty(getInsetKey("top-center")!)) {
-              <img
-                [src]="getInsetImageUrl('top-center')"
-                class="lane-col-inset-image"
-                alt=""
-              />
-            } @else {
-              <span>{{ getInsetValue("top-center") }}</span>
+          </div>
+          <div
+            class="drop-zone tc"
+            [class.selected-inset]="isAnchorSelected('top-center')"
+            [class.has-inset]="hasAnchorValue('top-center')"
+            (click)="onAnchorClick('top-center', $event)"
+            (dragover)="onAnchorDragOver($event)"
+            (dragenter)="onAnchorDragEnter($event)"
+            (dragleave)="onAnchorDragLeave($event)"
+            (drop)="onAnchorDrop($event, 'top-center')"
+          >
+            @if (hasAnchorValue("top-center")) {
+              <button
+                class="delete-anchor-btn"
+                (click)="deleteAnchor('top-center', $event)"
+                [title]="'UE_INSPECTOR_REMOVE_INSET' | translate"
+                [attr.aria-label]="'UE_INSPECTOR_REMOVE_INSET' | translate"
+              >
+                <span class="material-icons">delete</span>
+              </button>
             }
-          }
-        </div>
-        <div
-          class="inset-cell tr"
-          [class.clickable-lap-cell]="isInsetLapCount('top-right')"
-          [attr.title]="
-            isInsetLapCount('top-right')
-              ? ('RD_LAP_COLUMN_TOOLTIP' | translate)
-              : null
-          "
-          (click)="onInsetClick('top-right', $event)"
-        >
-          @if (hasInset("top-right")) {
-            @if (isImageProperty(getInsetKey("top-right")!)) {
-              <img
-                [src]="getInsetImageUrl('top-right')"
-                class="lane-col-inset-image"
-                alt=""
-              />
-            } @else {
-              <span>{{ getInsetValue("top-right") }}</span>
+          </div>
+          <div
+            class="drop-zone tr"
+            [class.selected-inset]="isAnchorSelected('top-right')"
+            [class.has-inset]="hasAnchorValue('top-right')"
+            (click)="onAnchorClick('top-right', $event)"
+            (dragover)="onAnchorDragOver($event)"
+            (dragenter)="onAnchorDragEnter($event)"
+            (dragleave)="onAnchorDragLeave($event)"
+            (drop)="onAnchorDrop($event, 'top-right')"
+          >
+            @if (hasAnchorValue("top-right")) {
+              <button
+                class="delete-anchor-btn"
+                (click)="deleteAnchor('top-right', $event)"
+                [title]="'UE_INSPECTOR_REMOVE_INSET' | translate"
+                [attr.aria-label]="'UE_INSPECTOR_REMOVE_INSET' | translate"
+              >
+                <span class="material-icons">delete</span>
+              </button>
             }
-          }
+          </div>
+          <div
+            class="drop-zone cl"
+            [class.selected-inset]="isAnchorSelected('center-left')"
+            [class.has-inset]="hasAnchorValue('center-left')"
+            (click)="onAnchorClick('center-left', $event)"
+            (dragover)="onAnchorDragOver($event)"
+            (dragenter)="onAnchorDragEnter($event)"
+            (dragleave)="onAnchorDragLeave($event)"
+            (drop)="onAnchorDrop($event, 'center-left')"
+          >
+            @if (hasAnchorValue("center-left")) {
+              <button
+                class="delete-anchor-btn"
+                (click)="deleteAnchor('center-left', $event)"
+                [title]="'UE_INSPECTOR_REMOVE_INSET' | translate"
+                [attr.aria-label]="'UE_INSPECTOR_REMOVE_INSET' | translate"
+              >
+                <span class="material-icons">delete</span>
+              </button>
+            }
+          </div>
+          <div
+            class="drop-zone cc"
+            (click)="onCenterZoneClick($event)"
+            (dragover)="onAnchorDragOver($event)"
+            (dragenter)="onAnchorDragEnter($event)"
+            (dragleave)="onAnchorDragLeave($event)"
+            (drop)="onAnchorDrop($event, 'center-center')"
+          ></div>
+          <div
+            class="drop-zone cr"
+            [class.selected-inset]="isAnchorSelected('center-right')"
+            [class.has-inset]="hasAnchorValue('center-right')"
+            (click)="onAnchorClick('center-right', $event)"
+            (dragover)="onAnchorDragOver($event)"
+            (dragenter)="onAnchorDragEnter($event)"
+            (dragleave)="onAnchorDragLeave($event)"
+            (drop)="onAnchorDrop($event, 'center-right')"
+          >
+            @if (hasAnchorValue("center-right")) {
+              <button
+                class="delete-anchor-btn"
+                (click)="deleteAnchor('center-right', $event)"
+                [title]="'UE_INSPECTOR_REMOVE_INSET' | translate"
+                [attr.aria-label]="'UE_INSPECTOR_REMOVE_INSET' | translate"
+              >
+                <span class="material-icons">delete</span>
+              </button>
+            }
+          </div>
+          <div
+            class="drop-zone bl"
+            [class.selected-inset]="isAnchorSelected('bottom-left')"
+            [class.has-inset]="hasAnchorValue('bottom-left')"
+            (click)="onAnchorClick('bottom-left', $event)"
+            (dragover)="onAnchorDragOver($event)"
+            (dragenter)="onAnchorDragEnter($event)"
+            (dragleave)="onAnchorDragLeave($event)"
+            (drop)="onAnchorDrop($event, 'bottom-left')"
+          >
+            @if (hasAnchorValue("bottom-left")) {
+              <button
+                class="delete-anchor-btn"
+                (click)="deleteAnchor('bottom-left', $event)"
+                [title]="'UE_INSPECTOR_REMOVE_INSET' | translate"
+                [attr.aria-label]="'UE_INSPECTOR_REMOVE_INSET' | translate"
+              >
+                <span class="material-icons">delete</span>
+              </button>
+            }
+          </div>
+          <div
+            class="drop-zone bc"
+            [class.selected-inset]="isAnchorSelected('bottom-center')"
+            [class.has-inset]="hasAnchorValue('bottom-center')"
+            (click)="onAnchorClick('bottom-center', $event)"
+            (dragover)="onAnchorDragOver($event)"
+            (dragenter)="onAnchorDragEnter($event)"
+            (dragleave)="onAnchorDragLeave($event)"
+            (drop)="onAnchorDrop($event, 'bottom-center')"
+          >
+            @if (hasAnchorValue("bottom-center")) {
+              <button
+                class="delete-anchor-btn"
+                (click)="deleteAnchor('bottom-center', $event)"
+                [title]="'UE_INSPECTOR_REMOVE_INSET' | translate"
+                [attr.aria-label]="'UE_INSPECTOR_REMOVE_INSET' | translate"
+              >
+                <span class="material-icons">delete</span>
+              </button>
+            }
+          </div>
+          <div
+            class="drop-zone br"
+            [class.selected-inset]="isAnchorSelected('bottom-right')"
+            [class.has-inset]="hasAnchorValue('bottom-right')"
+            (click)="onAnchorClick('bottom-right', $event)"
+            (dragover)="onAnchorDragOver($event)"
+            (dragenter)="onAnchorDragEnter($event)"
+            (dragleave)="onAnchorDragLeave($event)"
+            (drop)="onAnchorDrop($event, 'bottom-right')"
+          >
+            @if (hasAnchorValue("bottom-right")) {
+              <button
+                class="delete-anchor-btn"
+                (click)="deleteAnchor('bottom-right', $event)"
+                [title]="'UE_INSPECTOR_REMOVE_INSET' | translate"
+                [attr.aria-label]="'UE_INSPECTOR_REMOVE_INSET' | translate"
+              >
+                <span class="material-icons">delete</span>
+              </button>
+            }
+          </div>
         </div>
-      </div>
-    }
+      }
 
-    <!-- Main Content Row -->
-    <div class="lane-col-main-row">
-      @if (hasInset("center-left")) {
+      <!-- Insets Top Row -->
+      @if (hasTopInsets()) {
         <div
-          class="inset-cell cl"
-          [class.clickable-lap-cell]="isInsetLapCount('center-left')"
-          [attr.title]="
-            isInsetLapCount('center-left')
-              ? ('RD_LAP_COLUMN_TOOLTIP' | translate)
-              : null
-          "
-          (click)="onInsetClick('center-left', $event)"
+          class="lane-col-insets-row lane-col-insets-top"
           [style.font-family]="settings.insetFontFamily || null"
           [style.font-size.px]="effectiveInsetFontSize"
           [style.color]="effectiveInsetTextColor"
         >
-          @if (isImageProperty(getInsetKey("center-left")!)) {
-            <img
-              [src]="getInsetImageUrl('center-left')"
-              class="lane-col-inset-image"
-              alt=""
-            />
-          } @else {
-            <span>{{ getInsetValue("center-left") }}</span>
+          @if (hasInset("top-left")) {
+            <div
+              class="inset-cell tl"
+              [class.has-image]="isImageProperty(getInsetKey('top-left')!)"
+              [class.clickable-lap-cell]="isInsetLapCount('top-left')"
+              [style.font-family]="getInsetFontFamily('top-left')"
+              [style.font-size.px]="getEffectiveInsetFontSize('top-left')"
+              [style.color]="getEffectiveInsetTextColor('top-left')"
+              [attr.title]="
+                isInsetLapCount('top-left')
+                  ? ('RD_LAP_COLUMN_TOOLTIP' | translate)
+                  : null
+              "
+              (click)="onInsetClick('top-left', $event)"
+            >
+              @if (isCustomWidget(getInsetKey("top-left")!)) {
+                <div class="lane-col-inset-custom-widget-wrapper">
+                  <ng-container
+                    *ngComponentOutlet="
+                      getCustomWidgetComponent(getInsetKey('top-left')!);
+                      inputs: getCustomWidgetInputsForInset('top-left')
+                    "
+                  />
+                </div>
+              } @else if (isImageProperty(getInsetKey("top-left")!)) {
+                @if (
+                  isPlaceholderAvatar(
+                    getInsetImageUrl("top-left"),
+                    getInsetKey("top-left"),
+                    "top-left"
+                  )
+                ) {
+                  <svg
+                    viewBox="0 0 24 24"
+                    class="lane-col-inset-image placeholder-avatar"
+                    [style.color]="getEffectiveInsetTextColor('top-left')"
+                    [attr.preserveAspectRatio]="
+                      getSvgPreserveAspectRatio('top-left')
+                    "
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
+                      fill="currentColor"
+                    />
+                  </svg>
+                } @else if (getInsetImageUrl("top-left")) {
+                  <img
+                    [src]="getInsetImageUrl('top-left')"
+                    class="lane-col-inset-image"
+                    alt=""
+                    (error)="onImageError($event, 'top-left')"
+                  />
+                }
+              } @else {
+                <span>{{ getInsetValue("top-left") }}</span>
+              }
+            </div>
+          }
+          @if (hasInset("top-center")) {
+            <div
+              class="inset-cell tc"
+              [class.has-image]="isImageProperty(getInsetKey('top-center')!)"
+              [class.clickable-lap-cell]="isInsetLapCount('top-center')"
+              [style.font-family]="getInsetFontFamily('top-center')"
+              [style.font-size.px]="getEffectiveInsetFontSize('top-center')"
+              [style.color]="getEffectiveInsetTextColor('top-center')"
+              [attr.title]="
+                isInsetLapCount('top-center')
+                  ? ('RD_LAP_COLUMN_TOOLTIP' | translate)
+                  : null
+              "
+              (click)="onInsetClick('top-center', $event)"
+            >
+              @if (isCustomWidget(getInsetKey("top-center")!)) {
+                <div class="lane-col-inset-custom-widget-wrapper">
+                  <ng-container
+                    *ngComponentOutlet="
+                      getCustomWidgetComponent(getInsetKey('top-center')!);
+                      inputs: getCustomWidgetInputsForInset('top-center')
+                    "
+                  />
+                </div>
+              } @else if (isImageProperty(getInsetKey("top-center")!)) {
+                @if (
+                  isPlaceholderAvatar(
+                    getInsetImageUrl("top-center"),
+                    getInsetKey("top-center"),
+                    "top-center"
+                  )
+                ) {
+                  <svg
+                    viewBox="0 0 24 24"
+                    class="lane-col-inset-image placeholder-avatar"
+                    [style.color]="getEffectiveInsetTextColor('top-center')"
+                    [attr.preserveAspectRatio]="
+                      getSvgPreserveAspectRatio('top-center')
+                    "
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
+                      fill="currentColor"
+                    />
+                  </svg>
+                } @else if (getInsetImageUrl("top-center")) {
+                  <img
+                    [src]="getInsetImageUrl('top-center')"
+                    class="lane-col-inset-image"
+                    alt=""
+                    (error)="onImageError($event, 'top-center')"
+                  />
+                }
+              } @else {
+                <span>{{ getInsetValue("top-center") }}</span>
+              }
+            </div>
+          }
+          @if (hasInset("top-right")) {
+            <div
+              class="inset-cell tr"
+              [class.has-image]="isImageProperty(getInsetKey('top-right')!)"
+              [class.clickable-lap-cell]="isInsetLapCount('top-right')"
+              [style.font-family]="getInsetFontFamily('top-right')"
+              [style.font-size.px]="getEffectiveInsetFontSize('top-right')"
+              [style.color]="getEffectiveInsetTextColor('top-right')"
+              [attr.title]="
+                isInsetLapCount('top-right')
+                  ? ('RD_LAP_COLUMN_TOOLTIP' | translate)
+                  : null
+              "
+              (click)="onInsetClick('top-right', $event)"
+            >
+              @if (isCustomWidget(getInsetKey("top-right")!)) {
+                <div class="lane-col-inset-custom-widget-wrapper">
+                  <ng-container
+                    *ngComponentOutlet="
+                      getCustomWidgetComponent(getInsetKey('top-right')!);
+                      inputs: getCustomWidgetInputsForInset('top-right')
+                    "
+                  />
+                </div>
+              } @else if (isImageProperty(getInsetKey("top-right")!)) {
+                @if (
+                  isPlaceholderAvatar(
+                    getInsetImageUrl("top-right"),
+                    getInsetKey("top-right"),
+                    "top-right"
+                  )
+                ) {
+                  <svg
+                    viewBox="0 0 24 24"
+                    class="lane-col-inset-image placeholder-avatar"
+                    [style.color]="getEffectiveInsetTextColor('top-right')"
+                    [attr.preserveAspectRatio]="
+                      getSvgPreserveAspectRatio('top-right')
+                    "
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
+                      fill="currentColor"
+                    />
+                  </svg>
+                } @else if (getInsetImageUrl("top-right")) {
+                  <img
+                    [src]="getInsetImageUrl('top-right')"
+                    class="lane-col-inset-image"
+                    alt=""
+                    (error)="onImageError($event, 'top-right')"
+                  />
+                }
+              } @else {
+                <span>{{ getInsetValue("top-right") }}</span>
+              }
+            </div>
           }
         </div>
       }
 
-      <div class="lane-col-main-content">
-        <!-- Case 1: Last Laps List -->
-        @if (isLastLaps()) {
-          <div class="lane-col-last-laps" #lastLapsContainer>
-            @if (getLastLaps().length === 0) {
-              <div class="lane-col-empty">--</div>
+      <!-- Main Content Row -->
+      <div class="lane-col-main-row">
+        @if (hasInset("center-left")) {
+          <div
+            class="inset-cell cl"
+            [class.has-image]="isImageProperty(getInsetKey('center-left')!)"
+            [class.clickable-lap-cell]="isInsetLapCount('center-left')"
+            [attr.title]="
+              isInsetLapCount('center-left')
+                ? ('RD_LAP_COLUMN_TOOLTIP' | translate)
+                : null
+            "
+            (click)="onInsetClick('center-left', $event)"
+            [style.font-family]="getInsetFontFamily('center-left')"
+            [style.font-size.px]="getEffectiveInsetFontSize('center-left')"
+            [style.color]="getEffectiveInsetTextColor('center-left')"
+          >
+            @if (isCustomWidget(getInsetKey("center-left")!)) {
+              <div class="lane-col-inset-custom-widget-wrapper">
+                <ng-container
+                  *ngComponentOutlet="
+                    getCustomWidgetComponent(getInsetKey('center-left')!);
+                    inputs: getCustomWidgetInputsForInset('center-left')
+                  "
+                />
+              </div>
+            } @else if (isImageProperty(getInsetKey("center-left")!)) {
+              @if (
+                isPlaceholderAvatar(
+                  getInsetImageUrl("center-left"),
+                  getInsetKey("center-left"),
+                  "center-left"
+                )
+              ) {
+                <svg
+                  viewBox="0 0 24 24"
+                  class="lane-col-inset-image placeholder-avatar"
+                  [style.color]="getEffectiveInsetTextColor('center-left')"
+                  [attr.preserveAspectRatio]="
+                    getSvgPreserveAspectRatio('center-left')
+                  "
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
+                    fill="currentColor"
+                  />
+                </svg>
+              } @else if (getInsetImageUrl("center-left")) {
+                <img
+                  [src]="getInsetImageUrl('center-left')"
+                  class="lane-col-inset-image"
+                  alt=""
+                  (error)="onImageError($event, 'center-left')"
+                />
+              }
             } @else {
-              @for (lap of getVisibleLastLaps(); track lap.lapNumber) {
-                <div class="last-lap-item" [class.best-lap]="lap.isBest">
-                  <div class="last-lap-main">
-                    <span class="lap-number">{{ lap.lapNumber }}.</span>
-                    <span class="lap-time">{{ lap.lapTime }}</span>
-                  </div>
-                  @if (lap.segments.length > 0) {
-                    <div class="last-lap-segments">
-                      @for (seg of lap.segments; track $index) {
-                        <span class="lap-seg"
-                          >S{{ $index + 1 }}: {{ seg }}</span
-                        >
-                      }
-                    </div>
-                  }
+              <span>{{ getInsetValue("center-left") }}</span>
+            }
+          </div>
+        }
+
+        <div class="lane-col-main-content">
+          <!-- Case 0: Custom Widget as Main Column Center/Center Widget -->
+          @if (isCustomWidget(columnKey)) {
+            <div class="lane-col-main-custom-widget-wrapper">
+              @if (getCustomWidgetComponent(columnKey)) {
+                <ng-container
+                  *ngComponentOutlet="
+                    getCustomWidgetComponent(columnKey);
+                    inputs: getCustomWidgetInputsForMain()
+                  "
+                />
+              } @else {
+                <div
+                  class="custom-widget-missing-placeholder lane-col-custom-placeholder"
+                >
+                  <span class="material-icons">extension_off</span>
+                  <span>{{ columnKey }}</span>
                 </div>
               }
-            }
-          </div>
-        } @else if (isImageProperty()) {
-          <!-- Case 2: Images, Avatars, QR Codes, Flags -->
-          <div class="lane-col-image-wrapper">
-            @if (getImageUrl()) {
-              <img [src]="getImageUrl()" class="lane-col-image" alt="" />
-            }
-          </div>
-        } @else if (isPacingProperty()) {
-          <!-- Case 3: Ghost Pacing -->
-          <app-raceday-ghost-pacing
-            [driverHeatData]="targetDriver || null"
-            [benchmarkType]="getPacingBenchmarkType()"
-            [decimalPlaces]="getPacingDecimalPlaces()"
-            [personalBest]="targetDriver?.bestLapTime || 0"
-            [personalAvg]="targetDriver?.averageLapTime || 0"
-            [personalMedian]="targetDriver?.medianLapTime || 0"
-            [laneRecord]="
-              parent()?.getLaneRecordEntry?.(targetDriver?.laneIndex ?? 0)
-                ?.value || 0
-            "
-            [heatLeaderBest]="parent()?.heatBestTime || 0"
-            [heatLeaderAvg]="parent()?.heatLeaderAvgTime || 0"
-            [heatLeaderMedian]="parent()?.heatLeaderMedianTime || 0"
-          ></app-raceday-ghost-pacing>
-        } @else {
-          <!-- Case 4: Formatted Text / Numerical Value -->
-          <div
-            class="lane-col-value"
-            [style.font-family]="settings.valueFontFamily || null"
-            [style.color]="effectiveValueTextColor"
-            [style.justify-content]="
-              settings.valueAlignment === 'start'
-                ? 'flex-start'
-                : settings.valueAlignment === 'end'
-                  ? 'flex-end'
-                  : 'center'
-            "
-          >
-            <span class="lane-col-text">{{ formattedValue }}</span>
-          </div>
-
-          <!-- Teammate Driver Swap Overlay -->
-          @if (isTeamDriverSwapActive) {
-            <app-custom-select
-              class="teammate-select"
-              [style.background-image]="
-                parent()?.getDropdownArrowBg?.(targetDriver)
-              "
-              [style.background-position]="
-                parent()?.race?.practice ? 'right top' : 'right center'
-              "
-              [disabled]="parent()?.isDriverSwapDisabled?.(targetDriver)"
-              [ngModel]="
-                targetDriver?.actualDriver?.entity_id ||
-                targetDriver?.driver?.entity_id ||
-                $any(targetDriver?.driver)?.entity_id ||
-                targetDriver?.driver
-              "
-              (change)="onTeammateChange($event)"
-              style="background-repeat: no-repeat"
+            </div>
+          } @else if (isLastLaps()) {
+            <div
+              class="lane-col-last-laps"
+              #lastLapsContainer
+              [class.vertical-laps]="isVerticalLapsFlow"
+              [class.horizontal-laps]="!isVerticalLapsFlow"
+              [style.color]="effectiveValueTextColor"
             >
-              @for (
-                tm of parent()?.getTeammates?.(targetDriver);
-                track $any(tm).entity_id || $any(tm).id
-              ) {
-                <app-custom-option [value]="$any(tm).entity_id || $any(tm).id">
-                  {{
-                    columnKey === "driver.nickname"
-                      ? $any(tm).nickname || $any(tm).name
-                      : $any(tm).name
-                  }}
-                  @if (!parent()?.race?.practice) {
-                    {{
-                      parent()?.getDriverStats?.(
-                        targetDriver,
-                        $any(tm).entity_id || $any(tm).id
-                      )
-                    }}
-                  }
-                </app-custom-option>
+              @if (getLastLaps().length === 0) {
+                <div class="lane-col-empty">--</div>
+              } @else {
+                @for (lap of getVisibleLastLaps(); track $index) {
+                  <div
+                    class="last-lap-item"
+                    [class.best-lap]="lap.isBest"
+                    [style.border-bottom]="
+                      !$last && isVerticalLapsFlow
+                        ? '1px solid ' +
+                          (effectiveValueTextColor || 'currentColor')
+                        : null
+                    "
+                    [style.border-right]="
+                      !$last && !isVerticalLapsFlow
+                        ? '1px solid ' +
+                          (effectiveValueTextColor || 'currentColor')
+                        : null
+                    "
+                  >
+                    <span class="last-lap-time">{{ lap.lapTime }}</span>
+                    @if (lap.segments && lap.segments.length > 0) {
+                      <div class="last-lap-segments">
+                        @for (seg of lap.segments; track $index) {
+                          <span
+                            class="last-lap-seg"
+                            [style.font-size]="
+                              'calc(1em / ' +
+                              (lap.segments.length < 2
+                                ? 2
+                                : lap.segments.length) +
+                              ')'
+                            "
+                            >{{ seg }}</span
+                          >
+                        }
+                      </div>
+                    }
+                  </div>
+                }
               }
-            </app-custom-select>
-          }
-
-          <!-- Practice Mode Lane Reset Button -->
-          @if (isPracticeLaneResetActive) {
-            <button
-              class="material-icons reset-lane-btn lane-col-reset-btn"
-              title="{{ 'RD_RESET_LANE_TOOLTIP' | translate }}"
-              (click)="onResetLane($event)"
+            </div>
+          } @else if (isImageProperty()) {
+            <!-- Case 2: Images, Avatars, QR Codes, Flags -->
+            <div class="lane-col-image-wrapper">
+              @if (isPlaceholderAvatar(getImageUrl(), columnKey)) {
+                <svg
+                  viewBox="0 0 24 24"
+                  class="lane-col-image placeholder-avatar"
+                  [style.color]="effectiveValueTextColor"
+                  preserveAspectRatio="xMidYMid meet"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
+                    fill="currentColor"
+                  />
+                </svg>
+              } @else if (getImageUrl()) {
+                <img
+                  [src]="getImageUrl()"
+                  class="lane-col-image"
+                  alt=""
+                  (error)="onImageError($event)"
+                />
+              }
+            </div>
+          } @else if (isPacingProperty()) {
+            <!-- Case 3: Ghost Pacing -->
+            <app-raceday-ghost-pacing
+              [driverHeatData]="targetDriver || null"
+              [benchmarkType]="getPacingBenchmarkType()"
+              [decimalPlaces]="getPacingDecimalPlaces()"
+              [personalBest]="targetDriver?.bestLapTime || 0"
+              [personalAvg]="targetDriver?.averageLapTime || 0"
+              [personalMedian]="targetDriver?.medianLapTime || 0"
+              [laneRecord]="
+                parent()?.getLaneRecordEntry?.(targetDriver?.laneIndex ?? 0)
+                  ?.value || 0
+              "
+              [heatLeaderBest]="parent()?.heatBestTime || 0"
+              [heatLeaderAvg]="parent()?.heatLeaderAvgTime || 0"
+              [heatLeaderMedian]="parent()?.heatLeaderMedianTime || 0"
+            ></app-raceday-ghost-pacing>
+          } @else {
+            <!-- Case 4: Formatted Text / Numerical Value -->
+            <div
+              class="lane-col-value"
+              [style.font-family]="settings.valueFontFamily || null"
+              [style.color]="effectiveValueTextColor"
+              [style.justify-content]="
+                settings.valueAlignment === 'start'
+                  ? 'flex-start'
+                  : settings.valueAlignment === 'end'
+                    ? 'flex-end'
+                    : 'center'
+              "
             >
-              refresh
-            </button>
+              <span class="lane-col-text">{{ formattedValue }}</span>
+            </div>
+
+            <!-- Teammate Driver Swap Overlay -->
+            @if (isTeamDriverSwapActive) {
+              <app-custom-select
+                class="teammate-select"
+                [style.background-image]="
+                  parent()?.getDropdownArrowBg?.(targetDriver)
+                "
+                [style.background-position]="
+                  parent()?.race?.practice ? 'right top' : 'right center'
+                "
+                [disabled]="parent()?.isDriverSwapDisabled?.(targetDriver)"
+                [ngModel]="
+                  targetDriver?.actualDriver?.entity_id ||
+                  targetDriver?.driver?.entity_id ||
+                  $any(targetDriver?.driver)?.entity_id ||
+                  targetDriver?.driver
+                "
+                (change)="onTeammateChange($event)"
+                style="background-repeat: no-repeat"
+              >
+                @for (
+                  tm of parent()?.getTeammates?.(targetDriver);
+                  track $any(tm).entity_id || $any(tm).id
+                ) {
+                  <app-custom-option
+                    [value]="$any(tm).entity_id || $any(tm).id"
+                  >
+                    {{
+                      columnKey === "driver.nickname"
+                        ? $any(tm).nickname || $any(tm).name
+                        : $any(tm).name
+                    }}
+                    @if (!parent()?.race?.practice) {
+                      {{
+                        parent()?.getDriverStats?.(
+                          targetDriver,
+                          $any(tm).entity_id || $any(tm).id
+                        )
+                      }}
+                    }
+                  </app-custom-option>
+                }
+              </app-custom-select>
+            }
+
+            <!-- Practice Mode Lane Reset Button -->
+            @if (isPracticeLaneResetActive) {
+              <button
+                class="material-icons reset-lane-btn lane-col-reset-btn"
+                title="{{ 'RD_RESET_LANE_TOOLTIP' | translate }}"
+                (click)="onResetLane($event)"
+              >
+                refresh
+              </button>
+            }
           }
+        </div>
+
+        @if (hasInset("center-right")) {
+          <div
+            class="inset-cell cr"
+            [class.has-image]="isImageProperty(getInsetKey('center-right')!)"
+            [class.clickable-lap-cell]="isInsetLapCount('center-right')"
+            [attr.title]="
+              isInsetLapCount('center-right')
+                ? ('RD_LAP_COLUMN_TOOLTIP' | translate)
+                : null
+            "
+            (click)="onInsetClick('center-right', $event)"
+            [style.font-family]="getInsetFontFamily('center-right')"
+            [style.font-size.px]="getEffectiveInsetFontSize('center-right')"
+            [style.color]="getEffectiveInsetTextColor('center-right')"
+          >
+            @if (isCustomWidget(getInsetKey("center-right")!)) {
+              <div class="lane-col-inset-custom-widget-wrapper">
+                <ng-container
+                  *ngComponentOutlet="
+                    getCustomWidgetComponent(getInsetKey('center-right')!);
+                    inputs: getCustomWidgetInputsForInset('center-right')
+                  "
+                />
+              </div>
+            } @else if (isImageProperty(getInsetKey("center-right")!)) {
+              @if (
+                isPlaceholderAvatar(
+                  getInsetImageUrl("center-right"),
+                  getInsetKey("center-right"),
+                  "center-right"
+                )
+              ) {
+                <svg
+                  viewBox="0 0 24 24"
+                  class="lane-col-inset-image placeholder-avatar"
+                  [style.color]="getEffectiveInsetTextColor('center-right')"
+                  [attr.preserveAspectRatio]="
+                    getSvgPreserveAspectRatio('center-right')
+                  "
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
+                    fill="currentColor"
+                  />
+                </svg>
+              } @else if (getInsetImageUrl("center-right")) {
+                <img
+                  [src]="getInsetImageUrl('center-right')"
+                  class="lane-col-inset-image"
+                  alt=""
+                  (error)="onImageError($event, 'center-right')"
+                />
+              }
+            } @else {
+              <span>{{ getInsetValue("center-right") }}</span>
+            }
+          </div>
         }
       </div>
 
-      @if (hasInset("center-right")) {
+      <!-- Insets Bottom Row -->
+      @if (hasBottomInsets()) {
         <div
-          class="inset-cell cr"
-          [class.clickable-lap-cell]="isInsetLapCount('center-right')"
-          [attr.title]="
-            isInsetLapCount('center-right')
-              ? ('RD_LAP_COLUMN_TOOLTIP' | translate)
-              : null
-          "
-          (click)="onInsetClick('center-right', $event)"
+          class="lane-col-insets-row lane-col-insets-bottom"
           [style.font-family]="settings.insetFontFamily || null"
           [style.font-size.px]="effectiveInsetFontSize"
           [style.color]="effectiveInsetTextColor"
         >
-          @if (isImageProperty(getInsetKey("center-right")!)) {
-            <img
-              [src]="getInsetImageUrl('center-right')"
-              class="lane-col-inset-image"
-              alt=""
-            />
-          } @else {
-            <span>{{ getInsetValue("center-right") }}</span>
+          @if (hasInset("bottom-left")) {
+            <div
+              class="inset-cell bl"
+              [class.has-image]="isImageProperty(getInsetKey('bottom-left')!)"
+              [class.clickable-lap-cell]="isInsetLapCount('bottom-left')"
+              [style.font-family]="getInsetFontFamily('bottom-left')"
+              [style.font-size.px]="getEffectiveInsetFontSize('bottom-left')"
+              [style.color]="getEffectiveInsetTextColor('bottom-left')"
+              [attr.title]="
+                isInsetLapCount('bottom-left')
+                  ? ('RD_LAP_COLUMN_TOOLTIP' | translate)
+                  : null
+              "
+              (click)="onInsetClick('bottom-left', $event)"
+            >
+              @if (isCustomWidget(getInsetKey("bottom-left")!)) {
+                <div class="lane-col-inset-custom-widget-wrapper">
+                  <ng-container
+                    *ngComponentOutlet="
+                      getCustomWidgetComponent(getInsetKey('bottom-left')!);
+                      inputs: getCustomWidgetInputsForInset('bottom-left')
+                    "
+                  />
+                </div>
+              } @else if (isImageProperty(getInsetKey("bottom-left")!)) {
+                @if (
+                  isPlaceholderAvatar(
+                    getInsetImageUrl("bottom-left"),
+                    getInsetKey("bottom-left"),
+                    "bottom-left"
+                  )
+                ) {
+                  <svg
+                    viewBox="0 0 24 24"
+                    class="lane-col-inset-image placeholder-avatar"
+                    [style.color]="getEffectiveInsetTextColor('bottom-left')"
+                    [attr.preserveAspectRatio]="
+                      getSvgPreserveAspectRatio('bottom-left')
+                    "
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
+                      fill="currentColor"
+                    />
+                  </svg>
+                } @else if (getInsetImageUrl("bottom-left")) {
+                  <img
+                    [src]="getInsetImageUrl('bottom-left')"
+                    class="lane-col-inset-image"
+                    alt=""
+                    (error)="onImageError($event, 'bottom-left')"
+                  />
+                }
+              } @else {
+                <span>{{ getInsetValue("bottom-left") }}</span>
+              }
+            </div>
+          }
+          @if (hasInset("bottom-center")) {
+            <div
+              class="inset-cell bc"
+              [class.has-image]="isImageProperty(getInsetKey('bottom-center')!)"
+              [class.clickable-lap-cell]="isInsetLapCount('bottom-center')"
+              [style.font-family]="getInsetFontFamily('bottom-center')"
+              [style.font-size.px]="getEffectiveInsetFontSize('bottom-center')"
+              [style.color]="getEffectiveInsetTextColor('bottom-center')"
+              [attr.title]="
+                isInsetLapCount('bottom-center')
+                  ? ('RD_LAP_COLUMN_TOOLTIP' | translate)
+                  : null
+              "
+              (click)="onInsetClick('bottom-center', $event)"
+            >
+              @if (isCustomWidget(getInsetKey("bottom-center")!)) {
+                <div class="lane-col-inset-custom-widget-wrapper">
+                  <ng-container
+                    *ngComponentOutlet="
+                      getCustomWidgetComponent(getInsetKey('bottom-center')!);
+                      inputs: getCustomWidgetInputsForInset('bottom-center')
+                    "
+                  />
+                </div>
+              } @else if (isImageProperty(getInsetKey("bottom-center")!)) {
+                @if (
+                  isPlaceholderAvatar(
+                    getInsetImageUrl("bottom-center"),
+                    getInsetKey("bottom-center"),
+                    "bottom-center"
+                  )
+                ) {
+                  <svg
+                    viewBox="0 0 24 24"
+                    class="lane-col-inset-image placeholder-avatar"
+                    [style.color]="getEffectiveInsetTextColor('bottom-center')"
+                    [attr.preserveAspectRatio]="
+                      getSvgPreserveAspectRatio('bottom-center')
+                    "
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
+                      fill="currentColor"
+                    />
+                  </svg>
+                } @else if (getInsetImageUrl("bottom-center")) {
+                  <img
+                    [src]="getInsetImageUrl('bottom-center')"
+                    class="lane-col-inset-image"
+                    alt=""
+                    (error)="onImageError($event, 'bottom-center')"
+                  />
+                }
+              } @else {
+                <span>{{ getInsetValue("bottom-center") }}</span>
+              }
+            </div>
+          }
+          @if (hasInset("bottom-right")) {
+            <div
+              class="inset-cell br"
+              [class.has-image]="isImageProperty(getInsetKey('bottom-right')!)"
+              [class.clickable-lap-cell]="isInsetLapCount('bottom-right')"
+              [style.font-family]="getInsetFontFamily('bottom-right')"
+              [style.font-size.px]="getEffectiveInsetFontSize('bottom-right')"
+              [style.color]="getEffectiveInsetTextColor('bottom-right')"
+              [attr.title]="
+                isInsetLapCount('bottom-right')
+                  ? ('RD_LAP_COLUMN_TOOLTIP' | translate)
+                  : null
+              "
+              (click)="onInsetClick('bottom-right', $event)"
+            >
+              @if (isCustomWidget(getInsetKey("bottom-right")!)) {
+                <div class="lane-col-inset-custom-widget-wrapper">
+                  <ng-container
+                    *ngComponentOutlet="
+                      getCustomWidgetComponent(getInsetKey('bottom-right')!);
+                      inputs: getCustomWidgetInputsForInset('bottom-right')
+                    "
+                  />
+                </div>
+              } @else if (isImageProperty(getInsetKey("bottom-right")!)) {
+                @if (
+                  isPlaceholderAvatar(
+                    getInsetImageUrl("bottom-right"),
+                    getInsetKey("bottom-right"),
+                    "bottom-right"
+                  )
+                ) {
+                  <svg
+                    viewBox="0 0 24 24"
+                    class="lane-col-inset-image placeholder-avatar"
+                    [style.color]="getEffectiveInsetTextColor('bottom-right')"
+                    [attr.preserveAspectRatio]="
+                      getSvgPreserveAspectRatio('bottom-right')
+                    "
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
+                      fill="currentColor"
+                    />
+                  </svg>
+                } @else if (getInsetImageUrl("bottom-right")) {
+                  <img
+                    [src]="getInsetImageUrl('bottom-right')"
+                    class="lane-col-inset-image"
+                    alt=""
+                    (error)="onImageError($event, 'bottom-right')"
+                  />
+                }
+              } @else {
+                <span>{{ getInsetValue("bottom-right") }}</span>
+              }
+            </div>
           }
         </div>
       }
     </div>
-
-    <!-- Insets Bottom Row -->
-    @if (hasBottomInsets()) {
-      <div
-        class="lane-col-insets-row lane-col-insets-bottom"
-        [style.font-family]="settings.insetFontFamily || null"
-        [style.font-size.px]="effectiveInsetFontSize"
-        [style.color]="effectiveInsetTextColor"
-      >
-        <div
-          class="inset-cell bl"
-          [class.clickable-lap-cell]="isInsetLapCount('bottom-left')"
-          [attr.title]="
-            isInsetLapCount('bottom-left')
-              ? ('RD_LAP_COLUMN_TOOLTIP' | translate)
-              : null
-          "
-          (click)="onInsetClick('bottom-left', $event)"
-        >
-          @if (hasInset("bottom-left")) {
-            @if (isImageProperty(getInsetKey("bottom-left")!)) {
-              <img
-                [src]="getInsetImageUrl('bottom-left')"
-                class="lane-col-inset-image"
-                alt=""
-              />
-            } @else {
-              <span>{{ getInsetValue("bottom-left") }}</span>
-            }
-          }
-        </div>
-        <div
-          class="inset-cell bc"
-          [class.clickable-lap-cell]="isInsetLapCount('bottom-center')"
-          [attr.title]="
-            isInsetLapCount('bottom-center')
-              ? ('RD_LAP_COLUMN_TOOLTIP' | translate)
-              : null
-          "
-          (click)="onInsetClick('bottom-center', $event)"
-        >
-          @if (hasInset("bottom-center")) {
-            @if (isImageProperty(getInsetKey("bottom-center")!)) {
-              <img
-                [src]="getInsetImageUrl('bottom-center')"
-                class="lane-col-inset-image"
-                alt=""
-              />
-            } @else {
-              <span>{{ getInsetValue("bottom-center") }}</span>
-            }
-          }
-        </div>
-        <div
-          class="inset-cell br"
-          [class.clickable-lap-cell]="isInsetLapCount('bottom-right')"
-          [attr.title]="
-            isInsetLapCount('bottom-right')
-              ? ('RD_LAP_COLUMN_TOOLTIP' | translate)
-              : null
-          "
-          (click)="onInsetClick('bottom-right', $event)"
-        >
-          @if (hasInset("bottom-right")) {
-            @if (isImageProperty(getInsetKey("bottom-right")!)) {
-              <img
-                [src]="getInsetImageUrl('bottom-right')"
-                class="lane-col-inset-image"
-                alt=""
-              />
-            } @else {
-              <span>{{ getInsetValue("bottom-right") }}</span>
-            }
-          }
-        </div>
-      </div>
-    }
-  </div>
+  }
 </div>

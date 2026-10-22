@@ -1,4 +1,8 @@
-import { LaneGridReplicationHelper } from "@app/components/raceday/utils/lane-grid-replication.helper";
+import { LaneGridAnimationHelper } from "@app/components/raceday/utils/lane-grid-animation.helper";
+import {
+  LaneGridReplicationHelper,
+  LaneGridSession,
+} from "@app/components/raceday/utils/lane-grid-replication.helper";
 import {
   LaneReplicationHelper,
   LaneReplicationOptions,
@@ -6,6 +10,7 @@ import {
 import { CustomUI } from "@app/models/custom-ui";
 import { LayoutConfig, Settings } from "@app/models/settings";
 
+import { handleGridWidgetInspectorSync } from "./ui-editor-grid-sync.helper";
 import { WIDGET_REGISTRY } from "./widget-registry";
 
 export function findDefaultWidgetId(
@@ -15,6 +20,83 @@ export function findDefaultWidgetId(
   if (widgets.length === 0) return null;
   const laneView = widgets.find((w: any) => w.widgetType === "lane-view");
   return laneView ? laneView.id : widgets[0].id;
+}
+
+export function computeWidgetDisplayName(
+  widget: any,
+  translationService: any,
+  availableColumns?: { key: string; label: string }[],
+  getWidgetTypeLabelKey?: (w: string) => string,
+  selectedAnchor?: string | null,
+): string {
+  if (!widget) return "";
+  const type = widget.widgetType;
+  const key = getWidgetTypeLabelKey
+    ? getWidgetTypeLabelKey(type)
+    : "UE_WIDGET_TYPE_" + type?.toUpperCase().replace(/-/g, "_");
+  const translatedType = translationService?.translate?.(key) || type;
+
+  if (type === "lane-column") {
+    const s = widget.customSettings || {};
+    let colLabel = s.customLabel || "";
+    if (!colLabel && s.columnKey) {
+      const match = availableColumns?.find((c) => c.key === s.columnKey);
+      if (match?.label) {
+        colLabel = translationService?.translate?.(match.label) || match.label;
+      } else {
+        colLabel = s.columnKey
+          .replace(/^driver\./, "")
+          .replace(/([A-Z])/g, " $1")
+          .trim();
+      }
+    }
+    if (!colLabel) colLabel = translatedType;
+
+    let baseDisplayName = "";
+    if (s.isHeaderWidget) {
+      const headerText =
+        translationService?.translate?.("UE_GRID_HEADER_ROW_BADGE") || "Header";
+      baseDisplayName = s.gridId
+        ? `Grid · ${headerText} · ${colLabel}`
+        : `${headerText} · ${colLabel}`;
+    } else {
+      const idx =
+        (s.gridLane != null
+          ? s.gridLane
+          : s.targetIndex != null
+            ? s.targetIndex
+            : 0) + 1;
+      const mode = s.bindingMode || "lane";
+      let prefix = `Lane ${idx}`;
+      if (mode === "position") prefix = `Pos ${idx}`;
+      else if (mode === "overallPosition") prefix = `Overall Pos ${idx}`;
+      else if (mode === "seed") prefix = `Seed ${idx}`;
+
+      baseDisplayName = s.gridId
+        ? `Grid · ${prefix} · ${colLabel}`
+        : `${prefix} · ${colLabel}`;
+    }
+
+    if (selectedAnchor && selectedAnchor !== "center-center") {
+      const insetKey = s.insets?.[selectedAnchor];
+      const anchorPosKey = "UE_ANCHOR_" + selectedAnchor;
+      const anchorPosName =
+        translationService?.translate?.(anchorPosKey) || selectedAnchor;
+      if (insetKey) {
+        const match = availableColumns?.find((c) => c.key === insetKey);
+        const insetLabel = match?.label
+          ? translationService?.translate?.(match.label) || match.label
+          : insetKey;
+        return `${baseDisplayName} · Inset (${anchorPosName}: ${insetLabel})`;
+      } else {
+        return `${baseDisplayName} · Inset (${anchorPosName})`;
+      }
+    }
+
+    return baseDisplayName;
+  }
+
+  return translatedType;
 }
 
 export function ensureWidgetSelectedHelper(comp: any, ui?: CustomUI): void {
@@ -92,6 +174,20 @@ export function applyWidgetDefaultSettings(widget: any): boolean {
         }
       }
     }
+    if (widget.widgetType === "lane-column" && widget.customSettings) {
+      if (!widget.customSettings["backgroundColor"]) {
+        widget.customSettings["backgroundColor"] = "#000000";
+        mutated = true;
+      }
+      if (
+        !widget.customSettings["textColor"] ||
+        (widget.customSettings["textColor"] === "#000000" &&
+          widget.customSettings["backgroundColor"] === "#000000")
+      ) {
+        widget.customSettings["textColor"] = "#ffffff";
+        mutated = true;
+      }
+    }
   }
   return mutated;
 }
@@ -165,6 +261,9 @@ export function handleWidgetSelection(
   ui?: CustomUI,
 ): void {
   if (ui) comp.activeCustomUiId = ui.entity_id;
+  if (comp.selectedWidgetId !== id) {
+    comp.selectedAnchor = null;
+  }
   const layout = comp.getLayout(ui || comp.activeCustomUi);
   comp.selectedWidgetId = id || findDefaultWidgetId(layout);
   const selectedWidget =
@@ -181,6 +280,15 @@ export function handleWidgetSelection(
     if (uiId && comp.countdownPreviewActiveByUi) {
       comp.countdownPreviewActiveByUi[uiId] =
         selectedWidget.widgetType === "countdown";
+    }
+    const gridId = selectedWidget.customSettings?.gridId;
+    if (gridId && comp.activeGridSession?.gridId !== gridId) {
+      if (comp.activeGridSession && comp.finishGridSession) {
+        comp.finishGridSession(ui);
+      }
+      comp.onEditGridTemplate?.(gridId, ui);
+    } else if (!gridId && comp.activeGridSession && comp.finishGridSession) {
+      comp.finishGridSession(ui);
     }
   } else if (uiId && comp.countdownPreviewActiveByUi) {
     comp.countdownPreviewActiveByUi[uiId] = false;
@@ -205,7 +313,6 @@ export function handleWidgetInspectorChange(
   widget?: any,
   ui?: CustomUI,
 ): void {
-  if (comp.isSaving) return;
   const targetUi = ui || comp.activeCustomUi;
   const targetWidget = widget || comp.currentSelectedWidget;
   const layout = comp.getLayout(targetUi);
@@ -216,34 +323,8 @@ export function handleWidgetInspectorChange(
     }
 
     const gridId = targetWidget.customSettings?.["gridId"];
-    const newBindingMode = targetWidget.customSettings?.["bindingMode"];
-    if (gridId && newBindingMode) {
-      if (comp.activeGridSession && comp.activeGridSession.gridId === gridId) {
-        comp.activeGridSession.bindingMode = newBindingMode;
-      }
-      for (const w of layout.widgets) {
-        if (
-          w.customSettings?.["gridId"] === gridId &&
-          w.id !== targetWidget.id
-        ) {
-          if (!w.customSettings) w.customSettings = {};
-          w.customSettings["bindingMode"] = newBindingMode;
-        }
-      }
-    }
-
-    if (
-      comp.activeGridSession &&
-      LaneGridReplicationHelper.isMasterWidget(
-        targetWidget,
-        comp.activeGridSession,
-      )
-    ) {
-      layout.widgets = LaneGridReplicationHelper.syncMasterWidgetToLanes(
-        targetWidget,
-        comp.activeGridSession,
-        layout.widgets,
-      );
+    if (gridId) {
+      handleGridWidgetInspectorSync(comp, layout, targetWidget, gridId);
     }
     updateLayoutOnModel(
       layout,
@@ -252,6 +333,7 @@ export function handleWidgetInspectorChange(
       comp.isCurrentLayoutPractice,
       comp.parsedLayouts,
     );
+    comp.syncRacedayPreview?.(layout, targetUi);
   }
   comp.captureState();
   comp.cdr.markForCheck();
@@ -292,12 +374,59 @@ export function handleRemoveSelectedWidget(comp: any, ui?: CustomUI): void {
   if (!layout?.widgets) return;
 
   const idToRemove = comp.selectedWidgetId;
-  const newWidgets = layout.widgets.filter((w: any) => w.id !== idToRemove);
+  const targetWidget = layout.widgets.find((w: any) => w.id === idToRemove);
+  const gridId =
+    comp.activeGridSession?.gridId || targetWidget?.customSettings?.["gridId"];
+
+  let newWidgets: any[];
+  if (comp.activeGridSession && comp.activeGridSession.gridId === gridId) {
+    newWidgets = LaneGridReplicationHelper.removeMasterWidgetFromLanes(
+      idToRemove,
+      comp.activeGridSession,
+      layout.widgets,
+    );
+  } else if (gridId) {
+    newWidgets = LaneGridReplicationHelper.removeMasterWidgetFromLanes(
+      idToRemove,
+      { gridId } as any,
+      layout.widgets,
+    );
+  } else {
+    newWidgets = layout.widgets.filter((w: any) => w.id !== idToRemove);
+  }
+
+  if (gridId && !LaneGridReplicationHelper.hasGridWidgets(newWidgets, gridId)) {
+    newWidgets = LaneGridReplicationHelper.removeGrid(newWidgets, gridId);
+    LaneGridAnimationHelper.reset(gridId);
+    if (comp.activeGridSession?.gridId === gridId) {
+      comp.activeGridSession = null;
+    }
+  }
+
   const updatedLayout = { ...layout, widgets: newWidgets };
 
-  const laneView = newWidgets.find((w: any) => w.widgetType === "lane-view");
-  const nextWidget = laneView || newWidgets[0];
-  comp.selectedWidgetId = nextWidget ? nextWidget.id : null;
+  const nextWidgetId = LaneGridReplicationHelper.findNextWidgetAfterDeletion(
+    idToRemove,
+    layout.widgets,
+    newWidgets,
+    comp.activeGridSession,
+  );
+  if (comp.selectedWidgetId !== nextWidgetId) {
+    comp.selectedAnchor = null;
+  }
+  comp.selectedWidgetId = nextWidgetId;
+
+  const nextWidget = nextWidgetId
+    ? newWidgets.find((w: any) => w.id === nextWidgetId)
+    : null;
+
+  if (
+    gridId &&
+    !comp.activeGridSession &&
+    nextWidget?.customSettings?.["gridId"] === gridId
+  ) {
+    comp.onEditGridTemplate?.(gridId, targetUi);
+  }
 
   const uiId = targetUi?.entity_id || comp.activeCustomUiId;
   if (uiId && comp.countdownPreviewActiveByUi) {
@@ -306,6 +435,40 @@ export function handleRemoveSelectedWidget(comp: any, ui?: CustomUI): void {
   }
 
   comp.onLayoutChanged(updatedLayout, targetUi);
+}
+
+export function isWidgetHeightAutoCalculated(
+  widget: any,
+  session?: LaneGridSession | null,
+): boolean {
+  if (!widget?.customSettings?.["gridId"]) return false;
+  const isMirrored =
+    session && session.gridId === widget.customSettings["gridId"]
+      ? session.mirrorRows !== false
+      : widget.customSettings["mirrorRows"] !== false;
+  if (!isMirrored) return false;
+  const dir =
+    session && session.gridId === widget.customSettings["gridId"]
+      ? session.direction
+      : widget.customSettings["gridDirection"] || "vertical";
+  return dir === "vertical";
+}
+
+export function isWidgetWidthAutoCalculated(
+  widget: any,
+  session?: LaneGridSession | null,
+): boolean {
+  if (!widget?.customSettings?.["gridId"]) return false;
+  const isMirrored =
+    session && session.gridId === widget.customSettings["gridId"]
+      ? session.mirrorRows !== false
+      : widget.customSettings["mirrorRows"] !== false;
+  if (!isMirrored) return false;
+  const dir =
+    session && session.gridId === widget.customSettings["gridId"]
+      ? session.direction
+      : widget.customSettings["gridDirection"] || "vertical";
+  return dir === "horizontal";
 }
 
 export function handleNudgeSelectedWidget(
@@ -324,11 +487,29 @@ export function handleNudgeSelectedWidget(
   );
   if (!widget) return;
 
+  const canNudgeX = !isWidgetWidthAutoCalculated(
+    widget,
+    comp.activeGridSession,
+  );
+  const canNudgeY = !isWidgetHeightAutoCalculated(
+    widget,
+    comp.activeGridSession,
+  );
+  const effDx = canNudgeX ? dx : 0;
+  const effDy = canNudgeY ? dy : 0;
+  if (effDx === 0 && effDy === 0) return;
+
   const baseWidth = comp.getLayoutBaseWidth(targetUi);
   const baseHeight = comp.getLayoutBaseHeight(targetUi);
 
-  const newX = Math.max(0, Math.min(baseWidth - widget.width, widget.x + dx));
-  const newY = Math.max(0, Math.min(baseHeight - widget.height, widget.y + dy));
+  const newX = Math.max(
+    0,
+    Math.min(baseWidth - widget.width, widget.x + effDx),
+  );
+  const newY = Math.max(
+    0,
+    Math.min(baseHeight - widget.height, widget.y + effDy),
+  );
 
   if (newX !== widget.x || newY !== widget.y) {
     widget.x = newX;
@@ -343,7 +524,8 @@ export function handleWidgetXChange(
   widget: any,
   ui?: CustomUI,
 ): void {
-  if (!widget) return;
+  if (!widget || isWidgetWidthAutoCalculated(widget, comp.activeGridSession))
+    return;
   const baseWidth = comp.getLayoutBaseWidth(ui);
   const num = Number(value);
   const val = isNaN(num) ? 0 : num;
@@ -360,7 +542,8 @@ export function handleWidgetYChange(
   widget: any,
   ui?: CustomUI,
 ): void {
-  if (!widget) return;
+  if (!widget || isWidgetHeightAutoCalculated(widget, comp.activeGridSession))
+    return;
   const baseHeight = comp.getLayoutBaseHeight(ui);
   const num = Number(value);
   const val = isNaN(num) ? 0 : num;
@@ -377,7 +560,8 @@ export function handleWidgetWidthChange(
   widget: any,
   ui?: CustomUI,
 ): void {
-  if (!widget) return;
+  if (!widget || isWidgetWidthAutoCalculated(widget, comp.activeGridSession))
+    return;
   const baseWidth = comp.getLayoutBaseWidth(ui);
   const num = Number(value);
   const val = isNaN(num) ? 50 : num;
@@ -394,7 +578,8 @@ export function handleWidgetHeightChange(
   widget: any,
   ui?: CustomUI,
 ): void {
-  if (!widget) return;
+  if (!widget || isWidgetHeightAutoCalculated(widget, comp.activeGridSession))
+    return;
   const baseHeight = comp.getLayoutBaseHeight(ui);
   const num = Number(value);
   const val = isNaN(num) ? 50 : num;
@@ -410,7 +595,6 @@ export function handleLayoutChanged(
   newLayout: any,
   ui?: CustomUI,
 ): void {
-  if (comp.isSaving) return;
   updateLayoutOnModel(
     newLayout,
     ui,
@@ -419,6 +603,22 @@ export function handleLayoutChanged(
     comp.parsedLayouts,
   );
   const widgets = newLayout?.widgets || [];
+  if (
+    comp.activeGridSession &&
+    !LaneGridReplicationHelper.hasGridWidgets(
+      widgets,
+      comp.activeGridSession.gridId,
+    )
+  ) {
+    if (newLayout?.widgets) {
+      newLayout.widgets = LaneGridReplicationHelper.removeGrid(
+        widgets,
+        comp.activeGridSession.gridId,
+      );
+    }
+    LaneGridAnimationHelper.reset(comp.activeGridSession.gridId);
+    comp.activeGridSession = null;
+  }
   if (
     widgets.length > 0 &&
     (!comp.selectedWidgetId ||
@@ -435,5 +635,17 @@ export function handleLayoutChanged(
     }
   }
   comp.captureState();
+  comp.cdr.markForCheck();
+}
+
+export function handleAnchorSelection(
+  comp: any,
+  event: { widgetId: string; anchor: string | null },
+  ui?: CustomUI,
+): void {
+  if (comp.selectedWidgetId !== event.widgetId) {
+    handleWidgetSelection(comp, event.widgetId, ui);
+  }
+  comp.selectedAnchor = event.anchor;
   comp.cdr.markForCheck();
 }

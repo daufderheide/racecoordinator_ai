@@ -22,6 +22,7 @@ public class Driver extends Model {
   private final AudioConfig newHeatLeaderAudio;
   private final AudioConfig pitInAudio;
   private final AudioConfig fuelAudio;
+  private final AudioConfig driftLapAudio;
 
   public Driver(
       @JsonProperty("name") String name,
@@ -46,6 +47,7 @@ public class Driver extends Model {
           AudioConfig newHeatLeaderAudio,
       @JsonProperty("pitInAudio") @JsonAlias("pit_in_audio") AudioConfig pitInAudio,
       @JsonProperty("fuelAudio") @JsonAlias("fuel_audio") AudioConfig fuelAudio,
+      @JsonProperty("driftLapAudio") @JsonAlias("drift_lap_audio") AudioConfig driftLapAudio,
       @JsonProperty("lapSoundUrl") String lapSoundUrl,
       @JsonProperty("bestLapSoundUrl") String bestLapSoundUrl,
       @JsonProperty("penaltySoundUrl") String penaltySoundUrl,
@@ -78,6 +80,29 @@ public class Driver extends Model {
     this.newHeatLeaderAudio = defaultPresetAudio(newHeatLeaderAudio, "default_new_heat_leader");
     this.pitInAudio = defaultPresetAudio(pitInAudio, "default_pit_in");
     this.fuelAudio = defaultSetAudio(fuelAudio, "default_fuel_level");
+    this.driftLapAudio = defaultTtsAudio(driftLapAudio, "Drift lap for {driver.nickname}");
+  }
+
+  private static AudioConfig defaultTtsAudio(AudioConfig config, String defaultText) {
+    if (config == null) {
+      return new AudioConfig("tts", null, defaultText);
+    }
+    String type = config.getType();
+    if (type == null || type.trim().isEmpty()) {
+      type = "tts";
+    }
+    String url =
+        config.getUrl() != null && !config.getUrl().trim().isEmpty()
+            ? config.getUrl().trim()
+            : null;
+    if ("tts".equalsIgnoreCase(type)) {
+      String text = config.getText();
+      if (text == null || text.trim().isEmpty()) {
+        return new AudioConfig("tts", url, defaultText);
+      }
+      return new AudioConfig("tts", url, text.trim());
+    }
+    return config;
   }
 
   private static AudioConfig sanitizePresetAudio(AudioConfig config, String defaultPreset) {
@@ -179,6 +204,7 @@ public class Driver extends Model {
         null,
         null,
         null,
+        null,
         lapSoundUrl,
         bestLapSoundUrl,
         penaltySoundUrl,
@@ -229,7 +255,7 @@ public class Driver extends Model {
   public Driver(String name, String nickname, String entityId, String id) {
     this(
         name, nickname, null, null, null, null, null, null, null, null, null, null, null, null,
-        null, null, null, null, null, null, null, null, null, null, entityId, id);
+        null, null, null, null, null, null, null, null, null, null, null, entityId, id);
   }
 
   public Driver(String name) {
@@ -307,6 +333,10 @@ public class Driver extends Model {
     return fuelAudio;
   }
 
+  public AudioConfig getDriftLapAudio() {
+    return driftLapAudio;
+  }
+
   public static boolean isEmptyId(String id) {
     return id == null || id.isEmpty() || EMPTY_DRIVER_ID.equals(id);
   }
@@ -341,6 +371,8 @@ public class Driver extends Model {
         new AudioConfig("preset", "default_new_heat_leader", "");
     private AudioConfig pitInAudio = new AudioConfig("preset", "default_pit_in", "");
     private AudioConfig fuelAudio = new AudioConfig("audio_set", "default_fuel_level", "");
+    private AudioConfig driftLapAudio =
+        new AudioConfig("tts", null, "Drift lap for {driver.nickname}");
 
     public Builder() {}
 
@@ -364,6 +396,7 @@ public class Driver extends Model {
         b.newHeatLeaderAudio = other.getNewHeatLeaderAudio();
         b.pitInAudio = other.getPitInAudio();
         b.fuelAudio = other.getFuelAudio();
+        b.driftLapAudio = other.getDriftLapAudio();
       }
       return b;
     }
@@ -453,6 +486,11 @@ public class Driver extends Model {
       return this;
     }
 
+    public Builder withDriftLapAudio(AudioConfig driftLapAudio) {
+      this.driftLapAudio = driftLapAudio;
+      return this;
+    }
+
     public Driver build() {
       return new Driver(
           name,
@@ -470,6 +508,7 @@ public class Driver extends Model {
           newHeatLeaderAudio,
           pitInAudio,
           fuelAudio,
+          driftLapAudio,
           null,
           null,
           null,

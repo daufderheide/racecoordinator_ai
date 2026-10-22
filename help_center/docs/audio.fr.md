@@ -165,6 +165,7 @@ Les tableaux suivants répertorient tous les événements audio dans Race Coordi
 | **Son d'Entrée aux Stands** | Joué lorsque la voiture entre dans la voie des stands ou la zone de ravitaillement. | `default_pit_in` | **Annonce Vocale** | `urgent` (Poids 4) | `lane-view`: Joué sur l'Écran Principal et sur le Poste Pilote de cette voie/pilote. |
 | **Sons de Niveau de Carburant** | Joué lorsque le carburant descend aux seuils d'avertissement, critique ou vide. | `default_fuel_level` (Ensemble Audio) | **Annonce Vocale** | `urgent` (Poids 4) | `lane-view`: Joué sur l'Écran Principal et sur le Poste Pilote de cette voie/pilote. |
 | **Son de Faux Départ** | Joué lorsqu'un faux départ ou une infraction au départ est détecté. | `default_penalty` | **Annonce Vocale** | `urgent` (Poids 4) | `lane-view`: Joué sur l'Écran Principal et sur le Poste Pilote de cette voie/pilote. |
+| **Son de tour de drift** | Joué lorsque le pilote termine un tour en driftant. | TTS (`Drift lap for {driver.nickname}`) | **Annonce Vocale** | `urgent` (Poids 4) | `lane-view`: Joué sur l'Écran Principal et sur le Poste Pilote de cette voie/pilote. |
 
 ### Événements Audio de Thème (Configurés dans l'Éditeur de Thèmes)
 
@@ -181,7 +182,6 @@ Les tableaux suivants répertorient tous les événements audio dans Race Coordi
 | **Secondes Restantes avant Passage Automatique** | `audio.auto_advance` | **Annonce Vocale** / Ensemble Audio (Par défaut : TTS) | `normal` (Poids 2) | `timer`: Joué sur l'Écran Principal (si widget chronomètre présent) et sur tous les Postes Pilote. |
 | **Course Terminée** | `audio.race_over` | **Annonce Vocale** | `urgent` (Poids 4) | `flag`: Joué sur l'Écran Principal (si widget drapeau présent) et sur tous les Postes Pilote. |
 | **Temps au Tour Minimum** | `audio.min_lap_time` | **Annonce Vocale** | `urgent` (Poids 4) | `lane-view`: Joué sur l'Écran Principal et sur le Poste Pilote de cette voie/pilote. |
-| **Tour de Drift** | `audio.drift_lap` | **Annonce Vocale** | `urgent` (Poids 4) | `lane-view`: Joué sur l'Écran Principal et sur le Poste Pilote de cette voie/pilote. |
 
 ---
 
@@ -219,6 +219,6 @@ Lors de la prévisualisation d'un Ensemble Audio dans le Gestionnaire de Ressour
 | Emplacement | Éléments Configurables |
 | :--- | :--- |
 | **Éditeur d'Interface -> Paramètres Audio** | Volume général, délai d'attente urgent, espacement des annonces, voix TTS, vitesse, tonalité, volume TTS et essai de voix. |
-| **Éditeur de Thèmes** | Événements généraux : bips de départ, feu vert, sirène de drapeau jaune, temps restant, mi-manche, fin de manche, fin de course, tour minimum et tour de drift. |
-| **Éditeur de Pilotes** | Sons spécifiques au pilote : Son de Tour, Son de Meilleur Tour Personnel, Son du Meilleur Tour de Course, Son du Meilleur Tour de Voie de Course, Son du Meilleur Tour de Manche, Son de nouveau leader de course, Son de nouveau leader de manche, Son du Record de Tour Général, Son du Record de Tour de Voie Général, Son d'Entrée aux Stands, Sons de Niveau de Carburant et Son de Faux Départ. |
+| **Éditeur de Thèmes** | Événements généraux : bips de départ, feu vert, sirène de drapeau jaune, temps restant, mi-manche, fin de manche, fin de course et tour minimum. |
+| **Éditeur de Pilotes** | Sons spécifiques au pilote : Son de Tour, Son de Meilleur Tour Personnel, Son du Meilleur Tour de Course, Son du Meilleur Tour de Voie de Course, Son du Meilleur Tour de Manche, Son de nouveau leader de course, Son de nouveau leader de manche, Son du Record de Tour Général, Son du Record de Tour de Voie Général, Son d'Entrée aux Stands, Sons de Niveau de Carburant, Son de Faux Départ et Son de tour de drift. |
 | **Gestionnaire de Ressources** | Téléchargement et gestion des fichiers WAV, MP3 et OGG, et configuration d'ensembles audio avec valeurs de déclenchement selon le contexte (secondes, tours ou pourcentage), avec écoute immédiate. |

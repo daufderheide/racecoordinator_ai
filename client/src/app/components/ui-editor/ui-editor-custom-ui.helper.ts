@@ -121,11 +121,15 @@ export async function executeDeleteCustomUi(params: {
   dataService: any;
   logger: any;
   translationService: any;
+  customUiService?: any;
 }): Promise<{ newActiveUiId?: string }> {
   try {
     const { deleteCustomUiEntity } =
       await import("./ui-editor-operations.helper");
     await deleteCustomUiEntity(params.uiToDelete.entity_id, params.dataService);
+    if (params.customUiService?.initialize) {
+      await params.customUiService.initialize();
+    }
     delete params.sectionsExpanded[`ui_${params.uiToDelete.entity_id}`];
     const { newActiveUiId } = handleCustomUiStateDeletion(
       params.editingState,
@@ -197,6 +201,7 @@ export async function handleConfirmDeleteCustomUi(comp: any): Promise<void> {
     dataService: comp.dataService,
     logger: comp.logger,
     translationService: comp.translationService,
+    customUiService: comp.customUiService,
   });
   if (newActiveUiId !== undefined) {
     comp.activeCustomUiId = newActiveUiId;

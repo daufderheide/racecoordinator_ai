@@ -395,6 +395,40 @@
                               >
                                 <span class="material-icons">upload</span>
                               </button>
+                              @if (canReopenMigrationBanner(ui)) {
+                                <button
+                                  class="icon-btn canvas-action-icon-btn migration-restore-icon-btn"
+                                  (click)="reopenMigrationBanner(ui)"
+                                  [title]="
+                                    'UE_MIGRATION_SHOW_BANNER_BTN' | translate
+                                  "
+                                  [attr.aria-label]="
+                                    'UE_MIGRATION_SHOW_BANNER_BTN' | translate
+                                  "
+                                >
+                                  <span class="material-icons"
+                                    >auto_awesome</span
+                                  >
+                                </button>
+                              }
+                              @if (canReopenStackedColumnsBanner(ui)) {
+                                <button
+                                  class="icon-btn canvas-action-icon-btn stacked-columns-restore-icon-btn"
+                                  (click)="reopenStackedColumnsBanner(ui)"
+                                  [title]="
+                                    'UE_STACKED_COLUMNS_REOPEN_TOOLTIP'
+                                      | translate
+                                  "
+                                  [attr.aria-label]="
+                                    'UE_STACKED_COLUMNS_REOPEN_TOOLTIP'
+                                      | translate
+                                  "
+                                >
+                                  <span class="material-icons"
+                                    >layers_clear</span
+                                  >
+                                </button>
+                              }
                               <input
                                 #layoutFileInput
                                 type="file"
@@ -405,6 +439,179 @@
                             </div>
                           </div>
                         </div>
+
+                        @if (isMigratedLayout(ui)) {
+                          <div class="migration-notice-banner">
+                            <div class="migration-notice-info">
+                              <span class="material-icons migration-icon"
+                                >auto_awesome</span
+                              >
+                              <div class="migration-notice-text">
+                                <span class="migration-notice-title">{{
+                                  "UE_MIGRATION_BANNER_TITLE" | translate
+                                }}</span>
+                                <span class="migration-notice-desc">{{
+                                  "UE_MIGRATION_BANNER_DESC" | translate
+                                }}</span>
+                              </div>
+                            </div>
+                            <div class="migration-notice-actions">
+                              <button
+                                type="button"
+                                class="migration-btn migration-btn-restore"
+                                (click)="restorePreMigrationBackup(ui)"
+                                [title]="
+                                  'UE_MIGRATION_RESTORE_BACKUP_BTN' | translate
+                                "
+                              >
+                                <span class="material-icons">restore</span>
+                                {{
+                                  "UE_MIGRATION_RESTORE_BACKUP_BTN" | translate
+                                }}
+                              </button>
+                              <button
+                                type="button"
+                                class="migration-btn migration-btn-diagnostics"
+                                (click)="exportMigrationDiagnostics(ui)"
+                                [title]="
+                                  'UE_MIGRATION_EXPORT_DIAGNOSTICS_BTN'
+                                    | translate
+                                "
+                              >
+                                <span class="material-icons">bug_report</span>
+                                {{
+                                  "UE_MIGRATION_EXPORT_DIAGNOSTICS_BTN"
+                                    | translate
+                                }}
+                              </button>
+                              <button
+                                type="button"
+                                class="migration-btn-close"
+                                (click)="dismissMigrationBanner(ui)"
+                                [title]="'UE_MIGRATION_DISMISS_BTN' | translate"
+                              >
+                                <span class="material-icons">close</span>
+                              </button>
+                            </div>
+                          </div>
+                        }
+
+                        @if (canUpgradeLegacyHeatView(ui)) {
+                          <div
+                            class="migration-notice-banner legacy-preserved-banner"
+                          >
+                            <div class="migration-notice-info">
+                              <span
+                                class="material-icons migration-icon warning-icon"
+                                >schedule</span
+                              >
+                              <div class="migration-notice-text">
+                                <span class="migration-notice-title">{{
+                                  "UE_MIGRATION_PRESERVED_TITLE" | translate
+                                }}</span>
+                                <span class="migration-notice-desc">{{
+                                  "UE_MIGRATION_PRESERVED_DESC" | translate
+                                }}</span>
+                              </div>
+                            </div>
+                            <div class="migration-notice-actions">
+                              <button
+                                type="button"
+                                class="migration-btn migration-btn-upgrade"
+                                (click)="upgradeLegacyHeatView(ui)"
+                                [title]="'UE_MIGRATION_UPGRADE_BTN' | translate"
+                              >
+                                <span class="material-icons">upgrade</span>
+                                {{ "UE_MIGRATION_UPGRADE_BTN" | translate }}
+                              </button>
+                              <button
+                                type="button"
+                                class="migration-btn migration-btn-diagnostics"
+                                (click)="exportMigrationDiagnostics(ui)"
+                                [title]="
+                                  'UE_MIGRATION_EXPORT_DIAGNOSTICS_BTN'
+                                    | translate
+                                "
+                              >
+                                <span class="material-icons">bug_report</span>
+                                {{
+                                  "UE_MIGRATION_EXPORT_DIAGNOSTICS_BTN"
+                                    | translate
+                                }}
+                              </button>
+                              <button
+                                type="button"
+                                class="migration-btn-close"
+                                (click)="dismissMigrationBanner(ui)"
+                                [title]="'UE_MIGRATION_DISMISS_BTN' | translate"
+                              >
+                                <span class="material-icons">close</span>
+                              </button>
+                            </div>
+                          </div>
+                        }
+
+                        @if (hasStackedColumns(ui)) {
+                          <div
+                            class="migration-notice-banner stacked-columns-banner"
+                            id="ue-stacked-columns-banner"
+                          >
+                            <div class="migration-notice-info">
+                              <span
+                                class="material-icons migration-icon warning-icon"
+                                >layers_clear</span
+                              >
+                              <div class="migration-notice-text">
+                                <span class="migration-notice-title">{{
+                                  "UE_STACKED_COLUMNS_BANNER_TITLE" | translate
+                                }}</span>
+                                <span class="migration-notice-desc">{{
+                                  getStackedColumnsBannerDesc(ui)
+                                }}</span>
+                              </div>
+                            </div>
+                            <div class="migration-notice-actions">
+                              <button
+                                type="button"
+                                class="migration-btn migration-btn-upgrade"
+                                id="ue-btn-review-stacked-columns"
+                                (click)="openReviewStackedColumnsModal(ui)"
+                                [title]="
+                                  'UE_STACKED_COLUMNS_REVIEW_BTN' | translate
+                                "
+                              >
+                                <span class="material-icons">visibility</span>
+                                {{
+                                  "UE_STACKED_COLUMNS_REVIEW_BTN" | translate
+                                }}
+                              </button>
+                              <button
+                                type="button"
+                                class="migration-btn migration-btn-restore"
+                                id="ue-btn-quick-fix-stacked-columns"
+                                (click)="quickFixStackedColumns(ui)"
+                                [title]="
+                                  'UE_STACKED_COLUMNS_QUICK_FIX_BTN' | translate
+                                "
+                              >
+                                <span class="material-icons"
+                                  >auto_fix_high</span
+                                >
+                                {{
+                                  "UE_STACKED_COLUMNS_QUICK_FIX_BTN" | translate
+                                }}
+                              </button>
+                              <button
+                                type="button"
+                                class="migration-btn-close"
+                                (click)="dismissStackedColumnsBanner(ui)"
+                                [title]="'UE_MIGRATION_DISMISS_BTN' | translate"
+                              >
+                                <span class="material-icons">close</span>
+                              </button>
+                            </div>
+                          </div>
+                        }
 
                         <div class="raceday-editor-workspace">
                           <!-- Raceday Full Integration -->
@@ -437,6 +644,7 @@
                                   [activeCustomUi]="ui"
                                   [uiScale]="getPreviewScaleNumber(ui)"
                                   [selectedWidgetId]="getSelectedWidgetId(ui)"
+                                  [selectedAnchor]="selectedAnchor"
                                   [isCountdownPreviewActive]="
                                     isCountdownPreviewActive(ui)
                                   "
@@ -444,9 +652,13 @@
                                   (widgetSelected)="
                                     onWidgetSelected($event, ui)
                                   "
+                                  (anchorSelected)="
+                                    onAnchorSelected($event, ui)
+                                  "
                                   (layoutChanged)="onLayoutChanged($event, ui)"
                                   (columnsChanged)="onColumnsChanged(ui)"
                                   (finishGrid)="finishGridSession(ui)"
+                                  (deleteGrid)="onDeleteGrid($event, ui)"
                                   (gridBoundsChange)="
                                     onGridBoundsChange($event, ui)
                                   "
@@ -455,7 +667,7 @@
                             </div>
                           </div>
 
-                          <!-- Widget Inspector Sidebar -->
+                          <!-- Widget Configuration Sidebar -->
                           @if (
                             currentSelectedWidget &&
                             ui.entity_id === activeCustomUiId
@@ -469,7 +681,18 @@
                               [style.height.px]="getInspectorHeight(ui)"
                             >
                               <div class="inspector-header">
-                                <h2>{{ "UE_INSPECTOR_TITLE" | translate }}</h2>
+                                <div class="inspector-title-group">
+                                  <h2>
+                                    {{ "UE_INSPECTOR_TITLE" | translate }}
+                                  </h2>
+                                  <div class="inspector-widget-subtitle">
+                                    {{
+                                      getWidgetDisplayName(
+                                        currentSelectedWidget
+                                      )
+                                    }}
+                                  </div>
+                                </div>
                                 <button
                                   type="button"
                                   class="inspector-delete-btn"
@@ -555,13 +778,50 @@
                                 </div>
                                 <div class="inspector-row-grid">
                                   <div class="inspector-section">
-                                    <label class="inspector-label">{{
-                                      "UE_INSPECTOR_POS_X" | translate
-                                    }}</label>
+                                    <label class="inspector-label">
+                                      {{ "UE_INSPECTOR_POS_X" | translate }}
+                                      @if (
+                                        isWidgetWidthAutoCalculated(
+                                          currentSelectedWidget
+                                        )
+                                      ) {
+                                        <span
+                                          class="auto-calc-badge"
+                                          [title]="
+                                            'UE_INSPECTOR_AUTO_CALCULATED'
+                                              | translate
+                                          "
+                                          >({{
+                                            "UE_INSPECTOR_AUTO_CALCULATED"
+                                              | translate
+                                          }})</span
+                                        >
+                                      }
+                                    </label>
                                     <input
                                       id="inspector-pos-x"
                                       type="number"
                                       class="inspector-input"
+                                      [disabled]="
+                                        isWidgetWidthAutoCalculated(
+                                          currentSelectedWidget
+                                        )
+                                      "
+                                      [attr.disabled]="
+                                        isWidgetWidthAutoCalculated(
+                                          currentSelectedWidget
+                                        )
+                                          ? ''
+                                          : null
+                                      "
+                                      [title]="
+                                        isWidgetWidthAutoCalculated(
+                                          currentSelectedWidget
+                                        )
+                                          ? ('UE_INSPECTOR_AUTO_CALCULATED'
+                                            | translate)
+                                          : ''
+                                      "
                                       [ngModel]="currentSelectedWidget.x"
                                       (ngModelChange)="
                                         onWidgetXChange(
@@ -584,13 +844,50 @@
                                     />
                                   </div>
                                   <div class="inspector-section">
-                                    <label class="inspector-label">{{
-                                      "UE_INSPECTOR_POS_Y" | translate
-                                    }}</label>
+                                    <label class="inspector-label">
+                                      {{ "UE_INSPECTOR_POS_Y" | translate }}
+                                      @if (
+                                        isWidgetHeightAutoCalculated(
+                                          currentSelectedWidget
+                                        )
+                                      ) {
+                                        <span
+                                          class="auto-calc-badge"
+                                          [title]="
+                                            'UE_INSPECTOR_AUTO_CALCULATED'
+                                              | translate
+                                          "
+                                          >({{
+                                            "UE_INSPECTOR_AUTO_CALCULATED"
+                                              | translate
+                                          }})</span
+                                        >
+                                      }
+                                    </label>
                                     <input
                                       id="inspector-pos-y"
                                       type="number"
                                       class="inspector-input"
+                                      [disabled]="
+                                        isWidgetHeightAutoCalculated(
+                                          currentSelectedWidget
+                                        )
+                                      "
+                                      [attr.disabled]="
+                                        isWidgetHeightAutoCalculated(
+                                          currentSelectedWidget
+                                        )
+                                          ? ''
+                                          : null
+                                      "
+                                      [title]="
+                                        isWidgetHeightAutoCalculated(
+                                          currentSelectedWidget
+                                        )
+                                          ? ('UE_INSPECTOR_AUTO_CALCULATED'
+                                            | translate)
+                                          : ''
+                                      "
                                       [ngModel]="currentSelectedWidget.y"
                                       (ngModelChange)="
                                         onWidgetYChange(
@@ -615,13 +912,50 @@
                                 </div>
                                 <div class="inspector-row-grid">
                                   <div class="inspector-section">
-                                    <label class="inspector-label">{{
-                                      "UE_INSPECTOR_WIDTH" | translate
-                                    }}</label>
+                                    <label class="inspector-label">
+                                      {{ "UE_INSPECTOR_WIDTH" | translate }}
+                                      @if (
+                                        isWidgetWidthAutoCalculated(
+                                          currentSelectedWidget
+                                        )
+                                      ) {
+                                        <span
+                                          class="auto-calc-badge"
+                                          [title]="
+                                            'UE_INSPECTOR_AUTO_CALCULATED'
+                                              | translate
+                                          "
+                                          >({{
+                                            "UE_INSPECTOR_AUTO_CALCULATED"
+                                              | translate
+                                          }})</span
+                                        >
+                                      }
+                                    </label>
                                     <input
                                       id="inspector-pos-w"
                                       type="number"
                                       class="inspector-input"
+                                      [disabled]="
+                                        isWidgetWidthAutoCalculated(
+                                          currentSelectedWidget
+                                        )
+                                      "
+                                      [attr.disabled]="
+                                        isWidgetWidthAutoCalculated(
+                                          currentSelectedWidget
+                                        )
+                                          ? ''
+                                          : null
+                                      "
+                                      [title]="
+                                        isWidgetWidthAutoCalculated(
+                                          currentSelectedWidget
+                                        )
+                                          ? ('UE_INSPECTOR_AUTO_CALCULATED'
+                                            | translate)
+                                          : ''
+                                      "
                                       [ngModel]="currentSelectedWidget.width"
                                       (ngModelChange)="
                                         onWidgetWidthChange(
@@ -641,13 +975,50 @@
                                     />
                                   </div>
                                   <div class="inspector-section">
-                                    <label class="inspector-label">{{
-                                      "UE_INSPECTOR_HEIGHT" | translate
-                                    }}</label>
+                                    <label class="inspector-label">
+                                      {{ "UE_INSPECTOR_HEIGHT" | translate }}
+                                      @if (
+                                        isWidgetHeightAutoCalculated(
+                                          currentSelectedWidget
+                                        )
+                                      ) {
+                                        <span
+                                          class="auto-calc-badge"
+                                          [title]="
+                                            'UE_INSPECTOR_AUTO_CALCULATED'
+                                              | translate
+                                          "
+                                          >({{
+                                            "UE_INSPECTOR_AUTO_CALCULATED"
+                                              | translate
+                                          }})</span
+                                        >
+                                      }
+                                    </label>
                                     <input
                                       id="inspector-pos-h"
                                       type="number"
                                       class="inspector-input"
+                                      [disabled]="
+                                        isWidgetHeightAutoCalculated(
+                                          currentSelectedWidget
+                                        )
+                                      "
+                                      [attr.disabled]="
+                                        isWidgetHeightAutoCalculated(
+                                          currentSelectedWidget
+                                        )
+                                          ? ''
+                                          : null
+                                      "
+                                      [title]="
+                                        isWidgetHeightAutoCalculated(
+                                          currentSelectedWidget
+                                        )
+                                          ? ('UE_INSPECTOR_AUTO_CALCULATED'
+                                            | translate)
+                                          : ''
+                                      "
                                       [ngModel]="currentSelectedWidget.height"
                                       (ngModelChange)="
                                         onWidgetHeightChange(
@@ -676,6 +1047,10 @@
                                   [customUi]="ui"
                                   [availableColumns]="availableColumns"
                                   [isPracticeMode]="isCustomUiPractice(ui)"
+                                  [selectedAnchor]="selectedAnchor"
+                                  (anchorChange)="
+                                    onSelectedAnchorChange($event)
+                                  "
                                   (change)="onWidgetInspectorChange($event, ui)"
                                   (requestReplicate)="
                                     openReplicateLaneModal(ui)
@@ -683,12 +1058,17 @@
                                   (replicate)="onReplicateLanes($event, ui)"
                                   (editGrid)="onEditGridTemplate($event, ui)"
                                   (detachGrid)="onDetachGrid($event, ui)"
+                                  (deleteGrid)="onDeleteGrid($event, ui)"
+                                  (reMirrorGrid)="onReMirrorGrid($event, ui)"
+                                  (bringGridToFront)="
+                                    onBringGridToFront($event, ui)
+                                  "
                                 ></app-widget-inspector-fields>
                               </div>
                             </div>
                           }
 
-                          <!-- Widget Toolbox: Rendered at workspace level to always be on top of canvas and inspector -->
+                          <!-- Widget Library: Rendered at workspace level to always be on top of canvas and configuration -->
                           <ng-container
                             *ngTemplateOutlet="racedayComp?.toolboxTemplate"
                           ></ng-container>
@@ -1747,12 +2127,38 @@
   </app-confirmation-modal>
 
   <!-- Discard Changes Confirmation -->
+  @if (showDiscardConfirm) {
+    <app-confirmation-modal
+      [visible]="showDiscardConfirm"
+      title="UE_CONFIRM_DISCARD_TITLE"
+      [message]="discardMessage"
+      (confirm)="onConfirmDiscard()"
+      (cancel)="onCancelDiscard()"
+    >
+    </app-confirmation-modal>
+  }
+
+  <!-- Restore Pre-Migration Backup Confirmation -->
   <app-confirmation-modal
-    [visible]="showDiscardConfirm"
-    title="UE_CONFIRM_DISCARD_TITLE"
-    [message]="discardMessage"
-    (confirm)="onConfirmDiscard()"
-    (cancel)="onCancelDiscard()"
+    [visible]="showRestoreBackupConfirm"
+    title="UE_CONFIRM_RESTORE_BACKUP_TITLE"
+    message="UE_CONFIRM_RESTORE_BACKUP_MSG"
+    confirmText="COMMON_RESTORE"
+    cancelText="COMMON_CANCEL"
+    (confirm)="confirmRestorePreMigrationBackup()"
+    (cancel)="cancelRestorePreMigrationBackup()"
+  >
+  </app-confirmation-modal>
+
+  <!-- Upgrade Legacy Heat View Confirmation -->
+  <app-confirmation-modal
+    [visible]="showUpgradeHeatViewConfirm"
+    title="UE_CONFIRM_UPGRADE_TITLE"
+    message="UE_CONFIRM_UPGRADE_MSG"
+    confirmText="UE_MIGRATION_UPGRADE_BTN"
+    cancelText="COMMON_CANCEL"
+    (confirm)="confirmUpgradeLegacyHeatView()"
+    (cancel)="cancelUpgradeLegacyHeatView()"
   >
   </app-confirmation-modal>
 
@@ -1801,4 +2207,31 @@
     (confirm)="onConfirmReplicateLanes($event)"
     (cancel)="showReplicateLaneModal = false"
   ></app-replicate-lane-dialog>
+
+  <!-- Review Stacked Columns Modal -->
+  <app-review-stacked-columns-modal
+    [visible]="showReviewStackedColumnsModal"
+    [issues]="detectedStackedIssues"
+    [layoutName]="
+      activeCustomUi
+        ? (getCustomUiDisplayNameKey(activeCustomUi) | translate)
+        : ''
+    "
+    [availableColumns]="availableColumns"
+    (fix)="confirmRepairStackedColumns()"
+    (cancel)="showReviewStackedColumnsModal = false"
+  ></app-review-stacked-columns-modal>
+
+  <!-- Import Stacked Columns Confirmation Modal -->
+  <app-confirmation-modal
+    [visible]="showImportStackedConfirm"
+    title="UE_STACKED_COLUMNS_IMPORT_ALERT_TITLE"
+    message="UE_STACKED_COLUMNS_IMPORT_ALERT_MSG"
+    [messageParams]="{ count: importStackedCount }"
+    confirmText="UE_STACKED_COLUMNS_IMPORT_REPAIR_BTN"
+    cancelText="UE_STACKED_COLUMNS_IMPORT_AS_IS_BTN"
+    (confirm)="confirmRepairImportedLayout()"
+    (cancel)="cancelRepairImportedLayout(true)"
+  >
+  </app-confirmation-modal>
 </div>

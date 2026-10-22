@@ -179,10 +179,10 @@ test.describe("Add Lap Sections Dialog Visuals", () => {
     await TestSetupHelper.mockRaceData(page, raceData);
     await page.locator(".table-row").first().waitFor({ state: "visible" });
 
-    // Click the lap count cell by its text content "1.50" (or 1.85 due to userLaps + autoCalculatedLaps)
+    // Click the lap count cell by its text content "1.50" (autoCalculatedLaps excluded from cell until heat is over)
     const lapCell = page
       .locator("app-raceday-lane-view .body-cell")
-      .filter({ hasText: "1.85" })
+      .filter({ hasText: "1.50" })
       .first();
     await expect(lapCell).toBeVisible();
     await lapCell.click();
@@ -305,10 +305,10 @@ test.describe("Add Lap Sections Dialog Visuals", () => {
     const dropdown = page.locator(".menu-dropdown").first();
     await expect(dropdown).toBeVisible();
 
-    // 3. Click the Add Lap/Sections menu item
+    // 3. Click the Adjust Lap Sections/Time menu item
     const addLapItem = page
       .locator(".menu-item")
-      .filter({ hasText: "Add Lap/Sections" });
+      .filter({ hasText: "Adjust Lap Sections/Time" });
     await expect(addLapItem).toBeVisible();
     await expect(addLapItem).not.toHaveClass(/disabled/);
     await addLapItem.click();
@@ -393,7 +393,7 @@ test.describe("Add Lap Sections Dialog Visuals", () => {
 
     const addLapItem = page
       .locator(".menu-item")
-      .filter({ hasText: "Add Lap/Sections" });
+      .filter({ hasText: "Adjust Lap Sections/Time" });
     await expect(addLapItem).toBeVisible();
     await addLapItem.click();
 

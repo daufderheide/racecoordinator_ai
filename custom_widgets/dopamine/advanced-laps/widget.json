@@ -1,0 +1,70 @@
+{
+  "id": "advanced-laps",
+  "name": "Advanced Laps",
+  "version": "1.0.0",
+  "description": "Smart lap counter for heat or overall laps with pause auto-segments, racing count truncation, and allow-finish filtering",
+  "author": "dopamine",
+  "allowMultiple": true,
+  "defaultWidth": 200,
+  "defaultHeight": 90,
+  "minWidth": 100,
+  "minHeight": 50,
+  "defaultSettings": {
+    "mode": "heat",
+    "customLabel": "",
+    "decimalPlaces": 2,
+    "hideSegmentsForFinishingDrivers": false,
+    "bindingMode": "lane",
+    "targetIndex": 1,
+    "useLaneColors": true,
+    "showHeader": true,
+    "headerBackgroundColor": "rgba(68, 68, 68, 0.7)",
+    "headerTextColor": "#ffffff",
+    "headerFontSize": 14,
+    "headerAlignment": "center",
+    "backgroundColor": "#000000",
+    "textColor": "#ffffff",
+    "valueFontSize": 36,
+    "valueAlignment": "center",
+    "showBorder": true,
+    "borderColor": "",
+    "borderWidth": 1,
+    "borderRadius": 8
+  },
+  "settingsSchema": [
+    {
+      "key": "mode",
+      "label": "Lap Count Mode",
+      "type": "select",
+      "default": "heat",
+      "description": "Select whether to display Heat Laps or Overall Race Laps.",
+      "options": [
+        {
+          "label": "Heat Laps",
+          "value": "heat"
+        },
+        {
+          "label": "Overall Race Laps",
+          "value": "overall"
+        }
+      ]
+    },
+    {
+      "key": "decimalPlaces",
+      "label": "Decimal Places",
+      "type": "number",
+      "default": 2,
+      "min": 0,
+      "max": 3,
+      "step": 1,
+      "description": "Number of decimal places to display (0-3)."
+    },
+    {
+      "key": "hideSegmentsForFinishingDrivers",
+      "label": "Hide Auto-Segments on Pause for Finishing Drivers",
+      "type": "boolean",
+      "default": false,
+      "description": "On the allow finish lap during a pause, do not show auto-segments for drivers still finishing."
+    }
+  ]
+}

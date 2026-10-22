@@ -258,7 +258,7 @@ La barra degli strumenti superiore dell'Editor dei Tracciati fornisce strumenti 
 - **Indietro**: Ritorna alla vista precedente o alla Configurazione del Giorno di Gara.
 - **Aggiungi Tracciato (+)**: Crea un nuovo modello di tracciato ed entra in modalità modifica.
 - **Duplica Tracciato**: Crea una copia esatta con un nuovo nome univoco, perfetta per testare configurazioni alternative senza ripartire da zero.
-- **Modifica / Fine Modifica**: Passa dalla modalità sola lettura alla modalità modifica e viceversa. Uscendo dalla modalità modifica, le modifiche vengono convalidate e salvate.
+- **Modifica / Fine Modifica (`Cmd/Ctrl+E`)**: Passa dalla modalità sola lettura alla modalità modifica e viceversa. Uscendo dalla modalità modifica, le modifiche vengono convalidate e salvate.
 - **Espandi / Comprimi tutto**: Espande o comprime tutte le sezioni di configurazione e i pannelli delle interfacce contemporaneamente.
 - **Elimina Tracciato**: Elimina il tracciato selezionato previa conferma.
 - **Annulla (`Ctrl+Z`) / Ripristina (`Ctrl+Y`)**: Ripristina con facilità qualsiasi modifica a corsie, colori o pin.
@@ -285,3 +285,8 @@ La barra degli strumenti superiore dell'Editor dei Tracciati fornisce strumenti 
 
 ### Strisce LED FastLED Non Si Accendono
 - **Soluzione**: Assicurati che su Arduino sia installato lo **sketch ufficiale `v2.1.0.x`**, che il modello di LED e l'ordine dei colori siano corretti e che la massa (GND) dell'alimentatore a 5V sia collegata alla massa di Arduino.
+
+### Disconnessione dell'Interfaccia tra le Manche (Sospensione USB / Risparmio Energetico)
+- **Sintomo**: L'interfaccia (Arduino, Phidget o Trackmate) si disconnette durante le pause tra le manche o dopo periodi di inattività, e si riconnette all'avvio della gara con il messaggio *"La connessione all'interfaccia è stata ripristinata."*
+- **Soluzione**: Windows, Linux e macOS disattivano porte USB e dispositivi HID inattivi anche con il PC acceso. Consulta la sezione [Sospensione dell'Interfaccia USB e Disconnessioni](troubleshooting.it.md#usb-sleep-prevention) nella Risoluzione dei Problemi per disattivare il risparmio energetico in Gestione dispositivi.
+

@@ -71,11 +71,11 @@ import { TranslatePipe } from "@app/pipes/translate.pipe";
                 [ngModel]="direction()"
                 (ngModelChange)="direction.set($event)"
               >
-                <app-custom-option value="horizontal">
-                  {{ "UE_REPLICATE_DIR_HORIZONTAL" | translate }}
-                </app-custom-option>
                 <app-custom-option value="vertical">
                   {{ "UE_REPLICATE_DIR_VERTICAL" | translate }}
+                </app-custom-option>
+                <app-custom-option value="horizontal">
+                  {{ "UE_REPLICATE_DIR_HORIZONTAL" | translate }}
                 </app-custom-option>
               </app-custom-select>
             </div>
@@ -123,11 +123,110 @@ import { TranslatePipe } from "@app/pipes/translate.pipe";
             </div>
           </div>
 
+          <div class="form-group">
+            <label class="form-label">{{
+              "UE_REPLICATE_HEADER_PLACEMENT" | translate
+            }}</label>
+            <div class="select-container">
+              <app-custom-select
+                [ngModel]="headerPlacement()"
+                (ngModelChange)="headerPlacement.set($event)"
+              >
+                <app-custom-option value="individual">
+                  {{ "UE_REPLICATE_HEADER_INDIVIDUAL" | translate }}
+                </app-custom-option>
+                <app-custom-option value="top">
+                  {{ "UE_REPLICATE_HEADER_TOP" | translate }}
+                </app-custom-option>
+                <app-custom-option value="none">
+                  {{ "UE_REPLICATE_HEADER_NONE" | translate }}
+                </app-custom-option>
+              </app-custom-select>
+            </div>
+          </div>
+
+          @if (headerPlacement() === "top") {
+            <div class="form-group">
+              <div
+                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;"
+              >
+                <label class="form-label" style="margin-bottom: 0;">{{
+                  "UE_REPLICATE_HEADER_HEIGHT" | translate
+                }}</label>
+                <span
+                  style="font-size: 0.75rem; color: #38bdf8; font-weight: 600;"
+                  >{{ headerHeight() }}px</span
+                >
+              </div>
+              <div style="display: flex; gap: 8px; align-items: center;">
+                <input
+                  type="range"
+                  min="20"
+                  max="200"
+                  [ngModel]="headerHeight()"
+                  (ngModelChange)="headerHeight.set(+$event)"
+                  style="flex: 1; accent-color: #38bdf8;"
+                />
+                <input
+                  type="number"
+                  min="20"
+                  max="200"
+                  [ngModel]="headerHeight()"
+                  (ngModelChange)="headerHeight.set(+$event)"
+                  style="width: 64px; padding: 4px 8px; background: #0f172a; border: 1px solid #334155; border-radius: 6px; color: #f8fafc; font-size: 0.8125rem; text-align: center;"
+                  autocomplete="off"
+                  data-dashlane-ignore="true"
+                  data-1p-ignore="true"
+                  data-lpignore="true"
+                  data-bwignore="true"
+                  data-form-type="other"
+                />
+              </div>
+            </div>
+          }
+
+          <div class="form-check-group" style="margin-bottom: 12px;">
+            <label class="form-check-label">
+              <input
+                type="checkbox"
+                class="form-checkbox link-columns-checkbox"
+                [checked]="linkColumns()"
+                (change)="linkColumns.set(!linkColumns())"
+              />
+              <span>{{ "UE_REPLICATE_LINK_COLUMNS" | translate }}</span>
+            </label>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 12px;">
+            <label class="form-label">{{
+              "UE_GRID_SORT_ORDER" | translate
+            }}</label>
+            <div class="select-container">
+              <app-custom-select
+                [ngModel]="selectedSortOrder()"
+                (ngModelChange)="selectedSortOrder.set($event)"
+              >
+                <app-custom-option value="lane">
+                  {{ "UE_GRID_SORT_ORDER_LANE" | translate }}
+                </app-custom-option>
+                <app-custom-option value="position">
+                  {{ "UE_GRID_SORT_ORDER_HEAT_POSITION" | translate }}
+                </app-custom-option>
+                <app-custom-option value="overallPosition">
+                  {{ "UE_GRID_SORT_ORDER_OVERALL_POSITION" | translate }}
+                </app-custom-option>
+                <app-custom-option value="seed">
+                  {{ "UE_GRID_SORT_ORDER_SEED" | translate }}
+                </app-custom-option>
+              </app-custom-select>
+            </div>
+          </div>
+
           <div class="form-check-group">
             <label class="form-check-label">
               <input
                 type="checkbox"
-                class="form-checkbox"
+                class="form-checkbox replace-existing-checkbox"
                 [checked]="replaceExisting()"
                 (change)="replaceExisting.set(!replaceExisting())"
               />
@@ -258,9 +357,16 @@ export class ReplicateLaneDialogComponent {
   confirm = output<Omit<LaneReplicationOptions, "baseWidth" | "baseHeight">>();
   cancel = output<void>();
 
-  direction = signal<"horizontal" | "vertical">("horizontal");
+  direction = signal<"horizontal" | "vertical">("vertical");
   targetCount = signal<number>(4);
   distributionMode = signal<"auto-fit" | "preserve-spacing">("auto-fit");
+  headerPlacement = signal<"top" | "individual" | "none">("individual");
+  headerHeight = signal<number>(36);
+  linkColumns = signal<boolean>(true);
+  sortByBindingMode = signal<boolean>(true);
+  selectedSortOrder = signal<"lane" | "position" | "overallPosition" | "seed">(
+    "lane",
+  );
   replaceExisting = signal<boolean>(true);
 
   availableCounts = [2, 3, 4, 5, 6, 7, 8, 10, 12, 16, 20, 24, 32];
@@ -273,6 +379,7 @@ export class ReplicateLaneDialogComponent {
           if (def >= 2 && def <= 8) {
             this.targetCount.set(def);
           }
+          this.selectedSortOrder.set(this.bindingMode() || "lane");
         }
       },
       { allowSignalWrites: true },
@@ -301,9 +408,13 @@ export class ReplicateLaneDialogComponent {
       direction: this.direction(),
       targetCount: this.targetCount(),
       distributionMode: this.distributionMode(),
+      headerPlacement: this.headerPlacement(),
+      headerHeight: this.headerHeight(),
+      linkColumns: this.linkColumns(),
+      sortByBindingMode: this.sortByBindingMode(),
       replaceExisting: this.replaceExisting(),
       sourceIndex: this.sourceIndex(),
-      sourceBindingMode: this.bindingMode(),
+      sourceBindingMode: this.selectedSortOrder(),
     });
   }
 }

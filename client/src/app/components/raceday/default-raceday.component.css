@@ -402,6 +402,11 @@ app-default-raceday {
   background: rgba(59, 130, 246, 0.08);
 }
 
+.lane-blueprint-cell.header-cell {
+  border: 1px dashed rgba(59, 130, 246, 0.5);
+  background: rgba(59, 130, 246, 0.05);
+}
+
 .lane-blueprint-badge {
   position: absolute;
   top: 8px;
@@ -450,10 +455,69 @@ app-default-raceday {
   align-items: center;
 }
 
+.lane-blueprint-title.draggable-grid-title {
+  cursor: move;
+  user-select: none;
+  transition: color 0.15s ease;
+}
+
+.lane-blueprint-title.draggable-grid-title:hover {
+  color: #60a5fa;
+}
+
 .lane-blueprint-actions {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.lane-blueprint-toolbar .grid-front-btn {
+  border-color: #3b82f6;
+  color: #93c5fd;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+}
+
+.lane-blueprint-toolbar .grid-front-btn:hover {
+  background: #1d4ed8;
+  color: #ffffff;
+}
+
+.lane-blueprint-toolbar .grid-move-btn {
+  border-color: #3b82f6;
+  color: #93c5fd;
+  cursor: move;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+}
+
+.lane-blueprint-toolbar .grid-move-btn:hover {
+  background: #1d4ed8;
+  color: #ffffff;
+}
+
+.lane-blueprint-toolbar .grid-delete-btn {
+  background: #ef4444;
+  border-color: #dc2626;
+  color: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lane-blueprint-toolbar .grid-delete-btn:hover {
+  background: #dc2626;
+  border-color: #b91c1c;
+}
+
+.lane-blueprint-toolbar .grid-done-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .lane-blueprint-toolbar .btn-outline-info {
@@ -464,6 +528,39 @@ app-default-raceday {
 .lane-blueprint-toolbar .btn-outline-info:hover {
   background: #38bdf8;
   color: #0f172a;
+}
+
+/* Grid Move Handle Bar (on Blueprint Overlay) */
+.grid-move-handle-bar {
+  position: absolute;
+  top: -30px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1e293b;
+  border: 1px solid #3b82f6;
+  border-radius: 6px;
+  padding: 3px 10px;
+  color: #93c5fd;
+  font-size: 11px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: move;
+  pointer-events: auto;
+  z-index: 70;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  user-select: none;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.grid-move-handle-bar:hover {
+  background: #2563eb;
+  color: #ffffff;
+}
+
+.grid-move-handle-bar .move-icon {
+  font-size: 14px;
 }
 
 /* Grid Perimeter Resize Handles */
@@ -533,3 +630,168 @@ app-default-raceday {
   left: -6px;
   cursor: ew-resize;
 }
+
+.selected-grid-container-outline {
+  position: absolute;
+  pointer-events: none;
+  border: 2px dashed rgba(56, 189, 248, 0.7);
+  border-radius: 8px;
+  box-shadow: 0 0 16px rgba(56, 189, 248, 0.15), inset 0 0 12px rgba(56, 189, 248, 0.04);
+  z-index: 1004;
+  transition: all 0.12s ease-out;
+}
+
+.selected-grid-tag {
+  position: absolute;
+  top: -24px;
+  left: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(15, 23, 42, 0.92);
+  border: 1px solid rgba(56, 189, 248, 0.6);
+  color: #38bdf8;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+  letter-spacing: 0.03em;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+
+/* Raceday Grid Scroll Container */
+.raceday-grid-container {
+  position: absolute;
+  box-sizing: border-box;
+}
+
+.raceday-grid-container.customizing-unselected {
+  cursor: pointer;
+}
+
+.raceday-grid-container.customizing-unselected:hover {
+  outline: 1.5px dashed rgba(56, 189, 248, 0.4);
+}
+
+.raceday-grid-top-header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.raceday-grid-scroll-viewport {
+  position: absolute;
+  left: 0;
+  right: 0;
+  box-sizing: border-box;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(56, 189, 248, 0.5) rgba(15, 23, 42, 0.4);
+}
+
+.raceday-grid-scroll-viewport.scroll-vertical {
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.raceday-grid-scroll-viewport.scroll-horizontal {
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.raceday-grid-scroll-viewport:not(.scroll-vertical):not(.scroll-horizontal) {
+  overflow: hidden;
+}
+
+.raceday-grid-scroll-viewport::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.raceday-grid-scroll-viewport::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.4);
+  border-radius: 4px;
+}
+
+.raceday-grid-scroll-viewport::-webkit-scrollbar-thumb {
+  background: rgba(56, 189, 248, 0.5);
+  border-radius: 4px;
+  border: 1px solid rgba(15, 23, 42, 0.2);
+}
+
+.raceday-grid-scroll-viewport::-webkit-scrollbar-thumb:hover {
+  background: rgba(56, 189, 248, 0.8);
+}
+
+.raceday-grid-scroll-viewport::-webkit-scrollbar-corner {
+  background: rgba(15, 23, 42, 0.4);
+}
+
+.raceday-grid-scroll-content {
+  position: relative;
+  box-sizing: border-box;
+}
+
+.raceday-grid-label {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  user-select: none;
+  z-index: 2;
+  border-radius: 4px;
+}
+
+.raceday-grid-label.horizontal-label {
+  flex-direction: row;
+  white-space: nowrap;
+  padding: 4px 12px;
+}
+
+.raceday-grid-label.vertical-label {
+  flex-direction: column;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  transform: rotate(180deg);
+  white-space: nowrap;
+  padding: 12px 4px;
+}
+
+.grid-label-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lane-blueprint-cell.grid-label-blueprint-cell {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  border: 1.5px dashed rgba(56, 189, 248, 0.7);
+  z-index: 2;
+  overflow: hidden;
+  user-select: none;
+  border-radius: 4px;
+}
+
+.lane-blueprint-cell.grid-label-blueprint-cell.vertical-label {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  transform: rotate(180deg);
+  white-space: nowrap;
+}
+
+.grid-label-blueprint-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 4px 8px;
+}
+
+

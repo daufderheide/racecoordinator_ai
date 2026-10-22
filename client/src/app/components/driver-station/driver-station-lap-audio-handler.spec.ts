@@ -114,4 +114,49 @@ describe("DriverStationLapAudioHandler", () => {
       jasmine.objectContaining({ widgetType: "lane-view" }),
     );
   });
+
+  it("should process laps left thresholds with asset matched by name and audio_entries", () => {
+    mockThemeService.resolveAudioConfig.and.returnValue({
+      url: "Laps Left Set",
+      type: "audio_set",
+    });
+    deps.getAssets = () => [
+      {
+        name: "Laps Left Set",
+        type: "audio_set",
+        audio_entries: [{ time_seconds: 5, trigger_mode: "remaining" }],
+      },
+    ];
+
+    handler.leaderLaps = 14;
+    handler.handleLapEvent(
+      { objectId: "hd-other", lapNumber: 15, lapTime: 3.5, bestLapTime: 3.0 },
+      mockDriverData,
+    );
+
+    expect(handler.playedLapsLeft.has(5)).toBeTrue();
+  });
+
+  it("should play drift lap callout with urgent priority and drift_lap eventType", () => {
+    mockDriverData.driver.driftLapAudio = {
+      type: "tts",
+      text: "Drift Lap for Driver 1",
+    };
+
+    handler.handleLapEvent(
+      { objectId: "hd-1", isDrift: true, lapNumber: 20 },
+      mockDriverData,
+    );
+
+    expect(mockAudioService.playCallout).toHaveBeenCalledWith(
+      mockDriverData.driver.driftLapAudio,
+      "urgent",
+      jasmine.any(Object),
+      undefined,
+      jasmine.objectContaining({
+        widgetType: "lane-view",
+        eventType: "drift_lap",
+      }),
+    );
+  });
 });

@@ -16,6 +16,6 @@ Los temas le permiten personalizar los efectos de sonido y avisos de voz globale
 - **Mitad de manga:** Notificación al alcanzar el punto medio de una serie — tanto para carreras por tiempo (mitad de la duración transcurrida) como para carreras por vueltas (cuando el líder completa la mitad de las vueltas requeridas) (`audio.seconds_left.halfway`).
 - **Manga y carrera terminadas:** Señales acústicas de fin de manga (`audio.heat_over`) o fin de carrera (`audio.race_over`).
 - **Segundos restantes de avance automático:** Avisos de cuenta regresiva para el tiempo restante antes del avance automático a la siguiente manga (`audio.auto_advance`).
-- **Alertas de infracción:** Tonos por tiempo de vuelta inferior al mínimo (`audio.min_lap_time`) o vuelta de drift (`audio.drift_lap`).
+- **Alertas de infracción:** Tonos por tiempo de vuelta inferior al mínimo (`audio.min_lap_time`).
 
 Para más detalles sobre la atenuación de audio, niveles de prioridad y relevancia multipantalla, consulte la documentación del [Sistema de Audio](audio.md).

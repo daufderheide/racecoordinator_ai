@@ -3,10 +3,15 @@ import { Settings } from "@app/models/settings";
 import { Theme } from "@app/models/theme";
 
 import {
+  applyLoadedUiEditorData,
   ensureDefaultCustomUis,
+  handleUiEditorDataLoadError,
   handleUiEditorKeyboardShortcut,
+  normalizeLoadedCustomUis,
   normalizeLoadedThemes,
   processLoadedEditorData,
+  refreshUiEditorDisplayProperties,
+  resolveBackNavigation,
 } from "./ui-editor-data.helper";
 
 describe("ui-editor-data.helper", () => {
@@ -25,6 +30,25 @@ describe("ui-editor-data.helper", () => {
     expect(
       uis.some((u) => u.entity_id === "default_fuel_ui_layout_rc_ai"),
     ).toBeTrue();
+  });
+
+  it("should normalize loaded custom UIs without adding missing defaults", () => {
+    const uis: CustomUI[] = [
+      {
+        entity_id: "default_ui_layout_rc_ai",
+        name: "Default UI Layout",
+        is_default: true,
+      },
+    ];
+    normalizeLoadedCustomUis(uis);
+    expect(uis.length).toBe(1);
+    expect(uis[0].name).toBe("RaceCoordinator AI");
+    expect(
+      uis.some((u) => u.entity_id === "practice_ui_layout_rc_ai"),
+    ).toBeFalse();
+    expect(
+      uis.some((u) => u.entity_id === "default_fuel_ui_layout_rc_ai"),
+    ).toBeFalse();
   });
 
   it("should rename legacy default custom UI names to canonical names and preserve custom UIs", () => {
@@ -201,6 +225,40 @@ describe("ui-editor-data.helper", () => {
     ).toBe("My Custom Theme");
   });
 
+  it("should preserve deletion of default custom UIs in processLoadedEditorData when remaining custom UIs exist", () => {
+    const defaultTheme: Theme = {
+      entity_id: "default_classic_rc_ai",
+      name: "Default Theme",
+      is_default: true,
+      slots: {},
+      audio_slots: {},
+    };
+    const rawData = {
+      assets: [],
+      dirHandle: null,
+      widgetDirHandle: null,
+      themes: [defaultTheme],
+      tracks: [],
+      customUIs: [
+        {
+          entity_id: "default_ui_layout_rc_ai",
+          name: "RaceCoordinator AI",
+          is_default: true,
+        },
+      ],
+    };
+    const currentSettings = new Settings();
+    const result = processLoadedEditorData(
+      rawData as any,
+      currentSettings,
+      jasmine.createSpy("setActiveTheme"),
+    );
+    expect(result.initialState.customUIs?.length).toBe(1);
+    expect(result.initialState.customUIs?.[0].entity_id).toBe(
+      "default_ui_layout_rc_ai",
+    );
+  });
+
   describe("handleUiEditorKeyboardShortcut", () => {
     let onUndo: jasmine.Spy;
     let onRedo: jasmine.Spy;
@@ -349,6 +407,131 @@ describe("ui-editor-data.helper", () => {
       );
       expect(shiftDownEvent.preventDefault).toHaveBeenCalled();
       expect(onNudge).toHaveBeenCalledWith(0, 10);
+    });
+  });
+
+  describe("applyLoadedUiEditorData and handleUiEditorDataLoadError", () => {
+    it("should process loaded data, refresh display properties, and restore open layout", () => {
+      const mockSettings = new Settings();
+      const comp: any = {
+        settingsService: { getSettings: () => mockSettings },
+        themeService: { setActiveTheme: jasmine.createSpy("setActiveTheme") },
+        sortAvailableColumns: jasmine.createSpy("sortAvailableColumns"),
+        refreshDisplayProperties: jasmine
+          .createSpy("refreshDisplayProperties")
+          .and.callFake(() => {
+            comp.displayCustomUIs = comp.editingState.customUIs;
+            comp.displayThemes = comp.editingState.themes;
+          }),
+        undoManager: { initialize: jasmine.createSpy("initialize") },
+        cdr: { markForCheck: jasmine.createSpy("markForCheck") },
+        sectionsExpanded: { customUIs: true, ui_layout_1: true },
+        ensureWidgetSelected: jasmine.createSpy("ensureWidgetSelected"),
+        scrollToUi: jasmine.createSpy("scrollToUi"),
+        isLoading: true,
+        isDestroyed: false,
+      };
+
+      const res = {
+        assets: [],
+        themes: [{ entity_id: "t1", name: "Theme 1", is_default: true }],
+        customUIs: [{ entity_id: "layout_1", name: "Layout 1" }],
+        tracks: [],
+      };
+
+      applyLoadedUiEditorData(comp, res);
+
+      expect(comp.isLoading).toBeFalse();
+      expect(comp.sortAvailableColumns).toHaveBeenCalled();
+      expect(comp.refreshDisplayProperties).toHaveBeenCalled();
+      expect(comp.undoManager.initialize).toHaveBeenCalledWith(
+        comp.editingState,
+      );
+      expect(comp.activeCustomUiId).toBe("layout_1");
+      expect(comp.ensureWidgetSelected).toHaveBeenCalled();
+      expect(comp.scrollToUi).toHaveBeenCalledWith("layout_1", 100);
+      expect(comp.cdr.markForCheck).toHaveBeenCalled();
+    });
+
+    it("should handle error, initialize fallback state, and restore open layout", () => {
+      const mockSettings = new Settings();
+      const comp: any = {
+        logger: { error: jasmine.createSpy("error") },
+        settingsService: { getSettings: () => mockSettings },
+        refreshDisplayProperties: jasmine.createSpy("refreshDisplayProperties"),
+        undoManager: { initialize: jasmine.createSpy("initialize") },
+        cdr: { markForCheck: jasmine.createSpy("markForCheck") },
+        sectionsExpanded: {},
+        displayCustomUIs: [],
+        isLoading: true,
+        isDestroyed: false,
+      };
+
+      handleUiEditorDataLoadError(comp, new Error("network error"));
+
+      expect(comp.logger.error).toHaveBeenCalled();
+      expect(comp.isLoading).toBeFalse();
+      expect(comp.editingState).toBeDefined();
+      expect(comp.refreshDisplayProperties).toHaveBeenCalled();
+      expect(comp.cdr.markForCheck).toHaveBeenCalled();
+    });
+  });
+
+  describe("resolveBackNavigation", () => {
+    it("should resolve modify-heats returnUrl or fallback", () => {
+      const nav1 = resolveBackNavigation(
+        { from: "modify-heats", returnUrl: "/custom-return" },
+        null,
+      );
+      expect(nav1.targetUrl).toBe("/custom-return");
+      expect(nav1.queryParams).toEqual({ modifyHeats: "true" });
+
+      const nav2 = resolveBackNavigation({ from: "modify-heats" }, null);
+      expect(nav2.targetUrl).toBe("/default-raceday");
+      expect(nav2.queryParams).toEqual({ modifyHeats: "true" });
+    });
+
+    it("should resolve default setup route when from is not modify-heats", () => {
+      const nav = resolveBackNavigation(() => ({ from: "setup" }), null);
+      expect(nav.targetUrl).toBe("/raceday-setup");
+      expect(nav.queryParams).toEqual({});
+    });
+  });
+
+  describe("refreshUiEditorDisplayProperties", () => {
+    it("should sort themes and custom UIs and build column slots", () => {
+      const comp: any = {
+        editingState: {
+          themes: [
+            { entity_id: "t2", name: "B" },
+            { entity_id: "t1", name: "A" },
+          ],
+          customUIs: [
+            { entity_id: "u2", name: "UI B" },
+            { entity_id: "u1", name: "UI A" },
+          ],
+        },
+        parsedLayouts: new Map(),
+        displayThemes: [],
+        displayCustomUIs: [],
+        displayColumnSlots: [],
+        availableColumns: [{ key: "col1", label: "Col 1" }],
+        editingSettings: { racedayColumns: [] },
+        ensureWidgetSelected: jasmine.createSpy("ensureWidgetSelected"),
+        cdr: { markForCheck: jasmine.createSpy("markForCheck") },
+      };
+
+      refreshUiEditorDisplayProperties(comp);
+
+      expect(comp.displayThemes.length).toBe(2);
+      expect(comp.displayCustomUIs.length).toBe(2);
+      expect(comp.ensureWidgetSelected).toHaveBeenCalled();
+      expect(comp.cdr.markForCheck).toHaveBeenCalled();
+    });
+
+    it("should no-op when editingState is not present", () => {
+      const comp: any = { editingState: null };
+      expect(() => refreshUiEditorDisplayProperties(comp)).not.toThrow();
     });
   });
 });

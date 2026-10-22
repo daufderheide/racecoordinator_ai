@@ -258,7 +258,7 @@ La barra de herramientas superior del Editor de Pistas proporciona herramientas 
 - **Volver**: Regresa a la vista anterior o a la Configuración del Día de Carrera.
 - **Añadir Pista (+)**: Crea una nueva plantilla de pista y activa el modo de edición.
 - **Duplicar Pista**: Crea una copia exacta bajo otro nombre único, ideal para probar configuraciones distintas sin rehacer el trazado.
-- **Editar / Finalizar Edición**: Alterna entre el modo solo lectura y el modo de edición. Al salir del modo de edición, los cambios se validan y se guardan.
+- **Editar / Finalizar Edición (`Cmd/Ctrl+E`)**: Alterna entre el modo solo lectura y el modo de edición. Al salir del modo de edición, los cambios se validan y se guardan.
 - **Expandir / Contraer todo**: Expande o contrae todas las secciones de configuración y paneles de interfaces a la vez.
 - **Eliminar Pista**: Elimina la pista seleccionada tras confirmar la acción.
 - **Deshacer (`Ctrl+Z`) / Rehacer (`Ctrl+Y`)**: Reversión instantánea de cambios en dimensiones, colores o pines.
@@ -285,3 +285,8 @@ La barra de herramientas superior del Editor de Pistas proporciona herramientas 
 
 ### Tiras LED FastLED No Encienden
 - **Solución**: Verifique que el Arduino ejecute el **sketch oficial `v2.1.0.x`**, que el tipo de LED y orden de color sean correctos, y que la masa (GND) de la fuente de 5V esté unida a la masa del Arduino.
+
+### Desconexión de la Interfaz Entre Mangas (Suspensión USB / Ahorro de Energía)
+- **Síntoma**: La interfaz (Arduino, Phidget o Trackmate) se desconecta durante las pausas entre mangas o tras periodos de inactividad, y vuelve a conectarse al iniciar la carrera con el mensaje *"Se ha restablecido la conexión con la interfaz."*
+- **Solución**: Windows, Linux y macOS suspenden puertos USB y dispositivos HID inactivos aunque el ordenador esté encendido. Consulte la sección [Suspensión de la Interfaz USB y Desconexiones](troubleshooting.es.md#usb-sleep-prevention) en Solución de Problemas para desactivar el ahorro de energía en el Administrador de dispositivos.
+

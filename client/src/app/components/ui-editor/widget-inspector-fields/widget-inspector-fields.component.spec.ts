@@ -30,6 +30,7 @@ describe("WidgetInspectorFieldsComponent", () => {
 
     const mockCustomWidgetService = {
       getWidgetDefinition: () => undefined,
+      getCustomWidgets: () => [],
       isCustomWidget: (type: string) => type?.startsWith("custom:") ?? false,
     };
 
@@ -149,6 +150,38 @@ describe("WidgetInspectorFieldsComponent", () => {
     expect(component.requestReplicate.emit).toHaveBeenCalled();
   });
 
+  it("should forward deleteGrid when lane-column inspector emits deleteGrid", () => {
+    const laneColWidget: AbsoluteWidgetNode = {
+      id: "w-lane-col",
+      widgetType: "lane-column",
+      x: 0,
+      y: 0,
+      width: 200,
+      height: 120,
+      zIndex: 1,
+      customSettings: {
+        columnKey: "lastLapTime",
+        bindingMode: "lane",
+        targetIndex: 0,
+        gridId: "grid-test-fwd",
+      },
+    };
+    fixture.componentRef.setInput("widget", laneColWidget);
+    fixture.detectChanges();
+
+    spyOn(component.deleteGrid, "emit");
+    const laneColComp =
+      fixture.debugElement.children[0].children[0].componentInstance;
+    laneColComp.deleteGrid.emit("grid-test-fwd");
+    expect(component.deleteGrid.emit).toHaveBeenCalledWith("grid-test-fwd");
+
+    spyOn(component.bringGridToFront, "emit");
+    laneColComp.bringGridToFront.emit("grid-test-fwd");
+    expect(component.bringGridToFront.emit).toHaveBeenCalledWith(
+      "grid-test-fwd",
+    );
+  });
+
   it("should render action-button-inspector when widget is action-forward or action-close", () => {
     fixture.componentRef.setInput("widget", {
       id: "w-forward",
@@ -179,5 +212,155 @@ describe("WidgetInspectorFieldsComponent", () => {
     expect(
       fixture.nativeElement.querySelector("app-action-button-inspector"),
     ).toBeTruthy();
+  });
+
+  it("should identify lane column widgets including custom widgets in grids", () => {
+    const standardCol: AbsoluteWidgetNode = {
+      id: "w-std",
+      widgetType: "lane-column",
+      x: 0,
+      y: 0,
+      width: 100,
+      height: 50,
+      zIndex: 1,
+    };
+    expect(component.isLaneColumnWidget(standardCol)).toBeTrue();
+
+    const customInGrid: AbsoluteWidgetNode = {
+      id: "w-custom-grid",
+      widgetType: "custom:advanced-laps",
+      x: 0,
+      y: 0,
+      width: 100,
+      height: 50,
+      zIndex: 1,
+      customSettings: { gridId: "grid-123" },
+    };
+    expect(component.isLaneColumnWidget(customInGrid)).toBeTrue();
+
+    const customWithLane: AbsoluteWidgetNode = {
+      id: "w-custom-lane",
+      widgetType: "custom:advanced-laps",
+      x: 0,
+      y: 0,
+      width: 100,
+      height: 50,
+      zIndex: 1,
+      customSettings: { gridLane: 0 },
+    };
+    expect(component.isLaneColumnWidget(customWithLane)).toBeTrue();
+
+    const standaloneCustom: AbsoluteWidgetNode = {
+      id: "w-custom-solo",
+      widgetType: "custom:banner",
+      x: 0,
+      y: 0,
+      width: 100,
+      height: 50,
+      zIndex: 1,
+      customSettings: {},
+    };
+    expect(component.isLaneColumnWidget(standaloneCustom)).toBeFalse();
+  });
+
+  it("should render lane-column-inspector when custom widget is in a grid", () => {
+    const customGridWidget: AbsoluteWidgetNode = {
+      id: "w-custom-grid",
+      widgetType: "custom:advanced-laps",
+      x: 0,
+      y: 0,
+      width: 200,
+      height: 90,
+      zIndex: 1,
+      customSettings: {
+        gridId: "grid-test",
+        gridLane: 0,
+        targetIndex: 0,
+        useLaneColors: true,
+      },
+    };
+    fixture.componentRef.setInput("widget", customGridWidget);
+    fixture.detectChanges();
+
+    expect(
+      fixture.nativeElement.querySelector("app-lane-column-inspector"),
+    ).toBeTruthy();
+    expect(
+      fixture.nativeElement.querySelector(
+        ":scope > app-custom-widget-inspector",
+      ),
+    ).toBeNull();
+  });
+
+  it("should render lane-column-inspector when custom widget has insets configured", () => {
+    const customInsetWidget: AbsoluteWidgetNode = {
+      id: "w-custom-inset",
+      widgetType: "custom:lap-gauge",
+      x: 0,
+      y: 0,
+      width: 250,
+      height: 120,
+      zIndex: 1,
+      customSettings: {
+        insets: { "top-right": "lastLapTime" },
+      },
+    };
+    fixture.componentRef.setInput("widget", customInsetWidget);
+    fixture.detectChanges();
+
+    expect(
+      fixture.nativeElement.querySelector("app-lane-column-inspector"),
+    ).toBeTruthy();
+    expect(
+      fixture.nativeElement.querySelector(
+        ":scope > app-custom-widget-inspector",
+      ),
+    ).toBeNull();
+  });
+
+  it("should render custom-widget-inspector when custom widget is not in a grid or lane", () => {
+    const customSoloWidget: AbsoluteWidgetNode = {
+      id: "w-custom-solo",
+      widgetType: "custom:banner",
+      x: 0,
+      y: 0,
+      width: 300,
+      height: 100,
+      zIndex: 1,
+      customSettings: {},
+    };
+    fixture.componentRef.setInput("widget", customSoloWidget);
+    fixture.detectChanges();
+
+    expect(
+      fixture.nativeElement.querySelector("app-custom-widget-inspector"),
+    ).toBeTruthy();
+    expect(
+      fixture.nativeElement.querySelector("app-lane-column-inspector"),
+    ).toBeNull();
+  });
+
+  it("should forward selectedAnchor and emit anchorChange", () => {
+    const laneColWidget: AbsoluteWidgetNode = {
+      id: "w-lane-col",
+      widgetType: "lane-column",
+      x: 0,
+      y: 0,
+      width: 200,
+      height: 90,
+      zIndex: 1,
+      customSettings: {
+        columnKey: "lastLapTime",
+      },
+    };
+    fixture.componentRef.setInput("widget", laneColWidget);
+    fixture.componentRef.setInput("selectedAnchor", "top-left");
+    fixture.detectChanges();
+
+    expect(component.selectedAnchor()).toBe("top-left");
+
+    const spy = spyOn(component.anchorChange, "emit");
+    component.onAnchorChange("top-right");
+    expect(spy).toHaveBeenCalledWith("top-right");
   });
 });

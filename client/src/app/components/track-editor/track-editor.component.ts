@@ -104,6 +104,8 @@ import {
 })
 export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   lifecycle!: EditorLifecycleHelper;
+  // Delete Track Confirmation Modal
+  showDeleteConfirm = false;
 
   get showDiscardConfirm(): boolean {
     return this.lifecycle.showDiscardConfirm;
@@ -126,6 +128,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     this.lifecycle.pendingDeactivate = val;
   }
   private isReverting = false;
+  private isSwitchingSelection = false;
   @ViewChild(EditorTitleComponent) titleComponent!: EditorTitleComponent;
   private isDestroyed = false;
   private subscriptions: Subscription[] = [];
@@ -402,6 +405,13 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       cdr: this.cdr,
       translationService: this.translationService,
       getUnsavedReasons: () => this.getUnsavedReasons(),
+      undoManager: this.undoManager,
+      hasChanges: () => this.hasChanges(),
+      isSaveValid: () =>
+        Boolean(this.trackName?.trim() && this.isNameUnique(true)),
+      isSaving: () => this.isSaving,
+      onAutoSave: () => this.updateTrack(false, true),
+      logger: this.logger,
     });
   }
 
@@ -432,6 +442,10 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
             this.router.url.startsWith("/track-editor") ||
             this.router.url.includes("mock");
           if (!isEditorRoute) {
+            return;
+          }
+          if (this.isSwitchingSelection) {
+            this.isSwitchingSelection = false;
             return;
           }
           const nextId = paramMap.get("id");
@@ -874,7 +888,9 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     if (this.selectedTrackId === id) return;
     const found = this.allTracks.find((t) => t.entity_id === id);
     if (found) {
+      this.isSwitchingSelection = true;
       this.selectTrack(found);
+      this.navigationService.setLastEditedId("track", found.entity_id);
       this.router.navigate([], {
         relativeTo: this.route,
         queryParams: { id: found.entity_id },
@@ -925,41 +941,49 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
 
   deleteTrack() {
     if (!this.editingTrack || this.editingTrack.entity_id === "new") return;
-    if (confirm(this.translationService.translate("TE_CONFIRM_DELETE"))) {
-      this.isSaving = true;
-      const idToDelete = this.editingTrack.entity_id;
-      this.dataService.deleteTrack(idToDelete).subscribe({
-        next: () => {
-          this.isSaving = false;
-          this.isEditMode = false;
-          const nextTrack = getNextSelectionAfterDelete(
-            this.allTracks,
-            idToDelete,
-          );
-          this.allTracks = this.allTracks.filter(
-            (t) => t.entity_id !== idToDelete,
-          );
-          this.updateTrackSelectItems();
-          if (nextTrack) {
-            this.selectTrack(nextTrack);
-            this.router.navigate([], {
-              relativeTo: this.route,
-              queryParams: { id: nextTrack.entity_id },
-              queryParamsHandling: "merge",
-              replaceUrl: true,
-            });
-          } else {
-            this.startNewTrack();
-          }
-          this.cdr.detectChanges();
-        },
-        error: (err) => {
-          this.logger.error("Failed to delete track", err);
-          this.isSaving = false;
-          this.cdr.detectChanges();
-        },
-      });
-    }
+    this.showDeleteConfirm = true;
+  }
+
+  onCancelDelete() {
+    this.showDeleteConfirm = false;
+  }
+
+  onConfirmDelete() {
+    this.showDeleteConfirm = false;
+    if (!this.editingTrack || this.editingTrack.entity_id === "new") return;
+    this.isSaving = true;
+    const idToDelete = this.editingTrack.entity_id;
+    this.dataService.deleteTrack(idToDelete).subscribe({
+      next: () => {
+        this.isSaving = false;
+        this.isEditMode = false;
+        const nextTrack = getNextSelectionAfterDelete(
+          this.allTracks,
+          idToDelete,
+        );
+        this.allTracks = this.allTracks.filter(
+          (t) => t.entity_id !== idToDelete,
+        );
+        this.updateTrackSelectItems();
+        if (nextTrack) {
+          this.selectTrack(nextTrack);
+          this.router.navigate([], {
+            relativeTo: this.route,
+            queryParams: { id: nextTrack.entity_id },
+            queryParamsHandling: "merge",
+            replaceUrl: true,
+          });
+        } else {
+          this.startNewTrack();
+        }
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        this.logger.error("Failed to delete track", err);
+        this.isSaving = false;
+        this.cdr.detectChanges();
+      },
+    });
   }
 
   private initializeInterfaces() {
@@ -2463,43 +2487,45 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     }
   }
 
-  private autoSaveTrack() {
+  private autoSaveTrack(): Promise<any> {
     this.logger.debug("autoSaveTrack triggered");
     if (!this.editingTrack) {
       this.logger.debug("autoSaveTrack: no editingTrack");
-      return;
+      return Promise.resolve();
     }
-    if (!this.trackName.trim() || !this.isNameUnique(true)) {
+    if (!this.trackName?.trim() || !this.isNameUnique(true)) {
       this.logger.debug("autoSaveTrack: name invalid");
-      return;
-    }
-    if (this.isSaving) {
-      this.logger.debug("autoSaveTrack: isSaving is true");
-      return;
+      return Promise.resolve();
     }
     this.logger.debug("autoSaveTrack: triggering updateTrack");
-    this.updateTrack(false, true);
+    return this.lifecycle.scheduleAutoSave(() => this.updateTrack(false, true));
   }
 
-  updateTrack(isSaveAsNew: boolean = false, isAutoSave: boolean = false) {
-    if (!this.editingTrack || this.isSaving) return;
+  updateTrack(
+    isSaveAsNew: boolean = false,
+    isAutoSave: boolean = false,
+  ): Promise<any> {
+    if (!this.editingTrack || this.isSaving) return Promise.resolve();
     const wasNew = isSaveAsNew || this.editingTrack.entity_id === "new";
-    if (!wasNew && !this.isDirtyState()) return;
+    if (!wasNew && !this.isDirtyState()) return Promise.resolve();
 
     // Validate
-    if (!this.trackName.trim()) {
+    if (!this.trackName?.trim()) {
       if (!isAutoSave) {
         alert(this.translationService.translate("TE_ERROR_NAME_REQUIRED"));
       }
-      return;
+      return Promise.resolve();
     }
 
     this.isSaving = true;
     this.isAutoSaving = isAutoSave;
-    this.saveTrackData(isSaveAsNew, isAutoSave);
+    return this.saveTrackData(isSaveAsNew, isAutoSave);
   }
 
-  private saveTrackData(isSaveAsNew: boolean, isAutoSave: boolean) {
+  private saveTrackData(
+    isSaveAsNew: boolean,
+    isAutoSave: boolean,
+  ): Promise<any> {
     const finalTrack = this.createSnapshot();
     const wasNew = isSaveAsNew || finalTrack.entity_id === "new";
 
@@ -2517,19 +2543,25 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       ? this.dataService.createTrack({ ...payload, entity_id: "new" })
       : this.dataService.updateTrack(payload.entity_id, payload);
 
-    this.subscriptions.push(
-      obs.subscribe({
-        next: (result) => {
-          const merged = {
-            ...payload,
-            ...result,
-            entity_id: result?.entity_id || payload?.entity_id,
-          };
-          this.handleSaveSuccess(merged, wasNew, isAutoSave);
-        },
-        error: (err) => this.handleSaveError(err, isAutoSave),
-      }),
-    );
+    return new Promise((resolve, reject) => {
+      this.subscriptions.push(
+        obs.subscribe({
+          next: (result) => {
+            const merged = {
+              ...payload,
+              ...result,
+              entity_id: result?.entity_id || payload?.entity_id,
+            };
+            this.handleSaveSuccess(merged, wasNew, isAutoSave);
+            resolve(merged);
+          },
+          error: (err) => {
+            this.handleSaveError(err, isAutoSave);
+            reject(err);
+          },
+        }),
+      );
+    });
   }
 
   private handleSaveSuccess(result: any, wasNew: boolean, isAutoSave: boolean) {

@@ -42,4 +42,5 @@ message Lap {
   RecordTier record_tier = 15;
   bool is_new_race_leader = 16;
   bool is_new_heat_leader = 17;
+  double total_time = 18;
 }

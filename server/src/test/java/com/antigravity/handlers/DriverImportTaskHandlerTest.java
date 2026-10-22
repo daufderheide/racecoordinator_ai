@@ -117,4 +117,44 @@ public class DriverImportTaskHandlerTest {
     handler.handleTemplate(ctx);
     verify(ctx).contentType("application/json");
   }
+
+  @Test
+  public void testHandleExportCsv() {
+    Driver d =
+        new Driver.Builder().withEntityId("d1").withName("Mario").withNickname("Mario").build();
+    driverRepository.insert(d);
+
+    when(ctx.queryParam("format")).thenReturn("csv");
+    handler.handleExport(ctx);
+
+    verify(ctx).contentType("application/zip");
+    verify(ctx).header("Content-Disposition", "attachment; filename=\"drivers_export.zip\"");
+    verify(ctx).result(any(java.io.InputStream.class));
+  }
+
+  @Test
+  public void testHandleExportWithDriverIds() {
+    Driver d1 =
+        new Driver.Builder().withEntityId("d1").withName("Mario").withNickname("Mario").build();
+    Driver d2 =
+        new Driver.Builder().withEntityId("d2").withName("Luigi").withNickname("Luigi").build();
+    driverRepository.insert(d1);
+    driverRepository.insert(d2);
+
+    when(ctx.queryParam("format")).thenReturn("xlsx");
+    when(ctx.queryParam("driverIds")).thenReturn("d1");
+    handler.handleExport(ctx);
+
+    verify(ctx).contentType("application/zip");
+    verify(ctx).result(any(java.io.InputStream.class));
+  }
+
+  @Test
+  public void testHandleExportError() {
+    when(ctx.queryParam("format")).thenThrow(new RuntimeException("Database error"));
+    handler.handleExport(ctx);
+
+    verify(ctx).status(500);
+    verify(ctx).result(anyString());
+  }
 }

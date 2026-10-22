@@ -11,8 +11,11 @@
   display: flex;
   padding: 0;
   overflow: hidden;
-  position: relative;
-  transition: border-color 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    background-color 0.2s ease,
+    color 0.2s ease,
+    filter 0.2s ease;
 }
 
 .raceday-lane-column-card.orientation-vertical {
@@ -60,6 +63,26 @@
   padding: 3px 10px;
 }
 
+.raceday-lane-column-card.header-widget-card {
+  align-items: stretch;
+  justify-content: stretch;
+}
+
+.raceday-lane-column-card.header-widget-card .lane-col-header.header-widget-only {
+  width: 100%;
+  max-width: 100% !important;
+  height: 100%;
+  border-bottom: none;
+  border-right: none !important;
+  border-radius: inherit;
+  padding: 0 4px;
+  box-sizing: border-box;
+}
+
+.raceday-lane-column-card.highlight {
+  filter: brightness(1.2) drop-shadow(0 0 10px rgba(255, 255, 255, 0.3));
+}
+
 .lane-col-body {
   flex: 1;
   display: flex;
@@ -73,11 +96,11 @@
   box-sizing: border-box;
   position: relative;
   overflow: hidden;
-  padding: 6px 12px;
+  padding: 2px 4px;
 }
 
 .raceday-lane-column-card:not(.has-header) .lane-col-body {
-  padding: 8px 12px;
+  padding: 2px 4px;
 }
 
 .lane-col-main-row {
@@ -112,29 +135,27 @@
 }
 
 .lane-col-insets-row {
-  display: flex;
-  flex-direction: row;
+  position: absolute;
+  left: 0;
+  right: 0;
   width: 100%;
-  align-items: center;
-  justify-content: space-between;
   line-height: 1.2;
-  overflow: hidden;
+  overflow: visible;
   z-index: 2;
   pointer-events: none;
+  box-sizing: border-box;
 }
 
 .lane-col-insets-top {
-  position: absolute;
   top: 0;
-  left: 0;
-  right: 0;
+  height: 33.333%;
+  max-height: 33.333%;
 }
 
 .lane-col-insets-bottom {
-  position: absolute;
   bottom: 0;
-  left: 0;
-  right: 0;
+  height: 33.333%;
+  max-height: 33.333%;
 }
 
 .inset-cell {
@@ -143,8 +164,50 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 40%;
   pointer-events: auto;
+}
+
+.lane-col-insets-row .inset-cell {
+  position: absolute;
+  max-width: calc(100% - 12px);
+}
+
+.lane-col-insets-top .inset-cell:not(.has-image) {
+  top: 2px;
+}
+
+.lane-col-insets-bottom .inset-cell:not(.has-image) {
+  bottom: 2px;
+}
+
+/* Image insets occupy the full 1/3 x 1/3 inset bounding box */
+.lane-col-insets-row .inset-cell.has-image,
+.lane-col-insets-row .inset-cell:has(.lane-col-inset-image) {
+  width: calc(33.333% - 8px);
+  max-width: calc(33.333% - 8px);
+  height: calc(100% - 4px);
+  max-height: 100%;
+  box-sizing: border-box;
+}
+
+.lane-col-insets-top .inset-cell.has-image,
+.lane-col-insets-top .inset-cell:has(.lane-col-inset-image) {
+  top: 2px;
+}
+
+.lane-col-insets-bottom .inset-cell.has-image,
+.lane-col-insets-bottom .inset-cell:has(.lane-col-inset-image) {
+  bottom: 2px;
+}
+
+.lane-col-main-row .inset-cell.has-image,
+.lane-col-main-row .inset-cell:has(.lane-col-inset-image) {
+  width: calc(33.333% - 8px);
+  max-width: calc(33.333% - 8px);
+  height: 100%;
+  max-height: 100%;
+  flex-shrink: 0;
+  box-sizing: border-box;
 }
 
 .inset-cell.tl,
@@ -154,11 +217,54 @@
   text-align: left;
 }
 
+.inset-cell.tl {
+  align-items: flex-start;
+}
+
+.inset-cell.bl {
+  align-items: flex-end;
+}
+
+.inset-cell.cl {
+  align-items: center;
+}
+
+.lane-col-insets-row .inset-cell.tl,
+.lane-col-insets-row .inset-cell.bl {
+  left: 4px;
+  z-index: 1;
+}
+
+.inset-cell.tl > span,
+.inset-cell.bl > span,
+.inset-cell.cl > span {
+  text-align: left;
+}
+
 .inset-cell.tc,
 .inset-cell.bc {
   justify-content: center;
   text-align: center;
-  flex: 1;
+}
+
+.inset-cell.tc {
+  align-items: flex-start;
+}
+
+.inset-cell.bc {
+  align-items: flex-end;
+}
+
+.lane-col-insets-row .inset-cell.tc,
+.lane-col-insets-row .inset-cell.bc {
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+}
+
+.inset-cell.tc > span,
+.inset-cell.bc > span {
+  text-align: center;
 }
 
 .inset-cell.tr,
@@ -168,18 +274,180 @@
   text-align: right;
 }
 
+.inset-cell.tr {
+  align-items: flex-start;
+}
+
+.inset-cell.br {
+  align-items: flex-end;
+}
+
+.inset-cell.cr {
+  align-items: center;
+}
+
+.lane-col-insets-row .inset-cell.tr,
+.lane-col-insets-row .inset-cell.br {
+  right: 4px;
+  z-index: 3;
+}
+
+.inset-cell.tr > span,
+.inset-cell.br > span,
+.inset-cell.cr > span {
+  text-align: right;
+}
+
 .inset-cell.cl {
   margin-right: 4px;
+  max-width: 40%;
 }
 
 .inset-cell.cr {
   margin-left: 4px;
+  max-width: 40%;
 }
 
+.inset-cell > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+/* Image insets scale uniformly to fit the entire inset bounding box */
 .lane-col-inset-image {
-  max-height: 24px;
-  max-width: 32px;
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
   object-fit: contain;
+  display: block;
+}
+
+/* Position image flush with each respective corner or edge */
+.inset-cell.tl .lane-col-inset-image {
+  object-position: left top;
+}
+
+.inset-cell.tc .lane-col-inset-image {
+  object-position: center top;
+}
+
+.inset-cell.tr .lane-col-inset-image {
+  object-position: right top;
+}
+
+.inset-cell.cl .lane-col-inset-image {
+  object-position: left center;
+}
+
+.inset-cell.cr .lane-col-inset-image {
+  object-position: right center;
+}
+
+.inset-cell.bl .lane-col-inset-image {
+  object-position: left bottom;
+}
+
+.inset-cell.bc .lane-col-inset-image {
+  object-position: center bottom;
+}
+
+.inset-cell.br .lane-col-inset-image {
+  object-position: right bottom;
+}
+
+.lane-col-inset-custom-widget-wrapper {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: inherit;
+  max-width: 100%;
+  max-height: 100%;
+  overflow: hidden;
+  position: relative;
+  line-height: 1.1;
+}
+
+.lane-col-inset-custom-widget-wrapper > * {
+  max-width: 100%;
+  max-height: 100%;
+  display: flex !important;
+  flex-direction: row !important;
+  width: auto !important;
+  justify-content: inherit !important;
+  align-items: center !important;
+}
+
+/* Ensure custom widget cards scale down and fit smoothly within inset slots */
+.lane-col-inset-custom-widget-wrapper [class*="-card"],
+.lane-col-inset-custom-widget-wrapper .advanced-laps-card {
+  border: none !important;
+  background: transparent !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  box-shadow: none !important;
+  width: auto !important;
+  height: auto !important;
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: inherit !important;
+  color: inherit !important;
+}
+
+.lane-col-inset-custom-widget-wrapper [class*="-body"],
+.lane-col-inset-custom-widget-wrapper .advanced-laps-body {
+  padding: 0 !important;
+  width: auto !important;
+  height: auto !important;
+  flex: none !important;
+  overflow: visible !important;
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: inherit !important;
+  color: inherit !important;
+}
+
+.lane-col-inset-custom-widget-wrapper .advanced-laps-header {
+  display: none !important;
+}
+
+.lane-col-inset-custom-widget-wrapper [class*="-value"],
+.lane-col-inset-custom-widget-wrapper .advanced-laps-value {
+  font-size: inherit !important;
+  line-height: 1.1 !important;
+  white-space: nowrap !important;
+  text-align: inherit !important;
+  color: inherit !important;
+}
+
+.lane-col-main-custom-widget-wrapper {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.lane-col-main-custom-widget-wrapper > * {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lane-col-main-custom-widget-wrapper [class*="-card"] {
+  width: 100% !important;
+  height: 100% !important;
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
 }
 
 .lane-col-value {
@@ -212,73 +480,70 @@
 
 .lane-col-last-laps {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
   width: 100%;
   height: 100%;
   overflow: hidden;
-  align-items: stretch;
-  justify-content: flex-start;
+  box-sizing: border-box;
 }
 
-.raceday-lane-column-card.orientation-horizontal .lane-col-last-laps {
+.lane-col-last-laps.vertical-laps {
+  flex-direction: column;
+  justify-content: space-evenly;
+  align-items: center;
+}
+
+.lane-col-last-laps.horizontal-laps {
   flex-direction: row;
-  flex-wrap: wrap;
-  gap: 6px 12px;
+  justify-content: space-evenly;
   align-items: center;
 }
 
 .last-lap-item {
   display: flex;
-  flex-direction: column;
-  padding: 3px 6px;
-  border-radius: 4px;
-  background: rgba(0, 0, 0, 0.1);
-  font-family: monospace;
-  box-sizing: border-box;
-  flex-shrink: 0;
-}
-
-.raceday-lane-column-card.orientation-horizontal .last-lap-item {
-  display: inline-flex;
   flex-direction: row;
   align-items: center;
-  gap: 6px;
-}
-
-.last-lap-main {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 13px;
-  line-height: 1.2;
-}
-
-.raceday-lane-column-card.orientation-horizontal .last-lap-main {
-  display: inline-flex;
+  justify-content: center;
   gap: 4px;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  line-height: 1;
 }
 
-.last-lap-item.best-lap {
-  font-weight: bold;
-  box-shadow: inset 0 0 0 1px currentColor;
+.lane-col-last-laps.vertical-laps .last-lap-item {
+  padding-bottom: 2px;
+  width: max-content;
 }
 
-.last-lap-item .lap-number {
-  opacity: 0.75;
+.lane-col-last-laps.horizontal-laps .last-lap-item {
+  padding-right: 4px;
+  height: max-content;
+}
+
+.last-lap-time {
+  font-size: var(--lane-col-last-laps-font-size, var(--lane-col-value-font-size, 54px));
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
 }
 
 .last-lap-segments {
   display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  font-size: 11px;
+  flex-direction: column;
+  justify-content: space-evenly;
+  height: 1em;
+  font-size: var(--lane-col-last-laps-font-size, var(--lane-col-value-font-size, 54px));
+  gap: 0;
   opacity: 0.85;
-  margin-top: 2px;
 }
 
-.lap-seg {
-  opacity: 0.9;
+.last-lap-seg {
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.last-lap-item.best-lap .last-lap-time {
+  font-weight: 900;
+  text-decoration: underline;
 }
 
 .lane-col-image-wrapper {
@@ -290,9 +555,17 @@
 }
 
 .lane-col-image {
+  width: 100%;
+  height: 100%;
   max-width: 100%;
   max-height: 100%;
   object-fit: contain;
+}
+
+svg.lane-col-inset-image,
+svg.lane-col-image {
+  fill: currentColor;
+  pointer-events: none;
 }
 
 .drift-indicator {
@@ -332,8 +605,25 @@
 
 .drop-zone:hover,
 .drop-zone.drag-over {
-  background-color: rgba(59, 130, 246, 0.3);
+  background-color: rgba(59, 130, 246, 0.35);
   border-color: #3b82f6;
+  box-shadow: inset 0 0 10px rgba(59, 130, 246, 0.6);
+}
+
+.drop-zone.has-inset {
+  cursor: pointer;
+}
+
+.drop-zone.has-inset:hover {
+  background-color: rgba(56, 189, 248, 0.2);
+  border-color: rgba(56, 189, 248, 0.6);
+}
+
+.drop-zone.selected-inset {
+  background-color: rgba(56, 189, 248, 0.35) !important;
+  border: 2px solid #38bdf8 !important;
+  box-shadow: 0 0 8px rgba(56, 189, 248, 0.5);
+  z-index: 105;
 }
 
 .delete-anchor-btn {
@@ -346,7 +636,7 @@
   border-radius: 50%;
   width: 18px;
   height: 18px;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   font-size: 13px;
@@ -354,8 +644,12 @@
   z-index: 110;
   opacity: 0;
   transition: opacity 0.2s;
-  line-height: 1;
   padding: 0;
+}
+
+.delete-anchor-btn .material-icons {
+  font-size: 13px;
+  color: #ef4444;
 }
 
 .raceday-lane-column-card:hover .delete-anchor-btn {

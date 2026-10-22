@@ -136,6 +136,12 @@ public class RaceHeatTaskHandler {
               .build();
     }
     raceRepository.insert(race);
+    if (race.isPractice() || "Practice".equalsIgnoreCase(race.getName())) {
+      databaseContext.clearDefaultArtifactDeleted("race", "Practice");
+    }
+    if ("Fuel Race".equalsIgnoreCase(race.getName())) {
+      databaseContext.clearDefaultArtifactDeleted("race", "Fuel Race");
+    }
     return race;
   }
 
@@ -197,8 +203,17 @@ public class RaceHeatTaskHandler {
   }
 
   public void deleteRace(String id) {
+    Race race = raceRepository.findByEntityId(id);
     DatabaseService.getInstance().deleteAllRaceData(databaseContext, id);
     raceRepository.delete(id);
+    if (race != null) {
+      if (race.isPractice() || "Practice".equalsIgnoreCase(race.getName())) {
+        databaseContext.markDefaultArtifactDeleted("race", "Practice");
+      }
+      if ("Fuel Race".equalsIgnoreCase(race.getName())) {
+        databaseContext.markDefaultArtifactDeleted("race", "Fuel Race");
+      }
+    }
   }
 
   public void handleResetRace(Context ctx) {

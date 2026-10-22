@@ -43,7 +43,7 @@ import { TranslatePipe } from "@app/pipes/translate.pipe";
         display: flex;
         justify-content: center;
         align-items: center;
-        z-index: 3000;
+        z-index: 10000;
       }
       .modal-content {
         background: #2b2b2b;

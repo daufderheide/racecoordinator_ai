@@ -25,7 +25,8 @@
     ],
     "paths": {
       "@app/*": ["src/app/*"],
-      "@protobufjs/inquire": ["src/app/protobufjs-inquire-mock.js"]
+      "@protobufjs/inquire": ["src/app/protobufjs-inquire-mock.js"],
+      "@custom-widgets/*": ["../custom_widgets/*"]
     }
   },
   "angularCompilerOptions": {

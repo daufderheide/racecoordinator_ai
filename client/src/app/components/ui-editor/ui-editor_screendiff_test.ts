@@ -266,7 +266,8 @@ test.describe("UI Editor Visuals", () => {
     await columnToolbox.waitFor({ state: "visible" });
     await TestSetupHelper.waitForImagesLoaded(practiceUiSection);
 
-    await practiceUiSection.scrollIntoViewIfNeeded();
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await page.evaluate(() => new Promise(requestAnimationFrame));
     await page.mouse.move(0, 0);
 
     await expect(page).toHaveScreenshot(

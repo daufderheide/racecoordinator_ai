@@ -106,6 +106,7 @@ public class HeatOverTest {
 
     org.junit.Assert.assertTrue(result);
     verify(hem).onLap(0, 5.0, 1, false, true, true);
+    verify(race).updateAndBroadcastOverallStandings();
     verify(race).updateScoreRecords();
     verify(race, org.mockito.Mockito.atLeastOnce())
         .broadcast(org.mockito.ArgumentMatchers.any(com.antigravity.proto.RaceData.class));
@@ -166,6 +167,31 @@ public class HeatOverTest {
   }
 
   @Test
+  public void testEnter_SyncsDriverFlags_WarmupWhenCooldown() {
+    com.antigravity.race.Heat currentHeat = mock(com.antigravity.race.Heat.class);
+    when(currentHeat.getStatistics()).thenReturn(new com.antigravity.race.RaceHeatStatistics());
+    com.antigravity.race.DriverHeatData dhd =
+        new com.antigravity.race.DriverHeatData(
+            new com.antigravity.race.RaceParticipant(
+                new com.antigravity.models.Driver("d1", "Driver 1", "id1", "1"), "id1"));
+    when(currentHeat.getDrivers()).thenReturn(java.util.Collections.singletonList(dhd));
+    when(race.getCurrentHeat()).thenReturn(currentHeat);
+    when(race.isAutoAdvanceFired()).thenReturn(false);
+    when(race.getAutoAdvanceRemaining()).thenReturn(2.0);
+    when(race.getRaceModel())
+        .thenReturn(
+            new com.antigravity.models.Race.Builder()
+                .withAutoAdvanceTime(2.0)
+                .withAutoAdvanceWarmupTime(3.0)
+                .withHeatScoring(new HeatScoring())
+                .build());
+
+    heatOver.enter(race);
+
+    assertEquals(RaceFlag.GREEN_YELLOW, dhd.getFlag());
+  }
+
+  @Test
   public void testPause_SyncsDriverFlags() {
     com.antigravity.race.Heat currentHeat = mock(com.antigravity.race.Heat.class);
     com.antigravity.race.DriverHeatData dhd =
@@ -191,5 +217,27 @@ public class HeatOverTest {
 
     verify(race).setAutoAdvanceFired(true);
     verify(race).clearAutoTimers();
+  }
+
+  @Test
+  public void testEnter_AppliesEndHeatAutoSegments_WhenNoneAutoSegments() {
+    com.antigravity.race.HeatExecutionManager em =
+        mock(com.antigravity.race.HeatExecutionManager.class);
+    when(race.getHeatExecutionManager()).thenReturn(em);
+    when(race.getRaceModel())
+        .thenReturn(
+            new com.antigravity.models.Race.Builder()
+                .withHeatScoring(
+                    new HeatScoring(
+                        HeatScoring.FinishMethod.Timed,
+                        60L,
+                        HeatScoring.HeatRanking.LAP_COUNT,
+                        HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME,
+                        HeatScoring.AllowFinish.NoneAutoSegments))
+                .build());
+
+    heatOver.enter(race);
+
+    verify(em).applyEndHeatAutoSegments();
   }
 }

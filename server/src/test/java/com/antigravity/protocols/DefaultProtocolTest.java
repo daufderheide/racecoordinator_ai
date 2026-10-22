@@ -7,6 +7,8 @@ import static org.junit.Assert.assertTrue;
 import com.antigravity.mocks.MockScheduler;
 import com.antigravity.proto.InterfaceEvent;
 import com.antigravity.proto.InterfaceStatus;
+import com.antigravity.proto.RaceFlag;
+import com.antigravity.proto.RaceState;
 import java.util.concurrent.ScheduledExecutorService;
 import org.junit.Before;
 import org.junit.Test;
@@ -493,5 +495,55 @@ public class DefaultProtocolTest {
     protocol.handleCallButton(-1, 1, 12);
     protocol.handleCallButton(-1, 0, 12);
     assertEquals(2, listener.callButtonCount);
+  }
+
+  @Test
+  public void testEvaluateAnalogLeds_StartingState_YellowFlagOff() {
+    protocol.setRaceState(RaceState.STARTING, RaceFlag.RED, 5.0);
+    assertFalse(protocol.isGreenFlagOn);
+    assertFalse(protocol.isYellowFlagOn);
+    assertTrue(protocol.isCountdownOn[4]);
+  }
+
+  @Test
+  public void testEvaluateAnalogLeds_RestartCountdown_YellowFlagOff() {
+    // When restarting from a pause, flag is YELLOW and state is STARTING countdown
+    protocol.setRaceState(RaceState.STARTING, RaceFlag.YELLOW, 3.0);
+    assertFalse(protocol.isGreenFlagOn);
+    assertFalse(protocol.isYellowFlagOn);
+  }
+
+  @Test
+  public void testEvaluateAnalogLeds_PausedState_YellowFlagOn() {
+    protocol.setRaceState(RaceState.PAUSED, RaceFlag.YELLOW, 0.0);
+    assertFalse(protocol.isGreenFlagOn);
+    assertTrue(protocol.isYellowFlagOn);
+    assertFalse(protocol.isCountdownOn[0]);
+  }
+
+  @Test
+  public void testEvaluateAnalogLeds_PausedState_RedFlag_YellowFlagOff() {
+    protocol.setRaceState(RaceState.PAUSED, RaceFlag.RED, 0.0);
+    assertFalse(protocol.isGreenFlagOn);
+    assertFalse(protocol.isYellowFlagOn);
+    assertTrue(protocol.isCountdownOn[0]);
+  }
+
+  @Test
+  public void testEvaluateAnalogLeds_RacingGreenFlag() {
+    protocol.setRaceState(RaceState.RACING, RaceFlag.GREEN, 0.0);
+    assertTrue(protocol.isGreenFlagOn);
+    assertFalse(protocol.isYellowFlagOn);
+  }
+
+  @Test
+  public void testEvaluateAnalogLeds_OtherStates_YellowFlagOff() {
+    protocol.setRaceState(RaceState.HEAT_OVER, RaceFlag.RED, 0.0);
+    assertFalse(protocol.isGreenFlagOn);
+    assertFalse(protocol.isYellowFlagOn);
+
+    protocol.setRaceState(RaceState.NOT_STARTED, RaceFlag.RED, 0.0);
+    assertFalse(protocol.isGreenFlagOn);
+    assertFalse(protocol.isYellowFlagOn);
   }
 }

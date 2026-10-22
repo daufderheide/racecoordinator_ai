@@ -65,6 +65,9 @@ export class TeamEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   // Discard Changes Confirmation Modal
   lifecycle!: EditorLifecycleHelper;
 
+  // Delete Team Confirmation Modal
+  showDeleteConfirm = false;
+
   get showDiscardConfirm(): boolean {
     return this.lifecycle.showDiscardConfirm;
   }
@@ -86,6 +89,7 @@ export class TeamEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     this.lifecycle.pendingDeactivate = val;
   }
   private isReverting = false;
+  private isSwitchingSelection = false;
   @ViewChild(EditorTitleComponent) titleComponent!: EditorTitleComponent;
   private isDestroyed = false;
   private dataSubscription: Subscription | null = null;
@@ -164,6 +168,12 @@ export class TeamEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       cdr: this.cdr,
       translationService: this.translationService,
       getUnsavedReasons: () => this.getUnsavedReasons(),
+      undoManager: this.undoManager,
+      hasChanges: () => this.hasChanges(),
+      isSaveValid: () => !this.isNameInvalid,
+      isSaving: () => this.isSaving,
+      onAutoSave: () => this.updateTeam(false, true),
+      logger: this.logger,
     });
   }
 
@@ -187,6 +197,10 @@ export class TeamEditorComponent implements OnInit, OnDestroy, DirtyComponent {
             this.router.url.startsWith("/team-editor") ||
             this.router.url.includes("mock");
           if (!isEditorRoute) {
+            return;
+          }
+          if (this.isSwitchingSelection) {
+            this.isSwitchingSelection = false;
             return;
           }
           const nextId = paramMap.get("id");
@@ -473,6 +487,7 @@ export class TeamEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     if (this.selectedTeamId === id) return;
     const found = this.allTeams.find((t) => t.entity_id === id);
     if (found) {
+      this.isSwitchingSelection = true;
       this.selectTeam(found);
       this.navigationService.setLastEditedId("team", found.entity_id);
       this.router.navigate([], {
@@ -587,41 +602,44 @@ export class TeamEditorComponent implements OnInit, OnDestroy, DirtyComponent {
 
   deleteTeam() {
     if (!this.editingTeam || this.editingTeam.entity_id === "new") return;
-    if (confirm(this.translationService.translate("TEM_CONFIRM_DELETE"))) {
-      this.isSaving = true;
-      const idToDelete = this.editingTeam.entity_id;
-      this.dataService.deleteTeam(idToDelete).subscribe({
-        next: () => {
-          this.isSaving = false;
-          this.isEditMode = false;
-          const nextTeam = getNextSelectionAfterDelete(
-            this.allTeams,
-            idToDelete,
-          );
-          this.allTeams = this.allTeams.filter(
-            (t) => t.entity_id !== idToDelete,
-          );
-          this.updateTeamSelectItems();
-          if (nextTeam) {
-            this.selectTeam(nextTeam);
-            this.router.navigate([], {
-              relativeTo: this.route,
-              queryParams: { id: nextTeam.entity_id },
-              queryParamsHandling: "merge",
-              replaceUrl: true,
-            });
-          } else {
-            this.startNewTeam();
-          }
-          this.cdr.detectChanges();
-        },
-        error: (err) => {
-          this.logger.error("Failed to delete team", err);
-          this.isSaving = false;
-          this.cdr.detectChanges();
-        },
-      });
-    }
+    this.showDeleteConfirm = true;
+  }
+
+  onCancelDelete() {
+    this.showDeleteConfirm = false;
+  }
+
+  onConfirmDelete() {
+    this.showDeleteConfirm = false;
+    if (!this.editingTeam || this.editingTeam.entity_id === "new") return;
+    this.isSaving = true;
+    const idToDelete = this.editingTeam.entity_id;
+    this.dataService.deleteTeam(idToDelete).subscribe({
+      next: () => {
+        this.isSaving = false;
+        this.isEditMode = false;
+        const nextTeam = getNextSelectionAfterDelete(this.allTeams, idToDelete);
+        this.allTeams = this.allTeams.filter((t) => t.entity_id !== idToDelete);
+        this.updateTeamSelectItems();
+        if (nextTeam) {
+          this.selectTeam(nextTeam);
+          this.router.navigate([], {
+            relativeTo: this.route,
+            queryParams: { id: nextTeam.entity_id },
+            queryParamsHandling: "merge",
+            replaceUrl: true,
+          });
+        } else {
+          this.startNewTeam();
+        }
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        this.logger.error("Failed to delete team", err);
+        this.isSaving = false;
+        this.cdr.detectChanges();
+      },
+    });
   }
 
   // Undo/Redo Proxies
@@ -650,22 +668,18 @@ export class TeamEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     this.cdr.detectChanges();
   }
 
-  private autoSaveTeam() {
+  private autoSaveTeam(): Promise<any> {
     this.logger.debug("autoSaveTeam triggered");
     if (!this.editingTeam) {
       this.logger.debug("autoSaveTeam: no editingTeam");
-      return;
+      return Promise.resolve();
     }
     if (this.isNameInvalid) {
       this.logger.debug("autoSaveTeam: name invalid");
-      return;
-    }
-    if (this.isSaving) {
-      this.logger.debug("autoSaveTeam: isSaving is true");
-      return;
+      return Promise.resolve();
     }
     this.logger.debug("autoSaveTeam Triggering updateTeam");
-    this.updateTeam(false, true);
+    return this.lifecycle.scheduleAutoSave(() => this.updateTeam(false, true));
   }
 
   onBackClicked() {
@@ -759,9 +773,12 @@ export class TeamEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     this.lifecycle.onCancelDiscard();
   }
 
-  updateTeam(isSaveAsNew: boolean = false, isAutoSave: boolean = false) {
-    if (!this.editingTeam || this.isSaving) return;
-    if (!isSaveAsNew && !this.isDirtyState()) return;
+  updateTeam(
+    isSaveAsNew: boolean = false,
+    isAutoSave: boolean = false,
+  ): Promise<any> {
+    if (!this.editingTeam || this.isSaving) return Promise.resolve();
+    if (!isSaveAsNew && !this.isDirtyState()) return Promise.resolve();
 
     if (!isAutoSave) {
       this.isSaving = true;
@@ -770,14 +787,14 @@ export class TeamEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       this.isSaving = true;
       this.isAutoSaving = true;
     }
-    this.saveTeamData(isSaveAsNew, isAutoSave);
+    return this.saveTeamData(isSaveAsNew, isAutoSave);
   }
 
   private saveTeamData(
     isSaveAsNew: boolean = false,
     isAutoSave: boolean = false,
-  ) {
-    if (!this.editingTeam) return;
+  ): Promise<any> {
+    if (!this.editingTeam) return Promise.resolve();
 
     const teamToSend = this.cloneTeam(this.editingTeam);
     const wasNew = isSaveAsNew || teamToSend.entity_id === "new";
@@ -791,10 +808,17 @@ export class TeamEditorComponent implements OnInit, OnDestroy, DirtyComponent {
         ? this.dataService.createTeam(teamToSend)
         : this.dataService.updateTeam(teamToSend.entity_id, teamToSend);
 
-    obs.subscribe({
-      next: (result) =>
-        this.handleSaveSuccess(result, teamToSend, wasNew, isAutoSave),
-      error: (err) => this.handleSaveError(err, isAutoSave),
+    return new Promise((resolve, reject) => {
+      obs.subscribe({
+        next: (result) => {
+          this.handleSaveSuccess(result, teamToSend, wasNew, isAutoSave);
+          resolve(result);
+        },
+        error: (err) => {
+          this.handleSaveError(err, isAutoSave);
+          reject(err);
+        },
+      });
     });
   }
 

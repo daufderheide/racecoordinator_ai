@@ -1,3 +1,4 @@
+import { LaneGridAnimationHelper } from "@app/components/raceday/utils/lane-grid-animation.helper";
 import { CustomUI } from "@app/models/custom-ui";
 import { Settings } from "@app/models/settings";
 
@@ -7,13 +8,17 @@ import {
   executeClearLayout,
   handleClearCurrentLayout,
   handleClearLayout,
+  handleExportMigrationDiagnostics,
   handleExportPracticeRacedayLayout,
   handleExportRacedayLayout,
   handleImportPracticeRacedayLayout,
   handleImportRacedayLayout,
   handleResetCurrentLayout,
+  handleResetLayout,
   handleResetPracticeRacedayLayout,
   handleResetRacedayLayout,
+  handleRestorePreMigrationBackup,
+  handleUpgradeLegacyHeatView,
 } from "./ui-editor-layout-actions.helper";
 
 describe("ui-editor-layout-actions.helper", () => {
@@ -50,6 +55,13 @@ describe("ui-editor-layout-actions.helper", () => {
       editingSettings: settings,
       editingState: { settings: new Settings() },
       selectedWidgetId: "w1",
+      selectedAnchor: "top",
+      activeGridSession: { gridId: "grid-test" },
+      parsedLayouts: new Map(),
+      syncRacedayPreview: jasmine.createSpy("syncRacedayPreview"),
+      captureState: jasmine
+        .createSpy("captureState")
+        .and.callFake(() => mockComp.undoManager.captureState()),
       undoManager: { captureState: jasmine.createSpy("captureState") },
       refreshDisplayProperties: jasmine.createSpy("refreshDisplayProperties"),
       cdr: { detectChanges: jasmine.createSpy("detectChanges") },
@@ -151,11 +163,84 @@ describe("ui-editor-layout-actions.helper", () => {
       handleClearLayout(mockComp, ui);
 
       expect(mockComp.selectedWidgetId).toBeNull();
+      expect(mockComp.selectedAnchor).toBeNull();
+      expect(mockComp.activeGridSession).toBeNull();
+      expect(mockComp.syncRacedayPreview).toHaveBeenCalledWith(
+        jasmine.objectContaining({ widgets: [] }),
+        ui,
+      );
+      expect(mockComp.parsedLayouts.get(ui.entity_id)?.widgets).toEqual([]);
       expect(mockComp.countdownPreviewActiveByUi[ui.entity_id]).toBeFalse();
       expect(mockComp.undoManager.captureState).toHaveBeenCalled();
       expect(mockComp.refreshDisplayProperties).toHaveBeenCalled();
       expect(mockComp.cdr.detectChanges).toHaveBeenCalled();
       expect(JSON.parse(ui.layoutJson!).widgets).toEqual([]);
+    });
+
+    it("should remove grid by clearing activeGridSession, resetting animation helper, and synchronizing preview when layout has grid widgets", () => {
+      const gridUi: CustomUI = {
+        entity_id: "grid_ui",
+        name: "Grid UI",
+        is_default: false,
+        layoutJson: JSON.stringify({
+          baseWidth: 1920,
+          baseHeight: 1080,
+          widgets: [
+            {
+              id: "w-grid-1",
+              widgetType: "lane-column",
+              customSettings: { gridId: "grid-test" },
+            },
+            {
+              id: "w-grid-2",
+              widgetType: "lane-column",
+              customSettings: { gridId: "grid-test" },
+            },
+          ],
+        }),
+      };
+      mockComp.activeGridSession = { gridId: "grid-test" };
+      mockComp.currentSelectedWidget = { id: "w-grid-1" };
+      spyOn(LaneGridAnimationHelper, "reset").and.callThrough();
+
+      handleClearLayout(mockComp, gridUi);
+
+      expect(mockComp.activeGridSession).toBeNull();
+      expect(LaneGridAnimationHelper.reset).toHaveBeenCalled();
+      expect(mockComp.currentSelectedWidget).toBeNull();
+      expect(mockComp.syncRacedayPreview).toHaveBeenCalledWith(
+        jasmine.objectContaining({ widgets: [] }),
+        gridUi,
+      );
+      expect(JSON.parse(gridUi.layoutJson!).widgets).toEqual([]);
+    });
+
+    it("should fall back to activeCustomUi when ui parameter is not passed", () => {
+      handleClearLayout(mockComp);
+
+      expect(mockComp.activeGridSession).toBeNull();
+      expect(mockComp.syncRacedayPreview).toHaveBeenCalledWith(
+        jasmine.objectContaining({ widgets: [] }),
+        ui,
+      );
+      expect(JSON.parse(ui.layoutJson!).widgets).toEqual([]);
+    });
+  });
+
+  describe("handleResetLayout", () => {
+    it("should reset layout, clear activeGridSession, reset animation helper, and sync preview", () => {
+      mockComp.activeGridSession = { gridId: "grid-test" };
+      spyOn(LaneGridAnimationHelper, "reset").and.callThrough();
+
+      handleResetLayout(mockComp, ui);
+
+      expect(mockComp.activeGridSession).toBeNull();
+      expect(LaneGridAnimationHelper.reset).toHaveBeenCalled();
+      expect(mockComp.syncRacedayPreview).toHaveBeenCalled();
+      expect(mockComp.undoManager.captureState).toHaveBeenCalled();
+      expect(mockComp.refreshDisplayProperties).toHaveBeenCalled();
+      expect(mockComp.cdr.detectChanges).toHaveBeenCalled();
+      expect(ui.layoutJson).toBeDefined();
     });
   });
 
@@ -254,6 +339,107 @@ describe("ui-editor-layout-actions.helper", () => {
 
       handleImportPracticeRacedayLayout(mockComp, event);
       expect(mockComp.onImportLayout).toHaveBeenCalledWith(event, ui);
+    });
+  });
+
+  describe("migration layout actions", () => {
+    let mockComp: any;
+    let customUi: CustomUI;
+
+    beforeEach(() => {
+      customUi = {
+        entity_id: "ui_migrate_test",
+        name: "Test Layout",
+        is_default: false,
+        layoutJson: JSON.stringify({
+          preserveLegacyHeatView: true,
+          widgets: [
+            {
+              id: "w-lane",
+              widgetType: "lane-view",
+              x: 0,
+              y: 0,
+              width: 800,
+              height: 400,
+              zIndex: 100,
+            },
+          ],
+        }),
+      };
+
+      mockComp = {
+        customUIs: [customUi],
+        dismissedMigrationUis: new Set<string>(["ui_migrate_test"]),
+        saveDismissedMigrationUis: jasmine.createSpy(
+          "saveDismissedMigrationUis",
+        ),
+        onLayoutChanged: jasmine.createSpy("onLayoutChanged"),
+        syncRacedayPreview: jasmine.createSpy("syncRacedayPreview"),
+        cdr: { markForCheck: jasmine.createSpy("markForCheck") },
+        getLayout: jasmine
+          .createSpy("getLayout")
+          .and.returnValue({ widgets: [] }),
+        logger: { warn: jasmine.createSpy("warn") },
+      };
+    });
+
+    it("should handle upgrade legacy heat view and un-dismiss migration banner", () => {
+      handleUpgradeLegacyHeatView(mockComp, customUi);
+
+      expect(mockComp.dismissedMigrationUis.has("ui_migrate_test")).toBeFalse();
+      expect(mockComp.saveDismissedMigrationUis).toHaveBeenCalled();
+      expect(mockComp.onLayoutChanged).toHaveBeenCalled();
+      expect(mockComp.syncRacedayPreview).toHaveBeenCalled();
+      expect(mockComp.showSuccessModal).toBeTrue();
+      expect(mockComp.successModalTitle).toBe("COMMON_SUCCESS");
+      expect(mockComp.successModalMessage).toBe("UE_MIGRATION_UPGRADE_SUCCESS");
+      expect(mockComp.cdr.markForCheck).toHaveBeenCalled();
+    });
+
+    it("should handle restore pre-migration backup and un-dismiss migration banner", () => {
+      const backupUi: CustomUI = {
+        entity_id: "ui_backup",
+        name: "Test Layout (Pre-Migration Backup)",
+        is_default: false,
+        layoutJson: JSON.stringify({
+          widgets: [{ id: "legacy-w", widgetType: "lane-view" }],
+        }),
+      };
+      mockComp.customUIs.push(backupUi);
+
+      handleRestorePreMigrationBackup(mockComp, customUi);
+
+      expect(mockComp.dismissedMigrationUis.has("ui_migrate_test")).toBeFalse();
+      expect(mockComp.saveDismissedMigrationUis).toHaveBeenCalled();
+      expect(mockComp.onLayoutChanged).toHaveBeenCalled();
+      expect(mockComp.syncRacedayPreview).toHaveBeenCalled();
+      expect(mockComp.showSuccessModal).toBeTrue();
+      expect(mockComp.successModalTitle).toBe("COMMON_RESTORE");
+      expect(mockComp.successModalMessage).toBe("UE_MIGRATION_RESTORE_SUCCESS");
+      expect(mockComp.cdr.markForCheck).toHaveBeenCalled();
+    });
+
+    it("should log warning if pre-migration layout cannot be restored", () => {
+      const nonRestorableUi: CustomUI = {
+        entity_id: "no_backup",
+        name: "Non-Restorable",
+        is_default: false,
+      };
+
+      handleRestorePreMigrationBackup(mockComp, nonRestorableUi);
+
+      expect(mockComp.logger.warn).toHaveBeenCalledWith(
+        "Could not find pre-migration layout to restore for",
+        "Non-Restorable",
+      );
+      expect(mockComp.onLayoutChanged).not.toHaveBeenCalled();
+    });
+
+    it("should handle export migration diagnostics", () => {
+      expect(() =>
+        handleExportMigrationDiagnostics(mockComp, customUi),
+      ).not.toThrow();
+      expect(mockComp.getLayout).toHaveBeenCalledWith(customUi);
     });
   });
 });

@@ -48,18 +48,29 @@ public class DriverTest {
             .withNewHeatLeaderAudio(new AudioConfig("preset", "custom_heat_leader", ""))
             .withPitInAudio(new AudioConfig("preset", "custom_pit_in", ""))
             .withFuelAudio(new AudioConfig("audio_set", "custom_fuel_set", ""))
+            .withDriftLapAudio(new AudioConfig("tts", null, "Custom drift"))
             .build();
 
     assertEquals("custom_race_leader", driver.getNewRaceLeaderAudio().getUrl());
     assertEquals("custom_heat_leader", driver.getNewHeatLeaderAudio().getUrl());
     assertEquals("custom_pit_in", driver.getPitInAudio().getUrl());
     assertEquals("custom_fuel_set", driver.getFuelAudio().getUrl());
+    assertEquals("Custom drift", driver.getDriftLapAudio().getText());
 
     Driver copy = Driver.Builder.from(driver).build();
     assertEquals("custom_race_leader", copy.getNewRaceLeaderAudio().getUrl());
     assertEquals("custom_heat_leader", copy.getNewHeatLeaderAudio().getUrl());
     assertEquals("custom_pit_in", copy.getPitInAudio().getUrl());
     assertEquals("custom_fuel_set", copy.getFuelAudio().getUrl());
+    assertEquals("Custom drift", copy.getDriftLapAudio().getText());
+  }
+
+  @Test
+  public void testDriftLapAudioDefault() {
+    Driver driver = new Driver.Builder().withName("Default Drift").build();
+    assertNotNull(driver.getDriftLapAudio());
+    assertEquals("tts", driver.getDriftLapAudio().getType());
+    assertEquals("Drift lap for {driver.nickname}", driver.getDriftLapAudio().getText());
   }
 
   @Test

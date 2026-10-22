@@ -18,7 +18,9 @@ export default defineConfig({
     ? process.env["PWTEST_WORKERS"].endsWith("%")
       ? process.env["PWTEST_WORKERS"]
       : Number(process.env["PWTEST_WORKERS"])
-    : "50%",
+    : process.env["CI"]
+      ? 2
+      : "50%",
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: [
     ["html", { open: "never" }],

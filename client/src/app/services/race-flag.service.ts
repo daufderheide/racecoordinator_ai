@@ -1,4 +1,4 @@
-import { Injectable, OnDestroy } from "@angular/core";
+import { Injectable, OnDestroy, Optional } from "@angular/core";
 import { BehaviorSubject, Observable, Subscription } from "rxjs";
 import { DataService } from "@app/data.service";
 import { THEME_SLOT_KEYS } from "@app/models/theme";
@@ -6,6 +6,7 @@ import { RaceFlag, RaceState } from "@app/proto/antigravity";
 
 import { RaceService } from "./race.service";
 import { RaceConnectionService } from "./race-connection.service";
+import { RaceTimeService } from "./race-time.service";
 import { SettingsService } from "./settings.service";
 import { ThemeService } from "./theme.service";
 
@@ -52,7 +53,24 @@ export class RaceFlagService implements OnDestroy {
     private themeService: ThemeService,
     private settingsService: SettingsService,
     private dataService: DataService,
+    @Optional() private raceTimeService?: RaceTimeService,
   ) {
+    if (this.raceTimeService?.isCooldown$) {
+      this.subscriptions.add(
+        this.raceTimeService.isCooldown$.subscribe(() => {
+          this.notifySubscribers();
+        }),
+      );
+    }
+
+    if (this.raceTimeService?.isWarmup$) {
+      this.subscriptions.add(
+        this.raceTimeService.isWarmup$.subscribe(() => {
+          this.notifySubscribers();
+        }),
+      );
+    }
+
     if (this.raceConnectionService?.raceFlag$) {
       this.subscriptions.add(
         this.raceConnectionService.raceFlag$.subscribe((flag) => {
@@ -148,10 +166,16 @@ export class RaceFlagService implements OnDestroy {
     }
 
     if (this.currentState === RaceState.NOT_STARTED) {
+      if (this.raceTimeService?.isWarmup) {
+        return THEME_SLOT_KEYS.FLAG_WARMUP;
+      }
       return THEME_SLOT_KEYS.FLAG_NOT_STARTED;
     }
 
     if (this.currentState === RaceState.HEAT_OVER) {
+      if (this.raceTimeService?.isCooldown) {
+        return THEME_SLOT_KEYS.FLAG_WARMUP;
+      }
       return THEME_SLOT_KEYS.FLAG_HEAT_OVER;
     }
 
@@ -286,10 +310,16 @@ export class RaceFlagService implements OnDestroy {
    * Get the flag color for driver station indicator (simplified CSS class version)
    */
   getFlagColor(flag?: RaceFlag): FlagColor {
-    const f =
+    let f =
       flag !== undefined && flag !== RaceFlag.UNKNOWN_FLAG
         ? flag
         : this.currentFlag;
+    if (
+      (f === RaceFlag.UNKNOWN_FLAG || f === RaceFlag.RED) &&
+      (this.raceTimeService?.isCooldown || this.raceTimeService?.isWarmup)
+    ) {
+      f = RaceFlag.GREEN_YELLOW;
+    }
     switch (f) {
       case RaceFlag.GREEN:
       case RaceFlag.GREEN_YELLOW:

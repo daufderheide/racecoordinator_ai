@@ -4,6 +4,16 @@
   [class.scale-fixed]="widget()?.scaleMode !== 'auto'"
   [class.scale-to-window]="scaleToWindow()"
   [style.--heat-scale]="scaleToWindow() ? autoFitLayout().scale : null"
+  [style.--summary-font-size.px]="scaleToWindow() ? summaryRowFontSize() : null"
+  [style.--summary-header-font-size.px]="
+    scaleToWindow() ? summaryHeaderFontSize() : null
+  "
+  [style.--summary-row-font-size.px]="
+    scaleToWindow() ? summaryRowFontSize() : null
+  "
+  [style.--non-summary-font-size.px]="
+    scaleToWindow() ? nonSummaryFontSize() : null
+  "
 >
   @if (showHeader()) {
     <div

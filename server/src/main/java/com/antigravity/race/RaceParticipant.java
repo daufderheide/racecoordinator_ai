@@ -31,6 +31,10 @@ public class RaceParticipant extends ServerToClientObject
   private int lapsDownLeader;
   private int lapsDownPosition;
   private List<Double> allScoringLaps;
+  private boolean hasSegments;
+  private int heatsRaced;
+  private int heatsRemaining;
+  private int totalHeats;
 
   public RaceParticipant(Driver driver) {
     super();
@@ -413,6 +417,23 @@ public class RaceParticipant extends ServerToClientObject
     this.laneLaps = laneLaps != null ? laneLaps : new ArrayList<>();
   }
 
+  private List<Double> laneFastestLaps = new ArrayList<>();
+
+  public List<Double> getLaneFastestLaps() {
+    return laneFastestLaps;
+  }
+
+  public void setLaneFastestLaps(List<Double> laneFastestLaps) {
+    this.laneFastestLaps = laneFastestLaps != null ? laneFastestLaps : new ArrayList<>();
+  }
+
+  public Double getLaneFastestLap(int laneIndex) {
+    if (laneIndex >= 0 && laneIndex < laneFastestLaps.size()) {
+      return laneFastestLaps.get(laneIndex);
+    }
+    return null;
+  }
+
   private double positionPoints;
   private double overallBonusPoints;
   private double heatPositionPoints;
@@ -496,6 +517,18 @@ public class RaceParticipant extends ServerToClientObject
         heatBonusBreakdown != null ? heatBonusBreakdown : new java.util.HashMap<>();
   }
 
+  public boolean hasSegments() {
+    return hasSegments;
+  }
+
+  public boolean isHasSegments() {
+    return hasSegments;
+  }
+
+  public void setHasSegments(boolean hasSegments) {
+    this.hasSegments = hasSegments;
+  }
+
   @Override
   @com.fasterxml.jackson.annotation.JsonIgnore
   public String getParticipantId() {
@@ -512,5 +545,29 @@ public class RaceParticipant extends ServerToClientObject
       return getObjectId();
     }
     return "";
+  }
+
+  public int getHeatsRaced() {
+    return heatsRaced;
+  }
+
+  public void setHeatsRaced(int heatsRaced) {
+    this.heatsRaced = heatsRaced;
+  }
+
+  public int getHeatsRemaining() {
+    return heatsRemaining;
+  }
+
+  public void setHeatsRemaining(int heatsRemaining) {
+    this.heatsRemaining = heatsRemaining;
+  }
+
+  public int getTotalHeats() {
+    return totalHeats;
+  }
+
+  public void setTotalHeats(int totalHeats) {
+    this.totalHeats = totalHeats;
   }
 }

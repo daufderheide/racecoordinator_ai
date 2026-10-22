@@ -362,5 +362,71 @@ describe("CustomWidgetService", () => {
         jasmine.stringMatching(/has no compiled componentType/),
       );
     });
+
+    it("should reload custom widgets when serverDirectoriesChanged$ fires", async () => {
+      const { Subject } = await import("rxjs");
+      const dirChangedSubject = new Subject<void>();
+      (mockFileSystem as any).serverDirectoriesChanged$ =
+        dirChangedSubject.asObservable();
+      const testService = new CustomWidgetService(
+        mockFileSystem,
+        mockDynamicComp,
+        mockLogger,
+        mockHttp,
+      );
+      spyOn(testService, "reloadCustomWidgets").and.returnValue(
+        Promise.resolve(),
+      );
+
+      dirChangedSubject.next();
+      expect(testService.reloadCustomWidgets).toHaveBeenCalled();
+    });
+
+    it("should reload custom widgets when socketConnected$ fires true", async () => {
+      const { Subject } = await import("rxjs");
+      const socketSubject = new Subject<boolean>();
+      const mockData = { socketConnected$: socketSubject.asObservable() };
+      const testService = new CustomWidgetService(
+        mockFileSystem,
+        mockDynamicComp,
+        mockLogger,
+        mockHttp,
+        mockData as any,
+      );
+      spyOn(testService, "reloadCustomWidgets").and.returnValue(
+        Promise.resolve(),
+      );
+
+      socketSubject.next(true);
+      expect(testService.reloadCustomWidgets).toHaveBeenCalled();
+    });
+
+    it("should queue a reload if reloadCustomWidgets is called while a reload is in progress", async () => {
+      await service.reloadCustomWidgets();
+
+      let resolveFirst: () => void = () => {};
+      let reloadCount = 0;
+      spyOn<any>(service, "doReloadCustomWidgets").and.callFake(() => {
+        reloadCount++;
+        if (reloadCount === 1) {
+          return new Promise<void>((res) => {
+            resolveFirst = res;
+          });
+        }
+        return Promise.resolve();
+      });
+
+      const p1 = service.reloadCustomWidgets();
+      const p2 = service.reloadCustomWidgets();
+      expect(p1).toBe(p2);
+      expect(reloadCount).toBe(1);
+
+      // Finish first reload
+      resolveFirst();
+      await p1;
+
+      // The queued reload should now have executed
+      expect(reloadCount).toBe(2);
+    });
   });
 });

@@ -165,6 +165,7 @@ De onderstaande tabellen geven een gedetailleerd overzicht van alle audiogebeurt
 | **Pit In Geluid** | Wordt afgespeeld wanneer de auto de pitstraat of tankzone binnenrijdt. | `default_pit_in` | **Spraakbericht** | `urgent` (Gewicht 4) | `lane-view`: Klinkt op het Hoofdscherm en op het Rijdersstation van die specifieke baan/rijder. |
 | **Brandstofniveau Geluiden** | Wordt afgespeeld wanneer de brandstof daalt naar waarschuwings-, kritiek- of leegdrempels. | `default_fuel_level` (Audioset) | **Spraakbericht** | `urgent` (Gewicht 4) | `lane-view`: Klinkt op het Hoofdscherm en op het Rijdersstation van die specifieke baan/rijder. |
 | **Valse Start Geluid** | Wordt afgespeeld wanneer een valse start of overtreding bij de start wordt gedetecteerd. | `default_penalty` | **Spraakbericht** | `urgent` (Gewicht 4) | `lane-view`: Klinkt op het Hoofdscherm en op het Rijdersstation van die specifieke baan/rijder. |
+| **Drift-ronde geluid** | Wordt afgespeeld wanneer de coureur een ronde voltooit tijdens het driften. | TTS (`Drift lap for {driver.nickname}`) | **Spraakbericht** | `urgent` (Gewicht 4) | `lane-view`: Klinkt op het Hoofdscherm en op het Rijdersstation van die specifieke baan/rijder. |
 
 ### Thema-audiogebeurtenissen (Geconfigureerd in de Thema Editor)
 
@@ -181,7 +182,6 @@ De onderstaande tabellen geven een gedetailleerd overzicht van alle audiogebeurt
 | **Resterende Seconden Automatische Doorgang** | `audio.auto_advance` | **Spraakbericht** / Audioset (Standaard: TTS) | `normal` (Gewicht 2) | `timer`: Klinkt op het Hoofdscherm (indien Timer-widget aanwezig) en op alle Rijdersstations. |
 | **Race Beëindigd** | `audio.race_over` | **Spraakbericht** | `urgent` (Gewicht 4) | `flag`: Klinkt op het Hoofdscherm (indien Vlag-widget aanwezig) en op alle Rijdersstations. |
 | **Minimale Rondetijd** | `audio.min_lap_time` | **Spraakbericht** | `urgent` (Gewicht 4) | `lane-view`: Klinkt op het Hoofdscherm en op het Rijdersstation van die specifieke baan/rijder. |
-| **Drift-ronde** | `audio.drift_lap` | **Spraakbericht** | `urgent` (Gewicht 4) | `lane-view`: Klinkt op het Hoofdscherm en op het Rijdersstation van die specifieke baan/rijder. |
 
 ---
 
@@ -219,6 +219,6 @@ Bij het voorbeluisteren van een Audioset in de Asset Manager of Audiokiezer word
 | Onderdeel | Wat u hier kunt instellen |
 | :--- | :--- |
 | **UI Editor -> Audio-instellingen** | Hoofdvolume, time-out urgente wachtrij, tussenruimte berichten, TTS-stem, snelheid, toonhoogte, TTS-volume en testknop. |
-| **Thema Editor** | Systeemgeluiden: startaftelling, groen licht, gele vlag sirene, resterende tijd, halverwege, einde heat, einde race, minimumtijd en drift-ronde. |
-| **Rijders Editor** | Rijderspecifieke geluiden: Ronde Geluid, Persoonlijk Beste Ronde Geluid, Race Beste Ronde Geluid, Race Baan Beste Ronde Geluid, Heat Beste Ronde Geluid, Geluid nieuwe raceleider, Geluid nieuwe heatleider, Algemeen Baanrecord Ronde Geluid, Baanrecord per Spoor Ronde Geluid, Pit In Geluid, Brandstofniveau Geluiden en Valse Start Geluid. |
+| **Thema Editor** | Systeemgeluiden: startaftelling, groen licht, gele vlag sirene, resterende tijd, halverwege, einde heat, einde race en minimumtijd. |
+| **Rijders Editor** | Rijderspecifieke geluiden: Ronde Geluid, Persoonlijk Beste Ronde Geluid, Race Beste Ronde Geluid, Race Baan Beste Ronde Geluid, Heat Beste Ronde Geluid, Geluid nieuwe raceleider, Geluid nieuwe heatleider, Algemeen Baanrecord Ronde Geluid, Baanrecord per Spoor Ronde Geluid, Pit In Geluid, Brandstofniveau Geluiden, Valse Start Geluid en Drift-ronde geluid. |
 | **Asset Manager** | Uploaden en beheren van WAV-, MP3- en OGG-bestanden, en het configureren van audiosets met contextafhankelijke triggerwaarden (seconden, ronden of percentage) met directe voorbeluistering. |

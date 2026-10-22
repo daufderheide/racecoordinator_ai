@@ -384,7 +384,10 @@ export class RacedayCountdownComponent {
       const slotAssetId = this.themeService.resolveAssetId(slotKey);
       if (slotAssetId && this.parent()?.assets) {
         const asset = this.parent().assets.find(
-          (a: any) => a.entity_id === slotAssetId,
+          (a: any) =>
+            a?.model?.entityId === slotAssetId ||
+            a?.entity_id === slotAssetId ||
+            a?._id === slotAssetId,
         );
         if (asset?.url) {
           return typeof this.parent().getFullUrl === "function"

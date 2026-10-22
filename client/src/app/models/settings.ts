@@ -1,5 +1,9 @@
 import { AnchorPoint } from "@app/components/raceday/column_definition";
 import { IDemoConfig } from "@app/proto/antigravity";
+import {
+  TimerDisplayFormat,
+  TimerSubsecondMode,
+} from "@app/utils/timer-format.utils";
 
 export enum ColumnVisibility {
   Always = "Always",
@@ -31,6 +35,8 @@ export type WidgetType =
   | "next-heat"
   | "heat-list"
   | "image"
+  | "label"
+  | "grid"
   | "action-start-resume"
   | "action-pause"
   | "action-next-heat"
@@ -64,12 +70,27 @@ export interface AbsoluteWidgetNode {
   height: number;
   zIndex: number;
   fontFamily?: string;
-  scaleMode?: "auto" | "fixed";
+  scaleMode?: "auto" | "fixed" | "";
   fontSize?: number;
   textScaleFactor?: number;
   textColor?: string;
   backgroundColor?: string;
   customSettings?: Record<string, any>;
+}
+
+export interface InsetConfig {
+  columnKey?: string;
+  timeDecimalPlaces?: number;
+  lapDecimalPlaces?: number;
+  decimalPlaces?: number;
+  timeDisplayFormat?: TimerDisplayFormat;
+  timeSubsecondMode?: TimerSubsecondMode;
+  timeSubsecondThreshold?: number;
+  timeSubsecondDecimals?: number;
+  fontFamily?: string;
+  fontSize?: number;
+  textColor?: string;
+  heatsDisplayMode?: "raced" | "remaining";
 }
 
 export interface LaneColumnWidgetSettings {
@@ -78,6 +99,19 @@ export interface LaneColumnWidgetSettings {
   targetIndex: number;
   layoutOrientation: "vertical" | "horizontal";
   showHeader: boolean;
+  gridType?: "heat" | "overall";
+  gridId?: string;
+  gridDirection?: "vertical" | "horizontal";
+  gridLane?: number;
+  gridTotalLanes?: number;
+  gridMasterId?: string;
+  headerPlacement?: "top" | "left" | "individual" | "none";
+  headerHeight?: number;
+  headerWidth?: number;
+  isHeaderWidget?: boolean;
+  linkColumns?: boolean;
+  sortByBindingMode?: boolean;
+  highlightRowOnLap?: boolean;
   customLabel: string;
   headerFontFamily: string;
   headerFontSize: number;
@@ -91,8 +125,14 @@ export interface LaneColumnWidgetSettings {
   timeDecimalPlaces: number;
   lapDecimalPlaces: number;
   columnDecimals?: Record<string, number>;
+  timeDisplayFormat?: TimerDisplayFormat;
+  timeSubsecondMode?: TimerSubsecondMode;
+  timeSubsecondThreshold?: number;
+  timeSubsecondDecimals?: number;
+  heatsDisplayMode?: "raced" | "remaining";
   useLaneColors: boolean;
   insets?: Record<string, string>;
+  insetsConfig?: Record<string, InsetConfig>;
   insetFontFamily?: string;
   insetFontSize?: number;
   insetTextColor?: string;
@@ -104,6 +144,10 @@ export interface LaneColumnWidgetSettings {
   borderColor: string;
   borderWidth: number;
   borderRadius: number;
+  gridLabelShowBorder?: boolean;
+  gridLabelBorderColor?: string;
+  gridLabelBorderWidth?: number;
+  gridLabelBorderRadius?: number;
 }
 
 export type LayoutScaleMode = "letterbox" | "stretch";
@@ -118,6 +162,7 @@ export interface LayoutConfig {
   collapsedToolboxSubgroups?: Record<string, boolean> | string[];
   toolboxGroupExpandedStates?: Record<string, boolean>;
   toolboxSubgroupExpandedStates?: Record<string, boolean>;
+  preserveLegacyHeatView?: boolean;
 }
 
 export class Settings {
@@ -465,7 +510,7 @@ export class Settings {
     ],
     baseWidth: 1920,
     baseHeight: 1080,
-    aspectRatio: "current",
+    aspectRatio: "16:9",
     scaleMode: "stretch",
   };
 
@@ -476,8 +521,8 @@ export class Settings {
         widgetType: "menu-bar",
         x: 0,
         y: 0,
-        width: 1728,
-        height: 46,
+        width: 1920,
+        height: 38,
         zIndex: 216,
         scaleMode: "auto",
         fontFamily: "",
@@ -489,10 +534,10 @@ export class Settings {
       {
         id: "widget-timer",
         widgetType: "timer",
-        x: 701,
-        y: 41,
-        width: 397,
-        height: 94,
+        x: 779,
+        y: 38,
+        width: 441,
+        height: 111,
         zIndex: 218,
         scaleMode: "auto",
         fontFamily: "",
@@ -510,9 +555,9 @@ export class Settings {
         id: "widget-branding",
         widgetType: "branding",
         x: 0,
-        y: 41,
-        width: 422,
-        height: 94,
+        y: 38,
+        width: 469,
+        height: 111,
         zIndex: 206,
         scaleMode: "auto",
         fontFamily: "",
@@ -525,24 +570,24 @@ export class Settings {
         backgroundColor: "",
         fontFamily: "",
         fontSize: 24,
-        height: 93,
+        height: 111,
         id: "widget-qr",
         scaleMode: "auto",
         textColor: "",
         textScaleFactor: 1,
         widgetType: "qr",
-        width: 119,
-        x: 422,
-        y: 42,
+        width: 132,
+        x: 469,
+        y: 38,
         zIndex: 217,
       },
       {
         id: "widget-1783269768449",
         widgetType: "flag",
-        x: 541,
-        y: 41,
-        width: 160,
-        height: 94,
+        x: 601,
+        y: 38,
+        width: 178,
+        height: 111,
         zIndex: 212,
         scaleMode: "auto",
         fontFamily: "",
@@ -555,9 +600,9 @@ export class Settings {
         id: "widget-1783269787601",
         widgetType: "lane-view",
         x: 0,
-        y: 125,
-        width: 1728,
-        height: 781,
+        y: 149,
+        width: 1920,
+        height: 931,
         zIndex: 180,
         scaleMode: "auto",
         fontFamily: "",
@@ -587,10 +632,10 @@ export class Settings {
       {
         id: "widget-countdown",
         widgetType: "countdown",
-        x: 364,
-        y: 324,
-        width: 1000,
-        height: 250,
+        x: 404,
+        y: 386,
+        width: 1111,
+        height: 298,
         zIndex: 2000,
         scaleMode: "auto",
         customSettings: {
@@ -609,9 +654,9 @@ export class Settings {
         },
       },
     ],
-    baseWidth: 1728,
-    baseHeight: 906,
-    aspectRatio: "current",
+    baseWidth: 1920,
+    baseHeight: 1080,
+    aspectRatio: "16:9",
     scaleMode: "stretch",
   };
 }

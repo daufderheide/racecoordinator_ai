@@ -1,5 +1,5 @@
 import { AllowFinish } from "@app/models/heat_scoring";
-import { RaceFlag } from "@app/proto/antigravity";
+import { RaceFlag, RaceState } from "@app/proto/antigravity";
 
 import { DriverHeatData } from "../../../race/driver_heat_data";
 import { FormatContext, RacedayFormatUtils } from "./raceday-format.utils";
@@ -978,6 +978,68 @@ describe("RacedayFormatUtils", () => {
       expect(result).toBe("url-for-flag.race_over");
     });
 
+    it("should return warmup flag when all drivers finished and cooldown is active", () => {
+      ctx.getRace = () => ({ heat_scoring: { allow_finish: "Allow" } }) as any;
+      ctx.areAllDriversFinished = () => true;
+      ctx.isRaceOver = () => false;
+      ctx.isCooldown = () => true;
+      const mockHd = { isFinished: true } as any;
+      const result = RacedayFormatUtils.formatValue(
+        "flag",
+        RaceFlag.GREEN,
+        mockHd,
+        undefined,
+        ctx,
+      );
+      expect(result).toBe("url-for-flag.warmup");
+    });
+
+    it("should return warmup flag when all drivers finished and warmup flag is active via getFlagType", () => {
+      ctx.getRace = () => ({ heat_scoring: { allow_finish: "Allow" } }) as any;
+      ctx.areAllDriversFinished = () => true;
+      ctx.isRaceOver = () => false;
+      ctx.getFlagType = () => "flag.warmup";
+      const mockHd = { isFinished: true } as any;
+      const result = RacedayFormatUtils.formatValue(
+        "flag",
+        RaceFlag.GREEN,
+        mockHd,
+        undefined,
+        ctx,
+      );
+      expect(result).toBe("url-for-flag.warmup");
+    });
+
+    it("should return warmup flag when all drivers finished and hd.flag is GREEN_YELLOW", () => {
+      ctx.getRace = () => ({ heat_scoring: { allow_finish: "Allow" } }) as any;
+      ctx.areAllDriversFinished = () => true;
+      ctx.isRaceOver = () => false;
+      const mockHd = { isFinished: true, flag: RaceFlag.GREEN_YELLOW } as any;
+      const result = RacedayFormatUtils.formatValue(
+        "flag",
+        RaceFlag.GREEN,
+        mockHd,
+        undefined,
+        ctx,
+      );
+      expect(result).toBe("url-for-flag.warmup");
+    });
+
+    it("should return warmup flag when driver is finished in allow-finish during cooldown", () => {
+      ctx.getRace = () => ({ heat_scoring: { allow_finish: "Allow" } }) as any;
+      ctx.areAllDriversFinished = () => false;
+      ctx.isCooldown = () => true;
+      const mockHd = { isFinished: true } as any;
+      const result = RacedayFormatUtils.formatValue(
+        "flag",
+        RaceFlag.GREEN,
+        mockHd,
+        undefined,
+        ctx,
+      );
+      expect(result).toBe("url-for-flag.warmup");
+    });
+
     it("should return driver_finished even if hd.flag is RaceFlag.BLACK when finished in allow finish", () => {
       ctx.getRace = () => ({ heat_scoring: { allow_finish: "Allow" } }) as any;
       ctx.areAllDriversFinished = () => false;
@@ -1336,6 +1398,18 @@ describe("RacedayFormatUtils", () => {
       expect(
         RacedayFormatUtils.getPropertyValue(participantHd, "overallLapCount"),
       ).toBe(50.25);
+      expect(
+        RacedayFormatUtils.getPropertyValue(participantHd, "totalLaps"),
+      ).toBe(50.25);
+      expect(
+        RacedayFormatUtils.getPropertyValue(participantHd, "raceTotalLaps"),
+      ).toBe(50.25);
+      expect(
+        RacedayFormatUtils.getPropertyValue(participantHd, "overallTotalLaps"),
+      ).toBe(50.25);
+      expect(
+        RacedayFormatUtils.getPropertyValue(participantHd, "heatTotalLaps"),
+      ).toBe(participantHd.lapCount);
       expect(
         RacedayFormatUtils.getPropertyValue(
           participantHd,
@@ -1805,6 +1879,692 @@ describe("RacedayFormatUtils", () => {
         "top-right",
       );
       expect(result).toBe("5.1");
+    });
+  });
+
+  describe("Timer formatting for totalTime and overallTotalTime", () => {
+    it("should resolve timer format options from lane-column settings", () => {
+      const settings = {
+        timeDisplayFormat: "mm_ss",
+        timeSubsecondMode: "always",
+        timeSubsecondThreshold: 5,
+        timeSubsecondDecimals: 3,
+      };
+      const opts = RacedayFormatUtils.resolveTimerFormatOptions(
+        "totalTime",
+        settings,
+      );
+      expect(opts).toEqual({
+        format: "mm_ss",
+        subsecondMode: "always",
+        subsecondThreshold: 5,
+        subsecondDecimals: 3,
+      });
+    });
+
+    it("should default subsecondMode to never when omitted from settings", () => {
+      const opts = RacedayFormatUtils.resolveTimerFormatOptions("totalTime", {
+        timeDisplayFormat: "hh_mm_ss",
+      });
+      expect(opts).toEqual({
+        format: "hh_mm_ss",
+        subsecondMode: "never",
+        subsecondThreshold: 10,
+        subsecondDecimals: 2,
+      });
+
+      const colOpts = RacedayFormatUtils.resolveTimerFormatOptions(
+        "overallTotalTime",
+        {
+          columnTimeDisplayFormat: { overallTotalTime: "dynamic" },
+        },
+      );
+      expect(colOpts).toEqual({
+        format: "dynamic",
+        subsecondMode: "never",
+        subsecondThreshold: 10,
+        subsecondDecimals: 2,
+      });
+    });
+
+    it("should resolve timer format options from lane-view per-column maps", () => {
+      const settings = {
+        columnTimeDisplayFormat: { overallTotalTime: "hh_mm_ss" },
+        columnTimeSubsecondMode: { overallTotalTime: "never" },
+        columnTimeSubsecondThreshold: { overallTotalTime: 15 },
+        columnTimeSubsecondDecimals: { overallTotalTime: 1 },
+      };
+      const opts = RacedayFormatUtils.resolveTimerFormatOptions(
+        "overallTotalTime",
+        settings,
+      );
+      expect(opts).toEqual({
+        format: "hh_mm_ss",
+        subsecondMode: "never",
+        subsecondThreshold: 15,
+        subsecondDecimals: 1,
+      });
+    });
+
+    it("should return undefined for non-total-time columns or empty settings", () => {
+      expect(
+        RacedayFormatUtils.resolveTimerFormatOptions("lastLapTime", {
+          timeDisplayFormat: "dynamic",
+        }),
+      ).toBeUndefined();
+      expect(
+        RacedayFormatUtils.resolveTimerFormatOptions("totalTime", undefined),
+      ).toBeUndefined();
+      expect(
+        RacedayFormatUtils.resolveTimerFormatOptions("totalTime", {}),
+      ).toBeUndefined();
+    });
+
+    it("should format totalTime using timer options when configured on lane-column", () => {
+      ctx.laneViewWidgetSettings = {
+        timeDisplayFormat: "dynamic",
+        timeSubsecondMode: "threshold",
+        timeSubsecondThreshold: 10,
+        timeSubsecondDecimals: 2,
+      };
+      expect(
+        RacedayFormatUtils.formatValue("totalTime", 3665, hd, undefined, ctx),
+      ).toBe("1:01:05");
+      expect(
+        RacedayFormatUtils.formatValue("totalTime", 83, hd, undefined, ctx),
+      ).toBe("1:23");
+      expect(
+        RacedayFormatUtils.formatValue("totalTime", 45, hd, undefined, ctx),
+      ).toBe("45");
+      expect(
+        RacedayFormatUtils.formatValue("totalTime", 8.45, hd, undefined, ctx),
+      ).toBe("8.45");
+    });
+
+    it("should format totalTime with mm_ss and hh_mm_ss formats", () => {
+      ctx.laneViewWidgetSettings = {
+        timeDisplayFormat: "mm_ss",
+        timeSubsecondMode: "never",
+      };
+      expect(
+        RacedayFormatUtils.formatValue("totalTime", 83, hd, undefined, ctx),
+      ).toBe("01:23");
+      expect(
+        RacedayFormatUtils.formatValue("totalTime", 45, hd, undefined, ctx),
+      ).toBe("00:45");
+
+      ctx.laneViewWidgetSettings = {
+        timeDisplayFormat: "hh_mm_ss",
+        timeSubsecondMode: "never",
+      };
+      expect(
+        RacedayFormatUtils.formatValue("totalTime", 83, hd, undefined, ctx),
+      ).toBe("00:01:23");
+    });
+
+    it("should format overallTotalTime using lane-view per-column timer settings", () => {
+      ctx.laneViewWidgetSettings = {
+        columnTimeDisplayFormat: { overallTotalTime: "seconds" },
+        columnTimeSubsecondMode: { overallTotalTime: "always" },
+        columnTimeSubsecondDecimals: { overallTotalTime: 2 },
+      };
+      expect(
+        RacedayFormatUtils.formatValue(
+          "overallTotalTime",
+          83.42,
+          hd,
+          undefined,
+          ctx,
+        ),
+      ).toBe("83.42");
+    });
+
+    it("should format inset totalTime and overallTotalTime using insetTimeDecimalPlaces even when column decimal places is 1", () => {
+      ctx.laneViewWidgetSettings = {
+        timeDecimalPlaces: 3,
+        insetTimeDecimalPlaces: 3,
+        columnTimeDisplayFormat: { totalTime: "dynamic" },
+        columnTimeSubsecondMode: { totalTime: "always" },
+        columnTimeSubsecondDecimals: { totalTime: 1 },
+      };
+      const colDef = { propertyName: "totalTime" } as any;
+
+      // Main column value (center anchor): uses column decimal places (1) -> "21.0"
+      expect(
+        RacedayFormatUtils.formatValue(
+          "totalTime",
+          21.0,
+          hd,
+          colDef,
+          ctx,
+          "center-center",
+        ),
+      ).toBe("21.0");
+
+      // Inset overallTotalTime in totalTime column: uses insetTimeDecimalPlaces (3) -> "37.200"
+      expect(
+        RacedayFormatUtils.formatValue(
+          "overallTotalTime",
+          37.2,
+          hd,
+          colDef,
+          ctx,
+          "bottom-right",
+        ),
+      ).toBe("37.200");
+
+      // Inset totalTime in totalTime column: uses insetTimeDecimalPlaces (3) -> "21.000"
+      expect(
+        RacedayFormatUtils.formatValue(
+          "totalTime",
+          21.0,
+          hd,
+          colDef,
+          ctx,
+          "bottom-right",
+        ),
+      ).toBe("21.000");
+
+      // Empty driver placeholder: main cell has 1 dash "--.-", inset has 3 dashes "--.---"
+      const emptyHd = { isEmpty: true } as any;
+      expect(
+        RacedayFormatUtils.formatValue(
+          "totalTime",
+          0,
+          emptyHd,
+          colDef,
+          ctx,
+          "center-center",
+        ),
+      ).toBe("--.-");
+      expect(
+        RacedayFormatUtils.formatValue(
+          "overallTotalTime",
+          0,
+          emptyHd,
+          colDef,
+          ctx,
+          "bottom-right",
+        ),
+      ).toBe("--.---");
+    });
+
+    it("should recognize center-left and center-right anchors as insets", () => {
+      ctx.laneViewWidgetSettings = {
+        timeDecimalPlaces: 1,
+        insetTimeDecimalPlaces: 3,
+        lapDecimalPlaces: 0,
+        insetLapDecimalPlaces: 2,
+      };
+      const colDef = { propertyName: "lastLapTime" } as any;
+
+      // Center-center is main value -> 1 decimal
+      expect(
+        RacedayFormatUtils.formatValue(
+          "lastLapTime",
+          8.123,
+          hd,
+          colDef,
+          ctx,
+          "center-center",
+        ),
+      ).toBe("8.1");
+
+      // Center-left is an inset -> 3 decimals
+      expect(
+        RacedayFormatUtils.formatValue(
+          "lastLapTime",
+          8.123,
+          hd,
+          colDef,
+          ctx,
+          "center-left",
+        ),
+      ).toBe("8.123");
+
+      // Center-right is an inset -> 3 decimals
+      expect(
+        RacedayFormatUtils.formatValue(
+          "lastLapTime",
+          8.123,
+          hd,
+          colDef,
+          ctx,
+          "center-right",
+        ),
+      ).toBe("8.123");
+    });
+
+    it("should resolve timer format options from direct settings when configured for insets", () => {
+      const insetSettings = {
+        timeDisplayFormat: "seconds",
+        timeSubsecondMode: "always" as const,
+        timeSubsecondThreshold: 10,
+        timeSubsecondDecimals: 3,
+      };
+      const opts = RacedayFormatUtils.resolveTimerFormatOptions(
+        "totalTime",
+        insetSettings,
+      );
+      expect(opts).toEqual({
+        format: "seconds",
+        subsecondMode: "always",
+        subsecondThreshold: 10,
+        subsecondDecimals: 3,
+      });
+    });
+
+    it("should resolve default timer options when isInset is true even without explicit timer settings", () => {
+      const opts = RacedayFormatUtils.resolveTimerFormatOptions(
+        "totalTime",
+        {},
+        true,
+        3,
+      );
+      expect(opts).toEqual({
+        format: "dynamic",
+        subsecondMode: "always",
+        subsecondThreshold: 10,
+        subsecondDecimals: 3,
+      });
+    });
+
+    it("should maintain backward compatibility when no timer options are set", () => {
+      ctx.laneViewWidgetSettings = undefined;
+      expect(
+        RacedayFormatUtils.formatValue(
+          "totalTime",
+          42.1234,
+          hd,
+          undefined,
+          ctx,
+        ),
+      ).toBe("42.123");
+      expect(
+        RacedayFormatUtils.formatValue(
+          "overallTotalTime",
+          320.456,
+          hd,
+          undefined,
+          ctx,
+        ),
+      ).toBe("320.456");
+    });
+  });
+
+  describe("RC AI lap widgets auto-segments on pause", () => {
+    it("should exclude on-pause auto-segments in heat lap widgets when race state is PAUSED", () => {
+      ctx.raceState = RaceState.PAUSED;
+      hd.reactionTime = 1.0;
+      hd.autoCalculatedLaps = 0.35;
+      hd.adjustedLapCount = 10.35;
+
+      expect(
+        RacedayFormatUtils.formatValue("lapCount", 10.35, hd, undefined, ctx),
+      ).toBe("10.00");
+
+      expect(
+        RacedayFormatUtils.formatValue(
+          "heatTotalLaps",
+          10.35,
+          hd,
+          undefined,
+          ctx,
+        ),
+      ).toBe("10.00");
+    });
+
+    it("should include auto-segments in heat lap widgets when race state is HEAT_OVER", () => {
+      ctx.raceState = RaceState.HEAT_OVER;
+      hd.reactionTime = 1.0;
+      hd.autoCalculatedLaps = 0.35;
+      hd.adjustedLapCount = 10.35;
+
+      expect(
+        RacedayFormatUtils.formatValue("lapCount", 10.35, hd, undefined, ctx),
+      ).toBe("10.35");
+
+      expect(
+        RacedayFormatUtils.formatValue(
+          "heatTotalLaps",
+          10.35,
+          hd,
+          undefined,
+          ctx,
+        ),
+      ).toBe("10.35");
+    });
+
+    it("should include auto-segments in heat lap widgets when race state is RACE_OVER", () => {
+      ctx.raceState = RaceState.RACE_OVER;
+      hd.reactionTime = 1.0;
+      hd.autoCalculatedLaps = 0.42;
+
+      expect(
+        RacedayFormatUtils.formatValue("lapCount", 25.42, hd, undefined, ctx),
+      ).toBe("25.42");
+    });
+
+    it("should include auto-segments when driver isFinished is true even if state is RACING", () => {
+      ctx.raceState = RaceState.RACING;
+      hd.reactionTime = 1.0;
+      hd.isFinished = true;
+      hd.autoCalculatedLaps = 0.5;
+
+      expect(
+        RacedayFormatUtils.formatValue("lapCount", 15.5, hd, undefined, ctx),
+      ).toBe("15.50");
+    });
+
+    it("should show adjusted lap values with userLaps and penaltyLaps without pause segments when PAUSED", () => {
+      ctx.raceState = RaceState.PAUSED;
+      hd.reactionTime = 1.0;
+      hd.userLaps = 1.0;
+      hd.penaltyLaps = 0.5;
+      hd.autoCalculatedLaps = 0.25;
+
+      // 10 physical - 0.5 penalty + 1.0 user + 0.25 auto = 10.75 raw value
+      // Without pause auto-segment: 10.75 - 0.25 = 10.50 adjust lap value
+      expect(
+        RacedayFormatUtils.formatValue("lapCount", 10.75, hd, undefined, ctx),
+      ).toBe("10.50");
+    });
+
+    it("should exclude current heat on-pause auto-segments in race lap widgets when PAUSED", () => {
+      ctx.raceState = RaceState.PAUSED;
+      hd.autoCalculatedLaps = 0.35;
+      const participant = { totalTime: 120.5 } as any;
+      (hd as any).participant = participant;
+
+      // Raw value from server overall standings includes current heat pause segments (e.g. 50.35)
+      expect(
+        RacedayFormatUtils.formatValue(
+          "overallLapCount",
+          50.35,
+          hd,
+          undefined,
+          ctx,
+        ),
+      ).toBe("50.00");
+
+      expect(
+        RacedayFormatUtils.formatValue("totalLaps", 50.35, hd, undefined, ctx),
+      ).toBe("50.00");
+
+      expect(
+        RacedayFormatUtils.formatValue(
+          "raceTotalLaps",
+          50.35,
+          hd,
+          undefined,
+          ctx,
+        ),
+      ).toBe("50.00");
+
+      expect(
+        RacedayFormatUtils.formatValue(
+          "overallTotalLaps",
+          50.35,
+          hd,
+          undefined,
+          ctx,
+        ),
+      ).toBe("50.00");
+    });
+
+    it("should include auto-segments in race lap widgets when heat is HEAT_OVER or RACE_OVER", () => {
+      ctx.raceState = RaceState.HEAT_OVER;
+      hd.autoCalculatedLaps = 0.35;
+      (hd as any).participant = { totalTime: 120.5 } as any;
+
+      expect(
+        RacedayFormatUtils.formatValue(
+          "overallLapCount",
+          50.35,
+          hd,
+          undefined,
+          ctx,
+        ),
+      ).toBe("50.35");
+
+      ctx.raceState = RaceState.RACE_OVER;
+      expect(
+        RacedayFormatUtils.formatValue(
+          "overallLapCount",
+          50.35,
+          hd,
+          undefined,
+          ctx,
+        ),
+      ).toBe("50.35");
+    });
+
+    it("should correctly handle one lap to go without pause auto-segments", () => {
+      ctx.raceState = RaceState.PAUSED;
+      ctx.getFlagUrl = (k: string) => "url-for-" + k;
+      ctx.getRace = () =>
+        ({
+          heatScoring: { finishMethod: "Lap", finishValue: 10 },
+        }) as any;
+      (hd as any).lapCount = 9.35;
+      hd.adjustedLapCount = 9.35;
+      hd.autoCalculatedLaps = 0.35;
+
+      const flag = RacedayFormatUtils.formatValue(
+        "flag",
+        RaceFlag.GREEN,
+        hd,
+        undefined,
+        ctx,
+      );
+      expect(flag).toBe(ctx.getFlagUrl("flag.one_lap_to_go"));
+    });
+  });
+
+  describe("formatValue & formatOverallValue - Heats Raced & Remaining", () => {
+    it("should format heatsRaced in raced mode (default) and remaining mode via formatValue", () => {
+      const mockParticipant: any = {
+        objectId: "p1",
+        driver: { name: "Driver 1" },
+        heatsRaced: 4,
+        heatsRemaining: 2,
+        totalHeats: 6,
+      };
+      (hd as any).participant = mockParticipant;
+
+      // Default / raced mode
+      expect(
+        RacedayFormatUtils.formatValue(
+          "heatsRaced",
+          undefined,
+          hd,
+          undefined,
+          ctx,
+        ),
+      ).toBe("4");
+
+      expect(
+        RacedayFormatUtils.formatValue(
+          "heatsRaced",
+          undefined,
+          hd,
+          { heatsDisplayMode: "raced" } as any,
+          ctx,
+        ),
+      ).toBe("4");
+
+      // Remaining mode
+      expect(
+        RacedayFormatUtils.formatValue(
+          "heatsRaced",
+          undefined,
+          hd,
+          { heatsDisplayMode: "remaining" } as any,
+          ctx,
+        ),
+      ).toBe("2");
+    });
+
+    it("should compute remaining heats from totalHeats - heatsRaced when heatsRemaining is 0", () => {
+      const mockParticipant: any = {
+        objectId: "p1",
+        driver: { name: "Driver 1" },
+        heatsRaced: 3,
+        heatsRemaining: 0,
+        totalHeats: 7,
+      };
+      (hd as any).participant = mockParticipant;
+
+      expect(
+        RacedayFormatUtils.formatValue(
+          "heatsRaced",
+          undefined,
+          hd,
+          { heatsDisplayMode: "remaining" } as any,
+          ctx,
+        ),
+      ).toBe("4");
+    });
+
+    it("should format heatsRaced and heatsRemaining via formatValue with participant on hd", () => {
+      const mockParticipant: any = {
+        objectId: "p1",
+        driver: { name: "Driver 1" },
+        heatsRaced: 5,
+        heatsRemaining: 1,
+        totalHeats: 6,
+      };
+      (hd as any).participant = mockParticipant;
+
+      expect(
+        RacedayFormatUtils.formatValue(
+          "heatsRaced",
+          undefined,
+          hd,
+          undefined,
+          ctx,
+        ),
+      ).toBe("5");
+
+      expect(
+        RacedayFormatUtils.formatValue(
+          "heatsRaced",
+          undefined,
+          hd,
+          { heatsDisplayMode: "remaining" } as any,
+          ctx,
+        ),
+      ).toBe("1");
+
+      expect(
+        RacedayFormatUtils.formatValue(
+          "heatsRemaining",
+          undefined,
+          hd,
+          undefined,
+          ctx,
+        ),
+      ).toBe("1");
+    });
+
+    it("should extract overall property value correctly for heatsRaced", () => {
+      const mockParticipant: any = {
+        objectId: "p1",
+        driver: { name: "Driver 1" },
+        heatsRaced: 3,
+      };
+
+      expect(
+        (RacedayFormatUtils as any).extractOverallPropertyValue(
+          mockParticipant,
+          undefined,
+          "heatsRaced",
+        ),
+      ).toBe(3);
+    });
+
+    it("should return -- for null or empty driver", () => {
+      expect(
+        RacedayFormatUtils.formatValue(
+          "heatsRaced",
+          undefined,
+          null as any,
+          undefined,
+          ctx,
+        ),
+      ).toBe("--");
+
+      const emptyHd: any = { isEmptyLane: true };
+      expect(
+        RacedayFormatUtils.formatValue(
+          "heatsRaced",
+          undefined,
+          emptyHd,
+          undefined,
+          ctx,
+        ),
+      ).toBe("--");
+    });
+  });
+
+  describe("formatValue - driver.avatarUrl", () => {
+    it("should resolve custom avatar URL via ctx.getFullUrl", () => {
+      const customCtx = {
+        ...ctx,
+        getFullUrl: (url: string) => `http://mock-server/${url}`,
+      };
+      const result = RacedayFormatUtils.formatValue(
+        "driver.avatarUrl",
+        "custom/avatar.png",
+        hd,
+        undefined,
+        customCtx as any,
+      );
+      expect(result).toBe("http://mock-server/custom/avatar.png");
+    });
+
+    it("should fallback to default avatar for valid driver when avatar URL is missing or whitespace", () => {
+      const customCtx = {
+        ...ctx,
+        getFullUrl: (url: string) => `http://mock-server/${url}`,
+      };
+      const result1 = RacedayFormatUtils.formatValue(
+        "driver.avatarUrl",
+        undefined,
+        hd,
+        undefined,
+        customCtx as any,
+      );
+      expect(result1).toBe(
+        "http://mock-server/assets/images/default_avatar.svg",
+      );
+
+      const result2 = RacedayFormatUtils.formatValue(
+        "driver.avatarUrl",
+        "   ",
+        hd,
+        undefined,
+        customCtx as any,
+      );
+      expect(result2).toBe(
+        "http://mock-server/assets/images/default_avatar.svg",
+      );
+    });
+
+    it("should return empty string when driver is empty", () => {
+      const customCtx = {
+        ...ctx,
+        getFullUrl: (url: string) => `http://mock-server/${url}`,
+      };
+      const emptyHd = { isEmpty: true } as any;
+      const result = RacedayFormatUtils.formatValue(
+        "driver.avatarUrl",
+        undefined,
+        emptyHd,
+        undefined,
+        customCtx as any,
+      );
+      expect(result).toBe("");
     });
   });
 });

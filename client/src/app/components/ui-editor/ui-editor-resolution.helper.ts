@@ -107,10 +107,23 @@ export function getDefaultAspectRatioOptions(): AspectRatioOption[] {
 }
 
 export function getLayoutAspectRatio(layout?: LayoutConfig): string {
-  if (layout?.aspectRatio) {
+  if (layout?.aspectRatio && layout.aspectRatio !== "current") {
     return layout.aspectRatio;
   }
-  return "current";
+  if (layout?.baseWidth && layout?.baseHeight) {
+    const ratio = layout.baseWidth / layout.baseHeight;
+    if (Math.abs(ratio - 16 / 9) < 0.05) return "16:9";
+    if (Math.abs(ratio - 16 / 10) < 0.05) return "16:10";
+    if (Math.abs(ratio - 4 / 3) < 0.05) return "4:3";
+    if (Math.abs(ratio - 5 / 4) < 0.05) return "5:4";
+    if (Math.abs(ratio - 3 / 2) < 0.05) return "3:2";
+    if (Math.abs(ratio - 21 / 9) < 0.05) return "21:9";
+    if (Math.abs(ratio - 32 / 9) < 0.05) return "32:9";
+    if (Math.abs(ratio - 9 / 16) < 0.05) return "9:16";
+    if (Math.abs(ratio - 10 / 16) < 0.05) return "10:16";
+    if (Math.abs(ratio - 3 / 4) < 0.05) return "3:4";
+  }
+  return "16:9";
 }
 
 export function getLayoutAspectRatioOptions(
@@ -301,6 +314,47 @@ export function handleSetLayoutScaleMode(
   if (!comp.isDestroyed) comp.cdr.markForCheck();
 }
 
+export const UI_EDITOR_ZOOM_STORAGE_KEY = "ui_editor_layout_zoom";
+
+export function saveLayoutZoomToStorage(
+  zoomMap: Map<string, number>,
+  logger?: any,
+): void {
+  try {
+    if (typeof localStorage !== "undefined") {
+      const obj: Record<string, number> = {};
+      zoomMap.forEach((val, key) => {
+        obj[key] = val;
+      });
+      localStorage.setItem(UI_EDITOR_ZOOM_STORAGE_KEY, JSON.stringify(obj));
+    }
+  } catch (e) {
+    logger?.error?.("Failed to save layout zoom to storage", e);
+  }
+}
+
+export function loadLayoutZoomFromStorage(logger?: any): Map<string, number> {
+  const map = new Map<string, number>();
+  try {
+    if (typeof localStorage !== "undefined") {
+      const saved = localStorage.getItem(UI_EDITOR_ZOOM_STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && typeof parsed === "object") {
+          Object.entries(parsed).forEach(([key, val]) => {
+            if (typeof val === "number" && !isNaN(val)) {
+              map.set(key, Math.min(Math.max(Math.round(val), 75), 500));
+            }
+          });
+        }
+      }
+    }
+  } catch (e) {
+    logger?.error?.("Failed to load layout zoom from storage", e);
+  }
+  return map;
+}
+
 export function getLayoutZoomHelper(
   layoutZoomMap: Map<string, number>,
   targetId: string,
@@ -312,9 +366,11 @@ export function setLayoutZoomHelper(
   layoutZoomMap: Map<string, number>,
   targetId: string,
   zoom: number,
+  logger?: any,
 ): void {
   const clamped = Math.min(Math.max(Math.round(zoom), 75), 500);
   layoutZoomMap.set(targetId, clamped);
+  saveLayoutZoomToStorage(layoutZoomMap, logger);
 }
 
 export function getCanvasViewportMaxHeightHelper(): number {
@@ -326,7 +382,7 @@ export function getInspectorHeightHelper(
   containerHeight: number,
   viewportMaxHeight: number,
 ): number {
-  return Math.max(Math.min(containerHeight, viewportMaxHeight), 400);
+  return Math.max(Math.min(containerHeight, viewportMaxHeight), 250);
 }
 
 export function getComponentPreviewScaleNumber(
@@ -365,24 +421,27 @@ export function getComponentPreviewContainerHeight(
 }
 
 export class LayoutZoomController {
-  layoutZoomMap = new Map<string, number>();
+  layoutZoomMap: Map<string, number>;
 
-  constructor(private comp: any) {}
+  constructor(private comp: any) {
+    this.layoutZoomMap = loadLayoutZoomFromStorage(comp?.logger);
+  }
 
   getZoom(ui?: CustomUI): number {
     return getLayoutZoomHelper(
       this.layoutZoomMap,
-      ui?.entity_id || this.comp.activeCustomUiId || "default",
+      ui?.entity_id || this.comp?.activeCustomUiId || "default",
     );
   }
 
   setZoom(zoom: number, ui?: CustomUI): void {
     setLayoutZoomHelper(
       this.layoutZoomMap,
-      ui?.entity_id || this.comp.activeCustomUiId || "default",
+      ui?.entity_id || this.comp?.activeCustomUiId || "default",
       zoom,
+      this.comp?.logger,
     );
-    if (!this.comp.isDestroyed) this.comp.cdr.markForCheck();
+    if (!this.comp?.isDestroyed) this.comp?.cdr?.markForCheck?.();
   }
 
   step(delta: number, ui?: CustomUI): void {

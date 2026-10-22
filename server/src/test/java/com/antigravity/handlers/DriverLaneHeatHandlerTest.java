@@ -198,6 +198,76 @@ public class DriverLaneHeatHandlerTest {
   }
 
   @Test
+  public void testUpdateUserTime_DirectAndBatch() {
+    com.antigravity.models.Driver d1 =
+        new com.antigravity.models.Driver("Alice", "Ally", "d1", "1");
+    com.antigravity.models.Driver d2 = new com.antigravity.models.Driver("Bob", "Bobby", "d2", "2");
+    com.antigravity.race.RaceParticipant p1 = new com.antigravity.race.RaceParticipant(d1);
+    com.antigravity.race.RaceParticipant p2 = new com.antigravity.race.RaceParticipant(d2);
+    com.antigravity.models.Lane l1 = new com.antigravity.models.Lane("red", "black", 100);
+    com.antigravity.models.Lane l2 = new com.antigravity.models.Lane("white", "black", 101);
+    com.antigravity.models.Track track =
+        new com.antigravity.models.Track.Builder()
+            .name("Track")
+            .lanes(java.util.Arrays.asList(l1, l2))
+            .build();
+    com.antigravity.models.Race model =
+        new com.antigravity.models.Race.Builder()
+            .withName("Active Race Time")
+            .withEntityId("r_time")
+            .build();
+
+    com.antigravity.race.Race activeRace =
+        new com.antigravity.race.Race.Builder()
+            .model(model)
+            .drivers(java.util.Arrays.asList(p1, p2))
+            .track(track)
+            .isDemoMode(true)
+            .build();
+    ClientSubscriptionManager.getInstance().setRace(activeRace);
+
+    com.antigravity.race.DriverHeatData dhd0 = activeRace.getCurrentHeat().getDrivers().get(0);
+    dhd0.addLap(5.0, false, true);
+    dhd0.addLap(6.0, false, true);
+
+    // updateUserTime on current heat
+    Map<String, String> pathParams = new HashMap<>();
+    pathParams.put("lane", "0");
+    when(ctx.pathParamMap()).thenReturn(pathParams);
+    HashMap<String, Object> body = new HashMap<>();
+    body.put("userTime", 2.5);
+    when(ctx.bodyAsClass(HashMap.class)).thenReturn(body);
+    handler.updateUserTime(ctx);
+    verify(ctx, org.mockito.Mockito.atLeastOnce()).status(200);
+    org.junit.Assert.assertEquals(2.5, dhd0.getUserTime(), 0.001);
+    org.junit.Assert.assertEquals(13.5, dhd0.getTotalTime(), 0.001);
+
+    // updateHeatUserTime on heat 1, lane 1
+    when(ctx.pathParam("heatNumber")).thenReturn("1");
+    when(ctx.pathParam("lane")).thenReturn("1");
+    HashMap<String, Object> heatBody = new HashMap<>();
+    heatBody.put("userTime", -1.0);
+    when(ctx.bodyAsClass(HashMap.class)).thenReturn(heatBody);
+    handler.updateHeatUserTime(ctx);
+    verify(ctx, org.mockito.Mockito.atLeastOnce()).status(200);
+    org.junit.Assert.assertEquals(
+        -1.0, activeRace.getHeats().get(0).getDrivers().get(1).getUserTime(), 0.001);
+
+    // updateBatchUserTime
+    java.util.ArrayList<Map<String, Object>> updates = new java.util.ArrayList<>();
+    Map<String, Object> u1 = new HashMap<>();
+    u1.put("heatNumber", 1);
+    u1.put("laneIndex", 0);
+    u1.put("userTime", 4.25);
+    updates.add(u1);
+    when(ctx.bodyAsClass(java.util.List.class)).thenReturn(updates);
+    handler.updateBatchUserTime(ctx);
+    verify(ctx, org.mockito.Mockito.atLeastOnce()).status(200);
+    org.junit.Assert.assertEquals(4.25, dhd0.getUserTime(), 0.001);
+    org.junit.Assert.assertEquals(15.25, dhd0.getTotalTime(), 0.001);
+  }
+
+  @Test
   public void testUpdateLapRecordStatus_NoActiveRace_ShouldReturn404() {
     ClientSubscriptionManager.getInstance().setRace(null);
     when(ctx.pathParam("heatNumber")).thenReturn("1");

@@ -51,7 +51,9 @@ class MockImageSelectorComponent {
   imageUrl = input<string | undefined>();
   assets = input<any[]>([]);
   size = input<string | undefined>();
-  imageUrlChange = output<string>();
+  disabled = input<boolean>(false);
+  imageUrlChange = output<string | undefined>();
+  assetSelected = output<any>();
   uploadStarted = output<void>();
   uploadFinished = output<void>();
 }
@@ -117,6 +119,12 @@ class MockEditorTitleComponent {
   importHelpTitleKey = input<string>("");
   importHelpContentKey = input<string>("");
   import = output<void>();
+  showExport = input<boolean>(false);
+  disabledExport = input<boolean>(false);
+  exportTitleKey = input<string>("");
+  exportHelpTitleKey = input<string>("");
+  exportHelpContentKey = input<string>("");
+  export = output<void>();
 }
 
 @Component({
@@ -130,6 +138,18 @@ class MockImportModalComponent {
   entityType = input<string>("");
   close = output<void>();
   imported = output<any>();
+}
+
+@Component({
+  selector: "app-driver-export-modal",
+  standalone: true,
+  template: "",
+})
+class MockDriverExportModalComponent {
+  visible = input<boolean>(false);
+  driverCount = input<number>(0);
+  close = output<void>();
+  exported = output<any>();
 }
 
 @Component({
@@ -216,6 +236,7 @@ describe("DriverEditorComponent", () => {
         MockImageSelectorComponent,
         MockEditorTitleComponent,
         MockImportModalComponent,
+        MockDriverExportModalComponent,
         MockHelpOverlayComponent,
         MockTranslatePipe,
         MockAvatarUrlPipe,
@@ -423,7 +444,6 @@ describe("DriverEditorComponent", () => {
   });
 
   it("should delete driver and navigate back", () => {
-    spyOn(window, "confirm").and.returnValue(true);
     const driver = new Driver("d1", "Driver to Delete", "");
     setupDriver(driver);
     component.allDrivers = [driver, new Driver("d2", "Next Driver", "")];
@@ -431,6 +451,8 @@ describe("DriverEditorComponent", () => {
     dataService.deleteDriver.and.returnValue(of({}));
 
     component.deleteDriver();
+    expect(component.showDeleteConfirm).toBeTrue();
+    component.onConfirmDelete();
 
     expect(dataService.deleteDriver).toHaveBeenCalledWith("d1");
     expect(component.selectedDriverId).toBe("d2");
@@ -438,7 +460,6 @@ describe("DriverEditorComponent", () => {
   });
 
   it("should auto-select next driver in alphabetical order, or previous if last was deleted", () => {
-    spyOn(window, "confirm").and.returnValue(true);
     dataService.deleteDriver.and.returnValue(of({}));
 
     const driverA = new Driver("d1", "Driver A", "");
@@ -450,19 +471,20 @@ describe("DriverEditorComponent", () => {
 
     // Delete B -> C should be selected
     component.deleteDriver();
+    component.onConfirmDelete();
     expect(dataService.deleteDriver).toHaveBeenCalledWith("d2");
     expect(component.selectedDriverId).toBe("d3");
     expect(component.editingDriver?.name).toBe("Driver C");
 
     // Delete C -> A should be selected (since C was the last in list)
     component.deleteDriver();
+    component.onConfirmDelete();
     expect(dataService.deleteDriver).toHaveBeenCalledWith("d3");
     expect(component.selectedDriverId).toBe("d1");
     expect(component.editingDriver?.name).toBe("Driver A");
   });
 
   it("should start new driver if last remaining driver is deleted", () => {
-    spyOn(window, "confirm").and.returnValue(true);
     dataService.deleteDriver.and.returnValue(of({}));
     spyOn(component, "startNewDriver").and.callThrough();
 
@@ -471,6 +493,7 @@ describe("DriverEditorComponent", () => {
     component.allDrivers = [driverA];
 
     component.deleteDriver();
+    component.onConfirmDelete();
     expect(component.startNewDriver).toHaveBeenCalled();
   });
 
@@ -521,11 +544,13 @@ describe("DriverEditorComponent", () => {
   });
 
   it("should not delete if confirm is cancelled", () => {
-    spyOn(window, "confirm").and.returnValue(false);
     const driver = new Driver("d1", "", "");
     setupDriver(driver);
 
     component.deleteDriver();
+    expect(component.showDeleteConfirm).toBeTrue();
+    component.onCancelDelete();
+    expect(component.showDeleteConfirm).toBeFalse();
 
     expect(dataService.deleteDriver).not.toHaveBeenCalled();
   });
@@ -1065,6 +1090,22 @@ describe("DriverEditorComponent", () => {
 
       component.onToggleEditMode();
       expect(component.isEditMode).toBeFalse();
+
+      component.isEditMode = true;
+      dataService.updateDriver.calls.reset();
+      component.onAudioTypeChange("driftLap", "preset");
+      component.onAudioUrlChange("driftLap", "drift_sound.wav");
+      expect(component.editingDriver!.driftLapAudio.type).toBe("preset");
+      expect(component.editingDriver!.driftLapAudio.url).toBe(
+        "drift_sound.wav",
+      );
+      expect(dataService.updateDriver).toHaveBeenCalled();
+      expect(component.isSaving).toBeFalse();
+      expect(component.isDirtyState()).toBeFalse();
+      expect(component.isEditMode).toBeTrue();
+
+      component.onToggleEditMode();
+      expect(component.isEditMode).toBeFalse();
     }));
 
     it("should preserve preset and TTS values when toggling between types in driver editor", fakeAsync(() => {
@@ -1216,7 +1257,7 @@ describe("DriverEditorComponent", () => {
       const audioSelectors = fixture.debugElement.queryAll(
         By.css("app-audio-selector"),
       );
-      expect(audioSelectors.length).toBe(12);
+      expect(audioSelectors.length).toBe(13);
       expect(audioSelectors[0].componentInstance.label()).toBe(
         "DE_LABEL_LAP_SOUND",
       );
@@ -1252,6 +1293,9 @@ describe("DriverEditorComponent", () => {
       );
       expect(audioSelectors[11].componentInstance.label()).toBe(
         "DE_LABEL_FALSE_START_SOUND",
+      );
+      expect(audioSelectors[12].componentInstance.label()).toBe(
+        "DE_LABEL_DRIFT_LAP_SOUND",
       );
     });
 
@@ -1339,7 +1383,7 @@ describe("DriverEditorComponent", () => {
 
     it("should provide all guide steps including the name and nickname link step in correct order", () => {
       const steps = component.getHelpSteps();
-      expect(steps.length).toBe(19);
+      expect(steps.length).toBe(20);
 
       const selectors = steps.map((s) => s.selector).filter(Boolean);
       expect(selectors).toEqual([
@@ -1361,6 +1405,7 @@ describe("DriverEditorComponent", () => {
         "#driver-pit-in-audio",
         "#driver-fuel-audio",
         "#driver-false-start-audio",
+        "#driver-drift-lap-audio",
       ]);
 
       const linkStep = steps.find(
@@ -1601,6 +1646,19 @@ describe("DriverEditorComponent", () => {
       // Re-selecting same asset should not duplicate
       component.onAssetSelected(newAsset);
       expect(component.avatarAssets.length).toBe(2);
+    });
+
+    it("should clear avatarUrl and capture state when imageUrlChange emits undefined", () => {
+      const driver = new Driver("d1", "Test Driver", "Tester", "avatar.png");
+      setupDriver(driver);
+      fixture.detectChanges();
+      const imgSelector = fixture.debugElement.query(
+        By.css("app-image-selector"),
+      );
+      spyOn(component, "captureState");
+      imgSelector.componentInstance.imageUrlChange.emit(undefined);
+      expect(component.editingDriver?.avatarUrl).toBeUndefined();
+      expect(component.captureState).toHaveBeenCalled();
     });
   });
 
@@ -1950,8 +2008,93 @@ describe("DriverEditorComponent", () => {
         messages: [],
       });
 
-      expect((component as any).refreshDriverList).toHaveBeenCalled();
-      expect(component.onSelectDriverById).toHaveBeenCalledWith("d-new-1");
+      expect((component as any).refreshDriverList).toHaveBeenCalledWith(
+        "d-new-1",
+      );
+      expect(component.onSelectDriverById).toHaveBeenCalledWith(
+        "d-new-1",
+        true,
+      );
+    });
+
+    it("should reload drivers and select updated driver when import completes with overwrite", () => {
+      component.onOpenImportModal();
+      expect(component.showImportModal).toBeTrue();
+
+      spyOn(component as any, "refreshDriverList");
+      spyOn(component, "onSelectDriverById");
+      component.selectedDriverId = "d1";
+
+      component.onDriversImported({
+        success: true,
+        importedCount: 1,
+        updatedCount: 1,
+        skippedCount: 0,
+        createdDriverIds: [],
+        updatedDriverIds: ["d1"],
+        messages: [],
+      });
+
+      expect((component as any).refreshDriverList).toHaveBeenCalledWith("d1");
+      expect(component.onSelectDriverById).toHaveBeenCalledWith("d1", true);
+    });
+
+    it("should refresh driver list and assets when refreshDriverList is called", () => {
+      const mockNewAsset = {
+        name: "custom.wav",
+        type: "sound",
+        url: "/assets/custom.wav",
+      };
+      const mockNewDriver = new Driver(
+        "d1",
+        "Updated Name",
+        "Updated Nick",
+        undefined,
+        {
+          lapAudio: { type: "preset", url: "/assets/custom.wav" },
+        },
+      );
+      dataService.getDrivers.and.returnValue(of([mockNewDriver]));
+      dataService.listAssets.and.returnValue(of([mockNewAsset]));
+
+      component.selectedDriverId = "d1";
+      (component as any).refreshDriverList("d1");
+
+      expect(dataService.getDrivers).toHaveBeenCalled();
+      expect(dataService.listAssets).toHaveBeenCalled();
+      expect(component.soundAssets.length).toBe(1);
+      expect(component.soundAssets[0].name).toBe("custom.wav");
+      expect(component.editingDriver?.name).toBe("Updated Name");
+      expect(component.editingDriver?.lapAudio?.url).toBe("/assets/custom.wav");
+    });
+  });
+
+  describe("Export Drivers Modal", () => {
+    it("should toggle showExportModal on open and close", () => {
+      expect(component.showExportModal).toBeFalse();
+      component.isEditMode = false;
+      component.isSaving = false;
+      component.allDrivers = [new Driver("d1", "Driver 1", "")];
+      component.onOpenExportModal();
+      expect(component.showExportModal).toBeTrue();
+      component.showExportModal = false;
+      expect(component.showExportModal).toBeFalse();
+    });
+
+    it("should not open export modal if editing, saving, or no drivers", () => {
+      component.allDrivers = [];
+      component.onOpenExportModal();
+      expect(component.showExportModal).toBeFalse();
+
+      component.allDrivers = [new Driver("d1", "Driver 1", "")];
+      component.isEditMode = true;
+      component.onOpenExportModal();
+      expect(component.showExportModal).toBeFalse();
+
+      component.isEditMode = false;
+      component.isSaving = true;
+      component.onOpenExportModal();
+      expect(component.showExportModal).toBeFalse();
     });
   });
 });

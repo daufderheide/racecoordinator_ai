@@ -1,6 +1,8 @@
 package com.antigravity.race;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import com.antigravity.models.Driver;
 import com.antigravity.models.GroupOptions;
@@ -661,5 +663,190 @@ public class OverallStandingsTest {
     assertEquals(8.0, p1.getAverageTop15(), 0.001);
     assertEquals(11.0, p1.getTop2Consecutive(), 0.001);
     assertEquals(18.0, p1.getTop3Consecutive(), 0.001);
+  }
+
+  @Test
+  public void testOverallStandings_HasSegments() {
+    HeatScoring heatScoring =
+        new HeatScoring(
+            FinishMethod.Timed, 10, HeatRanking.LAP_COUNT, HeatRankingTiebreaker.FASTEST_LAP_TIME);
+    OverallScoring overallScoring =
+        new OverallScoring(0, OverallRanking.LAP_COUNT, OverallRankingTiebreaker.FASTEST_LAP_TIME);
+    OverallStandings os =
+        new OverallStandings(heatScoring, overallScoring, new GroupOptions(), false);
+
+    RaceParticipant p1 = createDriver("D1", "id1");
+    List<RaceParticipant> drivers = new ArrayList<>();
+    drivers.add(p1);
+
+    DriverHeatData dhd1 = new DriverHeatData(p1);
+    dhd1.addLap(10.0, false, true);
+    dhd1.addLap(8.0, false, true);
+
+    DriverHeatData dhd2 = new DriverHeatData(p1);
+    dhd2.addLap(6.0, false, true);
+    dhd2.addLap(5.0, false, true);
+
+    List<Heat> heats = new ArrayList<>();
+    heats.add(new Heat(1, java.util.Collections.singletonList(dhd1), heatScoring, false));
+    heats.add(new Heat(2, java.util.Collections.singletonList(dhd2), heatScoring, false));
+
+    // Case 1: No segments added in either heat
+    os.recalculate(drivers, heats);
+    assertFalse("Expected hasSegments to be false when no segments are added", p1.hasSegments());
+    assertEquals(4.0, p1.getTotalLaps(), 0.001);
+
+    // Case 2: User laps added in one heat (e.g. 0.5)
+    dhd1.setUserLaps(0.5);
+    os.recalculate(drivers, heats);
+    assertTrue("Expected hasSegments to be true when user segments added", p1.hasSegments());
+    assertEquals(4.5, p1.getTotalLaps(), 0.001);
+
+    // Case 3: User laps added in both heats that sum to an exact integer (0.5 + 0.5 = 1.0)
+    dhd2.setUserLaps(0.5);
+    os.recalculate(drivers, heats);
+    assertTrue(
+        "Expected hasSegments to be true even when segment summation results in a whole number",
+        p1.hasSegments());
+    assertEquals(5.0, p1.getTotalLaps(), 0.001);
+
+    // Case 4: Reset user laps, add auto-calculated laps (e.g. temporary pause or end-of-heat)
+    dhd1.setUserLaps(0.0);
+    dhd2.setUserLaps(0.0);
+    dhd1.setAutoCalculatedLaps(0.35);
+    os.recalculate(drivers, heats);
+    assertTrue(
+        "Expected hasSegments to be true when auto-calculated laps present", p1.hasSegments());
+    assertEquals(4.35, p1.getTotalLaps(), 0.001);
+
+    // Case 5: Auto-calculated laps removed (e.g. resuming from pause)
+    dhd1.setAutoCalculatedLaps(0.0);
+    os.recalculate(drivers, heats);
+    assertFalse(
+        "Expected hasSegments to be false when auto-calculated laps are removed", p1.hasSegments());
+    assertEquals(4.0, p1.getTotalLaps(), 0.001);
+  }
+
+  @Test
+  public void testUserTimeImpactsOverallTotalTimeAverageLapTimeAndTiebreaker() {
+    HeatScoring heatScoring =
+        new HeatScoring(
+            FinishMethod.Timed, 10, HeatRanking.LAP_COUNT, HeatRankingTiebreaker.AVERAGE_LAP_TIME);
+    OverallScoring overallScoring =
+        new OverallScoring(0, OverallRanking.LAP_COUNT, OverallRankingTiebreaker.TOTAL_TIME);
+    OverallStandings os =
+        new OverallStandings(heatScoring, overallScoring, new GroupOptions(), false);
+
+    RaceParticipant p1 = createDriver("D1", "id1");
+    RaceParticipant p2 = createDriver("D2", "id2");
+    List<RaceParticipant> drivers = java.util.Arrays.asList(p1, p2);
+
+    Heat h1 = createHeat(1, p1, 5, 50.0, p2, 5, 52.0);
+    List<Heat> heats = java.util.Arrays.asList(h1);
+
+    os.recalculate(drivers, heats);
+    assertEquals(1, p1.getRank());
+    assertEquals(2, p2.getRank());
+    assertEquals(50.0, p1.getTotalTime(), 0.001);
+    assertEquals(10.0, p1.getAverageLapTime(), 0.001);
+
+    // Apply +5.0s user time adjustment to P1 (total becomes 55.0s, average becomes 11.0s)
+    h1.getDrivers().get(0).setUserTime(5.0);
+    os.recalculate(drivers, heats);
+
+    assertEquals(55.0, p1.getTotalTime(), 0.001);
+    assertEquals(11.0, p1.getAverageLapTime(), 0.001);
+    assertEquals(2, p1.getRank());
+    assertEquals(1, p2.getRank());
+  }
+
+  @Test
+  public void testHeatsRacedAndRemainingCalculation() {
+    OverallStandings os =
+        new OverallStandings(new HeatScoring(), new OverallScoring(), new GroupOptions(), false);
+
+    RaceParticipant p1 = createDriver("D1", "id1");
+    RaceParticipant p2 = createDriver("D2", "id2");
+    RaceParticipant p3 = createDriver("D3", "id3");
+    RaceParticipant pEmpty = new RaceParticipant(Driver.EMPTY_DRIVER);
+
+    List<RaceParticipant> drivers = java.util.Arrays.asList(p1, p2, p3, pEmpty);
+
+    // Heat 1: P1 and P2
+    DriverHeatData dhd1_1 = new DriverHeatData(p1);
+    DriverHeatData dhd1_2 = new DriverHeatData(p2);
+    Heat h1 = new Heat(1, java.util.Arrays.asList(dhd1_1, dhd1_2), false);
+
+    // Heat 2: P2 and P3
+    DriverHeatData dhd2_2 = new DriverHeatData(p2);
+    DriverHeatData dhd2_3 = new DriverHeatData(p3);
+    Heat h2 = new Heat(2, java.util.Arrays.asList(dhd2_2, dhd2_3), false);
+
+    // Heat 3: P1 and P3
+    DriverHeatData dhd3_1 = new DriverHeatData(p1);
+    DriverHeatData dhd3_3 = new DriverHeatData(p3);
+    Heat h3 = new Heat(3, java.util.Arrays.asList(dhd3_1, dhd3_3), false);
+
+    List<Heat> heats = java.util.Arrays.asList(h1, h2, h3);
+
+    // Initial state: no heats started, no laps
+    os.recalculate(drivers, heats);
+
+    assertEquals(2, p1.getTotalHeats());
+    assertEquals(0, p1.getHeatsRaced());
+    assertEquals(2, p1.getHeatsRemaining());
+
+    assertEquals(2, p2.getTotalHeats());
+    assertEquals(0, p2.getHeatsRaced());
+    assertEquals(2, p2.getHeatsRemaining());
+
+    assertEquals(2, p3.getTotalHeats());
+    assertEquals(0, p3.getHeatsRaced());
+    assertEquals(2, p3.getHeatsRemaining());
+
+    assertEquals(0, pEmpty.getTotalHeats());
+    assertEquals(0, pEmpty.getHeatsRaced());
+    assertEquals(0, pEmpty.getHeatsRemaining());
+
+    // Heat 1 is started
+    h1.setStarted(true);
+    os.recalculate(drivers, heats);
+
+    assertEquals(1, p1.getHeatsRaced());
+    assertEquals(1, p1.getHeatsRemaining());
+
+    assertEquals(1, p2.getHeatsRaced());
+    assertEquals(1, p2.getHeatsRemaining());
+
+    assertEquals(0, p3.getHeatsRaced());
+    assertEquals(2, p3.getHeatsRemaining());
+
+    // Heat 2 has laps recorded (even if setStarted is false)
+    dhd2_2.addLap(10.0, false, true);
+    dhd2_3.addLap(11.0, false, true);
+    os.recalculate(drivers, heats);
+
+    assertEquals(1, p1.getHeatsRaced());
+    assertEquals(1, p1.getHeatsRemaining());
+
+    assertEquals(2, p2.getHeatsRaced());
+    assertEquals(0, p2.getHeatsRemaining());
+
+    assertEquals(1, p3.getHeatsRaced());
+    assertEquals(1, p3.getHeatsRemaining());
+
+    // Heat 3 finishes
+    dhd3_1.setFinished(true);
+    dhd3_3.setFinished(true);
+    os.recalculate(drivers, heats);
+
+    assertEquals(2, p1.getHeatsRaced());
+    assertEquals(0, p1.getHeatsRemaining());
+
+    assertEquals(2, p2.getHeatsRaced());
+    assertEquals(0, p2.getHeatsRemaining());
+
+    assertEquals(2, p3.getHeatsRaced());
+    assertEquals(0, p3.getHeatsRemaining());
   }
 }

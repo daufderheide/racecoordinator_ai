@@ -391,6 +391,7 @@ void setup() {
   rgbLedUpdateTime = 0xffffffff;
 #endif
 
+  timeResponse[5] = 1;
   ulPrevHwTimeUs = micros();
   // Force an immediate ping
   ulPrevPingUs = ulPrevHwTimeUs - ulPingTimeUs;

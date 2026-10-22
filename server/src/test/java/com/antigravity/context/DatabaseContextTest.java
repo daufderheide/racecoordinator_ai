@@ -316,4 +316,46 @@ public class DatabaseContextTest {
     databaseContext.markTableVerified("manual_verified");
     org.junit.Assert.assertTrue(databaseContext.isTableVerified("manual_verified"));
   }
+
+  @Test
+  public void testDefaultArtifactDeletionTracking() {
+    org.junit.Assert.assertFalse(databaseContext.isDefaultArtifactDeleted("race", "Practice"));
+    org.junit.Assert.assertFalse(
+        databaseContext.isDefaultArtifactDeleted("theme", "practice_theme_rc_ai"));
+    org.junit.Assert.assertFalse(
+        databaseContext.isDefaultArtifactDeleted("custom_ui", "practice_ui_layout_rc_ai"));
+
+    // Null checks
+    org.junit.Assert.assertFalse(databaseContext.isDefaultArtifactDeleted(null, "id"));
+    org.junit.Assert.assertFalse(databaseContext.isDefaultArtifactDeleted("race", null));
+    databaseContext.markDefaultArtifactDeleted(null, "id");
+    databaseContext.markDefaultArtifactDeleted("race", null);
+    databaseContext.clearDefaultArtifactDeleted(null, "id");
+    databaseContext.clearDefaultArtifactDeleted("race", null);
+
+    // Mark deleted
+    databaseContext.markDefaultArtifactDeleted("race", "Practice");
+    databaseContext.markDefaultArtifactDeleted("theme", "practice_theme_rc_ai");
+    databaseContext.markDefaultArtifactDeleted("custom_ui", "practice_ui_layout_rc_ai");
+
+    org.junit.Assert.assertTrue(databaseContext.isDefaultArtifactDeleted("race", "Practice"));
+    org.junit.Assert.assertTrue(databaseContext.isDefaultArtifactDeleted("race", "PRACTICE"));
+    org.junit.Assert.assertTrue(
+        databaseContext.isDefaultArtifactDeleted("theme", "practice_theme_rc_ai"));
+    org.junit.Assert.assertTrue(
+        databaseContext.isDefaultArtifactDeleted("custom_ui", "practice_ui_layout_rc_ai"));
+
+    // Clear single
+    databaseContext.clearDefaultArtifactDeleted("race", "Practice");
+    org.junit.Assert.assertFalse(databaseContext.isDefaultArtifactDeleted("race", "Practice"));
+    org.junit.Assert.assertTrue(
+        databaseContext.isDefaultArtifactDeleted("theme", "practice_theme_rc_ai"));
+
+    // Clear all
+    databaseContext.clearAllDeletedDefaultArtifacts();
+    org.junit.Assert.assertFalse(
+        databaseContext.isDefaultArtifactDeleted("theme", "practice_theme_rc_ai"));
+    org.junit.Assert.assertFalse(
+        databaseContext.isDefaultArtifactDeleted("custom_ui", "practice_ui_layout_rc_ai"));
+  }
 }

@@ -300,8 +300,10 @@ export function createMockLaneRecordEntries(): IRecordEntry[] {
 function createMockHeatDrivers(
   participants: RaceParticipant[],
 ): DriverHeatData[] {
-  return participants.slice(0, 4).map((p: any, index) => {
-    const hd = new DriverHeatData(`mock_hd_${index}`, p, p.lane - 1);
+  const count = Math.min(participants.length, 16);
+  return participants.slice(0, count).map((p: any, index) => {
+    const laneIndex = index;
+    const hd = new DriverHeatData(`mock_hd_${index}`, p, laneIndex);
     for (let i = 1; i <= p.lap_count; i++) {
       const isLast = i === p.lap_count;
       const lapTime = isLast
@@ -352,7 +354,8 @@ function createMockHeatDrivers(
 
     // Inject custom column attributes that may be dynamically accessed
     (hd as any).rankHeat = p.rank;
-    (hd as any).rankOverall = p.rank + 1;
+    (hd as any).rankOverall = p.rank;
+    (hd as any).overallRank = p.rank;
     (hd as any).speedMph = 15.5;
     (hd as any).speedKph = 25.0;
     (hd as any).speedFph = 80000;
@@ -375,6 +378,9 @@ function createMockNextHeatDrivers(): DriverHeatData[] {
     (hd as any).winProbability = mockWinProb;
     (hd as any).projectedRank = mockProjRank;
     (hd as any).projectedLaps = mockProjLaps;
+    (hd as any).rankHeat = p.rank;
+    (hd as any).rankOverall = p.rank;
+    (hd as any).overallRank = p.rank;
 
     if (hd.participant) {
       (hd.participant as any).fuelLevel = p.fuelLevel || 100;
@@ -578,7 +584,7 @@ function createMockRaceParticipants(): RaceParticipant[] {
         char.nickname,
         `https://api.dicebear.com/7.x/pixel-art/svg?seed=${char.avatar}`,
       ),
-      lane: rank <= 4 ? rank : 0,
+      lane: rank <= 16 ? rank : 0,
       total_time: totalTime,
       lap_count: lapCount,
       last_lap_time: lastLap,
@@ -592,109 +598,89 @@ function createMockRaceParticipants(): RaceParticipant[] {
       fuelLevel: Math.max(0, 100 - index * 4),
       seed: rank,
       team: char.team
-        ? { name: char.team, driverIds: [`d${rank}`] }
+        ? {
+            entity_id: `t_${char.team.toLowerCase().replace(/[^a-z0-9]/g, "_")}`,
+            name: char.team,
+            driverIds: [`d${rank}`],
+          }
         : undefined,
     } as unknown as RaceParticipant;
   });
 }
 
+const MOCK_NEXT_HEAT_CHARACTERS = [
+  {
+    id: "p5",
+    driverId: "d5",
+    name: "Yoshi",
+    nickname: "Green Dino",
+    avatar: "Yoshi",
+    lane: 1,
+    rank: 5,
+    team: undefined,
+  },
+  {
+    id: "p6",
+    driverId: "d6",
+    name: "Donkey Kong",
+    nickname: "DK",
+    avatar: "DK",
+    lane: 2,
+    rank: 6,
+    team: { entity_id: "t_dk_crew", name: "DK Crew", driverIds: ["d6"] },
+  },
+  {
+    id: "p7",
+    driverId: "d7",
+    name: "Wario",
+    nickname: "Greedy",
+    avatar: "Wario",
+    lane: 3,
+    rank: 7,
+    team: { entity_id: "t_wario_land", name: "Wario Land", driverIds: ["d7"] },
+  },
+  {
+    id: "p8",
+    driverId: "d8",
+    name: "Waluigi",
+    nickname: "Purple",
+    avatar: "Waluigi",
+    lane: 4,
+    rank: 8,
+    team: {
+      entity_id: "t_waluigi_pinball",
+      name: "Waluigi Pinball",
+      driverIds: ["d8"],
+    },
+  },
+];
+
 function createMockNextHeatParticipants(): RaceParticipant[] {
-  return [
-    {
-      id: "p5",
-      objectId: "p5",
-      driver: new Driver(
-        "d5",
-        "Yoshi",
-        "Green Dino",
-        "https://api.dicebear.com/7.x/pixel-art/svg?seed=Yoshi",
-      ),
-      lane: 1,
-      total_time: 0,
-      lap_count: 0,
-      last_lap_time: 0,
-      best_lap_time: 0,
-      average_lap_time: 0,
-      median_lap_time: 0,
-      rank: 5,
-      reaction_time: 0,
-      gap_leader: 0,
-      gap_position: 0,
-      fuelLevel: 100,
-      seed: 5,
-      team: undefined,
-    } as unknown as RaceParticipant,
-    {
-      id: "p6",
-      objectId: "p6",
-      driver: new Driver(
-        "d6",
-        "Donkey Kong",
-        "DK",
-        "https://api.dicebear.com/7.x/pixel-art/svg?seed=DK",
-      ),
-      lane: 2,
-      total_time: 0,
-      lap_count: 0,
-      last_lap_time: 0,
-      best_lap_time: 0,
-      average_lap_time: 0,
-      median_lap_time: 0,
-      rank: 6,
-      reaction_time: 0,
-      gap_leader: 0,
-      gap_position: 0,
-      fuelLevel: 100,
-      seed: 6,
-      team: { name: "DK Crew", driverIds: ["d6"] },
-    } as unknown as RaceParticipant,
-    {
-      id: "p7",
-      objectId: "p7",
-      driver: new Driver(
-        "d7",
-        "Wario",
-        "Greedy",
-        "https://api.dicebear.com/7.x/pixel-art/svg?seed=Wario",
-      ),
-      lane: 3,
-      total_time: 0,
-      lap_count: 0,
-      last_lap_time: 0,
-      best_lap_time: 0,
-      average_lap_time: 0,
-      median_lap_time: 0,
-      rank: 7,
-      reaction_time: 0,
-      gap_leader: 0,
-      gap_position: 0,
-      fuelLevel: 100,
-      seed: 7,
-      team: { name: "Wario Land", driverIds: ["d7"] },
-    } as unknown as RaceParticipant,
-    {
-      id: "p8",
-      objectId: "p8",
-      driver: new Driver(
-        "d8",
-        "Waluigi",
-        "Purple",
-        "https://api.dicebear.com/7.x/pixel-art/svg?seed=Waluigi",
-      ),
-      lane: 4,
-      total_time: 0,
-      lap_count: 0,
-      last_lap_time: 0,
-      best_lap_time: 0,
-      average_lap_time: 0,
-      median_lap_time: 0,
-      rank: 8,
-      reaction_time: 0,
-      gap_leader: 0,
-      gap_position: 0,
-      fuelLevel: 100,
-      seed: 8,
-      team: { name: "Waluigi Pinball", driverIds: ["d8"] },
-    } as unknown as RaceParticipant,
-  ];
+  return MOCK_NEXT_HEAT_CHARACTERS.map(
+    (char) =>
+      ({
+        id: char.id,
+        objectId: char.id,
+        driver: new Driver(
+          char.driverId,
+          char.name,
+          char.nickname,
+          `https://api.dicebear.com/7.x/pixel-art/svg?seed=${char.avatar}`,
+        ),
+        lane: char.lane,
+        total_time: 0,
+        lap_count: 0,
+        last_lap_time: 0,
+        best_lap_time: 0,
+        average_lap_time: 0,
+        median_lap_time: 0,
+        rank: char.rank,
+        reaction_time: 0,
+        gap_leader: 0,
+        gap_position: 0,
+        fuelLevel: 100,
+        seed: char.rank,
+        team: char.team,
+      }) as unknown as RaceParticipant,
+  );
 }

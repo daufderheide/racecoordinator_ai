@@ -20,7 +20,7 @@ Die obere Symbolleiste bietet folgende Aktionen:
 - **Zurück**: Kehrt zur vorherigen Ansicht oder zum Renntag-Setup zurück.
 - **Team hinzufügen (+)**: Erstellt eine neue Teamvorlage und wechselt in den Bearbeitungsmodus.
 - **Team duplizieren**: Erstellt eine Kopie des aktuell ausgewählten Teams mit einem eindeutigen Namen.
-- **Bearbeiten / Bearbeitung beenden**: Schaltet zwischen schreibgeschütztem Modus und Bearbeitungsmodus um.
+- **Bearbeiten / Bearbeitung beenden**: Schaltet zwischen schreibgeschütztem Modus und Bearbeitungsmodus um (Tastenkombination: Cmd/Ctrl+E).
 - **Team löschen**: Löscht das ausgewählte Team nach Bestätigung.
 - **Rückgängig / Wiederholen**: Nimmt kürzliche Änderungen während der Bearbeitungssitzung zurück oder wendet sie erneut an.
 - **Hilfe (?)**: Startet die interaktive Einführung, die jeden Abschnitt des Editors hervorhebt.

@@ -12,6 +12,7 @@ import java.io.File;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.List;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellType;
@@ -943,5 +944,245 @@ public class RaceExportSaveHandlerTest {
       org.junit.Assert.assertNotNull("Race Model row should not be null", raceModelRow);
       org.junit.Assert.assertEquals("Race Model", raceModelRow.getCell(0).getStringCellValue());
     }
+  }
+
+  @Test
+  public void testExportRaceXls_CustomRotationAssetOutputsNameAndExcludesAssetId()
+      throws Exception {
+    com.antigravity.models.Driver d1 = new com.antigravity.models.Driver("Practice Driver", "pd1");
+    com.antigravity.race.RaceParticipant p1 = new com.antigravity.race.RaceParticipant(d1);
+    com.antigravity.models.Lane l1 = new com.antigravity.models.Lane("#EF4444", "white", 100);
+    com.antigravity.models.Track track =
+        new com.antigravity.models.Track.Builder()
+            .name("Practice Track")
+            .lanes(Collections.singletonList(l1))
+            .build();
+
+    com.antigravity.models.Race model =
+        new com.antigravity.models.Race.Builder()
+            .withName("Practice Race")
+            .withHeatRotationType(com.antigravity.models.HeatRotationType.Custom)
+            .withCustomRotationAssetId("82c1bfa2-4c74-480b-af39-36b677ec62c4")
+            .withPractice(true)
+            .build();
+
+    com.antigravity.race.DriverHeatData dhd = new com.antigravity.race.DriverHeatData(p1, d1);
+    dhd.setLane(1);
+    com.antigravity.race.Heat heat =
+        new com.antigravity.race.Heat(1, Collections.singletonList(dhd), false);
+
+    com.antigravity.race.Race activeRace =
+        new com.antigravity.race.Race.Builder()
+            .model(model)
+            .track(track)
+            .drivers(Collections.singletonList(p1))
+            .heats(Collections.singletonList(heat))
+            .customRotationAssetName("Single Heat Practice")
+            .skipHardwareInterface(true)
+            .build();
+
+    ClientSubscriptionManager.getInstance().setRace(activeRace);
+
+    handler.exportRaceXls(ctx);
+
+    org.mockito.ArgumentCaptor<byte[]> captor = org.mockito.ArgumentCaptor.forClass(byte[].class);
+    verify(ctx, org.mockito.Mockito.atLeastOnce()).result(captor.capture());
+    byte[] exportedBytes = captor.getValue();
+    org.junit.Assert.assertNotNull(exportedBytes);
+
+    try (XSSFWorkbook wb = new XSSFWorkbook(new java.io.ByteArrayInputStream(exportedBytes))) {
+      Sheet infoSheet = wb.getSheet("Race Information");
+      org.junit.Assert.assertNotNull(infoSheet);
+
+      boolean foundAssetId = false;
+      String rotationsVal = null;
+      for (int r = 0; r <= infoSheet.getLastRowNum(); r++) {
+        Row row = infoSheet.getRow(r);
+        if (row != null && row.getCell(0) != null) {
+          String key = row.getCell(0).getStringCellValue();
+          if ("custom_rotation_asset_id".equalsIgnoreCase(key)) {
+            foundAssetId = true;
+          } else if ("custom_rotations".equalsIgnoreCase(key)) {
+            rotationsVal = row.getCell(1).getStringCellValue();
+          }
+        }
+      }
+
+      org.junit.Assert.assertFalse(
+          "custom_rotation_asset_id must be excluded from XLS", foundAssetId);
+      org.junit.Assert.assertEquals("Single Heat Practice", rotationsVal);
+    }
+  }
+
+  @Test
+  public void testExportRaceXls_FastestLapTimesPlacementAndAlignment() throws Exception {
+    com.antigravity.race.Race activeRace = createRaceWithRecordsAndHeats();
+    ClientSubscriptionManager.getInstance().setRace(activeRace);
+
+    handler.exportRaceXls(ctx);
+
+    org.mockito.ArgumentCaptor<byte[]> captor = org.mockito.ArgumentCaptor.forClass(byte[].class);
+    verify(ctx, org.mockito.Mockito.atLeastOnce()).result(captor.capture());
+    byte[] exportedBytes = captor.getValue();
+    org.junit.Assert.assertNotNull(exportedBytes);
+
+    try (XSSFWorkbook wb = new XSSFWorkbook(new java.io.ByteArrayInputStream(exportedBytes))) {
+      assertFastestLapTimesSheetOrder(wb);
+      assertFastestLapTimesTable2Alignment(wb);
+    }
+  }
+
+  private com.antigravity.race.Race createRaceWithRecordsAndHeats() {
+    com.antigravity.models.Driver d1 =
+        new com.antigravity.models.Driver.Builder().withId("d1").withName("David").build();
+    com.antigravity.models.Driver d2 =
+        new com.antigravity.models.Driver.Builder().withId("d2").withName("Ben").build();
+
+    com.antigravity.race.RaceParticipant p1 = new com.antigravity.race.RaceParticipant(d1);
+    com.antigravity.race.RaceParticipant p2 = new com.antigravity.race.RaceParticipant(d2);
+
+    com.antigravity.race.DriverHeatData dhd1 = new com.antigravity.race.DriverHeatData(p1);
+    dhd1.setLane(0);
+    dhd1.addLap(6.737, false, true);
+    dhd1.addLap(6.621, false, true);
+
+    com.antigravity.race.DriverHeatData dhd2 = new com.antigravity.race.DriverHeatData(p2);
+    dhd2.setLane(1);
+    dhd2.addLap(6.806, false, true);
+
+    com.antigravity.race.Heat heat1 =
+        new com.antigravity.race.Heat(1, java.util.Arrays.asList(dhd1, dhd2), false);
+    heat1.setStarted(true);
+
+    com.antigravity.models.Track track =
+        new com.antigravity.models.Track.Builder()
+            .name("Grand Track")
+            .lanes(
+                java.util.Arrays.asList(
+                    new com.antigravity.models.Lane("red", "black", 100),
+                    new com.antigravity.models.Lane("blue", "white", 101)))
+            .build();
+
+    com.antigravity.models.Race model =
+        new com.antigravity.models.Race.Builder().withName("Fastest Lap Test Race").build();
+
+    com.antigravity.proto.RecordEntry overallLap =
+        com.antigravity.proto.RecordEntry.newBuilder()
+            .setHolderName("David")
+            .setValue(5.237)
+            .setDate(1719591327000L)
+            .build();
+    com.antigravity.proto.OverallRecords overall =
+        com.antigravity.proto.OverallRecords.newBuilder()
+            .setFastestLap(overallLap)
+            .addLaneFastestLap(overallLap)
+            .addLaneFastestLap(overallLap)
+            .build();
+    com.antigravity.proto.RecordData recordData =
+        com.antigravity.proto.RecordData.newBuilder().setOverall(overall).build();
+
+    com.antigravity.race.Race race =
+        new com.antigravity.race.Race.Builder()
+            .model(model)
+            .drivers(java.util.Arrays.asList(p1, p2))
+            .heats(java.util.Collections.singletonList(heat1))
+            .track(track)
+            .isDemoMode(true)
+            .build();
+    race.getRecordsManager().loadOverallRaceRecords(overall);
+    return race;
+  }
+
+  private void assertFastestLapTimesSheetOrder(XSSFWorkbook wb) {
+    int fastestLapIdx = wb.getSheetIndex("Fastest Lap Times");
+    org.junit.Assert.assertTrue("Fastest Lap Times sheet must exist", fastestLapIdx != -1);
+
+    int lastHeatIdx = wb.getSheetIndex("Heat 1");
+    org.junit.Assert.assertTrue("Heat 1 must exist", lastHeatIdx != -1);
+    org.junit.Assert.assertTrue(
+        "Fastest Lap Times must be after last heat sheet ("
+            + lastHeatIdx
+            + " vs "
+            + fastestLapIdx
+            + ")",
+        fastestLapIdx > lastHeatIdx);
+
+    int driverIdx = wb.getSheetIndex("David");
+    if (driverIdx == -1) {
+      driverIdx = wb.getSheetIndex("Driver 1");
+    }
+    org.junit.Assert.assertTrue("Driver sheet must exist", driverIdx != -1);
+    org.junit.Assert.assertTrue(
+        "Fastest Lap Times must be before first driver sheet ("
+            + fastestLapIdx
+            + " vs "
+            + driverIdx
+            + ")",
+        fastestLapIdx < driverIdx);
+  }
+
+  private void assertFastestLapTimesTable2Alignment(XSSFWorkbook wb) {
+    Sheet sheet = wb.getSheet("Fastest Lap Times");
+    org.junit.Assert.assertNotNull(sheet);
+
+    int recNameRowIdx = -1;
+    int recNameColIdx = -1;
+    for (int r = 0; r <= sheet.getLastRowNum(); r++) {
+      Row row = sheet.getRow(r);
+      if (row != null) {
+        for (int c = 0; c < row.getLastCellNum(); c++) {
+          String val = getCellString(row.getCell(c));
+          if ("Record Lap Time Name".equalsIgnoreCase(val.trim())) {
+            recNameRowIdx = r;
+            recNameColIdx = c;
+            break;
+          }
+        }
+        if (recNameRowIdx != -1) {
+          break;
+        }
+      }
+    }
+    org.junit.Assert.assertTrue("Record Lap Time Name row must be found", recNameRowIdx != -1);
+
+    Row recNameRow = sheet.getRow(recNameRowIdx);
+    Cell colValCell = recNameRow.getCell(recNameColIdx + 1);
+    org.junit.Assert.assertNotNull("Value cell on Record Lap Time Name row must exist", colValCell);
+    org.junit.Assert.assertEquals("David", getCellString(colValCell));
+
+    Row recTimeRow = sheet.getRow(recNameRowIdx + 1);
+    org.junit.Assert.assertNotNull(recTimeRow);
+    org.junit.Assert.assertEquals(
+        "Record Lap Time", getCellString(recTimeRow.getCell(recNameColIdx)));
+    org.junit.Assert.assertEquals(
+        5.237, recTimeRow.getCell(recNameColIdx + 1).getNumericCellValue(), 0.001);
+
+    Row recDateRow = sheet.getRow(recNameRowIdx + 2);
+    org.junit.Assert.assertNotNull(recDateRow);
+    org.junit.Assert.assertEquals(
+        "Record Lap Time Date", getCellString(recDateRow.getCell(recNameColIdx)));
+    String dateVal = getCellString(recDateRow.getCell(recNameColIdx + 1));
+    org.junit.Assert.assertTrue(
+        "Date value must not be empty", dateVal != null && !dateVal.trim().isEmpty());
+
+    // Verify driver data rows (e.g. row 3) do not have record values leaked in the overall record
+    // column
+    Row driverRow = sheet.getRow(3);
+    org.junit.Assert.assertNotNull(driverRow);
+    Cell driverValCol = driverRow.getCell(recNameColIdx + 1);
+    org.junit.Assert.assertEquals("", getCellString(driverValCol).trim());
+  }
+
+  private static String getCellString(Cell cell) {
+    if (cell == null) {
+      return "";
+    }
+    if (cell.getCellType() == CellType.STRING) {
+      return cell.getStringCellValue();
+    }
+    if (cell.getCellType() == CellType.NUMERIC) {
+      return String.valueOf(cell.getNumericCellValue());
+    }
+    return "";
   }
 }

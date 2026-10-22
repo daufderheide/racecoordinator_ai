@@ -686,8 +686,9 @@ export class CustomRotationEditorComponent
   }
 
   dropHeat(rotation: ICustomRotation, event: CdkDragDrop<ICustomHeat[]>) {
-    if (rotation.heats) {
+    if (rotation.heats && event.previousIndex !== event.currentIndex) {
       moveItemInArray(rotation.heats, event.previousIndex, event.currentIndex);
+      this.updateDropListConnections();
       this.captureState();
     }
   }

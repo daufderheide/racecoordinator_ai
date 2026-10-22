@@ -23,6 +23,7 @@ describe("ServerFileSystemService", () => {
       debug: jasmine.createSpy("debug"),
       error: jasmine.createSpy("error"),
       info: jasmine.createSpy("info"),
+      warn: jasmine.createSpy("warn"),
     };
 
     TestBed.configureTestingModule({
@@ -62,6 +63,19 @@ describe("ServerFileSystemService", () => {
     expect(res.customUiDirectory).toBe("/path/ui");
     expect(res.customWidgetDirectory).toBe("/path/widgets");
     expect(res.isLocalhost).toBeTrue();
+  });
+
+  it("should return failed: true when getDirectories encounters an HTTP error", async () => {
+    const promise = service.getDirectories();
+    const req = httpMock.expectOne(
+      "http://localhost:7070/api/filesystem/directories",
+    );
+    expect(req.request.method).toBe("GET");
+    req.flush("Connection refused", { status: 0, statusText: "Unknown Error" });
+
+    const res = await promise;
+    expect(res.isLocalhost).toBeFalse();
+    expect(res.failed).toBeTrue();
   });
 
   it("should chooseFolder", async () => {
@@ -129,6 +143,30 @@ describe("ServerFileSystemService", () => {
 
     const res = await promise;
     expect(res).toBe('{"id":"widget1"}');
+  });
+
+  it("should hasWidgetFile return true when file exists", async () => {
+    const promise = service.hasWidgetFile("sample/widget1", "widget.json");
+    const req = httpMock.expectOne(
+      "http://localhost:7070/api/filesystem/widgets/has-file?path=sample%2Fwidget1&file=widget.json",
+    );
+    expect(req.request.method).toBe("GET");
+    req.flush({ exists: true });
+
+    const res = await promise;
+    expect(res).toBeTrue();
+  });
+
+  it("should hasWidgetFile return false when file does not exist", async () => {
+    const promise = service.hasWidgetFile("sample/widget1", "missing.css");
+    const req = httpMock.expectOne(
+      "http://localhost:7070/api/filesystem/widgets/has-file?path=sample%2Fwidget1&file=missing.css",
+    );
+    expect(req.request.method).toBe("GET");
+    req.flush({ exists: false });
+
+    const res = await promise;
+    expect(res).toBeFalse();
   });
 
   it("should writeWidgetFile", async () => {

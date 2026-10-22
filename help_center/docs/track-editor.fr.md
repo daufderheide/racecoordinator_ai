@@ -258,7 +258,7 @@ La barre d'outils supérieure de l'Éditeur de Circuits propose les outils de ge
 - **Retour** : Retourne à la vue précédente ou à la Configuration du Jour de Course.
 - **Ajouter un Circuit (+)** : Crée un nouveau modèle de circuit et active le mode édition.
 - **Dupliquer le Circuit** : Crée une copie conforme sous un nouveau nom unique, idéal pour tester des variantes sans altérer le circuit principal.
-- **Modifier / Terminer l'Édition** : Bascule entre le mode lecture seule et le mode édition. En quittant le mode édition, les modifications sont validées et enregistrées.
+- **Modifier / Terminer l'Édition (`Cmd/Ctrl+E`)** : Bascule entre le mode lecture seule et le mode édition. En quittant le mode édition, les modifications sont validées et enregistrées.
 - **Tout développer / réduire** : Développe ou réduit toutes les sections de configuration et panneaux d'interfaces en une seule fois.
 - **Supprimer le Circuit** : Supprime le circuit sélectionné après confirmation.
 - **Annuler (`Ctrl+Z`) / Rétablir (`Ctrl+Y`)** : Historique complet pour rétablir facilement tout changement.
@@ -285,3 +285,8 @@ La barre d'outils supérieure de l'Éditeur de Circuits propose les outils de ge
 
 ### Bandeaux LED FastLED Éteints
 - **Solution** : Vérifiez que l'Arduino utilise le **sketch officiel `v2.1.0.x`**, que le type de LED et l'ordre des couleurs sont exacts, et que la masse (GND) de l'alimentation 5V externe est reliée à la masse de l'Arduino.
+
+### Déconnexion de l'Interface Entre les Manches (Mise en Veille USB / Économie d'Énergie)
+- **Symptôme** : L'interface (Arduino, Phidget ou Trackmate) se déconnecte pendant les pauses entre les manches ou après une période d'inactivité, puis se reconnecte dès le départ avec le message *"La connexion avec l'interface a été rétablie."*
+- **Solution** : Windows, Linux et macOS coupent l'alimentation des ports USB et des contrôleurs HID inactifs même lorsque le PC est allumé. Consultez la section [Mise en Veille de l'Interface USB et Déconnexions](troubleshooting.fr.md#usb-sleep-prevention) dans le guide de dépannage pour désactiver l'économie d'énergie dans le Gestionnaire de périphériques.
+

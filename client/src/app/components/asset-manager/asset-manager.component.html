@@ -321,7 +321,7 @@
           [class.layout-medium]="layoutMode === 'medium'"
           [class.layout-large]="layoutMode === 'large'"
         >
-          @for (asset of filteredAssets; track asset) {
+          @for (asset of filteredAssets; track asset.id) {
             <div
               class="asset-card"
               [class.layout-list]="layoutMode === 'list'"
@@ -330,25 +330,28 @@
               [class.layout-large]="layoutMode === 'large'"
               [class.selected]="asset.selected"
               [class.playing]="currentlyPlayingAsset?.id === asset.id"
-              [draggable]="asset.type === 'image'"
+              [draggable]="
+                asset.type === 'image' && !isCsvAsset(asset) && !asset.editMode
+              "
               (dragstart)="onAssetDragStart($event, asset)"
               (click)="toggleSelection(asset, $event)"
             >
               <!-- Preview Area -->
               <div class="asset-preview">
-                @if (asset.type === "image" || asset.type === "image_set") {
+                @if (isCsvAsset(asset)) {
+                  <div class="csv-preview">
+                    <span class="material-icons">description</span>
+                    <span class="file-ext">CSV</span>
+                  </div>
+                } @else if (
+                  asset.type === "image" || asset.type === "image_set"
+                ) {
                   <img
-                    [src]="
-                      getAssetImageUrl(asset) ||
-                      'assets/images/am_icon_image_placeholder.png'
-                    "
+                    [src]="getAssetImageUrl(asset)"
                     class="preview-img"
                     alt="preview"
                     [class.image-set]="asset.type === 'image_set'"
-                    (error)="
-                      $any($event.target).src =
-                        'assets/images/am_icon_image_placeholder.png'
-                    "
+                    (error)="onImageError(asset)"
                   />
                 }
                 @if (
@@ -373,12 +376,17 @@
               <div class="asset-info">
                 <!-- Editing Mode -->
                 @if (asset.editMode) {
-                  <div class="edit-mode">
+                  <div
+                    class="edit-mode"
+                    (click)="$event.stopPropagation()"
+                    (dragstart)="$event.stopPropagation()"
+                  >
                     <input
                       type="text"
                       class="name-input"
                       [(ngModel)]="asset.name"
                       (keyup.enter)="saveName(asset.id, asset.name)"
+                      (keydown.escape)="cancelEditing(asset.id)"
                       autoFocus
                       autocomplete="one-time-code"
                       data-dashlane-ignore="true"
@@ -390,15 +398,18 @@
                       autocorrect="off"
                       autocapitalize="off"
                       name="rename-ignore-field"
+                      draggable="false"
                     />
                     <div class="edit-actions">
                       <button
+                        type="button"
                         class="btn-save"
                         (click)="saveName(asset.id, asset.name)"
                       >
                         {{ "AM_BTN_SAVE" | translate }}
                       </button>
                       <button
+                        type="button"
                         class="btn-cancel"
                         (click)="cancelEditing(asset.id)"
                       >

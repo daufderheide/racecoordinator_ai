@@ -164,6 +164,7 @@ Die folgenden Referenztabellen listen alle Audioereignisse in Race Coordinator A
 | **Boxenstopp-Sound** | Wird abgespielt, wenn das Fahrzeug in die Boxengasse oder den Tankbereich einfährt. | `default_pit_in` | **Sprachansage** | `urgent` (Gewicht 4) | `lane-view`: Spielt auf der Hauptanzeige und auf der Fahrerstation für die jeweilige Spur/den Fahrer. |
 | **Kraftstoffstand-Sounds** | Wird abgespielt, wenn der Tankfüllstand Warnung, kritisch oder leer erreicht. | `default_fuel_level` (Audioset) | **Sprachansage** | `urgent` (Gewicht 4) | `lane-view`: Spielt auf der Hauptanzeige und auf der Fahrerstation für die jeweilige Spur/den Fahrer. |
 | **Fehlstart-Sound** | Wird abgespielt, wenn ein Frühstart oder Verstoß beim Start erkannt wird. | `default_penalty` | **Sprachansage** | `urgent` (Gewicht 4) | `lane-view`: Spielt auf der Hauptanzeige und auf der Fahrerstation für die jeweilige Spur/den Fahrer. |
+| **Drift-Runden-Sound** | Wird abgespielt, wenn der Fahrer eine Runde im Drift abschließt. | TTS (`Drift lap for {driver.nickname}`) | **Sprachansage** | `urgent` (Gewicht 4) | `lane-view`: Spielt auf der Hauptanzeige und auf der Fahrerstation für die jeweilige Spur/den Fahrer. |
 
 ### Design-Audioereignisse (Konfiguration im Design-Editor / Themes)
 
@@ -180,7 +181,6 @@ Die folgenden Referenztabellen listen alle Audioereignisse in Race Coordinator A
 | **Automatisches Weiterschalten verbleibende Sekunden** | `audio.auto_advance` | **Sprachansage** / Audioset (Standard: TTS) | `normal` (Gewicht 2) | `timer`: Spielt auf der Hauptanzeige (wenn Timer-Widget vorhanden) und auf allen Fahrerstationen. |
 | **Rennen beendet** | `audio.race_over` | **Sprachansage** | `urgent` (Gewicht 4) | `flag`: Spielt auf der Hauptanzeige (wenn Flaggen-Widget vorhanden) und auf allen Fahrerstationen. |
 | **Mindestrundenzeit** | `audio.min_lap_time` | **Sprachansage** | `urgent` (Gewicht 4) | `lane-view`: Spielt auf der Hauptanzeige und auf der Fahrerstation für die jeweilige Spur/den Fahrer. |
-| **Driftrunde** | `audio.drift_lap` | **Sprachansage** | `urgent` (Gewicht 4) | `lane-view`: Spielt auf der Hauptanzeige und auf der Fahrerstation für die jeweilige Spur/den Fahrer. |
 
 ---
 
@@ -218,6 +218,6 @@ Bei der Vorschau im Asset Manager oder Theme-Audio-Selector spielen die Einträg
 | Bereich | Einstellmöglichkeiten |
 | :--- | :--- |
 | **UI-Editor -> Audio-Einstellungen** | Gesamtlautstärke, Dringlichkeits-Timeout, Ansagen-Abstand, TTS-Stimme, Geschwindigkeit, Tonhöhe, TTS-Lautstärke, Hörprobe. |
-| **Design-Editor (Themes)** | Systemweite Ereignisse: Start-Countdown, Grüne Lampe GO, Gelbe Flagge, Restzeit, Halbzeit, Durchgangsende, Rennende, Mindestrundenzeit, Driftrunde. |
-| **Fahrer-Editor** | Fahrerspezifische Sounds: Runden-Sound, Persönlicher Bester Runden-Sound, Rennen-Beste-Runde-Sound, Rennspur-Beste-Runde-Sound, Lauf-Beste-Runde-Sound, Neuer Rennführender-Sound, Neuer Lauf-Führender-Sound, Gesamtrekord-Rundensound, Spur-Gesamtrekord-Rundensound, Boxenstopp-Sound, Kraftstoffstand-Sounds und Fehlstart-Sound. |
+| **Design-Editor (Themes)** | Systemweite Ereignisse: Start-Countdown, Grüne Lampe GO, Gelbe Flagge, Restzeit, Halbzeit, Durchgangsende, Rennende, Mindestrundenzeit. |
+| **Fahrer-Editor** | Fahrerspezifische Sounds: Runden-Sound, Persönlicher Bester Runden-Sound, Rennen-Beste-Runde-Sound, Rennspur-Beste-Runde-Sound, Lauf-Beste-Runde-Sound, Neuer Rennführender-Sound, Neuer Lauf-Führender-Sound, Gesamtrekord-Rundensound, Spur-Gesamtrekord-Rundensound, Boxenstopp-Sound, Kraftstoffstand-Sounds, Fehlstart-Sound und Drift-Runden-Sound. |
 | **Asset Manager** | Hochladen und Verwalten von WAV-, MP3- und OGG-Dateien sowie Konfigurieren von Audio-Sets mit kontextabhängigen Auslösewerten (Sekunden, Runden oder Prozentsatz) mit Sofort-Hörprobe. |

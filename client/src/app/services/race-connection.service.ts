@@ -29,6 +29,7 @@ import { DriverMatchingUtils } from "@app/utils/driver-matching.utils";
 import { ChildWindowManagerService } from "./child-window-manager.service";
 import { LoggerService } from "./logger.service";
 import { RaceService } from "./race.service";
+import { WakeLockService } from "./wake-lock.service";
 
 export interface IReactionTime {
   objectId?: string | null;
@@ -104,6 +105,7 @@ export class RaceConnectionService implements OnDestroy {
   private pendingUpdate: IRace | null = null;
   private pendingHeat: any = null;
   private driverSubscription?: Subscription;
+  private raceStateSubscription?: Subscription;
 
   // Test hook or configuration
   private get WATCHDOG_TIMEOUT(): number {
@@ -120,10 +122,18 @@ export class RaceConnectionService implements OnDestroy {
     private logger: LoggerService,
     private ngZone: NgZone,
     private childWindowManagerService?: ChildWindowManagerService,
+    private wakeLockService?: WakeLockService,
   ) {
     if (!this.childWindowManagerService) {
       this.childWindowManagerService = inject(ChildWindowManagerService);
     }
+    if (!this.wakeLockService) {
+      this.wakeLockService = inject(WakeLockService);
+    }
+
+    this.raceStateSubscription = this.raceState$.subscribe((state) => {
+      this.updateWakeLockForState(state);
+    });
   }
 
   connect() {
@@ -344,6 +354,13 @@ export class RaceConnectionService implements OnDestroy {
               this.lapSubject.next(lap);
             } else {
               const segmentsCopy = [...(driverData.currentLapSegments || [])];
+              const lapTotalTime =
+                lap.totalTime != null && lap.totalTime > 0
+                  ? lap.totalTime
+                  : (lap as any).total_time != null &&
+                      (lap as any).total_time > 0
+                    ? (lap as any).total_time
+                    : undefined;
               if (typeof driverData.addLapTime === "function") {
                 driverData.addLapTime(
                   lap.lapNumber!,
@@ -357,6 +374,7 @@ export class RaceConnectionService implements OnDestroy {
                   lap.type ?? undefined,
                   segmentsCopy,
                   lap.countTowardsRecords !== false,
+                  lapTotalTime,
                 );
               }
               if (lap.flag !== undefined && lap.flag !== null) {
@@ -392,6 +410,7 @@ export class RaceConnectionService implements OnDestroy {
                       lap.type ?? undefined,
                       segmentsCopy,
                       lap.countTowardsRecords !== false,
+                      lapTotalTime,
                     );
                     if (lap.flag !== undefined && lap.flag !== null) {
                       targetHd.flag = lap.flag;
@@ -497,7 +516,7 @@ export class RaceConnectionService implements OnDestroy {
         this.dataService.getGroupStandingsUpdate().subscribe((update) => {
           if (update && update.participants) {
             const participants = update.participants.map((p: any) =>
-              RaceParticipantConverter.fromProto(p),
+              RaceParticipantConverter.fromGroupProto(p),
             );
             this.raceService.setGroupParticipants(
               participants,
@@ -1004,8 +1023,25 @@ export class RaceConnectionService implements OnDestroy {
     }
   }
 
+  private updateWakeLockForState(state: RaceState): void {
+    if (
+      state === RaceState.NOT_STARTED ||
+      state === RaceState.STARTING ||
+      state === RaceState.RACING ||
+      state === RaceState.PAUSED ||
+      state === RaceState.HEAT_OVER ||
+      state === RaceState.RACE_OVER
+    ) {
+      void this.wakeLockService?.request();
+    } else {
+      void this.wakeLockService?.release();
+    }
+  }
+
   ngOnDestroy() {
     this.isDestroyed = true;
+    this.raceStateSubscription?.unsubscribe();
     this.stopConnection();
+    void this.wakeLockService?.release();
   }
 }

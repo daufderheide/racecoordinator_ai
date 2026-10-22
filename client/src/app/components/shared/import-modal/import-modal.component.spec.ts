@@ -12,6 +12,7 @@ import {
   DriverImportResult,
   DriverImportRow,
 } from "@app/models/driver-import.model";
+import { AvatarUrlPipe } from "@app/pipes/avatar-url.pipe";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { TranslationService } from "@app/services/translation.service";
 
@@ -44,6 +45,7 @@ describe("ImportModalComponent", () => {
         resolvedNickname: "AliceW",
         selectedResolution: "AUTO_RENAME",
         defaultAudioMode: "file",
+        avatarUrl: "/assets/alice_helmet.png",
         audioSlots: {
           lap: { type: "preset", url: "default_lap.wav" },
         },
@@ -82,7 +84,14 @@ describe("ImportModalComponent", () => {
       "validateDriverImport",
       "commitDriverImport",
       "downloadDriverImportTemplate",
+      "listAssets",
     ]);
+    mockDataService.listAssets.and.returnValue(of([]));
+
+    (mockDataService as any).serverUrl = "http://localhost:7070";
+    (mockDataService as any).resolveAssetUrl = jasmine
+      .createSpy("resolveAssetUrl")
+      .and.callFake((url: string) => url);
 
     mockTranslationService = jasmine.createSpyObj("TranslationService", [
       "translate",
@@ -90,7 +99,12 @@ describe("ImportModalComponent", () => {
     mockTranslationService.translate.and.callFake((key: string) => key);
 
     await TestBed.configureTestingModule({
-      imports: [FormsModule, ImportModalComponent, TranslatePipe],
+      imports: [
+        FormsModule,
+        ImportModalComponent,
+        TranslatePipe,
+        AvatarUrlPipe,
+      ],
       providers: [
         { provide: DataService, useValue: mockDataService },
         { provide: TranslationService, useValue: mockTranslationService },
@@ -735,6 +749,7 @@ describe("ImportModalComponent", () => {
       tick();
 
       expect(mockDataService.commitDriverImport).toHaveBeenCalled();
+      expect(mockDataService.listAssets).toHaveBeenCalled();
       expect(component.importResult).toBe(result);
       expect(component.step).toBe("summary");
       expect(component.isLoading).toBeFalse();
@@ -910,6 +925,80 @@ describe("ImportModalComponent", () => {
       expect(
         fixture.nativeElement.querySelector("#assets-dialog-backdrop"),
       ).toBeTruthy();
+    });
+  });
+
+  describe("Avatar Thumbnail Display & Fallbacks", () => {
+    beforeEach(() => {
+      component.preview = createMockPreview();
+      component.step = "preview";
+      fixture.detectChanges();
+    });
+
+    it("should display avatar thumbnail image when avatarUrl is present", () => {
+      const rows = fixture.nativeElement.querySelectorAll(
+        ".preview-table tbody tr",
+      );
+      const row1Avatar = rows[0].querySelector(".col-avatar");
+      expect(row1Avatar).toBeTruthy();
+
+      const img = row1Avatar.querySelector("img.avatar-thumbnail");
+      expect(img).toBeTruthy();
+      expect(img.getAttribute("src")).toBe(
+        "http://localhost:7070/assets/alice_helmet.png",
+      );
+      expect(img.getAttribute("alt")).toBe("Alice Walker");
+
+      const text = row1Avatar.querySelector(".avatar-text");
+      expect(text.textContent).toContain("/assets/alice_helmet.png");
+    });
+
+    it("should display dash when avatarUrl is missing", () => {
+      const rows = fixture.nativeElement.querySelectorAll(
+        ".preview-table tbody tr",
+      );
+      const row2Avatar = rows[1].querySelector(".col-avatar");
+      expect(row2Avatar.querySelector("img.avatar-thumbnail")).toBeNull();
+      expect(row2Avatar.textContent.trim()).toBe("—");
+    });
+
+    it("should display broken_image fallback icon when avatar image fails to load", () => {
+      const rows = fixture.nativeElement.querySelectorAll(
+        ".preview-table tbody tr",
+      );
+      const img = rows[0].querySelector("img.avatar-thumbnail");
+      expect(img).toBeTruthy();
+
+      component.onAvatarError(1);
+      fixture.detectChanges();
+
+      expect(component.avatarErrors.has(1)).toBeTrue();
+      const row1Avatar = rows[0].querySelector(".col-avatar");
+      expect(row1Avatar.querySelector("img.avatar-thumbnail")).toBeNull();
+
+      const fallbackIcon = row1Avatar.querySelector(".avatar-fallback-icon");
+      expect(fallbackIcon).toBeTruthy();
+      expect(fallbackIcon.textContent.trim()).toBe("broken_image");
+    });
+
+    it("should clear avatarErrors when resetState is called", () => {
+      component.avatarErrors.add(1);
+      expect(component.avatarErrors.size).toBe(1);
+
+      component.resetState();
+      expect(component.avatarErrors.size).toBe(0);
+    });
+
+    it("should clear avatarErrors when startValidation succeeds", () => {
+      component.selectedFile = new File(["test"], "test.csv");
+      component.avatarErrors.add(1);
+      expect(component.avatarErrors.size).toBe(1);
+
+      const previewRes = createMockPreview();
+      mockDataService.validateDriverImport.and.returnValue(of(previewRes));
+
+      component.startValidation();
+      expect(component.avatarErrors.size).toBe(0);
     });
   });
 });

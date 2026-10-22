@@ -207,6 +207,8 @@ export class TestSetupHelper {
       const paths = [
         path.resolve(process.cwd(), "src/app/testing/fonts", filename),
         path.resolve(process.cwd(), "client/src/app/testing/fonts", filename),
+        path.resolve(process.cwd(), "src/assets/fonts", filename),
+        path.resolve(process.cwd(), "client/src/assets/fonts", filename),
         path.resolve(__dirname, "fonts", filename),
       ];
       for (const p of paths) {
@@ -215,8 +217,8 @@ export class TestSetupHelper {
       return "";
     };
 
-    // Serve local Material Icons font file from testing/fonts directory
-    await page.route("**/s/materialicons/**/*.woff2", async (route) => {
+    // Serve local Material Icons font file for both local assets and Google Fonts CDN URLs
+    await page.route("**/*materialicons*.woff2*", async (route) => {
       const filePath = getFontFilePath("materialicons.woff2");
       if (filePath) {
         await route.fulfill({
@@ -229,13 +231,16 @@ export class TestSetupHelper {
       }
     });
 
-    // Serve local Rajdhani font files from testing/fonts directory
-    await page.route("**/s/rajdhani/**/*.woff2", async (route) => {
+    // Serve local Rajdhani font files for both local assets and Google Fonts CDN URLs
+    await page.route("**/*rajdhani*.woff2*", async (route) => {
       const url = route.request().url();
       let filename = "rajdhani-500.woff2";
-      if (url.includes("L0x5DFM4tM2s7KCDQIm32C5yXg")) {
+      if (url.includes("L0x5DFM4tM2s7KCDQIm32C5yXg") || url.includes("-300")) {
         filename = "rajdhani-300.woff2";
-      } else if (url.includes("L0x5DFM4tM2s7KCDQIm3Bx5yXg")) {
+      } else if (
+        url.includes("L0x5DFM4tM2s7KCDQIm3Bx5yXg") ||
+        url.includes("-700")
+      ) {
         filename = "rajdhani-700.woff2";
       }
       const filePath = getFontFilePath(filename);
@@ -968,6 +973,10 @@ export class TestSetupHelper {
         filename = hashMatch[1] + ".png";
       }
 
+      if (filename === "driver_helmet.png") {
+        filename = "red-yellow.png";
+      }
+
       // Try multiple potential base paths
       const potentialPaths = [
         path.resolve(process.cwd(), "client/src/assets/images/defaults"),
@@ -1065,7 +1074,7 @@ export class TestSetupHelper {
       });
 
     // 4. Ensure fonts and layout have settled after text swap
-    // We execute the font loading in the browser, but race it at the Node level with a 2-second timeout
+    // We execute the font loading in the browser, but race it at the Node level with a 5-second timeout
     // to prevent any event loop stalls or fake timer issues from hanging the test suite.
     const fontsEvaluatePromise = page
       .evaluate(async () => {
@@ -1074,6 +1083,8 @@ export class TestSetupHelper {
             document.fonts.load("16px Rajdhani"),
             document.fonts.load("24px Rajdhani"),
             document.fonts.load("700 16px Rajdhani"),
+            document.fonts.load("24px 'Material Icons'", "delete"),
+            document.fonts.load("24px 'Material Icons'"),
             document.fonts.load("16px 'Material Icons'"),
           ]);
           await document.fonts.ready;
@@ -1089,7 +1100,7 @@ export class TestSetupHelper {
       });
 
     const fontsTimeoutPromise = new Promise<void>((resolve) => {
-      setTimeout(resolve, 2000);
+      setTimeout(resolve, 5000);
     });
 
     await Promise.race([fontsEvaluatePromise, fontsTimeoutPromise]);
@@ -2795,5 +2806,26 @@ export class TestSetupHelper {
         };
       }
     }, widgetFilesByFolder);
+  }
+
+  /**
+   * Deterministically blurs all inputs, selects, textareas, and active elements,
+   * yielding to the browser macrotask queue (setTimeout 0) so any component focusNameInput()
+   * timers scheduled during user interactions (e.g. edit mode toggle, add item) complete
+   * before the elements are blurred, avoiding focus ring and cursor blink race conditions.
+   */
+  static async blurActiveElement(page: Page): Promise<void> {
+    await page.evaluate(
+      () =>
+        new Promise((resolve) => {
+          setTimeout(() => {
+            (document.activeElement as HTMLElement)?.blur();
+            document
+              .querySelectorAll("input, select, textarea, button")
+              .forEach((el: any) => el.blur());
+            resolve(true);
+          }, 0);
+        }),
+    );
   }
 }

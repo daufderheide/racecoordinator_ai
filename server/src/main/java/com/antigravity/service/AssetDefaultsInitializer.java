@@ -764,17 +764,20 @@ public class AssetDefaultsInitializer {
       for (Theme t : themes) {
         backfillSingleTheme(t, themeRepo, foundFlags);
       }
-      if (!foundFlags[0]) {
+      if (!foundFlags[0]
+          && !databaseContext.isDefaultArtifactDeleted("theme", Theme.DEFAULT_THEME_ID)) {
         createAndSaveTheme(
             themeRepo, Theme.DEFAULT_THEME_ID, Theme.DEFAULT_THEME_NAME, CustomUI.DEFAULT_UI_ID);
         logger.info("Backfilled default theme with ID {}", Theme.DEFAULT_THEME_ID);
       }
-      if (!foundFlags[1]) {
+      if (!foundFlags[1]
+          && !databaseContext.isDefaultArtifactDeleted("theme", Theme.PRACTICE_THEME_ID)) {
         createAndSaveTheme(
             themeRepo, Theme.PRACTICE_THEME_ID, Theme.PRACTICE_THEME_NAME, CustomUI.PRACTICE_UI_ID);
         logger.info("Backfilled practice theme with ID {}", Theme.PRACTICE_THEME_ID);
       }
-      if (!foundFlags[2]) {
+      if (!foundFlags[2]
+          && !databaseContext.isDefaultArtifactDeleted("theme", Theme.FUEL_THEME_ID)) {
         createAndSaveTheme(
             themeRepo, Theme.FUEL_THEME_ID, Theme.FUEL_THEME_NAME, CustomUI.FUEL_UI_ID);
         logger.info("Backfilled fuel theme with ID {}", Theme.FUEL_THEME_ID);
@@ -986,12 +989,7 @@ public class AssetDefaultsInitializer {
           "audio.min_lap_time", new AudioConfig("tts", null, "Min lap time for {driver.nickname}"));
       updated = true;
     }
-    if (!as.containsKey("audio.drift_lap")
-        || ("preset".equals(as.get("audio.drift_lap").getType())
-            && "default_beep".equals(as.get("audio.drift_lap").getUrl()))) {
-      as.put("audio.drift_lap", new AudioConfig("tts", null, "Drift lap for {driver.nickname}"));
-      updated = true;
-    }
+
     for (Map.Entry<String, AudioConfig> entry : as.entrySet()) {
       AudioConfig ac = entry.getValue();
       if (ac != null && ac.getText() != null && ac.getText().contains("{{")) {

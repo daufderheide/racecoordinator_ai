@@ -80,10 +80,12 @@
         (isEditMode() ? 'EDITOR_TOOLTIP_READ_ONLY' : 'EDITOR_TOOLTIP_EDIT')
           | translate
       "
+      [attr.aria-label]="
+        (isEditMode() ? 'EDITOR_TOOLTIP_READ_ONLY' : 'EDITOR_TOOLTIP_EDIT')
+          | translate
+      "
     >
-      <span class="material-icons">{{
-        isEditMode() ? "visibility" : "edit"
-      }}</span>
+      <span class="material-icons">{{ isEditMode() ? "check" : "edit" }}</span>
     </button>
   }
 

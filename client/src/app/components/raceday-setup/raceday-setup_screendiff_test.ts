@@ -14,6 +14,19 @@ test.describe("Splash Screen Visuals", () => {
     await page.addInitScript(() => {
       // Force deterministic randomness for quote shuffling
       Math.random = () => 0.1;
+
+      // Intercept the 5000ms splash close setTimeout to keep it open indefinitely
+      const originalSetTimeout = window.setTimeout;
+      window.setTimeout = function (
+        handler: TimerHandler,
+        timeout?: number,
+        ...args: any[]
+      ) {
+        if (timeout === 5000) {
+          return 0 as any; // Block the timeout
+        }
+        return originalSetTimeout(handler, timeout, ...args);
+      } as any;
     });
 
     // Mock localized quotes to be stable

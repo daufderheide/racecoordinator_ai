@@ -1,5 +1,6 @@
 import { fakeAsync, flush, TestBed, tick } from "@angular/core/testing";
 import { of, Subject } from "rxjs";
+import { RaceParticipantConverter } from "@app/converters/race_participant.converter";
 import { DataService } from "@app/data.service";
 import { Driver } from "@app/models/driver";
 import {
@@ -16,22 +17,26 @@ import { RaceParticipant } from "@app/race/race_participant";
 import { ChildWindowManagerService } from "./child-window-manager.service";
 import { RaceService } from "./race.service";
 import { RaceConnectionService } from "./race-connection.service";
+import { WakeLockService } from "./wake-lock.service";
 
 describe("RaceConnectionService", () => {
   let service: RaceConnectionService;
   let mockDataService: any;
   let mockRaceService: any;
+  let mockWakeLockService: jasmine.SpyObj<WakeLockService>;
 
   let interfaceEventsSubject: Subject<IInterfaceEvent>;
   let raceUpdateSubject: Subject<any>;
   let lapsSubject: Subject<ILap>;
   let standingsUpdateSubject: Subject<any>;
+  let groupStandingsUpdateSubject: Subject<any>;
 
   beforeEach(() => {
     interfaceEventsSubject = new Subject<IInterfaceEvent>();
     raceUpdateSubject = new Subject<any>();
     lapsSubject = new Subject<ILap>();
     standingsUpdateSubject = new Subject<any>();
+    groupStandingsUpdateSubject = new Subject<any>();
 
     mockDataService = jasmine.createSpyObj("DataService", [
       "getInterfaceEvents",
@@ -69,7 +74,9 @@ describe("RaceConnectionService", () => {
       standingsUpdateSubject.asObservable(),
     );
     mockDataService.getOverallStandingsUpdate.and.returnValue(of({}));
-    mockDataService.getGroupStandingsUpdate.and.returnValue(of({}));
+    mockDataService.getGroupStandingsUpdate.and.returnValue(
+      groupStandingsUpdateSubject.asObservable(),
+    );
     mockDataService.getReactionTimes.and.returnValue(of({}));
     mockDataService.getSegments.and.returnValue(of(null));
     mockDataService.getRaceState.and.returnValue(of(RaceState.NOT_STARTED));
@@ -85,6 +92,9 @@ describe("RaceConnectionService", () => {
       "getCurrentHeat",
       "setCurrentHeat",
       "getHeats",
+      "setHeats",
+      "setParticipants",
+      "setGroupParticipants",
       "clear",
     ]);
     mockRaceService.getHeats.and.returnValue([]);
@@ -94,11 +104,19 @@ describe("RaceConnectionService", () => {
       ],
     });
 
+    mockWakeLockService = jasmine.createSpyObj("WakeLockService", [
+      "request",
+      "release",
+    ]);
+    mockWakeLockService.request.and.resolveTo(true);
+    mockWakeLockService.release.and.resolveTo();
+
     TestBed.configureTestingModule({
       providers: [
         RaceConnectionService,
         { provide: DataService, useValue: mockDataService },
         { provide: RaceService, useValue: mockRaceService },
+        { provide: WakeLockService, useValue: mockWakeLockService },
       ],
     });
     service = TestBed.inject(RaceConnectionService);
@@ -532,6 +550,49 @@ describe("RaceConnectionService", () => {
 
       expect(lane1Driver.addLapTime).toHaveBeenCalled();
       expect(lane0Driver.addLapTime).not.toHaveBeenCalled();
+    });
+
+    it("should forward lap totalTime to addLapTime", () => {
+      const driver = new Driver("d_test", "Driver Test", "DT");
+      const participant = new RaceParticipant("p_test", driver);
+      const hd = new DriverHeatData("dhd_test", participant, 0, driver);
+      spyOn(hd, "addLapTime");
+
+      mockRaceService.getCurrentHeat.and.returnValue({
+        objectId: "heat_test",
+        heatDrivers: [hd],
+      });
+
+      service.connect();
+
+      const lapData: ILap = {
+        objectId: "dhd_test",
+        interfaceId: 0,
+        driverId: "d_test",
+        lapNumber: 1,
+        lapTime: 3.456,
+        averageLapTime: 3.456,
+        medianLapTime: 3.456,
+        bestLapTime: 3.456,
+        adjustedLapCount: 1,
+        totalTime: 3.456,
+      };
+      lapsSubject.next(lapData);
+
+      expect(hd.addLapTime).toHaveBeenCalledWith(
+        1,
+        3.456,
+        3.456,
+        3.456,
+        3.456,
+        1,
+        "d_test",
+        undefined,
+        undefined,
+        jasmine.any(Array),
+        true,
+        3.456,
+      );
     });
 
     it("should update driver adjustedLapCount when FALSE_START lap is received", () => {
@@ -975,6 +1036,80 @@ describe("RaceConnectionService", () => {
       expect((service as any).isRaceEnded).toBeFalse();
       expect(mockDataService.connectToInterfaceDataSocket).toHaveBeenCalled();
       expect(service["raceStateSubject"].value).toBe(RaceState.NOT_STARTED);
+    });
+  });
+
+  describe("WakeLock", () => {
+    it("should request wake lock when race enters active Raceday states", () => {
+      mockWakeLockService.request.calls.reset();
+      (service as any).raceStateSubject.next(RaceState.NOT_STARTED);
+      expect(mockWakeLockService.request).toHaveBeenCalled();
+
+      mockWakeLockService.request.calls.reset();
+      (service as any).raceStateSubject.next(RaceState.STARTING);
+      expect(mockWakeLockService.request).toHaveBeenCalled();
+
+      mockWakeLockService.request.calls.reset();
+      (service as any).raceStateSubject.next(RaceState.RACING);
+      expect(mockWakeLockService.request).toHaveBeenCalled();
+
+      mockWakeLockService.request.calls.reset();
+      (service as any).raceStateSubject.next(RaceState.PAUSED);
+      expect(mockWakeLockService.request).toHaveBeenCalled();
+
+      mockWakeLockService.request.calls.reset();
+      (service as any).raceStateSubject.next(RaceState.HEAT_OVER);
+      expect(mockWakeLockService.request).toHaveBeenCalled();
+
+      mockWakeLockService.request.calls.reset();
+      (service as any).raceStateSubject.next(RaceState.RACE_OVER);
+      expect(mockWakeLockService.request).toHaveBeenCalled();
+    });
+
+    it("should release wake lock when race enters inactive states", () => {
+      mockWakeLockService.release.calls.reset();
+      (service as any).raceStateSubject.next(RaceState.UNKNOWN_STATE);
+      expect(mockWakeLockService.release).toHaveBeenCalled();
+    });
+
+    it("should release wake lock on ngOnDestroy", () => {
+      mockWakeLockService.release.calls.reset();
+      service.ngOnDestroy();
+      expect(mockWakeLockService.release).toHaveBeenCalled();
+    });
+
+    it("should process group standings update without corrupting overall participant ranks", () => {
+      service.connect();
+
+      const overallProto = {
+        objectId: "p-d15",
+        driver: { model: { entityId: "d15" }, name: "Driver 15" },
+        rank: 15,
+      };
+      const overallParticipant =
+        RaceParticipantConverter.fromProto(overallProto);
+      expect(overallParticipant.rank).toBe(15);
+
+      groupStandingsUpdateSubject.next({
+        group: 2,
+        participants: [
+          {
+            objectId: "p-d15",
+            driver: { model: { entityId: "d15" }, name: "Driver 15" },
+            rank: 5,
+          },
+        ],
+      });
+
+      expect(mockRaceService.setGroupParticipants).toHaveBeenCalled();
+      const groupParticipants =
+        mockRaceService.setGroupParticipants.calls.mostRecent().args[0];
+      expect(groupParticipants[0].rank).toBe(5);
+      expect(groupParticipants[0].groupRank).toBe(5);
+
+      // The overall participant must retain its original rank 15!
+      expect(overallParticipant.rank).toBe(15);
+      expect(overallParticipant.groupRank).toBe(5);
     });
   });
 });

@@ -22,6 +22,7 @@ import com.antigravity.service.CameraTunnelService;
 import com.antigravity.service.DatabaseService;
 import com.antigravity.service.ServerConfigService;
 import com.antigravity.service.UpdateService;
+import com.antigravity.util.AppInstanceCoordinator;
 import com.antigravity.util.NetworkUtils;
 import com.antigravity.util.PortConflictInspector;
 import com.antigravity.util.PortConflictReport;
@@ -48,7 +49,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,6 +59,7 @@ public class App {
 
   private static int serverPort = 7070;
   private static Javalin app;
+  private static TrayIcon currentTrayIcon = null;
 
   static {
     String defaultDataDir;
@@ -157,18 +161,40 @@ public class App {
         logger.info("Log Replay Mode Enabled. Reading from {}", logReplayFile);
       }
 
-      boolean headless = false;
+      boolean isHeadlessFlag = false;
       for (String arg : args) {
         if ("--headless".equals(arg)) {
-          headless = true;
+          isHeadlessFlag = true;
         }
       }
+      final boolean headless = isHeadlessFlag;
 
       Runtime.getRuntime()
           .addShutdownHook(
               new Thread(
                   () -> {
                     logger.info("Shutting down server...");
+                    Thread watchdog =
+                        new Thread(
+                            () -> {
+                              try {
+                                Thread.sleep(5000);
+                                logger.warn("Shutdown sequence exceeded 5s timeout. Forcing halt.");
+                                Runtime.getRuntime().halt(0);
+                              } catch (InterruptedException ignored) {
+                              }
+                            },
+                            "Shutdown-Watchdog");
+                    watchdog.setDaemon(true);
+                    watchdog.start();
+
+                    if (currentTrayIcon != null && SystemTray.isSupported()) {
+                      try {
+                        SystemTray.getSystemTray().remove(currentTrayIcon);
+                      } catch (Exception ignored) {
+                      }
+                    }
+
                     ClientSubscriptionManager.getInstance().setShuttingDown(true);
                     if (app != null) {
                       try {
@@ -250,51 +276,24 @@ public class App {
 
       logger.info("Starting Javalin on port {}...", serverPort);
       try {
-        app =
-            Javalin.create(
-                    config -> {
-                      config.addStaticFiles(staticFilePath, Location.EXTERNAL);
-                      config.enableCorsForAllOrigins();
-                      config.maxRequestSize = 250_000_000L;
-
-                      config.accessManager(
-                          (handler, ctx, permittedRoles) -> {
-                            Role userRole = AuthUtil.getRole(ctx);
-                            if (permittedRoles.isEmpty()) {
-                              handler.handle(ctx);
-                              return;
-                            }
-                            boolean allowed = false;
-                            for (io.javalin.core.security.RouteRole role : permittedRoles) {
-                              if (userRole.isAtLeast((Role) role)) {
-                                allowed = true;
-                                break;
-                              }
-                            }
-                            if (allowed) {
-                              handler.handle(ctx);
-                            } else {
-                              if (userRole == Role.VIEWER) {
-                                ctx.status(401).result("Authentication required");
-                              } else {
-                                ctx.status(403).result("Insufficient permissions");
-                              }
-                            }
-                          });
-
-                      config.jsonMapper(new JavalinJackson(new ObjectMapper()));
-                      config.server(
-                          () -> {
-                            org.eclipse.jetty.server.Server server =
-                                new org.eclipse.jetty.server.Server();
-                            server.setStopTimeout(1000);
-                            return server;
-                          });
-                    })
-                .start(serverPort);
+        app = createJavalin(staticFilePath).start(serverPort);
         logger.info("Javalin started successfully on port {}.", serverPort);
       } catch (Exception e) {
-        handlePortConflict(serverPort, headless, e);
+        if (AppInstanceCoordinator.isRaceCoordinatorRunning(serverPort)) {
+          AppInstanceCoordinator.handleAlreadyRunning(
+              serverPort,
+              headless,
+              () -> {
+                try {
+                  app = createJavalin(staticFilePath).start(serverPort);
+                  logger.info("Javalin restarted successfully on port {}.", serverPort);
+                } catch (Exception retryEx) {
+                  handlePortConflict(serverPort, headless, retryEx);
+                }
+              });
+        } else {
+          handlePortConflict(serverPort, headless, e);
+        }
       }
 
       app.before(
@@ -386,6 +385,14 @@ public class App {
                 ctx -> {
                   ClientSubscriptionManager.getInstance().removeSession(ctx);
                 });
+            ws.onError(
+                ctx -> {
+                  logger.debug(
+                      "Race data WebSocket error on session {}: {}",
+                      ctx.getSessionId(),
+                      ctx.error());
+                  ClientSubscriptionManager.getInstance().removeSession(ctx);
+                });
             ws.onBinaryMessage(
                 ctx -> {
                   try {
@@ -417,6 +424,14 @@ public class App {
                   } catch (Exception e) {
                     logger.error("Failed to parse incoming interface event over WebSocket", e);
                   }
+                });
+            ws.onError(
+                ctx -> {
+                  logger.debug(
+                      "Interface WebSocket error on session {}: {}",
+                      ctx.getSessionId(),
+                      ctx.error());
+                  ClientSubscriptionManager.getInstance().removeInterfaceSession(ctx);
                 });
           });
 
@@ -635,8 +650,36 @@ public class App {
           Role.ADMIN);
 
       app.get("/api/version", ctx -> ctx.result(SERVER_VERSION));
+      app.get(
+          "/api/server/status",
+          ctx -> {
+            Map<String, Object> status = new HashMap<>();
+            status.put("version", SERVER_VERSION);
+            status.put(
+                "activeClients", ClientSubscriptionManager.getInstance().getActiveSessionCount());
+            status.put(
+                "pendingShutdown", ClientSubscriptionManager.getInstance().isPendingAutoShutdown());
+            ctx.json(status);
+          });
       app.get("/api/server-ip", ctx -> ctx.result(getLocalIpAddress()));
       CameraTunnelService.registerRoutes(app, CameraTunnelService.getInstance());
+      app.post(
+          "/api/server/shutdown",
+          ctx -> {
+            logger.info("Shutdown requested via /api/server/shutdown from {}", ctx.ip());
+            ctx.status(200).result("Shutting down");
+            new Thread(
+                    () -> {
+                      try {
+                        Thread.sleep(200);
+                      } catch (InterruptedException ignored) {
+                      }
+                      System.exit(0);
+                    },
+                    "RemoteShutdownThread")
+                .start();
+          },
+          Role.ADMIN);
 
       if (!headless) {
         openBrowser("http://localhost:" + serverPort);
@@ -732,13 +775,14 @@ public class App {
 
       trayIcon.setPopupMenu(popup);
       tray.add(trayIcon);
+      currentTrayIcon = trayIcon;
       logger.info("SystemTray icon added.");
     } catch (Exception e) {
       logger.error("Failed to setup SystemTray", e);
     }
   }
 
-  private static void openBrowser(String url) {
+  static void openBrowser(String url) {
     try {
       if (System.getProperty("os.name").toLowerCase().contains("win")) {
         new ProcessBuilder("cmd", "/c", "start", url).start();
@@ -895,5 +939,47 @@ public class App {
     ctx.header("Cache-Control", "no-cache, no-store, must-revalidate");
     ctx.header("Pragma", "no-cache");
     ctx.header("Expires", "0");
+  }
+
+  static Javalin createJavalin(String staticFilePath) {
+    return Javalin.create(
+        config -> {
+          config.addStaticFiles(staticFilePath, Location.EXTERNAL);
+          config.enableCorsForAllOrigins();
+          config.maxRequestSize = 250_000_000L;
+
+          config.accessManager(
+              (handler, ctx, permittedRoles) -> {
+                Role userRole = AuthUtil.getRole(ctx);
+                if (permittedRoles.isEmpty()) {
+                  handler.handle(ctx);
+                  return;
+                }
+                boolean allowed = false;
+                for (io.javalin.core.security.RouteRole role : permittedRoles) {
+                  if (userRole.isAtLeast((Role) role)) {
+                    allowed = true;
+                    break;
+                  }
+                }
+                if (allowed) {
+                  handler.handle(ctx);
+                } else {
+                  if (userRole == Role.VIEWER) {
+                    ctx.status(401).result("Authentication required");
+                  } else {
+                    ctx.status(403).result("Insufficient permissions");
+                  }
+                }
+              });
+
+          config.jsonMapper(new JavalinJackson(new ObjectMapper()));
+          config.server(
+              () -> {
+                org.eclipse.jetty.server.Server server = new org.eclipse.jetty.server.Server();
+                server.setStopTimeout(1000);
+                return server;
+              });
+        });
   }
 }

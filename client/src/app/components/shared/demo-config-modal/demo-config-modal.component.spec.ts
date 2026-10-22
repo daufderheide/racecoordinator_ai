@@ -104,4 +104,72 @@ describe("DemoConfigModalComponent", () => {
     component.resetToInitial();
     expect(component.uiConfig.minLapTime).toBe(1.234);
   });
+
+  it("should configure all time inputs with a step attribute of 0.5 seconds", () => {
+    fixture.componentRef.setInput("visible", true);
+    fixture.detectChanges();
+
+    const groups = fixture.nativeElement.querySelectorAll(".config-group");
+    expect(groups.length).toBe(11);
+
+    const timeFieldLabels = [
+      "RDS_DEMO_MIN_LAP_TIME",
+      "RDS_DEMO_MAX_LAP_TIME",
+      "RDS_DEMO_MIN_REFUEL_TIME",
+      "RDS_DEMO_MAX_REFUEL_TIME",
+      "RDS_DEMO_MIN_REACTION_TIME",
+      "RDS_DEMO_MAX_REACTION_TIME",
+      "RDS_DEMO_MIN_PIT_ENTRY_OFFSET",
+      "RDS_DEMO_MAX_PIT_ENTRY_OFFSET",
+    ];
+
+    const nonTimeFieldLabels = [
+      "RDS_DEMO_NUM_SEGMENTS",
+      "RDS_DEMO_MIN_LAPS_BETWEEN_PITS",
+      "RDS_DEMO_MAX_LAPS_BETWEEN_PITS",
+    ];
+
+    groups.forEach((group: HTMLElement) => {
+      const label = group.querySelector("label")?.textContent?.trim();
+      const input = group.querySelector("input");
+      expect(input).toBeTruthy();
+
+      if (timeFieldLabels.includes(label || "")) {
+        expect(input?.getAttribute("step")).toBe("0.5");
+      } else if (nonTimeFieldLabels.includes(label || "")) {
+        expect(input?.getAttribute("step")).toBeNull();
+      }
+    });
+  });
+
+  it("should convert 0.5s incremented values to milliseconds accurately on confirm", () => {
+    spyOn(component.confirm, "emit");
+    component.uiConfig.minLapTime = 3.5;
+    component.uiConfig.maxLapTime = 5.5;
+    component.uiConfig.minRefuelTime = 4.5;
+    component.uiConfig.maxRefuelTime = 9.5;
+    component.uiConfig.numSegments = 4;
+    component.uiConfig.minLapsBetweenPits = 3;
+    component.uiConfig.maxLapsBetweenPits = 5;
+    component.uiConfig.minReactionTime = 0.5;
+    component.uiConfig.maxReactionTime = 1.0;
+    component.uiConfig.minPitEntryOffset = 1.5;
+    component.uiConfig.maxPitEntryOffset = 2.0;
+
+    component.onConfirm();
+
+    expect(component.confirm.emit).toHaveBeenCalledWith({
+      minLapTimeMs: 3500,
+      maxLapTimeMs: 5500,
+      minRefuelTimeMs: 4500,
+      maxRefuelTimeMs: 9500,
+      numSegments: 4,
+      minLapsBetweenPits: 3,
+      maxLapsBetweenPits: 5,
+      minReactionTimeMs: 500,
+      maxReactionTimeMs: 1000,
+      minPitEntryOffsetMs: 1500,
+      maxPitEntryOffsetMs: 2000,
+    });
+  });
 });

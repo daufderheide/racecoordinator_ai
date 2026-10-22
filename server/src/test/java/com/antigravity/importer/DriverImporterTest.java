@@ -387,4 +387,60 @@ public class DriverImporterTest {
     assertTrue(importedAlonso.getAvatarUrl().startsWith("/assets/"));
     assertTrue(importedAlonso.getAvatarUrl().contains("black-yellow"));
   }
+
+  @Test
+  public void testCommitImportWithOverwritePopulatesUpdatedDriverIds() throws Exception {
+    Driver existing = new Driver("Lewis Hamilton", "Lewis", "lh1", "lh1");
+    driverRepository.insert(existing);
+
+    DriverImportRow row = new DriverImportRow();
+    row.setExistingDriverId("lh1");
+    row.setResolvedName("Lewis Hamilton");
+    row.setResolvedNickname("Sir Lewis");
+    row.setStatus("CONFLICT");
+    row.setSelectedResolution("OVERWRITE");
+
+    Map<String, AudioConfig> audioSlots = new HashMap<>();
+    audioSlots.put("lap", new AudioConfig("preset", "/assets/custom_sound.wav", ""));
+    row.setAudioSlots(audioSlots);
+
+    DriverImportCommitRequest req = new DriverImportCommitRequest(Arrays.asList(row));
+    DriverImportResult result = importer.commitImport(req);
+
+    assertTrue(result.isSuccess());
+    assertEquals(0, result.getImportedCount());
+    assertEquals(1, result.getUpdatedCount());
+    assertEquals(1, result.getUpdatedDriverIds().size());
+    assertEquals("lh1", result.getUpdatedDriverIds().get(0));
+
+    Driver updated = driverRepository.findByEntityId("lh1");
+    assertNotNull(updated);
+    assertEquals("Sir Lewis", updated.getNickname());
+    assertNotNull(updated.getLapAudio());
+    assertEquals("/assets/custom_sound.wav", updated.getLapAudio().getUrl());
+  }
+
+  @Test
+  public void testParseAndValidateCsvDriftLapSound() throws Exception {
+    String csv = "Name,Nickname,Drift Lap Sound\n" + "Takumi Fujiwara,Takumi,tts:Initial D drift\n";
+
+    ByteArrayInputStream bais = new ByteArrayInputStream(csv.getBytes(StandardCharsets.UTF_8));
+    DriverImportPreview preview = importer.parseAndValidate(bais, "drifters.csv", null);
+
+    assertEquals(1, preview.getTotalRows());
+    assertEquals(1, preview.getValidCount());
+    DriverImportRow row = preview.getRows().get(0);
+    assertNotNull(row.getAudioSlots().get("driftLap"));
+    assertEquals("tts", row.getAudioSlots().get("driftLap").getType());
+    assertEquals("Initial D drift", row.getAudioSlots().get("driftLap").getText());
+
+    DriverImportCommitRequest req = new DriverImportCommitRequest(preview.getRows());
+    DriverImportResult result = importer.commitImport(req);
+    assertTrue(result.isSuccess());
+    Driver imported = driverRepository.findByEntityId(result.getCreatedDriverIds().get(0));
+    assertNotNull(imported);
+    assertNotNull(imported.getDriftLapAudio());
+    assertEquals("tts", imported.getDriftLapAudio().getType());
+    assertEquals("Initial D drift", imported.getDriftLapAudio().getText());
+  }
 }

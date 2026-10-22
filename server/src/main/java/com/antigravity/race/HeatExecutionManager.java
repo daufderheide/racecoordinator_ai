@@ -22,6 +22,7 @@ import com.antigravity.race.states.HeatOver;
 import com.antigravity.race.states.RaceOver;
 import com.antigravity.service.RacePredictionService;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -30,6 +31,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,6 +47,9 @@ public class HeatExecutionManager {
             t.setDaemon(true);
             return t;
           });
+  private static final AtomicReference<PendingPredictionData> pendingPrediction =
+      new AtomicReference<>();
+  private static final AtomicBoolean predictionScheduled = new AtomicBoolean(false);
   private Race race;
 
   // Transient heat execution state
@@ -78,6 +85,8 @@ public class HeatExecutionManager {
 
   public void initialize(int laneCount) {
     this.finishedLanes.clear();
+    pendingPrediction.set(null);
+    predictionScheduled.set(false);
     this.refuelDelayRemaining = new double[laneCount];
     this.isRefueling = new boolean[laneCount];
     this.accumulatedRefuelTime = new double[laneCount];
@@ -298,10 +307,17 @@ public class HeatExecutionManager {
           || allowFinish == AllowFinish.NoneAutoSegments
           || finishedLanes.size() >= race.getCurrentHeat().getActiveDriverCount()) {
         // Heat ends
-        if (race.isLastHeat()) {
-          race.changeState(new RaceOver());
-        } else {
-          race.changeState(new HeatOver());
+        if (race.getState() != null
+            && !(race.getState() instanceof HeatOver)
+            && !(race.getState() instanceof RaceOver)) {
+          if (allowFinish == AllowFinish.NoneAutoSegments) {
+            applyEndHeatAutoSegments();
+          }
+          if (race.isLastHeat()) {
+            race.changeState(new RaceOver());
+          } else {
+            race.changeState(new HeatOver());
+          }
         }
       } else {
         // Other drivers still racing so turn off power to this lane
@@ -371,8 +387,12 @@ public class HeatExecutionManager {
 
     if (lapCounted) {
       timeSinceLastLap[lane] = 0.0;
-      if (isDrift && this.race.getStatistics() != null) {
-        this.race.getStatistics().incrementDriftLapCount();
+      driverData.setCarryOverTime(0.0);
+      if (isDrift) {
+        driverData.setAutoCalculatedLaps(0.0);
+        if (this.race.getStatistics() != null) {
+          this.race.getStatistics().incrementDriftLapCount();
+        }
       }
     }
 
@@ -847,6 +867,7 @@ public class HeatExecutionManager {
               .setType(Lap.LapType.REACTION_TIME)
               .setFlag(race.getState().getLaneFlagType(race, lane))
               .setFuelLevel(driverData.getDriver().getFuelLevel())
+              .setTotalTime(driverData.getTotalTime())
               .build();
       driverData.setFlag(rtMsg.getFlag());
 
@@ -959,6 +980,7 @@ public class HeatExecutionManager {
             .setRecordTier(recordTier)
             .setIsNewRaceLeader(isNewRaceLeader)
             .setIsNewHeatLeader(isNewHeatLeader)
+            .setTotalTime(driverData.getTotalTime())
             .build();
     driverData.setFlag(lapMsg.getFlag());
 
@@ -1185,12 +1207,204 @@ public class HeatExecutionManager {
           && race.getRaceTime() < 0) {
         overshoot = -race.getRaceTime();
       }
+      int heatNum =
+          (race != null && race.getCurrentHeat() != null)
+              ? race.getCurrentHeat().getHeatNumber()
+              : -1;
+      List<DriverHeatData> drivers =
+          (race != null && race.getCurrentHeat() != null)
+              ? race.getCurrentHeat().getDrivers()
+              : null;
+
+      logger.info(
+          "AutoSegments (SingleLapAutoSegments) capturing partial lap times for Heat {}: raceTime={}s, overshoot={}s",
+          heatNum,
+          race != null ? race.getRaceTime() : 0.0,
+          overshoot);
+
       for (int i = 0; i < timeSinceLastLap.length; i++) {
+        String driverName =
+            (drivers != null
+                    && i < drivers.size()
+                    && drivers.get(i) != null
+                    && drivers.get(i).getDriver() != null
+                    && drivers.get(i).getDriver().getDriver() != null)
+                ? drivers.get(i).getDriver().getDriver().getName()
+                : "Lane " + (i + 1);
+
         if (!finishedLanes.contains(i)) {
           partialLapTimes[i] = Math.max(0.0, timeSinceLastLap[i] - overshoot);
+          logger.info(
+              "AutoSegments (SingleLapAutoSegments) Heat {} Lane {} ({}): timeSinceLastLap={}s, overshoot={}s, capturedPartialLapTime={}s",
+              heatNum,
+              i,
+              driverName,
+              timeSinceLastLap[i],
+              overshoot,
+              partialLapTimes[i]);
+        } else {
+          logger.info(
+              "AutoSegments (SingleLapAutoSegments) Heat {} Lane {} ({}): already finished, skipped partial lap time capture",
+              heatNum,
+              i,
+              driverName);
         }
       }
     }
+  }
+
+  public static void calculateAutoSegments(Race race, HeatExecutionManager executionManager) {
+    if (race == null || race.getCurrentHeat() == null) {
+      return;
+    }
+
+    HeatScoring scoring = race.getRaceModel() != null ? race.getRaceModel().getHeatScoring() : null;
+    if (scoring == null) {
+      return;
+    }
+
+    boolean isLapBased = scoring.getFinishMethod() == FinishMethod.Lap;
+    long limit = scoring.getFinishValue();
+    double[] times = executionManager != null ? executionManager.getTimeSinceLastLap() : null;
+    Set<Integer> finishedLanes =
+        executionManager != null ? executionManager.getFinishedLanes() : Collections.emptySet();
+    List<DriverHeatData> drivers = race.getCurrentHeat().getDrivers();
+    if (drivers == null) {
+      return;
+    }
+
+    int heatNum = race.getCurrentHeat().getHeatNumber();
+    logger.info(
+        "AutoSegments (NoneAutoSegments) calculating for Heat {}: isLapBased={}, finishValue={}",
+        heatNum,
+        isLapBased,
+        limit);
+
+    for (int i = 0; i < drivers.size(); i++) {
+      DriverHeatData dhd = drivers.get(i);
+      if (dhd == null) {
+        continue;
+      }
+
+      if (finishedLanes.contains(i)) {
+        continue;
+      }
+
+      String driverName =
+          (dhd.getDriver() != null && dhd.getDriver().getDriver() != null)
+              ? dhd.getDriver().getDriver().getName()
+              : "Lane " + (i + 1);
+
+      if (isLapBased && dhd.getLapCount() >= limit) {
+        dhd.setAutoCalculatedLaps(0.0);
+        logger.info(
+            "AutoSegments (NoneAutoSegments) Heat {} Lane {} ({}): reached lap limit {} (laps={}), autoCalculatedLaps=0.0",
+            heatNum,
+            i,
+            driverName,
+            limit,
+            dhd.getLapCount());
+      } else {
+        double median = dhd.getMedianLapTime();
+        if (median <= 0) {
+          dhd.setAutoCalculatedLaps(0.0);
+          logger.info(
+              "AutoSegments (NoneAutoSegments) Heat {} Lane {} ({}): median lap time <= 0 ({}), autoCalculatedLaps=0.0",
+              heatNum,
+              i,
+              driverName,
+              median);
+        } else {
+          double time = (times != null && i < times.length) ? times[i] : 0.0;
+          double rawSegments = time / median;
+          double segments = rawSegments;
+          boolean capped = false;
+          if (segments >= 1.0) {
+            segments = 0.99;
+            capped = true;
+          } else if (segments < 0.0) {
+            segments = 0.0;
+          }
+          dhd.setAutoCalculatedLaps(segments);
+          logger.info(
+              "AutoSegments (NoneAutoSegments) Heat {} Lane {} ({}): timeSinceLastLap={}s, medianLapTime={}s, rawRatio={}, autoCalculatedLaps={}{}, totalAdjustedLaps={}",
+              heatNum,
+              i,
+              driverName,
+              time,
+              median,
+              rawSegments,
+              segments,
+              capped ? " (capped at 0.99)" : "",
+              dhd.getAdjustedLapCount());
+        }
+      }
+    }
+  }
+
+  public void calculateAutoSegments() {
+    calculateAutoSegments(race, this);
+  }
+
+  public static void applyEndHeatAutoSegments(Race race, HeatExecutionManager executionManager) {
+    if (race == null) {
+      return;
+    }
+    HeatScoring scoring = race.getRaceModel() != null ? race.getRaceModel().getHeatScoring() : null;
+    if (scoring == null || scoring.getAllowFinish() != AllowFinish.NoneAutoSegments) {
+      return;
+    }
+
+    calculateAutoSegments(race, executionManager);
+
+    StandingsUpdate update = null;
+    if (race.getCurrentHeat() != null && race.getCurrentHeat().getHeatStandings() != null) {
+      update = race.getCurrentHeat().getHeatStandings().updateStandings();
+    }
+    race.recalculateOverallStandings();
+
+    RaceData.Builder finishBuilder = RaceData.newBuilder();
+    if (update != null) {
+      finishBuilder.setStandingsUpdate(update);
+    }
+    race.populateOverallStandings(finishBuilder);
+    if (race.getCurrentHeat() != null) {
+      finishBuilder.setHeat(HeatConverter.toProto(race.getCurrentHeat(), new HashSet<>()));
+    }
+    race.broadcast(finishBuilder.build());
+  }
+
+  public void applyEndHeatAutoSegments() {
+    applyEndHeatAutoSegments(race, this);
+  }
+
+  public static void removePauseAutoSegments(Race race, HeatExecutionManager executionManager) {
+    if (race == null || race.getCurrentHeat() == null) {
+      return;
+    }
+
+    Set<Integer> finishedLanes =
+        executionManager != null ? executionManager.getFinishedLanes() : Collections.emptySet();
+    List<DriverHeatData> drivers = race.getCurrentHeat().getDrivers();
+    if (drivers == null) {
+      return;
+    }
+
+    for (int i = 0; i < drivers.size(); i++) {
+      DriverHeatData dhd = drivers.get(i);
+      if (dhd == null) {
+        continue;
+      }
+
+      if (finishedLanes.contains(i)) {
+        continue;
+      }
+      dhd.setAutoCalculatedLaps(0.0);
+    }
+  }
+
+  public void removePauseAutoSegments() {
+    removePauseAutoSegments(race, this);
   }
 
   private boolean isSingleLapAutoSegmentsFinish(HeatScoring scoring) {
@@ -1216,8 +1430,10 @@ public class HeatExecutionManager {
     if (median > 0) {
       pctTraveled = partial / median;
     }
+    boolean capped = false;
     if (pctTraveled >= 1.0) {
       pctTraveled = 0.99;
+      capped = true;
     } else if (pctTraveled < 0.0) {
       pctTraveled = 0.0;
     }
@@ -1226,14 +1442,28 @@ public class HeatExecutionManager {
     finishedLanes.add(lane);
     driverData.setFinished(true);
     driverData.setFlag(race.getState().getLaneFlagType(race, lane));
+
+    int heatNum =
+        (race != null && race.getCurrentHeat() != null)
+            ? race.getCurrentHeat().getHeatNumber()
+            : -1;
+    String driverName =
+        (driverData.getDriver() != null && driverData.getDriver().getDriver() != null)
+            ? driverData.getDriver().getDriver().getName()
+            : "Lane " + (lane + 1);
+
     logger.info(
-        "Driver {} finished single lap (auto segments) on lane {}: partial={}s, lap={}s, median={}s, autoLaps={}",
-        driverData.getDriver().getDriver().getName(),
+        "AutoSegments (SingleLapAutoSegments) Heat {} Lane {} ({}): partialTime={}s, finalLapTime={}s, medianLapTime={}s, rawRatio={}, autoCalculatedLaps={}{}, totalAdjustedLaps={}",
+        heatNum,
         lane,
+        driverName,
         partial,
         finalLapTime,
         median,
-        pctTraveled);
+        median > 0 ? (partial / median) : 0.0,
+        pctTraveled,
+        capped ? " (capped at 0.99)" : "",
+        driverData.getAdjustedLapCount());
 
     race.setLanePower(false, lane);
 
@@ -1255,10 +1485,14 @@ public class HeatExecutionManager {
     this.race.broadcast(finishDataBuilder.build());
 
     if (finishedLanes.size() >= race.getCurrentHeat().getActiveDriverCount()) {
-      if (race.isLastHeat()) {
-        race.changeState(new RaceOver());
-      } else {
-        race.changeState(new HeatOver());
+      if (race.getState() != null
+          && !(race.getState() instanceof HeatOver)
+          && !(race.getState() instanceof RaceOver)) {
+        if (race.isLastHeat()) {
+          race.changeState(new RaceOver());
+        } else {
+          race.changeState(new HeatOver());
+        }
       }
     }
   }
@@ -1349,19 +1583,91 @@ public class HeatExecutionManager {
       com.antigravity.models.Race raceModel = this.race.getRaceModel(); // fqn-collision
       List<RaceParticipant> drivers = new ArrayList<>(this.race.getDrivers());
       boolean demoMode = this.race.isDemoMode();
-      RacePredictionService predictionService = RacePredictionService.getInstance();
 
-      predictionExecutor.submit(
-          () -> {
-            try {
-              predictionService.updateRealtimePrediction(
-                  dbCtx, raceId, raceModel, drivers, heats, heatIdx, actualDriverStates, demoMode);
-            } catch (Exception e) {
-              logger.error("Error updating realtime prediction on lap in background", e);
-            }
-          });
+      RacePredictionService predictionService = RacePredictionService.getInstance();
+      PendingPredictionData data =
+          new PendingPredictionData(
+              predictionService,
+              dbCtx,
+              raceId,
+              raceModel,
+              drivers,
+              heats,
+              heatIdx,
+              actualDriverStates,
+              demoMode);
+      pendingPrediction.set(data);
+
+      if (predictionScheduled.compareAndSet(false, true)) {
+        predictionExecutor.submit(HeatExecutionManager::processPendingPrediction);
+      }
     } catch (Exception e) {
       logger.error("Error updating realtime prediction on lap", e);
+    }
+  }
+
+  private static void processPendingPrediction() {
+    PendingPredictionData data = pendingPrediction.getAndSet(null);
+    predictionScheduled.set(false);
+    if (data != null) {
+      try {
+        data.predictionService.updateRealtimePrediction(
+            data.dbCtx,
+            data.raceId,
+            data.raceModel,
+            data.drivers,
+            data.heats,
+            data.heatIdx,
+            data.actualDriverStates,
+            data.demoMode);
+      } catch (Exception e) {
+        logger.error("Error updating realtime prediction on lap in background", e);
+      }
+    }
+    if (pendingPrediction.get() != null && predictionScheduled.compareAndSet(false, true)) {
+      predictionExecutor.submit(HeatExecutionManager::processPendingPrediction);
+    }
+  }
+
+  public static void flushPredictions() {
+    try {
+      for (int i = 0; i < 2; i++) {
+        predictionExecutor.submit(() -> {}).get(2, TimeUnit.SECONDS);
+      }
+    } catch (Exception ignored) {
+    }
+  }
+
+  private static class PendingPredictionData {
+    final RacePredictionService predictionService;
+    final DatabaseContext dbCtx;
+    final String raceId;
+    final com.antigravity.models.Race raceModel; // fqn-collision
+    final List<RaceParticipant> drivers;
+    final List<Heat> heats;
+    final int heatIdx;
+    final Map<String, DriverHeatState> actualDriverStates;
+    final boolean demoMode;
+
+    PendingPredictionData(
+        RacePredictionService predictionService,
+        DatabaseContext dbCtx,
+        String raceId,
+        com.antigravity.models.Race raceModel, // fqn-collision
+        List<RaceParticipant> drivers,
+        List<Heat> heats,
+        int heatIdx,
+        Map<String, DriverHeatState> actualDriverStates,
+        boolean demoMode) {
+      this.predictionService = predictionService;
+      this.dbCtx = dbCtx;
+      this.raceId = raceId;
+      this.raceModel = raceModel;
+      this.drivers = drivers;
+      this.heats = heats;
+      this.heatIdx = heatIdx;
+      this.actualDriverStates = actualDriverStates;
+      this.demoMode = demoMode;
     }
   }
 }

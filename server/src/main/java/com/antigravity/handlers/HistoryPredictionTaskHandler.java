@@ -25,6 +25,7 @@ import com.antigravity.util.RequestContextUtils;
 import com.antigravity.util.SeasonPointsCalculator;
 import io.javalin.Javalin;
 import io.javalin.http.Context;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -261,8 +262,6 @@ public class HistoryPredictionTaskHandler {
           u.containsKey("laneIndex")
               ? ((Number) u.get("laneIndex")).intValue()
               : ((Number) u.get("lane")).intValue();
-      double userLaps = ((Number) u.get("userLaps")).doubleValue();
-
       Heat targetHeat = null;
       for (Heat h : race.getHeats()) {
         if (h.getHeatNumber() == heatNumber) {
@@ -276,8 +275,20 @@ public class HistoryPredictionTaskHandler {
       if (lane < 0 || lane >= targetHeat.getDrivers().size()) {
         return "Invalid lane index: " + lane;
       }
-      targetHeat.getDrivers().get(lane).setUserLaps(userLaps);
-      heatsToRecalc.add(targetHeat);
+      boolean updated = false;
+      if (u.containsKey("userLaps")) {
+        double userLaps = ((Number) u.get("userLaps")).doubleValue();
+        targetHeat.getDrivers().get(lane).setUserLaps(userLaps);
+        updated = true;
+      }
+      if (u.containsKey("userTime")) {
+        double userTime = ((Number) u.get("userTime")).doubleValue();
+        targetHeat.getDrivers().get(lane).setUserTime(userTime);
+        updated = true;
+      }
+      if (updated) {
+        heatsToRecalc.add(targetHeat);
+      }
     }
 
     for (Heat h : heatsToRecalc) {
@@ -488,7 +499,8 @@ public class HistoryPredictionTaskHandler {
 
     if (activeRace != null && activeRace.getDrivers() != null) {
       Set<String> activeDriverIds = new HashSet<>();
-      for (RaceParticipant rp : activeRace.getDrivers()) {
+      List<RaceParticipant> activeDrivers = new ArrayList<>(activeRace.getDrivers());
+      for (RaceParticipant rp : activeDrivers) {
         if (rp != null && !PredictionEngine.isParticipantEmpty(rp)) {
           String pId = PredictionEngine.getParticipantId(rp);
           if (pId != null && !pId.isEmpty() && !"EMPTY_LANE".equals(pId)) {
@@ -570,7 +582,8 @@ public class HistoryPredictionTaskHandler {
       return false;
     }
     long recordTimestamp = record.getTimestamp();
-    for (RaceParticipant rp : activeRace.getDrivers()) {
+    List<RaceParticipant> activeDrivers = new ArrayList<>(activeRace.getDrivers());
+    for (RaceParticipant rp : activeDrivers) {
       if (rp != null && !PredictionEngine.isParticipantEmpty(rp)) {
         String driverId = PredictionEngine.getParticipantId(rp);
         if (driverId != null && !driverId.isEmpty()) {
@@ -666,19 +679,28 @@ public class HistoryPredictionTaskHandler {
     }
 
     try {
+      List<RaceParticipant> participants =
+          activeRace.getDrivers() != null
+              ? new ArrayList<>(activeRace.getDrivers())
+              : Collections.emptyList();
+      List<Heat> heats =
+          activeRace.getHeats() != null
+              ? new ArrayList<>(activeRace.getHeats())
+              : Collections.emptyList();
+
       RacePredictionService.getInstance()
           .generateAndSavePreRacePrediction(
               dbContext,
               activeRaceId,
               activeRace.getRaceModel(),
-              activeRace.getDrivers(),
-              activeRace.getHeats(),
+              participants,
+              heats,
               scope.isDemo(),
               true);
 
       int currentHeatIdx =
-          activeRace.getHeats() != null && activeRace.getCurrentHeat() != null
-              ? activeRace.getHeats().indexOf(activeRace.getCurrentHeat())
+          heats != null && activeRace.getCurrentHeat() != null
+              ? heats.indexOf(activeRace.getCurrentHeat())
               : 0;
       if (currentHeatIdx < 0) {
         currentHeatIdx = 0;
@@ -692,8 +714,8 @@ public class HistoryPredictionTaskHandler {
               dbContext,
               activeRaceId,
               activeRace.getRaceModel(),
-              activeRace.getDrivers(),
-              activeRace.getHeats(),
+              participants,
+              heats,
               currentHeatIdx,
               actualLaps,
               scope.isDemo());

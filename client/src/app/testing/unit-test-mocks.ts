@@ -56,6 +56,9 @@ export const mockDataService = {
     .createSpy("resetLaneHeatData")
     .and.returnValue(of(true)),
   uploadAsset: jasmine.createSpy("uploadAsset").and.returnValue(of(true)),
+  exportDrivers: jasmine
+    .createSpy("exportDrivers")
+    .and.returnValue(of(new Blob([]))),
   getCurrentDatabase: jasmine
     .createSpy("getCurrentDatabase")
     .and.returnValue(of({ name: "test_db" })),
@@ -63,6 +66,10 @@ export const mockDataService = {
     .createSpy("getServerVersion")
     .and.returnValue(of("1.0.0")),
   connectToRaceDataSocket: jasmine.createSpy("connectToRaceDataSocket"),
+  disconnectFromRaceDataSocket: jasmine.createSpy(
+    "disconnectFromRaceDataSocket",
+  ),
+  disconnectAllSockets: jasmine.createSpy("disconnectAllSockets"),
   getServerAnalyticsConfig: jasmine
     .createSpy("getServerAnalyticsConfig")
     .and.returnValue(of({ measurementId: "G-TEST", clientId: "test-client" })),
@@ -273,9 +280,12 @@ export function resetMocks() {
   mockDataService.getRaces.and.callFake(() => of(deepCopy(MOCK_RACES)));
   mockDataService.getEvents.and.returnValue(of([]));
   mockDataService.listAssets.and.returnValue(of([]));
+  mockDataService.exportDrivers.and.returnValue(of(new Blob([])));
   mockDataService.resetLaneHeatData.and.returnValue(of(true));
   mockDataService.getDatabases.and.returnValue(of([]));
   mockDataService.connectToRaceDataSocket.and.stub();
+  mockDataService.disconnectFromRaceDataSocket.and.stub();
+  mockDataService.disconnectAllSockets.and.stub();
   mockDataService.getRaceUpdate.and.returnValue(new Subject().asObservable());
   mockDataService.getRaceTime.and.returnValue(new Subject().asObservable());
   mockDataService.getLaps.and.returnValue(new Subject().asObservable());

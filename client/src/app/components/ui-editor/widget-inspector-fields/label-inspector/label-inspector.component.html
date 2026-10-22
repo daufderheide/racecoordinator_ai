@@ -1,0 +1,258 @@
+@if (settings()) {
+  <div class="inspector-geometry-title">
+    {{ "UE_INSPECTOR_LABEL_SETTINGS" | translate }}
+  </div>
+
+  <!-- Label Text -->
+  <div class="inspector-section">
+    <label class="inspector-label">{{
+      "UE_INSPECTOR_LABEL_TEXT" | translate
+    }}</label>
+    <input
+      type="text"
+      class="inspector-input"
+      [(ngModel)]="settings().text"
+      (input)="onSettingsChange()"
+      [placeholder]="'UE_GRID_LABEL_PLACEHOLDER' | translate"
+      autocomplete="off"
+      data-dashlane-ignore="true"
+      data-1p-ignore="true"
+      data-lpignore="true"
+      data-bwignore="true"
+      data-form-type="other"
+    />
+  </div>
+
+  <!-- Font Family -->
+  <div class="inspector-section">
+    <label class="inspector-label">{{
+      "UE_INSPECTOR_FONT_FAMILY" | translate
+    }}</label>
+    <div class="select-container select-sm">
+      <app-custom-select
+        [(ngModel)]="settings().fontFamily"
+        (change)="onSettingsChange()"
+        (focus)="fontService.loadLocalFonts()"
+        (click)="fontService.loadLocalFonts()"
+      >
+        <app-custom-option value="">
+          {{ "UE_INSPECTOR_FONT_THEME_DEFAULT" | translate }}
+        </app-custom-option>
+        @for (font of fontService.availableFonts(); track font) {
+          <app-custom-option [value]="font">{{ font }}</app-custom-option>
+        }
+      </app-custom-select>
+    </div>
+  </div>
+
+  <!-- Font Size -->
+  <div class="inspector-section">
+    <div class="inspector-label-row">
+      <label class="inspector-label">{{
+        "UE_INSPECTOR_FONT_SIZE" | translate
+      }}</label>
+      <span class="inspector-val-badge">{{ settings().fontSize || 18 }}px</span>
+    </div>
+    <input
+      type="range"
+      min="8"
+      max="120"
+      [(ngModel)]="settings().fontSize"
+      (change)="onSettingsChange()"
+      class="inspector-slider"
+    />
+  </div>
+
+  <!-- Bold & Italic Toggles -->
+  <div class="inspector-section" style="display: flex; gap: 16px">
+    <label class="form-check-label">
+      <input
+        type="checkbox"
+        class="form-checkbox"
+        [(ngModel)]="settings().fontBold"
+        (change)="onSettingsChange()"
+      />
+      <span>{{ "UE_INSPECTOR_FONT_BOLD" | translate }}</span>
+    </label>
+    <label class="form-check-label">
+      <input
+        type="checkbox"
+        class="form-checkbox"
+        [(ngModel)]="settings().fontItalic"
+        (change)="onSettingsChange()"
+      />
+      <span>{{ "UE_INSPECTOR_FONT_ITALIC" | translate }}</span>
+    </label>
+  </div>
+
+  <!-- Alignment -->
+  <div class="inspector-section">
+    <label class="inspector-label">{{
+      "UE_INSPECTOR_ALIGNMENT" | translate
+    }}</label>
+    <div class="select-container select-sm">
+      <app-custom-select
+        [(ngModel)]="settings().alignment"
+        (change)="onSettingsChange()"
+      >
+        <app-custom-option value="left">
+          {{ "UE_INSPECTOR_ALIGN_LEFT" | translate }}
+        </app-custom-option>
+        <app-custom-option value="center">
+          {{ "UE_INSPECTOR_ALIGN_CENTER" | translate }}
+        </app-custom-option>
+        <app-custom-option value="right">
+          {{ "UE_INSPECTOR_ALIGN_RIGHT" | translate }}
+        </app-custom-option>
+      </app-custom-select>
+    </div>
+  </div>
+
+  <!-- Text Color -->
+  <div class="inspector-section">
+    <label class="inspector-label">{{
+      "UE_INSPECTOR_TEXT_COLOR" | translate
+    }}</label>
+    <div class="color-picker-wrapper" [class.is-null]="!settings().textColor">
+      <input
+        type="color"
+        [value]="settings().textColor || '#ffffff'"
+        (change)="onColorChange('textColor', $event)"
+        class="color-picker-input"
+      />
+      @if (settings().textColor) {
+        <button
+          type="button"
+          class="color-reset-btn"
+          (click)="resetColor('textColor')"
+          [title]="'UE_INSPECTOR_RESET_COLOR' | translate"
+        >
+          <span class="material-icons">restart_alt</span>
+        </button>
+      }
+    </div>
+  </div>
+
+  <!-- Background Color -->
+  <div class="inspector-section">
+    <label class="inspector-label">{{
+      "UE_INSPECTOR_BACKGROUND_COLOR" | translate
+    }}</label>
+    <div
+      class="color-picker-wrapper"
+      [class.is-null]="!settings().backgroundColor"
+    >
+      <input
+        type="color"
+        [value]="settings().backgroundColor || '#0f172a'"
+        (change)="onColorChange('backgroundColor', $event)"
+        class="color-picker-input"
+      />
+      @if (settings().backgroundColor) {
+        <button
+          type="button"
+          class="color-reset-btn"
+          (click)="resetColor('backgroundColor')"
+          [title]="'UE_INSPECTOR_RESET_COLOR' | translate"
+        >
+          <span class="material-icons">restart_alt</span>
+        </button>
+      }
+    </div>
+  </div>
+
+  <hr class="inspector-divider" />
+
+  <!-- Border Styling Section -->
+  <div class="inspector-geometry-title">
+    {{ "UE_INSPECTOR_SHOW_BORDER" | translate }}
+  </div>
+
+  <div class="inspector-section" style="margin-bottom: 8px">
+    <label class="form-check-label">
+      <input
+        type="checkbox"
+        class="form-checkbox"
+        [(ngModel)]="settings().showBorder"
+        (change)="onSettingsChange()"
+      />
+      <span>{{ "UE_INSPECTOR_SHOW_BORDER" | translate }}</span>
+    </label>
+  </div>
+
+  @if (settings().showBorder) {
+    <!-- Border Color -->
+    <div class="inspector-section" style="margin-bottom: 8px">
+      <label class="inspector-label">{{
+        "UE_INSPECTOR_BORDER_COLOR" | translate
+      }}</label>
+      <div
+        class="color-picker-wrapper"
+        [class.is-null]="!settings().borderColor"
+      >
+        <input
+          type="color"
+          [value]="settings().borderColor || settings().textColor || '#ffffff'"
+          (change)="onColorChange('borderColor', $event)"
+          class="color-picker-input"
+        />
+        @if (settings().borderColor) {
+          <button
+            type="button"
+            class="color-reset-btn"
+            (click)="resetColor('borderColor')"
+            [title]="'UE_INSPECTOR_RESET_COLOR' | translate"
+          >
+            <span class="material-icons">restart_alt</span>
+          </button>
+        }
+      </div>
+    </div>
+
+    <!-- Border Width -->
+    <div class="inspector-section" style="margin-bottom: 8px">
+      <div class="inspector-label-row">
+        <label class="inspector-label">{{
+          "UE_INSPECTOR_BORDER_WIDTH" | translate
+        }}</label>
+        <span class="inspector-val-badge"
+          >{{
+            settings().borderWidth != null ? settings().borderWidth : 1
+          }}px</span
+        >
+      </div>
+      <input
+        type="range"
+        min="0"
+        max="10"
+        step="1"
+        [(ngModel)]="settings().borderWidth"
+        (change)="onSettingsChange()"
+        class="inspector-slider"
+      />
+    </div>
+
+    <!-- Border Radius -->
+    <div class="inspector-section" style="margin-bottom: 8px">
+      <div class="inspector-label-row">
+        <label class="inspector-label">{{
+          "UE_INSPECTOR_BORDER_RADIUS" | translate
+        }}</label>
+        <span class="inspector-val-badge"
+          >{{
+            settings().borderRadius != null ? settings().borderRadius : 4
+          }}px</span
+        >
+      </div>
+      <input
+        type="range"
+        min="0"
+        max="32"
+        step="1"
+        [(ngModel)]="settings().borderRadius"
+        (change)="onSettingsChange()"
+        class="inspector-slider"
+      />
+    </div>
+  }
+}

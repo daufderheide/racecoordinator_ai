@@ -1,5 +1,6 @@
 import { TestbedHarnessEnvironment } from "@angular/cdk/testing/testbed";
 import { ComponentFixture, TestBed } from "@angular/core/testing";
+import { LaneGridAnimationHelper } from "@app/components/raceday/utils/lane-grid-animation.helper";
 import { AbsoluteWidgetNode } from "@app/models/settings";
 import { TranslationService } from "@app/services/translation.service";
 import { mockTranslationService } from "@app/testing/unit-test-mocks";
@@ -412,7 +413,7 @@ describe("RacedayAbsoluteWidgetComponent", () => {
     expect(wrapper.style.zIndex).toBe("120");
   });
 
-  it("should always apply top zIndex (>= 10000) for countdown widget in both customizing and live modes", () => {
+  it("should always apply top zIndex (>= 100000) for countdown widget in both customizing and live modes", () => {
     mockWidget.widgetType = "countdown";
     mockWidget.zIndex = 105;
     fixture.componentRef.setInput("widget", { ...mockWidget });
@@ -420,11 +421,48 @@ describe("RacedayAbsoluteWidgetComponent", () => {
     fixture.detectChanges();
 
     const wrapper = fixture.nativeElement.querySelector(".widget-wrapper");
-    expect(parseInt(wrapper.style.zIndex, 10)).toBeGreaterThanOrEqual(10000);
+    expect(parseInt(wrapper.style.zIndex, 10)).toBeGreaterThanOrEqual(100000);
 
     fixture.componentRef.setInput("isCustomizing", false);
     fixture.detectChanges();
-    expect(parseInt(wrapper.style.zIndex, 10)).toBeGreaterThanOrEqual(10000);
+    expect(parseInt(wrapper.style.zIndex, 10)).toBeGreaterThanOrEqual(100000);
+  });
+
+  it("should ensure countdown widget has strictly higher zIndex than menu-bar in live mode", () => {
+    mockWidget.widgetType = "menu-bar";
+    mockWidget.zIndex = 100;
+    fixture.componentRef.setInput("widget", { ...mockWidget });
+    fixture.componentRef.setInput("isCustomizing", false);
+    fixture.detectChanges();
+    const menuZ = component.computedZIndex;
+
+    mockWidget.widgetType = "countdown";
+    mockWidget.zIndex = 100;
+    fixture.componentRef.setInput("widget", { ...mockWidget });
+    fixture.detectChanges();
+    const countdownZ = component.computedZIndex;
+
+    expect(menuZ).toBe(99999);
+    expect(countdownZ).toBeGreaterThan(menuZ);
+  });
+
+  it("should compute stylesheet z-index of 99999 for menu-bar and 100000 for countdown in DOM", () => {
+    mockWidget.widgetType = "menu-bar";
+    mockWidget.zIndex = 100;
+    fixture.componentRef.setInput("widget", { ...mockWidget });
+    fixture.componentRef.setInput("isCustomizing", false);
+    fixture.detectChanges();
+
+    const menuWrapper = fixture.nativeElement.querySelector(".widget-wrapper");
+    expect(window.getComputedStyle(menuWrapper).zIndex).toBe("99999");
+
+    mockWidget.widgetType = "countdown";
+    fixture.componentRef.setInput("widget", { ...mockWidget });
+    fixture.detectChanges();
+
+    const countdownWrapper =
+      fixture.nativeElement.querySelector(".widget-wrapper");
+    expect(window.getComputedStyle(countdownWrapper).zIndex).toBe("100000");
   });
 
   it("should render next-heat widget with custom settings in fixed scale mode", () => {
@@ -660,6 +698,674 @@ describe("RacedayAbsoluteWidgetComponent", () => {
 
       const message = placeholder.querySelector("span:not(.material-icons)");
       expect(message?.textContent?.trim()).toBe("Syntax error in template");
+    });
+  });
+
+  describe("Grid context & crosshair highlighting", () => {
+    it("should compute smart widgetLabel for lane-column widgets and default for other widgets", () => {
+      expect(component.widgetLabel).toBe("timer");
+
+      const headerWidget = {
+        ...mockWidget,
+        widgetType: "lane-column",
+        customSettings: {
+          gridId: "g1",
+          isHeaderWidget: true,
+          customLabel: "Nick",
+        },
+      };
+      fixture.componentRef.setInput("widget", headerWidget);
+      expect(component.widgetLabel).toBe("HEADER · NICK");
+
+      const emptyHeaderWidget = {
+        ...mockWidget,
+        widgetType: "lane-column",
+        customSettings: {
+          gridId: "g1",
+          isHeaderWidget: true,
+        },
+      };
+      fixture.componentRef.setInput("widget", emptyHeaderWidget);
+      expect(component.widgetLabel).toBe("HEADER");
+
+      const laneWidget = {
+        ...mockWidget,
+        widgetType: "lane-column",
+        customSettings: {
+          gridId: "g1",
+          gridLane: 2,
+          columnKey: "lastLapTime",
+        },
+      };
+      fixture.componentRef.setInput("widget", laneWidget);
+      expect(component.widgetLabel).toBe("L3 · LAST LAP TIME");
+
+      const posWidget = {
+        ...mockWidget,
+        widgetType: "lane-column",
+        customSettings: {
+          gridId: "g1",
+          bindingMode: "position",
+          targetIndex: 0,
+          customLabel: "Leader",
+        },
+      };
+      fixture.componentRef.setInput("widget", posWidget);
+      expect(component.widgetLabel).toBe("P1 · LEADER");
+
+      const overallPosWidget = {
+        ...mockWidget,
+        widgetType: "lane-column",
+        customSettings: {
+          gridId: "g1",
+          bindingMode: "overallPosition",
+          targetIndex: 0,
+          customLabel: "Leader",
+        },
+      };
+      fixture.componentRef.setInput("widget", overallPosWidget);
+      expect(component.widgetLabel).toBe("OP1 · LEADER");
+
+      const seedWidget = {
+        ...mockWidget,
+        widgetType: "lane-column",
+        customSettings: {
+          gridId: "g1",
+          bindingMode: "seed",
+          targetIndex: 1,
+          customLabel: "Seed Two",
+        },
+      };
+      fixture.componentRef.setInput("widget", seedWidget);
+      expect(component.widgetLabel).toBe("S2 · SEED TWO");
+    });
+
+    it("should correctly compute isGridMirrored and never mark header widgets as mirrored", () => {
+      const mockSession = {
+        gridId: "g1",
+        sourceLaneIndex: 0,
+        mirrorRows: true,
+      };
+      mockParent.gridSession = () => mockSession;
+      mockParent.layout = {
+        widgets: [{ id: "master-1", customSettings: { gridId: "g1" } }],
+      };
+      fixture.componentRef.setInput("parentComponent", { ...mockParent });
+
+      // Master widget (lane 0)
+      const masterWidget = {
+        id: "master-1",
+        widgetType: "lane-column",
+        customSettings: {
+          gridId: "g1",
+          gridLane: 0,
+          targetIndex: 0,
+        },
+      };
+      fixture.componentRef.setInput("widget", masterWidget);
+      expect(component.isGridMirrored).toBeFalse();
+
+      // Mirrored lane widget (lane 1)
+      const mirroredWidget = {
+        id: "mirror-1",
+        widgetType: "lane-column",
+        customSettings: {
+          gridId: "g1",
+          gridMasterId: "master-1",
+          gridLane: 1,
+          targetIndex: 1,
+        },
+      };
+      fixture.componentRef.setInput("widget", mirroredWidget);
+      expect(component.isGridMirrored).toBeTrue();
+
+      // Header widget: isHeaderWidget is true, gridLane & targetIndex are undefined
+      const headerWidget = {
+        id: "header-1",
+        widgetType: "lane-column",
+        customSettings: {
+          gridId: "g1",
+          gridMasterId: "master-1",
+          isHeaderWidget: true,
+          showHeader: true,
+        },
+      };
+      fixture.componentRef.setInput("widget", headerWidget);
+      expect(component.isGridMirrored).toBeFalse();
+
+      // Disabled mirrorRows
+      const nonMirroredRowWidget = {
+        id: "row-1",
+        widgetType: "lane-column",
+        customSettings: {
+          gridId: "g1",
+          gridLane: 1,
+          mirrorRows: false,
+        },
+      };
+      fixture.componentRef.setInput("widget", nonMirroredRowWidget);
+      expect(component.isGridMirrored).toBeFalse();
+    });
+
+    it("should correctly compute isSameGridColumn and isSameGridRow", () => {
+      const myColWidget = {
+        id: "w-col-1",
+        widgetType: "lane-column",
+        x: 10,
+        y: 10,
+        width: 100,
+        height: 50,
+        zIndex: 1,
+        customSettings: {
+          gridId: "g1",
+          columnKey: "driver.nickname",
+          gridLane: 1,
+        },
+      };
+      fixture.componentRef.setInput("widget", myColWidget);
+
+      mockParent.isLayoutCustomizing = true;
+      mockParent.selectedWidget = {
+        id: "w-col-2",
+        customSettings: {
+          gridId: "g1",
+          columnKey: "driver.nickname",
+          gridLane: 2,
+        },
+      };
+      fixture.componentRef.setInput("parentComponent", { ...mockParent });
+
+      // Same columnKey, different lane -> same column = true, same row = false
+      expect(component.isSameGridColumn).toBeTrue();
+      expect(component.isSameGridRow).toBeFalse();
+
+      // Same lane, different column -> same column = false, same row = true
+      mockParent.selectedWidget = {
+        id: "w-col-3",
+        customSettings: {
+          gridId: "g1",
+          columnKey: "lapTime",
+          gridLane: 1,
+        },
+      };
+      fixture.componentRef.setInput("parentComponent", { ...mockParent });
+      expect(component.isSameGridColumn).toBeFalse();
+      expect(component.isSameGridRow).toBeTrue();
+
+      // Selected widget itself -> neither column nor row crosshair
+      fixture.componentRef.setInput("selectedWidgetId", "w-col-1");
+      expect(component.isSameGridColumn).toBeFalse();
+      expect(component.isSameGridRow).toBeFalse();
+    });
+  });
+
+  describe("Grid Standings Animation", () => {
+    beforeEach(() => {
+      LaneGridAnimationHelper.reset();
+      jasmine.clock().install();
+      fixture.componentRef.setInput("isCustomizing", false);
+    });
+
+    afterEach(() => {
+      jasmine.clock().uninstall();
+      LaneGridAnimationHelper.reset();
+    });
+
+    it("should animate widget into new position when standings change in position mode", async () => {
+      const gridWidget: AbsoluteWidgetNode = {
+        id: "w-grid-row0",
+        widgetType: "lane-column",
+        x: 100,
+        y: 200,
+        width: 150,
+        height: 50,
+        zIndex: 100,
+        customSettings: {
+          gridId: "grid-anim-test",
+          gridLane: 0,
+          targetIndex: 0,
+          bindingMode: "position",
+          columnKey: "driver.name",
+        },
+      };
+
+      const parentMock = {
+        heat: { objectId: "heat-100" },
+        driverRankings: new Map([
+          ["driver-a", 1],
+          ["driver-b", 2],
+        ]),
+        heatDrivers: [
+          { objectId: "driver-a", laneIndex: 0 },
+          { objectId: "driver-b", laneIndex: 1 },
+        ],
+      };
+
+      // Record baseline position for driver-b at row 1 (y=260)
+      const siblingRow1: AbsoluteWidgetNode = {
+        ...gridWidget,
+        id: "w-grid-row1",
+        y: 260,
+        customSettings: {
+          ...gridWidget.customSettings,
+          gridLane: 1,
+          targetIndex: 1,
+        },
+      };
+      LaneGridAnimationHelper.recordPosition(
+        siblingRow1,
+        "driver-b",
+        "heat-100",
+      );
+      await Promise.resolve();
+
+      fixture.componentRef.setInput("widget", gridWidget);
+      fixture.componentRef.setInput("parentComponent", parentMock);
+      fixture.detectChanges();
+
+      // Initially, widget was at row 0 with driver-a. No animation yet.
+      expect(component.isGridAnimating).toBeFalse();
+
+      // Now driver-b takes 1st place!
+      parentMock.driverRankings.set("driver-b", 1);
+      parentMock.driverRankings.set("driver-a", 2);
+      fixture.componentRef.setInput("parentComponent", { ...parentMock });
+      fixture.detectChanges();
+
+      // Driver changed from driver-a to driver-b (who was at y=260)
+      // DeltaY = 260 - 200 = 60px. isGridAnimating should be true!
+      expect(component.isGridAnimating).toBeTrue();
+      const el = component.wrapperRef()?.nativeElement;
+      expect(el?.classList.contains("grid-animating")).toBeTrue();
+
+      // Advance clock by 300ms
+      jasmine.clock().tick(300);
+      expect(component.isGridAnimating).toBeFalse();
+      expect(el?.classList.contains("grid-animating")).toBeFalse();
+    });
+
+    it("should not animate in lane binding mode", () => {
+      const laneWidget: AbsoluteWidgetNode = {
+        id: "w-lane-0",
+        widgetType: "lane-column",
+        x: 100,
+        y: 200,
+        width: 150,
+        height: 50,
+        zIndex: 100,
+        customSettings: {
+          gridId: "grid-anim-test",
+          gridLane: 0,
+          targetIndex: 0,
+          bindingMode: "lane",
+          columnKey: "driver.name",
+        },
+      };
+
+      const parentMock = {
+        heat: { objectId: "heat-100" },
+        driverRankings: new Map([["driver-a", 1]]),
+        heatDrivers: [{ objectId: "driver-a", laneIndex: 0 }],
+      };
+
+      fixture.componentRef.setInput("widget", laneWidget);
+      fixture.componentRef.setInput("parentComponent", parentMock);
+      fixture.detectChanges();
+
+      expect(component.isGridAnimating).toBeFalse();
+    });
+
+    it("should not animate when isCustomizing is true", () => {
+      const gridWidget: AbsoluteWidgetNode = {
+        id: "w-grid-0",
+        widgetType: "lane-column",
+        x: 100,
+        y: 200,
+        width: 150,
+        height: 50,
+        zIndex: 100,
+        customSettings: {
+          gridId: "grid-anim-test",
+          gridLane: 0,
+          targetIndex: 0,
+          bindingMode: "position",
+          columnKey: "driver.name",
+        },
+      };
+
+      const parentMock = {
+        heat: { objectId: "heat-100" },
+        driverRankings: new Map([["driver-a", 1]]),
+        heatDrivers: [{ objectId: "driver-a", laneIndex: 0 }],
+      };
+
+      fixture.componentRef.setInput("isCustomizing", true);
+      fixture.componentRef.setInput("widget", gridWidget);
+      fixture.componentRef.setInput("parentComponent", parentMock);
+      fixture.detectChanges();
+
+      expect(component.isGridAnimating).toBeFalse();
+    });
+
+    it("should animate custom widget in grid when position rank changes", async () => {
+      const customWidget0: AbsoluteWidgetNode = {
+        id: "w-c0",
+        widgetType: "custom:gauge" as any,
+        x: 100,
+        y: 200,
+        width: 150,
+        height: 50,
+        zIndex: 100,
+        customSettings: {
+          gridId: "grid-anim-test",
+          gridLane: 0,
+          targetIndex: 0,
+          bindingMode: "position",
+        },
+      };
+
+      const customWidget1: AbsoluteWidgetNode = {
+        id: "w-c1",
+        widgetType: "custom:gauge" as any,
+        x: 100,
+        y: 260,
+        width: 150,
+        height: 50,
+        zIndex: 100,
+        customSettings: {
+          gridId: "grid-anim-test",
+          gridLane: 1,
+          targetIndex: 1,
+          bindingMode: "position",
+        },
+      };
+
+      const parentMock = {
+        heat: { objectId: "heat-100" },
+        driverRankings: new Map([
+          ["driver-a", 1],
+          ["driver-b", 2],
+        ]),
+        heatDrivers: [
+          { objectId: "driver-a", laneIndex: 0 },
+          { objectId: "driver-b", laneIndex: 1 },
+        ],
+      };
+
+      LaneGridAnimationHelper.recordPosition(
+        customWidget0,
+        "driver-a",
+        "heat-100",
+      );
+      LaneGridAnimationHelper.recordPosition(
+        customWidget1,
+        "driver-b",
+        "heat-100",
+      );
+      await Promise.resolve();
+
+      fixture.componentRef.setInput("isCustomizing", false);
+      fixture.componentRef.setInput("widget", customWidget0);
+      fixture.componentRef.setInput("parentComponent", parentMock);
+      fixture.detectChanges();
+
+      expect(component.isGridAnimating).toBeFalse();
+
+      parentMock.driverRankings.set("driver-b", 1);
+      parentMock.driverRankings.set("driver-a", 2);
+      fixture.componentRef.setInput("parentComponent", { ...parentMock });
+      fixture.detectChanges();
+
+      expect(component.isGridAnimating).toBeTrue();
+      jasmine.clock().tick(300);
+      expect(component.isGridAnimating).toBeFalse();
+    });
+
+    it("should compute auto-calculated flags and display correct resize handles", () => {
+      mockParent.gridSession = () => ({
+        gridId: "grid-test",
+        sourceLaneIndex: 0,
+      });
+      const vertWidget: AbsoluteWidgetNode = {
+        id: "w-vert",
+        widgetType: "lane-column",
+        x: 100,
+        y: 200,
+        width: 150,
+        height: 50,
+        zIndex: 100,
+        customSettings: {
+          gridId: "grid-test",
+          gridLane: 0,
+          gridDirection: "vertical",
+        },
+      };
+
+      fixture.componentRef.setInput("isCustomizing", true);
+      fixture.componentRef.setInput("widget", vertWidget);
+      fixture.detectChanges();
+
+      expect(component.isHeightAutoCalculated).toBeTrue();
+      expect(component.isWidthAutoCalculated).toBeFalse();
+
+      const el = fixture.nativeElement as HTMLElement;
+      expect(el.querySelector(".resize-handle.e")).toBeTruthy();
+      expect(el.querySelector(".resize-handle.w")).toBeTruthy();
+      expect(el.querySelector(".resize-handle.n")).toBeNull();
+      expect(el.querySelector(".resize-handle.s")).toBeNull();
+
+      const horizWidget: AbsoluteWidgetNode = {
+        ...vertWidget,
+        id: "w-horiz",
+        customSettings: {
+          gridId: "grid-test",
+          gridLane: 0,
+          gridDirection: "horizontal",
+        },
+      };
+
+      fixture.componentRef.setInput("widget", horizWidget);
+      fixture.detectChanges();
+
+      expect(component.isHeightAutoCalculated).toBeFalse();
+      expect(component.isWidthAutoCalculated).toBeTrue();
+      expect(el.querySelector(".resize-handle.n")).toBeTruthy();
+      expect(el.querySelector(".resize-handle.s")).toBeTruthy();
+      expect(el.querySelector(".resize-handle.e")).toBeNull();
+      expect(el.querySelector(".resize-handle.w")).toBeNull();
+
+      const noMirrorWidget: AbsoluteWidgetNode = {
+        ...vertWidget,
+        id: "w-nomirror",
+        customSettings: {
+          gridId: "grid-test",
+          gridLane: 0,
+          gridDirection: "vertical",
+          mirrorRows: false,
+        },
+      };
+      fixture.componentRef.setInput("widget", noMirrorWidget);
+      fixture.detectChanges();
+      expect(component.isHeightAutoCalculated).toBeFalse();
+      expect(component.isWidthAutoCalculated).toBeFalse();
+    });
+
+    it("should correctly determine shouldRenderAsLaneColumn", () => {
+      expect(
+        component.shouldRenderAsLaneColumn({
+          id: "w1",
+          widgetType: "lane-column",
+        } as any),
+      ).toBeTrue();
+
+      expect(
+        component.shouldRenderAsLaneColumn({
+          id: "w2",
+          widgetType: "timer",
+        } as any),
+      ).toBeFalse();
+
+      // Custom widget without grid/insets
+      expect(
+        component.shouldRenderAsLaneColumn({
+          id: "w3",
+          widgetType: "custom:gauge" as any,
+          customSettings: {},
+        } as any),
+      ).toBeFalse();
+
+      // Custom widget with insets
+      expect(
+        component.shouldRenderAsLaneColumn({
+          id: "w4",
+          widgetType: "custom:gauge" as any,
+          customSettings: {
+            insets: { "top-right": "bestLapTime" },
+          },
+        } as any),
+      ).toBeTrue();
+
+      // Custom widget with gridId
+      expect(
+        component.shouldRenderAsLaneColumn({
+          id: "w5",
+          widgetType: "custom:gauge" as any,
+          customSettings: {
+            gridId: "grid-123",
+          },
+        } as any),
+      ).toBeTrue();
+
+      // Custom widget with bindingMode
+      expect(
+        component.shouldRenderAsLaneColumn({
+          id: "w6",
+          widgetType: "custom:gauge" as any,
+          customSettings: {
+            bindingMode: "position",
+          },
+        } as any),
+      ).toBeTrue();
+    });
+
+    it("should prevent modification of grid cells and headers before grid is selected", () => {
+      mockParent.gridSession = () => null;
+
+      const gridCellWidget: AbsoluteWidgetNode = {
+        id: "w-cell-0",
+        widgetType: "lane-column",
+        x: 100,
+        y: 200,
+        width: 150,
+        height: 50,
+        zIndex: 100,
+        customSettings: {
+          gridId: "grid-unselected",
+          gridLane: 0,
+        },
+      };
+
+      fixture.componentRef.setInput("isCustomizing", true);
+      fixture.componentRef.setInput("widget", gridCellWidget);
+      fixture.detectChanges();
+
+      expect(component.isWidgetInGrid).toBeTrue();
+      expect(component.isGridSelected).toBeFalse();
+      expect(component.canModifyWidget).toBeFalse();
+
+      const el = fixture.nativeElement as HTMLElement;
+      expect(el.querySelector(".customizing-widget-overlay")).toBeNull();
+      expect(el.querySelector(".resize-handle")).toBeNull();
+      expect(
+        el.querySelector(".widget-wrapper.grid-cell-unselected"),
+      ).toBeTruthy();
+
+      // Attempts to drag, resize, or remove when unselected should be blocked
+      const mockEvent = new PointerEvent("pointerdown", {
+        clientX: 100,
+        clientY: 200,
+      });
+      component.onDragStart(mockEvent);
+      expect(gridCellWidget.x).toBe(100);
+
+      component.onResizeStart(mockEvent, "e");
+      expect(gridCellWidget.width).toBe(150);
+
+      component.removeWidget(mockEvent);
+      expect(mockParent.removeWidget).not.toHaveBeenCalled();
+
+      // Now select the grid
+      mockParent.gridSession = () => ({
+        gridId: "grid-unselected",
+        sourceLaneIndex: 0,
+        mirrorRows: true,
+      });
+      fixture.detectChanges();
+
+      expect(component.isGridSelected).toBeTrue();
+      expect(component.canModifyWidget).toBeTrue();
+      expect(el.querySelector(".customizing-widget-overlay")).toBeTruthy();
+      expect(el.querySelector(".resize-handle")).toBeTruthy();
+      expect(
+        el.querySelector(".widget-wrapper.grid-cell-unselected"),
+      ).toBeNull();
+    });
+
+    it("should prevent modification of column headers before grid is selected and allow when selected", () => {
+      mockParent.gridSession = () => null;
+
+      const headerWidget: AbsoluteWidgetNode = {
+        id: "w-header-col1",
+        widgetType: "lane-column",
+        x: 100,
+        y: 50,
+        width: 150,
+        height: 36,
+        zIndex: 105,
+        customSettings: {
+          gridId: "grid-header-test",
+          isHeaderWidget: true,
+          gridMasterId: "master-col1",
+        },
+      };
+
+      fixture.componentRef.setInput("isCustomizing", true);
+      fixture.componentRef.setInput("widget", headerWidget);
+      fixture.detectChanges();
+
+      expect(component.isWidgetInGrid).toBeTrue();
+      expect(component.isGridSelected).toBeFalse();
+      expect(component.canModifyWidget).toBeFalse();
+
+      const el = fixture.nativeElement as HTMLElement;
+      expect(el.querySelector(".customizing-widget-overlay")).toBeNull();
+      expect(el.querySelector(".resize-handle")).toBeNull();
+
+      // Selecting the grid enables header modifications and calls onMasterWidgetModified on drag/resize
+      mockParent.gridSession = () => ({
+        gridId: "grid-header-test",
+        sourceLaneIndex: 0,
+      });
+      mockParent.onMasterWidgetModified = jasmine.createSpy(
+        "onMasterWidgetModified",
+      );
+      fixture.detectChanges();
+
+      expect(component.isGridSelected).toBeTrue();
+      expect(component.canModifyWidget).toBeTrue();
+      expect(el.querySelector(".customizing-widget-overlay")).toBeTruthy();
+
+      // Trigger drag and pointerup
+      const pointerEvent = new PointerEvent("pointerdown", {
+        clientX: 100,
+        clientY: 50,
+      });
+      component.onDragStart(pointerEvent);
+      document.dispatchEvent(new PointerEvent("pointerup"));
+
+      expect(mockParent.onMasterWidgetModified).toHaveBeenCalledWith(
+        headerWidget,
+      );
     });
   });
 });

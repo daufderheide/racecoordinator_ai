@@ -171,7 +171,7 @@ export function getRacedayLayoutHelpSteps(
       title:
         translationService.translate(
           "UE_HELP_RACEDAY_WIDGET_INSPECTOR_TITLE",
-        ) || "Widget Inspector",
+        ) || "Widget Configuration",
       content: translationService.translate("UE_HELP_RACEDAY_WIDGET_INSPECTOR"),
       position: "left",
       onEnter: selectInspectorWidget,
@@ -335,13 +335,6 @@ export function getAudioHelpSteps(ctx: UiEditorHelpContext): GuideStep[] {
       selector: "#help-audio-min-lap-time",
       title: translationService.translate("UE_LABEL_MIN_LAP_TIME_AUDIO"),
       content: translationService.translate("UE_HELP_AUDIO_MIN_LAP_TIME"),
-      position: "bottom",
-      onEnter: () => expandThemeSection(ctx, "audio"),
-    },
-    {
-      selector: "#help-audio-drift-lap",
-      title: translationService.translate("UE_LABEL_DRIFT_LAP_AUDIO"),
-      content: translationService.translate("UE_HELP_AUDIO_DRIFT_LAP"),
       position: "bottom",
       onEnter: () => expandThemeSection(ctx, "audio"),
     },

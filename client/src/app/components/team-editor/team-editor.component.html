@@ -208,3 +208,15 @@
   (cancel)="onCancelDiscard()"
 >
 </app-confirmation-modal>
+
+<!-- Delete Team Confirmation -->
+<app-confirmation-modal
+  [visible]="showDeleteConfirm"
+  title="TEM_CONFIRM_DELETE_TITLE"
+  message="TEM_CONFIRM_DELETE"
+  confirmText="CD_YES"
+  cancelText="CD_NO"
+  (confirm)="onConfirmDelete()"
+  (cancel)="onCancelDelete()"
+>
+</app-confirmation-modal>

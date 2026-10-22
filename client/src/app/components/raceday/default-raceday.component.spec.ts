@@ -54,6 +54,7 @@ import { AuthService } from "@app/services/auth.service";
 import { RaceConnectionService } from "@app/services/race-connection.service";
 import * as _audio from "@app/utils/audio";
 
+import { LaneGridAnimationHelper } from "./utils/lane-grid-animation.helper";
 import { RacedayLayoutUtils } from "./utils/raceday-layout.utils";
 
 @Component({
@@ -263,6 +264,18 @@ describe("DefaultRacedayComponent", () => {
       });
       expect(clampedNegative.x).toBe(0);
       expect(clampedNegative.y).toBe(0);
+    });
+
+    it("should use smaller toolbox dimensions when minimized", () => {
+      spyOn(component, "isUIEditorMode").and.returnValue(false);
+      component.isLayoutEditorMinimized = true;
+
+      const clamped = (component as any).clampLayoutEditorPosition({
+        x: 2000,
+        y: 1050,
+      });
+      expect(clamped.x).toBe(1760);
+      expect(clamped.y).toBe(1040);
     });
 
     it("should not restrict position in UI editor mode, as it relies on cdkDragBoundary", () => {
@@ -1378,9 +1391,35 @@ describe("DefaultRacedayComponent", () => {
         2,
         0,
         1.5,
+        0,
       );
       expect(component["heats"][0].heatDrivers[0].adjustedLapCount).toBe(1.5);
       expect(component["heats"][0].heatDrivers[0].userLaps).toBe(1.5);
+    });
+
+    it("should update current heat driver userLaps and userTime when dialog emits object", () => {
+      fixture.detectChanges();
+      const mockHd: any = {
+        laneIndex: 0,
+        userLaps: 0,
+        userTime: 0,
+        totalTime: 10.0,
+      };
+      component["selectedHeatDriver"] = mockHd;
+      mockDataService.updateUserLaps.and.returnValue(
+        of({ adjustedLapCount: 2.0, totalTime: 12.5 }),
+      );
+
+      component["onAddLapSectionsConfirm"]({
+        userLaps: 2.0,
+        userTime: 2.5,
+      });
+
+      expect(mockDataService.updateUserLaps).toHaveBeenCalledWith(0, 2.0, 2.5);
+      expect(mockHd.adjustedLapCount).toBe(2.0);
+      expect(mockHd.userLaps).toBe(2.0);
+      expect(mockHd.userTime).toBe(2.5);
+      expect(mockHd.totalTime).toBe(12.5);
     });
 
     it("should call updateBatchUserLaps on batch confirm in menu mode", () => {
@@ -1891,10 +1930,87 @@ describe("DefaultRacedayComponent", () => {
     it("should fallback to hd.participant.rank if not found in overall list", () => {
       component["participants"] = [];
       const hd = {
-        driver: { entity_id: "d1" },
+        driver: { entity_id: "d1", name: "d1" },
         participant: { rank: 10 },
       } as any;
       expect(component.getDriverOverallRanking(hd)).toBe(10);
+    });
+
+    it("should return overall rank from leaderboardEntries or participants for unrun or active drivers", () => {
+      (component as any).leaderboardEntries = [
+        { entityId: "d15", rank: 15 } as any,
+      ];
+      component["participants"] = [
+        {
+          driver: { entity_id: "d15" },
+          rank: 15,
+        } as any,
+      ];
+      const hd = {
+        driver: { entity_id: "d15" },
+        participant: { rank: 5 },
+      } as any;
+      expect(component.getDriverOverallRanking(hd)).toBe(15);
+    });
+
+    it("should return distinct overall ranks for multiple drivers sharing the same team affiliation", () => {
+      (component as any).leaderboardEntries = [
+        { entityId: "d1", rank: 1 } as any,
+        { entityId: "d2", rank: 2 } as any,
+      ];
+      component["participants"] = [
+        {
+          objectId: "p1",
+          driver: { entity_id: "d1", name: "Mario" },
+          team: { entity_id: "t_mk", name: "Mushroom Kingdom" },
+          rank: 1,
+        } as any,
+        {
+          objectId: "p2",
+          driver: { entity_id: "d2", name: "Luigi" },
+          team: { entity_id: "t_mk", name: "Mushroom Kingdom" },
+          rank: 2,
+        } as any,
+      ];
+      const hd1 = {
+        objectId: "hd1",
+        driver: { entity_id: "d1", name: "Mario" },
+        participant: {
+          objectId: "p1",
+          team: { entity_id: "t_mk", name: "Mushroom Kingdom" },
+          rank: 1,
+        },
+      } as any;
+      const hd2 = {
+        objectId: "hd2",
+        driver: { entity_id: "d2", name: "Luigi" },
+        participant: {
+          objectId: "p2",
+          team: { entity_id: "t_mk", name: "Mushroom Kingdom" },
+          rank: 1,
+        },
+      } as any;
+
+      expect(component.getDriverOverallRanking(hd1)).toBe(1);
+      expect(component.getDriverOverallRanking(hd2)).toBe(2);
+    });
+
+    it("should provide distinct overall ranks for all 4 lanes in editor preview", () => {
+      (component as any).setupMockDataForEditor();
+      const heatDrivers: DriverHeatData[] =
+        (component as any).heat?.heatDrivers || [];
+      expect(heatDrivers.length).toBeGreaterThanOrEqual(4);
+      const ranks = heatDrivers
+        .slice(0, 4)
+        .map((hd: DriverHeatData) => component.getDriverOverallRanking(hd));
+      expect(ranks).toEqual([1, 2, 3, 4]);
+
+      const formattedRanks = heatDrivers
+        .slice(0, 4)
+        .map((hd: DriverHeatData) =>
+          component.formatValue("rankOverall", 0, hd),
+        );
+      expect(formattedRanks).toEqual(["1", "2", "3", "4"]);
     });
   });
 
@@ -1946,6 +2062,48 @@ describe("DefaultRacedayComponent", () => {
       } as any;
 
       expect(component.getDriverGroupRanking(hd1)).toBe(3);
+    });
+
+    it("should return distinct group ranks for multiple drivers sharing the same team affiliation", () => {
+      (component as any).groupLeaderboardEntries = [
+        { entityId: "d1", rank: 1 } as any,
+        { entityId: "d2", rank: 2 } as any,
+      ];
+      component["groupParticipants"] = [
+        {
+          objectId: "p1",
+          driver: { entity_id: "d1", name: "Mario" },
+          team: { entity_id: "t_mk", name: "Mushroom Kingdom" },
+          groupRank: 1,
+        } as any,
+        {
+          objectId: "p2",
+          driver: { entity_id: "d2", name: "Luigi" },
+          team: { entity_id: "t_mk", name: "Mushroom Kingdom" },
+          groupRank: 2,
+        } as any,
+      ];
+      const hd1 = {
+        objectId: "hd1",
+        driver: { entity_id: "d1", name: "Mario" },
+        participant: {
+          objectId: "p1",
+          team: { entity_id: "t_mk", name: "Mushroom Kingdom" },
+          groupRank: 1,
+        },
+      } as any;
+      const hd2 = {
+        objectId: "hd2",
+        driver: { entity_id: "d2", name: "Luigi" },
+        participant: {
+          objectId: "p2",
+          team: { entity_id: "t_mk", name: "Mushroom Kingdom" },
+          groupRank: 1,
+        },
+      } as any;
+
+      expect(component.getDriverGroupRanking(hd1)).toBe(1);
+      expect(component.getDriverGroupRanking(hd2)).toBe(2);
     });
 
     it("should return undefined if not found in group list", () => {
@@ -2029,13 +2187,73 @@ describe("DefaultRacedayComponent", () => {
       expect(result).toBe("http://localhost/assets/avatars/driver1.png");
     });
 
-    it("should return empty string for driver.avatarUrl if value is missing", () => {
+    it("should return default avatar for driver.avatarUrl if value is missing for valid driver", () => {
       const result = component.formatValue(
         "driver.avatarUrl",
         undefined,
         mockHd,
       );
+      expect(result).toBe("assets/images/default_avatar.svg");
+    });
+
+    it("should return empty string for driver.avatarUrl if driver is empty", () => {
+      const emptyHd = { isEmpty: true } as any;
+      const result = component.formatValue(
+        "driver.avatarUrl",
+        undefined,
+        emptyHd,
+      );
       expect(result).toBe("");
+    });
+
+    it("should return RD_EMPTY_LANE for driver.name and driver.nickname when driver is empty in non-overall context", () => {
+      const emptyHd = { isEmpty: true } as any;
+      expect(component.formatValue("driver.name", undefined, emptyHd)).toBe(
+        "RD_EMPTY_LANE",
+      );
+      expect(component.formatValue("driver.nickname", undefined, emptyHd)).toBe(
+        "RD_EMPTY_LANE",
+      );
+    });
+
+    it("should return empty string for driver.name and driver.nickname when driver is empty in overall context", () => {
+      const emptyHd = { isEmpty: true } as any;
+      const overallSettings = { gridType: "overall" };
+      expect(
+        component.formatValue(
+          "driver.name",
+          undefined,
+          emptyHd,
+          undefined,
+          undefined,
+          overallSettings,
+        ),
+      ).toBe("");
+      expect(
+        component.formatValue(
+          "driver.nickname",
+          undefined,
+          emptyHd,
+          undefined,
+          undefined,
+          overallSettings,
+        ),
+      ).toBe("");
+    });
+
+    it("should return empty string for driver.name when bindingMode is overallPosition and driver is empty", () => {
+      const emptyHd = { isEmpty: true } as any;
+      const overallSettings = { bindingMode: "overallPosition" };
+      expect(
+        component.formatValue(
+          "driver.name",
+          undefined,
+          emptyHd,
+          undefined,
+          undefined,
+          overallSettings,
+        ),
+      ).toBe("");
     });
 
     it("should format totalTime to 3 decimal places when above 0", () => {
@@ -2050,17 +2268,56 @@ describe("DefaultRacedayComponent", () => {
       expect(result2).toBe("--.---");
     });
 
-    it("should not render img tag in the table when avatarUrl is empty", () => {
+    it("should format totalTime with timer options when widgetSettings provided", () => {
+      const settings = {
+        timeDisplayFormat: "dynamic",
+        timeSubsecondMode: "threshold",
+        timeSubsecondThreshold: 10,
+        timeSubsecondDecimals: 2,
+      };
+      const result = component.formatValue(
+        "totalTime",
+        83,
+        mockHd,
+        undefined,
+        "center-center",
+        settings,
+      );
+      expect(result).toBe("1:23");
+    });
+
+    it("should format overallTotalTime with timer options when widgetSettings provided", () => {
+      const settings = {
+        timeDisplayFormat: "hh_mm_ss",
+        timeSubsecondMode: "never",
+      };
+      const result = component.formatValue(
+        "overallTotalTime",
+        3665,
+        mockHd,
+        undefined,
+        "center-center",
+        settings,
+      );
+      expect(result).toBe("01:01:05");
+    });
+
+    it("should render default avatar img tag in the table when avatarUrl is empty for valid driver", () => {
       mockSettings.racedayColumns = ["driver.avatarUrl"];
       (component as any).loadColumns();
 
       const mockHdWithNoAvatar = {
         objectId: "hd-no-avatar",
         laneIndex: 0,
-        driver: { name: "No Avatar Driver", avatarUrl: "" },
+        driver: { id: "d-no-avatar", name: "No Avatar Driver", avatarUrl: "" },
         participant: {},
         currentLapSegments: [],
       };
+      mockRaceService.getCurrentHeat.and.returnValue({
+        heatNumber: 1,
+        heatDrivers: [mockHdWithNoAvatar],
+      } as any);
+      component["heat"] = { heatDrivers: [mockHdWithNoAvatar] } as any;
       component["sortedHeatDrivers"] = [mockHdWithNoAvatar as any];
 
       fixture.detectChanges();
@@ -2071,9 +2328,43 @@ describe("DefaultRacedayComponent", () => {
       );
       expect(anchorDiv).toBeTruthy();
 
-      // But the img tag should be missing
-      const img = anchorDiv.querySelector("img");
-      expect(img).toBeFalsy();
+      // The placeholder avatar SVG should render with the lane text color
+      const svg = anchorDiv.querySelector("svg.lane-view-placeholder-avatar");
+      expect(svg).toBeTruthy();
+      expect(anchorDiv.style.color).toBe(
+        component.getLaneColor(mockHdWithNoAvatar as any, "foreground_color") ||
+          "rgb(255, 255, 255)",
+      );
+    });
+
+    it("should not render img tag in the table when driver is empty", () => {
+      mockSettings.racedayColumns = ["driver.avatarUrl"];
+      (component as any).loadColumns();
+
+      const mockEmptyHd = {
+        objectId: "empty-lane",
+        laneIndex: 0,
+        isEmpty: true,
+        driver: { id: "EMPTY_DRIVER", name: "rd_empty_lane", avatarUrl: "" },
+        participant: {},
+        currentLapSegments: [],
+      };
+      mockRaceService.getCurrentHeat.and.returnValue({
+        heatNumber: 1,
+        heatDrivers: [mockEmptyHd],
+      } as any);
+      component["heat"] = { heatDrivers: [mockEmptyHd] } as any;
+      component["sortedHeatDrivers"] = [mockEmptyHd as any];
+
+      fixture.detectChanges();
+
+      const anchorDiv = fixture.nativeElement.querySelector(
+        ".body-cell .anchor-center-center",
+      );
+      expect(anchorDiv).toBeTruthy();
+
+      const imgOrSvg = anchorDiv.querySelector("img, svg");
+      expect(imgOrSvg).toBeFalsy();
     });
 
     it("should format seed in (#) format", () => {
@@ -2266,6 +2557,23 @@ describe("DefaultRacedayComponent", () => {
       );
     });
 
+    it("should use warmup flag when all drivers finish in HeatOver during cooldown", () => {
+      mockRaceService.getRace.and.returnValue({
+        heat_scoring: { allow_finish: "Allow" },
+      } as any);
+      (component as any).raceState = RaceState.HEAT_OVER;
+      spyOnProperty(component, "isCooldown", "get").and.returnValue(true);
+      mockRaceFlagService.getFlagUrl.and.returnValue(
+        "http://localhost/warmup.png",
+      );
+      const finishedHd = { ...mockHd, isFinished: true } as any;
+      const result = component.formatValue("flag", RaceFlag.RED, finishedHd);
+      expect(result).toBe("http://localhost/warmup.png");
+      expect(mockRaceFlagService.getFlagUrl).toHaveBeenCalledWith(
+        "flag.warmup",
+      );
+    });
+
     it("should use race over flag when all drivers finish in RaceOver", () => {
       mockRaceService.getRace.and.returnValue({
         heat_scoring: { allow_finish: "Allow" },
@@ -2403,8 +2711,13 @@ describe("DefaultRacedayComponent", () => {
       expect((component as any).playThemedSound).not.toHaveBeenCalled();
     });
 
-    it("should play themed drift lap sound when receiving drift lap", () => {
-      spyOn(component as any, "playThemedSound");
+    it("should play driver drift lap sound when receiving drift lap", () => {
+      spyOn((component as any).audioService, "playCallout");
+
+      (component as any).heat.heatDrivers[0].driver.driftLapAudio = {
+        type: "tts",
+        text: "{driver.nickname} drift lap",
+      } as any;
 
       lapsSubject.next({
         objectId: "hd1",
@@ -2413,10 +2726,67 @@ describe("DefaultRacedayComponent", () => {
         isDrift: true,
       });
 
-      expect((component as any).playThemedSound).toHaveBeenCalledWith(
-        THEME_SLOT_KEYS.AUDIO_DRIFT_LAP,
+      expect((component as any).audioService.playCallout).toHaveBeenCalledWith(
+        jasmine.objectContaining({ type: "tts" }),
+        "urgent",
         jasmine.objectContaining({
           driver: jasmine.objectContaining({ nickname: "The Rocket" }),
+        }),
+        undefined,
+        jasmine.objectContaining({
+          widgetType: "lane-view",
+          eventType: "drift_lap",
+        }),
+      );
+    });
+
+    it("should dispatch urgent drift lap callout for every driver who gets a drift lap at heat end", () => {
+      spyOn((component as any).audioService, "playCallout");
+
+      (component as any).heat.heatDrivers[0].driver.driftLapAudio = {
+        type: "tts",
+        text: "{driver.name} drift 1",
+      } as any;
+      (component as any).heat.heatDrivers[1].driver.driftLapAudio = {
+        type: "tts",
+        text: "{driver.name} drift 2",
+      } as any;
+
+      lapsSubject.next({
+        objectId: "hd1",
+        lapTime: 5.0,
+        type: LapType.LAP,
+        isDrift: true,
+      });
+
+      lapsSubject.next({
+        objectId: "hd2",
+        lapTime: 5.2,
+        type: LapType.LAP,
+        isDrift: true,
+      });
+
+      expect((component as any).audioService.playCallout).toHaveBeenCalledTimes(
+        2,
+      );
+      expect((component as any).audioService.playCallout).toHaveBeenCalledWith(
+        (component as any).heat.heatDrivers[0].driver.driftLapAudio,
+        "urgent",
+        jasmine.any(Object),
+        undefined,
+        jasmine.objectContaining({
+          widgetType: "lane-view",
+          eventType: "drift_lap",
+        }),
+      );
+      expect((component as any).audioService.playCallout).toHaveBeenCalledWith(
+        (component as any).heat.heatDrivers[1].driver.driftLapAudio,
+        "urgent",
+        jasmine.any(Object),
+        undefined,
+        jasmine.objectContaining({
+          widgetType: "lane-view",
+          eventType: "drift_lap",
         }),
       );
     });
@@ -3233,6 +3603,39 @@ describe("DefaultRacedayComponent", () => {
       expect(component["highlightedDrivers"].has("hd1")).toBeFalse();
     }));
 
+    it("should reset highlight timer when a successive lap is received for the same driver", fakeAsync(() => {
+      mockSettings.highlightRowOnLap = true;
+
+      lapsSubject.next({
+        objectId: "hd1",
+        lapTime: 1.234,
+        bestLapTime: 1.0,
+      });
+      fixture.detectChanges();
+
+      expect(component["highlightedDrivers"].has("hd1")).toBeTrue();
+
+      // Advance 250ms (first timer has not fired yet)
+      tick(250);
+      expect(component["highlightedDrivers"].has("hd1")).toBeTrue();
+
+      // Successive lap arrives for hd1
+      lapsSubject.next({
+        objectId: "hd1",
+        lapTime: 1.2,
+        bestLapTime: 1.0,
+      });
+      fixture.detectChanges();
+
+      // Advance another 200ms (450ms total from start; first timer would have fired at 400ms)
+      tick(200);
+      expect(component["highlightedDrivers"].has("hd1")).toBeTrue();
+
+      // Advance remaining 200ms (400ms from second lap)
+      tick(200);
+      expect(component["highlightedDrivers"].has("hd1")).toBeFalse();
+    }));
+
     it("should not highlight driver when lap is received but disabled", fakeAsync(() => {
       mockSettings.highlightRowOnLap = false;
 
@@ -3298,6 +3701,46 @@ describe("DefaultRacedayComponent", () => {
       fixture.detectChanges();
 
       expect(component["highlightedDrivers"].has("hd1")).toBeFalse();
+    }));
+
+    it("should forward lap totalTime to addLapTime and call cdr.markForCheck when lap received even without highlight", fakeAsync(() => {
+      mockSettings.highlightRowOnLap = false;
+      const addLapTimeSpy = jasmine.createSpy("addLapTime");
+      const mockDriverHd = {
+        objectId: "driver1",
+        laneIndex: 0,
+        lapTimes: [],
+        driver: { lapAudio: {}, bestLapAudio: {} },
+        addLapTime: addLapTimeSpy,
+      };
+      const mockHeat = { heatDrivers: [mockDriverHd], heatNumber: 1 };
+      mockRaceService.getCurrentHeat.and.returnValue(mockHeat);
+      component["heat"] = mockHeat as any;
+      const cdrSpy = spyOn((component as any).cdr, "markForCheck");
+
+      lapsSubject.next({
+        objectId: "driver1",
+        lapNumber: 1,
+        lapTime: 2.345,
+        totalTime: 12.345,
+      });
+      tick();
+
+      expect(addLapTimeSpy).toHaveBeenCalledWith(
+        1,
+        2.345,
+        0,
+        0,
+        0,
+        0,
+        undefined,
+        undefined,
+        undefined,
+        jasmine.any(Array),
+        true,
+        12.345,
+      );
+      expect(cdrSpy).toHaveBeenCalled();
     }));
   });
 
@@ -4135,7 +4578,9 @@ describe("DefaultRacedayComponent", () => {
       (mockRouter as any).url = "/raceday?someParam=true";
       component.onOptionsSelect("CUSTOMIZE_UI");
       expect(mockRouter.navigate).toHaveBeenCalledWith(["/ui-editor"], {
-        queryParams: { returnUrl: "/raceday" },
+        queryParams: {
+          returnUrl: "/raceday",
+        },
       });
     });
   });
@@ -5624,6 +6069,58 @@ describe("DefaultRacedayComponent", () => {
       raceTimeSubject.next({ time: 60.0 });
       expect(window.Audio).toHaveBeenCalledWith(
         `${mockDataService.serverUrl}api/assets/download/60`,
+      );
+    });
+
+    it("should play audio set entry referencing asset UUID without 404 URL", () => {
+      const assetUuid = "d637f861-ca0c-488e-87b4-ecef43800cb1";
+      const mockAssets = [
+        {
+          model: { entityId: "custom_time_left_set" },
+          type: "audio_set",
+          audioEntries: [{ url: assetUuid, timeSeconds: 120 }],
+          url: "/api/assets/download/custom_time_left_set",
+        },
+        {
+          model: { entityId: assetUuid },
+          type: "audio",
+          url: "/assets/2_minutes_remaining.wav",
+        },
+      ];
+      mockDataService.listAssets.and.returnValue(of(mockAssets));
+      component["assets"] = mockAssets;
+
+      mockThemeService.resolveAudioConfig.and.callFake((key: string) => {
+        if (key === THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT) {
+          return { type: "audio_set", url: "custom_time_left_set" };
+        }
+        return null;
+      });
+
+      const race = {
+        ...MOCK_RACES[0],
+        heat_scoring: {
+          finishMethod: FinishMethod.Timed,
+          finishValue: 300,
+        },
+        track: component["track"],
+      } as any;
+      component["race"] = race;
+      mockRaceService.getRace.and.returnValue(race);
+
+      fixture.detectChanges();
+      component["raceState"] = RaceState.RACING;
+
+      (window.Audio as any).calls.reset();
+
+      raceTimeSubject.next({ time: 300.0 });
+      raceTimeSubject.next({ time: 120.0 });
+
+      expect(window.Audio).toHaveBeenCalledWith(
+        `${mockDataService.serverUrl}assets/2_minutes_remaining.wav`,
+      );
+      expect(window.Audio).not.toHaveBeenCalledWith(
+        `${mockDataService.serverUrl}${assetUuid}`,
       );
     });
 
@@ -7691,7 +8188,7 @@ describe("DefaultRacedayComponent", () => {
       } as any;
       const hd: any = { reactionTime: 1.0 };
 
-      // Without anchor or with center-* anchor, it's NOT an inset. Uses lapDecimalPlaces (1)
+      // Without anchor or with center-center anchor, it's NOT an inset. Uses lapDecimalPlaces (1)
       expect(component.formatValue("lapCount", 10.1234, hd)).toBe("10.1");
       expect(
         component.formatValue(
@@ -7702,6 +8199,8 @@ describe("DefaultRacedayComponent", () => {
           "center-center",
         ),
       ).toBe("10.1");
+
+      // With an inset anchor (including center-left, top-left), it IS an inset. Uses insetLapDecimalPlaces (3)
       expect(
         component.formatValue(
           "lapCount",
@@ -7710,9 +8209,7 @@ describe("DefaultRacedayComponent", () => {
           undefined,
           "center-left",
         ),
-      ).toBe("10.1");
-
-      // With an inset anchor, it IS an inset. Uses insetLapDecimalPlaces (3)
+      ).toBe("10.123");
       expect(
         component.formatValue("lapCount", 10.1234, hd, undefined, "top-left"),
       ).toBe("10.123");
@@ -7763,7 +8260,7 @@ describe("DefaultRacedayComponent", () => {
       };
       expect(component.formatValue("lapCount", 0.25, hdUserLaps)).toBe("0.25");
 
-      // 5. Automatic lap adjustment
+      // 5. Automatic lap adjustment (at heat finish)
       const hdAutoLaps: any = {
         reactionTime: 0,
         lapTimes: [],
@@ -7771,6 +8268,7 @@ describe("DefaultRacedayComponent", () => {
         autoCalculatedLaps: 1,
         penaltyLaps: 0,
         adjustedLapCount: 0,
+        isFinished: true,
       };
       expect(component.formatValue("lapCount", 1, hdAutoLaps)).toBe("1.00");
 
@@ -7836,6 +8334,41 @@ describe("DefaultRacedayComponent", () => {
       expect(component.formatValue("physicalLapCount", 1, hdEmpty)).toBe("--");
     });
 
+    it("should exclude on-pause auto-segments in lapCount and overallLapCount when PAUSED", () => {
+      component["raceState"] = RaceState.PAUSED;
+      const hd: any = {
+        actualDriver: { name: "Test Driver", entity_id: "driver-1" },
+        reactionTime: 1.0,
+        lapTimes: [10.5],
+        autoCalculatedLaps: 0.35,
+        userLaps: 0,
+        penaltyLaps: 0,
+        participant: { totalTime: 120.0, totalLaps: 25.35 },
+      };
+
+      expect(component.formatValue("lapCount", 10.35, hd)).toBe("10.00");
+      expect(component.formatValue("overallLapCount", 25.35, hd)).toBe("25.00");
+    });
+
+    it("should include auto-segments in lapCount and overallLapCount when HEAT_OVER or RACE_OVER", () => {
+      component["raceState"] = RaceState.HEAT_OVER;
+      const hd: any = {
+        actualDriver: { name: "Test Driver", entity_id: "driver-1" },
+        reactionTime: 1.0,
+        lapTimes: [10.5],
+        autoCalculatedLaps: 0.35,
+        userLaps: 0,
+        penaltyLaps: 0,
+        participant: { totalTime: 120.0, totalLaps: 25.35 },
+      };
+
+      expect(component.formatValue("lapCount", 10.35, hd)).toBe("10.35");
+      expect(component.formatValue("overallLapCount", 25.35, hd)).toBe("25.35");
+
+      component["raceState"] = RaceState.RACE_OVER;
+      expect(component.formatValue("overallLapCount", 25.35, hd)).toBe("25.35");
+    });
+
     it("should treat physicalLapCount column as clickable for add lap sections", () => {
       const hd: any = { laneIndex: 0 };
       const col: any = { propertyName: "physicalLapCount" };
@@ -7848,6 +8381,29 @@ describe("DefaultRacedayComponent", () => {
       const col: any = { propertyName: "lapCount" };
       (component as any).heat = { started: false } as any;
       expect(component.isLapCountColumnClickable(hd, col)).toBeTrue();
+    });
+
+    it("should treat totalTime and overallTotalTime columns as clickable for adjustment", () => {
+      const hd: any = { laneIndex: 0 };
+      expect(
+        component.isLapCountColumnClickable(hd, {
+          propertyName: "totalTime",
+        } as any),
+      ).toBeTrue();
+      expect(
+        component.isLapCountColumnClickable(hd, {
+          propertyName: "overallTotalTime",
+        } as any),
+      ).toBeTrue();
+    });
+
+    it("should open dialog when totalTime column is clicked", () => {
+      const mockHd: any = { laneIndex: 0 };
+      const mockCol: any = { propertyName: "totalTime" };
+      const mockEvent = new MouseEvent("click");
+      component.onCellClick(mockHd, mockCol, mockEvent);
+      expect(component["showAddLapSectionsDialog"]).toBeTrue();
+      expect(component["selectedHeatDriver"]).toBe(mockHd);
     });
 
     it("should return sanitized dropdown arrow background", () => {
@@ -8362,6 +8918,193 @@ describe("DefaultRacedayComponent", () => {
       expect(component.getNextZIndex()).toBe(106);
     });
 
+    it("should bring entire grid to front when bringGridToFront is called", () => {
+      const gw1: any = {
+        id: "gw1",
+        widgetType: "lane-column",
+        zIndex: 5,
+        customSettings: { gridId: "g-front", gridLane: 0 },
+      };
+      const gw2: any = {
+        id: "gw2",
+        widgetType: "lane-column",
+        zIndex: 5,
+        customSettings: { gridId: "g-front", gridLane: 1, gridMasterId: "gw1" },
+      };
+      const gwHeader: any = {
+        id: "gwHeader",
+        widgetType: "lane-column",
+        zIndex: 6,
+        customSettings: {
+          gridId: "g-front",
+          isHeaderWidget: true,
+          gridMasterId: "gw1",
+        },
+      };
+      component.layout.widgets.push(gw1, gw2, gwHeader);
+
+      component.bringGridToFront("g-front");
+
+      // Non-grid widgets w1 (100) and w2 (105) have maxOtherZ = 105.
+      // Grid widgets should be elevated above 105.
+      expect(gw1.zIndex).toBe(106);
+      expect(gw2.zIndex).toBe(106);
+      expect(gwHeader.zIndex).toBe(107);
+      expect(component.layoutChanged.emit).toHaveBeenCalledWith(
+        component.layout,
+      );
+    });
+
+    it("should not modify z-indices or emit layoutChanged when grid is already in front", () => {
+      const gw1: any = {
+        id: "gw-top1",
+        widgetType: "lane-column",
+        zIndex: 200,
+        customSettings: { gridId: "g-already-top", gridLane: 0 },
+      };
+      const gw2: any = {
+        id: "gw-top2",
+        widgetType: "lane-column",
+        zIndex: 201,
+        customSettings: { gridId: "g-already-top", gridLane: 1 },
+      };
+      component.layout.widgets.push(gw1, gw2);
+      (component.layoutChanged.emit as jasmine.Spy).calls.reset();
+
+      component.bringGridToFront("g-already-top");
+
+      expect(gw1.zIndex).toBe(200);
+      expect(gw2.zIndex).toBe(201);
+      expect(component.layoutChanged.emit).not.toHaveBeenCalled();
+    });
+
+    it("should delegate to bringGridToFront when bringToFront is called on a grid widget", () => {
+      spyOn(component, "bringGridToFront");
+      const gw1: any = {
+        id: "gw-delegate",
+        widgetType: "lane-column",
+        zIndex: 5,
+        customSettings: { gridId: "g-delegate", gridLane: 0 },
+      };
+      component.layout.widgets.push(gw1);
+
+      component.bringToFront("gw-delegate");
+
+      expect(component.bringGridToFront).toHaveBeenCalledWith("g-delegate");
+      expect(component.widgetSelected.emit).toHaveBeenCalledWith("gw-delegate");
+    });
+
+    it("should handle onGridContainerPointerDown to elevate grid and select master widget", () => {
+      spyOn(component, "bringGridToFront");
+      (component.widgetSelected.emit as jasmine.Spy).calls.reset();
+      component.isLayoutCustomizing = true;
+
+      const masterWidget: any = {
+        id: "w-grid-m1",
+        widgetType: "lane-column",
+        customSettings: { gridId: "g-pointer-test", gridLane: 0 },
+      };
+      const headerWidget: any = {
+        id: "w-grid-h1",
+        widgetType: "lane-column",
+        customSettings: {
+          gridId: "g-pointer-test",
+          isHeaderWidget: true,
+          gridMasterId: "w-grid-m1",
+        },
+      };
+      component.layout.widgets.push(masterWidget, headerWidget);
+
+      const mockEvent = {
+        target: document.createElement("div"),
+      } as any;
+
+      component.onGridContainerPointerDown(mockEvent, "g-pointer-test");
+
+      expect(component.bringGridToFront).toHaveBeenCalledWith("g-pointer-test");
+      expect(component.widgetSelected.emit).toHaveBeenCalledWith("w-grid-m1");
+    });
+
+    it("should not handle onGridContainerPointerDown if grid is already active or target is inside widget", () => {
+      spyOn(component, "bringGridToFront");
+      (component.widgetSelected.emit as jasmine.Spy).calls.reset();
+      component.isLayoutCustomizing = true;
+      fixture.componentRef.setInput("gridSession", { gridId: "g-active" });
+
+      const mockEvent = {
+        target: document.createElement("div"),
+      } as any;
+
+      // Already active grid session
+      component.onGridContainerPointerDown(mockEvent, "g-active");
+      expect(component.bringGridToFront).not.toHaveBeenCalled();
+
+      // Target is inside an app-raceday-absolute-widget
+      const widgetHost = document.createElement("app-raceday-absolute-widget");
+      const childDiv = document.createElement("div");
+      widgetHost.appendChild(childDiv);
+      const mockInsideEvent = { target: childDiv } as any;
+
+      component.onGridContainerPointerDown(mockInsideEvent, "g-other");
+      expect(component.bringGridToFront).not.toHaveBeenCalled();
+      expect(component.widgetSelected.emit).not.toHaveBeenCalled();
+    });
+
+    it("should calculate getGridSessionZIndex above active grid widgets", () => {
+      fixture.componentRef.setInput("gridSession", { gridId: "g-sess" });
+      component.layout.widgets.push({
+        id: "gw-sess",
+        widgetType: "lane-column",
+        zIndex: 150,
+        customSettings: { gridId: "g-sess" },
+      } as any);
+
+      expect(component.getGridSessionZIndex()).toBe(160);
+    });
+
+    it("should remove master widget and all its replicas/headers on removeWidget", () => {
+      const m1: any = {
+        id: "m-parent",
+        widgetType: "lane-column",
+        customSettings: { gridId: "g-del", gridLane: 0 },
+      };
+      const r1: any = {
+        id: "m-parent_grid_lane_1",
+        widgetType: "lane-column",
+        customSettings: {
+          gridId: "g-del",
+          gridLane: 1,
+          gridMasterId: "m-parent",
+        },
+      };
+      const h1: any = {
+        id: "m-parent_grid_header",
+        widgetType: "lane-column",
+        customSettings: {
+          gridId: "g-del",
+          isHeaderWidget: true,
+          gridMasterId: "m-parent",
+        },
+      };
+      component.layout.widgets.push(m1, r1, h1);
+
+      component.removeWidget("m-parent");
+
+      expect(
+        component.layout.widgets.some((w: any) => w.id === "m-parent"),
+      ).toBeFalse();
+      expect(
+        component.layout.widgets.some(
+          (w: any) => w.id === "m-parent_grid_lane_1",
+        ),
+      ).toBeFalse();
+      expect(
+        component.layout.widgets.some(
+          (w: any) => w.id === "m-parent_grid_header",
+        ),
+      ).toBeFalse();
+    });
+
     it("should remove widget by id and emit layoutChanged", () => {
       component.removeWidget("w2");
       expect(
@@ -8398,6 +9141,188 @@ describe("DefaultRacedayComponent", () => {
       (component as any).selectedWidgetId = () => "w1";
       component.removeWidget("w1");
       expect(component.widgetSelected.emit).toHaveBeenCalledWith("lane-view-1");
+    });
+
+    it("should keep selection within grid and select next column when deleting a column from a multi-column grid", () => {
+      fixture.componentRef.setInput("gridSession", {
+        gridId: "grid-multi-col",
+        bounds: { x: 0, y: 0, width: 600, height: 200 },
+        totalLanes: 2,
+        direction: "vertical",
+        sourceLaneIndex: 0,
+        bindingMode: "lane",
+      });
+
+      component.layout = {
+        widgets: [
+          {
+            id: "col1",
+            widgetType: "lane-column",
+            x: 0,
+            y: 0,
+            width: 100,
+            height: 50,
+            customSettings: { gridId: "grid-multi-col", gridLane: 0 },
+          },
+          {
+            id: "col2",
+            widgetType: "lane-column",
+            x: 120,
+            y: 0,
+            width: 150,
+            height: 50,
+            customSettings: { gridId: "grid-multi-col", gridLane: 0 },
+          },
+          {
+            id: "col3",
+            widgetType: "lane-column",
+            x: 290,
+            y: 0,
+            width: 120,
+            height: 50,
+            customSettings: { gridId: "grid-multi-col", gridLane: 0 },
+          },
+          {
+            id: "lane-view-main",
+            widgetType: "lane-view",
+            x: 0,
+            y: 300,
+            width: 800,
+            height: 400,
+          },
+        ],
+      } as any;
+
+      (component as any).selectedWidgetId = () => "col1";
+      component.removeWidget("col1");
+
+      // Must NOT select lane-view-main; must stay in grid and select col2 (the next column)
+      expect(component.widgetSelected.emit).toHaveBeenCalledWith("col2");
+    });
+
+    it("should select previous column when deleting the rightmost column in a grid", () => {
+      fixture.componentRef.setInput("gridSession", {
+        gridId: "grid-multi-col",
+        bounds: { x: 0, y: 0, width: 600, height: 200 },
+        totalLanes: 2,
+        direction: "vertical",
+        sourceLaneIndex: 0,
+        bindingMode: "lane",
+      });
+
+      component.layout = {
+        widgets: [
+          {
+            id: "col1",
+            widgetType: "lane-column",
+            x: 0,
+            y: 0,
+            width: 100,
+            height: 50,
+            customSettings: { gridId: "grid-multi-col", gridLane: 0 },
+          },
+          {
+            id: "col2",
+            widgetType: "lane-column",
+            x: 120,
+            y: 0,
+            width: 150,
+            height: 50,
+            customSettings: { gridId: "grid-multi-col", gridLane: 0 },
+          },
+        ],
+      } as any;
+
+      (component as any).selectedWidgetId = () => "col2";
+      component.removeWidget("col2");
+
+      expect(component.widgetSelected.emit).toHaveBeenCalledWith("col1");
+    });
+
+    it("should remove grid and emit finishGrid when the last element in a grid session is removed", () => {
+      spyOn(component.finishGrid, "emit");
+      spyOn(LaneGridAnimationHelper, "reset");
+      fixture.componentRef.setInput("gridSession", {
+        gridId: "grid-test-remove",
+        bounds: { x: 0, y: 0, width: 400, height: 200 },
+        totalLanes: 2,
+        direction: "horizontal",
+        sourceLaneIndex: 0,
+        bindingMode: "lane",
+      });
+
+      component.layout = {
+        widgets: [
+          {
+            id: "m1",
+            widgetType: "lane-column",
+            customSettings: { gridId: "grid-test-remove" },
+          },
+          {
+            id: "m1_grid_lane_1",
+            widgetType: "lane-column",
+            customSettings: {
+              gridId: "grid-test-remove",
+              gridMasterId: "m1",
+            },
+          },
+          {
+            id: "m1_grid_header",
+            widgetType: "lane-column",
+            customSettings: {
+              gridId: "grid-test-remove",
+              isHeaderWidget: true,
+              gridMasterId: "m1",
+            },
+          },
+          {
+            id: "other-w",
+            widgetType: "clock",
+          },
+        ],
+      } as any;
+
+      component.removeWidget("m1");
+      expect(
+        component.layout.widgets.some(
+          (w: any) => w.customSettings?.gridId === "grid-test-remove",
+        ),
+      ).toBeFalse();
+      expect(component.finishGrid.emit).toHaveBeenCalled();
+      expect(LaneGridAnimationHelper.reset).toHaveBeenCalledWith(
+        "grid-test-remove",
+      );
+      expect(component.layout.widgets.length).toBe(1);
+      expect(component.layout.widgets[0].id).toBe("other-w");
+    });
+
+    it("should remove grid and reset animation helper when the last element in a baked grid is removed", () => {
+      spyOn(LaneGridAnimationHelper, "reset");
+      fixture.componentRef.setInput("gridSession", null);
+
+      component.layout = {
+        widgets: [
+          {
+            id: "cell-1",
+            widgetType: "lane-column",
+            customSettings: { gridId: "grid-baked" },
+          },
+          {
+            id: "clock-1",
+            widgetType: "clock",
+          },
+        ],
+      } as any;
+
+      component.removeWidget("cell-1");
+      expect(
+        component.layout.widgets.some(
+          (w: any) => w.customSettings?.gridId === "grid-baked",
+        ),
+      ).toBeFalse();
+      expect(LaneGridAnimationHelper.reset).toHaveBeenCalledWith("grid-baked");
+      expect(component.layout.widgets.length).toBe(1);
+      expect(component.layout.widgets[0].id).toBe("clock-1");
     });
   });
 
@@ -8714,6 +9639,11 @@ describe("DefaultRacedayComponent", () => {
   });
 
   describe("Layout Editor Panel Persistence", () => {
+    beforeEach(() => {
+      spyOnProperty(window, "innerWidth", "get").and.returnValue(1920);
+      spyOnProperty(window, "innerHeight", "get").and.returnValue(1080);
+    });
+
     it("should initialize layout editor minimized state and position from settings", () => {
       mockSettings.layoutEditorMinimized = true;
       mockSettings.layoutEditorPositionX = 10;
@@ -9387,6 +10317,224 @@ describe("DefaultRacedayComponent", () => {
       expect(dropped.x).toBe(1920 - dropped.width);
       expect(dropped.y).toBe(1080 - dropped.height);
     });
+
+    it("should replicate custom widget across lanes and create header when dropped into an active grid session", () => {
+      const scalableContent = document.createElement("div");
+      scalableContent.className = "scalable-content";
+      Object.defineProperty(scalableContent, "offsetWidth", { value: 1920 });
+      Object.defineProperty(scalableContent, "offsetHeight", { value: 1080 });
+      spyOn(scalableContent, "getBoundingClientRect").and.returnValue({
+        left: 0,
+        top: 0,
+        width: 1920,
+        height: 1080,
+      } as any);
+      (component as any).el.nativeElement.appendChild(scalableContent);
+
+      const session: any = {
+        gridId: "grid-test",
+        bounds: { x: 100, y: 100, width: 800, height: 400 },
+        totalLanes: 4,
+        direction: "vertical",
+        sourceLaneIndex: 0,
+        bindingMode: "lane",
+        headerPlacement: "top",
+        headerHeight: 36,
+      };
+      fixture.componentRef.setInput("gridSession", session);
+
+      const mockCustomDef: any = {
+        manifest: {
+          id: "advanced-laps",
+          name: "Advanced Laps",
+          defaultWidth: 200,
+          defaultHeight: 90,
+          defaultSettings: {
+            mode: "heat",
+            customLabel: "Heat Laps",
+            decimalPlaces: 0,
+          },
+        },
+      };
+      (component as any).customWidgetService = {
+        getWidgetDefinition: () => mockCustomDef,
+        getCustomWidgets: () => [],
+      };
+
+      component.isLayoutCustomizing = true;
+      component.draggedWidgetType = "custom:dopamine:advanced-laps";
+      component.layout = {
+        baseWidth: 1920,
+        baseHeight: 1080,
+        widgets: [],
+      } as any;
+
+      const event = {
+        preventDefault: jasmine.createSpy("preventDefault"),
+        clientX: 200,
+        clientY: 200,
+      } as any;
+      component.onCanvasDrop(event);
+
+      expect(component.layout.widgets.length).toBe(5); // Master + 3 mirrored + 1 top header
+      const master = component.layout.widgets.find(
+        (w: any) =>
+          w.customSettings?.["gridLane"] === 0 &&
+          !w.customSettings?.["isHeaderWidget"],
+      );
+      expect(master).toBeTruthy();
+      expect(master?.customSettings?.["customLabel"]).toBe("Heat Laps");
+      expect(master?.customSettings?.["gridId"]).toBe("grid-test");
+
+      const header = component.layout.widgets.find(
+        (w: any) => w.customSettings?.["isHeaderWidget"],
+      );
+      expect(header).toBeTruthy();
+      expect(header?.height).toBe(36);
+      expect(header?.customSettings?.["customLabel"]).toBe("Heat Laps");
+
+      const lanes = component.layout.widgets.filter(
+        (w: any) => !w.customSettings?.["isHeaderWidget"],
+      );
+      expect(lanes.length).toBe(4);
+    });
+
+    it("should create new data grid with replicated widgets when grid widget is dropped on canvas", () => {
+      const scalableContent = document.createElement("div");
+      scalableContent.className = "scalable-content";
+      Object.defineProperty(scalableContent, "offsetWidth", { value: 1920 });
+      Object.defineProperty(scalableContent, "offsetHeight", { value: 1080 });
+      spyOn(scalableContent, "getBoundingClientRect").and.returnValue({
+        left: 0,
+        top: 0,
+        width: 1920,
+        height: 1080,
+      } as any);
+      (component as any).el.nativeElement.appendChild(scalableContent);
+
+      component.isLayoutCustomizing = true;
+      component.draggedWidgetType = "grid";
+      (component as any).track = { lanes: [{}, {}, {}, {}] } as any;
+      component.layout = {
+        baseWidth: 1920,
+        baseHeight: 1080,
+        widgets: [],
+      } as any;
+
+      spyOn(component.layoutChanged, "emit");
+      spyOn(component.widgetSelected, "emit");
+
+      const event = {
+        preventDefault: jasmine.createSpy("preventDefault"),
+        clientX: 400,
+        clientY: 200,
+      } as any;
+      component.onCanvasDrop(event);
+
+      // 4 lanes * 3 columns = 12 widgets
+      expect(component.layout.widgets.length).toBe(12);
+      expect(component.layoutChanged.emit).toHaveBeenCalled();
+      expect(component.widgetSelected.emit).toHaveBeenCalled();
+
+      const master = component.layout.widgets.find(
+        (w: any) =>
+          w.customSettings?.["gridLane"] === 0 &&
+          w.customSettings?.["columnKey"] === "driver.name",
+      );
+      expect(master).toBeTruthy();
+      expect(master?.customSettings?.["gridId"]).toMatch(/^grid-/);
+      expect(component.widgetSelected.emit).toHaveBeenCalledWith(master!.id);
+    });
+
+    it("should create single standalone widget without grid replication when lane-col widget is dropped without an active grid session", () => {
+      const scalableContent = document.createElement("div");
+      scalableContent.className = "scalable-content";
+      Object.defineProperty(scalableContent, "offsetWidth", { value: 1920 });
+      Object.defineProperty(scalableContent, "offsetHeight", { value: 1080 });
+      spyOn(scalableContent, "getBoundingClientRect").and.returnValue({
+        left: 0,
+        top: 0,
+        width: 1920,
+        height: 1080,
+      } as any);
+      (component as any).el.nativeElement.appendChild(scalableContent);
+
+      component.isLayoutCustomizing = true;
+      component.draggedWidgetType = "lane-col:driver.name";
+      fixture.componentRef.setInput("gridSession", null);
+      component.layout = {
+        baseWidth: 1920,
+        baseHeight: 1080,
+        widgets: [],
+      } as any;
+
+      spyOn(component.layoutChanged, "emit");
+      spyOn(component.widgetSelected, "emit");
+
+      const event = {
+        preventDefault: jasmine.createSpy("preventDefault"),
+        clientX: 400,
+        clientY: 200,
+      } as any;
+      component.onCanvasDrop(event);
+
+      // Single standalone widget only
+      expect(component.layout.widgets.length).toBe(1);
+      const widget = component.layout.widgets[0];
+      expect(widget.widgetType).toBe("lane-column");
+      expect(widget.customSettings?.["columnKey"]).toBe("driver.name");
+      expect(widget.customSettings?.["gridId"]).toBeUndefined();
+      expect(component.widgetSelected.emit).toHaveBeenCalledWith(widget.id);
+    });
+
+    it("should inherit useLaneColors false when lane-col widget is dropped into active grid with lane colors disabled", () => {
+      const scalableContent = document.createElement("div");
+      scalableContent.className = "scalable-content";
+      Object.defineProperty(scalableContent, "offsetWidth", { value: 1920 });
+      Object.defineProperty(scalableContent, "offsetHeight", { value: 1080 });
+      spyOn(scalableContent, "getBoundingClientRect").and.returnValue({
+        left: 0,
+        top: 0,
+        width: 1920,
+        height: 1080,
+      } as any);
+      (component as any).el.nativeElement.appendChild(scalableContent);
+
+      const session = {
+        gridId: "grid-no-colors",
+        bounds: { x: 100, y: 100, width: 800, height: 400 },
+        totalLanes: 3,
+        direction: "vertical",
+        sourceLaneIndex: 0,
+        bindingMode: "lane",
+        headerPlacement: "none",
+        useLaneColors: false,
+        backgroundColor: "#1e1e1e",
+        textColor: "#f0f0f0",
+      };
+      fixture.componentRef.setInput("gridSession", session);
+
+      component.isLayoutCustomizing = true;
+      component.draggedWidgetType = "lane-col:driver.name";
+      component.layout = {
+        baseWidth: 1920,
+        baseHeight: 1080,
+        widgets: [],
+      } as any;
+
+      const event = {
+        preventDefault: jasmine.createSpy("preventDefault"),
+        clientX: 200,
+        clientY: 200,
+      } as any;
+      component.onCanvasDrop(event);
+
+      expect(component.layout.widgets.length).toBe(3);
+      component.layout.widgets.forEach((w: any) => {
+        expect(w.customSettings?.["useLaneColors"]).toBeFalse();
+        expect(w.customSettings?.["backgroundColor"]).toBe("#1e1e1e");
+      });
+    });
   });
 
   describe("Printing", () => {
@@ -9758,6 +10906,56 @@ describe("DefaultRacedayComponent", () => {
       (component as any).loadRaceData();
       expect(themeService.activateForRace).not.toHaveBeenCalled();
       delete (component as any).route.snapshot.queryParams["themeId"];
+    });
+
+    it("should call activateForRace with race entity_id and theme_id", () => {
+      const themeService = TestBed.inject(ThemeService);
+      const raceService = TestBed.inject(RaceService);
+      (raceService.getRace as jasmine.Spy).and.returnValue({
+        entity_id: "race-123",
+        theme_id: "custom-theme-99",
+        track: { lanes: [] },
+      });
+      (themeService.getTransientThemeId as jasmine.Spy).and.returnValue(null);
+      (themeService.activateForRace as jasmine.Spy).calls.reset();
+
+      (component as any).loadRaceData();
+      expect(themeService.activateForRace).toHaveBeenCalledWith(
+        "race-123",
+        "custom-theme-99",
+      );
+    });
+
+    it("should refresh countdown lamp URLs when theme changes", () => {
+      (component as any).assets = [
+        { model: { entityId: "custom-red-id" }, url: "assets/custom_red.png" },
+        {
+          model: { entityId: "custom-green-id" },
+          url: "assets/custom_green.png",
+        },
+      ];
+      component.countdownLamps = [
+        { url: "assets/default_red.png", state: "on" },
+        { url: "assets/default_green.png", state: "go" },
+      ];
+
+      const themeService = TestBed.inject(ThemeService);
+      (themeService.resolveAssetId as jasmine.Spy).and.callFake(
+        (slotKey: string) => {
+          if (slotKey === "lamp.red.on") return "custom-red-id";
+          if (slotKey === "lamp.green") return "custom-green-id";
+          return null;
+        },
+      );
+
+      component.refreshCountdownLampUrls();
+
+      expect(component.countdownLamps[0].url).toContain(
+        "assets/custom_red.png",
+      );
+      expect(component.countdownLamps[1].url).toContain(
+        "assets/custom_green.png",
+      );
     });
 
     it("should initialize customUiService and activate theme on themeId query param", async () => {
@@ -10596,7 +11794,8 @@ describe("DefaultRacedayComponent", () => {
       const standings = rcAiGroup?.subgroups.find(
         (s) => s.id === "standings-heats",
       );
-      expect(standings?.widgets.map((w) => w.type)).toContain("lane-view");
+      expect(standings?.widgets.map((w) => w.type)).toContain("leaderboard");
+      expect(standings?.widgets.map((w) => w.type)).not.toContain("lane-view");
       const titles = rcAiGroup?.subgroups.find((s) => s.id === "titles-info");
       expect(titles?.widgets.map((w) => w.type)).toContain("timer");
 
@@ -11311,6 +12510,7 @@ describe("DefaultRacedayComponent", () => {
       component.layout = { baseWidth: 1920, baseHeight: 1080, widgets: [] };
 
       const emitSpy = spyOn(component.gridBoundsChange, "emit");
+      const layoutSpy = spyOn(component.layoutChanged, "emit");
 
       const pointerDownEvent = new PointerEvent("pointerdown", {
         clientX: 900,
@@ -11336,10 +12536,469 @@ describe("DefaultRacedayComponent", () => {
       const upEvent = new PointerEvent("pointerup");
       document.dispatchEvent(upEvent);
 
+      expect(layoutSpy).toHaveBeenCalledWith(component.layout);
+
       // Verify listeners removed after pointerup
       emitSpy.calls.reset();
       document.dispatchEvent(moveEvent);
       expect(emitSpy).not.toHaveBeenCalled();
+    });
+
+    it("should not emit layoutChanged on pointerup if no resizing occurred during onGridResizeStart", () => {
+      const session = {
+        gridId: "test-grid-resize-static",
+        bounds: { x: 100, y: 100, width: 800, height: 400 },
+        totalLanes: 4,
+        direction: "horizontal" as const,
+        sourceLaneIndex: 0,
+        bindingMode: "lane" as const,
+      };
+      fixture.componentRef.setInput("isUIEditorMode", true);
+      fixture.componentRef.setInput("uiScale", 1);
+      fixture.componentRef.setInput("gridSession", session);
+      fixture.detectChanges();
+      component.layout = { baseWidth: 1920, baseHeight: 1080, widgets: [] };
+
+      const layoutSpy = spyOn(component.layoutChanged, "emit");
+
+      const pointerDownEvent = new PointerEvent("pointerdown", {
+        clientX: 900,
+        clientY: 300,
+      });
+      component.onGridResizeStart(pointerDownEvent, "e");
+
+      const upEvent = new PointerEvent("pointerup");
+      document.dispatchEvent(upEvent);
+
+      expect(layoutSpy).not.toHaveBeenCalled();
+    });
+
+    it("should handle onGridMoveStart and emit gridBoundsChange on pointermove", () => {
+      const session = {
+        gridId: "test-grid-move",
+        bounds: { x: 100, y: 100, width: 800, height: 400 },
+        totalLanes: 4,
+        direction: "horizontal" as const,
+        sourceLaneIndex: 0,
+        bindingMode: "lane" as const,
+      };
+      fixture.componentRef.setInput("isUIEditorMode", true);
+      fixture.componentRef.setInput("uiScale", 1);
+      fixture.componentRef.setInput("gridSession", session);
+      fixture.detectChanges();
+      component.layout = { baseWidth: 1920, baseHeight: 1080, widgets: [] };
+
+      const emitSpy = spyOn(component.gridBoundsChange, "emit");
+      const layoutSpy = spyOn(component.layoutChanged, "emit");
+
+      const pointerDownEvent = new PointerEvent("pointerdown", {
+        clientX: 500,
+        clientY: 300,
+      });
+      component.onGridMoveStart(pointerDownEvent);
+
+      const moveEvent = new PointerEvent("pointermove", {
+        clientX: 550,
+        clientY: 340,
+      });
+      document.dispatchEvent(moveEvent);
+
+      expect(emitSpy).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          x: 150,
+          y: 140,
+          width: 800,
+          height: 400,
+        }),
+      );
+
+      const upEvent = new PointerEvent("pointerup");
+      document.dispatchEvent(upEvent);
+
+      expect(layoutSpy).toHaveBeenCalledWith(component.layout);
+
+      emitSpy.calls.reset();
+      document.dispatchEvent(moveEvent);
+      expect(emitSpy).not.toHaveBeenCalled();
+    });
+
+    it("should emit deleteGrid when onDeleteGridClicked is called", () => {
+      const session = {
+        gridId: "test-grid-delete",
+        bounds: { x: 100, y: 100, width: 800, height: 400 },
+        totalLanes: 4,
+        direction: "horizontal" as const,
+        sourceLaneIndex: 0,
+        bindingMode: "lane" as const,
+      };
+      fixture.componentRef.setInput("gridSession", session);
+      fixture.detectChanges();
+
+      const deleteSpy = spyOn(component.deleteGrid, "emit");
+      component.onDeleteGridClicked();
+      expect(deleteSpy).toHaveBeenCalledWith("test-grid-delete");
+    });
+
+    it("should update cell ratios and sync layout when onMasterWidgetModified is called", () => {
+      const session = {
+        gridId: "test-grid-modify",
+        bounds: { x: 100, y: 100, width: 800, height: 400 },
+        totalLanes: 4,
+        direction: "horizontal" as const,
+        sourceLaneIndex: 0,
+        bindingMode: "lane" as const,
+      };
+      fixture.componentRef.setInput("gridSession", session);
+      fixture.detectChanges();
+
+      const masterWidget: any = {
+        id: "w-master-1",
+        widgetType: "lane-column",
+        x: 100,
+        y: 100,
+        width: 150,
+        height: 300,
+        customSettings: {
+          gridId: "test-grid-modify",
+          gridLane: 0,
+        },
+      };
+
+      (component as any).layout = {
+        widgets: [masterWidget],
+      };
+
+      const layoutSpy = spyOn(component.layoutChanged, "emit");
+      component.onMasterWidgetModified(masterWidget);
+
+      expect(masterWidget.customSettings["cellWidthRatio"]).toBeCloseTo(1.0, 3);
+      expect(masterWidget.width).toBe(200);
+      expect(masterWidget.customSettings["cellHeightRatio"]).toBeCloseTo(
+        300 / 400,
+        3,
+      );
+      expect(layoutSpy).toHaveBeenCalled();
+    });
+
+    it("should not mirror master widget geometry to other lanes when session.mirrorRows is false", () => {
+      const session = {
+        gridId: "test-grid-nomirror",
+        bounds: { x: 100, y: 100, width: 800, height: 400 },
+        totalLanes: 4,
+        direction: "vertical" as const,
+        sourceLaneIndex: 0,
+        bindingMode: "lane" as const,
+        mirrorRows: false,
+      };
+      fixture.componentRef.setInput("gridSession", session);
+      fixture.detectChanges();
+
+      const masterWidget: any = {
+        id: "w-master-1",
+        widgetType: "lane-column",
+        x: 100,
+        y: 100,
+        width: 300,
+        height: 100,
+        customSettings: {
+          gridId: "test-grid-nomirror",
+          gridLane: 0,
+          mirrorRows: false,
+        },
+      };
+
+      const lane1Widget: any = {
+        id: "w-master-1_lane_1",
+        widgetType: "lane-column",
+        x: 100,
+        y: 200,
+        width: 200,
+        height: 80,
+        customSettings: {
+          gridId: "test-grid-nomirror",
+          gridMasterId: "w-master-1",
+          gridLane: 1,
+          mirrorRows: false,
+        },
+      };
+
+      (component as any).layout = {
+        widgets: [masterWidget, lane1Widget],
+      };
+
+      component.onMasterWidgetModified(masterWidget);
+
+      expect(masterWidget.width).toBe(300);
+      expect(lane1Widget.width).toBe(200);
+      expect(lane1Widget.height).toBe(80);
+    });
+
+    it("should ignore onMasterWidgetModified when widget is null or from another grid", () => {
+      const session = {
+        gridId: "test-grid-safety",
+        bounds: { x: 100, y: 100, width: 800, height: 400 },
+        totalLanes: 2,
+        direction: "vertical" as const,
+        sourceLaneIndex: 0,
+        bindingMode: "lane" as const,
+      };
+      fixture.componentRef.setInput("gridSession", session);
+      fixture.detectChanges();
+
+      const layoutSpy = spyOn(component.layoutChanged, "emit");
+      component.onMasterWidgetModified(null as any);
+      expect(layoutSpy).not.toHaveBeenCalled();
+
+      const otherWidget: any = {
+        id: "w-other",
+        customSettings: { gridId: "completely-different-grid" },
+      };
+      component.onMasterWidgetModified(otherWidget);
+      expect(layoutSpy).not.toHaveBeenCalled();
+    });
+
+    it("should resolve to master widget and replicate when onMasterWidgetModified is called on a mirrored child widget", () => {
+      const session = {
+        gridId: "test-grid-child-sync",
+        bounds: { x: 100, y: 100, width: 400, height: 400 },
+        totalLanes: 2,
+        direction: "vertical" as const,
+        sourceLaneIndex: 0,
+        bindingMode: "lane" as const,
+        mirrorRows: true,
+      };
+      fixture.componentRef.setInput("gridSession", session);
+      fixture.detectChanges();
+
+      const masterWidget: any = {
+        id: "w-master-1",
+        widgetType: "lane-column",
+        x: 100,
+        y: 100,
+        width: 400,
+        height: 200,
+        customSettings: {
+          gridId: "test-grid-child-sync",
+          gridLane: 0,
+          columnKey: "driver.name",
+        },
+      };
+
+      const childWidget: any = {
+        id: "w-master-1_grid_lane_1",
+        widgetType: "lane-column",
+        x: 100,
+        y: 300,
+        width: 400,
+        height: 200,
+        customSettings: {
+          gridId: "test-grid-child-sync",
+          gridMasterId: "w-master-1",
+          gridLane: 1,
+          columnKey: "driver.name",
+          insets: { "bottom-right": "qrCode" },
+          insetsConfig: { "bottom-right": { timeDecimalPlaces: 2 } },
+        },
+      };
+
+      (component as any).layout = {
+        widgets: [masterWidget, childWidget],
+      };
+
+      component.onMasterWidgetModified(childWidget);
+
+      // Master widget should have inherited the insets
+      expect(masterWidget.customSettings["insets"]).toEqual({
+        "bottom-right": "qrCode",
+      });
+      // There should not be duplicate master widgets at y: 100
+      const atY100 = (component as any).layout.widgets.filter(
+        (w: any) => w.y === 100 && !w.customSettings?.["isHeaderWidget"],
+      );
+      expect(atY100.length).toBe(1);
+      expect(atY100[0].id).toBe("w-master-1");
+
+      // The child widget at y: 300 should also have the insets mirrored
+      const atY300 = (component as any).layout.widgets.find(
+        (w: any) => w.y === 300,
+      );
+      expect(atY300).toBeTruthy();
+      expect(atY300.customSettings["insets"]).toEqual({
+        "bottom-right": "qrCode",
+      });
+    });
+
+    it("should update child widget in place without replication when mirrorRows is false", () => {
+      const session = {
+        gridId: "test-grid-nomirror-child",
+        bounds: { x: 100, y: 100, width: 400, height: 400 },
+        totalLanes: 2,
+        direction: "vertical" as const,
+        sourceLaneIndex: 0,
+        bindingMode: "lane" as const,
+        mirrorRows: false,
+      };
+      fixture.componentRef.setInput("gridSession", session);
+      fixture.detectChanges();
+
+      const masterWidget: any = {
+        id: "w-master-1",
+        widgetType: "lane-column",
+        x: 100,
+        y: 100,
+        width: 400,
+        height: 200,
+        customSettings: {
+          gridId: "test-grid-nomirror-child",
+          gridLane: 0,
+          mirrorRows: false,
+        },
+      };
+
+      const childWidget: any = {
+        id: "w-master-1_grid_lane_1",
+        widgetType: "lane-column",
+        x: 100,
+        y: 300,
+        width: 400,
+        height: 200,
+        customSettings: {
+          gridId: "test-grid-nomirror-child",
+          gridMasterId: "w-master-1",
+          gridLane: 1,
+          mirrorRows: false,
+          insets: { "top-left": "flag" },
+        },
+      };
+
+      (component as any).layout = {
+        widgets: [masterWidget, childWidget],
+      };
+
+      component.onMasterWidgetModified(childWidget);
+
+      // In unmirrored mode, master is not touched
+      expect(masterWidget.customSettings["insets"]).toBeUndefined();
+      // Child widget is updated in place
+      expect(childWidget.customSettings["insets"]).toEqual({
+        "top-left": "flag",
+      });
+    });
+
+    it("should update master widget geometry and synchronize lanes when onMasterWidgetModified is called on a header widget", () => {
+      const session = {
+        gridId: "test-grid-header-sync",
+        bounds: { x: 100, y: 100, width: 400, height: 400 },
+        totalLanes: 2,
+        direction: "vertical" as const,
+        sourceLaneIndex: 0,
+        bindingMode: "lane" as const,
+        mirrorRows: true,
+        headerPlacement: "top",
+        headerHeight: 36,
+      };
+      fixture.componentRef.setInput("gridSession", session);
+      fixture.detectChanges();
+
+      const masterWidget: any = {
+        id: "w-master-col",
+        widgetType: "lane-column",
+        x: 100,
+        y: 100,
+        width: 150,
+        height: 200,
+        customSettings: {
+          gridId: "test-grid-header-sync",
+          gridLane: 0,
+          columnKey: "driver.name",
+        },
+      };
+
+      const headerWidget: any = {
+        id: "w-header-col",
+        widgetType: "lane-column",
+        x: 120,
+        y: 64,
+        width: 180,
+        height: 36,
+        customSettings: {
+          gridId: "test-grid-header-sync",
+          isHeaderWidget: true,
+          gridMasterId: "w-master-col",
+        },
+      };
+
+      (component as any).layout = {
+        widgets: [masterWidget, headerWidget],
+      };
+
+      spyOn(component.layoutChanged, "emit");
+      component.onMasterWidgetModified(headerWidget);
+
+      expect(masterWidget.x).toBe(120);
+      expect(masterWidget.width).toBe(180);
+      expect(component.layoutChanged.emit).toHaveBeenCalled();
+    });
+
+    it("should calculate selectedGridBounds and selectedGridLabel when a grid widget is selected", () => {
+      fixture.componentRef.setInput("isUIEditorMode", true);
+      fixture.componentRef.setInput("gridSession", null);
+      (component as any).isCustomizing = true;
+
+      const widget1 = {
+        id: "col-1",
+        widgetType: "lane-column",
+        x: 100,
+        y: 100,
+        width: 150,
+        height: 60,
+        zIndex: 1,
+        customSettings: {
+          gridId: "g123",
+          gridLane: 0,
+          gridTotalLanes: 4,
+          bindingMode: "lane",
+        },
+      };
+      const widget2 = {
+        id: "col-2",
+        widgetType: "lane-column",
+        x: 100,
+        y: 170,
+        width: 150,
+        height: 60,
+        zIndex: 1,
+        customSettings: {
+          gridId: "g123",
+          gridLane: 1,
+          gridTotalLanes: 4,
+          bindingMode: "lane",
+        },
+      };
+
+      component.layout = {
+        baseWidth: 1920,
+        baseHeight: 1080,
+        widgets: [widget1, widget2],
+      };
+
+      // When no widget is selected
+      fixture.componentRef.setInput("selectedWidgetId", null);
+      expect(component.selectedGridBounds).toBeNull();
+
+      // When widget1 is selected
+      fixture.componentRef.setInput("selectedWidgetId", "col-1");
+      expect(component.selectedWidget).toBe(widget1);
+      const bounds = component.selectedGridBounds;
+      expect(bounds).toEqual({
+        x: 100,
+        y: 100,
+        width: 150,
+        height: 130,
+      });
+
+      // selectedGridLabel
+      expect(component.selectedGridLabel).toContain("4");
     });
   });
 
@@ -11437,6 +13096,783 @@ describe("DefaultRacedayComponent", () => {
       await new Promise((resolve) => setTimeout(resolve, 50));
       expect((component as any).laneQrCodeCache.has(0)).toBeTrue();
       expect(component.getLaneQrCodeUrl(0)).toContain("data:image/png;base64,");
+    });
+  });
+
+  describe("grid rendering and scrolling", () => {
+    it("should filter non-grid widgets with getNonGridWidgets()", () => {
+      const widget1 = { id: "w1", customSettings: {} } as any;
+      const widget2 = { id: "w2", customSettings: { gridId: "g1" } } as any;
+      const widget3 = { id: "w3" } as any;
+
+      (component as any).layout = { widgets: [widget1, widget2, widget3] };
+      const nonGrid = component.getNonGridWidgets();
+      expect(nonGrid.length).toBe(2);
+      expect(nonGrid.map((w: any) => w.id)).toEqual(["w1", "w3"]);
+    });
+
+    it("should compute grid descriptors and mark isScrollable when dataCount exceeds gridTotalLanes", () => {
+      const masterWidget = {
+        id: "grid-m",
+        widgetType: "lane-column",
+        x: 100,
+        y: 100,
+        width: 200,
+        height: 50,
+        customSettings: {
+          gridId: "scrollable-grid",
+          gridLane: 0,
+          gridTotalLanes: 2,
+          gridDirection: "vertical",
+          bindingMode: "lane",
+        },
+      } as any;
+      const mirroredWidget = {
+        id: "grid-lane-1",
+        widgetType: "lane-column",
+        x: 100,
+        y: 150,
+        width: 200,
+        height: 50,
+        customSettings: {
+          gridId: "scrollable-grid",
+          gridLane: 1,
+          gridMasterId: "grid-m",
+          gridTotalLanes: 2,
+          gridDirection: "vertical",
+          bindingMode: "lane",
+        },
+      } as any;
+
+      (component as any).layout = { widgets: [masterWidget, mirroredWidget] };
+      // 4 lanes on track, but grid is configured for 2 mirrored rows
+      (component as any).track = { lanes: [{}, {}, {}, {}] };
+      (component as any).race = { track: (component as any).track } as any;
+
+      const grids = component.getGrids();
+      expect(grids.length).toBe(1);
+      const grid = grids[0];
+      expect(grid.gridId).toBe("scrollable-grid");
+      expect(grid.hasScroll).toBeTrue();
+      expect(grid.dataCount).toBe(4);
+      // Generated virtual widgets for lanes 2 and 3
+      expect(grid.cellWidgets.length).toBe(4);
+    });
+
+    it("should not generate scrollable virtual widgets in getGrids when isUIEditorMode is true", () => {
+      fixture.componentRef.setInput("isUIEditorMode", true);
+      const masterWidget = {
+        id: "grid-m",
+        widgetType: "lane-column",
+        x: 100,
+        y: 100,
+        width: 200,
+        height: 50,
+        customSettings: {
+          gridId: "editor-grid",
+          gridLane: 0,
+          gridTotalLanes: 2,
+          gridDirection: "vertical",
+          bindingMode: "lane",
+        },
+      } as any;
+      const mirroredWidget = {
+        id: "grid-l1",
+        widgetType: "lane-column",
+        x: 100,
+        y: 150,
+        width: 200,
+        height: 50,
+        customSettings: {
+          gridId: "editor-grid",
+          gridLane: 1,
+          gridTotalLanes: 2,
+          gridDirection: "vertical",
+          bindingMode: "lane",
+        },
+      } as any;
+
+      (component as any).layout = { widgets: [masterWidget, mirroredWidget] };
+      // 4 lanes on track, but in editor mode preview should stay at authored 2 lanes
+      (component as any).track = { lanes: [{}, {}, {}, {}] };
+      (component as any).race = { track: (component as any).track } as any;
+
+      const grids = component.getGrids();
+      expect(grids.length).toBe(1);
+      const grid = grids[0];
+      expect(grid.gridId).toBe("editor-grid");
+      expect(grid.hasScroll).toBeFalse();
+      expect(grid.dataCount).toBe(2);
+      expect(grid.cellWidgets.length).toBe(2);
+    });
+
+    it("should not mark hasScroll when dataCount is within gridTotalLanes", () => {
+      const masterWidget = {
+        id: "grid-m",
+        widgetType: "lane-column",
+        x: 100,
+        y: 100,
+        width: 200,
+        height: 50,
+        customSettings: {
+          gridId: "non-scroll-grid",
+          gridLane: 0,
+          gridTotalLanes: 4,
+          gridDirection: "vertical",
+          bindingMode: "lane",
+        },
+      } as any;
+
+      (component as any).layout = { widgets: [masterWidget] };
+      // 2 lanes on track, grid is configured for 4 mirrored rows
+      (component as any).track = { lanes: [{}, {}] };
+      (component as any).race = { track: (component as any).track } as any;
+
+      const grids = component.getGrids();
+      expect(grids.length).toBe(1);
+      const grid = grids[0];
+      expect(grid.hasScroll).toBeFalse();
+      expect(grid.dataCount).toBe(2);
+      expect(grid.cellWidgets.length).toBe(1);
+    });
+
+    it("should populate grid label border options in RacedayGridDescriptor", () => {
+      const masterWidget = {
+        id: "grid-border-widget",
+        widgetType: "lane-column",
+        x: 50,
+        y: 50,
+        width: 300,
+        height: 80,
+        customSettings: {
+          gridId: "border-test-grid",
+          gridLane: 0,
+          gridTotalLanes: 2,
+          gridDirection: "vertical",
+          gridLabelPosition: "top",
+          gridLabelText: "HEAT BOARD",
+          gridLabelSize: 40,
+          gridLabelShowBorder: true,
+          gridLabelBorderColor: "#ef4444",
+          gridLabelBorderWidth: 3,
+          gridLabelBorderRadius: 10,
+        },
+      } as any;
+
+      (component as any).layout = { widgets: [masterWidget] };
+      (component as any).track = { lanes: [{}, {}] };
+      (component as any).race = { track: (component as any).track } as any;
+
+      const grids = component.getGrids();
+      expect(grids.length).toBe(1);
+      const grid = grids[0];
+      expect(grid.labelPosition).toBe("top");
+      expect(grid.labelText).toBe("HEAT BOARD");
+      expect(grid.labelShowBorder).toBeTrue();
+      expect(grid.labelBorderColor).toBe("#ef4444");
+      expect(grid.labelBorderWidth).toBe(3);
+      expect(grid.labelBorderRadius).toBe(10);
+    });
+
+    it("should auto-heal corrupt widgets positioned under top label on load", () => {
+      const corruptWidget = {
+        id: "corrupt-top-widget",
+        widgetType: "lane-column",
+        x: 50,
+        y: 50, // under the label!
+        width: 300,
+        height: 80,
+        customSettings: {
+          gridId: "corrupt-grid",
+          gridLane: 0,
+          gridTotalLanes: 2,
+          gridDirection: "vertical",
+          gridBounds: { x: 50, y: 50, width: 300, height: 200 },
+          gridLabelPosition: "top",
+          gridLabelText: "LEADERBOARD",
+          gridLabelSize: 40,
+        },
+      } as any;
+
+      (component as any).layout = { widgets: [corruptWidget] };
+      (component as any).track = { lanes: [{}, {}] };
+      (component as any).race = { track: (component as any).track } as any;
+
+      const grids = component.getGrids();
+      expect(grids.length).toBe(1);
+
+      const healedWidget = (component as any).layout.widgets.find(
+        (w: any) => w.id === "corrupt-top-widget",
+      );
+      expect(healedWidget.y).toBe(90);
+    });
+
+    it("should emit widgetSelected and anchorSelected on selectAnchor", () => {
+      const widgetSpy = spyOn(component.widgetSelected, "emit");
+      const anchorSpy = spyOn(component.anchorSelected, "emit");
+
+      component.selectAnchor("w-test-1", "top-left");
+      expect(widgetSpy).toHaveBeenCalledWith("w-test-1");
+      expect(anchorSpy).toHaveBeenCalledWith({
+        widgetId: "w-test-1",
+        anchor: "top-left",
+      });
+    });
+
+    it("should return cached reference for getGrids and getNonGridWidgets when inputs are unchanged", () => {
+      const masterWidget = {
+        id: "grid-m1",
+        widgetType: "lane-column",
+        x: 100,
+        y: 100,
+        width: 200,
+        height: 50,
+        customSettings: {
+          gridId: "cache-grid",
+          gridLane: 0,
+          gridTotalLanes: 4,
+          gridDirection: "vertical",
+          bindingMode: "lane",
+        },
+      } as any;
+      const nonGridWidget = {
+        id: "banner-1",
+        widgetType: "custom-label",
+        x: 0,
+        y: 0,
+        width: 100,
+        height: 30,
+      } as any;
+
+      (component as any).layout = { widgets: [masterWidget, nonGridWidget] };
+      (component as any).track = { lanes: [{}, {}] };
+      (component as any).race = { track: (component as any).track } as any;
+
+      const grids1 = component.getGrids();
+      const grids2 = component.getGrids();
+      expect(grids1).toBe(grids2);
+
+      const nonGrid1 = component.getNonGridWidgets();
+      const nonGrid2 = component.getNonGridWidgets();
+      expect(nonGrid1).toBe(nonGrid2);
+
+      component.invalidateGridCache();
+      const grids3 = component.getGrids();
+      expect(grids3).not.toBe(grids1);
+      expect(grids3.length).toBe(1);
+    });
+
+    it("should resolve gridType as overall in grid descriptor when any grid widget is overall", () => {
+      const widget1 = {
+        id: "grid-w1",
+        widgetType: "lane-column",
+        x: 100,
+        y: 100,
+        width: 200,
+        height: 50,
+        customSettings: {
+          gridId: "overall-desc-grid",
+          gridLane: 0,
+          gridTotalLanes: 2,
+          gridDirection: "vertical",
+          gridType: "heat",
+          columnKey: "driver.name",
+        },
+      } as any;
+      const widget2 = {
+        id: "grid-w2",
+        widgetType: "lane-column",
+        x: 300,
+        y: 100,
+        width: 200,
+        height: 50,
+        customSettings: {
+          gridId: "overall-desc-grid",
+          gridLane: 0,
+          gridTotalLanes: 2,
+          gridDirection: "vertical",
+          gridType: "overall",
+          columnKey: "overallLapCount",
+        },
+      } as any;
+
+      (component as any).layout = { widgets: [widget1, widget2] };
+      (component as any).track = { lanes: [{}, {}] };
+      (component as any).race = {
+        track: (component as any).track,
+        participants: [{}, {}, {}, {}],
+      } as any;
+
+      const grids = component.getGrids();
+      expect(grids.length).toBe(1);
+      expect(grids[0].gridType).toBe("overall");
+      expect(grids[0].dataCount).toBe(4);
+      expect(grids[0].cellWidgets[0].customSettings?.["gridType"]).toBe(
+        "overall",
+      );
+    });
+
+    it("should omit empty rows for overall grid when configured for 10 rows but only 5 drivers in race", () => {
+      const tenRowWidgets = Array.from({ length: 10 }, (_, i) => ({
+        id: `grid-w-overall-${i}`,
+        widgetType: "lane-column",
+        x: 100,
+        y: 100 + i * 50,
+        width: 200,
+        height: 50,
+        customSettings: {
+          gridId: "overall-10-grid",
+          gridLane: i,
+          gridTotalLanes: 10,
+          gridDirection: "vertical",
+          gridType: "overall",
+          columnKey: "overallLapCount",
+        },
+      })) as any[];
+
+      (component as any).layout = { widgets: tenRowWidgets };
+      (component as any).track = { lanes: [{}, {}, {}, {}] };
+      (component as any).race = {
+        track: (component as any).track,
+        participants: [{}, {}, {}, {}, {}],
+      } as any;
+
+      const grids = component.getGrids();
+      expect(grids.length).toBe(1);
+      const grid = grids[0];
+      expect(grid.gridId).toBe("overall-10-grid");
+      expect(grid.gridType).toBe("overall");
+      expect(grid.dataCount).toBe(5);
+      expect(grid.cellWidgets.length).toBe(5);
+      const lanes = grid.cellWidgets.map(
+        (w: any) => w.customSettings?.["gridLane"],
+      );
+      expect(lanes).toEqual([0, 1, 2, 3, 4]);
+    });
+
+    it("should retain all 10 rows for overall grid when isUIEditorMode is true", () => {
+      fixture.componentRef.setInput("isUIEditorMode", true);
+      const tenRowEditorWidgets = Array.from({ length: 10 }, (_, i) => ({
+        id: `grid-w-overall-editor-${i}`,
+        widgetType: "lane-column",
+        x: 100,
+        y: 100 + i * 50,
+        width: 200,
+        height: 50,
+        customSettings: {
+          gridId: "overall-10-editor-grid",
+          gridLane: i,
+          gridTotalLanes: 10,
+          gridDirection: "vertical",
+          gridType: "overall",
+          columnKey: "overallLapCount",
+        },
+      })) as any[];
+
+      (component as any).layout = { widgets: tenRowEditorWidgets };
+      (component as any).track = { lanes: [{}, {}, {}, {}] };
+      (component as any).race = {
+        track: (component as any).track,
+        participants: [{}, {}, {}, {}, {}],
+      } as any;
+
+      const grids = component.getGrids();
+      expect(grids.length).toBe(1);
+      const grid = grids[0];
+      expect(grid.cellWidgets.length).toBe(10);
+    });
+
+    it("should preserve getGrids and getNonGridWidgets caching when isLayoutCustomizing is true", () => {
+      const masterWidget = {
+        id: "grid-m1",
+        widgetType: "lane-column",
+        x: 100,
+        y: 100,
+        width: 200,
+        height: 50,
+        customSettings: {
+          gridId: "customizing-cache-grid",
+          gridLane: 0,
+          gridTotalLanes: 4,
+          gridDirection: "vertical",
+          bindingMode: "lane",
+        },
+      } as any;
+
+      (component as any).layout = { widgets: [masterWidget] };
+      (component as any).track = { lanes: [{}, {}] };
+      (component as any).race = { track: (component as any).track } as any;
+      component.isLayoutCustomizing = true;
+
+      const grids1 = component.getGrids();
+      const grids2 = component.getGrids();
+      expect(grids1).toBe(grids2);
+
+      const nonGrid1 = component.getNonGridWidgets();
+      const nonGrid2 = component.getNonGridWidgets();
+      expect(nonGrid1).toBe(nonGrid2);
+    });
+
+    it("should check widget existence with hasWidgetId in O(1) time and update when layout changes", () => {
+      const w1 = { id: "wid-1", widgetType: "lane-column" } as any;
+      const w2 = { id: "wid-2", widgetType: "label" } as any;
+      (component as any).layout = { widgets: [w1, w2] };
+
+      expect(component.hasWidgetId("wid-1")).toBeTrue();
+      expect(component.hasWidgetId("wid-2")).toBeTrue();
+      expect(component.hasWidgetId("wid-3")).toBeFalse();
+
+      // Update layout widgets
+      const w3 = { id: "wid-3", widgetType: "timer" } as any;
+      (component as any).layout = { widgets: [w3] };
+      expect(component.hasWidgetId("wid-1")).toBeFalse();
+      expect(component.hasWidgetId("wid-3")).toBeTrue();
+    });
+
+    it("should memoize selectedWidget and selectedGridBounds and clear them on invalidateGridCache", () => {
+      const w1 = {
+        id: "sel-w1",
+        widgetType: "lane-column",
+        x: 10,
+        y: 20,
+        width: 100,
+        height: 50,
+        customSettings: { gridId: "g-test" },
+      } as any;
+      (component as any).layout = { widgets: [w1] };
+      fixture.componentRef.setInput("selectedWidgetId", "sel-w1");
+      component.isLayoutCustomizing = true;
+
+      const sel1 = component.selectedWidget;
+      const sel2 = component.selectedWidget;
+      expect(sel1).toBe(w1);
+      expect(sel1).toBe(sel2);
+
+      const bounds1 = component.selectedGridBounds;
+      const bounds2 = component.selectedGridBounds;
+      expect(bounds1).toBeTruthy();
+      expect(bounds1).toBe(bounds2);
+
+      component.invalidateGridCache();
+      const sel3 = component.selectedWidget;
+      expect(sel3).toBe(w1);
+    });
+
+    describe("unselected grid title visibility", () => {
+      it("should render grid title in the DOM when grid is unselected and title is enabled", () => {
+        const gridWidget = {
+          id: "unselected-w1",
+          widgetType: "lane-column",
+          x: 100,
+          y: 100,
+          width: 400,
+          height: 600,
+          customSettings: {
+            gridId: "unselected-grid-1",
+            gridLane: 0,
+            gridTotalLanes: 2,
+            gridDirection: "vertical",
+            gridBounds: { x: 100, y: 100, width: 400, height: 600 },
+            gridLabelPosition: "top",
+            gridLabelText: "VISIBLE PLACEMENT TITLE",
+            gridLabelSize: 45,
+            gridLabelShowBorder: true,
+            gridLabelBorderColor: "#38bdf8",
+            gridLabelBorderWidth: 2,
+            gridLabelBorderRadius: 6,
+          },
+        } as any;
+
+        spyOnProperty(component, "currentRacedayLayout", "get").and.returnValue(
+          {
+            widgets: [gridWidget],
+          } as any,
+        );
+        (component as any).track = { lanes: [{}, {}] };
+        (component as any).race = { track: (component as any).track } as any;
+
+        fixture.detectChanges();
+
+        const grids = component.getGrids();
+        expect(grids.length).toBe(1);
+        expect(grids[0].labelPosition).toBe("top");
+        expect(grids[0].labelText).toBe("VISIBLE PLACEMENT TITLE");
+        expect(grids[0].labelBounds).toBeTruthy();
+
+        const labelEl: HTMLElement | null = fixture.nativeElement.querySelector(
+          ".raceday-grid-label",
+        );
+        expect(labelEl).toBeTruthy();
+        expect(labelEl?.textContent).toContain("VISIBLE PLACEMENT TITLE");
+        expect(labelEl?.classList.contains("horizontal-label")).toBeTrue();
+      });
+
+      it("should extract grid title settings when the first widget is a header widget without label settings", () => {
+        const headerWidget = {
+          id: "hdr-1",
+          widgetType: "lane-column",
+          x: 100,
+          y: 100,
+          width: 400,
+          height: 40,
+          customSettings: {
+            gridId: "mixed-grid",
+            isHeaderWidget: true,
+            gridBounds: { x: 100, y: 100, width: 400, height: 600 },
+          },
+        } as any;
+        const dataWidget = {
+          id: "cell-1",
+          widgetType: "lane-column",
+          x: 100,
+          y: 140,
+          width: 400,
+          height: 560,
+          customSettings: {
+            gridId: "mixed-grid",
+            gridLane: 0,
+            gridTotalLanes: 2,
+            gridDirection: "vertical",
+            gridBounds: { x: 100, y: 100, width: 400, height: 600 },
+            gridLabelPosition: "bottom",
+            gridLabelText: "BOTTOM TITLE PLACEMENT",
+            gridLabelSize: 38,
+          },
+        } as any;
+
+        (component as any).layout = { widgets: [headerWidget, dataWidget] };
+        (component as any).track = { lanes: [{}, {}] };
+        (component as any).race = { track: (component as any).track } as any;
+
+        const grids = component.getGrids();
+        expect(grids.length).toBe(1);
+        expect(grids[0].labelPosition).toBe("bottom");
+        expect(grids[0].labelText).toBe("BOTTOM TITLE PLACEMENT");
+        expect(grids[0].labelBounds).toBeTruthy();
+      });
+
+      it("should keep unselected grid and title visible when another grid is in an active session", () => {
+        const activeGridWidget = {
+          id: "active-w1",
+          widgetType: "lane-column",
+          x: 50,
+          y: 50,
+          width: 300,
+          height: 400,
+          customSettings: {
+            gridId: "active-grid",
+            gridLane: 0,
+            gridTotalLanes: 2,
+            gridBounds: { x: 50, y: 50, width: 300, height: 400 },
+          },
+        } as any;
+        const unselectedGridWidget = {
+          id: "unselected-w2",
+          widgetType: "lane-column",
+          x: 450,
+          y: 50,
+          width: 300,
+          height: 400,
+          customSettings: {
+            gridId: "unselected-grid",
+            gridLane: 0,
+            gridTotalLanes: 2,
+            gridBounds: { x: 450, y: 50, width: 300, height: 400 },
+            gridLabelPosition: "left",
+            gridLabelText: "UNSELECTED GRID TITLE",
+            gridLabelSize: 42,
+          },
+        } as any;
+
+        (component as any).layout = {
+          widgets: [activeGridWidget, unselectedGridWidget],
+        };
+        (component as any).track = { lanes: [{}, {}] };
+        (component as any).race = { track: (component as any).track } as any;
+
+        fixture.componentRef.setInput("gridSession", {
+          gridId: "active-grid",
+          bounds: { x: 50, y: 50, width: 300, height: 400 },
+          totalLanes: 2,
+          direction: "vertical",
+          sourceLaneIndex: 0,
+          bindingMode: "lane",
+        } as any);
+
+        const grids = component.getGrids();
+        expect(grids.length).toBe(1);
+        expect(grids[0].gridId).toBe("unselected-grid");
+        expect(grids[0].labelPosition).toBe("left");
+        expect(grids[0].labelText).toBe("UNSELECTED GRID TITLE");
+        expect(grids[0].labelBounds).toBeTruthy();
+
+        const nonGridWidgets = component.getNonGridWidgets();
+        expect(nonGridWidgets).toContain(activeGridWidget);
+        expect(nonGridWidgets).not.toContain(unselectedGridWidget);
+      });
+
+      it("should apply customizing-unselected class in UI editor mode when grid is unselected", () => {
+        const gridWidget = {
+          id: "editor-grid-w1",
+          widgetType: "lane-column",
+          x: 100,
+          y: 100,
+          width: 400,
+          height: 600,
+          customSettings: {
+            gridId: "editor-grid-1",
+            gridLane: 0,
+            gridTotalLanes: 2,
+            gridDirection: "vertical",
+            gridBounds: { x: 100, y: 100, width: 400, height: 600 },
+            gridLabelPosition: "top",
+            gridLabelText: "EDITOR TITLE",
+          },
+        } as any;
+
+        spyOnProperty(component, "currentRacedayLayout", "get").and.returnValue(
+          {
+            widgets: [gridWidget],
+          } as any,
+        );
+        (component as any).track = { lanes: [{}, {}] };
+        (component as any).race = { track: (component as any).track } as any;
+        fixture.componentRef.setInput("isUIEditorMode", true);
+
+        fixture.detectChanges();
+
+        const gridContainer: HTMLElement | null =
+          fixture.nativeElement.querySelector(".raceday-grid-container");
+        expect(gridContainer).toBeTruthy();
+        expect(
+          gridContainer?.classList.contains("customizing-unselected"),
+        ).toBeTrue();
+      });
+    });
+  });
+
+  describe("Grid performance optimizations and helper caching", () => {
+    it("should determine isGridOverall correctly and cache overall grid IDs", () => {
+      expect(component.isGridOverall(undefined)).toBeFalse();
+      expect(component.isGridOverall("")).toBeFalse();
+
+      const gridWidgets = [
+        {
+          id: "w1",
+          customSettings: { gridId: "g-overall", gridType: "overall" },
+        },
+        {
+          id: "w2",
+          customSettings: { gridId: "g-heat", gridType: "heat" },
+        },
+        {
+          id: "w3",
+          customSettings: { gridId: "g-key", columnKey: "overallPosition" },
+        },
+        {
+          id: "w4",
+          customSettings: {
+            gridId: "g-binding",
+            bindingMode: "overallPosition",
+          },
+        },
+      ] as any[];
+
+      (component as any).layout = { widgets: gridWidgets };
+      expect(component.isGridOverall("g-overall")).toBeTrue();
+      expect(component.isGridOverall("g-key")).toBeTrue();
+      expect(component.isGridOverall("g-binding")).toBeTrue();
+      expect(component.isGridOverall("g-heat")).toBeFalse();
+      expect(component.isGridOverall("non-existent")).toBeFalse();
+
+      // Caching: should return from cachedOverallGridIds
+      expect(component.isGridOverall("g-overall")).toBeTrue();
+
+      // Invalidation
+      component.invalidateGridCache();
+      expect(component.isGridOverall("g-heat")).toBeFalse();
+    });
+
+    it("should return true for isGridOverall when gridSession declared overall", () => {
+      fixture.componentRef.setInput("gridSession", {
+        gridType: "overall",
+      } as any);
+      expect(component.isGridOverall("any-grid")).toBeTrue();
+    });
+
+    it("should cache default lane widget settings and invalidate on layout change", () => {
+      const laneWidget = {
+        widgetType: "lane-column",
+        customSettings: { headerFontSize: 20 },
+      };
+      (component as any).currentRacedayLayout = {
+        widgets: [laneWidget],
+      };
+
+      const s1 = component.getDefaultLaneWidgetSettings();
+      expect(s1).toEqual({ headerFontSize: 20 });
+      const s2 = component.getDefaultLaneWidgetSettings();
+      expect(s2).toBe(s1);
+
+      // Invalidate on layout change
+      (component as any).currentRacedayLayout = {
+        widgets: [
+          { widgetType: "lane-column", customSettings: { headerFontSize: 24 } },
+        ],
+      };
+      const s3 = component.getDefaultLaneWidgetSettings();
+      expect(s3).toEqual({ headerFontSize: 24 });
+    });
+
+    it("should memoize getGrids when participants and heat drivers counts are unchanged", () => {
+      fixture.componentRef.setInput("gridSession", null);
+      const gridWidget = {
+        id: "w-grid-1",
+        widgetType: "lane-column",
+        x: 0,
+        y: 0,
+        width: 100,
+        height: 50,
+        customSettings: { gridId: "g1", gridTotalLanes: 4 },
+      } as any;
+      (component as any).layout = { widgets: [gridWidget] };
+      component.participants = [
+        { objectId: "p1" },
+        { objectId: "p2" },
+      ] as any[];
+      (component as any).sortedHeatDrivers = [{ objectId: "d1" }] as any[];
+
+      const g1 = component.getGrids();
+      expect(g1.length).toBe(1);
+
+      const g2 = component.getGrids();
+      expect(g2).toBe(g1);
+
+      // Invalidation clears cache
+      component.invalidateGridCache();
+      const g3 = component.getGrids();
+      expect(g3.length).toBe(1);
+      expect(g3).not.toBe(g1);
+    });
+
+    it("should pass widgetSettings directly in formatValue without scanning widgets", () => {
+      const hd = new DriverHeatData("d1", { objectId: "p1" } as any, 0, {
+        entity_id: "e1",
+        name: "Driver 1",
+      } as any);
+      const customSettings = { textColor: "#ff0000" };
+      spyOn(component, "getDefaultLaneWidgetSettings").and.callThrough();
+
+      const val = component.formatValue(
+        "driver.name",
+        "Driver 1",
+        hd,
+        undefined,
+        undefined,
+        customSettings,
+      );
+      expect(val).toBe("Driver 1");
+      expect(component.getDefaultLaneWidgetSettings).not.toHaveBeenCalled();
     });
   });
 });

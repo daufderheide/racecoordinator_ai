@@ -18,6 +18,7 @@ describe("FileSystemService", () => {
       "clearDirectory",
       "listWidgets",
       "getWidgetFile",
+      "hasWidgetFile",
       "writeWidgetFile",
       "deleteWidgetDir",
       "hasCustomFiles",
@@ -136,6 +137,82 @@ describe("FileSystemService", () => {
           create: true,
         },
       );
+    });
+
+    it("should get file size before creating writable stream", async () => {
+      const callOrder: string[] = [];
+      mockFileHandle.getFile.and.callFake(() => {
+        callOrder.push("getFile");
+        return Promise.resolve({
+          text: () => Promise.resolve("test"),
+          size: 4,
+        });
+      });
+      mockFileHandle.createWritable.and.callFake(() => {
+        callOrder.push("createWritable");
+        return Promise.resolve({
+          seek: jasmine.createSpy("seek"),
+          write: jasmine.createSpy("write"),
+          close: jasmine.createSpy("close"),
+        });
+      });
+
+      await service.appendToFile("log.txt", "more content");
+
+      expect(callOrder).toEqual(["getFile", "createWritable"]);
+    });
+
+    it("should recover from InvalidStateError by reading existing content and rewriting clean", async () => {
+      const cleanWritable = {
+        seek: jasmine.createSpy("seek"),
+        write: jasmine.createSpy("write"),
+        close: jasmine.createSpy("close").and.resolveTo(),
+      };
+
+      let attempt = 0;
+      mockFileHandle.createWritable.and.callFake(
+        (opts?: { keepExistingData?: boolean }) => {
+          attempt++;
+          if (attempt === 1) {
+            // First attempt with keepExistingData: true throws InvalidStateError
+            const err = new Error(
+              "An operation that depends on state cached in an interface object was made but the state had changed since it was read from disk.",
+            );
+            err.name = "InvalidStateError";
+            return Promise.reject(err);
+          }
+          // Recovery attempt with keepExistingData: false succeeds
+          expect(opts?.keepExistingData).toBeFalse();
+          return Promise.resolve(cleanWritable);
+        },
+      );
+
+      mockFileHandle.getFile.and.returnValue(
+        Promise.resolve({
+          text: () => Promise.resolve("previous content\n"),
+          size: 17,
+        }),
+      );
+
+      await service.appendToFile("race_coordinator_client.log", "new line\n");
+
+      expect(cleanWritable.write).toHaveBeenCalledWith(
+        "previous content\nnew line\n",
+      );
+      expect(cleanWritable.close).toHaveBeenCalled();
+    });
+
+    it("should handle error when recovery also fails", async () => {
+      spyOn(console, "error");
+      const err = new Error(
+        "An operation that depends on state cached in an interface object was made but the state had changed since it was read from disk.",
+      );
+      err.name = "InvalidStateError";
+      mockFileHandle.createWritable.and.rejectWith(err);
+
+      await service.appendToFile("log.txt", "content");
+
+      expect(console.error).toHaveBeenCalled();
     });
   });
 
@@ -572,6 +649,7 @@ describe("FileSystemService", () => {
       mockServerFs.getWidgetFile.and.returnValue(
         Promise.resolve("widget-content"),
       );
+      mockServerFs.hasWidgetFile.and.returnValue(Promise.resolve(true));
       mockServerFs.writeWidgetFile.and.returnValue(Promise.resolve(true));
       mockServerFs.deleteWidgetDir.and.returnValue(Promise.resolve(true));
 
@@ -584,6 +662,10 @@ describe("FileSystemService", () => {
 
       const exists = await service.hasWidgetFile("sample/w1", "widget.json");
       expect(exists).toBeTrue();
+      expect(mockServerFs.hasWidgetFile).toHaveBeenCalledWith(
+        "sample/w1",
+        "widget.json",
+      );
 
       await service.writeWidgetFile("sample/w1", "widget.json", "{}");
       expect(mockServerFs.writeWidgetFile).toHaveBeenCalledWith(
@@ -633,6 +715,68 @@ describe("FileSystemService", () => {
       await expectAsync(
         service.ensureServerDirectoriesInitialized(),
       ).toBeResolved();
+    });
+
+    it("should retry ensureServerDirectoriesInitialized when previous attempt failed and now succeeds", async () => {
+      (service as any).serverDirectoriesFetchedSuccessfully = false;
+      (service as any).serverCustomWidgetPath = undefined;
+      (service as any).serverCustomUiPath = undefined;
+      mockServerFs.getDirectories.and.returnValue(
+        Promise.resolve({
+          isLocalhost: true,
+          customWidgetDirectory: "/server/widgets",
+          customUiDirectory: "/server/ui",
+        }),
+      );
+
+      await service.ensureServerDirectoriesInitialized(true);
+      expect(mockServerFs.getDirectories).toHaveBeenCalled();
+      expect(service.getServerCustomWidgetPath()).toBe("/server/widgets");
+      expect(service.getServerCustomUiPath()).toBe("/server/ui");
+    });
+
+    it("should emit serverDirectoriesChanged$ when server directories update", async () => {
+      let emitted = false;
+      service.serverDirectoriesChanged$.subscribe(() => {
+        emitted = true;
+      });
+
+      mockServerFs.getDirectories.and.returnValue(
+        Promise.resolve({
+          isLocalhost: true,
+          customWidgetDirectory: "/brand/new/widgets",
+        }),
+      );
+
+      await service.initServerDirectories();
+      expect(emitted).toBeTrue();
+      expect(service.getServerCustomWidgetPath()).toBe("/brand/new/widgets");
+    });
+
+    it("should re-fetch server directories when socket connects", async () => {
+      const { Subject } = await import("rxjs");
+      const socketSubject = new Subject<boolean>();
+      const mockDataService = {
+        socketConnected$: socketSubject.asObservable(),
+      };
+      const mockLogger = jasmine.createSpyObj("LoggerService", [
+        "info",
+        "warn",
+        "error",
+      ]);
+      const fsWithSocket = new FileSystemService(
+        mockServerFs,
+        mockLogger,
+        mockDataService as any,
+      );
+      spyOn(fsWithSocket, "ensureServerDirectoriesInitialized").and.returnValue(
+        Promise.resolve(),
+      );
+
+      socketSubject.next(true);
+      expect(
+        fsWithSocket.ensureServerDirectoriesInitialized,
+      ).toHaveBeenCalledWith(true);
     });
   });
 });

@@ -14,6 +14,7 @@ import {
 } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { RacedayGhostPacingComponent } from "@app/components/raceday/components/raceday-ghost-pacing/raceday-ghost-pacing.component";
+import { getSvgPreserveAspectRatio } from "@app/components/raceday/components/raceday-lane-column/raceday-lane-column.utils";
 import { RacedayLayoutUtils } from "@app/components/raceday/utils/raceday-layout.utils";
 import {
   CustomOptionComponent,
@@ -219,6 +220,20 @@ export class RacedayLaneViewComponent implements AfterViewInit, OnDestroy {
       (this.parent() as any)?.currentRacedayLayout?.widgets?.find?.(
         (w: any) => w.widgetType === "lane-view",
       )?.customSettings;
+
+    const isInset = Boolean(
+      entry?.anchor && !entry.anchor.startsWith("center-"),
+    );
+    if (isInset) {
+      if (s?.["insetTimeDecimalPlaces"] !== undefined) {
+        return Math.min(3, Math.max(0, Number(s["insetTimeDecimalPlaces"])));
+      }
+      if (s?.["timeDecimalPlaces"] !== undefined) {
+        return Math.min(3, Math.max(0, Number(s["timeDecimalPlaces"])));
+      }
+      return 3;
+    }
+
     const customColDecimals =
       s?.["columnDecimals"] || s?.["columnDecimalPlaces"];
     const colKey = typeof col === "string" ? col : col?.propertyName;
@@ -271,10 +286,6 @@ export class RacedayLaneViewComponent implements AfterViewInit, OnDestroy {
       }
     }
 
-    const isInset = entry?.anchor && !entry.anchor.startsWith("center-");
-    if (isInset && s?.["insetTimeDecimalPlaces"] !== undefined) {
-      return Math.min(3, Math.max(0, Number(s["insetTimeDecimalPlaces"])));
-    }
     if (s?.["timeDecimalPlaces"] !== undefined) {
       return Math.min(3, Math.max(0, Number(s["timeDecimalPlaces"])));
     }
@@ -383,5 +394,31 @@ export class RacedayLaneViewComponent implements AfterViewInit, OnDestroy {
       );
     }
     return hd.actualDriver?.name || hd.driver?.name || "";
+  }
+
+  imageErrors = new Set<string>();
+
+  isPlaceholderAvatar(url?: string, key?: string, errorKey?: string): boolean {
+    if (errorKey && this.imageErrors.has(errorKey)) {
+      return true;
+    }
+    if (!url) {
+      return false;
+    }
+    return url.includes("default_avatar.svg");
+  }
+
+  getSvgPreserveAspectRatio(anchor?: string): string {
+    return getSvgPreserveAspectRatio(anchor);
+  }
+
+  onImageError(event: Event, errorKey?: string): void {
+    if (errorKey) {
+      this.imageErrors.add(errorKey);
+    }
+    const target = event?.target as HTMLImageElement;
+    if (target && !target.src?.includes("default_avatar.svg")) {
+      target.src = "assets/images/default_avatar.svg";
+    }
   }
 }

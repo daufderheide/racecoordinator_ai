@@ -37,19 +37,22 @@ public class CustomUITaskHandler {
         normalizeCustomUi(ui, foundFlags);
       }
 
-      if (!foundFlags[0]) {
+      if (!foundFlags[0]
+          && !databaseContext.isDefaultArtifactDeleted("custom_ui", CustomUI.DEFAULT_UI_ID)) {
         CustomUI defaultUi = CustomUI.createDefault();
         customUIRepository.save(defaultUi);
         logger.info("Created default custom UI with ID {}", CustomUI.DEFAULT_UI_ID);
       }
 
-      if (!foundFlags[1]) {
+      if (!foundFlags[1]
+          && !databaseContext.isDefaultArtifactDeleted("custom_ui", CustomUI.PRACTICE_UI_ID)) {
         CustomUI practiceUi = CustomUI.createPractice();
         customUIRepository.save(practiceUi);
         logger.info("Created practice custom UI with ID {}", CustomUI.PRACTICE_UI_ID);
       }
 
-      if (!foundFlags[2]) {
+      if (!foundFlags[2]
+          && !databaseContext.isDefaultArtifactDeleted("custom_ui", CustomUI.FUEL_UI_ID)) {
         CustomUI fuelUi = CustomUI.createFuel();
         customUIRepository.save(fuelUi);
         logger.info("Created fuel custom UI with ID {}", CustomUI.FUEL_UI_ID);
@@ -193,6 +196,25 @@ public class CustomUITaskHandler {
       }
 
       customUIRepository.save(ui);
+      if (CustomUI.DEFAULT_UI_ID.equals(ui.getEntityId())
+          || CustomUI.DEFAULT_UI_NAME.equalsIgnoreCase(ui.getName())) {
+        databaseContext.clearDefaultArtifactDeleted("custom_ui", CustomUI.DEFAULT_UI_ID);
+        databaseContext.clearDefaultArtifactDeleted("custom_ui", CustomUI.DEFAULT_UI_NAME);
+      } else if (CustomUI.PRACTICE_UI_ID.equals(ui.getEntityId())
+          || CustomUI.PRACTICE_UI_NAME.equalsIgnoreCase(ui.getName())) {
+        databaseContext.clearDefaultArtifactDeleted("custom_ui", CustomUI.PRACTICE_UI_ID);
+        databaseContext.clearDefaultArtifactDeleted("custom_ui", CustomUI.PRACTICE_UI_NAME);
+      } else if (CustomUI.FUEL_UI_ID.equals(ui.getEntityId())
+          || CustomUI.FUEL_UI_NAME.equalsIgnoreCase(ui.getName())) {
+        databaseContext.clearDefaultArtifactDeleted("custom_ui", CustomUI.FUEL_UI_ID);
+        databaseContext.clearDefaultArtifactDeleted("custom_ui", CustomUI.FUEL_UI_NAME);
+      }
+      if (ui.getEntityId() != null) {
+        databaseContext.clearDefaultArtifactDeleted("custom_ui", ui.getEntityId());
+      }
+      if (ui.getName() != null) {
+        databaseContext.clearDefaultArtifactDeleted("custom_ui", ui.getName());
+      }
       setStatus(ctx, 201);
       setJson(ctx, ui);
     } catch (Exception e) {
@@ -258,6 +280,24 @@ public class CustomUITaskHandler {
         return;
       }
       customUIRepository.delete(id);
+      if (CustomUI.DEFAULT_UI_ID.equals(id)
+          || CustomUI.PRACTICE_UI_ID.equals(id)
+          || CustomUI.FUEL_UI_ID.equals(id)
+          || "2".equals(id)
+          || ui.isDefault()) {
+        databaseContext.markDefaultArtifactDeleted("custom_ui", id);
+        if (CustomUI.DEFAULT_UI_ID.equals(id) || CustomUI.isLegacyDefaultName(ui.getName())) {
+          databaseContext.markDefaultArtifactDeleted("custom_ui", CustomUI.DEFAULT_UI_ID);
+        }
+        if (CustomUI.PRACTICE_UI_ID.equals(id) || CustomUI.isLegacyPracticeName(ui.getName())) {
+          databaseContext.markDefaultArtifactDeleted("custom_ui", CustomUI.PRACTICE_UI_ID);
+        }
+        if (CustomUI.FUEL_UI_ID.equals(id)
+            || "2".equals(id)
+            || CustomUI.isLegacyFuelName(ui.getName())) {
+          databaseContext.markDefaultArtifactDeleted("custom_ui", CustomUI.FUEL_UI_ID);
+        }
+      }
       setStatus(ctx, 204);
     } catch (Exception e) {
       e.printStackTrace();

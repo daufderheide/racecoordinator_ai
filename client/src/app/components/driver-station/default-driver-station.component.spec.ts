@@ -518,12 +518,18 @@ describe("DefaultDriverStationComponent", () => {
 
     it("should trigger min lap time and drift lap with driver lane association", () => {
       spyOn(component as any, "playThemedSound");
+      const audioService = (component as any).audioService as AudioService;
+      spyOn(audioService, "playCallout");
       const lapsSubject = new Subject<any>();
       mockRaceConnectionService.laps$ = lapsSubject.asObservable();
 
       const mockDriver = {
         entity_id: "d1",
         name: "Test Driver",
+        driftLapAudio: {
+          type: "tts" as const,
+          text: "Drift lap for Test Driver",
+        },
       };
       const driverData = {
         objectId: "hd1",
@@ -578,13 +584,16 @@ describe("DefaultDriverStationComponent", () => {
         lapTime: 3.5,
       });
 
-      expect((component as any).playThemedSound).toHaveBeenCalledWith(
-        THEME_SLOT_KEYS.AUDIO_DRIFT_LAP,
+      expect(audioService.playCallout).toHaveBeenCalledWith(
+        mockDriver.driftLapAudio,
+        "urgent",
         jasmine.any(Object),
+        undefined,
         {
           widgetType: "lane-view",
           laneIndex: 1,
           driverId: "d1",
+          eventType: "drift_lap",
         },
       );
     });
@@ -1238,6 +1247,67 @@ describe("DefaultDriverStationComponent", () => {
         "normal",
         undefined,
         undefined,
+        { widgetType: "timer" },
+      );
+    });
+
+    it("should play seconds left audio set entry referencing asset UUID without 404 URL", () => {
+      const audioService = (component as any).audioService as AudioService;
+      spyOn(audioService, "playCallout");
+
+      const raceTimeSubject = new Subject<any>();
+      mockRaceConnectionService.raceTime$ = raceTimeSubject.asObservable();
+
+      const assetUuid = "d637f861-ca0c-488e-87b4-ecef43800cb1";
+      const mockAssets = [
+        {
+          model: { entityId: "custom_time_left_set" },
+          type: "audio_set",
+          audioEntries: [{ url: assetUuid, timeSeconds: 120 }],
+          url: "/api/assets/download/custom_time_left_set",
+        },
+        {
+          model: { entityId: assetUuid },
+          type: "audio",
+          url: "/assets/2_minutes_remaining.wav",
+        },
+      ];
+      mockDataService.listAssets.and.returnValue(of(mockAssets));
+      mockDataService.loadedAssets = mockAssets;
+      component["assets"] = mockAssets;
+
+      mockThemeService.resolveAudioConfig.and.callFake((key: string) => {
+        if (key === THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT) {
+          return { type: "audio_set", url: "custom_time_left_set" };
+        }
+        return null;
+      });
+
+      const mockRace = {
+        name: "Test Race",
+        heat_scoring: {
+          finishMethod: FinishMethod.Timed,
+          finishValue: 300,
+        },
+        track: { lanes: [{ objectId: "l1" }] },
+      } as any;
+      mockRaceService.getRace.and.returnValue(mockRace);
+      component["race"] = mockRace;
+
+      fixture.detectChanges();
+      component["raceState"] = RaceState.RACING;
+
+      // Crossing 120s
+      raceTimeSubject.next({ time: 120 });
+
+      expect(audioService.playCallout).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          type: "preset",
+          url: `${mockDataService.serverUrl}/assets/2_minutes_remaining.wav`,
+        }),
+        "normal",
+        undefined,
+        `${mockDataService.serverUrl}/assets/2_minutes_remaining.wav`,
         { widgetType: "timer" },
       );
     });

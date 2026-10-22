@@ -165,6 +165,7 @@ As seguintes tabelas detalham todos os eventos de áudio no Race Coordinator AI,
 | **Som de Entrada nos Boxes** | Tocado quando o carro entra na faixa de boxes ou área de reabastecimento. | `default_pit_in` | **Aviso de Voz** | `urgent` (Peso 4) | `lane-view`: Toca no Ecrã Principal e no Posto de Piloto dessa calha/piloto. |
 | **Sons de Nível de Combustível** | Tocado quando o nível de combustível atinge os limites de aviso, crítico ou vazio. | `default_fuel_level` (Conjunto de Áudio) | **Aviso de Voz** | `urgent` (Peso 4) | `lane-view`: Toca no Ecrã Principal e no Posto de Piloto dessa calha/piloto. |
 | **Som de Queima de Largada** | Tocado quando uma queima de largada ou infração de partida é detectada. | `default_penalty` | **Aviso de Voz** | `urgent` (Peso 4) | `lane-view`: Toca no Ecrã Principal e no Posto de Piloto dessa calha/piloto. |
+| **Som de volta de drift** | Tocado quando o piloto completa uma volta derrapando. | TTS (`Drift lap for {driver.nickname}`) | **Aviso de Voz** | `urgent` (Peso 4) | `lane-view`: Toca no Ecrã Principal e no Posto de Piloto dessa calha/piloto. |
 
 ### Eventos de Áudio de Temas (Configurados no Editor de Temas)
 
@@ -181,7 +182,6 @@ As seguintes tabelas detalham todos os eventos de áudio no Race Coordinator AI,
 | **Segundos Restantes para Avanço Automático** | `audio.auto_advance` | **Aviso de Voz** / Conjunto de Áudio (Padrão: TTS) | `normal` (Peso 2) | `timer`: Toca no Ecrã Principal (se houver widget de cronómetro) e em todos os Postos de Piloto. |
 | **Corrida Terminada** | `audio.race_over` | **Aviso de Voz** | `urgent` (Peso 4) | `flag`: Toca no Ecrã Principal (se houver widget de bandeira) e em todos os Postos de Piloto. |
 | **Tempo Mínimo por Volta** | `audio.min_lap_time` | **Aviso de Voz** | `urgent` (Peso 4) | `lane-view`: Toca no Ecrã Principal e no Posto de Piloto dessa calha/piloto. |
-| **Volta de Drift** | `audio.drift_lap` | **Aviso de Voz** | `urgent` (Peso 4) | `lane-view`: Toca no Ecrã Principal e no Posto de Piloto dessa calha/piloto. |
 
 ---
 
@@ -219,6 +219,6 @@ Ao pré-visualizar um Conjunto de Áudio no Gestor de Ativos ou no Seletor de Á
 | Local | O que pode configurar |
 | :--- | :--- |
 | **Editor de Interface -> Definições de Áudio** | Volume principal, tempo de espera urgente, espaçamento de avisos, voz TTS, velocidade, tom, volume TTS e teste de fala. |
-| **Editor de Temas** | Sons de sistema: contagem decrescente, luz verde, sirene de bandeira amarela, tempo restante, meio da manga, fim da manga, fim da corrida, tempo mínimo e volta de drift. |
-| **Editor de Pilotos** | Sons específicos do piloto: Som de Volta, Som de Melhor Volta Pessoal, Som de Melhor Volta da Corrida, Som de Melhor Volta de Raia da Corrida, Som de Melhor Volta da Bateria, Som de novo líder da corrida, Som de novo líder da bateria, Som de Recorde de Volta Geral, Som de Recorde de Volta de Raia Geral, Som de Entrada nos Boxes, Sons de Nível de Combustível e Som de Queima de Largada. |
+| **Editor de Temas** | Sons de sistema: contagem decrescente, luz verde, sirene de bandeira amarela, tempo restante, meio da manga, fim da manga, fim da corrida e tempo mínimo. |
+| **Editor de Pilotos** | Sons específicos do piloto: Som de Volta, Som de Melhor Volta Pessoal, Som de Melhor Volta da Corrida, Som de Melhor Volta de Raia da Corrida, Som de Melhor Volta da Bateria, Som de novo líder da corrida, Som de novo líder da bateria, Som de Recorde de Volta Geral, Som de Recorde de Volta de Raia Geral, Som de Entrada nos Boxes, Sons de Nível de Combustible, Som de Queima de Largada e Som de volta de drift. |
 | **Gestor de Ativos** | Envio e gestão de ficheiros WAV, MP3 e OGG, e configuração de conjuntos de áudio com valores de ativação dependentes do contexto (segundos, voltas ou porcentagem), com pré-escuta imediata. |

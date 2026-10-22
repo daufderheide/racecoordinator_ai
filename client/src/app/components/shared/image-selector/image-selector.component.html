@@ -4,10 +4,12 @@
   }
   <div
     class="image-preview"
+    [class.disabled]="disabled()"
     [class.dragging]="isDragging"
     [class.small]="size() === 'small'"
     [class.medium]="size() === 'medium'"
     [class.large]="size() === 'large'"
+    [attr.aria-disabled]="disabled()"
     (dragenter)="onDragEnter($event)"
     (drop)="onDrop($event)"
     (dragover)="onDragOver($event)"
@@ -27,18 +29,26 @@
     @if (
       effectiveImageUrl() && !pendingPreview && !isUploading && !disabled()
     ) {
-      <div
+      <button
+        type="button"
         class="remove-button"
         (click)="removeImage($event)"
         [title]="'UE_BTN_REMOVE_IMAGE' | translate"
+        [attr.aria-label]="'UE_BTN_REMOVE_IMAGE' | translate"
       >
         <span class="material-icons" style="font-size: 1.2rem">delete</span>
-      </div>
+      </button>
     }
     @if (!effectiveImageUrl() && !pendingPreview) {
-      <div class="drop-hint">
-        {{ "UE_HINT_DRAG_IMAGE" | translate }}
-      </div>
+      @if (disabled()) {
+        <div class="drop-hint disabled-hint">
+          {{ "UE_HINT_NO_IMAGE" | translate }}
+        </div>
+      } @else {
+        <div class="drop-hint">
+          {{ "UE_HINT_DRAG_IMAGE" | translate }}
+        </div>
+      }
     }
     @if (isUploading) {
       <div class="upload-overlay">
