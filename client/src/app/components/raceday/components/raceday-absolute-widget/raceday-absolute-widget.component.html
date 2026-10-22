@@ -14,7 +14,7 @@
   [class.scale-auto]="widget().scaleMode === 'auto'"
   [class.scale-fixed]="widget().scaleMode !== 'auto'"
   [class.grid-cell-unselected]="isWidgetInGrid && !isGridSelected"
-  [style.display]="!isCountdownActive ? 'none' : null"
+  [style.display]="!isCountdownActive || isOverallNoDataRow ? 'none' : null"
   [style.pointer-events]="
     isCountdownGhost || (!isCustomizing() && !isCountdownActive) ? 'none' : null
   "

@@ -4322,6 +4322,7 @@ export class DefaultRacedayComponent
           if (
             s?.["gridId"] &&
             (s["gridType"] === "overall" ||
+              s["bindingMode"] === "overallPosition" ||
               RacedayLayoutUtils.isOverallColumnKey(s["columnKey"]))
           ) {
             set.add(s["gridId"]);
@@ -4512,6 +4513,7 @@ export class DefaultRacedayComponent
       gridType: gridWidgets.some(
         (w: any) =>
           w.customSettings?.["gridType"] === "overall" ||
+          w.customSettings?.["bindingMode"] === "overallPosition" ||
           RacedayLayoutUtils.isOverallColumnKey(
             w.customSettings?.["columnKey"],
           ),
@@ -7171,8 +7173,21 @@ export class DefaultRacedayComponent
     anchor?: string,
     widgetSettings?: any,
   ): string {
-    const laneViewSettings =
+    let laneViewSettings =
       widgetSettings || this.getDefaultLaneWidgetSettings();
+    if (
+      laneViewSettings?.gridType !== "overall" &&
+      (widgetSettings?.gridType === "overall" ||
+        widgetSettings?.bindingMode === "overallPosition" ||
+        laneViewSettings?.bindingMode === "overallPosition" ||
+        RacedayLayoutUtils.isOverallColumnKey(propertyName) ||
+        (widgetSettings?.gridId && this.isGridOverall(widgetSettings.gridId)))
+    ) {
+      laneViewSettings = {
+        ...(laneViewSettings || {}),
+        gridType: "overall",
+      };
+    }
     const ctx: FormatContext = {
       translate: (key) => this.translationService.translate(key),
       getRace: () => this.raceService.getRace(),

@@ -221,6 +221,43 @@ describe("LaneGridScrollHelper", () => {
         LaneGridScrollHelper.getGridDataCount(mixedWidgets, gridId, parent),
       ).toBe(6);
     });
+
+    it("should return 0 for overall grids when count is 0 outside editor mode", () => {
+      const overallWidgets = [
+        {
+          ...widgets[0],
+          customSettings: {
+            ...widgets[0].customSettings,
+            gridType: "overall",
+            gridTotalLanes: 10,
+          },
+        },
+      ];
+      expect(
+        LaneGridScrollHelper.getGridDataCount(overallWidgets, gridId, {
+          participants: [],
+        }),
+      ).toBe(0);
+    });
+
+    it("should return gridTotalLanes for overall grids when in editor mode even if count is 0", () => {
+      const overallWidgets = [
+        {
+          ...widgets[0],
+          customSettings: {
+            ...widgets[0].customSettings,
+            gridType: "overall",
+            gridTotalLanes: 10,
+          },
+        },
+      ];
+      expect(
+        LaneGridScrollHelper.getGridDataCount(overallWidgets, gridId, {
+          participants: [],
+          isUIEditorMode: () => true,
+        }),
+      ).toBe(10);
+    });
   });
 
   describe("generateScrollableGridWidgets", () => {
@@ -374,6 +411,86 @@ describe("LaneGridScrollHelper", () => {
       expect(generatedRow.length).toBe(2);
       expect(generatedRow[0].customSettings?.["gridType"]).toBe("overall");
       expect(generatedRow[1].customSettings?.["gridType"]).toBe("overall");
+    });
+
+    it("should omit rows where lane >= dataCount when dataCount is less than gridTotalLanes for overall grids", () => {
+      // 10-row overall grid with 5 drivers
+      const tenRowWidgets: AbsoluteWidgetNode[] = Array.from(
+        { length: 10 },
+        (_, i) => ({
+          id: `w-row-${i}`,
+          widgetType: "lane-column",
+          x: 100,
+          y: 100 + i * 40,
+          width: 200,
+          height: 40,
+          zIndex: 5,
+          customSettings: {
+            gridId,
+            gridLane: i,
+            targetIndex: i,
+            gridTotalLanes: 10,
+            gridType: "overall",
+          },
+        }),
+      );
+
+      const result = LaneGridScrollHelper.generateScrollableGridWidgets(
+        tenRowWidgets,
+        gridId,
+        5,
+      );
+
+      // Only rows 0..4 should be present, rows 5..9 must be omitted
+      expect(result.length).toBe(5);
+      const lanes = result.map((w) => w.customSettings?.["gridLane"]);
+      expect(lanes).toEqual([0, 1, 2, 3, 4]);
+    });
+
+    it("should return only header widgets and 0 data rows when dataCount is 0 for overall grids", () => {
+      const widgetsWithHeader: AbsoluteWidgetNode[] = [
+        {
+          id: "header-1",
+          widgetType: "lane-column",
+          x: 100,
+          y: 60,
+          width: 200,
+          height: 36,
+          zIndex: 5,
+          customSettings: {
+            gridId,
+            gridTotalLanes: 10,
+            gridType: "overall",
+            isHeaderWidget: true,
+          },
+        },
+        ...Array.from({ length: 10 }, (_, i) => ({
+          id: `data-row-${i}`,
+          widgetType: "lane-column",
+          x: 100,
+          y: 100 + i * 40,
+          width: 200,
+          height: 40,
+          zIndex: 5,
+          customSettings: {
+            gridId,
+            gridLane: i,
+            targetIndex: i,
+            gridTotalLanes: 10,
+            gridType: "overall",
+            isHeaderWidget: false,
+          },
+        })),
+      ];
+
+      const result = LaneGridScrollHelper.generateScrollableGridWidgets(
+        widgetsWithHeader,
+        gridId,
+        0,
+      );
+
+      expect(result.length).toBe(1);
+      expect(result[0].id).toBe("header-1");
     });
   });
 });

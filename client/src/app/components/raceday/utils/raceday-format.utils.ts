@@ -15,6 +15,8 @@ import {
   TimerFormatOptions,
 } from "@app/utils/timer-format.utils";
 
+import { RacedayLayoutUtils } from "./raceday-layout.utils";
+
 export interface FormatContext {
   translate: (key: string) => string;
   getRace: () => Race | undefined;
@@ -427,6 +429,18 @@ export class RacedayFormatUtils {
     }
 
     return undefined;
+  }
+
+  private static isOverallFormatContext(
+    ctx: FormatContext,
+    propertyName: string,
+  ): boolean {
+    const s = ctx.laneViewWidgetSettings;
+    return Boolean(
+      s?.gridType === "overall" ||
+      s?.bindingMode === "overallPosition" ||
+      RacedayLayoutUtils.isOverallColumnKey(propertyName),
+    );
   }
 
   private static formatOverallValue(
@@ -994,13 +1008,21 @@ export class RacedayFormatUtils {
       }
       return "--";
     } else if (baseKey === "driver.name") {
-      if (RacedayFormatUtils.isEmptyDriver(hd))
+      if (RacedayFormatUtils.isEmptyDriver(hd)) {
+        if (RacedayFormatUtils.isOverallFormatContext(ctx, propertyName)) {
+          return "";
+        }
         return ctx.translate("RD_EMPTY_LANE");
+      }
       const d = hd.actualDriver || (hd.driver as any)?.driver || hd.driver;
       return d?.name || "";
     } else if (baseKey === "driver.nickname") {
-      if (RacedayFormatUtils.isEmptyDriver(hd))
+      if (RacedayFormatUtils.isEmptyDriver(hd)) {
+        if (RacedayFormatUtils.isOverallFormatContext(ctx, propertyName)) {
+          return "";
+        }
         return ctx.translate("RD_EMPTY_LANE");
+      }
       const d = hd.actualDriver || (hd.driver as any)?.driver || hd.driver;
       return d?.nickname || d?.name || "";
     } else if (baseKey === "participant.team.name") {
@@ -1008,6 +1030,9 @@ export class RacedayFormatUtils {
         return "";
       }
       if (RacedayFormatUtils.isEmptyDriver(hd)) {
+        if (RacedayFormatUtils.isOverallFormatContext(ctx, propertyName)) {
+          return "";
+        }
         if (
           column &&
           column.layout[AnchorPoint.CenterCenter] === propertyName

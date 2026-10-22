@@ -48,6 +48,7 @@ import {
   resolvePacingDecimalPlaces,
   resolveTargetDriver,
 } from "./raceday-lane-column.utils";
+import { isOverallDataSource } from "./raceday-lane-column-driver.helper";
 import {
   deleteLaneColumnAnchor,
   dispatchLaneColumnAnchorSelection,
@@ -324,6 +325,28 @@ export class RacedayLaneColumnComponent
       (p) => this.getOrCreateSyntheticDriver(p),
     );
     return this.cachedTargetDriver;
+  }
+
+  get isOverallNoDataRow(): boolean {
+    const parent = this.parent();
+    const isEditor = Boolean(
+      (typeof parent?.isUIEditorMode === "function"
+        ? parent.isUIEditorMode()
+        : parent?.isUIEditorMode) || parent?.isLayoutCustomizing,
+    );
+    if (isEditor) {
+      return false;
+    }
+    const settings = this.settings;
+    if (settings?.isHeaderWidget) {
+      return false;
+    }
+    const bindingMode = settings?.bindingMode || "lane";
+    if (!isOverallDataSource(settings, parent, bindingMode)) {
+      return false;
+    }
+    const targetDriver = this.targetDriver;
+    return !targetDriver || RacedayFormatUtils.isEmptyDriver(targetDriver);
   }
 
   get backgroundColor(): string {

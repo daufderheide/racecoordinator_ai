@@ -25,6 +25,7 @@ import { RacedayHeatListComponent } from "@app/components/raceday/components/rac
 import { RacedayImageComponent } from "@app/components/raceday/components/raceday-image/raceday-image.component";
 import { RacedayLabelComponent } from "@app/components/raceday/components/raceday-label/raceday-label.component";
 import { RacedayLaneColumnComponent } from "@app/components/raceday/components/raceday-lane-column/raceday-lane-column.component";
+import { isOverallDataSource } from "@app/components/raceday/components/raceday-lane-column/raceday-lane-column-driver.helper";
 import { RacedayLaneViewComponent } from "@app/components/raceday/components/raceday-lane-view/raceday-lane-view.component";
 import { RacedayLeaderboardComponent } from "@app/components/raceday/components/raceday-leaderboard/raceday-leaderboard.component";
 import { RacedayMenuBarComponent } from "@app/components/raceday/components/raceday-menu-bar/raceday-menu-bar.component";
@@ -124,6 +125,42 @@ export class RacedayAbsoluteWidgetComponent
       return false;
     }
     return !this.isSelected && !this.isCountdownPreviewActive();
+  }
+
+  get isOverallNoDataRow(): boolean {
+    if (this.isCustomizing()) return false;
+    const parent = this.parentComponent();
+    const isEditor = Boolean(
+      (typeof parent?.isUIEditorMode === "function"
+        ? parent.isUIEditorMode()
+        : parent?.isUIEditorMode) || parent?.isLayoutCustomizing,
+    );
+    if (isEditor) return false;
+
+    const s = this.widget()?.customSettings;
+    if (s?.["isHeaderWidget"]) return false;
+
+    const bindingMode = s?.["bindingMode"] || "lane";
+    if (!isOverallDataSource(s as any, parent, bindingMode)) {
+      return false;
+    }
+
+    const gridId = s?.["gridId"];
+    const lane = Number(s?.["gridLane"] ?? s?.["targetIndex"] ?? 0);
+    const dataCount = gridId
+      ? LaneGridReplicationHelper.getGridDataCount(
+          parent?.layout?.widgets || [this.widget()],
+          gridId,
+          parent,
+        )
+      : parent?.race?.standings?.length ||
+        parent?.raceStandings?.length ||
+        parent?.participants?.length ||
+        parent?.race?.participants?.length ||
+        parent?.raceParticipants?.length ||
+        0;
+
+    return lane >= dataCount;
   }
 
   get isGridMirrored(): boolean {

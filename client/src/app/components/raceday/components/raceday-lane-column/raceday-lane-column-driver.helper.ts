@@ -285,7 +285,9 @@ export function isParentGridOverall(parent: any, gridId?: string): boolean {
     parent?.layout?.widgets?.some(
       (w: any) =>
         w.customSettings?.gridId === gridId &&
-        w.customSettings?.gridType === "overall",
+        (w.customSettings?.gridType === "overall" ||
+          w.customSettings?.bindingMode === "overallPosition" ||
+          RacedayLayoutUtils.isOverallColumnKey(w.customSettings?.columnKey)),
     ),
   );
 }
@@ -638,13 +640,16 @@ export function resolveTargetDriver(
     [];
 
   const isGrid = Boolean(settings.gridId);
-  const isOverallGrid =
-    isGrid &&
-    (settings.gridType === "overall" ||
-      isParentGridOverall(parent, settings.gridId));
-
   const bindingMode = settings.bindingMode || "lane";
   const targetIndex = settings.targetIndex ?? 0;
+
+  const isOverallGrid =
+    isGrid &&
+    settings.gridType !== "heat" &&
+    (settings.gridType === "overall" ||
+      bindingMode === "overallPosition" ||
+      RacedayLayoutUtils.isOverallColumnKey(columnKey || settings.columnKey) ||
+      isParentGridOverall(parent, settings.gridId));
 
   if (!isGrid) {
     return resolveStandaloneDriver(

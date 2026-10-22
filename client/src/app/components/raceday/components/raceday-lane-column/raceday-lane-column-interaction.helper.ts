@@ -395,7 +395,7 @@ export function resolveLaneColumnBackgroundColor(
   }
   if (
     isOverallDataSource(settings, parent, bindingMode) &&
-    isParentRaceOver(parent)
+    (!hd || RacedayFormatUtils.isEmptyDriver(hd) || isParentRaceOver(parent))
   ) {
     return settings.backgroundColor || "transparent";
   }
@@ -428,7 +428,7 @@ export function resolveLaneColumnForegroundColor(
   }
   if (
     isOverallDataSource(settings, parent, bindingMode) &&
-    isParentRaceOver(parent)
+    (!hd || RacedayFormatUtils.isEmptyDriver(hd) || isParentRaceOver(parent))
   ) {
     return settings.textColor || "#ffffff";
   }

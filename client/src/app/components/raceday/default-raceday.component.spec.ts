@@ -2194,6 +2194,56 @@ describe("DefaultRacedayComponent", () => {
       expect(result).toBe("");
     });
 
+    it("should return RD_EMPTY_LANE for driver.name and driver.nickname when driver is empty in non-overall context", () => {
+      const emptyHd = { isEmpty: true } as any;
+      expect(component.formatValue("driver.name", undefined, emptyHd)).toBe(
+        "RD_EMPTY_LANE",
+      );
+      expect(component.formatValue("driver.nickname", undefined, emptyHd)).toBe(
+        "RD_EMPTY_LANE",
+      );
+    });
+
+    it("should return empty string for driver.name and driver.nickname when driver is empty in overall context", () => {
+      const emptyHd = { isEmpty: true } as any;
+      const overallSettings = { gridType: "overall" };
+      expect(
+        component.formatValue(
+          "driver.name",
+          undefined,
+          emptyHd,
+          undefined,
+          undefined,
+          overallSettings,
+        ),
+      ).toBe("");
+      expect(
+        component.formatValue(
+          "driver.nickname",
+          undefined,
+          emptyHd,
+          undefined,
+          undefined,
+          overallSettings,
+        ),
+      ).toBe("");
+    });
+
+    it("should return empty string for driver.name when bindingMode is overallPosition and driver is empty", () => {
+      const emptyHd = { isEmpty: true } as any;
+      const overallSettings = { bindingMode: "overallPosition" };
+      expect(
+        component.formatValue(
+          "driver.name",
+          undefined,
+          emptyHd,
+          undefined,
+          undefined,
+          overallSettings,
+        ),
+      ).toBe("");
+    });
+
     it("should format totalTime to 3 decimal places when above 0", () => {
       const result = component.formatValue("totalTime", 42.1234, mockHd);
       expect(result).toBe("42.123");
@@ -13318,6 +13368,76 @@ describe("DefaultRacedayComponent", () => {
       );
     });
 
+    it("should omit empty rows for overall grid when configured for 10 rows but only 5 drivers in race", () => {
+      const tenRowWidgets = Array.from({ length: 10 }, (_, i) => ({
+        id: `grid-w-overall-${i}`,
+        widgetType: "lane-column",
+        x: 100,
+        y: 100 + i * 50,
+        width: 200,
+        height: 50,
+        customSettings: {
+          gridId: "overall-10-grid",
+          gridLane: i,
+          gridTotalLanes: 10,
+          gridDirection: "vertical",
+          gridType: "overall",
+          columnKey: "overallLapCount",
+        },
+      })) as any[];
+
+      (component as any).layout = { widgets: tenRowWidgets };
+      (component as any).track = { lanes: [{}, {}, {}, {}] };
+      (component as any).race = {
+        track: (component as any).track,
+        participants: [{}, {}, {}, {}, {}],
+      } as any;
+
+      const grids = component.getGrids();
+      expect(grids.length).toBe(1);
+      const grid = grids[0];
+      expect(grid.gridId).toBe("overall-10-grid");
+      expect(grid.gridType).toBe("overall");
+      expect(grid.dataCount).toBe(5);
+      expect(grid.cellWidgets.length).toBe(5);
+      const lanes = grid.cellWidgets.map(
+        (w: any) => w.customSettings?.["gridLane"],
+      );
+      expect(lanes).toEqual([0, 1, 2, 3, 4]);
+    });
+
+    it("should retain all 10 rows for overall grid when isUIEditorMode is true", () => {
+      fixture.componentRef.setInput("isUIEditorMode", true);
+      const tenRowEditorWidgets = Array.from({ length: 10 }, (_, i) => ({
+        id: `grid-w-overall-editor-${i}`,
+        widgetType: "lane-column",
+        x: 100,
+        y: 100 + i * 50,
+        width: 200,
+        height: 50,
+        customSettings: {
+          gridId: "overall-10-editor-grid",
+          gridLane: i,
+          gridTotalLanes: 10,
+          gridDirection: "vertical",
+          gridType: "overall",
+          columnKey: "overallLapCount",
+        },
+      })) as any[];
+
+      (component as any).layout = { widgets: tenRowEditorWidgets };
+      (component as any).track = { lanes: [{}, {}, {}, {}] };
+      (component as any).race = {
+        track: (component as any).track,
+        participants: [{}, {}, {}, {}, {}],
+      } as any;
+
+      const grids = component.getGrids();
+      expect(grids.length).toBe(1);
+      const grid = grids[0];
+      expect(grid.cellWidgets.length).toBe(10);
+    });
+
     it("should preserve getGrids and getNonGridWidgets caching when isLayoutCustomizing is true", () => {
       const masterWidget = {
         id: "grid-m1",
@@ -13605,11 +13725,19 @@ describe("DefaultRacedayComponent", () => {
           id: "w3",
           customSettings: { gridId: "g-key", columnKey: "overallPosition" },
         },
+        {
+          id: "w4",
+          customSettings: {
+            gridId: "g-binding",
+            bindingMode: "overallPosition",
+          },
+        },
       ] as any[];
 
       (component as any).layout = { widgets: gridWidgets };
       expect(component.isGridOverall("g-overall")).toBeTrue();
       expect(component.isGridOverall("g-key")).toBeTrue();
+      expect(component.isGridOverall("g-binding")).toBeTrue();
       expect(component.isGridOverall("g-heat")).toBeFalse();
       expect(component.isGridOverall("non-existent")).toBeFalse();
 

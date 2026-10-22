@@ -20,6 +20,7 @@ export class LaneGridScrollHelper {
     let gridTotalLanes: number | null = null;
     let explicitGridType: string | undefined;
     let mode = "lane";
+    let hasOverallSignals = false;
 
     for (let i = 0; i < widgets.length; i++) {
       const s = widgets[i]?.customSettings;
@@ -31,16 +32,22 @@ export class LaneGridScrollHelper {
         if (gridTotalLanes == null && s["gridTotalLanes"] != null) {
           gridTotalLanes = Number(s["gridTotalLanes"]);
         }
-        if (
-          explicitGridType !== "overall" &&
-          (s["gridType"] === "overall" ||
-            RacedayLayoutUtils.isOverallColumnKey(s["columnKey"]))
-        ) {
+        if (s["gridType"] === "overall") {
           explicitGridType = "overall";
-        } else if (!explicitGridType && s["gridType"]) {
-          explicitGridType = s["gridType"];
+        } else if (s["gridType"] === "heat") {
+          if (explicitGridType !== "overall") {
+            explicitGridType = "heat";
+          }
+        } else if (
+          s["bindingMode"] === "overallPosition" ||
+          RacedayLayoutUtils.isOverallColumnKey(s["columnKey"])
+        ) {
+          hasOverallSignals = true;
         }
       }
+    }
+    if (!explicitGridType && hasOverallSignals) {
+      explicitGridType = "overall";
     }
     return {
       hasGridWidget,
@@ -146,31 +153,67 @@ export class LaneGridScrollHelper {
     }
 
     const count = this.resolveDataCount(explicitGridType, mode, parent);
+    const isOverall =
+      explicitGridType === "overall" || mode === "overallPosition";
+    if (isOverall) {
+      return count;
+    }
     return count > 0 ? count : finalTotalLanes;
   }
 
-  public static generateScrollableGridWidgets(
-    allWidgets: AbsoluteWidgetNode[],
-    gridId: string,
+  private static resolveExplicitGridType(
+    gridWidgets: AbsoluteWidgetNode[],
+  ): string | undefined {
+    const hasExplicitHeat = gridWidgets.some(
+      (w) => w.customSettings?.["gridType"] === "heat",
+    );
+    const hasExplicitOverall = gridWidgets.some(
+      (w) => w.customSettings?.["gridType"] === "overall",
+    );
+    const hasOverallSignals = gridWidgets.some(
+      (w) =>
+        w.customSettings?.["bindingMode"] === "overallPosition" ||
+        RacedayLayoutUtils.isOverallColumnKey(w.customSettings?.["columnKey"]),
+    );
+    return hasExplicitOverall
+      ? "overall"
+      : hasExplicitHeat
+        ? "heat"
+        : hasOverallSignals
+          ? "overall"
+          : gridWidgets[0]?.customSettings?.["gridType"];
+  }
+
+  private static filterOverallGridRows(
+    gridWidgets: AbsoluteWidgetNode[],
     dataCount: number,
   ): AbsoluteWidgetNode[] {
-    const gridWidgets = (allWidgets || []).filter(
-      (w) => w.customSettings?.["gridId"] === gridId,
-    );
-    if (gridWidgets.length === 0) return [];
-    const first = gridWidgets[0];
-    const gridTotalLanes =
-      Number(first.customSettings?.["gridTotalLanes"]) || 4;
-    if (dataCount <= gridTotalLanes) {
-      return gridWidgets;
-    }
+    return gridWidgets.filter((w) => {
+      if (w.customSettings?.["isHeaderWidget"]) return true;
+      const lane = Number(
+        w.customSettings?.["gridLane"] ??
+          w.customSettings?.["targetIndex"] ??
+          0,
+      );
+      return lane < dataCount;
+    });
+  }
 
+  private static generateVirtualGridWidgets(
+    allWidgets: AbsoluteWidgetNode[],
+    gridWidgets: AbsoluteWidgetNode[],
+    gridId: string,
+    gridTotalLanes: number,
+    dataCount: number,
+    explicitGridType?: any,
+  ): AbsoluteWidgetNode[] {
     const bounds = LaneGridGeometryHelper.calculateGridBounds(
       allWidgets,
       gridId,
     );
     if (!bounds) return gridWidgets;
 
+    const first = gridWidgets[0];
     const direction = first.customSettings?.["gridDirection"] || "vertical";
     const headerPlacement =
       first.customSettings?.["headerPlacement"] || "individual";
@@ -186,16 +229,6 @@ export class LaneGridScrollHelper {
       );
       return lane === 0;
     });
-
-    const hasOverall = gridWidgets.some(
-      (w) =>
-        w.customSettings?.["gridType"] === "overall" ||
-        RacedayLayoutUtils.isOverallColumnKey(w.customSettings?.["columnKey"]),
-    );
-    const explicitGridType = hasOverall
-      ? "overall"
-      : gridWidgets.find((w) => w.customSettings?.["gridType"])
-          ?.customSettings?.["gridType"] || first.customSettings?.["gridType"];
 
     const sessionLike: LaneGridSession = {
       gridId,
@@ -242,6 +275,39 @@ export class LaneGridScrollHelper {
     }
 
     return result;
+  }
+
+  public static generateScrollableGridWidgets(
+    allWidgets: AbsoluteWidgetNode[],
+    gridId: string,
+    dataCount: number,
+  ): AbsoluteWidgetNode[] {
+    const gridWidgets = (allWidgets || []).filter(
+      (w) => w.customSettings?.["gridId"] === gridId,
+    );
+    if (gridWidgets.length === 0) return [];
+    const first = gridWidgets[0];
+    const gridTotalLanes =
+      Number(first.customSettings?.["gridTotalLanes"]) || 4;
+
+    const explicitGridType = this.resolveExplicitGridType(gridWidgets);
+
+    if (explicitGridType === "overall" && dataCount < gridTotalLanes) {
+      return this.filterOverallGridRows(gridWidgets, dataCount);
+    }
+
+    if (dataCount <= gridTotalLanes) {
+      return gridWidgets;
+    }
+
+    return this.generateVirtualGridWidgets(
+      allWidgets,
+      gridWidgets,
+      gridId,
+      gridTotalLanes,
+      dataCount,
+      explicitGridType,
+    );
   }
 
   private static createScrollableCellWidget(
