@@ -2558,6 +2558,22 @@ export class DefaultRacedaySetupComponent implements OnInit {
     this.helpLinkService.openHelp("");
   }
 
+  onBrandingClick() {
+    this.closeFileDropdown();
+    this.closeConfigDropdown();
+    this.closeOptionsDropdown();
+    this.closeHelpDropdown();
+    this.closeDropdown();
+    this.openHelpCenter();
+  }
+
+  onBrandingKeyDown(event: KeyboardEvent) {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      this.onBrandingClick();
+    }
+  }
+
   isUpdateBannerVisible = input<boolean>(false);
 
   openAbout() {

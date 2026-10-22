@@ -21,6 +21,7 @@ import { Theme } from "@app/models/theme";
 import { Track } from "@app/models/track";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { AuthService } from "@app/services/auth.service";
+import { HelpLinkService } from "@app/services/help-link.service";
 import { NavigationService } from "@app/services/navigation.service";
 import { ThemeService } from "@app/services/theme.service";
 import { TranslationService } from "@app/services/translation.service";
@@ -398,6 +399,20 @@ export class RacedayMenuBarComponent implements OnInit, OnDestroy {
     }
     if (active !== "options") this.isOptionsMenuOpen = false;
     if (active !== "help") this.isHelpMenuOpen = false;
+  }
+
+  private helpLinkService = inject(HelpLinkService, { optional: true });
+
+  onBrandingClick() {
+    this.closeAll();
+    this.helpLinkService?.openHelp("");
+  }
+
+  onBrandingKeyDown(event: KeyboardEvent) {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      this.onBrandingClick();
+    }
   }
 
   private closeAll() {

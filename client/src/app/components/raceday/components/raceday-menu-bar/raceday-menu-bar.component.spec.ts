@@ -5,6 +5,7 @@ import { DataService } from "@app/data.service";
 import { Role } from "@app/models/role";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { AuthService } from "@app/services/auth.service";
+import { HelpLinkService } from "@app/services/help-link.service";
 import { NavigationService } from "@app/services/navigation.service";
 import { TranslationService } from "@app/services/translation.service";
 import { mockTranslationService } from "@app/testing/unit-test-mocks";
@@ -19,6 +20,7 @@ describe("RacedayMenuBarComponent", () => {
   let mockAuthService: any;
   let mockDataService: any;
   let mockNavService: any;
+  let mockHelpLinkService: jasmine.SpyObj<HelpLinkService>;
   let canGoBackSubject: BehaviorSubject<boolean>;
   let roleSubject: BehaviorSubject<Role>;
 
@@ -26,6 +28,7 @@ describe("RacedayMenuBarComponent", () => {
     mockTranslationService.translate.and.callFake((key: string) => key);
     roleSubject = new BehaviorSubject<Role>(Role.DIRECTOR);
     canGoBackSubject = new BehaviorSubject<boolean>(false);
+    mockHelpLinkService = jasmine.createSpyObj("HelpLinkService", ["openHelp"]);
 
     mockNavService = {
       canGoBack$: canGoBackSubject.asObservable(),
@@ -61,6 +64,7 @@ describe("RacedayMenuBarComponent", () => {
         { provide: TranslationService, useValue: mockTranslationService },
         { provide: DataService, useValue: mockDataService },
         { provide: NavigationService, useValue: mockNavService },
+        { provide: HelpLinkService, useValue: mockHelpLinkService },
       ],
     }).compileComponents();
 
@@ -574,6 +578,76 @@ describe("RacedayMenuBarComponent", () => {
 
       expect(component.languageSelected.emit).toHaveBeenCalled();
       expect(component.isOptionsMenuOpen).toBeFalse();
+    });
+  });
+
+  describe("RC AI Branding", () => {
+    it("should render RaceCoordinator AI branding on the menu bar", () => {
+      fixture.detectChanges();
+      const brandingEl = fixture.nativeElement.querySelector(
+        '[data-testid="raceday-menu-bar-branding"]',
+      );
+      expect(brandingEl).toBeTruthy();
+      expect(brandingEl.textContent.trim()).toMatch(
+        /RaceCoordinator AI|GEN_APP_BRANDING/,
+      );
+      expect(brandingEl.classList.contains("rc-ai-branding")).toBeTrue();
+    });
+
+    it("should open help center and close open menus when branding is clicked", () => {
+      component.isFileMenuOpen = true;
+      component.isMenuOpen = true;
+      component.isOptionsMenuOpen = true;
+      component.isHelpMenuOpen = true;
+
+      component.onBrandingClick();
+
+      expect(mockHelpLinkService.openHelp).toHaveBeenCalledWith("");
+      expect(component.isFileMenuOpen).toBeFalse();
+      expect(component.isMenuOpen).toBeFalse();
+      expect(component.isOptionsMenuOpen).toBeFalse();
+      expect(component.isHelpMenuOpen).toBeFalse();
+    });
+
+    it("should handle Enter and Space keydown events to trigger onBrandingClick", () => {
+      spyOn(component, "onBrandingClick");
+
+      const enterEvent = new KeyboardEvent("keydown", {
+        key: "Enter",
+        cancelable: true,
+      });
+      spyOn(enterEvent, "preventDefault");
+      component.onBrandingKeyDown(enterEvent);
+      expect(enterEvent.preventDefault).toHaveBeenCalled();
+      expect(component.onBrandingClick).toHaveBeenCalledTimes(1);
+
+      const spaceEvent = new KeyboardEvent("keydown", {
+        key: " ",
+        cancelable: true,
+      });
+      spyOn(spaceEvent, "preventDefault");
+      component.onBrandingKeyDown(spaceEvent);
+      expect(spaceEvent.preventDefault).toHaveBeenCalled();
+      expect(component.onBrandingClick).toHaveBeenCalledTimes(2);
+
+      const otherEvent = new KeyboardEvent("keydown", {
+        key: "ArrowDown",
+        cancelable: true,
+      });
+      spyOn(otherEvent, "preventDefault");
+      component.onBrandingKeyDown(otherEvent);
+      expect(otherEvent.preventDefault).not.toHaveBeenCalled();
+      expect(component.onBrandingClick).toHaveBeenCalledTimes(2);
+    });
+
+    it("should trigger onBrandingClick when branding element is clicked in DOM", () => {
+      spyOn(component, "onBrandingClick");
+      fixture.detectChanges();
+      const brandingEl = fixture.nativeElement.querySelector(
+        '[data-testid="raceday-menu-bar-branding"]',
+      );
+      brandingEl.click();
+      expect(component.onBrandingClick).toHaveBeenCalled();
     });
   });
 });

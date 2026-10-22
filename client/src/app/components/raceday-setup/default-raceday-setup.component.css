@@ -51,6 +51,41 @@
   z-index: 3000;
 }
 
+.setup-menu-bar .rc-ai-branding {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-size: 1.05rem;
+  font-weight: 800;
+  font-style: italic;
+  letter-spacing: 1.5px;
+  line-height: 1;
+  color: #38bdf8;
+  background: linear-gradient(180deg, #ffffff 0%, #a5f3fc 35%, #38bdf8 70%, #0284c7 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 6px rgba(56, 189, 248, 0.75)) drop-shadow(0 0 14px rgba(0, 240, 255, 0.4));
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+  flex-shrink: 0;
+  outline: none;
+  border: none;
+  padding: 0;
+  text-decoration: none;
+  transition: none;
+}
+
+.setup-menu-bar .rc-ai-branding:hover,
+.setup-menu-bar .rc-ai-branding:focus,
+.setup-menu-bar .rc-ai-branding:active {
+  cursor: pointer;
+  outline: none;
+  border: none;
+  text-decoration: none;
+}
+
 .setup-menu-item-wrapper {
   position: relative;
 }

@@ -948,6 +948,76 @@ describe("DefaultRacedaySetupComponent", () => {
     expect(component.isHelpDropdownOpen).toBeFalse();
   });
 
+  describe("RC AI Branding", () => {
+    it("should render RaceCoordinator AI branding on the setup menu bar", () => {
+      fixture.detectChanges();
+      const brandingEl = fixture.nativeElement.querySelector(
+        '[data-testid="raceday-setup-branding"]',
+      );
+      expect(brandingEl).toBeTruthy();
+      expect(brandingEl.textContent.trim()).toMatch(
+        /RaceCoordinator AI|GEN_APP_BRANDING/,
+      );
+      expect(brandingEl.classList.contains("rc-ai-branding")).toBeTrue();
+    });
+
+    it("should open help center and close open dropdowns when branding is clicked", () => {
+      component.isHelpDropdownOpen = true;
+      component.isConfigDropdownOpen = true;
+      component.isFileDropdownOpen = true;
+      component.isOptionsDropdownOpen = true;
+
+      component.onBrandingClick();
+
+      expect(mockHelpLinkService.openHelp).toHaveBeenCalledWith("");
+      expect(component.isHelpDropdownOpen).toBeFalse();
+      expect(component.isConfigDropdownOpen).toBeFalse();
+      expect(component.isFileDropdownOpen).toBeFalse();
+      expect(component.isOptionsDropdownOpen).toBeFalse();
+    });
+
+    it("should handle Enter and Space keydown events to trigger onBrandingClick", () => {
+      spyOn(component, "onBrandingClick");
+
+      const enterEvent = new KeyboardEvent("keydown", {
+        key: "Enter",
+        cancelable: true,
+      });
+      spyOn(enterEvent, "preventDefault");
+      component.onBrandingKeyDown(enterEvent);
+      expect(enterEvent.preventDefault).toHaveBeenCalled();
+      expect(component.onBrandingClick).toHaveBeenCalledTimes(1);
+
+      const spaceEvent = new KeyboardEvent("keydown", {
+        key: " ",
+        cancelable: true,
+      });
+      spyOn(spaceEvent, "preventDefault");
+      component.onBrandingKeyDown(spaceEvent);
+      expect(spaceEvent.preventDefault).toHaveBeenCalled();
+      expect(component.onBrandingClick).toHaveBeenCalledTimes(2);
+
+      const otherEvent = new KeyboardEvent("keydown", {
+        key: "ArrowDown",
+        cancelable: true,
+      });
+      spyOn(otherEvent, "preventDefault");
+      component.onBrandingKeyDown(otherEvent);
+      expect(otherEvent.preventDefault).not.toHaveBeenCalled();
+      expect(component.onBrandingClick).toHaveBeenCalledTimes(2);
+    });
+
+    it("should trigger onBrandingClick when branding element is clicked in DOM", () => {
+      spyOn(component, "onBrandingClick");
+      fixture.detectChanges();
+      const brandingEl = fixture.nativeElement.querySelector(
+        '[data-testid="raceday-setup-branding"]',
+      );
+      brandingEl.click();
+      expect(component.onBrandingClick).toHaveBeenCalled();
+    });
+  });
+
   describe("Quit & Keyboard Shortcuts", () => {
     it("should close file dropdown and close window when quit is called", () => {
       spyOn(component, "closeWindow");

@@ -213,6 +213,16 @@
           }
         </div>
       }
+      <div
+        class="rc-ai-branding"
+        (click)="onBrandingClick()"
+        tabindex="0"
+        role="button"
+        (keydown)="onBrandingKeyDown($event)"
+        data-testid="raceday-setup-branding"
+      >
+        {{ "GEN_APP_BRANDING" | translate }}
+      </div>
     </div>
 
     <!-- New Premium Editor Title Bar -->
