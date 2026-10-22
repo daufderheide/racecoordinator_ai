@@ -564,7 +564,7 @@
             <input
               type="color"
               class="color-picker-input"
-              [value]="gridLabelTextColor"
+              [value]="toValidHexColor(gridLabelTextColor, '#ffffff')"
               (input)="onGridLabelTextColorChange($event)"
             />
             <button
@@ -588,7 +588,7 @@
             <input
               type="color"
               class="color-picker-input"
-              [value]="gridLabelBackgroundColor"
+              [value]="toValidHexColor(gridLabelBackgroundColor, '#0f172a')"
               (input)="onGridLabelBgColorChange($event)"
             />
             <button
@@ -626,7 +626,7 @@
               <input
                 type="color"
                 class="color-picker-input inspector-color-input"
-                [value]="gridLabelBorderColor"
+                [value]="toValidHexColor(gridLabelBorderColor, '#ffffff')"
                 (input)="onGridLabelBorderColorChange($event)"
               />
               <button
@@ -865,7 +865,7 @@
             <input
               type="color"
               class="color-picker-input"
-              [value]="gridHeaderTextColor || '#ffffff'"
+              [value]="toValidHexColor(gridHeaderTextColor, '#ffffff')"
               (change)="onGridHeaderTextColorChange($event)"
               (input)="onGridHeaderTextColorChange($event)"
             />
@@ -898,7 +898,7 @@
             <input
               type="color"
               class="color-picker-input"
-              [value]="gridHeaderBackgroundColor || '#444444'"
+              [value]="toValidHexColor(gridHeaderBackgroundColor, '#444444')"
               (change)="onGridHeaderBgColorChange($event)"
               (input)="onGridHeaderBgColorChange($event)"
             />
@@ -1526,7 +1526,9 @@
       >
         <input
           type="color"
-          [value]="currentSettings['headerTextColor'] || '#ffffff'"
+          [value]="
+            toValidHexColor(currentSettings['headerTextColor'], '#ffffff')
+          "
           (change)="onColorChange('headerTextColor', $event)"
           (input)="onColorChange('headerTextColor', $event)"
           class="color-picker-input"
@@ -1559,7 +1561,9 @@
       >
         <input
           type="color"
-          [value]="currentSettings['headerBackgroundColor'] || '#444444'"
+          [value]="
+            toValidHexColor(currentSettings['headerBackgroundColor'], '#444444')
+          "
           (change)="onColorChange('headerBackgroundColor', $event)"
           (input)="onColorChange('headerBackgroundColor', $event)"
           class="color-picker-input"
@@ -1644,9 +1648,11 @@
         }}</label>
         <input
           type="color"
-          [(ngModel)]="currentSettings['backgroundColor']"
-          (input)="onFieldChange()"
-          (change)="onFieldChange()"
+          [value]="
+            toValidHexColor(currentSettings['backgroundColor'], '#000000')
+          "
+          (input)="onColorChange('backgroundColor', $event)"
+          (change)="onColorChange('backgroundColor', $event)"
           class="inspector-color-input"
         />
       </div>
@@ -1658,9 +1664,9 @@
           }}</label>
           <input
             type="color"
-            [(ngModel)]="currentSettings['textColor']"
-            (input)="onFieldChange()"
-            (change)="onFieldChange()"
+            [value]="toValidHexColor(currentSettings['textColor'], '#ffffff')"
+            (input)="onColorChange('textColor', $event)"
+            (change)="onColorChange('textColor', $event)"
             class="inspector-color-input"
           />
         </div>
@@ -1778,8 +1784,9 @@
       }}</label>
       <input
         type="color"
-        [(ngModel)]="currentSettings['borderColor']"
-        (change)="onFieldChange()"
+        [value]="toValidHexColor(currentSettings['borderColor'], '#ffffff')"
+        (input)="onColorChange('borderColor', $event)"
+        (change)="onColorChange('borderColor', $event)"
         class="inspector-color-input"
       />
     </div>
@@ -2176,10 +2183,11 @@
         <div class="d-flex align-items-center gap-2">
           <input
             type="color"
-            [ngModel]="currentSettings['insetTextColor'] || '#ffffff'"
-            (ngModelChange)="
-              currentSettings['insetTextColor'] = $event; onFieldChange()
+            [value]="
+              toValidHexColor(currentSettings['insetTextColor'], '#ffffff')
             "
+            (input)="onColorChange('insetTextColor', $event)"
+            (change)="onColorChange('insetTextColor', $event)"
             class="inspector-color-input"
           />
           @if (currentSettings["insetTextColor"]) {
@@ -2625,8 +2633,24 @@
       <div class="d-flex align-items-center gap-2">
         <input
           type="color"
-          [ngModel]="getInsetTextColor(effectiveSelectedAnchor)"
-          (ngModelChange)="setInsetTextColor(effectiveSelectedAnchor, $event)"
+          [value]="
+            toValidHexColor(
+              getInsetTextColor(effectiveSelectedAnchor),
+              '#ffffff'
+            )
+          "
+          (input)="
+            setInsetTextColor(
+              effectiveSelectedAnchor,
+              $any($event.target).value
+            )
+          "
+          (change)="
+            setInsetTextColor(
+              effectiveSelectedAnchor,
+              $any($event.target).value
+            )
+          "
           class="inspector-color-input"
         />
         @if (hasCustomInsetTextColor(effectiveSelectedAnchor)) {

@@ -2527,6 +2527,39 @@ describe("UIEditorComponent", () => {
       // discardMessage contains bullet points
       expect(component.discardMessage).toContain("•");
     });
+
+    it("should conditionally render discard confirmation modal only when showDiscardConfirm is true", () => {
+      component.showDiscardConfirm = false;
+      fixture.detectChanges();
+
+      let discardModals = fixture.debugElement
+        .queryAll(By.css("app-confirmation-modal"))
+        .filter(
+          (el) => el.componentInstance.title() === "UE_CONFIRM_DISCARD_TITLE",
+        );
+      expect(discardModals.length).toBe(0);
+
+      component.showDiscardConfirm = true;
+      fixture.detectChanges();
+
+      discardModals = fixture.debugElement
+        .queryAll(By.css("app-confirmation-modal"))
+        .filter(
+          (el) => el.componentInstance.title() === "UE_CONFIRM_DISCARD_TITLE",
+        );
+      expect(discardModals.length).toBe(1);
+      expect(discardModals[0].componentInstance.message()).toBe(
+        component.discardMessage,
+      );
+
+      // Verify that toggling isSaving while showDiscardConfirm is false does not cause expression changed errors
+      component.showDiscardConfirm = false;
+      fixture.detectChanges();
+      component.isSaving = true;
+      expect(() => fixture.detectChanges()).not.toThrow();
+      component.isSaving = false;
+      expect(() => fixture.detectChanges()).not.toThrow();
+    });
   });
 
   describe("success modal functionality", () => {

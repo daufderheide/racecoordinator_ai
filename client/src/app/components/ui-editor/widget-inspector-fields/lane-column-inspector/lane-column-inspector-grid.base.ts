@@ -21,6 +21,29 @@ export abstract class LaneColumnInspectorGridBase {
   abstract resetHeaderTextColor(): void;
   abstract resetHeaderBackgroundColor(): void;
 
+  toValidHexColor(
+    color: string | undefined | null,
+    fallback: string = "#ffffff",
+  ): string {
+    if (!color) return fallback;
+    const trimmed = color.trim();
+    if (/^#[0-9a-fA-F]{6}$/.test(trimmed)) {
+      return trimmed;
+    }
+    if (/^#[0-9a-fA-F]{3}$/.test(trimmed)) {
+      return (
+        "#" +
+        trimmed[1] +
+        trimmed[1] +
+        trimmed[2] +
+        trimmed[2] +
+        trimmed[3] +
+        trimmed[3]
+      );
+    }
+    return fallback;
+  }
+
   get isHeaderWidget(): boolean {
     return Boolean(this.currentSettings["isHeaderWidget"]);
   }

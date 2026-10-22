@@ -145,6 +145,35 @@ describe("LaneColumnInspectorComponent", () => {
     expect(colorInputs.length).toBeGreaterThanOrEqual(2);
   });
 
+  it("should validate and sanitize color values with toValidHexColor", () => {
+    expect(component.toValidHexColor("#123456", "#ffffff")).toBe("#123456");
+    expect(component.toValidHexColor("#ABCDEF", "#ffffff")).toBe("#ABCDEF");
+    expect(component.toValidHexColor("#f00", "#000000")).toBe("#ff0000");
+    expect(component.toValidHexColor("", "#ffffff")).toBe("#ffffff");
+    expect(component.toValidHexColor(undefined, "#112233")).toBe("#112233");
+    expect(component.toValidHexColor(null, "#223344")).toBe("#223344");
+    expect(component.toValidHexColor("rgba(15, 23, 42, 0.85)", "#0f172a")).toBe(
+      "#0f172a",
+    );
+    expect(component.toValidHexColor("invalid-color", "#ffffff")).toBe(
+      "#ffffff",
+    );
+  });
+
+  it("should ensure color inputs never receive empty strings even if settings are empty", () => {
+    mockSettings.useLaneColors = false;
+    mockSettings.backgroundColor = "";
+    mockSettings.textColor = "";
+    fixture.detectChanges();
+
+    const colorInputs = fixture.debugElement.queryAll(
+      By.css("input.inspector-color-input"),
+    );
+    expect(colorInputs.length).toBeGreaterThanOrEqual(2);
+    expect(colorInputs[0].nativeElement.value).toBe("#000000");
+    expect(colorInputs[1].nativeElement.value).toBe("#ffffff");
+  });
+
   it("should set default black background and white text when unchecking useLaneColors", () => {
     const changeSpy = spyOn(component.change, "emit");
     mockSettings.useLaneColors = false;

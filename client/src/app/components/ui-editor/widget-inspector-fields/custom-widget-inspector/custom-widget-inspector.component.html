@@ -59,7 +59,12 @@
               <input
                 type="color"
                 class="color-picker-input"
-                [value]="getSettingValue(field.key, field.default ?? '#ffffff')"
+                [value]="
+                  toValidHexColor(
+                    getSettingValue(field.key, field.default),
+                    '#ffffff'
+                  )
+                "
                 (change)="onColorChange(field.key, $event)"
               />
               @if (!getSettingValue(field.key, field.default ?? "")) {
@@ -116,9 +121,9 @@
                     type="color"
                     class="color-picker-input"
                     [value]="
-                      getSettingValue(
-                        field.colorKey,
-                        field.colorDefault ?? '#ffffff'
+                      toValidHexColor(
+                        getSettingValue(field.colorKey, field.colorDefault),
+                        '#ffffff'
                       )
                     "
                     (change)="onColorChange(field.colorKey, $event)"

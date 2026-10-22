@@ -2125,14 +2125,16 @@
   </app-confirmation-modal>
 
   <!-- Discard Changes Confirmation -->
-  <app-confirmation-modal
-    [visible]="showDiscardConfirm"
-    title="UE_CONFIRM_DISCARD_TITLE"
-    [message]="discardMessage"
-    (confirm)="onConfirmDiscard()"
-    (cancel)="onCancelDiscard()"
-  >
-  </app-confirmation-modal>
+  @if (showDiscardConfirm) {
+    <app-confirmation-modal
+      [visible]="showDiscardConfirm"
+      title="UE_CONFIRM_DISCARD_TITLE"
+      [message]="discardMessage"
+      (confirm)="onConfirmDiscard()"
+      (cancel)="onCancelDiscard()"
+    >
+    </app-confirmation-modal>
+  }
 
   <!-- Restore Pre-Migration Backup Confirmation -->
   <app-confirmation-modal
