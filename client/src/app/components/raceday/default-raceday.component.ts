@@ -135,7 +135,10 @@ import { ToolboxGroup, ToolboxGroupHelper } from "./toolbox-group.helper";
 import { LaneGridAnimationHelper } from "./utils/lane-grid-animation.helper";
 import { LaneGridFactoryHelper } from "./utils/lane-grid-factory.helper";
 import { LaneGridHeaderHelper } from "./utils/lane-grid-header.helper";
-import { LaneGridLabelHelper } from "./utils/lane-grid-label.helper";
+import {
+  GridLabelPosition,
+  LaneGridLabelHelper,
+} from "./utils/lane-grid-label.helper";
 import {
   GridResizeHandle,
   LaneGridBounds,
@@ -1034,9 +1037,11 @@ export class DefaultRacedayComponent
   private cachedNonGridWidgets: any[] = [];
   private cachedNonGridWidgetsRef: any[] | null = null;
   private cachedNonGridSession: boolean = false;
+  private cachedNonGridActiveGridId: string | undefined = undefined;
   private cachedGrids: RacedayGridDescriptor[] = [];
   private cachedGridsWidgetsRef: any[] | null = null;
   private cachedGridsSession: boolean = false;
+  private cachedGridsActiveGridId: string | undefined = undefined;
   private cachedGridsDataCounts: string = "";
   private cachedGridsParticipantsCount = -1;
   private cachedGridsHeatDriversCount = -1;
@@ -4267,6 +4272,8 @@ export class DefaultRacedayComponent
   invalidateGridCache(): void {
     this.cachedGridsWidgetsRef = null;
     this.cachedNonGridWidgetsRef = null;
+    this.cachedNonGridActiveGridId = undefined;
+    this.cachedGridsActiveGridId = undefined;
     this.cachedGridsDataCounts = "";
     this.cachedGridsParticipantsCount = -1;
     this.cachedGridsHeatDriversCount = -1;
@@ -4327,18 +4334,25 @@ export class DefaultRacedayComponent
   }
 
   getNonGridWidgets(): any[] {
-    const session = Boolean(this.gridSession());
+    const activeGridId = this.gridSession()?.gridId;
+    const session = Boolean(activeGridId);
     const widgets = this.getWidgets();
     if (
       widgets === this.cachedNonGridWidgetsRef &&
-      session === this.cachedNonGridSession
+      session === this.cachedNonGridSession &&
+      activeGridId === this.cachedNonGridActiveGridId
     ) {
       return this.cachedNonGridWidgets;
     }
     this.cachedNonGridWidgetsRef = widgets;
     this.cachedNonGridSession = session;
-    if (session) {
-      this.cachedNonGridWidgets = widgets;
+    this.cachedNonGridActiveGridId = activeGridId;
+    if (activeGridId) {
+      this.cachedNonGridWidgets = widgets.filter(
+        (w: any) =>
+          !w.customSettings?.["gridId"] ||
+          w.customSettings?.["gridId"] === activeGridId,
+      );
     } else {
       this.cachedNonGridWidgets = widgets.filter(
         (w: any) => !w.customSettings?.["gridId"],
@@ -4348,15 +4362,8 @@ export class DefaultRacedayComponent
   }
 
   getGrids(): RacedayGridDescriptor[] {
-    const session = Boolean(this.gridSession());
-    if (session) {
-      this.cachedGrids = [];
-      this.cachedGridsWidgetsRef = null;
-      this.cachedGridsDataCounts = "";
-      this.cachedGridsParticipantsCount = -1;
-      this.cachedGridsHeatDriversCount = -1;
-      return [];
-    }
+    const activeGridId = this.gridSession()?.gridId;
+    const session = Boolean(activeGridId);
     const widgets = this.getWidgets();
     if (!widgets || widgets.length === 0) {
       this.cachedGrids = [];
@@ -4364,6 +4371,7 @@ export class DefaultRacedayComponent
       this.cachedGridsDataCounts = "";
       this.cachedGridsParticipantsCount = -1;
       this.cachedGridsHeatDriversCount = -1;
+      this.cachedGridsActiveGridId = undefined;
       return [];
     }
 
@@ -4374,6 +4382,7 @@ export class DefaultRacedayComponent
     if (
       widgets === this.cachedGridsWidgetsRef &&
       session === this.cachedGridsSession &&
+      activeGridId === this.cachedGridsActiveGridId &&
       participantsCount === this.cachedGridsParticipantsCount &&
       heatDriversCount === this.cachedGridsHeatDriversCount
     ) {
@@ -4405,6 +4414,7 @@ export class DefaultRacedayComponent
     if (
       widgets === this.cachedGridsWidgetsRef &&
       session === this.cachedGridsSession &&
+      activeGridId === this.cachedGridsActiveGridId &&
       dataCountsKey === this.cachedGridsDataCounts
     ) {
       this.cachedGridsParticipantsCount = participantsCount;
@@ -4413,7 +4423,10 @@ export class DefaultRacedayComponent
     }
 
     const descriptors: RacedayGridDescriptor[] = [];
-    for (const gridId of gridIds) {
+    const targetGridIds = activeGridId
+      ? gridIds.filter((id) => id !== activeGridId)
+      : gridIds;
+    for (const gridId of targetGridIds) {
       const desc = this.buildGridDescriptor(gridId, widgets);
       if (desc) descriptors.push(desc);
     }
@@ -4421,6 +4434,7 @@ export class DefaultRacedayComponent
     this.cachedGrids = descriptors;
     this.cachedGridsWidgetsRef = widgets;
     this.cachedGridsSession = session;
+    this.cachedGridsActiveGridId = activeGridId;
     this.cachedGridsDataCounts = dataCountsKey;
     this.cachedGridsParticipantsCount = participantsCount;
     this.cachedGridsHeatDriversCount = heatDriversCount;
@@ -4450,10 +4464,30 @@ export class DefaultRacedayComponent
     const headerPlacement =
       first.customSettings?.["headerPlacement"] || "individual";
     const headerHeight = Number(first.customSettings?.["headerHeight"]) || 36;
-    const labelPosition =
-      (first.customSettings?.["gridLabelPosition"] as any) || "none";
-    const labelText = first.customSettings?.["gridLabelText"] || "";
-    const labelSize = Number(first.customSettings?.["gridLabelSize"]) || 40;
+    const labelWidget =
+      gridWidgets.find(
+        (w: any) =>
+          w.customSettings?.["gridLabelPosition"] &&
+          w.customSettings?.["gridLabelPosition"] !== "none",
+      ) ||
+      gridWidgets.find(
+        (w: any) =>
+          w.customSettings?.["gridLabelText"] &&
+          String(w.customSettings["gridLabelText"]).trim() !== "",
+      ) ||
+      gridWidgets.find((w: any) => !w.customSettings?.["isHeaderWidget"]) ||
+      first;
+
+    const labelPosition: GridLabelPosition =
+      (labelWidget?.customSettings?.["gridLabelPosition"] as any) ||
+      (this.getGridLabelPosition(gridId) as any) ||
+      "none";
+    const labelText =
+      labelWidget?.customSettings?.["gridLabelText"] ??
+      this.getGridCustomTitle(gridId) ??
+      "";
+    const labelSize =
+      Number(labelWidget?.customSettings?.["gridLabelSize"]) || 40;
 
     const sessionLike: LaneGridSession = {
       gridId,
@@ -4477,16 +4511,16 @@ export class DefaultRacedayComponent
       gridLabelText: labelText,
       gridLabelSize: labelSize,
       gridLabelShowBorder:
-        first.customSettings?.["gridLabelShowBorder"] !== false,
+        labelWidget?.customSettings?.["gridLabelShowBorder"] !== false,
       gridLabelBorderColor:
-        first.customSettings?.["gridLabelBorderColor"] || "",
+        labelWidget?.customSettings?.["gridLabelBorderColor"] || "",
       gridLabelBorderWidth:
-        first.customSettings?.["gridLabelBorderWidth"] != null
-          ? Number(first.customSettings["gridLabelBorderWidth"])
+        labelWidget?.customSettings?.["gridLabelBorderWidth"] != null
+          ? Number(labelWidget.customSettings["gridLabelBorderWidth"])
           : 1,
       gridLabelBorderRadius:
-        first.customSettings?.["gridLabelBorderRadius"] != null
-          ? Number(first.customSettings["gridLabelBorderRadius"])
+        labelWidget?.customSettings?.["gridLabelBorderRadius"] != null
+          ? Number(labelWidget.customSettings["gridLabelBorderRadius"])
           : 4,
     };
 
@@ -4599,24 +4633,32 @@ export class DefaultRacedayComponent
       labelPosition,
       labelText,
       labelSize,
-      labelFontFamily: first.customSettings?.["gridLabelFontFamily"],
-      labelFontSize: Number(first.customSettings?.["gridLabelFontSize"]) || 18,
-      labelTextColor: first.customSettings?.["gridLabelTextColor"] || "#ffffff",
+      labelFontFamily: labelWidget?.customSettings?.["gridLabelFontFamily"],
+      labelFontSize:
+        Number(labelWidget?.customSettings?.["gridLabelFontSize"]) || 18,
+      labelTextColor:
+        labelWidget?.customSettings?.["gridLabelTextColor"] || "#ffffff",
       labelBackgroundColor:
-        first.customSettings?.["gridLabelBackgroundColor"] ||
+        labelWidget?.customSettings?.["gridLabelBackgroundColor"] ||
         "rgba(15, 23, 42, 0.85)",
-      labelFontBold: first.customSettings?.["gridLabelFontBold"] !== false,
-      labelFontItalic: Boolean(first.customSettings?.["gridLabelFontItalic"]),
-      labelAlignment: first.customSettings?.["gridLabelAlignment"] || "center",
-      labelShowBorder: first.customSettings?.["gridLabelShowBorder"] !== false,
-      labelBorderColor: first.customSettings?.["gridLabelBorderColor"] || "",
+      labelFontBold:
+        labelWidget?.customSettings?.["gridLabelFontBold"] !== false,
+      labelFontItalic: Boolean(
+        labelWidget?.customSettings?.["gridLabelFontItalic"],
+      ),
+      labelAlignment:
+        labelWidget?.customSettings?.["gridLabelAlignment"] || "center",
+      labelShowBorder:
+        labelWidget?.customSettings?.["gridLabelShowBorder"] !== false,
+      labelBorderColor:
+        labelWidget?.customSettings?.["gridLabelBorderColor"] || "",
       labelBorderWidth:
-        first.customSettings?.["gridLabelBorderWidth"] != null
-          ? Number(first.customSettings["gridLabelBorderWidth"])
+        labelWidget?.customSettings?.["gridLabelBorderWidth"] != null
+          ? Number(labelWidget.customSettings["gridLabelBorderWidth"])
           : 1,
       labelBorderRadius:
-        first.customSettings?.["gridLabelBorderRadius"] != null
-          ? Number(first.customSettings["gridLabelBorderRadius"])
+        labelWidget?.customSettings?.["gridLabelBorderRadius"] != null
+          ? Number(labelWidget.customSettings["gridLabelBorderRadius"])
           : 4,
       labelBounds,
       dataBounds,

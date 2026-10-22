@@ -13243,6 +13243,198 @@ describe("DefaultRacedayComponent", () => {
       const sel3 = component.selectedWidget;
       expect(sel3).toBe(w1);
     });
+
+    describe("unselected grid title visibility", () => {
+      it("should render grid title in the DOM when grid is unselected and title is enabled", () => {
+        const gridWidget = {
+          id: "unselected-w1",
+          widgetType: "lane-column",
+          x: 100,
+          y: 100,
+          width: 400,
+          height: 600,
+          customSettings: {
+            gridId: "unselected-grid-1",
+            gridLane: 0,
+            gridTotalLanes: 2,
+            gridDirection: "vertical",
+            gridBounds: { x: 100, y: 100, width: 400, height: 600 },
+            gridLabelPosition: "top",
+            gridLabelText: "VISIBLE PLACEMENT TITLE",
+            gridLabelSize: 45,
+            gridLabelShowBorder: true,
+            gridLabelBorderColor: "#38bdf8",
+            gridLabelBorderWidth: 2,
+            gridLabelBorderRadius: 6,
+          },
+        } as any;
+
+        spyOnProperty(component, "currentRacedayLayout", "get").and.returnValue(
+          {
+            widgets: [gridWidget],
+          } as any,
+        );
+        (component as any).track = { lanes: [{}, {}] };
+        (component as any).race = { track: (component as any).track } as any;
+
+        fixture.detectChanges();
+
+        const grids = component.getGrids();
+        expect(grids.length).toBe(1);
+        expect(grids[0].labelPosition).toBe("top");
+        expect(grids[0].labelText).toBe("VISIBLE PLACEMENT TITLE");
+        expect(grids[0].labelBounds).toBeTruthy();
+
+        const labelEl: HTMLElement | null = fixture.nativeElement.querySelector(
+          ".raceday-grid-label",
+        );
+        expect(labelEl).toBeTruthy();
+        expect(labelEl?.textContent).toContain("VISIBLE PLACEMENT TITLE");
+        expect(labelEl?.classList.contains("horizontal-label")).toBeTrue();
+      });
+
+      it("should extract grid title settings when the first widget is a header widget without label settings", () => {
+        const headerWidget = {
+          id: "hdr-1",
+          widgetType: "lane-column",
+          x: 100,
+          y: 100,
+          width: 400,
+          height: 40,
+          customSettings: {
+            gridId: "mixed-grid",
+            isHeaderWidget: true,
+            gridBounds: { x: 100, y: 100, width: 400, height: 600 },
+          },
+        } as any;
+        const dataWidget = {
+          id: "cell-1",
+          widgetType: "lane-column",
+          x: 100,
+          y: 140,
+          width: 400,
+          height: 560,
+          customSettings: {
+            gridId: "mixed-grid",
+            gridLane: 0,
+            gridTotalLanes: 2,
+            gridDirection: "vertical",
+            gridBounds: { x: 100, y: 100, width: 400, height: 600 },
+            gridLabelPosition: "bottom",
+            gridLabelText: "BOTTOM TITLE PLACEMENT",
+            gridLabelSize: 38,
+          },
+        } as any;
+
+        (component as any).layout = { widgets: [headerWidget, dataWidget] };
+        (component as any).track = { lanes: [{}, {}] };
+        (component as any).race = { track: (component as any).track } as any;
+
+        const grids = component.getGrids();
+        expect(grids.length).toBe(1);
+        expect(grids[0].labelPosition).toBe("bottom");
+        expect(grids[0].labelText).toBe("BOTTOM TITLE PLACEMENT");
+        expect(grids[0].labelBounds).toBeTruthy();
+      });
+
+      it("should keep unselected grid and title visible when another grid is in an active session", () => {
+        const activeGridWidget = {
+          id: "active-w1",
+          widgetType: "lane-column",
+          x: 50,
+          y: 50,
+          width: 300,
+          height: 400,
+          customSettings: {
+            gridId: "active-grid",
+            gridLane: 0,
+            gridTotalLanes: 2,
+            gridBounds: { x: 50, y: 50, width: 300, height: 400 },
+          },
+        } as any;
+        const unselectedGridWidget = {
+          id: "unselected-w2",
+          widgetType: "lane-column",
+          x: 450,
+          y: 50,
+          width: 300,
+          height: 400,
+          customSettings: {
+            gridId: "unselected-grid",
+            gridLane: 0,
+            gridTotalLanes: 2,
+            gridBounds: { x: 450, y: 50, width: 300, height: 400 },
+            gridLabelPosition: "left",
+            gridLabelText: "UNSELECTED GRID TITLE",
+            gridLabelSize: 42,
+          },
+        } as any;
+
+        (component as any).layout = {
+          widgets: [activeGridWidget, unselectedGridWidget],
+        };
+        (component as any).track = { lanes: [{}, {}] };
+        (component as any).race = { track: (component as any).track } as any;
+
+        fixture.componentRef.setInput("gridSession", {
+          gridId: "active-grid",
+          bounds: { x: 50, y: 50, width: 300, height: 400 },
+          totalLanes: 2,
+          direction: "vertical",
+          sourceLaneIndex: 0,
+          bindingMode: "lane",
+        } as any);
+
+        const grids = component.getGrids();
+        expect(grids.length).toBe(1);
+        expect(grids[0].gridId).toBe("unselected-grid");
+        expect(grids[0].labelPosition).toBe("left");
+        expect(grids[0].labelText).toBe("UNSELECTED GRID TITLE");
+        expect(grids[0].labelBounds).toBeTruthy();
+
+        const nonGridWidgets = component.getNonGridWidgets();
+        expect(nonGridWidgets).toContain(activeGridWidget);
+        expect(nonGridWidgets).not.toContain(unselectedGridWidget);
+      });
+
+      it("should apply customizing-unselected class in UI editor mode when grid is unselected", () => {
+        const gridWidget = {
+          id: "editor-grid-w1",
+          widgetType: "lane-column",
+          x: 100,
+          y: 100,
+          width: 400,
+          height: 600,
+          customSettings: {
+            gridId: "editor-grid-1",
+            gridLane: 0,
+            gridTotalLanes: 2,
+            gridDirection: "vertical",
+            gridBounds: { x: 100, y: 100, width: 400, height: 600 },
+            gridLabelPosition: "top",
+            gridLabelText: "EDITOR TITLE",
+          },
+        } as any;
+
+        spyOnProperty(component, "currentRacedayLayout", "get").and.returnValue(
+          {
+            widgets: [gridWidget],
+          } as any,
+        );
+        (component as any).track = { lanes: [{}, {}] };
+        (component as any).race = { track: (component as any).track } as any;
+        fixture.componentRef.setInput("isUIEditorMode", true);
+
+        fixture.detectChanges();
+
+        const gridContainer: HTMLElement | null =
+          fixture.nativeElement.querySelector(".raceday-grid-container");
+        expect(gridContainer).toBeTruthy();
+        expect(
+          gridContainer?.classList.contains("customizing-unselected"),
+        ).toBeTrue();
+      });
+    });
   });
 
   describe("Grid performance optimizations and helper caching", () => {
