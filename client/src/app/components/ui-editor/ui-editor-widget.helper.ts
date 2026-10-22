@@ -384,6 +384,12 @@ export function handleRemoveSelectedWidget(comp: any, ui?: CustomUI): void {
       comp.activeGridSession,
       layout.widgets,
     );
+  } else if (gridId) {
+    newWidgets = LaneGridReplicationHelper.removeMasterWidgetFromLanes(
+      idToRemove,
+      { gridId } as any,
+      layout.widgets,
+    );
   } else {
     newWidgets = layout.widgets.filter((w: any) => w.id !== idToRemove);
   }
@@ -398,9 +404,28 @@ export function handleRemoveSelectedWidget(comp: any, ui?: CustomUI): void {
 
   const updatedLayout = { ...layout, widgets: newWidgets };
 
-  const laneView = newWidgets.find((w: any) => w.widgetType === "lane-view");
-  const nextWidget = laneView || newWidgets[0];
-  comp.selectedWidgetId = nextWidget ? nextWidget.id : null;
+  const nextWidgetId = LaneGridReplicationHelper.findNextWidgetAfterDeletion(
+    idToRemove,
+    layout.widgets,
+    newWidgets,
+    comp.activeGridSession,
+  );
+  if (comp.selectedWidgetId !== nextWidgetId) {
+    comp.selectedAnchor = null;
+  }
+  comp.selectedWidgetId = nextWidgetId;
+
+  const nextWidget = nextWidgetId
+    ? newWidgets.find((w: any) => w.id === nextWidgetId)
+    : null;
+
+  if (
+    gridId &&
+    !comp.activeGridSession &&
+    nextWidget?.customSettings?.["gridId"] === gridId
+  ) {
+    comp.onEditGridTemplate?.(gridId, targetUi);
+  }
 
   const uiId = targetUi?.entity_id || comp.activeCustomUiId;
   if (uiId && comp.countdownPreviewActiveByUi) {

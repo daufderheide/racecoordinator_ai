@@ -8944,6 +8944,7 @@ export class DefaultRacedayComponent
 
   removeWidget(id: string) {
     if (!this.layout?.widgets) return;
+    const widgetsBefore = [...this.layout.widgets];
     const session = this.gridSession();
     const widgetToRemove = this.layout.widgets.find((w: any) => w.id === id);
     const gridId =
@@ -8998,12 +8999,24 @@ export class DefaultRacedayComponent
       }
     }
     this.layoutChanged.emit(this.layout);
-    if (this.selectedWidgetId() === id) {
-      const laneView = this.layout.widgets.find(
-        (w: any) => w.widgetType === "lane-view",
-      );
-      const nextWidget = laneView || this.layout.widgets[0];
-      this.widgetSelected.emit(nextWidget ? nextWidget.id : null);
+    const resolvedMasterId =
+      widgetToRemove?.customSettings?.["gridMasterId"] || id;
+    const currentSelectedId = this.selectedWidgetId();
+    const isSelectedDeleted =
+      currentSelectedId === id ||
+      currentSelectedId === resolvedMasterId ||
+      (currentSelectedId != null &&
+        !this.layout.widgets.some((w: any) => w.id === currentSelectedId));
+
+    if (isSelectedDeleted) {
+      const nextWidgetId =
+        LaneGridReplicationHelper.findNextWidgetAfterDeletion(
+          id,
+          widgetsBefore,
+          this.layout.widgets,
+          session,
+        );
+      this.widgetSelected.emit(nextWidgetId);
     }
     this.updateAudioRelevance();
   }

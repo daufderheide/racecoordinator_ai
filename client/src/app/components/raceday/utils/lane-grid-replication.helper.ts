@@ -11,6 +11,7 @@ import {
   LaneGridLabelHelper,
 } from "./lane-grid-label.helper";
 import { LaneGridScrollHelper } from "./lane-grid-scroll.helper";
+import { LaneGridSelectionHelper } from "./lane-grid-selection.helper";
 import { LaneGridStyleHelper } from "./lane-grid-style.helper";
 import { RacedayLayoutUtils } from "./raceday-layout.utils";
 
@@ -598,6 +599,20 @@ export class LaneGridReplicationHelper {
     widgets: AbsoluteWidgetNode[],
   ): AbsoluteWidgetNode[] {
     return LaneGridCleanupHelper.cleanOrphanedGridWidgets(widgets);
+  }
+
+  public static findNextWidgetAfterDeletion(
+    deletedId: string,
+    widgetsBefore: AbsoluteWidgetNode[],
+    widgetsAfter: AbsoluteWidgetNode[],
+    session?: LaneGridSession | null,
+  ): string | null {
+    return LaneGridSelectionHelper.findNextWidgetAfterDeletion(
+      deletedId,
+      widgetsBefore,
+      widgetsAfter,
+      session,
+    );
   }
 
   public static bakeGrid(

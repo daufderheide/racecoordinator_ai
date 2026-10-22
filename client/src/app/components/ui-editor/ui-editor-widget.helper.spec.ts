@@ -553,7 +553,50 @@ describe("ui-editor-widget.helper", () => {
 
     expect(comp.activeGridSession).toBeDefined();
     expect(comp.activeGridSession.gridId).toBe("grid-multi");
+    expect(comp.selectedWidgetId).toBe("col2");
     expect(comp.onLayoutChanged).toHaveBeenCalled();
+  });
+
+  it("should preserve grid selection and select next column even when lane-view exists in layout", () => {
+    const { handleRemoveSelectedWidget } = require("./ui-editor-widget.helper");
+    const layout = {
+      widgets: [
+        {
+          id: "col1",
+          widgetType: "lane-column",
+          x: 100,
+          y: 100,
+          customSettings: { gridId: "grid-test-lv", gridLane: 0 },
+        },
+        {
+          id: "col2",
+          widgetType: "lane-column",
+          x: 200,
+          y: 100,
+          customSettings: { gridId: "grid-test-lv", gridLane: 0 },
+        },
+        {
+          id: "lane-view-main",
+          widgetType: "lane-view",
+          x: 0,
+          y: 0,
+        },
+      ],
+    };
+    const comp = {
+      selectedWidgetId: "col1",
+      activeCustomUi: { entity_id: "ui1" },
+      activeGridSession: { gridId: "grid-test-lv" },
+      getLayout: jasmine.createSpy("getLayout").and.returnValue(layout),
+      onLayoutChanged: jasmine.createSpy("onLayoutChanged"),
+    };
+
+    handleRemoveSelectedWidget(comp);
+
+    expect(comp.activeGridSession).toBeDefined();
+    expect(comp.activeGridSession.gridId).toBe("grid-test-lv");
+    // Must NOT select lane-view-main; must stay in grid and select col2
+    expect(comp.selectedWidgetId).toBe("col2");
   });
 
   it("should handle nudging selected widget within bounds", () => {

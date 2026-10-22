@@ -9081,6 +9081,102 @@ describe("DefaultRacedayComponent", () => {
       expect(component.widgetSelected.emit).toHaveBeenCalledWith("lane-view-1");
     });
 
+    it("should keep selection within grid and select next column when deleting a column from a multi-column grid", () => {
+      fixture.componentRef.setInput("gridSession", {
+        gridId: "grid-multi-col",
+        bounds: { x: 0, y: 0, width: 600, height: 200 },
+        totalLanes: 2,
+        direction: "vertical",
+        sourceLaneIndex: 0,
+        bindingMode: "lane",
+      });
+
+      component.layout = {
+        widgets: [
+          {
+            id: "col1",
+            widgetType: "lane-column",
+            x: 0,
+            y: 0,
+            width: 100,
+            height: 50,
+            customSettings: { gridId: "grid-multi-col", gridLane: 0 },
+          },
+          {
+            id: "col2",
+            widgetType: "lane-column",
+            x: 120,
+            y: 0,
+            width: 150,
+            height: 50,
+            customSettings: { gridId: "grid-multi-col", gridLane: 0 },
+          },
+          {
+            id: "col3",
+            widgetType: "lane-column",
+            x: 290,
+            y: 0,
+            width: 120,
+            height: 50,
+            customSettings: { gridId: "grid-multi-col", gridLane: 0 },
+          },
+          {
+            id: "lane-view-main",
+            widgetType: "lane-view",
+            x: 0,
+            y: 300,
+            width: 800,
+            height: 400,
+          },
+        ],
+      } as any;
+
+      (component as any).selectedWidgetId = () => "col1";
+      component.removeWidget("col1");
+
+      // Must NOT select lane-view-main; must stay in grid and select col2 (the next column)
+      expect(component.widgetSelected.emit).toHaveBeenCalledWith("col2");
+    });
+
+    it("should select previous column when deleting the rightmost column in a grid", () => {
+      fixture.componentRef.setInput("gridSession", {
+        gridId: "grid-multi-col",
+        bounds: { x: 0, y: 0, width: 600, height: 200 },
+        totalLanes: 2,
+        direction: "vertical",
+        sourceLaneIndex: 0,
+        bindingMode: "lane",
+      });
+
+      component.layout = {
+        widgets: [
+          {
+            id: "col1",
+            widgetType: "lane-column",
+            x: 0,
+            y: 0,
+            width: 100,
+            height: 50,
+            customSettings: { gridId: "grid-multi-col", gridLane: 0 },
+          },
+          {
+            id: "col2",
+            widgetType: "lane-column",
+            x: 120,
+            y: 0,
+            width: 150,
+            height: 50,
+            customSettings: { gridId: "grid-multi-col", gridLane: 0 },
+          },
+        ],
+      } as any;
+
+      (component as any).selectedWidgetId = () => "col2";
+      component.removeWidget("col2");
+
+      expect(component.widgetSelected.emit).toHaveBeenCalledWith("col1");
+    });
+
     it("should remove grid and emit finishGrid when the last element in a grid session is removed", () => {
       spyOn(component.finishGrid, "emit");
       spyOn(LaneGridAnimationHelper, "reset");
