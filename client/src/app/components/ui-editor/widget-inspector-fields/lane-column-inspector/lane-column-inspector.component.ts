@@ -72,16 +72,32 @@ export class LaneColumnInspectorComponent extends LaneColumnInspectorGridBase {
   showReplicateModal = signal<boolean>(false);
   activeScope = signal<"widget" | "grid" | "column" | "inset">("grid");
   activeInspectorAnchor = signal<string | null>(null);
+  private previousWidgetId: string | null = null;
 
   constructor() {
     super();
     effect(() => {
+      const currentWidgetId = this.widget()?.id ?? null;
+      if (
+        this.previousWidgetId !== null &&
+        this.previousWidgetId !== currentWidgetId
+      ) {
+        this.activeInspectorAnchor.set(null);
+        if (this.activeScope() === "inset") {
+          this.activeScope.set("column");
+        }
+      }
+      this.previousWidgetId = currentWidgetId;
+
       const anchor = this.selectedAnchor();
       if (anchor && anchor !== "center-center") {
         this.activeInspectorAnchor.set(anchor);
         this.activeScope.set("inset");
-      } else if (anchor === null && this.activeScope() === "inset") {
-        this.activeScope.set("column");
+      } else if (anchor === null || anchor === "center-center") {
+        this.activeInspectorAnchor.set(null);
+        if (this.activeScope() === "inset") {
+          this.activeScope.set("column");
+        }
       }
     });
   }
@@ -164,9 +180,20 @@ export class LaneColumnInspectorComponent extends LaneColumnInspectorGridBase {
       const anchor = this.effectiveSelectedAnchor;
       this.anchorChange.emit(anchor);
     } else if (this.activeScope() === "inset") {
+      this.activeInspectorAnchor.set(null);
+      this.anchorChange.emit(null);
+    } else if (scope === "column") {
+      this.activeInspectorAnchor.set(null);
       this.anchorChange.emit(null);
     }
     this.activeScope.set(scope);
+  }
+
+  get selectedMapAnchor(): string {
+    return LaneColumnInsetHelper.getSelectedMapAnchor(
+      this.activeInspectorAnchor(),
+      this.selectedAnchor(),
+    );
   }
 
   get effectiveSelectedAnchor(): string {
@@ -210,6 +237,8 @@ export class LaneColumnInspectorComponent extends LaneColumnInspectorGridBase {
 
   selectAnchorFromMap(anchor: string): void {
     if (anchor === "center-center") {
+      this.activeInspectorAnchor.set(null);
+      this.anchorChange.emit(null);
       this.setScope("column");
       return;
     }
@@ -218,7 +247,12 @@ export class LaneColumnInspectorComponent extends LaneColumnInspectorGridBase {
   }
 
   getSelectedAnchorLabel(anchor?: string): string {
-    const key = anchor || this.effectiveSelectedAnchor;
+    const key = anchor || this.selectedMapAnchor;
+    if (key === "center-center") {
+      return this.translationService.translate(
+        "UE_INSPECTOR_INSET_MAIN_COLUMN",
+      );
+    }
     const pos = this.ANCHOR_POSITIONS.find((p) => p.key === key);
     return pos ? this.translationService.translate(pos.labelKey) : key;
   }
@@ -291,6 +325,7 @@ export class LaneColumnInspectorComponent extends LaneColumnInspectorGridBase {
   }
 
   backToColumn(): void {
+    this.activeInspectorAnchor.set(null);
     this.anchorChange.emit(null);
     this.activeScope.set("column");
   }

@@ -552,6 +552,19 @@ export class LaneColumnInsetHelper {
     );
   }
 
+  public static getSelectedMapAnchor(
+    activeInspectorAnchor: string | null,
+    selectedAnchor: string | null,
+  ): string {
+    if (activeInspectorAnchor) {
+      return activeInspectorAnchor;
+    }
+    if (selectedAnchor) {
+      return selectedAnchor;
+    }
+    return "center-center";
+  }
+
   public static getEffectiveSelectedAnchor(
     activeInspectorAnchor: string | null,
     selectedAnchor: string | null,

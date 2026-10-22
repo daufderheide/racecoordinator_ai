@@ -1901,16 +1901,58 @@ describe("LaneColumnInspectorComponent", () => {
     it("should select anchor when selectAnchorFromMap is called", () => {
       spyOn(component.anchorChange, "emit");
       component.selectAnchorFromMap("top-left");
+      expect(component.selectedMapAnchor).toBe("top-left");
       expect(component.effectiveSelectedAnchor).toBe("top-left");
       expect(component.anchorChange.emit).toHaveBeenCalledWith("top-left");
 
-      // Center-center switches to column scope
+      // Center-center switches to column scope and resets anchor
       component.selectAnchorFromMap("center-center");
+      expect(component.selectedMapAnchor).toBe("center-center");
       expect(component.activeScope()).toBe("column");
+      expect(component.anchorChange.emit).toHaveBeenCalledWith(null);
     });
 
-    it("should return localized label for selected anchor", () => {
+    it("should reset activeInspectorAnchor when selecting a different widget", () => {
+      component.selectAnchorFromMap("bottom-center");
+      expect(component.selectedMapAnchor).toBe("bottom-center");
+
+      // Switch to a new widget
+      fixture.componentRef.setInput("widget", {
+        id: "widget_different_column",
+        widgetType: "lane-column",
+        customSettings: { columnKey: "bestLapTime", insets: {} },
+      } as any);
+      fixture.detectChanges();
+
+      expect(component.selectedMapAnchor).toBe("center-center");
+      expect(component.activeInspectorAnchor()).toBeNull();
+    });
+
+    it("should clear activeInspectorAnchor when selectedAnchor is set to null or center-center", () => {
+      fixture.componentRef.setInput("selectedAnchor", "bottom-center");
+      fixture.detectChanges();
+      expect(component.selectedMapAnchor).toBe("bottom-center");
+      expect(component.activeInspectorAnchor()).toBe("bottom-center");
+
+      fixture.componentRef.setInput("selectedAnchor", null);
+      fixture.detectChanges();
+      expect(component.selectedMapAnchor).toBe("center-center");
+      expect(component.activeInspectorAnchor()).toBeNull();
+
+      fixture.componentRef.setInput("selectedAnchor", "top-right");
+      fixture.detectChanges();
+      expect(component.selectedMapAnchor).toBe("top-right");
+      expect(component.activeInspectorAnchor()).toBe("top-right");
+
+      fixture.componentRef.setInput("selectedAnchor", "center-center");
+      fixture.detectChanges();
+      expect(component.selectedMapAnchor).toBe("center-center");
+      expect(component.activeInspectorAnchor()).toBeNull();
+    });
+
+    it("should return localized label for selected anchor including center-center", () => {
       expect(component.getSelectedAnchorLabel("top-left")).toBeDefined();
+      expect(component.getSelectedAnchorLabel("center-center")).toBeDefined();
     });
 
     it("should handle inspector dragover and dragenter/dragleave classes", () => {

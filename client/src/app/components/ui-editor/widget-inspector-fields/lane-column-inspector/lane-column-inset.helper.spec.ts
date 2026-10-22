@@ -496,6 +496,19 @@ describe("LaneColumnInsetHelper", () => {
       expect(
         LaneColumnInsetHelper.getEffectiveSelectedAnchor(null, null, {}),
       ).toBe("top-right");
+
+      expect(
+        LaneColumnInsetHelper.getSelectedMapAnchor("bottom-center", null),
+      ).toBe("bottom-center");
+      expect(
+        LaneColumnInsetHelper.getSelectedMapAnchor("center-center", "top-left"),
+      ).toBe("center-center");
+      expect(
+        LaneColumnInsetHelper.getSelectedMapAnchor(null, "top-right"),
+      ).toBe("top-right");
+      expect(LaneColumnInsetHelper.getSelectedMapAnchor(null, null)).toBe(
+        "center-center",
+      );
     });
 
     it("should get and set anchor values", () => {

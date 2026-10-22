@@ -88,6 +88,8 @@
         [widget]="widget()"
         [availableColumns]="availableColumns()"
         [disableFontSizes]="widget().scaleMode === 'auto'"
+        [selectedAnchor]="selectedAnchor()"
+        (anchorChange)="onAnchorChange($event)"
         (change)="onSettingsChange()"
         (requestReplicate)="requestReplicate.emit()"
         (replicate)="replicate.emit($event)"
