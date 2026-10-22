@@ -10,6 +10,7 @@ import {
   ViewChild,
   ViewContainerRef,
 } from "@angular/core";
+import { Title } from "@angular/platform-browser";
 import { ActivatedRoute, Router, RouterStateSnapshot } from "@angular/router";
 import { Observable } from "rxjs";
 import { AboutDialogComponent } from "@app/components/shared/about-dialog/about-dialog.component";
@@ -65,6 +66,7 @@ class CustomRacedayBaseComponent extends DefaultRacedayComponent {
     @Inject(DateTimeFormatService)
     dateTimeFormatService?: DateTimeFormatService,
     @Inject(AudioService) audioService?: AudioService,
+    @Inject(Title) titleService?: Title,
   ) {
     super(
       el,
@@ -89,6 +91,7 @@ class CustomRacedayBaseComponent extends DefaultRacedayComponent {
       navigationService,
       dateTimeFormatService,
       audioService,
+      titleService,
     );
   }
 }

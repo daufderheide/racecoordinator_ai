@@ -1019,6 +1019,13 @@ export class PhidgetEditorComponent implements OnInit, OnDestroy {
         position: "bottom",
         onEnter: expandMain,
       },
+      {
+        selector: `#phidget-active-low-analog-leds-${this.interfaceIndex()}`,
+        title: "TE_HELP_PHIDGET_ACTIVE_LOW_LEDS_TITLE",
+        content: "TE_HELP_PHIDGET_ACTIVE_LOW_LEDS_CONTENT",
+        position: "bottom",
+        onEnter: expandMain,
+      },
     ];
 
     if (this.availableDigitalInputPins.length > 0) {

@@ -152,6 +152,7 @@ Define o tempo de filtragem em **microssegundos** ($1\text{ ms} = 1000\,\mu\text
 #### Lógica Invertida (Normalmente Fechado / NC)
 - **Sensores de Calha Normalmente Fechados (NC)**: Ativar se o sensor fornecer nível alto em repouso e baixar para nível baixo ao passar o carro (típico em sensores óticos). Desativar em dead strips ou reed switches.
 - **Relés Normalmente Fechados (NC)**: Ativar se o relé atuar para cortar a corrente e desativar para ligar a corrente. Garante pista alimentada mesmo com o computador desligado.
+- **LEDs Analógicos Ativos Baixos (Active Low Analog LEDs)**: Ativar se os seus LEDs analógicos (como semáforos de partida, bandeiras ou indicadores de líder) acenderem em nível BAIXO (0V) e apagarem em nível ALTO (5V). Isto resolve o comportamento invertido na fiação com ânodo comum nas interfaces Arduino e Phidget.
 
 #### Comportamento das Boxes no Pino de Volta
 Permite ao sensor de meta atuar em corridas com combustível:
@@ -246,7 +247,7 @@ A barra de ferramentas superior do Editor de Pistas disponibiliza ferramentas es
 - **Voltar**: Regressa à vista anterior ou à Configuração do Dia de Corrida.
 - **Adicionar Pista (+)**: Cria um novo modelo de pista e entra no modo de edição.
 - **Duplicar Pista**: Cria uma cópia exata com outro nome único, ideal para testar configurações sem alterar a original.
-- **Editar / Concluir Edição**: Alterna entre o modo somente leitura e o modo de edição. Ao sair do modo de edição, as alterações são validadas e gravadas.
+- **Editar / Concluir Edição (`Cmd/Ctrl+E`)**: Alterna entre o modo somente leitura e o modo de edição. Ao sair do modo de edição, as alterações são validadas e gravadas.
 - **Expandir / Recolher tudo**: Expande ou recolhe todas as seções de configuração e painéis de interfaces de uma vez.
 - **Eliminar Pista**: Elimina a pista selecionada após confirmação.
 - **Anular (`Ctrl+Z`) / Refazer (`Ctrl+Y`)**: Reversão imediata de qualquer alteração nas calhas, cores ou pinos.
@@ -264,8 +265,17 @@ A barra de ferramentas superior do Editor de Pistas disponibiliza ferramentas es
 - **Symptom**: Os carros começam a abastecer ininterruptamente assim que são colocados na calha.
 - **Solução**: Altere a opção **Sensores de Calha Normalmente Fechados (Normally Closed Lane Sensors)**.
 
+### LEDs Analógicos Invertidos (Acesos quando deveriam estar apagados)
+- **Sintoma**: Os LEDs do semáforo, bandeiras ou indicadores de líder estão acesos em repouso e apagam-se durante as fases ativas.
+- **Solução**: Ative a opção **LEDs analógicos ativos baixos (Active Low Analog LEDs)** na configuração da interface (Arduino ou Phidget).
+
 ### Voltas Duplas ou Não Detetadas
 - **Solução**: Aumente o antirressalto (Debounce) caso surjam contagens duplas; reduza-o caso carros muito velozes não sejam lidos e verifique o alinhamento das fotocélulas.
 
 ### Tiras LED FastLED Não Acendem
 - **Solução**: Certifique-se de que o Arduino está a correr o **sketch oficial `v2.1.0.x`**, que o tipo de LED e a ordem de cores estão corretos e que a massa (GND) da fonte de alimentação de 5V está ligada à massa do Arduino.
+
+### Desconexão da Interface Entre Baterias (Suspensão USB / Economia de Energia)
+- **Sintoma**: A interface (Arduino, Phidget ou Trackmate) desliga-se durante pausas entre baterias ou em períodos de inatividade, e volta a ligar-se no início da corrida com a mensagem *"A conexão com a interface foi restaurada."*
+- **Solução**: O Windows, Linux e macOS desligam portas USB e dispositivos HID inativos mesmo com o PC ligado. Consulte a seção [Suspensão da Interface USB e Desconexões](troubleshooting.pt.md#usb-sleep-prevention) na Solução de Problemas para desativar a economia de energia no Gerenciador de Dispositivos.
+

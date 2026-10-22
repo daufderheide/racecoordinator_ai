@@ -1,6 +1,7 @@
 package com.antigravity.protocols.phidget;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -17,6 +18,7 @@ public class PhidgetConfigTest {
     assertEquals(-1, config.serialNumber);
     assertTrue(config.normallyClosedLaneSensors);
     assertTrue(config.normallyClosedRelays);
+    assertFalse(config.activeLowAnalogLeds);
     assertTrue(config.useLapsForSegments);
     assertEquals(LapPinPitBehavior.PIT_IN_OUT, config.lapPinPitBehavior);
     assertNotNull(config.digitalInIds);
@@ -30,6 +32,7 @@ public class PhidgetConfigTest {
     ObjectMapper mapper = new ObjectMapper();
     PhidgetConfig config = new PhidgetConfig();
     config.serialNumber = 12345;
+    config.activeLowAnalogLeds = true;
 
     String json = mapper.writeValueAsString(config);
     PhidgetConfig deserialized = mapper.readValue(json, PhidgetConfig.class);
@@ -37,5 +40,6 @@ public class PhidgetConfigTest {
     assertNotNull(deserialized);
     assertEquals(12345, deserialized.serialNumber);
     assertEquals("Phidget", deserialized.name);
+    assertTrue(deserialized.activeLowAnalogLeds);
   }
 }

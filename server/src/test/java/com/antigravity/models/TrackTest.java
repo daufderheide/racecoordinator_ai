@@ -116,7 +116,7 @@ public class TrackTest {
             1,
             true,
             true,
-            0,
+            false,
             false,
             true,
             ArduinoConfig.LapPinPitBehavior.PIT_IN_OUT,
@@ -360,5 +360,26 @@ public class TrackTest {
 
     Track synced = track.syncWithLanes();
     assertEquals(0.015625, synced.getTrackScale(), 0.0001);
+  }
+
+  @Test
+  public void testGetNumTrackSections() {
+    Track track0 = new Track.Builder().name("Track 0").numTrackSections(0).build();
+    assertEquals(0, track0.getNumTrackSections());
+
+    Track track3 = new Track.Builder().name("Track 3").numTrackSections(3).build();
+    assertEquals(3, track3.getNumTrackSections());
+  }
+
+  @Test
+  public void testGetLaneCount() {
+    Track emptyTrack = new Track.Builder().name("Empty").build();
+    assertEquals(0, emptyTrack.getLaneCount());
+
+    Lane lane1 = new Lane("#FF0000", "#FFFFFF", 10.0);
+    Lane lane2 = new Lane("#00FF00", "#FFFFFF", 10.0);
+    Track twoLaneTrack =
+        new Track.Builder().name("2-Lane").lanes(Arrays.asList(lane1, lane2)).build();
+    assertEquals(2, twoLaneTrack.getLaneCount());
   }
 }

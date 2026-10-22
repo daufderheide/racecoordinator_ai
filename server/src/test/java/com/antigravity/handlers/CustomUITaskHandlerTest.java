@@ -3,6 +3,7 @@ package com.antigravity.handlers;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -204,6 +205,50 @@ public class CustomUITaskHandlerTest {
     when(handler.getPathParam(ctx, "id")).thenReturn(CustomUI.DEFAULT_UI_ID);
     handler.deleteCustomUI(ctx);
     verify(handler).setStatus(ctx, 204);
+    assertTrue(databaseContext.isDefaultArtifactDeleted("custom_ui", CustomUI.DEFAULT_UI_ID));
+  }
+
+  @Test
+  public void testDeleteDefaultCustomUIs_DoesNotRecreateOnEnsureDefaults() {
+    handler.ensureDefaultCustomUIs();
+
+    SqliteRepository<CustomUI> repo =
+        new SqliteRepository<>(databaseContext, "custom_uis", CustomUI.class);
+    assertNotNull(repo.findByEntityId(CustomUI.PRACTICE_UI_ID));
+    assertNotNull(repo.findByEntityId(CustomUI.FUEL_UI_ID));
+
+    // Delete Practice and Fuel custom UIs
+    when(handler.getPathParam(ctx, "id")).thenReturn(CustomUI.PRACTICE_UI_ID);
+    handler.deleteCustomUI(ctx);
+    verify(handler).setStatus(ctx, 204);
+
+    when(handler.getPathParam(ctx, "id")).thenReturn(CustomUI.FUEL_UI_ID);
+    handler.deleteCustomUI(ctx);
+
+    assertTrue(databaseContext.isDefaultArtifactDeleted("custom_ui", CustomUI.PRACTICE_UI_ID));
+    assertTrue(databaseContext.isDefaultArtifactDeleted("custom_ui", CustomUI.FUEL_UI_ID));
+
+    // Calling ensureDefaultCustomUIs() should NOT recreate them
+    handler.ensureDefaultCustomUIs();
+    assertNull(repo.findByEntityId(CustomUI.PRACTICE_UI_ID));
+    assertNull(repo.findByEntityId(CustomUI.FUEL_UI_ID));
+
+    // Recreating custom UI with name restores/unmarks it
+    CustomUI recreatedPractice =
+        new CustomUI(
+            CustomUI.PRACTICE_UI_NAME,
+            false,
+            "[]",
+            null,
+            null,
+            null,
+            null,
+            null,
+            "new_prac_ui",
+            null);
+    when(handler.getBody(ctx, CustomUI.class)).thenReturn(recreatedPractice);
+    handler.createCustomUI(ctx);
+    assertFalse(databaseContext.isDefaultArtifactDeleted("custom_ui", CustomUI.PRACTICE_UI_ID));
   }
 
   @Test

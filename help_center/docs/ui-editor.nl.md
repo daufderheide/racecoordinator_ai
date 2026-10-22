@@ -10,7 +10,7 @@ Met de UI-Editor kunt u aangepaste racedag-layouts ontwerpen, de kolommen van he
 - Pas grootte, positie en uitlijning van widgets aan op uw schermresolutie. Alle widgets blijven begrensd binnen het canvas.
 - **Widget-inspector bediening**:
   - **Positie & grootte**: Positioneer en dimensioneer de geselecteerde widget nauwkeurig met de numerieke velden voor **X**, **Y**, **Breedte** en **Hoogte**.
-  - **Widget verwijderen**: Klik op het prullenbak-icoon in de koptekst van de inspector of op de knop **Widget verwijderen** in de zijbalk.
+  - **Widget verwijderen**: Klik op het prullenbak-icoon in de koptekst van de inspector.
 - **Sneltoetsen**:
   - <kbd>Delete</kbd> of <kbd>Backspace</kbd>: Verwijdert de geselecteerde widget uit de layout.
   - <kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd>: Verplaatst de geselecteerde widget met 1px (of 10px met <kbd>Shift</kbd>).
@@ -33,3 +33,13 @@ De **Timer**-widget toont de verstreken of resterende heat-/racetijd in verschil
   - **Altijd**: Toont continu decimalen gedurende de hele heat.
   - **Nooit**: Beperkt de timer uitsluitend tot hele seconden.
 - **Live Voorbeeld**: De inspecteur bevat een direct voorbeeld waarin te zien is hoe de geselecteerde opmaak eruitziet op verschillende meetpunten (`> 1 hr`, `> 1 min`, `< 1 min` en `< 10s`).
+
+## Aftel-widgetconfiguratie
+
+De **Aftel-widget** toont de visuele startlichten en regelt de startgeluiden tijdens de startprocedure:
+
+- **Maximaal aantal lampen**: Bepaalt het maximale aantal getoonde startlampen (standaard 5, bereik 1 tot 10). Wanneer de startduur dit aantal overschrijdt (bijvoorbeeld een start van 6 seconden met maximaal 5 lampen), blijven alle lampen tijdens het beginverschil (1 seconde) gedimd/uit voordat de lampen achtereenvolgens oplichten.
+- **Infade-animatie**: Bepaalt of de startlichten-overlay en achtergrondvervaging vloeiend infaden bij het begin van de aftelling. Indien uitgeschakeld verschijnen de lichten en achtergrond direct.
+- **Oriëntatie**: Schakel tussen **Horizontale** en **Verticale** opstelling van de lichten.
+- **Gloed- en vervagingseffecten**: Pas de lichtkrans rondom de lampen, de schaalvergroting van rode/groene lichten en de sterkte of het bereik van de achtergrondvervaging aan.
+

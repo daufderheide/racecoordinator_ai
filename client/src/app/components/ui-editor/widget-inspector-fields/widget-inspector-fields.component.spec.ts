@@ -99,4 +99,36 @@ describe("WidgetInspectorFieldsComponent", () => {
     );
     expect(inspectorEl).toBeTruthy();
   });
+
+  it("should render action-button-inspector when widget is action-forward or action-close", () => {
+    fixture.componentRef.setInput("widget", {
+      id: "w-forward",
+      widgetType: "action-forward",
+      x: 0,
+      y: 0,
+      width: 36,
+      height: 36,
+      zIndex: 1,
+      customSettings: {},
+    });
+    fixture.detectChanges();
+    expect(
+      fixture.nativeElement.querySelector("app-action-button-inspector"),
+    ).toBeTruthy();
+
+    fixture.componentRef.setInput("widget", {
+      id: "w-close",
+      widgetType: "action-close",
+      x: 0,
+      y: 0,
+      width: 36,
+      height: 36,
+      zIndex: 1,
+      customSettings: {},
+    });
+    fixture.detectChanges();
+    expect(
+      fixture.nativeElement.querySelector("app-action-button-inspector"),
+    ).toBeTruthy();
+  });
 });

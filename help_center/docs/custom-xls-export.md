@@ -231,7 +231,8 @@ Available on the `Race Information` sheet.
 | `${race.name}` | `Friday Night Shootout` | Name of the race event |
 | `${race.startTime}` | `2026-09-11 19:30:00` | Start date and time of the event |
 | `${race.track.name}` | `Monza Oval` | Configured track name |
-| `${race.track.sections}` | `3` | Number of track sectors/segments configured |
+| `${race.track.getNumTrackSections()}` | `3` | Number of track sectors/segments configured |
+| `${race.track.getLaneCount()}` | `4` | Number of track lanes configured |
 | `${race.raceModel.minLapTime}` | `2.5` | Minimum lap time filter threshold |
 | `${race.raceModel.heatRotationType}` | `Round Robin` | Configured heat rotation method |
 | `${race.raceModel.heatScoring.finishMethod}` | `Lap Limit` | Finish condition (Lap Limit, Time Limit, etc.) |
@@ -249,9 +250,9 @@ Here is how each sheet in `race_export_template.xlsx` works under the hood:
 - **Explanation**: A straightforward single-table vertical loop. If the race does not belong to a season, Race Coordinator AI automatically omits this sheet from the export.
 
 ### 2. `Race Information`
-- **Cell `A1` Note**: `jx:area(lastCell="B81")`
-- **Cell `A10` Note**: `jx:each(items="race.track.lanes", var="lane", lastCell="B10")`
-- **Explanation**: Injects scalar race configuration properties (e.g. `${race.name}`) into cells `B6:B9` and iterates track lanes dynamically in rows 10+.
+- **Cell `A1` Note**: `jx:area(lastCell="B83")`
+- **Cell `10A / 10B`**: Displays `Lane Count` using `${race.track.getLaneCount()}`
+- **Explanation**: Injects scalar race configuration properties (e.g. `${race.name}`, `${race.track.getNumTrackSections()}`, `${race.track.getLaneCount()}`) into cells `B6:B10` and detailed race model settings in rows 16+.
 
 ### 3. `Heat List`
 - **Cell `A1` Note**: `jx:area(lastCell="C5")`

@@ -65,13 +65,10 @@
 
   <div class="inspector-section">
     <label class="inspector-label">{{
-      "UE_INSPECTOR_COUNTDOWN_PREVIEW_LAMP_COUNT" | translate
+      "UE_INSPECTOR_COUNTDOWN_MAX_LAMPS" | translate
     }}</label>
     <div class="select-container select-sm">
-      <app-custom-select
-        [value]="previewLampCount"
-        (change)="setPreviewLampCount($event)"
-      >
+      <app-custom-select [value]="maxLamps" (change)="setMaxLamps($event)">
         <app-custom-option [value]="3">3</app-custom-option>
         <app-custom-option [value]="4">4</app-custom-option>
         <app-custom-option [value]="5">5</app-custom-option>
@@ -82,6 +79,17 @@
         <app-custom-option [value]="10">10</app-custom-option>
       </app-custom-select>
     </div>
+  </div>
+
+  <div class="inspector-section">
+    <label class="inspector-checkbox-label">
+      <input
+        type="checkbox"
+        [ngModel]="fadeIn"
+        (ngModelChange)="setFadeIn($event)"
+      />
+      {{ "UE_INSPECTOR_COUNTDOWN_FADE_IN" | translate }}
+    </label>
   </div>
 
   <!-- Glow Effect Configuration -->

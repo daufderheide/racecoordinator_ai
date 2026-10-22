@@ -12,7 +12,7 @@
     @if (isGroupBoard()) {
       {{ "RD_WIN_GROUP_LEADER_BOARD" | translate }}
     } @else {
-      Leader Board
+      {{ "RD_WIN_LEADER_BOARD" | translate }}
     }
   </div>
   @if (isGroupBoard() && groupEnabled() && groupNumber() >= 0) {

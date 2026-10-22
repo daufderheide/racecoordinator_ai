@@ -1,6 +1,13 @@
 import { HttpClient } from "@angular/common/http";
 import { Injectable } from "@angular/core";
-import { BehaviorSubject, catchError, Observable, of } from "rxjs";
+import {
+  BehaviorSubject,
+  catchError,
+  finalize,
+  Observable,
+  of,
+  shareReplay,
+} from "rxjs";
 import { DataService } from "@app/data.service";
 
 export interface DriverProjection {
@@ -72,6 +79,15 @@ export class RacePredictionService {
     new BehaviorSubject<PredictionSnapshot | null>(null);
   currentPrediction$ = this.currentPredictionSubject.asObservable();
 
+  private inFlightPredictions = new Map<
+    string,
+    Observable<RacePredictionRecord | null>
+  >();
+  private inFlightEvaluations = new Map<
+    string,
+    Observable<PredictionEvaluationRecord | null>
+  >();
+
   constructor(
     private http: HttpClient,
     private dataService: DataService,
@@ -85,21 +101,47 @@ export class RacePredictionService {
     raceId: string,
     isDemo: boolean,
   ): Observable<RacePredictionRecord | null> {
+    const key = `${raceId}:${isDemo}`;
+    const inFlight = this.inFlightPredictions.get(key);
+    if (inFlight) {
+      return inFlight;
+    }
+
     const baseUrl = this.dataService.serverUrl || "";
     const url = `${baseUrl}/api/predictions/races/${raceId}?isDemo=${isDemo}&t=${Date.now()}`;
-    return this.http
-      .get<RacePredictionRecord>(url)
-      .pipe(catchError(() => of(null)));
+    const req$ = this.http.get<RacePredictionRecord>(url).pipe(
+      catchError(() => of(null)),
+      shareReplay(1),
+      finalize(() => {
+        this.inFlightPredictions.delete(key);
+      }),
+    );
+
+    this.inFlightPredictions.set(key, req$);
+    return req$;
   }
 
   getPredictionEvaluation(
     raceId: string,
     isDemo: boolean,
   ): Observable<PredictionEvaluationRecord | null> {
+    const key = `${raceId}:${isDemo}`;
+    const inFlight = this.inFlightEvaluations.get(key);
+    if (inFlight) {
+      return inFlight;
+    }
+
     const baseUrl = this.dataService.serverUrl || "";
     const url = `${baseUrl}/api/predictions/evaluations/${raceId}?isDemo=${isDemo}&t=${Date.now()}`;
-    return this.http
-      .get<PredictionEvaluationRecord>(url)
-      .pipe(catchError(() => of(null)));
+    const req$ = this.http.get<PredictionEvaluationRecord>(url).pipe(
+      catchError(() => of(null)),
+      shareReplay(1),
+      finalize(() => {
+        this.inFlightEvaluations.delete(key);
+      }),
+    );
+
+    this.inFlightEvaluations.set(key, req$);
+    return req$;
   }
 }

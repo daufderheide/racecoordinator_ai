@@ -99,6 +99,19 @@
     cursor: pointer;
     font-weight: bold;
     white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-play-content {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn-play .material-icons {
+    font-size: 18px;
 }
 
 .btn-play:hover {

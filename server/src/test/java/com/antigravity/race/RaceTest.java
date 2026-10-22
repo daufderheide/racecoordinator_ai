@@ -21,6 +21,7 @@ import com.antigravity.proto.RaceState;
 import com.antigravity.proto.RaceSubscriptionRequest;
 import com.antigravity.protocols.CarData;
 import com.antigravity.protocols.CarLocation;
+import com.antigravity.protocols.PartialTime;
 import com.antigravity.protocols.ProtocolDelegate;
 import com.antigravity.protocols.arduino.ArduinoConfig;
 import com.antigravity.race.states.Common;
@@ -253,6 +254,53 @@ public class RaceTest {
       assertEquals("none", dhd.getActualDriver().getLapAudio().getType());
       assertEquals("Driver One Updated", dhd.getDriver().getDriver().getName());
     }
+
+    @Test
+    public void testRaceUnifiedPropertiesAndStartTime() {
+      Lane lane1 = new Lane("#EF4444", "white", 100);
+      Track track =
+          new Track.Builder()
+              .name("Monza Grand Prix")
+              .numTrackSections(4)
+              .lanes(Collections.singletonList(lane1))
+              .build();
+      Driver d = new Driver("D1", "d1");
+      RaceParticipant p = new RaceParticipant(d);
+      Race model = new Race.Builder().withName("Night Shootout").build();
+
+      com.antigravity.race.Race race =
+          new com.antigravity.race.Race.Builder()
+              .model(model)
+              .track(track)
+              .drivers(Collections.singletonList(p))
+              .isDemoMode(true)
+              .build();
+
+      assertEquals("Night Shootout", race.getName());
+      assertEquals("Monza Grand Prix", race.getTrackName());
+      assertEquals(4, race.getTrack().getNumTrackSections());
+      assertEquals(4, race.getNumTrackSections());
+      assertEquals(1, race.getTrack().getLaneCount());
+      assertEquals(1, race.getLaneCount());
+      assertEquals("", race.getStartTime());
+
+      race.setFallbackStartTime("2026-10-03T18:30:00-04:00");
+      assertEquals("2026-10-03 18:30:00", race.getStartTime());
+
+      // Statistics start time takes priority over fallback
+      race.getStatistics().setStartTime("2026-10-03T19:00:00Z");
+      // Instant / offset formatted properly
+      assertTrue(race.getStartTime().startsWith("2026-10-03"));
+
+      // Direct pre-formatted date string
+      race.getStatistics().setStartTime("2026-09-11 19:30:00");
+      assertEquals("2026-09-11 19:30:00", race.getStartTime());
+
+      // Start millis fallback
+      race.getStatistics().setStartTime(null);
+      race.getStatistics().setStartMillis(1700000000000L);
+      assertFalse(race.getStartTime().isEmpty());
+    }
   }
 
   // =========================================================================
@@ -372,6 +420,7 @@ public class RaceTest {
     }
 
     private void verifyFullSnapshotBroadcast(RaceState expectedState) throws Exception {
+      ClientSubscriptionManager.getInstance().flushBroadcasts();
       Field sessionField = WsContext.class.getDeclaredField("session");
       sessionField.setAccessible(true);
       Session session = (Session) sessionField.get(currentMockWsContext);
@@ -397,6 +446,7 @@ public class RaceTest {
 
     private void verifyBroadcast(RaceState expectedState) {
       try {
+        ClientSubscriptionManager.getInstance().flushBroadcasts();
         Field sessionField = WsContext.class.getDeclaredField("session");
         sessionField.setAccessible(true);
         Session session = (Session) sessionField.get(currentMockWsContext);
@@ -695,6 +745,16 @@ public class RaceTest {
       assertEquals(1, dhd.getFalseStarts());
       assertEquals(1.0, dhd.getPenaltyLaps(), 0.001);
       assertEquals(3.0, dhd.getRemainingFalseStartTimePenalty(), 0.001);
+      assertEquals(
+          "Reaction time should remain -1.0 when restart on false start is enabled",
+          -1.0,
+          dhd.getReactionTime(),
+          0.001);
+      assertEquals(
+          "Adjusted lap count should reflect false start penalty even after restart",
+          -1.0,
+          dhd.getAdjustedLapCount(),
+          0.001);
     }
 
     @Test
@@ -727,6 +787,16 @@ public class RaceTest {
       assertEquals(1, dhd.getFalseStarts());
       assertEquals(0.5, dhd.getPenaltyLaps(), 0.001);
       assertEquals(2.0, dhd.getRemainingFalseStartTimePenalty(), 0.001);
+      assertEquals(
+          "Reaction time should be set to 0.0 when restart on false start is disabled",
+          0.0,
+          dhd.getReactionTime(),
+          0.001);
+      assertEquals(
+          "Adjusted lap count should reflect false start penalty",
+          -0.5,
+          dhd.getAdjustedLapCount(),
+          0.001);
       assertFalse("Lane 0 power should be cut immediately on false start", fsRace.isLanePower(0));
       fsRace.stop();
     }
@@ -815,11 +885,42 @@ public class RaceTest {
       st.onLap(0, 0.5, 1, false);
       assertFalse("Lane 0 power should be cut immediately", fsRace.isLanePower(0));
 
+      DriverHeatData dhd = fsRace.getCurrentHeat().getDrivers().get(0);
+      assertEquals("Penalty laps should be 1.0", 1.0, dhd.getPenaltyLaps(), 0.001);
+      assertEquals(
+          "Adjusted lap count should be -1.0 immediately on false start",
+          -1.0,
+          dhd.getAdjustedLapCount(),
+          0.001);
+      assertEquals(
+          "Reaction time should be set to 0.0 on false start", 0.0, dhd.getReactionTime(), 0.001);
+
       // Transition to Racing (Go / Green)
       Racing racing = new Racing();
       fsRace.changeState(racing);
       assertTrue(
           "Lane 0 power should be restored at Green when time penalty is 0", fsRace.isLanePower(0));
+
+      // First crossing in racing: completes Lap 1, adjusting lap count from -1.0 to 0.0
+      racing.onLap(0, 3.5, 1, false);
+      assertEquals(
+          "Physical lap count should be 1 after first crossing in racing", 1, dhd.getLapCount());
+      assertEquals(
+          "Adjusted lap count should transition from -1.0 to 0.0 on first crossing",
+          0.0,
+          dhd.getAdjustedLapCount(),
+          0.001);
+
+      // Second crossing in racing: completes Lap 2, adjusting lap count from 0.0 to 1.0
+      racing.onLap(0, 3.2, 1, false);
+      assertEquals(
+          "Physical lap count should be 2 after second crossing in racing", 2, dhd.getLapCount());
+      assertEquals(
+          "Adjusted lap count should transition from 0.0 to 1.0 on second crossing",
+          1.0,
+          dhd.getAdjustedLapCount(),
+          0.001);
+
       fsRace.stop();
     }
 
@@ -966,6 +1067,35 @@ public class RaceTest {
       assertTrue(zeroRace.getState() instanceof Racing);
       long duration = System.currentTimeMillis() - start;
       assertTrue("Duration should be fast (< 500ms), was " + duration, duration < 500);
+    }
+
+    @Test
+    public void testStartingWallClockCountdownDecreasesMonotonically() throws InterruptedException {
+      Race countdownModel = new Race.Builder().from(race.getRaceModel()).withStartTime(2.0).build();
+
+      com.antigravity.race.Race testRace =
+          new com.antigravity.race.Race.Builder()
+              .model(countdownModel)
+              .track(race.getTrack())
+              .drivers(race.getDrivers())
+              .isDemoMode(true)
+              .build();
+      ClientSubscriptionManager.getInstance().setRace(testRace);
+
+      testRace.setHasRacedInCurrentHeat(false);
+      testRace.changeState(new Starting());
+
+      Thread.sleep(150);
+      double rem1 = testRace.getAutoStartRemaining();
+      Thread.sleep(200);
+      double rem2 = testRace.getAutoStartRemaining();
+
+      assertTrue("Countdown should start around 2.0s, was: " + rem1, rem1 <= 2.0 && rem1 > 1.5);
+      assertTrue(
+          "Countdown should decrease monotonically, rem1=" + rem1 + ", rem2=" + rem2, rem2 < rem1);
+      assertTrue("rem2 should be around 1.6s, was: " + rem2, rem2 > 1.2 && rem2 < 1.8);
+
+      testRace.stop();
     }
 
     @Test
@@ -1249,6 +1379,19 @@ public class RaceTest {
       assertEquals(0.0, race.getAutoAdvanceRemaining(), 0.001);
       assertEquals(0.0, race.getRaceTime(), 0.001);
       assertTrue(race.getState() instanceof HeatOver);
+    }
+
+    @Test
+    public void testOnCallbuttonAbortsAutoStart() throws Exception {
+      assertTrue(race.getState() instanceof NotStarted);
+      race.setAutoStartRemaining(10.0);
+      race.addRaceTime(5.5f);
+
+      race.onCallbutton(0, 0);
+
+      assertEquals(0.0, race.getAutoStartRemaining(), 0.001);
+      assertEquals(0.0, race.getRaceTime(), 0.001);
+      assertTrue(race.getState() instanceof NotStarted);
     }
 
     @Test
@@ -1595,6 +1738,7 @@ public class RaceTest {
 
       refreshSession();
       race.setCurrentHeat(h2);
+      ClientSubscriptionManager.getInstance().flushBroadcasts();
 
       Field sessionField = WsContext.class.getDeclaredField("session");
       sessionField.setAccessible(true);
@@ -3723,6 +3867,240 @@ public class RaceTest {
       race.restartHeat();
       assertEquals(0.0f, race.getRaceTime(), 0.001);
     }
+
+    @Test
+    public void testDriftLapAtHeatEndCountsAndClearsCarryOverForNextHeat() {
+      ProtocolDelegate mockProtocol = mock(ProtocolDelegate.class);
+      Race raceModel = buildDriftRaceModel();
+      race = createDriftRace(raceModel, mockProtocol);
+
+      race.setCurrentHeat(race.getHeats().get(0));
+      race.prepareHeat();
+      race.changeState(new Racing());
+
+      DriverHeatData dhdHeat0 = race.getCurrentHeat().getDrivers().get(0);
+      String driverId = dhdHeat0.getDriver().getStableId();
+
+      race.onLap(0, 1.0, 1, 0); // reaction time
+      race.onLap(0, 4.0, 1, 0); // lap 1
+      assertEquals(1, dhdHeat0.getLapCount());
+
+      race.getHeatExecutionManager().processTicker(3.5f);
+      when(mockProtocol.stopTimer())
+          .thenReturn(Collections.singletonList(new PartialTime(0, 3.5, 3.5)));
+
+      race.changeState(new HeatOver());
+      assertEquals(3.5, dhdHeat0.getPendingLapTime(), 0.001);
+
+      // Car crosses dead strip in drift window (0.4s + 3.5s pending = 3.9s >= minLapTime 2.0s)
+      race.onLap(0, 0.4, 1, 0);
+      assertEquals(2, dhdHeat0.getLapCount());
+      assertTrue(dhdHeat0.getLaps().get(1).isDrift());
+      assertEquals(3.9, dhdHeat0.getLastLapTime(), 0.001);
+      assertEquals(0.0, dhdHeat0.getCarryOverTime(), 0.001);
+
+      // Advance to next heat and verify carry-over is cleared (no double lap)
+      Common.advanceToNextHeat(race);
+      race.prepareHeat();
+      race.changeState(new Racing());
+
+      DriverHeatData dhdHeat1 = null;
+      int laneInHeat1 = -1;
+      for (int i = 0; i < race.getCurrentHeat().getDrivers().size(); i++) {
+        DriverHeatData d = race.getCurrentHeat().getDrivers().get(i);
+        if (d != null && d.getDriver() != null && d.getDriver().getStableId().equals(driverId)) {
+          dhdHeat1 = d;
+          laneInHeat1 = i;
+          break;
+        }
+      }
+
+      assertNotNull(dhdHeat1);
+      assertTrue(laneInHeat1 != -1);
+      assertEquals(0.0, dhdHeat1.getPendingLapTime(), 0.001);
+      assertEquals(0.0, dhdHeat1.getCarryOverTime(), 0.001);
+
+      race.onLap(laneInHeat1, 4.2, 1, 0);
+      assertEquals(1, dhdHeat1.getLapCount());
+      assertEquals(4.2, dhdHeat1.getLastLapTime(), 0.001);
+    }
+
+    @Test
+    public void testDriftLapAtHeatEndWithStartAtCurrentFalse() {
+      ProtocolDelegate mockProtocol = mock(ProtocolDelegate.class);
+      Race raceModel = buildDriftRaceModel(false);
+      race = createDriftRace(raceModel, mockProtocol);
+
+      race.setCurrentHeat(race.getHeats().get(0));
+      race.prepareHeat();
+      race.changeState(new Racing());
+
+      DriverHeatData dhdHeat0 = race.getCurrentHeat().getDrivers().get(0);
+      String driverId = dhdHeat0.getDriver().getStableId();
+
+      race.onLap(0, 1.0, 1, 0); // reaction time
+      race.onLap(0, 4.0, 1, 0); // lap 1
+      assertEquals(1, dhdHeat0.getLapCount());
+
+      race.getHeatExecutionManager().processTicker(3.5f);
+      when(mockProtocol.stopTimer())
+          .thenReturn(Collections.singletonList(new PartialTime(0, 3.5, 3.5)));
+
+      race.changeState(new HeatOver());
+      assertEquals(3.5, dhdHeat0.getPendingLapTime(), 0.001);
+
+      // Car crosses dead strip in drift window (0.4s + 3.5s pending = 3.9s >= minLapTime 2.0s)
+      race.onLap(0, 0.4, 1, 0);
+      assertEquals(2, dhdHeat0.getLapCount());
+      assertTrue(dhdHeat0.getLaps().get(1).isDrift());
+      assertEquals(3.9, dhdHeat0.getLastLapTime(), 0.001);
+
+      // Advance to next heat - startAtCurrent is false
+      Common.advanceToNextHeat(race);
+      race.prepareHeat();
+      race.changeState(new Racing());
+
+      DriverHeatData dhdHeat1 = null;
+      int laneInHeat1 = -1;
+      for (int i = 0; i < race.getCurrentHeat().getDrivers().size(); i++) {
+        DriverHeatData d = race.getCurrentHeat().getDrivers().get(i);
+        if (d != null && d.getDriver() != null && d.getDriver().getStableId().equals(driverId)) {
+          dhdHeat1 = d;
+          laneInHeat1 = i;
+          break;
+        }
+      }
+
+      assertNotNull(dhdHeat1);
+      assertTrue(laneInHeat1 != -1);
+      assertEquals(0.0, dhdHeat1.getPendingLapTime(), 0.001);
+      assertEquals(0.0, dhdHeat1.getCarryOverTime(), 0.001);
+
+      // Next heat starts behind sensor: reaction time then lap 1 (lap 1 includes reaction time)
+      race.onLap(laneInHeat1, 0.8, 1, 0); // reaction time
+      race.onLap(laneInHeat1, 4.3, 1, 0); // lap 1
+      assertEquals(1, dhdHeat1.getLapCount());
+      assertEquals(5.1, dhdHeat1.getLastLapTime(), 0.001);
+    }
+
+    @Test
+    public void testStartAtCurrent_AdjustDriftLaps_FirstLapInSubsequentHeatExcludesFromRecords() {
+      ProtocolDelegate mockProtocol = mock(ProtocolDelegate.class);
+      Race raceModel = buildDriftRaceModel(true, true);
+      race = createDriftRace(raceModel, mockProtocol);
+
+      race.setCurrentHeat(race.getHeats().get(0));
+      race.prepareHeat();
+      race.changeState(new Racing());
+
+      DriverHeatData dhdHeat0 = race.getCurrentHeat().getDrivers().get(0);
+      String driverId = dhdHeat0.getDriver().getStableId();
+
+      // Heat 0 is the driver's first heat
+      race.onLap(0, 1.0, 1, 0); // reaction time
+      race.onLap(0, 4.0, 1, 0); // lap 1: 4.0s (+ 1.0s rt = 5.0s)
+      assertEquals(1, dhdHeat0.getLapCount());
+      assertTrue(dhdHeat0.getLaps().get(0).isCountTowardsRecords());
+      assertEquals(5.0, dhdHeat0.getBestLapTime(), 0.001);
+
+      // Heat ends with unfinished lap (3.5s carry-over time)
+      race.getHeatExecutionManager().processTicker(3.5f);
+      when(mockProtocol.stopTimer())
+          .thenReturn(Collections.singletonList(new PartialTime(0, 3.5, 3.5)));
+      race.changeState(new HeatOver());
+      assertEquals(3.5, dhdHeat0.getCarryOverTime(), 0.001);
+
+      // Advance to next heat (not driver's first heat, startAtCurrent = true, adjustDriftLaps =
+      // true)
+      Common.advanceToNextHeat(race);
+      race.prepareHeat();
+      race.changeState(new Racing());
+
+      DriverHeatData dhdHeat1 = null;
+      int laneInHeat1 = -1;
+      for (int i = 0; i < race.getCurrentHeat().getDrivers().size(); i++) {
+        DriverHeatData d = race.getCurrentHeat().getDrivers().get(i);
+        if (d != null && d.getDriver() != null && d.getDriver().getStableId().equals(driverId)) {
+          dhdHeat1 = d;
+          laneInHeat1 = i;
+          break;
+        }
+      }
+
+      assertNotNull(dhdHeat1);
+      assertTrue(laneInHeat1 != -1);
+      assertEquals(3.5, dhdHeat1.getPendingLapTime(), 0.001);
+      assertTrue(dhdHeat1.isHasDriftTime());
+
+      // Driver completes first lap in Heat 1 (0.5s + 3.5s pending = 4.0s, which is faster than
+      // 5.0s)
+      race.onLap(laneInHeat1, 0.5, 1, 0);
+      assertEquals(1, dhdHeat1.getLapCount());
+      assertEquals(4.0, dhdHeat1.getLastLapTime(), 0.001);
+      // Because startAtCurrent carries drift time and adjustDriftLaps is true:
+      assertFalse(dhdHeat1.getLaps().get(0).isCountTowardsRecords());
+      assertEquals(0.0, dhdHeat1.getBestLapTime(), 0.001);
+
+      // Driver completes second lap in Heat 1 (normal lap, 3.0s)
+      race.onLap(laneInHeat1, 3.0, 1, 0);
+      assertEquals(2, dhdHeat1.getLapCount());
+      assertEquals(3.0, dhdHeat1.getLastLapTime(), 0.001);
+      assertTrue(dhdHeat1.getLaps().get(1).isCountTowardsRecords());
+      assertEquals(3.0, dhdHeat1.getBestLapTime(), 0.001);
+    }
+
+    private Race buildDriftRaceModel() {
+      return buildDriftRaceModel(true);
+    }
+
+    private Race buildDriftRaceModel(boolean startAtCurrent) {
+      return buildDriftRaceModel(startAtCurrent, false);
+    }
+
+    private Race buildDriftRaceModel(boolean startAtCurrent, boolean adjustDriftLaps) {
+      return new Race.Builder()
+          .withName("Drift MultiHeat Test")
+          .withTrackEntityId("track1")
+          .withMinLapTime(2.0)
+          .withDriftTime(2.0)
+          .withStartAtCurrent(startAtCurrent)
+          .withAdjustDriftLaps(adjustDriftLaps)
+          .withStartBehindSensor(true)
+          .withHeatRotationType(HeatRotationType.RoundRobin)
+          .withHeatScoring(
+              new HeatScoring(
+                  HeatScoring.FinishMethod.Timed,
+                  60,
+                  HeatScoring.HeatRanking.LAP_COUNT,
+                  HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME,
+                  HeatScoring.AllowFinish.None))
+          .withOverallScoring(
+              new OverallScoring(
+                  0,
+                  OverallScoring.OverallRanking.LAP_COUNT,
+                  OverallScoring.OverallRankingTiebreaker.FASTEST_LAP_TIME))
+          .withEntityId("raceDrift")
+          .build();
+    }
+
+    private com.antigravity.race.Race createDriftRace(Race model, ProtocolDelegate protocol) {
+      com.antigravity.race.Race r =
+          new com.antigravity.race.Race.Builder()
+              .model(model)
+              .drivers(drivers.subList(0, 2))
+              .track(track)
+              .isDemoMode(true)
+              .demoConfig(
+                  com.antigravity.proto.DemoConfig.newBuilder()
+                      .setMinReactionTimeMs(3600000)
+                      .setMaxReactionTimeMs(3600000)
+                      .setMinLapTimeMs(3600000)
+                      .setMaxLapTimeMs(3600000)
+                      .build())
+              .build();
+      r.injectProtocols(protocol);
+      return r;
+    }
   }
 
   // =========================================================================
@@ -4228,6 +4606,7 @@ public class RaceTest {
 
       // Call prepareHeat()
       race.prepareHeat();
+      ClientSubscriptionManager.getInstance().flushBroadcasts();
 
       // Verify CarData messages were broadcast
       verify(mockRemote, atLeastOnce()).sendBytesByFuture(captor.capture());
@@ -4250,6 +4629,7 @@ public class RaceTest {
       reset(mockRemote);
       when(mockRemote.sendBytesByFuture(any())).thenReturn(null);
       race.resetCurrentHeat();
+      ClientSubscriptionManager.getInstance().flushBroadcasts();
       ArgumentCaptor<ByteBuffer> resetCaptor = ArgumentCaptor.forClass(ByteBuffer.class);
       verify(mockRemote, atLeastOnce()).sendBytesByFuture(resetCaptor.capture());
       carDataList.clear();
@@ -4263,6 +4643,62 @@ public class RaceTest {
       assertEquals(80.0, carDataList.get(0).getFuelLevel(), 0.001);
 
       ClientSubscriptionManager.getInstance().removeSession(wsContext);
+    }
+
+    @Test
+    public void testCachedDriverToGroupInvalidatedOnSetHeats() throws Exception {
+      Track track =
+          new Track.Builder()
+              .name("T")
+              .lanes(Arrays.asList(new Lane("r", "w", 100), new Lane("b", "w", 101)))
+              .build();
+      com.antigravity.models.GroupOptions groupOptions =
+          new com.antigravity.models.GroupOptions(true, 1, false, true, false, true, 1);
+      Race raceModel =
+          new Race.Builder()
+              .withName("GroupRace")
+              .withHeatScoring(new HeatScoring())
+              .withOverallScoring(new OverallScoring())
+              .withGroupOptions(groupOptions)
+              .build();
+
+      RaceParticipant p1 =
+          new RaceParticipant(new Driver.Builder().withName("D1").withEntityId("d1").build());
+      RaceParticipant p2 =
+          new RaceParticipant(new Driver.Builder().withName("D2").withEntityId("d2").build());
+      DriverHeatData dhd1 = new DriverHeatData(p1);
+      DriverHeatData dhd2 = new DriverHeatData(p2);
+
+      Heat heat1 = new Heat(1, Arrays.asList(dhd1, dhd2), new HeatScoring(), false);
+      heat1.setGroup(1);
+
+      com.antigravity.race.Race race =
+          new com.antigravity.race.Race.Builder()
+              .model(raceModel)
+              .track(track)
+              .drivers(Arrays.asList(p1, p2))
+              .heats(Collections.singletonList(heat1))
+              .isDemoMode(true)
+              .build();
+
+      RaceData.Builder raceDataBuilder = race.populateOverallStandings(RaceData.newBuilder());
+      assertTrue(raceDataBuilder.hasGroupStandingsUpdate());
+      assertEquals(1, raceDataBuilder.getGroupStandingsUpdate().getGroup());
+      assertEquals(2, raceDataBuilder.getGroupStandingsUpdate().getParticipantsCount());
+
+      Heat modifiedHeat1 = new Heat(1, Collections.singletonList(dhd1), new HeatScoring(), false);
+      modifiedHeat1.setGroup(1);
+      Heat modifiedHeat2 = new Heat(2, Collections.singletonList(dhd2), new HeatScoring(), false);
+      modifiedHeat2.setGroup(2);
+
+      race.setHeats(Arrays.asList(modifiedHeat1, modifiedHeat2));
+
+      RaceData.Builder updatedBuilder = race.populateOverallStandings(RaceData.newBuilder());
+      assertTrue(updatedBuilder.hasGroupStandingsUpdate());
+      assertEquals(1, updatedBuilder.getGroupStandingsUpdate().getGroup());
+      assertEquals(1, updatedBuilder.getGroupStandingsUpdate().getParticipantsCount());
+      assertEquals(
+          "D1", updatedBuilder.getGroupStandingsUpdate().getParticipants(0).getDriver().getName());
     }
   }
 }

@@ -485,12 +485,20 @@ export const TEMPLATE_VARIABLES: TemplateVariable[] = [
     example: '"Daytona Raceway"',
   },
   {
-    expression: "${race.track.sections}",
+    expression: "${race.track.getNumTrackSections()}",
     category: "race",
     categoryKey: "UE_VAR_CAT_RACE",
     type: "Number",
     descriptionKey: "UE_VAR_DESC_RACE_TRACK_SECTIONS",
     example: "3",
+  },
+  {
+    expression: "${race.track.getLaneCount()}",
+    category: "race",
+    categoryKey: "UE_VAR_CAT_RACE",
+    type: "Number",
+    descriptionKey: "UE_VAR_DESC_RACE_LANE_COUNT",
+    example: "4",
   },
   {
     expression: "${race.raceModel.minLapTime}",

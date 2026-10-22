@@ -21,6 +21,7 @@ describe("RacedayActionButtonComponent", () => {
   let fixture: ComponentFixture<RacedayActionButtonComponent>;
   let authServiceSpy: jasmine.SpyObj<AuthService>;
   let canGoBackSubject: BehaviorSubject<boolean>;
+  let canGoForwardSubject: BehaviorSubject<boolean>;
   let mockNavService: any;
 
   const mockWidget: AbsoluteWidgetNode = {
@@ -40,10 +41,14 @@ describe("RacedayActionButtonComponent", () => {
 
   beforeEach(async () => {
     canGoBackSubject = new BehaviorSubject<boolean>(false);
+    canGoForwardSubject = new BehaviorSubject<boolean>(false);
     mockNavService = {
       canGoBack$: canGoBackSubject.asObservable(),
       canGoBack: () => canGoBackSubject.value,
       goBack: jasmine.createSpy("goBack"),
+      canGoForward$: canGoForwardSubject.asObservable(),
+      canGoForward: () => canGoForwardSubject.value,
+      goForward: jasmine.createSpy("goForward"),
     };
 
     authServiceSpy = jasmine.createSpyObj("AuthService", [], {
@@ -211,6 +216,154 @@ describe("RacedayActionButtonComponent", () => {
     });
   });
 
+  describe("action-forward button widget", () => {
+    const forwardWidget: AbsoluteWidgetNode = {
+      ...mockWidget,
+      widgetType: "action-forward",
+    };
+
+    it("should be disabled when there is nowhere to navigate forward to", () => {
+      canGoForwardSubject.next(false);
+      mockParent.isUIEditorMode = () => false;
+      fixture.componentRef.setInput("widget", forwardWidget);
+      fixture.detectChanges();
+
+      expect(component.isActionDisabled).toBeTrue();
+    });
+
+    it("should be enabled when there is navigation history to go forward to", () => {
+      canGoForwardSubject.next(true);
+      mockParent.isUIEditorMode = () => false;
+      fixture.componentRef.setInput("widget", forwardWidget);
+      fixture.detectChanges();
+
+      expect(component.isActionDisabled).toBeFalse();
+    });
+
+    it("should remain enabled in UI editor mode even if there is nowhere to navigate forward to", () => {
+      canGoForwardSubject.next(false);
+      mockParent.isUIEditorMode = () => true;
+      fixture.componentRef.setInput("widget", forwardWidget);
+      fixture.detectChanges();
+
+      expect(component.isActionDisabled).toBeFalse();
+    });
+
+    it("should allow a viewer to use the forward button if navigation history exists", () => {
+      canGoForwardSubject.next(true);
+      mockParent.isUIEditorMode = () => false;
+      authServiceSpy = jasmine.createSpyObj("AuthService", [], {
+        currentRole: Role.VIEWER,
+      });
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({
+        imports: [
+          CommonModule,
+          MockTranslatePipe,
+          RacedayActionButtonComponent,
+        ],
+        providers: [
+          { provide: AuthService, useValue: authServiceSpy },
+          { provide: NavigationService, useValue: mockNavService },
+        ],
+      }).compileComponents();
+      fixture = TestBed.createComponent(RacedayActionButtonComponent);
+      component = fixture.componentInstance;
+      fixture.componentRef.setInput("widget", forwardWidget);
+      fixture.componentRef.setInput("parent", mockParent);
+      fixture.detectChanges();
+
+      expect(component.isActionDisabled).toBeFalse();
+    });
+
+    it("should call onFileMenuSelect('FORWARD') when clicked and enabled", () => {
+      canGoForwardSubject.next(true);
+      mockParent.isUIEditorMode = () => false;
+      const onFileMenuSelectSpy = jasmine.createSpy("onFileMenuSelect");
+      const parentWithMenu = {
+        ...mockParent,
+        onFileMenuSelect: onFileMenuSelectSpy,
+      };
+      fixture.componentRef.setInput("parent", parentWithMenu);
+      fixture.componentRef.setInput("widget", forwardWidget);
+      fixture.detectChanges();
+
+      const event = new Event("click");
+      spyOn(event, "stopPropagation");
+      component.onClick(event);
+
+      expect(event.stopPropagation).toHaveBeenCalled();
+      expect(onFileMenuSelectSpy).toHaveBeenCalledWith("FORWARD");
+    });
+
+    it("should not call onFileMenuSelect when clicked and disabled", () => {
+      canGoForwardSubject.next(false);
+      mockParent.isUIEditorMode = () => false;
+      const onFileMenuSelectSpy = jasmine.createSpy("onFileMenuSelect");
+      const parentWithMenu = {
+        ...mockParent,
+        onFileMenuSelect: onFileMenuSelectSpy,
+      };
+      fixture.componentRef.setInput("parent", parentWithMenu);
+      fixture.componentRef.setInput("widget", forwardWidget);
+      fixture.detectChanges();
+
+      const event = new Event("click");
+      spyOn(event, "stopPropagation");
+      component.onClick(event);
+
+      expect(event.stopPropagation).toHaveBeenCalled();
+      expect(onFileMenuSelectSpy).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("action-close button widget", () => {
+    const closeWidget: AbsoluteWidgetNode = {
+      ...mockWidget,
+      widgetType: "action-close",
+    };
+
+    it("should never be disabled even for viewer or outside editor", () => {
+      mockParent.isUIEditorMode = () => false;
+      fixture.componentRef.setInput("widget", closeWidget);
+      fixture.detectChanges();
+
+      expect(component.isActionDisabled).toBeFalse();
+    });
+
+    it("should call onFileMenuSelect('CLOSE') when clicked", () => {
+      mockParent.isUIEditorMode = () => false;
+      const onFileMenuSelectSpy = jasmine.createSpy("onFileMenuSelect");
+      const parentWithMenu = {
+        ...mockParent,
+        onFileMenuSelect: onFileMenuSelectSpy,
+      };
+      fixture.componentRef.setInput("parent", parentWithMenu);
+      fixture.componentRef.setInput("widget", closeWidget);
+      fixture.detectChanges();
+
+      const event = new Event("click");
+      spyOn(event, "stopPropagation");
+      component.onClick(event);
+
+      expect(event.stopPropagation).toHaveBeenCalled();
+      expect(onFileMenuSelectSpy).toHaveBeenCalledWith("CLOSE");
+    });
+
+    it("should fallback to window.close when parent has no onFileMenuSelect", () => {
+      spyOn(window, "close");
+      fixture.componentRef.setInput("parent", {});
+      fixture.componentRef.setInput("widget", closeWidget);
+      fixture.detectChanges();
+
+      const event = new Event("click");
+      spyOn(event, "stopPropagation");
+      component.onClick(event);
+
+      expect(window.close).toHaveBeenCalled();
+    });
+  });
+
   describe("Widget Actions and Labels", () => {
     const actionTests = [
       {
@@ -327,6 +480,18 @@ describe("RacedayActionButtonComponent", () => {
         action: "BACK",
         method: "onFileMenuSelect",
       },
+      {
+        widgetType: "action-forward",
+        label: "RD_MENU_FORWARD",
+        action: "FORWARD",
+        method: "onFileMenuSelect",
+      },
+      {
+        widgetType: "action-close",
+        label: "RD_MENU_CLOSE",
+        action: "CLOSE",
+        method: "onFileMenuSelect",
+      },
     ];
 
     actionTests.forEach((testCase) => {
@@ -382,6 +547,44 @@ describe("RacedayActionButtonComponent", () => {
 
       parentWithPower.isMainPowerDisabled = false;
       expect(component.isActionDisabled).toBeFalse();
+    });
+
+    it("should render correct Material Icons and CSS classes for navigation/close buttons", () => {
+      fixture.componentRef.setInput("widget", {
+        ...mockWidget,
+        widgetType: "action-back" as any,
+      });
+      fixture.detectChanges();
+      let btn = fixture.nativeElement.querySelector("button");
+      expect(btn.classList.contains("browser-nav-btn")).toBeTrue();
+      expect(btn.classList.contains("back-btn")).toBeTrue();
+      expect(btn.querySelector(".material-icons")?.textContent?.trim()).toBe(
+        "arrow_back",
+      );
+
+      fixture.componentRef.setInput("widget", {
+        ...mockWidget,
+        widgetType: "action-forward" as any,
+      });
+      fixture.detectChanges();
+      btn = fixture.nativeElement.querySelector("button");
+      expect(btn.classList.contains("browser-nav-btn")).toBeTrue();
+      expect(btn.classList.contains("forward-btn")).toBeTrue();
+      expect(btn.querySelector(".material-icons")?.textContent?.trim()).toBe(
+        "arrow_forward",
+      );
+
+      fixture.componentRef.setInput("widget", {
+        ...mockWidget,
+        widgetType: "action-close" as any,
+      });
+      fixture.detectChanges();
+      btn = fixture.nativeElement.querySelector("button");
+      expect(btn.classList.contains("browser-nav-btn")).toBeTrue();
+      expect(btn.classList.contains("close-btn")).toBeTrue();
+      expect(btn.querySelector(".material-icons")?.textContent?.trim()).toBe(
+        "close",
+      );
     });
   });
 });

@@ -80,10 +80,17 @@ export class ChildWindowManagerService {
     this.themeTabs = [];
   }
 
-  openThemeWindow(url: string): Window | null {
+  openThemeWindow(url: string, title?: string): Window | null {
     const win = window.open(url, "_blank");
     if (win) {
       this.themeTabs.push(win);
+      if (title && win.document) {
+        try {
+          win.document.title = title;
+        } catch {
+          // Ignore potential cross-origin access issues
+        }
+      }
     }
     return win;
   }

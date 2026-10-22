@@ -174,10 +174,10 @@ public class RacePredictionService {
       if (record == null) {
         record = new RacePredictionRecord();
         record.setRaceId(raceId);
-        record.setTimestamp(System.currentTimeMillis());
         record.setRealtimeSnapshots(new ArrayList<>());
         record.setPreRace(snapshot);
       }
+      record.setTimestamp(System.currentTimeMillis());
       if (record.getRealtimeSnapshots() == null) {
         record.setRealtimeSnapshots(new ArrayList<>());
       }

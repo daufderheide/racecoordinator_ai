@@ -201,8 +201,18 @@ public class NotStartedTest {
 
   @Test
   public void testOnCallbutton_StartsRace() {
+    when(race.getAutoStartRemaining()).thenReturn(0.0);
     notStarted.onCallbutton(race, 0);
     verify(race).startRace();
+  }
+
+  @Test
+  public void testOnCallbutton_WhenAutoStartActive_AbortsAutoStart() {
+    when(race.getAutoStartRemaining()).thenReturn(5.0);
+    notStarted.onCallbutton(race, 0);
+    verify(race, never()).startRace();
+    verify(race).setAutoStartFired(true);
+    verify(race).clearAutoTimers();
   }
 
   @Test

@@ -18,13 +18,19 @@ import com.antigravity.util.NetworkUtils;
 import com.google.protobuf.GeneratedMessageV3;
 import io.javalin.websocket.WsContext;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,11 +54,23 @@ public class ClientSubscriptionManager {
             t.setDaemon(true);
             return t;
           });
+  private final ExecutorService broadcastExecutor =
+      Executors.newSingleThreadExecutor(
+          r -> {
+            Thread t = new Thread(r, "WebSocket-Broadcast");
+            t.setDaemon(true);
+            return t;
+          });
+  private final AtomicReference<GeneratedMessageV3> pendingRaceTimeMessage =
+      new AtomicReference<>();
+  private final AtomicBoolean raceTimeScheduled = new AtomicBoolean(false);
   private ScheduledFuture<?> cleanupFuture;
   private long cleanupGracePeriodSeconds = 10;
   private boolean hasEverHadClient = false;
   private ScheduledFuture<?> autoShutdownFuture;
   private int autoShutdownDelaySeconds = 5;
+  private ScheduledFuture<?> startupWatchdogFuture;
+  private int startupWatchdogSeconds = 90;
   private Runnable autoShutdownAction =
       () -> {
         if (!Boolean.getBoolean("skip.jni.load")) {
@@ -69,21 +87,85 @@ public class ClientSubscriptionManager {
     this.autoShutdownDelaySeconds = seconds;
   }
 
+  void setStartupWatchdogSeconds(int seconds) {
+    this.startupWatchdogSeconds = seconds;
+  }
+
+  synchronized void cancelStartupWatchdog() {
+    if (startupWatchdogFuture != null) {
+      startupWatchdogFuture.cancel(false);
+      startupWatchdogFuture = null;
+    }
+  }
+
+  synchronized void scheduleStartupWatchdog() {
+    cancelStartupWatchdog();
+    if (startupWatchdogSeconds > 0) {
+      startupWatchdogFuture =
+          scheduler.schedule(
+              () -> {
+                synchronized (ClientSubscriptionManager.this) {
+                  if (!hasEverHadClient && sessions.isEmpty()) {
+                    logger.info(
+                        "No client connected within startup window ({} seconds). Auto-shutting down"
+                            + " server...",
+                        startupWatchdogSeconds);
+                    if (autoShutdownAction != null) {
+                      autoShutdownAction.run();
+                    }
+                  }
+                }
+              },
+              startupWatchdogSeconds,
+              TimeUnit.SECONDS);
+    }
+  }
+
+  public synchronized void pruneDeadSession(WsContext ctx) {
+    if (ctx == null) {
+      return;
+    }
+    boolean wasInSessions = sessions.remove(ctx);
+    boolean wasInRace = raceDataSubscribers.remove(ctx);
+    boolean wasInInterface = interfaceSubscribers.remove(ctx);
+    if (wasInSessions || wasInRace || wasInInterface) {
+      logger.info(
+          "Pruned dead/orphaned WebSocket session: {}. Remaining sessions: {}, Subscribers: {},"
+              + " Interface: {}",
+          System.identityHashCode(ctx),
+          sessions.size(),
+          raceDataSubscribers.size(),
+          interfaceSubscribers.size());
+      checkAutoShutdown();
+      if (wasInInterface) {
+        checkAndCloseProtocol();
+      }
+      checkAndStopRace(false);
+    }
+  }
+
   private ClientSubscriptionManager() {
+    scheduleStartupWatchdog();
     // Start periodic ping task to detect and clean up dead/orphaned connections
     scheduler.scheduleAtFixedRate(
         () -> {
           try {
-            sessions.forEach(
-                ctx -> {
-                  try {
-                    if (ctx.session.isOpen()) {
-                      ctx.session.getRemote().sendPing(ByteBuffer.wrap(new byte[0]));
-                    }
-                  } catch (Exception e) {
-                    logger.debug("Failed to ping session: {}", e.getMessage());
-                  }
-                });
+            List<WsContext> deadSessions = new ArrayList<>();
+            for (WsContext ctx : sessions) {
+              try {
+                if (ctx.session == null || !ctx.session.isOpen()) {
+                  deadSessions.add(ctx);
+                } else {
+                  ctx.session.getRemote().sendPing(ByteBuffer.wrap(new byte[0]));
+                }
+              } catch (Exception e) {
+                logger.debug("Failed to ping session: {}", e.getMessage());
+                deadSessions.add(ctx);
+              }
+            }
+            for (WsContext dead : deadSessions) {
+              pruneDeadSession(dead);
+            }
           } catch (Throwable t) {
             logger.error("Error in ping scheduler", t);
           }
@@ -116,6 +198,7 @@ public class ClientSubscriptionManager {
     this.isShuttingDown = shuttingDown;
     if (shuttingDown) {
       logger.info("Server shutting down. Cleaning up race and protocols...");
+      cancelStartupWatchdog();
       setRace(null);
       setProtocol(null);
       if (autoShutdownFuture != null) {
@@ -132,6 +215,7 @@ public class ClientSubscriptionManager {
         } catch (Exception ignored) {
         }
       }
+      pendingRaceTimeMessage.set(null);
       sessions.clear();
       raceDataSubscribers.clear();
       interfaceSubscribers.clear();
@@ -202,6 +286,7 @@ public class ClientSubscriptionManager {
     }
     sessions.add(ctx);
     hasEverHadClient = true;
+    cancelStartupWatchdog();
     if (autoShutdownFuture != null) {
       autoShutdownFuture.cancel(false);
       autoShutdownFuture = null;
@@ -209,40 +294,49 @@ public class ClientSubscriptionManager {
     // Remove auto-subscription: clients must call subscribe() explicitly
     // raceDataSubscribers.add(ctx);
     logger.info("New WebSocket session added. Total sessions: {}", sessions.size());
+    sendInitialSnapshot(ctx);
+  }
 
-    if (currentRace != null) {
-      boolean isReplay =
-          DatabaseService.getInstance() != null && DatabaseService.getInstance().isReplayMode();
-      com.antigravity.proto.SystemState sysState = // fqn-collision
-          com.antigravity.proto.SystemState.newBuilder() // fqn-collision
-              .setResourceLockState("RACE_RUNNING")
-              .setOwnerId("SYSTEM")
-              .setIsReplayMode(isReplay)
-              .build();
-      RaceData snapshot = currentRace.createSnapshot().toBuilder().setSystemState(sysState).build();
-      if (snapshot.hasRace() && snapshot.getRace().hasCurrentHeat()) {
-        logger.debug(
-            "Snapshot includes Current Heat: {}",
-            snapshot.getRace().getCurrentHeat().getObjectId());
+  private void sendInitialSnapshot(WsContext ctx) {
+    try {
+      if (currentRace != null) {
+        boolean isReplay =
+            DatabaseService.getInstance() != null && DatabaseService.getInstance().isReplayMode();
+        com.antigravity.proto.SystemState sysState = // fqn-collision
+            com.antigravity.proto.SystemState.newBuilder() // fqn-collision
+                .setResourceLockState("RACE_RUNNING")
+                .setOwnerId("SYSTEM")
+                .setIsReplayMode(isReplay)
+                .build();
+        RaceData snapshot =
+            currentRace.createSnapshot().toBuilder().setSystemState(sysState).build();
+        if (snapshot.hasRace() && snapshot.getRace().hasCurrentHeat()) {
+          logger.debug(
+              "Snapshot includes Current Heat: {}",
+              snapshot.getRace().getCurrentHeat().getObjectId());
+        } else {
+          logger.warn("Snapshot MISSING Current Heat!");
+        }
+        ctx.send(ByteBuffer.wrap(snapshot.toByteArray()));
       } else {
-        logger.warn("Snapshot MISSING Current Heat!");
+        boolean isReplay =
+            DatabaseService.getInstance() != null && DatabaseService.getInstance().isReplayMode();
+        com.antigravity.proto.SystemState sysState = // fqn-collision
+            com.antigravity.proto.SystemState.newBuilder() // fqn-collision
+                .setResourceLockState("IDLE")
+                .setOwnerId("")
+                .setIsReplayMode(isReplay)
+                .build();
+        RaceData snapshot = RaceData.newBuilder().setSystemState(sysState).build(); // fqn-collision
+        ctx.send(ByteBuffer.wrap(snapshot.toByteArray()));
       }
-      ctx.send(ByteBuffer.wrap(snapshot.toByteArray()));
-    } else {
-      boolean isReplay =
-          DatabaseService.getInstance() != null && DatabaseService.getInstance().isReplayMode();
-      com.antigravity.proto.SystemState sysState = // fqn-collision
-          com.antigravity.proto.SystemState.newBuilder() // fqn-collision
-              .setResourceLockState("IDLE")
-              .setOwnerId("")
-              .setIsReplayMode(isReplay)
-              .build();
-      RaceData snapshot = RaceData.newBuilder().setSystemState(sysState).build(); // fqn-collision
-      ctx.send(ByteBuffer.wrap(snapshot.toByteArray()));
+    } catch (Exception e) {
+      logger.warn("Failed to send initial snapshot to new session: {}", e.getMessage());
+      pruneDeadSession(ctx);
     }
   }
 
-  public void removeSession(WsContext ctx) {
+  public synchronized void removeSession(WsContext ctx) {
     sessions.remove(ctx);
     raceDataSubscribers.remove(ctx);
     checkAutoShutdown();
@@ -263,6 +357,7 @@ public class ClientSubscriptionManager {
     }
     sessions.add(ctx);
     hasEverHadClient = true;
+    cancelStartupWatchdog();
     if (autoShutdownFuture != null) {
       autoShutdownFuture.cancel(false);
       autoShutdownFuture = null;
@@ -326,6 +421,9 @@ public class ClientSubscriptionManager {
 
   private synchronized void checkAutoShutdown() {
     if (sessions.isEmpty() && hasEverHadClient) {
+      if (currentRace != null) {
+        return;
+      }
       if (autoShutdownFuture == null || autoShutdownFuture.isDone()) {
         logger.info(
             "No active sessions. Scheduling auto-shutdown in {} seconds...",
@@ -333,7 +431,7 @@ public class ClientSubscriptionManager {
         autoShutdownFuture =
             scheduler.schedule(
                 () -> {
-                  if (sessions.isEmpty()) {
+                  if (sessions.isEmpty() && currentRace == null) {
                     logger.info("Auto-shutting down server due to 0 connected clients.");
                     if (autoShutdownAction != null) {
                       autoShutdownAction.run();
@@ -394,45 +492,27 @@ public class ClientSubscriptionManager {
     if (currentRace != null && !hasDirectorSubscribers()) {
       if (!isShuttingDown) {
         boolean immediateCleanup = explicitUnsubscribe || lastDirectorExplicitlyUnsubscribed;
-        // If there are NO sessions at all (not even splash screen), we should stop quickly
-        long gracePeriod =
-            immediateCleanup
-                ? 0
-                : (sessions.isEmpty()
-                    ? Math.min(1, cleanupGracePeriodSeconds)
-                    : cleanupGracePeriodSeconds);
+        long gracePeriod = immediateCleanup ? 0 : cleanupGracePeriodSeconds;
 
         if (gracePeriod <= 0) {
           cancelPendingCleanup();
           performCleanup();
-        } else {
-          if (cleanupFuture != null && !cleanupFuture.isDone()) {
-            // If sessions became empty, we want to clean up quickly,
-            // but the existing task might have been scheduled with a longer grace period.
-            if (sessions.isEmpty() && gracePeriod < cleanupGracePeriodSeconds) {
-              logger.info(
-                  "Sessions are now empty. Shortening grace period to {} seconds.", gracePeriod);
-              cancelPendingCleanup();
-            }
-          }
-
-          if (cleanupFuture == null || cleanupFuture.isDone()) {
-            logger.info(
-                "No director subscribers left (Total Sessions: {}). Scheduling race cleanup in {} seconds...",
-                sessions.size(),
-                gracePeriod);
-            cleanupFuture =
-                scheduler.schedule(
-                    () -> {
-                      try {
-                        performCleanup();
-                      } catch (Throwable t) {
-                        logger.error("Error during scheduled race cleanup", t);
-                      }
-                    },
-                    gracePeriod,
-                    TimeUnit.SECONDS);
-          }
+        } else if (cleanupFuture == null || cleanupFuture.isDone()) {
+          logger.info(
+              "No director subscribers left (Total Sessions: {}). Scheduling race cleanup in {} seconds...",
+              sessions.size(),
+              gracePeriod);
+          cleanupFuture =
+              scheduler.schedule(
+                  () -> {
+                    try {
+                      performCleanup();
+                    } catch (Throwable t) {
+                      logger.error("Error during scheduled race cleanup", t);
+                    }
+                  },
+                  gracePeriod,
+                  TimeUnit.SECONDS);
         }
       } else {
         logger.info("Server is shutting down, preserving race state and auto-save.");
@@ -446,6 +526,7 @@ public class ClientSubscriptionManager {
           "Last director client disconnected/unsubscribed. Stopping and clearing current race.");
       deleteAutoSave(currentRace.getRaceModel().getEntityId(), currentRace.isDemoMode());
       setRace(null);
+      checkAutoShutdown();
     }
   }
 
@@ -470,31 +551,31 @@ public class ClientSubscriptionManager {
     }
   }
 
-  public synchronized void autoSave(Race race) {
-    if (race == null || databaseContext == null) {
-      return;
-    }
+  private RaceSaveData buildRaceSaveData(Race race) {
+    RaceSaveData saveData = new RaceSaveData();
+    saveData.setModel(race.getRaceModel());
+    saveData.setTrack(race.getTrack());
+    saveData.setDrivers(race.getDrivers());
+    saveData.setHeats(race.getHeats());
+    saveData.setStateClassName(race.getState().getClass().getName());
+    saveData.setAccumulatedRaceTime(race.getRaceTime());
+    saveData.setHasRacedInCurrentHeat(race.hasRacedInCurrentHeat());
+    saveData.setCurrentHeatIndex(race.getHeats().indexOf(race.getCurrentHeat()));
+    saveData.setDemoMode(race.isDemoMode());
+    saveData.setStatistics(race.getStatistics());
+    saveData.setAutoStartFired(race.isAutoStartFired());
+    saveData.setAutoAdvanceFired(race.isAutoAdvanceFired());
+
+    saveData.setAutoSave(true);
+    String filename = "autosave_" + race.getRaceModel().getEntityId() + ".json";
+    saveData.setSaveName(filename);
+    return saveData;
+  }
+
+  private void executeUpsertAutoSave(DatabaseContext ctx, RaceSaveData saveData, String filename) {
     try {
-      RaceSaveData saveData = new RaceSaveData();
-      saveData.setModel(race.getRaceModel());
-      saveData.setTrack(race.getTrack());
-      saveData.setDrivers(race.getDrivers());
-      saveData.setHeats(race.getHeats());
-      saveData.setStateClassName(race.getState().getClass().getName());
-      saveData.setAccumulatedRaceTime(race.getRaceTime());
-      saveData.setHasRacedInCurrentHeat(race.hasRacedInCurrentHeat());
-      saveData.setCurrentHeatIndex(race.getHeats().indexOf(race.getCurrentHeat()));
-      saveData.setDemoMode(race.isDemoMode());
-      saveData.setStatistics(race.getStatistics());
-      saveData.setAutoStartFired(race.isAutoStartFired());
-      saveData.setAutoAdvanceFired(race.isAutoAdvanceFired());
-
-      saveData.setAutoSave(true);
-      String filename = "autosave_" + race.getRaceModel().getEntityId() + ".json";
-      saveData.setSaveName(filename);
-
       DatabaseService dbService = DatabaseService.getInstance();
-      dbService.upsertAutoSave(databaseContext, saveData);
+      dbService.upsertAutoSave(ctx, saveData);
       logger.info("Auto-saved race to database: {}", filename);
     } catch (Exception e) {
       if (!isShuttingDown) {
@@ -503,20 +584,88 @@ public class ClientSubscriptionManager {
     }
   }
 
-  public synchronized void deleteAutoSave(String raceId, boolean isDemo) {
-    if (databaseContext == null || raceId == null) {
+  public CompletableFuture<Void> autoSaveAsync(Race race) {
+    if (race == null || databaseContext == null || databaseContext.getConnection() == null) {
+      return CompletableFuture.completedFuture(null);
+    }
+    try {
+      final DatabaseContext ctx = databaseContext;
+      RaceSaveData saveData = buildRaceSaveData(race);
+      String filename = saveData.getSaveName();
+
+      return CompletableFuture.runAsync(
+          () -> executeUpsertAutoSave(ctx, saveData, filename), scheduler);
+    } catch (Exception e) {
+      if (!isShuttingDown) {
+        logger.error("Error preparing auto-save data", e);
+      }
+      CompletableFuture<Void> failed = new CompletableFuture<>();
+      failed.completeExceptionally(e);
+      return failed;
+    }
+  }
+
+  public void autoSave(Race race) {
+    if (race == null || databaseContext == null || databaseContext.getConnection() == null) {
+      return;
+    }
+    if (Thread.currentThread().getName().startsWith("ClientSubscriptionManager-Scheduler")) {
+      try {
+        RaceSaveData saveData = buildRaceSaveData(race);
+        executeUpsertAutoSave(databaseContext, saveData, saveData.getSaveName());
+      } catch (Exception e) {
+        if (!isShuttingDown) {
+          logger.error("Error during auto-save on scheduler thread", e);
+        }
+      }
       return;
     }
     try {
-      String filename = "autosave_" + raceId + ".json";
+      autoSaveAsync(race).get(5, TimeUnit.SECONDS);
+    } catch (Exception e) {
+      if (!isShuttingDown) {
+        logger.warn("Synchronous autoSave timed out or failed: {}", e.getMessage());
+      }
+    }
+  }
+
+  private void executeDeleteAutoSave(DatabaseContext ctx, String filename, boolean isDemo) {
+    try {
       DatabaseService dbService = DatabaseService.getInstance();
-      boolean deleted = dbService.deleteSavedRace(databaseContext, filename, isDemo);
+      boolean deleted = dbService.deleteSavedRace(ctx, filename, isDemo);
       if (deleted) {
         logger.info("Deleted auto-save from db (demo={}): {}", isDemo, filename);
       }
     } catch (Exception e) {
       if (!isShuttingDown) {
         logger.error("Error deleting auto-save", e);
+      }
+    }
+  }
+
+  public CompletableFuture<Void> deleteAutoSaveAsync(String raceId, boolean isDemo) {
+    if (databaseContext == null || databaseContext.getConnection() == null || raceId == null) {
+      return CompletableFuture.completedFuture(null);
+    }
+    final DatabaseContext ctx = databaseContext;
+    String filename = "autosave_" + raceId + ".json";
+    return CompletableFuture.runAsync(
+        () -> executeDeleteAutoSave(ctx, filename, isDemo), scheduler);
+  }
+
+  public void deleteAutoSave(String raceId, boolean isDemo) {
+    if (databaseContext == null || databaseContext.getConnection() == null || raceId == null) {
+      return;
+    }
+    if (Thread.currentThread().getName().startsWith("ClientSubscriptionManager-Scheduler")) {
+      executeDeleteAutoSave(databaseContext, "autosave_" + raceId + ".json", isDemo);
+      return;
+    }
+    try {
+      deleteAutoSaveAsync(raceId, isDemo).get(5, TimeUnit.SECONDS);
+    } catch (Exception e) {
+      if (!isShuttingDown) {
+        logger.warn("Synchronous deleteAutoSave timed out or failed: {}", e.getMessage());
       }
     }
   }
@@ -553,20 +702,104 @@ public class ClientSubscriptionManager {
   }
 
   public void broadcast(GeneratedMessageV3 message) {
+    broadcastAsync(message);
+  }
+
+  public CompletableFuture<Void> broadcastAsync(GeneratedMessageV3 message) {
     if (raceDataSubscribers.isEmpty()) {
-      return;
+      return CompletableFuture.completedFuture(null);
+    }
+
+    if (isPureRaceTime(message)) {
+      pendingRaceTimeMessage.set(message);
+      CompletableFuture<Void> future = new CompletableFuture<>();
+      if (raceTimeScheduled.compareAndSet(false, true)) {
+        broadcastExecutor.submit(
+            () -> {
+              processPendingRaceTime();
+              future.complete(null);
+            });
+      } else {
+        future.complete(null);
+      }
+      return future;
     }
 
     byte[] bytes = message.toByteArray();
+    return CompletableFuture.runAsync(
+        () -> sendToRaceDataSubscribers(bytes, message.getClass().getSimpleName()),
+        broadcastExecutor);
+  }
 
+  public void flushBroadcasts() {
+    try {
+      broadcastExecutor.submit(() -> {}).get(2, TimeUnit.SECONDS);
+    } catch (Exception ignored) {
+    }
+  }
+
+  private void processPendingRaceTime() {
+    GeneratedMessageV3 msg = pendingRaceTimeMessage.getAndSet(null);
+    raceTimeScheduled.set(false);
+    if (msg != null) {
+      byte[] bt = msg.toByteArray();
+      sendToRaceDataSubscribers(bt, "RaceTime");
+    }
+    if (pendingRaceTimeMessage.get() != null && raceTimeScheduled.compareAndSet(false, true)) {
+      broadcastExecutor.submit(this::processPendingRaceTime);
+    }
+  }
+
+  private void sendToRaceDataSubscribers(byte[] bytes, String msgName) {
+    if (raceDataSubscribers.isEmpty()) {
+      return;
+    }
+    long startNs = System.nanoTime();
+    List<WsContext> failedSubscribers = new ArrayList<>();
     raceDataSubscribers.forEach(
         ctx -> {
           try {
             ctx.send(ByteBuffer.wrap(bytes));
           } catch (Exception e) {
             logger.warn("Failed to broadcast message to subscriber: {}", e.getMessage());
+            failedSubscribers.add(ctx);
           }
         });
+
+    if (!failedSubscribers.isEmpty()) {
+      for (WsContext ctx : failedSubscribers) {
+        pruneDeadSession(ctx);
+      }
+    }
+
+    long elapsedNs = System.nanoTime() - startNs;
+    if (elapsedNs > 25_000_000L) {
+      logger.warn(
+          "[PERF] WebSocket broadcast took {} ms ({} subscribers, msg: {})",
+          elapsedNs / 1_000_000L,
+          raceDataSubscribers.size(),
+          msgName);
+    }
+  }
+
+  private boolean isPureRaceTime(GeneratedMessageV3 message) {
+    if (!(message instanceof RaceData)) {
+      return false;
+    }
+    RaceData rd = (RaceData) message;
+    return rd.hasRaceTime()
+        && !rd.hasLap()
+        && !rd.hasStandingsUpdate()
+        && !rd.hasOverallStandingsUpdate()
+        && !rd.hasRace()
+        && !rd.hasCarData()
+        && !rd.hasSegment()
+        && !rd.hasFlag()
+        && !rd.hasRecordData()
+        && !rd.hasHeat()
+        && !rd.hasSystemState()
+        && !rd.hasGroupStandingsUpdate()
+        && !rd.hasRaceState();
   }
 
   public void broadcastSystemState() {
@@ -616,20 +849,36 @@ public class ClientSubscriptionManager {
   }
 
   public void broadcastInterfaceEvent(InterfaceEvent event) {
+    broadcastInterfaceEventAsync(event);
+  }
+
+  public CompletableFuture<Void> broadcastInterfaceEventAsync(InterfaceEvent event) {
     if (interfaceSubscribers.isEmpty()) {
-      return;
+      return CompletableFuture.completedFuture(null);
     }
     if (currentRace != null && (currentRace.getState() instanceof RaceOver)) {
-      return;
+      return CompletableFuture.completedFuture(null);
     }
 
     byte[] bytes = event.toByteArray();
-    for (WsContext session : interfaceSubscribers) {
-      try {
-        session.send(ByteBuffer.wrap(bytes));
-      } catch (Exception e) {
-        // Ignore or log
-      }
-    }
+    return CompletableFuture.runAsync(
+        () -> {
+          for (WsContext session : interfaceSubscribers) {
+            try {
+              session.send(ByteBuffer.wrap(bytes));
+            } catch (Exception e) {
+              // Ignore or log
+            }
+          }
+        },
+        broadcastExecutor);
+  }
+
+  public synchronized int getActiveSessionCount() {
+    return sessions.size();
+  }
+
+  public synchronized boolean isPendingAutoShutdown() {
+    return autoShutdownFuture != null || isShuttingDown;
   }
 }

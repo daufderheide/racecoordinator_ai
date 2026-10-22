@@ -207,6 +207,48 @@ public class ThemeTaskHandlerTest {
         .getPathParam(any(), eq("id"));
     handler.deleteTheme(ctx);
     verify(handler, org.mockito.Mockito.atLeastOnce()).setStatus(any(), eq(204));
+    assertTrue(databaseContext.isDefaultArtifactDeleted("theme", Theme.DEFAULT_THEME_ID));
+  }
+
+  @Test
+  public void testDeleteDefaultThemes_DoesNotRecreateOnEnsureDefaults() {
+    handler.ensureDefaultTheme();
+
+    com.antigravity.repository.SqliteRepository<Theme> repo =
+        new com.antigravity.repository.SqliteRepository<>(databaseContext, "themes", Theme.class);
+    assertNotNull(repo.findByEntityId(Theme.PRACTICE_THEME_ID));
+    assertNotNull(repo.findByEntityId(Theme.FUEL_THEME_ID));
+
+    // Delete Practice and Fuel themes
+    org.mockito.Mockito.doReturn(Theme.PRACTICE_THEME_ID)
+        .when(handler)
+        .getPathParam(any(), eq("id"));
+    handler.deleteTheme(ctx);
+
+    org.mockito.Mockito.doReturn(Theme.FUEL_THEME_ID).when(handler).getPathParam(any(), eq("id"));
+    handler.deleteTheme(ctx);
+
+    assertTrue(databaseContext.isDefaultArtifactDeleted("theme", Theme.PRACTICE_THEME_ID));
+    assertTrue(databaseContext.isDefaultArtifactDeleted("theme", Theme.FUEL_THEME_ID));
+
+    // Calling ensureDefaultTheme() should NOT recreate them
+    handler.ensureDefaultTheme();
+    assertNull(repo.findByEntityId(Theme.PRACTICE_THEME_ID));
+    assertNull(repo.findByEntityId(Theme.FUEL_THEME_ID));
+
+    // Calling createTheme with name restores/unmarks it
+    Theme recreatedPractice =
+        new Theme(
+            Theme.PRACTICE_THEME_NAME,
+            false,
+            new HashMap<>(),
+            new HashMap<>(),
+            null,
+            "new_prac",
+            null);
+    org.mockito.Mockito.doReturn(recreatedPractice).when(handler).getBody(any(), eq(Theme.class));
+    handler.createTheme(ctx);
+    assertFalse(databaseContext.isDefaultArtifactDeleted("theme", Theme.PRACTICE_THEME_ID));
   }
 
   @Test

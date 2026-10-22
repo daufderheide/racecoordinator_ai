@@ -11,7 +11,9 @@ import com.antigravity.repository.SqliteRepository;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -371,6 +373,25 @@ public class AssetDefaultsInitializer {
       if (!file.exists() || !file.isFile() || file.length() == 0) {
         return true;
       }
+      if (id != null && id.startsWith("default_")) {
+        String resourcePath = getDefaultResourcePath(id);
+        if (resourcePath != null) {
+          try {
+            byte[] bundledData = readResource(resourcePath);
+            if (bundledData != null) {
+              if (bundledData.length != file.length()) {
+                return true;
+              }
+              byte[] existingData = Files.readAllBytes(file.toPath());
+              if (!Arrays.equals(bundledData, existingData)) {
+                return true;
+              }
+            }
+          } catch (Exception ignored) {
+            // Keep existing file if reading fails
+          }
+        }
+      }
     }
     return false;
   }
@@ -654,17 +675,20 @@ public class AssetDefaultsInitializer {
       for (Theme t : themes) {
         backfillSingleTheme(t, themeRepo, foundFlags);
       }
-      if (!foundFlags[0]) {
+      if (!foundFlags[0]
+          && !databaseContext.isDefaultArtifactDeleted("theme", Theme.DEFAULT_THEME_ID)) {
         createAndSaveTheme(
             themeRepo, Theme.DEFAULT_THEME_ID, Theme.DEFAULT_THEME_NAME, CustomUI.DEFAULT_UI_ID);
         logger.info("Backfilled default theme with ID {}", Theme.DEFAULT_THEME_ID);
       }
-      if (!foundFlags[1]) {
+      if (!foundFlags[1]
+          && !databaseContext.isDefaultArtifactDeleted("theme", Theme.PRACTICE_THEME_ID)) {
         createAndSaveTheme(
             themeRepo, Theme.PRACTICE_THEME_ID, Theme.PRACTICE_THEME_NAME, CustomUI.PRACTICE_UI_ID);
         logger.info("Backfilled practice theme with ID {}", Theme.PRACTICE_THEME_ID);
       }
-      if (!foundFlags[2]) {
+      if (!foundFlags[2]
+          && !databaseContext.isDefaultArtifactDeleted("theme", Theme.FUEL_THEME_ID)) {
         createAndSaveTheme(
             themeRepo, Theme.FUEL_THEME_ID, Theme.FUEL_THEME_NAME, CustomUI.FUEL_UI_ID);
         logger.info("Backfilled fuel theme with ID {}", Theme.FUEL_THEME_ID);
@@ -698,7 +722,7 @@ public class AssetDefaultsInitializer {
         uiId = CustomUI.DEFAULT_UI_ID;
         updated = true;
       }
-      if (Theme.isLegacyDefaultName(name)) {
+      if (Theme.isLegacyDefaultName(name) && !Theme.DEFAULT_THEME_NAME.equals(name)) {
         name = Theme.DEFAULT_THEME_NAME;
         updated = true;
       }
@@ -709,7 +733,7 @@ public class AssetDefaultsInitializer {
         uiId = CustomUI.PRACTICE_UI_ID;
         updated = true;
       }
-      if (Theme.isLegacyPracticeName(name)) {
+      if (Theme.isLegacyPracticeName(name) && !Theme.PRACTICE_THEME_NAME.equals(name)) {
         name = Theme.PRACTICE_THEME_NAME;
         updated = true;
       }
@@ -720,7 +744,7 @@ public class AssetDefaultsInitializer {
         uiId = CustomUI.FUEL_UI_ID;
         updated = true;
       }
-      if (Theme.isLegacyFuelName(name)) {
+      if (Theme.isLegacyFuelName(name) && !Theme.FUEL_THEME_NAME.equals(name)) {
         name = Theme.FUEL_THEME_NAME;
         updated = true;
       }

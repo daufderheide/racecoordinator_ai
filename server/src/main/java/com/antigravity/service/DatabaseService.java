@@ -85,6 +85,18 @@ public class DatabaseService {
     databaseInitializer.backfillDrivers(context);
   }
 
+  public void markDefaultArtifactDeleted(DatabaseContext context, String type, String id) {
+    context.markDefaultArtifactDeleted(type, id);
+  }
+
+  public boolean isDefaultArtifactDeleted(DatabaseContext context, String type, String id) {
+    return context.isDefaultArtifactDeleted(type, id);
+  }
+
+  public void clearDefaultArtifactDeleted(DatabaseContext context, String type, String id) {
+    context.clearDefaultArtifactDeleted(type, id);
+  }
+
   public Track getFactoryTrack() {
     return databaseInitializer.getFactoryTrack();
   }
@@ -488,13 +500,7 @@ public class DatabaseService {
     String raceId = runtimeRace.getRaceModel().getEntityId();
     String tableName = getCollectionName("race_records", isDemo);
     try {
-      context
-          .getConnection()
-          .createStatement()
-          .execute(
-              "CREATE TABLE IF NOT EXISTS "
-                  + tableName
-                  + " (race_id TEXT PRIMARY KEY, records_blob BLOB)");
+      context.ensureRaceRecordsTable(tableName);
       String sql =
           "INSERT INTO "
               + tableName
@@ -518,13 +524,7 @@ public class DatabaseService {
   public RecordData getRaceRecords(DatabaseContext context, String raceId, boolean isDemo) {
     String tableName = getCollectionName("race_records", isDemo);
     try {
-      context
-          .getConnection()
-          .createStatement()
-          .execute(
-              "CREATE TABLE IF NOT EXISTS "
-                  + tableName
-                  + " (race_id TEXT PRIMARY KEY, records_blob BLOB)");
+      context.ensureRaceRecordsTable(tableName);
       String sql = "SELECT records_blob FROM " + tableName + " WHERE race_id = ?";
       try (PreparedStatement pstmt = context.getConnection().prepareStatement(sql)) {
         pstmt.setString(1, raceId);
@@ -646,7 +646,7 @@ public class DatabaseService {
   }
 
   public void upsertAutoSave(DatabaseContext context, RaceSaveData data) {
-    if (data == null) {
+    if (data == null || context == null || context.getConnection() == null) {
       return;
     }
     boolean isDemo = data.isDemoMode();
@@ -743,7 +743,7 @@ public class DatabaseService {
   }
 
   public boolean deleteSavedRace(DatabaseContext context, String saveName, RaceScope scope) {
-    if (context == null || saveName == null) return false;
+    if (context == null || context.getConnection() == null || saveName == null) return false;
     String tableName = getCollectionName("saved_races", scope);
     context.ensureTable(tableName);
     String sql =

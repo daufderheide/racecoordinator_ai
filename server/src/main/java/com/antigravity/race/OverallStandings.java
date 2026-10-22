@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -41,77 +42,36 @@ public class OverallStandings {
 
   public void recalculate(
       List<RaceParticipant> drivers, List<Heat> heats, HeatRotationType rotationType) {
-    Map<String, List<DriverHeatData>> driverHeats = new HashMap<>();
+    Map<String, Map<Integer, List<DriverHeatData>>> driverHeatsByNumber = new HashMap<>();
+    Map<String, Integer> driverToGroup = new HashMap<>();
 
-    // 1. Strings heats to drivers
+    // 1. Strings heats to drivers and index by heat number and group
     for (Heat heat : heats) {
+      int heatNum = heat.getHeatNumber();
+      int heatGroup = heat.getGroup();
       for (DriverHeatData dhd : heat.getDrivers()) {
         if (dhd.getDriver() != null) {
-          driverHeats
-              .computeIfAbsent(dhd.getDriver().getStableId(), k -> new ArrayList<>())
+          String stableId = dhd.getDriver().getStableId();
+          driverHeatsByNumber
+              .computeIfAbsent(stableId, k -> new LinkedHashMap<>())
+              .computeIfAbsent(heatNum, k -> new ArrayList<>())
               .add(dhd);
+          driverToGroup.put(stableId, heatGroup);
         }
       }
     }
 
     // 2. Aggregate stats for each driver
     for (RaceParticipant driver : drivers) {
-      List<DriverHeatData> rawHeats =
-          driverHeats.getOrDefault(driver.getStableId(), new ArrayList<>());
-      List<DriverHeatData> myHeats = consolidateDriverHeats(rawHeats, heats, rotationType);
-      List<DriverHeatData> scoringHeats = getScoringHeats(myHeats);
-
-      double totalLaps = 0.0;
-      double totalTime = 0.0;
-      double bestLap = Double.MAX_VALUE;
-
-      List<Double> allScoringLaps = new ArrayList<>();
-      for (DriverHeatData dhd : scoringHeats) {
-        totalLaps += dhd.getAdjustedLapCount();
-        totalTime += dhd.getTotalTime();
-
-        if (dhd.getBestLapTime() > 0 && dhd.getBestLapTime() < bestLap) {
-          bestLap = dhd.getBestLapTime();
-        }
-        for (DriverHeatData.LapData lap : dhd.getLaps()) {
-          allScoringLaps.add(lap.getLapTime());
-        }
-      }
-
-      // Updating driver stats
-      if (bestLap == Double.MAX_VALUE) {
-        bestLap = 0.0;
-      }
-      driver.setAllScoringLaps(allScoringLaps);
-      driver.setTotalLaps(totalLaps);
-      driver.setTotalTime(totalTime);
-      driver.setBestLapTime(bestLap);
-
-      if (!allScoringLaps.isEmpty()) {
-        double sum = 0;
-        for (double lap : allScoringLaps) {
-          sum += lap;
-        }
-        driver.setAverageLapTime(sum / allScoringLaps.size());
-
-        Collections.sort(allScoringLaps);
-        int middle = allScoringLaps.size() / 2;
-        if (allScoringLaps.size() % 2 == 1) {
-          driver.setMedianLapTime(allScoringLaps.get(middle));
-        } else {
-          driver.setMedianLapTime(
-              (allScoringLaps.get(middle - 1) + allScoringLaps.get(middle)) / 2.0);
-        }
-      } else {
-        driver.setAverageLapTime(0.0);
-        driver.setMedianLapTime(0.0);
-      }
+      Map<Integer, List<DriverHeatData>> heatsByNumber =
+          driverHeatsByNumber.getOrDefault(driver.getStableId(), Collections.emptyMap());
+      calculateDriverStats(driver, heatsByNumber, rotationType);
     }
 
     // 3. Rank drivers
     if (!practice) {
       if (groupOptions != null && groupOptions.isEnabled() && groupOptions.getMinAdvancing() > 0) {
-        rankWithMinAdvancing(drivers, heats);
+        rankWithMinAdvancing(drivers, driverToGroup);
       } else {
         drivers.sort(getComparator());
       }
@@ -233,15 +193,8 @@ public class OverallStandings {
     return comparator;
   }
 
-  private void rankWithMinAdvancing(List<RaceParticipant> drivers, List<Heat> heats) {
-    Map<String, Integer> driverToGroup = new HashMap<>();
-    for (Heat heat : heats) {
-      for (DriverHeatData dhd : heat.getDrivers()) {
-        if (dhd.getDriver() != null) {
-          driverToGroup.put(dhd.getDriver().getStableId(), heat.getGroup());
-        }
-      }
-    }
+  private void rankWithMinAdvancing(
+      List<RaceParticipant> drivers, Map<String, Integer> driverToGroup) {
 
     Map<Integer, List<RaceParticipant>> groupedDrivers = new HashMap<>();
     List<RaceParticipant> emptyDrivers = new ArrayList<>();
@@ -288,22 +241,64 @@ public class OverallStandings {
             : TiebreakerMethod.AVERAGE_LAP_TIME);
   }
 
-  private List<DriverHeatData> consolidateDriverHeats(
-      List<DriverHeatData> rawHeats, List<Heat> heats, HeatRotationType rotationType) {
-    if (rawHeats == null || rawHeats.isEmpty()) {
-      return new ArrayList<>();
+  private void calculateDriverStats(
+      RaceParticipant driver,
+      Map<Integer, List<DriverHeatData>> heatsByNumber,
+      HeatRotationType rotationType) {
+    List<DriverHeatData> myHeats = consolidateDriverHeats(heatsByNumber, rotationType);
+    List<DriverHeatData> scoringHeats = getScoringHeats(myHeats);
+
+    double totalLaps = 0.0;
+    double totalTime = 0.0;
+    double bestLap = Double.MAX_VALUE;
+
+    List<Double> allScoringLaps = new ArrayList<>();
+    for (DriverHeatData dhd : scoringHeats) {
+      totalLaps += dhd.getAdjustedLapCount();
+      totalTime += dhd.getTotalTime();
+
+      if (dhd.getBestLapTime() > 0 && dhd.getBestLapTime() < bestLap) {
+        bestLap = dhd.getBestLapTime();
+      }
+      for (DriverHeatData.LapData lap : dhd.getLaps()) {
+        allScoringLaps.add(lap.getLapTime());
+      }
     }
 
-    Map<Integer, List<DriverHeatData>> heatsByNumber = new HashMap<>();
-    for (DriverHeatData dhd : rawHeats) {
-      int heatNum = 0;
-      for (Heat h : heats) {
-        if (h.getDrivers().contains(dhd)) {
-          heatNum = h.getHeatNumber();
-          break;
-        }
+    // Updating driver stats
+    if (bestLap == Double.MAX_VALUE) {
+      bestLap = 0.0;
+    }
+    driver.setAllScoringLaps(allScoringLaps);
+    driver.setTotalLaps(totalLaps);
+    driver.setTotalTime(totalTime);
+    driver.setBestLapTime(bestLap);
+
+    if (!allScoringLaps.isEmpty()) {
+      double sum = 0;
+      for (double lap : allScoringLaps) {
+        sum += lap;
       }
-      heatsByNumber.computeIfAbsent(heatNum, k -> new ArrayList<>()).add(dhd);
+      driver.setAverageLapTime(sum / allScoringLaps.size());
+
+      Collections.sort(allScoringLaps);
+      int middle = allScoringLaps.size() / 2;
+      if (allScoringLaps.size() % 2 == 1) {
+        driver.setMedianLapTime(allScoringLaps.get(middle));
+      } else {
+        driver.setMedianLapTime(
+            (allScoringLaps.get(middle - 1) + allScoringLaps.get(middle)) / 2.0);
+      }
+    } else {
+      driver.setAverageLapTime(0.0);
+      driver.setMedianLapTime(0.0);
+    }
+  }
+
+  private List<DriverHeatData> consolidateDriverHeats(
+      Map<Integer, List<DriverHeatData>> heatsByNumber, HeatRotationType rotationType) {
+    if (heatsByNumber == null || heatsByNumber.isEmpty()) {
+      return new ArrayList<>();
     }
 
     List<DriverHeatData> consolidated = new ArrayList<>();

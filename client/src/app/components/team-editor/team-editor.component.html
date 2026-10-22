@@ -131,8 +131,9 @@
                     <button
                       class="action-btn danger small"
                       (click)="removeDriver(driver)"
+                      [title]="'REMOVE' | translate"
                     >
-                      X
+                      <span class="material-icons">delete</span>
                     </button>
                   }
                 </div>
@@ -177,7 +178,9 @@
                   </div>
                   <div class="spacer"></div>
                   @if (isEditMode) {
-                    <button class="action-btn small add-list-btn">+</button>
+                    <button class="action-btn small add-list-btn">
+                      <span class="material-icons">add</span>
+                    </button>
                   }
                 </div>
               }
@@ -203,5 +206,17 @@
   [message]="discardMessage"
   (confirm)="onConfirmDiscard()"
   (cancel)="onCancelDiscard()"
+>
+</app-confirmation-modal>
+
+<!-- Delete Team Confirmation -->
+<app-confirmation-modal
+  [visible]="showDeleteConfirm"
+  title="TEM_CONFIRM_DELETE_TITLE"
+  message="TEM_CONFIRM_DELETE"
+  confirmText="CD_YES"
+  cancelText="CD_NO"
+  (confirm)="onConfirmDelete()"
+  (cancel)="onCancelDelete()"
 >
 </app-confirmation-modal>

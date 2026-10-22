@@ -5,5 +5,6 @@ export class BrowserNavigationHarnessBase {
     container: ".browser-nav-container",
     backButton: "#browser-nav-back-btn",
     forwardButton: "#browser-nav-forward-btn",
+    closeButton: "#browser-nav-close-btn",
   };
 }

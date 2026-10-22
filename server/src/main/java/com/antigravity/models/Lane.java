@@ -48,4 +48,8 @@ public class Lane extends Model {
   public double getLength() {
     return length;
   }
+
+  public String getName() {
+    return "";
+  }
 }

@@ -101,6 +101,8 @@ import {
 })
 export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   lifecycle!: EditorLifecycleHelper;
+  // Delete Track Confirmation Modal
+  showDeleteConfirm = false;
 
   get showDiscardConfirm(): boolean {
     return this.lifecycle.showDiscardConfirm;
@@ -123,6 +125,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     this.lifecycle.pendingDeactivate = val;
   }
   private isReverting = false;
+  private isSwitchingSelection = false;
   @ViewChild(EditorTitleComponent) titleComponent!: EditorTitleComponent;
   private isDestroyed = false;
   private subscriptions: Subscription[] = [];
@@ -197,8 +200,14 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   showLedStringDialog = false;
   requestingArduinoIndex = -1;
 
-  toggleSection(section: keyof typeof this.sectionsExpanded) {
-    this.sectionsExpanded[section] = !this.sectionsExpanded[section];
+  toggleSection(
+    section: keyof typeof this.sectionsExpanded,
+    forcedState?: boolean,
+  ) {
+    this.sectionsExpanded[section] =
+      typeof forcedState === "boolean"
+        ? forcedState
+        : !this.sectionsExpanded[section];
     localStorage.setItem(
       "rc.track-editor.sections",
       JSON.stringify(this.sectionsExpanded),
@@ -401,6 +410,10 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
             this.router.url.startsWith("/track-editor") ||
             this.router.url.includes("mock");
           if (!isEditorRoute) {
+            return;
+          }
+          if (this.isSwitchingSelection) {
+            this.isSwitchingSelection = false;
             return;
           }
           const nextId = paramMap.get("id");
@@ -821,7 +834,9 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     if (this.selectedTrackId === id) return;
     const found = this.allTracks.find((t) => t.entity_id === id);
     if (found) {
+      this.isSwitchingSelection = true;
       this.selectTrack(found);
+      this.navigationService.setLastEditedId("track", found.entity_id);
       this.router.navigate([], {
         relativeTo: this.route,
         queryParams: { id: found.entity_id },
@@ -872,41 +887,49 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
 
   deleteTrack() {
     if (!this.editingTrack || this.editingTrack.entity_id === "new") return;
-    if (confirm(this.translationService.translate("TE_CONFIRM_DELETE"))) {
-      this.isSaving = true;
-      const idToDelete = this.editingTrack.entity_id;
-      this.dataService.deleteTrack(idToDelete).subscribe({
-        next: () => {
-          this.isSaving = false;
-          this.isEditMode = false;
-          const nextTrack = getNextSelectionAfterDelete(
-            this.allTracks,
-            idToDelete,
-          );
-          this.allTracks = this.allTracks.filter(
-            (t) => t.entity_id !== idToDelete,
-          );
-          this.updateTrackSelectItems();
-          if (nextTrack) {
-            this.selectTrack(nextTrack);
-            this.router.navigate([], {
-              relativeTo: this.route,
-              queryParams: { id: nextTrack.entity_id },
-              queryParamsHandling: "merge",
-              replaceUrl: true,
-            });
-          } else {
-            this.startNewTrack();
-          }
-          this.cdr.detectChanges();
-        },
-        error: (err) => {
-          this.logger.error("Failed to delete track", err);
-          this.isSaving = false;
-          this.cdr.detectChanges();
-        },
-      });
-    }
+    this.showDeleteConfirm = true;
+  }
+
+  onCancelDelete() {
+    this.showDeleteConfirm = false;
+  }
+
+  onConfirmDelete() {
+    this.showDeleteConfirm = false;
+    if (!this.editingTrack || this.editingTrack.entity_id === "new") return;
+    this.isSaving = true;
+    const idToDelete = this.editingTrack.entity_id;
+    this.dataService.deleteTrack(idToDelete).subscribe({
+      next: () => {
+        this.isSaving = false;
+        this.isEditMode = false;
+        const nextTrack = getNextSelectionAfterDelete(
+          this.allTracks,
+          idToDelete,
+        );
+        this.allTracks = this.allTracks.filter(
+          (t) => t.entity_id !== idToDelete,
+        );
+        this.updateTrackSelectItems();
+        if (nextTrack) {
+          this.selectTrack(nextTrack);
+          this.router.navigate([], {
+            relativeTo: this.route,
+            queryParams: { id: nextTrack.entity_id },
+            queryParamsHandling: "merge",
+            replaceUrl: true,
+          });
+        } else {
+          this.startNewTrack();
+        }
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        this.logger.error("Failed to delete track", err);
+        this.isSaving = false;
+        this.cdr.detectChanges();
+      },
+    });
   }
 
   private initializeInterfaces() {
@@ -2006,7 +2029,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       hardwareType: 0,
       normallyClosedLaneSensors: true,
       normallyClosedRelays: true,
-      globalInvertLights: 0,
+      activeLowAnalogLeds: false,
       usePitsAsLaps: false,
       useLapsForSegments: false,
       lapPinPitBehavior: 3,
@@ -2146,6 +2169,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       hubPort: 0,
       normallyClosedLaneSensors: true,
       normallyClosedRelays: true,
+      activeLowAnalogLeds: false,
       useLapsForSegments: false,
       lapPinPitBehavior: 3,
       digitalInIds: Array(32).fill(0),

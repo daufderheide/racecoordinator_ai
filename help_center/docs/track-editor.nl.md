@@ -152,6 +152,7 @@ Stelt de ontdenderingstijd van ingangspinnen in in **microseconden** ($1\text{ m
 #### Inverteer-Opties (Ruststroom / Normally Closed)
 - **Normally Closed Spoorsensoren**: Inschakelen indien de sensor in rust hoog is en naar laag zakt zodra een auto passeert (standaard bij lichtsluizen). Uitschakelen bij dead strips of reed-contacten.
 - **Normally Closed Relais**: Inschakelen indien het relais bekrachtigt om stroom af te sluiten en in rust stroom doorlaat. Garandeert baanstroom, zelfs als de computer uitstaat.
+- **Actief-laag Analoge Leds (Active Low Analog LEDs)**: Inschakelen als uw analoge leds (zoals startlichten, vlaggen of heat-leaderindicatoren) AAN gaan bij LAAG (0V) en UIT bij HOOG (5V). Dit lost omgekeerd gedrag op bij bedrading met gemeenschappelijke anode op Arduino- en Phidget-interfaces.
 
 #### Pitstop-Gedrag op Rondepin
 Laat de start/finish-sensor fungeren als pitstop-detectie tijdens brandstofraces:
@@ -246,7 +247,7 @@ De bovenste werkbalk van de Baan-Editor biedt essentiële beheertools:
 - **Terug**: Keert terug naar het vorige scherm of de Racedag Setup.
 - **Baan toevoegen (+)**: Maakt een nieuw baansjabloon aan en activeert de bewerkingsmodus.
 - **Baan dupliceren**: Maakt een identieke kopie onder een unieke naam om variaties te testen zonder vanaf nul te beginnen.
-- **Bewerken / Bewerken voltooien**: Schakelt tussen alleen-lezen modus en bewerkingsmodus. Bij het verlaten van de bewerkingsmodus worden wijzigingen gevalideerd en opgeslagen.
+- **Bewerken / Bewerken voltooien (`Cmd/Ctrl+E`)**: Schakelt tussen alleen-lezen modus en bewerkingsmodus. Bij het verlaten van de bewerkingsmodus worden wijzigingen gevalideerd en opgeslagen.
 - **Alles uitvouwen / samenvouwen**: Vouwt alle configuratiesecties en hardware-interfacepanelen in één keer uit of samen.
 - **Baan verwijderen**: Verwijdert de geselecteerde baan na bevestiging.
 - **Ongedaan Maken (`Ctrl+Z`) / Opnieuw (`Ctrl+Y`)**: Eenvoudig herstellen van afmetingen, kleuren of pinnen.
@@ -264,8 +265,17 @@ De bovenste werkbalk van de Baan-Editor biedt essentiële beheertools:
 - **Symptoom**: Auto's blijven continu tanken zodra ze de baan opgaan.
 - **Oplossing**: Wijzig de instelling **Normally Closed Spoorsensoren**.
 
+### Analoge Leds Geïnverteerd (Aan wanneer ze uit horen te zijn)
+- **Symptoom**: Startlichten, vlaggen of heat-leaderleds branden in rust en gaan uit tijdens actieve sequenties.
+- **Oplossing**: Schakel de optie **Actief-laag analoge leds (Active Low Analog LEDs)** in uw interfaceconfiguratie (Arduino of Phidget) in.
+
 ### Dubbele Tellingen of Gemiste Ronden
 - **Oplossing**: Verhoog de ontdendering (Debounce) bij dubbeltellingen; verlaag deze bij gemiste ronden van snelle auto's en controleer de uitlijning van de fotocellen.
 
 ### FastLED RGB-Strips Gaan Niet Aan
 - **Oplossing**: Zorg dat de officiële **Race Coordinator AI sketch (`v2.1.0.x`)** is geladen, controleer het LED-type en de kleurvolgorde, en controleer of de massa (GND) van de externe 5V-voeding verbonden is met de massa van de Arduino.
+
+### Interface Verbinding Verbreekt Tussen Heats (USB Slaapstand / Energiebesparing)
+- **Symptoom**: De interface (Arduino, Phidget of Trackmate) verbreekt de verbinding tijdens pauzes tussen heats of bij inactiviteit en herstelt zich bij de start met de melding *"De verbinding met de interface is hersteld."*
+- **Oplossing**: Windows, Linux en macOS schakelen inactieve USB-poorten en HID-apparaten uit, zelfs als de pc wakker is. Raadpleeg het gedeelte [USB-interface Slaapstand & Verbindingsverlies](troubleshooting.nl.md#usb-sleep-prevention) in Probleemoplossing om energiebesparing in Apparaatbeheer uit te schakelen.
+

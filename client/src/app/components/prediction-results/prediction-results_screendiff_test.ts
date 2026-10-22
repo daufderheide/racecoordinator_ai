@@ -123,4 +123,35 @@ test.describe("Prediction Results Visuals", () => {
       },
     );
   });
+
+  test("should display prediction results in fullscreen mode with close button", async ({
+    page,
+  }) => {
+    const mockData = PredictionResultsHelper.createPreRaceMockData();
+    await PredictionResultsHelper.injectMockPredictionData(page, {
+      predictionRecord: mockData,
+      evaluationRecord: null,
+    });
+
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/prediction-results"),
+    );
+
+    await page.evaluate(() => {
+      (window as any).fullscreenService?.setFullscreenOverride(true);
+    });
+
+    const header = page.locator(".header-bar");
+    await header.waitFor({ state: "visible" });
+
+    await page.locator(".prediction-table").waitFor({ state: "visible" });
+
+    await page.mouse.move(0, 0);
+
+    await expect(page).toHaveScreenshot("prediction-results-fullscreen.png", {
+      maxDiffPixelRatio: 0.05,
+    });
+  });
 });

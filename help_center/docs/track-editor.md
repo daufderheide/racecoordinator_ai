@@ -153,6 +153,7 @@ Configures input pin debounce timing in **microseconds** ($1\text{ ms} = 1000\,\
 #### Invert Logic Options (Normally Closed)
 - **Normally Closed Lane Sensors**: When enabled, the software expects sensors to read a high logic level when idle and drop low when broken by a car. Optical photo-detectors and infrared sensors are typically Normally Closed. Dead strips and mechanical reed switches typically require this setting to be disabled.
 - **Normally Closed Relays**: When enabled, the relay energizes to cut track power and de-energizes to provide track power. This fail-safe ensures track power remains active even if the race management computer is powered down.
+- **Active Low Analog LEDs**: When enabled, analog LEDs (such as start lights, flags, and heat leader indicators) turn ON when the pin is pulled LOW (0V) and OFF when driven HIGH (5V). This setting resolves inverted LED behavior for common-anode wiring on both Arduino and Phidget interfaces.
 
 #### Lap Pin Pit Behavior
 Enables lap timing sensors to perform dual duty during fuel simulation races without requiring physical pit lane wiring:
@@ -265,7 +266,7 @@ The top toolbar of the Track Editor provides essential management tools:
 - **Back**: Returns to the previous view or Race Day Setup.
 - **Add Track (+)**: Creates a new track template and enters Edit Mode.
 - **Duplicate Track**: Creates an exact copy of the currently selected track under a new unique name. Ideal for creating alternate configurations (e.g., standard racing vs. digital fuel layout) without rebuilding lane dimensions and pin assignments from scratch.
-- **Edit / Done Editing**: Toggles between Read-Only Mode and Edit Mode. When exiting Edit Mode, changes are validated and persisted.
+- **Edit / Done Editing (`Cmd/Ctrl+E`)**: Toggles between Read-Only Mode and Edit Mode. When exiting Edit Mode, changes are validated and persisted.
 - **Expand / Collapse All**: Expands or collapses all configuration sections and hardware interface panels at once.
 - **Delete Track**: Deletes the selected track after confirmation.
 - **Undo (`Ctrl+Z`) / Redo (`Ctrl+Y`)**: Seamlessly revert or restore changes across lane dimensions, color adjustments, pin reassignments, and interface additions.
@@ -283,6 +284,10 @@ The top toolbar of the Track Editor provides essential management tools:
 - **Symptom**: Cars enter the pit lane or cross the lap line and remain in a continuous refueling state without releasing.
 - **Solution**: Toggle the **Normally Closed Lane Sensors** checkbox. When set incorrectly, the software interprets an unbroken optical beam as an active car parked over the pit sensor.
 
+### Inverted Analog LEDs (Lights On When Should Be Off)
+- **Symptom**: Start countdown lights, green/yellow flag LEDs, or lane heat leader indicators are lit when idle and turn off during active sequences (reversed ON/OFF states).
+- **Solution**: Enable the **Active Low Analog LEDs** checkbox in your interface configuration (Arduino or Phidget). This inverts the output voltage logic to support common-anode wiring (where pulling a pin LOW turns the LED on).
+
 ### False Double Laps or Missed Triggers
 - **Symptom**: Cars trigger two laps on a single pass, or fast cars fail to register.
 - **Solution**:
@@ -295,3 +300,8 @@ The top toolbar of the Track Editor provides essential management tools:
     1. Ensure the Arduino is running the official **Race Coordinator AI sketch (`v2.1.0.x`)**; legacy `v1.0.0.x` sketches do not support FastLED control.
     2. Check that the **LED Type** (e.g., `WS2812B`) and **Color Order** (e.g., `GRB`) match your physical strip specifications.
     3. Verify that the 5V power supply ground is bonded to the Arduino ground (common ground). Powering long LED strips directly from the Arduino's 5V pin will cause voltage drops and brownouts.
+
+### Interface Disconnects Between Heats (USB Sleep / Selective Suspend)
+- **Symptom**: Your interface (Arduino, Phidget, or Trackmate) disconnects during pauses between heats or after sitting idle, then reconnects when racing resumes with a message saying *"Connection to the interface has been restored."*
+- **Solution**: Windows, Linux, and macOS aggressively power down idle USB and HID devices even when the PC is awake. Refer to the [USB Interface Sleep & Power Saving](troubleshooting.md#usb-sleep-prevention) guide in Troubleshooting to disable USB power saving on your USB Root Hubs and Human Interface Devices in Device Manager.
+

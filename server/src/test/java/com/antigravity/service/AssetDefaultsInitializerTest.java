@@ -10,10 +10,13 @@ import com.antigravity.models.CustomUI;
 import com.antigravity.models.Theme;
 import com.antigravity.proto.AssetMessage;
 import com.antigravity.repository.SqliteRepository;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.List;
+import javax.imageio.ImageIO;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -145,6 +148,27 @@ public class AssetDefaultsInitializerTest {
   }
 
   @Test
+  public void testBackfillDefaults_UpdatesOutdatedPhysicalFiles() throws Exception {
+    initializer.backfillDefaults();
+
+    File lampFile = new File(assetsDir, "default_start_red_dim_Start_Lamp_Dim");
+    assertTrue("Start lamp file should exist on disk", lampFile.exists());
+    long originalLength = lampFile.length();
+
+    // Simulate an outdated/stale file from an older database version
+    java.nio.file.Files.write(lampFile.toPath(), new byte[] {1, 2, 3, 4, 5});
+    assertEquals(5, lampFile.length());
+
+    // Running backfillDefaults should detect the mismatch and update to the current bundled default
+    // asset
+    initializer.backfillDefaults();
+    assertEquals(
+        "Outdated default asset file should be restored to correct size",
+        originalLength,
+        lampFile.length());
+  }
+
+  @Test
   public void testDefaultResourcePathHelper() {
     String path1 = AssetDefaultsInitializer.getDefaultResourcePath("default_black-blue");
     assertNotNull("Should find resource for default_black-blue", path1);
@@ -257,5 +281,76 @@ public class AssetDefaultsInitializerTest {
     assertNotNull(themeRepo.findByEntityId(Theme.DEFAULT_THEME_ID));
     assertNotNull(themeRepo.findByEntityId(Theme.PRACTICE_THEME_ID));
     assertNotNull(themeRepo.findByEntityId(Theme.FUEL_THEME_ID));
+  }
+
+  @Test
+  public void testDefaultStartLampsAlignmentAndPixelParity() throws Exception {
+    BufferedImage redDim;
+    BufferedImage redOn;
+    BufferedImage green;
+    try (InputStream is1 = getClass().getResourceAsStream("/defaults/start_red_dim.png");
+        InputStream is2 = getClass().getResourceAsStream("/defaults/start_red_on.png");
+        InputStream is3 = getClass().getResourceAsStream("/defaults/start_green.png")) {
+      assertNotNull("start_red_dim.png resource should exist", is1);
+      assertNotNull("start_red_on.png resource should exist", is2);
+      assertNotNull("start_green.png resource should exist", is3);
+      redDim = ImageIO.read(is1);
+      redOn = ImageIO.read(is2);
+      green = ImageIO.read(is3);
+    }
+
+    assertNotNull(redDim);
+    assertNotNull(redOn);
+    assertNotNull(green);
+    assertEquals(152, redDim.getWidth());
+    assertEquals(152, redDim.getHeight());
+    assertEquals(redDim.getWidth(), redOn.getWidth());
+    assertEquals(redDim.getHeight(), redOn.getHeight());
+    assertEquals(redDim.getWidth(), green.getWidth());
+    assertEquals(redDim.getHeight(), green.getHeight());
+
+    int minX = 152;
+    int maxX = 0;
+    int minY = 152;
+    int maxY = 0;
+
+    for (int y = 0; y < 152; y++) {
+      for (int x = 0; x < 152; x++) {
+        int aDim = (redDim.getRGB(x, y) >> 24) & 0xFF;
+        int aOn = (redOn.getRGB(x, y) >> 24) & 0xFF;
+        int aGreen = (green.getRGB(x, y) >> 24) & 0xFF;
+
+        assertEquals(
+            "Alpha channel transparency mismatch at (" + x + "," + y + ")", (aDim > 0), (aOn > 0));
+        assertEquals(
+            "Alpha channel transparency mismatch at (" + x + "," + y + ")",
+            (aDim > 0),
+            (aGreen > 0));
+
+        if (aDim > 0) {
+          minX = Math.min(minX, x);
+          maxX = Math.max(maxX, x);
+          minY = Math.min(minY, y);
+          maxY = Math.max(maxY, y);
+        }
+
+        double dist = Math.hypot(x - 75.5, y - 76.0);
+        if (dist >= 64.0) {
+          assertEquals(
+              "Outer bezel mismatch between red_dim and green at (" + x + "," + y + ")",
+              green.getRGB(x, y),
+              redDim.getRGB(x, y));
+          assertEquals(
+              "Outer bezel mismatch between red_on and green at (" + x + "," + y + ")",
+              green.getRGB(x, y),
+              redOn.getRGB(x, y));
+        }
+      }
+    }
+
+    assertEquals(2, minX);
+    assertEquals(149, maxX);
+    assertEquals(2, minY);
+    assertEquals(150, maxY);
   }
 }

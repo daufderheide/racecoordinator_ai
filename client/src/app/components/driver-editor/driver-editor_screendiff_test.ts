@@ -19,7 +19,7 @@ test.describe("Driver Editor Visuals", () => {
   async function enterEditMode(page: any) {
     await page.locator("#edit-track-btn").click();
     await expect(page.locator("#driver-name-input")).toBeEnabled();
-    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+    await TestSetupHelper.blurActiveElement(page);
     await TestSetupHelper.disableAnimations(page);
   }
 
@@ -99,7 +99,7 @@ test.describe("Driver Editor Visuals", () => {
         (document.querySelector("#driver-name-input") as HTMLInputElement)
           ?.value === "New Driver",
     );
-    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+    await TestSetupHelper.blurActiveElement(page);
     await TestSetupHelper.disableAnimations(page);
 
     await expect(page).toHaveScreenshot("driver-editor-new.png", {

@@ -20,7 +20,7 @@ La barre d'outils supérieure propose les actions suivantes :
 - **Retour** : Revient à la vue précédente ou à la Configuration du Jour de Course.
 - **Ajouter une Équipe (+)** : Crée un nouveau modèle d'équipe et passe en mode édition.
 - **Dupliquer l'Équipe** : Crée une copie de l'équipe sélectionnée avec un nom unique.
-- **Modifier / Terminer l'édition** : Bascule entre le mode lecture seule et le mode édition.
+- **Modifier / Terminer l'édition** : Bascule entre le mode lecture seule et le mode édition (raccourci clavier : Cmd/Ctrl+E).
 - **Supprimer l'Équipe** : Supprime l'équipe sélectionnée après confirmation.
 - **Annuler / Rétablir** : Annule ou réapplique les modifications récentes apportées pendant la session.
 - **Aide (?)** : Ouvre le guide interactif présentant chaque section de l'éditeur.

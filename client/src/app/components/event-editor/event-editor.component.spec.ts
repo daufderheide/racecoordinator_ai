@@ -576,7 +576,6 @@ describe("EventEditorComponent", () => {
 
     it("should prompt confirmation and delete event on onDeleteEvent", fakeAsync(() => {
       fixture.detectChanges();
-      spyOn(window, "confirm").and.returnValue(true);
       const evt2: Event = {
         entity_id: "evt_2",
         name: "Second Event",
@@ -588,6 +587,8 @@ describe("EventEditorComponent", () => {
       component.updateEventSelectItems();
 
       component.onDeleteEvent();
+      expect(component.showDeleteConfirm).toBeTrue();
+      component.onConfirmDelete();
       tick(200);
 
       expect(mockDataService.deleteEvent).toHaveBeenCalledWith("evt_1");
@@ -622,11 +623,12 @@ describe("EventEditorComponent", () => {
 
       component.existingEvents = [evtA, evtB, evtC];
       component.selectEvent(evtB);
-      spyOn(window, "confirm").and.returnValue(true);
       mockDataService.deleteEvent.and.returnValue(of({ success: true }));
 
       // Delete B -> C is selected
       component.onDeleteEvent();
+      expect(component.showDeleteConfirm).toBeTrue();
+      component.onConfirmDelete();
       tick(200);
       expect(mockDataService.deleteEvent).toHaveBeenCalledWith("evt_2");
       expect(component.selectedEventId).toBe("evt_3");
@@ -634,10 +636,52 @@ describe("EventEditorComponent", () => {
 
       // Delete C -> A is selected
       component.onDeleteEvent();
+      expect(component.showDeleteConfirm).toBeTrue();
+      component.onConfirmDelete();
       tick(200);
       expect(mockDataService.deleteEvent).toHaveBeenCalledWith("evt_3");
       expect(component.selectedEventId).toBe("evt_1");
       expect(component.editingEvent?.name).toBe("Event A");
+    }));
+
+    it("should cancel delete event when onCancelDelete is called", () => {
+      component.editingEvent = {
+        entity_id: "evt_1",
+        name: "Event A",
+        description: "",
+        auto_advance_time: 0,
+        races: [],
+      };
+      component.onDeleteEvent();
+      expect(component.showDeleteConfirm).toBeTrue();
+      component.onCancelDelete();
+      expect(component.showDeleteConfirm).toBeFalse();
+      expect(mockDataService.deleteEvent).not.toHaveBeenCalled();
+    });
+
+    it("should start new event if last remaining event is deleted", fakeAsync(() => {
+      fixture.detectChanges();
+      mockDataService.deleteEvent.and.returnValue(of({ success: true }));
+      spyOn(component, "startNewEvent").and.callThrough();
+
+      component.existingEvents = [
+        {
+          entity_id: "evt_1",
+          name: "Only Event",
+          description: "",
+          auto_advance_time: 0,
+          races: [],
+        },
+      ];
+      component.editingEvent = { ...component.existingEvents[0] };
+
+      component.onDeleteEvent();
+      expect(component.showDeleteConfirm).toBeTrue();
+      component.onConfirmDelete();
+      tick(200);
+
+      expect(mockDataService.deleteEvent).toHaveBeenCalledWith("evt_1");
+      expect(component.startNewEvent).toHaveBeenCalled();
     }));
 
     it("should disable keyboard undo/redo in read-only mode, and enable in edit mode", () => {
@@ -673,6 +717,33 @@ describe("EventEditorComponent", () => {
       const yEvent = new KeyboardEvent("keydown", { key: "y", ctrlKey: true });
       component.handleKeyboardEvent(yEvent);
       expect(component.editingEvent.name).toBe("Modified Event");
+    });
+
+    it("should switch event without re-fetching data when selected via onSelectEventById", () => {
+      const router = TestBed.inject(Router);
+      const route = TestBed.inject(ActivatedRoute);
+      const event2: Event = {
+        entity_id: "evt_2",
+        name: "Event Two",
+        description: "",
+        auto_advance_time: 0,
+        races: [],
+      };
+      component.existingEvents = [component.editingEvent, event2];
+      component.isEditMode = false;
+      spyOn(component, "loadData").and.callThrough();
+
+      component.onSelectEventById("evt_2");
+
+      expect(component.selectedEventId).toBe("evt_2");
+      expect(component.editingEvent?.name).toBe("Event Two");
+      expect(router.navigate).toHaveBeenCalledWith([], {
+        relativeTo: route,
+        queryParams: { id: "evt_2" },
+        queryParamsHandling: "merge",
+        replaceUrl: true,
+      });
+      expect(component.loadData).not.toHaveBeenCalled();
     });
   });
 });

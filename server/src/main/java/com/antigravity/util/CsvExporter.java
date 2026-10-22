@@ -326,6 +326,14 @@ public class CsvExporter {
           finalFlattened.put(prefix + "driverName", "Unknown");
           finalFlattened.put(prefix + "driverNickname", "Unknown");
         }
+      } else if (key.equals("custom_rotations") || key.endsWith(".custom_rotations")) {
+        if (race != null
+            && race.getCustomRotationAssetName() != null
+            && !race.getCustomRotationAssetName().isEmpty()) {
+          finalFlattened.put(key, race.getCustomRotationAssetName());
+        } else {
+          finalFlattened.put(key, entry.getValue());
+        }
       } else {
         finalFlattened.put(key, entry.getValue());
       }
@@ -355,6 +363,8 @@ public class CsvExporter {
               "entity_id",
               "empty",
               "driverIds",
+              "custom_rotation_asset_id",
+              "customRotationAssetId",
               "lapSoundUrl",
               "bestLapSoundUrl",
               "penaltySoundUrl",

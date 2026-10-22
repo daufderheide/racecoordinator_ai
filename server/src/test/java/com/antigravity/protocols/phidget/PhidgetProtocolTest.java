@@ -1008,4 +1008,61 @@ public class PhidgetProtocolTest {
     spyProto.applyOutputChannelState(1);
     verify(spyProto).setOutputChannelPhysicalState(1, false);
   }
+
+  @Test
+  public void testApplyOutputChannelState_ActiveLowAnalogLed() throws Exception {
+    PhidgetConfig ledConfig = new PhidgetConfig();
+    ledConfig.serialNumber = 147995;
+    ledConfig.activeLowAnalogLeds = true;
+    ledConfig.digitalOutIds =
+        Arrays.asList(
+            PinBehavior.BEHAVIOR_ANALOG_LED_GREEN_FLAG_VALUE,
+            PinBehavior.BEHAVIOR_ANALOG_LED_YELLOW_FLAG_VALUE);
+
+    PhidgetProtocol spyProto = org.mockito.Mockito.spy(new PhidgetProtocol(ledConfig, 2, null));
+    org.mockito.Mockito.doNothing()
+        .when(spyProto)
+        .setOutputChannelPhysicalState(
+            org.mockito.ArgumentMatchers.anyInt(), org.mockito.ArgumentMatchers.anyBoolean());
+
+    Field greenFlagField = PhidgetProtocol.class.getSuperclass().getDeclaredField("isGreenFlagOn");
+    greenFlagField.setAccessible(true);
+    greenFlagField.set(spyProto, true);
+
+    spyProto.applyOutputChannelState(0);
+    verify(spyProto).setOutputChannelPhysicalState(0, false);
+
+    Field yellowFlagField =
+        PhidgetProtocol.class.getSuperclass().getDeclaredField("isYellowFlagOn");
+    yellowFlagField.setAccessible(true);
+    yellowFlagField.set(spyProto, false);
+
+    spyProto.applyOutputChannelState(1);
+    verify(spyProto).setOutputChannelPhysicalState(1, true);
+  }
+
+  @Test
+  public void testSetPinState_ActiveLowAnalogLed() throws Exception {
+    PhidgetConfig ledConfig = new PhidgetConfig();
+    ledConfig.serialNumber = 147995;
+    ledConfig.activeLowAnalogLeds = true;
+    ledConfig.digitalOutIds = Arrays.asList(PinBehavior.BEHAVIOR_ANALOG_LED_GREEN_FLAG_VALUE);
+
+    PhidgetProtocol spyProto = org.mockito.Mockito.spy(new PhidgetProtocol(ledConfig, 2, null));
+    org.mockito.Mockito.doReturn(true)
+        .when(spyProto)
+        .isOutputChannelAttached(org.mockito.ArgumentMatchers.anyInt());
+    org.mockito.Mockito.doNothing()
+        .when(spyProto)
+        .setOutputChannelPhysicalState(
+            org.mockito.ArgumentMatchers.anyInt(), org.mockito.ArgumentMatchers.anyBoolean());
+
+    // Request ON (isHigh=true) -> should output physical false (LOW, 0V)
+    spyProto.setPinState(true, 0, true);
+    verify(spyProto).setOutputChannelPhysicalState(0, false);
+
+    // Request OFF (isHigh=false) -> should output physical true (HIGH, 5V)
+    spyProto.setPinState(true, 0, false);
+    verify(spyProto).setOutputChannelPhysicalState(0, true);
+  }
 }

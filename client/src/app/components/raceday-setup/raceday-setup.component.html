@@ -45,6 +45,7 @@
           } @else {
             <a
               [href]="updateResult?.downloadUrl"
+              (click)="onDownloadUpdate($event)"
               target="_blank"
               class="update-btn-primary"
             >
@@ -270,4 +271,16 @@
     buttonText="GEN_OK"
     (acknowledge)="acknowledgeUpToDate()"
   ></app-acknowledgement-modal>
+
+  <!-- Downgrade Confirmation Modal -->
+  <app-confirmation-modal
+    [visible]="showDowngradeModal"
+    title="RDS_UPDATE_CONFIRM_DOWNGRADE_TITLE"
+    message="RDS_UPDATE_CONFIRM_DOWNGRADE_MESSAGE"
+    [messageParams]="downgradeMessageParams"
+    confirmText="GEN_YES"
+    cancelText="GEN_NO"
+    (confirm)="confirmDowngradeUpdate()"
+    (cancel)="cancelDowngradeUpdate()"
+  ></app-confirmation-modal>
 </div>

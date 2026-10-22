@@ -135,6 +135,10 @@ export class DataService {
     return this.baseUrl;
   }
 
+  public getBaseUrl(): string {
+    return this.baseUrl;
+  }
+
   private get driversUrl(): string {
     return `${this.baseUrl}/api/drivers`;
   }
@@ -155,6 +159,8 @@ export class DataService {
     return `${this.baseUrl}/api/seasons`;
   }
   private connectionIntent = "";
+  private lastRaceTimeReceivedAt = 0;
+  private raceSubscriptionStartedAt = 0;
 
   constructor(
     private http: HttpClient,
@@ -583,7 +589,7 @@ export class DataService {
         hardwareType: config.hardwareType,
         normallyClosedLaneSensors: config.normallyClosedLaneSensors,
         normallyClosedRelays: config.normallyClosedRelays,
-        globalInvertLights: config.globalInvertLights,
+        activeLowAnalogLeds: config.activeLowAnalogLeds,
         usePitsAsLaps: config.usePitsAsLaps,
         useLapsForSegments: config.useLapsForSegments,
         digitalIds: config.digitalIds,
@@ -639,6 +645,7 @@ export class DataService {
           hubPort: config.hubPort,
           normallyClosedLaneSensors: config.normallyClosedLaneSensors,
           normallyClosedRelays: config.normallyClosedRelays,
+          activeLowAnalogLeds: config.activeLowAnalogLeds,
           useLapsForSegments: config.useLapsForSegments,
           lapPinPitBehavior: config.lapPinPitBehavior,
           digitalInIds: config.digitalInIds,
@@ -675,7 +682,7 @@ export class DataService {
             hardwareType: config.hardwareType,
             normallyClosedLaneSensors: config.normallyClosedLaneSensors,
             normallyClosedRelays: config.normallyClosedRelays,
-            globalInvertLights: config.globalInvertLights,
+            activeLowAnalogLeds: config.activeLowAnalogLeds,
             usePitsAsLaps: config.usePitsAsLaps,
             useLapsForSegments: config.useLapsForSegments,
             digitalIds: config.digitalIds,
@@ -710,6 +717,7 @@ export class DataService {
             hubPort: phidgetConfig.hubPort,
             normallyClosedLaneSensors: phidgetConfig.normallyClosedLaneSensors,
             normallyClosedRelays: phidgetConfig.normallyClosedRelays,
+            activeLowAnalogLeds: phidgetConfig.activeLowAnalogLeds,
             useLapsForSegments: phidgetConfig.useLapsForSegments,
             lapPinPitBehavior: phidgetConfig.lapPinPitBehavior,
             digitalInIds: phidgetConfig.digitalInIds,
@@ -1594,9 +1602,35 @@ export class DataService {
 
   private shouldSubscribeToRaceData = false;
   private isInterfaceSocketExplicitlyDisconnected = false;
+  private isRaceDataSocketExplicitlyDisconnected = false;
+
+  public clearRaceData() {
+    this.raceStateSubject.next(RaceState.UNKNOWN_STATE);
+    this.flagSubject.next(RaceFlag.UNKNOWN_FLAG);
+    this.raceTimeSubject.next({ time: 0 });
+    this.lastRaceTimeReceivedAt = 0;
+    this.raceSubscriptionStartedAt = 0;
+
+    const clearReplay = (subject: any) => {
+      if (subject && Array.isArray(subject._buffer)) {
+        subject._buffer.length = 0;
+      }
+    };
+    clearReplay(this.standingsSubject);
+    clearReplay(this.overallStandingsSubject);
+    clearReplay(this.groupStandingsSubject);
+    clearReplay(this.raceUpdateSubject);
+    clearReplay(this.recordDataSubject);
+  }
 
   public updateRaceSubscription(subscribe: boolean) {
     this.shouldSubscribeToRaceData = subscribe;
+    if (subscribe) {
+      this.raceSubscriptionStartedAt =
+        typeof performance !== "undefined" ? performance.now() : Date.now();
+    } else {
+      this.clearRaceData();
+    }
     if (
       this.raceDataSocket &&
       this.raceDataSocket.readyState === WebSocket.OPEN
@@ -1630,19 +1664,39 @@ export class DataService {
   private handleRaceDataMessage(event: MessageEvent) {
     this.ngZone.run(() => {
       try {
+        const now =
+          typeof performance !== "undefined" ? performance.now() : Date.now();
+        const dispatchDelay =
+          event &&
+          typeof event.timeStamp === "number" &&
+          event.timeStamp > 0 &&
+          event.timeStamp <= now
+            ? Math.round(now - event.timeStamp)
+            : -1;
+
+        if (dispatchDelay > 100) {
+          this.logger.warn(
+            `[PERF] Browser main-thread freeze: message dispatch delayed by ${dispatchDelay}ms (UI rendering or long task blocked event loop)`,
+          );
+        }
+
         const arrayBuffer = event.data as ArrayBuffer;
         const raceData = RaceData.decode(
           Reader.create(new Uint8Array(arrayBuffer)),
         );
 
+        const previousState = this.raceStateSubject.value;
+        let newState = previousState;
         if (raceData.raceState) {
           this.logger.debug("WS: Received RaceState", raceData.raceState);
+          newState = raceData.raceState;
           this.raceStateSubject.next(raceData.raceState);
         }
         if (raceData.race) {
           this.logger.debug("WS: Received Race", raceData.race);
           this.raceUpdateSubject.next(raceData.race);
           if (raceData.race.state) {
+            newState = raceData.race.state;
             this.raceStateSubject.next(raceData.race.state);
           }
           if (raceData.race.flag) {
@@ -1652,45 +1706,88 @@ export class DataService {
             this.heatSubject.next(raceData.race.currentHeat);
           }
         }
+        if (newState !== previousState) {
+          this.lastRaceTimeReceivedAt = 0;
+        }
         if (raceData.raceTime) {
-          this.raceTimeSubject.next(raceData.raceTime);
+          this.handleRaceTimeMessage(
+            raceData.raceTime,
+            newState,
+            now,
+            dispatchDelay,
+          );
         }
-        if (raceData.lap) {
-          this.lapSubject.next(raceData.lap);
-        }
-        if (raceData.standingsUpdate) {
-          this.standingsSubject.next(raceData.standingsUpdate);
-        }
-        if (raceData.overallStandingsUpdate) {
-          this.overallStandingsSubject.next(raceData.overallStandingsUpdate);
-        }
-        if (raceData.groupStandingsUpdate) {
-          this.groupStandingsSubject.next(raceData.groupStandingsUpdate);
-        }
-        if (raceData.carData) {
-          this.carDataSubject.next(raceData.carData);
-        }
-        if (raceData.segment) {
-          this.segmentSubject.next(raceData.segment);
-        }
-        if (raceData.flag) {
-          this.logger.debug("WS: Received RaceFlag", raceData.flag);
-          this.flagSubject.next(raceData.flag);
-        }
-        if (raceData.recordData) {
-          this.recordDataSubject.next(raceData.recordData);
-        }
-        if (raceData.heat) {
-          this.logger.debug("WS: Received Heat", raceData.heat);
-          this.heatSubject.next(raceData.heat);
-        }
-        if (raceData.systemState) {
-          this.systemStateSubject.next(raceData.systemState as SystemState);
-        }
+        this.dispatchTelemetryUpdates(raceData);
       } catch (e) {
         this.logger.error("Error parsing race data message", e);
       }
     });
+  }
+
+  private handleRaceTimeMessage(
+    raceTime: IRaceTime,
+    raceState: RaceState,
+    now: number,
+    dispatchDelay: number,
+  ): void {
+    const isTicking =
+      raceState === RaceState.STARTING ||
+      raceState === RaceState.RACING ||
+      (raceTime.autoStartRemaining ?? 0) > 0 ||
+      (raceTime.autoAdvanceRemaining ?? 0) > 0;
+
+    if (isTicking && this.lastRaceTimeReceivedAt > 0) {
+      const isHydrationGracePeriod =
+        this.raceSubscriptionStartedAt > 0 &&
+        now - this.raceSubscriptionStartedAt < 3000;
+      const gap = Math.round(now - this.lastRaceTimeReceivedAt);
+      if (gap > 450 && !isHydrationGracePeriod) {
+        const delayInfo =
+          dispatchDelay >= 0
+            ? `, browser dispatch delay: ${dispatchDelay}ms`
+            : "";
+        this.logger.warn(
+          `[PERF] RaceTime WebSocket interval lag: ${gap}ms (expected ~100ms${delayInfo})`,
+        );
+      }
+    }
+    this.lastRaceTimeReceivedAt = isTicking ? now : 0;
+    this.raceTimeSubject.next(raceTime);
+  }
+
+  private dispatchTelemetryUpdates(raceData: RaceData): void {
+    if (raceData.lap) {
+      this.lapSubject.next(raceData.lap);
+    }
+    if (raceData.standingsUpdate) {
+      this.standingsSubject.next(raceData.standingsUpdate);
+    }
+    if (raceData.overallStandingsUpdate) {
+      this.overallStandingsSubject.next(raceData.overallStandingsUpdate);
+    }
+    if (raceData.groupStandingsUpdate) {
+      this.groupStandingsSubject.next(raceData.groupStandingsUpdate);
+    }
+    if (raceData.carData) {
+      this.carDataSubject.next(raceData.carData);
+    }
+    if (raceData.segment) {
+      this.segmentSubject.next(raceData.segment);
+    }
+    if (raceData.flag) {
+      this.logger.debug("WS: Received RaceFlag", raceData.flag);
+      this.flagSubject.next(raceData.flag);
+    }
+    if (raceData.recordData) {
+      this.recordDataSubject.next(raceData.recordData);
+    }
+    if (raceData.heat) {
+      this.logger.debug("WS: Received Heat", raceData.heat);
+      this.heatSubject.next(raceData.heat);
+    }
+    if (raceData.systemState) {
+      this.systemStateSubject.next(raceData.systemState as SystemState);
+    }
   }
 
   public connectToRaceDataSocket() {
@@ -1717,6 +1814,7 @@ export class DataService {
     if (this.connectionIntent) params.push(`intent=${this.connectionIntent}`);
     if (params.length > 0) wsUrl += "?" + params.join("&");
 
+    this.isRaceDataSocketExplicitlyDisconnected = false;
     this.logger.debug(`Connecting to Race Data WebSocket: ${wsUrl}`);
     this.raceDataSocket = new WebSocket(wsUrl);
     this.raceDataSocket.binaryType = "arraybuffer";
@@ -1731,20 +1829,25 @@ export class DataService {
     };
 
     this.raceDataSocket.onmessage = (event) => {
-      this.ngZone.run(() => {
-        this.handleRaceDataMessage(event);
-      });
+      this.handleRaceDataMessage(event);
     };
 
     this.raceDataSocket.onclose = () => {
       this.logger.info(
-        "Race Data WebSocket closed. Reconnecting in 2 seconds...",
+        "Race Data WebSocket closed." +
+          (this.isRaceDataSocketExplicitlyDisconnected
+            ? ""
+            : " Reconnecting in 2 seconds..."),
       );
       this.socketConnectedSubject.next(false);
       this.raceDataSocket = undefined;
-      setTimeout(() => {
-        this.connectToRaceDataSocket();
-      }, 2000);
+      if (!this.isRaceDataSocketExplicitlyDisconnected) {
+        setTimeout(() => {
+          if (!this.isRaceDataSocketExplicitlyDisconnected) {
+            this.connectToRaceDataSocket();
+          }
+        }, 2000);
+      }
     };
 
     this.raceDataSocket.onerror = (err) => {
@@ -1844,6 +1947,23 @@ export class DataService {
       this.interfaceDataSocket.close();
       this.interfaceDataSocket = undefined;
     }
+  }
+
+  public disconnectFromRaceDataSocket() {
+    this.isRaceDataSocketExplicitlyDisconnected = true;
+    if (this.raceDataSocket) {
+      try {
+        this.raceDataSocket.close();
+      } catch (e) {
+        // Ignore
+      }
+      this.raceDataSocket = undefined;
+    }
+  }
+
+  public disconnectAllSockets() {
+    this.disconnectFromRaceDataSocket();
+    this.disconnectFromInterfaceDataSocket();
   }
 
   public getRaceTime(): Observable<IRaceTime> {

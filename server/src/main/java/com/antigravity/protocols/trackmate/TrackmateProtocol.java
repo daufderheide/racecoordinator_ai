@@ -9,7 +9,6 @@ import com.antigravity.protocols.AbstractSerialProtocol;
 import com.antigravity.protocols.arduino.ArduinoConfig;
 import com.antigravity.protocols.interfaces.ISerialConnection;
 import java.nio.charset.StandardCharsets;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
 public class TrackmateProtocol extends AbstractSerialProtocol {
@@ -37,10 +36,7 @@ public class TrackmateProtocol extends AbstractSerialProtocol {
       int numLanes,
       ISerialConnection serialConnection,
       ScheduledExecutorService statusScheduler) {
-    super(
-        numLanes,
-        serialConnection,
-        statusScheduler != null ? statusScheduler : Executors.newScheduledThreadPool(1));
+    super(numLanes, serialConnection, statusScheduler);
     this.config = config;
     logger.info("TrackmateProtocol initialized with {} lanes", numLanes);
   }

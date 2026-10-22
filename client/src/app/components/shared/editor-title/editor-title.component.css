@@ -74,6 +74,11 @@
   font-size: 1.25rem;
   font-weight: 600;
   text-transform: none;
+  --custom-select-max-height: calc(100vh - 80px);
+}
+
+.editor-title-select ::ng-deep .custom-select-dropdown {
+  max-height: calc(100vh - 80px);
 }
 
 .editor-title-select ::ng-deep .custom-select-trigger {

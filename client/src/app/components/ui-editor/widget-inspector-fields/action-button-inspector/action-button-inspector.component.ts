@@ -76,6 +76,10 @@ export class ActionButtonInspectorComponent {
         return "RD_MENU_MAIN_POWER_OFF";
       case "action-back":
         return "RD_MENU_BACK";
+      case "action-forward":
+        return "RD_MENU_FORWARD";
+      case "action-close":
+        return "RD_MENU_CLOSE";
       default:
         return "";
     }

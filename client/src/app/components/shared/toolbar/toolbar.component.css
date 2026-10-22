@@ -6,28 +6,29 @@
 
 .toolbar-btn {
   padding: 0;
-  width: 34px;
-  height: 34px;
-  min-width: 34px;
-  display: flex;
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  display: inline-flex;
   justify-content: center;
   align-items: center;
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s ease-in-out;
   background: transparent;
-  border: none;
-  color: #ffffff;
+  border: 1px solid transparent;
+  color: #94a3b8;
   font-family: inherit;
 }
 
 .toolbar-btn .material-icons {
-  font-size: 1.4rem;
+  font-size: 1.35rem;
 }
 
 .toolbar-btn:hover:not(:disabled) {
   background: rgba(255, 255, 255, 0.1);
-  transform: translateY(-2px);
+  color: #ffffff;
+  transform: translateY(-1px);
 }
 
 .toolbar-btn:disabled {
@@ -35,85 +36,92 @@
   cursor: not-allowed;
 }
 
-/* Specific button styles to match track manager */
+/* Specific button styles to match ghost icon standard */
 .toolbar-btn.ghost {
+  color: #94a3b8;
+}
+
+.toolbar-btn.ghost:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
   color: #ffffff;
 }
 
-.toolbar-btn.help {
-  color: #e0e0e0;
-}
-
-.toolbar-btn.help:hover:not(:disabled) {
-  background: rgba(0, 240, 255, 0.1);
-  color: #00f0ff;
-  text-shadow: 0 0 8px rgba(0, 240, 255, 0.8);
-}
-
 .toolbar-btn.danger {
-  background: rgba(239, 68, 68, 0.2);
+  background: transparent;
   color: #ef4444;
-  border: 1px solid rgba(239, 68, 68, 0.5);
+  border: 1px solid transparent;
 }
 
 .toolbar-btn.danger:hover:not(:disabled) {
-  background: rgba(239, 68, 68, 0.4);
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #ef4444;
 }
 
 .toolbar-btn.info {
-  background: rgba(14, 165, 233, 0.1);
-  color: #0ea5e9;
-  border: 1px solid rgba(14, 165, 233, 0.4);
+  background: transparent;
+  color: #38bdf8;
+  border: 1px solid transparent;
 }
 
 .toolbar-btn.info:hover:not(:disabled) {
-  background: rgba(14, 165, 233, 0.2);
-  border-color: rgba(14, 165, 233, 0.6);
+  background: rgba(56, 189, 248, 0.15);
+  border-color: rgba(56, 189, 248, 0.3);
+  color: #38bdf8;
 }
 
 .toolbar-btn.success {
-  background: rgba(16, 185, 129, 0.1);
+  background: transparent;
   color: #10b981;
-  border: 1px solid rgba(16, 185, 129, 0.4);
+  border: 1px solid transparent;
 }
 
 .toolbar-btn.success:hover:not(:disabled) {
-  background: rgba(16, 185, 129, 0.2);
-  border-color: rgba(16, 185, 129, 0.6);
+  background: rgba(16, 185, 129, 0.15);
+  border-color: rgba(16, 185, 129, 0.3);
+  color: #10b981;
 }
 
 .toolbar-btn.success.unequal {
-  background: rgba(239, 68, 68, 0.1);
+  background: transparent;
   color: #ef4444;
-  border: 1px solid rgba(239, 68, 68, 0.4);
+  border: 1px solid transparent;
 }
 
 .toolbar-btn.success.unequal:hover:not(:disabled) {
-  background: rgba(239, 68, 68, 0.2);
-  border-color: rgba(239, 68, 68, 0.6);
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+}
+
+.toolbar-btn.help {
+  background: transparent;
+  color: #f59e0b;
+  border: 1px solid transparent;
+}
+
+.toolbar-btn.help:hover:not(:disabled) {
+  background: rgba(245, 158, 11, 0.15);
+  border-color: rgba(245, 158, 11, 0.3);
+  color: #f59e0b;
 }
 
 .spacer {
   flex: 1;
 }
 
-.delete-x {
-  font-family: sans-serif;
-  font-weight: bold;
-  font-size: 1.2rem;
-}
-
 /* Undo/Redo specific */
 .toolbar-btn.undo,
 .toolbar-btn.redo {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: transparent;
+  border: 1px solid transparent;
+  color: #94a3b8;
 }
 
 .toolbar-btn.undo:hover:not(:disabled),
 .toolbar-btn.redo:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.2);
-  border-color: rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
 }
 
 .help-svg {
@@ -125,11 +133,13 @@
 .toolbar-utility-group {
   display: flex;
   align-items: center;
+  gap: 4px;
 }
 
 .toolbar-utility-group .toolbar-btn {
-  width: 26px;
-  min-width: 26px;
+  width: 32px;
+  min-width: 32px;
+  height: 32px;
 }
 
 /* Analytics Toggle */

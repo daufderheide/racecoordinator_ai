@@ -117,7 +117,11 @@ export function processLoadedEditorData(
   }
 
   const customUIs: CustomUI[] = (result.customUIs as CustomUI[]) || [];
-  ensureDefaultCustomUis(customUIs, editingSettings);
+  if (customUIs.length === 0) {
+    ensureDefaultCustomUis(customUIs, editingSettings);
+  } else {
+    normalizeLoadedCustomUis(customUIs);
+  }
 
   const initialState: UIEditorState = {
     settings: editingSettings,
@@ -134,6 +138,44 @@ export function processLoadedEditorData(
     track,
     initialState,
   };
+}
+
+export function normalizeLoadedCustomUis(customUIs: CustomUI[]): void {
+  const hasFuelUi = customUIs.some(
+    (u: any) => u.entity_id === "default_fuel_ui_layout_rc_ai",
+  );
+  if (!hasFuelUi) {
+    const legacyFuelUi = customUIs.find(
+      (u: any) =>
+        u.entity_id === "2" && (u.is_default || isLegacyFuelUiName(u.name)),
+    );
+    if (legacyFuelUi) {
+      legacyFuelUi.entity_id = "default_fuel_ui_layout_rc_ai";
+      (legacyFuelUi as any)._id = "default_fuel_ui_layout_rc_ai";
+      if (isLegacyFuelUiName(legacyFuelUi.name)) {
+        legacyFuelUi.name = "RaceCoordinator AI (Fuel)";
+      }
+    }
+  }
+
+  for (const ui of customUIs) {
+    if (
+      ui.entity_id === "default_ui_layout_rc_ai" &&
+      isLegacyRacedayUiName(ui.name)
+    ) {
+      ui.name = "RaceCoordinator AI";
+    } else if (
+      ui.entity_id === "practice_ui_layout_rc_ai" &&
+      isLegacyPracticeUiName(ui.name)
+    ) {
+      ui.name = "RaceCoordinator AI (Practice)";
+    } else if (
+      ui.entity_id === "default_fuel_ui_layout_rc_ai" &&
+      isLegacyFuelUiName(ui.name)
+    ) {
+      ui.name = "RaceCoordinator AI (Fuel)";
+    }
+  }
 }
 
 export function normalizeLoadedThemes(themes: Theme[]): void {

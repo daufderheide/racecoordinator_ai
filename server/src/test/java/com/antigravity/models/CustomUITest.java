@@ -69,19 +69,19 @@ public class CustomUITest {
 
     assertTrue(defaultUi.getLayoutJson().contains("widget-countdown"));
     assertTrue(defaultUi.getLayoutJson().contains("\"glowEffect\":true"));
-    assertTrue(defaultUi.getLayoutJson().contains("\"glowOverlap\":100"));
-    assertTrue(defaultUi.getLayoutJson().contains("\"glowRedOverlap\":100"));
-    assertTrue(defaultUi.getLayoutJson().contains("\"glowGreenOverlap\":100"));
+    assertTrue(defaultUi.getLayoutJson().contains("\"glowOverlap\":30"));
+    assertTrue(defaultUi.getLayoutJson().contains("\"glowRedOverlap\":30"));
+    assertTrue(defaultUi.getLayoutJson().contains("\"glowGreenOverlap\":25"));
     assertTrue(practiceUi.getLayoutJson().contains("widget-countdown"));
     assertTrue(practiceUi.getLayoutJson().contains("\"glowEffect\":true"));
-    assertTrue(practiceUi.getLayoutJson().contains("\"glowOverlap\":100"));
-    assertTrue(practiceUi.getLayoutJson().contains("\"glowRedOverlap\":100"));
-    assertTrue(practiceUi.getLayoutJson().contains("\"glowGreenOverlap\":100"));
+    assertTrue(practiceUi.getLayoutJson().contains("\"glowOverlap\":30"));
+    assertTrue(practiceUi.getLayoutJson().contains("\"glowRedOverlap\":30"));
+    assertTrue(practiceUi.getLayoutJson().contains("\"glowGreenOverlap\":25"));
     assertTrue(fuelUi.getLayoutJson().contains("widget-countdown"));
     assertTrue(fuelUi.getLayoutJson().contains("\"glowEffect\":true"));
-    assertTrue(fuelUi.getLayoutJson().contains("\"glowOverlap\":100"));
-    assertTrue(fuelUi.getLayoutJson().contains("\"glowRedOverlap\":100"));
-    assertTrue(fuelUi.getLayoutJson().contains("\"glowGreenOverlap\":100"));
+    assertTrue(fuelUi.getLayoutJson().contains("\"glowOverlap\":30"));
+    assertTrue(fuelUi.getLayoutJson().contains("\"glowRedOverlap\":30"));
+    assertTrue(fuelUi.getLayoutJson().contains("\"glowGreenOverlap\":25"));
   }
 
   @Test
@@ -92,19 +92,40 @@ public class CustomUITest {
     assertTrue(backfilled.contains("widget-countdown"));
     assertTrue(backfilled.contains("\"widgetType\":\"countdown\""));
     assertTrue(backfilled.contains("\"orientation\":\"horizontal\""));
+    assertTrue(backfilled.contains("\"maxLamps\":5"));
+    assertTrue(backfilled.contains("\"fadeIn\":true"));
     assertTrue(backfilled.contains("\"glowEffect\":true"));
-    assertTrue(backfilled.contains("\"glowOverlap\":100"));
-    assertTrue(backfilled.contains("\"glowRedOverlap\":100"));
-    assertTrue(backfilled.contains("\"glowGreenOverlap\":100"));
+    assertTrue(backfilled.contains("\"glowOverlap\":30"));
+    assertTrue(backfilled.contains("\"glowRedOverlap\":30"));
+    assertTrue(backfilled.contains("\"glowGreenOverlap\":25"));
 
-    // Existing countdown widget without glowEffect backfills glowEffect and glowOverlap
+    // Existing countdown widget without glowEffect backfills glowEffect, maxLamps, fadeIn and
+    // glowOverlap
     String layoutWithOldCountdown =
-        "{\"widgets\":[{\"id\":\"widget-countdown\",\"widgetType\":\"countdown\",\"customSettings\":{\"lampScale\":1.0}}]}";
+        "{\"widgets\":[{\"id\":\"widget-countdown\",\"widgetType\":\"countdown\",\"customSettings\":{\"lampScale\":1.0,\"previewLampCount\":7}}]}";
     String backfilledExisting = CustomUI.ensureCountdownWidget(layoutWithOldCountdown);
+    assertTrue(backfilledExisting.contains("\"maxLamps\":7"));
+    assertTrue(backfilledExisting.contains("\"fadeIn\":true"));
     assertTrue(backfilledExisting.contains("\"glowEffect\":true"));
-    assertTrue(backfilledExisting.contains("\"glowOverlap\":100"));
-    assertTrue(backfilledExisting.contains("\"glowRedOverlap\":100"));
-    assertTrue(backfilledExisting.contains("\"glowGreenOverlap\":100"));
+    assertTrue(backfilledExisting.contains("\"glowOverlap\":30"));
+    assertTrue(backfilledExisting.contains("\"glowRedOverlap\":30"));
+    assertTrue(backfilledExisting.contains("\"glowGreenOverlap\":25"));
+
+    // Existing countdown widget with old default overlap (100) backfills to 30 and 25
+    String layoutWithDefault100 =
+        "{\"widgets\":[{\"id\":\"widget-countdown\",\"widgetType\":\"countdown\",\"customSettings\":{\"glowOverlap\":100,\"glowRedOverlap\":100,\"glowGreenOverlap\":100}}]}";
+    String backfilled100 = CustomUI.ensureCountdownWidget(layoutWithDefault100);
+    assertTrue(backfilled100.contains("\"glowOverlap\":30"));
+    assertTrue(backfilled100.contains("\"glowRedOverlap\":30"));
+    assertTrue(backfilled100.contains("\"glowGreenOverlap\":25"));
+
+    // Existing countdown widget with custom overlap (e.g. 45 and 55) is preserved
+    String layoutWithCustom =
+        "{\"widgets\":[{\"id\":\"widget-countdown\",\"widgetType\":\"countdown\",\"customSettings\":{\"glowOverlap\":45,\"glowRedOverlap\":45,\"glowGreenOverlap\":55}}]}";
+    String preservedCustom = CustomUI.ensureCountdownWidget(layoutWithCustom);
+    assertTrue(preservedCustom.contains("\"glowOverlap\":45"));
+    assertTrue(preservedCustom.contains("\"glowRedOverlap\":45"));
+    assertTrue(preservedCustom.contains("\"glowGreenOverlap\":55"));
 
     // Calling again should not duplicate
     String alreadyPresent = CustomUI.ensureCountdownWidget(backfilled);

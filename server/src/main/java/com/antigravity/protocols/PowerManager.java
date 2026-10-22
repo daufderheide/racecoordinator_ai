@@ -45,6 +45,9 @@ public class PowerManager {
   private boolean isWarmup = false;
 
   public void setWarmup(boolean warmup) {
+    if (this.isWarmup != warmup) {
+      logger.info("PowerManager.setWarmup: warmup changed from {} to {}", this.isWarmup, warmup);
+    }
     this.isWarmup = warmup;
   }
 
@@ -66,7 +69,13 @@ public class PowerManager {
         if (state.firstMainPower || state.currentMainPower != targetMainPower) {
           protocol.setMainPower(targetMainPower);
           state.firstMainPower = false;
-          logger.info("Main Power set to {} for protocol {}", targetMainPower ? "ON" : "OFF", i);
+          logger.info(
+              "Main Power set to {} for protocol {} (targetMainPower={}, isWarmup={}, requestedOn={})",
+              targetMainPower ? "ON" : "OFF",
+              i,
+              targetMainPower,
+              isWarmup,
+              on);
         }
       }
       state.currentMainPower = isWarmup || on;

@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { MOCK_RACES } from "@app/testing/data/races_data";
 import { TestSetupHelper } from "@app/testing/test-setup_helper";
 
 import { RaceEditorHarnessE2e } from "./testing/race-editor.harness.e2e";
@@ -66,7 +67,7 @@ test.describe("Race Editor Visuals", () => {
   async function enterEditMode(page: any) {
     await page.locator("#edit-track-btn").click();
     await expect(page.locator("#race-name-input")).toBeEnabled();
-    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+    await TestSetupHelper.blurActiveElement(page);
     await TestSetupHelper.disableAnimations(page);
   }
 
@@ -205,7 +206,11 @@ test.describe("Race Editor Visuals", () => {
           body: JSON.stringify("Internal Server Error"),
         });
       } else {
-        await route.continue();
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify(MOCK_RACES),
+        });
       }
     });
 

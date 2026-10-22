@@ -194,8 +194,13 @@ public class ArduinoProtocolTest {
   }
 
   private void setupAnalogLedPins() {
+    setupAnalogLedPins(false);
+  }
+
+  private void setupAnalogLedPins(boolean activeLowAnalogLeds) {
     ArduinoConfig newConfig = new ArduinoConfig();
     newConfig.commPort = "COM1";
+    newConfig.activeLowAnalogLeds = activeLowAnalogLeds;
     for (int i = 0; i < 11; i++) {
       newConfig.digitalIds.add(PinBehavior.BEHAVIOR_UNUSED_VALUE);
     }
@@ -208,6 +213,7 @@ public class ArduinoProtocolTest {
     newConfig.digitalIds.set(8, PinBehavior.BEHAVIOR_ANALOG_LED_COUNTDOWN_5_VALUE);
     newConfig.digitalIds.set(9, PinBehavior.BEHAVIOR_ANALOG_LED_HEAT_LEADER_BASE_VALUE);
     newConfig.digitalIds.set(10, PinBehavior.BEHAVIOR_ANALOG_LED_HEAT_LEADER_BASE_VALUE + 1);
+    this.config = newConfig;
     protocol = new TestableArduinoProtocol(newConfig, 2, scheduler, serialConnection);
     protocol.open();
 
@@ -263,9 +269,18 @@ public class ArduinoProtocolTest {
     // Countdown is at 5
     protocol.setRaceState(RaceState.STARTING, RaceFlag.RED, 5.0);
     assertPinState(2, false); // Green OFF
-    assertPinState(3, true); // Yellow ON
+    assertPinState(3, false); // Yellow OFF
     assertPinState(8, true);
     assertPinState(7, false);
+  }
+
+  @Test
+  public void testAnalogLed_StartingState_RestartCountdown() {
+    setupAnalogLedPins();
+    // Restart countdown from paused heat with YELLOW flag
+    protocol.setRaceState(RaceState.STARTING, RaceFlag.YELLOW, 3.0);
+    assertPinState(2, false); // Green OFF
+    assertPinState(3, false); // Yellow OFF during countdown
   }
 
   @Test
@@ -278,12 +293,21 @@ public class ArduinoProtocolTest {
   }
 
   @Test
+  public void testAnalogLed_PausedState() {
+    setupAnalogLedPins();
+    protocol.setRaceState(RaceState.PAUSED, RaceFlag.YELLOW, 0);
+    assertPinState(2, false); // Green OFF
+    assertPinState(3, true); // Yellow ON
+    assertPinState(4, false); // Countdowns OFF
+  }
+
+  @Test
   public void testAnalogLed_OtherStates() {
     setupAnalogLedPins();
     // Any other state e.g. HEAT_OVER
     protocol.setRaceState(RaceState.HEAT_OVER, RaceFlag.YELLOW, 0);
     assertPinState(2, false); // Green OFF
-    assertPinState(3, true); // Yellow ON
+    assertPinState(3, false); // Yellow OFF
     assertPinState(4, false); // Countdowns OFF
   }
 
@@ -326,6 +350,38 @@ public class ArduinoProtocolTest {
     protocol.initializeHardwareState();
     assertPinState(9, false);
     assertPinState(10, false);
+  }
+
+  @Test
+  public void testAnalogLed_ActiveLow_RedFlag() {
+    setupAnalogLedPins(true);
+    protocol.setRaceState(RaceState.NOT_STARTED, RaceFlag.RED, 0);
+    // Green/Yellow OFF -> Active Low means driven HIGH (5V)
+    assertPinState(2, true);
+    assertPinState(3, true);
+    // Countdowns ON -> Active Low means driven LOW (0V)
+    assertPinState(4, false);
+    assertPinState(5, false);
+    assertPinState(6, false);
+    assertPinState(7, false);
+    assertPinState(8, false);
+  }
+
+  @Test
+  public void testSetPinState_ActiveLowAnalogLed_ConfigPage() {
+    setupAnalogLedPins(true);
+    protocol.clearPinStateCache();
+    serialConnection.allWrittenData.clear();
+
+    // Pin D2 is Green Flag (Analog LED). Requesting ON (isHigh=true) should output LOW (0V).
+    protocol.setPinState(true, 2, true);
+    assertPinState(2, false);
+
+    // Requesting OFF (isHigh=false) should output HIGH (5V).
+    protocol.clearPinStateCache();
+    serialConnection.allWrittenData.clear();
+    protocol.setPinState(true, 2, false);
+    assertPinState(2, true);
   }
 
   private static class TestableArduinoProtocol extends ArduinoProtocol {
@@ -530,6 +586,26 @@ public class ArduinoProtocolTest {
       }
     }
     assertTrue("Should have synchronized power after NC setting change", foundPower);
+  }
+
+  @Test
+  public void testUpdateConfig_ActiveLowAnalogLeds_SynchronizesLeds() {
+    setupAnalogLedPins(false);
+    protocol.setRaceState(RaceState.NOT_STARTED, RaceFlag.RED, 0);
+    // Green (pin 2) is OFF -> 0V (LOW)
+    assertPinState(2, false);
+
+    serialConnection.allWrittenData.clear();
+    protocol.clearPinStateCache();
+
+    ArduinoConfig newConfig = new ArduinoConfig();
+    newConfig.commPort = "COM1";
+    newConfig.activeLowAnalogLeds = true;
+    newConfig.digitalIds = new ArrayList<>(config.digitalIds);
+    protocol.updateConfig(newConfig);
+
+    // After updating to activeLowAnalogLeds=true, Green (OFF) should now be driven 5V (HIGH)
+    assertPinState(2, true);
   }
 
   @Test
@@ -2628,5 +2704,64 @@ public class ArduinoProtocolTest {
           "Version should be rejected: " + ver[1] + "." + ver[2] + "." + ver[3], p.isOpen());
       p.close();
     }
+  }
+
+  @Test
+  public void testUnexpectedVersionWhenAlreadyVerified_ReinitializesPins() {
+    protocol.open();
+    byte[] versionMsg = {0x56, 2, 1, 0, 0, 0x3B};
+    serialConnection.injectData(versionMsg);
+    assertTrue("Should be verified and open", protocol.isOpen());
+
+    serialConnection.allWrittenData.clear();
+
+    // Inject version again (simulating Arduino reboot while port remained open)
+    serialConnection.injectData(versionMsg);
+
+    boolean hasPinModeRead =
+        serialConnection.allWrittenData.stream()
+            .anyMatch(data -> data.length > 1 && data[0] == 0x50 && data[1] == 0x49);
+    boolean hasPinModeWrite =
+        serialConnection.allWrittenData.stream()
+            .anyMatch(data -> data.length > 1 && data[0] == 0x50 && data[1] == 0x4F);
+    boolean hasTimeReset =
+        serialConnection.allWrittenData.stream()
+            .anyMatch(data -> data.length == 2 && data[0] == 0x54 && data[1] == 0x3B);
+
+    assertTrue("Should re-send pinModeRead on unexpected version", hasPinModeRead);
+    assertTrue("Should re-send pinModeWrite on unexpected version", hasPinModeWrite);
+    assertTrue("Should re-send time reset on unexpected version", hasTimeReset);
+  }
+
+  @Test
+  public void testUnexpectedHeartbeatResetFlag_ReinitializesPins() {
+    protocol.open();
+    byte[] versionMsg = {0x56, 2, 1, 0, 0, 0x3B};
+    serialConnection.injectData(versionMsg);
+    assertTrue("Should be verified and open", protocol.isOpen());
+
+    // Send initial heartbeat to satisfy expected reset (setting hwReset to 0)
+    byte[] initialHeartbeat = {0x54, 0, 0, 1, 0, 1, 0x3B};
+    serialConnection.injectData(initialHeartbeat);
+
+    serialConnection.allWrittenData.clear();
+
+    // Inject unexpected heartbeat with isReset = 1 while running normally
+    byte[] resetHeartbeat = {0x54, 0, 0, 2, 0, 1, 0x3B};
+    serialConnection.injectData(resetHeartbeat);
+
+    boolean hasPinModeRead =
+        serialConnection.allWrittenData.stream()
+            .anyMatch(data -> data.length > 1 && data[0] == 0x50 && data[1] == 0x49);
+    boolean hasPinModeWrite =
+        serialConnection.allWrittenData.stream()
+            .anyMatch(data -> data.length > 1 && data[0] == 0x50 && data[1] == 0x4F);
+    boolean hasTimeReset =
+        serialConnection.allWrittenData.stream()
+            .anyMatch(data -> data.length == 2 && data[0] == 0x54 && data[1] == 0x3B);
+
+    assertTrue("Should re-send pinModeRead on reset heartbeat", hasPinModeRead);
+    assertTrue("Should re-send pinModeWrite on reset heartbeat", hasPinModeWrite);
+    assertTrue("Should re-send time reset on reset heartbeat", hasTimeReset);
   }
 }

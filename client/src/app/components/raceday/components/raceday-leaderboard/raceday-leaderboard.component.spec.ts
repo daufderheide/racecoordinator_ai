@@ -19,6 +19,9 @@ describe("RacedayLeaderboardComponent", () => {
         if (params && params.group !== undefined) {
           return `${key} ${params.group}`;
         }
+        if (key === "RD_WIN_LEADER_BOARD") {
+          return "Leader Board";
+        }
         return key;
       },
     );
@@ -44,9 +47,20 @@ describe("RacedayLeaderboardComponent", () => {
     expect(component).toBeTruthy();
   });
 
-  it("should render empty leaderboard initially", async () => {
+  it("should render empty leaderboard initially with localized title", async () => {
     expect(await harness.getTitle()).toBe("Leader Board");
     expect(await harness.getEntryCount()).toBe(0);
+  });
+
+  it("should localize leaderboard title using RD_WIN_LEADER_BOARD key across languages", async () => {
+    mockTranslationService.translate.and.callFake((key: string) => {
+      if (key === "RD_WIN_LEADER_BOARD") {
+        return "Rangliste";
+      }
+      return key;
+    });
+    fixture.detectChanges();
+    expect(await harness.getTitle()).toBe("Rangliste");
   });
 
   it("should sort and display leaderboard entries correctly", async () => {

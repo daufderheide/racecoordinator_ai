@@ -345,6 +345,11 @@ export class RacedayHeatDriversComponent implements AfterViewInit, OnDestroy {
   }
 
   trackByDriver(index: number, hd: DriverHeatData): string {
-    return hd.driver?.entity_id || String(index);
+    const lane = hd.laneIndex ?? index;
+    const driverId = hd.driver?.entity_id;
+    if (driverId && driverId !== "EMPTY_LANE") {
+      return `${lane}-${driverId}`;
+    }
+    return `lane-${lane}`;
   }
 }

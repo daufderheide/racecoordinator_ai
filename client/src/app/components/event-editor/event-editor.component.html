@@ -11,9 +11,14 @@
     [showEdit]="true"
     [showAdd]="true"
     [showCopy]="true"
-    [showDelete]="existingEvents.length > 1"
+    [showDelete]="true"
     [disabledCopy]="!isConfigValid() || isSaving"
-    [disabledDelete]="!editingEvent || isSaving || existingEvents.length <= 1"
+    [disabledDelete]="
+      !editingEvent ||
+      isSaving ||
+      !editingEvent.entity_id ||
+      editingEvent.entity_id === 'new'
+    "
     [undoManager]="undoManager"
     [isSaving]="isSaving"
     [helpSteps]="getHelpSteps()"
@@ -222,4 +227,15 @@
   [cancelText]="'COMMON_CANCEL' | translate"
   (confirm)="onConfirmDiscard()"
   (cancel)="onCancelDiscard()"
+></app-confirmation-modal>
+
+<!-- Delete Event Confirmation -->
+<app-confirmation-modal
+  [visible]="showDeleteConfirm"
+  title="EE_CONFIRM_DELETE_TITLE"
+  message="EE_CONFIRM_DELETE"
+  confirmText="CD_YES"
+  cancelText="CD_NO"
+  (confirm)="onConfirmDelete()"
+  (cancel)="onCancelDelete()"
 ></app-confirmation-modal>

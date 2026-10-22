@@ -86,7 +86,13 @@ public class LogReplayService {
   public void start() {
     if (isRunning) return;
     isRunning = true;
-    executorService = Executors.newSingleThreadExecutor();
+    executorService =
+        Executors.newSingleThreadExecutor(
+            r -> {
+              Thread t = new Thread(r, "LogReplayService");
+              t.setDaemon(true);
+              return t;
+            });
     executorService.submit(this::replayLoop);
     logger.info("LogReplayService started for file: {}", logFilePath);
   }

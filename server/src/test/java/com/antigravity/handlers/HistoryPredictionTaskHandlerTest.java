@@ -573,4 +573,49 @@ public class HistoryPredictionTaskHandlerTest {
     org.junit.Assert.assertEquals(
         0.75, updated.getHeats().get(0).getDrivers().get(0).getUserLaps(), 0.001);
   }
+
+  @Test
+  public void testConcurrentGetRacePredictionRecordDeduplication() throws Exception {
+    com.antigravity.models.Race raceModel =
+        new com.antigravity.models.Race.Builder()
+            .withName("DeduplicationTest")
+            .withEntityId("dedup_race_id")
+            .build();
+    com.antigravity.models.Driver driver =
+        new com.antigravity.models.Driver.Builder().withName("D1").withEntityId("d1").build();
+    com.antigravity.race.RaceParticipant p1 = new com.antigravity.race.RaceParticipant(driver);
+    com.antigravity.race.DriverHeatData dhd = new com.antigravity.race.DriverHeatData(p1);
+    com.antigravity.race.Heat heat =
+        new com.antigravity.race.Heat(1, java.util.Collections.singletonList(dhd), false);
+
+    com.antigravity.race.Race mockActiveRace = mock(com.antigravity.race.Race.class);
+    when(mockActiveRace.getRaceModel()).thenReturn(raceModel);
+    when(mockActiveRace.getDrivers()).thenReturn(java.util.Collections.singletonList(p1));
+    when(mockActiveRace.getHeats()).thenReturn(java.util.Collections.singletonList(heat));
+    when(mockActiveRace.getCurrentHeat()).thenReturn(heat);
+    when(mockActiveRace.isDemoMode()).thenReturn(true);
+    when(mockActiveRace.getState()).thenReturn(new com.antigravity.race.states.NotStarted());
+
+    com.antigravity.race.ClientSubscriptionManager.getInstance().setRace(mockActiveRace);
+
+    Context ctx1 = mock(Context.class);
+    when(ctx1.pathParam("id")).thenReturn("dedup_race_id");
+    when(ctx1.queryParam("isDemo")).thenReturn("true");
+
+    Context ctx2 = mock(Context.class);
+    when(ctx2.pathParam("id")).thenReturn("dedup_race_id");
+    when(ctx2.queryParam("isDemo")).thenReturn("true");
+
+    java.util.concurrent.ExecutorService pool =
+        java.util.concurrent.Executors.newFixedThreadPool(2);
+    java.util.concurrent.Future<?> f1 = pool.submit(() -> handler.getRacePredictionRecord(ctx1));
+    java.util.concurrent.Future<?> f2 = pool.submit(() -> handler.getRacePredictionRecord(ctx2));
+
+    f1.get(5, java.util.concurrent.TimeUnit.SECONDS);
+    f2.get(5, java.util.concurrent.TimeUnit.SECONDS);
+    pool.shutdown();
+
+    verify(ctx1).json(any(RacePredictionRecord.class));
+    verify(ctx2).json(any(RacePredictionRecord.class));
+  }
 }

@@ -75,6 +75,10 @@
   transition: background 0.15s ease, color 0.15s ease;
 }
 
+.close-btn .material-icons {
+  font-size: 20px;
+}
+
 .close-btn:hover {
   background: rgba(255, 255, 255, 0.1);
   color: #f8fafc;
@@ -134,6 +138,13 @@
   cursor: pointer;
   padding: 4px;
   border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.clear-search-btn .material-icons {
+  font-size: 16px;
 }
 
 .clear-search-btn:hover {

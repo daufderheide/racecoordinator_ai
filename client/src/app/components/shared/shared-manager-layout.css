@@ -259,12 +259,29 @@
 
 .action-btn.icon-only {
   padding: 0;
-  width: 34px;
-  height: 34px;
-  min-width: 34px;
-  display: flex;
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  display: inline-flex;
   justify-content: center;
   align-items: center;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: #94a3b8;
+  transition: all 0.2s ease-in-out;
+}
+
+.action-btn.icon-only:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #f8fafc;
+  transform: translateY(-1px);
+}
+
+.action-btn.icon-only.danger:hover {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #ef4444;
 }
 
 .action-btn.ghost {

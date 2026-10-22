@@ -44,15 +44,18 @@ public class ThemeTaskHandler {
         migrateAndCheckTheme(t, foundFlags);
       }
 
-      if (!foundFlags[0]) {
+      if (!foundFlags[0]
+          && !databaseContext.isDefaultArtifactDeleted("theme", Theme.DEFAULT_THEME_ID)) {
         createAndSaveFactoryTheme(
             Theme.DEFAULT_THEME_ID, "RaceCoordinator AI", CustomUI.DEFAULT_UI_ID);
       }
-      if (!foundFlags[1]) {
+      if (!foundFlags[1]
+          && !databaseContext.isDefaultArtifactDeleted("theme", Theme.PRACTICE_THEME_ID)) {
         createAndSaveFactoryTheme(
             Theme.PRACTICE_THEME_ID, "RaceCoordinator AI (Practice)", CustomUI.PRACTICE_UI_ID);
       }
-      if (!foundFlags[2]) {
+      if (!foundFlags[2]
+          && !databaseContext.isDefaultArtifactDeleted("theme", Theme.FUEL_THEME_ID)) {
         createAndSaveFactoryTheme(
             Theme.FUEL_THEME_ID, "RaceCoordinator AI (Fuel)", CustomUI.FUEL_UI_ID);
       }
@@ -124,7 +127,7 @@ public class ThemeTaskHandler {
         uiId = CustomUI.DEFAULT_UI_ID;
         updated = true;
       }
-      if (Theme.isLegacyDefaultName(name)) {
+      if (Theme.isLegacyDefaultName(name) && !Theme.DEFAULT_THEME_NAME.equals(name)) {
         name = Theme.DEFAULT_THEME_NAME;
         updated = true;
       }
@@ -135,7 +138,7 @@ public class ThemeTaskHandler {
         uiId = CustomUI.PRACTICE_UI_ID;
         updated = true;
       }
-      if (Theme.isLegacyPracticeName(name)) {
+      if (Theme.isLegacyPracticeName(name) && !Theme.PRACTICE_THEME_NAME.equals(name)) {
         name = Theme.PRACTICE_THEME_NAME;
         updated = true;
       }
@@ -146,7 +149,7 @@ public class ThemeTaskHandler {
         uiId = CustomUI.FUEL_UI_ID;
         updated = true;
       }
-      if (Theme.isLegacyFuelName(name)) {
+      if (Theme.isLegacyFuelName(name) && !Theme.FUEL_THEME_NAME.equals(name)) {
         name = Theme.FUEL_THEME_NAME;
         updated = true;
       }
@@ -410,6 +413,25 @@ public class ThemeTaskHandler {
       }
 
       themeRepository.save(theme);
+      if (Theme.DEFAULT_THEME_ID.equals(theme.getEntityId())
+          || Theme.DEFAULT_THEME_NAME.equalsIgnoreCase(theme.getName())) {
+        databaseContext.clearDefaultArtifactDeleted("theme", Theme.DEFAULT_THEME_ID);
+        databaseContext.clearDefaultArtifactDeleted("theme", Theme.DEFAULT_THEME_NAME);
+      } else if (Theme.PRACTICE_THEME_ID.equals(theme.getEntityId())
+          || Theme.PRACTICE_THEME_NAME.equalsIgnoreCase(theme.getName())) {
+        databaseContext.clearDefaultArtifactDeleted("theme", Theme.PRACTICE_THEME_ID);
+        databaseContext.clearDefaultArtifactDeleted("theme", Theme.PRACTICE_THEME_NAME);
+      } else if (Theme.FUEL_THEME_ID.equals(theme.getEntityId())
+          || Theme.FUEL_THEME_NAME.equalsIgnoreCase(theme.getName())) {
+        databaseContext.clearDefaultArtifactDeleted("theme", Theme.FUEL_THEME_ID);
+        databaseContext.clearDefaultArtifactDeleted("theme", Theme.FUEL_THEME_NAME);
+      }
+      if (theme.getEntityId() != null) {
+        databaseContext.clearDefaultArtifactDeleted("theme", theme.getEntityId());
+      }
+      if (theme.getName() != null) {
+        databaseContext.clearDefaultArtifactDeleted("theme", theme.getName());
+      }
       setStatus(ctx, 201);
       setJson(ctx, theme);
     } catch (Exception e) {
@@ -482,6 +504,24 @@ public class ThemeTaskHandler {
       }
 
       themeRepository.delete(id);
+      if (Theme.DEFAULT_THEME_ID.equals(id)
+          || Theme.PRACTICE_THEME_ID.equals(id)
+          || Theme.FUEL_THEME_ID.equals(id)
+          || "2".equals(id)
+          || theme.isDefault()) {
+        databaseContext.markDefaultArtifactDeleted("theme", id);
+        if (Theme.DEFAULT_THEME_ID.equals(id) || Theme.isLegacyDefaultName(theme.getName())) {
+          databaseContext.markDefaultArtifactDeleted("theme", Theme.DEFAULT_THEME_ID);
+        }
+        if (Theme.PRACTICE_THEME_ID.equals(id) || Theme.isLegacyPracticeName(theme.getName())) {
+          databaseContext.markDefaultArtifactDeleted("theme", Theme.PRACTICE_THEME_ID);
+        }
+        if (Theme.FUEL_THEME_ID.equals(id)
+            || "2".equals(id)
+            || Theme.isLegacyFuelName(theme.getName())) {
+          databaseContext.markDefaultArtifactDeleted("theme", Theme.FUEL_THEME_ID);
+        }
+      }
 
       Race activeRace = ClientSubscriptionManager.getInstance().getRace();
       if (activeRace != null

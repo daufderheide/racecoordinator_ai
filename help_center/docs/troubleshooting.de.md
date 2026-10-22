@@ -1,6 +1,67 @@
 # Fehlerbehebung
 
+## Verbindungsprobleme
+
+### USB-Schnittstellen-Ruhezustand & Verbindungsabbrüche zwischen den Heats (Selektives Energiesparen) {: #usb-sleep-prevention }
+- **Symptom**: In den Pausen zwischen den Heats, beim Umsetzen der Spuren oder nach längerem Stillstand bricht die Verbindung zur Schnittstelle (Phidget, Arduino, Trackmate oder USB-Seriell-Adapter) ab. Sobald das nächste Rennen startet oder Autos die Sensoren auslösen, verbindet sich die Schnittstelle wieder und es erscheint der Hinweis: *"Schnittstelle verbunden: Die Verbindung zur Schnittstelle wurde wiederhergestellt."*
+- **Ursache**: Moderne Betriebssysteme (Windows, macOS und Linux) verfügen über aggressive Energiesparmechanismen für USB-Controller und Human Interface Devices (HID). Obwohl Race Coordinator AI den Ruhezustand des Gesamtsystems verhindert, schaltet das Betriebssystem ungenutzte USB-Ports, USB-Root-Hubs und HID-Geräte bei Inaktivität selbstständig ab (USB Selective Suspend), wenn kurzzeitig keine Sensordaten übertragen werden.
+- **Warum dies softwareseitig nicht automatisch abgeschaltet werden kann**: Das Hardware-Energiemanagement wird direkt vom Betriebssystem-Kernel gesteuert. Unter Windows erfordert das Ändern der Geräteeinstellungen Administratorrechte (UAC) und Eingriffe in geschützte Registrierungsschlüssel (`HKLM`). Anwendungen dürfen und können dies nicht ohne Weiteres eigenständig ändern, um Konflikte mit anderen Geräten (wie Tastaturen, Mäusen oder Bluetooth-Adaptern) zu vermeiden.
+- **Lösung nach Betriebssystem**:
+
+#### Windows 10 & Windows 11 (Empfohlene dauerhafte Lösung)
+
+##### 1. Energiesparen für USB- und HID-Geräte im Geräte-Manager deaktivieren
+1. Klicken Sie mit der rechten Maustaste auf das **Start**-Symbol (oder drücken Sie `Win + X`) und wählen Sie den **Geräte-Manager**.
+2. Erweitern Sie die Kategorie **Eingabegeräte (Human Interface Devices)**:
+    - Suchen Sie nach den **USB-Eingabegerät**-Einträgen Ihrer Schnittstelle.
+    - Klicken Sie mit der rechten Maustaste auf den Eintrag, wählen Sie **Eigenschaften** und wechseln Sie zum Reiter **Energieverwaltung**.
+    - **Deaktivieren Sie das Häkchen** bei *"Computer kann das Gerät ausschalten, um Energie zu sparen"* und bestätigen Sie mit **OK**.
+3. Erweitern Sie die Kategorie **USB-Controller (Universal Serial Bus controllers)**:
+    - Klicken Sie mit der rechten Maustaste auf jeden **USB-Root-Hub** und **Generischen USB-Hub**, wählen Sie **Eigenschaften** und wechseln Sie zur **Energieverwaltung**.
+    - **Deaktivieren Sie das Häkchen** bei *"Computer kann das Gerät ausschalten, um Energie zu sparen"* und klicken Sie auf **OK**.
+4. (Für Arduino / Seriell): Erweitern Sie **Anschlüsse (COM & LPT)**:
+    - Klicken Sie mit der rechten Maustaste auf Ihren COM-Port (z. B. *Arduino Uno*, *USB-Seriell-Anschluss*), wählen Sie **Eigenschaften** und deaktivieren Sie im Reiter **Energieverwaltung** (falls vorhanden) die Option *"Computer kann das Gerät ausschalten, um Energie zu sparen"*.
+
+##### 2. Selektives USB-Energiesparen in den Windows-Energieoptionen deaktivieren
+1. Öffnen Sie die Windows-**Systemsteuerung** und navigieren Sie zu den **Energieoptionen** (oder drücken Sie `Win + R`, geben Sie `powercfg.cpl` ein und drücken Sie Enter).
+2. Klicken Sie neben Ihrem aktiven Energiesparplan auf **Energiesparplaneinstellungen ändern**.
+3. Klicken Sie auf **Erweiterte Energieeinstellungen ändern**.
+4. Erweitern Sie **USB-Einstellungen** -> **Einstellung für selektives USB-Energiesparen**.
+5. Setzen Sie die Einstellungen für **Auf Akku** und **Netzbetrieb** auf **Deaktiviert**.
+6. Klicken Sie auf **Übernehmen** und **OK**.
+
+---
+
+#### Linux & Raspberry Pi OS
+
+##### 1. Kernel-USB-Autosuspend deaktivieren
+Standardmäßig schaltet der Linux-Kernel inaktive USB-Geräte nach 2 Sekunden ab:
+- **Unter Ubuntu, Debian oder Linux Mint (GRUB)**:
+    1. GRUB-Konfiguration bearbeiten: `sudo nano /etc/default/grub`.
+    2. Fügen Sie `usbcore.autosuspend=-1` zu `GRUB_CMDLINE_LINUX_DEFAULT` hinzu.
+    3. Aktualisieren und neu starten: `sudo update-grub && sudo reboot`.
+- **Unter Raspberry Pi OS**:
+    1. Boot-Konfigurationsdatei öffnen: `sudo nano /boot/firmware/cmdline.txt` (oder `/boot/cmdline.txt`).
+    2. Fügen Sie `usbcore.autosuspend=-1` am Ende der Zeile an (alle Parameter müssen in einer einzigen Zeile bleiben).
+    3. Speichern und neu starten: `sudo reboot`.
+
+##### 2. Autosuspend per Udev-Regel deaktivieren (Alternative)
+1. Neue Regeldatei anlegen: `sudo nano /etc/udev/rules.d/50-usb-power.rules`
+2. Folgende Regel einfügen:
+   ```text
+   ACTION=="add", SUBSYSTEM=="usb", TEST=="power/control", ATTR{power/control}="on"
+   ```
+3. Regeln neu laden: `sudo udevadm control --reload-rules && sudo udevadm trigger`
+
+---
+
+#### macOS
+
+- **Energieeinstellungen**: Öffnen Sie **Systemeinstellungen** -> **Displays** -> **Erweitert...** (oder **Energie sparen**) und aktivieren Sie **"Automatisches Aktivieren des Ruhezustands bei ausgeschaltetem Display verhindern"**.
+- **Aktive USB-Hubs mit Netzteil verwenden**: macOS kann passive USB-Hubs bei schwankender Last stromlos schalten. Schließen Sie Schnittstellen stets über einen aktiven USB-Hub mit eigener Stromversorgung an.
+
 ## Anzeigeprobleme
+
 
 ### Browserkompatibilität & Leerer Bildschirm auf älteren Geräten (Android < 9, ältere Windows-Systeme & Tablets) {: #browser-compatibility }
 - **Symptom**: Beim Öffnen von Race Coordinator AI auf einem älteren Tablet (z. B. Android 4.4 KitKat bis Android 8 Oreo), älteren PC oder veralteten Browser bleibt der Bildschirm komplett leer oder zeigt die Warnung „Browser nicht unterstützt“.

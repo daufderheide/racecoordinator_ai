@@ -67,10 +67,16 @@
       </div>
       <button class="btn-play" (click)="play()">
         @if (!isPlaying) {
-          <span>▶ {{ "AS_BTN_PLAY" | translate }}</span>
+          <span class="btn-play-content">
+            <span class="material-icons">play_arrow</span>
+            <span>{{ "AS_BTN_PLAY" | translate }}</span>
+          </span>
         }
         @if (isPlaying) {
-          <span>■ {{ "AS_BTN_STOP" | translate }}</span>
+          <span class="btn-play-content">
+            <span class="material-icons">stop</span>
+            <span>{{ "AS_BTN_STOP" | translate }}</span>
+          </span>
         }
       </button>
     </div>

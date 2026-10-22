@@ -5,6 +5,7 @@ const {
   getActiveReleaseBranches,
   parseReleaseBranches,
   getUnmergedCommitCount,
+  isBlockingConflict,
   checkHasMergeConflict,
   checkSyncStatus
 } = require('./sync_release_branch');
@@ -121,9 +122,37 @@ describe('sync_release_branch', () => {
     });
   });
 
+  describe('isBlockingConflict', () => {
+    test('should return false for empty or clean output', () => {
+      assert.strictEqual(isBlockingConflict(''), true); // Empty error output treated as true
+      assert.strictEqual(isBlockingConflict('Everything merged cleanly'), false);
+    });
+
+    test('should return false when only VERSION conflicts', () => {
+      const output = 'Auto-merging VERSION\nCONFLICT (content): Merge conflict in VERSION';
+      assert.strictEqual(isBlockingConflict(output), false);
+    });
+
+    test('should return true when files other than VERSION conflict', () => {
+      const output = 'CONFLICT (content): Merge conflict in VERSION\nCONFLICT (content): Merge conflict in src/app.ts';
+      assert.strictEqual(isBlockingConflict(output), true);
+    });
+
+    test('should return true for legacy conflict markers', () => {
+      const output = '<<<<<<< .our\nfoo\n=======\nbar\n>>>>>>> .their';
+      assert.strictEqual(isBlockingConflict(output), true);
+    });
+  });
+
   describe('checkHasMergeConflict', () => {
     test('should return true if conflict markers exist in merge-tree output', () => {
       const mockExec = (cmd) => {
+        if (cmd.includes('--write-tree')) {
+          const err = new Error('conflict');
+          err.status = 1;
+          err.stdout = 'CONFLICT (content): Merge conflict in src/app.ts';
+          throw err;
+        }
         if (cmd.includes('merge-base')) return 'abcdef123';
         if (cmd.includes('merge-tree')) {
           return '<<<<<<< .our\nsome change\n=======\nsome conflict\n>>>>>>> .their';
@@ -134,11 +163,13 @@ describe('sync_release_branch', () => {
       assert.strictEqual(conflict, true);
     });
 
-    test('should return false if clean merge', () => {
+    test('should return false if only VERSION conflicts in --write-tree', () => {
       const mockExec = (cmd) => {
-        if (cmd.includes('merge-base')) return 'abcdef123';
-        if (cmd.includes('merge-tree')) {
-          return 'clean merged content without conflict markers';
+        if (cmd.includes('--write-tree')) {
+          const err = new Error('conflict');
+          err.status = 1;
+          err.stdout = 'CONFLICT (content): Merge conflict in VERSION';
+          throw err;
         }
         return '';
       };
@@ -146,13 +177,42 @@ describe('sync_release_branch', () => {
       assert.strictEqual(conflict, false);
     });
 
-    test('should return false on error or empty merge base', () => {
+    test('should return false if clean merge with --write-tree', () => {
       const mockExec = (cmd) => {
+        if (cmd.includes('--write-tree')) {
+          return 'tree_hash_123456';
+        }
+        return '';
+      };
+      const conflict = checkHasMergeConflict('release/v1.0.0', 'develop', mockExec);
+      assert.strictEqual(conflict, false);
+    });
+
+    test('should return false on empty merge base in fallback', () => {
+      const mockExec = (cmd) => {
+        if (cmd.includes('--write-tree')) {
+          throw new Error('unsupported flag --write-tree'); // triggers fallback
+        }
         if (cmd.includes('merge-base')) return '';
         return '';
       };
       const conflict = checkHasMergeConflict('release/v1.0.0', 'develop', mockExec);
       assert.strictEqual(conflict, false);
+    });
+
+    test('should return true if fallback merge-tree throws unexpected error (fail-safe)', () => {
+      const mockExec = (cmd) => {
+        if (cmd.includes('--write-tree')) {
+          throw new Error('unsupported flag --write-tree');
+        }
+        if (cmd.includes('merge-base')) return 'abcdef123';
+        if (cmd.includes('merge-tree')) {
+          throw new Error('spawnSync ENOBUFS');
+        }
+        return '';
+      };
+      const conflict = checkHasMergeConflict('release/v1.0.0', 'develop', mockExec);
+      assert.strictEqual(conflict, true);
     });
   });
 

@@ -305,6 +305,7 @@ public class AssetTaskHandlerTest {
 
     verify(handler, org.mockito.Mockito.never()).setStatus(eq(ctx), eq(404));
     verify(handler).setContentType(eq(ctx), eq("image/png"));
+    verify(ctx).header(eq("Cache-Control"), eq("public, max-age=86400"));
     verify(handler).setStream(eq(ctx), any());
   }
 
@@ -325,6 +326,7 @@ public class AssetTaskHandlerTest {
 
     verify(handler, org.mockito.Mockito.never()).setStatus(eq(ctx), eq(404));
     verify(handler).setContentType(eq(ctx), eq("audio/wav"));
+    verify(ctx).header(eq("Cache-Control"), eq("public, max-age=86400"));
   }
 
   @Test

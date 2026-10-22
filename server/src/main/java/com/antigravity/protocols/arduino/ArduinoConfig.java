@@ -98,7 +98,7 @@ public class ArduinoConfig {
   // Normally closed lane sensors means the sensor is active low.
   public boolean normallyClosedLaneSensors;
   public boolean normallyClosedRelays;
-  public int globalInvertLights;
+  public boolean activeLowAnalogLeds;
   public boolean usePitsAsLaps;
   public boolean useLapsForSegments;
   public LapPinPitBehavior lapPinPitBehavior;
@@ -140,7 +140,7 @@ public class ArduinoConfig {
     this.hardwareType = 1;
     this.normallyClosedLaneSensors = true;
     this.normallyClosedRelays = true;
-    this.globalInvertLights = 0;
+    this.activeLowAnalogLeds = false;
     this.usePitsAsLaps = false;
     this.useLapsForSegments = true;
     this.lapPinPitBehavior = LapPinPitBehavior.PIT_IN_OUT;
@@ -155,7 +155,8 @@ public class ArduinoConfig {
       @JsonProperty("hardwareType") int hardwareType,
       @JsonProperty("normallyClosedLaneSensors") boolean normallyClosedLaneSensors,
       @JsonProperty("normallyClosedRelays") boolean normallyClosedRelays,
-      @JsonProperty("globalInvertLights") int globalInvertLights,
+      @JsonProperty("active_low_analog_leds") @JsonAlias("activeLowAnalogLeds")
+          boolean activeLowAnalogLeds,
       @JsonProperty("usePitsAsLaps") boolean usePitsAsLaps,
       @JsonProperty("useLapsForSegments") boolean useLapsForSegments,
       @JsonProperty("lapPinPitBehavior") LapPinPitBehavior lapPinPitBehavior,
@@ -174,7 +175,7 @@ public class ArduinoConfig {
     this.hardwareType = hardwareType;
     this.normallyClosedLaneSensors = normallyClosedLaneSensors;
     this.normallyClosedRelays = normallyClosedRelays;
-    this.globalInvertLights = globalInvertLights;
+    this.activeLowAnalogLeds = activeLowAnalogLeds;
     this.usePitsAsLaps = usePitsAsLaps;
     this.useLapsForSegments = useLapsForSegments;
     this.lapPinPitBehavior = lapPinPitBehavior;

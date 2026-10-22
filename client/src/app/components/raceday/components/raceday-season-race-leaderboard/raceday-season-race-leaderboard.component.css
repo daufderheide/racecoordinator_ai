@@ -39,10 +39,6 @@ app-raceday-season-race-leaderboard {
   display: flex;
   flex-direction: column;
   gap: 4px;
-
-  /* Custom scrollbar */
-  scrollbar-width: thin;
-  scrollbar-color: rgba(56, 189, 248, 0.5) rgba(15, 23, 42, 0.4);
 }
 
 .leaderboard-scroll-content::-webkit-scrollbar {

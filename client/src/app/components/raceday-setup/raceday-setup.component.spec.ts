@@ -818,6 +818,73 @@ describe("RacedaySetupComponent", () => {
       expect(component.isUpdating).toBeTrue();
     });
 
+    it("should show downgrade confirmation modal when installUpdate is called with a downgrade", () => {
+      component.serverVersion = "1.1.0-alpha.20261001";
+      component.updateResult = {
+        updateAvailable: true,
+        latestVersion: "1.0.1-beta.1",
+        releaseNotes: "",
+        downloadUrl: "http://example.com/dl",
+        releaseUrl: "http://example.com/release",
+        isWindows: true,
+      };
+
+      mockUpdateService.installUpdate.and.returnValue(of(true));
+      component.installUpdate();
+
+      expect(component.showDowngradeModal).toBeTrue();
+      expect(mockUpdateService.installUpdate).not.toHaveBeenCalled();
+
+      // Confirming the modal proceeds with install
+      component.confirmDowngradeUpdate();
+      expect(component.showDowngradeModal).toBeFalse();
+      expect(mockUpdateService.installUpdate).toHaveBeenCalledWith(
+        "http://example.com/dl",
+      );
+    });
+
+    it("should not show downgrade confirmation modal when updating to a higher version", () => {
+      component.serverVersion = "1.1.0-alpha.20261001";
+      component.updateResult = {
+        updateAvailable: true,
+        latestVersion: "1.2.0-beta.1",
+        releaseNotes: "",
+        downloadUrl: "http://example.com/dl",
+        releaseUrl: "http://example.com/release",
+        isWindows: true,
+      };
+
+      mockUpdateService.installUpdate.and.returnValue(of(true));
+      component.installUpdate();
+
+      expect(component.showDowngradeModal).toBeFalse();
+      expect(mockUpdateService.installUpdate).toHaveBeenCalledWith(
+        "http://example.com/dl",
+      );
+    });
+
+    it("should intercept onDownloadUpdate when version is a downgrade", () => {
+      component.serverVersion = "1.1.0-alpha.20261001";
+      component.updateResult = {
+        updateAvailable: true,
+        latestVersion: "1.0.1-beta.1",
+        releaseNotes: "",
+        downloadUrl: "http://example.com/dl",
+        releaseUrl: "http://example.com/release",
+        isWindows: false,
+      };
+
+      const event = new MouseEvent("click");
+      spyOn(event, "preventDefault");
+      component.onDownloadUpdate(event);
+
+      expect(event.preventDefault).toHaveBeenCalled();
+      expect(component.showDowngradeModal).toBeTrue();
+
+      component.cancelDowngradeUpdate();
+      expect(component.showDowngradeModal).toBeFalse();
+    });
+
     it("should transition to RDS_UPDATE_STATUS_CONFIRM_PROMPT and trigger reload when update completes", fakeAsync(() => {
       component.updateResult = {
         updateAvailable: true,

@@ -86,8 +86,9 @@ export class AppComponent implements OnInit {
     }
     this.logger.info("AppComponent: Initializing application...");
 
-    // Initialize file logging if a handle is available
+    // Initialize file and server logging
     if (!(window as any).isPlaywright) {
+      this.logger.registerServerLogging(() => this.dataService.getBaseUrl());
       this.fileSystemService.getCustomDirectoryHandle().then((handle) => {
         if (handle) {
           this.logger.registerFileLogging(this.fileSystemService);
@@ -222,5 +223,11 @@ export class AppComponent implements OnInit {
   @HostListener("window:drop", ["$event"])
   onWindowDrop(event: DragEvent): void {
     event.preventDefault();
+  }
+
+  @HostListener("window:pagehide")
+  @HostListener("window:beforeunload")
+  onWindowUnload(): void {
+    this.dataService.disconnectAllSockets();
   }
 }

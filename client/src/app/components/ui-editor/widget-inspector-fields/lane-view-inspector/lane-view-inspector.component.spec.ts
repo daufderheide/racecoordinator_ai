@@ -183,8 +183,9 @@ describe("LaneViewInspectorComponent", () => {
     expect(component.getColumnLabel("unknown")).toBe("unknown");
   });
 
-  it("should return correct column label for analysis columns in availableColumns", () => {
+  it("should return correct column label for analysis and lap columns in availableColumns", () => {
     fixture.componentRef.setInput("availableColumns", [
+      { key: "physicalLapCount", label: "UI_EDITOR_COL_LAP_COUNT" },
       { key: "standardDeviation", label: "RD_COL_STD_DEV" },
       { key: "consistencyScore", label: "RD_COL_CONSISTENCY" },
       { key: "averageTop5", label: "RD_COL_AVG_TOP_5" },
@@ -193,6 +194,9 @@ describe("LaneViewInspectorComponent", () => {
       { key: "top2Consecutive", label: "RD_COL_TOP_2_CONSECUTIVE" },
       { key: "top3Consecutive", label: "RD_COL_TOP_3_CONSECUTIVE" },
     ]);
+    expect(component.getColumnLabel("physicalLapCount")).toBe(
+      "UI_EDITOR_COL_LAP_COUNT",
+    );
     expect(component.getColumnLabel("standardDeviation")).toBe(
       "RD_COL_STD_DEV",
     );

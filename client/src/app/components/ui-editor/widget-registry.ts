@@ -50,11 +50,13 @@ export const WIDGET_REGISTRY: Record<string, WidgetRegistryEntry> = {
       blurCustomHeight: 1080,
       lampSizingMode: "custom",
       previewLampCount: 5,
+      maxLamps: 5,
+      fadeIn: true,
       glowEffect: true,
       glowIntensity: 100,
-      glowOverlap: 100,
-      glowRedOverlap: 100,
-      glowGreenOverlap: 100,
+      glowOverlap: 30,
+      glowRedOverlap: 30,
+      glowGreenOverlap: 25,
     }),
   },
   image: {
@@ -124,6 +126,7 @@ export const WIDGET_REGISTRY: Record<string, WidgetRegistryEntry> = {
       showCurrentHeatTime: true,
       showCompletedSummary: true,
       showActiveSummary: true,
+      showFutureSummary: false,
       summaryShowPosition: true,
       summaryShowDriver: true,
       summaryShowLaps: true,
@@ -402,6 +405,24 @@ export const WIDGET_REGISTRY: Record<string, WidgetRegistryEntry> = {
     }),
   },
   "action-back": {
+    defaultSettings: () => ({
+      fontFamily: "",
+      fontSize: 24,
+      textColor: "",
+      backgroundColor: "",
+      shortcut: "",
+    }),
+  },
+  "action-forward": {
+    defaultSettings: () => ({
+      fontFamily: "",
+      fontSize: 24,
+      textColor: "",
+      backgroundColor: "",
+      shortcut: "",
+    }),
+  },
+  "action-close": {
     defaultSettings: () => ({
       fontFamily: "",
       fontSize: 24,

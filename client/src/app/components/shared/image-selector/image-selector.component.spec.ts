@@ -222,6 +222,134 @@ describe("ImageSelectorComponent", () => {
     expect(logger.error).toHaveBeenCalled();
   }));
 
+  it("should ensure remove button and its icon have pointer-events auto", () => {
+    fixture.componentRef.setInput("imageUrl", "/assets/test.png");
+    fixture.detectChanges();
+    const removeBtn = fixture.nativeElement.querySelector(".remove-button");
+    const icon = fixture.nativeElement.querySelector(
+      ".remove-button .material-icons",
+    );
+    expect(window.getComputedStyle(removeBtn).pointerEvents).toBe("auto");
+    expect(window.getComputedStyle(icon).pointerEvents).toBe("auto");
+  });
+
+  it("should remove image and NOT open item selector when remove button is clicked", () => {
+    fixture.componentRef.setInput("imageUrl", "/assets/test.png");
+    fixture.detectChanges();
+
+    let emittedUrl: string | undefined = "not-called";
+    let emittedAsset: any = "not-called";
+    (component as any).imageUrlChange.subscribe(
+      (val: any) => (emittedUrl = val),
+    );
+    (component as any).assetSelected.subscribe(
+      (val: any) => (emittedAsset = val),
+    );
+
+    const removeBtn = fixture.nativeElement.querySelector(
+      ".remove-button",
+    ) as HTMLButtonElement;
+    removeBtn.click();
+    fixture.detectChanges();
+
+    expect(emittedUrl).toBeUndefined();
+    expect(emittedAsset).toBeNull();
+    expect(component.showSelector).toBeFalse();
+  });
+
+  it("should remove image and NOT open item selector when remove button icon is clicked", () => {
+    fixture.componentRef.setInput("imageUrl", "/assets/test.png");
+    fixture.detectChanges();
+
+    let emittedUrl: string | undefined = "not-called";
+    (component as any).imageUrlChange.subscribe(
+      (val: any) => (emittedUrl = val),
+    );
+
+    const icon = fixture.nativeElement.querySelector(
+      ".remove-button .material-icons",
+    ) as HTMLElement;
+    icon.click();
+    fixture.detectChanges();
+
+    expect(emittedUrl).toBeUndefined();
+    expect(component.showSelector).toBeFalse();
+  });
+
+  it("should not show remove button when disabled", () => {
+    fixture.componentRef.setInput("imageUrl", "/assets/test.png");
+    fixture.componentRef.setInput("disabled", true);
+    fixture.detectChanges();
+
+    const removeBtn = fixture.nativeElement.querySelector(".remove-button");
+    expect(removeBtn).toBeNull();
+  });
+
+  it("should display UE_HINT_DRAG_IMAGE when not disabled and no image is selected", async () => {
+    fixture.componentRef.setInput("imageUrl", undefined);
+    fixture.componentRef.setInput("disabled", false);
+    fixture.detectChanges();
+
+    expect(await harness.hasDragHint()).toBeTrue();
+    expect(await harness.getDragHintText()).toBe(
+      "Drag image to add or click to select",
+    );
+    expect(await harness.isDragHintDisabled()).toBeFalse();
+    expect(await harness.isDisabled()).toBeFalse();
+  });
+
+  it("should display UE_HINT_NO_IMAGE with disabled-hint class and .disabled class on container when disabled and no image", async () => {
+    fixture.componentRef.setInput("imageUrl", undefined);
+    fixture.componentRef.setInput("disabled", true);
+    fixture.detectChanges();
+
+    expect(await harness.hasDragHint()).toBeTrue();
+    expect(await harness.getDragHintText()).toBe("No image");
+    expect(await harness.isDragHintDisabled()).toBeTrue();
+    expect(await harness.isDisabled()).toBeTrue();
+  });
+
+  it("should set disabled class on preview container when disabled with image selected", async () => {
+    fixture.componentRef.setInput("imageUrl", "/assets/test.png");
+    fixture.componentRef.setInput("disabled", true);
+    fixture.detectChanges();
+
+    expect(await harness.isDisabled()).toBeTrue();
+  });
+
+  it("should not open selector on click when disabled", async () => {
+    fixture.componentRef.setInput("disabled", true);
+    fixture.detectChanges();
+
+    await harness.clickPreviewToOpenSelector();
+    expect(component.showSelector).toBeFalse();
+  });
+
+  it("should ignore dragenter, dragover, and drop when disabled", () => {
+    fixture.componentRef.setInput("disabled", true);
+    fixture.detectChanges();
+
+    const enterEvent = new DragEvent("dragenter", { cancelable: true });
+    spyOn(enterEvent, "preventDefault");
+    component.onDragEnter(enterEvent);
+    expect(component.isDragging).toBeFalse();
+    expect(enterEvent.preventDefault).not.toHaveBeenCalled();
+
+    const overEvent = new DragEvent("dragover", { cancelable: true });
+    spyOn(overEvent, "preventDefault");
+    component.onDragOver(overEvent);
+    expect(component.isDragging).toBeFalse();
+    expect(overEvent.preventDefault).not.toHaveBeenCalled();
+
+    const file = new File(["upload"], "test.png", { type: "image/png" });
+    const dataTransfer = new DataTransfer();
+    dataTransfer.items.add(file);
+    const dropEvent = new DragEvent("drop", { dataTransfer });
+    spyOn(component, "processFile");
+    component.onDrop(dropEvent);
+    expect(component.processFile).not.toHaveBeenCalled();
+  });
+
   it("should open and close selector", async () => {
     await harness.clickPreviewToOpenSelector();
     expect(component.showSelector).toBeTrue();

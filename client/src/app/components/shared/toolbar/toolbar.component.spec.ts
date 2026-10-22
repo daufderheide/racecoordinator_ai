@@ -6,6 +6,7 @@ import {
   TestBed,
   tick,
 } from "@angular/core/testing";
+import { By } from "@angular/platform-browser";
 import { ActivatedRoute } from "@angular/router";
 import { BehaviorSubject, of } from "rxjs";
 import { AnalyticsService } from "@app/analytics.service";
@@ -122,6 +123,27 @@ describe("ToolbarComponent", () => {
     expect(component.edit.emit).toHaveBeenCalled();
   });
 
+  it("should update edit button tooltip, aria-label, and icon based on isEditMode", async () => {
+    fixture.componentRef.setInput("showEdit", true);
+    fixture.componentRef.setInput("isEditMode", false);
+    fixture.detectChanges();
+
+    const editBtn = fixture.debugElement.query(
+      By.css("#edit-track-btn"),
+    ).nativeElement;
+    const iconSpan = editBtn.querySelector(".material-icons");
+    expect(editBtn.getAttribute("title")).toBe("EDITOR_TOOLTIP_EDIT");
+    expect(editBtn.getAttribute("aria-label")).toBe("EDITOR_TOOLTIP_EDIT");
+    expect(iconSpan.textContent.trim()).toBe("edit");
+
+    fixture.componentRef.setInput("isEditMode", true);
+    fixture.detectChanges();
+
+    expect(editBtn.getAttribute("title")).toBe("EDITOR_TOOLTIP_READ_ONLY");
+    expect(editBtn.getAttribute("aria-label")).toBe("EDITOR_TOOLTIP_READ_ONLY");
+    expect(iconSpan.textContent.trim()).toBe("check");
+  });
+
   it("should show help button when showHelp is true", async () => {
     fixture.componentRef.setInput("showHelp", true);
     fixture.detectChanges();
@@ -148,6 +170,15 @@ describe("ToolbarComponent", () => {
     fixture.detectChanges();
     await harness.clickDelete();
     expect(component.delete.emit).toHaveBeenCalled();
+  });
+
+  it("should render material-icons delete in delete button", () => {
+    fixture.componentRef.setInput("showDelete", true);
+    fixture.detectChanges();
+    const deleteBtn = fixture.nativeElement.querySelector("#delete-track-btn");
+    const icon = deleteBtn.querySelector(".material-icons");
+    expect(icon).toBeTruthy();
+    expect(icon.textContent.trim()).toBe("delete");
   });
 
   it("should show undo/redo when showUndo/showRedo are true", async () => {

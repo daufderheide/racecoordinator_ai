@@ -114,4 +114,26 @@ describe("DriverStationLapAudioHandler", () => {
       jasmine.objectContaining({ widgetType: "lane-view" }),
     );
   });
+
+  it("should process laps left thresholds with asset matched by name and audio_entries", () => {
+    mockThemeService.resolveAudioConfig.and.returnValue({
+      url: "Laps Left Set",
+      type: "audio_set",
+    });
+    deps.getAssets = () => [
+      {
+        name: "Laps Left Set",
+        type: "audio_set",
+        audio_entries: [{ time_seconds: 5, trigger_mode: "remaining" }],
+      },
+    ];
+
+    handler.leaderLaps = 14;
+    handler.handleLapEvent(
+      { objectId: "hd-other", lapNumber: 15, lapTime: 3.5, bestLapTime: 3.0 },
+      mockDriverData,
+    );
+
+    expect(handler.playedLapsLeft.has(5)).toBeTrue();
+  });
 });

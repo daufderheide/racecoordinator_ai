@@ -35,6 +35,7 @@ import { RaceService } from "@app/services/race.service";
 import { RaceConnectionService } from "@app/services/race-connection.service";
 import { RaceFlagService } from "@app/services/race-flag.service";
 import { ThemeService } from "@app/services/theme.service";
+import { resolveAudioUrl } from "@app/utils/audio";
 import { FuelAudioTracker } from "@app/utils/fuel-audio-tracker";
 import { ViewerRaceEndedHandler } from "@app/utils/viewer-race-ended-handler";
 
@@ -212,6 +213,7 @@ export class DefaultDriverStationComponent implements OnInit, OnDestroy {
     this.timeAudioHandler.playedHalfway = v;
   }
   private previousRaceState: RaceState = RaceState.UNKNOWN_STATE;
+  private isRestarting: boolean = false;
   private assets: any[] = [];
 
   /* eslint-disable max-lines-per-function */
@@ -311,8 +313,15 @@ export class DefaultDriverStationComponent implements OnInit, OnDestroy {
         if (this.raceState === RaceState.STARTING) {
           const currentSecond = Math.ceil(this.time);
           const r = this.race;
-          const duration = r?.start_time ?? 5.0;
-          const totalLamps = Math.ceil(duration);
+          const duration = this.isRestarting
+            ? (r?.restart_time ?? r?.start_time)
+            : r?.start_time;
+          const totalLamps =
+            duration != null
+              ? Math.ceil(duration)
+              : this.time > 0
+                ? Math.ceil(this.time)
+                : 0;
           if (
             currentSecond <= totalLamps &&
             currentSecond <= 5 &&
@@ -399,11 +408,13 @@ export class DefaultDriverStationComponent implements OnInit, OnDestroy {
           }
 
           if (state === RaceState.STARTING) {
+            this.isRestarting = previousState === RaceState.PAUSED;
             this.audioService.stopVoice();
             this.lastPlayedCountdownSecond = -1;
           }
 
           if (state === RaceState.RACING) {
+            this.isRestarting = false;
             this.hasRacedInCurrentHeat = true;
             if (previousState !== RaceState.UNKNOWN_STATE) {
               this.playAudioFromSet(THEME_SLOT_KEYS.AUDIO_COUNTDOWN, 0, {
@@ -682,15 +693,7 @@ export class DefaultDriverStationComponent implements OnInit, OnDestroy {
 
     let playableUrl: string | undefined = config.url;
     if (config.type === "preset" && playableUrl) {
-      const asset = (this.assets || []).find(
-        (a) =>
-          a.model?.entityId === playableUrl ||
-          a.entity_id === playableUrl ||
-          a._id === playableUrl,
-      );
-      if (asset) {
-        playableUrl = this.getFullUrl(asset.url);
-      }
+      playableUrl = this.resolveAssetPlayableUrl(playableUrl);
     }
 
     let priority: AudioPriority = "normal";
@@ -753,11 +756,12 @@ export class DefaultDriverStationComponent implements OnInit, OnDestroy {
       (a) =>
         a.model?.entityId === assetId ||
         a.entity_id === assetId ||
-        a._id === assetId,
+        a._id === assetId ||
+        a.name === assetId,
     );
     if (!asset || asset.type !== "audio_set") return null;
 
-    const entries = asset.audioEntries || asset.audio_entries;
+    const entries = asset.audioEntries || (asset as any)?.audio_entries;
     const entry = entries?.find((e: any) => {
       const val =
         e.timeSeconds != null
@@ -777,7 +781,9 @@ export class DefaultDriverStationComponent implements OnInit, OnDestroy {
     const entryType = entry.type || "preset";
     if (entryType === "none") return null;
 
-    const playableUrl = entry.url ? this.getFullUrl(entry.url) : undefined;
+    const playableUrl = entry.url
+      ? this.resolveAssetPlayableUrl(entry.url)
+      : undefined;
     return {
       config: {
         type: entryType,
@@ -920,9 +926,9 @@ export class DefaultDriverStationComponent implements OnInit, OnDestroy {
         a.name === urlOrId,
     );
     if (asset?.url) {
-      return this.getFullUrl(asset.url);
+      return resolveAudioUrl(asset.url, this.dataService.serverUrl);
     }
-    return this.getFullUrl(urlOrId);
+    return resolveAudioUrl(urlOrId, this.dataService.serverUrl);
   }
 
   private getFullUrl(url: string | undefined): string {

@@ -18,12 +18,13 @@
   align-items: center;
   justify-content: center;
   position: relative;
-  background: radial-gradient(circle at center, rgba(13, 21, 30, 0.4) 0%, rgba(6, 9, 14, 0.8) 100%), url('/assets/images/race_results_bg.png') no-repeat center center;
+  background: radial-gradient(circle at center, rgba(13, 21, 30, 0.25) 0%, rgba(6, 9, 14, 0.65) 100%), url('/assets/images/race_results_bg.png') no-repeat center center;
   background-size: cover;
 }
 
 .scalable-content {
   position: absolute;
+  z-index: 1;
   top: 50%;
   left: 50%;
   width: 1920px;
@@ -106,7 +107,7 @@
 
 /* Glass Panel Overlay */
 .results-container {
-  background: rgba(8, 14, 24, 0.72);
+  background: rgba(8, 14, 24, 0.78);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(0, 229, 255, 0.2);

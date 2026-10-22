@@ -125,4 +125,48 @@ test.describe("Custom Select Visuals", () => {
     const clip = await getSelectBoundingClip(selectLocator);
     await expect(page).toHaveScreenshot("custom-select-hover.png", { clip });
   });
+
+  test("should display open state extending to page bottom", async ({
+    page,
+  }) => {
+    const mockDrivers = Array.from({ length: 15 }, (_, i) => ({
+      entity_id: `d${i + 1}`,
+      name: `Driver ${i + 1}`,
+      nickname: `D${i + 1}`,
+      avatarUrl: "assets/images/default_avatar.svg",
+    }));
+
+    await page.route("**/api/drivers", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(mockDrivers),
+      });
+    });
+
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/driver-editor?id=d1"),
+    );
+    await page.locator(".page-container").waitFor();
+    await page.locator(".loader-overlay").waitFor({ state: "hidden" });
+    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+    await TestSetupHelper.disableAnimations(page);
+
+    const selectLocator = page.locator("#editor-object-selector");
+    await expect(selectLocator).toBeVisible();
+
+    const harness = new CustomSelectHarnessE2e(selectLocator);
+    await harness.toggle();
+    await expect(async () => {
+      expect(await harness.isOpen()).toBe(true);
+      expect(await harness.getOptionsCount()).toBe(15);
+    }).toPass({ timeout: 10000 });
+
+    const clip = await getSelectBoundingClip(selectLocator);
+    await expect(page).toHaveScreenshot("custom-select-extend-to-bottom.png", {
+      clip,
+    });
+  });
 });

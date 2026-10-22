@@ -34,6 +34,7 @@ describe("PhidgetEditorComponent", () => {
     hubPort: 0,
     normallyClosedLaneSensors: true,
     normallyClosedRelays: true,
+    activeLowAnalogLeds: false,
     useLapsForSegments: true,
     lapPinPitBehavior: 0,
     digitalInIds: [
@@ -387,9 +388,15 @@ describe("PhidgetEditorComponent", () => {
 
   it("should return guide steps and expand appropriate sections onEnter", () => {
     const steps = component.getHelpSteps();
-    expect(steps.length).toBeGreaterThanOrEqual(5);
+    expect(steps.length).toBeGreaterThanOrEqual(6);
     expect(steps[0].selector).toBe("#phidget-editor-0");
     expect(steps[0].title).toBe("TE_HELP_PHIDGET_TITLE");
+
+    const activeLowStep = steps.find(
+      (s) => s.title === "TE_HELP_PHIDGET_ACTIVE_LOW_LEDS_TITLE",
+    );
+    expect(activeLowStep).toBeDefined();
+    expect(activeLowStep?.selector).toBe("#phidget-active-low-analog-leds-0");
 
     component.sectionsExpanded.phidget = false;
     component.sectionsExpanded.main = false;
@@ -398,9 +405,12 @@ describe("PhidgetEditorComponent", () => {
     expect(component.sectionsExpanded.main).toBeTrue();
 
     // Check digital in step onEnter if digital in pins exist
-    if (steps.length > 5) {
+    const digitalInStep = steps.find(
+      (s) => s.title === "TE_HELP_PHIDGET_DIGITAL_IN_TITLE",
+    );
+    if (digitalInStep) {
       component.sectionsExpanded.digitalIn = false;
-      steps[5].onEnter!();
+      digitalInStep.onEnter!();
       expect(component.sectionsExpanded.digitalIn).toBeTrue();
     }
   });
@@ -624,6 +634,7 @@ describe("PhidgetEditorComponent", () => {
       hubPort: 0,
       normallyClosedLaneSensors: true,
       normallyClosedRelays: true,
+      activeLowAnalogLeds: false,
       useLapsForSegments: false,
       lapPinPitBehavior: 3,
       digitalInIds: Array(32).fill(0),
@@ -649,6 +660,7 @@ describe("PhidgetEditorComponent", () => {
       hubPort: 0,
       normallyClosedLaneSensors: true,
       normallyClosedRelays: true,
+      activeLowAnalogLeds: false,
       useLapsForSegments: true,
       lapPinPitBehavior: 0,
       digitalInIds: [PinBehavior.BEHAVIOR_LAP_BASE, 0, 0, 0],
@@ -684,6 +696,7 @@ describe("PhidgetEditorComponent", () => {
       hubPort: 0,
       normallyClosedLaneSensors: true,
       normallyClosedRelays: true,
+      activeLowAnalogLeds: false,
       useLapsForSegments: true,
       lapPinPitBehavior: 0,
       digitalInIds: [

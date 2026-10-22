@@ -101,6 +101,9 @@ import {
 export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   lifecycle!: EditorLifecycleHelper;
 
+  // Delete Race Confirmation Modal
+  showDeleteConfirm = false;
+
   get showDiscardConfirm(): boolean {
     return this.lifecycle.showDiscardConfirm;
   }
@@ -122,6 +125,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     this.lifecycle.pendingDeactivate = val;
   }
   private isReverting = false;
+  private isSwitchingSelection = false;
   editingRace: any;
   originalRace: any;
   selectedRace: any;
@@ -337,7 +341,9 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     if (this.selectedRaceId === id) return;
     const found = this.allRaces.find((r) => r.entity_id === id);
     if (found) {
+      this.isSwitchingSelection = true;
       this.selectRace(found);
+      this.navigationService.setLastEditedId("race", found.entity_id);
       this.router.navigate([], {
         relativeTo: this.route,
         queryParams: { id: found.entity_id },
@@ -456,41 +462,44 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
 
   deleteRace() {
     if (!this.editingRace || this.editingRace.entity_id === "new") return;
-    if (confirm(this.translationService.translate("RE_CONFIRM_DELETE"))) {
-      this.isSaving = true;
-      const idToDelete = this.editingRace.entity_id;
-      this.dataService.deleteRace(idToDelete).subscribe({
-        next: () => {
-          this.isSaving = false;
-          this.isEditMode = false;
-          const nextRace = getNextSelectionAfterDelete(
-            this.allRaces,
-            idToDelete,
-          );
-          this.allRaces = this.allRaces.filter(
-            (r) => r.entity_id !== idToDelete,
-          );
-          this.updateRaceSelectItems();
-          if (nextRace) {
-            this.selectRace(nextRace);
-            this.router.navigate([], {
-              relativeTo: this.route,
-              queryParams: { id: nextRace.entity_id },
-              queryParamsHandling: "merge",
-              replaceUrl: true,
-            });
-          } else {
-            this.startNewRace();
-          }
-          this.cdr.detectChanges();
-        },
-        error: (err) => {
-          this.logger.error("Failed to delete race", err);
-          this.isSaving = false;
-          this.cdr.detectChanges();
-        },
-      });
-    }
+    this.showDeleteConfirm = true;
+  }
+
+  onCancelDelete() {
+    this.showDeleteConfirm = false;
+  }
+
+  onConfirmDelete() {
+    this.showDeleteConfirm = false;
+    if (!this.editingRace || this.editingRace.entity_id === "new") return;
+    this.isSaving = true;
+    const idToDelete = this.editingRace.entity_id;
+    this.dataService.deleteRace(idToDelete).subscribe({
+      next: () => {
+        this.isSaving = false;
+        this.isEditMode = false;
+        const nextRace = getNextSelectionAfterDelete(this.allRaces, idToDelete);
+        this.allRaces = this.allRaces.filter((r) => r.entity_id !== idToDelete);
+        this.updateRaceSelectItems();
+        if (nextRace) {
+          this.selectRace(nextRace);
+          this.router.navigate([], {
+            relativeTo: this.route,
+            queryParams: { id: nextRace.entity_id },
+            queryParamsHandling: "merge",
+            replaceUrl: true,
+          });
+        } else {
+          this.startNewRace();
+        }
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        this.logger.error("Failed to delete race", err);
+        this.isSaving = false;
+        this.cdr.detectChanges();
+      },
+    });
   }
 
   onBackClicked() {
@@ -852,6 +861,10 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
             this.router.url.startsWith("/race-editor") ||
             this.router.url.includes("mock");
           if (!isEditorRoute) {
+            return;
+          }
+          if (this.isSwitchingSelection) {
+            this.isSwitchingSelection = false;
             return;
           }
           const nextId = paramMap.get("id");

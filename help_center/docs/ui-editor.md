@@ -20,7 +20,7 @@ For complete widget development details, see the [Custom Widgets Guide](custom-w
 - Resize, reposition, and align widgets to match your screen resolution. All widgets are bounded to prevent dragging or resizing past the canvas frame.
 - **Widget Inspector Controls**:
   - **Position & Size**: Precisely position and dimension the selected widget using the **X**, **Y**, **Width**, and **Height** numeric inputs.
-  - **Delete Widget**: Click the trash icon in the inspector header or the **Delete Widget** button in the inspector sidebar to remove the selected widget.
+  - **Delete Widget**: Click the trash icon in the inspector header to remove the selected widget.
 - **Keyboard Shortcuts**:
   - <kbd>Delete</kbd> or <kbd>Backspace</kbd>: Removes the selected widget from the layout.
   - <kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd>: Nudges the selected widget by 1px (or 10px holding <kbd>Shift</kbd>).
@@ -43,6 +43,16 @@ The **Timer** widget displays the elapsed or remaining heat/race time with confi
   - **Always**: Displays fractional seconds continuously throughout the entire heat.
   - **Never**: Restricts the timer to whole seconds only.
 - **Live Preview**: The inspector includes an instant live preview demonstrating how the selected options format across different race time checkpoints (`> 1 hr`, `> 1 min`, `< 1 min`, and `< 10s`).
+
+## Countdown Widget Configuration
+
+The **Countdown** widget displays visual start lights and triggers start audio during the starting sequence:
+
+- **Maximum Lamps**: Sets the maximum number of lamps to display (defaults to 5, range 1 to 10). When the start countdown duration exceeds this number (for example, a 6-second start countdown with 5 maximum lamps), all lamps remain off/dim for the initial difference (1 second) before sequentially illuminating the countdown lamps.
+- **Fade In Animation**: Controls whether the countdown overlay and background blur smoothly fade in when the countdown begins. When unchecked, the lights and background appear immediately.
+- **Orientation**: Switch between **Horizontal** and **Vertical** light bar arrangements.
+- **Glow & Blur Effects**: Customize lamp illumination halos, red/green overlap scaling, and background blur amount or target area.
+
 
 
 

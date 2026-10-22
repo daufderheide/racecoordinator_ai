@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from "@angular/core/testing";
 import { BehaviorSubject, of, throwError } from "rxjs";
+import { DriverConverter } from "@app/converters/driver.converter";
 import { DataService } from "@app/data.service";
 import { Driver } from "@app/models/driver";
 import { RaceParticipant } from "@app/models/race_participant";
@@ -24,23 +25,23 @@ describe("DisallowLapRecordsDialogComponent", () => {
       drivers: [
         {
           laneIndex: 0,
-          driver: { name: "Alice" },
+          driver: { entity_id: "dl_alice", name: "Alice" },
           lapsWithDetails: [
             {
               time: 2.5,
-              driverId: "d1",
+              driverId: "dl_alice",
               isDrift: false,
               countTowardsRecords: true,
             },
             {
               time: 1.2,
-              driverId: "d1",
+              driverId: "dl_alice",
               isDrift: false,
               countTowardsRecords: true,
             },
             {
               time: 3.0,
-              driverId: "d1",
+              driverId: "dl_alice",
               isDrift: false,
               countTowardsRecords: false,
             },
@@ -48,11 +49,11 @@ describe("DisallowLapRecordsDialogComponent", () => {
         },
         {
           laneIndex: 1,
-          driver: { name: "Bob" },
+          driver: { entity_id: "dl_bob", name: "Bob" },
           lapsWithDetails: [
             {
               time: 2.8,
-              driverId: "d2",
+              driverId: "dl_bob",
               isDrift: false,
               countTowardsRecords: true,
             },
@@ -65,7 +66,7 @@ describe("DisallowLapRecordsDialogComponent", () => {
       drivers: [
         {
           laneIndex: 0,
-          driver: { name: "Charlie" },
+          driver: { entity_id: "dl_charlie", name: "Charlie" },
           lapsWithDetails: [],
         },
       ],
@@ -81,6 +82,7 @@ describe("DisallowLapRecordsDialogComponent", () => {
   };
 
   beforeEach(async () => {
+    DriverConverter.clearCache();
     mockDataService = jasmine.createSpyObj("DataService", [
       "updateLiveLapRecordStatus",
       "updateHistoryLapRecordStatus",
@@ -1448,5 +1450,27 @@ describe("DisallowLapRecordsDialogComponent", () => {
       expect(lapsDesc[3].recordTier).toBeNull(); // Eligible
       expect(lapsDesc[4].countTowardsRecords).toBeFalse(); // Disallowed
     });
+  });
+
+  it("should not be contaminated by pre-existing cached drivers from DriverConverter", () => {
+    DriverConverter.fromProto({
+      model: { entityId: "d1" },
+      name: "Alice",
+      nickname: "The Rocket",
+    });
+    DriverConverter.fromProto({
+      model: { entityId: "d2" },
+      name: "Bob",
+      nickname: "Drift King",
+    });
+
+    fixture.componentRef.setInput("heats", mockHeats);
+    fixture.detectChanges();
+
+    expect(component.availableDrivers.map((d) => d.driverName)).toEqual([
+      "Alice",
+      "Bob",
+      "Charlie",
+    ]);
   });
 });

@@ -67,6 +67,8 @@ export class SeasonEditorComponent
   implements OnInit, OnDestroy, DirtyComponent
 {
   lifecycle!: EditorLifecycleHelper;
+  // Delete Season Confirmation Modal
+  showDeleteConfirm = false;
 
   get showDiscardConfirm(): boolean {
     return this.lifecycle.showDiscardConfirm;
@@ -93,6 +95,7 @@ export class SeasonEditorComponent
   isEditMode = false;
   private isPreservingEditModeOnNavigation = false;
   private transitionToReadOnlyOnSave = false;
+  private isSwitchingSelection = false;
   seasonSelectItems: { id: string; name: string }[] = [];
   selectedSeasonId = "";
   originalSeason?: Season;
@@ -240,8 +243,49 @@ export class SeasonEditorComponent
             this.isReverting = false;
             return;
           }
-          const seasonId = paramMap.get("id");
-          this.loadData(seasonId);
+          if (this.isSwitchingSelection) {
+            this.isSwitchingSelection = false;
+            return;
+          }
+          const isEditorRoute =
+            !this.router.url ||
+            this.router.url === "/" ||
+            this.router.url.startsWith("/season-editor") ||
+            this.router.url.includes("mock");
+          if (!isEditorRoute) {
+            return;
+          }
+          const nextId = paramMap.get("id");
+          if (nextId && nextId !== "new") {
+            this.navigationService.setLastEditedId("season", nextId);
+          }
+          const currentId = this.editingSeason?.entity_id;
+          if (
+            currentId &&
+            nextId !== currentId &&
+            this.hasChanges() &&
+            !this.isNavigationApproved
+          ) {
+            this.confirmDiscard().then((confirmed) => {
+              if (confirmed) {
+                this.loadData(nextId);
+              } else {
+                this.isReverting = true;
+                this.router.navigate([], {
+                  relativeTo: this.route,
+                  queryParams: {
+                    id: currentId,
+                    from: this.route.snapshot.queryParamMap.get("from"),
+                    returnUrl:
+                      this.route.snapshot.queryParamMap.get("returnUrl"),
+                  },
+                  queryParamsHandling: "merge",
+                });
+              }
+            });
+          } else {
+            this.loadData(nextId);
+          }
         }),
       );
     } else {
@@ -270,6 +314,7 @@ export class SeasonEditorComponent
     if (this.selectedSeasonId === id) return;
     const found = this.existingSeasons.find((s) => s.entity_id === id);
     if (found) {
+      this.isSwitchingSelection = true;
       this.selectSeason(found);
       this.router.navigate([], {
         relativeTo: this.route,
@@ -764,43 +809,51 @@ export class SeasonEditorComponent
 
   onDeleteSeason(): void {
     if (!this.editingSeason?.entity_id) return;
-    if (confirm(this.translationService.translate("SE_CONFIRM_DELETE"))) {
-      this.isSaving = true;
-      const idToDelete = this.editingSeason.entity_id;
-      this.subscriptions.push(
-        this.dataService.deleteSeason(idToDelete).subscribe({
-          next: () => {
-            this.isSaving = false;
-            this.isEditMode = false;
-            const nextSeason = getNextSelectionAfterDelete(
-              this.existingSeasons,
-              idToDelete,
-            );
-            this.existingSeasons = this.existingSeasons.filter(
-              (s) => s.entity_id !== idToDelete,
-            );
-            this.updateSeasonSelectItems();
-            if (nextSeason) {
-              this.selectSeason(nextSeason);
-              this.router.navigate([], {
-                relativeTo: this.route,
-                queryParams: { id: nextSeason.entity_id },
-                queryParamsHandling: "merge",
-                replaceUrl: true,
-              });
-            } else {
-              this.startNewSeason();
-            }
-            this.cdr.detectChanges();
-          },
-          error: (err) => {
-            this.logger.error("Failed to delete season", err);
-            this.isSaving = false;
-            this.cdr.detectChanges();
-          },
-        }),
-      );
-    }
+    this.showDeleteConfirm = true;
+  }
+
+  onCancelDelete(): void {
+    this.showDeleteConfirm = false;
+  }
+
+  onConfirmDelete(): void {
+    this.showDeleteConfirm = false;
+    if (!this.editingSeason?.entity_id) return;
+    this.isSaving = true;
+    const idToDelete = this.editingSeason.entity_id;
+    this.subscriptions.push(
+      this.dataService.deleteSeason(idToDelete).subscribe({
+        next: () => {
+          this.isSaving = false;
+          this.isEditMode = false;
+          const nextSeason = getNextSelectionAfterDelete(
+            this.existingSeasons,
+            idToDelete,
+          );
+          this.existingSeasons = this.existingSeasons.filter(
+            (s) => s.entity_id !== idToDelete,
+          );
+          this.updateSeasonSelectItems();
+          if (nextSeason) {
+            this.selectSeason(nextSeason);
+            this.router.navigate([], {
+              relativeTo: this.route,
+              queryParams: { id: nextSeason.entity_id },
+              queryParamsHandling: "merge",
+              replaceUrl: true,
+            });
+          } else {
+            this.startNewSeason();
+          }
+          this.cdr.detectChanges();
+        },
+        error: (err) => {
+          this.logger.error("Failed to delete season", err);
+          this.isSaving = false;
+          this.cdr.detectChanges();
+        },
+      }),
+    );
   }
 
   autoSaveSeason(): void {

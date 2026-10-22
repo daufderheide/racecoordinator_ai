@@ -150,6 +150,27 @@ export class EditorTitleComponent implements AfterViewChecked {
 
   @HostListener("window:keydown", ["$event"])
   handleKeyDown(event: KeyboardEvent) {
+    // Suppress if any modal dialog is open
+    if (document.querySelector(".modal-backdrop")) {
+      return;
+    }
+
+    const isCmdOrCtrl = event.metaKey || event.ctrlKey;
+
+    // Toggle Edit / View Mode: Cmd/Ctrl+E
+    if (
+      isCmdOrCtrl &&
+      !event.shiftKey &&
+      !event.altKey &&
+      (event.key === "e" || event.key === "E")
+    ) {
+      if (this.showEdit() && !this.disabledEdit() && !this.isSaving()) {
+        event.preventDefault();
+        this.onEdit();
+      }
+      return;
+    }
+
     if (this.isEditMode()) return;
 
     // Suppress if focus is in an input or editable field
@@ -164,13 +185,8 @@ export class EditorTitleComponent implements AfterViewChecked {
       return;
     }
 
-    // Suppress if any modal dialog is open
-    if (document.querySelector(".modal-backdrop")) {
-      return;
-    }
-
     // Never interfere with system shortcuts (Cmd/Ctrl)
-    if (event.metaKey || event.ctrlKey) return;
+    if (isCmdOrCtrl) return;
 
     const key = event.key.toLowerCase();
 

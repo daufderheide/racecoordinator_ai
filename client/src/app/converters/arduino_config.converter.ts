@@ -34,7 +34,8 @@ export class ArduinoConfigConverter {
         p.normallyClosedLaneSensors ?? p.normally_closed_lane_sensors ?? false,
       normallyClosedRelays:
         p.normallyClosedRelays ?? p.normally_closed_relays ?? false,
-      globalInvertLights: p.globalInvertLights || p.global_invert_lights || 0,
+      activeLowAnalogLeds:
+        p.activeLowAnalogLeds ?? p.active_low_analog_leds ?? false,
       usePitsAsLaps: p.usePitsAsLaps ?? p.use_pits_as_laps ?? false,
       useLapsForSegments:
         p.useLapsForSegments ?? p.use_laps_for_segments ?? false,

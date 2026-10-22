@@ -329,7 +329,7 @@
 }
 
 .drag-handle-icon {
-  font-size: 0.8rem;
+  font-size: 1.1rem;
   color: rgba(148, 163, 184, 0.6);
 }
 
@@ -391,28 +391,40 @@
 
 .lock-icon {
   color: #f59e0b;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lock-icon .material-icons {
+  font-size: 1.1rem;
 }
 
 .btn-remove {
   background: transparent;
-  border: none;
-  color: rgba(148, 163, 184, 0.6);
+  border: 1px solid transparent;
+  color: #ef4444;
   font-weight: 700;
   font-size: 0.85rem;
   cursor: pointer;
-  transition: color 0.2s;
-  padding: 4px;
+  transition: all 0.2s ease-in-out;
+  padding: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
   font-family: inherit;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.delete-x {
-  font-family: inherit;
-  font-weight: bold;
+.btn-remove .material-icons {
   font-size: 1.1rem;
-  line-height: 1;
 }
 
 .btn-remove:hover {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.3);
   color: #ef4444;
 }
 
@@ -482,7 +494,8 @@
   gap: 10px;
 }
 
-.swap-highlight i {
+.swap-highlight i,
+.swap-highlight .material-icons {
   font-size: 2rem;
 }
 
@@ -519,7 +532,8 @@
   max-width: 80%;
 }
 
-.locked-overlay i {
+.locked-overlay i,
+.locked-overlay .material-icons {
   font-size: 2.5rem;
   color: #ef4444;
   filter: drop-shadow(0 0 8px rgba(239, 68, 68, 0.4));
@@ -596,11 +610,11 @@
 }
 
 .icon-button {
-  background: rgba(56, 189, 248, 0.1);
-  border: 1px solid rgba(56, 189, 248, 0.3);
+  background: transparent;
+  border: 1px solid transparent;
   color: #38bdf8;
   padding: 4px 8px;
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s;
   display: flex;
@@ -610,9 +624,9 @@
 }
 
 .icon-button:hover {
-  background: rgba(56, 189, 248, 0.2);
-  border-color: #38bdf8;
-  transform: scale(1.05);
+  background: rgba(56, 189, 248, 0.15);
+  border-color: rgba(56, 189, 248, 0.3);
+  transform: translateY(-1px);
 }
 
 .icon-button i {
@@ -625,14 +639,15 @@
   align-items: center;
   gap: 6px;
   padding: 2px 8px;
-  border-radius: 15px;
+  border-radius: 6px;
   font-family: inherit;
   font-size: 0.85rem;
   font-weight: 600;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  border: 1px solid rgba(56, 189, 248, 0.25);
-  background: rgba(15, 23, 42, 0.6);
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.05);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid transparent;
+  background: transparent;
+  box-shadow: none;
+  cursor: pointer;
 }
 
 .available-pill .graphic-icon {
@@ -658,15 +673,15 @@
   min-width: 12px;
   text-align: center;
   line-height: 1;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  border: 1px solid rgba(56, 189, 248, 0.1);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid transparent;
 }
 
 .available-pill:hover {
   background: rgba(56, 189, 248, 0.15);
-  border-color: #38bdf8;
-  box-shadow: 0 0 12px rgba(56, 189, 248, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.1);
-  transform: translateY(-1px) scale(1.03);
+  border-color: rgba(56, 189, 248, 0.3);
+  box-shadow: 0 0 8px rgba(56, 189, 248, 0.2);
+  transform: translateY(-1px);
 }
 
 .available-pill:hover .graphic-icon {
@@ -681,8 +696,8 @@
 }
 
 .available-pill:active {
-  transform: translateY(0) scale(0.98);
-  box-shadow: 0 0 4px rgba(56, 189, 248, 0.2);
+  transform: translateY(0);
+  box-shadow: none;
 }
 
 /* Equality Report Modal Styles */

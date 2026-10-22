@@ -71,7 +71,7 @@ public class ArduinoConfigTest {
             1,
             true,
             false,
-            0,
+            true,
             true,
             false,
             ArduinoConfig.LapPinPitBehavior.NONE,
@@ -82,8 +82,12 @@ public class ArduinoConfigTest {
 
     assertTrue(config1.normallyClosedLaneSensors);
     assertFalse(config1.normallyClosedRelays);
+    assertTrue(config1.activeLowAnalogLeds);
     assertTrue(config1.usePitsAsLaps);
     assertFalse(config1.useLapsForSegments);
+
+    ArduinoConfig defaultConfig = new ArduinoConfig();
+    assertFalse(defaultConfig.activeLowAnalogLeds);
   }
 
   @Test

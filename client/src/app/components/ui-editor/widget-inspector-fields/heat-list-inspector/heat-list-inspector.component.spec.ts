@@ -151,5 +151,53 @@ describe("HeatListInspectorComponent", () => {
     component.settings().showCurrentHeatTime = false;
     component.onSettingsChange();
     expect(component.settings().showCurrentHeatTime).toBeFalse();
+
+    component.settings().showFutureSummary = true;
+    component.onSettingsChange();
+    expect(component.settings().showFutureSummary).toBeTrue();
+  });
+
+  it("should disable summaryRowTextColor field when summaryUseLaneColors is enabled", () => {
+    fixture.componentRef.setInput("settings", {
+      ...component.settings(),
+      showActiveSummary: true,
+      summaryUseLaneColors: true,
+      summaryRowTextColor: "#ffffff",
+    });
+    fixture.detectChanges();
+
+    const section = fixture.nativeElement.querySelector(
+      ".summary-row-text-color-section",
+    );
+    expect(section).toBeTruthy();
+    expect(section.classList.contains("disabled")).toBeTrue();
+
+    const colorInput = section.querySelector("input[type='color']");
+    expect(colorInput.disabled).toBeTrue();
+
+    const resetBtn = section.querySelector(".color-reset-btn");
+    expect(resetBtn.disabled).toBeTrue();
+  });
+
+  it("should enable summaryRowTextColor field when summaryUseLaneColors is disabled", () => {
+    fixture.componentRef.setInput("settings", {
+      ...component.settings(),
+      showActiveSummary: true,
+      summaryUseLaneColors: false,
+      summaryRowTextColor: "#ffffff",
+    });
+    fixture.detectChanges();
+
+    const section = fixture.nativeElement.querySelector(
+      ".summary-row-text-color-section",
+    );
+    expect(section).toBeTruthy();
+    expect(section.classList.contains("disabled")).toBeFalse();
+
+    const colorInput = section.querySelector("input[type='color']");
+    expect(colorInput.disabled).toBeFalse();
+
+    const resetBtn = section.querySelector(".color-reset-btn");
+    expect(resetBtn.disabled).toBeFalse();
   });
 });

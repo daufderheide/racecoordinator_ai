@@ -528,6 +528,10 @@
   transition: opacity 0.2s;
 }
 
+.delete-anchor-btn .material-icons {
+  font-size: 13px;
+}
+
 .body-cell:hover .delete-anchor-btn {
   opacity: 1;
 }

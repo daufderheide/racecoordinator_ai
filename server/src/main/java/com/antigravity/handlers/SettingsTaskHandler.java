@@ -7,6 +7,9 @@ import com.antigravity.service.ServerConfigService;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.javalin.Javalin;
 import io.javalin.http.Context;
+import java.io.File;
+import java.io.FileInputStream;
+import java.nio.file.Paths;
 import org.slf4j.LoggerFactory;
 
 /**
@@ -22,6 +25,8 @@ public class SettingsTaskHandler {
     app.post("/api/settings/log-level", this::setLogLevel, Role.ADMIN);
     app.post("/api/settings/director-password", this::setDirectorPassword, Role.ADMIN);
     app.get("/api/settings/auth", this::getAuthSettings, Role.ADMIN);
+    app.post("/api/client-logs", this::handleClientLog, Role.VIEWER);
+    app.get("/api/logs/download", this::downloadLog, Role.VIEWER);
   }
 
   /**
@@ -63,6 +68,74 @@ public class SettingsTaskHandler {
         configService.getDirectorPassword() != null
             && !configService.getDirectorPassword().isEmpty();
     ctx.json(new AuthSettingsResponse(hasDirectorPassword));
+  }
+
+  void handleClientLog(Context ctx) {
+    try {
+      ClientLogRequest req = ctx.bodyAsClass(ClientLogRequest.class);
+      if (req != null && req.message != null && !req.message.isEmpty()) {
+        String level = req.level != null ? req.level.toUpperCase() : "WARN";
+        String msg = req.message.length() > 1000 ? req.message.substring(0, 1000) : req.message;
+        String clientIp = ctx.ip() != null ? ctx.ip() : "unknown";
+        String clientTag =
+            req.clientId != null && !req.clientId.isEmpty()
+                ? clientIp + "#" + req.clientId
+                : clientIp;
+        String prefix = "[CLIENT " + clientTag + "] ";
+
+        org.slf4j.Logger clientLogger = LoggerFactory.getLogger("com.antigravity.client");
+        if ("ERROR".equals(level)) {
+          clientLogger.error("{}{}", prefix, msg);
+        } else if ("INFO".equals(level)) {
+          clientLogger.info("{}{}", prefix, msg);
+        } else if ("DEBUG".equals(level)) {
+          clientLogger.debug("{}{}", prefix, msg);
+        } else {
+          clientLogger.warn("{}{}", prefix, msg);
+        }
+      }
+      setStatus(ctx, 200);
+      setResult(ctx, "OK");
+    } catch (Exception e) {
+      setStatus(ctx, 400);
+      setResult(ctx, "Failed to parse log: " + e.getMessage());
+    }
+  }
+
+  File getLogFile() {
+    String appDataDir = System.getProperty("app.data.dir");
+    if (appDataDir != null && !appDataDir.isEmpty()) {
+      return Paths.get(appDataDir, "racecoordinator.log").toFile();
+    }
+    return new File("racecoordinator.log");
+  }
+
+  void downloadLog(Context ctx) {
+    try {
+      File logFile = getLogFile();
+      if (!logFile.exists() || !logFile.canRead()) {
+        setStatus(ctx, 404);
+        setResult(ctx, "Log file not found");
+        return;
+      }
+      ctx.contentType("text/plain; charset=utf-8");
+      ctx.header("Content-Disposition", "attachment; filename=\"racecoordinator.log\"");
+      ctx.result(new FileInputStream(logFile));
+    } catch (Exception e) {
+      setStatus(ctx, 500);
+      setResult(ctx, "Error reading log file: " + e.getMessage());
+    }
+  }
+
+  public static class ClientLogRequest {
+    @JsonProperty("level")
+    public String level;
+
+    @JsonProperty("message")
+    public String message;
+
+    @JsonProperty("clientId")
+    public String clientId;
   }
 
   private static class PasswordRequest {

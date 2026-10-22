@@ -1,10 +1,12 @@
 import { TestbedHarnessEnvironment } from "@angular/cdk/testing/testbed";
 import { Component, input, output } from "@angular/core";
 import { ComponentFixture, TestBed } from "@angular/core/testing";
+import { By } from "@angular/platform-browser";
 import { ActivatedRoute, Router } from "@angular/router";
 import { of } from "rxjs";
 import { TranslationService } from "@app/services/translation.service";
 
+import { CustomSelectComponent } from "../custom-select/custom-select.component";
 import { EditorTitleComponent } from "./editor-title.component";
 import { EditorTitleHarness } from "./testing/editor-title.harness";
 
@@ -164,6 +166,16 @@ describe("EditorTitleComponent", () => {
       fixture.componentRef.setInput("items", testItems);
       fixture.componentRef.setInput("selectedId", "item-1");
       fixture.detectChanges();
+    });
+
+    it("should configure custom select with extendToPageBottom", () => {
+      const selectDebug = fixture.debugElement.query(
+        By.css("#editor-object-selector"),
+      );
+      expect(selectDebug).toBeTruthy();
+      const selectComponent =
+        selectDebug.componentInstance as CustomSelectComponent;
+      expect(selectComponent.extendToPageBottom()).toBeTrue();
     });
 
     it("should display prev/next buttons and item counter", async () => {
@@ -330,6 +342,155 @@ describe("EditorTitleComponent", () => {
         new KeyboardEvent("keydown", { key: "x", cancelable: true }),
       );
       expect(component.expandCollapse.emit).not.toHaveBeenCalled();
+    });
+
+    it("should toggle edit mode via Cmd+E and Ctrl+E when showEdit is true", () => {
+      fixture.componentRef.setInput("showEdit", true);
+      fixture.componentRef.setInput("isEditMode", false);
+      fixture.detectChanges();
+
+      spyOn(component.edit, "emit");
+
+      // Cmd+E (Mac)
+      const cmdEvent = new KeyboardEvent("keydown", {
+        key: "e",
+        metaKey: true,
+        cancelable: true,
+      });
+      window.dispatchEvent(cmdEvent);
+      expect(component.edit.emit).toHaveBeenCalledTimes(1);
+      expect(cmdEvent.defaultPrevented).toBeTrue();
+
+      // Ctrl+E (Windows/Linux) in edit mode
+      fixture.componentRef.setInput("isEditMode", true);
+      fixture.detectChanges();
+
+      const ctrlEvent = new KeyboardEvent("keydown", {
+        key: "E",
+        ctrlKey: true,
+        cancelable: true,
+      });
+      window.dispatchEvent(ctrlEvent);
+      expect(component.edit.emit).toHaveBeenCalledTimes(2);
+      expect(ctrlEvent.defaultPrevented).toBeTrue();
+    });
+
+    it("should toggle edit mode via Cmd/Ctrl+E even when an input element is focused", () => {
+      fixture.componentRef.setInput("showEdit", true);
+      fixture.detectChanges();
+
+      const inputEl = document.createElement("input");
+      document.body.appendChild(inputEl);
+      inputEl.focus();
+
+      spyOn(component.edit, "emit");
+      window.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          key: "e",
+          ctrlKey: true,
+          cancelable: true,
+        }),
+      );
+      expect(component.edit.emit).toHaveBeenCalled();
+
+      document.body.removeChild(inputEl);
+    });
+
+    it("should not toggle edit mode via Cmd/Ctrl+E when showEdit is false", () => {
+      fixture.componentRef.setInput("showEdit", false);
+      fixture.detectChanges();
+
+      spyOn(component.edit, "emit");
+      window.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          key: "e",
+          metaKey: true,
+          cancelable: true,
+        }),
+      );
+      expect(component.edit.emit).not.toHaveBeenCalled();
+    });
+
+    it("should not toggle edit mode via Cmd/Ctrl+E when disabledEdit is true", () => {
+      fixture.componentRef.setInput("showEdit", true);
+      fixture.componentRef.setInput("disabledEdit", true);
+      fixture.detectChanges();
+
+      spyOn(component.edit, "emit");
+      window.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          key: "e",
+          metaKey: true,
+          cancelable: true,
+        }),
+      );
+      expect(component.edit.emit).not.toHaveBeenCalled();
+    });
+
+    it("should not toggle edit mode via Cmd/Ctrl+E when isSaving is true", () => {
+      fixture.componentRef.setInput("showEdit", true);
+      fixture.componentRef.setInput("isSaving", true);
+      fixture.detectChanges();
+
+      spyOn(component.edit, "emit");
+      window.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          key: "e",
+          metaKey: true,
+          cancelable: true,
+        }),
+      );
+      expect(component.edit.emit).not.toHaveBeenCalled();
+    });
+
+    it("should not toggle edit mode via Cmd/Ctrl+E when modal dialog is open", () => {
+      fixture.componentRef.setInput("showEdit", true);
+      fixture.detectChanges();
+
+      const modalEl = document.createElement("div");
+      modalEl.className = "modal-backdrop";
+      document.body.appendChild(modalEl);
+
+      spyOn(component.edit, "emit");
+      window.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          key: "e",
+          ctrlKey: true,
+          cancelable: true,
+        }),
+      );
+      expect(component.edit.emit).not.toHaveBeenCalled();
+
+      document.body.removeChild(modalEl);
+    });
+
+    it("should not toggle edit mode when Shift or Alt is pressed with Cmd/Ctrl+E", () => {
+      fixture.componentRef.setInput("showEdit", true);
+      fixture.detectChanges();
+
+      spyOn(component.edit, "emit");
+
+      // Cmd+Shift+E
+      window.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          key: "e",
+          metaKey: true,
+          shiftKey: true,
+          cancelable: true,
+        }),
+      );
+      expect(component.edit.emit).not.toHaveBeenCalled();
+
+      // Ctrl+Alt+E
+      window.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          key: "e",
+          ctrlKey: true,
+          altKey: true,
+          cancelable: true,
+        }),
+      );
+      expect(component.edit.emit).not.toHaveBeenCalled();
     });
 
     it("should not scroll containers back to top when advancing or going to previous", async () => {

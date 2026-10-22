@@ -2,10 +2,16 @@
   [class]="
     widget().widgetType === 'action-back'
       ? 'browser-nav-btn back-btn'
-      : 'action-button'
+      : widget().widgetType === 'action-forward'
+        ? 'browser-nav-btn forward-btn'
+        : widget().widgetType === 'action-close'
+          ? 'browser-nav-btn close-btn'
+          : 'action-button'
   "
   [disabled]="isActionDisabled"
   (click)="onClick($event)"
+  [title]="actionLabelKey | translate"
+  [attr.aria-label]="actionLabelKey | translate"
   [style.font-family]="widget().customSettings?.['fontFamily'] || null"
   [style.font-size.px]="
     widget().scaleMode === 'fixed' || !widget().scaleMode
@@ -15,11 +21,15 @@
   [style.color]="widget().customSettings?.['textColor'] || null"
   [style.background-color]="
     widget().customSettings?.['backgroundColor'] ||
-    (widget().widgetType === 'action-back' ? null : '#009dff')
+    (isNavOrCloseButton ? null : '#009dff')
   "
 >
   @if (widget().widgetType === "action-back") {
     <span class="material-icons">arrow_back</span>
+  } @else if (widget().widgetType === "action-forward") {
+    <span class="material-icons">arrow_forward</span>
+  } @else if (widget().widgetType === "action-close") {
+    <span class="material-icons">close</span>
   } @else {
     {{ actionLabelKey | translate }}
   }

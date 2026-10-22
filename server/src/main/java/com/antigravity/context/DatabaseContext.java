@@ -45,6 +45,7 @@ public class DatabaseContext {
   private volatile String currentDatabaseName;
   private final ServerConfigService configService;
   private final String dataRoot;
+  private final Set<String> verifiedTables = Collections.synchronizedSet(new HashSet<>());
 
   public DatabaseContext(
       String initialDatabaseName, ServerConfigService configService, String dataRoot) {
@@ -85,6 +86,7 @@ public class DatabaseContext {
         logger.warn("Error closing database connection during switch", e);
       }
     }
+    this.verifiedTables.clear();
 
     this.currentDatabaseName = databaseName;
     File dbDir = new File(dataRoot + databaseName);
@@ -119,6 +121,10 @@ public class DatabaseContext {
     if (tableName == null || tableName.trim().isEmpty()) {
       return;
     }
+    String normalized = tableName.trim().toLowerCase();
+    if (verifiedTables.contains(normalized)) {
+      return;
+    }
     try (Statement stmt = getConnection().createStatement()) {
       if ("counters".equalsIgnoreCase(tableName)) {
         stmt.execute(
@@ -129,8 +135,41 @@ public class DatabaseContext {
                 + tableName
                 + " (entity_id TEXT PRIMARY KEY, sequence_id TEXT, json_data TEXT NOT NULL)");
       }
+      verifiedTables.add(normalized);
     } catch (SQLException e) {
       logger.error("Error creating table {}", tableName, e);
+    }
+  }
+
+  public synchronized void ensureRaceRecordsTable(String tableName) {
+    if (tableName == null || tableName.trim().isEmpty()) {
+      return;
+    }
+    String normalized = tableName.trim().toLowerCase();
+    if (verifiedTables.contains(normalized)) {
+      return;
+    }
+    try (Statement stmt = getConnection().createStatement()) {
+      stmt.execute(
+          "CREATE TABLE IF NOT EXISTS "
+              + tableName
+              + " (race_id TEXT PRIMARY KEY, records_blob BLOB)");
+      verifiedTables.add(normalized);
+    } catch (SQLException e) {
+      logger.error("Error creating race records table {}", tableName, e);
+    }
+  }
+
+  public boolean isTableVerified(String tableName) {
+    if (tableName == null) {
+      return false;
+    }
+    return verifiedTables.contains(tableName.trim().toLowerCase());
+  }
+
+  public void markTableVerified(String tableName) {
+    if (tableName != null) {
+      verifiedTables.add(tableName.trim().toLowerCase());
     }
   }
 
@@ -192,6 +231,66 @@ public class DatabaseContext {
       logger.error("Error setting system_info for new database {}", databaseName, e);
     }
     logger.info("Created database: {} at {}", databaseName, dbDir.getAbsolutePath());
+  }
+
+  public synchronized void markDefaultArtifactDeleted(String type, String id) {
+    if (type == null || id == null) {
+      return;
+    }
+    ensureTable("system_info");
+    String key = "deleted_default:" + type.trim().toLowerCase() + ":" + id.trim().toLowerCase();
+    String sql =
+        "INSERT OR REPLACE INTO system_info (entity_id, sequence_id, json_data) VALUES (?, NULL, ?)";
+    try (PreparedStatement pstmt = getConnection().prepareStatement(sql)) {
+      pstmt.setString(1, key);
+      pstmt.setString(2, "{\"deleted_at\":" + System.currentTimeMillis() + "}");
+      pstmt.executeUpdate();
+    } catch (SQLException e) {
+      logger.error("Error marking default artifact deleted: {}", key, e);
+    }
+  }
+
+  public synchronized boolean isDefaultArtifactDeleted(String type, String id) {
+    if (type == null || id == null) {
+      return false;
+    }
+    ensureTable("system_info");
+    String key = "deleted_default:" + type.trim().toLowerCase() + ":" + id.trim().toLowerCase();
+    String sql = "SELECT 1 FROM system_info WHERE entity_id = ?";
+    try (PreparedStatement pstmt = getConnection().prepareStatement(sql)) {
+      pstmt.setString(1, key);
+      try (ResultSet rs = pstmt.executeQuery()) {
+        return rs.next();
+      }
+    } catch (SQLException e) {
+      logger.error("Error checking default artifact deleted: {}", key, e);
+      return false;
+    }
+  }
+
+  public synchronized void clearDefaultArtifactDeleted(String type, String id) {
+    if (type == null || id == null) {
+      return;
+    }
+    ensureTable("system_info");
+    String key = "deleted_default:" + type.trim().toLowerCase() + ":" + id.trim().toLowerCase();
+    String sql = "DELETE FROM system_info WHERE entity_id = ?";
+    try (PreparedStatement pstmt = getConnection().prepareStatement(sql)) {
+      pstmt.setString(1, key);
+      pstmt.executeUpdate();
+    } catch (SQLException e) {
+      logger.error("Error clearing deleted default artifact: {}", key, e);
+    }
+  }
+
+  public synchronized void clearAllDeletedDefaultArtifacts() {
+    ensureTable("system_info");
+    String sql = "DELETE FROM system_info WHERE entity_id LIKE 'deleted_default:%'";
+    try (Statement stmt = getConnection().createStatement()) {
+      stmt.executeUpdate(sql);
+    } catch (SQLException e) {
+      logger.error("Error clearing all deleted default artifacts", e);
+    }
   }
 
   public synchronized List<String> listDatabases() {

@@ -2157,6 +2157,13 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
         position: "bottom",
         onEnter: expandMain,
       },
+      {
+        selector: `#arduino-active-low-analog-leds-${this.index()}`,
+        title: "TE_HELP_ARDUINO_ACTIVE_LOW_LEDS_TITLE",
+        content: "TE_HELP_ARDUINO_ACTIVE_LOW_LEDS_CONTENT",
+        position: "bottom",
+        onEnter: expandMain,
+      },
     ];
   }
 

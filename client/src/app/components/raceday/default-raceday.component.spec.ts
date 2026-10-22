@@ -45,7 +45,7 @@ class MockTranslatePipe implements PipeTransform {
   }
 }
 
-import { By } from "@angular/platform-browser";
+import { By, Title } from "@angular/platform-browser";
 import { BehaviorSubject, of, Subject, throwError } from "rxjs";
 import { DisallowLapRecordsDialogComponent } from "@app/components/shared/disallow-lap-records-dialog/disallow-lap-records-dialog.component";
 import { Role } from "@app/models/role";
@@ -3040,6 +3040,54 @@ describe("DefaultRacedayComponent", () => {
       component["time"] = 9.5;
       expect(component["formattedTime"]).toBe("9");
     });
+
+    it("should memoize TimerFormatOptions and invalidate on layout or settings change", () => {
+      component["layout"] = {
+        widgets: [
+          {
+            widgetType: "timer",
+            customSettings: {
+              timeDisplayFormat: "mm_ss",
+              timeSubsecondMode: "threshold",
+              timeSubsecondThreshold: 10,
+              timeSubsecondDecimals: 2,
+            },
+          },
+        ],
+      } as any;
+
+      const opts1 = component["getTimerFormatOptions"]();
+      const opts2 = component["getTimerFormatOptions"]();
+      expect(opts1).toBe(opts2);
+
+      // Modify layout reference
+      component["layout"] = {
+        widgets: [
+          {
+            widgetType: "timer",
+            customSettings: {
+              timeDisplayFormat: "m_ss",
+              timeSubsecondMode: "always",
+              timeSubsecondThreshold: 5,
+              timeSubsecondDecimals: 3,
+            },
+          },
+        ],
+      } as any;
+
+      const opts3 = component["getTimerFormatOptions"]();
+      expect(opts3).not.toBe(opts1);
+      expect(opts3.format).toBe("m_ss");
+      expect(opts3.subsecondMode).toBe("always");
+
+      // Modify settings within existing layout
+      component["layout"].widgets[0].customSettings = {
+        timeDisplayFormat: "hh_mm_ss",
+      };
+      const opts4 = component["getTimerFormatOptions"]();
+      expect(opts4).not.toBe(opts3);
+      expect(opts4.format).toBe("hh_mm_ss");
+    });
   });
 
   describe("Lap Highlighting", () => {
@@ -3225,6 +3273,16 @@ describe("DefaultRacedayComponent", () => {
       });
 
       expect(mockAudioInstance.play).toHaveBeenCalled();
+    });
+
+    it("should update driverData adjustedLapCount when FALSE_START received with adjustedLapCount", () => {
+      lapsSubject.next({
+        objectId: "hd1",
+        type: LapType.FALSE_START,
+        adjustedLapCount: -1,
+      });
+
+      expect(mockHd.adjustedLapCount).toBe(-1);
     });
   });
 
@@ -3746,6 +3804,40 @@ describe("DefaultRacedayComponent", () => {
       expect(component.isBackDisabled).toBeFalse();
       component.onFileMenuSelect("BACK");
       expect(window.history.back).toHaveBeenCalled();
+    });
+
+    it("should handle FORWARD action in file menu respecting isForwardDisabled", () => {
+      spyOn(window.history, "forward");
+      const navService = (component as any).navigationService;
+      spyOn(navService, "canGoForward").and.returnValue(false);
+
+      expect(component.isForwardDisabled).toBeTrue();
+      component.onFileMenuSelect("FORWARD");
+      expect(window.history.forward).not.toHaveBeenCalled();
+
+      navService.canGoForward.and.returnValue(true);
+      expect(component.isForwardDisabled).toBeFalse();
+      component.onFileMenuSelect("FORWARD");
+      expect(window.history.forward).toHaveBeenCalled();
+    });
+
+    it("should handle CLOSE action in file menu calling window.close", () => {
+      spyOn(window, "close");
+      component.onFileMenuSelect("CLOSE");
+      expect(window.close).toHaveBeenCalled();
+    });
+
+    it("should exit fullscreen when closing window if in fullscreen", () => {
+      spyOn(window, "close");
+      const exitFsSpy = jasmine.createSpy("exitFullscreen");
+      spyOnProperty(document, "fullscreenElement", "get").and.returnValue(
+        document.body,
+      );
+      spyOn(document, "exitFullscreen").and.callFake(exitFsSpy);
+
+      component.closeWindow();
+      expect(exitFsSpy).toHaveBeenCalled();
+      expect(window.close).toHaveBeenCalled();
     });
 
     it("should open disallow lap records dialog when DISALLOW_LAP_RECORDS is selected in menu", () => {
@@ -4460,6 +4552,15 @@ describe("DefaultRacedayComponent", () => {
       expect(component["countdownTotalLamps"]).toBe(4);
     }));
 
+    it("should dynamically synchronize countdownTotalLamps from autoStartRemaining if uninitialized", fakeAsync(() => {
+      component["countdownTotalLamps"] = 0;
+      component["showCountdownOverlay"] = true;
+      raceTimeSubject.next({ time: 4.2, autoStartRemaining: 4.2 });
+      tick();
+
+      expect(component["countdownTotalLamps"]).toBe(5);
+    }));
+
     it("should update lamp states based on time remaining", fakeAsync(() => {
       component["race"] = { ...MOCK_RACES[0], start_time: 5.0 } as any;
       raceTimeSubject.next({ time: 5.0, autoStartRemaining: 5.0 });
@@ -4484,6 +4585,53 @@ describe("DefaultRacedayComponent", () => {
         component["countdownLamps"].every((l) => l.state === "on"),
       ).toBeTrue();
       expect(component["countdownText"]).toBe("1");
+    }));
+
+    it("should cap countdownTotalLamps to maxLamps and keep all lamps dim when duration > maxLamps", fakeAsync(() => {
+      component.layout = {
+        baseWidth: 1920,
+        baseHeight: 1080,
+        widgets: [
+          {
+            id: "widget-countdown",
+            widgetType: "countdown",
+            x: 0,
+            y: 0,
+            width: 500,
+            height: 200,
+            zIndex: 2000,
+            scaleMode: "auto",
+            customSettings: {
+              maxLamps: 5,
+            },
+          },
+        ],
+      };
+
+      const race = { ...MOCK_RACES[0], start_time: 6.0 } as any;
+      component["race"] = race;
+      mockRaceService.getRace.and.returnValue(race);
+      raceStateSubject.next(RaceState.STARTING);
+      tick();
+
+      // Capped to maxLamps = 5 even though start_time = 6.0
+      expect(component["countdownTotalLamps"]).toBe(5);
+      expect(component["countdownLamps"].length).toBe(5);
+
+      // At T=6.0s (extra 1 second above 5 max lamps), all 5 lamps should be DIM / OFF!
+      expect(
+        component["countdownLamps"].every((l) => l.state === "dim"),
+      ).toBeTrue();
+      expect(component["countdownText"]).toBe("6");
+
+      // At T=5.0s, the first lamp should illuminate
+      raceTimeSubject.next({ time: 5.0, autoStartRemaining: 5.0 });
+      tick();
+      expect(component["countdownLamps"][0].state).toBe("on");
+      expect(
+        component["countdownLamps"].filter((l) => l.state === "on").length,
+      ).toBe(1);
+      expect(component["countdownText"]).toBe("5");
     }));
 
     it("should transition to green and hide after 5s when state becomes RACING", fakeAsync(() => {
@@ -5138,10 +5286,7 @@ describe("DefaultRacedayComponent", () => {
       expect(window.Audio).not.toHaveBeenCalledWith(
         `${mockDataService.serverUrl}api/assets/download/5`,
       );
-      expect(component["countdownLamps"].length).toBe(5);
-      expect(
-        component["countdownLamps"].every((l) => l.state === "go"),
-      ).toBeTrue();
+      expect(component["countdownLamps"].length).toBe(0);
     }));
 
     it("should play only 'GO' sound and NOT '5' when restart_time is 0", fakeAsync(() => {
@@ -5174,10 +5319,7 @@ describe("DefaultRacedayComponent", () => {
       expect(window.Audio).not.toHaveBeenCalledWith(
         `${mockDataService.serverUrl}api/assets/download/5`,
       );
-      expect(component["countdownLamps"].length).toBe(5);
-      expect(
-        component["countdownLamps"].every((l) => l.state === "go"),
-      ).toBeTrue();
+      expect(component["countdownLamps"].length).toBe(0);
     }));
   });
 
@@ -5384,6 +5526,58 @@ describe("DefaultRacedayComponent", () => {
       raceTimeSubject.next({ time: 60.0 });
       expect(window.Audio).toHaveBeenCalledWith(
         `${mockDataService.serverUrl}api/assets/download/60`,
+      );
+    });
+
+    it("should play audio set entry referencing asset UUID without 404 URL", () => {
+      const assetUuid = "d637f861-ca0c-488e-87b4-ecef43800cb1";
+      const mockAssets = [
+        {
+          model: { entityId: "custom_time_left_set" },
+          type: "audio_set",
+          audioEntries: [{ url: assetUuid, timeSeconds: 120 }],
+          url: "/api/assets/download/custom_time_left_set",
+        },
+        {
+          model: { entityId: assetUuid },
+          type: "audio",
+          url: "/assets/2_minutes_remaining.wav",
+        },
+      ];
+      mockDataService.listAssets.and.returnValue(of(mockAssets));
+      component["assets"] = mockAssets;
+
+      mockThemeService.resolveAudioConfig.and.callFake((key: string) => {
+        if (key === THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT) {
+          return { type: "audio_set", url: "custom_time_left_set" };
+        }
+        return null;
+      });
+
+      const race = {
+        ...MOCK_RACES[0],
+        heat_scoring: {
+          finishMethod: FinishMethod.Timed,
+          finishValue: 300,
+        },
+        track: component["track"],
+      } as any;
+      component["race"] = race;
+      mockRaceService.getRace.and.returnValue(race);
+
+      fixture.detectChanges();
+      component["raceState"] = RaceState.RACING;
+
+      (window.Audio as any).calls.reset();
+
+      raceTimeSubject.next({ time: 300.0 });
+      raceTimeSubject.next({ time: 120.0 });
+
+      expect(window.Audio).toHaveBeenCalledWith(
+        `${mockDataService.serverUrl}assets/2_minutes_remaining.wav`,
+      );
+      expect(window.Audio).not.toHaveBeenCalledWith(
+        `${mockDataService.serverUrl}${assetUuid}`,
       );
     });
 
@@ -6725,6 +6919,90 @@ describe("DefaultRacedayComponent", () => {
       expect(component["lastPlayedCountdownSecond"]).toBe(5);
     });
 
+    it("should skip countdown sound if triggered rapidly (<250ms) after previous countdown sound without advancing lastCountdownSoundTime", () => {
+      mockThemeService.resolveAudioConfig.and.returnValue({
+        type: "audio_set",
+        url: "audio-set-1",
+      });
+      spyOn<any>(component, "playAudioFromSet").and.callThrough();
+      component["showCountdownOverlay"] = true;
+      component["countdownTotalLamps"] = 5;
+      component["lastPlayedCountdownSecond"] = 5;
+      const initialTime =
+        (typeof performance !== "undefined" ? performance.now() : Date.now()) -
+        150;
+      component["lastCountdownSoundTime"] = initialTime;
+
+      component["updateCountdownLamps"](4.0);
+
+      expect(component["playAudioFromSet"]).not.toHaveBeenCalled();
+      expect(component["lastPlayedCountdownSecond"]).toBe(4);
+      // Ensure skipped sound does NOT update lastCountdownSoundTime so it avoids cascading drops
+      expect(component["lastCountdownSoundTime"]).toBe(initialTime);
+    });
+
+    it("should play countdown sound when delta is at least 250ms after previous sound", () => {
+      mockThemeService.resolveAudioConfig.and.returnValue({
+        type: "audio_set",
+        url: "audio-set-1",
+      });
+      spyOn<any>(component, "playAudioFromSet").and.returnValue(true);
+      component["showCountdownOverlay"] = true;
+      component["countdownTotalLamps"] = 5;
+      component["lastPlayedCountdownSecond"] = 5;
+      const initialTime =
+        (typeof performance !== "undefined" ? performance.now() : Date.now()) -
+        700;
+      component["lastCountdownSoundTime"] = initialTime;
+
+      component["updateCountdownLamps"](4.0);
+
+      expect(component["playAudioFromSet"]).toHaveBeenCalledWith(
+        THEME_SLOT_KEYS.AUDIO_COUNTDOWN,
+        4,
+        { widgetType: "countdown" },
+      );
+      expect(component["lastPlayedCountdownSecond"]).toBe(4);
+      expect(component["lastCountdownSoundTime"]).toBeGreaterThan(initialTime);
+    });
+
+    it("should play TTS countdown callout with urgent priority to avoid being dropped by cadence spacing", () => {
+      mockThemeService.resolveAudioConfig.and.returnValue({
+        type: "audio_set",
+        url: "audio-set-tts",
+      });
+      component["assets"] = [
+        {
+          entity_id: "audio-set-tts",
+          type: "audio_set",
+          audio_entries: [
+            {
+              time_seconds: 3,
+              type: "tts",
+              text: "Three",
+              trigger_mode: "remaining",
+            },
+          ],
+        } as any,
+      ];
+      const audioService = (component as any).audioService;
+      spyOn(audioService, "playCallout").and.returnValue(true);
+
+      const played = (component as any).playAudioFromSet(
+        THEME_SLOT_KEYS.AUDIO_COUNTDOWN,
+        3,
+      );
+
+      expect(played).toBeTrue();
+      expect(audioService.playCallout).toHaveBeenCalledWith(
+        { type: "tts", text: "Three" },
+        "urgent",
+        undefined,
+        undefined,
+        { widgetType: "countdown" },
+      );
+    });
+
     it("should preload countdown audio entries across seconds 0 through 5", () => {
       mockThemeService.resolveAudioConfig.and.returnValue({
         type: "audio_set",
@@ -6744,6 +7022,44 @@ describe("DefaultRacedayComponent", () => {
       expect(audioService.preload).toHaveBeenCalledWith(
         jasmine.stringMatching("/assets/5.mp3"),
       );
+    });
+
+    it("should preload countdown lamp images when preloadCountdownAudio is called", () => {
+      component["assets"] = [
+        { name: "Start Lamp Red", url: "/assets/red.svg" },
+        { name: "Start Lamp Dim", url: "/assets/dim.svg" },
+        { name: "Start Lamp Green", url: "/assets/green.svg" },
+      ] as any;
+      const createdImages: any[] = [];
+      const origImage = (window as any).Image;
+      (window as any).Image = function (this: any) {
+        const img = this || {};
+        createdImages.push(img);
+        return img;
+      };
+
+      try {
+        (component as any).preloadCountdownAudio();
+      } finally {
+        (window as any).Image = origImage;
+      }
+
+      expect(createdImages.length).toBeGreaterThanOrEqual(3);
+      expect(
+        createdImages.some(
+          (img) => img.src && img.src.includes("/assets/red.svg"),
+        ),
+      ).toBeTrue();
+      expect(
+        createdImages.some(
+          (img) => img.src && img.src.includes("/assets/dim.svg"),
+        ),
+      ).toBeTrue();
+      expect(
+        createdImages.some(
+          (img) => img.src && img.src.includes("/assets/green.svg"),
+        ),
+      ).toBeTrue();
     });
 
     it("should play sound from audio set for GO (0 seconds)", () => {
@@ -7689,20 +8005,47 @@ describe("DefaultRacedayComponent", () => {
       expect(result).toBeTrue();
     });
 
-    it("should block deactivation and show acknowledgement modal when race has ended and forceExit is false", () => {
+    it("should show exit confirmation modal when race has ended and forceExit is false", (done) => {
+      fixture.detectChanges();
+      sessionStorage.removeItem("skipIntro");
+      component.raceHasEnded = true;
+      component.forceExit = false;
+
+      const result = component.canDeactivate() as any;
+      expect(component.showExitConfirmation).toBeTrue();
+      expect(component.showAckModal).toBeFalse();
+      expect(component.exitModalTitle).toBe("RD_RACE_ENDED_TITLE");
+      expect(component.exitModalMessage).toBe(
+        "RD_CONFIRM_EXIT_RACE_ENDED_MESSAGE",
+      );
+      expect(component.exitConfirmText).toBe("RD_CONFIRM_EXIT_BTN_LEAVE");
+      expect(component.exitCancelText).toBe("RD_CONFIRM_EXIT_BTN_STAY");
+
+      result.subscribe((val: boolean) => {
+        expect(val).toBeTrue();
+        expect(sessionStorage.getItem("skipIntro")).toBeNull();
+        done();
+      });
+      component.onExitConfirm();
+    });
+
+    it("should stay on page when cancelling exit confirmation after race has ended", (done) => {
       fixture.detectChanges();
       component.raceHasEnded = true;
       component.forceExit = false;
 
-      const result = component.canDeactivate();
-      expect(result).toBeFalse();
-      expect(component.showAckModal).toBeTrue();
-      expect(component.ackModalTitle).toBe("RD_RACE_ENDED_TITLE");
-      expect(component.ackModalMessage).toBe("RD_RACE_ENDED_MESSAGE");
-      expect(component.ackModalButtonText).toBe("RD_RACE_ENDED_BTN_OK");
+      const result = component.canDeactivate() as any;
+      expect(component.showExitConfirmation).toBeTrue();
+
+      result.subscribe((val: boolean) => {
+        expect(val).toBeFalse();
+        expect(component.showExitConfirmation).toBeFalse();
+        done();
+      });
+      component.onExitCancel();
     });
 
-    it("should allow deactivation and not show acknowledgement modal when race has ended and navigating to /ui-editor", () => {
+    it("should allow deactivation and not show confirmation modal when race has ended and navigating to /ui-editor", () => {
       fixture.detectChanges();
       component.raceHasEnded = true;
       component.forceExit = false;
@@ -7710,21 +8053,24 @@ describe("DefaultRacedayComponent", () => {
       const nextState = { url: "/ui-editor?returnUrl=/raceday" } as any;
       const result = component.canDeactivate(nextState);
       expect(result).toBeTrue();
-      expect(component.showAckModal).toBeFalse();
+      expect(component.showExitConfirmation).toBeFalse();
     });
 
-    it("should block deactivation and show acknowledgement modal when race has ended and navigating to /raceday-setup", () => {
+    it("should show exit confirmation modal when race has ended and navigating to /raceday-setup", () => {
       fixture.detectChanges();
       component.raceHasEnded = true;
       component.forceExit = false;
 
       const nextState = { url: "/raceday-setup" } as any;
       const result = component.canDeactivate(nextState);
-      expect(result).toBeFalse();
-      expect(component.showAckModal).toBeTrue();
-      expect(component.ackModalTitle).toBe("RD_RACE_ENDED_TITLE");
-      expect(component.ackModalMessage).toBe("RD_RACE_ENDED_MESSAGE");
-      expect(component.ackModalButtonText).toBe("RD_RACE_ENDED_BTN_OK");
+      expect(result).toBeDefined();
+      expect(component.showExitConfirmation).toBeTrue();
+      expect(component.exitModalTitle).toBe("RD_RACE_ENDED_TITLE");
+      expect(component.exitModalMessage).toBe(
+        "RD_CONFIRM_EXIT_RACE_ENDED_MESSAGE",
+      );
+      expect(component.exitConfirmText).toBe("RD_CONFIRM_EXIT_BTN_LEAVE");
+      expect(component.exitCancelText).toBe("RD_CONFIRM_EXIT_BTN_STAY");
     });
 
     it("should redirect to /raceday-setup and set forceExit to true on acknowledging the modal when raceHasEnded is true without setting skipIntro", () => {
@@ -7740,6 +8086,20 @@ describe("DefaultRacedayComponent", () => {
       expect(component.forceExit).toBeTrue();
       expect(mockRouter.navigate).toHaveBeenCalledWith(["/raceday-setup"]);
       expect(sessionStorage.getItem("skipIntro")).toBeNull();
+    });
+
+    it("should redirect to /raceday-setup on acknowledging RD_RACE_ENDED_TITLE modal when raceHasEnded is true", () => {
+      fixture.detectChanges();
+      component.raceHasEnded = true;
+      component.ackModalTitle = "RD_RACE_ENDED_TITLE";
+      component.showAckModal = true;
+      component.forceExit = false;
+
+      component.onAcknowledgeModal();
+
+      expect(component.showAckModal).toBeFalse();
+      expect(component.forceExit).toBeTrue();
+      expect(mockRouter.navigate).toHaveBeenCalledWith(["/raceday-setup"]);
     });
 
     it("should show exit confirmation modal on canDeactivate under normal conditions", () => {
@@ -8751,6 +9111,42 @@ describe("DefaultRacedayComponent", () => {
       expect(droppedWidget.customSettings?.["fontSize"]).toBe(24);
     });
 
+    it("should set default size 36x36 for action-back, action-forward, and action-close buttons when dropping onto canvas", () => {
+      const navButtons = ["action-back", "action-forward", "action-close"];
+      const element = document.createElement("div");
+      spyOnProperty(element, "offsetWidth", "get").and.returnValue(1920);
+      spyOnProperty(element, "offsetHeight", "get").and.returnValue(1080);
+      spyOn(element, "getBoundingClientRect").and.returnValue({
+        left: 0,
+        top: 0,
+        width: 1920,
+        height: 1080,
+      } as DOMRect);
+      spyOn(component["el"].nativeElement, "querySelector").and.returnValue(
+        element,
+      );
+
+      for (const btnType of navButtons) {
+        component.layout = { widgets: [] } as any;
+        component.isLayoutCustomizing = true;
+        component.draggedWidgetType = btnType as any;
+
+        const event = {
+          preventDefault: jasmine.createSpy("preventDefault"),
+          clientX: 100,
+          clientY: 100,
+        } as any;
+
+        component.onCanvasDrop(event);
+
+        expect(component.layout.widgets.length).toBe(1);
+        const droppedWidget = component.layout.widgets[0];
+        expect(droppedWidget.widgetType).toBe(btnType as any);
+        expect(droppedWidget.width).toBe(36);
+        expect(droppedWidget.height).toBe(36);
+      }
+    });
+
     it("should set default size 200x18 for header widgets (event-name, race-name, track-name, heat-info) when dropping onto canvas", () => {
       const headerWidgetTypes = [
         "event-name",
@@ -9271,6 +9667,119 @@ describe("DefaultRacedayComponent", () => {
       await new Promise((resolve) => setTimeout(resolve, 0));
       expect(updateSpy).toHaveBeenCalled();
     });
+
+    it("should not render auto-injected app-browser-navigation in theme window or raceday", () => {
+      if (!(component as any).route.snapshot.queryParams) {
+        (component as any).route.snapshot.queryParams = {};
+      }
+      (component as any).route.snapshot.queryParams["themeId"] = "theme-1";
+      fixture.detectChanges();
+
+      const navEl = fixture.nativeElement.querySelector(
+        "app-browser-navigation",
+      );
+      expect(navEl).toBeNull();
+      delete (component as any).route.snapshot.queryParams["themeId"];
+    });
+
+    it("should update tab title to theme name when themeId query param is present", () => {
+      const titleService = TestBed.inject(Title);
+      const setTitleSpy = spyOn(titleService, "setTitle");
+      const themeService = TestBed.inject(ThemeService);
+
+      (themeService.getActiveTheme as jasmine.Spy).and.returnValue({
+        entity_id: "custom_theme_1",
+        name: "Neon Cyberpunk",
+      });
+
+      if (!(component as any).route.snapshot.queryParams) {
+        (component as any).route.snapshot.queryParams = {};
+      }
+      (component as any).route.snapshot.queryParams["themeId"] =
+        "custom_theme_1";
+
+      component.updateTabTitle();
+      expect(setTitleSpy).toHaveBeenCalledWith("Neon Cyberpunk");
+      delete (component as any).route.snapshot.queryParams["themeId"];
+    });
+
+    it("should update tab title for practice theme using localized display name", () => {
+      const titleService = TestBed.inject(Title);
+      const setTitleSpy = spyOn(titleService, "setTitle");
+      const translationService = TestBed.inject(TranslationService);
+      (translationService.translate as jasmine.Spy).and.callFake(
+        (key: string) => {
+          if (key === "UE_LABEL_PRACTICE_THEME") {
+            return "RaceCoordinator AI (Training)";
+          }
+          return key;
+        },
+      );
+
+      component.updateTabTitle("practice_theme_rc_ai");
+      expect(setTitleSpy).toHaveBeenCalledWith("RaceCoordinator AI (Training)");
+    });
+
+    it("should update tab title for fuel theme using localized display name", () => {
+      const titleService = TestBed.inject(Title);
+      const setTitleSpy = spyOn(titleService, "setTitle");
+      const translationService = TestBed.inject(TranslationService);
+      (translationService.translate as jasmine.Spy).and.callFake(
+        (key: string) => {
+          if (key === "UE_LABEL_FUEL_THEME") {
+            return "RaceCoordinator AI (Kraftstoff)";
+          }
+          return key;
+        },
+      );
+
+      component.updateTabTitle("default_fuel_theme_rc_ai");
+      expect(setTitleSpy).toHaveBeenCalledWith(
+        "RaceCoordinator AI (Kraftstoff)",
+      );
+    });
+
+    it("should update tab title for default classic theme using localized display name", () => {
+      const titleService = TestBed.inject(Title);
+      const setTitleSpy = spyOn(titleService, "setTitle");
+      const translationService = TestBed.inject(TranslationService);
+      (translationService.translate as jasmine.Spy).and.callFake(
+        (key: string) => {
+          if (key === "UE_LABEL_DEFAULT_THEME") {
+            return "RaceCoordinator AI";
+          }
+          return key;
+        },
+      );
+
+      component.updateTabTitle("default_classic_rc_ai");
+      expect(setTitleSpy).toHaveBeenCalledWith("RaceCoordinator AI");
+    });
+
+    it("should not update tab title when themeId is absent", () => {
+      const titleService = TestBed.inject(Title);
+      const setTitleSpy = spyOn(titleService, "setTitle");
+      const themeService = TestBed.inject(ThemeService);
+      (themeService.getTransientThemeId as jasmine.Spy).and.returnValue(null);
+      if ((component as any).route.snapshot.queryParams) {
+        delete (component as any).route.snapshot.queryParams["themeId"];
+      }
+
+      component.updateTabTitle();
+      expect(setTitleSpy).not.toHaveBeenCalled();
+    });
+
+    it("should pass theme title to openThemeWindow when onThemeMenuSelect is called with known theme", () => {
+      const childWindowManager = TestBed.inject(ChildWindowManagerService);
+      const openSpy = spyOn(childWindowManager, "openThemeWindow");
+      const themeService = TestBed.inject(ThemeService);
+      (themeService.getThemes as jasmine.Spy).and.returnValue([
+        { entity_id: "t_custom", name: "Custom Vintage" },
+      ]);
+
+      (component as any).onThemeMenuSelect("t_custom");
+      expect(openSpy).toHaveBeenCalledWith("mock-url", "Custom Vintage");
+    });
   });
 
   describe("PDF Export handling", () => {
@@ -9768,6 +10277,71 @@ describe("DefaultRacedayComponent", () => {
 
       expect(component.showSaveRaceDialog).toBeFalse();
     });
+
+    it("should remain on raceday page and not navigate to /raceday-setup when acknowledging save success in race over state", () => {
+      mockDataService.saveRace.and.returnValue(
+        of("Race saved successfully: 20260826_FinishedRace.json"),
+      );
+      fixture.detectChanges();
+      (component as any).raceState = RaceState.RACE_OVER;
+      component.raceHasEnded = true;
+      component.forceExit = false;
+      mockRouter.navigate.calls.reset();
+
+      component.onSaveRaceConfirm("Finished Race");
+
+      expect(component.showAckModal).toBeTrue();
+      expect(component.ackModalTitle).toBe("RD_SAVE_SUCCESS");
+
+      component.onAcknowledgeModal();
+
+      expect(component.showAckModal).toBeFalse();
+      expect(mockRouter.navigate).not.toHaveBeenCalled();
+      expect(component.forceExit).toBeFalse();
+    });
+
+    it("should remain on raceday page and not navigate to /raceday-setup when acknowledging save error in race over state", () => {
+      mockDataService.saveRace.and.returnValue(
+        throwError(() => ({ error: "Disk Full" })),
+      );
+      fixture.detectChanges();
+      (component as any).raceState = RaceState.RACE_OVER;
+      component.raceHasEnded = true;
+      component.forceExit = false;
+      mockRouter.navigate.calls.reset();
+
+      component.onSaveRaceConfirm("Finished Race");
+
+      expect(component.showAckModal).toBeTrue();
+      expect(component.ackModalTitle).toBe("RD_SAVE_ERROR");
+
+      component.onAcknowledgeModal();
+
+      expect(component.showAckModal).toBeFalse();
+      expect(mockRouter.navigate).not.toHaveBeenCalled();
+      expect(component.forceExit).toBeFalse();
+    });
+
+    it("should remain on raceday page when acknowledging save success during normal race state", () => {
+      mockDataService.saveRace.and.returnValue(
+        of("Race saved successfully: 20260826_MidRace.json"),
+      );
+      fixture.detectChanges();
+      (component as any).raceState = RaceState.RACING;
+      component.raceHasEnded = false;
+      component.forceExit = false;
+      mockRouter.navigate.calls.reset();
+
+      component.onSaveRaceConfirm("Mid Race");
+
+      expect(component.showAckModal).toBeTrue();
+
+      component.onAcknowledgeModal();
+
+      expect(component.showAckModal).toBeFalse();
+      expect(mockRouter.navigate).not.toHaveBeenCalled();
+      expect(component.forceExit).toBeFalse();
+    });
   });
 
   describe("Master Power Actions and Unused Widgets", () => {
@@ -9805,6 +10379,8 @@ describe("DefaultRacedayComponent", () => {
       expect(unused).toContain("action-master-power-off");
       expect(unused).toContain("action-open-season-results");
       expect(unused).toContain("action-open-prediction-results");
+      expect(unused).toContain("action-forward");
+      expect(unused).toContain("action-close");
       expect(unused).toContain("heat-list");
 
       component.layout = {
@@ -9984,6 +10560,12 @@ describe("DefaultRacedayComponent", () => {
 
       component["executeWidgetAction"]("action-export-pdf");
       expect(component.onFileMenuSelect).toHaveBeenCalledWith("EXPORT_PDF");
+
+      component["executeWidgetAction"]("action-forward");
+      expect(component.onFileMenuSelect).toHaveBeenCalledWith("FORWARD");
+
+      component["executeWidgetAction"]("action-close");
+      expect(component.onFileMenuSelect).toHaveBeenCalledWith("CLOSE");
     });
 
     it("should trigger master power action from keyboard shortcut", () => {
@@ -10543,6 +11125,103 @@ describe("DefaultRacedayComponent", () => {
         undefined,
         { widgetType: "timer" },
       );
+    });
+  });
+
+  describe("Race Restart and Second Race Start Lifecycle", () => {
+    it("should reset raceHasEnded, load auto-start timer, and enable Start button when loading a new race in NOT_STARTED state", () => {
+      // Simulate previously ended race
+      component.raceHasEnded = true;
+      (component as any).raceState = RaceState.RACE_OVER;
+      mockRaceConnectionService.isInterfaceConnected = true;
+      (component as any).isInterfaceConnected = true;
+
+      const newRace = {
+        entity_id: "new-race-id",
+        name: "Second Race",
+        state: RaceState.NOT_STARTED,
+        auto_start_time: 60,
+        track: { lanes: [{ id: "l1" }] },
+      };
+      mockRaceService.getRace.and.returnValue(newRace);
+
+      (component as any).loadRaceData();
+
+      expect(component.raceHasEnded).toBeFalse();
+      expect((component as any).raceState).toBe(RaceState.NOT_STARTED);
+      expect((component as any).autoStartRemaining).toBe(60);
+      expect((component as any).time).toBe(60);
+      expect(component.isStartResumeDisabled).toBeFalse();
+    });
+
+    it("should reset raceHasEnded to false when handleRaceStateChange transitions from RACE_OVER to NOT_STARTED", () => {
+      component.raceHasEnded = true;
+      (component as any).raceState = RaceState.RACE_OVER;
+
+      (component as any).handleRaceStateChange(RaceState.NOT_STARTED);
+
+      expect(component.raceHasEnded).toBeFalse();
+      expect((component as any).raceState).toBe(RaceState.NOT_STARTED);
+    });
+
+    it("should update autoStartRemaining and time on raceTime updates when race has restarted in NOT_STARTED state", () => {
+      component.raceHasEnded = false;
+      (component as any).raceState = RaceState.NOT_STARTED;
+
+      (component as any).subscribeToRaceTime();
+
+      raceTimeSubject.next({
+        time: 55,
+        autoStartRemaining: 55,
+      });
+
+      expect((component as any).autoStartRemaining).toBe(55);
+      expect((component as any).time).toBe(55);
+    });
+
+    it("should reuse latestPredictionRecord on sortHeatDrivers without refetching from predictionService", () => {
+      const predService = TestBed.inject(RacePredictionService);
+      const mockRecord: any = {
+        race_id: "test_race",
+        timestamp: 1000,
+        pre_race: { projected_standings: [] },
+      };
+      (predService.getRacePredictions as jasmine.Spy).and.returnValue(
+        of(mockRecord),
+      );
+      (component as any).race = { entity_id: "test_race" };
+      (component as any).heat = {
+        heatDrivers: [{ laneIndex: 0, objectId: "d1" }],
+      };
+
+      (component as any).latestPredictionRecord = null;
+      (predService.getRacePredictions as jasmine.Spy).calls.reset();
+
+      // First call fetches from predictionService
+      (component as any).sortHeatDrivers();
+      expect(predService.getRacePredictions).toHaveBeenCalledTimes(1);
+      expect((component as any).latestPredictionRecord).toBe(mockRecord);
+
+      // Subsequent call reuses latestPredictionRecord
+      (component as any).sortHeatDrivers();
+      expect(predService.getRacePredictions).toHaveBeenCalledTimes(1);
+    });
+
+    it("should generate lane QR code lazily on-demand and cache it", async () => {
+      (component as any).serverUrlBase = "http://localhost:7070";
+      (component as any).laneQrCodeCache.clear();
+      (component as any).generatingLaneQrCodes.clear();
+
+      expect((component as any).laneQrCodeCache.has(0)).toBeFalse();
+
+      const url = component.getLaneQrCodeUrl(0);
+      expect(url).toBe("");
+      expect((component as any).generatingLaneQrCodes.has(0)).toBeTrue();
+
+      // Wait a tick for QRCode.toDataURL to resolve
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      expect((component as any).laneQrCodeCache.has(0)).toBeTrue();
+      expect(component.getLaneQrCodeUrl(0)).toContain("data:image/png;base64,");
     });
   });
 });

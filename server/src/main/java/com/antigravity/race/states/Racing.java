@@ -13,6 +13,7 @@ import com.antigravity.race.DriverHeatData;
 import com.antigravity.race.HeatExecutionManager;
 import com.antigravity.race.Race;
 import java.time.OffsetDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Executors;
@@ -102,7 +103,7 @@ public class Racing implements IRaceState {
 
     HeatScoring scoring = race.getRaceModel().getHeatScoring();
     if (scoring != null && scoring.getFinishMethod() == FinishMethod.Timed) {
-      if (race.getRaceTime() == 0) {
+      if (!race.hasRacedInCurrentHeat() && race.getRaceTime() == 0) {
         race.addRaceTime((float) scoring.getFinishValue());
       }
     }
@@ -152,7 +153,13 @@ public class Racing implements IRaceState {
     if (scheduler != null) {
       scheduler.shutdown();
     }
-    scheduler = Executors.newScheduledThreadPool(1);
+    scheduler =
+        Executors.newSingleThreadScheduledExecutor(
+            r -> {
+              Thread t = new Thread(r, "RacingTicker");
+              t.setDaemon(true);
+              return t;
+            });
     final Runnable ticker =
         new Runnable() {
           long lastTime = 0;
@@ -165,6 +172,13 @@ public class Racing implements IRaceState {
               if (lastTime == 0) {
                 lastTime = now;
                 return;
+              }
+
+              long intervalNs = now - lastTime;
+              if (intervalNs > 200_000_000L) {
+                logger.warn(
+                    "[PERF] Racing ticker delayed by {} ms",
+                    (intervalNs - 100_000_000L) / 1_000_000L);
               }
 
               float delta = (now - lastTime) / 1_000_000_000.0f;
@@ -289,15 +303,23 @@ public class Racing implements IRaceState {
               // Broadcast RaceTime message wrapped in RaceData
               race.broadcastTime();
 
+              long tickDurationNs = System.nanoTime() - now;
+              if (tickDurationNs > 50_000_000L && !allFinished) {
+                logger.warn(
+                    "[PERF] Racing ticker execution took {} ms", tickDurationNs / 1_000_000L);
+              }
+
               if (allFinished) {
                 if (allowFinish == AllowFinish.NoneAutoSegments) {
                   calculateAutoSegments();
                   StandingsUpdate update =
                       race.getCurrentHeat().getHeatStandings().updateStandings();
+                  RaceData.Builder finishBuilder = RaceData.newBuilder();
                   if (update != null) {
-                    race.broadcast(RaceData.newBuilder().setStandingsUpdate(update).build());
+                    finishBuilder.setStandingsUpdate(update);
                   }
-                  race.updateAndBroadcastOverallStandings();
+                  race.populateOverallStandings(finishBuilder);
+                  race.broadcast(finishBuilder.build());
                 }
                 if (race.isLastHeat()) {
                   race.changeState(new RaceOver());
@@ -305,7 +327,6 @@ public class Racing implements IRaceState {
                   race.changeState(new HeatOver());
                 }
               }
-
             } catch (Exception e) {
               logger.error("Error in Racing timer", e);
             }
@@ -339,7 +360,24 @@ public class Racing implements IRaceState {
       }
     }
 
-    race.stopProtocols();
+    List<PartialTime> partialTimes = race.stopProtocols();
+    if (partialTimes != null && race.getCurrentHeat() != null) {
+      List<DriverHeatData> drivers = race.getCurrentHeat().getDrivers();
+      HeatExecutionManager em = race.getHeatExecutionManager();
+      Set<Integer> finished = em != null ? em.getFinishedLanes() : Collections.emptySet();
+      for (PartialTime pt : partialTimes) {
+        int lane = pt.getLaneIndex();
+        if (drivers != null && lane >= 0 && lane < drivers.size()) {
+          DriverHeatData dhd = drivers.get(lane);
+          if (dhd != null && !finished.contains(lane) && pt.getLapTime() > 0) {
+            dhd.addPendingLapTime(pt.getLapTime());
+            dhd.markDriftTime();
+            logger.info("Added partial lap time of {}s to lane {}", pt.getLapTime(), lane);
+          }
+        }
+      }
+    }
+
     logger.info("Racing state exited.");
   }
 
@@ -358,24 +396,6 @@ public class Racing implements IRaceState {
   public void pause(Race race) {
     logger.info("Racing.pause() called. Pausing race.");
     race.getStatistics().incrementYellowFlagCount();
-
-    // Get partial times on pause and add them to each driver's pending lap time
-    List<PartialTime> partialTimes = race.stopProtocols();
-    if (partialTimes != null && race.getCurrentHeat() != null) {
-      List<DriverHeatData> drivers = race.getCurrentHeat().getDrivers();
-      for (PartialTime pt : partialTimes) {
-        int lane = pt.getLaneIndex();
-        if (drivers != null && lane >= 0 && lane < drivers.size()) {
-          DriverHeatData dhd = drivers.get(lane);
-          if (dhd != null) {
-            dhd.addPendingLapTime(pt.getLapTime());
-            dhd.markDriftTime();
-            logger.info("Added partial lap time of {}s to lane {}", pt.getLapTime(), lane);
-          }
-        }
-      }
-    }
-
     race.changeState(new Paused());
   }
 
@@ -496,32 +516,69 @@ public class Racing implements IRaceState {
     HeatScoring scoring = race.getRaceModel().getHeatScoring();
     if (scoring == null) return;
 
+    int heatNum = race.getCurrentHeat().getHeatNumber();
     boolean isLapBased = scoring.getFinishMethod() == FinishMethod.Lap;
     long limit = scoring.getFinishValue();
     double[] times = executionManager.getTimeSinceLastLap();
     List<DriverHeatData> drivers = race.getCurrentHeat().getDrivers();
     if (drivers == null) return;
 
+    logger.info(
+        "AutoSegments (NoneAutoSegments) calculating for Heat {}: isLapBased={}, finishValue={}",
+        heatNum,
+        isLapBased,
+        limit);
+
     for (int i = 0; i < drivers.size(); i++) {
       DriverHeatData dhd = drivers.get(i);
       if (dhd == null) continue;
+      String driverName =
+          (dhd.getDriver() != null && dhd.getDriver().getDriver() != null)
+              ? dhd.getDriver().getDriver().getName()
+              : "Lane " + (i + 1);
 
       // Lap based race: the driver that got to the lap limit ending the heat should
-      // get 0 auto
-      // segments
+      // get 0 auto segments
       if (isLapBased && dhd.getLapCount() >= limit) {
         dhd.setAutoCalculatedLaps(0.0);
+        logger.info(
+            "AutoSegments (NoneAutoSegments) Heat {} Lane {} ({}): reached lap limit {} (laps={}), autoCalculatedLaps=0.0",
+            heatNum,
+            i,
+            driverName,
+            limit,
+            dhd.getLapCount());
       } else {
         double median = dhd.getMedianLapTime();
         if (median <= 0) {
           dhd.setAutoCalculatedLaps(0.0);
+          logger.info(
+              "AutoSegments (NoneAutoSegments) Heat {} Lane {} ({}): median lap time <= 0 ({}), autoCalculatedLaps=0.0",
+              heatNum,
+              i,
+              driverName,
+              median);
         } else {
           double time = (times != null && i < times.length) ? times[i] : 0.0;
-          double segments = time / median;
+          double rawSegments = time / median;
+          double segments = rawSegments;
+          boolean capped = false;
           if (segments >= 1.0) {
             segments = 0.99;
+            capped = true;
           }
           dhd.setAutoCalculatedLaps(segments);
+          logger.info(
+              "AutoSegments (NoneAutoSegments) Heat {} Lane {} ({}): timeSinceLastLap={}s, medianLapTime={}s, rawRatio={}, autoCalculatedLaps={}{}, totalAdjustedLaps={}",
+              heatNum,
+              i,
+              driverName,
+              time,
+              median,
+              rawSegments,
+              segments,
+              capped ? " (capped at 0.99)" : "",
+              dhd.getAdjustedLapCount());
         }
       }
     }

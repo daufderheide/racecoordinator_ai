@@ -29,6 +29,7 @@ import { DriverMatchingUtils } from "@app/utils/driver-matching.utils";
 import { ChildWindowManagerService } from "./child-window-manager.service";
 import { LoggerService } from "./logger.service";
 import { RaceService } from "./race.service";
+import { WakeLockService } from "./wake-lock.service";
 
 export interface IReactionTime {
   objectId?: string | null;
@@ -104,6 +105,7 @@ export class RaceConnectionService implements OnDestroy {
   private pendingUpdate: IRace | null = null;
   private pendingHeat: any = null;
   private driverSubscription?: Subscription;
+  private raceStateSubscription?: Subscription;
 
   // Test hook or configuration
   private get WATCHDOG_TIMEOUT(): number {
@@ -120,10 +122,18 @@ export class RaceConnectionService implements OnDestroy {
     private logger: LoggerService,
     private ngZone: NgZone,
     private childWindowManagerService?: ChildWindowManagerService,
+    private wakeLockService?: WakeLockService,
   ) {
     if (!this.childWindowManagerService) {
       this.childWindowManagerService = inject(ChildWindowManagerService);
     }
+    if (!this.wakeLockService) {
+      this.wakeLockService = inject(WakeLockService);
+    }
+
+    this.raceStateSubscription = this.raceState$.subscribe((state) => {
+      this.updateWakeLockForState(state);
+    });
   }
 
   connect() {
@@ -190,7 +200,7 @@ export class RaceConnectionService implements OnDestroy {
     this.pendingHeat = null;
     this.hasInitiallyConnected = false;
     this.lastInterfaceStatus = -1;
-    this.isRaceEnded = this.raceStateSubject.value === RaceState.RACE_OVER;
+    this.isRaceEnded = false;
     this.dataService.updateRaceSubscription(true);
 
     this.subscriptions.push(
@@ -299,6 +309,48 @@ export class RaceConnectionService implements OnDestroy {
               this.logger.debug(
                 `Lap on lane ${driverData.laneIndex} was below min lap time: ${lap.lapTime}`,
               );
+              this.lapSubject.next(lap);
+            } else if (lap.type === LapType.FALSE_START) {
+              if (
+                lap.adjustedLapCount !== undefined &&
+                lap.adjustedLapCount !== null &&
+                !isNaN(lap.adjustedLapCount)
+              ) {
+                driverData.adjustedLapCount = lap.adjustedLapCount;
+              }
+              if (lap.flag !== undefined && lap.flag !== null) {
+                driverData.flag = lap.flag;
+              }
+
+              // Also ensure matching driver in raceService.getHeats() is kept in sync
+              if (allHeats && allHeats.length > 0) {
+                const targetHeat = allHeats.find(
+                  (h) =>
+                    (heat.objectId && h.objectId === heat.objectId) ||
+                    h.heatNumber === heat.heatNumber,
+                );
+                if (targetHeat && targetHeat.heatDrivers) {
+                  const targetHd = DriverMatchingUtils.findDriverForLap(
+                    targetHeat.heatDrivers,
+                    lap,
+                  );
+                  if (targetHd && targetHd !== driverData) {
+                    if (
+                      lap.adjustedLapCount !== undefined &&
+                      lap.adjustedLapCount !== null &&
+                      !isNaN(lap.adjustedLapCount)
+                    ) {
+                      targetHd.adjustedLapCount = lap.adjustedLapCount;
+                    }
+                    if (lap.flag !== undefined && lap.flag !== null) {
+                      targetHd.flag = lap.flag;
+                    }
+                  }
+                }
+                this.raceService.setHeats([...allHeats]);
+              }
+
+              this.raceService.setCurrentHeat(heat);
               this.lapSubject.next(lap);
             } else {
               const segmentsCopy = [...(driverData.currentLapSegments || [])];
@@ -484,6 +536,10 @@ export class RaceConnectionService implements OnDestroy {
           }
           this.clearDisconnectedError();
           this.dataService.disconnectFromInterfaceDataSocket();
+        } else if (state !== RaceState.UNKNOWN_STATE && this.isRaceEnded) {
+          this.isRaceEnded = false;
+          this.dataService.connectToInterfaceDataSocket();
+          this.resetWatchdog();
         }
         this.raceStateSubject.next(state);
       }),
@@ -529,13 +585,22 @@ export class RaceConnectionService implements OnDestroy {
 
     this.raceService.clear();
 
+    // Reset state & connection flags
+    this.isRaceEnded = false;
+    this.isInterfaceConnected = false;
+    this.lastInterfaceStatus = -1;
+    this.hasInitiallyConnected = false;
+
     // Reset subjects to prevent old state from immediately firing on reconnect
     this.raceStateSubject.next(RaceState.UNKNOWN_STATE);
     this.raceFlagSubject.next(RaceFlag.UNKNOWN_FLAG);
     this.raceTimeSubject.next({ time: 0 });
     this.recordDataSubject.next(null);
 
-    if (this.noStatusWatchdog) clearTimeout(this.noStatusWatchdog);
+    if (this.noStatusWatchdog) {
+      clearTimeout(this.noStatusWatchdog);
+      this.noStatusWatchdog = null;
+    }
     this.clearDisconnectedError();
     if (this.childWindowManagerService) {
       this.childWindowManagerService.closeAllWindows();
@@ -644,6 +709,18 @@ export class RaceConnectionService implements OnDestroy {
       this.dataService.disconnectFromInterfaceDataSocket();
       if (this.raceStateSubject.value !== RaceState.RACE_OVER) {
         this.raceStateSubject.next(RaceState.RACE_OVER);
+      }
+    } else {
+      const state = update.state ?? (update as any).raceState;
+      if (state !== undefined && state !== RaceState.UNKNOWN_STATE) {
+        if (this.isRaceEnded) {
+          this.isRaceEnded = false;
+          this.dataService.connectToInterfaceDataSocket();
+          this.resetWatchdog();
+        }
+        if (this.raceStateSubject.value !== state) {
+          this.raceStateSubject.next(state);
+        }
       }
     }
     if (update.drivers && update.drivers.length > 0) {
@@ -937,8 +1014,25 @@ export class RaceConnectionService implements OnDestroy {
     }
   }
 
+  private updateWakeLockForState(state: RaceState): void {
+    if (
+      state === RaceState.NOT_STARTED ||
+      state === RaceState.STARTING ||
+      state === RaceState.RACING ||
+      state === RaceState.PAUSED ||
+      state === RaceState.HEAT_OVER ||
+      state === RaceState.RACE_OVER
+    ) {
+      void this.wakeLockService?.request();
+    } else {
+      void this.wakeLockService?.release();
+    }
+  }
+
   ngOnDestroy() {
     this.isDestroyed = true;
+    this.raceStateSubscription?.unsubscribe();
     this.stopConnection();
+    void this.wakeLockService?.release();
   }
 }

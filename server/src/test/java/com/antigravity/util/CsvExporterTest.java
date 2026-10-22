@@ -277,4 +277,61 @@ public class CsvExporterTest {
     assertEquals(9.2, row.getTop2Consecutive(), 0.001);
     assertEquals(13.9, row.getTop3Consecutive(), 0.001);
   }
+
+  @Test
+  public void testCustomRotationAssetIdExcludedFromCsv() {
+    Race raceModel =
+        new Race.Builder()
+            .withName("Custom Rotation Export Test")
+            .withTrackEntityId("track1")
+            .withHeatRotationType(HeatRotationType.Custom)
+            .withCustomRotationAssetId("82c1bfa2-4c74-480b-af39-36b677ec62c4")
+            .build();
+
+    com.antigravity.race.Race customRace =
+        new com.antigravity.race.Race.Builder()
+            .model(raceModel)
+            .drivers(Collections.singletonList(new RaceParticipant(driver)))
+            .track(race.getTrack())
+            .heats(Collections.emptyList())
+            .isDemoMode(true)
+            .build();
+
+    String csv = CsvExporter.export(customRace);
+    assertNotNull(csv);
+    org.junit.Assert.assertFalse(
+        "CSV must not contain custom_rotation_asset_id", csv.contains("custom_rotation_asset_id"));
+    org.junit.Assert.assertFalse(
+        "CSV must not contain the asset id string",
+        csv.contains("82c1bfa2-4c74-480b-af39-36b677ec62c4"));
+  }
+
+  @Test
+  public void testCustomRotationAssetNameIncludedInCsv() {
+    Race raceModel =
+        new Race.Builder()
+            .withName("Practice Race Custom Rotation")
+            .withTrackEntityId("track1")
+            .withHeatRotationType(HeatRotationType.Custom)
+            .withCustomRotationAssetId("82c1bfa2-4c74-480b-af39-36b677ec62c4")
+            .withPractice(true)
+            .build();
+
+    com.antigravity.race.Race customRace =
+        new com.antigravity.race.Race.Builder()
+            .model(raceModel)
+            .customRotationAssetName("Practice Single Heat")
+            .drivers(Collections.singletonList(new RaceParticipant(driver)))
+            .track(race.getTrack())
+            .heats(Collections.emptyList())
+            .isDemoMode(true)
+            .build();
+
+    String csv = CsvExporter.export(customRace);
+    assertNotNull(csv);
+    org.junit.Assert.assertFalse(
+        "CSV must not contain custom_rotation_asset_id", csv.contains("custom_rotation_asset_id"));
+    assertTrue("CSV must contain custom_rotations header", csv.contains("custom_rotations"));
+    assertTrue("CSV must contain custom rotation asset name", csv.contains("Practice Single Heat"));
+  }
 }

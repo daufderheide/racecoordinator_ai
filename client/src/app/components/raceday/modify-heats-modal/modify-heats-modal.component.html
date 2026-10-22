@@ -331,20 +331,22 @@
             <!-- Highlight Overlay -->
             @if (hoveredHeatIdx === hIdx && !isHeatStarted(heat)) {
               <div class="swap-highlight">
-                <i class="fas fa-exchange-alt"></i>
+                <span class="material-icons">swap_horiz</span>
                 <span>{{ "SWAP" | translate }}</span>
               </div>
             }
 
             @if (isHeatStarted(heat)) {
               <div class="locked-overlay">
-                <i class="fas fa-lock"></i>
+                <span class="material-icons">lock</span>
                 <span>{{ "RD_HEAT_LOCKED" | translate }}</span>
               </div>
             }
             <div class="heat-header">
               <div class="header-title" cdkDragHandle>
-                <i class="fas fa-grip-vertical drag-handle-icon"></i>
+                <span class="material-icons drag-handle-icon"
+                  >drag_indicator</span
+                >
                 <h4>
                   {{ "RD_HEAT" | translate }} {{ heat.heatNumber }}
                   @if (
@@ -374,7 +376,7 @@
                     class="lock-icon"
                     [title]="'RD_HEAT_LOCKED' | translate"
                   >
-                    <i class="fas fa-lock"></i>
+                    <span class="material-icons">lock</span>
                   </span>
                 } @else {
                   <button
@@ -382,7 +384,7 @@
                     (click)="onRemoveHeat(hIdx); $event.stopPropagation()"
                     [title]="'REMOVE' | translate"
                   >
-                    <span class="delete-x">X</span>
+                    <span class="material-icons">delete</span>
                   </button>
                 }
               </div>
@@ -517,7 +519,7 @@
 
   @if (errorMessage() || currentValidationError) {
     <div class="error-toast">
-      <i class="fas fa-exclamation-triangle"></i>
+      <span class="material-icons">warning</span>
       <span>{{
         errorMessage() || currentValidationError || "" | translate
       }}</span>

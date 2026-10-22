@@ -583,6 +583,7 @@ public class TrackmateProtocolTest {
   @Test
   public void testTrackmateWithPerLaneRelays() {
     TrackmateConfig laneRelayConfig = new TrackmateConfig();
+    laneRelayConfig.commPort = "COM1";
     laneRelayConfig.hasPerLaneRelays = true;
     laneRelayConfig.normallyClosedRelays = false;
     TrackmateProtocol proto =
@@ -590,6 +591,7 @@ public class TrackmateProtocolTest {
     assertFalse(proto.hasMainRelay());
     assertTrue(proto.hasPerLaneRelays());
 
+    proto.open();
     proto.initializeHardwareState();
     assertNotNull(serialConnection.lastWrittenData);
     assertEquals((byte) 'E', serialConnection.lastWrittenData[0]);

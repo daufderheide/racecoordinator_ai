@@ -1078,7 +1078,7 @@ describe("TrackEditorComponent", () => {
           hardwareType: 0,
           normallyClosedLaneSensors: false,
           normallyClosedRelays: false,
-          globalInvertLights: 0,
+          activeLowAnalogLeds: false,
           usePitsAsLaps: false,
           useLapsForSegments: false,
           lapPinPitBehavior: 0,
@@ -1227,6 +1227,49 @@ describe("TrackEditorComponent", () => {
       component.sectionsExpanded["lanes"] = true;
       component.toggleSection("lanes");
       expect(component.sectionsExpanded["lanes"]).toBeFalse();
+
+      component.toggleSection("lanes", false);
+      expect(component.sectionsExpanded["lanes"]).toBeFalse();
+
+      component.toggleSection("lanes", true);
+      expect(component.sectionsExpanded["lanes"]).toBeTrue();
+    });
+
+    it("should toggle lane section in a single header click in the DOM", () => {
+      component.sectionsExpanded["lanes"] = true;
+      fixture.detectChanges();
+
+      const headerEl = fixture.debugElement.query(
+        By.css("#lane-editor-section .section-header"),
+      );
+      expect(headerEl).toBeTruthy();
+      expect(
+        fixture.debugElement.query(
+          By.css("#lane-editor-section .section-content"),
+        ),
+      ).toBeTruthy();
+
+      // Click once to close
+      headerEl.nativeElement.click();
+      fixture.detectChanges();
+
+      expect(component.sectionsExpanded["lanes"]).toBeFalse();
+      expect(
+        fixture.debugElement.query(
+          By.css("#lane-editor-section .section-content"),
+        ),
+      ).toBeFalsy();
+
+      // Click once to open
+      headerEl.nativeElement.click();
+      fixture.detectChanges();
+
+      expect(component.sectionsExpanded["lanes"]).toBeTrue();
+      expect(
+        fixture.debugElement.query(
+          By.css("#lane-editor-section .section-content"),
+        ),
+      ).toBeTruthy();
     });
 
     it("should allow toggling sections when in read-only mode", () => {
@@ -1277,7 +1320,7 @@ describe("TrackEditorComponent", () => {
           analogIds: new Array(6).fill(0),
           normallyClosedLaneSensors: false,
           normallyClosedRelays: true,
-          globalInvertLights: 0,
+          activeLowAnalogLeds: false,
           usePitsAsLaps: false,
           useLapsForSegments: true,
           ledStrings: [ls],
@@ -1547,10 +1590,11 @@ describe("TrackEditorComponent", () => {
       const track2 = new Track({ entity_id: "t2", name: "Track 2", lanes: [] });
       component.allTracks = [track1, track2];
       component.editingTrack = track1;
-      spyOn(window, "confirm").and.returnValue(true);
       dataService.deleteTrack.and.returnValue(of(true));
 
       component.deleteTrack();
+      expect(component.showDeleteConfirm).toBeTrue();
+      component.onConfirmDelete();
 
       expect(dataService.deleteTrack).toHaveBeenCalledWith("t1");
       expect(component.allTracks.length).toBe(1);
@@ -1565,20 +1609,36 @@ describe("TrackEditorComponent", () => {
 
       component.allTracks = [trackA, trackB, trackC];
       component.selectTrack(trackB);
-      spyOn(window, "confirm").and.returnValue(true);
       dataService.deleteTrack.and.returnValue(of(true));
 
       // Delete B -> C is selected
       component.deleteTrack();
+      expect(component.showDeleteConfirm).toBeTrue();
+      component.onConfirmDelete();
       expect(dataService.deleteTrack).toHaveBeenCalledWith("t2");
       expect(component.selectedTrackId).toBe("t3");
       expect(component.editingTrack?.name).toBe("Track C");
 
       // Delete C -> A is selected
       component.deleteTrack();
+      expect(component.showDeleteConfirm).toBeTrue();
+      component.onConfirmDelete();
       expect(dataService.deleteTrack).toHaveBeenCalledWith("t3");
       expect(component.selectedTrackId).toBe("t1");
       expect(component.editingTrack?.name).toBe("Track A");
+    });
+
+    it("should cancel delete track when onCancelDelete is called", () => {
+      component.editingTrack = new Track({
+        entity_id: "t1",
+        name: "Track 1",
+        lanes: [],
+      });
+      component.deleteTrack();
+      expect(component.showDeleteConfirm).toBeTrue();
+      component.onCancelDelete();
+      expect(component.showDeleteConfirm).toBeFalse();
+      expect(dataService.deleteTrack).not.toHaveBeenCalled();
     });
 
     it("should stay in edit mode during continuous auto-save", fakeAsync(() => {
@@ -1657,6 +1717,32 @@ describe("TrackEditorComponent", () => {
       expect(laneLengthInput?.disabled).toBeTrue();
       expect(laneBgInput?.disabled).toBeTrue();
       expect(laneFgInput?.disabled).toBeTrue();
+    });
+
+    it("should switch track without re-fetching data when selected via onSelectTrackById", () => {
+      const track2 = new Track({
+        entity_id: "t2",
+        name: "Monza",
+        lanes: [],
+      });
+      component.allTracks = [component.editingTrack!, track2];
+      component.isEditMode = false;
+      spyOn(component, "loadData").and.callThrough();
+
+      component.onSelectTrackById("t2");
+
+      expect(component.selectedTrackId).toBe("t2");
+      expect(component.editingTrack?.name).toBe("Monza");
+      expect(router.navigate).toHaveBeenCalledWith([], {
+        relativeTo: _activatedRoute,
+        queryParams: { id: "t2" },
+        queryParamsHandling: "merge",
+        replaceUrl: true,
+      });
+
+      // Simulate queryParamMap emitting the updated ID
+      _activatedRoute.setQueryParams({ id: "t2" });
+      expect(component.loadData).not.toHaveBeenCalled();
     });
   });
 });

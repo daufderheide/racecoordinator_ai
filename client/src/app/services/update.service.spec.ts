@@ -4,7 +4,14 @@ import {
 } from "@angular/common/http/testing";
 import { TestBed } from "@angular/core/testing";
 
-import { UpdateCheckResult, UpdateService } from "./update.service";
+import {
+  compareVersions,
+  isAlphaVersion,
+  isDowngrade,
+  parseVersion,
+  UpdateCheckResult,
+  UpdateService,
+} from "./update.service";
 
 describe("UpdateService", () => {
   let service: UpdateService;
@@ -169,5 +176,116 @@ describe("UpdateService", () => {
     expect(req.request.method).toBe("POST");
     expect(req.request.body).toEqual({ version, durationDays: 7 });
     req.flush("OK");
+  });
+
+  describe("version parsing and comparison", () => {
+    it("should parse standard semantic versions correctly", () => {
+      expect(parseVersion("1.2.3")).toEqual({
+        major: 1,
+        minor: 2,
+        patch: 3,
+        prerelease: undefined,
+      });
+      expect(parseVersion("v1.2.3")).toEqual({
+        major: 1,
+        minor: 2,
+        patch: 3,
+        prerelease: undefined,
+      });
+      expect(parseVersion("1.1.0-alpha.20261001")).toEqual({
+        major: 1,
+        minor: 1,
+        patch: 0,
+        prerelease: "alpha.20261001",
+      });
+      expect(parseVersion("1.0.1-beta.1")).toEqual({
+        major: 1,
+        minor: 0,
+        patch: 1,
+        prerelease: "beta.1",
+      });
+      expect(parseVersion("0.0.0_dev")).toEqual({
+        major: 0,
+        minor: 0,
+        patch: 0,
+        prerelease: "dev",
+      });
+      expect(parseVersion("")).toBeNull();
+      expect(parseVersion(null)).toBeNull();
+      expect(parseVersion(undefined)).toBeNull();
+      expect(parseVersion("invalid")).toBeNull();
+    });
+
+    it("should compare versions accurately", () => {
+      expect(compareVersions("2.0.0", "1.9.9")).toBeGreaterThan(0);
+      expect(compareVersions("1.9.9", "2.0.0")).toBeLessThan(0);
+      expect(compareVersions("1.2.0", "1.1.0")).toBeGreaterThan(0);
+      expect(compareVersions("1.0.2", "1.0.1")).toBeGreaterThan(0);
+      expect(compareVersions("1.0.0", "v1.0.0")).toBe(0);
+
+      // Prerelease vs release: normal release has higher precedence than prerelease
+      expect(compareVersions("1.1.0", "1.1.0-beta.1")).toBeGreaterThan(0);
+      expect(compareVersions("1.1.0-beta.1", "1.1.0")).toBeLessThan(0);
+
+      // Prerelease comparisons
+      expect(
+        compareVersions("1.1.0-beta.1", "1.1.0-alpha.20261001"),
+      ).toBeGreaterThan(0);
+      expect(
+        compareVersions("1.1.0-alpha.20261001", "1.1.0-beta.1"),
+      ).toBeLessThan(0);
+
+      // Numeric prerelease sub-parts
+      expect(
+        compareVersions("1.1.0-alpha.20261002", "1.1.0-alpha.20261001"),
+      ).toBeGreaterThan(0);
+      expect(
+        compareVersions("1.1.0-alpha.20261001", "1.1.0-alpha.20261002"),
+      ).toBeLessThan(0);
+
+      // Null / empty handling
+      expect(compareVersions(null, null)).toBe(0);
+      expect(compareVersions("1.0.0", null)).toBeGreaterThan(0);
+      expect(compareVersions(null, "1.0.0")).toBeLessThan(0);
+    });
+
+    it("should identify downgrades correctly", () => {
+      // User's specific cases:
+      // alpha 1.1.0 to beta 1.0.1 -> downgrade (confirmation required)
+      expect(isDowngrade("1.1.0-alpha.20261001", "1.0.1-beta.1")).toBeTrue();
+
+      // alpha 1.1.0 to beta 1.2.0 -> NOT a downgrade (no confirmation)
+      expect(isDowngrade("1.1.0-alpha.20261001", "1.2.0-beta.1")).toBeFalse();
+
+      // Standard version upgrades and downgrades
+      expect(isDowngrade("1.1.0", "1.0.1")).toBeTrue();
+      expect(isDowngrade("1.0.1", "1.1.0")).toBeFalse();
+      expect(isDowngrade("1.0.0", "1.0.0")).toBeFalse();
+
+      // Prerelease downgrades on same base version
+      expect(
+        isDowngrade("1.1.0-alpha.20261002", "1.1.0-alpha.20261001"),
+      ).toBeTrue();
+      expect(
+        isDowngrade("1.1.0-alpha.20261001", "1.1.0-alpha.20261002"),
+      ).toBeFalse();
+      expect(isDowngrade("1.1.0-beta.1", "1.1.0-alpha.20261001")).toBeTrue();
+      expect(isDowngrade("1.1.0-alpha.20261001", "1.1.0-beta.1")).toBeFalse();
+
+      // Null / undefined handling
+      expect(isDowngrade(null, "1.0.0")).toBeFalse();
+      expect(isDowngrade("1.0.0", null)).toBeFalse();
+      expect(isDowngrade(undefined, undefined)).toBeFalse();
+    });
+
+    it("should detect alpha versions correctly", () => {
+      expect(isAlphaVersion("v1.0.0-alpha.20261001")).toBeTrue();
+      expect(isAlphaVersion("0.0.0_dev")).toBeTrue();
+      expect(isAlphaVersion("ALPHA-BUILD-123")).toBeTrue();
+      expect(isAlphaVersion("v1.0.0-beta.1")).toBeFalse();
+      expect(isAlphaVersion("v1.0.0")).toBeFalse();
+      expect(isAlphaVersion(null)).toBeFalse();
+      expect(isAlphaVersion(undefined)).toBeFalse();
+    });
   });
 });

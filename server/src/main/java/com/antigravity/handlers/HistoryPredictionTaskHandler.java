@@ -25,12 +25,16 @@ import com.antigravity.util.RequestContextUtils;
 import com.antigravity.util.SeasonPointsCalculator;
 import io.javalin.Javalin;
 import io.javalin.http.Context;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,6 +42,8 @@ public class HistoryPredictionTaskHandler {
 
   private static final Logger logger = LoggerFactory.getLogger(HistoryPredictionTaskHandler.class);
   private final DatabaseContext databaseContext;
+  private final ConcurrentHashMap<String, CompletableFuture<RacePredictionRecord>>
+      inFlightPredictions = new ConcurrentHashMap<>();
 
   public HistoryPredictionTaskHandler(DatabaseContext databaseContext, Javalin app) {
     this.databaseContext = databaseContext;
@@ -483,7 +489,8 @@ public class HistoryPredictionTaskHandler {
 
     if (activeRace != null && activeRace.getDrivers() != null) {
       Set<String> activeDriverIds = new HashSet<>();
-      for (RaceParticipant rp : activeRace.getDrivers()) {
+      List<RaceParticipant> activeDrivers = new ArrayList<>(activeRace.getDrivers());
+      for (RaceParticipant rp : activeDrivers) {
         if (rp != null && !PredictionEngine.isParticipantEmpty(rp)) {
           String pId = PredictionEngine.getParticipantId(rp);
           if (pId != null && !pId.isEmpty() && !"EMPTY_LANE".equals(pId)) {
@@ -565,7 +572,8 @@ public class HistoryPredictionTaskHandler {
       return false;
     }
     long recordTimestamp = record.getTimestamp();
-    for (RaceParticipant rp : activeRace.getDrivers()) {
+    List<RaceParticipant> activeDrivers = new ArrayList<>(activeRace.getDrivers());
+    for (RaceParticipant rp : activeDrivers) {
       if (rp != null && !PredictionEngine.isParticipantEmpty(rp)) {
         String driverId = PredictionEngine.getParticipantId(rp);
         if (driverId != null && !driverId.isEmpty()) {
@@ -622,38 +630,7 @@ public class HistoryPredictionTaskHandler {
           && activeRace.getRaceModel() != null) {
         String activeRaceId = activeRace.getRaceModel().getEntityId();
         if (activeRaceId != null && !activeRaceId.isEmpty()) {
-          record =
-              RacePredictionService.getInstance()
-                  .generateAndSavePreRacePrediction(
-                      dbContext,
-                      activeRaceId,
-                      activeRace.getRaceModel(),
-                      activeRace.getDrivers(),
-                      activeRace.getHeats(),
-                      scope.isDemo(),
-                      true);
-
-          int currentHeatIdx =
-              activeRace.getHeats() != null && activeRace.getCurrentHeat() != null
-                  ? activeRace.getHeats().indexOf(activeRace.getCurrentHeat())
-                  : 0;
-          if (currentHeatIdx < 0) currentHeatIdx = 0;
-
-          Map<String, PredictionEngine.DriverHeatState> actualLaps =
-              HeatExecutionManager.buildDriverHeatStates(activeRace);
-
-          RacePredictionService.getInstance()
-              .updateRealtimePrediction(
-                  dbContext,
-                  activeRaceId,
-                  activeRace.getRaceModel(),
-                  activeRace.getDrivers(),
-                  activeRace.getHeats(),
-                  currentHeatIdx,
-                  actualLaps,
-                  scope.isDemo());
-
-          record = dbService.getRacePredictionRecord(dbContext, activeRaceId, scope.isDemo());
+          record = getOrComputePrediction(dbContext, activeRace, activeRaceId, scope);
         }
       }
 
@@ -665,6 +642,87 @@ public class HistoryPredictionTaskHandler {
     } catch (Exception e) {
       logger.error("Error fetching race prediction record", e);
       ctx.status(500).result("Error fetching race prediction record: " + e.getMessage());
+    }
+  }
+
+  private RacePredictionRecord getOrComputePrediction(
+      DatabaseContext dbContext,
+      com.antigravity.race.Race activeRace, // fqn-collision
+      String activeRaceId,
+      RaceScope scope) {
+    String computationKey = activeRaceId + ":" + scope.isDemo();
+    CompletableFuture<RacePredictionRecord> future = new CompletableFuture<>();
+    CompletableFuture<RacePredictionRecord> existing =
+        inFlightPredictions.putIfAbsent(computationKey, future);
+
+    if (existing != null) {
+      try {
+        return existing.get(15, TimeUnit.SECONDS);
+      } catch (Exception e) {
+        logger.warn(
+            "Waiting for in-flight prediction failed for raceId={}, falling back to database",
+            activeRaceId,
+            e);
+        return DatabaseService.getInstance()
+            .getRacePredictionRecord(dbContext, activeRaceId, scope.isDemo());
+      }
+    }
+
+    try {
+      List<RaceParticipant> participants =
+          activeRace.getDrivers() != null
+              ? new ArrayList<>(activeRace.getDrivers())
+              : Collections.emptyList();
+      List<Heat> heats =
+          activeRace.getHeats() != null
+              ? new ArrayList<>(activeRace.getHeats())
+              : Collections.emptyList();
+
+      RacePredictionService.getInstance()
+          .generateAndSavePreRacePrediction(
+              dbContext,
+              activeRaceId,
+              activeRace.getRaceModel(),
+              participants,
+              heats,
+              scope.isDemo(),
+              true);
+
+      int currentHeatIdx =
+          heats != null && activeRace.getCurrentHeat() != null
+              ? heats.indexOf(activeRace.getCurrentHeat())
+              : 0;
+      if (currentHeatIdx < 0) {
+        currentHeatIdx = 0;
+      }
+
+      Map<String, PredictionEngine.DriverHeatState> actualLaps =
+          HeatExecutionManager.buildDriverHeatStates(activeRace);
+
+      RacePredictionService.getInstance()
+          .updateRealtimePrediction(
+              dbContext,
+              activeRaceId,
+              activeRace.getRaceModel(),
+              participants,
+              heats,
+              currentHeatIdx,
+              actualLaps,
+              scope.isDemo());
+
+      RacePredictionRecord computed =
+          DatabaseService.getInstance()
+              .getRacePredictionRecord(dbContext, activeRaceId, scope.isDemo());
+      future.complete(computed);
+      return computed;
+    } catch (Throwable t) {
+      future.completeExceptionally(t);
+      if (t instanceof RuntimeException) {
+        throw (RuntimeException) t;
+      }
+      throw new RuntimeException("Error computing pre-race prediction", t);
+    } finally {
+      inFlightPredictions.remove(computationKey, future);
     }
   }
 

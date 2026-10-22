@@ -513,7 +513,16 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
 
   isCountdownPreviewActive(ui?: CustomUI): boolean {
     const id = ui?.entity_id || this.activeCustomUiId;
-    return id ? !!this.countdownPreviewActiveByUi[id] : false;
+    if (!id) return false;
+    if (this.countdownPreviewActiveByUi[id] !== undefined) {
+      return !!this.countdownPreviewActiveByUi[id];
+    }
+    const layout = this.getLayout(ui || this.activeCustomUi);
+    const selected =
+      this.selectedWidgetId && layout?.widgets
+        ? layout.widgets.find((w: any) => w.id === this.selectedWidgetId)
+        : null;
+    return selected?.widgetType === "countdown";
   }
 
   toggleCountdownPreview(ui?: CustomUI) {

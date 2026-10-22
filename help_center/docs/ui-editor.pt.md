@@ -10,7 +10,7 @@ O Editor de Interface permite criar layouts personalizados para o dia de corrida
 - Redimensione, reposicione e alinhe widgets de acordo com a resolução do ecrã. Todos os widgets permanecem delimitados dentro do ecrã.
 - **Controlos do Inspetor de Widgets**:
   - **Posição e tamanho**: Posicione e dimensione com precisão o widget selecionado utilizando os campos numéricos **X**, **Y**, **Largura** e **Altura**.
-  - **Excluir widget**: Clique no ícone do lixo no cabeçalho do inspetor ou no botão **Excluir widget** na barra lateral.
+  - **Excluir widget**: Clique no ícone do lixo no cabeçalho do inspetor.
 - **Atalhos de teclado**:
   - <kbd>Delete</kbd> ou <kbd>Backspace</kbd>: Remove o widget selecionado do layout.
   - <kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd>: Move o widget selecionado 1px (ou 10px mantendo <kbd>Shift</kbd> pressionado).
@@ -33,3 +33,13 @@ O widget **Cronómetro** exibe o tempo decorrido ou restante da manga/corrida co
   - **Sempre**: Exibe frações de segundo continuamente durante toda a manga.
   - **Nunca**: Limita o cronómetro exclusivamente a segundos inteiros.
 - **Pré-visualização**: O inspetor inclui uma pré-visualização instantânea que demonstra a formatação das opções selecionadas em diferentes fases da corrida (`> 1 hr`, `> 1 min`, `< 1 min` e `< 10s`).
+
+## Configuração do widget de contagem decrescente
+
+O widget **Contagem Decrescente** exibe o semáforo visual de partida e aciona os efeitos sonoros correspondentes durante o procedimento de largada:
+
+- **Lâmpadas máximas**: Define o número máximo de luzes a apresentar (predefinição 5, intervalo de 1 a 10). Quando a duração da contagem ultrapassa este valor (por exemplo, uma partida de 6 segundos com o máximo de 5 lâmpadas), todas as luzes permanecem apagadas/atenuadas durante a diferença inicial (1 segundo) antes de acenderem sequencialmente.
+- **Animação de fade-in**: Controla se a sobreposição do semáforo e o desfoque de fundo aparecem com uma transição suave. Quando desmarcado, as luzes e o fundo surgem de imediato.
+- **Orientação**: Alterne entre a disposição **Horizontal** e **Vertical** do semáforo.
+- **Efeitos de brilho e desfoque**: Personalize o halo luminoso das lâmpadas, a sobreposição de escala das luzes vermelhas/verdes e a intensidade ou área do desfoque de fundo.
+

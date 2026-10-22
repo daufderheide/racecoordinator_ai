@@ -20,7 +20,7 @@ A barra de ferramentas superior oferece as seguintes ações:
 - **Voltar**: Retorna à visualização anterior ou à Configuração do Dia de Corrida.
 - **Adicionar Equipe (+)**: Cria um novo modelo de equipe e entra no modo de edição.
 - **Duplicar Equipe**: Duplica a equipe atualmente selecionada com um nome exclusivo.
-- **Editar / Concluir Edição**: Alterna entre o modo somente leitura e o modo de edição.
+- **Editar / Concluir Edição**: Alterna entre o modo somente leitura e o modo de edição (atalho de teclado: Cmd/Ctrl+E).
 - **Excluir Equipe**: Exclui a equipe selecionada após confirmação.
 - **Desfazer / Refazer**: Reverte ou reaplica edições recentes realizadas durante a sessão.
 - **Ajuda (?)**: Abre o tour guiado interativo destacando cada seção do editor.

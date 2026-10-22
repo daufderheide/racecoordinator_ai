@@ -152,6 +152,7 @@ Définit la durée d'antirebond en **microsecondes** ($1\text{ ms} = 1000\,\mu\t
 #### Inversion Logique (Normalement Fermé / NC)
 - **Capteurs de Voie Normalement Fermés (NC)** : À activer si le capteur délivre un niveau haut au repos et passe à l'état bas au passage d'une voiture (cas typique des cellules photoélectriques). À désactiver sur dead strips ou reeds.
 - **Relais Normalement Fermés (NC)** : À activer si le relais s'excite pour couper l'alimentation et retombe au repos pour alimenter la piste. Garantit que la piste reste sous tension même si l'ordinateur est éteint.
+- **LEDs Analogiques Actives Basses (Active Low Analog LEDs)** : À activer si vos LEDs analogiques (feux de départ, drapeaux ou témoins de leader) s'allument à l'état BAS (0V) et s'éteignent à l'état HAUT (5V). Cela résout le comportement inversé pour les câblages à anode commune sur Arduino et Phidget.
 
 #### Comportement Stand sur Broche de Tour
 Permet au capteur de ligne d'assurer le ravitaillement en course avec essence :
@@ -246,7 +247,7 @@ La barre d'outils supérieure de l'Éditeur de Circuits propose les outils de ge
 - **Retour** : Retourne à la vue précédente ou à la Configuration du Jour de Course.
 - **Ajouter un Circuit (+)** : Crée un nouveau modèle de circuit et active le mode édition.
 - **Dupliquer le Circuit** : Crée une copie conforme sous un nouveau nom unique, idéal pour tester des variantes sans altérer le circuit principal.
-- **Modifier / Terminer l'Édition** : Bascule entre le mode lecture seule et le mode édition. En quittant le mode édition, les modifications sont validées et enregistrées.
+- **Modifier / Terminer l'Édition (`Cmd/Ctrl+E`)** : Bascule entre le mode lecture seule et le mode édition. En quittant le mode édition, les modifications sont validées et enregistrées.
 - **Tout développer / réduire** : Développe ou réduit toutes les sections de configuration et panneaux d'interfaces en une seule fois.
 - **Supprimer le Circuit** : Supprime le circuit sélectionné après confirmation.
 - **Annuler (`Ctrl+Z`) / Rétablir (`Ctrl+Y`)** : Historique complet pour rétablir facilement tout changement.
@@ -264,8 +265,17 @@ La barre d'outils supérieure de l'Éditeur de Circuits propose les outils de ge
 - **Symptôme** : Les voitures se mettent à ravitailler sans arrêt dès qu'elles sont sur la piste.
 - **Solution** : Changez l'état de la case **Capteurs de Voie Normalement Fermés (Normally Closed Lane Sensors)**.
 
+### LEDs Analogiques Inversées (Allumées au lieu d'être éteintes)
+- **Symptôme** : Les feux de départ, drapeaux ou témoins de leader sont allumés au repos et s'éteignent lors des phases actives.
+- **Solution** : Cochez la case **LEDs analogiques actives basses (Active Low Analog LEDs)** dans la configuration de votre interface (Arduino ou Phidget).
+
 ### Tours Doubles ou Passages Manqués
 - **Solution** : Augmentez l'antirebond (Debounce) en cas de doubles comptages ; diminuez-le si des voitures très rapides ne sont pas détectées, et vérifiez l'alignement des cellules optiques.
 
 ### Bandeaux LED FastLED Éteints
 - **Solution** : Vérifiez que l'Arduino utilise le **sketch officiel `v2.1.0.x`**, que le type de LED et l'ordre des couleurs sont exacts, et que la masse (GND) de l'alimentation 5V externe est reliée à la masse de l'Arduino.
+
+### Déconnexion de l'Interface Entre les Manches (Mise en Veille USB / Économie d'Énergie)
+- **Symptôme** : L'interface (Arduino, Phidget ou Trackmate) se déconnecte pendant les pauses entre les manches ou après une période d'inactivité, puis se reconnecte dès le départ avec le message *"La connexion avec l'interface a été rétablie."*
+- **Solution** : Windows, Linux et macOS coupent l'alimentation des ports USB et des contrôleurs HID inactifs même lorsque le PC est allumé. Consultez la section [Mise en Veille de l'Interface USB et Déconnexions](troubleshooting.fr.md#usb-sleep-prevention) dans le guide de dépannage pour désactiver l'économie d'énergie dans le Gestionnaire de périphériques.
+

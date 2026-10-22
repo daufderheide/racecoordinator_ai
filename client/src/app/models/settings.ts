@@ -48,6 +48,8 @@ export type WidgetType =
   | "action-master-power-on"
   | "action-master-power-off"
   | "action-back"
+  | "action-forward"
+  | "action-close"
   | `custom:${string}`
   | (string & {});
 
@@ -416,10 +418,12 @@ export class Settings {
           blurAmount: 50,
           lampSizingMode: "custom",
           previewLampCount: 5,
+          maxLamps: 5,
+          fadeIn: true,
           glowEffect: true,
-          glowOverlap: 100,
-          glowRedOverlap: 100,
-          glowGreenOverlap: 100,
+          glowOverlap: 30,
+          glowRedOverlap: 30,
+          glowGreenOverlap: 25,
         },
       },
     ],
@@ -560,10 +564,12 @@ export class Settings {
           blurAmount: 50,
           lampSizingMode: "custom",
           previewLampCount: 5,
+          maxLamps: 5,
+          fadeIn: true,
           glowEffect: true,
-          glowOverlap: 100,
-          glowRedOverlap: 100,
-          glowGreenOverlap: 100,
+          glowOverlap: 30,
+          glowRedOverlap: 30,
+          glowGreenOverlap: 25,
         },
       },
     ],

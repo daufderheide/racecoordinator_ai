@@ -4,6 +4,8 @@ import com.antigravity.proto.RaceFlag;
 import com.antigravity.proto.RaceState;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.function.Supplier;
 
 public class ProtocolDelegate implements IProtocol {
 
@@ -21,9 +23,20 @@ public class ProtocolDelegate implements IProtocol {
   private ProtocolListener listener;
 
   public ProtocolDelegate(List<IProtocol> protocols) {
+    this(protocols, null);
+  }
+
+  public ProtocolDelegate(
+      List<IProtocol> protocols, Supplier<ScheduledExecutorService> schedulerSupplier) {
     this.protocols = protocols;
     this.powerManager = new PowerManager(this);
-    this.pitManager = new PitManager(getNumLanes(), this::hasPitInConfigured, () -> this.listener);
+    this.pitManager =
+        new PitManager(
+            getNumLanes(),
+            this::hasPitInConfigured,
+            () -> this.listener,
+            System::currentTimeMillis,
+            schedulerSupplier);
     for (IProtocol protocol : protocols) {
       protocol.setPitManager(this.pitManager);
     }

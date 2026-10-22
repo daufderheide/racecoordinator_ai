@@ -80,7 +80,7 @@ message ArduinoConfig {
   int32 debounce_us = 4;
   bool normally_closed_lane_sensors = 5;
   bool normally_closed_relays = 6;
-  int32 global_invert_lights = 7;
+  reserved 7;
   bool use_pits_as_laps = 10;
   bool use_laps_for_segments = 11;
   int32 hardware_type = 12;
@@ -90,6 +90,7 @@ message ArduinoConfig {
   LapPinPitBehavior lap_pin_pit_behavior = 16;
   repeated VoltageConfig voltage_configs = 17;
   repeated LedString led_strings = 18;
+  bool active_low_analog_leds = 19;
 }
 
 message LedString {

@@ -348,6 +348,18 @@
             [parent]="parentComponent()"
           ></app-raceday-action-button>
         }
+        @case ("action-forward") {
+          <app-raceday-action-button
+            [widget]="widget()"
+            [parent]="parentComponent()"
+          ></app-raceday-action-button>
+        }
+        @case ("action-close") {
+          <app-raceday-action-button
+            [widget]="widget()"
+            [parent]="parentComponent()"
+          ></app-raceday-action-button>
+        }
         @case ("countdown") {
           <app-raceday-countdown
             [widget]="widget()"
@@ -375,9 +387,9 @@
       <button
         class="widget-remove-btn"
         (click)="removeWidget($event)"
-        title="Remove widget"
+        [title]="'UE_BTN_DELETE_WIDGET' | translate"
       >
-        ×
+        <span class="material-icons">delete</span>
       </button>
     </div>
 

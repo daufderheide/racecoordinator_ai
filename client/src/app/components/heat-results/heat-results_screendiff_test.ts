@@ -264,4 +264,32 @@ test.describe("Heat Results Visuals", () => {
       maxDiffPixels: 8000,
     });
   });
+
+  test("should display heat results in fullscreen mode with close button", async ({
+    page,
+  }) => {
+    const mockData = HeatResultsHelper.createMockHeatData();
+    await HeatResultsHelper.injectMockRaceData(page, mockData);
+
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/heat-results"),
+    );
+
+    await page.evaluate(() => {
+      (window as any).fullscreenService?.setFullscreenOverride(true);
+    });
+
+    const header = page.locator(".header-bar");
+    await header.waitFor({ state: "visible" });
+    await page.locator(".loader-overlay").waitFor({ state: "hidden" });
+
+    await page.mouse.move(0, 0);
+
+    await expect(page).toHaveScreenshot("heat-results-fullscreen.png", {
+      maxDiffPixelRatio: 0.05,
+      maxDiffPixels: 8000,
+    });
+  });
 });

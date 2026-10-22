@@ -321,7 +321,7 @@
           [class.layout-medium]="layoutMode === 'medium'"
           [class.layout-large]="layoutMode === 'large'"
         >
-          @for (asset of filteredAssets; track asset) {
+          @for (asset of filteredAssets; track asset.id) {
             <div
               class="asset-card"
               [class.layout-list]="layoutMode === 'list'"
@@ -330,25 +330,28 @@
               [class.layout-large]="layoutMode === 'large'"
               [class.selected]="asset.selected"
               [class.playing]="currentlyPlayingAsset?.id === asset.id"
-              [draggable]="asset.type === 'image'"
+              [draggable]="
+                asset.type === 'image' && !isCsvAsset(asset) && !asset.editMode
+              "
               (dragstart)="onAssetDragStart($event, asset)"
               (click)="toggleSelection(asset, $event)"
             >
               <!-- Preview Area -->
               <div class="asset-preview">
-                @if (asset.type === "image" || asset.type === "image_set") {
+                @if (isCsvAsset(asset)) {
+                  <div class="csv-preview">
+                    <span class="material-icons">description</span>
+                    <span class="file-ext">CSV</span>
+                  </div>
+                } @else if (
+                  asset.type === "image" || asset.type === "image_set"
+                ) {
                   <img
-                    [src]="
-                      getAssetImageUrl(asset) ||
-                      'assets/images/am_icon_image_placeholder.png'
-                    "
+                    [src]="getAssetImageUrl(asset)"
                     class="preview-img"
                     alt="preview"
                     [class.image-set]="asset.type === 'image_set'"
-                    (error)="
-                      $any($event.target).src =
-                        'assets/images/am_icon_image_placeholder.png'
-                    "
+                    (error)="onImageError(asset)"
                   />
                 }
                 @if (
@@ -364,7 +367,7 @@
                 }
                 @if (asset.type === "custom_rotation") {
                   <div class="rotation-preview">
-                    <i class="fas fa-sync-alt"></i>
+                    <span class="material-icons">sync</span>
                     <span class="lane-count">{{ asset.numLanes }} Lanes</span>
                   </div>
                 }
@@ -373,12 +376,17 @@
               <div class="asset-info">
                 <!-- Editing Mode -->
                 @if (asset.editMode) {
-                  <div class="edit-mode">
+                  <div
+                    class="edit-mode"
+                    (click)="$event.stopPropagation()"
+                    (dragstart)="$event.stopPropagation()"
+                  >
                     <input
                       type="text"
                       class="name-input"
                       [(ngModel)]="asset.name"
                       (keyup.enter)="saveName(asset.id, asset.name)"
+                      (keydown.escape)="cancelEditing(asset.id)"
                       autoFocus
                       autocomplete="one-time-code"
                       data-dashlane-ignore="true"
@@ -390,15 +398,18 @@
                       autocorrect="off"
                       autocapitalize="off"
                       name="rename-ignore-field"
+                      draggable="false"
                     />
                     <div class="edit-actions">
                       <button
+                        type="button"
                         class="btn-save"
                         (click)="saveName(asset.id, asset.name)"
                       >
                         {{ "AM_BTN_SAVE" | translate }}
                       </button>
                       <button
+                        type="button"
                         class="btn-cancel"
                         (click)="cancelEditing(asset.id)"
                       >
@@ -420,32 +431,23 @@
                         asset.type === "audio_set"
                       ) {
                         @if (currentlyPlayingAsset?.id !== asset.id) {
-                          <img
-                            src="assets/images/am_icon_play.png"
-                            class="action-icon play"
+                          <span
+                            class="material-icons action-icon play"
                             (click)="$event.stopPropagation(); playAsset(asset)"
                             title="Play"
-                          />
+                            >play_arrow</span
+                          >
                         } @else {
                           <span
                             class="material-icons action-icon stop"
                             (click)="$event.stopPropagation(); stopAsset()"
                             title="Stop"
-                            style="
-                              font-size: 20px;
-                              display: inline-flex;
-                              align-items: center;
-                              justify-content: center;
-                              width: 20px;
-                              height: 20px;
-                            "
                             >stop</span
                           >
                         }
                       }
-                      <img
-                        src="assets/images/am_icon_edit.png"
-                        class="action-icon"
+                      <span
+                        class="material-icons action-icon"
                         [class.disabled]="selectedAssets.length > 1"
                         (click)="
                           $event.stopPropagation();
@@ -459,13 +461,14 @@
                                   : startEditing(asset.id))
                         "
                         title="Edit"
-                      />
-                      <img
-                        src="assets/images/am_icon_trash.png"
-                        class="action-icon delete"
+                        >edit</span
+                      >
+                      <span
+                        class="material-icons action-icon delete"
                         (click)="$event.stopPropagation(); onDelete(asset.id)"
                         title="Delete"
-                      />
+                        >delete</span
+                      >
                     </div>
                   </div>
                 }
@@ -479,7 +482,7 @@
     <!-- Error Toast -->
     @if (errorMessage) {
       <div class="error-toast">
-        <i class="fas fa-exclamation-triangle"></i>
+        <span class="material-icons">warning</span>
         <span>{{ errorMessage | translate }}</span>
       </div>
     }

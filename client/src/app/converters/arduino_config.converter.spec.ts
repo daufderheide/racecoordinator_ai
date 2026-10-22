@@ -12,7 +12,7 @@ describe("ArduinoConfigConverter", () => {
       hardwareType: 1,
       normallyClosedLaneSensors: true,
       normallyClosedRelays: false,
-      globalInvertLights: 0,
+      activeLowAnalogLeds: true,
       usePitsAsLaps: true,
       useLapsForSegments: false,
       lapPinPitBehavior: 2,
@@ -40,6 +40,7 @@ describe("ArduinoConfigConverter", () => {
     expect(config.baudRate).toBe(115200);
     expect(config.normallyClosedLaneSensors).toBeTrue();
     expect(config.normallyClosedRelays).toBeFalse();
+    expect(config.activeLowAnalogLeds).toBeTrue();
     expect(config.digitalIds).toEqual([1, 2, 3]);
     expect(config.ledStrings.length).toBe(1);
     expect(config.voltageConfigs![1]).toBe(12.0);

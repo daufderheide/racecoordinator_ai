@@ -55,6 +55,7 @@ public class CustomDirectoryTaskHandler {
 
     app.get("/api/filesystem/widgets/list", this::listWidgets, Role.VIEWER);
     app.get("/api/filesystem/widgets/file", this::getWidgetFile, Role.VIEWER);
+    app.get("/api/filesystem/widgets/has-file", this::hasWidgetFile, Role.VIEWER);
     app.post("/api/filesystem/widgets/write-file", this::writeWidgetFile, Role.ADMIN);
     app.post("/api/filesystem/widgets/delete-dir", this::deleteWidgetDirectory, Role.ADMIN);
 
@@ -215,16 +216,6 @@ public class CustomDirectoryTaskHandler {
     String groupName = topDir.getFileName().toString();
     try (Stream<Path> childStream = Files.list(topDir)) {
       List<Path> childDirs = childStream.filter(Files::isDirectory).collect(Collectors.toList());
-      if (childDirs.isEmpty()) {
-        results.add(
-            new DiscoveredWidgetDirDto(
-                topDir.getFileName().toString(),
-                topDir.getFileName().toString(),
-                "custom-root",
-                null));
-        return;
-      }
-
       for (Path childDir : childDirs) {
         processGroupChildWidgetDir(groupName, childDir, results);
       }
@@ -296,6 +287,40 @@ public class CustomDirectoryTaskHandler {
     } catch (IOException e) {
       ctx.status(500).result("Error reading file: " + e.getMessage());
     }
+  }
+
+  void hasWidgetFile(Context ctx) {
+    String widgetDirPath = configService.getCustomWidgetDirectory();
+    if (widgetDirPath == null || widgetDirPath.trim().isEmpty()) {
+      ctx.json(mapOf("exists", false));
+      return;
+    }
+
+    Path root = Paths.get(widgetDirPath.trim()).normalize();
+    if (!Files.exists(root) || !Files.isDirectory(root)) {
+      ctx.json(mapOf("exists", false));
+      return;
+    }
+
+    String widgetPath = ctx.queryParam("path");
+    String filename = ctx.queryParam("file");
+    if (filename == null || filename.trim().isEmpty()) {
+      ctx.json(mapOf("exists", false));
+      return;
+    }
+
+    Path target =
+        (widgetPath != null && !widgetPath.trim().isEmpty())
+            ? root.resolve(widgetPath.trim()).resolve(filename.trim()).normalize()
+            : root.resolve(filename.trim()).normalize();
+
+    if (!target.startsWith(root)) {
+      ctx.json(mapOf("exists", false));
+      return;
+    }
+
+    boolean exists = Files.exists(target) && Files.isRegularFile(target);
+    ctx.json(mapOf("exists", exists));
   }
 
   void writeWidgetFile(Context ctx) {

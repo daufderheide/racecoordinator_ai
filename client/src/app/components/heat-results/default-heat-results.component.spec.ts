@@ -644,4 +644,12 @@ describe("DefaultHeatResultsComponent", () => {
       expect(component.showAddLapSectionsDialog).toBeFalse();
     });
   });
+
+  it("should render app-browser-navigation with mode='close'", () => {
+    const navEl = fixture.nativeElement.querySelector("app-browser-navigation");
+    expect(navEl).toBeTruthy();
+    expect(
+      navEl.getAttribute("mode") || navEl.getAttribute("ng-reflect-mode"),
+    ).toBe("close");
+  });
 });
