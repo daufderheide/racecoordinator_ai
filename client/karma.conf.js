@@ -45,6 +45,7 @@ module.exports = function (config) {
     "--disable-gpu",
     "--disable-dev-shm-usage",
     "--disable-software-rasterizer",
+    "--window-size=1920,1080",
     "--user-data-dir=" + chromeUserData,
     "--disable-crash-reporter",
     "--disable-breakpad",

@@ -265,6 +265,18 @@ describe("DefaultRacedayComponent", () => {
       expect(clampedNegative.y).toBe(0);
     });
 
+    it("should use smaller toolbox dimensions when minimized", () => {
+      spyOn(component, "isUIEditorMode").and.returnValue(false);
+      component.isLayoutEditorMinimized = true;
+
+      const clamped = (component as any).clampLayoutEditorPosition({
+        x: 2000,
+        y: 1050,
+      });
+      expect(clamped.x).toBe(1760);
+      expect(clamped.y).toBe(1040);
+    });
+
     it("should not restrict position in UI editor mode, as it relies on cdkDragBoundary", () => {
       spyOn(component, "isUIEditorMode").and.returnValue(true);
       spyOn(component, "uiScale").and.returnValue(0.5);
@@ -8600,6 +8612,11 @@ describe("DefaultRacedayComponent", () => {
   });
 
   describe("Layout Editor Panel Persistence", () => {
+    beforeEach(() => {
+      spyOnProperty(window, "innerWidth", "get").and.returnValue(1920);
+      spyOnProperty(window, "innerHeight", "get").and.returnValue(1080);
+    });
+
     it("should initialize layout editor minimized state and position from settings", () => {
       mockSettings.layoutEditorMinimized = true;
       mockSettings.layoutEditorPositionX = 10;
