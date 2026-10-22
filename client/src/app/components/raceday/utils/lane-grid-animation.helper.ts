@@ -1,3 +1,8 @@
+import {
+  getCachedOverallParticipants,
+  getCachedSortedHeatDriversByOverallRank,
+  getCachedSortedHeatDriversByRank,
+} from "@app/components/raceday/components/raceday-lane-column/raceday-lane-column-driver.helper";
 import { AbsoluteWidgetNode } from "@app/models/settings";
 import { DriverHeatData } from "@app/race/driver_heat_data";
 
@@ -79,22 +84,7 @@ export class LaneGridAnimationHelper {
       parent.heatDrivers ||
       parent.heat?.heatDrivers ||
       [];
-    const sorted = [...participants].sort((a, b) => {
-      const getHeatRank = (p: any) => {
-        const d = drivers.find(
-          (driver) =>
-            driver.objectId === p.objectId ||
-            driver.participant?.objectId === p.objectId ||
-            driver.driver?.entity_id === (p.driver?.entity_id || p.objectId),
-        );
-        if (!d) return 999;
-        return parent.driverRankings?.get(d.objectId) ?? 999;
-      };
-      const rankA = getHeatRank(a);
-      const rankB = getHeatRank(b);
-      if (rankA !== rankB) return rankA - rankB;
-      return (a.rank ?? 999) - (b.rank ?? 999);
-    });
+    const sorted = getCachedOverallParticipants(parent, drivers, mode);
     const match = sorted[targetIndex];
     return match?.driver?.entity_id || match?.objectId || null;
   }
@@ -112,27 +102,7 @@ export class LaneGridAnimationHelper {
       [];
 
     if (mode === "overallPosition") {
-      const getOverallRank = (d: DriverHeatData): number => {
-        if (typeof parent.getDriverOverallRanking === "function") {
-          const r = parent.getDriverOverallRanking(d);
-          if (r != null && r > 0) return r;
-        }
-        const match = (parent.participants || []).find(
-          (p: any) =>
-            p.objectId === d.objectId ||
-            p.participant?.objectId === d.objectId ||
-            p.driver?.entity_id === (d.driver?.entity_id || d.objectId) ||
-            p.driver?.name === d.driver?.name,
-        );
-        if (match?.rank && match.rank > 0) return match.rank;
-        return (d as any).overallRank ?? d.participant?.rank ?? 999;
-      };
-      const sorted = [...drivers].sort((a, b) => {
-        const rankA = getOverallRank(a);
-        const rankB = getOverallRank(b);
-        if (rankA !== rankB) return rankA - rankB;
-        return (a.laneIndex ?? 0) - (b.laneIndex ?? 0);
-      });
+      const sorted = getCachedSortedHeatDriversByOverallRank(drivers, parent);
       return sorted[targetIndex]?.objectId || null;
     }
 
@@ -151,20 +121,7 @@ export class LaneGridAnimationHelper {
       }
     }
 
-    const sortedByRank = [...drivers].sort((a, b) => {
-      const rankA = parent.driverRankings?.get(a.objectId) ?? 999;
-      const rankB = parent.driverRankings?.get(b.objectId) ?? 999;
-      if (rankA !== rankB) return rankA - rankB;
-
-      const lapsA = (a as any).lapCount ?? a.lapTimes?.length ?? 0;
-      const lapsB = (b as any).lapCount ?? b.lapTimes?.length ?? 0;
-      if (lapsA !== lapsB) return (lapsB as number) - (lapsA as number);
-
-      const timeA = (a as any).totalTime ?? 0;
-      const timeB = (b as any).totalTime ?? 0;
-      return (timeA as number) - (timeB as number);
-    });
-
+    const sortedByRank = getCachedSortedHeatDriversByRank(drivers, parent);
     return sortedByRank[targetIndex]?.objectId || null;
   }
 

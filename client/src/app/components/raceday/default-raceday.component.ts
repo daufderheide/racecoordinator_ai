@@ -1038,6 +1038,14 @@ export class DefaultRacedayComponent
   private cachedGridsWidgetsRef: any[] | null = null;
   private cachedGridsSession: boolean = false;
   private cachedGridsDataCounts: string = "";
+  private cachedGridsParticipantsCount = -1;
+  private cachedGridsHeatDriversCount = -1;
+  private cachedGridIds: string[] = [];
+  private cachedGridIdsWidgetsRef: any[] | null = null;
+  private cachedOverallGridIds?: Set<string>;
+  private cachedOverallGridWidgetsRef: any = null;
+  private cachedDefaultLaneWidgetSettings: any = null;
+  private cachedDefaultLaneWidgetsRef: any = null;
   private carLocations = new Map<number, number>();
   private fuelAudioTracker: FuelAudioTracker;
   private get laneFuelAudioStates(): Map<number, any> {
@@ -4260,6 +4268,14 @@ export class DefaultRacedayComponent
     this.cachedGridsWidgetsRef = null;
     this.cachedNonGridWidgetsRef = null;
     this.cachedGridsDataCounts = "";
+    this.cachedGridsParticipantsCount = -1;
+    this.cachedGridsHeatDriversCount = -1;
+    this.cachedGridIdsWidgetsRef = null;
+    this.cachedGridIds = [];
+    this.cachedOverallGridIds = undefined;
+    this.cachedOverallGridWidgetsRef = null;
+    this.cachedDefaultLaneWidgetSettings = null;
+    this.cachedDefaultLaneWidgetsRef = null;
     this.cachedSelectedWidgetWidgetsRef = null;
     this.cachedSelectedWidget = null;
     this.cachedWidgetIdSetWidgetsRef = null;
@@ -4267,6 +4283,47 @@ export class DefaultRacedayComponent
     this.cachedGridBoundsWidgetsRef = null;
     this.cachedGridBoundsSelWidget = null;
     this.cachedGridBounds = null;
+  }
+
+  isGridOverall(gridId?: string): boolean {
+    if (!gridId) return false;
+    if (this.gridSession()?.gridType === "overall") return true;
+
+    const widgets = this.getWidgets();
+    if (
+      widgets !== this.cachedOverallGridWidgetsRef ||
+      !this.cachedOverallGridIds
+    ) {
+      this.cachedOverallGridWidgetsRef = widgets;
+      const set = new Set<string>();
+      if (widgets) {
+        for (let i = 0; i < widgets.length; i++) {
+          const s = widgets[i]?.customSettings;
+          if (
+            s?.["gridId"] &&
+            (s["gridType"] === "overall" ||
+              RacedayLayoutUtils.isOverallColumnKey(s["columnKey"]))
+          ) {
+            set.add(s["gridId"]);
+          }
+        }
+      }
+      this.cachedOverallGridIds = set;
+    }
+    return this.cachedOverallGridIds.has(gridId);
+  }
+
+  getDefaultLaneWidgetSettings(): any {
+    const widgets = this.currentRacedayLayout?.widgets;
+    if (widgets !== this.cachedDefaultLaneWidgetsRef) {
+      this.cachedDefaultLaneWidgetsRef = widgets;
+      const found = widgets?.find(
+        (w: any) =>
+          w.widgetType === "lane-view" || w.widgetType === "lane-column",
+      );
+      this.cachedDefaultLaneWidgetSettings = found?.customSettings || null;
+    }
+    return this.cachedDefaultLaneWidgetSettings;
   }
 
   getNonGridWidgets(): any[] {
@@ -4296,6 +4353,8 @@ export class DefaultRacedayComponent
       this.cachedGrids = [];
       this.cachedGridsWidgetsRef = null;
       this.cachedGridsDataCounts = "";
+      this.cachedGridsParticipantsCount = -1;
+      this.cachedGridsHeatDriversCount = -1;
       return [];
     }
     const widgets = this.getWidgets();
@@ -4303,16 +4362,38 @@ export class DefaultRacedayComponent
       this.cachedGrids = [];
       this.cachedGridsWidgetsRef = null;
       this.cachedGridsDataCounts = "";
+      this.cachedGridsParticipantsCount = -1;
+      this.cachedGridsHeatDriversCount = -1;
       return [];
     }
 
-    const gridIds = Array.from(
-      new Set(
-        widgets
-          .map((w: any) => w.customSettings?.["gridId"])
-          .filter((id): id is string => Boolean(id)),
-      ),
-    );
+    const participantsCount = this.participants?.length || 0;
+    const heatDriversCount =
+      this.sortedHeatDrivers?.length || this.heat?.heatDrivers?.length || 0;
+
+    if (
+      widgets === this.cachedGridsWidgetsRef &&
+      session === this.cachedGridsSession &&
+      participantsCount === this.cachedGridsParticipantsCount &&
+      heatDriversCount === this.cachedGridsHeatDriversCount
+    ) {
+      return this.cachedGrids;
+    }
+
+    if (widgets !== this.cachedGridIdsWidgetsRef) {
+      this.cachedGridIdsWidgetsRef = widgets;
+      const seen = new Set<string>();
+      const ids: string[] = [];
+      for (let i = 0; i < widgets.length; i++) {
+        const id = widgets[i]?.customSettings?.["gridId"];
+        if (id && !seen.has(id)) {
+          seen.add(id);
+          ids.push(id);
+        }
+      }
+      this.cachedGridIds = ids;
+    }
+    const gridIds = this.cachedGridIds;
 
     const dataCountsKey = gridIds
       .map(
@@ -4326,6 +4407,8 @@ export class DefaultRacedayComponent
       session === this.cachedGridsSession &&
       dataCountsKey === this.cachedGridsDataCounts
     ) {
+      this.cachedGridsParticipantsCount = participantsCount;
+      this.cachedGridsHeatDriversCount = heatDriversCount;
       return this.cachedGrids;
     }
 
@@ -4339,6 +4422,8 @@ export class DefaultRacedayComponent
     this.cachedGridsWidgetsRef = widgets;
     this.cachedGridsSession = session;
     this.cachedGridsDataCounts = dataCountsKey;
+    this.cachedGridsParticipantsCount = participantsCount;
+    this.cachedGridsHeatDriversCount = heatDriversCount;
 
     return this.cachedGrids;
   }
@@ -7031,10 +7116,8 @@ export class DefaultRacedayComponent
     anchor?: string,
     widgetSettings?: any,
   ): string {
-    const laneViewWidget = this.currentRacedayLayout?.widgets?.find(
-      (w: any) =>
-        w.widgetType === "lane-view" || w.widgetType === "lane-column",
-    );
+    const laneViewSettings =
+      widgetSettings || this.getDefaultLaneWidgetSettings();
     const ctx: FormatContext = {
       translate: (key) => this.translationService.translate(key),
       getRace: () => this.raceService.getRace(),
@@ -7044,7 +7127,7 @@ export class DefaultRacedayComponent
       getFlagUrl: (flag) => this.getFlagUrl(flag),
       getFullUrl: (url) => this.getFullUrl(url),
       getImageSetUrl: (hd, prop) => this.getImageUrl(prop, hd),
-      laneViewWidgetSettings: widgetSettings || laneViewWidget?.customSettings,
+      laneViewWidgetSettings: laneViewSettings,
       getDriverOverallRanking: (hd) => this.getDriverOverallRanking(hd),
       getDriverGroupRanking: (hd) => this.getDriverGroupRanking(hd),
       getLaneQrCodeUrl: (laneIndex) => this.getLaneQrCodeUrl(laneIndex),

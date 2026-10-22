@@ -9,6 +9,9 @@ import { DriverHeatData } from "@app/race/driver_heat_data";
 import { TranslationService } from "@app/services/translation.service";
 
 import {
+  buildSyntheticInsetWidgetInputs,
+  buildSyntheticMainWidgetInputs,
+  extractDroppedColumnKey,
   formatAdjustedLapValue,
   getSharedCanvasContext,
   isOverallDataSource,
@@ -441,4 +444,247 @@ export function resolveLaneColumnForegroundColor(
   const trackLaneFg =
     laneIdx >= 0 ? track?.lanes?.[laneIdx]?.foreground_color : undefined;
   return trackLaneFg || settings.textColor || "#ffffff";
+}
+
+export function resolveLaneColumnEffectiveHeaderTextColor(
+  settings: LaneColumnWidgetSettings,
+  isHeaderWidget: boolean,
+  getForegroundColor: () => string,
+): string {
+  if (settings.headerTextColor) {
+    return settings.headerTextColor;
+  }
+  if (isHeaderWidget) {
+    return "#ffffff";
+  }
+  const fg = getForegroundColor();
+  if (settings.useLaneColors !== false) {
+    return fg;
+  }
+  return settings.textColor || fg || "#ffffff";
+}
+
+export function resolveLaneColumnEffectiveValueTextColor(
+  settings: LaneColumnWidgetSettings,
+  foregroundColor: string,
+): string {
+  if (settings.useLaneColors !== false) {
+    return foregroundColor;
+  }
+  return settings.valueTextColor || settings.textColor || foregroundColor;
+}
+
+export function resolveLaneColumnEffectiveInsetTextColor(
+  settings: LaneColumnWidgetSettings,
+  foregroundColor: string,
+): string {
+  if (settings.useLaneColors !== false) {
+    return foregroundColor;
+  }
+  return settings.insetTextColor || settings.textColor || foregroundColor;
+}
+
+export function handleLaneColumnAnchorDragOver(
+  event: DragEvent,
+  isUIEditorMode: boolean,
+  isGridCellUnselected: boolean,
+): void {
+  if (!isUIEditorMode || isGridCellUnselected) return;
+  event.preventDefault();
+  event.stopPropagation();
+  if (event.dataTransfer) {
+    const allowed = event.dataTransfer.effectAllowed;
+    event.dataTransfer.dropEffect = allowed === "move" ? "move" : "copy";
+  }
+}
+
+export function handleLaneColumnAnchorDragEnter(
+  event: DragEvent,
+  isUIEditorMode: boolean,
+  isGridCellUnselected: boolean,
+): void {
+  if (!isUIEditorMode || isGridCellUnselected) return;
+  event.preventDefault();
+  event.stopPropagation();
+  ((event.currentTarget || event.target) as HTMLElement)?.classList.add(
+    "drag-over",
+  );
+}
+
+export function handleLaneColumnAnchorDragLeave(
+  event: DragEvent,
+  isUIEditorMode: boolean,
+): void {
+  if (!isUIEditorMode) return;
+  event.preventDefault();
+  event.stopPropagation();
+  ((event.currentTarget || event.target) as HTMLElement)?.classList.remove(
+    "drag-over",
+  );
+}
+
+export function handleLaneColumnAnchorDrop(
+  event: DragEvent,
+  anchor: string,
+  isUIEditorMode: boolean,
+  isGridCellUnselected: boolean,
+  parent: any,
+): string | undefined {
+  if (!isUIEditorMode || isGridCellUnselected) return undefined;
+  event.preventDefault();
+  event.stopPropagation();
+  ((event.currentTarget || event.target) as HTMLElement)?.classList.remove(
+    "drag-over",
+  );
+  const droppedKey = extractDroppedColumnKey(event, parent);
+  if (droppedKey && parent) {
+    parent.draggedWidgetType = null;
+  }
+  return droppedKey;
+}
+
+export function dispatchLaneColumnAnchorSelection(
+  parent: any,
+  widgetId: string | undefined,
+  anchor: string | null,
+  outputEmitter?: any,
+): void {
+  if (!widgetId) return;
+  if (parent?.selectAnchor) {
+    parent.selectAnchor(widgetId, anchor);
+  } else {
+    if (parent?.widgetSelected?.emit) {
+      parent.widgetSelected.emit(widgetId);
+    }
+    if (parent?.anchorSelected?.emit) {
+      parent.anchorSelected.emit({ widgetId, anchor });
+    }
+  }
+  outputEmitter?.emit?.({ widgetId, anchor });
+}
+
+export class LaneColumnAvatarHelper {
+  readonly imageErrors = new Set<string>();
+  mainImageError = false;
+  private lastDriverId?: string;
+
+  checkDriverChange(currentDriver?: DriverHeatData): void {
+    const currentId =
+      currentDriver?.objectId ||
+      currentDriver?.driver?.entity_id ||
+      (currentDriver?.driver as any)?.id;
+    if (this.lastDriverId !== currentId) {
+      this.lastDriverId = currentId;
+      this.imageErrors.clear();
+      this.mainImageError = false;
+    }
+  }
+
+  isPlaceholderAvatar(
+    currentDriver?: DriverHeatData,
+    url?: string,
+    anchor?: string,
+  ): boolean {
+    this.checkDriverChange(currentDriver);
+    if (anchor && this.imageErrors.has(anchor)) return true;
+    if (!anchor && this.mainImageError) return true;
+    if (!url) return false;
+    return url.includes("default_avatar.svg");
+  }
+
+  onImageError(event: Event, anchor?: string): void {
+    if (anchor) {
+      this.imageErrors.add(anchor);
+    } else {
+      this.mainImageError = true;
+    }
+    const target = event?.target as HTMLImageElement;
+    if (target && !target.src?.includes("default_avatar.svg")) {
+      target.src = "assets/images/default_avatar.svg";
+    }
+  }
+}
+
+export function resolveCachedSyntheticInsetInputs(
+  cache: Map<string, any>,
+  anchor: string,
+  key: string | undefined,
+  w: AbsoluteWidgetNode | null,
+  bindingMode: string,
+  targetIndex: number,
+  fontSize: number,
+  parent: any,
+  isCustomizing: boolean,
+  targetDriver?: DriverHeatData,
+  laneFg?: string,
+  laneBg?: string,
+) {
+  const existing = cache.get(anchor);
+  if (
+    existing &&
+    existing.parent === parent &&
+    existing.isCustomizing === isCustomizing &&
+    existing.widget?.widgetType === key &&
+    existing.widget?.customSettings?.["valueFontSize"] === fontSize &&
+    existing.widget?.customSettings?.["gridLane"] === targetIndex &&
+    existing.widget?.customSettings?.["targetDriver"] === targetDriver &&
+    existing.widget?.customSettings?.["laneForegroundColor"] === laneFg &&
+    existing.widget?.customSettings?.["laneBackgroundColor"] === laneBg
+  ) {
+    return existing;
+  }
+  const inputs = buildSyntheticInsetWidgetInputs(
+    anchor,
+    key,
+    w,
+    bindingMode,
+    targetIndex,
+    fontSize,
+    parent,
+    isCustomizing,
+    targetDriver,
+    laneFg,
+    laneBg,
+  );
+  cache.set(anchor, inputs);
+  return inputs;
+}
+
+export function resolveCachedSyntheticMainInputs(
+  cachedRef: { current?: any },
+  key: string,
+  w: AbsoluteWidgetNode | null,
+  bindingMode: string,
+  targetIndex: number,
+  parent: any,
+  isCustomizing: boolean,
+  targetDriver?: DriverHeatData,
+  laneFg?: string,
+  laneBg?: string,
+) {
+  const existing = cachedRef.current;
+  if (
+    existing &&
+    existing.parent === parent &&
+    existing.isCustomizing === isCustomizing &&
+    existing.widget?.widgetType === key &&
+    existing.widget?.customSettings?.["gridLane"] === targetIndex &&
+    existing.widget?.customSettings?.["targetDriver"] === targetDriver &&
+    existing.widget?.customSettings?.["laneForegroundColor"] === laneFg &&
+    existing.widget?.customSettings?.["laneBackgroundColor"] === laneBg
+  ) {
+    return existing;
+  }
+  cachedRef.current = buildSyntheticMainWidgetInputs(
+    key,
+    w,
+    bindingMode,
+    targetIndex,
+    parent,
+    isCustomizing,
+    targetDriver,
+    laneFg,
+    laneBg,
+  );
+  return cachedRef.current;
 }

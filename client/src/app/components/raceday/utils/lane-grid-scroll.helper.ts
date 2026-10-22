@@ -7,51 +7,65 @@ import { LaneGridSession } from "./lane-grid-replication.helper";
 import { RacedayLayoutUtils } from "./raceday-layout.utils";
 
 export class LaneGridScrollHelper {
-  public static getGridDataCount(
+  private static extractGridMetadata(
     widgets: AbsoluteWidgetNode[],
     gridId: string,
+  ): {
+    hasGridWidget: boolean;
+    finalTotalLanes: number;
+    explicitGridType?: string;
+    mode: string;
+  } {
+    let hasGridWidget = false;
+    let gridTotalLanes: number | null = null;
+    let explicitGridType: string | undefined;
+    let mode = "lane";
+
+    for (let i = 0; i < widgets.length; i++) {
+      const s = widgets[i]?.customSettings;
+      if (s?.["gridId"] === gridId) {
+        if (!hasGridWidget) {
+          hasGridWidget = true;
+          mode = s["bindingMode"] || "lane";
+        }
+        if (gridTotalLanes == null && s["gridTotalLanes"] != null) {
+          gridTotalLanes = Number(s["gridTotalLanes"]);
+        }
+        if (
+          explicitGridType !== "overall" &&
+          (s["gridType"] === "overall" ||
+            RacedayLayoutUtils.isOverallColumnKey(s["columnKey"]))
+        ) {
+          explicitGridType = "overall";
+        } else if (!explicitGridType && s["gridType"]) {
+          explicitGridType = s["gridType"];
+        }
+      }
+    }
+    return {
+      hasGridWidget,
+      finalTotalLanes: gridTotalLanes || 4,
+      explicitGridType,
+      mode,
+    };
+  }
+
+  private static resolveDataCount(
+    explicitGridType: string | undefined,
+    mode: string,
     parent: any,
   ): number {
-    const gridWidgets = (widgets || []).filter(
-      (w) => w.customSettings?.["gridId"] === gridId,
-    );
-    if (gridWidgets.length === 0) return 0;
-    const first = gridWidgets[0];
-    const rawTotalLanes =
-      gridWidgets.find((w) => w.customSettings?.["gridTotalLanes"] != null)
-        ?.customSettings?.["gridTotalLanes"] ??
-      first.customSettings?.["gridTotalLanes"];
-    const gridTotalLanes = Number(rawTotalLanes) || 4;
-
-    const isEditor = Boolean(
-      (typeof parent?.isUIEditorMode === "function"
-        ? parent.isUIEditorMode()
-        : parent?.isUIEditorMode) || parent?.isLayoutCustomizing,
-    );
-    if (isEditor) {
-      return gridTotalLanes;
-    }
-    const mode = first.customSettings?.["bindingMode"] || "lane";
-    const hasOverall = gridWidgets.some(
-      (w) =>
-        w.customSettings?.["gridType"] === "overall" ||
-        RacedayLayoutUtils.isOverallColumnKey(w.customSettings?.["columnKey"]),
-    );
-    const explicitGridType = hasOverall
-      ? "overall"
-      : gridWidgets.find((w) => w.customSettings?.["gridType"])
-          ?.customSettings?.["gridType"] || first.customSettings?.["gridType"];
-
-    let count = 0;
     if (explicitGridType === "overall") {
-      count =
+      return (
         parent?.race?.standings?.length ||
         parent?.raceStandings?.length ||
         parent?.participants?.length ||
         parent?.race?.participants?.length ||
         parent?.raceParticipants?.length ||
-        0;
-    } else if (explicitGridType === "heat") {
+        0
+      );
+    }
+    if (explicitGridType === "heat") {
       const heatCount =
         parent?.heat?.heatDrivers?.length ||
         parent?.heatDrivers?.length ||
@@ -65,43 +79,74 @@ export class LaneGridScrollHelper {
         parent?.race?.track?.lanes?.length ||
         parent?.maxTrackLanes ||
         0;
-      count = Math.max(heatCount, trackCount);
-    } else {
-      if (mode === "lane") {
-        count =
-          parent?.track?.lanes?.length ||
-          parent?.currentTrack?.lanes?.length ||
-          parent?.race?.track?.lanes?.length ||
-          parent?.maxTrackLanes ||
-          0;
-      } else if (mode === "position") {
-        count =
-          parent?.heat?.standings?.length ||
-          parent?.heatStandings?.length ||
-          parent?.heat?.heatDrivers?.length ||
-          parent?.heatDrivers?.length ||
-          parent?.track?.lanes?.length ||
-          parent?.currentTrack?.lanes?.length ||
-          parent?.race?.track?.lanes?.length ||
-          parent?.maxTrackLanes ||
-          0;
-      } else if (mode === "overallPosition") {
-        count =
-          parent?.race?.standings?.length ||
-          parent?.raceStandings?.length ||
-          parent?.participants?.length ||
-          parent?.race?.participants?.length ||
-          parent?.raceParticipants?.length ||
-          0;
-      } else if (mode === "seed") {
-        count =
-          parent?.race?.participants?.length ||
-          parent?.participants?.length ||
-          parent?.raceParticipants?.length ||
-          0;
-      }
+      return Math.max(heatCount, trackCount);
     }
-    return count > 0 ? count : gridTotalLanes;
+    if (mode === "lane") {
+      return (
+        parent?.track?.lanes?.length ||
+        parent?.currentTrack?.lanes?.length ||
+        parent?.race?.track?.lanes?.length ||
+        parent?.maxTrackLanes ||
+        0
+      );
+    }
+    if (mode === "position") {
+      return (
+        parent?.heat?.standings?.length ||
+        parent?.heatStandings?.length ||
+        parent?.heat?.heatDrivers?.length ||
+        parent?.heatDrivers?.length ||
+        parent?.track?.lanes?.length ||
+        parent?.currentTrack?.lanes?.length ||
+        parent?.race?.track?.lanes?.length ||
+        parent?.maxTrackLanes ||
+        0
+      );
+    }
+    if (mode === "overallPosition") {
+      return (
+        parent?.race?.standings?.length ||
+        parent?.raceStandings?.length ||
+        parent?.participants?.length ||
+        parent?.race?.participants?.length ||
+        parent?.raceParticipants?.length ||
+        0
+      );
+    }
+    if (mode === "seed") {
+      return (
+        parent?.race?.participants?.length ||
+        parent?.participants?.length ||
+        parent?.raceParticipants?.length ||
+        0
+      );
+    }
+    return 0;
+  }
+
+  public static getGridDataCount(
+    widgets: AbsoluteWidgetNode[],
+    gridId: string,
+    parent: any,
+  ): number {
+    if (!widgets || widgets.length === 0 || !gridId) return 0;
+
+    const { hasGridWidget, finalTotalLanes, explicitGridType, mode } =
+      this.extractGridMetadata(widgets, gridId);
+
+    if (!hasGridWidget) return 0;
+
+    const isEditor = Boolean(
+      (typeof parent?.isUIEditorMode === "function"
+        ? parent.isUIEditorMode()
+        : parent?.isUIEditorMode) || parent?.isLayoutCustomizing,
+    );
+    if (isEditor) {
+      return finalTotalLanes;
+    }
+
+    const count = this.resolveDataCount(explicitGridType, mode, parent);
+    return count > 0 ? count : finalTotalLanes;
   }
 
   public static generateScrollableGridWidgets(

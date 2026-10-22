@@ -13221,4 +13221,121 @@ describe("DefaultRacedayComponent", () => {
       expect(sel3).toBe(w1);
     });
   });
+
+  describe("Grid performance optimizations and helper caching", () => {
+    it("should determine isGridOverall correctly and cache overall grid IDs", () => {
+      expect(component.isGridOverall(undefined)).toBeFalse();
+      expect(component.isGridOverall("")).toBeFalse();
+
+      const gridWidgets = [
+        {
+          id: "w1",
+          customSettings: { gridId: "g-overall", gridType: "overall" },
+        },
+        {
+          id: "w2",
+          customSettings: { gridId: "g-heat", gridType: "heat" },
+        },
+        {
+          id: "w3",
+          customSettings: { gridId: "g-key", columnKey: "overallPosition" },
+        },
+      ] as any[];
+
+      (component as any).layout = { widgets: gridWidgets };
+      expect(component.isGridOverall("g-overall")).toBeTrue();
+      expect(component.isGridOverall("g-key")).toBeTrue();
+      expect(component.isGridOverall("g-heat")).toBeFalse();
+      expect(component.isGridOverall("non-existent")).toBeFalse();
+
+      // Caching: should return from cachedOverallGridIds
+      expect(component.isGridOverall("g-overall")).toBeTrue();
+
+      // Invalidation
+      component.invalidateGridCache();
+      expect(component.isGridOverall("g-heat")).toBeFalse();
+    });
+
+    it("should return true for isGridOverall when gridSession declared overall", () => {
+      fixture.componentRef.setInput("gridSession", {
+        gridType: "overall",
+      } as any);
+      expect(component.isGridOverall("any-grid")).toBeTrue();
+    });
+
+    it("should cache default lane widget settings and invalidate on layout change", () => {
+      const laneWidget = {
+        widgetType: "lane-column",
+        customSettings: { headerFontSize: 20 },
+      };
+      (component as any).currentRacedayLayout = {
+        widgets: [laneWidget],
+      };
+
+      const s1 = component.getDefaultLaneWidgetSettings();
+      expect(s1).toEqual({ headerFontSize: 20 });
+      const s2 = component.getDefaultLaneWidgetSettings();
+      expect(s2).toBe(s1);
+
+      // Invalidate on layout change
+      (component as any).currentRacedayLayout = {
+        widgets: [
+          { widgetType: "lane-column", customSettings: { headerFontSize: 24 } },
+        ],
+      };
+      const s3 = component.getDefaultLaneWidgetSettings();
+      expect(s3).toEqual({ headerFontSize: 24 });
+    });
+
+    it("should memoize getGrids when participants and heat drivers counts are unchanged", () => {
+      fixture.componentRef.setInput("gridSession", null);
+      const gridWidget = {
+        id: "w-grid-1",
+        widgetType: "lane-column",
+        x: 0,
+        y: 0,
+        width: 100,
+        height: 50,
+        customSettings: { gridId: "g1", gridTotalLanes: 4 },
+      } as any;
+      (component as any).layout = { widgets: [gridWidget] };
+      component.participants = [
+        { objectId: "p1" },
+        { objectId: "p2" },
+      ] as any[];
+      (component as any).sortedHeatDrivers = [{ objectId: "d1" }] as any[];
+
+      const g1 = component.getGrids();
+      expect(g1.length).toBe(1);
+
+      const g2 = component.getGrids();
+      expect(g2).toBe(g1);
+
+      // Invalidation clears cache
+      component.invalidateGridCache();
+      const g3 = component.getGrids();
+      expect(g3.length).toBe(1);
+      expect(g3).not.toBe(g1);
+    });
+
+    it("should pass widgetSettings directly in formatValue without scanning widgets", () => {
+      const hd = new DriverHeatData("d1", { objectId: "p1" } as any, 0, {
+        entity_id: "e1",
+        name: "Driver 1",
+      } as any);
+      const customSettings = { textColor: "#ff0000" };
+      spyOn(component, "getDefaultLaneWidgetSettings").and.callThrough();
+
+      const val = component.formatValue(
+        "driver.name",
+        "Driver 1",
+        hd,
+        undefined,
+        undefined,
+        customSettings,
+      );
+      expect(val).toBe("Driver 1");
+      expect(component.getDefaultLaneWidgetSettings).not.toHaveBeenCalled();
+    });
+  });
 });
