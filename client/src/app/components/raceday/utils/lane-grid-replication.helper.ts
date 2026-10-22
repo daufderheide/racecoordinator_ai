@@ -172,6 +172,13 @@ export class LaneGridReplicationHelper {
     showHeader: boolean,
     result: AbsoluteWidgetNode[],
   ): void {
+    const isHorizontal =
+      session.direction === "horizontal" ||
+      session.layoutOrientation === "horizontal";
+    const isLanesMirrored = isHorizontal
+      ? session.linkColumns !== false
+      : session.mirrorRows !== false;
+
     for (let k = 0; k < session.totalLanes; k++) {
       if (k === session.sourceLaneIndex) continue;
 
@@ -190,12 +197,13 @@ export class LaneGridReplicationHelper {
       clonedSettings["gridLane"] = k;
       clonedSettings["gridMasterId"] = masterWidget.id;
       clonedSettings["mirrorRows"] = session.mirrorRows !== false;
+      clonedSettings["linkColumns"] = session.linkColumns !== false;
       clonedSettings["bindingMode"] = effectiveBindingMode;
       clonedSettings["showHeader"] = showHeader;
       clonedSettings["isHeaderWidget"] = false;
       clonedSettings["gridType"] = session.gridType || "heat";
 
-      if (session.mirrorRows === false && existingIndex >= 0) {
+      if (!isLanesMirrored && existingIndex >= 0) {
         const existing = result[existingIndex];
         result[existingIndex] = {
           ...existing,
@@ -207,7 +215,8 @@ export class LaneGridReplicationHelper {
             ...(existing.customSettings || {}),
             targetIndex: k,
             gridLane: k,
-            mirrorRows: false,
+            mirrorRows: session.mirrorRows !== false,
+            linkColumns: session.linkColumns !== false,
             bindingMode: effectiveBindingMode,
             showHeader,
             isHeaderWidget: false,
@@ -342,44 +351,15 @@ export class LaneGridReplicationHelper {
       session,
       session.sourceLaneIndex,
     );
-    const {
-      cellWidthRatio,
-      cellHeightRatio,
-      cellOffsetXRatio,
-      cellOffsetYRatio,
-    } = LaneGridGeometryHelper.resolveCellRatios(
+    const ratios = LaneGridGeometryHelper.resolveCellRatios(
       masterWidget,
       session,
       masterCell,
       headerHeight,
     );
 
-    const cellW = masterCell.width > 0 ? masterCell.width : 1;
-    const cellH = masterCell.height > 0 ? masterCell.height : 1;
-    const isVertical = session.direction === "vertical";
-    const targetWidth =
-      isVertical || session.mirrorRows === false
-        ? Math.max(10, Math.round(cellW * cellWidthRatio))
-        : cellW;
-    const targetHeight =
-      !isVertical || session.mirrorRows === false
-        ? Math.max(10, Math.round(cellH * cellHeightRatio))
-        : cellH;
-    const targetX = isVertical
-      ? Math.max(
-          masterCell.x,
-          Math.round(masterCell.x + cellW * cellOffsetXRatio),
-        )
-      : masterCell.x;
-    const targetY = isVertical
-      ? masterCell.y
-      : Math.max(
-          masterCell.y,
-          Math.round(masterCell.y + cellH * cellOffsetYRatio),
-        );
-
-    const offsetInCellX = isVertical ? Math.max(0, targetX - masterCell.x) : 0;
-    const offsetInCellY = isVertical ? 0 : Math.max(0, targetY - masterCell.y);
+    const { targetBounds, offsetInCellX, offsetInCellY } =
+      this.computeMasterGeometry(session, masterCell, ratios);
 
     const effectiveBindingMode =
       (masterWidget.customSettings?.["bindingMode"] as any) ||
@@ -392,8 +372,8 @@ export class LaneGridReplicationHelper {
     const updatedMaster = this.buildUpdatedMaster(
       masterWidget,
       session,
-      { x: targetX, y: targetY, width: targetWidth, height: targetHeight },
-      { cellWidthRatio, cellHeightRatio, cellOffsetXRatio, cellOffsetYRatio },
+      targetBounds,
+      ratios,
       effectiveBindingMode,
       showHeader,
       headerHeight,
@@ -426,6 +406,62 @@ export class LaneGridReplicationHelper {
     );
 
     return result;
+  }
+
+  private static computeMasterGeometry(
+    session: LaneGridSession,
+    masterCell: LaneGridBounds,
+    ratios: {
+      cellWidthRatio: number;
+      cellHeightRatio: number;
+      cellOffsetXRatio: number;
+      cellOffsetYRatio: number;
+    },
+  ): {
+    targetBounds: LaneGridBounds;
+    offsetInCellX: number;
+    offsetInCellY: number;
+  } {
+    const cellW = masterCell.width > 0 ? masterCell.width : 1;
+    const cellH = masterCell.height > 0 ? masterCell.height : 1;
+    const isHorizontal =
+      session.direction === "horizontal" ||
+      session.layoutOrientation === "horizontal";
+    const isVertical = !isHorizontal;
+    const targetWidth =
+      isVertical || session.linkColumns === false
+        ? Math.max(10, Math.round(cellW * ratios.cellWidthRatio))
+        : cellW;
+    const targetHeight =
+      isHorizontal || session.mirrorRows === false
+        ? Math.max(10, Math.round(cellH * ratios.cellHeightRatio))
+        : cellH;
+    const targetX = isVertical
+      ? Math.max(
+          masterCell.x,
+          Math.round(masterCell.x + cellW * ratios.cellOffsetXRatio),
+        )
+      : masterCell.x;
+    const targetY = isVertical
+      ? masterCell.y
+      : Math.max(
+          masterCell.y,
+          Math.round(masterCell.y + cellH * ratios.cellOffsetYRatio),
+        );
+
+    const offsetInCellX = isVertical ? Math.max(0, targetX - masterCell.x) : 0;
+    const offsetInCellY = isVertical ? 0 : Math.max(0, targetY - masterCell.y);
+
+    return {
+      targetBounds: {
+        x: targetX,
+        y: targetY,
+        width: targetWidth,
+        height: targetHeight,
+      },
+      offsetInCellX,
+      offsetInCellY,
+    };
   }
 
   public static syncAllMasterWidgetsToLanes(
@@ -639,7 +675,10 @@ export class LaneGridReplicationHelper {
             ...(w.customSettings || {}),
             gridId: session.gridId,
             gridTotalLanes: session.totalLanes,
-            gridDirection: session.direction,
+            gridDirection:
+              session.direction || session.layoutOrientation || "vertical",
+            layoutOrientation:
+              session.layoutOrientation || session.direction || "vertical",
             gridType: effectiveGridType,
             gridBounds: { ...session.bounds },
             headerPlacement: session.headerPlacement ?? "individual",
@@ -778,7 +817,10 @@ export class LaneGridReplicationHelper {
       gridId,
       bounds,
       totalLanes: validCount,
-      direction: first.customSettings?.["gridDirection"] || "vertical",
+      direction:
+        first.customSettings?.["gridDirection"] ||
+        first.customSettings?.["layoutOrientation"] ||
+        "vertical",
       sourceLaneIndex: 0,
       bindingMode: first.customSettings?.["bindingMode"] || "lane",
       gridType:
@@ -790,9 +832,12 @@ export class LaneGridReplicationHelper {
         first.customSettings?.["headerPlacement"] || "individual",
       headerHeight: Number(first.customSettings?.["headerHeight"]) || 36,
       linkColumns: first.customSettings?.["linkColumns"] !== false,
+      mirrorRows: first.customSettings?.["mirrorRows"] !== false,
       sortByBindingMode: first.customSettings?.["sortByBindingMode"] !== false,
       layoutOrientation:
-        first.customSettings?.["layoutOrientation"] || "vertical",
+        first.customSettings?.["layoutOrientation"] ||
+        first.customSettings?.["gridDirection"] ||
+        "vertical",
       gridLabelPosition: first.customSettings?.["gridLabelPosition"] || "none",
       gridLabelText: first.customSettings?.["gridLabelText"] || "",
       gridLabelSize: Number(first.customSettings?.["gridLabelSize"]) || 40,

@@ -709,11 +709,13 @@ export function handleReMirrorGrid(
     if (w.customSettings?.["gridId"] === gridId) {
       if (!w.customSettings) w.customSettings = {};
       w.customSettings["mirrorRows"] = true;
+      w.customSettings["linkColumns"] = true;
     }
   }
 
   if (comp.activeGridSession && comp.activeGridSession.gridId === gridId) {
     comp.activeGridSession.mirrorRows = true;
+    comp.activeGridSession.linkColumns = true;
     const synced = LaneGridReplicationHelper.syncAllMasterWidgetsToLanes(
       comp.activeGridSession,
       layout.widgets,
@@ -730,6 +732,7 @@ export function handleReMirrorGrid(
     );
     if (session) {
       session.mirrorRows = true;
+      session.linkColumns = true;
       const synced = LaneGridReplicationHelper.syncAllMasterWidgetsToLanes(
         session,
         layout.widgets,

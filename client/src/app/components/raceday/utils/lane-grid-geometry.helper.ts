@@ -388,7 +388,10 @@ export class LaneGridGeometryHelper {
     }
     const cellW = masterCell.width > 0 ? masterCell.width : 1;
     const cellH = masterCell.height > 0 ? masterCell.height : 1;
-    if (session.direction === "vertical") {
+    const isHorizontal =
+      session.direction === "horizontal" ||
+      session.layoutOrientation === "horizontal";
+    if (!isHorizontal) {
       if (session.mirrorRows !== false) {
         widget.height = cellH;
         widget.y = masterCell.y;
@@ -403,7 +406,7 @@ export class LaneGridGeometryHelper {
       widget.customSettings["cellOffsetXRatio"] =
         (widget.x - masterCell.x) / cellW;
     } else {
-      if (session.mirrorRows !== false) {
+      if (session.linkColumns !== false) {
         widget.width = cellW;
         widget.x = masterCell.x;
         widget.customSettings["cellWidthRatio"] = 1.0;
@@ -772,9 +775,12 @@ export class LaneGridGeometryHelper {
       cellOffsetYRatio = Math.max(0, (masterWidget.y - masterCell.y) / cellH);
     }
 
-    const isVertical = session.direction === "vertical";
-    const allowCustomWidth = isVertical || session.mirrorRows === false;
-    const allowCustomHeight = !isVertical || session.mirrorRows === false;
+    const isHorizontal =
+      session.direction === "horizontal" ||
+      session.layoutOrientation === "horizontal";
+    const isVertical = !isHorizontal;
+    const allowCustomWidth = isVertical || session.linkColumns === false;
+    const allowCustomHeight = isHorizontal || session.mirrorRows === false;
     return {
       cellWidthRatio: allowCustomWidth
         ? Math.max(0.001, cellWidthRatio ?? masterWidget.width / cellW)

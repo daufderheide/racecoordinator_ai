@@ -175,7 +175,7 @@
               : "UE_GRID_LANE_MASTER_BADGE"
             ) | translate
           }}
-        } @else if (!mirrorRows) {
+        } @else if (!isLanesMirrored) {
           {{
             (currentSettings["bindingMode"] === "position"
               ? "UE_GRID_POSITION_INDEPENDENT_BADGE"
@@ -225,7 +225,7 @@
       <!-- Mirrored Rows/Columns Count Control -->
       <div class="inspector-section" style="margin-bottom: 8px">
         <label class="inspector-label">{{
-          (gridDirection === "horizontal"
+          (isGridHorizontal
             ? "UE_GRID_MIRRORED_COLUMNS"
             : "UE_GRID_MIRRORED_ROWS"
           ) | translate
@@ -339,27 +339,32 @@
             class="form-checkbox"
             [(ngModel)]="mirrorRows"
           />
-          <span>{{
-            (gridDirection === "horizontal"
-              ? "UE_GRID_MIRROR_COLUMNS_TOGGLE"
-              : "UE_GRID_MIRROR_ROWS_TOGGLE"
-            ) | translate
-          }}</span>
+          <span>{{ "UE_GRID_MIRROR_ROWS_TOGGLE" | translate }}</span>
         </label>
       </div>
 
-      @if (!mirrorRows) {
+      @if (!isLanesMirrored) {
         <div class="inspector-section" style="margin-bottom: 8px">
           <button
             type="button"
             class="btn btn-sm btn-outline-primary w-100"
             (click)="onReMirrorGrid()"
-            [title]="'UE_GRID_RE_MIRROR_BUTTON_TOOLTIP' | translate"
+            [title]="
+              (isGridHorizontal
+                ? 'UE_GRID_RE_MIRROR_COLUMNS_BUTTON_TOOLTIP'
+                : 'UE_GRID_RE_MIRROR_BUTTON_TOOLTIP'
+              ) | translate
+            "
           >
             <span class="material-icons me-1" style="font-size: 14px"
               >sync</span
             >
-            {{ "UE_GRID_RE_MIRROR_BUTTON" | translate }}
+            {{
+              (isGridHorizontal
+                ? "UE_GRID_RE_MIRROR_COLUMNS_BUTTON"
+                : "UE_GRID_RE_MIRROR_BUTTON"
+              ) | translate
+            }}
           </button>
         </div>
       }

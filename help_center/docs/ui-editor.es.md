@@ -135,68 +135,69 @@ El menú desplegable **Ordenación de Cuadrícula** en la pestaña Cuadrícula c
   - Al hacer clic en **Listo**, la cuadrícula se consolida en widgets independientes.
   - **Editar Plantilla y Desvincular**: Al seleccionar cualquier widget de la cuadrícula, la Configuración de widgets muestra una tarjeta para **Editar Plantilla de Cuadrícula** (para reingresar al modo de replicación en tiempo real en cualquier momento) o **Desvincular de Cuadrícula** (para separar permanentemente el widget).
 
-### Sincronización de Cuadrícula: Vincular columnas vs. Reflejar Filas
+### Sincronización de Cuadrícula: Reflejar Columnas vs. Reflejar Filas
 
-Una cuadrícula en Race Coordinator AI es una matriz bidimensional organizada en:
+Una cuadrícula en Race Coordinator AI es una matriz bidimensional organizada en puestos de competidores y métricas de datos:
 
-- **Filas (Puestos de Competidores)**: Representan cada carril físico de la pista (**Carril 1, Carril 2, ...**) o posición de carrera (**Posición 1, Posición 2, ...**). Cuando la dirección de la cuadrícula es horizontal, estos puestos se muestran como columnas verticales.
-- **Columnas (Campos de Datos)**: Representan cada métrica de datos dentro de un puesto (por ejemplo, *Nombre del Piloto, Vueltas de la Ronda, Tiempo de Última Vuelta, Mejor Vuelta, Diferencia, Imagen del Coche*).
+- **Orientación Vertical (Predeterminada)**:
+  - **Filas (Puestos de Competidores)**: Representan cada carril físico de la pista (**Carril 1, Carril 2, ...**) o posición de carrera (**Posición 1, Posición 2, ...**).
+  - **Columnas (Campos de Datos)**: Representan cada métrica de datos dentro de un puesto (por ejemplo, *Nombre del Piloto, Vueltas de la Ronda, Tiempo de Última Vuelta, Mejor Vuelta, Diferencia, Imagen del Coche*).
+  - **Reflejar Columnas**: Controla la sincronización del estilo visual en todas las columnas de datos.
+  - **Reflejar Filas**: Regula la replicación y la sincronización de geometría de fila a fila partiendo de la **Fila Maestra (Carril 1 / Posición 1)** hacia todas las demás filas (**Carriles 2..N**).
+- **Orientación Horizontal**:
+  - **Columnas (Puestos de Competidores)**: Representan cada carril físico de la pista (**Carril 1, Carril 2, ...**) o posición de carrera (**Posición 1, Posición 2, ...**). Cada carril en una vista de manga es una columna.
+  - **Filas (Campos de Datos)**: Representan métricas de datos apiladas verticalmente dentro de cada carril.
+  - **Reflejar Columnas**: Regula la replicación de columna a columna y la sincronización de geometría y estilo partiendo de la **Columna Maestra (Carril 1 / Posición 1)** hacia todas las demás columnas (**Carriles 2..N**). Al desactivarlo, las columnas (carriles) se vuelven independientes y aparece el botón **Volver a reflejar en todas las columnas**.
+  - **Reflejar Filas**: Controla la sincronización del estilo visual en todas las filas de datos (métricas).
 
-El Inspector de la cuadrícula incluye dos controles esenciales en la sección **Estructura y diseño de la cuadrícula**: **Vincular columnas** y **Reflejar Filas** (denominado **Reflejar Columnas** si la orientación del diseño es horizontal).
+El Inspector de la cuadrícula incluye dos controles esenciales en la sección **Estructura y diseño de la cuadrícula**: **Reflejar Columnas** y **Reflejar Filas**.
 
-#### Vincular columnas
+#### Reflejar Columnas
 
-**Vincular columnas** controla la sincronización del estilo visual en todas las columnas de datos de la cuadrícula.
+**Reflejar Columnas** sincroniza las columnas en toda la cuadrícula:
+- En **Orientación Vertical**, las columnas representan diferentes campos/métricas de datos. Reflejar Columnas sincroniza el estilo visual entre estas columnas métricas.
+- En **Orientación Horizontal**, las columnas representan carriles o posiciones individuales de la pista. Reflejar Columnas sincroniza la replicación de columna a columna, las dimensiones y el estilo desde la **Columna Maestra (Carril 1 / Posición 1)** a todos los carriles competidores.
 
 - **Activado (Predeterminado)**:
-  - Todas las columnas de datos comparten un estilo visual idéntico.
-  - Cualquier cambio en una propiedad de estilo en cualquiera de las columnas se sincroniza automática e inmediatamente en todas las columnas de la cuadrícula.
+  - Las columnas comparten estilos vinculados (en orientación vertical) o una replicación completa de la plantilla maestra (en orientación horizontal).
+  - Cualquier cambio en la columna maestra se propaga inmediatamente a todas las columnas.
   - **Propiedades Sincronizadas**:
-    - **Estilo de Encabezado**: Familia tipográfica, tamaño de fuente, color del texto, color de fondo, alineación del texto y altura del encabezado.
+    - **Estilo de Encabezado**: Familia tipográfica, tamaño de fuente, color del texto, color de fondo, alineación del texto y dimensiones del encabezado.
     - **Estilo de Celda de Datos**: Familia tipográfica, tamaño de fuente, color del texto, color de fondo, alternancia de colores de carril (`useLaneColors`) y alineación de los valores.
     - **Estilo de Borde**: Visibilidad del borde, color del borde, grosor del borde y radio de las esquinas.
     - **Formato de Tiempo**: Decimales, formato de visualización y umbral de precisión de subsegundos.
-    - **Resaltado de Telemetría**: Resaltado de fila al completar vuelta.
-  - **Interacción con filas no reflejadas**: Cuando **Reflejar filas** está desactivado, las filas se desacoplan entre sí. Si **Vincular columnas** está activado, la modificación de estilos visuales (como color de fondo, color de texto o fuentes) en cualquier columna de una fila propaga ese cambio a todas las columnas *dentro de esa fila específica*, sin alterar ninguna otra fila.
+    - **Resaltado de Telemetría**: Resaltado al completar vuelta.
 - **Desactivado**:
-  - Desvincula el estilo de las columnas. Cada columna puede tener sus propios tamaños de fuente, colores, bordes y alineaciones de manera independiente (por ejemplo, un texto grande en negrita con borde para el *Nombre del Piloto*, mientras que las *Vueltas* mantienen un texto pequeño y fondo transparente).
-  - Al desactivarlo, aparecen botones en el inspector (**Aplicar estilo de encabezado / valor / borde / formato a todas las columnas**) debajo de cada sección, permitiendo transmitir selectivamente un tipo de estilo a todas las columnas bajo demanda.
-- **Comportamiento al Desactivar**:
-  - Se guarda inmediatamente en la configuración.
-  - **Estado Visual de la Cuadrícula**: Los estilos actuales de las columnas **no** cambian inmediatamente; la cuadrícula mantiene su aspecto actual.
-  - **Acción Requerida del Usuario**: Para apreciar diferencias visuales, el usuario debe seleccionar una columna concreta y editar sus opciones de estilo. Solo la columna editada reflejará los cambios.
+  - Desacopla la sincronización de columnas.
+  - En orientación vertical, cada columna de datos puede tener tamaños de fuente, colores y bordes independientes, y aparecen botones para aplicar estilos manualmente a todas las columnas.
+  - En orientación horizontal, cada columna de carril competidor se vuelve independiente, los widgets muestran la etiqueta **Independiente** (por ejemplo, `Carril 2 (Independiente)`), y aparece el botón **Volver a reflejar en todas las columnas**.
 - **Comportamiento al Volver a Activar**:
-  - Vuelve a activar la sincronización automática para futuras ediciones.
-  - **Estado Visual de la Cuadrícula**: Volver a marcar la casilla **no** sobrescribe inmediatamente las demás columnas con los estilos de la columna actualmente seleccionada; los estilos existentes se conservan intactos.
-  - **Acción Requerida del Usuario**: El usuario debe modificar una propiedad de estilo (por ejemplo, cambiar el tamaño de fuente en 1px, cambiar un color o conmutar un borde) en cualquier columna. En cuanto se produce la modificación, la propiedad se propaga inmediatamente a todas las columnas de la cuadrícula. Alternativamente, se puede pulsar cualquiera de los botones explícitos de «Aplicar a todas las columnas».
+  - Reactiva la sincronización de columnas. En orientación horizontal, volver a activar la casilla o hacer clic en **Volver a reflejar en todas las columnas** vuelve a sincronizar inmediatamente todas las columnas con el carril maestro.
 
-#### Reflejar Filas (o Reflejar Columnas)
+#### Reflejar Filas
 
-**Reflejar Filas** gestiona la replicación y la geometría de fila a fila partiendo de la **Fila Maestra (Carril 1 / Posición 1)** hacia todas las demás filas (**Carriles 2..N**).
+**Reflejar Filas** sincroniza las filas en toda la cuadrícula:
+- En **Orientación Vertical**, las filas representan carriles o posiciones individuales de la pista. Reflejar Filas regula la replicación y la sincronización de geometría de fila a fila partiendo de la **Fila Maestra (Carril 1 / Posición 1)** hacia todas las demás filas (**Carriles 2..N**).
+- En **Orientación Horizontal**, las filas representan diferentes campos o métricas de datos apilados dentro de cada carril. Reflejar Filas regula la sincronización del estilo visual entre las filas métricas.
 
 - **Activado (Predeterminado)**:
-  - Todas las filas no maestras reflejan estrictamente a la fila maestra.
-  - Cualquier desplazamiento, cambio de tamaño, ajuste de diseño o modificación de propiedades en la celda maestra se replica inmediatamente en tiempo real en todos los demás carriles o posiciones.
-  - Los widgets no maestros están vinculados al maestro y muestran la etiqueta **Reflejado** (por ejemplo, `Carril 2 (Reflejado)`).
+  - Las filas siguen estrictamente la plantilla maestra (en orientación vertical) o comparten estilos sincronizados (en orientación horizontal).
+  - Cualquier desplazamiento, cambio de tamaño o modificación en la celda maestra se replica inmediatamente en tiempo real en todos los demás carriles o posiciones.
+  - En orientación vertical, los widgets no maestros muestran la etiqueta **Reflejado** (por ejemplo, `Carril 2 (Reflejado)`).
 - **Desactivado**:
-  - Desacopla las filas no maestras de la plantilla maestra.
-  - Los widgets no maestros muestran la etiqueta **Independiente** (por ejemplo, `Carril 2 (Independiente)`).
-  - El usuario puede hacer clic en cualquier fila individual (por ejemplo, Carril 2 o Posición 3) y personalizar sus propiedades, colores de texto, colores de fondo o asignaciones de datos de forma independiente sin alterar la fila maestra ni los demás carriles.
-  - Aparece el botón **Volver a reflejar en todas las filas** directamente debajo de la casilla en el inspector.
-- **Comportamiento al Desactivar**:
-  - Surte efecto inmediato en la configuración.
-  - **Estado Visual de la Cuadrícula**: La distribución y las posiciones de las celdas **no** se mueven ni cambian de inmediato; las posiciones y estilos actuales se preservan.
-  - **Acción Requerida del Usuario**: El usuario debe seleccionar una celda no maestra y editar sus propiedades para introducir personalizaciones individuales.
+  - Desacopla las filas.
+  - En orientación vertical, las filas no maestras muestran la etiqueta **Independiente** (por ejemplo, `Carril 2 (Independiente)`), los carriles pueden personalizarse de forma individual y aparece el botón **Volver a reflejar en todas las filas**.
+  - En orientación horizontal, cada fila métrica puede tener estilos independientes sin afectar a las demás filas.
 - **Comportamiento al Volver a Activar**:
-  - Restablece la replicación maestra en la cuadrícula.
-  - **Actualización Inmediata**:
-    - Si el usuario vuelve a activar la casilla **Reflejar Filas** teniendo seleccionado un **widget maestro**, el diseño y configuración del maestro se sincronizan de inmediato con todos los carriles reflejados, sobrescribiendo las modificaciones independientes de las filas.
-    - Si el usuario hace clic en el botón **Volver a reflejar en todas las filas**, el editor resincroniza inmediatamente todas las columnas maestras en todas las filas de la cuadrícula completa (`syncAllMasterWidgetsToLanes`), consolida la cuadrícula y actualiza el lienzo y la vista previa de carrera al instante sin requerir ninguna acción adicional.
+  - Reactiva la replicación y sincronización de filas. En orientación vertical, hacer clic en **Volver a reflejar en todas las filas** o volver a marcar la casilla alinea inmediatamente todas las filas con la fila maestra.
 
 #### Resumen Comparativo
 
-| Control | Dirección / Alcance | Qué Sincroniza | Comportamiento al Desactivar | Comportamiento al Volver a Activar | ¿Inmediato o Requiere Acción del Usuario? |
+| Control | Orientación | Alcance | Qué Sincroniza | Comportamiento al Desactivar | Comportamiento al Volver a Activar |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Vincular columnas** | Horizontal (Entre Columnas) | Estilo visual: fuentes, tamaños, colores de texto/fondo, bordes, encabezados, formatos y resaltados | Las columnas se vuelven independientes; se conservan los estilos actuales; aparecen botones manuales de «Aplicar a todas» | Reactiva la sincronización para futuras ediciones; no sobrescribe de golpe las demás columnas | **Requiere Acción del Usuario**: Alternar la casilla no modifica los estilos actuales. El usuario debe editar una propiedad de estilo para que la sincronización surta efecto entre columnas. |
-| **Reflejar Filas** | Vertical (Entre Filas / Carriles) | Geometría y propiedades: ancho/alto de celda, márgenes, vinculaciones replicadas del Carril 1 Maestro a Carriles 2..N | Las filas se independizan; el inspector muestra la etiqueta `Independiente`; se pueden editar carriles individuales; aparece el botón `Volver a reflejar en todas las filas` | Restablece la replicación maestra; la plantilla del maestro sobrescribe las modificaciones individuales de los carriles | **Inmediato si se selecciona el Maestro o se pulsa el botón**: Pulsar `Volver a reflejar en todas las filas` o reactivar sobre el Maestro alinea inmediatamente todas las filas al Maestro. Desactivar conserva el diseño hasta editar. |
+| **Reflejar Columnas** | Vertical | Columnas (Métricas de Datos) | Estilo visual: fuentes, tamaños, colores, bordes, encabezados, formatos | Las columnas se vuelven independientes; se conservan los estilos actuales; aparecen botones manuales «Aplicar a todas» | Reactiva la sincronización automática para futuras ediciones |
+| **Reflejar Columnas** | Horizontal | Columnas (Carriles / Competidores) | Geometría, replicación y estilos desde el Carril 1 Maestro a todas las columnas de carriles | Las columnas de carriles se independizan; aparece la etiqueta `Independiente`; aparece el botón `Volver a reflejar en todas las columnas` | Restablece la replicación maestra; alinea todas las columnas al Maestro |
+| **Reflejar Filas** | Vertical | Filas (Carriles / Competidores) | Geometría, replicación y configuración desde el Carril 1 Maestro a todas las filas de carriles | Las filas de carriles se independizan; aparece la etiqueta `Independiente`; aparece el botón `Volver a reflejar en todas las filas` | Restablece la replicación maestra; alinea todas las filas al Maestro |
+| **Reflejar Filas** | Horizontal | Filas (Métricas de Datos) | Estilo visual: fuentes, tamaños, colores, bordes entre filas de métricas | Las filas de métricas se vuelven independientes; se conservan los estilos actuales | Reactiva la sincronización automática para futuras ediciones |
+
 

@@ -2168,7 +2168,7 @@ describe("LaneGridReplicationHelper", () => {
       expect(updatedLane1?.height).toBe(40);
     });
 
-    it("should allow independent column widths for horizontal grids when mirrorRows is false", () => {
+    it("should allow independent column widths for horizontal grids when linkColumns is false", () => {
       const master: AbsoluteWidgetNode = {
         id: "m-col-horiz",
         widgetType: "lane-column",
@@ -2181,7 +2181,7 @@ describe("LaneGridReplicationHelper", () => {
           gridId: "g-horiz-nomirror",
           gridLane: 0,
           targetIndex: 0,
-          mirrorRows: false,
+          linkColumns: false,
           cellWidthRatio: 80 / 150,
           cellHeightRatio: 1.0,
         },
@@ -2195,7 +2195,7 @@ describe("LaneGridReplicationHelper", () => {
         sourceLaneIndex: 0,
         headerPlacement: "none",
         bindingMode: "lane",
-        mirrorRows: false,
+        linkColumns: false,
       };
 
       const result = LaneGridReplicationHelper.syncMasterWidgetToLanes(

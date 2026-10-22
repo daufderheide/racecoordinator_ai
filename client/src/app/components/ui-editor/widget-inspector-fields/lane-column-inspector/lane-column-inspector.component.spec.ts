@@ -1463,6 +1463,57 @@ describe("LaneColumnInspectorComponent", () => {
       expect(component.mirrorRows).toBeTrue();
       expect(component.reMirrorGrid.emit).toHaveBeenCalledWith("grid-test-1");
     });
+
+    it("should correctly compute isGridHorizontal and isLanesMirrored in vertical and horizontal orientations", () => {
+      fixture.componentRef.setInput("settings", mockSettings);
+      mockSettings.gridId = "grid-test-1";
+
+      // Vertical (default)
+      mockSettings.layoutOrientation = "vertical";
+      mockSettings.gridDirection = undefined;
+      expect(component.isGridHorizontal).toBeFalse();
+
+      component.mirrorRows = true;
+      component.linkColumns = false;
+      expect(component.isLanesMirrored).toBeTrue();
+
+      component.mirrorRows = false;
+      expect(component.isLanesMirrored).toBeFalse();
+
+      // Horizontal orientation via layoutOrientation
+      mockSettings.layoutOrientation = "horizontal";
+      expect(component.isGridHorizontal).toBeTrue();
+
+      // In horizontal, isLanesMirrored reflects linkColumns (since columns are lanes)
+      component.linkColumns = true;
+      component.mirrorRows = false;
+      expect(component.isLanesMirrored).toBeTrue();
+
+      component.linkColumns = false;
+      expect(component.isLanesMirrored).toBeFalse();
+
+      // Horizontal orientation via gridDirection fallback
+      mockSettings.layoutOrientation = undefined;
+      mockSettings.gridDirection = "horizontal";
+      expect(component.isGridHorizontal).toBeTrue();
+      expect(component.isLanesMirrored).toBeFalse();
+      component.linkColumns = true;
+      expect(component.isLanesMirrored).toBeTrue();
+    });
+
+    it("should re-mirror columns and emit reMirrorGrid when horizontal", () => {
+      fixture.componentRef.setInput("settings", mockSettings);
+      mockSettings.gridId = "grid-test-horiz";
+      mockSettings.layoutOrientation = "horizontal";
+      component.linkColumns = false;
+
+      spyOn(component.reMirrorGrid, "emit");
+      component.onReMirrorGrid();
+      expect(component.linkColumns).toBeTrue();
+      expect(component.reMirrorGrid.emit).toHaveBeenCalledWith(
+        "grid-test-horiz",
+      );
+    });
   });
 
   describe("Custom Widget integration", () => {

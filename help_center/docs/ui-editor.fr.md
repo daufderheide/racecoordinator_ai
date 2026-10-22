@@ -135,68 +135,69 @@ Le menu déroulant **Tri de la Grille** dans l'onglet Grille détermine l'ordre 
   - Cliquez sur **Terminé** pour figer la grille en widgets indépendants.
   - **Modifier le Modèle et Détacher** : En sélectionnant ultérieurement un widget de la grille, la Configuration de widgets propose un panneau permettant de cliquer sur **Modifier le Modèle de Grille** (pour réactiver à tout moment le mode de réplication en temps réel) ou **Détacher de la Grille** (pour rompre définitivement le lien).
 
-### Synchronisation de Grille : Lier les colonnes vs. Refléter les lignes
+### Synchronisation de Grille : Refléter les colonnes vs. Refléter les lignes
 
-Une grille dans Race Coordinator AI est une matrice à deux dimensions articulée autour de :
+Une grille dans Race Coordinator AI est une matrice à deux dimensions articulée autour d'emplacements de concurrents et de métriques de données :
 
-- **Lignes (Emplacements des Concurrents)** : Représentent chaque voie physique du circuit (**Voie 1, Voie 2, ...**) ou chaque position de course (**Position 1, Position 2, ...**). Lorsque l'orientation de la grille est horizontale, ces emplacements s'affichent sous forme de colonnes verticales.
-- **Colonnes (Champs de Données)** : Représentent chaque métrique de données affichée dans un emplacement (par exemple, *Nom du Pilote, Nombre de Tours, Dernier Tour, Meilleur Tour, Écart, Image du Véhicule*).
+- **Orientation Verticale (Par défaut)** :
+  - **Lignes (Emplacements des Concurrents)** : Représentent chaque voie physique du circuit (**Voie 1, Voie 2, ...**) ou chaque position de course (**Position 1, Position 2, ...**).
+  - **Colonnes (Champs de Données)** : Représentent chaque métrique de données affichée dans un emplacement (par exemple, *Nom du Pilote, Nombre de Tours, Dernier Tour, Meilleur Tour, Écart, Image du Véhicule*).
+  - **Refléter les colonnes** : Régit la synchronisation du style visuel sur toutes les colonnes de données.
+  - **Refléter les lignes** : Pilote la réplication de ligne à ligne et la géométrie depuis la **Ligne Maître (Voie 1 / Position 1)** vers l'ensemble des autres lignes (**Voies 2..N**).
+- **Orientation Horizontale** :
+  - **Colonnes (Emplacements des Concurrents)** : Représentent chaque voie physique du circuit (**Voie 1, Voie 2, ...**) ou chaque position de course (**Position 1, Position 2, ...**). Chaque voie dans une vue de manche est une colonne.
+  - **Lignes (Champs de Données)** : Représentent les métriques de données empilées verticalement au sein de chaque voie.
+  - **Refléter les colonnes** : Pilote la réplication de colonne à colonne, la géométrie et le style depuis la **Colonne Maître (Voie 1 / Position 1)** vers l'ensemble des autres colonnes (**Voies 2..N**). Lorsque décoché, les colonnes (voies) deviennent indépendantes et le bouton **Refléter à nouveau sur toutes les colonnes** apparaît.
+  - **Refléter les lignes** : Régit la synchronisation du style visuel sur l'ensemble des lignes de données (métriques).
 
-L'Inspecteur de grille met à disposition deux commandes clés dans la section **Structure et disposition de la grille** : **Lier les colonnes** et **Refléter les lignes** (nommé **Refléter les colonnes** lorsque la disposition est horizontale).
+L'Inspecteur de grille met à disposition deux commandes clés dans la section **Structure et disposition de la grille** : **Refléter les colonnes** et **Refléter les lignes**.
 
-#### Lier les colonnes
+#### Refléter les colonnes
 
-**Lier les colonnes** régit la synchronisation du style visuel sur toutes les colonnes de données de la grille.
+**Refléter les colonnes** synchronise les colonnes sur l'ensemble de la grille :
+- En **Orientation Verticale**, les colonnes représentent différents champs/métriques de données. Refléter les colonnes harmonise le style visuel entre ces colonnes métriques.
+- En **Orientation Horizontale**, les colonnes représentent les voies ou positions individuelles du circuit. Refléter les colonnes régit la réplication, le dimensionnement et le style depuis la **Colonne Maître (Voie 1 / Position 1)** vers l'ensemble des voies concurrentes.
 
 - **Coché (Par défaut)** :
-  - Toutes les colonnes de données partagent un style visuel identique.
-  - Toute modification apportée au style d'une colonne quelconque est immédiatement et automatiquement répercutée sur toutes les colonnes de la grille.
+  - Les colonnes partagent des styles liés (en orientation verticale) ou une réplication complète du modèle maître (en orientation horizontale).
+  - Toute modification apportée au maître se propage instantanément à toutes les colonnes.
   - **Propriétés Synchronisées** :
-    - **Style d'En-tête** : Police, taille du texte, couleur du texte, couleur de fond, alignement du texte et hauteur de l'en-tête.
+    - **Style d'En-tête** : Police, taille du texte, couleur du texte, couleur de fond, alignement du texte et dimensions de l'en-tête.
     - **Style de Cellule de Données** : Police, taille du texte, couleur du texte, couleur d'arrière-plan, bascule des couleurs de voie (`useLaneColors`) et alignement des valeurs.
     - **Style de Bordure** : Affichage de la bordure, couleur, épaisseur et rayon des coins.
     - **Format de Temps** : Nombre de décimales, format d'affichage et seuils de précision sub-seconde.
-    - **Mise en Valeur Télémétrique** : Surbrillance de ligne au passage de tour.
-  - **Interaction avec les lignes non dupliquées** : Lorsque **Dupliquer les lignes** est décoché, les lignes sont découplées les unes des autres. Si **Lier les colonnes** est activé, la modification d'un style visuel (comme la couleur d'arrière-plan, la couleur du texte ou les polices) sur une colonne d'une ligne propage cette modification à toutes les colonnes *au sein de cette ligne spécifique*, sans affecter aucune autre ligne.
+    - **Mise en Valeur Télémétrique** : Surbrillance lors du passage de tour.
 - **Décoché** :
-  - Dissocie le style des colonnes. Chaque colonne peut disposer de ses propres polices, couleurs, bordures et alignements personnalisés (par exemple, une police grande et en gras avec bordure pour le *Nom du Pilote*, tandis que le *Nombre de Tours* conserve un petit texte blanc sans bordure).
-  - En mode dissocié, des boutons dédiés (**Appliquer le style d'en-tête / de valeur / de bordure / le format à toutes les colonnes**) apparaissent sous chaque section de l'inspecteur pour diffuser sélectivement une catégorie de style à la demande.
-- **Comportement lors de la Décochage** :
-  - Enregistré immédiatement dans la configuration.
-  - **État Visuel de la Grille** : Les styles existants des colonnes ne changent **pas** immédiatement ; la grille conserve son apparence actuelle.
-  - **Action Utilisateur Requise** : Pour constater des différences visuelles, l'utilisateur doit sélectionner une colonne et en modifier le style. Seule la colonne modifiée adoptera les nouveaux réglages.
+  - Dissocie la synchronisation des colonnes.
+  - En orientation verticale, chaque colonne de données peut avoir ses propres polices, couleurs et bordures, et des boutons permettent d'appliquer manuellement les styles à toutes les colonnes.
+  - En orientation horizontale, chaque colonne de voie devient indépendante, les widgets affichent le badge **Indépendant** (par exemple, `Voie 2 (Indépendant)`), et le bouton **Refléter à nouveau sur toutes les colonnes** apparaît.
 - **Comportement lors du Recochage** :
-  - Réactive la synchronisation automatique pour les modifications ultérieures.
-  - **État Visuel de la Grille** : Recocher la case n'écrase **pas** immédiatement les autres colonnes avec le style de la colonne sélectionnée ; les styles existants restent intacts.
-  - **Action Utilisateur Requise** : L'utilisateur doit modifier une propriété de style (par exemple, changer la taille de police d'un pixel, ajuster une couleur ou activer/désactiver une bordure) sur n'importe quelle colonne. Dès cette modification, le nouveau réglage se propage instantanément à toutes les colonnes de la grille. L'utilisateur peut aussi cliquer sur l'un des boutons explicites « Appliquer à toutes les colonnes ».
+  - Réactive la synchronisation des colonnes. En orientation horizontale, recocher la case ou cliquer sur **Refléter à nouveau sur toutes les colonnes** synchronise immédiatement toutes les colonnes avec la voie maître.
 
-#### Refléter les lignes (ou Refléter les colonnes)
+#### Refléter les lignes
 
-**Refléter les lignes** pilote la réplication de ligne à ligne et la géométrie depuis la **Ligne Maître (Voie 1 / Position 1)** vers l'ensemble des autres lignes (**Voies 2..N**).
+**Refléter les lignes** synchronise les lignes sur l'ensemble de la grille :
+- En **Orientation Verticale**, les lignes représentent les voies ou positions individuelles du circuit. Refléter les lignes régit la réplication et la géométrie de ligne à ligne depuis la **Ligne Maître (Voie 1 / Position 1)** vers toutes les autres lignes (**Voies 2..N**).
+- En **Orientation Horizontale**, les lignes représentent les différents champs ou métriques empilés dans chaque voie. Refléter les lignes régit la synchronisation du style visuel entre les lignes métriques.
 
 - **Coché (Par défaut)** :
-  - Toutes les lignes non-maîtres reflètent fidèlement la ligne maître.
-  - Tout déplacement, redimensionnement, réalignement ou changement de réglage sur la cellule maître se répercute instantanément en direct sur l'ensemble des autres voies ou positions.
-  - Les widgets non-maîtres de la grille sont asservis au maître et portent le badge **Cloné** (par exemple, `Voie 2 (Cloné)`).
+  - Les lignes suivent strictement le modèle maître (en orientation verticale) ou partagent des styles synchronisés (en orientation horizontale).
+  - Tout déplacement, redimensionnement ou modification apportée à la cellule maître se répercute instantanément en direct sur l'ensemble des autres voies ou positions.
+  - En orientation verticale, les widgets non-maîtres affichent le badge **Cloné** (par exemple, `Voie 2 (Cloné)`).
 - **Décoché** :
-  - Désolidarise les lignes non-maîtres du modèle maître.
-  - Les widgets non-maîtres affichent le badge **Indépendant** (par exemple, `Voie 2 (Indépendant)`).
-  - L'utilisateur peut cliquer sur n'importe quelle ligne individuelle (par exemple, Voie 2 ou Position 3) et ajuster ses propriétés, couleurs ou affectations de données indépendamment, sans impacter la ligne maître ni les autres voies.
-  - Le bouton **Refléter à nouveau sur toutes les lignes** apparaît sous la case à cocher dans l'inspecteur.
-- **Comportement lors de la Décochage** :
-  - Prend effet immédiatement dans la configuration.
-  - **État Visuel de la Grille** : L'agencement et la position des cellules ne bougent **pas** immédiatement ; les positions et styles actuels sont préservés.
-  - **Action Utilisateur Requise** : L'utilisateur doit sélectionner une cellule non-maître et modifier ses paramètres pour créer des styles de voie spécifiques.
+  - Désolidarise les lignes.
+  - En orientation verticale, les lignes non-maîtres affichent le badge **Indépendant** (par exemple, `Voie 2 (Indépendant)`), les voies peuvent être personnalisées individuellement, et le bouton **Refléter à nouveau sur toutes les lignes** apparaît.
+  - En orientation horizontale, chaque ligne métrique peut avoir ses propres styles sans affecter les autres lignes.
 - **Comportement lors du Recochage** :
-  - Rétablit la réplication maître au sein de la grille.
-  - **Mise à Jour Immédiate** :
-    - Si l'utilisateur recoche la case **Refléter les lignes** alors qu'un **widget maître** est sélectionné, la géométrie et les réglages du maître sont immédiatement appliqués à toutes les voies clonées, écrasant les personnalisations individuelles.
-    - Si l'utilisateur clique sur le bouton **Refléter à nouveau sur toutes les lignes**, l'éditeur synchronise immédiatement toutes les colonnes maîtres sur toutes les lignes de la grille (`syncAllMasterWidgetsToLanes`), fige la grille et met à jour instantanément la zone de travail de l'Éditeur d'IU et l'aperçu de course sans autre intervention requise.
+  - Réactive la réplication et la synchronisation des lignes. En orientation verticale, cliquer sur **Refléter à nouveau sur toutes les lignes** ou recocher la case réaligne instantanément toutes les lignes sur la ligne maître.
 
 #### Tableau Récapitulatif
 
-| Contrôle | Axe / Portée | Éléments Synchronisés | Comportement lorsque Décoché | Comportement lors du Recochage | Immédiat vs. Action Requise |
+| Contrôle | Orientation | Portée | Éléments Synchronisés | Comportement lorsque Décoché | Comportement lors du Recochage |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Lier les colonnes** | Horizontal (Entre Colonnes) | Style visuel : polices, tailles, couleurs de texte/fond, bordures, en-têtes, formats horaires, surbrillances | Les colonnes deviennent indépendantes ; les styles actuels sont conservés ; boutons « Appliquer à toutes » affichés | Réactive la synchronisation automatique pour les futures éditions ; n'écrase pas immédiatement les autres colonnes | **Action Requise** : Changer la case ne modifie pas les styles actuels. L'utilisateur doit modifier une propriété de style pour que la liaison s'applique aux colonnes. |
-| **Refléter les lignes** | Vertical (Entre Lignes / Voies) | Géométrie et paramètres : largeur/hauteur de cellule, décalages, liaisons de données répliquées de la Voie 1 Maître aux Voies 2..N | Les lignes deviennent indépendantes ; l'inspecteur affiche le badge `Indépendant` ; voies personnalisables individuellement ; bouton `Refléter à nouveau` affiché | Rétablit la réplication maître ; le modèle maître remplace les personnalisations individuelles des lignes | **Immédiat si le Maître est sélectionné ou au clic sur le bouton** : Cliquer sur `Refléter à nouveau sur toutes les lignes` ou recocher sur le Maître synchronise immédiatement toutes les lignes. Décocher préserve la disposition jusqu'à édition. |
+| **Refléter les colonnes** | Verticale | Colonnes (Métriques de Données) | Style visuel : polices, tailles, couleurs, bordures, en-têtes, formats horaires | Les colonnes deviennent indépendantes ; les styles actuels sont conservés ; boutons « Appliquer à toutes » affichés | Réactive la synchronisation automatique pour les futures éditions |
+| **Refléter les colonnes** | Horizontale | Colonnes (Voies / Concurrents) | Géométrie, réplication et styles depuis la Voie 1 Maître vers toutes les colonnes de voies | Les colonnes de voies deviennent indépendantes ; badge `Indépendant` affiché ; bouton `Refléter à nouveau sur toutes les colonnes` affiché | Rétablit la réplication maître ; réaligne toutes les colonnes sur le Maître |
+| **Refléter les lignes** | Verticale | Lignes (Voies / Concurrents) | Géométrie, réplication et réglages depuis la Voie 1 Maître vers toutes les lignes de voies | Les lignes de voies deviennent indépendantes ; badge `Indépendant` affiché ; bouton `Refléter à nouveau sur toutes les lignes` affiché | Rétablit la réplication maître ; réaligne toutes les lignes sur le Maître |
+| **Refléter les lignes** | Horizontale | Lignes (Métriques de Données) | Style visuel : polices, tailles, couleurs, bordures entre lignes de métriques | Les lignes de métriques deviennent indépendantes ; les styles actuels sont conservés | Réactive la synchronisation automatique pour les futures éditions |
+
 

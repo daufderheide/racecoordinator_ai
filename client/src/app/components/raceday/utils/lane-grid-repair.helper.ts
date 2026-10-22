@@ -274,7 +274,13 @@ export class LaneGridRepairHelper {
         session?.gridId === gridId
           ? session
           : this.buildSessionForGrid(gridId, workingWidgets);
-      if (gridSession && gridSession.mirrorRows !== false) {
+      const isHorizontal =
+        gridSession?.direction === "horizontal" ||
+        gridSession?.layoutOrientation === "horizontal";
+      const isLanesMirrored = isHorizontal
+        ? gridSession?.linkColumns !== false
+        : gridSession?.mirrorRows !== false;
+      if (gridSession && isLanesMirrored) {
         workingWidgets = LaneGridReplicationHelper.syncAllMasterWidgetsToLanes(
           gridSession,
           workingWidgets,

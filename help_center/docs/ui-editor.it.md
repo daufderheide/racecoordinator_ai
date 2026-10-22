@@ -135,68 +135,69 @@ Il menu a discesa **Ordinamento Griglia** nella scheda Griglia controlla l'ordin
   - Fai clic su **Fine** per convertire la griglia in widget indipendenti.
   - **Modifica Modello e Scollega**: Selezionando successivamente qualsiasi widget della griglia, la Configurazione widget visualizza una scheda per **Modifica Modello Griglia** (per rientrare in qualsiasi momento nella modalità in tempo reale) o **Scollega dalla Griglia** (per rimuovere definitivamente il collegamento).
 
-### Sincronizzazione Griglia: Collega colonne vs. Rifletti righe
+### Sincronizzazione Griglia: Rifletti colonne vs. Rifletti righe
 
-Una griglia in Race Coordinator AI è una matrice bidimensionale strutturata in:
+Una griglia in Race Coordinator AI è una matrice bidimensionale strutturata in postazioni concorrenti e metriche di dati:
 
-- **Righe (Postazioni Concorrenti)**: Rappresentano ciascuna corsia fisica della pista (**Corsia 1, Corsia 2, ...**) o posizione di gara (**Posizione 1, Posizione 2, ...**). Se la griglia è orientata orizzontalmente, queste postazioni appaiono come colonne verticali.
-- **Colonne (Campi Dati)**: Rappresentano le singole metriche di dati all'interno di ciascuna postazione (ad esempio *Nome Pilota, Giri Manche, Ultimo Giro, Giro Migliore, Distacco, Immagine Auto*).
+- **Orientamento Verticale (Predefinito)**:
+  - **Righe (Postazioni Concorrenti)**: Rappresentano ciascuna corsia fisica della pista (**Corsia 1, Corsia 2, ...**) o posizione di gara (**Posizione 1, Posizione 2, ...**).
+  - **Colonne (Campi Dati)**: Rappresentano le singole metriche di dati all'interno di ciascuna postazione (ad esempio *Nome Pilota, Giri Manche, Ultimo Giro, Giro Migliore, Distacco, Immagine Auto*).
+  - **Rifletti colonne**: Controlla la sincronizzazione dello stile grafico tra tutte le colonne di dati.
+  - **Rifletti righe**: Gestisce la duplicazione e la geometria riga per riga a partire dalla **Riga Master (Corsia 1 / Posizione 1)** verso tutte le altre righe (**Corsie 2..N**).
+- **Orientamento Orizzontale**:
+  - **Colonne (Postazioni Concorrenti)**: Rappresentano ciascuna corsia fisica della pista (**Corsia 1, Corsia 2, ...**) o posizione di gara (**Posizione 1, Posizione 2, ...**). Ciascuna corsia in una vista manche è una colonna.
+  - **Righe (Campi Dati)**: Rappresentano le metriche di dati impilate verticalmente all'interno di ciascuna corsia.
+  - **Rifletti colonne**: Gestisce la replicazione da colonna a colonna, la geometria e lo stile a partire dalla **Colonna Master (Corsia 1 / Posizione 1)** verso tutte le altre colonne (**Corsie 2..N**). Se deselezionato, le colonne (corsie) diventano indipendenti e compare il pulsante **Rifletti su tutte le colonne**.
+  - **Rifletti righe**: Controlla la sincronizzazione dello stile grafico tra tutte le righe di dati (metriche).
 
-L'Ispettore widget offre due controlli fondamentali nella sezione **Struttura e layout della griglia**: **Collega colonne** e **Rifletti righe** (denominato **Rifletti colonne** con layout orizzontale).
+L'Ispettore widget offre due controlli fondamentali nella sezione **Struttura e layout della griglia**: **Rifletti colonne** e **Rifletti righe**.
 
-#### Collega colonne
+#### Rifletti colonne
 
-**Collega colonne** controlla la sincronizzazione dello stile grafico tra tutte le colonne di dati della griglia.
+**Rifletti colonne** sincronizza le colonne nell'intera griglia:
+- Con **Orientamento Verticale**, le colonne rappresentano diversi campi/metriche di dati. Rifletti colonne armonizza lo stile grafico tra queste colonne di metriche.
+- Con **Orientamento Orizzontale**, le colonne rappresentano singole corsie o posizioni della pista. Rifletti colonne gestisce la replicazione da colonna a colonna, il dimensionamento e lo stile a partire dalla **Colonna Master (Corsia 1 / Posizione 1)** verso tutte le altre corsie.
 
 - **Selezionato (Predefinito)**:
-  - Tutte le colonne di dati condividono un aspetto visivo identico.
-  - Qualsiasi modifica alle proprietà grafiche apportata su una colonna viene sincronizzata istantaneamente e in automatico su tutte le colonne della griglia.
+  - Le colonne condividono stili collegati (con orientamento verticale) o la completa replicazione del modello master (con orientamento orizzontale).
+  - Qualsiasi modifica apportata sul master si propaga immediatamente a tutte le colonne.
   - **Proprietà Sincronizzate**:
-    - **Stile Intestazione**: Famiglia di caratteri, dimensione testo, colore testo, colore di sfondo, allineamento testo e altezza intestazione.
+    - **Stile Intestazione**: Famiglia di caratteri, dimensione testo, colore testo, colore di sfondo, allineamento testo e dimensioni intestazione.
     - **Stile Cella Dati**: Famiglia di caratteri, dimensione testo, colore testo, colore di sfondo, commutazione dei colori corsia (`useLaneColors`) e allineamento valori.
     - **Stile Bordo**: Visibilità del bordo, colore bordo, spessore bordo e raggio angoli.
     - **Formato Tempo**: Cifre decimali, formato di visualizzazione e soglie di precisione sub-secondo.
-    - **Evidenziazione Telemetria**: Evidenziazione della riga al passaggio del giro.
-  - **Interazione con le righe non replicate**: Quando **Replica righe** è deselezionato, le righe sono disaccoppiate tra loro. Se **Collega colonne** è abilitato, la modifica degli stili visivi (come colore di sfondo, colore del testo o font) su una colonna propaga tale modifica a tutte le colonne *all'interno di quella specifica riga*, senza alterare le altre righe.
+    - **Evidenziazione Telemetria**: Evidenziazione al passaggio del giro.
 - **Deselezionato**:
-  - Scollega lo stile delle colonne. Ciascuna colonna può avere dimensioni testo, colori, bordi e allineamenti del tutto indipendenti (ad esempio un testo grande e in grassetto con bordo per il *Nome Pilota*, mentre i *Giri* mantengono un testo piccolo con sfondo trasparente).
-  - Quando deselezionato, nell'ispettore compaiono pulsanti dedicati (**Applica stile intestazione / valore / bordo / formato a tutte le colonne**) per propagare manualmente e a comando una categoria di stili su tutte le colonne.
-- **Comportamento alla Deselezione**:
-  - Viene salvato immediatamente nella configurazione.
-  - **Stato Grafico della Griglia**: Gli stili attuali delle colonne **non** cambiano immediatamente; la griglia conserva l'aspetto corrente.
-  - **Azione Richiesta dall'Utente**: Per visualizzare differenze grafiche, l'utente deve selezionare una colonna e modificarne lo stile. Solo la colonna modificata adotterà le nuove impostazioni.
+  - Scollega la sincronizzazione delle colonne.
+  - Con orientamento verticale, ciascuna colonna di dati può avere dimensioni testo, colori e bordi indipendenti, e compaiono pulsanti per applicare manualmente gli stili a tutte le colonne.
+  - Con orientamento orizzontale, ciascuna colonna corsia diventa indipendente, i widget mostrano lo stato **Indipendente** (ad es. `Corsia 2 (Indipendente)`), e compare il pulsante **Rifletti su tutte le colonne**.
 - **Comportamento alla Nuova Selezione**:
-  - Riattiva la sincronizzazione automatica per le future modifiche.
-  - **Stato Grafico della Griglia**: La semplice riselezione della casella **non** sovrascrive subito le altre colonne con lo stile di quella selezionata; gli stili esistenti restano inalterati.
-  - **Azione Richiesta dall'Utente**: L'utente deve modificare una proprietà di stile (ad es. variare la dimensione del testo di 1px, cambiare colore o attivare/disattivare un bordo) su una colonna qualsiasi. Non appena viene effettuata la modifica, la proprietà si propaga istantaneamente a tutte le colonne della griglia. In alternativa, è possibile fare clic su uno dei pulsanti espliciti «Applica a tutte le colonne».
+  - Riattiva la sincronizzazione delle colonne. Con orientamento orizzontale, riselezionare la casella o fare clic su **Rifletti su tutte le colonne** sincronizza immediatamente tutte le colonne con la corsia master.
 
-#### Rifletti righe (o Rifletti colonne)
+#### Rifletti righe
 
-**Rifletti righe** gestisce la duplicazione e la geometria riga per riga a partire dalla **Riga Master (Corsia 1 / Posizione 1)** verso tutte le altre righe (**Corsie 2..N**).
+**Rifletti righe** sincronizza le righe nell'intera griglia:
+- Con **Orientamento Verticale**, le righe rappresentano singole corsie o posizioni della pista. Rifletti righe gestisce la replicazione e la geometria riga per riga a partire dalla **Riga Master (Corsia 1 / Posizione 1)** verso tutte le altre righe (**Corsie 2..N**).
+- Con **Orientamento Orizzontale**, le righe rappresentano diversi campi o metriche impilati in ciascuna corsia. Rifletti righe gestisce la sincronizzazione dello stile grafico tra le righe di metriche.
 
 - **Selezionato (Predefinito)**:
-  - Tutte le righe non master rispecchiano fedelmente la riga master.
-  - Qualsiasi spostamento, ridimensionamento, regolazione di layout o modifica impostata sulla cella master si replica istantaneamente in tempo reale su tutte le altre corsie o posizioni.
-  - I widget non master nella griglia sono vincolati al master e mostrano il badge **Speculare** (ad es. `Corsia 2 (Speculare)`).
+  - Le righe seguono rigorosamente il modello master (con orientamento verticale) o condividono stili sincronizzati (con orientamento orizzontale).
+  - Qualsiasi spostamento, ridimensionamento o modifica applicata alla cella master si replica istantaneamente in tempo reale su tutte le altre corsie o posizioni.
+  - Con orientamento verticale, i widget non master mostrano lo stato **Speculare** (ad es. `Corsia 2 (Speculare)`).
 - **Deselezionato**:
-  - Scollega le righe non master dal modello master.
-  - I widget non master mostrano il badge **Indipendente** (ad es. `Corsia 2 (Indipendente)`).
-  - L'utente può fare clic su qualsiasi riga individuale (ad es. Corsia 2 o Posizione 3) e personalizzarne proprietà, colori del testo, colori di sfondo o associazioni dati in modo autonomo, senza modificare il master o le altre corsie.
-  - Sotto la casella di controllo nell'ispettore compare il pulsante **Rifletti su tutte le righe**.
-- **Comportamento alla Deselezione**:
-  - Ha effetto immediato nella configurazione.
-  - **Stato Grafico della Griglia**: Il layout e le posizioni delle celle **non** si muovono né cambiano subito; posizioni e stili attuali vengono mantenuti.
-  - **Azione Richiesta dall'Utente**: L'utente deve selezionare una cella non master e modificarne le proprietà per personalizzare la singola corsia.
+  - Scollega le righe.
+  - Con orientamento verticale, le righe non master mostrano lo stato **Indipendente** (ad es. `Corsia 2 (Indipendente)`), le corsie possono essere personalizzate singolarmente e compare il pulsante **Rifletti su tutte le righe**.
+  - Con orientamento orizzontale, ciascuna riga di metrica può avere stili indipendenti senza alterare le altre righe.
 - **Comportamento alla Nuova Selezione**:
-  - Riabilita la replicazione master nella griglia.
-  - **Aggiornamento Immediato**:
-    - Se l'utente riseleziona la casella **Rifletti righe** mentre è selezionato un **widget master**, il layout e le impostazioni del master vengono immediatamente applicati a tutte le corsie speculari, sovrascrivendo le modifiche indipendenti.
-    - Se l'utente fa clic sul pulsante **Rifletti su tutte le righe**, l'editor risincronizza immediatamente tutte le colonne master su tutte le righe della griglia (`syncAllMasterWidgetsToLanes`), fissa la griglia e aggiorna la tela dell'Editor UI e l'anteprima di gara all'istante senza ulteriori azioni.
+  - Riattiva la replicazione e la sincronizzazione delle righe. Con orientamento verticale, fare clic su **Rifletti su tutte le righe** o riselezionare la casella allinea immediatamente tutte le righe alla riga master.
 
 #### Schema Riassuntivo
 
-| Controllo | Direzione / Ambito | Cosa Sincronizza | Comportamento quando Deselezionato | Comportamento alla Riselezione | Immediato vs. Azione Richiesta |
+| Controllo | Orientamento | Ambito | Cosa Sincronizza | Comportamento quando Deselezionato | Comportamento alla Riselezione |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Collega colonne** | Orizzontale (Tra Colonne) | Stile visivo: caratteri, dimensioni, colori testo/sfondo, bordi, intestazioni, formati orari, evidenziazioni | Le colonne diventano indipendenti; gli stili attuali vengono mantenuti; compaiono i pulsanti «Applica a tutte» | Riattiva l'auto-sync per modifiche future; non sovrascrive subito le altre colonne | **Azione Richiesta**: Modificare la casella non altera gli stili correnti. L'utente deve modificare una proprietà grafica affinché il collegamento abbia effetto tra le colonne. |
-| **Rifletti righe** | Verticale (Tra Righe / Corsie) | Geometria e impostazioni: larghezza/altezza cella, scostamenti, associazioni duplicate dalla Corsia 1 Master alle Corsie 2..N | Le righe si rendono indipendenti; l'ispettore mostra lo stato `Indipendente`; corsie personalizzabili singolarmente; compare il pulsante `Rifletti su tutte le righe` | Ripristina la replicazione master; il modello master sovrascrive le personalizzazioni delle singole corsie | **Immediato se il Master è selezionato o al clic sul pulsante**: Facendo clic su `Rifletti su tutte le righe` o riselezionando sul Master si allineano immediatamente tutte le righe. La deselezione mantiene il layout fino alla modifica. |
+| **Rifletti colonne** | Verticale | Colonne (Metriche Dati) | Stile visivo: caratteri, dimensioni, colori, bordi, intestazioni, formati | Le colonne diventano indipendenti; gli stili attuali vengono mantenuti; compaiono pulsanti «Applica a tutte» | Riattiva la sincronizzazione automatica per modifiche future |
+| **Rifletti colonne** | Orizzontale | Colonne (Corsie / Concorrenti) | Geometria, replicazione e stili dalla Corsia 1 Master a tutte le colonne corsia | Le colonne corsia diventano indipendenti; stato `Indipendente` visualizzato; compare il pulsante `Rifletti su tutte le colonne` | Ripristina la replicazione master; riallinea tutte le colonne al Master |
+| **Rifletti righe** | Verticale | Righe (Corsie / Concorrenti) | Geometria, replicazione e impostazioni dalla Corsia 1 Master a tutte le righe corsia | Le righe corsia diventano indipendenti; stato `Indipendente` visualizzato; compare il pulsante `Rifletti su tutte le righe` | Ripristina la replicazione master; riallinea tutte le righe al Master |
+| **Rifletti righe** | Orizzontale | Righe (Metriche Dati) | Stile visivo: caratteri, dimensioni, colori, bordi tra righe di metriche | Le righe di metriche diventano indipendenti; gli stili attuali vengono mantenuti | Riattiva la sincronizzazione automatica per modifiche future |
+
 

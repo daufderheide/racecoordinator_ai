@@ -13,100 +13,166 @@ export class LaneGridStyleHelper {
   ): AbsoluteWidgetNode[] {
     if (!gridId || !sourceSettings || !allWidgets) return allWidgets || [];
 
-    const headerKeys = [
-      "headerFontFamily",
-      "headerFontSize",
-      "headerTextColor",
-      "headerBackgroundColor",
-      "headerAlignment",
-      "headerHeight",
-    ];
-    const valueKeys = [
-      "valueFontFamily",
-      "valueFontSize",
-      "valueTextColor",
-      "valueAlignment",
-      "backgroundColor",
-      "textColor",
-      "useLaneColors",
-    ];
-    const borderKeys = [
-      "showBorder",
-      "borderColor",
-      "borderWidth",
-      "borderRadius",
-    ];
-    const highlightKeys = ["highlightRowOnLap"];
-    const timeKeys = [
-      "timeDecimalPlaces",
-      "timeDisplayFormat",
-      "timeSubsecondMode",
-      "timeSubsecondThreshold",
-      "timeSubsecondDecimals",
-    ];
-
-    let targetKeys: string[] = [];
-    if (propertyGroup === "header") targetKeys = headerKeys;
-    else if (propertyGroup === "value") targetKeys = valueKeys;
-    else if (propertyGroup === "border") targetKeys = borderKeys;
-    else if (propertyGroup === "highlight") targetKeys = highlightKeys;
-    else if (propertyGroup === "time") targetKeys = timeKeys;
-
+    const targetKeys = this.getTargetKeys(propertyGroup);
     const sourceMasterId =
       sourceSettings["gridMasterId"] || sourceWidgetId || "";
     const forceAll = Boolean(sourceSettings["_forceAllColumns"]);
+    const isHorizontal =
+      sourceSettings["layoutOrientation"] === "horizontal" ||
+      sourceSettings["gridDirection"] === "horizontal" ||
+      allWidgets.some(
+        (w) =>
+          w.customSettings?.["gridId"] === gridId &&
+          (w.customSettings?.["layoutOrientation"] === "horizontal" ||
+            w.customSettings?.["gridDirection"] === "horizontal"),
+      );
 
     return allWidgets.map((w) => {
       if (w.customSettings?.["gridId"] !== gridId) return w;
       if (
-        (propertyGroup === "value" ||
-          propertyGroup === "highlight" ||
-          propertyGroup === "time") &&
-        w.customSettings?.["isHeaderWidget"]
+        this.shouldSkipCrossColumnWidget(
+          w,
+          sourceSettings,
+          propertyGroup,
+          sourceMasterId,
+          forceAll,
+          isHorizontal,
+        )
       ) {
         return w;
       }
-      if (
-        sourceSettings["isHeaderWidget"] &&
-        propertyGroup !== "header" &&
-        propertyGroup !== "border"
-      ) {
-        return w;
-      }
+      return this.applyTargetSettings(
+        w,
+        targetKeys,
+        sourceSettings,
+        sourceScaleMode,
+      );
+    });
+  }
+
+  private static getTargetKeys(
+    propertyGroup: "header" | "value" | "border" | "time" | "highlight",
+  ): string[] {
+    switch (propertyGroup) {
+      case "header":
+        return [
+          "headerFontFamily",
+          "headerFontSize",
+          "headerTextColor",
+          "headerBackgroundColor",
+          "headerAlignment",
+          "headerHeight",
+        ];
+      case "value":
+        return [
+          "valueFontFamily",
+          "valueFontSize",
+          "valueTextColor",
+          "valueAlignment",
+          "backgroundColor",
+          "textColor",
+          "useLaneColors",
+        ];
+      case "border":
+        return ["showBorder", "borderColor", "borderWidth", "borderRadius"];
+      case "highlight":
+        return ["highlightRowOnLap"];
+      case "time":
+        return [
+          "timeDecimalPlaces",
+          "timeDisplayFormat",
+          "timeSubsecondMode",
+          "timeSubsecondThreshold",
+          "timeSubsecondDecimals",
+        ];
+    }
+  }
+
+  private static shouldSkipCrossColumnWidget(
+    w: AbsoluteWidgetNode,
+    sourceSettings: Record<string, any>,
+    propertyGroup: "header" | "value" | "border" | "time" | "highlight",
+    sourceMasterId: string,
+    forceAll: boolean,
+    isHorizontal: boolean,
+  ): boolean {
+    if (
+      (propertyGroup === "value" ||
+        propertyGroup === "highlight" ||
+        propertyGroup === "time") &&
+      w.customSettings?.["isHeaderWidget"]
+    ) {
+      return true;
+    }
+    if (
+      sourceSettings["isHeaderWidget"] &&
+      propertyGroup !== "header" &&
+      propertyGroup !== "border"
+    ) {
+      return true;
+    }
+
+    const wLane = Number(
+      w.customSettings?.["gridLane"] ?? w.customSettings?.["targetIndex"],
+    );
+    const sourceLane = Number(
+      sourceSettings["gridLane"] ?? sourceSettings["targetIndex"],
+    );
+    const wMasterId = w.customSettings?.["gridMasterId"] || w.id;
+    const isHeader =
+      Boolean(sourceSettings["isHeaderWidget"]) ||
+      Boolean(w.customSettings?.["isHeaderWidget"]);
+
+    if (!isHorizontal) {
       if (!forceAll && sourceSettings["linkColumns"] === false) {
-        const wMasterId = w.customSettings?.["gridMasterId"] || w.id;
-        if (sourceMasterId && wMasterId !== sourceMasterId) {
-          return w;
-        }
+        if (sourceMasterId && wMasterId !== sourceMasterId) return true;
       }
       if (
         sourceSettings["mirrorRows"] === false &&
-        !sourceSettings["isHeaderWidget"] &&
-        !w.customSettings?.["isHeaderWidget"] &&
-        Number(
-          w.customSettings?.["gridLane"] ?? w.customSettings?.["targetIndex"],
-        ) !==
-          Number(sourceSettings["gridLane"] ?? sourceSettings["targetIndex"])
+        !isHeader &&
+        wLane !== sourceLane
       ) {
-        return w;
+        return true;
       }
+    } else {
+      if (
+        !forceAll &&
+        sourceSettings["linkColumns"] === false &&
+        !isHeader &&
+        wLane !== sourceLane
+      ) {
+        return true;
+      }
+      if (
+        sourceSettings["mirrorRows"] === false &&
+        sourceMasterId &&
+        wMasterId !== sourceMasterId
+      ) {
+        return true;
+      }
+    }
+    return false;
+  }
 
-      const nextSettings = { ...(w.customSettings || {}) };
-      for (const k of targetKeys) {
-        if (sourceSettings[k] !== undefined) {
-          nextSettings[k] = sourceSettings[k];
-        } else if (sourceSettings["_reset_" + k]) {
-          delete nextSettings[k];
-        }
+  private static applyTargetSettings(
+    w: AbsoluteWidgetNode,
+    targetKeys: string[],
+    sourceSettings: Record<string, any>,
+    sourceScaleMode?: "auto" | "fixed" | "",
+  ): AbsoluteWidgetNode {
+    const nextSettings = { ...(w.customSettings || {}) };
+    for (const k of targetKeys) {
+      if (sourceSettings[k] !== undefined) {
+        nextSettings[k] = sourceSettings[k];
+      } else if (sourceSettings["_reset_" + k]) {
+        delete nextSettings[k];
       }
-      return {
-        ...w,
-        ...(sourceScaleMode !== undefined
-          ? { scaleMode: sourceScaleMode }
-          : {}),
-        customSettings: nextSettings,
-      };
-    });
+    }
+    return {
+      ...w,
+      ...(sourceScaleMode !== undefined ? { scaleMode: sourceScaleMode } : {}),
+      customSettings: nextSettings,
+    };
   }
 
   public static updateGridLinkColumns(
@@ -204,6 +270,7 @@ export class LaneGridStyleHelper {
           customSettings: {
             ...(w.customSettings || {}),
             layoutOrientation: validOrientation,
+            gridDirection: validOrientation,
           },
         };
       }

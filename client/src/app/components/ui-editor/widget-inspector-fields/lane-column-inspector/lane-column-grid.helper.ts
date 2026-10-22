@@ -476,6 +476,7 @@ export class LaneColumnGridHelper {
   ): void {
     const orientation = val === "horizontal" ? "horizontal" : "vertical";
     currentSettings["layoutOrientation"] = orientation;
+    currentSettings["gridDirection"] = orientation;
     currentSettings["_layoutOrientationChanged"] = true;
     onFieldChange();
   }

@@ -249,6 +249,7 @@ export function handleGridColumnStructureChanges(
     );
     if (comp.activeGridSession && comp.activeGridSession.gridId === gridId) {
       comp.activeGridSession.layoutOrientation = orientation;
+      comp.activeGridSession.direction = orientation;
     }
   }
 
@@ -352,7 +353,15 @@ export function handleGridSessionWidgetSync(
       targetWidget,
       comp.activeGridSession,
     );
-    if (targetWidget.customSettings?.["mirrorRows"] !== false) {
+    const isHoriz =
+      comp.activeGridSession.direction === "horizontal" ||
+      comp.activeGridSession.layoutOrientation === "horizontal" ||
+      targetWidget.customSettings?.["gridDirection"] === "horizontal" ||
+      targetWidget.customSettings?.["layoutOrientation"] === "horizontal";
+    const isLanesMirrored = isHoriz
+      ? targetWidget.customSettings?.["linkColumns"] !== false
+      : targetWidget.customSettings?.["mirrorRows"] !== false;
+    if (isLanesMirrored) {
       layout.widgets = LaneGridReplicationHelper.syncMasterWidgetToLanes(
         targetWidget,
         comp.activeGridSession,
@@ -382,7 +391,9 @@ export function handleGridSessionWidgetSync(
     if (masterWidget) {
       const isHoriz =
         comp.activeGridSession.direction === "horizontal" ||
-        targetWidget.customSettings?.["gridDirection"] === "horizontal";
+        comp.activeGridSession.layoutOrientation === "horizontal" ||
+        targetWidget.customSettings?.["gridDirection"] === "horizontal" ||
+        targetWidget.customSettings?.["layoutOrientation"] === "horizontal";
       if (isHoriz) {
         masterWidget.y = targetWidget.y;
         masterWidget.height = targetWidget.height;
@@ -394,7 +405,10 @@ export function handleGridSessionWidgetSync(
         masterWidget,
         comp.activeGridSession,
       );
-      if (masterWidget.customSettings?.["mirrorRows"] !== false) {
+      const isMasterLanesMirrored = isHoriz
+        ? masterWidget.customSettings?.["linkColumns"] !== false
+        : masterWidget.customSettings?.["mirrorRows"] !== false;
+      if (isMasterLanesMirrored) {
         layout.widgets = LaneGridReplicationHelper.syncMasterWidgetToLanes(
           masterWidget,
           comp.activeGridSession,

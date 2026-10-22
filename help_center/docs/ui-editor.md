@@ -135,67 +135,67 @@ The **Grid Sorting** dropdown on the Grid tab controls the row ordering. Its beh
   - Clicking **Done** bakes the layout into independent widgets.
   - **Template Re-entry & Detach**: Selecting any baked grid widget later shows a configuration card allowing you to click **Edit Grid Template** to re-enter realtime replication mode anytime, or **Detach from Grid** to permanently break the link.
 
-### Grid Synchronization: Link Columns vs. Mirror Rows
+### Grid Synchronization: Mirror Columns vs. Mirror Rows
 
-A grid in Race Coordinator AI is a two-dimensional matrix organized into:
+A grid in Race Coordinator AI is a two-dimensional matrix organized into competitor slots and data metrics:
 
-- **Rows (Competitor Slots)**: Representing each individual physical track lane (**Lane 1, Lane 2, ...**) or race running position (**Position 1, Position 2, ...**). When the grid layout direction is horizontal, these competitor slots are displayed as vertical columns.
-- **Columns (Data Fields)**: Representing each data metric displayed within a slot (e.g. *Driver Name, Heat Lap Count, Last Lap Time, Best Lap, Gap, Car Image*).
+- **Vertical Orientation (Default)**:
+  - **Rows (Competitor Slots)**: Representing each individual physical track lane (**Lane 1, Lane 2, ...**) or race running position (**Position 1, Position 2, ...**).
+  - **Columns (Data Fields)**: Representing each data metric displayed within a slot (e.g. *Driver Name, Heat Lap Count, Last Lap Time, Best Lap, Gap, Car Image*).
+  - **Mirror Columns**: Governs visual styling synchronization across all data columns.
+  - **Mirror Rows**: Governs row-to-row replication and geometry synchronization from the **Master Row (Lane 1 / Position 1)** to all other rows (**Lanes 2..N**).
+- **Horizontal Orientation**:
+  - **Columns (Competitor Slots)**: Representing each individual physical track lane (**Lane 1, Lane 2, ...**) or race running position (**Position 1, Position 2, ...**). Each lane in a heat view is a column.
+  - **Rows (Data Fields)**: Representing each data metric displayed within a slot stacked vertically.
+  - **Mirror Columns**: Governs column-to-column replication and geometry synchronization from the **Master Column (Lane 1 / Position 1)** to all other columns (**Lanes 2..N**). When unchecked, columns (lanes) become independent and the **Re-mirror to All Columns** button appears.
+  - **Mirror Rows**: Governs visual styling synchronization across all data rows (metrics).
 
-The Grid Inspector provides two core synchronization controls in the **Grid Structure & Layout** section: **Link Columns** and **Mirror Rows** (labeled **Mirror Columns** when grid layout direction is horizontal).
+The Grid Inspector provides two core synchronization controls in the **Grid Structure & Layout** section: **Mirror Columns** and **Mirror Rows**.
 
-#### Link Columns
+#### Mirror Columns
 
-**Link Columns** governs visual styling synchronization across all the different data columns in the grid.
+**Mirror Columns** synchronizes columns across the grid:
+- In **Vertical Orientation**, columns represent different data fields/metrics. Mirror Columns synchronizes visual styling across these metric columns.
+- In **Horizontal Orientation**, columns represent individual track lanes/positions. Mirror Columns synchronizes column-to-column replication, sizing, and styling from the **Master Column (Lane 1 / Position 1)** across all competitor lanes.
 
 - **Checked (Default)**:
-  - All data columns share identical visual styling.
-  - Modifying any styling property on any column automatically and immediately synchronizes that change across all columns in the grid.
+  - Columns share linked styling (in vertical orientation) or full master replication (in horizontal orientation).
+  - Modifying properties on the master propagates immediately across columns.
   - **Synchronized Properties**:
-    - **Header Styling**: Font family, font size, text color, background color, text alignment, and header height.
+    - **Header Styling**: Font family, font size, text color, background color, text alignment, and header height/width.
     - **Data Cell Styling**: Font family, font size, text color, background color, lane color toggling (`useLaneColors`), and value alignment.
     - **Border Styling**: Border visibility, border color, border width, and corner radius.
     - **Time Formatting**: Decimal places, display format, and subsecond precision settings.
-    - **Lap Telemetry Highlights**: Row highlight on lap trigger.
-  - **Interaction with Unmirrored Rows**: When **Mirror Rows** is unchecked, rows are decoupled from each other. If **Link Columns** is enabled, modifying visual styles (such as background color, text color, or fonts) on any column within a row propagates that change across all columns in that specific row, without altering any other rows.
+    - **Lap Telemetry Highlights**: Row/column highlight on lap trigger.
 - **Unchecked**:
-  - Uncouples column styling. Each column can have its own independent font sizes, colors, borders, and alignments (e.g. you can make the *Driver Name* column large and bold with a bright background, while keeping the *Laps* column smaller with a transparent background).
-  - When unchecked, dedicated **Apply [Header / Value / Border / Format] Style to All Columns** buttons appear in the inspector under each styling section, allowing you to selectively push one specific category of styles across all columns on demand.
-- **Unchecking Behavior**:
-  - Takes effect immediately in configuration.
-  - **Grid Visual State**: Existing column styles do **not** change immediately upon unchecking; the grid maintains its current appearance.
-  - **User Action Required**: To see visual differences, the user must select a specific column and edit its style settings. Only the selected column will reflect the new edits.
+  - Decouples column synchronization.
+  - In vertical orientation, each data column can have independent font sizes, colors, and borders, and manual **Apply Style to All Columns** buttons appear.
+  - In horizontal orientation, each competitor lane column becomes independent, widgets show the **Independent** badge (e.g. `Lane 2 (Independent)`), and a **Re-mirror to All Columns** button appears.
 - **Re-checking Behavior**:
-  - Re-engages automatic synchronization for future edits.
-  - **Grid Visual State**: Simply re-checking the box does **not** immediately overwrite other columns with the currently selected column's styling; existing column styles remain untouched.
-  - **User Action Required**: The user must modify a styling property (e.g. change a font size by 1px, adjust a color, or toggle a border) on any column. As soon as that edit occurs, the updated property immediately propagates across all columns in the grid. Alternatively, the user can click any of the explicit "Apply Style to All Columns" buttons.
+  - Re-engages column synchronization. In horizontal orientation, re-checking or clicking **Re-mirror to All Columns** immediately re-synchronizes all columns from the master lane.
 
-#### Mirror Rows (or Mirror Columns)
+#### Mirror Rows
 
-**Mirror Rows** governs row-to-row replication and geometry synchronization from the **Master Row (Lane 1 / Position 1)** to all other rows (**Lanes 2..N**).
+**Mirror Rows** synchronizes rows across the grid:
+- In **Vertical Orientation**, rows represent individual track lanes/positions. Mirror Rows governs row-to-row replication and geometry synchronization from the **Master Row (Lane 1 / Position 1)** to all other rows (**Lanes 2..N**).
+- In **Horizontal Orientation**, rows represent different data fields/metrics stacked within each lane. Mirror Rows governs visual styling synchronization across metric rows.
 
 - **Checked (Default)**:
-  - All non-master rows strictly mirror the Master row.
-  - Any movement, resizing, layout adjustments, or property changes made to the Master cell immediately replicate to all other lanes/positions in real time.
-  - Non-master widgets in the grid are locked to the master and display the **Mirrored** badge (e.g. `Lane 2 (Mirrored)`).
+  - Rows strictly follow the master template (in vertical orientation) or share synchronized styling (in horizontal orientation).
+  - Any movement, resizing, or property changes made to the Master cell replicate to all other lanes/positions in real time.
+  - In vertical orientation, non-master widgets display the **Mirrored** badge (e.g. `Lane 2 (Mirrored)`).
 - **Unchecked**:
-  - Decouples non-master rows from the master template.
-  - Non-master widgets display the **Independent** badge (e.g. `Lane 2 (Independent)`).
-  - The user can click on any individual row (e.g. Lane 2 or Position 3) and customize its properties, text colors, background colors, or specific data overrides independently without altering the Master row or other lanes.
-  - A **Re-mirror to All Rows** button appears directly beneath the checkbox in the inspector.
-- **Unchecking Behavior**:
-  - Takes effect immediately in configuration.
-  - **Grid Visual State**: The grid layout and existing cell positions do **not** move or change immediately; current positions and styles are preserved.
-  - **User Action Required**: The user must select a non-master cell (e.g. Lane 2) and modify its properties to introduce independent customizations.
+  - Decouples rows.
+  - In vertical orientation, non-master rows display the **Independent** badge (e.g. `Lane 2 (Independent)`), individual lanes can be customized independently, and a **Re-mirror to All Rows** button appears.
+  - In horizontal orientation, each metric row can have independent styles without affecting other rows.
 - **Re-checking Behavior**:
-  - Re-enables master replication across the grid.
-  - **Immediate Grid Update**:
-    - If the user re-checks the **Mirror Rows** checkbox while editing the **Master widget**, the Master row's layout and settings immediately re-synchronize down to all mirrored lanes, replacing any independent lane overrides.
-    - If the user clicks the **Re-mirror to All Rows** button, the editor immediately re-synchronizes all master columns across all rows in the entire grid (`syncAllMasterWidgetsToLanes`), bakes the grid, and updates both the UI Editor canvas and the live raceday preview instantly without requiring any further action.
+  - Re-enables row replication and synchronization. In vertical orientation, clicking **Re-mirror to All Rows** or re-checking immediately snaps all rows back to the master.
 
 #### Summary Comparison
 
-| Control | Direction / Scope | What It Synchronizes | Behavior When Unchecked | Behavior When Re-checked | Immediate vs. User Action Required |
+| Control | Orientation | Scope | What It Synchronizes | Behavior When Unchecked | Behavior When Re-checked |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Link Columns** | Horizontal (Across Columns) | Visual styling: fonts, sizes, text/bg colors, borders, header styles, time formats, highlights | Columns become independent; existing styles are retained; manual "Apply to All" buttons appear | Re-engages auto-sync for subsequent edits; does not instantly overwrite other columns | **User Action Required**: Changing the checkbox does not alter existing column styles. The user must edit a styling property for the new linking behavior to take effect across columns. |
-| **Mirror Rows** | Vertical (Across Rows / Lanes) | Geometry and properties: cell width/height, offsets, bindings, and settings replicated from Lane 1 Master to Lanes 2..N | Rows become independent; inspector displays `Independent` badges; individual lanes can be customized; `Re-mirror to All Rows` button appears | Re-establishes master replication; master template overwrites independent lane customizations | **Immediate when Master is selected or button clicked**: Clicking `Re-mirror to All Rows` or re-checking on Master immediately snaps all rows to the Master. Unchecking preserves current layout until a row is edited. |
+| **Mirror Columns** | Vertical | Columns (Data Metrics) | Visual styling: fonts, sizes, text/bg colors, borders, header styles, time formats | Columns become independent; existing styles retained; manual "Apply to All" buttons appear | Re-engages auto-sync for subsequent edits |
+| **Mirror Columns** | Horizontal | Columns (Lanes / Competitors) | Geometry, replication, and styles from Master Lane 1 across all lane columns | Lane columns become independent; `Independent` badges appear; `Re-mirror to All Columns` button appears | Re-establishes master replication; snaps all columns to Master |
+| **Mirror Rows** | Vertical | Rows (Lanes / Competitors) | Geometry, replication, and settings from Master Lane 1 across all lane rows | Lane rows become independent; `Independent` badges appear; `Re-mirror to All Rows` button appears | Re-establishes master replication; snaps all rows to Master |
+| **Mirror Rows** | Horizontal | Rows (Data Metrics) | Visual styling: fonts, sizes, text/bg colors, borders across metric rows | Metric rows become independent; existing styles retained | Re-engages auto-sync for subsequent edits |

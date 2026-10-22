@@ -444,6 +444,130 @@ describe("LaneGridStyleHelper", () => {
     expect(updated[3].customSettings?.["textColor"]).toBeUndefined();
   });
 
+  it("should respect linkColumns (lanes) and mirrorRows (metrics) in horizontal orientation", () => {
+    const horizWidgets: AbsoluteWidgetNode[] = [
+      {
+        id: "l0-m1",
+        widgetType: "lane-column",
+        x: 0,
+        y: 0,
+        width: 100,
+        height: 50,
+        zIndex: 1,
+        customSettings: {
+          gridId,
+          gridLane: 0,
+          gridMasterId: "metric-1",
+          layoutOrientation: "horizontal",
+          linkColumns: false,
+          mirrorRows: true,
+        },
+      },
+      {
+        id: "l0-m2",
+        widgetType: "lane-column",
+        x: 0,
+        y: 50,
+        width: 100,
+        height: 50,
+        zIndex: 1,
+        customSettings: {
+          gridId,
+          gridLane: 0,
+          gridMasterId: "metric-2",
+          layoutOrientation: "horizontal",
+          linkColumns: false,
+          mirrorRows: true,
+        },
+      },
+      {
+        id: "l1-m1",
+        widgetType: "lane-column",
+        x: 100,
+        y: 0,
+        width: 100,
+        height: 50,
+        zIndex: 1,
+        customSettings: {
+          gridId,
+          gridLane: 1,
+          gridMasterId: "metric-1",
+          layoutOrientation: "horizontal",
+          linkColumns: false,
+          mirrorRows: true,
+        },
+      },
+      {
+        id: "l1-m2",
+        widgetType: "lane-column",
+        x: 100,
+        y: 50,
+        width: 100,
+        height: 50,
+        zIndex: 1,
+        customSettings: {
+          gridId,
+          gridLane: 1,
+          gridMasterId: "metric-2",
+          layoutOrientation: "horizontal",
+          linkColumns: false,
+          mirrorRows: true,
+        },
+      },
+    ];
+
+    // When linkColumns is false in horizontal orientation, Lane 0 edits do not affect Lane 1 (columns)
+    const updatedLane0 = LaneGridStyleHelper.syncCrossColumnProperty(
+      gridId,
+      "value",
+      {
+        gridLane: 0,
+        gridMasterId: "metric-1",
+        layoutOrientation: "horizontal",
+        linkColumns: false,
+        mirrorRows: true,
+        valueFontSize: 28,
+      },
+      horizWidgets,
+      "l0-m1",
+    );
+
+    expect(updatedLane0[0].customSettings?.["valueFontSize"]).toBe(28);
+    expect(updatedLane0[1].customSettings?.["valueFontSize"]).toBe(28);
+    expect(updatedLane0[2].customSettings?.["valueFontSize"]).toBeUndefined();
+    expect(updatedLane0[3].customSettings?.["valueFontSize"]).toBeUndefined();
+
+    // When mirrorRows is false in horizontal orientation, metric-1 edits do not affect metric-2 (rows)
+    const horizUnmirroredRows: AbsoluteWidgetNode[] = horizWidgets.map((w) => ({
+      ...w,
+      customSettings: {
+        ...w.customSettings,
+        linkColumns: true,
+        mirrorRows: false,
+      },
+    }));
+
+    const updatedMetric1 = LaneGridStyleHelper.syncCrossColumnProperty(
+      gridId,
+      "value",
+      {
+        gridLane: 0,
+        gridMasterId: "metric-1",
+        layoutOrientation: "horizontal",
+        linkColumns: true,
+        mirrorRows: false,
+        valueFontSize: 32,
+      },
+      horizUnmirroredRows,
+      "l0-m1",
+    );
+
+    expect(updatedMetric1[0].customSettings?.["valueFontSize"]).toBe(32);
+    expect(updatedMetric1[1].customSettings?.["valueFontSize"]).toBeUndefined();
+    expect(updatedMetric1[2].customSettings?.["valueFontSize"]).toBe(32);
+    expect(updatedMetric1[3].customSettings?.["valueFontSize"]).toBeUndefined();
+  });
+
   it("should apply value style to all columns when _forceAllColumns is true even if linkColumns is false", () => {
     const unlinkedWidgets: AbsoluteWidgetNode[] = [
       {

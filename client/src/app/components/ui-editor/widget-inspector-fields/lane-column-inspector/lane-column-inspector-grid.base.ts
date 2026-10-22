@@ -204,6 +204,17 @@ export abstract class LaneColumnInspectorGridBase {
     return LaneColumnGridHelper.getGridLayoutOrientation(this.currentSettings);
   }
 
+  get isGridHorizontal(): boolean {
+    return (
+      this.gridLayoutOrientation === "horizontal" ||
+      this.gridDirection === "horizontal"
+    );
+  }
+
+  get isLanesMirrored(): boolean {
+    return this.isGridHorizontal ? this.linkColumns : this.mirrorRows;
+  }
+
   onGridLayoutOrientationChange(val: "vertical" | "horizontal"): void {
     LaneColumnGridHelper.setGridLayoutOrientation(
       this.currentSettings,
@@ -443,7 +454,11 @@ export abstract class LaneColumnInspectorGridBase {
   }
 
   onReMirrorGrid(): void {
-    this.mirrorRows = true;
+    if (this.isGridHorizontal) {
+      this.linkColumns = true;
+    } else {
+      this.mirrorRows = true;
+    }
     if (this.currentSettings["gridId"]) {
       this.reMirrorGrid.emit(this.currentSettings["gridId"]);
     }
