@@ -295,8 +295,38 @@ public class DatabaseInitializerTest {
 
     CustomUI updated = uiRepo.findByEntityId("legacy_ui_id");
     assertNotNull(updated);
+    assertFalse(updated.getLayoutJson().contains("widget-countdown"));
+    assertFalse(updated.getLayoutJson().contains("\"widgetType\":\"countdown\""));
+  }
+
+  @Test
+  public void testBackfillCustomUIs_BackfillsExistingCountdownWidgetSettings() {
+    SqliteRepository<CustomUI> uiRepo =
+        new SqliteRepository<>(context, "custom_uis", CustomUI.class);
+    uiRepo.drop();
+
+    CustomUI uiWithOldCountdown =
+        new CustomUI(
+            "Legacy Countdown UI",
+            false,
+            "{\"widgets\":[{\"id\":\"widget-countdown\",\"widgetType\":\"countdown\",\"customSettings\":{\"lampScale\":1.0,\"previewLampCount\":5}}]}",
+            "[]",
+            "{}",
+            "{}",
+            "{}",
+            "{}",
+            "legacy_countdown_id",
+            null);
+    uiRepo.save(uiWithOldCountdown);
+
+    initializer.backfillCustomUIs(context);
+
+    CustomUI updated = uiRepo.findByEntityId("legacy_countdown_id");
+    assertNotNull(updated);
     assertTrue(updated.getLayoutJson().contains("widget-countdown"));
     assertTrue(updated.getLayoutJson().contains("\"widgetType\":\"countdown\""));
+    assertTrue(updated.getLayoutJson().contains("\"lampSizingMode\":\"custom\""));
+    assertTrue(updated.getLayoutJson().contains("\"maxLamps\":5"));
   }
 
   @Test

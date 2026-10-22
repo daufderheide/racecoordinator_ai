@@ -740,7 +740,7 @@ describe("RacedayLayoutUtils", () => {
       );
     });
 
-    it("should add countdown widget with 30% red and 25% green default overlap when missing", () => {
+    it("should preserve layout and not add countdown widget when missing", () => {
       const layout: LayoutConfig = {
         baseWidth: 1920,
         baseHeight: 1080,
@@ -748,13 +748,10 @@ describe("RacedayLayoutUtils", () => {
       };
       const result = RacedayLayoutUtils.ensureCountdownWidget(layout);
       expect(result).toBeDefined();
-      const countdown = result?.widgets.find(
-        (w) => w.widgetType === "countdown",
-      );
-      expect(countdown).toBeDefined();
-      expect(countdown?.customSettings?.["glowOverlap"]).toBe(30);
-      expect(countdown?.customSettings?.["glowRedOverlap"]).toBe(30);
-      expect(countdown?.customSettings?.["glowGreenOverlap"]).toBe(25);
+      expect(
+        result?.widgets.some((w) => w.widgetType === "countdown"),
+      ).toBeFalse();
+      expect(result?.widgets.length).toBe(1);
     });
 
     it("should backfill existing countdown widget using default 100 overlap to 30% red and 25% green", () => {

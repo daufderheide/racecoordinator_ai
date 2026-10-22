@@ -2,7 +2,7 @@ import {
   AnchorPoint,
   ColumnDefinition,
 } from "@app/components/raceday/column_definition";
-import { AbsoluteWidgetNode, LayoutConfig } from "@app/models/settings";
+import { LayoutConfig } from "@app/models/settings";
 
 export class RacedayLayoutUtils {
   static getColumnX(columns: ColumnDefinition[], columnIndex: number): number {
@@ -707,26 +707,16 @@ export class RacedayLayoutUtils {
     const hasCountdown = layout.widgets.some(
       (w) => w.widgetType === "countdown",
     );
-    if (hasCountdown) {
-      for (const w of layout.widgets) {
-        if (w.widgetType === "countdown") {
-          w.customSettings = this.backfillCountdownSettings(w.customSettings);
-        }
-      }
+    if (!hasCountdown) {
       return layout;
     }
 
-    const baseWidth = layout.baseWidth || 1920;
-    const baseHeight = layout.baseHeight || 1080;
-    const countdownWidget = this.createDefaultCountdownWidget(
-      baseWidth,
-      baseHeight,
-    );
-
-    return {
-      ...layout,
-      widgets: [...layout.widgets, countdownWidget],
-    };
+    for (const w of layout.widgets) {
+      if (w.widgetType === "countdown") {
+        w.customSettings = this.backfillCountdownSettings(w.customSettings);
+      }
+    }
+    return layout;
   }
 
   private static backfillCountdownSettings(
@@ -774,42 +764,6 @@ export class RacedayLayoutUtils {
       s["glowGreenOverlap"] = 25;
     }
     return s;
-  }
-
-  private static createDefaultCountdownWidget(
-    baseWidth: number,
-    baseHeight: number,
-  ): AbsoluteWidgetNode {
-    const isPortrait = baseWidth < baseHeight;
-    const widgetWidth = isPortrait ? 250 : 1000;
-    const widgetHeight = isPortrait ? 800 : 250;
-    const x = Math.max(0, Math.round((baseWidth - widgetWidth) / 2));
-    const y = Math.max(0, Math.round((baseHeight - widgetHeight) / 2));
-
-    return {
-      id: "widget-countdown",
-      widgetType: "countdown",
-      x,
-      y,
-      width: widgetWidth,
-      height: widgetHeight,
-      zIndex: 2000,
-      scaleMode: "auto",
-      customSettings: {
-        orientation: isPortrait ? "vertical" : "horizontal",
-        lampScale: 1.0,
-        blurArea: "fullscreen",
-        blurAmount: 50,
-        lampSizingMode: "custom",
-        previewLampCount: 5,
-        maxLamps: 5,
-        fadeIn: true,
-        glowEffect: true,
-        glowOverlap: 30,
-        glowRedOverlap: 30,
-        glowGreenOverlap: 25,
-      },
-    };
   }
 
   static isOverallColumnKey(key: string | undefined): boolean {

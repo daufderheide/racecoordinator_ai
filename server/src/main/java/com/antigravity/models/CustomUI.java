@@ -424,10 +424,6 @@ public class CustomUI extends Model {
             return modified ? mapper.writeValueAsString(rootObj) : layoutJson;
           }
         }
-        int baseWidth = rootObj.has("baseWidth") ? rootObj.get("baseWidth").asInt(1920) : 1920;
-        int baseHeight = rootObj.has("baseHeight") ? rootObj.get("baseHeight").asInt(1080) : 1080;
-        widgetsArray.add(createDefaultCountdownWidget(mapper, baseWidth, baseHeight));
-        return mapper.writeValueAsString(rootObj);
       }
     } catch (Exception e) {
       // Return original on error
@@ -483,40 +479,6 @@ public class CustomUI extends Model {
       modified = true;
     }
     return modified;
-  }
-
-  private static com.fasterxml.jackson.databind.node.ObjectNode createDefaultCountdownWidget(
-      com.fasterxml.jackson.databind.ObjectMapper mapper, int baseWidth, int baseHeight) {
-    int widgetWidth = 1000;
-    int widgetHeight = 250;
-    int x = Math.max(0, (baseWidth - widgetWidth) / 2);
-    int y = Math.max(0, (baseHeight - widgetHeight) / 2);
-
-    com.fasterxml.jackson.databind.node.ObjectNode countdownWidget = mapper.createObjectNode();
-    countdownWidget.put("id", "widget-countdown");
-    countdownWidget.put("widgetType", "countdown");
-    countdownWidget.put("x", x);
-    countdownWidget.put("y", y);
-    countdownWidget.put("width", widgetWidth);
-    countdownWidget.put("height", widgetHeight);
-    countdownWidget.put("zIndex", 2000);
-    countdownWidget.put("scaleMode", "auto");
-
-    com.fasterxml.jackson.databind.node.ObjectNode customSettings = mapper.createObjectNode();
-    customSettings.put("orientation", "horizontal");
-    customSettings.put("lampScale", 1.0);
-    customSettings.put("blurArea", "fullscreen");
-    customSettings.put("blurAmount", 50);
-    customSettings.put("lampSizingMode", "custom");
-    customSettings.put("previewLampCount", 5);
-    customSettings.put("maxLamps", 5);
-    customSettings.put("fadeIn", true);
-    customSettings.put("glowEffect", true);
-    customSettings.put("glowOverlap", 30);
-    customSettings.put("glowRedOverlap", 30);
-    customSettings.put("glowGreenOverlap", 25);
-    countdownWidget.set("customSettings", customSettings);
-    return countdownWidget;
   }
 
   public static String ensurePracticeTopRowCoordinates(String layoutJson) {

@@ -136,15 +136,9 @@ public class CustomUITest {
     String layoutWithoutCountdown =
         "{\"widgets\":[{\"id\":\"w1\",\"widgetType\":\"timer\"}],\"baseWidth\":1920,\"baseHeight\":1080}";
     String backfilled = CustomUI.ensureCountdownWidget(layoutWithoutCountdown);
-    assertTrue(backfilled.contains("widget-countdown"));
-    assertTrue(backfilled.contains("\"widgetType\":\"countdown\""));
-    assertTrue(backfilled.contains("\"orientation\":\"horizontal\""));
-    assertTrue(backfilled.contains("\"maxLamps\":5"));
-    assertTrue(backfilled.contains("\"fadeIn\":true"));
-    assertTrue(backfilled.contains("\"glowEffect\":true"));
-    assertTrue(backfilled.contains("\"glowOverlap\":30"));
-    assertTrue(backfilled.contains("\"glowRedOverlap\":30"));
-    assertTrue(backfilled.contains("\"glowGreenOverlap\":25"));
+    assertFalse(backfilled.contains("widget-countdown"));
+    assertFalse(backfilled.contains("\"widgetType\":\"countdown\""));
+    assertEquals(layoutWithoutCountdown, backfilled);
 
     // Existing countdown widget without glowEffect backfills glowEffect, maxLamps, fadeIn and
     // glowOverlap
@@ -175,8 +169,8 @@ public class CustomUITest {
     assertTrue(preservedCustom.contains("\"glowGreenOverlap\":55"));
 
     // Calling again should not duplicate
-    String alreadyPresent = CustomUI.ensureCountdownWidget(backfilled);
-    assertEquals(backfilled, alreadyPresent);
+    String alreadyPresent = CustomUI.ensureCountdownWidget(backfilledExisting);
+    assertEquals(backfilledExisting, alreadyPresent);
 
     // Null or invalid returns input
     assertEquals(null, CustomUI.ensureCountdownWidget(null));
