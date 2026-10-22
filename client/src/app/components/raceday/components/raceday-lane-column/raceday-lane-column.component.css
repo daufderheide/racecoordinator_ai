@@ -75,7 +75,7 @@
   border-bottom: none;
   border-right: none !important;
   border-radius: inherit;
-  padding: 0 16px;
+  padding: 0 4px;
   box-sizing: border-box;
 }
 
@@ -96,11 +96,11 @@
   box-sizing: border-box;
   position: relative;
   overflow: hidden;
-  padding: 6px 12px;
+  padding: 2px 4px;
 }
 
 .raceday-lane-column-card:not(.has-header) .lane-col-body {
-  padding: 8px 12px;
+  padding: 2px 4px;
 }
 
 .lane-col-main-row {
@@ -231,7 +231,7 @@
 
 .lane-col-insets-row .inset-cell.tl,
 .lane-col-insets-row .inset-cell.bl {
-  left: 6px;
+  left: 4px;
   z-index: 1;
 }
 
@@ -288,7 +288,7 @@
 
 .lane-col-insets-row .inset-cell.tr,
 .lane-col-insets-row .inset-cell.br {
-  right: 6px;
+  right: 4px;
   z-index: 3;
 }
 

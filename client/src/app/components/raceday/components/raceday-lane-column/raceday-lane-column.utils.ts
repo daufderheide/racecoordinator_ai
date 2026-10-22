@@ -550,7 +550,7 @@ function calculateBaseDimensions(
     explicitWidth && explicitWidth > 0 ? explicitWidth : cardEl.clientWidth;
   const cardH =
     explicitHeight && explicitHeight > 0 ? explicitHeight : cardEl.clientHeight;
-  let availWidth = Math.max(10, cardW - 24 - 8);
+  let availWidth = Math.max(10, cardW - 8);
   let availHeight = Math.max(10, cardH);
 
   if (settings.showHeader !== false) {
@@ -558,15 +558,15 @@ function calculateBaseDimensions(
       const headerEl = explicitWidth
         ? null
         : (cardEl.querySelector(".lane-col-header") as HTMLElement | null);
-      const headerW = headerEl ? headerEl.offsetWidth + 8 : 60;
+      const headerW = headerEl ? headerEl.offsetWidth + 4 : 40;
       availWidth = Math.max(10, availWidth - headerW);
-      availHeight = Math.max(10, availHeight - 12);
+      availHeight = Math.max(10, availHeight - 4);
     } else {
       const headerH = (settings.headerFontSize || 14) * 1.2;
-      availHeight = Math.max(10, availHeight - headerH - 8);
+      availHeight = Math.max(10, cardH - headerH - 4);
     }
   } else {
-    availHeight = Math.max(10, availHeight - 16);
+    availHeight = Math.max(10, cardH - 4);
   }
   return { availWidth, availHeight };
 }
@@ -612,15 +612,9 @@ export function fitColumnTextValue(
   const cardH =
     explicitHeight && explicitHeight > 0 ? explicitHeight : cardEl.clientHeight;
 
-  let baseFontSize = settings.valueFontSize || 36;
-  if (scaleMode === "auto" && !settings.valueFontSize) {
-    if (cardH > 0) {
-      baseFontSize = Math.max(12, Math.min(48, Math.round(cardH * 0.45)));
-    }
-  }
-
   if (cardW <= 0 || cardH <= 0) {
-    cardEl.style.setProperty("--lane-col-value-font-size", `${baseFontSize}px`);
+    const fallbackSize = settings.valueFontSize || 36;
+    cardEl.style.setProperty("--lane-col-value-font-size", `${fallbackSize}px`);
     cardEl.style.setProperty("--lane-col-pad-left", "0px");
     cardEl.style.setProperty("--lane-col-pad-right", "0px");
     cardEl.style.setProperty("--lane-col-pad-top", "0px");
@@ -629,18 +623,6 @@ export function fitColumnTextValue(
   }
 
   const isHorizontal = layoutOrientation === "horizontal";
-  const ctx = getSharedCanvasContext();
-  if (!ctx) return;
-
-  const computedFamily =
-    settings.valueFontFamily ||
-    (!explicitWidth && typeof window !== "undefined" && window.getComputedStyle
-      ? window.getComputedStyle(cardEl).fontFamily
-      : "") ||
-    "sans-serif";
-  ctx.font = `700 ${baseFontSize}px ${computedFamily}`;
-  const textWidth = ctx.measureText(text).width || 1;
-
   const baseDims = calculateBaseDimensions(
     cardEl,
     settings,
@@ -658,24 +640,49 @@ export function fitColumnTextValue(
     effectiveInsetFontSize,
   );
 
+  let baseFontSize = settings.valueFontSize || 36;
+  if (scaleMode === "auto") {
+    if (settings.valueFontSize) {
+      baseFontSize = Math.max(
+        12,
+        Math.min(settings.valueFontSize, Math.round(dims.availHeight * 0.85)),
+      );
+    } else {
+      baseFontSize = Math.max(12, Math.round(dims.availHeight * 0.85));
+    }
+  }
+
   const isCustomScaling = scaleMode !== undefined && scaleMode !== "auto";
 
   if (isCustomScaling) {
     cardEl.style.setProperty("--lane-col-value-font-size", `${baseFontSize}px`);
-  } else {
-    let scale = 1;
-    if (dims.availWidth > 0 && textWidth > dims.availWidth) {
-      scale = Math.min(scale, dims.availWidth / textWidth);
-    }
-    if (dims.availHeight > 0 && baseFontSize > dims.availHeight) {
-      scale = Math.min(scale, dims.availHeight / baseFontSize);
-    }
-
-    const minSize = 10;
-    const targetSize = Math.max(minSize, Math.floor(baseFontSize * scale));
-    cardEl.style.setProperty("--lane-col-value-font-size", `${targetSize}px`);
-    safeguardTextOverflow(cardEl, targetSize, minSize, Boolean(explicitWidth));
+    return;
   }
+
+  const ctx = getSharedCanvasContext();
+  if (!ctx) return;
+
+  const computedFamily =
+    settings.valueFontFamily ||
+    (!explicitWidth && typeof window !== "undefined" && window.getComputedStyle
+      ? window.getComputedStyle(cardEl).fontFamily
+      : "") ||
+    "sans-serif";
+  ctx.font = `700 ${baseFontSize}px ${computedFamily}`;
+  const textWidth = ctx.measureText(text).width || 1;
+
+  let scale = 1;
+  if (dims.availWidth > 0 && textWidth > dims.availWidth) {
+    scale = Math.min(scale, dims.availWidth / textWidth);
+  }
+  if (dims.availHeight > 0 && baseFontSize > dims.availHeight) {
+    scale = Math.min(scale, dims.availHeight / baseFontSize);
+  }
+
+  const minSize = 10;
+  const targetSize = Math.max(minSize, Math.floor(baseFontSize * scale));
+  cardEl.style.setProperty("--lane-col-value-font-size", `${targetSize}px`);
+  safeguardTextOverflow(cardEl, targetSize, minSize, Boolean(explicitWidth));
 }
 
 export function fitColumnLastLaps(

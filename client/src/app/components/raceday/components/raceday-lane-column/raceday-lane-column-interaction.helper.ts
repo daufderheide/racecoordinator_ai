@@ -179,8 +179,8 @@ export function fitLaneColumnHeaderText(
   const baseFontSize = Number(
     settings.headerFontSize || (widget?.fontSize ? widget.fontSize : 24),
   );
-  const availWidth = Math.max(10, cardW - 16);
-  const availHeight = Math.max(10, cardH - 8);
+  const availWidth = Math.max(10, cardW - 8);
+  const availHeight = Math.max(10, cardH - 4);
 
   const ctx = getSharedCanvasContext();
   if (!ctx) return;

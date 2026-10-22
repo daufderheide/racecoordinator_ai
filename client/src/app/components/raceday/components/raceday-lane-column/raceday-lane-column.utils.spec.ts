@@ -1010,6 +1010,80 @@ describe("raceday-lane-column.utils", () => {
       expect(numSize).toBeGreaterThanOrEqual(10);
       expect(numSize).toBeLessThanOrEqual(40);
     });
+
+    it("should allow two-digit numbers (10+) to maintain a large legible font size without excessive shrinkage compared to single digits", () => {
+      // Test narrow cell e.g. 40px wide by 45px tall (typical position/lane column)
+      const singleDigitCard = document.createElement("div");
+      const doubleDigitCard = document.createElement("div");
+
+      fitColumnTextValue(
+        singleDigitCard,
+        "5",
+        { showHeader: false } as any,
+        "auto",
+        "vertical",
+        false,
+        false,
+        () => false,
+        14,
+        40,
+        45,
+      );
+
+      fitColumnTextValue(
+        doubleDigitCard,
+        "10",
+        { showHeader: false } as any,
+        "auto",
+        "vertical",
+        false,
+        false,
+        () => false,
+        14,
+        40,
+        45,
+      );
+
+      const singleSize = parseInt(
+        singleDigitCard.style.getPropertyValue("--lane-col-value-font-size"),
+        10,
+      );
+      const doubleSize = parseInt(
+        doubleDigitCard.style.getPropertyValue("--lane-col-value-font-size"),
+        10,
+      );
+
+      // Single digit should be large (e.g. around 35px for 45px height)
+      expect(singleSize).toBeGreaterThanOrEqual(28);
+      // Two-digit "10" must not collapse to 10px minimum - it should remain close to single-digit size (>= 22px)
+      expect(doubleSize).toBeGreaterThanOrEqual(22);
+      expect(doubleSize / singleSize).toBeGreaterThan(0.65);
+    });
+
+    it("should allow longer driver names like 'Uncle Jon' to fill available width without collapsing to minSize", () => {
+      // Cell width 110px by 45px tall
+      fitColumnTextValue(
+        cardEl,
+        "Uncle Jon",
+        { showHeader: false } as any,
+        "auto",
+        "vertical",
+        false,
+        false,
+        () => false,
+        14,
+        110,
+        45,
+      );
+
+      const sizeVar = cardEl.style.getPropertyValue(
+        "--lane-col-value-font-size",
+      );
+      const numSize = parseInt(sizeVar, 10);
+      // Previously "Uncle Jon" collapsed all the way down to 10px due to 32px padding deduction!
+      // Now it should stay comfortably above 18px and fill the available cell space.
+      expect(numSize).toBeGreaterThanOrEqual(18);
+    });
   });
 
   describe("getSharedCanvasContext", () => {
