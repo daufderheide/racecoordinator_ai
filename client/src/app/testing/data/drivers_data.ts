@@ -12,6 +12,7 @@ export const MOCK_DRIVERS = [
     bestLapSoundType: "preset",
     lapSoundText: "",
     bestLapSoundText: "",
+    label_ids: ["lbl-pro"],
   },
   {
     entity_id: "d2",
@@ -20,30 +21,32 @@ export const MOCK_DRIVERS = [
     avatarUrl: "assets/images/default_avatar.svg",
     lapSoundUrl: "",
     bestLapSoundUrl: "",
+    label_ids: ["lbl-amateur"],
   },
   {
     entity_id: "d3",
     name: "Charlie",
     nickname: "Speedy",
     avatarUrl: "assets/images/default_avatar.svg",
+    label_ids: ["lbl-rookie"],
   },
   {
     entity_id: "d4",
     name: "Dave",
     nickname: "Noob",
     avatarUrl: "assets/images/default_avatar.svg",
+    label_ids: [],
   },
 ];
 
-export const MOCK_DRIVER_INSTANCES = MOCK_DRIVERS.map(
-  (d: any) =>
-    new Driver(
-      d.entity_id,
-      d.name,
-      d.nickname || "",
-      d.avatarUrl,
-      d.lapSoundUrl,
-    ),
+export const MOCK_DRIVER_INSTANCES = MOCK_DRIVERS.map((d: any) =>
+  Driver.createDefault(
+    d.entity_id,
+    d.name,
+    d.nickname || "",
+    d.avatarUrl,
+    d.label_ids || [],
+  ),
 );
 
 export const MOCK_DRIVER_LABELS = [

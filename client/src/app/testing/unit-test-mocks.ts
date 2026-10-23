@@ -4,7 +4,7 @@ import { deepCopy } from "@app/utils/clone.utils";
 import { scanAndSecureNode } from "@app/utils/form-security";
 
 import { Settings } from "../models/settings";
-import { MOCK_DRIVERS } from "./data/drivers_data";
+import { MOCK_DRIVER_LABELS, MOCK_DRIVERS } from "./data/drivers_data";
 import { MOCK_RACES } from "./data/races_data";
 import { createDefaultSettings } from "./data/settings_data";
 import { MOCK_TEAMS } from "./data/teams_data";
@@ -30,6 +30,9 @@ export const mockDataService = {
   getDrivers: jasmine
     .createSpy("getDrivers")
     .and.callFake(() => of(deepCopy(MOCK_DRIVERS))),
+  getDriverLabels: jasmine
+    .createSpy("getDriverLabels")
+    .and.callFake(() => of(deepCopy(MOCK_DRIVER_LABELS))),
   getTeams: jasmine
     .createSpy("getTeams")
     .and.callFake(() => of(deepCopy(MOCK_TEAMS))),
@@ -275,6 +278,9 @@ export function resetMocks() {
 
   // Restore default behaviors for mockDataService
   mockDataService.getDrivers.and.callFake(() => of(deepCopy(MOCK_DRIVERS)));
+  mockDataService.getDriverLabels.and.callFake(() =>
+    of(deepCopy(MOCK_DRIVER_LABELS)),
+  );
   mockDataService.getTeams.and.callFake(() => of(deepCopy(MOCK_TEAMS)));
   mockDataService.getRaces.and.callFake(() => of(deepCopy(MOCK_RACES)));
   mockDataService.getEvents.and.returnValue(of([]));

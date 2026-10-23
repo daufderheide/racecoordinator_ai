@@ -13,7 +13,7 @@ import {
 } from "@app/proto/antigravity";
 
 import {} from "./data/assets_data";
-import { MOCK_DRIVERS } from "./data/drivers_data";
+import { MOCK_DRIVER_LABELS, MOCK_DRIVERS } from "./data/drivers_data";
 import { MOCK_RACES } from "./data/races_data";
 import { MOCK_TEAMS } from "./data/teams_data";
 import { MOCK_FACTORY_SETTINGS, MOCK_TRACKS } from "./data/tracks_data";
@@ -337,7 +337,10 @@ export class TestSetupHelper {
 
   static async setupDriverMocks(page: Page, options: SetupOptions = {}) {
     let currentDrivers = [...MOCK_DRIVERS];
-    let currentLabels = options.driverLabels ? [...options.driverLabels] : [];
+    let currentLabels =
+      options.driverLabels !== undefined
+        ? [...options.driverLabels]
+        : [...MOCK_DRIVER_LABELS];
 
     await page.route("**/api/driver-labels", async (route) => {
       const method = route.request().method();

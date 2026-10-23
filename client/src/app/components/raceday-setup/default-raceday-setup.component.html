@@ -469,50 +469,48 @@
                 />
               </svg>
             </div>
-            @if (driverLabels.length > 0) {
-              <div class="label-filter-dropdown-wrap">
-                <div class="label-filter-row">
-                  <app-custom-select
-                    id="available-label-filter"
-                    [multiple]="true"
-                    [ngModel]="selectedAvailableLabelIds"
-                    (ngModelChange)="onAvailableLabelFilterChange($event)"
-                    [placeholder]="'RDS_ALL_LABELS' | translate"
-                    [multiCountText]="'RDS_LABELS_SELECTED' | translate"
-                    [clearTooltip]="'RDS_CLEAR_LABEL_FILTER' | translate"
-                  >
-                    <app-custom-option value="">
-                      {{ "RDS_ALL_LABELS" | translate }}
-                    </app-custom-option>
-                    @for (label of driverLabels; track label.entity_id) {
-                      <app-custom-option
-                        [value]="label.entity_id"
-                        [color]="label.color"
-                      >
-                        {{ label.name }}
-                      </app-custom-option>
-                    }
-                  </app-custom-select>
-
-                  @if (selectedAvailableLabelIds.length > 1) {
-                    <button
-                      type="button"
-                      id="available-label-match-mode-toggle"
-                      class="label-match-mode-btn"
-                      (click)="toggleAvailableLabelMatchMode()"
-                      [title]="'RDS_MATCH_MODE' | translate"
+            <div class="label-filter-dropdown-wrap">
+              <div class="label-filter-row">
+                <app-custom-select
+                  id="available-label-filter"
+                  [multiple]="true"
+                  [ngModel]="selectedAvailableLabelIds"
+                  (ngModelChange)="onAvailableLabelFilterChange($event)"
+                  [placeholder]="'RDS_ALL_LABELS' | translate"
+                  [multiCountText]="'RDS_LABELS_SELECTED' | translate"
+                  [clearTooltip]="'RDS_CLEAR_LABEL_FILTER' | translate"
+                >
+                  <app-custom-option value="">
+                    {{ "RDS_ALL_LABELS" | translate }}
+                  </app-custom-option>
+                  @for (label of driverLabels; track label.entity_id) {
+                    <app-custom-option
+                      [value]="label.entity_id"
+                      [color]="label.color"
                     >
-                      <span class="match-mode-label">{{
-                        (availableLabelMatchMode === "all"
-                          ? "RDS_MATCH_ALL"
-                          : "RDS_MATCH_ANY"
-                        ) | translate
-                      }}</span>
-                    </button>
+                      {{ label.name }}
+                    </app-custom-option>
                   }
-                </div>
+                </app-custom-select>
+
+                @if (selectedAvailableLabelIds.length > 1) {
+                  <button
+                    type="button"
+                    id="available-label-match-mode-toggle"
+                    class="label-match-mode-btn"
+                    (click)="toggleAvailableLabelMatchMode()"
+                    [title]="'RDS_MATCH_MODE' | translate"
+                  >
+                    <span class="match-mode-label">{{
+                      (availableLabelMatchMode === "all"
+                        ? "RDS_MATCH_ALL"
+                        : "RDS_MATCH_ANY"
+                      ) | translate
+                    }}</span>
+                  </button>
+                }
               </div>
-            }
+            </div>
           </div>
 
           <div
@@ -693,50 +691,48 @@
                 />
               </svg>
             </div>
-            @if (driverLabels.length > 0) {
-              <div class="label-filter-dropdown-wrap">
-                <div class="label-filter-row">
-                  <app-custom-select
-                    id="racing-label-filter"
-                    [multiple]="true"
-                    [ngModel]="selectedRacingLabelIds"
-                    (ngModelChange)="onRacingLabelFilterChange($event)"
-                    [placeholder]="'RDS_ALL_LABELS' | translate"
-                    [multiCountText]="'RDS_LABELS_SELECTED' | translate"
-                    [clearTooltip]="'RDS_CLEAR_LABEL_FILTER' | translate"
-                  >
-                    <app-custom-option value="">
-                      {{ "RDS_ALL_LABELS" | translate }}
-                    </app-custom-option>
-                    @for (label of driverLabels; track label.entity_id) {
-                      <app-custom-option
-                        [value]="label.entity_id"
-                        [color]="label.color"
-                      >
-                        {{ label.name }}
-                      </app-custom-option>
-                    }
-                  </app-custom-select>
-
-                  @if (selectedRacingLabelIds.length > 1) {
-                    <button
-                      type="button"
-                      id="racing-label-match-mode-toggle"
-                      class="label-match-mode-btn"
-                      (click)="toggleRacingLabelMatchMode()"
-                      [title]="'RDS_MATCH_MODE' | translate"
+            <div class="label-filter-dropdown-wrap">
+              <div class="label-filter-row">
+                <app-custom-select
+                  id="racing-label-filter"
+                  [multiple]="true"
+                  [ngModel]="selectedRacingLabelIds"
+                  (ngModelChange)="onRacingLabelFilterChange($event)"
+                  [placeholder]="'RDS_ALL_LABELS' | translate"
+                  [multiCountText]="'RDS_LABELS_SELECTED' | translate"
+                  [clearTooltip]="'RDS_CLEAR_LABEL_FILTER' | translate"
+                >
+                  <app-custom-option value="">
+                    {{ "RDS_ALL_LABELS" | translate }}
+                  </app-custom-option>
+                  @for (label of driverLabels; track label.entity_id) {
+                    <app-custom-option
+                      [value]="label.entity_id"
+                      [color]="label.color"
                     >
-                      <span class="match-mode-label">{{
-                        (racingLabelMatchMode === "all"
-                          ? "RDS_MATCH_ALL"
-                          : "RDS_MATCH_ANY"
-                        ) | translate
-                      }}</span>
-                    </button>
+                      {{ label.name }}
+                    </app-custom-option>
                   }
-                </div>
+                </app-custom-select>
+
+                @if (selectedRacingLabelIds.length > 1) {
+                  <button
+                    type="button"
+                    id="racing-label-match-mode-toggle"
+                    class="label-match-mode-btn"
+                    (click)="toggleRacingLabelMatchMode()"
+                    [title]="'RDS_MATCH_MODE' | translate"
+                  >
+                    <span class="match-mode-label">{{
+                      (racingLabelMatchMode === "all"
+                        ? "RDS_MATCH_ALL"
+                        : "RDS_MATCH_ANY"
+                      ) | translate
+                    }}</span>
+                  </button>
+                }
               </div>
-            }
+            </div>
           </div>
 
           <div
