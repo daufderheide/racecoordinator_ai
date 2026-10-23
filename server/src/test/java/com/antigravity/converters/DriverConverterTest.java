@@ -525,4 +525,22 @@ public class DriverConverterTest {
     assertEquals("dl_url", reconstructed.getDriftLapAudio().getUrl());
     assertEquals("dl_text", reconstructed.getDriftLapAudio().getText());
   }
+
+  @Test
+  public void testLabelIdsRoundTrip() {
+    java.util.List<String> labels = java.util.Arrays.asList("lbl-101", "lbl-202");
+    Driver original = new Driver.Builder().withName("Labeled Racer").withLabelIds(labels).build();
+
+    DriverModel proto = DriverConverter.toProto(original, new HashSet<>());
+    assertNotNull(proto);
+    assertEquals(2, proto.getLabelIdsCount());
+    assertEquals("lbl-101", proto.getLabelIds(0));
+    assertEquals("lbl-202", proto.getLabelIds(1));
+
+    Driver reconstructed = DriverConverter.fromProto(proto);
+    assertNotNull(reconstructed);
+    assertEquals(2, reconstructed.getLabelIds().size());
+    assertTrue(reconstructed.getLabelIds().contains("lbl-101"));
+    assertTrue(reconstructed.getLabelIds().contains("lbl-202"));
+  }
 }

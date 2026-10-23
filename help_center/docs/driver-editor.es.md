@@ -32,6 +32,7 @@ La barra de herramientas superior proporciona las siguientes acciones:
 - **Apodo**: Nombre abreviado o pronunciado utilizado para los anuncios de voz (TTS).
 - **Vincular Nombre y Apodo**: Al activarse, la edición del nombre se copia automáticamente en el apodo.
 - **Avatar**: Seleccione una imagen o icono para el piloto.
+- **Etiquetas de piloto**: Asigne etiquetas codificadas por colores (similar a las etiquetas de problemas de GitHub) para organizar a los pilotos en conjuntos personalizados (como "Pro", "Rookie" o "Clase A"). Los pilotos pueden pertenecer a cualquier cantidad de conjuntos. En el Modo Edición, haga clic en **Gestionar etiquetas** para crear, editar, cambiar de color, eliminar o asignar etiquetas. En la pantalla de Configuración del Día de Carrera, puede filtrar los participantes disponibles por etiqueta para configurar rápidamente las alineaciones de carrera.
 
 ## Avisos de Audio y Efectos
 

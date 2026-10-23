@@ -332,4 +332,44 @@ describe("DriverConverter", () => {
     expect(driver.lapAudio.url).toBe("default_beep");
     expect(driver.pitInAudio.url).toBe("default_pit_in");
   });
+
+  it("should map label_ids from proto and update cache in-place", () => {
+    const proto: IDriverModel = {
+      model: { entityId: "d_proto_label" },
+      name: "Label Driver",
+      label_ids: ["lbl-1", "lbl-2"],
+    } as any;
+
+    const driver = DriverConverter.fromProto(proto);
+    expect(driver.labelIds).toEqual(["lbl-1", "lbl-2"]);
+
+    // Update in-place
+    const proto2: IDriverModel = {
+      model: { entityId: "d_proto_label" },
+      name: "Label Driver Updated",
+      label_ids: ["lbl-3"],
+    } as any;
+    DriverConverter.fromProto(proto2);
+    expect(driver.labelIds).toEqual(["lbl-3"]);
+  });
+
+  it("should map labelIds from JSON and register updates", () => {
+    const json = {
+      entity_id: "d_json_label",
+      name: "JSON Label Driver",
+      labelIds: ["lbl-a", "lbl-b"],
+    };
+    const driver = DriverConverter.fromJSON(json);
+    expect(driver.labelIds).toEqual(["lbl-a", "lbl-b"]);
+
+    const updated = Driver.createDefault(
+      "d_json_label",
+      "JSON Label Driver",
+      "",
+      undefined,
+      ["lbl-c"],
+    );
+    DriverConverter.register(updated);
+    expect(driver.labelIds).toEqual(["lbl-c"]);
+  });
 });

@@ -59,6 +59,7 @@ public class DatabaseTaskHandler {
     this.historyPredictionTaskHandler = new HistoryPredictionTaskHandler(databaseContext, app);
     this.raceHeatTaskHandler = new RaceHeatTaskHandler(databaseContext, app);
     new DriverImportTaskHandler(databaseContext, driverRepository, app);
+    new DriverLabelTaskHandler(databaseContext, driverRepository, app);
 
     // Driver Endpoints
     app.get("/api/drivers", this::getDrivers, Role.VIEWER);

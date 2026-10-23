@@ -138,13 +138,18 @@ export class DriverConverter {
           proto.name || (finalId === EMPTY_DRIVER_ID ? "Empty" : "Unknown");
         cached.nickname = proto.nickname || "";
         cached.avatarUrl = proto.avatarUrl || undefined;
+        cached.labelIds = (proto as any).label_ids
+          ? [...(proto as any).label_ids]
+          : (proto as any).labelIds
+            ? [...(proto as any).labelIds]
+            : cached.labelIds || [];
         this.updateDriverAudio(cached, proto as any);
         return cached;
       }
     }
 
     return this.cache.process(finalId, isReference, () => {
-      return new Driver(
+      const d = new Driver(
         finalId,
         proto.name || (finalId === EMPTY_DRIVER_ID ? "Empty" : "Unknown"),
         proto.nickname || "",
@@ -165,6 +170,12 @@ export class DriverConverter {
           driftLapAudio: this.mapAudio(proto.driftLapAudio),
         },
       );
+      d.labelIds = (proto as any).label_ids
+        ? [...(proto as any).label_ids]
+        : (proto as any).labelIds
+          ? [...(proto as any).labelIds]
+          : [];
+      return d;
     });
   }
 
@@ -175,6 +186,11 @@ export class DriverConverter {
       cached.name = json.name || "";
       cached.nickname = json.nickname || "";
       cached.avatarUrl = json.avatarUrl;
+      cached.labelIds = Array.isArray(json.labelIds)
+        ? [...json.labelIds]
+        : Array.isArray(json.label_ids)
+          ? [...json.label_ids]
+          : cached.labelIds || [];
       this.updateDriverAudio(cached, json);
       return cached;
     }
@@ -199,6 +215,11 @@ export class DriverConverter {
         driftLapAudio: this.mapAudio(json.driftLapAudio),
       },
     );
+    d.labelIds = Array.isArray(json.labelIds)
+      ? [...json.labelIds]
+      : Array.isArray(json.label_ids)
+        ? [...json.label_ids]
+        : [];
     this.cache.process(id, false, () => d);
     return d;
   }
@@ -225,6 +246,7 @@ export class DriverConverter {
       existing.pitInAudio = driver.pitInAudio;
       existing.fuelAudio = driver.fuelAudio;
       existing.driftLapAudio = driver.driftLapAudio;
+      existing.labelIds = [...(driver.labelIds || [])];
     } else {
       // Manually populate cache using process to ensure valid state
       // access private cache if possible, or use a workaround.

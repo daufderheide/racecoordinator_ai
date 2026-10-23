@@ -32,6 +32,7 @@ A barra de ferramentas superior oferece as seguintes ações:
 - **Apelido**: Nome abreviado ou falado usado para anúncios de voz (TTS).
 - **Vincular Nome e Apelido**: Quando ativado, o texto digitado no nome é copiado automaticamente para o apelido.
 - **Avatar**: Escolha uma imagem ou ícone para o piloto.
+- **Etiquetas de piloto**: Atribua etiquetas com código de cores (semelhantes às etiquetas de problemas do GitHub) para organizar os pilotos em conjuntos personalizados (como "Pro", "Rookie" ou "Classe A"). Os pilotos podem pertencer a qualquer número de conjuntos. No Modo de Edição, clique em **Gerenciar etiquetas** para criar, editar, alterar a cor, excluir ou atribuir etiquetas. Na tela de Configuração do Dia de Corrida, você pode filtrar os participantes disponíveis por etiqueta para montar rapidamente as listas de corrida.
 
 ## Avisos de Áudio e Efeitos Sonoros
 

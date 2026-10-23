@@ -2,6 +2,9 @@ package com.antigravity.models;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 public class Driver extends Model {
   public static final String EMPTY_DRIVER_ID = "EMPTY_LANE";
@@ -23,6 +26,7 @@ public class Driver extends Model {
   private final AudioConfig pitInAudio;
   private final AudioConfig fuelAudio;
   private final AudioConfig driftLapAudio;
+  private final List<String> labelIds;
 
   public Driver(
       @JsonProperty("name") String name,
@@ -48,6 +52,7 @@ public class Driver extends Model {
       @JsonProperty("pitInAudio") @JsonAlias("pit_in_audio") AudioConfig pitInAudio,
       @JsonProperty("fuelAudio") @JsonAlias("fuel_audio") AudioConfig fuelAudio,
       @JsonProperty("driftLapAudio") @JsonAlias("drift_lap_audio") AudioConfig driftLapAudio,
+      @JsonProperty("labelIds") @JsonAlias({"label_ids", "labels"}) List<String> labelIds,
       @JsonProperty("lapSoundUrl") String lapSoundUrl,
       @JsonProperty("bestLapSoundUrl") String bestLapSoundUrl,
       @JsonProperty("penaltySoundUrl") String penaltySoundUrl,
@@ -81,6 +86,7 @@ public class Driver extends Model {
     this.pitInAudio = defaultPresetAudio(pitInAudio, "default_pit_in");
     this.fuelAudio = defaultSetAudio(fuelAudio, "default_fuel_level");
     this.driftLapAudio = defaultTtsAudio(driftLapAudio, "Drift lap for {driver.nickname}");
+    this.labelIds = labelIds != null ? new ArrayList<>(labelIds) : new ArrayList<>();
   }
 
   private static AudioConfig defaultTtsAudio(AudioConfig config, String defaultText) {
@@ -205,6 +211,7 @@ public class Driver extends Model {
         null,
         null,
         null,
+        null,
         lapSoundUrl,
         bestLapSoundUrl,
         penaltySoundUrl,
@@ -255,7 +262,7 @@ public class Driver extends Model {
   public Driver(String name, String nickname, String entityId, String id) {
     this(
         name, nickname, null, null, null, null, null, null, null, null, null, null, null, null,
-        null, null, null, null, null, null, null, null, null, null, null, entityId, id);
+        null, null, null, null, null, null, null, null, null, null, null, null, entityId, id);
   }
 
   public Driver(String name) {
@@ -337,6 +344,10 @@ public class Driver extends Model {
     return driftLapAudio;
   }
 
+  public List<String> getLabelIds() {
+    return labelIds != null ? Collections.unmodifiableList(labelIds) : Collections.emptyList();
+  }
+
   public static boolean isEmptyId(String id) {
     return id == null || id.isEmpty() || EMPTY_DRIVER_ID.equals(id);
   }
@@ -373,6 +384,7 @@ public class Driver extends Model {
     private AudioConfig fuelAudio = new AudioConfig("audio_set", "default_fuel_level", "");
     private AudioConfig driftLapAudio =
         new AudioConfig("tts", null, "Drift lap for {driver.nickname}");
+    private List<String> labelIds = new ArrayList<>();
 
     public Builder() {}
 
@@ -397,6 +409,8 @@ public class Driver extends Model {
         b.pitInAudio = other.getPitInAudio();
         b.fuelAudio = other.getFuelAudio();
         b.driftLapAudio = other.getDriftLapAudio();
+        b.labelIds =
+            other.getLabelIds() != null ? new ArrayList<>(other.getLabelIds()) : new ArrayList<>();
       }
       return b;
     }
@@ -491,6 +505,11 @@ public class Driver extends Model {
       return this;
     }
 
+    public Builder withLabelIds(List<String> labelIds) {
+      this.labelIds = labelIds != null ? new ArrayList<>(labelIds) : new ArrayList<>();
+      return this;
+    }
+
     public Driver build() {
       return new Driver(
           name,
@@ -509,6 +528,7 @@ public class Driver extends Model {
           pitInAudio,
           fuelAudio,
           driftLapAudio,
+          labelIds,
           null,
           null,
           null,

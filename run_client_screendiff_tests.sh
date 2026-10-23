@@ -18,7 +18,9 @@ for arg in "$@"; do
     if [[ "$arg" == "--changed" ]] || [[ "$arg" == --changed=* ]]; then
         CHANGED_FLAG="$arg"
     else
-        REMAINING_ARGS+=("$arg")
+        clean_arg="${arg#./client/}"
+        clean_arg="${clean_arg#client/}"
+        REMAINING_ARGS+=("$clean_arg")
     fi
 done
 
@@ -42,7 +44,9 @@ elif [ $# -gt 0 ]; then
     echo "Running screendiff tests with specified arguments..."
     PLAYWRIGHT_ARGS=""
     for arg in "$@"; do
-        PLAYWRIGHT_ARGS+=" $(printf '%q' "$arg")"
+        clean_arg="${arg#./client/}"
+        clean_arg="${clean_arg#client/}"
+        PLAYWRIGHT_ARGS+=" $(printf '%q' "$clean_arg")"
     done
     PLAYWRIGHT_ARGS="${PLAYWRIGHT_ARGS# }"
 else

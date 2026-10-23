@@ -14,7 +14,7 @@ describe("DriverEditorHelpHelper", () => {
       },
     });
 
-    expect(steps.length).toBe(20);
+    expect(steps.length).toBe(21);
     expect(steps[0].title).toBe("translated_DE_HELP_WELCOME_TITLE");
     expect(steps[0].position).toBe("center");
 
@@ -25,6 +25,7 @@ describe("DriverEditorHelpHelper", () => {
       "#driver-name-section",
       "#driver-name-nickname-link-section",
       "#driver-nickname-section",
+      "#driver-labels-section",
       "#driver-audio-section",
       "#driver-lap-audio",
       "#driver-best-lap-audio",

@@ -3709,4 +3709,252 @@ describe("DefaultRacedaySetupComponent", () => {
       }
     }));
   });
+
+  describe("Label Filtering", () => {
+    it("should filter available participants by label", () => {
+      const d1 = Driver.createDefault("d1", "Alpha", "A", undefined, [
+        "lbl-pro",
+      ]);
+      const d2 = Driver.createDefault("d2", "Beta", "B", undefined, [
+        "lbl-rookie",
+      ]);
+      const d3 = Driver.createDefault("d3", "Gamma", "G", undefined, [
+        "lbl-pro",
+        "lbl-vintage",
+      ]);
+
+      component.allDrivers = [d1, d2, d3];
+      component.unselectedParticipants = [d1, d2, d3];
+      component.selectedParticipants = [];
+      component.driverLabels = [
+        { entity_id: "lbl-pro", name: "Pro", color: "#ef4444" },
+        { entity_id: "lbl-rookie", name: "Rookie", color: "#3b82f6" },
+        { entity_id: "lbl-vintage", name: "Vintage", color: "#10b981" },
+      ];
+
+      // No label filter -> all 3
+      component.selectedAvailableLabelId = "";
+      expect(component.filteredAvailableParticipants.length).toBe(3);
+
+      // Filter by "lbl-pro" -> d1 and d3
+      component.onAvailableLabelFilterChange("lbl-pro");
+      expect(component.filteredAvailableParticipants).toEqual([d1, d3]);
+
+      // Filter by "lbl-rookie" -> d2
+      component.onAvailableLabelFilterChange("lbl-rookie");
+      expect(component.filteredAvailableParticipants).toEqual([d2]);
+
+      // Filter by "lbl-vintage" -> d3
+      component.onAvailableLabelFilterChange("lbl-vintage");
+      expect(component.filteredAvailableParticipants).toEqual([d3]);
+    });
+
+    it("should correctly identify team labels and filter team participants", () => {
+      const d1 = Driver.createDefault("d1", "Driver 1", "D1", undefined, [
+        "lbl-gt",
+      ]);
+      const d2 = Driver.createDefault("d2", "Driver 2", "D2", undefined, []);
+      const team = new Team("t1", "Racing Team", undefined, ["d1", "d2"]);
+
+      component.allDrivers = [d1, d2];
+      component.allTeams = [team];
+      component.unselectedParticipants = [team];
+      component.driverLabels = [
+        { entity_id: "lbl-gt", name: "GT", color: "#f59e0b" },
+      ];
+
+      // Team has driver with lbl-gt
+      expect(component.participantHasLabel(team, "lbl-gt")).toBeTrue();
+      expect(component.participantHasLabel(team, "lbl-other")).toBeFalse();
+
+      component.selectedAvailableLabelId = "lbl-gt";
+      expect(component.filteredAvailableParticipants).toEqual([team]);
+
+      component.selectedAvailableLabelId = "lbl-other";
+      expect(component.filteredAvailableParticipants).toEqual([]);
+
+      const teamLabels = component.getParticipantLabels(team);
+      expect(teamLabels.length).toBe(1);
+      expect(teamLabels[0].name).toBe("GT");
+    });
+
+    it("should filter racing participants by label using selectedRacingLabelId", () => {
+      const d1 = Driver.createDefault("d1", "Alpha", "A", undefined, [
+        "lbl-pro",
+      ]);
+      const d2 = Driver.createDefault("d2", "Beta", "B", undefined, [
+        "lbl-rookie",
+      ]);
+      const d3 = Driver.createDefault("d3", "Gamma", "G", undefined, [
+        "lbl-pro",
+        "lbl-vintage",
+      ]);
+
+      component.allDrivers = [d1, d2, d3];
+      component.selectedParticipants = [d1, d2, d3];
+      component.driverLabels = [
+        { entity_id: "lbl-pro", name: "Pro", color: "#ef4444" },
+        { entity_id: "lbl-rookie", name: "Rookie", color: "#3b82f6" },
+        { entity_id: "lbl-vintage", name: "Vintage", color: "#10b981" },
+      ];
+
+      // No label filter -> all 3
+      component.selectedRacingLabelId = "";
+      expect(component.filteredRacingParticipants.length).toBe(3);
+
+      // Filter by "lbl-pro" -> d1 and d3
+      component.onRacingLabelFilterChange("lbl-pro");
+      expect(component.filteredRacingParticipants).toEqual([d1, d3]);
+
+      // Filter by "lbl-rookie" -> d2
+      component.onRacingLabelFilterChange("lbl-rookie");
+      expect(component.filteredRacingParticipants).toEqual([d2]);
+
+      // Filter by "lbl-vintage" -> d3
+      component.onRacingLabelFilterChange("lbl-vintage");
+      expect(component.filteredRacingParticipants).toEqual([d3]);
+
+      // With search query combined with label filter
+      component.onRacingLabelFilterChange("lbl-pro");
+      component.racingSearchQuery = "Gamma";
+      expect(component.filteredRacingParticipants).toEqual([d3]);
+    });
+
+    it("should add only label-filtered available participants when addAllFilteredAvailableParticipants is called", () => {
+      const d1 = Driver.createDefault("d1", "Alpha", "A", undefined, [
+        "lbl-pro",
+      ]);
+      const d2 = Driver.createDefault("d2", "Beta", "B", undefined, [
+        "lbl-rookie",
+      ]);
+      component.allDrivers = [d1, d2];
+      component.unselectedParticipants = [d1, d2];
+      component.selectedParticipants = [];
+      component.driverLabels = [
+        { entity_id: "lbl-pro", name: "Pro", color: "#ef4444" },
+        { entity_id: "lbl-rookie", name: "Rookie", color: "#3b82f6" },
+      ];
+
+      component.selectedAvailableLabelId = "lbl-pro";
+      component.availableSearchQuery = "";
+      component.addAllFilteredAvailableParticipants();
+
+      expect(component.selectedParticipants).toContain(d1);
+      expect(component.selectedParticipants).not.toContain(d2);
+    });
+
+    it("should remove only label-filtered racing participants when removeAllFilteredRacingParticipants is called", () => {
+      const d1 = Driver.createDefault("d1", "Alpha", "A", undefined, [
+        "lbl-pro",
+      ]);
+      const d2 = Driver.createDefault("d2", "Beta", "B", undefined, [
+        "lbl-rookie",
+      ]);
+      component.allDrivers = [d1, d2];
+      component.selectedParticipants = [d1, d2];
+      component.driverLabels = [
+        { entity_id: "lbl-pro", name: "Pro", color: "#ef4444" },
+        { entity_id: "lbl-rookie", name: "Rookie", color: "#3b82f6" },
+      ];
+
+      component.selectedRacingLabelId = "lbl-pro";
+      component.racingSearchQuery = "";
+      component.removeAllFilteredRacingParticipants();
+
+      expect(component.selectedParticipants).not.toContain(d1);
+      expect(component.selectedParticipants).toContain(d2);
+    });
+
+    it("should filter participants by multiple labels using Match Any (OR) and Match All (AND)", () => {
+      const d1 = Driver.createDefault("d1", "Alpha", "A", undefined, [
+        "lbl-pro",
+      ]);
+      const d2 = Driver.createDefault("d2", "Beta", "B", undefined, [
+        "lbl-rookie",
+      ]);
+      const d3 = Driver.createDefault("d3", "Gamma", "G", undefined, [
+        "lbl-pro",
+        "lbl-vintage",
+      ]);
+      const d4 = Driver.createDefault("d4", "Delta", "D", undefined, [
+        "lbl-amateur",
+      ]);
+
+      component.allDrivers = [d1, d2, d3, d4];
+      component.unselectedParticipants = [d1, d2, d3, d4];
+      component.selectedParticipants = [d1, d2, d3, d4];
+      component.driverLabels = [
+        { entity_id: "lbl-pro", name: "Pro", color: "#ef4444" },
+        { entity_id: "lbl-rookie", name: "Rookie", color: "#3b82f6" },
+        { entity_id: "lbl-vintage", name: "Vintage", color: "#10b981" },
+        { entity_id: "lbl-amateur", name: "Amateur", color: "#f59e0b" },
+      ];
+
+      // Match Any (OR): Selecting pro and rookie -> d1, d2, d3
+      component.availableLabelMatchMode = "any";
+      component.onAvailableLabelFilterChange(["lbl-pro", "lbl-rookie"]);
+      expect(component.filteredAvailableParticipants).toEqual([d1, d2, d3]);
+
+      // Match All (AND): Selecting pro and vintage -> only d3
+      component.availableLabelMatchMode = "all";
+      component.onAvailableLabelFilterChange(["lbl-pro", "lbl-vintage"]);
+      expect(component.filteredAvailableParticipants).toEqual([d3]);
+
+      // Toggling match mode
+      component.toggleAvailableLabelMatchMode();
+      expect(component.availableLabelMatchMode).toBe("any");
+      expect(component.filteredAvailableParticipants).toEqual([d1, d3]);
+
+      // Clear available filter
+      component.clearAvailableLabelFilter();
+      expect(component.selectedAvailableLabelIds).toEqual([]);
+      expect(component.filteredAvailableParticipants.length).toBe(4);
+
+      // Racing list multi-label filter Match Any
+      component.racingLabelMatchMode = "any";
+      component.onRacingLabelFilterChange(["lbl-rookie", "lbl-amateur"]);
+      expect(component.filteredRacingParticipants).toEqual([d2, d4]);
+
+      // Racing list match mode toggle
+      component.toggleRacingLabelMatchMode();
+      expect(component.racingLabelMatchMode).toBe("all");
+      // No driver has both rookie and amateur
+      expect(component.filteredRacingParticipants).toEqual([]);
+
+      // Clear racing filter
+      component.clearRacingLabelFilter();
+      expect(component.selectedRacingLabelIds).toEqual([]);
+      expect(component.filteredRacingParticipants.length).toBe(4);
+    });
+
+    it("should handle bulk add/remove with multi-label filter active", () => {
+      const d1 = Driver.createDefault("d1", "Alpha", "A", undefined, [
+        "lbl-pro",
+      ]);
+      const d2 = Driver.createDefault("d2", "Beta", "B", undefined, [
+        "lbl-rookie",
+      ]);
+      const d3 = Driver.createDefault("d3", "Gamma", "G", undefined, [
+        "lbl-amateur",
+      ]);
+      component.allDrivers = [d1, d2, d3];
+      component.unselectedParticipants = [d1, d2, d3];
+      component.selectedParticipants = [];
+
+      // Filter available by [lbl-pro, lbl-rookie] and add all
+      component.onAvailableLabelFilterChange(["lbl-pro", "lbl-rookie"]);
+      component.addAllFilteredAvailableParticipants();
+
+      expect(component.selectedParticipants).toContain(d1);
+      expect(component.selectedParticipants).toContain(d2);
+      expect(component.selectedParticipants).not.toContain(d3);
+
+      // Now filter racing participants and remove all filtered
+      component.onRacingLabelFilterChange(["lbl-pro"]);
+      component.removeAllFilteredRacingParticipants();
+
+      expect(component.selectedParticipants).not.toContain(d1);
+      expect(component.selectedParticipants).toContain(d2);
+    });
+  });
 });

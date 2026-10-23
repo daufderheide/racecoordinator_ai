@@ -32,6 +32,7 @@ La barra degli strumenti superiore offre le seguenti azioni:
 - **Soprannome**: Un nome breve o fonetico utilizzato per gli annunci vocali (TTS).
 - **Collega Nome e Soprannome**: Quando attivo, la digitazione del nome aggiorna automaticamente il soprannome.
 - **Avatar**: Scegli un'immagine o un'icona personalizzata per il pilota.
+- **Etichette pilota**: Assegna etichette con codice colore (simili alle etichette dei ticket di GitHub) per organizzare i piloti in gruppi personalizzati (come "Pro", "Rookie" o "Classe A"). I piloti possono appartenere a qualsiasi numero di gruppi. In modalità Modifica, fai clic su **Gestisci etichette** per creare, modificare, ricolorare, eliminare o assegnare etichette. Nella schermata di Configurazione del Giorno di Gara, puoi filtrare i partecipanti disponibili per etichetta per comporre rapidamente i gruppi di gara.
 
 ## Annunci Audio ed Effetti Sonori
 

@@ -33,6 +33,7 @@ export interface SetupOptions {
   uiEditorHelpShown?: boolean;
   recentRaceIds?: string[];
   selectedDriverIds?: string[];
+  driverLabels?: any[];
 }
 
 export class TestSetupHelper {
@@ -69,7 +70,7 @@ export class TestSetupHelper {
     await this.setupLocalizationMocks(page);
 
     // Mock specialized APIs
-    await this.setupDriverMocks(page);
+    await this.setupDriverMocks(page, options);
     await this.setupRaceRestMocks(page);
     await this.setupTrackMocks(page);
     await this.setupTeamMocks(page);
@@ -334,8 +335,60 @@ export class TestSetupHelper {
     }
   }
 
-  static async setupDriverMocks(page: Page) {
+  static async setupDriverMocks(page: Page, options: SetupOptions = {}) {
     let currentDrivers = [...MOCK_DRIVERS];
+    let currentLabels = options.driverLabels ? [...options.driverLabels] : [];
+
+    await page.route("**/api/driver-labels", async (route) => {
+      const method = route.request().method();
+      if (method === "POST") {
+        const postData = route.request().postDataJSON();
+        const newLabel = {
+          ...postData,
+          entity_id: postData.entity_id || `lbl-${Date.now()}`,
+        };
+        currentLabels.push(newLabel);
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify(newLabel),
+        });
+      } else {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify(currentLabels),
+        });
+      }
+    });
+
+    await page.route("**/api/driver-labels/*", async (route) => {
+      const method = route.request().method();
+      const url = route.request().url();
+      const id = url.split("/").pop();
+
+      if (method === "PUT") {
+        const postData = route.request().postDataJSON();
+        const index = currentLabels.findIndex((l) => l.entity_id === id);
+        if (index !== -1) {
+          currentLabels[index] = { ...currentLabels[index], ...postData };
+        }
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify(currentLabels[index] || postData),
+        });
+      } else if (method === "DELETE") {
+        currentLabels = currentLabels.filter((l) => l.entity_id !== id);
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({ success: true }),
+        });
+      } else {
+        await route.continue();
+      }
+    });
 
     await page.route("**/api/drivers", async (route) => {
       const method = route.request().method();

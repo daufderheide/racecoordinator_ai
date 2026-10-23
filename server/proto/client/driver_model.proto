@@ -26,4 +26,5 @@ message DriverModel {
   AudioConfig pitInAudio = 15;
   AudioConfig fuelAudio = 16;
   AudioConfig driftLapAudio = 17;
+  repeated string label_ids = 18;
 }

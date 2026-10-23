@@ -1,0 +1,153 @@
+import { expect, test } from "@playwright/test";
+import {
+  MOCK_DRIVER_LABELS,
+  MOCK_DRIVERS,
+} from "@app/testing/data/drivers_data";
+import { TestSetupHelper } from "@app/testing/test-setup_helper";
+
+test.describe("Raceday Setup Driver Labels Visuals", () => {
+  test.use({ locale: "en" });
+
+  test.beforeEach(async ({ page }) => {
+    const driversWithLabels = MOCK_DRIVERS.map((d) => {
+      if (d.entity_id === "d1") {
+        return { ...d, label_ids: ["lbl-pro"] };
+      }
+      if (d.entity_id === "d2") {
+        return { ...d, label_ids: ["lbl-amateur"] };
+      }
+      if (d.entity_id === "d3") {
+        return { ...d, label_ids: ["lbl-rookie"] };
+      }
+      return { ...d, label_ids: [] };
+    });
+
+    await TestSetupHelper.setupStandardMocks(page, {
+      driverLabels: MOCK_DRIVER_LABELS,
+    });
+
+    await page.route("**/api/drivers", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(driversWithLabels),
+      });
+    });
+
+    await TestSetupHelper.setupLocalStorage(page, {
+      recentRaceIds: ["r1", "r2"],
+      selectedDriverIds: ["d1", "d2"],
+      racedaySetupWalkthroughSeen: true,
+      language: "en",
+    });
+
+    await TestSetupHelper.waitForLocalization(page, "en", page.goto("/"));
+    await expect(page.locator(".setup-container")).toBeVisible({
+      timeout: 15000,
+    });
+
+    const splashScreen = page.locator(".splash-screen");
+    if ((await splashScreen.count()) > 0) {
+      await expect(splashScreen).not.toBeVisible({ timeout: 10000 });
+    }
+
+    await Promise.race([
+      page.evaluate(() => document.fonts.ready),
+      new Promise<void>((resolve) => setTimeout(resolve, 2000)),
+    ]).catch((err) => {
+      console.warn("Raceday Setup test: font ready wait failed:", err);
+    });
+
+    await TestSetupHelper.disableAnimations(page);
+    await expect(page.getByText("Alice")).toBeVisible();
+  });
+
+  test("should display driver cards with labels and label filter dropdown", async ({
+    page,
+  }) => {
+    await page.waitForSelector(".driver-panel");
+    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+    await page.mouse.move(0, 0);
+    await TestSetupHelper.disableAnimations(page);
+
+    await expect(page).toHaveScreenshot("raceday-setup-labels-overview.png", {
+      maxDiffPixelRatio: 0.05,
+      animations: "disabled",
+      timeout: 10000,
+    });
+  });
+
+  test("should filter available drivers by label", async ({ page }) => {
+    await page.waitForSelector(".driver-panel");
+
+    await page
+      .locator("#available-label-filter .custom-select-trigger")
+      .click();
+    await page
+      .locator(
+        "#available-label-filter .custom-select-option[data-value='lbl-rookie']",
+      )
+      .click();
+    await page
+      .locator("#available-label-filter .custom-select-trigger")
+      .click();
+
+    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+    await page.mouse.move(0, 0);
+    await TestSetupHelper.disableAnimations(page);
+
+    await expect(page).toHaveScreenshot("raceday-setup-labels-filtered.png", {
+      maxDiffPixelRatio: 0.05,
+      animations: "disabled",
+      timeout: 10000,
+    });
+  });
+
+  test("should filter racing drivers by label", async ({ page }) => {
+    await page.waitForSelector(".driver-panel");
+
+    await page.locator("#racing-label-filter .custom-select-trigger").click();
+    await page
+      .locator(
+        "#racing-label-filter .custom-select-option[data-value='lbl-pro']",
+      )
+      .click();
+    await page.locator("#racing-label-filter .custom-select-trigger").click();
+
+    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+    await page.mouse.move(0, 0);
+    await TestSetupHelper.disableAnimations(page);
+
+    await expect(page).toHaveScreenshot(
+      "raceday-setup-racing-labels-filtered.png",
+      {
+        maxDiffPixelRatio: 0.05,
+        animations: "disabled",
+        timeout: 10000,
+      },
+    );
+  });
+
+  test("should display open multi-select label dropdown with checkboxes", async ({
+    page,
+  }) => {
+    await page.waitForSelector(".driver-panel");
+
+    await page
+      .locator("#available-label-filter .custom-select-trigger")
+      .click();
+
+    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+    await page.mouse.move(0, 0);
+    await TestSetupHelper.disableAnimations(page);
+
+    await expect(page).toHaveScreenshot(
+      "raceday-setup-labels-dropdown-open.png",
+      {
+        maxDiffPixelRatio: 0.05,
+        animations: "disabled",
+        timeout: 10000,
+      },
+    );
+  });
+});

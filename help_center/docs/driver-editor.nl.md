@@ -32,6 +32,7 @@ De bovenste werkbalk biedt de volgende opties:
 - **Bijnaam**: Een korte of gesproken naam voor tekst-naar-spraak (TTS) meldingen.
 - **Koppel naam & bijnaam**: Indien ingeschakeld, wordt de ingevoerde naam automatisch overgenomen als bijnaam.
 - **Avatar**: Kies een afbeelding of pictogram voor de coureur.
+- **Coureur-labels**: Wijs kleurgecodeerde labels toe (vergelijkbaar met GitHub-issuelabels) om coureurs in aangepaste groepen te organiseren (zoals "Pro", "Rookie" of "Klasse A"). Coureurs kunnen tot meerdere groepen behoren. Klik in de bewerkingsmodus op **Labels beheren** om labels te maken, bewerken, van kleur te veranderen, verwijderen of toe te wijzen. Op het scherm Racedag-configuratie kunt u beschikbare deelnemers op label filteren om snel startvelden samen te stellen.
 
 ## Audiomeldingen & geluidseffecten
 

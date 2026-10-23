@@ -32,6 +32,7 @@ La barre d'outils supérieure offre les actions suivantes :
 - **Surnom** : Un nom court ou phonétique utilisé pour la synthèse vocale (TTS).
 - **Lier Nom et Surnom** : Lorsque cette option est activée, la saisie du nom se répercute automatiquement sur le surnom.
 - **Avatar** : Choisissez une image ou une icône personnalisée pour le pilote.
+- **Étiquettes de pilote** : Attribuez des étiquettes de couleur (similaires aux étiquettes d'issues GitHub) pour organiser les pilotes en groupes personnalisés (par exemple "Pro", "Rookie" ou "Classe A"). Les pilotes peuvent appartenir à plusieurs groupes. En mode Édition, cliquez sur **Gérer les étiquettes** pour créer, modifier, recolorer, supprimer ou attribuer des étiquettes. Sur l'écran de configuration du jour de course, vous pouvez filtrer les participants disponibles par étiquette pour composer rapidement vos plateaux.
 
 ## Annonces audio et effets sonores
 

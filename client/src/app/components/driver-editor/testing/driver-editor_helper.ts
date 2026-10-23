@@ -37,6 +37,10 @@ export class DriverEditorHelper {
       "commitDriverImport",
       "downloadDriverImportTemplate",
       "exportDrivers",
+      "getDriverLabels",
+      "createDriverLabel",
+      "updateDriverLabel",
+      "deleteDriverLabel",
     ]);
     spy.updateRaceSubscription = jasmine.createSpy("updateRaceSubscription");
     spy.connectToInterfaceDataSocket = jasmine.createSpy(
@@ -117,6 +121,12 @@ export class DriverEditorHelper {
     );
     spy.downloadDriverImportTemplate.and.returnValue(of(new Blob([])));
     spy.exportDrivers.and.returnValue(of(new Blob([])));
+    spy.getDriverLabels.and.returnValue(of([]));
+    spy.createDriverLabel.and.callFake((l: any) =>
+      of({ ...l, entity_id: "lbl-new" }),
+    );
+    spy.updateDriverLabel.and.callFake((l: any) => of(l));
+    spy.deleteDriverLabel.and.returnValue(of(undefined));
     spy.socketConnected$ = of(true);
 
     return spy;

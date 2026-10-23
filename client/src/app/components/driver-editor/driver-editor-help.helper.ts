@@ -44,6 +44,12 @@ function buildGeneralHelpSteps(ctx: DriverEditorHelpContext): GuideStep[] {
       content: t.translate("DE_HELP_NICKNAME_CONTENT"),
       position: "bottom",
     },
+    {
+      selector: "#driver-labels-section",
+      title: t.translate("DE_HELP_LABELS_TITLE"),
+      content: t.translate("DE_HELP_LABELS_CONTENT"),
+      position: "bottom",
+    },
   ];
 }
 

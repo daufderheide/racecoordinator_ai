@@ -1,0 +1,291 @@
+@if (visible()) {
+  <div
+    class="label-modal-backdrop"
+    id="driver-label-modal-backdrop"
+    (click)="onClose()"
+  >
+    <div
+      class="label-modal-dialog"
+      id="driver-label-modal-dialog"
+      (click)="$event.stopPropagation()"
+    >
+      <!-- Modal Header -->
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <span class="material-icons modal-header-icon">label</span>
+          <h2 class="modal-title">{{ "DLM_TITLE" | translate }}</h2>
+        </div>
+        <button
+          type="button"
+          class="btn-ghost-close"
+          id="btn-close-label-modal"
+          (click)="onClose()"
+          [title]="'COMMON_CLOSE' | translate"
+          aria-label="Close"
+        >
+          <span class="material-icons">close</span>
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="modal-body" id="driver-label-modal-body">
+        <!-- Create / Edit Form Section -->
+        @if (isFormOpen) {
+          <div class="label-form-card" id="driver-label-form-card">
+            <div class="form-header">
+              <h3>
+                {{
+                  (editingLabelId ? "DLM_EDIT_TITLE" : "DLM_CREATE_TITLE")
+                    | translate
+                }}
+              </h3>
+            </div>
+
+            <!-- Live Preview -->
+            <div class="preview-wrap">
+              <span
+                class="label-preview-pill"
+                [style.background-color]="formColor"
+                [style.color]="getContrastColor(formColor)"
+              >
+                {{ formName.trim() || ("DLM_LABEL_NAME" | translate) }}
+              </span>
+            </div>
+
+            <!-- Name Input -->
+            <div class="form-field">
+              <label class="field-label">{{
+                "DLM_LABEL_NAME" | translate
+              }}</label>
+              <input
+                type="text"
+                id="driver-label-name-input"
+                class="dm-input"
+                [placeholder]="'DLM_LABEL_NAME' | translate"
+                [(ngModel)]="formName"
+                (keydown.enter)="saveForm()"
+                autocomplete="off"
+                data-dashlane-ignore="true"
+                data-1p-ignore="true"
+                data-lpignore="true"
+                data-bwignore="true"
+                data-form-type="other"
+              />
+            </div>
+
+            <!-- Color Palette -->
+            <div class="form-field">
+              <div class="color-field-header">
+                <label class="field-label">{{
+                  "DLM_LABEL_COLOR" | translate
+                }}</label>
+                <button
+                  type="button"
+                  class="btn-randomize"
+                  (click)="randomizeColor()"
+                  [title]="'DLM_RANDOM_COLOR' | translate"
+                >
+                  <span class="material-icons">shuffle</span>
+                </button>
+              </div>
+
+              <div class="color-palette-grid">
+                @for (c of presetColors; track c) {
+                  <button
+                    type="button"
+                    class="color-swatch"
+                    [style.background-color]="c"
+                    [class.selected]="
+                      formColor.toLowerCase() === c.toLowerCase()
+                    "
+                    (click)="selectColor(c)"
+                    [attr.aria-label]="c"
+                  >
+                    @if (formColor.toLowerCase() === c.toLowerCase()) {
+                      <span class="material-icons swatch-check">check</span>
+                    }
+                  </button>
+                }
+                <!-- Custom Color Picker -->
+                <div class="custom-color-picker-wrap" [title]="'Custom color'">
+                  <input
+                    type="color"
+                    [(ngModel)]="formColor"
+                    class="custom-color-input"
+                  />
+                  <span class="material-icons picker-icon">palette</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Error Banner -->
+            @if (formErrorMessage) {
+              <div class="alert-banner error" id="driver-label-form-error">
+                <span class="material-icons alert-icon">error</span>
+                <span class="alert-text">{{
+                  formErrorMessage | translate
+                }}</span>
+              </div>
+            }
+
+            <!-- Form Actions -->
+            <div class="form-actions">
+              <button
+                type="button"
+                class="btn-secondary"
+                id="btn-cancel-label-form"
+                (click)="cancelForm()"
+              >
+                {{ "DLM_BTN_CANCEL" | translate }}
+              </button>
+              <button
+                type="button"
+                class="btn-primary"
+                id="btn-save-label-form"
+                [disabled]="isSaving"
+                (click)="saveForm()"
+              >
+                {{
+                  (editingLabelId ? "DLM_BTN_SAVE" : "DLM_BTN_CREATE")
+                    | translate
+                }}
+              </button>
+            </div>
+          </div>
+        }
+
+        <!-- Search & New Label Row (When Form is closed) -->
+        @if (!isFormOpen) {
+          <div class="toolbar-row">
+            <div class="search-input-wrap">
+              <span class="material-icons search-icon">search</span>
+              <input
+                type="text"
+                id="driver-label-search-input"
+                class="dm-input search-input"
+                [placeholder]="'DLM_SEARCH_PLACEHOLDER' | translate"
+                [(ngModel)]="searchQuery"
+                autocomplete="off"
+                data-dashlane-ignore="true"
+                data-1p-ignore="true"
+                data-lpignore="true"
+                data-bwignore="true"
+                data-form-type="other"
+              />
+            </div>
+            <button
+              type="button"
+              class="btn-primary btn-new-label"
+              id="btn-open-create-label"
+              (click)="openCreateForm()"
+            >
+              <span class="material-icons">add</span>
+              <span>{{ "DLM_BTN_NEW_LABEL" | translate }}</span>
+            </button>
+          </div>
+        }
+
+        <!-- Labels List -->
+        <div class="labels-list-container" id="driver-labels-list-container">
+          @for (label of filteredLabels; track label.entity_id) {
+            <!-- Deletion Confirmation Row -->
+            @if (deletingLabelId === label.entity_id) {
+              <div
+                class="label-delete-confirm-row"
+                id="label-delete-confirm-{{ label.entity_id }}"
+              >
+                <div class="delete-confirm-message">
+                  <span class="material-icons warn-icon">warning</span>
+                  <span>{{
+                    "DLM_CONFIRM_DELETE_MSG" | translate: { name: label.name }
+                  }}</span>
+                </div>
+                <div class="delete-confirm-actions">
+                  <button
+                    type="button"
+                    class="btn-cancel-delete"
+                    (click)="cancelDelete($event)"
+                  >
+                    {{ "DLM_BTN_CANCEL" | translate }}
+                  </button>
+                  <button
+                    type="button"
+                    class="btn-danger-delete"
+                    [disabled]="isSaving"
+                    (click)="executeDelete(label, $event)"
+                  >
+                    {{ "DLM_BTN_DELETE" | translate }}
+                  </button>
+                </div>
+              </div>
+            } @else {
+              <!-- Normal Label Row -->
+              <div
+                class="label-item-row"
+                [id]="'label-row-' + label.entity_id"
+                [class.assigned]="isAssigned(label.entity_id)"
+                (click)="toggleAssign(label)"
+                [title]="'DLM_SELECT_TO_ASSIGN' | translate"
+              >
+                <div class="label-item-left">
+                  <span class="material-icons assign-check-icon">
+                    {{
+                      isAssigned(label.entity_id)
+                        ? "check_box"
+                        : "check_box_outline_blank"
+                    }}
+                  </span>
+                  <span
+                    class="label-pill"
+                    [style.background-color]="label.color"
+                    [style.color]="getContrastColor(label.color)"
+                  >
+                    {{ label.name }}
+                  </span>
+                </div>
+
+                <div class="label-item-actions">
+                  <button
+                    type="button"
+                    class="btn-ghost-action edit"
+                    (click)="openEditForm(label, $event)"
+                    [title]="'DLM_EDIT_TITLE' | translate"
+                  >
+                    <span class="material-icons">edit</span>
+                  </button>
+                  <button
+                    type="button"
+                    class="btn-ghost-action delete"
+                    (click)="confirmDelete(label, $event)"
+                    [title]="'DLM_BTN_DELETE' | translate"
+                  >
+                    <span class="material-icons">delete</span>
+                  </button>
+                </div>
+              </div>
+            }
+          }
+
+          @if (filteredLabels.length === 0) {
+            <div class="empty-labels-state">
+              <span class="material-icons empty-icon">label_off</span>
+              <p>{{ "DLM_NO_LABELS_FOUND" | translate }}</p>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="modal-footer">
+        <button
+          type="button"
+          class="btn-secondary"
+          id="btn-done-label-modal"
+          (click)="onClose()"
+        >
+          {{ "COMMON_DONE" | translate }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

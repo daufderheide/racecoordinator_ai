@@ -93,73 +93,85 @@ export function mapSoundType(
 }
 
 export function toDriver(d: any): Driver {
-  return new Driver(d.entity_id, d.name, d.nickname || "", d.avatarUrl, {
-    lapAudio: {
-      type: mapSoundType(d.lapAudio?.type || d.lapSoundType),
-      url: d.lapAudio?.url || d.lapSoundUrl,
-      text: d.lapAudio?.text || d.lapSoundText,
+  const driver = new Driver(
+    d.entity_id,
+    d.name,
+    d.nickname || "",
+    d.avatarUrl,
+    {
+      lapAudio: {
+        type: mapSoundType(d.lapAudio?.type || d.lapSoundType),
+        url: d.lapAudio?.url || d.lapSoundUrl,
+        text: d.lapAudio?.text || d.lapSoundText,
+      },
+      bestLapAudio: {
+        type: mapSoundType(d.bestLapAudio?.type || d.bestLapSoundType),
+        url: d.bestLapAudio?.url || d.bestLapSoundUrl,
+        text: d.bestLapAudio?.text || d.bestLapSoundText,
+      },
+      penaltyAudio: {
+        type: mapSoundType(d.penaltyAudio?.type || d.penaltySoundType),
+        url: d.penaltyAudio?.url || d.penaltySoundUrl,
+        text: d.penaltyAudio?.text || d.penaltySoundText,
+      },
+      overallBestLapAudio: {
+        type: mapSoundType(d.overallBestLapAudio?.type),
+        url: d.overallBestLapAudio?.url,
+        text: d.overallBestLapAudio?.text,
+      },
+      overallLaneBestLapAudio: {
+        type: mapSoundType(d.overallLaneBestLapAudio?.type),
+        url: d.overallLaneBestLapAudio?.url,
+        text: d.overallLaneBestLapAudio?.text,
+      },
+      raceBestLapAudio: {
+        type: mapSoundType(d.raceBestLapAudio?.type),
+        url: d.raceBestLapAudio?.url,
+        text: d.raceBestLapAudio?.text,
+      },
+      raceLaneBestLapAudio: {
+        type: mapSoundType(d.raceLaneBestLapAudio?.type),
+        url: d.raceLaneBestLapAudio?.url,
+        text: d.raceLaneBestLapAudio?.text,
+      },
+      heatBestLapAudio: {
+        type: mapSoundType(d.heatBestLapAudio?.type),
+        url: d.heatBestLapAudio?.url,
+        text: d.heatBestLapAudio?.text,
+      },
+      newRaceLeaderAudio: {
+        type: mapSoundType(d.newRaceLeaderAudio?.type),
+        url: d.newRaceLeaderAudio?.url,
+        text: d.newRaceLeaderAudio?.text,
+      },
+      newHeatLeaderAudio: {
+        type: mapSoundType(d.newHeatLeaderAudio?.type),
+        url: d.newHeatLeaderAudio?.url,
+        text: d.newHeatLeaderAudio?.text,
+      },
+      pitInAudio: {
+        type: mapSoundType(d.pitInAudio?.type),
+        url: d.pitInAudio?.url,
+        text: d.pitInAudio?.text,
+      },
+      fuelAudio: {
+        type: mapSoundType(d.fuelAudio?.type, "audio_set"),
+        url: d.fuelAudio?.url || "default_fuel_level",
+        text: d.fuelAudio?.text,
+      },
+      driftLapAudio: {
+        type: mapSoundType(d.driftLapAudio?.type, "tts"),
+        url: d.driftLapAudio?.url,
+        text: d.driftLapAudio?.text,
+      },
     },
-    bestLapAudio: {
-      type: mapSoundType(d.bestLapAudio?.type || d.bestLapSoundType),
-      url: d.bestLapAudio?.url || d.bestLapSoundUrl,
-      text: d.bestLapAudio?.text || d.bestLapSoundText,
-    },
-    penaltyAudio: {
-      type: mapSoundType(d.penaltyAudio?.type || d.penaltySoundType),
-      url: d.penaltyAudio?.url || d.penaltySoundUrl,
-      text: d.penaltyAudio?.text || d.penaltySoundText,
-    },
-    overallBestLapAudio: {
-      type: mapSoundType(d.overallBestLapAudio?.type),
-      url: d.overallBestLapAudio?.url,
-      text: d.overallBestLapAudio?.text,
-    },
-    overallLaneBestLapAudio: {
-      type: mapSoundType(d.overallLaneBestLapAudio?.type),
-      url: d.overallLaneBestLapAudio?.url,
-      text: d.overallLaneBestLapAudio?.text,
-    },
-    raceBestLapAudio: {
-      type: mapSoundType(d.raceBestLapAudio?.type),
-      url: d.raceBestLapAudio?.url,
-      text: d.raceBestLapAudio?.text,
-    },
-    raceLaneBestLapAudio: {
-      type: mapSoundType(d.raceLaneBestLapAudio?.type),
-      url: d.raceLaneBestLapAudio?.url,
-      text: d.raceLaneBestLapAudio?.text,
-    },
-    heatBestLapAudio: {
-      type: mapSoundType(d.heatBestLapAudio?.type),
-      url: d.heatBestLapAudio?.url,
-      text: d.heatBestLapAudio?.text,
-    },
-    newRaceLeaderAudio: {
-      type: mapSoundType(d.newRaceLeaderAudio?.type),
-      url: d.newRaceLeaderAudio?.url,
-      text: d.newRaceLeaderAudio?.text,
-    },
-    newHeatLeaderAudio: {
-      type: mapSoundType(d.newHeatLeaderAudio?.type),
-      url: d.newHeatLeaderAudio?.url,
-      text: d.newHeatLeaderAudio?.text,
-    },
-    pitInAudio: {
-      type: mapSoundType(d.pitInAudio?.type),
-      url: d.pitInAudio?.url,
-      text: d.pitInAudio?.text,
-    },
-    fuelAudio: {
-      type: mapSoundType(d.fuelAudio?.type, "audio_set"),
-      url: d.fuelAudio?.url || "default_fuel_level",
-      text: d.fuelAudio?.text,
-    },
-    driftLapAudio: {
-      type: mapSoundType(d.driftLapAudio?.type, "tts"),
-      url: d.driftLapAudio?.url,
-      text: d.driftLapAudio?.text,
-    },
-  });
+  );
+  driver.labelIds = Array.isArray(d.labelIds)
+    ? [...d.labelIds]
+    : Array.isArray(d.label_ids)
+      ? [...d.label_ids]
+      : [];
+  return driver;
 }
 
 export function createNewDriverTemplate(): Driver {
@@ -167,7 +179,7 @@ export function createNewDriverTemplate(): Driver {
 }
 
 export function cloneDriver(driver: Driver): Driver {
-  return new Driver(
+  const cloned = new Driver(
     driver.entity_id,
     driver.name,
     driver.nickname,
@@ -208,6 +220,8 @@ export function cloneDriver(driver: Driver): Driver {
         : undefined,
     },
   );
+  cloned.labelIds = Array.isArray(driver.labelIds) ? [...driver.labelIds] : [];
+  return cloned;
 }
 
 export function areDriversEqual(d1: Driver, d2: Driver): boolean {
@@ -232,10 +246,17 @@ export function areDriversEqual(d1: Driver, d2: Driver): boolean {
     return normalizeString(a1.url) === normalizeString(a2.url);
   };
 
+  const labels1 = (d1.labelIds || []).slice().sort();
+  const labels2 = (d2.labelIds || []).slice().sort();
+  const labelsMatch =
+    labels1.length === labels2.length &&
+    labels1.every((val, idx) => val === labels2[idx]);
+
   return (
     nameMatch &&
     nicknameMatch &&
     avatarMatch &&
+    labelsMatch &&
     checkAudio(d1.lapAudio, d2.lapAudio) &&
     checkAudio(d1.bestLapAudio, d2.bestLapAudio) &&
     checkAudio(d1.penaltyAudio, d2.penaltyAudio) &&

@@ -532,6 +532,156 @@ describe("CustomSelectComponent", () => {
     // 1000 - 80 - 16 = 904px
     expect(select.calculatedMaxHeight).toBe("904px");
   });
+
+  describe("Multi-select functionality", () => {
+    let hostFixture: ComponentFixture<MultiSelectTestHostComponent>;
+    let hostComponent: MultiSelectTestHostComponent;
+    let select: CustomSelectComponent;
+    let element: HTMLElement;
+
+    beforeEach(() => {
+      hostFixture = TestBed.createComponent(MultiSelectTestHostComponent);
+      hostComponent = hostFixture.componentInstance;
+      hostFixture.detectChanges();
+      select = hostFixture.debugElement.children[0]
+        .componentInstance as CustomSelectComponent;
+      element = hostFixture.nativeElement as HTMLElement;
+    });
+
+    it("should display placeholder or all option when empty array is selected", () => {
+      expect(select.selectedLabel).toBe("All Items");
+      expect(element.querySelector(".selected-text")?.textContent?.trim()).toBe(
+        "All Items",
+      );
+      expect(element.querySelector(".custom-select-clear-btn")).toBeNull();
+    });
+
+    it("should toggle option selection on click without closing dropdown", () => {
+      select.toggleOpen();
+      hostFixture.detectChanges();
+      expect(select.isOpen).toBeTrue();
+
+      const options = element.querySelectorAll<HTMLElement>(
+        ".custom-select-option",
+      );
+      // Click Option 1
+      options[1].click();
+      hostFixture.detectChanges();
+
+      expect(select.isOpen).toBeTrue();
+      expect(select.value()).toEqual(["opt1"]);
+      expect(hostComponent.onChange).toHaveBeenCalledWith(["opt1"]);
+
+      // Click Option 2
+      options[2].click();
+      hostFixture.detectChanges();
+
+      expect(select.isOpen).toBeTrue();
+      expect(select.value()).toEqual(["opt1", "opt2"]);
+
+      // Click Option 1 again to deselect
+      options[1].click();
+      hostFixture.detectChanges();
+
+      expect(select.isOpen).toBeTrue();
+      expect(select.value()).toEqual(["opt2"]);
+    });
+
+    it("should render color dot and label name when 1 option is selected", () => {
+      select.value.set(["opt1"]);
+      select.updateSelectedLabel();
+      hostFixture.detectChanges();
+
+      const triggerDot = element.querySelector(
+        ".custom-select-trigger .custom-select-color-dot",
+      ) as HTMLElement;
+      expect(triggerDot).toBeTruthy();
+      expect(triggerDot.style.backgroundColor).toBe("rgb(239, 68, 68)");
+      expect(
+        element
+          .querySelector(".custom-select-trigger-text")
+          ?.textContent?.trim(),
+      ).toBe("Option 1");
+      expect(element.querySelector(".custom-select-clear-btn")).toBeTruthy();
+    });
+
+    it("should render multiple color dots and multiCountText when multiple options selected", () => {
+      select.value.set(["opt1", "opt2"]);
+      select.updateSelectedLabel();
+      hostFixture.detectChanges();
+
+      const triggerDots = element.querySelectorAll(
+        ".custom-select-trigger .custom-select-color-dot",
+      );
+      expect(triggerDots.length).toBe(2);
+      expect(
+        element
+          .querySelector(".custom-select-trigger-text")
+          ?.textContent?.trim(),
+      ).toBe("Items (2)");
+    });
+
+    it("should clear selections when the All Items option is clicked", () => {
+      select.value.set(["opt1", "opt2"]);
+      select.updateSelectedLabel();
+      select.toggleOpen();
+      hostFixture.detectChanges();
+
+      const options = element.querySelectorAll<HTMLElement>(
+        ".custom-select-option",
+      );
+      // Click All Items option (index 0)
+      options[0].click();
+      hostFixture.detectChanges();
+
+      expect(select.value()).toEqual([]);
+      expect(element.querySelector(".selected-text")?.textContent?.trim()).toBe(
+        "All Items",
+      );
+    });
+
+    it("should clear selections when clear button on trigger is clicked", () => {
+      select.value.set(["opt1"]);
+      select.updateSelectedLabel();
+      hostFixture.detectChanges();
+
+      const clearBtn = element.querySelector<HTMLButtonElement>(
+        ".custom-select-clear-btn",
+      );
+      expect(clearBtn).toBeTruthy();
+
+      clearBtn!.click();
+      hostFixture.detectChanges();
+
+      expect(select.value()).toEqual([]);
+      expect(element.querySelector(".selected-text")?.textContent?.trim()).toBe(
+        "All Items",
+      );
+    });
+
+    it("should show checkbox icons in multi-select dropdown", () => {
+      select.value.set(["opt1"]);
+      select.toggleOpen();
+      hostFixture.detectChanges();
+
+      const checkboxes = element.querySelectorAll(".custom-select-checkbox");
+      // Options 1, 2, 3 have checkboxes (All Items does not)
+      expect(checkboxes.length).toBe(3);
+      expect(checkboxes[0].textContent?.trim()).toBe("check_box");
+      expect(checkboxes[1].textContent?.trim()).toBe("check_box_outline_blank");
+    });
+
+    it("should handle writeValue with array, empty array, or string", () => {
+      select.writeValue(["opt2"]);
+      expect(select.value()).toEqual(["opt2"]);
+
+      select.writeValue("");
+      expect(select.value()).toEqual([]);
+
+      select.writeValue("opt1");
+      expect(select.value()).toEqual(["opt1"]);
+    });
+  });
 });
 
 @Component({
@@ -547,4 +697,31 @@ describe("CustomSelectComponent", () => {
 class DynamicLabelTestHostComponent {
   val = "opt1";
   opt1Label = "Original Label";
+}
+
+@Component({
+  standalone: true,
+  imports: [CustomSelectComponent, CustomOptionComponent],
+  template: `
+    <app-custom-select
+      [multiple]="true"
+      [value]="val"
+      placeholder="All Items"
+      multiCountText="Items ({count})"
+      (change)="onChange($event)"
+    >
+      <app-custom-option value="">All Items</app-custom-option>
+      <app-custom-option value="opt1" color="#ef4444"
+        >Option 1</app-custom-option
+      >
+      <app-custom-option value="opt2" color="#22c55e"
+        >Option 2</app-custom-option
+      >
+      <app-custom-option value="opt3">Option 3</app-custom-option>
+    </app-custom-select>
+  `,
+})
+class MultiSelectTestHostComponent {
+  val: string[] = [];
+  onChange = jasmine.createSpy("onChange");
 }

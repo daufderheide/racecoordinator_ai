@@ -25,33 +25,43 @@ public class DriverConverter {
       }
     }
 
-    return DriverModel.newBuilder()
-        .setName(driver.getName() != null ? driver.getName() : "")
-        .setNickname(driver.getNickname() != null ? driver.getNickname() : "")
-        .setAvatarUrl(avatarUrl != null ? avatarUrl : "")
-        .setLapAudio(toProtoAudio(driver.getLapAudio(), "default_beep"))
-        .setBestLapAudio(toProtoAudio(driver.getBestLapAudio(), "default_driveby"))
-        .setPenaltyAudio(toProtoAudio(driver.getPenaltyAudio(), "default_penalty"))
-        .setOverallBestLapAudio(toProtoAudio(driver.getOverallBestLapAudio(), "default_record_lap"))
-        .setOverallLaneBestLapAudio(
-            toProtoAudio(driver.getOverallLaneBestLapAudio(), "default_record_lane_lap"))
-        .setRaceBestLapAudio(toProtoAudio(driver.getRaceBestLapAudio(), "default_best_race_lap"))
-        .setRaceLaneBestLapAudio(
-            toProtoAudio(driver.getRaceLaneBestLapAudio(), "default_best_race_lane_lap"))
-        .setHeatBestLapAudio(toProtoAudio(driver.getHeatBestLapAudio(), "default_best_heat_lap"))
-        .setNewRaceLeaderAudio(
-            toProtoAudio(driver.getNewRaceLeaderAudio(), "default_new_race_leader"))
-        .setNewHeatLeaderAudio(
-            toProtoAudio(driver.getNewHeatLeaderAudio(), "default_new_heat_leader"))
-        .setPitInAudio(toProtoAudio(driver.getPitInAudio(), "default_pit_in"))
-        .setFuelAudio(toProtoAudio(driver.getFuelAudio(), "default_fuel_level", "audio_set"))
-        .setDriftLapAudio(
-            toProtoAudio(driver.getDriftLapAudio(), null, "tts", "Drift lap for {driver.nickname}"))
-        .setModel(
-            Model.newBuilder()
-                .setEntityId(driver.getEntityId() != null ? driver.getEntityId() : "")
-                .build())
-        .build();
+    DriverModel.Builder builder =
+        DriverModel.newBuilder()
+            .setName(driver.getName() != null ? driver.getName() : "")
+            .setNickname(driver.getNickname() != null ? driver.getNickname() : "")
+            .setAvatarUrl(avatarUrl != null ? avatarUrl : "")
+            .setLapAudio(toProtoAudio(driver.getLapAudio(), "default_beep"))
+            .setBestLapAudio(toProtoAudio(driver.getBestLapAudio(), "default_driveby"))
+            .setPenaltyAudio(toProtoAudio(driver.getPenaltyAudio(), "default_penalty"))
+            .setOverallBestLapAudio(
+                toProtoAudio(driver.getOverallBestLapAudio(), "default_record_lap"))
+            .setOverallLaneBestLapAudio(
+                toProtoAudio(driver.getOverallLaneBestLapAudio(), "default_record_lane_lap"))
+            .setRaceBestLapAudio(
+                toProtoAudio(driver.getRaceBestLapAudio(), "default_best_race_lap"))
+            .setRaceLaneBestLapAudio(
+                toProtoAudio(driver.getRaceLaneBestLapAudio(), "default_best_race_lane_lap"))
+            .setHeatBestLapAudio(
+                toProtoAudio(driver.getHeatBestLapAudio(), "default_best_heat_lap"))
+            .setNewRaceLeaderAudio(
+                toProtoAudio(driver.getNewRaceLeaderAudio(), "default_new_race_leader"))
+            .setNewHeatLeaderAudio(
+                toProtoAudio(driver.getNewHeatLeaderAudio(), "default_new_heat_leader"))
+            .setPitInAudio(toProtoAudio(driver.getPitInAudio(), "default_pit_in"))
+            .setFuelAudio(toProtoAudio(driver.getFuelAudio(), "default_fuel_level", "audio_set"))
+            .setDriftLapAudio(
+                toProtoAudio(
+                    driver.getDriftLapAudio(), null, "tts", "Drift lap for {driver.nickname}"))
+            .setModel(
+                Model.newBuilder()
+                    .setEntityId(driver.getEntityId() != null ? driver.getEntityId() : "")
+                    .build());
+
+    if (driver.getLabelIds() != null && !driver.getLabelIds().isEmpty()) {
+      builder.addAllLabelIds(driver.getLabelIds());
+    }
+
+    return builder.build();
   }
 
   private static AudioConfig toProtoAudio(
@@ -161,6 +171,9 @@ public class DriverConverter {
     }
     if (proto.hasDriftLapAudio()) {
       builder.withDriftLapAudio(fromProtoAudio(proto.getDriftLapAudio()));
+    }
+    if (proto.getLabelIdsCount() > 0) {
+      builder.withLabelIds(proto.getLabelIdsList());
     }
 
     return builder.build();

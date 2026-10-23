@@ -26,6 +26,7 @@ export class CustomOptionComponent {
   disabled = input<boolean>(false);
   separator = input(false, { transform: booleanAttribute });
   divider = input(false, { transform: booleanAttribute });
+  color = input<string | undefined>(undefined);
   constructor(public elementRef: ElementRef<HTMLElement>) {}
 
   get hasSeparator(): boolean {
@@ -65,6 +66,10 @@ export class CustomSelectComponent
 {
   id = input<string>("");
   disabled = input(false);
+  multiple = input(false, { transform: booleanAttribute });
+  placeholder = input<string>("");
+  multiCountText = input<string>("");
+  clearTooltip = input<string>("Clear");
   compareWith = input<(o1: any, o2: any) => boolean>(
     (o1: any, o2: any) => o1 === o2,
   );
@@ -112,17 +117,81 @@ export class CustomSelectComponent
     this.updateSelectedLabel();
   }
 
+  get hasMultipleSelectedOptions(): boolean {
+    if (!this.multiple()) return false;
+    const val = this.value();
+    return Array.isArray(val) && val.length > 0;
+  }
+
+  get selectedOptions(): CustomOptionComponent[] {
+    if (!this.customOptions) return [];
+    if (this.multiple()) {
+      return this.customOptions.filter(
+        (opt) => !this.isEmptyOption(opt) && this.isSelected(opt.value()),
+      );
+    }
+    const single = this.customOptions.find((opt) =>
+      this.isSelected(opt.value()),
+    );
+    return single ? [single] : [];
+  }
+
+  get multiSelectedLabel(): string {
+    const count = this.selectedOptions.length;
+    if (this.multiCountText()) {
+      return this.multiCountText().replace("{count}", String(count));
+    }
+    return `${count} selected`;
+  }
+
+  isEmptyValue(val: any): boolean {
+    return val === "" || val === undefined || val === null;
+  }
+
+  isEmptyOption(option: CustomOptionComponent): boolean {
+    return this.isEmptyValue(option.value());
+  }
+
   isSelected(optValue: any): boolean {
     const fn = this.compareWith() || ((o1: any, o2: any) => o1 === o2);
+    if (this.multiple()) {
+      const val = this.value();
+      const isEmpty = !val || !Array.isArray(val) || val.length === 0;
+      if (this.isEmptyValue(optValue)) {
+        return isEmpty;
+      }
+      if (isEmpty) return false;
+      return val.some((item: any) => fn(optValue, item));
+    }
     return fn(optValue, this.value());
   }
 
   updateSelectedLabel() {
     if (!this.customOptions) return;
+    if (this.multiple()) {
+      const selected = this.selectedOptions;
+      let newLabel = "";
+      if (selected.length === 0) {
+        const allOption = this.customOptions.find((opt) =>
+          this.isEmptyOption(opt),
+        );
+        newLabel = allOption ? allOption.label : this.placeholder();
+      } else if (selected.length === 1) {
+        newLabel = selected[0].label;
+      } else {
+        newLabel = this.multiSelectedLabel;
+      }
+      if (this.selectedLabel !== newLabel) {
+        this.selectedLabel = newLabel;
+        this.cdr.markForCheck();
+      }
+      return;
+    }
+
     const selected = this.customOptions.find((opt) =>
       this.isSelected(opt.value()),
     );
-    const newLabel = selected ? selected.label : "";
+    const newLabel = selected ? selected.label : this.placeholder() || "";
     if (this.selectedLabel !== newLabel) {
       this.selectedLabel = newLabel;
       this.cdr.markForCheck();
@@ -130,7 +199,17 @@ export class CustomSelectComponent
   }
 
   writeValue(val: any): void {
-    this.value.set(val);
+    if (this.multiple()) {
+      if (Array.isArray(val)) {
+        this.value.set([...val]);
+      } else if (this.isEmptyValue(val)) {
+        this.value.set([]);
+      } else {
+        this.value.set([val]);
+      }
+    } else {
+      this.value.set(val);
+    }
   }
 
   registerOnChange(fn: any): void {
@@ -230,8 +309,44 @@ export class CustomSelectComponent
     }, 0);
   }
 
+  clearSelection(event: Event): void {
+    event.stopPropagation();
+    if (this.disabled()) return;
+    if (this.multiple()) {
+      this.value.set([]);
+    } else {
+      this.value.set(undefined);
+    }
+    this.updateSelectedLabel();
+    this.onChange(this.value());
+    this.change.emit(this.value());
+  }
+
   selectOption(option: CustomOptionComponent, event: Event) {
     event.stopPropagation();
+    if (this.multiple()) {
+      const optVal = option.value();
+      if (this.isEmptyValue(optVal)) {
+        this.value.set([]);
+      } else {
+        const current: any[] = Array.isArray(this.value())
+          ? [...this.value()]
+          : [];
+        const fn = this.compareWith() || ((o1: any, o2: any) => o1 === o2);
+        const index = current.findIndex((item) => fn(item, optVal));
+        if (index >= 0) {
+          current.splice(index, 1);
+        } else {
+          current.push(optVal);
+        }
+        this.value.set(current);
+      }
+      this.updateSelectedLabel();
+      this.onChange(this.value());
+      this.change.emit(this.value());
+      return;
+    }
+
     this.value.set(option.value());
     this.selectedLabel = option.label;
     this.onChange(this.value());

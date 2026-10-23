@@ -16,6 +16,7 @@ import {
   DriverImportPreview,
   DriverImportResult,
 } from "@app/models/driver-import.model";
+import { DriverLabel } from "@app/models/driver-label";
 import { Event } from "@app/models/event";
 import { Season, SeasonStandingItem } from "@app/models/season";
 import {
@@ -148,6 +149,10 @@ export class DataService {
     return `${this.baseUrl}/api/drivers`;
   }
 
+  private get driverLabelsUrl(): string {
+    return `${this.baseUrl}/api/driver-labels`;
+  }
+
   private get tracksUrl(): string {
     return `${this.baseUrl}/api/tracks`;
   }
@@ -249,6 +254,35 @@ export class DataService {
 
   deleteDriver(id: string): Observable<any> {
     return this.http.delete<any>(`${this.driversUrl}/${id}`);
+  }
+
+  getDriverLabels(): Observable<DriverLabel[]> {
+    return this.http.get<DriverLabel[]>(this.driverLabelsUrl);
+  }
+
+  createDriverLabel(label: Partial<DriverLabel>): Observable<DriverLabel> {
+    return this.http.post<DriverLabel>(this.driverLabelsUrl, label);
+  }
+
+  updateDriverLabel(label: Partial<DriverLabel>): Observable<DriverLabel>;
+  updateDriverLabel(
+    id: string,
+    label: Partial<DriverLabel>,
+  ): Observable<DriverLabel>;
+  updateDriverLabel(
+    idOrLabel: string | Partial<DriverLabel>,
+    label?: Partial<DriverLabel>,
+  ): Observable<DriverLabel> {
+    const id =
+      typeof idOrLabel === "string"
+        ? idOrLabel
+        : idOrLabel.entity_id || (idOrLabel as any).id || "";
+    const body = typeof idOrLabel === "object" ? idOrLabel : label || {};
+    return this.http.put<DriverLabel>(`${this.driverLabelsUrl}/${id}`, body);
+  }
+
+  deleteDriverLabel(id: string): Observable<any> {
+    return this.http.delete<any>(`${this.driverLabelsUrl}/${id}`);
   }
 
   validateDriverImport(formData: FormData): Observable<DriverImportPreview> {

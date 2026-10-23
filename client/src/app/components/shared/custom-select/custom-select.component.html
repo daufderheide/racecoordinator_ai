@@ -2,15 +2,62 @@
   class="custom-select-container"
   [class.disabled]="disabled()"
   [class.open]="isOpen"
+  [class.multiple]="multiple()"
 >
   <div class="custom-select-trigger" (click)="toggleOpen()">
     <span class="selected-text" [title]="selectedLabel || ''">
-      @if (selectedLabel) {
+      @if (multiple() && hasMultipleSelectedOptions) {
+        <span class="custom-select-trigger-selection">
+          @if (selectedOptions.length === 1) {
+            @if (selectedOptions[0].color()) {
+              <span
+                class="custom-select-color-dot"
+                [style.background-color]="selectedOptions[0].color()"
+              ></span>
+            }
+            <span class="custom-select-trigger-text">{{
+              selectedOptions[0].label
+            }}</span>
+          } @else {
+            <span class="custom-select-multi-dots">
+              @for (
+                opt of selectedOptions.slice(0, 3);
+                track opt.value() ?? $index
+              ) {
+                @if (opt.color()) {
+                  <span
+                    class="custom-select-color-dot"
+                    [style.background-color]="opt.color()"
+                  ></span>
+                }
+              }
+            </span>
+            <span class="custom-select-trigger-text">{{
+              multiSelectedLabel
+            }}</span>
+          }
+        </span>
+      } @else if (selectedLabel) {
         {{ selectedLabel }}
+      } @else if (placeholder()) {
+        <span class="placeholder">{{ placeholder() }}</span>
       } @else {
         <span class="placeholder">&nbsp;</span>
       }
     </span>
+
+    @if (multiple() && hasMultipleSelectedOptions) {
+      <button
+        type="button"
+        class="custom-select-clear-btn"
+        (click)="clearSelection($event)"
+        [title]="clearTooltip()"
+        aria-label="Clear selection"
+      >
+        <span class="material-icons">close</span>
+      </button>
+    }
+
     <span class="dropdown-icon">▼</span>
   </div>
 
@@ -27,9 +74,25 @@
           [attr.data-value]="option.value()"
           [class.selected]="isSelected(option.value())"
           [class.disabled]="option.disabled()"
+          [class.is-empty-option]="isEmptyOption(option)"
           (click)="!option.disabled() && selectOption(option, $event)"
         >
-          {{ option.label }}
+          @if (multiple() && !isEmptyOption(option)) {
+            <span class="material-icons custom-select-checkbox">
+              {{
+                isSelected(option.value())
+                  ? "check_box"
+                  : "check_box_outline_blank"
+              }}
+            </span>
+          }
+          @if (option.color()) {
+            <span
+              class="custom-select-color-dot"
+              [style.background-color]="option.color()"
+            ></span>
+          }
+          <span class="custom-select-option-text">{{ option.label }}</span>
         </div>
         @if (option.hasSeparator) {
           <div class="custom-select-separator" role="separator"></div>

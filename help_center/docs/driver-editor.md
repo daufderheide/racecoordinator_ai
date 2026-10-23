@@ -32,6 +32,7 @@ The top toolbar provides the following actions:
 - **Nickname**: A shortened or spoken callout name used for Text-to-Speech (TTS) announcements.
 - **Link Name & Nickname**: When enabled, editing the Name field automatically mirrors the text into the Nickname field.
 - **Avatar**: Choose a custom image or preset icon to represent the driver on race displays.
+- **Driver Labels**: Assign color-coded labels (similar to GitHub issue labels) to organize drivers into custom sets (such as "Pro", "Rookie", or "Class A"). Drivers can belong to any number of sets. In Edit Mode, click **Manage Labels** to create, edit, recolor, delete, or assign labels. On the Race Day Setup screen, you can filter available participants by label to quickly configure race rosters.
 
 ## Audio Callouts & SFX
 

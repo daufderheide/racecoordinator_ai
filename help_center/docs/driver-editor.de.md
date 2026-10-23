@@ -32,6 +32,7 @@ Die obere Symbolleiste bietet folgende Aktionen:
 - **Spitzname**: Ein Kurzname oder gesprochener Name für Text-to-Speech (TTS)-Ansagen.
 - **Name & Spitzname verknüpfen**: Wenn aktiviert, wird die Eingabe im Namensfeld automatisch in das Spitznamenfeld übernommen.
 - **Avatar**: Wählen Sie ein Bild oder Symbol für den Fahrer aus.
+- **Fahrer-Labels**: Weisen Sie farbcodierte Labels zu (ähnlich wie GitHub-Issue-Labels), um Fahrer in Gruppen zu organisieren (z. B. "Pro", "Rookie" oder "Klasse A"). Fahrer können beliebig vielen Gruppen angehören. Im Bearbeitungsmodus klicken Sie auf **Labels verwalten**, um Labels zu erstellen, zu bearbeiten, umzufärben, zu löschen oder zuzuweisen. Auf dem Renntag-Setup-Bildschirm können Sie verfügbare Teilnehmer nach Label filtern, um Starterfelder schnell zusammenzustellen.
 
 ## Audioansagen & Soundeffekte
 

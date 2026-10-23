@@ -38,6 +38,7 @@ import { getThemeDisplayNameKey } from "@app/components/ui-editor/ui-editor-crud
 import { DriverConverter } from "@app/converters/driver.converter";
 import { DataService } from "@app/data.service";
 import { Driver } from "@app/models/driver";
+import { DriverLabel } from "@app/models/driver-label";
 import { Event as EventModel } from "@app/models/event";
 import { Race } from "@app/models/race";
 import { Season, SeasonStandingItem } from "@app/models/season";
@@ -55,6 +56,7 @@ import { SettingsService } from "@app/services/settings.service";
 import { ThemeService } from "@app/services/theme.service";
 import { TranslationService } from "@app/services/translation.service";
 import { UpdateChannel } from "@app/services/update.service";
+import { getContrastColor } from "@app/utils/color.utils";
 import { saveFileAs } from "@app/utils/file-download.utils";
 import { calculateSeasonStandings } from "@app/utils/season.utils";
 import { naturalSortCompare } from "@app/utils/sorting.utils";
@@ -109,6 +111,31 @@ export class DefaultRacedaySetupComponent implements OnInit {
   clickedParticipantItem: Participant | null = null;
   public allDrivers: Driver[] = [];
   public allTeams: Team[] = [];
+  public driverLabels: DriverLabel[] = [];
+  public selectedAvailableLabelIds: string[] = [];
+  public selectedRacingLabelIds: string[] = [];
+  public availableLabelMatchMode: "any" | "all" = "any";
+  public racingLabelMatchMode: "any" | "all" = "any";
+
+  get selectedAvailableLabelId(): string {
+    return this.selectedAvailableLabelIds.length > 0
+      ? this.selectedAvailableLabelIds[0]
+      : "";
+  }
+
+  set selectedAvailableLabelId(val: string) {
+    this.selectedAvailableLabelIds = val ? [val] : [];
+  }
+
+  get selectedRacingLabelId(): string {
+    return this.selectedRacingLabelIds.length > 0
+      ? this.selectedRacingLabelIds[0]
+      : "";
+  }
+
+  set selectedRacingLabelId(val: string) {
+    this.selectedRacingLabelIds = val ? [val] : [];
+  }
 
   imageErrors = new Set<string>();
 
@@ -120,10 +147,23 @@ export class DefaultRacedaySetupComponent implements OnInit {
   racingActiveIndex: number = 0;
 
   get filteredAvailableParticipants(): Participant[] {
-    if (!this.availableSearchQuery) return this.unselectedParticipants;
+    let pool = this.unselectedParticipants;
+    if (this.selectedAvailableLabelIds.length > 0) {
+      pool = pool.filter((p) => {
+        if (this.availableLabelMatchMode === "all") {
+          return this.selectedAvailableLabelIds.every((id) =>
+            this.participantHasLabel(p, id),
+          );
+        }
+        return this.selectedAvailableLabelIds.some((id) =>
+          this.participantHasLabel(p, id),
+        );
+      });
+    }
+    if (!this.availableSearchQuery) return pool;
     const lowerQuery = this.availableSearchQuery.trim().toLowerCase();
-    if (!lowerQuery) return this.unselectedParticipants;
-    const matches = this.unselectedParticipants.filter((p) => {
+    if (!lowerQuery) return pool;
+    const matches = pool.filter((p) => {
       const name = this.getLocalizedName(p).toLowerCase();
       const nickname = this.getLocalizedNickname(p).toLowerCase();
       return name.includes(lowerQuery) || nickname.includes(lowerQuery);
@@ -132,10 +172,23 @@ export class DefaultRacedaySetupComponent implements OnInit {
   }
 
   get filteredRacingParticipants(): Participant[] {
-    if (!this.racingSearchQuery) return this.selectedParticipants;
+    let pool = this.selectedParticipants;
+    if (this.selectedRacingLabelIds.length > 0) {
+      pool = pool.filter((p) => {
+        if (this.racingLabelMatchMode === "all") {
+          return this.selectedRacingLabelIds.every((id) =>
+            this.participantHasLabel(p, id),
+          );
+        }
+        return this.selectedRacingLabelIds.some((id) =>
+          this.participantHasLabel(p, id),
+        );
+      });
+    }
+    if (!this.racingSearchQuery) return pool;
     const lowerQuery = this.racingSearchQuery.trim().toLowerCase();
-    if (!lowerQuery) return this.selectedParticipants;
-    const matches = this.selectedParticipants.filter((p) => {
+    if (!lowerQuery) return pool;
+    const matches = pool.filter((p) => {
       const name = this.getLocalizedName(p).toLowerCase();
       const nickname = this.getLocalizedNickname(p).toLowerCase();
       return name.includes(lowerQuery) || nickname.includes(lowerQuery);
@@ -279,6 +332,7 @@ export class DefaultRacedaySetupComponent implements OnInit {
       races: this.dataService.getRaces(),
       events: this.dataService.getEvents(),
       seasons: this.dataService.getSeasons(),
+      driverLabels: this.dataService.getDriverLabels(),
     }).subscribe({
       next: (result) => this.initInitialData(result),
       error: (err) => this.logger.error("Error loading initial data", err),
@@ -304,6 +358,7 @@ export class DefaultRacedaySetupComponent implements OnInit {
     );
     this.allDrivers = drivers;
     this.allTeams = teams;
+    this.driverLabels = (result.driverLabels as any[]) || [];
 
     (this as any).races = (result.races || []).sort((a: any, b: any) =>
       (a.name || "").localeCompare(b.name || ""),
@@ -605,6 +660,83 @@ export class DefaultRacedaySetupComponent implements OnInit {
       return `${participant.driverIds.length} ${this.translationService.translate("RDS_TEAM_DRIVERS")}`;
     }
     return "";
+  }
+
+  participantHasLabel(participant: Participant, labelId: string): boolean {
+    if (!labelId) return true;
+    if (this.isDriver(participant)) {
+      return (participant.labelIds || []).includes(labelId);
+    }
+    const team = participant as Team;
+    if (!team.driverIds || team.driverIds.length === 0) return false;
+    return team.driverIds.some((dId) => {
+      const d = this.allDrivers.find((driver) => driver.entity_id === dId);
+      return !!d && (d.labelIds || []).includes(labelId);
+    });
+  }
+
+  getParticipantLabels(participant: Participant): DriverLabel[] {
+    if (this.isDriver(participant)) {
+      const ids = new Set(participant.labelIds || []);
+      return this.driverLabels.filter((l) => ids.has(l.entity_id));
+    }
+    const team = participant as Team;
+    const ids = new Set<string>();
+    (team.driverIds || []).forEach((dId) => {
+      const d = this.allDrivers.find((driver) => driver.entity_id === dId);
+      (d?.labelIds || []).forEach((lId) => ids.add(lId));
+    });
+    return this.driverLabels.filter((l) => ids.has(l.entity_id));
+  }
+
+  onAvailableLabelFilterChange(
+    labelIds: string[] | string | null | undefined,
+  ): void {
+    if (Array.isArray(labelIds)) {
+      this.selectedAvailableLabelIds = labelIds.filter(Boolean);
+    } else if (labelIds) {
+      this.selectedAvailableLabelIds = [labelIds];
+    } else {
+      this.selectedAvailableLabelIds = [];
+    }
+    this.availableActiveIndex = 0;
+  }
+
+  onRacingLabelFilterChange(
+    labelIds: string[] | string | null | undefined,
+  ): void {
+    if (Array.isArray(labelIds)) {
+      this.selectedRacingLabelIds = labelIds.filter(Boolean);
+    } else if (labelIds) {
+      this.selectedRacingLabelIds = [labelIds];
+    } else {
+      this.selectedRacingLabelIds = [];
+    }
+    this.racingActiveIndex = 0;
+  }
+
+  toggleAvailableLabelMatchMode(): void {
+    this.availableLabelMatchMode =
+      this.availableLabelMatchMode === "any" ? "all" : "any";
+  }
+
+  toggleRacingLabelMatchMode(): void {
+    this.racingLabelMatchMode =
+      this.racingLabelMatchMode === "any" ? "all" : "any";
+  }
+
+  clearAvailableLabelFilter(): void {
+    this.selectedAvailableLabelIds = [];
+    this.availableActiveIndex = 0;
+  }
+
+  clearRacingLabelFilter(): void {
+    this.selectedRacingLabelIds = [];
+    this.racingActiveIndex = 0;
+  }
+
+  getContrastColor(color: string | undefined): string {
+    return getContrastColor(color);
   }
 
   onParticipantImageError(participant: Participant) {
@@ -914,7 +1046,10 @@ export class DefaultRacedaySetupComponent implements OnInit {
   }
 
   addAllFilteredAvailableParticipants(inputElem?: HTMLInputElement) {
-    if (!this.availableSearchQuery) {
+    if (
+      !this.availableSearchQuery &&
+      this.selectedAvailableLabelIds.length === 0
+    ) {
       this.addAllParticipants();
       return;
     }
@@ -967,7 +1102,7 @@ export class DefaultRacedaySetupComponent implements OnInit {
   }
 
   removeAllFilteredRacingParticipants(inputElem?: HTMLInputElement) {
-    if (!this.racingSearchQuery) {
+    if (!this.racingSearchQuery && this.selectedRacingLabelIds.length === 0) {
       this.removeAllParticipants();
       return;
     }

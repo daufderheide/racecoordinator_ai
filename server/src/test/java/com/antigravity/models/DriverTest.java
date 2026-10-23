@@ -109,4 +109,19 @@ public class DriverTest {
     assertEquals("default_pit_in", driver.getPitInAudio().getUrl());
     assertEquals("default_fuel_level", driver.getFuelAudio().getUrl());
   }
+
+  @Test
+  public void testLabelIdsAndBuilder() {
+    java.util.List<String> labels = java.util.Arrays.asList("label-1", "label-2");
+    Driver driver = new Driver.Builder().withName("Dave").withLabelIds(labels).build();
+
+    assertEquals(2, driver.getLabelIds().size());
+    assertTrue(driver.getLabelIds().contains("label-1"));
+    assertTrue(driver.getLabelIds().contains("label-2"));
+
+    Driver copy = Driver.Builder.from(driver).build();
+    assertEquals(2, copy.getLabelIds().size());
+    assertTrue(copy.getLabelIds().contains("label-1"));
+    assertTrue(copy.getLabelIds().contains("label-2"));
+  }
 }

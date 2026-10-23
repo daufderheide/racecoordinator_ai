@@ -1383,7 +1383,7 @@ describe("DriverEditorComponent", () => {
 
     it("should provide all guide steps including the name and nickname link step in correct order", () => {
       const steps = component.getHelpSteps();
-      expect(steps.length).toBe(20);
+      expect(steps.length).toBe(21);
 
       const selectors = steps.map((s) => s.selector).filter(Boolean);
       expect(selectors).toEqual([
@@ -1392,6 +1392,7 @@ describe("DriverEditorComponent", () => {
         "#driver-name-section",
         "#driver-name-nickname-link-section",
         "#driver-nickname-section",
+        "#driver-labels-section",
         "#driver-audio-section",
         "#driver-lap-audio",
         "#driver-best-lap-audio",
@@ -1415,6 +1416,13 @@ describe("DriverEditorComponent", () => {
       expect(linkStep?.title).toBe("DE_HELP_LINK_TITLE");
       expect(linkStep?.content).toBe("DE_HELP_LINK_CONTENT");
       expect(linkStep?.position).toBe("bottom");
+
+      const labelsStep = steps.find(
+        (s) => s.selector === "#driver-labels-section",
+      );
+      expect(labelsStep).toBeDefined();
+      expect(labelsStep?.title).toBe("DE_HELP_LABELS_TITLE");
+      expect(labelsStep?.content).toBe("DE_HELP_LABELS_CONTENT");
     });
   });
 
@@ -2096,5 +2104,80 @@ describe("DriverEditorComponent", () => {
       component.onOpenExportModal();
       expect(component.showExportModal).toBeFalse();
     });
+  });
+
+  describe("Driver Labels", () => {
+    it("should open and close label manager modal", () => {
+      expect(component.isLabelManagerOpen).toBeFalse();
+      component.openLabelManager();
+      expect(component.isLabelManagerOpen).toBeTrue();
+      component.closeLabelManager();
+      expect(component.isLabelManagerOpen).toBeFalse();
+    });
+
+    it("should update allLabels on onLabelsUpdated", () => {
+      const labels = [
+        { entity_id: "lbl-1", name: "Pro", color: "#ef4444" },
+        { entity_id: "lbl-2", name: "Rookie", color: "#3b82f6" },
+      ];
+      component.onLabelsUpdated(labels);
+      expect(component.allLabels).toEqual(labels);
+    });
+
+    it("should update driver labelIds on onAssignedLabelsChange and capture state", () => {
+      component.editingDriver = new Driver("d1", "Test Driver", "");
+      component.editingDriver.labelIds = [];
+
+      component.onAssignedLabelsChange(["lbl-1", "lbl-2"]);
+      expect(component.editingDriver.labelIds).toEqual(["lbl-1", "lbl-2"]);
+    });
+
+    it("should unassign label in edit mode and capture state", () => {
+      component.editingDriver = new Driver("d1", "Test Driver", "");
+      component.editingDriver.labelIds = ["lbl-1", "lbl-2"];
+
+      // Read-only mode -> no-op
+      component.isEditMode = false;
+      component.unassignLabel("lbl-1");
+      expect(component.editingDriver.labelIds).toEqual(["lbl-1", "lbl-2"]);
+
+      // Edit mode -> removes label
+      component.isEditMode = true;
+      component.unassignLabel("lbl-1");
+      expect(component.editingDriver.labelIds).toEqual(["lbl-2"]);
+    });
+
+    it("should return assigned labels matching editingDriver.labelIds", () => {
+      component.allLabels = [
+        { entity_id: "lbl-1", name: "Pro", color: "#ef4444" },
+        { entity_id: "lbl-2", name: "Rookie", color: "#3b82f6" },
+        { entity_id: "lbl-3", name: "Vintage", color: "#10b981" },
+      ];
+      component.editingDriver = new Driver("d1", "Test Driver", "");
+      component.editingDriver.labelIds = ["lbl-1", "lbl-3"];
+
+      const assigned = component.getAssignedLabels();
+      expect(assigned.length).toBe(2);
+      expect(assigned.map((l) => l.name)).toEqual(["Pro", "Vintage"]);
+    });
+
+    it("should include labelIds in updateDriver payload when saved", fakeAsync(() => {
+      const mockDriver = new Driver("d1", "Driver 1", "D1");
+      mockDriver.labelIds = ["lbl-1", "lbl-2"];
+      component.editingDriver = mockDriver;
+      component.originalDriver = new Driver("d1", "Driver 1", "D1");
+      component.isEditMode = true;
+
+      const dataService = TestBed.inject(DataService);
+      component.updateDriver(false, false);
+      tick();
+
+      expect(dataService.updateDriver).toHaveBeenCalledWith(
+        "d1",
+        jasmine.objectContaining({
+          labelIds: ["lbl-1", "lbl-2"],
+        }),
+      );
+    }));
   });
 });

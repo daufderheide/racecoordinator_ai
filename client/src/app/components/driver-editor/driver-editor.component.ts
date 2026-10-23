@@ -13,6 +13,7 @@ import { forkJoin, Subscription } from "rxjs";
 import { AudioSelectorComponent } from "@app/components/shared/audio-selector/audio-selector.component";
 import { ConfirmationModalComponent } from "@app/components/shared/confirmation-modal/confirmation-modal.component";
 import { DriverExportModalComponent } from "@app/components/shared/driver-export-modal/driver-export-modal.component";
+import { DriverLabelManagerModalComponent } from "@app/components/shared/driver-label-manager-modal/driver-label-manager-modal.component";
 import { EditorSectionComponent } from "@app/components/shared/editor-section/editor-section.component";
 import { EditorTitleComponent } from "@app/components/shared/editor-title/editor-title.component";
 import { ImageSelectorComponent } from "@app/components/shared/image-selector/image-selector.component";
@@ -24,6 +25,7 @@ import { DirtyComponent } from "@app/interfaces/dirty-component";
 import { AssetType, normalizeAssetType } from "@app/models/asset";
 import { Driver } from "@app/models/driver";
 import { DriverImportResult } from "@app/models/driver-import.model";
+import { DriverLabel } from "@app/models/driver-label";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import {
   ConnectionMonitorService,
@@ -36,6 +38,7 @@ import { RaceConnectionService } from "@app/services/race-connection.service";
 import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
 import { createTTSContext, mockTTSContext } from "@app/utils/audio";
+import { getContrastColor } from "@app/utils/color.utils";
 import { EditorLifecycleHelper } from "@app/utils/editor-lifecycle.helper";
 
 import {
@@ -95,6 +98,7 @@ export { DriverAudioSlot } from "./driver-editor.helper";
     ConfirmationModalComponent,
     ImportModalComponent,
     DriverExportModalComponent,
+    DriverLabelManagerModalComponent,
   ],
 })
 export class DriverEditorComponent
@@ -160,6 +164,8 @@ export class DriverEditorComponent
 
   // Driver Data
   allDrivers: Driver[] = [];
+  allLabels: DriverLabel[] = [];
+  isLabelManagerOpen: boolean = false;
   private initialLastEditedId: string | null = null;
 
   // Assets for presets
@@ -405,10 +411,11 @@ export class DriverEditorComponent
     this.dataSubscription = forkJoin({
       drivers: this.dataService.getDrivers(),
       assets: this.dataService.listAssets(),
+      labels: this.dataService.getDriverLabels(),
     }).subscribe({
       next: (result) => {
         try {
-          this.loadDataInternal(result.drivers, result.assets);
+          this.loadDataInternal(result.drivers, result.assets, result.labels);
         } finally {
           this.isLoading = false;
           if (!this.isDestroyed) {
@@ -586,8 +593,13 @@ export class DriverEditorComponent
     return this.saveDriverData(isSaveAsNew, isAutoSave);
   }
 
-  private loadDataInternal(rawDrivers: any[], assets: any[]) {
+  private loadDataInternal(
+    rawDrivers: any[],
+    assets: any[],
+    rawLabels: any[] = [],
+  ) {
     this.allDrivers = mapRawDrivers(rawDrivers);
+    this.allLabels = rawLabels || [];
     this.updateDriverSelectItems();
 
     const processed = processImportedAssets(assets);
@@ -918,9 +930,11 @@ export class DriverEditorComponent
     this.dataSubscription = forkJoin({
       drivers: this.dataService.getDrivers(),
       assets: this.dataService.listAssets(),
+      labels: this.dataService.getDriverLabels(),
     }).subscribe({
-      next: ({ drivers, assets }) => {
+      next: ({ drivers, assets, labels }) => {
         this.allDrivers = mapRawDrivers(drivers);
+        this.allLabels = labels || [];
         this.updateDriverSelectItems();
 
         const processed = processImportedAssets(assets);
@@ -1011,6 +1025,43 @@ export class DriverEditorComponent
         this.cdr.detectChanges();
       },
     });
+  }
+
+  openLabelManager() {
+    this.isLabelManagerOpen = true;
+  }
+
+  closeLabelManager() {
+    this.isLabelManagerOpen = false;
+  }
+
+  onLabelsUpdated(labels: DriverLabel[]) {
+    this.allLabels = labels;
+  }
+
+  onAssignedLabelsChange(assignedIds: string[]) {
+    if (this.editingDriver) {
+      this.editingDriver.labelIds = assignedIds;
+      this.captureState();
+    }
+  }
+
+  unassignLabel(labelId: string) {
+    if (!this.isEditMode || !this.editingDriver) return;
+    this.editingDriver.labelIds = (this.editingDriver.labelIds || []).filter(
+      (id) => id !== labelId,
+    );
+    this.captureState();
+  }
+
+  getAssignedLabels(): DriverLabel[] {
+    if (!this.editingDriver || !this.editingDriver.labelIds) return [];
+    const ids = new Set(this.editingDriver.labelIds);
+    return this.allLabels.filter((l) => ids.has(l.entity_id));
+  }
+
+  getContrastColor(color: string | undefined): string {
+    return getContrastColor(color);
   }
 
   getAvatarUrl(url?: string): string {

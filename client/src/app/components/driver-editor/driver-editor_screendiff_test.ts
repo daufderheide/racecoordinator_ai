@@ -1,5 +1,8 @@
 import { expect, test } from "@playwright/test";
-import { MOCK_DRIVERS } from "@app/testing/data/drivers_data";
+import {
+  MOCK_DRIVER_LABELS,
+  MOCK_DRIVERS,
+} from "@app/testing/data/drivers_data";
 import { TestSetupHelper } from "@app/testing/test-setup_helper";
 
 import { DriverEditorHarnessE2e } from "./testing/driver-editor.harness.e2e";
@@ -298,6 +301,93 @@ test.describe("Driver Editor Visuals", () => {
       animations: "disabled",
       maxDiffPixelRatio: 0.05,
       timeout: 15000,
+    });
+  });
+
+  test("should display driver editor with assigned labels in read-only mode", async ({
+    page,
+  }) => {
+    const driverWithLabels = {
+      ...MOCK_DRIVERS[0],
+      label_ids: ["lbl-pro", "lbl-rookie"],
+    };
+    await page.route("**/api/drivers", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify([driverWithLabels]),
+      });
+    });
+    await page.route("**/api/driver-labels", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(MOCK_DRIVER_LABELS),
+      });
+    });
+
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/driver-editor?id=d1"),
+    );
+    await page.locator(".page-container").waitFor();
+    await page.locator(".loader-overlay").waitFor({ state: "hidden" });
+    await page
+      .locator("#driver-assigned-labels-list .driver-label-pill")
+      .first()
+      .waitFor({ state: "visible" });
+    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+    await page.mouse.move(0, 0);
+    await TestSetupHelper.disableAnimations(page);
+
+    await expect(page).toHaveScreenshot("driver-editor-labels-read-only.png", {
+      animations: "disabled",
+      maxDiffPixelRatio: 0.05,
+    });
+  });
+
+  test("should display driver editor with assigned labels in edit mode", async ({
+    page,
+  }) => {
+    const driverWithLabels = {
+      ...MOCK_DRIVERS[0],
+      label_ids: ["lbl-pro", "lbl-rookie"],
+    };
+    await page.route("**/api/drivers", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify([driverWithLabels]),
+      });
+    });
+    await page.route("**/api/driver-labels", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(MOCK_DRIVER_LABELS),
+      });
+    });
+
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/driver-editor?id=d1"),
+    );
+    await page.locator(".page-container").waitFor();
+    await page.locator(".loader-overlay").waitFor({ state: "hidden" });
+
+    await enterEditMode(page);
+    await page
+      .locator("#driver-manage-labels-btn")
+      .waitFor({ state: "visible" });
+    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+    await page.mouse.move(0, 0);
+    await TestSetupHelper.disableAnimations(page);
+
+    await expect(page).toHaveScreenshot("driver-editor-labels-edit-mode.png", {
+      animations: "disabled",
+      maxDiffPixelRatio: 0.05,
     });
   });
 });

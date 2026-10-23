@@ -66,7 +66,8 @@ if ($ChangedFlag) {
 } elseif ($args.Count -gt 0) {
     Write-Host "Running screendiff tests with specified arguments..." -ForegroundColor Green
     $PlaywrightArgs = ($args | ForEach-Object {
-        if ($_ -match '\s') { "'$_'" } else { $_ }
+        $clean = $_ -replace '^[.]?[/\\]?client[/\\]', ''
+        if ($clean -match '\s') { "'$clean'" } else { $clean }
     }) -join " "
 } else {
     Write-Host "Running all $TotalTests of $TotalTests screendiff tests..." -ForegroundColor Green

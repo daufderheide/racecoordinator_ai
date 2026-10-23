@@ -45,3 +45,21 @@ export const MOCK_DRIVER_INSTANCES = MOCK_DRIVERS.map(
       d.lapSoundUrl,
     ),
 );
+
+export const MOCK_DRIVER_LABELS = [
+  {
+    entity_id: "lbl-pro",
+    name: "Pro",
+    color: "#e11d48",
+  },
+  {
+    entity_id: "lbl-amateur",
+    name: "Amateur",
+    color: "#2563eb",
+  },
+  {
+    entity_id: "lbl-rookie",
+    name: "Rookie",
+    color: "#16a34a",
+  },
+];

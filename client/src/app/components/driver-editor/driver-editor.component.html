@@ -137,6 +137,54 @@
             class="dm-input"
           />
         </div>
+        <!-- Labels Section -->
+        <div id="driver-labels-section" class="editor-section">
+          <div class="labels-section-header">
+            <label class="section-label">{{
+              "DE_SECTION_LABELS" | translate
+            }}</label>
+            @if (isEditMode) {
+              <button
+                type="button"
+                id="driver-manage-labels-btn"
+                class="btn-manage-labels"
+                (click)="openLabelManager()"
+                [title]="'DE_MANAGE_LABELS_TOOLTIP' | translate"
+              >
+                <span class="material-icons">label</span>
+                <span>{{ "DE_MANAGE_LABELS" | translate }}</span>
+              </button>
+            }
+          </div>
+
+          <div class="driver-labels-list" id="driver-assigned-labels-list">
+            @for (label of getAssignedLabels(); track label.entity_id) {
+              <span
+                class="driver-label-pill"
+                [style.background-color]="label.color"
+                [style.color]="getContrastColor(label.color)"
+              >
+                <span class="label-name">{{ label.name }}</span>
+                @if (isEditMode) {
+                  <button
+                    type="button"
+                    class="btn-remove-label"
+                    (click)="unassignLabel(label.entity_id)"
+                    [title]="'DE_REMOVE_LABEL_TOOLTIP' | translate"
+                    [attr.aria-label]="'DE_REMOVE_LABEL' | translate"
+                  >
+                    <span class="material-icons">delete</span>
+                  </button>
+                }
+              </span>
+            }
+            @if (getAssignedLabels().length === 0) {
+              <span class="no-labels-text">{{
+                "DE_NO_LABELS" | translate
+              }}</span>
+            }
+          </div>
+        </div>
         <div class="editor-actions">
           <div class="spacer"></div>
         </div>
@@ -495,4 +543,15 @@
     (close)="showExportModal = false"
   >
   </app-driver-export-modal>
+
+  <!-- Driver Label Manager Modal -->
+  <app-driver-label-manager-modal
+    [visible]="isLabelManagerOpen"
+    [assignedLabelIds]="editingDriver ? editingDriver.labelIds || [] : []"
+    [allLabels]="allLabels"
+    (assignedLabelIdsChange)="onAssignedLabelsChange($event)"
+    (labelsUpdated)="onLabelsUpdated($event)"
+    (close)="closeLabelManager()"
+  >
+  </app-driver-label-manager-modal>
 </div>

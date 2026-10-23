@@ -32,6 +32,7 @@ export interface DriverInit extends DriverAudioConfig {
   name: string;
   nickname?: string;
   avatarUrl?: string;
+  labelIds?: string[];
 }
 
 export const EMPTY_DRIVER_ID = "EMPTY_LANE";
@@ -183,6 +184,7 @@ export class Driver implements Model {
   pitInAudio!: AudioConfig;
   fuelAudio!: AudioConfig;
   driftLapAudio!: AudioConfig;
+  labelIds: string[] = [];
 
   constructor(init: DriverInit);
   constructor(
@@ -239,12 +241,16 @@ export class Driver implements Model {
       this.name = entity_idOrInit.name;
       this.nickname = entity_idOrInit.nickname || "";
       this.avatarUrl = entity_idOrInit.avatarUrl;
+      this.labelIds = Array.isArray(entity_idOrInit.labelIds)
+        ? [...entity_idOrInit.labelIds]
+        : [];
       audioConfig = entity_idOrInit;
     } else {
       this.entity_id = entity_idOrInit;
       this.name = name || "";
       this.nickname = nickname || "";
       this.avatarUrl = avatarUrl;
+      this.labelIds = [];
       audioConfig = resolveAudioConfig(
         audioOrLap,
         bestLapAudio,
@@ -271,8 +277,11 @@ export class Driver implements Model {
     name: string,
     nickname: string = "",
     avatarUrl?: string,
+    labelIds: string[] = [],
   ): Driver {
-    return new Driver(entity_id, name, nickname, avatarUrl);
+    const driver = new Driver(entity_id, name, nickname, avatarUrl);
+    driver.labelIds = Array.isArray(labelIds) ? [...labelIds] : [];
+    return driver;
   }
 
   get falseStartAudio(): AudioConfig {
