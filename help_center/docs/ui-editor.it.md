@@ -63,6 +63,16 @@ Il widget **Colonna Corsia** consente di posizionare le singole colonne di dati 
 - **Pilota di Riferimento e Schede Singole**:
   - Le singole schede posizionate fuori da una griglia scelgono quale pilota mostrare: per **Corsia Pista** (Corsia 1 fino a Corsia 8), per **Posizione Manche** (1°, 2°, ecc.), per posizione nella **Classifica Generale** o per **Testa di Serie**.
 
+### Widget inset e allineamento
+
+Ogni scheda colonna corsia supporta fino a 8 **slot inset secondari** disposti lungo il perimetro della metrica principale (In alto a sinistra, In alto al centro, In alto a destra, Al centro a sinistra, Al centro a destra, In basso a sinistra, In basso al centro, In basso a destra):
+
+- **Associazione dati**: Gli inset possono visualizzare metriche secondarie (es. giro migliore, conteggio giri, carburante %, manche disputate, nome pilota), immagini/avatar o widget personalizzati incorporati.
+- **Allineamento orizzontale e verticale**:
+  - Nella scheda Inset dell'ispettore, ogni inset posizionato dispone di controlli per l'**Allineamento orizzontale** (**Sinistra**, **Centro**, **Destra**) e l'**Allineamento verticale** (**In alto**, **Al centro**, **In basso**).
+  - Gli inset utilizzano per impostazione predefinita la loro posizione perimetrale naturale (es. `In alto a sinistra` predefinito su Sinistra/In alto, `In basso a destra` su Destra/In basso), garantendo totale compatibilità visiva con i layout esistenti e consentendo una regolazione precisa all'interno di ciascuno slot.
+- **Stile personalizzato**: Gli inset possono ereditare caratteri e colori dalla colonna oppure definire tipografia, colori del testo, decimali e soglie di formato personalizzati.
+
 ### Origini Dati Griglia: Dati Manche vs. Dati Generali di Gara
 
 Ogni griglia di dati nell'Editor UI dispone di un'impostazione **Origine dati** nella scheda Griglia, che determina quali piloti popolano le righe:

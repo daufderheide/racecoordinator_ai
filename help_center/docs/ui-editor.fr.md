@@ -63,6 +63,16 @@ Le widget **Colonne de Voie** permet de positionner des colonnes individuelles d
 - **Pilote Cible et Cartes Individuelles** :
   - Les cartes placées hors grille sélectionnent le pilote à afficher : par **Voie de Piste** (Voie 1 à Voie 8), par **Position de Série** (1ère, 2e, etc.), par rang au **Classement Général** ou par **Tête de Série**.
 
+### Widgets d'encart (Insets) et alignement
+
+Chaque carte de colonne de voie prend en charge jusqu'à 8 **emplacements d'encart (Insets)** disposés autour du périmètre de la métrique principale (En haut à gauche, En haut au centre, En haut à droite, Au centre à gauche, Au centre à droite, En bas à gauche, En bas au centre, En bas à droite) :
+
+- **Liaison de données** : Les encarts peuvent afficher des métriques secondaires (ex. meilleur tour, nombre de tours, carburant %, manches courues, nom du pilote), des images/avatars ou des widgets personnalisés intégrés.
+- **Alignement horizontal et vertical** :
+  - Dans l'onglet Inset de l'inspecteur, chaque encart placé propose des menus déroulants d'**Alignement horizontal** (**Gauche**, **Centre**, **Droite**) et d'**Alignement vertical** (**Haut**, **Centre**, **Bas**).
+  - Les encarts utilisent par défaut leur position périmétrique naturelle (ex. `En haut à gauche` par défaut sur Gauche/Haut, `En bas à droite` par défaut sur Droite/Bas), assurant une compatibilité visuelle totale avec les dispositions existantes tout en permettant un ajustement précis au sein de chaque emplacement.
+- **Personnalisation visuelle** : Les encarts peuvent hériter des polices et des couleurs de la colonne ou définir une typographie, des couleurs de texte, des décimales et des seuils de format personnalisés.
+
 ### Sources de Données de Grille : Données de Série vs. Données Générales de Course
 
 Chaque grille de données dans l'Éditeur d'Interface dispose d'un paramètre **Source de données** dans l'onglet Grille, qui définit quels pilotes alimentent les lignes :

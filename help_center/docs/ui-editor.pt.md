@@ -63,6 +63,16 @@ O widget **Coluna de Pista** permite posicionar colunas individuais de dados da 
 - **Piloto Alvo e Cartões Individuais**:
   - Cartões individuais colocados fora de uma grade escolhem qual piloto exibir: por **Pista** (Pista 1 a Pista 8), por **Posição da Bateria** (1º, 2º, etc.), por posto na **Classificação Geral** ou por **Chaveamento do Piloto**.
 
+### Widgets de inserção (Insets) e alinhamento
+
+Cada cartão de coluna de pista suporta até 8 **espaços de inserção (Insets)** secundários dispostos ao redor do perímetro do dado principal (Superior esquerdo, Superior centro, Superior direito, Centro esquerdo, Centro direito, Inferior esquerdo, Inferior centro, Inferior direito):
+
+- **Vinculação de dados**: Os insets podem exibir métricas secundárias (ex.: melhor volta, contagem de voltas, combustível %, baterias disputadas, nome do piloto), imagens/avatares ou widgets personalizados incorporados.
+- **Alinhamento horizontal e vertical**:
+  - Na aba Inset do inspetor, cada inserção posicionada oferece opções de **Alinhamento horizontal** (**Esquerda**, **Centro**, **Direita**) e **Alinhamento vertical** (**Superior**, **Centro**, **Inferior**).
+  - Os insets adotam por padrão sua posição perimétrica natural (ex.: `Superior esquerdo` padroniza como Esquerda/Superior, `Inferior direito` como Direita/Inferior), assegurando total compatibilidade visual com layouts existentes enquanto possibilita ajuste fino dentro de cada espaço.
+- **Estilos personalizados**: Os insets podem herdar fontes e cores da coluna ou definir tipografia, cores de texto, casas decimais e limites de formato personalizados.
+
 ### Origens de Dados da Grade: Dados da Bateria vs. Dados Gerais da Corrida
 
 Toda grade de dados no Editor de UI possui uma configuração de **Origem de dados** na aba Grade, que define quais pilotos preenchem as linhas da grade:

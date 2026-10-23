@@ -63,6 +63,16 @@ Das **Spurspalten-Widget** ermöglicht es, einzelne Datenspalten aus der Spurans
 - **Zielfahrer & Einzelkarten**:
   - Einzelne Karten außerhalb eines Rasters wählen den anzuzeigenden Fahrer: nach **Spur** (Spur 1 bis Spur 8), nach **Lauf-Position** (1., 2. usw.), nach Rang in der **Gesamtwertung** oder nach **Fahrer-Setzung**.
 
+### Inset-Widgets & Ausrichtung
+
+Jede Spurspalten-Karte unterstützt bis zu 8 sekundäre **Inset-Plätze** (Einfügungen), die um den Umfang des primären Datenwerts angeordnet sind (Oben-Links, Oben-Mitte, Oben-Rechts, Mitte-Links, Mitte-Rechts, Unten-Links, Unten-Mitte, Unten-Rechts):
+
+- **Datenbindung**: Insets können sekundäre Metriken (z. B. beste Runde, Rundenzahl, Kraftstoff %, gefahrene Durchgänge, Fahrername), Bilder/Avatare oder eingebettete benutzerdefinierte Widgets anzeigen.
+- **Horizontale & vertikale Ausrichtung**:
+  - Auf der Inset-Registerkarte des Inspektors bietet jedes platzierte Inset Optionen für **Horizontale Ausrichtung** (**Links**, **Zentriert**, **Rechts**) und **Vertikale Ausrichtung** (**Oben**, **Zentriert**, **Unten**).
+  - Insets verwenden standardmäßig ihre natürliche Umfangsausrichtung (z. B. `Oben-Links` standardmäßig Links/Oben, `Unten-Rechts` standardmäßig Rechts/Unten), was vollständige visuelle Kompatibilität mit bestehenden Layouts gewährleistet und gleichzeitig präzise Positionierung innerhalb jedes Inset-Bereichs ermöglicht.
+- **Benutzerdefinierte Stile**: Insets können Spaltenschriftarten und -farben erben oder benutzerdefinierte Typografie, Textfarben, Dezimalstellen und Formatschwellenwerte konfigurieren.
+
 ### Raster-Datenquellen: Lauf-Daten vs. Gesamtwertungs-Daten
 
 Jedes Datenraster im UI-Editor verfügt im Reiter „Raster“ über eine Einstellung **Datenquelle**, die festlegt, welche Fahrer die Zeilen des Rasters füllen:

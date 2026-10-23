@@ -8,6 +8,7 @@ import {
   fitColumnTextValue,
   formatAdjustedLapValue,
   getInsetDefaultAlignment,
+  getInsetDefaultVerticalAlignment,
   getSharedCanvasContext,
   getSvgPreserveAspectRatio,
   isCustomWidgetKey,
@@ -263,6 +264,36 @@ describe("raceday-lane-column.utils", () => {
         "#ffffff",
       );
     });
+
+    it("should set horizontalAlignment, verticalAlignment, and valueAlignment in customSettings", () => {
+      const widget: any = {
+        customSettings: {
+          insetsConfig: {
+            "top-left": {
+              horizontalAlignment: "right",
+              verticalAlignment: "bottom",
+            },
+          },
+        },
+      };
+      const result = buildSyntheticInsetWidgetInputs(
+        "top-left",
+        "custom:advanced-laps",
+        widget,
+        "lane",
+        0,
+        14,
+        null,
+        false,
+      );
+      expect(result.widget.customSettings?.["horizontalAlignment"]).toBe(
+        "right",
+      );
+      expect(result.widget.customSettings?.["verticalAlignment"]).toBe(
+        "bottom",
+      );
+      expect(result.widget.customSettings?.["valueAlignment"]).toBe("right");
+    });
   });
 
   describe("getInsetDefaultAlignment", () => {
@@ -281,6 +312,25 @@ describe("raceday-lane-column.utils", () => {
     it("should return center for center-positioned anchors", () => {
       expect(getInsetDefaultAlignment("top-center")).toBe("center");
       expect(getInsetDefaultAlignment("bottom-center")).toBe("center");
+    });
+  });
+
+  describe("getInsetDefaultVerticalAlignment", () => {
+    it("should return top for top-positioned anchors", () => {
+      expect(getInsetDefaultVerticalAlignment("top-left")).toBe("top");
+      expect(getInsetDefaultVerticalAlignment("top-center")).toBe("top");
+      expect(getInsetDefaultVerticalAlignment("top-right")).toBe("top");
+    });
+
+    it("should return bottom for bottom-positioned anchors", () => {
+      expect(getInsetDefaultVerticalAlignment("bottom-left")).toBe("bottom");
+      expect(getInsetDefaultVerticalAlignment("bottom-center")).toBe("bottom");
+      expect(getInsetDefaultVerticalAlignment("bottom-right")).toBe("bottom");
+    });
+
+    it("should return center for center-positioned anchors", () => {
+      expect(getInsetDefaultVerticalAlignment("center-left")).toBe("center");
+      expect(getInsetDefaultVerticalAlignment("center-right")).toBe("center");
     });
   });
 
@@ -1104,9 +1154,20 @@ describe("raceday-lane-column.utils", () => {
       expect(getSvgPreserveAspectRatio("center-right")).toBe("xMaxYMid meet");
       expect(getSvgPreserveAspectRatio("bottom-left")).toBe("xMinYMax meet");
       expect(getSvgPreserveAspectRatio("bottom-center")).toBe("xMidYMax meet");
-      expect(getSvgPreserveAspectRatio("bottom-right")).toBe("xMaxYMax meet");
       expect(getSvgPreserveAspectRatio(undefined)).toBe("xMidYMid meet");
       expect(getSvgPreserveAspectRatio("unknown")).toBe("xMidYMid meet");
+    });
+
+    it("should respect explicit horizontal and vertical alignment parameters", () => {
+      expect(getSvgPreserveAspectRatio("top-left", "right", "bottom")).toBe(
+        "xMaxYMax meet",
+      );
+      expect(getSvgPreserveAspectRatio("top-left", "center", "center")).toBe(
+        "xMidYMid meet",
+      );
+      expect(getSvgPreserveAspectRatio("bottom-right", "left", "top")).toBe(
+        "xMinYMin meet",
+      );
     });
   });
 });

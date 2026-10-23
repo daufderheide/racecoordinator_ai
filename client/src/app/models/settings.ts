@@ -90,6 +90,9 @@ export interface InsetConfig {
   fontSize?: number;
   textColor?: string;
   heatsDisplayMode?: "raced" | "remaining";
+  horizontalAlignment?: "left" | "center" | "right";
+  verticalAlignment?: "top" | "center" | "bottom";
+  valueAlignment?: "left" | "center" | "right" | "start" | "end";
 }
 
 export interface LaneColumnWidgetSettings {

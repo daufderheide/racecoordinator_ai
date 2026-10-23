@@ -63,6 +63,16 @@ The **Lane Column** widget allows individual data columns from the lane view (su
 - **Target Driver & Standalone Cards**:
   - Individual cards placed outside of a grid select which driver to display: by **Track Lane** (Lane 1 through Lane 8), by **Heat Position** (1st, 2nd, etc.), by **Overall Standings** rank, or by **Driver Seed**.
 
+### Inset Widgets & Alignment
+
+Each Lane Column card supports up to 8 secondary **Inset Slots** arranged around the perimeter of the primary data metric (Top-Left, Top-Center, Top-Right, Center-Left, Center-Right, Bottom-Left, Bottom-Center, Bottom-Right):
+
+- **Data Binding**: Insets can display secondary metrics (e.g. Best Lap, Lap Count, Fuel %, Heats Raced, Driver Name), images/avatars, or embedded Custom Widgets.
+- **Horizontal & Vertical Alignment**:
+  - In the Inspector's Inset tab, each placed inset provides **Horizontal Alignment** (**Left**, **Center**, **Right**) and **Vertical Alignment** (**Top**, **Center**, **Bottom**) dropdowns.
+  - Insets default to their natural perimeter positions (e.g. `Top-Left` defaults to Left/Top, `Bottom-Right` defaults to Right/Bottom), ensuring complete visual compatibility with existing layouts while providing full control over positioning within each inset slot.
+- **Custom Styling**: Insets can inherit column fonts and colors or configure custom typography, text colors, decimal places, and format thresholds.
+
 ### Grid Data Sources: Heat Data vs. Overall Race Data
 
 Every data grid in the UI Editor has a **Data Source** setting on the Grid tab that dictates which drivers populate the grid rows:

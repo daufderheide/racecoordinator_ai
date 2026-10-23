@@ -458,6 +458,44 @@ export class LaneColumnInspectorComponent extends LaneColumnInspectorGridBase {
     this.onFieldChange();
   }
 
+  getInsetHorizontalAlignment(anchor: string): "left" | "center" | "right" {
+    return LaneColumnInsetHelper.getInsetHorizontalAlignment(
+      this.currentSettings,
+      anchor,
+    );
+  }
+
+  setInsetHorizontalAlignment(
+    anchor: string,
+    val: "left" | "center" | "right",
+  ): void {
+    LaneColumnInsetHelper.setInsetHorizontalAlignment(
+      this.currentSettings,
+      anchor,
+      val,
+    );
+    this.onFieldChange();
+  }
+
+  getInsetVerticalAlignment(anchor: string): "top" | "center" | "bottom" {
+    return LaneColumnInsetHelper.getInsetVerticalAlignment(
+      this.currentSettings,
+      anchor,
+    );
+  }
+
+  setInsetVerticalAlignment(
+    anchor: string,
+    val: "top" | "center" | "bottom",
+  ): void {
+    LaneColumnInsetHelper.setInsetVerticalAlignment(
+      this.currentSettings,
+      anchor,
+      val,
+    );
+    this.onFieldChange();
+  }
+
   getInsetFontFamily(anchor: string): string {
     return LaneColumnInsetHelper.getInsetFontFamily(
       this.currentSettings,

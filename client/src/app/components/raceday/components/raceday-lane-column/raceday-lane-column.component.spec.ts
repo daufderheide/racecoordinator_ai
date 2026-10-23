@@ -1582,6 +1582,64 @@ describe("RacedayLaneColumnComponent", () => {
       );
     });
 
+    it("should resolve inset alignments and apply them to inset-cell element", () => {
+      fixture.componentRef.setInput("parent", mockParent);
+      fixture.componentRef.setInput(
+        "widget",
+        createWidget({
+          columnKey: "lastLapTime",
+          insets: {
+            "top-left": "driver.nickname",
+            "bottom-right": "bestLapTime",
+          },
+          insetsConfig: {
+            "top-left": {
+              horizontalAlignment: "center",
+              verticalAlignment: "bottom",
+            },
+          },
+        }),
+      );
+      fixture.detectChanges();
+
+      expect(component.getInsetHorizontalAlignment("top-left")).toBe("center");
+      expect(component.getInsetVerticalAlignment("top-left")).toBe("bottom");
+      expect(component.getInsetJustifyContent("top-left")).toBe("center");
+      expect(component.getInsetAlignItems("top-left")).toBe("flex-end");
+      expect(component.getInsetTextAlign("top-left")).toBe("center");
+      expect(component.getInsetObjectPosition("top-left")).toBe(
+        "center bottom",
+      );
+
+      // Default fallback for bottom-right: right, bottom
+      expect(component.getInsetHorizontalAlignment("bottom-right")).toBe(
+        "right",
+      );
+      expect(component.getInsetVerticalAlignment("bottom-right")).toBe(
+        "bottom",
+      );
+      expect(component.getInsetJustifyContent("bottom-right")).toBe("flex-end");
+      expect(component.getInsetAlignItems("bottom-right")).toBe("flex-end");
+      expect(component.getInsetTextAlign("bottom-right")).toBe("right");
+      expect(component.getInsetObjectPosition("bottom-right")).toBe(
+        "right bottom",
+      );
+
+      const tlCell: HTMLElement =
+        fixture.nativeElement.querySelector(".inset-cell.tl");
+      expect(tlCell).toBeTruthy();
+      expect(tlCell.style.justifyContent).toBe("center");
+      expect(tlCell.style.alignItems).toBe("flex-end");
+      expect(tlCell.style.textAlign).toBe("center");
+
+      const brCell: HTMLElement =
+        fixture.nativeElement.querySelector(".inset-cell.br");
+      expect(brCell).toBeTruthy();
+      expect(brCell.style.justifyContent).toBe("flex-end");
+      expect(brCell.style.alignItems).toBe("flex-end");
+      expect(brCell.style.textAlign).toBe("right");
+    });
+
     it("should render image insets when inset key is an image property", () => {
       fixture.componentRef.setInput("parent", mockParent);
       fixture.componentRef.setInput(

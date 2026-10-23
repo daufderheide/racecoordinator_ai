@@ -2676,6 +2676,64 @@
 
     <hr class="inspector-divider" />
 
+    <!-- Inset Alignment Section -->
+    <div class="inspector-geometry-title">
+      <span class="material-icons">format_align_center</span>
+      {{ "UE_INSPECTOR_INSET_ALIGNMENT" | translate }}
+    </div>
+
+    <!-- Horizontal Alignment -->
+    <div class="inspector-section">
+      <label class="inspector-label">{{
+        "UE_INSPECTOR_HORIZONTAL_ALIGNMENT" | translate
+      }}</label>
+      <div class="select-container select-sm">
+        <app-custom-select
+          [ngModel]="getInsetHorizontalAlignment(effectiveSelectedAnchor)"
+          (ngModelChange)="
+            setInsetHorizontalAlignment(effectiveSelectedAnchor, $event)
+          "
+        >
+          <app-custom-option value="left">
+            {{ "UE_INSPECTOR_ALIGN_START" | translate }}
+          </app-custom-option>
+          <app-custom-option value="center">
+            {{ "UE_INSPECTOR_ALIGN_CENTER" | translate }}
+          </app-custom-option>
+          <app-custom-option value="right">
+            {{ "UE_INSPECTOR_ALIGN_END" | translate }}
+          </app-custom-option>
+        </app-custom-select>
+      </div>
+    </div>
+
+    <!-- Vertical Alignment -->
+    <div class="inspector-section">
+      <label class="inspector-label">{{
+        "UE_INSPECTOR_VERTICAL_ALIGNMENT" | translate
+      }}</label>
+      <div class="select-container select-sm">
+        <app-custom-select
+          [ngModel]="getInsetVerticalAlignment(effectiveSelectedAnchor)"
+          (ngModelChange)="
+            setInsetVerticalAlignment(effectiveSelectedAnchor, $event)
+          "
+        >
+          <app-custom-option value="top">
+            {{ "UE_GRID_LABEL_POS_TOP" | translate }}
+          </app-custom-option>
+          <app-custom-option value="center">
+            {{ "UE_INSPECTOR_ALIGN_CENTER" | translate }}
+          </app-custom-option>
+          <app-custom-option value="bottom">
+            {{ "UE_GRID_LABEL_POS_BOTTOM" | translate }}
+          </app-custom-option>
+        </app-custom-select>
+      </div>
+    </div>
+
+    <hr class="inspector-divider" />
+
     <!-- Remove Inset Action Button -->
     <div class="inspector-section">
       <button

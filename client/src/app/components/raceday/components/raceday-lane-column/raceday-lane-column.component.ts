@@ -38,6 +38,8 @@ import {
   fitColumnLastLaps,
   fitColumnTextValue,
   formatAdjustedLapValue,
+  getInsetDefaultAlignment,
+  getInsetDefaultVerticalAlignment,
   getSvgPreserveAspectRatio,
   HeatDataLapItem,
   isCustomWidgetKey,
@@ -430,6 +432,46 @@ export class RacedayLaneColumnComponent
       return this.settings.insetsConfig[anchor].textColor!;
     }
     return this.effectiveInsetTextColor;
+  }
+
+  getInsetHorizontalAlignment(anchor: string): "left" | "center" | "right" {
+    const cfg = this.settings.insetsConfig?.[anchor];
+    const val = cfg?.horizontalAlignment || cfg?.valueAlignment;
+    if (val === "start" || val === "left") return "left";
+    if (val === "end" || val === "right") return "right";
+    if (val === "center") return "center";
+    return getInsetDefaultAlignment(anchor);
+  }
+
+  getInsetVerticalAlignment(anchor: string): "top" | "center" | "bottom" {
+    const cfg = this.settings.insetsConfig?.[anchor];
+    const val = cfg?.verticalAlignment;
+    if (val === "top" || val === "center" || val === "bottom") return val;
+    return getInsetDefaultVerticalAlignment(anchor);
+  }
+
+  getInsetJustifyContent(anchor: string): string {
+    const align = this.getInsetHorizontalAlignment(anchor);
+    if (align === "left") return "flex-start";
+    if (align === "right") return "flex-end";
+    return "center";
+  }
+
+  getInsetAlignItems(anchor: string): string {
+    const align = this.getInsetVerticalAlignment(anchor);
+    if (align === "top") return "flex-start";
+    if (align === "bottom") return "flex-end";
+    return "center";
+  }
+
+  getInsetTextAlign(anchor: string): string {
+    return this.getInsetHorizontalAlignment(anchor);
+  }
+
+  getInsetObjectPosition(anchor: string): string {
+    const h = this.getInsetHorizontalAlignment(anchor);
+    const v = this.getInsetVerticalAlignment(anchor);
+    return `${h} ${v}`;
   }
 
   get effectiveSelectedAnchor(): string | null {
@@ -923,7 +965,9 @@ export class RacedayLaneColumnComponent
   }
 
   getSvgPreserveAspectRatio(anchor?: string): string {
-    return getSvgPreserveAspectRatio(anchor);
+    const h = anchor ? this.getInsetHorizontalAlignment(anchor) : undefined;
+    const v = anchor ? this.getInsetVerticalAlignment(anchor) : undefined;
+    return getSvgPreserveAspectRatio(anchor, h, v);
   }
 
   onImageError(event: Event, anchor?: string): void {

@@ -630,5 +630,115 @@ describe("LaneColumnInsetHelper", () => {
         LaneColumnInsetHelper.getInsetDecimalPlaces(settings, "bottom-right"),
       ).toBe(1);
     });
+
+    it("should get default horizontal and vertical alignments based on anchor", () => {
+      expect(
+        LaneColumnInsetHelper.getInsetDefaultHorizontalAlignment("top-left"),
+      ).toBe("left");
+      expect(
+        LaneColumnInsetHelper.getInsetDefaultHorizontalAlignment("top-center"),
+      ).toBe("center");
+      expect(
+        LaneColumnInsetHelper.getInsetDefaultHorizontalAlignment("top-right"),
+      ).toBe("right");
+      expect(
+        LaneColumnInsetHelper.getInsetDefaultHorizontalAlignment("center-left"),
+      ).toBe("left");
+      expect(
+        LaneColumnInsetHelper.getInsetDefaultHorizontalAlignment(
+          "center-right",
+        ),
+      ).toBe("right");
+      expect(
+        LaneColumnInsetHelper.getInsetDefaultHorizontalAlignment("bottom-left"),
+      ).toBe("left");
+      expect(
+        LaneColumnInsetHelper.getInsetDefaultHorizontalAlignment(
+          "bottom-center",
+        ),
+      ).toBe("center");
+      expect(
+        LaneColumnInsetHelper.getInsetDefaultHorizontalAlignment(
+          "bottom-right",
+        ),
+      ).toBe("right");
+
+      expect(
+        LaneColumnInsetHelper.getInsetDefaultVerticalAlignment("top-left"),
+      ).toBe("top");
+      expect(
+        LaneColumnInsetHelper.getInsetDefaultVerticalAlignment("top-center"),
+      ).toBe("top");
+      expect(
+        LaneColumnInsetHelper.getInsetDefaultVerticalAlignment("top-right"),
+      ).toBe("top");
+      expect(
+        LaneColumnInsetHelper.getInsetDefaultVerticalAlignment("center-left"),
+      ).toBe("center");
+      expect(
+        LaneColumnInsetHelper.getInsetDefaultVerticalAlignment("center-right"),
+      ).toBe("center");
+      expect(
+        LaneColumnInsetHelper.getInsetDefaultVerticalAlignment("bottom-left"),
+      ).toBe("bottom");
+      expect(
+        LaneColumnInsetHelper.getInsetDefaultVerticalAlignment("bottom-center"),
+      ).toBe("bottom");
+      expect(
+        LaneColumnInsetHelper.getInsetDefaultVerticalAlignment("bottom-right"),
+      ).toBe("bottom");
+    });
+
+    it("should get and set horizontal alignment with valueAlignment fallback", () => {
+      const s: any = {};
+      // Default fallback
+      expect(
+        LaneColumnInsetHelper.getInsetHorizontalAlignment(s, "top-left"),
+      ).toBe("left");
+      expect(
+        LaneColumnInsetHelper.getInsetHorizontalAlignment(s, "top-center"),
+      ).toBe("center");
+
+      // valueAlignment fallback (start / end)
+      s.insetsConfig = {
+        "top-center": { valueAlignment: "start" },
+        "top-right": { valueAlignment: "end" },
+      };
+      expect(
+        LaneColumnInsetHelper.getInsetHorizontalAlignment(s, "top-center"),
+      ).toBe("left");
+      expect(
+        LaneColumnInsetHelper.getInsetHorizontalAlignment(s, "top-right"),
+      ).toBe("right");
+
+      // Explicit set
+      LaneColumnInsetHelper.setInsetHorizontalAlignment(s, "top-left", "right");
+      expect(
+        LaneColumnInsetHelper.getInsetHorizontalAlignment(s, "top-left"),
+      ).toBe("right");
+      expect(s.insetsConfig["top-left"].horizontalAlignment).toBe("right");
+      expect(s.insetsConfig["top-left"].valueAlignment).toBe("right");
+    });
+
+    it("should get and set vertical alignment", () => {
+      const s: any = {};
+      // Default fallback
+      expect(
+        LaneColumnInsetHelper.getInsetVerticalAlignment(s, "top-left"),
+      ).toBe("top");
+      expect(
+        LaneColumnInsetHelper.getInsetVerticalAlignment(s, "center-left"),
+      ).toBe("center");
+      expect(
+        LaneColumnInsetHelper.getInsetVerticalAlignment(s, "bottom-left"),
+      ).toBe("bottom");
+
+      // Explicit set
+      LaneColumnInsetHelper.setInsetVerticalAlignment(s, "top-left", "bottom");
+      expect(
+        LaneColumnInsetHelper.getInsetVerticalAlignment(s, "top-left"),
+      ).toBe("bottom");
+      expect(s.insetsConfig["top-left"].verticalAlignment).toBe("bottom");
+    });
   });
 });

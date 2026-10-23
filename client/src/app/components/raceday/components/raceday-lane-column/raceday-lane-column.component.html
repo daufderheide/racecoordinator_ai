@@ -287,6 +287,9 @@
               class="inset-cell tl"
               [class.has-image]="isImageProperty(getInsetKey('top-left')!)"
               [class.clickable-lap-cell]="isInsetLapCount('top-left')"
+              [style.justify-content]="getInsetJustifyContent('top-left')"
+              [style.align-items]="getInsetAlignItems('top-left')"
+              [style.text-align]="getInsetTextAlign('top-left')"
               [style.font-family]="getInsetFontFamily('top-left')"
               [style.font-size.px]="getEffectiveInsetFontSize('top-left')"
               [style.color]="getEffectiveInsetTextColor('top-left')"
@@ -332,6 +335,7 @@
                   <img
                     [src]="getInsetImageUrl('top-left')"
                     class="lane-col-inset-image"
+                    [style.object-position]="getInsetObjectPosition('top-left')"
                     alt=""
                     (error)="onImageError($event, 'top-left')"
                   />
@@ -346,6 +350,9 @@
               class="inset-cell tc"
               [class.has-image]="isImageProperty(getInsetKey('top-center')!)"
               [class.clickable-lap-cell]="isInsetLapCount('top-center')"
+              [style.justify-content]="getInsetJustifyContent('top-center')"
+              [style.align-items]="getInsetAlignItems('top-center')"
+              [style.text-align]="getInsetTextAlign('top-center')"
               [style.font-family]="getInsetFontFamily('top-center')"
               [style.font-size.px]="getEffectiveInsetFontSize('top-center')"
               [style.color]="getEffectiveInsetTextColor('top-center')"
@@ -391,6 +398,9 @@
                   <img
                     [src]="getInsetImageUrl('top-center')"
                     class="lane-col-inset-image"
+                    [style.object-position]="
+                      getInsetObjectPosition('top-center')
+                    "
                     alt=""
                     (error)="onImageError($event, 'top-center')"
                   />
@@ -405,6 +415,9 @@
               class="inset-cell tr"
               [class.has-image]="isImageProperty(getInsetKey('top-right')!)"
               [class.clickable-lap-cell]="isInsetLapCount('top-right')"
+              [style.justify-content]="getInsetJustifyContent('top-right')"
+              [style.align-items]="getInsetAlignItems('top-right')"
+              [style.text-align]="getInsetTextAlign('top-right')"
               [style.font-family]="getInsetFontFamily('top-right')"
               [style.font-size.px]="getEffectiveInsetFontSize('top-right')"
               [style.color]="getEffectiveInsetTextColor('top-right')"
@@ -450,6 +463,9 @@
                   <img
                     [src]="getInsetImageUrl('top-right')"
                     class="lane-col-inset-image"
+                    [style.object-position]="
+                      getInsetObjectPosition('top-right')
+                    "
                     alt=""
                     (error)="onImageError($event, 'top-right')"
                   />
@@ -469,6 +485,9 @@
             class="inset-cell cl"
             [class.has-image]="isImageProperty(getInsetKey('center-left')!)"
             [class.clickable-lap-cell]="isInsetLapCount('center-left')"
+            [style.justify-content]="getInsetJustifyContent('center-left')"
+            [style.align-items]="getInsetAlignItems('center-left')"
+            [style.text-align]="getInsetTextAlign('center-left')"
             [attr.title]="
               isInsetLapCount('center-left')
                 ? ('RD_LAP_COLUMN_TOOLTIP' | translate)
@@ -514,6 +533,9 @@
                 <img
                   [src]="getInsetImageUrl('center-left')"
                   class="lane-col-inset-image"
+                  [style.object-position]="
+                    getInsetObjectPosition('center-left')
+                  "
                   alt=""
                   (error)="onImageError($event, 'center-left')"
                 />
@@ -716,6 +738,9 @@
             class="inset-cell cr"
             [class.has-image]="isImageProperty(getInsetKey('center-right')!)"
             [class.clickable-lap-cell]="isInsetLapCount('center-right')"
+            [style.justify-content]="getInsetJustifyContent('center-right')"
+            [style.align-items]="getInsetAlignItems('center-right')"
+            [style.text-align]="getInsetTextAlign('center-right')"
             [attr.title]="
               isInsetLapCount('center-right')
                 ? ('RD_LAP_COLUMN_TOOLTIP' | translate)
@@ -761,6 +786,9 @@
                 <img
                   [src]="getInsetImageUrl('center-right')"
                   class="lane-col-inset-image"
+                  [style.object-position]="
+                    getInsetObjectPosition('center-right')
+                  "
                   alt=""
                   (error)="onImageError($event, 'center-right')"
                 />
@@ -785,6 +813,9 @@
               class="inset-cell bl"
               [class.has-image]="isImageProperty(getInsetKey('bottom-left')!)"
               [class.clickable-lap-cell]="isInsetLapCount('bottom-left')"
+              [style.justify-content]="getInsetJustifyContent('bottom-left')"
+              [style.align-items]="getInsetAlignItems('bottom-left')"
+              [style.text-align]="getInsetTextAlign('bottom-left')"
               [style.font-family]="getInsetFontFamily('bottom-left')"
               [style.font-size.px]="getEffectiveInsetFontSize('bottom-left')"
               [style.color]="getEffectiveInsetTextColor('bottom-left')"
@@ -830,6 +861,9 @@
                   <img
                     [src]="getInsetImageUrl('bottom-left')"
                     class="lane-col-inset-image"
+                    [style.object-position]="
+                      getInsetObjectPosition('bottom-left')
+                    "
                     alt=""
                     (error)="onImageError($event, 'bottom-left')"
                   />
@@ -844,6 +878,9 @@
               class="inset-cell bc"
               [class.has-image]="isImageProperty(getInsetKey('bottom-center')!)"
               [class.clickable-lap-cell]="isInsetLapCount('bottom-center')"
+              [style.justify-content]="getInsetJustifyContent('bottom-center')"
+              [style.align-items]="getInsetAlignItems('bottom-center')"
+              [style.text-align]="getInsetTextAlign('bottom-center')"
               [style.font-family]="getInsetFontFamily('bottom-center')"
               [style.font-size.px]="getEffectiveInsetFontSize('bottom-center')"
               [style.color]="getEffectiveInsetTextColor('bottom-center')"
@@ -889,6 +926,9 @@
                   <img
                     [src]="getInsetImageUrl('bottom-center')"
                     class="lane-col-inset-image"
+                    [style.object-position]="
+                      getInsetObjectPosition('bottom-center')
+                    "
                     alt=""
                     (error)="onImageError($event, 'bottom-center')"
                   />
@@ -903,6 +943,9 @@
               class="inset-cell br"
               [class.has-image]="isImageProperty(getInsetKey('bottom-right')!)"
               [class.clickable-lap-cell]="isInsetLapCount('bottom-right')"
+              [style.justify-content]="getInsetJustifyContent('bottom-right')"
+              [style.align-items]="getInsetAlignItems('bottom-right')"
+              [style.text-align]="getInsetTextAlign('bottom-right')"
               [style.font-family]="getInsetFontFamily('bottom-right')"
               [style.font-size.px]="getEffectiveInsetFontSize('bottom-right')"
               [style.color]="getEffectiveInsetTextColor('bottom-right')"
@@ -948,6 +991,9 @@
                   <img
                     [src]="getInsetImageUrl('bottom-right')"
                     class="lane-col-inset-image"
+                    [style.object-position]="
+                      getInsetObjectPosition('bottom-right')
+                    "
                     alt=""
                     (error)="onImageError($event, 'bottom-right')"
                   />

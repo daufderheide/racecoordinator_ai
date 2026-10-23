@@ -19,6 +19,15 @@ export function getInsetDefaultAlignment(
   return "center";
 }
 
+export function getInsetDefaultVerticalAlignment(
+  anchor: string,
+): "top" | "center" | "bottom" {
+  if (anchor.startsWith("top-") || anchor.startsWith("top")) return "top";
+  if (anchor.startsWith("bottom-") || anchor.startsWith("bottom"))
+    return "bottom";
+  return "center";
+}
+
 export function buildSyntheticInsetWidgetInputs(
   anchor: string,
   key: string | undefined,
@@ -44,10 +53,27 @@ export function buildSyntheticInsetWidgetInputs(
     2;
 
   const defaultAlignment = getInsetDefaultAlignment(anchor);
-  const resolvedAlignment = anchorCfg.valueAlignment || defaultAlignment;
+  const defaultVertical = getInsetDefaultVerticalAlignment(anchor);
+  const rawAlign = anchorCfg.horizontalAlignment || anchorCfg.valueAlignment;
+  const resolvedAlignment =
+    rawAlign === "start" || rawAlign === "left"
+      ? "left"
+      : rawAlign === "end" || rawAlign === "right"
+        ? "right"
+        : rawAlign === "center"
+          ? "center"
+          : defaultAlignment;
+  const resolvedVertical =
+    anchorCfg.verticalAlignment === "top" ||
+    anchorCfg.verticalAlignment === "center" ||
+    anchorCfg.verticalAlignment === "bottom"
+      ? anchorCfg.verticalAlignment
+      : defaultVertical;
 
   const customSettings: Record<string, any> = {
     valueAlignment: resolvedAlignment,
+    horizontalAlignment: resolvedAlignment,
+    verticalAlignment: resolvedVertical,
     ...anchorCfg,
     showHeader: false,
     bindingMode,
@@ -57,6 +83,12 @@ export function buildSyntheticInsetWidgetInputs(
   };
   if (!customSettings["valueAlignment"]) {
     customSettings["valueAlignment"] = resolvedAlignment;
+  }
+  if (!customSettings["horizontalAlignment"]) {
+    customSettings["horizontalAlignment"] = resolvedAlignment;
+  }
+  if (!customSettings["verticalAlignment"]) {
+    customSettings["verticalAlignment"] = resolvedVertical;
   }
 
   if (targetDriver) {
@@ -504,7 +536,22 @@ export function resolveLaneColumnImageUrl(
   return "";
 }
 
-export function getSvgPreserveAspectRatio(anchor?: string): string {
+export function getSvgPreserveAspectRatio(
+  anchor?: string,
+  horizontal?: string,
+  vertical?: string,
+): string {
+  const h =
+    horizontal || (anchor ? getInsetDefaultAlignment(anchor) : undefined);
+  const v =
+    vertical || (anchor ? getInsetDefaultVerticalAlignment(anchor) : undefined);
+
+  if (h && v) {
+    const hPart = h === "left" ? "xMin" : h === "right" ? "xMax" : "xMid";
+    const vPart = v === "top" ? "YMin" : v === "bottom" ? "YMax" : "YMid";
+    return `${hPart}${vPart} meet`;
+  }
+
   switch (anchor) {
     case "top-left":
       return "xMinYMin meet";

@@ -63,6 +63,16 @@ El widget de **Columna de Carril** permite colocar columnas individuales de dato
 - **Piloto Objetivo y Tarjetas Individuales**:
   - Las tarjetas individuales colocadas fuera de una cuadrícula eligen qué piloto mostrar: por **Carril de Pista** (Carril 1 a Carril 8), por **Posición de Ronda** (1º, 2º, etc.), por puesto en la **Clasificación General** o por **Clasificación Previa**.
 
+### Widgets secundarios (Insets) y alineación
+
+Cada tarjeta de columna de carril admite hasta 8 **ranuras secundarias (Insets)** dispuestas alrededor del perímetro del dato principal (Superior izquierda, Superior centro, Superior derecha, Centro izquierda, Centro derecha, Inferior izquierda, Inferior centro, Inferior derecha):
+
+- **Vinculación de datos**: Los insets pueden mostrar métricas secundarias (p. ej., mejor vuelta, conteo de vueltas, combustible %, mangas disputadas, nombre del piloto), imágenes/avatares o widgets personalizados incrustados.
+- **Alineación horizontal y vertical**:
+  - En la pestaña Inset del inspector, cada elemento secundario proporciona controles de **Alineación horizontal** (**Izquierda**, **Centro**, **Derecha**) y **Alineación vertical** (**Arriba**, **Centro**, **Abajo**).
+  - Los insets utilizan de forma predeterminada su posición perimétrica natural (p. ej., `Superior izquierda` utiliza Izquierda/Arriba de forma predeterminada, `Inferior derecha` utiliza Derecha/Abajo), garantizando total compatibilidad visual con diseños existentes y permitiendo un ajuste preciso dentro de cada ranura.
+- **Estilos personalizados**: Los insets pueden heredar fuentes y colores de la columna o configurar tipografía, colores de texto, decimales y umbrales de formato personalizados.
+
 ### Fuentes de Datos de Cuadrícula: Datos de Ronda vs. Datos Generales de Carrera
 
 Cada cuadrícula de datos en el Editor de UI cuenta con el ajuste **Fuente de datos** en la pestaña Cuadrícula, que determina qué pilotos ocupan las filas:

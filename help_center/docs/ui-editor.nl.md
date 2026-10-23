@@ -63,6 +63,16 @@ De widget **Baankolom** maakt het mogelijk om individuele gegevenskolommen uit h
 - **Doelcoureur & Losse Kaarten**:
   - Losse kaarten buiten een raster kiezen welke coureur wordt weergegeven: op **Baan** (Baan 1 t/m Baan 8), op **Heat-positie** (1e, 2e, etc.), op positie in het **Algemeen Klassement** of op **Coureur Seed**.
 
+### Inset-widgets & uitlijning
+
+Elke baankolomkaart ondersteunt tot 8 secundaire **inset-slots** langs de rand van de primaire meetwaarde (Linksboven, Middenboven, Rechtsboven, Middenlinks, Middenrechts, Linksonder, Middenonder, Rechtsonder):
+
+- **Gegevenskoppeling**: Insets kunnen secundaire meetwaarden weergeven (bijv. beste ronde, rondenaantal, brandstof %, verreden heats, coureurnaam), afbeeldingen/avatars of ingesloten aangepaste widgets.
+- **Horizontale & verticale uitlijning**:
+  - Op het Inset-tabblad van de inspector biedt elke geplaatste inset opties voor **Horizontale uitlijning** (**Links**, **Midden**, **Rechts**) en **Verticale uitlijning** (**Boven**, **Midden**, **Onder**).
+  - Insets gebruiken standaard hun natuurlijke randpositie (bijv. `Linksboven` gebruikt standaard Links/Boven, `Rechtsonder` gebruikt Rechts/Onder), waardoor volledige visuele compatibiliteit met bestaande lay-outs behouden blijft terwijl nauwkeurige afstemming binnen elk slot mogelijk is.
+- **Aangepaste stijlen**: Insets kunnen kolomlettertypen en -kleuren overnemen of aangepaste typografie, tekstkleuren, decimalen en opmaakdrempels configureren.
+
 ### Raster Gegevensbronnen: Heat-gegevens vs. Algemene Racegegevens
 
 Elk gegevensraster in de UI-editor beschikt op het tabblad Raster over de instelling **Gegevensbron**, die bepaalt welke coureurs de rijen vullen:

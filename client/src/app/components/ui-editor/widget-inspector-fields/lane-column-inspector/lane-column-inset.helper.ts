@@ -316,6 +316,87 @@ export class LaneColumnInsetHelper {
     cfg.heatsDisplayMode = val;
   }
 
+  public static getInsetDefaultHorizontalAlignment(
+    anchor: string,
+  ): "left" | "center" | "right" {
+    if (
+      anchor.endsWith("-left") ||
+      anchor.startsWith("left") ||
+      anchor.includes("left")
+    ) {
+      return "left";
+    }
+    if (
+      anchor.endsWith("-right") ||
+      anchor.startsWith("right") ||
+      anchor.includes("right")
+    ) {
+      return "right";
+    }
+    return "center";
+  }
+
+  public static getInsetDefaultVerticalAlignment(
+    anchor: string,
+  ): "top" | "center" | "bottom" {
+    if (
+      anchor.startsWith("top-") ||
+      anchor.startsWith("top") ||
+      anchor.includes("top")
+    ) {
+      return "top";
+    }
+    if (
+      anchor.startsWith("bottom-") ||
+      anchor.startsWith("bottom") ||
+      anchor.includes("bottom")
+    ) {
+      return "bottom";
+    }
+    return "center";
+  }
+
+  public static getInsetHorizontalAlignment(
+    currentSettings: any,
+    anchor: string,
+  ): "left" | "center" | "right" {
+    const cfg = currentSettings["insetsConfig"]?.[anchor];
+    const val = cfg?.horizontalAlignment || cfg?.valueAlignment;
+    if (val === "start" || val === "left") return "left";
+    if (val === "end" || val === "right") return "right";
+    if (val === "center") return "center";
+    return this.getInsetDefaultHorizontalAlignment(anchor);
+  }
+
+  public static setInsetHorizontalAlignment(
+    currentSettings: any,
+    anchor: string,
+    val: "left" | "center" | "right",
+  ): void {
+    const cfg = this.getOrCreateInsetConfig(currentSettings, anchor);
+    cfg.horizontalAlignment = val;
+    cfg.valueAlignment = val;
+  }
+
+  public static getInsetVerticalAlignment(
+    currentSettings: any,
+    anchor: string,
+  ): "top" | "center" | "bottom" {
+    const cfg = currentSettings["insetsConfig"]?.[anchor];
+    const val = cfg?.verticalAlignment;
+    if (val === "top" || val === "center" || val === "bottom") return val;
+    return this.getInsetDefaultVerticalAlignment(anchor);
+  }
+
+  public static setInsetVerticalAlignment(
+    currentSettings: any,
+    anchor: string,
+    val: "top" | "center" | "bottom",
+  ): void {
+    const cfg = this.getOrCreateInsetConfig(currentSettings, anchor);
+    cfg.verticalAlignment = val;
+  }
+
   public static getInsetFontFamily(
     currentSettings: any,
     anchor: string,

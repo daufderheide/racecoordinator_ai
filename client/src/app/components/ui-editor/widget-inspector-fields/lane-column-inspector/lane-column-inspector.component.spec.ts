@@ -2163,5 +2163,20 @@ describe("LaneColumnInspectorComponent", () => {
       expect(component.isInsetHeatsCount("bottom-right")).toBeFalse();
       expect(component.getInsetHeatsDisplayMode("bottom-right")).toBe("raced");
     });
+
+    it("should manage inset horizontal and vertical alignment and emit change", () => {
+      component.setAnchorValue("top-left", "bestLapTime");
+      expect(component.getInsetHorizontalAlignment("top-left")).toBe("left");
+      expect(component.getInsetVerticalAlignment("top-left")).toBe("top");
+
+      spyOn(component.change, "emit");
+      component.setInsetHorizontalAlignment("top-left", "right");
+      expect(component.getInsetHorizontalAlignment("top-left")).toBe("right");
+      expect(component.change.emit).toHaveBeenCalled();
+
+      component.setInsetVerticalAlignment("top-left", "bottom");
+      expect(component.getInsetVerticalAlignment("top-left")).toBe("bottom");
+      expect(component.change.emit).toHaveBeenCalledTimes(2);
+    });
   });
 });
