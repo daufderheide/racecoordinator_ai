@@ -58,6 +58,21 @@ export function parseVersion(versionStr?: string | null): ParsedVersion | null {
   };
 }
 
+const STAGE_RANKS: Record<string, number> = {
+  dev: 10,
+  alpha: 20,
+  beta: 30,
+  rc: 40,
+};
+
+function isDateIdentifier(val: string): boolean {
+  return /^\d{8}$/.test(val);
+}
+
+function isGitHashIdentifier(val: string): boolean {
+  return /^[0-9a-f]{6,40}$/i.test(val) && !/^\d{8}$/.test(val);
+}
+
 export function comparePrereleases(pre1: string, pre2: string): number {
   const parts1 = pre1.split(".");
   const parts2 = pre2.split(".");
@@ -74,6 +89,36 @@ export function comparePrereleases(pre1: string, pre2: string): number {
     }
     if (p1 === p2) {
       continue;
+    }
+
+    // Stage comparison (e.g. dev < alpha < beta < rc)
+    if (i === 0) {
+      const rank1 = STAGE_RANKS[p1.toLowerCase()];
+      const rank2 = STAGE_RANKS[p2.toLowerCase()];
+      if (rank1 !== undefined && rank2 !== undefined) {
+        if (rank1 !== rank2) {
+          return rank1 - rank2;
+        }
+        continue;
+      }
+    }
+
+    // Prerelease sub-identifier comparison (e.g. git hash vs daily date)
+    const isHash1 = isGitHashIdentifier(p1);
+    const isHash2 = isGitHashIdentifier(p2);
+    const isDate1 = isDateIdentifier(p1);
+    const isDate2 = isDateIdentifier(p2);
+
+    if (isHash1 && isDate2) {
+      // Manual commit build is superseded by scheduled daily build
+      return -1;
+    }
+    if (isDate1 && isHash2) {
+      return 1;
+    }
+    if (isHash1 && isHash2) {
+      // Two manual commit builds of same version cannot be ordered chronologically; neither is a downgrade
+      return 0;
     }
 
     const num1 = /^\d+$/.test(p1) ? parseInt(p1, 10) : NaN;

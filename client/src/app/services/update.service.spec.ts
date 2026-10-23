@@ -272,6 +272,30 @@ describe("UpdateService", () => {
       expect(isDowngrade("1.1.0-beta.1", "1.1.0-alpha.20261001")).toBeTrue();
       expect(isDowngrade("1.1.0-alpha.20261001", "1.1.0-beta.1")).toBeFalse();
 
+      // Manual commit hash alpha vs scheduled daily dated alpha
+      expect(
+        isDowngrade("1.1.0-alpha.2dbe08c", "v1.1.0-alpha.20261023"),
+      ).toBeFalse();
+      expect(
+        isDowngrade("1.1.0-alpha.20261023", "1.1.0-alpha.2dbe08c"),
+      ).toBeTrue();
+      expect(
+        isDowngrade("1.1.0-alpha.1234567", "v1.1.0-alpha.20261023"),
+      ).toBeFalse();
+      expect(
+        isDowngrade("1.1.0-alpha.2dbe08c", "1.1.0-alpha.a1f71d2"),
+      ).toBeFalse();
+
+      // Alpha to Beta transitions
+      expect(isDowngrade("1.1.0-alpha.2dbe08c", "1.1.0-beta.1")).toBeFalse();
+      expect(isDowngrade("1.1.0-beta.1", "1.1.0-alpha.2dbe08c")).toBeTrue();
+      expect(isDowngrade("1.1.0-beta.1", "1.1.0-beta.2")).toBeFalse();
+      expect(isDowngrade("1.1.0-beta.2", "1.1.0-beta.1")).toBeTrue();
+
+      // Dev vs Alpha transitions
+      expect(isDowngrade("1.1.0-dev", "1.1.0-alpha.20261023")).toBeFalse();
+      expect(isDowngrade("1.1.0-alpha.20261023", "1.1.0-dev")).toBeTrue();
+
       // Null / undefined handling
       expect(isDowngrade(null, "1.0.0")).toBeFalse();
       expect(isDowngrade("1.0.0", null)).toBeFalse();
