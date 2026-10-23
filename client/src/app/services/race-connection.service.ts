@@ -109,7 +109,7 @@ export class RaceConnectionService implements OnDestroy {
 
   // Test hook or configuration
   private get WATCHDOG_TIMEOUT(): number {
-    return (window as any).WATCHDOG_TIMEOUT || 5000;
+    return (window as any).WATCHDOG_TIMEOUT || 10000;
   }
 
   private get INITIAL_WATCHDOG_TIMEOUT(): number {
