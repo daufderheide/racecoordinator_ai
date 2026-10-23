@@ -303,7 +303,7 @@ describe("RaceConnectionService", () => {
       );
 
       // Watchdog timeout warning
-      tick(6000); // 5s watchdog after initial connection
+      tick(11000); // 10s watchdog after initial connection
       expect(logger.warn).toHaveBeenCalledWith(
         jasmine.stringMatching(/Interface watchdog timeout reached/),
       );
