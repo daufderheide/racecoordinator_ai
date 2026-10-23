@@ -204,7 +204,11 @@ public class DefaultProtocolTest {
     scheduler.tick();
     assertEquals(InterfaceStatus.CONNECTED, listener.lastStatus);
 
-    protocol.advanceTime(2500); // Exceed 2000ms heartbeat limit
+    protocol.advanceTime(2500); // Under 5000ms limit, still connected
+    scheduler.tick();
+    assertEquals(InterfaceStatus.CONNECTED, listener.lastStatus);
+
+    protocol.advanceTime(3000); // Total 5500ms: exceeds 5000ms heartbeat limit
     scheduler.tick();
     assertEquals(InterfaceStatus.DISCONNECTED, listener.lastStatus);
   }
@@ -216,6 +220,8 @@ public class DefaultProtocolTest {
     protocol.simulateHeartbeat();
     assertTrue("Healthy after heartbeat", protocol.isHealthy());
     protocol.advanceTime(2500);
+    assertTrue("Still healthy at 2500ms with 5000ms timeout", protocol.isHealthy());
+    protocol.advanceTime(3000); // Total 5500ms
     assertFalse("Unhealthy after timeout", protocol.isHealthy());
 
     protocol.simulateHeartbeat();

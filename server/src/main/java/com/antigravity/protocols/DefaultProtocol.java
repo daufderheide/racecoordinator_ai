@@ -74,6 +74,7 @@ public abstract class DefaultProtocol implements IProtocol {
   protected volatile long openTimeMs = 0;
   protected volatile long lastReconnectAttemptTimeMs = 0;
   private static final long RECONNECT_INTERVAL_MS = 5000;
+  public static final long HEARTBEAT_TIMEOUT_MS = 5000;
 
   public DefaultProtocol(int numLanes) {
     this.numLanes = numLanes;
@@ -197,7 +198,7 @@ public abstract class DefaultProtocol implements IProtocol {
           long age = now() - lastHeartbeatTimeMs;
           logger.trace(
               "Timeout age: {}ms (now: {}, lastHeartbeat: {})", age, now(), lastHeartbeatTimeMs);
-          if (age < 2000) {
+          if (age < HEARTBEAT_TIMEOUT_MS) {
             status = InterfaceStatus.CONNECTED;
           } else {
             status = InterfaceStatus.DISCONNECTED;
@@ -234,7 +235,7 @@ public abstract class DefaultProtocol implements IProtocol {
     if (isConnected()) {
       if (!requiresHeartbeat()
           || lastHeartbeatTimeMs == 0
-          || (currentTime - lastHeartbeatTimeMs <= 2000)) {
+          || (currentTime - lastHeartbeatTimeMs <= HEARTBEAT_TIMEOUT_MS)) {
         return;
       }
     }
@@ -244,8 +245,9 @@ public abstract class DefaultProtocol implements IProtocol {
       try {
         if (isConnected()) {
           logger.warn(
-              "Interface index {} heartbeat stale (>2000ms). Closing stale connection before reconnect.",
-              getInterfaceIndex());
+              "Interface index {} heartbeat stale (>{}ms). Closing stale connection before reconnect.",
+              getInterfaceIndex(),
+              HEARTBEAT_TIMEOUT_MS);
           close();
         }
         logger.info(
@@ -631,8 +633,8 @@ public abstract class DefaultProtocol implements IProtocol {
     if (!isConnected() || lastHeartbeatTimeMs == 0) {
       return false; // Not connected or no heartbeat yet
     }
-    // Healthy if we received a heartbeat in the last 2 seconds
-    return (now() - lastHeartbeatTimeMs) < 2000;
+    // Healthy if we received a heartbeat within the timeout window
+    return (now() - lastHeartbeatTimeMs) < HEARTBEAT_TIMEOUT_MS;
   }
 
   public long getLastHeartbeatTimeMs() {
