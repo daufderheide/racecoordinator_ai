@@ -4307,7 +4307,11 @@ export class DefaultRacedayComponent
 
   isGridOverall(gridId?: string): boolean {
     if (!gridId) return false;
-    if (this.gridSession()?.gridType === "overall") return true;
+    const session = this.gridSession();
+    if (session) {
+      if (session.gridType === "overall") return true;
+      if (session.gridType === "heat") return false;
+    }
 
     const widgets = this.getWidgets();
     if (
@@ -4317,15 +4321,40 @@ export class DefaultRacedayComponent
       this.cachedOverallGridWidgetsRef = widgets;
       const set = new Set<string>();
       if (widgets) {
+        const gridMap = new Map<string, any[]>();
         for (let i = 0; i < widgets.length; i++) {
           const s = widgets[i]?.customSettings;
-          if (
-            s?.["gridId"] &&
-            (s["gridType"] === "overall" ||
-              s["bindingMode"] === "overallPosition" ||
-              RacedayLayoutUtils.isOverallColumnKey(s["columnKey"]))
-          ) {
-            set.add(s["gridId"]);
+          if (s?.["gridId"]) {
+            let list = gridMap.get(s["gridId"]);
+            if (!list) {
+              list = [];
+              gridMap.set(s["gridId"], list);
+            }
+            list.push(s);
+          }
+        }
+        for (const [gid, settingsList] of gridMap.entries()) {
+          const hasExplicitOverall = settingsList.some(
+            (s) => s["gridType"] === "overall",
+          );
+          if (hasExplicitOverall) {
+            set.add(gid);
+            continue;
+          }
+          const hasExplicitHeat = settingsList.some(
+            (s) => s["gridType"] === "heat",
+          );
+          if (hasExplicitHeat) {
+            continue;
+          }
+          const hasLegacyOverall = settingsList.some(
+            (s) =>
+              !s["gridType"] &&
+              (s["bindingMode"] === "overallPosition" ||
+                RacedayLayoutUtils.isOverallColumnKey(s["columnKey"])),
+          );
+          if (hasLegacyOverall) {
+            set.add(gid);
           }
         }
       }

@@ -359,7 +359,7 @@ export class LaneGridReplicationHelper {
     );
 
     const { targetBounds, offsetInCellX, offsetInCellY } =
-      this.computeMasterGeometry(session, masterCell, ratios);
+      LaneGridGeometryHelper.computeMasterGeometry(session, masterCell, ratios);
 
     const effectiveBindingMode =
       (masterWidget.customSettings?.["bindingMode"] as any) ||
@@ -406,62 +406,6 @@ export class LaneGridReplicationHelper {
     );
 
     return result;
-  }
-
-  private static computeMasterGeometry(
-    session: LaneGridSession,
-    masterCell: LaneGridBounds,
-    ratios: {
-      cellWidthRatio: number;
-      cellHeightRatio: number;
-      cellOffsetXRatio: number;
-      cellOffsetYRatio: number;
-    },
-  ): {
-    targetBounds: LaneGridBounds;
-    offsetInCellX: number;
-    offsetInCellY: number;
-  } {
-    const cellW = masterCell.width > 0 ? masterCell.width : 1;
-    const cellH = masterCell.height > 0 ? masterCell.height : 1;
-    const isHorizontal =
-      session.direction === "horizontal" ||
-      session.layoutOrientation === "horizontal";
-    const isVertical = !isHorizontal;
-    const targetWidth =
-      isVertical || session.linkColumns === false
-        ? Math.max(10, Math.round(cellW * ratios.cellWidthRatio))
-        : cellW;
-    const targetHeight =
-      isHorizontal || session.mirrorRows === false
-        ? Math.max(10, Math.round(cellH * ratios.cellHeightRatio))
-        : cellH;
-    const targetX = isVertical
-      ? Math.max(
-          masterCell.x,
-          Math.round(masterCell.x + cellW * ratios.cellOffsetXRatio),
-        )
-      : masterCell.x;
-    const targetY = isVertical
-      ? masterCell.y
-      : Math.max(
-          masterCell.y,
-          Math.round(masterCell.y + cellH * ratios.cellOffsetYRatio),
-        );
-
-    const offsetInCellX = isVertical ? Math.max(0, targetX - masterCell.x) : 0;
-    const offsetInCellY = isVertical ? 0 : Math.max(0, targetY - masterCell.y);
-
-    return {
-      targetBounds: {
-        x: targetX,
-        y: targetY,
-        width: targetWidth,
-        height: targetHeight,
-      },
-      offsetInCellX,
-      offsetInCellY,
-    };
   }
 
   public static syncAllMasterWidgetsToLanes(
@@ -514,17 +458,7 @@ export class LaneGridReplicationHelper {
       session.bindingMode = (bindingModeOverride as any) || "lane";
     }
     if (!session.gridType) {
-      const hasOverall = masterWidgets.some(
-        (m) =>
-          m.customSettings?.["gridType"] === "overall" ||
-          RacedayLayoutUtils.isOverallColumnKey(
-            m.customSettings?.["columnKey"],
-          ),
-      );
-      session.gridType = hasOverall
-        ? "overall"
-        : (masterWidgets.find((m) => m.customSettings?.["gridType"])
-            ?.customSettings?.["gridType"] as any) || "heat";
+      session.gridType = this.resolveGridTypeForMasterWidgets(masterWidgets);
     }
 
     let currentWidgets = [...allWidgets];
@@ -560,6 +494,32 @@ export class LaneGridReplicationHelper {
     });
 
     return LaneGridCleanupHelper.cleanOrphanedGridWidgets(currentWidgets);
+  }
+
+  private static resolveGridTypeForMasterWidgets(
+    masterWidgets: AbsoluteWidgetNode[],
+  ): "heat" | "overall" {
+    const allHeat =
+      masterWidgets.length > 0 &&
+      masterWidgets.every((m) => m.customSettings?.["gridType"] === "heat");
+    const anyOverall = masterWidgets.some(
+      (m) => m.customSettings?.["gridType"] === "overall",
+    );
+    const anyLegacyOverall = masterWidgets.some(
+      (m) =>
+        !m.customSettings?.["gridType"] &&
+        RacedayLayoutUtils.isOverallColumnKey(m.customSettings?.["columnKey"]),
+    );
+    if (allHeat) {
+      return "heat";
+    }
+    if (anyOverall || anyLegacyOverall) {
+      return "overall";
+    }
+    return (
+      (masterWidgets.find((m) => m.customSettings?.["gridType"])
+        ?.customSettings?.["gridType"] as any) || "heat"
+    );
   }
 
   public static hasGridWidgets(
@@ -656,17 +616,34 @@ export class LaneGridReplicationHelper {
     session: LaneGridSession,
   ): AbsoluteWidgetNode[] {
     if (!widgets || !session) return widgets || [];
-    const hasOverall = widgets.some(
-      (w) =>
-        w.customSettings?.["gridId"] === session.gridId &&
-        (w.customSettings?.["gridType"] === "overall" ||
+    let effectiveGridType: "heat" | "overall";
+    if (session.gridType) {
+      effectiveGridType = session.gridType;
+    } else {
+      const gridWidgets = widgets.filter(
+        (w) => w.customSettings?.["gridId"] === session.gridId,
+      );
+      const allHeat =
+        gridWidgets.length > 0 &&
+        gridWidgets.every((w) => w.customSettings?.["gridType"] === "heat");
+      const anyOverall = gridWidgets.some(
+        (w) => w.customSettings?.["gridType"] === "overall",
+      );
+      const anyLegacyOverall = gridWidgets.some(
+        (w) =>
+          !w.customSettings?.["gridType"] &&
           RacedayLayoutUtils.isOverallColumnKey(
             w.customSettings?.["columnKey"],
-          )),
-    );
-    const effectiveGridType = hasOverall
-      ? "overall"
-      : session.gridType || "heat";
+          ),
+      );
+      if (allHeat) {
+        effectiveGridType = "heat";
+      } else if (anyOverall || anyLegacyOverall) {
+        effectiveGridType = "overall";
+      } else {
+        effectiveGridType = "heat";
+      }
+    }
     const mapped = widgets.map((w) => {
       if (w.customSettings?.["gridId"] === session.gridId) {
         return {
@@ -799,75 +776,13 @@ export class LaneGridReplicationHelper {
     ) {
       return allWidgets || [];
     }
-    const validCount = Math.max(
-      1,
-      Math.min(32, Math.round(Number(newTotalLanes))),
-    );
-    const bounds =
-      existingBounds || this.calculateGridBounds(allWidgets, gridId);
-    if (!bounds) return allWidgets;
-
-    const gridWidgets = allWidgets.filter(
-      (w) => w.customSettings?.["gridId"] === gridId,
-    );
-    if (gridWidgets.length === 0) return allWidgets;
-    const first = gridWidgets[0];
-
-    const session: LaneGridSession = {
+    const session = LaneGridStyleHelper.buildSessionFromGridWidgets(
       gridId,
-      bounds,
-      totalLanes: validCount,
-      direction:
-        first.customSettings?.["gridDirection"] ||
-        first.customSettings?.["layoutOrientation"] ||
-        "vertical",
-      sourceLaneIndex: 0,
-      bindingMode: first.customSettings?.["bindingMode"] || "lane",
-      gridType:
-        first.customSettings?.["gridType"] ||
-        (gridWidgets.some((w) => w.customSettings?.["gridType"] === "overall")
-          ? "overall"
-          : "heat"),
-      headerPlacement:
-        first.customSettings?.["headerPlacement"] || "individual",
-      headerHeight: Number(first.customSettings?.["headerHeight"]) || 36,
-      linkColumns: first.customSettings?.["linkColumns"] !== false,
-      mirrorRows: first.customSettings?.["mirrorRows"] !== false,
-      sortByBindingMode: first.customSettings?.["sortByBindingMode"] !== false,
-      layoutOrientation:
-        first.customSettings?.["layoutOrientation"] ||
-        first.customSettings?.["gridDirection"] ||
-        "vertical",
-      gridLabelPosition: first.customSettings?.["gridLabelPosition"] || "none",
-      gridLabelText: first.customSettings?.["gridLabelText"] || "",
-      gridLabelSize: Number(first.customSettings?.["gridLabelSize"]) || 40,
-      gridLabelFontFamily: first.customSettings?.["gridLabelFontFamily"] || "",
-      gridLabelFontSize:
-        Number(first.customSettings?.["gridLabelFontSize"]) || 18,
-      gridLabelTextColor:
-        first.customSettings?.["gridLabelTextColor"] || "#ffffff",
-      gridLabelBackgroundColor:
-        first.customSettings?.["gridLabelBackgroundColor"] ||
-        "rgba(15, 23, 42, 0.85)",
-      gridLabelFontBold: first.customSettings?.["gridLabelFontBold"] !== false,
-      gridLabelFontItalic: Boolean(
-        first.customSettings?.["gridLabelFontItalic"],
-      ),
-      gridLabelAlignment:
-        first.customSettings?.["gridLabelAlignment"] || "center",
-      gridLabelShowBorder:
-        first.customSettings?.["gridLabelShowBorder"] !== false,
-      gridLabelBorderColor:
-        first.customSettings?.["gridLabelBorderColor"] || "",
-      gridLabelBorderWidth:
-        first.customSettings?.["gridLabelBorderWidth"] != null
-          ? Number(first.customSettings["gridLabelBorderWidth"])
-          : 1,
-      gridLabelBorderRadius:
-        first.customSettings?.["gridLabelBorderRadius"] != null
-          ? Number(first.customSettings["gridLabelBorderRadius"])
-          : 4,
-    };
+      allWidgets,
+      newTotalLanes,
+      existingBounds,
+    );
+    if (!session) return allWidgets || [];
 
     const synced = this.syncAllMasterWidgetsToLanes(session, allWidgets);
     return this.bakeGrid(synced, session);
@@ -1036,25 +951,9 @@ export class LaneGridReplicationHelper {
     const gridWidgets = allWidgets.filter(
       (w) => w.customSettings?.["gridId"] === gridId,
     );
-    const first = gridWidgets[0];
-    const prevPos = first?.customSettings?.["gridLabelPosition"] || "none";
-    const prevSize = Number(first?.customSettings?.["gridLabelSize"]) || 40;
-    const newPos = config.gridLabelPosition ?? prevPos;
-    const newSize = config.gridLabelSize ?? prevSize;
-
-    const labelGeometryChanged =
-      prevPos !== newPos || (newPos !== "none" && prevSize !== newSize);
-
-    const isAnyUnderLabel = gridWidgets.some((w) => {
-      if (w.customSettings?.["isHeaderWidget"]) return false;
-      const dataBounds = LaneGridLabelHelper.computeGridDataBounds(session);
-      return (
-        (newPos === "top" && w.y < dataBounds.y) ||
-        (newPos === "left" && w.x < dataBounds.x)
-      );
-    });
-
-    if (labelGeometryChanged || isAnyUnderLabel) {
+    if (
+      LaneGridLabelHelper.shouldResyncForGridLabel(gridWidgets, session, config)
+    ) {
       const synced = this.syncAllMasterWidgetsToLanes(session, allWidgets);
       return this.bakeGrid(synced, session);
     }

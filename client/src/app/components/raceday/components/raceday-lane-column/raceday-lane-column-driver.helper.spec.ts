@@ -235,6 +235,28 @@ describe("raceday-lane-column-driver.helper", () => {
       expect(isParentGridOverall(parent, "grid-1")).toBeTrue();
     });
 
+    it("should return false if gridSession declared heat", () => {
+      const parent = { gridSession: () => ({ gridType: "heat" }) };
+      expect(isParentGridOverall(parent, "grid-1")).toBeFalse();
+    });
+
+    it("should return false if layout widgets declare heat grid even with overall columnKey", () => {
+      const parent = {
+        layout: {
+          widgets: [
+            {
+              customSettings: {
+                gridId: "grid-1",
+                gridType: "heat",
+                columnKey: "overallLapCount",
+              },
+            },
+          ],
+        },
+      };
+      expect(isParentGridOverall(parent, "grid-1")).toBeFalse();
+    });
+
     it("should return true if layout widgets declare overall grid", () => {
       const parent = {
         layout: {

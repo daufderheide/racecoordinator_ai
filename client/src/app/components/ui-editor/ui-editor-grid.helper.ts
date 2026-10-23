@@ -297,14 +297,26 @@ function buildEditGridSession(
   const headerHeight = Number(first.customSettings?.["headerHeight"]) || 36;
   const linkColumns = first.customSettings?.["linkColumns"] !== false;
 
-  const hasOverallWidget = gridWidgets.some(
+  const allHeat =
+    gridWidgets.length > 0 &&
+    gridWidgets.every((w: any) => w.customSettings?.["gridType"] === "heat");
+  const anyOverall = gridWidgets.some(
+    (w: any) => w.customSettings?.["gridType"] === "overall",
+  );
+  const anyLegacyOverallColumn = gridWidgets.some(
     (w: any) =>
-      w.customSettings?.["gridType"] === "overall" ||
+      !w.customSettings?.["gridType"] &&
       RacedayLayoutUtils.isOverallColumnKey(w.customSettings?.["columnKey"]),
   );
-  const gridType = hasOverallWidget
-    ? "overall"
-    : first.customSettings?.["gridType"] || "heat";
+
+  let gridType: "heat" | "overall";
+  if (allHeat) {
+    gridType = "heat";
+  } else if (anyOverall || anyLegacyOverallColumn) {
+    gridType = "overall";
+  } else {
+    gridType = first.customSettings?.["gridType"] || "heat";
+  }
 
   const dataWidget = gridWidgets.find(
     (w: any) => !w.customSettings?.["isHeaderWidget"],
@@ -639,13 +651,20 @@ export function handleSyncActiveGridSessionFromLayout(comp: any): void {
       ? "position"
       : cs["bindingMode"] || comp.activeGridSession.bindingMode;
 
-    const hasOverallWidget = gridWidgets.some(
+    const allHeat =
+      gridWidgets.length > 0 &&
+      gridWidgets.every((w: any) => w.customSettings?.["gridType"] === "heat");
+    const anyOverall = gridWidgets.some(
+      (w: any) => w.customSettings?.["gridType"] === "overall",
+    );
+    const anyLegacyOverall = gridWidgets.some(
       (w: any) =>
-        w.customSettings?.["gridType"] === "overall" ||
+        !w.customSettings?.["gridType"] &&
         RacedayLayoutUtils.isOverallColumnKey(w.customSettings?.["columnKey"]),
     );
-    const gridType =
-      comp.activeGridSession.gridType === "overall" || hasOverallWidget
+    const gridType = allHeat
+      ? "heat"
+      : anyOverall || anyLegacyOverall
         ? "overall"
         : cs["gridType"] || comp.activeGridSession.gridType || "heat";
 

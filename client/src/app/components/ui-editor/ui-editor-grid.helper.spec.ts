@@ -397,6 +397,38 @@ describe("ui-editor-grid.helper", () => {
       expect(mockComp.activeGridSession.gridType).toBe("overall");
     });
 
+    it("should resolve gridType as heat when all widgets have gridType heat even if a widget has an overall columnKey", () => {
+      mockWidgets = [
+        {
+          id: "w-heat-col",
+          widgetType: "lane-column",
+          x: 100,
+          y: 50,
+          width: 200,
+          height: 100,
+          zIndex: 100,
+          customSettings: {
+            gridId: "heat-grid-with-overall-col",
+            gridLane: 0,
+            gridTotalLanes: 4,
+            gridDirection: "vertical",
+            columnKey: "overallLapCount",
+            gridType: "heat",
+          },
+        },
+      ];
+      mockComp.getLayout.and.returnValue({
+        baseWidth: 1920,
+        baseHeight: 1080,
+        widgets: mockWidgets,
+      });
+
+      handleEditGridTemplate(mockComp, "heat-grid-with-overall-col", mockUi);
+
+      expect(mockComp.activeGridSession).toBeDefined();
+      expect(mockComp.activeGridSession.gridType).toBe("heat");
+    });
+
     it("should ignore invalid or non-existent gridId", () => {
       handleEditGridTemplate(mockComp, "unknown-grid", mockUi);
       expect(mockComp.activeGridSession).toBeNull();

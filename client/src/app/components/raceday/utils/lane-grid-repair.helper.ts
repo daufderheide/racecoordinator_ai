@@ -342,14 +342,25 @@ export class LaneGridRepairHelper {
     const bindingMode = positionWidget
       ? "position"
       : (first.customSettings?.["bindingMode"] as any) || "lane";
-    const hasOverall = gridWidgets.some(
+    const allHeat =
+      gridWidgets.length > 0 &&
+      gridWidgets.every((w) => w.customSettings?.["gridType"] === "heat");
+    const anyOverall = gridWidgets.some(
+      (w) => w.customSettings?.["gridType"] === "overall",
+    );
+    const anyLegacyOverall = gridWidgets.some(
       (w) =>
-        w.customSettings?.["gridType"] === "overall" ||
+        !w.customSettings?.["gridType"] &&
         RacedayLayoutUtils.isOverallColumnKey(w.customSettings?.["columnKey"]),
     );
-    const gridType = hasOverall
-      ? "overall"
-      : (first.customSettings?.["gridType"] as any) || "heat";
+    let gridType: "heat" | "overall";
+    if (allHeat) {
+      gridType = "heat";
+    } else if (anyOverall || anyLegacyOverall) {
+      gridType = "overall";
+    } else {
+      gridType = (first.customSettings?.["gridType"] as any) || "heat";
+    }
     const linkColumns = first.customSettings?.["linkColumns"] !== false;
     const mirrorRows = first.customSettings?.["mirrorRows"] !== false;
 

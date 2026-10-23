@@ -870,4 +870,60 @@ export class LaneGridGeometryHelper {
       },
     );
   }
+
+  public static computeMasterGeometry(
+    session: LaneGridSession,
+    masterCell: LaneGridBounds,
+    ratios: {
+      cellWidthRatio: number;
+      cellHeightRatio: number;
+      cellOffsetXRatio: number;
+      cellOffsetYRatio: number;
+    },
+  ): {
+    targetBounds: LaneGridBounds;
+    offsetInCellX: number;
+    offsetInCellY: number;
+  } {
+    const cellW = masterCell.width > 0 ? masterCell.width : 1;
+    const cellH = masterCell.height > 0 ? masterCell.height : 1;
+    const isHorizontal =
+      session.direction === "horizontal" ||
+      session.layoutOrientation === "horizontal";
+    const isVertical = !isHorizontal;
+    const targetWidth =
+      isVertical || session.linkColumns === false
+        ? Math.max(10, Math.round(cellW * ratios.cellWidthRatio))
+        : cellW;
+    const targetHeight =
+      isHorizontal || session.mirrorRows === false
+        ? Math.max(10, Math.round(cellH * ratios.cellHeightRatio))
+        : cellH;
+    const targetX = isVertical
+      ? Math.max(
+          masterCell.x,
+          Math.round(masterCell.x + cellW * ratios.cellOffsetXRatio),
+        )
+      : masterCell.x;
+    const targetY = isVertical
+      ? masterCell.y
+      : Math.max(
+          masterCell.y,
+          Math.round(masterCell.y + cellH * ratios.cellOffsetYRatio),
+        );
+
+    const offsetInCellX = isVertical ? Math.max(0, targetX - masterCell.x) : 0;
+    const offsetInCellY = isVertical ? 0 : Math.max(0, targetY - masterCell.y);
+
+    return {
+      targetBounds: {
+        x: targetX,
+        y: targetY,
+        width: targetWidth,
+        height: targetHeight,
+      },
+      offsetInCellX,
+      offsetInCellY,
+    };
+  }
 }

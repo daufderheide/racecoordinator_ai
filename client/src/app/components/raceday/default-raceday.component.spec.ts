@@ -13744,6 +13744,14 @@ describe("DefaultRacedayComponent", () => {
             bindingMode: "overallPosition",
           },
         },
+        {
+          id: "w5",
+          customSettings: {
+            gridId: "g-heat-overall-col",
+            gridType: "heat",
+            columnKey: "overallLapCount",
+          },
+        },
       ] as any[];
 
       (component as any).layout = { widgets: gridWidgets };
@@ -13751,6 +13759,7 @@ describe("DefaultRacedayComponent", () => {
       expect(component.isGridOverall("g-key")).toBeTrue();
       expect(component.isGridOverall("g-binding")).toBeTrue();
       expect(component.isGridOverall("g-heat")).toBeFalse();
+      expect(component.isGridOverall("g-heat-overall-col")).toBeFalse();
       expect(component.isGridOverall("non-existent")).toBeFalse();
 
       // Caching: should return from cachedOverallGridIds

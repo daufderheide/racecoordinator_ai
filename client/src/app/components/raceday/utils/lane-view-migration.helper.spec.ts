@@ -321,6 +321,83 @@ describe("LaneViewMigrationHelper", () => {
       }
     });
 
+    it("should preserve gridType as 'heat' and bindingMode as heat standings even when overall columns like overallLapCount are present", () => {
+      const layout: LayoutConfig = {
+        widgets: [
+          {
+            id: "widget-lane-view-overall-cols",
+            widgetType: "lane-view",
+            x: 0,
+            y: 0,
+            width: 800,
+            height: 400,
+            zIndex: 100,
+            customSettings: {
+              isVertical: false,
+              sortByStandings: true,
+            },
+          },
+        ],
+      };
+
+      const options: LaneViewMigrationOptions = {
+        layout,
+        columns: ["laneNumber", "overallLapCount", "lapCount"],
+        totalLanes: 4,
+      };
+
+      const result =
+        LaneViewMigrationHelper.convertLegacyLaneViewLayout(options);
+
+      expect(result.migrated).toBeTrue();
+      const gridWidgets = result.layout.widgets.filter(
+        (w) => w.widgetType === "lane-column",
+      );
+      expect(gridWidgets.length).toBeGreaterThan(0);
+      for (const w of gridWidgets) {
+        expect(w.customSettings?.["gridType"]).toBe("heat");
+        expect(w.customSettings?.["bindingMode"]).toBe("position");
+      }
+    });
+
+    it("should set bindingMode to 'lane' when sortByStandings is false even with overall columns", () => {
+      const layout: LayoutConfig = {
+        widgets: [
+          {
+            id: "widget-lane-view-by-lane",
+            widgetType: "lane-view",
+            x: 0,
+            y: 0,
+            width: 800,
+            height: 400,
+            zIndex: 100,
+            customSettings: {
+              isVertical: false,
+              sortByStandings: false,
+            },
+          },
+        ],
+      };
+
+      const options: LaneViewMigrationOptions = {
+        layout,
+        columns: ["laneNumber", "overallLapCount", "lapCount"],
+        totalLanes: 4,
+      };
+
+      const result =
+        LaneViewMigrationHelper.convertLegacyLaneViewLayout(options);
+
+      expect(result.migrated).toBeTrue();
+      const gridWidgets = result.layout.widgets.filter(
+        (w) => w.widgetType === "lane-column",
+      );
+      for (const w of gridWidgets) {
+        expect(w.customSettings?.["gridType"]).toBe("heat");
+        expect(w.customSettings?.["bindingMode"]).toBe("lane");
+      }
+    });
+
     it("should successfully convert Settings.DEFAULT_LAYOUT into grid layout", () => {
       const result = LaneViewMigrationHelper.convertLegacyLaneViewLayout({
         layout: Settings.DEFAULT_LAYOUT,

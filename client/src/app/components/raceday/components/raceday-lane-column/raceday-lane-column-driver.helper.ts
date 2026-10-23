@@ -281,12 +281,30 @@ export function isParentGridOverall(parent: any, gridId?: string): boolean {
   ) {
     return true;
   }
+  if (
+    parent?.gridSession?.()?.gridType === "heat" ||
+    parent?.activeGridSession?.gridType === "heat"
+  ) {
+    return false;
+  }
+  const gridWidgets = parent?.layout?.widgets?.filter(
+    (w: any) => w.customSettings?.gridId === gridId,
+  );
+  if (!gridWidgets || gridWidgets.length === 0) return false;
+  const allHeat = gridWidgets.every(
+    (w: any) => w.customSettings?.gridType === "heat",
+  );
+  if (allHeat) return false;
+  const anyOverall = gridWidgets.some(
+    (w: any) => w.customSettings?.gridType === "overall",
+  );
+  if (anyOverall) return true;
+
   return Boolean(
-    parent?.layout?.widgets?.some(
+    gridWidgets.some(
       (w: any) =>
-        w.customSettings?.gridId === gridId &&
-        (w.customSettings?.gridType === "overall" ||
-          w.customSettings?.bindingMode === "overallPosition" ||
+        !w.customSettings?.gridType &&
+        (w.customSettings?.bindingMode === "overallPosition" ||
           RacedayLayoutUtils.isOverallColumnKey(w.customSettings?.columnKey)),
     ),
   );

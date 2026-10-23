@@ -1,6 +1,10 @@
 import { AbsoluteWidgetNode } from "@app/models/settings";
 
-import type { LaneGridSession } from "./lane-grid-replication.helper";
+import { LaneGridGeometryHelper } from "./lane-grid-geometry.helper";
+import type {
+  LaneGridBounds,
+  LaneGridSession,
+} from "./lane-grid-replication.helper";
 
 export class LaneGridStyleHelper {
   public static syncCrossColumnProperty(
@@ -448,5 +452,85 @@ export class LaneGridStyleHelper {
         target[key] = refSettings[key];
       }
     }
+  }
+
+  public static buildSessionFromGridWidgets(
+    gridId: string,
+    allWidgets: AbsoluteWidgetNode[],
+    newTotalLanes?: number,
+    existingBounds?: LaneGridBounds | null,
+  ): LaneGridSession | null {
+    if (!gridId || !allWidgets) return null;
+    const gridWidgets = allWidgets.filter(
+      (w) => w.customSettings?.["gridId"] === gridId,
+    );
+    if (gridWidgets.length === 0) return null;
+    const first = gridWidgets[0];
+
+    const bounds =
+      existingBounds ||
+      LaneGridGeometryHelper.calculateGridBounds(allWidgets, gridId);
+    if (!bounds) return null;
+
+    let validCount = Number(first.customSettings?.["gridTotalLanes"]) || 4;
+    if (newTotalLanes != null && Number(newTotalLanes) > 0) {
+      validCount = Math.max(1, Math.min(32, Math.round(Number(newTotalLanes))));
+    }
+
+    return {
+      gridId,
+      bounds,
+      totalLanes: validCount,
+      direction:
+        first.customSettings?.["gridDirection"] ||
+        first.customSettings?.["layoutOrientation"] ||
+        "vertical",
+      sourceLaneIndex: 0,
+      bindingMode: first.customSettings?.["bindingMode"] || "lane",
+      gridType:
+        first.customSettings?.["gridType"] ||
+        (gridWidgets.some((w) => w.customSettings?.["gridType"] === "overall")
+          ? "overall"
+          : "heat"),
+      headerPlacement:
+        first.customSettings?.["headerPlacement"] || "individual",
+      headerHeight: Number(first.customSettings?.["headerHeight"]) || 36,
+      linkColumns: first.customSettings?.["linkColumns"] !== false,
+      mirrorRows: first.customSettings?.["mirrorRows"] !== false,
+      sortByBindingMode: first.customSettings?.["sortByBindingMode"] !== false,
+      layoutOrientation:
+        first.customSettings?.["layoutOrientation"] ||
+        first.customSettings?.["gridDirection"] ||
+        "vertical",
+      gridLabelPosition: first.customSettings?.["gridLabelPosition"] || "none",
+      gridLabelText: first.customSettings?.["gridLabelText"] || "",
+      gridLabelSize: Number(first.customSettings?.["gridLabelSize"]) || 40,
+      gridLabelFontFamily: first.customSettings?.["gridLabelFontFamily"] || "",
+      gridLabelFontSize:
+        Number(first.customSettings?.["gridLabelFontSize"]) || 18,
+      gridLabelTextColor:
+        first.customSettings?.["gridLabelTextColor"] || "#ffffff",
+      gridLabelBackgroundColor:
+        first.customSettings?.["gridLabelBackgroundColor"] ||
+        "rgba(15, 23, 42, 0.85)",
+      gridLabelFontBold: first.customSettings?.["gridLabelFontBold"] !== false,
+      gridLabelFontItalic: Boolean(
+        first.customSettings?.["gridLabelFontItalic"],
+      ),
+      gridLabelAlignment:
+        first.customSettings?.["gridLabelAlignment"] || "center",
+      gridLabelShowBorder:
+        first.customSettings?.["gridLabelShowBorder"] !== false,
+      gridLabelBorderColor:
+        first.customSettings?.["gridLabelBorderColor"] || "",
+      gridLabelBorderWidth:
+        first.customSettings?.["gridLabelBorderWidth"] != null
+          ? Number(first.customSettings["gridLabelBorderWidth"])
+          : 1,
+      gridLabelBorderRadius:
+        first.customSettings?.["gridLabelBorderRadius"] != null
+          ? Number(first.customSettings["gridLabelBorderRadius"])
+          : 4,
+    };
   }
 }

@@ -675,6 +675,39 @@ describe("LaneGridReplicationHelper", () => {
     expect(baked[0].customSettings?.["gridType"]).toBe("overall");
   });
 
+  it("should preserve session.gridType as heat in bakeGrid even when widget has an overall column key", () => {
+    const widgetsWithOverallCol: AbsoluteWidgetNode[] = [
+      {
+        id: "w-lap",
+        widgetType: "lane-column",
+        x: 100,
+        y: 50,
+        width: 200,
+        height: 100,
+        zIndex: 100,
+        customSettings: {
+          gridId: "test-grid-heat",
+          columnKey: "overallLapCount",
+          gridType: "heat",
+        },
+      },
+    ];
+    const heatSession: LaneGridSession = {
+      gridId: "test-grid-heat",
+      bounds: { x: 100, y: 50, width: 800, height: 400 },
+      totalLanes: 4,
+      direction: "vertical",
+      sourceLaneIndex: 0,
+      bindingMode: "lane",
+      gridType: "heat",
+    };
+    const baked = LaneGridReplicationHelper.bakeGrid(
+      widgetsWithOverallCol,
+      heatSession,
+    );
+    expect(baked[0].customSettings?.["gridType"]).toBe("heat");
+  });
+
   it("should resolve session.gridType as overall in syncAllMasterWidgetsToLanes when a master widget has gridType overall", () => {
     const masterWidgets: AbsoluteWidgetNode[] = [
       {

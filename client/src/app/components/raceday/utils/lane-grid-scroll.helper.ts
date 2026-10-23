@@ -164,24 +164,29 @@ export class LaneGridScrollHelper {
   private static resolveExplicitGridType(
     gridWidgets: AbsoluteWidgetNode[],
   ): string | undefined {
-    const hasExplicitHeat = gridWidgets.some(
-      (w) => w.customSettings?.["gridType"] === "heat",
-    );
     const hasExplicitOverall = gridWidgets.some(
       (w) => w.customSettings?.["gridType"] === "overall",
     );
+    if (hasExplicitOverall) {
+      return "overall";
+    }
+    const hasExplicitHeat = gridWidgets.some(
+      (w) => w.customSettings?.["gridType"] === "heat",
+    );
+    if (hasExplicitHeat) {
+      return "heat";
+    }
     const hasOverallSignals = gridWidgets.some(
       (w) =>
-        w.customSettings?.["bindingMode"] === "overallPosition" ||
-        RacedayLayoutUtils.isOverallColumnKey(w.customSettings?.["columnKey"]),
+        !w.customSettings?.["gridType"] &&
+        (w.customSettings?.["bindingMode"] === "overallPosition" ||
+          RacedayLayoutUtils.isOverallColumnKey(
+            w.customSettings?.["columnKey"],
+          )),
     );
-    return hasExplicitOverall
+    return hasOverallSignals
       ? "overall"
-      : hasExplicitHeat
-        ? "heat"
-        : hasOverallSignals
-          ? "overall"
-          : gridWidgets[0]?.customSettings?.["gridType"];
+      : gridWidgets[0]?.customSettings?.["gridType"] || "heat";
   }
 
   private static filterOverallGridRows(

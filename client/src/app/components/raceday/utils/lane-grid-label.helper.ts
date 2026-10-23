@@ -301,4 +301,30 @@ export class LaneGridLabelHelper {
     if (align === "right" || align === "end") return "flex-start";
     return "center";
   }
+
+  public static shouldResyncForGridLabel(
+    gridWidgets: AbsoluteWidgetNode[],
+    session: LaneGridSession,
+    config: GridLabelConfig,
+  ): boolean {
+    const first = gridWidgets[0];
+    const prevPos = first?.customSettings?.["gridLabelPosition"] || "none";
+    const prevSize = Number(first?.customSettings?.["gridLabelSize"]) || 40;
+    const newPos = config.gridLabelPosition ?? prevPos;
+    const newSize = config.gridLabelSize ?? prevSize;
+
+    const labelGeometryChanged =
+      prevPos !== newPos || (newPos !== "none" && prevSize !== newSize);
+
+    const isAnyUnderLabel = gridWidgets.some((w) => {
+      if (w.customSettings?.["isHeaderWidget"]) return false;
+      const dataBounds = this.computeGridDataBounds(session);
+      return (
+        (newPos === "top" && w.y < dataBounds.y) ||
+        (newPos === "left" && w.x < dataBounds.x)
+      );
+    });
+
+    return labelGeometryChanged || isAnyUnderLabel;
+  }
 }

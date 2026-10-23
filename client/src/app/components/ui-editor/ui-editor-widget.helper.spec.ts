@@ -446,6 +446,98 @@ describe("ui-editor-widget.helper", () => {
     expect(targetWidget.customSettings._gridTypeChanged).toBeUndefined();
   });
 
+  it("should preserve gridType as heat when deselecting and reselecting grid even with overall columnKey", () => {
+    const {
+      handleWidgetInspectorChange,
+    } = require("./ui-editor-widget.helper");
+    const {
+      handleFinishGridSession,
+      handleEditGridTemplate,
+    } = require("./ui-editor-grid.helper");
+
+    const widget1 = {
+      id: "w1",
+      widgetType: "lane-column",
+      x: 0,
+      y: 0,
+      width: 100,
+      height: 100,
+      zIndex: 100,
+      customSettings: {
+        gridId: "grid-test-revert",
+        gridLane: 0,
+        gridTotalLanes: 2,
+        gridType: "heat",
+        _gridTypeChanged: true,
+      },
+    };
+    const widget2 = {
+      id: "w2",
+      widgetType: "lane-column",
+      x: 100,
+      y: 0,
+      width: 100,
+      height: 100,
+      zIndex: 100,
+      customSettings: {
+        gridId: "grid-test-revert",
+        gridLane: 0,
+        gridTotalLanes: 2,
+        columnKey: "overallLapCount",
+        gridType: "overall",
+      },
+    };
+    const otherWidget = {
+      id: "other-w",
+      widgetType: "flag",
+      x: 300,
+      y: 0,
+      width: 100,
+      height: 100,
+      zIndex: 100,
+      customSettings: {},
+    };
+    const layout = { widgets: [widget1, widget2, otherWidget] };
+    const comp: any = {
+      isSaving: false,
+      activeCustomUi: { entity_id: "ui1" },
+      currentSelectedWidget: widget1,
+      activeGridSession: {
+        gridId: "grid-test-revert",
+        bounds: { x: 0, y: 0, width: 200, height: 100 },
+        totalLanes: 2,
+        direction: "vertical",
+        sourceLaneIndex: 0,
+        gridType: "overall",
+      },
+      getLayout: jasmine.createSpy("getLayout").and.returnValue(layout),
+      editingSettings: new Settings(),
+      isCurrentLayoutPractice: false,
+      isCustomUiPractice: () => false,
+      parsedLayouts: new Map(),
+      captureState: jasmine.createSpy("captureState"),
+      cdr: { markForCheck: jasmine.createSpy("markForCheck") },
+      syncRacedayPreview: jasmine.createSpy("syncRacedayPreview"),
+      maxTrackLanes: 2,
+    };
+
+    // 1. Change gridType to "heat"
+    handleWidgetInspectorChange(comp, widget1);
+    expect(widget2.customSettings.gridType).toBe("heat");
+    expect(comp.activeGridSession.gridType).toBe("heat");
+
+    // 2. Select another widget (finishes grid session / bakes grid)
+    handleFinishGridSession(comp);
+    expect(comp.activeGridSession).toBeNull();
+    expect(widget1.customSettings.gridType).toBe("heat");
+    expect(widget2.customSettings.gridType).toBe("heat");
+
+    // 3. Select the grid again (re-opens edit grid template session)
+    handleEditGridTemplate(comp, "grid-test-revert");
+    expect(comp.activeGridSession).toBeDefined();
+    expect(comp.activeGridSession.gridType).toBe("heat");
+  });
+
   it("should handle removing selected widget", () => {
     const { handleRemoveSelectedWidget } = require("./ui-editor-widget.helper");
     const layout = {
