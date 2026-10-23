@@ -4,6 +4,11 @@ import { TestSetupHelper } from "@app/testing/test-setup_helper";
 
 test.describe("Driver Label Manager Modal Visuals", () => {
   test.beforeEach(async ({ page }) => {
+    // Deterministic pseudo-randomness for visual testing (e.g. label color selection)
+    await page.addInitScript(() => {
+      Math.random = () => 0;
+    });
+
     await TestSetupHelper.setupStandardMocks(page, {
       driverEditorHelpShown: true,
       driverLabels: MOCK_DRIVER_LABELS,
@@ -57,6 +62,7 @@ test.describe("Driver Label Manager Modal Visuals", () => {
     await dialog
       .locator("#driver-label-form-card")
       .waitFor({ state: "visible" });
+    await dialog.locator(".color-swatch").first().click();
     await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
     await page.mouse.move(0, 0);
     await TestSetupHelper.disableAnimations(page);
