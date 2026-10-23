@@ -860,4 +860,33 @@ describe("RacingRosterDialogComponent", () => {
     expect(parseFloat(labelFontSize)).toBeLessThanOrEqual(12);
     expect(dialogComponent.getContrastColor("#000000")).toBe("#ffffff");
   });
+
+  it("should render labels as colored dots when more than 2 labels are assigned to a participant", async () => {
+    const labels: DriverLabel[] = [
+      { entity_id: "l1", name: "Pro", color: "#ef4444" },
+      { entity_id: "l2", name: "Veteran", color: "#3b82f6" },
+      { entity_id: "l3", name: "Champion", color: "#10b981" },
+    ];
+    const d1 = new Driver("d1", "Mario Andretti", "Speedy");
+    d1.labelIds = ["l1", "l2", "l3"];
+
+    hostComponent.driverLabels.set(labels);
+    hostComponent.participants.set([d1]);
+    hostComponent.visible.set(true);
+    fixture.detectChanges();
+
+    const dotsContainer = fixture.nativeElement.querySelector(
+      ".driver-labels-chips.dots-mode",
+    );
+    expect(dotsContainer).toBeTruthy();
+
+    const dots = fixture.nativeElement.querySelectorAll(".driver-label-dot");
+    expect(dots.length).toBe(3);
+    expect(dots[0].getAttribute("title")).toBe("Pro");
+    expect(dots[1].getAttribute("title")).toBe("Veteran");
+    expect(dots[2].getAttribute("title")).toBe("Champion");
+
+    const itemLabels = await harness.getItemLabels(0);
+    expect(itemLabels).toEqual(["Pro", "Veteran", "Champion"]);
+  });
 });

@@ -1,5 +1,6 @@
 import { expect, Page, test } from "@playwright/test";
 import { DefaultRacedaySetupHarnessE2e } from "@app/components/raceday-setup/testing/default-raceday-setup.harness.e2e";
+import { MOCK_DRIVER_LABELS } from "@app/testing/data/drivers_data";
 import { TestSetupHelper } from "@app/testing/test-setup_helper";
 
 import { RacingRosterDialogHarnessE2e } from "./testing/racing-roster-dialog.harness.e2e";
@@ -261,6 +262,90 @@ test.describe("Racing Roster Dialog Visuals", () => {
 
     await expect(page).toHaveScreenshot(
       "racing-roster-dialog-team-labels.png",
+      {
+        maxDiffPixelRatio: 0.05,
+        animations: "disabled",
+        timeout: 10000,
+      },
+    );
+  });
+
+  test("should display racing roster dialog with multi-label overflow shrunk to dots", async ({
+    page,
+  }) => {
+    const multiLabels = [
+      ...MOCK_DRIVER_LABELS,
+      { entity_id: "lbl-vet", name: "Veteran", color: "#d97706" },
+      { entity_id: "lbl-champ", name: "Champion", color: "#9333ea" },
+    ];
+
+    const overflowDrivers = [
+      {
+        entity_id: "d1",
+        name: "Alice",
+        nickname: "The Rocket",
+        label_ids: ["lbl-pro"],
+      },
+      {
+        entity_id: "d2",
+        name: "Bob",
+        nickname: "Drift King",
+        label_ids: ["lbl-pro", "lbl-amateur"],
+      },
+      {
+        entity_id: "d3",
+        name: "Charlie",
+        nickname: "Speedy",
+        label_ids: ["lbl-pro", "lbl-amateur", "lbl-rookie"],
+      },
+      {
+        entity_id: "d4",
+        name: "Dave",
+        nickname: "Apex Hunter",
+        label_ids: [
+          "lbl-pro",
+          "lbl-amateur",
+          "lbl-rookie",
+          "lbl-vet",
+          "lbl-champ",
+        ],
+      },
+    ];
+
+    await page.route("**/api/driver-labels", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(multiLabels),
+      });
+    });
+
+    await page.route("**/api/drivers", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(overflowDrivers),
+      });
+    });
+
+    await TestSetupHelper.setupLocalStorage(page, {
+      recentRaceIds: ["r1", "r2"],
+      selectedDriverIds: ["d1", "d2", "d3", "d4"],
+      racedaySetupWalkthroughSeen: true,
+      language: "en",
+    });
+
+    await TestSetupHelper.waitForLocalization(page, "en", page.goto("/"));
+    await expect(page.locator(".setup-container")).toBeVisible({
+      timeout: 15000,
+    });
+    await TestSetupHelper.disableAnimations(page);
+    await expect(page.getByText("Alice")).toBeVisible();
+
+    await openRosterDialog(page);
+
+    await expect(page).toHaveScreenshot(
+      "racing-roster-dialog-labels-overflow-dots.png",
       {
         maxDiffPixelRatio: 0.05,
         animations: "disabled",

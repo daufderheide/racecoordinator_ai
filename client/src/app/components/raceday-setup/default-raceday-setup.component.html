@@ -584,12 +584,19 @@
                         {{ getLocalizedTeamMembers(participant) }}
                       }
                     </div>
-                    @if (getParticipantLabels(participant).length > 0) {
-                      <div class="driver-labels-chips">
-                        @for (
-                          label of getParticipantLabels(participant);
-                          track label.entity_id
-                        ) {
+                  </div>
+                  @if (getParticipantLabels(participant).length > 0) {
+                    <div
+                      class="driver-labels-chips"
+                      [class.dots-mode]="
+                        getParticipantLabels(participant).length > 2
+                      "
+                    >
+                      @for (
+                        label of getParticipantLabels(participant);
+                        track label.entity_id
+                      ) {
+                        @if (getParticipantLabels(participant).length <= 2) {
                           <span
                             class="driver-label-chip"
                             [style.background-color]="label.color"
@@ -598,10 +605,16 @@
                           >
                             {{ label.name }}
                           </span>
+                        } @else {
+                          <span
+                            class="driver-label-chip driver-label-dot"
+                            [style.background-color]="label.color"
+                            [title]="label.name"
+                          ></span>
                         }
-                      </div>
-                    }
-                  </div>
+                      }
+                    </div>
+                  }
                 </div>
               }
             }
@@ -808,12 +821,19 @@
                         {{ getLocalizedTeamMembers(participant) }}
                       }
                     </div>
-                    @if (getParticipantLabels(participant).length > 0) {
-                      <div class="driver-labels-chips">
-                        @for (
-                          label of getParticipantLabels(participant);
-                          track label.entity_id
-                        ) {
+                  </div>
+                  @if (getParticipantLabels(participant).length > 0) {
+                    <div
+                      class="driver-labels-chips"
+                      [class.dots-mode]="
+                        getParticipantLabels(participant).length > 2
+                      "
+                    >
+                      @for (
+                        label of getParticipantLabels(participant);
+                        track label.entity_id
+                      ) {
+                        @if (getParticipantLabels(participant).length <= 2) {
                           <span
                             class="driver-label-chip"
                             [style.background-color]="label.color"
@@ -822,10 +842,16 @@
                           >
                             {{ label.name }}
                           </span>
+                        } @else {
+                          <span
+                            class="driver-label-chip driver-label-dot"
+                            [style.background-color]="label.color"
+                            [title]="label.name"
+                          ></span>
                         }
-                      </div>
-                    }
-                  </div>
+                      }
+                    </div>
+                  }
                 </div>
               }
             }

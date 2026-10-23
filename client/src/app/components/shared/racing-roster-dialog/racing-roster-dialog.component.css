@@ -298,11 +298,23 @@
 
 .driver-labels-chips {
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
   gap: 3px;
   flex-shrink: 0;
-  max-width: 100%;
-  overflow: hidden;
+  margin-left: auto;
+  max-width: 85px;
+}
+
+.driver-labels-chips.dots-mode {
+  flex-direction: column;
+  flex-wrap: wrap-reverse;
+  max-height: 38px;
+  gap: 3px;
+  align-items: flex-end;
+  justify-content: center;
+  max-width: 40px;
 }
 
 .driver-label-chip {
@@ -318,7 +330,25 @@
   overflow: hidden;
   text-overflow: ellipsis;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
-  flex-shrink: 0;
+  box-sizing: border-box;
+}
+
+.driver-label-chip.driver-label-dot {
+  width: 7px;
+  height: 7px;
+  min-width: 7px;
+  min-height: 7px;
+  padding: 0;
+  border-radius: 50%;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  transition: transform 0.15s ease;
+  cursor: default;
+  display: inline-block;
+}
+
+.driver-label-chip.driver-label-dot:hover {
+  transform: scale(1.35);
 }
 
 /* Density Modifiers */

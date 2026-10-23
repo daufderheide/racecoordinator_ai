@@ -175,12 +175,18 @@
                         >
                       }
                     </div>
-                    @if (getDriverLabels(driver).length > 0) {
-                      <div class="driver-labels-chips">
-                        @for (
-                          label of getDriverLabels(driver);
-                          track label.entity_id
-                        ) {
+                  </div>
+                  <div class="spacer"></div>
+                  @if (getDriverLabels(driver).length > 0) {
+                    <div
+                      class="driver-labels-chips"
+                      [class.dots-mode]="getDriverLabels(driver).length > 2"
+                    >
+                      @for (
+                        label of getDriverLabels(driver);
+                        track label.entity_id
+                      ) {
+                        @if (getDriverLabels(driver).length <= 2) {
                           <span
                             class="driver-label-chip"
                             [style.background-color]="label.color"
@@ -189,11 +195,16 @@
                           >
                             {{ label.name }}
                           </span>
+                        } @else {
+                          <span
+                            class="driver-label-chip driver-label-dot"
+                            [style.background-color]="label.color"
+                            [title]="label.name"
+                          ></span>
                         }
-                      </div>
-                    }
-                  </div>
-                  <div class="spacer"></div>
+                      }
+                    </div>
+                  }
                   @if (isEditMode) {
                     <button
                       class="action-btn danger small"
@@ -244,12 +255,18 @@
                         >
                       }
                     </div>
-                    @if (getDriverLabels(driver).length > 0) {
-                      <div class="driver-labels-chips">
-                        @for (
-                          label of getDriverLabels(driver);
-                          track label.entity_id
-                        ) {
+                  </div>
+                  <div class="spacer"></div>
+                  @if (getDriverLabels(driver).length > 0) {
+                    <div
+                      class="driver-labels-chips"
+                      [class.dots-mode]="getDriverLabels(driver).length > 2"
+                    >
+                      @for (
+                        label of getDriverLabels(driver);
+                        track label.entity_id
+                      ) {
+                        @if (getDriverLabels(driver).length <= 2) {
                           <span
                             class="driver-label-chip"
                             [style.background-color]="label.color"
@@ -258,11 +275,16 @@
                           >
                             {{ label.name }}
                           </span>
+                        } @else {
+                          <span
+                            class="driver-label-chip driver-label-dot"
+                            [style.background-color]="label.color"
+                            [title]="label.name"
+                          ></span>
                         }
-                      </div>
-                    }
-                  </div>
-                  <div class="spacer"></div>
+                      }
+                    </div>
+                  }
                   @if (isEditMode) {
                     <button class="action-btn small add-list-btn">
                       <span class="material-icons">add</span>

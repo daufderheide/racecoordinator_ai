@@ -957,5 +957,49 @@ describe("TeamEditorComponent", () => {
       expect(clone.labelIds).toEqual(["lbl-pro"]);
       expect(clone.labelIds).not.toBe(original.labelIds);
     });
+
+    it("should render chips for <= 2 driver labels and dots for > 2 driver labels", () => {
+      const d1 = Driver.createDefault("d1", "Driver One", "D1", undefined, [
+        "lbl-pro",
+        "lbl-rookie",
+      ]);
+      const d2 = Driver.createDefault("d2", "Driver Two", "D2", undefined, [
+        "lbl-pro",
+        "lbl-rookie",
+        "lbl-vintage",
+      ]);
+      component.allLabels = [
+        { entity_id: "lbl-pro", name: "Pro", color: "#ef4444" },
+        { entity_id: "lbl-rookie", name: "Rookie", color: "#3b82f6" },
+        { entity_id: "lbl-vintage", name: "Vintage", color: "#10b981" },
+      ];
+      component.allDrivers = [d1, d2];
+      component.editingTeam = new Team(
+        "t1",
+        "Team 1",
+        undefined,
+        ["d1", "d2"],
+        [],
+      );
+      fixture.detectChanges();
+
+      const items = fixture.nativeElement.querySelectorAll(
+        "#assigned-drivers-list .driver-item",
+      );
+      expect(items.length).toBe(2);
+
+      const chips0 = items[0].querySelectorAll(
+        ".driver-label-chip:not(.driver-label-dot)",
+      );
+      expect(chips0.length).toBe(2);
+      expect(chips0[0].textContent.trim()).toBe("Pro");
+      expect(chips0[1].textContent.trim()).toBe("Rookie");
+
+      const dots1 = items[1].querySelectorAll(".driver-label-dot");
+      expect(dots1.length).toBe(3);
+      expect(dots1[0].getAttribute("title")).toBe("Pro");
+      expect(dots1[1].getAttribute("title")).toBe("Rookie");
+      expect(dots1[2].getAttribute("title")).toBe("Vintage");
+    });
   });
 });

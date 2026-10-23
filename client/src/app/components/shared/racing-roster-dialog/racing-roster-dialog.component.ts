@@ -554,7 +554,7 @@ export class RacingRosterDialogComponent implements AfterViewInit, OnDestroy {
           : labelsWidth100;
     }
 
-    const hasTwoLines = !!(secondaryText || teamText || itemLabels.length > 0);
+    const hasTwoLines = !!(secondaryText || teamText);
     const gapPx = hasTwoLines
       ? Math.max(2, Math.min(6, Math.round(cardHeight * 0.04)))
       : 0;
@@ -605,5 +605,6 @@ export class RacingRosterDialogComponent implements AfterViewInit, OnDestroy {
     infoEl.style.setProperty("--card-meta-font-size", `${targetMetaPx}px`);
     infoEl.style.setProperty("--card-label-font-size", `${targetLabelPx}px`);
     infoEl.style.setProperty("--card-lines-gap", `${gapPx}px`);
+    card.style.setProperty("--card-label-font-size", `${targetLabelPx}px`);
   }
 }

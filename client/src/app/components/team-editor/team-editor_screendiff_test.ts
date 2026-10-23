@@ -1,4 +1,8 @@
 import { expect, test } from "@playwright/test";
+import {
+  MOCK_DRIVER_LABELS,
+  MOCK_DRIVERS,
+} from "@app/testing/data/drivers_data";
 import { MOCK_TEAMS } from "@app/testing/data/teams_data";
 import { TestSetupHelper } from "@app/testing/test-setup_helper";
 
@@ -191,5 +195,109 @@ test.describe("Team Editor Visuals", () => {
       animations: "disabled",
       maxDiffPixelRatio: 0.05,
     });
+  });
+
+  test("should display team editor with multi-label overflow shrunk to dots", async ({
+    page,
+  }) => {
+    const multiLabels = [
+      ...MOCK_DRIVER_LABELS,
+      { entity_id: "lbl-vet", name: "Veteran", color: "#d97706" },
+      { entity_id: "lbl-champ", name: "Champion", color: "#9333ea" },
+    ];
+
+    const teamWithManyLabels = {
+      ...MOCK_TEAMS[0],
+      labelIds: ["lbl-pro", "lbl-amateur", "lbl-rookie", "lbl-vet"],
+      driverIds: ["d1", "d2"],
+    };
+
+    const overflowDrivers = [
+      {
+        ...MOCK_DRIVERS[0],
+        entity_id: "d1",
+        name: "Alice",
+        nickname: "The Rocket",
+        label_ids: ["lbl-pro"],
+      },
+      {
+        ...MOCK_DRIVERS[1],
+        entity_id: "d2",
+        name: "Bob",
+        nickname: "Drift King",
+        label_ids: ["lbl-pro", "lbl-amateur"],
+      },
+      {
+        ...MOCK_DRIVERS[2],
+        entity_id: "d3",
+        name: "Charlie",
+        nickname: "Speedy",
+        label_ids: ["lbl-pro", "lbl-amateur", "lbl-rookie"],
+      },
+      {
+        ...MOCK_DRIVERS[3],
+        entity_id: "d4",
+        name: "Dave",
+        nickname: "Apex Hunter",
+        label_ids: [
+          "lbl-pro",
+          "lbl-amateur",
+          "lbl-rookie",
+          "lbl-vet",
+          "lbl-champ",
+        ],
+      },
+    ];
+
+    await page.route("**/api/driver-labels", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(multiLabels),
+      });
+    });
+
+    await page.route("**/api/drivers", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(overflowDrivers),
+      });
+    });
+
+    await page.route("**/api/teams", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify([teamWithManyLabels]),
+      });
+    });
+
+    await page.route("**/api/teams/*", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(teamWithManyLabels),
+      });
+    });
+
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/team-editor?id=t1"),
+    );
+
+    await page.locator(".page-container").waitFor();
+    await page.locator(".loader-overlay").waitFor({ state: "hidden" });
+
+    await enterEditMode(page);
+
+    await expect(page).toHaveScreenshot(
+      "team-editor-labels-overflow-dots.png",
+      {
+        animations: "disabled",
+        maxDiffPixelRatio: 0.05,
+      },
+    );
   });
 });

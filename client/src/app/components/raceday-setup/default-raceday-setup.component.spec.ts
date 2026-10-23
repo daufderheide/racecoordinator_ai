@@ -3991,5 +3991,49 @@ describe("DefaultRacedaySetupComponent", () => {
       expect(component.selectedParticipants).not.toContain(d1);
       expect(component.selectedParticipants).toContain(d2);
     });
+
+    it("should render chips for <= 2 labels and colored dots for > 2 labels", () => {
+      const d1 = Driver.createDefault("d1", "Alpha", "A", undefined, [
+        "lbl-pro",
+        "lbl-rookie",
+      ]);
+      const d2 = Driver.createDefault("d2", "Beta", "B", undefined, [
+        "lbl-pro",
+        "lbl-rookie",
+        "lbl-vintage",
+      ]);
+      component.allDrivers = [d1, d2];
+      component.unselectedParticipants = [d1, d2];
+      component.selectedParticipants = [];
+      component.driverLabels = [
+        { entity_id: "lbl-pro", name: "Pro", color: "#ef4444" },
+        { entity_id: "lbl-rookie", name: "Rookie", color: "#3b82f6" },
+        { entity_id: "lbl-vintage", name: "Vintage", color: "#10b981" },
+      ];
+      fixture.detectChanges();
+
+      const item0 = fixture.nativeElement.querySelector("#avail-item-0");
+      expect(item0).toBeTruthy();
+      const chipsContainer0 = item0.querySelector(".driver-labels-chips");
+      expect(chipsContainer0).toBeTruthy();
+      expect(chipsContainer0.classList.contains("dots-mode")).toBeFalse();
+      const chips0 = item0.querySelectorAll(
+        ".driver-label-chip:not(.driver-label-dot)",
+      );
+      expect(chips0.length).toBe(2);
+      expect(chips0[0].textContent.trim()).toBe("Pro");
+      expect(chips0[1].textContent.trim()).toBe("Rookie");
+
+      const item1 = fixture.nativeElement.querySelector("#avail-item-1");
+      expect(item1).toBeTruthy();
+      const chipsContainer1 = item1.querySelector(".driver-labels-chips");
+      expect(chipsContainer1).toBeTruthy();
+      expect(chipsContainer1.classList.contains("dots-mode")).toBeTrue();
+      const dots1 = item1.querySelectorAll(".driver-label-dot");
+      expect(dots1.length).toBe(3);
+      expect(dots1[0].getAttribute("title")).toBe("Pro");
+      expect(dots1[1].getAttribute("title")).toBe("Rookie");
+      expect(dots1[2].getAttribute("title")).toBe("Vintage");
+    });
   });
 });

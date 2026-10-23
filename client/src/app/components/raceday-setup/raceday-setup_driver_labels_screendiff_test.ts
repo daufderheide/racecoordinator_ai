@@ -174,4 +174,92 @@ test.describe("Raceday Setup Driver Labels Visuals", () => {
       timeout: 10000,
     });
   });
+
+  test("should display driver cards with multi-label overflow shrunk to dots", async ({
+    page,
+  }) => {
+    const multiLabels = [
+      ...MOCK_DRIVER_LABELS,
+      { entity_id: "lbl-vet", name: "Veteran", color: "#d97706" },
+      { entity_id: "lbl-champ", name: "Champion", color: "#9333ea" },
+    ];
+
+    const overflowDrivers = [
+      {
+        ...MOCK_DRIVERS[0],
+        entity_id: "d1",
+        name: "Alice",
+        nickname: "The Rocket",
+        label_ids: ["lbl-pro"],
+      },
+      {
+        ...MOCK_DRIVERS[1],
+        entity_id: "d2",
+        name: "Bob",
+        nickname: "Drift King",
+        label_ids: ["lbl-pro", "lbl-amateur"],
+      },
+      {
+        ...MOCK_DRIVERS[2],
+        entity_id: "d3",
+        name: "Charlie",
+        nickname: "Speedy",
+        label_ids: ["lbl-pro", "lbl-amateur", "lbl-rookie"],
+      },
+      {
+        ...MOCK_DRIVERS[3],
+        entity_id: "d4",
+        name: "Dave",
+        nickname: "Apex Hunter",
+        label_ids: [
+          "lbl-pro",
+          "lbl-amateur",
+          "lbl-rookie",
+          "lbl-vet",
+          "lbl-champ",
+        ],
+      },
+    ];
+
+    await page.route("**/api/driver-labels", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(multiLabels),
+      });
+    });
+
+    await page.route("**/api/drivers", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(overflowDrivers),
+      });
+    });
+
+    await TestSetupHelper.setupLocalStorage(page, {
+      recentRaceIds: ["r1", "r2"],
+      selectedDriverIds: ["d1", "d2"],
+      racedaySetupWalkthroughSeen: true,
+      language: "en",
+    });
+
+    await TestSetupHelper.waitForLocalization(page, "en", page.goto("/"));
+    await page.waitForSelector(".driver-panel");
+    await expect(page.getByText("Alice")).toBeVisible();
+    await expect(page.getByText("Dave")).toBeVisible();
+
+    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+    await page.mouse.move(0, 0);
+    await TestSetupHelper.disableAnimations(page);
+
+    await expect(page).toHaveScreenshot(
+      "raceday-setup-labels-overflow-dots.png",
+      {
+        maxDiffPixelRatio: 0.05,
+        animations: "disabled",
+        timeout: 10000,
+      },
+    );
+  });
 });

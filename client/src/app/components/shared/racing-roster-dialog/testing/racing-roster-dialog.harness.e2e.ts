@@ -111,7 +111,9 @@ export class RacingRosterDialogHarnessE2e implements RacingRosterDialogHarnessBa
     const count = await labelEls.count();
     const labels: string[] = [];
     for (let i = 0; i < count; i++) {
-      labels.push((await labelEls.nth(i).textContent())?.trim() || "");
+      const text = (await labelEls.nth(i).textContent())?.trim();
+      const title = (await labelEls.nth(i).getAttribute("title"))?.trim();
+      labels.push(text || title || "");
     }
     return labels;
   }

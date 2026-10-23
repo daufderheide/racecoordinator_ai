@@ -141,8 +141,7 @@
                   @if (
                     item.secondaryName ||
                     (item.teamName &&
-                      (!item.isTeam || item.teamName !== item.primaryName)) ||
-                    (item.labels && item.labels.length > 0)
+                      (!item.isTeam || item.teamName !== item.primaryName))
                   ) {
                     <div class="driver-meta">
                       @if (item.secondaryName) {
@@ -158,23 +157,34 @@
                           {{ item.teamName }}
                         </span>
                       }
-                      @if (item.labels && item.labels.length > 0) {
-                        <div class="driver-labels-chips">
-                          @for (label of item.labels; track label.entity_id) {
-                            <span
-                              class="driver-label-chip"
-                              [style.background-color]="label.color"
-                              [style.color]="getContrastColor(label.color)"
-                              [title]="label.name"
-                            >
-                              {{ label.name }}
-                            </span>
-                          }
-                        </div>
-                      }
                     </div>
                   }
                 </div>
+                @if (item.labels && item.labels.length > 0) {
+                  <div
+                    class="driver-labels-chips"
+                    [class.dots-mode]="item.labels.length > 2"
+                  >
+                    @for (label of item.labels; track label.entity_id) {
+                      @if (item.labels.length <= 2) {
+                        <span
+                          class="driver-label-chip"
+                          [style.background-color]="label.color"
+                          [style.color]="getContrastColor(label.color)"
+                          [title]="label.name"
+                        >
+                          {{ label.name }}
+                        </span>
+                      } @else {
+                        <span
+                          class="driver-label-chip driver-label-dot"
+                          [style.background-color]="label.color"
+                          [title]="label.name"
+                        ></span>
+                      }
+                    }
+                  </div>
+                }
               </div>
             }
           </div>

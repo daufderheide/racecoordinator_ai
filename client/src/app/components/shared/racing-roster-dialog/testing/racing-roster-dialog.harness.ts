@@ -53,7 +53,9 @@ export class RosterCardHarness extends ComponentHarness {
     const els = await this.getLabelEls();
     const result: string[] = [];
     for (const el of els) {
-      result.push((await el.text()).trim());
+      const text = (await el.text()).trim();
+      const title = (await el.getAttribute("title"))?.trim();
+      result.push(text || title || "");
     }
     return result;
   }
