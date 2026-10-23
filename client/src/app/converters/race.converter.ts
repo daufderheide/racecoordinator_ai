@@ -28,7 +28,6 @@ export class RaceConverter {
     this.cache.clear();
   }
 
-  /* eslint-disable max-lines-per-function */
   static fromProto(proto: IRaceModel): Race {
     if (!proto) {
       return new Race(
@@ -59,212 +58,7 @@ export class RaceConverter {
     return this.cache.process(
       objectId,
       isReference,
-      /* eslint-disable max-lines-per-function */
-      () => {
-        let heatScoring = new HeatScoring();
-        if (p.heatScoring) {
-          let heatRanking = p.heatScoring.heatRanking;
-          if (typeof heatRanking === "number") {
-            const methods = [
-              HeatRanking.HR_LAP_COUNT,
-              HeatRanking.HR_FASTEST_LAP,
-              HeatRanking.HR_TOTAL_TIME,
-            ];
-            heatRanking = methods[heatRanking] || HeatRanking.HR_LAP_COUNT;
-          }
-
-          let heatRankingTiebreaker = p.heatScoring.heatRankingTiebreaker;
-          if (typeof heatRankingTiebreaker === "number") {
-            const tiebreakers = [
-              HeatRankingTiebreaker.HRT_FASTEST_LAP_TIME,
-              HeatRankingTiebreaker.HRT_MEDIAN_LAP_TIME,
-              HeatRankingTiebreaker.HRT_AVERAGE_LAP_TIME,
-            ];
-            heatRankingTiebreaker =
-              tiebreakers[heatRankingTiebreaker] ||
-              HeatRankingTiebreaker.HRT_FASTEST_LAP_TIME;
-          }
-
-          let allowFinish = p.heatScoring.allowFinish;
-          if (typeof allowFinish === "number") {
-            const allowFinishes = [
-              AllowFinish.AF_NONE,
-              AllowFinish.AF_ALLOW,
-              AllowFinish.AF_SINGLE_LAP,
-              AllowFinish.AF_NONE_AUTO_SEGMENTS,
-              AllowFinish.AF_SINGLE_LAP_AUTO_SEGMENTS,
-            ];
-            allowFinish = allowFinishes[allowFinish] || AllowFinish.AF_NONE;
-          }
-
-          heatScoring = new HeatScoring(
-            p.heatScoring.finishMethod === 1
-              ? FinishMethod.Timed
-              : FinishMethod.Lap,
-            p.heatScoring.finishValue != null
-              ? Number(p.heatScoring.finishValue)
-              : 0,
-            heatRanking as unknown as HeatRanking,
-            heatRankingTiebreaker as unknown as HeatRankingTiebreaker,
-            allowFinish as unknown as AllowFinish,
-          );
-        }
-
-        let overallScoring = new OverallScoring();
-        if (p.overallScoring) {
-          let rankingMethod = p.overallScoring.rankingMethod;
-          if (typeof rankingMethod === "number") {
-            const methods = [
-              OverallRanking.OR_LAP_COUNT,
-              OverallRanking.OR_FASTEST_LAP,
-              OverallRanking.OR_TOTAL_TIME,
-              OverallRanking.OR_AVERAGE_LAP,
-            ];
-            rankingMethod =
-              methods[rankingMethod] || OverallRanking.OR_LAP_COUNT;
-          }
-
-          let tiebreaker = p.overallScoring.tiebreaker;
-          if (typeof tiebreaker === "number") {
-            const tiebreakers = [
-              OverallRankingTiebreaker.ORT_FASTEST_LAP_TIME,
-              OverallRankingTiebreaker.ORT_MEDIAN_LAP_TIME,
-              OverallRankingTiebreaker.ORT_AVERAGE_LAP_TIME,
-              OverallRankingTiebreaker.ORT_TOTAL_TIME,
-            ];
-            tiebreaker =
-              tiebreakers[tiebreaker] ||
-              OverallRankingTiebreaker.ORT_FASTEST_LAP_TIME;
-          }
-
-          overallScoring = new OverallScoring(
-            p.overallScoring.droppedHeats || 0,
-            rankingMethod as unknown as OverallRanking,
-            tiebreaker as unknown as OverallRankingTiebreaker,
-          );
-        }
-
-        const fuelOptions = AnalogFuelOptionsConverter.fromProto(
-          proto.fuelOptions,
-        );
-        const digitalFuelOptions = DigitalFuelOptionsConverter.fromProto(
-          proto.digitalFuelOptions,
-        );
-
-        return new Race(
-          objectId || "",
-          proto.name || "",
-          TrackConverter.fromProto(proto.track!),
-          (() => {
-            const rotationMap = [
-              "RoundRobin",
-              "FriendlyRoundRobin",
-              "EuropeanRoundRobin",
-              "SingleHeat",
-              "SingleHeatSolo",
-              "CustomRoundRobin",
-              "Custom",
-              "SingleHeatSoloAllLanes",
-              "SingleHeatSoloAllLanesAccumulate",
-            ];
-            return typeof proto.heatRotationType === "number"
-              ? rotationMap[proto.heatRotationType] || "RoundRobin"
-              : proto.heatRotationType || "RoundRobin";
-          })(),
-          heatScoring,
-          overallScoring,
-          fuelOptions,
-          digitalFuelOptions,
-          p.teamOptions
-            ? new TeamOptions(
-                p.teamOptions.heatLapLimit || 0,
-                p.teamOptions.heatTimeLimit || 0,
-                p.teamOptions.overallLapLimit || 0,
-                p.teamOptions.overallTimeLimit || 0,
-                p.teamOptions.requirePitStopChangeDriver || false,
-              )
-            : new TeamOptions(),
-          proto.autoAdvanceTime || 0,
-          proto.autoStartTime || 0,
-          proto.autoAdvanceWarmupTime || 0,
-          proto.autoStartWarmupTime || 0,
-          p.driftTime != null
-            ? Number(p.driftTime)
-            : p.drift_time != null
-              ? Number(p.drift_time)
-              : undefined,
-          p.minLapTime != null
-            ? Number(p.minLapTime)
-            : p.min_lap_time != null
-              ? Number(p.min_lap_time)
-              : undefined,
-          p.start_time != null
-            ? Number(p.start_time)
-            : p.startTime != null
-              ? Number(p.startTime)
-              : undefined,
-          p.restart_time != null
-            ? Number(p.restart_time)
-            : p.restartTime != null
-              ? Number(p.restartTime)
-              : undefined,
-          p.startRandomizer ||
-            p.start_randomizer ||
-            p.startDelay ||
-            p.start_delay ||
-            0.0,
-          p.restartRandomizer ||
-            p.restart_randomizer ||
-            p.restartDelay ||
-            p.restart_delay ||
-            0.0,
-          proto.soloLaneIndex || 0,
-          p.customRotationSequence || p.custom_rotation_sequence || [],
-          p.customRotationAssetId || p.custom_rotation_asset_id,
-          p.customRotations || p.custom_rotations || [],
-          p.heatTimesThrough || p.heat_times_through || 1,
-          p.reverseHeats || p.reverse_heats || false,
-          p.hotStart || p.hot_start || false,
-          p.restartOnFalseStart || p.restart_on_false_start || false,
-          p.startBehindSensor ?? p.start_behind_sensor ?? true,
-          p.startAtCurrent ?? p.start_at_current ?? false,
-          p.falseStartLapPenalty || p.false_start_lap_penalty || 0,
-          p.falseStartTimePenalty || p.false_start_time_penalty || 0,
-          p.groupOptions || p.group_options
-            ? new GroupOptions(
-                !!(p.groupOptions?.enabled || p.group_options?.enabled),
-                p.groupOptions?.maxGroups || p.group_options?.max_groups || 1,
-                !!(
-                  p.groupOptions?.balance ??
-                  p.group_options?.balance ??
-                  false
-                ),
-                !!(
-                  p.groupOptions?.allowEmptyLanes ??
-                  p.group_options?.allow_empty_lanes ??
-                  true
-                ),
-                !!(
-                  p.groupOptions?.forceMultipleOfMax ??
-                  p.group_options?.force_multiple_of_max ??
-                  false
-                ),
-                !!(
-                  p.groupOptions?.rotateGroupHeats ??
-                  p.group_options?.rotate_group_heats ??
-                  true
-                ),
-                p.groupOptions?.minAdvancing ||
-                  p.group_options?.min_advancing ||
-                  0,
-                p.groupOptions?.names || p.group_options?.names || [],
-              )
-            : new GroupOptions(),
-          p.practice || false,
-          p.adjustDriftLaps ?? p.adjust_drift_laps ?? false,
-          p.themeId || p.theme_id || undefined,
-        );
-      },
+      () => this.buildRaceFromProto(proto, p, objectId),
       () => {
         if (!proto.track && !isReference) {
           throw new Error(
@@ -272,6 +66,209 @@ export class RaceConverter {
           );
         }
       },
+    );
+  }
+
+  private static buildRaceFromProto(
+    proto: IRaceModel,
+    p: any,
+    objectId?: string | null,
+  ): Race {
+    const heatScoring = this.parseHeatScoring(p.heatScoring);
+    const overallScoring = this.parseOverallScoring(p.overallScoring);
+    const fuelOptions = AnalogFuelOptionsConverter.fromProto(proto.fuelOptions);
+    const digitalFuelOptions = DigitalFuelOptionsConverter.fromProto(
+      proto.digitalFuelOptions,
+    );
+    const teamOptions = this.parseTeamOptions(p.teamOptions);
+    const groupOptions = this.parseGroupOptions(
+      p.groupOptions || p.group_options,
+    );
+
+    return new Race(
+      objectId || "",
+      proto.name || "",
+      TrackConverter.fromProto(proto.track!),
+      this.parseHeatRotationType(proto.heatRotationType),
+      heatScoring,
+      overallScoring,
+      fuelOptions,
+      digitalFuelOptions,
+      teamOptions,
+      proto.autoAdvanceTime || 0,
+      proto.autoStartTime || 0,
+      proto.autoAdvanceWarmupTime || 0,
+      proto.autoStartWarmupTime || 0,
+      p.driftTime != null
+        ? Number(p.driftTime)
+        : p.drift_time != null
+          ? Number(p.drift_time)
+          : undefined,
+      p.minLapTime != null
+        ? Number(p.minLapTime)
+        : p.min_lap_time != null
+          ? Number(p.min_lap_time)
+          : undefined,
+      p.start_time != null
+        ? Number(p.start_time)
+        : p.startTime != null
+          ? Number(p.startTime)
+          : undefined,
+      p.restart_time != null
+        ? Number(p.restart_time)
+        : p.restartTime != null
+          ? Number(p.restartTime)
+          : undefined,
+      p.startRandomizer ||
+        p.start_randomizer ||
+        p.startDelay ||
+        p.start_delay ||
+        0.0,
+      p.restartRandomizer ||
+        p.restart_randomizer ||
+        p.restartDelay ||
+        p.restart_delay ||
+        0.0,
+      proto.soloLaneIndex || 0,
+      p.customRotationSequence || p.custom_rotation_sequence || [],
+      p.customRotationAssetId || p.custom_rotation_asset_id,
+      p.customRotations || p.custom_rotations || [],
+      p.heatTimesThrough || p.heat_times_through || 1,
+      p.reverseHeats || p.reverse_heats || false,
+      p.hotStart || p.hot_start || false,
+      p.restartOnFalseStart || p.restart_on_false_start || false,
+      p.startBehindSensor ?? p.start_behind_sensor ?? true,
+      p.startAtCurrent ?? p.start_at_current ?? false,
+      p.falseStartLapPenalty || p.false_start_lap_penalty || 0,
+      p.falseStartTimePenalty || p.false_start_time_penalty || 0,
+      groupOptions,
+      p.practice || false,
+      p.adjustDriftLaps ?? p.adjust_drift_laps ?? false,
+      p.themeId || p.theme_id || undefined,
+    );
+  }
+
+  private static parseHeatScoring(rawScoring: any): HeatScoring {
+    if (!rawScoring) return new HeatScoring();
+
+    let heatRanking = rawScoring.heatRanking;
+    if (typeof heatRanking === "number") {
+      const methods = [
+        HeatRanking.HR_LAP_COUNT,
+        HeatRanking.HR_FASTEST_LAP,
+        HeatRanking.HR_TOTAL_TIME,
+      ];
+      heatRanking = methods[heatRanking] || HeatRanking.HR_LAP_COUNT;
+    }
+
+    let heatRankingTiebreaker = rawScoring.heatRankingTiebreaker;
+    if (typeof heatRankingTiebreaker === "number") {
+      const tiebreakers = [
+        HeatRankingTiebreaker.HRT_FASTEST_LAP_TIME,
+        HeatRankingTiebreaker.HRT_MEDIAN_LAP_TIME,
+        HeatRankingTiebreaker.HRT_AVERAGE_LAP_TIME,
+      ];
+      heatRankingTiebreaker =
+        tiebreakers[heatRankingTiebreaker] ||
+        HeatRankingTiebreaker.HRT_FASTEST_LAP_TIME;
+    }
+
+    let allowFinish = rawScoring.allowFinish;
+    if (typeof allowFinish === "number") {
+      const allowFinishes = [
+        AllowFinish.AF_NONE,
+        AllowFinish.AF_ALLOW,
+        AllowFinish.AF_SINGLE_LAP,
+        AllowFinish.AF_NONE_AUTO_SEGMENTS,
+        AllowFinish.AF_SINGLE_LAP_AUTO_SEGMENTS,
+      ];
+      allowFinish = allowFinishes[allowFinish] || AllowFinish.AF_NONE;
+    }
+
+    return new HeatScoring(
+      rawScoring.finishMethod === 1 ? FinishMethod.Timed : FinishMethod.Lap,
+      rawScoring.finishValue != null ? Number(rawScoring.finishValue) : 0,
+      heatRanking as unknown as HeatRanking,
+      heatRankingTiebreaker as unknown as HeatRankingTiebreaker,
+      allowFinish as unknown as AllowFinish,
+    );
+  }
+
+  private static parseOverallScoring(rawScoring: any): OverallScoring {
+    if (!rawScoring) return new OverallScoring();
+
+    let rankingMethod = rawScoring.rankingMethod;
+    if (typeof rankingMethod === "number") {
+      const methods = [
+        OverallRanking.OR_LAP_COUNT,
+        OverallRanking.OR_FASTEST_LAP,
+        OverallRanking.OR_TOTAL_TIME,
+        OverallRanking.OR_AVERAGE_LAP,
+      ];
+      rankingMethod = methods[rankingMethod] || OverallRanking.OR_LAP_COUNT;
+    }
+
+    let tiebreaker = rawScoring.tiebreaker;
+    if (typeof tiebreaker === "number") {
+      const tiebreakers = [
+        OverallRankingTiebreaker.ORT_FASTEST_LAP_TIME,
+        OverallRankingTiebreaker.ORT_MEDIAN_LAP_TIME,
+        OverallRankingTiebreaker.ORT_AVERAGE_LAP_TIME,
+        OverallRankingTiebreaker.ORT_TOTAL_TIME,
+      ];
+      tiebreaker =
+        tiebreakers[tiebreaker] ||
+        OverallRankingTiebreaker.ORT_FASTEST_LAP_TIME;
+    }
+
+    return new OverallScoring(
+      rawScoring.droppedHeats || 0,
+      rankingMethod as unknown as OverallRanking,
+      tiebreaker as unknown as OverallRankingTiebreaker,
+    );
+  }
+
+  private static parseTeamOptions(rawOptions: any): TeamOptions {
+    if (!rawOptions) return new TeamOptions();
+    return new TeamOptions(
+      rawOptions.heatLapLimit || 0,
+      rawOptions.heatTimeLimit || 0,
+      rawOptions.overallLapLimit || 0,
+      rawOptions.overallTimeLimit || 0,
+      rawOptions.requirePitStopChangeDriver || false,
+    );
+  }
+
+  private static parseHeatRotationType(heatRotationType: any): string {
+    const rotationMap = [
+      "RoundRobin",
+      "FriendlyRoundRobin",
+      "EuropeanRoundRobin",
+      "SingleHeat",
+      "SingleHeatSolo",
+      "CustomRoundRobin",
+      "Custom",
+      "SingleHeatSoloAllLanes",
+      "SingleHeatSoloAllLanesAccumulate",
+    ];
+    return typeof heatRotationType === "number"
+      ? rotationMap[heatRotationType] || "RoundRobin"
+      : heatRotationType || "RoundRobin";
+  }
+
+  private static parseGroupOptions(rawGroup: any): GroupOptions {
+    if (!rawGroup) return new GroupOptions();
+    return new GroupOptions(
+      Boolean(rawGroup.enabled),
+      rawGroup.maxGroups || rawGroup.max_groups || 1,
+      Boolean(rawGroup.balance ?? false),
+      Boolean(rawGroup.allowEmptyLanes ?? rawGroup.allow_empty_lanes ?? true),
+      Boolean(
+        rawGroup.forceMultipleOfMax ?? rawGroup.force_multiple_of_max ?? false,
+      ),
+      Boolean(rawGroup.rotateGroupHeats ?? rawGroup.rotate_group_heats ?? true),
+      rawGroup.minAdvancing || rawGroup.min_advancing || 0,
+      rawGroup.names || [],
     );
   }
 }

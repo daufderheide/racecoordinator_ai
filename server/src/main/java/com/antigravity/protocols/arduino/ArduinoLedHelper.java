@@ -375,7 +375,6 @@ public class ArduinoLedHelper {
     }
   }
 
-  @SuppressWarnings("checkstyle:MethodLength")
   public void refreshRaceState() {
     if (!protocol.isOpen() || !protocol.supportsRgbLeds()) {
       return;
@@ -403,152 +402,178 @@ public class ArduinoLedHelper {
       for (int i = 0; i < ledString.leds.size(); i++) {
         int behavior = ledString.leds.get(i);
         if (behavior >= raceStateBehavior && behavior < raceStateBehavior + 100) {
-          int[] rgb1 = {0, 0, 0};
-          int[] rgb2 = {0, 0, 0};
-          boolean isInterleaved = false;
-          boolean canFlash = false;
-
-          RaceFlag currentFlag = flag;
-          if (state == RaceState.STARTING) {
-            currentFlag = RaceFlag.RED;
-          }
-
-          switch (currentFlag) {
-            case RED:
-              rgb1 = new int[] {255, 0, 0};
-              rgb2 = new int[] {0, 0, 0};
-              break;
-            case GREEN:
-              rgb1 = new int[] {0, 255, 0};
-              rgb2 = new int[] {0, 0, 0};
-              break;
-            case YELLOW:
-              isInterleaved = true;
-              canFlash = true;
-              rgb1 = new int[] {255, 255, 0}; // Yellow
-              rgb2 = new int[] {0, 0, 0}; // Black
-              break;
-            case WHITE:
-              rgb1 = new int[] {255, 255, 255};
-              rgb2 = new int[] {0, 0, 0};
-              break;
-            case CHECKERED:
-              isInterleaved = true;
-              canFlash = true;
-              rgb1 = new int[] {255, 255, 255}; // White
-              rgb2 = new int[] {0, 0, 0}; // Black
-              break;
-            case GREEN_YELLOW:
-              isInterleaved = true;
-              canFlash = false; // We'll use rotation instead of flashing
-              rgb1 = new int[] {0, 255, 0}; // Green
-              rgb2 = new int[] {255, 255, 0}; // Yellow
-              break;
-            default:
-              break;
-          }
-
-          if (state == RaceState.STARTING) {
-            isInterleaved = false;
-            canFlash = false;
-          }
-
-          int[] finalRgb = {0, 0, 0};
-          if (flag == RaceFlag.GREEN_YELLOW) {
-            // Rotating effect: shift the interleaving over time
-            long rotationOffset = (now / 150) % 2; // Shift every 150ms
-            if ((i + rotationOffset) % 2 != 0) {
-              finalRgb = rgb2;
-            } else {
-              finalRgb = rgb1;
-            }
-          } else {
-            if (canFlash && ledString.flagFlashRate > 0) {
-              long halfPeriod = (long) (1000.0 / (ledString.flagFlashRate * 2.0));
-              boolean toggle = (now / halfPeriod) % 2 != 0;
-              if (toggle) {
-                int[] temp = rgb1;
-                rgb1 = rgb2;
-                rgb2 = temp;
-              }
-            }
-
-            finalRgb = rgb1;
-            if (isInterleaved && (i % 2 != 0)) {
-              finalRgb = rgb2;
-            }
-          }
-
-          if (state == RaceState.STARTING) {
-            int n = behavior - raceStateBehavior;
-            // Show the number of LEDs corresponding to the seconds elapsed (e.g., 1st sec =
-            // 1 LED).
-            // This matches the updated UI countdown display (1, 2, 3, GO).
-            int onCount = Math.max(1, startingDuration - (int) Math.ceil(countdown) + 1);
-            boolean shouldBeOn = n >= startingDuration - onCount && n < startingDuration;
-            if (!shouldBeOn) {
-              finalRgb = new int[] {0, 0, 0};
-            }
-          }
-
-          String key = ledString.pin + "_" + i;
-          long currentColor =
-              ((long) (finalRgb[0] & 0xFF) << 16)
-                  | ((long) (finalRgb[1] & 0xFF) << 8)
-                  | (long) (finalRgb[2] & 0xFF);
-          Long lastColor = lastLedColors.get(key);
-
-          if (lastColor == null || lastColor != currentColor) {
-            logger.debug(
-                "  LED Update: pin={}, index={}, color={}",
-                ledString.pin,
-                i,
-                String.format("%06X", currentColor));
-            updates.add(
-                RgbLedState.newBuilder()
-                    .setIndex(i)
-                    .setR(finalRgb[0])
-                    .setG(finalRgb[1])
-                    .setB(finalRgb[2])
-                    .build());
-          }
+          processRaceStateLed(ledString, i, behavior, state, flag, countdown, now, updates);
         } else if (behavior >= RgbLedBehavior.RGB_LED_BEHAVIOR_COUNTDOWN_BASE_VALUE
             && behavior < RgbLedBehavior.RGB_LED_BEHAVIOR_COUNTDOWN_BASE_VALUE + 100) {
-          int n = behavior - RgbLedBehavior.RGB_LED_BEHAVIOR_COUNTDOWN_BASE_VALUE;
-          int r = 0;
-          int g = 0;
-          int b = 0;
-
-          if (state == RaceState.STARTING) {
-            // Show the number of LEDs corresponding to the seconds elapsed (e.g., 1st sec =
-            // 1 LED).
-            // This matches the updated UI countdown display (1, 2, 3, GO).
-            int onCount = Math.max(1, startingDuration - (int) Math.ceil(countdown) + 1);
-            if (n >= startingDuration - onCount && n < startingDuration) {
-              r = 255;
-            }
-          } else if (state == RaceState.RACING && flag == RaceFlag.GREEN) {
-            if (now - lastStateChangeTime < 1000) {
-              if (startingDuration == 0 || n < startingDuration) {
-                g = 255;
-              }
-            }
-          }
-
-          String key = ledString.pin + "_" + i;
-          long currentColor =
-              ((long) (r & 0xFF) << 16) | ((long) (g & 0xFF) << 8) | (long) (b & 0xFF);
-          Long lastColor = lastLedColors.get(key);
-
-          if (lastColor == null || lastColor != currentColor) {
-            updates.add(RgbLedState.newBuilder().setIndex(i).setR(r).setG(g).setB(b).build());
-          }
+          processCountdownLed(ledString, i, behavior, state, flag, countdown, now, updates);
         }
       }
 
       if (!updates.isEmpty()) {
         setStringRgbLedValues(ledString.pin, updates);
       }
+    }
+  }
+
+  private void processRaceStateLed(
+      LedString ledString,
+      int i,
+      int behavior,
+      RaceState state,
+      RaceFlag flag,
+      double countdown,
+      long now,
+      List<RgbLedState> updates) {
+    int[] finalRgb = computeRaceStateRgb(ledString, i, behavior, state, flag, countdown, now);
+
+    String key = ledString.pin + "_" + i;
+    long currentColor =
+        ((long) (finalRgb[0] & 0xFF) << 16)
+            | ((long) (finalRgb[1] & 0xFF) << 8)
+            | (long) (finalRgb[2] & 0xFF);
+    Long lastColor = lastLedColors.get(key);
+
+    if (lastColor == null || lastColor != currentColor) {
+      logger.debug(
+          "  LED Update: pin={}, index={}, color={}",
+          ledString.pin,
+          i,
+          String.format("%06X", currentColor));
+      updates.add(
+          RgbLedState.newBuilder()
+              .setIndex(i)
+              .setR(finalRgb[0])
+              .setG(finalRgb[1])
+              .setB(finalRgb[2])
+              .build());
+    }
+  }
+
+  private int[] computeRaceStateRgb(
+      LedString ledString,
+      int i,
+      int behavior,
+      RaceState state,
+      RaceFlag flag,
+      double countdown,
+      long now) {
+    int[] rgb1 = {0, 0, 0};
+    int[] rgb2 = {0, 0, 0};
+    boolean isInterleaved = false;
+    boolean canFlash = false;
+
+    RaceFlag currentFlag = flag;
+    if (state == RaceState.STARTING) {
+      currentFlag = RaceFlag.RED;
+    }
+
+    switch (currentFlag) {
+      case RED:
+        rgb1 = new int[] {255, 0, 0};
+        rgb2 = new int[] {0, 0, 0};
+        break;
+      case GREEN:
+        rgb1 = new int[] {0, 255, 0};
+        rgb2 = new int[] {0, 0, 0};
+        break;
+      case YELLOW:
+        isInterleaved = true;
+        canFlash = true;
+        rgb1 = new int[] {255, 255, 0};
+        rgb2 = new int[] {0, 0, 0};
+        break;
+      case WHITE:
+        rgb1 = new int[] {255, 255, 255};
+        rgb2 = new int[] {0, 0, 0};
+        break;
+      case CHECKERED:
+        isInterleaved = true;
+        canFlash = true;
+        rgb1 = new int[] {255, 255, 255};
+        rgb2 = new int[] {0, 0, 0};
+        break;
+      case GREEN_YELLOW:
+        isInterleaved = true;
+        canFlash = false;
+        rgb1 = new int[] {0, 255, 0};
+        rgb2 = new int[] {255, 255, 0};
+        break;
+      default:
+        break;
+    }
+
+    if (state == RaceState.STARTING) {
+      isInterleaved = false;
+      canFlash = false;
+    }
+
+    int[] finalRgb = {0, 0, 0};
+    if (flag == RaceFlag.GREEN_YELLOW) {
+      long rotationOffset = (now / 150) % 2;
+      finalRgb = ((i + rotationOffset) % 2 != 0) ? rgb2 : rgb1;
+    } else {
+      if (canFlash && ledString.flagFlashRate > 0) {
+        long halfPeriod = (long) (1000.0 / (ledString.flagFlashRate * 2.0));
+        boolean toggle = (now / halfPeriod) % 2 != 0;
+        if (toggle) {
+          int[] temp = rgb1;
+          rgb1 = rgb2;
+          rgb2 = temp;
+        }
+      }
+
+      finalRgb = rgb1;
+      if (isInterleaved && (i % 2 != 0)) {
+        finalRgb = rgb2;
+      }
+    }
+
+    if (state == RaceState.STARTING) {
+      int raceStateBehavior = RgbLedBehavior.RGB_LED_BEHAVIOR_RACE_STATE_BASE_VALUE;
+      int n = behavior - raceStateBehavior;
+      int onCount = Math.max(1, startingDuration - (int) Math.ceil(countdown) + 1);
+      boolean shouldBeOn = n >= startingDuration - onCount && n < startingDuration;
+      if (!shouldBeOn) {
+        finalRgb = new int[] {0, 0, 0};
+      }
+    }
+
+    return finalRgb;
+  }
+
+  private void processCountdownLed(
+      LedString ledString,
+      int i,
+      int behavior,
+      RaceState state,
+      RaceFlag flag,
+      double countdown,
+      long now,
+      List<RgbLedState> updates) {
+    int n = behavior - RgbLedBehavior.RGB_LED_BEHAVIOR_COUNTDOWN_BASE_VALUE;
+    int r = 0;
+    int g = 0;
+    int b = 0;
+
+    if (state == RaceState.STARTING) {
+      int onCount = Math.max(1, startingDuration - (int) Math.ceil(countdown) + 1);
+      if (n >= startingDuration - onCount && n < startingDuration) {
+        r = 255;
+      }
+    } else if (state == RaceState.RACING && flag == RaceFlag.GREEN) {
+      if (now - lastStateChangeTime < 1000) {
+        if (startingDuration == 0 || n < startingDuration) {
+          g = 255;
+        }
+      }
+    }
+
+    String key = ledString.pin + "_" + i;
+    long currentColor = ((long) (r & 0xFF) << 16) | ((long) (g & 0xFF) << 8) | (long) (b & 0xFF);
+    Long lastColor = lastLedColors.get(key);
+
+    if (lastColor == null || lastColor != currentColor) {
+      updates.add(RgbLedState.newBuilder().setIndex(i).setR(r).setG(g).setB(b).build());
     }
   }
 

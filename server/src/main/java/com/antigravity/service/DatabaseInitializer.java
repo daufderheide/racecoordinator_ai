@@ -72,7 +72,6 @@ public class DatabaseInitializer {
     logger.info("Database reset complete.");
   }
 
-  @SuppressWarnings("checkstyle:MethodLength")
   public void resetDrivers(DatabaseContext context) {
     SqliteRepository<Driver> driverRepo = new SqliteRepository<>(context, "drivers", Driver.class);
     driverRepo.drop();
@@ -92,90 +91,29 @@ public class DatabaseInitializer {
     AudioConfig bestLapAudio = new AudioConfig("preset", "default_driveby", null);
     AudioConfig penaltyAudio = new AudioConfig("preset", "default_penalty", null);
 
-    List<Driver> initialDrivers = new ArrayList<>();
-    initialDrivers.add(
-        createDriver(
-            "Abby",
-            "Bank Farter",
-            helmetAssets,
-            1,
-            lapAudio,
-            bestLapAudio,
-            penaltyAudio,
-            context.getNextSequence("drivers")));
-    initialDrivers.add(
-        createDriver(
-            "Andrea",
-            "The Pants",
-            helmetAssets,
-            2,
-            lapAudio,
-            bestLapAudio,
-            penaltyAudio,
-            context.getNextSequence("drivers")));
-    initialDrivers.add(
-        createDriver(
-            "Austin",
-            "Sports Mode",
-            helmetAssets,
-            3,
-            lapAudio,
-            bestLapAudio,
-            penaltyAudio,
-            context.getNextSequence("drivers")));
-    initialDrivers.add(
-        createDriver(
-            "Christine",
-            "Peo Fuente",
-            helmetAssets,
-            4,
-            lapAudio,
-            bestLapAudio,
-            penaltyAudio,
-            context.getNextSequence("drivers")));
-    initialDrivers.add(
-        createDriver(
-            "Dave",
-            "Bad Cheese",
-            helmetAssets,
-            5,
-            lapAudio,
-            bestLapAudio,
-            penaltyAudio,
-            context.getNextSequence("drivers")));
-    initialDrivers.add(
-        createDriver(
-            "Gene",
-            "Swamper Gene",
-            helmetAssets,
-            6,
-            lapAudio,
-            bestLapAudio,
-            penaltyAudio,
-            context.getNextSequence("drivers")));
-    initialDrivers.add(
-        createDriver(
-            "Meyer",
-            "Bull Dog",
-            helmetAssets,
-            7,
-            lapAudio,
-            bestLapAudio,
-            penaltyAudio,
-            context.getNextSequence("drivers")));
-    initialDrivers.add(
-        createDriver(
-            "Noah Jack",
-            "Boy Wonder",
-            helmetAssets,
-            8,
-            lapAudio,
-            bestLapAudio,
-            penaltyAudio,
-            context.getNextSequence("drivers")));
+    String[][] defaultDrivers = {
+      {"Abby", "Bank Farter"},
+      {"Andrea", "The Pants"},
+      {"Austin", "Sports Mode"},
+      {"Christine", "Peo Fuente"},
+      {"Dave", "Bad Cheese"},
+      {"Gene", "Swamper Gene"},
+      {"Meyer", "Bull Dog"},
+      {"Noah Jack", "Boy Wonder"}
+    };
 
-    for (Driver d : initialDrivers) {
-      driverRepo.save(d);
+    for (int i = 0; i < defaultDrivers.length; i++) {
+      Driver driver =
+          createDriver(
+              defaultDrivers[i][0],
+              defaultDrivers[i][1],
+              helmetAssets,
+              i + 1,
+              lapAudio,
+              bestLapAudio,
+              penaltyAudio,
+              context.getNextSequence("drivers"));
+      driverRepo.save(driver);
     }
     logger.info("Drivers reset.");
   }

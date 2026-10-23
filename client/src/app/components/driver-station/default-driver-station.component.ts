@@ -216,8 +216,13 @@ export class DefaultDriverStationComponent implements OnInit, OnDestroy {
   private isRestarting: boolean = false;
   private assets: any[] = [];
 
-  /* eslint-disable max-lines-per-function */
   ngOnInit() {
+    this.initViewerAndAssets();
+    this.initRouteAndHeat();
+    this.initRaceSubscriptions();
+  }
+
+  private initViewerAndAssets(): void {
     this.viewerRaceEndedHandler = new ViewerRaceEndedHandler(
       this.dataService,
       this.authService,
@@ -254,7 +259,9 @@ export class DefaultDriverStationComponent implements OnInit, OnDestroy {
         }),
       );
     }
+  }
 
+  private initRouteAndHeat(): void {
     this.route.params.subscribe((params) => {
       if (this.inputLaneIndex() !== undefined) {
         this.laneIndex = this.inputLaneIndex()!;
@@ -273,74 +280,12 @@ export class DefaultDriverStationComponent implements OnInit, OnDestroy {
         this.cdr.detectChanges();
       }),
     );
+  }
 
+  private initRaceSubscriptions(): void {
     this.subscriptions.push(
       this.raceConnectionService.raceTime$.subscribe((raceTime) => {
-        this.time = raceTime.time || 0;
-        const autoStart = raceTime.autoStartRemaining || 0;
-        if (
-          (this.raceState === RaceState.NOT_STARTED ||
-            this.raceState === RaceState.UNKNOWN_STATE ||
-            this.raceState === RaceState.STARTING) &&
-          autoStart > 0
-        ) {
-          this.checkAutoStartAnnouncements(
-            autoStart,
-            this.previousAutoStartRemaining,
-          );
-        } else if (autoStart <= 0) {
-          this.playedAutoStart.clear();
-          this.playedAutoStartElapsed.clear();
-        }
-        this.previousAutoStartRemaining = autoStart;
-
-        const autoAdvance = raceTime.autoAdvanceRemaining || 0;
-        if (
-          (this.raceState === RaceState.HEAT_OVER ||
-            this.raceState === RaceState.UNKNOWN_STATE) &&
-          autoAdvance > 0
-        ) {
-          this.checkAutoAdvanceAnnouncements(
-            autoAdvance,
-            this.previousAutoAdvanceRemaining,
-          );
-        } else if (autoAdvance <= 0) {
-          this.playedAutoAdvance.clear();
-          this.playedAutoAdvanceElapsed.clear();
-        }
-        this.previousAutoAdvanceRemaining = autoAdvance;
-
-        if (this.raceState === RaceState.STARTING) {
-          const currentSecond = Math.ceil(this.time);
-          const r = this.race;
-          const duration = this.isRestarting
-            ? (r?.restart_time ?? r?.start_time)
-            : r?.start_time;
-          const totalLamps =
-            duration != null
-              ? Math.ceil(duration)
-              : this.time > 0
-                ? Math.ceil(this.time)
-                : 0;
-          if (
-            currentSecond <= totalLamps &&
-            currentSecond <= 5 &&
-            currentSecond >= 1 &&
-            currentSecond !== this.lastPlayedCountdownSecond
-          ) {
-            const played = this.playAudioFromSet(
-              THEME_SLOT_KEYS.AUDIO_COUNTDOWN,
-              currentSecond,
-              { widgetType: "countdown" },
-            );
-            if (played) {
-              this.lastPlayedCountdownSecond = currentSecond;
-            }
-          }
-        } else if (this.raceState === RaceState.RACING) {
-          this.checkRaceTimeAnnouncements(this.time);
-        }
-        this.cdr.detectChanges();
+        this.handleRaceTime(raceTime);
       }),
     );
 
@@ -361,68 +306,7 @@ export class DefaultDriverStationComponent implements OnInit, OnDestroy {
     this.subscriptions.push(
       this.raceConnectionService.raceState$.subscribe((state) => {
         if (state) {
-          const previousState = this.previousRaceState;
-          this.previousRaceState = state;
-          this.raceState = state;
-
-          if (
-            state === RaceState.NOT_STARTED ||
-            state === RaceState.HEAT_OVER ||
-            state === RaceState.RACE_OVER
-          ) {
-            if (state === RaceState.NOT_STARTED) {
-              this.hasRacedInCurrentHeat = false;
-            }
-            this.timeAudioHandler.reset();
-            this.lapAudioHandler.reset();
-            this.previousAutoStartRemaining = 0;
-            this.previousAutoAdvanceRemaining = 0;
-            this.fuelAudioTracker.reset(
-              this.heat,
-              this.hasRacedInCurrentHeat,
-              this.race,
-              this.track,
-            );
-            this.audioService.reset();
-          }
-
-          if (
-            state === RaceState.PAUSED &&
-            previousState === RaceState.RACING
-          ) {
-            this.playThemedSound(THEME_SLOT_KEYS.AUDIO_YELLOW_FLAG, undefined, {
-              widgetType: "flag",
-            });
-          }
-
-          if (previousState !== RaceState.UNKNOWN_STATE) {
-            if (state === RaceState.HEAT_OVER) {
-              this.playThemedSound(THEME_SLOT_KEYS.AUDIO_HEAT_OVER, undefined, {
-                widgetType: "flag",
-              });
-            } else if (state === RaceState.RACE_OVER) {
-              this.playThemedSound(THEME_SLOT_KEYS.AUDIO_RACE_OVER, undefined, {
-                widgetType: "flag",
-              });
-            }
-          }
-
-          if (state === RaceState.STARTING) {
-            this.isRestarting = previousState === RaceState.PAUSED;
-            this.audioService.stopVoice();
-            this.lastPlayedCountdownSecond = -1;
-          }
-
-          if (state === RaceState.RACING) {
-            this.isRestarting = false;
-            this.hasRacedInCurrentHeat = true;
-            if (previousState !== RaceState.UNKNOWN_STATE) {
-              this.playAudioFromSet(THEME_SLOT_KEYS.AUDIO_COUNTDOWN, 0, {
-                widgetType: "countdown",
-              });
-            }
-          }
-          this.cdr.detectChanges();
+          this.handleRaceStateChange(state);
         }
       }),
     );
@@ -482,6 +366,140 @@ export class DefaultDriverStationComponent implements OnInit, OnDestroy {
         this.cdr.detectChanges();
       }),
     );
+  }
+
+  private handleRaceTime(raceTime: any): void {
+    this.time = raceTime.time || 0;
+    const autoStart = raceTime.autoStartRemaining || 0;
+    if (
+      (this.raceState === RaceState.NOT_STARTED ||
+        this.raceState === RaceState.UNKNOWN_STATE ||
+        this.raceState === RaceState.STARTING) &&
+      autoStart > 0
+    ) {
+      this.checkAutoStartAnnouncements(
+        autoStart,
+        this.previousAutoStartRemaining,
+      );
+    } else if (autoStart <= 0) {
+      this.playedAutoStart.clear();
+      this.playedAutoStartElapsed.clear();
+    }
+    this.previousAutoStartRemaining = autoStart;
+
+    const autoAdvance = raceTime.autoAdvanceRemaining || 0;
+    if (
+      (this.raceState === RaceState.HEAT_OVER ||
+        this.raceState === RaceState.UNKNOWN_STATE) &&
+      autoAdvance > 0
+    ) {
+      this.checkAutoAdvanceAnnouncements(
+        autoAdvance,
+        this.previousAutoAdvanceRemaining,
+      );
+    } else if (autoAdvance <= 0) {
+      this.playedAutoAdvance.clear();
+      this.playedAutoAdvanceElapsed.clear();
+    }
+    this.previousAutoAdvanceRemaining = autoAdvance;
+
+    if (this.raceState === RaceState.STARTING) {
+      this.handleStartingCountdown();
+    } else if (this.raceState === RaceState.RACING) {
+      this.checkRaceTimeAnnouncements(this.time);
+    }
+    this.cdr.detectChanges();
+  }
+
+  private handleStartingCountdown(): void {
+    const currentSecond = Math.ceil(this.time);
+    const r = this.race;
+    const duration = this.isRestarting
+      ? (r?.restart_time ?? r?.start_time)
+      : r?.start_time;
+    const totalLamps =
+      duration != null
+        ? Math.ceil(duration)
+        : this.time > 0
+          ? Math.ceil(this.time)
+          : 0;
+    if (
+      currentSecond <= totalLamps &&
+      currentSecond <= 5 &&
+      currentSecond >= 1 &&
+      currentSecond !== this.lastPlayedCountdownSecond
+    ) {
+      const played = this.playAudioFromSet(
+        THEME_SLOT_KEYS.AUDIO_COUNTDOWN,
+        currentSecond,
+        { widgetType: "countdown" },
+      );
+      if (played) {
+        this.lastPlayedCountdownSecond = currentSecond;
+      }
+    }
+  }
+
+  private handleRaceStateChange(state: RaceState): void {
+    const previousState = this.previousRaceState;
+    this.previousRaceState = state;
+    this.raceState = state;
+
+    if (
+      state === RaceState.NOT_STARTED ||
+      state === RaceState.HEAT_OVER ||
+      state === RaceState.RACE_OVER
+    ) {
+      if (state === RaceState.NOT_STARTED) {
+        this.hasRacedInCurrentHeat = false;
+      }
+      this.timeAudioHandler.reset();
+      this.lapAudioHandler.reset();
+      this.previousAutoStartRemaining = 0;
+      this.previousAutoAdvanceRemaining = 0;
+      this.fuelAudioTracker.reset(
+        this.heat,
+        this.hasRacedInCurrentHeat,
+        this.race,
+        this.track,
+      );
+      this.audioService.reset();
+    }
+
+    if (state === RaceState.PAUSED && previousState === RaceState.RACING) {
+      this.playThemedSound(THEME_SLOT_KEYS.AUDIO_YELLOW_FLAG, undefined, {
+        widgetType: "flag",
+      });
+    }
+
+    if (previousState !== RaceState.UNKNOWN_STATE) {
+      if (state === RaceState.HEAT_OVER) {
+        this.playThemedSound(THEME_SLOT_KEYS.AUDIO_HEAT_OVER, undefined, {
+          widgetType: "flag",
+        });
+      } else if (state === RaceState.RACE_OVER) {
+        this.playThemedSound(THEME_SLOT_KEYS.AUDIO_RACE_OVER, undefined, {
+          widgetType: "flag",
+        });
+      }
+    }
+
+    if (state === RaceState.STARTING) {
+      this.isRestarting = previousState === RaceState.PAUSED;
+      this.audioService.stopVoice();
+      this.lastPlayedCountdownSecond = -1;
+    }
+
+    if (state === RaceState.RACING) {
+      this.isRestarting = false;
+      this.hasRacedInCurrentHeat = true;
+      if (previousState !== RaceState.UNKNOWN_STATE) {
+        this.playAudioFromSet(THEME_SLOT_KEYS.AUDIO_COUNTDOWN, 0, {
+          widgetType: "countdown",
+        });
+      }
+    }
+    this.cdr.detectChanges();
   }
 
   ngOnDestroy() {

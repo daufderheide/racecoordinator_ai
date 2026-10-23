@@ -181,10 +181,20 @@ export class RaceConnectionService implements OnDestroy {
     }
   }
 
-  /* eslint-disable max-lines-per-function */
   private startConnection() {
+    this.initConnectionState();
+    this.subscribeSystemAndSocket();
+    this.subscribeRaceData();
+    this.subscribeStandingsAndState();
+
+    if (!this.isRaceEnded) {
+      this.dataService.connectToInterfaceDataSocket();
+      this.resetWatchdog();
+    }
+  }
+
+  private initConnectionState(): void {
     this.isConnected = true;
-    // Clear caches to ensure fresh data for new race (mirrors DefaultRacedayComponent)
     RaceConverter.clearCache();
     DriverConverter.clearCache();
     HeatConverter.clearCache();
@@ -202,7 +212,9 @@ export class RaceConnectionService implements OnDestroy {
     this.lastInterfaceStatus = -1;
     this.isRaceEnded = false;
     this.dataService.updateRaceSubscription(true);
+  }
 
+  private subscribeSystemAndSocket(): void {
     this.subscriptions.push(
       this.dataService.getSystemState().subscribe((state) => {
         if (state) {
@@ -237,7 +249,9 @@ export class RaceConnectionService implements OnDestroy {
         }
       }),
     );
+  }
 
+  private subscribeRaceData(): void {
     this.subscriptions.push(
       this.dataService.getRaceUpdate().subscribe((update) => {
         if (this.driversLoaded) {
@@ -253,229 +267,246 @@ export class RaceConnectionService implements OnDestroy {
 
     this.subscriptions.push(
       this.dataService.getRaceTime().subscribe((raceTime) => {
-        try {
-          const current = this.raceTimeSubject.getValue() || { time: 0 };
-          const currentState = this.raceStateSubject.getValue();
-
-          if (
-            raceTime &&
-            (raceTime.autoStartRemaining == null ||
-              raceTime.autoStartRemaining <= 0) &&
-            (raceTime.autoAdvanceRemaining == null ||
-              raceTime.autoAdvanceRemaining <= 0) &&
-            raceTime.time === 0 &&
-            (current.time || 0) > 0 &&
-            currentState === RaceState.STARTING
-          ) {
-            this.logger.debug(
-              "RaceConnectionService: dropping transient raceTime 0 during STARTING transition",
-            );
-            return;
-          }
-        } catch (e) {
-          // Defensive: if getValue() isn't available for any reason, just forward
-        }
-
-        this.raceTimeSubject.next(raceTime);
+        this.handleRaceTimeIncoming(raceTime);
       }),
     );
 
     this.subscriptions.push(
       this.dataService.getLaps().subscribe((lap) => {
-        const currentHeat = this.raceService.getCurrentHeat();
-        const allHeats =
-          typeof this.raceService?.getHeats === "function"
-            ? this.raceService.getHeats()
-            : [];
-        const heat =
-          currentHeat || (allHeats && allHeats.length > 0 ? allHeats[0] : null);
-        if (heat && heat.heatDrivers && lap) {
-          const driverData = DriverMatchingUtils.findDriverForLap(
-            heat.heatDrivers,
-            lap,
-          );
-          if (driverData) {
-            if (lap.fuelLevel != null && driverData.participant) {
-              driverData.participant.fuelLevel = Number(lap.fuelLevel);
-            }
-            if (lap.type === LapType.REACTION_TIME) {
-              driverData.reactionTime = lap.lapTime!;
-              this.reactionTimeSubject.next({
-                objectId: lap.objectId,
-                reactionTime: lap.lapTime,
-                interfaceId: lap.interfaceId,
-              });
-            } else if (lap.type === LapType.MIN_LAP_TIME) {
-              this.logger.debug(
-                `Lap on lane ${driverData.laneIndex} was below min lap time: ${lap.lapTime}`,
-              );
-              this.lapSubject.next(lap);
-            } else if (lap.type === LapType.FALSE_START) {
-              if (
-                lap.adjustedLapCount !== undefined &&
-                lap.adjustedLapCount !== null &&
-                !isNaN(lap.adjustedLapCount)
-              ) {
-                driverData.adjustedLapCount = lap.adjustedLapCount;
-              }
-              if (lap.flag !== undefined && lap.flag !== null) {
-                driverData.flag = lap.flag;
-              }
-
-              // Also ensure matching driver in raceService.getHeats() is kept in sync
-              if (allHeats && allHeats.length > 0) {
-                const targetHeat = allHeats.find(
-                  (h) =>
-                    (heat.objectId && h.objectId === heat.objectId) ||
-                    h.heatNumber === heat.heatNumber,
-                );
-                if (targetHeat && targetHeat.heatDrivers) {
-                  const targetHd = DriverMatchingUtils.findDriverForLap(
-                    targetHeat.heatDrivers,
-                    lap,
-                  );
-                  if (targetHd && targetHd !== driverData) {
-                    if (
-                      lap.adjustedLapCount !== undefined &&
-                      lap.adjustedLapCount !== null &&
-                      !isNaN(lap.adjustedLapCount)
-                    ) {
-                      targetHd.adjustedLapCount = lap.adjustedLapCount;
-                    }
-                    if (lap.flag !== undefined && lap.flag !== null) {
-                      targetHd.flag = lap.flag;
-                    }
-                  }
-                }
-                this.raceService.setHeats([...allHeats]);
-              }
-
-              this.raceService.setCurrentHeat(heat);
-              this.lapSubject.next(lap);
-            } else {
-              const segmentsCopy = [...(driverData.currentLapSegments || [])];
-              const lapTotalTime =
-                lap.totalTime != null && lap.totalTime > 0
-                  ? lap.totalTime
-                  : (lap as any).total_time != null &&
-                      (lap as any).total_time > 0
-                    ? (lap as any).total_time
-                    : undefined;
-              if (typeof driverData.addLapTime === "function") {
-                driverData.addLapTime(
-                  lap.lapNumber!,
-                  lap.lapTime!,
-                  lap.averageLapTime!,
-                  lap.medianLapTime!,
-                  lap.bestLapTime!,
-                  lap.adjustedLapCount!,
-                  lap.driverId ?? undefined,
-                  lap.isDrift ?? undefined,
-                  lap.type ?? undefined,
-                  segmentsCopy,
-                  lap.countTowardsRecords !== false,
-                  lapTotalTime,
-                );
-              }
-              if (lap.flag !== undefined && lap.flag !== null) {
-                driverData.flag = lap.flag;
-              }
-
-              // Also ensure matching driver in raceService.getHeats() is kept in sync
-              if (allHeats && allHeats.length > 0) {
-                const targetHeat = allHeats.find(
-                  (h) =>
-                    (heat.objectId && h.objectId === heat.objectId) ||
-                    h.heatNumber === heat.heatNumber,
-                );
-                if (targetHeat && targetHeat.heatDrivers) {
-                  const targetHd = DriverMatchingUtils.findDriverForLap(
-                    targetHeat.heatDrivers,
-                    lap,
-                  );
-                  if (
-                    targetHd &&
-                    targetHd !== driverData &&
-                    typeof targetHd.addLapTime === "function"
-                  ) {
-                    targetHd.addLapTime(
-                      lap.lapNumber!,
-                      lap.lapTime!,
-                      lap.averageLapTime!,
-                      lap.medianLapTime!,
-                      lap.bestLapTime!,
-                      lap.adjustedLapCount!,
-                      lap.driverId ?? undefined,
-                      lap.isDrift ?? undefined,
-                      lap.type ?? undefined,
-                      segmentsCopy,
-                      lap.countTowardsRecords !== false,
-                      lapTotalTime,
-                    );
-                    if (lap.flag !== undefined && lap.flag !== null) {
-                      targetHd.flag = lap.flag;
-                    }
-                    if (lap.fuelLevel != null && targetHd.participant) {
-                      targetHd.participant.fuelLevel = Number(lap.fuelLevel);
-                    }
-                  }
-                }
-                this.raceService.setHeats([...allHeats]);
-              }
-
-              this.raceService.setCurrentHeat(heat);
-              this.lapSubject.next(lap);
-            }
-          }
-        }
+        this.handleLapIncoming(lap);
       }),
     );
 
     this.subscriptions.push(
       this.dataService.getCarData().subscribe((carData) => {
-        const heat = this.raceService.getCurrentHeat();
-        if (heat && heat.heatDrivers && carData && carData.lane != null) {
-          console.log(
-            `DEBUG FUEL (CarData Received): lane=${carData.lane} fuelLevel=${carData.fuelLevel}`,
-          );
-          const driverData =
-            heat.heatDrivers.find((d) => d.laneIndex === carData.lane) ||
-            heat.heatDrivers[carData.lane];
-          if (driverData) {
-            if (carData.fuelLevel != null) {
-              driverData.participant.fuelLevel = carData.fuelLevel as number;
-            }
-            if (
-              carData.isRefueling !== undefined &&
-              carData.isRefueling !== null
-            ) {
-              driverData.isRefueling = !!carData.isRefueling;
-            }
-            if (carData.flag !== undefined && carData.flag !== null) {
-              driverData.flag = carData.flag;
-            }
-            this.carDataSubject.next(carData);
-          }
-        }
+        this.handleCarDataIncoming(carData);
       }),
     );
 
     this.subscriptions.push(
       this.dataService.getSegments().subscribe((segment) => {
-        const heat = this.raceService.getCurrentHeat();
-        if (heat && heat.heatDrivers && segment && segment.objectId) {
-          const driverData = heat.heatDrivers.find(
-            (d) => d.objectId === segment.objectId,
-          );
-          if (driverData) {
-            const segmentIndex = (segment.segmentNumber || 1) - 1;
-            driverData.addSegmentTime(segmentIndex, segment.segmentTime!);
-            this.segmentSubject.next(segment);
-          }
-        }
+        this.handleSegmentIncoming(segment);
       }),
     );
+  }
 
+  private handleRaceTimeIncoming(raceTime: any): void {
+    try {
+      const current = this.raceTimeSubject.getValue() || { time: 0 };
+      const currentState = this.raceStateSubject.getValue();
+
+      if (
+        raceTime &&
+        (raceTime.autoStartRemaining == null ||
+          raceTime.autoStartRemaining <= 0) &&
+        (raceTime.autoAdvanceRemaining == null ||
+          raceTime.autoAdvanceRemaining <= 0) &&
+        raceTime.time === 0 &&
+        (current.time || 0) > 0 &&
+        currentState === RaceState.STARTING
+      ) {
+        this.logger.debug(
+          "RaceConnectionService: dropping transient raceTime 0 during STARTING transition",
+        );
+        return;
+      }
+    } catch {
+      // Defensive: if getValue() isn't available for any reason, just forward
+    }
+
+    this.raceTimeSubject.next(raceTime);
+  }
+
+  private handleLapIncoming(lap: any): void {
+    const currentHeat = this.raceService.getCurrentHeat();
+    const allHeats =
+      typeof this.raceService?.getHeats === "function"
+        ? this.raceService.getHeats()
+        : [];
+    const heat =
+      currentHeat || (allHeats && allHeats.length > 0 ? allHeats[0] : null);
+    if (!heat || !heat.heatDrivers || !lap) return;
+
+    const driverData = DriverMatchingUtils.findDriverForLap(
+      heat.heatDrivers,
+      lap,
+    );
+    if (!driverData) return;
+
+    if (lap.fuelLevel != null && driverData.participant) {
+      driverData.participant.fuelLevel = Number(lap.fuelLevel);
+    }
+    if (lap.type === LapType.REACTION_TIME) {
+      driverData.reactionTime = lap.lapTime!;
+      this.reactionTimeSubject.next({
+        objectId: lap.objectId,
+        reactionTime: lap.lapTime,
+        interfaceId: lap.interfaceId,
+      });
+    } else if (lap.type === LapType.MIN_LAP_TIME) {
+      this.logger.debug(
+        `Lap on lane ${driverData.laneIndex} was below min lap time: ${lap.lapTime}`,
+      );
+      this.lapSubject.next(lap);
+    } else {
+      this.processLapUpdate(driverData, lap, heat, allHeats);
+    }
+  }
+
+  private processLapUpdate(
+    driverData: any,
+    lap: any,
+    heat: any,
+    allHeats: any[],
+  ): void {
+    const isFalseStart = lap.type === LapType.FALSE_START;
+    const segmentsCopy = [...(driverData.currentLapSegments || [])];
+    const lapTotalTime =
+      lap.totalTime != null && lap.totalTime > 0
+        ? lap.totalTime
+        : (lap as any).total_time != null && (lap as any).total_time > 0
+          ? (lap as any).total_time
+          : undefined;
+
+    if (isFalseStart) {
+      if (
+        lap.adjustedLapCount !== undefined &&
+        lap.adjustedLapCount !== null &&
+        !isNaN(lap.adjustedLapCount)
+      ) {
+        driverData.adjustedLapCount = lap.adjustedLapCount;
+      }
+    } else if (typeof driverData.addLapTime === "function") {
+      driverData.addLapTime(
+        lap.lapNumber!,
+        lap.lapTime!,
+        lap.averageLapTime!,
+        lap.medianLapTime!,
+        lap.bestLapTime!,
+        lap.adjustedLapCount!,
+        lap.driverId ?? undefined,
+        lap.isDrift ?? undefined,
+        lap.type ?? undefined,
+        segmentsCopy,
+        lap.countTowardsRecords !== false,
+        lapTotalTime,
+      );
+    }
+
+    if (lap.flag !== undefined && lap.flag !== null) {
+      driverData.flag = lap.flag;
+    }
+
+    this.syncTargetHeat(
+      heat,
+      allHeats,
+      lap,
+      driverData,
+      isFalseStart,
+      segmentsCopy,
+      lapTotalTime,
+    );
+
+    this.raceService.setCurrentHeat(heat);
+    this.lapSubject.next(lap);
+  }
+
+  private syncTargetHeat(
+    heat: any,
+    allHeats: any[],
+    lap: any,
+    driverData: any,
+    isFalseStart: boolean,
+    segmentsCopy: any[],
+    lapTotalTime: any,
+  ): void {
+    if (!allHeats || allHeats.length === 0) return;
+
+    const targetHeat = allHeats.find(
+      (h) =>
+        (heat.objectId && h.objectId === heat.objectId) ||
+        h.heatNumber === heat.heatNumber,
+    );
+    if (targetHeat && targetHeat.heatDrivers) {
+      const targetHd = DriverMatchingUtils.findDriverForLap(
+        targetHeat.heatDrivers,
+        lap,
+      );
+      if (targetHd && targetHd !== driverData) {
+        if (isFalseStart) {
+          if (
+            lap.adjustedLapCount !== undefined &&
+            lap.adjustedLapCount !== null &&
+            !isNaN(lap.adjustedLapCount)
+          ) {
+            targetHd.adjustedLapCount = lap.adjustedLapCount;
+          }
+        } else if (typeof targetHd.addLapTime === "function") {
+          targetHd.addLapTime(
+            lap.lapNumber!,
+            lap.lapTime!,
+            lap.averageLapTime!,
+            lap.medianLapTime!,
+            lap.bestLapTime!,
+            lap.adjustedLapCount!,
+            lap.driverId ?? undefined,
+            lap.isDrift ?? undefined,
+            lap.type ?? undefined,
+            segmentsCopy,
+            lap.countTowardsRecords !== false,
+            lapTotalTime,
+          );
+          if (lap.fuelLevel != null && targetHd.participant) {
+            targetHd.participant.fuelLevel = Number(lap.fuelLevel);
+          }
+        }
+        if (lap.flag !== undefined && lap.flag !== null) {
+          targetHd.flag = lap.flag;
+        }
+      }
+    }
+    this.raceService.setHeats([...allHeats]);
+  }
+
+  private handleCarDataIncoming(carData: any): void {
+    const heat = this.raceService.getCurrentHeat();
+    if (heat && heat.heatDrivers && carData && carData.lane != null) {
+      console.log(
+        `DEBUG FUEL (CarData Received): lane=${carData.lane} fuelLevel=${carData.fuelLevel}`,
+      );
+      const driverData =
+        heat.heatDrivers.find((d) => d.laneIndex === carData.lane) ||
+        heat.heatDrivers[carData.lane];
+      if (driverData) {
+        if (carData.fuelLevel != null) {
+          driverData.participant.fuelLevel = carData.fuelLevel as number;
+        }
+        if (carData.isRefueling !== undefined && carData.isRefueling !== null) {
+          driverData.isRefueling = !!carData.isRefueling;
+        }
+        if (carData.flag !== undefined && carData.flag !== null) {
+          driverData.flag = carData.flag;
+        }
+        this.carDataSubject.next(carData);
+      }
+    }
+  }
+
+  private handleSegmentIncoming(segment: any): void {
+    const heat = this.raceService.getCurrentHeat();
+    if (heat && heat.heatDrivers && segment && segment.objectId) {
+      const driverData = heat.heatDrivers.find(
+        (d) => d.objectId === segment.objectId,
+      );
+      if (driverData) {
+        const segmentIndex = (segment.segmentNumber || 1) - 1;
+        driverData.addSegmentTime(segmentIndex, segment.segmentTime!);
+        this.segmentSubject.next(segment);
+      }
+    }
+  }
+
+  private subscribeStandingsAndState(): void {
     this.subscriptions.push(
       this.dataService.getStandingsUpdate().subscribe((update) => {
         const heat = this.raceService.getCurrentHeat();
@@ -486,28 +517,7 @@ export class RaceConnectionService implements OnDestroy {
 
     this.subscriptions.push(
       this.dataService.getOverallStandingsUpdate().subscribe((update) => {
-        if (update && update.participants) {
-          const participants = update.participants.map((p: any) =>
-            RaceParticipantConverter.fromProto(p),
-          );
-          this.raceService.setParticipants(participants);
-          const heat = this.raceService.getCurrentHeat();
-          if (heat && heat.heatDrivers) {
-            heat.heatDrivers.forEach((hd) => {
-              const d = hd.actualDriver || hd.driver;
-              const driverId = d?.entity_id || d?.name;
-              const match = participants.find(
-                (p) =>
-                  p.driver?.entity_id === driverId ||
-                  p.driver?.name === driverId,
-              );
-              if (match && match.fuelLevel != null && hd.participant) {
-                hd.participant.fuelLevel = match.fuelLevel;
-              }
-            });
-          }
-          this.overallStandingsSubject.next(update);
-        }
+        this.handleOverallStandingsIncoming(update);
       }),
     );
 
@@ -537,20 +547,7 @@ export class RaceConnectionService implements OnDestroy {
 
     this.subscriptions.push(
       this.dataService.getRaceState().subscribe((state) => {
-        if (state === RaceState.RACE_OVER) {
-          this.isRaceEnded = true;
-          if (this.noStatusWatchdog) {
-            clearTimeout(this.noStatusWatchdog);
-            this.noStatusWatchdog = null;
-          }
-          this.clearDisconnectedError();
-          this.dataService.disconnectFromInterfaceDataSocket();
-        } else if (state !== RaceState.UNKNOWN_STATE && this.isRaceEnded) {
-          this.isRaceEnded = false;
-          this.dataService.connectToInterfaceDataSocket();
-          this.resetWatchdog();
-        }
-        this.raceStateSubject.next(state);
+        this.handleRaceStateIncoming(state);
       }),
     );
 
@@ -574,11 +571,47 @@ export class RaceConnectionService implements OnDestroy {
         this.processHeatUpdate(heatProto);
       }),
     );
+  }
 
-    if (!this.isRaceEnded) {
+  private handleOverallStandingsIncoming(update: any): void {
+    if (update && update.participants) {
+      const participants = update.participants.map((p: any) =>
+        RaceParticipantConverter.fromProto(p),
+      );
+      this.raceService.setParticipants(participants);
+      const heat = this.raceService.getCurrentHeat();
+      if (heat && heat.heatDrivers) {
+        heat.heatDrivers.forEach((hd) => {
+          const d = hd.actualDriver || hd.driver;
+          const driverId = d?.entity_id || d?.name;
+          const match = participants.find(
+            (p: any) =>
+              p.driver?.entity_id === driverId || p.driver?.name === driverId,
+          );
+          if (match && match.fuelLevel != null && hd.participant) {
+            hd.participant.fuelLevel = match.fuelLevel;
+          }
+        });
+      }
+      this.overallStandingsSubject.next(update);
+    }
+  }
+
+  private handleRaceStateIncoming(state: RaceState): void {
+    if (state === RaceState.RACE_OVER) {
+      this.isRaceEnded = true;
+      if (this.noStatusWatchdog) {
+        clearTimeout(this.noStatusWatchdog);
+        this.noStatusWatchdog = null;
+      }
+      this.clearDisconnectedError();
+      this.dataService.disconnectFromInterfaceDataSocket();
+    } else if (state !== RaceState.UNKNOWN_STATE && this.isRaceEnded) {
+      this.isRaceEnded = false;
       this.dataService.connectToInterfaceDataSocket();
       this.resetWatchdog();
     }
+    this.raceStateSubject.next(state);
   }
 
   private stopConnection() {
@@ -705,6 +738,27 @@ export class RaceConnectionService implements OnDestroy {
       "RaceConnectionService: processRaceUpdate called with:",
       update,
     );
+    this.applyRaceStateFromUpdate(update);
+
+    if (update.drivers && update.drivers.length > 0) {
+      const participants = update.drivers.map((d: any) =>
+        RaceParticipantConverter.fromProto(d),
+      );
+      this.raceService.setParticipants(participants);
+    }
+
+    if (update.heats && update.heats.length > 0) {
+      const heats = update.heats.map((h: any, index: number) =>
+        HeatConverter.fromProto(h, index + 1),
+      );
+      this.raceService.setHeats(heats);
+    }
+
+    this.applyRaceModelFromUpdate(update);
+    this.applyHeatsAndRecordsFromUpdate(update);
+  }
+
+  private applyRaceStateFromUpdate(update: IRace): void {
     if (
       update.state === RaceState.RACE_OVER ||
       (update as any).raceState === RaceState.RACE_OVER
@@ -732,20 +786,9 @@ export class RaceConnectionService implements OnDestroy {
         }
       }
     }
-    if (update.drivers && update.drivers.length > 0) {
-      const participants = update.drivers.map((d: any) =>
-        RaceParticipantConverter.fromProto(d),
-      );
-      this.raceService.setParticipants(participants);
-    }
+  }
 
-    if (update.heats && update.heats.length > 0) {
-      const heats = update.heats.map((h: any, index: number) =>
-        HeatConverter.fromProto(h, index + 1),
-      );
-      this.raceService.setHeats(heats);
-    }
-
+  private applyRaceModelFromUpdate(update: IRace): void {
     if (update.race) {
       const currentRace = this.raceService.getRace();
       const newRaceId = update.race.model?.entityId;
@@ -776,26 +819,7 @@ export class RaceConnectionService implements OnDestroy {
       ) {
         (race as any).is_finished = true;
       }
-      if (update.isEvent) {
-        (race as any).is_event = update.isEvent;
-        (race as any).event_id = update.eventId;
-        (race as any).event_name = update.eventName;
-        (race as any).current_event_race_index = update.currentEventRaceIndex;
-        (race as any).total_event_races = update.totalEventRaces;
-        (race as any).auto_advance_remaining_seconds =
-          update.autoAdvanceRemainingSeconds;
-      }
-      if (update.isSeason || update.seasonId || update.seasonName) {
-        (race as any).is_season = update.isSeason;
-        (race as any).season_id = update.seasonId;
-        (race as any).season_name = update.seasonName;
-        (race as any).season_standings = update.seasonStandings || [];
-      }
-      if (update.startTimeMillis || (update as any).start_time_millis) {
-        const sm = update.startTimeMillis || (update as any).start_time_millis;
-        (race as any).start_time_millis =
-          typeof sm === "number" ? sm : Number(sm);
-      }
+      this.decorateRaceWithMetadata(race, update);
       this.raceService.setRace(race);
     } else {
       const currentRace = this.raceService.getRace();
@@ -808,7 +832,30 @@ export class RaceConnectionService implements OnDestroy {
         }
       }
     }
+  }
 
+  private decorateRaceWithMetadata(race: any, update: IRace): void {
+    if (update.isEvent) {
+      race.is_event = update.isEvent;
+      race.event_id = update.eventId;
+      race.event_name = update.eventName;
+      race.current_event_race_index = update.currentEventRaceIndex;
+      race.total_event_races = update.totalEventRaces;
+      race.auto_advance_remaining_seconds = update.autoAdvanceRemainingSeconds;
+    }
+    if (update.isSeason || update.seasonId || update.seasonName) {
+      race.is_season = update.isSeason;
+      race.season_id = update.seasonId;
+      race.season_name = update.seasonName;
+      race.season_standings = update.seasonStandings || [];
+    }
+    if (update.startTimeMillis || (update as any).start_time_millis) {
+      const sm = update.startTimeMillis || (update as any).start_time_millis;
+      race.start_time_millis = typeof sm === "number" ? sm : Number(sm);
+    }
+  }
+
+  private applyHeatsAndRecordsFromUpdate(update: IRace): void {
     if (
       !this.raceService.getRace()?.track &&
       (update.currentHeat || (update.heats && update.heats.length > 0))
@@ -848,8 +895,6 @@ export class RaceConnectionService implements OnDestroy {
         this.raceService.setRace(currentRace);
       }
     }
-
-    // Gaps updating after race update might be needed, or it's handled by StandingsUpdate
   }
 
   private applyStandingsUpdate(update: IStandingsUpdate, heat: any) {

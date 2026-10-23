@@ -613,7 +613,6 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
     });
   }
 
-  // eslint-disable-next-line max-lines-per-function
   protected onDrop(event: CdkDragDrop<any>) {
     const result = this.modifyHeatsService.handleDrop(event, {
       localHeats: this.localHeats,

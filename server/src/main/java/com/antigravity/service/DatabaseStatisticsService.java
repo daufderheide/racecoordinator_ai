@@ -7,6 +7,7 @@ import com.antigravity.models.DriverStatistics;
 import com.antigravity.models.DriverTrackStats;
 import com.antigravity.models.GlobalStatistics;
 import com.antigravity.models.RaceHistoryRecord;
+import com.antigravity.models.Track;
 import com.antigravity.race.DriverHeatData;
 import com.antigravity.race.Heat;
 import com.antigravity.race.RaceParticipant;
@@ -25,7 +26,6 @@ import org.slf4j.LoggerFactory;
 public class DatabaseStatisticsService {
   private static final Logger logger = LoggerFactory.getLogger(DatabaseStatisticsService.class);
 
-  @SuppressWarnings("checkstyle:MethodLength")
   public void updateGlobalStatistics(
       DatabaseContext context, com.antigravity.race.Race runtimeRace) { // fqn-collision
     if (runtimeRace == null) return;
@@ -56,140 +56,155 @@ public class DatabaseStatisticsService {
       com.antigravity.proto.RecordData recordData = runtimeRace.getRecordData(); // fqn-collision
       com.antigravity.proto.OverallRecords overall = recordData.getOverall(); // fqn-collision
 
-      if (overall.hasFastestLap()) {
-        com.antigravity.proto.RecordEntry fl = overall.getFastestLap(); // fqn-collision
-        if (stats.getFastestLapTime() == 0.0 || fl.getValue() < stats.getFastestLapTime()) {
-          stats.setFastestLapTime(fl.getValue());
-          stats.setFastestLapDriverName(fl.getHolderName());
-          stats.setFastestLapDriverNickname(fl.getHolderNickname());
-          stats.setFastestLapTeamName(fl.getHolderTeamName());
-          stats.setFastestLapDate(fl.getDate());
-          if (runtimeRace.getTrack() != null) {
-            stats.setFastestLapTrackName(runtimeRace.getTrack().getName());
-          }
-        }
-      }
-
-      if (overall.hasHighestScore()) {
-        com.antigravity.proto.RecordEntry hs = overall.getHighestScore(); // fqn-collision
-        if (stats.getHighestScore() == 0.0 || hs.getValue() > stats.getHighestScore()) {
-          stats.setHighestScore(hs.getValue());
-          stats.setHighestScoreHolderName(hs.getHolderName());
-          stats.setHighestScoreHolderNickname(hs.getHolderNickname());
-          stats.setHighestScoreTeamName(hs.getHolderTeamName());
-          stats.setHighestScoreDate(hs.getDate());
-          if (runtimeRace.getTrack() != null) {
-            stats.setHighestScoreTrackName(runtimeRace.getTrack().getName());
-          }
-        }
-      }
-
-      if (runtimeRace.getTrack() != null) {
-        stats.setFastestLapTrackName(runtimeRace.getTrack().getName());
-        stats.setHighestScoreTrackName(runtimeRace.getTrack().getName());
-      }
-
-      List<Double> laneFastestTimes =
-          stats.getLaneFastestLapTimes() != null
-              ? new ArrayList<>(stats.getLaneFastestLapTimes())
-              : new ArrayList<>();
-      List<String> laneFastestHolders =
-          stats.getLaneFastestLapDriverNames() != null
-              ? new ArrayList<>(stats.getLaneFastestLapDriverNames())
-              : new ArrayList<>();
-      List<String> laneFastestNicknames =
-          stats.getLaneFastestLapDriverNicknames() != null
-              ? new ArrayList<>(stats.getLaneFastestLapDriverNicknames())
-              : new ArrayList<>();
-      List<String> laneFastestTeams =
-          stats.getLaneFastestLapTeamNames() != null
-              ? new ArrayList<>(stats.getLaneFastestLapTeamNames())
-              : new ArrayList<>();
-      List<Long> laneFastestDates =
-          stats.getLaneFastestLapDates() != null
-              ? new ArrayList<>(stats.getLaneFastestLapDates())
-              : new ArrayList<>();
-
-      for (int i = 0; i < overall.getLaneFastestLapCount(); i++) {
-        com.antigravity.proto.RecordEntry entry = overall.getLaneFastestLap(i); // fqn-collision
-        double newVal = entry.getValue();
-        if (i >= laneFastestTimes.size()) {
-          laneFastestTimes.add(newVal);
-          laneFastestHolders.add(entry.getHolderName());
-          laneFastestNicknames.add(entry.getHolderNickname());
-          laneFastestTeams.add(entry.getHolderTeamName());
-          laneFastestDates.add(entry.getDate());
-        } else {
-          double existingVal = laneFastestTimes.get(i);
-          if (newVal > 0.0 && (existingVal == 0.0 || newVal < existingVal)) {
-            laneFastestTimes.set(i, newVal);
-            laneFastestHolders.set(i, entry.getHolderName());
-            laneFastestNicknames.set(i, entry.getHolderNickname());
-            laneFastestTeams.set(i, entry.getHolderTeamName());
-            while (laneFastestDates.size() <= i) laneFastestDates.add(0L);
-            laneFastestDates.set(i, entry.getDate());
-          }
-        }
-      }
-      stats.setLaneFastestLapTimes(laneFastestTimes);
-      stats.setLaneFastestLapDriverNames(laneFastestHolders);
-      stats.setLaneFastestLapDriverNicknames(laneFastestNicknames);
-      stats.setLaneFastestLapTeamNames(laneFastestTeams);
-      stats.setLaneFastestLapDates(laneFastestDates);
-
-      List<Double> laneHighestScores =
-          stats.getLaneHighestScores() != null
-              ? new ArrayList<>(stats.getLaneHighestScores())
-              : new ArrayList<>();
-      List<String> laneHighestHolders =
-          stats.getLaneHighestScoreHolderNames() != null
-              ? new ArrayList<>(stats.getLaneHighestScoreHolderNames())
-              : new ArrayList<>();
-      List<String> laneHighestNicknames =
-          stats.getLaneHighestScoreHolderNicknames() != null
-              ? new ArrayList<>(stats.getLaneHighestScoreHolderNicknames())
-              : new ArrayList<>();
-      List<String> laneHighestTeams =
-          stats.getLaneHighestScoreTeamNames() != null
-              ? new ArrayList<>(stats.getLaneHighestScoreTeamNames())
-              : new ArrayList<>();
-      List<Long> laneHighestDates =
-          stats.getLaneHighestScoreDates() != null
-              ? new ArrayList<>(stats.getLaneHighestScoreDates())
-              : new ArrayList<>();
-
-      for (int i = 0; i < overall.getLaneHighestScoreCount(); i++) {
-        com.antigravity.proto.RecordEntry entry = overall.getLaneHighestScore(i); // fqn-collision
-        double newVal = entry.getValue();
-        if (i >= laneHighestScores.size()) {
-          laneHighestScores.add(newVal);
-          laneHighestHolders.add(entry.getHolderName());
-          laneHighestNicknames.add(entry.getHolderNickname());
-          laneHighestTeams.add(entry.getHolderTeamName());
-          laneHighestDates.add(entry.getDate());
-        } else {
-          double existingVal = laneHighestScores.get(i);
-          if (existingVal == 0.0 || newVal > existingVal) {
-            laneHighestScores.set(i, newVal);
-            laneHighestHolders.set(i, entry.getHolderName());
-            laneHighestNicknames.set(i, entry.getHolderNickname());
-            laneHighestTeams.set(i, entry.getHolderTeamName());
-            while (laneHighestDates.size() <= i) laneHighestDates.add(0L);
-            laneHighestDates.set(i, entry.getDate());
-          }
-        }
-      }
-      stats.setLaneHighestScores(laneHighestScores);
-      stats.setLaneHighestScoreHolderNames(laneHighestHolders);
-      stats.setLaneHighestScoreHolderNicknames(laneHighestNicknames);
-      stats.setLaneHighestScoreTeamNames(laneHighestTeams);
-      stats.setLaneHighestScoreDates(laneHighestDates);
+      updateOverallRecords(stats, overall, runtimeRace.getTrack());
+      updateLaneFastestLaps(stats, overall);
+      updateLaneHighestScores(stats, overall);
 
       statsRepo.save(stats);
       logger.info("Race statistics updated for race: {}", raceId);
     } catch (Exception e) {
       logger.error("Failed to update global statistics for race {}", raceId, e);
     }
+  }
+
+  private void updateOverallRecords(
+      GlobalStatistics stats,
+      com.antigravity.proto.OverallRecords overall, // fqn-collision
+      Track track) {
+    if (overall.hasFastestLap()) {
+      com.antigravity.proto.RecordEntry fl = overall.getFastestLap(); // fqn-collision
+      if (stats.getFastestLapTime() == 0.0 || fl.getValue() < stats.getFastestLapTime()) {
+        stats.setFastestLapTime(fl.getValue());
+        stats.setFastestLapDriverName(fl.getHolderName());
+        stats.setFastestLapDriverNickname(fl.getHolderNickname());
+        stats.setFastestLapTeamName(fl.getHolderTeamName());
+        stats.setFastestLapDate(fl.getDate());
+        if (track != null) {
+          stats.setFastestLapTrackName(track.getName());
+        }
+      }
+    }
+
+    if (overall.hasHighestScore()) {
+      com.antigravity.proto.RecordEntry hs = overall.getHighestScore(); // fqn-collision
+      if (stats.getHighestScore() == 0.0 || hs.getValue() > stats.getHighestScore()) {
+        stats.setHighestScore(hs.getValue());
+        stats.setHighestScoreHolderName(hs.getHolderName());
+        stats.setHighestScoreHolderNickname(hs.getHolderNickname());
+        stats.setHighestScoreTeamName(hs.getHolderTeamName());
+        stats.setHighestScoreDate(hs.getDate());
+        if (track != null) {
+          stats.setHighestScoreTrackName(track.getName());
+        }
+      }
+    }
+
+    if (track != null) {
+      stats.setFastestLapTrackName(track.getName());
+      stats.setHighestScoreTrackName(track.getName());
+    }
+  }
+
+  private void updateLaneFastestLaps(
+      GlobalStatistics stats, com.antigravity.proto.OverallRecords overall) { // fqn-collision
+    List<Double> laneFastestTimes =
+        stats.getLaneFastestLapTimes() != null
+            ? new ArrayList<>(stats.getLaneFastestLapTimes())
+            : new ArrayList<>();
+    List<String> laneFastestHolders =
+        stats.getLaneFastestLapDriverNames() != null
+            ? new ArrayList<>(stats.getLaneFastestLapDriverNames())
+            : new ArrayList<>();
+    List<String> laneFastestNicknames =
+        stats.getLaneFastestLapDriverNicknames() != null
+            ? new ArrayList<>(stats.getLaneFastestLapDriverNicknames())
+            : new ArrayList<>();
+    List<String> laneFastestTeams =
+        stats.getLaneFastestLapTeamNames() != null
+            ? new ArrayList<>(stats.getLaneFastestLapTeamNames())
+            : new ArrayList<>();
+    List<Long> laneFastestDates =
+        stats.getLaneFastestLapDates() != null
+            ? new ArrayList<>(stats.getLaneFastestLapDates())
+            : new ArrayList<>();
+
+    for (int i = 0; i < overall.getLaneFastestLapCount(); i++) {
+      com.antigravity.proto.RecordEntry entry = overall.getLaneFastestLap(i); // fqn-collision
+      double newVal = entry.getValue();
+      if (i >= laneFastestTimes.size()) {
+        laneFastestTimes.add(newVal);
+        laneFastestHolders.add(entry.getHolderName());
+        laneFastestNicknames.add(entry.getHolderNickname());
+        laneFastestTeams.add(entry.getHolderTeamName());
+        laneFastestDates.add(entry.getDate());
+      } else {
+        double existingVal = laneFastestTimes.get(i);
+        if (newVal > 0.0 && (existingVal == 0.0 || newVal < existingVal)) {
+          laneFastestTimes.set(i, newVal);
+          laneFastestHolders.set(i, entry.getHolderName());
+          laneFastestNicknames.set(i, entry.getHolderNickname());
+          laneFastestTeams.set(i, entry.getHolderTeamName());
+          while (laneFastestDates.size() <= i) laneFastestDates.add(0L);
+          laneFastestDates.set(i, entry.getDate());
+        }
+      }
+    }
+    stats.setLaneFastestLapTimes(laneFastestTimes);
+    stats.setLaneFastestLapDriverNames(laneFastestHolders);
+    stats.setLaneFastestLapDriverNicknames(laneFastestNicknames);
+    stats.setLaneFastestLapTeamNames(laneFastestTeams);
+    stats.setLaneFastestLapDates(laneFastestDates);
+  }
+
+  private void updateLaneHighestScores(
+      GlobalStatistics stats, com.antigravity.proto.OverallRecords overall) { // fqn-collision
+    List<Double> laneHighestScores =
+        stats.getLaneHighestScores() != null
+            ? new ArrayList<>(stats.getLaneHighestScores())
+            : new ArrayList<>();
+    List<String> laneHighestHolders =
+        stats.getLaneHighestScoreHolderNames() != null
+            ? new ArrayList<>(stats.getLaneHighestScoreHolderNames())
+            : new ArrayList<>();
+    List<String> laneHighestNicknames =
+        stats.getLaneHighestScoreHolderNicknames() != null
+            ? new ArrayList<>(stats.getLaneHighestScoreHolderNicknames())
+            : new ArrayList<>();
+    List<String> laneHighestTeams =
+        stats.getLaneHighestScoreTeamNames() != null
+            ? new ArrayList<>(stats.getLaneHighestScoreTeamNames())
+            : new ArrayList<>();
+    List<Long> laneHighestDates =
+        stats.getLaneHighestScoreDates() != null
+            ? new ArrayList<>(stats.getLaneHighestScoreDates())
+            : new ArrayList<>();
+
+    for (int i = 0; i < overall.getLaneHighestScoreCount(); i++) {
+      com.antigravity.proto.RecordEntry entry = overall.getLaneHighestScore(i); // fqn-collision
+      double newVal = entry.getValue();
+      if (i >= laneHighestScores.size()) {
+        laneHighestScores.add(newVal);
+        laneHighestHolders.add(entry.getHolderName());
+        laneHighestNicknames.add(entry.getHolderNickname());
+        laneHighestTeams.add(entry.getHolderTeamName());
+        laneHighestDates.add(entry.getDate());
+      } else {
+        double existingVal = laneHighestScores.get(i);
+        if (existingVal == 0.0 || newVal > existingVal) {
+          laneHighestScores.set(i, newVal);
+          laneHighestHolders.set(i, entry.getHolderName());
+          laneHighestNicknames.set(i, entry.getHolderNickname());
+          laneHighestTeams.set(i, entry.getHolderTeamName());
+          while (laneHighestDates.size() <= i) laneHighestDates.add(0L);
+          laneHighestDates.set(i, entry.getDate());
+        }
+      }
+    }
+    stats.setLaneHighestScores(laneHighestScores);
+    stats.setLaneHighestScoreHolderNames(laneHighestHolders);
+    stats.setLaneHighestScoreHolderNicknames(laneHighestNicknames);
+    stats.setLaneHighestScoreTeamNames(laneHighestTeams);
+    stats.setLaneHighestScoreDates(laneHighestDates);
   }
 
   public GlobalStatistics getGlobalStatistics(
@@ -212,7 +227,6 @@ public class DatabaseStatisticsService {
     return getGlobalStatistics(context, raceEntityId, RaceScope.fromBoolean(isDemo));
   }
 
-  @SuppressWarnings("checkstyle:MethodLength")
   public void saveDriverStatistics(
       DatabaseContext context, com.antigravity.race.Race race) { // fqn-collision
     if (context == null || race == null || race.getRaceModel() == null) {
@@ -230,8 +244,8 @@ public class DatabaseStatisticsService {
           new SqliteRepository<>(context, tableName, DriverStatistics.class);
       Map<String, DriverStatistics> statsMap = new HashMap<>();
       Map<String, Double> driverRaceLaps = new HashMap<>();
-
       long raceDate = System.currentTimeMillis();
+      String raceId = race.getRaceModel().getEntityId();
 
       if (race.getHeats() != null) {
         for (Heat heat : race.getHeats()) {
@@ -244,51 +258,12 @@ public class DatabaseStatisticsService {
                 && driverData.getDriver().getDriver() != null
                 && !driverData.getDriver().getDriver().isEmpty()) {
               String stableId = driverData.getDriver().getStableId();
-
               driverRaceLaps.put(
                   stableId,
                   driverRaceLaps.getOrDefault(stableId, 0.0) + driverData.getAdjustedLapCount());
-
               DriverStatistics stats =
                   statsMap.computeIfAbsent(
-                      stableId,
-                      id -> {
-                        DriverStatistics s =
-                            repo.findByEntityId(id + "_" + race.getRaceModel().getEntityId());
-                        if (s == null) {
-                          s = new DriverStatistics();
-                          s.setDriverId(id);
-                          s.setRaceId(race.getRaceModel().getEntityId());
-
-                          List<Double> bestTimes = new ArrayList<>();
-                          List<Double> bestCounts = new ArrayList<>();
-                          for (int k = 0; k < finalLaneCount; k++) {
-                            bestTimes.add(0.0);
-                            bestCounts.add(0.0);
-                          }
-                          s.setLaneBestLapTimes(bestTimes);
-                          s.setLaneBestLapCounts(bestCounts);
-                          s.setBestLapTime(0.0);
-                          s.setBestLapCount(0.0);
-                          s.setLaneBestLapTimesDates(
-                              new ArrayList<>(Collections.nCopies(finalLaneCount, 0L)));
-                          s.setLaneBestLapCountsDates(
-                              new ArrayList<>(Collections.nCopies(finalLaneCount, 0L)));
-                        } else {
-                          if (s.getLaneBestLapTimes() == null)
-                            s.setLaneBestLapTimes(new ArrayList<>());
-                          while (s.getLaneBestLapTimes().size() < finalLaneCount) {
-                            s.getLaneBestLapTimes().add(0.0);
-                          }
-                          if (s.getLaneBestLapCounts() == null)
-                            s.setLaneBestLapCounts(new ArrayList<>());
-                          while (s.getLaneBestLapCounts().size() < finalLaneCount) {
-                            s.getLaneBestLapCounts().add(0.0);
-                          }
-                        }
-                        return s;
-                      });
-
+                      stableId, id -> getOrCreateDriverStats(repo, id, raceId, finalLaneCount));
               updateDriverStatsForHeat(stats, driverData, raceDate, laneIdx);
             }
           }
@@ -306,11 +281,47 @@ public class DatabaseStatisticsService {
         repo.save(stats);
       }
 
-      logger.info(
-          "Successfully saved driver statistics for race: {}", race.getRaceModel().getEntityId());
+      logger.info("Successfully saved driver statistics for race: {}", raceId);
     } catch (Exception e) {
       logger.error("Failed to save driver statistics", e);
     }
+  }
+
+  private DriverStatistics getOrCreateDriverStats(
+      SqliteRepository<DriverStatistics> repo, String driverId, String raceId, int finalLaneCount) {
+    DriverStatistics s = repo.findByEntityId(driverId + "_" + raceId);
+    if (s == null) {
+      s = new DriverStatistics();
+      s.setDriverId(driverId);
+      s.setRaceId(raceId);
+
+      List<Double> bestTimes = new ArrayList<>();
+      List<Double> bestCounts = new ArrayList<>();
+      for (int k = 0; k < finalLaneCount; k++) {
+        bestTimes.add(0.0);
+        bestCounts.add(0.0);
+      }
+      s.setLaneBestLapTimes(bestTimes);
+      s.setLaneBestLapCounts(bestCounts);
+      s.setBestLapTime(0.0);
+      s.setBestLapCount(0.0);
+      s.setLaneBestLapTimesDates(new ArrayList<>(Collections.nCopies(finalLaneCount, 0L)));
+      s.setLaneBestLapCountsDates(new ArrayList<>(Collections.nCopies(finalLaneCount, 0L)));
+    } else {
+      if (s.getLaneBestLapTimes() == null) {
+        s.setLaneBestLapTimes(new ArrayList<>());
+      }
+      while (s.getLaneBestLapTimes().size() < finalLaneCount) {
+        s.getLaneBestLapTimes().add(0.0);
+      }
+      if (s.getLaneBestLapCounts() == null) {
+        s.setLaneBestLapCounts(new ArrayList<>());
+      }
+      while (s.getLaneBestLapCounts().size() < finalLaneCount) {
+        s.getLaneBestLapCounts().add(0.0);
+      }
+    }
+    return s;
   }
 
   private void updateDriverStatsForHeat(
@@ -394,7 +405,6 @@ public class DatabaseStatisticsService {
     return repo.findByEntityId(id);
   }
 
-  @SuppressWarnings("checkstyle:MethodLength")
   public void updateDriverTrackStats(
       DatabaseContext context, com.antigravity.race.Race race, boolean isDemo) { // fqn-collision
     try {
@@ -406,134 +416,150 @@ public class DatabaseStatisticsService {
 
       for (RaceParticipant rp : race.getDrivers()) {
         if (rp == null) continue;
-        String driverId = PredictionEngine.getParticipantId(rp);
-        if (driverId == null || driverId.isEmpty()) continue;
-
-        DriverTrackStats stats = getDriverTrackStats(context, driverId, trackId, isDemo);
-        if (stats == null) {
-          stats = new DriverTrackStats();
-          stats.setId(driverId + "_" + trackId);
-          stats.setDriverId(driverId);
-          stats.setTrackId(trackId);
-        }
-
-        stats.setTotalRaces(stats.getTotalRaces() + 1);
-
-        int heatsCompleted = 0;
-        int lapsCompleted = 0;
-        Map<Integer, List<Double>> laneLaps = new HashMap<>();
-
-        if (race.getHeats() != null) {
-          for (Heat heat : race.getHeats()) {
-            if (heat.getDrivers() != null) {
-              for (int laneIdx = 0; laneIdx < heat.getDrivers().size(); laneIdx++) {
-                DriverHeatData dhd = heat.getDrivers().get(laneIdx);
-                if (dhd != null && dhd.getDriver() != null) {
-                  String heatDriverId = PredictionEngine.getParticipantId(dhd.getDriver());
-                  if (driverId.equals(heatDriverId)) {
-                    heatsCompleted++;
-                    lapsCompleted += dhd.getLapCount();
-
-                    if (dhd.getLaps() != null) {
-                      List<Double> validLaps = new ArrayList<>();
-                      for (DriverHeatData.LapData lap : dhd.getLaps()) {
-                        if (lap.getLapTime() > 0
-                            && (minLapTime == 0 || lap.getLapTime() >= minLapTime)) {
-                          validLaps.add(lap.getLapTime());
-                        }
-                      }
-                      if (!validLaps.isEmpty()) {
-                        laneLaps.computeIfAbsent(laneIdx, k -> new ArrayList<>()).addAll(validLaps);
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-
-        List<Double> allValidLaps = new ArrayList<>();
-        List<DriverTrackStats.LanePaceStats> laneStatsList = stats.getLaneStats();
-        if (laneStatsList == null) {
-          laneStatsList = new ArrayList<>();
-          stats.setLaneStats(laneStatsList);
-        }
-
-        for (Map.Entry<Integer, List<Double>> entry : laneLaps.entrySet()) {
-          int laneIdx = entry.getKey();
-          List<Double> laps = entry.getValue();
-          allValidLaps.addAll(laps);
-
-          if (!laps.isEmpty()) {
-            java.util.Collections.sort(laps);
-            double median;
-            int mid = laps.size() / 2;
-            if (laps.size() % 2 == 0) {
-              median = (laps.get(mid - 1) + laps.get(mid)) / 2.0;
-            } else {
-              median = laps.get(mid);
-            }
-
-            DriverTrackStats.LanePaceStats existing = null;
-            for (DriverTrackStats.LanePaceStats lps : laneStatsList) {
-              if (lps.getLaneIndex() == laneIdx) {
-                existing = lps;
-                break;
-              }
-            }
-
-            if (existing == null) {
-              existing = new DriverTrackStats.LanePaceStats();
-              existing.setLaneIndex(laneIdx);
-              laneStatsList.add(existing);
-            }
-
-            if (existing.getMedianLapTime() > 0 && existing.getSampleSizeLaps() > 0) {
-              double totalWeight = existing.getSampleSizeLaps() + laps.size();
-              existing.setMedianLapTime(
-                  ((existing.getMedianLapTime() * existing.getSampleSizeLaps())
-                          + (median * laps.size()))
-                      / totalWeight);
-              existing.setSampleSizeLaps((int) totalWeight);
-            } else {
-              existing.setMedianLapTime(median);
-              existing.setSampleSizeLaps(laps.size());
-            }
-          }
-        }
-
-        if (!allValidLaps.isEmpty()) {
-          java.util.Collections.sort(allValidLaps);
-          double sessionMedian;
-          int mid = allValidLaps.size() / 2;
-          if (allValidLaps.size() % 2 == 0) {
-            sessionMedian = (allValidLaps.get(mid - 1) + allValidLaps.get(mid)) / 2.0;
-          } else {
-            sessionMedian = allValidLaps.get(mid);
-          }
-
-          if (stats.getOverallMedianLapTime() > 0 && stats.getTotalLaps() > 0) {
-            double totalWeight = stats.getTotalLaps() + allValidLaps.size();
-            if (totalWeight > 0) {
-              stats.setOverallMedianLapTime(
-                  ((stats.getOverallMedianLapTime() * stats.getTotalLaps())
-                          + (sessionMedian * allValidLaps.size()))
-                      / totalWeight);
-            }
-          } else {
-            stats.setOverallMedianLapTime(sessionMedian);
-          }
-        }
-
-        stats.setTotalHeats(stats.getTotalHeats() + heatsCompleted);
-        stats.setTotalLaps(stats.getTotalLaps() + lapsCompleted);
-
-        stats.setLastUpdated(System.currentTimeMillis());
-        saveDriverTrackStats(context, stats, isDemo);
+        updateDriverTrackStatsForParticipant(context, race, rp, trackId, minLapTime, isDemo);
       }
     } catch (Throwable t) {
       logger.error("updateDriverTrackStats: FAILED with throwable!", t);
+    }
+  }
+
+  private void updateDriverTrackStatsForParticipant(
+      DatabaseContext context,
+      com.antigravity.race.Race race, // fqn-collision
+      RaceParticipant rp,
+      String trackId,
+      double minLapTime,
+      boolean isDemo) {
+    String driverId = PredictionEngine.getParticipantId(rp);
+    if (driverId == null || driverId.isEmpty()) return;
+
+    DriverTrackStats stats = getDriverTrackStats(context, driverId, trackId, isDemo);
+    if (stats == null) {
+      stats = new DriverTrackStats();
+      stats.setId(driverId + "_" + trackId);
+      stats.setDriverId(driverId);
+      stats.setTrackId(trackId);
+    }
+
+    stats.setTotalRaces(stats.getTotalRaces() + 1);
+
+    int[] totals = new int[2];
+    Map<Integer, List<Double>> laneLaps = collectLaneLaps(race, driverId, minLapTime, totals);
+
+    List<Double> allValidLaps = new ArrayList<>();
+    List<DriverTrackStats.LanePaceStats> laneStatsList = stats.getLaneStats();
+    if (laneStatsList == null) {
+      laneStatsList = new ArrayList<>();
+      stats.setLaneStats(laneStatsList);
+    }
+
+    for (Map.Entry<Integer, List<Double>> entry : laneLaps.entrySet()) {
+      allValidLaps.addAll(entry.getValue());
+      updateLanePaceStats(laneStatsList, entry.getKey(), entry.getValue());
+    }
+
+    if (!allValidLaps.isEmpty()) {
+      updateOverallMedianLapTime(stats, allValidLaps);
+    }
+
+    stats.setTotalHeats(stats.getTotalHeats() + totals[0]);
+    stats.setTotalLaps(stats.getTotalLaps() + totals[1]);
+
+    stats.setLastUpdated(System.currentTimeMillis());
+    saveDriverTrackStats(context, stats, isDemo);
+  }
+
+  private Map<Integer, List<Double>> collectLaneLaps(
+      com.antigravity.race.Race race, // fqn-collision
+      String driverId,
+      double minLapTime,
+      int[] totals) {
+    Map<Integer, List<Double>> laneLaps = new HashMap<>();
+    if (race.getHeats() == null) return laneLaps;
+
+    for (Heat heat : race.getHeats()) {
+      if (heat.getDrivers() == null) continue;
+      for (int laneIdx = 0; laneIdx < heat.getDrivers().size(); laneIdx++) {
+        DriverHeatData dhd = heat.getDrivers().get(laneIdx);
+        if (dhd != null && dhd.getDriver() != null) {
+          String heatDriverId = PredictionEngine.getParticipantId(dhd.getDriver());
+          if (driverId.equals(heatDriverId)) {
+            totals[0]++;
+            totals[1] += dhd.getLapCount();
+
+            if (dhd.getLaps() != null) {
+              List<Double> validLaps = new ArrayList<>();
+              for (DriverHeatData.LapData lap : dhd.getLaps()) {
+                if (lap.getLapTime() > 0 && (minLapTime == 0 || lap.getLapTime() >= minLapTime)) {
+                  validLaps.add(lap.getLapTime());
+                }
+              }
+              if (!validLaps.isEmpty()) {
+                laneLaps.computeIfAbsent(laneIdx, k -> new ArrayList<>()).addAll(validLaps);
+              }
+            }
+          }
+        }
+      }
+    }
+    return laneLaps;
+  }
+
+  private void updateLanePaceStats(
+      List<DriverTrackStats.LanePaceStats> laneStatsList, int laneIdx, List<Double> laps) {
+    if (laps == null || laps.isEmpty()) return;
+    double median = calculateMedian(laps);
+
+    DriverTrackStats.LanePaceStats existing = null;
+    for (DriverTrackStats.LanePaceStats lps : laneStatsList) {
+      if (lps.getLaneIndex() == laneIdx) {
+        existing = lps;
+        break;
+      }
+    }
+
+    if (existing == null) {
+      existing = new DriverTrackStats.LanePaceStats();
+      existing.setLaneIndex(laneIdx);
+      laneStatsList.add(existing);
+    }
+
+    if (existing.getMedianLapTime() > 0 && existing.getSampleSizeLaps() > 0) {
+      double totalWeight = existing.getSampleSizeLaps() + laps.size();
+      existing.setMedianLapTime(
+          ((existing.getMedianLapTime() * existing.getSampleSizeLaps()) + (median * laps.size()))
+              / totalWeight);
+      existing.setSampleSizeLaps((int) totalWeight);
+    } else {
+      existing.setMedianLapTime(median);
+      existing.setSampleSizeLaps(laps.size());
+    }
+  }
+
+  private void updateOverallMedianLapTime(DriverTrackStats stats, List<Double> allValidLaps) {
+    double sessionMedian = calculateMedian(allValidLaps);
+    if (stats.getOverallMedianLapTime() > 0 && stats.getTotalLaps() > 0) {
+      double totalWeight = stats.getTotalLaps() + allValidLaps.size();
+      if (totalWeight > 0) {
+        stats.setOverallMedianLapTime(
+            ((stats.getOverallMedianLapTime() * stats.getTotalLaps())
+                    + (sessionMedian * allValidLaps.size()))
+                / totalWeight);
+      }
+    } else {
+      stats.setOverallMedianLapTime(sessionMedian);
+    }
+  }
+
+  private double calculateMedian(List<Double> laps) {
+    if (laps == null || laps.isEmpty()) return 0.0;
+    List<Double> sorted = new ArrayList<>(laps);
+    java.util.Collections.sort(sorted);
+    int mid = sorted.size() / 2;
+    if (sorted.size() % 2 == 0) {
+      return (sorted.get(mid - 1) + sorted.get(mid)) / 2.0;
+    } else {
+      return sorted.get(mid);
     }
   }
 

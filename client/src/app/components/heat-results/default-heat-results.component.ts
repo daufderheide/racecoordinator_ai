@@ -599,11 +599,15 @@ export class DefaultHeatResultsComponent implements OnInit, OnDestroy {
     }
   }
 
-  /* eslint-disable max-lines-per-function */
   protected updateGraph() {
     if (!this.heat || !this.heat.heatDrivers) return;
+    this.driverLines = this.buildDriverLines();
+    this.computeRankingTimeline();
+    this.updateGraphScaling();
+  }
 
-    this.driverLines = this.heat.heatDrivers
+  private buildDriverLines(): any[] {
+    return (this.heat?.heatDrivers ?? [])
       .filter((hd: any) => {
         const dName =
           hd.actualDriver?.name ?? hd.driver?.name ?? hd.driver?.driver?.name;
@@ -636,7 +640,7 @@ export class DefaultHeatResultsComponent implements OnInit, OnDestroy {
         const color = lane?.background_color || "#ffffff";
         const backgroundColor = lane?.background_color || "#333333";
 
-        const laps = hd.lapTimes; // Uses our new getter
+        const laps = hd.lapTimes;
         let currentAbsoluteTime = 0;
         const points: any[] = [];
 
@@ -657,17 +661,12 @@ export class DefaultHeatResultsComponent implements OnInit, OnDestroy {
           rankPathData: "",
         };
       });
+  }
 
-    // --- Compute Ranking Timeline ---
-    interface ChronoEvent {
-      absoluteTime: number;
-      objectId: string;
-    }
-
-    const events: ChronoEvent[] = [];
+  private computeRankingTimeline(): void {
+    const events: { absoluteTime: number; objectId: string }[] = [];
     this.driverLines.forEach((line) => {
       let accum = 0;
-      // Get the corresponding DriverHeatData to fetch lapTimes
       const hd = this.heat?.heatDrivers.find(
         (d) => d.objectId === line.objectId,
       );
@@ -680,7 +679,6 @@ export class DefaultHeatResultsComponent implements OnInit, OnDestroy {
 
     events.sort((a, b) => a.absoluteTime - b.absoluteTime);
 
-    // Track active laps completed counts
     const lapsCount: { [id: string]: number } = {};
     const lastLapTime: { [id: string]: number } = {};
     const rankingHistory: { [id: string]: any[] } = {};
@@ -688,14 +686,13 @@ export class DefaultHeatResultsComponent implements OnInit, OnDestroy {
     this.driverLines.forEach((line) => {
       lapsCount[line.objectId] = 0;
       lastLapTime[line.objectId] = 0;
-      rankingHistory[line.objectId] = [{ x: 0, y: 0 }]; // Initial setup loaded from timeline loops
+      rankingHistory[line.objectId] = [{ x: 0, y: 0 }];
     });
 
     events.forEach((event) => {
       lapsCount[event.objectId]++;
       lastLapTime[event.objectId] = event.absoluteTime;
 
-      // Score drivers: descending laps first, tiebreak with ascending total time spent completing that lap length
       const scores = this.driverLines.map((line) => ({
         objectId: line.objectId,
         laps: lapsCount[line.objectId],
@@ -716,14 +713,12 @@ export class DefaultHeatResultsComponent implements OnInit, OnDestroy {
       });
     });
 
-    // Assign ranking points to driver lines
     this.driverLines.forEach((line) => {
       const history = rankingHistory[line.objectId];
       if (history.length > 1 && history[0].x === 0 && history[0].y === 0) {
-        history[0].y = history[1].y; // align start point for cleaner curve
+        history[0].y = history[1].y;
       }
 
-      // Filter to keep only the points when 1 or more positions change, or when it's the driver's own completed lap (and boundary start/end points)
       const filtered: any[] = [];
       if (history.length > 0) {
         filtered.push(history[0]);
@@ -742,10 +737,16 @@ export class DefaultHeatResultsComponent implements OnInit, OnDestroy {
       }
       line.rankPoints = filtered;
     });
+  }
 
+  private updateGraphScaling(): void {
     // Calculate Max X & Max Y for scaling
-    let allX = this.driverLines.flatMap((line) => line.points.map((p) => p.x));
-    let allY = this.driverLines.flatMap((line) => line.points.map((p) => p.y));
+    const allX = this.driverLines.flatMap((line) =>
+      line.points.map((p) => p.x),
+    );
+    const allY = this.driverLines.flatMap((line) =>
+      line.points.map((p) => p.y),
+    );
 
     if (allX.length > 0) {
       this.maxX = Math.max(...allX) * 1.05; // 5% padding

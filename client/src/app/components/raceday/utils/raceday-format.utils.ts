@@ -1,5 +1,3 @@
-/* eslint-disable max-lines */
-/* eslint-disable max-lines-per-function */
 import {
   AnchorPoint,
   ColumnDefinition,
@@ -15,7 +13,8 @@ import {
   TimerFormatOptions,
 } from "@app/utils/timer-format.utils";
 
-import { RacedayLayoutUtils } from "./raceday-layout.utils";
+import { RacedayOverallFormatUtils } from "./raceday-overall-format.utils";
+import { resolveRacedayTimerFormatOptions } from "./raceday-timer-format.utils";
 
 export interface FormatContext {
   translate: (key: string) => string;
@@ -89,25 +88,23 @@ export class RacedayFormatUtils {
   }
 
   static isHeatOrRaceOver(ctx?: FormatContext, hd?: DriverHeatData): boolean {
-    if (hd?.isFinished) {
-      return true;
-    }
-    if (!ctx) {
-      return false;
-    }
-    const state = ctx.getRaceState ? ctx.getRaceState() : ctx.raceState;
+    if (!ctx) return false;
+    if (ctx.isRaceOver && ctx.isRaceOver()) return true;
+    const raceState =
+      ctx.raceState !== undefined
+        ? ctx.raceState
+        : ctx.getRaceState
+          ? ctx.getRaceState()
+          : undefined;
     if (
-      state === RaceState.HEAT_OVER ||
-      state === RaceState.RACE_OVER ||
-      state === 5 ||
-      state === 6
+      raceState === RaceState.HEAT_OVER ||
+      raceState === RaceState.RACE_OVER ||
+      raceState === (RaceState as any).HEAT_OVER ||
+      raceState === (RaceState as any).RACE_OVER
     ) {
       return true;
     }
-    if (ctx.isRaceOver && ctx.isRaceOver()) {
-      return true;
-    }
-    if (ctx.areAllDriversFinished && ctx.areAllDriversFinished()) {
+    if (hd && (hd.isFinished || (hd as any).finished)) {
       return true;
     }
     if (
@@ -120,6 +117,9 @@ export class RacedayFormatUtils {
     ) {
       return true;
     }
+    if (ctx.areAllDriversFinished && ctx.areAllDriversFinished()) {
+      return true;
+    }
     return false;
   }
 
@@ -127,16 +127,13 @@ export class RacedayFormatUtils {
     heatDriver: DriverHeatData,
     propertyPath: string,
   ): any {
-    if (!heatDriver) return undefined;
+    if (!heatDriver || !propertyPath) return undefined;
     const baseKey = propertyPath.split(".")[0].split("_")[0];
-    if (baseKey === "heatTotalLaps") {
-      return heatDriver.lapCount;
-    }
-    const p =
+    const participant =
       heatDriver.participant ?? (heatDriver as any).actualDriver?.participant;
-    const overallVal = RacedayFormatUtils.extractOverallPropertyValue(
-      p,
-      heatDriver as any,
+    const overallVal = RacedayOverallFormatUtils.extractOverallPropertyValue(
+      participant,
+      heatDriver,
       baseKey,
     );
     if (overallVal !== undefined) {
@@ -151,150 +148,16 @@ export class RacedayFormatUtils {
     return value;
   }
 
-  private static extractOverallPropertyValue(
+  static extractOverallPropertyValue(
     p: any,
     heatDriver: any,
     baseKey: string,
   ): any {
-    switch (baseKey) {
-      case "overallLapCount":
-      case "totalLaps":
-      case "raceTotalLaps":
-      case "overallTotalLaps":
-        return (
-          p?.totalLaps ??
-          heatDriver?.totalLaps ??
-          heatDriver?.overallLapCount ??
-          heatDriver?.lapCount
-        );
-      case "overallPhysicalLapCount":
-        return (
-          p?.physicalLapCount ??
-          heatDriver?.physicalLapCount ??
-          heatDriver?.overallPhysicalLapCount
-        );
-      case "overallTotalTime":
-        return (
-          p?.totalTime ?? heatDriver?.totalTime ?? heatDriver?.overallTotalTime
-        );
-      case "overallBestLapTime":
-        return (
-          p?.bestLapTime ??
-          heatDriver?.bestLapTime ??
-          heatDriver?.overallBestLapTime
-        );
-      case "overallAverageLapTime":
-        return (
-          p?.averageLapTime ??
-          heatDriver?.averageLapTime ??
-          heatDriver?.overallAverageLapTime
-        );
-      case "overallMedianLapTime":
-        return (
-          p?.medianLapTime ??
-          heatDriver?.medianLapTime ??
-          heatDriver?.overallMedianLapTime
-        );
-      case "overallConsistencyScore":
-        return (
-          p?.consistencyScore ??
-          heatDriver?.consistencyScore ??
-          heatDriver?.overallConsistencyScore
-        );
-      case "overallStandardDeviation":
-        return (
-          p?.standardDeviation ??
-          heatDriver?.standardDeviation ??
-          heatDriver?.overallStandardDeviation
-        );
-      case "overallAverageTop5":
-        return (
-          p?.averageTop5 ??
-          heatDriver?.averageTop5 ??
-          heatDriver?.overallAverageTop5
-        );
-      case "overallAverageTop10":
-        return (
-          p?.averageTop10 ??
-          heatDriver?.averageTop10 ??
-          heatDriver?.overallAverageTop10
-        );
-      case "overallAverageTop15":
-        return (
-          p?.averageTop15 ??
-          heatDriver?.averageTop15 ??
-          heatDriver?.overallAverageTop15
-        );
-      case "overallTop2Consecutive":
-        return (
-          p?.top2Consecutive ??
-          heatDriver?.top2Consecutive ??
-          heatDriver?.overallTop2Consecutive
-        );
-      case "overallTop3Consecutive":
-        return (
-          p?.top3Consecutive ??
-          heatDriver?.top3Consecutive ??
-          heatDriver?.overallTop3Consecutive
-        );
-      case "overallGapLeader":
-        return (
-          p?.gapLeader ?? heatDriver?.gapLeader ?? heatDriver?.overallGapLeader
-        );
-      case "overallGapPosition":
-        return (
-          p?.gapPosition ??
-          heatDriver?.gapPosition ??
-          heatDriver?.overallGapPosition
-        );
-      case "overallGapLeaderF1":
-        return (
-          p?.gapLeaderF1 ??
-          heatDriver?.gapLeaderF1 ??
-          heatDriver?.overallGapLeaderF1
-        );
-      case "overallGapPositionF1":
-        return (
-          p?.gapPositionF1 ??
-          heatDriver?.gapPositionF1 ??
-          heatDriver?.overallGapPositionF1
-        );
-      case "overallLapsLed":
-        return p?.lapsLed ?? heatDriver?.lapsLed ?? heatDriver?.overallLapsLed;
-      case "overallTrackCalls":
-        return (
-          p?.trackCalls ??
-          heatDriver?.trackCalls ??
-          heatDriver?.overallTrackCalls
-        );
-      case "overallPoints":
-        return (
-          p?.totalPoints ?? heatDriver?.totalPoints ?? heatDriver?.overallPoints
-        );
-      case "heatsRaced":
-      case "overallHeatsRaced":
-        return (
-          p?.heatsRaced ??
-          heatDriver?.heatsRaced ??
-          heatDriver?.overallHeatsRaced
-        );
-      case "heatsRemaining":
-      case "overallHeatsRemaining":
-        return (
-          p?.heatsRemaining ??
-          heatDriver?.heatsRemaining ??
-          heatDriver?.overallHeatsRemaining
-        );
-      case "totalHeats":
-      case "overallTotalHeats":
-        return (
-          p?.totalHeats ??
-          heatDriver?.totalHeats ??
-          heatDriver?.overallTotalHeats
-        );
-      default:
-        return undefined;
-    }
+    return RacedayOverallFormatUtils.extractOverallPropertyValue(
+      p,
+      heatDriver,
+      baseKey,
+    );
   }
 
   static resolveTimerFormatOptions(
@@ -304,405 +167,13 @@ export class RacedayFormatUtils {
     insetDecimals?: number,
     propertyKey?: string,
   ): TimerFormatOptions | undefined {
-    if (!settings) return undefined;
-    const baseKey = colKey ? colKey.split("_")[0] : "";
-    const propBase = propertyKey ? propertyKey.split("_")[0] : "";
-    const isTotalTime =
-      colKey === "totalTime" ||
-      colKey === "overallTotalTime" ||
-      baseKey === "totalTime" ||
-      baseKey === "overallTotalTime" ||
-      propertyKey === "totalTime" ||
-      propertyKey === "overallTotalTime" ||
-      propBase === "totalTime" ||
-      propBase === "overallTotalTime";
-    if (!isTotalTime) return undefined;
-
-    const colFormat =
-      settings.columnTimeDisplayFormat?.[colKey] ??
-      settings.columnTimeDisplayFormat?.[baseKey] ??
-      (propertyKey
-        ? settings.columnTimeDisplayFormat?.[propertyKey]
-        : undefined) ??
-      (propBase ? settings.columnTimeDisplayFormat?.[propBase] : undefined);
-    const colSubMode =
-      settings.columnTimeSubsecondMode?.[colKey] ??
-      settings.columnTimeSubsecondMode?.[baseKey] ??
-      (propertyKey
-        ? settings.columnTimeSubsecondMode?.[propertyKey]
-        : undefined) ??
-      (propBase ? settings.columnTimeSubsecondMode?.[propBase] : undefined);
-    const colThresh =
-      settings.columnTimeSubsecondThreshold?.[colKey] ??
-      settings.columnTimeSubsecondThreshold?.[baseKey] ??
-      (propertyKey
-        ? settings.columnTimeSubsecondThreshold?.[propertyKey]
-        : undefined) ??
-      (propBase
-        ? settings.columnTimeSubsecondThreshold?.[propBase]
-        : undefined);
-    const colDec =
-      settings.columnTimeSubsecondDecimals?.[colKey] ??
-      settings.columnTimeSubsecondDecimals?.[baseKey] ??
-      (propertyKey
-        ? settings.columnTimeSubsecondDecimals?.[propertyKey]
-        : undefined) ??
-      (propBase
-        ? settings.columnTimeSubsecondDecimals?.[propBase]
-        : undefined) ??
-      settings.columnDecimals?.[colKey] ??
-      settings.columnDecimals?.[baseKey];
-
-    if (isInset) {
-      const effDec =
-        settings.timeSubsecondDecimals !== undefined
-          ? Number(settings.timeSubsecondDecimals)
-          : insetDecimals !== undefined
-            ? insetDecimals
-            : settings.insetTimeDecimalPlaces !== undefined
-              ? Number(settings.insetTimeDecimalPlaces)
-              : settings.timeDecimalPlaces !== undefined
-                ? Number(settings.timeDecimalPlaces)
-                : 3;
-      return {
-        format: settings.timeDisplayFormat || colFormat || "dynamic",
-        subsecondMode:
-          settings.timeSubsecondMode ||
-          colSubMode ||
-          (effDec > 0 ? "always" : "never"),
-        subsecondThreshold:
-          settings.timeSubsecondThreshold !== undefined
-            ? Number(settings.timeSubsecondThreshold)
-            : colThresh !== undefined
-              ? Number(colThresh)
-              : 10,
-        subsecondDecimals: effDec,
-      };
-    }
-
-    const hasTimerConfig =
-      colFormat !== undefined ||
-      colSubMode !== undefined ||
-      colThresh !== undefined ||
-      colDec !== undefined ||
-      settings.timeDisplayFormat !== undefined ||
-      settings.timeSubsecondMode !== undefined ||
-      settings.timeSubsecondThreshold !== undefined ||
-      settings.timeSubsecondDecimals !== undefined;
-
-    if (!hasTimerConfig) {
-      return undefined;
-    }
-
-    if (
-      colFormat !== undefined ||
-      colSubMode !== undefined ||
-      colThresh !== undefined ||
-      colDec !== undefined
-    ) {
-      return {
-        format: colFormat || "dynamic",
-        subsecondMode: colSubMode || "never",
-        subsecondThreshold: colThresh !== undefined ? Number(colThresh) : 10,
-        subsecondDecimals: colDec !== undefined ? Number(colDec) : 2,
-      };
-    }
-
-    if (
-      settings.timeDisplayFormat !== undefined ||
-      settings.timeSubsecondMode !== undefined ||
-      settings.timeSubsecondThreshold !== undefined ||
-      settings.timeSubsecondDecimals !== undefined
-    ) {
-      return {
-        format: settings.timeDisplayFormat || "dynamic",
-        subsecondMode: settings.timeSubsecondMode || "never",
-        subsecondThreshold:
-          settings.timeSubsecondThreshold !== undefined
-            ? Number(settings.timeSubsecondThreshold)
-            : 10,
-        subsecondDecimals:
-          settings.timeSubsecondDecimals !== undefined
-            ? Number(settings.timeSubsecondDecimals)
-            : 2,
-      };
-    }
-
-    return undefined;
-  }
-
-  private static isOverallFormatContext(
-    ctx: FormatContext,
-    propertyName: string,
-  ): boolean {
-    const s = ctx.laneViewWidgetSettings;
-    return Boolean(
-      s?.gridType === "overall" ||
-      s?.bindingMode === "overallPosition" ||
-      RacedayLayoutUtils.isOverallColumnKey(propertyName),
+    return resolveRacedayTimerFormatOptions(
+      colKey,
+      settings,
+      isInset,
+      insetDecimals,
+      propertyKey,
     );
-  }
-
-  private static formatOverallValue(
-    baseKey: string,
-    value: any,
-    hd: DriverHeatData,
-    ctx: FormatContext,
-    timePlaceholder: string,
-    lapPlaceholder: string,
-    timeDecimals: number,
-    lapDecimals: number,
-    colKey?: string,
-    isInset?: boolean,
-    column?: ColumnDefinition | any,
-  ): string | null {
-    if (RacedayFormatUtils.isEmptyDriver(hd)) {
-      if (
-        baseKey === "overallPhysicalLapCount" ||
-        baseKey === "overallLapsLed" ||
-        baseKey === "overallTrackCalls" ||
-        baseKey === "overallPoints"
-      ) {
-        return "--";
-      }
-      if (
-        baseKey === "overallTotalTime" ||
-        baseKey === "overallBestLapTime" ||
-        baseKey === "overallAverageLapTime" ||
-        baseKey === "overallMedianLapTime" ||
-        baseKey === "overallStandardDeviation" ||
-        baseKey === "overallAverageTop5" ||
-        baseKey === "overallAverageTop10" ||
-        baseKey === "overallAverageTop15" ||
-        baseKey === "overallTop2Consecutive" ||
-        baseKey === "overallTop3Consecutive" ||
-        baseKey === "overallGapLeader" ||
-        baseKey === "overallGapPosition" ||
-        baseKey === "overallGapLeaderF1" ||
-        baseKey === "overallGapPositionF1"
-      ) {
-        return timePlaceholder;
-      }
-      if (baseKey === "overallConsistencyScore") {
-        return "--.-%";
-      }
-      if (
-        baseKey === "overallLapCount" ||
-        baseKey === "totalLaps" ||
-        baseKey === "raceTotalLaps" ||
-        baseKey === "overallTotalLaps"
-      ) {
-        return lapPlaceholder;
-      }
-    }
-
-    if (
-      baseKey === "overallBestLapTime" ||
-      baseKey === "overallAverageLapTime" ||
-      baseKey === "overallMedianLapTime" ||
-      baseKey === "overallTotalTime" ||
-      baseKey === "overallStandardDeviation" ||
-      baseKey === "overallAverageTop5" ||
-      baseKey === "overallAverageTop10" ||
-      baseKey === "overallAverageTop15" ||
-      baseKey === "overallTop2Consecutive" ||
-      baseKey === "overallTop3Consecutive"
-    ) {
-      const isStdDev = baseKey === "overallStandardDeviation";
-      const isValid =
-        value !== null &&
-        value !== undefined &&
-        (isStdDev ? value >= 0 : value > 0);
-      if (isValid && baseKey === "overallTotalTime") {
-        const timerOpts = RacedayFormatUtils.resolveTimerFormatOptions(
-          colKey || baseKey,
-          ctx.laneViewWidgetSettings,
-          isInset,
-          timeDecimals,
-          baseKey,
-        );
-        if (timerOpts) {
-          return formatTimerDisplay(value, timerOpts);
-        }
-      }
-      return isValid ? value.toFixed(timeDecimals) : timePlaceholder;
-    }
-
-    if (baseKey === "overallConsistencyScore") {
-      if (value === null || value === undefined) return "--.-%";
-      return value.toFixed(1) + "%";
-    }
-
-    if (baseKey === "overallGapLeader" || baseKey === "overallGapPosition") {
-      if (value === 0 || value === null || value === undefined) {
-        return timePlaceholder;
-      }
-      const sign = value > 0 ? "+" : "";
-      return sign + value.toFixed(timeDecimals);
-    }
-
-    if (
-      baseKey === "overallGapLeaderF1" ||
-      baseKey === "overallGapPositionF1"
-    ) {
-      const isLeader = baseKey === "overallGapLeaderF1";
-      const p = hd?.participant;
-      const lapsDown =
-        (isLeader ? p?.lapsDownLeader : p?.lapsDownPosition) ??
-        (isLeader ? hd?.lapsDownLeader : hd?.lapsDownPosition) ??
-        0;
-
-      if (lapsDown === 1) {
-        return ctx
-          .translate("RD_LAP_DOWN")
-          .replace("{{count}}", lapsDown.toString());
-      } else if (lapsDown > 1) {
-        return ctx
-          .translate("RD_LAPS_DOWN")
-          .replace("{{count}}", lapsDown.toString());
-      } else {
-        if (value === 0 || value === null || value === undefined) {
-          return timePlaceholder;
-        }
-        const sign = value > 0 ? "+" : "";
-        return sign + value.toFixed(timeDecimals);
-      }
-    }
-
-    if (
-      baseKey === "overallLapCount" ||
-      baseKey === "totalLaps" ||
-      baseKey === "raceTotalLaps" ||
-      baseKey === "overallTotalLaps"
-    ) {
-      const p = hd?.participant;
-      const hasCompleted = p?.totalTime && p.totalTime > 0;
-      if (
-        value === null ||
-        value === undefined ||
-        (value === 0 && !hasCompleted)
-      ) {
-        return lapPlaceholder;
-      }
-      let lapVal = Number(value);
-      const isOver = RacedayFormatUtils.isHeatOrRaceOver(ctx, hd);
-      if (!isOver && (hd?.autoCalculatedLaps || 0) > 0) {
-        lapVal =
-          Math.round((lapVal - hd.autoCalculatedLaps + Number.EPSILON) * 1e6) /
-          1e6;
-      }
-      return Number(lapVal).toFixed(lapDecimals);
-    }
-
-    if (baseKey === "overallPhysicalLapCount") {
-      const p = hd?.participant;
-      const hasCompleted = p?.totalTime && p.totalTime > 0;
-      if (
-        value === null ||
-        value === undefined ||
-        (value === 0 && !hasCompleted)
-      ) {
-        return "--";
-      }
-      return String(value);
-    }
-
-    if (baseKey === "overallLapsLed") {
-      const led =
-        value !== undefined && value !== null
-          ? value
-          : (hd?.participant?.lapsLed ?? 0);
-      return String(led);
-    }
-
-    if (baseKey === "overallTrackCalls") {
-      const calls =
-        value !== undefined && value !== null
-          ? value
-          : (hd?.participant?.trackCalls ?? 0);
-      return String(calls);
-    }
-
-    if (baseKey === "overallPoints") {
-      const points =
-        value !== undefined && value !== null
-          ? value
-          : (hd?.participant?.totalPoints ?? 0);
-      return String(points);
-    }
-
-    if (baseKey === "heatsRaced" || baseKey === "heatsRemaining") {
-      if (RacedayFormatUtils.isEmptyDriver(hd)) {
-        return "--";
-      }
-      const mode =
-        (column as any)?.heatsDisplayMode ||
-        (column as any)?.customSettings?.heatsDisplayMode ||
-        ctx.laneViewWidgetSettings?.heatsDisplayMode ||
-        (baseKey === "heatsRemaining" ? "remaining" : "raced");
-      const p = (hd?.participant ??
-        (hd as any)?.actualDriver?.participant) as any;
-      let count: number | undefined =
-        mode === "remaining" ? p?.heatsRemaining : p?.heatsRaced;
-
-      if (
-        mode === "remaining" &&
-        (!count || count === 0) &&
-        p?.totalHeats &&
-        p.totalHeats > (p.heatsRaced || 0)
-      ) {
-        count = Math.max(0, p.totalHeats - (p.heatsRaced || 0));
-      }
-
-      if (count === undefined || count === null) {
-        const race = ctx.getRace?.() as any;
-        const driverId =
-          (hd?.driver as any)?.driverId ||
-          (p?.driver as any)?.entity_id ||
-          (p?.driver as any)?.id ||
-          (hd as any)?.driverId;
-        if (race?.heats && driverId) {
-          let driverTotalHeats = 0;
-          let driverHeatsRaced = 0;
-          for (const heat of race.heats) {
-            const inHeat = heat.heatDrivers?.some(
-              (d: any) =>
-                d.driver?.driverId === driverId ||
-                d.actualDriver?.id === driverId ||
-                d.actualDriver?.entity_id === driverId ||
-                d.participant?.driver?.entity_id === driverId ||
-                d.participant?.driver?.id === driverId,
-            );
-            if (inHeat) {
-              driverTotalHeats++;
-              if (
-                heat.started ||
-                heat.heatDrivers?.some(
-                  (d: any) =>
-                    (d.driver?.driverId === driverId ||
-                      d.actualDriver?.id === driverId ||
-                      d.actualDriver?.entity_id === driverId ||
-                      d.participant?.driver?.entity_id === driverId ||
-                      d.participant?.driver?.id === driverId) &&
-                    (d.lapCount > 0 || d.totalTime > 0),
-                )
-              ) {
-                driverHeatsRaced++;
-              }
-            }
-          }
-          count =
-            mode === "remaining"
-              ? Math.max(0, driverTotalHeats - driverHeatsRaced)
-              : driverHeatsRaced;
-        } else {
-          count = 0;
-        }
-      }
-      return String(count);
-    }
-
-    return null;
   }
 
   static formatValue(
@@ -715,10 +186,79 @@ export class RacedayFormatUtils {
   ): string {
     if (!propertyName) return "";
     const baseKey = propertyName.split("_")[0];
-
     const isInset = Boolean(anchor && anchor !== "center-center");
-
     const colKey = column?.propertyName || baseKey;
+
+    const { timeDecimals, lapDecimals, timePlaceholder, lapPlaceholder } =
+      this.resolveDecimalsAndPlaceholders(
+        colKey,
+        baseKey,
+        column,
+        ctx,
+        isInset,
+      );
+
+    if (
+      baseKey.startsWith("overall") ||
+      baseKey === "totalLaps" ||
+      baseKey === "raceTotalLaps" ||
+      baseKey === "heatsRaced" ||
+      baseKey === "heatsRemaining"
+    ) {
+      const overallStr = RacedayOverallFormatUtils.formatOverallValue(
+        baseKey,
+        value,
+        hd,
+        ctx,
+        timePlaceholder,
+        lapPlaceholder,
+        timeDecimals,
+        lapDecimals,
+        colKey,
+        isInset,
+        column,
+      );
+      if (overallStr !== null) return overallStr;
+    }
+
+    if (this.isEmptyDriver(hd)) {
+      const emptyStr = this.formatEmptyDriverValue(
+        baseKey,
+        propertyName,
+        isInset,
+        timePlaceholder,
+      );
+      if (emptyStr !== null) return emptyStr;
+    }
+
+    return this.formatNonOverallValue(
+      baseKey,
+      propertyName,
+      value,
+      hd,
+      column,
+      ctx,
+      timeDecimals,
+      lapDecimals,
+      timePlaceholder,
+      lapPlaceholder,
+      colKey,
+      isInset,
+    );
+  }
+
+  private static resolveDecimalsAndPlaceholders(
+    colKey: string,
+    baseKey: string,
+    column: ColumnDefinition | undefined,
+    ctx: FormatContext,
+    isInset: boolean,
+  ): {
+    timeDecimals: number;
+    lapDecimals: number;
+    timePlaceholder: string;
+    lapPlaceholder: string;
+  } {
     const customColDecimals =
       ctx.laneViewWidgetSettings?.columnDecimals ||
       ctx.laneViewWidgetSettings?.columnDecimalPlaces;
@@ -751,7 +291,8 @@ export class RacedayFormatUtils {
         : ctx.laneViewWidgetSettings?.timeDecimalPlaces !== undefined
           ? Number(ctx.laneViewWidgetSettings.timeDecimalPlaces)
           : 3;
-    let lapDecimals = isInset
+
+    const lapDecimals = isInset
       ? ctx.laneViewWidgetSettings?.insetLapDecimalPlaces !== undefined
         ? Number(ctx.laneViewWidgetSettings.insetLapDecimalPlaces)
         : 2
@@ -768,124 +309,130 @@ export class RacedayFormatUtils {
     const lapPlaceholder =
       lapDecimals > 0 ? "--." + "-".repeat(lapDecimals) : "--";
 
+    return { timeDecimals, lapDecimals, timePlaceholder, lapPlaceholder };
+  }
+
+  private static formatEmptyDriverValue(
+    baseKey: string,
+    propertyName: string,
+    isInset: boolean,
+    timePlaceholder: string,
+  ): string | null {
+    if (baseKey === "seed") return "";
     if (
-      baseKey.startsWith("overall") ||
-      baseKey === "totalLaps" ||
-      baseKey === "raceTotalLaps" ||
+      baseKey === "rankHeat" ||
+      baseKey === "rankOverall" ||
+      baseKey === "rankGroup" ||
+      baseKey === "lapsLed" ||
+      baseKey === "trackCalls" ||
+      baseKey === "physicalLapCount" ||
+      baseKey === "recordLapTime" ||
+      baseKey === "bestRaceLapTime" ||
       baseKey === "heatsRaced" ||
-      baseKey === "heatsRemaining"
+      baseKey === "heatsRemaining" ||
+      baseKey.startsWith("ghostPacing")
     ) {
-      const overallStr = RacedayFormatUtils.formatOverallValue(
+      return "--";
+    }
+    if (
+      baseKey === "gapLeader" ||
+      baseKey === "gapPosition" ||
+      baseKey === "gapLeaderF1" ||
+      baseKey === "gapPositionF1" ||
+      baseKey === "standardDeviation" ||
+      baseKey === "averageTop5" ||
+      baseKey === "averageTop10" ||
+      baseKey === "averageTop15" ||
+      baseKey === "top2Consecutive" ||
+      baseKey === "top3Consecutive"
+    ) {
+      return timePlaceholder;
+    }
+    if (baseKey === "consistencyScore") return "--.-%";
+    if (
+      isInset &&
+      (baseKey === "flag" ||
+        (baseKey.startsWith("imageset") &&
+          propertyName.toLowerCase().includes("driverstate")))
+    ) {
+      return "";
+    }
+    return null;
+  }
+
+  private static formatNonOverallValue(
+    baseKey: string,
+    propertyName: string,
+    value: any,
+    hd: DriverHeatData,
+    column: ColumnDefinition | undefined,
+    ctx: FormatContext,
+    timeDecimals: number,
+    lapDecimals: number,
+    timePlaceholder: string,
+    lapPlaceholder: string,
+    colKey: string,
+    isInset: boolean,
+  ): string {
+    if (baseKey === "recordLapTime") {
+      return this.formatRecordLapTime(hd, ctx, timeDecimals, timePlaceholder);
+    }
+    if (baseKey === "bestRaceLapTime") {
+      return this.formatBestRaceLapTime(hd, ctx, timeDecimals, timePlaceholder);
+    }
+    if (this.isTimingBaseKey(baseKey)) {
+      return this.formatTimingValue(
+        baseKey,
+        value,
+        colKey,
+        ctx,
+        isInset,
+        timeDecimals,
+        timePlaceholder,
+      );
+    }
+    if (baseKey === "consistencyScore") {
+      if (this.isEmptyDriver(hd) || value === null || value === undefined)
+        return "--.-%";
+      return value.toFixed(1) + "%";
+    }
+    if (baseKey.startsWith("gap")) {
+      return this.formatGapValue(
         baseKey,
         value,
         hd,
         ctx,
-        timePlaceholder,
-        lapPlaceholder,
         timeDecimals,
-        lapDecimals,
-        colKey,
-        isInset,
-        column,
+        timePlaceholder,
       );
-      if (overallStr !== null) {
-        return overallStr;
-      }
+    }
+    if (baseKey === "lapCount" || baseKey === "heatTotalLaps") {
+      return this.formatLapCountValue(
+        value,
+        hd,
+        ctx,
+        lapDecimals,
+        lapPlaceholder,
+      );
+    }
+    if (baseKey === "physicalLapCount") {
+      return this.formatPhysicalLapCount(value, hd);
     }
 
-    if (RacedayFormatUtils.isEmptyDriver(hd)) {
-      if (baseKey === "seed") {
-        return "";
-      }
-      if (
-        baseKey === "rankHeat" ||
-        baseKey === "rankOverall" ||
-        baseKey === "rankGroup" ||
-        baseKey === "lapsLed" ||
-        baseKey === "trackCalls" ||
-        baseKey === "physicalLapCount" ||
-        baseKey === "recordLapTime" ||
-        baseKey === "bestRaceLapTime" ||
-        baseKey.startsWith("ghostPacing")
-      ) {
-        return "--";
-      }
-      if (
-        baseKey === "gapLeader" ||
-        baseKey === "gapPosition" ||
-        baseKey === "gapLeaderF1" ||
-        baseKey === "gapPositionF1" ||
-        baseKey === "standardDeviation" ||
-        baseKey === "averageTop5" ||
-        baseKey === "averageTop10" ||
-        baseKey === "averageTop15" ||
-        baseKey === "top2Consecutive" ||
-        baseKey === "top3Consecutive"
-      ) {
-        return timePlaceholder;
-      }
-      if (baseKey === "consistencyScore") {
-        return "--.-%";
-      }
-      if (
-        isInset &&
-        (baseKey === "flag" ||
-          (baseKey.startsWith("imageset") &&
-            propertyName.toLowerCase().includes("driverstate")))
-      ) {
-        return "";
-      }
-    }
+    return this.formatEntityOrStatusValue(
+      baseKey,
+      propertyName,
+      value,
+      hd,
+      column,
+      ctx,
+      timeDecimals,
+      timePlaceholder,
+    );
+  }
 
-    if (baseKey === "recordLapTime") {
-      const entry = ctx.getLaneRecordEntry
-        ? ctx.getLaneRecordEntry(hd?.laneIndex ?? 0)
-        : undefined;
-      if (entry && entry.value > 0) {
-        const timeStr = entry.value.toFixed(timeDecimals);
-        const nickname = entry.holderNickname || entry.holderName || "---";
-        let dateStr = "---";
-        if (entry.date) {
-          let ms = 0;
-          if (typeof entry.date === "number") {
-            ms = entry.date;
-          } else if (entry.date.toNumber) {
-            ms = entry.date.toNumber();
-          } else if (typeof entry.date === "string") {
-            ms = parseInt(entry.date, 10);
-          } else {
-            ms = Number(entry.date);
-          }
-          if (ms > 0 && !isNaN(ms)) {
-            if (ctx.formatDate) {
-              dateStr = ctx.formatDate(ms);
-            } else {
-              const d = new Date(ms);
-              dateStr = new Intl.DateTimeFormat("en-US", {
-                dateStyle: "short",
-              }).format(d);
-            }
-          }
-        }
-        return `${timeStr} (${nickname}, ${dateStr})`;
-      }
-      return `${timePlaceholder} (---, ---)`;
-    } else if (baseKey === "bestRaceLapTime") {
-      const entry = ctx.getBestRaceLapEntry
-        ? ctx.getBestRaceLapEntry(hd?.laneIndex ?? 0)
-        : undefined;
-      if (entry && entry.value > 0) {
-        const timeStr = entry.value.toFixed(timeDecimals);
-        const nickname = entry.holderNickname || entry.holderName || "---";
-        let heatStr = "---";
-        if (entry.heatNumber && entry.heatNumber > 0) {
-          const heatPrefix = ctx.translate ? ctx.translate("RD_HEAT") : "Heat";
-          heatStr = `${heatPrefix} ${entry.heatNumber}`;
-        }
-        return `${timeStr} (${nickname}, ${heatStr})`;
-      }
-      return `${timePlaceholder} (---, ---)`;
-    } else if (
+  private static isTimingBaseKey(baseKey: string): boolean {
+    return (
       baseKey.includes("LapTime") ||
       baseKey === "reactionTime" ||
       baseKey === "totalTime" ||
@@ -895,37 +442,107 @@ export class RacedayFormatUtils {
       baseKey === "averageTop15" ||
       baseKey === "top2Consecutive" ||
       baseKey === "top3Consecutive"
-    ) {
-      const isStdDev = baseKey === "standardDeviation";
-      const isValid =
-        value !== null &&
-        value !== undefined &&
-        (isStdDev ? value >= 0 : value > 0);
-      if (isValid && baseKey === "totalTime") {
-        const timerOpts = RacedayFormatUtils.resolveTimerFormatOptions(
-          colKey,
-          ctx.laneViewWidgetSettings,
-          isInset,
-          timeDecimals,
-          baseKey,
-        );
-        if (timerOpts) {
-          return formatTimerDisplay(value, timerOpts);
+    );
+  }
+
+  private static formatRecordLapTime(
+    hd: DriverHeatData,
+    ctx: FormatContext,
+    timeDecimals: number,
+    timePlaceholder: string,
+  ): string {
+    const entry = ctx.getLaneRecordEntry
+      ? ctx.getLaneRecordEntry(hd?.laneIndex ?? 0)
+      : undefined;
+    if (entry && entry.value > 0) {
+      const timeStr = entry.value.toFixed(timeDecimals);
+      const nickname = entry.holderNickname || entry.holderName || "---";
+      let dateStr = "---";
+      if (entry.date) {
+        let ms = 0;
+        if (typeof entry.date === "number") ms = entry.date;
+        else if (entry.date.toNumber) ms = entry.date.toNumber();
+        else if (typeof entry.date === "string") ms = parseInt(entry.date, 10);
+        else ms = Number(entry.date);
+
+        if (ms > 0 && !isNaN(ms)) {
+          dateStr = ctx.formatDate
+            ? ctx.formatDate(ms)
+            : new Intl.DateTimeFormat("en-US", { dateStyle: "short" }).format(
+                new Date(ms),
+              );
         }
       }
-      return isValid ? value.toFixed(timeDecimals) : timePlaceholder;
-    } else if (baseKey === "consistencyScore") {
-      if (RacedayFormatUtils.isEmptyDriver(hd)) return "--.-%";
-      if (value === null || value === undefined) return "--.-%";
-      return value.toFixed(1) + "%";
-    } else if (baseKey === "gapLeader" || baseKey === "gapPosition") {
+      return `${timeStr} (${nickname}, ${dateStr})`;
+    }
+    return `${timePlaceholder} (---, ---)`;
+  }
+
+  private static formatBestRaceLapTime(
+    hd: DriverHeatData,
+    ctx: FormatContext,
+    timeDecimals: number,
+    timePlaceholder: string,
+  ): string {
+    const entry = ctx.getBestRaceLapEntry
+      ? ctx.getBestRaceLapEntry(hd?.laneIndex ?? 0)
+      : undefined;
+    if (entry && entry.value > 0) {
+      const timeStr = entry.value.toFixed(timeDecimals);
+      const nickname = entry.holderNickname || entry.holderName || "---";
+      let heatStr = "---";
+      if (entry.heatNumber && entry.heatNumber > 0) {
+        const heatPrefix = ctx.translate ? ctx.translate("RD_HEAT") : "Heat";
+        heatStr = `${heatPrefix} ${entry.heatNumber}`;
+      }
+      return `${timeStr} (${nickname}, ${heatStr})`;
+    }
+    return `${timePlaceholder} (---, ---)`;
+  }
+
+  private static formatTimingValue(
+    baseKey: string,
+    value: any,
+    colKey: string,
+    ctx: FormatContext,
+    isInset: boolean,
+    timeDecimals: number,
+    timePlaceholder: string,
+  ): string {
+    const isStdDev = baseKey === "standardDeviation";
+    const isValid =
+      value !== null &&
+      value !== undefined &&
+      (isStdDev ? value >= 0 : value > 0);
+    if (isValid && baseKey === "totalTime") {
+      const timerOpts = this.resolveTimerFormatOptions(
+        colKey,
+        ctx.laneViewWidgetSettings,
+        isInset,
+        timeDecimals,
+        baseKey,
+      );
+      if (timerOpts) return formatTimerDisplay(value, timerOpts);
+    }
+    return isValid ? value.toFixed(timeDecimals) : timePlaceholder;
+  }
+
+  private static formatGapValue(
+    baseKey: string,
+    value: any,
+    hd: DriverHeatData,
+    ctx: FormatContext,
+    timeDecimals: number,
+    timePlaceholder: string,
+  ): string {
+    if (baseKey === "gapLeader" || baseKey === "gapPosition") {
       if (value === 0) return timePlaceholder;
       const sign = value > 0 ? "+" : "";
       return sign + value.toFixed(timeDecimals);
-    } else if (baseKey === "gapLeaderF1" || baseKey === "gapPositionF1") {
+    }
+    if (baseKey === "gapLeaderF1" || baseKey === "gapPositionF1") {
       const isLeader = baseKey === "gapLeaderF1";
       const lapsDown = isLeader ? hd.lapsDownLeader : hd.lapsDownPosition;
-
       if (lapsDown === 1) {
         return ctx
           .translate("RD_LAP_DOWN")
@@ -939,269 +556,354 @@ export class RacedayFormatUtils {
         const sign = value > 0 ? "+" : "";
         return sign + value.toFixed(timeDecimals);
       }
-    } else if (baseKey === "lapCount" || baseKey === "heatTotalLaps") {
-      const hasReactionTime = hd.reactionTime > 0;
-      const hasRealLap = hd.lapTimes && hd.lapTimes.length > 0;
-      const isOver = RacedayFormatUtils.isHeatOrRaceOver(ctx, hd);
-      const hasAdjustment =
-        (hd.userLaps !== undefined && hd.userLaps !== 0) ||
-        (isOver &&
-          hd.autoCalculatedLaps !== undefined &&
-          hd.autoCalculatedLaps !== 0) ||
-        (hd.penaltyLaps !== undefined && hd.penaltyLaps !== 0) ||
-        (hd.adjustedLapCount !== undefined && hd.adjustedLapCount !== 0);
+    }
+    return timePlaceholder;
+  }
 
-      if (
-        value === null ||
-        value === undefined ||
-        (!hasReactionTime && !hasRealLap && !hasAdjustment)
-      ) {
-        return lapPlaceholder;
-      }
-      let lapVal = Number(value);
-      if (!isOver && (hd.autoCalculatedLaps || 0) > 0) {
-        lapVal =
-          Math.round((lapVal - hd.autoCalculatedLaps + Number.EPSILON) * 1e6) /
-          1e6;
-      }
-      return Number(lapVal).toFixed(lapDecimals);
-    } else if (baseKey === "physicalLapCount") {
-      const hasReactionTime = hd.reactionTime > 0;
-      const hasRealLap = hd.lapTimes && hd.lapTimes.length > 0;
+  private static formatLapCountValue(
+    value: any,
+    hd: DriverHeatData,
+    ctx: FormatContext,
+    lapDecimals: number,
+    lapPlaceholder: string,
+  ): string {
+    const hasReactionTime = hd.reactionTime > 0;
+    const hasRealLap = hd.lapTimes && hd.lapTimes.length > 0;
+    const isOver = this.isHeatOrRaceOver(ctx, hd);
+    const hasAdjustment =
+      (hd.userLaps !== undefined && hd.userLaps !== 0) ||
+      (isOver &&
+        hd.autoCalculatedLaps !== undefined &&
+        hd.autoCalculatedLaps !== 0) ||
+      (hd.penaltyLaps !== undefined && hd.penaltyLaps !== 0) ||
+      (hd.adjustedLapCount !== undefined && hd.adjustedLapCount !== 0);
 
-      if (
-        value === null ||
-        value === undefined ||
-        (!hasReactionTime && !hasRealLap)
-      ) {
-        return "--";
-      }
-      return value.toString();
-    } else if (baseKey === "lapsLed") {
-      if (RacedayFormatUtils.isEmptyDriver(hd)) return "--";
-      const led =
-        value !== undefined && value !== null
-          ? value
-          : (hd?.lapsLed ?? (hd as any)?.laps_led ?? 0);
-      return String(led);
-    } else if (baseKey === "trackCalls") {
-      if (RacedayFormatUtils.isEmptyDriver(hd)) return "--";
-      const calls =
-        value !== undefined && value !== null
-          ? value
-          : (hd?.trackCalls ?? (hd as any)?.track_calls ?? 0);
-      return String(calls);
-    } else if (baseKey === "laneNumber") {
-      return String((hd?.laneIndex ?? 0) + 1);
-    } else if (baseKey.startsWith("ghostPacing")) {
-      if (RacedayFormatUtils.isEmptyDriver(hd)) return "--";
-      const ghostLap = (hd as any).ghostLapTime ?? 0;
-      const currentLapTime = (hd as any).currentLapTime ?? hd.lastLapTime ?? 0;
-      if (ghostLap > 0 && currentLapTime > 0) {
-        const delta = ghostLap - currentLapTime;
-        const fixedVal = delta.toFixed(timeDecimals);
-        if (Math.abs(Number(fixedVal)) === 0) {
-          return (0).toFixed(timeDecimals) + "s";
-        }
-        const sign = delta > 0 ? "+" : "";
-        return sign + fixedVal + "s";
-      }
+    if (
+      value === null ||
+      value === undefined ||
+      (!hasReactionTime && !hasRealLap && !hasAdjustment)
+    ) {
+      return lapPlaceholder;
+    }
+    let lapVal = Number(value);
+    if (!isOver && (hd.autoCalculatedLaps || 0) > 0) {
+      lapVal =
+        Math.round((lapVal - hd.autoCalculatedLaps + Number.EPSILON) * 1e6) /
+        1e6;
+    }
+    return Number(lapVal).toFixed(lapDecimals);
+  }
+
+  private static formatPhysicalLapCount(
+    value: any,
+    hd: DriverHeatData,
+  ): string {
+    const hasReactionTime = hd.reactionTime > 0;
+    const hasRealLap = hd.lapTimes && hd.lapTimes.length > 0;
+    if (
+      value === null ||
+      value === undefined ||
+      (!hasReactionTime && !hasRealLap)
+    ) {
       return "--";
-    } else if (baseKey === "driver.name") {
-      if (RacedayFormatUtils.isEmptyDriver(hd)) {
-        if (RacedayFormatUtils.isOverallFormatContext(ctx, propertyName)) {
-          return "";
-        }
-        return ctx.translate("RD_EMPTY_LANE");
-      }
-      const d = hd.actualDriver || (hd.driver as any)?.driver || hd.driver;
-      return d?.name || "";
-    } else if (baseKey === "driver.nickname") {
-      if (RacedayFormatUtils.isEmptyDriver(hd)) {
-        if (RacedayFormatUtils.isOverallFormatContext(ctx, propertyName)) {
-          return "";
-        }
-        return ctx.translate("RD_EMPTY_LANE");
-      }
-      const d = hd.actualDriver || (hd.driver as any)?.driver || hd.driver;
-      return d?.nickname || d?.name || "";
-    } else if (baseKey === "participant.team.name") {
-      if (ctx.getRace()?.practice) {
-        return "";
-      }
-      if (RacedayFormatUtils.isEmptyDriver(hd)) {
-        if (RacedayFormatUtils.isOverallFormatContext(ctx, propertyName)) {
-          return "";
-        }
-        if (
-          column &&
-          column.layout[AnchorPoint.CenterCenter] === propertyName
-        ) {
-          return ctx.translate("RD_EMPTY_LANE");
-        }
-        return "";
-      }
-      return hd.participant?.team?.name || (hd.driver as any)?.team?.name || "";
-    } else if (baseKey === "participant.fuelLevel") {
-      return value !== undefined ? value.toFixed(1) : "--.-";
-    } else if (baseKey === "fuelCapacity") {
-      const race = ctx.getRace();
-      const track = ctx.getTrack();
-      const capacity =
-        typeof track?.hasDigitalFuel === "function" && track.hasDigitalFuel()
-          ? race?.digital_fuel_options?.capacity
-          : race?.fuel_options?.capacity;
-      return capacity !== undefined ? capacity.toFixed(1) : "--.-";
-    } else if (baseKey === "fuelPercentage") {
-      const level = hd.participant?.fuelLevel ?? (hd.driver as any)?.fuelLevel;
-      const race = ctx.getRace();
-      const track = ctx.getTrack();
-      const capacity =
-        typeof track?.hasDigitalFuel === "function" && track.hasDigitalFuel()
-          ? race?.digital_fuel_options?.capacity
-          : race?.fuel_options?.capacity;
-      if (level !== undefined && capacity !== undefined && capacity > 0) {
-        const percentage = Math.round((level / capacity) * 100);
-        return percentage + "%";
-      }
-      return "--%";
-    } else if (baseKey === "driver.avatarUrl") {
-      if (value && typeof value === "string" && value.trim()) {
-        return ctx.getFullUrl ? ctx.getFullUrl(value.trim()) : value.trim();
-      }
-      if (!RacedayFormatUtils.isEmptyDriver(hd)) {
-        const defaultAvatar = "assets/images/default_avatar.svg";
-        return ctx.getFullUrl ? ctx.getFullUrl(defaultAvatar) : defaultAvatar;
-      }
-      return "";
-    } else if (baseKey === "seed") {
+    }
+    return value.toString();
+  }
+
+  private static formatEntityOrStatusValue(
+    baseKey: string,
+    propertyName: string,
+    value: any,
+    hd: DriverHeatData,
+    column: ColumnDefinition | undefined,
+    ctx: FormatContext,
+    timeDecimals: number,
+    timePlaceholder: string,
+  ): string {
+    if (baseKey === "lapsLed") {
+      if (this.isEmptyDriver(hd)) return "--";
+      return String(value ?? hd?.lapsLed ?? (hd as any)?.laps_led ?? 0);
+    }
+    if (baseKey === "trackCalls") {
+      if (this.isEmptyDriver(hd)) return "--";
+      return String(value ?? hd?.trackCalls ?? (hd as any)?.track_calls ?? 0);
+    }
+    if (baseKey === "laneNumber") return String((hd?.laneIndex ?? 0) + 1);
+    if (baseKey.startsWith("ghostPacing"))
+      return this.formatGhostPacing(hd, timeDecimals);
+    if (baseKey === "driver.name" || baseKey === "driver.nickname") {
+      return this.formatDriverNameOrNickname(baseKey, propertyName, hd, ctx);
+    }
+    if (baseKey === "participant.team.name") {
+      return this.formatTeamName(propertyName, hd, column, ctx);
+    }
+    if (baseKey.startsWith("fuel") || baseKey === "participant.fuelLevel") {
+      return this.formatFuelLevels(baseKey, value, hd, ctx);
+    }
+    if (baseKey === "driver.avatarUrl")
+      return this.formatAvatarUrl(value, hd, ctx);
+    if (baseKey === "seed") {
       const seed = hd.participant?.seed ?? (hd.driver as any)?.seed;
       return seed ? `(${seed})` : "--";
-    } else if (baseKey === "rankHeat") {
-      if (RacedayFormatUtils.isEmptyDriver(hd)) return "--";
+    }
+    if (baseKey.startsWith("rank")) return this.formatRanks(baseKey, hd, ctx);
+    if (baseKey.startsWith("projected") || baseKey === "winProbability") {
+      return this.formatPredictions(baseKey, hd);
+    }
+    if (baseKey === "flag") return this.formatFlagValue(value, hd, column, ctx);
+    if (baseKey === "segmentTime") {
+      return this.formatSegmentTime(
+        propertyName,
+        hd,
+        column,
+        timeDecimals,
+        timePlaceholder,
+      );
+    }
+    if (baseKey === "mph" || baseKey === "kph" || baseKey === "fph") {
+      return this.formatSpeed(baseKey, hd, ctx);
+    }
+    if (baseKey.startsWith("imageset") || baseKey === "fuel-gauge-builtin") {
+      return ctx.getImageSetUrl(hd, propertyName);
+    }
+    if (baseKey === "qrCode") {
+      return ctx.getLaneQrCodeUrl ? ctx.getLaneQrCodeUrl(hd.laneIndex) : "";
+    }
+    if (baseKey === "driverViewQrCode") {
+      if (this.isEmptyDriver(hd)) return "";
+      return ctx.getDriverViewQrCodeUrl ? ctx.getDriverViewQrCodeUrl(hd) : "";
+    }
+    return value?.toString() ?? "";
+  }
+
+  private static formatGhostPacing(
+    hd: DriverHeatData,
+    timeDecimals: number,
+  ): string {
+    if (this.isEmptyDriver(hd)) return "--";
+    const ghostLap = (hd as any).ghostLapTime ?? 0;
+    const currentLapTime = (hd as any).currentLapTime ?? hd.lastLapTime ?? 0;
+    if (ghostLap > 0 && currentLapTime > 0) {
+      const delta = ghostLap - currentLapTime;
+      const fixedVal = delta.toFixed(timeDecimals);
+      if (Math.abs(Number(fixedVal)) === 0)
+        return (0).toFixed(timeDecimals) + "s";
+      const sign = delta > 0 ? "+" : "";
+      return sign + fixedVal + "s";
+    }
+    return "--";
+  }
+
+  private static formatDriverNameOrNickname(
+    baseKey: string,
+    propertyName: string,
+    hd: DriverHeatData,
+    ctx: FormatContext,
+  ): string {
+    if (this.isEmptyDriver(hd)) {
+      if (RacedayOverallFormatUtils.isOverallFormatContext(ctx, propertyName))
+        return "";
+      return ctx.translate("RD_EMPTY_LANE");
+    }
+    const d = hd.actualDriver || (hd.driver as any)?.driver || hd.driver;
+    if (baseKey === "driver.nickname") return d?.nickname || d?.name || "";
+    return d?.name || "";
+  }
+
+  private static formatTeamName(
+    propertyName: string,
+    hd: DriverHeatData,
+    column: ColumnDefinition | undefined,
+    ctx: FormatContext,
+  ): string {
+    if (ctx.getRace()?.practice) return "";
+    if (this.isEmptyDriver(hd)) {
+      if (RacedayOverallFormatUtils.isOverallFormatContext(ctx, propertyName))
+        return "";
+      if (column && column.layout[AnchorPoint.CenterCenter] === propertyName) {
+        return ctx.translate("RD_EMPTY_LANE");
+      }
+      return "";
+    }
+    return hd.participant?.team?.name || (hd.driver as any)?.team?.name || "";
+  }
+
+  private static formatFuelLevels(
+    baseKey: string,
+    value: any,
+    hd: DriverHeatData,
+    ctx: FormatContext,
+  ): string {
+    if (baseKey === "participant.fuelLevel") {
+      return value !== undefined ? value.toFixed(1) : "--.-";
+    }
+    const race = ctx.getRace();
+    const track = ctx.getTrack();
+    const capacity =
+      typeof track?.hasDigitalFuel === "function" && track.hasDigitalFuel()
+        ? race?.digital_fuel_options?.capacity
+        : race?.fuel_options?.capacity;
+
+    if (baseKey === "fuelCapacity") {
+      return capacity !== undefined ? capacity.toFixed(1) : "--.-";
+    }
+    if (baseKey === "fuelPercentage") {
+      const level = hd.participant?.fuelLevel ?? (hd.driver as any)?.fuelLevel;
+      if (level !== undefined && capacity !== undefined && capacity > 0) {
+        return Math.round((level / capacity) * 100) + "%";
+      }
+      return "--%";
+    }
+    return "--.-";
+  }
+
+  private static formatAvatarUrl(
+    value: any,
+    hd: DriverHeatData,
+    ctx: FormatContext,
+  ): string {
+    if (value && typeof value === "string" && value.trim()) {
+      return ctx.getFullUrl ? ctx.getFullUrl(value.trim()) : value.trim();
+    }
+    if (!this.isEmptyDriver(hd)) {
+      const defaultAvatar = "assets/images/default_avatar.svg";
+      return ctx.getFullUrl ? ctx.getFullUrl(defaultAvatar) : defaultAvatar;
+    }
+    return "";
+  }
+
+  private static formatRanks(
+    baseKey: string,
+    hd: DriverHeatData,
+    ctx: FormatContext,
+  ): string {
+    if (this.isEmptyDriver(hd)) return "--";
+    if (baseKey === "rankHeat") {
       const rank = ctx.getDriverRanking(hd.objectId);
       return rank ? `${rank}` : "--";
-    } else if (baseKey === "rankOverall") {
-      if (RacedayFormatUtils.isEmptyDriver(hd)) return "--";
+    }
+    if (baseKey === "rankOverall") {
       const rank = ctx.getDriverOverallRanking
         ? ctx.getDriverOverallRanking(hd)
         : (hd.participant?.rank ?? (hd.driver as any)?.rank);
       return rank ? `${rank}` : "--";
-    } else if (baseKey === "rankGroup") {
-      if (RacedayFormatUtils.isEmptyDriver(hd)) return "--";
-      let rank: number | undefined;
-      if (ctx.getDriverGroupRanking) {
-        rank = ctx.getDriverGroupRanking(hd);
-      }
+    }
+    if (baseKey === "rankGroup") {
+      const rank = ctx.getDriverGroupRanking
+        ? ctx.getDriverGroupRanking(hd)
+        : undefined;
       return rank !== undefined ? `${rank}` : "--";
-    } else if (baseKey === "winProbability") {
+    }
+    return "--";
+  }
+
+  private static formatPredictions(
+    baseKey: string,
+    hd: DriverHeatData,
+  ): string {
+    if (baseKey === "winProbability") {
       const prob =
         (hd as any).winProbability ?? (hd.participant as any)?.winProbability;
       if (prob !== undefined && prob >= 0) return `${Math.round(prob * 100)}%`;
-      if (RacedayFormatUtils.isEmptyDriver(hd)) return "--";
+      if (this.isEmptyDriver(hd)) return "--";
       return "--%";
-    } else if (baseKey === "projectedRank") {
+    }
+    if (baseKey === "projectedRank") {
       const rank =
         (hd as any).projectedRank ?? (hd.participant as any)?.projectedRank;
       if (rank && rank > 0) return `#${rank}`;
-      if (RacedayFormatUtils.isEmptyDriver(hd)) return "--";
+      if (this.isEmptyDriver(hd)) return "--";
       return "--";
-    } else if (baseKey === "projectedLaps") {
+    }
+    if (baseKey === "projectedLaps") {
       const laps =
         (hd as any).projectedLaps ?? (hd.participant as any)?.projectedLaps;
       if (laps !== undefined && laps >= 0) return `${laps}`;
-      if (RacedayFormatUtils.isEmptyDriver(hd)) return "--";
+      if (this.isEmptyDriver(hd)) return "--";
       return "--";
-    } else if (baseKey === "flag") {
-      return RacedayFormatUtils.formatFlagValue(value, hd, column, ctx);
-    } else if (baseKey === "segmentTime") {
-      const parts = propertyName.split("_");
-      const index = parts.length > 1 ? parseInt(parts[1], 10) : 0;
+    }
+    return "--";
+  }
 
-      let useIndex = true;
-      let segmentCount = 0;
-      if (column) {
-        segmentCount = Object.values(column.layout).filter((v) =>
-          v?.startsWith("segmentTime"),
-        ).length;
-        if (segmentCount <= 1) {
-          useIndex = false;
-        }
-      } else if (index === 0) {
-        useIndex = false;
-      }
-
-      if (useIndex) {
-        let actualIndex = index;
-        if (propertyName === "segmentTime" && column) {
-          const anchorOrder = [
-            AnchorPoint.TopLeft,
-            AnchorPoint.TopCenter,
-            AnchorPoint.TopRight,
-            AnchorPoint.CenterLeft,
-            AnchorPoint.CenterCenter,
-            AnchorPoint.CenterRight,
-            AnchorPoint.BottomLeft,
-            AnchorPoint.BottomCenter,
-            AnchorPoint.BottomRight,
-          ];
-          let counter = 0;
-          for (const anchor of anchorOrder) {
-            const p = column.layout[anchor];
-            if (p && p.split("_")[0] === "segmentTime") {
-              if (p === "segmentTime") {
-                actualIndex = counter;
-                break;
-              }
-              counter++;
-            }
-          }
-        }
-
-        const segmentVal = hd.currentLapSegments[actualIndex];
-        return segmentVal !== undefined && segmentVal > 0
-          ? segmentVal.toFixed(timeDecimals)
-          : timePlaceholder;
-      } else {
-        return hd.lastSegmentTime > 0
-          ? hd.lastSegmentTime.toFixed(timeDecimals)
-          : timePlaceholder;
-      }
-    } else if (baseKey === "mph" || baseKey === "kph" || baseKey === "fph") {
-      const lastLapTime = hd.lastLapTime;
-      const track = ctx.getTrack();
-      const lane = track?.lanes?.[hd.laneIndex];
-      const length = lane?.length;
-      const scale =
-        track?.track_scale && track.track_scale > 0 && track.track_scale <= 1
-          ? track.track_scale
-          : 1.0;
-
-      if (lastLapTime > 0 && length !== undefined && length > 0) {
-        const scaledLength = length / scale;
-        const fph = (scaledLength / lastLapTime) * 3600;
-        if (baseKey === "fph") return fph.toFixed(0);
-
-        const mph = fph / 5280;
-        if (baseKey === "mph") return mph.toFixed(2);
-
-        const kph = mph * 1.609344;
-        if (baseKey === "kph") return kph.toFixed(2);
-      }
-      return "--.--";
-    } else if (
-      baseKey.startsWith("imageset") ||
-      baseKey === "fuel-gauge-builtin"
-    ) {
-      return ctx.getImageSetUrl(hd, propertyName);
-    } else if (baseKey === "qrCode") {
-      return ctx.getLaneQrCodeUrl ? ctx.getLaneQrCodeUrl(hd.laneIndex) : "";
-    } else if (baseKey === "driverViewQrCode") {
-      if (this.isEmptyDriver(hd)) return "";
-      return ctx.getDriverViewQrCodeUrl ? ctx.getDriverViewQrCodeUrl(hd) : "";
+  private static formatSegmentTime(
+    propertyName: string,
+    hd: DriverHeatData,
+    column: ColumnDefinition | undefined,
+    timeDecimals: number,
+    timePlaceholder: string,
+  ): string {
+    const parts = propertyName.split("_");
+    const index = parts.length > 1 ? parseInt(parts[1], 10) : 0;
+    let useIndex = true;
+    if (column) {
+      const segmentCount = Object.values(column.layout).filter((v) =>
+        v?.startsWith("segmentTime"),
+      ).length;
+      if (segmentCount <= 1) useIndex = false;
+    } else if (index === 0) {
+      useIndex = false;
     }
 
-    return value?.toString() ?? "";
+    if (useIndex) {
+      let actualIndex = index;
+      if (propertyName === "segmentTime" && column) {
+        const anchorOrder = [
+          AnchorPoint.TopLeft,
+          AnchorPoint.TopCenter,
+          AnchorPoint.TopRight,
+          AnchorPoint.CenterLeft,
+          AnchorPoint.CenterCenter,
+          AnchorPoint.CenterRight,
+          AnchorPoint.BottomLeft,
+          AnchorPoint.BottomCenter,
+          AnchorPoint.BottomRight,
+        ];
+        let counter = 0;
+        for (const anchor of anchorOrder) {
+          const p = column.layout[anchor];
+          if (p && p.split("_")[0] === "segmentTime") {
+            if (p === "segmentTime") {
+              actualIndex = counter;
+              break;
+            }
+            counter++;
+          }
+        }
+      }
+      const segmentVal = hd.currentLapSegments[actualIndex];
+      return segmentVal !== undefined && segmentVal > 0
+        ? segmentVal.toFixed(timeDecimals)
+        : timePlaceholder;
+    }
+    return hd.lastSegmentTime > 0
+      ? hd.lastSegmentTime.toFixed(timeDecimals)
+      : timePlaceholder;
+  }
+
+  private static formatSpeed(
+    baseKey: string,
+    hd: DriverHeatData,
+    ctx: FormatContext,
+  ): string {
+    const lastLapTime = hd.lastLapTime;
+    const track = ctx.getTrack();
+    const lane = track?.lanes?.[hd.laneIndex];
+    const length = lane?.length;
+    const scale =
+      track?.track_scale && track.track_scale > 0 && track.track_scale <= 1
+        ? track.track_scale
+        : 1.0;
+
+    if (lastLapTime > 0 && length !== undefined && length > 0) {
+      const scaledLength = length / scale;
+      const fph = (scaledLength / lastLapTime) * 3600;
+      if (baseKey === "fph") return fph.toFixed(0);
+      const mph = fph / 5280;
+      if (baseKey === "mph") return mph.toFixed(2);
+      const kph = mph * 1.609344;
+      if (baseKey === "kph") return kph.toFixed(2);
+    }
+    return "--.--";
   }
 
   private static formatFlagValue(
@@ -1210,27 +912,7 @@ export class RacedayFormatUtils {
     _column: ColumnDefinition | undefined,
     ctx: FormatContext,
   ): string {
-    const race = ctx.getRace?.();
-    const isFuelEnabled =
-      (race?.fuel_options && race.fuel_options.enabled) ||
-      (race?.digital_fuel_options && race.digital_fuel_options.enabled) ||
-      (race as any)?.fuelOptions?.enabled ||
-      (race as any)?.digitalFuelOptions?.enabled;
-
-    const isOutOfFuel =
-      Boolean(isFuelEnabled) &&
-      ((hd?.participant &&
-        hd.participant.fuelLevel !== undefined &&
-        hd.participant.fuelLevel <= 0) ||
-        (hd?.driver &&
-          (hd.driver as any).fuelLevel !== undefined &&
-          (hd.driver as any).fuelLevel <= 0));
-
-    const isPenalized = Boolean(
-      hd && ((hd as any).remainingFalseStartTimePenalty > 0 || isOutOfFuel),
-    );
-
-    if (isPenalized) {
+    if (this.isDriverPenalized(hd, ctx)) {
       return ctx.getFlagUrl("flag.penalty");
     }
 
@@ -1247,13 +929,68 @@ export class RacedayFormatUtils {
         : false;
 
     if (allFinished) {
-      if (isWarmupOrCooldown) {
-        return ctx.getFlagUrl("flag.warmup");
-      }
+      if (isWarmupOrCooldown) return ctx.getFlagUrl("flag.warmup");
       const isRaceOver = ctx.isRaceOver ? ctx.isRaceOver() : false;
       return ctx.getFlagUrl(isRaceOver ? "flag.race_over" : "flag.heat_over");
     }
 
+    const finishFlag = this.checkFinishedFlag(hd, ctx, isWarmupOrCooldown);
+    if (finishFlag) return finishFlag;
+
+    const oneLapFlag = this.checkOneLapToGoFlag(value, hd, ctx);
+    if (oneLapFlag) return oneLapFlag;
+
+    if (ctx.getFlagType?.() === "flag.heat_finishing") {
+      return ctx.getFlagUrl("flag.racing");
+    }
+    if (
+      value === RaceFlag.GREEN_YELLOW ||
+      hd?.flag === RaceFlag.GREEN_YELLOW ||
+      isWarmupOrCooldown
+    ) {
+      return ctx.getFlagUrl("flag.warmup");
+    }
+    if (value === RaceFlag.BLACK || hd?.flag === RaceFlag.BLACK) {
+      return ctx.getFlagUrl("flag.penalty");
+    }
+
+    const flag =
+      value === RaceFlag.UNKNOWN_FLAG || value === 0
+        ? ctx.getFlagType()
+        : value;
+    return ctx.getFlagUrl(flag);
+  }
+
+  private static isDriverPenalized(
+    hd: DriverHeatData | undefined,
+    ctx: FormatContext,
+  ): boolean {
+    const race = ctx.getRace?.();
+    const isFuelEnabled =
+      (race?.fuel_options && race.fuel_options.enabled) ||
+      (race?.digital_fuel_options && race.digital_fuel_options.enabled) ||
+      (race as any)?.fuelOptions?.enabled ||
+      (race as any)?.digitalFuelOptions?.enabled;
+
+    const isOutOfFuel =
+      Boolean(isFuelEnabled) &&
+      ((hd?.participant &&
+        hd.participant.fuelLevel !== undefined &&
+        hd.participant.fuelLevel <= 0) ||
+        (hd?.driver &&
+          (hd.driver as any).fuelLevel !== undefined &&
+          (hd.driver as any).fuelLevel <= 0));
+
+    return Boolean(
+      hd && ((hd as any).remainingFalseStartTimePenalty > 0 || isOutOfFuel),
+    );
+  }
+
+  private static checkFinishedFlag(
+    hd: DriverHeatData | undefined,
+    ctx: FormatContext,
+    isWarmupOrCooldown: boolean,
+  ): string | null {
     const isFinished =
       Boolean(hd?.isFinished) ||
       Boolean(
@@ -1265,14 +1002,19 @@ export class RacedayFormatUtils {
         ),
       );
 
-    if (isFinished && RacedayFormatUtils.isAllowFinish(ctx.getRace())) {
-      if (isWarmupOrCooldown) {
-        return ctx.getFlagUrl("flag.warmup");
-      }
+    if (isFinished && this.isAllowFinish(ctx.getRace())) {
+      if (isWarmupOrCooldown) return ctx.getFlagUrl("flag.warmup");
       return ctx.getFlagUrl("flag.driver_finished");
     }
+    return null;
+  }
 
-    // Check for one lap to go
+  private static checkOneLapToGoFlag(
+    value: any,
+    hd: DriverHeatData | undefined,
+    ctx: FormatContext,
+  ): string | null {
+    const race = ctx.getRace?.();
     const scoring: any = race?.heat_scoring ?? (race as any)?.heatScoring;
     const finishMethod = scoring?.finishMethod ?? scoring?.finish_method;
     const finishValue = scoring?.finishValue ?? scoring?.finish_value;
@@ -1286,40 +1028,13 @@ export class RacedayFormatUtils {
         finishValue !== undefined &&
         finishValue > 0 &&
         (hd?.lapCount ?? 0) -
-          (!RacedayFormatUtils.isHeatOrRaceOver(ctx, hd)
+          (!this.isHeatOrRaceOver(ctx, hd)
             ? (hd?.autoCalculatedLaps ?? 0)
             : 0) ===
           finishValue - 1,
       );
 
-    if (isOneLapToGo) {
-      return ctx.getFlagUrl("flag.one_lap_to_go");
-    }
-
-    // If actively racing in allow-finish heat_finishing period,
-    // an unfinished driver who is still racing displays flag.racing.
-    const flagType = ctx.getFlagType?.();
-    if (flagType === "flag.heat_finishing") {
-      return ctx.getFlagUrl("flag.racing");
-    }
-
-    if (
-      value === RaceFlag.GREEN_YELLOW ||
-      hd?.flag === RaceFlag.GREEN_YELLOW ||
-      isWarmupOrCooldown
-    ) {
-      return ctx.getFlagUrl("flag.warmup");
-    }
-
-    if (value === RaceFlag.BLACK || hd?.flag === RaceFlag.BLACK) {
-      return ctx.getFlagUrl("flag.penalty");
-    }
-
-    const flag =
-      value === RaceFlag.UNKNOWN_FLAG || value === 0
-        ? ctx.getFlagType()
-        : value;
-    return ctx.getFlagUrl(flag);
+    return isOneLapToGo ? ctx.getFlagUrl("flag.one_lap_to_go") : null;
   }
 
   static formatColumnValue(

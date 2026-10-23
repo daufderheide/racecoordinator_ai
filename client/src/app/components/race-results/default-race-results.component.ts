@@ -11,6 +11,11 @@ import { Router, RouterModule } from "@angular/router";
 import { firstValueFrom, Subscription } from "rxjs";
 import { AddLapSectionsDialogComponent } from "@app/components/raceday/components/add-lap-sections-dialog/add-lap-sections-dialog.component";
 import { AcknowledgementModalComponent } from "@app/components/shared/acknowledgement-modal/acknowledgement-modal.component";
+import { BrowserNavigationComponent } from "@app/components/shared/browser-navigation/browser-navigation.component";
+import {
+  PdfExportDialogComponent,
+  PdfExportOptions,
+} from "@app/components/shared/pdf-export-dialog/pdf-export-dialog.component";
 import { TwinGraphsComponent } from "@app/components/shared/twin-graphs/twin-graphs.component";
 import { DataService } from "@app/data.service";
 import { Driver } from "@app/models/driver";
@@ -24,6 +29,7 @@ import { Race } from "@app/models/race";
 import { RaceParticipant } from "@app/models/race_participant";
 import { isAtLeast, Role } from "@app/models/role";
 import { AvatarUrlPipe } from "@app/pipes/avatar-url.pipe";
+import { LocalDatePipe } from "@app/pipes/local-date.pipe";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { IRecordData, IRecordEntry } from "@app/proto/antigravity";
 import { Heat } from "@app/race/heat";
@@ -33,66 +39,17 @@ import { RaceService } from "@app/services/race.service";
 import { RaceConnectionService } from "@app/services/race-connection.service";
 import { RaceFlagService } from "@app/services/race-flag.service";
 import { RaceTimeService } from "@app/services/race-time.service";
+import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
 import { saveFileAs } from "@app/utils/file-download.utils";
 import { ViewerRaceEndedHandler } from "@app/utils/viewer-race-ended-handler";
 
-interface StandingsRow {
-  rank: number;
-  visualIndex: number;
-  driver: Driver;
-  score: number;
-  laps: number;
-  averageLapTime: number;
-  medianLapTime: number;
-  bestLapTime: number;
-  totalTime: number;
-  gap1st: number | null;
-  gapAhead: number | null;
-  avatarUrl: string;
-  laneScores: (number | null)[];
-}
-
-interface GraphPoint {
-  x: number;
-  y: number;
-  isOwnLap?: boolean;
-  causesStandingsChange?: boolean;
-}
-
-interface DriverLine {
-  objectId: string;
-  driverName: string;
-  color: string;
-  backgroundColor: string;
-  points: GraphPoint[];
-  pathData: string;
-  rankPoints: GraphPoint[];
-  rankPathData: string;
-  legendX: number;
-  legendY: number;
-}
-
-const NEON_COLORS = [
-  { color: "#00ffff", bg: "#0b2e30" }, // Neon Cyan
-  { color: "#ff00ff", bg: "#300030" }, // Neon Pink
-  { color: "#ffff00", bg: "#303000" }, // Neon Yellow
-  { color: "#00ff00", bg: "#003000" }, // Neon Green
-  { color: "#ff3d00", bg: "#300b00" }, // Neon Orange/Red
-  { color: "#3d5afe", bg: "#000b30" }, // Neon Blue
-  { color: "#d500f9", bg: "#230030" }, // Dark Magenta
-  { color: "#1de9b6", bg: "#003020" }, // Mint Teal
-  { color: "#ff9100", bg: "#301c00" }, // Amber Orange
-  { color: "#c6ff00", bg: "#233000" }, // Lime Green
-];
-
-import { BrowserNavigationComponent } from "@app/components/shared/browser-navigation/browser-navigation.component";
 import {
-  PdfExportDialogComponent,
-  PdfExportOptions,
-} from "@app/components/shared/pdf-export-dialog/pdf-export-dialog.component";
-import { LocalDatePipe } from "@app/pipes/local-date.pipe";
-import { SettingsService } from "@app/services/settings.service";
+  DriverLine,
+  GraphPoint,
+  NEON_COLORS,
+  StandingsRow,
+} from "./race-results.types";
 
 @Component({
   standalone: true,
@@ -733,33 +690,33 @@ export class DefaultRaceResultsComponent implements OnInit, OnDestroy {
     return line.objectId;
   }
 
-  /* eslint-disable max-lines-per-function */
   protected updateGraph() {
     if (!this.standingsRows || this.standingsRows.length === 0) {
       this.driverLines = [];
       return;
     }
 
+    const sortedHeats = this.getSortedAllHeats();
+    const stableKeys = this.getStableDriverKeys();
+    this.driverLines = this.buildDriverLines(sortedHeats, stableKeys);
+    this.computeRankingTimeline(sortedHeats);
+    this.computeGraphScalingAndLayout();
+  }
+
+  private getSortedAllHeats(): Heat[] {
     const heats = this.raceService.getHeats() || [];
     const currentHeat = this.raceService.getCurrentHeat();
-
-    // Merge completed heats with the current (live) heat, deduplicating by objectId
     const heatMap = new Map<string, Heat>();
     heats.forEach((h) => heatMap.set(h.objectId, h));
     if (currentHeat) {
       heatMap.set(currentHeat.objectId, currentHeat);
     }
-    const allHeats = Array.from(heatMap.values());
-    const sortedHeats = allHeats.sort((a, b) => a.heatNumber - b.heatNumber);
+    return Array.from(heatMap.values()).sort(
+      (a, b) => a.heatNumber - b.heatNumber,
+    );
+  }
 
-    // Safe helper to extract the "identity" driver from any shape of HeatDriver.
-    // For graph matching we need the driver identity that corresponds to the
-    // standings (i.e. the RaceParticipant's driver, which in team races is the
-    // team entity).  actualDriver is only the individual who happened to drive
-    // in that heat, so we try participant.driver first.
-
-    // Get stable unique driver keys sorted by seed (registration order), falling back to nickname/name alphabetically.
-    // This ensures colors and legends are permanently stable under all race/position changes.
+  private getStableDriverKeys(): string[] {
     const stableParticipants = [...this.participants].sort((a, b) => {
       const seedA = a.seed || 0;
       const seedB = b.seed || 0;
@@ -775,24 +732,27 @@ export class DefaultRaceResultsComponent implements OnInit, OnDestroy {
       return nameA.localeCompare(nameB);
     });
 
-    const stableKeys = stableParticipants
+    return stableParticipants
       .map((p) => this.getDriverKey(p?.driver))
       .filter((key) => !!key);
+  }
 
+  private buildDriverLines(
+    sortedHeats: Heat[],
+    stableKeys: string[],
+  ): DriverLine[] {
     const getNeonColor = (key: string) => {
       const idx = stableKeys.indexOf(key);
       if (idx === -1) return NEON_COLORS[0];
       return NEON_COLORS[idx % NEON_COLORS.length];
     };
 
-    // Map each standings row to a DriverLine config
-    this.driverLines = this.standingsRows.map((row) => {
+    const lines = this.standingsRows.map((row) => {
       const driver = row.driver;
       const driverName = driver.nickname || driver.name;
       const driverKey = this.getDriverKey(driver);
       const palette = getNeonColor(driverKey);
 
-      // Concatenate lap times across all sorted heats
       const points: GraphPoint[] = [];
       let currentAbsoluteTime = 0;
 
@@ -825,24 +785,27 @@ export class DefaultRaceResultsComponent implements OnInit, OnDestroy {
       };
     });
 
-    // CRITICAL: Sort the driver lines in stable registration driver order.
-    // This satisfies: "The graph legends should never change. They should remain in driver order no matter what is happening in the race"
-    this.driverLines.sort((a, b) => {
+    lines.sort((a, b) => {
       const idxA = stableKeys.indexOf(a.objectId);
       const idxB = stableKeys.indexOf(b.objectId);
       return idxA - idxB;
     });
 
-    // --- Compute Overall Standing Ranks Timeline ---
-    interface ChronoEvent {
-      absoluteTime: number;
-      objectId: string;
-    }
+    return lines;
+  }
 
-    const events: ChronoEvent[] = [];
+  private computeRankingTimeline(sortedHeats: Heat[]): void {
+    const events = this.buildChronoEvents(sortedHeats);
+    const rankingHistory = this.buildRankingHistory(events);
+    this.assignRankingPoints(rankingHistory);
+  }
+
+  private buildChronoEvents(
+    sortedHeats: Heat[],
+  ): Array<{ absoluteTime: number; objectId: string }> {
+    const events: Array<{ absoluteTime: number; objectId: string }> = [];
     this.driverLines.forEach((line) => {
       let accum = 0;
-      // Get all sorted heats for this driver to find cumulative events
       sortedHeats.forEach((heat) => {
         const hd = heat.heatDrivers.find((d) => {
           if (!d) return false;
@@ -858,15 +821,16 @@ export class DefaultRaceResultsComponent implements OnInit, OnDestroy {
         }
       });
     });
+    return events.sort((a, b) => a.absoluteTime - b.absoluteTime);
+  }
 
-    events.sort((a, b) => a.absoluteTime - b.absoluteTime);
-
-    // Track active laps completed counts
+  private buildRankingHistory(
+    events: Array<{ absoluteTime: number; objectId: string }>,
+  ): { [id: string]: GraphPoint[] } {
     const lapsCount: { [id: string]: number } = {};
     const lastLapTime: { [id: string]: number } = {};
     const rankingHistory: { [id: string]: GraphPoint[] } = {};
 
-    // To get the correct initial standings at x = 0, sort drivers by their starting positions/seed.
     const initialScores = this.driverLines.map((line) => {
       const participant = this.participants.find(
         (p) => p && p.driver && this.getDriverKey(p.driver) === line.objectId,
@@ -906,7 +870,6 @@ export class DefaultRaceResultsComponent implements OnInit, OnDestroy {
       lapsCount[event.objectId]++;
       lastLapTime[event.objectId] = event.absoluteTime;
 
-      // Score drivers: descending laps first, tiebreak with ascending total time
       const scores = this.driverLines.map((line) => ({
         objectId: line.objectId,
         laps: lapsCount[line.objectId],
@@ -934,14 +897,18 @@ export class DefaultRaceResultsComponent implements OnInit, OnDestroy {
       });
     });
 
-    // Assign ranking points to driver lines
+    return rankingHistory;
+  }
+
+  private assignRankingPoints(rankingHistory: {
+    [id: string]: GraphPoint[];
+  }): void {
     this.driverLines.forEach((line) => {
-      const history = rankingHistory[line.objectId];
+      const history = rankingHistory[line.objectId] || [];
       if (history.length > 1 && history[0].x === 0 && history[0].y === 0) {
-        history[0].y = history[1].y; // align start point for cleaner curve
+        history[0].y = history[1].y;
       }
 
-      // Filter to keep only the points when 1 or more positions change, or when it's the driver's own completed lap (and boundary start/end points)
       const filtered: GraphPoint[] = [];
       if (history.length > 0) {
         filtered.push(history[0]);
@@ -960,8 +927,9 @@ export class DefaultRaceResultsComponent implements OnInit, OnDestroy {
       }
       line.rankPoints = filtered;
     });
+  }
 
-    // Calculate Max X & Max Y for scaling
+  private computeGraphScalingAndLayout(): void {
     const allX = this.driverLines.flatMap((line) =>
       line.points.map((p) => p.x),
     );
@@ -969,27 +937,12 @@ export class DefaultRaceResultsComponent implements OnInit, OnDestroy {
       line.points.map((p) => p.y),
     );
 
-    if (allX.length > 0) {
-      this.maxX = Math.max(...allX) * 1.05; // 5% padding
-    } else {
-      this.maxX = 10;
-    }
+    this.maxX = allX.length > 0 ? Math.max(...allX) * 1.05 : 10;
+    this.maxY = allY.length > 0 ? Math.max(...allY) * 1.1 : 5;
 
-    if (allY.length > 0) {
-      this.maxY = Math.max(...allY) * 1.1; // 10% padding
-    } else {
-      this.maxY = 5;
-    }
+    if (this.maxX <= 0) this.maxX = 10;
+    if (this.maxY <= 0) this.maxY = 5;
 
-    // Safeguard from division-by-zero or negative boundaries
-    if (this.maxX <= 0) {
-      this.maxX = 10;
-    }
-    if (this.maxY <= 0) {
-      this.maxY = 5;
-    }
-
-    // Calculate legend row wrapping and positions
     const itemsPerRow = 6;
     const legendItemWidth = 180;
     const legendItemHeight = 35;
@@ -1000,11 +953,9 @@ export class DefaultRaceResultsComponent implements OnInit, OnDestroy {
     this.height = 750 + delta;
     this.padding.bottom = 150 + delta;
 
-    // Generate SVG path strings and legend positions
     this.driverLines.forEach((line, i) => {
       const r = Math.floor(i / itemsPerRow);
       const col = i % itemsPerRow;
-
       const startIdx = r * itemsPerRow;
       const endIdx = Math.min(N, (r + 1) * itemsPerRow);
       const itemsInRow = endIdx - startIdx;

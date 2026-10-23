@@ -19,7 +19,6 @@ import java.util.stream.Collectors;
 
 public class RaceConverter {
 
-  @SuppressWarnings("checkstyle:MethodLength")
   public static com.antigravity.proto.RaceModel toProto( // fqn-collision
       Race race, Track track, Set<String> sentObjectIds) { // fqn-collision
     String key = "Race_" + race.getObjectId();
@@ -44,129 +43,25 @@ public class RaceConverter {
               .setTrack(TrackConverter.toProto(track, sentObjectIds));
 
       if (race.getHeatScoring() != null) {
-        HeatScoring scoring = race.getHeatScoring();
-        builder.setHeatScoring(
-            com.antigravity.proto.HeatScoring.newBuilder() // fqn-collision
-                .setFinishMethod(
-                    com.antigravity.proto.HeatScoring.FinishMethod // fqn-collision
-                        .valueOf(scoring.getFinishMethod().name()))
-                .setFinishValue(scoring.getFinishValue())
-                .setHeatRanking(
-                    com.antigravity.proto.HeatScoring.HeatRanking // fqn-collision
-                        .valueOf("HR_" + scoring.getHeatRanking().name()))
-                .setHeatRankingTiebreaker(
-                    com.antigravity.proto.HeatScoring.HeatRankingTiebreaker // fqn-collision
-                        .valueOf("HRT_" + scoring.getHeatRankingTiebreaker().name()))
-                .setAllowFinish(
-                    com.antigravity.proto.HeatScoring.AllowFinish // fqn-collision
-                        .valueOf(
-                        "AF_"
-                            + (scoring.getAllowFinish() != null
-                                ? scoring
-                                    .getAllowFinish()
-                                    .name()
-                                    .replaceAll("([a-z])([A-Z])", "$1_$2")
-                                    .toUpperCase()
-                                : "NONE")))
-                .build());
+        builder.setHeatScoring(buildHeatScoring(race.getHeatScoring()));
       }
 
       if (race.getOverallScoring() != null) {
-        OverallScoring scoring = race.getOverallScoring();
-        builder.setOverallScoring(
-            com.antigravity.proto.OverallScoring.newBuilder() // fqn-collision
-                .setDroppedHeats(scoring.getDroppedHeats())
-                .setRankingMethod(
-                    com.antigravity.proto.OverallScoring.OverallRanking // fqn-collision
-                        .valueOf("OR_" + scoring.getRankingMethod().name()))
-                .setTiebreaker(
-                    com.antigravity.proto.OverallScoring.OverallRankingTiebreaker // fqn-collision
-                        .valueOf("ORT_" + scoring.getTiebreaker().name()))
-                .build());
+        builder.setOverallScoring(buildOverallScoring(race.getOverallScoring()));
       }
 
       builder.setMinLapTime(race.getMinLapTime());
 
       if (race.getFuelOptions() != null) {
-        AnalogFuelOptions fuel = race.getFuelOptions();
-        com.antigravity.proto.AnalogFuelOptions.Builder fuelBuilder = // fqn-collision
-            com.antigravity.proto.AnalogFuelOptions.newBuilder() // fqn-collision
-                .setEnabled(fuel.isEnabled())
-                .setResetFuelAtHeatStart(fuel.isResetFuelAtHeatStart())
-                .setEndHeatOnOutOfFuel(
-                    fuel.getOutOfFuelAction() == FuelOptions.OutOfFuelAction.END_HEAT)
-                .setOutOfFuelAction(
-                    com.antigravity.proto.OutOfFuelAction.valueOf( // fqn-collision
-                        fuel.getOutOfFuelAction().name()))
-                .setCapacity(fuel.getCapacity())
-                .setUsageType(
-                    com.antigravity.proto.FuelUsageType.valueOf( // fqn-collision
-                        fuel.getUsageType().name())) // fqn-collision
-                .setUsageRate(fuel.getUsageRate())
-                .setStartLevel(fuel.getStartLevel())
-                .setRefuelRate(fuel.getRefuelRate())
-                .setPitStopDelay(fuel.getPitStopDelay())
-                .setReferenceTime(fuel.getReferenceTime())
-                .setPowerStutterOnTime(fuel.getPowerStutterOnTime())
-                .setPowerStutterOffTime(fuel.getPowerStutterOffTime())
-                .setFastestTime(fuel.getFastestTime())
-                .setMaxUsage(fuel.getMaxUsage())
-                .setSlowestTime(fuel.getSlowestTime())
-                .setMinUsage(fuel.getMinUsage());
-        if (fuel.getCustomCurve() != null) {
-          fuel.getCustomCurve()
-              .forEach(
-                  p ->
-                      fuelBuilder.addCustomCurve(
-                          com.antigravity.proto.FuelCurvePoint.newBuilder() // fqn-collision
-                              .setX(p.getX())
-                              .setY(p.getY())
-                              .build()));
-        }
-        builder.setFuelOptions(fuelBuilder.build());
+        builder.setFuelOptions(buildAnalogFuelOptions(race.getFuelOptions()));
       }
 
       if (race.getDigitalFuelOptions() != null) {
-        DigitalFuelOptions fuel = race.getDigitalFuelOptions();
-        com.antigravity.proto.DigitalFuelOptions.Builder digitalBuilder = // fqn-collision
-            com.antigravity.proto.DigitalFuelOptions.newBuilder() // fqn-collision
-                .setEnabled(fuel.isEnabled())
-                .setResetFuelAtHeatStart(fuel.isResetFuelAtHeatStart())
-                .setEndHeatOnOutOfFuel(
-                    fuel.getOutOfFuelAction() == FuelOptions.OutOfFuelAction.END_HEAT)
-                .setOutOfFuelAction(
-                    com.antigravity.proto.OutOfFuelAction.valueOf( // fqn-collision
-                        fuel.getOutOfFuelAction().name()))
-                .setCapacity(fuel.getCapacity())
-                .setUsageType(
-                    com.antigravity.proto.FuelUsageType.valueOf( // fqn-collision
-                        fuel.getUsageType().name())) // fqn-collision
-                .setUsageRate(fuel.getUsageRate())
-                .setStartLevel(fuel.getStartLevel())
-                .setRefuelRate(fuel.getRefuelRate())
-                .setPitStopDelay(fuel.getPitStopDelay());
-        if (fuel.getCustomCurve() != null) {
-          fuel.getCustomCurve()
-              .forEach(
-                  p ->
-                      digitalBuilder.addCustomCurve(
-                          com.antigravity.proto.FuelCurvePoint.newBuilder() // fqn-collision
-                              .setX(p.getX())
-                              .setY(p.getY())
-                              .build()));
-        }
-        builder.setDigitalFuelOptions(digitalBuilder.build());
+        builder.setDigitalFuelOptions(buildDigitalFuelOptions(race.getDigitalFuelOptions()));
       }
+
       if (race.getTeamOptions() != null) {
-        TeamOptions options = race.getTeamOptions();
-        builder.setTeamOptions(
-            com.antigravity.proto.TeamOptions.newBuilder() // fqn-collision
-                .setHeatLapLimit(options.getHeatLapLimit())
-                .setHeatTimeLimit(options.getHeatTimeLimit())
-                .setOverallLapLimit(options.getOverallLapLimit())
-                .setOverallTimeLimit(options.getOverallTimeLimit())
-                .setRequirePitStopChangeDriver(options.isRequirePitStopChangeDriver())
-                .build());
+        builder.setTeamOptions(buildTeamOptions(race.getTeamOptions()));
       }
       builder.setAutoAdvanceTime(race.getAutoAdvanceTime());
       builder.setAutoStartTime(race.getAutoStartTime());
@@ -199,23 +94,149 @@ public class RaceConverter {
       builder.setReverseHeats(race.isReverseHeats());
 
       if (race.getGroupOptions() != null) {
-        com.antigravity.models.GroupOptions groups = race.getGroupOptions(); // fqn-collision
-        com.antigravity.proto.GroupOptions.Builder groupBuilder = // fqn-collision
-            com.antigravity.proto.GroupOptions.newBuilder() // fqn-collision
-                .setEnabled(groups.isEnabled())
-                .setMaxGroups(groups.getMaxGroups())
-                .setBalance(groups.isBalance())
-                .setAllowEmptyLanes(groups.isAllowEmptyLanes())
-                .setForceMultipleOfMax(groups.isForceMultipleOfMax())
-                .setRotateGroupHeats(groups.isRotateGroupHeats());
-        if (groups.getNames() != null) {
-          groupBuilder.addAllNames(groups.getNames());
-        }
-        builder.setGroupOptions(groupBuilder.build());
+        builder.setGroupOptions(buildGroupOptions(race.getGroupOptions()));
       }
 
       return builder.build();
     }
+  }
+
+  private static com.antigravity.proto.HeatScoring buildHeatScoring( // fqn-collision
+      HeatScoring scoring) {
+    return com.antigravity.proto.HeatScoring.newBuilder() // fqn-collision
+        .setFinishMethod(
+            com.antigravity.proto.HeatScoring.FinishMethod // fqn-collision
+                .valueOf(scoring.getFinishMethod().name()))
+        .setFinishValue(scoring.getFinishValue())
+        .setHeatRanking(
+            com.antigravity.proto.HeatScoring.HeatRanking // fqn-collision
+                .valueOf("HR_" + scoring.getHeatRanking().name()))
+        .setHeatRankingTiebreaker(
+            com.antigravity.proto.HeatScoring.HeatRankingTiebreaker // fqn-collision
+                .valueOf("HRT_" + scoring.getHeatRankingTiebreaker().name()))
+        .setAllowFinish(
+            com.antigravity.proto.HeatScoring.AllowFinish // fqn-collision
+                .valueOf(
+                "AF_"
+                    + (scoring.getAllowFinish() != null
+                        ? scoring
+                            .getAllowFinish()
+                            .name()
+                            .replaceAll("([a-z])([A-Z])", "$1_$2")
+                            .toUpperCase()
+                        : "NONE")))
+        .build();
+  }
+
+  private static com.antigravity.proto.OverallScoring buildOverallScoring( // fqn-collision
+      OverallScoring scoring) {
+    return com.antigravity.proto.OverallScoring.newBuilder() // fqn-collision
+        .setDroppedHeats(scoring.getDroppedHeats())
+        .setRankingMethod(
+            com.antigravity.proto.OverallScoring.OverallRanking // fqn-collision
+                .valueOf("OR_" + scoring.getRankingMethod().name()))
+        .setTiebreaker(
+            com.antigravity.proto.OverallScoring.OverallRankingTiebreaker // fqn-collision
+                .valueOf("ORT_" + scoring.getTiebreaker().name()))
+        .build();
+  }
+
+  private static com.antigravity.proto.AnalogFuelOptions buildAnalogFuelOptions( // fqn-collision
+      AnalogFuelOptions fuel) {
+    com.antigravity.proto.AnalogFuelOptions.Builder fuelBuilder = // fqn-collision
+        com.antigravity.proto.AnalogFuelOptions.newBuilder() // fqn-collision
+            .setEnabled(fuel.isEnabled())
+            .setResetFuelAtHeatStart(fuel.isResetFuelAtHeatStart())
+            .setEndHeatOnOutOfFuel(
+                fuel.getOutOfFuelAction() == FuelOptions.OutOfFuelAction.END_HEAT)
+            .setOutOfFuelAction(
+                com.antigravity.proto.OutOfFuelAction.valueOf( // fqn-collision
+                    fuel.getOutOfFuelAction().name()))
+            .setCapacity(fuel.getCapacity())
+            .setUsageType(
+                com.antigravity.proto.FuelUsageType.valueOf( // fqn-collision
+                    fuel.getUsageType().name())) // fqn-collision
+            .setUsageRate(fuel.getUsageRate())
+            .setStartLevel(fuel.getStartLevel())
+            .setRefuelRate(fuel.getRefuelRate())
+            .setPitStopDelay(fuel.getPitStopDelay())
+            .setReferenceTime(fuel.getReferenceTime())
+            .setPowerStutterOnTime(fuel.getPowerStutterOnTime())
+            .setPowerStutterOffTime(fuel.getPowerStutterOffTime())
+            .setFastestTime(fuel.getFastestTime())
+            .setMaxUsage(fuel.getMaxUsage())
+            .setSlowestTime(fuel.getSlowestTime())
+            .setMinUsage(fuel.getMinUsage());
+    if (fuel.getCustomCurve() != null) {
+      fuel.getCustomCurve()
+          .forEach(
+              p ->
+                  fuelBuilder.addCustomCurve(
+                      com.antigravity.proto.FuelCurvePoint.newBuilder() // fqn-collision
+                          .setX(p.getX())
+                          .setY(p.getY())
+                          .build()));
+    }
+    return fuelBuilder.build();
+  }
+
+  private static com.antigravity.proto.DigitalFuelOptions buildDigitalFuelOptions( // fqn-collision
+      DigitalFuelOptions fuel) {
+    com.antigravity.proto.DigitalFuelOptions.Builder digitalBuilder = // fqn-collision
+        com.antigravity.proto.DigitalFuelOptions.newBuilder() // fqn-collision
+            .setEnabled(fuel.isEnabled())
+            .setResetFuelAtHeatStart(fuel.isResetFuelAtHeatStart())
+            .setEndHeatOnOutOfFuel(
+                fuel.getOutOfFuelAction() == FuelOptions.OutOfFuelAction.END_HEAT)
+            .setOutOfFuelAction(
+                com.antigravity.proto.OutOfFuelAction.valueOf( // fqn-collision
+                    fuel.getOutOfFuelAction().name()))
+            .setCapacity(fuel.getCapacity())
+            .setUsageType(
+                com.antigravity.proto.FuelUsageType.valueOf( // fqn-collision
+                    fuel.getUsageType().name())) // fqn-collision
+            .setUsageRate(fuel.getUsageRate())
+            .setStartLevel(fuel.getStartLevel())
+            .setRefuelRate(fuel.getRefuelRate())
+            .setPitStopDelay(fuel.getPitStopDelay());
+    if (fuel.getCustomCurve() != null) {
+      fuel.getCustomCurve()
+          .forEach(
+              p ->
+                  digitalBuilder.addCustomCurve(
+                      com.antigravity.proto.FuelCurvePoint.newBuilder() // fqn-collision
+                          .setX(p.getX())
+                          .setY(p.getY())
+                          .build()));
+    }
+    return digitalBuilder.build();
+  }
+
+  private static com.antigravity.proto.TeamOptions buildTeamOptions( // fqn-collision
+      TeamOptions options) {
+    return com.antigravity.proto.TeamOptions.newBuilder() // fqn-collision
+        .setHeatLapLimit(options.getHeatLapLimit())
+        .setHeatTimeLimit(options.getHeatTimeLimit())
+        .setOverallLapLimit(options.getOverallLapLimit())
+        .setOverallTimeLimit(options.getOverallTimeLimit())
+        .setRequirePitStopChangeDriver(options.isRequirePitStopChangeDriver())
+        .build();
+  }
+
+  private static com.antigravity.proto.GroupOptions buildGroupOptions( // fqn-collision
+      com.antigravity.models.GroupOptions groups) { // fqn-collision
+    com.antigravity.proto.GroupOptions.Builder groupBuilder = // fqn-collision
+        com.antigravity.proto.GroupOptions.newBuilder() // fqn-collision
+            .setEnabled(groups.isEnabled())
+            .setMaxGroups(groups.getMaxGroups())
+            .setBalance(groups.isBalance())
+            .setAllowEmptyLanes(groups.isAllowEmptyLanes())
+            .setForceMultipleOfMax(groups.isForceMultipleOfMax())
+            .setRotateGroupHeats(groups.isRotateGroupHeats());
+    if (groups.getNames() != null) {
+      groupBuilder.addAllNames(groups.getNames());
+    }
+    return groupBuilder.build();
   }
 
   public static com.antigravity.proto.Race toProto( // fqn-collision

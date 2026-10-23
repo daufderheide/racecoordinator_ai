@@ -270,7 +270,6 @@ export class DefaultRacedaySetupComponent implements OnInit {
     private themeService: ThemeService,
   ) {}
 
-  /* eslint-disable max-lines-per-function */
   ngOnInit() {
     this.updateScale();
 
@@ -281,174 +280,180 @@ export class DefaultRacedaySetupComponent implements OnInit {
       events: this.dataService.getEvents(),
       seasons: this.dataService.getSeasons(),
     }).subscribe({
-      next: (result) => {
-        const drivers = (result.drivers as any[]).map((d: any) => {
-          const driver = DriverConverter.fromJSON(d);
-          DriverConverter.register(driver);
-          return driver;
-        });
-        const teams = (result.teams as any).map(
-          (t: any) =>
-            new Team(
-              t.entity_id || t.entityId || "",
-              t.name || "",
-              t.avatarUrl || undefined,
-              t.driverIds || [],
-            ),
-        );
-        this.allDrivers = drivers;
-        this.allTeams = teams;
-
-        const races = result.races;
-
-        // --- Race Setup ---
-        (this as any).races = races.sort((a: any, b: any) =>
-          (a.name || "").localeCompare(b.name || ""),
-        );
-
-        this.events = (result.events || []).sort((a: any, b: any) =>
-          (a.name || "").localeCompare(b.name || ""),
-        );
-
-        this.seasons = (result.seasons || []).sort((a: any, b: any) =>
-          (a.name || "").localeCompare(b.name || ""),
-        );
-
-        const localSettings = this.settingsService.getSettings();
-        this.updateQuickStartRaces(localSettings.recentRaceIds);
-
-        if (localSettings && localSettings.selectedSeasonId) {
-          const matchedSeason = this.seasons.find(
-            (s) => s.entity_id === localSettings.selectedSeasonId,
-          );
-          if (matchedSeason) {
-            this.selectedSeason = matchedSeason;
-            this.calculateSeasonStandings();
-          }
-        }
-
-        if (localSettings && localSettings.selectedRaceId) {
-          if (localSettings.isEventMode) {
-            const matchedEvent = this.events.find(
-              (e) => e.entity_id === localSettings.selectedRaceId,
-            );
-            if (matchedEvent) {
-              this.selectedEvent = matchedEvent;
-              this.selectedRace = undefined;
-            }
-          } else {
-            const matchedRace = this.races.find(
-              (r) => r.entity_id === localSettings.selectedRaceId,
-            );
-            if (matchedRace) {
-              this.selectedRace = matchedRace;
-              this.selectedEvent = undefined;
-            }
-          }
-
-          if (!this.selectedRace && !this.selectedEvent) {
-            const matchedRace = this.races.find(
-              (r) => r.entity_id === localSettings.selectedRaceId,
-            );
-            if (matchedRace) {
-              this.selectedRace = matchedRace;
-              this.selectedEvent = undefined;
-            } else {
-              const matchedEvent = this.events.find(
-                (e) => e.entity_id === localSettings.selectedRaceId,
-              );
-              if (matchedEvent) {
-                this.selectedEvent = matchedEvent;
-                this.selectedRace = undefined;
-              }
-            }
-          }
-        }
-
-        if (!this.selectedRace && !this.selectedEvent) {
-          if (
-            localSettings &&
-            localSettings.recentRaceIds &&
-            localSettings.recentRaceIds.length > 0
-          ) {
-            const defaultId = localSettings.recentRaceIds[0];
-            const matchedRace = this.races.find(
-              (r) => r.entity_id === defaultId,
-            );
-            if (matchedRace) {
-              this.selectedRace = matchedRace;
-              this.selectedEvent = undefined;
-            } else {
-              const matchedEvent = this.events.find(
-                (e) => e.entity_id === defaultId,
-              );
-              if (matchedEvent) {
-                this.selectedEvent = matchedEvent;
-                this.selectedRace = undefined;
-              }
-            }
-          }
-          if (
-            !this.selectedRace &&
-            !this.selectedEvent &&
-            this.races.length > 0
-          ) {
-            this.selectedRace = this.races[0];
-          } else if (
-            !this.selectedRace &&
-            !this.selectedEvent &&
-            this.events.length > 0
-          ) {
-            this.selectedEvent = this.events[0];
-          }
-        }
-
-        if (this.selectedRace?.entity_id) {
-          this.themeService.activateForRace(
-            this.selectedRace.entity_id,
-            this.selectedRace.theme_id,
-          );
-        }
-
-        // --- Participant Setup ---
-        const allParticipants: Participant[] = [...drivers, ...teams];
-        // Use prefixed IDs to avoid collision between drivers and teams sharing the same numeric sequence
-        const participantMap = new Map(
-          allParticipants.map((p) => [
-            this.isDriver(p) ? `d_${p.entity_id}` : `t_${p.entity_id}`,
-            p,
-          ]),
-        );
-
-        // Populate Selected (in saved order)
-        if (localSettings && localSettings.selectedDriverIds) {
-          const loadedParticipants: Participant[] = [];
-          for (const rawId of localSettings.selectedDriverIds) {
-            // Support both prefixed and non-prefixed IDs for backward compatibility
-            let prefixedId = rawId;
-            if (!rawId.startsWith("d_") && !rawId.startsWith("t_")) {
-              // Old style ID, try driver first then team
-              if (participantMap.has(`d_${rawId}`)) {
-                prefixedId = `d_${rawId}`;
-              } else if (participantMap.has(`t_${rawId}`)) {
-                prefixedId = `t_${rawId}`;
-              }
-            }
-
-            const p = participantMap.get(prefixedId);
-            if (p) {
-              loadedParticipants.push(p);
-            }
-          }
-          this.selectedParticipants = loadedParticipants;
-        }
-        this.updateUnselectedParticipants();
-
-        this.cdr.detectChanges();
-      },
+      next: (result) => this.initInitialData(result),
       error: (err) => this.logger.error("Error loading initial data", err),
     });
 
+    this.initSystemSubscriptions();
+  }
+
+  private initInitialData(result: any) {
+    const drivers = (result.drivers as any[]).map((d: any) => {
+      const driver = DriverConverter.fromJSON(d);
+      DriverConverter.register(driver);
+      return driver;
+    });
+    const teams = (result.teams as any).map(
+      (t: any) =>
+        new Team(
+          t.entity_id || t.entityId || "",
+          t.name || "",
+          t.avatarUrl || undefined,
+          t.driverIds || [],
+        ),
+    );
+    this.allDrivers = drivers;
+    this.allTeams = teams;
+
+    (this as any).races = (result.races || []).sort((a: any, b: any) =>
+      (a.name || "").localeCompare(b.name || ""),
+    );
+
+    this.events = (result.events || []).sort((a: any, b: any) =>
+      (a.name || "").localeCompare(b.name || ""),
+    );
+
+    this.seasons = (result.seasons || []).sort((a: any, b: any) =>
+      (a.name || "").localeCompare(b.name || ""),
+    );
+
+    const localSettings = this.settingsService.getSettings();
+    this.updateQuickStartRaces(localSettings.recentRaceIds);
+
+    this.initSeasonSelection(localSettings);
+    this.initRaceAndEventSelection(localSettings);
+    this.initParticipantSelection(drivers, teams, localSettings);
+
+    this.cdr.detectChanges();
+  }
+
+  private initSeasonSelection(localSettings: any) {
+    if (localSettings && localSettings.selectedSeasonId) {
+      const matchedSeason = this.seasons.find(
+        (s) => s.entity_id === localSettings.selectedSeasonId,
+      );
+      if (matchedSeason) {
+        this.selectedSeason = matchedSeason;
+        this.calculateSeasonStandings();
+      }
+    }
+  }
+
+  private initRaceAndEventSelection(localSettings: any) {
+    if (localSettings && localSettings.selectedRaceId) {
+      if (localSettings.isEventMode) {
+        const matchedEvent = this.events.find(
+          (e) => e.entity_id === localSettings.selectedRaceId,
+        );
+        if (matchedEvent) {
+          this.selectedEvent = matchedEvent;
+          this.selectedRace = undefined;
+        }
+      } else {
+        const matchedRace = this.races.find(
+          (r) => r.entity_id === localSettings.selectedRaceId,
+        );
+        if (matchedRace) {
+          this.selectedRace = matchedRace;
+          this.selectedEvent = undefined;
+        }
+      }
+
+      if (!this.selectedRace && !this.selectedEvent) {
+        const matchedRace = this.races.find(
+          (r) => r.entity_id === localSettings.selectedRaceId,
+        );
+        if (matchedRace) {
+          this.selectedRace = matchedRace;
+          this.selectedEvent = undefined;
+        } else {
+          const matchedEvent = this.events.find(
+            (e) => e.entity_id === localSettings.selectedRaceId,
+          );
+          if (matchedEvent) {
+            this.selectedEvent = matchedEvent;
+            this.selectedRace = undefined;
+          }
+        }
+      }
+    }
+
+    if (!this.selectedRace && !this.selectedEvent) {
+      if (
+        localSettings &&
+        localSettings.recentRaceIds &&
+        localSettings.recentRaceIds.length > 0
+      ) {
+        const defaultId = localSettings.recentRaceIds[0];
+        const matchedRace = this.races.find((r) => r.entity_id === defaultId);
+        if (matchedRace) {
+          this.selectedRace = matchedRace;
+          this.selectedEvent = undefined;
+        } else {
+          const matchedEvent = this.events.find(
+            (e) => e.entity_id === defaultId,
+          );
+          if (matchedEvent) {
+            this.selectedEvent = matchedEvent;
+            this.selectedRace = undefined;
+          }
+        }
+      }
+      if (!this.selectedRace && !this.selectedEvent && this.races.length > 0) {
+        this.selectedRace = this.races[0];
+      } else if (
+        !this.selectedRace &&
+        !this.selectedEvent &&
+        this.events.length > 0
+      ) {
+        this.selectedEvent = this.events[0];
+      }
+    }
+
+    if (this.selectedRace?.entity_id) {
+      this.themeService.activateForRace(
+        this.selectedRace.entity_id,
+        this.selectedRace.theme_id,
+      );
+    }
+  }
+
+  private initParticipantSelection(
+    drivers: Driver[],
+    teams: Team[],
+    localSettings: any,
+  ) {
+    const allParticipants: Participant[] = [...drivers, ...teams];
+    const participantMap = new Map(
+      allParticipants.map((p) => [
+        this.isDriver(p) ? `d_${p.entity_id}` : `t_${p.entity_id}`,
+        p,
+      ]),
+    );
+
+    if (localSettings && localSettings.selectedDriverIds) {
+      const loadedParticipants: Participant[] = [];
+      for (const rawId of localSettings.selectedDriverIds) {
+        let prefixedId = rawId;
+        if (!rawId.startsWith("d_") && !rawId.startsWith("t_")) {
+          if (participantMap.has(`d_${rawId}`)) {
+            prefixedId = `d_${rawId}`;
+          } else if (participantMap.has(`t_${rawId}`)) {
+            prefixedId = `t_${rawId}`;
+          }
+        }
+
+        const p = participantMap.get(prefixedId);
+        if (p) {
+          loadedParticipants.push(p);
+        }
+      }
+      this.selectedParticipants = loadedParticipants;
+    }
+    this.updateUnselectedParticipants();
+  }
+
+  private initSystemSubscriptions() {
     this.translationService.getTranslationsLoaded().subscribe((loaded) => {
       this.translationsLoaded = loaded;
       this.cdr.detectChanges();
@@ -1771,65 +1776,66 @@ export class DefaultRacedaySetupComponent implements OnInit {
         if (response.success) {
           this.router.navigate(["/raceday"]);
         } else {
-          // Handle validation error
-          this.errorTitle = "RDS_ERR_VALIDATION_TITLE";
-
-          if (response.errorCode === "DUPE_INDIVIDUAL_TEAM") {
-            this.errorMessage = "RDS_ERR_DRIVER_DUPE_IND_TEAM";
-            this.errorMessageParams = {
-              driver: response.driverName,
-              team: response.teamNames.join(", "),
-            };
-          } else if (response.errorCode === "DUPE_MULTIPLE_TEAMS") {
-            this.errorMessage = "RDS_ERR_DRIVER_DUPE_TEAMS";
-            this.errorMessageParams = {
-              driver: response.driverName,
-              teams: response.teamNames.join(", "),
-            };
-          } else if (response.errorCode === "TRACK_DELETED") {
-            this.errorMessage = "RDS_ERR_TRACK_DELETED";
-            this.errorMessageParams = {
-              race: this.selectedRace?.name || this.selectedEvent?.name || "",
-            };
-          } else if (response.errorCode === "THEME_DELETED") {
-            this.errorMessage = "RDS_ERR_THEME_DELETED";
-            this.errorMessageParams = {
-              race: this.selectedRace?.name || this.selectedEvent?.name || "",
-            };
-          } else if (response.errorCode === "NO_CUSTOM_ROTATIONS") {
-            this.errorMessage = "RDS_ERR_NO_CUSTOM_ROTATIONS";
-            this.errorMessageParams = {};
-          } else {
-            this.errorMessage = response.errorCode || "Unknown error";
-            this.errorMessageParams = {};
-          }
-
-          // Append fix description if it's a known error
-          if (response.errorCode) {
-            const translatedMessage = this.translationService.translate(
-              this.errorMessage,
-              this.errorMessageParams,
-            );
-            const fixKey =
-              response.errorCode === "NO_CUSTOM_ROTATIONS"
-                ? "RDS_ERR_NO_CUSTOM_ROTATIONS_FIX"
-                : response.errorCode === "TRACK_DELETED"
-                  ? "RDS_ERR_TRACK_DELETED_FIX"
-                  : response.errorCode === "THEME_DELETED"
-                    ? "RDS_ERR_THEME_DELETED_FIX"
-                    : "RDS_ERR_START_RACE_FIX_DESCRIPTION";
-            const fixDescription = this.translationService.translate(fixKey);
-            this.errorMessage = translatedMessage + "\n\n" + fixDescription;
-            // Clear messageParams since we've already done the translation for the main part
-            this.errorMessageParams = {};
-          }
-
-          this.showErrorModal = true;
-          this.cdr.detectChanges();
+          this.handleInitializeRaceError(response);
         }
       },
       error: (err) => this.logger.error("Failed to initialize race", err),
     });
+  }
+
+  private handleInitializeRaceError(response: any) {
+    this.errorTitle = "RDS_ERR_VALIDATION_TITLE";
+
+    if (response.errorCode === "DUPE_INDIVIDUAL_TEAM") {
+      this.errorMessage = "RDS_ERR_DRIVER_DUPE_IND_TEAM";
+      this.errorMessageParams = {
+        driver: response.driverName,
+        team: response.teamNames.join(", "),
+      };
+    } else if (response.errorCode === "DUPE_MULTIPLE_TEAMS") {
+      this.errorMessage = "RDS_ERR_DRIVER_DUPE_TEAMS";
+      this.errorMessageParams = {
+        driver: response.driverName,
+        teams: response.teamNames.join(", "),
+      };
+    } else if (response.errorCode === "TRACK_DELETED") {
+      this.errorMessage = "RDS_ERR_TRACK_DELETED";
+      this.errorMessageParams = {
+        race: this.selectedRace?.name || this.selectedEvent?.name || "",
+      };
+    } else if (response.errorCode === "THEME_DELETED") {
+      this.errorMessage = "RDS_ERR_THEME_DELETED";
+      this.errorMessageParams = {
+        race: this.selectedRace?.name || this.selectedEvent?.name || "",
+      };
+    } else if (response.errorCode === "NO_CUSTOM_ROTATIONS") {
+      this.errorMessage = "RDS_ERR_NO_CUSTOM_ROTATIONS";
+      this.errorMessageParams = {};
+    } else {
+      this.errorMessage = response.errorCode || "Unknown error";
+      this.errorMessageParams = {};
+    }
+
+    if (response.errorCode) {
+      const translatedMessage = this.translationService.translate(
+        this.errorMessage,
+        this.errorMessageParams,
+      );
+      const fixKey =
+        response.errorCode === "NO_CUSTOM_ROTATIONS"
+          ? "RDS_ERR_NO_CUSTOM_ROTATIONS_FIX"
+          : response.errorCode === "TRACK_DELETED"
+            ? "RDS_ERR_TRACK_DELETED_FIX"
+            : response.errorCode === "THEME_DELETED"
+              ? "RDS_ERR_THEME_DELETED_FIX"
+              : "RDS_ERR_START_RACE_FIX_DESCRIPTION";
+      const fixDescription = this.translationService.translate(fixKey);
+      this.errorMessage = translatedMessage + "\n\n" + fixDescription;
+      this.errorMessageParams = {};
+    }
+
+    this.showErrorModal = true;
+    this.cdr.detectChanges();
   }
 
   selectQuickStartItem(item: any) {
@@ -2618,6 +2624,10 @@ export class DefaultRacedaySetupComponent implements OnInit {
   }
 
   getHelpSteps(): GuideStep[] {
+    return [...this.getDriverHelpSteps(), ...this.getRaceHelpSteps()];
+  }
+
+  private getDriverHelpSteps(): GuideStep[] {
     return [
       {
         title: this.translationService.translate("RDS_HELP_WELCOME_TITLE"),
@@ -2683,6 +2693,11 @@ export class DefaultRacedaySetupComponent implements OnInit {
         ),
         position: "bottom",
       },
+    ];
+  }
+
+  private getRaceHelpSteps(): GuideStep[] {
+    return [
       {
         selector: ".custom-dropdown-container",
         title: this.translationService.translate(

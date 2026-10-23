@@ -172,7 +172,6 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
 
   activeDatabaseName: string = "";
 
-  /* eslint-disable max-lines-per-function */
   ngOnInit() {
     try {
       const saved = localStorage.getItem("am_layout_mode") as AssetLayoutMode;
