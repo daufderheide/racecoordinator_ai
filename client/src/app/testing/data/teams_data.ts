@@ -16,5 +16,6 @@ export const MOCK_TEAMS = [
 ];
 
 export const MOCK_TEAM_INSTANCES = MOCK_TEAMS.map(
-  (t: any) => new Team(t.entity_id, t.name, t.avatarUrl, t.driverIds),
+  (t: any) =>
+    new Team(t.entity_id, t.name, t.avatarUrl, t.driverIds, t.labelIds || []),
 );

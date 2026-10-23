@@ -29,8 +29,9 @@ La barra degli strumenti superiore fornisce le seguenti azioni:
 
 - **Nome del Team**: Il nome univoco del team visualizzato nelle classifiche e nelle schermate di gara.
 - **Immagine / Logo del Team**: Scegli un'icona preimpostata o carica un logo personalizzato per rappresentare il team.
+- **Etichette del Team**: Assegna etichette con codice colore (simili alle etichette di GitHub) per organizzare i team in gruppi o categorie personalizzate (come "GT3", "Pro" o "Amateur"). I team possono appartenere a qualsiasi numero di gruppi. In modalità modifica, fai clic su **Gestisci etichette** per creare, modificare, ricolorare, eliminare o assegnare etichette. Nella schermata Configurazione del giorno di gara, puoi filtrare i team disponibili per etichetta per comporre rapidamente le formazioni di gara.
 
 ## Membri del Team & Formazione
 
-- **Piloti Assegnati**: Piloti attualmente assegnati a questo team. In modalità modifica, trascina e rilascia i piloti per riordinare la formazione oppure fai clic sul pulsante Rimuovi (X) per rimuovere un pilota.
-- **Piloti Disponibili**: Piloti non ancora assegnati a questo team. In modalità modifica, fai clic su un pilota per aggiungerlo alla formazione del team.
+- **Piloti Assegnati**: Piloti attualmente assegnati a questo team. In modalità modifica, trascina e rilascia i piloti per riordinare la formazione oppure fai clic sul pulsante elimina per rimuovere un pilota. Ogni pilota mostra le sue etichette pilota assegnate come badge accanto al proprio nome.
+- **Piloti Disponibili**: Piloti non ancora assegnati a questo team. In modalità modifica, fai clic su un pilota per aggiungerlo alla formazione del team. Ogni pilota mostra le sue etichette pilota assegnate come badge accanto al proprio nome per facilitare la composizione di formazioni equilibrate.

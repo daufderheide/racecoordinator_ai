@@ -29,8 +29,9 @@ Die obere Symbolleiste bietet folgende Aktionen:
 
 - **Teamname**: Der eindeutige Name des Teams, der in Ranglisten und Rennanzeigen dargestellt wird.
 - **Teambild / Logo**: Wählen Sie ein vordefiniertes Symbol oder ein eigenes Logo zur Darstellung des Teams.
+- **Team-Labels**: Weisen Sie farbcodierte Labels (ähnlich wie GitHub-Issue-Labels) zu, um Teams in benutzerdefinierten Gruppen oder Kategorien (wie „GT3“, „Pro“ oder „Amateur“) zu organisieren. Teams können beliebig vielen Gruppen angehören. Klicken Sie im Bearbeitungsmodus auf **Labels verwalten**, um Labels zu erstellen, zu bearbeiten, umzufärben, zu löschen oder zuzuweisen. Auf dem Renntag-Setup-Bildschirm können Sie verfügbare Teams nach Label filtern, um Teamaufstellungen schnell zusammenzustellen.
 
 ## Teammitglieder & Aufstellung
 
-- **Zugewiesene Fahrer**: Fahrer, die derzeit diesem Team zugewiesen sind. Im Bearbeitungsmodus können Fahrer per Drag & Drop neu angeordnet oder mit der Entfernen-Schaltfläche (X) entfernt werden.
-- **Verfügbare Fahrer**: Fahrer, die diesem Team noch nicht zugewiesen sind. Im Bearbeitungsmodus klicken Sie auf einen Fahrer, um ihn der Teamaufstellung hinzuzufügen.
+- **Zugewiesene Fahrer**: Fahrer, die derzeit diesem Team zugewiesen sind. Im Bearbeitungsmodus können Fahrer per Drag & Drop neu angeordnet oder mit der Löschen-Schaltfläche entfernt werden. Jeder Fahrer zeigt seine zugewiesenen Fahrer-Labels als Abzeichen neben seinem Namen an.
+- **Verfügbare Fahrer**: Fahrer, die diesem Team noch nicht zugewiesen sind. Im Bearbeitungsmodus klicken Sie auf einen Fahrer, um ihn der Teamaufstellung hinzuzufügen. Jeder Fahrer zeigt seine zugewiesenen Fahrer-Labels als Abzeichen neben seinem Namen an, um die Auswahl ausgewogener Aufstellungen zu erleichtern.

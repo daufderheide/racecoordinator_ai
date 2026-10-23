@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { MOCK_TEAMS } from "@app/testing/data/teams_data";
 import { TestSetupHelper } from "@app/testing/test-setup_helper";
 
 import { TeamEditorHarnessE2e } from "./testing/team-editor.harness.e2e";
@@ -148,6 +149,47 @@ test.describe("Team Editor Visuals", () => {
       animations: "disabled",
       maxDiffPixelRatio: 0.05,
       timeout: 15000,
+    });
+  });
+
+  test("should display team editor with assigned labels", async ({ page }) => {
+    const teamsWithLabels = MOCK_TEAMS.map((t) => {
+      if (t.entity_id === "t1") {
+        return { ...t, labelIds: ["lbl-pro", "lbl-amateur"] };
+      }
+      return t;
+    });
+
+    await page.route("**/api/teams", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(teamsWithLabels),
+      });
+    });
+
+    await page.route("**/api/teams/*", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(teamsWithLabels[0]),
+      });
+    });
+
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/team-editor?id=t1"),
+    );
+
+    await page.locator(".page-container").waitFor();
+    await page.locator(".loader-overlay").waitFor({ state: "hidden" });
+
+    await enterEditMode(page);
+
+    await expect(page).toHaveScreenshot("team-editor-with-labels.png", {
+      animations: "disabled",
+      maxDiffPixelRatio: 0.05,
     });
   });
 });

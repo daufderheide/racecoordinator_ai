@@ -29,8 +29,9 @@ The top toolbar provides the following actions:
 
 - **Team Name**: The unique name of the team displayed on standings and race displays.
 - **Team Image / Avatar**: Choose a preset icon or custom logo to represent the team.
+- **Team Labels**: Assign color-coded labels (similar to GitHub issue labels) to organize teams into custom sets or categories (such as "GT3", "Pro", or "Amateur"). Teams can belong to any number of sets. In Edit Mode, click **Manage Labels** to create, edit, recolor, delete, or assign labels. On the Race Day Setup screen, you can filter available teams by label to quickly populate team race rosters.
 
 ## Team Members & Lineup
 
-- **Assigned Drivers**: Drivers currently assigned to this team. In Edit Mode, drag and drop drivers to reorder the lineup or click the remove button (X) to unassign a driver.
-- **Available Drivers**: Drivers that are not currently assigned to this team. In Edit Mode, click on a driver to add them to the team lineup.
+- **Assigned Drivers**: Drivers currently assigned to this team. In Edit Mode, drag and drop drivers to reorder the lineup or click the delete button to unassign a driver. Each driver displays their assigned driver labels as badges next to their name.
+- **Available Drivers**: Drivers that are not currently assigned to this team. In Edit Mode, click on a driver to add them to the team lineup. Each driver displays their assigned driver labels as badges next to their name to help identify qualifications when assembling rosters.

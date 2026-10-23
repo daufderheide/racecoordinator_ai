@@ -239,4 +239,33 @@ test.describe("Racing Roster Dialog Visuals", () => {
       },
     );
   });
+
+  test("should display racing roster dialog with team containing labels", async ({
+    page,
+  }) => {
+    await TestSetupHelper.setupLocalStorage(page, {
+      recentRaceIds: ["r1", "r2"],
+      selectedDriverIds: ["t1", "t2"],
+      racedaySetupWalkthroughSeen: true,
+      language: "en",
+    });
+
+    await TestSetupHelper.waitForLocalization(page, "en", page.goto("/"));
+    await expect(page.locator(".setup-container")).toBeVisible({
+      timeout: 15000,
+    });
+    await TestSetupHelper.disableAnimations(page);
+    await expect(page.getByText("Team Alpha")).toBeVisible();
+
+    await openRosterDialog(page);
+
+    await expect(page).toHaveScreenshot(
+      "racing-roster-dialog-team-labels.png",
+      {
+        maxDiffPixelRatio: 0.05,
+        animations: "disabled",
+        timeout: 10000,
+      },
+    );
+  });
 });

@@ -13,9 +13,11 @@ import {
   untracked,
 } from "@angular/core";
 import { Driver } from "@app/models/driver";
+import { DriverLabel } from "@app/models/driver-label";
 import { Team } from "@app/models/team";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { TranslationService } from "@app/services/translation.service";
+import { getContrastColor } from "@app/utils/color.utils";
 import { naturalSortCompare } from "@app/utils/sorting.utils";
 
 export interface RosterItem {
@@ -27,6 +29,7 @@ export interface RosterItem {
   teamName?: string;
   avatarUrl?: string;
   isTeam?: boolean;
+  labels?: DriverLabel[];
 }
 
 export type RosterSortOption = "seed" | "nickname" | "driverName" | "name";
@@ -46,10 +49,15 @@ export class RacingRosterDialogComponent implements AfterViewInit, OnDestroy {
   participants = input<any[]>([]);
   teams = input<Team[]>([]);
   allDrivers = input<Driver[]>([]);
+  driverLabels = input<DriverLabel[]>([]);
 
   close = output<void>();
 
   sortBy = signal<RosterSortOption>("nickname");
+
+  getContrastColor(color: string | undefined): string {
+    return getContrastColor(color);
+  }
 
   private resizeObserver?: ResizeObserver;
   private canvasContext?: CanvasRenderingContext2D | null;
@@ -112,6 +120,7 @@ export class RacingRosterDialogComponent implements AfterViewInit, OnDestroy {
     const rawList = this.participants() || [];
     const teamsList = this.teams() || [];
     const driversList = this.allDrivers() || [];
+    const labelsList = this.driverLabels() || [];
 
     const { teamIds, teamNames } = this.collectRacingTeams(rawList);
 
@@ -121,6 +130,7 @@ export class RacingRosterDialogComponent implements AfterViewInit, OnDestroy {
         index,
         teamsList,
         driversList,
+        labelsList,
         teamIds,
         teamNames,
       ),
@@ -177,10 +187,55 @@ export class RacingRosterDialogComponent implements AfterViewInit, OnDestroy {
     index: number,
     teamsList: Team[],
     driversList: Driver[],
+    labelsList: DriverLabel[],
     racingTeamIds: Set<string>,
     racingTeamNames: Set<string>,
   ): RosterItem {
     const isTeamParticipant = !!(p && ("driverIds" in p || p instanceof Team));
+    const { name, nickname, teamName } = this.resolveParticipantNames(
+      p,
+      isTeamParticipant,
+      teamsList,
+      driversList,
+      racingTeamIds,
+      racingTeamNames,
+    );
+    const itemLabels = this.resolveParticipantLabels(
+      p,
+      isTeamParticipant,
+      teamsList,
+      driversList,
+      labelsList,
+    );
+
+    const primaryName = isTeamParticipant ? name : nickname || name;
+    const secondaryName = isTeamParticipant
+      ? nickname
+      : nickname && nickname !== name
+        ? name
+        : "";
+
+    return {
+      seed: index + 1,
+      name,
+      nickname,
+      primaryName,
+      secondaryName,
+      teamName: teamName || undefined,
+      avatarUrl: p?.avatarUrl,
+      isTeam: isTeamParticipant,
+      labels: itemLabels.length > 0 ? itemLabels : undefined,
+    };
+  }
+
+  private resolveParticipantNames(
+    p: any,
+    isTeamParticipant: boolean,
+    teamsList: Team[],
+    driversList: Driver[],
+    racingTeamIds: Set<string>,
+    racingTeamNames: Set<string>,
+  ): { name: string; nickname: string; teamName: string } {
     let name = "";
     let nickname = "";
     let teamName = "";
@@ -254,23 +309,113 @@ export class RacingRosterDialogComponent implements AfterViewInit, OnDestroy {
       nickname = this.translationService.translate("RD_EMPTY_LANE");
     }
 
-    const primaryName = isTeamParticipant ? name : nickname || name;
-    const secondaryName = isTeamParticipant
-      ? nickname
-      : nickname && nickname !== name
-        ? name
-        : "";
+    return { name, nickname, teamName };
+  }
 
-    return {
-      seed: index + 1,
-      name,
-      nickname,
-      primaryName,
-      secondaryName,
-      teamName: teamName || undefined,
-      avatarUrl: p?.avatarUrl,
-      isTeam: isTeamParticipant,
-    };
+  private resolveParticipantLabels(
+    p: any,
+    isTeamParticipant: boolean,
+    teamsList: Team[],
+    driversList: Driver[],
+    labelsList: DriverLabel[],
+  ): DriverLabel[] {
+    if (
+      Array.isArray(p?.labels) &&
+      p.labels.length > 0 &&
+      typeof p.labels[0] === "object"
+    ) {
+      return p.labels as DriverLabel[];
+    }
+
+    let rawLabelIds: string[] = [];
+    if (p) {
+      if (Array.isArray(p.labelIds)) {
+        rawLabelIds = p.labelIds;
+      } else if (Array.isArray(p.label_ids)) {
+        rawLabelIds = p.label_ids;
+      } else if (Array.isArray(p.labels)) {
+        rawLabelIds = p.labels;
+      } else if (p.driver && Array.isArray(p.driver.labelIds)) {
+        rawLabelIds = p.driver.labelIds;
+      } else if (p.driver && Array.isArray(p.driver.label_ids)) {
+        rawLabelIds = p.driver.label_ids;
+      } else if (p.team && Array.isArray(p.team.labelIds)) {
+        rawLabelIds = p.team.labelIds;
+      } else if (p.team && Array.isArray(p.team.label_ids)) {
+        rawLabelIds = p.team.label_ids;
+      }
+    }
+
+    if (rawLabelIds.length === 0 && p?.entity_id) {
+      const pid = p.entity_id;
+      if (isTeamParticipant) {
+        const matched = teamsList.find(
+          (t) =>
+            t.entity_id === pid ||
+            t.entity_id === pid.replace(/^t_/, "") ||
+            t.entity_id === `t_${pid}`,
+        );
+        if (matched?.labelIds) {
+          rawLabelIds = matched.labelIds;
+        }
+      } else {
+        const matched = driversList.find(
+          (d) =>
+            d.entity_id === pid ||
+            d.entity_id === pid.replace(/^d_/, "") ||
+            d.entity_id === `d_${pid}`,
+        );
+        if (matched?.labelIds) {
+          rawLabelIds = matched.labelIds;
+        }
+      }
+    }
+
+    if (isTeamParticipant) {
+      let driverIds: string[] = p?.driverIds || [];
+      if (driverIds.length === 0 && p?.entity_id) {
+        const pid = p.entity_id;
+        const matched = teamsList.find(
+          (t) =>
+            t.entity_id === pid ||
+            t.entity_id === pid.replace(/^t_/, "") ||
+            t.entity_id === `t_${pid}`,
+        );
+        if (matched?.driverIds) {
+          driverIds = matched.driverIds;
+        }
+      }
+      for (const dId of driverIds) {
+        const d = driversList.find(
+          (driver) =>
+            driver.entity_id === dId ||
+            driver.entity_id === dId.replace(/^d_/, "") ||
+            driver.entity_id === `d_${dId}`,
+        );
+        if (d && Array.isArray(d.labelIds)) {
+          rawLabelIds.push(...d.labelIds);
+        }
+      }
+    }
+
+    if (rawLabelIds.length === 0 || labelsList.length === 0) {
+      return [];
+    }
+
+    const labelIdSet = new Set<string>();
+    for (const id of rawLabelIds) {
+      if (id) {
+        labelIdSet.add(id);
+        labelIdSet.add(id.replace(/^l_/, ""));
+        labelIdSet.add(`l_${id}`);
+      }
+    }
+    return labelsList.filter(
+      (l) =>
+        labelIdSet.has(l.entity_id) ||
+        labelIdSet.has(l.entity_id.replace(/^l_/, "")) ||
+        labelIdSet.has(`l_${l.entity_id}`),
+    );
   }
 
   gridColumns = computed<number>(() => {
@@ -321,6 +466,9 @@ export class RacingRosterDialogComponent implements AfterViewInit, OnDestroy {
     if (item.teamName && (!item.isTeam || item.teamName !== item.primaryName)) {
       parts.push(`[${item.teamName}]`);
     }
+    if (item.labels && item.labels.length > 0) {
+      parts.push(`{${item.labels.map((l) => l.name).join(", ")}}`);
+    }
     return parts.join(" ");
   }
 
@@ -345,89 +493,117 @@ export class RacingRosterDialogComponent implements AfterViewInit, OnDestroy {
 
     for (let i = 0; i < cardEls.length; i++) {
       const card = cardEls[i];
-      const infoEl = card.querySelector<HTMLElement>(".driver-info");
-      if (!infoEl) continue;
-
-      const cardHeight = card.clientHeight;
-      const availableWidth = Math.max(20, infoEl.clientWidth - 4);
-      if (availableWidth <= 0 || cardHeight <= 0) continue;
-
       const item = items[i];
-      if (!item) continue;
-
-      // Measure line 1 (driver nickname / team name) at 100px
-      ctx.font = `600 100px ${fontFamily}`;
-      const nameWidth100 = ctx.measureText(item.primaryName || "").width || 1;
-
-      // Measure line 2 (driver name / member nicknames and/or team name) at 100px
-      const secondaryText = item.secondaryName || "";
-      const showTeamName = !!(
-        item.teamName &&
-        (!item.isTeam || item.teamName !== item.primaryName)
-      );
-      const teamText = showTeamName ? item.teamName! : "";
-
-      let line2Width100 = 0;
-      if (secondaryText && teamText) {
-        ctx.font = `italic 400 100px ${fontFamily}`;
-        const secWidth100 = ctx.measureText(secondaryText).width;
-        ctx.font = `500 100px ${fontFamily}`;
-        const teamWidth100 = ctx.measureText(teamText).width;
-        const gap100 = 20;
-        line2Width100 = secWidth100 + teamWidth100 + gap100;
-      } else if (secondaryText) {
-        ctx.font = `italic 400 100px ${fontFamily}`;
-        line2Width100 = ctx.measureText(secondaryText).width;
-      } else if (teamText) {
-        ctx.font = `500 100px ${fontFamily}`;
-        line2Width100 = ctx.measureText(teamText).width;
+      if (card && item) {
+        this.scaleCard(card, item, ctx, fontFamily);
       }
-
-      const hasTwoLines = !!(secondaryText || teamText);
-      const gapPx = hasTwoLines
-        ? Math.max(2, Math.min(6, Math.round(cardHeight * 0.04)))
-        : 0;
-
-      // Allocate available vertical height (leaving subtle top/bottom breathing margin)
-      const availableHeight = Math.min(
-        cardHeight - (hasTwoLines ? 10 : 8),
-        Math.floor(cardHeight * 0.86),
-      );
-
-      // Line-height is 1.2. Meta text is 74% of primary name size.
-      const metaRatio = 0.74;
-      const heightUnits = hasTwoLines ? 1.2 + metaRatio * 1.2 : 1.2;
-      const maxNameFromHeight = (availableHeight - gapPx) / heightUnits;
-      const maxNameFromWidth = (availableWidth / nameWidth100) * 100;
-
-      // Ceiling based on card height and readability
-      const maxNameCeiling = Math.min(
-        38,
-        Math.floor(cardHeight * (hasTwoLines ? 0.44 : 0.52)),
-      );
-      const minNameFloor = 8;
-
-      let targetNamePx = Math.min(maxNameFromHeight, maxNameFromWidth);
-      targetNamePx = Math.max(
-        minNameFloor,
-        Math.min(maxNameCeiling, Math.floor(targetNamePx)),
-      );
-
-      let targetMetaPx = 8;
-      if (hasTwoLines) {
-        const maxMetaFromWidth =
-          line2Width100 > 0 ? (availableWidth / line2Width100) * 100 : 100;
-        const maxMetaFromHeight = targetNamePx * metaRatio;
-        targetMetaPx = Math.min(maxMetaFromHeight, maxMetaFromWidth);
-        targetMetaPx = Math.max(
-          8,
-          Math.min(Math.floor(targetNamePx * 0.85), Math.floor(targetMetaPx)),
-        );
-      }
-
-      infoEl.style.setProperty("--card-name-font-size", `${targetNamePx}px`);
-      infoEl.style.setProperty("--card-meta-font-size", `${targetMetaPx}px`);
-      infoEl.style.setProperty("--card-lines-gap", `${gapPx}px`);
     }
+  }
+
+  private scaleCard(
+    card: HTMLElement,
+    item: RosterItem,
+    ctx: CanvasRenderingContext2D,
+    fontFamily: string,
+  ): void {
+    const infoEl = card.querySelector<HTMLElement>(".driver-info");
+    if (!infoEl) return;
+
+    const cardHeight = card.clientHeight;
+    const availableWidth = Math.max(20, infoEl.clientWidth - 4);
+    if (availableWidth <= 0 || cardHeight <= 0) return;
+
+    // Measure line 1 (driver nickname / team name) at 100px
+    ctx.font = `600 100px ${fontFamily}`;
+    const nameWidth100 = ctx.measureText(item.primaryName || "").width || 1;
+
+    // Measure line 2 (driver name / member nicknames and/or team name / labels) at 100px
+    const secondaryText = item.secondaryName || "";
+    const showTeamName = !!(
+      item.teamName &&
+      (!item.isTeam || item.teamName !== item.primaryName)
+    );
+    const teamText = showTeamName ? item.teamName! : "";
+    const itemLabels = item.labels || [];
+
+    let line2Width100 = 0;
+    if (secondaryText && teamText) {
+      ctx.font = `italic 400 100px ${fontFamily}`;
+      const secWidth100 = ctx.measureText(secondaryText).width;
+      ctx.font = `500 100px ${fontFamily}`;
+      const teamWidth100 = ctx.measureText(teamText).width;
+      const gap100 = 20;
+      line2Width100 = secWidth100 + teamWidth100 + gap100;
+    } else if (secondaryText) {
+      ctx.font = `italic 400 100px ${fontFamily}`;
+      line2Width100 = ctx.measureText(secondaryText).width;
+    } else if (teamText) {
+      ctx.font = `500 100px ${fontFamily}`;
+      line2Width100 = ctx.measureText(teamText).width;
+    }
+
+    if (itemLabels.length > 0) {
+      ctx.font = `600 100px ${fontFamily}`;
+      let labelsWidth100 = 0;
+      for (const l of itemLabels) {
+        labelsWidth100 += ctx.measureText(l.name).width + 50;
+      }
+      line2Width100 =
+        line2Width100 > 0
+          ? line2Width100 + 20 + labelsWidth100
+          : labelsWidth100;
+    }
+
+    const hasTwoLines = !!(secondaryText || teamText || itemLabels.length > 0);
+    const gapPx = hasTwoLines
+      ? Math.max(2, Math.min(6, Math.round(cardHeight * 0.04)))
+      : 0;
+
+    // Allocate available vertical height (leaving subtle top/bottom breathing margin)
+    const availableHeight = Math.min(
+      cardHeight - (hasTwoLines ? 10 : 8),
+      Math.floor(cardHeight * 0.86),
+    );
+
+    // Line-height is 1.2. Meta text is 74% of primary name size.
+    const metaRatio = 0.74;
+    const heightUnits = hasTwoLines ? 1.2 + metaRatio * 1.2 : 1.2;
+    const maxNameFromHeight = (availableHeight - gapPx) / heightUnits;
+    const maxNameFromWidth = (availableWidth / nameWidth100) * 100;
+
+    // Ceiling based on card height and readability
+    const maxNameCeiling = Math.min(
+      38,
+      Math.floor(cardHeight * (hasTwoLines ? 0.44 : 0.52)),
+    );
+    const minNameFloor = 8;
+
+    let targetNamePx = Math.min(maxNameFromHeight, maxNameFromWidth);
+    targetNamePx = Math.max(
+      minNameFloor,
+      Math.min(maxNameCeiling, Math.floor(targetNamePx)),
+    );
+
+    let targetMetaPx = 8;
+    if (hasTwoLines) {
+      const maxMetaFromWidth =
+        line2Width100 > 0 ? (availableWidth / line2Width100) * 100 : 100;
+      const maxMetaFromHeight = targetNamePx * metaRatio;
+      targetMetaPx = Math.min(maxMetaFromHeight, maxMetaFromWidth);
+      targetMetaPx = Math.max(
+        8,
+        Math.min(Math.floor(targetNamePx * 0.85), Math.floor(targetMetaPx)),
+      );
+    }
+
+    const targetLabelPx = Math.max(
+      7,
+      Math.min(12, Math.floor(targetMetaPx * 0.9)),
+    );
+
+    infoEl.style.setProperty("--card-name-font-size", `${targetNamePx}px`);
+    infoEl.style.setProperty("--card-meta-font-size", `${targetMetaPx}px`);
+    infoEl.style.setProperty("--card-label-font-size", `${targetLabelPx}px`);
+    infoEl.style.setProperty("--card-lines-gap", `${gapPx}px`);
   }
 }

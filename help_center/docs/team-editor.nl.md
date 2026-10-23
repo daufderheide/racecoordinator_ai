@@ -29,8 +29,9 @@ De bovenste werkbalk biedt de volgende acties:
 
 - **Teamnaam**: De unieke naam van het team die wordt weergegeven op ranglijsten en raceschermen.
 - **Teamlogo / Afbeelding**: Kies een vooraf ingesteld pictogram of upload een eigen logo voor het team.
+- **Teamlabels**: Wijs kleurgecodeerde labels toe (vergelijkbaar met GitHub-issuelabels) om teams in aangepaste groepen of categorieën te organiseren (zoals "GT3", "Pro" of "Amateur"). Teams kunnen tot een willekeurig aantal groepen behoren. Klik in de bewerkingsmodus op **Labels beheren** om labels te maken, bewerken, herkleuren, verwijderen of toe te wijzen. Op het scherm Racedag-instellingen kunt u beschikbare teams op label filteren om snel teamopstellingen samen te stellen.
 
 ## Teamleden & Opstelling
 
-- **Toegewezen Coureurs**: Coureurs die momenteel aan dit team zijn toegewezen. In de bewerkingsmodus kunt u coureurs slepen en neerzetten om de volgorde te wijzigen of op het verwijderpictogram (X) klikken.
-- **Beschikbare Coureurs**: Coureurs die nog niet aan dit team zijn toegewezen. In de bewerkingsmodus klikt u op een coureur om deze aan de opstelling toe te voegen.
+- **Toegewezen Coureurs**: Coureurs die momenteel aan dit team zijn toegewezen. In de bewerkingsmodus kunt u coureurs slepen en neerzetten om de volgorde te wijzigen of op het verwijderpictogram klikken. Elke coureur toont de toegewezen coureurlabels als badges naast de naam.
+- **Beschikbare Coureurs**: Coureurs die nog niet aan dit team zijn toegewezen. In de bewerkingsmodus klikt u op een coureur om deze aan de opstelling toe te voegen. Elke coureur toont de toegewezen coureurlabels als badges naast de naam om evenwichtige opstellingen samen te stellen.

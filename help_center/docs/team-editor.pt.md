@@ -29,8 +29,9 @@ A barra de ferramentas superior oferece as seguintes ações:
 
 - **Nome da Equipe**: O nome exclusivo da equipe exibido em tabelas de classificação e telas de corrida.
 - **Imagem / Logotipo da Equipe**: Escolha um ícone predefinido ou envie um logotipo personalizado para representar a equipe.
+- **Etiquetas da Equipe**: Atribua etiquetas codificadas por cores (semelhantes às etiquetas de problemas do GitHub) para organizar as equipes em conjuntos ou categorias personalizados (como "GT3", "Pro" ou "Amateur"). As equipes podem pertencer a qualquer número de conjuntos. No modo de edição, clique em **Gerenciar etiquetas** para criar, editar, recolorir, excluir ou atribuir etiquetas. Na tela de Configuração do Dia de Corrida, você pode filtrar as equipes disponíveis por etiqueta para preencher rapidamente as escalações de corrida de equipes.
 
 ## Membros da Equipe & Escalação
 
-- **Pilotos Atribuídos**: Pilotos atualmente designados para esta equipe. No modo de edição, arraste e solte os pilotos para reordenar a escalação ou clique no botão Remover (X) para desatribuir um piloto.
-- **Pilotos Disponíveis**: Pilotos que ainda não estão atribuídos a esta equipe. No modo de edição, clique em um piloto para adicioná-lo à escalação da equipe.
+- **Pilotos Atribuídos**: Pilotos atualmente designados para esta equipe. No modo de edição, arraste e solte os pilotos para reordenar a escalação ou clique no botão excluir para desatribuir um piloto. Cada piloto exibe suas etiquetas de piloto atribuídas como selos ao lado do seu nome.
+- **Pilotos Disponíveis**: Pilotos que ainda não estão atribuídos a esta equipe. No modo de edição, clique em um piloto para adicioná-lo à escalação da equipe. Cada piloto exibe suas etiquetas de piloto atribuídas como selos ao lado do seu nome para facilitar a composição de escalações equilibradas.

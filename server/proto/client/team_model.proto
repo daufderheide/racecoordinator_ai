@@ -12,4 +12,6 @@ message TeamModel {
   string name = 2;
   string avatarUrl = 3;
   repeated string driver_ids = 4;
+  repeated string label_ids = 5;
 }
+

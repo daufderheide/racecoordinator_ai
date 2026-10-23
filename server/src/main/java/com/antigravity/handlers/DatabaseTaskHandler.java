@@ -59,7 +59,7 @@ public class DatabaseTaskHandler {
     this.historyPredictionTaskHandler = new HistoryPredictionTaskHandler(databaseContext, app);
     this.raceHeatTaskHandler = new RaceHeatTaskHandler(databaseContext, app);
     new DriverImportTaskHandler(databaseContext, driverRepository, app);
-    new DriverLabelTaskHandler(databaseContext, driverRepository, app);
+    new DriverLabelTaskHandler(databaseContext, driverRepository, teamRepository, app);
 
     // Driver Endpoints
     app.get("/api/drivers", this::getDrivers, Role.VIEWER);
@@ -217,9 +217,7 @@ public class DatabaseTaskHandler {
       if (driverIds.isEmpty()) {
         deleteTeam(team.getEntityId());
       } else {
-        Team updatedTeam =
-            new Team(
-                team.getName(), team.getAvatarUrl(), driverIds, team.getEntityId(), team.getId());
+        Team updatedTeam = Team.Builder.from(team).withDriverIds(driverIds).build();
         teamRepository.replace(team.getEntityId(), updatedTeam);
       }
     }
@@ -262,7 +260,7 @@ public class DatabaseTaskHandler {
         || team.getEntityId().isEmpty()
         || "new".equals(team.getEntityId())) {
       String nextId = teamRepository.getNextSequence();
-      team = new Team(team.getName(), team.getAvatarUrl(), team.getDriverIds(), nextId, null);
+      team = Team.Builder.from(team).withEntityId(nextId).withId(null).build();
     }
     teamRepository.insert(team);
     return team;
@@ -297,7 +295,7 @@ public class DatabaseTaskHandler {
       throw new IllegalArgumentException("Team name or nickname already exists");
     }
 
-    team = new Team(team.getName(), team.getAvatarUrl(), team.getDriverIds(), id, null);
+    team = Team.Builder.from(team).withEntityId(id).withId(null).build();
     teamRepository.replace(id, team);
     return team;
   }

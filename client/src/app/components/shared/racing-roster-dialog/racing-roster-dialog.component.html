@@ -141,7 +141,8 @@
                   @if (
                     item.secondaryName ||
                     (item.teamName &&
-                      (!item.isTeam || item.teamName !== item.primaryName))
+                      (!item.isTeam || item.teamName !== item.primaryName)) ||
+                    (item.labels && item.labels.length > 0)
                   ) {
                     <div class="driver-meta">
                       @if (item.secondaryName) {
@@ -156,6 +157,20 @@
                         <span class="team-name" [title]="item.teamName">
                           {{ item.teamName }}
                         </span>
+                      }
+                      @if (item.labels && item.labels.length > 0) {
+                        <div class="driver-labels-chips">
+                          @for (label of item.labels; track label.entity_id) {
+                            <span
+                              class="driver-label-chip"
+                              [style.background-color]="label.color"
+                              [style.color]="getContrastColor(label.color)"
+                              [title]="label.name"
+                            >
+                              {{ label.name }}
+                            </span>
+                          }
+                        </div>
                       }
                     </div>
                   }

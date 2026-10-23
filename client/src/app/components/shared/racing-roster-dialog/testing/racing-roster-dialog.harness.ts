@@ -17,6 +17,9 @@ export class RosterCardHarness extends ComponentHarness {
   protected getTeamEl = this.locatorForOptional(
     RacingRosterDialogHarnessBase.selectors.teamName,
   );
+  protected getLabelEls = this.locatorForAll(
+    RacingRosterDialogHarnessBase.selectors.labelChip,
+  );
 
   async getSeed(): Promise<string> {
     const el = await this.getSeedEl();
@@ -44,6 +47,15 @@ export class RosterCardHarness extends ComponentHarness {
   async getTeam(): Promise<string> {
     const el = await this.getTeamEl();
     return el ? (await el.text()).trim() : "";
+  }
+
+  async getLabels(): Promise<string[]> {
+    const els = await this.getLabelEls();
+    const result: string[] = [];
+    for (const el of els) {
+      result.push((await el.text()).trim());
+    }
+    return result;
   }
 }
 
@@ -135,6 +147,12 @@ export class RacingRosterDialogHarness
     const cards = await this.getCards();
     if (index >= cards.length) return "";
     return await cards[index].getTeam();
+  }
+
+  async getItemLabels(index: number): Promise<string[]> {
+    const cards = await this.getCards();
+    if (index >= cards.length) return [];
+    return await cards[index].getLabels();
   }
 
   async clickSortBySeed(): Promise<void> {

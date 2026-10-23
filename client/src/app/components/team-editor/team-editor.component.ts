@@ -17,6 +17,7 @@ import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, Router } from "@angular/router";
 import { forkJoin, Subscription } from "rxjs";
 import { ConfirmationModalComponent } from "@app/components/shared/confirmation-modal/confirmation-modal.component";
+import { DriverLabelManagerModalComponent } from "@app/components/shared/driver-label-manager-modal/driver-label-manager-modal.component";
 import { EditorTitleComponent } from "@app/components/shared/editor-title/editor-title.component";
 import { ImageSelectorComponent } from "@app/components/shared/image-selector/image-selector.component";
 import { UndoManager } from "@app/components/shared/undo-redo-controls/undo-manager";
@@ -25,6 +26,7 @@ import { DataService } from "@app/data.service";
 import { AutoSelectDefaultDirective } from "@app/directives/auto-select-default.directive";
 import { DirtyComponent } from "@app/interfaces/dirty-component";
 import { Driver } from "@app/models/driver";
+import { DriverLabel } from "@app/models/driver-label";
 import { Team } from "@app/models/team";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import {
@@ -37,6 +39,7 @@ import { NavigationService } from "@app/services/navigation.service";
 import { RaceConnectionService } from "@app/services/race-connection.service";
 import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
+import { getContrastColor } from "@app/utils/color.utils";
 import { EditorLifecycleHelper } from "@app/utils/editor-lifecycle.helper";
 import {
   getNextSelectionAfterDelete,
@@ -44,6 +47,15 @@ import {
   mapToSelectItems,
 } from "@app/utils/editor-utils";
 import { naturalSortCompare } from "@app/utils/sorting.utils";
+
+import {
+  areTeamsEqual,
+  cloneTeam,
+  generateUniqueTeamName,
+  getTeamEditorHelpSteps,
+  getTeamUnsavedReasons,
+  resolveTeamAvatarUrl,
+} from "./team-editor.helper";
 
 @Component({
   standalone: true,
@@ -59,6 +71,7 @@ import { naturalSortCompare } from "@app/utils/sorting.utils";
     CdkDrag,
     TranslatePipe,
     ConfirmationModalComponent,
+    DriverLabelManagerModalComponent,
   ],
 })
 export class TeamEditorComponent implements OnInit, OnDestroy, DirtyComponent {
@@ -127,6 +140,8 @@ export class TeamEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   // Data
   allDrivers: Driver[] = [];
   allTeams: Team[] = []; // For name uniqueness check
+  allLabels: DriverLabel[] = [];
+  isLabelManagerOpen: boolean = false;
 
   // Assets
   avatarAssets: any[] = [];
@@ -309,9 +324,11 @@ export class TeamEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       drivers: this.dataService.getDrivers(),
       teams: this.dataService.getTeams(),
       assets: this.dataService.listAssets(),
+      labels: this.dataService.getDriverLabels(),
     }).subscribe({
       next: (result) => {
         try {
+          this.allLabels = (result.labels as any[]) || [];
           this.allDrivers = (result.drivers as any[]).map((d: any) => {
             const driver = DriverConverter.fromJSON(d);
             DriverConverter.register(driver);
@@ -324,6 +341,7 @@ export class TeamEditorComponent implements OnInit, OnDestroy, DirtyComponent {
                 t.name || "",
                 t.avatarUrl || undefined,
                 t.driverIds || [],
+                t.labelIds || [],
               ),
           );
           this.loadDataInternal(result.assets);
@@ -345,16 +363,11 @@ export class TeamEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   }
 
   private cloneTeam(team: Team): Team {
-    return new Team(team.entity_id, team.name, team.avatarUrl, [
-      ...team.driverIds,
-    ]);
+    return cloneTeam(team);
   }
 
   private areTeamsEqual(a: Team, b: Team): boolean {
-    if (a.name !== b.name) return false;
-    if (a.avatarUrl !== b.avatarUrl) return false;
-    if (a.driverIds.length !== b.driverIds.length) return false;
-    return a.driverIds.every((id, i) => id === b.driverIds[i]);
+    return areTeamsEqual(a, b);
   }
 
   get isNameInvalid(): boolean {
@@ -539,7 +552,7 @@ export class TeamEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     const defaultName =
       this.translationService.translate("TMM_DEFAULT_TEAM_NAME") || "New Team";
     const uniqueName = this.generateUniqueName(defaultName, false);
-    const newTeam = new Team("new", uniqueName, undefined, []);
+    const newTeam = new Team("new", uniqueName, undefined, [], []);
 
     this.subscriptions.push(
       this.dataService.createTeam(newTeam).subscribe({
@@ -553,6 +566,7 @@ export class TeamEditorComponent implements OnInit, OnDestroy, DirtyComponent {
             result.entity_id,
             uniqueName,
             undefined,
+            [],
             [],
           );
 
@@ -730,23 +744,12 @@ export class TeamEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   }
 
   getUnsavedReasons(): string[] {
-    const reasons: string[] = [];
-    if (!this.editingTeam) return reasons;
-
-    const nameTrimmed = this.editingTeam.name?.trim() || "";
-    if (!nameTrimmed) {
-      reasons.push("DISCARD_REASON_TEAM_NAME_EMPTY");
-    } else if (!this.isNameUnique(true)) {
-      reasons.push("DISCARD_REASON_TEAM_NAME_DUPLICATE");
-    }
-
-    if (this.isSaving) {
-      reasons.push("DISCARD_REASON_SAVING");
-    } else if (reasons.length === 0 && this.isDirtyState()) {
-      reasons.push("DISCARD_REASON_EXIT_TOO_QUICKLY");
-    }
-
-    return reasons;
+    return getTeamUnsavedReasons(
+      this.editingTeam,
+      this.allTeams,
+      this.isSaving,
+      this.isDirtyState(),
+    );
   }
 
   get discardMessage(): string {
@@ -837,6 +840,7 @@ export class TeamEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       teamToSend.name,
       teamToSend.avatarUrl,
       [...teamToSend.driverIds],
+      [...(teamToSend.labelIds || [])],
     );
 
     if (wasNew) {
@@ -946,6 +950,7 @@ export class TeamEditorComponent implements OnInit, OnDestroy, DirtyComponent {
               t.name || "",
               t.avatarUrl || undefined,
               t.driverIds || [],
+              t.labelIds || [],
             ),
         );
         this.updateTeamSelectItems();
@@ -1018,68 +1023,58 @@ export class TeamEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   }
 
   generateUniqueName(baseName: string, forceSuffix: boolean = false): string {
-    let counter = forceSuffix ? 1 : 0;
-    const pattern = /(_\d+)$/;
-    const base = (baseName || "").replace(pattern, "").trim();
-
-    while (true) {
-      const candidate = counter === 0 ? base : `${base}_${counter}`;
-      if (
-        !this.allTeams.some(
-          (t) => t.name.toLowerCase() === candidate.toLowerCase(),
-        )
-      ) {
-        return candidate;
-      }
-      counter++;
-    }
+    return generateUniqueTeamName(baseName, this.allTeams, forceSuffix);
   }
 
   getAvatarUrl(url?: string): string {
-    if (!url) return "assets/images/default_avatar.svg";
-    const resolved = this.dataService?.resolveAssetUrl
-      ? this.dataService.resolveAssetUrl(url)
-      : url;
-    if (resolved && resolved.startsWith("/")) {
-      return `${this.dataService.serverUrl}${resolved}`;
+    return resolveTeamAvatarUrl(url, this.dataService);
+  }
+
+  openLabelManager() {
+    this.isLabelManagerOpen = true;
+  }
+
+  closeLabelManager() {
+    this.isLabelManagerOpen = false;
+  }
+
+  onLabelsUpdated(labels: DriverLabel[]) {
+    this.allLabels = labels || [];
+  }
+
+  onAssignedLabelsChange(assignedIds: string[]) {
+    if (this.editingTeam) {
+      this.editingTeam.labelIds = assignedIds;
+      this.captureState();
     }
-    return resolved;
+  }
+
+  unassignLabel(labelId: string) {
+    if (!this.isEditMode || !this.editingTeam) return;
+    this.editingTeam.labelIds = (this.editingTeam.labelIds || []).filter(
+      (id) => id !== labelId,
+    );
+    this.captureState();
+  }
+
+  getAssignedLabels(): DriverLabel[] {
+    if (!this.editingTeam || !this.editingTeam.labelIds) return [];
+    const ids = new Set(this.editingTeam.labelIds);
+    return this.allLabels.filter((l) => ids.has(l.entity_id));
+  }
+
+  getContrastColor(color: string | undefined): string {
+    return getContrastColor(color);
+  }
+
+  getDriverLabels(driver: Driver): DriverLabel[] {
+    if (!driver || !driver.labelIds) return [];
+    const ids = new Set(driver.labelIds);
+    return this.allLabels.filter((l) => ids.has(l.entity_id));
   }
 
   getHelpSteps(): GuideStep[] {
-    return [
-      {
-        title: this.translationService.translate("TEM_HELP_WELCOME_TITLE"),
-        content: this.translationService.translate("TEM_HELP_WELCOME_CONTENT"),
-        position: "center",
-      },
-      {
-        selector: "#avatar-selector",
-        title: this.translationService.translate("TEM_HELP_AVATAR_TITLE"),
-        content: this.translationService.translate("TEM_HELP_AVATAR_CONTENT"),
-        position: "right",
-      },
-      {
-        selector: "#team-name-input",
-        title: this.translationService.translate("TEM_HELP_NAME_TITLE"),
-        content: this.translationService.translate("TEM_HELP_NAME_CONTENT"),
-        position: "bottom",
-      },
-      {
-        selector: "#assigned-drivers-list",
-        title: this.translationService.translate("TEM_HELP_ASSIGNED_TITLE"),
-        content: this.translationService.translate("TEM_HELP_ASSIGNED_CONTENT"),
-        position: "left",
-      },
-      {
-        selector: "#available-drivers-list",
-        title: this.translationService.translate("TEM_HELP_AVAILABLE_TITLE"),
-        content: this.translationService.translate(
-          "TEM_HELP_AVAILABLE_CONTENT",
-        ),
-        position: "left",
-      },
-    ];
+    return getTeamEditorHelpSteps(this.translationService);
   }
 
   startHelp() {

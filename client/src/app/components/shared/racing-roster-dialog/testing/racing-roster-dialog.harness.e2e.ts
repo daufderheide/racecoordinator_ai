@@ -105,6 +105,17 @@ export class RacingRosterDialogHarnessE2e implements RacingRosterDialogHarnessBa
     return "";
   }
 
+  async getItemLabels(index: number): Promise<string[]> {
+    const card = this.cards.nth(index);
+    const labelEls = card.locator(this.base.selectors.labelChip);
+    const count = await labelEls.count();
+    const labels: string[] = [];
+    for (let i = 0; i < count; i++) {
+      labels.push((await labelEls.nth(i).textContent())?.trim() || "");
+    }
+    return labels;
+  }
+
   async clickSortBySeed(): Promise<void> {
     await this.sortSeedBtn.click();
   }

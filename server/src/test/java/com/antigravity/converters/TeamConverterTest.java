@@ -21,7 +21,14 @@ public class TeamConverterTest {
 
   @Test
   public void testToProto_FirstTime() {
-    Team team = new Team("Team Alpha", "avatar_url", Arrays.asList("d1", "d2"), "t1", "1");
+    Team team =
+        new Team(
+            "Team Alpha",
+            "avatar_url",
+            Arrays.asList("d1", "d2"),
+            Arrays.asList("l1", "l2"),
+            "t1",
+            "1");
     Set<String> sentObjectIds = new HashSet<>();
 
     TeamModel proto = TeamConverter.toProto(team, sentObjectIds);
@@ -33,6 +40,9 @@ public class TeamConverterTest {
     assertEquals(2, proto.getDriverIdsCount());
     assertTrue(proto.getDriverIdsList().contains("d1"));
     assertTrue(proto.getDriverIdsList().contains("d2"));
+    assertEquals(2, proto.getLabelIdsCount());
+    assertTrue(proto.getLabelIdsList().contains("l1"));
+    assertTrue(proto.getLabelIdsList().contains("l2"));
 
     assertTrue(sentObjectIds.contains("Team_" + team.getObjectId()));
   }

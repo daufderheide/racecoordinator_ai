@@ -15,6 +15,7 @@ export class TeamEditorHelper {
     const spy = jasmine.createSpyObj("DataService", [
       "getTeams",
       "getDrivers",
+      "getDriverLabels",
       "deleteTeam",
       "updateTeam",
       "createTeam",
@@ -53,6 +54,7 @@ export class TeamEditorHelper {
 
     spy.getTeams.and.callFake(() => of(deepCopy(MOCK_TEAMS)));
     spy.getDrivers.and.callFake(() => of(deepCopy(MOCK_DRIVERS)));
+    spy.getDriverLabels.and.returnValue(of([]));
     spy.deleteTeam.and.returnValue(of({ success: true }));
     spy.updateTeam.and.callFake((id: string, team: any) => of(team));
     spy.createTeam.and.callFake((team: any) =>
@@ -84,6 +86,14 @@ export class TeamEditorHelper {
     });
 
     await page.route("**/api/assets**", async (route: any) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify([]),
+      });
+    });
+
+    await page.route("**/api/driver-labels**", async (route: any) => {
       await route.fulfill({
         status: 200,
         contentType: "application/json",

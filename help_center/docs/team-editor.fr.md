@@ -29,8 +29,9 @@ La barre d'outils supérieure propose les actions suivantes :
 
 - **Nom de l'Équipe** : Le nom unique de l'équipe affiché sur les classements et écrans de course.
 - **Image / Logo de l'Équipe** : Choisissez une icône prédéfinie ou un logo personnalisé pour représenter l'équipe.
+- **Étiquettes d'Équipe** : Attribuez des étiquettes colorées (similaires aux étiquettes GitHub) pour organiser les équipes en groupes ou catégories personnalisés (comme « GT3 », « Pro » ou « Amateur »). Les équipes peuvent appartenir à plusieurs groupes. En mode édition, cliquez sur **Gérer les étiquettes** pour créer, modifier, recolorer, supprimer ou attribuer des étiquettes. Sur l'écran Configuration du Jour de Course, vous pouvez filtrer les équipes disponibles par étiquette pour composer rapidement les compositions d'équipes.
 
 ## Membres de l'Équipe & Alignement
 
-- **Pilotes Assignés** : Pilotes actuellement assignés à cette équipe. En mode édition, glissez-déposez pour réorganiser l'alignement ou cliquez sur le bouton Supprimer (X) pour désassigner un pilote.
-- **Pilotes Disponibles** : Pilotes non assignés à cette équipe. En mode édition, cliquez sur un pilote pour l'ajouter à l'équipe.
+- **Pilotes Assignés** : Pilotes actuellement assignés à cette équipe. En mode édition, glissez-déposez pour réorganiser l'alignement ou cliquez sur le bouton Supprimer pour désassigner un pilote. Chaque pilote affiche ses étiquettes de pilote attribuées sous forme de badges à côté de son nom.
+- **Pilotes Disponibles** : Pilotes non assignés à cette équipe. En mode édition, cliquez sur un pilote pour l'ajouter à l'équipe. Chaque pilote affiche ses étiquettes de pilote attribuées sous forme de badges à côté de son nom pour faciliter la composition d'équipes équilibrées.

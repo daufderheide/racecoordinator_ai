@@ -4,6 +4,7 @@ import com.antigravity.auth.Role;
 import com.antigravity.context.DatabaseContext;
 import com.antigravity.models.Driver;
 import com.antigravity.models.DriverLabel;
+import com.antigravity.models.Team;
 import com.antigravity.race.ClientSubscriptionManager;
 import com.antigravity.race.Race;
 import com.antigravity.repository.SqliteRepository;
@@ -20,18 +21,28 @@ public class DriverLabelTaskHandler {
 
   private final SqliteRepository<DriverLabel> driverLabelRepository;
   private final SqliteRepository<Driver> driverRepository;
+  private final SqliteRepository<Team> teamRepository;
 
   public DriverLabelTaskHandler(
-      DatabaseContext databaseContext, SqliteRepository<Driver> driverRepository, Javalin app) {
+      DatabaseContext databaseContext,
+      SqliteRepository<Driver> driverRepository,
+      SqliteRepository<Team> teamRepository,
+      Javalin app) {
     this.driverLabelRepository =
         new SqliteRepository<>(databaseContext, "driver_labels", DriverLabel.class);
     this.driverRepository = driverRepository;
+    this.teamRepository = teamRepository;
 
     app.get("/api/driver-labels", this::getLabels, Role.VIEWER);
     app.get("/api/driver-labels/{id}", this::getLabelById, Role.VIEWER);
     app.post("/api/driver-labels", this::createLabel, Role.DIRECTOR);
     app.put("/api/driver-labels/{id}", this::updateLabel, Role.DIRECTOR);
     app.delete("/api/driver-labels/{id}", this::deleteLabel, Role.DIRECTOR);
+  }
+
+  public DriverLabelTaskHandler(
+      DatabaseContext databaseContext, SqliteRepository<Driver> driverRepository, Javalin app) {
+    this(databaseContext, driverRepository, null, app);
   }
 
   public void getLabels(Context ctx) {
@@ -157,6 +168,19 @@ public class DriverLabelTaskHandler {
           driverRepository.replace(driver.getEntityId(), updatedDriver);
           if (activeRace != null) {
             activeRace.updateDriver(updatedDriver);
+          }
+        }
+      }
+
+      // Remove this label ID from any teams that reference it
+      if (teamRepository != null) {
+        List<Team> allTeams = teamRepository.findAll();
+        for (Team team : allTeams) {
+          if (team.getLabelIds() != null && team.getLabelIds().contains(id)) {
+            List<String> updatedLabelIds = new ArrayList<>(team.getLabelIds());
+            updatedLabelIds.remove(id);
+            Team updatedTeam = Team.Builder.from(team).withLabelIds(updatedLabelIds).build();
+            teamRepository.replace(team.getEntityId(), updatedTeam);
           }
         }
       }

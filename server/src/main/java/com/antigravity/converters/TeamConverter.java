@@ -38,6 +38,7 @@ public class TeamConverter {
           .setName(team.getName())
           .setAvatarUrl(avatarUrl != null ? avatarUrl : "")
           .addAllDriverIds(team.getDriverIds())
+          .addAllLabelIds(team.getLabelIds())
           .setModel(
               (com.antigravity.proto.Model) // fqn-collision
                   com.antigravity.proto.Model.newBuilder() // fqn-collision

@@ -19,6 +19,8 @@ export abstract class RacingRosterDialogHarnessBase {
     driverName: ".driver-name",
     driverNickname: ".driver-nickname",
     teamName: ".team-name",
+    driverLabelsChips: ".driver-labels-chips",
+    labelChip: ".driver-label-chip",
     emptyMessage: ".empty-roster-message",
   };
 
@@ -32,6 +34,7 @@ export abstract class RacingRosterDialogHarnessBase {
   abstract getItemPrimaryName(index: number): Promise<string>;
   abstract getItemSecondaryName(index: number): Promise<string>;
   abstract getItemTeam(index: number): Promise<string>;
+  abstract getItemLabels(index: number): Promise<string[]>;
   abstract clickSortBySeed(): Promise<void>;
   abstract clickSortByName(): Promise<void>;
   abstract clickSortByNickname(): Promise<void>;

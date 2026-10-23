@@ -848,4 +848,114 @@ describe("TeamEditorComponent", () => {
       expect(component.loadData).not.toHaveBeenCalled();
     });
   });
+
+  describe("Team and Driver Labels", () => {
+    const mockLabels = [
+      { entity_id: "lbl-pro", name: "Pro", color: "#ef4444" },
+      { entity_id: "lbl-am", name: "Amateur", color: "#10b981" },
+    ];
+
+    beforeEach(() => {
+      component.allLabels = [...mockLabels];
+    });
+
+    it("should open and close the label manager modal", () => {
+      expect(component.isLabelManagerOpen).toBeFalse();
+      component.openLabelManager();
+      expect(component.isLabelManagerOpen).toBeTrue();
+      component.closeLabelManager();
+      expect(component.isLabelManagerOpen).toBeFalse();
+    });
+
+    it("should update allLabels on onLabelsUpdated", () => {
+      const updated = [{ entity_id: "lbl-3", name: "GT3", color: "#3b82f6" }];
+      component.onLabelsUpdated(updated);
+      expect(component.allLabels).toEqual(updated);
+    });
+
+    it("should assign and unassign labels for editingTeam", () => {
+      component.editingTeam = new Team(
+        "t1",
+        "Team 1",
+        undefined,
+        [],
+        ["lbl-pro"],
+      );
+      component.isEditMode = true;
+
+      component.onAssignedLabelsChange(["lbl-pro", "lbl-am"]);
+      expect(component.editingTeam.labelIds).toEqual(["lbl-pro", "lbl-am"]);
+
+      const assigned = component.getAssignedLabels();
+      expect(assigned.length).toBe(2);
+      expect(assigned[0].name).toBe("Pro");
+      expect(assigned[1].name).toBe("Amateur");
+
+      component.unassignLabel("lbl-pro");
+      expect(component.editingTeam.labelIds).toEqual(["lbl-am"]);
+      expect(component.getAssignedLabels().length).toBe(1);
+    });
+
+    it("should not unassign labels when not in edit mode", () => {
+      component.editingTeam = new Team(
+        "t1",
+        "Team 1",
+        undefined,
+        [],
+        ["lbl-pro"],
+      );
+      component.isEditMode = false;
+
+      component.unassignLabel("lbl-pro");
+      expect(component.editingTeam.labelIds).toEqual(["lbl-pro"]);
+    });
+
+    it("should return empty assigned labels when team has no labels", () => {
+      component.editingTeam = new Team("t1", "Team 1", undefined, [], []);
+      expect(component.getAssignedLabels()).toEqual([]);
+    });
+
+    it("should get driver labels for assigned and available drivers", () => {
+      const driver = Driver.createDefault("d1", "Driver One", "D1", undefined, [
+        "lbl-pro",
+      ]);
+      const labels = component.getDriverLabels(driver);
+      expect(labels.length).toBe(1);
+      expect(labels[0].name).toBe("Pro");
+
+      const driverNoLabels = Driver.createDefault(
+        "d2",
+        "Driver Two",
+        "D2",
+        undefined,
+        [],
+      );
+      expect(component.getDriverLabels(driverNoLabels)).toEqual([]);
+    });
+
+    it("should include #team-labels-section in getHelpSteps()", () => {
+      const steps = component.getHelpSteps();
+      const labelStep = steps.find(
+        (s) => s.selector === "#team-labels-section",
+      );
+      expect(labelStep).toBeDefined();
+      expect(labelStep?.title).toBe("TEM_HELP_LABELS_TITLE");
+    });
+
+    it("should correctly compare teams with different labels in areTeamsEqual", () => {
+      const teamA = new Team("t1", "Team", undefined, ["d1"], ["lbl-pro"]);
+      const teamB = new Team("t1", "Team", undefined, ["d1"], ["lbl-am"]);
+      const teamC = new Team("t1", "Team", undefined, ["d1"], ["lbl-pro"]);
+
+      expect((component as any).areTeamsEqual(teamA, teamB)).toBeFalse();
+      expect((component as any).areTeamsEqual(teamA, teamC)).toBeTrue();
+    });
+
+    it("should copy labels when cloning team", () => {
+      const original = new Team("t1", "Team", undefined, ["d1"], ["lbl-pro"]);
+      const clone = (component as any).cloneTeam(original);
+      expect(clone.labelIds).toEqual(["lbl-pro"]);
+      expect(clone.labelIds).not.toBe(original.labelIds);
+    });
+  });
 });

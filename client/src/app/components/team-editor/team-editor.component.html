@@ -67,6 +67,54 @@
                   data-form-type="other"
                 />
               </div>
+              <!-- LABELS SECTION -->
+              <div id="team-labels-section" class="editor-section">
+                <div class="labels-section-header">
+                  <label class="track-name-label">{{
+                    "TEM_SECTION_LABELS" | translate
+                  }}</label>
+                  @if (isEditMode) {
+                    <button
+                      type="button"
+                      id="team-manage-labels-btn"
+                      class="btn-manage-labels"
+                      (click)="openLabelManager()"
+                      [title]="'TEM_MANAGE_LABELS_TOOLTIP' | translate"
+                    >
+                      <span class="material-icons">label</span>
+                      <span>{{ "TEM_MANAGE_LABELS" | translate }}</span>
+                    </button>
+                  }
+                </div>
+
+                <div class="driver-labels-list" id="team-assigned-labels-list">
+                  @for (label of getAssignedLabels(); track label.entity_id) {
+                    <span
+                      class="driver-label-pill"
+                      [style.background-color]="label.color"
+                      [style.color]="getContrastColor(label.color)"
+                    >
+                      <span class="label-name">{{ label.name }}</span>
+                      @if (isEditMode) {
+                        <button
+                          type="button"
+                          class="btn-remove-label"
+                          (click)="unassignLabel(label.entity_id)"
+                          [title]="'TEM_REMOVE_LABEL_TOOLTIP' | translate"
+                          [attr.aria-label]="'TEM_REMOVE_LABEL' | translate"
+                        >
+                          <span class="material-icons">delete</span>
+                        </button>
+                      }
+                    </span>
+                  }
+                  @if (getAssignedLabels().length === 0) {
+                    <span class="no-labels-text">{{
+                      "TEM_NO_LABELS" | translate
+                    }}</span>
+                  }
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -112,18 +160,37 @@
                   <div class="driver-avatar-mini">
                     <img [src]="getAvatarUrl(driver.avatarUrl)" alt="Avatar" />
                   </div>
-                  <div class="driver-name">
-                    {{ driver.name }}
-                    @if (driver.nickname) {
-                      <span
-                        class="driver-nickname"
-                        style="
-                          color: #94a3b8;
-                          font-size: 0.85em;
-                          margin-left: 5px;
-                        "
-                        >({{ driver.nickname }})</span
-                      >
+                  <div class="driver-info">
+                    <div class="driver-name">
+                      {{ driver.name }}
+                      @if (driver.nickname) {
+                        <span
+                          class="driver-nickname"
+                          style="
+                            color: #94a3b8;
+                            font-size: 0.85em;
+                            margin-left: 5px;
+                          "
+                          >({{ driver.nickname }})</span
+                        >
+                      }
+                    </div>
+                    @if (getDriverLabels(driver).length > 0) {
+                      <div class="driver-labels-chips">
+                        @for (
+                          label of getDriverLabels(driver);
+                          track label.entity_id
+                        ) {
+                          <span
+                            class="driver-label-chip"
+                            [style.background-color]="label.color"
+                            [style.color]="getContrastColor(label.color)"
+                            [title]="label.name"
+                          >
+                            {{ label.name }}
+                          </span>
+                        }
+                      </div>
                     }
                   </div>
                   <div class="spacer"></div>
@@ -162,18 +229,37 @@
                   <div class="driver-avatar-mini">
                     <img [src]="getAvatarUrl(driver.avatarUrl)" alt="Avatar" />
                   </div>
-                  <div class="driver-name">
-                    {{ driver.name }}
-                    @if (driver.nickname) {
-                      <span
-                        class="driver-nickname"
-                        style="
-                          color: #94a3b8;
-                          font-size: 0.85em;
-                          margin-left: 5px;
-                        "
-                        >({{ driver.nickname }})</span
-                      >
+                  <div class="driver-info">
+                    <div class="driver-name">
+                      {{ driver.name }}
+                      @if (driver.nickname) {
+                        <span
+                          class="driver-nickname"
+                          style="
+                            color: #94a3b8;
+                            font-size: 0.85em;
+                            margin-left: 5px;
+                          "
+                          >({{ driver.nickname }})</span
+                        >
+                      }
+                    </div>
+                    @if (getDriverLabels(driver).length > 0) {
+                      <div class="driver-labels-chips">
+                        @for (
+                          label of getDriverLabels(driver);
+                          track label.entity_id
+                        ) {
+                          <span
+                            class="driver-label-chip"
+                            [style.background-color]="label.color"
+                            [style.color]="getContrastColor(label.color)"
+                            [title]="label.name"
+                          >
+                            {{ label.name }}
+                          </span>
+                        }
+                      </div>
                     }
                   </div>
                   <div class="spacer"></div>
@@ -220,3 +306,15 @@
   (cancel)="onCancelDelete()"
 >
 </app-confirmation-modal>
+
+<!-- Team Label Manager Modal -->
+<app-driver-label-manager-modal
+  [visible]="isLabelManagerOpen"
+  titleKey="TEM_LABELS_MODAL_TITLE"
+  [assignedLabelIds]="editingTeam ? editingTeam.labelIds || [] : []"
+  [allLabels]="allLabels"
+  (assignedLabelIdsChange)="onAssignedLabelsChange($event)"
+  (labelsUpdated)="onLabelsUpdated($event)"
+  (close)="closeLabelManager()"
+>
+</app-driver-label-manager-modal>

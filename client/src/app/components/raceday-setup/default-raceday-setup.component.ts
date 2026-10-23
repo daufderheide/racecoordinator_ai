@@ -36,6 +36,7 @@ import { SeasonSummaryComponent } from "@app/components/shared/season-summary/se
 import { UpdateSelectorComponent } from "@app/components/shared/update-selector/update-selector.component";
 import { getThemeDisplayNameKey } from "@app/components/ui-editor/ui-editor-crud.helper";
 import { DriverConverter } from "@app/converters/driver.converter";
+import { TeamConverter } from "@app/converters/team.converter";
 import { DataService } from "@app/data.service";
 import { Driver } from "@app/models/driver";
 import { DriverLabel } from "@app/models/driver-label";
@@ -347,15 +348,11 @@ export class DefaultRacedaySetupComponent implements OnInit {
       DriverConverter.register(driver);
       return driver;
     });
-    const teams = (result.teams as any).map(
-      (t: any) =>
-        new Team(
-          t.entity_id || t.entityId || "",
-          t.name || "",
-          t.avatarUrl || undefined,
-          t.driverIds || [],
-        ),
-    );
+    const teams = ((result.teams as any[]) || []).map((t: any) => {
+      const team = TeamConverter.fromJSON(t);
+      TeamConverter.register(team);
+      return team;
+    });
     this.allDrivers = drivers;
     this.allTeams = teams;
     this.driverLabels = (result.driverLabels as any[]) || [];
@@ -664,28 +661,39 @@ export class DefaultRacedaySetupComponent implements OnInit {
 
   participantHasLabel(participant: Participant, labelId: string): boolean {
     if (!labelId) return true;
+    if ((participant?.labelIds || []).includes(labelId)) {
+      return true;
+    }
     if (this.isDriver(participant)) {
-      return (participant.labelIds || []).includes(labelId);
+      return false;
     }
     const team = participant as Team;
     if (!team.driverIds || team.driverIds.length === 0) return false;
     return team.driverIds.some((dId) => {
-      const d = this.allDrivers.find((driver) => driver.entity_id === dId);
+      const d = this.allDrivers.find(
+        (driver) =>
+          driver.entity_id === dId ||
+          driver.entity_id === dId.replace(/^d_/, "") ||
+          driver.entity_id === `d_${dId}`,
+      );
       return !!d && (d.labelIds || []).includes(labelId);
     });
   }
 
   getParticipantLabels(participant: Participant): DriverLabel[] {
-    if (this.isDriver(participant)) {
-      const ids = new Set(participant.labelIds || []);
-      return this.driverLabels.filter((l) => ids.has(l.entity_id));
+    const ids = new Set(participant?.labelIds || []);
+    if (!this.isDriver(participant)) {
+      const team = participant as Team;
+      (team.driverIds || []).forEach((dId) => {
+        const d = this.allDrivers.find(
+          (driver) =>
+            driver.entity_id === dId ||
+            driver.entity_id === dId.replace(/^d_/, "") ||
+            driver.entity_id === `d_${dId}`,
+        );
+        (d?.labelIds || []).forEach((lId) => ids.add(lId));
+      });
     }
-    const team = participant as Team;
-    const ids = new Set<string>();
-    (team.driverIds || []).forEach((dId) => {
-      const d = this.allDrivers.find((driver) => driver.entity_id === dId);
-      (d?.labelIds || []).forEach((lId) => ids.add(lId));
-    });
     return this.driverLabels.filter((l) => ids.has(l.entity_id));
   }
 

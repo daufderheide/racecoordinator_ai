@@ -3750,11 +3750,15 @@ describe("DefaultRacedaySetupComponent", () => {
     });
 
     it("should correctly identify team labels and filter team participants", () => {
-      const d1 = Driver.createDefault("d1", "Driver 1", "D1", undefined, [
-        "lbl-gt",
-      ]);
+      const d1 = Driver.createDefault("d1", "Driver 1", "D1", undefined, []);
       const d2 = Driver.createDefault("d2", "Driver 2", "D2", undefined, []);
-      const team = new Team("t1", "Racing Team", undefined, ["d1", "d2"]);
+      const team = new Team(
+        "t1",
+        "Racing Team",
+        undefined,
+        ["d1", "d2"],
+        ["lbl-gt"],
+      );
 
       component.allDrivers = [d1, d2];
       component.allTeams = [team];
@@ -3763,7 +3767,7 @@ describe("DefaultRacedaySetupComponent", () => {
         { entity_id: "lbl-gt", name: "GT", color: "#f59e0b" },
       ];
 
-      // Team has driver with lbl-gt
+      // Team has label lbl-gt
       expect(component.participantHasLabel(team, "lbl-gt")).toBeTrue();
       expect(component.participantHasLabel(team, "lbl-other")).toBeFalse();
 
@@ -3776,6 +3780,37 @@ describe("DefaultRacedaySetupComponent", () => {
       const teamLabels = component.getParticipantLabels(team);
       expect(teamLabels.length).toBe(1);
       expect(teamLabels[0].name).toBe("GT");
+    });
+
+    it("should preserve team labelIds when loading initial data", () => {
+      const rawResult = {
+        drivers: [],
+        teams: [
+          {
+            entity_id: "t10",
+            name: "Team Turbo",
+            avatarUrl: "turbo.png",
+            driverIds: ["d1"],
+            labelIds: ["lbl-turbo"],
+          },
+        ],
+        races: [],
+        events: [],
+        seasons: [],
+        driverLabels: [
+          { entity_id: "lbl-turbo", name: "Turbo", color: "#3b82f6" },
+        ],
+      };
+
+      (component as any).initInitialData(rawResult);
+      expect(component.allTeams.length).toBe(1);
+      expect(component.allTeams[0].labelIds).toEqual(["lbl-turbo"]);
+      expect(
+        component.participantHasLabel(component.allTeams[0], "lbl-turbo"),
+      ).toBeTrue();
+      const labels = component.getParticipantLabels(component.allTeams[0]);
+      expect(labels.length).toBe(1);
+      expect(labels[0].name).toBe("Turbo");
     });
 
     it("should filter racing participants by label using selectedRacingLabelId", () => {

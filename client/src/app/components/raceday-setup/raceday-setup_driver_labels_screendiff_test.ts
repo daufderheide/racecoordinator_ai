@@ -150,4 +150,28 @@ test.describe("Raceday Setup Driver Labels Visuals", () => {
       },
     );
   });
+
+  test("should display team cards with labels in racing section", async ({
+    page,
+  }) => {
+    await TestSetupHelper.setupLocalStorage(page, {
+      recentRaceIds: ["r1", "r2"],
+      selectedDriverIds: ["t1"],
+      racedaySetupWalkthroughSeen: true,
+      language: "en",
+    });
+
+    await TestSetupHelper.waitForLocalization(page, "en", page.goto("/"));
+    await page.waitForSelector(".driver-panel");
+    await expect(page.getByText("Team Alpha")).toBeVisible();
+    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+    await page.mouse.move(0, 0);
+    await TestSetupHelper.disableAnimations(page);
+
+    await expect(page).toHaveScreenshot("raceday-setup-teams-with-labels.png", {
+      maxDiffPixelRatio: 0.05,
+      animations: "disabled",
+      timeout: 10000,
+    });
+  });
 });

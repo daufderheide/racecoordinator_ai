@@ -18,6 +18,7 @@ import {
 })
 export class DriverLabelManagerModalComponent {
   visible = input<boolean>(false);
+  titleKey = input<string>("DLM_TITLE");
   assignedLabelIds = input<string[]>([]);
   allLabels = input<DriverLabel[]>([]);
 

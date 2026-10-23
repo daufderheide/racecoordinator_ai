@@ -33,6 +33,7 @@ import {
 } from "@app/components/shared/undo-redo-controls/undo-manager";
 import { DriverConverter } from "@app/converters/driver.converter";
 import { HeatConverter } from "@app/converters/heat.converter";
+import { TeamConverter } from "@app/converters/team.converter";
 import { DataService } from "@app/data.service";
 import { Driver } from "@app/models/driver";
 import { Race } from "@app/models/race";
@@ -298,15 +299,11 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
           DriverConverter.register(driver);
           return driver;
         });
-        this.allTeams = (result.teams as any[]).map(
-          (t) =>
-            new Team(
-              t.entity_id || t.entityId || "",
-              t.name || "",
-              t.avatarUrl || undefined,
-              t.driver_ids || t.driverIds || [],
-            ),
-        );
+        this.allTeams = (result.teams as any[]).map((t) => {
+          const team = TeamConverter.fromJSON(t);
+          TeamConverter.register(team);
+          return team;
+        });
 
         if (!savedState) {
           this.initializeState();

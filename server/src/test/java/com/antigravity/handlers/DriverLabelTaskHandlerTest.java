@@ -13,6 +13,7 @@ import static org.mockito.Mockito.when;
 import com.antigravity.context.DatabaseContext;
 import com.antigravity.models.Driver;
 import com.antigravity.models.DriverLabel;
+import com.antigravity.models.Team;
 import com.antigravity.repository.SqliteRepository;
 import io.javalin.Javalin;
 import io.javalin.http.Context;
@@ -32,6 +33,7 @@ public class DriverLabelTaskHandlerTest {
 
   private DatabaseContext databaseContext;
   private SqliteRepository<Driver> driverRepository;
+  private SqliteRepository<Team> teamRepository;
   private SqliteRepository<DriverLabel> driverLabelRepository;
   private Javalin app;
   private DriverLabelTaskHandler handler;
@@ -42,12 +44,13 @@ public class DriverLabelTaskHandlerTest {
     String rootDir = tempFolder.newFolder("db_root").getAbsolutePath() + File.separator;
     databaseContext = new DatabaseContext("test_db", null, rootDir);
     driverRepository = new SqliteRepository<>(databaseContext, "drivers", Driver.class);
+    teamRepository = new SqliteRepository<>(databaseContext, "teams", Team.class);
     driverLabelRepository =
         new SqliteRepository<>(databaseContext, "driver_labels", DriverLabel.class);
     app = mock(Javalin.class);
     ctx = mock(Context.class);
 
-    handler = new DriverLabelTaskHandler(databaseContext, driverRepository, app);
+    handler = new DriverLabelTaskHandler(databaseContext, driverRepository, teamRepository, app);
   }
 
   @After
@@ -242,5 +245,49 @@ public class DriverLabelTaskHandlerTest {
     assertNotNull(updatedD2);
     assertEquals(1, updatedD2.getLabelIds().size());
     assertTrue(updatedD2.getLabelIds().contains("lbl-keep"));
+  }
+
+  @Test
+  public void testDeleteLabel_RemovesFromRepoAndCleansUpTeams() {
+    DriverLabel label1 = new DriverLabel("Label 1", "#3b82f6", "lbl-del-team");
+    DriverLabel label2 = new DriverLabel("Label 2", "#10b981", "lbl-keep-team");
+    driverLabelRepository.insert(label1);
+    driverLabelRepository.insert(label2);
+
+    Team team1 =
+        new Team.Builder()
+            .withEntityId("t-1")
+            .withName("Team One")
+            .withLabelIds(Arrays.asList("lbl-del-team", "lbl-keep-team"))
+            .build();
+    Team team2 =
+        new Team.Builder()
+            .withEntityId("t-2")
+            .withName("Team Two")
+            .withLabelIds(Arrays.asList("lbl-keep-team"))
+            .build();
+
+    teamRepository.insert(team1);
+    teamRepository.insert(team2);
+
+    when(ctx.pathParam("id")).thenReturn("lbl-del-team");
+    when(ctx.status(anyInt())).thenReturn(ctx);
+
+    handler.deleteLabel(ctx);
+
+    verify(ctx).status(204);
+    assertNull(driverLabelRepository.findByEntityId("lbl-del-team"));
+    assertNotNull(driverLabelRepository.findByEntityId("lbl-keep-team"));
+
+    Team updatedT1 = teamRepository.findByEntityId("t-1");
+    assertNotNull(updatedT1);
+    assertEquals(1, updatedT1.getLabelIds().size());
+    assertFalse(updatedT1.getLabelIds().contains("lbl-del-team"));
+    assertTrue(updatedT1.getLabelIds().contains("lbl-keep-team"));
+
+    Team updatedT2 = teamRepository.findByEntityId("t-2");
+    assertNotNull(updatedT2);
+    assertEquals(1, updatedT2.getLabelIds().size());
+    assertTrue(updatedT2.getLabelIds().contains("lbl-keep-team"));
   }
 }

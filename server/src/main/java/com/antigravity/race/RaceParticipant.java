@@ -56,23 +56,13 @@ public class RaceParticipant extends ServerToClientObject
     this.isTeamParticipant = true;
     // Create synthetic driver for the team
     // Prefix ID with t_ to avoid clashing with real driver IDs in the client cache
-    // TODO(aufderheide): Replace this with a builder. There are too many parameters
-    // for this to be readable.
     this.driver =
-        new Driver(
-            team.getName(),
-            null, // Nickname
-            team.getAvatarUrl(),
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            "t_" + team.getEntityId(),
-            null);
+        new Driver.Builder()
+            .withName(team.getName())
+            .withAvatarUrl(team.getAvatarUrl())
+            .withEntityId("t_" + team.getEntityId())
+            .withLabelIds(team.getLabelIds())
+            .build();
   }
 
   public RaceParticipant(Driver driver, String objectId) {

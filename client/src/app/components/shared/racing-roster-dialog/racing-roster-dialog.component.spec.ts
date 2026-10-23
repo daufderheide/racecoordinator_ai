@@ -2,6 +2,7 @@ import { TestbedHarnessEnvironment } from "@angular/cdk/testing/testbed";
 import { Component, signal } from "@angular/core";
 import { ComponentFixture, TestBed } from "@angular/core/testing";
 import { Driver } from "@app/models/driver";
+import { DriverLabel } from "@app/models/driver-label";
 import { Team } from "@app/models/team";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { TranslationService } from "@app/services/translation.service";
@@ -18,6 +19,7 @@ import { RacingRosterDialogHarness } from "./testing/racing-roster-dialog.harnes
       [participants]="participants()"
       [teams]="teams()"
       [allDrivers]="allDrivers()"
+      [driverLabels]="driverLabels()"
       (close)="onClose()"
     ></app-racing-roster-dialog>
   `,
@@ -27,6 +29,7 @@ class TestHostComponent {
   participants = signal<any[]>([]);
   teams = signal<Team[]>([]);
   allDrivers = signal<Driver[]>([]);
+  driverLabels = signal<DriverLabel[]>([]);
   closed = false;
 
   onClose(): void {
@@ -734,5 +737,127 @@ describe("RacingRosterDialogComponent", () => {
     // In a 90px tall card with ample width, text scales up to fill vertical space (> 25px)
     expect(parseFloat(nameFontSize)).toBeGreaterThanOrEqual(28);
     expect(parseFloat(metaFontSize)).toBeGreaterThanOrEqual(20);
+  });
+
+  it("should display driver labels on roster cards and include them in tooltip", async () => {
+    const dialogComponent = fixture.debugElement.children[0]
+      .componentInstance as RacingRosterDialogComponent;
+
+    const labels: DriverLabel[] = [
+      { entity_id: "l1", name: "Pro", color: "#ef4444" },
+      { entity_id: "l2", name: "Veteran", color: "#3b82f6" },
+    ];
+    const d1 = new Driver("d1", "Mario Andretti", "Speedy");
+    d1.labelIds = ["l1", "l2"];
+
+    hostComponent.driverLabels.set(labels);
+    hostComponent.participants.set([d1]);
+    hostComponent.visible.set(true);
+    fixture.detectChanges();
+
+    expect(await harness.getItemCount()).toBe(1);
+    const itemLabels = await harness.getItemLabels(0);
+    expect(itemLabels).toEqual(["Pro", "Veteran"]);
+
+    const rosterItem = dialogComponent.rosterItems()[0];
+    expect(dialogComponent.getItemTooltip(rosterItem)).toBe(
+      "(#1) Speedy (Mario Andretti) {Pro, Veteran}",
+    );
+  });
+
+  it("should display team labels on team roster cards", async () => {
+    const dialogComponent = fixture.debugElement.children[0]
+      .componentInstance as RacingRosterDialogComponent;
+
+    const labels: DriverLabel[] = [
+      { entity_id: "l_team_label", name: "GT3", color: "#10b981" },
+    ];
+    const t1 = new Team(
+      "t1",
+      "Red Bull Racing",
+      undefined,
+      ["d1", "d2"],
+      ["l_team_label"],
+    );
+
+    hostComponent.driverLabels.set(labels);
+    hostComponent.participants.set([t1]);
+    hostComponent.visible.set(true);
+    fixture.detectChanges();
+
+    expect(await harness.getItemCount()).toBe(1);
+    const itemLabels = await harness.getItemLabels(0);
+    expect(itemLabels).toEqual(["GT3"]);
+
+    const rosterItem = dialogComponent.rosterItems()[0];
+    expect(dialogComponent.getItemTooltip(rosterItem)).toBe(
+      "(#1) Red Bull Racing (2 Drivers) {GT3}",
+    );
+  });
+
+  it("should resolve labels from allDrivers and allTeams when participant objects lack labelIds directly", async () => {
+    const labels: DriverLabel[] = [
+      { entity_id: "l1", name: "Junior", color: "#f59e0b" },
+    ];
+    const authoritativeDriver = new Driver("d1", "Lewis Hamilton", "Hammer");
+    authoritativeDriver.labelIds = ["l1"];
+
+    const rawParticipant = {
+      entity_id: "d1",
+      name: "Lewis Hamilton",
+      nickname: "Hammer",
+    };
+
+    hostComponent.driverLabels.set(labels);
+    hostComponent.allDrivers.set([authoritativeDriver]);
+    hostComponent.participants.set([rawParticipant]);
+    hostComponent.visible.set(true);
+    fixture.detectChanges();
+
+    expect(await harness.getItemCount()).toBe(1);
+    const itemLabels = await harness.getItemLabels(0);
+    expect(itemLabels).toEqual(["Junior"]);
+  });
+
+  it("should calculate and apply --card-label-font-size in scaleText when labels are present", () => {
+    const dialogComponent = fixture.debugElement.children[0]
+      .componentInstance as RacingRosterDialogComponent;
+
+    const labels: DriverLabel[] = [
+      { entity_id: "l1", name: "Pro", color: "#ef4444" },
+    ];
+    const d1 = new Driver("d1", "Max Verstappen", "Mad Max");
+    d1.labelIds = ["l1"];
+
+    hostComponent.driverLabels.set(labels);
+    hostComponent.participants.set([d1]);
+    hostComponent.visible.set(true);
+    fixture.detectChanges();
+
+    const cardEl = fixture.nativeElement.querySelector(
+      ".roster-card",
+    ) as HTMLElement;
+    const infoEl = fixture.nativeElement.querySelector(
+      ".driver-info",
+    ) as HTMLElement;
+
+    Object.defineProperty(cardEl, "clientHeight", {
+      value: 90,
+      configurable: true,
+    });
+    Object.defineProperty(infoEl, "clientWidth", {
+      value: 280,
+      configurable: true,
+    });
+
+    dialogComponent.scaleText();
+
+    const labelFontSize = infoEl.style.getPropertyValue(
+      "--card-label-font-size",
+    );
+    expect(labelFontSize).toBeTruthy();
+    expect(parseFloat(labelFontSize)).toBeGreaterThanOrEqual(7);
+    expect(parseFloat(labelFontSize)).toBeLessThanOrEqual(12);
+    expect(dialogComponent.getContrastColor("#000000")).toBe("#ffffff");
   });
 });

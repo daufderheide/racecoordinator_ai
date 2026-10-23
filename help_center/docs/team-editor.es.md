@@ -29,8 +29,9 @@ La barra de herramientas superior proporciona las siguientes acciones:
 
 - **Nombre del Equipo**: El nombre único del equipo que se muestra en clasificaciones y pantallas de carrera.
 - **Imagen / Logotipo del Equipo**: Seleccione un icono preestablecido o una imagen personalizada para representar al equipo.
+- **Etiquetas de Equipo**: Asigne etiquetas codificadas por colores (similares a las etiquetas de incidencias de GitHub) para organizar a los equipos en conjuntos o categorías personalizados (como "GT3", "Pro" o "Amateur"). Los equipos pueden pertenecer a cualquier cantidad de conjuntos. En el modo de edición, haga clic en **Administrar Etiquetas** para crear, editar, cambiar el color, eliminar o asignar etiquetas. En la pantalla Configuración del Día de Carrera, puede filtrar los equipos disponibles por etiqueta para completar rápidamente las alineaciones de carreras de equipos.
 
 ## Miembros del Equipo y Alineación
 
-- **Pilotos Asignados**: Pilotos actualmente asignados a este equipo. En el modo de edición, arrastre y suelte para reordenar la alineación o haga clic en el botón eliminar (X) para desasignar un piloto.
-- **Pilotos Disponibles**: Pilotos que aún no están asignados a este equipo. En el modo de edición, haga clic en un piloto para agregarlo a la alineación del equipo.
+- **Pilotos Asignados**: Pilotos actualmente asignados a este equipo. En el modo de edición, arrastre y suelte para reordenar la alineación o haga clic en el botón eliminar para desasignar un piloto. Cada piloto muestra sus etiquetas de piloto asignadas como insignias junto a su nombre.
+- **Pilotos Disponibles**: Pilotos que aún no están asignados a este equipo. En el modo de edición, haga clic en un piloto para agregarlo a la alineación del equipo. Cada piloto muestra sus etiquetas de piloto asignadas como insignias junto a su nombre para ayudar a identificar cualificaciones al armar las alineaciones.
