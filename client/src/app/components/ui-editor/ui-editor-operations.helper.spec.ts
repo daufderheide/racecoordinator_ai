@@ -30,33 +30,71 @@ describe("ui-editor-operations.helper", () => {
     loggerSpy = jasmine.createSpyObj<LoggerService>("LoggerService", ["error"]);
   });
 
-  it("should create custom UI entity", async () => {
+  it("should create custom UI entity using factory defaults and unique name", async () => {
     const dataServiceSpy = jasmine.createSpyObj<DataService>("DataService", [
-      "duplicateCustomUI",
+      "createCustomUI",
     ]);
-    dataServiceSpy.duplicateCustomUI.and.returnValue(
+    dataServiceSpy.createCustomUI.and.callFake((payload: any) =>
       of({
-        _id: "new_ui",
-        entity_id: "new_ui",
-        name: "New UI",
-        is_default: false,
+        ...payload,
+        entity_id: "custom_ui_123",
       }),
     );
 
-    const defaultUi = {
-      _id: "default_ui",
-      entity_id: "default_ui_layout_rc_ai",
-      name: "Default UI",
-      is_default: true,
-      layoutJson: "{}",
-    };
+    const existingUis = [
+      {
+        entity_id: "default_ui_layout_rc_ai",
+        name: "RaceCoordinator AI",
+        is_default: true,
+      },
+    ];
 
     const res = await createCustomUiEntity(
-      defaultUi as any,
+      existingUis as any,
       translationServiceSpy,
       dataServiceSpy,
     );
-    expect(res?.name).toBe("New UI");
+
+    expect(dataServiceSpy.createCustomUI).toHaveBeenCalled();
+    const passedPayload =
+      dataServiceSpy.createCustomUI.calls.mostRecent().args[0];
+    expect(passedPayload.entity_id).toBe("new");
+    expect(passedPayload["@id"]).toBe(1);
+    expect(passedPayload.name).toBe("New UI Layout");
+    expect(passedPayload.is_default).toBeFalse();
+    expect(passedPayload.layoutJson).toBeTruthy();
+    expect(passedPayload.columnsJson).toBeTruthy();
+    expect(passedPayload.columnLayoutsJson).toBeTruthy();
+    expect(res?.entity_id).toBe("custom_ui_123");
+    expect(res?.name).toBe("New UI Layout");
+  });
+
+  it("should create custom UI entity with incremented name when New UI Layout already exists", async () => {
+    const dataServiceSpy = jasmine.createSpyObj<DataService>("DataService", [
+      "createCustomUI",
+    ]);
+    dataServiceSpy.createCustomUI.and.callFake((payload: any) =>
+      of({
+        ...payload,
+        entity_id: "custom_ui_124",
+      }),
+    );
+
+    const existingUis = [
+      {
+        entity_id: "u1",
+        name: "New UI Layout",
+        is_default: false,
+      },
+    ];
+
+    const res = await createCustomUiEntity(
+      existingUis as any,
+      translationServiceSpy,
+      dataServiceSpy,
+    );
+
+    expect(res?.name).toBe("New UI Layout 2");
   });
 
   it("should duplicate custom UI entity", async () => {

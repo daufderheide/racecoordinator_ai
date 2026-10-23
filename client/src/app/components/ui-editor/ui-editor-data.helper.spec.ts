@@ -1,3 +1,4 @@
+import { of, throwError } from "rxjs";
 import { CustomUI } from "@app/models/custom-ui";
 import { Settings } from "@app/models/settings";
 import { Theme } from "@app/models/theme";
@@ -5,6 +6,7 @@ import { Theme } from "@app/models/theme";
 import {
   applyLoadedUiEditorData,
   ensureDefaultCustomUis,
+  fetchUiEditorData,
   handleUiEditorDataLoadError,
   handleUiEditorKeyboardShortcut,
   normalizeLoadedCustomUis,
@@ -453,7 +455,8 @@ describe("ui-editor-data.helper", () => {
       expect(comp.cdr.markForCheck).toHaveBeenCalled();
     });
 
-    it("should handle error, initialize fallback state, and restore open layout", () => {
+    it("should handle error, initialize fallback state, alert user, and restore open layout", () => {
+      spyOn(window, "alert");
       const mockSettings = new Settings();
       const comp: any = {
         logger: { error: jasmine.createSpy("error") },
@@ -474,6 +477,82 @@ describe("ui-editor-data.helper", () => {
       expect(comp.editingState).toBeDefined();
       expect(comp.refreshDisplayProperties).toHaveBeenCalled();
       expect(comp.cdr.markForCheck).toHaveBeenCalled();
+      expect(window.alert).toHaveBeenCalledWith(
+        "Failed to load UI layout and theme data from server.",
+      );
+    });
+
+    it("should handle error and preserve existing editingState if already populated", () => {
+      spyOn(window, "alert");
+      const existingState: any = {
+        settings: new Settings(),
+        themes: [{ entity_id: "t1" }],
+        customUIs: [{ entity_id: "u1" }],
+      };
+      const comp: any = {
+        logger: { error: jasmine.createSpy("error") },
+        editingState: existingState,
+        refreshDisplayProperties: jasmine.createSpy("refreshDisplayProperties"),
+        undoManager: { initialize: jasmine.createSpy("initialize") },
+        cdr: { markForCheck: jasmine.createSpy("markForCheck") },
+        sectionsExpanded: {},
+        displayCustomUIs: [],
+        isLoading: true,
+        isDestroyed: false,
+        translationService: { translate: (k: string) => `TRANS_${k}` },
+      };
+
+      handleUiEditorDataLoadError(comp, new Error("server down"));
+
+      expect(comp.editingState).toBe(existingState);
+      expect(comp.undoManager.initialize).not.toHaveBeenCalled();
+      expect(window.alert).toHaveBeenCalledWith("TRANS_UE_ERROR_LOAD_FAILED");
+    });
+  });
+
+  describe("fetchUiEditorData", () => {
+    it("should fetch all editor data and propagate theme/customUi errors", (done) => {
+      const mockDataService = {
+        listAssets: () => of([]),
+        getThemes: () => throwError(() => new Error("Theme load failure")),
+        getTracks: () => of([]),
+        getCustomUIs: () => of([]),
+      };
+      const mockFileSystem = {
+        getCustomDirectoryHandle: () => of(null),
+        getCustomWidgetDirectoryHandle: () => of(null),
+      };
+
+      fetchUiEditorData(mockDataService, mockFileSystem).subscribe({
+        next: () => fail("Should have failed"),
+        error: (err: any) => {
+          expect(err.message).toBe("Theme load failure");
+          done();
+        },
+      });
+    });
+
+    it("should fetch all editor data successfully when calls succeed", (done) => {
+      const mockDataService = {
+        listAssets: () => of([{ id: "a1", type: "image" }]),
+        getThemes: () => of([{ entity_id: "t1" }]),
+        getTracks: () => of([{ entity_id: "trk1" }]),
+        getCustomUIs: () => of([{ entity_id: "u1" }]),
+      };
+      const mockFileSystem = {
+        getCustomDirectoryHandle: () => of({ name: "dir" }),
+        getCustomWidgetDirectoryHandle: () => of(null),
+      };
+
+      fetchUiEditorData(mockDataService, mockFileSystem).subscribe({
+        next: (result: any) => {
+          expect(result.themes.length).toBe(1);
+          expect(result.customUIs.length).toBe(1);
+          expect(result.dirHandle.name).toBe("dir");
+          done();
+        },
+        error: () => fail("Should not have failed"),
+      });
     });
   });
 

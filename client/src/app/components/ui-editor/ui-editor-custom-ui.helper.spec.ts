@@ -4,6 +4,7 @@ import { Theme } from "@app/models/theme";
 
 import {
   executeDeleteCustomUi,
+  handleConfirmDeleteCustomUi,
   handleCreateCustomUi,
   handleCustomUiStateDeletion,
   handleDuplicateCustomUi,
@@ -123,14 +124,12 @@ describe("ui-editor-custom-ui.helper", () => {
       defaultUiNames: {},
       translationService: { translate: (k: string) => k },
       dataService: {
-        duplicateCustomUI: jasmine
-          .createSpy("duplicateCustomUI")
-          .and.returnValue(
-            of({
-              entity_id: "new_ui_1",
-              name: "New Layout",
-            }),
-          ),
+        createCustomUI: jasmine.createSpy("createCustomUI").and.returnValue(
+          of({
+            entity_id: "new_ui_1",
+            name: "New Layout",
+          }),
+        ),
       },
       logger: { error: jasmine.createSpy("error") },
       refreshDisplayProperties: jasmine.createSpy("refreshDisplayProperties"),
@@ -228,5 +227,45 @@ describe("ui-editor-custom-ui.helper", () => {
     expect(sectionsExpanded["ui_ui_del"]).toBeUndefined();
     expect(editingState.customUIs.length).toBe(1);
     expect(res.newActiveUiId).toBe("default_ui_layout_rc_ai");
+  });
+
+  it("should call comp.captureState when present on create, duplicate, and confirm delete", async () => {
+    const existingUi: CustomUI = {
+      entity_id: "ui_1",
+      name: "Layout 1",
+      is_default: false,
+    };
+    const comp: any = {
+      editingState: { customUIs: [existingUi] },
+      defaultUiNames: {},
+      translationService: { translate: (k: string) => k },
+      dataService: {
+        createCustomUI: () => of({ entity_id: "ui_new", name: "New Layout" }),
+        duplicateCustomUI: () =>
+          of({ entity_id: "ui_dup", name: "Layout 1 (1)" }),
+        deleteCustomUI: () => of(null),
+      },
+      logger: { error: jasmine.createSpy("error") },
+      refreshDisplayProperties: jasmine.createSpy("refreshDisplayProperties"),
+      captureState: jasmine.createSpy("captureState"),
+      undoManager: { captureState: jasmine.createSpy("undoCaptureState") },
+      toggleUiSection: jasmine.createSpy("toggleUiSection"),
+      focusUiNameInput: jasmine.createSpy("focusUiNameInput"),
+      cdr: { markForCheck: jasmine.createSpy("markForCheck") },
+      sectionsExpanded: {},
+    };
+
+    await handleCreateCustomUi(comp);
+    expect(comp.captureState).toHaveBeenCalledTimes(1);
+
+    await handleDuplicateCustomUi(comp, existingUi);
+    expect(comp.captureState).toHaveBeenCalledTimes(2);
+
+    comp.uiToDelete = existingUi;
+    comp.activeCustomUiId = "ui_1";
+    await handleConfirmDeleteCustomUi(comp);
+    expect(comp.captureState).toHaveBeenCalledTimes(3);
+    expect(comp.showDeleteUiConfirm).toBeFalse();
+    expect(comp.uiToDelete).toBeNull();
   });
 });

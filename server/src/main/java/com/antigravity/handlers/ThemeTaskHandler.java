@@ -309,7 +309,11 @@ public class ThemeTaskHandler {
   }
 
   <T> T getBody(Context ctx, Class<T> clazz) {
-    return ctx.bodyAsClass(clazz);
+    try {
+      return DatabaseHandlerUtils.bodyAsClassWithId(ctx.body(), clazz);
+    } catch (Exception e) {
+      throw new RuntimeException("Error parsing request body: " + e.getMessage(), e);
+    }
   }
 
   void setStatus(Context ctx, int status) {

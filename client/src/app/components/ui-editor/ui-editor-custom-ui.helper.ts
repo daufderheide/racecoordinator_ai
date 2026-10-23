@@ -3,7 +3,6 @@ import { deepCopy } from "@app/utils/clone.utils";
 import { naturalSortCompare } from "@app/utils/sorting.utils";
 
 import { UIEditorState } from "./ui-editor-constants";
-import { isCustomUiDefault } from "./ui-editor-crud.helper";
 
 export function sortCustomUisForDisplay(customUIs: CustomUI[]): CustomUI[] {
   const list = [...(customUIs || [])];
@@ -50,15 +49,15 @@ export async function executeCreateCustomUi(params: {
   dataService: any;
   logger: any;
 }): Promise<CustomUI | undefined> {
-  const defaultUi = params.displayCustomUIs.find(
-    (u) => u.entity_id === "default_ui_layout_rc_ai" || isCustomUiDefault(u),
-  );
-  if (!defaultUi) return undefined;
   try {
     const { createCustomUiEntity } =
       await import("./ui-editor-operations.helper");
+    const existingUis =
+      params.editingState?.customUIs && params.editingState.customUIs.length > 0
+        ? params.editingState.customUIs
+        : params.displayCustomUIs || [];
     const created = await createCustomUiEntity(
-      defaultUi,
+      existingUis,
       params.translationService,
       params.dataService,
     );
@@ -157,7 +156,11 @@ export async function handleCreateCustomUi(comp: any): Promise<void> {
       comp.defaultUiNames[created.entity_id] = created.name;
     }
     comp.refreshDisplayProperties();
-    comp.undoManager.captureState();
+    if (comp.captureState) {
+      comp.captureState();
+    } else {
+      comp.undoManager.captureState();
+    }
     comp.toggleUiSection(created.entity_id);
     comp.focusUiNameInput?.(created.entity_id);
     comp.cdr.markForCheck();
@@ -180,7 +183,11 @@ export async function handleDuplicateCustomUi(
       comp.defaultUiNames[created.entity_id] = created.name;
     }
     comp.refreshDisplayProperties();
-    comp.undoManager.captureState();
+    if (comp.captureState) {
+      comp.captureState();
+    } else {
+      comp.undoManager.captureState();
+    }
     comp.toggleUiSection(created.entity_id);
     comp.focusUiNameInput?.(created.entity_id);
     comp.cdr.markForCheck();
@@ -206,7 +213,11 @@ export async function handleConfirmDeleteCustomUi(comp: any): Promise<void> {
   if (newActiveUiId !== undefined) {
     comp.activeCustomUiId = newActiveUiId;
     comp.refreshDisplayProperties();
-    comp.undoManager.captureState();
+    if (comp.captureState) {
+      comp.captureState();
+    } else {
+      comp.undoManager.captureState();
+    }
     comp.cdr.markForCheck();
   }
 }

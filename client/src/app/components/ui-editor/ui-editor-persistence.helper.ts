@@ -1,4 +1,5 @@
-import { forkJoin, Observable, of } from "rxjs";
+import { forkJoin, Observable, of, throwError } from "rxjs";
+import { catchError } from "rxjs/operators";
 import { UndoManager } from "@app/components/shared/undo-redo-controls/undo-manager";
 import { DataService } from "@app/data.service";
 import { CustomUI } from "@app/models/custom-ui";
@@ -33,26 +34,10 @@ export interface AutoSaveContext {
   customUiService: CustomUiService;
 }
 
-export function buildAutoSavePipeline(
-  ctx: AutoSaveContext,
-): Observable<any> | null {
-  if (
-    ctx.isLoading ||
-    ctx.isSaving ||
-    !ctx.hasChanges ||
-    ctx.isAnyThemeNameInvalid ||
-    ctx.isAnyCustomUiNameInvalid
-  ) {
-    return null;
-  }
-
-  // 1. Save Settings
-  ctx.settingsService.saveSettings(ctx.editingSettings);
-
+function buildThemeSaveObservables(ctx: AutoSaveContext): Observable<any>[] {
   const saveObservables: Observable<any>[] = [];
   const initialState = ctx.initialState;
 
-  // 2. Save changed Themes
   for (const theme of ctx.displayThemes) {
     let hasChanged = true;
     if (initialState && initialState.themes) {
@@ -67,11 +52,44 @@ export function buildAutoSavePipeline(
       }
     }
     if (hasChanged) {
-      saveObservables.push(ctx.dataService.updateTheme(theme.entity_id, theme));
+      saveObservables.push(
+        ctx.dataService.updateTheme(theme.entity_id, theme).pipe(
+          catchError((err: any) => {
+            if (err?.status === 404) {
+              return ctx.dataService.createTheme(theme);
+            }
+            return throwError(() => err);
+          }),
+        ),
+      );
     }
   }
 
-  // 3. Save changed Custom UIs
+  if (initialState && initialState.themes) {
+    for (const initialTheme of initialState.themes) {
+      if (
+        !ctx.displayThemes.some((t) => t.entity_id === initialTheme.entity_id)
+      ) {
+        saveObservables.push(
+          ctx.dataService.deleteTheme(initialTheme.entity_id).pipe(
+            catchError((err: any) => {
+              if (err?.status === 404) {
+                return of(null);
+              }
+              return throwError(() => err);
+            }),
+          ),
+        );
+      }
+    }
+  }
+  return saveObservables;
+}
+
+function buildCustomUiSaveObservables(ctx: AutoSaveContext): Observable<any>[] {
+  const saveObservables: Observable<any>[] = [];
+  const initialState = ctx.initialState;
+
   for (const ui of ctx.displayCustomUIs) {
     let hasChanged = true;
     if (initialState && initialState.customUIs) {
@@ -83,9 +101,59 @@ export function buildAutoSavePipeline(
       }
     }
     if (hasChanged) {
-      saveObservables.push(ctx.dataService.updateCustomUI(ui.entity_id, ui));
+      saveObservables.push(
+        ctx.dataService.updateCustomUI(ui.entity_id, ui).pipe(
+          catchError((err: any) => {
+            if (err?.status === 404) {
+              return ctx.dataService.createCustomUI(ui);
+            }
+            return throwError(() => err);
+          }),
+        ),
+      );
     }
   }
+
+  if (initialState && initialState.customUIs) {
+    for (const initialUi of initialState.customUIs) {
+      if (
+        !ctx.displayCustomUIs.some((u) => u.entity_id === initialUi.entity_id)
+      ) {
+        saveObservables.push(
+          ctx.dataService.deleteCustomUI(initialUi.entity_id).pipe(
+            catchError((err: any) => {
+              if (err?.status === 404) {
+                return of(null);
+              }
+              return throwError(() => err);
+            }),
+          ),
+        );
+      }
+    }
+  }
+  return saveObservables;
+}
+
+export function buildAutoSavePipeline(
+  ctx: AutoSaveContext,
+): Observable<any> | null {
+  if (
+    ctx.isLoading ||
+    ctx.isSaving ||
+    !ctx.hasChanges ||
+    ctx.isAnyThemeNameInvalid ||
+    ctx.isAnyCustomUiNameInvalid
+  ) {
+    return null;
+  }
+
+  ctx.settingsService.saveSettings(ctx.editingSettings);
+
+  const saveObservables: Observable<any>[] = [
+    ...buildThemeSaveObservables(ctx),
+    ...buildCustomUiSaveObservables(ctx),
+  ];
 
   return saveObservables.length > 0 ? forkJoin(saveObservables) : of([null]);
 }

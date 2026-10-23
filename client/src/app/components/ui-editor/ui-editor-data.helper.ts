@@ -417,9 +417,9 @@ export function fetchUiEditorData(dataService: any, fileSystem: any): any {
     widgetDirHandle: fileSystem.getCustomWidgetDirectoryHandle
       ? fileSystem.getCustomWidgetDirectoryHandle()
       : of(null),
-    themes: dataService.getThemes().pipe(catchError(() => of([]))),
+    themes: dataService.getThemes(),
     tracks: dataService.getTracks().pipe(catchError(() => of([]))),
-    customUIs: dataService.getCustomUIs().pipe(catchError(() => of([]))),
+    customUIs: dataService.getCustomUIs(),
   });
 }
 
@@ -474,19 +474,27 @@ export function applyLoadedUiEditorData(comp: any, res: any): void {
 }
 
 export function handleUiEditorDataLoadError(comp: any, err: any): void {
-  comp.logger.error("Failed to load UI editor data", err);
+  comp.logger?.error("Failed to load UI editor data", err);
   comp.isLoading = false;
   if (!comp.editingState) {
     comp.editingState = {
-      settings: cloneSettings(comp.settingsService.getSettings()),
-      themes: [],
-      customUIs: [],
+      settings: cloneSettings(
+        comp.settingsService?.getSettings?.() || new Settings(),
+      ),
+      themes: comp.themeService?.getThemes?.() || [],
+      customUIs: comp.customUiService?.getCustomUIs?.() || [],
     };
-    comp.undoManager.initialize(comp.editingState);
+    comp.undoManager?.initialize(comp.editingState);
   }
   comp.refreshDisplayProperties();
   restoreOpenLayoutOnEntry(comp);
-  if (!comp.isDestroyed) comp.cdr.markForCheck();
+  if (typeof alert === "function") {
+    alert(
+      comp.translationService?.translate("UE_ERROR_LOAD_FAILED") ||
+        "Failed to load UI layout and theme data from server.",
+    );
+  }
+  if (!comp.isDestroyed) comp.cdr?.markForCheck();
 }
 
 export function handleUiEditorInit(comp: any): void {

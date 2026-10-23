@@ -4,6 +4,7 @@ import { TranslationService } from "@app/services/translation.service";
 
 import {
   buildDuplicateEntityName,
+  generateUniqueCustomUiName,
   getCustomUiDisplayNameKey,
   getThemeDisplayNameKey,
   isCustomUiDefault,
@@ -234,5 +235,46 @@ describe("ui-editor-crud.helper", () => {
       translationServiceSpy,
     );
     expect(dupName).toBe("Default UI Layout (Copy)");
+  });
+
+  describe("generateUniqueCustomUiName", () => {
+    it("should return trimmed base name when existingUis is empty", () => {
+      expect(generateUniqueCustomUiName("New UI Layout", [])).toBe(
+        "New UI Layout",
+      );
+    });
+
+    it("should return base name when not taken", () => {
+      const existing: CustomUI[] = [
+        { entity_id: "1", name: "RaceCoordinator AI", is_default: true },
+        { entity_id: "2", name: "Practice", is_default: true },
+      ];
+      expect(generateUniqueCustomUiName("New UI Layout", existing)).toBe(
+        "New UI Layout",
+      );
+    });
+
+    it("should append suffix 2 when base name already exists", () => {
+      const existing: CustomUI[] = [
+        { entity_id: "1", name: "New UI Layout", is_default: false },
+      ];
+      expect(generateUniqueCustomUiName("New UI Layout", existing)).toBe(
+        "New UI Layout 2",
+      );
+    });
+
+    it("should be case-insensitive and increment suffix until available", () => {
+      const existing: CustomUI[] = [
+        { entity_id: "1", name: "new ui layout", is_default: false },
+        { entity_id: "2", name: "New UI Layout 2", is_default: false },
+      ];
+      expect(generateUniqueCustomUiName("New UI Layout", existing)).toBe(
+        "New UI Layout 3",
+      );
+    });
+
+    it("should fallback to default name if baseName is empty", () => {
+      expect(generateUniqueCustomUiName("", [])).toBe("New UI Layout");
+    });
   });
 });

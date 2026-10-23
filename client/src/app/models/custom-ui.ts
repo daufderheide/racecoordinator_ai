@@ -1,4 +1,5 @@
 export interface CustomUI {
+  "@id"?: number;
   _id?: string;
   entity_id: string;
   name: string;

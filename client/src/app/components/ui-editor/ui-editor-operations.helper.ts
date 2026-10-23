@@ -8,26 +8,45 @@ import { TranslationService } from "@app/services/translation.service";
 
 import {
   buildDuplicateEntityName,
+  generateUniqueCustomUiName,
   getCustomUiDisplayNameKey,
   getThemeDisplayNameKey,
   isCustomUiDefault,
   isThemeDefault,
 } from "./ui-editor-crud.helper";
+import { getDefaultLayoutResetData } from "./ui-editor-io.helper";
 
 export async function createCustomUiEntity(
-  defaultUi: CustomUI,
+  existingUisOrUi: CustomUI[] | CustomUI,
   translationService: TranslationService,
   dataService: DataService,
 ): Promise<CustomUI | null> {
-  const newName = buildDuplicateEntityName(
-    defaultUi.name,
-    isCustomUiDefault(defaultUi),
-    getCustomUiDisplayNameKey(defaultUi, translationService),
-    translationService,
-  );
-  return firstValueFrom(
-    dataService.duplicateCustomUI(defaultUi.entity_id, newName),
-  );
+  const existingUis: CustomUI[] = Array.isArray(existingUisOrUi)
+    ? existingUisOrUi
+    : existingUisOrUi
+      ? [existingUisOrUi]
+      : [];
+  const defaultKey = "UE_DEFAULT_CUSTOM_UI_NAME";
+  const translated = translationService.translate(defaultKey);
+  const baseName =
+    translated && translated !== defaultKey ? translated : "New UI Layout";
+  const newName = generateUniqueCustomUiName(baseName, existingUis);
+
+  const resetData = getDefaultLayoutResetData(false);
+  const newUi: CustomUI = {
+    "@id": 1,
+    entity_id: "new",
+    name: newName,
+    is_default: false,
+    layoutJson: JSON.stringify(resetData.defaultLayout),
+    columnsJson: JSON.stringify(resetData.columns),
+    columnLayoutsJson: JSON.stringify(resetData.columnLayouts),
+    columnVisibilityJson: JSON.stringify(resetData.columnVisibility),
+    columnWidthsJson: JSON.stringify(resetData.columnWidths),
+    columnAnchorsJson: JSON.stringify(resetData.columnAnchors),
+  };
+
+  return firstValueFrom(dataService.createCustomUI(newUi));
 }
 
 export async function duplicateCustomUiEntity(

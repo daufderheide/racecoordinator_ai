@@ -3579,15 +3579,12 @@ describe("UIEditorComponent", () => {
           widgets: [],
         }),
       };
-      dataService.duplicateCustomUI.and.returnValue(of(createdUi));
+      dataService.createCustomUI.and.returnValue(of(createdUi));
       spyOn(component.undoManager, "captureState");
 
       await component.createNewCustomUi();
 
-      expect(dataService.duplicateCustomUI).toHaveBeenCalledWith(
-        "default_ui_layout_rc_ai",
-        jasmine.any(String),
-      );
+      expect(dataService.createCustomUI).toHaveBeenCalled();
       expect(
         component.displayCustomUIs.some((u) => u.entity_id === "custom_ui_new"),
       ).toBeTrue();
@@ -3628,9 +3625,9 @@ describe("UIEditorComponent", () => {
       expect(component.activeCustomUiId).toBe("custom_1_copy");
     });
 
-    it("should handle error when duplicating custom UI with duplicate name", async () => {
+    it("should handle error when creating custom UI with duplicate name", async () => {
       spyOn(window, "alert");
-      dataService.duplicateCustomUI.and.returnValue(
+      dataService.createCustomUI.and.returnValue(
         throwError(() => ({ status: 409 })),
       );
 

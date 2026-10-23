@@ -233,3 +233,30 @@ export function buildDuplicateEntityName(
   const copySuffix = translationService.translate("UE_LABEL_COPY_SUFFIX");
   return baseName + copySuffix;
 }
+
+export function generateUniqueCustomUiName(
+  baseName: string,
+  existingUis: CustomUI[],
+): string {
+  const trimmedBase = (baseName || "New UI Layout").trim();
+  const lowerBase = trimmedBase.toLowerCase();
+  const exists = (existingUis || []).some(
+    (u) => (u.name || "").trim().toLowerCase() === lowerBase,
+  );
+  if (!exists) {
+    return trimmedBase;
+  }
+  let suffix = 2;
+  while (true) {
+    const candidate = `${trimmedBase} ${suffix}`;
+    const candidateLower = candidate.toLowerCase();
+    if (
+      !(existingUis || []).some(
+        (u) => (u.name || "").trim().toLowerCase() === candidateLower,
+      )
+    ) {
+      return candidate;
+    }
+    suffix++;
+  }
+}

@@ -1,4 +1,4 @@
-import { of } from "rxjs";
+import { of, throwError } from "rxjs";
 import { DataService } from "@app/data.service";
 import { CustomUI } from "@app/models/custom-ui";
 import { Settings } from "@app/models/settings";
@@ -92,6 +92,131 @@ describe("ui-editor-persistence.helper", () => {
       expect(settingsServiceSpy.saveSettings).toHaveBeenCalled();
       expect(dataServiceSpy.updateTheme).toHaveBeenCalledWith("t1", theme);
       expect(dataServiceSpy.updateCustomUI).toHaveBeenCalledWith("ui1", ui);
+      done();
+    });
+  });
+
+  it("should recreate custom UI and theme via create API when update returns 404", (done) => {
+    const theme: Theme = {
+      entity_id: "t_restored",
+      name: "Restored Theme",
+      is_default: false,
+      slots: {},
+      audio_slots: {},
+    };
+    const ui: CustomUI = {
+      entity_id: "ui_restored",
+      name: "Restored Layout",
+      is_default: false,
+    };
+
+    const dataServiceSpy = jasmine.createSpyObj<DataService>("DataService", [
+      "updateTheme",
+      "createTheme",
+      "updateCustomUI",
+      "createCustomUI",
+    ]);
+    dataServiceSpy.updateTheme.and.returnValue(
+      throwError(() => ({ status: 404, message: "Theme not found" })),
+    );
+    dataServiceSpy.createTheme.and.returnValue(of(theme));
+    dataServiceSpy.updateCustomUI.and.returnValue(
+      throwError(() => ({ status: 404, message: "Custom UI not found" })),
+    );
+    dataServiceSpy.createCustomUI.and.returnValue(of(ui));
+
+    const settingsServiceSpy = jasmine.createSpyObj<SettingsService>(
+      "SettingsService",
+      ["saveSettings"],
+    );
+
+    const ctx: any = {
+      isLoading: false,
+      isSaving: false,
+      hasChanges: true,
+      isAnyThemeNameInvalid: false,
+      isAnyCustomUiNameInvalid: false,
+      editingSettings: new Settings(),
+      displayThemes: [theme],
+      displayCustomUIs: [ui],
+      initialState: {
+        themes: [],
+        customUIs: [],
+      },
+      dataService: dataServiceSpy,
+      settingsService: settingsServiceSpy,
+      themeService: jasmine.createSpyObj<ThemeService>("ThemeService", [
+        "refresh",
+      ]),
+      customUiService: jasmine.createSpyObj<CustomUiService>(
+        "CustomUiService",
+        ["initialize"],
+      ),
+    };
+
+    const pipeline = buildAutoSavePipeline(ctx);
+    expect(pipeline).not.toBeNull();
+
+    pipeline?.subscribe(() => {
+      expect(dataServiceSpy.updateTheme).toHaveBeenCalledWith(
+        "t_restored",
+        theme,
+      );
+      expect(dataServiceSpy.createTheme).toHaveBeenCalledWith(theme);
+      expect(dataServiceSpy.updateCustomUI).toHaveBeenCalledWith(
+        "ui_restored",
+        ui,
+      );
+      expect(dataServiceSpy.createCustomUI).toHaveBeenCalledWith(ui);
+      done();
+    });
+  });
+
+  it("should delete themes and custom UIs that existed in initialState but were removed", (done) => {
+    const dataServiceSpy = jasmine.createSpyObj<DataService>("DataService", [
+      "deleteTheme",
+      "deleteCustomUI",
+    ]);
+    dataServiceSpy.deleteTheme.and.returnValue(of(null));
+    dataServiceSpy.deleteCustomUI.and.returnValue(
+      throwError(() => ({ status: 404 })),
+    );
+
+    const settingsServiceSpy = jasmine.createSpyObj<SettingsService>(
+      "SettingsService",
+      ["saveSettings"],
+    );
+
+    const ctx: any = {
+      isLoading: false,
+      isSaving: false,
+      hasChanges: true,
+      isAnyThemeNameInvalid: false,
+      isAnyCustomUiNameInvalid: false,
+      editingSettings: new Settings(),
+      displayThemes: [],
+      displayCustomUIs: [],
+      initialState: {
+        themes: [{ entity_id: "t_old", name: "Old Theme" }],
+        customUIs: [{ entity_id: "ui_old", name: "Old Layout" }],
+      },
+      dataService: dataServiceSpy,
+      settingsService: settingsServiceSpy,
+      themeService: jasmine.createSpyObj<ThemeService>("ThemeService", [
+        "refresh",
+      ]),
+      customUiService: jasmine.createSpyObj<CustomUiService>(
+        "CustomUiService",
+        ["initialize"],
+      ),
+    };
+
+    const pipeline = buildAutoSavePipeline(ctx);
+    expect(pipeline).not.toBeNull();
+
+    pipeline?.subscribe(() => {
+      expect(dataServiceSpy.deleteTheme).toHaveBeenCalledWith("t_old");
+      expect(dataServiceSpy.deleteCustomUI).toHaveBeenCalledWith("ui_old");
       done();
     });
   });

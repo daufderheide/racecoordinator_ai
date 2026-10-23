@@ -118,7 +118,11 @@ public class CustomUITaskHandler {
   }
 
   <T> T getBody(Context ctx, Class<T> clazz) {
-    return ctx.bodyAsClass(clazz);
+    try {
+      return DatabaseHandlerUtils.bodyAsClassWithId(ctx.body(), clazz);
+    } catch (Exception e) {
+      throw new RuntimeException("Error parsing request body: " + e.getMessage(), e);
+    }
   }
 
   void setStatus(Context ctx, int status) {
@@ -181,16 +185,41 @@ public class CustomUITaskHandler {
           || ui.getEntityId().isEmpty()
           || "new".equals(ui.getEntityId())) {
         String nextId = getNextSequence("custom_uis");
+        CustomUI factoryDefaults = CustomUI.createDefault();
+        String layoutJson =
+            ui.getLayoutJson() != null && !ui.getLayoutJson().trim().isEmpty()
+                ? ui.getLayoutJson()
+                : factoryDefaults.getLayoutJson();
+        String columnsJson =
+            ui.getColumnsJson() != null && !ui.getColumnsJson().trim().isEmpty()
+                ? ui.getColumnsJson()
+                : factoryDefaults.getColumnsJson();
+        String columnLayoutsJson =
+            ui.getColumnLayoutsJson() != null && !ui.getColumnLayoutsJson().trim().isEmpty()
+                ? ui.getColumnLayoutsJson()
+                : factoryDefaults.getColumnLayoutsJson();
+        String columnVisibilityJson =
+            ui.getColumnVisibilityJson() != null && !ui.getColumnVisibilityJson().trim().isEmpty()
+                ? ui.getColumnVisibilityJson()
+                : factoryDefaults.getColumnVisibilityJson();
+        String columnWidthsJson =
+            ui.getColumnWidthsJson() != null && !ui.getColumnWidthsJson().trim().isEmpty()
+                ? ui.getColumnWidthsJson()
+                : factoryDefaults.getColumnWidthsJson();
+        String columnAnchorsJson =
+            ui.getColumnAnchorsJson() != null && !ui.getColumnAnchorsJson().trim().isEmpty()
+                ? ui.getColumnAnchorsJson()
+                : factoryDefaults.getColumnAnchorsJson();
         ui =
             new CustomUI(
                 ui.getName(),
                 false,
-                ui.getLayoutJson(),
-                ui.getColumnsJson(),
-                ui.getColumnLayoutsJson(),
-                ui.getColumnVisibilityJson(),
-                ui.getColumnWidthsJson(),
-                ui.getColumnAnchorsJson(),
+                layoutJson,
+                columnsJson,
+                columnLayoutsJson,
+                columnVisibilityJson,
+                columnWidthsJson,
+                columnAnchorsJson,
                 nextId,
                 null);
       }

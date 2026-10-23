@@ -126,6 +126,51 @@ public class CustomUITaskHandlerTest {
   }
 
   @Test
+  public void testCreateCustomUI_PopulatesFactoryDefaultsWhenEmpty() {
+    handler.ensureDefaultCustomUIs();
+
+    CustomUI newUi =
+        new CustomUI(
+            "Factory Default Layout", false, null, null, null, null, null, null, "new", null);
+    when(handler.getBody(ctx, CustomUI.class)).thenReturn(newUi);
+
+    handler.createCustomUI(ctx);
+    verify(handler).setStatus(ctx, 201);
+
+    ArgumentCaptor<Object> captor = ArgumentCaptor.forClass(Object.class);
+    verify(handler).setJson(eq(ctx), captor.capture());
+
+    CustomUI created = (CustomUI) captor.getValue();
+    org.junit.Assert.assertNotNull(created);
+    org.junit.Assert.assertFalse(created.isDefault());
+    org.junit.Assert.assertNotNull(created.getLayoutJson());
+    org.junit.Assert.assertEquals(
+        CustomUI.createDefault().getLayoutJson(), created.getLayoutJson());
+    org.junit.Assert.assertEquals(
+        CustomUI.createDefault().getColumnsJson(), created.getColumnsJson());
+  }
+
+  @Test
+  public void testCreateCustomUI_FromRawJsonWithoutId_SuccessfullyDeserializesAndCreates() {
+    handler.ensureDefaultCustomUIs();
+
+    String rawJson = "{\"entity_id\":\"new\",\"name\":\"EndToEnd UI Layout\",\"is_default\":false}";
+    when(ctx.body()).thenReturn(rawJson);
+
+    handler.createCustomUI(ctx);
+    verify(handler).setStatus(ctx, 201);
+
+    ArgumentCaptor<Object> captor = ArgumentCaptor.forClass(Object.class);
+    verify(handler).setJson(eq(ctx), captor.capture());
+
+    CustomUI created = (CustomUI) captor.getValue();
+    org.junit.Assert.assertNotNull(created);
+    org.junit.Assert.assertEquals("EndToEnd UI Layout", created.getName());
+    org.junit.Assert.assertEquals(
+        CustomUI.createDefault().getLayoutJson(), created.getLayoutJson());
+  }
+
+  @Test
   public void testCreateCustomUI_DuplicateName() {
     handler.ensureDefaultCustomUIs();
 
