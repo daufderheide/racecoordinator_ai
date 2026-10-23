@@ -166,7 +166,6 @@ public class PredictionEngine {
     return false;
   }
 
-  @SuppressWarnings("checkstyle:MethodLength")
   private PredictionSnapshot runSimulation(
       Race raceModel,
       List<RaceParticipant> participants,
@@ -200,56 +199,8 @@ public class PredictionEngine {
       finishValue = raceModel.getHeatScoring().getFinishValue();
     }
 
-    double fallbackLapTime = 5.0;
-    double sum = 0;
-    int count = 0;
-
-    for (RaceParticipant rp : participants) {
-      if (rp == null || isParticipantEmpty(rp)) continue;
-      String driverId = getParticipantId(rp);
-      if (driverId == null || driverId.isEmpty()) continue;
-
-      double pace = 0;
-
-      if (driverHeatStates != null && driverHeatStates.containsKey(driverId)) {
-        DriverHeatState state = driverHeatStates.get(driverId);
-        if (state.allRaceLapTimes != null && !state.allRaceLapTimes.isEmpty()) {
-          List<Double> laps = new ArrayList<>(state.allRaceLapTimes);
-          Collections.sort(laps);
-          double m = laps.get(laps.size() / 2);
-          if (laps.size() % 2 == 0) m = (m + laps.get(laps.size() / 2 - 1)) / 2.0;
-          pace = m;
-        }
-      }
-
-      if (pace <= 0 && driverStatsMap != null && driverStatsMap.containsKey(driverId)) {
-        DriverTrackStats s = driverStatsMap.get(driverId);
-        if (s.getOverallMedianLapTime() > 0) {
-          pace = s.getOverallMedianLapTime();
-        } else if (s.getLaneStats() != null && !s.getLaneStats().isEmpty()) {
-          double laneSum = 0;
-          int laneCount = 0;
-          for (DriverTrackStats.LanePaceStats lps : s.getLaneStats()) {
-            if (lps.getMedianLapTime() > 0) {
-              laneSum += lps.getMedianLapTime();
-              laneCount++;
-            }
-          }
-          if (laneCount > 0) pace = laneSum / laneCount;
-        }
-      }
-
-      if (pace > 0) {
-        sum += pace;
-        count++;
-      }
-    }
-
-    if (count > 0) {
-      fallbackLapTime = sum / count;
-    } else if (raceModel != null && raceModel.getMinLapTime() > 0) {
-      fallbackLapTime = raceModel.getMinLapTime() * 1.5;
-    }
+    double fallbackLapTime =
+        computeFallbackLapTime(raceModel, participants, driverStatsMap, driverHeatStates);
     double fallbackStdDev = fallbackLapTime * 0.05; // 5% variance fallback
 
     Map<String, Double> totalProjectedTime = new HashMap<>();
@@ -365,7 +316,76 @@ public class PredictionEngine {
     }
   }
 
-  @SuppressWarnings("checkstyle:MethodLength")
+  private double computeFallbackLapTime(
+      Race raceModel,
+      List<RaceParticipant> participants,
+      Map<String, DriverTrackStats> driverStatsMap,
+      Map<String, DriverHeatState> driverHeatStates) {
+    double sum = 0;
+    int count = 0;
+
+    for (RaceParticipant rp : participants) {
+      if (rp == null || isParticipantEmpty(rp)) {
+        continue;
+      }
+      String driverId = getParticipantId(rp);
+      if (driverId == null || driverId.isEmpty()) {
+        continue;
+      }
+
+      double pace = getParticipantPace(driverId, driverHeatStates, driverStatsMap);
+      if (pace > 0) {
+        sum += pace;
+        count++;
+      }
+    }
+
+    if (count > 0) {
+      return sum / count;
+    } else if (raceModel != null && raceModel.getMinLapTime() > 0) {
+      return raceModel.getMinLapTime() * 1.5;
+    }
+    return 5.0;
+  }
+
+  private double getParticipantPace(
+      String driverId,
+      Map<String, DriverHeatState> driverHeatStates,
+      Map<String, DriverTrackStats> driverStatsMap) {
+    if (driverHeatStates != null && driverHeatStates.containsKey(driverId)) {
+      DriverHeatState state = driverHeatStates.get(driverId);
+      if (state.allRaceLapTimes != null && !state.allRaceLapTimes.isEmpty()) {
+        List<Double> laps = new ArrayList<>(state.allRaceLapTimes);
+        Collections.sort(laps);
+        double m = laps.get(laps.size() / 2);
+        if (laps.size() % 2 == 0) {
+          m = (m + laps.get(laps.size() / 2 - 1)) / 2.0;
+        }
+        return m;
+      }
+    }
+
+    if (driverStatsMap != null && driverStatsMap.containsKey(driverId)) {
+      DriverTrackStats s = driverStatsMap.get(driverId);
+      if (s.getOverallMedianLapTime() > 0) {
+        return s.getOverallMedianLapTime();
+      } else if (s.getLaneStats() != null && !s.getLaneStats().isEmpty()) {
+        double laneSum = 0;
+        int laneCount = 0;
+        for (DriverTrackStats.LanePaceStats lps : s.getLaneStats()) {
+          if (lps.getMedianLapTime() > 0) {
+            laneSum += lps.getMedianLapTime();
+            laneCount++;
+          }
+        }
+        if (laneCount > 0) {
+          return laneSum / laneCount;
+        }
+      }
+    }
+    return 0;
+  }
+
   private void executeSingleSimulationRun(
       List<RaceParticipant> participants,
       List<Heat> scheduledHeats,
@@ -385,7 +405,34 @@ public class PredictionEngine {
 
     Map<String, Double> simLapsMap = new HashMap<>();
     Map<String, Double> simTimeMap = new HashMap<>();
+    initSimMaps(participants, driverHeatStates, simLapsMap, simTimeMap);
 
+    for (int h = currentHeatIndex; h < scheduledHeats.size(); h++) {
+      simulateSingleScheduledHeat(
+          scheduledHeats.get(h),
+          h,
+          h == currentHeatIndex,
+          driverStatsMap,
+          driverHeatStates,
+          finishMethod,
+          finishValue,
+          fallbackLapTime,
+          fallbackStdDev,
+          simLapsMap,
+          simTimeMap,
+          heatWinnerCounts,
+          heatProjectedLapsSum);
+    }
+
+    recordSimulationStandings(
+        simLapsMap, simTimeMap, totalProjectedLaps, totalProjectedTime, winCounts, podiumCounts);
+  }
+
+  private void initSimMaps(
+      List<RaceParticipant> participants,
+      Map<String, DriverHeatState> driverHeatStates,
+      Map<String, Double> simLapsMap,
+      Map<String, Double> simTimeMap) {
     if (participants != null) {
       for (RaceParticipant rp : participants) {
         if (rp == null || isParticipantEmpty(rp)) {
@@ -407,75 +454,95 @@ public class PredictionEngine {
         }
       }
     }
+  }
 
-    for (int h = currentHeatIndex; h < scheduledHeats.size(); h++) {
-      Heat heat = scheduledHeats.get(h);
-      String heatWinnerId = null;
-      double bestHeatLaps = -1.0;
+  private void simulateSingleScheduledHeat(
+      Heat heat,
+      int heatIndex,
+      boolean isCurrentHeat,
+      Map<String, DriverTrackStats> driverStatsMap,
+      Map<String, DriverHeatState> driverHeatStates,
+      FinishMethod finishMethod,
+      long finishValue,
+      double fallbackLapTime,
+      double fallbackStdDev,
+      Map<String, Double> simLapsMap,
+      Map<String, Double> simTimeMap,
+      Map<Integer, Map<String, Integer>> heatWinnerCounts,
+      Map<Integer, Map<String, Double>> heatProjectedLapsSum) {
+    String heatWinnerId = null;
+    double bestHeatLaps = -1.0;
 
-      for (DriverHeatData dhd : heat.getDrivers()) {
-        if (dhd == null || isHeatDriverEmpty(dhd)) {
-          continue;
-        }
-        String driverId = getHeatDriverParticipantId(dhd);
-        if (driverId == null || driverId.isEmpty() || "EMPTY_LANE".equals(driverId)) {
-          continue;
-        }
-
-        Driver actualDriver = dhd.getActualDriver();
-        String statsDriverId =
-            (actualDriver != null
-                    && actualDriver.getEntityId() != null
-                    && !actualDriver.getEntityId().isEmpty())
-                ? actualDriver.getEntityId()
-                : driverId;
-
-        int laneIndex = dhd.getLane();
-
-        DriverHeatState state = driverHeatStates != null ? driverHeatStates.get(driverId) : null;
-        SimulationResult simRes =
-            simulateHeatForDriver(
-                statsDriverId,
-                laneIndex,
-                driverStatsMap,
-                state,
-                h == currentHeatIndex,
-                finishMethod,
-                finishValue,
-                fallbackLapTime,
-                fallbackStdDev);
-
-        simLapsMap.put(driverId, simLapsMap.getOrDefault(driverId, 0.0) + simRes.laps);
-        simTimeMap.put(driverId, simTimeMap.getOrDefault(driverId, 0.0) + simRes.timeSec);
-
-        Map<String, Double> hLapsMap = heatProjectedLapsSum.get(h);
-        hLapsMap.put(driverId, hLapsMap.getOrDefault(driverId, 0.0) + simRes.laps);
-
-        double totalHeatLaps =
-            (state != null && h == currentHeatIndex)
-                ? state.currentHeatLapsCompleted + simRes.laps
-                : simRes.laps;
-        double totalHeatTime = simRes.timeSec;
-
-        if (finishMethod == FinishMethod.Lap) {
-          if (bestHeatLaps < 0 || totalHeatTime < bestHeatLaps) {
-            bestHeatLaps = totalHeatTime;
-            heatWinnerId = driverId;
-          }
-        } else {
-          if (totalHeatLaps > bestHeatLaps) {
-            bestHeatLaps = totalHeatLaps;
-            heatWinnerId = driverId;
-          }
-        }
+    for (DriverHeatData dhd : heat.getDrivers()) {
+      if (dhd == null || isHeatDriverEmpty(dhd)) {
+        continue;
+      }
+      String driverId = getHeatDriverParticipantId(dhd);
+      if (driverId == null || driverId.isEmpty() || "EMPTY_LANE".equals(driverId)) {
+        continue;
       }
 
-      if (heatWinnerId != null) {
-        Map<String, Integer> hWinners = heatWinnerCounts.get(h);
-        hWinners.put(heatWinnerId, hWinners.getOrDefault(heatWinnerId, 0) + 1);
+      Driver actualDriver = dhd.getActualDriver();
+      String statsDriverId =
+          (actualDriver != null
+                  && actualDriver.getEntityId() != null
+                  && !actualDriver.getEntityId().isEmpty())
+              ? actualDriver.getEntityId()
+              : driverId;
+
+      int laneIndex = dhd.getLane();
+
+      DriverHeatState state = driverHeatStates != null ? driverHeatStates.get(driverId) : null;
+      SimulationResult simRes =
+          simulateHeatForDriver(
+              statsDriverId,
+              laneIndex,
+              driverStatsMap,
+              state,
+              isCurrentHeat,
+              finishMethod,
+              finishValue,
+              fallbackLapTime,
+              fallbackStdDev);
+
+      simLapsMap.put(driverId, simLapsMap.getOrDefault(driverId, 0.0) + simRes.laps);
+      simTimeMap.put(driverId, simTimeMap.getOrDefault(driverId, 0.0) + simRes.timeSec);
+
+      Map<String, Double> hLapsMap = heatProjectedLapsSum.get(heatIndex);
+      hLapsMap.put(driverId, hLapsMap.getOrDefault(driverId, 0.0) + simRes.laps);
+
+      double totalHeatLaps =
+          (state != null && isCurrentHeat)
+              ? state.currentHeatLapsCompleted + simRes.laps
+              : simRes.laps;
+      double totalHeatTime = simRes.timeSec;
+
+      if (finishMethod == FinishMethod.Lap) {
+        if (bestHeatLaps < 0 || totalHeatTime < bestHeatLaps) {
+          bestHeatLaps = totalHeatTime;
+          heatWinnerId = driverId;
+        }
+      } else {
+        if (totalHeatLaps > bestHeatLaps) {
+          bestHeatLaps = totalHeatLaps;
+          heatWinnerId = driverId;
+        }
       }
     }
 
+    if (heatWinnerId != null) {
+      Map<String, Integer> hWinners = heatWinnerCounts.get(heatIndex);
+      hWinners.put(heatWinnerId, hWinners.getOrDefault(heatWinnerId, 0) + 1);
+    }
+  }
+
+  private void recordSimulationStandings(
+      Map<String, Double> simLapsMap,
+      Map<String, Double> simTimeMap,
+      Map<String, Double> totalProjectedLaps,
+      Map<String, Double> totalProjectedTime,
+      Map<String, Integer> winCounts,
+      Map<String, Integer> podiumCounts) {
     List<Map.Entry<String, Double>> sortedSimResults = new ArrayList<>(simLapsMap.entrySet());
     sortedSimResults.sort(
         (e1, e2) -> {

@@ -642,7 +642,6 @@ public class DatabaseContext {
     }
   }
 
-  @SuppressWarnings("checkstyle:MethodLength")
   public synchronized void importDatabase(String dbName, InputStream zipIn) throws IOException {
     File dbDir = new File(dataRoot + dbName);
     File assetDir = new File(dbDir, "assets");
@@ -670,102 +669,123 @@ public class DatabaseContext {
       while ((entry = zis.getNextEntry()) != null) {
         String entryName = entry.getName();
         if (entryName.startsWith("data/") && entryName.endsWith(".json")) {
-          String tableName = entryName.substring(5, entryName.length() - 5);
-
-          BufferedReader reader =
-              new BufferedReader(new InputStreamReader(zis, StandardCharsets.UTF_8));
-          String line;
-          while ((line = reader.readLine()) != null) {
-            if (line.trim().isEmpty()) continue;
-            try {
-              JsonNode node = objectMapper.readTree(line);
-              if ("counters".equalsIgnoreCase(tableName)) {
-                ensureTable("counters");
-                String name =
-                    node.has("_id") ? node.get("_id").asText() : node.get("name").asText();
-                int seq = node.get("seq").asInt();
-                String sql =
-                    "INSERT INTO counters (name, seq) VALUES (?, ?) ON CONFLICT(name) DO UPDATE SET seq = excluded.seq";
-                try (PreparedStatement pstmt = getConnection().prepareStatement(sql)) {
-                  pstmt.setString(1, name);
-                  pstmt.setInt(2, seq);
-                  pstmt.executeUpdate();
-                }
-              } else if (tableName.endsWith("race_records") || node.has("records_blob")) {
-                try (Statement stmt = getConnection().createStatement()) {
-                  stmt.execute(
-                      "CREATE TABLE IF NOT EXISTS "
-                          + tableName
-                          + " (race_id TEXT PRIMARY KEY, records_blob BLOB)");
-                }
-                String raceId = node.has("race_id") ? node.get("race_id").asText() : "";
-                String base64 = node.has("records_blob") ? node.get("records_blob").asText() : "";
-                byte[] blob = base64.isEmpty() ? new byte[0] : Base64.getDecoder().decode(base64);
-                String sql =
-                    "INSERT INTO "
-                        + tableName
-                        + " (race_id, records_blob) VALUES (?, ?) "
-                        + "ON CONFLICT(race_id) DO UPDATE SET records_blob=excluded.records_blob";
-                try (PreparedStatement pstmt = getConnection().prepareStatement(sql)) {
-                  pstmt.setString(1, raceId);
-                  pstmt.setBytes(2, blob);
-                  pstmt.executeUpdate();
-                }
-              } else {
-                ensureTable(tableName);
-                String entityId = null;
-                if (node.has("entity_id")) {
-                  entityId = node.get("entity_id").asText();
-                } else if (node.has("_id")) {
-                  JsonNode idNode = node.get("_id");
-                  if (idNode.isObject() && idNode.has("$oid")) {
-                    entityId = idNode.get("$oid").asText();
-                  } else {
-                    entityId = idNode.asText();
-                  }
-                }
-                if (entityId == null || entityId.trim().isEmpty()) {
-                  entityId = java.util.UUID.randomUUID().toString();
-                }
-
-                String seqId = node.has("sequence_id") ? node.get("sequence_id").asText() : null;
-                String sql =
-                    "INSERT INTO "
-                        + tableName
-                        + " (entity_id, sequence_id, json_data) VALUES (?, ?, ?) "
-                        + "ON CONFLICT(entity_id) DO UPDATE SET sequence_id=excluded.sequence_id, json_data=excluded.json_data";
-                try (PreparedStatement pstmt = getConnection().prepareStatement(sql)) {
-                  pstmt.setString(1, entityId);
-                  pstmt.setString(2, seqId);
-                  pstmt.setString(3, line);
-                  pstmt.executeUpdate();
-                }
-              }
-            } catch (Exception e) {
-              logger.error("Failed to parse/import JSON line in table {}: {}", tableName, line, e);
-            }
-          }
+          importJsonTableEntry(zis, entryName);
         } else if (entryName.startsWith("assets/")) {
-          String relativePath = entryName.substring(7);
-          File assetFile = new File(assetDir, relativePath);
-          if (entry.isDirectory()) {
-            assetFile.mkdirs();
-          } else {
-            assetFile.getParentFile().mkdirs();
-            try (FileOutputStream fos = new FileOutputStream(assetFile)) {
-              byte[] buffer = new byte[8192];
-              int length;
-              while ((length = zis.read(buffer)) >= 0) {
-                fos.write(buffer, 0, length);
-              }
-            }
-          }
+          importAssetEntry(zis, entry, assetDir);
         }
         zis.closeEntry();
       }
     }
 
     new AssetService(this, Paths.get(dataRoot, dbName, "assets").toString()).backfillDefaults();
+  }
+
+  private void importJsonTableEntry(ZipInputStream zis, String entryName) throws IOException {
+    String tableName = entryName.substring(5, entryName.length() - 5);
+    BufferedReader reader = new BufferedReader(new InputStreamReader(zis, StandardCharsets.UTF_8));
+    String line;
+    while ((line = reader.readLine()) != null) {
+      if (line.trim().isEmpty()) {
+        continue;
+      }
+      try {
+        JsonNode node = objectMapper.readTree(line);
+        if ("counters".equalsIgnoreCase(tableName)) {
+          importCounterNode(node);
+        } else if (tableName.endsWith("race_records") || node.has("records_blob")) {
+          importRaceRecordNode(tableName, node);
+        } else {
+          importStandardEntityNode(tableName, node, line);
+        }
+      } catch (Exception e) {
+        logger.error("Failed to parse/import JSON line in table {}: {}", tableName, line, e);
+      }
+    }
+  }
+
+  private void importCounterNode(JsonNode node) throws SQLException {
+    ensureTable("counters");
+    String name = node.has("_id") ? node.get("_id").asText() : node.get("name").asText();
+    int seq = node.get("seq").asInt();
+    String sql =
+        "INSERT INTO counters (name, seq) VALUES (?, ?) ON CONFLICT(name) DO UPDATE SET seq = excluded.seq";
+    try (PreparedStatement pstmt = getConnection().prepareStatement(sql)) {
+      pstmt.setString(1, name);
+      pstmt.setInt(2, seq);
+      pstmt.executeUpdate();
+    }
+  }
+
+  private void importRaceRecordNode(String tableName, JsonNode node) throws SQLException {
+    try (Statement stmt = getConnection().createStatement()) {
+      stmt.execute(
+          "CREATE TABLE IF NOT EXISTS "
+              + tableName
+              + " (race_id TEXT PRIMARY KEY, records_blob BLOB)");
+    }
+    String raceId = node.has("race_id") ? node.get("race_id").asText() : "";
+    String base64 = node.has("records_blob") ? node.get("records_blob").asText() : "";
+    byte[] blob = base64.isEmpty() ? new byte[0] : Base64.getDecoder().decode(base64);
+    String sql =
+        "INSERT INTO "
+            + tableName
+            + " (race_id, records_blob) VALUES (?, ?) "
+            + "ON CONFLICT(race_id) DO UPDATE SET records_blob=excluded.records_blob";
+    try (PreparedStatement pstmt = getConnection().prepareStatement(sql)) {
+      pstmt.setString(1, raceId);
+      pstmt.setBytes(2, blob);
+      pstmt.executeUpdate();
+    }
+  }
+
+  private void importStandardEntityNode(String tableName, JsonNode node, String line)
+      throws SQLException {
+    ensureTable(tableName);
+    String entityId = null;
+    if (node.has("entity_id")) {
+      entityId = node.get("entity_id").asText();
+    } else if (node.has("_id")) {
+      JsonNode idNode = node.get("_id");
+      if (idNode.isObject() && idNode.has("$oid")) {
+        entityId = idNode.get("$oid").asText();
+      } else {
+        entityId = idNode.asText();
+      }
+    }
+    if (entityId == null || entityId.trim().isEmpty()) {
+      entityId = java.util.UUID.randomUUID().toString();
+    }
+
+    String seqId = node.has("sequence_id") ? node.get("sequence_id").asText() : null;
+    String sql =
+        "INSERT INTO "
+            + tableName
+            + " (entity_id, sequence_id, json_data) VALUES (?, ?, ?) "
+            + "ON CONFLICT(entity_id) DO UPDATE SET sequence_id=excluded.sequence_id, json_data=excluded.json_data";
+    try (PreparedStatement pstmt = getConnection().prepareStatement(sql)) {
+      pstmt.setString(1, entityId);
+      pstmt.setString(2, seqId);
+      pstmt.setString(3, line);
+      pstmt.executeUpdate();
+    }
+  }
+
+  private void importAssetEntry(ZipInputStream zis, ZipEntry entry, File assetDir)
+      throws IOException {
+    String relativePath = entry.getName().substring(7);
+    File assetFile = new File(assetDir, relativePath);
+    if (entry.isDirectory()) {
+      assetFile.mkdirs();
+    } else {
+      assetFile.getParentFile().mkdirs();
+      try (FileOutputStream fos = new FileOutputStream(assetFile)) {
+        byte[] buffer = new byte[8192];
+        int length;
+        while ((length = zis.read(buffer)) >= 0) {
+          fos.write(buffer, 0, length);
+        }
+      }
+    }
   }
 
   public static class DatabaseStats {

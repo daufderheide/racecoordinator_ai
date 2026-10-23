@@ -266,11 +266,7 @@ public class RaceHeatTaskHandler {
       return;
     }
 
-    List<RaceParticipant> mockDrivers = new ArrayList<>();
-    for (int i = 0; i < driverCount; i++) {
-      Driver mockDriver = new Driver("Driver " + (i + 1), "Driver " + (i + 1));
-      mockDrivers.add(new RaceParticipant(mockDriver));
-    }
+    List<RaceParticipant> mockDrivers = buildMockDrivers(driverCount);
 
     com.antigravity.race.Race tempRace = // fqn-collision
         new com.antigravity.race.Race.Builder() // fqn-collision
@@ -281,33 +277,7 @@ public class RaceHeatTaskHandler {
             .isDemoMode(true)
             .build();
 
-    List<Heat> heats = tempRace.getHeats();
-
-    List<Map<String, Object>> heatList = new ArrayList<>();
-    for (Heat heat : heats) {
-      Map<String, Object> heatMap = new HashMap<>();
-      heatMap.put("heatNumber", heat.getHeatNumber());
-      heatMap.put("group", heat.getGroup());
-
-      List<Map<String, Object>> lanes = new ArrayList<>();
-      List<DriverHeatData> drivers = heat.getDrivers();
-      for (int laneIdx = 0; laneIdx < drivers.size(); laneIdx++) {
-        DriverHeatData driverData = drivers.get(laneIdx);
-        Map<String, Object> laneMap = new HashMap<>();
-        laneMap.put("laneNumber", laneIdx + 1);
-        laneMap.put("driverNumber", driverData.getDriver().getSeed());
-
-        if (laneIdx < track.getLanes().size()) {
-          Lane lane = track.getLanes().get(laneIdx);
-          laneMap.put("backgroundColor", lane.getBackground_color());
-          laneMap.put("foregroundColor", lane.getForeground_color());
-        }
-
-        lanes.add(laneMap);
-      }
-      heatMap.put("lanes", lanes);
-      heatList.add(heatMap);
-    }
+    List<Map<String, Object>> heatList = formatHeatList(tempRace.getHeats(), track);
 
     Map<String, Object> response = new HashMap<>();
     response.put("heats", heatList);
@@ -316,7 +286,7 @@ public class RaceHeatTaskHandler {
     tempRace.stop();
   }
 
-  @SuppressWarnings({"unchecked", "checkstyle:MethodLength"})
+  @SuppressWarnings("unchecked")
   public void previewHeats(Context ctx) {
     Map<String, Object> body = ctx.bodyAsClass(Map.class);
     Number driverCountNum = (Number) body.get("driverCount");
@@ -336,19 +306,8 @@ public class RaceHeatTaskHandler {
       customRotationAssetId = (String) body.get("customRotationAssetId");
     }
 
-    List<CustomRotation> customRotations = null;
-    if (customRotationAssetId != null && !customRotationAssetId.isEmpty()) {
-      customRotations = resolveCustomRotations(customRotationAssetId);
-    } else {
-      List<Map<String, Object>> customRotationsRaw =
-          (List<Map<String, Object>>) body.get("custom_rotations");
-      if (customRotationsRaw == null) {
-        customRotationsRaw = (List<Map<String, Object>>) body.get("customRotations");
-      }
-      if (customRotationsRaw != null) {
-        customRotations = parseCustomRotations(customRotationsRaw);
-      }
-    }
+    List<CustomRotation> customRotations =
+        resolveCustomRotationsFromBody(body, customRotationAssetId);
 
     Number heatTimesThroughNum = (Number) body.get("heatTimesThrough");
     if (heatTimesThroughNum == null) {
@@ -387,27 +346,10 @@ public class RaceHeatTaskHandler {
     try {
       rotationTypeEnum = HeatRotationType.valueOf(rotationType);
       if (rotationTypeEnum == HeatRotationType.CustomRoundRobin) {
-        if (customRotationSequence == null || customRotationSequence.isEmpty()) {
-          ctx.status(400).result("Custom rotation sequence is required");
+        String error = validateCustomRoundRobinSequence(customRotationSequence, track);
+        if (error != null) {
+          ctx.status(400).result(error);
           return;
-        }
-        int numLanes = track.getLanes().size();
-        Set<Integer> uniqueLanes = new HashSet<>();
-        for (Integer lane : customRotationSequence) {
-          if (lane == null || lane < 0) {
-            ctx.status(400).result("Lane numbers must be greater than or equal to 0 and not null");
-            return;
-          }
-          if (lane > numLanes) {
-            ctx.status(400)
-                .result("Lane number " + lane + " exceeds track lane count (" + numLanes + ")");
-            return;
-          }
-          if (lane > 0 && !uniqueLanes.add(lane)) {
-            ctx.status(400)
-                .result("Lane number " + lane + " appears more than once in rotation sequence");
-            return;
-          }
         }
       }
     } catch (IllegalArgumentException e) {
@@ -415,71 +357,20 @@ public class RaceHeatTaskHandler {
       return;
     }
 
-    HeatScoring defaultHeatScoring =
-        new HeatScoring(
-            HeatScoring.FinishMethod.Lap,
-            10,
-            HeatScoring.HeatRanking.LAP_COUNT,
-            HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME);
-    OverallScoring defaultOverallScoring = new OverallScoring();
-
-    Map<String, Object> groupOptionsMap = (Map<String, Object>) body.get("groupOptions");
-    if (groupOptionsMap == null) {
-      groupOptionsMap = (Map<String, Object>) body.get("group_options");
-    }
-    GroupOptions groupOptions = null;
-    if (groupOptionsMap != null) {
-      Boolean enabled = (Boolean) groupOptionsMap.get("enabled");
-      Number maxGroupsNum = (Number) groupOptionsMap.get("max_groups");
-      if (maxGroupsNum == null) {
-        maxGroupsNum = (Number) groupOptionsMap.get("maxGroups");
-      }
-      Integer maxGroups = maxGroupsNum != null ? maxGroupsNum.intValue() : null;
-      Boolean balance = (Boolean) groupOptionsMap.get("balance");
-      Boolean allowEmpty = (Boolean) groupOptionsMap.get("allow_empty_lanes");
-      if (allowEmpty == null) {
-        allowEmpty = (Boolean) groupOptionsMap.get("allowEmptyLanes");
-      }
-      Boolean forceMultiple = (Boolean) groupOptionsMap.get("force_multiple_of_max");
-      if (forceMultiple == null) {
-        forceMultiple = (Boolean) groupOptionsMap.get("forceMultipleOfMax");
-      }
-      Boolean rotateHeats = (Boolean) groupOptionsMap.get("rotate_group_heats");
-      if (rotateHeats == null) {
-        rotateHeats = (Boolean) groupOptionsMap.get("rotateGroupHeats");
-      }
-      Number minAdvancingNum = (Number) groupOptionsMap.get("min_advancing");
-      if (minAdvancingNum == null) {
-        minAdvancingNum = (Number) groupOptionsMap.get("minAdvancing");
-      }
-      Integer minAdvancing = minAdvancingNum != null ? minAdvancingNum.intValue() : 0;
-      @SuppressWarnings("unchecked")
-      List<String> names = (List<String>) groupOptionsMap.get("names");
-      if (names == null) {
-        @SuppressWarnings("unchecked")
-        List<String> namesFallback = (List<String>) groupOptionsMap.get("group_names");
-        names = namesFallback;
-      }
-
-      groupOptions =
-          new GroupOptions(
-              enabled,
-              maxGroups,
-              balance,
-              allowEmpty,
-              forceMultiple,
-              rotateHeats,
-              minAdvancing,
-              names);
-    }
+    GroupOptions groupOptions = parseGroupOptionsFromBody(body);
 
     Race tempRaceConfig =
         new Race.Builder()
             .withName("Preview")
             .withTrackEntityId(trackId)
             .withHeatRotationType(rotationTypeEnum)
-            .withHeatScoring(defaultHeatScoring)
-            .withOverallScoring(defaultOverallScoring)
+            .withHeatScoring(
+                new HeatScoring(
+                    HeatScoring.FinishMethod.Lap,
+                    10,
+                    HeatScoring.HeatRanking.LAP_COUNT,
+                    HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME))
+            .withOverallScoring(new OverallScoring())
             .withAutoAdvanceTime(0.0)
             .withAutoStartTime(0.0)
             .withAutoAdvanceWarmupTime(0.0)
@@ -492,11 +383,7 @@ public class RaceHeatTaskHandler {
             .withGroupOptions(groupOptions)
             .build();
 
-    List<RaceParticipant> mockDrivers = new ArrayList<>();
-    for (int i = 0; i < driverCount; i++) {
-      Driver mockDriver = new Driver("Driver " + (i + 1), "Driver " + (i + 1));
-      mockDrivers.add(new RaceParticipant(mockDriver));
-    }
+    List<RaceParticipant> mockDrivers = buildMockDrivers(driverCount);
 
     com.antigravity.race.Race tempRace = // fqn-collision
         new com.antigravity.race.Race.Builder() // fqn-collision
@@ -507,8 +394,25 @@ public class RaceHeatTaskHandler {
             .isDemoMode(true)
             .build();
 
-    List<Heat> heats = tempRace.getHeats();
+    List<Map<String, Object>> heatList = formatHeatList(tempRace.getHeats(), track);
 
+    Map<String, Object> response = new HashMap<>();
+    response.put("heats", heatList);
+    ctx.json(response);
+
+    tempRace.stop();
+  }
+
+  private List<RaceParticipant> buildMockDrivers(int driverCount) {
+    List<RaceParticipant> mockDrivers = new ArrayList<>();
+    for (int i = 0; i < driverCount; i++) {
+      Driver mockDriver = new Driver("Driver " + (i + 1), "Driver " + (i + 1));
+      mockDrivers.add(new RaceParticipant(mockDriver));
+    }
+    return mockDrivers;
+  }
+
+  private List<Map<String, Object>> formatHeatList(List<Heat> heats, Track track) {
     List<Map<String, Object>> heatList = new ArrayList<>();
     for (Heat heat : heats) {
       Map<String, Object> heatMap = new HashMap<>();
@@ -534,12 +438,83 @@ public class RaceHeatTaskHandler {
       heatMap.put("lanes", lanes);
       heatList.add(heatMap);
     }
+    return heatList;
+  }
 
-    Map<String, Object> response = new HashMap<>();
-    response.put("heats", heatList);
-    ctx.json(response);
+  @SuppressWarnings("unchecked")
+  private List<CustomRotation> resolveCustomRotationsFromBody(
+      Map<String, Object> body, String customRotationAssetId) {
+    if (customRotationAssetId != null && !customRotationAssetId.isEmpty()) {
+      return resolveCustomRotations(customRotationAssetId);
+    }
+    List<Map<String, Object>> customRotationsRaw =
+        (List<Map<String, Object>>) body.get("custom_rotations");
+    if (customRotationsRaw == null) {
+      customRotationsRaw = (List<Map<String, Object>>) body.get("customRotations");
+    }
+    return customRotationsRaw != null ? parseCustomRotations(customRotationsRaw) : null;
+  }
 
-    tempRace.stop();
+  private String validateCustomRoundRobinSequence(
+      List<Integer> customRotationSequence, Track track) {
+    if (customRotationSequence == null || customRotationSequence.isEmpty()) {
+      return "Custom rotation sequence is required";
+    }
+    int numLanes = track.getLanes().size();
+    Set<Integer> uniqueLanes = new HashSet<>();
+    for (Integer lane : customRotationSequence) {
+      if (lane == null || lane < 0) {
+        return "Lane numbers must be greater than or equal to 0 and not null";
+      }
+      if (lane > numLanes) {
+        return "Lane number " + lane + " exceeds track lane count (" + numLanes + ")";
+      }
+      if (lane > 0 && !uniqueLanes.add(lane)) {
+        return "Lane number " + lane + " appears more than once in rotation sequence";
+      }
+    }
+    return null;
+  }
+
+  @SuppressWarnings("unchecked")
+  private GroupOptions parseGroupOptionsFromBody(Map<String, Object> body) {
+    Map<String, Object> groupOptionsMap = (Map<String, Object>) body.get("groupOptions");
+    if (groupOptionsMap == null) {
+      groupOptionsMap = (Map<String, Object>) body.get("group_options");
+    }
+    if (groupOptionsMap == null) {
+      return null;
+    }
+    Boolean enabled = (Boolean) groupOptionsMap.get("enabled");
+    Number maxGroupsNum = (Number) groupOptionsMap.get("max_groups");
+    if (maxGroupsNum == null) {
+      maxGroupsNum = (Number) groupOptionsMap.get("maxGroups");
+    }
+    Integer maxGroups = maxGroupsNum != null ? maxGroupsNum.intValue() : null;
+    Boolean balance = (Boolean) groupOptionsMap.get("balance");
+    Boolean allowEmpty = (Boolean) groupOptionsMap.get("allow_empty_lanes");
+    if (allowEmpty == null) {
+      allowEmpty = (Boolean) groupOptionsMap.get("allowEmptyLanes");
+    }
+    Boolean forceMultiple = (Boolean) groupOptionsMap.get("force_multiple_of_max");
+    if (forceMultiple == null) {
+      forceMultiple = (Boolean) groupOptionsMap.get("forceMultipleOfMax");
+    }
+    Boolean rotateHeats = (Boolean) groupOptionsMap.get("rotate_group_heats");
+    if (rotateHeats == null) {
+      rotateHeats = (Boolean) groupOptionsMap.get("rotateGroupHeats");
+    }
+    Number minAdvancingNum = (Number) groupOptionsMap.get("min_advancing");
+    if (minAdvancingNum == null) {
+      minAdvancingNum = (Number) groupOptionsMap.get("minAdvancing");
+    }
+    Integer minAdvancing = minAdvancingNum != null ? minAdvancingNum.intValue() : 0;
+    List<String> names = (List<String>) groupOptionsMap.get("names");
+    if (names == null) {
+      names = (List<String>) groupOptionsMap.get("group_names");
+    }
+    return new GroupOptions(
+        enabled, maxGroups, balance, allowEmpty, forceMultiple, rotateHeats, minAdvancing, names);
   }
 
   public void validateRace(Race race) {

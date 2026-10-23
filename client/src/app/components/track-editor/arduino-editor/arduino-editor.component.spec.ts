@@ -1402,7 +1402,7 @@ describe("ArduinoEditorComponent", () => {
       expect(activeLowStep).toBeDefined();
       expect(activeLowStep?.selector).toBe("#arduino-active-low-analog-leds-0");
       component.sectionsExpanded.main = false;
-      activeLowStep?.onEnter();
+      activeLowStep?.onEnter?.();
       expect(component.sectionsExpanded.main).toBeTrue();
     });
 
@@ -1443,7 +1443,7 @@ describe("ArduinoEditorComponent", () => {
       const voltageStep = steps.find(
         (s) => s.title === "TE_HELP_ARDUINO_VOLTAGE_TITLE",
       );
-      voltageStep?.onEnter();
+      voltageStep?.onEnter?.();
       expect(component.sectionsExpanded.voltage).toBeTrue();
     });
 
@@ -1520,7 +1520,7 @@ describe("ArduinoEditorComponent", () => {
       const ledStep = steps.find(
         (s) => s.title === "TE_HELP_ARDUINO_LED_TITLE",
       );
-      ledStep?.onEnter();
+      ledStep?.onEnter?.();
       expect(component.sectionsExpanded.leds).toBeTrue();
       expect(component.ledStringExpanded[0]).toBeTrue();
     });

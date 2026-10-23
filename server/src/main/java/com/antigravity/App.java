@@ -136,7 +136,6 @@ public class App {
     System.exit(1);
   }
 
-  @SuppressWarnings("checkstyle:MethodLength")
   public static void main(String[] args) {
     triggerLogRollover();
     try {
@@ -150,433 +149,30 @@ public class App {
       appDataDir = Paths.get(appDataDir).toAbsolutePath().normalize().toString();
       logger.info("Using app data directory: {}", appDataDir);
 
-      String logReplayFile = System.getProperty("enableLogReplay");
-      if (logReplayFile != null && !logReplayFile.trim().isEmpty()) {
-        DatabaseService.getInstance().setReplayMode(true);
-        com.antigravity.service.LogReplayService.init(logReplayFile); // fqn-collision
-        logger.info("Log Replay Mode Enabled. Reading from {}", logReplayFile);
-      }
+      initLogReplayIfEnabled();
 
-      boolean isHeadlessFlag = false;
-      for (String arg : args) {
-        if ("--headless".equals(arg)) {
-          isHeadlessFlag = true;
-        }
-      }
-      final boolean headless = isHeadlessFlag;
-
-      Runtime.getRuntime()
-          .addShutdownHook(
-              new Thread(
-                  () -> {
-                    logger.info("Shutting down server...");
-                    Thread watchdog =
-                        new Thread(
-                            () -> {
-                              try {
-                                Thread.sleep(5000);
-                                logger.warn("Shutdown sequence exceeded 5s timeout. Forcing halt.");
-                                Runtime.getRuntime().halt(0);
-                              } catch (InterruptedException ignored) {
-                              }
-                            },
-                            "Shutdown-Watchdog");
-                    watchdog.setDaemon(true);
-                    watchdog.start();
-
-                    if (currentTrayIcon != null && SystemTray.isSupported()) {
-                      try {
-                        SystemTray.getSystemTray().remove(currentTrayIcon);
-                      } catch (Exception ignored) {
-                      }
-                    }
-
-                    ClientSubscriptionManager.getInstance().setShuttingDown(true);
-                    if (app != null) {
-                      try {
-                        app.stop();
-                      } catch (Exception e) {
-                        logger.error("Error stopping Javalin: " + e.getMessage());
-                      }
-                    }
-                    logger.info("Server stopped.");
-                    triggerLogRollover();
-                  }));
+      boolean headless = isHeadless(args);
+      registerShutdownHook();
 
       ServerConfigService configService = new ServerConfigService();
-      List<String> existingDatabases = DatabaseContext.listDatabases(appDataDir);
+      DatabaseContext databaseContext = initializeDatabaseContext(appDataDir, configService);
+      processPendingMigrations(appDataDir, databaseContext);
+      runStartupDatabaseBackfills(
+          databaseContext, appDataDir, databaseContext.getCurrentDatabaseName());
 
-      String activeDb;
-      DatabaseContext databaseContext;
-      if (!existingDatabases.contains("RaceCoordinator_AI_DB")) {
-        logger.info(
-            "Default database 'RaceCoordinator_AI_DB' not found. Creating 'RaceCoordinator_AI_DB' with factory defaults.");
-        activeDb = "RaceCoordinator_AI_DB";
-        databaseContext = new DatabaseContext(activeDb, configService, appDataDir);
-        ClientSubscriptionManager.getInstance().setDatabaseContext(databaseContext);
-        databaseContext.createDatabase(activeDb);
-        databaseContext.resetDatabaseToFactory(activeDb);
-      } else {
-        String lastActiveDb = configService.getLastActiveDatabase();
-        if (lastActiveDb != null && existingDatabases.contains(lastActiveDb)) {
-          activeDb = lastActiveDb;
-        } else {
-          activeDb = "RaceCoordinator_AI_DB";
-        }
-        databaseContext = new DatabaseContext(activeDb, configService, appDataDir);
-        ClientSubscriptionManager.getInstance().setDatabaseContext(databaseContext);
-
-        DatabaseContext.DatabaseStats stats = databaseContext.getDatabaseStats(activeDb);
-        if (stats.driverCount == 0 && stats.trackCount == 0 && stats.raceCount == 0) {
-          logger.info("Database '{}' is uninitialized. Resetting to factory defaults...", activeDb);
-          databaseContext.resetDatabaseToFactory(activeDb);
-        }
-      }
-
-      // Perform any pending migrations
-      File pendingImportDir = new File(appDataDir, "pending_imports");
-      if (pendingImportDir.exists() && pendingImportDir.isDirectory()) {
-        logger.info("Found pending database migrations. Importing...");
-        File[] zipFiles = pendingImportDir.listFiles((dir, name) -> name.endsWith(".zip"));
-        if (zipFiles != null) {
-          for (File zipFile : zipFiles) {
-            String dbName = zipFile.getName().substring(0, zipFile.getName().length() - 4);
-            logger.info("Importing migrated database: {}", dbName);
-            try (java.io.FileInputStream fis = new java.io.FileInputStream(zipFile)) {
-              databaseContext.importDatabase(dbName, fis);
-            } catch (Exception e) {
-              logger.error("Failed to import database: " + dbName, e);
-            }
-          }
-        }
-        for (File f : pendingImportDir.listFiles()) {
-          f.delete();
-        }
-        pendingImportDir.delete();
-        logger.info("Migration imports completed.");
-      }
-
-      runStartupDatabaseBackfills(databaseContext, appDataDir, activeDb);
-
-      String[] possiblePaths = {"client/dist/client", "../client/dist/client", "web", "server/web"};
-      String resolvedClientPath = null;
-      for (String path : possiblePaths) {
-        if (Files.exists(Paths.get(path))) {
-          resolvedClientPath = path;
-          break;
-        }
-      }
-
-      final String staticFilePath = resolvedClientPath != null ? resolvedClientPath : "web";
+      String staticFilePath = resolveStaticFilePath();
       logger.info("Serving static files from: {}", staticFilePath);
+      startJavalinServer(staticFilePath, headless);
 
-      logger.info("Starting Javalin on port {}...", serverPort);
-      try {
-        app = createJavalin(staticFilePath).start(serverPort);
-        logger.info("Javalin started successfully on port {}.", serverPort);
-      } catch (Exception e) {
-        if (AppInstanceCoordinator.isRaceCoordinatorRunning(serverPort)) {
-          AppInstanceCoordinator.handleAlreadyRunning(
-              serverPort,
-              headless,
-              () -> {
-                try {
-                  app = createJavalin(staticFilePath).start(serverPort);
-                  logger.info("Javalin restarted successfully on port {}.", serverPort);
-                } catch (Exception retryEx) {
-                  handlePortConflict(serverPort, headless, retryEx);
-                }
-              });
-        } else {
-          handlePortConflict(serverPort, headless, e);
-        }
-      }
+      configureJavalinMiddleware(app, staticFilePath);
 
-      app.before(
-          ctx -> {
-            String path = ctx.path();
-
-            if (!path.startsWith("/api/")
-                || (path.startsWith("/api/auth/") && !path.startsWith("/api/auth/password"))
-                || path.equals("/api/server-ip")
-                || path.equals("/api/version")) {
-              return;
-            }
-
-            if (NetworkUtils.isLocalhost(ctx.ip(), null)) {
-              ctx.attribute("role", Role.ADMIN);
-              return;
-            }
-
-            String authHeader = ctx.header("Authorization");
-            if (authHeader != null && authHeader.startsWith("Bearer ")) {
-              String token = authHeader.substring(7);
-              if (AuthService.getInstance().isValidToken(token)) {
-                ctx.attribute("role", Role.DIRECTOR);
-                return;
-              }
-            }
-
-            ctx.attribute("role", Role.VIEWER);
-          });
-
-      app.exception(
-          Exception.class,
-          (e, ctx) -> {
-            logger.error("Uncaught exception in " + ctx.path(), e);
-            ctx.status(500).result("Internal Server Error: " + e.getMessage());
-          });
-
-      app.after(
-          ctx -> {
-            String path = ctx.path();
-            if (path.equals("/") || path.endsWith("/index.html") || path.endsWith("index.html")) {
-              applyNoCacheHeaders(ctx);
-            }
-          });
-
-      app.error(
-          404,
-          ctx -> {
-            String accept = ctx.header("Accept");
-            if (accept != null && accept.contains("text/html")) {
-              Path indexPath = Paths.get(staticFilePath, "index.html");
-              if (Files.exists(indexPath)) {
-                applyNoCacheHeaders(ctx);
-                ctx.contentType("text/html");
-                ctx.result(new String(Files.readAllBytes(indexPath)));
-              } else {
-                logger.error(
-                    "SPA Fallback: index.html not found at {}", indexPath.toAbsolutePath());
-              }
-            }
-          });
-
-      app.ws(
-          "/api/race-data",
-          ws -> {
-            ws.onConnect(
-                ctx -> {
-                  ClientSubscriptionManager.getInstance().addSession(ctx);
-                });
-            ws.onClose(
-                ctx -> {
-                  ClientSubscriptionManager.getInstance().removeSession(ctx);
-                });
-            ws.onError(
-                ctx -> {
-                  logger.debug(
-                      "Race data WebSocket error on session {}: {}",
-                      ctx.getSessionId(),
-                      ctx.error());
-                  ClientSubscriptionManager.getInstance().removeSession(ctx);
-                });
-            ws.onBinaryMessage(
-                ctx -> {
-                  try {
-                    RaceSubscriptionRequest request = RaceSubscriptionRequest.parseFrom(ctx.data());
-                    ClientSubscriptionManager.getInstance().handleRaceSubscription(ctx, request);
-                  } catch (Exception e) {
-                    // Ignore non-subscription messages
-                  }
-                });
-          });
-
-      app.ws(
-          "/api/interface-data",
-          ws -> {
-            ws.onConnect(
-                ctx -> {
-                  ClientSubscriptionManager.getInstance().addInterfaceSession(ctx);
-                });
-            ws.onClose(
-                ctx -> {
-                  ClientSubscriptionManager.getInstance().removeInterfaceSession(ctx);
-                });
-            ws.onError(
-                ctx -> {
-                  logger.debug(
-                      "Interface WebSocket error on session {}: {}",
-                      ctx.getSessionId(),
-                      ctx.error());
-                  ClientSubscriptionManager.getInstance().removeInterfaceSession(ctx);
-                });
-          });
-
-      new AuthTaskHandler(app, configService);
-      new ClientCommandTaskHandler(databaseContext, app);
-      new DatabaseTaskHandler(databaseContext, app);
-      new AssetTaskHandler(databaseContext, app);
-      new CustomUITaskHandler(databaseContext, app);
-      new ThemeTaskHandler(databaseContext, app);
-      new SettingsTaskHandler(app, configService);
-      new CustomDirectoryTaskHandler(app, configService);
+      configureWebSockets(app);
+      registerCoreTaskHandlers(databaseContext, app, configService);
 
       UpdateService updateService = new UpdateService(SERVER_VERSION, configService);
 
-      app.get(
-          "/api/update/config",
-          ctx -> {
-            java.util.Map<String, Object> configMap = new java.util.HashMap<>();
-            configMap.put("channel", configService.getUpdateChannel());
-            configMap.put("skippedVersion", configService.getSkippedUpdateVersion());
-            configMap.put("snoozedVersion", configService.getSnoozedUpdateVersion());
-            configMap.put("snoozedUntil", configService.getSnoozedUpdateUntil());
-            ctx.json(configMap);
-          });
-
-      app.post(
-          "/api/update/channel",
-          ctx -> {
-            try {
-              String body = ctx.body();
-              ObjectMapper mapper = new ObjectMapper();
-              com.fasterxml.jackson.databind.JsonNode json = mapper.readTree(body);
-              if (json.has("channel")) {
-                String channel = json.get("channel").asText().toUpperCase();
-                configService.setUpdateChannel(channel);
-                updateService.clearCache();
-                ctx.status(200).result("Channel updated");
-              } else {
-                ctx.status(400).result("Missing channel");
-              }
-            } catch (Exception e) {
-              logger.error("Failed to set update channel", e);
-              ctx.status(500).result("Internal error");
-            }
-          },
-          Role.ADMIN);
-
-      app.post(
-          "/api/update/snooze",
-          ctx -> {
-            try {
-              String body = ctx.body();
-              ObjectMapper mapper = new ObjectMapper();
-              com.fasterxml.jackson.databind.JsonNode json = mapper.readTree(body);
-              if (json.has("version")) {
-                String version = json.get("version").asText();
-                long days = json.has("durationDays") ? json.get("durationDays").asLong() : 7L;
-                long untilTimestamp = System.currentTimeMillis() + (days * 24L * 60L * 60L * 1000L);
-                configService.setSnoozedUpdate(version, untilTimestamp);
-                updateService.clearCache();
-                ctx.status(200).result("Update snoozed");
-              } else {
-                ctx.status(400).result("Missing version");
-              }
-            } catch (Exception e) {
-              logger.error("Failed to snooze update", e);
-              ctx.status(500).result("Internal error");
-            }
-          },
-          Role.ADMIN);
-
-      app.get(
-          "/api/update/check",
-          ctx -> {
-            boolean force = Boolean.parseBoolean(ctx.queryParam("force"));
-            if (force) {
-              updateService.clearCache();
-            }
-            ctx.json(updateService.checkForUpdates(force));
-          });
-
-      app.post(
-          "/api/update/skip",
-          ctx -> {
-            try {
-              String body = ctx.body();
-              ObjectMapper mapper = new ObjectMapper();
-              com.fasterxml.jackson.databind.JsonNode json = mapper.readTree(body);
-              if (json.has("version")) {
-                String version = json.get("version").asText();
-                configService.setSkippedUpdateVersion(version);
-                updateService.clearCache();
-                ctx.status(200).result("Version skipped");
-              } else {
-                ctx.status(400).result("Missing version");
-              }
-            } catch (Exception e) {
-              logger.error("Failed to skip update", e);
-              ctx.status(500).result("Internal error");
-            }
-          },
-          Role.ADMIN);
-
-      app.post(
-          "/api/update/install",
-          ctx -> {
-            try {
-              String body = ctx.body();
-              ObjectMapper mapper = new ObjectMapper();
-              com.fasterxml.jackson.databind.JsonNode json = mapper.readTree(body);
-              if (json.has("downloadUrl")) {
-                String downloadUrl = json.get("downloadUrl").asText();
-                new Thread(
-                        () -> {
-                          try {
-                            updateService.downloadAndInstallUpdate(downloadUrl);
-                          } catch (Exception e) {
-                            logger.error("Update failed", e);
-                          }
-                        })
-                    .start();
-                ctx.status(200).result("Update started");
-              } else {
-                ctx.status(400).result("Missing downloadUrl");
-              }
-            } catch (Exception e) {
-              ctx.status(500).result("Error: " + e.getMessage());
-            }
-          },
-          Role.ADMIN);
-
-      app.get(
-          "/api/update/progress",
-          ctx -> {
-            ctx.header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
-            ctx.contentType("application/json");
-            ctx.result(new ObjectMapper().writeValueAsString(updateService.getDownloadProgress()));
-          });
-
-      app.post(
-          "/api/update/cancel",
-          ctx -> {
-            updateService.cancelDownload();
-            ctx.status(200).result("Cancelled");
-          },
-          Role.ADMIN);
-
-      app.get("/api/version", ctx -> ctx.result(SERVER_VERSION));
-      app.get(
-          "/api/server/status",
-          ctx -> {
-            Map<String, Object> status = new HashMap<>();
-            status.put("version", SERVER_VERSION);
-            status.put(
-                "activeClients", ClientSubscriptionManager.getInstance().getActiveSessionCount());
-            status.put(
-                "pendingShutdown", ClientSubscriptionManager.getInstance().isPendingAutoShutdown());
-            ctx.json(status);
-          });
-      app.get("/api/server-ip", ctx -> ctx.result(getLocalIpAddress()));
-      app.post(
-          "/api/server/shutdown",
-          ctx -> {
-            logger.info("Shutdown requested via /api/server/shutdown from {}", ctx.ip());
-            ctx.status(200).result("Shutting down");
-            new Thread(
-                    () -> {
-                      try {
-                        Thread.sleep(200);
-                      } catch (InterruptedException ignored) {
-                      }
-                      System.exit(0);
-                    },
-                    "RemoteShutdownThread")
-                .start();
-          },
-          Role.ADMIN);
+      registerUpdateRoutes(app, configService, updateService);
+      registerServerRoutes(app);
 
       if (!headless) {
         openBrowser("http://localhost:" + serverPort);
@@ -874,5 +470,456 @@ public class App {
                 return server;
               });
         });
+  }
+
+  private static void registerUpdateRoutes(
+      Javalin app, ServerConfigService configService, UpdateService updateService) {
+    registerUpdateConfigRoutes(app, configService, updateService);
+    registerUpdateExecutionRoutes(app, updateService);
+  }
+
+  private static void registerUpdateConfigRoutes(
+      Javalin app, ServerConfigService configService, UpdateService updateService) {
+    app.get(
+        "/api/update/config",
+        ctx -> {
+          java.util.Map<String, Object> configMap = new java.util.HashMap<>();
+          configMap.put("channel", configService.getUpdateChannel());
+          configMap.put("skippedVersion", configService.getSkippedUpdateVersion());
+          configMap.put("snoozedVersion", configService.getSnoozedUpdateVersion());
+          configMap.put("snoozedUntil", configService.getSnoozedUpdateUntil());
+          ctx.json(configMap);
+        });
+
+    app.post(
+        "/api/update/channel",
+        ctx -> {
+          try {
+            String body = ctx.body();
+            ObjectMapper mapper = new ObjectMapper();
+            com.fasterxml.jackson.databind.JsonNode json = mapper.readTree(body);
+            if (json.has("channel")) {
+              String channel = json.get("channel").asText().toUpperCase();
+              configService.setUpdateChannel(channel);
+              updateService.clearCache();
+              ctx.status(200).result("Channel updated");
+            } else {
+              ctx.status(400).result("Missing channel");
+            }
+          } catch (Exception e) {
+            logger.error("Failed to set update channel", e);
+            ctx.status(500).result("Internal error");
+          }
+        },
+        Role.ADMIN);
+
+    app.post(
+        "/api/update/snooze",
+        ctx -> {
+          try {
+            String body = ctx.body();
+            ObjectMapper mapper = new ObjectMapper();
+            com.fasterxml.jackson.databind.JsonNode json = mapper.readTree(body);
+            if (json.has("version")) {
+              String version = json.get("version").asText();
+              long days = json.has("durationDays") ? json.get("durationDays").asLong() : 7L;
+              long untilTimestamp = System.currentTimeMillis() + (days * 24L * 60L * 60L * 1000L);
+              configService.setSnoozedUpdate(version, untilTimestamp);
+              updateService.clearCache();
+              ctx.status(200).result("Update snoozed");
+            } else {
+              ctx.status(400).result("Missing version");
+            }
+          } catch (Exception e) {
+            logger.error("Failed to snooze update", e);
+            ctx.status(500).result("Internal error");
+          }
+        },
+        Role.ADMIN);
+
+    app.post(
+        "/api/update/skip",
+        ctx -> {
+          try {
+            String body = ctx.body();
+            ObjectMapper mapper = new ObjectMapper();
+            com.fasterxml.jackson.databind.JsonNode json = mapper.readTree(body);
+            if (json.has("version")) {
+              String version = json.get("version").asText();
+              configService.setSkippedUpdateVersion(version);
+              updateService.clearCache();
+              ctx.status(200).result("Version skipped");
+            } else {
+              ctx.status(400).result("Missing version");
+            }
+          } catch (Exception e) {
+            logger.error("Failed to skip update", e);
+            ctx.status(500).result("Internal error");
+          }
+        },
+        Role.ADMIN);
+  }
+
+  private static void registerUpdateExecutionRoutes(Javalin app, UpdateService updateService) {
+    app.get(
+        "/api/update/check",
+        ctx -> {
+          boolean force = Boolean.parseBoolean(ctx.queryParam("force"));
+          if (force) {
+            updateService.clearCache();
+          }
+          ctx.json(updateService.checkForUpdates(force));
+        });
+
+    app.post(
+        "/api/update/install",
+        ctx -> {
+          try {
+            String body = ctx.body();
+            ObjectMapper mapper = new ObjectMapper();
+            com.fasterxml.jackson.databind.JsonNode json = mapper.readTree(body);
+            if (json.has("downloadUrl")) {
+              String downloadUrl = json.get("downloadUrl").asText();
+              new Thread(
+                      () -> {
+                        try {
+                          updateService.downloadAndInstallUpdate(downloadUrl);
+                        } catch (Exception e) {
+                          logger.error("Update failed", e);
+                        }
+                      })
+                  .start();
+              ctx.status(200).result("Update started");
+            } else {
+              ctx.status(400).result("Missing downloadUrl");
+            }
+          } catch (Exception e) {
+            ctx.status(500).result("Error: " + e.getMessage());
+          }
+        },
+        Role.ADMIN);
+
+    app.get(
+        "/api/update/progress",
+        ctx -> {
+          ctx.header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
+          ctx.contentType("application/json");
+          ctx.result(new ObjectMapper().writeValueAsString(updateService.getDownloadProgress()));
+        });
+
+    app.post(
+        "/api/update/cancel",
+        ctx -> {
+          updateService.cancelDownload();
+          ctx.status(200).result("Cancelled");
+        },
+        Role.ADMIN);
+  }
+
+  private static void registerServerRoutes(Javalin app) {
+    app.get("/api/version", ctx -> ctx.result(SERVER_VERSION));
+    app.get(
+        "/api/server/status",
+        ctx -> {
+          Map<String, Object> status = new HashMap<>();
+          status.put("version", SERVER_VERSION);
+          status.put(
+              "activeClients", ClientSubscriptionManager.getInstance().getActiveSessionCount());
+          status.put(
+              "pendingShutdown", ClientSubscriptionManager.getInstance().isPendingAutoShutdown());
+          ctx.json(status);
+        });
+    app.get("/api/server-ip", ctx -> ctx.result(getLocalIpAddress()));
+    app.post(
+        "/api/server/shutdown",
+        ctx -> {
+          logger.info("Shutdown requested via /api/server/shutdown from {}", ctx.ip());
+          ctx.status(200).result("Shutting down");
+          new Thread(
+                  () -> {
+                    try {
+                      Thread.sleep(200);
+                    } catch (InterruptedException ignored) {
+                    }
+                    System.exit(0);
+                  },
+                  "RemoteShutdownThread")
+              .start();
+        },
+        Role.ADMIN);
+  }
+
+  private static void configureWebSockets(Javalin app) {
+    app.ws(
+        "/api/race-data",
+        ws -> {
+          ws.onConnect(
+              ctx -> {
+                ClientSubscriptionManager.getInstance().addSession(ctx);
+              });
+          ws.onClose(
+              ctx -> {
+                ClientSubscriptionManager.getInstance().removeSession(ctx);
+              });
+          ws.onError(
+              ctx -> {
+                logger.debug(
+                    "Race data WebSocket error on session {}: {}", ctx.getSessionId(), ctx.error());
+                ClientSubscriptionManager.getInstance().removeSession(ctx);
+              });
+          ws.onBinaryMessage(
+              ctx -> {
+                try {
+                  RaceSubscriptionRequest request = RaceSubscriptionRequest.parseFrom(ctx.data());
+                  ClientSubscriptionManager.getInstance().handleRaceSubscription(ctx, request);
+                } catch (Exception e) {
+                  // Ignore non-subscription messages
+                }
+              });
+        });
+
+    app.ws(
+        "/api/interface-data",
+        ws -> {
+          ws.onConnect(
+              ctx -> {
+                ClientSubscriptionManager.getInstance().addInterfaceSession(ctx);
+              });
+          ws.onClose(
+              ctx -> {
+                ClientSubscriptionManager.getInstance().removeInterfaceSession(ctx);
+              });
+          ws.onError(
+              ctx -> {
+                logger.debug(
+                    "Interface WebSocket error on session {}: {}", ctx.getSessionId(), ctx.error());
+                ClientSubscriptionManager.getInstance().removeInterfaceSession(ctx);
+              });
+        });
+  }
+
+  private static void registerCoreTaskHandlers(
+      DatabaseContext databaseContext, Javalin app, ServerConfigService configService) {
+    new AuthTaskHandler(app, configService);
+    new ClientCommandTaskHandler(databaseContext, app);
+    new DatabaseTaskHandler(databaseContext, app);
+    new AssetTaskHandler(databaseContext, app);
+    new CustomUITaskHandler(databaseContext, app);
+    new ThemeTaskHandler(databaseContext, app);
+    new SettingsTaskHandler(app, configService);
+    new CustomDirectoryTaskHandler(app, configService);
+  }
+
+  private static void configureJavalinMiddleware(Javalin app, String staticFilePath) {
+    app.before(
+        ctx -> {
+          String path = ctx.path();
+
+          if (!path.startsWith("/api/")
+              || (path.startsWith("/api/auth/") && !path.startsWith("/api/auth/password"))
+              || path.equals("/api/server-ip")
+              || path.equals("/api/version")) {
+            return;
+          }
+
+          if (NetworkUtils.isLocalhost(ctx.ip(), null)) {
+            ctx.attribute("role", Role.ADMIN);
+            return;
+          }
+
+          String authHeader = ctx.header("Authorization");
+          if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            String token = authHeader.substring(7);
+            if (AuthService.getInstance().isValidToken(token)) {
+              ctx.attribute("role", Role.DIRECTOR);
+              return;
+            }
+          }
+
+          ctx.attribute("role", Role.VIEWER);
+        });
+
+    app.exception(
+        Exception.class,
+        (e, ctx) -> {
+          logger.error("Uncaught exception in " + ctx.path(), e);
+          ctx.status(500).result("Internal Server Error: " + e.getMessage());
+        });
+
+    app.after(
+        ctx -> {
+          String path = ctx.path();
+          if (path.equals("/") || path.endsWith("/index.html") || path.endsWith("index.html")) {
+            applyNoCacheHeaders(ctx);
+          }
+        });
+
+    app.error(
+        404,
+        ctx -> {
+          String accept = ctx.header("Accept");
+          if (accept != null && accept.contains("text/html")) {
+            Path indexPath = Paths.get(staticFilePath, "index.html");
+            if (Files.exists(indexPath)) {
+              applyNoCacheHeaders(ctx);
+              ctx.contentType("text/html");
+              ctx.result(new String(Files.readAllBytes(indexPath)));
+            } else {
+              logger.error("SPA Fallback: index.html not found at {}", indexPath.toAbsolutePath());
+            }
+          }
+        });
+  }
+
+  private static String resolveStaticFilePath() {
+    String[] possiblePaths = {"client/dist/client", "../client/dist/client", "web", "server/web"};
+    for (String path : possiblePaths) {
+      if (Files.exists(Paths.get(path))) {
+        return path;
+      }
+    }
+    return "web";
+  }
+
+  private static void startJavalinServer(String staticFilePath, boolean headless) {
+    logger.info("Starting Javalin on port {}...", serverPort);
+    try {
+      app = createJavalin(staticFilePath).start(serverPort);
+      logger.info("Javalin started successfully on port {}.", serverPort);
+    } catch (Exception e) {
+      if (AppInstanceCoordinator.isRaceCoordinatorRunning(serverPort)) {
+        AppInstanceCoordinator.handleAlreadyRunning(
+            serverPort,
+            headless,
+            () -> {
+              try {
+                app = createJavalin(staticFilePath).start(serverPort);
+                logger.info("Javalin restarted successfully on port {}.", serverPort);
+              } catch (Exception retryEx) {
+                handlePortConflict(serverPort, headless, retryEx);
+              }
+            });
+      } else {
+        handlePortConflict(serverPort, headless, e);
+      }
+    }
+  }
+
+  private static void initLogReplayIfEnabled() {
+    String logReplayFile = System.getProperty("enableLogReplay");
+    if (logReplayFile != null && !logReplayFile.trim().isEmpty()) {
+      DatabaseService.getInstance().setReplayMode(true);
+      com.antigravity.service.LogReplayService.init(logReplayFile); // fqn-collision
+      logger.info("Log Replay Mode Enabled. Reading from {}", logReplayFile);
+    }
+  }
+
+  private static boolean isHeadless(String[] args) {
+    for (String arg : args) {
+      if ("--headless".equals(arg)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static void registerShutdownHook() {
+    Runtime.getRuntime()
+        .addShutdownHook(
+            new Thread(
+                () -> {
+                  logger.info("Shutting down server...");
+                  Thread watchdog =
+                      new Thread(
+                          () -> {
+                            try {
+                              Thread.sleep(5000);
+                              logger.warn("Shutdown sequence exceeded 5s timeout. Forcing halt.");
+                              Runtime.getRuntime().halt(0);
+                            } catch (InterruptedException ignored) {
+                            }
+                          },
+                          "Shutdown-Watchdog");
+                  watchdog.setDaemon(true);
+                  watchdog.start();
+
+                  if (currentTrayIcon != null && SystemTray.isSupported()) {
+                    try {
+                      SystemTray.getSystemTray().remove(currentTrayIcon);
+                    } catch (Exception ignored) {
+                    }
+                  }
+
+                  ClientSubscriptionManager.getInstance().setShuttingDown(true);
+                  if (app != null) {
+                    try {
+                      app.stop();
+                    } catch (Exception e) {
+                      logger.error("Error stopping Javalin: " + e.getMessage());
+                    }
+                  }
+                  logger.info("Server stopped.");
+                  triggerLogRollover();
+                }));
+  }
+
+  static DatabaseContext initializeDatabaseContext(
+      String appDataDir, ServerConfigService configService) {
+    List<String> existingDatabases = DatabaseContext.listDatabases(appDataDir);
+    String activeDb;
+    DatabaseContext databaseContext;
+    if (!existingDatabases.contains("RaceCoordinator_AI_DB")) {
+      logger.info(
+          "Default database 'RaceCoordinator_AI_DB' not found. "
+              + "Creating 'RaceCoordinator_AI_DB' with factory defaults.");
+      activeDb = "RaceCoordinator_AI_DB";
+      databaseContext = new DatabaseContext(activeDb, configService, appDataDir);
+      ClientSubscriptionManager.getInstance().setDatabaseContext(databaseContext);
+      databaseContext.createDatabase(activeDb);
+      databaseContext.resetDatabaseToFactory(activeDb);
+    } else {
+      String lastActiveDb = configService.getLastActiveDatabase();
+      if (lastActiveDb != null && existingDatabases.contains(lastActiveDb)) {
+        activeDb = lastActiveDb;
+      } else {
+        activeDb = "RaceCoordinator_AI_DB";
+      }
+      databaseContext = new DatabaseContext(activeDb, configService, appDataDir);
+      ClientSubscriptionManager.getInstance().setDatabaseContext(databaseContext);
+
+      DatabaseContext.DatabaseStats stats = databaseContext.getDatabaseStats(activeDb);
+      if (stats.driverCount == 0 && stats.trackCount == 0 && stats.raceCount == 0) {
+        logger.info("Database '{}' is uninitialized. Resetting to factory defaults...", activeDb);
+        databaseContext.resetDatabaseToFactory(activeDb);
+      }
+    }
+    return databaseContext;
+  }
+
+  private static void processPendingMigrations(String appDataDir, DatabaseContext databaseContext) {
+    File pendingImportDir = new File(appDataDir, "pending_imports");
+    if (pendingImportDir.exists() && pendingImportDir.isDirectory()) {
+      logger.info("Found pending database migrations. Importing...");
+      File[] zipFiles = pendingImportDir.listFiles((dir, name) -> name.endsWith(".zip"));
+      if (zipFiles != null) {
+        for (File zipFile : zipFiles) {
+          String dbName = zipFile.getName().substring(0, zipFile.getName().length() - 4);
+          logger.info("Importing migrated database: {}", dbName);
+          try (java.io.FileInputStream fis = new java.io.FileInputStream(zipFile)) {
+            databaseContext.importDatabase(dbName, fis);
+          } catch (Exception e) {
+            logger.error("Failed to import database: " + dbName, e);
+          }
+        }
+      }
+      File[] files = pendingImportDir.listFiles();
+      if (files != null) {
+        for (File f : files) {
+          f.delete();
+        }
+      }
+      pendingImportDir.delete();
+      logger.info("Migration imports completed.");
+    }
   }
 }

@@ -1,5 +1,3 @@
-/* eslint-disable max-lines */
-import {} from "@angular/cdk/drag-drop";
 import {
   ChangeDetectorRef,
   Component,
@@ -28,22 +26,64 @@ import {
   MAX_DIGITAL_PINS,
 } from "@app/models/track";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
-import { PinBehavior, RgbLedBehavior } from "@app/proto/antigravity";
+import { PinBehavior } from "@app/proto/antigravity";
+import { GuideStep } from "@app/services/help.service";
 import { LoggerService } from "@app/services/logger.service";
 import { TranslationService } from "@app/services/translation.service";
 
-interface PinAction {
-  label: string;
-  value: string;
-  disabled?: boolean;
-  tooltip?: string;
-}
-
-interface PinGroup {
-  key: string;
-  label: string;
-  actions: PinAction[];
-}
+import { buildArduinoHelpSteps } from "./arduino-editor-help.helper";
+import {
+  checkCallButtonPins,
+  processAnalogDataEvent,
+  processDigitalPinEvent,
+} from "./arduino-event.helper";
+import {
+  buildColorOrders,
+  buildLedBehaviors,
+  buildLedTypes,
+  getLedActionLabel,
+  getLedBaseTranslationKey,
+  getRgbLedColorHex,
+  getRgbLedColorShadow,
+} from "./arduino-led.helper";
+import {
+  createLedString,
+  removeLedStringByIndex,
+  removeLedStringByPin,
+  updateLedBehaviorState,
+  updateLedStringBrightness,
+  updateLedStringColorOrder,
+  updateLedStringCount,
+  updateLedStringFlashRate,
+  updateLedStringLaneColor,
+  updateLedStringLedType,
+} from "./arduino-led-string.helper";
+import {
+  createPinGroups,
+  filterPinActions,
+  getLaneForAnalogPin,
+  getPinAction,
+  getVoltageLanes,
+  isOutputPinBehavior,
+  parsePinAction,
+  PinAction,
+  PinGroup,
+  syncArduinoLanes,
+} from "./arduino-pin.helper";
+import {
+  loadArduinoGroupsCollapsed,
+  loadArduinoLedStringsExpanded,
+  loadArduinoLedStringsLinked,
+  loadArduinoSections,
+  loadArduinoVoltageLinked,
+  saveArduinoState,
+} from "./arduino-storage.helper";
+import {
+  applyMaxToSeen,
+  applyVoltageMax,
+  getLiveVoltageForLane,
+  getVoltageMax,
+} from "./arduino-voltage.helper";
 
 @Component({
   standalone: true,
@@ -132,176 +172,140 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
     });
   }
 
-  /* eslint-disable max-lines-per-function */
   ngOnInit() {
     this.fetchPorts();
     this.portPollingSubscription = timer(5000, 5000).subscribe(() => {
       this.fetchPorts();
     });
 
-    // Load expanded state from localStorage
-    const savedSections = localStorage.getItem(
-      `rc.arduino-editor.sections.${this.index()}`,
-    );
-    if (savedSections) {
-      try {
-        const parsed = JSON.parse(savedSections);
-        this.sectionsExpanded = { ...this.sectionsExpanded, ...parsed };
-      } catch (e) {
-        this.logger.error("Failed to parse saved sections", e);
-      }
-    }
-
-    // Load collapsed groups
-    const savedGroups = localStorage.getItem(
-      `rc.arduino-editor.groups-collapsed.${this.index()}`,
-    );
-    if (savedGroups) {
-      try {
-        this.groupsCollapsed = JSON.parse(savedGroups);
-      } catch (e) {
-        this.logger.error("Failed to parse saved groups", e);
-      }
-    }
-
-    // Load link states
-    const savedVoltageLink = localStorage.getItem(
-      `rc.arduino-editor.voltage-linked.${this.index()}`,
-    );
-    if (savedVoltageLink !== null) {
-      this.isVoltageLinked = savedVoltageLink === "true";
-    }
-
-    const savedLedLink = localStorage.getItem(
-      `rc.arduino-editor.led-strings-linked.${this.index()}`,
-    );
-    if (savedLedLink !== null) {
-      this.isLedStringsLinked = savedLedLink === "true";
-    }
-
-    const config = this.config();
-    if (config && config.ledStrings) {
-      config.ledStrings.forEach((ls) => {
-        if (ls.ledType === undefined) ls.ledType = 0;
-      });
-
-      // Default to open (true)
-      this.ledStringExpanded = new Array(config.ledStrings.length).fill(true);
-      const savedLeds = localStorage.getItem(
-        `rc.arduino-editor.led-strings.${this.index()}`,
-      );
-      if (savedLeds) {
-        try {
-          const parsed = JSON.parse(savedLeds);
-          if (Array.isArray(parsed)) {
-            parsed.forEach((val, i) => {
-              if (i < this.ledStringExpanded.length) {
-                this.ledStringExpanded[i] = val;
-              }
-            });
-          }
-        } catch (e) {
-          this.logger.error("Failed to parse saved led strings", e);
-        }
-      }
-    }
+    this.loadSavedSettings();
 
     this.updatePinActions();
     this.updateLedBehaviors();
     this.updateLedTypes();
     this.updateColorOrders();
 
-    // Subscribe to Interface Events for status and pin activity
+    this.subscribeToInterfaceEvents();
+    this.subscribeToDebounceUpdates();
+
+    this.translationService.getCurrentLanguage().subscribe(() => {
+      this.updatePinActions();
+      this.updateLedBehaviors();
+      this.updateLedTypes();
+      this.updateColorOrders();
+    });
+
+    this.updateArduinoConfig();
+  }
+
+  private loadSavedSettings() {
+    this.sectionsExpanded = loadArduinoSections(
+      this.index(),
+      this.sectionsExpanded,
+      this.logger,
+    );
+    this.groupsCollapsed = loadArduinoGroupsCollapsed(
+      this.index(),
+      this.logger,
+    );
+    this.isVoltageLinked = loadArduinoVoltageLinked(this.index());
+    this.isLedStringsLinked = loadArduinoLedStringsLinked(this.index());
+    this.initLedStringsExpanded();
+  }
+
+  private initLedStringsExpanded() {
+    const config = this.config();
+    if (config && config.ledStrings) {
+      config.ledStrings.forEach((ls) => {
+        if (ls.ledType === undefined) ls.ledType = 0;
+      });
+      this.ledStringExpanded = loadArduinoLedStringsExpanded(
+        this.index(),
+        config.ledStrings.length,
+        this.logger,
+      );
+    }
+  }
+
+  private subscribeToInterfaceEvents() {
     this.interfaceEventsSubscription = this.dataService
       .getInterfaceEvents()
       .subscribe({
         next: (event) => {
-          if (event.lap) {
-            if ((event.lap.interfaceIndex ?? 0) === this.index()) {
-              this.triggerPinActivity(event.lap.interfaceId ?? -1);
-            }
-          } else if (event.segment) {
-            if ((event.segment.interfaceIndex ?? 0) === this.index()) {
-              this.triggerPinActivity(event.segment.interfaceId ?? -1);
-            }
-          } else if (event.callbutton) {
-            if ((event.callbutton.interfaceIndex ?? 0) === this.index()) {
-              const lane = event.callbutton.lane;
-              // Trigger activity for master call button or specific lane call button
-              const config = this.config();
-              const isMega = config?.hardwareType === 1;
-              const digitalCount = isMega ? 54 : 14;
-              const analogCount = isMega ? 16 : 6;
-
-              const checkPin = (isDigital: boolean, pinCount: number) => {
-                for (let i = 0; i < pinCount; i++) {
-                  if (isDigital && i < 2) continue; // Skip D0, D1
-                  const behavior = this.getPinBehavior(isDigital, i);
-                  if (
-                    behavior === PinBehavior.BEHAVIOR_CALL_BUTTON ||
-                    behavior ===
-                      PinBehavior.BEHAVIOR_CALL_BUTTON_BASE + (lane ?? 0)
-                  ) {
-                    this.triggerPinActivity(isDigital ? i : i + 1000);
-                  }
-                }
-              };
-
-              checkPin(true, digitalCount);
-              checkPin(false, analogCount);
-            }
-          } else if (event.status) {
-            if ((event.status.interfaceIndex ?? 0) === this.index()) {
-              this.interfaceStatus = event.status.status as number;
-              if (this.interfaceStatus === 0) {
-                this.supportsRgbLeds = event.status.supportsRgbLeds ?? true;
-              } else {
-                this.supportsRgbLeds = true;
-              }
-              this.cdr.detectChanges();
-            }
-          } else if (event.analogData) {
-            if ((event.analogData.interfaceIndex ?? 0) === this.index()) {
-              const pin = event.analogData.pin ?? -1;
-              const value = event.analogData.value ?? 0;
-              this.liveVoltages[pin] = value;
-
-              const lane = this.getLaneForAnalogPin(pin);
-              if (lane !== -1) {
-                const currentMax = this.maxVoltagesSeen[lane] ?? 0;
-                if (value > currentMax) {
-                  this.maxVoltagesSeen[lane] = value;
-                }
-              }
-              this.cdr.detectChanges();
-            }
-          } else if (event.digitalPin) {
-            if ((event.digitalPin.interfaceIndex ?? 0) === this.index()) {
-              const pin = event.digitalPin.pin ?? -1;
-              const isDigital = event.digitalPin.isDigital ?? false;
-              const state = event.digitalPin.state ?? 0;
-              const key = (isDigital ? "D" : "A") + pin;
-
-              // Map the raw state to our "active" status based on normally closed settings
-              // For inputs, we consider it "active" (green) if it's in the trip state
-              const config = this.config();
-              const nc = config?.normallyClosedLaneSensors;
-              const isTrip = nc ? state === 1 : state === 0;
-
-              this.pinActivity[key] = isTrip;
-
-              // Clear any existing pulse timer for this pin since we have real-time state
-              if (this.pinActivityTimers[key]) {
-                clearTimeout(this.pinActivityTimers[key]);
-                delete this.pinActivityTimers[key];
-              }
-              this.cdr.detectChanges();
-            }
-          }
+          this.handleInterfaceEvent(event);
         },
       });
+  }
 
-    // Handle debounce changes
+  private handleInterfaceEvent(event: any) {
+    if (event.lap) {
+      if ((event.lap.interfaceIndex ?? 0) === this.index()) {
+        this.triggerPinActivity(event.lap.interfaceId ?? -1);
+      }
+    } else if (event.segment) {
+      if ((event.segment.interfaceIndex ?? 0) === this.index()) {
+        this.triggerPinActivity(event.segment.interfaceId ?? -1);
+      }
+    } else if (event.callbutton) {
+      this.handleCallButtonEvent(event.callbutton);
+    } else if (event.status) {
+      this.handleStatusEvent(event.status);
+    } else if (event.analogData) {
+      this.handleAnalogDataEvent(event.analogData);
+    } else if (event.digitalPin) {
+      this.handleDigitalPinEvent(event.digitalPin);
+    }
+  }
+
+  private handleCallButtonEvent(callbutton: any) {
+    if ((callbutton.interfaceIndex ?? 0) !== this.index()) {
+      return;
+    }
+    checkCallButtonPins(
+      this.config(),
+      callbutton.lane,
+      (isDigital, pin) => this.getPinBehavior(isDigital, pin),
+      (pinId) => this.triggerPinActivity(pinId),
+    );
+  }
+
+  private handleStatusEvent(status: any) {
+    if ((status.interfaceIndex ?? 0) === this.index()) {
+      this.interfaceStatus = status.status as number;
+      if (this.interfaceStatus === 0) {
+        this.supportsRgbLeds = status.supportsRgbLeds ?? true;
+      } else {
+        this.supportsRgbLeds = true;
+      }
+      this.cdr.detectChanges();
+    }
+  }
+
+  private handleAnalogDataEvent(analogData: any) {
+    if ((analogData.interfaceIndex ?? 0) === this.index()) {
+      processAnalogDataEvent(
+        analogData,
+        this.liveVoltages,
+        this.maxVoltagesSeen,
+        (pin) => this.getLaneForAnalogPin(pin),
+      );
+      this.cdr.detectChanges();
+    }
+  }
+
+  private handleDigitalPinEvent(digitalPin: any) {
+    if ((digitalPin.interfaceIndex ?? 0) === this.index()) {
+      processDigitalPinEvent(
+        digitalPin,
+        this.config(),
+        this.pinActivity,
+        this.pinActivityTimers,
+      );
+      this.cdr.detectChanges();
+    }
+  }
+
+  private subscribeToDebounceUpdates() {
     this.debounceUpdateSubject
       .pipe(debounceTime(500), distinctUntilChanged())
       .subscribe((value) => {
@@ -311,16 +315,6 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
           this.updateArduinoConfig();
         }
       });
-
-    // Translate pin actions when language changes
-    this.translationService.getCurrentLanguage().subscribe(() => {
-      this.updatePinActions();
-      this.updateLedBehaviors();
-      this.updateLedTypes();
-      this.updateColorOrders();
-    });
-
-    this.updateArduinoConfig();
   }
 
   ngOnDestroy() {
@@ -491,22 +485,14 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
   }
 
   getRgbLedColorHex(stringIndex: number, ledIndex: number): string | undefined {
-    const color = this.getRgbLedColor(stringIndex, ledIndex);
-    if (color === "red") return "#ef4444";
-    if (color === "green") return "#22c55e";
-    if (color === "blue") return "#3b82f6";
-    return undefined;
+    return getRgbLedColorHex(this.getRgbLedColor(stringIndex, ledIndex));
   }
 
   getRgbLedColorShadow(
     stringIndex: number,
     ledIndex: number,
   ): string | undefined {
-    const color = this.getRgbLedColor(stringIndex, ledIndex);
-    if (color === "red") return "0 0 8px rgba(239, 68, 68, 0.6)";
-    if (color === "green") return "0 0 8px rgba(34, 197, 94, 0.6)";
-    if (color === "blue") return "0 0 8px rgba(59, 130, 246, 0.6)";
-    return undefined;
+    return getRgbLedColorShadow(this.getRgbLedColor(stringIndex, ledIndex));
   }
 
   sendLedStringState(stringIndex: number) {
@@ -532,20 +518,12 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
       return { index: idx, r, g, b };
     });
 
-    console.log(
-      `sendLedStringState: sending ${states.length} LED states to pin ${ls.pin}`,
-    );
-
     this.dataService
       .setInterfaceRgbLedState(ls.pin, states, this.index())
       .subscribe({
         next: (resp) => {
           if (!resp.success) {
             this.logger.error("Failed to set RGB LED state:", resp.message);
-          } else {
-            console.log(
-              "sendLedStringState: successfully sent RGB LED state to server",
-            );
           }
         },
         error: (err) => this.logger.error("Error setting RGB LED state:", err),
@@ -576,8 +554,6 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
 
     this.activeRgbLedStates[key] = nextState;
     this.cdr.detectChanges();
-
-    console.log(`toggleRgbLed: key=${key}, nextState=${nextState}`);
 
     this.sendLedStringState(stringIndex);
   }
@@ -636,21 +612,7 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
       return;
     }
     const behavior = this.getPinBehavior(isDigital, pin);
-    // Check if it is a Write pin (Relay)
-    // BEHAVIOR_RELAY = 3; BEHAVIOR_RELAY_BASE = 4000;
-    const isRelay =
-      behavior === PinBehavior.BEHAVIOR_RELAY ||
-      (behavior >= PinBehavior.BEHAVIOR_RELAY_BASE &&
-        behavior < PinBehavior.BEHAVIOR_RELAY_BASE + 1000) ||
-      behavior === PinBehavior.BEHAVIOR_ANALOG_LED_GREEN_FLAG ||
-      behavior === PinBehavior.BEHAVIOR_ANALOG_LED_YELLOW_FLAG ||
-      (behavior >= PinBehavior.BEHAVIOR_ANALOG_LED_COUNTDOWN_1 &&
-        behavior <= PinBehavior.BEHAVIOR_ANALOG_LED_COUNTDOWN_5) ||
-      (behavior >= (PinBehavior as any).BEHAVIOR_ANALOG_LED_HEAT_LEADER_BASE &&
-        behavior <
-          (PinBehavior as any).BEHAVIOR_ANALOG_LED_HEAT_LEADER_BASE + 1000);
-
-    if (isRelay) {
+    if (isOutputPinBehavior(behavior)) {
       const key = isDigital ? `D${pin}` : `A${pin}`;
       const currentState = !!this.pinState[key];
       const newState = !currentState;
@@ -683,129 +645,11 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
 
   getPinAction(isDigital: boolean, pinIndex: number): string {
     const val = this.getPinBehavior(isDigital, pinIndex);
-    if (val === PinBehavior.BEHAVIOR_UNUSED || val === -1) return "";
-    if (val === PinBehavior.BEHAVIOR_RESERVED) return "reserved";
-    if (val === PinBehavior.BEHAVIOR_CALL_BUTTON) return "master_call";
-    if (val === PinBehavior.BEHAVIOR_RELAY) return "master_relay";
-
-    if (
-      val >= PinBehavior.BEHAVIOR_LAP_BASE &&
-      val < PinBehavior.BEHAVIOR_SEGMENT_BASE
-    )
-      return `lap_${val - PinBehavior.BEHAVIOR_LAP_BASE}`;
-
-    if (
-      val >= PinBehavior.BEHAVIOR_SEGMENT_BASE &&
-      val < PinBehavior.BEHAVIOR_CALL_BUTTON_BASE
-    )
-      return `segment_${val - PinBehavior.BEHAVIOR_SEGMENT_BASE}`;
-
-    if (
-      val >= PinBehavior.BEHAVIOR_CALL_BUTTON_BASE &&
-      val < PinBehavior.BEHAVIOR_RELAY_BASE
-    )
-      return `call_${val - PinBehavior.BEHAVIOR_CALL_BUTTON_BASE}`;
-
-    if (
-      val >= PinBehavior.BEHAVIOR_RELAY_BASE &&
-      val < PinBehavior.BEHAVIOR_RELAY_BASE + 1000
-    )
-      return `relay_${val - PinBehavior.BEHAVIOR_RELAY_BASE}`;
-
-    if (
-      val >= PinBehavior.BEHAVIOR_PIT_IN_BASE &&
-      val < PinBehavior.BEHAVIOR_PIT_OUT_BASE
-    )
-      return `pitin_${val - PinBehavior.BEHAVIOR_PIT_IN_BASE}`;
-
-    if (
-      val >= PinBehavior.BEHAVIOR_PIT_OUT_BASE &&
-      val < PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE
-    )
-      return `pitout_${val - PinBehavior.BEHAVIOR_PIT_OUT_BASE}`;
-
-    if (
-      val >= PinBehavior.BEHAVIOR_PIT_IN_OUT_BASE &&
-      val < PinBehavior.BEHAVIOR_PIT_IN_OUT_BASE + 1000
-    )
-      return `pitinout_${val - PinBehavior.BEHAVIOR_PIT_IN_OUT_BASE}`;
-
-    if (val === PinBehavior.BEHAVIOR_RESERVED) return "reserved";
-
-    if (
-      val >= PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE &&
-      val < PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE + 1000
-    )
-      return `voltage_${val - PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE}`;
-
-    if (val === (PinBehavior as any).BEHAVIOR_LED_RGB_STRING)
-      return "led_string";
-
-    if (val === (PinBehavior as any).BEHAVIOR_ANALOG_LED_GREEN_FLAG) {
-      return "analogled_green";
-    }
-    if (val === (PinBehavior as any).BEHAVIOR_ANALOG_LED_YELLOW_FLAG) {
-      return "analogled_yellow";
-    }
-    for (let i = 1; i <= 5; i++) {
-      if (val === (PinBehavior as any)[`BEHAVIOR_ANALOG_LED_COUNTDOWN_${i}`]) {
-        return `analogled_countdown_${i}`;
-      }
-    }
-    if (
-      val >= (PinBehavior as any).BEHAVIOR_ANALOG_LED_HEAT_LEADER_BASE &&
-      val < (PinBehavior as any).BEHAVIOR_ANALOG_LED_HEAT_LEADER_BASE + 1000
-    ) {
-      return `analogled_heat_leader_${val - (PinBehavior as any).BEHAVIOR_ANALOG_LED_HEAT_LEADER_BASE}`;
-    }
-
-    return "";
+    return getPinAction(val);
   }
 
   setPinAction(isDigital: boolean, pinIndex: number, action: string) {
-    let val = PinBehavior.BEHAVIOR_UNUSED;
-    if (action === "master_call") {
-      val = PinBehavior.BEHAVIOR_CALL_BUTTON;
-    } else if (action === "master_relay") {
-      val = PinBehavior.BEHAVIOR_RELAY;
-    } else if (action.startsWith("lap_")) {
-      const laneIndex = parseInt(action.split("_")[1], 10);
-      val = PinBehavior.BEHAVIOR_LAP_BASE + laneIndex;
-    } else if (action.startsWith("segment_")) {
-      const laneIndex = parseInt(action.split("_")[1], 10);
-      val = PinBehavior.BEHAVIOR_SEGMENT_BASE + laneIndex;
-    } else if (action.startsWith("call_")) {
-      const laneIndex = parseInt(action.split("_")[1], 10);
-      val = PinBehavior.BEHAVIOR_CALL_BUTTON_BASE + laneIndex;
-    } else if (action.startsWith("relay_")) {
-      const laneIndex = parseInt(action.split("_")[1], 10);
-      val = PinBehavior.BEHAVIOR_RELAY_BASE + laneIndex;
-    } else if (action === "reserved") {
-      val = PinBehavior.BEHAVIOR_RESERVED;
-    } else if (action.startsWith("voltage_")) {
-      const laneIndex = parseInt(action.split("_")[1], 10);
-      val = PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE + laneIndex;
-    } else if (action.startsWith("pitin_")) {
-      const laneIndex = parseInt(action.split("_")[1], 10);
-      val = PinBehavior.BEHAVIOR_PIT_IN_BASE + laneIndex;
-    } else if (action.startsWith("pitout_")) {
-      const laneIndex = parseInt(action.split("_")[1], 10);
-      val = PinBehavior.BEHAVIOR_PIT_OUT_BASE + laneIndex;
-    } else if (action === "led_string") {
-      val = (PinBehavior as any).BEHAVIOR_LED_RGB_STRING;
-    } else if (action === "analogled_green") {
-      val = (PinBehavior as any).BEHAVIOR_ANALOG_LED_GREEN_FLAG;
-    } else if (action === "analogled_yellow") {
-      val = (PinBehavior as any).BEHAVIOR_ANALOG_LED_YELLOW_FLAG;
-    } else if (action.startsWith("analogled_countdown_")) {
-      const index = parseInt(action.split("_")[2], 10);
-      val = (PinBehavior as any)[`BEHAVIOR_ANALOG_LED_COUNTDOWN_${index}`];
-    } else if (action.startsWith("analogled_heat_leader_")) {
-      const laneIndex = parseInt(action.split("_")[3], 10);
-      val =
-        (PinBehavior as any).BEHAVIOR_ANALOG_LED_HEAT_LEADER_BASE + laneIndex;
-    }
-
+    const val = parsePinAction(action);
     this.setPinBehavior(isDigital, pinIndex, val.toString());
   }
 
@@ -844,254 +688,26 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
     }
   }
 
-  /* eslint-disable max-lines-per-function */
   private updateLedBehaviors() {
-    const lanes = this.lanes();
-    const groups: PinGroup[] = [];
-
-    // 1. General Group
-    const generalActions: PinAction[] = [];
-    generalActions.push({
-      label: this.translationService.translate("AE_PIN_UNUSED"),
-      value: RgbLedBehavior.RGB_LED_BEHAVIOR_UNUSED.toString(),
-    });
-    groups.push({ key: "", label: "", actions: generalActions });
-
-    // 2. Leader Group
-    const leaderActions: PinAction[] = [];
-    leaderActions.push({
-      label: this.translationService.translate(
-        "RGB_LED_BEHAVIOR_HEAT_PROGRESS",
-      ),
-      value: RgbLedBehavior.RGB_LED_BEHAVIOR_HEAT_PROGRESS.toString(),
-    });
-    leaderActions.push({
-      label: this.translationService.translate("RGB_LED_BEHAVIOR_HEAT_LEADER"),
-      value: RgbLedBehavior.RGB_LED_BEHAVIOR_HEAT_LEADER.toString(),
-    });
-    lanes.forEach((_, i) => {
-      leaderActions.push({
-        label: this.translationService.translate(
-          "AE_LED_BEHAVIOR_HEAT_LEADER_LANE",
-          { lane: i + 1 },
-        ),
-        value: (
-          RgbLedBehavior.RGB_LED_BEHAVIOR_HEAT_LEADER_BASE + i
-        ).toString(),
-      });
-    });
-    groups.push({
-      key: "AE_LED_GROUP_LEADER",
-      label: this.translationService.translate("AE_LED_GROUP_LEADER"),
-      actions: leaderActions,
-    });
-
-    // 3. Fuel Group
-    const fuelActions: PinAction[] = [];
-    lanes.forEach((_, i) => {
-      fuelActions.push({
-        label: this.translationService.translate(
-          "AE_LED_BEHAVIOR_FUEL_LEVEL_LANE",
-          { lane: i + 1 },
-        ),
-        value: (RgbLedBehavior.RGB_LED_BEHAVIOR_FUEL_LEVEL_BASE + i).toString(),
-      });
-    });
-    groups.push({
-      key: "AE_LED_GROUP_FUEL",
-      label: this.translationService.translate("AE_LED_GROUP_FUEL"),
-      actions: fuelActions,
-    });
-
-    // 4. Refueling Group
-    const refuelActions: PinAction[] = [];
-    lanes.forEach((_, i) => {
-      refuelActions.push({
-        label: this.translationService.translate(
-          "AE_LED_BEHAVIOR_REFUELING_LANE",
-          { lane: i + 1 },
-        ),
-        value: (RgbLedBehavior.RGB_LED_BEHAVIOR_REFUELING_BASE + i).toString(),
-      });
-    });
-    groups.push({
-      key: "AE_LED_GROUP_REFUELING",
-      label: this.translationService.translate("AE_LED_GROUP_REFUELING"),
-      actions: refuelActions,
-    });
-
-    // 5. Lap Indicator Group
-    const lapIndActions: PinAction[] = [];
-    lanes.forEach((_, i) => {
-      lapIndActions.push({
-        label: this.translationService.translate(
-          "AE_LED_BEHAVIOR_LAP_INDICATOR_LANE",
-          { lane: i + 1 },
-        ),
-        value: (
-          RgbLedBehavior.RGB_LED_BEHAVIOR_LAP_INDICATOR_BASE + i
-        ).toString(),
-      });
-    });
-    groups.push({
-      key: "AE_LED_GROUP_LAP_INDICATOR",
-      label: this.translationService.translate("AE_LED_GROUP_LAP_INDICATOR"),
-      actions: lapIndActions,
-    });
-
-    // 6. Lap Sensor Group
-    const lapSensActions: PinAction[] = [];
-    lanes.forEach((_, i) => {
-      lapSensActions.push({
-        label: this.translationService.translate(
-          "AE_LED_BEHAVIOR_LAP_SENSOR_LANE",
-          { lane: i + 1 },
-        ),
-        value: (RgbLedBehavior.RGB_LED_BEHAVIOR_LAP_SENSOR_BASE + i).toString(),
-      });
-    });
-    groups.push({
-      key: "AE_LED_GROUP_LAP_SENSOR",
-      label: this.translationService.translate("AE_LED_GROUP_LAP_SENSOR"),
-      actions: lapSensActions,
-    });
-
-    // 7. Race State Group
-    const stateActions: PinAction[] = [];
-    for (let i = 1; i <= 5; i++) {
-      stateActions.push({
-        label: this.translationService.translate("AE_LED_BEHAVIOR_RACE_STATE", {
-          index: i,
-        }),
-        value: (
-          RgbLedBehavior.RGB_LED_BEHAVIOR_RACE_STATE_BASE +
-          i -
-          1
-        ).toString(),
-      });
-    }
-    groups.push({
-      key: "AE_LED_GROUP_RACE_STATE",
-      label: this.translationService.translate("AE_LED_GROUP_RACE_STATE"),
-      actions: stateActions,
-    });
-
-    // 8. Countdown Group
-    const countActions: PinAction[] = [];
-    for (let i = 1; i <= 5; i++) {
-      countActions.push({
-        label: this.translationService.translate("AE_LED_BEHAVIOR_COUNTDOWN", {
-          index: i,
-        }),
-        value: (
-          RgbLedBehavior.RGB_LED_BEHAVIOR_COUNTDOWN_BASE +
-          i -
-          1
-        ).toString(),
-      });
-    }
-    groups.push({
-      key: "AE_LED_GROUP_COUNTDOWN",
-      label: this.translationService.translate("AE_LED_GROUP_COUNTDOWN"),
-      actions: countActions,
-    });
-
-    // Sort each group's actions alphabetically by label
-    groups.forEach((g) => {
-      g.actions.sort((a, b) => a.label.localeCompare(b.label));
-    });
-
-    // Sort groups alphabetically by label, but keep the "None" group (empty key) first
-    groups.sort((a, b) => {
-      if (a.key === "") return -1;
-      if (b.key === "") return 1;
-      return a.label.localeCompare(b.label);
-    });
-
-    this.ledBehaviors = groups;
+    this.ledBehaviors = buildLedBehaviors(
+      this.lanes(),
+      this.translationService,
+    );
   }
 
   private updateLedTypes() {
-    const allTypes = [
-      {
-        label: this.translationService.translate("AE_LED_TYPE_NEOPIXEL"),
-        value: "0",
-      },
-      {
-        label: this.translationService.translate("AE_LED_TYPE_WS2811"),
-        value: "1",
-      },
-      {
-        label: this.translationService.translate("AE_LED_TYPE_WS2812"),
-        value: "2",
-      },
-      {
-        label: this.translationService.translate("AE_LED_TYPE_WS2812B"),
-        value: "3",
-      },
-      {
-        label: this.translationService.translate("AE_LED_TYPE_TM1809"),
-        value: "4",
-      },
-      {
-        label: this.translationService.translate("AE_LED_TYPE_OTHER"),
-        value: "12",
-      },
-    ];
-    if (this.config()?.hardwareType === 0) {
-      // Uno/Nano - Only keep WS2811, TM1809 and OTHER to save Flash/RAM in the sketch
-      this.ledTypes = allTypes.filter((t) =>
-        ["1", "4", "12"].includes(t.value),
-      );
-    } else {
-      this.ledTypes = allTypes;
-    }
+    this.ledTypes = buildLedTypes(
+      this.translationService,
+      this.config()?.hardwareType,
+    );
   }
 
   private updateColorOrders() {
-    this.colorOrders = [
-      {
-        label: this.translationService.translate("AE_LED_ORDER_RGB"),
-        value: "0",
-      },
-      {
-        label: this.translationService.translate("AE_LED_ORDER_GRB"),
-        value: "1",
-      },
-      {
-        label: this.translationService.translate("AE_LED_ORDER_BGR"),
-        value: "2",
-      },
-      {
-        label: this.translationService.translate("AE_LED_ORDER_RBG"),
-        value: "3",
-      },
-      {
-        label: this.translationService.translate("AE_LED_ORDER_GBR"),
-        value: "4",
-      },
-      {
-        label: this.translationService.translate("AE_LED_ORDER_BRG"),
-        value: "5",
-      },
-    ];
+    this.colorOrders = buildColorOrders(this.translationService);
   }
 
   private getLedBaseTranslationKey(behaviorKey: string): string {
-    switch (behaviorKey) {
-      case "RGB_LED_BEHAVIOR_HEAT_LEADER_BASE":
-        return "AE_LED_BEHAVIOR_HEAT_LEADER_LANE";
-      case "RGB_LED_BEHAVIOR_FUEL_LEVEL_BASE":
-        return "AE_LED_BEHAVIOR_FUEL_LEVEL_LANE";
-      case "RGB_LED_BEHAVIOR_REFUELING_BASE":
-        return "AE_LED_BEHAVIOR_REFUELING_LANE";
-      case "RGB_LED_BEHAVIOR_LAP_INDICATOR_BASE":
-        return "AE_LED_BEHAVIOR_LAP_INDICATOR_LANE";
-      case "RGB_LED_BEHAVIOR_LAP_SENSOR_BASE":
-        return "AE_LED_BEHAVIOR_LAP_SENSOR_LANE";
-      default:
-        return behaviorKey;
-    }
+    return getLedBaseTranslationKey(behaviorKey);
   }
 
   onCreateLedString() {
@@ -1124,22 +740,7 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const n = Number(numLeds);
-    const newString: LedString = {
-      pin: pin,
-      leds: new Array(n).fill(RgbLedBehavior.RGB_LED_BEHAVIOR_UNUSED),
-      numUsedLeds: 0,
-      addressableLeds: n,
-      brightness: 32,
-      ledType: 1,
-      colorOrder: 0,
-      flagFlashRate: 2,
-      ledLaneColorOverrides: this.lanes().map(
-        (l) => l.background_color || "#ffffff",
-      ),
-    };
-
-    config.ledStrings.push(newString);
+    config.ledStrings.push(createLedString(numLeds, pin, this.lanes()));
     this.ledStringExpanded.push(true);
     this.saveState();
     this.updateArduinoConfig();
@@ -1164,9 +765,8 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
     }
     const config = this.config();
     if (!config || !config.ledStrings) return;
-    const index = config.ledStrings.findIndex((s) => s.pin === pin);
+    const index = removeLedStringByPin(config, pin);
     if (index !== -1) {
-      config.ledStrings.splice(index, 1);
       this.ledStringExpanded.splice(index, 1);
       this.saveState();
       this.updateArduinoConfig();
@@ -1181,20 +781,7 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
     const config = this.config();
     if (!config || !config.ledStrings) return;
 
-    // Reset pin behavior if this string was linked to a pin
-    const pin = config.ledStrings[index].pin;
-    if (pin !== 0) {
-      const isDigital = pin < 1000;
-      const pinIndex = isDigital ? pin : pin - 1000;
-      const unused = PinBehavior.BEHAVIOR_UNUSED;
-      if (isDigital) {
-        config.digitalIds[pinIndex] = unused;
-      } else {
-        config.analogIds[pinIndex] = unused;
-      }
-    }
-
-    config.ledStrings.splice(index, 1);
+    removeLedStringByIndex(config, index);
     this.ledStringExpanded.splice(index, 1);
     this.saveState();
     this.updateArduinoConfig();
@@ -1206,36 +793,14 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
     }
     const config = this.config();
     if (!config || !config.ledStrings) return;
-    const val = parseInt(behavior, 10);
-    const ls = config.ledStrings[stringIndex];
-    ls.leds[ledIndex] = val;
-
-    if (val === 0) {
-      // RgbLedBehavior.RGB_LED_BEHAVIOR_UNUSED
-      const key = `${stringIndex}-${ledIndex}`;
-      this.activeRgbLedStates[key] = "off";
-
-      if (this.isLedStringsLinked) {
-        config.ledStrings.forEach((_, i) => {
-          this.activeRgbLedStates[`${i}-${ledIndex}`] = "off";
-        });
-      }
-    }
-
-    if (this.isLedStringsLinked) {
-      config.ledStrings.forEach((string, i) => {
-        if (i !== stringIndex) {
-          if (string.leds.length > ledIndex) {
-            string.leds[ledIndex] = val;
-            this.updateDerivedLedFields(i);
-          }
-        }
-      });
-    }
-
-    // Update derived fields
-    this.updateDerivedLedFields(stringIndex);
-
+    updateLedBehaviorState(
+      config,
+      stringIndex,
+      ledIndex,
+      parseInt(behavior, 10),
+      this.isLedStringsLinked,
+      this.activeRgbLedStates,
+    );
     this.cdr.detectChanges();
     this.updateArduinoConfig();
   }
@@ -1272,14 +837,7 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
     }
     const config = this.config();
     if (!config?.ledStrings) return;
-    const brightness = parseInt(val, 10);
-    config.ledStrings[stringIdx].brightness = brightness;
-
-    if (this.isLedStringsLinked) {
-      config.ledStrings.forEach((ls, i) => {
-        if (i !== stringIdx) ls.brightness = brightness;
-      });
-    }
+    updateLedStringBrightness(config, stringIdx, val, this.isLedStringsLinked);
     this.updateArduinoConfig();
   }
 
@@ -1289,55 +847,8 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
     }
     const config = this.config();
     if (!config?.ledStrings) return;
-    const count = parseInt(val, 10);
-    if (isNaN(count) || count < 0) return;
-
-    this.resizeLedString(stringIdx, count);
-
-    if (this.isLedStringsLinked) {
-      config.ledStrings.forEach((ls, i) => {
-        if (i !== stringIdx) {
-          this.resizeLedString(i, count);
-        }
-      });
-    }
+    updateLedStringCount(config, stringIdx, val, this.isLedStringsLinked);
     this.updateArduinoConfig();
-  }
-
-  private resizeLedString(stringIdx: number, count: number) {
-    const config = this.config();
-    if (!config?.ledStrings) return;
-    const ls = config.ledStrings[stringIdx];
-    const currentLength = ls.leds.length;
-
-    if (count > currentLength) {
-      // Growing: fill with UNUSED
-      const extra = new Array(count - currentLength).fill(
-        RgbLedBehavior.RGB_LED_BEHAVIOR_UNUSED,
-      );
-      ls.leds = [...ls.leds, ...extra];
-    } else if (count < currentLength) {
-      // Shrinking: truncate
-      ls.leds = ls.leds.slice(0, count);
-    }
-
-    // Update derived fields
-    this.updateDerivedLedFields(stringIdx);
-  }
-
-  private updateDerivedLedFields(stringIdx: number) {
-    const config = this.config();
-    if (!config?.ledStrings) return;
-    const ls = config.ledStrings[stringIdx];
-    ls.numUsedLeds = 0;
-    // The user now controls the number of LEDs on the string via the leds array length.
-    // We want addressableLeds to represent the total physical count for the Arduino.
-    ls.addressableLeds = ls.leds.length;
-    ls.leds.forEach((b) => {
-      if (b !== RgbLedBehavior.RGB_LED_BEHAVIOR_UNUSED) {
-        ls.numUsedLeds++;
-      }
-    });
   }
 
   onLedStringLedTypeChange(stringIdx: number, val: any) {
@@ -1346,28 +857,7 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
     }
     const config = this.config();
     if (!config?.ledStrings) return;
-    const ledType = parseInt(val, 10);
-    config.ledStrings[stringIdx].ledType = ledType;
-
-    // Change default color order based on LED type
-    // WS2811: RGB (0)
-    // WS2812: GRB (1)
-    // WS2812B: GRB (1)
-    // TM1809/Default: RGB (0)
-    let colorOrder = 0; // RGB
-    if (ledType === 2 || ledType === 3) {
-      colorOrder = 1; // GRB
-    }
-    config.ledStrings[stringIdx].colorOrder = colorOrder;
-
-    if (this.isLedStringsLinked) {
-      config.ledStrings.forEach((ls, i) => {
-        if (i !== stringIdx) {
-          ls.ledType = ledType;
-          ls.colorOrder = colorOrder;
-        }
-      });
-    }
+    updateLedStringLedType(config, stringIdx, val, this.isLedStringsLinked);
     this.updateArduinoConfig();
   }
 
@@ -1377,14 +867,7 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
     }
     const config = this.config();
     if (!config?.ledStrings) return;
-    const colorOrder = parseInt(val, 10);
-    config.ledStrings[stringIdx].colorOrder = colorOrder;
-
-    if (this.isLedStringsLinked) {
-      config.ledStrings.forEach((ls, i) => {
-        if (i !== stringIdx) ls.colorOrder = colorOrder;
-      });
-    }
+    updateLedStringColorOrder(config, stringIdx, val, this.isLedStringsLinked);
     this.updateArduinoConfig();
   }
 
@@ -1394,14 +877,7 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
     }
     const config = this.config();
     if (!config?.ledStrings) return;
-    const rate = parseFloat(val);
-    config.ledStrings[stringIdx].flagFlashRate = rate;
-
-    if (this.isLedStringsLinked) {
-      config.ledStrings.forEach((ls, i) => {
-        if (i !== stringIdx) ls.flagFlashRate = rate;
-      });
-    }
+    updateLedStringFlashRate(config, stringIdx, val, this.isLedStringsLinked);
     this.updateLedString();
   }
 
@@ -1415,28 +891,13 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
     }
     const config = this.config();
     if (!config?.ledStrings) return;
-    const sourceString = config.ledStrings[stringIdx];
-
-    // Ensure array is large enough for source string
-    while (sourceString.ledLaneColorOverrides.length <= laneIdx) {
-      sourceString.ledLaneColorOverrides.push("#ffffff");
-    }
-    sourceString.ledLaneColorOverrides[laneIdx] = color;
-
-    if (this.isLedStringsLinked) {
-      config.ledStrings.forEach((ls, i) => {
-        if (i !== stringIdx) {
-          if (!ls.ledLaneColorOverrides) ls.ledLaneColorOverrides = [];
-          while (ls.ledLaneColorOverrides.length <= laneIdx) {
-            ls.ledLaneColorOverrides.push("#ffffff");
-          }
-          ls.ledLaneColorOverrides[laneIdx] = color;
-        }
-      });
-    }
-
-    // Use debounce for color changes to prevent re-renders from closing the color picker
-    // We don't call updateLedString() immediately here to avoid UI interruptions during dragging
+    updateLedStringLaneColor(
+      config,
+      stringIdx,
+      laneIdx,
+      color,
+      this.isLedStringsLinked,
+    );
     clearTimeout(this.colorDebounceTimer);
     this.colorDebounceTimer = setTimeout(() => {
       this.colorDebounceTimer = null;
@@ -1444,309 +905,32 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
     }, 400);
   }
 
-  /* eslint-disable max-lines-per-function */
   private updatePinActions() {
     const lanes = this.lanes();
-
-    /* eslint-disable max-lines-per-function */
-    const createGroups = (includeVoltage: boolean): PinGroup[] => {
-      const groups: PinGroup[] = [];
-
-      // 1. None Group (Unused, Reserved)
-      groups.push({
-        key: "",
-        label: "",
-        actions: [
-          {
-            label: this.translationService.translate("AE_PIN_UNUSED"),
-            value: "",
-          },
-          {
-            label: this.translationService.translate("AE_PIN_RESERVED"),
-            value: "reserved",
-          },
-        ],
-      });
-
-      // 2. Callbutton Group
-      const callActions: PinAction[] = [];
-      callActions.push({
-        label: this.translationService.translate("AE_PIN_MASTER_CALL"),
-        value: "master_call",
-      });
-      lanes.forEach((_, i) => {
-        callActions.push({
-          label: this.translationService.translate("AE_PIN_CALL_BUTTON_LANE", {
-            lane: i + 1,
-          }),
-          value: `call_${i}`,
-        });
-      });
-      groups.push({
-        key: "AE_BEHAVIOR_GROUP_CALLBUTTON",
-        label: this.translationService.translate(
-          "AE_BEHAVIOR_GROUP_CALLBUTTON",
-        ),
-        actions: callActions,
-      });
-
-      // 3. Relay Group
-      const relayActions: PinAction[] = [];
-      relayActions.push({
-        label: this.translationService.translate("AE_PIN_RELAY"),
-        value: "master_relay",
-      });
-      lanes.forEach((_, i) => {
-        relayActions.push({
-          label: this.translationService.translate("AE_PIN_RELAY_LANE", {
-            lane: i + 1,
-          }),
-          value: `relay_${i}`,
-        });
-      });
-      groups.push({
-        key: "AE_BEHAVIOR_GROUP_RELAY",
-        label: this.translationService.translate("AE_BEHAVIOR_GROUP_RELAY"),
-        actions: relayActions,
-      });
-
-      // 4. Pit Group
-      const pitActions: PinAction[] = [];
-      lanes.forEach((_, i) => {
-        pitActions.push({
-          label: this.translationService.translate("AE_PIN_PIT_IN_LANE", {
-            lane: i + 1,
-          }),
-          value: `pitin_${i}`,
-        });
-        pitActions.push({
-          label: this.translationService.translate("AE_PIN_PIT_OUT_LANE", {
-            lane: i + 1,
-          }),
-          value: `pitout_${i}`,
-        });
-        pitActions.push({
-          label: this.translationService.translate("AE_PIN_PIT_IN_OUT_LANE", {
-            lane: i + 1,
-          }),
-          value: `pitinout_${i}`,
-        });
-      });
-      if (pitActions.length > 0) {
-        groups.push({
-          key: "AE_BEHAVIOR_GROUP_PIT",
-          label: this.translationService.translate("AE_BEHAVIOR_GROUP_PIT"),
-          actions: pitActions,
-        });
-      }
-
-      // 5. Lap Group
-      const lapActions: PinAction[] = [];
-      lanes.forEach((_, i) => {
-        lapActions.push({
-          label: this.translationService.translate("AE_PIN_LAP_LANE", {
-            lane: i + 1,
-          }),
-          value: `lap_${i}`,
-        });
-      });
-      if (lapActions.length > 0) {
-        groups.push({
-          key: "AE_BEHAVIOR_GROUP_LAP",
-          label: this.translationService.translate("AE_BEHAVIOR_GROUP_LAP"),
-          actions: lapActions,
-        });
-      }
-
-      // 6. Segment Group
-      const segmentActions: PinAction[] = [];
-      lanes.forEach((_, i) => {
-        segmentActions.push({
-          label: this.translationService.translate("AE_PIN_SEGMENT_LANE", {
-            lane: i + 1,
-          }),
-          value: `segment_${i}`,
-        });
-      });
-      if (segmentActions.length > 0) {
-        groups.push({
-          key: "AE_BEHAVIOR_GROUP_SEGMENT",
-          label: this.translationService.translate("AE_BEHAVIOR_GROUP_SEGMENT"),
-          actions: segmentActions,
-        });
-      }
-
-      // 7. Voltage Group (Analog only)
-      if (includeVoltage) {
-        const voltageActions: PinAction[] = [];
-        lanes.forEach((_, i) => {
-          voltageActions.push({
-            label: this.translationService.translate("AE_PIN_VOLTAGE_LANE", {
-              lane: i + 1,
-            }),
-            value: `voltage_${i}`,
-          });
-        });
-        if (voltageActions.length > 0) {
-          groups.push({
-            key: "AE_BEHAVIOR_GROUP_VOLTAGE",
-            label: this.translationService.translate(
-              "AE_BEHAVIOR_GROUP_VOLTAGE",
-            ),
-            actions: voltageActions,
-          });
-        }
-      }
-
-      // Analog Led Group
-      const analogLedActions: PinAction[] = [
-        {
-          label: this.translationService.translate(
-            "AE_PIN_ANALOG_LED_GREEN_FLAG",
-          ),
-          value: "analogled_green",
-        },
-        {
-          label: this.translationService.translate(
-            "AE_PIN_ANALOG_LED_YELLOW_FLAG",
-          ),
-          value: "analogled_yellow",
-        },
-        {
-          label: this.translationService.translate(
-            "AE_PIN_ANALOG_LED_COUNTDOWN",
-            { num: 1 },
-          ),
-          value: "analogled_countdown_1",
-        },
-        {
-          label: this.translationService.translate(
-            "AE_PIN_ANALOG_LED_COUNTDOWN",
-            { num: 2 },
-          ),
-          value: "analogled_countdown_2",
-        },
-        {
-          label: this.translationService.translate(
-            "AE_PIN_ANALOG_LED_COUNTDOWN",
-            { num: 3 },
-          ),
-          value: "analogled_countdown_3",
-        },
-        {
-          label: this.translationService.translate(
-            "AE_PIN_ANALOG_LED_COUNTDOWN",
-            { num: 4 },
-          ),
-          value: "analogled_countdown_4",
-        },
-        {
-          label: this.translationService.translate(
-            "AE_PIN_ANALOG_LED_COUNTDOWN",
-            { num: 5 },
-          ),
-          value: "analogled_countdown_5",
-        },
-      ];
-      lanes.forEach((_, i) => {
-        analogLedActions.push({
-          label: this.translationService.translate(
-            "AE_PIN_ANALOG_LED_HEAT_LEADER_LANE",
-            { lane: i + 1 },
-          ),
-          value: `analogled_heat_leader_${i}`,
-        });
-      });
-      groups.push({
-        key: "AE_BEHAVIOR_GROUP_ANALOG_LED",
-        label: this.translationService.translate(
-          "AE_BEHAVIOR_GROUP_ANALOG_LED",
-        ),
-        actions: analogLedActions,
-      });
-
-      // 8. Other Group
-      groups.push({
-        key: "AE_BEHAVIOR_GROUP_OTHER",
-        label: this.translationService.translate("AE_BEHAVIOR_GROUP_OTHER"),
-        actions: [
-          {
-            label: this.translationService.translate("AE_PIN_LED_RGB_STRING"),
-            value: "led_string",
-          },
-        ],
-      });
-
-      // Sort each group's actions alphabetically by label (except the 'None' group)
-      groups.forEach((g) => {
-        if (g.key !== "") {
-          g.actions.sort((a, b) => a.label.localeCompare(b.label));
-        }
-      });
-
-      // Sort groups alphabetically by label, but keep the "None" group (empty key) first
-      groups.sort((a, b) => {
-        if (a.key === "") return -1;
-        if (b.key === "") return 1;
-        return a.label.localeCompare(b.label);
-      });
-
-      return groups;
-    };
-
-    this.digitalPinActions = createGroups(false);
-    this.analogPinActions = createGroups(true);
+    this.digitalPinActions = createPinGroups(
+      lanes,
+      false,
+      this.translationService,
+    );
+    this.analogPinActions = createPinGroups(
+      lanes,
+      true,
+      this.translationService,
+    );
   }
 
   getFilteredActions(isDigital: boolean, pin: number): PinGroup[] {
     const groups = isDigital ? this.digitalPinActions : this.analogPinActions;
-    const config = this.config();
-    if (!config) {
-      return groups;
-    }
-
-    let canLed = true;
-    if (config.hardwareType === 0) {
-      // Uno/Nano (hardwareType 0), only allow led_string on D2-D3 and ALL analog A0-A5
-      canLed = isDigital ? pin >= 2 && pin <= 3 : pin >= 0 && pin <= 5;
-    } else if (config.hardwareType === 1) {
-      // Mega (hardwareType 1), only allow led_string on EVEN digital pins D22-D52 and EVEN analog A0-A14
-      canLed = isDigital
-        ? pin >= 22 && pin <= 52 && pin % 2 === 0
-        : pin >= 0 && pin <= 15 && pin % 2 === 0;
-    }
-
     const currentAction = this.getPinAction(isDigital, pin);
-    let filtered = groups;
-    // If hardware doesn't physically support RGB LED on this pin AND it's not currently assigned, filter it out
-    if (!canLed && currentAction !== "led_string") {
-      filtered = groups
-        .map((g) => ({
-          ...g,
-          actions: g.actions.filter((a) => a.value !== "led_string"),
-        }))
-        .filter((g) => g.actions.length > 0);
-    }
-
-    if (!this.supportsRgbLeds) {
-      filtered = filtered.map((g) => ({
-        ...g,
-        actions: g.actions.map((a) => {
-          if (a.value === "led_string") {
-            return {
-              ...a,
-              disabled: true,
-              tooltip: this.translationService.translate(
-                "AE_RGB_LEDS_DISABLED_TOOLTIP",
-              ),
-            };
-          }
-          return a;
-        }),
-      }));
-    }
-
-    return filtered;
+    return filterPinActions(
+      groups,
+      isDigital,
+      pin,
+      this.config(),
+      this.supportsRgbLeds,
+      currentAction,
+      this.translationService,
+    );
   }
 
   private refreshLanes() {
@@ -1757,235 +941,48 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
     this.updatePinActions();
     this.updateLedBehaviors();
 
-    const laneCount = lanes.length;
-    let changed = false;
-
-    // Validate/Update LED strings
-    (config.ledStrings || []).forEach((ls) => {
-      // Truncate color overrides
-      if (ls.ledLaneColorOverrides.length > laneCount) {
-        ls.ledLaneColorOverrides = ls.ledLaneColorOverrides.slice(0, laneCount);
-        changed = true;
-      }
-
-      // Sync color overrides length
-      while (ls.ledLaneColorOverrides.length < laneCount) {
-        const laneIdx = ls.ledLaneColorOverrides.length;
-        const lane = lanes[laneIdx];
-        ls.ledLaneColorOverrides.push(lane?.background_color || "#ffffff");
-        changed = true;
-      }
-      if (ls.ledLaneColorOverrides.length > laneCount) {
-        ls.ledLaneColorOverrides.splice(laneCount);
-        changed = true;
-      }
-
-      // Heal existing overrides if they are empty or null
-      for (let i = 0; i < ls.ledLaneColorOverrides.length; i++) {
-        if (
-          !ls.ledLaneColorOverrides[i] ||
-          ls.ledLaneColorOverrides[i].trim() === ""
-        ) {
-          const lane = lanes[i];
-          ls.ledLaneColorOverrides[i] = lane?.background_color || "#ffffff";
-          changed = true;
-        }
-      }
-
-      // Validate behaviors
-      if (ls.leds) {
-        ls.leds = ls.leds.map((behavior) => {
-          const laneIdx = this.getLaneIndexFromRgbBehavior(behavior);
-          if (laneIdx !== -1 && laneIdx >= laneCount) {
-            changed = true;
-            return RgbLedBehavior.RGB_LED_BEHAVIOR_UNUSED;
-          }
-          return behavior;
-        });
-      }
-    });
-
-    // Validate Pins
-    const validatePins = (ids: number[]) => {
-      if (!ids) return;
-      for (let i = 0; i < ids.length; i++) {
-        const laneIdx = this.getLaneIndexFromPinBehavior(ids[i]);
-        if (laneIdx !== -1 && laneIdx >= laneCount) {
-          ids[i] = PinBehavior.BEHAVIOR_UNUSED;
-          changed = true;
-        }
-      }
-    };
-
-    if (config.digitalIds) validatePins(config.digitalIds);
-    if (config.analogIds) validatePins(config.analogIds);
-
-    // Validate Voltage Configs
-    if (config.voltageConfigs) {
-      const activeVoltageLanes = new Set(this.getVoltageLanes());
-      Object.keys(config.voltageConfigs).forEach((key) => {
-        const laneIdx = parseInt(key, 10);
-        if (laneIdx >= laneCount || !activeVoltageLanes.has(laneIdx)) {
-          delete config.voltageConfigs![laneIdx];
-          changed = true;
-        }
-      });
-    }
-
-    if (changed) {
+    if (syncArduinoLanes(config, lanes)) {
       this.updateArduinoConfig();
     }
   }
 
-  private getLaneIndexFromRgbBehavior(behavior: number): number {
-    const bases = [
-      RgbLedBehavior.RGB_LED_BEHAVIOR_HEAT_LEADER_BASE,
-      RgbLedBehavior.RGB_LED_BEHAVIOR_FUEL_LEVEL_BASE,
-      RgbLedBehavior.RGB_LED_BEHAVIOR_REFUELING_BASE,
-      RgbLedBehavior.RGB_LED_BEHAVIOR_LAP_INDICATOR_BASE,
-      RgbLedBehavior.RGB_LED_BEHAVIOR_LAP_SENSOR_BASE,
-    ];
-
-    for (const base of bases) {
-      if (behavior >= base && behavior < base + 1000) {
-        return behavior - base;
-      }
-    }
-    return -1;
-  }
-
-  private getLaneIndexFromPinBehavior(behavior: number): number {
-    const bases = [
-      PinBehavior.BEHAVIOR_LAP_BASE,
-      PinBehavior.BEHAVIOR_SEGMENT_BASE,
-      PinBehavior.BEHAVIOR_CALL_BUTTON_BASE,
-      PinBehavior.BEHAVIOR_RELAY_BASE,
-      PinBehavior.BEHAVIOR_PIT_IN_BASE,
-      PinBehavior.BEHAVIOR_PIT_OUT_BASE,
-      PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE,
-      PinBehavior.BEHAVIOR_PIT_IN_OUT_BASE,
-    ];
-
-    for (const base of bases) {
-      if (behavior >= base && behavior < base + 1000) {
-        return behavior - base;
-      }
-    }
-    return -1;
-  }
-
   getVoltageLanes(): number[] {
-    const config = this.config();
-    if (!config) return [];
-    const lanes = new Set<number>();
-
-    // Check analog pins only for voltage level
-    const isMega = config.hardwareType === 1;
-    const analogCount = isMega ? 16 : 6;
-    const analogIds = config.analogIds || [];
-    for (let i = 0; i < analogCount; i++) {
-      const behavior = analogIds[i];
-      if (
-        behavior !== undefined &&
-        behavior >= PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE &&
-        behavior < PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE + 1000
-      ) {
-        lanes.add(behavior - PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE);
-      }
-    }
-    return Array.from(lanes).sort((a, b) => a - b);
+    return getVoltageLanes(this.config());
   }
 
   getLiveVoltageForLane(lane: number): number {
-    const config = this.config();
-    if (!config) return 0;
-    const isMega = config.hardwareType === 1;
-    const analogCount = isMega ? 16 : 6;
-    const analogIds = config.analogIds || [];
-
-    const targetBehavior = PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE + lane;
-    for (let i = 0; i < analogCount; i++) {
-      if (analogIds[i] === targetBehavior) {
-        return this.liveVoltages[i] ?? 0;
-      }
-    }
-    return 0;
+    return getLiveVoltageForLane(this.config(), this.liveVoltages, lane);
   }
 
   getVoltageMax(lane: number): number {
-    const config = this.config();
-    if (!config || !config.voltageConfigs) return 1023;
-    const val = config.voltageConfigs[lane];
-    return val !== undefined ? val : 1023;
+    return getVoltageMax(this.config(), lane);
   }
 
   getLaneForAnalogPin(pin: number): number {
-    const config = this.config();
-    if (!config) return -1;
-    const isMega = config.hardwareType === 1;
-    const analogCount = isMega ? 16 : 6;
-    const analogIds = config.analogIds || [];
-    if (pin >= 0 && pin < analogCount) {
-      const behavior = analogIds[pin];
-      if (
-        behavior !== undefined &&
-        behavior >= PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE &&
-        behavior < PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE + 1000
-      ) {
-        return behavior - PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE;
-      }
-    }
-    return -1;
+    return getLaneForAnalogPin(this.config(), pin);
   }
 
   setVoltageMax(lane: number, value: string | number) {
-    if (!this.isEditMode()) {
-      return;
-    }
-    if (!this.config()) return;
-
-    let val: number;
-    if (typeof value === "string") {
-      val = parseInt(value, 10);
-    } else {
-      val = value;
-    }
-
-    if (isNaN(val)) return;
-
-    if (this.isVoltageLinked) {
-      for (const l of this.getVoltageLanes()) {
-        this.setVoltageMaxInternal(l, val);
-      }
-    } else {
-      this.setVoltageMaxInternal(lane, val);
-    }
+    if (!this.isEditMode()) return;
+    applyVoltageMax(
+      this.config(),
+      lane,
+      value,
+      this.isVoltageLinked,
+      this.getVoltageLanes(),
+    );
     this.updateArduinoConfig();
   }
 
-  private setVoltageMaxInternal(lane: number, value: number) {
-    const config = this.config();
-    if (!config) return;
-    if (!config.voltageConfigs) config.voltageConfigs = {};
-    config.voltageConfigs[lane] = value;
-  }
-
   setMaxToSeen(lane: number) {
-    if (!this.isEditMode()) {
-      return;
-    }
-    if (this.isVoltageLinked) {
-      let globalMax = 0;
-      for (const l of this.getVoltageLanes()) {
-        globalMax = Math.max(globalMax, this.maxVoltagesSeen[l] ?? 0);
-      }
-      for (const l of this.getVoltageLanes()) {
-        this.setVoltageMaxInternal(l, globalMax);
-      }
-    } else {
-      const maxSeen = this.maxVoltagesSeen[lane] ?? 0;
-      this.setVoltageMaxInternal(lane, maxSeen);
-    }
+    if (!this.isEditMode()) return;
+    applyMaxToSeen(
+      this.config(),
+      lane,
+      this.maxVoltagesSeen,
+      this.isVoltageLinked,
+      this.getVoltageLanes(),
+    );
     this.updateArduinoConfig();
   }
 
@@ -2000,17 +997,11 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
   }
 
   private saveState() {
-    localStorage.setItem(
-      `rc.arduino-editor.sections.${this.index()}`,
-      JSON.stringify(this.sectionsExpanded),
-    );
-    localStorage.setItem(
-      `rc.arduino-editor.led-strings.${this.index()}`,
-      JSON.stringify(this.ledStringExpanded),
-    );
-    localStorage.setItem(
-      `rc.arduino-editor.groups-collapsed.${this.index()}`,
-      JSON.stringify(this.groupsCollapsed),
+    saveArduinoState(
+      this.index(),
+      this.sectionsExpanded,
+      this.ledStringExpanded,
+      this.groupsCollapsed,
     );
   }
 
@@ -2077,14 +1068,7 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
   }
 
   getLedActionLabel(value: string | number | undefined): string {
-    const valStr = value?.toString();
-    if (!valStr || valStr === "0")
-      return this.translationService.translate("AE_PIN_UNUSED");
-    for (const group of this.ledBehaviors) {
-      const action = group.actions.find((a) => a.value === valStr);
-      if (action) return action.label;
-    }
-    return valStr;
+    return getLedActionLabel(value, this.ledBehaviors, this.translationService);
   }
 
   @HostListener("document:click")
@@ -2094,320 +1078,36 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
   }
 
   ensureSectionsExpanded(): void {
-    this.sectionsExpanded.arduino = true;
-    this.sectionsExpanded.main = true;
-    this.sectionsExpanded.digital = true;
-    this.sectionsExpanded.analog = true;
-    this.sectionsExpanded.voltage = true;
-    this.sectionsExpanded.leds = true;
+    const s = this.sectionsExpanded;
+    s.arduino = s.main = s.digital = s.analog = s.voltage = s.leds = true;
     if (this.config()?.ledStrings?.length) {
       this.ledStringExpanded[0] = true;
     }
     this.cdr.detectChanges();
   }
 
-  private getMainHelpSteps(expandMain: () => void): any[] {
-    return [
-      {
-        selector: `#arduino-board-type-${this.index()}`,
-        title: "TE_HELP_ARDUINO_BOARD_TYPE_TITLE",
-        content: "TE_HELP_ARDUINO_BOARD_TYPE_CONTENT",
-        position: "bottom",
-        onEnter: expandMain,
-      },
-      {
-        selector: `#arduino-com-port-${this.index()}`,
-        title: "TE_HELP_ARDUINO_COM_PORT_TITLE",
-        content: "TE_HELP_ARDUINO_COM_PORT_CONTENT",
-        position: "bottom",
-        onEnter: expandMain,
-      },
-      {
-        selector: `#arduino-status-badge-${this.index()}`,
-        title: "TE_HELP_ARDUINO_STATUS_TITLE",
-        content: "TE_HELP_ARDUINO_STATUS_CONTENT",
-        position: "right",
-        onEnter: expandMain,
-      },
-      {
-        selector: `#arduino-debounce-${this.index()}`,
-        title: "TE_HELP_ARDUINO_DEBOUNCE_TITLE",
-        content: "TE_HELP_ARDUINO_DEBOUNCE_CONTENT",
-        position: "bottom",
-        onEnter: expandMain,
-      },
-      {
-        selector: `#arduino-pit-behavior-${this.index()}`,
-        title: "TE_HELP_ARDUINO_PIT_BEHAVIOR_TITLE",
-        content: "TE_HELP_ARDUINO_PIT_BEHAVIOR_CONTENT",
-        position: "bottom",
-        onEnter: expandMain,
-      },
-      {
-        selector: `#arduino-nc-sensors-${this.index()}`,
-        title: "TE_HELP_ARDUINO_NC_SENSORS_TITLE",
-        content: "TE_HELP_ARDUINO_NC_SENSORS_CONTENT",
-        position: "bottom",
-        onEnter: expandMain,
-      },
-      {
-        selector: `#arduino-nc-relays-${this.index()}`,
-        title: "TE_HELP_ARDUINO_NC_RELAYS_TITLE",
-        content: "TE_HELP_ARDUINO_NC_RELAYS_CONTENT",
-        position: "bottom",
-        onEnter: expandMain,
-      },
-      {
-        selector: `#arduino-active-low-analog-leds-${this.index()}`,
-        title: "TE_HELP_ARDUINO_ACTIVE_LOW_LEDS_TITLE",
-        content: "TE_HELP_ARDUINO_ACTIVE_LOW_LEDS_CONTENT",
-        position: "bottom",
-        onEnter: expandMain,
-      },
-    ];
-  }
-
-  private getPinHelpSteps(
-    expandDigital: () => void,
-    expandAnalog: () => void,
-  ): any[] {
-    const digitalPin = this.availablePins?.includes(4)
-      ? 4
-      : (this.availablePins?.[0] ?? 2);
-    const analogPin = this.availableAnalogPins?.includes(2)
-      ? 2
-      : (this.availableAnalogPins?.[0] ?? 0);
-
-    return [
-      {
-        selector: `#arduino-digital-selector-${digitalPin}`,
-        title: "TE_HELP_ARDUINO_PIN_SELECTOR_TITLE",
-        content: "TE_HELP_ARDUINO_PIN_SELECTOR_CONTENT",
-        position: "bottom",
-        onEnter: expandDigital,
-      },
-      {
-        selector: `#arduino-digital-status-${digitalPin}`,
-        title: "TE_HELP_ARDUINO_PIN_STATUS_TITLE",
-        content: "TE_HELP_ARDUINO_PIN_STATUS_CONTENT",
-        position: "bottom",
-        onEnter: expandDigital,
-      },
-      {
-        selector: `#arduino-analog-selector-${analogPin}`,
-        title: "TE_HELP_ARDUINO_ANALOG_SELECTOR_TITLE",
-        content: "TE_HELP_ARDUINO_ANALOG_SELECTOR_CONTENT",
-        position: "bottom",
-        onEnter: expandAnalog,
-      },
-      {
-        selector: `#arduino-analog-status-${analogPin}`,
-        title: "TE_HELP_ARDUINO_ANALOG_STATUS_TITLE",
-        content: "TE_HELP_ARDUINO_ANALOG_STATUS_CONTENT",
-        position: "bottom",
-        onEnter: expandAnalog,
-      },
-    ];
-  }
-
-  private getVoltageHelpSteps(expandVoltage: () => void): any[] {
-    const voltageLanes = this.getVoltageLanes();
-    const steps: any[] = [
-      {
-        selector: `#arduino-voltage-section-${this.index()}`,
-        title: "TE_HELP_ARDUINO_VOLTAGE_TITLE",
-        content: "TE_HELP_ARDUINO_VOLTAGE_CONTENT",
-        position: "top",
-        onEnter: expandVoltage,
-      },
-    ];
-
-    if (voltageLanes.length > 0) {
-      const firstLane = voltageLanes[0];
-      steps.push(
-        {
-          selector: `#arduino-voltage-reset-${this.index()}`,
-          title: "TE_HELP_ARDUINO_VOLTAGE_RESET_TITLE",
-          content: "TE_HELP_ARDUINO_VOLTAGE_RESET_CONTENT",
-          position: "bottom",
-          onEnter: expandVoltage,
-        },
-        {
-          selector: `#arduino-voltage-max-${this.index()}-${firstLane}`,
-          title: "TE_HELP_ARDUINO_VOLTAGE_MAX_TITLE",
-          content: "TE_HELP_ARDUINO_VOLTAGE_MAX_CONTENT",
-          position: "bottom",
-          onEnter: expandVoltage,
-        },
-        {
-          selector: `#arduino-voltage-link-${this.index()}-${firstLane}`,
-          title: "TE_HELP_ARDUINO_VOLTAGE_LINK_TITLE",
-          content: "TE_HELP_ARDUINO_VOLTAGE_LINK_CONTENT",
-          position: "bottom",
-          onEnter: expandVoltage,
-        },
-        {
-          selector: `#arduino-voltage-live-${this.index()}-${firstLane}`,
-          title: "TE_HELP_ARDUINO_VOLTAGE_LIVE_TITLE",
-          content: "TE_HELP_ARDUINO_VOLTAGE_LIVE_CONTENT",
-          position: "bottom",
-          onEnter: expandVoltage,
-        },
-        {
-          selector: `#arduino-voltage-set-max-${this.index()}-${firstLane}`,
-          title: "TE_HELP_ARDUINO_VOLTAGE_SET_MAX_TITLE",
-          content: "TE_HELP_ARDUINO_VOLTAGE_SET_MAX_CONTENT",
-          position: "bottom",
-          onEnter: expandVoltage,
-        },
-      );
-    }
-
-    return steps;
-  }
-
-  private getLedStringDetailHelpSteps(
-    expandLeds: () => void,
-    hasLeds: boolean,
-  ): any[] {
-    const steps: any[] = [
-      {
-        selector: `#arduino-led-string-header-${this.index()}-0`,
-        title: "TE_HELP_ARDUINO_LED_STRING_TITLE",
-        content: "TE_HELP_ARDUINO_LED_STRING_CONTENT",
-        position: "bottom",
-        onEnter: expandLeds,
-      },
-      {
-        selector: `#arduino-led-link-${this.index()}-0`,
-        title: "TE_HELP_ARDUINO_LED_LINK_TITLE",
-        content: "TE_HELP_ARDUINO_LED_LINK_CONTENT",
-        position: "bottom",
-        onEnter: expandLeds,
-      },
-      {
-        selector: `#arduino-led-count-${this.index()}-0`,
-        title: "TE_HELP_ARDUINO_LED_COUNT_TITLE",
-        content: "TE_HELP_ARDUINO_LED_COUNT_CONTENT",
-        position: "bottom",
-        onEnter: expandLeds,
-      },
-      {
-        selector: `#arduino-led-brightness-${this.index()}-0`,
-        title: "TE_HELP_ARDUINO_LED_BRIGHTNESS_TITLE",
-        content: "TE_HELP_ARDUINO_LED_BRIGHTNESS_CONTENT",
-        position: "bottom",
-        onEnter: expandLeds,
-      },
-      {
-        selector: `#arduino-led-flash-rate-${this.index()}-0`,
-        title: "TE_HELP_ARDUINO_LED_FLASH_RATE_TITLE",
-        content: "TE_HELP_ARDUINO_LED_FLASH_RATE_CONTENT",
-        position: "bottom",
-        onEnter: expandLeds,
-      },
-      {
-        selector: `#arduino-led-type-${this.index()}-0`,
-        title: "TE_HELP_ARDUINO_LED_TYPE_TITLE",
-        content: "TE_HELP_ARDUINO_LED_TYPE_CONTENT",
-        position: "bottom",
-        onEnter: expandLeds,
-      },
-      {
-        selector: `#arduino-led-color-order-${this.index()}-0`,
-        title: "TE_HELP_ARDUINO_LED_COLOR_ORDER_TITLE",
-        content: "TE_HELP_ARDUINO_LED_COLOR_ORDER_CONTENT",
-        position: "bottom",
-        onEnter: expandLeds,
-      },
-      {
-        selector: `#arduino-led-lane-overrides-${this.index()}-0`,
-        title: "TE_HELP_ARDUINO_LED_LANE_OVERRIDES_TITLE",
-        content: "TE_HELP_ARDUINO_LED_LANE_OVERRIDES_CONTENT",
-        position: "bottom",
-        onEnter: expandLeds,
-      },
-    ];
-
-    if (hasLeds) {
-      steps.push(
-        {
-          selector: `#arduino-led-status-${this.index()}-0-0`,
-          title: "TE_HELP_ARDUINO_LED_STATUS_TITLE",
-          content: "TE_HELP_ARDUINO_LED_STATUS_CONTENT",
-          position: "bottom",
-          onEnter: expandLeds,
-        },
-        {
-          selector: `#arduino-led-selector-${this.index()}-0-0`,
-          title: "TE_HELP_ARDUINO_LED_SELECTOR_TITLE",
-          content: "TE_HELP_ARDUINO_LED_SELECTOR_CONTENT",
-          position: "bottom",
-          onEnter: expandLeds,
-        },
-      );
-    }
-
-    return steps;
-  }
-
-  private getLedHelpSteps(expandLeds: () => void): any[] {
-    const ledStrings = this.config()?.ledStrings;
-    const steps: any[] = [
-      {
-        selector: `#arduino-led-section-${this.index()}`,
-        title: "TE_HELP_ARDUINO_LED_TITLE",
-        content: "TE_HELP_ARDUINO_LED_CONTENT",
-        position: "top",
-        onEnter: expandLeds,
-      },
-    ];
-
-    if (ledStrings && ledStrings.length > 0) {
-      const firstString = ledStrings[0];
-      const hasLeds = Boolean(firstString?.leds && firstString.leds.length > 0);
-      steps.push(...this.getLedStringDetailHelpSteps(expandLeds, hasLeds));
-    }
-
-    return steps;
-  }
-
-  getHelpSteps(): any[] {
-    const expandMain = () => {
+  getHelpSteps(): GuideStep[] {
+    const expand = (key: keyof typeof this.sectionsExpanded, isLed = false) => {
       this.sectionsExpanded.arduino = true;
-      this.sectionsExpanded.main = true;
-      this.cdr.detectChanges();
-    };
-    const expandDigital = () => {
-      this.sectionsExpanded.arduino = true;
-      this.sectionsExpanded.digital = true;
-      this.cdr.detectChanges();
-    };
-    const expandAnalog = () => {
-      this.sectionsExpanded.arduino = true;
-      this.sectionsExpanded.analog = true;
-      this.cdr.detectChanges();
-    };
-    const expandVoltage = () => {
-      this.sectionsExpanded.arduino = true;
-      this.sectionsExpanded.voltage = true;
-      this.cdr.detectChanges();
-    };
-    const expandLeds = () => {
-      this.sectionsExpanded.arduino = true;
-      this.sectionsExpanded.leds = true;
-      if (this.config()?.ledStrings?.length) {
+      this.sectionsExpanded[key] = true;
+      if (isLed && this.config()?.ledStrings?.length) {
         this.ledStringExpanded[0] = true;
       }
       this.cdr.detectChanges();
     };
 
-    return [
-      ...this.getMainHelpSteps(expandMain),
-      ...this.getPinHelpSteps(expandDigital, expandAnalog),
-      ...this.getVoltageHelpSteps(expandVoltage),
-      ...this.getLedHelpSteps(expandLeds),
-    ];
+    return buildArduinoHelpSteps({
+      index: this.index(),
+      availablePins: this.availablePins,
+      availableAnalogPins: this.availableAnalogPins,
+      voltageLanes: this.getVoltageLanes(),
+      ledStrings: this.config()?.ledStrings,
+      expandMain: () => expand("main"),
+      expandDigital: () => expand("digital"),
+      expandAnalog: () => expand("analog"),
+      expandVoltage: () => expand("voltage"),
+      expandLeds: () => expand("leds", true),
+    });
   }
 
   removeInterface(event: Event) {

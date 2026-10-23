@@ -94,24 +94,43 @@ public class Racing implements IRaceState {
   }
 
   @Override
-  @SuppressWarnings("checkstyle:MethodLength")
   public void enter(Race race) {
     this.race = race;
     this.previousHeatProgress = -1.0;
     this.executionManager = race.getHeatExecutionManager();
 
-    HeatScoring scoring = race.getRaceModel().getHeatScoring();
-    if (scoring != null && scoring.getFinishMethod() == FinishMethod.Timed) {
-      if (!race.hasRacedInCurrentHeat() && race.getRaceTime() == 0) {
-        race.addRaceTime((float) scoring.getFinishValue());
-      }
-    }
+    initializeTimedRaceTime(race);
 
     RaceFlag initialFlag = getFlagType(race);
     race.broadcastFlag(initialFlag);
     syncDriverFlags(race);
     this.previousFlag = initialFlag;
 
+    initializeHeatStartTimeAndBroadcast(race);
+
+    race.setHasRacedInCurrentHeat(true);
+    race.clearAutoTimers();
+
+    initializeFuelTracking(race);
+
+    logger.info("Racing: Digital fuel enabled: {}", executionManager.isDigitalFuelEnabled());
+    logger.info("Racing: Analog fuel enabled: {}", executionManager.isAnalogFuelEnabled());
+
+    race.startProtocols();
+    initializeFalseStartTimePenalties();
+    startScheduler();
+  }
+
+  private void initializeTimedRaceTime(Race race) {
+    HeatScoring scoring = race.getRaceModel().getHeatScoring();
+    if (scoring != null && scoring.getFinishMethod() == FinishMethod.Timed) {
+      if (!race.hasRacedInCurrentHeat() && race.getRaceTime() == 0) {
+        race.addRaceTime((float) scoring.getFinishValue());
+      }
+    }
+  }
+
+  private void initializeHeatStartTimeAndBroadcast(Race race) {
     if (race.getStatistics().getStartTime() == null) {
       race.getStatistics().setStartTime(OffsetDateTime.now().toString());
       race.getStatistics().setStartMillis(System.currentTimeMillis());
@@ -130,25 +149,20 @@ public class Racing implements IRaceState {
               .build());
       race.broadcastFuelLevels();
     }
+  }
 
-    race.setHasRacedInCurrentHeat(true);
-    race.clearAutoTimers();
-
-    int laneCount = 0;
+  private void initializeFuelTracking(Race race) {
     if (race.getTrack() != null && race.getTrack().getLanes() != null) {
-      laneCount = race.getTrack().getLanes().size();
+      int laneCount = race.getTrack().getLanes().size();
       previousRefuelingState = new boolean[laneCount];
       previousFuelLevels = new int[laneCount];
       for (int i = 0; i < laneCount; i++) {
         previousFuelLevels[i] = -1;
       }
     }
+  }
 
-    logger.info("Racing: Digital fuel enabled: {}", executionManager.isDigitalFuelEnabled());
-    logger.info("Racing: Analog fuel enabled: {}", executionManager.isAnalogFuelEnabled());
-
-    race.startProtocols();
-    initializeFalseStartTimePenalties();
+  private void startScheduler() {
     if (scheduler != null) {
       scheduler.shutdown();
     }
@@ -159,171 +173,174 @@ public class Racing implements IRaceState {
               t.setDaemon(true);
               return t;
             });
-    final Runnable ticker =
-        new Runnable() {
-          long lastTime = 0;
+    timerHandle = scheduler.scheduleAtFixedRate(createTicker(), 0, 100, TimeUnit.MILLISECONDS);
+  }
 
-          @Override
-          @SuppressWarnings("checkstyle:MethodLength")
-          public void run() {
-            try {
-              long now = System.nanoTime();
-              if (lastTime == 0) {
-                lastTime = now;
-                return;
-              }
+  private Runnable createTicker() {
+    return new Runnable() {
+      long lastTime = 0;
 
-              long intervalNs = now - lastTime;
-              if (intervalNs > 200_000_000L) {
-                logger.warn(
-                    "[PERF] Racing ticker delayed by {} ms",
-                    (intervalNs - 100_000_000L) / 1_000_000L);
-              }
-
-              float delta = (now - lastTime) / 1_000_000_000.0f;
-              lastTime = now;
-
-              HeatScoring scoring = race.getRaceModel().getHeatScoring();
-              long limit = scoring != null ? scoring.getFinishValue() : 0;
-              boolean isTimed = scoring != null && scoring.getFinishMethod() == FinishMethod.Timed;
-              boolean isInfiniteTimed = isTimed && limit <= 0;
-
-              if (isTimed && !isInfiniteTimed) {
-                race.addRaceTime(-delta);
-              } else {
-                race.addRaceTime(delta);
-              }
-
-              // Handle false start time penalties
-              processFalseStartTimePenalties(delta);
-
-              // Handle refueling and fuel usage via the execution manager
-              executionManager.processTicker(delta);
-
-              // Check for refueling state changes
-              boolean[] currentRefuelingState = executionManager.getIsRefueling();
-              if (currentRefuelingState != null && previousRefuelingState != null) {
-                for (int i = 0;
-                    i < Math.min(currentRefuelingState.length, previousRefuelingState.length);
-                    i++) {
-                  if (currentRefuelingState[i] != previousRefuelingState[i]) {
-                    race.setRefueling(i, currentRefuelingState[i]);
-                    previousRefuelingState[i] = currentRefuelingState[i];
-                  }
-                }
-              }
-
-              // Check for fuel level changes
-              syncFuelLevels();
-
-              // Check finish conditions
-              boolean allFinished = false;
-              AllowFinish allowFinish =
-                  scoring != null ? scoring.getAllowFinish() : AllowFinish.None;
-
-              if (scoring != null) {
-                Set<Integer> finishedLanes = executionManager.getFinishedLanes();
-                if (isTimed) {
-                  if (!isInfiniteTimed && race.getRaceTime() <= 0) {
-                    if (allowFinish == AllowFinish.SingleLapAutoSegments) {
-                      executionManager.capturePartialLapTimes();
-                    }
-                    race.resetRaceTime();
-                    if (allowFinish == AllowFinish.None
-                        || allowFinish == AllowFinish.NoneAutoSegments) {
-                      allFinished = true;
-                    } else {
-                      // Timed race with Allow Finish: Heat ends when everyone has crossed the line
-                      // once after time expired
-                      if (finishedLanes.size() >= race.getCurrentHeat().getActiveDriverCount()) {
-                        allFinished = true;
-                      }
-                    }
-                  }
-                } else {
-                  // Lap based
-                  if (allowFinish == AllowFinish.None
-                      || allowFinish == AllowFinish.NoneAutoSegments) {
-                    if (race.getCurrentHeat().getDrivers() != null) {
-                      for (DriverHeatData driver : race.getCurrentHeat().getDrivers()) {
-                        if (driver.getLapCount() >= limit) {
-                          allFinished = true;
-                          break;
-                        }
-                      }
-                    }
-                  } else {
-                    // Lap based with Allow Finish: Heat ends when everyone has reached the lap
-                    // limit
-                    if (finishedLanes.size() >= race.getCurrentHeat().getActiveDriverCount()) {
-                      allFinished = true;
-                    }
-                  }
-                }
-              }
-
-              // Update heat progress
-              if (scoring != null) {
-                double currentProgress = 0;
-                long limitValue = scoring.getFinishValue();
-                if (limitValue > 0) {
-                  if (scoring.getFinishMethod() == FinishMethod.Timed) {
-                    currentProgress =
-                        Math.min(1.0, (limitValue - race.getRaceTime()) / (double) limitValue);
-                  } else {
-                    int maxLaps = 0;
-                    if (race.getCurrentHeat().getDrivers() != null) {
-                      for (DriverHeatData driver : race.getCurrentHeat().getDrivers()) {
-                        maxLaps = Math.max(maxLaps, driver.getLapCount());
-                      }
-                    }
-                    currentProgress = Math.min(1.0, (double) maxLaps / limitValue);
-                  }
-                } else if (isInfiniteTimed) {
-                  // For infinite timed races, progress stays at 0
-                  currentProgress = 0.0;
-                }
-
-                // Update if changed significantly or at the very end
-                if (Math.abs(currentProgress - previousHeatProgress) >= 0.01
-                    || (currentProgress >= 1.0 && previousHeatProgress < 1.0)) {
-                  race.setHeatProgress(currentProgress);
-                  previousHeatProgress = currentProgress;
-                }
-              }
-
-              // Check for flag changes
-              RaceFlag currentFlag = getFlagType(race);
-              if (currentFlag != previousFlag) {
-                race.broadcastFlag(currentFlag);
-                previousFlag = currentFlag;
-              }
-
-              // Broadcast RaceTime message wrapped in RaceData
-              race.broadcastTime();
-
-              long tickDurationNs = System.nanoTime() - now;
-              if (tickDurationNs > 50_000_000L && !allFinished) {
-                logger.warn(
-                    "[PERF] Racing ticker execution took {} ms", tickDurationNs / 1_000_000L);
-              }
-
-              if (allFinished) {
-                if (allowFinish == AllowFinish.NoneAutoSegments && executionManager != null) {
-                  executionManager.applyEndHeatAutoSegments();
-                }
-                if (race.isLastHeat()) {
-                  race.changeState(new RaceOver());
-                } else {
-                  race.changeState(new HeatOver());
-                }
-              }
-            } catch (Exception e) {
-              logger.error("Error in Racing timer", e);
-            }
+      @Override
+      public void run() {
+        try {
+          long now = System.nanoTime();
+          if (lastTime == 0) {
+            lastTime = now;
+            return;
           }
-        };
-    timerHandle = scheduler.scheduleAtFixedRate(ticker, 0, 100, TimeUnit.MILLISECONDS);
+
+          long intervalNs = now - lastTime;
+          if (intervalNs > 200_000_000L) {
+            logger.warn(
+                "[PERF] Racing ticker delayed by {} ms", (intervalNs - 100_000_000L) / 1_000_000L);
+          }
+
+          float delta = (now - lastTime) / 1_000_000_000.0f;
+          lastTime = now;
+
+          executeTick(now, delta);
+        } catch (Exception e) {
+          logger.error("Error in Racing timer", e);
+        }
+      }
+    };
+  }
+
+  private void executeTick(long now, float delta) {
+    HeatScoring scoring = race.getRaceModel().getHeatScoring();
+    long limit = scoring != null ? scoring.getFinishValue() : 0;
+    boolean isTimed = scoring != null && scoring.getFinishMethod() == FinishMethod.Timed;
+    boolean isInfiniteTimed = isTimed && limit <= 0;
+
+    updateRaceTime(delta, isTimed, isInfiniteTimed);
+    processFalseStartTimePenalties(delta);
+    executionManager.processTicker(delta);
+    syncRefuelingState();
+    syncFuelLevels();
+
+    AllowFinish allowFinish = scoring != null ? scoring.getAllowFinish() : AllowFinish.None;
+    boolean allFinished =
+        checkFinishConditions(scoring, isTimed, isInfiniteTimed, allowFinish, limit);
+
+    updateHeatProgress(scoring, isInfiniteTimed);
+    updateFlagAndBroadcast();
+
+    long tickDurationNs = System.nanoTime() - now;
+    if (tickDurationNs > 50_000_000L && !allFinished) {
+      logger.warn("[PERF] Racing ticker execution took {} ms", tickDurationNs / 1_000_000L);
+    }
+
+    if (allFinished) {
+      handleHeatFinish(allowFinish);
+    }
+  }
+
+  private void updateRaceTime(float delta, boolean isTimed, boolean isInfiniteTimed) {
+    if (isTimed && !isInfiniteTimed) {
+      race.addRaceTime(-delta);
+    } else {
+      race.addRaceTime(delta);
+    }
+  }
+
+  private void syncRefuelingState() {
+    boolean[] currentRefuelingState = executionManager.getIsRefueling();
+    if (currentRefuelingState != null && previousRefuelingState != null) {
+      for (int i = 0;
+          i < Math.min(currentRefuelingState.length, previousRefuelingState.length);
+          i++) {
+        if (currentRefuelingState[i] != previousRefuelingState[i]) {
+          race.setRefueling(i, currentRefuelingState[i]);
+          previousRefuelingState[i] = currentRefuelingState[i];
+        }
+      }
+    }
+  }
+
+  private boolean checkFinishConditions(
+      HeatScoring scoring,
+      boolean isTimed,
+      boolean isInfiniteTimed,
+      AllowFinish allowFinish,
+      long limit) {
+    if (scoring == null) {
+      return false;
+    }
+    Set<Integer> finishedLanes = executionManager.getFinishedLanes();
+    if (isTimed) {
+      if (!isInfiniteTimed && race.getRaceTime() <= 0) {
+        if (allowFinish == AllowFinish.SingleLapAutoSegments) {
+          executionManager.capturePartialLapTimes();
+        }
+        race.resetRaceTime();
+        if (allowFinish == AllowFinish.None || allowFinish == AllowFinish.NoneAutoSegments) {
+          return true;
+        }
+        return finishedLanes.size() >= race.getCurrentHeat().getActiveDriverCount();
+      }
+      return false;
+    }
+
+    if (allowFinish == AllowFinish.None || allowFinish == AllowFinish.NoneAutoSegments) {
+      if (race.getCurrentHeat().getDrivers() != null) {
+        for (DriverHeatData driver : race.getCurrentHeat().getDrivers()) {
+          if (driver.getLapCount() >= limit) {
+            return true;
+          }
+        }
+      }
+      return false;
+    }
+    return finishedLanes.size() >= race.getCurrentHeat().getActiveDriverCount();
+  }
+
+  private void updateHeatProgress(HeatScoring scoring, boolean isInfiniteTimed) {
+    if (scoring == null) {
+      return;
+    }
+    double currentProgress = 0;
+    long limitValue = scoring.getFinishValue();
+    if (limitValue > 0) {
+      if (scoring.getFinishMethod() == FinishMethod.Timed) {
+        currentProgress = Math.min(1.0, (limitValue - race.getRaceTime()) / (double) limitValue);
+      } else {
+        int maxLaps = 0;
+        if (race.getCurrentHeat().getDrivers() != null) {
+          for (DriverHeatData driver : race.getCurrentHeat().getDrivers()) {
+            maxLaps = Math.max(maxLaps, driver.getLapCount());
+          }
+        }
+        currentProgress = Math.min(1.0, (double) maxLaps / limitValue);
+      }
+    } else if (isInfiniteTimed) {
+      currentProgress = 0.0;
+    }
+
+    if (Math.abs(currentProgress - previousHeatProgress) >= 0.01
+        || (currentProgress >= 1.0 && previousHeatProgress < 1.0)) {
+      race.setHeatProgress(currentProgress);
+      previousHeatProgress = currentProgress;
+    }
+  }
+
+  private void updateFlagAndBroadcast() {
+    RaceFlag currentFlag = getFlagType(race);
+    if (currentFlag != previousFlag) {
+      race.broadcastFlag(currentFlag);
+      previousFlag = currentFlag;
+    }
+    race.broadcastTime();
+  }
+
+  private void handleHeatFinish(AllowFinish allowFinish) {
+    if (allowFinish == AllowFinish.NoneAutoSegments && executionManager != null) {
+      executionManager.applyEndHeatAutoSegments();
+    }
+    if (race.isLastHeat()) {
+      race.changeState(new RaceOver());
+    } else {
+      race.changeState(new HeatOver());
+    }
   }
 
   @Override

@@ -83,39 +83,16 @@ public class RaceControlHandler {
     }
   }
 
-  @SuppressWarnings("checkstyle:MethodLength")
   public TaskResult handleInitializeRace(InitializeRaceRequest request) throws Exception {
     DatabaseService dbService = DatabaseService.getInstance();
 
     if (request.getEventId() != null && !request.getEventId().isEmpty()) {
-      com.antigravity.models.Event event = // fqn-collision
-          dbService.getEvent(databaseContext, request.getEventId());
-      if (event == null) {
-        return TaskResult.error(404, "Event not found: " + request.getEventId());
-      }
-      if (ClientSubscriptionManager.getInstance().hasDirectorSubscribers()
-          && ClientSubscriptionManager.getInstance().getRace() != null
-          && ClientSubscriptionManager.getInstance().getRace().isActive()) {
-        return TaskResult.error(
-            409, "Cannot start new race while client is watching an active race");
-      }
-      com.antigravity.race.EventExecutionManager.getInstance() // fqn-collision
-          .startEvent(
-              event,
-              request.getDriverIdsList(),
-              request.getIsDemoMode(),
-              request.getDemoConfig(),
-              databaseContext,
-              request.getSeasonId());
-      InitializeRaceResponse response =
-          InitializeRaceResponse.newBuilder().setSuccess(true).build();
-      return TaskResult.success(response.toByteArray());
+      return handleInitializeEvent(request);
     }
 
     com.antigravity.race.EventExecutionManager.getInstance().cancelEvent(); // fqn-collision
 
     Race raceModel = dbService.getRace(databaseContext, request.getRaceId());
-
     if (raceModel == null) {
       return TaskResult.error(404, "Race not found");
     }
@@ -135,104 +112,17 @@ public class RaceControlHandler {
     List<Driver> drivers = dbService.getDrivers(databaseContext, rawIds);
     List<Team> teams = dbService.getTeams(databaseContext, rawIds);
 
-    List<RaceParticipant> participants = new ArrayList<>();
+    InitializeRaceResponse dupes = checkParticipantDuplicates(participantIds, drivers, teams);
+    if (dupes != null) {
+      return TaskResult.success(dupes.toByteArray());
+    }
+
     List<Team> allTeams = dbService.getAllTeams(databaseContext);
+    List<RaceParticipant> participants =
+        buildParticipants(participantIds, drivers, teams, allTeams);
 
-    Map<String, List<String>> driverToTeamNames = new HashMap<>();
-    Set<String> individualDriverIds = new HashSet<>();
-
-    for (String pid : participantIds) {
-      String rawId = pid.startsWith("d_") || pid.startsWith("t_") ? pid.substring(2) : pid;
-      if (pid.startsWith("d_")) {
-        individualDriverIds.add(rawId);
-      } else if (pid.startsWith("t_")) {
-        Team team =
-            teams.stream().filter(t -> t.getEntityId().equals(rawId)).findFirst().orElse(null);
-        if (team != null) {
-          for (String dId : team.getDriverIds()) {
-            driverToTeamNames.computeIfAbsent(dId, k -> new ArrayList<>()).add(team.getName());
-          }
-        }
-      }
-    }
-
-    for (String dId : individualDriverIds) {
-      if (driverToTeamNames.containsKey(dId)) {
-        Driver d =
-            drivers.stream().filter(drv -> drv.getEntityId().equals(dId)).findFirst().orElse(null);
-        String dName = d != null ? d.getName() : dId;
-        InitializeRaceResponse response =
-            InitializeRaceResponse.newBuilder()
-                .setSuccess(false)
-                .setErrorCode("DUPE_INDIVIDUAL_TEAM")
-                .setDriverName(dName)
-                .addAllTeamNames(driverToTeamNames.get(dId))
-                .build();
-        return TaskResult.success(response.toByteArray());
-      }
-    }
-
-    for (Map.Entry<String, List<String>> entry : driverToTeamNames.entrySet()) {
-      if (entry.getValue().size() > 1) {
-        String dId = entry.getKey();
-        Driver d =
-            drivers.stream().filter(drv -> drv.getEntityId().equals(dId)).findFirst().orElse(null);
-        if (d == null) {
-          d = dbService.getDriver(databaseContext, dId);
-        }
-        String dName = d != null ? d.getName() : dId;
-        InitializeRaceResponse response =
-            InitializeRaceResponse.newBuilder()
-                .setSuccess(false)
-                .setErrorCode("DUPE_MULTIPLE_TEAMS")
-                .setDriverName(dName)
-                .addAllTeamNames(entry.getValue())
-                .build();
-        return TaskResult.success(response.toByteArray());
-      }
-    }
-
-    for (String pid : participantIds) {
-      String rawId = pid.startsWith("d_") || pid.startsWith("t_") ? pid.substring(2) : pid;
-      boolean isExplicitDriver = pid.startsWith("d_");
-      boolean isExplicitTeam = pid.startsWith("t_");
-
-      if (!isExplicitTeam) {
-        Driver driver =
-            drivers.stream().filter(d -> d.getEntityId().equals(rawId)).findFirst().orElse(null);
-        if (driver != null) {
-          Team driverTeam = null;
-          if (!isExplicitDriver) {
-            driverTeam =
-                allTeams.stream()
-                    .filter(t -> t.getDriverIds().contains(rawId))
-                    .findFirst()
-                    .orElse(null);
-          }
-
-          if (driverTeam != null) {
-            participants.add(new RaceParticipant(driver, driverTeam));
-          } else {
-            participants.add(new RaceParticipant(driver));
-          }
-          continue;
-        }
-      }
-
-      if (!isExplicitDriver) {
-        Team team =
-            teams.stream().filter(t -> t.getEntityId().equals(rawId)).findFirst().orElse(null);
-        if (team != null) {
-          RaceParticipant rp = new RaceParticipant(team);
-          List<Driver> teamDrivers = dbService.getDrivers(databaseContext, team.getDriverIds());
-          rp.setTeamDrivers(teamDrivers);
-          participants.add(rp);
-        }
-      }
-    }
     Track raceTrack =
         DatabaseService.getInstance().getTrack(databaseContext, raceModel.getTrackEntityId());
-
     if (raceTrack == null) {
       InitializeRaceResponse response =
           InitializeRaceResponse.newBuilder()
@@ -265,6 +155,139 @@ public class RaceControlHandler {
       return TaskResult.success(response.toByteArray());
     }
 
+    return startRuntimeRace(raceModel, participants, raceTrack, raceTheme, request);
+  }
+
+  private TaskResult handleInitializeEvent(InitializeRaceRequest request) throws Exception {
+    DatabaseService dbService = DatabaseService.getInstance();
+    com.antigravity.models.Event event = // fqn-collision
+        dbService.getEvent(databaseContext, request.getEventId());
+    if (event == null) {
+      return TaskResult.error(404, "Event not found: " + request.getEventId());
+    }
+    if (ClientSubscriptionManager.getInstance().hasDirectorSubscribers()
+        && ClientSubscriptionManager.getInstance().getRace() != null
+        && ClientSubscriptionManager.getInstance().getRace().isActive()) {
+      return TaskResult.error(409, "Cannot start new race while client is watching an active race");
+    }
+    com.antigravity.race.EventExecutionManager.getInstance() // fqn-collision
+        .startEvent(
+            event,
+            request.getDriverIdsList(),
+            request.getIsDemoMode(),
+            request.getDemoConfig(),
+            databaseContext,
+            request.getSeasonId());
+    InitializeRaceResponse response = InitializeRaceResponse.newBuilder().setSuccess(true).build();
+    return TaskResult.success(response.toByteArray());
+  }
+
+  private InitializeRaceResponse checkParticipantDuplicates(
+      List<String> participantIds, List<Driver> drivers, List<Team> teams) {
+    Map<String, List<String>> driverToTeamNames = new HashMap<>();
+    Set<String> individualDriverIds = new HashSet<>();
+
+    for (String pid : participantIds) {
+      String rawId = pid.startsWith("d_") || pid.startsWith("t_") ? pid.substring(2) : pid;
+      if (pid.startsWith("d_")) {
+        individualDriverIds.add(rawId);
+      } else if (pid.startsWith("t_")) {
+        Team team =
+            teams.stream().filter(t -> t.getEntityId().equals(rawId)).findFirst().orElse(null);
+        if (team != null) {
+          for (String dId : team.getDriverIds()) {
+            driverToTeamNames.computeIfAbsent(dId, k -> new ArrayList<>()).add(team.getName());
+          }
+        }
+      }
+    }
+
+    for (String dId : individualDriverIds) {
+      if (driverToTeamNames.containsKey(dId)) {
+        Driver d =
+            drivers.stream().filter(drv -> drv.getEntityId().equals(dId)).findFirst().orElse(null);
+        String dName = d != null ? d.getName() : dId;
+        return InitializeRaceResponse.newBuilder()
+            .setSuccess(false)
+            .setErrorCode("DUPE_INDIVIDUAL_TEAM")
+            .setDriverName(dName)
+            .addAllTeamNames(driverToTeamNames.get(dId))
+            .build();
+      }
+    }
+
+    for (Map.Entry<String, List<String>> entry : driverToTeamNames.entrySet()) {
+      if (entry.getValue().size() > 1) {
+        String dId = entry.getKey();
+        Driver d =
+            drivers.stream().filter(drv -> drv.getEntityId().equals(dId)).findFirst().orElse(null);
+        if (d == null) {
+          d = DatabaseService.getInstance().getDriver(databaseContext, dId);
+        }
+        String dName = d != null ? d.getName() : dId;
+        return InitializeRaceResponse.newBuilder()
+            .setSuccess(false)
+            .setErrorCode("DUPE_MULTIPLE_TEAMS")
+            .setDriverName(dName)
+            .addAllTeamNames(entry.getValue())
+            .build();
+      }
+    }
+
+    return null;
+  }
+
+  private List<RaceParticipant> buildParticipants(
+      List<String> participantIds, List<Driver> drivers, List<Team> teams, List<Team> allTeams) {
+    List<RaceParticipant> participants = new ArrayList<>();
+    for (String pid : participantIds) {
+      String rawId = pid.startsWith("d_") || pid.startsWith("t_") ? pid.substring(2) : pid;
+      boolean isExplicitDriver = pid.startsWith("d_");
+      boolean isExplicitTeam = pid.startsWith("t_");
+
+      if (!isExplicitTeam) {
+        Driver driver =
+            drivers.stream().filter(d -> d.getEntityId().equals(rawId)).findFirst().orElse(null);
+        if (driver != null) {
+          Team driverTeam = null;
+          if (!isExplicitDriver) {
+            driverTeam =
+                allTeams.stream()
+                    .filter(t -> t.getDriverIds().contains(rawId))
+                    .findFirst()
+                    .orElse(null);
+          }
+
+          if (driverTeam != null) {
+            participants.add(new RaceParticipant(driver, driverTeam));
+          } else {
+            participants.add(new RaceParticipant(driver));
+          }
+          continue;
+        }
+      }
+
+      if (!isExplicitDriver) {
+        Team team =
+            teams.stream().filter(t -> t.getEntityId().equals(rawId)).findFirst().orElse(null);
+        if (team != null) {
+          RaceParticipant rp = new RaceParticipant(team);
+          List<Driver> teamDrivers =
+              DatabaseService.getInstance().getDrivers(databaseContext, team.getDriverIds());
+          rp.setTeamDrivers(teamDrivers);
+          participants.add(rp);
+        }
+      }
+    }
+    return participants;
+  }
+
+  private TaskResult startRuntimeRace(
+      Race raceModel,
+      List<RaceParticipant> participants,
+      Track raceTrack,
+      Theme raceTheme,
+      InitializeRaceRequest request) {
     com.antigravity.race.Race runtimeRace = null; // fqn-collision
     try {
       runtimeRace =
