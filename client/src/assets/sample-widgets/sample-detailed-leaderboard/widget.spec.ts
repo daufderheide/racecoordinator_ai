@@ -110,6 +110,33 @@ describe("DetailedLeaderboardComponent (sample-detailed-leaderboard)", () => {
       expect(component.formatGap({ lapCount: 0, totalLaps: 0 }, 1, [{}])).toBe(
         "--",
       );
+
+      // Zero gap or tiny gap with lap data
+      expect(
+        component.formatGap({ gapPosition: 0, lapCount: 5 }, 1, [
+          { totalTime: 10 },
+        ]),
+      ).toBe("+0.000");
+      expect(
+        component.formatGap({ gapLeader: 0, lapCount: 5 }, 1, [
+          { totalTime: 10 },
+        ]),
+      ).toBe("+0.000");
+      expect(
+        component.formatGap({ gapPosition: 0.0001, lapCount: 5 }, 1, [
+          { totalTime: 10 },
+        ]),
+      ).toBe("+0.000");
+      expect(
+        component.formatGap({ gapPosition: -0.0001, lapCount: 5 }, 1, [
+          { totalTime: 10 },
+        ]),
+      ).toBe("+0.000");
+      expect(
+        component.formatGap({ gapPosition: 0, lapCount: 0, totalLaps: 0 }, 1, [
+          {},
+        ]),
+      ).toBe("--");
     });
   });
 

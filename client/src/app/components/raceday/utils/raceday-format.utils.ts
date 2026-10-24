@@ -67,6 +67,28 @@ export class RacedayFormatUtils {
     return true;
   }
 
+  static hasHeatData(hd: DriverHeatData | any): boolean {
+    if (!hd || this.isEmptyDriver(hd)) return false;
+    const hasReaction = (hd.reactionTime ?? hd.reaction_time ?? 0) > 0;
+    const hasLaps =
+      (hd.lapTimes && hd.lapTimes.length > 0) ||
+      (hd.laps && hd.laps.length > 0) ||
+      (hd.physicalLapCount ?? hd.physical_lap_count ?? 0) > 0 ||
+      (hd.lapCount ?? hd.lap_count ?? 0) > 0;
+    const hasTime =
+      (hd.totalTime ?? hd.total_time ?? hd._totalTime ?? 0) > 0 ||
+      (hd.bestLapTime ?? hd.best_lap_time ?? hd._bestLapTime ?? 0) > 0 ||
+      (hd.lastLapTime ?? hd.last_lap_time ?? hd._lastLapTime ?? 0) > 0 ||
+      (hd.averageLapTime ?? hd.average_lap_time ?? 0) > 0;
+    const hasAdjustment =
+      (hd.userLaps !== undefined && hd.userLaps !== 0) ||
+      (hd.penaltyLaps !== undefined && hd.penaltyLaps !== 0) ||
+      (hd.autoCalculatedLaps !== undefined && hd.autoCalculatedLaps !== 0) ||
+      (hd.adjustedLapCount !== undefined && hd.adjustedLapCount !== 0);
+    const isFinished = hd.isFinished === true || hd.finished === true;
+    return hasReaction || hasLaps || hasTime || hasAdjustment || isFinished;
+  }
+
   static isAllowFinish(race?: Race): boolean {
     if (!race) return false;
     const scoring: any = race.heat_scoring ?? (race as any).heatScoring;
@@ -536,14 +558,11 @@ export class RacedayFormatUtils {
     timeDecimals: number,
     timePlaceholder: string,
   ): string {
-    if (baseKey === "gapLeader" || baseKey === "gapPosition") {
-      if (value === 0) return timePlaceholder;
-      const sign = value > 0 ? "+" : "";
-      return sign + value.toFixed(timeDecimals);
-    }
-    if (baseKey === "gapLeaderF1" || baseKey === "gapPositionF1") {
-      const isLeader = baseKey === "gapLeaderF1";
-      const lapsDown = isLeader ? hd.lapsDownLeader : hd.lapsDownPosition;
+    const isLeaderF1 = baseKey === "gapLeaderF1";
+    const isPositionF1 = baseKey === "gapPositionF1";
+
+    if (isLeaderF1 || isPositionF1) {
+      const lapsDown = isLeaderF1 ? hd.lapsDownLeader : hd.lapsDownPosition;
       if (lapsDown === 1) {
         return ctx
           .translate("RD_LAP_DOWN")
@@ -552,12 +571,28 @@ export class RacedayFormatUtils {
         return ctx
           .translate("RD_LAPS_DOWN")
           .replace("{{count}}", lapsDown.toString());
-      } else {
-        if (value === 0) return timePlaceholder;
-        const sign = value > 0 ? "+" : "";
-        return sign + value.toFixed(timeDecimals);
       }
     }
+
+    if (
+      baseKey === "gapLeader" ||
+      baseKey === "gapPosition" ||
+      isLeaderF1 ||
+      isPositionF1
+    ) {
+      if (value === null || value === undefined || isNaN(Number(value))) {
+        return timePlaceholder;
+      }
+      const num = Number(value);
+      const fixed = Math.abs(num).toFixed(timeDecimals);
+      const isZero = Number(fixed) === 0;
+      if (isZero && !this.hasHeatData(hd)) {
+        return timePlaceholder;
+      }
+      const sign = !isZero && num < 0 ? "-" : "+";
+      return sign + fixed;
+    }
+
     return timePlaceholder;
   }
 

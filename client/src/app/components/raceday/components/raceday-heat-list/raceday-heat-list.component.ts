@@ -14,6 +14,7 @@ import {
 } from "@angular/core";
 import { toSignal } from "@angular/core/rxjs-interop";
 import { of } from "rxjs";
+import { RacedayFormatUtils } from "@app/components/raceday/utils/raceday-format.utils";
 import { AbsoluteWidgetNode } from "@app/models/settings";
 import { Track } from "@app/models/track";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
@@ -441,11 +442,13 @@ export class RacedayHeatListComponent implements AfterViewInit, OnDestroy {
 
         if (typeof hd.gapLeader === "number") {
           gapLeader = hd.gapLeader;
-          if (gapLeader > 0) {
-            formattedGap = "+" + gapLeader.toFixed(timeDec);
-          } else if (gapLeader === 0 && rank === 1) {
-            formattedGap = "--";
-          }
+          formattedGap = this.formatLaneGap(
+            hd,
+            rank,
+            lapCount,
+            bestLapTime,
+            timeDec,
+          );
         }
 
         if (typeof hd.averageLapTime === "number" && hd.averageLapTime > 0) {
@@ -481,6 +484,31 @@ export class RacedayHeatListComponent implements AfterViewInit, OnDestroy {
       medianLapTime,
       formattedMedianLap,
     };
+  }
+
+  private formatLaneGap(
+    hd: any,
+    rank: number,
+    lapCount: number,
+    bestLapTime: number,
+    timeDec: number,
+  ): string {
+    if (typeof hd.gapLeader !== "number") {
+      return "--";
+    }
+    const fixed = Math.abs(hd.gapLeader).toFixed(timeDec);
+    const isZero = Number(fixed) === 0;
+    if (rank === 1 && isZero) {
+      return "--";
+    }
+    if (isZero) {
+      return lapCount > 0 ||
+        bestLapTime > 0 ||
+        RacedayFormatUtils.hasHeatData(hd)
+        ? "+" + fixed
+        : "--";
+    }
+    return (hd.gapLeader > 0 ? "+" : "-") + fixed;
   }
 
   private extractDriverLaps(hd: any, isCompleted = false): number {
@@ -555,11 +583,23 @@ export class RacedayHeatListComponent implements AfterViewInit, OnDestroy {
           formattedBestLap = bestTime.toFixed(timeDec);
         }
 
-        gapLeader = lane.gapLeader || 0;
-        if (gapLeader > 0) {
-          formattedGap = "+" + Number(lane.gapLeader).toFixed(timeDec);
-        } else if (gapLeader === 0 && rank === 1) {
+        gapLeader =
+          typeof lane.gapLeader === "number"
+            ? lane.gapLeader
+            : lane.gapLeader || 0;
+        const fixed = Math.abs(gapLeader).toFixed(timeDec);
+        const isZero = Number(fixed) === 0;
+        if (rank === 1 && isZero) {
           formattedGap = "--";
+        } else if (isZero) {
+          formattedGap =
+            laps > 0 || bestTime > 0 || RacedayFormatUtils.hasHeatData(lane)
+              ? "+" + fixed
+              : "--";
+        } else if (gapLeader > 0) {
+          formattedGap = "+" + fixed;
+        } else {
+          formattedGap = "-" + fixed;
         }
 
         averageLapTime = lane.averageLapTime || 0;

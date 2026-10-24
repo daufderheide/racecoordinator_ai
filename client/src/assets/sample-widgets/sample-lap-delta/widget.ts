@@ -34,9 +34,11 @@ export class LapDeltaComponent extends CustomWidgetBaseComponent {
   get deltaFormatted(): string {
     const d = this.deltaSeconds;
     const decimals = this.showMilliseconds ? 3 : 2;
-    if (d === null) return `+${(0).toFixed(decimals)}s`;
-    const sign = d >= 0 ? "+" : "-";
-    return `${sign}${Math.abs(d).toFixed(decimals)}s`;
+    if (d === null) return this.showMilliseconds ? "--.---" : "--.--";
+    const fixed = Math.abs(d).toFixed(decimals);
+    const isZero = Number(fixed) === 0;
+    const sign = !isZero && d < 0 ? "-" : "+";
+    return `${sign}${fixed}s`;
   }
 
   get deltaColor(): string {

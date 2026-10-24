@@ -949,6 +949,71 @@ describe("RacedayHeatListComponent", () => {
       ).toBe("5.550");
     });
 
+    it("should format gap as +0.000 for runner up tied with leader or tiny gap", () => {
+      const tiedHeats: any[] = [
+        {
+          heatNumber: 1,
+          isCompleted: true,
+          heatDrivers: [
+            {
+              laneIndex: 0,
+              rank: 1,
+              lapCount: 15,
+              bestLapTime: 5.182,
+              gapLeader: 0,
+              driver: { nickname: "Rocket" },
+            },
+            {
+              laneIndex: 1,
+              rank: 2,
+              lapCount: 15,
+              bestLapTime: 5.182,
+              gapLeader: 0,
+              driver: { nickname: "Speedy" },
+            },
+            {
+              laneIndex: 2,
+              rank: 3,
+              lapCount: 15,
+              bestLapTime: 5.182,
+              gapLeader: 0.0002,
+              driver: { nickname: "Flash" },
+            },
+          ],
+        },
+      ];
+
+      fixture.componentRef.setInput("heats", tiedHeats);
+      fixture.componentRef.setInput("currentHeat", { heatNumber: 1 } as Heat);
+      fixture.componentRef.setInput("widget", {
+        ...mockWidget,
+        customSettings: {
+          ...mockWidget.customSettings,
+          showCompletedSummary: true,
+          summaryShowGap: true,
+        },
+      });
+      fixture.detectChanges();
+
+      const heat1 = fixture.nativeElement.querySelector("#heat-card-1");
+      const rows = heat1.querySelectorAll(".summary-lane-row");
+
+      // Leader (rank 1, gap 0): "--"
+      expect(
+        rows[0].querySelector(".summary-cell-gap").textContent.trim(),
+      ).toBe("--");
+
+      // Runner up (rank 2, gap 0 with 15 laps): "+0.000"
+      expect(
+        rows[1].querySelector(".summary-cell-gap").textContent.trim(),
+      ).toBe("+0.000");
+
+      // Rank 3 (tiny gap 0.0002 with 15 laps): "+0.000"
+      expect(
+        rows[2].querySelector(".summary-cell-gap").textContent.trim(),
+      ).toBe("+0.000");
+    });
+
     it("should support disabling core columns (Pos, Driver)", () => {
       fixture.componentRef.setInput("heats", mockTelemetryHeats);
       fixture.componentRef.setInput("currentHeat", { heatNumber: 2 } as Heat);

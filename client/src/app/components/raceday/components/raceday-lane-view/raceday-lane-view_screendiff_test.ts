@@ -372,4 +372,166 @@ test.describe("Raceday Lane View Visuals", () => {
       "raceday-lane-view-large-header.png",
     );
   });
+
+  test("should display gap column widget with zero and tiny gaps", async ({
+    page,
+  }) => {
+    await TestSetupHelper.setupSettings(page, {
+      racedayColumns: [
+        "laneNumber",
+        "driver.nickname",
+        "lapCount",
+        "gapLeader",
+      ],
+      columnLayouts: {
+        laneNumber: { "center-center": "laneNumber" },
+        "driver.nickname": { "center-center": "driver.nickname" },
+        lapCount: { "center-center": "lapCount" },
+        gapLeader: {
+          "center-center": "gapLeader",
+          "bottom-right": "gapPosition",
+        },
+      },
+      columnAnchors: {
+        laneNumber: "center-center",
+        "driver.nickname": "center-center",
+        lapCount: "center-center",
+        gapLeader: "center-center",
+      },
+      columnWidths: {
+        laneNumber: 80,
+        "driver.nickname": 250,
+        lapCount: 120,
+        gapLeader: 220,
+      },
+    });
+
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/default-raceday"),
+    );
+
+    await page.locator(".dashboard-wrapper").waitFor();
+
+    const raceData = {
+      race: {
+        race: {
+          model: { entityId: "r1" },
+          name: "Gap Widget Test",
+          track: {
+            model: { entityId: "t1" },
+            name: "Test Track",
+            lanes: [
+              {
+                objectId: "l1",
+                backgroundColor: "#ef4444",
+                foregroundColor: "#ffffff",
+                length: 10,
+              },
+              {
+                objectId: "l2",
+                backgroundColor: "#3b82f6",
+                foregroundColor: "#ffffff",
+                length: 10,
+              },
+              {
+                objectId: "l3",
+                backgroundColor: "#eab308",
+                foregroundColor: "#000000",
+                length: 10,
+              },
+              {
+                objectId: "l4",
+                backgroundColor: "#22c55e",
+                foregroundColor: "#ffffff",
+                length: 10,
+              },
+            ],
+          },
+        },
+        drivers: [
+          { objectId: "rp1", driver: { name: "Alice", nickname: "Leader" } },
+          { objectId: "rp2", driver: { name: "Bob", nickname: "TinyGap" } },
+          { objectId: "rp3", driver: { name: "Charlie", nickname: "ZeroGap" } },
+          { objectId: "rp4", driver: { name: "Dave", nickname: "Unstarted" } },
+        ],
+        currentHeat: {
+          objectId: "h1",
+          heatNumber: 1,
+          heatDrivers: [
+            {
+              objectId: "hd1",
+              laneIndex: 0,
+              lapCount: 15,
+              totalTime: 45.123,
+              bestLapTime: 3.012,
+              lastLapTime: 3.123,
+              gapLeader: 0,
+              gapPosition: 0,
+              rank: 1,
+              driver: {
+                objectId: "rp1",
+                driver: { name: "Alice", nickname: "Leader" },
+              },
+            },
+            {
+              objectId: "hd2",
+              laneIndex: 1,
+              lapCount: 15,
+              totalTime: 45.1231,
+              bestLapTime: 3.012,
+              lastLapTime: 3.123,
+              gapLeader: 0.0001,
+              gapPosition: 0.0001,
+              rank: 2,
+              driver: {
+                objectId: "rp2",
+                driver: { name: "Bob", nickname: "TinyGap" },
+              },
+            },
+            {
+              objectId: "hd3",
+              laneIndex: 2,
+              lapCount: 15,
+              totalTime: 45.123,
+              bestLapTime: 3.012,
+              lastLapTime: 3.123,
+              gapLeader: 0.0,
+              gapPosition: 0.0,
+              rank: 3,
+              driver: {
+                objectId: "rp3",
+                driver: { name: "Charlie", nickname: "ZeroGap" },
+              },
+            },
+            {
+              objectId: "hd4",
+              laneIndex: 3,
+              lapCount: 0,
+              gapLeader: 0,
+              gapPosition: 0,
+              driver: {
+                objectId: "rp4",
+                driver: { name: "Dave", nickname: "Unstarted" },
+              },
+            },
+          ],
+        },
+      },
+    };
+
+    await TestSetupHelper.mockRaceData(page, raceData);
+    await page.locator(".table-row").first().waitFor({ state: "visible" });
+
+    const laneView = page.locator("app-raceday-lane-view");
+    await expect(laneView).toBeVisible();
+
+    await page.addStyleTag({
+      content:
+        "* { caret-color: transparent !important; } .blink { animation: none !important; }",
+    });
+
+    await expect(laneView).toHaveScreenshot("raceday-lane-view-gap-widget.png");
+  });
 });

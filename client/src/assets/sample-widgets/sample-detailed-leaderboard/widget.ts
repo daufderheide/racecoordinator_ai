@@ -316,42 +316,47 @@ export class DetailedLeaderboardComponent extends CustomWidgetBaseComponent {
     const gapLead = d.gapLeader !== undefined ? d.gapLeader : d.gap_leader;
     const totTime = d.totalTime !== undefined ? d.totalTime : d.total_time;
 
+    const hasData =
+      (d.lapCount !== undefined && d.lapCount > 0) ||
+      (d.lap_count !== undefined && d.lap_count > 0) ||
+      (d.totalLaps !== undefined && d.totalLaps > 0) ||
+      (d.total_laps !== undefined && d.total_laps > 0) ||
+      (totTime !== undefined && totTime > 0) ||
+      (d.bestLapTime !== undefined && d.bestLapTime > 0) ||
+      (d.best_lap_time !== undefined && d.best_lap_time > 0);
+
+    const tryFormat = (val: any): string | null => {
+      if (val === undefined || val === null) return null;
+      const g = Number(val);
+      if (isNaN(g)) return null;
+      const fixed = Math.abs(g).toFixed(3);
+      const isZero = Number(fixed) === 0;
+      if (isZero && !hasData) return null;
+      const sign = !isZero && g < 0 ? "-" : "+";
+      return `${sign}${fixed}`;
+    };
+
     if (preferredMetric === "gapPosition") {
-      if (gapPos !== undefined && gapPos !== 0) {
-        const g = Number(gapPos);
-        return g > 0 ? `+${g.toFixed(3)}` : g.toFixed(3);
-      }
+      const res = tryFormat(gapPos);
+      if (res !== null) return res;
     } else {
-      if (gapLead !== undefined && gapLead !== 0) {
-        const g = Number(gapLead);
-        return g > 0 ? `+${g.toFixed(3)}` : g.toFixed(3);
-      }
+      const res = tryFormat(gapLead);
+      if (res !== null) return res;
     }
 
-    if (gapPos !== undefined && gapPos !== 0) {
-      const g = Number(gapPos);
-      return g > 0 ? `+${g.toFixed(3)}` : g.toFixed(3);
-    }
-    if (gapLead !== undefined && gapLead !== 0) {
-      const g = Number(gapLead);
-      return g > 0 ? `+${g.toFixed(3)}` : g.toFixed(3);
-    }
+    const posRes = tryFormat(gapPos);
+    if (posRes !== null) return posRes;
+
+    const leadRes = tryFormat(gapLead);
+    if (leadRes !== null) return leadRes;
 
     const prev = list[index - 1];
     const prevTime =
       prev && (prev.totalTime !== undefined ? prev.totalTime : prev.total_time);
     if (prevTime !== undefined && totTime !== undefined) {
       const delta = Number(totTime) - Number(prevTime);
-      if (delta !== 0) {
-        return delta > 0 ? `+${delta.toFixed(3)}` : delta.toFixed(3);
-      }
-    }
-
-    if (
-      (d.lapCount === 0 || d.lapCount === undefined) &&
-      (d.totalLaps === 0 || d.total_laps === 0)
-    ) {
-      return "--";
+      const deltaRes = tryFormat(delta);
+      if (deltaRes !== null) return deltaRes;
     }
 
     return "--";

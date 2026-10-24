@@ -119,6 +119,140 @@ describe("RacedayFormatUtils", () => {
       );
       expect(result).toBe("--.---");
     });
+
+    it("should format gapLeaderF1 as +0.000 when value is 0, lapsDownLeader is 0, and driver has heat data", () => {
+      hd.lapsDownLeader = 0;
+      (hd as any).physicalLapCount = 2;
+      const result = RacedayFormatUtils.formatValue(
+        "gapLeaderF1",
+        0,
+        hd,
+        undefined,
+        ctx,
+      );
+      expect(result).toBe("+0.000");
+    });
+
+    it("should format gapLeaderF1 as +0.000 when value is tiny (< decimals) and driver has heat data", () => {
+      hd.lapsDownLeader = 0;
+      (hd as any).physicalLapCount = 2;
+      const result = RacedayFormatUtils.formatValue(
+        "gapLeaderF1",
+        0.0001,
+        hd,
+        undefined,
+        ctx,
+      );
+      expect(result).toBe("+0.000");
+    });
+  });
+
+  describe("formatValue - Gaps (gapLeader, gapPosition)", () => {
+    it("should format gapLeader as placeholder when value is 0 and driver has no data", () => {
+      const result = RacedayFormatUtils.formatValue(
+        "gapLeader",
+        0,
+        hd,
+        undefined,
+        ctx,
+      );
+      expect(result).toBe("--.---");
+    });
+
+    it("should format gapLeader as +0.000 when value is 0 and driver has heat data", () => {
+      (hd as any).physicalLapCount = 5;
+      const result = RacedayFormatUtils.formatValue(
+        "gapLeader",
+        0,
+        hd,
+        undefined,
+        ctx,
+      );
+      expect(result).toBe("+0.000");
+    });
+
+    it("should format gapPosition as +0.000 when value is 0 and driver has heat data", () => {
+      (hd as any).lapTimes = [5.2];
+      const result = RacedayFormatUtils.formatValue(
+        "gapPosition",
+        0,
+        hd,
+        undefined,
+        ctx,
+      );
+      expect(result).toBe("+0.000");
+    });
+
+    it("should format tiny gap as +0.000 when value is less than decimal places allow and driver has data", () => {
+      (hd as any).physicalLapCount = 1;
+      const result = RacedayFormatUtils.formatValue(
+        "gapLeader",
+        0.0002,
+        hd,
+        undefined,
+        ctx,
+      );
+      expect(result).toBe("+0.000");
+    });
+
+    it("should format negative tiny gap as +0.000 rather than -0.000", () => {
+      (hd as any).physicalLapCount = 1;
+      const result = RacedayFormatUtils.formatValue(
+        "gapLeader",
+        -0.0001,
+        hd,
+        undefined,
+        ctx,
+      );
+      expect(result).toBe("+0.000");
+    });
+
+    it("should format negative non-zero gap with minus sign", () => {
+      (hd as any).physicalLapCount = 1;
+      const result = RacedayFormatUtils.formatValue(
+        "gapLeader",
+        -0.25,
+        hd,
+        undefined,
+        ctx,
+      );
+      expect(result).toBe("-0.250");
+    });
+
+    it("should format gapLeader with configured time decimals", () => {
+      (hd as any).physicalLapCount = 1;
+      const customCtx = {
+        ...ctx,
+        laneViewWidgetSettings: {
+          ...ctx.laneViewWidgetSettings,
+          timeDecimalPlaces: 2,
+        },
+      };
+      const result = RacedayFormatUtils.formatValue(
+        "gapLeader",
+        0,
+        hd,
+        undefined,
+        customCtx,
+      );
+      expect(result).toBe("+0.00");
+    });
+
+    it("should return placeholder when gap value is null or undefined", () => {
+      (hd as any).physicalLapCount = 1;
+      expect(
+        RacedayFormatUtils.formatValue("gapLeader", null, hd, undefined, ctx),
+      ).toBe("--.---");
+      expect(
+        RacedayFormatUtils.formatValue(
+          "gapLeader",
+          undefined,
+          hd,
+          undefined,
+          ctx,
+        ),
+      ).toBe("--.---");
+    });
   });
 
   describe("formatValue - Predictions", () => {
@@ -1628,6 +1762,24 @@ describe("RacedayFormatUtils", () => {
       ).toBe("+1.234");
       expect(
         RacedayFormatUtils.formatValue(
+          "overallGapLeader",
+          0,
+          participantHd,
+          undefined,
+          ctx,
+        ),
+      ).toBe("+0.000");
+      expect(
+        RacedayFormatUtils.formatValue(
+          "overallGapLeader",
+          0.0001,
+          participantHd,
+          undefined,
+          ctx,
+        ),
+      ).toBe("+0.000");
+      expect(
+        RacedayFormatUtils.formatValue(
           "overallGapPosition",
           0.567,
           participantHd,
@@ -1635,6 +1787,15 @@ describe("RacedayFormatUtils", () => {
           ctx,
         ),
       ).toBe("+0.567");
+      expect(
+        RacedayFormatUtils.formatValue(
+          "overallGapPosition",
+          0,
+          participantHd,
+          undefined,
+          ctx,
+        ),
+      ).toBe("+0.000");
       expect(
         RacedayFormatUtils.formatValue(
           "overallGapLeaderF1",
@@ -1743,6 +1904,23 @@ describe("RacedayFormatUtils", () => {
           "overallGapLeader",
           0,
           emptyHd,
+          undefined,
+          ctx,
+        ),
+      ).toBe("--.---");
+      const unstartedHd: any = {
+        actualDriver: { name: "Driver" },
+        participant: {
+          totalLaps: 0,
+          physicalLapCount: 0,
+          totalTime: 0,
+        },
+      };
+      expect(
+        RacedayFormatUtils.formatValue(
+          "overallGapLeader",
+          0,
+          unstartedHd,
           undefined,
           ctx,
         ),

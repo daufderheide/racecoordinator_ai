@@ -313,6 +313,22 @@ export class RacedayOverallFormatUtils {
     return null;
   }
 
+  static hasOverallData(hd: DriverHeatData | any): boolean {
+    if (!hd || RacedayFormatUtils.isEmptyDriver(hd)) return false;
+    const p = hd.participant ?? hd;
+    const hasLaps =
+      (p.totalLaps ?? p.total_laps ?? 0) > 0 ||
+      (p.physicalLapCount ?? p.physical_lap_count ?? 0) > 0;
+    const hasTime =
+      (p.totalTime ?? p.total_time ?? 0) > 0 ||
+      (p.bestLapTime ?? p.best_lap_time ?? 0) > 0 ||
+      (p.averageLapTime ?? p.average_lap_time ?? 0) > 0;
+    const hasHeats =
+      (p.heatsRaced ?? p.heats_raced ?? 0) > 0 ||
+      (p.lapsLed ?? p.laps_led ?? 0) > 0;
+    return hasLaps || hasTime || hasHeats || RacedayFormatUtils.hasHeatData(hd);
+  }
+
   private static formatOverallGapValue(
     baseKey: string,
     value: any,
@@ -321,23 +337,14 @@ export class RacedayOverallFormatUtils {
     timePlaceholder: string,
     timeDecimals: number,
   ): string | null {
-    if (baseKey === "overallGapLeader" || baseKey === "overallGapPosition") {
-      if (value === 0 || value === null || value === undefined) {
-        return timePlaceholder;
-      }
-      const sign = value > 0 ? "+" : "";
-      return sign + value.toFixed(timeDecimals);
-    }
+    const isLeaderF1 = baseKey === "overallGapLeaderF1";
+    const isPositionF1 = baseKey === "overallGapPositionF1";
 
-    if (
-      baseKey === "overallGapLeaderF1" ||
-      baseKey === "overallGapPositionF1"
-    ) {
-      const isLeader = baseKey === "overallGapLeaderF1";
+    if (isLeaderF1 || isPositionF1) {
       const p = hd?.participant;
       const lapsDown =
-        (isLeader ? p?.lapsDownLeader : p?.lapsDownPosition) ??
-        (isLeader ? hd?.lapsDownLeader : hd?.lapsDownPosition) ??
+        (isLeaderF1 ? p?.lapsDownLeader : p?.lapsDownPosition) ??
+        (isLeaderF1 ? hd?.lapsDownLeader : hd?.lapsDownPosition) ??
         0;
 
       if (lapsDown === 1) {
@@ -348,14 +355,29 @@ export class RacedayOverallFormatUtils {
         return ctx
           .translate("RD_LAPS_DOWN")
           .replace("{{count}}", lapsDown.toString());
-      } else {
-        if (value === 0 || value === null || value === undefined) {
-          return timePlaceholder;
-        }
-        const sign = value > 0 ? "+" : "";
-        return sign + value.toFixed(timeDecimals);
       }
     }
+
+    if (
+      baseKey === "overallGapLeader" ||
+      baseKey === "overallGapPosition" ||
+      isLeaderF1 ||
+      isPositionF1
+    ) {
+      if (value === null || value === undefined || isNaN(Number(value))) {
+        return timePlaceholder;
+      }
+      const num = Number(value);
+      const fixed = Math.abs(num).toFixed(timeDecimals);
+      const isZero = Number(fixed) === 0;
+
+      if (isZero && !this.hasOverallData(hd)) {
+        return timePlaceholder;
+      }
+      const sign = !isZero && num < 0 ? "-" : "+";
+      return sign + fixed;
+    }
+
     return null;
   }
 
