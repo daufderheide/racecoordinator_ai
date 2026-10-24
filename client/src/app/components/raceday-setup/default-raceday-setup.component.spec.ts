@@ -670,6 +670,259 @@ describe("DefaultRacedaySetupComponent", () => {
     });
   }));
 
+  it("should respect availableSearchQuery when addAllParticipants is called, adding only matching visible drivers", fakeAsync(() => {
+    expect(component.selectedParticipants.length).toBe(0);
+    expect(component.unselectedParticipants.length).toBe(6);
+
+    // Filter available by search query "Alice"
+    component.availableSearchQuery = "Alice";
+    expect(component.filteredAvailableParticipants.length).toBe(1);
+    expect(component.filteredAvailableParticipants[0].name).toBe("Alice");
+
+    component.addAllParticipants();
+    flush();
+
+    // Only Alice should have been added
+    expect(component.selectedParticipants.length).toBe(1);
+    expect(component.selectedParticipants[0].name).toBe("Alice");
+
+    // Clear search and verify remaining unselected drivers were not added
+    component.availableSearchQuery = "";
+    const remainingDriverNames = component.unselectedParticipants
+      .filter((p) => component.isDriver(p))
+      .map((p) => p.name);
+    expect(remainingDriverNames).toEqual(["Bob", "Charlie", "Dave"]);
+  }));
+
+  it("should respect selectedAvailableLabelIds when addAllParticipants is called, adding only matching visible drivers", fakeAsync(() => {
+    expect(component.selectedParticipants.length).toBe(0);
+
+    // Filter by 'lbl-pro' (Alice has lbl-pro; Team Alpha also matches because it contains Alice)
+    component.onAvailableLabelFilterChange(["lbl-pro"]);
+    const visibleDrivers = component.filteredAvailableParticipants.filter((p) =>
+      component.isDriver(p),
+    );
+    expect(visibleDrivers.length).toBe(1);
+    expect(visibleDrivers[0].name).toBe("Alice");
+
+    component.addAllParticipants();
+    flush();
+
+    expect(component.selectedParticipants.length).toBe(1);
+    expect(component.selectedParticipants[0].name).toBe("Alice");
+
+    // Clear label filter and verify other drivers remain in available list
+    component.clearAvailableLabelFilter();
+    const remainingDriverNames = component.unselectedParticipants
+      .filter((p) => component.isDriver(p))
+      .map((p) => p.name);
+    expect(remainingDriverNames).toEqual(["Bob", "Charlie", "Dave"]);
+  }));
+
+  it("should respect both search filter and label filter when addAllParticipants is called", fakeAsync(() => {
+    expect(component.selectedParticipants.length).toBe(0);
+
+    // Filter by label 'lbl-amateur' and search query 'Bob'
+    component.onAvailableLabelFilterChange(["lbl-amateur"]);
+    component.availableSearchQuery = "Bob";
+    expect(component.filteredAvailableParticipants.length).toBe(1);
+    expect(component.filteredAvailableParticipants[0].name).toBe("Bob");
+
+    component.addAllParticipants();
+    flush();
+
+    expect(component.selectedParticipants.length).toBe(1);
+    expect(component.selectedParticipants[0].name).toBe("Bob");
+
+    component.clearAvailableLabelFilter();
+    component.availableSearchQuery = "";
+    expect(component.selectedParticipants.length).toBe(1);
+    expect(
+      component.unselectedParticipants.some((p) => p.name === "Alice"),
+    ).toBeTrue();
+  }));
+
+  it("should do nothing when addAllParticipants is called and no drivers match the filter", fakeAsync(() => {
+    expect(component.selectedParticipants.length).toBe(0);
+
+    component.availableSearchQuery = "NonExistentDriverName";
+    expect(component.filteredAvailableParticipants.length).toBe(0);
+
+    component.addAllParticipants();
+    flush();
+
+    expect(component.selectedParticipants.length).toBe(0);
+    component.availableSearchQuery = "";
+    expect(component.unselectedParticipants.length).toBe(6);
+  }));
+
+  it("should add only visible filtered drivers when Add All button is clicked in UI", async () => {
+    component.availableSearchQuery = "Charlie";
+    fixture.detectChanges();
+
+    await harness.clickAddAll();
+
+    expect(component.selectedParticipants.length).toBe(1);
+    expect(component.selectedParticipants[0].name).toBe("Charlie");
+  });
+
+  it("should add matching team when only a team matches the search criteria and can be added", fakeAsync(() => {
+    expect(component.selectedParticipants.length).toBe(0);
+
+    // Search for "Team Alpha" - no individual drivers match, only Team Alpha
+    component.availableSearchQuery = "Team Alpha";
+    expect(component.filteredAvailableParticipants.length).toBe(1);
+    expect(
+      component.isTeam(component.filteredAvailableParticipants[0]),
+    ).toBeTrue();
+    expect(component.filteredAvailableParticipants[0].name).toBe("Team Alpha");
+
+    component.addAllParticipants();
+    flush();
+
+    expect(component.selectedParticipants.length).toBe(1);
+    expect(component.isTeam(component.selectedParticipants[0])).toBeTrue();
+    expect(component.selectedParticipants[0].name).toBe("Team Alpha");
+
+    // Clear search and verify unselected participants no longer contains Team Alpha or its drivers
+    component.availableSearchQuery = "";
+    expect(
+      component.unselectedParticipants.some((p) => p.name === "Team Alpha"),
+    ).toBeFalse();
+    expect(
+      component.unselectedParticipants.some((p) => p.name === "Alice"),
+    ).toBeFalse();
+    expect(
+      component.unselectedParticipants.some((p) => p.name === "Bob"),
+    ).toBeFalse();
+    expect(
+      component.unselectedParticipants.some((p) => p.name === "Charlie"),
+    ).toBeTrue();
+  }));
+
+  it("should prioritize individual drivers over teams when both drivers and teams match the search criteria", fakeAsync(() => {
+    expect(component.selectedParticipants.length).toBe(0);
+
+    // Search for "Al" - matches driver Alice ("Al...") and Team Alpha ("Team Al...")
+    component.availableSearchQuery = "Al";
+    const visibleDrivers = component.filteredAvailableParticipants.filter((p) =>
+      component.isDriver(p),
+    );
+    const visibleTeams = component.filteredAvailableParticipants.filter((p) =>
+      component.isTeam(p),
+    );
+    expect(visibleDrivers.length).toBeGreaterThan(0);
+    expect(visibleTeams.length).toBeGreaterThan(0);
+
+    component.addAllParticipants();
+    flush();
+
+    // Only the individual driver(s) should be added, not the team
+    expect(component.selectedParticipants.length).toBe(1);
+    expect(component.selectedParticipants[0].name).toBe("Alice");
+    expect(component.isDriver(component.selectedParticipants[0])).toBeTrue();
+  }));
+
+  it("should add matching individual drivers and non-conflicting teams in a single Add All action", fakeAsync(() => {
+    expect(component.selectedParticipants.length).toBe(0);
+
+    // Give Team Beta the 'lbl-pro' label
+    const teamBeta = component.allTeams.find((t) => t.name === "Team Beta")!;
+    teamBeta.labelIds = ["lbl-pro"];
+
+    // Filter by 'lbl-pro'
+    // This captures Alice (driver), Team Alpha (contains Alice), and Team Beta (has lbl-pro)
+    component.onAvailableLabelFilterChange(["lbl-pro"]);
+
+    const visibleItems = component.filteredAvailableParticipants;
+    expect(
+      visibleItems.some((p) => p.name === "Alice" && component.isDriver(p)),
+    ).toBeTrue();
+    expect(
+      visibleItems.some((p) => p.name === "Team Alpha" && component.isTeam(p)),
+    ).toBeTrue();
+    expect(
+      visibleItems.some((p) => p.name === "Team Beta" && component.isTeam(p)),
+    ).toBeTrue();
+
+    // Single click on Add All
+    component.addAllParticipants();
+    flush();
+
+    // Alice should be added as individual driver
+    expect(
+      component.selectedParticipants.some(
+        (p) => p.name === "Alice" && component.isDriver(p),
+      ),
+    ).toBeTrue();
+
+    // Team Beta should be added because none of its drivers are racing
+    expect(
+      component.selectedParticipants.some(
+        (p) => p.name === "Team Beta" && component.isTeam(p),
+      ),
+    ).toBeTrue();
+
+    // Team Alpha should NOT be added because Alice is racing individually
+    expect(
+      component.selectedParticipants.some((p) => p.name === "Team Alpha"),
+    ).toBeFalse();
+
+    // Total selected should be 2 (Alice + Team Beta)
+    expect(component.selectedParticipants.length).toBe(2);
+
+    // Team Alpha should now be hidden from available list as its driver Alice is in the race
+    expect(
+      component.filteredAvailableParticipants.some(
+        (p) => p.name === "Team Alpha",
+      ),
+    ).toBeFalse();
+  }));
+
+  it("should add multiple teams when only teams match the search and they do not conflict", fakeAsync(() => {
+    expect(component.selectedParticipants.length).toBe(0);
+
+    // Search for "Team" - matches Team Alpha (d1, d2) and Team Beta (d3, d4), no drivers
+    component.availableSearchQuery = "Team";
+    const visibleDrivers = component.filteredAvailableParticipants.filter((p) =>
+      component.isDriver(p),
+    );
+    const visibleTeams = component.filteredAvailableParticipants.filter((p) =>
+      component.isTeam(p),
+    );
+    expect(visibleDrivers.length).toBe(0);
+    expect(visibleTeams.length).toBe(2);
+
+    component.addAllParticipants();
+    flush();
+
+    expect(component.selectedParticipants.length).toBe(2);
+    expect(
+      component.selectedParticipants.every((p) => component.isTeam(p)),
+    ).toBeTrue();
+  }));
+
+  it("should show validation error and not add team when only team matches search but cannot be added due to conflict", fakeAsync(() => {
+    const validationService = (component as any).validationService;
+    validationService.validate.and.returnValue({
+      isValid: false,
+      errorCode: "DUPE_INDIVIDUAL_TEAM",
+      driverName: "Alice",
+      teamNames: ["Team Alpha"],
+    });
+    validationService.getErrorMessage.and.returnValue(
+      "Conflict with individual driver",
+    );
+
+    component.availableSearchQuery = "Team Alpha";
+    component.addAllParticipants();
+    flush();
+
+    expect(component.showErrorModal).toBeTrue();
+    expect(component.errorMessage).toBe("Conflict with individual driver");
+    expect(component.selectedParticipants.length).toBe(0);
+  }));
+
   it("should remove all drivers", fakeAsync(() => {
     // Setup initial state: select all
     component.addAllParticipants();
@@ -3873,6 +4126,29 @@ describe("DefaultRacedaySetupComponent", () => {
       component.selectedAvailableLabelId = "lbl-pro";
       component.availableSearchQuery = "";
       component.addAllFilteredAvailableParticipants();
+
+      expect(component.selectedParticipants).toContain(d1);
+      expect(component.selectedParticipants).not.toContain(d2);
+    });
+
+    it("should add only label-filtered available participants when addAllParticipants is called", () => {
+      const d1 = Driver.createDefault("d1", "Alpha", "A", undefined, [
+        "lbl-pro",
+      ]);
+      const d2 = Driver.createDefault("d2", "Beta", "B", undefined, [
+        "lbl-rookie",
+      ]);
+      component.allDrivers = [d1, d2];
+      component.unselectedParticipants = [d1, d2];
+      component.selectedParticipants = [];
+      component.driverLabels = [
+        { entity_id: "lbl-pro", name: "Pro", color: "#ef4444" },
+        { entity_id: "lbl-rookie", name: "Rookie", color: "#3b82f6" },
+      ];
+
+      component.selectedAvailableLabelId = "lbl-pro";
+      component.availableSearchQuery = "";
+      component.addAllParticipants();
 
       expect(component.selectedParticipants).toContain(d1);
       expect(component.selectedParticipants).not.toContain(d2);

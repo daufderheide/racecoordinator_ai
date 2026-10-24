@@ -51,7 +51,10 @@ import { FileSystemService } from "@app/services/file-system.service";
 import { GuideStep, HelpService } from "@app/services/help.service";
 import { HelpLinkService } from "@app/services/help-link.service";
 import { LoggerService } from "@app/services/logger.service";
-import { ParticipantValidationService } from "@app/services/participant-validation.service";
+import {
+  ParticipantValidationService,
+  ValidationResult,
+} from "@app/services/participant-validation.service";
 import { RaceService } from "@app/services/race.service";
 import { SettingsService } from "@app/services/settings.service";
 import { ThemeService } from "@app/services/theme.service";
@@ -986,16 +989,7 @@ export class DefaultRacedaySetupComponent implements OnInit {
           );
 
           if (!validationResult.isValid) {
-            this.errorTitle = "RDS_ERR_VALIDATION_TITLE";
-            this.errorMessage = this.validationService.getErrorMessage(
-              validationResult,
-              this.translationService,
-            );
-            // RDS uses errorMessageParams but getErrorMessage already translates it.
-            // We clear errorMessageParams to avoid double translation if the component tries to translate again.
-            this.errorMessageParams = {};
-            this.showErrorModal = true;
-            this.cdr.detectChanges();
+            this.showParticipantValidationError(validationResult);
             return;
           }
 
@@ -1016,87 +1010,20 @@ export class DefaultRacedaySetupComponent implements OnInit {
     );
   }
 
-  addAllParticipants() {
-    const unselectedDrivers = this.unselectedParticipants.filter((p) =>
-      this.isDriver(p),
+  private showParticipantValidationError(
+    validationResult: ValidationResult,
+  ): void {
+    this.errorTitle = "RDS_ERR_VALIDATION_TITLE";
+    this.errorMessage = this.validationService.getErrorMessage(
+      validationResult,
+      this.translationService,
     );
-    const potentialParticipants = [
-      ...this.selectedParticipants,
-      ...unselectedDrivers,
-    ];
-    const validationResult = this.validationService.validate(
-      potentialParticipants,
-      this.allTeams,
-      this.allDrivers,
-    );
-
-    if (!validationResult.isValid) {
-      this.errorTitle = "RDS_ERR_VALIDATION_TITLE";
-      this.errorMessage = this.validationService.getErrorMessage(
-        validationResult,
-        this.translationService,
-      );
-      this.errorMessageParams = {};
-      this.showErrorModal = true;
-      this.cdr.detectChanges();
-      return;
-    }
-
-    this.updateListWithRefresh(() => {
-      this.selectedParticipants = [
-        ...this.selectedParticipants,
-        ...unselectedDrivers,
-      ];
-      this.updateUnselectedParticipants();
-      this.selectedParticipantItem = null;
-      this.clickedParticipantItem = null;
-    });
+    this.errorMessageParams = {};
+    this.showErrorModal = true;
+    this.cdr.detectChanges();
   }
 
-  addAllFilteredAvailableParticipants(inputElem?: HTMLInputElement) {
-    if (
-      !this.availableSearchQuery &&
-      this.selectedAvailableLabelIds.length === 0
-    ) {
-      this.addAllParticipants();
-      return;
-    }
-
-    const unselectedDrivers = this.filteredAvailableParticipants.filter((p) =>
-      this.isDriver(p),
-    );
-    if (unselectedDrivers.length === 0) return;
-
-    const potentialParticipants = [
-      ...this.selectedParticipants,
-      ...unselectedDrivers,
-    ];
-    const validationResult = this.validationService.validate(
-      potentialParticipants,
-      this.allTeams,
-      this.allDrivers,
-    );
-
-    if (!validationResult.isValid) {
-      this.errorTitle = "RDS_ERR_VALIDATION_TITLE";
-      this.errorMessage = this.validationService.getErrorMessage(
-        validationResult,
-        this.translationService,
-      );
-      this.errorMessageParams = {};
-      this.showErrorModal = true;
-      this.cdr.detectChanges();
-      return;
-    }
-
-    this.updateListWithRefresh(() => {
-      this.selectedParticipants = [
-        ...this.selectedParticipants,
-        ...unselectedDrivers,
-      ];
-      this.updateUnselectedParticipants();
-    }, inputElem);
-
+  private updateAvailableActiveItem(): void {
     const remainingAvail = this.filteredAvailableParticipants.length;
     if (this.availableActiveIndex >= remainingAvail) {
       this.availableActiveIndex = Math.max(0, remainingAvail - 1);
@@ -1107,6 +1034,135 @@ export class DefaultRacedaySetupComponent implements OnInit {
         : null;
     this.clickedParticipantItem = this.selectedParticipantItem;
     this.cdr.detectChanges();
+  }
+
+  private extractEligibleTeamsForAddAll(
+    unselectedTeams: Participant[],
+    currentSelected: Participant[],
+    driversBeingAdded: Participant[],
+  ): Participant[] {
+    const selectedDriverIds = new Set<string>();
+    const selectedTeamIds = new Set<string>();
+
+    const recordDriverId = (id: string) => {
+      if (!id) return;
+      const raw = id.replace(/^d_/, "");
+      selectedDriverIds.add(id);
+      selectedDriverIds.add(raw);
+      selectedDriverIds.add(`d_${raw}`);
+    };
+
+    [...currentSelected, ...driversBeingAdded].forEach((p) => {
+      if (this.isDriver(p)) {
+        recordDriverId(p.entity_id);
+      } else if (this.isTeam(p)) {
+        selectedTeamIds.add(p.entity_id);
+        (p.driverIds || []).forEach((id) => recordDriverId(id));
+      }
+    });
+
+    const eligibleTeams: Participant[] = [];
+    for (const team of unselectedTeams) {
+      if (!this.isTeam(team) || selectedTeamIds.has(team.entity_id)) continue;
+      const hasConflict = (team.driverIds || []).some((dId) =>
+        selectedDriverIds.has(dId),
+      );
+      if (hasConflict) continue;
+
+      const potentialParticipants = [
+        ...currentSelected,
+        ...driversBeingAdded,
+        ...eligibleTeams,
+        team,
+      ];
+      const validationResult = this.validationService.validate(
+        potentialParticipants,
+        this.allTeams,
+        this.allDrivers,
+      );
+      if (validationResult.isValid) {
+        eligibleTeams.push(team);
+        selectedTeamIds.add(team.entity_id);
+        (team.driverIds || []).forEach((id) => recordDriverId(id));
+      }
+    }
+
+    return eligibleTeams;
+  }
+
+  addAllParticipants(inputElem?: HTMLInputElement) {
+    const unselectedDrivers = this.filteredAvailableParticipants.filter((p) =>
+      this.isDriver(p),
+    );
+    const unselectedTeams = this.filteredAvailableParticipants.filter((p) =>
+      this.isTeam(p),
+    );
+
+    if (unselectedDrivers.length === 0 && unselectedTeams.length === 0) {
+      return;
+    }
+
+    let participantsToAdd: Participant[] = [];
+
+    // 1. Prioritize individual drivers
+    if (unselectedDrivers.length > 0) {
+      const potentialParticipants = [
+        ...this.selectedParticipants,
+        ...unselectedDrivers,
+      ];
+      const validationResult = this.validationService.validate(
+        potentialParticipants,
+        this.allTeams,
+        this.allDrivers,
+      );
+
+      if (!validationResult.isValid) {
+        this.showParticipantValidationError(validationResult);
+        return;
+      }
+
+      participantsToAdd = [...unselectedDrivers];
+    }
+
+    // 2. Also add any matching teams that can be added without driver conflict
+    const eligibleTeams = this.extractEligibleTeamsForAddAll(
+      unselectedTeams,
+      this.selectedParticipants,
+      participantsToAdd,
+    );
+    participantsToAdd.push(...eligibleTeams);
+
+    if (participantsToAdd.length === 0) {
+      if (unselectedTeams.length > 0) {
+        const potentialParticipants = [
+          ...this.selectedParticipants,
+          unselectedTeams[0],
+        ];
+        const validationResult = this.validationService.validate(
+          potentialParticipants,
+          this.allTeams,
+          this.allDrivers,
+        );
+        if (!validationResult.isValid) {
+          this.showParticipantValidationError(validationResult);
+        }
+      }
+      return;
+    }
+
+    this.updateListWithRefresh(() => {
+      this.selectedParticipants = [
+        ...this.selectedParticipants,
+        ...participantsToAdd,
+      ];
+      this.updateUnselectedParticipants();
+    }, inputElem);
+
+    this.updateAvailableActiveItem();
+  }
+
+  addAllFilteredAvailableParticipants(inputElem?: HTMLInputElement) {
+    this.addAllParticipants(inputElem);
   }
 
   removeAllFilteredRacingParticipants(inputElem?: HTMLInputElement) {
@@ -1278,17 +1334,7 @@ export class DefaultRacedaySetupComponent implements OnInit {
     if (!participant) return;
 
     this.toggleParticipantSelection(participant, false, inputElem);
-
-    const remaining = this.filteredAvailableParticipants.length;
-    if (this.availableActiveIndex >= remaining) {
-      this.availableActiveIndex = Math.max(0, remaining - 1);
-    }
-    this.selectedParticipantItem =
-      remaining > 0
-        ? this.filteredAvailableParticipants[this.availableActiveIndex] || null
-        : null;
-    this.clickedParticipantItem = this.selectedParticipantItem;
-    this.cdr.detectChanges();
+    this.updateAvailableActiveItem();
     this.scrollActiveAvailableItemIntoView();
   }
 
