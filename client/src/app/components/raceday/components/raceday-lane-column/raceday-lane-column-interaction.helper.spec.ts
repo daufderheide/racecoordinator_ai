@@ -3,9 +3,12 @@ import { RaceState } from "@app/proto/antigravity";
 import { DriverHeatData } from "@app/race/driver_heat_data";
 
 import {
+  applyLaneColumnLastLapsFit,
   deleteLaneColumnAnchor,
   fitLaneColumnHeaderText,
   formatLaneColumnInsetValue,
+  handleLaneColumnCardClick,
+  handleLaneColumnInsetClick,
   isLaneColumnInsetLapCount,
   isLaneColumnLapCountClickable,
   isLaneColumnPracticeLaneResetActive,
@@ -16,6 +19,7 @@ import {
   resolveLaneColumnBackgroundColor,
   resolveLaneColumnCardTooltip,
   resolveLaneColumnForegroundColor,
+  resolveLaneColumnFormattedValue,
   setLaneColumnInset,
 } from "./raceday-lane-column-interaction.helper";
 
@@ -330,6 +334,30 @@ describe("raceday-lane-column-interaction.helper", () => {
       );
       expect(result).toBe("42 Laps");
       expect(parent.formatValue).toHaveBeenCalled();
+    });
+
+    it("should return team name in fallback when isOverallOrSeedDataSource is true and driver is a team", () => {
+      const teamHd = {
+        participant: { team: { name: "Apex Racers" } },
+        driver: { name: "Alice", nickname: "Rocket" },
+      } as any;
+      const resName = formatLaneColumnInsetValue(
+        teamHd,
+        "top-left",
+        "driver.name",
+        { gridType: "overall" } as any,
+        {},
+      );
+      expect(resName).toBe("Apex Racers");
+
+      const resNick = formatLaneColumnInsetValue(
+        teamHd,
+        "top-left",
+        "driver.nickname",
+        { bindingMode: "seed" } as any,
+        {},
+      );
+      expect(resNick).toBe("Apex Racers");
     });
   });
 
@@ -886,6 +914,225 @@ describe("raceday-lane-column-interaction.helper", () => {
           0,
         ),
       ).toBe("#lane0Fg");
+    });
+  });
+
+  describe("handleLaneColumnCardClick", () => {
+    it("should do nothing if isUIEditorMode is true or parent/hd is missing", () => {
+      const parent = { onCellClick: jasmine.createSpy("onCellClick") };
+      const event: any = {
+        stopPropagation: jasmine.createSpy("stopPropagation"),
+      };
+      handleLaneColumnCardClick(
+        event,
+        parent,
+        mockHd,
+        "lapCount",
+        true,
+        true,
+        false,
+      );
+      expect(parent.onCellClick).not.toHaveBeenCalled();
+
+      handleLaneColumnCardClick(
+        event,
+        null,
+        mockHd,
+        "lapCount",
+        false,
+        true,
+        false,
+      );
+      expect(parent.onCellClick).not.toHaveBeenCalled();
+
+      handleLaneColumnCardClick(
+        event,
+        parent,
+        undefined,
+        "lapCount",
+        false,
+        true,
+        false,
+      );
+      expect(parent.onCellClick).not.toHaveBeenCalled();
+    });
+
+    it("should call parent.onCellClick when isLapCountClickable is true", () => {
+      const parent = { onCellClick: jasmine.createSpy("onCellClick") };
+      const event: any = {
+        stopPropagation: jasmine.createSpy("stopPropagation"),
+      };
+      handleLaneColumnCardClick(
+        event,
+        parent,
+        mockHd,
+        "lapCount",
+        false,
+        true,
+        false,
+      );
+      expect(parent.onCellClick).toHaveBeenCalledWith(
+        mockHd,
+        { propertyName: "lapCount" } as any,
+        event,
+      );
+    });
+
+    it("should open teammate select if isTeamDriverSwapActive is true", () => {
+      const select = { toggleOpen: jasmine.createSpy("toggleOpen") };
+      const event: any = {
+        target: document.createElement("div"),
+        stopPropagation: jasmine.createSpy("stopPropagation"),
+      };
+      handleLaneColumnCardClick(
+        event,
+        {},
+        mockHd,
+        "driver.name",
+        false,
+        false,
+        true,
+        select,
+      );
+      expect(select.toggleOpen).toHaveBeenCalled();
+      expect(event.stopPropagation).toHaveBeenCalled();
+    });
+
+    it("should not open teammate select if click was inside custom-select", () => {
+      const select = { toggleOpen: jasmine.createSpy("toggleOpen") };
+      const selectEl = document.createElement("app-custom-select");
+      const target = document.createElement("span");
+      selectEl.appendChild(target);
+      const event: any = {
+        target,
+        stopPropagation: jasmine.createSpy("stopPropagation"),
+      };
+      handleLaneColumnCardClick(
+        event,
+        {},
+        mockHd,
+        "driver.name",
+        false,
+        false,
+        true,
+        select,
+      );
+      expect(select.toggleOpen).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("handleLaneColumnInsetClick", () => {
+    it("should do nothing if isUIEditorMode is true", () => {
+      const parent = { onCellClick: jasmine.createSpy("onCellClick") };
+      const event: any = {
+        stopPropagation: jasmine.createSpy("stopPropagation"),
+      };
+      handleLaneColumnInsetClick(
+        event,
+        "top-left",
+        { "top-left": "lapCount" },
+        parent,
+        mockHd,
+        true,
+      );
+      expect(parent.onCellClick).not.toHaveBeenCalled();
+    });
+
+    it("should invoke parent.onCellClick for lapCount inset", () => {
+      const parent = { onCellClick: jasmine.createSpy("onCellClick") };
+      const event: any = {
+        stopPropagation: jasmine.createSpy("stopPropagation"),
+      };
+      handleLaneColumnInsetClick(
+        event,
+        "top-left",
+        { "top-left": "lapCount" },
+        parent,
+        mockHd,
+        false,
+      );
+      expect(event.stopPropagation).toHaveBeenCalled();
+      expect(parent.onCellClick).toHaveBeenCalledWith(
+        mockHd,
+        { propertyName: "lapCount" } as any,
+        event,
+      );
+    });
+  });
+
+  describe("resolveLaneColumnFormattedValue", () => {
+    it("should return -- when hd is undefined", () => {
+      expect(
+        resolveLaneColumnFormattedValue(
+          undefined,
+          "lapCount",
+          {},
+          {} as any,
+          "lane",
+        ),
+      ).toBe("--");
+    });
+
+    it("should delegate to parent.formatValue if provided", () => {
+      const parent = {
+        formatValue: jasmine
+          .createSpy("formatValue")
+          .and.returnValue("Formatted 42"),
+      };
+      const result = resolveLaneColumnFormattedValue(
+        mockHd,
+        "lapCount",
+        parent,
+        {} as any,
+        "lane",
+      );
+      expect(result).toBe("Formatted 42");
+    });
+
+    it("should resolve team name on overall/seed standings for team drivers", () => {
+      const teamHd: any = {
+        driver: { entity_id: "d1", name: "Driver 1" },
+        participant: { team: { name: "Team Fast" } },
+      };
+      const parent = {
+        gridSession: () => ({ dataSource: "overallStandings" }),
+      };
+      const result = resolveLaneColumnFormattedValue(
+        teamHd,
+        "driver.name",
+        parent,
+        {} as any,
+        "overallPosition",
+      );
+      expect(result).toBe("Team Fast");
+    });
+  });
+
+  describe("applyLaneColumnLastLapsFit", () => {
+    it("should handle null cardEl gracefully", () => {
+      const onFit = jasmine.createSpy("onFit");
+      expect(() =>
+        applyLaneColumnLastLapsFit(null, {} as any, null, 5, true, onFit),
+      ).not.toThrow();
+      expect(onFit).not.toHaveBeenCalled();
+    });
+
+    it("should apply custom scaling font size and lap count", () => {
+      const el = document.createElement("div");
+      const onFit = jasmine.createSpy("onFit");
+      const widget: any = { scaleMode: "fixed", fontSize: 24 };
+      applyLaneColumnLastLapsFit(
+        el,
+        { valueFontSize: 24 } as any,
+        widget,
+        8,
+        true,
+        onFit,
+      );
+      expect(onFit).toHaveBeenCalledWith(8);
+      expect(el.style.getPropertyValue("--lane-col-last-laps-font-size")).toBe(
+        "24px",
+      );
     });
   });
 });

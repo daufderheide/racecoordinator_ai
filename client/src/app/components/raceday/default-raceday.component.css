@@ -666,6 +666,18 @@ app-default-raceday {
   box-sizing: border-box;
 }
 
+.raceday-grid-container:has(app-custom-select.open),
+.raceday-grid-container:has(.custom-select-container.open),
+.raceday-grid-scroll-viewport:has(app-custom-select.open),
+.raceday-grid-scroll-viewport:has(.custom-select-container.open),
+.raceday-grid-scroll-content:has(app-custom-select.open),
+.raceday-grid-scroll-content:has(.custom-select-container.open),
+.raceday-grid-top-header:has(app-custom-select.open),
+.raceday-grid-top-header:has(.custom-select-container.open) {
+  overflow: visible !important;
+  z-index: 100000 !important;
+}
+
 .raceday-grid-container.customizing-unselected {
   cursor: pointer;
 }

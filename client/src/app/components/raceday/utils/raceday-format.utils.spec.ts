@@ -2567,4 +2567,171 @@ describe("RacedayFormatUtils", () => {
       expect(result).toBe("");
     });
   });
+
+  describe("formatValue - driver.name and driver.nickname for teams vs actual drivers", () => {
+    const teamHd: any = {
+      participant: {
+        team: { name: "McLaren F1 Team" },
+        driver: { name: "Lando Norris", nickname: "Lando" },
+      },
+      driver: { name: "Lando Norris", nickname: "Lando" },
+      actualDriver: { name: "Oscar Piastri", nickname: "Pastry" },
+    };
+
+    const individualHd: any = {
+      participant: {
+        driver: { name: "Max Verstappen", nickname: "Mad Max" },
+      },
+      driver: { name: "Max Verstappen", nickname: "Mad Max" },
+      actualDriver: { name: "Max Verstappen", nickname: "Mad Max" },
+    };
+
+    const emptyHd: any = {
+      isEmpty: true,
+    };
+
+    it("should format driver.name and driver.nickname using actual driver on heat grids for teams", () => {
+      const heatCtx = {
+        ...ctx,
+        laneViewWidgetSettings: { gridType: "heat" },
+      } as any;
+
+      const nameResult = RacedayFormatUtils.formatValue(
+        "driver.name",
+        undefined,
+        teamHd,
+        undefined,
+        heatCtx,
+      );
+      expect(nameResult).toBe("Oscar Piastri");
+
+      const nickResult = RacedayFormatUtils.formatValue(
+        "driver.nickname",
+        undefined,
+        teamHd,
+        undefined,
+        heatCtx,
+      );
+      expect(nickResult).toBe("Pastry");
+    });
+
+    it("should format driver.name and driver.nickname using team name on overall standings grids", () => {
+      const overallCtx = {
+        ...ctx,
+        laneViewWidgetSettings: { gridType: "overall" },
+      } as any;
+
+      const nameResult = RacedayFormatUtils.formatValue(
+        "driver.name",
+        undefined,
+        teamHd,
+        undefined,
+        overallCtx,
+      );
+      expect(nameResult).toBe("McLaren F1 Team");
+
+      const nickResult = RacedayFormatUtils.formatValue(
+        "driver.nickname",
+        undefined,
+        teamHd,
+        undefined,
+        overallCtx,
+      );
+      expect(nickResult).toBe("McLaren F1 Team");
+    });
+
+    it("should format driver.name and driver.nickname using team name on seed grids", () => {
+      const seedCtx = {
+        ...ctx,
+        laneViewWidgetSettings: { bindingMode: "seed" },
+      } as any;
+
+      const nameResult = RacedayFormatUtils.formatValue(
+        "driver.name",
+        undefined,
+        teamHd,
+        undefined,
+        seedCtx,
+      );
+      expect(nameResult).toBe("McLaren F1 Team");
+
+      const nickResult = RacedayFormatUtils.formatValue(
+        "driver.nickname",
+        undefined,
+        teamHd,
+        undefined,
+        seedCtx,
+      );
+      expect(nickResult).toBe("McLaren F1 Team");
+    });
+
+    it("should format driver.name and driver.nickname using driver name/nickname when not a team", () => {
+      const overallCtx = {
+        ...ctx,
+        laneViewWidgetSettings: { gridType: "overall" },
+      } as any;
+
+      const nameResult = RacedayFormatUtils.formatValue(
+        "driver.name",
+        undefined,
+        individualHd,
+        undefined,
+        overallCtx,
+      );
+      expect(nameResult).toBe("Max Verstappen");
+
+      const nickResult = RacedayFormatUtils.formatValue(
+        "driver.nickname",
+        undefined,
+        individualHd,
+        undefined,
+        overallCtx,
+      );
+      expect(nickResult).toBe("Mad Max");
+    });
+
+    it("should format empty driver as empty string on overall and seed grids and RD_EMPTY_LANE on heat grids", () => {
+      const overallCtx = {
+        ...ctx,
+        laneViewWidgetSettings: { gridType: "overall" },
+      } as any;
+      expect(
+        RacedayFormatUtils.formatValue(
+          "driver.name",
+          undefined,
+          emptyHd,
+          undefined,
+          overallCtx,
+        ),
+      ).toBe("");
+
+      const seedCtx = {
+        ...ctx,
+        laneViewWidgetSettings: { bindingMode: "seed" },
+      } as any;
+      expect(
+        RacedayFormatUtils.formatValue(
+          "driver.name",
+          undefined,
+          emptyHd,
+          undefined,
+          seedCtx,
+        ),
+      ).toBe("");
+
+      const heatCtx = {
+        ...ctx,
+        laneViewWidgetSettings: { gridType: "heat" },
+      } as any;
+      expect(
+        RacedayFormatUtils.formatValue(
+          "driver.name",
+          undefined,
+          emptyHd,
+          undefined,
+          heatCtx,
+        ),
+      ).toBe("RD_EMPTY_LANE");
+    });
+  });
 });

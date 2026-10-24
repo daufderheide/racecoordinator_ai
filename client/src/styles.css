@@ -67,7 +67,7 @@ app-custom-select.teammate-select,
   background-origin: content-box !important;
 }
 
-/* Allow custom-select dropdowns to overflow clipped table cells, rows, and widgets */
+/* Allow custom-select dropdowns to overflow clipped table cells, rows, widgets, and grids */
 .body-cell:has(app-custom-select.open),
 .body-cell:has(.custom-select-container.open),
 .table-row:has(app-custom-select.open),
@@ -77,9 +77,19 @@ app-custom-select.teammate-select,
 .widget-wrapper:has(app-custom-select.open),
 .widget-wrapper:has(.custom-select-container.open),
 .raceday-lane-column-card:has(app-custom-select.open),
-.raceday-lane-column-card:has(.custom-select-container.open) {
+.raceday-lane-column-card:has(.custom-select-container.open),
+app-raceday-absolute-widget:has(app-custom-select.open),
+app-raceday-absolute-widget:has(.custom-select-container.open),
+.raceday-grid-scroll-content:has(app-custom-select.open),
+.raceday-grid-scroll-content:has(.custom-select-container.open),
+.raceday-grid-scroll-viewport:has(app-custom-select.open),
+.raceday-grid-scroll-viewport:has(.custom-select-container.open),
+.raceday-grid-container:has(app-custom-select.open),
+.raceday-grid-container:has(.custom-select-container.open),
+.raceday-grid-top-header:has(app-custom-select.open),
+.raceday-grid-top-header:has(.custom-select-container.open) {
   overflow: visible !important;
-  z-index: 10000 !important;
+  z-index: 100000 !important;
 }
 
 .raceday-lane-column-card:has(app-custom-select.open) .lane-col-body,

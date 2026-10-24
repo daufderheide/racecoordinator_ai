@@ -704,9 +704,25 @@ export class RacedayFormatUtils {
     ctx: FormatContext,
   ): string {
     if (this.isEmptyDriver(hd)) {
-      if (RacedayOverallFormatUtils.isOverallFormatContext(ctx, propertyName))
+      if (
+        RacedayOverallFormatUtils.isOverallOrSeedFormatContext(
+          ctx,
+          propertyName,
+        )
+      )
         return "";
       return ctx.translate("RD_EMPTY_LANE");
+    }
+    if (
+      RacedayOverallFormatUtils.isOverallOrSeedFormatContext(ctx, propertyName)
+    ) {
+      const teamObj =
+        hd.participant?.team ||
+        (hd.driver as any)?.team ||
+        (hd as any)?.team ||
+        (hd.actualDriver as any)?.team;
+      const teamName = typeof teamObj === "string" ? teamObj : teamObj?.name;
+      if (teamName) return teamName;
     }
     const d = hd.actualDriver || (hd.driver as any)?.driver || hd.driver;
     if (baseKey === "driver.nickname") return d?.nickname || d?.name || "";
@@ -721,7 +737,12 @@ export class RacedayFormatUtils {
   ): string {
     if (ctx.getRace()?.practice) return "";
     if (this.isEmptyDriver(hd)) {
-      if (RacedayOverallFormatUtils.isOverallFormatContext(ctx, propertyName))
+      if (
+        RacedayOverallFormatUtils.isOverallOrSeedFormatContext(
+          ctx,
+          propertyName,
+        )
+      )
         return "";
       if (column && column.layout[AnchorPoint.CenterCenter] === propertyName) {
         return ctx.translate("RD_EMPTY_LANE");

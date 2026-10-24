@@ -18,6 +18,17 @@ export class RacedayOverallFormatUtils {
     );
   }
 
+  static isOverallOrSeedFormatContext(
+    ctx: FormatContext,
+    propertyName: string,
+  ): boolean {
+    const s = ctx.laneViewWidgetSettings;
+    return Boolean(
+      this.isOverallFormatContext(ctx, propertyName) ||
+      s?.bindingMode === "seed",
+    );
+  }
+
   static extractOverallPropertyValue(
     p: any,
     heatDriver: any,

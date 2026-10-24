@@ -310,6 +310,26 @@ export function isParentGridOverall(parent: any, gridId?: string): boolean {
   );
 }
 
+export function isParentGridSeed(parent: any, gridId?: string): boolean {
+  if (!gridId || !parent) return false;
+  if (typeof parent.isGridSeed === "function") {
+    return Boolean(parent.isGridSeed(gridId));
+  }
+  if (
+    parent?.gridSession?.()?.bindingMode === "seed" ||
+    parent?.activeGridSession?.bindingMode === "seed"
+  ) {
+    return true;
+  }
+  const gridWidgets = parent?.layout?.widgets?.filter(
+    (w: any) => w.customSettings?.gridId === gridId,
+  );
+  if (!gridWidgets || gridWidgets.length === 0) return false;
+  return Boolean(
+    gridWidgets.some((w: any) => w.customSettings?.bindingMode === "seed"),
+  );
+}
+
 export function resolveHeatDriverByPosition(
   drivers: DriverHeatData[],
   parent: any,
@@ -571,6 +591,20 @@ export function isOverallDataSource(
   return false;
 }
 
+export function isOverallOrSeedDataSource(
+  settings: LaneColumnWidgetSettings | undefined,
+  parent?: any,
+  bindingMode?: string,
+): boolean {
+  if (!settings) return false;
+  const mode = bindingMode || settings.bindingMode;
+  if (mode === "seed") return true;
+  if (settings.gridId && isParentGridSeed(parent, settings.gridId)) {
+    return true;
+  }
+  return isOverallDataSource(settings, parent, bindingMode);
+}
+
 export function resolveOverallGridDriver(
   drivers: DriverHeatData[],
   parent: any,
@@ -666,8 +700,10 @@ export function resolveTargetDriver(
     settings.gridType !== "heat" &&
     (settings.gridType === "overall" ||
       bindingMode === "overallPosition" ||
+      bindingMode === "seed" ||
       RacedayLayoutUtils.isOverallColumnKey(columnKey || settings.columnKey) ||
-      isParentGridOverall(parent, settings.gridId));
+      isParentGridOverall(parent, settings.gridId) ||
+      isParentGridSeed(parent, settings.gridId));
 
   if (!isGrid) {
     return resolveStandaloneDriver(

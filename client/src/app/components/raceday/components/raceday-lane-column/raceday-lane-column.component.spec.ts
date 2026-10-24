@@ -2595,6 +2595,75 @@ describe("RacedayLaneColumnComponent", () => {
       expect(component.isTeamDriverSwapActive).toBeFalse();
     });
 
+    it("should format team name for driver.name and driver.nickname on overall and seed grids when driver is a team", () => {
+      const participant = {
+        objectId: "p1",
+        seed: 1,
+        team: { name: "Ferrari Team" },
+        driver: { name: "Charles", nickname: "Lord Perceval" },
+      };
+      const teamHd = {
+        objectId: "p1",
+        participant,
+        driver: { name: "Charles", nickname: "Lord Perceval" },
+        actualDriver: { name: "Charles", nickname: "Lord Perceval" },
+      } as any;
+      const parentWithFormat = {
+        ...mockParent,
+        participants: [participant],
+        sortedHeatDrivers: [teamHd],
+        heatDrivers: [teamHd],
+        formatValue: undefined,
+      };
+      fixture.componentRef.setInput("parent", parentWithFormat);
+
+      // On overall grid: should show team name
+      fixture.componentRef.setInput(
+        "widget",
+        createWidget({
+          columnKey: "driver.name",
+          targetIndex: 0,
+          gridType: "overall",
+        }),
+      );
+      fixture.detectChanges();
+      expect(component.formattedValue).toBe("Ferrari Team");
+
+      fixture.componentRef.setInput(
+        "widget",
+        createWidget({
+          columnKey: "driver.nickname",
+          targetIndex: 0,
+          bindingMode: "seed",
+        }),
+      );
+      fixture.detectChanges();
+      expect(component.formattedValue).toBe("Ferrari Team");
+
+      // On heat grid: should show actual driver name or nickname
+      fixture.componentRef.setInput(
+        "widget",
+        createWidget({
+          columnKey: "driver.name",
+          targetIndex: 0,
+          gridType: "heat",
+        }),
+      );
+      fixture.detectChanges();
+      expect(component.formattedValue).toBe("Charles");
+
+      fixture.componentRef.setInput(
+        "widget",
+        createWidget({
+          columnKey: "driver.nickname",
+          targetIndex: 0,
+          gridType: "heat",
+        }),
+      );
+      fixture.detectChanges();
+      expect(component.formattedValue).toBe("Lord Perceval");
+    });
+
     it("should recognize physicalLapCount column and insets as clickable for add lap sections", () => {
       fixture.componentRef.setInput("parent", mockParent);
       fixture.componentRef.setInput(

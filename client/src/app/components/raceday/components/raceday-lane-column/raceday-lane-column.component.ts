@@ -35,9 +35,7 @@ import { TranslationService } from "@app/services/translation.service";
 
 import {
   computeHeatDataLastLaps,
-  fitColumnLastLaps,
   fitColumnTextValue,
-  formatAdjustedLapValue,
   getInsetDefaultAlignment,
   getInsetDefaultVerticalAlignment,
   getSvgPreserveAspectRatio,
@@ -52,6 +50,7 @@ import {
 } from "./raceday-lane-column.utils";
 import { isOverallDataSource } from "./raceday-lane-column-driver.helper";
 import {
+  applyLaneColumnLastLapsFit,
   deleteLaneColumnAnchor,
   dispatchLaneColumnAnchorSelection,
   fitLaneColumnHeaderText,
@@ -60,6 +59,8 @@ import {
   handleLaneColumnAnchorDragLeave,
   handleLaneColumnAnchorDragOver,
   handleLaneColumnAnchorDrop,
+  handleLaneColumnCardClick,
+  handleLaneColumnInsetClick,
   isLaneColumnInsetLapCount,
   isLaneColumnLapCountClickable,
   isLaneColumnPracticeLaneResetActive,
@@ -76,6 +77,7 @@ import {
   resolveLaneColumnEffectiveInsetTextColor,
   resolveLaneColumnEffectiveValueTextColor,
   resolveLaneColumnForegroundColor,
+  resolveLaneColumnFormattedValue,
   setLaneColumnInset,
 } from "./raceday-lane-column-interaction.helper";
 
@@ -610,32 +612,16 @@ export class RacedayLaneColumnComponent
   }
 
   onCardClick(event: MouseEvent): void {
-    if (this.isUIEditorMode) return;
-    const p = this.parent();
-    const hd = this.targetDriver;
-    if (!p || !hd) return;
-
-    if (this.isLapCountClickable && p.onCellClick) {
-      p.onCellClick(
-        hd,
-        { propertyName: this.columnKey } as ColumnDefinition,
-        event,
-      );
-    } else if (this.isTeamDriverSwapActive) {
-      const target = event.target as HTMLElement | null;
-      if (
-        target &&
-        typeof target.closest === "function" &&
-        target.closest("app-custom-select")
-      ) {
-        return;
-      }
-      event.stopPropagation?.();
-      const select = this.teammateSelect();
-      if (select) {
-        select.toggleOpen();
-      }
-    }
+    handleLaneColumnCardClick(
+      event,
+      this.parent(),
+      this.targetDriver,
+      this.columnKey,
+      this.isUIEditorMode,
+      this.isLapCountClickable,
+      this.isTeamDriverSwapActive,
+      this.teammateSelect(),
+    );
   }
 
   isInsetLapCount(anchor: string): boolean {
@@ -646,16 +632,14 @@ export class RacedayLaneColumnComponent
   }
 
   onInsetClick(anchor: string, event: MouseEvent): void {
-    if (this.isUIEditorMode) return;
-    const key = this.getInsetKey(anchor);
-    if (isLaneColumnInsetLapCount(key, false)) {
-      event.stopPropagation();
-      const p = this.parent();
-      const hd = this.targetDriver;
-      if (p?.onCellClick && hd) {
-        p.onCellClick(hd, { propertyName: key } as ColumnDefinition, event);
-      }
-    }
+    handleLaneColumnInsetClick(
+      event,
+      anchor,
+      this.settings.insets,
+      this.parent(),
+      this.targetDriver,
+      this.isUIEditorMode,
+    );
   }
 
   onResetLane(event: Event): void {
@@ -714,25 +698,18 @@ export class RacedayLaneColumnComponent
   }
 
   get formattedValue(): string {
-    const hd = this.targetDriver;
-    const key = this.columnKey;
     const parent = this.parent();
-    if (!hd) return "--";
-
-    if (parent?.formatValue) {
-      const colDef = this.getColumnDefinition(key, parent);
-      return parent.formatValue(
-        key,
-        RacedayFormatUtils.getPropertyValue(hd, key),
-        hd,
-        colDef,
-        "center-center",
-        this.settings,
-      );
-    }
-
-    const raw = RacedayFormatUtils.getPropertyValue(hd, key);
-    return formatAdjustedLapValue(raw, hd, key);
+    const colDef = parent?.formatValue
+      ? this.getColumnDefinition(this.columnKey, parent)
+      : undefined;
+    return resolveLaneColumnFormattedValue(
+      this.targetDriver,
+      this.columnKey,
+      parent,
+      this.settings,
+      this.bindingMode,
+      colDef,
+    );
   }
 
   isLastLaps(): boolean {
@@ -837,40 +814,14 @@ export class RacedayLaneColumnComponent
   }
 
   private fitLastLaps(): void {
-    const cardEl = this.cardRef()?.nativeElement;
-    if (!cardEl) return;
-
-    const baseFontSize = Number(
-      this.settings.valueFontSize ||
-        (this.widget()?.fontSize ? this.widget()!.fontSize : 54),
+    applyLaneColumnLastLapsFit(
+      this.cardRef()?.nativeElement,
+      this.settings,
+      this.widget(),
+      this.getLastLaps().length,
+      this.isVerticalLapsFlow,
+      (count) => this.maxVisibleLaps.set(count),
     );
-    const allLaps = this.getLastLaps();
-    const explicitW = this.widget()?.width;
-    const explicitH = this.widget()?.height;
-
-    const scaleMode = this.widget()?.scaleMode;
-    const isCustomScaling = scaleMode !== undefined && scaleMode !== "auto";
-    if (isCustomScaling) {
-      this.maxVisibleLaps.set(allLaps.length || 5);
-      cardEl.style.setProperty(
-        "--lane-col-last-laps-font-size",
-        `${baseFontSize}px`,
-      );
-    } else {
-      const fit = fitColumnLastLaps(
-        cardEl,
-        this.isVerticalLapsFlow,
-        baseFontSize,
-        allLaps.length,
-        explicitW,
-        explicitH,
-      );
-      this.maxVisibleLaps.set(fit.maxLaps);
-      cardEl.style.setProperty(
-        "--lane-col-last-laps-font-size",
-        `${fit.fontSize}px`,
-      );
-    }
   }
 
   isImageProperty(key: string = this.columnKey): boolean {

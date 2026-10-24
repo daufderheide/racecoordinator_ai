@@ -226,7 +226,7 @@
 
 :host(.teammate-select.open),
 :host(.teammate-select[data-open="true"]) {
-  z-index: 10000;
+  z-index: 100000;
 }
 
 :host(.teammate-select) .custom-select-container {
@@ -261,7 +261,7 @@
   color: #f1f5f9;
   text-align: left;
   white-space: nowrap;
-  z-index: 10000;
+  z-index: 100000;
 }
 
 :host(.teammate-select) .custom-select-option {

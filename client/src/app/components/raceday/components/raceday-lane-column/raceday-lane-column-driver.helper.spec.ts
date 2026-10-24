@@ -9,7 +9,9 @@ import {
   getParticipantHeatLane,
   getParticipantHeatRank,
   isOverallDataSource,
+  isOverallOrSeedDataSource,
   isParentGridOverall,
+  isParentGridSeed,
   isParentRaceOver,
   resolveHeatDriverByPosition,
   resolveHeatGridDriver,
@@ -457,6 +459,69 @@ describe("raceday-lane-column-driver.helper", () => {
     it("should evaluate isParentRaceOver correctly", () => {
       expect(isParentRaceOver(null)).toBeFalse();
       expect(isParentRaceOver({ isRaceOver: () => true })).toBeTrue();
+    });
+
+    it("should evaluate isParentGridSeed correctly", () => {
+      expect(isParentGridSeed(null, "grid-1")).toBeFalse();
+      expect(isParentGridSeed({}, undefined)).toBeFalse();
+      expect(isParentGridSeed({ isGridSeed: () => true }, "grid-1")).toBeTrue();
+      expect(
+        isParentGridSeed(
+          { gridSession: () => ({ bindingMode: "seed" }) },
+          "grid-1",
+        ),
+      ).toBeTrue();
+      expect(
+        isParentGridSeed(
+          { activeGridSession: { bindingMode: "seed" } },
+          "grid-1",
+        ),
+      ).toBeTrue();
+      expect(
+        isParentGridSeed(
+          {
+            layout: {
+              widgets: [
+                { customSettings: { gridId: "grid-1", bindingMode: "seed" } },
+              ],
+            },
+          },
+          "grid-1",
+        ),
+      ).toBeTrue();
+      expect(
+        isParentGridSeed(
+          {
+            layout: {
+              widgets: [
+                { customSettings: { gridId: "grid-1", bindingMode: "lane" } },
+              ],
+            },
+          },
+          "grid-1",
+        ),
+      ).toBeFalse();
+    });
+
+    it("should evaluate isOverallOrSeedDataSource correctly", () => {
+      expect(isOverallOrSeedDataSource(undefined)).toBeFalse();
+      expect(
+        isOverallOrSeedDataSource({ bindingMode: "seed" } as any),
+      ).toBeTrue();
+      expect(
+        isOverallOrSeedDataSource({} as any, undefined, "seed"),
+      ).toBeTrue();
+      expect(
+        isOverallOrSeedDataSource({ gridId: "grid-seed" } as any, {
+          isGridSeed: (id: string) => id === "grid-seed",
+        }),
+      ).toBeTrue();
+      expect(
+        isOverallOrSeedDataSource({ gridType: "overall" } as any),
+      ).toBeTrue();
+      expect(
+        isOverallOrSeedDataSource({ gridType: "heat" } as any),
+      ).toBeFalse();
     });
   });
 });

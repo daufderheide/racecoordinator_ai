@@ -2256,6 +2256,83 @@ describe("DefaultRacedayComponent", () => {
       ).toBe("");
     });
 
+    it("should return team name for driver.name and driver.nickname on overall and seed contexts when driver is a team", () => {
+      const teamHd = {
+        participant: {
+          team: { name: "Red Bull Racing" },
+          driver: { name: "Max Verstappen", nickname: "Super Max" },
+        },
+        driver: { name: "Max Verstappen", nickname: "Super Max" },
+        actualDriver: { name: "Max Verstappen", nickname: "Super Max" },
+      } as any;
+
+      // Overall grid
+      expect(
+        component.formatValue(
+          "driver.name",
+          undefined,
+          teamHd,
+          undefined,
+          undefined,
+          { gridType: "overall" },
+        ),
+      ).toBe("Red Bull Racing");
+      expect(
+        component.formatValue(
+          "driver.nickname",
+          undefined,
+          teamHd,
+          undefined,
+          undefined,
+          { gridType: "overall" },
+        ),
+      ).toBe("Red Bull Racing");
+
+      // Seed grid
+      expect(
+        component.formatValue(
+          "driver.name",
+          undefined,
+          teamHd,
+          undefined,
+          undefined,
+          { bindingMode: "seed" },
+        ),
+      ).toBe("Red Bull Racing");
+      expect(
+        component.formatValue(
+          "driver.nickname",
+          undefined,
+          teamHd,
+          undefined,
+          undefined,
+          { bindingMode: "seed" },
+        ),
+      ).toBe("Red Bull Racing");
+
+      // Heat grid: returns actual driver name / nickname
+      expect(
+        component.formatValue(
+          "driver.name",
+          undefined,
+          teamHd,
+          undefined,
+          undefined,
+          { gridType: "heat" },
+        ),
+      ).toBe("Max Verstappen");
+      expect(
+        component.formatValue(
+          "driver.nickname",
+          undefined,
+          teamHd,
+          undefined,
+          undefined,
+          { gridType: "heat" },
+        ),
+      ).toBe("Super Max");
+    });
+
     it("should format totalTime to 3 decimal places when above 0", () => {
       const result = component.formatValue("totalTime", 42.1234, mockHd);
       expect(result).toBe("42.123");
@@ -8955,6 +9032,33 @@ describe("DefaultRacedayComponent", () => {
       );
     });
 
+    it("should bring grid to front when other widgets have default undefined zIndex", () => {
+      component.layout.widgets = [
+        { id: "other-w1", widgetType: "lane-column" } as any,
+        { id: "other-w2", widgetType: "lane-column" } as any,
+      ];
+      const gw1: any = {
+        id: "gw1",
+        widgetType: "lane-column",
+        customSettings: { gridId: "g-default-z", gridLane: 0 },
+      };
+      const gw2: any = {
+        id: "gw2",
+        widgetType: "lane-column",
+        customSettings: { gridId: "g-default-z", gridLane: 1 },
+      };
+      component.layout.widgets.push(gw1, gw2);
+
+      component.bringGridToFront("g-default-z");
+
+      // Default other widgets have baseline zIndex 100, so grid widgets should be elevated to 101.
+      expect(gw1.zIndex).toBe(101);
+      expect(gw2.zIndex).toBe(101);
+      expect(component.layoutChanged.emit).toHaveBeenCalledWith(
+        component.layout,
+      );
+    });
+
     it("should not modify z-indices or emit layoutChanged when grid is already in front", () => {
       const gw1: any = {
         id: "gw-top1",
@@ -13781,6 +13885,40 @@ describe("DefaultRacedayComponent", () => {
         gridType: "overall",
       } as any);
       expect(component.isGridOverall("any-grid")).toBeTrue();
+    });
+
+    it("should determine isGridSeed correctly and cache seed grid IDs", () => {
+      expect(component.isGridSeed(undefined)).toBeFalse();
+      expect(component.isGridSeed("")).toBeFalse();
+
+      const gridWidgets = [
+        {
+          id: "w1",
+          customSettings: { gridId: "g-seed", bindingMode: "seed" },
+        },
+        {
+          id: "w2",
+          customSettings: { gridId: "g-lane", bindingMode: "lane" },
+        },
+      ] as any[];
+
+      (component as any).layout = { widgets: gridWidgets };
+      expect(component.isGridSeed("g-seed")).toBeTrue();
+      expect(component.isGridSeed("g-lane")).toBeFalse();
+      expect(component.isGridSeed("non-existent")).toBeFalse();
+
+      // Caching: should return from cachedSeedGridIds
+      expect(component.isGridSeed("g-seed")).toBeTrue();
+
+      // Invalidation
+      component.invalidateGridCache();
+      expect(component.isGridSeed("g-lane")).toBeFalse();
+
+      // gridSession declared seed
+      fixture.componentRef.setInput("gridSession", {
+        bindingMode: "seed",
+      } as any);
+      expect(component.isGridSeed("any-grid")).toBeTrue();
     });
 
     it("should cache default lane widget settings and invalidate on layout change", () => {

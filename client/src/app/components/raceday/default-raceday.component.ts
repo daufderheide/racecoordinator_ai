@@ -1045,6 +1045,8 @@ export class DefaultRacedayComponent
   private cachedGridIdsWidgetsRef: any[] | null = null;
   private cachedOverallGridIds?: Set<string>;
   private cachedOverallGridWidgetsRef: any = null;
+  private cachedSeedGridIds?: Set<string>;
+  private cachedSeedGridWidgetsRef: any = null;
   private cachedDefaultLaneWidgetSettings: any = null;
   private cachedDefaultLaneWidgetsRef: any = null;
   private carLocations = new Map<number, number>();
@@ -4288,6 +4290,8 @@ export class DefaultRacedayComponent
     this.cachedGridIds = [];
     this.cachedOverallGridIds = undefined;
     this.cachedOverallGridWidgetsRef = null;
+    this.cachedSeedGridIds = undefined;
+    this.cachedSeedGridWidgetsRef = null;
     this.cachedDefaultLaneWidgetSettings = null;
     this.cachedDefaultLaneWidgetsRef = null;
     this.cachedSelectedWidgetWidgetsRef = null;
@@ -4355,6 +4359,30 @@ export class DefaultRacedayComponent
       this.cachedOverallGridIds = set;
     }
     return this.cachedOverallGridIds.has(gridId);
+  }
+
+  isGridSeed(gridId?: string): boolean {
+    if (!gridId) return false;
+    const session = this.gridSession();
+    if (session) {
+      if (session.bindingMode === "seed") return true;
+    }
+
+    const widgets = this.getWidgets();
+    if (widgets !== this.cachedSeedGridWidgetsRef || !this.cachedSeedGridIds) {
+      this.cachedSeedGridWidgetsRef = widgets;
+      const set = new Set<string>();
+      if (widgets) {
+        for (let i = 0; i < widgets.length; i++) {
+          const s = widgets[i]?.customSettings;
+          if (s?.["gridId"] && s["bindingMode"] === "seed") {
+            set.add(s["gridId"]);
+          }
+        }
+      }
+      this.cachedSeedGridIds = set;
+    }
+    return this.cachedSeedGridIds.has(gridId);
   }
 
   getDefaultLaneWidgetSettings(): any {
@@ -4612,7 +4640,10 @@ export class DefaultRacedayComponent
       cellWidgets = normalizedGridWidgets;
     }
 
-    const zIndex = Math.max(1, ...gridWidgets.map((w: any) => w.zIndex || 10));
+    const zIndex = Math.max(
+      1,
+      ...gridWidgets.map((w: any) => (w.zIndex != null ? w.zIndex : 100)),
+    );
 
     return {
       gridId,
@@ -7183,6 +7214,16 @@ export class DefaultRacedayComponent
         gridType: "overall",
       };
     }
+    if (
+      laneViewSettings?.bindingMode !== "seed" &&
+      (widgetSettings?.bindingMode === "seed" ||
+        (widgetSettings?.gridId && this.isGridSeed(widgetSettings.gridId)))
+    ) {
+      laneViewSettings = {
+        ...(laneViewSettings || {}),
+        bindingMode: "seed",
+      };
+    }
     const ctx: FormatContext = {
       translate: (key) => this.translationService.translate(key),
       getRace: () => this.raceService.getRace(),
@@ -8774,7 +8815,11 @@ export class DefaultRacedayComponent
       (w: any) => w.widgetType !== "countdown",
     );
     if (!nonCountdown.length) return 100;
-    return Math.max(...nonCountdown.map((w: any) => w.zIndex || 0)) + 1;
+    return (
+      Math.max(
+        ...nonCountdown.map((w: any) => (w.zIndex != null ? w.zIndex : 100)),
+      ) + 1
+    );
   }
 
   bringGridToFront(gridId: string): void {
@@ -8789,18 +8834,24 @@ export class DefaultRacedayComponent
       (w: any) =>
         w.customSettings?.["gridId"] !== gridId && w.widgetType !== "countdown",
     );
-    const maxOtherZ =
-      otherNonCountdown.length > 0
-        ? Math.max(...otherNonCountdown.map((w: any) => w.zIndex || 0))
-        : 0;
+    if (otherNonCountdown.length === 0) return;
+
+    const maxOtherZ = Math.max(
+      ...otherNonCountdown.map((w: any) => (w.zIndex != null ? w.zIndex : 100)),
+    );
 
     const newBaseZ = maxOtherZ + 1;
     let changed = false;
 
-    const minGridZ = Math.min(...gridWidgets.map((w: any) => w.zIndex || 10));
+    const minGridZ = Math.min(
+      ...gridWidgets.map((w: any) => (w.zIndex != null ? w.zIndex : 100)),
+    );
     if (minGridZ <= maxOtherZ) {
       for (const gw of gridWidgets) {
-        const relativeOffset = Math.max(0, (gw.zIndex || 10) - minGridZ);
+        const relativeOffset = Math.max(
+          0,
+          (gw.zIndex != null ? gw.zIndex : 100) - minGridZ,
+        );
         const targetZ = newBaseZ + relativeOffset;
         if (gw.zIndex !== targetZ) {
           gw.zIndex = targetZ;
@@ -8809,7 +8860,9 @@ export class DefaultRacedayComponent
       }
     }
 
-    const maxGridZ = Math.max(...gridWidgets.map((w: any) => w.zIndex || 0));
+    const maxGridZ = Math.max(
+      ...gridWidgets.map((w: any) => (w.zIndex != null ? w.zIndex : 100)),
+    );
     for (const cw of this.layout.widgets) {
       if (cw.widgetType === "countdown") {
         if (cw.zIndex == null || cw.zIndex <= maxGridZ) {
@@ -8859,7 +8912,9 @@ export class DefaultRacedayComponent
     );
     const maxZ =
       gridWidgets.length > 0
-        ? Math.max(...gridWidgets.map((w: any) => w.zIndex || 0))
+        ? Math.max(
+            ...gridWidgets.map((w: any) => (w.zIndex != null ? w.zIndex : 100)),
+          )
         : 100;
     return maxZ + 10;
   }
@@ -8891,8 +8946,12 @@ export class DefaultRacedayComponent
       const otherWidgets = this.layout.widgets.filter((w: any) => w.id !== id);
       const maxOtherZ =
         otherWidgets.length > 0
-          ? Math.max(...otherWidgets.map((w: any) => w.zIndex || 0))
-          : 0;
+          ? Math.max(
+              ...otherWidgets.map((w: any) =>
+                w.zIndex != null ? w.zIndex : 100,
+              ),
+            )
+          : 100;
       if (targetWidget.zIndex == null || targetWidget.zIndex <= maxOtherZ) {
         targetWidget.zIndex = Math.max(2000, maxOtherZ + 1);
         this.layoutChanged.emit(this.layout);
@@ -8904,10 +8963,14 @@ export class DefaultRacedayComponent
     const otherNonCountdown = this.layout.widgets.filter(
       (w: any) => w.id !== id && w.widgetType !== "countdown",
     );
-    const maxOtherZ =
-      otherNonCountdown.length > 0
-        ? Math.max(...otherNonCountdown.map((w: any) => w.zIndex || 0))
-        : 0;
+    if (otherNonCountdown.length === 0) {
+      this.widgetSelected.emit(id);
+      return;
+    }
+
+    const maxOtherZ = Math.max(
+      ...otherNonCountdown.map((w: any) => (w.zIndex != null ? w.zIndex : 100)),
+    );
 
     let changed = false;
     if (targetWidget.zIndex == null || targetWidget.zIndex <= maxOtherZ) {

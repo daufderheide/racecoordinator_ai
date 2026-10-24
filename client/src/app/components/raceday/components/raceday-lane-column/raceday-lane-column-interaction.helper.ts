@@ -12,9 +12,11 @@ import {
   buildSyntheticInsetWidgetInputs,
   buildSyntheticMainWidgetInputs,
   extractDroppedColumnKey,
+  fitColumnLastLaps,
   formatAdjustedLapValue,
   getSharedCanvasContext,
   isOverallDataSource,
+  isOverallOrSeedDataSource,
   isParentRaceOver,
 } from "./raceday-lane-column.utils";
 
@@ -143,6 +145,9 @@ export function formatLaneColumnInsetValue(
     timeSubsecondThreshold: anchorCfg?.timeSubsecondThreshold ?? 10,
     timeSubsecondDecimals: anchorCfg?.timeSubsecondDecimals ?? 2,
     heatsDisplayMode: anchorCfg?.heatsDisplayMode || "raced",
+    gridType: settings.gridType,
+    bindingMode: settings.bindingMode,
+    gridId: settings.gridId,
   };
 
   if (parent?.formatValue) {
@@ -155,6 +160,19 @@ export function formatLaneColumnInsetValue(
       anchor,
       insetSettings,
     );
+  }
+
+  if (
+    (key === "driver.name" || key === "driver.nickname") &&
+    isOverallOrSeedDataSource(settings, parent)
+  ) {
+    const teamObj =
+      hd.participant?.team ||
+      (hd.driver as any)?.team ||
+      (hd as any)?.team ||
+      (hd.actualDriver as any)?.team;
+    const teamName = typeof teamObj === "string" ? teamObj : teamObj?.name;
+    if (teamName) return teamName;
   }
 
   const raw = RacedayFormatUtils.getPropertyValue(hd, key);
@@ -687,4 +705,134 @@ export function resolveCachedSyntheticMainInputs(
     laneBg,
   );
   return cachedRef.current;
+}
+
+export function handleLaneColumnCardClick(
+  event: MouseEvent,
+  parent: any,
+  hd: DriverHeatData | undefined,
+  columnKey: string,
+  isUIEditorMode: boolean,
+  isLapCountClickable: boolean,
+  isTeamDriverSwapActive: boolean,
+  teammateSelect?: { toggleOpen: () => void } | null,
+): void {
+  if (isUIEditorMode) return;
+  if (!parent || !hd) return;
+
+  if (isLapCountClickable && parent.onCellClick) {
+    parent.onCellClick(
+      hd,
+      { propertyName: columnKey } as ColumnDefinition,
+      event,
+    );
+  } else if (isTeamDriverSwapActive) {
+    const target = event.target as HTMLElement | null;
+    if (
+      target &&
+      typeof target.closest === "function" &&
+      target.closest("app-custom-select")
+    ) {
+      return;
+    }
+    event.stopPropagation?.();
+    teammateSelect?.toggleOpen();
+  }
+}
+
+export function handleLaneColumnInsetClick(
+  event: MouseEvent,
+  anchor: string,
+  insets: Record<string, string> | undefined,
+  parent: any,
+  hd: DriverHeatData | undefined,
+  isUIEditorMode: boolean,
+): void {
+  if (isUIEditorMode) return;
+  const key = insets?.[anchor];
+  if (isLaneColumnInsetLapCount(key, false)) {
+    event.stopPropagation();
+    if (parent?.onCellClick && hd) {
+      parent.onCellClick(hd, { propertyName: key } as ColumnDefinition, event);
+    }
+  }
+}
+
+export function resolveLaneColumnFormattedValue(
+  hd: DriverHeatData | undefined,
+  columnKey: string,
+  parent: any,
+  settings: LaneColumnWidgetSettings,
+  bindingMode: string,
+  colDef?: ColumnDefinition,
+): string {
+  if (!hd) return "--";
+
+  if (parent?.formatValue) {
+    return parent.formatValue(
+      columnKey,
+      RacedayFormatUtils.getPropertyValue(hd, columnKey),
+      hd,
+      colDef,
+      "center-center",
+      settings,
+    );
+  }
+
+  if (
+    (columnKey === "driver.name" || columnKey === "driver.nickname") &&
+    isOverallOrSeedDataSource(settings, parent, bindingMode)
+  ) {
+    const teamObj =
+      hd.participant?.team ||
+      (hd.driver as any)?.team ||
+      (hd as any)?.team ||
+      (hd.actualDriver as any)?.team;
+    const teamName = typeof teamObj === "string" ? teamObj : teamObj?.name;
+    if (teamName) return teamName;
+  }
+
+  const raw = RacedayFormatUtils.getPropertyValue(hd, columnKey);
+  return formatAdjustedLapValue(raw, hd, columnKey);
+}
+
+export function applyLaneColumnLastLapsFit(
+  cardEl: HTMLElement | null | undefined,
+  settings: LaneColumnWidgetSettings,
+  widget: AbsoluteWidgetNode | null,
+  allLapsCount: number,
+  isVerticalLapsFlow: boolean,
+  setMaxVisibleLaps: (count: number | undefined) => void,
+): void {
+  if (!cardEl) return;
+
+  const baseFontSize = Number(
+    settings.valueFontSize || (widget?.fontSize ? widget.fontSize : 54),
+  );
+  const explicitW = widget?.width;
+  const explicitH = widget?.height;
+
+  const scaleMode = widget?.scaleMode;
+  const isCustomScaling = scaleMode !== undefined && scaleMode !== "auto";
+  if (isCustomScaling) {
+    setMaxVisibleLaps(allLapsCount || 5);
+    cardEl.style.setProperty(
+      "--lane-col-last-laps-font-size",
+      `${baseFontSize}px`,
+    );
+  } else {
+    const fit = fitColumnLastLaps(
+      cardEl,
+      isVerticalLapsFlow,
+      baseFontSize,
+      allLapsCount,
+      explicitW,
+      explicitH,
+    );
+    setMaxVisibleLaps(fit.maxLaps);
+    cardEl.style.setProperty(
+      "--lane-col-last-laps-font-size",
+      `${fit.fontSize}px`,
+    );
+  }
 }
