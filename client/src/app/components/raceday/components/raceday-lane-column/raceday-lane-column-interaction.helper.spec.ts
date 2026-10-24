@@ -17,6 +17,7 @@ import {
   notifyLaneColumnParentChange,
   resolveEffectiveHeaderFontSize,
   resolveEffectiveInsetFontSize,
+  resolveHeatEmptyLaneIndex,
   resolveLaneColumnBackgroundColor,
   resolveLaneColumnCardTooltip,
   resolveLaneColumnForegroundColor,
@@ -939,6 +940,352 @@ describe("raceday-lane-column-interaction.helper", () => {
           0,
         ),
       ).toBe("#lane0Fg");
+    });
+
+    it("should apply lane colors to empty driver on heat grid in position mode", () => {
+      const parent = {
+        track: {
+          lanes: [
+            { background_color: "#lane0Bg", foreground_color: "#lane0Fg" },
+            { background_color: "#lane1Bg", foreground_color: "#lane1Fg" },
+            { background_color: "#lane2Bg", foreground_color: "#lane2Fg" },
+            { background_color: "#lane3Bg", foreground_color: "#lane3Fg" },
+          ],
+        },
+      };
+      const emptyHd: any = { isEmpty: true, laneIndex: 3 };
+      const heatSettings = {
+        useLaneColors: true,
+        gridType: "heat",
+      };
+
+      expect(
+        resolveLaneColumnBackgroundColor(
+          heatSettings as any,
+          emptyHd,
+          parent,
+          "position",
+          3,
+        ),
+      ).toBe("#lane3Bg");
+      expect(
+        resolveLaneColumnForegroundColor(
+          heatSettings as any,
+          emptyHd,
+          parent,
+          "position",
+          3,
+        ),
+      ).toBe("#lane3Fg");
+    });
+
+    it("should apply lane colors via parent.getLaneColor for empty driver on heat grid", () => {
+      const parent = {
+        track: {
+          lanes: [
+            { background_color: "#lane0Bg", foreground_color: "#lane0Fg" },
+            { background_color: "#lane1Bg", foreground_color: "#lane1Fg" },
+            { background_color: "#lane2Bg", foreground_color: "#lane2Fg" },
+            { background_color: "#lane3Bg", foreground_color: "#lane3Fg" },
+          ],
+        },
+        getLaneColor: (hd: any, prop: string) => {
+          if (hd.laneIndex === 2) {
+            return prop === "background_color"
+              ? "#customLane2Bg"
+              : "#customLane2Fg";
+          }
+          return "";
+        },
+      };
+      const emptyHd: any = { isEmpty: true, laneIndex: 2 };
+      const heatSettings = {
+        useLaneColors: true,
+        gridType: "heat",
+      };
+
+      expect(
+        resolveLaneColumnBackgroundColor(
+          heatSettings as any,
+          emptyHd,
+          parent,
+          "position",
+          2,
+        ),
+      ).toBe("#customLane2Bg");
+      expect(
+        resolveLaneColumnForegroundColor(
+          heatSettings as any,
+          emptyHd,
+          parent,
+          "position",
+          2,
+        ),
+      ).toBe("#customLane2Fg");
+    });
+
+    it("should resolve unoccupied lane color when driver is undefined in position mode within track lanes", () => {
+      const createActiveDriver = (id: string, lane: number) =>
+        new DriverHeatData(
+          id,
+          {
+            objectId: id,
+            name: id,
+            driver: { entity_id: id, name: id },
+          } as any,
+          lane,
+          { entity_id: id, name: id } as any,
+        );
+      const active0 = createActiveDriver("d0", 0);
+      const active1 = createActiveDriver("d1", 1);
+      const active2 = createActiveDriver("d2", 2);
+      const parent = {
+        track: {
+          lanes: [
+            { background_color: "#lane0Bg", foreground_color: "#lane0Fg" },
+            { background_color: "#lane1Bg", foreground_color: "#lane1Fg" },
+            { background_color: "#lane2Bg", foreground_color: "#lane2Fg" },
+            { background_color: "#lane3Bg", foreground_color: "#lane3Fg" },
+          ],
+        },
+        heatDrivers: [active0, active1, active2],
+      };
+      const heatSettings = {
+        useLaneColors: true,
+        gridType: "heat",
+      };
+
+      // TargetIndex 3 represents the 4th position row (the unoccupied lane 3)
+      expect(
+        resolveLaneColumnBackgroundColor(
+          heatSettings as any,
+          undefined,
+          parent,
+          "position",
+          3,
+        ),
+      ).toBe("#lane3Bg");
+      expect(
+        resolveLaneColumnForegroundColor(
+          heatSettings as any,
+          undefined,
+          parent,
+          "position",
+          3,
+        ),
+      ).toBe("#lane3Fg");
+    });
+
+    it("should resolve unoccupied lane colors in order when multiple lanes are empty in position mode", () => {
+      const createActiveDriver = (id: string, lane: number) =>
+        new DriverHeatData(
+          id,
+          {
+            objectId: id,
+            name: id,
+            driver: { entity_id: id, name: id },
+          } as any,
+          lane,
+          { entity_id: id, name: id } as any,
+        );
+      const active1 = createActiveDriver("d1", 1);
+      const active3 = createActiveDriver("d3", 3);
+      const parent = {
+        track: {
+          lanes: [
+            { background_color: "#lane0Bg", foreground_color: "#lane0Fg" },
+            { background_color: "#lane1Bg", foreground_color: "#lane1Fg" },
+            { background_color: "#lane2Bg", foreground_color: "#lane2Fg" },
+            { background_color: "#lane3Bg", foreground_color: "#lane3Fg" },
+          ],
+        },
+        heatDrivers: [active1, active3],
+      };
+      const heatSettings = {
+        useLaneColors: true,
+        gridType: "heat",
+      };
+
+      // 2 active drivers occupy lanes 1 & 3; unoccupied lanes are 0 & 2
+      // targetIndex 2 is the 1st unoccupied lane (Lane 0)
+      expect(
+        resolveLaneColumnBackgroundColor(
+          heatSettings as any,
+          undefined,
+          parent,
+          "position",
+          2,
+        ),
+      ).toBe("#lane0Bg");
+      expect(
+        resolveLaneColumnForegroundColor(
+          heatSettings as any,
+          undefined,
+          parent,
+          "position",
+          2,
+        ),
+      ).toBe("#lane0Fg");
+
+      // targetIndex 3 is the 2nd unoccupied lane (Lane 2)
+      expect(
+        resolveLaneColumnBackgroundColor(
+          heatSettings as any,
+          undefined,
+          parent,
+          "position",
+          3,
+        ),
+      ).toBe("#lane2Bg");
+      expect(
+        resolveLaneColumnForegroundColor(
+          heatSettings as any,
+          undefined,
+          parent,
+          "position",
+          3,
+        ),
+      ).toBe("#lane2Fg");
+    });
+
+    it("should not apply lane color to empty row beyond physical track lanes in position mode", () => {
+      const parent = {
+        track: {
+          lanes: [
+            { background_color: "#lane0Bg", foreground_color: "#lane0Fg" },
+            { background_color: "#lane1Bg", foreground_color: "#lane1Fg" },
+          ],
+        },
+      };
+      const emptyHd: any = { isEmpty: true, laneIndex: 0 };
+      const heatSettings = {
+        useLaneColors: true,
+        gridType: "heat",
+      };
+
+      // targetIndex 2 and 3 are beyond the 2 physical lanes
+      expect(
+        resolveLaneColumnBackgroundColor(
+          heatSettings as any,
+          emptyHd,
+          parent,
+          "position",
+          2,
+        ),
+      ).toBe("transparent");
+      expect(
+        resolveLaneColumnForegroundColor(
+          heatSettings as any,
+          emptyHd,
+          parent,
+          "position",
+          2,
+        ),
+      ).toBe("#ffffff");
+
+      expect(
+        resolveLaneColumnBackgroundColor(
+          heatSettings as any,
+          undefined,
+          parent,
+          "position",
+          3,
+        ),
+      ).toBe("transparent");
+      expect(
+        resolveLaneColumnForegroundColor(
+          heatSettings as any,
+          undefined,
+          parent,
+          "position",
+          3,
+        ),
+      ).toBe("#ffffff");
+    });
+
+    it("should not apply lane color to empty driver on overall grid in position mode", () => {
+      const parent = {
+        track: {
+          lanes: [
+            { background_color: "#lane0Bg", foreground_color: "#lane0Fg" },
+            { background_color: "#lane1Bg", foreground_color: "#lane1Fg" },
+          ],
+        },
+      };
+      const emptyHd: any = { isEmpty: true, laneIndex: 0 };
+      const overallSettings = {
+        useLaneColors: true,
+        gridType: "overall",
+      };
+
+      expect(
+        resolveLaneColumnBackgroundColor(
+          overallSettings as any,
+          emptyHd,
+          parent,
+          "position",
+          0,
+        ),
+      ).toBe("transparent");
+      expect(
+        resolveLaneColumnForegroundColor(
+          overallSettings as any,
+          emptyHd,
+          parent,
+          "position",
+          0,
+        ),
+      ).toBe("#ffffff");
+    });
+  });
+
+  describe("resolveHeatEmptyLaneIndex", () => {
+    it("should return -1 when track or lanes are missing or targetIndex is invalid", () => {
+      expect(resolveHeatEmptyLaneIndex(undefined, 0)).toBe(-1);
+      expect(resolveHeatEmptyLaneIndex({}, 0)).toBe(-1);
+      expect(resolveHeatEmptyLaneIndex({}, -1, { lanes: [{}] })).toBe(-1);
+      expect(
+        resolveHeatEmptyLaneIndex({}, 4, { lanes: [{}, {}, {}, {}] }),
+      ).toBe(-1);
+    });
+
+    it("should return empty lanes in order when some lanes are unoccupied", () => {
+      const track = { lanes: [{}, {}, {}, {}] };
+      const active0 = new DriverHeatData(
+        "d0",
+        {
+          objectId: "d0",
+          name: "D0",
+          driver: { entity_id: "d0", name: "D0" },
+        } as any,
+        0,
+        { entity_id: "d0", name: "D0" } as any,
+      );
+      const active2 = new DriverHeatData(
+        "d2",
+        {
+          objectId: "d2",
+          name: "D2",
+          driver: { entity_id: "d2", name: "D2" },
+        } as any,
+        2,
+        { entity_id: "d2", name: "D2" } as any,
+      );
+      const parent = { heatDrivers: [active0, active2] };
+
+      // Active count is 2 (lanes 0 and 2). Unoccupied lanes are 1 and 3.
+      expect(resolveHeatEmptyLaneIndex(parent, 2, track)).toBe(1);
+      expect(resolveHeatEmptyLaneIndex(parent, 3, track)).toBe(3);
+    });
+
+    it("should handle all lanes unoccupied when heatDrivers is empty", () => {
+      const track = { lanes: [{}, {}, {}] };
+      const parent = { heatDrivers: [] };
+
+      expect(resolveHeatEmptyLaneIndex(parent, 0, track)).toBe(0);
+      expect(resolveHeatEmptyLaneIndex(parent, 1, track)).toBe(1);
+      expect(resolveHeatEmptyLaneIndex(parent, 2, track)).toBe(2);
+      expect(resolveHeatEmptyLaneIndex(parent, 3, track)).toBe(-1);
     });
   });
 

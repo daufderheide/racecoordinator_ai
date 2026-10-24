@@ -3626,6 +3626,45 @@ describe("RacedayLaneColumnComponent", () => {
         expect(component.formattedValue).toBe("--");
         expect(component.getInsetValue("top-left")).toBe("--");
       });
+
+      it("should apply lane colors to empty lanes on heat grid in position mode with emptyRowsMode empty", () => {
+        fixture.componentRef.setInput("parent", mockParent);
+
+        // Position 1 (targetIndex 1, 2nd position row) when there is an empty driver on Lane 1
+        const emptyHd = {
+          objectId: "empty-lane-1",
+          isEmpty: true,
+          laneIndex: 1,
+        } as any;
+        const testParent = {
+          ...mockParent,
+          heatDrivers: [mockDrivers[0], emptyHd],
+          heat: {
+            heatDrivers: [mockDrivers[0], emptyHd],
+            standings: ["driver-1", "empty-lane-1"],
+          },
+        };
+        fixture.componentRef.setInput("parent", testParent);
+
+        fixture.componentRef.setInput(
+          "widget",
+          createWidget({
+            gridId: "grid-heat-empty-test",
+            gridType: "heat",
+            bindingMode: "position",
+            columnKey: "driver.name",
+            targetIndex: 1,
+            emptyRowsMode: "empty",
+            useLaneColors: true,
+          }),
+        );
+        fixture.detectChanges();
+
+        expect(component.formattedValue).toBe("RD_EMPTY_LANE");
+        // Lane 1 has background_color "#223344" and foreground_color "#00ccff"
+        expect(component.backgroundColor).toBe("#223344");
+        expect(component.foregroundColor).toBe("#00ccff");
+      });
     });
   });
 });
