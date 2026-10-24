@@ -262,4 +262,175 @@ test.describe("Raceday Setup Driver Labels Visuals", () => {
       },
     );
   });
+
+  test("should convert driver label to dot to prevent name and nickname truncation", async ({
+    page,
+  }) => {
+    const customLabels = [
+      { entity_id: "lbl-comp", name: "Competition 1", color: "#84cc16" },
+      { entity_id: "lbl-club", name: "Club", color: "#ef4444" },
+    ];
+
+    const customDrivers = [
+      {
+        ...MOCK_DRIVERS[0],
+        entity_id: "d1",
+        name: "Driver 6",
+        nickname: "Driver 6",
+        label_ids: ["lbl-comp"],
+      },
+      {
+        ...MOCK_DRIVERS[1],
+        entity_id: "d2",
+        name: "Driver 8",
+        nickname: "Driver 8",
+        label_ids: ["lbl-comp"],
+      },
+      {
+        ...MOCK_DRIVERS[2],
+        entity_id: "d3",
+        name: "Driver 9",
+        nickname: "Driver 9",
+        label_ids: ["lbl-club", "lbl-comp"],
+      },
+      {
+        ...MOCK_DRIVERS[3],
+        entity_id: "d4",
+        name: "Driver 10",
+        nickname: "Driver 10",
+        label_ids: ["lbl-comp"],
+      },
+    ];
+
+    await page.route("**/api/driver-labels", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(customLabels),
+      });
+    });
+
+    await page.route("**/api/drivers", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(customDrivers),
+      });
+    });
+
+    await TestSetupHelper.setupLocalStorage(page, {
+      recentRaceIds: ["r1", "r2"],
+      selectedDriverIds: ["d1", "d2"],
+      racedaySetupWalkthroughSeen: true,
+      language: "en",
+    });
+
+    await TestSetupHelper.waitForLocalization(page, "en", page.goto("/"));
+    await page.waitForSelector(".driver-panel");
+    await expect(page.locator("#racing-item-0")).toBeVisible();
+    await expect(page.locator("#avail-item-0")).toBeVisible();
+
+    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+    await page.mouse.move(0, 0);
+    await TestSetupHelper.disableAnimations(page);
+
+    await expect(page).toHaveScreenshot(
+      "raceday-setup-driver-label-dot-prevents-truncation.png",
+      {
+        maxDiffPixelRatio: 0.05,
+        animations: "disabled",
+        timeout: 10000,
+      },
+    );
+  });
+
+  test("should convert team label to dot to prevent team name truncation", async ({
+    page,
+  }) => {
+    const customLabels = [
+      { entity_id: "lbl-comp", name: "Competition 1", color: "#84cc16" },
+    ];
+
+    const teamDrivers = [
+      {
+        ...MOCK_DRIVERS[0],
+        entity_id: "d1",
+        name: "Driver 1",
+        nickname: "D1",
+        label_ids: [],
+      },
+      {
+        ...MOCK_DRIVERS[1],
+        entity_id: "d2",
+        name: "Driver 2",
+        nickname: "D2",
+        label_ids: [],
+      },
+    ];
+
+    const customTeams = [
+      {
+        entity_id: "t1",
+        name: "Team Apex",
+        avatarUrl: "",
+        driverIds: ["d1", "d2"],
+        labelIds: ["lbl-comp"],
+      },
+      {
+        entity_id: "t2",
+        name: "Scuderia Ferrari",
+        avatarUrl: "",
+        driverIds: ["d1", "d2"],
+        labelIds: ["lbl-comp"],
+      },
+    ];
+
+    await page.route("**/api/driver-labels", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(customLabels),
+      });
+    });
+
+    await page.route("**/api/drivers", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(teamDrivers),
+      });
+    });
+
+    await page.route("**/api/teams", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(customTeams),
+      });
+    });
+
+    await TestSetupHelper.setupLocalStorage(page, {
+      recentRaceIds: ["r1", "r2"],
+      selectedDriverIds: ["t1"],
+      racedaySetupWalkthroughSeen: true,
+      language: "en",
+    });
+
+    await TestSetupHelper.waitForLocalization(page, "en", page.goto("/"));
+    await page.waitForSelector(".driver-panel");
+    await expect(page.locator("#racing-item-0")).toBeVisible();
+
+    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+    await page.mouse.move(0, 0);
+    await TestSetupHelper.disableAnimations(page);
+
+    await expect(page).toHaveScreenshot(
+      "raceday-setup-team-label-dot-prevents-truncation.png",
+      {
+        maxDiffPixelRatio: 0.05,
+        animations: "disabled",
+        timeout: 10000,
+      },
+    );
+  });
 });

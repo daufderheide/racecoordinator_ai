@@ -12,6 +12,7 @@ import {
   signal,
   untracked,
 } from "@angular/core";
+import { DriverLabelsOverflowDirective } from "@app/directives/driver-labels-overflow.directive";
 import { Driver } from "@app/models/driver";
 import { DriverLabel } from "@app/models/driver-label";
 import { Team } from "@app/models/team";
@@ -39,7 +40,7 @@ export type RosterSortOption = "seed" | "nickname" | "driverName" | "name";
   selector: "app-racing-roster-dialog",
   templateUrl: "./racing-roster-dialog.component.html",
   styleUrl: "./racing-roster-dialog.component.css",
-  imports: [TranslatePipe],
+  imports: [TranslatePipe, DriverLabelsOverflowDirective],
 })
 export class RacingRosterDialogComponent implements AfterViewInit, OnDestroy {
   private translationService = inject(TranslationService);

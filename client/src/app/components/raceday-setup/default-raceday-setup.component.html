@@ -588,15 +588,17 @@
                   @if (getParticipantLabels(participant).length > 0) {
                     <div
                       class="driver-labels-chips"
-                      [class.dots-mode]="
-                        getParticipantLabels(participant).length > 2
+                      [appDriverLabelsOverflow]="
+                        getParticipantLabels(participant)
                       "
+                      #availLabelsOverflow="appDriverLabelsOverflow"
+                      [class.dots-mode]="availLabelsOverflow.isDotsMode()"
                     >
                       @for (
                         label of getParticipantLabels(participant);
                         track label.entity_id
                       ) {
-                        @if (getParticipantLabels(participant).length <= 2) {
+                        @if (!availLabelsOverflow.isDotsMode()) {
                           <span
                             class="driver-label-chip"
                             [style.background-color]="label.color"
@@ -779,7 +781,7 @@
                   (cdkDragStarted)="onDragStarted($event)"
                   (dblclick)="toggleParticipantSelection(participant, true)"
                 >
-                  <div class="driver-seed">({{ i + 1 }})</div>
+                  <div class="driver-seed">{{ i + 1 }}</div>
                   <div class="avatar-container">
                     @if (
                       participant.avatarUrl &&
@@ -825,15 +827,17 @@
                   @if (getParticipantLabels(participant).length > 0) {
                     <div
                       class="driver-labels-chips"
-                      [class.dots-mode]="
-                        getParticipantLabels(participant).length > 2
+                      [appDriverLabelsOverflow]="
+                        getParticipantLabels(participant)
                       "
+                      #racingLabelsOverflow="appDriverLabelsOverflow"
+                      [class.dots-mode]="racingLabelsOverflow.isDotsMode()"
                     >
                       @for (
                         label of getParticipantLabels(participant);
                         track label.entity_id
                       ) {
-                        @if (getParticipantLabels(participant).length <= 2) {
+                        @if (!racingLabelsOverflow.isDotsMode()) {
                           <span
                             class="driver-label-chip"
                             [style.background-color]="label.color"

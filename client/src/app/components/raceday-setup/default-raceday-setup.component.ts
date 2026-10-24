@@ -38,6 +38,7 @@ import { getThemeDisplayNameKey } from "@app/components/ui-editor/ui-editor-crud
 import { DriverConverter } from "@app/converters/driver.converter";
 import { TeamConverter } from "@app/converters/team.converter";
 import { DataService } from "@app/data.service";
+import { DriverLabelsOverflowDirective } from "@app/directives/driver-labels-overflow.directive";
 import { Driver } from "@app/models/driver";
 import { DriverLabel } from "@app/models/driver-label";
 import { Event as EventModel } from "@app/models/event";
@@ -96,6 +97,7 @@ type Participant = Driver | Team;
     CustomSelectComponent,
     CustomOptionComponent,
     RaceHistoryDialogComponent,
+    DriverLabelsOverflowDirective,
   ],
 })
 export class DefaultRacedaySetupComponent implements OnInit {

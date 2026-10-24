@@ -180,13 +180,15 @@
                   @if (getDriverLabels(driver).length > 0) {
                     <div
                       class="driver-labels-chips"
-                      [class.dots-mode]="getDriverLabels(driver).length > 2"
+                      [appDriverLabelsOverflow]="getDriverLabels(driver)"
+                      #assignedLabelsOverflow="appDriverLabelsOverflow"
+                      [class.dots-mode]="assignedLabelsOverflow.isDotsMode()"
                     >
                       @for (
                         label of getDriverLabels(driver);
                         track label.entity_id
                       ) {
-                        @if (getDriverLabels(driver).length <= 2) {
+                        @if (!assignedLabelsOverflow.isDotsMode()) {
                           <span
                             class="driver-label-chip"
                             [style.background-color]="label.color"
@@ -260,13 +262,15 @@
                   @if (getDriverLabels(driver).length > 0) {
                     <div
                       class="driver-labels-chips"
-                      [class.dots-mode]="getDriverLabels(driver).length > 2"
+                      [appDriverLabelsOverflow]="getDriverLabels(driver)"
+                      #availLabelsOverflow="appDriverLabelsOverflow"
+                      [class.dots-mode]="availLabelsOverflow.isDotsMode()"
                     >
                       @for (
                         label of getDriverLabels(driver);
                         track label.entity_id
                       ) {
-                        @if (getDriverLabels(driver).length <= 2) {
+                        @if (!availLabelsOverflow.isDotsMode()) {
                           <span
                             class="driver-label-chip"
                             [style.background-color]="label.color"

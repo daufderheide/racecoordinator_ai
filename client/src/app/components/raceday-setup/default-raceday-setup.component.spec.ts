@@ -9,12 +9,14 @@ import {
   tick,
 } from "@angular/core/testing";
 import { FormsModule } from "@angular/forms";
+import { By } from "@angular/platform-browser";
 import { ActivatedRoute, Router } from "@angular/router";
 import { BehaviorSubject as _BehaviorSubject, of } from "rxjs";
 import { AnalyticsService } from "@app/analytics.service";
 import { HelpOverlayComponent } from "@app/components/shared/help-overlay/help-overlay.component";
 import { RacingRosterDialogHarness } from "@app/components/shared/racing-roster-dialog/testing/racing-roster-dialog.harness";
 import { DataService } from "@app/data.service";
+import { DriverLabelsOverflowDirective } from "@app/directives/driver-labels-overflow.directive";
 import { Driver } from "@app/models/driver";
 import { Settings as _Settings } from "@app/models/settings";
 import { Team } from "@app/models/team";
@@ -4310,6 +4312,49 @@ describe("DefaultRacedaySetupComponent", () => {
       expect(dots1[0].getAttribute("title")).toBe("Pro");
       expect(dots1[1].getAttribute("title")).toBe("Rookie");
       expect(dots1[2].getAttribute("title")).toBe("Vintage");
+    });
+
+    it("should switch to dot representation when driver name is truncated by labels", () => {
+      const d = Driver.createDefault("d1", "Al", "A", undefined, ["lbl-club"]);
+      component.allDrivers = [d];
+      component.unselectedParticipants = [d];
+      component.selectedParticipants = [];
+      component.driverLabels = [
+        { entity_id: "lbl-club", name: "Club", color: "#ef4444" },
+      ];
+      fixture.detectChanges();
+
+      const item = fixture.nativeElement.querySelector("#avail-item-0");
+      expect(item).toBeTruthy();
+      const chipsContainer = item.querySelector(".driver-labels-chips");
+      expect(chipsContainer).toBeTruthy();
+
+      // Initially fits
+      expect(chipsContainer.classList.contains("dots-mode")).toBeFalse();
+
+      // Mock name truncation
+      const nameEl = item.querySelector(".driver-name");
+      Object.defineProperty(nameEl, "clientWidth", {
+        value: 20,
+        configurable: true,
+      });
+      Object.defineProperty(nameEl, "scrollWidth", {
+        value: 100,
+        configurable: true,
+      });
+
+      // Trigger directive overflow check
+      const dirDebug = fixture.debugElement.query(
+        By.css("#avail-item-0 .driver-labels-chips"),
+      );
+      const directive = dirDebug.injector.get(DriverLabelsOverflowDirective);
+      directive.checkOverflow();
+      fixture.detectChanges();
+
+      expect(chipsContainer.classList.contains("dots-mode")).toBeTrue();
+      const dots = item.querySelectorAll(".driver-label-dot");
+      expect(dots.length).toBe(1);
+      expect(dots[0].getAttribute("title")).toBe("Club");
     });
   });
 });

@@ -163,10 +163,12 @@
                 @if (item.labels && item.labels.length > 0) {
                   <div
                     class="driver-labels-chips"
-                    [class.dots-mode]="item.labels.length > 2"
+                    [appDriverLabelsOverflow]="item.labels"
+                    #rosterLabelsOverflow="appDriverLabelsOverflow"
+                    [class.dots-mode]="rosterLabelsOverflow.isDotsMode()"
                   >
                     @for (label of item.labels; track label.entity_id) {
-                      @if (item.labels.length <= 2) {
+                      @if (!rosterLabelsOverflow.isDotsMode()) {
                         <span
                           class="driver-label-chip"
                           [style.background-color]="label.color"

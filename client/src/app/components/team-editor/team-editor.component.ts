@@ -24,6 +24,7 @@ import { UndoManager } from "@app/components/shared/undo-redo-controls/undo-mana
 import { DriverConverter } from "@app/converters/driver.converter";
 import { DataService } from "@app/data.service";
 import { AutoSelectDefaultDirective } from "@app/directives/auto-select-default.directive";
+import { DriverLabelsOverflowDirective } from "@app/directives/driver-labels-overflow.directive";
 import { DirtyComponent } from "@app/interfaces/dirty-component";
 import { Driver } from "@app/models/driver";
 import { DriverLabel } from "@app/models/driver-label";
@@ -72,6 +73,7 @@ import {
     TranslatePipe,
     ConfirmationModalComponent,
     DriverLabelManagerModalComponent,
+    DriverLabelsOverflowDirective,
   ],
 })
 export class TeamEditorComponent implements OnInit, OnDestroy, DirtyComponent {
