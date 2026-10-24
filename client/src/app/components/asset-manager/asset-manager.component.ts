@@ -1,4 +1,6 @@
 import {
+  AfterViewChecked,
+  AfterViewInit,
   ChangeDetectorRef,
   Component,
   computed,
@@ -49,9 +51,14 @@ import {
 
 import {
   AssetView,
+  calculateAssetUsagePercent,
+  calculateListGridDimensions,
   formatAssetBytes,
   formatAssetTooltip,
+  getAssetBytesByType,
+  getAssetCountByType,
   parseAssetSize,
+  sortAudioSetEntries,
 } from "./asset-manager.utils";
 import { getAssetManagerHelpSteps } from "./asset-manager-help";
 import { AudioSetEditorComponent } from "./audio-set-editor/audio-set-editor.component";
@@ -74,9 +81,15 @@ export { AssetView } from "./asset-manager.utils";
     TranslatePipe,
   ],
 })
-export class AssetManagerComponent implements OnInit, OnDestroy {
+export class AssetManagerComponent
+  implements OnInit, OnDestroy, AfterViewInit, AfterViewChecked
+{
   @ViewChild(ManagerHeaderComponent) header!: ManagerHeaderComponent;
   @ViewChild("assetGrid") assetGridRef?: ElementRef<HTMLDivElement>;
+  private lastGridWidth = 0;
+  private lastGridHeight = 0;
+  private lastAssetCount = -1;
+  private gridResizeObserver?: ResizeObserver;
   // Data
   assets: AssetView[] = [];
   layoutMode: AssetLayoutMode = "medium";
@@ -177,9 +190,29 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
     this.raceConnectionService.connect();
   }
 
+  ngAfterViewInit(): void {
+    if (
+      typeof ResizeObserver !== "undefined" &&
+      this.assetGridRef?.nativeElement
+    ) {
+      this.gridResizeObserver = new ResizeObserver(() => {
+        this.updateListGridDimensions();
+      });
+      this.gridResizeObserver.observe(this.assetGridRef.nativeElement);
+    }
+    this.updateListGridDimensions();
+  }
+
+  ngAfterViewChecked(): void {
+    if (this.layoutMode === "list") {
+      this.updateListGridDimensions();
+    }
+  }
+
   @HostListener("window:resize")
   onResize() {
     this.updateScale();
+    this.updateListGridDimensions();
   }
 
   private updateScale() {
@@ -211,6 +244,9 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
   ngOnDestroy() {
     this.stopAsset();
     this.isDestroyed = true;
+    if (this.gridResizeObserver) {
+      this.gridResizeObserver.disconnect();
+    }
     this.raceConnectionService.disconnect();
     this.connectionMonitor.stopMonitoring();
     if (this.connectionSubscription) {
@@ -314,6 +350,7 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
         this.isLoading = false;
         if (!this.isDestroyed) {
           this.cdr.detectChanges(); // Force update
+          this.updateListGridDimensions();
         }
         if (onLoaded) {
           onLoaded();
@@ -391,57 +428,39 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
     );
   }
 
-  private getBytesByType(type: string): number {
-    const targetType = normalizeAssetType(type);
-    return this.assets
-      .filter((a) => normalizeAssetType(a.type) === targetType)
-      .reduce((sum, a) => sum + parseAssetSize(a.size), 0);
-  }
-
   get imageBytes(): number {
-    return this.getBytesByType("image");
+    return getAssetBytesByType(this.assets, "image");
   }
   get imageSetBytes(): number {
-    return this.getBytesByType("image_set");
+    return getAssetBytesByType(this.assets, "image_set");
   }
   get soundBytes(): number {
-    return this.getBytesByType("sound");
+    return getAssetBytesByType(this.assets, "sound");
   }
   get audioSetBytes(): number {
-    return this.getBytesByType("audio_set");
+    return getAssetBytesByType(this.assets, "audio_set");
   }
   get customRotationBytes(): number {
-    return this.getBytesByType("custom_rotation");
+    return getAssetBytesByType(this.assets, "custom_rotation");
   }
 
   get imageUsagePercent(): number {
-    return this.totalBytes === 0
-      ? 0
-      : (this.imageBytes / this.totalBytes) * 100;
+    return calculateAssetUsagePercent(this.imageBytes, this.totalBytes);
   }
-
   get imageSetUsagePercent(): number {
-    return this.totalBytes === 0
-      ? 0
-      : (this.imageSetBytes / this.totalBytes) * 100;
+    return calculateAssetUsagePercent(this.imageSetBytes, this.totalBytes);
   }
-
   get soundUsagePercent(): number {
-    return this.totalBytes === 0
-      ? 0
-      : (this.soundBytes / this.totalBytes) * 100;
+    return calculateAssetUsagePercent(this.soundBytes, this.totalBytes);
   }
-
   get audioSetUsagePercent(): number {
-    return this.totalBytes === 0
-      ? 0
-      : (this.audioSetBytes / this.totalBytes) * 100;
+    return calculateAssetUsagePercent(this.audioSetBytes, this.totalBytes);
   }
-
   get customRotationUsagePercent(): number {
-    return this.totalBytes === 0
-      ? 0
-      : (this.customRotationBytes / this.totalBytes) * 100;
+    return calculateAssetUsagePercent(
+      this.customRotationBytes,
+      this.totalBytes,
+    );
   }
 
   formatAssetTooltip(bytes: number): string {
@@ -449,24 +468,19 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
   }
 
   get imageCount(): number {
-    return this.assets.filter((a) => a.type === "image").length;
+    return getAssetCountByType(this.assets, "image");
   }
-
   get soundCount(): number {
-    return this.assets.filter((a) => a.type === "sound" || a.type === "audio")
-      .length;
+    return getAssetCountByType(this.assets, "sound");
   }
-
   get imageSetCount(): number {
-    return this.assets.filter((a) => a.type === "image_set").length;
+    return getAssetCountByType(this.assets, "image_set");
   }
-
   get audioSetCount(): number {
-    return this.assets.filter((a) => a.type === "audio_set").length;
+    return getAssetCountByType(this.assets, "audio_set");
   }
-
   get customRotationCount(): number {
-    return this.assets.filter((a) => a.type === "custom_rotation").length;
+    return getAssetCountByType(this.assets, "custom_rotation");
   }
 
   setFilterType(
@@ -480,6 +494,12 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
       | "custom_rotation",
   ) {
     this.filterType = type;
+    this.updateListGridDimensions();
+  }
+
+  onLayoutModeChange(mode: AssetLayoutMode) {
+    this.layoutMode = mode;
+    this.updateListGridDimensions();
   }
 
   private previewInterval: any;
@@ -921,19 +941,7 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
     this.currentlyPlayingAsset = asset;
     this.cdr.detectChanges();
 
-    // Natural order: elapsed ascending first, then remaining descending
-    const sortedEntries = [...asset.audioEntries].sort((a, b) => {
-      const modeA = a.triggerMode || (a as any).trigger_mode || "remaining";
-      const modeB = b.triggerMode || (b as any).trigger_mode || "remaining";
-      if (modeA !== modeB) {
-        return modeA === "elapsed" ? -1 : 1;
-      }
-      const valA =
-        Number(a.timeSeconds != null ? a.timeSeconds : a.percentage) || 0;
-      const valB =
-        Number(b.timeSeconds != null ? b.timeSeconds : b.percentage) || 0;
-      return modeA === "elapsed" ? valA - valB : valB - valA;
-    });
+    const sortedEntries = sortAudioSetEntries(asset.audioEntries || []);
 
     for (const entry of sortedEntries) {
       if (this.currentlyPlayingAsset !== asset) break;
@@ -1095,16 +1103,39 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
     this.loadAssets();
   }
 
-  onGridWheel(event: WheelEvent): void {
-    if (this.layoutMode === "list") {
-      if (Math.abs(event.deltaY) > Math.abs(event.deltaX)) {
-        const grid = this.assetGridRef?.nativeElement;
-        if (grid && grid.scrollWidth > grid.clientWidth) {
-          grid.scrollLeft += event.deltaY;
-          event.preventDefault();
-        }
-      }
+  updateListGridDimensions(): void {
+    if (this.layoutMode !== "list") {
+      return;
     }
+    const grid = this.assetGridRef?.nativeElement;
+    if (!grid) {
+      return;
+    }
+
+    const availableWidth = grid.clientWidth || 1200;
+    const availableHeight = grid.clientHeight || 600;
+    const count = this.filteredAssets.length;
+
+    if (
+      availableWidth === this.lastGridWidth &&
+      availableHeight === this.lastGridHeight &&
+      count === this.lastAssetCount
+    ) {
+      return;
+    }
+
+    this.lastGridWidth = availableWidth;
+    this.lastGridHeight = availableHeight;
+    this.lastAssetCount = count;
+
+    const { cols, rows } = calculateListGridDimensions(
+      availableWidth,
+      availableHeight,
+      count,
+    );
+
+    grid.style.setProperty("--list-row-count", rows.toString());
+    grid.style.setProperty("--list-col-count", cols.toString());
   }
 
   getHelpSteps(): GuideStep[] {

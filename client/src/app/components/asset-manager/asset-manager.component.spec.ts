@@ -1257,91 +1257,93 @@ describe("AssetManagerComponent", () => {
       expect(card.classList.contains("layout-large")).toBeTrue();
     });
 
-    describe("onGridWheel", () => {
+    describe("updateListGridDimensions", () => {
       let mockGrid: {
-        scrollWidth: number;
         clientWidth: number;
-        scrollLeft: number;
+        clientHeight: number;
+        style: {
+          setProperty: jasmine.Spy;
+        };
       };
 
       beforeEach(() => {
         mockGrid = {
-          scrollWidth: 1000,
-          clientWidth: 500,
-          scrollLeft: 100,
+          clientWidth: 1200,
+          clientHeight: 600,
+          style: {
+            setProperty: jasmine.createSpy("setProperty"),
+          },
         };
         component.assetGridRef = {
           nativeElement: mockGrid as unknown as HTMLDivElement,
         };
       });
 
-      it("should translate deltaY to scrollLeft and preventDefault when layoutMode is list and scrolling down", () => {
+      it("should set CSS variables --list-row-count and --list-col-count when layoutMode is list", () => {
         component.layoutMode = "list";
-        const event = new WheelEvent("wheel", { deltaY: 50, deltaX: 0 });
-        spyOn(event, "preventDefault");
+        component.assets = [
+          { id: "1", name: "a", type: "image", size: "1 B", url: "" },
+          { id: "2", name: "b", type: "image", size: "1 B", url: "" },
+        ];
+        component.updateListGridDimensions();
 
-        component.onGridWheel(event);
-
-        expect(mockGrid.scrollLeft).toBe(150);
-        expect(event.preventDefault).toHaveBeenCalled();
+        expect(mockGrid.style.setProperty).toHaveBeenCalledWith(
+          "--list-row-count",
+          jasmine.any(String),
+        );
+        expect(mockGrid.style.setProperty).toHaveBeenCalledWith(
+          "--list-col-count",
+          jasmine.any(String),
+        );
       });
 
-      it("should translate negative deltaY to scrollLeft when scrolling up", () => {
-        component.layoutMode = "list";
-        const event = new WheelEvent("wheel", { deltaY: -40, deltaX: 0 });
-        spyOn(event, "preventDefault");
-
-        component.onGridWheel(event);
-
-        expect(mockGrid.scrollLeft).toBe(60);
-        expect(event.preventDefault).toHaveBeenCalled();
-      });
-
-      it("should not translate scroll or preventDefault when layoutMode is not list", () => {
+      it("should not update dimensions when layoutMode is not list", () => {
         component.layoutMode = "medium";
-        const event = new WheelEvent("wheel", { deltaY: 50, deltaX: 0 });
-        spyOn(event, "preventDefault");
+        component.updateListGridDimensions();
 
-        component.onGridWheel(event);
-
-        expect(mockGrid.scrollLeft).toBe(100);
-        expect(event.preventDefault).not.toHaveBeenCalled();
+        expect(mockGrid.style.setProperty).not.toHaveBeenCalled();
       });
 
-      it("should not intercept when horizontal scroll deltaX is greater than or equal to deltaY", () => {
+      it("should not update dimensions if assetGridRef is undefined", () => {
         component.layoutMode = "list";
-        const event = new WheelEvent("wheel", { deltaY: 20, deltaX: 50 });
-        spyOn(event, "preventDefault");
+        component.assetGridRef = undefined;
+        component.updateListGridDimensions();
 
-        component.onGridWheel(event);
-
-        expect(mockGrid.scrollLeft).toBe(100);
-        expect(event.preventDefault).not.toHaveBeenCalled();
+        expect(mockGrid.style.setProperty).not.toHaveBeenCalled();
       });
 
-      it("should not intercept when scrollWidth is less than or equal to clientWidth", () => {
+      it("should skip setting properties if dimensions and count have not changed", () => {
         component.layoutMode = "list";
-        mockGrid.scrollWidth = 400;
-        mockGrid.clientWidth = 500;
-        const event = new WheelEvent("wheel", { deltaY: 50, deltaX: 0 });
-        spyOn(event, "preventDefault");
+        component.assets = [];
+        component.updateListGridDimensions();
+        expect(mockGrid.style.setProperty).toHaveBeenCalledTimes(2);
 
-        component.onGridWheel(event);
-
-        expect(mockGrid.scrollLeft).toBe(100);
-        expect(event.preventDefault).not.toHaveBeenCalled();
+        // Second call with same dimensions and asset count should no-op
+        component.updateListGridDimensions();
+        expect(mockGrid.style.setProperty).toHaveBeenCalledTimes(2);
       });
 
-      it("should trigger onGridWheel from template wheel event", () => {
+      it("should update dimensions on window resize event", () => {
         component.layoutMode = "list";
-        fixture.detectChanges();
-        spyOn(component, "onGridWheel");
+        spyOn(component, "updateListGridDimensions");
 
-        const gridEl = fixture.nativeElement.querySelector(".asset-grid");
-        const wheelEvent = new WheelEvent("wheel", { deltaY: 50, deltaX: 0 });
-        gridEl.dispatchEvent(wheelEvent);
+        window.dispatchEvent(new Event("resize"));
 
-        expect(component.onGridWheel).toHaveBeenCalledWith(wheelEvent);
+        expect(component.updateListGridDimensions).toHaveBeenCalled();
+      });
+
+      it("should update layoutMode and recalculate dimensions on onLayoutModeChange", () => {
+        spyOn(component, "updateListGridDimensions");
+        component.onLayoutModeChange("list");
+        expect(component.layoutMode).toBe("list");
+        expect(component.updateListGridDimensions).toHaveBeenCalled();
+      });
+
+      it("should recalculate dimensions on setFilterType", () => {
+        spyOn(component, "updateListGridDimensions");
+        component.setFilterType("image");
+        expect(component.filterType).toBe("image");
+        expect(component.updateListGridDimensions).toHaveBeenCalled();
       });
     });
 

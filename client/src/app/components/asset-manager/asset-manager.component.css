@@ -322,22 +322,34 @@
   overflow-y: auto;
   padding-right: 10px;
   padding-bottom: 20px;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(56, 189, 248, 0.2) transparent;
 }
 
 .asset-grid::-webkit-scrollbar {
   width: 8px;
   height: 8px;
+  display: block;
 }
 
-.asset-grid::-webkit-scrollbar-thumb {
-  background: rgba(56, 189, 248, 0.2);
+.asset-grid::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.5);
   border-radius: 4px;
 }
 
+.asset-grid::-webkit-scrollbar-thumb {
+  background: rgba(56, 189, 248, 0.5);
+  border-radius: 4px;
+  border: 1px solid rgba(15, 23, 42, 0.2);
+}
+
 .asset-grid::-webkit-scrollbar-thumb:hover {
-  background: rgba(56, 189, 248, 0.4);
+  background: rgba(56, 189, 248, 0.8);
+}
+
+@supports not selector(::-webkit-scrollbar) {
+  .asset-grid {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(56, 189, 248, 0.5) rgba(15, 23, 42, 0.5);
+  }
 }
 
 .asset-card {
@@ -668,21 +680,22 @@
 
 /* List View */
 .asset-grid.layout-list {
-  display: flex;
-  flex-direction: column;
-  flex-wrap: wrap;
-  align-content: flex-start;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  grid-template-rows: repeat(var(--list-row-count, 15), 38px);
+  grid-template-columns: repeat(var(--list-col-count, 5), minmax(0, 1fr));
   gap: 6px;
-  overflow-x: auto;
-  overflow-y: hidden;
-  padding-right: 0;
-  padding-bottom: 8px;
-  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 10px;
+  padding-bottom: 20px;
+  align-content: start;
 }
 
 .asset-card.layout-list {
-  width: 260px;
-  flex-shrink: 0;
+  width: 100%;
+  min-width: 200px;
   box-sizing: border-box;
   flex-direction: row;
   align-items: center;
@@ -691,6 +704,7 @@
   padding: 3px 8px;
   border-radius: 6px;
   gap: 8px;
+  overflow: hidden;
 }
 
 .asset-card.layout-list:hover {

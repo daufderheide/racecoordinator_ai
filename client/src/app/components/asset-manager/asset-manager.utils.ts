@@ -1,3 +1,4 @@
+import { normalizeAssetType } from "@app/models/asset";
 import {
   IAudioSetEntry,
   ICustomRotation,
@@ -61,4 +62,80 @@ export function formatAssetBytes(bytes: number, decimals = 2): string {
 export function formatAssetTooltip(bytes: number): string {
   const mb = (bytes / (1024 * 1024)).toFixed(2);
   return `${bytes.toLocaleString()} bytes (${mb} MB)`;
+}
+
+export function getAssetBytesByType(assets: AssetView[], type: string): number {
+  const targetType = normalizeAssetType(type);
+  return assets
+    .filter((a) => normalizeAssetType(a.type) === targetType)
+    .reduce((sum, a) => sum + parseAssetSize(a.size), 0);
+}
+
+export function calculateAssetUsagePercent(
+  bytes: number,
+  totalBytes: number,
+): number {
+  return totalBytes === 0 ? 0 : (bytes / totalBytes) * 100;
+}
+
+export function getAssetCountByType(assets: AssetView[], type: string): number {
+  if (type === "sound" || type === "audio") {
+    return assets.filter((a) => a.type === "sound" || a.type === "audio")
+      .length;
+  }
+  return assets.filter((a) => a.type === type).length;
+}
+
+export function sortAudioSetEntries(
+  entries: IAudioSetEntry[],
+): IAudioSetEntry[] {
+  return [...entries].sort((a, b) => {
+    const modeA = a.triggerMode || (a as any).trigger_mode || "remaining";
+    const modeB = b.triggerMode || (b as any).trigger_mode || "remaining";
+    if (modeA !== modeB) {
+      return modeA === "elapsed" ? -1 : 1;
+    }
+    const valA =
+      Number(a.timeSeconds != null ? a.timeSeconds : a.percentage) || 0;
+    const valB =
+      Number(b.timeSeconds != null ? b.timeSeconds : b.percentage) || 0;
+    return modeA === "elapsed" ? valA - valB : valB - valA;
+  });
+}
+
+export interface ListGridDimensions {
+  cols: number;
+  rows: number;
+}
+
+export function calculateListGridDimensions(
+  availableWidth: number,
+  availableHeight: number,
+  itemCount: number,
+  options: {
+    colMinWidth?: number;
+    rowHeight?: number;
+    gap?: number;
+    paddingBottom?: number;
+  } = {},
+): ListGridDimensions {
+  const colMinWidth = options.colMinWidth ?? 240;
+  const rowHeight = options.rowHeight ?? 38;
+  const gap = options.gap ?? 6;
+  const paddingBottom = options.paddingBottom ?? 20;
+
+  const cols = Math.max(
+    1,
+    Math.floor((availableWidth + gap) / (colMinWidth + gap)),
+  );
+  const usableHeight = Math.max(rowHeight, availableHeight - paddingBottom);
+  const visibleRows = Math.max(
+    1,
+    Math.floor((usableHeight + gap) / (rowHeight + gap)),
+  );
+
+  const minRowsToFit = Math.ceil(itemCount / cols);
+  const rows = Math.max(visibleRows, minRowsToFit, 1);
+
+  return { cols, rows };
 }

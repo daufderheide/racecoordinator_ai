@@ -287,7 +287,8 @@
             </div>
             <app-asset-layout-switcher
               id="asset-layout-switcher"
-              [(layout)]="layoutMode"
+              [layout]="layoutMode"
+              (layoutChange)="onLayoutModeChange($event)"
               storageKey="am_layout_mode"
             ></app-asset-layout-switcher>
           </div>
@@ -300,6 +301,7 @@
             class="filter-input"
             [placeholder]="'AM_FILTER_PLACEHOLDER' | translate"
             [(ngModel)]="filterName"
+            (ngModelChange)="updateListGridDimensions()"
             autocomplete="one-time-code"
             data-dashlane-ignore="true"
             data-1p-ignore="true"
@@ -321,7 +323,6 @@
           [class.layout-small]="layoutMode === 'small'"
           [class.layout-medium]="layoutMode === 'medium'"
           [class.layout-large]="layoutMode === 'large'"
-          (wheel)="onGridWheel($event)"
         >
           @for (asset of filteredAssets; track asset.id) {
             <div
