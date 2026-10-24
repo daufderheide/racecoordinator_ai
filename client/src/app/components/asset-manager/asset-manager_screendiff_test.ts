@@ -70,7 +70,10 @@ test.describe("Asset Manager Visuals", () => {
 
     await page
       .locator(".asset-grid")
-      .evaluate((el: any) => (el.scrollTop = 0))
+      .evaluate((el: any) => {
+        el.scrollTop = 0;
+        el.scrollLeft = 0;
+      })
       .catch(() => null);
 
     await expect(page).toHaveScreenshot("asset-manager-layout-list.png", {

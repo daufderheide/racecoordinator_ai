@@ -315,11 +315,13 @@
 
         <!-- Asset Grid -->
         <div
+          #assetGrid
           class="asset-grid"
           [class.layout-list]="layoutMode === 'list'"
           [class.layout-small]="layoutMode === 'small'"
           [class.layout-medium]="layoutMode === 'medium'"
           [class.layout-large]="layoutMode === 'large'"
+          (wheel)="onGridWheel($event)"
         >
           @for (asset of filteredAssets; track asset.id) {
             <div

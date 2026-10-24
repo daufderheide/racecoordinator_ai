@@ -2,6 +2,7 @@ import {
   ChangeDetectorRef,
   Component,
   computed,
+  ElementRef,
   HostListener,
   inject,
   OnDestroy,
@@ -25,9 +26,6 @@ import {
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import {
   IAssetMessage,
-  IAudioSetEntry,
-  ICustomRotation,
-  IImageSetEntry,
   ISaveAudioSetEntry,
   ISaveImageSetEntry,
 } from "@app/proto/antigravity";
@@ -49,33 +47,17 @@ import {
   retainUtterance,
 } from "@app/utils/audio";
 
+import {
+  AssetView,
+  formatAssetBytes,
+  formatAssetTooltip,
+  parseAssetSize,
+} from "./asset-manager.utils";
 import { getAssetManagerHelpSteps } from "./asset-manager-help";
 import { AudioSetEditorComponent } from "./audio-set-editor/audio-set-editor.component";
 import { ImageSetEditorComponent } from "./image-set-editor/image-set-editor.component";
 
-// Interface matching the mock/view needs, mapped from Protobuf
-export interface AssetView {
-  id: string;
-  name: string;
-  type:
-    | "image"
-    | "sound"
-    | "audio"
-    | "image_set"
-    | "audio_set"
-    | "custom_rotation"
-    | "csv";
-  size: string;
-  url: string;
-  editMode?: boolean;
-  selected?: boolean;
-  images?: IImageSetEntry[];
-  audioEntries?: IAudioSetEntry[];
-  numLanes?: number;
-  customRotations?: ICustomRotation[];
-  currentPreviewIndex?: number;
-  hasError?: boolean;
-}
+export { AssetView } from "./asset-manager.utils";
 
 @Component({
   standalone: true,
@@ -94,6 +76,7 @@ export interface AssetView {
 })
 export class AssetManagerComponent implements OnInit, OnDestroy {
   @ViewChild(ManagerHeaderComponent) header!: ManagerHeaderComponent;
+  @ViewChild("assetGrid") assetGridRef?: ElementRef<HTMLDivElement>;
   // Data
   assets: AssetView[] = [];
   layoutMode: AssetLayoutMode = "medium";
@@ -396,45 +379,14 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
   get totalSize(): string {
     let totalBytes = 0;
     for (const asset of this.assets) {
-      totalBytes += this.parseSize(asset.size);
+      totalBytes += parseAssetSize(asset.size);
     }
-    return this.formatBytes(totalBytes);
-  }
-
-  private parseSize(sizeStr: string): number {
-    if (!sizeStr) return 0;
-
-    // Handle IEC units (KiB, MiB) by converting to JEDEC-like (KB, MB) for the parser
-    // This assumes the value is base-1024 in both cases, which it is.
-    const normalized = sizeStr.replace("iB", "B");
-
-    const units = ["B", "KB", "MB", "GB", "TB", "PB"];
-    const parts = normalized.split(" ");
-    if (parts.length !== 2) return 0;
-
-    const value = parseFloat(parts[0]);
-    const unit = parts[1].toUpperCase();
-    const power = units.indexOf(unit);
-
-    if (power === -1) return 0;
-    return value * Math.pow(1024, power);
-  }
-
-  private formatBytes(bytes: number, decimals = 2): string {
-    if (bytes === 0) return "0 B";
-
-    const k = 1024;
-    const dm = decimals < 0 ? 0 : decimals;
-    const sizes = ["B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"];
-
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + " " + sizes[i];
+    return formatAssetBytes(totalBytes);
   }
 
   get totalBytes(): number {
     return this.assets.reduce(
-      (sum, asset) => sum + this.parseSize(asset.size),
+      (sum, asset) => sum + parseAssetSize(asset.size),
       0,
     );
   }
@@ -443,7 +395,7 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
     const targetType = normalizeAssetType(type);
     return this.assets
       .filter((a) => normalizeAssetType(a.type) === targetType)
-      .reduce((sum, a) => sum + this.parseSize(a.size), 0);
+      .reduce((sum, a) => sum + parseAssetSize(a.size), 0);
   }
 
   get imageBytes(): number {
@@ -493,8 +445,7 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
   }
 
   formatAssetTooltip(bytes: number): string {
-    const mb = (bytes / (1024 * 1024)).toFixed(2);
-    return `${bytes.toLocaleString()} bytes (${mb} MB)`;
+    return formatAssetTooltip(bytes);
   }
 
   get imageCount(): number {
@@ -1142,6 +1093,18 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
 
   onCustomRotationSaved(_asset: IAssetMessage) {
     this.loadAssets();
+  }
+
+  onGridWheel(event: WheelEvent): void {
+    if (this.layoutMode === "list") {
+      if (Math.abs(event.deltaY) > Math.abs(event.deltaX)) {
+        const grid = this.assetGridRef?.nativeElement;
+        if (grid && grid.scrollWidth > grid.clientWidth) {
+          grid.scrollLeft += event.deltaY;
+          event.preventDefault();
+        }
+      }
+    }
   }
 
   getHelpSteps(): GuideStep[] {

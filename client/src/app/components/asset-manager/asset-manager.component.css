@@ -322,15 +322,22 @@
   overflow-y: auto;
   padding-right: 10px;
   padding-bottom: 20px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(56, 189, 248, 0.2) transparent;
 }
 
 .asset-grid::-webkit-scrollbar {
   width: 8px;
+  height: 8px;
 }
 
 .asset-grid::-webkit-scrollbar-thumb {
   background: rgba(56, 189, 248, 0.2);
   border-radius: 4px;
+}
+
+.asset-grid::-webkit-scrollbar-thumb:hover {
+  background: rgba(56, 189, 248, 0.4);
 }
 
 .asset-card {
@@ -661,11 +668,22 @@
 
 /* List View */
 .asset-grid.layout-list {
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  display: flex;
+  flex-direction: column;
+  flex-wrap: wrap;
+  align-content: flex-start;
   gap: 6px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-right: 0;
+  padding-bottom: 8px;
+  height: 100%;
 }
 
 .asset-card.layout-list {
+  width: 260px;
+  flex-shrink: 0;
+  box-sizing: border-box;
   flex-direction: row;
   align-items: center;
   min-height: 38px;
@@ -774,6 +792,8 @@
   padding: 2px 6px;
   font-size: 0.8rem;
   height: 24px;
+  flex: 1;
+  min-width: 0;
 }
 
 .asset-card.layout-list .edit-actions {

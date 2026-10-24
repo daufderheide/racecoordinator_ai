@@ -1257,6 +1257,94 @@ describe("AssetManagerComponent", () => {
       expect(card.classList.contains("layout-large")).toBeTrue();
     });
 
+    describe("onGridWheel", () => {
+      let mockGrid: {
+        scrollWidth: number;
+        clientWidth: number;
+        scrollLeft: number;
+      };
+
+      beforeEach(() => {
+        mockGrid = {
+          scrollWidth: 1000,
+          clientWidth: 500,
+          scrollLeft: 100,
+        };
+        component.assetGridRef = {
+          nativeElement: mockGrid as unknown as HTMLDivElement,
+        };
+      });
+
+      it("should translate deltaY to scrollLeft and preventDefault when layoutMode is list and scrolling down", () => {
+        component.layoutMode = "list";
+        const event = new WheelEvent("wheel", { deltaY: 50, deltaX: 0 });
+        spyOn(event, "preventDefault");
+
+        component.onGridWheel(event);
+
+        expect(mockGrid.scrollLeft).toBe(150);
+        expect(event.preventDefault).toHaveBeenCalled();
+      });
+
+      it("should translate negative deltaY to scrollLeft when scrolling up", () => {
+        component.layoutMode = "list";
+        const event = new WheelEvent("wheel", { deltaY: -40, deltaX: 0 });
+        spyOn(event, "preventDefault");
+
+        component.onGridWheel(event);
+
+        expect(mockGrid.scrollLeft).toBe(60);
+        expect(event.preventDefault).toHaveBeenCalled();
+      });
+
+      it("should not translate scroll or preventDefault when layoutMode is not list", () => {
+        component.layoutMode = "medium";
+        const event = new WheelEvent("wheel", { deltaY: 50, deltaX: 0 });
+        spyOn(event, "preventDefault");
+
+        component.onGridWheel(event);
+
+        expect(mockGrid.scrollLeft).toBe(100);
+        expect(event.preventDefault).not.toHaveBeenCalled();
+      });
+
+      it("should not intercept when horizontal scroll deltaX is greater than or equal to deltaY", () => {
+        component.layoutMode = "list";
+        const event = new WheelEvent("wheel", { deltaY: 20, deltaX: 50 });
+        spyOn(event, "preventDefault");
+
+        component.onGridWheel(event);
+
+        expect(mockGrid.scrollLeft).toBe(100);
+        expect(event.preventDefault).not.toHaveBeenCalled();
+      });
+
+      it("should not intercept when scrollWidth is less than or equal to clientWidth", () => {
+        component.layoutMode = "list";
+        mockGrid.scrollWidth = 400;
+        mockGrid.clientWidth = 500;
+        const event = new WheelEvent("wheel", { deltaY: 50, deltaX: 0 });
+        spyOn(event, "preventDefault");
+
+        component.onGridWheel(event);
+
+        expect(mockGrid.scrollLeft).toBe(100);
+        expect(event.preventDefault).not.toHaveBeenCalled();
+      });
+
+      it("should trigger onGridWheel from template wheel event", () => {
+        component.layoutMode = "list";
+        fixture.detectChanges();
+        spyOn(component, "onGridWheel");
+
+        const gridEl = fixture.nativeElement.querySelector(".asset-grid");
+        const wheelEvent = new WheelEvent("wheel", { deltaY: 50, deltaX: 0 });
+        gridEl.dispatchEvent(wheelEvent);
+
+        expect(component.onGridWheel).toHaveBeenCalledWith(wheelEvent);
+      });
+    });
+
     it("should load layoutMode from localStorage on ngOnInit", () => {
       localStorage.setItem("am_layout_mode", "small");
       component.ngOnInit();
