@@ -91,7 +91,10 @@
           [style.height.px]="grid.bounds.height"
           [style.z-index]="grid.zIndex"
         >
-          @if (grid.labelBounds) {
+          @if (
+            grid.labelBounds &&
+            (!gridSession() || gridSession()?.gridId !== grid.gridId)
+          ) {
             <div
               class="raceday-grid-label"
               [class.horizontal-label]="

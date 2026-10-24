@@ -13668,14 +13668,20 @@ describe("DefaultRacedayComponent", () => {
         } as any);
 
         const grids = component.getGrids();
-        expect(grids.length).toBe(1);
-        expect(grids[0].gridId).toBe("unselected-grid");
-        expect(grids[0].labelPosition).toBe("left");
-        expect(grids[0].labelText).toBe("UNSELECTED GRID TITLE");
-        expect(grids[0].labelBounds).toBeTruthy();
+        expect(grids.length).toBe(2);
+        const unselectedGrid = grids.find(
+          (g) => g.gridId === "unselected-grid",
+        );
+        expect(unselectedGrid).toBeTruthy();
+        expect(unselectedGrid?.labelPosition).toBe("left");
+        expect(unselectedGrid?.labelText).toBe("UNSELECTED GRID TITLE");
+        expect(unselectedGrid?.labelBounds).toBeTruthy();
+
+        const activeGrid = grids.find((g) => g.gridId === "active-grid");
+        expect(activeGrid).toBeTruthy();
 
         const nonGridWidgets = component.getNonGridWidgets();
-        expect(nonGridWidgets).toContain(activeGridWidget);
+        expect(nonGridWidgets).not.toContain(activeGridWidget);
         expect(nonGridWidgets).not.toContain(unselectedGridWidget);
       });
 

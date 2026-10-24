@@ -1036,12 +1036,8 @@ export class DefaultRacedayComponent
   private lapHighlightTimers: Map<string, any> = new Map();
   private cachedNonGridWidgets: any[] = [];
   private cachedNonGridWidgetsRef: any[] | null = null;
-  private cachedNonGridSession: boolean = false;
-  private cachedNonGridActiveGridId: string | undefined = undefined;
   private cachedGrids: RacedayGridDescriptor[] = [];
   private cachedGridsWidgetsRef: any[] | null = null;
-  private cachedGridsSession: boolean = false;
-  private cachedGridsActiveGridId: string | undefined = undefined;
   private cachedGridsDataCounts: string = "";
   private cachedGridsParticipantsCount = -1;
   private cachedGridsHeatDriversCount = -1;
@@ -4285,8 +4281,6 @@ export class DefaultRacedayComponent
   invalidateGridCache(): void {
     this.cachedGridsWidgetsRef = null;
     this.cachedNonGridWidgetsRef = null;
-    this.cachedNonGridActiveGridId = undefined;
-    this.cachedGridsActiveGridId = undefined;
     this.cachedGridsDataCounts = "";
     this.cachedGridsParticipantsCount = -1;
     this.cachedGridsHeatDriversCount = -1;
@@ -4377,36 +4371,18 @@ export class DefaultRacedayComponent
   }
 
   getNonGridWidgets(): any[] {
-    const activeGridId = this.gridSession()?.gridId;
-    const session = Boolean(activeGridId);
     const widgets = this.getWidgets();
-    if (
-      widgets === this.cachedNonGridWidgetsRef &&
-      session === this.cachedNonGridSession &&
-      activeGridId === this.cachedNonGridActiveGridId
-    ) {
+    if (widgets === this.cachedNonGridWidgetsRef) {
       return this.cachedNonGridWidgets;
     }
     this.cachedNonGridWidgetsRef = widgets;
-    this.cachedNonGridSession = session;
-    this.cachedNonGridActiveGridId = activeGridId;
-    if (activeGridId) {
-      this.cachedNonGridWidgets = widgets.filter(
-        (w: any) =>
-          !w.customSettings?.["gridId"] ||
-          w.customSettings?.["gridId"] === activeGridId,
-      );
-    } else {
-      this.cachedNonGridWidgets = widgets.filter(
-        (w: any) => !w.customSettings?.["gridId"],
-      );
-    }
+    this.cachedNonGridWidgets = widgets.filter(
+      (w: any) => !w.customSettings?.["gridId"],
+    );
     return this.cachedNonGridWidgets;
   }
 
   getGrids(): RacedayGridDescriptor[] {
-    const activeGridId = this.gridSession()?.gridId;
-    const session = Boolean(activeGridId);
     const widgets = this.getWidgets();
     if (!widgets || widgets.length === 0) {
       this.cachedGrids = [];
@@ -4414,7 +4390,6 @@ export class DefaultRacedayComponent
       this.cachedGridsDataCounts = "";
       this.cachedGridsParticipantsCount = -1;
       this.cachedGridsHeatDriversCount = -1;
-      this.cachedGridsActiveGridId = undefined;
       return [];
     }
 
@@ -4424,8 +4399,6 @@ export class DefaultRacedayComponent
 
     if (
       widgets === this.cachedGridsWidgetsRef &&
-      session === this.cachedGridsSession &&
-      activeGridId === this.cachedGridsActiveGridId &&
       participantsCount === this.cachedGridsParticipantsCount &&
       heatDriversCount === this.cachedGridsHeatDriversCount
     ) {
@@ -4456,8 +4429,6 @@ export class DefaultRacedayComponent
 
     if (
       widgets === this.cachedGridsWidgetsRef &&
-      session === this.cachedGridsSession &&
-      activeGridId === this.cachedGridsActiveGridId &&
       dataCountsKey === this.cachedGridsDataCounts
     ) {
       this.cachedGridsParticipantsCount = participantsCount;
@@ -4466,18 +4437,13 @@ export class DefaultRacedayComponent
     }
 
     const descriptors: RacedayGridDescriptor[] = [];
-    const targetGridIds = activeGridId
-      ? gridIds.filter((id) => id !== activeGridId)
-      : gridIds;
-    for (const gridId of targetGridIds) {
+    for (const gridId of gridIds) {
       const desc = this.buildGridDescriptor(gridId, widgets);
       if (desc) descriptors.push(desc);
     }
 
     this.cachedGrids = descriptors;
     this.cachedGridsWidgetsRef = widgets;
-    this.cachedGridsSession = session;
-    this.cachedGridsActiveGridId = activeGridId;
     this.cachedGridsDataCounts = dataCountsKey;
     this.cachedGridsParticipantsCount = participantsCount;
     this.cachedGridsHeatDriversCount = heatDriversCount;
