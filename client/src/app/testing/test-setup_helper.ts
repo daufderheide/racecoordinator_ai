@@ -39,17 +39,33 @@ export interface SetupOptions {
 export class TestSetupHelper {
   static async setupStandardMocks(page: Page, options: SetupOptions = {}) {
     // Listen for console logs from the browser and prefix them for visibility
+    const isVerbose = !!process.env["PW_VERBOSE"];
     page.on("console", (msg) => {
       const type = msg.type();
       const text = msg.text();
-      // Only log if it's not a noisy debug message, or if it's one of our HEARTBEAT logs
-      if (
-        type === "error" ||
-        type === "warning" ||
-        text.includes("MockWebSocket") ||
-        text.includes("RACE_FLAG_DEBUG")
-      ) {
-        console.log(`BROWSER [${type.toUpperCase()}]: ${text}`);
+
+      if (isVerbose) {
+        if (
+          type === "error" ||
+          type === "warning" ||
+          text.includes("MockWebSocket") ||
+          text.includes("RACE_FLAG_DEBUG")
+        ) {
+          console.log(`BROWSER [${type.toUpperCase()}]: ${text}`);
+        }
+        return;
+      }
+
+      // Default: Only log genuine errors, filtering out known benign browser/engine warnings
+      if (type === "error") {
+        if (
+          text.includes("interactive-widget") ||
+          text.includes("Failed to get server directories") ||
+          text.includes("FileSystemService")
+        ) {
+          return;
+        }
+        console.log(`BROWSER [ERROR]: ${text}`);
       }
     });
 
@@ -57,11 +73,13 @@ export class TestSetupHelper {
       console.error(`BROWSER ERROR: ${err.message}`),
     );
 
-    page.on("requestfailed", (request) => {
-      console.log(
-        `BROWSER [REQUEST_FAILED]: ${request.url()} failed with: ${request.failure()?.errorText}`,
-      );
-    });
+    if (isVerbose) {
+      page.on("requestfailed", (request) => {
+        console.log(
+          `BROWSER [REQUEST_FAILED]: ${request.url()} failed with: ${request.failure()?.errorText}`,
+        );
+      });
+    }
 
     // Mock WebSockets by default to avoid connection refused/watchdog issues
     await this.setupWebSocketMock(page);
@@ -1012,12 +1030,16 @@ export class TestSetupHelper {
     // Mock background images to avoid dev-server flakiness
     await page.route("**/*.png", async (route) => {
       const url = route.request().url();
-      console.log(`DEBUG: Asset request hit: ${url}`);
+      if (process.env["PW_VERBOSE"]) {
+        console.log(`DEBUG: Asset request hit: ${url}`);
+      }
 
       // Extract filename
       const match = url.match(/\/([^\/]+\.png)(\?.*)?$/);
       if (!match) {
-        console.warn(`DEBUG: Asset URL did not match regex: ${url}`);
+        if (process.env["PW_VERBOSE"]) {
+          console.warn(`DEBUG: Asset URL did not match regex: ${url}`);
+        }
         return route.continue();
       }
 
