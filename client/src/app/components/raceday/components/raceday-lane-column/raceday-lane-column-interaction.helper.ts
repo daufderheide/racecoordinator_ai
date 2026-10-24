@@ -15,7 +15,6 @@ import {
   fitColumnLastLaps,
   formatAdjustedLapValue,
   getSharedCanvasContext,
-  isOverallDataSource,
   isOverallOrSeedDataSource,
   isParentRaceOver,
 } from "./raceday-lane-column.utils";
@@ -112,6 +111,17 @@ export function isLaneColumnInsetLapCount(
   );
 }
 
+export function isNameOrNicknameProperty(property?: string): boolean {
+  if (!property) return false;
+  const baseKey = property.split("_")[0];
+  return (
+    baseKey === "driver.name" ||
+    baseKey === "driver.nickname" ||
+    baseKey === "name" ||
+    baseKey === "nickname"
+  );
+}
+
 export function formatLaneColumnInsetValue(
   hd: DriverHeatData | undefined,
   anchor: string,
@@ -120,7 +130,19 @@ export function formatLaneColumnInsetValue(
   parent: any,
 ): string {
   if (!key) return "";
-  if (!hd) return "--";
+  if (!hd) {
+    if (settings.emptyRowsMode === "blank") return "";
+    if (
+      !isOverallOrSeedDataSource(settings, parent, settings.bindingMode) &&
+      isNameOrNicknameProperty(key)
+    ) {
+      return (
+        parent?.translationService?.translate?.("RD_EMPTY_LANE") ||
+        "RD_EMPTY_LANE"
+      );
+    }
+    return "--";
+  }
 
   const anchorCfg = settings.insetsConfig?.[anchor];
   const insetTimeDec =
@@ -148,6 +170,7 @@ export function formatLaneColumnInsetValue(
     gridType: settings.gridType,
     bindingMode: settings.bindingMode,
     gridId: settings.gridId,
+    emptyRowsMode: settings.emptyRowsMode,
   };
 
   if (parent?.formatValue) {
@@ -412,7 +435,7 @@ export function resolveLaneColumnBackgroundColor(
     return settings.backgroundColor || "transparent";
   }
   if (
-    isOverallDataSource(settings, parent, bindingMode) &&
+    isOverallOrSeedDataSource(settings, parent, bindingMode) &&
     (!hd || RacedayFormatUtils.isEmptyDriver(hd) || isParentRaceOver(parent))
   ) {
     return settings.backgroundColor || "transparent";
@@ -445,7 +468,7 @@ export function resolveLaneColumnForegroundColor(
     return settings.textColor || "#ffffff";
   }
   if (
-    isOverallDataSource(settings, parent, bindingMode) &&
+    isOverallOrSeedDataSource(settings, parent, bindingMode) &&
     (!hd || RacedayFormatUtils.isEmptyDriver(hd) || isParentRaceOver(parent))
   ) {
     return settings.textColor || "#ffffff";
@@ -766,7 +789,19 @@ export function resolveLaneColumnFormattedValue(
   bindingMode: string,
   colDef?: ColumnDefinition,
 ): string {
-  if (!hd) return "--";
+  if (!hd) {
+    if (settings.emptyRowsMode === "blank") return "";
+    if (
+      !isOverallOrSeedDataSource(settings, parent, bindingMode) &&
+      isNameOrNicknameProperty(columnKey)
+    ) {
+      return (
+        parent?.translationService?.translate?.("RD_EMPTY_LANE") ||
+        "RD_EMPTY_LANE"
+      );
+    }
+    return "--";
+  }
 
   if (parent?.formatValue) {
     return parent.formatValue(

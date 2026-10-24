@@ -102,6 +102,7 @@ export interface LaneColumnWidgetSettings {
   layoutOrientation: "vertical" | "horizontal";
   showHeader: boolean;
   gridType?: "heat" | "overall";
+  emptyRowsMode?: "remove" | "empty" | "blank";
   gridId?: string;
   gridDirection?: "vertical" | "horizontal";
   gridLane?: number;

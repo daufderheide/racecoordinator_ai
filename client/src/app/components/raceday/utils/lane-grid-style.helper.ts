@@ -259,6 +259,29 @@ export class LaneGridStyleHelper {
     });
   }
 
+  public static updateGridEmptyRowsMode(
+    allWidgets: AbsoluteWidgetNode[],
+    gridId: string,
+    emptyRowsMode: "remove" | "empty" | "blank",
+  ): AbsoluteWidgetNode[] {
+    if (!gridId || !allWidgets) return allWidgets || [];
+    return allWidgets.map((w) => {
+      if (w.customSettings?.["gridId"] === gridId) {
+        if (w.customSettings) {
+          w.customSettings["emptyRowsMode"] = emptyRowsMode;
+        }
+        return {
+          ...w,
+          customSettings: {
+            ...(w.customSettings || {}),
+            emptyRowsMode,
+          },
+        };
+      }
+      return w;
+    });
+  }
+
   public static updateGridLayoutOrientation(
     allWidgets: AbsoluteWidgetNode[],
     gridId: string,

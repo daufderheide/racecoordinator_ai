@@ -201,6 +201,14 @@ De Raster-inspector biedt twee essentiële synchronisatieknoppen in de sectie **
 - **Gedrag bij Opnieuw Inschakelen**:
   - Activeert de rijduplicatie en -synchronisatie weer. Bij verticale richting lijnt het klikken op **Opnieuw spiegelen naar alle rijen** of opnieuw aanvinken van het vakje direct alle rijen uit met de master.
 
+#### Extra rijen
+
+Wanneer een raster onbezette rijen bevat (bijvoorbeeld wanneer er minder coureurs deelnemen aan een race of heat dan er rijen/banen zijn geconfigureerd), bepaalt de instelling **Extra rijen** in de Raster-inspector het gedrag:
+
+- **Verwijderen**: Verwijdert automatisch overtollige onbezette rijen en kolommen, zodat het raster exact aansluit op het werkelijke aantal deelnemers. (Standaard voor rasters met **Algemeen Klassement** en **Coureur Seed**).
+- **Leeg weergeven**: Behoudt de extra rijen en toont `--` voor alle waarden en insets, met behoud van kaartstructuren en kolomkoppen. (Standaard voor rasters met **Heat** en **Baan**).
+- **Blanco weergeven**: Behoudt de extra rijen en toont alleen de randen en achtergrond van de kaarten, zonder waarden of koppen.
+
 #### Vergelijkingstabel
 
 | Bediening | Richting | Bereik | Wat wordt gesynchroniseerd | Gedrag bij Uitschakelen | Gedrag bij Opnieuw Inschakelen |

@@ -201,6 +201,14 @@ The Grid Inspector provides two core synchronization controls in the **Grid Stru
 - **Re-checking Behavior**:
   - Re-enables row replication and synchronization. In vertical orientation, clicking **Re-mirror to All Rows** or re-checking immediately snaps all rows back to the master.
 
+#### Extra Rows
+
+When a grid has unfilled rows (such as when there are fewer drivers in a race or heat than configured grid rows/lanes), the **Extra Rows** setting in the Grid Inspector controls how these unfilled rows are handled:
+
+- **Remove**: Automatically removes the extra unfilled rows and columns, shrinking the grid to fit the actual driver count cleanly without dead space. (Default for **Overall Standings** and **Driver Seed** grids).
+- **Show Empty**: Keeps the extra rows visible, displaying `--` for all metric and inset values while preserving card structures and column headers. (Default for **Heat** and **Lane** grids).
+- **Show Blank**: Keeps the extra rows visible, showing only the card borders and background colors with no values or headers inside.
+
 #### Summary Comparison
 
 | Control | Orientation | Scope | What It Synchronizes | Behavior When Unchecked | Behavior When Re-checked |

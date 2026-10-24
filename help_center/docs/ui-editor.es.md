@@ -201,6 +201,14 @@ El Inspector de la cuadrícula incluye dos controles esenciales en la sección *
 - **Comportamiento al Volver a Activar**:
   - Reactiva la replicación y sincronización de filas. En orientación vertical, hacer clic en **Volver a reflejar en todas las filas** o volver a marcar la casilla alinea inmediatamente todas las filas con la fila maestra.
 
+#### Filas adicionales
+
+Cuando una cuadrícula contiene filas desocupadas (por ejemplo, cuando hay menos pilotos en una carrera o manga que filas/carriles configurados), el ajuste **Filas adicionales** del Inspector de cuadrícula controla su comportamiento:
+
+- **Eliminar**: Elimina automáticamente las filas y columnas sobrantes no asignadas, ajustando la cuadrícula al número real de pilotos participantes. (Predeterminado para cuadrículas de **Clasificación General** y **Clasificación Previa**).
+- **Mostrar vacías**: Mantiene visibles las filas adicionales mostrando `--` en todos los valores e inserciones, conservando encabezados y estructuras. (Predeterminado para cuadrículas de **Manga** y **Carril**).
+- **Mostrar en blanco**: Mantiene visibles las filas adicionales mostrando únicamente los bordes y el fondo de las tarjetas, sin textos ni encabezados.
+
 #### Resumen Comparativo
 
 | Control | Orientación | Alcance | Qué Sincroniza | Comportamiento al Desactivar | Comportamiento al Volver a Activar |

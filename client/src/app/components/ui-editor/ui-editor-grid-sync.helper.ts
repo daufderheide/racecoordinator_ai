@@ -166,6 +166,52 @@ export function handleGridLabelStructureChange(
   }
 }
 
+function handleGridModeStructureChanges(
+  comp: any,
+  layout: any,
+  targetWidget: any,
+  gridId: string,
+): void {
+  if (targetWidget.customSettings?.["_gridTypeChanged"]) {
+    delete targetWidget.customSettings["_gridTypeChanged"];
+    const gridType = targetWidget.customSettings?.["gridType"] || "heat";
+    layout.widgets = LaneGridReplicationHelper.updateGridType(
+      layout.widgets,
+      gridId,
+      gridType,
+    );
+    if (comp.activeGridSession && comp.activeGridSession.gridId === gridId) {
+      comp.activeGridSession.gridType = gridType;
+    }
+  }
+
+  if (targetWidget.customSettings?.["_gridEmptyRowsModeChanged"]) {
+    delete targetWidget.customSettings["_gridEmptyRowsModeChanged"];
+    const mode = targetWidget.customSettings?.["emptyRowsMode"] || "remove";
+    layout.widgets = LaneGridReplicationHelper.updateGridEmptyRowsMode(
+      layout.widgets,
+      gridId,
+      mode,
+    );
+    if (comp.activeGridSession && comp.activeGridSession.gridId === gridId) {
+      comp.activeGridSession.emptyRowsMode = mode;
+    }
+  }
+
+  if (targetWidget.customSettings?.["_sortByBindingModeChanged"]) {
+    delete targetWidget.customSettings["_sortByBindingModeChanged"];
+    const sort = targetWidget.customSettings?.["sortByBindingMode"] !== false;
+    layout.widgets = LaneGridReplicationHelper.updateGridSortByBindingMode(
+      layout.widgets,
+      gridId,
+      sort,
+    );
+    if (comp.activeGridSession && comp.activeGridSession.gridId === gridId) {
+      comp.activeGridSession.sortByBindingMode = sort;
+    }
+  }
+}
+
 export function handleGridColumnStructureChanges(
   comp: any,
   layout: any,
@@ -212,31 +258,7 @@ export function handleGridColumnStructureChanges(
     }
   }
 
-  if (targetWidget.customSettings?.["_gridTypeChanged"]) {
-    delete targetWidget.customSettings["_gridTypeChanged"];
-    const gridType = targetWidget.customSettings?.["gridType"] || "heat";
-    layout.widgets = LaneGridReplicationHelper.updateGridType(
-      layout.widgets,
-      gridId,
-      gridType,
-    );
-    if (comp.activeGridSession && comp.activeGridSession.gridId === gridId) {
-      comp.activeGridSession.gridType = gridType;
-    }
-  }
-
-  if (targetWidget.customSettings?.["_sortByBindingModeChanged"]) {
-    delete targetWidget.customSettings["_sortByBindingModeChanged"];
-    const sort = targetWidget.customSettings?.["sortByBindingMode"] !== false;
-    layout.widgets = LaneGridReplicationHelper.updateGridSortByBindingMode(
-      layout.widgets,
-      gridId,
-      sort,
-    );
-    if (comp.activeGridSession && comp.activeGridSession.gridId === gridId) {
-      comp.activeGridSession.sortByBindingMode = sort;
-    }
-  }
+  handleGridModeStructureChanges(comp, layout, targetWidget, gridId);
 
   if (targetWidget.customSettings?.["_layoutOrientationChanged"]) {
     delete targetWidget.customSettings["_layoutOrientationChanged"];

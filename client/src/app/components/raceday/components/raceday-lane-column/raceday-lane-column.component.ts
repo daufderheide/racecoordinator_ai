@@ -34,21 +34,26 @@ import { GhostBenchmarkType } from "@app/services/ghost-pacing.service";
 import { TranslationService } from "@app/services/translation.service";
 
 import {
+  checkCustomWidgetReload,
   computeHeatDataLastLaps,
   fitColumnTextValue,
-  getInsetDefaultAlignment,
-  getInsetDefaultVerticalAlignment,
   getSvgPreserveAspectRatio,
+  hasSideInsets,
   HeatDataLapItem,
   isCustomWidgetKey,
   isLaneColumnImageProperty,
   resolveColumnHeaderLabel,
+  resolveInsetAlignItems,
+  resolveInsetHorizontalAlignment,
+  resolveInsetJustifyContent,
+  resolveInsetObjectPosition,
+  resolveInsetVerticalAlignment,
   resolveLaneColumnImageUrl,
   resolvePacingBenchmarkType,
   resolvePacingDecimalPlaces,
   resolveTargetDriver,
 } from "./raceday-lane-column.utils";
-import { isOverallDataSource } from "./raceday-lane-column-driver.helper";
+import { isOverallOrSeedDataSource } from "./raceday-lane-column-driver.helper";
 import {
   applyLaneColumnLastLapsFit,
   deleteLaneColumnAnchor,
@@ -65,6 +70,7 @@ import {
   isLaneColumnLapCountClickable,
   isLaneColumnPracticeLaneResetActive,
   isLaneColumnTeamDriverSwapActive,
+  isNameOrNicknameProperty,
   LaneColumnAvatarHelper,
   notifyLaneColumnParentChange,
   resolveCachedSyntheticInsetInputs,
@@ -112,7 +118,9 @@ export class RacedayLaneColumnComponent
   });
   private cdr = inject(ChangeDetectorRef);
   private customWidgetSub?: Subscription;
-  isCustomWidget = isCustomWidgetKey;
+  isCustomWidget(key?: string): boolean {
+    return isCustomWidgetKey(key);
+  }
   private insetCustomInputs = new Map<string, any>();
   private mainCustomInputsRef: { current?: any } = {};
   readonly avatarHelper = new LaneColumnAvatarHelper();
@@ -169,23 +177,11 @@ export class RacedayLaneColumnComponent
       this.resizeObserver.observe(cardEl);
     }
     this.fitContent();
-    this.checkCustomWidgetReload();
-  }
-
-  private checkCustomWidgetReload(): void {
-    if (
-      this.customWidgetService &&
-      this.customWidgetService.getCustomWidgets().length === 0 &&
-      (this.isCustomWidget(this.columnKey) || this.hasAnyCustomInsets())
-    ) {
-      this.customWidgetService.reloadCustomWidgets().catch(() => {});
-    }
-  }
-
-  private hasAnyCustomInsets(): boolean {
-    const insets = this.settings.insets;
-    if (!insets) return false;
-    return Object.values(insets).some((k) => this.isCustomWidget(k));
+    checkCustomWidgetReload(
+      this.customWidgetService,
+      this.columnKey,
+      this.settings.insets,
+    );
   }
 
   ngAfterViewChecked(): void {
@@ -331,7 +327,19 @@ export class RacedayLaneColumnComponent
     return this.cachedTargetDriver;
   }
 
-  get isOverallNoDataRow(): boolean {
+  get emptyRowsMode(): "remove" | "empty" | "blank" {
+    if (this.settings?.emptyRowsMode) {
+      return this.settings.emptyRowsMode;
+    }
+    const isOverallOrSeed = isOverallOrSeedDataSource(
+      this.settings,
+      this.parent(),
+      this.bindingMode,
+    );
+    return isOverallOrSeed ? "remove" : "empty";
+  }
+
+  get isExtraGridRow(): boolean {
     const parent = this.parent();
     const isEditor = Boolean(
       (typeof parent?.isUIEditorMode === "function"
@@ -342,15 +350,21 @@ export class RacedayLaneColumnComponent
       return false;
     }
     const settings = this.settings;
-    if (settings?.isHeaderWidget) {
+    if (!settings?.gridId) {
       return false;
     }
-    const bindingMode = settings?.bindingMode || "lane";
-    if (!isOverallDataSource(settings, parent, bindingMode)) {
+    if (settings?.isHeaderWidget) {
       return false;
     }
     const targetDriver = this.targetDriver;
     return !targetDriver || RacedayFormatUtils.isEmptyDriver(targetDriver);
+  }
+
+  get isOverallNoDataRow(): boolean {
+    if (this.emptyRowsMode !== "remove") {
+      return false;
+    }
+    return this.isExtraGridRow;
   }
 
   get backgroundColor(): string {
@@ -437,43 +451,27 @@ export class RacedayLaneColumnComponent
   }
 
   getInsetHorizontalAlignment(anchor: string): "left" | "center" | "right" {
-    const cfg = this.settings.insetsConfig?.[anchor];
-    const val = cfg?.horizontalAlignment || cfg?.valueAlignment;
-    if (val === "start" || val === "left") return "left";
-    if (val === "end" || val === "right") return "right";
-    if (val === "center") return "center";
-    return getInsetDefaultAlignment(anchor);
+    return resolveInsetHorizontalAlignment(this.settings, anchor);
   }
 
   getInsetVerticalAlignment(anchor: string): "top" | "center" | "bottom" {
-    const cfg = this.settings.insetsConfig?.[anchor];
-    const val = cfg?.verticalAlignment;
-    if (val === "top" || val === "center" || val === "bottom") return val;
-    return getInsetDefaultVerticalAlignment(anchor);
+    return resolveInsetVerticalAlignment(this.settings, anchor);
   }
 
   getInsetJustifyContent(anchor: string): string {
-    const align = this.getInsetHorizontalAlignment(anchor);
-    if (align === "left") return "flex-start";
-    if (align === "right") return "flex-end";
-    return "center";
+    return resolveInsetJustifyContent(this.settings, anchor);
   }
 
   getInsetAlignItems(anchor: string): string {
-    const align = this.getInsetVerticalAlignment(anchor);
-    if (align === "top") return "flex-start";
-    if (align === "bottom") return "flex-end";
-    return "center";
+    return resolveInsetAlignItems(this.settings, anchor);
   }
 
   getInsetTextAlign(anchor: string): string {
-    return this.getInsetHorizontalAlignment(anchor);
+    return resolveInsetHorizontalAlignment(this.settings, anchor);
   }
 
   getInsetObjectPosition(anchor: string): string {
-    const h = this.getInsetHorizontalAlignment(anchor);
-    const v = this.getInsetVerticalAlignment(anchor);
-    return `${h} ${v}`;
+    return resolveInsetObjectPosition(this.settings, anchor);
   }
 
   get effectiveSelectedAnchor(): string | null {
@@ -576,6 +574,7 @@ export class RacedayLaneColumnComponent
   }
 
   get isLapCountClickable(): boolean {
+    if (this.isExtraGridRow) return false;
     return isLaneColumnLapCountClickable(
       this.parent(),
       this.targetDriver,
@@ -585,6 +584,7 @@ export class RacedayLaneColumnComponent
   }
 
   get isTeamDriverSwapActive(): boolean {
+    if (this.isExtraGridRow) return false;
     return isLaneColumnTeamDriverSwapActive(
       this.parent(),
       this.targetDriver,
@@ -594,6 +594,7 @@ export class RacedayLaneColumnComponent
   }
 
   get isPracticeLaneResetActive(): boolean {
+    if (this.isExtraGridRow) return false;
     return isLaneColumnPracticeLaneResetActive(
       this.parent(),
       this.columnKey,
@@ -602,6 +603,7 @@ export class RacedayLaneColumnComponent
   }
 
   get cardTooltip(): string | null {
+    if (this.isExtraGridRow) return null;
     return resolveLaneColumnCardTooltip(
       this.translationService,
       this.isLapCountClickable,
@@ -698,6 +700,22 @@ export class RacedayLaneColumnComponent
   }
 
   get formattedValue(): string {
+    if (this.isExtraGridRow) {
+      if (this.emptyRowsMode === "blank") {
+        return "";
+      }
+      if (
+        !isOverallOrSeedDataSource(
+          this.settings,
+          this.parent(),
+          this.bindingMode,
+        ) &&
+        isNameOrNicknameProperty(this.columnKey)
+      ) {
+        return this.translationService.translate("RD_EMPTY_LANE");
+      }
+      return "--";
+    }
     const parent = this.parent();
     const colDef = parent?.formatValue
       ? this.getColumnDefinition(this.columnKey, parent)
@@ -825,10 +843,12 @@ export class RacedayLaneColumnComponent
   }
 
   isImageProperty(key: string = this.columnKey): boolean {
+    if (this.isExtraGridRow) return false;
     return isLaneColumnImageProperty(key);
   }
 
   getImageUrl(key: string = this.columnKey, anchor?: string): string {
+    if (this.isExtraGridRow) return "";
     return resolveLaneColumnImageUrl(
       key,
       this.targetDriver,
@@ -843,34 +863,39 @@ export class RacedayLaneColumnComponent
   }
 
   hasInset(anchor: string): boolean {
+    if (this.isExtraGridRow && this.emptyRowsMode === "blank") return false;
     return Boolean(this.getInsetKey(anchor));
   }
 
   hasTopInsets(): boolean {
-    return Boolean(
-      this.getInsetKey("top-left") ||
-      this.getInsetKey("top-center") ||
-      this.getInsetKey("top-right"),
+    return hasSideInsets(
+      this.settings.insets,
+      "top",
+      this.isExtraGridRow && this.emptyRowsMode === "blank",
     );
   }
 
   hasBottomInsets(): boolean {
-    return Boolean(
-      this.getInsetKey("bottom-left") ||
-      this.getInsetKey("bottom-center") ||
-      this.getInsetKey("bottom-right"),
+    return hasSideInsets(
+      this.settings.insets,
+      "bottom",
+      this.isExtraGridRow && this.emptyRowsMode === "blank",
     );
   }
 
   hasLeftInsets(): boolean {
-    return Boolean(
-      this.getInsetKey("top-left") || this.getInsetKey("bottom-left"),
+    return hasSideInsets(
+      this.settings.insets,
+      "left",
+      this.isExtraGridRow && this.emptyRowsMode === "blank",
     );
   }
 
   hasRightInsets(): boolean {
-    return Boolean(
-      this.getInsetKey("top-right") || this.getInsetKey("bottom-right"),
+    return hasSideInsets(
+      this.settings.insets,
+      "right",
+      this.isExtraGridRow && this.emptyRowsMode === "blank",
     );
   }
 
@@ -884,6 +909,26 @@ export class RacedayLaneColumnComponent
   }
 
   getInsetValue(anchor: string): string {
+    if (this.isExtraGridRow) {
+      if (this.emptyRowsMode === "blank") {
+        return "";
+      }
+      const insetKey = this.getInsetKey(anchor);
+      if (!insetKey) {
+        return "";
+      }
+      if (
+        !isOverallOrSeedDataSource(
+          this.settings,
+          this.parent(),
+          this.bindingMode,
+        ) &&
+        isNameOrNicknameProperty(insetKey)
+      ) {
+        return this.translationService.translate("RD_EMPTY_LANE");
+      }
+      return "--";
+    }
     return formatLaneColumnInsetValue(
       this.targetDriver,
       anchor,
@@ -908,6 +953,7 @@ export class RacedayLaneColumnComponent
   }
 
   isPlaceholderAvatar(url?: string, _key?: string, anchor?: string): boolean {
+    if (this.isExtraGridRow) return false;
     return this.avatarHelper.isPlaceholderAvatar(
       this.targetDriver,
       url,
@@ -992,6 +1038,7 @@ export class RacedayLaneColumnComponent
   }
 
   isPacingProperty(): boolean {
+    if (this.isExtraGridRow) return false;
     return RacedayLayoutUtils.isPacingProperty(this.columnKey);
   }
 
@@ -1008,6 +1055,7 @@ export class RacedayLaneColumnComponent
   }
 
   isDriftLap(): boolean {
+    if (this.isExtraGridRow) return false;
     const hd = this.targetDriver;
     const parent = this.parent();
     if (!hd || !parent) return false;

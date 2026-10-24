@@ -822,3 +822,98 @@ export function extractDroppedColumnKey(
 
   return droppedKey;
 }
+
+export function resolveInsetHorizontalAlignment(
+  settings: LaneColumnWidgetSettings,
+  anchor: string,
+): "left" | "center" | "right" {
+  const cfg = settings.insetsConfig?.[anchor];
+  const val = cfg?.horizontalAlignment || cfg?.valueAlignment;
+  if (val === "start" || val === "left") return "left";
+  if (val === "end" || val === "right") return "right";
+  if (val === "center") return "center";
+  return getInsetDefaultAlignment(anchor);
+}
+
+export function resolveInsetVerticalAlignment(
+  settings: LaneColumnWidgetSettings,
+  anchor: string,
+): "top" | "center" | "bottom" {
+  const cfg = settings.insetsConfig?.[anchor];
+  const val = cfg?.verticalAlignment;
+  if (val === "top" || val === "center" || val === "bottom") return val;
+  return getInsetDefaultVerticalAlignment(anchor);
+}
+
+export function resolveInsetJustifyContent(
+  settings: LaneColumnWidgetSettings,
+  anchor: string,
+): string {
+  const align = resolveInsetHorizontalAlignment(settings, anchor);
+  if (align === "left") return "flex-start";
+  if (align === "right") return "flex-end";
+  return "center";
+}
+
+export function resolveInsetAlignItems(
+  settings: LaneColumnWidgetSettings,
+  anchor: string,
+): string {
+  const align = resolveInsetVerticalAlignment(settings, anchor);
+  if (align === "top") return "flex-start";
+  if (align === "bottom") return "flex-end";
+  return "center";
+}
+
+export function resolveInsetObjectPosition(
+  settings: LaneColumnWidgetSettings,
+  anchor: string,
+): string {
+  const h = resolveInsetHorizontalAlignment(settings, anchor);
+  const v = resolveInsetVerticalAlignment(settings, anchor);
+  return `${h} ${v}`;
+}
+
+export function hasSideInsets(
+  insets: Record<string, string> | undefined,
+  side: "top" | "bottom" | "left" | "right",
+  suppressed = false,
+): boolean {
+  if (suppressed || !insets) return false;
+  if (side === "top") {
+    return Boolean(
+      insets["top-left"] || insets["top-center"] || insets["top-right"],
+    );
+  }
+  if (side === "bottom") {
+    return Boolean(
+      insets["bottom-left"] ||
+      insets["bottom-center"] ||
+      insets["bottom-right"],
+    );
+  }
+  if (side === "left") {
+    return Boolean(insets["top-left"] || insets["bottom-left"]);
+  }
+  return Boolean(insets["top-right"] || insets["bottom-right"]);
+}
+
+export function checkCustomWidgetReload(
+  customWidgetService:
+    | { getCustomWidgets: () => any[]; reloadCustomWidgets: () => Promise<any> }
+    | null
+    | undefined,
+  columnKey: string,
+  insets?: Record<string, string>,
+): void {
+  if (
+    customWidgetService &&
+    customWidgetService.getCustomWidgets().length === 0 &&
+    (isCustomWidgetKey(columnKey) ||
+      Boolean(
+        insets && Object.values(insets).some((k) => isCustomWidgetKey(k)),
+      ))
+  ) {
+    customWidgetService.reloadCustomWidgets().catch(() => {});
+  }
+}

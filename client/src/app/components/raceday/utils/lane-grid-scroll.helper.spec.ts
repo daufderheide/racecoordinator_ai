@@ -492,5 +492,79 @@ describe("LaneGridScrollHelper", () => {
       expect(result.length).toBe(1);
       expect(result[0].id).toBe("header-1");
     });
+
+    it("should keep all rows when emptyRowsMode is empty or blank on overall grids", () => {
+      const widgetsEmptyMode: AbsoluteWidgetNode[] = Array.from(
+        { length: 4 },
+        (_, i) => ({
+          id: `row-${i}`,
+          widgetType: "lane-column",
+          x: 100,
+          y: 100 + i * 40,
+          width: 200,
+          height: 40,
+          zIndex: 5,
+          customSettings: {
+            gridId,
+            gridLane: i,
+            targetIndex: i,
+            gridTotalLanes: 4,
+            gridType: "overall",
+            emptyRowsMode: "empty",
+          },
+        }),
+      );
+
+      const result = LaneGridScrollHelper.generateScrollableGridWidgets(
+        widgetsEmptyMode,
+        gridId,
+        2,
+      );
+      expect(result.length).toBe(4);
+
+      const widgetsBlankMode = widgetsEmptyMode.map((w) => ({
+        ...w,
+        customSettings: {
+          ...w.customSettings,
+          emptyRowsMode: "blank" as const,
+        },
+      }));
+      const resultBlank = LaneGridScrollHelper.generateScrollableGridWidgets(
+        widgetsBlankMode,
+        gridId,
+        2,
+      );
+      expect(resultBlank.length).toBe(4);
+    });
+
+    it("should filter rows when emptyRowsMode is remove on heat grids", () => {
+      const heatWidgetsRemove: AbsoluteWidgetNode[] = Array.from(
+        { length: 4 },
+        (_, i) => ({
+          id: `row-${i}`,
+          widgetType: "lane-column",
+          x: 100,
+          y: 100 + i * 40,
+          width: 200,
+          height: 40,
+          zIndex: 5,
+          customSettings: {
+            gridId,
+            gridLane: i,
+            targetIndex: i,
+            gridTotalLanes: 4,
+            gridType: "heat",
+            emptyRowsMode: "remove",
+          },
+        }),
+      );
+
+      const result = LaneGridScrollHelper.generateScrollableGridWidgets(
+        heatWidgetsRemove,
+        gridId,
+        2,
+      );
+      expect(result.length).toBe(2);
+    });
   });
 });

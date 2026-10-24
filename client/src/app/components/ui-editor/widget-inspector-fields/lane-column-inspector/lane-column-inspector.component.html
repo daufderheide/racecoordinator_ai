@@ -319,6 +319,26 @@
         </div>
       </div>
 
+      <!-- Grid Empty Rows Control -->
+      <div class="inspector-section" style="margin-bottom: 8px">
+        <label class="inspector-label">{{
+          "UE_GRID_EMPTY_ROWS" | translate
+        }}</label>
+        <div class="select-container select-sm">
+          <app-custom-select [(ngModel)]="gridEmptyRowsMode">
+            <app-custom-option value="remove">
+              {{ "UE_GRID_EMPTY_ROWS_REMOVE" | translate }}
+            </app-custom-option>
+            <app-custom-option value="empty">
+              {{ "UE_GRID_EMPTY_ROWS_SHOW_EMPTY" | translate }}
+            </app-custom-option>
+            <app-custom-option value="blank">
+              {{ "UE_GRID_EMPTY_ROWS_SHOW_BLANK" | translate }}
+            </app-custom-option>
+          </app-custom-select>
+        </div>
+      </div>
+
       <!-- Link Columns Toggle -->
       <div class="inspector-section" style="margin-bottom: 8px">
         <label class="form-check-label">

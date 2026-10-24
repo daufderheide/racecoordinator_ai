@@ -2178,5 +2178,34 @@ describe("LaneColumnInspectorComponent", () => {
       expect(component.getInsetVerticalAlignment("top-left")).toBe("bottom");
       expect(component.change.emit).toHaveBeenCalledTimes(2);
     });
+
+    it("should get and set gridEmptyRowsMode and emit change", () => {
+      // heat/lane grid defaults to "empty"
+      component.currentSettings["gridId"] = "grid-heat-1";
+      component.currentSettings["gridType"] = "heat";
+      component.currentSettings["bindingMode"] = "lane";
+      delete component.currentSettings["emptyRowsMode"];
+      expect(component.gridEmptyRowsMode).toBe("empty");
+
+      // overall grid defaults to "remove"
+      component.currentSettings["gridType"] = "overall";
+      component.currentSettings["bindingMode"] = "overallPosition";
+      expect(component.gridEmptyRowsMode).toBe("remove");
+
+      // set to "blank"
+      spyOn(component.change, "emit");
+      component.gridEmptyRowsMode = "blank";
+      expect(component.gridEmptyRowsMode).toBe("blank");
+      expect(component.currentSettings["emptyRowsMode"]).toBe("blank");
+      expect(component.currentSettings["_gridEmptyRowsModeChanged"]).toBeTrue();
+      expect(component.change.emit).toHaveBeenCalled();
+
+      // set to "remove"
+      component.gridEmptyRowsMode = "remove";
+      expect(component.gridEmptyRowsMode).toBe("remove");
+      expect(component.currentSettings["emptyRowsMode"]).toBe("remove");
+      expect(component.currentSettings["_gridEmptyRowsModeChanged"]).toBeTrue();
+      expect(component.change.emit).toHaveBeenCalledTimes(2);
+    });
   });
 });

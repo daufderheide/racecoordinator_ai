@@ -415,6 +415,29 @@ export class LaneColumnGridHelper {
     onFieldChange();
   }
 
+  public static getGridEmptyRowsMode(
+    currentSettings: any,
+  ): "remove" | "empty" | "blank" {
+    if (currentSettings["emptyRowsMode"] === "empty") return "empty";
+    if (currentSettings["emptyRowsMode"] === "blank") return "blank";
+    if (currentSettings["emptyRowsMode"] === "remove") return "remove";
+    const isOverallOrSeed =
+      currentSettings["gridType"] === "overall" ||
+      currentSettings["bindingMode"] === "overallPosition" ||
+      currentSettings["bindingMode"] === "seed";
+    return isOverallOrSeed ? "remove" : "empty";
+  }
+
+  public static setGridEmptyRowsMode(
+    currentSettings: any,
+    val: "remove" | "empty" | "blank",
+    onFieldChange: () => void,
+  ): void {
+    currentSettings["emptyRowsMode"] = val;
+    currentSettings["_gridEmptyRowsModeChanged"] = true;
+    onFieldChange();
+  }
+
   public static getSortByBindingMode(currentSettings: any): boolean {
     return currentSettings["sortByBindingMode"] !== false;
   }

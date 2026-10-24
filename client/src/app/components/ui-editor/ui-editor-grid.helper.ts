@@ -78,14 +78,22 @@ function createInitialGridSession(
   physicalCellIndex: number,
 ): LaneGridSession {
   const cs = sourceWidgets[0]?.customSettings || {};
+  const effectiveGridType = options.gridType || cs["gridType"] || "heat";
+  const effectiveBindingMode = options.sourceBindingMode ?? "lane";
+  const isOverallOrSeed =
+    effectiveGridType === "overall" ||
+    effectiveBindingMode === "overallPosition" ||
+    effectiveBindingMode === "seed";
+  const defaultMode = isOverallOrSeed ? "remove" : "empty";
   return {
     gridId: `grid-${Date.now()}`,
     bounds,
     totalLanes: options.targetCount,
     direction: options.direction || "vertical",
     sourceLaneIndex: physicalCellIndex,
-    gridType: options.gridType || cs["gridType"] || "heat",
-    bindingMode: options.sourceBindingMode ?? "lane",
+    gridType: effectiveGridType,
+    emptyRowsMode: options.emptyRowsMode || cs["emptyRowsMode"] || defaultMode,
+    bindingMode: effectiveBindingMode,
     headerPlacement: options.headerPlacement ?? "individual",
     headerHeight: options.headerHeight ?? 36,
     linkColumns: options.linkColumns ?? true,
@@ -618,6 +626,27 @@ function extractGridLabelSessionSettings(
   };
 }
 
+function resolveSyncedGridType(
+  gridWidgets: any[],
+  cs: any,
+  fallbackGridType: string,
+): string {
+  const allHeat =
+    gridWidgets.length > 0 &&
+    gridWidgets.every((w: any) => w.customSettings?.["gridType"] === "heat");
+  if (allHeat) return "heat";
+  const anyOverall = gridWidgets.some(
+    (w: any) => w.customSettings?.["gridType"] === "overall",
+  );
+  const anyLegacyOverall = gridWidgets.some(
+    (w: any) =>
+      !w.customSettings?.["gridType"] &&
+      RacedayLayoutUtils.isOverallColumnKey(w.customSettings?.["columnKey"]),
+  );
+  if (anyOverall || anyLegacyOverall) return "overall";
+  return cs["gridType"] || fallbackGridType || "heat";
+}
+
 export function handleSyncActiveGridSessionFromLayout(comp: any): void {
   if (!comp.activeGridSession) return;
   const targetUi = comp.activeCustomUi;
@@ -651,22 +680,11 @@ export function handleSyncActiveGridSessionFromLayout(comp: any): void {
       ? "position"
       : cs["bindingMode"] || comp.activeGridSession.bindingMode;
 
-    const allHeat =
-      gridWidgets.length > 0 &&
-      gridWidgets.every((w: any) => w.customSettings?.["gridType"] === "heat");
-    const anyOverall = gridWidgets.some(
-      (w: any) => w.customSettings?.["gridType"] === "overall",
+    const gridType = resolveSyncedGridType(
+      gridWidgets,
+      cs,
+      comp.activeGridSession.gridType,
     );
-    const anyLegacyOverall = gridWidgets.some(
-      (w: any) =>
-        !w.customSettings?.["gridType"] &&
-        RacedayLayoutUtils.isOverallColumnKey(w.customSettings?.["columnKey"]),
-    );
-    const gridType = allHeat
-      ? "heat"
-      : anyOverall || anyLegacyOverall
-        ? "overall"
-        : cs["gridType"] || comp.activeGridSession.gridType || "heat";
 
     const dataWidget = gridWidgets.find(
       (w: any) => !w.customSettings?.["isHeaderWidget"],
@@ -682,6 +700,12 @@ export function handleSyncActiveGridSessionFromLayout(comp: any): void {
       dataWidget?.customSettings?.["textColor"] ||
       comp.activeGridSession.textColor;
 
+    const isOverallOrSeed =
+      gridType === "overall" ||
+      bindingMode === "overallPosition" ||
+      bindingMode === "seed";
+    const defaultEmptyMode = isOverallOrSeed ? "remove" : "empty";
+
     comp.activeGridSession = {
       ...comp.activeGridSession,
       bounds: bounds || comp.activeGridSession.bounds,
@@ -689,6 +713,10 @@ export function handleSyncActiveGridSessionFromLayout(comp: any): void {
       direction,
       bindingMode,
       gridType,
+      emptyRowsMode:
+        cs["emptyRowsMode"] ||
+        comp.activeGridSession?.emptyRowsMode ||
+        defaultEmptyMode,
       useLaneColors,
       backgroundColor,
       textColor,

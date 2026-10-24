@@ -3353,5 +3353,279 @@ describe("RacedayLaneColumnComponent", () => {
         fixture.nativeElement.querySelector(".anchor-drop-grid"),
       ).toBeTruthy();
     });
+
+    describe("emptyRowsMode & isExtraGridRow & isOverallNoDataRow", () => {
+      it("should resolve default emptyRowsMode correctly", () => {
+        // heat/lane binding mode defaults to "empty"
+        fixture.componentRef.setInput("parent", mockParent);
+        fixture.componentRef.setInput(
+          "widget",
+          createWidget({ bindingMode: "lane", emptyRowsMode: undefined }),
+        );
+        fixture.detectChanges();
+        expect(component.emptyRowsMode).toBe("empty");
+
+        // position binding mode with heat grid defaults to "empty"
+        fixture.componentRef.setInput(
+          "widget",
+          createWidget({
+            bindingMode: "position",
+            gridType: "heat",
+            emptyRowsMode: undefined,
+          }),
+        );
+        fixture.detectChanges();
+        expect(component.emptyRowsMode).toBe("empty");
+
+        // overallPosition binding mode defaults to "remove"
+        fixture.componentRef.setInput(
+          "widget",
+          createWidget({
+            bindingMode: "overallPosition",
+            emptyRowsMode: undefined,
+          }),
+        );
+        fixture.detectChanges();
+        expect(component.emptyRowsMode).toBe("remove");
+
+        // seed binding mode defaults to "remove"
+        fixture.componentRef.setInput(
+          "widget",
+          createWidget({ bindingMode: "seed", emptyRowsMode: undefined }),
+        );
+        fixture.detectChanges();
+        expect(component.emptyRowsMode).toBe("remove");
+
+        // explicit setting overrides default
+        fixture.componentRef.setInput(
+          "widget",
+          createWidget({ bindingMode: "lane", emptyRowsMode: "blank" }),
+        );
+        fixture.detectChanges();
+        expect(component.emptyRowsMode).toBe("blank");
+
+        fixture.componentRef.setInput(
+          "widget",
+          createWidget({
+            bindingMode: "overallPosition",
+            emptyRowsMode: "empty",
+          }),
+        );
+        fixture.detectChanges();
+        expect(component.emptyRowsMode).toBe("empty");
+      });
+
+      it("should determine isExtraGridRow correctly", () => {
+        fixture.componentRef.setInput("parent", mockParent);
+        // Valid driver on lane 0 -> not an extra row
+        fixture.componentRef.setInput(
+          "widget",
+          createWidget({
+            gridId: "grid-test",
+            bindingMode: "lane",
+            targetIndex: 0,
+          }),
+        );
+        fixture.detectChanges();
+        expect(component.isExtraGridRow).toBeFalse();
+
+        // Lane 5 (no driver in mockParent with laneIndex: 5) -> isExtraGridRow is true
+        fixture.componentRef.setInput(
+          "widget",
+          createWidget({
+            gridId: "grid-test",
+            bindingMode: "lane",
+            targetIndex: 5,
+          }),
+        );
+        fixture.detectChanges();
+        expect(component.isExtraGridRow).toBeTrue();
+
+        // Non-grid widget (no gridId) -> isExtraGridRow is false
+        fixture.componentRef.setInput(
+          "widget",
+          createWidget({ bindingMode: "lane", targetIndex: 5 }),
+        );
+        fixture.detectChanges();
+        expect(component.isExtraGridRow).toBeFalse();
+
+        // Header widget is never an extra row
+        fixture.componentRef.setInput(
+          "widget",
+          createWidget({
+            gridId: "grid-test",
+            bindingMode: "lane",
+            targetIndex: 5,
+            isHeaderWidget: true,
+          }),
+        );
+        fixture.detectChanges();
+        expect(component.isExtraGridRow).toBeFalse();
+
+        // In UI Editor mode, isExtraGridRow is always false
+        mockParent.isUIEditorMode = () => true;
+        fixture.componentRef.setInput(
+          "widget",
+          createWidget({
+            gridId: "grid-test",
+            bindingMode: "lane",
+            targetIndex: 5,
+          }),
+        );
+        fixture.detectChanges();
+        expect(component.isExtraGridRow).toBeFalse();
+        mockParent.isUIEditorMode = () => false;
+      });
+
+      it("should determine isOverallNoDataRow based on emptyRowsMode", () => {
+        fixture.componentRef.setInput("parent", mockParent);
+        // Extra row with emptyRowsMode = "remove" -> isOverallNoDataRow is true
+        fixture.componentRef.setInput(
+          "widget",
+          createWidget({
+            gridId: "grid-test",
+            bindingMode: "lane",
+            targetIndex: 5,
+            emptyRowsMode: "remove",
+          }),
+        );
+        fixture.detectChanges();
+        expect(component.isOverallNoDataRow).toBeTrue();
+
+        // Extra row with emptyRowsMode = "empty" -> isOverallNoDataRow is false (row shown with --)
+        fixture.componentRef.setInput(
+          "widget",
+          createWidget({
+            gridId: "grid-test",
+            bindingMode: "lane",
+            targetIndex: 5,
+            emptyRowsMode: "empty",
+          }),
+        );
+        fixture.detectChanges();
+        expect(component.isOverallNoDataRow).toBeFalse();
+
+        // Extra row with emptyRowsMode = "blank" -> isOverallNoDataRow is false (row shown blank)
+        fixture.componentRef.setInput(
+          "widget",
+          createWidget({
+            gridId: "grid-test",
+            bindingMode: "lane",
+            targetIndex: 5,
+            emptyRowsMode: "blank",
+          }),
+        );
+        fixture.detectChanges();
+        expect(component.isOverallNoDataRow).toBeFalse();
+
+        // Populated row with emptyRowsMode = "remove" -> isOverallNoDataRow is false
+        fixture.componentRef.setInput(
+          "widget",
+          createWidget({
+            gridId: "grid-test",
+            bindingMode: "lane",
+            targetIndex: 0,
+            emptyRowsMode: "remove",
+          }),
+        );
+        fixture.detectChanges();
+        expect(component.isOverallNoDataRow).toBeFalse();
+      });
+
+      it("should format values and insets according to emptyRowsMode for extra grid rows", () => {
+        fixture.componentRef.setInput("parent", mockParent);
+
+        // empty mode: returns "--" for main value and inset
+        fixture.componentRef.setInput(
+          "widget",
+          createWidget({
+            gridId: "grid-test",
+            bindingMode: "lane",
+            targetIndex: 5,
+            emptyRowsMode: "empty",
+            insets: { "top-left": "lapCount" },
+          }),
+        );
+        fixture.detectChanges();
+        expect(component.formattedValue).toBe("--");
+        expect(component.getInsetValue("top-left")).toBe("--");
+        expect(component.hasInset("top-left")).toBeTrue();
+
+        // blank mode: returns "" for main value and inset, hasInset is false, header suppressed
+        fixture.componentRef.setInput(
+          "widget",
+          createWidget({
+            gridId: "grid-test",
+            bindingMode: "lane",
+            targetIndex: 5,
+            emptyRowsMode: "blank",
+            insets: { "top-left": "lapCount" },
+          }),
+        );
+        fixture.detectChanges();
+        expect(component.formattedValue).toBe("");
+        expect(component.getInsetValue("top-left")).toBe("");
+        expect(component.hasInset("top-left")).toBeFalse();
+
+        const headerEl =
+          fixture.nativeElement.querySelector(".lane-col-header");
+        expect(headerEl).toBeNull();
+      });
+
+      it("should format driver.name and driver.nickname as RD_EMPTY_LANE on heat grid extra rows in empty mode", () => {
+        fixture.componentRef.setInput("parent", mockParent);
+
+        // Heat grid in empty mode with driver.name: should return RD_EMPTY_LANE
+        fixture.componentRef.setInput(
+          "widget",
+          createWidget({
+            gridId: "grid-test",
+            gridType: "heat",
+            bindingMode: "lane",
+            columnKey: "driver.name",
+            targetIndex: 5,
+            emptyRowsMode: "empty",
+            insets: { "top-left": "driver.nickname" },
+          }),
+        );
+        fixture.detectChanges();
+        expect(component.formattedValue).toBe("RD_EMPTY_LANE");
+        expect(component.getInsetValue("top-left")).toBe("RD_EMPTY_LANE");
+
+        // Heat grid in blank mode with driver.name: should return ""
+        fixture.componentRef.setInput(
+          "widget",
+          createWidget({
+            gridId: "grid-test",
+            gridType: "heat",
+            bindingMode: "lane",
+            columnKey: "driver.name",
+            targetIndex: 5,
+            emptyRowsMode: "blank",
+            insets: { "top-left": "driver.nickname" },
+          }),
+        );
+        fixture.detectChanges();
+        expect(component.formattedValue).toBe("");
+        expect(component.getInsetValue("top-left")).toBe("");
+
+        // Overall grid in empty mode with driver.name: should return "--"
+        fixture.componentRef.setInput(
+          "widget",
+          createWidget({
+            gridId: "grid-test",
+            gridType: "overall",
+            bindingMode: "overallPosition",
+            columnKey: "driver.name",
+            targetIndex: 5,
+            emptyRowsMode: "empty",
+            insets: { "top-left": "driver.nickname" },
+          }),
+        );
+        fixture.detectChanges();
+        expect(component.formattedValue).toBe("--");
+        expect(component.getInsetValue("top-left")).toBe("--");
+      });
+    });
   });
 });

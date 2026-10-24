@@ -5,7 +5,10 @@
   [class.clickable-team-card]="isTeamDriverSwapActive"
   [class.orientation-vertical]="layoutOrientation === 'vertical'"
   [class.orientation-horizontal]="layoutOrientation === 'horizontal'"
-  [class.has-header]="settings.showHeader !== false"
+  [class.has-header]="
+    settings.showHeader !== false &&
+    (!isExtraGridRow || emptyRowsMode !== 'blank')
+  "
   [class.header-widget-card]="isHeaderWidget"
   [class.highlight]="isHighlighted"
   [attr.title]="cardTooltip"
@@ -53,7 +56,10 @@
     </div>
   } @else {
     <!-- Optional Header / Label -->
-    @if (settings.showHeader !== false) {
+    @if (
+      settings.showHeader !== false &&
+      (!isExtraGridRow || emptyRowsMode !== "blank")
+    ) {
       <div
         class="lane-col-header"
         [style.background]="effectiveHeaderBackgroundColor"

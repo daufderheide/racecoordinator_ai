@@ -201,6 +201,14 @@ L'Ispettore widget offre due controlli fondamentali nella sezione **Struttura e 
 - **Comportamento alla Nuova Selezione**:
   - Riattiva la replicazione e la sincronizzazione delle righe. Con orientamento verticale, fare clic su **Rifletti su tutte le righe** o riselezionare la casella allinea immediatamente tutte le righe alla riga master.
 
+#### Righe aggiuntive
+
+Quando una griglia presenta righe non occupate (ad esempio quando partecipano a una gara o manche meno piloti rispetto alle righe/corsie configurate), l'impostazione **Righe aggiuntive** nell'Ispettore griglia ne determina il comportamento:
+
+- **Rimuovi**: Rimuove automaticamente le righe e colonne vuote eccedenti, adattando la griglia all'effettivo numero di piloti in gara. (Predefinito per le griglie **Classifica Generale** e **Testa di Serie**).
+- **Mostra vuote**: Mantiene visibili le righe aggiuntive mostrando `--` per tutti i valori e riquadri, preservando intestazioni e bordi delle schede. (Predefinito per le griglie **Manche** e **Corsia**).
+- **Mostra in bianco**: Mantiene visibili le righe aggiuntive mostrando solo i bordi e lo sfondo delle schede, senza valori né intestazioni.
+
 #### Schema Riassuntivo
 
 | Controllo | Orientamento | Ambito | Cosa Sincronizza | Comportamento quando Deselezionato | Comportamento alla Riselezione |

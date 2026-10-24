@@ -2732,6 +2732,57 @@ describe("RacedayFormatUtils", () => {
           heatCtx,
         ),
       ).toBe("RD_EMPTY_LANE");
+
+      const overallEmptyCtx = {
+        ...ctx,
+        laneViewWidgetSettings: {
+          gridType: "overall",
+          emptyRowsMode: "empty",
+        },
+      } as any;
+      expect(
+        RacedayFormatUtils.formatValue(
+          "driver.name",
+          undefined,
+          emptyHd,
+          undefined,
+          overallEmptyCtx,
+        ),
+      ).toBe("--");
+
+      const overallBlankCtx = {
+        ...ctx,
+        laneViewWidgetSettings: {
+          gridType: "overall",
+          emptyRowsMode: "blank",
+        },
+      } as any;
+      expect(
+        RacedayFormatUtils.formatValue(
+          "driver.name",
+          undefined,
+          emptyHd,
+          undefined,
+          overallBlankCtx,
+        ),
+      ).toBe("");
+
+      const heatBlankCtx = {
+        ...ctx,
+        laneViewWidgetSettings: {
+          gridType: "heat",
+          emptyRowsMode: "blank",
+        },
+      } as any;
+      expect(
+        RacedayFormatUtils.formatValue(
+          "driver.name",
+          undefined,
+          emptyHd,
+          undefined,
+          heatBlankCtx,
+        ),
+      ).toBe("");
     });
   });
 });

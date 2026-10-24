@@ -709,8 +709,15 @@ export class RacedayFormatUtils {
           ctx,
           propertyName,
         )
-      )
+      ) {
+        if (ctx.laneViewWidgetSettings?.emptyRowsMode === "empty") {
+          return "--";
+        }
         return "";
+      }
+      if (ctx.laneViewWidgetSettings?.emptyRowsMode === "blank") {
+        return "";
+      }
       return ctx.translate("RD_EMPTY_LANE");
     }
     if (
@@ -742,8 +749,15 @@ export class RacedayFormatUtils {
           ctx,
           propertyName,
         )
-      )
+      ) {
+        if (ctx.laneViewWidgetSettings?.emptyRowsMode === "empty") {
+          return "--";
+        }
         return "";
+      }
+      if (ctx.laneViewWidgetSettings?.emptyRowsMode === "blank") {
+        return "";
+      }
       if (column && column.layout[AnchorPoint.CenterCenter] === propertyName) {
         return ctx.translate("RD_EMPTY_LANE");
       }

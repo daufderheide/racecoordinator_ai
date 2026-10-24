@@ -25,7 +25,7 @@ import { RacedayHeatListComponent } from "@app/components/raceday/components/rac
 import { RacedayImageComponent } from "@app/components/raceday/components/raceday-image/raceday-image.component";
 import { RacedayLabelComponent } from "@app/components/raceday/components/raceday-label/raceday-label.component";
 import { RacedayLaneColumnComponent } from "@app/components/raceday/components/raceday-lane-column/raceday-lane-column.component";
-import { isOverallDataSource } from "@app/components/raceday/components/raceday-lane-column/raceday-lane-column-driver.helper";
+import { isOverallOrSeedDataSource } from "@app/components/raceday/components/raceday-lane-column/raceday-lane-column-driver.helper";
 import { RacedayLaneViewComponent } from "@app/components/raceday/components/raceday-lane-view/raceday-lane-view.component";
 import { RacedayLeaderboardComponent } from "@app/components/raceday/components/raceday-leaderboard/raceday-leaderboard.component";
 import { RacedayMenuBarComponent } from "@app/components/raceday/components/raceday-menu-bar/raceday-menu-bar.component";
@@ -141,7 +141,14 @@ export class RacedayAbsoluteWidgetComponent
     if (s?.["isHeaderWidget"]) return false;
 
     const bindingMode = s?.["bindingMode"] || "lane";
-    if (!isOverallDataSource(s as any, parent, bindingMode)) {
+    const isOverallOrSeed = isOverallOrSeedDataSource(
+      s as any,
+      parent,
+      bindingMode,
+    );
+    const defaultMode = isOverallOrSeed ? "remove" : "empty";
+    const emptyRowsMode = (s?.["emptyRowsMode"] || defaultMode) as string;
+    if (emptyRowsMode !== "remove") {
       return false;
     }
 

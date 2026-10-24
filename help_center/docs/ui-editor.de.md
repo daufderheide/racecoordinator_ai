@@ -201,6 +201,14 @@ Der Widget-Inspektor bietet im Abschnitt **Rasterstruktur & Layout** zwei wesent
 - **Verhalten beim erneuten Aktivieren**:
   - Reaktiviert die Zeilenreplikation und -synchronisierung. Bei vertikaler Ausrichtung synchronisiert das erneute Aktivieren oder Anklicken von **Auf alle Zeilen spiegeln** alle Zeilen sofort wieder mit dem Master.
 
+#### Zusätzliche Zeilen
+
+Wenn ein Raster unbesetzte Zeilen aufweist (z. B. wenn weniger Fahrer an einem Rennen oder Lauf teilnehmen als Zeilen/Spuren im Raster konfiguriert sind), steuert die Einstellung **Zusätzliche Zeilen** im Raster-Inspektor das Verhalten:
+
+- **Entfernen**: Entfernt überzählige unbesetzte Zeilen und Spalten automatisch, sodass das Raster exakt an die tatsächliche Fahrerzahl angepasst wird. (Standard für Raster mit **Gesamtwertung** und **Fahrer-Setzung**).
+- **Leer anzeigen**: Behält die zusätzlichen Zeilen bei und zeigt `--` für alle Metriken und Insets an, während Kartenstrukturen und Kopfzeilen sichtbar bleiben. (Standard für Raster mit **Lauf** und **Spur**).
+- **Blank anzeigen**: Behält die zusätzlichen Zeilen bei und zeigt nur Kartenrahmen und Hintergrundfarben ohne Werte oder Kopfzeilen an.
+
 #### Vergleichsübersicht
 
 | Option | Ausrichtung | Geltungsbereich | Was synchronisiert wird | Verhalten bei Deaktivierung | Verhalten bei erneuter Aktivierung |

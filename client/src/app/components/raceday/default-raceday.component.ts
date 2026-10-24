@@ -4385,6 +4385,35 @@ export class DefaultRacedayComponent
     return this.cachedSeedGridIds.has(gridId);
   }
 
+  getGridEmptyRowsMode(gridId?: string): "remove" | "empty" | "blank" {
+    if (!gridId) return "empty";
+    const session = this.gridSession();
+    if (session && session.gridId === gridId && session.emptyRowsMode) {
+      return session.emptyRowsMode;
+    }
+    const widgets = this.getWidgets();
+    let isOverallOrSeed = this.isGridOverall(gridId) || this.isGridSeed(gridId);
+    if (widgets) {
+      for (let i = 0; i < widgets.length; i++) {
+        const s = widgets[i]?.customSettings;
+        if (s?.["gridId"] === gridId) {
+          if (s["emptyRowsMode"]) {
+            return s["emptyRowsMode"];
+          }
+          if (
+            s["gridType"] === "overall" ||
+            s["bindingMode"] === "overallPosition" ||
+            s["bindingMode"] === "seed" ||
+            RacedayLayoutUtils.isOverallColumnKey(s["columnKey"])
+          ) {
+            isOverallOrSeed = true;
+          }
+        }
+      }
+    }
+    return isOverallOrSeed ? "remove" : "empty";
+  }
+
   getDefaultLaneWidgetSettings(): any {
     const widgets = this.currentRacedayLayout?.widgets;
     if (widgets !== this.cachedDefaultLaneWidgetsRef) {
@@ -4526,6 +4555,18 @@ export class DefaultRacedayComponent
     const labelSize =
       Number(labelWidget?.customSettings?.["gridLabelSize"]) || 40;
 
+    const isOverallOrSeed = gridWidgets.some(
+      (w: any) =>
+        w.customSettings?.["gridType"] === "overall" ||
+        w.customSettings?.["bindingMode"] === "overallPosition" ||
+        w.customSettings?.["bindingMode"] === "seed" ||
+        RacedayLayoutUtils.isOverallColumnKey(w.customSettings?.["columnKey"]),
+    );
+    const emptyRowsMode =
+      (gridWidgets.find((w: any) => w.customSettings?.["emptyRowsMode"])
+        ?.customSettings?.["emptyRowsMode"] as "remove" | "empty" | "blank") ||
+      this.getGridEmptyRowsMode(gridId);
+
     const sessionLike: LaneGridSession = {
       gridId,
       bounds,
@@ -4533,16 +4574,10 @@ export class DefaultRacedayComponent
       direction,
       sourceLaneIndex: 0,
       bindingMode: first.customSettings?.["bindingMode"] || "lane",
-      gridType: gridWidgets.some(
-        (w: any) =>
-          w.customSettings?.["gridType"] === "overall" ||
-          w.customSettings?.["bindingMode"] === "overallPosition" ||
-          RacedayLayoutUtils.isOverallColumnKey(
-            w.customSettings?.["columnKey"],
-          ),
-      )
+      gridType: isOverallOrSeed
         ? "overall"
         : first.customSettings?.["gridType"] || "heat",
+      emptyRowsMode,
       headerPlacement,
       headerHeight,
       gridLabelPosition: labelPosition,
@@ -4604,11 +4639,17 @@ export class DefaultRacedayComponent
       : dataBounds.width / gridTotalLanes;
 
     const hasScroll = dataCount > gridTotalLanes;
+    const isRemoveEmptyRows = sessionLike.emptyRowsMode === "remove";
+    const effectiveDisplayCount =
+      isRemoveEmptyRows && dataCount < gridTotalLanes
+        ? dataCount
+        : Math.max(dataCount, gridTotalLanes);
+
     const contentWidth = isVertical
       ? dataBounds.width
-      : Math.round(dataCount * pitch);
+      : Math.round(effectiveDisplayCount * pitch);
     const contentHeight = isVertical
-      ? Math.round(dataCount * pitch)
+      ? Math.round(effectiveDisplayCount * pitch)
       : dataBounds.height;
 
     let headerWidgets: AbsoluteWidgetNode[] = [];
@@ -7222,6 +7263,21 @@ export class DefaultRacedayComponent
       laneViewSettings = {
         ...(laneViewSettings || {}),
         bindingMode: "seed",
+      };
+    }
+    const resolvedEmptyRowsMode =
+      laneViewSettings?.emptyRowsMode ||
+      widgetSettings?.emptyRowsMode ||
+      (widgetSettings?.gridId
+        ? this.getGridEmptyRowsMode(widgetSettings.gridId)
+        : undefined);
+    if (
+      resolvedEmptyRowsMode &&
+      laneViewSettings?.emptyRowsMode !== resolvedEmptyRowsMode
+    ) {
+      laneViewSettings = {
+        ...(laneViewSettings || {}),
+        emptyRowsMode: resolvedEmptyRowsMode,
       };
     }
     const ctx: FormatContext = {

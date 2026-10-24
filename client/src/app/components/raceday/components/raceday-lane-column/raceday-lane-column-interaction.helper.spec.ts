@@ -13,6 +13,7 @@ import {
   isLaneColumnLapCountClickable,
   isLaneColumnPracticeLaneResetActive,
   isLaneColumnTeamDriverSwapActive,
+  isNameOrNicknameProperty,
   notifyLaneColumnParentChange,
   resolveEffectiveHeaderFontSize,
   resolveEffectiveInsetFontSize,
@@ -303,6 +304,30 @@ describe("raceday-lane-column-interaction.helper", () => {
           "top-left",
           "lapCount",
           {} as any,
+          {},
+        ),
+      ).toBe("--");
+    });
+
+    it("should handle emptyRowsMode for undefined driver", () => {
+      // blank mode returns empty string
+      expect(
+        formatLaneColumnInsetValue(
+          undefined,
+          "top-left",
+          "lapCount",
+          { emptyRowsMode: "blank" } as any,
+          {},
+        ),
+      ).toBe("");
+
+      // empty mode returns '--'
+      expect(
+        formatLaneColumnInsetValue(
+          undefined,
+          "top-left",
+          "lapCount",
+          { emptyRowsMode: "empty" } as any,
           {},
         ),
       ).toBe("--");
@@ -1071,6 +1096,59 @@ describe("raceday-lane-column-interaction.helper", () => {
           "lane",
         ),
       ).toBe("--");
+    });
+
+    it("should handle emptyRowsMode for undefined driver", () => {
+      // blank mode returns empty string
+      expect(
+        resolveLaneColumnFormattedValue(
+          undefined,
+          "lapCount",
+          {},
+          { emptyRowsMode: "blank" } as any,
+          "lane",
+        ),
+      ).toBe("");
+
+      // empty mode returns '--' for lapCount
+      expect(
+        resolveLaneColumnFormattedValue(
+          undefined,
+          "lapCount",
+          {},
+          { emptyRowsMode: "empty" } as any,
+          "lane",
+        ),
+      ).toBe("--");
+
+      // empty mode returns 'RD_EMPTY_LANE' for driver.name on heat/lane grid
+      expect(
+        resolveLaneColumnFormattedValue(
+          undefined,
+          "driver.name",
+          {},
+          { emptyRowsMode: "empty" } as any,
+          "lane",
+        ),
+      ).toBe("RD_EMPTY_LANE");
+
+      // empty mode returns '--' for driver.name on overall grid
+      expect(
+        resolveLaneColumnFormattedValue(
+          undefined,
+          "driver.name",
+          {},
+          { gridType: "overall", emptyRowsMode: "empty" } as any,
+          "overallPosition",
+        ),
+      ).toBe("--");
+
+      // isNameOrNicknameProperty helper
+      expect(isNameOrNicknameProperty("driver.name")).toBeTrue();
+      expect(isNameOrNicknameProperty("driver.nickname")).toBeTrue();
+      expect(isNameOrNicknameProperty("name")).toBeTrue();
+      expect(isNameOrNicknameProperty("nickname")).toBeTrue();
+      expect(isNameOrNicknameProperty("lapCount")).toBeFalse();
     });
 
     it("should delegate to parent.formatValue if provided", () => {

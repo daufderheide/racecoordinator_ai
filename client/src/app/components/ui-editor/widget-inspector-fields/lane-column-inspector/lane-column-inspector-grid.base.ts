@@ -174,6 +174,25 @@ export abstract class LaneColumnInspectorGridBase {
     );
   }
 
+  get isOverallOrSeedGrid(): boolean {
+    return (
+      this.gridType === "overall" ||
+      this.gridSortOrder === "overallPosition" ||
+      this.gridSortOrder === "seed" ||
+      this.currentSettings["bindingMode"] === "overallPosition" ||
+      this.currentSettings["bindingMode"] === "seed"
+    );
+  }
+
+  get gridEmptyRowsMode(): "remove" | "empty" | "blank" {
+    return LaneColumnGridHelper.getGridEmptyRowsMode(this.currentSettings);
+  }
+  set gridEmptyRowsMode(val: "remove" | "empty" | "blank") {
+    LaneColumnGridHelper.setGridEmptyRowsMode(this.currentSettings, val, () =>
+      this.onFieldChange(),
+    );
+  }
+
   get sortByBindingMode(): boolean {
     return LaneColumnGridHelper.getSortByBindingMode(this.currentSettings);
   }

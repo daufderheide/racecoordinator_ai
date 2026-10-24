@@ -153,9 +153,11 @@ export class LaneGridScrollHelper {
     }
 
     const count = this.resolveDataCount(explicitGridType, mode, parent);
-    const isOverall =
-      explicitGridType === "overall" || mode === "overallPosition";
-    if (isOverall) {
+    const isOverallOrSeed =
+      explicitGridType === "overall" ||
+      mode === "overallPosition" ||
+      mode === "seed";
+    if (isOverallOrSeed) {
       return count;
     }
     return count > 0 ? count : finalTotalLanes;
@@ -224,6 +226,13 @@ export class LaneGridScrollHelper {
       first.customSettings?.["headerPlacement"] || "individual";
     const headerHeight = Number(first.customSettings?.["headerHeight"]) || 36;
     const bindingMode = first.customSettings?.["bindingMode"] || "lane";
+    const isSeed = gridWidgets.some(
+      (w) => w.customSettings?.["bindingMode"] === "seed",
+    );
+    const isOverallOrSeed = explicitGridType === "overall" || isSeed;
+    const defaultMode = isOverallOrSeed ? "remove" : "empty";
+    const emptyRowsMode =
+      first.customSettings?.["emptyRowsMode"] || defaultMode;
 
     const masterWidgets = gridWidgets.filter((w) => {
       if (w.customSettings?.["isHeaderWidget"]) return false;
@@ -243,6 +252,7 @@ export class LaneGridScrollHelper {
       sourceLaneIndex: 0,
       bindingMode,
       gridType: explicitGridType,
+      emptyRowsMode,
       headerPlacement,
       headerHeight,
       gridLabelPosition: first.customSettings?.["gridLabelPosition"] || "none",
@@ -296,8 +306,17 @@ export class LaneGridScrollHelper {
       Number(first.customSettings?.["gridTotalLanes"]) || 4;
 
     const explicitGridType = this.resolveExplicitGridType(gridWidgets);
+    const isSeed = gridWidgets.some(
+      (w) => w.customSettings?.["bindingMode"] === "seed",
+    );
+    const isOverallOrSeed = explicitGridType === "overall" || isSeed;
+    const defaultMode = isOverallOrSeed ? "remove" : "empty";
+    const emptyRowsMode =
+      (gridWidgets.find((w) => w.customSettings?.["emptyRowsMode"])
+        ?.customSettings?.["emptyRowsMode"] as "remove" | "empty" | "blank") ||
+      defaultMode;
 
-    if (explicitGridType === "overall" && dataCount < gridTotalLanes) {
+    if (emptyRowsMode === "remove" && dataCount < gridTotalLanes) {
       return this.filterOverallGridRows(gridWidgets, dataCount);
     }
 

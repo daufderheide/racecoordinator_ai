@@ -827,5 +827,49 @@ describe("LaneGridStyleHelper", () => {
       expect(newTarget.customSettings?.["useLaneColors"]).toBeTrue();
       expect(newTarget.customSettings?.["customCustomProp"]).toBe("val");
     });
+
+    it("should update emptyRowsMode across all widgets in the grid", () => {
+      const widgets: AbsoluteWidgetNode[] = [
+        {
+          id: "w1",
+          widgetType: "lane-column",
+          x: 0,
+          y: 0,
+          width: 100,
+          height: 50,
+          zIndex: 1,
+          customSettings: { gridId: "grid-test", emptyRowsMode: "remove" },
+        },
+        {
+          id: "w2",
+          widgetType: "lane-column",
+          x: 0,
+          y: 50,
+          width: 100,
+          height: 50,
+          zIndex: 1,
+          customSettings: { gridId: "grid-test", emptyRowsMode: "remove" },
+        },
+        {
+          id: "w3",
+          widgetType: "lane-column",
+          x: 0,
+          y: 100,
+          width: 100,
+          height: 50,
+          zIndex: 1,
+          customSettings: { gridId: "other-grid", emptyRowsMode: "remove" },
+        },
+      ];
+
+      const result = LaneGridStyleHelper.updateGridEmptyRowsMode(
+        widgets,
+        "grid-test",
+        "blank",
+      );
+      expect(result[0].customSettings?.["emptyRowsMode"]).toBe("blank");
+      expect(result[1].customSettings?.["emptyRowsMode"]).toBe("blank");
+      expect(result[2].customSettings?.["emptyRowsMode"]).toBe("remove");
+    });
   });
 });

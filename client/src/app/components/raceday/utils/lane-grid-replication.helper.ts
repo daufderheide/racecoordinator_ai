@@ -32,6 +32,7 @@ export interface LaneGridSession {
   sourceLaneIndex: number;
   bindingMode: "lane" | "position" | "overallPosition" | "seed";
   gridType?: "heat" | "overall";
+  emptyRowsMode?: "remove" | "empty" | "blank";
   headerPlacement?: "top" | "individual" | "none" | "left";
   headerHeight?: number;
   headerWidth?: number;
@@ -288,6 +289,14 @@ export class LaneGridReplicationHelper {
         cellOffsetXRatio: ratios.cellOffsetXRatio,
         cellOffsetYRatio: ratios.cellOffsetYRatio,
         gridType: session.gridType || "heat",
+        emptyRowsMode:
+          session.emptyRowsMode ||
+          masterWidget.customSettings?.["emptyRowsMode"] ||
+          (session.gridType === "overall" ||
+          session.bindingMode === "seed" ||
+          session.bindingMode === "overallPosition"
+            ? "remove"
+            : "empty"),
         bindingMode,
         targetIndex: session.sourceLaneIndex,
         showHeader,
@@ -663,6 +672,14 @@ export class LaneGridReplicationHelper {
             headerWidth: session.headerWidth ?? 200,
             linkColumns: session.linkColumns ?? true,
             mirrorRows: session.mirrorRows !== false,
+            emptyRowsMode:
+              session.emptyRowsMode ||
+              w.customSettings?.["emptyRowsMode"] ||
+              (session.gridType === "overall" ||
+              session.bindingMode === "seed" ||
+              session.bindingMode === "overallPosition"
+                ? "remove"
+                : "empty"),
             gridLabelPosition: session.gridLabelPosition || "none",
             gridLabelText: session.gridLabelText || "",
             gridLabelSize: session.gridLabelSize || 40,
@@ -748,6 +765,18 @@ export class LaneGridReplicationHelper {
     gridType: "heat" | "overall",
   ): AbsoluteWidgetNode[] {
     return LaneGridStyleHelper.updateGridType(allWidgets, gridId, gridType);
+  }
+
+  public static updateGridEmptyRowsMode(
+    allWidgets: AbsoluteWidgetNode[],
+    gridId: string,
+    emptyRowsMode: "remove" | "empty" | "blank",
+  ): AbsoluteWidgetNode[] {
+    return LaneGridStyleHelper.updateGridEmptyRowsMode(
+      allWidgets,
+      gridId,
+      emptyRowsMode,
+    );
   }
 
   public static updateGridLayoutOrientation(

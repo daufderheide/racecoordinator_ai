@@ -313,5 +313,51 @@ describe("LaneColumnGridHelper", () => {
       expect(unsetSettings._gridSortOrderChanged).toBeTrue();
       expect(orderChanged).toBeTrue();
     });
+
+    it("should get and set gridEmptyRowsMode with appropriate defaults", () => {
+      const heatSettings: any = { gridType: "heat", bindingMode: "lane" };
+      expect(LaneColumnGridHelper.getGridEmptyRowsMode(heatSettings)).toBe(
+        "empty",
+      );
+
+      const overallSettings: any = { gridType: "overall" };
+      expect(LaneColumnGridHelper.getGridEmptyRowsMode(overallSettings)).toBe(
+        "remove",
+      );
+
+      const seedSettings: any = { bindingMode: "seed" };
+      expect(LaneColumnGridHelper.getGridEmptyRowsMode(seedSettings)).toBe(
+        "remove",
+      );
+
+      let emptyRowsChanged = false;
+      LaneColumnGridHelper.setGridEmptyRowsMode(heatSettings, "blank", () => {
+        emptyRowsChanged = true;
+      });
+      expect(LaneColumnGridHelper.getGridEmptyRowsMode(heatSettings)).toBe(
+        "blank",
+      );
+      expect(heatSettings.emptyRowsMode).toBe("blank");
+      expect(heatSettings._gridEmptyRowsModeChanged).toBeTrue();
+      expect(emptyRowsChanged).toBeTrue();
+
+      LaneColumnGridHelper.setGridEmptyRowsMode(
+        heatSettings,
+        "remove",
+        () => {},
+      );
+      expect(LaneColumnGridHelper.getGridEmptyRowsMode(heatSettings)).toBe(
+        "remove",
+      );
+
+      LaneColumnGridHelper.setGridEmptyRowsMode(
+        heatSettings,
+        "empty",
+        () => {},
+      );
+      expect(LaneColumnGridHelper.getGridEmptyRowsMode(heatSettings)).toBe(
+        "empty",
+      );
+    });
   });
 });

@@ -201,6 +201,14 @@ L'Inspecteur de grille met à disposition deux commandes clés dans la section *
 - **Comportement lors du Recochage** :
   - Réactive la réplication et la synchronisation des lignes. En orientation verticale, cliquer sur **Refléter à nouveau sur toutes les lignes** ou recocher la case réaligne instantanément toutes les lignes sur la ligne maître.
 
+#### Lignes supplémentaires
+
+Lorsqu'une grille présente des lignes inoccupées (par exemple lorsqu'il y a moins de pilotes participant à une course ou série que de lignes/voies configurées), le réglage **Lignes supplémentaires** dans l'inspecteur de grille contrôle leur traitement :
+
+- **Supprimer**: Supprime automatiquement les lignes et colonnes non occupées, ajustant la grille au nombre réel de pilotes participants. (Par défaut pour les grilles **Classement Général** et **Tête de Série**).
+- **Afficher vide**: Conserve les lignes supplémentaires visibles en affichant `--` pour toutes les valeurs et incrustations, tout en préservant les en-têtes et structures de cartes. (Par défaut pour les grilles **Série** et **Voie**).
+- **Afficher blanc**: Conserve les lignes supplémentaires visibles en affichant uniquement les bordures et l'arrière-plan des cartes, sans valeur ni en-tête.
+
 #### Tableau Récapitulatif
 
 | Contrôle | Orientation | Portée | Éléments Synchronisés | Comportement lorsque Décoché | Comportement lors du Recochage |

@@ -201,6 +201,14 @@ O Inspetor de grade oferece dois controles primordiais na seção **Estrutura e 
 - **Comportamento ao Marcar Novamente**:
   - Reativa a replicação e a sincronização de linhas. Na orientação vertical, clicar em **Reespelhar em todas as linhas** ou remarcar a caixa alinha imediatamente todas as linhas à linha mestre.
 
+#### Linhas extras
+
+Quando uma grade contém linhas desocupadas (como quando há menos pilotos em uma corrida ou bateria do que linhas/pistas configuradas), a configuração **Linhas extras** no Inspetor de grade define como essas linhas são tratadas:
+
+- **Remover**: Remove automaticamente as linhas e colunas desocupadas, ajustando a grade à quantidade real de pilotos participantes. (Padrão para grades de **Classificação Geral** e **Chaveamento do Piloto**).
+- **Mostrar vazio**: Mantém as linhas extras visíveis exibindo `--` para todos os valores e campos embutidos, preservando cabeçalhos e molduras dos cartões. (Padrão para grades de **Bateria** e **Pista**).
+- **Mostrar em branco**: Mantém as linhas extras visíveis exibindo apenas as bordas e o fundo dos cartões, sem qualquer valor ou cabeçalho.
+
 #### Tabela Comparativa
 
 | Controle | Orientação | Escopo | O Que Sincroniza | Comportamento ao Desmarcar | Comportamento ao Marcar Novamente |
