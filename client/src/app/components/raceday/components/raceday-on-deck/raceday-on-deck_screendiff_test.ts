@@ -3,12 +3,6 @@ import { TestSetupHelper } from "@app/testing/test-setup_helper";
 
 test.describe("Raceday On Deck Visuals", () => {
   test.beforeEach(async ({ page }) => {
-    page.on("console", (msg) => {
-      console.log(`BROWSER [${msg.type().toUpperCase()}]: ${msg.text()}`);
-    });
-    page.on("pageerror", (err) => {
-      console.error(`BROWSER EXCEPTION: ${err.message}`);
-    });
     await TestSetupHelper.setupStandardMocks(page);
     await TestSetupHelper.setupRaceWebSocketMocks(page);
     await TestSetupHelper.setupAssetMocks(page);

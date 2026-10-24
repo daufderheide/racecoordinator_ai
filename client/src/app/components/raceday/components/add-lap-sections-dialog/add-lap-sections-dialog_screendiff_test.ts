@@ -3,13 +3,6 @@ import { TestSetupHelper } from "@app/testing/test-setup_helper";
 
 test.describe("Add Lap Sections Dialog Visuals", () => {
   test.beforeEach(async ({ page }) => {
-    page.on("console", (msg) =>
-      console.log(`BROWSER [${msg.type()}]: ${msg.text()}`),
-    );
-    page.on("pageerror", (err) =>
-      console.error(`BROWSER ERROR: ${err.message}`),
-    );
-
     await TestSetupHelper.setupStandardMocks(page);
     await TestSetupHelper.setupRaceWebSocketMocks(page);
     await TestSetupHelper.setupAssetMocks(page);

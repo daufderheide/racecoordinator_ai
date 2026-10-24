@@ -5,13 +5,6 @@ import { DefaultRacedayHarnessE2e } from "./testing/default-raceday.harness.e2e"
 
 test.describe("Raceday Visuals for Sorting", () => {
   test.beforeEach(async ({ page }) => {
-    page.on("console", (msg) =>
-      console.log(`BROWSER [${msg.type()}]: ${msg.text()}`),
-    );
-    page.on("pageerror", (err) =>
-      console.error(`BROWSER ERROR: ${err.message}`),
-    );
-
     await TestSetupHelper.setupStandardMocks(page);
     await TestSetupHelper.setupRaceWebSocketMocks(page);
     await TestSetupHelper.setupAssetMocks(page);

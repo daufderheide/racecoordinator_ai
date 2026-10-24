@@ -23,7 +23,7 @@ export default defineConfig({
       : "50%",
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: [
-    [process.env["PW_REPORTER"] || "line"],
+    [process.env["PW_REPORTER"] || "./scripts/screendiff-reporter.js"],
     ["html", { open: "never" }],
     ["json", { outputFile: process.env["PW_REPORT_PATH"] || "pw-result.json" }],
   ],

@@ -247,9 +247,6 @@ test.describe("Raceday Menu Bar Visuals", () => {
         { objectId: "d4", entity_id: "d4", name: "Meowth" },
       ],
     };
-    page.on("console", (msg) => {
-      console.log(`BROWSER CONSOLE: ${msg.type()}: ${msg.text()}`);
-    });
 
     await TestSetupHelper.waitForLocalization(
       page,

@@ -3,11 +3,6 @@ import { TestSetupHelper } from "@app/testing/test-setup_helper";
 
 test.describe("Viewer Race Director Menu", () => {
   test.beforeEach(async ({ page }) => {
-    page.on("console", (msg) => {
-      if (msg.type() === "error") {
-        console.log(`BROWSER CONSOLE ERROR: ${msg.text()}`);
-      }
-    });
     // 1. Setup standard mocks
     await TestSetupHelper.setupStandardMocks(page);
 

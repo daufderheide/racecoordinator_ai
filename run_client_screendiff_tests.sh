@@ -137,12 +137,15 @@ mkdir -p "$ISOLATED_DIR/test-home"
 DOCKER_CMD="node -e \"const fs=require('fs'),crypto=require('crypto');const hash=crypto.createHash('md5').update(fs.readFileSync('package.json')).digest('hex');if(!fs.existsSync('node_modules')||!fs.existsSync('.installed-hash')||fs.readFileSync('.installed-hash','utf8').trim()!==hash){console.log('Dependencies changed or missing, installing...');require('child_process').execSync('npm install --no-package-lock --ignore-scripts',{stdio:'inherit'});fs.writeFileSync('.installed-hash',hash);}\" && rm -rf /work/test-results && npx playwright test $PLAYWRIGHT_ARGS"
 
 docker run --rm \
+  --init \
   --ipc=host \
   -v "$ISOLATED_DIR:/work" \
   -w /work \
   -e HOME="/work/test-home" \
   -e PWTEST_WORKERS="${PWTEST_WORKERS:-100%}" \
   -e CI="${CI:-true}" \
+  -e PW_REPORTER="${PW_REPORTER:-./scripts/screendiff-reporter.js}" \
+  -e PW_VERBOSE="${PW_VERBOSE:-}" \
   mcr.microsoft.com/playwright:v1.61.1-jammy \
   /bin/bash -c "$DOCKER_CMD"
 TEST_EXIT_CODE=$?

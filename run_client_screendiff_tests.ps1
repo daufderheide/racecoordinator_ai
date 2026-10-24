@@ -134,12 +134,15 @@ $DockerCmd = "node -e `"const fs=require('fs'),crypto=require('crypto');const ha
 
 $DockerArgs = @(
     "run", "--rm",
+    "--init",
     "--ipc=host",
     "-v", "$IsolatedDir`:/work",
     "-w", "/work",
     "-e", "HOME=/work/test-home",
     "-e", "PWTEST_WORKERS=$WorkerCount",
     "-e", "CI=$(if ($env:CI) { $env:CI } else { 'true' })",
+    "-e", "PW_REPORTER=$(if ($env:PW_REPORTER) { $env:PW_REPORTER } else { './scripts/screendiff-reporter.js' })",
+    "-e", "PW_VERBOSE=$(if ($env:PW_VERBOSE) { $env:PW_VERBOSE } else { '' })",
     "mcr.microsoft.com/playwright:v1.61.1-jammy",
     "/bin/bash", "-c", $DockerCmd
 )

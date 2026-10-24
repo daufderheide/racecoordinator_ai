@@ -4,13 +4,6 @@ import { TestSetupHelper } from "@app/testing/test-setup_helper";
 
 test.describe("Image Set Editor Visuals", () => {
   test.beforeEach(async ({ page }) => {
-    page.on("console", (msg) =>
-      console.log(`BROWSER [${msg.type()}]: ${msg.text()}`),
-    );
-    page.on("pageerror", (err) =>
-      console.error(`BROWSER ERROR: ${err.message}`),
-    );
-
     await TestSetupHelper.setupStandardMocks(page);
     await TestSetupHelper.setupAssetMocks(page);
     await TestSetupHelper.disableAnimations(page);

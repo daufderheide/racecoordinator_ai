@@ -95,11 +95,6 @@ test.describe("Drift Lap Indicator Visuals", () => {
       },
     });
 
-    // Capture browser logs
-    page.on("console", (msg) => {
-      console.log(`BROWSER [${msg.type().toUpperCase()}]: ${msg.text()}`);
-    });
-
     await TestSetupHelper.mockRaceData(page, raceData);
 
     // Ensure data is applied and UI settles
