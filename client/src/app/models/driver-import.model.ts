@@ -22,6 +22,9 @@ export interface DriverImportRow {
   message?: string;
   selectedResolution: ConflictResolution;
   existingDriverId?: string;
+  labels?: string[];
+  labelIds?: string[];
+  hasLabelColumns?: boolean;
 }
 
 export interface ExistingDriverSummary {

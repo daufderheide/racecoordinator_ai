@@ -118,6 +118,13 @@ Al hacer clic en **Exportar Pilotos** en la barra de herramientas, puede elegir 
 - **Excel (`.xlsx`)**: Formato de libro de Microsoft Excel con encabezados con estilo y filas de datos formateadas.
 - **JSON (`.json`)**: Matriz JSON formateada con objetos completos de perfil de piloto y configuración de audio.
 
+### Ordenación lógica y exportación de etiquetas
+
+- **Ordenación lógica**: En todos los formatos de exportación (CSV, Excel y JSON), los pilotos se ordenan de forma lógica por nombre para que los números sigan un orden natural (por ejemplo, `Piloto 9` precede a `Piloto 10`).
+- **Columnas dedicadas para etiquetas**: Cada etiqueta de piloto disponible en el sistema se exporta en su propia columna (`Label 1`, `Label 2`, `Label 3`, etc.), ordenada lógicamente por nombre. Si un piloto tiene asignada la etiqueta, la celda contendrá su nombre; de lo contrario, permanecerá vacía.
+- **Etiquetas en JSON**: En exportaciones JSON, cada piloto incluye un arreglo `labels` con los nombres de las etiquetas asignadas, así como propiedades individuales `label1`, `label2`, etc.
+- **Creación automática de etiquetas al importar**: Al importar pilotos desde cualquier formato, las columnas `Label 1..N`, `labels` (lista separada por comas) o las que coincidan con nombres de etiquetas existentes se reconocen automáticamente. Las etiquetas que no existan en la base de datos se crearán y asignarán de forma automática al confirmar la importación, asignándoles colores aleatorios para distinguirlas de las etiquetas existentes y de otras etiquetas nuevas importadas.
+
 ### Empaquetado de Audio y Archivos Multimedia
 
 - Todos los archivos de audio y avatares personalizados referenciados por los pilotos exportados se recopilan automáticamente y se empaquetan en el archivo ZIP junto con el archivo de datos (`drivers.csv`, `drivers.xlsx` o `drivers.json`).

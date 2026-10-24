@@ -10,11 +10,13 @@ import com.antigravity.importer.model.DriverImportRow;
 import com.antigravity.importer.model.ExistingDriverSummary;
 import com.antigravity.models.AudioConfig;
 import com.antigravity.models.Driver;
+import com.antigravity.models.DriverLabel;
 import com.antigravity.proto.AssetMessage;
 import com.antigravity.repository.SqliteRepository;
 import com.antigravity.service.AssetDefaultsInitializer;
 import com.antigravity.service.AssetDefaultsInitializer.DefaultAsset;
 import com.antigravity.service.AssetService;
+import com.antigravity.util.LogicalSortComparator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -23,12 +25,17 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
+import java.util.UUID;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -57,17 +64,79 @@ public class DriverImporter {
     "driftLap"
   };
 
+  public static final List<String> PRESET_LABEL_COLORS =
+      Collections.unmodifiableList(
+          Arrays.asList(
+              "#ef4444", // Red
+              "#f97316", // Orange
+              "#f59e0b", // Amber
+              "#10b981", // Emerald
+              "#06b6d4", // Cyan
+              "#3b82f6", // Blue
+              "#6366f1", // Indigo
+              "#8b5cf6", // Purple
+              "#ec4899", // Pink
+              "#64748b", // Slate
+              "#84cc16", // Lime
+              "#14b8a6", // Teal
+              "#f43f5e", // Rose
+              "#d946ef", // Fuchsia
+              "#a855f7", // Violet
+              "#0ea5e9", // Sky
+              "#22c55e", // Green
+              "#eab308", // Yellow
+              "#e11d48", // Crimson
+              "#c026d3", // Magenta
+              "#7c3aed", // Deep Purple
+              "#2563eb", // Royal Blue
+              "#059669", // Dark Emerald
+              "#475569" // Dark Slate
+              ));
+
   private final DatabaseContext databaseContext;
   private final SqliteRepository<Driver> driverRepository;
   private final AssetService assetService;
+  private final SqliteRepository<DriverLabel> driverLabelRepository;
+  private final Random random;
+  private final Set<String> sessionLabelColors = new HashSet<>();
+
+  public DriverImporter(
+      DatabaseContext databaseContext,
+      SqliteRepository<Driver> driverRepository,
+      AssetService assetService,
+      SqliteRepository<DriverLabel> driverLabelRepository) {
+    this(databaseContext, driverRepository, assetService, driverLabelRepository, new Random());
+  }
+
+  public DriverImporter(
+      DatabaseContext databaseContext,
+      SqliteRepository<Driver> driverRepository,
+      AssetService assetService,
+      SqliteRepository<DriverLabel> driverLabelRepository,
+      Random random) {
+    this.databaseContext = databaseContext;
+    this.driverRepository = driverRepository;
+    this.assetService = assetService;
+    this.driverLabelRepository =
+        driverLabelRepository != null
+            ? driverLabelRepository
+            : (databaseContext != null
+                ? new SqliteRepository<>(databaseContext, "driver_labels", DriverLabel.class)
+                : null);
+    this.random = random != null ? random : new Random();
+  }
 
   public DriverImporter(
       DatabaseContext databaseContext,
       SqliteRepository<Driver> driverRepository,
       AssetService assetService) {
-    this.databaseContext = databaseContext;
-    this.driverRepository = driverRepository;
-    this.assetService = assetService;
+    this(
+        databaseContext,
+        driverRepository,
+        assetService,
+        databaseContext != null
+            ? new SqliteRepository<>(databaseContext, "driver_labels", DriverLabel.class)
+            : null);
   }
 
   public DriverImportPreview parseAndValidate(
@@ -249,7 +318,144 @@ public class DriverImporter {
       row.setAvatarUrl(resolveAvatarUrl(avatar, assetLookup));
     }
 
+    boolean hasLabelCol = hasAnyLabelColumn(raw);
+    row.setHasLabelColumns(hasLabelCol);
+    List<String> extractedLabels = extractLabelsFromRow(raw);
+    row.setLabels(extractedLabels);
+
+    if (row.getLabels() != null && !row.getLabels().isEmpty() && driverLabelRepository != null) {
+      List<DriverLabel> existingDbLabels = driverLabelRepository.findAll();
+      if (existingDbLabels != null) {
+        List<String> ids = new ArrayList<>();
+        for (String lblName : row.getLabels()) {
+          for (DriverLabel dbLbl : existingDbLabels) {
+            if (dbLbl != null
+                && dbLbl.getName() != null
+                && dbLbl.getName().equalsIgnoreCase(lblName)) {
+              if (dbLbl.getEntityId() != null && !ids.contains(dbLbl.getEntityId())) {
+                ids.add(dbLbl.getEntityId());
+              }
+              break;
+            }
+          }
+        }
+        row.setLabelIds(ids);
+      }
+    }
+
     return row;
+  }
+
+  private boolean hasAnyLabelColumn(Map<String, String> raw) {
+    if (raw == null || raw.isEmpty()) return false;
+    for (String key : raw.keySet()) {
+      String clean = key.trim().toLowerCase(Locale.ROOT).replaceAll("[\\s_-]+", "");
+      if ("labels".equals(clean) || "driverlabels".equals(clean) || "driverlabel".equals(clean)) {
+        return true;
+      }
+      if (clean.matches("^label\\d+$")) {
+        return true;
+      }
+    }
+    if (driverLabelRepository != null) {
+      List<DriverLabel> dbLabels = driverLabelRepository.findAll();
+      if (dbLabels != null) {
+        for (DriverLabel lbl : dbLabels) {
+          if (lbl != null && lbl.getName() != null && !lbl.getName().trim().isEmpty()) {
+            for (String key : raw.keySet()) {
+              if (key.equalsIgnoreCase(lbl.getName().trim())) {
+                return true;
+              }
+            }
+          }
+        }
+      }
+    }
+    return false;
+  }
+
+  private List<String> extractLabelsFromRow(Map<String, String> raw) {
+    List<String> extracted = new ArrayList<>();
+    if (raw == null || raw.isEmpty()) {
+      return extracted;
+    }
+
+    // 1. Check for combined "labels" field (comma/semicolon/newline separated)
+    String combined = raw.get("labels");
+    if (combined != null && !combined.trim().isEmpty()) {
+      String[] parts = combined.split("[,;\\r\\n]+");
+      for (String part : parts) {
+        String trimmed = part.trim();
+        if (!trimmed.isEmpty() && !containsCaseInsensitiveList(extracted, trimmed)) {
+          extracted.add(trimmed);
+        }
+      }
+    }
+
+    // 2. Check for numbered label columns: label1, label2, etc. (sorted logically)
+    List<String> labelKeys = new ArrayList<>();
+    for (String key : raw.keySet()) {
+      String cleanKey = key.trim().toLowerCase(Locale.ROOT).replaceAll("[\\s_-]+", "");
+      if (cleanKey.matches("^label\\d+$")) {
+        labelKeys.add(key);
+      }
+    }
+    labelKeys.sort(
+        (k1, k2) -> {
+          String c1 = k1.trim().toLowerCase(Locale.ROOT).replaceAll("[\\s_-]+", "");
+          String c2 = k2.trim().toLowerCase(Locale.ROOT).replaceAll("[\\s_-]+", "");
+          return LogicalSortComparator.INSTANCE.compare(c1, c2);
+        });
+
+    for (String key : labelKeys) {
+      String val = raw.get(key);
+      if (val != null) {
+        String trimmed = val.trim();
+        if (!trimmed.isEmpty() && !containsCaseInsensitiveList(extracted, trimmed)) {
+          extracted.add(trimmed);
+        }
+      }
+    }
+
+    // 3. Check if any key matches a known DriverLabel name in the database
+    if (driverLabelRepository != null) {
+      List<DriverLabel> dbLabels = driverLabelRepository.findAll();
+      if (dbLabels != null) {
+        for (DriverLabel lbl : dbLabels) {
+          if (lbl != null && lbl.getName() != null && !lbl.getName().trim().isEmpty()) {
+            String lblName = lbl.getName().trim();
+            for (Map.Entry<String, String> entry : raw.entrySet()) {
+              if (entry.getKey().equalsIgnoreCase(lblName)) {
+                String val =
+                    entry.getValue() != null
+                        ? entry.getValue().trim().toLowerCase(Locale.ROOT)
+                        : "";
+                if ("true".equals(val)
+                    || "yes".equals(val)
+                    || "1".equals(val)
+                    || "x".equals(val)
+                    || "check".equals(val)
+                    || val.equalsIgnoreCase(lblName)) {
+                  if (!containsCaseInsensitiveList(extracted, lblName)) {
+                    extracted.add(lblName);
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    return extracted;
+  }
+
+  private boolean containsCaseInsensitiveList(List<String> list, String value) {
+    if (list == null || value == null) return false;
+    for (String item : list) {
+      if (value.equalsIgnoreCase(item)) return true;
+    }
+    return false;
   }
 
   private void validateCollisions(
@@ -384,7 +590,7 @@ public class DriverImporter {
       result.setSkippedCount(result.getSkippedCount() + 1);
       return;
     }
-    Driver updated = buildDriverFromRow(existing.getEntityId(), row);
+    Driver updated = buildDriverFromRow(existing.getEntityId(), row, existing);
     driverRepository.replace(existing.getEntityId(), updated);
     result.getUpdatedDriverIds().add(existing.getEntityId());
     result.setUpdatedCount(result.getUpdatedCount() + 1);
@@ -411,7 +617,7 @@ public class DriverImporter {
       DriverImportResult result) {
 
     String nextId = getNextSequence();
-    Driver driver = buildDriverFromRow(nextId, row);
+    Driver driver = buildDriverFromRow(nextId, row, null);
     driverRepository.insert(driver);
 
     existingNames.add(driver.getName());
@@ -420,14 +626,27 @@ public class DriverImporter {
     result.setImportedCount(result.getImportedCount() + 1);
   }
 
-  private Driver buildDriverFromRow(String entityId, DriverImportRow row) {
+  private Driver buildDriverFromRow(String entityId, DriverImportRow row, Driver existing) {
     Map<String, AudioConfig> audio =
         row.getAudioSlots() != null ? row.getAudioSlots() : new HashMap<>();
+
+    List<String> labelIdsToUse;
+    if (row.isHasLabelColumns() || !row.getLabels().isEmpty()) {
+      labelIdsToUse = resolveOrCreateLabelIds(row.getLabels(), row.getLabelIds());
+    } else if (existing != null && existing.getLabelIds() != null) {
+      labelIdsToUse = new ArrayList<>(existing.getLabelIds());
+    } else if (!row.getLabelIds().isEmpty()) {
+      labelIdsToUse = new ArrayList<>(row.getLabelIds());
+    } else {
+      labelIdsToUse = new ArrayList<>();
+    }
+
     return new Driver.Builder()
         .withEntityId(entityId)
         .withName(row.getResolvedName())
         .withNickname(row.getResolvedNickname())
         .withAvatarUrl(resolveAvatarUrl(row.getAvatarUrl(), null))
+        .withLabelIds(labelIdsToUse)
         .withLapAudio(audio.get("lap"))
         .withBestLapAudio(audio.get("bestLap"))
         .withPenaltyAudio(audio.get("penalty"))
@@ -442,6 +661,98 @@ public class DriverImporter {
         .withFuelAudio(audio.get("fuel"))
         .withDriftLapAudio(audio.get("driftLap"))
         .build();
+  }
+
+  private List<String> resolveOrCreateLabelIds(
+      List<String> labelNames, List<String> explicitLabelIds) {
+    Set<String> resultIds = new LinkedHashSet<>();
+    if (explicitLabelIds != null) {
+      for (String id : explicitLabelIds) {
+        if (id != null && !id.trim().isEmpty()) {
+          resultIds.add(id.trim());
+        }
+      }
+    }
+    if (labelNames != null && driverLabelRepository != null) {
+      List<DriverLabel> existingLabels = driverLabelRepository.findAll();
+      if (existingLabels == null) {
+        existingLabels = new ArrayList<>();
+      }
+      Set<String> usedColors = collectUsedLabelColors(existingLabels);
+
+      for (String name : labelNames) {
+        if (name == null || name.trim().isEmpty()) {
+          continue;
+        }
+        String trimmedName = name.trim();
+        DriverLabel matched = null;
+        for (DriverLabel dbLbl : existingLabels) {
+          if (dbLbl != null
+              && dbLbl.getName() != null
+              && dbLbl.getName().equalsIgnoreCase(trimmedName)) {
+            matched = dbLbl;
+            break;
+          }
+        }
+        if (matched != null) {
+          resultIds.add(matched.getEntityId());
+        } else {
+          String newId = UUID.randomUUID().toString();
+          String chosenColor = generateUniqueLabelColor(usedColors);
+          usedColors.add(chosenColor.toLowerCase(Locale.ROOT));
+          sessionLabelColors.add(chosenColor.toLowerCase(Locale.ROOT));
+
+          DriverLabel created =
+              new DriverLabel.Builder()
+                  .withEntityId(newId)
+                  .withName(trimmedName)
+                  .withColor(chosenColor)
+                  .build();
+          driverLabelRepository.insert(created);
+          existingLabels.add(created);
+          resultIds.add(newId);
+        }
+      }
+    }
+    return new ArrayList<>(resultIds);
+  }
+
+  private Set<String> collectUsedLabelColors(List<DriverLabel> existingLabels) {
+    Set<String> used = new HashSet<>(sessionLabelColors);
+    if (existingLabels != null) {
+      for (DriverLabel lbl : existingLabels) {
+        if (lbl != null && lbl.getColor() != null && !lbl.getColor().trim().isEmpty()) {
+          used.add(lbl.getColor().trim().toLowerCase(Locale.ROOT));
+        }
+      }
+    }
+    return used;
+  }
+
+  String generateUniqueLabelColor(Set<String> usedColors) {
+    List<String> availablePresets = new ArrayList<>();
+    for (String color : PRESET_LABEL_COLORS) {
+      if (!usedColors.contains(color.toLowerCase(Locale.ROOT))) {
+        availablePresets.add(color);
+      }
+    }
+
+    if (!availablePresets.isEmpty()) {
+      int idx = random.nextInt(availablePresets.size());
+      return availablePresets.get(idx);
+    }
+
+    for (int attempt = 0; attempt < 100; attempt++) {
+      int r = random.nextInt(256);
+      int g = random.nextInt(256);
+      int b = random.nextInt(256);
+      String candidate = String.format(Locale.ROOT, "#%02x%02x%02x", r, g, b);
+      if (!usedColors.contains(candidate.toLowerCase(Locale.ROOT))) {
+        return candidate;
+      }
+    }
+
+    return PRESET_LABEL_COLORS.get(random.nextInt(PRESET_LABEL_COLORS.size()));
   }
 
   private Map<String, String> buildAssetLookupMap(Map<String, String> uploadedAssets) {
@@ -630,9 +941,9 @@ public class DriverImporter {
 
   public String generateCsvTemplate() {
     return "# default-audio: system\n"
-        + "Name,Nickname,Avatar,Lap Sound,Best Lap Sound,Penalty Sound\n"
-        + "Mario Rossi,Mario,,default_beep,default_driveby,default_penalty\n"
-        + "Luigi Verdi,Luigi,,none,tts:Great lap by {driver.name}!,none\n";
+        + "Name,Nickname,Avatar,Label 1,Label 2,Lap Sound,Best Lap Sound,Penalty Sound\n"
+        + "Mario Rossi,Mario,,Club 1,Novice,default_beep,default_driveby,default_penalty\n"
+        + "Luigi Verdi,Luigi,,Club 2,,none,tts:Great lap by {driver.name}!,none\n";
   }
 
   public byte[] generateXlsxTemplate() throws IOException {
@@ -644,6 +955,8 @@ public class DriverImporter {
         "Name",
         "Nickname",
         "Avatar",
+        "Label 1",
+        "Label 2",
         "Default Audio",
         "Lap Sound",
         "Best Lap Sound",
@@ -657,18 +970,22 @@ public class DriverImporter {
       row1.createCell(0).setCellValue("Mario Rossi");
       row1.createCell(1).setCellValue("Mario");
       row1.createCell(2).setCellValue("");
-      row1.createCell(3).setCellValue("system");
-      row1.createCell(4).setCellValue("default_beep");
-      row1.createCell(5).setCellValue("default_driveby");
-      row1.createCell(6).setCellValue("default_penalty");
+      row1.createCell(3).setCellValue("Club 1");
+      row1.createCell(4).setCellValue("Novice");
+      row1.createCell(5).setCellValue("system");
+      row1.createCell(6).setCellValue("default_beep");
+      row1.createCell(7).setCellValue("default_driveby");
+      row1.createCell(8).setCellValue("default_penalty");
 
       Row row2 = sheet.createRow(2);
       row2.createCell(0).setCellValue("Luigi Verdi");
       row2.createCell(1).setCellValue("Luigi");
       row2.createCell(2).setCellValue("");
-      row2.createCell(3).setCellValue("none");
-      row2.createCell(4).setCellValue("default_beep");
-      row2.createCell(5).setCellValue("tts:Fast lap by {driver.name}!");
+      row2.createCell(3).setCellValue("Club 2");
+      row2.createCell(4).setCellValue("");
+      row2.createCell(5).setCellValue("none");
+      row2.createCell(6).setCellValue("default_beep");
+      row2.createCell(7).setCellValue("tts:Fast lap by {driver.name}!");
 
       wb.write(baos);
       return baos.toByteArray();
@@ -683,6 +1000,11 @@ public class DriverImporter {
     ObjectNode d1 = drivers.addObject();
     d1.put("name", "Mario Rossi");
     d1.put("nickname", "Mario");
+    ArrayNode d1Labels = d1.putArray("labels");
+    d1Labels.add("Club 1");
+    d1Labels.add("Novice");
+    d1.put("label1", "Club 1");
+    d1.put("label2", "Novice");
     ObjectNode lapAudio = d1.putObject("lapAudio");
     lapAudio.put("type", "preset");
     lapAudio.put("url", "default_beep");
@@ -690,6 +1012,9 @@ public class DriverImporter {
     ObjectNode d2 = drivers.addObject();
     d2.put("name", "Luigi Verdi");
     d2.put("nickname", "Luigi");
+    ArrayNode d2Labels = d2.putArray("labels");
+    d2Labels.add("Club 2");
+    d2.put("label1", "Club 2");
     ObjectNode bestLapAudio = d2.putObject("bestLapAudio");
     bestLapAudio.put("type", "tts");
     bestLapAudio.put("text", "Fast lap by {driver.name}!");

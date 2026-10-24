@@ -3,10 +3,12 @@ package com.antigravity.importer;
 import com.antigravity.context.DatabaseContext;
 import com.antigravity.models.AudioConfig;
 import com.antigravity.models.Driver;
+import com.antigravity.models.DriverLabel;
 import com.antigravity.proto.AssetMessage;
 import com.antigravity.repository.SqliteRepository;
 import com.antigravity.service.AssetDefaultsInitializer;
 import com.antigravity.service.AssetService;
+import com.antigravity.util.LogicalSortComparator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -16,7 +18,6 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -60,6 +61,7 @@ public class DriverExporter {
   private final DatabaseContext databaseContext;
   private final SqliteRepository<Driver> driverRepository;
   private final AssetService assetService;
+  private final SqliteRepository<DriverLabel> driverLabelRepository;
 
   public static class ExportedMediaFile {
     private final String zipEntryName;
@@ -88,14 +90,35 @@ public class DriverExporter {
   public DriverExporter(
       DatabaseContext databaseContext,
       SqliteRepository<Driver> driverRepository,
-      AssetService assetService) {
+      AssetService assetService,
+      SqliteRepository<DriverLabel> driverLabelRepository) {
     this.databaseContext = databaseContext;
     this.driverRepository = driverRepository;
     this.assetService = assetService;
+    this.driverLabelRepository =
+        driverLabelRepository != null
+            ? driverLabelRepository
+            : (databaseContext != null
+                ? new SqliteRepository<>(databaseContext, "driver_labels", DriverLabel.class)
+                : null);
+  }
+
+  public DriverExporter(
+      DatabaseContext databaseContext,
+      SqliteRepository<Driver> driverRepository,
+      AssetService assetService) {
+    this(
+        databaseContext,
+        driverRepository,
+        assetService,
+        databaseContext != null
+            ? new SqliteRepository<>(databaseContext, "driver_labels", DriverLabel.class)
+            : null);
   }
 
   public byte[] exportDriversZip(List<Driver> drivers, String format) throws IOException {
     List<Driver> targetDrivers = prepareDrivers(drivers);
+    List<DriverLabel> possibleLabels = resolvePossibleLabels(targetDrivers);
     String normalizedFormat = normalizeFormat(format);
 
     Map<String, ExportedMediaFile> hashToFileMap = new LinkedHashMap<>();
@@ -114,16 +137,16 @@ public class DriverExporter {
       case "xlsx":
       case "xls":
         dataFileName = "drivers.xlsx";
-        dataFileBytes = generateExcelBytes(targetDrivers, urlToZipEntryMap);
+        dataFileBytes = generateExcelBytes(targetDrivers, urlToZipEntryMap, possibleLabels);
         break;
       case "json":
         dataFileName = "drivers.json";
-        dataFileBytes = generateJsonBytes(targetDrivers, urlToZipEntryMap);
+        dataFileBytes = generateJsonBytes(targetDrivers, urlToZipEntryMap, possibleLabels);
         break;
       case "csv":
       default:
         dataFileName = "drivers.csv";
-        dataFileBytes = generateCsvBytes(targetDrivers, urlToZipEntryMap);
+        dataFileBytes = generateCsvBytes(targetDrivers, urlToZipEntryMap, possibleLabels);
         break;
     }
 
@@ -147,9 +170,90 @@ public class DriverExporter {
     }
 
     result.sort(
-        Comparator.comparing(
-            d -> d.getName() != null ? d.getName() : "", String.CASE_INSENSITIVE_ORDER));
+        (d1, d2) -> {
+          String n1 = d1 != null && d1.getName() != null ? d1.getName() : "";
+          String n2 = d2 != null && d2.getName() != null ? d2.getName() : "";
+          int cmp = LogicalSortComparator.INSTANCE.compare(n1, n2);
+          if (cmp != 0) return cmp;
+          String nick1 = d1 != null && d1.getNickname() != null ? d1.getNickname() : "";
+          String nick2 = d2 != null && d2.getNickname() != null ? d2.getNickname() : "";
+          cmp = LogicalSortComparator.INSTANCE.compare(nick1, nick2);
+          if (cmp != 0) return cmp;
+          String id1 = d1 != null && d1.getEntityId() != null ? d1.getEntityId() : "";
+          String id2 = d2 != null && d2.getEntityId() != null ? d2.getEntityId() : "";
+          return id1.compareTo(id2);
+        });
     return result;
+  }
+
+  private List<DriverLabel> resolvePossibleLabels(List<Driver> drivers) {
+    Map<String, DriverLabel> labelMap = new LinkedHashMap<>();
+
+    if (driverLabelRepository != null) {
+      List<DriverLabel> fromDb = driverLabelRepository.findAll();
+      if (fromDb != null) {
+        for (DriverLabel lbl : fromDb) {
+          if (lbl != null && lbl.getName() != null && !lbl.getName().trim().isEmpty()) {
+            labelMap.put(lbl.getEntityId() != null ? lbl.getEntityId() : lbl.getName().trim(), lbl);
+          }
+        }
+      }
+    }
+
+    // Also check drivers in case any driver references a label not found in DB
+    if (drivers != null) {
+      for (Driver d : drivers) {
+        if (d != null && d.getLabelIds() != null) {
+          for (String lblId : d.getLabelIds()) {
+            if (lblId != null && !lblId.trim().isEmpty() && !labelMap.containsKey(lblId)) {
+              if (driverLabelRepository != null) {
+                DriverLabel found = driverLabelRepository.findByEntityId(lblId);
+                if (found != null) {
+                  labelMap.put(found.getEntityId(), found);
+                  continue;
+                }
+              }
+              labelMap.put(lblId, new DriverLabel(lblId, "#3b82f6", lblId, lblId));
+            }
+          }
+        }
+      }
+    }
+
+    List<DriverLabel> result = new ArrayList<>(labelMap.values());
+    result.sort(
+        (l1, l2) -> {
+          String n1 = l1 != null && l1.getName() != null ? l1.getName() : "";
+          String n2 = l2 != null && l2.getName() != null ? l2.getName() : "";
+          int cmp = LogicalSortComparator.INSTANCE.compare(n1, n2);
+          if (cmp != 0) return cmp;
+          String id1 = l1 != null && l1.getEntityId() != null ? l1.getEntityId() : "";
+          String id2 = l2 != null && l2.getEntityId() != null ? l2.getEntityId() : "";
+          return id1.compareTo(id2);
+        });
+    return result;
+  }
+
+  private boolean driverHasLabel(Driver driver, DriverLabel label) {
+    if (driver == null || label == null || driver.getLabelIds() == null) {
+      return false;
+    }
+    String labelId = label.getEntityId();
+    String id = label.getId();
+    String name = label.getName();
+    for (String assigned : driver.getLabelIds()) {
+      if (assigned == null) continue;
+      if (labelId != null && assigned.equalsIgnoreCase(labelId)) {
+        return true;
+      }
+      if (id != null && assigned.equalsIgnoreCase(id)) {
+        return true;
+      }
+      if (name != null && !name.isEmpty() && assigned.equalsIgnoreCase(name)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private String normalizeFormat(String format) {
@@ -361,10 +465,17 @@ public class DriverExporter {
     return name;
   }
 
-  private byte[] generateCsvBytes(List<Driver> drivers, Map<String, String> urlToZipEntryMap) {
+  private byte[] generateCsvBytes(
+      List<Driver> drivers,
+      Map<String, String> urlToZipEntryMap,
+      List<DriverLabel> possibleLabels) {
     StringBuilder sb = new StringBuilder();
     sb.append("# default-audio: system\n");
-    sb.append("Name,Nickname,Avatar,Lap,BestLap,Penalty,RaceBestLap,RaceLaneBestLap,")
+    sb.append("Name,Nickname,Avatar");
+    for (int i = 0; i < possibleLabels.size(); i++) {
+      sb.append(",Label ").append(i + 1);
+    }
+    sb.append(",Lap,BestLap,Penalty,RaceBestLap,RaceLaneBestLap,")
         .append(
             "HeatBestLap,NewRaceLeader,NewHeatLeader,OverallBestLap,OverallLaneBestLap,PitIn,Fuel\n");
 
@@ -374,6 +485,9 @@ public class DriverExporter {
       String avatar = escapeCsv(resolveAvatarExportValue(d.getAvatarUrl(), urlToZipEntryMap));
 
       sb.append(name).append(",").append(nick).append(",").append(avatar);
+      for (DriverLabel lbl : possibleLabels) {
+        sb.append(",").append(driverHasLabel(d, lbl) ? escapeCsv(lbl.getName()) : "");
+      }
       for (String slotKey : AUDIO_SLOT_KEYS) {
         AudioConfig config = getAudioConfigForSlot(d, slotKey);
         String val = formatAudioForExport(config, urlToZipEntryMap);
@@ -385,7 +499,8 @@ public class DriverExporter {
     return sb.toString().getBytes(StandardCharsets.UTF_8);
   }
 
-  private byte[] generateExcelBytes(List<Driver> drivers, Map<String, String> urlToZipEntryMap)
+  private byte[] generateExcelBytes(
+      List<Driver> drivers, Map<String, String> urlToZipEntryMap, List<DriverLabel> possibleLabels)
       throws IOException {
     try (Workbook wb = new XSSFWorkbook();
         ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
@@ -397,27 +512,29 @@ public class DriverExporter {
       headerStyle.setFont(font);
 
       Row headerRow = sheet.createRow(0);
-      String[] headers = {
-        "Name",
-        "Nickname",
-        "Avatar",
-        "Lap",
-        "BestLap",
-        "Penalty",
-        "RaceBestLap",
-        "RaceLaneBestLap",
-        "HeatBestLap",
-        "NewRaceLeader",
-        "NewHeatLeader",
-        "OverallBestLap",
-        "OverallLaneBestLap",
-        "PitIn",
-        "Fuel"
-      };
+      List<String> headerList = new ArrayList<>();
+      headerList.add("Name");
+      headerList.add("Nickname");
+      headerList.add("Avatar");
+      for (int i = 0; i < possibleLabels.size(); i++) {
+        headerList.add("Label " + (i + 1));
+      }
+      headerList.add("Lap");
+      headerList.add("BestLap");
+      headerList.add("Penalty");
+      headerList.add("RaceBestLap");
+      headerList.add("RaceLaneBestLap");
+      headerList.add("HeatBestLap");
+      headerList.add("NewRaceLeader");
+      headerList.add("NewHeatLeader");
+      headerList.add("OverallBestLap");
+      headerList.add("OverallLaneBestLap");
+      headerList.add("PitIn");
+      headerList.add("Fuel");
 
-      for (int i = 0; i < headers.length; i++) {
+      for (int i = 0; i < headerList.size(); i++) {
         Cell c = headerRow.createCell(i);
-        c.setCellValue(headers[i]);
+        c.setCellValue(headerList.get(i));
         c.setCellStyle(headerStyle);
       }
 
@@ -430,6 +547,9 @@ public class DriverExporter {
             .setCellValue(resolveAvatarExportValue(d.getAvatarUrl(), urlToZipEntryMap));
 
         int colIdx = 3;
+        for (DriverLabel lbl : possibleLabels) {
+          row.createCell(colIdx++).setCellValue(driverHasLabel(d, lbl) ? lbl.getName() : "");
+        }
         for (String slotKey : AUDIO_SLOT_KEYS) {
           AudioConfig config = getAudioConfigForSlot(d, slotKey);
           String val = formatAudioForExport(config, urlToZipEntryMap);
@@ -437,7 +557,7 @@ public class DriverExporter {
         }
       }
 
-      for (int i = 0; i < headers.length; i++) {
+      for (int i = 0; i < headerList.size(); i++) {
         sheet.autoSizeColumn(i);
       }
 
@@ -446,7 +566,8 @@ public class DriverExporter {
     }
   }
 
-  private byte[] generateJsonBytes(List<Driver> drivers, Map<String, String> urlToZipEntryMap)
+  private byte[] generateJsonBytes(
+      List<Driver> drivers, Map<String, String> urlToZipEntryMap, List<DriverLabel> possibleLabels)
       throws IOException {
     ObjectNode root = objectMapper.createObjectNode();
     root.put("defaultAudio", "system");
@@ -459,6 +580,15 @@ public class DriverExporter {
       String avatar = resolveAvatarExportValue(d.getAvatarUrl(), urlToZipEntryMap);
       if (!avatar.isEmpty()) {
         node.put("avatarUrl", avatar);
+      }
+
+      ArrayNode labelsArray = node.putArray("labels");
+      for (int i = 0; i < possibleLabels.size(); i++) {
+        DriverLabel lbl = possibleLabels.get(i);
+        if (driverHasLabel(d, lbl)) {
+          labelsArray.add(lbl.getName());
+          node.put("label" + (i + 1), lbl.getName());
+        }
       }
 
       for (String slotKey : AUDIO_SLOT_KEYS) {

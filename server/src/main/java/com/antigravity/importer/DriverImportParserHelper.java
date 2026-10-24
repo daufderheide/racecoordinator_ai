@@ -144,7 +144,14 @@ public final class DriverImportParserHelper {
       case "driftaudio":
       case "driftsound":
         return "driftLap";
+      case "labels":
+      case "driverlabels":
+      case "driverlabel":
+        return "labels";
       default:
+        if (clean.matches("^label\\d+$")) {
+          return clean;
+        }
         return header.trim();
     }
   }
@@ -320,6 +327,36 @@ public final class DriverImportParserHelper {
         if (item.has("nickname")) row.put("nickname", item.get("nickname").asText(""));
         if (item.has("avatarUrl")) row.put("avatar", item.get("avatarUrl").asText(""));
         if (item.has("defaultAudio")) row.put("default_audio", item.get("defaultAudio").asText(""));
+
+        // Labels
+        if (item.has("labels")) {
+          JsonNode labelsNode = item.get("labels");
+          if (labelsNode.isArray()) {
+            List<String> list = new ArrayList<>();
+            for (JsonNode l : labelsNode) {
+              if (l.isTextual() && !l.asText().trim().isEmpty()) {
+                list.add(l.asText().trim());
+              }
+            }
+            if (!list.isEmpty()) {
+              row.put("labels", String.join(",", list));
+            }
+          } else if (labelsNode.isTextual() && !labelsNode.asText().trim().isEmpty()) {
+            row.put("labels", labelsNode.asText().trim());
+          }
+        }
+
+        java.util.Iterator<String> fieldNames = item.fieldNames();
+        while (fieldNames.hasNext()) {
+          String fn = fieldNames.next();
+          String cleanFn = fn.trim().toLowerCase(Locale.ROOT).replaceAll("[\\s_-]+", "");
+          if (cleanFn.matches("^label\\d+$") && item.get(fn).isTextual()) {
+            String val = item.get(fn).asText().trim();
+            if (!val.isEmpty()) {
+              row.put(cleanFn, val);
+            }
+          }
+        }
 
         // Audio configs
         String[] slots = {

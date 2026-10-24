@@ -1,6 +1,7 @@
 package com.antigravity.importer;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -11,14 +12,24 @@ import com.antigravity.importer.model.DriverImportResult;
 import com.antigravity.importer.model.DriverImportRow;
 import com.antigravity.models.AudioConfig;
 import com.antigravity.models.Driver;
+import com.antigravity.models.DriverLabel;
 import com.antigravity.repository.SqliteRepository;
 import com.antigravity.service.AssetService;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Random;
+import java.util.Set;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -31,6 +42,7 @@ public class DriverImporterTest {
 
   private DatabaseContext databaseContext;
   private SqliteRepository<Driver> driverRepository;
+  private SqliteRepository<DriverLabel> driverLabelRepository;
   private AssetService assetService;
   private DriverImporter importer;
 
@@ -39,11 +51,14 @@ public class DriverImporterTest {
     String rootDir = tempFolder.newFolder("db_root").getAbsolutePath() + File.separator;
     databaseContext = new DatabaseContext("test_db", null, rootDir);
     driverRepository = new SqliteRepository<>(databaseContext, "drivers", Driver.class);
+    driverLabelRepository =
+        new SqliteRepository<>(databaseContext, "driver_labels", DriverLabel.class);
 
     File assetsDir = new File(new File(databaseContext.getDataRoot(), "test_db"), "assets");
     assetService = new AssetService(databaseContext, assetsDir.getAbsolutePath());
 
-    importer = new DriverImporter(databaseContext, driverRepository, assetService);
+    importer =
+        new DriverImporter(databaseContext, driverRepository, assetService, driverLabelRepository);
   }
 
   @After
@@ -442,5 +457,380 @@ public class DriverImporterTest {
     assertNotNull(imported.getDriftLapAudio());
     assertEquals("tts", imported.getDriftLapAudio().getType());
     assertEquals("Initial D drift", imported.getDriftLapAudio().getText());
+  }
+
+  @Test
+  public void testImportCsvWithNumberedLabelsAndAutoCreateLabels() throws Exception {
+    // Label 1 already exists in DB, Label 2 and Novice are new
+    DriverLabel existingLbl =
+        new DriverLabel.Builder()
+            .withEntityId("lbl_club1")
+            .withName("Club 1")
+            .withColor("#3b82f6")
+            .build();
+    driverLabelRepository.insert(existingLbl);
+
+    String csv =
+        "Name,Nickname,Label 1,Label 2\n"
+            + "Mario Rossi,Mario,Club 1,Novice\n"
+            + "Luigi Verdi,Luigi,Club 2,\n";
+
+    ByteArrayInputStream bais = new ByteArrayInputStream(csv.getBytes(StandardCharsets.UTF_8));
+    DriverImportPreview preview = importer.parseAndValidate(bais, "drivers.csv", null);
+
+    assertEquals(2, preview.getTotalRows());
+    assertEquals(2, preview.getValidCount());
+
+    DriverImportRow r1 = preview.getRows().get(0);
+    assertNotNull(r1.getLabels());
+    assertEquals(2, r1.getLabels().size());
+    assertTrue(r1.getLabels().contains("Club 1"));
+    assertTrue(r1.getLabels().contains("Novice"));
+    // Pre-resolved labelIds has lbl_club1 because it existed in DB
+    assertNotNull(r1.getLabelIds());
+    assertTrue(r1.getLabelIds().contains("lbl_club1"));
+
+    DriverImportRow r2 = preview.getRows().get(1);
+    assertNotNull(r2.getLabels());
+    assertEquals(1, r2.getLabels().size());
+    assertTrue(r2.getLabels().contains("Club 2"));
+
+    // Commit import
+    DriverImportCommitRequest req = new DriverImportCommitRequest(preview.getRows());
+    DriverImportResult result = importer.commitImport(req);
+    assertTrue(result.isSuccess());
+    assertEquals(2, result.getImportedCount());
+
+    // Verify all 3 labels now exist in DB
+    List<DriverLabel> allDbLabels = driverLabelRepository.findAll();
+    assertEquals(3, allDbLabels.size());
+    DriverLabel novLbl =
+        allDbLabels.stream()
+            .filter(l -> "Novice".equalsIgnoreCase(l.getName()))
+            .findFirst()
+            .orElse(null);
+    DriverLabel club2Lbl =
+        allDbLabels.stream()
+            .filter(l -> "Club 2".equalsIgnoreCase(l.getName()))
+            .findFirst()
+            .orElse(null);
+    assertNotNull(novLbl);
+    assertNotNull(club2Lbl);
+
+    // Verify drivers have correct label IDs
+    Driver mario = driverRepository.findByEntityId(result.getCreatedDriverIds().get(0));
+    assertNotNull(mario);
+    assertEquals(2, mario.getLabelIds().size());
+    assertTrue(mario.getLabelIds().contains("lbl_club1"));
+    assertTrue(mario.getLabelIds().contains(novLbl.getEntityId()));
+
+    Driver luigi = driverRepository.findByEntityId(result.getCreatedDriverIds().get(1));
+    assertNotNull(luigi);
+    assertEquals(1, luigi.getLabelIds().size());
+    assertTrue(luigi.getLabelIds().contains(club2Lbl.getEntityId()));
+  }
+
+  @Test
+  public void testImportExcelWithLabels() throws Exception {
+    byte[] xlsxBytes;
+    try (Workbook wb = new XSSFWorkbook();
+        ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+      Sheet sheet = wb.createSheet("Drivers");
+      Row header = sheet.createRow(0);
+      header.createCell(0).setCellValue("Name");
+      header.createCell(1).setCellValue("Nickname");
+      header.createCell(2).setCellValue("Label 1");
+      header.createCell(3).setCellValue("Label 2");
+
+      Row r1 = sheet.createRow(1);
+      r1.createCell(0).setCellValue("Charles Leclerc");
+      r1.createCell(1).setCellValue("Charles");
+      r1.createCell(2).setCellValue("Pro");
+      r1.createCell(3).setCellValue("Scuderia");
+
+      wb.write(baos);
+      xlsxBytes = baos.toByteArray();
+    }
+
+    ByteArrayInputStream bais = new ByteArrayInputStream(xlsxBytes);
+    DriverImportPreview preview = importer.parseAndValidate(bais, "drivers.xlsx", null);
+    assertEquals(1, preview.getTotalRows());
+    DriverImportRow row = preview.getRows().get(0);
+    assertNotNull(row.getLabels());
+    assertEquals(2, row.getLabels().size());
+    assertTrue(row.getLabels().contains("Pro"));
+    assertTrue(row.getLabels().contains("Scuderia"));
+
+    DriverImportResult result =
+        importer.commitImport(new DriverImportCommitRequest(preview.getRows()));
+    assertTrue(result.isSuccess());
+    Driver charles = driverRepository.findByEntityId(result.getCreatedDriverIds().get(0));
+    assertNotNull(charles);
+    assertEquals(2, charles.getLabelIds().size());
+  }
+
+  @Test
+  public void testImportJsonWithLabelsArrayAndNumberedLabels() throws Exception {
+    String json =
+        "{\n"
+            + "  \"defaultAudio\": \"system\",\n"
+            + "  \"drivers\": [\n"
+            + "    {\n"
+            + "      \"name\": \"Max Verstappen\",\n"
+            + "      \"nickname\": \"Max\",\n"
+            + "      \"labels\": [\"Champion\", \"RedBull\"]\n"
+            + "    },\n"
+            + "    {\n"
+            + "      \"name\": \"George Russell\",\n"
+            + "      \"nickname\": \"George\",\n"
+            + "      \"label1\": \"Mercedes\",\n"
+            + "      \"label2\": \"Pro\"\n"
+            + "    }\n"
+            + "  ]\n"
+            + "}";
+
+    ByteArrayInputStream bais = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
+    DriverImportPreview preview = importer.parseAndValidate(bais, "drivers.json", null);
+
+    assertEquals(2, preview.getTotalRows());
+    DriverImportRow r1 = preview.getRows().get(0);
+    assertNotNull(r1.getLabels());
+    assertTrue(r1.getLabels().contains("Champion"));
+    assertTrue(r1.getLabels().contains("RedBull"));
+
+    DriverImportRow r2 = preview.getRows().get(1);
+    assertNotNull(r2.getLabels());
+    assertTrue(r2.getLabels().contains("Mercedes"));
+    assertTrue(r2.getLabels().contains("Pro"));
+
+    DriverImportResult result =
+        importer.commitImport(new DriverImportCommitRequest(preview.getRows()));
+    assertTrue(result.isSuccess());
+    assertEquals(2, result.getImportedCount());
+  }
+
+  @Test
+  public void testImportOverwritePreservesLabelsWhenNoLabelColumnsProvided() throws Exception {
+    DriverLabel existingLbl =
+        new DriverLabel.Builder()
+            .withEntityId("lbl_keep")
+            .withName("KeepMe")
+            .withColor("#3b82f6")
+            .build();
+    driverLabelRepository.insert(existingLbl);
+
+    Driver existingDriver =
+        new Driver.Builder()
+            .withEntityId("d_existing")
+            .withName("Lando Norris")
+            .withNickname("Lando")
+            .withLabelIds(Arrays.asList("lbl_keep"))
+            .build();
+    driverRepository.insert(existingDriver);
+
+    // CSV without any label columns
+    String csv = "Name,Nickname\n" + "Lando Norris,LandoSuper\n";
+
+    ByteArrayInputStream bais = new ByteArrayInputStream(csv.getBytes(StandardCharsets.UTF_8));
+    DriverImportPreview preview = importer.parseAndValidate(bais, "drivers.csv", null);
+    assertEquals(1, preview.getConflictCount());
+
+    DriverImportRow row = preview.getRows().get(0);
+    row.setSelectedResolution("OVERWRITE");
+
+    DriverImportResult result =
+        importer.commitImport(new DriverImportCommitRequest(Arrays.asList(row)));
+    assertTrue(result.isSuccess());
+
+    Driver updated = driverRepository.findByEntityId("d_existing");
+    assertNotNull(updated);
+    assertEquals("LandoSuper", updated.getNickname());
+    // Labels must be preserved because file had no label columns
+    assertNotNull(updated.getLabelIds());
+    assertEquals(1, updated.getLabelIds().size());
+    assertEquals("lbl_keep", updated.getLabelIds().get(0));
+  }
+
+  @Test
+  public void testImportOverwriteReplacesLabelsWhenLabelColumnsProvided() throws Exception {
+    DriverLabel oldLbl =
+        new DriverLabel.Builder()
+            .withEntityId("lbl_old")
+            .withName("OldClub")
+            .withColor("#3b82f6")
+            .build();
+    driverLabelRepository.insert(oldLbl);
+
+    Driver existingDriver =
+        new Driver.Builder()
+            .withEntityId("d_existing2")
+            .withName("Oscar Piastri")
+            .withNickname("Oscar")
+            .withLabelIds(Arrays.asList("lbl_old"))
+            .build();
+    driverRepository.insert(existingDriver);
+
+    // CSV WITH a label column specifying a new label
+    String csv = "Name,Nickname,Label 1\n" + "Oscar Piastri,OscarSuper,NewClub\n";
+
+    ByteArrayInputStream bais = new ByteArrayInputStream(csv.getBytes(StandardCharsets.UTF_8));
+    DriverImportPreview preview = importer.parseAndValidate(bais, "drivers.csv", null);
+    assertEquals(1, preview.getConflictCount());
+
+    DriverImportRow row = preview.getRows().get(0);
+    row.setSelectedResolution("OVERWRITE");
+
+    DriverImportResult result =
+        importer.commitImport(new DriverImportCommitRequest(Arrays.asList(row)));
+    assertTrue(result.isSuccess());
+
+    Driver updated = driverRepository.findByEntityId("d_existing2");
+    assertNotNull(updated);
+    assertEquals("OscarSuper", updated.getNickname());
+    // Labels must be replaced with NewClub
+    assertNotNull(updated.getLabelIds());
+    assertEquals(1, updated.getLabelIds().size());
+    DriverLabel newLbl =
+        driverLabelRepository.findAll().stream()
+            .filter(l -> "NewClub".equalsIgnoreCase(l.getName()))
+            .findFirst()
+            .orElse(null);
+    assertNotNull(newLbl);
+    assertEquals(newLbl.getEntityId(), updated.getLabelIds().get(0));
+  }
+
+  @Test
+  public void testTemplatesIncludeLabels() throws Exception {
+    // 1. CSV template
+    String csv = importer.generateCsvTemplate();
+    assertTrue("CSV template should include Label 1", csv.contains("Label 1"));
+    assertTrue("CSV template should include Label 2", csv.contains("Label 2"));
+
+    // 2. XLSX template
+    byte[] xlsx = importer.generateXlsxTemplate();
+    assertNotNull(xlsx);
+    try (ByteArrayInputStream bais = new ByteArrayInputStream(xlsx)) {
+      DriverImportParserHelper.ParsedDataFile parsed = DriverImportParserHelper.parseExcel(bais);
+      assertNotNull(parsed.getRows());
+      assertTrue(parsed.getRows().size() >= 2);
+      assertEquals("Club 1", parsed.getRows().get(0).get("label1"));
+      assertEquals("Novice", parsed.getRows().get(0).get("label2"));
+    }
+
+    // 3. JSON template
+    String json = importer.generateJsonTemplate();
+    assertTrue(
+        "JSON template should include labels", json.contains("labels") || json.contains("label1"));
+    try (ByteArrayInputStream bais =
+        new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8))) {
+      DriverImportParserHelper.ParsedDataFile parsed = DriverImportParserHelper.parseJson(bais);
+      assertNotNull(parsed.getRows());
+      assertTrue(parsed.getRows().size() >= 2);
+      assertEquals("Club 1", parsed.getRows().get(0).get("label1"));
+      assertEquals("Novice", parsed.getRows().get(0).get("label2"));
+    }
+  }
+
+  @Test
+  public void testGenerateUniqueLabelColorPicksAvailablePreset() {
+    String color = importer.generateUniqueLabelColor(new HashSet<>());
+    assertNotNull(color);
+    assertTrue(color.matches("^#[0-9a-fA-F]{6}$"));
+    assertTrue(DriverImporter.PRESET_LABEL_COLORS.contains(color));
+  }
+
+  @Test
+  public void testGenerateUniqueLabelColorAvoidsUsedColors() {
+    Set<String> used = new HashSet<>();
+    // Mark all presets except the very last one as used
+    for (int i = 0; i < DriverImporter.PRESET_LABEL_COLORS.size() - 1; i++) {
+      used.add(DriverImporter.PRESET_LABEL_COLORS.get(i).toLowerCase(java.util.Locale.ROOT));
+    }
+    String expected =
+        DriverImporter.PRESET_LABEL_COLORS.get(DriverImporter.PRESET_LABEL_COLORS.size() - 1);
+    String chosen = importer.generateUniqueLabelColor(used);
+    assertEquals(expected, chosen);
+  }
+
+  @Test
+  public void testGenerateUniqueLabelColorFallsBackToRandomHexWhenPresetsExhausted() {
+    Set<String> used = new HashSet<>();
+    for (String preset : DriverImporter.PRESET_LABEL_COLORS) {
+      used.add(preset.toLowerCase(java.util.Locale.ROOT));
+    }
+    String chosen = importer.generateUniqueLabelColor(used);
+    assertNotNull(chosen);
+    assertTrue(chosen.matches("^#[0-9a-fA-F]{6}$"));
+    assertFalse(used.contains(chosen.toLowerCase(java.util.Locale.ROOT)));
+  }
+
+  @Test
+  public void testImportNewLabelsRandomizesAndKeepsUniqueColors() throws Exception {
+    // 1. Existing label with red color in DB
+    String existingColor = "#ef4444";
+    DriverLabel existingLbl =
+        new DriverLabel.Builder()
+            .withEntityId("lbl_existing")
+            .withName("Veteran")
+            .withColor(existingColor)
+            .build();
+    driverLabelRepository.insert(existingLbl);
+
+    // 2. Import CSV with 4 distinct new labels across 4 drivers
+    String csv =
+        "Name,Nickname,Label 1\n"
+            + "Racer One,R1,Group Alpha\n"
+            + "Racer Two,R2,Group Beta\n"
+            + "Racer Three,R3,Group Gamma\n"
+            + "Racer Four,R4,Group Delta\n";
+
+    DriverImportPreview preview =
+        importer.parseAndValidate(
+            new ByteArrayInputStream(csv.getBytes(StandardCharsets.UTF_8)), "drivers.csv", null);
+    assertEquals(4, preview.getRows().size());
+
+    DriverImportCommitRequest req = new DriverImportCommitRequest(preview.getRows());
+    DriverImportResult result = importer.commitImport(req);
+    assertTrue(result.isSuccess());
+    assertEquals(4, result.getImportedCount());
+
+    // 3. Verify all 4 new labels were created and each has a unique color
+    List<DriverLabel> allLabels = driverLabelRepository.findAll();
+    assertEquals(5, allLabels.size()); // 1 existing + 4 new
+
+    Set<String> assignedColors = new HashSet<>();
+    for (DriverLabel lbl : allLabels) {
+      assertNotNull(lbl.getColor());
+      assertTrue(lbl.getColor().matches("^#[0-9a-fA-F]{6}$"));
+      assignedColors.add(lbl.getColor().toLowerCase(java.util.Locale.ROOT));
+    }
+    assertEquals("All labels must have unique colors", 5, assignedColors.size());
+
+    // None of the newly created labels should use the existing label's color
+    for (DriverLabel lbl : allLabels) {
+      if (!"lbl_existing".equals(lbl.getEntityId())) {
+        assertFalse(
+            "New label " + lbl.getName() + " should not have existing label color",
+            existingColor.equalsIgnoreCase(lbl.getColor()));
+      }
+    }
+  }
+
+  @Test
+  public void testDeterministicRandomLabelColorSelection() throws Exception {
+    DriverImporter deterministicImporter =
+        new DriverImporter(
+            databaseContext,
+            driverRepository,
+            assetService,
+            driverLabelRepository,
+            new Random(12345));
+
+    Set<String> used = new HashSet<>();
+    String color1 = deterministicImporter.generateUniqueLabelColor(used);
+    used.add(color1.toLowerCase(java.util.Locale.ROOT));
+
+    String color2 = deterministicImporter.generateUniqueLabelColor(used);
+    assertFalse(color1.equalsIgnoreCase(color2));
   }
 }

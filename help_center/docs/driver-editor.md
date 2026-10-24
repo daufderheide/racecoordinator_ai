@@ -118,6 +118,13 @@ When you click **Export Drivers** on the toolbar, you can select from three data
 - **Excel (`.xlsx`)**: Microsoft Excel workbook format with styled column headers and formatted data rows.
 - **JSON (`.json`)**: Formatted JSON array containing complete driver profile and audio configuration objects.
 
+### Logical Sorting & Label Export
+
+- **Logical Sorting**: In all export formats (CSV, Excel, and JSON), drivers are sorted logically by name so that numeric names follow intuitive ordering (e.g. `Driver 9` is listed before `Driver 10`).
+- **Dedicated Label Columns**: Every possible driver label in the system is exported into its own dedicated column (`Label 1`, `Label 2`, `Label 3`, etc.), sorted logically by label name. If a driver has that label assigned, the cell contains the label name; if unassigned, the cell remains empty.
+- **JSON Labels**: In JSON exports, each driver includes a `labels` array of assigned label names as well as individual `label1`, `label2`, etc. properties.
+- **Label Auto-Creation on Import**: When importing drivers from any format, columns labeled `Label 1..N`, `labels` (comma-separated list), or matching existing label names are automatically recognized. Any imported labels not yet present in your database are automatically created and assigned upon commit, with randomized colors chosen to make each new label distinct from existing labels and other newly imported labels.
+
 ### Companion Audio & Media Bundling
 
 - All audio files and custom avatars referenced by the exported drivers are automatically collected and packaged into the ZIP archive alongside the data file (`drivers.csv`, `drivers.xlsx`, or `drivers.json`).

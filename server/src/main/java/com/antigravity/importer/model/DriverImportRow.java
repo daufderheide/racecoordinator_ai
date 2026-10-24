@@ -3,7 +3,9 @@ package com.antigravity.importer.model;
 import com.antigravity.models.AudioConfig;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class DriverImportRow {
@@ -22,8 +24,43 @@ public class DriverImportRow {
   private String message = "";
   private String selectedResolution = "SKIP"; // SKIP, OVERWRITE, AUTO_RENAME
   private String existingDriverId;
+  private List<String> labels = new ArrayList<>();
+  private List<String> labelIds = new ArrayList<>();
+  private boolean hasLabelColumns;
 
   public DriverImportRow() {}
+
+  public DriverImportRow(
+      int rowIndex,
+      String rawName,
+      String rawNickname,
+      String resolvedName,
+      String resolvedNickname,
+      String avatarUrl,
+      Map<String, AudioConfig> audioSlots,
+      String defaultAudioMode,
+      String status,
+      String conflictType,
+      String message,
+      String selectedResolution,
+      String existingDriverId) {
+    this(
+        rowIndex,
+        rawName,
+        rawNickname,
+        resolvedName,
+        resolvedNickname,
+        avatarUrl,
+        audioSlots,
+        defaultAudioMode,
+        status,
+        conflictType,
+        message,
+        selectedResolution,
+        existingDriverId,
+        null,
+        null);
+  }
 
   @JsonCreator
   public DriverImportRow(
@@ -39,7 +76,9 @@ public class DriverImportRow {
       @JsonProperty("conflictType") String conflictType,
       @JsonProperty("message") String message,
       @JsonProperty("selectedResolution") String selectedResolution,
-      @JsonProperty("existingDriverId") String existingDriverId) {
+      @JsonProperty("existingDriverId") String existingDriverId,
+      @JsonProperty("labels") List<String> labels,
+      @JsonProperty("labelIds") List<String> labelIds) {
     this.rowIndex = rowIndex;
     this.rawName = rawName;
     this.rawNickname = rawNickname;
@@ -55,6 +94,12 @@ public class DriverImportRow {
     this.message = message != null ? message : "";
     this.selectedResolution = selectedResolution != null ? selectedResolution : "SKIP";
     this.existingDriverId = existingDriverId;
+    if (labels != null) {
+      this.labels = new ArrayList<>(labels);
+    }
+    if (labelIds != null) {
+      this.labelIds = new ArrayList<>(labelIds);
+    }
   }
 
   public int getRowIndex() {
@@ -159,5 +204,29 @@ public class DriverImportRow {
 
   public void setExistingDriverId(String existingDriverId) {
     this.existingDriverId = existingDriverId;
+  }
+
+  public List<String> getLabels() {
+    return labels != null ? labels : new ArrayList<>();
+  }
+
+  public void setLabels(List<String> labels) {
+    this.labels = labels != null ? new ArrayList<>(labels) : new ArrayList<>();
+  }
+
+  public List<String> getLabelIds() {
+    return labelIds != null ? labelIds : new ArrayList<>();
+  }
+
+  public void setLabelIds(List<String> labelIds) {
+    this.labelIds = labelIds != null ? new ArrayList<>(labelIds) : new ArrayList<>();
+  }
+
+  public boolean isHasLabelColumns() {
+    return hasLabelColumns;
+  }
+
+  public void setHasLabelColumns(boolean hasLabelColumns) {
+    this.hasLabelColumns = hasLabelColumns;
   }
 }

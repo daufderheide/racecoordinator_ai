@@ -118,6 +118,13 @@ Wenn Sie in der Symbolleiste auf **Fahrer exportieren** klicken, können Sie aus
 - **Excel (`.xlsx`)**: Microsoft Excel-Arbeitsmappenformat mit formatierten Spaltenüberschriften und Datenzeilen.
 - **JSON (`.json`)**: Formatiertes JSON-Array mit vollständigen Fahrerprofil- und Audiokonfigurationsobjekten.
 
+### Logische Sortierung & Label-Export
+
+- **Logische Sortierung**: In allen Exportformaten (CSV, Excel und JSON) werden Fahrer logisch nach Namen sortiert, sodass nummerierte Namen natürlich geordnet sind (z. B. steht `Fahrer 9` vor `Fahrer 10`).
+- **Eigene Label-Spalten**: Jedes im System vorhandene Fahrer-Label wird in eine eigene Spalte (`Label 1`, `Label 2`, `Label 3` usw.) exportiert, logisch sortiert nach dem Label-Namen. Ist einem Fahrer das Label zugewiesen, enthält die Zelle den Label-Namen; andernfalls bleibt sie leer.
+- **JSON-Labels**: Beim JSON-Export enthält jeder Fahrer ein `labels`-Array mit den zugewiesenen Label-Namen sowie einzelne Eigenschaften `label1`, `label2` usw.
+- **Automatische Label-Erstellung beim Import**: Beim Importieren von Fahrern aus beliebigen Formaten werden Spalten wie `Label 1..N`, `labels` (kommagetrennte Liste) oder Spalten mit dem Namen eines vorhandenen Labels automatisch erkannt. Nicht in der Datenbank vorhandene Labels werden beim Bestätigen des Imports automatisch angelegt und verknüpft, wobei ihnen zufällige Farben zugewiesen werden, um sie von bestehenden und neu importierten Labels abzuheben.
+
 ### Bündelung von Audio- und Mediendateien
 
 - Alle Audiodateien und benutzerdefinierten Avatare, die von den exportierten Fahrern referenziert werden, werden automatisch gesammelt und zusammen mit der Datendatei (`drivers.csv`, `drivers.xlsx` oder `drivers.json`) in das ZIP-Archiv gepackt.

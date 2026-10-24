@@ -12,9 +12,12 @@ import com.antigravity.importer.model.DriverImportResult;
 import com.antigravity.importer.model.DriverImportRow;
 import com.antigravity.models.AudioConfig;
 import com.antigravity.models.Driver;
+import com.antigravity.models.DriverLabel;
 import com.antigravity.proto.AssetMessage;
 import com.antigravity.repository.SqliteRepository;
 import com.antigravity.service.AssetService;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.InputStream;
@@ -37,6 +40,7 @@ public class DriverExporterTest {
 
   private DatabaseContext databaseContext;
   private SqliteRepository<Driver> driverRepository;
+  private SqliteRepository<DriverLabel> driverLabelRepository;
   private AssetService assetService;
   private DriverExporter exporter;
   private DriverImporter importer;
@@ -46,12 +50,16 @@ public class DriverExporterTest {
     String rootDir = tempFolder.newFolder("db_root").getAbsolutePath() + File.separator;
     databaseContext = new DatabaseContext("test_db", null, rootDir);
     driverRepository = new SqliteRepository<>(databaseContext, "drivers", Driver.class);
+    driverLabelRepository =
+        new SqliteRepository<>(databaseContext, "driver_labels", DriverLabel.class);
 
     File assetsDir = new File(new File(databaseContext.getDataRoot(), "test_db"), "assets");
     assetService = new AssetService(databaseContext, assetsDir.getAbsolutePath());
 
-    exporter = new DriverExporter(databaseContext, driverRepository, assetService);
-    importer = new DriverImporter(databaseContext, driverRepository, assetService);
+    exporter =
+        new DriverExporter(databaseContext, driverRepository, assetService, driverLabelRepository);
+    importer =
+        new DriverImporter(databaseContext, driverRepository, assetService, driverLabelRepository);
   }
 
   @After
@@ -365,5 +373,161 @@ public class DriverExporterTest {
       }
     }
     return map;
+  }
+
+  @Test
+  public void testLogicalSortingAcrossAllFormats() throws Exception {
+    Driver d1 = new Driver.Builder().withEntityId("d1").withName("Driver 1").build();
+    Driver d2 = new Driver.Builder().withEntityId("d2").withName("Driver 2").build();
+    Driver d9 = new Driver.Builder().withEntityId("d9").withName("Driver 9").build();
+    Driver d10 = new Driver.Builder().withEntityId("d10").withName("Driver 10").build();
+    Driver d11 = new Driver.Builder().withEntityId("d11").withName("Driver 11").build();
+
+    // Insert in unsorted order: 10, 2, 11, 1, 9
+    List<Driver> drivers = Arrays.asList(d10, d2, d11, d1, d9);
+
+    // 1. CSV
+    byte[] csvZip = exporter.exportDriversZip(drivers, "csv");
+    Map<String, byte[]> csvEntries = extractZipEntries(csvZip);
+    String csvText = new String(csvEntries.get("drivers.csv"), StandardCharsets.UTF_8);
+    int pos1 = csvText.indexOf("Driver 1,");
+    int pos2 = csvText.indexOf("Driver 2,");
+    int pos9 = csvText.indexOf("Driver 9,");
+    int pos10 = csvText.indexOf("Driver 10,");
+    int pos11 = csvText.indexOf("Driver 11,");
+    assertTrue("Driver 1 before Driver 2", pos1 >= 0 && pos1 < pos2);
+    assertTrue("Driver 2 before Driver 9", pos2 < pos9);
+    assertTrue("Driver 9 before Driver 10", pos9 < pos10);
+    assertTrue("Driver 10 before Driver 11", pos10 < pos11);
+
+    // 2. Excel
+    byte[] xlsxZip = exporter.exportDriversZip(drivers, "xlsx");
+    Map<String, byte[]> xlsxEntries = extractZipEntries(xlsxZip);
+    ParsedDataFile xlsxParsed =
+        DriverImportParserHelper.parseExcel(
+            new ByteArrayInputStream(xlsxEntries.get("drivers.xlsx")));
+    assertEquals(5, xlsxParsed.getRows().size());
+    assertEquals("Driver 1", xlsxParsed.getRows().get(0).get("name"));
+    assertEquals("Driver 2", xlsxParsed.getRows().get(1).get("name"));
+    assertEquals("Driver 9", xlsxParsed.getRows().get(2).get("name"));
+    assertEquals("Driver 10", xlsxParsed.getRows().get(3).get("name"));
+    assertEquals("Driver 11", xlsxParsed.getRows().get(4).get("name"));
+
+    // 3. JSON
+    byte[] jsonZip = exporter.exportDriversZip(drivers, "json");
+    Map<String, byte[]> jsonEntries = extractZipEntries(jsonZip);
+    ParsedDataFile jsonParsed =
+        DriverImportParserHelper.parseJson(
+            new ByteArrayInputStream(jsonEntries.get("drivers.json")));
+    assertEquals(5, jsonParsed.getRows().size());
+    assertEquals("Driver 1", jsonParsed.getRows().get(0).get("name"));
+    assertEquals("Driver 2", jsonParsed.getRows().get(1).get("name"));
+    assertEquals("Driver 9", jsonParsed.getRows().get(2).get("name"));
+    assertEquals("Driver 10", jsonParsed.getRows().get(3).get("name"));
+    assertEquals("Driver 11", jsonParsed.getRows().get(4).get("name"));
+  }
+
+  @Test
+  public void testLabelExportAcrossAllFormats() throws Exception {
+    DriverLabel l1 =
+        new DriverLabel.Builder()
+            .withEntityId("lbl_c1")
+            .withName("Club 1")
+            .withColor("#3b82f6")
+            .build();
+    DriverLabel l2 =
+        new DriverLabel.Builder()
+            .withEntityId("lbl_c2")
+            .withName("Club 2")
+            .withColor("#ef4444")
+            .build();
+    DriverLabel l3 =
+        new DriverLabel.Builder()
+            .withEntityId("lbl_nov")
+            .withName("Novice")
+            .withColor("#10b981")
+            .build();
+    DriverLabel l4 =
+        new DriverLabel.Builder()
+            .withEntityId("lbl_pro")
+            .withName("Pro")
+            .withColor("#8b5cf6")
+            .build();
+
+    driverLabelRepository.insert(l1);
+    driverLabelRepository.insert(l2);
+    driverLabelRepository.insert(l3);
+    driverLabelRepository.insert(l4);
+
+    Driver d1 =
+        new Driver.Builder()
+            .withEntityId("d1")
+            .withName("Driver 1")
+            .withNickname("D1")
+            .withLabelIds(Arrays.asList("lbl_c1", "lbl_nov"))
+            .build();
+
+    Driver d10 =
+        new Driver.Builder()
+            .withEntityId("d10")
+            .withName("Driver 10")
+            .withNickname("D10")
+            .withLabelIds(Arrays.asList("lbl_c2", "lbl_pro"))
+            .build();
+
+    List<Driver> drivers = Arrays.asList(d1, d10);
+
+    // 1. CSV
+    byte[] csvZip = exporter.exportDriversZip(drivers, "csv");
+    Map<String, byte[]> csvEntries = extractZipEntries(csvZip);
+    String csvText = new String(csvEntries.get("drivers.csv"), StandardCharsets.UTF_8);
+    // Header should contain Label 1..4
+    assertTrue(csvText.contains("Label 1,Label 2,Label 3,Label 4"));
+    // Driver 1 has Club 1 and Novice
+    assertTrue(csvText.contains("Driver 1,D1,,Club 1,,Novice,"));
+    // Driver 10 has Club 2 and Pro
+    assertTrue(csvText.contains("Driver 10,D10,,,Club 2,,Pro"));
+
+    // 2. Excel
+    byte[] xlsxZip = exporter.exportDriversZip(drivers, "xlsx");
+    Map<String, byte[]> xlsxEntries = extractZipEntries(xlsxZip);
+    ParsedDataFile xlsxParsed =
+        DriverImportParserHelper.parseExcel(
+            new ByteArrayInputStream(xlsxEntries.get("drivers.xlsx")));
+    assertEquals(2, xlsxParsed.getRows().size());
+    Map<String, String> row1 = xlsxParsed.getRows().get(0);
+    assertEquals("Driver 1", row1.get("name"));
+    assertEquals("Club 1", row1.get("label1"));
+    assertEquals("Novice", row1.get("label3"));
+    Map<String, String> row2 = xlsxParsed.getRows().get(1);
+    assertEquals("Driver 10", row2.get("name"));
+    assertEquals("Club 2", row2.get("label2"));
+    assertEquals("Pro", row2.get("label4"));
+
+    // 3. JSON
+    byte[] jsonZip = exporter.exportDriversZip(drivers, "json");
+    Map<String, byte[]> jsonEntries = extractZipEntries(jsonZip);
+    ObjectMapper mapper = new ObjectMapper();
+    JsonNode jsonNode = mapper.readTree(jsonEntries.get("drivers.json"));
+    JsonNode driversArray = jsonNode.get("drivers");
+    assertEquals(2, driversArray.size());
+
+    JsonNode j1 = driversArray.get(0);
+    assertEquals("Driver 1", j1.get("name").asText());
+    assertEquals("Club 1", j1.get("label1").asText());
+    assertEquals("Novice", j1.get("label3").asText());
+    JsonNode j1Labels = j1.get("labels");
+    assertEquals(2, j1Labels.size());
+    assertEquals("Club 1", j1Labels.get(0).asText());
+    assertEquals("Novice", j1Labels.get(1).asText());
+
+    JsonNode j2 = driversArray.get(1);
+    assertEquals("Driver 10", j2.get("name").asText());
+    assertEquals("Club 2", j2.get("label2").asText());
+    assertEquals("Pro", j2.get("label4").asText());
+    JsonNode j2Labels = j2.get("labels");
+    assertEquals(2, j2Labels.size());
+    assertEquals("Club 2", j2Labels.get(0).asText());
+    assertEquals("Pro", j2Labels.get(1).asText());
   }
 }

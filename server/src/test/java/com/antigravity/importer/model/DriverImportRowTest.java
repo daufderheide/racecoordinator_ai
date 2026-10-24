@@ -5,6 +5,7 @@ import static org.junit.Assert.assertNotNull;
 
 import com.antigravity.models.AudioConfig;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import org.junit.Test;
@@ -38,6 +39,10 @@ public class DriverImportRowTest {
     audioSlots.put("lap", new AudioConfig("preset", "beep.wav", null));
     row.setAudioSlots(audioSlots);
 
+    row.setLabels(Arrays.asList("Club 1", "Novice"));
+    row.setLabelIds(Arrays.asList("lbl-1", "lbl-2"));
+    row.setHasLabelColumns(true);
+
     assertEquals(1, row.getRowIndex());
     assertEquals("Alice", row.getRawName());
     assertEquals("Ali", row.getRawNickname());
@@ -51,9 +56,16 @@ public class DriverImportRowTest {
     assertEquals("AUTO_RENAME", row.getSelectedResolution());
     assertEquals("drv-123", row.getExistingDriverId());
     assertEquals(1, row.getAudioSlots().size());
+    assertEquals(Arrays.asList("Club 1", "Novice"), row.getLabels());
+    assertEquals(Arrays.asList("lbl-1", "lbl-2"), row.getLabelIds());
+    org.junit.Assert.assertTrue(row.isHasLabelColumns());
 
     row.setAudioSlots(null);
     assertNotNull(row.getAudioSlots());
+    row.setLabels(null);
+    assertNotNull(row.getLabels());
+    row.setLabelIds(null);
+    assertNotNull(row.getLabelIds());
 
     DriverImportRow parameterized =
         new DriverImportRow(
@@ -69,7 +81,9 @@ public class DriverImportRowTest {
             "NONE",
             "",
             "OVERWRITE",
-            "drv-999");
+            "drv-999",
+            Arrays.asList("Pro"),
+            Arrays.asList("lbl-pro"));
     assertEquals(2, parameterized.getRowIndex());
     assertEquals("Bob", parameterized.getRawName());
     assertEquals("Bobby", parameterized.getRawNickname());
@@ -77,16 +91,20 @@ public class DriverImportRowTest {
     assertEquals("file", parameterized.getDefaultAudioMode());
     assertEquals("OVERWRITE", parameterized.getSelectedResolution());
     assertEquals("drv-999", parameterized.getExistingDriverId());
+    assertEquals(Arrays.asList("Pro"), parameterized.getLabels());
+    assertEquals(Arrays.asList("lbl-pro"), parameterized.getLabelIds());
 
     DriverImportRow nullParam =
         new DriverImportRow(
-            0, null, null, null, null, null, null, null, null, null, null, null, null);
+            0, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
     assertEquals("system", nullParam.getDefaultAudioMode());
     assertEquals("VALID", nullParam.getStatus());
     assertEquals("NONE", nullParam.getConflictType());
     assertEquals("SKIP", nullParam.getSelectedResolution());
     assertEquals("", nullParam.getMessage());
     assertNotNull(nullParam.getAudioSlots());
+    assertNotNull(nullParam.getLabels());
+    assertNotNull(nullParam.getLabelIds());
   }
 
   @Test
@@ -109,7 +127,9 @@ public class DriverImportRowTest {
             "NONE",
             "OK",
             "SKIP",
-            null);
+            null,
+            Arrays.asList("Club 1", "Expert"),
+            Arrays.asList("lbl-1", "lbl-exp"));
 
     String json = mapper.writeValueAsString(row);
     DriverImportRow deserialized = mapper.readValue(json, DriverImportRow.class);
@@ -122,5 +142,7 @@ public class DriverImportRowTest {
     assertEquals(1, deserialized.getAudioSlots().size());
     assertEquals("tts", deserialized.getAudioSlots().get("lap").getType());
     assertEquals("Nice lap", deserialized.getAudioSlots().get("lap").getText());
+    assertEquals(Arrays.asList("Club 1", "Expert"), deserialized.getLabels());
+    assertEquals(Arrays.asList("lbl-1", "lbl-exp"), deserialized.getLabelIds());
   }
 }

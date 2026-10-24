@@ -118,6 +118,13 @@ Wanneer u op **Coureurs exporteren** in de werkbalk klikt, kunt u kiezen uit dri
 - **Excel (`.xlsx`)**: Microsoft Excel-werkmapindeling met gestijlde kolomkoppen en opgemaakte gegevensrijen.
 - **JSON (`.json`)**: Gestructureerde JSON-array met volledige coureurprofielen en audioconfiguratie-objecten.
 
+### Logisch sorteren en exporteren van labels
+
+- **Logisch sorteren**: In alle exportformaten (CSV, Excel en JSON) worden coureurs logisch op naam gesorteerd, zodat numerieke reeksen natuurlijk worden geordend (bijv. `Coureur 9` komt vóór `Coureur 10`).
+- **Eigen labelkolommen**: Elk beschikbaar coureurslabel in het systeem krijgt een eigen kolom (`Label 1`, `Label 2`, `Label 3`, enz.), logisch gesorteerd op labelnaam. Als een coureur dat label heeft, bevat de cel de labelnaam; zo niet, dan blijft deze leeg.
+- **Labels in JSON**: Bij JSON-exports bevat elke coureur een `labels`-array met toegewezen labels en afzonderlijke eigenschappen `label1`, `label2`, enz.
+- **Automatische aanmaak van labels bij import**: Bij het importeren van coureurs uit elk formaat worden kolommen zoals `Label 1..N`, `labels` (door komma's gescheiden lijst) of kolommen met een bestaande labelnaam automatisch herkend. Labels die nog niet in de database voorkomen, worden automatisch aangemaakt en gekoppeld bij het voltooien van de import, waarbij willekeurige kleuren worden toegewezen om ze te onderscheiden van bestaande en nieuw geïmporteerde labels.
+
 ### Bündeling van audio- en mediabestanden
 
 - Alle audiobestanden en aangepaste avatars waarnaar de geëxporteerde coureurs verwijzen, worden automatisch verzameld en verpakt in het ZIP-archief naast het gegevensbestand (`drivers.csv`, `drivers.xlsx` of `drivers.json`).

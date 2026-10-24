@@ -118,6 +118,13 @@ Lorsque vous cliquez sur **Exporter des pilotes** dans la barre d'outils, vous p
 - **Excel (`.xlsx`)** : Format de classeur Microsoft Excel avec en-têtes stylisés et lignes de données formatées.
 - **JSON (`.json`)** : Tableau JSON structuré contenant les objets complets de profil de pilote et de configuration audio.
 
+### Tri logique et exportation des étiquettes
+
+- **Tri logique** : Dans tous les formats d'exportation (CSV, Excel et JSON), les pilotes sont triés logiquement par nom afin que les valeurs numériques suivent un ordre naturel (par exemple, `Pilote 9` précède `Pilote 10`).
+- **Colonnes dédiées pour chaque étiquette** : Chaque étiquette de pilote existante dans le système est exportée dans sa propre colonne (`Label 1`, `Label 2`, `Label 3`, etc.), triée logiquement par nom d'étiquette. Si un pilote possède cette étiquette, la cellule contient son nom ; sinon, elle reste vide.
+- **Étiquettes en JSON** : Lors de l'exportation JSON, chaque pilote contient un tableau `labels` répertoriant les étiquettes assignées ainsi que des propriétés `label1`, `label2`, etc.
+- **Création automatique d'étiquettes à l'importation** : Lors de l'importation depuis n'importe quel format, les colonnes `Label 1..N`, `labels` (liste séparée par des virgules) ou correspondant au nom d'une étiquette existante sont reconnues automatiquement. Toute étiquette inexistante en base de données est créée et assignée automatiquement lors de la validation de l'importation, avec des couleurs aléatoires attribuées pour la distinguer des étiquettes existantes et des autres nouvelles étiquettes importées.
+
 ### Regroupement des fichiers audio et multimédias
 
 - Tous les fichiers audio et avatars personnalisés référencés par les pilotes exportés sont automatiquement collectés et intégrés dans l'archive ZIP aux côtés du fichier de données (`drivers.csv`, `drivers.xlsx` ou `drivers.json`).
