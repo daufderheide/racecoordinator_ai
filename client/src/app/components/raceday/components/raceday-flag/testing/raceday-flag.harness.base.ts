@@ -3,7 +3,9 @@ export abstract class RacedayFlagHarnessBase {
 
   static readonly selectors = {
     flagImage: ".flag-image",
+    raceStateIndicator: ".race-state-indicator",
   };
 
   abstract getFlagUrl(): Promise<string | null>;
+  abstract getRaceStateColorClass(): Promise<string | null>;
 }

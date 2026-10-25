@@ -474,6 +474,21 @@
   line-height: 1.1;
 }
 
+.lane-col-value:has(.team-name) {
+  flex-direction: column;
+  justify-content: center;
+}
+
+.lane-col-value .team-name {
+  font-size: min(1.5rem, 8cqw);
+  opacity: 0.8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: -2px;
+  line-height: 1.1;
+}
+
 .lane-col-empty {
   font-size: 24px;
   font-weight: 600;

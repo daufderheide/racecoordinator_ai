@@ -64,6 +64,24 @@ export const WIDGET_REGISTRY: Record<string, WidgetRegistryEntry> = {
       imageUrl: "",
     }),
   },
+  flag: {
+    defaultSettings: () => ({
+      displayMode: "image",
+    }),
+  },
+  "progress-gauge": {
+    defaultSettings: () => ({
+      gaugeType: "heat-progress",
+      gaugeStyle: "thermometer",
+      orientation: "vertical",
+      bindingMode: "hostLane",
+      targetIndex: 0,
+      showLabel: true,
+      fillColor: "",
+      backgroundColor: "",
+      borderColor: "",
+    }),
+  },
   grid: {
     defaultSettings: () => ({}),
   },

@@ -1,8 +1,19 @@
-<div class="panel-card flag-panel">
-  <img
-    [src]="displayFlagUrl() || null"
-    [style.display]="displayFlagUrl() ? '' : 'none'"
-    class="flag-image"
-    alt="Race Flag"
-  />
+<div
+  class="panel-card flag-panel"
+  [class.color-bar-mode]="isColorBarMode && !isImageMode"
+>
+  @if (isImageMode) {
+    <img
+      [src]="displayFlagUrl() || null"
+      [style.display]="displayFlagUrl() ? '' : 'none'"
+      class="flag-image"
+      alt="Race Flag"
+    />
+  }
+  @if (isColorBarMode) {
+    <div
+      class="race-state-indicator"
+      [class]="'race-state-indicator race-state-' + effectiveRaceStateColor"
+    ></div>
+  }
 </div>

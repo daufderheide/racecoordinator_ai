@@ -69,4 +69,34 @@ describe("RacedayFlagComponent", () => {
     );
     expect(cardEl).toBeTruthy();
   });
+
+  it("should render race state indicator when displayMode is color-bar", async () => {
+    fixture.componentRef.setInput("displayMode", "color-bar");
+    fixture.componentRef.setInput("raceStateColor", "green");
+    fixture.detectChanges();
+
+    const indicatorClass = await harness.getRaceStateColorClass();
+    expect(indicatorClass).toContain("race-state-green");
+    expect(await harness.getFlagUrl()).toBeNull();
+  });
+
+  it("should use parent raceStateColor when input is not provided", async () => {
+    fixture.componentRef.setInput("displayMode", "color-bar");
+    fixture.componentRef.setInput("parent", { raceStateColor: "yellow" });
+    fixture.detectChanges();
+
+    const indicatorClass = await harness.getRaceStateColorClass();
+    expect(indicatorClass).toContain("race-state-yellow");
+  });
+
+  it("should support both displayMode rendering image and indicator", async () => {
+    fixture.componentRef.setInput("displayMode", "both");
+    fixture.componentRef.setInput("currentFlagUrl", "assets/flags/green.png");
+    fixture.componentRef.setInput("raceStateColor", "checkered");
+    fixture.detectChanges();
+
+    expect(await harness.getFlagUrl()).toBe("assets/flags/green.png");
+    const indicatorClass = await harness.getRaceStateColorClass();
+    expect(indicatorClass).toContain("race-state-checkered");
+  });
 });

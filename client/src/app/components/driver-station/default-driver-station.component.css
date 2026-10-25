@@ -394,3 +394,90 @@
 .span-all {
   grid-column: 2 / -1; /* -1 means span to edge */
 }
+
+/* Widget integration styling */
+.data-row app-raceday-lane-column,
+.data-row app-raceday-flag {
+  display: block;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.single-col,
+.flag-col {
+  width: 100%;
+}
+
+.flex-1 {
+  flex: 1;
+  min-width: 0;
+}
+
+.lane-col-fix {
+  flex: 0 0 60px;
+}
+
+.data-row app-raceday-lane-column .raceday-lane-column-card {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
+.data-row app-raceday-lane-column .lane-col-header {
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  justify-content: flex-start !important;
+  text-align: left !important;
+  font-size: 0.9rem !important;
+  opacity: 0.8 !important;
+  text-transform: uppercase !important;
+  color: inherit !important;
+  font-weight: normal !important;
+  margin-bottom: 2px !important;
+}
+
+.data-row app-raceday-lane-column.lane-col-fix .lane-col-header {
+  justify-content: flex-end !important;
+  text-align: right !important;
+  font-size: clamp(0.4rem, 2cqw, 0.9rem) !important;
+}
+
+.data-row app-raceday-lane-column .lane-col-value {
+  padding: 0 !important;
+  color: inherit !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  font-size: clamp(2.5rem, 25cqw, 3.6rem) !important;
+  font-weight: bold !important;
+  line-height: 1.1 !important;
+}
+
+.driver-row app-raceday-lane-column:first-child .lane-col-value {
+  font-size: 3.6rem !important;
+}
+
+.driver-row app-raceday-lane-column.lane-col-fix .lane-col-value {
+  font-size: clamp(1rem, 8cqw, 3.6rem) !important;
+  align-items: flex-end !important;
+  text-align: right !important;
+}
+
+.data-row app-raceday-lane-column .team-name {
+  font-size: min(1.5rem, 8cqw) !important;
+  opacity: 0.8 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  margin-top: -2px !important;
+}
+
+.ds-gauge-fill {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}

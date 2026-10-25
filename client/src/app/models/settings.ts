@@ -57,6 +57,7 @@ export type WidgetType =
   | "action-back"
   | "action-forward"
   | "action-close"
+  | "progress-gauge"
   | `custom:${string}`
   | (string & {});
 
@@ -97,11 +98,31 @@ export interface InsetConfig {
   valueAlignment?: "left" | "center" | "right" | "start" | "end";
 }
 
+export interface ProgressGaugeWidgetSettings {
+  gaugeType?: "heat-progress" | "fuel";
+  gaugeStyle?: "thermometer" | "bar";
+  orientation?: "vertical" | "horizontal";
+  bindingMode?: "hostLane" | "lane" | "hostDriver";
+  targetIndex?: number;
+  showLabel?: boolean;
+  fillColor?: string;
+  backgroundColor?: string;
+  borderColor?: string;
+  borderWidth?: number;
+  borderRadius?: number;
+}
+
 export interface LaneColumnWidgetSettings {
   columnKey: string;
   gapTarget?: "leader" | "position";
   gapMode?: "always_time" | "laps_and_time" | "always_laps";
-  bindingMode: "lane" | "position" | "overallPosition" | "seed";
+  bindingMode:
+    | "lane"
+    | "position"
+    | "overallPosition"
+    | "seed"
+    | "hostLane"
+    | "hostDriver";
   targetIndex: number;
   layoutOrientation: "vertical" | "horizontal";
   showHeader: boolean;

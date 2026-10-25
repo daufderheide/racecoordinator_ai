@@ -1,0 +1,26 @@
+<div
+  class="progress-gauge-container"
+  [class.gauge-thermometer]="effectiveGaugeStyle === 'thermometer'"
+  [class.gauge-bar]="effectiveGaugeStyle === 'bar'"
+  [class.orientation-vertical]="effectiveOrientation === 'vertical'"
+  [class.orientation-horizontal]="effectiveOrientation === 'horizontal'"
+  [class.gauge-fuel]="effectiveGaugeType === 'fuel'"
+  [class.gauge-heat-progress]="effectiveGaugeType === 'heat-progress'"
+>
+  <div
+    class="thermometer-container"
+    [style.border-color]="effectiveBorderColor"
+  >
+    <div
+      class="thermometer-fill"
+      [style.height.%]="effectiveOrientation === 'vertical' ? percentage : 100"
+      [style.width.%]="effectiveOrientation === 'horizontal' ? percentage : 100"
+      [style.background-color]="effectiveFillColor"
+    ></div>
+  </div>
+  @if (showLabel) {
+    <div class="thermometer-label" [style.color]="effectiveForegroundColor">
+      <span>{{ labelText }}</span>
+    </div>
+  }
+</div>

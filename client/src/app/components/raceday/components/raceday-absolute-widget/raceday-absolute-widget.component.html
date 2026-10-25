@@ -230,6 +230,12 @@
             [widget]="widget()"
           ></app-raceday-lane-column>
         }
+        @case ("progress-gauge") {
+          <app-raceday-progress-gauge
+            [parent]="parentComponent()"
+            [widget]="widget()"
+          ></app-raceday-progress-gauge>
+        }
         @case ("on-deck") {
           <app-raceday-on-deck
             [track]="parentComponent().track"

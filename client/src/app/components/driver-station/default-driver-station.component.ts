@@ -11,36 +11,49 @@ import {
 } from "@angular/core";
 import { ActivatedRoute, Router } from "@angular/router";
 import { Subscription } from "rxjs";
+import { RacedayFlagComponent } from "@app/components/raceday/components/raceday-flag/raceday-flag.component";
+import { RacedayLaneColumnComponent } from "@app/components/raceday/components/raceday-lane-column/raceday-lane-column.component";
+import { RacedayProgressGaugeComponent } from "@app/components/raceday/components/raceday-progress-gauge/raceday-progress-gauge.component";
 import { RacedayFormatUtils } from "@app/components/raceday/utils/raceday-format.utils";
 import { AcknowledgementModalComponent } from "@app/components/shared/acknowledgement-modal/acknowledgement-modal.component";
 import { BrowserNavigationComponent } from "@app/components/shared/browser-navigation/browser-navigation.component";
 import { DataService } from "@app/data.service";
-import { AudioConfig } from "@app/models/driver";
 import { FinishMethod } from "@app/models/heat_scoring";
 import { Race } from "@app/models/race";
+import { AbsoluteWidgetNode } from "@app/models/settings";
 import { THEME_SLOT_KEYS } from "@app/models/theme";
 import { Track } from "@app/models/track";
-import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { RaceFlag, RaceState } from "@app/proto/antigravity";
 import { DriverHeatData } from "@app/race/driver_heat_data";
 import { Heat } from "@app/race/heat";
-import {
-  AudioAssociation,
-  AudioPriority,
-  AudioService,
-} from "@app/services/audio.service";
+import { AudioAssociation, AudioService } from "@app/services/audio.service";
 import { AuthService } from "@app/services/auth.service";
 import { LoggerService } from "@app/services/logger.service";
 import { RaceService } from "@app/services/race.service";
 import { RaceConnectionService } from "@app/services/race-connection.service";
 import { RaceFlagService } from "@app/services/race-flag.service";
 import { ThemeService } from "@app/services/theme.service";
-import { resolveAudioUrl } from "@app/utils/audio";
+import { TranslationService } from "@app/services/translation.service";
 import { FuelAudioTracker } from "@app/utils/fuel-audio-tracker";
 import { ViewerRaceEndedHandler } from "@app/utils/viewer-race-ended-handler";
 
+import { formatDriverStationValue } from "./driver-station-format.helper";
 import { DriverStationLapAudioHandler } from "./driver-station-lap-audio-handler";
+import { DriverStationThemeAudioHandler } from "./driver-station-theme-audio-handler";
 import { DriverStationTimeAudioHandler } from "./driver-station-time-audio-handler";
+import {
+  DRIVER_STATION_BEST_LAP_TIME_WIDGET,
+  DRIVER_STATION_FLAG_WIDGET,
+  DRIVER_STATION_FUEL_PROGRESS_WIDGET,
+  DRIVER_STATION_GAP_LEADER_WIDGET,
+  DRIVER_STATION_HEAT_RANK_WIDGET,
+  DRIVER_STATION_LANE_NUMBER_WIDGET,
+  DRIVER_STATION_LAP_COUNT_WIDGET,
+  DRIVER_STATION_LAST_LAP_TIME_WIDGET,
+  DRIVER_STATION_NICKNAME_WIDGET,
+  DRIVER_STATION_OVERALL_RANK_WIDGET,
+  DRIVER_STATION_PROGRESS_WIDGET,
+} from "./driver-station-widget-configs";
 
 @Component({
   standalone: true,
@@ -49,15 +62,18 @@ import { DriverStationTimeAudioHandler } from "./driver-station-time-audio-handl
   styleUrls: ["./default-driver-station.component.css"],
   providers: [AudioService],
   imports: [
-    DecimalPipe,
-    TranslatePipe,
     AcknowledgementModalComponent,
     BrowserNavigationComponent,
+    RacedayProgressGaugeComponent,
+    RacedayLaneColumnComponent,
+    RacedayFlagComponent,
   ],
 })
 export class DefaultDriverStationComponent implements OnInit, OnDestroy {
   private authService = inject(AuthService);
   private router = inject(Router);
+  public translationService = inject(TranslationService);
+  private decimalPipe = new DecimalPipe("en-US");
   protected viewerRaceEndedHandler!: ViewerRaceEndedHandler;
 
   get showAckModal(): boolean {
@@ -124,13 +140,20 @@ export class DefaultDriverStationComponent implements OnInit, OnDestroy {
     private audioService: AudioService = inject(AudioService),
     private themeService: ThemeService = inject(ThemeService),
   ) {
+    this.themeAudioHandler = new DriverStationThemeAudioHandler({
+      themeService: this.themeService,
+      audioService: this.audioService,
+      dataService: this.dataService,
+      getAssets: () => this.assets,
+    });
     this.fuelAudioTracker = new FuelAudioTracker(this.audioService, (urlOrId) =>
-      this.resolveAssetPlayableUrl(urlOrId),
+      this.themeAudioHandler.resolveAssetPlayableUrl(urlOrId),
     );
     this.lapAudioHandler = new DriverStationLapAudioHandler({
       audioService: this.audioService,
       themeService: this.themeService,
-      resolvePlayableUrl: (urlOrId) => this.resolveAssetPlayableUrl(urlOrId),
+      resolvePlayableUrl: (urlOrId) =>
+        this.themeAudioHandler.resolveAssetPlayableUrl(urlOrId),
       playThemedSound: (slotKey, context, association) =>
         this.playThemedSound(slotKey, context, association),
       getRace: () => this.race,
@@ -168,6 +191,7 @@ export class DefaultDriverStationComponent implements OnInit, OnDestroy {
   protected raceState: RaceState = RaceState.UNKNOWN_STATE;
   protected hasRacedInCurrentHeat: boolean = false;
   private fuelAudioTracker: FuelAudioTracker;
+  private themeAudioHandler: DriverStationThemeAudioHandler;
   private lapAudioHandler: DriverStationLapAudioHandler;
   private timeAudioHandler: DriverStationTimeAudioHandler;
   private lastPlayedCountdownSecond: number = -1;
@@ -296,7 +320,7 @@ export class DefaultDriverStationComponent implements OnInit, OnDestroy {
             (d) => d.objectId === lap.objectId,
           );
           if (driverData) {
-            this.handleLapEvent(lap, driverData);
+            this.lapAudioHandler.handleLapEvent(lap, driverData);
           }
         }
         this.cdr.detectChanges();
@@ -377,7 +401,7 @@ export class DefaultDriverStationComponent implements OnInit, OnDestroy {
         this.raceState === RaceState.STARTING) &&
       autoStart > 0
     ) {
-      this.checkAutoStartAnnouncements(
+      this.timeAudioHandler.checkAutoStartAnnouncements(
         autoStart,
         this.previousAutoStartRemaining,
       );
@@ -393,7 +417,7 @@ export class DefaultDriverStationComponent implements OnInit, OnDestroy {
         this.raceState === RaceState.UNKNOWN_STATE) &&
       autoAdvance > 0
     ) {
-      this.checkAutoAdvanceAnnouncements(
+      this.timeAudioHandler.checkAutoAdvanceAnnouncements(
         autoAdvance,
         this.previousAutoAdvanceRemaining,
       );
@@ -406,7 +430,7 @@ export class DefaultDriverStationComponent implements OnInit, OnDestroy {
     if (this.raceState === RaceState.STARTING) {
       this.handleStartingCountdown();
     } else if (this.raceState === RaceState.RACING) {
-      this.checkRaceTimeAnnouncements(this.time);
+      this.timeAudioHandler.checkRaceTimeAnnouncements(this.time);
     }
     this.cdr.detectChanges();
   }
@@ -666,6 +690,90 @@ export class DefaultDriverStationComponent implements OnInit, OnDestroy {
     return hasReactionTime || hasRealLap || hasAdjustment;
   }
 
+  get activeLaneIndex(): number {
+    return this.laneIndex;
+  }
+
+  get heatDrivers(): DriverHeatData[] {
+    return this.heat?.heatDrivers || (this.driverData ? [this.driverData] : []);
+  }
+
+  get driverRankings(): Map<string, number> {
+    const map = new Map<string, number>();
+    if (this.driverData?.objectId && this.standingsPosition) {
+      map.set(this.driverData.objectId, this.standingsPosition);
+    }
+    return map;
+  }
+
+  getDriverRanking(id: string): number | undefined {
+    if (
+      this.standingsPosition &&
+      (id === this.driverData?.objectId ||
+        id === (this.driverData?.participant as any)?.id ||
+        id === (this.driverData?.participant as any)?.entity_id)
+    ) {
+      return this.standingsPosition;
+    }
+    return undefined;
+  }
+
+  getDriverOverallRanking(_hd: any): number | undefined {
+    return this.overallPosition || undefined;
+  }
+
+  formatValue(
+    propertyName: string,
+    value: any,
+    hd: DriverHeatData,
+    column?: any,
+    anchor?: string,
+    widgetSettings?: any,
+  ): string {
+    return formatDriverStationValue(
+      {
+        isEmptyDriver: this.isEmptyDriver,
+        standingsPosition: this.standingsPosition,
+        overallPosition: this.overallPosition,
+        laneIndex: this.laneIndex,
+        hasLapData: this.hasLapData,
+        driverData: this.driverData,
+        translationService: this.translationService,
+        decimalPipe: this.decimalPipe,
+        race: this.race,
+        track: this.track,
+        raceFlagService: this.raceFlagService,
+        raceState: this.raceState,
+        getDriverRanking: (id: string) => this.getDriverRanking(id),
+        getDriverOverallRanking: (d: any) => this.getDriverOverallRanking(d),
+      },
+      propertyName,
+      value,
+      hd,
+      column,
+      anchor,
+      widgetSettings,
+    );
+  }
+
+  readonly progressWidget: AbsoluteWidgetNode = DRIVER_STATION_PROGRESS_WIDGET;
+  readonly nicknameWidget: AbsoluteWidgetNode = DRIVER_STATION_NICKNAME_WIDGET;
+  readonly laneNumberWidget: AbsoluteWidgetNode =
+    DRIVER_STATION_LANE_NUMBER_WIDGET;
+  readonly heatRankWidget: AbsoluteWidgetNode = DRIVER_STATION_HEAT_RANK_WIDGET;
+  readonly overallRankWidget: AbsoluteWidgetNode =
+    DRIVER_STATION_OVERALL_RANK_WIDGET;
+  readonly lapCountWidget: AbsoluteWidgetNode = DRIVER_STATION_LAP_COUNT_WIDGET;
+  readonly lastLapTimeWidget: AbsoluteWidgetNode =
+    DRIVER_STATION_LAST_LAP_TIME_WIDGET;
+  readonly gapLeaderWidget: AbsoluteWidgetNode =
+    DRIVER_STATION_GAP_LEADER_WIDGET;
+  readonly bestLapTimeWidget: AbsoluteWidgetNode =
+    DRIVER_STATION_BEST_LAP_TIME_WIDGET;
+  readonly flagWidget: AbsoluteWidgetNode = DRIVER_STATION_FLAG_WIDGET;
+  readonly fuelProgressWidget: AbsoluteWidgetNode =
+    DRIVER_STATION_FUEL_PROGRESS_WIDGET;
+
   private updateAudioRelevance(): void {
     const allowedLanes = new Set<number>();
     if (this.laneIndex != null && this.laneIndex >= 0) {
@@ -699,116 +807,8 @@ export class DefaultDriverStationComponent implements OnInit, OnDestroy {
     slotKey: string,
     context?: any,
     association?: AudioAssociation,
-  ) {
-    const config = this.themeService.resolveAudioConfig(slotKey);
-    if (!config || config.type === "none") return;
-
-    if (config.type === "tts") {
-      if (!config.text?.trim()) return;
-    } else {
-      if (!config.url?.trim()) return;
-    }
-
-    let playableUrl: string | undefined = config.url;
-    if (config.type === "preset" && playableUrl) {
-      playableUrl = this.resolveAssetPlayableUrl(playableUrl);
-    }
-
-    let priority: AudioPriority = "normal";
-    if (
-      slotKey === THEME_SLOT_KEYS.AUDIO_YELLOW_FLAG ||
-      slotKey === THEME_SLOT_KEYS.AUDIO_HEAT_OVER ||
-      slotKey === THEME_SLOT_KEYS.AUDIO_RACE_OVER ||
-      slotKey === THEME_SLOT_KEYS.AUDIO_MIN_LAP_TIME
-    ) {
-      priority = "urgent";
-    }
-
-    let defaultAssoc = association;
-    if (!defaultAssoc) {
-      if (
-        slotKey === THEME_SLOT_KEYS.AUDIO_YELLOW_FLAG ||
-        slotKey === THEME_SLOT_KEYS.AUDIO_HEAT_OVER ||
-        slotKey === THEME_SLOT_KEYS.AUDIO_RACE_OVER
-      ) {
-        defaultAssoc = { widgetType: "flag" };
-      } else if (
-        slotKey === THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT ||
-        slotKey === THEME_SLOT_KEYS.AUDIO_LAPS_LEFT ||
-        slotKey === THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT_HALFWAY ||
-        slotKey === THEME_SLOT_KEYS.AUDIO_AUTO_START ||
-        slotKey === THEME_SLOT_KEYS.AUDIO_AUTO_ADVANCE
-      ) {
-        defaultAssoc = { widgetType: "timer" };
-      }
-    }
-
-    this.audioService.playCallout(
-      config,
-      priority,
-      context,
-      playableUrl,
-      defaultAssoc,
-    );
-  }
-
-  private getAudioFromSetEntry(
-    slotKey: string,
-    timeSeconds: number,
-    triggerMode: string = "remaining",
-  ): { config: AudioConfig; playableUrl?: string } | null {
-    if (
-      !this.themeService ||
-      typeof this.themeService.resolveAudioConfig !== "function"
-    ) {
-      return null;
-    }
-    const config = this.themeService.resolveAudioConfig(slotKey);
-    if (!config || config.type !== "audio_set") return null;
-
-    const assetId = config.url;
-    if (!assetId) return null;
-
-    const asset = (this.assets || []).find(
-      (a) =>
-        a.model?.entityId === assetId ||
-        a.entity_id === assetId ||
-        a._id === assetId ||
-        a.name === assetId,
-    );
-    if (!asset || asset.type !== "audio_set") return null;
-
-    const entries = asset.audioEntries || (asset as any)?.audio_entries;
-    const entry = entries?.find((e: any) => {
-      const val =
-        e.timeSeconds != null
-          ? e.timeSeconds
-          : e.time_seconds != null
-            ? e.time_seconds
-            : e.percentage;
-      const mode = e.triggerMode || e.trigger_mode || "remaining";
-      return (
-        val != null &&
-        Math.abs(Number(val) - timeSeconds) < 0.1 &&
-        mode === triggerMode
-      );
-    });
-    if (!entry) return null;
-
-    const entryType = entry.type || "preset";
-    if (entryType === "none") return null;
-
-    const playableUrl = entry.url
-      ? this.resolveAssetPlayableUrl(entry.url)
-      : undefined;
-    return {
-      config: {
-        type: entryType,
-        url: playableUrl,
-        text: entry.text || undefined,
-      },
-      playableUrl,
-    };
+  ): void {
+    this.themeAudioHandler.playThemedSound(slotKey, context, association);
   }
 
   private playAudioFromSet(
@@ -817,142 +817,15 @@ export class DefaultDriverStationComponent implements OnInit, OnDestroy {
     association?: AudioAssociation,
     triggerMode: string = "remaining",
   ): boolean {
-    const defaultAssoc =
-      association ??
-      (slotKey === THEME_SLOT_KEYS.AUDIO_COUNTDOWN
-        ? { widgetType: "countdown" }
-        : { widgetType: "timer" });
-
-    const entryItem = this.getAudioFromSetEntry(
+    return this.themeAudioHandler.playAudioFromSet(
       slotKey,
       timeSeconds,
+      association,
       triggerMode,
     );
-    if (entryItem) {
-      if (slotKey === THEME_SLOT_KEYS.AUDIO_COUNTDOWN) {
-        if (entryItem.config.type === "tts") {
-          return this.audioService.playCallout(
-            { type: "tts", text: entryItem.config.text },
-            "normal",
-            undefined,
-            undefined,
-            defaultAssoc,
-          );
-        } else {
-          return !!this.audioService.playSfx(
-            entryItem.playableUrl,
-            defaultAssoc,
-          );
-        }
-      } else {
-        return this.audioService.playCallout(
-          entryItem.config,
-          "normal",
-          undefined,
-          entryItem.playableUrl,
-          defaultAssoc,
-        );
-      }
-    }
-    return false;
   }
 
   private preloadCountdownAudio(): void {
-    if (
-      !this.assets ||
-      this.assets.length === 0 ||
-      !this.audioService ||
-      typeof this.audioService.preload !== "function"
-    ) {
-      return;
-    }
-    for (let second = 0; second <= 5; second++) {
-      const item = this.getAudioFromSetEntry(
-        THEME_SLOT_KEYS.AUDIO_COUNTDOWN,
-        second,
-      );
-      if (item?.playableUrl && item.config.type !== "tts") {
-        this.audioService.preload(item.playableUrl);
-      }
-    }
-  }
-
-  private getSecondsLeftThresholds(
-    triggerMode: "remaining" | "elapsed" = "remaining",
-  ): number[] {
-    return this.timeAudioHandler.getSecondsLeftThresholds(triggerMode);
-  }
-
-  private checkRaceTimeAnnouncements(currentTime: number) {
-    this.timeAudioHandler.checkRaceTimeAnnouncements(currentTime);
-  }
-
-  private checkLapsLeftCallouts(lap: any, driverData: DriverHeatData) {
-    this.lapAudioHandler.checkLapsLeftCallouts(lap, driverData);
-  }
-
-  private getAutoStartThresholds(
-    triggerMode: "remaining" | "elapsed" = "remaining",
-  ): number[] {
-    return this.timeAudioHandler.getAutoStartThresholds(triggerMode);
-  }
-
-  private checkAutoStartAnnouncements(
-    currentTime: number,
-    previousTime: number,
-  ) {
-    this.timeAudioHandler.checkAutoStartAnnouncements(
-      currentTime,
-      previousTime,
-    );
-  }
-
-  private getAutoAdvanceThresholds(
-    triggerMode: "remaining" | "elapsed" = "remaining",
-  ): number[] {
-    return this.timeAudioHandler.getAutoAdvanceThresholds(triggerMode);
-  }
-
-  private checkAutoAdvanceAnnouncements(
-    currentTime: number,
-    previousTime: number,
-  ) {
-    this.timeAudioHandler.checkAutoAdvanceAnnouncements(
-      currentTime,
-      previousTime,
-    );
-  }
-
-  private handleLapEvent(lap: any, driverData: DriverHeatData): void {
-    this.lapAudioHandler.handleLapEvent(lap, driverData);
-  }
-
-  private checkHalfwayPoint(lap: any, driverData?: DriverHeatData) {
-    this.lapAudioHandler.checkHalfwayPoint(lap, driverData);
-  }
-
-  private resolveAssetPlayableUrl(
-    urlOrId: string | undefined,
-  ): string | undefined {
-    if (!urlOrId) return undefined;
-    const asset = (this.assets || []).find(
-      (a: any) =>
-        a.model?.entityId === urlOrId ||
-        a.entity_id === urlOrId ||
-        a._id === urlOrId ||
-        a.name === urlOrId,
-    );
-    if (asset?.url) {
-      return resolveAudioUrl(asset.url, this.dataService.serverUrl);
-    }
-    return resolveAudioUrl(urlOrId, this.dataService.serverUrl);
-  }
-
-  private getFullUrl(url: string | undefined): string {
-    if (!url) return "";
-    if (url.startsWith("http://") || url.startsWith("https://")) {
-      return url;
-    }
-    return `${this.dataService.serverUrl}${url.startsWith("/") ? "" : "/"}${url}`;
+    this.themeAudioHandler.preloadCountdownAudio();
   }
 }

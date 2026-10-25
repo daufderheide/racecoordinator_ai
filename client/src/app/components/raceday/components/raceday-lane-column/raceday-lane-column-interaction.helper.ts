@@ -877,6 +877,16 @@ export function resolveLaneColumnFormattedValue(
         "RD_EMPTY_LANE"
       );
     }
+    if (columnKey === "laneNumber") {
+      const effLane =
+        bindingMode === "hostLane"
+          ? (parent?.activeLaneIndex ??
+            parent?.laneIndex ??
+            settings?.targetIndex ??
+            0)
+          : (settings?.targetIndex ?? 0);
+      return String(effLane + 1);
+    }
     return "--";
   }
 

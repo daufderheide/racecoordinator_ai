@@ -679,6 +679,16 @@
               "
             >
               <span class="lane-col-text">{{ formattedValue }}</span>
+              @if (
+                (columnKey === "driver.nickname" ||
+                  columnKey === "driver.name") &&
+                targetDriver?.participant?.team?.name &&
+                !isEmptyDriver
+              ) {
+                <span class="team-name">{{
+                  targetDriver?.participant?.team?.name
+                }}</span>
+              }
             </div>
 
             <!-- Teammate Driver Swap Overlay -->

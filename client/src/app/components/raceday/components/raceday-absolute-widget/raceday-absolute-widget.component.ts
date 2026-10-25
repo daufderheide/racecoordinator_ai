@@ -31,6 +31,7 @@ import { RacedayLeaderboardComponent } from "@app/components/raceday/components/
 import { RacedayMenuBarComponent } from "@app/components/raceday/components/raceday-menu-bar/raceday-menu-bar.component";
 import { RacedayNextHeatComponent } from "@app/components/raceday/components/raceday-next-heat/raceday-next-heat.component";
 import { RacedayOnDeckComponent } from "@app/components/raceday/components/raceday-on-deck/raceday-on-deck.component";
+import { RacedayProgressGaugeComponent } from "@app/components/raceday/components/raceday-progress-gauge/raceday-progress-gauge.component";
 import { RacedayQrComponent } from "@app/components/raceday/components/raceday-qr/raceday-qr.component";
 import { RacedayRaceNameComponent } from "@app/components/raceday/components/raceday-race-name/raceday-race-name.component";
 import { RacedayRecordsComponent } from "@app/components/raceday/components/raceday-records/raceday-records.component";
@@ -81,6 +82,7 @@ import { LoggerService } from "@app/services/logger.service";
     RacedayLabelComponent,
     RacedayActionButtonComponent,
     RacedayCountdownComponent,
+    RacedayProgressGaugeComponent,
   ],
 })
 export class RacedayAbsoluteWidgetComponent
