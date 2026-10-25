@@ -762,18 +762,23 @@ describe("DataService", () => {
         expect(themes.length).toBe(1);
         service.getDefaultTheme().subscribe((def) => {
           expect(def.name).toBe("Dark Theme");
-          service.getTheme("th1").subscribe((t) => {
-            expect(t.name).toBe("Dark Theme");
-            service.createTheme(mockTheme).subscribe((created) => {
-              expect(created.name).toBe("Dark Theme");
-              service.updateTheme("th1", mockTheme).subscribe((updated) => {
-                expect(updated.name).toBe("Dark Theme");
-                service.duplicateTheme("th1", "Dark Copy").subscribe((dup) => {
-                  expect(dup.name).toBe("Dark Copy");
-                  service.deleteTheme("th1").subscribe((del) => {
-                    expect(del.success).toBeTrue();
-                    done();
-                  });
+          service.getThemeFactorySettings().subscribe((factory) => {
+            expect(factory.name).toBe("New Theme");
+            service.getTheme("th1").subscribe((t) => {
+              expect(t.name).toBe("Dark Theme");
+              service.createTheme(mockTheme).subscribe((created) => {
+                expect(created.name).toBe("Dark Theme");
+                service.updateTheme("th1", mockTheme).subscribe((updated) => {
+                  expect(updated.name).toBe("Dark Theme");
+                  service
+                    .duplicateTheme("th1", "Dark Copy")
+                    .subscribe((dup) => {
+                      expect(dup.name).toBe("Dark Copy");
+                      service.deleteTheme("th1").subscribe((del) => {
+                        expect(del.success).toBeTrue();
+                        done();
+                      });
+                    });
                 });
               });
             });
@@ -788,6 +793,11 @@ describe("DataService", () => {
         r.url.endsWith("/api/themes/default"),
       );
       reqDef.flush(mockTheme);
+
+      const reqFactory = httpMock.expectOne((r) =>
+        r.url.endsWith("/api/themes/factory-settings"),
+      );
+      reqFactory.flush({ name: "New Theme" });
 
       const reqGet = httpMock.expectOne((r) =>
         r.url.endsWith("/api/themes/th1"),

@@ -28,6 +28,7 @@ public class ThemeTaskHandler {
 
     app.get("/api/themes", this::listThemes, Role.VIEWER);
     app.get("/api/themes/default", this::getDefaultTheme, Role.VIEWER);
+    app.get("/api/themes/factory-settings", this::getFactoryTheme, Role.VIEWER);
     app.get("/api/themes/{id}", this::getTheme, Role.VIEWER);
     app.post("/api/themes", this::createTheme, Role.VIEWER);
     app.put("/api/themes/{id}", this::updateTheme, Role.VIEWER);
@@ -364,6 +365,23 @@ public class ThemeTaskHandler {
       e.printStackTrace();
       setStatus(ctx, 500);
       setResult(ctx, "Error getting default theme: " + e.getMessage());
+    }
+  }
+
+  public Theme getFactoryTheme() {
+    Map<String, String> slots = createDefaultSlots();
+    Map<String, AudioConfig> audioSlots = new HashMap<>();
+    populateDefaultAudioSlots(audioSlots);
+    return new Theme("New Theme", false, slots, audioSlots, CustomUI.DEFAULT_UI_ID, "new", null);
+  }
+
+  void getFactoryTheme(Context ctx) {
+    try {
+      setJson(ctx, getFactoryTheme());
+    } catch (Exception e) {
+      e.printStackTrace();
+      setStatus(ctx, 500);
+      setResult(ctx, "Error getting factory theme: " + e.getMessage());
     }
   }
 

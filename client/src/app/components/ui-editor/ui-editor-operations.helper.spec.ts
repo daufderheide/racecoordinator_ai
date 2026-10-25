@@ -11,6 +11,7 @@ import {
   deleteThemeEntity,
   duplicateCustomUiEntity,
   duplicateThemeEntity,
+  getDefaultThemeFactoryData,
   handleConfirmDiscard,
   handleOperationError,
   isCountdownPreviewActiveHelper,
@@ -136,34 +137,53 @@ describe("ui-editor-operations.helper", () => {
     expect(dataServiceSpy.deleteCustomUI).toHaveBeenCalledWith("ui_1");
   });
 
-  it("should create theme entity", async () => {
+  it("should create theme entity using factory defaults and unique name", async () => {
     const themeServiceSpy = jasmine.createSpyObj<ThemeService>("ThemeService", [
-      "duplicateTheme",
+      "createTheme",
     ]);
-    themeServiceSpy.duplicateTheme.and.returnValue(
+    themeServiceSpy.createTheme.and.callFake((t: any) =>
       Promise.resolve({
         entity_id: "new_t",
-        name: "New Theme",
+        name: t.name,
         is_default: false,
-        slots: {},
-        audio_slots: {},
+        slots: t.slots || {},
+        audio_slots: t.audio_slots || {},
+        uiId: t.uiId,
       }),
     );
 
-    const defaultTheme = {
-      entity_id: "default_classic_rc_ai",
-      name: "Classic",
-      is_default: true,
-      slots: {},
-      audio_slots: {},
-    };
+    const existingThemes = [
+      {
+        entity_id: "default_classic_rc_ai",
+        name: "Classic",
+        is_default: true,
+        slots: {},
+        audio_slots: {},
+      },
+    ];
 
     const res = await createThemeEntity(
-      defaultTheme as any,
+      existingThemes as any,
       translationServiceSpy,
       themeServiceSpy,
     );
     expect(res.name).toBe("New Theme");
+    expect(themeServiceSpy.createTheme).toHaveBeenCalled();
+    const passedTheme = themeServiceSpy.createTheme.calls.mostRecent().args[0];
+    expect(passedTheme.is_default).toBeFalse();
+    expect(passedTheme.slots!["flag.racing"]).toBe("default_flag_green");
+    expect(passedTheme.audio_slots!["audio.countdown"].url).toBe(
+      "default_countdown",
+    );
+    expect(passedTheme.uiId).toBe("default_ui_layout_rc_ai");
+  });
+
+  it("should return factory defaults from getDefaultThemeFactoryData", () => {
+    const factory = getDefaultThemeFactoryData();
+    expect(factory.uiId).toBe("default_ui_layout_rc_ai");
+    expect(factory.slots["flag.racing"]).toBe("default_flag_green");
+    expect(factory.slots["gauge.fuel"]).toBe("default_fuel_gauge");
+    expect(factory.audio_slots["audio.countdown"].type).toBe("audio_set");
   });
 
   it("should duplicate theme entity", async () => {

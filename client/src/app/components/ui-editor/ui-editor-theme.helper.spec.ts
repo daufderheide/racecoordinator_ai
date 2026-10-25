@@ -313,7 +313,7 @@ describe("ui-editor-theme.helper", () => {
       defaultThemeNames: {},
       translationService: { translate: (k: string) => k },
       themeService: {
-        duplicateTheme: jasmine.createSpy("duplicateTheme").and.resolveTo({
+        createTheme: jasmine.createSpy("createTheme").and.resolveTo({
           entity_id: "new_theme_1",
           name: "New Theme",
         }),
@@ -330,7 +330,7 @@ describe("ui-editor-theme.helper", () => {
     expect(comp.defaultThemeNames["new_theme_1"]).toBe("New Theme");
     expect(comp.openSuccessModal).toHaveBeenCalledWith(
       jasmine.any(Object),
-      "default_classic_rc_ai",
+      null,
       "new_theme_1",
     );
   });

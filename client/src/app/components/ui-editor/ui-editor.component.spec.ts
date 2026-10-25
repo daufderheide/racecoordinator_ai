@@ -276,6 +276,7 @@ describe("UIEditorComponent", () => {
       "setActiveTheme",
       "deleteTheme",
       "duplicateTheme",
+      "createTheme",
       "resolveAssetId",
     ]);
     mockTranslationService = jasmine.createSpyObj("TranslationService", [
@@ -358,6 +359,16 @@ describe("UIEditorComponent", () => {
     mockThemeService.getActiveTheme.and.returnValue(null);
     mockThemeService.getThemes.and.returnValue([]);
     mockThemeService.resolveAssetId.and.returnValue(null);
+    mockThemeService.createTheme.and.callFake((t: any) =>
+      Promise.resolve({
+        entity_id: "new_t",
+        name: t.name || "New Theme",
+        is_default: false,
+        slots: t.slots || {},
+        audio_slots: t.audio_slots || {},
+        uiId: t.uiId,
+      }),
+    );
 
     TestBed.overrideComponent(DefaultRacedayComponent, {
       set: {
@@ -1344,7 +1355,7 @@ describe("UIEditorComponent", () => {
       expect(component.showDeleteConfirm).toBeFalse();
     }));
 
-    it("should duplicate the default theme when creating a new theme without activating it", fakeAsync(() => {
+    it("should create new theme using factory defaults without changing active theme", fakeAsync(() => {
       const defaultTheme = {
         entity_id: "t1",
         is_default: true,
@@ -1361,18 +1372,17 @@ describe("UIEditorComponent", () => {
       component.refreshDisplayProperties();
       component.editingSettings.activeThemeId = "t1";
 
-      mockThemeService.duplicateTheme.and.returnValue(
-        Promise.resolve(newTheme),
-      );
+      mockThemeService.createTheme.and.returnValue(Promise.resolve(newTheme));
 
       component.createNewTheme();
       flush();
 
-      const expectedName = "RaceCoordinator AI (Copy)";
-      expect(mockThemeService.duplicateTheme).toHaveBeenCalledWith(
-        "t1",
-        expectedName,
-      );
+      expect(mockThemeService.createTheme).toHaveBeenCalled();
+      const createdArg =
+        mockThemeService.createTheme.calls.mostRecent().args[0];
+      expect(createdArg.name).toBe("New Theme");
+      expect(createdArg.is_default).toBeFalse();
+      expect(createdArg.slots["flag.racing"]).toBe("default_flag_green");
       expect(component.editingSettings.activeThemeId).toBe("t1");
       expect(component.displayThemes.length).toBe(2);
       expect(component.sectionsExpanded["theme_t3"]).toBeTrue();
@@ -1488,15 +1498,13 @@ describe("UIEditorComponent", () => {
         name: "Default (Copy)",
         slots: {},
       } as Theme;
-      mockThemeService.duplicateTheme.and.returnValue(
-        Promise.resolve(newTheme),
-      );
+      mockThemeService.createTheme.and.returnValue(Promise.resolve(newTheme));
 
       spyOn(component, "captureState").and.callThrough();
       const initialUndoCount = component.undoManager.undoStackCount;
 
       component.createNewTheme();
-      tick(); // resolve duplicateTheme
+      tick(); // resolve createTheme
 
       expect(component.captureState).toHaveBeenCalled();
       expect(component.undoManager.undoStackCount).toBe(initialUndoCount + 1);
@@ -1884,9 +1892,7 @@ describe("UIEditorComponent", () => {
         is_default: false,
         slots: {},
       } as Theme;
-      mockThemeService.duplicateTheme.and.returnValue(
-        Promise.resolve(newTheme),
-      );
+      mockThemeService.createTheme.and.returnValue(Promise.resolve(newTheme));
 
       component.createNewTheme();
       flush();
@@ -2605,16 +2611,14 @@ describe("UIEditorComponent", () => {
       const newTheme = {
         entity_id: "t2",
         is_default: false,
-        name: "RaceCoordinator AI (Copy)",
+        name: "New Theme",
         slots: {},
       } as Theme;
       component.editingState.themes = [defaultTheme];
       component.refreshDisplayProperties();
       component.editingSettings.activeThemeId = "t1";
 
-      mockThemeService.duplicateTheme.and.returnValue(
-        Promise.resolve(newTheme),
-      );
+      mockThemeService.createTheme.and.returnValue(Promise.resolve(newTheme));
 
       component.createNewTheme();
       flush();
@@ -2623,7 +2627,7 @@ describe("UIEditorComponent", () => {
       expect(component.successModalTitle).toBe("GEN_SUCCESS");
       expect(component.successModalMessage).toBe("UE_SUCCESS_CREATE");
       expect(component.successModalParams).toEqual({
-        name: "RaceCoordinator AI (Copy)",
+        name: "New Theme",
       });
     }));
 

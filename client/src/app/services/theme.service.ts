@@ -404,6 +404,15 @@ export class ThemeService {
   }
 
   /**
+   * Create a new theme.
+   */
+  async createTheme(theme: Partial<Theme>): Promise<Theme> {
+    const result = await firstValueFrom(this.dataService.createTheme(theme));
+    await this.refresh();
+    return result;
+  }
+
+  /**
    * Delete a theme.
    */
   async deleteTheme(themeId: string): Promise<void> {

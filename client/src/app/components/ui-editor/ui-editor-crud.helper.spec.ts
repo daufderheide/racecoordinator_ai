@@ -5,6 +5,7 @@ import { TranslationService } from "@app/services/translation.service";
 import {
   buildDuplicateEntityName,
   generateUniqueCustomUiName,
+  generateUniqueThemeName,
   getCustomUiDisplayNameKey,
   getThemeDisplayNameKey,
   isCustomUiDefault,
@@ -275,6 +276,73 @@ describe("ui-editor-crud.helper", () => {
 
     it("should fallback to default name if baseName is empty", () => {
       expect(generateUniqueCustomUiName("", [])).toBe("New UI Layout");
+    });
+  });
+
+  describe("generateUniqueThemeName", () => {
+    it("should return trimmed base name when existingThemes is empty", () => {
+      expect(generateUniqueThemeName("New Theme", [])).toBe("New Theme");
+    });
+
+    it("should return base name when not taken", () => {
+      const existing: Theme[] = [
+        {
+          entity_id: "1",
+          name: "RaceCoordinator AI",
+          is_default: true,
+          slots: {},
+          audio_slots: {},
+        },
+        {
+          entity_id: "2",
+          name: "Practice",
+          is_default: true,
+          slots: {},
+          audio_slots: {},
+        },
+      ];
+      expect(generateUniqueThemeName("New Theme", existing)).toBe("New Theme");
+    });
+
+    it("should append suffix 2 when base name already exists", () => {
+      const existing: Theme[] = [
+        {
+          entity_id: "1",
+          name: "New Theme",
+          is_default: false,
+          slots: {},
+          audio_slots: {},
+        },
+      ];
+      expect(generateUniqueThemeName("New Theme", existing)).toBe(
+        "New Theme 2",
+      );
+    });
+
+    it("should be case-insensitive and increment suffix until available", () => {
+      const existing: Theme[] = [
+        {
+          entity_id: "1",
+          name: "new theme",
+          is_default: false,
+          slots: {},
+          audio_slots: {},
+        },
+        {
+          entity_id: "2",
+          name: "New Theme 2",
+          is_default: false,
+          slots: {},
+          audio_slots: {},
+        },
+      ];
+      expect(generateUniqueThemeName("New Theme", existing)).toBe(
+        "New Theme 3",
+      );
+    });
+
+    it("should fallback to default name if baseName is empty", () => {
+      expect(generateUniqueThemeName("", [])).toBe("New Theme");
     });
   });
 });

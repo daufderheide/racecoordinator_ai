@@ -607,7 +607,8 @@
   width: 100%;
 }
 
-.custom-ui-toolbar-container {
+.custom-ui-toolbar-container,
+.theme-toolbar-container {
   display: flex;
   align-items: center;
   gap: 15px;

@@ -9,12 +9,59 @@ import { TranslationService } from "@app/services/translation.service";
 import {
   buildDuplicateEntityName,
   generateUniqueCustomUiName,
+  generateUniqueThemeName,
   getCustomUiDisplayNameKey,
   getThemeDisplayNameKey,
   isCustomUiDefault,
   isThemeDefault,
 } from "./ui-editor-crud.helper";
 import { getDefaultLayoutResetData } from "./ui-editor-io.helper";
+
+export function getDefaultThemeFactoryData(): {
+  slots: { [key: string]: string };
+  audio_slots: { [key: string]: any };
+  uiId: string;
+} {
+  return {
+    slots: {
+      "flag.racing": "default_flag_green",
+      "flag.heat_paused": "default_flag_yellow",
+      "flag.heat_over": "default_flag_red",
+      "flag.race_over": "default_flag_checkered",
+      "flag.not_started": "default_flag_red",
+      "flag.starting": "default_flag_red",
+      "flag.restarting": "default_flag_yellow",
+      "flag.one_lap_to_go": "default_flag_white",
+      "flag.heat_finishing": "default_flag_checkered",
+      "flag.warmup": "default_flag_green_yellow",
+      "flag.driver_finished": "default_flag_red",
+      "flag.penalty": "default_flag_black",
+      "lamp.red.on": "default_start_red_on",
+      "lamp.red.dim": "default_start_red_dim",
+      "lamp.green": "default_start_green",
+      "gauge.fuel": "default_fuel_gauge",
+    },
+    audio_slots: {
+      "audio.countdown": { type: "audio_set", url: "default_countdown" },
+      "audio.seconds_left": { type: "audio_set", url: "default_seconds_left" },
+      "audio.laps_left": { type: "audio_set", url: "default_laps_left" },
+      "audio.auto_start": { type: "audio_set", url: "default_auto_start" },
+      "audio.auto_advance": { type: "audio_set", url: "default_auto_advance" },
+      "audio.yellowflag": { type: "preset", url: "default_yellow_flag" },
+      "audio.seconds_left.halfway": {
+        type: "preset",
+        url: "default_heat_half",
+      },
+      "audio.heat_over": { type: "preset", url: "default_heat_over" },
+      "audio.race_over": { type: "preset", url: "default_race_over" },
+      "audio.min_lap_time": {
+        type: "tts",
+        text: "Min lap time for {driver.nickname}",
+      },
+    },
+    uiId: "default_ui_layout_rc_ai",
+  };
+}
 
 export async function createCustomUiEntity(
   existingUisOrUi: CustomUI[] | CustomUI,
@@ -71,17 +118,44 @@ export async function deleteCustomUiEntity(
 }
 
 export async function createThemeEntity(
-  defaultTheme: Theme,
+  existingThemesOrTheme: Theme[] | Theme,
   translationService: TranslationService,
   themeService: ThemeService,
+  dataService?: DataService,
 ): Promise<Theme> {
-  const newName = buildDuplicateEntityName(
-    defaultTheme.name,
-    isThemeDefault(defaultTheme),
-    getThemeDisplayNameKey(defaultTheme, translationService),
-    translationService,
-  );
-  return themeService.duplicateTheme(defaultTheme.entity_id, newName);
+  const existingThemes: Theme[] = Array.isArray(existingThemesOrTheme)
+    ? existingThemesOrTheme
+    : existingThemesOrTheme
+      ? [existingThemesOrTheme]
+      : [];
+  const defaultKey = "UE_LABEL_NEW_THEME";
+  const translated = translationService.translate(defaultKey);
+  const baseName =
+    translated && translated !== defaultKey ? translated : "New Theme";
+  const newName = generateUniqueThemeName(baseName, existingThemes);
+
+  let factoryData: any = null;
+  if (dataService?.getThemeFactorySettings) {
+    try {
+      factoryData = await firstValueFrom(dataService.getThemeFactorySettings());
+    } catch {
+      // fallback to client-side factory defaults
+    }
+  }
+  if (!factoryData) {
+    factoryData = getDefaultThemeFactoryData();
+  }
+
+  const newTheme: Partial<Theme> = {
+    entity_id: "new",
+    name: newName,
+    is_default: false,
+    slots: factoryData.slots || {},
+    audio_slots: factoryData.audio_slots || {},
+    uiId: factoryData.uiId || "default_ui_layout_rc_ai",
+  };
+
+  return themeService.createTheme(newTheme);
 }
 
 export async function duplicateThemeEntity(

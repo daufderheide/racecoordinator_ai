@@ -260,3 +260,30 @@ export function generateUniqueCustomUiName(
     suffix++;
   }
 }
+
+export function generateUniqueThemeName(
+  baseName: string,
+  existingThemes: Theme[],
+): string {
+  const trimmedBase = (baseName || "New Theme").trim();
+  const lowerBase = trimmedBase.toLowerCase();
+  const exists = (existingThemes || []).some(
+    (t) => (t.name || "").trim().toLowerCase() === lowerBase,
+  );
+  if (!exists) {
+    return trimmedBase;
+  }
+  let suffix = 2;
+  while (true) {
+    const candidate = `${trimmedBase} ${suffix}`;
+    const candidateLower = candidate.toLowerCase();
+    if (
+      !(existingThemes || []).some(
+        (t) => (t.name || "").trim().toLowerCase() === candidateLower,
+      )
+    ) {
+      return candidate;
+    }
+    suffix++;
+  }
+}

@@ -227,6 +227,21 @@ describe("ThemeService", () => {
     expect(result.entity_id).toBe("new-theme");
   });
 
+  it("should create theme and refresh", async () => {
+    const newTheme = {
+      ...mockThemes[0],
+      entity_id: "created-theme",
+      name: "New Theme",
+    };
+    dataServiceSpy.createTheme.and.returnValue(of(newTheme));
+
+    const result = await service.createTheme(newTheme);
+
+    expect(dataServiceSpy.createTheme).toHaveBeenCalledWith(newTheme);
+    expect(dataServiceSpy.getThemes).toHaveBeenCalled();
+    expect(result.entity_id).toBe("created-theme");
+  });
+
   it("should delete theme and refresh", async () => {
     dataServiceSpy.deleteTheme.and.returnValue(of(undefined));
 

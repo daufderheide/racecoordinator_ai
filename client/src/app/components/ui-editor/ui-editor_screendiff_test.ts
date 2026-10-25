@@ -411,4 +411,33 @@ test.describe("UI Editor Visuals", () => {
       },
     );
   });
+
+  test("should display themes expander correctly", async ({ page }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/ui-editor"),
+    );
+    await page.locator(".ue-container").waitFor({ state: "visible" });
+
+    const themesSection = page.locator(
+      '.config-section[data-section="themes"]',
+    );
+    await themesSection.waitFor({ state: "visible" });
+    await page.locator("#help-themes").waitFor({ state: "visible" });
+    await page.locator("#help-themes-add").waitFor({ state: "visible" });
+    await themesSection.scrollIntoViewIfNeeded();
+    await page.evaluate(() => new Promise(requestAnimationFrame));
+    await TestSetupHelper.waitForImagesLoaded(themesSection);
+    await page.mouse.move(0, 0);
+
+    await expect(themesSection).toHaveScreenshot(
+      "ui-editor-themes-expander.png",
+      {
+        maxDiffPixelRatio: 0.05,
+        maxDiffPixels: 5000,
+        animations: "disabled",
+      },
+    );
+  });
 });

@@ -73,6 +73,22 @@ public class ThemeTaskHandlerTest {
   }
 
   @Test
+  public void testGetFactoryTheme_Success() {
+    handler.getFactoryTheme(ctx);
+    org.mockito.ArgumentCaptor<Object> captor = org.mockito.ArgumentCaptor.forClass(Object.class);
+    verify(handler).setJson(any(), captor.capture());
+    Theme factory = (Theme) captor.getValue();
+    assertNotNull(factory);
+    assertEquals("New Theme", factory.getName());
+    assertFalse(factory.isDefault());
+    assertEquals(CustomUI.DEFAULT_UI_ID, factory.getUiId());
+    assertNotNull(factory.getSlots());
+    assertEquals("default_flag_green", factory.getSlots().get("flag.racing"));
+    assertNotNull(factory.getAudioSlots());
+    assertEquals("default_countdown", factory.getAudioSlots().get("audio.countdown").getUrl());
+  }
+
+  @Test
   public void testEnsureDefaultTheme_CreatesDefaultThemeWhenEmpty() {
     handler.ensureDefaultTheme();
     org.mockito.ArgumentCaptor<Object> captor = org.mockito.ArgumentCaptor.forClass(Object.class);

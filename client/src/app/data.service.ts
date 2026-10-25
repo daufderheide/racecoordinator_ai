@@ -1264,6 +1264,10 @@ export class DataService {
     return this.http.get<any>(`${this.baseUrl}/api/themes/default`);
   }
 
+  getThemeFactorySettings(): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/api/themes/factory-settings`);
+  }
+
   getTheme(id: string): Observable<any> {
     return this.http.get<any>(`${this.baseUrl}/api/themes/${id}`);
   }

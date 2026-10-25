@@ -104,27 +104,28 @@ export async function executeCreateTheme(params: {
   editingState: UIEditorState;
   translationService: any;
   themeService: any;
+  dataService?: any;
   logger: any;
 }): Promise<{
   created?: Theme;
   defaultTheme?: Theme;
   successModalParams?: { title: string; message: string; params: any };
 }> {
-  const defaultTheme = params.displayThemes.find(
-    (t) => t.entity_id === "default_classic_rc_ai" || isThemeDefault(t),
-  );
-  if (!defaultTheme) return {};
   try {
     const { createThemeEntity } = await import("./ui-editor-operations.helper");
+    const existingThemes =
+      params.editingState?.themes && params.editingState.themes.length > 0
+        ? params.editingState.themes
+        : params.displayThemes || [];
     const created = await createThemeEntity(
-      defaultTheme,
+      existingThemes,
       params.translationService,
       params.themeService,
+      params.dataService,
     );
     params.editingState.themes = [...params.editingState.themes, created];
     return {
       created,
-      defaultTheme,
       successModalParams: {
         title: "GEN_SUCCESS",
         message: "UE_SUCCESS_CREATE",
@@ -215,6 +216,7 @@ export async function handleCreateTheme(comp: any): Promise<void> {
     editingState: comp.editingState,
     translationService: comp.translationService,
     themeService: comp.themeService,
+    dataService: comp.dataService,
     logger: comp.logger,
   });
   if (res.created) {
@@ -224,11 +226,7 @@ export async function handleCreateTheme(comp: any): Promise<void> {
     comp.refreshDisplayProperties();
     comp.toggleThemeSection(res.created.entity_id, false);
     comp.captureState();
-    comp.openSuccessModal(
-      res.successModalParams,
-      res.defaultTheme?.entity_id || null,
-      res.created.entity_id,
-    );
+    comp.openSuccessModal(res.successModalParams, null, res.created.entity_id);
   }
 }
 
