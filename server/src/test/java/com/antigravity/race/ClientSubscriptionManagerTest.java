@@ -61,6 +61,7 @@ public class ClientSubscriptionManagerTest {
     manager.setCleanupGracePeriodSeconds(0);
     manager.setAutoShutdownDelaySeconds(5);
     manager.cancelStartupWatchdog();
+    ClientSubscriptionManager.setPreShutdownHook(null);
 
     try {
       Field autoShutdownFutureField =
@@ -625,6 +626,34 @@ public class ClientSubscriptionManagerTest {
     // Wait a little for the scheduler
     Thread.sleep(200);
     assertTrue("Auto-shutdown should be called", shutdownCalled.get());
+  }
+
+  @Test
+  public void testPreShutdownHookExecutedOnAutoShutdown() throws Exception {
+    manager.setAutoShutdownDelaySeconds(0);
+    java.util.concurrent.atomic.AtomicBoolean preShutdownCalled =
+        new java.util.concurrent.atomic.AtomicBoolean(false);
+    java.util.concurrent.atomic.AtomicBoolean shutdownCalled =
+        new java.util.concurrent.atomic.AtomicBoolean(false);
+
+    ClientSubscriptionManager.setPreShutdownHook(() -> preShutdownCalled.set(true));
+    manager.setAutoShutdownAction(() -> shutdownCalled.set(true));
+
+    WsContext mockContext = mock(WsContext.class);
+    org.eclipse.jetty.websocket.api.Session mockSession =
+        mock(org.eclipse.jetty.websocket.api.Session.class);
+    Field sessionField = WsContext.class.getDeclaredField("session");
+    sessionField.setAccessible(true);
+    sessionField.set(mockContext, mockSession);
+
+    manager.addSession(mockContext);
+    manager.removeSession(mockContext);
+
+    Thread.sleep(200);
+    assertTrue("Pre-shutdown hook should be called", preShutdownCalled.get());
+    assertTrue("Auto-shutdown should be called", shutdownCalled.get());
+
+    ClientSubscriptionManager.setPreShutdownHook(null);
   }
 
   @Test

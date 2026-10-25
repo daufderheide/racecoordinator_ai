@@ -3,6 +3,8 @@ package com.antigravity;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -68,6 +70,7 @@ public class AppTest {
     if (rootLogger != null && mockAppender != null) {
       rootLogger.detachAppender(mockAppender);
     }
+    App.setCurrentTrayIcon(null);
   }
 
   @Test
@@ -132,6 +135,30 @@ public class AppTest {
   public void testShowPortConflictDialog_HeadlessFalseDoesNotThrow() {
     if (GraphicsEnvironment.isHeadless()) {
       App.showPortConflictDialog("Port Conflict Test", "Test port conflict message", false);
+    }
+  }
+
+  @Test
+  public void testRemoveTrayIcon_WhenNull_DoesNotThrow() {
+    App.setCurrentTrayIcon(null);
+    App.removeTrayIcon();
+    assertNull(App.getCurrentTrayIcon());
+  }
+
+  @Test
+  public void testSetAndGetAndRemoveCurrentTrayIcon() {
+    App.setCurrentTrayIcon(null);
+    assertNull(App.getCurrentTrayIcon());
+
+    if (!GraphicsEnvironment.isHeadless()) {
+      java.awt.image.BufferedImage img =
+          new java.awt.image.BufferedImage(16, 16, java.awt.image.BufferedImage.TYPE_INT_ARGB);
+      java.awt.TrayIcon icon = new java.awt.TrayIcon(img, "Test");
+      App.setCurrentTrayIcon(icon);
+      assertSame(icon, App.getCurrentTrayIcon());
+
+      App.removeTrayIcon();
+      assertNull(App.getCurrentTrayIcon());
     }
   }
 }

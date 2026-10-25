@@ -71,9 +71,25 @@ public class ClientSubscriptionManager {
   private int autoShutdownDelaySeconds = 5;
   private ScheduledFuture<?> startupWatchdogFuture;
   private int startupWatchdogSeconds = 90;
+  private static Runnable preShutdownHook;
+
+  public static void setPreShutdownHook(Runnable hook) {
+    preShutdownHook = hook;
+  }
+
+  private static void runPreShutdownHook() {
+    if (preShutdownHook != null) {
+      try {
+        preShutdownHook.run();
+      } catch (Exception ignored) {
+      }
+    }
+  }
+
   private Runnable autoShutdownAction =
       () -> {
         if (!Boolean.getBoolean("skip.jni.load")) {
+          runPreShutdownHook();
           System.exit(0);
         }
       };
@@ -111,6 +127,7 @@ public class ClientSubscriptionManager {
                             + " server...",
                         startupWatchdogSeconds);
                     if (autoShutdownAction != null) {
+                      runPreShutdownHook();
                       autoShutdownAction.run();
                     }
                   }
@@ -434,6 +451,7 @@ public class ClientSubscriptionManager {
                   if (sessions.isEmpty() && currentRace == null) {
                     logger.info("Auto-shutting down server due to 0 connected clients.");
                     if (autoShutdownAction != null) {
+                      runPreShutdownHook();
                       autoShutdownAction.run();
                     }
                   }
@@ -525,6 +543,7 @@ public class ClientSubscriptionManager {
       logger.info(
           "Last director client disconnected/unsubscribed. Stopping and clearing current race.");
       deleteAutoSave(currentRace.getRaceModel().getEntityId(), currentRace.isDemoMode());
+      cleanupFuture = null;
       setRace(null);
       checkAutoShutdown();
     }

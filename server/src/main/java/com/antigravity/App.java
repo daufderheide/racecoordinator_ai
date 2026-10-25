@@ -153,6 +153,7 @@ public class App {
 
       boolean headless = isHeadless(args);
       registerShutdownHook();
+      ClientSubscriptionManager.setPreShutdownHook(App::removeTrayIcon);
 
       ServerConfigService configService = new ServerConfigService();
       DatabaseContext databaseContext = initializeDatabaseContext(appDataDir, configService);
@@ -259,6 +260,7 @@ public class App {
       exitItem.addActionListener(
           e -> {
             logger.info("Exiting from System Tray");
+            removeTrayIcon();
             System.exit(0);
           });
 
@@ -273,6 +275,25 @@ public class App {
     } catch (Exception e) {
       logger.error("Failed to setup SystemTray", e);
     }
+  }
+
+  public static synchronized void removeTrayIcon() {
+    if (currentTrayIcon != null && SystemTray.isSupported()) {
+      try {
+        TrayIcon icon = currentTrayIcon;
+        currentTrayIcon = null;
+        SystemTray.getSystemTray().remove(icon);
+      } catch (Exception ignored) {
+      }
+    }
+  }
+
+  static void setCurrentTrayIcon(TrayIcon icon) {
+    currentTrayIcon = icon;
+  }
+
+  static TrayIcon getCurrentTrayIcon() {
+    return currentTrayIcon;
   }
 
   static void openBrowser(String url) {
@@ -637,6 +658,7 @@ public class App {
           ctx.status(200).result("Shutting down");
           new Thread(
                   () -> {
+                    removeTrayIcon();
                     try {
                       Thread.sleep(200);
                     } catch (InterruptedException ignored) {
@@ -844,9 +866,12 @@ public class App {
                   watchdog.start();
 
                   if (currentTrayIcon != null && SystemTray.isSupported()) {
+                    Thread trayCleanup = new Thread(App::removeTrayIcon, "TrayCleanupThread");
+                    trayCleanup.setDaemon(true);
+                    trayCleanup.start();
                     try {
-                      SystemTray.getSystemTray().remove(currentTrayIcon);
-                    } catch (Exception ignored) {
+                      trayCleanup.join(300);
+                    } catch (InterruptedException ignored) {
                     }
                   }
 
