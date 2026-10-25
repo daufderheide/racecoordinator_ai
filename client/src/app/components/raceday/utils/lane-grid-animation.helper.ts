@@ -6,8 +6,6 @@ import {
 import { AbsoluteWidgetNode } from "@app/models/settings";
 import { DriverHeatData } from "@app/race/driver_heat_data";
 
-import { RacedayLayoutUtils } from "./raceday-layout.utils";
-
 export interface GridSlotCoordinate {
   x: number;
   y: number;
@@ -51,7 +49,7 @@ export class LaneGridAnimationHelper {
     const targetRank = targetIndex + 1;
     const isOverallGrid =
       s["gridType"] === "overall" ||
-      (!s["gridType"] && RacedayLayoutUtils.isOverallColumnKey(s["columnKey"]));
+      (!s["gridType"] && s["bindingMode"] === "overallPosition");
 
     if (isOverallGrid) {
       return this.resolveOverallGridEntityId(

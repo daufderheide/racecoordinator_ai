@@ -381,6 +381,16 @@ export class LaneGridStyleHelper {
         targetWidget.scaleMode = ref.scaleMode;
       }
     }
+
+    const effectiveGridType = session.gridType || refSettings?.["gridType"];
+    if (effectiveGridType && !targetWidget.customSettings["gridType"]) {
+      targetWidget.customSettings["gridType"] = effectiveGridType;
+    }
+    const effectiveBindingMode =
+      session.bindingMode || refSettings?.["bindingMode"];
+    if (effectiveBindingMode && !targetWidget.customSettings["bindingMode"]) {
+      targetWidget.customSettings["bindingMode"] = effectiveBindingMode;
+    }
   }
 
   private static applyGridColorInheritance(

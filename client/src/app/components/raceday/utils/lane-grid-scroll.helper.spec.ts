@@ -169,7 +169,7 @@ describe("LaneGridScrollHelper", () => {
       ).toBe(8);
     });
 
-    it("should count overall race participants when columnKey is an overall column key", () => {
+    it("should count track lanes when columnKey is an overall column key in a heat grid", () => {
       const overallColWidgets = [
         {
           ...widgets[0],
@@ -191,7 +191,7 @@ describe("LaneGridScrollHelper", () => {
           gridId,
           parent,
         ),
-      ).toBe(6);
+      ).toBe(4);
     });
 
     it("should count overall race participants when any widget has gridType overall even if first widget is heat", () => {

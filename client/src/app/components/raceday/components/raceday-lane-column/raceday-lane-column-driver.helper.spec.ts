@@ -259,6 +259,22 @@ describe("raceday-lane-column-driver.helper", () => {
       expect(isParentGridOverall(parent, "grid-1")).toBeFalse();
     });
 
+    it("should return false if layout widgets do not declare gridType even with overall columnKey", () => {
+      const parent = {
+        layout: {
+          widgets: [
+            {
+              customSettings: {
+                gridId: "grid-1",
+                columnKey: "overallLapCount",
+              },
+            },
+          ],
+        },
+      };
+      expect(isParentGridOverall(parent, "grid-1")).toBeFalse();
+    });
+
     it("should return true if layout widgets declare overall grid", () => {
       const parent = {
         layout: {
@@ -454,6 +470,12 @@ describe("raceday-lane-column-driver.helper", () => {
       expect(isOverallDataSource(undefined)).toBeFalse();
       expect(isOverallDataSource({ gridType: "overall" } as any)).toBeTrue();
       expect(isOverallDataSource({ gridType: "heat" } as any)).toBeFalse();
+      expect(
+        isOverallDataSource({ columnKey: "overallLapCount" } as any),
+      ).toBeFalse();
+      expect(
+        isOverallDataSource({ columnKey: "rankOverall" } as any),
+      ).toBeFalse();
     });
 
     it("should evaluate isParentRaceOver correctly", () => {

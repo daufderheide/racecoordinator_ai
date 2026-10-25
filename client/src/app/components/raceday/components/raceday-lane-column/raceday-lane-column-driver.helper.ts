@@ -1,4 +1,3 @@
-import { RacedayLayoutUtils } from "@app/components/raceday/utils/raceday-layout.utils";
 import { LaneColumnWidgetSettings } from "@app/models/settings";
 import { RaceState } from "@app/proto/antigravity";
 import { DriverHeatData } from "@app/race/driver_heat_data";
@@ -291,21 +290,20 @@ export function isParentGridOverall(parent: any, gridId?: string): boolean {
     (w: any) => w.customSettings?.gridId === gridId,
   );
   if (!gridWidgets || gridWidgets.length === 0) return false;
-  const allHeat = gridWidgets.every(
-    (w: any) => w.customSettings?.gridType === "heat",
-  );
-  if (allHeat) return false;
   const anyOverall = gridWidgets.some(
     (w: any) => w.customSettings?.gridType === "overall",
   );
   if (anyOverall) return true;
+  const anyHeat = gridWidgets.some(
+    (w: any) => w.customSettings?.gridType === "heat",
+  );
+  if (anyHeat) return false;
 
   return Boolean(
     gridWidgets.some(
       (w: any) =>
         !w.customSettings?.gridType &&
-        (w.customSettings?.bindingMode === "overallPosition" ||
-          RacedayLayoutUtils.isOverallColumnKey(w.customSettings?.columnKey)),
+        w.customSettings?.bindingMode === "overallPosition",
     ),
   );
 }
@@ -584,9 +582,7 @@ export function isOverallDataSource(
   // Standalone widgets (not part of a grid)
   const mode = bindingMode || settings.bindingMode;
   if (mode === "overallPosition") return true;
-  if (RacedayLayoutUtils.isOverallColumnKey(settings.columnKey)) {
-    return true;
-  }
+  if (mode === "lane" || mode === "position") return false;
 
   return false;
 }
@@ -701,7 +697,6 @@ export function resolveTargetDriver(
     (settings.gridType === "overall" ||
       bindingMode === "overallPosition" ||
       bindingMode === "seed" ||
-      RacedayLayoutUtils.isOverallColumnKey(columnKey || settings.columnKey) ||
       isParentGridOverall(parent, settings.gridId) ||
       isParentGridSeed(parent, settings.gridId));
 

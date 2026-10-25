@@ -5,7 +5,6 @@ import {
   LaneGridReplicationHelper,
   LaneGridSession,
 } from "@app/components/raceday/utils/lane-grid-replication.helper";
-import { RacedayLayoutUtils } from "@app/components/raceday/utils/raceday-layout.utils";
 import { CustomUI } from "@app/models/custom-ui";
 
 import { updateLayoutOnModel } from "./ui-editor-widget.helper";
@@ -305,22 +304,24 @@ function buildEditGridSession(
   const headerHeight = Number(first.customSettings?.["headerHeight"]) || 36;
   const linkColumns = first.customSettings?.["linkColumns"] !== false;
 
-  const allHeat =
-    gridWidgets.length > 0 &&
-    gridWidgets.every((w: any) => w.customSettings?.["gridType"] === "heat");
+  const anyHeat = gridWidgets.some(
+    (w: any) => w.customSettings?.["gridType"] === "heat",
+  );
   const anyOverall = gridWidgets.some(
     (w: any) => w.customSettings?.["gridType"] === "overall",
   );
   const anyLegacyOverallColumn = gridWidgets.some(
     (w: any) =>
       !w.customSettings?.["gridType"] &&
-      RacedayLayoutUtils.isOverallColumnKey(w.customSettings?.["columnKey"]),
+      w.customSettings?.["bindingMode"] === "overallPosition",
   );
 
   let gridType: "heat" | "overall";
-  if (allHeat) {
+  if (anyOverall) {
+    gridType = "overall";
+  } else if (anyHeat) {
     gridType = "heat";
-  } else if (anyOverall || anyLegacyOverallColumn) {
+  } else if (anyLegacyOverallColumn) {
     gridType = "overall";
   } else {
     gridType = first.customSettings?.["gridType"] || "heat";
@@ -631,19 +632,20 @@ function resolveSyncedGridType(
   cs: any,
   fallbackGridType: string,
 ): string {
-  const allHeat =
-    gridWidgets.length > 0 &&
-    gridWidgets.every((w: any) => w.customSettings?.["gridType"] === "heat");
-  if (allHeat) return "heat";
   const anyOverall = gridWidgets.some(
     (w: any) => w.customSettings?.["gridType"] === "overall",
   );
+  if (anyOverall) return "overall";
+  const anyHeat = gridWidgets.some(
+    (w: any) => w.customSettings?.["gridType"] === "heat",
+  );
+  if (anyHeat) return "heat";
   const anyLegacyOverall = gridWidgets.some(
     (w: any) =>
       !w.customSettings?.["gridType"] &&
-      RacedayLayoutUtils.isOverallColumnKey(w.customSettings?.["columnKey"]),
+      w.customSettings?.["bindingMode"] === "overallPosition",
   );
-  if (anyOverall || anyLegacyOverall) return "overall";
+  if (anyLegacyOverall) return "overall";
   return cs["gridType"] || fallbackGridType || "heat";
 }
 

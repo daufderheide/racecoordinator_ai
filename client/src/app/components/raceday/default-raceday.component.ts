@@ -4348,10 +4348,7 @@ export class DefaultRacedayComponent
             continue;
           }
           const hasLegacyOverall = settingsList.some(
-            (s) =>
-              !s["gridType"] &&
-              (s["bindingMode"] === "overallPosition" ||
-                RacedayLayoutUtils.isOverallColumnKey(s["columnKey"])),
+            (s) => !s["gridType"] && s["bindingMode"] === "overallPosition",
           );
           if (hasLegacyOverall) {
             set.add(gid);
@@ -4405,8 +4402,7 @@ export class DefaultRacedayComponent
           if (
             s["gridType"] === "overall" ||
             s["bindingMode"] === "overallPosition" ||
-            s["bindingMode"] === "seed" ||
-            RacedayLayoutUtils.isOverallColumnKey(s["columnKey"])
+            s["bindingMode"] === "seed"
           ) {
             isOverallOrSeed = true;
           }
@@ -4561,8 +4557,7 @@ export class DefaultRacedayComponent
       (w: any) =>
         w.customSettings?.["gridType"] === "overall" ||
         w.customSettings?.["bindingMode"] === "overallPosition" ||
-        w.customSettings?.["bindingMode"] === "seed" ||
-        RacedayLayoutUtils.isOverallColumnKey(w.customSettings?.["columnKey"]),
+        w.customSettings?.["bindingMode"] === "seed",
     );
     const emptyRowsMode =
       (gridWidgets.find((w: any) => w.customSettings?.["emptyRowsMode"])
@@ -7249,7 +7244,6 @@ export class DefaultRacedayComponent
       (widgetSettings?.gridType === "overall" ||
         widgetSettings?.bindingMode === "overallPosition" ||
         laneViewSettings?.bindingMode === "overallPosition" ||
-        RacedayLayoutUtils.isOverallColumnKey(propertyName) ||
         (widgetSettings?.gridId && this.isGridOverall(widgetSettings.gridId)))
     ) {
       laneViewSettings = {

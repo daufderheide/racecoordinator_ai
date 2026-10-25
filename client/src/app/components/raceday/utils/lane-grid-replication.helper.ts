@@ -13,7 +13,6 @@ import {
 import { LaneGridScrollHelper } from "./lane-grid-scroll.helper";
 import { LaneGridSelectionHelper } from "./lane-grid-selection.helper";
 import { LaneGridStyleHelper } from "./lane-grid-style.helper";
-import { RacedayLayoutUtils } from "./raceday-layout.utils";
 
 export type { GridLabelConfig, GridLabelPosition };
 
@@ -508,27 +507,27 @@ export class LaneGridReplicationHelper {
   private static resolveGridTypeForMasterWidgets(
     masterWidgets: AbsoluteWidgetNode[],
   ): "heat" | "overall" {
-    const allHeat =
-      masterWidgets.length > 0 &&
-      masterWidgets.every((m) => m.customSettings?.["gridType"] === "heat");
     const anyOverall = masterWidgets.some(
       (m) => m.customSettings?.["gridType"] === "overall",
     );
+    if (anyOverall) {
+      return "overall";
+    }
+    const anyHeat = masterWidgets.some(
+      (m) => m.customSettings?.["gridType"] === "heat",
+    );
+    if (anyHeat) {
+      return "heat";
+    }
     const anyLegacyOverall = masterWidgets.some(
       (m) =>
         !m.customSettings?.["gridType"] &&
-        RacedayLayoutUtils.isOverallColumnKey(m.customSettings?.["columnKey"]),
+        m.customSettings?.["bindingMode"] === "overallPosition",
     );
-    if (allHeat) {
-      return "heat";
-    }
-    if (anyOverall || anyLegacyOverall) {
+    if (anyLegacyOverall) {
       return "overall";
     }
-    return (
-      (masterWidgets.find((m) => m.customSettings?.["gridType"])
-        ?.customSettings?.["gridType"] as any) || "heat"
-    );
+    return "heat";
   }
 
   public static hasGridWidgets(
@@ -632,25 +631,29 @@ export class LaneGridReplicationHelper {
       const gridWidgets = widgets.filter(
         (w) => w.customSettings?.["gridId"] === session.gridId,
       );
-      const allHeat =
-        gridWidgets.length > 0 &&
-        gridWidgets.every((w) => w.customSettings?.["gridType"] === "heat");
       const anyOverall = gridWidgets.some(
         (w) => w.customSettings?.["gridType"] === "overall",
       );
-      const anyLegacyOverall = gridWidgets.some(
-        (w) =>
-          !w.customSettings?.["gridType"] &&
-          RacedayLayoutUtils.isOverallColumnKey(
-            w.customSettings?.["columnKey"],
-          ),
-      );
-      if (allHeat) {
-        effectiveGridType = "heat";
-      } else if (anyOverall || anyLegacyOverall) {
+      if (anyOverall) {
         effectiveGridType = "overall";
       } else {
-        effectiveGridType = "heat";
+        const anyHeat = gridWidgets.some(
+          (w) => w.customSettings?.["gridType"] === "heat",
+        );
+        if (anyHeat) {
+          effectiveGridType = "heat";
+        } else {
+          const anyLegacyOverall = gridWidgets.some(
+            (w) =>
+              !w.customSettings?.["gridType"] &&
+              w.customSettings?.["bindingMode"] === "overallPosition",
+          );
+          if (anyLegacyOverall) {
+            effectiveGridType = "overall";
+          } else {
+            effectiveGridType = "heat";
+          }
+        }
       }
     }
     const mapped = widgets.map((w) => {

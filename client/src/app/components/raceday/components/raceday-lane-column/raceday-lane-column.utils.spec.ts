@@ -465,13 +465,13 @@ describe("raceday-lane-column.utils", () => {
       ).toBeTrue();
     });
 
-    it("should return true when columnKey is an overall column key without explicit gridType on standalone widgets", () => {
+    it("should return false when columnKey is an overall column key without explicit gridType on standalone widgets", () => {
       expect(
         isOverallDataSource({ columnKey: "overallLapCount" } as any),
-      ).toBeTrue();
+      ).toBeFalse();
       expect(
         isOverallDataSource({ columnKey: "rankOverall" } as any),
-      ).toBeTrue();
+      ).toBeFalse();
     });
 
     it("should return false when gridType is explicitly heat even with overallPosition or overall columns", () => {

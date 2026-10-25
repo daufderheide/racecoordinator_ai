@@ -4,7 +4,6 @@ import { deepCopy } from "@app/utils/clone.utils";
 import { LaneGridGeometryHelper } from "./lane-grid-geometry.helper";
 import { LaneGridLabelHelper } from "./lane-grid-label.helper";
 import { LaneGridSession } from "./lane-grid-replication.helper";
-import { RacedayLayoutUtils } from "./raceday-layout.utils";
 
 export class LaneGridScrollHelper {
   private static extractGridMetadata(
@@ -38,10 +37,7 @@ export class LaneGridScrollHelper {
           if (explicitGridType !== "overall") {
             explicitGridType = "heat";
           }
-        } else if (
-          s["bindingMode"] === "overallPosition" ||
-          RacedayLayoutUtils.isOverallColumnKey(s["columnKey"])
-        ) {
+        } else if (s["bindingMode"] === "overallPosition") {
           hasOverallSignals = true;
         }
       }
@@ -181,10 +177,7 @@ export class LaneGridScrollHelper {
     const hasOverallSignals = gridWidgets.some(
       (w) =>
         !w.customSettings?.["gridType"] &&
-        (w.customSettings?.["bindingMode"] === "overallPosition" ||
-          RacedayLayoutUtils.isOverallColumnKey(
-            w.customSettings?.["columnKey"],
-          )),
+        w.customSettings?.["bindingMode"] === "overallPosition",
     );
     return hasOverallSignals
       ? "overall"

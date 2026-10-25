@@ -13866,7 +13866,8 @@ describe("DefaultRacedayComponent", () => {
 
       (component as any).layout = { widgets: gridWidgets };
       expect(component.isGridOverall("g-overall")).toBeTrue();
-      expect(component.isGridOverall("g-key")).toBeTrue();
+      // columnKey alone does not promote grid to overall:
+      expect(component.isGridOverall("g-key")).toBeFalse();
       expect(component.isGridOverall("g-binding")).toBeTrue();
       expect(component.isGridOverall("g-heat")).toBeFalse();
       expect(component.isGridOverall("g-heat-overall-col")).toBeFalse();

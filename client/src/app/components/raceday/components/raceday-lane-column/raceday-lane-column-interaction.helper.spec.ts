@@ -1269,6 +1269,78 @@ describe("raceday-lane-column-interaction.helper", () => {
         ),
       ).toBe("#ffffff");
     });
+
+    it("should preserve lane color for drivers and empty lanes on heat grid with overall column widget even when race is over", () => {
+      const parent = {
+        isRaceOver: () => true,
+        track: {
+          lanes: [
+            { background_color: "#lane0Bg", foreground_color: "#lane0Fg" },
+            { background_color: "#lane1Bg", foreground_color: "#lane1Fg" },
+          ],
+        },
+        drivers: [
+          new DriverHeatData("d0", { objectId: "d0", name: "D0" } as any, 0),
+        ],
+        getLaneColor: (hd: any, prop: string) =>
+          hd?.laneIndex === 0
+            ? prop === "background_color"
+              ? "#lane0Bg"
+              : "#lane0Fg"
+            : null,
+      };
+      const activeHd = new DriverHeatData(
+        "d0",
+        { objectId: "d0", name: "D0" } as any,
+        0,
+      );
+      const emptyHd: any = { isEmpty: true, laneIndex: -1 };
+      const heatWidgetSettings = {
+        useLaneColors: true,
+        gridType: "heat",
+        columnKey: "overallLapCount",
+      };
+
+      // Active driver when race is over preserves lane color
+      expect(
+        resolveLaneColumnBackgroundColor(
+          heatWidgetSettings as any,
+          activeHd,
+          parent,
+          "lane",
+          0,
+        ),
+      ).toBe("#lane0Bg");
+      expect(
+        resolveLaneColumnForegroundColor(
+          heatWidgetSettings as any,
+          activeHd,
+          parent,
+          "lane",
+          0,
+        ),
+      ).toBe("#lane0Fg");
+
+      // Empty lane preserves lane color via resolveHeatEmptyLaneIndex
+      expect(
+        resolveLaneColumnBackgroundColor(
+          heatWidgetSettings as any,
+          emptyHd,
+          parent,
+          "position",
+          1,
+        ),
+      ).toBe("#lane1Bg");
+      expect(
+        resolveLaneColumnForegroundColor(
+          heatWidgetSettings as any,
+          emptyHd,
+          parent,
+          "position",
+          1,
+        ),
+      ).toBe("#lane1Fg");
+    });
   });
 
   describe("resolveHeatEmptyLaneIndex", () => {

@@ -366,7 +366,7 @@ describe("ui-editor-grid.helper", () => {
       expect(mockComp.activeGridSession.gridType).toBe("overall");
     });
 
-    it("should resolve gridType as overall when a widget has an overall columnKey", () => {
+    it("should resolve gridType as heat when a widget has an overall columnKey without explicit gridType", () => {
       mockWidgets = [
         {
           id: "w-col",
@@ -394,7 +394,7 @@ describe("ui-editor-grid.helper", () => {
       handleEditGridTemplate(mockComp, "overall-grid-2", mockUi);
 
       expect(mockComp.activeGridSession).toBeDefined();
-      expect(mockComp.activeGridSession.gridType).toBe("overall");
+      expect(mockComp.activeGridSession.gridType).toBe("heat");
     });
 
     it("should resolve gridType as heat when all widgets have gridType heat even if a widget has an overall columnKey", () => {

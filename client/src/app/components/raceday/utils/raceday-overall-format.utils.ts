@@ -4,28 +4,25 @@ import { formatTimerDisplay } from "@app/utils/timer-format.utils";
 
 import { FormatContext, RacedayFormatUtils } from "./raceday-format.utils";
 import { RacedayGapFormatUtils } from "./raceday-gap-format.utils";
-import { RacedayLayoutUtils } from "./raceday-layout.utils";
 
 export class RacedayOverallFormatUtils {
   static isOverallFormatContext(
     ctx: FormatContext,
-    propertyName: string,
+    _propertyName?: string,
   ): boolean {
     const s = ctx.laneViewWidgetSettings;
     return Boolean(
-      s?.gridType === "overall" ||
-      s?.bindingMode === "overallPosition" ||
-      RacedayLayoutUtils.isOverallColumnKey(propertyName),
+      s?.gridType === "overall" || s?.bindingMode === "overallPosition",
     );
   }
 
   static isOverallOrSeedFormatContext(
     ctx: FormatContext,
-    propertyName: string,
+    _propertyName?: string,
   ): boolean {
     const s = ctx.laneViewWidgetSettings;
     return Boolean(
-      this.isOverallFormatContext(ctx, propertyName) ||
+      this.isOverallFormatContext(ctx, _propertyName) ||
       s?.bindingMode === "seed",
     );
   }

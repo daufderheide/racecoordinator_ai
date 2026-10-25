@@ -740,6 +740,38 @@ describe("LaneGridReplicationHelper", () => {
     expect(sessionWithoutType.gridType).toBe("overall");
   });
 
+  it("should not resolve session.gridType as overall in syncAllMasterWidgetsToLanes when a master widget only has overall columnKey", () => {
+    const masterWidgets: AbsoluteWidgetNode[] = [
+      {
+        id: "m-1",
+        widgetType: "lane-column",
+        x: 100,
+        y: 50,
+        width: 200,
+        height: 100,
+        zIndex: 100,
+        customSettings: {
+          gridId: "sync-heat-grid",
+          gridLane: 0,
+          columnKey: "overallLapCount",
+        },
+      },
+    ];
+    const sessionWithoutType: LaneGridSession = {
+      gridId: "sync-heat-grid",
+      bounds: { x: 100, y: 50, width: 800, height: 400 },
+      totalLanes: 2,
+      direction: "vertical",
+      sourceLaneIndex: 0,
+      bindingMode: "lane",
+    };
+    LaneGridReplicationHelper.syncAllMasterWidgetsToLanes(
+      sessionWithoutType,
+      masterWidgets,
+    );
+    expect(sessionWithoutType.gridType).toBe("heat");
+  });
+
   describe("calculateAvailableGridBounds", () => {
     it("should expand to full canvas when no obstacles exist", () => {
       const source: AbsoluteWidgetNode[] = [

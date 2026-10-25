@@ -6,7 +6,6 @@ import {
   LaneGridReplicationHelper,
   LaneGridSession,
 } from "./lane-grid-replication.helper";
-import { RacedayLayoutUtils } from "./raceday-layout.utils";
 
 export interface StackedColumnIssue {
   id: string;
@@ -350,21 +349,23 @@ export class LaneGridRepairHelper {
     const bindingMode = positionWidget
       ? "position"
       : (first.customSettings?.["bindingMode"] as any) || "lane";
-    const allHeat =
-      gridWidgets.length > 0 &&
-      gridWidgets.every((w) => w.customSettings?.["gridType"] === "heat");
     const anyOverall = gridWidgets.some(
       (w) => w.customSettings?.["gridType"] === "overall",
+    );
+    const anyHeat = gridWidgets.some(
+      (w) => w.customSettings?.["gridType"] === "heat",
     );
     const anyLegacyOverall = gridWidgets.some(
       (w) =>
         !w.customSettings?.["gridType"] &&
-        RacedayLayoutUtils.isOverallColumnKey(w.customSettings?.["columnKey"]),
+        w.customSettings?.["bindingMode"] === "overallPosition",
     );
     let gridType: "heat" | "overall";
-    if (allHeat) {
+    if (anyOverall) {
+      gridType = "overall";
+    } else if (anyHeat) {
       gridType = "heat";
-    } else if (anyOverall || anyLegacyOverall) {
+    } else if (anyLegacyOverall) {
       gridType = "overall";
     } else {
       gridType = (first.customSettings?.["gridType"] as any) || "heat";
