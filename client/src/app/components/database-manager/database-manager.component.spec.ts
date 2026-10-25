@@ -11,6 +11,7 @@ import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { ConnectionMonitorService } from "@app/services/connection-monitor.service";
 import { HelpService } from "@app/services/help.service";
 import { LoggerService } from "@app/services/logger.service";
+import { PrintService } from "@app/services/print.service";
 import { RaceConnectionService } from "@app/services/race-connection.service";
 import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
@@ -35,6 +36,7 @@ describe("DatabaseManagerComponent", () => {
   let dataService: any;
   let _router: any;
   let _activatedRoute: any;
+  let mockPrintService: jasmine.SpyObj<PrintService>;
 
   beforeEach(async () => {
     mockTranslationService.translate.and.callFake((key: string) => key);
@@ -105,6 +107,14 @@ describe("DatabaseManagerComponent", () => {
       ["connect", "disconnect"],
     );
 
+    mockPrintService = jasmine.createSpyObj("PrintService", [
+      "print",
+      "formatExportTimestamp",
+    ]);
+    mockPrintService.formatExportTimestamp.and.returnValue(
+      "--2026-10-25--12-40-02_AM",
+    );
+
     await TestBed.configureTestingModule({
       imports: [FormsModule, DatabaseManagerComponent, TranslatePipe],
       providers: [
@@ -130,6 +140,7 @@ describe("DatabaseManagerComponent", () => {
         },
         { provide: ConnectionMonitorService, useValue: mockConnectionMonitor },
         { provide: RaceConnectionService, useValue: mockRaceConnectionService },
+        { provide: PrintService, useValue: mockPrintService },
         ChangeDetectorRef,
       ],
       schemas: [CUSTOM_ELEMENTS_SCHEMA],
@@ -415,8 +426,9 @@ describe("DatabaseManagerComponent", () => {
       expect(dataService.exportDatabaseBlob).toHaveBeenCalledWith(
         MOCK_DATABASES[1].name,
       );
+      expect(mockPrintService.formatExportTimestamp).toHaveBeenCalled();
       expect((window as any).showSaveFilePicker).toHaveBeenCalledWith({
-        suggestedName: `${MOCK_DATABASES[1].name}.zip`,
+        suggestedName: `${MOCK_DATABASES[1].name}--2026-10-25--12-40-02_AM.zip`,
         types: [
           {
             description: "ZIP Files",

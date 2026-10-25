@@ -1,7 +1,9 @@
 package com.antigravity.handlers;
 
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -10,12 +12,17 @@ import com.antigravity.auth.Role;
 import com.antigravity.context.DatabaseContext;
 import io.javalin.Javalin;
 import io.javalin.http.Context;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import javax.servlet.ServletOutputStream;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 
 public class DatabaseManagementTaskHandlerTest {
 
@@ -39,6 +46,8 @@ public class DatabaseManagementTaskHandlerTest {
     verify(mockJavalin).post(eq("/api/databases/reset"), any(), eq(Role.ADMIN));
     verify(mockJavalin).post(eq("/api/databases/delete"), any(), eq(Role.ADMIN));
     verify(mockJavalin).get(eq("/api/databases/current"), any(), eq(Role.ADMIN));
+    verify(mockJavalin).get(eq("/api/databases/{name}/export"), any(), eq(Role.ADMIN));
+    verify(mockJavalin).post(eq("/api/databases/import"), any(), eq(Role.ADMIN));
   }
 
   @Test
@@ -181,5 +190,42 @@ public class DatabaseManagementTaskHandlerTest {
     handler.deleteDatabase(mockCtx);
     verify(mockDbCtx).deleteDatabase("db_to_delete");
     verify(mockCtx).status(204);
+  }
+
+  @Test
+  public void testExportDatabase_Success() throws Exception {
+    HttpServletRequest req = mock(HttpServletRequest.class);
+    HttpServletResponse res = mock(HttpServletResponse.class);
+    ServletOutputStream outStream = mock(ServletOutputStream.class);
+    when(res.getOutputStream()).thenReturn(outStream);
+    Context ctx = org.mockito.Mockito.spy(new Context(req, res, new HashMap<>()));
+    org.mockito.Mockito.doReturn("RaceCoordinator_AI_DB").when(ctx).pathParam("name");
+
+    handler.exportDatabase(ctx);
+
+    verify(res).setContentType("application/zip");
+    ArgumentCaptor<String> headerValCaptor = ArgumentCaptor.forClass(String.class);
+    verify(res).setHeader(eq("Content-Disposition"), headerValCaptor.capture());
+    assertTrue(
+        headerValCaptor
+            .getValue()
+            .matches(
+                "attachment; filename=\"RaceCoordinator_AI_DB--\\d{4}-\\d{2}-\\d{2}--\\d{2}-\\d{2}-\\d{2}_(AM|PM)\\.zip\""));
+    verify(mockDbCtx).exportDatabase(eq("RaceCoordinator_AI_DB"), eq(outStream));
+  }
+
+  @Test
+  public void testExportDatabase_Exception() throws Exception {
+    HttpServletRequest req = mock(HttpServletRequest.class);
+    HttpServletResponse res = mock(HttpServletResponse.class);
+    ServletOutputStream outStream = mock(ServletOutputStream.class);
+    when(res.getOutputStream()).thenReturn(outStream);
+    Context ctx = org.mockito.Mockito.spy(new Context(req, res, new HashMap<>()));
+    org.mockito.Mockito.doReturn("bad_db").when(ctx).pathParam("name");
+    doThrow(new IOException("Disk error")).when(mockDbCtx).exportDatabase(eq("bad_db"), any());
+
+    handler.exportDatabase(ctx);
+
+    verify(res).setStatus(500);
   }
 }

@@ -5,8 +5,11 @@ import com.antigravity.context.DatabaseContext;
 import io.javalin.Javalin;
 import io.javalin.http.Context;
 import io.javalin.http.UploadedFile;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,6 +17,8 @@ import org.slf4j.LoggerFactory;
 public class DatabaseManagementTaskHandler {
 
   private static final Logger logger = LoggerFactory.getLogger(DatabaseManagementTaskHandler.class);
+  private static final DateTimeFormatter EXPORT_TIMESTAMP_FORMATTER =
+      DateTimeFormatter.ofPattern("'--'yyyy-MM-dd'--'hh-mm-ss_a", Locale.US);
   private final DatabaseContext databaseContext;
 
   public DatabaseManagementTaskHandler(DatabaseContext databaseContext, Javalin app) {
@@ -171,7 +176,8 @@ public class DatabaseManagementTaskHandler {
 
   public void exportDatabase(Context ctx) {
     String name = ctx.pathParam("name");
-    ctx.header("Content-Disposition", "attachment; filename=\"" + name + ".zip\"");
+    String timeSuffix = EXPORT_TIMESTAMP_FORMATTER.format(LocalDateTime.now());
+    ctx.header("Content-Disposition", "attachment; filename=\"" + name + timeSuffix + ".zip\"");
     ctx.contentType("application/zip");
     try {
       databaseContext.exportDatabase(name, ctx.res.getOutputStream());

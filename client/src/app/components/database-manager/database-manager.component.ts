@@ -22,6 +22,7 @@ import {
   ConnectionState,
 } from "@app/services/connection-monitor.service";
 import { LoggerService } from "@app/services/logger.service";
+import { PrintService } from "@app/services/print.service";
 import { RaceConnectionService } from "@app/services/race-connection.service";
 import { SettingsService } from "@app/services/settings.service";
 import { saveFileAs } from "@app/utils/file-download.utils";
@@ -97,6 +98,7 @@ export class DatabaseManagerComponent implements OnInit, OnDestroy {
     private connectionMonitor: ConnectionMonitorService,
     private raceConnectionService: RaceConnectionService,
     private logger: LoggerService,
+    private printService: PrintService,
   ) {}
 
   ngOnInit(): void {
@@ -400,7 +402,8 @@ export class DatabaseManagerComponent implements OnInit, OnDestroy {
   async exportDatabase() {
     if (!this.selectedDatabase) return;
     const dbName = this.selectedDatabase.name;
-    const suggestedName = `${dbName}.zip`;
+    const timeStr = this.printService.formatExportTimestamp();
+    const suggestedName = `${dbName}${timeStr}.zip`;
     this.loading = true;
     this.cdr.detectChanges();
     try {
