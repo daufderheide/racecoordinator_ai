@@ -42,6 +42,14 @@ public class OverallStandings {
 
   public void recalculate(
       List<RaceParticipant> drivers, List<Heat> heats, HeatRotationType rotationType) {
+    recalculate(drivers, heats, rotationType, null);
+  }
+
+  public void recalculate(
+      List<RaceParticipant> drivers,
+      List<Heat> heats,
+      HeatRotationType rotationType,
+      String completedDriverParticipantId) {
     Map<String, Map<Integer, List<DriverHeatData>>> driverHeatsByNumber = new HashMap<>();
     Map<String, Integer> driverToGroup = new HashMap<>();
     Map<Integer, Boolean> heatStartedByNumber = new HashMap<>();
@@ -117,6 +125,19 @@ public class OverallStandings {
       HeatScoring.FinishMethod finishMethod =
           heatScoring != null ? heatScoring.getFinishMethod() : HeatScoring.FinishMethod.Lap;
       GapCalculator.calculateGaps(drivers, finishMethod);
+      if (completedDriverParticipantId != null) {
+        RaceParticipant completed =
+            drivers.stream()
+                .filter(
+                    d ->
+                        completedDriverParticipantId.equals(d.getParticipantId())
+                            || completedDriverParticipantId.equals(d.getStableId()))
+                .findFirst()
+                .orElse(null);
+        if (completed != null) {
+          GapCalculator.calculateLapGapsForDriver(completed, drivers);
+        }
+      }
     }
   }
 
@@ -146,7 +167,7 @@ public class OverallStandings {
       switch (heatScoring.getHeatRanking()) {
         case LAP_COUNT:
           // More laps = better
-          comparator = Comparator.comparingDouble(DriverHeatData::getAdjustedLapCount).reversed();
+          comparator = Comparator.comparingDouble(DriverHeatData::getScoredLapCount).reversed();
           break;
         case FASTEST_LAP:
           // Lower time = better
@@ -189,7 +210,7 @@ public class OverallStandings {
     } else {
       // Default to Lap Count
       comparator =
-          Comparator.comparingDouble(DriverHeatData::getAdjustedLapCount)
+          Comparator.comparingDouble(DriverHeatData::getScoredLapCount)
               .reversed()
               .thenComparingDouble(
                   d -> d.getTotalTime() == 0 ? Double.MAX_VALUE : d.getTotalTime());
@@ -256,6 +277,7 @@ public class OverallStandings {
     populateDriverHeatCounts(driver, heatsByNumber, heatStartedByNumber);
 
     double totalLaps = 0.0;
+    double effectiveTotalLaps = 0.0;
     double totalTime = 0.0;
     double bestLap = Double.MAX_VALUE;
     int totalLapsLed = 0;
@@ -267,11 +289,12 @@ public class OverallStandings {
     List<Double> allScoringLaps = new ArrayList<>();
     boolean hasSegments = false;
     for (DriverHeatData dhd : scoringHeats) {
-      totalLaps += dhd.getAdjustedLapCount();
+      totalLaps += dhd.getScoredLapCount();
+      effectiveTotalLaps += dhd.getEffectiveLapCount();
       totalTime += dhd.getTotalTime();
       totalLapsLed += dhd.getLapsLed();
       totalTrackCalls += dhd.getTrackCalls();
-      if (dhd.getUserLaps() != 0.0 || dhd.getAutoCalculatedLaps() != 0.0) {
+      if (dhd.getUserLaps() != 0.0 || (dhd.isFinished() && dhd.getAutoCalculatedLaps() != 0.0)) {
         hasSegments = true;
       }
 
@@ -297,6 +320,7 @@ public class OverallStandings {
     }
     driver.setAllScoringLaps(allScoringLaps);
     driver.setTotalLaps(totalLaps);
+    driver.setEffectiveTotalLaps(effectiveTotalLaps);
     driver.setTotalTime(totalTime);
     driver.setBestLapTime(bestLap);
     driver.setLapsLed(totalLapsLed);
@@ -345,7 +369,7 @@ public class OverallStandings {
             for (DriverHeatData dhd : entry.getValue()) {
               if (dhd != null
                   && (dhd.isFinished()
-                      || dhd.getAdjustedLapCount() > 0
+                      || dhd.getScoredLapCount() > 0
                       || dhd.getTotalTime() > 0
                       || dhd.getUserLaps() > 0
                       || dhd.getUserTime() > 0
@@ -404,9 +428,9 @@ public class OverallStandings {
           DriverHeatData best = dhdList.get(0);
           for (int i = 1; i < dhdList.size(); i++) {
             DriverHeatData candidate = dhdList.get(i);
-            if (candidate.getAdjustedLapCount() > best.getAdjustedLapCount()) {
+            if (candidate.getScoredLapCount() > best.getScoredLapCount()) {
               best = candidate;
-            } else if (candidate.getAdjustedLapCount() == best.getAdjustedLapCount()) {
+            } else if (candidate.getScoredLapCount() == best.getScoredLapCount()) {
               if (candidate.getTotalTime() < best.getTotalTime() && candidate.getTotalTime() > 0) {
                 best = candidate;
               }

@@ -82,17 +82,24 @@ public class StandingsComparator<T extends StandingsParticipant> implements Comp
     return 0;
   }
 
+  private static double getScoredLapCount(StandingsParticipant p) {
+    if (p instanceof DriverHeatData) {
+      return ((DriverHeatData) p).getScoredLapCount();
+    }
+    return p.getAdjustedLapCount();
+  }
+
   static int comparePrimary(StandingsParticipant a, StandingsParticipant b, RankingMethod method) {
     switch (method) {
       case LAP_COUNT:
-        return Double.compare(b.getAdjustedLapCount(), a.getAdjustedLapCount());
+        return Double.compare(getScoredLapCount(b), getScoredLapCount(a));
       case FASTEST_LAP:
         double aBest = a.getBestLapTime() > 0 ? a.getBestLapTime() : Double.MAX_VALUE;
         double bBest = b.getBestLapTime() > 0 ? b.getBestLapTime() : Double.MAX_VALUE;
         return Double.compare(aBest, bBest);
       case TOTAL_TIME:
-        if (a.getAdjustedLapCount() != b.getAdjustedLapCount()) {
-          return Double.compare(b.getAdjustedLapCount(), a.getAdjustedLapCount());
+        if (Double.compare(getScoredLapCount(a), getScoredLapCount(b)) != 0) {
+          return Double.compare(getScoredLapCount(b), getScoredLapCount(a));
         }
         double aTime = a.getTotalTime() > 0 ? a.getTotalTime() : Double.MAX_VALUE;
         double bTime = b.getTotalTime() > 0 ? b.getTotalTime() : Double.MAX_VALUE;

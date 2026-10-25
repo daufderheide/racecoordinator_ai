@@ -1,176 +1,176 @@
-# Cálculos de Diferenças & Widgets de Intervalo (Gaps)
+# Cálculos de Diferenças e Widgets de Diferença (Gaps)
 
-O Race Coordinator AI inclui um mecanismo automatizado no servidor para cálculo de diferenças (`GapCalculator`), determinando em tempo real os intervalos de tempo e as diferenças de voltas entre concorrentes. Todos os cálculos são executados continuamente no servidor e sincronizados com a interface do cliente, widgets personalizados, anúncios de voz (TTS) e exportações em folhas de cálculo.
+O Race Coordinator AI inclui um mecanismo automatizado no servidor para cálculo de diferenças (`GapCalculator`), que determina em tempo real os intervalos de tempo e voltas entre competidores. Todos os cálculos são executados continuamente no servidor e sincronizados com os painéis dos clientes, widgets personalizados, chamadas de voz e exportações para planilhas.
 
 ---
 
 ## Visão Geral dos Cálculos de Diferenças
 
-Sempre que a classificação da corrida é atualizada, o sistema ordena todos os concorrentes pela sua posição atual de acordo com as regras de pontuação ativas (Maior Número de Voltas, Tempo Total Mais Rápido ou Pontos). Em seguida, as métricas de diferença são calculadas em relação a dois referenciais distintos:
+Sempre que a classificação da corrida é atualizada, o mecanismo classifica todos os competidores de acordo com a ordem da corrida e as regras de pontuação ativas (Mais Voltas, Menor Tempo Total ou Pontos). Em seguida, as métricas de diferença são calculadas em relação a dois referenciais distintos:
 
-- **Diferença para o Líder (`gapLeader` / `overallGapLeader`)**: O intervalo de tempo entre um concorrente e o 1.º classificado da corrida (P1). A diferença do líder para si próprio é sempre `0.0` (apresentada como `--`).
-- **Diferença para o Carro da Frente (`gapPosition` / `overallGapPosition`)**: O intervalo de tempo entre um concorrente e o carro imediatamente à sua frente na classificação (por exemplo, P3 em relação a P2). A diferença do 1.º classificado é sempre `0.0` (apresentada como `--`).
+- **Diferença para o Líder (`leader`)**: O intervalo entre um competidor e o líder atual da corrida (P1). A diferença do líder para si mesmo é sempre `0.0` (exibida como `--`).
+- **Diferença para o Carro da Frente (`position`)**: O intervalo entre um competidor e o carro imediatamente à frente na classificação (ex.: P3 em relação a P2). A diferença do líder é sempre `0.0` (exibida como `--`).
 
-### Âmbitis de Dados: Diferenças da Manga vs. Diferenças Gerais
+### Escopos de Dados: Diferenças da Bateria vs. Diferenças Gerais
 
-O Race Coordinator AI suporta o cálculo de diferenças em dois âmbitos distintos:
+O Race Coordinator AI suporta a avaliação de diferenças em dois escopos:
 
-| Âmbito | Chaves de Colunas | Descrição | Caso de Uso |
+| Escopo | Chave da Coluna | Descrição | Caso de Uso |
 | :--- | :--- | :--- | :--- |
-| **Dados da Manga (Heat Data)** | `gapLeader`<br>`gapPosition`<br>`gapLeaderF1`<br>`gapPositionF1` | Avalia as diferenças estritamente entre os carros que estão a competir na pista na manga ativa. Pilotos em descanso apresentam traços (`--`). | Corridas ao vivo, cartões de pista, tabelas de classificação da manga. |
-| **Dados Gerais (Overall Data)** | `overallGapLeader`<br>`overallGapPosition`<br>`overallGapLeaderF1`<br>`overallGapPositionF1` | Avalia as diferenças acumuladas do torneio entre todos os participantes inscritos, abrangendo todas as mangas concluídas. | Grelhas de classificação geral, acompanhamento de campeonatos. |
+| **Dados da Bateria (Heat Data)** | `gap` | Avalia intervalos estritamente entre os carros que competem na bateria atual. Pilotos aguardando exibem traços (`--`). | Corridas ao vivo, cartões de pista, placares de bateria. |
+| **Dados Gerais (Overall Data)** | `overallGap` | Avalia intervalos cumulativos entre todos os participantes do torneio, em todas as baterias disputadas. | Grades gerais, classificações de campeonato. |
+
+> [!NOTE]
+> Os layouts existentes que utilizam chaves de coluna legadas (`gapLeader`, `gapPosition`, `gapLeaderF1`, `gapPositionF1`, `overallGapLeader`, etc.) são migrados automaticamente ao carregar para `gap` ou `overallGap` com as configurações correspondentes de alvo e modo de cálculo.
 
 ---
 
-## Os 4 Widgets de Diferença Suportados
+## Os 2 Widgets de Diferença Configuráveis
 
-O Race Coordinator AI disponibiliza **4 widgets de diferença específicos** (disponíveis como colunas de grelha, cartões de coluna independentes e inserções personalizadas), divididos por método de cálculo e alvo de referência:
+O Race Coordinator AI oferece **2 widgets de diferença configuráveis** (disponíveis como colunas de grade, cartões de pista individuais e inserções personalizadas):
 
 ```
                           ┌──────────────────────────────────────────────┐
-                          │            WIDGETS DE DIFERENÇA              │
+                          │         WIDGETS DE DIFERENÇA DE CORRIDA      │
                           └──────────────────────┬───────────────────────┘
                                                  │
                    ┌─────────────────────────────┴─────────────────────────────┐
                    ▼                                                           ▼
       ┌─────────────────────────┐                                 ┌─────────────────────────┐
-      │   DIFERENÇAS PADRÃO     │                                 │  DIFERENÇAS FÓRMULA 1   │
-      │   Projeção de Ritmo     │                                 │ Passagem Linha de Meta  │
+      │DIFERENÇA BATERIA (`gap`)│                                 │DIFERENÇA GERAL(`overallGap`)│
+      │ Pilotos Bateria Ativa   │                                 │Todos os Participantes   │
       └────────────┬────────────┘                                 └────────────┬────────────┘
                    │                                                           │
-         ┌─────────┴─────────┐                                       ┌─────────┴─────────┐
-         ▼                   ▼                                       ▼                   ▼
-  ┌─────────────┐     ┌─────────────┐                         ┌─────────────┐     ┌─────────────┐
-  │ Gap Leader  │     │Gap Position │                         │Gap Leader F1│     │Gap Pos. F1  │
-  │ (Líder P1)  │     │(Carro Frente│                         │ (Líder P1)  │     │(Carro Frente│
-  └─────────────┘     └─────────────┘                         └─────────────┘     └─────────────┘
+                   └─────────────────────────────┬─────────────────────────────┘
+                                                 │
+                               ┌─────────────────┴─────────────────┐
+                               ▼                                   ▼
+                   ┌───────────────────────┐           ┌───────────────────────┐
+                   │   SELETOR DE ALVO     │           │    MODO DE CÁLCULO    │
+                   ├───────────────────────┤           ├───────────────────────┤
+                   │ • Líder (P1)          │           │ • Sempre tempo        │
+                   │ • Posição à frente    │           │ • Voltas e tempo (F1) │
+                   │                       │           │ • Sempre voltas       │
+                   └───────────────────────┘           └───────────────────────┘
 ```
 
-### 1. Diferença para o Líder (Padrão)
-- **Chaves da Caixa de Ferramentas**: `gapLeader` (Manga) / `overallGapLeader` (Geral)
-- **Grupo da Caixa de Ferramentas**: *Heat Data → Gaps & Intervals* / *Overall Race Data → Overall Gaps & Intervals*
-- **Rótulos Predefinidos**: `HEAT GAP LEADER`, `OVERALL GAP LEADER` ou `GAP LEADER`
-- **Modelo de Medição**: Projeção matemática contínua de ritmo.
-- **Apresentação**: Formatado como `+X.XXX` segundos com casas decimais configuráveis (1 a 3 decimais). O líder apresenta `--`.
-- **Objetivo**: Fornece uma estimativa em tempo real da desvantagem temporal para o líder. Mesmo que o líder tenha completado mais voltas, projeta o intervalo com base no ritmo médio do perseguidor.
+### Seleção de Alvo
+- **Líder (`leader`)**: Intervalo relativo ao líder atual da corrida (P1). O líder exibe traços (`--`).
+- **Posição à frente (`position`)**: Intervalo relativo ao concorrente imediatamente à frente (ex.: P3 vs P2). O líder exibe traços (`--`).
 
-### 2. Diferença para o Carro da Frente (Padrão)
-- **Chaves da Caixa de Ferramentas**: `gapPosition` (Manga) / `overallGapPosition` (Geral)
-- **Grupo da Caixa de Ferramentas**: *Heat Data → Gaps & Intervals* / *Overall Race Data → Overall Gaps & Intervals*
-- **Rótulos Predefinidos**: `HEAT GAP POSITION`, `OVERALL GAP POSITION` ou `GAP POSITION`
-- **Modelo de Medição**: Projeção matemática contínua de ritmo.
-- **Apresentação**: Formatado como `+X.XXX` segundos. O 1.º classificado apresenta `--`.
-- **Objetivo**: Exibe o tempo necessário para ultrapassar o concorrente imediatamente à frente. Essencial para duelos diretos em pista.
-
-### 3. Diferença Fórmula 1 para o Líder (`F1`)
-- **Chaves da Caixa de Ferramentas**: `gapLeaderF1` (Manga) / `overallGapLeaderF1` (Geral)
-- **Grupo da Caixa de Ferramentas**: *Heat Data → Gaps & Intervals* / *Overall Race Data → Overall Gaps & Intervals*
-- **Rótulos Predefinidos**: `HEAT GAP LEADER LAP`, `OVERALL GAP LEADER LAP` ou `GAP LEADER`
-- **Modelo de Medição**: Medição cronométrica física exata na linha de meta.
-- **Apresentação**:
-  - **Na mesma volta**: `+X.XXX` segundos de diferença física ao cruzar a linha.
-  - **Pilotos dobrados**: Substitui o tempo por `+1 Volta` ou `+N Voltas` (`RD_LAP_DOWN` / `RD_LAPS_DOWN`).
-  - **Líder**: Apresenta `--`.
-- **Objetivo**: Reproduz as transmissões oficiais de Fórmula 1. Evita números gigantescos de tempo estimado para carros dobrados, indicando claramente a desvantagem em voltas.
-
-### 4. Diferença Fórmula 1 para o Carro da Frente (`F1`)
-- **Chaves da Caixa de Ferramentas**: `gapPositionF1` (Manga) / `overallGapPositionF1` (Geral)
-- **Grupo da Caixa de Ferramentas**: *Heat Data → Gaps & Intervals* / *Overall Race Data → Overall Gaps & Intervals*
-- **Rótulos Predefinidos**: `HEAT GAP POSITION LAP`, `OVERALL GAP POSITION LAP` ou `GAP POSITION`
-- **Modelo de Medição**: Medição cronométrica física exata na linha de meta.
-- **Apresentação**:
-  - **Na mesma volta**: Formatado como `+X.XXX` segundos atrás do concorrente da frente.
-  - **Dobrado pelo carro da frente**: Apresenta `+1 Volta` ou `+N Voltas`.
-  - **Líder**: Apresenta `--`.
-- **Objetivo**: Proporciona uma experiência autêntica em disputas diretas, indicando prontamente as voltas perdidas em relação ao carro anterior.
+### Modos de Cálculo
+1. **Sempre tempo (`always_time`)**:
+   - Projeção matemática contínua de ritmo em segundos.
+   - Formatado como `+X.XXX` com casas decimais de tempo configuráveis (1 a 3 casas).
+2. **Voltas e tempo (`laps_and_time`)**:
+   - Formato estilo transmissão Fórmula 1.
+   - Exibe segundos (`+X.XXX`) quando os carros estão na mesma volta.
+   - Exibe déficit de voltas (`+1 Volta`, `+N Voltas`) quando houver volta perdida.
+3. **Sempre voltas (`always_laps`)**:
+   - Diferença exata de voltas calculada a cada volta completada pelo competidor na linha de chegada.
+   - Incorpora o progresso de volta parcial do piloto alvo naquele momento exato.
+   - Formatado com casas decimais de volta configuráveis (0 a 3 casas).
 
 ---
 
 ## Fórmulas de Cálculo Detalhadas
 
-Todo o processamento matemático é realizado em `com.antigravity.race.GapCalculator` no servidor Java.
+Todos os cálculos são executados em `com.antigravity.race.GapCalculator` no servidor Java.
 
-Considere `leadParticipant` o piloto da frente e `curParticipant` o piloto perseguidor.
+Seja `leadParticipant` o piloto à frente (líder ou posição $N-1$) e `curParticipant` o piloto perseguidor.
 
-### Matemática da Projeção de Diferença Padrão
+### 1. Fórmula: Sempre Tempo (`always_time`)
 
-São tratados três cenários:
+As diferenças de tempo padrão avaliam três cenários:
 
-#### Cenário A: Mesmo Número de Voltas
+#### Cenário A: Mesmo Número de Voltas Concluídas
 $$\text{Gap} = \text{TotalTime}_{\text{cur}} - \text{TotalTime}_{\text{lead}}$$
 
-#### Cenário B: Nenhuma Volta Completa Realizada
-Se o piloto perseguidor ainda não completou uma volta cronometrada (`hasNoFullLaps()`):
+#### Cenário B: Nenhuma Volta Concluída
 $$\text{Gap} = \text{TotalTime}_{\text{lead}}$$
 
-#### Cenário C: Diferente Número de Voltas
+#### Cenário C: Número Diferente de Voltas
 $$\text{LapDiff} = \text{AdjustedLaps}_{\text{lead}} - \text{AdjustedLaps}_{\text{cur}}$$
 $$\text{AvgLapTime}_{\text{cur}} = \text{AverageLapTime}(\text{curParticipant})$$
 
-A fórmula adapta-se consoante o **Método de Fim de Prova (Finish Method)**:
-
-1. **Corridas por Tempo (Timed Finish)**:
+A fórmula de projeção adapta-se ao **Método de Encerramento**:
+1. **Corridas por Tempo**:
    $$\text{Gap} = \text{AvgLapTime}_{\text{cur}} \times \text{LapDiff}$$
-
-2. **Corridas por Voltas (Lap Finish)**:
+2. **Corridas por Voltas**:
    $$\text{TimeDiff} = \text{TotalTime}_{\text{cur}} - \text{TotalTime}_{\text{lead}}$$
    $$\text{ProjectedGap} = \text{TimeDiff} + (\text{AvgLapTime}_{\text{cur}} \times \text{LapDiff})$$
 
-   > [!NOTE]
-   > Se $\text{ProjectedGap}$ resultar num valor negativo devido a anomalias de cronometragem, o sistema utiliza automaticamente $\text{AvgLapTime}_{\text{cur}} \times \text{LapDiff}$.
-
 ---
 
-### Matemática das Diferenças Fórmula 1
+### 2. Fórmula: Fórmula 1 (`laps_and_time`)
 
-#### 1. Voltas Perdidas (Laps Down)
+#### 1. Verificação de Voltas Perdidas
 $$\text{LapsDown} = (\text{PhysicalLaps}_{\text{lead}} - \text{PhysicalLaps}_{\text{cur}}) - 1$$
-
-- Se $\text{LapsDown} > 0$: O perseguidor foi dobrado. O tempo é fixado em `0.0` e a interface apresenta `+X Voltas`.
-- Se $\text{LapsDown} \le 0$: O perseguidor está na volta do líder ($\text{LapsDown} = 0$).
+- Se $\text{LapsDown} > 0$: O piloto levou volta (`+X Voltas`).
+- Se $\text{LapsDown} \le 0$: Na mesma volta do líder.
 
 #### 2. Diferença na Volta do Líder
-- **Mesmo Número de Voltas Físicas Realizadas**:
+- **Mesmo número de voltas concluídas**:
   $$\text{TimeGap} = \text{TotalTime}_{\text{cur}} - \text{TotalTime}_{\text{lead}}$$
-- **O Líder Completou uma Volta Adicional**: A diferença é calculada no momento exato em que o líder completou a mesma volta:
+- **Líder completou uma volta adicional**:
   $$\text{TimeGap} = \text{TotalTime}_{\text{cur}} - \text{leadParticipant.getTimeAtLap}(\text{PhysicalLaps}_{\text{cur}})$$
 
-> [!TIP]
-> Se o tempo calculado for negativo, é fixado em `0.0`.
+---
+
+### 3. Fórmula: Sempre Voltas (`always_laps`)
+
+Mede a diferença exata de voltas ao completar cada volta:
+
+#### 1. Disparo de Conclusão de Volta
+Ao cruzar a linha de chegada, o servidor registra as voltas ajustadas do competidor e identifica o piloto de referência.
+
+#### 2. Cálculo de Volta Parcial
+Para garantir uma comparação justa e precisa, o progresso de volta parcial do piloto de referência é calculado a partir do tempo decorrido desde a última volta dele:
+$$\text{TimeSinceLastLap}_{\text{target}} = \text{CurrentElapsedTime} - \text{TimeOfLastLap}_{\text{target}}$$
+$$\text{PartialLap}_{\text{target}} = \min\left(0.99, \max\left(0.0, \frac{\text{TimeSinceLastLap}_{\text{target}}}{\text{MedianLapTime}_{\text{target}}}\right)\right)$$
+
+> [!NOTE]
+> Caso o piloto de referência ainda não tenha um tempo mediano válido ($\le 0$) ou $\text{TimeSinceLastLap} \le 0$, a volta parcial é avaliada em $0.0$. O progresso é limitado a $0.99$ para evitar arredondamentos indevidos antes do cruzamento físico da linha.
+
+#### 3. Diferença Efetiva de Voltas
+$$\text{EffectiveLaps}_{\text{target}} = \text{AdjustedLaps}_{\text{target}} + \text{PartialLap}_{\text{target}}$$
+$$\text{GapLaps} = \text{EffectiveLaps}_{\text{target}} - \text{AdjustedLaps}_{\text{competitor}}$$
+
+O competidor retém esse valor até a conclusão da sua própria volta seguinte.
 
 ---
 
-## Comparação: Diferenças Padrão vs. Diferenças Fórmula 1
+## Comparação dos Modos de Cálculo
 
-| Característica | Diferenças Padrão (`gapLeader`, `gapPosition`) | Diferenças Fórmula 1 (`gapLeaderF1`, `gapPositionF1`) |
-| :--- | :--- | :--- |
-| **Abordagem de Cálculo** | Projeção estatística contínua de ritmo | Comparação exata ao passar pela meta |
-| **Carros Dobrados** | Segundos projetados (ex. `+14.820`) | Texto de voltas perdidas (ex. `+1 Volta`, `+2 Voltas`) |
-| **Na Mesma Volta** | Diferença temporal em segundos (`+1.450`) | Diferença exata na linha da mesma volta (`+1.450`) |
-| **Tipo de Fim de Corrida** | Diferencia provas por tempo e por voltas | Baseado no cruzamento da linha de meta |
-| **Aplicação Ideal** | Controlo de ritmo contínuo no slot car | Gráficos televisivos, ecrãs de espectadores |
-
----
-
-## Utilização dos Widgets no Editor de IU
-
-### 1. Em Grelhas e Classificações
-No Editor de IU, selecione o widget Grid e aceda ao separador **Colunas**. Nos subgrupos **Gaps & Intervals** ou **Overall Gaps & Intervals**, ative as colunas pretendidas.
-
-### 2. Cartões de Coluna Independentes
-Arraste um widget de diferença a partir da Caixa de Ferramentas para a tela e vincule-o a uma **Pista Específica**, uma **Posição na Manga** ou à **Classificação Geral**.
-
-### 3. Inserções (Insets) noutros Cartões
-Adicione o valor da diferença como um distintivo secundário noutros cartões através dos 8 pontos de fixação em **Card Insets**.
+| Característica | Sempre tempo (`always_time`) | Voltas e tempo (`laps_and_time`) | Sempre voltas (`always_laps`) |
+| :--- | :--- | :--- | :--- |
+| **Abordagem** | Projeção matemática contínua de ritmo | Comparações exatas na linha de chegada | Diferença de voltas com volta parcial |
+| **Carros com Volta Perdida**| Segundos projetados (ex.: `+14.820`) | Texto de voltas perdidas (`+1 Volta`) | Delta decimal de voltas (ex.: `+2.45`) |
+| **Na Volta do Líder** | Diferença em segundos (`+1.450`) | Diferença exata na linha (`+1.450`) | Delta decimal de voltas (ex.: `+0.28`) |
+| **Base Decimal** | Casas decimais de tempo (1 a 3) | Casas decimais de tempo (1 a 3) | Casas decimais de volta (0 a 3) |
+| **Momento de Atualização** | Atualizações contínuas | Cruzamento da linha de chegada | Cruzamento pessoal de volta concluída |
+| **Aplicação Ideal** | Pacing em autorama, tomada de tempos | Telas de transmissão estilo Fórmula 1 | Corridas de endurance por voltas |
 
 ---
 
-## Integração com Voz (TTS), Áudio e Exportação
+## Usando Widgets de Diferença no Editor de Interface
 
-- **Conversão de Texto em Voz (TTS)**:
-  - `{driver.gapLeader}`: Diferença para o líder vocalizada em segundos.
-  - `{driver.gapPosition}`: Diferença para o carro da frente vocalizada em segundos.
-- **Widgets HTML/JS Personalizados**: `driver.gap_leader` e `driver.gap_position`.
-- **Modelos Excel (XLS)**:
-  - `${driver.gapLeader}` e `${driver.gapPosition}` (Classificação geral).
-  - `${heatDriver.gapLeader}` e `${heatDriver.gapPosition}` (Resultados da manga).
+### 1. Em Grades e Classificações
+No Editor de Interface, selecione o widget de Grade e acesse a aba **Colunas**. Em **Gaps e Intervalos**, ative **Diferença da Bateria** (`gap`) ou **Diferença Geral** (`overallGap`):
+- Selecione a coluna para abrir o **Inspetor de Colunas**.
+- Em **Configuração de diferença**, defina o **Alvo** (*Líder* ou *Posição à frente*) e o **Modo de cálculo** (*Sempre tempo*, *Voltas e tempo* ou *Sempre voltas*).
+- Podem ser adicionadas simultaneamente à mesma grade várias colunas de diferença com alvos ou modos distintos.
+
+### 2. Cartões de Pista Individuais
+Arraste widgets de diferença da caixa de ferramentas diretamente para a tela e configure alvo e modo no inspetor.
+
+### 3. Inserções (Insets)
+As métricas de diferença podem ser inseridas como sub-badges em cartões de pista atribuindo `gap` ou `overallGap` a qualquer uma das 8 posições de ancoragem.
+
+---
+
+## Integração com TTS, Áudio e Exportação
+
+- **Texto para Voz (TTS)**: `{driver.gapLeader}` e `{driver.gapPosition}`.
+- **Widgets personalizados HTML/JS**: `driver.gap_leader` e `driver.gap_position`.
+- **Exportações para Excel**: `${driver.gapLeader}` e `${driver.gapPosition}`.

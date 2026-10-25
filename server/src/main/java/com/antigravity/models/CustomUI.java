@@ -177,7 +177,7 @@ public class CustomUI extends Model {
             + "\"previewLampCount\":5,\"maxLamps\":5,\"fadeIn\":true,\"glowEffect\":true,\"glowOverlap\":30,"
             + "\"glowRedOverlap\":30,\"glowGreenOverlap\":25}}],\"baseWidth\":1920,\"baseHeight\":1080,\"aspectRatio\":\"16:9\",\"scaleMode\":\"stretch\"}";
     String columnsJson =
-        "[\"driver.nickname\",\"lapCount\",\"lastLapTime\",\"averageLapTime\",\"gapLeader\","
+        "[\"driver.nickname\",\"lapCount\",\"lastLapTime\",\"averageLapTime\",\"gap\","
             + "\"ghostPacingLeaderAvg\"]";
     String columnLayoutsJson =
         "{\"laneNumber\":{\"center-center\":\"laneNumber\"},\"driver.nickname\":{"
@@ -186,7 +186,7 @@ public class CustomUI extends Model {
             + "\"center-center\":\"imageset_fuel-gauge-builtin\"},\"lapCount\":{"
             + "\"center-center\":\"lapCount\",\"bottom-left\":\"flag\"},\"lastLapTime\":{"
             + "\"center-center\":\"lastLapTime\",\"bottom-right\":\"bestLapTime\"},"
-            + "\"gapLeader\":{\"center-center\":\"gapLeader\",\"bottom-right\":\"gapPosition\"}}";
+            + "\"gap\":{\"center-center\":\"gap\",\"bottom-right\":\"gapPosition\"}}";
     String columnVisibilityJson = "{\"imageset_fuel-gauge-builtin\":\"FuelRaceOnly\"}";
     String columnWidthsJson = "{\"ghostPacingLeaderAvg\":200,\"averageLapTime\":310}";
     return new CustomUI(
@@ -264,7 +264,7 @@ public class CustomUI extends Model {
             + "\"insetTimeDecimalPlaces\":3,\"insetLapDecimalPlaces\":2,"
             + "\"insetFontFamily\":\"\",\"insetFontSize\":24,\"insetTextColor\":\"\","
             + "\"columnWidths\":{\"lapCount\":210,\"imageset_fuel-gauge-builtin\":210,"
-            + "\"lastLapTime\":310,\"gapLeader\":310}}},"
+            + "\"lastLapTime\":310,\"gap\":310}}},"
             + "{\"id\":\"widget-countdown\",\"widgetType\":\"countdown\",\"x\":460,\"y\":390,"
             + "\"width\":1000,\"height\":250,\"zIndex\":2000,\"scaleMode\":\"auto\","
             + "\"customSettings\":{\"orientation\":\"horizontal\",\"lampScale\":1.0,"
@@ -273,7 +273,7 @@ public class CustomUI extends Model {
             + "\"glowRedOverlap\":30,\"glowGreenOverlap\":25}}],\"baseWidth\":1920,\"baseHeight\":1080,\"aspectRatio\":\"16:9\",\"scaleMode\":\"stretch\"}";
     String columnsJson =
         "[\"driver.nickname\",\"imageset_fuel-gauge-builtin\",\"lapCount\",\"lastLapTime\","
-            + "\"gapLeader\"]";
+            + "\"gap\"]";
     String columnLayoutsJson =
         "{\"laneNumber\":{\"center-center\":\"laneNumber\"},\"driver.nickname\":{"
             + "\"center-center\":\"driver.nickname\",\"bottom-right\":\"participant.team.name\","
@@ -281,12 +281,12 @@ public class CustomUI extends Model {
             + "\"center-center\":\"imageset_fuel-gauge-builtin\"},\"lapCount\":{"
             + "\"center-center\":\"lapCount\",\"bottom-left\":\"flag\"},\"lastLapTime\":{"
             + "\"center-center\":\"lastLapTime\",\"top-right\":\"bestLapTime\","
-            + "\"bottom-right\":\"averageLapTime\"},\"gapLeader\":{\"center-center\":\"gapLeader\","
+            + "\"bottom-right\":\"averageLapTime\"},\"gap\":{\"center-center\":\"gap\","
             + "\"bottom-right\":\"gapPosition\"}}";
     String columnVisibilityJson = "{\"imageset_fuel-gauge-builtin\":\"FuelRaceOnly\"}";
     String columnWidthsJson =
         "{\"lapCount\":210,\"imageset_fuel-gauge-builtin\":210,\"lastLapTime\":310,"
-            + "\"gapLeader\":310}";
+            + "\"gap\":310}";
     return new CustomUI(
         "RaceCoordinator AI (Fuel)",
         true,

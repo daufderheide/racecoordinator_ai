@@ -8,8 +8,8 @@ Race Coordinator AI verfügt über eine automatisierte serverseitige Engine zur 
 
 Sobald sich die Wertungen während des Rennens aktualisieren, sortiert die Engine alle Teilnehmer nach ihrer aktuellen Platzierung gemäß den aktiven Wertungsregeln (Meiste Runden, Schnellste Gesamtzeit oder Punkte). Anschließend werden die Abstandsmetriken für zwei unterschiedliche Bezugspunkte berechnet:
 
-- **Abstand zum Führenden (`gapLeader` / `overallGapLeader`)**: Der Zeitabstand zwischen einem Fahrer und dem Erstplatzierten (P1). Der Abstand des Führenden zu sich selbst beträgt immer `0.0` (dargestellt als `--`).
-- **Abstand zum Vordermann (`gapPosition` / `overallGapPosition`)**: Der Zeitabstand zwischen einem Fahrer und dem unmittelbar vor ihm platzierten Fahrzeug (z. B. P3 im Vergleich zu P2). Der Abstand des Erstplatzierten beträgt immer `0.0` (dargestellt als `--`).
+- **Abstand zum Führenden (`leader`)**: Der Zeitabstand zwischen einem Fahrer und dem Erstplatzierten (P1). Der Abstand des Führenden zu sich selbst beträgt immer `0.0` (dargestellt als `--`).
+- **Abstand zum Vordermann (`position`)**: Der Zeitabstand zwischen einem Fahrer und dem unmittelbar vor ihm platzierten Fahrzeug (z. B. P3 im Vergleich zu P2). Der Abstand des Erstplatzierten beträgt immer `0.0` (dargestellt als `--`).
 
 ### Datenbereiche: Durchgangs-Abstände vs. Gesamt-Abstände
 
@@ -17,14 +17,17 @@ Race Coordinator AI unterstützt die Abstandsbewertung über zwei verschiedene D
 
 | Bereich | Spaltenschlüssel | Beschreibung | Anwendungsfall |
 | :--- | :--- | :--- | :--- |
-| **Durchgangsdaten (Heat Data)** | `gapLeader`<br>`gapPosition`<br>`gapLeaderF1`<br>`gapPositionF1` | Bewertet Abstände ausschließlich zwischen den Fahrzeugen, die im aktuellen Durchgang aktiv auf der Strecke fahren. Pausierende Fahrer zeigen Striche (`--`). | Live-Rennen, Fahrerstandskarten, Live-Bestenlisten. |
-| **Gesamtrendaten (Overall Data)** | `overallGapLeader`<br>`overallGapPosition`<br>`overallGapLeaderF1`<br>`overallGapPositionF1` | Bewertet kumulierte Abstände über alle registrierten Teilnehmer des gesamten Turniers hinweg, über alle abgeschlossenen Durchgänge. | Gesamtwertungsraster, turnierweite Ranglisten, Meisterschaftsverfolgung. |
+| **Durchgangsdaten (Heat Data)** | `gap` | Bewertet Abstände ausschließlich zwischen den Fahrzeugen, die im aktuellen Durchgang aktiv auf der Strecke fahren. Pausierende Fahrer zeigen Striche (`--`). | Live-Rennen, Fahrerstandskarten, Live-Bestenlisten. |
+| **Gesamtdaten (Overall Data)** | `overallGap` | Bewertet kumulierte Abstände über alle registrierten Teilnehmer des gesamten Turniers hinweg, über alle abgeschlossenen Durchgänge. | Gesamtwertungsraster, turnierweite Ranglisten, Meisterschaftsverfolgung. |
+
+> [!NOTE]
+> Bestehende Layouts mit veralteten Spaltenschlüsseln (`gapLeader`, `gapPosition`, `gapLeaderF1`, `gapPositionF1`, `overallGapLeader`, `overallGapPosition`, `overallGapLeaderF1`, `overallGapPositionF1`) werden beim Laden automatisch zu `gap` bzw. `overallGap` mit den entsprechenden Ziel- und Berechnungsmoduseinstellungen migriert.
 
 ---
 
-## Die 4 unterstützten Abstands-Widgets
+## Die 2 konfigurierbaren Abstands-Widgets
 
-Race Coordinator AI bietet **4 verschiedene Abstands-Widgets** (verfügbar als Rasterspalten, eigenständige Spaltenkarten und benutzerdefinierte Insets), unterteilt nach Berechnungsmethode und Bezugsziel:
+Race Coordinator AI bietet **2 konfigurierbare Abstands-Widgets** (verfügbar als Rasterspalten, eigenständige Spaltenkarten und benutzerdefinierte Insets):
 
 ```
                           ┌──────────────────────────────────────────────┐
@@ -34,149 +37,154 @@ Race Coordinator AI bietet **4 verschiedene Abstands-Widgets** (verfügbar als R
                    ┌─────────────────────────────┴─────────────────────────────┐
                    ▼                                                           ▼
       ┌─────────────────────────┐                                 ┌─────────────────────────┐
-      │    STANDARD-ABSTÄNDE    │                                 │    FORMEL-1-ABSTÄNDE    │
-      │  Kontinuierliche Pace   │                                 │   Exakte Linienquerung  │
+      │   LAUF-ABSTAND (`gap`)  │                                 │GESAMT-ABSTAND(`overallGap)│
+      │  Aktive Fahrer im Lauf  │                                 │ Alle Turnierteilnehmer  │
       └────────────┬────────────┘                                 └────────────┬────────────┘
                    │                                                           │
-         ┌─────────┴─────────┐                                       ┌─────────┴─────────┐
-         ▼                   ▼                                       ▼                   ▼
-  ┌─────────────┐     ┌─────────────┐                         ┌─────────────┐     ┌─────────────┐
-  │ Gap Leader  │     │Gap Position │                         │Gap Leader F1│     │Gap Pos. F1  │
-  │(P1-Führender│     │(Vordermann) │                         │(P1-Führender│     │(Vordermann) │
-  └─────────────┘     └─────────────┘                         └─────────────┘     └─────────────┘
+                   └─────────────────────────────┬─────────────────────────────┘
+                                                 │
+                               ┌─────────────────┴─────────────────┐
+                               ▼                                   ▼
+                   ┌───────────────────────┐           ┌───────────────────────┐
+                   │     ZIEL-AUSWAHL      │           │   BERECHNUNGSMODUS    │
+                   ├───────────────────────┤           ├───────────────────────┤
+                   │ • Führender (P1)      │           │ • Immer Zeit          │
+                   │ • Vorausfahrender     │           │ • Runden und Zeit (F1)│
+                   │                       │           │ • Immer Runden (Delta)│
+                   └───────────────────────┘           └───────────────────────┘
 ```
 
-### 1. Abstand zum Führenden (Standard)
-- **Toolbox-Schlüssel**: `gapLeader` (Durchgang) / `overallGapLeader` (Gesamt)
-- **Toolbox-Gruppe**: *Heat Data → Gaps & Intervals* / *Overall Race Data → Overall Gaps & Intervals*
-- **Standardbezeichnungen**: `HEAT GAP LEADER`, `OVERALL GAP LEADER` oder `GAP LEADER`
-- **Messmodell**: Kontinuierliche mathematische Pace-Projektion.
-- **Anzeige**: Formatiert als `+X.XXX` Sekunden mit konfigurierbaren Nachkommastellen (1 bis 3 Dezimalstellen). Der Führende zeigt `--`.
-- **Zweck**: Liefert einen in Echtzeit prognostizierten Zeitrückstand auf den Führenden. Selbst wenn der Führende mehr Runden absolviert hat, projiziert dieses Widget den Zeitabstand basierend auf der durchschnittlichen Rundenzeit des Verfolgers.
+### Zielauswahl
+- **Führender (`leader`)**: Abstand relativ zum Führenden des Rennens (P1). Der Führende zeigt Striche (`--`).
+- **Vorausfahrender (`position`)**: Abstand relativ zum unmittelbar davor platzierten Konkurrenten (z. B. P3 zu P2). Der Führende zeigt Striche (`--`).
 
-### 2. Abstand zum Vordermann (Standard)
-- **Toolbox-Schlüssel**: `gapPosition` (Durchgang) / `overallGapPosition` (Gesamt)
-- **Toolbox-Gruppe**: *Heat Data → Gaps & Intervals* / *Overall Race Data → Overall Gaps & Intervals*
-- **Standardbezeichnungen**: `HEAT GAP POSITION`, `OVERALL GAP POSITION` oder `GAP POSITION`
-- **Messmodell**: Kontinuierliche mathematische Pace-Projektion.
-- **Anzeige**: Formatiert als `+X.XXX` Sekunden. Der Erstplatzierte zeigt `--`.
-- **Zweck**: Zeigt den Zeitrückstand an, der nötig ist, um den unmittelbar vorausfahrenden Konkurrenten zu überholen. Unverzichtbar für Positionskämpfe.
-
-### 3. Formel-1-Abstand zum Führenden (`F1`)
-- **Toolbox-Schlüssel**: `gapLeaderF1` (Durchgang) / `overallGapLeaderF1` (Gesamt)
-- **Toolbox-Gruppe**: *Heat Data → Gaps & Intervals* / *Overall Race Data → Overall Gaps & Intervals*
-- **Standardbezeichnungen**: `HEAT GAP LEADER LAP`, `OVERALL GAP LEADER LAP` oder `GAP LEADER`
-- **Messmodell**: Exakte physische Zeitmessung an der Start-/Ziellinie.
-- **Anzeige**:
-  - **In derselben Runde**: Formatiert als `+X.XXX` Sekunden (physischer Zeitunterschied bei der Linienüberquerung).
-  - **Überrundete Fahrer**: Ersetzt die Zeitanzeige automatisch durch `+1 Runde` oder `+N Runden` (`RD_LAP_DOWN` / `RD_LAPS_DOWN`).
-  - **Führender**: Zeigt `--`.
-- **Zweck**: Bildet die offizielle Formel-1-Zeitmessung nach. Anstelle großer hochgerechneter Zeitabstände wird bei überrundeten Fahrzeugen klar der Rundenrückstand angezeigt.
-
-### 4. Formel-1-Abstand zum Vordermann (`F1`)
-- **Toolbox-Schlüssel**: `gapPositionF1` (Durchgang) / `overallGapPositionF1` (Gesamt)
-- **Toolbox-Gruppe**: *Heat Data → Gaps & Intervals* / *Overall Race Data → Overall Gaps & Intervals*
-- **Standardbezeichnungen**: `HEAT GAP POSITION LAP`, `OVERALL GAP POSITION LAP` oder `GAP POSITION`
-- **Messmodell**: Exakte physische Zeitmessung an der Start-/Ziellinie.
-- **Anzeige**:
-  - **In derselben Runde**: Formatiert als `+X.XXX` Sekunden hinter dem Vordermann.
-  - **Vom Vordermann überrundet**: Zeigt `+1 Runde` oder `+N Runden`.
-  - **Führender**: Zeigt `--`.
-- **Zweck**: Bietet ein authentisches TV-Rennerlebnis für direkte Duelle, mit sofortiger Kennzeichnung überrundeter Abstände zum nächsten Wagen.
+### Berechnungsmodi
+1. **Immer Zeit (`always_time`)**:
+   - Kontinuierliche mathematische Pace-Projektion in Sekunden.
+   - Formatiert als `+X.XXX` mit konfigurierbaren Zeitdezimalstellen (1 bis 3 Stellen).
+2. **Runden und Zeit (`laps_and_time`)**:
+   - Formel-1-Übertragungsanzeige.
+   - Zeigt Sekunden (`+X.XXX`) an, wenn die Fahrer in der Führungsrunde sind.
+   - Zeigt Rundenrückstände (`+1 Runde`, `+N Runden`) bei Überrundung an.
+3. **Immer Runden (`always_laps`)**:
+   - Exakter Runden-Delta-Wert, der jedes Mal berechnet wird, wenn ein Fahrer die Linie zur Rundenbeendigung überquert.
+   - Bezieht den Teilrundenfortschritt des Zielfahrers im exakten Überquerungsmoment mit ein.
+   - Formatiert mit konfigurierbaren Rundendezimalstellen (0 bis 3 Stellen).
 
 ---
 
 ## Detaillierte Berechnungsformeln
 
-Die gesamte Abstandsmathematik wird in `com.antigravity.race.GapCalculator` auf dem Java-Server berechnet.
+Die gesamte Abstandsmathematik wird in `com.antigravity.race.GapCalculator` auf dem Java-Server ausgeführt.
 
-Sei `leadParticipant` der vorausfahrende Fahrer (Führender oder Fahrzeug auf Position $N-1$) und `curParticipant` der nachfolgende Fahrer.
+Sei `leadParticipant` der vorausfahrende Fahrer (Führender oder Konkurrent auf Position $N-1$) und `curParticipant` der verfolgende Fahrer.
 
-### Standard-Abstandsprojektion
+### 1. Formel: Immer Zeit (`always_time`)
 
-Standardabstände berücksichtigen drei mögliche Rundenszenarien:
+Standardmäßige Zeitabstände bewerten drei Runden-Szenarien:
 
-#### Szenario A: Gleiche Rundenzahl
-Haben beide Fahrer exakt dieselbe Anzahl angepasster Runden absolviert:
+#### Szenario A: Gleiche absolvierte Runden
+Haben beide Fahrer exakt dieselbe Anzahl bereinigter Runden zurückgelegt:
 $$\text{Gap} = \text{TotalTime}_{\text{cur}} - \text{TotalTime}_{\text{lead}}$$
 
-#### Szenario B: Keine vollständige Runde absolviert
-Hat der nachfolgende Fahrer noch keine vollständige gezeitete Runde abgeschlossen (`hasNoFullLaps()`):
+#### Szenario B: Keine abgeschlossenen Runden
+Hat der Verfolger noch keine vollständige gezeitete Runde beendet (`hasNoFullLaps()`):
 $$\text{Gap} = \text{TotalTime}_{\text{lead}}$$
 
-#### Szenario C: Unterschiedliche Rundenzahl
-Hat der vorausfahrende Fahrer mehr Runden absolviert, wird die Rundendifferenz berechnet:
+#### Szenario C: Unterschiedliche Rundenzahlen
+Hat der vorausfahrende Fahrer mehr Runden absolviert, wird die Rundendifferenz ermittelt:
 $$\text{LapDiff} = \text{AdjustedLaps}_{\text{lead}} - \text{AdjustedLaps}_{\text{cur}}$$
 $$\text{AvgLapTime}_{\text{cur}} = \text{AverageLapTime}(\text{curParticipant})$$
 
-Die Projektionsformel passt sich an die konfigurierte **Ende-Methode (Finish Method)** des Rennens an:
+Die Projektionsformel passt sich an die konfigurierte **Beendigungsmethode** an:
 
-1. **Zeitbasierte Rennen (Timed Finish)** (z. B. 2-Minuten-Durchgänge):
-   Bei zeitbasierten Rennen ist die Gesamtlaufzeit beim Signalton im Wesentlichen identisch. Der Abstand wird rein über das Rundentempo des nachfolgenden Fahrers entlang des Rundenrückstands projiziert:
+1. **Zeitbasierte Rennen** (z. B. 2-Minuten-Heats):
    $$\text{Gap} = \text{AvgLapTime}_{\text{cur}} \times \text{LapDiff}$$
 
-2. **Rundenbasierte Rennen (Lap Finish)** (z. B. 50-Runden-Durchgänge):
-   Bei rundenbasierten Rennen weichen die Gesamtzeiten naturgemäß voneinander ab. Das System kombiniert die aktuelle Zeitdifferenz mit der prognostizierten Zeit für die fehlenden Runden:
+2. **Rundenbasierte Rennen** (z. B. 50-Runden-Heats):
    $$\text{TimeDiff} = \text{TotalTime}_{\text{cur}} - \text{TotalTime}_{\text{lead}}$$
    $$\text{ProjectedGap} = \text{TimeDiff} + (\text{AvgLapTime}_{\text{cur}} \times \text{LapDiff})$$
 
    > [!NOTE]
-   > Sollte $\text{ProjectedGap}$ aufgrund von Zeitanomalien oder manuellen Anpassungen negativ ausfallen, greift das System automatisch auf $\text{AvgLapTime}_{\text{cur}} \times \text{LapDiff}$ zurück.
+   > Ergibt $\text{ProjectedGap}$ ausnahmsweise einen negativen Wert, greift das System automatisch auf $\text{AvgLapTime}_{\text{cur}} \times \text{LapDiff}$ zurück.
 
 ---
 
-### Formel-1-Abstandsmathematik
+### 2. Formel: Formel-1-Abstand (`laps_and_time`)
 
-Formel-1-Abstände spiegeln physische Rennpositionen wider, wenn Fahrzeuge die Start-/Ziellinie überqueren:
+Formel-1-Abstände spiegeln physische Streckenabstände bei Start-/Ziellinienüberquerung wider:
 
-#### 1. Ermittlung des Rundenrückstands (Laps Down)
-Die Engine prüft, ob der nachfolgende Fahrer physisch überrundet wurde:
+#### 1. Überrundungsprüfung
 $$\text{LapsDown} = (\text{PhysicalLaps}_{\text{lead}} - \text{PhysicalLaps}_{\text{cur}}) - 1$$
 
-- Wenn $\text{LapsDown} > 0$: Der Fahrer ist überrundet. `lapsDownLeader` (oder `lapsDownPosition`) wird gespeichert, der Zeitabstand auf `0.0` gesetzt und in der UI `+X Runden` angezeigt.
-- Wenn $\text{LapsDown} \le 0$: Der Fahrer befindet sich in der Führungsrunde ($\text{LapsDown} = 0$).
+- Ist $\text{LapsDown} > 0$: Der Fahrer ist überrundet (`+X Runden`).
+- Ist $\text{LapsDown} \le 0$: Der Fahrer befindet sich in der Führungsrunde.
 
-#### 2. Zeitdifferenz in der Führungsrunde
-Fahren beide Fahrer in derselben Runde, wird die exakte Zeitdifferenz beim Überqueren der Linie berechnet:
-
-- **Gleiche Anzahl physischer Runden absolviert**: Beide Fahrzeuge haben die Ziellinie für dieselbe Rundennummer überquert:
+#### 2. Zeitabstand in der Führungsrunde
+- **Gleiche Rundenzahl beendet**:
   $$\text{TimeGap} = \text{TotalTime}_{\text{cur}} - \text{TotalTime}_{\text{lead}}$$
-- **Führender hat eine zusätzliche Runde absolviert**: Der Führende hat bereits die nächste Runde begonnen, während der Verfolger seine Runde noch beendet. Der Abstand wird zu dem Zeitpunkt gemessen, an dem der Führende exakt dieselbe Runde beendet hatte:
+- **Führender hat eine Runde mehr absolviert**:
   $$\text{TimeGap} = \text{TotalTime}_{\text{cur}} - \text{leadParticipant.getTimeAtLap}(\text{PhysicalLaps}_{\text{cur}})$$
-
-> [!TIP]
-> Sollte der berechnete Zeitabstand durch Messschwankungen negativ sein, wird er auf `0.0` fixiert.
 
 ---
 
-## Vergleich: Standard-Abstände vs. Formel-1-Abstände
+### 3. Formel: Immer Runden (`always_laps`)
 
-| Eigenschaft | Standard-Abstände (`gapLeader`, `gapPosition`) | Formel-1-Abstände (`gapLeaderF1`, `gapPositionF1`) |
-| :--- | :--- | :--- |
-| **Berechnungsansatz** | Kontinuierliche statistische Pace-Projektion | Exakter Zeitvergleich bei Überquerung der Ziellinie |
-| **Anzeige bei Überrundung** | Projizierte Sekunden (z. B. `+14.820`) | Rundenrückstand-Text (z. B. `+1 Runde`, `+3 Runden`) |
-| **Anzeige in Führungsrunde** | Zeitdifferenz in Sekunden (`+1.450`) | Exakte Zeitdifferenz bei identischer Runde (`+1.450`) |
-| **Ende-Methode** | Differenziert nach zeit- oder rundenbasiertem Ende | Überquerungsbasiert über alle Rennformate hinweg |
-| **Empfohlener Einsatz** | Slotcar-Rennbetrieb, kontinuierliche Pace-Kontrolle | TV-Grafiken, Broadcast-Anzeigen, Zuschauer-Bildschirme |
+Die Berechnung im Modus „Immer Runden“ misst den exakten Runden-Delta-Wert bei jedem Rundenabschluss:
+
+#### 1. Rundenabschluss-Auslöser
+Überquert ein Fahrer die Ziellinie, wird seine Rundenzahl erfasst. Der Referenzfahrer (Führender oder Vordermann) wird ermittelt.
+
+#### 2. Berechnung der Teilrunde
+Um einen fairen und genauen Vergleich zu gewährleisten, wird der Teilrundenfortschritt des Referenzfahrers basierend auf der Zeit seit dessen letzter Rundenüberquerung berechnet:
+$$\text{TimeSinceLastLap}_{\text{target}} = \text{CurrentElapsedTime} - \text{TimeOfLastLap}_{\text{target}}$$
+$$\text{PartialLap}_{\text{target}} = \min\left(0.99, \max\left(0.0, \frac{\text{TimeSinceLastLap}_{\text{target}}}{\text{MedianLapTime}_{\text{target}}}\right)\right)$$
+
+> [!NOTE]
+> Hat der Referenzfahrer noch keine gültige Median-Rundenzeit ($\le 0$) oder ist $\text{TimeSinceLastLap} \le 0$, beträgt die Teilrunde $0.0$. Die Teilrunde wird auf maximal $0.99$ begrenzt, um vorzeitige Rundenaufrundungen vor der echten Linienüberquerung auszuschließen.
+
+#### 3. Effektives Runden-Delta
+Die effektive Rundenzahl des Referenzfahrers wird bestimmt:
+$$\text{EffectiveLaps}_{\text{target}} = \text{AdjustedLaps}_{\text{target}} + \text{PartialLap}_{\text{target}}$$
+
+Der Rundenabstand für den Fahrer beträgt:
+$$\text{GapLaps} = \text{EffectiveLaps}_{\text{target}} - \text{AdjustedLaps}_{\text{competitor}}$$
+
+Der Fahrer behält diesen berechneten Wert bei, bis er selbst die nächste Runde vollendet.
+
+---
+
+## Vergleich der Berechnungsmodi
+
+| Merkmal | Immer Zeit (`always_time`) | Runden und Zeit (`laps_and_time`) | Immer Runden (`always_laps`) |
+| :--- | :--- | :--- | :--- |
+| **Berechnungsansatz** | Kontinuierliche statistische Pace-Projektion | Exakte Zeitstempelvergleiche an der Ziellinie | Runden-Delta mit Teilrundenfortschritt |
+| **Überrundete Autos** | Prognostizierte Sekunden (z. B. `+14.820`) | Rundenrückstand-Text (z. B. `+1 Runde`, `+3 Runden`) | Dezimales Runden-Delta (z. B. `+2.45`) |
+| **Führungsrunden-Autos** | Zeitdifferenz in Sekunden (`+1.450`) | Exakte Zeitdifferenz an der Linie (`+1.450`) | Dezimales Runden-Delta (z. B. `+0.28`) |
+| **Genauigkeitsbasis** | Zeitdezimalstellen (1 bis 3 Stellen) | Zeitdezimalstellen (1 bis 3 Stellen) | Rundendezimalstellen (0 bis 3 Stellen) |
+| **Aktualisierungszeitpunkt** | Kontinuierliche Projektionsaktualisierung | Start-/Ziellinienüberquerung | Vollendete eigene Rundenüberquerung |
+| **Empfohlener Einsatz** | Slot-Car-Pacing, Zeittrainings | Formel-1-TV-Timing-Anzeigen | Langstreckenrennen, rundenbasierte Serien |
 
 ---
 
 ## Verwendung der Abstands-Widgets im UI-Editor
 
-### 1. In Rastern und Bestenlisten
-Wählen Sie im UI-Editor das Grid-Widget aus und wechseln Sie zum Reiter **Spalten (Columns)**. Unter **Gaps & Intervals** (Durchgang) oder **Overall Gaps & Intervals** (Gesamt) aktivieren Sie die gewünschten Abstandsspalten:
-- Verschieben Sie Spaltenkarten nach oben oder unten, um deren Reihenfolge anzupassen.
-- Konfigurieren Sie die Dezimalstellen (1, 2 oder 3) im Spalten-Inspektor.
+### 1. In Rastern und Ranglisten
+Wählen Sie im UI-Editor Ihr Raster-Widget aus und wechseln Sie zum Reiter **Spalten**. Aktivieren Sie unter **Gaps & Intervalle** (Lauf) oder **Gesamt-Gaps & Intervalle** (Gesamt) die Spalte **Lauf-Abstand** (`gap`) oder **Gesamt-Abstand** (`overallGap`):
+- Wählen Sie die Spaltenkarte aus, um den **Spalten-Inspektor** zu öffnen.
+- Wählen Sie unter **Abstandskonfiguration** das **Ziel** (*Führender* oder *Vorausfahrender*) und den **Berechnungsmodus** (*Immer Zeit*, *Runden und Zeit* oder *Immer Runden*).
+- Mehrere Abstandsspalten mit unterschiedlichen Zielen oder Modi können gleichzeitig demselben Raster hinzugefügt werden!
 
-### 2. Eigenständige Spaltenkarten (Lane Column Cards)
-Sie können einzelne Abstands-Widgets direkt aus der Toolbox auf die Leinwand ziehen:
-- Binden Sie die Karte im **Lane Column Inspector** an eine bestimmte **Spur (Track Lane)**, eine **Durchgangsplatzierung (Heat Position)** oder die **Gesamtwertung (Overall Standings Rank)**.
-- Wählen Sie die Layout-Ausrichtung: **Vertikal** (Titel über Wert) oder **Horizontal** (nebeneinander).
+### 2. Eigenständige Spaltenkarten
+Sie können Abstands-Widgets direkt aus der Toolbox auf die Arbeitsfläche ziehen:
+- Verknüpfen Sie die Karte im **Spalten-Inspektor** mit einer Spur, Laufposition oder Gesamtwertungsplatzierung.
+- Konfigurieren Sie Ziel und Berechnungsmodus.
 
-### 3. Inset-Abstände auf anderen Karten
-Abstandswerte können direkt als kleine Zusatz-Badges (Insets) in andere Spurkarten integriert werden:
-- Wählen Sie eine beliebige Lane-Column-Karte (z. B. Fahrerbild oder Rundenanzahl).
-- Weisen Sie im Bereich **Card Insets** `gapLeader` oder `gapPositionF1` einer der 8 Ankerpositionen (z. B. unten rechts) zu.
+### 3. Inset-Daten auf anderen Karten
+Abstandsmetriken können direkt als Sub-Badges in andere Spaltenkarten eingebettet werden:
+- Wählen Sie eine beliebige Spaltenkarte aus (z. B. Fahrer-Avatar oder Rundenanzahl).
+- Weisen Sie im Bereich **Karten-Insets** `gap` oder `overallGap` einer der 8 Ankerpositionen zu.
+- Passen Sie Ziel und Berechnungsmodus direkt in den Inset-Einstellungen an.
 
 ---
 
@@ -184,10 +192,10 @@ Abstandswerte können direkt als kleine Zusatz-Badges (Insets) in andere Spurkar
 
 Abstandsmetriken sind nahtlos in alle Subsysteme von Race Coordinator AI integriert:
 
-- **Text-to-Speech (TTS)**: Ansagen von Abständen mittels dynamischer Variablenersetzung:
+- **Text-to-Speech (TTS)**: Ansage von Intervallen über dynamische Variablen:
   - `{driver.gapLeader}`: Gesprochener Zeitabstand zum Führenden in Sekunden.
   - `{driver.gapPosition}`: Gesprochener Zeitabstand zum Vordermann in Sekunden.
-- **Benutzerdefinierte HTML/JS-Widgets**: Zugriff auf Live-Abstände über `driver.gap_leader` und `driver.gap_position`.
-- **Excel-Exporte (XLS)**: Ausgabe in Jxls-Vorlagen:
+- **Benutzerdefinierte HTML/JS-Widgets**: Zugriff auf Livedaten über `driver.gap_leader` und `driver.gap_position`.
+- **Excel-Exporte**: Integration von Abstandsspalten über Jxls-Tags:
   - `${driver.gapLeader}` und `${driver.gapPosition}` (Gesamtwertung).
-  - `${heatDriver.gapLeader}` und `${heatDriver.gapPosition}` (Durchgangsergebnisse).
+  - `${heatDriver.gapLeader}` und `${heatDriver.gapPosition}` (Laufergebnisse).

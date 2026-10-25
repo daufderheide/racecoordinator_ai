@@ -613,4 +613,118 @@ describe("ui-editor-data.helper", () => {
       expect(() => refreshUiEditorDisplayProperties(comp)).not.toThrow();
     });
   });
+
+  describe("gap migration in normalizeLoadedCustomUis", () => {
+    it("should migrate legacy gap widgets, columns, widths, and layouts across CustomUIs and editingSettings", () => {
+      const customUis: CustomUI[] = [
+        {
+          entity_id: "custom_ui_gap",
+          name: "Custom UI Gap",
+          is_default: false,
+          layoutJson: JSON.stringify({
+            widgets: [
+              {
+                id: "w-gap",
+                widgetType: "lane-column",
+                customSettings: {
+                  columnKey: "gapLeader",
+                  insets: { "bottom-right": "gapPosition" },
+                },
+              },
+            ],
+          }),
+          columnsJson: JSON.stringify(["lapCount", "gapLeader"]),
+          columnLayoutsJson: JSON.stringify({
+            gapLeader: {
+              "center-center": "gapLeader",
+              "bottom-right": "gapPosition",
+            },
+          }),
+          columnWidthsJson: JSON.stringify({
+            gapLeader: 310,
+          }),
+        },
+      ];
+
+      const editingSettings: any = {
+        racedayLayout: {
+          widgets: [
+            {
+              id: "w-raceday-gap",
+              widgetType: "lane-column",
+              customSettings: {
+                columnKey: "gapLeaderF1",
+              },
+            },
+          ],
+        },
+        practiceRacedayLayout: {
+          widgets: [
+            {
+              id: "w-practice-gap",
+              widgetType: "lane-column",
+              customSettings: {
+                columnKey: "overallGapPosition",
+              },
+            },
+          ],
+        },
+        racedayColumns: ["gapLeader"],
+        practiceRacedayColumns: ["gapPosition"],
+        columnWidths: { gapLeader: 310 },
+        practiceColumnWidths: { gapPosition: 300 },
+        columnLayouts: { gapLeader: { "center-center": "gapLeader" } },
+        practiceColumnLayouts: {
+          gapPosition: { "center-center": "gapPosition" },
+        },
+      };
+
+      normalizeLoadedCustomUis(customUis, editingSettings);
+
+      // Check custom UI layout
+      const parsedLayout = JSON.parse(customUis[0].layoutJson!);
+      expect(parsedLayout.widgets[0].customSettings.columnKey).toBe("gap");
+      expect(parsedLayout.widgets[0].customSettings.gapTarget).toBe("leader");
+      expect(parsedLayout.widgets[0].customSettings.gapMode).toBe(
+        "always_time",
+      );
+      expect(
+        parsedLayout.widgets[0].customSettings.insets["bottom-right"],
+      ).toBe("gap");
+      expect(
+        parsedLayout.widgets[0].customSettings.insetsConfig["bottom-right"]
+          .gapTarget,
+      ).toBe("position");
+
+      // Check columns, widths, layouts
+      expect(JSON.parse(customUis[0].columnsJson!)).toEqual([
+        "lapCount",
+        "gap",
+      ]);
+      expect(JSON.parse(customUis[0].columnWidthsJson!)["gap"]).toBe(310);
+      expect(JSON.parse(customUis[0].columnLayoutsJson!)["gap"]).toBeDefined();
+
+      // Check editingSettings
+      expect(
+        editingSettings.racedayLayout.widgets[0].customSettings.columnKey,
+      ).toBe("gap");
+      expect(
+        editingSettings.racedayLayout.widgets[0].customSettings.gapMode,
+      ).toBe("laps_and_time");
+      expect(
+        editingSettings.practiceRacedayLayout.widgets[0].customSettings
+          .columnKey,
+      ).toBe("overallGap");
+      expect(
+        editingSettings.practiceRacedayLayout.widgets[0].customSettings
+          .gapTarget,
+      ).toBe("position");
+      expect(editingSettings.racedayColumns).toEqual(["gap"]);
+      expect(editingSettings.practiceRacedayColumns).toEqual(["gap"]);
+      expect(editingSettings.columnWidths["gap"]).toBe(310);
+      expect(editingSettings.practiceColumnWidths["gap"]).toBe(300);
+      expect(editingSettings.columnLayouts["gap"]).toBeDefined();
+      expect(editingSettings.practiceColumnLayouts["gap"]).toBeDefined();
+    });
+  });
 });

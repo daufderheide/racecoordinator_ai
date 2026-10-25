@@ -94,7 +94,11 @@ export class LaneGridRepairHelper {
           0,
       );
 
-      const groupKey = `${gridId}::${colKey}::${isHeader}::${lane}`;
+      const gapSuffix =
+        colKey === "gap" || colKey === "overallGap"
+          ? `::${w.customSettings?.["gapTarget"] || "leader"}::${w.customSettings?.["gapMode"] || "always_time"}`
+          : "";
+      const groupKey = `${gridId}::${colKey}${gapSuffix}::${isHeader}::${lane}`;
       if (!grouped.has(groupKey)) {
         grouped.set(groupKey, []);
       }
@@ -125,7 +129,11 @@ export class LaneGridRepairHelper {
         }
 
         const insetsToMerge = this.findInsetsToMerge(primary, duplicates);
-        const [gridId, columnKey, isHeaderStr, laneStr] = groupKey.split("::");
+        const parts = groupKey.split("::");
+        const gridId = parts[0];
+        const columnKey = parts[1];
+        const isHeaderStr = parts[parts.length - 2];
+        const laneStr = parts[parts.length - 1];
         const isHeader = isHeaderStr === "true";
         const laneIndex = Number(laneStr);
 

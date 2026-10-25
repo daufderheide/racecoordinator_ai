@@ -42,4 +42,6 @@ message RaceParticipant {
   int32 heats_raced = 31;
   int32 heats_remaining = 32;
   int32 total_heats = 33;
+  double gap_leader_laps = 34;
+  double gap_position_laps = 35;
 }

@@ -110,12 +110,22 @@ Das **Gefahrene Heats** (`heatsRaced`)-Widget zeigt den Rennlauf-Fortschritt jed
 
 #### Abstands-Widgets (Gaps & Intervalle)
 
-Race Coordinator AI unterstützt **4 verschiedene Abstands-Widgets** sowohl für Durchgangsdaten als auch für Gesamtwertungsdaten:
+Race Coordinator AI bietet **2 konfigurierbare Abstands-Widgets** für Lauf-Daten und Gesamtwertungsdaten:
 
-1. **Abstand zum Führenden (`gapLeader` / `overallGapLeader`)**: Standardmäßige kontinuierliche Pace-Projektion des Zeitabstands zum Führenden (P1).
-2. **Abstand zum Vordermann (`gapPosition` / `overallGapPosition`)**: Standardmäßige kontinuierliche Pace-Projektion des Zeitabstands zum unmittelbar vorausfahrenden Fahrzeug.
-3. **Formel-1-Abstand zum Führenden (`gapLeaderF1` / `overallGapLeaderF1`)**: Exakter Zeitabstand an der Start-/Ziellinie in derselben Runde oder Rundenrückstand (`+1 Runde`, `+N Runden`) bei Überrundung.
-4. **Formel-1-Abstand zum Vordermann (`gapPositionF1` / `overallGapPositionF1`)**: Exakter Zeitabstand an der Start-/Ziellinie zum vorausfahrenden Fahrzeug in derselben Runde oder Rundenrückstand (`+1 Runde`, `+N Runden`).
+1. **Lauf-Abstand (`gap`)**: Ermittelt Abstände in Echtzeit ausschließlich zwischen den Fahrzeugen des aktiven Laufs.
+2. **Gesamt-Abstand (`overallGap`)**: Ermittelt kumulierte Abstände über alle Turnierteilnehmer hinweg.
+
+Jedes Abstands-Widget kann im Spalten-Inspektor über zwei zentrale Optionen konfiguriert werden:
+- **Ziel**:
+  - **Führender**: Abstand zum aktuellen Spitzenreiter (P1).
+  - **Vorausfahrender**: Abstand zum unmittelbar im Klassement vorausfahrenden Konkurrenten (z. B. P3 zu P2).
+- **Berechnungsmodus**:
+  - **Immer Zeit**: Kontinuierliche rechnerische Pace-Projektion in Sekunden (`+X.XXX`).
+  - **Runden und Zeit**: Formel-1-Modus mit Zeitanzeige in derselben Runde oder Rundenrückstand (`+1 Runde`, `+N Runden`) bei Überrundung.
+  - **Immer Runden**: Exakter Runden-Delta-Wert zwischen Konkurrenten bei Rundenüberquerung, unter Berücksichtigung der Teilrunde des Vergleichsfahrers.
+
+> [!NOTE]
+> Mehrere Abstands-Widgets mit unterschiedlicher Konfiguration (z. B. eine Spalte für den Abstand zum Führenden und eine für den Abstand zum Vordermann) können gleichzeitig im selben Layout oder Raster platziert werden.
 
 Für detaillierte mathematische Formeln und Zeitmessungsspezifikationen siehe den [Leitfaden zu Abstandsberechnungen](gap-calculations.md).
 

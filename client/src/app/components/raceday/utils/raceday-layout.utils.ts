@@ -228,6 +228,8 @@ export class RacedayLayoutUtils {
       k === "overallAverageTop15" ||
       k === "overallTop2Consecutive" ||
       k === "overallTop3Consecutive" ||
+      k === "gap" ||
+      k === "overallGap" ||
       k === "gapLeader" ||
       k === "gapPosition" ||
       k === "gapLeaderF1" ||
@@ -359,6 +361,7 @@ export class RacedayLayoutUtils {
     top2Consecutive: "RD_COL_TOP_2_CONSECUTIVE",
     top3Consecutive: "RD_COL_TOP_3_CONSECUTIVE",
     totalTime: "RD_COL_TOTAL_TIME",
+    gap: "UI_EDITOR_COL_HEAT_GAP",
     gapLeader: "RD_COL_GAP_LEADER",
     gapPosition: "RD_COL_GAP_POSITION",
     gapLeaderF1: "RD_COL_GAP_LEADER_F1",
@@ -394,6 +397,7 @@ export class RacedayLayoutUtils {
     overallAverageTop15: "RD_COL_AVG_TOP_15",
     overallTop2Consecutive: "RD_COL_TOP_2_CONSECUTIVE",
     overallTop3Consecutive: "RD_COL_TOP_3_CONSECUTIVE",
+    overallGap: "UI_EDITOR_COL_OVERALL_GAP",
     overallGapLeader: "RD_COL_GAP_LEADER",
     overallGapPosition: "RD_COL_GAP_POSITION",
     overallGapLeaderF1: "RD_COL_GAP_LEADER_F1",
@@ -470,10 +474,12 @@ export class RacedayLayoutUtils {
     top2Consecutive: 330,
     top3Consecutive: 330,
     totalTime: 330,
+    gap: 330,
     gapLeader: 330,
     gapPosition: 330,
     gapLeaderF1: 330,
     gapPositionF1: 330,
+    overallGap: 330,
     "participant.team.name": 330,
     "participant.fuelLevel": 216,
     fuelCapacity: 216,

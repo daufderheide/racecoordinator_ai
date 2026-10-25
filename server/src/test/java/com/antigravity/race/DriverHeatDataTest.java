@@ -303,4 +303,57 @@ public class DriverHeatDataTest {
     assertEquals(0.0, dhd.getTotalTime(), 0.001);
     assertEquals(0.0, dhd.getAverageLapTime(), 0.001);
   }
+
+  @Test
+  public void testResetClearsAutoCalculatedLapsAndState() {
+    Driver driverModel = new Driver("Test Driver", "Nickname");
+    RaceParticipant driver = new RaceParticipant(driverModel);
+    DriverHeatData dhd = new DriverHeatData(driver);
+
+    dhd.addLap(10.0, false, true);
+    dhd.setAutoCalculatedLaps(0.75);
+    dhd.setLapsLed(5);
+    dhd.setCarryOverTime(3.5);
+    dhd.setRefueling(true);
+    dhd.setCurrentLocation(com.antigravity.protocols.CarLocation.Main);
+    dhd.setFlag(com.antigravity.proto.RaceFlag.YELLOW);
+    dhd.setFinished(true);
+
+    dhd.reset();
+
+    assertEquals(0.0, dhd.getAutoCalculatedLaps(), 0.001);
+    assertEquals(0, dhd.getLapsLed());
+    assertEquals(0.0, dhd.getCarryOverTime(), 0.001);
+    org.junit.Assert.assertFalse(dhd.isRefueling());
+    org.junit.Assert.assertNull(dhd.getCurrentLocation());
+    assertEquals(com.antigravity.proto.RaceFlag.UNKNOWN_FLAG, dhd.getFlag());
+    org.junit.Assert.assertFalse(dhd.isFinished());
+    assertEquals(0.0, dhd.getAdjustedLapCount(), 0.001);
+    assertEquals(0.0, dhd.getScoredLapCount(), 0.001);
+  }
+
+  @Test
+  public void testGetScoredLapCount_UnfinishedVsFinished() {
+    Driver driverModel = new Driver("Test Driver", "Nickname");
+    RaceParticipant driver = new RaceParticipant(driverModel);
+    DriverHeatData dhd = new DriverHeatData(driver);
+
+    for (int i = 0; i < 5; i++) {
+      dhd.addLap(10.0, false, true);
+    }
+    dhd.setPenaltyLaps(1.0);
+    dhd.setUserLaps(0.5);
+    dhd.setAutoCalculatedLaps(0.4);
+
+    // When unfinished (active or paused), scored laps ignores autoCalculatedLaps: 5 - 1 + 0.5 = 4.5
+    org.junit.Assert.assertFalse(dhd.isFinished());
+    assertEquals(4.5, dhd.getScoredLapCount(), 0.001);
+    assertEquals(4.9, dhd.getAdjustedLapCount(), 0.001);
+
+    // When finished, scored laps equals adjustedLapCount: 4.9
+    dhd.setFinished(true);
+    org.junit.Assert.assertTrue(dhd.isFinished());
+    assertEquals(4.9, dhd.getScoredLapCount(), 0.001);
+    assertEquals(4.9, dhd.getAdjustedLapCount(), 0.001);
+  }
 }

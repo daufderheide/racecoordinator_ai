@@ -34,6 +34,8 @@ export class DriverHeatData {
   private _gapPosition: number = 0;
   private _gapLeaderF1: number = 0;
   private _gapPositionF1: number = 0;
+  private _gapLeaderLaps: number = 0;
+  private _gapPositionLaps: number = 0;
   private _lapsDownLeader: number = 0;
   private _lapsDownPosition: number = 0;
   public penaltyLaps: number = 0;
@@ -95,6 +97,8 @@ export class DriverHeatData {
     this._gapPosition = 0;
     this._gapLeaderF1 = 0;
     this._gapPositionF1 = 0;
+    this._gapLeaderLaps = 0;
+    this._gapPositionLaps = 0;
     this._lapsDownLeader = 0;
     this._lapsDownPosition = 0;
     this._currentLapSegments = [];
@@ -320,6 +324,22 @@ export class DriverHeatData {
 
   set gapPositionF1(value: number) {
     this._gapPositionF1 = value;
+  }
+
+  get gapLeaderLaps(): number {
+    return this._gapLeaderLaps;
+  }
+
+  set gapLeaderLaps(value: number) {
+    this._gapLeaderLaps = value;
+  }
+
+  get gapPositionLaps(): number {
+    return this._gapPositionLaps;
+  }
+
+  set gapPositionLaps(value: number) {
+    this._gapPositionLaps = value;
   }
 
   get lapsDownLeader(): number {

@@ -42,6 +42,8 @@ public class RaceParticipantConverter {
         .setGapPosition(participant.getGapPosition())
         .setGapLeaderF1(participant.getGapLeaderF1())
         .setGapPositionF1(participant.getGapPositionF1())
+        .setGapLeaderLaps(participant.getGapLeaderLaps())
+        .setGapPositionLaps(participant.getGapPositionLaps())
         .setLapsDownLeader(participant.getLapsDownLeader())
         .setLapsDownPosition(participant.getLapsDownPosition())
         .setConsistencyScore(participant.getConsistencyScore())

@@ -1,176 +1,176 @@
-# Calculs d'Écarts & Widgets d'Intervalle (Gaps)
+# Calculs d'Écarts et Widgets d'Écart (Gaps)
 
-Race Coordinator AI intègre un moteur automatisé côté serveur pour le calcul des écarts (`GapCalculator`), déterminant en temps réel les intervalles chronométriques et les différentiels de tours entre les concurrents. Tous les calculs sont exécutés de façon continue sur le serveur et synchronisés avec l'affichage client, les widgets d'interface personnalisés, les annonces vocales (TTS) et les exports tableurs.
+Race Coordinator AI intègre un moteur automatisé de calcul d'écarts côté serveur (`GapCalculator`) qui détermine en temps réel les écarts chronométriques et les intervalles en tours entre les concurrents. Tous les calculs s'effectuent en continu sur le serveur et sont synchronisés avec les affichages clients, les widgets personnalisés, les annonces vocales et les exports tableurs.
 
 ---
 
 ## Vue d'Ensemble des Calculs d'Écarts
 
-À chaque mise à jour du classement de la course, le moteur trie les concurrents selon leur position courante d'après le système de pointage actif (Nombre de tours, Temps total le plus rapide ou Points). Les écarts sont ensuite calculés par rapport à deux repères distincts :
+À chaque mise à jour du classement, le moteur ordonne tous les concurrents selon les règles de scoring actives (Plus grand nombre de tours, Meilleur temps total ou Points). Les métriques d'écart sont ensuite évaluées par rapport à deux référentiels distincts :
 
-- **Écart avec le Meneur (`gapLeader` / `overallGapLeader`)** : L'intervalle de temps entre un pilote et la 1re place de la course (P1). L'écart du meneur avec lui-même est toujours de `0.0` (affiché sous forme de tirets `--`).
-- **Écart avec la Position Précédente (`gapPosition` / `overallGapPosition`)** : L'intervalle de temps entre un pilote et la voiture immédiatement devant dans le classement (par exemple, P3 par rapport à P2). L'écart du 1er est toujours de `0.0` (affiché sous forme de tirets `--`).
+- **Écart avec le Meneur (`leader`)** : L'intervalle entre un concurrent et le leader actuel de la course (P1). L'écart du leader avec lui-même est toujours `0.0` (affiché sous forme de tirets `--`).
+- **Écart avec la Position Précédente (`position`)** : L'intervalle entre un concurrent et la voiture qui le précède immédiatement au classement (ex. P3 par rapport à P2). L'écart du leader est toujours `0.0` (affiché sous forme de tirets `--`).
 
-### Portées des Données : Écarts de Manche vs. Écarts Généraux
+### Portées de Données : Écarts de Manche vs Écarts Généraux
 
 Race Coordinator AI prend en charge l'évaluation des écarts sur deux portées distinctes :
 
-| Portée | Clés de Colonnes | Description | Cas d'Usage |
+| Portée | Clé de Colonne | Description | Cas d'Usage |
 | :--- | :--- | :--- | :--- |
-| **Données de Manche (Heat Data)** | `gapLeader`<br>`gapPosition`<br>`gapLeaderF1`<br>`gapPositionF1` | Évalue les écarts strictement entre les voitures actuellement en piste dans la manche active. Les pilotes au repos affichent des tirets (`--`). | Course en direct, fiches de piste, tableaux de bord de manche. |
-| **Données Générales (Overall Data)** | `overallGapLeader`<br>`overallGapPosition`<br>`overallGapLeaderF1`<br>`overallGapPositionF1` | Évalue les écarts cumulés du tournoi entre tous les participants inscrits, sur l'ensemble des manches disputées. | Tableaux de classement général, suivi du championnat. |
+| **Données de Manche (Heat Data)** | `gap` | Évalue les écarts strictement entre les voitures actuellement en piste dans la manche active. Les pilotes au repos affichent des tirets (`--`). | Course en direct, fiches de piste, classements de manche en direct. |
+| **Données Générales (Overall Data)** | `overallGap` | Évalue les écarts cumulés sur l'ensemble des participants du tournoi, à travers toutes les manches disputées. | Grille de classement général, suivi de championnat. |
+
+> [!NOTE]
+> Les mises en page existantes utilisant d'anciennes clés (`gapLeader`, `gapPosition`, `gapLeaderF1`, `gapPositionF1`, `overallGapLeader`, etc.) sont automatiquement migrées vers `gap` ou `overallGap` avec les paramètres de cible et de mode de calcul correspondants.
 
 ---
 
-## Les 4 Widgets d'Écart Pris en Charge
+## Les 2 Widgets d'Écart Configurables
 
-Race Coordinator AI propose **4 widgets d'écart spécifiques** (disponibles sous forme de colonnes de grille, de fiches de piste indépendantes ou d'encarts personnalisés) :
+Race Coordinator AI propose **2 widgets d'écart configurables** (disponibles sous forme de colonnes de grille, de cartes de piste individuelles et d'encarts personnalisés) :
 
 ```
                           ┌──────────────────────────────────────────────┐
-                          │           WIDGETS D'ÉCART DE COURSE          │
+                          │            WIDGETS D'ÉCART DE COURSE         │
                           └──────────────────────┬───────────────────────┘
                                                  │
                    ┌─────────────────────────────┴─────────────────────────────┐
                    ▼                                                           ▼
       ┌─────────────────────────┐                                 ┌─────────────────────────┐
-      │     ÉCARTS STANDARDS    │                                 │     ÉCARTS FORMULE 1    │
-      │  Projection de Rythme   │                                 │ Passage Ligne d'Arrivée │
+      │  ÉCART DE MANCHE (`gap`)│                                 │ÉCART GÉNÉRAL(`overallGap)│
+      │ Pilotes Manche Active   │                                 │Tous les Participants    │
       └────────────┬────────────┘                                 └────────────┬────────────┘
                    │                                                           │
-         ┌─────────┴─────────┐                                       ┌─────────┴─────────┐
-         ▼                   ▼                                       ▼                   ▼
-  ┌─────────────┐     ┌─────────────┐                         ┌─────────────┐     ┌─────────────┐
-  │ Gap Leader  │     │Gap Position │                         │Gap Leader F1│     │Gap Pos. F1  │
-  │ (Meneur P1) │     │ (Voiture Av)│                         │ (Meneur P1) │     │ (Voiture Av)│
-  └─────────────┘     └─────────────┘                         └─────────────┘     └─────────────┘
+                   └─────────────────────────────┬─────────────────────────────┘
+                                                 │
+                               ┌─────────────────┴─────────────────┐
+                               ▼                                   ▼
+                   ┌───────────────────────┐           ┌───────────────────────┐
+                   │  SÉLECTEUR DE CIBLE   │           │    MODE DE CALCUL     │
+                   ├───────────────────────┤           ├───────────────────────┤
+                   │ • Leader (P1)         │           │ • Toujours temps      │
+                   │ • Position précédente │           │ • Tours et temps (F1) │
+                   │                       │           │ • Toujours tours      │
+                   └───────────────────────┘           └───────────────────────┘
 ```
 
-### 1. Écart avec le Meneur (Standard)
-- **Clés de Boîte à Outils** : `gapLeader` (Manche) / `overallGapLeader` (Général)
-- **Groupe de Boîte à Outils** : *Heat Data → Gaps & Intervals* / *Overall Race Data → Overall Gaps & Intervals*
-- **Libellés par Défaut** : `HEAT GAP LEADER`, `OVERALL GAP LEADER` ou `GAP LEADER`
-- **Modèle de Mesure** : Projection mathématique continue du rythme.
-- **Affichage** : Formaté en `+X.XXX` secondes avec décimales configurables (1 à 3 décimales). Le meneur affiche `--`.
-- **Objectif** : Offre une estimation en direct du retard par rapport au meneur. Même si le meneur a bouclé plus de tours, le widget projette l'écart selon le temps au tour moyen du poursuivant.
+### Sélection de la Cible
+- **Leader (`leader`)** : Écart par rapport au leader actuel de la course (P1). Le leader affiche des tirets (`--`).
+- **Position précédente (`position`)** : Écart par rapport au concurrent immédiatement devant (ex. P3 vs P2). Le leader affiche des tirets (`--`).
 
-### 2. Écart avec la Position Précédente (Standard)
-- **Clés de Boîte à Outils** : `gapPosition` (Manche) / `overallGapPosition` (Général)
-- **Groupe de Boîte à Outils** : *Heat Data → Gaps & Intervals* / *Overall Race Data → Overall Gaps & Intervals*
-- **Libellés par Défaut** : `HEAT GAP POSITION`, `OVERALL GAP POSITION` ou `GAP POSITION`
-- **Modèle de Mesure** : Projection mathématique continue du rythme.
-- **Affichage** : Formaté en `+X.XXX` secondes. La 1re place affiche `--`.
-- **Objectif** : Affiche le temps nécessaire pour doubler le concurrent qui précède. Idéal pour les duels en piste.
-
-### 3. Écart Formule 1 avec le Meneur (`F1`)
-- **Clés de Boîte à Outils** : `gapLeaderF1` (Manche) / `overallGapLeaderF1` (Général)
-- **Groupe de Boîte à Outils** : *Heat Data → Gaps & Intervals* / *Overall Race Data → Overall Gaps & Intervals*
-- **Libellés par Défaut** : `HEAT GAP LEADER LAP`, `OVERALL GAP LEADER LAP` ou `GAP LEADER`
-- **Modèle de Mesure** : Mesure physique exacte lors du passage sur la ligne d'arrivée.
-- **Affichage** :
-  - **Dans le même tour** : `+X.XXX` secondes d'écart physique réel au franchissement de la ligne.
-  - **Pilotes avec un tour de retard** : Remplace l'écart temporel par `+1 Tour` ou `+N Tours` (`RD_LAP_DOWN` / `RD_LAPS_DOWN`).
-  - **Meneur** : Affiche `--`.
-- **Objectif** : Reproduit la présentation télévisée de la Formule 1. Évite d'afficher des temps d'écart disproportionnés pour les retardataires.
-
-### 4. Écart Formule 1 avec la Position Précédente (`F1`)
-- **Clés de Boîte à Outils** : `gapPositionF1` (Manche) / `overallGapPositionF1` (Général)
-- **Groupe de Boîte à Outils** : *Heat Data → Gaps & Intervals* / *Overall Race Data → Overall Gaps & Intervals*
-- **Libellés par Défaut** : `HEAT GAP POSITION LAP`, `OVERALL GAP POSITION LAP` ou `GAP POSITION`
-- **Modèle de Mesure** : Mesure physique exacte lors du passage sur la ligne d'arrivée.
-- **Affichage** :
-  - **Dans le même tour** : Formaté en `+X.XXX` secondes derrière le concurrent précédent.
-  - **Doublé par la voiture précédente** : Affiche `+1 Tour` ou `+N Tours`.
-  - **Meneur** : Affiche `--`.
-- **Objectif** : Fournit une indication précise des écarts lors des batailles rapprochées, marquant immédiatement le nombre de tours de retard le cas échéant.
+### Modes de Calcul
+1. **Toujours temps (`always_time`)** :
+   - Projection continue du rythme chronométrique en secondes.
+   - Formaté en `+X.XXX` avec décimales configurables (1 à 3 décimales).
+2. **Tours et temps (`laps_and_time`)** :
+   - Affichage type retransmission Formule 1.
+   - Affiche des secondes (`+X.XXX`) pour les voitures dans le tour du leader.
+   - Affiche le retard en tours (`+1 Tour`, `+N Tours`) en cas de dépassement.
+3. **Toujours tours (`always_laps`)** :
+   - Différence exacte en tours calculée chaque fois qu'un concurrent franchit la ligne d'arrivée.
+   - Intègre la progression partielle du pilote cible à ce moment précis.
+   - Formaté avec décimales de tours configurables (0 à 3 décimales).
 
 ---
 
 ## Formules de Calcul Détaillées
 
-Tous les calculs sont centralisés dans `com.antigravity.race.GapCalculator` sur le serveur Java.
+Tous les calculs sont effectués dans `com.antigravity.race.GapCalculator` sur le serveur Java.
 
-Soit `leadParticipant` le pilote qui précède et `curParticipant` le pilote poursuivant.
+Soit `leadParticipant` le pilote qui précède (leader ou position $N-1$) et `curParticipant` le pilote poursuivant.
 
-### Mathématiques des Écarts Standards
+### 1. Formule : Toujours Temps (`always_time`)
 
-Trois situations sont gérées :
+Les écarts chronométriques évaluent trois scénarios :
 
-#### Situation A : Même Nombre de Tours
+#### Scénario A : Même Nombre de Tours
 $$\text{Gap} = \text{TotalTime}_{\text{cur}} - \text{TotalTime}_{\text{lead}}$$
 
-#### Situation B : Aucun Tour Complet Réalisé
-Si le poursuivant n'a pas encore validé de tour complet (`hasNoFullLaps()`) :
+#### Scénario B : Aucun Tour Réalisé
 $$\text{Gap} = \text{TotalTime}_{\text{lead}}$$
 
-#### Situation C : Nombre de Tours Différent
+#### Scénario C : Nombre de Tours Différent
 $$\text{LapDiff} = \text{AdjustedLaps}_{\text{lead}} - \text{AdjustedLaps}_{\text{cur}}$$
 $$\text{AvgLapTime}_{\text{cur}} = \text{AverageLapTime}(\text{curParticipant})$$
 
-La projection s'adapte au **Mode de Fin de Manche (Finish Method)** :
-
-1. **Course au Temps (Timed Finish)** :
+La formule de projection s'adapte à la **Méthode d'Arrivée** :
+1. **Courses au Temps** :
    $$\text{Gap} = \text{AvgLapTime}_{\text{cur}} \times \text{LapDiff}$$
-
-2. **Course aux Tours (Lap Finish)** :
+2. **Courses aux Tours** :
    $$\text{TimeDiff} = \text{TotalTime}_{\text{cur}} - \text{TotalTime}_{\text{lead}}$$
    $$\text{ProjectedGap} = \text{TimeDiff} + (\text{AvgLapTime}_{\text{cur}} \times \text{LapDiff})$$
 
-   > [!NOTE]
-   > Si des ajustements ou anomalies de timing rendent $\text{ProjectedGap}$ négatif, le système bascule automatiquement sur $\text{AvgLapTime}_{\text{cur}} \times \text{LapDiff}$.
-
 ---
 
-### Mathématiques des Écarts Formule 1
+### 2. Formule : Formule 1 (`laps_and_time`)
 
-#### 1. Tours de Retard (Laps Down)
+#### 1. Évaluation du Retard en Tours
 $$\text{LapsDown} = (\text{PhysicalLaps}_{\text{lead}} - \text{PhysicalLaps}_{\text{cur}}) - 1$$
+- Si $\text{LapsDown} > 0$ : Le pilote est dépassé (`+X Tours`).
+- Si $\text{LapsDown} \le 0$ : Le pilote est dans le tour du leader.
 
-- Si $\text{LapsDown} > 0$ : Le poursuivant a un ou plusieurs tours de retard. L'écart chronométrique est fixé à `0.0` et l'interface affiche `+X Tours`.
-- Si $\text{LapsDown} \le 0$ : Le poursuivant est dans le tour du meneur ($\text{LapsDown} = 0$).
-
-#### 2. Écart dans le Même Tour
-- **Même Nombre de Tours Physiques** :
+#### 2. Écart dans le Tour du Leader
+- **Même nombre de tours franchis** :
   $$\text{TimeGap} = \text{TotalTime}_{\text{cur}} - \text{TotalTime}_{\text{lead}}$$
-- **Le Meneur a Bouclé un Tour Supplémentaire** : L'écart est calculé au moment précis où le meneur a franchi la ligne lors de ce même tour :
+- **Le leader compte un tour supplémentaire** :
   $$\text{TimeGap} = \text{TotalTime}_{\text{cur}} - \text{leadParticipant.getTimeAtLap}(\text{PhysicalLaps}_{\text{cur}})$$
 
-> [!TIP]
-> Si la valeur calculée est négative, elle est plafonnée à `0.0`.
+---
+
+### 3. Formule : Toujours Tours (`always_laps`)
+
+Ce mode mesure l'écart exact en tours à chaque franchissement de la ligne :
+
+#### 1. Déclenchement du Franchissement
+Quand un concurrent boucle un tour, le serveur enregistre ses tours ajustés et identifie le pilote de référence.
+
+#### 2. Calcul du Tour Partiel
+Pour assurer une comparaison juste, la progression partielle du pilote de référence est calculée en fonction du temps écoulé depuis son propre dernier tour :
+$$\text{TimeSinceLastLap}_{\text{target}} = \text{CurrentElapsedTime} - \text{TimeOfLastLap}_{\text{target}}$$
+$$\text{PartialLap}_{\text{target}} = \min\left(0.99, \max\left(0.0, \frac{\text{TimeSinceLastLap}_{\text{target}}}{\text{MedianLapTime}_{\text{target}}}\right)\right)$$
+
+> [!NOTE]
+> Si le pilote de référence n'a pas encore de temps médian valide ($\le 0$) ou si $\text{TimeSinceLastLap} \le 0$, le tour partiel vaut $0.0$. La progression est plafonnée à $0.99$ pour éviter d'incrémenter un tour complet avant le franchissement physique.
+
+#### 3. Écart Effectif en Tours
+$$\text{EffectiveLaps}_{\text{target}} = \text{AdjustedLaps}_{\text{target}} + \text{PartialLap}_{\text{target}}$$
+$$\text{GapLaps} = \text{EffectiveLaps}_{\text{target}} - \text{AdjustedLaps}_{\text{competitor}}$$
+
+Le concurrent conserve cette valeur jusqu'au franchissement de son propre tour suivant.
 
 ---
 
-## Comparatif : Écarts Standards vs. Écarts Formule 1
+## Comparaison des Modes de Calcul
 
-| Caractéristique | Écarts Standards (`gapLeader`, `gapPosition`) | Écarts Formule 1 (`gapLeaderF1`, `gapPositionF1`) |
-| :--- | :--- | :--- |
-| **Méthode** | Projection continue de rythme | Comparaison exacte au franchissement de la ligne |
-| **Voitures avec Tour de Retard** | Secondes projetées (ex. `+14.820`) | Tours de retard (ex. `+1 Tour`, `+2 Tours`) |
-| **Dans le Même Tour** | Écart de temps en secondes (`+1.450`) | Différentiel exact au franchissement de la ligne (`+1.450`) |
-| **Type de Fin de Course** | Différencie les courses au temps et aux tours | Basé sur le franchissement de la ligne d'arrivée |
-| **Usage Idéal** | Contrôle régulier du rythme en slot racing | Affichage type retransmission TV, écrans spectateurs |
+| Caractéristique | Toujours temps (`always_time`) | Tours et temps (`laps_and_time`) | Toujours tours (`always_laps`) |
+| :--- | :--- | :--- | :--- |
+| **Approche** | Projection continue du rythme | Comparaisons exactes sur la ligne | Écart en tours avec progression partielle |
+| **Voitures Dépassées**| Secondes projetées (ex. `+14.820`) | Texte d'écart en tours (`+1 Tour`) | Écart décimal en tours (ex. `+2.45`) |
+| **Dans le Tour du Leader**| Écart en secondes (`+1.450`) | Différence exacte sur la ligne (`+1.450`) | Écart décimal en tours (ex. `+0.28`) |
+| **Base Décimale** | Décimales de temps (1 à 3) | Décimales de temps (1 à 3) | Décimales de tours (0 à 3) |
+| **Moment de Mise à Jour**| Mises à jour continues | Franchissement de la ligne | Franchissement de tour personnel |
+| **Application Idéale**| Gestion du rythme, essais | Tableaux de chronométrage F1 | Épreuves d'endurance aux tours |
 
 ---
 
 ## Utilisation des Widgets d'Écart dans l'Éditeur d'Interface
 
 ### 1. Dans les Grilles et Tableaux
-Dans l'Éditeur d'Interface, sélectionnez le widget Grille et ouvrez l'onglet **Colonnes**. Dans les sous-groupes **Gaps & Intervals** ou **Overall Gaps & Intervals**, cochez les colonnes d'écart souhaitées.
+Dans l'Éditeur d'Interface, sélectionnez le widget Grille et ouvrez l'onglet **Colonnes**. Dans **Gaps et Intervalles**, cochez **Écart de Manche** (`gap`) ou **Écart Général** (`overallGap`) :
+- Sélectionnez la colonne pour ouvrir l'**Inspecteur de Colonne**.
+- Dans **Configuration d'écart**, choisissez la **Cible** (*Leader* ou *Position précédente*) et le **Mode de calcul** (*Toujours temps*, *Tours et temps* ou *Toujours tours*).
+- Plusieurs colonnes d'écart avec des cibles ou modes distincts peuvent être ajoutées simultanément à la même grille.
 
-### 2. Fiches de Piste Indépendantes
-Glissez-déposez un widget d'écart depuis la Boîte à Outils sur le canevas. Liez la fiche à une **Piste Spécifique**, une **Position en Manche** ou au **Classement Général**.
+### 2. Cartes de Piste Individuelles
+Faites glisser les widgets d'écart directement depuis la barre d'outils sur le canevas et configurez cible et mode dans l'inspecteur.
 
-### 3. Encarts (Insets) sur d'Autres Fiches
-Ajoutez un sous-indicateur d'écart sur n'importe quelle fiche (ex. avatar ou compteurs de tours) via les 8 ancres disponibles dans la section **Card Insets**.
+### 3. Encarts (Insets)
+Les écarts peuvent être intégrés en sous-badges dans les cartes de piste en assignant `gap` ou `overallGap` à l'une des 8 positions d'ancrage.
 
 ---
 
-## Intégration TTS, Audio & Exportations
+## Intégration avec la Synthèse Vocale (TTS), l'Audio et l'Export
 
-- **Synthèse Vocale (TTS)** :
-  - `{driver.gapLeader}` : Écart avec le meneur vocalisé en secondes.
-  - `{driver.gapPosition}` : Écart avec la voiture précédente en secondes.
-- **Widgets HTML/JS Personnalisés** : `driver.gap_leader` et `driver.gap_position`.
-- **Modèles Excel (XLS)** :
-  - `${driver.gapLeader}` et `${driver.gapPosition}` (Classement général).
-  - `${heatDriver.gapLeader}` et `${heatDriver.gapPosition}` (Résultats de manche).
+- **Synthèse Vocale (TTS)** : `{driver.gapLeader}` et `{driver.gapPosition}`.
+- **Widgets personnalisés HTML/JS** : `driver.gap_leader` et `driver.gap_position`.
+- **Exports Excel** : `${driver.gapLeader}` et `${driver.gapPosition}`.

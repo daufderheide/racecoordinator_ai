@@ -79,6 +79,8 @@ export interface AbsoluteWidgetNode {
 
 export interface InsetConfig {
   columnKey?: string;
+  gapTarget?: "leader" | "position";
+  gapMode?: "always_time" | "laps_and_time" | "always_laps";
   timeDecimalPlaces?: number;
   lapDecimalPlaces?: number;
   decimalPlaces?: number;
@@ -97,6 +99,8 @@ export interface InsetConfig {
 
 export interface LaneColumnWidgetSettings {
   columnKey: string;
+  gapTarget?: "leader" | "position";
+  gapMode?: "always_time" | "laps_and_time" | "always_laps";
   bindingMode: "lane" | "position" | "overallPosition" | "seed";
   targetIndex: number;
   layoutOrientation: "vertical" | "horizontal";
@@ -174,7 +178,7 @@ export class Settings {
     "lapCount",
     "lastLapTime",
     "averageLapTime",
-    "gapLeader",
+    "gap",
     "ghostPacingLeaderAvg",
   ];
 
@@ -284,9 +288,8 @@ export class Settings {
       [AnchorPoint.CenterCenter]: "lastLapTime",
       [AnchorPoint.BottomRight]: "bestLapTime",
     },
-    gapLeader: {
-      [AnchorPoint.CenterCenter]: "gapLeader",
-      [AnchorPoint.BottomRight]: "gapPosition",
+    gap: {
+      [AnchorPoint.CenterCenter]: "gap",
     },
   };
   columnVisibility: { [columnKey: string]: ColumnVisibility } = {

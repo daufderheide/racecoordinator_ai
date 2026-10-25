@@ -110,12 +110,22 @@ Il widget **Manche Disputate** (`heatsRaced`) mostra l'avanzamento della parteci
 
 #### Widget Distacchi (Gaps e Intervalli)
 
-Race Coordinator AI supporta **4 widget distacco specifici** sia per i Dati Manche che per i Dati Generali:
+Race Coordinator AI fornisce **2 widget distacco configurabili** per i Dati Manche e i Dati Generali:
 
-1. **Distacco dal Leader (`gapLeader` / `overallGapLeader`)**: Proiezione matematica continua del tempo di ritardo stimato rispetto al leader (P1).
-2. **Distacco dal Pilota che Precede (`gapPosition` / `overallGapPosition`)**: Proiezione matematica continua del tempo di ritardo rispetto all'auto immediatamente avanti.
-3. **Distacco Formula 1 dal Leader (`gapLeaderF1` / `overallGapLeaderF1`)**: Distacco esatto sul traguardo nello stesso giro o giri di ritardo (`+1 Giro`, `+N Giri`) in caso di doppiaggio.
-4. **Distacco Formula 1 dal Pilota che Precede (`gapPositionF1` / `overallGapPositionF1`)**: Distacco esatto sul traguardo rispetto all'auto precedente nello stesso giro o giri di ritardo (`+1 Giro`, `+N Giri`).
+1. **Distacco Manche (`gap`)**: Valuta gli intervalli in tempo reale esclusivamente tra le auto in pista nella manche attiva.
+2. **Distacco Generale (`overallGap`)**: Valuta gli intervalli cumulativi tra tutti i partecipanti all'evento.
+
+Ciascun widget distacco può essere configurato nell'Ispettore Colonne tramite due opzioni principali:
+- **Obiettivo**:
+  - **Leader**: Intervallo rispetto al leader attuale della gara (P1).
+  - **Posizione precedente**: Intervallo rispetto al concorrente immediatamente davanti in classifica (es. P3 vs P2).
+- **Modalità di calcolo**:
+  - **Sempre tempo**: Proiezione matematica continua del passo in secondi (`+X.XXX`).
+  - **Giri e tempo**: Stile Formula 1 che mostra il tempo nello stesso giro o il distacco in giri (`+1 Giro`, `+N Giri`) in caso di doppiaggio.
+  - **Sempre giri**: Distacco esatto in giri calcolato al completamento di ogni giro, incorporando l'avanzamento parziale del pilota confrontato.
+
+> [!NOTE]
+> È possibile posizionare contemporaneamente più widget distacco con configurazioni distinte (ad esempio una colonna Distacco Leader e una Distacco Posizione) sulla stessa griglia o layout.
 
 Per consultare le formule matematiche complete e le specifiche di cronometraggio, consultare la [Guida ai Calcoli dei Distacchi](gap-calculations.md).
 

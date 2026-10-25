@@ -936,6 +936,11 @@ public class HeatExecutionManager {
     String previousHeatLeaderId = getHeatLeaderParticipantId();
 
     driverData.addLap(effectiveLapTime, isDrift, countTowardsRecords);
+    if (timeSinceLastLap != null && lane >= 0 && lane < timeSinceLastLap.length) {
+      timeSinceLastLap[lane] = 0.0;
+    }
+    driverData.setTimeSinceLastLap(0.0);
+    syncTimeSinceLastLapToDrivers();
     updateRealtimePredictionOnLap();
 
     // Handle analog fuel usage, but exclude reaction time as it could be extremely
@@ -950,7 +955,7 @@ public class HeatExecutionManager {
         && this.race.getCurrentHeat().getHeatStandings() != null) {
       standingsUpdate = this.race.getCurrentHeat().getHeatStandings().onLap(lane, effectiveLapTime);
     }
-    this.race.recalculateOverallStandings();
+    this.race.recalculateOverallStandings(driverData.getParticipantId());
 
     boolean[] leaderChange =
         evaluateLeaderChange(
@@ -1253,6 +1258,20 @@ public class HeatExecutionManager {
     }
   }
 
+  public void syncTimeSinceLastLapToDrivers() {
+    if (timeSinceLastLap != null && race != null && race.getCurrentHeat() != null) {
+      List<DriverHeatData> drivers = race.getCurrentHeat().getDrivers();
+      if (drivers != null) {
+        for (int i = 0; i < drivers.size() && i < timeSinceLastLap.length; i++) {
+          DriverHeatData dhd = drivers.get(i);
+          if (dhd != null) {
+            dhd.setTimeSinceLastLap(timeSinceLastLap[i]);
+          }
+        }
+      }
+    }
+  }
+
   public static void calculateAutoSegments(Race race, HeatExecutionManager executionManager) {
     if (race == null || race.getCurrentHeat() == null) {
       return;
@@ -1356,6 +1375,14 @@ public class HeatExecutionManager {
     }
 
     calculateAutoSegments(race, executionManager);
+
+    if (race.getCurrentHeat() != null && race.getCurrentHeat().getDrivers() != null) {
+      for (DriverHeatData dhd : race.getCurrentHeat().getDrivers()) {
+        if (dhd != null) {
+          dhd.setFinished(true);
+        }
+      }
+    }
 
     StandingsUpdate update = null;
     if (race.getCurrentHeat() != null && race.getCurrentHeat().getHeatStandings() != null) {

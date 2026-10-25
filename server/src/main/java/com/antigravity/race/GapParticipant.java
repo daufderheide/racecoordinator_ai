@@ -37,6 +37,27 @@ public interface GapParticipant {
   /** Sets the number of laps down to the position immediately ahead. */
   void setLapsDownPosition(int lapsDown);
 
+  /** Gets the effective lap count including running partial laps. */
+  default double getEffectiveLapCount() {
+    return getAdjustedLapCount();
+  }
+
+  /** Gets the gap to the leader in laps. */
+  default double getGapLeaderLaps() {
+    return 0.0;
+  }
+
+  /** Sets the gap to the leader in laps. */
+  void setGapLeaderLaps(double gapLeaderLaps);
+
+  /** Gets the gap to the position immediately ahead in laps. */
+  default double getGapPositionLaps() {
+    return 0.0;
+  }
+
+  /** Sets the gap to the position immediately ahead in laps. */
+  void setGapPositionLaps(double gapPositionLaps);
+
   /** Returns true if this participant is considered empty (e.g., an empty lane). */
   default boolean isEmptyParticipant() {
     return false;

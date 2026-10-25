@@ -143,4 +143,119 @@ public class GapCalculatorTest {
     org.mockito.Mockito.verify(current).setGapLeaderF1(0.0);
     org.mockito.Mockito.verify(current).setLapsDownLeader(1);
   }
+
+  @Test
+  public void testGapCalculator_AlwaysLaps_AllParticipants() {
+    GapParticipant leader = mock(GapParticipant.class);
+    when(leader.getAdjustedLapCount()).thenReturn(20.0);
+    when(leader.getEffectiveLapCount()).thenReturn(20.4); // 20 laps + 0.4 partial
+
+    GapParticipant current = mock(GapParticipant.class);
+    when(current.getAdjustedLapCount()).thenReturn(18.0);
+    when(current.getEffectiveLapCount()).thenReturn(18.0);
+
+    List<GapParticipant> participants = Arrays.asList(leader, current);
+    GapCalculator.calculateGaps(participants, HeatScoring.FinishMethod.Lap);
+
+    org.mockito.Mockito.verify(leader).setGapLeaderLaps(0.0);
+    org.mockito.Mockito.verify(leader).setGapPositionLaps(0.0);
+
+    org.mockito.Mockito.verify(current)
+        .setGapLeaderLaps(org.mockito.AdditionalMatchers.eq(2.4, 0.0001));
+    org.mockito.Mockito.verify(current)
+        .setGapPositionLaps(org.mockito.AdditionalMatchers.eq(2.4, 0.0001));
+  }
+
+  @Test
+  public void testGapCalculator_AlwaysLaps_SingleDriverCompletedLap() {
+    GapParticipant leader = mock(GapParticipant.class);
+    when(leader.getAdjustedLapCount()).thenReturn(20.0);
+    when(leader.getEffectiveLapCount()).thenReturn(20.5);
+
+    GapParticipant p2 = mock(GapParticipant.class);
+    when(p2.getAdjustedLapCount()).thenReturn(19.0);
+    when(p2.getEffectiveLapCount()).thenReturn(19.2);
+
+    GapParticipant p3 = mock(GapParticipant.class);
+    when(p3.getAdjustedLapCount()).thenReturn(18.0); // p3 just completed lap 18
+    when(p3.getEffectiveLapCount()).thenReturn(18.0);
+
+    List<GapParticipant> participants = Arrays.asList(leader, p2, p3);
+    GapCalculator.calculateLapGapsForDriver(p3, participants);
+
+    org.mockito.Mockito.verify(p3).setGapLeaderLaps(org.mockito.AdditionalMatchers.eq(2.5, 0.0001));
+    org.mockito.Mockito.verify(p3)
+        .setGapPositionLaps(org.mockito.AdditionalMatchers.eq(1.2, 0.0001));
+  }
+
+  @Test
+  public void testGapCalculator_AlwaysLaps_PartialSegments() {
+    GapParticipant leader = mock(GapParticipant.class);
+    when(leader.getAdjustedLapCount()).thenReturn(1.62);
+    when(leader.getEffectiveLapCount()).thenReturn(1.62);
+    when(leader.getPhysicalLapCount()).thenReturn(1);
+    when(leader.getTotalTime()).thenReturn(4.705);
+
+    GapParticipant p2 = mock(GapParticipant.class);
+    when(p2.getAdjustedLapCount()).thenReturn(1.58);
+    when(p2.getEffectiveLapCount()).thenReturn(1.58);
+    when(p2.getPhysicalLapCount()).thenReturn(1);
+    when(p2.getTotalTime()).thenReturn(4.805);
+
+    GapParticipant p3 = mock(GapParticipant.class);
+    when(p3.getAdjustedLapCount()).thenReturn(1.49);
+    when(p3.getEffectiveLapCount()).thenReturn(1.49);
+    when(p3.getPhysicalLapCount()).thenReturn(1);
+    when(p3.getTotalTime()).thenReturn(5.103);
+
+    List<GapParticipant> participants = Arrays.asList(leader, p2, p3);
+    GapCalculator.calculateGaps(participants, HeatScoring.FinishMethod.Lap);
+
+    org.mockito.Mockito.verify(leader).setGapLeaderLaps(0.0);
+    org.mockito.Mockito.verify(leader).setGapPositionLaps(0.0);
+
+    // Bad Cheese: 1.62 - 1.58 = 0.04
+    org.mockito.Mockito.verify(p2)
+        .setGapLeaderLaps(org.mockito.AdditionalMatchers.eq(0.04, 0.0001));
+    org.mockito.Mockito.verify(p2)
+        .setGapPositionLaps(org.mockito.AdditionalMatchers.eq(0.04, 0.0001));
+    org.mockito.Mockito.verify(p2).setGapLeader(org.mockito.AdditionalMatchers.eq(0.100, 0.0001));
+    org.mockito.Mockito.verify(p2).setGapPosition(org.mockito.AdditionalMatchers.eq(0.100, 0.0001));
+
+    // Bank Farter: 1.62 - 1.49 = 0.13 to leader, 1.58 - 1.49 = 0.09 to position ahead
+    org.mockito.Mockito.verify(p3)
+        .setGapLeaderLaps(org.mockito.AdditionalMatchers.eq(0.13, 0.0001));
+    org.mockito.Mockito.verify(p3)
+        .setGapPositionLaps(org.mockito.AdditionalMatchers.eq(0.09, 0.0001));
+    org.mockito.Mockito.verify(p3).setGapLeader(org.mockito.AdditionalMatchers.eq(0.398, 0.0001));
+    org.mockito.Mockito.verify(p3).setGapPosition(org.mockito.AdditionalMatchers.eq(0.298, 0.0001));
+  }
+
+  @Test
+  public void testGapCalculator_AlwaysLaps_LeaderCompletedLap() {
+    GapParticipant leader = mock(GapParticipant.class);
+    when(leader.getAdjustedLapCount()).thenReturn(21.0);
+
+    GapParticipant p2 = mock(GapParticipant.class);
+    when(p2.getAdjustedLapCount()).thenReturn(19.0);
+
+    List<GapParticipant> participants = Arrays.asList(leader, p2);
+    GapCalculator.calculateLapGapsForDriver(leader, participants);
+
+    org.mockito.Mockito.verify(leader).setGapLeaderLaps(0.0);
+    org.mockito.Mockito.verify(leader).setGapPositionLaps(0.0);
+  }
+
+  @Test
+  public void testGapCalculator_AlwaysLaps_EmptyParticipant() {
+    GapParticipant leader = mock(GapParticipant.class);
+    GapParticipant empty = mock(GapParticipant.class);
+    when(empty.isEmptyParticipant()).thenReturn(true);
+
+    List<GapParticipant> participants = Arrays.asList(leader, empty);
+    GapCalculator.calculateLapGapsForDriver(empty, participants);
+
+    org.mockito.Mockito.verify(empty).setGapLeaderLaps(0.0);
+    org.mockito.Mockito.verify(empty).setGapPositionLaps(0.0);
+  }
 }

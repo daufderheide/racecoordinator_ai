@@ -110,12 +110,22 @@ Le widget **Manches Disputées** (`heatsRaced`) présente l'état d'avancement d
 
 #### Widgets d'Écarts (Gaps et Intervalles)
 
-Race Coordinator AI prend en charge **4 widgets d'écart distincts** aussi bien pour les Données de Série que pour les Données Générales :
+Race Coordinator AI propose **2 widgets d'écart configurables** pour les Données de Manche et les Données Générales :
 
-1. **Écart avec le Meneur (`gapLeader` / `overallGapLeader`)** : Projection continue du retard chronométrique estimé par rapport au meneur (P1).
-2. **Écart avec la Position Précédente (`gapPosition` / `overallGapPosition`)** : Projection continue du retard chronométrique estimé par rapport à la voiture immédiatement devant.
-3. **Écart Formule 1 avec le Meneur (`gapLeaderF1` / `overallGapLeaderF1`)** : Différentiel exact sur la ligne d'arrivée dans le même tour ou retard en tours (`+1 Tour`, `+N Tours`) en cas de dépassement.
-4. **Écart Formule 1 avec la Position Précédente (`gapPositionF1` / `overallGapPositionF1`)** : Différentiel exact sur la ligne d'arrivée par rapport à la voiture précédente dans le même tour ou retard en tours (`+1 Tour`, `+N Tours`).
+1. **Écart de Manche (`gap`)** : Évalue les intervalles en temps réel strictement entre les voitures en piste dans la manche active.
+2. **Écart Général (`overallGap`)** : Évalue les intervalles cumulés entre tous les participants de l'événement.
+
+Chaque widget d'écart peut être personnalisé dans l'Inspecteur de Colonne via deux options essentielles :
+- **Cible** :
+  - **Leader** : Intervalle par rapport au meneur actuel de la course (P1).
+  - **Position précédente** : Intervalle par rapport au concurrent immédiatement devant au classement (ex. P3 vs P2).
+- **Mode de calcul** :
+  - **Toujours temps** : Projection continue du rythme chronométrique en secondes (`+X.XXX`).
+  - **Tours et temps** : Style Formule 1 affichant le temps dans le même tour ou le retard en tours (`+1 Tour`, `+N Tours`) en cas de dépassement.
+  - **Toujours tours** : Écart exact en tours calculé lors du franchissement de la ligne, intégrant la progression partielle du pilote comparé.
+
+> [!NOTE]
+> Plusieurs widgets d'écart avec des configurations différentes (par exemple une colonne Écart Leader et une colonne Écart Position) peuvent être placés simultanément sur la même grille ou mise en page.
 
 Pour consulter les formules mathématiques complètes et les spécifications de chronométrage, reportez-vous au [Guide des Calculs d'Écarts](gap-calculations.md).
 

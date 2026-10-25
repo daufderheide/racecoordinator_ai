@@ -1113,6 +1113,53 @@
       </div>
     </div>
 
+    @if (isGapColumn) {
+      <hr class="inspector-divider" />
+      <div class="inspector-geometry-title">
+        <span class="material-icons">compare_arrows</span>
+        {{ "UE_INSPECTOR_GAP_SECTION" | translate }}
+      </div>
+      <div class="inspector-section">
+        <label class="inspector-label">{{
+          "UE_INSPECTOR_GAP_TARGET" | translate
+        }}</label>
+        <div class="select-container select-sm">
+          <app-custom-select
+            [ngModel]="gapTarget"
+            (ngModelChange)="gapTarget = $event"
+          >
+            <app-custom-option value="leader">
+              {{ "UE_GAP_TARGET_LEADER" | translate }}
+            </app-custom-option>
+            <app-custom-option value="position">
+              {{ "UE_GAP_TARGET_POSITION" | translate }}
+            </app-custom-option>
+          </app-custom-select>
+        </div>
+      </div>
+      <div class="inspector-section">
+        <label class="inspector-label">{{
+          "UE_INSPECTOR_GAP_MODE" | translate
+        }}</label>
+        <div class="select-container select-sm">
+          <app-custom-select
+            [ngModel]="gapMode"
+            (ngModelChange)="gapMode = $event"
+          >
+            <app-custom-option value="always_time">
+              {{ "UE_GAP_MODE_ALWAYS_TIME" | translate }}
+            </app-custom-option>
+            <app-custom-option value="laps_and_time">
+              {{ "UE_GAP_MODE_LAPS_AND_TIME" | translate }}
+            </app-custom-option>
+            <app-custom-option value="always_laps">
+              {{ "UE_GAP_MODE_ALWAYS_LAPS" | translate }}
+            </app-custom-option>
+          </app-custom-select>
+        </div>
+      </div>
+    }
+
     @if (isTotalTimeColumn || isTimeColumn || isLapColumn) {
       <hr class="inspector-divider" />
 
@@ -2511,6 +2558,53 @@
               getInsetPreview(effectiveSelectedAnchor, 8.45)
             }}</span>
           </div>
+        </div>
+      </div>
+    }
+
+    <!-- Inset Gap Configuration -->
+    @if (isInsetGapColumn(effectiveSelectedAnchor)) {
+      <div class="inspector-geometry-title">
+        <span class="material-icons">compare_arrows</span>
+        {{ "UE_INSPECTOR_GAP_SECTION" | translate }}
+      </div>
+      <div class="inspector-section">
+        <label class="inspector-label">{{
+          "UE_INSPECTOR_GAP_TARGET" | translate
+        }}</label>
+        <div class="select-container select-sm">
+          <app-custom-select
+            [ngModel]="getInsetGapTarget(effectiveSelectedAnchor)"
+            (ngModelChange)="setInsetGapTarget(effectiveSelectedAnchor, $event)"
+          >
+            <app-custom-option value="leader">
+              {{ "UE_GAP_TARGET_LEADER" | translate }}
+            </app-custom-option>
+            <app-custom-option value="position">
+              {{ "UE_GAP_TARGET_POSITION" | translate }}
+            </app-custom-option>
+          </app-custom-select>
+        </div>
+      </div>
+      <div class="inspector-section">
+        <label class="inspector-label">{{
+          "UE_INSPECTOR_GAP_MODE" | translate
+        }}</label>
+        <div class="select-container select-sm">
+          <app-custom-select
+            [ngModel]="getInsetGapMode(effectiveSelectedAnchor)"
+            (ngModelChange)="setInsetGapMode(effectiveSelectedAnchor, $event)"
+          >
+            <app-custom-option value="always_time">
+              {{ "UE_GAP_MODE_ALWAYS_TIME" | translate }}
+            </app-custom-option>
+            <app-custom-option value="laps_and_time">
+              {{ "UE_GAP_MODE_LAPS_AND_TIME" | translate }}
+            </app-custom-option>
+            <app-custom-option value="always_laps">
+              {{ "UE_GAP_MODE_ALWAYS_LAPS" | translate }}
+            </app-custom-option>
+          </app-custom-select>
         </div>
       </div>
     }

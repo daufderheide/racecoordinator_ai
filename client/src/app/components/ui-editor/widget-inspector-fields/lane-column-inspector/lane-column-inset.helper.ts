@@ -1,3 +1,4 @@
+import { GAP_MIGRATION_MAP } from "@app/components/raceday/utils/lane-view-migration.helper";
 import { RacedayLayoutUtils } from "@app/components/raceday/utils/raceday-layout.utils";
 import { AbsoluteWidgetNode, InsetConfig } from "@app/models/settings";
 import { CustomWidgetService } from "@app/services/custom-widget.service";
@@ -474,15 +475,89 @@ export class LaneColumnInsetHelper {
     return baseKey === "totalTime" || baseKey === "overallTotalTime";
   }
 
-  public static isInsetTimeColumn(key: string | undefined): boolean {
+  public static isInsetGapColumn(key: string | undefined): boolean {
     if (!key) return false;
+    const baseKey = key.split("_")[0];
+    return (
+      baseKey === "gap" ||
+      baseKey === "overallGap" ||
+      Boolean(GAP_MIGRATION_MAP[baseKey])
+    );
+  }
+
+  public static getInsetGapTarget(
+    currentSettings: any,
+    anchor: string,
+  ): "leader" | "position" {
+    const cfg = this.getOrCreateInsetConfig(currentSettings, anchor);
+    if (cfg.gapTarget) return cfg.gapTarget;
+    const insetKey = currentSettings["insets"]?.[anchor];
+    if (insetKey && GAP_MIGRATION_MAP[insetKey]) {
+      return GAP_MIGRATION_MAP[insetKey].gapTarget;
+    }
+    return "leader";
+  }
+
+  public static setInsetGapTarget(
+    currentSettings: any,
+    anchor: string,
+    val: "leader" | "position",
+  ): void {
+    const cfg = this.getOrCreateInsetConfig(currentSettings, anchor);
+    cfg.gapTarget = val;
+  }
+
+  public static getInsetGapMode(
+    currentSettings: any,
+    anchor: string,
+  ): "always_time" | "laps_and_time" | "always_laps" {
+    const cfg = this.getOrCreateInsetConfig(currentSettings, anchor);
+    if (cfg.gapMode) return cfg.gapMode;
+    const insetKey = currentSettings["insets"]?.[anchor];
+    if (insetKey && GAP_MIGRATION_MAP[insetKey]) {
+      return GAP_MIGRATION_MAP[insetKey].gapMode;
+    }
+    return "always_time";
+  }
+
+  public static setInsetGapMode(
+    currentSettings: any,
+    anchor: string,
+    val: "always_time" | "laps_and_time" | "always_laps",
+  ): void {
+    const cfg = this.getOrCreateInsetConfig(currentSettings, anchor);
+    cfg.gapMode = val;
+  }
+
+  public static isInsetTimeColumn(
+    key: string | undefined,
+    currentSettings?: any,
+    anchor?: string,
+  ): boolean {
+    if (!key) return false;
+    if (this.isInsetGapColumn(key)) {
+      if (currentSettings && anchor) {
+        return this.getInsetGapMode(currentSettings, anchor) !== "always_laps";
+      }
+      return true;
+    }
     return (
       RacedayLayoutUtils.isTimeColumnKey(key) && !this.isInsetTotalTime(key)
     );
   }
 
-  public static isInsetLapColumn(key: string | undefined): boolean {
+  public static isInsetLapColumn(
+    key: string | undefined,
+    currentSettings?: any,
+    anchor?: string,
+  ): boolean {
     if (!key || this.isCustomWidget(key)) return false;
+    if (this.isInsetGapColumn(key)) {
+      if (currentSettings && anchor) {
+        return this.getInsetGapMode(currentSettings, anchor) === "always_laps";
+      }
+      return false;
+    }
     return RacedayLayoutUtils.isLapColumnKey(key);
   }
 
@@ -496,6 +571,7 @@ export class LaneColumnInsetHelper {
     if (!key) return false;
     if (
       this.isInsetTotalTime(key) ||
+      this.isInsetGapColumn(key) ||
       this.isInsetTimeColumn(key) ||
       this.isInsetLapColumn(key) ||
       this.isInsetHeatsCountColumn(key)
@@ -562,6 +638,63 @@ export class LaneColumnInsetHelper {
     ) {
       current["textColor"] = "#ffffff";
     }
+
+    const colKey = current["columnKey"];
+    if (colKey && GAP_MIGRATION_MAP[colKey]) {
+      const mapping = GAP_MIGRATION_MAP[colKey];
+      current["columnKey"] = mapping.columnKey;
+      if (!current["gapTarget"]) {
+        current["gapTarget"] = mapping.gapTarget;
+      }
+      if (!current["gapMode"]) {
+        current["gapMode"] = mapping.gapMode;
+      }
+    }
+
+    if (current["insets"] && typeof current["insets"] === "object") {
+      for (const [anchor, insetVal] of Object.entries(current["insets"])) {
+        if (typeof insetVal === "string" && GAP_MIGRATION_MAP[insetVal]) {
+          const mapping = GAP_MIGRATION_MAP[insetVal];
+          current["insets"][anchor] = mapping.columnKey;
+          if (!current["insetsConfig"]) {
+            current["insetsConfig"] = {};
+          }
+          if (!current["insetsConfig"][anchor]) {
+            current["insetsConfig"][anchor] = {};
+          }
+          current["insetsConfig"][anchor].columnKey = mapping.columnKey;
+          if (!current["insetsConfig"][anchor].gapTarget) {
+            current["insetsConfig"][anchor].gapTarget = mapping.gapTarget;
+          }
+          if (!current["insetsConfig"][anchor].gapMode) {
+            current["insetsConfig"][anchor].gapMode = mapping.gapMode;
+          }
+        }
+      }
+    }
+
+    if (
+      current["insetsConfig"] &&
+      typeof current["insetsConfig"] === "object"
+    ) {
+      for (const [, cfg] of Object.entries(current["insetsConfig"])) {
+        if (
+          cfg &&
+          (cfg as any).columnKey &&
+          GAP_MIGRATION_MAP[(cfg as any).columnKey]
+        ) {
+          const mapping = GAP_MIGRATION_MAP[(cfg as any).columnKey];
+          (cfg as any).columnKey = mapping.columnKey;
+          if (!(cfg as any).gapTarget) {
+            (cfg as any).gapTarget = mapping.gapTarget;
+          }
+          if (!(cfg as any).gapMode) {
+            (cfg as any).gapMode = mapping.gapMode;
+          }
+        }
+      }
+    }
+
     return current;
   }
 

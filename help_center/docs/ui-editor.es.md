@@ -110,12 +110,22 @@ El widget **Mangas Disputadas** (`heatsRaced`) muestra el progreso de participac
 
 #### Widgets de Diferencias (Gaps e Intervalos)
 
-Race Coordinator AI soporta **4 widgets de diferencias específicos** tanto para Datos de Ronda como para Datos Generales:
+Race Coordinator AI proporciona **2 widgets de diferencias configurables** para Datos de Ronda y Datos Generales:
 
-1. **Diferencia con el Líder (`gapLeader` / `overallGapLeader`)**: Proyección matemática continua del tiempo de desventaja respecto al líder (P1).
-2. **Diferencia con la Posición Precedente (`gapPosition` / `overallGapPosition`)**: Proyección matemática continua del tiempo de desventaja respecto al coche inmediatamente anterior.
-3. **Diferencia Fórmula 1 con el Líder (`gapLeaderF1` / `overallGapLeaderF1`)**: Diferencia exacta en la línea de meta en la misma vuelta o vueltas perdidas (`+1 Vuelta`, `+N Vueltas`) en caso de estar doblado.
-4. **Diferencia Fórmula 1 con la Posición Precedente (`gapPositionF1` / `overallGapPositionF1`)**: Diferencia exacta en la línea de meta respecto al coche anterior en la misma vuelta o vueltas perdidas (`+1 Vuelta`, `+N Vueltas`).
+1. **Diferencia de Ronda (`gap`)**: Evalúa los intervalos en tiempo real estrictamente entre los coches que compiten en la ronda actual.
+2. **Diferencia General (`overallGap`)**: Evalúa los intervalos acumulados entre todos los participantes del evento.
+
+Cada widget de diferencia se puede personalizar en el Inspector de Columnas mediante dos opciones principales:
+- **Objetivo**:
+  - **Líder**: Intervalo respecto al líder actual de la carrera (P1).
+  - **Posición por delante**: Intervalo respecto al competidor inmediatamente anterior en la clasificación (ej. P3 vs P2).
+- **Modo de cálculo**:
+  - **Siempre tiempo**: Proyección matemática continua del ritmo en segundos (`+X.XXX`).
+  - **Vueltas y tiempo**: Estilo Fórmula 1 que muestra el tiempo en la misma vuelta o el déficit de vueltas (`+1 Vuelta`, `+N Vueltas`) al estar doblado.
+  - **Siempre vueltas**: Diferencia exacta de vueltas calculada al completar una vuelta, incorporando el progreso de vuelta parcial del piloto comparado.
+
+> [!NOTE]
+> Se pueden colocar varios widgets de diferencias con distintas configuraciones (por ejemplo, una columna de Diferencia con el Líder y otra con la Posición Precedente) en la misma cuadrícula o diseño simultáneamente.
 
 Para conocer las fórmulas matemáticas completas y especificaciones de cronometraje, consulte la [Guía de Cálculos de Diferencias](gap-calculations.md).
 

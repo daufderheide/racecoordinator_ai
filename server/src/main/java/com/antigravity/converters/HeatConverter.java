@@ -92,6 +92,8 @@ public class HeatConverter {
         .setGapPosition(data.getGapPosition())
         .setGapLeaderF1(data.getGapLeaderF1())
         .setGapPositionF1(data.getGapPositionF1())
+        .setGapLeaderLaps(data.getGapLeaderLaps())
+        .setGapPositionLaps(data.getGapPositionLaps())
         .setLapsDownLeader(data.getLapsDownLeader())
         .setLapsDownPosition(data.getLapsDownPosition())
         .setIsRefueling(data.isRefueling())

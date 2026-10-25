@@ -152,10 +152,7 @@ export function processLoadedEditorData(
   };
 }
 
-export function normalizeLoadedCustomUis(
-  customUIs: CustomUI[],
-  editingSettings?: Settings,
-): void {
+function ensureFuelCustomUiCanonical(customUIs: CustomUI[]): void {
   const hasFuelUi = customUIs.some(
     (u: any) => u.entity_id === "default_fuel_ui_layout_rc_ai",
   );
@@ -172,25 +169,164 @@ export function normalizeLoadedCustomUis(
       }
     }
   }
+}
 
-  for (const ui of customUIs) {
-    if (
-      ui.entity_id === "default_ui_layout_rc_ai" &&
-      isLegacyRacedayUiName(ui.name)
-    ) {
-      ui.name = "RaceCoordinator AI";
-    } else if (
-      ui.entity_id === "practice_ui_layout_rc_ai" &&
-      isLegacyPracticeUiName(ui.name)
-    ) {
-      ui.name = "RaceCoordinator AI (Practice)";
-    } else if (
-      ui.entity_id === "default_fuel_ui_layout_rc_ai" &&
-      isLegacyFuelUiName(ui.name)
-    ) {
-      ui.name = "RaceCoordinator AI (Fuel)";
+function normalizeCustomUiNames(ui: CustomUI): void {
+  if (
+    ui.entity_id === "default_ui_layout_rc_ai" &&
+    isLegacyRacedayUiName(ui.name)
+  ) {
+    ui.name = "RaceCoordinator AI";
+  } else if (
+    ui.entity_id === "practice_ui_layout_rc_ai" &&
+    isLegacyPracticeUiName(ui.name)
+  ) {
+    ui.name = "RaceCoordinator AI (Practice)";
+  } else if (
+    ui.entity_id === "default_fuel_ui_layout_rc_ai" &&
+    isLegacyFuelUiName(ui.name)
+  ) {
+    ui.name = "RaceCoordinator AI (Fuel)";
+  }
+}
+
+function migrateCustomUiLayout(
+  ui: CustomUI,
+  layout: any,
+  editingSettings?: Settings,
+): void {
+  if (!layout) return;
+
+  if (LaneViewMigrationHelper.hasLegacyLaneView(layout, ui.name)) {
+    const isPractice =
+      ui.entity_id === "practice_ui_layout_rc_ai" ||
+      ui.name?.toLowerCase().includes("practice");
+    let columns: string[] | undefined;
+    let columnLayouts: any;
+    let columnVisibility: any;
+    let columnWidths: any;
+    let columnAnchors: any;
+    try {
+      if (ui.columnsJson) columns = JSON.parse(ui.columnsJson);
+      if (ui.columnLayoutsJson)
+        columnLayouts = JSON.parse(ui.columnLayoutsJson);
+      if (ui.columnVisibilityJson)
+        columnVisibility = JSON.parse(ui.columnVisibilityJson);
+      if (ui.columnWidthsJson) columnWidths = JSON.parse(ui.columnWidthsJson);
+      if (ui.columnAnchorsJson)
+        columnAnchors = JSON.parse(ui.columnAnchorsJson);
+    } catch {
+      // ignore
     }
 
+    const migration = LaneViewMigrationHelper.convertLegacyLaneViewLayout({
+      layout,
+      columns,
+      columnLayouts,
+      columnVisibility,
+      columnWidths,
+      columnAnchors,
+      isPractice,
+    });
+    if (migration.migrated) {
+      (ui as any)._wasMigrated = true;
+      (ui as any)._preMigrationLayout = layout;
+      if (ui.entity_id) {
+        preMigrationLayoutCache.set(
+          ui.entity_id,
+          JSON.parse(JSON.stringify(layout)),
+        );
+      }
+      ui.layoutJson = JSON.stringify(migration.layout);
+      syncSettingsLayout(ui.entity_id, migration.layout, editingSettings);
+    }
+  } else if (LaneViewMigrationHelper.migrateGapWidgets(layout)) {
+    ui.layoutJson = JSON.stringify(layout);
+    syncSettingsLayout(ui.entity_id, layout, editingSettings);
+  }
+}
+
+function syncSettingsLayout(
+  entityId: string | undefined,
+  layout: any,
+  editingSettings?: Settings,
+): void {
+  if (!editingSettings) return;
+  if (entityId === "default_ui_layout_rc_ai") {
+    editingSettings.racedayLayout = layout;
+  } else if (entityId === "practice_ui_layout_rc_ai") {
+    editingSettings.practiceRacedayLayout = layout;
+  }
+}
+
+function migrateCustomUiColumns(ui: CustomUI): void {
+  try {
+    if (ui.columnsJson) {
+      const cols = JSON.parse(ui.columnsJson);
+      if (LaneViewMigrationHelper.migrateColumnList(cols)) {
+        ui.columnsJson = JSON.stringify(cols);
+      }
+    }
+    if (ui.columnLayoutsJson) {
+      const layouts = JSON.parse(ui.columnLayoutsJson);
+      if (LaneViewMigrationHelper.migrateColumnLayouts(layouts)) {
+        ui.columnLayoutsJson = JSON.stringify(layouts);
+      }
+    }
+    if (ui.columnWidthsJson) {
+      const widths = JSON.parse(ui.columnWidthsJson);
+      if (LaneViewMigrationHelper.migrateColumnWidths(widths)) {
+        ui.columnWidthsJson = JSON.stringify(widths);
+      }
+    }
+  } catch {
+    // ignore
+  }
+}
+
+function migrateEditingSettingsGapData(editingSettings: Settings): void {
+  if (editingSettings.racedayLayout) {
+    LaneViewMigrationHelper.migrateGapWidgets(editingSettings.racedayLayout);
+  }
+  if (editingSettings.practiceRacedayLayout) {
+    LaneViewMigrationHelper.migrateGapWidgets(
+      editingSettings.practiceRacedayLayout,
+    );
+  }
+  if (editingSettings.racedayColumns) {
+    LaneViewMigrationHelper.migrateColumnList(editingSettings.racedayColumns);
+  }
+  if (editingSettings.practiceRacedayColumns) {
+    LaneViewMigrationHelper.migrateColumnList(
+      editingSettings.practiceRacedayColumns,
+    );
+  }
+  if (editingSettings.columnWidths) {
+    LaneViewMigrationHelper.migrateColumnWidths(editingSettings.columnWidths);
+  }
+  if (editingSettings.practiceColumnWidths) {
+    LaneViewMigrationHelper.migrateColumnWidths(
+      editingSettings.practiceColumnWidths,
+    );
+  }
+  if (editingSettings.columnLayouts) {
+    LaneViewMigrationHelper.migrateColumnLayouts(editingSettings.columnLayouts);
+  }
+  if (editingSettings.practiceColumnLayouts) {
+    LaneViewMigrationHelper.migrateColumnLayouts(
+      editingSettings.practiceColumnLayouts,
+    );
+  }
+}
+
+export function normalizeLoadedCustomUis(
+  customUIs: CustomUI[],
+  editingSettings?: Settings,
+): void {
+  ensureFuelCustomUiCanonical(customUIs);
+
+  for (const ui of customUIs) {
+    normalizeCustomUiNames(ui);
     let layout: any;
     try {
       if (ui.layoutJson) {
@@ -200,57 +336,12 @@ export function normalizeLoadedCustomUis(
       // ignore
     }
 
-    if (LaneViewMigrationHelper.hasLegacyLaneView(layout, ui.name)) {
-      const isPractice =
-        ui.entity_id === "practice_ui_layout_rc_ai" ||
-        ui.name?.toLowerCase().includes("practice");
-      let columns: string[] | undefined;
-      let columnLayouts: any;
-      let columnVisibility: any;
-      let columnWidths: any;
-      let columnAnchors: any;
-      try {
-        if (ui.columnsJson) columns = JSON.parse(ui.columnsJson);
-        if (ui.columnLayoutsJson)
-          columnLayouts = JSON.parse(ui.columnLayoutsJson);
-        if (ui.columnVisibilityJson)
-          columnVisibility = JSON.parse(ui.columnVisibilityJson);
-        if (ui.columnWidthsJson) columnWidths = JSON.parse(ui.columnWidthsJson);
-        if (ui.columnAnchorsJson)
-          columnAnchors = JSON.parse(ui.columnAnchorsJson);
-      } catch {
-        // ignore
-      }
+    migrateCustomUiLayout(ui, layout, editingSettings);
+    migrateCustomUiColumns(ui);
+  }
 
-      const migration = LaneViewMigrationHelper.convertLegacyLaneViewLayout({
-        layout,
-        columns,
-        columnLayouts,
-        columnVisibility,
-        columnWidths,
-        columnAnchors,
-        isPractice,
-      });
-      if (migration.migrated) {
-        (ui as any)._wasMigrated = true;
-        (ui as any)._preMigrationLayout = layout;
-        if (ui.entity_id) {
-          preMigrationLayoutCache.set(
-            ui.entity_id,
-            JSON.parse(JSON.stringify(layout)),
-          );
-        }
-        ui.layoutJson = JSON.stringify(migration.layout);
-        if (ui.entity_id === "default_ui_layout_rc_ai" && editingSettings) {
-          editingSettings.racedayLayout = migration.layout;
-        } else if (
-          ui.entity_id === "practice_ui_layout_rc_ai" &&
-          editingSettings
-        ) {
-          editingSettings.practiceRacedayLayout = migration.layout;
-        }
-      }
-    }
+  if (editingSettings) {
+    migrateEditingSettingsGapData(editingSettings);
   }
 }
 

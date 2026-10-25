@@ -94,12 +94,7 @@ describe("LaneViewColumnGroupHelper", () => {
     });
 
     it("should return gaps for gap columns", () => {
-      expect(LaneViewColumnGroupHelper.getGroupIdForColumn("gapLeader")).toBe(
-        "gaps",
-      );
-      expect(LaneViewColumnGroupHelper.getGroupIdForColumn("gapLeaderF1")).toBe(
-        "gaps",
-      );
+      expect(LaneViewColumnGroupHelper.getGroupIdForColumn("gap")).toBe("gaps");
     });
 
     it("should return overall-standings for overall standings columns", () => {
@@ -144,12 +139,9 @@ describe("LaneViewColumnGroupHelper", () => {
     });
 
     it("should return overall-gaps for overall gap columns", () => {
-      expect(
-        LaneViewColumnGroupHelper.getGroupIdForColumn("overallGapLeader"),
-      ).toBe("overall-gaps");
-      expect(
-        LaneViewColumnGroupHelper.getGroupIdForColumn("overallGapPositionF1"),
-      ).toBe("overall-gaps");
+      expect(LaneViewColumnGroupHelper.getGroupIdForColumn("overallGap")).toBe(
+        "overall-gaps",
+      );
     });
 
     it("should return pacing for ghost pacing columns", () => {

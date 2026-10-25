@@ -740,5 +740,52 @@ describe("LaneColumnInsetHelper", () => {
       ).toBe("bottom");
       expect(s.insetsConfig["top-left"].verticalAlignment).toBe("bottom");
     });
+
+    it("should recognize gap columns including legacy gap keys in isInsetGapColumn", () => {
+      expect(LaneColumnInsetHelper.isInsetGapColumn("gap")).toBeTrue();
+      expect(LaneColumnInsetHelper.isInsetGapColumn("overallGap")).toBeTrue();
+      expect(LaneColumnInsetHelper.isInsetGapColumn("gapLeader")).toBeTrue();
+      expect(
+        LaneColumnInsetHelper.isInsetGapColumn("gapPositionF1"),
+      ).toBeTrue();
+      expect(
+        LaneColumnInsetHelper.isInsetGapColumn("overallGapLeader"),
+      ).toBeTrue();
+      expect(LaneColumnInsetHelper.isInsetGapColumn("lastLapTime")).toBeFalse();
+    });
+
+    it("should infer inset gap target and mode from legacy key if unset in insetsConfig", () => {
+      const s: any = {
+        insets: { "bottom-right": "gapPositionF1" },
+        insetsConfig: {},
+      };
+      expect(LaneColumnInsetHelper.getInsetGapTarget(s, "bottom-right")).toBe(
+        "position",
+      );
+      expect(LaneColumnInsetHelper.getInsetGapMode(s, "bottom-right")).toBe(
+        "laps_and_time",
+      );
+    });
+
+    it("should normalize legacy gap settings in normalizeSettings", () => {
+      const s: any = {
+        columnKey: "gapLeader",
+        insets: {
+          "bottom-right": "gapPosition",
+        },
+      };
+      const normalized = LaneColumnInsetHelper.normalizeSettings(s);
+      expect(normalized.columnKey).toBe("gap");
+      expect(normalized.gapTarget).toBe("leader");
+      expect(normalized.gapMode).toBe("always_time");
+      expect(normalized.insets["bottom-right"]).toBe("gap");
+      expect(normalized.insetsConfig["bottom-right"].columnKey).toBe("gap");
+      expect(normalized.insetsConfig["bottom-right"].gapTarget).toBe(
+        "position",
+      );
+      expect(normalized.insetsConfig["bottom-right"].gapMode).toBe(
+        "always_time",
+      );
+    });
   });
 });

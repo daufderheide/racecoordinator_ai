@@ -3,6 +3,7 @@ import { DriverHeatData } from "@app/race/driver_heat_data";
 import { formatTimerDisplay } from "@app/utils/timer-format.utils";
 
 import { FormatContext, RacedayFormatUtils } from "./raceday-format.utils";
+import { RacedayGapFormatUtils } from "./raceday-gap-format.utils";
 import { RacedayLayoutUtils } from "./raceday-layout.utils";
 
 export class RacedayOverallFormatUtils {
@@ -33,6 +34,8 @@ export class RacedayOverallFormatUtils {
     p: any,
     heatDriver: any,
     baseKey: string,
+    settings?: any,
+    anchor?: string,
   ): any {
     const timingVal = this.extractTimingProperty(p, heatDriver, baseKey);
     if (timingVal !== undefined) return timingVal;
@@ -40,7 +43,13 @@ export class RacedayOverallFormatUtils {
     const lapVal = this.extractLapProperty(p, heatDriver, baseKey);
     if (lapVal !== undefined) return lapVal;
 
-    const gapVal = this.extractGapProperty(p, heatDriver, baseKey);
+    const gapVal = this.extractGapProperty(
+      p,
+      heatDriver,
+      baseKey,
+      settings,
+      anchor,
+    );
     if (gapVal !== undefined) return gapVal;
 
     return this.extractOtherProperty(p, heatDriver, baseKey);
@@ -117,8 +126,49 @@ export class RacedayOverallFormatUtils {
     }
   }
 
-  private static extractGapProperty(p: any, hd: any, baseKey: string): any {
+  private static extractGapProperty(
+    p: any,
+    hd: any,
+    baseKey: string,
+    settings?: any,
+    anchor?: string,
+  ): any {
     switch (baseKey) {
+      case "overallGap": {
+        const config =
+          anchor &&
+          anchor !== "center-center" &&
+          settings?.insetsConfig?.[anchor]
+            ? settings.insetsConfig[anchor]
+            : settings;
+        const target = config?.gapTarget || "leader";
+        const mode = config?.gapMode || "always_time";
+        if (target === "position") {
+          if (mode === "always_laps") {
+            return (
+              p?.gapPositionLaps ??
+              hd?.gapPositionLaps ??
+              hd?.overallGapPositionLaps
+            );
+          }
+          if (mode === "laps_and_time") {
+            return (
+              p?.gapPositionF1 ?? hd?.gapPositionF1 ?? hd?.overallGapPositionF1
+            );
+          }
+          return p?.gapPosition ?? hd?.gapPosition ?? hd?.overallGapPosition;
+        } else {
+          if (mode === "always_laps") {
+            return (
+              p?.gapLeaderLaps ?? hd?.gapLeaderLaps ?? hd?.overallGapLeaderLaps
+            );
+          }
+          if (mode === "laps_and_time") {
+            return p?.gapLeaderF1 ?? hd?.gapLeaderF1 ?? hd?.overallGapLeaderF1;
+          }
+          return p?.gapLeader ?? hd?.gapLeader ?? hd?.overallGapLeader;
+        }
+      }
       case "overallGapLeader":
         return p?.gapLeader ?? hd?.gapLeader ?? hd?.overallGapLeader;
       case "overallGapPosition":
@@ -168,12 +218,15 @@ export class RacedayOverallFormatUtils {
     colKey?: string,
     isInset?: boolean,
     column?: ColumnDefinition | any,
+    anchor?: string,
   ): string | null {
     if (RacedayFormatUtils.isEmptyDriver(hd)) {
       return this.formatOverallEmptyDriver(
         baseKey,
         timePlaceholder,
         lapPlaceholder,
+        ctx,
+        anchor,
       );
     }
 
@@ -199,7 +252,10 @@ export class RacedayOverallFormatUtils {
       hd,
       ctx,
       timePlaceholder,
+      lapPlaceholder,
       timeDecimals,
+      lapDecimals,
+      anchor,
     );
     if (gapResult !== null) return gapResult;
 
@@ -227,6 +283,8 @@ export class RacedayOverallFormatUtils {
     baseKey: string,
     timePlaceholder: string,
     lapPlaceholder: string,
+    ctx?: FormatContext,
+    anchor?: string,
   ): string | null {
     if (
       baseKey === "overallPhysicalLapCount" ||
@@ -237,6 +295,17 @@ export class RacedayOverallFormatUtils {
       baseKey === "heatsRemaining"
     ) {
       return "--";
+    }
+    if (baseKey === "overallGap") {
+      const s = ctx?.laneViewWidgetSettings;
+      const config =
+        anchor && anchor !== "center-center" && s?.insetsConfig?.[anchor]
+          ? s.insetsConfig[anchor]
+          : s;
+      if (config?.gapMode === "always_laps") {
+        return lapPlaceholder;
+      }
+      return timePlaceholder;
     }
     if (
       baseKey === "overallTotalTime" ||
@@ -335,50 +404,23 @@ export class RacedayOverallFormatUtils {
     hd: DriverHeatData,
     ctx: FormatContext,
     timePlaceholder: string,
+    lapPlaceholder: string,
     timeDecimals: number,
+    lapDecimals: number,
+    anchor?: string,
   ): string | null {
-    const isLeaderF1 = baseKey === "overallGapLeaderF1";
-    const isPositionF1 = baseKey === "overallGapPositionF1";
-
-    if (isLeaderF1 || isPositionF1) {
-      const p = hd?.participant;
-      const lapsDown =
-        (isLeaderF1 ? p?.lapsDownLeader : p?.lapsDownPosition) ??
-        (isLeaderF1 ? hd?.lapsDownLeader : hd?.lapsDownPosition) ??
-        0;
-
-      if (lapsDown === 1) {
-        return ctx
-          .translate("RD_LAP_DOWN")
-          .replace("{{count}}", lapsDown.toString());
-      } else if (lapsDown > 1) {
-        return ctx
-          .translate("RD_LAPS_DOWN")
-          .replace("{{count}}", lapsDown.toString());
-      }
-    }
-
-    if (
-      baseKey === "overallGapLeader" ||
-      baseKey === "overallGapPosition" ||
-      isLeaderF1 ||
-      isPositionF1
-    ) {
-      if (value === null || value === undefined || isNaN(Number(value))) {
-        return timePlaceholder;
-      }
-      const num = Number(value);
-      const fixed = Math.abs(num).toFixed(timeDecimals);
-      const isZero = Number(fixed) === 0;
-
-      if (isZero && !this.hasOverallData(hd)) {
-        return timePlaceholder;
-      }
-      const sign = !isZero && num < 0 ? "-" : "+";
-      return sign + fixed;
-    }
-
-    return null;
+    return RacedayGapFormatUtils.formatOverallGapValue(
+      baseKey,
+      value,
+      hd,
+      ctx,
+      timePlaceholder,
+      lapPlaceholder,
+      timeDecimals,
+      lapDecimals,
+      this.hasOverallData(hd),
+      anchor,
+    );
   }
 
   private static formatOverallLapValue(

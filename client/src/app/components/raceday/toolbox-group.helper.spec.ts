@@ -48,7 +48,7 @@ describe("ToolboxGroupHelper", () => {
     const mediaSg = rcAiGroup.subgroups.find((sg) => sg.id === "media-chrome");
     expect(mediaSg?.widgets.length).toBe(4);
 
-    expect(rcAiGroup.totalCount).toBe(127);
+    expect(rcAiGroup.totalCount).toBe(121);
   });
 
   it("should exclude used widgets from root and subgroups", () => {
@@ -87,7 +87,7 @@ describe("ToolboxGroupHelper", () => {
     expect(mediaSg?.widgets.find((w) => w.type === "branding")).toBeUndefined();
     expect(mediaSg?.widgets.length).toBe(3);
 
-    expect(rcAiGroup.totalCount).toBe(123);
+    expect(rcAiGroup.totalCount).toBe(117);
   });
 
   it("should organize custom widgets into groups, subgroups, and custom-root", () => {

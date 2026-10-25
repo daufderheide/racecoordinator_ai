@@ -9,6 +9,7 @@ import {
 } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { LaneReplicationOptions } from "@app/components/raceday/utils/lane-replication.helper";
+import { GAP_MIGRATION_MAP } from "@app/components/raceday/utils/lane-view-migration.helper";
 import { RacedayLayoutUtils } from "@app/components/raceday/utils/raceday-layout.utils";
 import {
   CustomOptionComponent,
@@ -556,12 +557,50 @@ export class LaneColumnInspectorComponent extends LaneColumnInspectorGridBase {
     return LaneColumnInsetHelper.isInsetTotalTime(this.getAnchorValue(anchor));
   }
 
+  isInsetGapColumn(anchor: string): boolean {
+    return LaneColumnInsetHelper.isInsetGapColumn(this.getAnchorValue(anchor));
+  }
+
+  getInsetGapTarget(anchor: string): "leader" | "position" {
+    return LaneColumnInsetHelper.getInsetGapTarget(
+      this.currentSettings,
+      anchor,
+    );
+  }
+
+  setInsetGapTarget(anchor: string, val: "leader" | "position"): void {
+    LaneColumnInsetHelper.setInsetGapTarget(this.currentSettings, anchor, val);
+    this.onFieldChange();
+  }
+
+  getInsetGapMode(
+    anchor: string,
+  ): "always_time" | "laps_and_time" | "always_laps" {
+    return LaneColumnInsetHelper.getInsetGapMode(this.currentSettings, anchor);
+  }
+
+  setInsetGapMode(
+    anchor: string,
+    val: "always_time" | "laps_and_time" | "always_laps",
+  ): void {
+    LaneColumnInsetHelper.setInsetGapMode(this.currentSettings, anchor, val);
+    this.onFieldChange();
+  }
+
   isInsetTimeColumn(anchor: string): boolean {
-    return LaneColumnInsetHelper.isInsetTimeColumn(this.getAnchorValue(anchor));
+    return LaneColumnInsetHelper.isInsetTimeColumn(
+      this.getAnchorValue(anchor),
+      this.currentSettings,
+      anchor,
+    );
   }
 
   isInsetLapColumn(anchor: string): boolean {
-    return LaneColumnInsetHelper.isInsetLapColumn(this.getAnchorValue(anchor));
+    return LaneColumnInsetHelper.isInsetLapColumn(
+      this.getAnchorValue(anchor),
+      this.currentSettings,
+      anchor,
+    );
   }
 
   isInsetNumericColumn(anchor: string): boolean {
@@ -661,13 +700,61 @@ export class LaneColumnInspectorComponent extends LaneColumnInspectorGridBase {
     );
   }
 
+  get isGapColumn(): boolean {
+    const key = this.currentSettings["columnKey"] || "";
+    return (
+      key === "gap" || key === "overallGap" || Boolean(GAP_MIGRATION_MAP[key])
+    );
+  }
+
+  get gapTarget(): "leader" | "position" {
+    if (this.currentSettings["gapTarget"]) {
+      return this.currentSettings["gapTarget"] as "leader" | "position";
+    }
+    const key = this.currentSettings["columnKey"];
+    if (key && GAP_MIGRATION_MAP[key]) {
+      return GAP_MIGRATION_MAP[key].gapTarget;
+    }
+    return "leader";
+  }
+
+  set gapTarget(value: "leader" | "position") {
+    this.currentSettings["gapTarget"] = value;
+    this.onFieldChange();
+  }
+
+  get gapMode(): "always_time" | "laps_and_time" | "always_laps" {
+    if (this.currentSettings["gapMode"]) {
+      return this.currentSettings["gapMode"] as
+        | "always_time"
+        | "laps_and_time"
+        | "always_laps";
+    }
+    const key = this.currentSettings["columnKey"];
+    if (key && GAP_MIGRATION_MAP[key]) {
+      return GAP_MIGRATION_MAP[key].gapMode;
+    }
+    return "always_time";
+  }
+
+  set gapMode(value: "always_time" | "laps_and_time" | "always_laps") {
+    this.currentSettings["gapMode"] = value;
+    this.onFieldChange();
+  }
+
   get isTimeColumn(): boolean {
+    if (this.isGapColumn) {
+      return this.gapMode !== "always_laps";
+    }
     return RacedayLayoutUtils.isTimeColumnKey(
       this.currentSettings["columnKey"] || "",
     );
   }
 
   get isLapColumn(): boolean {
+    if (this.isGapColumn) {
+      return this.gapMode === "always_laps";
+    }
     return RacedayLayoutUtils.isLapColumnKey(
       this.currentSettings["columnKey"] || "",
     );
@@ -691,22 +778,36 @@ export class LaneColumnInspectorComponent extends LaneColumnInspectorGridBase {
 
   get hasTimeInset(): boolean {
     const insets = this.currentSettings["insets"];
-    return Boolean(
-      insets &&
-      Object.values(insets).some((v) =>
-        RacedayLayoutUtils.isTimeColumnKey(String(v || "")),
-      ),
-    );
+    if (!insets) return false;
+    return Object.entries(insets).some(([anchor, v]) => {
+      const val = String(v || "");
+      if (LaneColumnInsetHelper.isInsetGapColumn(val)) {
+        return (
+          LaneColumnInsetHelper.getInsetGapMode(
+            this.currentSettings,
+            anchor,
+          ) !== "always_laps"
+        );
+      }
+      return RacedayLayoutUtils.isTimeColumnKey(val);
+    });
   }
 
   get hasLapInset(): boolean {
     const insets = this.currentSettings["insets"];
-    return Boolean(
-      insets &&
-      Object.values(insets).some((v) =>
-        RacedayLayoutUtils.isLapColumnKey(String(v || "")),
-      ),
-    );
+    if (!insets) return false;
+    return Object.entries(insets).some(([anchor, v]) => {
+      const val = String(v || "");
+      if (LaneColumnInsetHelper.isInsetGapColumn(val)) {
+        return (
+          LaneColumnInsetHelper.getInsetGapMode(
+            this.currentSettings,
+            anchor,
+          ) === "always_laps"
+        );
+      }
+      return RacedayLayoutUtils.isLapColumnKey(val);
+    });
   }
 
   onFieldChange(): void {

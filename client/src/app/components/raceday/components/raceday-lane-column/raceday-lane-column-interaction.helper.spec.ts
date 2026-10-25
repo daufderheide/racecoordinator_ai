@@ -362,6 +362,38 @@ describe("raceday-lane-column-interaction.helper", () => {
       expect(parent.formatValue).toHaveBeenCalled();
     });
 
+    it("should pass gapMode always_laps to getPropertyValue and formatValue for insets", () => {
+      let passedValue: any;
+      const parent = {
+        columns: [{ propertyName: "gap" }],
+        formatValue: jasmine.createSpy().and.callFake((_k, val) => {
+          passedValue = val;
+          return "mock-gap";
+        }),
+      };
+      const hdWithGaps: any = {
+        ...mockHd,
+        gapLeader: 2.461,
+        gapLeaderLaps: 0.5,
+      };
+      const result = formatLaneColumnInsetValue(
+        hdWithGaps,
+        "bottom-right",
+        "gap",
+        {
+          insetsConfig: {
+            "bottom-right": {
+              gapTarget: "leader",
+              gapMode: "always_laps",
+            },
+          },
+        } as any,
+        parent,
+      );
+      expect(result).toBe("mock-gap");
+      expect(passedValue).toBe(0.5);
+    });
+
     it("should return team name in fallback when isOverallOrSeedDataSource is true and driver is a team", () => {
       const teamHd = {
         participant: { team: { name: "Apex Racers" } },
@@ -1512,6 +1544,33 @@ describe("raceday-lane-column-interaction.helper", () => {
         "lane",
       );
       expect(result).toBe("Formatted 42");
+    });
+
+    it("should pass gapMode always_laps to getPropertyValue and formatValue for main column", () => {
+      let passedValue: any;
+      const parent = {
+        formatValue: jasmine.createSpy().and.callFake((_k, val) => {
+          passedValue = val;
+          return "mock-main-gap";
+        }),
+      };
+      const hdWithGaps: any = {
+        ...mockHd,
+        gapLeader: 2.461,
+        gapLeaderLaps: 0.5,
+      };
+      const result = resolveLaneColumnFormattedValue(
+        hdWithGaps,
+        "gap",
+        parent,
+        {
+          gapTarget: "leader",
+          gapMode: "always_laps",
+        } as any,
+        "lane",
+      );
+      expect(result).toBe("mock-main-gap");
+      expect(passedValue).toBe(0.5);
     });
 
     it("should resolve team name on overall/seed standings for team drivers", () => {

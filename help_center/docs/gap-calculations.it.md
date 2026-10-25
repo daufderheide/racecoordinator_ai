@@ -1,176 +1,176 @@
-# Calcoli dei Distacchi & Widget Distacco (Gaps)
+# Calcoli dei Distacchi e Widget Distacco (Gaps)
 
-Race Coordinator AI dispone di un motore automatizzato lato server per il calcolo dei distacchi (`GapCalculator`), che calcola in tempo reale i distacchi cronometrici e le differenze di giri tra i concorrenti. Tutti i calcoli avvengono sul server e vengono sincronizzati con l'interfaccia client, i widget personalizzati, gli annunci vocali (TTS) e le esportazioni in fogli di calcolo.
+Race Coordinator AI include un motore server per il calcolo automatizzato dei distacchi (`GapCalculator`), che determina in tempo reale i distacchi cronometrici e gli intervalli in giri tra i concorrenti. Tutti i calcoli vengono eseguiti continuamente sul server e sincronizzati con i display del client, i widget personalizzati, gli avvisi vocali e le esportazioni in fogli di calcolo.
 
 ---
 
 ## Panoramica dei Calcoli dei Distacchi
 
-Ogni volta che la classifica si aggiorna, il motore ordina tutti i piloti in base all'ordine di marcia attuale secondo il sistema di punteggio attivo (Maggior Numero di Giri, Tempo Totale Più Rapido o Punti). Successivamente, le metriche di distacco vengono calcolate rispetto a due riferimenti distinti:
+A ogni aggiornamento della classifica, il motore ordina i concorrenti in base all'ordine di gara corrente secondo le regole di punteggio attive (Maggior numero di giri, Tempo totale più veloce o Punti). Vengono quindi calcolate le metriche di distacco rispetto a due riferimenti distinti:
 
-- **Distacco dal Leader (`gapLeader` / `overallGapLeader`)**: Il distacco temporale tra un pilota e la 1ª posizione della gara (P1). Il distacco del leader rispetto a se stesso è sempre `0.0` (visualizzato come `--`).
-- **Distacco dal Pilota che Precede (`gapPosition` / `overallGapPosition`)**: Il distacco temporale tra un pilota e l'auto immediatamente avanti in classifica (ad esempio, P3 rispetto a P2). Il distacco della 1ª posizione è sempre `0.0` (visualizzato come `--`).
+- **Distacco dal Leader (`leader`)**: L'intervallo tra un concorrente e il leader attuale della gara (P1). Il distacco del leader da se stesso è sempre `0.0` (visualizzato come `--`).
+- **Distacco dal Pilota che Precede (`position`)**: L'intervallo tra un concorrente e l'auto immediatamente avanti in classifica (es. P3 rispetto a P2). Il distacco del leader è sempre `0.0` (visualizzato come `--`).
 
-### Ambiti dei Dati: Distacchi di Manche vs. Distacchi Generali
+### Ambiti dei Dati: Distacchi Manche vs Distacchi Generali
 
-Race Coordinator AI supporta la valutazione dei distacchi su due ambiti distinti:
+Race Coordinator AI supporta la valutazione dei distacchi su due ambiti:
 
-| Ambito | Chiavi di Colonna | Descrizione | Caso d'Uso |
+| Ambito | Chiave Colonna | Descrizione | Caso d'Uso |
 | :--- | :--- | :--- | :--- |
-| **Dati di Manche (Heat Data)** | `gapLeader`<br>`gapPosition`<br>`gapLeaderF1`<br>`gapPositionF1` | Valuta i distacchi esclusivamente tra le vetture che stanno gareggiando nella manche attiva. I piloti a riposo mostrano trattini (`--`). | Gare dal vivo, schede corsia, classifiche di manche. |
-| **Dati Generali (Overall Data)** | `overallGapLeader`<br>`overallGapPosition`<br>`overallGapLeaderF1`<br>`overallGapPositionF1` | Valuta i distacchi cumulativi dell'evento tra tutti i piloti iscritti, su tutte le manche completate. | Tabelloni di classifica generale, monitoraggio campionati. |
+| **Dati Manche (Heat Data)** | `gap` | Valuta i distacchi esclusivamente tra le auto attualmente in pista nella manche attiva. I piloti a riposo mostrano trattini (`--`). | Gare live, schede corsia, classifiche manche live. |
+| **Dati Generali (Overall Data)** | `overallGap` | Valuta i distacchi cumulativi su tutti i partecipanti all'evento, attraverso tutte le manche completate. | Griglie generali, classifiche di campionato. |
+
+> [!NOTE]
+> I layout esistenti che utilizzano le chiavi precedenti (`gapLeader`, `gapPosition`, `gapLeaderF1`, `gapPositionF1`, `overallGapLeader`, ecc.) vengono migrati automaticamente al caricamento a `gap` o `overallGap` con le relative impostazioni di obiettivo e modalità di calcolo.
 
 ---
 
-## I 4 Widget di Distacco Supportati
+## I 2 Widget Distacco Configurabili
 
-Race Coordinator AI mette a disposizione **4 widget di distacco specifici** (disponibili come colonne di griglia, schede corsia autonome e riquadri inset personalizzati):
+Race Coordinator AI fornisce **2 widget distacco configurabili** (disponibili come colonne di griglia, schede corsia autonome e riquadri interni personalizzati):
 
 ```
                           ┌──────────────────────────────────────────────┐
-                          │            WIDGET DISTACCHI DI GARA          │
+                          │           WIDGET DISTACCO DI GARA            │
                           └──────────────────────┬───────────────────────┘
                                                  │
                    ┌─────────────────────────────┴─────────────────────────────┐
                    ▼                                                           ▼
       ┌─────────────────────────┐                                 ┌─────────────────────────┐
-      │    DISTACCHI STANDARD   │                                 │   DISTACCHI FORMULA 1   │
-      │   Proiezione del Passo  │                                 │ Passaggio Linea Arrivo  │
+      │  DISTACCO MANCHE (`gap`)│                                 │DISTACCO GENERALE(`overallGap`)│
+      │   Piloti Manche Attiva  │                                 │ Tutti i Partecipanti    │
       └────────────┬────────────┘                                 └────────────┬────────────┘
                    │                                                           │
-         ┌─────────┴─────────┐                                       ┌─────────┴─────────┐
-         ▼                   ▼                                       ▼                   ▼
-  ┌─────────────┐     ┌─────────────┐                         ┌─────────────┐     ┌─────────────┐
-  │ Gap Leader  │     │Gap Position │                         │Gap Leader F1│     │Gap Pos. F1  │
-  │ (Leader P1) │     │ (Pilota Av) │                         │ (Leader P1) │     │ (Pilota Av) │
-  └─────────────┘     └─────────────┘                         └─────────────┘     └─────────────┘
+                   └─────────────────────────────┬─────────────────────────────┘
+                                                 │
+                               ┌─────────────────┴─────────────────┐
+                               ▼                                   ▼
+                   ┌───────────────────────┐           ┌───────────────────────┐
+                   │  SELETTORE OBIETTIVO  │           │  MODALITÀ DI CALCOLO  │
+                   ├───────────────────────┤           ├───────────────────────┤
+                   │ • Leader (P1)         │           │ • Sempre tempo        │
+                   │ • Posizione precedente│           │ • Giri e tempo (F1)   │
+                   │                       │           │ • Sempre giri         │
+                   └───────────────────────┘           └───────────────────────┘
 ```
 
-### 1. Distacco dal Leader (Standard)
-- **Chiavi Strumenti**: `gapLeader` (Manche) / `overallGapLeader` (Generale)
-- **Gruppo Strumenti**: *Heat Data → Gaps & Intervals* / *Overall Race Data → Overall Gaps & Intervals*
-- **Etichette Predefinite**: `HEAT GAP LEADER`, `OVERALL GAP LEADER` o `GAP LEADER`
-- **Modello di Misurazione**: Proiezione matematica continua del passo.
-- **Visualizzazione**: Formattato come `+X.XXX` secondi con cifre decimali configurabili (da 1 a 3 decimali). Il leader mostra `--`.
-- **Scopo**: Fornisce una stima in tempo reale del ritardo temporale rispetto al leader. Anche se il leader ha completato più giri, proietta il ritardo in base al passo medio del concorrente inseguitore.
+### Selezione dell'Obiettivo
+- **Leader (`leader`)**: Intervallo relativo al leader attuale della gara (P1). Il leader mostra trattini (`--`).
+- **Posizione precedente (`position`)**: Intervallo relativo all'auto immediatamente avanti in classifica (es. P3 vs P2). Il leader mostra trattini (`--`).
 
-### 2. Distacco dal Pilota che Precede (Standard)
-- **Chiavi Strumenti**: `gapPosition` (Manche) / `overallGapPosition` (Generale)
-- **Gruppo Strumenti**: *Heat Data → Gaps & Intervals* / *Overall Race Data → Overall Gaps & Intervals*
-- **Etichette Predefinite**: `HEAT GAP POSITION`, `OVERALL GAP POSITION` o `GAP POSITION`
-- **Modello di Misurazione**: Proiezione matematica continua del passo.
-- **Visualizzazione**: Formattato come `+X.XXX` secondi. La 1ª posizione mostra `--`.
-- **Scopo**: Indica il distacco cronometrico necessario per superare il pilota immediatamente avanti. Essenziale per i duelli diretti.
-
-### 3. Distacco Formula 1 dal Leader (`F1`)
-- **Chiavi Strumenti**: `gapLeaderF1` (Manche) / `overallGapLeaderF1` (Generale)
-- **Gruppo Strumenti**: *Heat Data → Gaps & Intervals* / *Overall Race Data → Overall Gaps & Intervals*
-- **Etichette Predefinite**: `HEAT GAP LEADER LAP`, `OVERALL GAP LEADER LAP` o `GAP LEADER`
-- **Modello di Misurazione**: Misurazione cronometrica fisica al passaggio sulla linea del traguardo.
-- **Visualizzazione**:
-  - **Nello stesso giro**: `+X.XXX` secondi di differenza temporale all'attraversamento della linea.
-  - **Piloti doppiati**: Sostituisce il tempo con `+1 Giro` o `+N Giri` (`RD_LAP_DOWN` / `RD_LAPS_DOWN`).
-  - **Leader**: Mostra `--`.
-- **Scopo**: Emula la grafica televisiva della Formula 1, mostrando chiaramente i giri di distacco per le auto doppiate anziché cifre temporali sproporzionate.
-
-### 4. Distacco Formula 1 dal Pilota che Precede (`F1`)
-- **Chiavi Strumenti**: `gapPositionF1` (Manche) / `overallGapPositionF1` (Generale)
-- **Gruppo Strumenti**: *Heat Data → Gaps & Intervals* / *Overall Race Data → Overall Gaps & Intervals*
-- **Etichette Predefinite**: `HEAT GAP POSITION LAP`, `OVERALL GAP POSITION LAP` o `GAP POSITION`
-- **Modello di Misurazione**: Misurazione cronometrica fisica al passaggio sulla linea del traguardo.
-- **Visualizzazione**:
-  - **Nello stesso giro**: Formattato come `+X.XXX` secondi dal concorrente precedente.
-  - **Doppiato dall'auto precedente**: Mostra `+1 Giro` o `+N Giri`.
-  - **Leader**: Mostra `--`.
-- **Scopo**: Fornisce un'esperienza autentica nelle sfide ravvicinate, indicando subito i giri persi nei confronti dell'auto precedente.
+### Modalità di Calcolo
+1. **Sempre tempo (`always_time`)**:
+   - Proiezione matematica continua del passo in secondi.
+   - Formattato come `+X.XXX` con decimali di tempo configurabili (da 1 a 3 cifre decimali).
+2. **Giri e tempo (`laps_and_time`)**:
+   - Visualizzazione stile trasmissione Formula 1.
+   - Mostra secondi (`+X.XXX`) se sullo stesso giro.
+   - Mostra giri di ritardo (`+1 Giro`, `+N Giri`) in caso di doppiaggio.
+3. **Sempre giri (`always_laps`)**:
+   - Distacco esatto in giri calcolato ogni volta che un pilota taglia il traguardo per completare un giro.
+   - Include l'avanzamento parziale del pilota obiettivo in quell'esatto momento.
+   - Formattato con decimali di giro configurabili (da 0 a 3 cifre decimali).
 
 ---
 
 ## Formule di Calcolo Dettagliate
 
-Tutti i calcoli matematici sono implementati in `com.antigravity.race.GapCalculator` sul server Java.
+Tutti i calcoli vengono eseguiti in `com.antigravity.race.GapCalculator` sul server Java.
 
-Sia `leadParticipant` il pilota che precede e `curParticipant` il pilota inseguitore.
+Sia `leadParticipant` il pilota che precede (leader o posizione $N-1$) e `curParticipant` il pilota inseguitore.
 
-### Matematica dei Distacchi Standard
+### 1. Formula: Sempre Tempo (`always_time`)
 
-Vengono gestiti tre scenari di giri:
+I distacchi temporali valutano tre scenari:
 
-#### Scenario A: Stesso Numero di Giri
+#### Scenario A: Stesso Numero di Giri Completati
 $$\text{Gap} = \text{TotalTime}_{\text{cur}} - \text{TotalTime}_{\text{lead}}$$
 
-#### Scenario B: Nessun Giro Completo
-Se l'inseguitore non ha ancora completato un giro valido (`hasNoFullLaps()`):
+#### Scenario B: Nessun Giro Completato
 $$\text{Gap} = \text{TotalTime}_{\text{lead}}$$
 
-#### Scenario C: Diverso Numero di Giri
+#### Scenario C: Numero Differente di Giri
 $$\text{LapDiff} = \text{AdjustedLaps}_{\text{lead}} - \text{AdjustedLaps}_{\text{cur}}$$
 $$\text{AvgLapTime}_{\text{cur}} = \text{AverageLapTime}(\text{curParticipant})$$
 
-La formula di proiezione varia a seconda del **Metodo di Fine Gara (Finish Method)**:
-
-1. **Gare a Tempo (Timed Finish)**:
+La formula di proiezione si adatta al **Metodo di Fine Gara**:
+1. **Gare a Tempo**:
    $$\text{Gap} = \text{AvgLapTime}_{\text{cur}} \times \text{LapDiff}$$
-
-2. **Gare a Giri (Lap Finish)**:
+2. **Gare a Giri**:
    $$\text{TimeDiff} = \text{TotalTime}_{\text{cur}} - \text{TotalTime}_{\text{lead}}$$
    $$\text{ProjectedGap} = \text{TimeDiff} + (\text{AvgLapTime}_{\text{cur}} \times \text{LapDiff})$$
 
-   > [!NOTE]
-   > Qualora $\text{ProjectedGap}$ risultasse negativo a causa di anomalie di cronometraggio, il sistema impiega $\text{AvgLapTime}_{\text{cur}} \times \text{LapDiff}$.
-
 ---
 
-### Matematica dei Distacchi Formula 1
+### 2. Formula: Formula 1 (`laps_and_time`)
 
-#### 1. Giri di Distacco (Laps Down)
+#### 1. Verifica Doppiaggio
 $$\text{LapsDown} = (\text{PhysicalLaps}_{\text{lead}} - \text{PhysicalLaps}_{\text{cur}}) - 1$$
-
-- Se $\text{LapsDown} > 0$: L'inseguitore è doppiato. Il distacco temporale è impostato su `0.0` e l'interfaccia mostra `+X Giri`.
-- Se $\text{LapsDown} \le 0$: L'inseguitore si trova nel giro del leader ($\text{LapsDown} = 0$).
+- Se $\text{LapsDown} > 0$: Il pilota è doppiato (`+X Giri`).
+- Se $\text{LapsDown} \le 0$: Il pilota è nel giro del leader.
 
 #### 2. Distacco nel Giro del Leader
-- **Stesso Numero di Giri Fisici Completati**:
+- **Stesso numero di giri completati**:
   $$\text{TimeGap} = \text{TotalTime}_{\text{cur}} - \text{TotalTime}_{\text{lead}}$$
-- **Il Leader ha Completato un Giro in Più**: Il distacco viene misurato al momento in cui il leader ha completato lo stesso giro:
+- **Il leader ha completato un giro in più**:
   $$\text{TimeGap} = \text{TotalTime}_{\text{cur}} - \text{leadParticipant.getTimeAtLap}(\text{PhysicalLaps}_{\text{cur}})$$
 
-> [!TIP]
-> Se il distacco temporale calcolato risultasse negativo, viene forzato a `0.0`.
+---
+
+### 3. Formula: Sempre Giri (`always_laps`)
+
+Misura il distacco esatto in giri al completamento di ogni giro:
+
+#### 1. Attivazione al Completamento del Giro
+Quando un pilota taglia il traguardo, il server registra i suoi giri e individua il pilota di riferimento.
+
+#### 2. Calcolo del Giro Parziale
+Per garantire un confronto equo, viene calcolato l'avanzamento parziale del pilota di riferimento in base al tempo trascorso dal suo ultimo giro:
+$$\text{TimeSinceLastLap}_{\text{target}} = \text{CurrentElapsedTime} - \text{TimeOfLastLap}_{\text{target}}$$
+$$\text{PartialLap}_{\text{target}} = \min\left(0.99, \max\left(0.0, \frac{\text{TimeSinceLastLap}_{\text{target}}}{\text{MedianLapTime}_{\text{target}}}\right)\right)$$
+
+> [!NOTE]
+> Se il pilota di riferimento non ha ancora un tempo mediano valido ($\le 0$) o $\text{TimeSinceLastLap} \le 0$, il giro parziale è $0.0$. Il valore è limitato a $0.99$ per evitare incrementi anticipati prima dell'effettivo passaggio sulla linea.
+
+#### 3. Distacco Effettivo in Giri
+$$\text{EffectiveLaps}_{\text{target}} = \text{AdjustedLaps}_{\text{target}} + \text{PartialLap}_{\text{target}}$$
+$$\text{GapLaps} = \text{EffectiveLaps}_{\text{target}} - \text{AdjustedLaps}_{\text{competitor}}$$
+
+Il pilota mantiene questo valore calcolato fino al completamento del proprio giro successivo.
 
 ---
 
-## Confronto: Distacchi Standard vs. Distacchi Formula 1
+## Confronto delle Modalità di Calcolo
 
-| Caratteristica | Distacchi Standard (`gapLeader`, `gapPosition`) | Distacchi Formula 1 (`gapLeaderF1`, `gapPositionF1`) |
-| :--- | :--- | :--- |
-| **Approccio di Calcolo** | Proiezione statistica continua del passo | Confronto temporale esatto al traguardo |
-| **Auto Doppiate** | Secondi stimati (es. `+14.820`) | Testo giri persi (es. `+1 Giro`, `+2 Giri`) |
-| **Nello Stesso Giro** | Differenza di tempo in secondi (`+1.450`) | Distacco reale al traguardo (`+1.450`) |
-| **Fine Gara** | Distingue tra gare a tempo e a giri | Basato sul passaggio sulla linea del traguardo |
-| **Utilizzo Ottimale** | Controllo continuo del ritmo nello slot racing | Grafiche televisive, schermi per spettatori |
+| Caratteristica | Sempre tempo (`always_time`) | Giri e tempo (`laps_and_time`) | Sempre giri (`always_laps`) |
+| :--- | :--- | :--- | :--- |
+| **Approccio** | Proiezione matematica continua del passo | Confronti esatti al passaggio sulla linea | Distacco in giri con avanzamento parziale |
+| **Auto Doppiate** | Secondi stimati (es. `+14.820`) | Testo giri persi (es. `+1 Giro`) | Delta decimale in giri (es. `+2.45`) |
+| **Nel Giro del Leader** | Differenza in secondi (`+1.450`) | Distacco esatto sul traguardo (`+1.450`) | Delta decimale in giri (es. `+0.28`) |
+| **Base Decimale** | Decimali di tempo (da 1 a 3) | Decimali di tempo (da 1 a 3) | Decimali di giri (da 0 a 3) |
+| **Momento Aggiornamento**| Aggiornamenti continui | Passaggio sul traguardo | Passaggio personale a completamento giro |
+| **Applicazione Ideale** | Pacing slot car, prove a tempo | Tabelloni TV in stile Formula 1 | Gare di durata a giri |
 
 ---
 
-## Utilizzo dei Widget nell'Editor UI
+## Utilizzo dei Widget Distacco nell'Editor dell'Interfaccia
 
 ### 1. In Griglie e Classifiche
-Nell'Editor UI, selezionare il widget Grid e accedere alla scheda **Colonne**. Nei sottogruppi **Gaps & Intervals** o **Overall Gaps & Intervals**, attivare le colonne desiderate e impostare i decimali.
+Nell'Editor dell'Interfaccia, selezionare il widget Griglia e aprire la scheda **Colonne**. Sotto **Gaps e Intervalli**, attivare **Distacco Manche** (`gap`) o **Distacco Generale** (`overallGap`):
+- Selezionare la colonna per aprire l'**Ispettore Colonne**.
+- In **Configurazione distacco**, selezionare l'**Obiettivo** (*Leader* o *Posizione precedente*) e la **Modalità di calcolo** (*Sempre tempo*, *Giri e tempo* o *Sempre giri*).
+- È possibile aggiungere contemporaneamente alla stessa griglia più colonne distacco con obiettivi o modalità diverse.
 
 ### 2. Schede Corsia Autonome
-Trascinare il widget distacco direttamente sul canvas e collegarlo a una **Corsia Specifica**, una **Posizione di Manche** o alla **Classifica Generale**.
+Trascinare i widget distacco direttamente dalla barra degli strumenti sulla tela e configurare obiettivo e modalità nell'ispettore.
 
-### 3. Inset su Altre Schede
-Integrare il distacco come badge secondario all'interno di un'altra scheda corsia tramite le 8 ancore disponibili nella sezione **Card Insets**.
+### 3. Riquadri Interni (Insets)
+I distacchi possono essere incorporati come badge secondari nelle schede corsia assegnando `gap` o `overallGap` a una delle 8 posizioni di ancoraggio.
 
 ---
 
-## Integrazione con Sintesi Vocale (TTS), Audio ed Export
+## Integrazione con Sintesi Vocale (TTS), Audio ed Esportazione
 
-- **Sintesi Vocale (TTS)**:
-  - `{driver.gapLeader}`: Distacco dal leader pronunciato in secondi.
-  - `{driver.gapPosition}`: Distacco dal pilota precedente pronunciato in secondi.
-- **Widget HTML/JS Personalizzati**: `driver.gap_leader` e `driver.gap_position`.
-- **Modelli Excel (XLS)**:
-  - `${driver.gapLeader}` e `${driver.gapPosition}` (Classifica generale).
-  - `${heatDriver.gapLeader}` e `${heatDriver.gapPosition}` (Risultati di manche).
+- **Sintesi Vocale (TTS)**: `{driver.gapLeader}` e `{driver.gapPosition}`.
+- **Widget personalizzati HTML/JS**: `driver.gap_leader` e `driver.gap_position`.
+- **Esportazioni Excel**: `${driver.gapLeader}` e `${driver.gapPosition}`.

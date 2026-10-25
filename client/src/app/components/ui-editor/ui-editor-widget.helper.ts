@@ -7,6 +7,7 @@ import {
   LaneReplicationHelper,
   LaneReplicationOptions,
 } from "@app/components/raceday/utils/lane-replication.helper";
+import { LaneViewMigrationHelper } from "@app/components/raceday/utils/lane-view-migration.helper";
 import { CustomUI } from "@app/models/custom-ui";
 import { LayoutConfig, Settings } from "@app/models/settings";
 
@@ -201,20 +202,27 @@ export function resolveActiveLayout(
       targetUi.entity_id === "default_ui_layout_rc_ai" &&
       editingSettings?.racedayLayout
     ) {
+      LaneViewMigrationHelper.migrateGapWidgets(editingSettings.racedayLayout);
       return editingSettings.racedayLayout;
     }
     if (
       targetUi.entity_id === "practice_ui_layout_rc_ai" &&
       editingSettings?.practiceRacedayLayout
     ) {
+      LaneViewMigrationHelper.migrateGapWidgets(
+        editingSettings.practiceRacedayLayout,
+      );
       return editingSettings.practiceRacedayLayout;
     }
     if (targetUi.layoutJson && targetUi.layoutJson !== "[]") {
       if (parsedLayoutsCache && parsedLayoutsCache.has(targetUi.entity_id)) {
-        return parsedLayoutsCache.get(targetUi.entity_id);
+        const cached = parsedLayoutsCache.get(targetUi.entity_id);
+        LaneViewMigrationHelper.migrateGapWidgets(cached);
+        return cached;
       }
       try {
         const parsed = JSON.parse(targetUi.layoutJson);
+        LaneViewMigrationHelper.migrateGapWidgets(parsed);
         if (parsedLayoutsCache) {
           parsedLayoutsCache.set(targetUi.entity_id, parsed);
         }
@@ -224,10 +232,11 @@ export function resolveActiveLayout(
       }
     }
   }
-  return (
+  const fallback =
     editingSettings?.racedayLayout ||
-    JSON.parse(JSON.stringify(Settings.DEFAULT_LAYOUT))
-  );
+    JSON.parse(JSON.stringify(Settings.DEFAULT_LAYOUT));
+  LaneViewMigrationHelper.migrateGapWidgets(fallback);
+  return fallback;
 }
 
 export function updateLayoutOnModel(

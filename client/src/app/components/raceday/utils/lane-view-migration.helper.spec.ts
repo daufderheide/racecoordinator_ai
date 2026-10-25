@@ -618,4 +618,152 @@ describe("LaneViewMigrationHelper", () => {
       expect(timer?.height).toBe(111);
     });
   });
+
+  describe("migrateGapWidgets", () => {
+    it("should return false for invalid layout", () => {
+      expect(LaneViewMigrationHelper.migrateGapWidgets(null)).toBeFalse();
+      expect(LaneViewMigrationHelper.migrateGapWidgets(undefined)).toBeFalse();
+      expect(LaneViewMigrationHelper.migrateGapWidgets({} as any)).toBeFalse();
+    });
+
+    it("should migrate legacy gap columns and insets with matching targets and modes", () => {
+      const layout: LayoutConfig = {
+        widgets: [
+          {
+            id: "gap-col",
+            widgetType: "lane-column",
+            x: 0,
+            y: 0,
+            width: 100,
+            height: 50,
+            zIndex: 100,
+            customSettings: {
+              columnKey: "gapLeaderF1",
+              insets: {
+                "top-right": "overallGapPosition",
+                "bottom-left": "gapPosition",
+              },
+            },
+          },
+        ],
+      };
+      const migrated = LaneViewMigrationHelper.migrateGapWidgets(layout);
+      expect(migrated).toBeTrue();
+
+      const w = layout.widgets[0].customSettings as any;
+      expect(w.columnKey).toBe("gap");
+      expect(w.gapTarget).toBe("leader");
+      expect(w.gapMode).toBe("laps_and_time");
+
+      expect(w.insets["top-right"]).toBe("overallGap");
+      expect(w.insetsConfig["top-right"].columnKey).toBe("overallGap");
+      expect(w.insetsConfig["top-right"].gapTarget).toBe("position");
+      expect(w.insetsConfig["top-right"].gapMode).toBe("always_time");
+
+      expect(w.insets["bottom-left"]).toBe("gap");
+      expect(w.insetsConfig["bottom-left"].columnKey).toBe("gap");
+      expect(w.insetsConfig["bottom-left"].gapTarget).toBe("position");
+      expect(w.insetsConfig["bottom-left"].gapMode).toBe("always_time");
+    });
+
+    it("should not modify already migrated gap widgets", () => {
+      const layout: LayoutConfig = {
+        widgets: [
+          {
+            id: "gap-col",
+            widgetType: "lane-column",
+            x: 0,
+            y: 0,
+            width: 100,
+            height: 50,
+            zIndex: 100,
+            customSettings: {
+              columnKey: "gap",
+              gapTarget: "position",
+              gapMode: "always_laps",
+            },
+          },
+        ],
+      };
+      const migrated = LaneViewMigrationHelper.migrateGapWidgets(layout);
+      expect(migrated).toBeFalse();
+      const w = layout.widgets[0].customSettings as any;
+      expect(w.columnKey).toBe("gap");
+      expect(w.gapTarget).toBe("position");
+      expect(w.gapMode).toBe("always_laps");
+    });
+  });
+
+  describe("migrateColumnList", () => {
+    it("should return false for null or undefined or empty list", () => {
+      expect(LaneViewMigrationHelper.migrateColumnList(undefined)).toBeFalse();
+      expect(LaneViewMigrationHelper.migrateColumnList([] as any)).toBeFalse();
+    });
+
+    it("should migrate legacy gap keys in array", () => {
+      const cols = [
+        "lapCount",
+        "gapLeader",
+        "gapPositionF1",
+        "overallGapPosition",
+      ];
+      const migrated = LaneViewMigrationHelper.migrateColumnList(cols);
+      expect(migrated).toBeTrue();
+      expect(cols).toEqual(["lapCount", "gap", "gap", "overallGap"]);
+    });
+
+    it("should not modify already migrated list", () => {
+      const cols = ["lapCount", "gap", "overallGap"];
+      const migrated = LaneViewMigrationHelper.migrateColumnList(cols);
+      expect(migrated).toBeFalse();
+      expect(cols).toEqual(["lapCount", "gap", "overallGap"]);
+    });
+  });
+
+  describe("migrateColumnWidths", () => {
+    it("should return false for null or empty object", () => {
+      expect(
+        LaneViewMigrationHelper.migrateColumnWidths(undefined),
+      ).toBeFalse();
+      expect(LaneViewMigrationHelper.migrateColumnWidths({})).toBeFalse();
+    });
+
+    it("should rename legacy gap keys to unified keys", () => {
+      const widths: Record<string, number> = {
+        lapCount: 200,
+        gapLeader: 310,
+        overallGapPosition: 320,
+      };
+      const migrated = LaneViewMigrationHelper.migrateColumnWidths(widths);
+      expect(migrated).toBeTrue();
+      expect(widths["gapLeader"]).toBeUndefined();
+      expect(widths["gap"]).toBe(310);
+      expect(widths["overallGap"]).toBe(320);
+      expect(widths["lapCount"]).toBe(200);
+    });
+  });
+
+  describe("migrateColumnLayouts", () => {
+    it("should return false for null or empty layouts", () => {
+      expect(
+        LaneViewMigrationHelper.migrateColumnLayouts(undefined),
+      ).toBeFalse();
+      expect(LaneViewMigrationHelper.migrateColumnLayouts({})).toBeFalse();
+    });
+
+    it("should migrate keys and anchor values", () => {
+      const layouts: Record<string, Record<string, string>> = {
+        gapLeader: {
+          "center-center": "gapLeader",
+          "bottom-right": "gapPosition",
+        },
+      };
+      const migrated = LaneViewMigrationHelper.migrateColumnLayouts(layouts);
+      expect(migrated).toBeTrue();
+      expect(layouts["gapLeader"]).toBeUndefined();
+      expect(layouts["gap"]).toBeDefined();
+      expect(layouts["gap"]["center-center"]).toBe("gap");
+      expect(layouts["gap"]["bottom-right"]).toBe("gap");
+    });
+  });
 });

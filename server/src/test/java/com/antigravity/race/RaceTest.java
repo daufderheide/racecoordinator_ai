@@ -15,10 +15,12 @@ import com.antigravity.models.Race;
 import com.antigravity.models.Team;
 import com.antigravity.models.Theme;
 import com.antigravity.models.Track;
+import com.antigravity.proto.HeatPositionUpdate;
 import com.antigravity.proto.RaceData;
 import com.antigravity.proto.RaceFlag;
 import com.antigravity.proto.RaceState;
 import com.antigravity.proto.RaceSubscriptionRequest;
+import com.antigravity.proto.StandingsUpdate;
 import com.antigravity.protocols.CarData;
 import com.antigravity.protocols.CarLocation;
 import com.antigravity.protocols.PartialTime;
@@ -2569,6 +2571,83 @@ public class RaceTest {
       assertEquals("d1", laps.get(0).getDriverId());
       assertEquals("d2", laps.get(1).getDriverId());
     }
+
+    @Test
+    public void testResetCurrentHeatBroadcastsResetGapsAndStandingsUpdate() {
+      Racing racing = new Racing();
+      race.changeState(racing);
+
+      // First triggers record reaction times
+      racing.onLap(0, 0.5, 1, false);
+      racing.onLap(1, 0.5, 1, false);
+
+      // Second triggers record completed laps for lane 0 and lane 1 so gaps are non-zero
+      racing.onLap(0, 10.0, 1, false);
+      racing.onLap(1, 12.0, 1, false);
+
+      DriverHeatData dhd0 = race.getCurrentHeat().getDrivers().get(0);
+      DriverHeatData dhd1 = race.getCurrentHeat().getDrivers().get(1);
+      assertEquals(1, dhd0.getLapCount());
+      assertEquals(1, dhd1.getLapCount());
+      assertTrue("Driver 1 should have non-zero gap to leader", dhd1.getGapLeader() > 0.0);
+
+      // Set up a mock subscription to capture broadcasted RaceData
+      Session mockSession = mock(Session.class);
+      when(mockSession.isOpen()).thenReturn(true);
+      RemoteEndpoint mockRemote = mock(RemoteEndpoint.class);
+      when(mockSession.getRemote()).thenReturn(mockRemote);
+      when(mockRemote.sendBytesByFuture(any())).thenReturn(null);
+      WsContext wsContext = new WsContext("resetTestSession", mockSession) {};
+
+      ClientSubscriptionManager.getInstance().setRace(race);
+      ClientSubscriptionManager.getInstance().addSession(wsContext);
+      ClientSubscriptionManager.getInstance()
+          .handleRaceSubscription(
+              wsContext, RaceSubscriptionRequest.newBuilder().setSubscribe(true).build());
+
+      // Reset the heat
+      race.resetCurrentHeat();
+      ClientSubscriptionManager.getInstance().flushBroadcasts();
+
+      // Verify all drivers in currentHeat have their gaps, laps, and auto segments reset to 0
+      assertEquals(0, dhd0.getLapCount());
+      assertEquals(0, dhd1.getLapCount());
+      assertEquals(0.0, dhd0.getGapLeader(), 0.001);
+      assertEquals(0.0, dhd1.getGapLeader(), 0.001);
+      assertEquals(0.0, dhd0.getGapLeaderLaps(), 0.001);
+      assertEquals(0.0, dhd1.getGapLeaderLaps(), 0.001);
+      assertEquals(0.0, dhd0.getAutoCalculatedLaps(), 0.001);
+      assertEquals(0.0, dhd1.getAutoCalculatedLaps(), 0.001);
+
+      // Capture broadcasted messages and verify StandingsUpdate
+      ArgumentCaptor<java.nio.ByteBuffer> captor =
+          ArgumentCaptor.forClass(java.nio.ByteBuffer.class);
+      verify(mockRemote, atLeastOnce()).sendBytesByFuture(captor.capture());
+
+      boolean foundResetStandingsUpdate = false;
+      for (java.nio.ByteBuffer buf : captor.getAllValues()) {
+        try {
+          RaceData data = RaceData.parseFrom(buf);
+          if (data.hasStandingsUpdate()) {
+            StandingsUpdate su = data.getStandingsUpdate();
+            assertEquals(2, su.getUpdatesCount());
+            for (HeatPositionUpdate hpu : su.getUpdatesList()) {
+              assertEquals(0.0, hpu.getGapLeader(), 0.001);
+              assertEquals(0.0, hpu.getGapLeaderLaps(), 0.001);
+              assertEquals(0.0, hpu.getGapPosition(), 0.001);
+            }
+            foundResetStandingsUpdate = true;
+          }
+        } catch (Exception e) {
+          // ignore non-RaceData
+        }
+      }
+      assertTrue(
+          "Expected broadcasted RaceData to contain reset StandingsUpdate",
+          foundResetStandingsUpdate);
+
+      ClientSubscriptionManager.getInstance().removeSession(wsContext);
+    }
   }
 
   // =========================================================================
@@ -4594,55 +4673,63 @@ public class RaceTest {
       when(mockSession.getRemote()).thenReturn(mockRemote);
       WsContext wsContext = new WsContext("fuel_test_session", mockSession) {};
       ClientSubscriptionManager.getInstance().addSession(wsContext);
-      ClientSubscriptionManager.getInstance()
-          .handleRaceSubscription(
-              wsContext, RaceSubscriptionRequest.newBuilder().setSubscribe(true).build());
+      try {
+        ClientSubscriptionManager.getInstance()
+            .handleRaceSubscription(
+                wsContext, RaceSubscriptionRequest.newBuilder().setSubscribe(true).build());
+        ClientSubscriptionManager.getInstance().flushBroadcasts();
 
-      // Clear earlier messages
-      ArgumentCaptor<ByteBuffer> captor = ArgumentCaptor.forClass(ByteBuffer.class);
-      verify(mockRemote, atLeastOnce()).sendBytesByFuture(captor.capture());
-      reset(mockRemote);
-      when(mockRemote.sendBytesByFuture(any())).thenReturn(null);
+        // Clear earlier messages
+        ArgumentCaptor<ByteBuffer> initialCaptor = ArgumentCaptor.forClass(ByteBuffer.class);
+        verify(mockRemote, atLeastOnce()).sendBytesByFuture(initialCaptor.capture());
+        reset(mockRemote);
+        when(mockRemote.sendBytesByFuture(any())).thenReturn(null);
 
-      // Call prepareHeat()
-      race.prepareHeat();
-      ClientSubscriptionManager.getInstance().flushBroadcasts();
+        // Call prepareHeat()
+        race.prepareHeat();
+        ClientSubscriptionManager.getInstance().flushBroadcasts();
 
-      // Verify CarData messages were broadcast
-      verify(mockRemote, atLeastOnce()).sendBytesByFuture(captor.capture());
-      List<com.antigravity.proto.CarData> carDataList = new ArrayList<>(); // fqn-collision
-      for (ByteBuffer buf : captor.getAllValues()) {
-        RaceData data = RaceData.parseFrom(buf);
-        if (data.hasCarData()) {
-          carDataList.add(data.getCarData());
+        // Verify CarData messages were broadcast
+        ArgumentCaptor<ByteBuffer> prepareCaptor = ArgumentCaptor.forClass(ByteBuffer.class);
+        verify(mockRemote, atLeastOnce()).sendBytesByFuture(prepareCaptor.capture());
+        List<com.antigravity.proto.CarData> carDataList = new ArrayList<>(); // fqn-collision
+        for (ByteBuffer buf : prepareCaptor.getAllValues()) {
+          if (buf != null) {
+            RaceData data = RaceData.parseFrom(buf);
+            if (data.hasCarData()) {
+              carDataList.add(data.getCarData());
+            }
+          }
         }
-      }
 
-      assertFalse("Expected CarData messages to be broadcast", carDataList.isEmpty());
-      assertEquals(2, carDataList.size());
-      assertEquals(0, carDataList.get(0).getLane());
-      assertEquals(80.0, carDataList.get(0).getFuelLevel(), 0.001);
-      assertEquals(1, carDataList.get(1).getLane());
-      assertEquals(80.0, carDataList.get(1).getFuelLevel(), 0.001);
+        assertFalse("Expected CarData messages to be broadcast", carDataList.isEmpty());
+        assertEquals(2, carDataList.size());
+        assertEquals(0, carDataList.get(0).getLane());
+        assertEquals(80.0, carDataList.get(0).getFuelLevel(), 0.001);
+        assertEquals(1, carDataList.get(1).getLane());
+        assertEquals(80.0, carDataList.get(1).getFuelLevel(), 0.001);
 
-      // Verify resetCurrentHeat also broadcasts CarData
-      reset(mockRemote);
-      when(mockRemote.sendBytesByFuture(any())).thenReturn(null);
-      race.resetCurrentHeat();
-      ClientSubscriptionManager.getInstance().flushBroadcasts();
-      ArgumentCaptor<ByteBuffer> resetCaptor = ArgumentCaptor.forClass(ByteBuffer.class);
-      verify(mockRemote, atLeastOnce()).sendBytesByFuture(resetCaptor.capture());
-      carDataList.clear();
-      for (ByteBuffer buf : resetCaptor.getAllValues()) {
-        RaceData data = RaceData.parseFrom(buf);
-        if (data.hasCarData()) {
-          carDataList.add(data.getCarData());
+        // Verify resetCurrentHeat also broadcasts CarData
+        reset(mockRemote);
+        when(mockRemote.sendBytesByFuture(any())).thenReturn(null);
+        race.resetCurrentHeat();
+        ClientSubscriptionManager.getInstance().flushBroadcasts();
+        ArgumentCaptor<ByteBuffer> resetCaptor = ArgumentCaptor.forClass(ByteBuffer.class);
+        verify(mockRemote, atLeastOnce()).sendBytesByFuture(resetCaptor.capture());
+        carDataList.clear();
+        for (ByteBuffer buf : resetCaptor.getAllValues()) {
+          if (buf != null) {
+            RaceData data = RaceData.parseFrom(buf);
+            if (data.hasCarData()) {
+              carDataList.add(data.getCarData());
+            }
+          }
         }
+        assertEquals(2, carDataList.size());
+        assertEquals(80.0, carDataList.get(0).getFuelLevel(), 0.001);
+      } finally {
+        ClientSubscriptionManager.getInstance().removeSession(wsContext);
       }
-      assertEquals(2, carDataList.size());
-      assertEquals(80.0, carDataList.get(0).getFuelLevel(), 0.001);
-
-      ClientSubscriptionManager.getInstance().removeSession(wsContext);
     }
 
     @Test

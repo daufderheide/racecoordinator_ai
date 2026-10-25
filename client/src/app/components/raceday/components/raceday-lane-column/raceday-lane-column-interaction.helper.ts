@@ -157,6 +157,9 @@ export function formatLaneColumnInsetValue(
       : undefined;
 
   const insetSettings: any = {
+    gapTarget: anchorCfg?.gapTarget,
+    gapMode: anchorCfg?.gapMode,
+    insetsConfig: settings.insetsConfig,
     insetTimeDecimalPlaces: insetTimeDec,
     insetLapDecimalPlaces: insetLapDec,
     timeDecimalPlaces: insetTimeDec,
@@ -177,7 +180,7 @@ export function formatLaneColumnInsetValue(
     const colDef = parent.columns?.find((c: any) => c.propertyName === key);
     return parent.formatValue(
       key,
-      RacedayFormatUtils.getPropertyValue(hd, key),
+      RacedayFormatUtils.getPropertyValue(hd, key, insetSettings, anchor),
       hd,
       colDef,
       anchor,
@@ -198,7 +201,12 @@ export function formatLaneColumnInsetValue(
     if (teamName) return teamName;
   }
 
-  const raw = RacedayFormatUtils.getPropertyValue(hd, key);
+  const raw = RacedayFormatUtils.getPropertyValue(
+    hd,
+    key,
+    insetSettings,
+    anchor,
+  );
   return formatAdjustedLapValue(raw, hd, key);
 }
 
@@ -875,7 +883,12 @@ export function resolveLaneColumnFormattedValue(
   if (parent?.formatValue) {
     return parent.formatValue(
       columnKey,
-      RacedayFormatUtils.getPropertyValue(hd, columnKey),
+      RacedayFormatUtils.getPropertyValue(
+        hd,
+        columnKey,
+        settings,
+        "center-center",
+      ),
       hd,
       colDef,
       "center-center",
@@ -896,7 +909,12 @@ export function resolveLaneColumnFormattedValue(
     if (teamName) return teamName;
   }
 
-  const raw = RacedayFormatUtils.getPropertyValue(hd, columnKey);
+  const raw = RacedayFormatUtils.getPropertyValue(
+    hd,
+    columnKey,
+    settings,
+    "center-center",
+  );
   return formatAdjustedLapValue(raw, hd, columnKey);
 }
 

@@ -28,6 +28,9 @@ public class RaceParticipant extends ServerToClientObject
   private double gapPosition;
   private double gapLeaderF1;
   private double gapPositionF1;
+  private double gapLeaderLaps;
+  private double gapPositionLaps;
+  private double effectiveTotalLaps;
   private int lapsDownLeader;
   private int lapsDownPosition;
   private List<Double> allScoringLaps;
@@ -395,6 +398,39 @@ public class RaceParticipant extends ServerToClientObject
 
   public int getLapsDownPosition() {
     return lapsDownPosition;
+  }
+
+  public double getEffectiveTotalLaps() {
+    return effectiveTotalLaps;
+  }
+
+  public void setEffectiveTotalLaps(double effectiveTotalLaps) {
+    this.effectiveTotalLaps = effectiveTotalLaps;
+  }
+
+  @Override
+  public double getEffectiveLapCount() {
+    return effectiveTotalLaps > 0 ? effectiveTotalLaps : getTotalLaps();
+  }
+
+  @Override
+  public double getGapLeaderLaps() {
+    return gapLeaderLaps;
+  }
+
+  @Override
+  public void setGapLeaderLaps(double gapLeaderLaps) {
+    this.gapLeaderLaps = gapLeaderLaps;
+  }
+
+  @Override
+  public double getGapPositionLaps() {
+    return gapPositionLaps;
+  }
+
+  @Override
+  public void setGapPositionLaps(double gapPositionLaps) {
+    this.gapPositionLaps = gapPositionLaps;
   }
 
   private List<Double> laneLaps = new ArrayList<>();

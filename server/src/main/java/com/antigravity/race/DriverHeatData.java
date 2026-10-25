@@ -94,6 +94,9 @@ public class DriverHeatData extends ServerToClientObject
   private double gapPosition = 0.0;
   private double gapLeaderF1 = 0.0;
   private double gapPositionF1 = 0.0;
+  private double gapLeaderLaps = 0.0;
+  private double gapPositionLaps = 0.0;
+  private double timeSinceLastLap = 0.0;
   private int lapsDownLeader = 0;
   private int lapsDownPosition = 0;
   private ArrayList<Double> segments = new ArrayList<>();
@@ -249,6 +252,13 @@ public class DriverHeatData extends ServerToClientObject
     return (double) getLapCount() - penaltyLaps + userLaps + autoCalculatedLaps;
   }
 
+  public double getScoredLapCount() {
+    if (isFinished) {
+      return getAdjustedLapCount();
+    }
+    return (double) getLapCount() - penaltyLaps + userLaps;
+  }
+
   public List<LapData> getLaps() {
     return laps;
   }
@@ -396,6 +406,9 @@ public class DriverHeatData extends ServerToClientObject
     gapPosition = 0.0;
     gapLeaderF1 = 0.0;
     gapPositionF1 = 0.0;
+    gapLeaderLaps = 0.0;
+    gapPositionLaps = 0.0;
+    timeSinceLastLap = 0.0;
     lapsDownLeader = 0;
     lapsDownPosition = 0;
     falseStarts = 0;
@@ -406,6 +419,12 @@ public class DriverHeatData extends ServerToClientObject
     hasDriftTime = false;
     isFinished = false;
     trackCalls = 0;
+    autoCalculatedLaps = 0.0;
+    lapsLed = 0;
+    carryOverTime = 0.0;
+    isRefueling = false;
+    currentLocation = null;
+    flag = RaceFlag.UNKNOWN_FLAG;
   }
 
   public void resetForFalseStart() {
@@ -501,6 +520,55 @@ public class DriverHeatData extends ServerToClientObject
   @Override
   public void setLapsDownPosition(int lapsDownPosition) {
     this.lapsDownPosition = lapsDownPosition;
+  }
+
+  public double getTimeSinceLastLap() {
+    return timeSinceLastLap;
+  }
+
+  public void setTimeSinceLastLap(double timeSinceLastLap) {
+    this.timeSinceLastLap = timeSinceLastLap;
+  }
+
+  @Override
+  public double getEffectiveLapCount() {
+    double base = getAdjustedLapCount();
+    if (isFinished || autoCalculatedLaps > 0) {
+      return base;
+    }
+    double median = getMedianLapTime();
+    if (median <= 0 || timeSinceLastLap <= 0) {
+      return base;
+    }
+    double partial = timeSinceLastLap / median;
+    if (partial >= 1.0) {
+      partial = 0.99;
+    } else if (partial < 0.0) {
+      partial = 0.0;
+    }
+    return base + partial;
+  }
+
+  @Override
+  public double getGapLeaderLaps() {
+    if (isEmptyParticipant()) return 0.0;
+    return gapLeaderLaps;
+  }
+
+  @Override
+  public void setGapLeaderLaps(double gapLeaderLaps) {
+    this.gapLeaderLaps = gapLeaderLaps;
+  }
+
+  @Override
+  public double getGapPositionLaps() {
+    if (isEmptyParticipant()) return 0.0;
+    return gapPositionLaps;
+  }
+
+  @Override
+  public void setGapPositionLaps(double gapPositionLaps) {
+    this.gapPositionLaps = gapPositionLaps;
   }
 
   public CarLocation getCurrentLocation() {

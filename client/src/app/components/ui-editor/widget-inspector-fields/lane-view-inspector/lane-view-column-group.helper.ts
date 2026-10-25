@@ -77,7 +77,7 @@ export const LANE_VIEW_COLUMN_GROUPS: readonly ColumnGroupDefinition[] = [
   {
     id: "gaps",
     nameKey: "UE_COL_GROUP_GAPS",
-    columnKeys: ["gapLeader", "gapPosition", "gapLeaderF1", "gapPositionF1"],
+    columnKeys: ["gap"],
   },
   {
     id: "overall-standings",
@@ -121,12 +121,7 @@ export const LANE_VIEW_COLUMN_GROUPS: readonly ColumnGroupDefinition[] = [
   {
     id: "overall-gaps",
     nameKey: "UE_COL_GROUP_OVERALL_GAPS",
-    columnKeys: [
-      "overallGapLeader",
-      "overallGapPosition",
-      "overallGapLeaderF1",
-      "overallGapPositionF1",
-    ],
+    columnKeys: ["overallGap"],
   },
   {
     id: "pacing",

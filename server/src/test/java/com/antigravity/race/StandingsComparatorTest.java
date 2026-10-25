@@ -325,4 +325,46 @@ public class StandingsComparatorTest {
         "p1 with lower total time should rank higher", comparator.compare(p1, p2) < 0);
     Assert.assertTrue("p2 should rank lower", comparator.compare(p2, p1) > 0);
   }
+
+  @Test
+  public void testDriverHeatDataAutoCalculatedLapsIgnoredUntilFinished() {
+    com.antigravity.models.Driver dModel1 = new com.antigravity.models.Driver("D1", "Driver 1");
+    com.antigravity.models.Driver dModel2 = new com.antigravity.models.Driver("D2", "Driver 2");
+    DriverHeatData dhd1 = new DriverHeatData(new RaceParticipant(dModel1));
+    DriverHeatData dhd2 = new DriverHeatData(new RaceParticipant(dModel2));
+
+    // Both drivers have completed 10 laps.
+    // dhd1 has a faster best lap (4.0s vs 5.0s).
+    // dhd2 has coasted further during pause (autoCalculatedLaps = 0.8 vs 0.2).
+    for (int i = 0; i < 9; i++) {
+      dhd1.addLap(5.0, false, true);
+      dhd2.addLap(5.0, false, true);
+    }
+    dhd1.addLap(4.0, false, true);
+    dhd2.addLap(5.0, false, true);
+
+    dhd1.setAutoCalculatedLaps(0.2);
+    dhd2.setAutoCalculatedLaps(0.8);
+
+    StandingsComparator<StandingsParticipant> comparator =
+        new StandingsComparator<>(RankingMethod.LAP_COUNT, TiebreakerMethod.FASTEST_LAP_TIME);
+
+    // While unfinished (active heat or pause):
+    // Scored laps for both are 10.0 (pause auto-segments are ignored).
+    // Tiebreaker on fastest lap breaks the tie: dhd1 (4.0s) beats dhd2 (5.0s).
+    Assert.assertFalse(dhd1.isFinished());
+    Assert.assertFalse(dhd2.isFinished());
+    Assert.assertTrue(
+        "dhd1 should rank ahead of dhd2 based on tiebreaker while unfinished",
+        comparator.compare(dhd1, dhd2) < 0);
+
+    // Once finished:
+    // Auto-calculated laps count into the final score: dhd2 has 10.8 laps vs dhd1's 10.2 laps.
+    // dhd2 now ranks ahead on lap count.
+    dhd1.setFinished(true);
+    dhd2.setFinished(true);
+    Assert.assertTrue(
+        "dhd2 should rank ahead of dhd1 on lap count once finished",
+        comparator.compare(dhd2, dhd1) < 0);
+  }
 }

@@ -548,6 +548,64 @@ describe("LaneColumnInspectorComponent", () => {
       expect(component.isTimeColumn).toBeFalse();
     });
 
+    it("should correctly identify gap columns and manage gapTarget and gapMode", () => {
+      mockSettings.columnKey = "gap";
+      expect(component.isGapColumn).toBeTrue();
+      expect(component.isTimeColumn).toBeTrue();
+      expect(component.isLapColumn).toBeFalse();
+
+      component.gapMode = "always_laps";
+      expect(component.isLapColumn).toBeTrue();
+      expect(component.isTimeColumn).toBeFalse();
+
+      component.gapTarget = "position";
+      expect(mockSettings.gapTarget).toBe("position");
+      expect(component.gapTarget).toBe("position");
+
+      mockSettings.columnKey = "overallGap";
+      expect(component.isGapColumn).toBeTrue();
+
+      // Legacy gapLeader key should normalize to gap with leader target and always_time mode
+      mockSettings.columnKey = "gapLeader";
+      delete mockSettings.gapTarget;
+      delete mockSettings.gapMode;
+      expect(component.isGapColumn).toBeTrue();
+      expect(component.gapTarget).toBe("leader");
+      expect(component.gapMode).toBe("always_time");
+      expect(mockSettings.columnKey).toBe("gap");
+
+      // Legacy gapPositionF1 key should normalize to gap with position target and laps_and_time mode
+      mockSettings.columnKey = "gapPositionF1";
+      delete mockSettings.gapTarget;
+      delete mockSettings.gapMode;
+      expect(component.isGapColumn).toBeTrue();
+      expect(component.gapTarget).toBe("position");
+      expect(component.gapMode).toBe("laps_and_time");
+      expect(mockSettings.columnKey).toBe("gap");
+    });
+
+    it("should handle inset gap column configuration including legacy keys", () => {
+      mockSettings.insets = {};
+      expect(component.isInsetGapColumn("top-right")).toBeFalse();
+      mockSettings.insets["top-right"] = "gap";
+      expect(component.isInsetGapColumn("top-right")).toBeTrue();
+
+      component.setInsetGapTarget("top-right", "position");
+      expect(component.getInsetGapTarget("top-right")).toBe("position");
+
+      component.setInsetGapMode("top-right", "always_laps");
+      expect(component.getInsetGapMode("top-right")).toBe("always_laps");
+      expect(component.isInsetLapColumn("top-right")).toBeTrue();
+      expect(component.isInsetTimeColumn("top-right")).toBeFalse();
+
+      // Legacy inset key
+      mockSettings.insets["bottom-right"] = "gapLeader";
+      delete mockSettings.insetsConfig?.["bottom-right"];
+      expect(component.isInsetGapColumn("bottom-right")).toBeTrue();
+      expect(component.getInsetGapTarget("bottom-right")).toBe("leader");
+      expect(component.getInsetGapMode("bottom-right")).toBe("always_time");
+    });
+
     it("should display only time decimals selector with options [0, 3] when column is time data", () => {
       mockSettings.columnKey = "lastLapTime";
       fixture.detectChanges();

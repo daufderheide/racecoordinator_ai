@@ -110,12 +110,22 @@ The **Heats Raced** (`heatsRaced`) widget displays heat participation progress f
 
 #### Gap Widgets (Gaps & Intervals)
 
-Race Coordinator AI supports **4 distinct gap widgets** across both Heat Data and Overall Race Data:
+Race Coordinator AI provides **2 configurable gap widgets** across Heat Data and Overall Race Data:
 
-1. **Gap to Leader (`gapLeader` / `overallGapLeader`)**: Standard continuous projected time gap behind the current race leader (P1).
-2. **Gap to Position Ahead (`gapPosition` / `overallGapPosition`)**: Standard continuous projected time gap behind the car running immediately ahead in the standings.
-3. **Formula 1 Gap to Leader (`gapLeaderF1` / `overallGapLeaderF1`)**: Exact start/finish line time differential behind the leader on the same lap, or lap deficit (`+1 Lap`, `+N Laps`) when lapped.
-4. **Formula 1 Gap to Position Ahead (`gapPositionF1` / `overallGapPositionF1`)**: Exact start/finish line time differential behind the car ahead on the same lap, or lap deficit (`+1 Lap`, `+N Laps`) when lapped.
+1. **Heat Gap (`gap`)**: Evaluates real-time intervals strictly between cars actively competing in the current heat.
+2. **Overall Gap (`overallGap`)**: Evaluates cumulative intervals across all event participants.
+
+Each gap widget can be customized in the Column Inspector with two key configuration options:
+- **Target**:
+  - **Leader**: Interval relative to the current race leader (P1).
+  - **Position Ahead**: Interval relative to the competitor running immediately ahead in the standings (e.g. P3 vs P2).
+- **Calculation Mode**:
+  - **Always Time**: Continuous mathematical pace projection in seconds (`+X.XXX`).
+  - **Laps and Time**: Formula 1 style gap displaying time on the lead lap, or lap count (`+1 Lap`, `+N Laps`) when lapped.
+  - **Always Laps**: Exact lap delta between competitors calculated on lap completion, incorporating partial lap progress of the compared driver.
+
+> [!NOTE]
+> Multiple gap widgets with distinct configurations (e.g. a Leader Gap column and a Position Gap column) can be placed on the same grid or layout simultaneously.
 
 For complete mathematical formulas, finish type adaptations, and timing specifications, see the [Gap Calculations Guide](gap-calculations.md).
 

@@ -710,16 +710,27 @@ public class OverallStandingsTest {
         p1.hasSegments());
     assertEquals(5.0, p1.getTotalLaps(), 0.001);
 
-    // Case 4: Reset user laps, add auto-calculated laps (e.g. temporary pause or end-of-heat)
+    // Case 4: Temporary pause auto-calculated laps during active heat should NOT affect overall
+    // standings
     dhd1.setUserLaps(0.0);
     dhd2.setUserLaps(0.0);
     dhd1.setAutoCalculatedLaps(0.35);
     os.recalculate(drivers, heats);
+    assertFalse(
+        "Expected hasSegments to be false during pause when heat is not finished",
+        p1.hasSegments());
+    assertEquals(4.0, p1.getTotalLaps(), 0.001);
+
+    // Case 5: When heat finishes with auto-calculated laps (e.g. NoneAutoSegments), it counts
+    // towards overall standings
+    dhd1.setFinished(true);
+    os.recalculate(drivers, heats);
     assertTrue(
-        "Expected hasSegments to be true when auto-calculated laps present", p1.hasSegments());
+        "Expected hasSegments to be true when finished heat has auto-calculated laps",
+        p1.hasSegments());
     assertEquals(4.35, p1.getTotalLaps(), 0.001);
 
-    // Case 5: Auto-calculated laps removed (e.g. resuming from pause)
+    // Case 6: Auto-calculated laps removed or 0
     dhd1.setAutoCalculatedLaps(0.0);
     os.recalculate(drivers, heats);
     assertFalse(

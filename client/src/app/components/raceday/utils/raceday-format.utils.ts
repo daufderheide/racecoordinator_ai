@@ -14,7 +14,9 @@ import {
 } from "@app/utils/timer-format.utils";
 
 import { RacedayFlagFormatUtils } from "./raceday-flag-format.utils";
+import { RacedayGapFormatUtils } from "./raceday-gap-format.utils";
 import { RacedayOverallFormatUtils } from "./raceday-overall-format.utils";
+import { RacedayTelemetryFormatUtils } from "./raceday-telemetry-format.utils";
 import { resolveRacedayTimerFormatOptions } from "./raceday-timer-format.utils";
 
 export interface FormatContext {
@@ -149,6 +151,8 @@ export class RacedayFormatUtils {
   static getPropertyValue(
     heatDriver: DriverHeatData,
     propertyPath: string,
+    settings?: any,
+    anchor?: string,
   ): any {
     if (!heatDriver || !propertyPath) return undefined;
     const baseKey = propertyPath.split(".")[0].split("_")[0];
@@ -158,9 +162,28 @@ export class RacedayFormatUtils {
       participant,
       heatDriver,
       baseKey,
+      settings,
+      anchor,
     );
     if (overallVal !== undefined) {
       return overallVal;
+    }
+    if (baseKey === "gap") {
+      const config =
+        anchor && anchor !== "center-center" && settings?.insetsConfig?.[anchor]
+          ? settings.insetsConfig[anchor]
+          : settings;
+      const target = config?.gapTarget || "leader";
+      const mode = config?.gapMode || "always_time";
+      if (target === "position") {
+        if (mode === "always_laps") return heatDriver.gapPositionLaps;
+        if (mode === "laps_and_time") return heatDriver.gapPositionF1;
+        return heatDriver.gapPosition;
+      } else {
+        if (mode === "always_laps") return heatDriver.gapLeaderLaps;
+        if (mode === "laps_and_time") return heatDriver.gapLeaderF1;
+        return heatDriver.gapLeader;
+      }
     }
     const parts = propertyPath.split(".").map((part) => part.split("_")[0]);
     let value: any = heatDriver;
@@ -175,11 +198,15 @@ export class RacedayFormatUtils {
     p: any,
     heatDriver: any,
     baseKey: string,
+    settings?: any,
+    anchor?: string,
   ): any {
     return RacedayOverallFormatUtils.extractOverallPropertyValue(
       p,
       heatDriver,
       baseKey,
+      settings,
+      anchor,
     );
   }
 
@@ -240,6 +267,7 @@ export class RacedayFormatUtils {
         colKey,
         isInset,
         column,
+        anchor,
       );
       if (overallStr !== null) return overallStr;
     }
@@ -250,6 +278,9 @@ export class RacedayFormatUtils {
         propertyName,
         isInset,
         timePlaceholder,
+        lapPlaceholder,
+        ctx,
+        anchor,
       );
       if (emptyStr !== null) return emptyStr;
     }
@@ -267,6 +298,7 @@ export class RacedayFormatUtils {
       lapPlaceholder,
       colKey,
       isInset,
+      anchor,
     );
   }
 
@@ -340,6 +372,9 @@ export class RacedayFormatUtils {
     propertyName: string,
     isInset: boolean,
     timePlaceholder: string,
+    lapPlaceholder?: string,
+    ctx?: FormatContext,
+    anchor?: string,
   ): string | null {
     if (baseKey === "seed") return "";
     if (
@@ -356,6 +391,17 @@ export class RacedayFormatUtils {
       baseKey.startsWith("ghostPacing")
     ) {
       return "--";
+    }
+    if (baseKey === "gap" || baseKey === "overallGap") {
+      const s = ctx?.laneViewWidgetSettings;
+      const config =
+        anchor && anchor !== "center-center" && s?.insetsConfig?.[anchor]
+          ? s.insetsConfig[anchor]
+          : s;
+      if (config?.gapMode === "always_laps") {
+        return lapPlaceholder ?? "--";
+      }
+      return timePlaceholder;
     }
     if (
       baseKey === "gapLeader" ||
@@ -396,6 +442,7 @@ export class RacedayFormatUtils {
     lapPlaceholder: string,
     colKey: string,
     isInset: boolean,
+    anchor?: string,
   ): string {
     if (baseKey === "recordLapTime") {
       return this.formatRecordLapTime(hd, ctx, timeDecimals, timePlaceholder);
@@ -426,7 +473,10 @@ export class RacedayFormatUtils {
         hd,
         ctx,
         timeDecimals,
+        lapDecimals,
         timePlaceholder,
+        lapPlaceholder,
+        anchor,
       );
     }
     if (baseKey === "lapCount" || baseKey === "heatTotalLaps") {
@@ -556,44 +606,22 @@ export class RacedayFormatUtils {
     hd: DriverHeatData,
     ctx: FormatContext,
     timeDecimals: number,
+    lapDecimals: number,
     timePlaceholder: string,
+    lapPlaceholder: string,
+    anchor?: string,
   ): string {
-    const isLeaderF1 = baseKey === "gapLeaderF1";
-    const isPositionF1 = baseKey === "gapPositionF1";
-
-    if (isLeaderF1 || isPositionF1) {
-      const lapsDown = isLeaderF1 ? hd.lapsDownLeader : hd.lapsDownPosition;
-      if (lapsDown === 1) {
-        return ctx
-          .translate("RD_LAP_DOWN")
-          .replace("{{count}}", lapsDown.toString());
-      } else if (lapsDown > 1) {
-        return ctx
-          .translate("RD_LAPS_DOWN")
-          .replace("{{count}}", lapsDown.toString());
-      }
-    }
-
-    if (
-      baseKey === "gapLeader" ||
-      baseKey === "gapPosition" ||
-      isLeaderF1 ||
-      isPositionF1
-    ) {
-      if (value === null || value === undefined || isNaN(Number(value))) {
-        return timePlaceholder;
-      }
-      const num = Number(value);
-      const fixed = Math.abs(num).toFixed(timeDecimals);
-      const isZero = Number(fixed) === 0;
-      if (isZero && !this.hasHeatData(hd)) {
-        return timePlaceholder;
-      }
-      const sign = !isZero && num < 0 ? "-" : "+";
-      return sign + fixed;
-    }
-
-    return timePlaceholder;
+    return RacedayGapFormatUtils.formatHeatGapValue(
+      baseKey,
+      value,
+      hd,
+      ctx,
+      timeDecimals,
+      lapDecimals,
+      timePlaceholder,
+      lapPlaceholder,
+      anchor,
+    );
   }
 
   private static formatLapCountValue(
@@ -674,7 +702,12 @@ export class RacedayFormatUtils {
       return this.formatTeamName(propertyName, hd, column, ctx);
     }
     if (baseKey.startsWith("fuel") || baseKey === "participant.fuelLevel") {
-      return this.formatFuelLevels(baseKey, value, hd, ctx);
+      return RacedayTelemetryFormatUtils.formatFuelLevels(
+        baseKey,
+        value,
+        hd,
+        ctx,
+      );
     }
     if (baseKey === "driver.avatarUrl")
       return this.formatAvatarUrl(value, hd, ctx);
@@ -690,7 +723,7 @@ export class RacedayFormatUtils {
       return RacedayFlagFormatUtils.formatFlagValue(value, hd, column, ctx);
     }
     if (baseKey === "segmentTime") {
-      return this.formatSegmentTime(
+      return RacedayTelemetryFormatUtils.formatSegmentTime(
         propertyName,
         hd,
         column,
@@ -699,7 +732,7 @@ export class RacedayFormatUtils {
       );
     }
     if (baseKey === "mph" || baseKey === "kph" || baseKey === "fph") {
-      return this.formatSpeed(baseKey, hd, ctx);
+      return RacedayTelemetryFormatUtils.formatSpeed(baseKey, hd, ctx);
     }
     if (baseKey.startsWith("imageset") || baseKey === "fuel-gauge-builtin") {
       return ctx.getImageSetUrl(hd, propertyName);
@@ -801,35 +834,6 @@ export class RacedayFormatUtils {
     return hd.participant?.team?.name || (hd.driver as any)?.team?.name || "";
   }
 
-  private static formatFuelLevels(
-    baseKey: string,
-    value: any,
-    hd: DriverHeatData,
-    ctx: FormatContext,
-  ): string {
-    if (baseKey === "participant.fuelLevel") {
-      return value !== undefined ? value.toFixed(1) : "--.-";
-    }
-    const race = ctx.getRace();
-    const track = ctx.getTrack();
-    const capacity =
-      typeof track?.hasDigitalFuel === "function" && track.hasDigitalFuel()
-        ? race?.digital_fuel_options?.capacity
-        : race?.fuel_options?.capacity;
-
-    if (baseKey === "fuelCapacity") {
-      return capacity !== undefined ? capacity.toFixed(1) : "--.-";
-    }
-    if (baseKey === "fuelPercentage") {
-      const level = hd.participant?.fuelLevel ?? (hd.driver as any)?.fuelLevel;
-      if (level !== undefined && capacity !== undefined && capacity > 0) {
-        return Math.round((level / capacity) * 100) + "%";
-      }
-      return "--%";
-    }
-    return "--.-";
-  }
-
   private static formatAvatarUrl(
     value: any,
     hd: DriverHeatData,
@@ -898,87 +902,6 @@ export class RacedayFormatUtils {
     return "--";
   }
 
-  private static formatSegmentTime(
-    propertyName: string,
-    hd: DriverHeatData,
-    column: ColumnDefinition | undefined,
-    timeDecimals: number,
-    timePlaceholder: string,
-  ): string {
-    const parts = propertyName.split("_");
-    const index = parts.length > 1 ? parseInt(parts[1], 10) : 0;
-    let useIndex = true;
-    if (column) {
-      const segmentCount = Object.values(column.layout).filter((v) =>
-        v?.startsWith("segmentTime"),
-      ).length;
-      if (segmentCount <= 1) useIndex = false;
-    } else if (index === 0) {
-      useIndex = false;
-    }
-
-    if (useIndex) {
-      let actualIndex = index;
-      if (propertyName === "segmentTime" && column) {
-        const anchorOrder = [
-          AnchorPoint.TopLeft,
-          AnchorPoint.TopCenter,
-          AnchorPoint.TopRight,
-          AnchorPoint.CenterLeft,
-          AnchorPoint.CenterCenter,
-          AnchorPoint.CenterRight,
-          AnchorPoint.BottomLeft,
-          AnchorPoint.BottomCenter,
-          AnchorPoint.BottomRight,
-        ];
-        let counter = 0;
-        for (const anchor of anchorOrder) {
-          const p = column.layout[anchor];
-          if (p && p.split("_")[0] === "segmentTime") {
-            if (p === "segmentTime") {
-              actualIndex = counter;
-              break;
-            }
-            counter++;
-          }
-        }
-      }
-      const segmentVal = hd.currentLapSegments[actualIndex];
-      return segmentVal !== undefined && segmentVal > 0
-        ? segmentVal.toFixed(timeDecimals)
-        : timePlaceholder;
-    }
-    return hd.lastSegmentTime > 0
-      ? hd.lastSegmentTime.toFixed(timeDecimals)
-      : timePlaceholder;
-  }
-
-  private static formatSpeed(
-    baseKey: string,
-    hd: DriverHeatData,
-    ctx: FormatContext,
-  ): string {
-    const lastLapTime = hd.lastLapTime;
-    const track = ctx.getTrack();
-    const lane = track?.lanes?.[hd.laneIndex];
-    const length = lane?.length;
-    const scale =
-      track?.track_scale && track.track_scale > 0 && track.track_scale <= 1
-        ? track.track_scale
-        : 1.0;
-
-    if (lastLapTime > 0 && length !== undefined && length > 0) {
-      const scaledLength = length / scale;
-      const fph = (scaledLength / lastLapTime) * 3600;
-      if (baseKey === "fph") return fph.toFixed(0);
-      const mph = fph / 5280;
-      if (baseKey === "mph") return mph.toFixed(2);
-      const kph = mph * 1.609344;
-      if (baseKey === "kph") return kph.toFixed(2);
-    }
-    return "--.--";
-  }
-
   static formatColumnValue(
     heatDriver: DriverHeatData,
     column: ColumnDefinition | undefined,
@@ -989,13 +912,23 @@ export class RacedayFormatUtils {
     const prop = propertyName || column?.propertyName || "";
     if (column && prop === column.propertyName && column.formatter) {
       return column.formatter(
-        RacedayFormatUtils.getPropertyValue(heatDriver, prop),
+        RacedayFormatUtils.getPropertyValue(
+          heatDriver,
+          prop,
+          ctx.laneViewWidgetSettings,
+          anchor,
+        ),
         heatDriver,
         column,
         anchor,
       );
     }
-    const value = RacedayFormatUtils.getPropertyValue(heatDriver, prop);
+    const value = RacedayFormatUtils.getPropertyValue(
+      heatDriver,
+      prop,
+      ctx.laneViewWidgetSettings,
+      anchor,
+    );
     return RacedayFormatUtils.formatValue(
       prop,
       value,

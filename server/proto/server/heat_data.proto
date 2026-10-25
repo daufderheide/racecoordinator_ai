@@ -55,5 +55,7 @@ message DriverHeatData {
   double top_3_consecutive = 35;
   double user_time = 36;
   double total_time = 37;
+  double gap_leader_laps = 38;
+  double gap_position_laps = 39;
 }
 

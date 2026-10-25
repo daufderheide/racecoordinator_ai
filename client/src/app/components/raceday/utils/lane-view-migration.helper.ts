@@ -56,7 +56,187 @@ interface LaneGridMigrationBuildParams {
   insetLapDecimalPlaces: number;
 }
 
+export const GAP_MIGRATION_MAP: Record<
+  string,
+  {
+    columnKey: string;
+    gapTarget: "leader" | "position";
+    gapMode: "always_time" | "laps_and_time";
+  }
+> = {
+  gapLeader: {
+    columnKey: "gap",
+    gapTarget: "leader",
+    gapMode: "always_time",
+  },
+  gapPosition: {
+    columnKey: "gap",
+    gapTarget: "position",
+    gapMode: "always_time",
+  },
+  gapLeaderF1: {
+    columnKey: "gap",
+    gapTarget: "leader",
+    gapMode: "laps_and_time",
+  },
+  gapPositionF1: {
+    columnKey: "gap",
+    gapTarget: "position",
+    gapMode: "laps_and_time",
+  },
+  overallGapLeader: {
+    columnKey: "overallGap",
+    gapTarget: "leader",
+    gapMode: "always_time",
+  },
+  overallGapPosition: {
+    columnKey: "overallGap",
+    gapTarget: "position",
+    gapMode: "always_time",
+  },
+  overallGapLeaderF1: {
+    columnKey: "overallGap",
+    gapTarget: "leader",
+    gapMode: "laps_and_time",
+  },
+  overallGapPositionF1: {
+    columnKey: "overallGap",
+    gapTarget: "position",
+    gapMode: "laps_and_time",
+  },
+};
+
+function migrateColumnKey(s: Record<string, any>): boolean {
+  const colKey = s["columnKey"];
+  if (colKey && GAP_MIGRATION_MAP[colKey]) {
+    const mapping = GAP_MIGRATION_MAP[colKey];
+    s["columnKey"] = mapping.columnKey;
+    if (!s["gapTarget"]) s["gapTarget"] = mapping.gapTarget;
+    if (!s["gapMode"]) s["gapMode"] = mapping.gapMode;
+    return true;
+  }
+  return false;
+}
+
+function migrateInsets(s: Record<string, any>): boolean {
+  if (!s["insets"] || typeof s["insets"] !== "object") return false;
+  let migrated = false;
+  for (const [anchor, insetVal] of Object.entries(s["insets"])) {
+    if (typeof insetVal === "string" && GAP_MIGRATION_MAP[insetVal]) {
+      const mapping = GAP_MIGRATION_MAP[insetVal];
+      s["insets"][anchor] = mapping.columnKey;
+      if (!s["insetsConfig"]) s["insetsConfig"] = {};
+      if (!s["insetsConfig"][anchor]) s["insetsConfig"][anchor] = {};
+      s["insetsConfig"][anchor].columnKey = mapping.columnKey;
+      if (!s["insetsConfig"][anchor].gapTarget) {
+        s["insetsConfig"][anchor].gapTarget = mapping.gapTarget;
+      }
+      if (!s["insetsConfig"][anchor].gapMode) {
+        s["insetsConfig"][anchor].gapMode = mapping.gapMode;
+      }
+      migrated = true;
+    }
+  }
+  return migrated;
+}
+
+function migrateInsetsConfig(s: Record<string, any>): boolean {
+  if (!s["insetsConfig"] || typeof s["insetsConfig"] !== "object") return false;
+  let migrated = false;
+  for (const [, cfg] of Object.entries(s["insetsConfig"])) {
+    if (
+      cfg &&
+      (cfg as any).columnKey &&
+      GAP_MIGRATION_MAP[(cfg as any).columnKey]
+    ) {
+      const mapping = GAP_MIGRATION_MAP[(cfg as any).columnKey];
+      (cfg as any).columnKey = mapping.columnKey;
+      if (!(cfg as any).gapTarget) {
+        (cfg as any).gapTarget = mapping.gapTarget;
+      }
+      if (!(cfg as any).gapMode) {
+        (cfg as any).gapMode = mapping.gapMode;
+      }
+      migrated = true;
+    }
+  }
+  return migrated;
+}
+
 export class LaneViewMigrationHelper {
+  public static migrateGapWidgets(
+    layout: LayoutConfig | null | undefined,
+  ): boolean {
+    if (!layout?.widgets || !Array.isArray(layout.widgets)) {
+      return false;
+    }
+    let migrated = false;
+    for (const w of layout.widgets) {
+      if (!w.customSettings) continue;
+      const s = w.customSettings;
+      if (migrateColumnKey(s)) migrated = true;
+      if (migrateInsets(s)) migrated = true;
+      if (migrateInsetsConfig(s)) migrated = true;
+    }
+    return migrated;
+  }
+
+  public static migrateColumnList(columns: string[] | undefined): boolean {
+    if (!columns || !Array.isArray(columns)) return false;
+    let migrated = false;
+    for (let i = 0; i < columns.length; i++) {
+      const col = columns[i];
+      if (col && GAP_MIGRATION_MAP[col]) {
+        columns[i] = GAP_MIGRATION_MAP[col].columnKey;
+        migrated = true;
+      }
+    }
+    return migrated;
+  }
+
+  public static migrateColumnWidths(
+    widths: Record<string, number> | undefined,
+  ): boolean {
+    if (!widths || typeof widths !== "object") return false;
+    let migrated = false;
+    for (const [key, val] of Object.entries(widths)) {
+      if (GAP_MIGRATION_MAP[key]) {
+        const newKey = GAP_MIGRATION_MAP[key].columnKey;
+        if (widths[newKey] === undefined) {
+          widths[newKey] = val;
+        }
+        delete widths[key];
+        migrated = true;
+      }
+    }
+    return migrated;
+  }
+
+  public static migrateColumnLayouts(
+    layouts: Record<string, Record<string, string>> | undefined,
+  ): boolean {
+    if (!layouts || typeof layouts !== "object") return false;
+    let migrated = false;
+    for (const [key, layout] of Object.entries(layouts)) {
+      if (layout && typeof layout === "object") {
+        for (const [anchor, val] of Object.entries(layout)) {
+          if (typeof val === "string" && GAP_MIGRATION_MAP[val]) {
+            layout[anchor] = GAP_MIGRATION_MAP[val].columnKey;
+            migrated = true;
+          }
+        }
+      }
+      if (GAP_MIGRATION_MAP[key]) {
+        const newKey = GAP_MIGRATION_MAP[key].columnKey;
+        if (!layouts[newKey]) {
+          layouts[newKey] = layout;
+        }
+        delete layouts[key];
+        migrated = true;
+      }
+    }
+    return migrated;
+  }
   public static hasLegacyLaneView(
     layout: LayoutConfig | null | undefined,
     uiName?: string,
@@ -103,6 +283,13 @@ export class LaneViewMigrationHelper {
     options: LaneViewMigrationOptions,
   ): LaneViewMigrationResult {
     if (!options?.layout || !this.hasLegacyLaneView(options.layout)) {
+      if (options?.layout) {
+        const cloned: LayoutConfig = JSON.parse(JSON.stringify(options.layout));
+        const migratedGaps = this.migrateGapWidgets(cloned);
+        if (migratedGaps) {
+          return { layout: cloned, migrated: true };
+        }
+      }
       return { layout: options.layout, migrated: false };
     }
 
@@ -137,7 +324,8 @@ export class LaneViewMigrationHelper {
       }
     }
 
-    return { layout: currentLayout, migrated: migratedAny };
+    const migratedGaps = this.migrateGapWidgets(currentLayout);
+    return { layout: currentLayout, migrated: migratedAny || migratedGaps };
   }
 
   private static convertSingleLaneView(

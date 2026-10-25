@@ -65,7 +65,7 @@ public class CustomUITest {
     assertTrue(fuelUi.getColumnWidthsJson().contains("\"imageset_fuel-gauge-builtin\":210"));
     assertTrue(fuelUi.getColumnWidthsJson().contains("\"lapCount\":210"));
     assertTrue(fuelUi.getColumnWidthsJson().contains("\"lastLapTime\":310"));
-    assertTrue(fuelUi.getColumnWidthsJson().contains("\"gapLeader\":310"));
+    assertTrue(fuelUi.getColumnWidthsJson().contains("\"gap\":310"));
     assertTrue(fuelUi.getLayoutJson().contains("widget-lane-view"));
 
     assertTrue(defaultUi.getLayoutJson().contains("widget-countdown"));

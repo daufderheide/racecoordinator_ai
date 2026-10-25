@@ -58,7 +58,11 @@ public class HeatStandings {
   }
 
   public StandingsUpdate updateStandings() {
-    List<String> newStandings = calculateStandings();
+    return updateStandings(null);
+  }
+
+  public StandingsUpdate updateStandings(DriverHeatData completedDriver) {
+    List<String> newStandings = calculateStandings(completedDriver);
     StandingsUpdate.Builder updateBuilder = StandingsUpdate.newBuilder();
 
     // Always send an update for all drivers to ensure gaps are refreshed on the
@@ -93,6 +97,8 @@ public class HeatStandings {
                 .setLapsDownLeader(dhd.getLapsDownLeader())
                 .setLapsDownPosition(dhd.getLapsDownPosition())
                 .setLapsLed(dhd.getLapsLed())
+                .setGapLeaderLaps(dhd.getGapLeaderLaps())
+                .setGapPositionLaps(dhd.getGapPositionLaps())
                 .build());
       }
     }
@@ -102,14 +108,19 @@ public class HeatStandings {
   }
 
   public StandingsUpdate onLap(int lane, double lapTime) {
-    return updateStandings();
+    DriverHeatData completedDriver =
+        driverHeatData.stream()
+            .filter(d -> d != null && d.getLane() == lane)
+            .findFirst()
+            .orElse(null);
+    return updateStandings(completedDriver);
   }
 
   private boolean isAtHeatStart() {
     for (DriverHeatData dhd : driverHeatData) {
       if (dhd != null
           && (dhd.getLapCount() > 0
-              || dhd.getAdjustedLapCount() != 0.0
+              || dhd.getScoredLapCount() != 0.0
               || dhd.getTotalTime() > 0.0)) {
         return false;
       }
@@ -118,6 +129,10 @@ public class HeatStandings {
   }
 
   private List<String> calculateStandings() {
+    return calculateStandings(null);
+  }
+
+  private List<String> calculateStandings(DriverHeatData completedDriver) {
     List<DriverHeatData> sortedDrivers;
     if (isAtHeatStart()) {
       sortedDrivers =
@@ -125,12 +140,12 @@ public class HeatStandings {
               .filter(d -> d != null && d.getObjectId() != null)
               .sorted(Comparator.comparingInt(DriverHeatData::getLane))
               .collect(Collectors.toList());
-      calculateGaps(sortedDrivers);
+      calculateGaps(sortedDrivers, completedDriver);
     } else if (practice) {
       sortedDrivers = new ArrayList<>(driverHeatData);
     } else {
       sortedDrivers = driverHeatData.stream().sorted(getComparator()).collect(Collectors.toList());
-      calculateGaps(sortedDrivers);
+      calculateGaps(sortedDrivers, completedDriver);
     }
     calculateLapsLed();
 
@@ -160,8 +175,11 @@ public class HeatStandings {
     return standings;
   }
 
-  private void calculateGaps(List<DriverHeatData> sortedDrivers) {
+  private void calculateGaps(List<DriverHeatData> sortedDrivers, DriverHeatData completedDriver) {
     GapCalculator.calculateGaps(sortedDrivers, scoring.getFinishMethod());
+    if (completedDriver != null) {
+      GapCalculator.calculateLapGapsForDriver(completedDriver, sortedDrivers);
+    }
   }
 
   private Comparator<DriverHeatData> getComparator() {

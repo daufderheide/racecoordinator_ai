@@ -110,12 +110,22 @@ O widget **Baterias Disputadas** (`heatsRaced`) exibe o progresso de participaç
 
 #### Widgets de Diferença (Gaps e Intervalos)
 
-O Race Coordinator AI suporta **4 widgets de diferença distintos** tanto para Dados da Bateria quanto para Dados Gerais:
+O Race Coordinator AI fornece **2 widgets de diferença configuráveis** para Dados da Bateria e Dados Gerais:
 
-1. **Diferença para o Líder (`gapLeader` / `overallGapLeader`)**: Projeção matemática contínua da desvantagem temporal calculada em relação ao líder (P1).
-2. **Diferença para o Carro da Frente (`gapPosition` / `overallGapPosition`)**: Projeção matemática contínua da desvantagem temporal em relação ao concorrente imediatamente à frente.
-3. **Diferença Fórmula 1 para o Líder (`gapLeaderF1` / `overallGapLeaderF1`)**: Diferencial exato na linha de chegada na mesma volta ou desvantagem de voltas (`+1 Volta`, `+N Voltas`) em caso de voltas perdidas.
-4. **Diferença Fórmula 1 para o Carro da Frente (`gapPositionF1` / `overallGapPositionF1`)**: Diferencial exato na linha de chegada em relação ao carro da frente na mesma volta ou desvantagem de voltas (`+1 Volta`, `+N Voltas`).
+1. **Diferença da Bateria (`gap`)**: Avalia os intervalos em tempo real estritamente entre os carros que competem na bateria atual.
+2. **Diferença Geral (`overallGap`)**: Avalia os intervalos acumulados entre todos os participantes do evento.
+
+Cada widget de diferença pode ser configurado no Inspetor de Colunas por meio de duas opções principais:
+- **Alvo**:
+  - **Líder**: Intervalo em relação ao líder atual da corrida (P1).
+  - **Posição à frente**: Intervalo em relação ao concorrente imediatamente à frente na classificação (ex.: P3 vs P2).
+- **Modo de cálculo**:
+  - **Sempre tempo**: Projeção matemática contínua de ritmo em segundos (`+X.XXX`).
+  - **Voltas e tempo**: Estilo Fórmula 1 exibindo o tempo na mesma volta ou o déficit de voltas (`+1 Volta`, `+N Voltas`) em caso de volta perdida.
+  - **Sempre voltas**: Diferença exata de voltas calculada ao completar cada volta, incorporando o progresso de volta parcial do piloto comparado.
+
+> [!NOTE]
+> Vários widgets de diferença com configurações distintas (por exemplo, uma coluna para Diferença para o Líder e outra para o Carro da Frente) podem ser inseridos simultaneamente na mesma grade ou layout.
 
 Para consultar as fórmulas matemáticas completas e as especificações de cronometragem, consulte o [Guia de Cálculos de Diferenças](gap-calculations.md).
 

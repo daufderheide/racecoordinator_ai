@@ -1268,9 +1268,11 @@ export class DefaultRacedayComponent
         isPractice: this.isPracticeLayout,
       });
       if (migration.migrated) {
+        LaneViewMigrationHelper.migrateGapWidgets(migration.layout);
         return migration.layout;
       }
     }
+    LaneViewMigrationHelper.migrateGapWidgets(resolvedLayout);
     return resolvedLayout;
   }
   set currentRacedayLayout(layout: LayoutConfig | undefined) {

@@ -19,6 +19,8 @@ export class RaceParticipant {
     public team?: Team,
     public gapLeaderF1: number = 0,
     public gapPositionF1: number = 0,
+    public gapLeaderLaps: number = 0,
+    public gapPositionLaps: number = 0,
     public lapsDownLeader: number = 0,
     public lapsDownPosition: number = 0,
     public consistencyScore: number = 0,

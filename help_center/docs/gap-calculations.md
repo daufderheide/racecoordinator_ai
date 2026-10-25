@@ -8,23 +8,26 @@ Race Coordinator AI features an automated server-side gap calculation engine (`G
 
 Whenever race standings update, the engine sorts all competitors by their current running order according to the active scoring rules (Most Laps, Fastest Total Time, or Points). Once sorted, gap metrics are computed for two distinct reference frames:
 
-- **Gap to Leader (`gapLeader` / `overallGapLeader`)**: The time interval between a competitor and the current 1st-place race leader (P1). The leader's gap to leader is always `0.0` (rendered as `--`).
-- **Gap to Position Ahead (`gapPosition` / `overallGapPosition`)**: The time interval between a competitor and the car running immediately ahead in the standings (for example, P3 compared to P2). The 1st-place leader's gap to position is always `0.0` (rendered as `--`).
+- **Gap to Leader (`leader`)**: The interval between a competitor and the current 1st-place race leader (P1). The leader's gap to leader is always `0.0` (rendered as `--`).
+- **Gap to Position Ahead (`position`)**: The interval between a competitor and the car running immediately ahead in the standings (for example, P3 compared to P2). The 1st-place leader's gap to position is always `0.0` (rendered as `--`).
 
 ### Data Scopes: Heat Gaps vs. Overall Gaps
 
 Race Coordinator AI supports gap evaluation across two distinct data scopes:
 
-| Scope | Column Keys | Description | Target Use Case |
+| Scope | Column Key | Description | Target Use Case |
 | :--- | :--- | :--- | :--- |
-| **Heat Data** | `gapLeader`<br>`gapPosition`<br>`gapLeaderF1`<br>`gapPositionF1` | Evaluates intervals strictly between the cars actively competing on track in the current heat. Resting drivers display dashes (`--`). | Live heat racing, driver station lane cards, broadcast heat leaderboards. |
-| **Overall Race Data** | `overallGapLeader`<br>`overallGapPosition`<br>`overallGapLeaderF1`<br>`overallGapPositionF1` | Evaluates cumulative tournament intervals across all registered event participants, spanning all completed heats. | Tournament standings grids, multi-heat event leaderboards, championship tracking. |
+| **Heat Data** | `gap` | Evaluates intervals strictly between the cars actively competing on track in the current heat. Resting drivers display dashes (`--`). | Live heat racing, driver station lane cards, broadcast heat leaderboards. |
+| **Overall Race Data** | `overallGap` | Evaluates cumulative tournament intervals across all registered event participants, spanning all completed heats. | Tournament standings grids, multi-heat event leaderboards, championship tracking. |
+
+> [!NOTE]
+> Existing layouts using legacy column keys (`gapLeader`, `gapPosition`, `gapLeaderF1`, `gapPositionF1`, `overallGapLeader`, `overallGapPosition`, `overallGapLeaderF1`, `overallGapPositionF1`) are automatically migrated to `gap` or `overallGap` with matching target and calculation mode settings when loaded.
 
 ---
 
-## The 4 Gap Widgets We Support
+## The 2 Configurable Gap Widgets
 
-Race Coordinator AI provides **4 distinct gap widgets** (available as grid columns, standalone lane column cards, and custom insets) categorized by calculation method and reference target:
+Race Coordinator AI provides **2 configurable gap widgets** (available as grid columns, standalone lane column cards, and custom insets):
 
 ```
                           ┌──────────────────────────────────────────────┐
@@ -34,55 +37,39 @@ Race Coordinator AI provides **4 distinct gap widgets** (available as grid colum
                    ┌─────────────────────────────┴─────────────────────────────┐
                    ▼                                                           ▼
       ┌─────────────────────────┐                                 ┌─────────────────────────┐
-      │      STANDARD GAPS      │                                 │     FORMULA 1 GAPS      │
-      │  Continuous Projection  │                                 │   Exact Line Crossing   │
+      │     HEAT GAP (`gap`)    │                                 │ OVERALL GAP (`overallGap`)│
+      │   Active Heat Drivers   │                                 │   All Event Competitors │
       └────────────┬────────────┘                                 └────────────┬────────────┘
                    │                                                           │
-         ┌─────────┴─────────┐                                       ┌─────────┴─────────┐
-         ▼                   ▼                                       ▼                   ▼
-  ┌─────────────┐     ┌─────────────┐                         ┌─────────────┐     ┌─────────────┐
-  │ Gap Leader  │     │Gap Position │                         │Gap Leader F1│     │Gap Pos. F1  │
-  │ (P1 Target) │     │(Ahead Target│                         │ (P1 Target) │     │(Ahead Target│
-  └─────────────┘     └─────────────┘                         └─────────────┘     └─────────────┘
+                   └─────────────────────────────┬─────────────────────────────┘
+                                                 │
+                               ┌─────────────────┴─────────────────┐
+                               ▼                                   ▼
+                   ┌───────────────────────┐           ┌───────────────────────┐
+                   │    TARGET SELECTOR    │           │   CALCULATION MODE    │
+                   ├───────────────────────┤           ├───────────────────────┤
+                   │ • Leader (P1)         │           │ • Always Time         │
+                   │ • Position Ahead      │           │ • Laps and Time (F1)  │
+                   │                       │           │ • Always Laps (Delta) │
+                   └───────────────────────┘           └───────────────────────┘
 ```
 
-### 1. Gap to Leader (Standard)
-- **UI Toolbox Keys**: `gapLeader` (Heat) / `overallGapLeader` (Overall)
-- **Toolbox Group**: *Heat Data → Gaps & Intervals* / *Overall Race Data → Overall Gaps & Intervals*
-- **Default Labels**: `HEAT GAP LEADER`, `OVERALL GAP LEADER`, or `GAP LEADER`
-- **Measurement Model**: Continuous mathematical pace projection.
-- **Display Output**: Formatted as `+X.XXX` seconds with configurable decimal places (1 to 3 decimal places). The race leader displays `--`.
-- **Purpose**: Provides a real-time projected time deficit to the leader. Even when the leader has completed more laps, this widget projects the time gap using the trailing car's average lap pace.
+### Gap Target Selection
+- **Leader (`leader`)**: Interval relative to the current race leader (P1). The leader displays dashes (`--`).
+- **Position Ahead (`position`)**: Interval relative to the car immediately ahead in the standings (e.g., P3 vs P2). The 1st-place leader displays dashes (`--`).
 
-### 2. Gap to Position Ahead (Standard)
-- **UI Toolbox Keys**: `gapPosition` (Heat) / `overallGapPosition` (Overall)
-- **Toolbox Group**: *Heat Data → Gaps & Intervals* / *Overall Race Data → Overall Gaps & Intervals*
-- **Default Labels**: `HEAT GAP POSITION`, `OVERALL GAP POSITION`, or `GAP POSITION`
-- **Measurement Model**: Continuous mathematical pace projection.
-- **Display Output**: Formatted as `+X.XXX` seconds. The 1st-place leader displays `--`.
-- **Purpose**: Displays the time deficit required to overtake the competitor immediately ahead in the standings. Crucial for head-to-head battles and position defense.
-
-### 3. Formula 1 Gap to Leader (`F1`)
-- **UI Toolbox Keys**: `gapLeaderF1` (Heat) / `overallGapLeaderF1` (Overall)
-- **Toolbox Group**: *Heat Data → Gaps & Intervals* / *Overall Race Data → Overall Gaps & Intervals*
-- **Default Labels**: `HEAT GAP LEADER LAP`, `OVERALL GAP LEADER LAP`, or `GAP LEADER`
-- **Measurement Model**: Exact physical timing measured at the start/finish line.
-- **Display Output**:
-  - **On the Same Lap**: Formatted as `+X.XXX` seconds, showing the physical time difference when crossing the line.
-  - **Lapped Drivers**: Automatically replaces the time display with `+1 Lap` or `+N Laps` (`RD_LAP_DOWN` / `RD_LAPS_DOWN`).
-  - **Leader**: Displays `--`.
-- **Purpose**: Emulates professional Formula 1 timing broadcasts. Rather than showing large projected time gaps for lapped cars, it clearly indicates lap deficits.
-
-### 4. Formula 1 Gap to Position Ahead (`F1`)
-- **UI Toolbox Keys**: `gapPositionF1` (Heat) / `overallGapPositionF1` (Overall)
-- **Toolbox Group**: *Heat Data → Gaps & Intervals* / *Overall Race Data → Overall Gaps & Intervals*
-- **Default Labels**: `HEAT GAP POSITION LAP`, `OVERALL GAP POSITION LAP`, or `GAP POSITION`
-- **Measurement Model**: Exact physical timing measured at the start/finish line.
-- **Display Output**:
-  - **On the Same Lap**: Formatted as `+X.XXX` seconds behind the competitor ahead.
-  - **Lapped by Car Ahead**: Displays `+1 Lap` or `+N Laps`.
-  - **Leader**: Displays `--`.
-- **Purpose**: Gives an authentic broadcast feel for interval battles, showing immediate lap differentials when cars are lapped by the competitor directly ahead.
+### Calculation Modes
+1. **Always Time (`always_time`)**:
+   - Continuous mathematical pace projection in seconds.
+   - Formatted as `+X.XXX` with configurable time decimals (1 to 3 decimal places).
+2. **Laps and Time (`laps_and_time`)**:
+   - Formula 1 broadcast style timing.
+   - Displays seconds (`+X.XXX`) when competitors are on the lead lap.
+   - Displays lap deficits (`+1 Lap`, `+N Laps`) when competitors are lapped.
+3. **Always Laps (`always_laps`)**:
+   - Exact lap count delta calculated whenever a competitor crosses the line to complete a lap.
+   - Incorporates partial lap progress of the compared driver at that exact moment.
+   - Formatted with configurable lap decimal places (0 to 3 decimal places).
 
 ---
 
@@ -92,9 +79,9 @@ All gap math is calculated in `com.antigravity.race.GapCalculator` on the Java s
 
 Let `leadParticipant` be the driver ahead (leader or car in position $N-1$) and `curParticipant` be the trailing driver.
 
-### Standard Gap Projection Math
+### 1. Always Time Math (`always_time`)
 
-Standard gaps evaluate three possible lap scenarios:
+Standard time gaps evaluate three possible lap scenarios:
 
 #### Scenario A: Same Completed Laps
 When both drivers have completed the exact same number of adjusted laps:
@@ -125,7 +112,7 @@ The projection formula adapts based on the race's configured **Finish Method**:
 
 ---
 
-### Formula 1 Gap Math
+### 2. Formula 1 Gap Math (`laps_and_time`)
 
 Formula 1 gaps represent physical track positions measured as cars cross the start/finish loop:
 
@@ -149,34 +136,65 @@ When drivers are on the same lap, the exact crossing time differential is calcul
 
 ---
 
-## Comparison: Standard Gaps vs. Formula 1 Gaps
+### 3. Always Laps Math (`always_laps`)
 
-| Feature | Standard Gaps (`gapLeader`, `gapPosition`) | Formula 1 Gaps (`gapLeaderF1`, `gapPositionF1`) |
-| :--- | :--- | :--- |
-| **Calculation Approach** | Continuous statistical pace projection | Exact loop crossing timestamp comparisons |
-| **Lapped Car Display** | Projected seconds (e.g. `+14.820`) | Lap deficit string (e.g. `+1 Lap`, `+3 Laps`) |
-| **Lead Lap Car Display** | Time difference in seconds (`+1.450`) | Exact time difference at identical lap line (`+1.450`) |
-| **Finish Method Adaptation** | Differentiates Timed vs. Lap-Based finishes | Loop crossing driven across all race types |
-| **Best Application** | Slot car pacing awareness, time trial tracking | Broadcast-style visual displays, spectator boards |
+The Always Laps calculation measures the exact lap delta between competitors at each lap completion:
+
+#### 1. Lap Completion Trigger
+Whenever a competitor completes a lap, the server records their adjusted lap count. The reference target driver (either the leader or the position ahead) is identified.
+
+#### 2. Partial Lap Progress Calculation
+To ensure fair and accurate comparisons without penalizing the target driver for being mid-lap, the target driver's partial lap progress is computed using their running time since their last lap:
+$$\text{TimeSinceLastLap}_{\text{target}} = \text{CurrentElapsedTime} - \text{TimeOfLastLap}_{\text{target}}$$
+$$\text{PartialLap}_{\text{target}} = \min\left(0.99, \max\left(0.0, \frac{\text{TimeSinceLastLap}_{\text{target}}}{\text{MedianLapTime}_{\text{target}}}\right)\right)$$
+
+> [!NOTE]
+> If the target driver has no valid median lap time ($\le 0$) or $\text{TimeSinceLastLap} \le 0$, the partial lap evaluates to $0.0$. Partial progress is clamped at $0.99$ to avoid premature whole lap increments before a physical line crossing.
+
+#### 3. Effective Lap Delta
+The target driver's effective lap count is determined:
+$$\text{EffectiveLaps}_{\text{target}} = \text{AdjustedLaps}_{\text{target}} + \text{PartialLap}_{\text{target}}$$
+
+The lap gap for the competitor is:
+$$\text{GapLaps} = \text{EffectiveLaps}_{\text{target}} - \text{AdjustedLaps}_{\text{competitor}}$$
+
+Competitors hold their calculated lap gap until they complete their own next lap, at which point the delta is re-evaluated against the target's current progress.
+
+---
+
+## Comparison of Calculation Modes
+
+| Feature | Always Time (`always_time`) | Laps and Time (`laps_and_time`) | Always Laps (`always_laps`) |
+| :--- | :--- | :--- | :--- |
+| **Calculation Approach** | Continuous statistical pace projection | Exact loop crossing timestamp comparisons | Lap count delta with partial lap progress |
+| **Lapped Car Display** | Projected seconds (e.g. `+14.820`) | Lap deficit string (e.g. `+1 Lap`, `+3 Laps`) | Decimal lap delta (e.g. `+2.45`) |
+| **Lead Lap Car Display** | Time difference in seconds (`+1.450`) | Exact time difference at line (`+1.450`) | Decimal lap delta (e.g. `+0.28`) |
+| **Timing Basis** | Time decimals (1 to 3 places) | Time decimals (1 to 3 places) | Lap decimals (0 to 3 places) |
+| **Update Moment** | Continuous projection updates | Start/finish line crossing | Completed lap crossing |
+| **Best Application** | Slot car pacing awareness, time trials | Broadcast-style F1 TV timing boards | Lap-endurance races, lap-based standings |
 
 ---
 
 ## Using Gap Widgets in the UI Editor
 
 ### 1. In Grids and Leaderboards
-In the UI Editor, select your Grid widget and navigate to the **Columns** tab. Under the **Gaps & Intervals** (Heat) or **Overall Gaps & Intervals** (Overall) subgroups, check any of the gap columns to add them to your leaderboard:
+In the UI Editor, select your Grid widget and navigate to the **Columns** tab. Under the **Gaps & Intervals** (Heat) or **Overall Gaps & Intervals** (Overall) subgroups, check **Heat Gap** (`gap`) or **Overall Gap** (`overallGap`) to add them to your leaderboard:
 - Drag column cards up or down to reorder them relative to Driver Name, Laps, or Lap Times.
-- Configure time decimal precision (1, 2, or 3 decimals) in the Column Inspector.
+- Select the gap column card to open the **Column Inspector**.
+- Under **Gap Configuration**, choose the **Target** (*Leader* or *Position Ahead*) and the **Calculation Mode** (*Always Time*, *Laps and Time*, or *Always Laps*).
+- Multiple gap columns with different targets or calculation modes can be added to the same grid simultaneously!
 
 ### 2. Standalone Lane Column Cards
 You can drag individual gap widgets directly from the Toolbox onto the canvas:
 - In the **Lane Column Inspector**, bind the card to a specific **Track Lane** (e.g. Lane 1), **Heat Position** (e.g. Pos 2), or **Overall Standings Rank** (e.g. Overall Pos 1).
+- Configure **Target** and **Calculation Mode** in the Gap Configuration section.
 - Set layout orientation to **Vertical** (stacked title over gap) or **Horizontal** (side-by-side).
 
 ### 3. Inset Data on Other Cards
 Gap metrics can be embedded directly as sub-badges inside other lane cards:
 - Select any Lane Column card (e.g. Driver Avatar or Lap Count).
-- In the **Card Insets** section, assign `gapLeader` or `gapPositionF1` to any of the 8 perimeter anchor positions (e.g. Bottom-Right).
+- In the **Card Insets** section, assign `gap` or `overallGap` to any of the 8 perimeter anchor positions (e.g. Bottom-Right).
+- Configure the inset's Target and Calculation Mode directly in the Inset Settings popup.
 
 ---
 

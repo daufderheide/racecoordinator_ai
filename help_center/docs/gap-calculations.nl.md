@@ -1,176 +1,176 @@
 # Verschilberekeningen & Verschil-Widgets (Gaps)
 
-Race Coordinator AI beschikt over een geautomatiseerde server-side berekeningsengine (`GapCalculator`) die in realtime tijdsverschillen en ronde-intervallen tussen deelnemers bepaalt. Alle berekeningen worden continu op de server uitgevoerd en gesynchroniseerd naar client-displays, aangepaste UI-widgets, gesproken meldingen (TTS) en spreadsheet-exports.
+Race Coordinator AI beschikt over een geautomatiseerde server-engine voor verschilberekening (`GapCalculator`), die in realtime tijdsverschillen en rondenintervallen tussen deelnemers bepaalt. Alle berekeningen worden continu op de server uitgevoerd en gesynchroniseerd met client-displays, aangepaste UI-widgets, audiospraak en spreadsheet-exporten.
 
 ---
 
 ## Overzicht van Verschilberekeningen
 
-Wanneer de tussenstand van een race wordt bijgewerkt, sorteert de engine alle deelnemers op hun huidige positie volgens de actieve scoreregels (Meeste Ronden, Snelste Totale Tijd of Punten). Vervolgens worden de verschilmetrieken berekend voor twee afzonderlijke referentiepunten:
+Zodra de tussenstand tijdens de race wordt bijgewerkt, sorteert de engine alle deelnemers volgens de actieve scorecriteria (Meeste ronden, Snelste totale tijd of Punten). Vervolgens worden de verschilwaarden berekend voor twee verschillende referentiekaders:
 
-- **Verschil met de Leider (`gapLeader` / `overallGapLeader`)**: Het tijdsverschil tussen een deelnemer en de nummer 1 in de race (P1). Het verschil van de leider met zichzelf is altijd `0.0` (weergegeven als `--`).
-- **Verschil met de Voorligger (`gapPosition` / `overallGapPosition`)**: Het tijdsverschil tussen een deelnemer en de auto die direct ervoor rijdt in het klassement (bijv. P3 ten opzichte van P2). Het verschil van de nummer 1 is altijd `0.0` (weergegeven als `--`).
+- **Verschil met de Leider (`leader`)**: Het interval tussen een deelnemer en de huidige leider (P1). Het verschil van de leider met zichzelf is altijd `0.0` (weergegeven als `--`).
+- **Verschil met de Voorligger (`position`)**: Het interval tussen een deelnemer en de auto die direct ervoor rijdt in het klassement (bijv. P3 vergeleken met P2). Het verschil van de leider is altijd `0.0` (weergegeven als `--`).
 
 ### Gegevensbereiken: Heat-verschillen vs. Algemene Verschillen
 
-Race Coordinator AI ondersteunt verschilberekeningen binnen twee afzonderlijke bereiken:
+Race Coordinator AI ondersteunt verschilbepaling over twee gegevensbereiken:
 
-| Bereik | Kolomsleutels | Omschrijving | Toepassing |
+| Bereik | Kolomsleutel | Omschrijving | Toepassing |
 | :--- | :--- | :--- | :--- |
-| **Heat-gegevens (Heat Data)** | `gapLeader`<br>`gapPosition`<br>`gapLeaderF1`<br>`gapPositionF1` | Berekent verschillen uitsluitend tussen de auto's die op de baan rijden in de actieve heat. Rustende rijders tonen streepjes (`--`). | Live races, baankaarten, live heat-klassementen. |
-| **Algemene Gegevens (Overall Data)** | `overallGapLeader`<br>`overallGapPosition`<br>`overallGapLeaderF1`<br>`overallGapPositionF1` | Berekent cumulatieve toernooiverschillen over alle ingeschreven deelnemers over alle voltooide heats heen. | Algemene toernooiroosters, klassementsoverzichten, kampioenschappen. |
+| **Heat-gegevens (Heat Data)** | `gap` | Berekent intervallen uitsluitend tussen de auto's die actief op de baan rijden in de huidige heat. Rustende rijders tonen streepjes (`--`). | Live races, baanvak-kaarten, live heat-klassementen. |
+| **Algemene Gegevens (Overall Data)** | `overallGap` | Berekent cumulatieve toernooi-intervallen over alle deelnemers aan het evenement, over alle voltooide heats heen. | Algemene standenrasters, toernooiranglijsten. |
+
+> [!NOTE]
+> Bestaande lay-outs die gebruikmaken van oudere kolomsleutels (`gapLeader`, `gapPosition`, `gapLeaderF1`, `gapPositionF1`, `overallGapLeader`, enz.) worden bij het laden automatisch gemigreerd naar `gap` of `overallGap` met de bijbehorende doel- en modusinstellingen.
 
 ---
 
-## De 4 Ondersteunde Verschil-Widgets
+## De 2 Configureerbare Verschil-Widgets
 
-Race Coordinator AI biedt **4 specifieke verschil-widgets** (beschikbaar als tabelkolommen, zelfstandige baankaarten en aangepaste insets), ingedeeld naar berekeningsmethode en referentiedoel:
+Race Coordinator AI biedt **2 configureerbare verschil-widgets** (beschikbaar als rasterkolommen, afzonderlijke baanvak-kaarten en aangepaste insets):
 
 ```
                           ┌──────────────────────────────────────────────┐
-                          │            RACE-VERSCHIL-WIDGETS             │
+                          │            RACE VERSCHIL-WIDGETS             │
                           └──────────────────────┬───────────────────────┘
                                                  │
                    ┌─────────────────────────────┴─────────────────────────────┐
                    ▼                                                           ▼
       ┌─────────────────────────┐                                 ┌─────────────────────────┐
-      │   STANDAARDVERSCHILLEN  │                                 │    FORMULE 1-VERSCHIL   │
-      │  Continue Pace-projectie│                                 │   Exacte Doorkomstijd   │
+      │   HEAT-VERSCHIL (`gap`) │                                 │ALGEMEEN VERSCHIL(`overallGap`)│
+      │   Actieve Heat-rijders  │                                 │   Alle Deelnemers       │
       └────────────┬────────────┘                                 └────────────┬────────────┘
                    │                                                           │
-         ┌─────────┴─────────┐                                       ┌─────────┴─────────┐
-         ▼                   ▼                                       ▼                   ▼
-  ┌─────────────┐     ┌─────────────┐                         ┌─────────────┐     ┌─────────────┐
-  │ Gap Leader  │     │Gap Position │                         │Gap Leader F1│     │Gap Pos. F1  │
-  │ (Leider P1) │     │(Voorligger) │                         │ (Leider P1) │     │(Voorligger) │
-  └─────────────┘     └─────────────┘                         └─────────────┘     └─────────────┘
+                   └─────────────────────────────┬─────────────────────────────┘
+                                                 │
+                               ┌─────────────────┴─────────────────┐
+                               ▼                                   ▼
+                   ┌───────────────────────┐           ┌───────────────────────┐
+                   │     DOEL-KIEZER       │           │   BEREKENINGSMODUS    │
+                   ├───────────────────────┤           ├───────────────────────┤
+                   │ • Leider (P1)         │           │ • Altijd tijd         │
+                   │ • Voorgaande positie  │           │ • Ronden en tijd (F1) │
+                   │                       │           │ • Altijd ronden       │
+                   └───────────────────────┘           └───────────────────────┘
 ```
 
-### 1. Verschil met de Leider (Standaard)
-- **Toolbox-sleutels**: `gapLeader` (Heat) / `overallGapLeader` (Algemeen)
-- **Toolbox-groep**: *Heat Data → Gaps & Intervals* / *Overall Race Data → Overall Gaps & Intervals*
-- **Standaardlabels**: `HEAT GAP LEADER`, `OVERALL GAP LEADER` of `GAP LEADER`
-- **Meetmethode**: Continue wiskundige pace-projectie.
-- **Weergave**: Opgemaakt als `+X.XXX` seconden met instelbare decimalen (1 tot 3 decimalen). De leider toont `--`.
-- **Doel**: Geeft een realtime berekende achterstand op de leider. Zelfs als de leider meer ronden heeft gereden, projecteert deze widget het tijdsverschil op basis van het gemiddelde tempo van de achtervolger.
+### Doelselectie
+- **Leider (`leader`)**: Interval ten opzichte van de huidige raceleider (P1). De leider toont streepjes (`--`).
+- **Voorgaande positie (`position`)**: Interval ten opzichte van de directe voorligger (bijv. P3 t.o.v. P2). De leider toont streepjes (`--`).
 
-### 2. Verschil met de Voorligger (Standaard)
-- **Toolbox-sleutels**: `gapPosition` (Heat) / `overallGapPosition` (Algemeen)
-- **Toolbox-groep**: *Heat Data → Gaps & Intervals* / *Overall Race Data → Overall Gaps & Intervals*
-- **Standaardlabels**: `HEAT GAP POSITION`, `OVERALL GAP POSITION` of `GAP POSITION`
-- **Meetmethode**: Continue wiskundige pace-projectie.
-- **Weergave**: Opgemaakt als `+X.XXX` seconden. De nummer 1 toont `--`.
-- **Doel**: Toont het tijdsverschil dat nodig is om de directe voorligger in te halen. Essentieel voor positieduels.
-
-### 3. Formule 1-verschil met de Leider (`F1`)
-- **Toolbox-sleutels**: `gapLeaderF1` (Heat) / `overallGapLeaderF1` (Algemeen)
-- **Toolbox-groep**: *Heat Data → Gaps & Intervals* / *Overall Race Data → Overall Gaps & Intervals*
-- **Standaardlabels**: `HEAT GAP LEADER LAP`, `OVERALL GAP LEADER LAP` of `GAP LEADER`
-- **Meetmethode**: Exacte fysieke tijdmeting bij passage van de start/finishlijn.
-- **Weergave**:
-  - **In dezelfde ronde**: Opgemaakt als `+X.XXX` seconden (daadwerkelijk tijdsverschil bij het overschrijden van de finishlijn).
-  - **Gedubbelde rijders**: Vervangt de tijdsweergave automatisch door `+1 Ronde` of `+N Ronden` (`RD_LAP_DOWN` / `RD_LAPS_DOWN`).
-  - **Leider**: Toont `--`.
-- **Doel**: Bootst officiële Formule 1-televisie-uitzendingen na. Voorkomt buitenproportionele projectietijden voor gedubbelde rijders door direct de rondeachterstand te tonen.
-
-### 4. Formule 1-verschil met de Voorligger (`F1`)
-- **Toolbox-sleutels**: `gapPositionF1` (Heat) / `overallGapPositionF1` (Algemeen)
-- **Toolbox-groep**: *Heat Data → Gaps & Intervals* / *Overall Race Data → Overall Gaps & Intervals*
-- **Standaardlabels**: `HEAT GAP POSITION LAP`, `OVERALL GAP POSITION LAP` of `GAP POSITION`
-- **Meetmethode**: Exacte fysieke tijdmeting bij passage van de start/finishlijn.
-- **Weergave**:
-  - **In dezelfde ronde**: Opgemaakt als `+X.XXX` seconden achter de voorligger.
-  - **Gedubbeld door voorligger**: Toont `+1 Ronde` of `+N Ronden`.
-  - **Leider**: Toont `--`.
-- **Doel**: Biedt een authentieke tv-ervaring voor onderlinge duels, met directe weergave van rondenachterstand op de wagen direct ervoor.
+### Berekeningsmodi
+1. **Altijd tijd (`always_time`)**:
+   - Continue pace-projectie van het tijdsverschil in seconden.
+   - Opgemaakt als `+X.XXX` met instelbare tijddecimalen (1 tot 3 decimalen).
+2. **Ronden en tijd (`laps_and_time`)**:
+   - Formule 1-stijl weergave.
+   - Toont seconden (`+X.XXX`) wanneer coureurs in dezelfde ronde rijden.
+   - Toont rondenachterstand (`+1 Ronde`, `+N Ronden`) bij een dubbeling.
+3. **Altijd ronden (`always_laps`)**:
+   - Exact rondenverschil berekend op het moment dat een deelnemer over de finishlijn komt om een ronde te voltooien.
+   - Houdt rekening met de partiële rondevoortgang van de doelcoureur op dat exacte moment.
+   - Opgemaakt met instelbare rondedecimalen (0 tot 3 decimalen).
 
 ---
 
 ## Gedetailleerde Berekeningsformules
 
-Alle wiskundige berekeningen vinden plaats in `com.antigravity.race.GapCalculator` op de Java-server.
+Alle berekeningen worden uitgevoerd in `com.antigravity.race.GapCalculator` op de Java-server.
 
-Laat `leadParticipant` de voorliggende rijder zijn en `curParticipant` de achtervolgende rijder.
+Laat `leadParticipant` de voorliggende coureur zijn (leider of positie $N-1$) en `curParticipant` de achtervolgende coureur.
 
-### Standaard Verschilberekening
+### 1. Formule: Altijd Tijd (`always_time`)
 
-Er worden drie mogelijke rondescenario's onderscheiden:
+Standaard tijdsverschillen onderscheiden drie situaties:
 
-#### Scenario A: Zelfde Aantal Ronden
+#### Situatie A: Zelfde Aantal Voltooide Ronden
 $$\text{Gap} = \text{TotalTime}_{\text{cur}} - \text{TotalTime}_{\text{lead}}$$
 
-#### Scenario B: Geen Volledige Ronde Gereden
-Als de achtervolger nog geen volledige getimede ronde heeft voltooid (`hasNoFullLaps()`):
+#### Situatie B: Geen Voltooide Ronden
 $$\text{Gap} = \text{TotalTime}_{\text{lead}}$$
 
-#### Scenario C: Verschillend Aantal Ronden
+#### Situatie C: Verschillend Aantal Ronden
 $$\text{LapDiff} = \text{AdjustedLaps}_{\text{lead}} - \text{AdjustedLaps}_{\text{cur}}$$
 $$\text{AvgLapTime}_{\text{cur}} = \text{AverageLapTime}(\text{curParticipant})$$
 
-De projectieformule past zich aan op basis van de geconfigureerde **Finishmethode (Finish Method)**:
-
-1. **Races op Tijd (Timed Finish)**:
+De projectieformule past zich aan aan de **Finishmethode**:
+1. **Tijdgebonden Races**:
    $$\text{Gap} = \text{AvgLapTime}_{\text{cur}} \times \text{LapDiff}$$
-
-2. **Races op Ronden (Lap Finish)**:
+2. **Rondegebonden Races**:
    $$\text{TimeDiff} = \text{TotalTime}_{\text{cur}} - \text{TotalTime}_{\text{lead}}$$
    $$\text{ProjectedGap} = \text{TimeDiff} + (\text{AvgLapTime}_{\text{cur}} \times \text{LapDiff})$$
 
-   > [!NOTE]
-   > Als $\text{ProjectedGap}$ door timinganomalieën negatief uitvalt, valt het systeem automatisch terug op $\text{AvgLapTime}_{\text{cur}} \times \text{LapDiff}$.
-
 ---
 
-### Formule 1-Verschilberekening
+### 2. Formule: Formule 1 (`laps_and_time`)
 
-#### 1. Ronden Achterstand (Laps Down)
+#### 1. Rondenachterstand Bepalen
 $$\text{LapsDown} = (\text{PhysicalLaps}_{\text{lead}} - \text{PhysicalLaps}_{\text{cur}}) - 1$$
+- Als $\text{LapsDown} > 0$: De coureur is gedubbeld (`+X Ronden`).
+- Als $\text{LapsDown} \le 0$: In dezelfde ronde als de leider.
 
-- Als $\text{LapsDown} > 0$: De achtervolger is gedubbeld. Het tijdsverschil wordt `0.0` en de interface toont `+X Ronden`.
-- Als $\text{LapsDown} \le 0$: De achtervolger bevindt zich in dezelfde ronde als de voorligger ($\text{LapsDown} = 0$).
-
-#### 2. Tijdsverschil in de Leiderronde
-- **Gelijk Aantal Fysieke Ronden**:
+#### 2. Tijdsverschil in Dezelfde Ronde
+- **Gelijk aantal doorkomsten**:
   $$\text{TimeGap} = \text{TotalTime}_{\text{cur}} - \text{TotalTime}_{\text{lead}}$$
-- **Leider heeft een Extra Ronde Voltooid**: Het verschil wordt gemeten ten opzichte van het moment waarop de leider diezelfde ronde voltooide:
+- **Leider heeft één ronde extra voltooid**:
   $$\text{TimeGap} = \text{TotalTime}_{\text{cur}} - \text{leadParticipant.getTimeAtLap}(\text{PhysicalLaps}_{\text{cur}})$$
 
-> [!TIP]
-> Als het berekende tijdsverschil negatief is, wordt dit vastgezet op `0.0`.
+---
+
+### 3. Formule: Altijd Ronden (`always_laps`)
+
+Meet het exacte rondenverschil bij elke voltooide ronde:
+
+#### 1. Voltooiingstrigger
+Wanneer een coureur over de finishlijn komt, registreert de server het aantal aangepaste ronden en wordt de referentiecoureur vastgesteld.
+
+#### 2. Berekening van Partiële Ronde
+Om een eerlijke en nauwkeurige vergelijking te waarborgen, wordt de partiële rondevoortgang van de referentiecoureur berekend op basis van de verstreken tijd sinds diens laatste doorkomst:
+$$\text{TimeSinceLastLap}_{\text{target}} = \text{CurrentElapsedTime} - \text{TimeOfLastLap}_{\text{target}}$$
+$$\text{PartialLap}_{\text{target}} = \min\left(0.99, \max\left(0.0, \frac{\text{TimeSinceLastLap}_{\text{target}}}{\text{MedianLapTime}_{\text{target}}}\right)\right)$$
+
+> [!NOTE]
+> Als de referentiecoureur nog geen geldige mediane rondetijd heeft ($\le 0$) of $\text{TimeSinceLastLap} \le 0$, is de partiële ronde $0.0$. De waarde wordt begrensd op maximaal $0.99$ om afronding naar een hele ronde voor de feitelijke doorkomst te voorkomen.
+
+#### 3. Effectief Rondenverschil
+$$\text{EffectiveLaps}_{\text{target}} = \text{AdjustedLaps}_{\text{target}} + \text{PartialLap}_{\text{target}}$$
+$$\text{GapLaps} = \text{EffectiveLaps}_{\text{target}} - \text{AdjustedLaps}_{\text{competitor}}$$
+
+De coureur behoudt deze berekende waarde tot diens eigen volgende rondeovergang.
 
 ---
 
-## Vergelijking: Standaardverschillen vs. Formule 1-verschillen
+## Vergelijking van Berekeningsmodi
 
-| Eigenschap | Standaardverschillen (`gapLeader`, `gapPosition`) | Formule 1-verschillen (`gapLeaderF1`, `gapPositionF1`) |
-| :--- | :--- | :--- |
-| **Berekeningsmethode** | Continue statistische pace-projectie | Exacte doorkomsttijd aan de finishlijn |
-| **Gedubbelde Wagens** | Geprojecteerde seconden (bijv. `+14.820`) | Rondenachterstand (bijv. `+1 Ronde`, `+2 Ronden`) |
-| **In Dezelfde Ronde** | Tijdsverschil in seconden (`+1.450`) | Doorkomsttijdsverschil bij dezelfde ronde (`+1.450`) |
-| **Finishmethode** | Onderscheidt tijd- en rondengestuurde races | Gebaseerd op doorkomstmeting in alle races |
-| **Aanbevolen Gebruik** | Continue snelheidscontrole bij slotracen | Televisiegrafieken, toeschouwersschermen |
-
----
-
-## Gebruik van Verschil-Widgets in de UI Editor
-
-### 1. In Roosters en Klassementen
-Selecteer in de UI Editor de Grid-widget en ga naar het tabblad **Kolommen**. Vink onder **Gaps & Intervals** of **Overall Gaps & Intervals** de gewenste kolommen aan.
-
-### 2. Zelfstandige Baankaarten
-Sleep een verschil-widget vanuit de Toolbox naar het canvas en koppel deze aan een **Specifieke Baan**, een **Heat-positie** of het **Algemeen Klassement**.
-
-### 3. Inset-verschillen op Andere Kaarten
-Voeg een verschilwaarde toe als secundaire badge binnen een andere kaart via de 8 ankerposities in **Card Insets**.
+| Eigenschap | Altijd tijd (`always_time`) | Ronden en tijd (`laps_and_time`) | Altijd ronden (`always_laps`) |
+| :--- | :--- | :--- | :--- |
+| **Aanpak** | Continue wiskundige pace-projectie | Exacte tijdstempels bij finishdoorkomst | Rondenverschil met partiële ronde |
+| **Gedubbelde Auto's** | Berekende seconden (bijv. `+14.820`) | Tekst met rondenachterstand (`+1 Ronde`) | Decimaal rondenverschil (bijv. `+2.45`) |
+| **In Zelfde Ronde** | Tijdsverschil in seconden (`+1.450`) | Exact tijdsverschil aan de lijn (`+1.450`) | Decimaal rondenverschil (bijv. `+0.28`) |
+| **Decimale Basis** | Tijddecimalen (1 tot 3) | Tijddecimalen (1 tot 3) | Rondedecimalen (0 tot 3) |
+| **Updatemoment** | Continue projectie-updates | Finishlijnovergang | Eigen voltooide ronde |
+| **Ideale Toepassing** | Slotcar pacing, kwalificaties | F1 TV-uitzendingsborden | Rondegebaseerde langeafstandsraces |
 
 ---
 
-## Integratie met Spraak (TTS), Audio & Export
+## Verschil-Widgets Gebruiken in de UI-Editor
 
-- **Tekst-naar-Spraak (TTS)**:
-  - `{driver.gapLeader}`: Gesproken verschil met de leider in seconden.
-  - `{driver.gapPosition}`: Gesproken verschil met de voorligger in seconden.
-- **Aangepaste HTML/JS Widgets**: `driver.gap_leader` en `driver.gap_position`.
-- **Excel-sjablonen (XLS)**:
-  - `${driver.gapLeader}` en `${driver.gapPosition}` (Algemeen klassement).
-  - `${heatDriver.gapLeader}` en `${heatDriver.gapPosition}` (Heat-resultaten).
+### 1. In Rasters en Ranglijsten
+Selecteer in de UI-Editor uw Raster-widget en open het tabblad **Kolommen**. Vink onder **Gaps & Intervallen** **Heat-verschil** (`gap`) of **Algemeen verschil** (`overallGap`) aan:
+- Selecteer de kolomkaart om de **Kolom-inspector** te openen.
+- Kies onder **Verschilconfiguratie** het **Doel** (*Leider* of *Voorgaande positie*) en de **Berekeningsmodus** (*Altijd tijd*, *Ronden en tijd* of *Altijd ronden*).
+- Meerdere verschilkolommen met verschillende instellingen kunnen gelijktijdig aan hetzelfde raster worden toegevoegd.
+
+### 2. Afzonderlijke Baanvak-kaarten
+Sleep verschil-widgets rechtstreeks van de gereedschapskist naar het canvas en stel doel en modus in via de inspector.
+
+### 3. Inset-Gegevens
+Verschillen kunnen als sub-badge in andere baanvak-kaarten worden ingevoegd door `gap` of `overallGap` toe te wijzen aan een van de 8 ankerposities.
+
+---
+
+## Integratie met Tekst-naar-Spraak (TTS), Audio & Export
+
+- **Tekst-naar-Spraak (TTS)**: `{driver.gapLeader}` en `{driver.gapPosition}`.
+- **Aangepaste HTML/JS-widgets**: `driver.gap_leader` en `driver.gap_position`.
+- **Excel-exports**: `${driver.gapLeader}` en `${driver.gapPosition}`.

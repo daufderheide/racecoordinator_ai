@@ -498,7 +498,7 @@ export class RacedayHeatListComponent implements AfterViewInit, OnDestroy {
     }
     const fixed = Math.abs(hd.gapLeader).toFixed(timeDec);
     const isZero = Number(fixed) === 0;
-    if (rank === 1 && isZero) {
+    if (rank === 1) {
       return "--";
     }
     if (isZero) {
@@ -589,7 +589,7 @@ export class RacedayHeatListComponent implements AfterViewInit, OnDestroy {
             : lane.gapLeader || 0;
         const fixed = Math.abs(gapLeader).toFixed(timeDec);
         const isZero = Number(fixed) === 0;
-        if (rank === 1 && isZero) {
+        if (rank === 1) {
           formattedGap = "--";
         } else if (isZero) {
           formattedGap =

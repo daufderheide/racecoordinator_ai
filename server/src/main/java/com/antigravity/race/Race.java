@@ -32,6 +32,7 @@ import com.antigravity.proto.RaceTime;
 import com.antigravity.proto.RecordData;
 import com.antigravity.proto.RegenerateHeatsRequest;
 import com.antigravity.proto.RegenerateHeatsResponse;
+import com.antigravity.proto.StandingsUpdate;
 import com.antigravity.protocols.CarData;
 import com.antigravity.protocols.PartialTime;
 import com.antigravity.protocols.ProtocolDelegate;
@@ -1299,19 +1300,21 @@ public class Race implements ProtocolListener {
           setFuelLevel(i, fuelLevel, capacity);
         }
       }
+      StandingsUpdate update = currentHeat.getHeatStandings().updateStandings();
       broadcast(
           RaceData.newBuilder()
               .setRace(
                   com.antigravity.proto.Race.newBuilder() // fqn-collision
                       .setCurrentHeat(HeatConverter.toProto(currentHeat, new HashSet<>()))
                       .build())
+              .setHeat(HeatConverter.toProto(currentHeat, new HashSet<>()))
+              .setStandingsUpdate(update)
               .build());
       broadcastFuelLevels();
       updateAndBroadcastOverallStandings();
       resetHeatRecords();
       broadcastRecords();
       broadcastTime();
-      updateAndBroadcastOverallStandings();
     }
   }
 
@@ -1337,12 +1340,15 @@ public class Race implements ProtocolListener {
           setFuelLevel(i, fuelLevel, capacity);
         }
       }
+      StandingsUpdate update = currentHeat.getHeatStandings().updateStandings();
       broadcast(
           RaceData.newBuilder()
               .setRace(
                   com.antigravity.proto.Race.newBuilder() // fqn-collision
                       .setCurrentHeat(HeatConverter.toProto(currentHeat, new HashSet<>()))
                       .build())
+              .setHeat(HeatConverter.toProto(currentHeat, new HashSet<>()))
+              .setStandingsUpdate(update)
               .build());
       broadcastFuelLevels();
       resetHeatRecords();
@@ -1356,11 +1362,16 @@ public class Race implements ProtocolListener {
   }
 
   public void recalculateOverallStandings() {
+    recalculateOverallStandings(null);
+  }
+
+  public void recalculateOverallStandings(String completedDriverParticipantId) {
     if (overallStandings != null) {
       overallStandings.recalculate(
           this.drivers,
           this.heats,
-          this.getRaceModel() != null ? this.getRaceModel().getHeatRotationType() : null);
+          this.getRaceModel() != null ? this.getRaceModel().getHeatRotationType() : null,
+          completedDriverParticipantId);
     }
   }
 

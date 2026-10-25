@@ -51,6 +51,8 @@ export class RaceParticipantConverter {
         team,
         proto.gapLeaderF1 || 0,
         proto.gapPositionF1 || 0,
+        proto.gapLeaderLaps || 0,
+        proto.gapPositionLaps || 0,
         proto.lapsDownLeader || 0,
         proto.lapsDownPosition || 0,
         proto.consistencyScore || 0,
@@ -96,6 +98,8 @@ export class RaceParticipantConverter {
       team,
       proto.gapLeaderF1 || 0,
       proto.gapPositionF1 || 0,
+      proto.gapLeaderLaps || 0,
+      proto.gapPositionLaps || 0,
       proto.lapsDownLeader || 0,
       proto.lapsDownPosition || 0,
       proto.consistencyScore || 0,
@@ -155,6 +159,10 @@ export class RaceParticipantConverter {
       cached.gapLeaderF1 = proto.gapLeaderF1;
     if (proto.gapPositionF1 !== undefined && proto.gapPositionF1 !== null)
       cached.gapPositionF1 = proto.gapPositionF1;
+    if (proto.gapLeaderLaps !== undefined && proto.gapLeaderLaps !== null)
+      cached.gapLeaderLaps = proto.gapLeaderLaps;
+    if (proto.gapPositionLaps !== undefined && proto.gapPositionLaps !== null)
+      cached.gapPositionLaps = proto.gapPositionLaps;
     if (proto.lapsDownLeader !== undefined && proto.lapsDownLeader !== null)
       cached.lapsDownLeader = proto.lapsDownLeader;
     if (proto.lapsDownPosition !== undefined && proto.lapsDownPosition !== null)

@@ -251,6 +251,8 @@ export class LaneViewInspectorComponent implements OnInit {
     const current = this.currentColumns;
     return this.availableColumns().filter(
       (c) =>
+        c.key === "gap" ||
+        c.key === "overallGap" ||
         !current.some(
           (colKey) => colKey === c.key || colKey.split("_").includes(c.key),
         ),

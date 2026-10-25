@@ -240,4 +240,31 @@ public class PausedTest {
 
     assertEquals(0.0, dhd.getAutoCalculatedLaps(), 0.001);
   }
+
+  @Test
+  public void testPauseBroadcastsHeatAndStandingsUpdate() {
+    Heat heat = mock(Heat.class);
+    when(heat.getObjectId()).thenReturn("heat-1");
+    com.antigravity.race.HeatStandings heatStandings =
+        mock(com.antigravity.race.HeatStandings.class);
+    when(heatStandings.updateStandings())
+        .thenReturn(com.antigravity.proto.StandingsUpdate.getDefaultInstance());
+    when(heat.getHeatStandings()).thenReturn(heatStandings);
+    when(race.getCurrentHeat()).thenReturn(heat);
+
+    paused.enter(race);
+
+    org.mockito.ArgumentCaptor<com.antigravity.proto.RaceData> captor =
+        org.mockito.ArgumentCaptor.forClass(com.antigravity.proto.RaceData.class);
+    verify(race).broadcast(captor.capture());
+
+    com.antigravity.proto.RaceData broadcast = captor.getValue();
+    org.junit.Assert.assertTrue(
+        "Broadcast should include Heat proto for custom widgets", broadcast.hasHeat());
+    org.junit.Assert.assertTrue(
+        "Broadcast should include StandingsUpdate during pause for gap updates",
+        broadcast.hasStandingsUpdate());
+
+    verify(race).recalculateOverallStandings();
+  }
 }

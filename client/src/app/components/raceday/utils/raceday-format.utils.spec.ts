@@ -255,6 +255,404 @@ describe("RacedayFormatUtils", () => {
     });
   });
 
+  describe("formatValue - Configurable Gap Widgets (gap & overallGap)", () => {
+    it("should format heat gap with always_laps and leader target", () => {
+      ctx.laneViewWidgetSettings = {
+        ...ctx.laneViewWidgetSettings,
+        gapTarget: "leader",
+        gapMode: "always_laps",
+      } as any;
+      (hd as any).physicalLapCount = 5;
+      hd.gapLeaderLaps = 1.45;
+
+      const result = RacedayFormatUtils.formatValue(
+        "gap",
+        undefined,
+        hd,
+        undefined,
+        ctx,
+      );
+      expect(result).toBe("+1.45");
+    });
+
+    it("should safely use gapLeaderLaps instead of time value when always_laps is set even if time value passed", () => {
+      ctx.laneViewWidgetSettings = {
+        ...ctx.laneViewWidgetSettings,
+        gapTarget: "leader",
+        gapMode: "always_laps",
+      } as any;
+      (hd as any).physicalLapCount = 8;
+      hd.gapLeader = 2.461;
+      hd.gapLeaderLaps = 0.0;
+
+      const result = RacedayFormatUtils.formatValue(
+        "gap",
+        2.461,
+        hd,
+        undefined,
+        ctx,
+      );
+      expect(result).toBe("+0.00");
+    });
+
+    it("should format heat gap with always_laps and position target", () => {
+      ctx.laneViewWidgetSettings = {
+        ...ctx.laneViewWidgetSettings,
+        gapTarget: "position",
+        gapMode: "always_laps",
+      } as any;
+      (hd as any).physicalLapCount = 5;
+      hd.gapPositionLaps = 0.32;
+
+      const result = RacedayFormatUtils.formatValue(
+        "gap",
+        undefined,
+        hd,
+        undefined,
+        ctx,
+      );
+      expect(result).toBe("+0.32");
+    });
+
+    it("should format gap with always_laps and leader target using hd.gapLeaderLaps even if time passed", () => {
+      ctx.laneViewWidgetSettings = {
+        ...ctx.laneViewWidgetSettings,
+        gapTarget: "leader",
+        gapMode: "always_laps",
+      } as any;
+      (hd as any).physicalLapCount = 1;
+      hd.gapLeader = 0.1;
+      hd.gapLeaderLaps = 0.04;
+
+      const result = RacedayFormatUtils.formatValue(
+        "gap",
+        0.1,
+        hd,
+        undefined,
+        ctx,
+      );
+      expect(result).toBe("+0.04");
+    });
+
+    it("should format gap with always_laps and position target using hd.gapPositionLaps even if time passed", () => {
+      ctx.laneViewWidgetSettings = {
+        ...ctx.laneViewWidgetSettings,
+        gapTarget: "position",
+        gapMode: "always_laps",
+      } as any;
+      (hd as any).physicalLapCount = 1;
+      hd.gapPosition = 0.298;
+      hd.gapPositionLaps = 0.09;
+
+      const result = RacedayFormatUtils.formatValue(
+        "gap",
+        0.298,
+        hd,
+        undefined,
+        ctx,
+      );
+      expect(result).toBe("+0.09");
+    });
+
+    it("should return lap placeholder when always_laps is 0 and driver has no data", () => {
+      ctx.laneViewWidgetSettings = {
+        ...ctx.laneViewWidgetSettings,
+        gapTarget: "leader",
+        gapMode: "always_laps",
+      } as any;
+      hd.gapLeaderLaps = 0;
+
+      const result = RacedayFormatUtils.formatValue(
+        "gap",
+        undefined,
+        hd,
+        undefined,
+        ctx,
+      );
+      expect(result).toBe("--.--");
+    });
+
+    it("should format heat gap with always_time", () => {
+      ctx.laneViewWidgetSettings = {
+        ...ctx.laneViewWidgetSettings,
+        gapTarget: "leader",
+        gapMode: "always_time",
+      } as any;
+      (hd as any).physicalLapCount = 3;
+      hd.gapLeader = 2.123;
+
+      const result = RacedayFormatUtils.formatValue(
+        "gap",
+        undefined,
+        hd,
+        undefined,
+        ctx,
+      );
+      expect(result).toBe("+2.123");
+    });
+
+    it("should format heat gap with laps_and_time when lapped", () => {
+      ctx.laneViewWidgetSettings = {
+        ...ctx.laneViewWidgetSettings,
+        gapTarget: "leader",
+        gapMode: "laps_and_time",
+      } as any;
+      hd.lapsDownLeader = 1;
+
+      const result = RacedayFormatUtils.formatValue(
+        "gap",
+        0,
+        hd,
+        undefined,
+        ctx,
+      );
+      expect(result).toBe("+1 Lap");
+    });
+
+    it("should format heat gap based on inset config overrides", () => {
+      ctx.laneViewWidgetSettings = {
+        ...ctx.laneViewWidgetSettings,
+        gapTarget: "leader",
+        gapMode: "always_time",
+        insetsConfig: {
+          "top-right": {
+            columnKey: "gap",
+            gapTarget: "position",
+            gapMode: "always_laps",
+          },
+        },
+      } as any;
+      (hd as any).physicalLapCount = 4;
+      hd.gapPositionLaps = 0.78;
+
+      const result = RacedayFormatUtils.formatValue(
+        "gap",
+        undefined,
+        hd,
+        undefined,
+        ctx,
+        "top-right",
+      );
+      expect(result).toBe("+0.78");
+    });
+
+    it("should format overall gap with always_laps and leader target", () => {
+      ctx.laneViewWidgetSettings = {
+        ...ctx.laneViewWidgetSettings,
+        gapTarget: "leader",
+        gapMode: "always_laps",
+      } as any;
+      const participant: any = {
+        gapLeaderLaps: 2.5,
+        totalLaps: 10,
+        physicalLapCount: 10,
+      };
+      (hd as any).participant = participant;
+
+      const result = RacedayFormatUtils.formatValue(
+        "overallGap",
+        undefined,
+        hd,
+        undefined,
+        ctx,
+      );
+      expect(result).toBe("+2.50");
+    });
+
+    it("should format overall gap with always_time", () => {
+      ctx.laneViewWidgetSettings = {
+        ...ctx.laneViewWidgetSettings,
+        gapTarget: "leader",
+        gapMode: "always_time",
+      } as any;
+      const participant: any = {
+        gapLeader: 3.456,
+        totalLaps: 10,
+        physicalLapCount: 10,
+      };
+      (hd as any).participant = participant;
+
+      const result = RacedayFormatUtils.formatValue(
+        "overallGap",
+        undefined,
+        hd,
+        undefined,
+        ctx,
+      );
+      expect(result).toBe("+3.456");
+    });
+
+    it("should format overall gap with laps_and_time when lapped", () => {
+      ctx.laneViewWidgetSettings = {
+        ...ctx.laneViewWidgetSettings,
+        gapTarget: "leader",
+        gapMode: "laps_and_time",
+      } as any;
+      const participant: any = {
+        gapLeader: 0,
+        lapsDownLeader: 2,
+        totalLaps: 10,
+        physicalLapCount: 10,
+      };
+      (hd as any).participant = participant;
+
+      const result = RacedayFormatUtils.formatValue(
+        "overallGap",
+        undefined,
+        hd,
+        undefined,
+        ctx,
+      );
+      expect(result).toBe("+2 Laps");
+    });
+
+    it("should format heat gap as placeholder when driver is in 1st place in heat", () => {
+      hd.rank = 1;
+      (hd as any).physicalLapCount = 5;
+      hd.gapLeader = 0;
+      expect(
+        RacedayFormatUtils.formatValue("gap", undefined, hd, undefined, ctx),
+      ).toBe("--.---");
+      expect(
+        RacedayFormatUtils.formatValue("gapLeader", 0, hd, undefined, ctx),
+      ).toBe("--.---");
+      expect(
+        RacedayFormatUtils.formatValue("gapPosition", 0, hd, undefined, ctx),
+      ).toBe("--.---");
+      expect(
+        RacedayFormatUtils.formatValue("gapLeaderF1", 0, hd, undefined, ctx),
+      ).toBe("--.---");
+    });
+
+    it("should format heat gap as placeholder when driver ranking map has rank 1", () => {
+      (hd as any).physicalLapCount = 5;
+      hd.gapLeader = 0;
+      const rankCtx = {
+        ...ctx,
+        getDriverRanking: (id: string) => (id === hd.objectId ? 1 : 2),
+      };
+      expect(
+        RacedayFormatUtils.formatValue(
+          "gap",
+          undefined,
+          hd,
+          undefined,
+          rankCtx,
+        ),
+      ).toBe("--.---");
+    });
+
+    it("should format heat gap with always_laps as lap placeholder when driver is in 1st place", () => {
+      hd.rank = 1;
+      (hd as any).physicalLapCount = 5;
+      ctx.laneViewWidgetSettings = {
+        ...ctx.laneViewWidgetSettings,
+        gapMode: "always_laps",
+      } as any;
+      expect(
+        RacedayFormatUtils.formatValue("gap", undefined, hd, undefined, ctx),
+      ).toBe("--.--");
+    });
+
+    it("should format overall gap as placeholder when driver is 1st place overall", () => {
+      (hd as any).participant = {
+        rank: 1,
+        totalLaps: 10,
+        gapLeader: 0,
+        physicalLapCount: 10,
+      };
+      expect(
+        RacedayFormatUtils.formatValue(
+          "overallGap",
+          undefined,
+          hd,
+          undefined,
+          ctx,
+        ),
+      ).toBe("--.---");
+      expect(
+        RacedayFormatUtils.formatValue(
+          "overallGapLeader",
+          0,
+          hd,
+          undefined,
+          ctx,
+        ),
+      ).toBe("--.---");
+      expect(
+        RacedayFormatUtils.formatValue(
+          "overallGapPosition",
+          0,
+          hd,
+          undefined,
+          ctx,
+        ),
+      ).toBe("--.---");
+    });
+
+    it("should format overall gap as placeholder when getDriverOverallRanking returns 1", () => {
+      (hd as any).participant = {
+        totalLaps: 10,
+        physicalLapCount: 10,
+      };
+      const overallRankCtx = {
+        ...ctx,
+        getDriverOverallRanking: () => 1,
+      };
+      expect(
+        RacedayFormatUtils.formatValue(
+          "overallGap",
+          undefined,
+          hd,
+          undefined,
+          overallRankCtx,
+        ),
+      ).toBe("--.---");
+    });
+
+    it("should format overall gap with always_laps as lap placeholder when in 1st place overall", () => {
+      (hd as any).participant = {
+        rank: 1,
+        totalLaps: 10,
+        physicalLapCount: 10,
+      };
+      ctx.laneViewWidgetSettings = {
+        ...ctx.laneViewWidgetSettings,
+        gapMode: "always_laps",
+      } as any;
+      expect(
+        RacedayFormatUtils.formatValue(
+          "overallGap",
+          undefined,
+          hd,
+          undefined,
+          ctx,
+        ),
+      ).toBe("--.--");
+    });
+
+    it("should format gap as +0.000 when driver is in 2nd place and gap is 0", () => {
+      hd.rank = 2;
+      (hd as any).physicalLapCount = 5;
+      hd.gapLeader = 0;
+      expect(RacedayFormatUtils.formatValue("gap", 0, hd, undefined, ctx)).toBe(
+        "+0.000",
+      );
+    });
+
+    it("should format overall gap as +0.000 when driver is in 2nd place overall and gap is 0", () => {
+      (hd as any).participant = {
+        rank: 2,
+        totalLaps: 10,
+        physicalLapCount: 10,
+        gapLeader: 0,
+      };
+      expect(
+        RacedayFormatUtils.formatValue("overallGap", 0, hd, undefined, ctx),
+      ).toBe("+0.000");
+    });
+  });
+
   describe("formatValue - Predictions", () => {
     it("should return -- without % sign for empty lane", () => {
       const mockHd = { actualDriver: null } as any;

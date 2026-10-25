@@ -407,7 +407,7 @@ describe("LaneViewInspectorComponent", () => {
         { key: "lapCount", label: "RD_COL_LAP" },
         { key: "lastLapTime", label: "RD_COL_LAP_TIME" },
         { key: "standardDeviation", label: "RD_COL_STD_DEV" },
-        { key: "gapLeader", label: "UI_EDITOR_COL_GAP_LEADER" },
+        { key: "gap", label: "UI_EDITOR_COL_HEAT_GAP" },
         { key: "ghostPacing", label: "RD_COL_GHOST_PACING_LANE_RECORD" },
         { key: "participant.fuelLevel", label: "RD_COL_FUEL_LEVEL" },
         { key: "winProbability", label: "RD_COL_WIN_PROB" },
@@ -506,7 +506,7 @@ describe("LaneViewInspectorComponent", () => {
       });
       customFixture.componentRef.setInput("globalSettings", {});
       customFixture.componentRef.setInput("availableColumns", [
-        { key: "gapLeader", label: "Gap" },
+        { key: "gap", label: "Gap" },
       ]);
       customFixture.detectChanges();
 

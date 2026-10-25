@@ -110,12 +110,22 @@ Het widget **Heats Gereden** (`heatsRaced`) toont de voortgang van de deelname a
 
 #### Verschil-Widgets (Gaps & Intervallen)
 
-Race Coordinator AI ondersteunt **4 afzonderlijke verschil-widgets** voor zowel Heat-gegevens als Algemene Gegevens:
+Race Coordinator AI biedt **2 configureerbare verschil-widgets** voor Heat-gegevens en Algemene Gegevens:
 
-1. **Verschil met de Leider (`gapLeader` / `overallGapLeader`)**: Continue pace-projectie van het berekende tijdsverschil met de leider (P1).
-2. **Verschil met de Voorligger (`gapPosition` / `overallGapPosition`)**: Continue pace-projectie van het berekende tijdsverschil met de directe voorligger.
-3. **Formule 1-verschil met de Leider (`gapLeaderF1` / `overallGapLeaderF1`)**: Exact tijdsverschil aan de finishlijn in dezelfde ronde of rondenachterstand (`+1 Ronde`, `+N Ronden`) bij een dubbeling.
-4. **Formule 1-verschil met de Voorligger (`gapPositionF1` / `overallGapPositionF1`)**: Exact tijdsverschil aan de finishlijn met de voorligger in dezelfde ronde of rondenachterstand (`+1 Ronde`, `+N Ronden`).
+1. **Heat-verschil (`gap`)**: Berekent intervallen in realtime uitsluitend tussen auto's die actief racen in de huidige heat.
+2. **Algemeen verschil (`overallGap`)**: Berekent cumulatieve intervallen over alle deelnemers aan het evenement.
+
+Elke verschil-widget kan in de Kolom-inspector worden aangepast met twee kernopties:
+- **Doel**:
+  - **Leider**: Verschil ten opzichte van de huidige raceleider (P1).
+  - **Voorgaande positie**: Verschil ten opzichte van de directe voorligger in de stand (bijv. P3 t.o.v. P2).
+- **Berekeningsmodus**:
+  - **Altijd tijd**: Continue pace-projectie van het tijdsverschil in seconden (`+X.XXX`).
+  - **Ronden en tijd**: Formule 1-weergave met tijdsverschil in dezelfde ronde of rondenachterstand (`+1 Ronde`, `+N Ronden`) bij een dubbeling.
+  - **Altijd ronden**: Exact rondenverschil berekend bij finishdoorkomst, inclusief de partiële rondevoortgang van de vergeleken coureur.
+
+> [!NOTE]
+> Meerdere verschil-widgets met verschillende configuraties (bijvoorbeeld een Leider-verschilkolom en een Voorligger-verschilkolom) kunnen gelijktijdig op hetzelfde raster of layout worden geplaatst.
 
 Voor gedetailleerde wiskundige formules en tijdmetingsspecificaties, zie de [Gids voor Verschilberekeningen](gap-calculations.md).
 

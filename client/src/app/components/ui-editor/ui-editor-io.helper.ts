@@ -135,6 +135,10 @@ export function parseLayoutImport(
       isPractice,
     });
     const finalLayout = migration.migrated ? migration.layout : layout;
+    LaneViewMigrationHelper.migrateGapWidgets(finalLayout);
+    LaneViewMigrationHelper.migrateColumnList(columns);
+    LaneViewMigrationHelper.migrateColumnLayouts(columnLayouts);
+    LaneViewMigrationHelper.migrateColumnWidths(columnWidths);
 
     return {
       layout: finalLayout,
@@ -196,6 +200,10 @@ export function getDefaultLayoutResetData(
     isPractice,
   });
   const finalLayout = migration.migrated ? migration.layout : defaultLayout;
+  LaneViewMigrationHelper.migrateGapWidgets(finalLayout);
+  LaneViewMigrationHelper.migrateColumnList(columns);
+  LaneViewMigrationHelper.migrateColumnLayouts(columnLayouts);
+  LaneViewMigrationHelper.migrateColumnWidths(columnWidths);
 
   return {
     defaultLayout: finalLayout,
