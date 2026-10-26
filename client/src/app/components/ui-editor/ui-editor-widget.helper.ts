@@ -352,6 +352,24 @@ export function handleWidgetColorChange(
   }
 }
 
+export function resetCustomScalingOverrides(widget: any): void {
+  if (!widget?.customSettings) return;
+  const s = widget.customSettings;
+  const isGrid = Boolean(s["gridId"]);
+  if (widget.widgetType === "lane-column") {
+    s["valueFontSize"] = isGrid ? 54 : 36;
+    s["headerFontSize"] = isGrid ? 24 : 14;
+    s["insetFontSize"] = isGrid ? 24 : 18;
+    if (s.insetsConfig) {
+      for (const anchor of Object.keys(s.insetsConfig)) {
+        if (s.insetsConfig[anchor]?.fontSize) {
+          delete s.insetsConfig[anchor].fontSize;
+        }
+      }
+    }
+  }
+}
+
 export function handleWidgetInspectorChange(
   comp: any,
   widget?: any,
@@ -361,6 +379,18 @@ export function handleWidgetInspectorChange(
   const targetWidget = widget || comp.currentSelectedWidget;
   const layout = comp.getLayout(targetUi);
   if (layout && targetWidget && layout.widgets) {
+    if (targetWidget.scaleMode === "auto") {
+      resetCustomScalingOverrides(targetWidget);
+      const targetGridId = targetWidget.customSettings?.["gridId"];
+      if (targetGridId) {
+        for (const w of layout.widgets) {
+          if (w.customSettings?.["gridId"] === targetGridId) {
+            w.scaleMode = "auto";
+            resetCustomScalingOverrides(w);
+          }
+        }
+      }
+    }
     const idx = layout.widgets.findIndex((w: any) => w.id === targetWidget.id);
     if (idx !== -1) {
       layout.widgets[idx] = targetWidget;

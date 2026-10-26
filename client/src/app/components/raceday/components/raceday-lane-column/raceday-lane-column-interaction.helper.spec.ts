@@ -443,6 +443,30 @@ describe("raceday-lane-column-interaction.helper", () => {
       expect(headerEl.style.fontSize).toMatch(/\d+px/);
     });
 
+    it("should auto-scale header font size in auto scaleMode rather than staying stuck on small custom headerFontSize", () => {
+      const cardEl = document.createElement("div");
+      Object.defineProperty(cardEl, "clientWidth", {
+        value: 200,
+        configurable: true,
+      });
+      Object.defineProperty(cardEl, "clientHeight", {
+        value: 100,
+        configurable: true,
+      });
+      const headerEl = document.createElement("div");
+      headerEl.className = "lane-col-header";
+      cardEl.appendChild(headerEl);
+
+      fitLaneColumnHeaderText(
+        cardEl,
+        { headerFontSize: 8 } as any,
+        { scaleMode: "auto" } as any,
+        "TEST",
+      );
+      const parsedSize = parseInt(headerEl.style.fontSize, 10);
+      expect(parsedSize).toBeGreaterThan(8);
+    });
+
     it("should gracefully do nothing if header element missing", () => {
       const cardEl = document.createElement("div");
       expect(() =>

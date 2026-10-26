@@ -376,7 +376,11 @@ export class RacedayLaneColumnComponent
   }
 
   getEffectiveInsetFontSize(anchor?: string): number {
-    if (anchor && this.settings.insetsConfig?.[anchor]?.fontSize) {
+    if (
+      this.widget()?.scaleMode !== "auto" &&
+      anchor &&
+      this.settings.insetsConfig?.[anchor]?.fontSize
+    ) {
       return this.settings.insetsConfig[anchor].fontSize!;
     }
     return this.effectiveInsetFontSize;

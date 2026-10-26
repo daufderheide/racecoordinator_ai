@@ -1036,6 +1036,64 @@ describe("raceday-lane-column.utils", () => {
       expect(numSize).toBeGreaterThanOrEqual(10);
     });
 
+    it("should auto-scale font size to available container height in auto mode even when valueFontSize is set small", () => {
+      Object.defineProperty(cardEl, "clientWidth", {
+        value: 200,
+        configurable: true,
+      });
+      Object.defineProperty(cardEl, "clientHeight", {
+        value: 100,
+        configurable: true,
+      });
+
+      fitColumnTextValue(
+        cardEl,
+        "42",
+        { valueFontSize: 12 } as any,
+        "auto",
+        "vertical",
+        false,
+        false,
+        () => false,
+        14,
+      );
+
+      const sizeVar = cardEl.style.getPropertyValue(
+        "--lane-col-value-font-size",
+      );
+      const numSize = parseInt(sizeVar, 10);
+      expect(numSize).toBe(36);
+    });
+
+    it("should auto-scale grid column font size up to 54 in auto mode even when valueFontSize is set small", () => {
+      Object.defineProperty(cardEl, "clientWidth", {
+        value: 200,
+        configurable: true,
+      });
+      Object.defineProperty(cardEl, "clientHeight", {
+        value: 100,
+        configurable: true,
+      });
+
+      fitColumnTextValue(
+        cardEl,
+        "42",
+        { gridId: "grid-heat-data", valueFontSize: 12 } as any,
+        "auto",
+        "vertical",
+        false,
+        false,
+        () => false,
+        14,
+      );
+
+      const sizeVar = cardEl.style.getPropertyValue(
+        "--lane-col-value-font-size",
+      );
+      const numSize = parseInt(sizeVar, 10);
+      expect(numSize).toBe(54);
+    });
+
     it("should use explicitWidth and explicitHeight without reading card dimensions", () => {
       // cardEl has no clientWidth or clientHeight defined
       fitColumnTextValue(
@@ -1058,7 +1116,7 @@ describe("raceday-lane-column.utils", () => {
       expect(sizeVar).toBeTruthy();
       const numSize = parseInt(sizeVar, 10);
       expect(numSize).toBeGreaterThanOrEqual(10);
-      expect(numSize).toBeLessThanOrEqual(40);
+      expect(numSize).toBeLessThanOrEqual(36);
     });
 
     it("should allow two-digit numbers (10+) to maintain a large legible font size without excessive shrinkage compared to single digits", () => {

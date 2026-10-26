@@ -11,6 +11,8 @@ import { TranslationService } from "@app/services/translation.service";
 import {
   buildSyntheticInsetWidgetInputs,
   buildSyntheticMainWidgetInputs,
+  DEFAULT_GRID_LANE_COLUMN_HEADER_FONT_SIZE,
+  DEFAULT_LANE_COLUMN_HEADER_FONT_SIZE,
   extractDroppedColumnKey,
   fitColumnLastLaps,
   formatAdjustedLapValue,
@@ -228,9 +230,15 @@ export function fitLaneColumnHeaderText(
   const cardH =
     explicitHeight && explicitHeight > 0 ? explicitHeight : cardEl.clientHeight;
 
-  const baseFontSize = Number(
-    settings.headerFontSize || (widget?.fontSize ? widget.fontSize : 24),
-  );
+  const isGrid = Boolean(settings.gridId || widget?.customSettings?.["gridId"]);
+  const baseFontSize =
+    widget?.scaleMode === "auto"
+      ? isGrid
+        ? DEFAULT_GRID_LANE_COLUMN_HEADER_FONT_SIZE
+        : DEFAULT_LANE_COLUMN_HEADER_FONT_SIZE
+      : Number(
+          settings.headerFontSize || (widget?.fontSize ? widget.fontSize : 24),
+        );
   const availWidth = Math.max(10, cardW - 8);
   const availHeight = Math.max(10, cardH - 4);
 
@@ -939,9 +947,12 @@ export function applyLaneColumnLastLapsFit(
 ): void {
   if (!cardEl) return;
 
-  const baseFontSize = Number(
-    settings.valueFontSize || (widget?.fontSize ? widget.fontSize : 54),
-  );
+  const baseFontSize =
+    widget?.scaleMode === "auto"
+      ? 54
+      : Number(
+          settings.valueFontSize || (widget?.fontSize ? widget.fontSize : 54),
+        );
   const explicitW = widget?.width;
   const explicitH = widget?.height;
 

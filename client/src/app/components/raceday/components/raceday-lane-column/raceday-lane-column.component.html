@@ -57,7 +57,9 @@
       class="lane-col-header header-widget-only"
       [style.background]="effectiveHeaderBackgroundColor"
       [style.font-family]="settings.headerFontFamily || null"
-      [style.font-size.px]="settings.headerFontSize || 14"
+      [style.font-size.px]="
+        widget()?.scaleMode === 'auto' ? null : settings.headerFontSize || null
+      "
       [style.color]="effectiveHeaderTextColor"
       [style.justify-content]="
         settings.headerAlignment === 'start'
@@ -86,7 +88,11 @@
         class="lane-col-header"
         [style.background]="effectiveHeaderBackgroundColor"
         [style.font-family]="settings.headerFontFamily || null"
-        [style.font-size.px]="settings.headerFontSize || 14"
+        [style.font-size.px]="
+          widget()?.scaleMode === 'auto'
+            ? null
+            : settings.headerFontSize || null
+        "
         [style.color]="effectiveHeaderTextColor"
         [style.justify-content]="
           settings.headerAlignment === 'start'

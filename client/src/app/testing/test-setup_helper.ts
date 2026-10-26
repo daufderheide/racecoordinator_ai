@@ -2589,15 +2589,27 @@ export class TestSetupHelper {
         get: (key: string) => {
           const request: any = { result: null, onsuccess: null, onerror: null };
           setTimeout(() => {
-            if (key === "raceday-setup-dir") {
+            if (key === "raceday-setup-dir" || key === "custom-widgets-dir") {
               request.result = mockDirectoryHandle;
             }
             if (request.onsuccess) request.onsuccess({ target: request });
           }, 10);
           return request;
         },
-        put: () => ({ onsuccess: null, onerror: null }), // No-op for put
-        delete: () => ({ onsuccess: null, onerror: null }), // No-op for delete
+        put: () => {
+          const req: any = { onsuccess: null, onerror: null };
+          setTimeout(() => {
+            if (req.onsuccess) req.onsuccess({ target: req });
+          }, 10);
+          return req;
+        },
+        delete: () => {
+          const req: any = { onsuccess: null, onerror: null };
+          setTimeout(() => {
+            if (req.onsuccess) req.onsuccess({ target: req });
+          }, 10);
+          return req;
+        },
       };
 
       const mockTransaction = {
@@ -2610,39 +2622,44 @@ export class TestSetupHelper {
         transaction: (_stores: any, _mode: any) => mockTransaction,
       };
 
-      const mockOpenRequest: any = {
-        result: mockDB,
-        onsuccess: null,
-        onerror: null,
-        onupgradeneeded: null,
+      const createOpenRequest = () => {
+        const listeners: Record<string, Function[]> = {};
+        const req: any = {
+          result: mockDB,
+          onsuccess: null,
+          onerror: null,
+          onupgradeneeded: null,
+          addEventListener: (event: string, fn: Function) => {
+            listeners[event] = listeners[event] || [];
+            listeners[event].push(fn);
+          },
+        };
+        setTimeout(() => {
+          const event = { target: req };
+          if (req.onsuccess) {
+            req.onsuccess(event);
+          }
+          if (listeners["success"]) {
+            listeners["success"].forEach((fn) => fn(event));
+          }
+        }, 10);
+        return req;
       };
+
+      const openFn = (_name: string, _version?: number) => createOpenRequest();
 
       // Override window.indexedDB
       try {
         Object.defineProperty(window, "indexedDB", {
           value: {
-            open: (_name: string, _version: number) => {
-              setTimeout(() => {
-                if (mockOpenRequest.onsuccess) {
-                  mockOpenRequest.onsuccess({ target: mockOpenRequest });
-                }
-              }, 10);
-              return mockOpenRequest;
-            },
+            open: openFn,
           },
           writable: true,
         });
       } catch (e) {
         // Fallback
         (window as any).indexedDB = {
-          open: (_name: string, _version: number) => {
-            setTimeout(() => {
-              if (mockOpenRequest.onsuccess) {
-                mockOpenRequest.onsuccess({ target: mockOpenRequest });
-              }
-            }, 10);
-            return mockOpenRequest;
-          },
+          open: openFn,
         };
       }
     }, customFiles);

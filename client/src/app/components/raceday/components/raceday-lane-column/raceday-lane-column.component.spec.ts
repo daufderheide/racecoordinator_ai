@@ -1310,6 +1310,51 @@ describe("RacedayLaneColumnComponent", () => {
     );
   });
 
+  it("should auto-scale font size back up when switching from custom mode with small font size back to auto scaleMode", () => {
+    fixture.componentRef.setInput("parent", mockParent);
+    const widget = createWidget({
+      columnKey: "driver.nickname",
+      valueFontSize: 14,
+    });
+    widget.scaleMode = "";
+    fixture.componentRef.setInput("widget", widget);
+    const cardEl = component.cardRef()?.nativeElement;
+    if (cardEl) {
+      Object.defineProperty(cardEl, "clientWidth", {
+        value: 200,
+        configurable: true,
+      });
+      Object.defineProperty(cardEl, "clientHeight", {
+        value: 100,
+        configurable: true,
+      });
+    }
+    spyOnProperty(component, "formattedValue", "get").and.returnValue(
+      "Driver Name",
+    );
+    component.fitContent();
+
+    expect(cardEl?.style.getPropertyValue("--lane-col-value-font-size")).toBe(
+      "14px",
+    );
+
+    // Switch back to auto-scale mode
+    const autoWidget = createWidget({
+      columnKey: "driver.nickname",
+      valueFontSize: 14,
+    });
+    autoWidget.scaleMode = "auto";
+    fixture.componentRef.setInput("widget", autoWidget);
+    component.fitContent();
+
+    const sizeVar = cardEl?.style.getPropertyValue(
+      "--lane-col-value-font-size",
+    );
+    const autoNum = parseInt(sizeVar || "0", 10);
+    expect(autoNum).toBeGreaterThan(14);
+    expect(autoNum).toBeLessThanOrEqual(36);
+  });
+
   it("should render value inside .lane-col-text with proper text alignment", () => {
     fixture.componentRef.setInput("parent", mockParent);
     fixture.componentRef.setInput(

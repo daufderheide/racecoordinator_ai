@@ -6,6 +6,7 @@ import {
   computeWidgetDisplayName,
   findDefaultWidgetId,
   handleWidgetInspectorChange,
+  resetCustomScalingOverrides,
   resolveActiveLayout,
   updateLayoutOnModel,
 } from "./ui-editor-widget.helper";
@@ -536,6 +537,99 @@ describe("ui-editor-widget.helper", () => {
     handleEditGridTemplate(comp, "grid-test-revert");
     expect(comp.activeGridSession).toBeDefined();
     expect(comp.activeGridSession.gridType).toBe("heat");
+  });
+
+  describe("resetCustomScalingOverrides", () => {
+    it("should reset custom font sizes to 54/24/24 for grid lane column", () => {
+      const widget: any = {
+        widgetType: "lane-column",
+        customSettings: {
+          gridId: "grid-test",
+          valueFontSize: 12,
+          headerFontSize: 8,
+          insetFontSize: 10,
+          insetsConfig: {
+            "top-left": { fontSize: 9 },
+          },
+        },
+      };
+      resetCustomScalingOverrides(widget);
+      expect(widget.customSettings.valueFontSize).toBe(54);
+      expect(widget.customSettings.headerFontSize).toBe(24);
+      expect(widget.customSettings.insetFontSize).toBe(24);
+      expect(
+        widget.customSettings.insetsConfig["top-left"].fontSize,
+      ).toBeUndefined();
+    });
+
+    it("should reset custom font sizes to 36/14/18 for standalone lane column", () => {
+      const widget: any = {
+        widgetType: "lane-column",
+        customSettings: {
+          valueFontSize: 12,
+          headerFontSize: 8,
+          insetFontSize: 10,
+        },
+      };
+      resetCustomScalingOverrides(widget);
+      expect(widget.customSettings.valueFontSize).toBe(36);
+      expect(widget.customSettings.headerFontSize).toBe(14);
+      expect(widget.customSettings.insetFontSize).toBe(18);
+    });
+
+    it("should gracefully do nothing for widgets without customSettings", () => {
+      expect(() => resetCustomScalingOverrides(null)).not.toThrow();
+      expect(() => resetCustomScalingOverrides({})).not.toThrow();
+    });
+  });
+
+  it("should reset custom font sizes and propagate scaleMode auto across all grid widgets when handleWidgetInspectorChange is called", () => {
+    const targetWidget = {
+      id: "w1",
+      widgetType: "lane-column",
+      scaleMode: "auto",
+      customSettings: {
+        gridId: "grid-test",
+        valueFontSize: 12,
+        headerFontSize: 8,
+        insetFontSize: 10,
+      },
+    };
+    const siblingGridWidget = {
+      id: "w2",
+      widgetType: "lane-column",
+      scaleMode: "fixed",
+      customSettings: {
+        gridId: "grid-test",
+        valueFontSize: 14,
+        headerFontSize: 10,
+        insetFontSize: 12,
+      },
+    };
+    const layout = { widgets: [targetWidget, siblingGridWidget] };
+    const comp = {
+      isSaving: false,
+      activeCustomUi: { entity_id: "ui1" },
+      currentSelectedWidget: targetWidget,
+      getLayout: jasmine.createSpy("getLayout").and.returnValue(layout),
+      editingSettings: new Settings(),
+      isCurrentLayoutPractice: false,
+      parsedLayouts: new Map(),
+      captureState: jasmine.createSpy("captureState"),
+      cdr: { markForCheck: jasmine.createSpy("markForCheck") },
+      syncRacedayPreview: jasmine.createSpy("syncRacedayPreview"),
+    };
+
+    handleWidgetInspectorChange(comp, targetWidget);
+
+    expect(targetWidget.customSettings.valueFontSize).toBe(54);
+    expect(targetWidget.customSettings.headerFontSize).toBe(24);
+    expect(targetWidget.customSettings.insetFontSize).toBe(24);
+
+    expect(siblingGridWidget.scaleMode).toBe("auto");
+    expect(siblingGridWidget.customSettings.valueFontSize).toBe(54);
+    expect(siblingGridWidget.customSettings.headerFontSize).toBe(24);
+    expect(siblingGridWidget.customSettings.insetFontSize).toBe(24);
   });
 
   it("should handle removing selected widget", () => {

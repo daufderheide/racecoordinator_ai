@@ -7,6 +7,11 @@ import {
 import { DriverHeatData } from "@app/race/driver_heat_data";
 import { GhostBenchmarkType } from "@app/services/ghost-pacing.service";
 
+export const DEFAULT_LANE_COLUMN_VALUE_FONT_SIZE = 36;
+export const DEFAULT_GRID_LANE_COLUMN_VALUE_FONT_SIZE = 54;
+export const DEFAULT_LANE_COLUMN_HEADER_FONT_SIZE = 14;
+export const DEFAULT_GRID_LANE_COLUMN_HEADER_FONT_SIZE = 24;
+
 export function isCustomWidgetKey(key: string | undefined): boolean {
   return Boolean(key && key.startsWith("custom:"));
 }
@@ -687,16 +692,17 @@ export function fitColumnTextValue(
     effectiveInsetFontSize,
   );
 
-  let baseFontSize = settings.valueFontSize || 36;
+  const defaultBaseSize = settings.gridId
+    ? DEFAULT_GRID_LANE_COLUMN_VALUE_FONT_SIZE
+    : DEFAULT_LANE_COLUMN_VALUE_FONT_SIZE;
+  let baseFontSize: number;
   if (scaleMode === "auto") {
-    if (settings.valueFontSize) {
-      baseFontSize = Math.max(
-        12,
-        Math.min(settings.valueFontSize, Math.round(dims.availHeight * 0.85)),
-      );
-    } else {
-      baseFontSize = Math.max(12, Math.round(dims.availHeight * 0.85));
-    }
+    baseFontSize = Math.max(
+      12,
+      Math.min(defaultBaseSize, Math.round(dims.availHeight * 0.85)),
+    );
+  } else {
+    baseFontSize = settings.valueFontSize || defaultBaseSize;
   }
 
   const isCustomScaling = scaleMode !== undefined && scaleMode !== "auto";
