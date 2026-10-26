@@ -476,6 +476,13 @@ export function resolveLaneColumnBackgroundColor(
   targetIndex: number,
 ): string {
   if (settings.useLaneColors === false) {
+    if (
+      bindingMode === "hostLane" &&
+      parent?.isDriverStation &&
+      !parent?.isUIEditorMode?.()
+    ) {
+      return settings.backgroundColor || "transparent";
+    }
     return settings.backgroundColor || "#000000";
   }
   if (
@@ -501,7 +508,7 @@ export function resolveLaneColumnBackgroundColor(
     parent?.isDriverStation &&
     !parent?.isUIEditorMode?.()
   ) {
-    return "transparent";
+    return settings.backgroundColor || "transparent";
   }
   if (bindingMode === "hostLane" && parent?.activeLaneBackgroundColor) {
     return parent.activeLaneBackgroundColor;
@@ -536,7 +543,20 @@ export function resolveLaneColumnForegroundColor(
   targetIndex: number,
 ): string {
   if (settings.useLaneColors === false) {
-    return settings.textColor || "#ffffff";
+    if (
+      (bindingMode === "hostLane" || parent?.isDriverStation) &&
+      !settings.textColor &&
+      parent?.activeLaneForegroundColor
+    ) {
+      return parent.activeLaneForegroundColor;
+    }
+    return (
+      settings.textColor ||
+      (parent?.isDriverStation
+        ? parent?.activeLaneForegroundColor
+        : undefined) ||
+      "#ffffff"
+    );
   }
   if (
     isOverallOrSeedDataSource(settings, parent, bindingMode) &&
@@ -578,7 +598,12 @@ export function resolveLaneColumnForegroundColor(
   }
   const trackLaneFg =
     laneIdx >= 0 ? track?.lanes?.[laneIdx]?.foreground_color : undefined;
-  return trackLaneFg || settings.textColor || "#ffffff";
+  return (
+    trackLaneFg ||
+    settings.textColor ||
+    (parent?.isDriverStation ? parent?.activeLaneForegroundColor : undefined) ||
+    "#ffffff"
+  );
 }
 
 export function resolveLaneColumnEffectiveHeaderTextColor(

@@ -96,6 +96,46 @@ describe("ui-editor-data.helper", () => {
     );
   });
 
+  it("should migrate driver station custom UI useLaneColors:false to true in ensureDefaultCustomUis and normalizeLoadedCustomUis", () => {
+    const uis: CustomUI[] = [
+      {
+        entity_id: "driver_station_ui_layout_rc_ai",
+        name: "RaceCoordinator AI (Driver Station)",
+        is_default: true,
+        layoutJson: JSON.stringify({
+          widgets: [
+            {
+              id: "widget-ds-nickname",
+              widgetType: "lane-column",
+              customSettings: { useLaneColors: false },
+            },
+          ],
+        }),
+      },
+    ];
+
+    normalizeLoadedCustomUis(uis);
+    expect(uis[0].layoutJson).toContain('"useLaneColors":true');
+    expect(uis[0].layoutJson).not.toContain('"useLaneColors":false');
+
+    uis[0].layoutJson = JSON.stringify({
+      widgets: [
+        {
+          id: "widget-ds-nickname",
+          widgetType: "lane-column",
+          customSettings: { useLaneColors: false },
+        },
+      ],
+    });
+
+    ensureDefaultCustomUis(uis, new Settings());
+    const dsUi = uis.find(
+      (u) => u.entity_id === "driver_station_ui_layout_rc_ai",
+    );
+    expect(dsUi?.layoutJson).toContain('"useLaneColors":true');
+    expect(dsUi?.layoutJson).not.toContain('"useLaneColors":false');
+  });
+
   it("should migrate legacy fuel custom UI with entity_id '2'", () => {
     const uis: CustomUI[] = [
       {

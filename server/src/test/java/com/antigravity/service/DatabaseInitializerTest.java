@@ -446,6 +446,33 @@ public class DatabaseInitializerTest {
   }
 
   @Test
+  public void testBackfillCustomUIs_MigratesDriverStationUseLaneColors() {
+    SqliteRepository<CustomUI> uiRepo =
+        new SqliteRepository<>(context, "custom_uis", CustomUI.class);
+    uiRepo.drop();
+
+    uiRepo.save(
+        new CustomUI(
+            CustomUI.DRIVER_STATION_UI_NAME,
+            true,
+            "{\"widgets\":[{\"customSettings\":{\"useLaneColors\":false}}]}",
+            "[]",
+            "{}",
+            "{}",
+            "{}",
+            "{}",
+            CustomUI.DRIVER_STATION_UI_ID,
+            null));
+
+    initializer.backfillCustomUIs(context);
+
+    CustomUI driverStationUi = uiRepo.findByEntityId(CustomUI.DRIVER_STATION_UI_ID);
+    assertNotNull(driverStationUi);
+    assertTrue(driverStationUi.getLayoutJson().contains("\"useLaneColors\":true"));
+    assertFalse(driverStationUi.getLayoutJson().contains("\"useLaneColors\":false"));
+  }
+
+  @Test
   public void testResetDrivers_InitializesPitInAndFuelAudio() {
     initializer.resetDrivers(context);
     SqliteRepository<Driver> driverRepo = new SqliteRepository<>(context, "drivers", Driver.class);

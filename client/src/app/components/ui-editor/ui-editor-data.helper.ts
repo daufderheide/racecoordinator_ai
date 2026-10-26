@@ -334,6 +334,17 @@ export function normalizeLoadedCustomUis(
 
   for (const ui of customUIs) {
     normalizeCustomUiNames(ui);
+    if (
+      ui.entity_id === "driver_station_ui_layout_rc_ai" &&
+      ui.is_default &&
+      ui.layoutJson &&
+      ui.layoutJson.includes('"useLaneColors":false')
+    ) {
+      ui.layoutJson = ui.layoutJson.replace(
+        /"useLaneColors":false/g,
+        '"useLaneColors":true',
+      );
+    }
     let layout: any;
     try {
       if (ui.layoutJson) {
@@ -539,8 +550,20 @@ function ensureDriverStationCustomUi(customUIs: CustomUI[]): void {
       entity_id: "driver_station_ui_layout_rc_ai",
       _id: "driver_station_ui_layout_rc_ai",
     });
-  } else if (isLegacyDriverStationUiName(dsUi.name)) {
-    dsUi.name = "RaceCoordinator AI (Driver Station)";
+  } else {
+    if (isLegacyDriverStationUiName(dsUi.name)) {
+      dsUi.name = "RaceCoordinator AI (Driver Station)";
+    }
+    if (
+      dsUi.is_default &&
+      dsUi.layoutJson &&
+      dsUi.layoutJson.includes('"useLaneColors":false')
+    ) {
+      dsUi.layoutJson = dsUi.layoutJson.replace(
+        /"useLaneColors":false/g,
+        '"useLaneColors":true',
+      );
+    }
   }
 }
 

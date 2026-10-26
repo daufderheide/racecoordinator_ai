@@ -90,6 +90,7 @@ public class CustomUITest {
     assertTrue(driverStationUi.getLayoutJson().contains("\"baseHeight\":1920"));
     assertTrue(driverStationUi.getLayoutJson().contains("\"aspectRatio\":\"9:16\""));
     assertTrue(driverStationUi.getLayoutJson().contains("\"scaleMode\":\"stretch\""));
+    assertTrue(driverStationUi.getLayoutJson().contains("\"useLaneColors\":true"));
 
     assertTrue(defaultUi.getLayoutJson().contains("widget-countdown"));
     assertTrue(defaultUi.getLayoutJson().contains("\"glowEffect\":true"));
