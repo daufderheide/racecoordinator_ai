@@ -72,6 +72,15 @@ export function computeWidgetDisplayName(
       if (mode === "position") prefix = `Pos ${idx}`;
       else if (mode === "overallPosition") prefix = `Overall Pos ${idx}`;
       else if (mode === "seed") prefix = `Seed ${idx}`;
+      else if (mode === "hostLane") {
+        prefix =
+          translationService?.translate?.("UE_PREFIX_STATION_LANE") ||
+          "Station Lane";
+      } else if (mode === "hostDriver") {
+        prefix =
+          translationService?.translate?.("UE_PREFIX_STATION_DRIVER") ||
+          "Station Driver";
+      }
 
       baseDisplayName = s.gridId
         ? `Grid · ${prefix} · ${colLabel}`

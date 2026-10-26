@@ -442,6 +442,12 @@ describe("LaneColumnInsetHelper", () => {
       expect(normalized.layoutOrientation).toBe("vertical");
       expect(normalized.backgroundColor).toBe("#000000");
       expect(normalized.textColor).toBe("#ffffff");
+      expect(normalized.bindingMode).toBe("lane");
+
+      const hostLaneSettings = LaneColumnInsetHelper.normalizeSettings({
+        bindingMode: "hostLane",
+      });
+      expect(hostLaneSettings.bindingMode).toBe("hostLane");
 
       const s = {
         timeDecimalPlaces: 5,

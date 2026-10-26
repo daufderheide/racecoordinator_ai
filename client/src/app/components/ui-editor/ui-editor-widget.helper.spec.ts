@@ -19,6 +19,8 @@ describe("ui-editor-widget.helper", () => {
         if (key === "UE_WIDGET_TYPE_LANE_COLUMN") return "Lane Column";
         if (key === "UE_GRID_HEADER_ROW_BADGE") return "Header";
         if (key === "RD_BEST_LAP_TIME") return "Best Lap Time";
+        if (key === "UE_PREFIX_STATION_LANE") return "Station Lane";
+        if (key === "UE_PREFIX_STATION_DRIVER") return "Station Driver";
         return key;
       },
     };
@@ -102,6 +104,28 @@ describe("ui-editor-widget.helper", () => {
       expect(computeWidgetDisplayName(seedWidget, mockTranslationService)).toBe(
         "Seed 4 · Rank",
       );
+
+      const hostLaneWidget = {
+        widgetType: "lane-column",
+        customSettings: {
+          bindingMode: "hostLane",
+          customLabel: "Telemetry",
+        },
+      };
+      expect(
+        computeWidgetDisplayName(hostLaneWidget, mockTranslationService),
+      ).toBe("Station Lane · Telemetry");
+
+      const hostDriverWidget = {
+        widgetType: "lane-column",
+        customSettings: {
+          bindingMode: "hostDriver",
+          customLabel: "Profile",
+        },
+      };
+      expect(
+        computeWidgetDisplayName(hostDriverWidget, mockTranslationService),
+      ).toBe("Station Driver · Profile");
     });
 
     it("should resolve column label from availableColumns when customLabel is not set", () => {

@@ -603,6 +603,7 @@ export class LaneColumnGridHelper {
   public static getCellBreadcrumbLabel(
     currentSettings: any,
     isHeaderWidget: boolean,
+    translationService?: any,
   ): string {
     if (isHeaderWidget) {
       return "Header";
@@ -617,6 +618,18 @@ export class LaneColumnGridHelper {
     if (mode === "position") return `Pos ${idx}`;
     if (mode === "overallPosition") return `Overall Pos ${idx}`;
     if (mode === "seed") return `Seed ${idx}`;
+    if (mode === "hostLane") {
+      return (
+        translationService?.translate?.("UE_PREFIX_STATION_LANE") ||
+        "Station Lane"
+      );
+    }
+    if (mode === "hostDriver") {
+      return (
+        translationService?.translate?.("UE_PREFIX_STATION_DRIVER") ||
+        "Station Driver"
+      );
+    }
     return `Lane ${idx}`;
   }
 
@@ -625,6 +638,9 @@ export class LaneColumnGridHelper {
     totalLanes?: number,
   ): number[] {
     const mode = currentSettings["bindingMode"];
+    if (mode === "hostLane" || mode === "hostDriver") {
+      return [];
+    }
     if (mode === "overallPosition" || mode === "seed") {
       const count = Math.max(16, Math.min(64, (totalLanes || 4) * 4));
       return Array.from({ length: count }, (_, i) => i);

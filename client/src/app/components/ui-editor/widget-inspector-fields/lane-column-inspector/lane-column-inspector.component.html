@@ -1077,6 +1077,9 @@
             <app-custom-option value="seed">
               {{ "UE_GRID_SORT_ORDER_SEED" | translate }}
             </app-custom-option>
+            <app-custom-option value="hostLane">
+              {{ "UE_GRID_SORT_ORDER_HOST_LANE" | translate }}
+            </app-custom-option>
           </app-custom-select>
         </div>
       </div>
@@ -1095,26 +1098,47 @@
           }}
         </label>
         <div class="select-container select-sm">
-          <app-custom-select
-            [(ngModel)]="currentSettings['targetIndex']"
-            (change)="onFieldChange()"
-          >
-            @for (idx of availableIndices; track idx) {
-              <app-custom-option [value]="idx">
-                {{
-                  (currentSettings["bindingMode"] === "position"
-                    ? "UE_INSPECTOR_POSITION_INDEX"
-                    : currentSettings["bindingMode"] === "overallPosition"
-                      ? "UE_INSPECTOR_OVERALL_POSITION_INDEX"
-                      : currentSettings["bindingMode"] === "seed"
-                        ? "UE_INSPECTOR_SEED_INDEX"
-                        : "UE_INSPECTOR_LANE_INDEX"
-                  ) | translate: { index: idx + 1 }
-                }}
+          @if (currentSettings["bindingMode"] === "hostLane") {
+            <app-custom-select [disabled]="true" [value]="'dynamic'">
+              <app-custom-option value="dynamic">
+                {{ "UE_INSPECTOR_HOST_LANE_DYNAMIC" | translate }}
               </app-custom-option>
-            }
-          </app-custom-select>
+            </app-custom-select>
+          } @else {
+            <app-custom-select
+              [(ngModel)]="currentSettings['targetIndex']"
+              (change)="onFieldChange()"
+            >
+              @for (idx of availableIndices; track idx) {
+                <app-custom-option [value]="idx">
+                  {{
+                    (currentSettings["bindingMode"] === "position"
+                      ? "UE_INSPECTOR_POSITION_INDEX"
+                      : currentSettings["bindingMode"] === "overallPosition"
+                        ? "UE_INSPECTOR_OVERALL_POSITION_INDEX"
+                        : currentSettings["bindingMode"] === "seed"
+                          ? "UE_INSPECTOR_SEED_INDEX"
+                          : "UE_INSPECTOR_LANE_INDEX"
+                    ) | translate: { index: idx + 1 }
+                  }}
+                </app-custom-option>
+              }
+            </app-custom-select>
+          }
         </div>
+        @if (currentSettings["bindingMode"] === "hostLane") {
+          <div
+            class="inspector-field-hint"
+            style="
+              font-size: 11px;
+              opacity: 0.75;
+              margin-top: 4px;
+              line-height: 1.3;
+            "
+          >
+            {{ "UE_INSPECTOR_HOST_LANE_HINT" | translate }}
+          </div>
+        }
       </div>
     </div>
   }
