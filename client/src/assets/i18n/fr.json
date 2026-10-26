@@ -2613,6 +2613,7 @@
   "UE_WIDGET_TYPE_MENU_BAR": "Menu Bar",
   "UE_WIDGET_TYPE_NEXT_HEAT": "Next Heat",
   "UE_WIDGET_TYPE_ON_DECK": "On Deck",
+  "UE_WIDGET_TYPE_PROGRESS_GAUGE": "Jauge de progression",
   "UE_WIDGET_TYPE_QR": "QR Code",
   "UE_WIDGET_TYPE_RACE_NAME": "Race Name",
   "UE_WIDGET_TYPE_RACE_STATS": "Race Stats",
