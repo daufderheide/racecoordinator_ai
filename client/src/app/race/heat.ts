@@ -15,6 +15,7 @@ export class Heat {
   group: number = 0;
   masterTrackCalls?: number = 0;
   trackCalls?: number = 0;
+  originalHeatNumber?: number;
 
   constructor(
     objectId: string,

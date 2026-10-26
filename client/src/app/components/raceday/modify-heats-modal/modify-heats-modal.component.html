@@ -483,6 +483,21 @@
                 }
               </div>
             </div>
+            <div class="heat-subheader">
+              <span
+                class="original-heat-tag"
+                [attr.data-original-heat]="getOriginalHeatDisplay(heat)"
+              >
+                <span class="original-heat-label"
+                  >{{ "RD_ORIGINAL_HEAT" | translate }}:</span
+                >
+                <span
+                  class="original-heat-value"
+                  [class.is-new]="getOriginalHeatDisplay(heat) === '--'"
+                  >{{ getOriginalHeatDisplay(heat) }}</span
+                >
+              </span>
+            </div>
             <div class="heat-lanes">
               @for (lane of track().lanes; track $index; let lIdx = $index) {
                 <div class="lane-row">

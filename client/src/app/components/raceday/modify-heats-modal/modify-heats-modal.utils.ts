@@ -8,7 +8,7 @@ import { Race } from "@app/models/race";
 import { RaceParticipant } from "@app/models/race_participant";
 import { Team } from "@app/models/team";
 import { Track } from "@app/models/track";
-import { IHeat, IRaceParticipant } from "@app/proto/antigravity";
+import { IHeat, IRaceParticipant, RaceState } from "@app/proto/antigravity";
 import { DriverHeatData } from "@app/race/driver_heat_data";
 import { Heat } from "@app/race/heat";
 import { TranslationService } from "@app/services/translation.service";
@@ -20,6 +20,13 @@ export interface ModifyHeatsState {
   participants: RaceParticipant[];
 }
 
+export function isPlaceholderParticipant(
+  p: RaceParticipant | null | undefined,
+): boolean {
+  if (!p) return true;
+  return Driver.isEmpty(p.driver) && !p.team;
+}
+
 export function areModifyHeatsStatesEqual(
   a: ModifyHeatsState,
   b: ModifyHeatsState,
@@ -28,12 +35,18 @@ export function areModifyHeatsStatesEqual(
     a.heats.length === b.heats.length &&
     a.heats.every((h, i) => {
       const otherH = b.heats[i];
+      const validA = h.heatDrivers.filter(
+        (d) => !isPlaceholderParticipant(d.participant),
+      );
+      const validB = otherH.heatDrivers.filter(
+        (d) => !isPlaceholderParticipant(d.participant),
+      );
       return (
         h.objectId === otherH.objectId &&
         h.group === otherH.group &&
-        h.heatDrivers.length === otherH.heatDrivers.length &&
-        h.heatDrivers.every((dhd, j) => {
-          const otherDhd = otherH.heatDrivers[j];
+        validA.length === validB.length &&
+        validA.every((dhd, j) => {
+          const otherDhd = validB[j];
           return (
             dhd.laneIndex === otherDhd.laneIndex &&
             dhd.participant.objectId === otherDhd.participant.objectId
@@ -42,9 +55,15 @@ export function areModifyHeatsStatesEqual(
       );
     });
 
+  const validPartsA = a.participants.filter(
+    (p) => !isPlaceholderParticipant(p),
+  );
+  const validPartsB = b.participants.filter(
+    (p) => !isPlaceholderParticipant(p),
+  );
   const participantsMatch =
-    a.participants.length === b.participants.length &&
-    a.participants.every((p, i) => p.objectId === b.participants[i].objectId);
+    validPartsA.length === validPartsB.length &&
+    validPartsA.every((p, i) => p.objectId === validPartsB[i].objectId);
 
   return heatsMatch && participantsMatch;
 }
@@ -52,10 +71,7 @@ export function areModifyHeatsStatesEqual(
 export function filterDriverPool(
   localParticipants: RaceParticipant[],
 ): RaceParticipant[] {
-  return localParticipants.filter((p) => {
-    const isPlaceholder = Driver.isEmpty(p.driver) && !p.team;
-    return !isPlaceholder;
-  });
+  return localParticipants.filter((p) => !isPlaceholderParticipant(p));
 }
 
 export function filterDatabaseParticipants(
@@ -120,7 +136,7 @@ export function buildDropListConnections(
 
 export function cloneHeat(heat: Heat): Heat {
   const clonedDrivers = heat.heatDrivers.map((dhd: DriverHeatData) => {
-    if (!dhd) return null;
+    if (!dhd || isPlaceholderParticipant(dhd.participant)) return null;
     const newDhd = new DriverHeatData(
       dhd.objectId,
       dhd.participant,
@@ -142,6 +158,7 @@ export function cloneHeat(heat: Heat): Heat {
     heat.started,
   );
   newHeat.group = heat.group;
+  newHeat.originalHeatNumber = heat.originalHeatNumber;
   return newHeat;
 }
 
@@ -294,7 +311,7 @@ export function convertHeatsToProto(
     const laneCount = track?.lanes?.length || 0;
     for (let i = 0; i < laneCount; i++) {
       const dhd = h.heatDrivers.find((d) => d.laneIndex === i);
-      if (dhd) {
+      if (dhd && !isPlaceholderParticipant(dhd.participant)) {
         heatDrivers.push({
           objectId: dhd.objectId,
           driver: { objectId: dhd.participant.objectId } as any,
@@ -356,12 +373,18 @@ export function getModifyHeatsValidationError(
   for (const localH of localHeats) {
     const originalH = originalHeats.find((h) => h.objectId === localH.objectId);
     if (originalH && isHeatStarted(originalH)) {
-      if (localH.heatDrivers.length !== originalH.heatDrivers.length) {
+      const localDrivers = localH.heatDrivers.filter(
+        (d) => !isPlaceholderParticipant(d.participant),
+      );
+      const originalDrivers = originalH.heatDrivers.filter(
+        (d) => !isPlaceholderParticipant(d.participant),
+      );
+      if (localDrivers.length !== originalDrivers.length) {
         return translationService.translate("RD_ERR_STARTED_HEAT_MODIFIED");
       }
-      for (let i = 0; i < localH.heatDrivers.length; i++) {
-        const localDhd = localH.heatDrivers[i];
-        const originalDhd = originalH.heatDrivers.find(
+      for (let i = 0; i < localDrivers.length; i++) {
+        const localDhd = localDrivers[i];
+        const originalDhd = originalDrivers.find(
           (d) => d.laneIndex === localDhd.laneIndex,
         );
         if (
@@ -379,7 +402,7 @@ export function getModifyHeatsValidationError(
     if (isHeatStarted(originalH)) {
       for (const dhd of originalH.heatDrivers) {
         // Skip empty lanes
-        if (!dhd.participant || Driver.isEmpty(dhd.participant.driver)) {
+        if (isPlaceholderParticipant(dhd.participant)) {
           continue;
         }
         const stillInRace = localParticipants.some(
@@ -400,7 +423,7 @@ export function getModifyHeatsValidationError(
     for (const h of localHeats) {
       for (const dhd of h.heatDrivers) {
         const p = dhd.participant;
-        if (!p || Driver.isEmpty(p.driver)) continue;
+        if (isPlaceholderParticipant(p)) continue;
 
         if (
           participantGroups.has(p.objectId) &&
@@ -627,7 +650,9 @@ export function isParticipantInStartedHeat(
   for (const heat of heats) {
     if (isHeatStarted(heat)) {
       const isInHeat = heat.heatDrivers?.some(
-        (dhd) => dhd.participant.objectId === participant.objectId,
+        (dhd) =>
+          !isPlaceholderParticipant(dhd.participant) &&
+          dhd.participant.objectId === participant.objectId,
       );
       if (isInHeat) {
         return true;
@@ -722,8 +747,7 @@ export function performLaneCheck(
       const dhd = h.heatDrivers.find((d) => d.laneIndex === laneIdx);
       return dhd &&
         dhd.participant &&
-        dhd.participant.driver &&
-        !dhd.participant.driver.isEmpty()
+        !isPlaceholderParticipant(dhd.participant)
         ? dhd.participant.objectId
         : null;
     }),
@@ -778,4 +802,72 @@ export function getContrastTextColor(hexColor: string): string {
     return lightness >= 50 ? "#0f172a" : "#ffffff";
   }
   return "#0f172a";
+}
+
+export function getOriginalHeatDisplay(
+  heat: Heat,
+  originalHeats: Heat[] = [],
+): string {
+  if (heat.originalHeatNumber !== undefined) {
+    return `${heat.originalHeatNumber}`;
+  }
+  if (heat.objectId && !heat.objectId.startsWith("new-heat-")) {
+    const orig = originalHeats.find((h) => h.objectId === heat.objectId);
+    if (orig && orig.heatNumber) {
+      return `${orig.heatNumber}`;
+    }
+  }
+  return "--";
+}
+
+export function isHeatStarted(
+  heat: Heat,
+  currentHeatNumber: number,
+  raceState: RaceState,
+): boolean {
+  if (
+    heat.started ||
+    heat.heatNumber < currentHeatNumber ||
+    raceState === RaceState.RACE_OVER
+  ) {
+    return true;
+  }
+
+  if (heat.heatNumber === currentHeatNumber) {
+    if (
+      raceState === RaceState.STARTING ||
+      raceState === RaceState.RACING ||
+      raceState === RaceState.HEAT_OVER ||
+      raceState === RaceState.PAUSED
+    ) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+export function calculateModalScale(
+  windowWidth: number,
+  windowHeight: number,
+  targetWidth: number = 1600,
+  targetHeight: number = 900,
+): number {
+  return Math.min(windowWidth / targetWidth, windowHeight / targetHeight);
+}
+
+export function getHeatHighlightColors(
+  heat: Heat,
+  getHighlightColor: (p: RaceParticipant | null | undefined) => string | null,
+): string[] {
+  const colors: string[] = [];
+  for (const dhd of heat.heatDrivers) {
+    if (dhd.participant && !isPlaceholderParticipant(dhd.participant)) {
+      const color = getHighlightColor(dhd.participant);
+      if (color && !colors.includes(color)) {
+        colors.push(color);
+      }
+    }
+  }
+  return colors;
 }

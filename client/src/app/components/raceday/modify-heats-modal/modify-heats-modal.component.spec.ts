@@ -27,6 +27,7 @@ import { RaceConnectionService } from "@app/services/race-connection.service";
 import { TranslationService } from "@app/services/translation.service";
 
 import { ModifyHeatsModalComponent } from "./modify-heats-modal.component";
+import { executeHeatReorder } from "./modify-heats-modal.utils";
 
 describe("ModifyHeatsModalComponent", () => {
   let component: ModifyHeatsModalComponent;
@@ -2233,6 +2234,245 @@ describe("ModifyHeatsModalComponent", () => {
 
       expect(component["isDriverHighlighted"](p1)).toBeFalse();
       expect(component["isDriverHighlighted"](p2)).toBeFalse();
+    });
+  });
+
+  describe("Original Heat Tag", () => {
+    let heat1: Heat;
+    let heat2: Heat;
+
+    beforeEach(() => {
+      heat1 = new Heat("h1", 1, [], [], false);
+      heat2 = new Heat("h2", 2, [], [], false);
+      fixture.componentRef.setInput("heatsInput", [heat1, heat2]);
+      fixture.componentRef.setInput("trackInput", createMockTrack());
+      component.ngOnInit();
+      fixture.detectChanges();
+    });
+
+    it("should initialize localHeats with originalHeatNumber matching initial heat numbers", () => {
+      expect(component["localHeats"][0].originalHeatNumber).toBe(1);
+      expect(component["localHeats"][1].originalHeatNumber).toBe(2);
+    });
+
+    it("should return the original heat number string in getOriginalHeatDisplay", () => {
+      expect(component.getOriginalHeatDisplay(component["localHeats"][0])).toBe(
+        "1",
+      );
+      expect(component.getOriginalHeatDisplay(component["localHeats"][1])).toBe(
+        "2",
+      );
+    });
+
+    it("should return '--' for newly added heats in getOriginalHeatDisplay", () => {
+      component["onAddHeat"]();
+      const addedHeat = component["localHeats"][2];
+      expect(component.getOriginalHeatDisplay(addedHeat)).toBe("--");
+    });
+
+    it("should fallback to heatsInput when heat.originalHeatNumber is undefined", () => {
+      const heatWithoutOrig = new Heat("h1", 1, [], [], false);
+      expect(component.getOriginalHeatDisplay(heatWithoutOrig)).toBe("1");
+
+      const unknownHeat = new Heat("unknown", 99, [], [], false);
+      expect(component.getOriginalHeatDisplay(unknownHeat)).toBe("--");
+    });
+
+    it("should render original heat tag under the title bar in the DOM", () => {
+      const tags = fixture.debugElement.queryAll(By.css(".original-heat-tag"));
+      expect(tags.length).toBe(2);
+
+      const label = tags[0].query(By.css(".original-heat-label"));
+      const val = tags[0].query(By.css(".original-heat-value"));
+
+      expect(label.nativeElement.textContent).toContain("RD_ORIGINAL_HEAT:");
+      expect(val.nativeElement.textContent.trim()).toBe("1");
+      expect(val.nativeElement.classList.contains("is-new")).toBeFalse();
+    });
+
+    it("should render '--' with is-new class for newly added heat in the DOM", () => {
+      component["onAddHeat"]();
+      fixture.detectChanges();
+
+      const tags = fixture.debugElement.queryAll(By.css(".original-heat-tag"));
+      expect(tags.length).toBe(3);
+
+      const newHeatVal = tags[2].query(By.css(".original-heat-value"));
+      expect(newHeatVal.nativeElement.textContent.trim()).toBe("--");
+      expect(newHeatVal.nativeElement.classList.contains("is-new")).toBeTrue();
+    });
+
+    it("should preserve original heat numbers after swapping heats", () => {
+      const action = { type: "swap" as const, targetIndex: 1 };
+      const reorderResult = executeHeatReorder(
+        component["localHeats"],
+        0,
+        action,
+      );
+      expect(reorderResult.reordered).toBeTrue();
+      component["localHeats"] = reorderResult.newHeats;
+      fixture.detectChanges();
+
+      expect(component["localHeats"][0].heatNumber).toBe(1);
+      expect(component["localHeats"][0].originalHeatNumber).toBe(2);
+      expect(component.getOriginalHeatDisplay(component["localHeats"][0])).toBe(
+        "2",
+      );
+
+      expect(component["localHeats"][1].heatNumber).toBe(2);
+      expect(component["localHeats"][1].originalHeatNumber).toBe(1);
+      expect(component.getOriginalHeatDisplay(component["localHeats"][1])).toBe(
+        "1",
+      );
+
+      const tags = fixture.debugElement.queryAll(By.css(".original-heat-tag"));
+      expect(
+        tags[0]
+          .query(By.css(".original-heat-value"))
+          .nativeElement.textContent.trim(),
+      ).toBe("2");
+      expect(
+        tags[1]
+          .query(By.css(".original-heat-value"))
+          .nativeElement.textContent.trim(),
+      ).toBe("1");
+    });
+
+    it("should reset originalHeatNumber on regenerate heats", () => {
+      const protoHeat1 = { objectId: "reg-h1", heatNumber: 1, heatDrivers: [] };
+      const protoHeat2 = { objectId: "reg-h2", heatNumber: 2, heatDrivers: [] };
+      mockDataService.regenerateHeats.and.returnValue(
+        of({ success: true, heats: [protoHeat1, protoHeat2] }),
+      );
+
+      component["onRegenerateHeats"]();
+      expect(component["localHeats"].length).toBe(2);
+      expect(component["localHeats"][0].originalHeatNumber).toBe(1);
+      expect(component["localHeats"][1].originalHeatNumber).toBe(2);
+      expect(component.getOriginalHeatDisplay(component["localHeats"][0])).toBe(
+        "1",
+      );
+      expect(component.getOriginalHeatDisplay(component["localHeats"][1])).toBe(
+        "2",
+      );
+    });
+  });
+
+  describe("empty lane rendering and getDriverHeatDataInLane", () => {
+    it("should return null from getDriverHeatDataInLane when lane has placeholder driver", () => {
+      const pReal = new RaceParticipant(
+        "rp1",
+        new Driver("d1", "Dave", "Dave"),
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        100,
+      );
+      const pEmpty = new RaceParticipant(
+        "rp-empty",
+        new Driver("EMPTY_LANE", "Empty", "Empty"),
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        100,
+      );
+      const dhdReal = new DriverHeatData("dhd1", pReal, 0);
+      const dhdEmpty = new DriverHeatData("dhd2", pEmpty, 1);
+      component["localHeats"] = [
+        new Heat("h1", 1, [dhdReal, dhdEmpty], [], false),
+      ];
+
+      expect(component["getDriverHeatDataInLane"](0, 0)).toBe(dhdReal);
+      expect(component["getDriverHeatDataInLane"](0, 1)).toBeNull();
+      expect(component["getDriverHeatDataInLane"](0, 2)).toBeNull();
+    });
+
+    it("should render dotted empty lane indicator for empty or placeholder lanes in the DOM", () => {
+      const pReal = new RaceParticipant(
+        "rp1",
+        new Driver("d1", "Dave", "Dave"),
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        100,
+      );
+      const pEmpty = new RaceParticipant(
+        "rp-empty",
+        new Driver("EMPTY_LANE", "Empty", "Empty"),
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        100,
+      );
+      const dhdReal = new DriverHeatData("dhd1", pReal, 0);
+      const dhdEmpty = new DriverHeatData("dhd2", pEmpty, 1);
+      const heat = new Heat("h1", 1, [dhdReal, dhdEmpty], [], false);
+
+      fixture.componentRef.setInput("heatsInput", [heat]);
+      fixture.componentRef.setInput("trackInput", createMockTrack());
+      fixture.detectChanges();
+
+      const populatedItems = fixture.debugElement.queryAll(
+        By.css(".driver-item.populated"),
+      );
+      const emptyItems = fixture.debugElement.queryAll(
+        By.css(".driver-item.empty"),
+      );
+
+      // Only lane 0 is populated
+      expect(populatedItems.length).toBe(1);
+      expect(populatedItems[0].nativeElement.textContent).toContain("Dave");
+      expect(populatedItems[0].nativeElement.textContent).not.toContain(
+        "Empty",
+      );
+
+      // Lane 1 is empty and shows the dotted empty indicator
+      expect(emptyItems.length).toBe(1);
+      expect(emptyItems[0].nativeElement.textContent.trim()).toBe(
+        "RD_EMPTY_LANE",
+      );
+    });
+
+    it("should not remove placeholder driver on double-click", () => {
+      const pEmpty = new RaceParticipant(
+        "rp-empty",
+        new Driver("EMPTY_LANE", "Empty", "Empty"),
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        100,
+      );
+      const dhdEmpty = new DriverHeatData("dhd2", pEmpty, 1);
+      const heat = new Heat("h1", 1, [dhdEmpty], [], false);
+      component["localHeats"] = [heat];
+
+      component["onRemoveFromHeat"](0, 1);
+      expect(heat.heatDrivers.length).toBe(1);
     });
   });
 });

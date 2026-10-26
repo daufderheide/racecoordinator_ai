@@ -15,6 +15,7 @@ import {
   createParticipantFromTeam,
   getParticipantName,
   isDriver,
+  isPlaceholderParticipant,
 } from "./modify-heats-modal.utils";
 
 export interface DropContext {
@@ -85,8 +86,7 @@ export class ModifyHeatsService {
           // Dragged to the end: find the last non-placeholder in updatedParticipants
           for (let i = updatedParticipants.length - 1; i >= 0; i--) {
             const p = updatedParticipants[i];
-            const isPlaceholder = Driver.isEmpty(p.driver) && !p.team;
-            if (!isPlaceholder) {
+            if (!isPlaceholderParticipant(p)) {
               toIdx = i;
               break;
             }
@@ -233,7 +233,9 @@ export class ModifyHeatsService {
     if (fromHIdx !== -1) {
       const fromLIdx = parseInt(fromId.split("-")[3], 10);
       const isAlreadyInHeat = heats[toHIdx].heatDrivers.some(
-        (dhd) => dhd.participant.objectId === participant.objectId,
+        (dhd) =>
+          !isPlaceholderParticipant(dhd.participant) &&
+          dhd.participant.objectId === participant.objectId,
       );
       if (isAlreadyInHeat && fromHIdx !== toHIdx) {
         return {
@@ -250,15 +252,19 @@ export class ModifyHeatsService {
         this.addDriverToHeat(heats, fromHIdx, fromLIdx, existingOccupant);
       } else {
         this.removeDriverFromHeat(heats, fromHIdx, fromLIdx);
+        this.removeDriverFromHeat(heats, toHIdx, toLIdx);
         this.addDriverToHeat(heats, toHIdx, toLIdx, participant);
       }
     } else {
       if (
         !heats[toHIdx].heatDrivers.some(
-          (dhd) => dhd.participant.objectId === participant.objectId,
+          (dhd) =>
+            !isPlaceholderParticipant(dhd.participant) &&
+            dhd.participant.objectId === participant.objectId,
         )
       ) {
         if (existingOccupant) this.removeDriverFromHeat(heats, toHIdx, toLIdx);
+        this.removeDriverFromHeat(heats, toHIdx, toLIdx);
         this.addDriverToHeat(heats, toHIdx, toLIdx, participant);
       }
     }
@@ -344,8 +350,7 @@ export class ModifyHeatsService {
         toIdx = participants.length;
         for (let i = 0; i < participants.length; i++) {
           const p = participants[i];
-          const isPlaceholder = Driver.isEmpty(p.driver) && !p.team;
-          if (isPlaceholder) {
+          if (isPlaceholderParticipant(p)) {
             toIdx = i;
             break;
           }
@@ -434,7 +439,10 @@ export class ModifyHeatsService {
     const dhd = heats[heatIdx].heatDrivers.find(
       (d: DriverHeatData) => d.laneIndex === laneIdx,
     );
-    return dhd ? dhd.participant : null;
+    if (!dhd || isPlaceholderParticipant(dhd.participant)) {
+      return null;
+    }
+    return dhd.participant;
   }
 
   private removeDriverFromHeat(
@@ -541,8 +549,7 @@ export class ModifyHeatsService {
     let toIdx = updatedParticipants.length;
     for (let i = 0; i < updatedParticipants.length; i++) {
       const p = updatedParticipants[i];
-      const isPlaceholder = Driver.isEmpty(p.driver) && !p.team;
-      if (isPlaceholder) {
+      if (isPlaceholderParticipant(p)) {
         toIdx = i;
         break;
       }

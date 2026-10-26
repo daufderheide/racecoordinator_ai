@@ -29,5 +29,6 @@ export abstract class ModifyHeatsModalHarnessBase {
   abstract dragDriverToHeat(
     driverName: string,
     heatIndex: number,
+    laneIndex?: number,
   ): Promise<void>;
 }

@@ -84,16 +84,24 @@ export class ModifyHeatsModalHarnessE2e implements ModifyHeatsModalHarnessBase {
       .isVisible();
   }
 
-  async dragDriverToHeat(driverName: string, heatIndex: number): Promise<void> {
+  async dragDriverToHeat(
+    driverName: string,
+    heatIndex: number,
+    laneIndex: number = 0,
+  ): Promise<void> {
     const driver = this.driverPool
       .locator(this.base.selectors.driverItem, { hasText: driverName })
       .first();
     const heat = this.heatCards.nth(heatIndex);
+    const targetLane = heat.locator(
+      `[id="heat-${heatIndex}-lane-${laneIndex}"]`,
+    );
 
     await driver.waitFor({ state: "visible" });
 
     const sourceBox = await driver.boundingBox();
-    const targetBox = await heat.boundingBox();
+    const laneBox = await targetLane.boundingBox();
+    const targetBox = laneBox || (await heat.boundingBox());
 
     if (sourceBox && targetBox) {
       const page = this.locator.page();
@@ -110,7 +118,7 @@ export class ModifyHeatsModalHarnessE2e implements ModifyHeatsModalHarnessBase {
       await page.waitForTimeout(500);
       await page.mouse.up();
     } else {
-      await driver.dragTo(heat);
+      await driver.dragTo(targetLane);
     }
   }
 }
