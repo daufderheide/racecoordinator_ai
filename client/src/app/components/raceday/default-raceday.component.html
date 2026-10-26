@@ -1,11 +1,25 @@
 <div
   #dashboardWrapper
   class="dashboard-wrapper"
+  [class.driver-station-mode]="isDriverStation"
+  [class.driver-view-mode]="isDriverView"
   [class.ui-editor-mode]="isUIEditorMode()"
+  [style.background-color]="
+    isDriverStation && !isUIEditorMode() ? activeLaneBackgroundColor : null
+  "
+  [style.color]="
+    isDriverStation && !isUIEditorMode() ? activeLaneForegroundColor : null
+  "
   [style.overflow]="isUIEditorMode() ? 'visible' : 'hidden'"
   (dragover)="onCanvasDragOver($event)"
   (drop)="onCanvasDrop($event)"
 >
+  @if ((routeLaneIndex !== undefined || isDriverView) && !isUIEditorMode()) {
+    <app-browser-navigation
+      class="driver-station-nav driver-view-nav"
+      mode="navigation"
+    ></app-browser-navigation>
+  }
   <app-raceday-modals
     [showAckModal]="showAckModal"
     [ackModalTitle]="ackModalTitle"
@@ -50,428 +64,446 @@
   >
   </app-raceday-modals>
 
-  <div
-    class="scalable-content"
-    [class.edit-mode]="isLayoutCustomizing"
-    [style.width.px]="isPrinting ? 1920 : dashboardWidth"
-    [style.height.px]="isPrinting ? 1080 : dashboardHeight"
-    [style.position]="'absolute'"
-    [style.top.px]="isPrinting || isUIEditorMode() ? 0 : contentTop"
-    [style.left.px]="isPrinting || isUIEditorMode() ? 0 : contentLeft"
-    [style.transform]="isPrinting || isUIEditorMode() ? 'none' : scaleTransform"
-    [style.transform-origin]="'top left'"
-  >
+  @if (isDriverView && !isRacingInCurrentHeat) {
+    <!-- Full-screen on deck container for mobile -->
+    <div class="on-deck-mobile-container">
+      <app-raceday-heat-drivers
+        type="on-deck"
+        [track]="track || race.track"
+        [currentHeat]="currentHeat"
+        [heats]="heats"
+      ></app-raceday-heat-drivers>
+    </div>
+  } @else {
     <div
-      class="raceday-absolute-layout-root-wrapper"
+      class="scalable-content"
       [class.edit-mode]="isLayoutCustomizing"
-      style="position: relative; width: 100%; height: 100%"
-      (pointerdown)="onCanvasPointerDown($event)"
+      [style.width.px]="isPrinting ? 1920 : dashboardWidth"
+      [style.height.px]="isPrinting ? 1080 : dashboardHeight"
+      [style.position]="'absolute'"
+      [style.top.px]="isPrinting || isUIEditorMode() ? 0 : contentTop"
+      [style.left.px]="isPrinting || isUIEditorMode() ? 0 : contentLeft"
+      [style.transform]="
+        isPrinting || isUIEditorMode() ? 'none' : scaleTransform
+      "
+      [style.transform-origin]="'top left'"
     >
-      @for (widget of getNonGridWidgets(); track widget.id) {
-        <app-raceday-absolute-widget
-          [widget]="widget"
-          [parentComponent]="this"
-          [isCustomizing]="isLayoutCustomizing"
-          [selectedWidgetId]="selectedWidgetId()"
-          [isCountdownPreviewActive]="isCountdownPreviewActive()"
-        ></app-raceday-absolute-widget>
-      }
+      <div
+        class="raceday-absolute-layout-root-wrapper"
+        [class.edit-mode]="isLayoutCustomizing"
+        style="position: relative; width: 100%; height: 100%"
+        (pointerdown)="onCanvasPointerDown($event)"
+      >
+        @for (widget of getNonGridWidgets(); track widget.id) {
+          <app-raceday-absolute-widget
+            [widget]="widget"
+            [parentComponent]="this"
+            [isCustomizing]="isLayoutCustomizing"
+            [selectedWidgetId]="selectedWidgetId()"
+            [isCountdownPreviewActive]="isCountdownPreviewActive()"
+          ></app-raceday-absolute-widget>
+        }
 
-      @for (grid of getGrids(); track grid.gridId) {
-        <div
-          class="raceday-grid-container"
-          [class.customizing-unselected]="
-            (isLayoutCustomizing || isUIEditorMode()) &&
-            gridSession()?.gridId !== grid.gridId
-          "
-          (pointerdown)="onGridContainerPointerDown($event, grid.gridId)"
-          [style.left.px]="grid.bounds.x"
-          [style.top.px]="grid.bounds.y"
-          [style.width.px]="grid.bounds.width"
-          [style.height.px]="grid.bounds.height"
-          [style.z-index]="grid.zIndex"
-        >
-          @if (
-            grid.labelBounds &&
-            (!gridSession() || gridSession()?.gridId !== grid.gridId)
-          ) {
+        @for (grid of getGrids(); track grid.gridId) {
+          <div
+            class="raceday-grid-container"
+            [class.customizing-unselected]="
+              (isLayoutCustomizing || isUIEditorMode()) &&
+              gridSession()?.gridId !== grid.gridId
+            "
+            (pointerdown)="onGridContainerPointerDown($event, grid.gridId)"
+            [style.left.px]="grid.bounds.x"
+            [style.top.px]="grid.bounds.y"
+            [style.width.px]="grid.bounds.width"
+            [style.height.px]="grid.bounds.height"
+            [style.z-index]="grid.zIndex"
+          >
+            @if (
+              grid.labelBounds &&
+              (!gridSession() || gridSession()?.gridId !== grid.gridId)
+            ) {
+              <div
+                class="raceday-grid-label"
+                [class.horizontal-label]="
+                  grid.labelPosition === 'top' ||
+                  grid.labelPosition === 'bottom'
+                "
+                [class.vertical-label]="
+                  grid.labelPosition === 'left' ||
+                  grid.labelPosition === 'right'
+                "
+                [style.left.px]="grid.labelBounds.x - grid.bounds.x"
+                [style.top.px]="grid.labelBounds.y - grid.bounds.y"
+                [style.width.px]="grid.labelBounds.width"
+                [style.height.px]="grid.labelBounds.height"
+                [style.font-family]="grid.labelFontFamily || null"
+                [style.font-size.px]="grid.labelFontSize || 18"
+                [style.color]="grid.labelTextColor || '#ffffff'"
+                [style.background-color]="
+                  grid.labelBackgroundColor || 'rgba(15, 23, 42, 0.85)'
+                "
+                [style.font-weight]="grid.labelFontBold ? 'bold' : 'normal'"
+                [style.font-style]="grid.labelFontItalic ? 'italic' : 'normal'"
+                [style.justify-content]="
+                  getGridLabelJustify(grid.labelPosition, grid.labelAlignment)
+                "
+                [style.border-color]="
+                  grid.labelBorderColor || grid.labelTextColor || '#ffffff'
+                "
+                [style.border-width.px]="
+                  grid.labelBorderWidth != null ? grid.labelBorderWidth : 1
+                "
+                [style.border-radius.px]="
+                  grid.labelBorderRadius != null ? grid.labelBorderRadius : 4
+                "
+                [style.border-style]="grid.labelShowBorder ? 'solid' : 'none'"
+              >
+                <span class="grid-label-text">{{
+                  grid.labelText || ("UE_GRID_LABEL_DEFAULT" | translate)
+                }}</span>
+              </div>
+            }
+            @if (
+              grid.headerPlacement === "top" && grid.direction === "vertical"
+            ) {
+              <div
+                class="raceday-grid-top-header"
+                [style.left.px]="grid.dataBounds.x - grid.bounds.x"
+                [style.top.px]="grid.dataBounds.y - grid.bounds.y"
+                [style.height.px]="grid.headerHeight"
+                [style.width.px]="grid.dataBounds.width"
+              >
+                @for (w of grid.headerWidgets; track w.id) {
+                  <app-raceday-absolute-widget
+                    [widget]="w"
+                    [parentComponent]="this"
+                    [isCustomizing]="isLayoutCustomizing"
+                    [selectedWidgetId]="selectedWidgetId()"
+                    [gridContentOffset]="grid.headerOffset"
+                  ></app-raceday-absolute-widget>
+                }
+              </div>
+            }
             <div
-              class="raceday-grid-label"
-              [class.horizontal-label]="
-                grid.labelPosition === 'top' || grid.labelPosition === 'bottom'
+              class="raceday-grid-scroll-viewport"
+              [class.scroll-vertical]="
+                grid.direction === 'vertical' && grid.hasScroll
               "
-              [class.vertical-label]="
-                grid.labelPosition === 'left' || grid.labelPosition === 'right'
+              [class.scroll-horizontal]="
+                grid.direction === 'horizontal' && grid.hasScroll
               "
-              [style.left.px]="grid.labelBounds.x - grid.bounds.x"
-              [style.top.px]="grid.labelBounds.y - grid.bounds.y"
-              [style.width.px]="grid.labelBounds.width"
-              [style.height.px]="grid.labelBounds.height"
-              [style.font-family]="grid.labelFontFamily || null"
-              [style.font-size.px]="grid.labelFontSize || 18"
-              [style.color]="grid.labelTextColor || '#ffffff'"
-              [style.background-color]="
-                grid.labelBackgroundColor || 'rgba(15, 23, 42, 0.85)'
-              "
-              [style.font-weight]="grid.labelFontBold ? 'bold' : 'normal'"
-              [style.font-style]="grid.labelFontItalic ? 'italic' : 'normal'"
-              [style.justify-content]="
-                getGridLabelJustify(grid.labelPosition, grid.labelAlignment)
-              "
-              [style.border-color]="
-                grid.labelBorderColor || grid.labelTextColor || '#ffffff'
-              "
-              [style.border-width.px]="
-                grid.labelBorderWidth != null ? grid.labelBorderWidth : 1
-              "
-              [style.border-radius.px]="
-                grid.labelBorderRadius != null ? grid.labelBorderRadius : 4
-              "
-              [style.border-style]="grid.labelShowBorder ? 'solid' : 'none'"
-            >
-              <span class="grid-label-text">{{
-                grid.labelText || ("UE_GRID_LABEL_DEFAULT" | translate)
-              }}</span>
-            </div>
-          }
-          @if (
-            grid.headerPlacement === "top" && grid.direction === "vertical"
-          ) {
-            <div
-              class="raceday-grid-top-header"
               [style.left.px]="grid.dataBounds.x - grid.bounds.x"
-              [style.top.px]="grid.dataBounds.y - grid.bounds.y"
-              [style.height.px]="grid.headerHeight"
+              [style.top.px]="
+                grid.dataBounds.y -
+                grid.bounds.y +
+                (grid.headerPlacement === 'top' && grid.direction === 'vertical'
+                  ? grid.headerHeight
+                  : 0)
+              "
+              [style.height.px]="
+                grid.dataBounds.height -
+                (grid.headerPlacement === 'top' && grid.direction === 'vertical'
+                  ? grid.headerHeight
+                  : 0)
+              "
               [style.width.px]="grid.dataBounds.width"
             >
-              @for (w of grid.headerWidgets; track w.id) {
-                <app-raceday-absolute-widget
-                  [widget]="w"
-                  [parentComponent]="this"
-                  [isCustomizing]="isLayoutCustomizing"
-                  [selectedWidgetId]="selectedWidgetId()"
-                  [gridContentOffset]="grid.headerOffset"
-                ></app-raceday-absolute-widget>
-              }
-            </div>
-          }
-          <div
-            class="raceday-grid-scroll-viewport"
-            [class.scroll-vertical]="
-              grid.direction === 'vertical' && grid.hasScroll
-            "
-            [class.scroll-horizontal]="
-              grid.direction === 'horizontal' && grid.hasScroll
-            "
-            [style.left.px]="grid.dataBounds.x - grid.bounds.x"
-            [style.top.px]="
-              grid.dataBounds.y -
-              grid.bounds.y +
-              (grid.headerPlacement === 'top' && grid.direction === 'vertical'
-                ? grid.headerHeight
-                : 0)
-            "
-            [style.height.px]="
-              grid.dataBounds.height -
-              (grid.headerPlacement === 'top' && grid.direction === 'vertical'
-                ? grid.headerHeight
-                : 0)
-            "
-            [style.width.px]="grid.dataBounds.width"
-          >
-            <div
-              class="raceday-grid-scroll-content"
-              [style.width.px]="grid.contentWidth"
-              [style.height.px]="grid.contentHeight"
-            >
-              @for (w of grid.cellWidgets; track w.id) {
-                <app-raceday-absolute-widget
-                  [widget]="w"
-                  [parentComponent]="this"
-                  [isCustomizing]="isLayoutCustomizing"
-                  [selectedWidgetId]="selectedWidgetId()"
-                  [gridContentOffset]="grid.contentOffset"
-                ></app-raceday-absolute-widget>
-              }
-            </div>
-          </div>
-        </div>
-      }
-
-      @if (selectedGridBounds; as gBounds) {
-        <div
-          class="selected-grid-container-outline"
-          [style.left.px]="gBounds.x"
-          [style.top.px]="gBounds.y"
-          [style.width.px]="gBounds.width"
-          [style.height.px]="gBounds.height"
-        >
-          <div class="selected-grid-tag">
-            <span class="material-icons" style="font-size: 13px">grid_on</span>
-            <span>{{ selectedGridLabel }}</span>
-          </div>
-        </div>
-      }
-
-      @if (gridSession()) {
-        <div
-          class="lane-blueprint-overlay"
-          [style.left.px]="gridSession()!.bounds.x"
-          [style.top.px]="gridSession()!.bounds.y"
-          [style.width.px]="gridSession()!.bounds.width"
-          [style.height.px]="gridSession()!.bounds.height"
-          [style.z-index]="getGridSessionZIndex()"
-        >
-          <div
-            class="grid-move-handle-bar"
-            (pointerdown)="onGridMoveStart($event)"
-            [title]="'UE_GRID_MOVE_TOOLTIP' | translate"
-          >
-            <span class="material-icons move-icon">open_with</span>
-            <span class="move-label">{{ "UE_GRID_MOVE" | translate }}</span>
-          </div>
-
-          <div
-            class="grid-resize-handle handle-nw"
-            (pointerdown)="onGridResizeStart($event, 'nw')"
-          ></div>
-          <div
-            class="grid-resize-handle handle-n"
-            (pointerdown)="onGridResizeStart($event, 'n')"
-          ></div>
-          <div
-            class="grid-resize-handle handle-ne"
-            (pointerdown)="onGridResizeStart($event, 'ne')"
-          ></div>
-          <div
-            class="grid-resize-handle handle-e"
-            (pointerdown)="onGridResizeStart($event, 'e')"
-          ></div>
-          <div
-            class="grid-resize-handle handle-se"
-            (pointerdown)="onGridResizeStart($event, 'se')"
-          ></div>
-          <div
-            class="grid-resize-handle handle-s"
-            (pointerdown)="onGridResizeStart($event, 's')"
-          ></div>
-          <div
-            class="grid-resize-handle handle-sw"
-            (pointerdown)="onGridResizeStart($event, 'sw')"
-          ></div>
-          <div
-            class="grid-resize-handle handle-w"
-            (pointerdown)="onGridResizeStart($event, 'w')"
-          ></div>
-
-          @if (getGridLabelBounds(); as labelBounds) {
-            <div
-              class="lane-blueprint-cell grid-label-blueprint-cell"
-              [class.vertical-label]="
-                gridSession()!.gridLabelPosition === 'left' ||
-                gridSession()!.gridLabelPosition === 'right'
-              "
-              [style.left.px]="labelBounds.x - gridSession()!.bounds.x"
-              [style.top.px]="labelBounds.y - gridSession()!.bounds.y"
-              [style.width.px]="labelBounds.width"
-              [style.height.px]="labelBounds.height"
-              [style.font-family]="gridSession()!.gridLabelFontFamily || null"
-              [style.font-size.px]="gridSession()!.gridLabelFontSize || 18"
-              [style.color]="gridSession()!.gridLabelTextColor || '#ffffff'"
-              [style.background-color]="
-                gridSession()!.gridLabelBackgroundColor ||
-                'rgba(15, 23, 42, 0.85)'
-              "
-              [style.font-weight]="
-                gridSession()!.gridLabelFontBold !== false ? 'bold' : 'normal'
-              "
-              [style.font-style]="
-                gridSession()!.gridLabelFontItalic ? 'italic' : 'normal'
-              "
-              [style.justify-content]="
-                getGridLabelJustify(
-                  gridSession()!.gridLabelPosition,
-                  gridSession()!.gridLabelAlignment
-                )
-              "
-              [style.border-radius.px]="
-                gridSession()!.gridLabelBorderRadius != null
-                  ? gridSession()!.gridLabelBorderRadius
-                  : 4
-              "
-              [style.border-style]="
-                gridSession()!.gridLabelShowBorder ? 'solid' : 'dashed'
-              "
-              [style.border-color]="
-                gridSession()!.gridLabelShowBorder
-                  ? gridSession()!.gridLabelBorderColor ||
-                    gridSession()!.gridLabelTextColor ||
-                    '#ffffff'
-                  : 'rgba(56, 189, 248, 0.7)'
-              "
-              [style.border-width.px]="
-                gridSession()!.gridLabelShowBorder
-                  ? gridSession()!.gridLabelBorderWidth != null
-                    ? gridSession()!.gridLabelBorderWidth
-                    : 1
-                  : 1.5
-              "
-            >
-              <div class="grid-label-blueprint-text">
-                {{
-                  gridSession()!.gridLabelText ||
-                    ("UE_GRID_LABEL_DEFAULT" | translate)
-                }}
-              </div>
-            </div>
-          }
-
-          @if (getHeaderRowBounds(); as headerBounds) {
-            <div
-              class="lane-blueprint-cell header-cell"
-              [style.left.px]="headerBounds.x - gridSession()!.bounds.x"
-              [style.top.px]="headerBounds.y - gridSession()!.bounds.y"
-              [style.width.px]="headerBounds.width"
-              [style.height.px]="headerBounds.height"
-            >
-              <div class="lane-blueprint-badge">
-                <span
-                  class="material-icons"
-                  style="font-size: 12px; margin-right: 2px"
-                  >view_headline</span
-                >
-                {{ "UE_GRID_HEADER_ROW_BADGE" | translate }}
-              </div>
-            </div>
-          }
-
-          @for (cell of getGridCells(); track cell.laneIndex) {
-            <div
-              class="lane-blueprint-cell"
-              [class.master-cell]="cell.isMaster"
-              [style.left.px]="cell.bounds.x - gridSession()!.bounds.x"
-              [style.top.px]="cell.bounds.y - gridSession()!.bounds.y"
-              [style.width.px]="cell.bounds.width"
-              [style.height.px]="cell.bounds.height"
-            >
               <div
-                class="lane-blueprint-badge"
-                [class.master-badge]="cell.isMaster"
+                class="raceday-grid-scroll-content"
+                [style.width.px]="grid.contentWidth"
+                [style.height.px]="grid.contentHeight"
               >
-                @if (cell.isMaster) {
-                  <span class="material-icons" style="font-size: 13px"
-                    >star</span
-                  >
-                  {{
-                    (gridSession()!.bindingMode === "position"
-                      ? "UE_GRID_POSITION_MASTER_BADGE"
-                      : "UE_GRID_LANE_MASTER_BADGE"
-                    ) | translate
-                  }}
-                } @else {
-                  <span class="material-icons" style="font-size: 13px"
-                    >content_copy</span
-                  >
-                  {{
-                    (gridSession()!.bindingMode === "position"
-                      ? "UE_GRID_POSITION_MIRRORED_BADGE"
-                      : "UE_GRID_LANE_MIRRORED_BADGE"
-                    ) | translate: { index: cell.laneIndex + 1 }
-                  }}
+                @for (w of grid.cellWidgets; track w.id) {
+                  <app-raceday-absolute-widget
+                    [widget]="w"
+                    [parentComponent]="this"
+                    [isCustomizing]="isLayoutCustomizing"
+                    [selectedWidgetId]="selectedWidgetId()"
+                    [gridContentOffset]="grid.contentOffset"
+                  ></app-raceday-absolute-widget>
                 }
               </div>
             </div>
-          }
-        </div>
-
-        <div class="lane-blueprint-toolbar">
-          <div
-            class="lane-blueprint-title draggable-grid-title"
-            (pointerdown)="onGridMoveStart($event)"
-            [title]="'UE_GRID_MOVE_TOOLTIP' | translate"
-          >
-            <span class="material-icons me-1" style="font-size: 16px"
-              >grid_view</span
-            >
-            {{
-              (gridSession()!.bindingMode === "position"
-                ? "UE_GRID_POSITION_MODE_TITLE"
-                : "UE_GRID_MODE_TITLE"
-              ) | translate: { count: gridSession()!.totalLanes }
-            }}
           </div>
-          <div class="lane-blueprint-actions">
-            <button
-              type="button"
-              class="btn btn-sm btn-outline-primary grid-front-btn"
-              (click)="bringGridToFront(gridSession()!.gridId)"
-              [title]="'UE_GRID_BRING_TO_FRONT_TOOLTIP' | translate"
-            >
-              <span class="material-icons me-1" style="font-size: 14px"
-                >flip_to_front</span
+        }
+
+        @if (selectedGridBounds; as gBounds) {
+          <div
+            class="selected-grid-container-outline"
+            [style.left.px]="gBounds.x"
+            [style.top.px]="gBounds.y"
+            [style.width.px]="gBounds.width"
+            [style.height.px]="gBounds.height"
+          >
+            <div class="selected-grid-tag">
+              <span class="material-icons" style="font-size: 13px"
+                >grid_on</span
               >
-              {{ "UE_GRID_BRING_TO_FRONT" | translate }}
-            </button>
-            <button
-              type="button"
-              class="btn btn-sm btn-outline-primary grid-move-btn"
+              <span>{{ selectedGridLabel }}</span>
+            </div>
+          </div>
+        }
+
+        @if (gridSession()) {
+          <div
+            class="lane-blueprint-overlay"
+            [style.left.px]="gridSession()!.bounds.x"
+            [style.top.px]="gridSession()!.bounds.y"
+            [style.width.px]="gridSession()!.bounds.width"
+            [style.height.px]="gridSession()!.bounds.height"
+            [style.z-index]="getGridSessionZIndex()"
+          >
+            <div
+              class="grid-move-handle-bar"
               (pointerdown)="onGridMoveStart($event)"
               [title]="'UE_GRID_MOVE_TOOLTIP' | translate"
             >
-              <span class="material-icons me-1" style="font-size: 14px"
-                >open_with</span
+              <span class="material-icons move-icon">open_with</span>
+              <span class="move-label">{{ "UE_GRID_MOVE" | translate }}</span>
+            </div>
+
+            <div
+              class="grid-resize-handle handle-nw"
+              (pointerdown)="onGridResizeStart($event, 'nw')"
+            ></div>
+            <div
+              class="grid-resize-handle handle-n"
+              (pointerdown)="onGridResizeStart($event, 'n')"
+            ></div>
+            <div
+              class="grid-resize-handle handle-ne"
+              (pointerdown)="onGridResizeStart($event, 'ne')"
+            ></div>
+            <div
+              class="grid-resize-handle handle-e"
+              (pointerdown)="onGridResizeStart($event, 'e')"
+            ></div>
+            <div
+              class="grid-resize-handle handle-se"
+              (pointerdown)="onGridResizeStart($event, 'se')"
+            ></div>
+            <div
+              class="grid-resize-handle handle-s"
+              (pointerdown)="onGridResizeStart($event, 's')"
+            ></div>
+            <div
+              class="grid-resize-handle handle-sw"
+              (pointerdown)="onGridResizeStart($event, 'sw')"
+            ></div>
+            <div
+              class="grid-resize-handle handle-w"
+              (pointerdown)="onGridResizeStart($event, 'w')"
+            ></div>
+
+            @if (getGridLabelBounds(); as labelBounds) {
+              <div
+                class="lane-blueprint-cell grid-label-blueprint-cell"
+                [class.vertical-label]="
+                  gridSession()!.gridLabelPosition === 'left' ||
+                  gridSession()!.gridLabelPosition === 'right'
+                "
+                [style.left.px]="labelBounds.x - gridSession()!.bounds.x"
+                [style.top.px]="labelBounds.y - gridSession()!.bounds.y"
+                [style.width.px]="labelBounds.width"
+                [style.height.px]="labelBounds.height"
+                [style.font-family]="gridSession()!.gridLabelFontFamily || null"
+                [style.font-size.px]="gridSession()!.gridLabelFontSize || 18"
+                [style.color]="gridSession()!.gridLabelTextColor || '#ffffff'"
+                [style.background-color]="
+                  gridSession()!.gridLabelBackgroundColor ||
+                  'rgba(15, 23, 42, 0.85)'
+                "
+                [style.font-weight]="
+                  gridSession()!.gridLabelFontBold !== false ? 'bold' : 'normal'
+                "
+                [style.font-style]="
+                  gridSession()!.gridLabelFontItalic ? 'italic' : 'normal'
+                "
+                [style.justify-content]="
+                  getGridLabelJustify(
+                    gridSession()!.gridLabelPosition,
+                    gridSession()!.gridLabelAlignment
+                  )
+                "
+                [style.border-radius.px]="
+                  gridSession()!.gridLabelBorderRadius != null
+                    ? gridSession()!.gridLabelBorderRadius
+                    : 4
+                "
+                [style.border-style]="
+                  gridSession()!.gridLabelShowBorder ? 'solid' : 'dashed'
+                "
+                [style.border-color]="
+                  gridSession()!.gridLabelShowBorder
+                    ? gridSession()!.gridLabelBorderColor ||
+                      gridSession()!.gridLabelTextColor ||
+                      '#ffffff'
+                    : 'rgba(56, 189, 248, 0.7)'
+                "
+                [style.border-width.px]="
+                  gridSession()!.gridLabelShowBorder
+                    ? gridSession()!.gridLabelBorderWidth != null
+                      ? gridSession()!.gridLabelBorderWidth
+                      : 1
+                    : 1.5
+                "
               >
-              {{ "UE_GRID_MOVE" | translate }}
-            </button>
-            <button
-              type="button"
-              class="btn btn-sm btn-danger grid-delete-btn"
-              (click)="onDeleteGridClicked()"
-              [title]="'UE_GRID_DELETE_TOOLTIP' | translate"
-            >
-              <span class="material-icons me-1" style="font-size: 14px"
-                >delete</span
+                <div class="grid-label-blueprint-text">
+                  {{
+                    gridSession()!.gridLabelText ||
+                      ("UE_GRID_LABEL_DEFAULT" | translate)
+                  }}
+                </div>
+              </div>
+            }
+
+            @if (getHeaderRowBounds(); as headerBounds) {
+              <div
+                class="lane-blueprint-cell header-cell"
+                [style.left.px]="headerBounds.x - gridSession()!.bounds.x"
+                [style.top.px]="headerBounds.y - gridSession()!.bounds.y"
+                [style.width.px]="headerBounds.width"
+                [style.height.px]="headerBounds.height"
               >
-              {{ "UE_GRID_DELETE" | translate }}
-            </button>
-            <button
-              type="button"
-              class="btn btn-sm btn-primary grid-done-btn"
-              (click)="finishGrid.emit()"
-            >
-              <span class="material-icons me-1" style="font-size: 14px"
-                >check</span
+                <div class="lane-blueprint-badge">
+                  <span
+                    class="material-icons"
+                    style="font-size: 12px; margin-right: 2px"
+                    >view_headline</span
+                  >
+                  {{ "UE_GRID_HEADER_ROW_BADGE" | translate }}
+                </div>
+              </div>
+            }
+
+            @for (cell of getGridCells(); track cell.laneIndex) {
+              <div
+                class="lane-blueprint-cell"
+                [class.master-cell]="cell.isMaster"
+                [style.left.px]="cell.bounds.x - gridSession()!.bounds.x"
+                [style.top.px]="cell.bounds.y - gridSession()!.bounds.y"
+                [style.width.px]="cell.bounds.width"
+                [style.height.px]="cell.bounds.height"
               >
-              {{ "UE_GRID_MODE_DONE" | translate }}
-            </button>
+                <div
+                  class="lane-blueprint-badge"
+                  [class.master-badge]="cell.isMaster"
+                >
+                  @if (cell.isMaster) {
+                    <span class="material-icons" style="font-size: 13px"
+                      >star</span
+                    >
+                    {{
+                      (gridSession()!.bindingMode === "position"
+                        ? "UE_GRID_POSITION_MASTER_BADGE"
+                        : "UE_GRID_LANE_MASTER_BADGE"
+                      ) | translate
+                    }}
+                  } @else {
+                    <span class="material-icons" style="font-size: 13px"
+                      >content_copy</span
+                    >
+                    {{
+                      (gridSession()!.bindingMode === "position"
+                        ? "UE_GRID_POSITION_MIRRORED_BADGE"
+                        : "UE_GRID_LANE_MIRRORED_BADGE"
+                      ) | translate: { index: cell.laneIndex + 1 }
+                    }}
+                  }
+                </div>
+              </div>
+            }
           </div>
+
+          <div class="lane-blueprint-toolbar">
+            <div
+              class="lane-blueprint-title draggable-grid-title"
+              (pointerdown)="onGridMoveStart($event)"
+              [title]="'UE_GRID_MOVE_TOOLTIP' | translate"
+            >
+              <span class="material-icons me-1" style="font-size: 16px"
+                >grid_view</span
+              >
+              {{
+                (gridSession()!.bindingMode === "position"
+                  ? "UE_GRID_POSITION_MODE_TITLE"
+                  : "UE_GRID_MODE_TITLE"
+                ) | translate: { count: gridSession()!.totalLanes }
+              }}
+            </div>
+            <div class="lane-blueprint-actions">
+              <button
+                type="button"
+                class="btn btn-sm btn-outline-primary grid-front-btn"
+                (click)="bringGridToFront(gridSession()!.gridId)"
+                [title]="'UE_GRID_BRING_TO_FRONT_TOOLTIP' | translate"
+              >
+                <span class="material-icons me-1" style="font-size: 14px"
+                  >flip_to_front</span
+                >
+                {{ "UE_GRID_BRING_TO_FRONT" | translate }}
+              </button>
+              <button
+                type="button"
+                class="btn btn-sm btn-outline-primary grid-move-btn"
+                (pointerdown)="onGridMoveStart($event)"
+                [title]="'UE_GRID_MOVE_TOOLTIP' | translate"
+              >
+                <span class="material-icons me-1" style="font-size: 14px"
+                  >open_with</span
+                >
+                {{ "UE_GRID_MOVE" | translate }}
+              </button>
+              <button
+                type="button"
+                class="btn btn-sm btn-danger grid-delete-btn"
+                (click)="onDeleteGridClicked()"
+                [title]="'UE_GRID_DELETE_TOOLTIP' | translate"
+              >
+                <span class="material-icons me-1" style="font-size: 14px"
+                  >delete</span
+                >
+                {{ "UE_GRID_DELETE" | translate }}
+              </button>
+              <button
+                type="button"
+                class="btn btn-sm btn-primary grid-done-btn"
+                (click)="finishGrid.emit()"
+              >
+                <span class="material-icons me-1" style="font-size: 14px"
+                  >check</span
+                >
+                {{ "UE_GRID_MODE_DONE" | translate }}
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+
+      @if (!heat && errorMessage) {
+        <div
+          class="error-container"
+          style="
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          "
+        >
+          <h1
+            style="
+              color: #ef4444;
+              font-size: 40px;
+              font-weight: bold;
+              text-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+            "
+          >
+            {{ errorMessage }}
+          </h1>
         </div>
       }
     </div>
-
-    @if (!heat && errorMessage) {
-      <div
-        class="error-container"
-        style="
-          flex: 1;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        "
-      >
-        <h1
-          style="
-            color: #ef4444;
-            font-size: 40px;
-            font-weight: bold;
-            text-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
-          "
-        >
-          {{ errorMessage }}
-        </h1>
-      </div>
-    }
-  </div>
+  }
 
   <!-- Layout Customizer Floating Panel -->
   <ng-template #toolboxTemplate>

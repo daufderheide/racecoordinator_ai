@@ -10,10 +10,12 @@ public class CustomUI extends Model {
   public static final String DEFAULT_UI_ID = "default_ui_layout_rc_ai";
   public static final String PRACTICE_UI_ID = "practice_ui_layout_rc_ai";
   public static final String FUEL_UI_ID = "default_fuel_ui_layout_rc_ai";
+  public static final String DRIVER_STATION_UI_ID = "driver_station_ui_layout_rc_ai";
 
   public static final String DEFAULT_UI_NAME = "RaceCoordinator AI";
   public static final String PRACTICE_UI_NAME = "RaceCoordinator AI (Practice)";
   public static final String FUEL_UI_NAME = "RaceCoordinator AI (Fuel)";
+  public static final String DRIVER_STATION_UI_NAME = "RaceCoordinator AI (Driver Station)";
 
   public static boolean isLegacyDefaultName(String name) {
     if (name == null || name.trim().isEmpty()) {
@@ -48,6 +50,19 @@ public class CustomUI extends Model {
         || "fuel ui".equals(n)
         || "fuel ui layout".equals(n)
         || "default fuel ui layout".equals(n);
+  }
+
+  public static boolean isLegacyDriverStationName(String name) {
+    if (name == null || name.trim().isEmpty()) {
+      return true;
+    }
+    String n = name.trim().toLowerCase();
+    return "driver station".equals(n)
+        || "driver station ui".equals(n)
+        || "driver station layout".equals(n)
+        || "driver station ui layout".equals(n)
+        || "default driver station ui layout".equals(n)
+        || "racecoordinator ai (driver station)".equals(n);
   }
 
   public static final String PRE_MIGRATION_BACKUP_SUFFIX = " (Pre-Migration Backup)";
@@ -297,6 +312,34 @@ public class CustomUI extends Model {
         columnWidthsJson,
         "{}",
         FUEL_UI_ID,
+        null);
+  }
+
+  public static CustomUI createDriverStation() {
+    String layoutJson =
+        "{\"widgets\":["
+            + "{\"id\":\"widget-ds-progress\",\"widgetType\":\"progress-gauge\",\"x\":20,\"y\":20,\"width\":80,\"height\":1880,\"zIndex\":100,\"customSettings\":{\"gaugeType\":\"heat-progress\",\"gaugeStyle\":\"thermometer\",\"orientation\":\"vertical\",\"bindingMode\":\"hostLane\"}},"
+            + "{\"id\":\"widget-ds-nickname\",\"widgetType\":\"lane-column\",\"x\":120,\"y\":20,\"width\":640,\"height\":290,\"zIndex\":100,\"customSettings\":{\"columnKey\":\"driver.nickname\",\"bindingMode\":\"hostLane\",\"showHeader\":true,\"showBorder\":true,\"borderWidth\":2,\"borderRadius\":10,\"borderColor\":\"rgba(0,0,0,0.1)\",\"backgroundColor\":\"rgba(255,255,255,0.1)\",\"useLaneColors\":false,\"headerFontSize\":24,\"valueFontSize\":48}},"
+            + "{\"id\":\"widget-ds-lane-number\",\"widgetType\":\"lane-column\",\"x\":780,\"y\":20,\"width\":180,\"height\":290,\"zIndex\":100,\"customSettings\":{\"columnKey\":\"laneNumber\",\"bindingMode\":\"hostLane\",\"showHeader\":true,\"showBorder\":true,\"borderWidth\":2,\"borderRadius\":10,\"borderColor\":\"rgba(0,0,0,0.1)\",\"backgroundColor\":\"rgba(255,255,255,0.1)\",\"useLaneColors\":false,\"headerFontSize\":24,\"valueFontSize\":48}},"
+            + "{\"id\":\"widget-ds-rank-heat\",\"widgetType\":\"lane-column\",\"x\":120,\"y\":330,\"width\":410,\"height\":290,\"zIndex\":100,\"customSettings\":{\"columnKey\":\"rankHeat\",\"bindingMode\":\"hostLane\",\"showHeader\":true,\"showBorder\":true,\"borderWidth\":2,\"borderRadius\":10,\"borderColor\":\"rgba(0,0,0,0.1)\",\"backgroundColor\":\"rgba(255,255,255,0.1)\",\"useLaneColors\":false,\"headerFontSize\":24,\"valueFontSize\":48}},"
+            + "{\"id\":\"widget-ds-rank-overall\",\"widgetType\":\"lane-column\",\"x\":550,\"y\":330,\"width\":410,\"height\":290,\"zIndex\":100,\"customSettings\":{\"columnKey\":\"rankOverall\",\"bindingMode\":\"hostLane\",\"showHeader\":true,\"showBorder\":true,\"borderWidth\":2,\"borderRadius\":10,\"borderColor\":\"rgba(0,0,0,0.1)\",\"backgroundColor\":\"rgba(255,255,255,0.1)\",\"useLaneColors\":false,\"headerFontSize\":24,\"valueFontSize\":48}},"
+            + "{\"id\":\"widget-ds-lap-count\",\"widgetType\":\"lane-column\",\"x\":120,\"y\":640,\"width\":410,\"height\":290,\"zIndex\":100,\"customSettings\":{\"columnKey\":\"lapCount\",\"bindingMode\":\"hostLane\",\"showHeader\":true,\"showBorder\":true,\"borderWidth\":2,\"borderRadius\":10,\"borderColor\":\"rgba(0,0,0,0.1)\",\"backgroundColor\":\"rgba(255,255,255,0.1)\",\"useLaneColors\":false,\"lapDecimalPlaces\":0,\"decimalPlaces\":0,\"headerFontSize\":24,\"valueFontSize\":48}},"
+            + "{\"id\":\"widget-ds-last-lap-time\",\"widgetType\":\"lane-column\",\"x\":550,\"y\":640,\"width\":410,\"height\":290,\"zIndex\":100,\"customSettings\":{\"columnKey\":\"lastLapTime\",\"bindingMode\":\"hostLane\",\"showHeader\":true,\"showBorder\":true,\"borderWidth\":2,\"borderRadius\":10,\"borderColor\":\"rgba(0,0,0,0.1)\",\"backgroundColor\":\"rgba(255,255,255,0.1)\",\"useLaneColors\":false,\"headerFontSize\":24,\"valueFontSize\":48}},"
+            + "{\"id\":\"widget-ds-gap-leader\",\"widgetType\":\"lane-column\",\"x\":120,\"y\":950,\"width\":840,\"height\":290,\"zIndex\":100,\"customSettings\":{\"columnKey\":\"gapLeader\",\"customLabel\":\"GAP LEADER\",\"bindingMode\":\"hostLane\",\"showHeader\":true,\"showBorder\":true,\"borderWidth\":2,\"borderRadius\":10,\"borderColor\":\"rgba(0,0,0,0.1)\",\"backgroundColor\":\"rgba(255,255,255,0.1)\",\"useLaneColors\":false,\"headerFontSize\":24,\"valueFontSize\":48}},"
+            + "{\"id\":\"widget-ds-best-lap-time\",\"widgetType\":\"lane-column\",\"x\":120,\"y\":1260,\"width\":840,\"height\":290,\"zIndex\":100,\"customSettings\":{\"columnKey\":\"bestLapTime\",\"bindingMode\":\"hostLane\",\"showHeader\":true,\"showBorder\":true,\"borderWidth\":2,\"borderRadius\":10,\"borderColor\":\"rgba(0,0,0,0.1)\",\"backgroundColor\":\"rgba(255,255,255,0.1)\",\"useLaneColors\":false,\"headerFontSize\":24,\"valueFontSize\":48}},"
+            + "{\"id\":\"widget-ds-flag\",\"widgetType\":\"flag\",\"x\":120,\"y\":1570,\"width\":840,\"height\":330,\"zIndex\":100,\"customSettings\":{\"displayMode\":\"color-bar\"}},"
+            + "{\"id\":\"widget-ds-fuel\",\"widgetType\":\"progress-gauge\",\"x\":980,\"y\":20,\"width\":80,\"height\":1880,\"zIndex\":100,\"customSettings\":{\"gaugeType\":\"fuel\",\"gaugeStyle\":\"thermometer\",\"orientation\":\"vertical\",\"bindingMode\":\"hostLane\"}}"
+            + "],\"baseWidth\":1080,\"baseHeight\":1920,\"aspectRatio\":\"9:16\",\"scaleMode\":\"stretch\"}";
+    return new CustomUI(
+        DRIVER_STATION_UI_NAME,
+        true,
+        layoutJson,
+        "[]",
+        "{}",
+        "{}",
+        "{}",
+        "{}",
+        DRIVER_STATION_UI_ID,
         null);
   }
 

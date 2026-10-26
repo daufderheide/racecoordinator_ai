@@ -61,6 +61,9 @@ export class RacedayFormatUtils {
     if (hd.actualDriver && !Driver.isEmpty(hd.actualDriver)) return false;
     if (hd.actualDriver && Driver.isEmpty(hd.actualDriver)) return true;
 
+    const team = hd.participant?.team || hd.driver?.team || (hd as any).team;
+    if (team && (team.name || team.entity_id)) return false;
+
     const nestedDriver = hd.driver?.driver || hd.participant?.driver;
     if (nestedDriver && !Driver.isEmpty(nestedDriver)) return false;
     if (nestedDriver && Driver.isEmpty(nestedDriver)) return true;
@@ -800,8 +803,17 @@ export class RacedayFormatUtils {
       if (teamName) return teamName;
     }
     const d = hd.actualDriver || (hd.driver as any)?.driver || hd.driver;
-    if (baseKey === "driver.nickname") return d?.nickname || d?.name || "";
-    return d?.name || "";
+    const driverName =
+      (baseKey === "driver.nickname" ? d?.nickname : undefined) || d?.name;
+    if (driverName) return driverName;
+    const teamObj =
+      hd.participant?.team ||
+      (hd.driver as any)?.team ||
+      (hd as any)?.team ||
+      (hd.actualDriver as any)?.team;
+    const teamName = typeof teamObj === "string" ? teamObj : teamObj?.name;
+    if (teamName) return teamName;
+    return "";
   }
 
   private static formatTeamName(

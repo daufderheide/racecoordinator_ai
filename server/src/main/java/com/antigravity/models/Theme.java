@@ -20,10 +20,12 @@ public class Theme extends Model {
   public static final String DEFAULT_THEME_ID = "default_classic_rc_ai";
   public static final String PRACTICE_THEME_ID = "practice_theme_rc_ai";
   public static final String FUEL_THEME_ID = "default_fuel_theme_rc_ai";
+  public static final String DRIVER_STATION_THEME_ID = "driver_station_theme_rc_ai";
 
   public static final String DEFAULT_THEME_NAME = "RaceCoordinator AI";
   public static final String PRACTICE_THEME_NAME = "RaceCoordinator AI (Practice)";
   public static final String FUEL_THEME_NAME = "RaceCoordinator AI (Fuel)";
+  public static final String DRIVER_STATION_THEME_NAME = "RaceCoordinator AI (Driver Station)";
 
   // TODO(aufderheide): Remove the legacy name checks after a few versions.
   public static boolean isLegacyDefaultName(String name) {
@@ -55,6 +57,16 @@ public class Theme extends Model {
     }
     String n = name.trim().toLowerCase();
     return "fuel".equals(n) || "fuel theme".equals(n);
+  }
+
+  public static boolean isLegacyDriverStationName(String name) {
+    if (name == null || name.trim().isEmpty()) {
+      return true;
+    }
+    String n = name.trim().toLowerCase();
+    return "driver station".equals(n)
+        || "driver station theme".equals(n)
+        || "racecoordinator ai (driver station)".equals(n);
   }
 
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();

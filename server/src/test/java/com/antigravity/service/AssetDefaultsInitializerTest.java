@@ -277,10 +277,11 @@ public class AssetDefaultsInitializerTest {
     initializer.backfillDefaultTheme();
 
     List<Theme> themes = themeRepo.findAll();
-    assertEquals(3, themes.size());
+    assertEquals(4, themes.size());
     assertNotNull(themeRepo.findByEntityId(Theme.DEFAULT_THEME_ID));
     assertNotNull(themeRepo.findByEntityId(Theme.PRACTICE_THEME_ID));
     assertNotNull(themeRepo.findByEntityId(Theme.FUEL_THEME_ID));
+    assertNotNull(themeRepo.findByEntityId(Theme.DRIVER_STATION_THEME_ID));
   }
 
   @Test

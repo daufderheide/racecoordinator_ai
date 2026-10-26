@@ -132,6 +132,15 @@ public class ThemeTaskHandlerTest {
     assertNotNull(fuelTheme);
     org.junit.Assert.assertEquals(CustomUI.FUEL_UI_ID, fuelTheme.getUiId());
     assertTrue(fuelTheme.isDefault());
+
+    Theme driverStationTheme =
+        themes.stream()
+            .filter(t -> Theme.DRIVER_STATION_THEME_ID.equals(t.getEntityId()))
+            .findFirst()
+            .orElse(null);
+    assertNotNull(driverStationTheme);
+    org.junit.Assert.assertEquals(CustomUI.DRIVER_STATION_UI_ID, driverStationTheme.getUiId());
+    assertTrue(driverStationTheme.isDefault());
   }
 
   @Test
@@ -229,6 +238,7 @@ public class ThemeTaskHandlerTest {
         new com.antigravity.repository.SqliteRepository<>(databaseContext, "themes", Theme.class);
     assertNotNull(repo.findByEntityId(Theme.PRACTICE_THEME_ID));
     assertNotNull(repo.findByEntityId(Theme.FUEL_THEME_ID));
+    assertNotNull(repo.findByEntityId(Theme.DRIVER_STATION_THEME_ID));
 
     // Delete Practice and Fuel themes
     org.mockito.Mockito.doReturn(Theme.PRACTICE_THEME_ID)
@@ -239,13 +249,20 @@ public class ThemeTaskHandlerTest {
     org.mockito.Mockito.doReturn(Theme.FUEL_THEME_ID).when(handler).getPathParam(any(), eq("id"));
     handler.deleteTheme(ctx);
 
+    org.mockito.Mockito.doReturn(Theme.DRIVER_STATION_THEME_ID)
+        .when(handler)
+        .getPathParam(any(), eq("id"));
+    handler.deleteTheme(ctx);
+
     assertTrue(databaseContext.isDefaultArtifactDeleted("theme", Theme.PRACTICE_THEME_ID));
     assertTrue(databaseContext.isDefaultArtifactDeleted("theme", Theme.FUEL_THEME_ID));
+    assertTrue(databaseContext.isDefaultArtifactDeleted("theme", Theme.DRIVER_STATION_THEME_ID));
 
     // Calling ensureDefaultTheme() should NOT recreate them
     handler.ensureDefaultTheme();
     assertNull(repo.findByEntityId(Theme.PRACTICE_THEME_ID));
     assertNull(repo.findByEntityId(Theme.FUEL_THEME_ID));
+    assertNull(repo.findByEntityId(Theme.DRIVER_STATION_THEME_ID));
 
     // Calling createTheme with name restores/unmarks it
     Theme recreatedPractice =

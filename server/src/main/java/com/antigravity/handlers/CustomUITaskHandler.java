@@ -32,7 +32,7 @@ public class CustomUITaskHandler {
     try {
       databaseContext.ensureTable("custom_uis");
       List<CustomUI> uis = customUIRepository.findAll();
-      boolean[] foundFlags = new boolean[3]; // [default, practice, fuel]
+      boolean[] foundFlags = new boolean[4]; // [default, practice, fuel, driver_station]
       for (CustomUI ui : uis) {
         normalizeCustomUi(ui, foundFlags);
       }
@@ -56,6 +56,14 @@ public class CustomUITaskHandler {
         CustomUI fuelUi = CustomUI.createFuel();
         customUIRepository.save(fuelUi);
         logger.info("Created fuel custom UI with ID {}", CustomUI.FUEL_UI_ID);
+      }
+
+      if (!foundFlags[3]
+          && !databaseContext.isDefaultArtifactDeleted(
+              "custom_ui", CustomUI.DRIVER_STATION_UI_ID)) {
+        CustomUI dsUi = CustomUI.createDriverStation();
+        customUIRepository.save(dsUi);
+        logger.info("Created driver station custom UI with ID {}", CustomUI.DRIVER_STATION_UI_ID);
       }
     } catch (Exception e) {
       logger.error("Failed to ensure default custom UIs", e);
@@ -95,6 +103,14 @@ public class CustomUITaskHandler {
       foundFlags[2] = true;
       if (CustomUI.isLegacyFuelName(name) && !CustomUI.FUEL_UI_NAME.equals(name)) {
         name = CustomUI.FUEL_UI_NAME;
+        updated = true;
+      }
+    }
+    if (CustomUI.DRIVER_STATION_UI_ID.equals(entityId)) {
+      foundFlags[3] = true;
+      if (CustomUI.isLegacyDriverStationName(name)
+          && !CustomUI.DRIVER_STATION_UI_NAME.equals(name)) {
+        name = CustomUI.DRIVER_STATION_UI_NAME;
         updated = true;
       }
     }
@@ -237,6 +253,10 @@ public class CustomUITaskHandler {
           || CustomUI.FUEL_UI_NAME.equalsIgnoreCase(ui.getName())) {
         databaseContext.clearDefaultArtifactDeleted("custom_ui", CustomUI.FUEL_UI_ID);
         databaseContext.clearDefaultArtifactDeleted("custom_ui", CustomUI.FUEL_UI_NAME);
+      } else if (CustomUI.DRIVER_STATION_UI_ID.equals(ui.getEntityId())
+          || CustomUI.DRIVER_STATION_UI_NAME.equalsIgnoreCase(ui.getName())) {
+        databaseContext.clearDefaultArtifactDeleted("custom_ui", CustomUI.DRIVER_STATION_UI_ID);
+        databaseContext.clearDefaultArtifactDeleted("custom_ui", CustomUI.DRIVER_STATION_UI_NAME);
       }
       if (ui.getEntityId() != null) {
         databaseContext.clearDefaultArtifactDeleted("custom_ui", ui.getEntityId());
@@ -312,6 +332,7 @@ public class CustomUITaskHandler {
       if (CustomUI.DEFAULT_UI_ID.equals(id)
           || CustomUI.PRACTICE_UI_ID.equals(id)
           || CustomUI.FUEL_UI_ID.equals(id)
+          || CustomUI.DRIVER_STATION_UI_ID.equals(id)
           || "2".equals(id)
           || ui.isDefault()) {
         databaseContext.markDefaultArtifactDeleted("custom_ui", id);
@@ -325,6 +346,10 @@ public class CustomUITaskHandler {
             || "2".equals(id)
             || CustomUI.isLegacyFuelName(ui.getName())) {
           databaseContext.markDefaultArtifactDeleted("custom_ui", CustomUI.FUEL_UI_ID);
+        }
+        if (CustomUI.DRIVER_STATION_UI_ID.equals(id)
+            || CustomUI.isLegacyDriverStationName(ui.getName())) {
+          databaseContext.markDefaultArtifactDeleted("custom_ui", CustomUI.DRIVER_STATION_UI_ID);
         }
       }
       setStatus(ctx, 204);

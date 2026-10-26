@@ -215,5 +215,25 @@ describe("RacedayProgressGaugeComponent", () => {
       const labelEl = fixture.nativeElement.querySelector(".thermometer-label");
       expect(labelEl).toBeNull();
     });
+
+    it("should fall back to parent activeLaneForegroundColor when fillColor and textColor are absent", () => {
+      mockParent.activeLaneForegroundColor = "#000000";
+      const widget = {
+        id: "gauge-ds",
+        widgetType: "progress-gauge",
+        customSettings: {
+          gaugeType: "heat-progress",
+          gaugeStyle: "thermometer",
+          bindingMode: "hostLane",
+        },
+      } as any;
+
+      fixture.componentRef.setInput("parent", mockParent);
+      fixture.componentRef.setInput("widget", widget);
+      fixture.detectChanges();
+
+      expect(component.effectiveFillColor).toBe("#000000");
+      expect(component.effectiveForegroundColor).toBe("#000000");
+    });
   });
 });

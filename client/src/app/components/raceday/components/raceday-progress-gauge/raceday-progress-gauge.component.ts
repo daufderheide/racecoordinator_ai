@@ -94,8 +94,11 @@ export class RacedayProgressGaugeComponent {
 
   get isEmptyDriver(): boolean {
     const d = this.targetDriver;
-    if (this.parent()?.isEmptyDriver !== undefined) {
-      return Boolean(this.parent().isEmptyDriver);
+    if (typeof this.parent()?.isEmptyDriver === "boolean") {
+      return this.parent().isEmptyDriver;
+    }
+    if (typeof this.parent()?.isEmptyDriver === "function") {
+      return !d || this.parent().isEmptyDriver(d);
     }
     return !d || RacedayFormatUtils.isEmptyDriver(d);
   }
@@ -118,11 +121,15 @@ export class RacedayProgressGaugeComponent {
     if (this.isEmptyDriver) return 0;
     const parent = this.parent();
     const finishValue =
-      parent?.finishValue ?? parent?.race?.heat_scoring?.finishValue ?? 0;
+      parent?.finishValue ??
+      parent?.race?.heat_scoring?.finishValue ??
+      (parent?.race as any)?.heatScoring?.finishValue ??
+      0;
     if (!finishValue) return 0;
     const finishMethod =
       parent?.finishMethod ??
       parent?.race?.heat_scoring?.finishMethod ??
+      (parent?.race as any)?.heatScoring?.finishMethod ??
       FinishMethod.Lap;
 
     if (finishMethod === FinishMethod.Timed || finishMethod === "Timed") {
@@ -141,10 +148,14 @@ export class RacedayProgressGaugeComponent {
 
     const parent = this.parent();
     const finishValue =
-      parent?.finishValue ?? parent?.race?.heat_scoring?.finishValue ?? 0;
+      parent?.finishValue ??
+      parent?.race?.heat_scoring?.finishValue ??
+      (parent?.race as any)?.heatScoring?.finishValue ??
+      0;
     const finishMethod =
       parent?.finishMethod ??
       parent?.race?.heat_scoring?.finishMethod ??
+      (parent?.race as any)?.heatScoring?.finishMethod ??
       FinishMethod.Lap;
 
     if (finishMethod === FinishMethod.Timed || finishMethod === "Timed") {
@@ -160,6 +171,7 @@ export class RacedayProgressGaugeComponent {
   get effectiveFillColor(): string {
     return (
       this.effectiveSettings["fillColor"] ||
+      this.parent()?.activeLaneForegroundColor ||
       this.parent()?.foregroundColor ||
       "currentColor"
     );
@@ -168,6 +180,7 @@ export class RacedayProgressGaugeComponent {
   get effectiveForegroundColor(): string {
     return (
       this.effectiveSettings["textColor"] ||
+      this.parent()?.activeLaneForegroundColor ||
       this.parent()?.foregroundColor ||
       "currentColor"
     );

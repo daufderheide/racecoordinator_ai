@@ -4,7 +4,6 @@ import { TranslationService } from "@app/services/translation.service";
 import { isEntityNameUnique } from "@app/utils/editor-utils";
 
 export const DEFAULT_RACEDAY_UI_NAMES = new Set([
-  "",
   "default",
   "default ui",
   "racecoordinator ai",
@@ -14,7 +13,6 @@ export const DEFAULT_RACEDAY_UI_NAMES = new Set([
 ]);
 
 export const DEFAULT_PRACTICE_UI_NAMES = new Set([
-  "",
   "practice",
   "practice ui",
   "racecoordinator ai (practice)",
@@ -23,7 +21,6 @@ export const DEFAULT_PRACTICE_UI_NAMES = new Set([
 ]);
 
 export const DEFAULT_FUEL_UI_NAMES = new Set([
-  "",
   "fuel",
   "fuel ui",
   "racecoordinator ai (fuel)",
@@ -31,8 +28,15 @@ export const DEFAULT_FUEL_UI_NAMES = new Set([
   "fuel ui layout",
 ]);
 
+export const DEFAULT_DRIVER_STATION_UI_NAMES = new Set([
+  "driver station",
+  "driver station ui",
+  "racecoordinator ai (driver station)",
+  "default driver station ui layout",
+  "driver station ui layout",
+]);
+
 export const DEFAULT_THEME_NAMES = new Set([
-  "",
   "default",
   "racecoordinator ai",
   "racecoordinator ai (default)",
@@ -42,41 +46,61 @@ export const DEFAULT_THEME_NAMES = new Set([
 ]);
 
 export const DEFAULT_PRACTICE_THEME_NAMES = new Set([
-  "",
   "racecoordinator ai (practice)",
   "practice",
   "practice theme",
 ]);
 
 export const DEFAULT_FUEL_THEME_NAMES = new Set([
-  "",
   "racecoordinator ai (fuel)",
   "fuel",
   "fuel theme",
 ]);
 
+export const DEFAULT_DRIVER_STATION_THEME_NAMES = new Set([
+  "racecoordinator ai (driver station)",
+  "driver station",
+  "driver station theme",
+]);
+
 export function isLegacyRacedayUiName(name?: string): boolean {
-  return DEFAULT_RACEDAY_UI_NAMES.has((name || "").trim().toLowerCase());
+  if (!name || !name.trim()) return false;
+  return DEFAULT_RACEDAY_UI_NAMES.has(name.trim().toLowerCase());
 }
 
 export function isLegacyPracticeUiName(name?: string): boolean {
-  return DEFAULT_PRACTICE_UI_NAMES.has((name || "").trim().toLowerCase());
+  if (!name || !name.trim()) return false;
+  return DEFAULT_PRACTICE_UI_NAMES.has(name.trim().toLowerCase());
 }
 
 export function isLegacyFuelUiName(name?: string): boolean {
-  return DEFAULT_FUEL_UI_NAMES.has((name || "").trim().toLowerCase());
+  if (!name || !name.trim()) return false;
+  return DEFAULT_FUEL_UI_NAMES.has(name.trim().toLowerCase());
+}
+
+export function isLegacyDriverStationUiName(name?: string): boolean {
+  if (!name || !name.trim()) return false;
+  return DEFAULT_DRIVER_STATION_UI_NAMES.has(name.trim().toLowerCase());
 }
 
 export function isLegacyDefaultThemeName(name?: string): boolean {
-  return DEFAULT_THEME_NAMES.has((name || "").trim().toLowerCase());
+  if (!name || !name.trim()) return false;
+  return DEFAULT_THEME_NAMES.has(name.trim().toLowerCase());
 }
 
 export function isLegacyPracticeThemeName(name?: string): boolean {
-  return DEFAULT_PRACTICE_THEME_NAMES.has((name || "").trim().toLowerCase());
+  if (!name || !name.trim()) return false;
+  return DEFAULT_PRACTICE_THEME_NAMES.has(name.trim().toLowerCase());
 }
 
 export function isLegacyFuelThemeName(name?: string): boolean {
-  return DEFAULT_FUEL_THEME_NAMES.has((name || "").trim().toLowerCase());
+  if (!name || !name.trim()) return false;
+  return DEFAULT_FUEL_THEME_NAMES.has(name.trim().toLowerCase());
+}
+
+export function isLegacyDriverStationThemeName(name?: string): boolean {
+  if (!name || !name.trim()) return false;
+  return DEFAULT_DRIVER_STATION_THEME_NAMES.has(name.trim().toLowerCase());
 }
 
 export function getCustomUiDisplayNameKey(
@@ -125,6 +149,19 @@ export function getCustomUiDisplayNameKey(
     }
     return ui.name || "";
   }
+  if (entityId === "driver_station_ui_layout_rc_ai") {
+    const translated = translationService
+      ?.translate("UE_LABEL_DEFAULT_DRIVER_STATION_UI")
+      ?.trim()
+      .toLowerCase();
+    if (
+      DEFAULT_DRIVER_STATION_UI_NAMES.has(nameNorm) ||
+      (translated && nameNorm === translated)
+    ) {
+      return "UE_LABEL_DEFAULT_DRIVER_STATION_UI";
+    }
+    return ui.name || "";
+  }
   return ui.name || "UE_LABEL_DEFAULT_UI";
 }
 
@@ -133,7 +170,8 @@ export function isCustomUiDefault(ui: CustomUI): boolean {
     ui.is_default ||
     ui.entity_id === "default_ui_layout_rc_ai" ||
     ui.entity_id === "practice_ui_layout_rc_ai" ||
-    ui.entity_id === "default_fuel_ui_layout_rc_ai"
+    ui.entity_id === "default_fuel_ui_layout_rc_ai" ||
+    ui.entity_id === "driver_station_ui_layout_rc_ai"
   );
 }
 
@@ -183,6 +221,19 @@ export function getThemeDisplayNameKey(
     }
     return theme.name || "";
   }
+  if (entityId === "driver_station_theme_rc_ai") {
+    const translated = translationService
+      ?.translate("UE_LABEL_DRIVER_STATION_THEME")
+      ?.trim()
+      .toLowerCase();
+    if (
+      DEFAULT_DRIVER_STATION_THEME_NAMES.has(nameNorm) ||
+      (translated && nameNorm === translated)
+    ) {
+      return "UE_LABEL_DRIVER_STATION_THEME";
+    }
+    return theme.name || "";
+  }
   if (theme.is_default || entityId === "default_classic_rc_ai") {
     const translated = translationService
       ?.translate("UE_LABEL_DEFAULT_THEME")
@@ -204,7 +255,8 @@ export function isThemeDefault(theme: Theme): boolean {
     theme.is_default ||
     theme.entity_id === "default_classic_rc_ai" ||
     theme.entity_id === "practice_theme_rc_ai" ||
-    theme.entity_id === "default_fuel_theme_rc_ai"
+    theme.entity_id === "default_fuel_theme_rc_ai" ||
+    theme.entity_id === "driver_station_theme_rc_ai"
   );
 }
 

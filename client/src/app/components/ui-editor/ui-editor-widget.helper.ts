@@ -214,6 +214,12 @@ export function resolveActiveLayout(
       );
       return editingSettings.practiceRacedayLayout;
     }
+    if (
+      targetUi.entity_id === "driver_station_ui_layout_rc_ai" &&
+      (!targetUi.layoutJson || targetUi.layoutJson === "[]")
+    ) {
+      return JSON.parse(JSON.stringify(Settings.DEFAULT_DRIVER_STATION_LAYOUT));
+    }
     if (targetUi.layoutJson && targetUi.layoutJson !== "[]") {
       if (parsedLayoutsCache && parsedLayoutsCache.has(targetUi.entity_id)) {
         const cached = parsedLayoutsCache.get(targetUi.entity_id);

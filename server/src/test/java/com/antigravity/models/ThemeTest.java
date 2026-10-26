@@ -172,6 +172,7 @@ public class ThemeTest {
     assertEquals("default_classic_rc_ai", Theme.DEFAULT_THEME_ID);
     assertEquals("practice_theme_rc_ai", Theme.PRACTICE_THEME_ID);
     assertEquals("default_fuel_theme_rc_ai", Theme.FUEL_THEME_ID);
+    assertEquals("driver_station_theme_rc_ai", Theme.DRIVER_STATION_THEME_ID);
   }
 
   @Test
@@ -199,6 +200,13 @@ public class ThemeTest {
     assertTrue(Theme.isLegacyFuelName("fuel theme"));
     assertFalse(Theme.isLegacyFuelName("RaceCoordinator AI (Fuel)"));
     assertFalse(Theme.isLegacyFuelName("Custom Leaderboard Theme"));
+
+    assertTrue(Theme.isLegacyDriverStationName(null));
+    assertTrue(Theme.isLegacyDriverStationName(""));
+    assertTrue(Theme.isLegacyDriverStationName("driver station"));
+    assertTrue(Theme.isLegacyDriverStationName("driver station theme"));
+    assertTrue(Theme.isLegacyDriverStationName("RaceCoordinator AI (Driver Station)"));
+    assertFalse(Theme.isLegacyDriverStationName("Custom Leaderboard Theme"));
   }
 
   @Test

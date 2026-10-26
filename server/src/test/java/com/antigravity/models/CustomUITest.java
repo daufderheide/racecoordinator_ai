@@ -41,6 +41,7 @@ public class CustomUITest {
     assertEquals("default_ui_layout_rc_ai", CustomUI.DEFAULT_UI_ID);
     assertEquals("practice_ui_layout_rc_ai", CustomUI.PRACTICE_UI_ID);
     assertEquals("default_fuel_ui_layout_rc_ai", CustomUI.FUEL_UI_ID);
+    assertEquals("driver_station_ui_layout_rc_ai", CustomUI.DRIVER_STATION_UI_ID);
 
     CustomUI defaultUi = CustomUI.createDefault();
     assertTrue(defaultUi.isDefault());
@@ -67,6 +68,28 @@ public class CustomUITest {
     assertTrue(fuelUi.getColumnWidthsJson().contains("\"lastLapTime\":310"));
     assertTrue(fuelUi.getColumnWidthsJson().contains("\"gap\":310"));
     assertTrue(fuelUi.getLayoutJson().contains("widget-lane-view"));
+
+    CustomUI driverStationUi = CustomUI.createDriverStation();
+    assertTrue(driverStationUi.isDefault());
+    assertEquals("RaceCoordinator AI (Driver Station)", driverStationUi.getName());
+    assertEquals(CustomUI.DRIVER_STATION_UI_ID, driverStationUi.getEntityId());
+    assertTrue(driverStationUi.getLayoutJson().contains("widget-ds-progress"));
+    assertTrue(driverStationUi.getLayoutJson().contains("widget-ds-nickname"));
+    assertTrue(driverStationUi.getLayoutJson().contains("widget-ds-lane-number"));
+    assertTrue(driverStationUi.getLayoutJson().contains("widget-ds-rank-heat"));
+    assertTrue(driverStationUi.getLayoutJson().contains("widget-ds-rank-overall"));
+    assertTrue(driverStationUi.getLayoutJson().contains("widget-ds-lap-count"));
+    assertTrue(driverStationUi.getLayoutJson().contains("widget-ds-last-lap-time"));
+    assertTrue(driverStationUi.getLayoutJson().contains("widget-ds-gap-leader"));
+    assertTrue(driverStationUi.getLayoutJson().contains("widget-ds-best-lap-time"));
+    assertTrue(driverStationUi.getLayoutJson().contains("widget-ds-flag"));
+    assertTrue(driverStationUi.getLayoutJson().contains("widget-ds-fuel"));
+    assertTrue(driverStationUi.getLayoutJson().contains("\"lapDecimalPlaces\":0"));
+    assertTrue(driverStationUi.getLayoutJson().contains("\"customLabel\":\"GAP LEADER\""));
+    assertTrue(driverStationUi.getLayoutJson().contains("\"baseWidth\":1080"));
+    assertTrue(driverStationUi.getLayoutJson().contains("\"baseHeight\":1920"));
+    assertTrue(driverStationUi.getLayoutJson().contains("\"aspectRatio\":\"9:16\""));
+    assertTrue(driverStationUi.getLayoutJson().contains("\"scaleMode\":\"stretch\""));
 
     assertTrue(defaultUi.getLayoutJson().contains("widget-countdown"));
     assertTrue(defaultUi.getLayoutJson().contains("\"glowEffect\":true"));
@@ -214,6 +237,14 @@ public class CustomUITest {
     assertTrue(CustomUI.isLegacyFuelName("Fuel UI Layout"));
     assertTrue(CustomUI.isLegacyFuelName("default fuel ui layout"));
     assertFalse(CustomUI.isLegacyFuelName("Custom Leaderboard"));
+
+    assertTrue(CustomUI.isLegacyDriverStationName(null));
+    assertTrue(CustomUI.isLegacyDriverStationName(""));
+    assertTrue(CustomUI.isLegacyDriverStationName("driver station"));
+    assertTrue(CustomUI.isLegacyDriverStationName("driver station ui"));
+    assertTrue(CustomUI.isLegacyDriverStationName("driver station layout"));
+    assertTrue(CustomUI.isLegacyDriverStationName("default driver station ui layout"));
+    assertFalse(CustomUI.isLegacyDriverStationName("Custom Leaderboard"));
   }
 
   @Test

@@ -10,6 +10,8 @@ import { deepCopy } from "@app/utils/clone.utils";
 import { BASE_AVAILABLE_COLUMNS, UIEditorState } from "./ui-editor-constants";
 import {
   isLegacyDefaultThemeName,
+  isLegacyDriverStationThemeName,
+  isLegacyDriverStationUiName,
   isLegacyFuelThemeName,
   isLegacyFuelUiName,
   isLegacyPracticeThemeName,
@@ -187,6 +189,11 @@ function normalizeCustomUiNames(ui: CustomUI): void {
     isLegacyFuelUiName(ui.name)
   ) {
     ui.name = "RaceCoordinator AI (Fuel)";
+  } else if (
+    ui.entity_id === "driver_station_ui_layout_rc_ai" &&
+    isLegacyDriverStationUiName(ui.name)
+  ) {
+    ui.name = "RaceCoordinator AI (Driver Station)";
   }
 }
 
@@ -385,6 +392,13 @@ export function normalizeLoadedThemes(themes: Theme[]): void {
       if (!t.uiId || t.uiId === "2") {
         t.uiId = "default_fuel_ui_layout_rc_ai";
       }
+    } else if (t.entity_id === "driver_station_theme_rc_ai") {
+      if (isLegacyDriverStationThemeName(t.name)) {
+        t.name = "RaceCoordinator AI (Driver Station)";
+      }
+      if (!t.uiId) {
+        t.uiId = "driver_station_ui_layout_rc_ai";
+      }
     }
   }
 }
@@ -413,6 +427,7 @@ export function ensureDefaultCustomUis(
   ensureRacedayCustomUi(customUIs, s);
   ensurePracticeCustomUi(customUIs, s);
   ensureFuelCustomUi(customUIs, s);
+  ensureDriverStationCustomUi(customUIs);
 }
 
 function ensureRacedayCustomUi(customUIs: CustomUI[], s: Settings): void {
@@ -498,6 +513,28 @@ function ensureFuelCustomUi(customUIs: CustomUI[], s: Settings): void {
     });
   } else if (isLegacyFuelUiName(fuelUi.name)) {
     fuelUi.name = "RaceCoordinator AI (Fuel)";
+  }
+}
+
+function ensureDriverStationCustomUi(customUIs: CustomUI[]): void {
+  const dsUi = customUIs.find(
+    (u: any) => u.entity_id === "driver_station_ui_layout_rc_ai",
+  );
+  if (!dsUi) {
+    customUIs.push({
+      name: "RaceCoordinator AI (Driver Station)",
+      is_default: true,
+      layoutJson: JSON.stringify(Settings.DEFAULT_DRIVER_STATION_LAYOUT),
+      columnsJson: "[]",
+      columnLayoutsJson: "{}",
+      columnVisibilityJson: "{}",
+      columnWidthsJson: "{}",
+      columnAnchorsJson: "{}",
+      entity_id: "driver_station_ui_layout_rc_ai",
+      _id: "driver_station_ui_layout_rc_ai",
+    });
+  } else if (isLegacyDriverStationUiName(dsUi.name)) {
+    dsUi.name = "RaceCoordinator AI (Driver Station)";
   }
 }
 

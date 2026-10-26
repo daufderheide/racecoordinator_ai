@@ -111,6 +111,7 @@ export const DEFAULT_SECTIONS_EXPANDED: Record<string, boolean> = {
   customUIs: true,
   ui_default_ui_layout_rc_ai: true,
   ui_practice_ui_layout_rc_ai: false,
+  ui_driver_station_ui_layout_rc_ai: false,
   racedayLayout: true,
   practiceRacedayLayout: false,
   layout: true,

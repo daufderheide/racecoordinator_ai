@@ -496,13 +496,25 @@ export function resolveLaneColumnBackgroundColor(
   ) {
     return settings.backgroundColor || "transparent";
   }
+  if (
+    bindingMode === "hostLane" &&
+    parent?.isDriverStation &&
+    !parent?.isUIEditorMode?.()
+  ) {
+    return "transparent";
+  }
+  if (bindingMode === "hostLane" && parent?.activeLaneBackgroundColor) {
+    return parent.activeLaneBackgroundColor;
+  }
   if (hd && parent?.getLaneColor) {
     const bg = parent.getLaneColor(hd, "background_color");
     if (bg) return bg;
   }
   let laneIdx = hd?.laneIndex ?? -1;
   if (laneIdx < 0) {
-    if (bindingMode === "lane") {
+    if (bindingMode === "hostLane") {
+      laneIdx = parent?.activeLaneIndex ?? parent?.laneIndex ?? -1;
+    } else if (bindingMode === "lane") {
       laneIdx = targetIndex;
     } else if (
       !isOverallOrSeedDataSource(settings, parent, bindingMode) &&
@@ -544,13 +556,18 @@ export function resolveLaneColumnForegroundColor(
   ) {
     return settings.textColor || "#ffffff";
   }
+  if (bindingMode === "hostLane" && parent?.activeLaneForegroundColor) {
+    return parent.activeLaneForegroundColor;
+  }
   if (hd && parent?.getLaneColor) {
     const fg = parent.getLaneColor(hd, "foreground_color");
     if (fg) return fg;
   }
   let laneIdx = hd?.laneIndex ?? -1;
   if (laneIdx < 0) {
-    if (bindingMode === "lane") {
+    if (bindingMode === "hostLane") {
+      laneIdx = parent?.activeLaneIndex ?? parent?.laneIndex ?? -1;
+    } else if (bindingMode === "lane") {
       laneIdx = targetIndex;
     } else if (
       !isOverallOrSeedDataSource(settings, parent, bindingMode) &&

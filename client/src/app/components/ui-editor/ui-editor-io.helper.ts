@@ -26,6 +26,7 @@ export function buildLayoutExport(
   fileName: string;
 } {
   const isPractice = ui.entity_id === "practice_ui_layout_rc_ai";
+  const isDriverStation = ui.entity_id === "driver_station_ui_layout_rc_ai";
   let layout: any = undefined;
   if (ui.layoutJson) {
     try {
@@ -35,10 +36,12 @@ export function buildLayoutExport(
     }
   }
   if (!layout) {
-    layout = isPractice
-      ? fallbackSettings?.practiceRacedayLayout ||
-        Settings.DEFAULT_PRACTICE_LAYOUT
-      : fallbackSettings?.racedayLayout || Settings.DEFAULT_LAYOUT;
+    layout = isDriverStation
+      ? Settings.DEFAULT_DRIVER_STATION_LAYOUT
+      : isPractice
+        ? fallbackSettings?.practiceRacedayLayout ||
+          Settings.DEFAULT_PRACTICE_LAYOUT
+        : fallbackSettings?.racedayLayout || Settings.DEFAULT_LAYOUT;
   }
 
   const columns = ui.columnsJson
@@ -78,11 +81,13 @@ export function buildLayoutExport(
   };
 
   const fileName =
-    ui.entity_id === "practice_ui_layout_rc_ai"
-      ? "practice-raceday-layout.json"
-      : ui.entity_id === "default_ui_layout_rc_ai"
-        ? "raceday-layout.json"
-        : `${(ui.name || "layout").toLowerCase().replace(/[^a-z0-9_-]+/g, "-")}-layout.json`;
+    ui.entity_id === "driver_station_ui_layout_rc_ai"
+      ? "driver-station-layout.json"
+      : ui.entity_id === "practice_ui_layout_rc_ai"
+        ? "practice-raceday-layout.json"
+        : ui.entity_id === "default_ui_layout_rc_ai"
+          ? "raceday-layout.json"
+          : `${(ui.name || "layout").toLowerCase().replace(/[^a-z0-9_-]+/g, "-")}-layout.json`;
 
   return { layoutExport, fileName };
 }
@@ -157,6 +162,7 @@ export function getDefaultLayoutResetData(
   isPractice: boolean,
   windowInnerWidth?: number,
   windowInnerHeight?: number,
+  isDriverStation?: boolean,
 ): {
   defaultLayout: LayoutConfig;
   columns: string[];
@@ -165,13 +171,26 @@ export function getDefaultLayoutResetData(
   columnWidths: any;
   columnAnchors: any;
 } {
-  const baseLayout = isPractice
-    ? Settings.DEFAULT_PRACTICE_LAYOUT
-    : Settings.DEFAULT_LAYOUT;
+  const baseLayout = isDriverStation
+    ? Settings.DEFAULT_DRIVER_STATION_LAYOUT
+    : isPractice
+      ? Settings.DEFAULT_PRACTICE_LAYOUT
+      : Settings.DEFAULT_LAYOUT;
   const defaultLayout =
     windowInnerWidth && windowInnerHeight
       ? computeScaledLayout(baseLayout, windowInnerWidth, windowInnerHeight)
       : JSON.parse(JSON.stringify(baseLayout));
+
+  if (isDriverStation) {
+    return {
+      defaultLayout,
+      columns: [],
+      columnLayouts: {},
+      columnVisibility: {},
+      columnWidths: {},
+      columnAnchors: {},
+    };
+  }
 
   const defaultSettings = new Settings();
   const columns = isPractice

@@ -1,8 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { TestSetupHelper } from "@app/testing/test-setup_helper";
 
-import { DriverViewHarnessE2e } from "./testing/driver-view.harness.e2e";
-
 test.describe("Driver View Visuals", () => {
   test.beforeEach(async ({ page }) => {
     await TestSetupHelper.setupStandardMocks(page);
@@ -106,9 +104,10 @@ test.describe("Driver View Visuals", () => {
 
     await TestSetupHelper.mockRaceData(page, raceData);
 
-    const harness = new DriverViewHarnessE2e(page.locator("app-driver-view"));
     await expect(async () => {
-      expect(await harness.isOnDeckMode()).toBe(true);
+      expect(await page.locator(".on-deck-mobile-container").isVisible()).toBe(
+        true,
+      );
     }).toPass();
 
     await expect(page).toHaveScreenshot("driver-view-on-deck.png", {
@@ -216,9 +215,8 @@ test.describe("Driver View Visuals", () => {
 
     await TestSetupHelper.mockRaceData(page, raceData);
 
-    const harness = new DriverViewHarnessE2e(page.locator("app-driver-view"));
     await expect(async () => {
-      expect(await harness.isRacingMode()).toBe(true);
+      expect(await page.locator(".scalable-content").isVisible()).toBe(true);
     }).toPass();
 
     await expect(page).toHaveScreenshot("driver-view-racing.png", {

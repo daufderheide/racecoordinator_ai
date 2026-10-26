@@ -760,7 +760,7 @@ public class AssetDefaultsInitializer {
       SqliteRepository<Theme> themeRepo =
           new SqliteRepository<>(databaseContext, "themes", Theme.class);
       List<Theme> themes = themeRepo.findAll();
-      boolean[] foundFlags = new boolean[3]; // [default, practice, fuel]
+      boolean[] foundFlags = new boolean[4]; // [default, practice, fuel, driver_station]
       for (Theme t : themes) {
         backfillSingleTheme(t, themeRepo, foundFlags);
       }
@@ -781,6 +781,15 @@ public class AssetDefaultsInitializer {
         createAndSaveTheme(
             themeRepo, Theme.FUEL_THEME_ID, Theme.FUEL_THEME_NAME, CustomUI.FUEL_UI_ID);
         logger.info("Backfilled fuel theme with ID {}", Theme.FUEL_THEME_ID);
+      }
+      if (!foundFlags[3]
+          && !databaseContext.isDefaultArtifactDeleted("theme", Theme.DRIVER_STATION_THEME_ID)) {
+        createAndSaveTheme(
+            themeRepo,
+            Theme.DRIVER_STATION_THEME_ID,
+            Theme.DRIVER_STATION_THEME_NAME,
+            CustomUI.DRIVER_STATION_UI_ID);
+        logger.info("Backfilled driver station theme with ID {}", Theme.DRIVER_STATION_THEME_ID);
       }
     } catch (Exception e) {
       logger.error("Failed to backfill default theme", e);
@@ -835,6 +844,17 @@ public class AssetDefaultsInitializer {
       }
       if (Theme.isLegacyFuelName(name) && !Theme.FUEL_THEME_NAME.equals(name)) {
         name = Theme.FUEL_THEME_NAME;
+        updated = true;
+      }
+    }
+    if (Theme.DRIVER_STATION_THEME_ID.equals(entityId)) {
+      foundFlags[3] = true;
+      if (uiId == null) {
+        uiId = CustomUI.DRIVER_STATION_UI_ID;
+        updated = true;
+      }
+      if (Theme.isLegacyDriverStationName(name) && !Theme.DRIVER_STATION_THEME_NAME.equals(name)) {
+        name = Theme.DRIVER_STATION_THEME_NAME;
         updated = true;
       }
     }

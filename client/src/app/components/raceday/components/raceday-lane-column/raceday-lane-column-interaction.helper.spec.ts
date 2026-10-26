@@ -672,6 +672,59 @@ describe("raceday-lane-column-interaction.helper", () => {
       ).toBe("#lane0Fg");
     });
 
+    it("should resolve hostLane foreground and background colors from parent active lane", () => {
+      const parent = {
+        activeLaneForegroundColor: "#000000",
+        activeLaneBackgroundColor: "#ffffff",
+        isDriverStation: false,
+      };
+      expect(
+        resolveLaneColumnForegroundColor(
+          {} as any,
+          undefined,
+          parent,
+          "hostLane",
+          0,
+        ),
+      ).toBe("#000000");
+      expect(
+        resolveLaneColumnBackgroundColor(
+          {} as any,
+          undefined,
+          parent,
+          "hostLane",
+          0,
+        ),
+      ).toBe("#ffffff");
+    });
+
+    it("should return transparent background for hostLane in driver station mode outside UI editor", () => {
+      const parent = {
+        activeLaneForegroundColor: "#000000",
+        activeLaneBackgroundColor: "#ffffff",
+        isDriverStation: true,
+        isUIEditorMode: () => false,
+      };
+      expect(
+        resolveLaneColumnBackgroundColor(
+          {} as any,
+          undefined,
+          parent,
+          "hostLane",
+          0,
+        ),
+      ).toBe("transparent");
+      expect(
+        resolveLaneColumnForegroundColor(
+          {} as any,
+          undefined,
+          parent,
+          "hostLane",
+          0,
+        ),
+      ).toBe("#000000");
+    });
+
     it("should not apply lane 0 color to empty row or undefined driver in position mode", () => {
       const parent = {
         track: {

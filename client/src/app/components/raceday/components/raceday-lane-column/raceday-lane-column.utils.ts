@@ -251,7 +251,7 @@ function tryGetParentLastLaps(
   parent: any,
   placeholder: string,
 ): HeatDataLapItem[] | undefined {
-  if (!parent?.getLastLaps) return undefined;
+  if (!targetDriver || !parent?.getLastLaps) return undefined;
   const colDef = parent.columns?.find(
     (c: any) => c.propertyName === "lastLaps",
   );

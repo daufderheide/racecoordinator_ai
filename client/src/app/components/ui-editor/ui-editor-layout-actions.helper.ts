@@ -22,7 +22,13 @@ export function applyResetLayout(
   windowHeight?: number,
 ): any {
   const isPractice = ui.entity_id === "practice_ui_layout_rc_ai";
-  const data = getDefaultLayoutResetData(isPractice, windowWidth, windowHeight);
+  const isDriverStation = ui.entity_id === "driver_station_ui_layout_rc_ai";
+  const data = getDefaultLayoutResetData(
+    isPractice,
+    windowWidth,
+    windowHeight,
+    isDriverStation,
+  );
 
   ui.layoutJson = JSON.stringify(data.defaultLayout);
   ui.columnsJson = JSON.stringify(data.columns);
@@ -97,10 +103,13 @@ export function applyClearLayout(
   }
   if (!layout) {
     const isPractice = ui.entity_id === "practice_ui_layout_rc_ai";
-    layout = isPractice
-      ? editingSettings?.practiceRacedayLayout ||
-        Settings.DEFAULT_PRACTICE_LAYOUT
-      : editingSettings?.racedayLayout || Settings.DEFAULT_LAYOUT;
+    const isDriverStation = ui.entity_id === "driver_station_ui_layout_rc_ai";
+    layout = isDriverStation
+      ? Settings.DEFAULT_DRIVER_STATION_LAYOUT
+      : isPractice
+        ? editingSettings?.practiceRacedayLayout ||
+          Settings.DEFAULT_PRACTICE_LAYOUT
+        : editingSettings?.racedayLayout || Settings.DEFAULT_LAYOUT;
     layout = deepCopy(layout);
   }
   layout.widgets = [];

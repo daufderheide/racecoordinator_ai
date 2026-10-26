@@ -129,6 +129,26 @@ export class RacedayAbsoluteWidgetComponent
     return !this.isSelected && !this.isCountdownPreviewActive();
   }
 
+  get isFuelWidgetHidden(): boolean {
+    if (this.isCustomizing()) return false;
+    const parent = this.parentComponent();
+    const isEditor = Boolean(
+      (typeof parent?.isUIEditorMode === "function"
+        ? parent.isUIEditorMode()
+        : parent?.isUIEditorMode) || parent?.isLayoutCustomizing,
+    );
+    if (isEditor) return false;
+
+    const w = this.widget();
+    if (
+      w?.widgetType === "progress-gauge" &&
+      w?.customSettings?.["gaugeType"] === "fuel"
+    ) {
+      return !parent?.isFuelRace;
+    }
+    return false;
+  }
+
   get isOverallNoDataRow(): boolean {
     if (this.isCustomizing()) return false;
     const parent = this.parentComponent();

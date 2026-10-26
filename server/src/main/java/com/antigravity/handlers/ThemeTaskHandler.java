@@ -40,7 +40,7 @@ public class ThemeTaskHandler {
     try {
       databaseContext.ensureTable("themes");
       List<Theme> themes = themeRepository.findAll();
-      boolean[] foundFlags = new boolean[3]; // [default, practice, fuel]
+      boolean[] foundFlags = new boolean[4]; // [default, practice, fuel, driver_station]
       for (Theme t : themes) {
         migrateAndCheckTheme(t, foundFlags);
       }
@@ -59,6 +59,13 @@ public class ThemeTaskHandler {
           && !databaseContext.isDefaultArtifactDeleted("theme", Theme.FUEL_THEME_ID)) {
         createAndSaveFactoryTheme(
             Theme.FUEL_THEME_ID, "RaceCoordinator AI (Fuel)", CustomUI.FUEL_UI_ID);
+      }
+      if (!foundFlags[3]
+          && !databaseContext.isDefaultArtifactDeleted("theme", Theme.DRIVER_STATION_THEME_ID)) {
+        createAndSaveFactoryTheme(
+            Theme.DRIVER_STATION_THEME_ID,
+            Theme.DRIVER_STATION_THEME_NAME,
+            CustomUI.DRIVER_STATION_UI_ID);
       }
     } catch (Exception e) {
       logger.error("Failed to ensure default theme", e);
@@ -80,33 +87,8 @@ public class ThemeTaskHandler {
       updated = true;
     }
 
-    if (Theme.DEFAULT_THEME_ID.equals(entityId)) {
-      foundFlags[0] = true;
-    }
-    if (Theme.PRACTICE_THEME_ID.equals(entityId)) {
-      foundFlags[1] = true;
-    }
-    if (Theme.FUEL_THEME_ID.equals(entityId)) {
-      foundFlags[2] = true;
-    }
-
     Map<String, String> s = new HashMap<>(t.getSlots());
-    if (migrateThemeSlots(s, t.isDefault())) {
-      updated = true;
-    }
-    if (s.remove("audio.countdown") != null) {
-      updated = true;
-    }
-    if (s.remove("audio.seconds_left") != null) {
-      updated = true;
-    }
-    if (s.remove("audio.laps_left") != null) {
-      updated = true;
-    }
-    if (s.remove("audio.auto_start") != null) {
-      updated = true;
-    }
-    if (s.remove("audio.auto_advance") != null) {
+    if (migrateThemeSlots(s, t.isDefault()) || cleanObsoleteAudioSlots(s)) {
       updated = true;
     }
 
@@ -122,6 +104,51 @@ public class ThemeTaskHandler {
       updated = true;
     }
 
+    ThemeMetadata meta = normalizeDefaultThemeMetadata(entityId, name, uiId, foundFlags);
+    name = meta.name;
+    uiId = meta.uiId;
+    if (meta.updated) {
+      updated = true;
+    }
+
+    if (updated) {
+      Theme newTheme = new Theme(name, t.isDefault(), s, as, uiId, entityId, t.getId());
+      themeRepository.save(newTheme);
+    }
+  }
+
+  private boolean cleanObsoleteAudioSlots(Map<String, String> s) {
+    boolean updated = false;
+    String[] obsoleteKeys = {
+      "audio.countdown",
+      "audio.seconds_left",
+      "audio.laps_left",
+      "audio.auto_start",
+      "audio.auto_advance"
+    };
+    for (String key : obsoleteKeys) {
+      if (s.remove(key) != null) {
+        updated = true;
+      }
+    }
+    return updated;
+  }
+
+  private static class ThemeMetadata {
+    final String name;
+    final String uiId;
+    final boolean updated;
+
+    ThemeMetadata(String name, String uiId, boolean updated) {
+      this.name = name;
+      this.uiId = uiId;
+      this.updated = updated;
+    }
+  }
+
+  private ThemeMetadata normalizeDefaultThemeMetadata(
+      String entityId, String name, String uiId, boolean[] foundFlags) {
+    boolean updated = false;
     if (Theme.DEFAULT_THEME_ID.equals(entityId)) {
       foundFlags[0] = true;
       if (uiId == null) {
@@ -132,8 +159,7 @@ public class ThemeTaskHandler {
         name = Theme.DEFAULT_THEME_NAME;
         updated = true;
       }
-    }
-    if (Theme.PRACTICE_THEME_ID.equals(entityId)) {
+    } else if (Theme.PRACTICE_THEME_ID.equals(entityId)) {
       foundFlags[1] = true;
       if (uiId == null) {
         uiId = CustomUI.PRACTICE_UI_ID;
@@ -143,8 +169,7 @@ public class ThemeTaskHandler {
         name = Theme.PRACTICE_THEME_NAME;
         updated = true;
       }
-    }
-    if (Theme.FUEL_THEME_ID.equals(entityId)) {
+    } else if (Theme.FUEL_THEME_ID.equals(entityId)) {
       foundFlags[2] = true;
       if (uiId == null) {
         uiId = CustomUI.FUEL_UI_ID;
@@ -154,16 +179,22 @@ public class ThemeTaskHandler {
         name = Theme.FUEL_THEME_NAME;
         updated = true;
       }
+    } else if (Theme.DRIVER_STATION_THEME_ID.equals(entityId)) {
+      foundFlags[3] = true;
+      if (uiId == null) {
+        uiId = CustomUI.DRIVER_STATION_UI_ID;
+        updated = true;
+      }
+      if (Theme.isLegacyDriverStationName(name) && !Theme.DRIVER_STATION_THEME_NAME.equals(name)) {
+        name = Theme.DRIVER_STATION_THEME_NAME;
+        updated = true;
+      }
     }
     if (uiId == null || uiId.trim().isEmpty()) {
       uiId = CustomUI.DEFAULT_UI_ID;
       updated = true;
     }
-
-    if (updated) {
-      Theme newTheme = new Theme(name, t.isDefault(), s, as, uiId, entityId, t.getId());
-      themeRepository.save(newTheme);
-    }
+    return new ThemeMetadata(name, uiId, updated);
   }
 
   private void createAndSaveFactoryTheme(String entityId, String name, String uiId) {
@@ -523,6 +554,7 @@ public class ThemeTaskHandler {
       if (Theme.DEFAULT_THEME_ID.equals(id)
           || Theme.PRACTICE_THEME_ID.equals(id)
           || Theme.FUEL_THEME_ID.equals(id)
+          || Theme.DRIVER_STATION_THEME_ID.equals(id)
           || "2".equals(id)
           || theme.isDefault()) {
         databaseContext.markDefaultArtifactDeleted("theme", id);
@@ -536,6 +568,10 @@ public class ThemeTaskHandler {
             || "2".equals(id)
             || Theme.isLegacyFuelName(theme.getName())) {
           databaseContext.markDefaultArtifactDeleted("theme", Theme.FUEL_THEME_ID);
+        }
+        if (Theme.DRIVER_STATION_THEME_ID.equals(id)
+            || Theme.isLegacyDriverStationName(theme.getName())) {
+          databaseContext.markDefaultArtifactDeleted("theme", Theme.DRIVER_STATION_THEME_ID);
         }
       }
 

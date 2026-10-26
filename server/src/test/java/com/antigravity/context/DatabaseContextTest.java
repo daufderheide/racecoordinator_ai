@@ -184,7 +184,7 @@ public class DatabaseContextTest {
             databaseContext, "custom_uis", com.antigravity.models.CustomUI.class);
     java.util.List<com.antigravity.models.CustomUI> uis = uiRepo.findAll();
     assertNotNull(uis);
-    assertEquals(3, uis.size());
+    assertEquals(4, uis.size());
 
     com.antigravity.models.CustomUI defaultUi =
         uis.stream()
@@ -209,6 +209,15 @@ public class DatabaseContextTest {
             .orElse(null);
     assertNotNull(fuelUi);
     assertEquals("RaceCoordinator AI (Fuel)", fuelUi.getName());
+
+    com.antigravity.models.CustomUI driverStationUi =
+        uis.stream()
+            .filter(
+                u -> com.antigravity.models.CustomUI.DRIVER_STATION_UI_ID.equals(u.getEntityId()))
+            .findFirst()
+            .orElse(null);
+    assertNotNull(driverStationUi);
+    assertEquals("RaceCoordinator AI (Driver Station)", driverStationUi.getName());
   }
 
   @Test
