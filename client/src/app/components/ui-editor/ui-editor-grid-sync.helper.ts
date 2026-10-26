@@ -1,5 +1,6 @@
 import { LaneGridHeaderHelper } from "@app/components/raceday/utils/lane-grid-header.helper";
 import { LaneGridReplicationHelper } from "@app/components/raceday/utils/lane-grid-replication.helper";
+import { deepCopy } from "@app/utils/clone.utils";
 
 export function handleGridBindingModeSync(
   comp: any,
@@ -359,95 +360,211 @@ export function handleCrossColumnLiveSync(
   }
 }
 
+function syncMirroredChildToMasterAndLanes(
+  comp: any,
+  layout: any,
+  targetWidget: any,
+): void {
+  const masterId = targetWidget.customSettings?.["gridMasterId"];
+  if (!masterId) return;
+  const masterWidget = layout.widgets.find((w: any) => w.id === masterId);
+  if (!masterWidget) return;
+
+  const isHoriz =
+    comp.activeGridSession.direction === "horizontal" ||
+    comp.activeGridSession.layoutOrientation === "horizontal" ||
+    targetWidget.customSettings?.["gridDirection"] === "horizontal" ||
+    targetWidget.customSettings?.["layoutOrientation"] === "horizontal";
+  const isMasterLanesMirrored = isHoriz
+    ? masterWidget.customSettings?.["linkColumns"] !== false
+    : masterWidget.customSettings?.["mirrorRows"] !== false;
+  if (!isMasterLanesMirrored) return;
+
+  const masterTargetIndex = masterWidget.customSettings?.["targetIndex"];
+  const masterGridLane = masterWidget.customSettings?.["gridLane"];
+  const masterGridBounds = masterWidget.customSettings?.["gridBounds"];
+  const masterCellRatios = {
+    cellWidthRatio: masterWidget.customSettings?.["cellWidthRatio"],
+    cellHeightRatio: masterWidget.customSettings?.["cellHeightRatio"],
+    cellOffsetXRatio: masterWidget.customSettings?.["cellOffsetXRatio"],
+    cellOffsetYRatio: masterWidget.customSettings?.["cellOffsetYRatio"],
+  };
+
+  if (targetWidget.scaleMode !== undefined) {
+    masterWidget.scaleMode = targetWidget.scaleMode;
+  }
+  if (targetWidget.fontFamily !== undefined) {
+    masterWidget.fontFamily = targetWidget.fontFamily;
+  }
+  if (targetWidget.fontSize !== undefined) {
+    masterWidget.fontSize = targetWidget.fontSize;
+  }
+  if (targetWidget.textColor !== undefined) {
+    masterWidget.textColor = targetWidget.textColor;
+  }
+  if (targetWidget.backgroundColor !== undefined) {
+    masterWidget.backgroundColor = targetWidget.backgroundColor;
+  }
+
+  masterWidget.customSettings = {
+    ...masterWidget.customSettings,
+    ...deepCopy(targetWidget.customSettings || {}),
+  };
+  delete masterWidget.customSettings["gridMasterId"];
+  if (masterTargetIndex !== undefined) {
+    masterWidget.customSettings["targetIndex"] = masterTargetIndex;
+  }
+  if (masterGridLane !== undefined) {
+    masterWidget.customSettings["gridLane"] = masterGridLane;
+  }
+  if (masterGridBounds !== undefined) {
+    masterWidget.customSettings["gridBounds"] = masterGridBounds;
+  }
+  Object.assign(masterWidget.customSettings, masterCellRatios);
+
+  layout.widgets = LaneGridReplicationHelper.syncMasterWidgetToLanes(
+    masterWidget,
+    comp.activeGridSession,
+    layout.widgets,
+  );
+}
+
+function syncMasterWidgetLayout(
+  comp: any,
+  layout: any,
+  masterWidget: any,
+  directionWidget: any = masterWidget,
+): void {
+  LaneGridReplicationHelper.updateWidgetCellRatios(
+    masterWidget,
+    comp.activeGridSession,
+  );
+  const isHoriz =
+    comp.activeGridSession.direction === "horizontal" ||
+    comp.activeGridSession.layoutOrientation === "horizontal" ||
+    directionWidget.customSettings?.["gridDirection"] === "horizontal" ||
+    directionWidget.customSettings?.["layoutOrientation"] === "horizontal";
+  const isLanesMirrored = isHoriz
+    ? masterWidget.customSettings?.["linkColumns"] !== false
+    : masterWidget.customSettings?.["mirrorRows"] !== false;
+  if (isLanesMirrored) {
+    layout.widgets = LaneGridReplicationHelper.syncMasterWidgetToLanes(
+      masterWidget,
+      comp.activeGridSession,
+      layout.widgets,
+    );
+  } else {
+    const headerHeight =
+      comp.activeGridSession.headerHeight != null
+        ? Math.max(20, comp.activeGridSession.headerHeight)
+        : 36;
+    LaneGridHeaderHelper.syncPlacementHeaderWidget(
+      masterWidget,
+      masterWidget,
+      comp.activeGridSession,
+      headerHeight,
+      layout.widgets,
+    );
+  }
+}
+
+function syncHeaderWidgetToMaster(
+  comp: any,
+  layout: any,
+  targetWidget: any,
+): void {
+  const masterId = targetWidget.customSettings?.["gridMasterId"];
+  const masterWidget = masterId
+    ? layout.widgets.find((w: any) => w.id === masterId)
+    : null;
+  if (!masterWidget) {
+    return;
+  }
+  const isHoriz =
+    comp.activeGridSession.direction === "horizontal" ||
+    comp.activeGridSession.layoutOrientation === "horizontal" ||
+    targetWidget.customSettings?.["gridDirection"] === "horizontal" ||
+    targetWidget.customSettings?.["layoutOrientation"] === "horizontal";
+  if (isHoriz) {
+    masterWidget.y = targetWidget.y;
+    masterWidget.height = targetWidget.height;
+  } else {
+    masterWidget.x = targetWidget.x;
+    masterWidget.width = targetWidget.width;
+  }
+  syncMasterWidgetLayout(comp, layout, masterWidget, targetWidget);
+}
+
 export function handleGridSessionWidgetSync(
   comp: any,
   layout: any,
   targetWidget: any,
 ): void {
+  const targetGridId = targetWidget.customSettings?.["gridId"];
   if (
-    comp.activeGridSession &&
+    !comp.activeGridSession ||
+    !targetGridId ||
+    comp.activeGridSession.gridId !== targetGridId
+  ) {
+    return;
+  }
+  if (
     LaneGridReplicationHelper.isMasterWidget(
       targetWidget,
       comp.activeGridSession,
     )
   ) {
-    LaneGridReplicationHelper.updateWidgetCellRatios(
-      targetWidget,
-      comp.activeGridSession,
-    );
-    const isHoriz =
-      comp.activeGridSession.direction === "horizontal" ||
-      comp.activeGridSession.layoutOrientation === "horizontal" ||
-      targetWidget.customSettings?.["gridDirection"] === "horizontal" ||
-      targetWidget.customSettings?.["layoutOrientation"] === "horizontal";
-    const isLanesMirrored = isHoriz
-      ? targetWidget.customSettings?.["linkColumns"] !== false
-      : targetWidget.customSettings?.["mirrorRows"] !== false;
-    if (isLanesMirrored) {
-      layout.widgets = LaneGridReplicationHelper.syncMasterWidgetToLanes(
-        targetWidget,
-        comp.activeGridSession,
-        layout.widgets,
-      );
-    } else {
-      const headerHeight =
-        comp.activeGridSession.headerHeight != null
-          ? Math.max(20, comp.activeGridSession.headerHeight)
-          : 36;
-      LaneGridHeaderHelper.syncPlacementHeaderWidget(
-        targetWidget,
-        targetWidget,
-        comp.activeGridSession,
-        headerHeight,
-        layout.widgets,
-      );
-    }
+    syncMasterWidgetLayout(comp, layout, targetWidget);
   } else if (
     comp.activeGridSession &&
     targetWidget.customSettings?.["isHeaderWidget"]
   ) {
-    const masterId = targetWidget.customSettings?.["gridMasterId"];
-    const masterWidget = masterId
-      ? layout.widgets.find((w: any) => w.id === masterId)
-      : null;
-    if (masterWidget) {
-      const isHoriz =
-        comp.activeGridSession.direction === "horizontal" ||
-        comp.activeGridSession.layoutOrientation === "horizontal" ||
-        targetWidget.customSettings?.["gridDirection"] === "horizontal" ||
-        targetWidget.customSettings?.["layoutOrientation"] === "horizontal";
-      if (isHoriz) {
-        masterWidget.y = targetWidget.y;
-        masterWidget.height = targetWidget.height;
-      } else {
-        masterWidget.x = targetWidget.x;
-        masterWidget.width = targetWidget.width;
+    syncHeaderWidgetToMaster(comp, layout, targetWidget);
+  } else if (
+    comp.activeGridSession &&
+    !targetWidget.customSettings?.["isHeaderWidget"] &&
+    targetWidget.customSettings?.["gridMasterId"]
+  ) {
+    syncMirroredChildToMasterAndLanes(comp, layout, targetWidget);
+  }
+}
+
+export function handleColumnGapSettingsSync(
+  comp: any,
+  layout: any,
+  targetWidget: any,
+  gridId: string,
+): void {
+  if (
+    targetWidget.customSettings?.["gapMode"] === undefined &&
+    targetWidget.customSettings?.["gapTarget"] === undefined
+  ) {
+    return;
+  }
+  const isHoriz =
+    comp?.activeGridSession?.direction === "horizontal" ||
+    comp?.activeGridSession?.layoutOrientation === "horizontal" ||
+    targetWidget.customSettings?.["gridDirection"] === "horizontal" ||
+    targetWidget.customSettings?.["layoutOrientation"] === "horizontal";
+  const isLanesMirrored = isHoriz
+    ? targetWidget.customSettings?.["linkColumns"] !== false
+    : targetWidget.customSettings?.["mirrorRows"] !== false;
+  if (!isLanesMirrored) return;
+
+  const masterId =
+    targetWidget.customSettings?.["gridMasterId"] || targetWidget.id;
+  for (const w of layout.widgets) {
+    if (
+      w.customSettings?.["gridId"] === gridId &&
+      (w.id === masterId || w.customSettings?.["gridMasterId"] === masterId)
+    ) {
+      if (!w.customSettings) w.customSettings = {};
+      if (targetWidget.customSettings["gapMode"] !== undefined) {
+        w.customSettings["gapMode"] = targetWidget.customSettings["gapMode"];
       }
-      LaneGridReplicationHelper.updateWidgetCellRatios(
-        masterWidget,
-        comp.activeGridSession,
-      );
-      const isMasterLanesMirrored = isHoriz
-        ? masterWidget.customSettings?.["linkColumns"] !== false
-        : masterWidget.customSettings?.["mirrorRows"] !== false;
-      if (isMasterLanesMirrored) {
-        layout.widgets = LaneGridReplicationHelper.syncMasterWidgetToLanes(
-          masterWidget,
-          comp.activeGridSession,
-          layout.widgets,
-        );
-      } else {
-        const headerHeight =
-          comp.activeGridSession.headerHeight != null
-            ? Math.max(20, comp.activeGridSession.headerHeight)
-            : 36;
-        LaneGridHeaderHelper.syncPlacementHeaderWidget(
-          masterWidget,
-          masterWidget,
-          comp.activeGridSession,
-          headerHeight,
-          layout.widgets,
-        );
+      if (targetWidget.customSettings["gapTarget"] !== undefined) {
+        w.customSettings["gapTarget"] =
+          targetWidget.customSettings["gapTarget"];
       }
     }
   }
@@ -483,6 +600,7 @@ export function handleGridWidgetInspectorSync(
   handleGridBindingModeSync(comp, layout, targetWidget, gridId);
   handleGridSyncAction(layout, targetWidget, gridId);
   handleGridStructureChanges(comp, layout, targetWidget, gridId);
+  handleColumnGapSettingsSync(comp, layout, targetWidget, gridId);
   handleGridSessionWidgetSync(comp, layout, targetWidget);
   handleCrossColumnLiveSync(layout, targetWidget, gridId);
   handleCustomLabelSync(layout, targetWidget, gridId);

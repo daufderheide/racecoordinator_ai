@@ -258,6 +258,50 @@ describe("ModifyHeatsService", () => {
       expect(result.updatedHeats[1].heatDrivers[0].participant).toBe(p1);
     });
 
+    it("should replace placeholder driver without swapping it back when moving into a lane containing placeholder driver", () => {
+      const p1 = createTestParticipant(createTestDriver("d1", "Dave"));
+      const pEmpty = createTestParticipant(
+        new Driver("EMPTY_LANE", "Empty", "Empty"),
+      );
+
+      const heat0 = new Heat(
+        "h0",
+        0,
+        [new DriverHeatData("dhd1", p1, 0)],
+        [],
+        false,
+      );
+      const heat1 = new Heat(
+        "h1",
+        1,
+        [new DriverHeatData("dhd-empty", pEmpty, 1)],
+        [],
+        false,
+      );
+
+      const event: any = {
+        previousContainer: { id: "heat-0-lane-0" },
+        container: { id: "heat-1-lane-1" },
+        item: { data: p1 },
+      };
+
+      const context: DropContext = {
+        localHeats: [heat0, heat1],
+        localParticipants: [p1, pEmpty],
+        allDrivers: [],
+        allTeams: [],
+        isHeatStarted: () => false,
+        isParticipantInStartedHeat: () => false,
+      };
+
+      const result = service.handleDrop(event, context);
+      expect(result.actionTaken).toBeTrue();
+      expect(result.updatedHeats[0].heatDrivers.length).toBe(0);
+      expect(result.updatedHeats[1].heatDrivers.length).toBe(1);
+      expect(result.updatedHeats[1].heatDrivers[0].laneIndex).toBe(1);
+      expect(result.updatedHeats[1].heatDrivers[0].participant).toBe(p1);
+    });
+
     it("should reject moving driver to heat they are already in", () => {
       const p1 = createTestParticipant(createTestDriver("d1", "Dave"));
       const p2 = createTestParticipant(createTestDriver("d2", "Alice"));

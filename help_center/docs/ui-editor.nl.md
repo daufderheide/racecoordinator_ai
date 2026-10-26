@@ -121,13 +121,21 @@ Elke verschil-widget kan in de Kolom-inspector worden aangepast met twee kernopt
   - **Voorgaande positie**: Verschil ten opzichte van de directe voorligger in de stand (bijv. P3 t.o.v. P2).
 - **Berekeningsmodus**:
   - **Altijd tijd**: Continue pace-projectie van het tijdsverschil in seconden (`+X.XXX`).
-  - **Ronden en tijd**: Formule 1-weergave met tijdsverschil in dezelfde ronde of rondenachterstand (`+1 Ronde`, `+N Ronden`) bij een dubbeling.
+  - **Tijd en ronden achterstand**: Formule 1-weergave met tijdsverschil in dezelfde ronde of rondenachterstand (`+1 Ronde`, `+N Ronden`) bij een dubbeling.
   - **Altijd ronden**: Exact rondenverschil berekend bij finishdoorkomst, inclusief de partiële rondevoortgang van de vergeleken coureur.
 
 > [!NOTE]
 > Meerdere verschil-widgets met verschillende configuraties (bijvoorbeeld een Leider-verschilkolom en een Voorligger-verschilkolom) kunnen gelijktijdig op hetzelfde raster of layout worden geplaatst.
 
 Voor gedetailleerde wiskundige formules en tijdmetingsspecificaties, zie de [Gids voor Verschilberekeningen](gap-calculations.md).
+
+#### Laatste Ronden Widget (`lastLaps`)
+
+De widget **Laatste Ronden** (`lastLaps`) toont de recent gereden rondetijden van de coureur in de actieve heat:
+
+- **Weer te geven laatste ronden**: Bepaalt hoeveel recente ronden in de widget worden getoond (schuifregelaar 1–20, numeriek invoerveld 1–50). De standaardwaarde is `5`.
+- **Dynamische schaling en pasvorm**: De kaart schaalt lettergroottes en regelafstanden automatisch om het geconfigureerde aantal ronden netjes in de kolomgeometrie te passen.
+- **Grid-synchronisatie**: In banengrids synchroniseert het configureren of toepassen van tijdopmaken het aantal weergegeven ronden over alle deelnemende banen.
 
 ### Rastersortering & Interactiematrix
 

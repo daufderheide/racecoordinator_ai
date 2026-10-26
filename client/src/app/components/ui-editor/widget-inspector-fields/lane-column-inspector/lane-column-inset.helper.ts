@@ -755,6 +755,11 @@ export class LaneColumnInsetHelper {
         Math.max(0, Number(currentSettings["timeSubsecondDecimals"])),
       );
     }
+    if (currentSettings["lastLapsCount"] !== undefined) {
+      const parsed = Number(currentSettings["lastLapsCount"]);
+      currentSettings["lastLapsCount"] =
+        !isNaN(parsed) && parsed > 0 ? Math.max(1, Math.round(parsed)) : 5;
+    }
   }
 
   public static getPlacedInsetAnchors(

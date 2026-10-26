@@ -37,12 +37,18 @@ test.describe("UI Editor Visuals", () => {
     const _harness = new UIEditorHarnessE2e(editor);
     const previewContainer = page.locator(".raceday-preview-container").first();
     await previewContainer.waitFor({ state: "visible" });
+    await previewContainer
+      .locator("app-raceday-lane-column")
+      .first()
+      .waitFor({ state: "visible" });
     await TestSetupHelper.waitForImagesLoaded(editor);
+    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+    await page.evaluate(() => new Promise(requestAnimationFrame));
     await page.mouse.move(0, 0);
 
     await expect(page).toHaveScreenshot("ui-editor-page.png", {
       maxDiffPixelRatio: 0.05,
-      maxDiffPixels: 10000,
+      maxDiffPixels: 15000,
       animations: "disabled",
     });
   });

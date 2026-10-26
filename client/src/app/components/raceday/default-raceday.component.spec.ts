@@ -192,6 +192,47 @@ describe("DefaultRacedayComponent", () => {
       const result = component.getLastLaps(heatDriver, column);
       expect(result.length).toBe(5);
     });
+
+    it("should honor countOverride when provided", () => {
+      const heatDriver = {
+        lapTimes: [1, 2, 3000, 4000, 5000, 6000, 7000],
+      } as any;
+      const column = {} as any;
+      const result3 = component.getLastLaps(
+        heatDriver,
+        column,
+        "center-center",
+        3,
+      );
+      expect(result3.length).toBe(3);
+
+      const result8 = component.getLastLaps(
+        heatDriver,
+        column,
+        "center-center",
+        8,
+      );
+      expect(result8.length).toBe(8);
+    });
+
+    it("should honor lastLapsCount from laneViewWidgetSettings when countOverride is not provided", () => {
+      const heatDriver = {
+        lapTimes: [1, 2, 3000, 4000, 5000],
+      } as any;
+      const column = {} as any;
+      (component as any).currentRacedayLayout = {
+        widgets: [
+          {
+            widgetType: "lane-column",
+            customSettings: {
+              lastLapsCount: 4,
+            },
+          },
+        ],
+      };
+      const result = component.getLastLaps(heatDriver, column);
+      expect(result.length).toBe(4);
+    });
   });
 
   describe("saveLayout practice vs normal", () => {
@@ -3779,6 +3820,123 @@ describe("DefaultRacedayComponent", () => {
 
       expect(component["highlightedDrivers"].has("hd1")).toBeFalse();
     }));
+
+    it("should highlight driver if at least one grid in a multi-grid layout has highlighting enabled", fakeAsync(() => {
+      component.currentRacedayLayout = {
+        widgets: [
+          {
+            widgetType: "lane-column",
+            customSettings: { gridId: "grid-1", highlightLapStyle: "none" },
+          },
+          {
+            widgetType: "lane-column",
+            customSettings: {
+              gridId: "grid-2",
+              highlightLapStyle: "glow-border",
+            },
+          },
+        ],
+      } as any;
+
+      lapsSubject.next({
+        objectId: "hd1",
+        lapTime: 1.234,
+        bestLapTime: 1.0,
+      });
+      fixture.detectChanges();
+
+      expect(component["highlightedDrivers"].has("hd1")).toBeTrue();
+    }));
+
+    it("should not highlight driver if all grids in layout have highlighting disabled", fakeAsync(() => {
+      component.currentRacedayLayout = {
+        widgets: [
+          {
+            widgetType: "lane-column",
+            customSettings: { gridId: "grid-1", highlightLapStyle: "none" },
+          },
+          {
+            widgetType: "lane-column",
+            customSettings: { gridId: "grid-2", highlightRowOnLap: false },
+          },
+        ],
+      } as any;
+
+      lapsSubject.next({
+        objectId: "hd1",
+        lapTime: 1.234,
+        bestLapTime: 1.0,
+      });
+      fixture.detectChanges();
+
+      expect(component["highlightedDrivers"].has("hd1")).toBeFalse();
+    }));
+
+    it("should resolve highlightLapStyle from widget, practice settings, or global settings", () => {
+      // 1. Fallback to classic when unset
+      delete (mockSettings as any).highlightLapStyle;
+      component.currentRacedayLayout = null as any;
+      expect(component.highlightLapStyle).toBe("classic");
+
+      // 2. Global settings
+      mockSettings.highlightLapStyle = "full-glow";
+      expect(component.highlightLapStyle).toBe("full-glow");
+
+      // 3. Practice settings when in practice mode
+      const isPracticeSpy = spyOnProperty(
+        component,
+        "isPracticeLayout",
+        "get",
+      ).and.returnValue(true);
+      mockSettings.highlightPracticeLapStyle = "tint-wash";
+      expect(component.highlightLapStyle).toBe("tint-wash");
+      isPracticeSpy.and.returnValue(false);
+
+      // 4. Widget customSettings overrides global
+      component.currentRacedayLayout = {
+        widgets: [
+          {
+            widgetType: "lane-column",
+            customSettings: { highlightLapStyle: "shimmer" },
+          },
+        ],
+      } as any;
+      expect(component.highlightLapStyle).toBe("shimmer");
+
+      // 5. Legacy widget with highlightRowOnLap: true resolves to classic
+      component.currentRacedayLayout = {
+        widgets: [
+          {
+            widgetType: "lane-column",
+            customSettings: { highlightRowOnLap: true },
+          },
+        ],
+      } as any;
+      expect(component.highlightLapStyle).toBe("classic");
+
+      // 6. Legacy widget with highlightRowOnLap: false resolves to none
+      component.currentRacedayLayout = {
+        widgets: [
+          {
+            widgetType: "lane-column",
+            customSettings: { highlightRowOnLap: false },
+          },
+        ],
+      } as any;
+      expect(component.highlightLapStyle).toBe("none");
+    });
+
+    it("should check isLaneColorLight correctly", () => {
+      spyOn(component, "getLaneColor").and.callFake(
+        (hd: any, _prop: string) => {
+          if (hd?.laneIndex === 0) return "#ffffff"; // light
+          return "#000000"; // dark
+        },
+      );
+
+      expect(component.isLaneColorLight({ laneIndex: 0 } as any)).toBeTrue();
+      expect(component.isLaneColorLight({ laneIndex: 1 } as any)).toBeFalse();
+    });
 
     it("should forward lap totalTime to addLapTime and call cdr.markForCheck when lap received even without highlight", fakeAsync(() => {
       mockSettings.highlightRowOnLap = false;
@@ -9148,6 +9306,35 @@ describe("DefaultRacedayComponent", () => {
       expect(component.widgetSelected.emit).toHaveBeenCalledWith("gw-delegate");
     });
 
+    it("should redirect to master widget when bringToFront is called on a mirrored child widget", () => {
+      spyOn(component, "bringGridToFront");
+      const master: any = {
+        id: "w-master-gap",
+        widgetType: "lane-column",
+        zIndex: 5,
+        customSettings: { gridId: "g-delegate", gridLane: 0, mirrorRows: true },
+      };
+      const child: any = {
+        id: "w-child-gap",
+        widgetType: "lane-column",
+        zIndex: 5,
+        customSettings: {
+          gridId: "g-delegate",
+          gridMasterId: "w-master-gap",
+          gridLane: 1,
+          mirrorRows: true,
+        },
+      };
+      component.layout.widgets.push(master, child);
+
+      component.bringToFront("w-child-gap");
+
+      expect(component.bringGridToFront).toHaveBeenCalledWith("g-delegate");
+      expect(component.widgetSelected.emit).toHaveBeenCalledWith(
+        "w-master-gap",
+      );
+    });
+
     it("should handle onGridContainerPointerDown to elevate grid and select master widget", () => {
       spyOn(component, "bringGridToFront");
       (component.widgetSelected.emit as jasmine.Spy).calls.reset();
@@ -13029,6 +13216,62 @@ describe("DefaultRacedayComponent", () => {
       });
     });
 
+    it("should synchronize gapMode and gapTarget from child to master widget in onMasterWidgetModified", () => {
+      const session = {
+        gridId: "test-grid-gap-sync",
+        bounds: { x: 100, y: 100, width: 400, height: 400 },
+        totalLanes: 2,
+        direction: "vertical" as const,
+        sourceLaneIndex: 0,
+        bindingMode: "lane" as const,
+        mirrorRows: true,
+      };
+      fixture.componentRef.setInput("gridSession", session);
+      fixture.detectChanges();
+
+      const masterWidget: any = {
+        id: "w-master-gap-sync",
+        widgetType: "lane-column",
+        x: 100,
+        y: 100,
+        width: 400,
+        height: 200,
+        customSettings: {
+          gridId: "test-grid-gap-sync",
+          gridLane: 0,
+          columnKey: "gap",
+          gapMode: "always_time",
+          gapTarget: "leader",
+        },
+      };
+
+      const childWidget: any = {
+        id: "w-master-gap-sync_grid_lane_1",
+        widgetType: "lane-column",
+        x: 100,
+        y: 300,
+        width: 400,
+        height: 200,
+        customSettings: {
+          gridId: "test-grid-gap-sync",
+          gridMasterId: "w-master-gap-sync",
+          gridLane: 1,
+          columnKey: "gap",
+          gapMode: "laps_and_time",
+          gapTarget: "position",
+        },
+      };
+
+      (component as any).layout = {
+        widgets: [masterWidget, childWidget],
+      };
+
+      component.onMasterWidgetModified(childWidget);
+
+      expect(masterWidget.customSettings.gapMode).toBe("laps_and_time");
+      expect(masterWidget.customSettings.gapTarget).toBe("position");
+    });
+
     it("should update child widget in place without replication when mirrorRows is false", () => {
       const session = {
         gridId: "test-grid-nomirror-child",
@@ -14054,25 +14297,44 @@ describe("DefaultRacedayComponent", () => {
     it("should cache default lane widget settings and invalidate on layout change", () => {
       const laneWidget = {
         widgetType: "lane-column",
-        customSettings: { headerFontSize: 20 },
+        customSettings: {
+          headerFontSize: 20,
+          highlightLapStyle: "classic",
+          highlightRowOnLap: true,
+        },
       };
       (component as any).currentRacedayLayout = {
         widgets: [laneWidget],
       };
 
       const s1 = component.getDefaultLaneWidgetSettings();
-      expect(s1).toEqual({ headerFontSize: 20 });
+      expect(s1).toEqual({
+        headerFontSize: 20,
+        highlightLapStyle: "classic",
+        highlightRowOnLap: true,
+      });
       const s2 = component.getDefaultLaneWidgetSettings();
       expect(s2).toBe(s1);
 
       // Invalidate on layout change
       (component as any).currentRacedayLayout = {
         widgets: [
-          { widgetType: "lane-column", customSettings: { headerFontSize: 24 } },
+          {
+            widgetType: "lane-column",
+            customSettings: {
+              headerFontSize: 24,
+              highlightLapStyle: "classic",
+              highlightRowOnLap: true,
+            },
+          },
         ],
       };
       const s3 = component.getDefaultLaneWidgetSettings();
-      expect(s3).toEqual({ headerFontSize: 24 });
+      expect(s3).toEqual({
+        headerFontSize: 24,
+        highlightLapStyle: "classic",
+        highlightRowOnLap: true,
+      });
     });
 
     it("should memoize getGrids when participants and heat drivers counts are unchanged", () => {

@@ -1,4 +1,7 @@
 import { Driver } from "@app/models/driver";
+import { RaceParticipant } from "@app/models/race_participant";
+import { Team } from "@app/models/team";
+import { DriverHeatData } from "@app/race/driver_heat_data";
 import { Heat } from "@app/race/heat";
 
 import {
@@ -14,6 +17,7 @@ import {
   filterDriverPool,
   getParticipantKey,
   HeatCardBounds,
+  isPlaceholderParticipant,
 } from "./modify-heats-modal.utils";
 
 describe("modify-heats-modal.utils", () => {
@@ -301,6 +305,82 @@ describe("modify-heats-modal.utils", () => {
         "h4",
       ]);
       expect(result.newHeats[0].started).toBeTrue();
+    });
+  });
+
+  describe("cloneHeat", () => {
+    it("should preserve originalHeatNumber when cloned", () => {
+      const h1 = new Heat("h1", 2, [], [], false);
+      h1.originalHeatNumber = 1;
+      const cloned = cloneHeat(h1);
+      expect(cloned.originalHeatNumber).toBe(1);
+      expect(cloned.heatNumber).toBe(2);
+      expect(cloned.objectId).toBe("h1");
+    });
+
+    it("should preserve undefined originalHeatNumber for new heats", () => {
+      const hNew = new Heat("new-heat-123", 5, [], [], false);
+      const cloned = cloneHeat(hNew);
+      expect(cloned.originalHeatNumber).toBeUndefined();
+    });
+
+    it("should filter out empty placeholder drivers when cloning heat", () => {
+      const pReal = createParticipantFromDriver(
+        new Driver("d1", "Real", "Real"),
+      );
+      const pEmpty = createParticipantFromDriver(
+        new Driver("EMPTY_LANE", "Empty", "Empty"),
+      );
+      const dhdReal = new DriverHeatData("dhd1", pReal, 0);
+      const dhdEmpty = new DriverHeatData("dhd2", pEmpty, 1);
+      const heat = new Heat("h1", 1, [dhdReal, dhdEmpty], [], false);
+
+      const cloned = cloneHeat(heat);
+      expect(cloned.heatDrivers.length).toBe(1);
+      expect(cloned.heatDrivers[0].laneIndex).toBe(0);
+      expect(cloned.heatDrivers[0].participant.driver.name).toBe("Real");
+    });
+  });
+
+  describe("isPlaceholderParticipant", () => {
+    it("should return true for null or undefined", () => {
+      expect(isPlaceholderParticipant(null)).toBeTrue();
+      expect(isPlaceholderParticipant(undefined)).toBeTrue();
+    });
+
+    it("should return true for participant with empty driver and no team", () => {
+      const pEmpty = createParticipantFromDriver(
+        new Driver("EMPTY_LANE", "Empty", "Empty"),
+      );
+      expect(isPlaceholderParticipant(pEmpty)).toBeTrue();
+    });
+
+    it("should return false for participant with real driver", () => {
+      const pReal = createParticipantFromDriver(
+        new Driver("d1", "Dave", "Dave"),
+      );
+      expect(isPlaceholderParticipant(pReal)).toBeFalse();
+    });
+
+    it("should return false for team participant even if driver is empty", () => {
+      const team = new Team("t1", "Team 1");
+      const pTeam = new RaceParticipant(
+        "rp-team",
+        new Driver("EMPTY_LANE", "Empty", "Empty"),
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        100,
+        0,
+        0,
+        team,
+      );
+      expect(isPlaceholderParticipant(pTeam)).toBeFalse();
     });
   });
 

@@ -121,13 +121,21 @@ Ciascun widget distacco può essere configurato nell'Ispettore Colonne tramite d
   - **Posizione precedente**: Intervallo rispetto al concorrente immediatamente davanti in classifica (es. P3 vs P2).
 - **Modalità di calcolo**:
   - **Sempre tempo**: Proiezione matematica continua del passo in secondi (`+X.XXX`).
-  - **Giri e tempo**: Stile Formula 1 che mostra il tempo nello stesso giro o il distacco in giri (`+1 Giro`, `+N Giri`) in caso di doppiaggio.
+  - **Tempo e giri di ritardo**: Stile Formula 1 che mostra il tempo nello stesso giro o il distacco in giri (`+1 Giro`, `+N Giri`) in caso di doppiaggio.
   - **Sempre giri**: Distacco esatto in giri calcolato al completamento di ogni giro, incorporando l'avanzamento parziale del pilota confrontato.
 
 > [!NOTE]
 > È possibile posizionare contemporaneamente più widget distacco con configurazioni distinte (ad esempio una colonna Distacco Leader e una Distacco Posizione) sulla stessa griglia o layout.
 
 Per consultare le formule matematiche complete e le specifiche di cronometraggio, consultare la [Guida ai Calcoli dei Distacchi](gap-calculations.md).
+
+#### Widget Ultimi Giri (`lastLaps`)
+
+Il widget **Ultimi Giri** (`lastLaps`) visualizza i tempi dei giri recenti completati dal pilota nella manche attiva:
+
+- **Ultimi giri da visualizzare**: Configura quanti giri recenti mostrare all'interno del widget (cursore 1–20, inserimento numerico 1–50). Il valore predefinito è `5`.
+- **Ridimensionamento e adattamento dinamico**: La scheda scala automaticamente le dimensioni dei caratteri e le spaziature per adattare ordinatamente il numero configurato di giri nella geometria della colonna.
+- **Sincronizzazione della griglia**: Nelle griglie di corsia, la configurazione o l'applicazione dei formati orari sincronizza il conteggio degli ultimi giri su tutte le corsie in gara.
 
 ### Ordinamento Griglia e Matrice di Interazione
 

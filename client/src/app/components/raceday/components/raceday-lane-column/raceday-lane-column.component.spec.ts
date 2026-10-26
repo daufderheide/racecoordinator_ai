@@ -918,6 +918,26 @@ describe("RacedayLaneColumnComponent", () => {
     expect(laps[4].lapTime).toBe("--.---");
   });
 
+  it("should generate custom number of lastLaps when lastLapsCount is configured", () => {
+    const driverWithLaps = {
+      ...mockDrivers[0],
+      bestLapTime: 7.481,
+      lapTimes: [7.481, 8.123, 7.95, 8.0, 7.8],
+      lapsWithDetails: [],
+    };
+    mockParent.heatDrivers = [driverWithLaps];
+    mockParent.heat.heatDrivers = [driverWithLaps];
+    fixture.componentRef.setInput("parent", mockParent);
+    fixture.componentRef.setInput(
+      "widget",
+      createWidget({ columnKey: "lastLaps", targetIndex: 0, lastLapsCount: 3 }),
+    );
+    fixture.detectChanges();
+
+    const laps = component.getLastLaps();
+    expect(laps.length).toBe(3);
+  });
+
   it("should slice visible last laps according to maxVisibleLaps", () => {
     component.maxVisibleLaps.set(2);
     spyOn(component, "getLastLaps").and.returnValue([
@@ -1308,6 +1328,51 @@ describe("RacedayLaneColumnComponent", () => {
     expect(cardEl?.style.getPropertyValue("--lane-col-value-font-size")).toBe(
       "50px",
     );
+  });
+
+  it("should auto-scale font size back up when switching from custom mode with small font size back to auto scaleMode", () => {
+    fixture.componentRef.setInput("parent", mockParent);
+    const widget = createWidget({
+      columnKey: "driver.nickname",
+      valueFontSize: 14,
+    });
+    widget.scaleMode = "";
+    fixture.componentRef.setInput("widget", widget);
+    const cardEl = component.cardRef()?.nativeElement;
+    if (cardEl) {
+      Object.defineProperty(cardEl, "clientWidth", {
+        value: 200,
+        configurable: true,
+      });
+      Object.defineProperty(cardEl, "clientHeight", {
+        value: 100,
+        configurable: true,
+      });
+    }
+    spyOnProperty(component, "formattedValue", "get").and.returnValue(
+      "Driver Name",
+    );
+    component.fitContent();
+
+    expect(cardEl?.style.getPropertyValue("--lane-col-value-font-size")).toBe(
+      "14px",
+    );
+
+    // Switch back to auto-scale mode
+    const autoWidget = createWidget({
+      columnKey: "driver.nickname",
+      valueFontSize: 14,
+    });
+    autoWidget.scaleMode = "auto";
+    fixture.componentRef.setInput("widget", autoWidget);
+    component.fitContent();
+
+    const sizeVar = cardEl?.style.getPropertyValue(
+      "--lane-col-value-font-size",
+    );
+    const autoNum = parseInt(sizeVar || "0", 10);
+    expect(autoNum).toBeGreaterThan(14);
+    expect(autoNum).toBeLessThanOrEqual(36);
   });
 
   it("should render value inside .lane-col-text with proper text alignment", () => {
@@ -3148,6 +3213,66 @@ describe("RacedayLaneColumnComponent", () => {
       );
       fixture.detectChanges();
       expect(component.isHighlighted).toBeFalse();
+
+      // Should apply highlight-style class based on highlightLapStyle
+      fixture.componentRef.setInput(
+        "widget",
+        createWidget({
+          columnKey: "lastLapTime",
+          targetIndex: 0,
+          highlightRowOnLap: true,
+          highlightLapStyle: "glow-border",
+        }),
+      );
+      fixture.detectChanges();
+      expect(component.highlightLapStyle).toBe("glow-border");
+      const styledCard = fixture.nativeElement.querySelector(
+        ".raceday-lane-column-card",
+      );
+      expect(
+        styledCard.classList.contains("highlight-style-glow-border"),
+      ).toBeTrue();
+      expect(component.isLightBackground).toBeFalse(); // default dark bg
+
+      // Should not highlight if highlightLapStyle is 'none'
+      fixture.componentRef.setInput(
+        "widget",
+        createWidget({
+          columnKey: "lastLapTime",
+          targetIndex: 0,
+          highlightLapStyle: "none",
+        }),
+      );
+      fixture.detectChanges();
+      expect(component.isHighlighted).toBeFalse();
+      const noneCard = fixture.nativeElement.querySelector(
+        ".raceday-lane-column-card",
+      );
+      expect(noneCard.classList.contains("highlight")).toBeFalse();
+
+      // Should default to none if highlightRowOnLap is false without explicit highlightLapStyle
+      fixture.componentRef.setInput(
+        "widget",
+        createWidget({
+          columnKey: "lastLapTime",
+          targetIndex: 0,
+          highlightRowOnLap: false,
+        }),
+      );
+      fixture.detectChanges();
+      expect(component.highlightLapStyle).toBe("none");
+
+      // Should default to classic if highlightRowOnLap is true without explicit highlightLapStyle
+      fixture.componentRef.setInput(
+        "widget",
+        createWidget({
+          columnKey: "lastLapTime",
+          targetIndex: 0,
+          highlightRowOnLap: true,
+        }),
+      );
+      fixture.detectChanges();
+      expect(component.highlightLapStyle).toBe("classic");
     });
 
     it("should default effectiveHeaderTextColor to #ffffff for isHeaderWidget even if lane colors are enabled", () => {

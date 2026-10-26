@@ -1,3 +1,5 @@
+import { HighlightLapStyle } from "@app/models/settings";
+
 export class LaneColumnGridHelper {
   public static getGridHeaderPlacement(
     currentSettings: any,
@@ -337,6 +339,9 @@ export class LaneColumnGridHelper {
   }
 
   public static getHighlightRowOnLap(currentSettings: any): boolean {
+    if (currentSettings["highlightLapStyle"] !== undefined) {
+      return currentSettings["highlightLapStyle"] !== "none";
+    }
     return currentSettings["highlightRowOnLap"] !== false;
   }
 
@@ -346,6 +351,31 @@ export class LaneColumnGridHelper {
     onFieldChange: () => void,
   ): void {
     currentSettings["highlightRowOnLap"] = Boolean(val);
+    currentSettings["highlightLapStyle"] = val
+      ? currentSettings["highlightLapStyle"] &&
+        currentSettings["highlightLapStyle"] !== "none"
+        ? currentSettings["highlightLapStyle"]
+        : "shimmer"
+      : "none";
+    currentSettings["_syncAction"] = "highlight";
+    onFieldChange();
+  }
+
+  public static getHighlightLapStyle(currentSettings: any): HighlightLapStyle {
+    if (currentSettings["highlightLapStyle"] !== undefined) {
+      return currentSettings["highlightLapStyle"];
+    }
+    return currentSettings["highlightRowOnLap"] === false ? "none" : "classic";
+  }
+
+  public static setHighlightLapStyle(
+    currentSettings: any,
+    val: HighlightLapStyle,
+    onFieldChange: () => void,
+  ): void {
+    currentSettings["highlightLapStyle"] = val;
+    currentSettings["highlightRowOnLap"] = val !== "none";
+    currentSettings["_syncAction"] = "highlight";
     onFieldChange();
   }
 

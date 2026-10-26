@@ -121,13 +121,21 @@ Cada widget de diferença pode ser configurado no Inspetor de Colunas por meio d
   - **Posição à frente**: Intervalo em relação ao concorrente imediatamente à frente na classificação (ex.: P3 vs P2).
 - **Modo de cálculo**:
   - **Sempre tempo**: Projeção matemática contínua de ritmo em segundos (`+X.XXX`).
-  - **Voltas e tempo**: Estilo Fórmula 1 exibindo o tempo na mesma volta ou o déficit de voltas (`+1 Volta`, `+N Voltas`) em caso de volta perdida.
+  - **Tempo e voltas atrás**: Estilo Fórmula 1 exibindo o tempo na mesma volta ou o déficit de voltas (`+1 Volta`, `+N Voltas`) em caso de volta perdida.
   - **Sempre voltas**: Diferença exata de voltas calculada ao completar cada volta, incorporando o progresso de volta parcial do piloto comparado.
 
 > [!NOTE]
 > Vários widgets de diferença com configurações distintas (por exemplo, uma coluna para Diferença para o Líder e outra para o Carro da Frente) podem ser inseridos simultaneamente na mesma grade ou layout.
 
 Para consultar as fórmulas matemáticas completas e as especificações de cronometragem, consulte o [Guia de Cálculos de Diferenças](gap-calculations.md).
+
+#### Widget de Últimas Voltas (`lastLaps`)
+
+O widget **Últimas Voltas** (`lastLaps`) exibe os tempos das voltas recentes completadas pelo piloto na bateria ativa:
+
+- **Últimas voltas a exibir**: Configura quantas voltas recentes renderizar no widget (controle deslizante 1–20, campo numérico 1–50). O padrão é `5`.
+- **Ajuste e dimensionamento dinâmicos**: O cartão ajusta automaticamente os tamanhos de fonte e espaçamento para encaixar perfeitamente a quantidade configurada de voltas na geometria da coluna.
+- **Sincronização na grade**: Em grades de pistas, configurar ou aplicar formatos de tempo sincroniza o total de últimas voltas em todas as pistas concorrentes.
 
 ### Ordenação da Grade e Matriz de Interação
 

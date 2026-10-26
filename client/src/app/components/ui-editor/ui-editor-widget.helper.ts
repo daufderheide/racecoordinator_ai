@@ -269,6 +269,37 @@ export function updateLayoutOnModel(
   }
 }
 
+function resolveMirroredMasterId(
+  layout: any,
+  id: string | null,
+  activeGridSession: any,
+): string | null {
+  if (!id || !layout?.widgets) return id;
+  const target = layout.widgets.find((w: any) => w.id === id);
+  const masterId = target?.customSettings?.["gridMasterId"];
+  if (!masterId) return id;
+
+  const sessionMatchesTarget =
+    activeGridSession &&
+    target?.customSettings?.["gridId"] &&
+    activeGridSession.gridId === target.customSettings["gridId"];
+  const isHoriz =
+    (sessionMatchesTarget &&
+      (activeGridSession.direction === "horizontal" ||
+        activeGridSession.layoutOrientation === "horizontal")) ||
+    target?.customSettings?.["gridDirection"] === "horizontal" ||
+    target?.customSettings?.["layoutOrientation"] === "horizontal";
+  const isLanesMirrored = isHoriz
+    ? target?.customSettings?.["linkColumns"] !== false &&
+      (!sessionMatchesTarget || activeGridSession.linkColumns !== false)
+    : target?.customSettings?.["mirrorRows"] !== false &&
+      (!sessionMatchesTarget || activeGridSession.mirrorRows !== false);
+  if (isLanesMirrored && layout.widgets.some((w: any) => w.id === masterId)) {
+    return masterId;
+  }
+  return id;
+}
+
 export function handleWidgetSelection(
   comp: any,
   id: string | null,
@@ -279,7 +310,12 @@ export function handleWidgetSelection(
     comp.selectedAnchor = null;
   }
   const layout = comp.getLayout(ui || comp.activeCustomUi);
-  comp.selectedWidgetId = id || findDefaultWidgetId(layout);
+  const resolvedId = resolveMirroredMasterId(
+    layout,
+    id,
+    comp.activeGridSession,
+  );
+  comp.selectedWidgetId = resolvedId || findDefaultWidgetId(layout);
   const selectedWidget =
     layout?.widgets?.find((w: any) => w.id === comp.selectedWidgetId) ||
     comp.selectedWidget;
@@ -322,6 +358,24 @@ export function handleWidgetColorChange(
   }
 }
 
+export function resetCustomScalingOverrides(widget: any): void {
+  if (!widget?.customSettings) return;
+  const s = widget.customSettings;
+  const isGrid = Boolean(s["gridId"]);
+  if (widget.widgetType === "lane-column") {
+    s["valueFontSize"] = isGrid ? 54 : 36;
+    s["headerFontSize"] = isGrid ? 24 : 14;
+    s["insetFontSize"] = isGrid ? 24 : 18;
+    if (s.insetsConfig) {
+      for (const anchor of Object.keys(s.insetsConfig)) {
+        if (s.insetsConfig[anchor]?.fontSize) {
+          delete s.insetsConfig[anchor].fontSize;
+        }
+      }
+    }
+  }
+}
+
 export function handleWidgetInspectorChange(
   comp: any,
   widget?: any,
@@ -331,6 +385,18 @@ export function handleWidgetInspectorChange(
   const targetWidget = widget || comp.currentSelectedWidget;
   const layout = comp.getLayout(targetUi);
   if (layout && targetWidget && layout.widgets) {
+    if (targetWidget.scaleMode === "auto") {
+      resetCustomScalingOverrides(targetWidget);
+      const targetGridId = targetWidget.customSettings?.["gridId"];
+      if (targetGridId) {
+        for (const w of layout.widgets) {
+          if (w.customSettings?.["gridId"] === targetGridId) {
+            w.scaleMode = "auto";
+            resetCustomScalingOverrides(w);
+          }
+        }
+      }
+    }
     const idx = layout.widgets.findIndex((w: any) => w.id === targetWidget.id);
     if (idx !== -1) {
       layout.widgets[idx] = targetWidget;

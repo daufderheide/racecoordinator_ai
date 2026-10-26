@@ -49,7 +49,7 @@ Race Coordinator AI bietet **2 konfigurierbare Abstands-Widgets** (verfügbar al
                    │     ZIEL-AUSWAHL      │           │   BERECHNUNGSMODUS    │
                    ├───────────────────────┤           ├───────────────────────┤
                    │ • Führender (P1)      │           │ • Immer Zeit          │
-                   │ • Vorausfahrender     │           │ • Runden und Zeit (F1)│
+                   │ • Vorausfahrender     │           │ • Zeit und Runden zurück (F1)│
                    │                       │           │ • Immer Runden (Delta)│
                    └───────────────────────┘           └───────────────────────┘
 ```
@@ -62,7 +62,7 @@ Race Coordinator AI bietet **2 konfigurierbare Abstands-Widgets** (verfügbar al
 1. **Immer Zeit (`always_time`)**:
    - Kontinuierliche mathematische Pace-Projektion in Sekunden.
    - Formatiert als `+X.XXX` mit konfigurierbaren Zeitdezimalstellen (1 bis 3 Stellen).
-2. **Runden und Zeit (`laps_and_time`)**:
+2. **Zeit und Runden zurück (`laps_and_time`)**:
    - Formel-1-Übertragungsanzeige.
    - Zeigt Sekunden (`+X.XXX`) an, wenn die Fahrer in der Führungsrunde sind.
    - Zeigt Rundenrückstände (`+1 Runde`, `+N Runden`) bei Überrundung an.
@@ -156,7 +156,7 @@ Der Fahrer behält diesen berechneten Wert bei, bis er selbst die nächste Runde
 
 ## Vergleich der Berechnungsmodi
 
-| Merkmal | Immer Zeit (`always_time`) | Runden und Zeit (`laps_and_time`) | Immer Runden (`always_laps`) |
+| Merkmal | Immer Zeit (`always_time`) | Zeit und Runden zurück (`laps_and_time`) | Immer Runden (`always_laps`) |
 | :--- | :--- | :--- | :--- |
 | **Berechnungsansatz** | Kontinuierliche statistische Pace-Projektion | Exakte Zeitstempelvergleiche an der Ziellinie | Runden-Delta mit Teilrundenfortschritt |
 | **Überrundete Autos** | Prognostizierte Sekunden (z. B. `+14.820`) | Rundenrückstand-Text (z. B. `+1 Runde`, `+3 Runden`) | Dezimales Runden-Delta (z. B. `+2.45`) |
@@ -172,7 +172,7 @@ Der Fahrer behält diesen berechneten Wert bei, bis er selbst die nächste Runde
 ### 1. In Rastern und Ranglisten
 Wählen Sie im UI-Editor Ihr Raster-Widget aus und wechseln Sie zum Reiter **Spalten**. Aktivieren Sie unter **Gaps & Intervalle** (Lauf) oder **Gesamt-Gaps & Intervalle** (Gesamt) die Spalte **Lauf-Abstand** (`gap`) oder **Gesamt-Abstand** (`overallGap`):
 - Wählen Sie die Spaltenkarte aus, um den **Spalten-Inspektor** zu öffnen.
-- Wählen Sie unter **Abstandskonfiguration** das **Ziel** (*Führender* oder *Vorausfahrender*) und den **Berechnungsmodus** (*Immer Zeit*, *Runden und Zeit* oder *Immer Runden*).
+- Wählen Sie unter **Abstandskonfiguration** das **Ziel** (*Führender* oder *Vorausfahrender*) und den **Berechnungsmodus** (*Immer Zeit*, *Zeit und Runden zurück* oder *Immer Runden*).
 - Mehrere Abstandsspalten mit unterschiedlichen Zielen oder Modi können gleichzeitig demselben Raster hinzugefügt werden!
 
 ### 2. Eigenständige Spaltenkarten

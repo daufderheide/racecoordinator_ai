@@ -363,6 +363,41 @@
         </label>
       </div>
 
+      <!-- Grid Highlight on Lap -->
+      <div class="inspector-section" style="margin-bottom: 8px">
+        <label class="inspector-label">{{
+          "UE_INSPECTOR_LANE_VIEW_HIGHLIGHT_LAP" | translate
+        }}</label>
+        <div class="select-container select-sm">
+          <app-custom-select [(ngModel)]="gridHighlightLapStyle">
+            <app-custom-option value="none">
+              {{ "UE_INSPECTOR_HIGHLIGHT_STYLE_NONE" | translate }}
+            </app-custom-option>
+            <app-custom-option value="classic">
+              {{ "UE_INSPECTOR_HIGHLIGHT_STYLE_CLASSIC" | translate }}
+            </app-custom-option>
+            <app-custom-option value="full-glow">
+              {{ "UE_INSPECTOR_HIGHLIGHT_STYLE_FULL_GLOW" | translate }}
+            </app-custom-option>
+            <app-custom-option value="glow-border">
+              {{ "UE_INSPECTOR_HIGHLIGHT_STYLE_GLOW_BORDER" | translate }}
+            </app-custom-option>
+            <app-custom-option value="tint-wash">
+              {{ "UE_INSPECTOR_HIGHLIGHT_STYLE_TINT_WASH" | translate }}
+            </app-custom-option>
+            <app-custom-option value="shimmer">
+              {{ "UE_INSPECTOR_HIGHLIGHT_STYLE_SHIMMER" | translate }}
+            </app-custom-option>
+            <app-custom-option value="scale-pulse">
+              {{ "UE_INSPECTOR_HIGHLIGHT_STYLE_SCALE_PULSE" | translate }}
+            </app-custom-option>
+            <app-custom-option value="adaptive-dip">
+              {{ "UE_INSPECTOR_HIGHLIGHT_STYLE_ADAPTIVE_DIP" | translate }}
+            </app-custom-option>
+          </app-custom-select>
+        </div>
+      </div>
+
       @if (!isLanesMirrored) {
         <div class="inspector-section" style="margin-bottom: 8px">
           <button
@@ -1160,6 +1195,48 @@
       </div>
     }
 
+    @if (isLastLapsColumn) {
+      <hr class="inspector-divider" />
+      <div class="inspector-geometry-title">
+        <span class="material-icons">history</span>
+        {{ "UE_INSPECTOR_LAST_LAPS_SECTION" | translate }}
+      </div>
+      <div class="inspector-section">
+        <div class="inspector-label-row">
+          <label class="inspector-label">{{
+            "UE_INSPECTOR_LAST_LAPS_COUNT" | translate
+          }}</label>
+        </div>
+        <div style="display: flex; gap: 8px; align-items: center">
+          <input
+            type="range"
+            min="1"
+            max="20"
+            step="1"
+            [ngModel]="lastLapsCount"
+            (ngModelChange)="lastLapsCount = $event"
+            class="inspector-slider"
+            style="flex: 1"
+          />
+          <input
+            type="number"
+            min="1"
+            max="50"
+            step="1"
+            autocomplete="off"
+            data-dashlane-ignore="true"
+            data-1p-ignore="true"
+            data-lpignore="true"
+            data-bwignore="true"
+            data-form-type="other"
+            [ngModel]="lastLapsCount"
+            (ngModelChange)="lastLapsCount = $event"
+            class="inspector-number-input"
+          />
+        </div>
+      </div>
+    }
+
     @if (isTotalTimeColumn || isTimeColumn || isLapColumn) {
       <hr class="inspector-divider" />
 
@@ -1685,14 +1762,39 @@
 
     <!-- Lap Flash Highlight -->
     <div class="inspector-section">
-      <label class="form-check-label">
-        <input
-          type="checkbox"
-          class="form-checkbox"
-          [(ngModel)]="highlightRowOnLap"
-        />
-        <span>{{ "UE_INSPECTOR_LANE_VIEW_HIGHLIGHT_LAP" | translate }}</span>
-      </label>
+      <div class="inspector-field">
+        <label class="inspector-label">{{
+          "UE_INSPECTOR_LANE_VIEW_HIGHLIGHT_LAP" | translate
+        }}</label>
+        <div class="select-container select-sm">
+          <app-custom-select [(ngModel)]="highlightLapStyle">
+            <app-custom-option value="none">
+              {{ "UE_INSPECTOR_HIGHLIGHT_STYLE_NONE" | translate }}
+            </app-custom-option>
+            <app-custom-option value="classic">
+              {{ "UE_INSPECTOR_HIGHLIGHT_STYLE_CLASSIC" | translate }}
+            </app-custom-option>
+            <app-custom-option value="full-glow">
+              {{ "UE_INSPECTOR_HIGHLIGHT_STYLE_FULL_GLOW" | translate }}
+            </app-custom-option>
+            <app-custom-option value="glow-border">
+              {{ "UE_INSPECTOR_HIGHLIGHT_STYLE_GLOW_BORDER" | translate }}
+            </app-custom-option>
+            <app-custom-option value="tint-wash">
+              {{ "UE_INSPECTOR_HIGHLIGHT_STYLE_TINT_WASH" | translate }}
+            </app-custom-option>
+            <app-custom-option value="shimmer">
+              {{ "UE_INSPECTOR_HIGHLIGHT_STYLE_SHIMMER" | translate }}
+            </app-custom-option>
+            <app-custom-option value="scale-pulse">
+              {{ "UE_INSPECTOR_HIGHLIGHT_STYLE_SCALE_PULSE" | translate }}
+            </app-custom-option>
+            <app-custom-option value="adaptive-dip">
+              {{ "UE_INSPECTOR_HIGHLIGHT_STYLE_ADAPTIVE_DIP" | translate }}
+            </app-custom-option>
+          </app-custom-select>
+        </div>
+      </div>
     </div>
 
     <hr class="inspector-divider" />

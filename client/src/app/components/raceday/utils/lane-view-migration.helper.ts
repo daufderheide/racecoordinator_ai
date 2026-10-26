@@ -1,6 +1,7 @@
 import { AnchorPoint } from "@app/components/raceday/column_definition";
 import {
   AbsoluteWidgetNode,
+  HighlightLapStyle,
   LayoutConfig,
   Settings,
 } from "@app/models/settings";
@@ -41,6 +42,7 @@ interface LaneGridMigrationBuildParams {
   columnDecimals: Record<string, number>;
   baseZIndex: number;
   highlightRowOnLap: boolean;
+  highlightLapStyle: HighlightLapStyle;
   headerFontFamily: string;
   headerFontSize: number;
   headerTextColor: string;
@@ -163,6 +165,28 @@ function migrateInsetsConfig(s: Record<string, any>): boolean {
   return migrated;
 }
 
+function migrateHighlightLapStyle(
+  widget: AbsoluteWidgetNode,
+  s: Record<string, any>,
+): boolean {
+  if (
+    widget.widgetType !== "lane-view" &&
+    widget.widgetType !== "lane-column"
+  ) {
+    return false;
+  }
+  if (s["highlightLapStyle"] === undefined) {
+    if (s["highlightRowOnLap"] === false) {
+      s["highlightLapStyle"] = "none";
+    } else {
+      s["highlightLapStyle"] = "classic";
+    }
+    s["highlightRowOnLap"] = s["highlightLapStyle"] !== "none";
+    return true;
+  }
+  return false;
+}
+
 export class LaneViewMigrationHelper {
   public static migrateGapWidgets(
     layout: LayoutConfig | null | undefined,
@@ -172,11 +196,38 @@ export class LaneViewMigrationHelper {
     }
     let migrated = false;
     for (const w of layout.widgets) {
+      if (
+        (w.widgetType === "lane-view" || w.widgetType === "lane-column") &&
+        !w.customSettings
+      ) {
+        w.customSettings = {};
+      }
       if (!w.customSettings) continue;
       const s = w.customSettings;
       if (migrateColumnKey(s)) migrated = true;
       if (migrateInsets(s)) migrated = true;
       if (migrateInsetsConfig(s)) migrated = true;
+      if (migrateHighlightLapStyle(w, s)) migrated = true;
+    }
+    return migrated;
+  }
+
+  public static migrateHighlightWidgets(
+    layout: LayoutConfig | null | undefined,
+  ): boolean {
+    if (!layout?.widgets || !Array.isArray(layout.widgets)) {
+      return false;
+    }
+    let migrated = false;
+    for (const w of layout.widgets) {
+      if (
+        (w.widgetType === "lane-view" || w.widgetType === "lane-column") &&
+        !w.customSettings
+      ) {
+        w.customSettings = {};
+      }
+      if (!w.customSettings) continue;
+      if (migrateHighlightLapStyle(w, w.customSettings)) migrated = true;
     }
     return migrated;
   }
@@ -397,7 +448,13 @@ export class LaneViewMigrationHelper {
       columnLabels: (s["columnLabels"] || {}) as Record<string, string>,
       columnDecimals: (s["columnDecimals"] || {}) as Record<string, number>,
       baseZIndex: laneView.zIndex ?? 100,
-      highlightRowOnLap: s["highlightRowOnLap"] !== false,
+      highlightRowOnLap:
+        s["highlightLapStyle"] !== undefined
+          ? s["highlightLapStyle"] !== "none"
+          : s["highlightRowOnLap"] !== false,
+      highlightLapStyle:
+        (s["highlightLapStyle"] as HighlightLapStyle) ||
+        (s["highlightRowOnLap"] === false ? "none" : "classic"),
       headerFontFamily: s["columnFontFamily"] || laneView.fontFamily || "",
       headerFontSize,
       headerTextColor: s["columnTextColor"] || laneView.textColor || "",
@@ -560,6 +617,7 @@ export class LaneViewMigrationHelper {
         linkColumns: true,
         sortByBindingMode: true,
         highlightRowOnLap: params.highlightRowOnLap,
+        highlightLapStyle: params.highlightLapStyle,
         customLabel: params.columnLabels[colKey] || "",
         headerFontFamily: params.headerFontFamily,
         headerFontSize: params.headerFontSize,
@@ -835,6 +893,7 @@ export class LaneViewMigrationHelper {
         linkColumns: true,
         sortByBindingMode: true,
         highlightRowOnLap: params.highlightRowOnLap,
+        highlightLapStyle: params.highlightLapStyle,
         customLabel: params.columnLabels[colKey] || "",
         headerFontFamily: params.headerFontFamily,
         headerFontSize: params.headerFontSize,

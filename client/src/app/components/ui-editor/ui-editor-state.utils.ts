@@ -27,6 +27,11 @@ export function cloneSettings(s: Settings): Settings {
 
   clone.highlightRowOnLap = s.highlightRowOnLap ?? true;
   clone.highlightPracticeRowOnLap = s.highlightPracticeRowOnLap ?? true;
+  clone.highlightLapStyle =
+    s.highlightLapStyle || (s.highlightRowOnLap === false ? "none" : "classic");
+  clone.highlightPracticeLapStyle =
+    s.highlightPracticeLapStyle ||
+    (s.highlightPracticeRowOnLap === false ? "none" : "classic");
   clone.pageTransition = s.pageTransition || "slide";
   clone.masterVolume = s.masterVolume ?? 100;
   clone.urgentQueueTtl = s.urgentQueueTtl ?? 5000;
@@ -104,6 +109,14 @@ export function areSettingsEqual(a: Settings, b: Settings): boolean {
     a.sortByStandings === b.sortByStandings &&
     a.highlightRowOnLap === b.highlightRowOnLap &&
     a.highlightPracticeRowOnLap === b.highlightPracticeRowOnLap &&
+    (a.highlightLapStyle ||
+      (a.highlightRowOnLap === false ? "none" : "classic")) ===
+      (b.highlightLapStyle ||
+        (b.highlightRowOnLap === false ? "none" : "classic")) &&
+    (a.highlightPracticeLapStyle ||
+      (a.highlightPracticeRowOnLap === false ? "none" : "classic")) ===
+      (b.highlightPracticeLapStyle ||
+        (b.highlightPracticeRowOnLap === false ? "none" : "classic")) &&
     a.pageTransition === b.pageTransition &&
     (a.masterVolume ?? 100) === (b.masterVolume ?? 100) &&
     (a.urgentQueueTtl ?? 5000) === (b.urgentQueueTtl ?? 5000) &&

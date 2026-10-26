@@ -85,5 +85,6 @@ export class ModifyHeatsModalHarness
   async dragDriverToHeat(
     _driverName: string,
     _heatIndex: number,
+    _laneIndex?: number,
   ): Promise<void> {}
 }

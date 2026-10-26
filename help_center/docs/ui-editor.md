@@ -121,13 +121,21 @@ Each gap widget can be customized in the Column Inspector with two key configura
   - **Position Ahead**: Interval relative to the competitor running immediately ahead in the standings (e.g. P3 vs P2).
 - **Calculation Mode**:
   - **Always Time**: Continuous mathematical pace projection in seconds (`+X.XXX`).
-  - **Laps and Time**: Formula 1 style gap displaying time on the lead lap, or lap count (`+1 Lap`, `+N Laps`) when lapped.
+  - **Time and Laps Down**: Formula 1 style gap displaying time on the lead lap, or lap count (`+1 Lap`, `+N Laps`) when lapped.
   - **Always Laps**: Exact lap delta between competitors calculated on lap completion, incorporating partial lap progress of the compared driver.
 
 > [!NOTE]
 > Multiple gap widgets with distinct configurations (e.g. a Leader Gap column and a Position Gap column) can be placed on the same grid or layout simultaneously.
 
 For complete mathematical formulas, finish type adaptations, and timing specifications, see the [Gap Calculations Guide](gap-calculations.md).
+
+#### Last Laps Widget (`lastLaps`)
+
+The **Last Laps** (`lastLaps`) widget displays recent lap times completed by the driver in the active heat:
+
+- **Last Laps to Display**: Configures how many recent laps to render within the widget (slider range 1–20, input range 1–50). Defaults to `5`.
+- **Dynamic Sizing & Fit**: The card automatically scales font sizes and line heights to fit the configured number of laps cleanly within the allocated column geometry.
+- **Cross-Grid Synchronization**: In lane grids, configuring or applying time formats synchronizes the last laps display count across all competing lanes.
 
 ### Grid Sorting & Interaction Matrix
 

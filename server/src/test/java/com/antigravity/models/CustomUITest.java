@@ -52,11 +52,13 @@ public class CustomUITest {
     assertTrue(defaultUi.getColumnWidthsJson().contains("\"ghostPacingLeaderAvg\":200"));
     assertTrue(defaultUi.getColumnWidthsJson().contains("\"averageLapTime\":310"));
     assertTrue(defaultUi.getLayoutJson().contains("widget-lane-view"));
+    assertTrue(defaultUi.getLayoutJson().contains("\"highlightLapStyle\":\"shimmer\""));
 
     CustomUI practiceUi = CustomUI.createPractice();
     assertTrue(practiceUi.isDefault());
     assertEquals("RaceCoordinator AI (Practice)", practiceUi.getName());
     assertEquals(CustomUI.PRACTICE_UI_ID, practiceUi.getEntityId());
+    assertTrue(practiceUi.getLayoutJson().contains("\"highlightLapStyle\":\"shimmer\""));
 
     CustomUI fuelUi = CustomUI.createFuel();
     assertTrue(fuelUi.isDefault());
@@ -64,6 +66,7 @@ public class CustomUITest {
     assertEquals(CustomUI.FUEL_UI_ID, fuelUi.getEntityId());
     assertTrue(fuelUi.getColumnsJson().contains("imageset_fuel-gauge-builtin"));
     assertTrue(fuelUi.getColumnWidthsJson().contains("\"imageset_fuel-gauge-builtin\":210"));
+    assertTrue(fuelUi.getLayoutJson().contains("\"highlightLapStyle\":\"shimmer\""));
     assertTrue(fuelUi.getColumnWidthsJson().contains("\"lapCount\":210"));
     assertTrue(fuelUi.getColumnWidthsJson().contains("\"lastLapTime\":310"));
     assertTrue(fuelUi.getColumnWidthsJson().contains("\"gap\":310"));

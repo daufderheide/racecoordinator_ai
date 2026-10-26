@@ -49,7 +49,7 @@ Race Coordinator AI fornisce **2 widget distacco configurabili** (disponibili co
                    │  SELETTORE OBIETTIVO  │           │  MODALITÀ DI CALCOLO  │
                    ├───────────────────────┤           ├───────────────────────┤
                    │ • Leader (P1)         │           │ • Sempre tempo        │
-                   │ • Posizione precedente│           │ • Giri e tempo (F1)   │
+                   │ • Posizione precedente│           │ • Tempo e giri (F1)   │
                    │                       │           │ • Sempre giri         │
                    └───────────────────────┘           └───────────────────────┘
 ```
@@ -62,7 +62,7 @@ Race Coordinator AI fornisce **2 widget distacco configurabili** (disponibili co
 1. **Sempre tempo (`always_time`)**:
    - Proiezione matematica continua del passo in secondi.
    - Formattato come `+X.XXX` con decimali di tempo configurabili (da 1 a 3 cifre decimali).
-2. **Giri e tempo (`laps_and_time`)**:
+2. **Tempo e giri di ritardo (`laps_and_time`)**:
    - Visualizzazione stile trasmissione Formula 1.
    - Mostra secondi (`+X.XXX`) se sullo stesso giro.
    - Mostra giri di ritardo (`+1 Giro`, `+N Giri`) in caso di doppiaggio.
@@ -142,7 +142,7 @@ Il pilota mantiene questo valore calcolato fino al completamento del proprio gir
 
 ## Confronto delle Modalità di Calcolo
 
-| Caratteristica | Sempre tempo (`always_time`) | Giri e tempo (`laps_and_time`) | Sempre giri (`always_laps`) |
+| Caratteristica | Sempre tempo (`always_time`) | Tempo e giri di ritardo (`laps_and_time`) | Sempre giri (`always_laps`) |
 | :--- | :--- | :--- | :--- |
 | **Approccio** | Proiezione matematica continua del passo | Confronti esatti al passaggio sulla linea | Distacco in giri con avanzamento parziale |
 | **Auto Doppiate** | Secondi stimati (es. `+14.820`) | Testo giri persi (es. `+1 Giro`) | Delta decimale in giri (es. `+2.45`) |
@@ -158,7 +158,7 @@ Il pilota mantiene questo valore calcolato fino al completamento del proprio gir
 ### 1. In Griglie e Classifiche
 Nell'Editor dell'Interfaccia, selezionare il widget Griglia e aprire la scheda **Colonne**. Sotto **Gaps e Intervalli**, attivare **Distacco Manche** (`gap`) o **Distacco Generale** (`overallGap`):
 - Selezionare la colonna per aprire l'**Ispettore Colonne**.
-- In **Configurazione distacco**, selezionare l'**Obiettivo** (*Leader* o *Posizione precedente*) e la **Modalità di calcolo** (*Sempre tempo*, *Giri e tempo* o *Sempre giri*).
+- In **Configurazione distacco**, selezionare l'**Obiettivo** (*Leader* o *Posizione precedente*) e la **Modalità di calcolo** (*Sempre tempo*, *Tempo e giri di ritardo* o *Sempre giri*).
 - È possibile aggiungere contemporaneamente alla stessa griglia più colonne distacco con obiettivi o modalità diverse.
 
 ### 2. Schede Corsia Autonome

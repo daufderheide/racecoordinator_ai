@@ -4,7 +4,9 @@ import { DriverHeatData } from "@app/race/driver_heat_data";
 import {
   buildSyntheticInsetWidgetInputs,
   buildSyntheticMainWidgetInputs,
+  computeHeatDataLastLaps,
   extractDroppedColumnKey,
+  fitColumnLastLaps,
   fitColumnTextValue,
   formatAdjustedLapValue,
   getInsetDefaultAlignment,
@@ -1036,6 +1038,64 @@ describe("raceday-lane-column.utils", () => {
       expect(numSize).toBeGreaterThanOrEqual(10);
     });
 
+    it("should auto-scale font size to available container height in auto mode even when valueFontSize is set small", () => {
+      Object.defineProperty(cardEl, "clientWidth", {
+        value: 200,
+        configurable: true,
+      });
+      Object.defineProperty(cardEl, "clientHeight", {
+        value: 100,
+        configurable: true,
+      });
+
+      fitColumnTextValue(
+        cardEl,
+        "42",
+        { valueFontSize: 12 } as any,
+        "auto",
+        "vertical",
+        false,
+        false,
+        () => false,
+        14,
+      );
+
+      const sizeVar = cardEl.style.getPropertyValue(
+        "--lane-col-value-font-size",
+      );
+      const numSize = parseInt(sizeVar, 10);
+      expect(numSize).toBe(36);
+    });
+
+    it("should auto-scale grid column font size up to 54 in auto mode even when valueFontSize is set small", () => {
+      Object.defineProperty(cardEl, "clientWidth", {
+        value: 200,
+        configurable: true,
+      });
+      Object.defineProperty(cardEl, "clientHeight", {
+        value: 100,
+        configurable: true,
+      });
+
+      fitColumnTextValue(
+        cardEl,
+        "42",
+        { gridId: "grid-heat-data", valueFontSize: 12 } as any,
+        "auto",
+        "vertical",
+        false,
+        false,
+        () => false,
+        14,
+      );
+
+      const sizeVar = cardEl.style.getPropertyValue(
+        "--lane-col-value-font-size",
+      );
+      const numSize = parseInt(sizeVar, 10);
+      expect(numSize).toBe(54);
+    });
+
     it("should use explicitWidth and explicitHeight without reading card dimensions", () => {
       // cardEl has no clientWidth or clientHeight defined
       fitColumnTextValue(
@@ -1058,7 +1118,7 @@ describe("raceday-lane-column.utils", () => {
       expect(sizeVar).toBeTruthy();
       const numSize = parseInt(sizeVar, 10);
       expect(numSize).toBeGreaterThanOrEqual(10);
-      expect(numSize).toBeLessThanOrEqual(40);
+      expect(numSize).toBeLessThanOrEqual(36);
     });
 
     it("should allow two-digit numbers (10+) to maintain a large legible font size without excessive shrinkage compared to single digits", () => {
@@ -1168,6 +1228,100 @@ describe("raceday-lane-column.utils", () => {
       expect(getSvgPreserveAspectRatio("bottom-right", "left", "top")).toBe(
         "xMinYMin meet",
       );
+    });
+  });
+
+  describe("computeHeatDataLastLaps", () => {
+    it("should default to 5 laps when targetDriver is undefined and no parent laps exist", () => {
+      const result = computeHeatDataLastLaps(undefined, {} as any, null);
+      expect(result.length).toBe(5);
+      expect(result.every((item) => item.lapTime === "--.---")).toBeTrue();
+    });
+
+    it("should honor custom lastLapsCount when targetDriver is undefined", () => {
+      const result = computeHeatDataLastLaps(
+        undefined,
+        { lastLapsCount: 8, timeDecimalPlaces: 2 } as any,
+        null,
+      );
+      expect(result.length).toBe(8);
+      expect(result.every((item) => item.lapTime === "--.--")).toBeTrue();
+    });
+
+    it("should generate correct number of laps for driver with custom lastLapsCount", () => {
+      const mockDriver: any = {
+        lapTimes: [10.123, 9.876, 9.456, 9.234, 9.111, 8.999, 9.05],
+        lapsWithDetails: [],
+        bestLapTime: 8.999,
+      };
+
+      const result3 = computeHeatDataLastLaps(
+        mockDriver,
+        { lastLapsCount: 3, timeDecimalPlaces: 3 } as any,
+        null,
+      );
+      expect(result3.length).toBe(3);
+      // Last 3 completed laps: indices 5, 4, 3 (since n=7, loop i=1..3 -> index 7-1-1=5, 7-1-2=4, 7-1-3=3)
+      expect(result3[0].lapNumber).toBe(6);
+      expect(result3[0].lapTime).toBe("8.999");
+      expect(result3[0].isBest).toBeTrue();
+
+      const result10 = computeHeatDataLastLaps(
+        mockDriver,
+        { lastLapsCount: 10, timeDecimalPlaces: 2 } as any,
+        null,
+      );
+      expect(result10.length).toBe(10);
+    });
+
+    it("should delegate to parent.getLastLaps with configured lastLapsCount", () => {
+      const parent = {
+        columns: [{ propertyName: "lastLaps" }],
+        getLastLaps: jasmine.createSpy("getLastLaps").and.returnValue([
+          { lapNumber: 3, lapTime: "9.500", isBest: false, segments: [] },
+          { lapNumber: 2, lapTime: "9.600", isBest: false, segments: [] },
+          { lapNumber: 1, lapTime: "9.700", isBest: true, segments: [] },
+        ]),
+      };
+
+      const result = computeHeatDataLastLaps(
+        undefined,
+        { lastLapsCount: 3 } as any,
+        parent,
+      );
+      expect(parent.getLastLaps).toHaveBeenCalledWith(
+        undefined,
+        parent.columns[0],
+        "center-center",
+        3,
+      );
+      expect(result.length).toBe(3);
+    });
+  });
+
+  describe("fitColumnLastLaps", () => {
+    it("should clamp totalLaps to maxConfiguredLaps", () => {
+      const mockEl = { clientWidth: 400, clientHeight: 300 } as HTMLElement;
+      const fit5 = fitColumnLastLaps(mockEl, true, 54, 10, 400, 300, 5);
+      expect(fit5.maxLaps).toBeLessThanOrEqual(5);
+
+      const fit10 = fitColumnLastLaps(mockEl, true, 54, 10, 400, 600, 10);
+      expect(fit10.maxLaps).toBeLessThanOrEqual(10);
+    });
+
+    it("should handle horizontal flow with custom maxConfiguredLaps", () => {
+      const mockEl = { clientWidth: 600, clientHeight: 100 } as HTMLElement;
+      const fitHorizontal = fitColumnLastLaps(
+        mockEl,
+        false,
+        48,
+        4,
+        600,
+        100,
+        4,
+      );
+      expect(fitHorizontal.maxLaps).toBeLessThanOrEqual(4);
+      expect(fitHorizontal.fontSize).toBeGreaterThanOrEqual(12);
     });
   });
 });

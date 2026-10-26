@@ -49,7 +49,7 @@ Race Coordinator AI proporciona **2 widgets de diferencia configurables** (dispo
                    │ SELECTOR DE OBJETIVO  │           │    MODO DE CÁLCULO    │
                    ├───────────────────────┤           ├───────────────────────┤
                    │ • Líder (P1)          │           │ • Siempre tiempo      │
-                   │ • Posición anterior   │           │ • Vueltas y tiempo(F1)│
+                   │ • Posición anterior   │           │ • Tiempo y vueltas(F1)│
                    │                       │           │ • Siempre vueltas     │
                    └───────────────────────┘           └───────────────────────┘
 ```
@@ -62,7 +62,7 @@ Race Coordinator AI proporciona **2 widgets de diferencia configurables** (dispo
 1. **Siempre tiempo (`always_time`)**:
    - Proyección matemática continua del ritmo en segundos.
    - Formateado como `+X.XXX` con decimales de tiempo configurables (1 a 3 decimales).
-2. **Vueltas y tiempo (`laps_and_time`)**:
+2. **Tiempo y vueltas perdidas (`laps_and_time`)**:
    - Cronometraje estilo Fórmula 1.
    - Muestra segundos (`+X.XXX`) cuando están en la misma vuelta.
    - Muestra déficit de vueltas (`+1 Vuelta`, `+N Vueltas`) cuando están doblados.
@@ -142,7 +142,7 @@ El competidor mantiene este valor calculado hasta que complete su propia vuelta 
 
 ## Comparación de Modos de Cálculo
 
-| Característica | Siempre tiempo (`always_time`) | Vueltas y tiempo (`laps_and_time`) | Siempre vueltas (`always_laps`) |
+| Característica | Siempre tiempo (`always_time`) | Tiempo y vueltas perdidas (`laps_and_time`) | Siempre vueltas (`always_laps`) |
 | :--- | :--- | :--- | :--- |
 | **Enfoque** | Proyección matemática continua del ritmo | Comparaciones exactas en la línea de meta | Diferencia de vueltas con vuelta parcial |
 | **Coches Doblados** | Segundos proyectados (ej. `+14.820`) | Texto de vueltas perdidas (`+1 Vuelta`) | Delta decimal de vueltas (ej. `+2.45`) |
@@ -158,7 +158,7 @@ El competidor mantiene este valor calculado hasta que complete su propia vuelta 
 ### 1. En Cuadrículas y Tablas
 En el Editor de IU, seleccione el widget de Cuadrícula y vaya a la pestaña **Columnas**. En **Gaps e Intervalos**, active **Diferencia de Ronda** (`gap`) o **Diferencia General** (`overallGap`):
 - Seleccione la columna para abrir el **Inspector de Columnas**.
-- En **Configuración de diferencia**, elija el **Objetivo** (*Líder* o *Posición anterior*) y el **Modo de cálculo** (*Siempre tiempo*, *Vueltas y tiempo* o *Siempre vueltas*).
+- En **Configuración de diferencia**, elija el **Objetivo** (*Líder* o *Posición anterior*) y el **Modo de cálculo** (*Siempre tiempo*, *Tiempo y vueltas perdidas* o *Siempre vueltas*).
 - Se pueden añadir varias columnas de diferencia con objetivos o modos distintos simultáneamente a la misma cuadrícula.
 
 ### 2. Tarjetas de Carril Independientes

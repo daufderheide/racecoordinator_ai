@@ -443,6 +443,30 @@ describe("raceday-lane-column-interaction.helper", () => {
       expect(headerEl.style.fontSize).toMatch(/\d+px/);
     });
 
+    it("should auto-scale header font size in auto scaleMode rather than staying stuck on small custom headerFontSize", () => {
+      const cardEl = document.createElement("div");
+      Object.defineProperty(cardEl, "clientWidth", {
+        value: 200,
+        configurable: true,
+      });
+      Object.defineProperty(cardEl, "clientHeight", {
+        value: 100,
+        configurable: true,
+      });
+      const headerEl = document.createElement("div");
+      headerEl.className = "lane-col-header";
+      cardEl.appendChild(headerEl);
+
+      fitLaneColumnHeaderText(
+        cardEl,
+        { headerFontSize: 8 } as any,
+        { scaleMode: "auto" } as any,
+        "TEST",
+      );
+      const parsedSize = parseInt(headerEl.style.fontSize, 10);
+      expect(parsedSize).toBeGreaterThan(8);
+    });
+
     it("should gracefully do nothing if header element missing", () => {
       const cardEl = document.createElement("div");
       expect(() =>
@@ -626,6 +650,44 @@ describe("raceday-lane-column-interaction.helper", () => {
         "bottom-right": { timeDecimalPlaces: 2 },
       });
       expect(masterNode.customSettings["columnKey"]).toBe("driver.name");
+    });
+
+    it("should copy gapMode and gapTarget from childNode to masterNode", () => {
+      const masterNode: any = {
+        id: "w-master-gap",
+        customSettings: {
+          gridId: "grid-1",
+          gridLane: 0,
+          columnKey: "gap",
+          gapMode: "always_time",
+          gapTarget: "leader",
+        },
+      };
+      const childNode: any = {
+        id: "w-master-gap_grid_lane_1",
+        customSettings: {
+          gridId: "grid-1",
+          gridMasterId: "w-master-gap",
+          gridLane: 1,
+          columnKey: "gap",
+          gapMode: "always_laps",
+          gapTarget: "position",
+        },
+      };
+      const parent = {
+        gridSession: () => ({
+          gridId: "grid-1",
+          sourceLaneIndex: 0,
+          mirrorRows: true,
+        }),
+        onMasterWidgetModified: jasmine.createSpy(),
+        layout: { widgets: [masterNode, childNode] },
+      };
+
+      notifyLaneColumnParentChange(parent, childNode);
+      expect(parent.onMasterWidgetModified).toHaveBeenCalledWith(masterNode);
+      expect(masterNode.customSettings["gapMode"]).toBe("always_laps");
+      expect(masterNode.customSettings["gapTarget"]).toBe("position");
     });
   });
 
@@ -1816,6 +1878,40 @@ describe("raceday-lane-column-interaction.helper", () => {
       expect(el.style.getPropertyValue("--lane-col-last-laps-font-size")).toBe(
         "24px",
       );
+    });
+
+    it("should honor configured lastLapsCount in custom scaling mode", () => {
+      const el = document.createElement("div");
+      const onFit = jasmine.createSpy("onFit");
+      const widget: any = { scaleMode: "fixed", fontSize: 20 };
+      applyLaneColumnLastLapsFit(
+        el,
+        { valueFontSize: 20, lastLapsCount: 6 } as any,
+        widget,
+        0,
+        true,
+        onFit,
+      );
+      expect(onFit).toHaveBeenCalledWith(6);
+    });
+
+    it("should pass configured lastLapsCount to fitColumnLastLaps in fit scaling mode", () => {
+      const el = document.createElement("div");
+      Object.defineProperty(el, "clientWidth", { value: 300 });
+      Object.defineProperty(el, "clientHeight", { value: 400 });
+      const onFit = jasmine.createSpy("onFit");
+      const widget: any = { scaleMode: "auto" };
+      applyLaneColumnLastLapsFit(
+        el,
+        { lastLapsCount: 4 } as any,
+        widget,
+        10,
+        true,
+        onFit,
+      );
+      expect(onFit).toHaveBeenCalled();
+      const calledLaps = onFit.calls.mostRecent().args[0];
+      expect(calledLaps).toBeLessThanOrEqual(4);
     });
   });
 });

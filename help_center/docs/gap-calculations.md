@@ -49,7 +49,7 @@ Race Coordinator AI provides **2 configurable gap widgets** (available as grid c
                    │    TARGET SELECTOR    │           │   CALCULATION MODE    │
                    ├───────────────────────┤           ├───────────────────────┤
                    │ • Leader (P1)         │           │ • Always Time         │
-                   │ • Position Ahead      │           │ • Laps and Time (F1)  │
+                   │ • Position Ahead      │           │ • Time and Laps Down (F1) │
                    │                       │           │ • Always Laps (Delta) │
                    └───────────────────────┘           └───────────────────────┘
 ```
@@ -62,7 +62,7 @@ Race Coordinator AI provides **2 configurable gap widgets** (available as grid c
 1. **Always Time (`always_time`)**:
    - Continuous mathematical pace projection in seconds.
    - Formatted as `+X.XXX` with configurable time decimals (1 to 3 decimal places).
-2. **Laps and Time (`laps_and_time`)**:
+2. **Time and Laps Down (`laps_and_time`)**:
    - Formula 1 broadcast style timing.
    - Displays seconds (`+X.XXX`) when competitors are on the lead lap.
    - Displays lap deficits (`+1 Lap`, `+N Laps`) when competitors are lapped.
@@ -164,7 +164,7 @@ Competitors hold their calculated lap gap until they complete their own next lap
 
 ## Comparison of Calculation Modes
 
-| Feature | Always Time (`always_time`) | Laps and Time (`laps_and_time`) | Always Laps (`always_laps`) |
+| Feature | Always Time (`always_time`) | Time and Laps Down (`laps_and_time`) | Always Laps (`always_laps`) |
 | :--- | :--- | :--- | :--- |
 | **Calculation Approach** | Continuous statistical pace projection | Exact loop crossing timestamp comparisons | Lap count delta with partial lap progress |
 | **Lapped Car Display** | Projected seconds (e.g. `+14.820`) | Lap deficit string (e.g. `+1 Lap`, `+3 Laps`) | Decimal lap delta (e.g. `+2.45`) |
@@ -181,7 +181,7 @@ Competitors hold their calculated lap gap until they complete their own next lap
 In the UI Editor, select your Grid widget and navigate to the **Columns** tab. Under the **Gaps & Intervals** (Heat) or **Overall Gaps & Intervals** (Overall) subgroups, check **Heat Gap** (`gap`) or **Overall Gap** (`overallGap`) to add them to your leaderboard:
 - Drag column cards up or down to reorder them relative to Driver Name, Laps, or Lap Times.
 - Select the gap column card to open the **Column Inspector**.
-- Under **Gap Configuration**, choose the **Target** (*Leader* or *Position Ahead*) and the **Calculation Mode** (*Always Time*, *Laps and Time*, or *Always Laps*).
+- Under **Gap Configuration**, choose the **Target** (*Leader* or *Position Ahead*) and the **Calculation Mode** (*Always Time*, *Time and Laps Down*, or *Always Laps*).
 - Multiple gap columns with different targets or calculation modes can be added to the same grid simultaneously!
 
 ### 2. Standalone Lane Column Cards

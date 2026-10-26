@@ -7,6 +7,11 @@ import {
 import { DriverHeatData } from "@app/race/driver_heat_data";
 import { GhostBenchmarkType } from "@app/services/ghost-pacing.service";
 
+export const DEFAULT_LANE_COLUMN_VALUE_FONT_SIZE = 36;
+export const DEFAULT_GRID_LANE_COLUMN_VALUE_FONT_SIZE = 54;
+export const DEFAULT_LANE_COLUMN_HEADER_FONT_SIZE = 14;
+export const DEFAULT_GRID_LANE_COLUMN_HEADER_FONT_SIZE = 24;
+
 export function isCustomWidgetKey(key: string | undefined): boolean {
   return Boolean(key && key.startsWith("custom:"));
 }
@@ -250,18 +255,24 @@ function tryGetParentLastLaps(
   targetDriver: DriverHeatData | undefined,
   parent: any,
   placeholder: string,
+  count: number = 5,
 ): HeatDataLapItem[] | undefined {
-  if (!targetDriver || !parent?.getLastLaps) return undefined;
+  if (!parent?.getLastLaps) return undefined;
   const colDef = parent.columns?.find(
     (c: any) => c.propertyName === "lastLaps",
   );
-  const parentLaps = parent.getLastLaps(targetDriver, colDef, "center-center");
+  const parentLaps = parent.getLastLaps(
+    targetDriver,
+    colDef,
+    "center-center",
+    count,
+  );
   if (
     parentLaps &&
     parentLaps.length > 0 &&
     parentLaps[0]?.lapNumber !== undefined
   ) {
-    return parentLaps.map((l: any, idx: number) => ({
+    return parentLaps.slice(0, count).map((l: any, idx: number) => ({
       lapNumber: l.lapNumber ?? idx + 1,
       lapTime: l.lapTime ?? placeholder,
       isBest: Boolean(l.isBest),
@@ -289,13 +300,20 @@ function extractLapSegments(
 
 export function computeHeatDataLastLaps(
   targetDriver: DriverHeatData | undefined,
-  settings: LaneColumnWidgetSettings,
+  settings: Partial<LaneColumnWidgetSettings>,
   parent: any,
 ): HeatDataLapItem[] {
   const decimals =
     settings.timeDecimalPlaces !== undefined
       ? Number(settings.timeDecimalPlaces)
       : 3;
+  const count =
+    settings.lastLapsCount !== undefined &&
+    settings.lastLapsCount !== null &&
+    !isNaN(Number(settings.lastLapsCount)) &&
+    Number(settings.lastLapsCount) > 0
+      ? Math.max(1, Math.round(Number(settings.lastLapsCount)))
+      : 5;
   const emptyLapPlaceholder =
     decimals > 0 ? "--." + "-".repeat(decimals) : "--";
 
@@ -304,9 +322,10 @@ export function computeHeatDataLastLaps(
       targetDriver,
       parent,
       emptyLapPlaceholder,
+      count,
     );
     if (parentLaps) return parentLaps;
-    return Array.from({ length: 5 }, () => ({
+    return Array.from({ length: count }, () => ({
       lapNumber: 0,
       lapTime: emptyLapPlaceholder,
       isBest: false,
@@ -323,13 +342,14 @@ export function computeHeatDataLastLaps(
       targetDriver,
       parent,
       emptyLapPlaceholder,
+      count,
     );
     if (parentLaps) return parentLaps;
   }
   const bestTime = targetDriver.bestLapTime || 0;
 
   const result: HeatDataLapItem[] = [];
-  for (let i = 1; i <= 5; i++) {
+  for (let i = 1; i <= count; i++) {
     const index = n - 1 - i;
     if (index >= 0 && laps[index] && laps[index] > 0) {
       const val = laps[index];
@@ -687,16 +707,17 @@ export function fitColumnTextValue(
     effectiveInsetFontSize,
   );
 
-  let baseFontSize = settings.valueFontSize || 36;
+  const defaultBaseSize = settings.gridId
+    ? DEFAULT_GRID_LANE_COLUMN_VALUE_FONT_SIZE
+    : DEFAULT_LANE_COLUMN_VALUE_FONT_SIZE;
+  let baseFontSize: number;
   if (scaleMode === "auto") {
-    if (settings.valueFontSize) {
-      baseFontSize = Math.max(
-        12,
-        Math.min(settings.valueFontSize, Math.round(dims.availHeight * 0.85)),
-      );
-    } else {
-      baseFontSize = Math.max(12, Math.round(dims.availHeight * 0.85));
-    }
+    baseFontSize = Math.max(
+      12,
+      Math.min(defaultBaseSize, Math.round(dims.availHeight * 0.85)),
+    );
+  } else {
+    baseFontSize = settings.valueFontSize || defaultBaseSize;
   }
 
   const isCustomScaling = scaleMode !== undefined && scaleMode !== "auto";
@@ -739,12 +760,17 @@ export function fitColumnLastLaps(
   lapCount: number = 5,
   explicitWidth?: number,
   explicitHeight?: number,
+  maxConfiguredLaps: number = 5,
 ): { maxLaps: number; fontSize: number } {
   const containerW =
     explicitWidth && explicitWidth > 0 ? explicitWidth : cardEl.clientWidth;
   const containerH =
     explicitHeight && explicitHeight > 0 ? explicitHeight : cardEl.clientHeight;
-  const totalLaps = Math.min(5, Math.max(1, lapCount || 5));
+  const maxLapsLimit = Math.max(1, maxConfiguredLaps || 5);
+  const totalLaps = Math.min(
+    maxLapsLimit,
+    Math.max(1, lapCount || maxLapsLimit),
+  );
 
   if (containerW <= 0 || containerH <= 0) {
     return { maxLaps: totalLaps, fontSize: baseFontSize };

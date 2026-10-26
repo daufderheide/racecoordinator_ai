@@ -49,7 +49,7 @@ Race Coordinator AI propose **2 widgets d'écart configurables** (disponibles so
                    │  SÉLECTEUR DE CIBLE   │           │    MODE DE CALCUL     │
                    ├───────────────────────┤           ├───────────────────────┤
                    │ • Leader (P1)         │           │ • Toujours temps      │
-                   │ • Position précédente │           │ • Tours et temps (F1) │
+                   │ • Position précédente │           │ • Temps et tours (F1) │
                    │                       │           │ • Toujours tours      │
                    └───────────────────────┘           └───────────────────────┘
 ```
@@ -62,7 +62,7 @@ Race Coordinator AI propose **2 widgets d'écart configurables** (disponibles so
 1. **Toujours temps (`always_time`)** :
    - Projection continue du rythme chronométrique en secondes.
    - Formaté en `+X.XXX` avec décimales configurables (1 à 3 décimales).
-2. **Tours et temps (`laps_and_time`)** :
+2. **Temps et tours de retard (`laps_and_time`)** :
    - Affichage type retransmission Formule 1.
    - Affiche des secondes (`+X.XXX`) pour les voitures dans le tour du leader.
    - Affiche le retard en tours (`+1 Tour`, `+N Tours`) en cas de dépassement.
@@ -142,7 +142,7 @@ Le concurrent conserve cette valeur jusqu'au franchissement de son propre tour s
 
 ## Comparaison des Modes de Calcul
 
-| Caractéristique | Toujours temps (`always_time`) | Tours et temps (`laps_and_time`) | Toujours tours (`always_laps`) |
+| Caractéristique | Toujours temps (`always_time`) | Temps et tours de retard (`laps_and_time`) | Toujours tours (`always_laps`) |
 | :--- | :--- | :--- | :--- |
 | **Approche** | Projection continue du rythme | Comparaisons exactes sur la ligne | Écart en tours avec progression partielle |
 | **Voitures Dépassées**| Secondes projetées (ex. `+14.820`) | Texte d'écart en tours (`+1 Tour`) | Écart décimal en tours (ex. `+2.45`) |
@@ -158,7 +158,7 @@ Le concurrent conserve cette valeur jusqu'au franchissement de son propre tour s
 ### 1. Dans les Grilles et Tableaux
 Dans l'Éditeur d'Interface, sélectionnez le widget Grille et ouvrez l'onglet **Colonnes**. Dans **Gaps et Intervalles**, cochez **Écart de Manche** (`gap`) ou **Écart Général** (`overallGap`) :
 - Sélectionnez la colonne pour ouvrir l'**Inspecteur de Colonne**.
-- Dans **Configuration d'écart**, choisissez la **Cible** (*Leader* ou *Position précédente*) et le **Mode de calcul** (*Toujours temps*, *Tours et temps* ou *Toujours tours*).
+- Dans **Configuration d'écart**, choisissez la **Cible** (*Leader* ou *Position précédente*) et le **Mode de calcul** (*Toujours temps*, *Temps et tours de retard* ou *Toujours tours*).
 - Plusieurs colonnes d'écart avec des cibles ou modes distincts peuvent être ajoutées simultanément à la même grille.
 
 ### 2. Cartes de Piste Individuelles

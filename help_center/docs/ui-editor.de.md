@@ -121,13 +121,21 @@ Jedes Abstands-Widget kann im Spalten-Inspektor über zwei zentrale Optionen kon
   - **Vorausfahrender**: Abstand zum unmittelbar im Klassement vorausfahrenden Konkurrenten (z. B. P3 zu P2).
 - **Berechnungsmodus**:
   - **Immer Zeit**: Kontinuierliche rechnerische Pace-Projektion in Sekunden (`+X.XXX`).
-  - **Runden und Zeit**: Formel-1-Modus mit Zeitanzeige in derselben Runde oder Rundenrückstand (`+1 Runde`, `+N Runden`) bei Überrundung.
+  - **Zeit und Runden zurück**: Formel-1-Modus mit Zeitanzeige in derselben Runde oder Rundenrückstand (`+1 Runde`, `+N Runden`) bei Überrundung.
   - **Immer Runden**: Exakter Runden-Delta-Wert zwischen Konkurrenten bei Rundenüberquerung, unter Berücksichtigung der Teilrunde des Vergleichsfahrers.
 
 > [!NOTE]
 > Mehrere Abstands-Widgets mit unterschiedlicher Konfiguration (z. B. eine Spalte für den Abstand zum Führenden und eine für den Abstand zum Vordermann) können gleichzeitig im selben Layout oder Raster platziert werden.
 
 Für detaillierte mathematische Formeln und Zeitmessungsspezifikationen siehe den [Leitfaden zu Abstandsberechnungen](gap-calculations.md).
+
+#### Widget für letzte Runden (`lastLaps`)
+
+Das Widget **Letzte Runden** (`lastLaps`) zeigt die zuletzt absolvierten Rundenzeiten des Fahrers im aktuellen Lauf an:
+
+- **Anzuzeigende letzte Runden**: Konfiguriert, wie viele letzte Runden im Widget dargestellt werden sollen (Schieberegler 1–20, Zahleneingabe 1–50). Standardwert ist `5`.
+- **Dynamische Skalierung & Einpassung**: Die Karte passt Schriftgrößen und Zeilenabstände automatisch an, um die konfigurierte Anzahl an Runden sauber in die Spaltengeometrie einzupassen.
+- **Raster-Synchronisation**: In Bahnrastern synchronisiert das Zuweisen von Zeitformaten die Anzahl der angezeigten letzten Runden über alle Bahnen hinweg.
 
 ### Raster-Sortierung & Interaktionsmatrix
 

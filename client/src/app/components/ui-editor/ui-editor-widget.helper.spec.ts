@@ -6,6 +6,7 @@ import {
   computeWidgetDisplayName,
   findDefaultWidgetId,
   handleWidgetInspectorChange,
+  resetCustomScalingOverrides,
   resolveActiveLayout,
   updateLayoutOnModel,
 } from "./ui-editor-widget.helper";
@@ -538,6 +539,99 @@ describe("ui-editor-widget.helper", () => {
     expect(comp.activeGridSession.gridType).toBe("heat");
   });
 
+  describe("resetCustomScalingOverrides", () => {
+    it("should reset custom font sizes to 54/24/24 for grid lane column", () => {
+      const widget: any = {
+        widgetType: "lane-column",
+        customSettings: {
+          gridId: "grid-test",
+          valueFontSize: 12,
+          headerFontSize: 8,
+          insetFontSize: 10,
+          insetsConfig: {
+            "top-left": { fontSize: 9 },
+          },
+        },
+      };
+      resetCustomScalingOverrides(widget);
+      expect(widget.customSettings.valueFontSize).toBe(54);
+      expect(widget.customSettings.headerFontSize).toBe(24);
+      expect(widget.customSettings.insetFontSize).toBe(24);
+      expect(
+        widget.customSettings.insetsConfig["top-left"].fontSize,
+      ).toBeUndefined();
+    });
+
+    it("should reset custom font sizes to 36/14/18 for standalone lane column", () => {
+      const widget: any = {
+        widgetType: "lane-column",
+        customSettings: {
+          valueFontSize: 12,
+          headerFontSize: 8,
+          insetFontSize: 10,
+        },
+      };
+      resetCustomScalingOverrides(widget);
+      expect(widget.customSettings.valueFontSize).toBe(36);
+      expect(widget.customSettings.headerFontSize).toBe(14);
+      expect(widget.customSettings.insetFontSize).toBe(18);
+    });
+
+    it("should gracefully do nothing for widgets without customSettings", () => {
+      expect(() => resetCustomScalingOverrides(null)).not.toThrow();
+      expect(() => resetCustomScalingOverrides({})).not.toThrow();
+    });
+  });
+
+  it("should reset custom font sizes and propagate scaleMode auto across all grid widgets when handleWidgetInspectorChange is called", () => {
+    const targetWidget = {
+      id: "w1",
+      widgetType: "lane-column",
+      scaleMode: "auto",
+      customSettings: {
+        gridId: "grid-test",
+        valueFontSize: 12,
+        headerFontSize: 8,
+        insetFontSize: 10,
+      },
+    };
+    const siblingGridWidget = {
+      id: "w2",
+      widgetType: "lane-column",
+      scaleMode: "fixed",
+      customSettings: {
+        gridId: "grid-test",
+        valueFontSize: 14,
+        headerFontSize: 10,
+        insetFontSize: 12,
+      },
+    };
+    const layout = { widgets: [targetWidget, siblingGridWidget] };
+    const comp = {
+      isSaving: false,
+      activeCustomUi: { entity_id: "ui1" },
+      currentSelectedWidget: targetWidget,
+      getLayout: jasmine.createSpy("getLayout").and.returnValue(layout),
+      editingSettings: new Settings(),
+      isCurrentLayoutPractice: false,
+      parsedLayouts: new Map(),
+      captureState: jasmine.createSpy("captureState"),
+      cdr: { markForCheck: jasmine.createSpy("markForCheck") },
+      syncRacedayPreview: jasmine.createSpy("syncRacedayPreview"),
+    };
+
+    handleWidgetInspectorChange(comp, targetWidget);
+
+    expect(targetWidget.customSettings.valueFontSize).toBe(54);
+    expect(targetWidget.customSettings.headerFontSize).toBe(24);
+    expect(targetWidget.customSettings.insetFontSize).toBe(24);
+
+    expect(siblingGridWidget.scaleMode).toBe("auto");
+    expect(siblingGridWidget.customSettings.valueFontSize).toBe(54);
+    expect(siblingGridWidget.customSettings.headerFontSize).toBe(24);
+    expect(siblingGridWidget.customSettings.insetFontSize).toBe(24);
+  });
+
   it("should handle removing selected widget", () => {
     const { handleRemoveSelectedWidget } = require("./ui-editor-widget.helper");
     const layout = {
@@ -944,6 +1038,64 @@ describe("ui-editor-widget.helper", () => {
     handleWidgetSelection(comp, "w-1");
     expect(comp.selectedAnchor).toBeNull();
     expect(comp.selectedWidgetId).toBe("w-1");
+  });
+
+  it("should resolve mirrored child widget to masterId in handleWidgetSelection", () => {
+    const { handleWidgetSelection } = require("./ui-editor-widget.helper");
+    const masterWidget = {
+      id: "w-master-gap",
+      widgetType: "lane-column",
+      customSettings: { gridId: "grid-gaps", gridLane: 0, mirrorRows: true },
+    };
+    const childWidget = {
+      id: "w-child-gap-lane1",
+      widgetType: "lane-column",
+      customSettings: {
+        gridId: "grid-gaps",
+        gridMasterId: "w-master-gap",
+        gridLane: 1,
+        mirrorRows: true,
+      },
+    };
+    const layout = { widgets: [masterWidget, childWidget] };
+    const comp = {
+      selectedWidgetId: null as string | null,
+      activeGridSession: { gridId: "grid-gaps", mirrorRows: true },
+      getLayout: jasmine.createSpy("getLayout").and.returnValue(layout),
+      cdr: { markForCheck: jasmine.createSpy("markForCheck") },
+    };
+
+    handleWidgetSelection(comp, "w-child-gap-lane1");
+    expect(comp.selectedWidgetId).toBe("w-master-gap");
+  });
+
+  it("should preserve child widget ID in handleWidgetSelection when rows are not mirrored", () => {
+    const { handleWidgetSelection } = require("./ui-editor-widget.helper");
+    const masterWidget = {
+      id: "w-master-gap",
+      widgetType: "lane-column",
+      customSettings: { gridId: "grid-gaps", gridLane: 0, mirrorRows: false },
+    };
+    const childWidget = {
+      id: "w-child-gap-lane1",
+      widgetType: "lane-column",
+      customSettings: {
+        gridId: "grid-gaps",
+        gridMasterId: "w-master-gap",
+        gridLane: 1,
+        mirrorRows: false,
+      },
+    };
+    const layout = { widgets: [masterWidget, childWidget] };
+    const comp = {
+      selectedWidgetId: null as string | null,
+      activeGridSession: { gridId: "grid-gaps", mirrorRows: false },
+      getLayout: jasmine.createSpy("getLayout").and.returnValue(layout),
+      cdr: { markForCheck: jasmine.createSpy("markForCheck") },
+    };
+
+    handleWidgetSelection(comp, "w-child-gap-lane1");
+    expect(comp.selectedWidgetId).toBe("w-child-gap-lane1");
   });
 
   it("should handle handleAnchorSelection by selecting widget and setting anchor", () => {

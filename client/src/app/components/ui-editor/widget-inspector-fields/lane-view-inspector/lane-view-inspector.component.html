@@ -20,10 +20,39 @@
   }
 
   <div class="inspector-section" id="help-raceday-highlight">
-    <label class="inspector-checkbox-label">
-      <input type="checkbox" [(ngModel)]="highlightRowOnLap" />
-      {{ "UE_INSPECTOR_LANE_VIEW_HIGHLIGHT_LAP" | translate }}
-    </label>
+    <div class="inspector-field">
+      <label class="inspector-label">{{
+        "UE_INSPECTOR_LANE_VIEW_HIGHLIGHT_LAP" | translate
+      }}</label>
+      <div class="select-container select-sm">
+        <app-custom-select [(ngModel)]="highlightLapStyle">
+          <app-custom-option value="none">
+            {{ "UE_INSPECTOR_HIGHLIGHT_STYLE_NONE" | translate }}
+          </app-custom-option>
+          <app-custom-option value="classic">
+            {{ "UE_INSPECTOR_HIGHLIGHT_STYLE_CLASSIC" | translate }}
+          </app-custom-option>
+          <app-custom-option value="full-glow">
+            {{ "UE_INSPECTOR_HIGHLIGHT_STYLE_FULL_GLOW" | translate }}
+          </app-custom-option>
+          <app-custom-option value="glow-border">
+            {{ "UE_INSPECTOR_HIGHLIGHT_STYLE_GLOW_BORDER" | translate }}
+          </app-custom-option>
+          <app-custom-option value="tint-wash">
+            {{ "UE_INSPECTOR_HIGHLIGHT_STYLE_TINT_WASH" | translate }}
+          </app-custom-option>
+          <app-custom-option value="shimmer">
+            {{ "UE_INSPECTOR_HIGHLIGHT_STYLE_SHIMMER" | translate }}
+          </app-custom-option>
+          <app-custom-option value="scale-pulse">
+            {{ "UE_INSPECTOR_HIGHLIGHT_STYLE_SCALE_PULSE" | translate }}
+          </app-custom-option>
+          <app-custom-option value="adaptive-dip">
+            {{ "UE_INSPECTOR_HIGHLIGHT_STYLE_ADAPTIVE_DIP" | translate }}
+          </app-custom-option>
+        </app-custom-select>
+      </div>
+    </div>
   </div>
 
   <!-- Columns Section -->

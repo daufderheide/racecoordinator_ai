@@ -1,3 +1,4 @@
+import { RacedayFormatUtils } from "@app/components/raceday/utils/raceday-format.utils";
 import { LaneColumnWidgetSettings } from "@app/models/settings";
 import { RaceState } from "@app/proto/antigravity";
 import { DriverHeatData } from "@app/race/driver_heat_data";
@@ -821,4 +822,116 @@ export function resolveTargetDriver(
     targetIndex,
     getOrCreateSyntheticDriver,
   );
+}
+
+export class LaneColumnDriverCache {
+  private cachedTargetDriver?: DriverHeatData;
+  private lastSettings?: LaneColumnWidgetSettings;
+  private lastColumnKey?: string;
+  private lastParent?: any;
+  private lastParticipants?: any;
+  private lastDrivers?: any;
+  private lastRankings?: any;
+  private lastStandings?: any;
+  private lastRaceState?: any;
+  private lastHeatId?: any;
+  private syntheticHeatDrivers = new Map<string, DriverHeatData>();
+
+  private getOrCreateSyntheticDriver(participant: any): DriverHeatData {
+    let synth = this.syntheticHeatDrivers.get(participant.objectId);
+    if (!synth || synth.participant !== participant) {
+      synth = new DriverHeatData(
+        participant.objectId,
+        participant,
+        -1,
+        participant.driver,
+      );
+      this.syntheticHeatDrivers.set(participant.objectId, synth);
+    }
+    return synth;
+  }
+
+  resolve(
+    settings: LaneColumnWidgetSettings,
+    columnKey: string,
+    parent: any,
+  ): DriverHeatData | undefined {
+    const drivers =
+      parent?.sortedHeatDrivers ||
+      parent?.heatDrivers ||
+      parent?.heat?.heatDrivers;
+    const participants = parent?.participants;
+    const rankings = parent?.driverRankings;
+    const standings = parent?.heat?.standings;
+    const raceState = parent?.raceState;
+    const heatId = parent?.heat?.objectId;
+
+    if (
+      this.cachedTargetDriver !== undefined &&
+      this.lastSettings === settings &&
+      this.lastColumnKey === columnKey &&
+      this.lastParent === parent &&
+      this.lastParticipants === participants &&
+      this.lastDrivers === drivers &&
+      this.lastRankings === rankings &&
+      this.lastStandings === standings &&
+      this.lastRaceState === raceState &&
+      this.lastHeatId === heatId
+    ) {
+      return this.cachedTargetDriver;
+    }
+
+    this.lastSettings = settings;
+    this.lastColumnKey = columnKey;
+    this.lastParent = parent;
+    this.lastParticipants = participants;
+    this.lastDrivers = drivers;
+    this.lastRankings = rankings;
+    this.lastStandings = standings;
+    this.lastRaceState = raceState;
+    this.lastHeatId = heatId;
+
+    this.cachedTargetDriver = resolveTargetDriver(
+      settings,
+      columnKey,
+      parent,
+      (p) => this.getOrCreateSyntheticDriver(p),
+    );
+    return this.cachedTargetDriver;
+  }
+}
+
+export function resolveLaneColumnEmptyRowsMode(
+  settings: LaneColumnWidgetSettings,
+  parent: any,
+  bindingMode: LaneColumnWidgetSettings["bindingMode"],
+): "remove" | "empty" | "blank" {
+  if (settings?.emptyRowsMode) {
+    return settings.emptyRowsMode;
+  }
+  const isOverallOrSeed = isOverallOrSeedDataSource(
+    settings,
+    parent,
+    bindingMode,
+  );
+  return isOverallOrSeed ? "remove" : "empty";
+}
+
+export function isLaneColumnExtraGridRow(
+  parent: any,
+  settings: LaneColumnWidgetSettings,
+  targetDriver?: DriverHeatData,
+): boolean {
+  const isEditor = Boolean(
+    (typeof parent?.isUIEditorMode === "function"
+      ? parent.isUIEditorMode()
+      : parent?.isUIEditorMode) || parent?.isLayoutCustomizing,
+  );
+  if (isEditor) {
+    return false;
+  }
+  if (!settings?.gridId || settings?.isHeaderWidget) {
+    return false;
+  }
+  return !targetDriver || RacedayFormatUtils.isEmptyDriver(targetDriver);
 }

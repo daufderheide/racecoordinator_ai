@@ -207,7 +207,39 @@
           [cdkDragPreviewContainer]="'parent'"
           (cdkDragStarted)="parent().onDragStarted(hd.laneIndex)"
           (cdkDragEnded)="parent().onDragEnded()"
-          [class.highlight]="parent().highlightedDrivers.has(hd.objectId)"
+          [class.highlight]="
+            parent().highlightedDrivers.has(hd.objectId) &&
+            highlightLapStyle !== 'none'
+          "
+          [class.highlight-style-full-glow]="
+            parent().highlightedDrivers.has(hd.objectId) &&
+            highlightLapStyle === 'full-glow'
+          "
+          [class.highlight-style-glow-border]="
+            parent().highlightedDrivers.has(hd.objectId) &&
+            highlightLapStyle === 'glow-border'
+          "
+          [class.highlight-style-tint-wash]="
+            parent().highlightedDrivers.has(hd.objectId) &&
+            highlightLapStyle === 'tint-wash'
+          "
+          [class.highlight-style-shimmer]="
+            parent().highlightedDrivers.has(hd.objectId) &&
+            highlightLapStyle === 'shimmer'
+          "
+          [class.highlight-style-scale-pulse]="
+            parent().highlightedDrivers.has(hd.objectId) &&
+            highlightLapStyle === 'scale-pulse'
+          "
+          [class.highlight-style-adaptive-dip]="
+            parent().highlightedDrivers.has(hd.objectId) &&
+            highlightLapStyle === 'adaptive-dip'
+          "
+          [class.highlight-style-classic]="
+            parent().highlightedDrivers.has(hd.objectId) &&
+            highlightLapStyle === 'classic'
+          "
+          [class.is-light-lane]="isLaneColorLight(hd)"
           [class.drag-over]="parent().draggingLane === hd.laneIndex"
           (mouseenter)="parent().onDragOver(hd.laneIndex)"
           [style.grid-template-columns]="
@@ -228,7 +260,11 @@
           "
           [style.transform]="
             parent().highlightedDrivers.has(hd.objectId)
-              ? 'scale(1.015)'
+              ? highlightLapStyle === 'scale-pulse'
+                ? 'scale(1.025)'
+                : highlightLapStyle === 'classic'
+                  ? 'scale(1.015)'
+                  : 'scale(1)'
               : 'scale(1)'
           "
         >

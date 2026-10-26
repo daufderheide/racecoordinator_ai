@@ -59,6 +59,7 @@ import {
   buildDropListConnections,
   calculateHeatCardHoverAction,
   calculateHeatDropAction,
+  calculateModalScale,
   cloneHeat,
   collectHeatCardBounds,
   convertHeatsToProto,
@@ -68,8 +69,10 @@ import {
   filterDriverPool,
   getContrastTextColor,
   getDatabaseItemTrackId,
+  getHeatHighlightColors as extractHeatHighlightColors,
   getLastStartedHeatIndex,
   getModifyHeatsValidationError,
+  getOriginalHeatDisplay as getOriginalHeatDisplayHelper,
   getParticipantAvatar,
   getParticipantKey,
   getParticipantMeta,
@@ -77,7 +80,9 @@ import {
   HeatCardBounds,
   HeatDropAction,
   isDriver,
+  isHeatStarted as isHeatStartedHelper,
   isParticipantInStartedHeat,
+  isPlaceholderParticipant,
   isTeam,
   ModifyHeatsState,
   performLaneCheck,
@@ -251,14 +256,7 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
   }
 
   private updateScale() {
-    const targetWidth = 1600;
-    const targetHeight = 900;
-    const windowWidth = window.innerWidth;
-    const windowHeight = window.innerHeight;
-
-    const scaleX = windowWidth / targetWidth;
-    const scaleY = windowHeight / targetHeight;
-    this.scale = Math.min(scaleX, scaleY);
+    this.scale = calculateModalScale(window.innerWidth, window.innerHeight);
   }
 
   ngOnInit() {
@@ -275,7 +273,13 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
     );
 
     this.isLoading = true;
-    this.localHeats = this.heats().map((h) => cloneHeat(h));
+    this.localHeats = this.heats().map((h) => {
+      const cloned = cloneHeat(h);
+      if (cloned.originalHeatNumber === undefined) {
+        cloned.originalHeatNumber = h.originalHeatNumber ?? h.heatNumber;
+      }
+      return cloned;
+    });
     this.localParticipants = [...this.participants()];
 
     const savedState = this.modifyHeatsService.restoreState();
@@ -358,7 +362,13 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
 
   private initializeState() {
     // Deep clone heats to avoid modifying original state until saved
-    this.localHeats = this.heats().map((h) => cloneHeat(h));
+    this.localHeats = this.heats().map((h) => {
+      const cloned = cloneHeat(h);
+      if (cloned.originalHeatNumber === undefined) {
+        cloned.originalHeatNumber = h.originalHeatNumber ?? h.heatNumber;
+      }
+      return cloned;
+    });
     this.localParticipants = [...this.participants()];
 
     this.undoManager.initialize({
@@ -458,14 +468,9 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
 
   protected getHeatHighlightColors(heat: Heat): string[] {
     if (this.highlightedDrivers.size === 0) return [];
-    const colors: string[] = [];
-    for (const dhd of heat.heatDrivers) {
-      const color = this.getDriverHighlightColor(dhd.participant);
-      if (color && !colors.includes(color)) {
-        colors.push(color);
-      }
-    }
-    return colors;
+    return extractHeatHighlightColors(heat, (p) =>
+      this.getDriverHighlightColor(p),
+    );
   }
 
   protected getCustomGroupName(groupIdx: number): string {
@@ -508,42 +513,32 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
   }
 
   protected isHeatStarted(heat: Heat): boolean {
-    if (
-      heat.started ||
-      heat.heatNumber < this.currentHeatNumber() ||
-      this.raceState() === RaceState.RACE_OVER
-    ) {
-      return true;
-    }
-
-    // Also consider it started if it's the current heat and the race is active
-    if (heat.heatNumber === this.currentHeatNumber()) {
-      const s = this.raceState();
-      if (
-        s === RaceState.STARTING ||
-        s === RaceState.RACING ||
-        s === RaceState.HEAT_OVER ||
-        s === RaceState.PAUSED
-      ) {
-        return true;
-      }
-    }
-
-    return false;
+    return isHeatStartedHelper(
+      heat,
+      this.currentHeatNumber(),
+      this.raceState(),
+    );
   }
 
   protected get isRegenerateDisabled(): boolean {
     return false;
   }
 
+  getOriginalHeatDisplay(heat: Heat): string {
+    return getOriginalHeatDisplayHelper(heat, this.heats());
+  }
+
   protected getDriverHeatDataInLane(
     heatIdx: number,
     laneIdx: number,
   ): DriverHeatData | null {
-    const dhd = this.localHeats[heatIdx].heatDrivers.find(
+    const dhd = this.localHeats[heatIdx]?.heatDrivers?.find(
       (d: DriverHeatData) => d.laneIndex === laneIdx,
     );
-    return dhd || null;
+    if (!dhd || isPlaceholderParticipant(dhd.participant)) {
+      return null;
+    }
+    return dhd;
   }
 
   protected isTeamLane(dhd: DriverHeatData): boolean {
@@ -888,7 +883,8 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
     if (this.isHeatStarted(heat)) return;
 
     const dhd = heat.heatDrivers.find((d) => d.laneIndex === laneIdx);
-    if (!dhd || !dhd.participant) return;
+    if (!dhd || !dhd.participant || isPlaceholderParticipant(dhd.participant))
+      return;
 
     // Remove from the heat
     heat.heatDrivers = heat.heatDrivers.filter((d) => d.laneIndex !== laneIdx);
@@ -921,9 +917,11 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
           next: (res) => {
             if (res.success && res.heats) {
               // Update local heats with the newly generated ones
-              this.localHeats = res.heats.map((hProto: IHeat) =>
-                HeatConverter.fromProto(hProto),
-              );
+              this.localHeats = res.heats.map((hProto: IHeat) => {
+                const heat = HeatConverter.fromProto(hProto);
+                heat.originalHeatNumber = heat.heatNumber;
+                return cloneHeat(heat);
+              });
               this.updateDriverPool();
               this.updateDatabaseParticipants();
               this.updateDropListConnections();

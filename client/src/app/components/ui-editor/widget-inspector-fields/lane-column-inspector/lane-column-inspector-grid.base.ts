@@ -1,5 +1,6 @@
 import { InputSignal, OutputEmitterRef, WritableSignal } from "@angular/core";
 import { LaneReplicationOptions } from "@app/components/raceday/utils/lane-replication.helper";
+import { HighlightLapStyle } from "@app/models/settings";
 
 import { LaneColumnGridHelper } from "./lane-column-grid.helper";
 
@@ -134,6 +135,15 @@ export abstract class LaneColumnInspectorGridBase {
   }
   set highlightRowOnLap(val: boolean) {
     LaneColumnGridHelper.setHighlightRowOnLap(this.currentSettings, val, () =>
+      this.onFieldChange(),
+    );
+  }
+
+  get highlightLapStyle(): HighlightLapStyle {
+    return LaneColumnGridHelper.getHighlightLapStyle(this.currentSettings);
+  }
+  set highlightLapStyle(val: HighlightLapStyle) {
+    LaneColumnGridHelper.setHighlightLapStyle(this.currentSettings, val, () =>
       this.onFieldChange(),
     );
   }
@@ -285,6 +295,20 @@ export abstract class LaneColumnInspectorGridBase {
   applyTimeFormatToAll(): void {
     this.currentSettings["_forceAllColumns"] = true;
     this.currentSettings["_syncAction"] = "time";
+    this.onFieldChange();
+  }
+
+  get gridHighlightLapStyle(): HighlightLapStyle {
+    return this.highlightLapStyle;
+  }
+  set gridHighlightLapStyle(val: HighlightLapStyle) {
+    this.currentSettings["_forceAllColumns"] = true;
+    this.highlightLapStyle = val;
+  }
+
+  applyHighlightStyleToAll(): void {
+    this.currentSettings["_forceAllColumns"] = true;
+    this.currentSettings["_syncAction"] = "highlight";
     this.onFieldChange();
   }
 

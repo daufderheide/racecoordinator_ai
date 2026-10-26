@@ -11,11 +11,14 @@
   display: flex;
   padding: 0;
   overflow: hidden;
+  position: relative;
   transition:
     border-color 0.2s ease,
     background-color 0.2s ease,
     color 0.2s ease,
-    filter 0.2s ease;
+    filter 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
 }
 
 .raceday-lane-column-card.orientation-vertical {
@@ -79,8 +82,98 @@
   box-sizing: border-box;
 }
 
+/* Lap Flash Highlights */
+@keyframes lap-shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
 .raceday-lane-column-card.highlight {
+  box-shadow: inset 0 0 0 2px #38bdf8, inset 0 0 14px rgba(56, 189, 248, 0.65);
+}
+
+.raceday-lane-column-card.highlight.highlight-style-classic {
+  box-shadow: none;
   filter: brightness(1.2) drop-shadow(0 0 10px rgba(255, 255, 255, 0.3));
+}
+
+.raceday-lane-column-card.highlight.highlight-style-glow-border {
+  box-shadow: inset 0 0 0 2px #38bdf8, inset 0 0 14px rgba(56, 189, 248, 0.65);
+}
+
+.raceday-lane-column-card.highlight.highlight-style-tint-wash {
+  box-shadow: none;
+}
+
+.raceday-lane-column-card.highlight.highlight-style-tint-wash::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  z-index: 10;
+  background: rgba(56, 189, 248, 0.35);
+}
+
+.raceday-lane-column-card.highlight.highlight-style-full-glow {
+  box-shadow: inset 0 0 0 2px #38bdf8, inset 0 0 14px rgba(56, 189, 248, 0.65);
+}
+
+.raceday-lane-column-card.highlight.highlight-style-full-glow::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  z-index: 10;
+  background: rgba(56, 189, 248, 0.25);
+}
+
+.raceday-lane-column-card.highlight.highlight-style-shimmer {
+  box-shadow: inset 0 0 0 1px rgba(56, 189, 248, 0.5);
+  position: relative;
+  overflow: hidden;
+}
+
+.raceday-lane-column-card.highlight.highlight-style-shimmer::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  border-radius: inherit;
+  z-index: 10;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(56, 189, 248, 0.25) 25%,
+    rgba(255, 255, 255, 0.8) 50%,
+    rgba(56, 189, 248, 0.25) 75%,
+    transparent 100%
+  );
+  animation: lap-shimmer 400ms ease-out forwards;
+}
+
+.raceday-lane-column-card.highlight.highlight-style-scale-pulse {
+  transform: scale(1.025);
+  z-index: 15 !important;
+  box-shadow: inset 0 0 0 2px #38bdf8, inset 0 0 12px rgba(56, 189, 248, 0.55);
+}
+
+.raceday-lane-column-card.highlight.highlight-style-adaptive-dip.is-light-lane {
+  filter: brightness(0.65) contrast(1.15) !important;
+  box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.6);
+}
+
+.raceday-lane-column-card.highlight.highlight-style-adaptive-dip:not(.is-light-lane) {
+  filter: brightness(1.35) !important;
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.6);
 }
 
 .lane-col-body {

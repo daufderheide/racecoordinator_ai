@@ -1,6 +1,7 @@
 import {
   getContrastColor,
   getRandomLabelColor,
+  isColorLight,
   PRESET_LABEL_COLORS,
 } from "./color.utils";
 
@@ -30,5 +31,27 @@ describe("ColorUtils", () => {
   it("should return a color from PRESET_LABEL_COLORS with getRandomLabelColor", () => {
     const randomColor = getRandomLabelColor();
     expect(PRESET_LABEL_COLORS).toContain(randomColor);
+  });
+
+  describe("isColorLight", () => {
+    it("should return true for white and bright colors", () => {
+      expect(isColorLight("#ffffff")).toBeTrue();
+      expect(isColorLight("#fff")).toBeTrue();
+      expect(isColorLight("#ffff00")).toBeTrue(); // Yellow
+      expect(isColorLight("rgb(255, 255, 255)")).toBeTrue();
+      expect(isColorLight("rgba(255, 255, 255, 1)")).toBeTrue();
+      expect(isColorLight("#facc15")).toBeTrue();
+    });
+
+    it("should return false for dark colors, red, black, and transparent", () => {
+      expect(isColorLight("#000000")).toBeFalse();
+      expect(isColorLight("#000")).toBeFalse();
+      expect(isColorLight("#ff0000")).toBeFalse(); // Pure red is < 0.55 luminance
+      expect(isColorLight("#1e293b")).toBeFalse();
+      expect(isColorLight("transparent")).toBeFalse();
+      expect(isColorLight("")).toBeFalse();
+      expect(isColorLight(undefined)).toBeFalse();
+      expect(isColorLight("invalid")).toBeFalse();
+    });
   });
 });
