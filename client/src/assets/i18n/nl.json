@@ -2283,7 +2283,7 @@
   "UE_GAP_TARGET_POSITION": "Voorgaande positie",
   "UE_INSPECTOR_GAP_MODE": "Berekeningsmodus",
   "UE_GAP_MODE_ALWAYS_TIME": "Altijd tijd",
-  "UE_GAP_MODE_LAPS_AND_TIME": "Ronden en tijd",
+  "UE_GAP_MODE_LAPS_AND_TIME": "Tijd en ronden achterstand",
   "UE_GAP_MODE_ALWAYS_LAPS": "Altijd ronden",
   "UE_INSPECTOR_LAST_LAPS_SECTION": "Configuratie van laatste ronden",
   "UE_INSPECTOR_LAST_LAPS_COUNT": "Weer te geven laatste ronden",

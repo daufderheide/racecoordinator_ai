@@ -49,7 +49,7 @@ O Race Coordinator AI oferece **2 widgets de diferença configuráveis** (dispon
                    │   SELETOR DE ALVO     │           │    MODO DE CÁLCULO    │
                    ├───────────────────────┤           ├───────────────────────┤
                    │ • Líder (P1)          │           │ • Sempre tempo        │
-                   │ • Posição à frente    │           │ • Voltas e tempo (F1) │
+                   │ • Posição à frente    │           │ • Tempo e voltas (F1) │
                    │                       │           │ • Sempre voltas       │
                    └───────────────────────┘           └───────────────────────┘
 ```
@@ -62,7 +62,7 @@ O Race Coordinator AI oferece **2 widgets de diferença configuráveis** (dispon
 1. **Sempre tempo (`always_time`)**:
    - Projeção matemática contínua de ritmo em segundos.
    - Formatado como `+X.XXX` com casas decimais de tempo configuráveis (1 a 3 casas).
-2. **Voltas e tempo (`laps_and_time`)**:
+2. **Tempo e voltas atrás (`laps_and_time`)**:
    - Formato estilo transmissão Fórmula 1.
    - Exibe segundos (`+X.XXX`) quando os carros estão na mesma volta.
    - Exibe déficit de voltas (`+1 Volta`, `+N Voltas`) quando houver volta perdida.
@@ -142,7 +142,7 @@ O competidor retém esse valor até a conclusão da sua própria volta seguinte.
 
 ## Comparação dos Modos de Cálculo
 
-| Característica | Sempre tempo (`always_time`) | Voltas e tempo (`laps_and_time`) | Sempre voltas (`always_laps`) |
+| Característica | Sempre tempo (`always_time`) | Tempo e voltas atrás (`laps_and_time`) | Sempre voltas (`always_laps`) |
 | :--- | :--- | :--- | :--- |
 | **Abordagem** | Projeção matemática contínua de ritmo | Comparações exatas na linha de chegada | Diferença de voltas com volta parcial |
 | **Carros com Volta Perdida**| Segundos projetados (ex.: `+14.820`) | Texto de voltas perdidas (`+1 Volta`) | Delta decimal de voltas (ex.: `+2.45`) |
@@ -158,7 +158,7 @@ O competidor retém esse valor até a conclusão da sua própria volta seguinte.
 ### 1. Em Grades e Classificações
 No Editor de Interface, selecione o widget de Grade e acesse a aba **Colunas**. Em **Gaps e Intervalos**, ative **Diferença da Bateria** (`gap`) ou **Diferença Geral** (`overallGap`):
 - Selecione a coluna para abrir o **Inspetor de Colunas**.
-- Em **Configuração de diferença**, defina o **Alvo** (*Líder* ou *Posição à frente*) e o **Modo de cálculo** (*Sempre tempo*, *Voltas e tempo* ou *Sempre voltas*).
+- Em **Configuração de diferença**, defina o **Alvo** (*Líder* ou *Posição à frente*) e o **Modo de cálculo** (*Sempre tempo*, *Tempo e voltas atrás* ou *Sempre voltas*).
 - Podem ser adicionadas simultaneamente à mesma grade várias colunas de diferença com alvos ou modos distintos.
 
 ### 2. Cartões de Pista Individuais

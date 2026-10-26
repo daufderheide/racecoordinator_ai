@@ -2283,7 +2283,7 @@
   "UE_GAP_TARGET_POSITION": "Position précédente",
   "UE_INSPECTOR_GAP_MODE": "Mode de calcul",
   "UE_GAP_MODE_ALWAYS_TIME": "Toujours temps",
-  "UE_GAP_MODE_LAPS_AND_TIME": "Tours et temps",
+  "UE_GAP_MODE_LAPS_AND_TIME": "Temps et tours de retard",
   "UE_GAP_MODE_ALWAYS_LAPS": "Toujours tours",
   "UE_INSPECTOR_LAST_LAPS_SECTION": "Configuration des derniers tours",
   "UE_INSPECTOR_LAST_LAPS_COUNT": "Derniers tours à afficher",

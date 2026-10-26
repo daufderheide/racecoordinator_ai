@@ -584,6 +584,21 @@ describe("LaneColumnInspectorComponent", () => {
       expect(mockSettings.columnKey).toBe("gap");
     });
 
+    it("should render gap calculation mode options including laps_and_time", async () => {
+      mockSettings.columnKey = "gap";
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      const options =
+        fixture.nativeElement.querySelectorAll("app-custom-option");
+      const optionValues = Array.from(options).map((opt: any) =>
+        opt.getAttribute("value"),
+      );
+      expect(optionValues).toContain("always_time");
+      expect(optionValues).toContain("laps_and_time");
+      expect(optionValues).toContain("always_laps");
+    });
+
     it("should correctly identify lastLaps column and manage lastLapsCount", () => {
       mockSettings.columnKey = "driver";
       expect(component.isLastLapsColumn).toBeFalse();

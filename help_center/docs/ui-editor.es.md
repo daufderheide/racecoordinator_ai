@@ -121,7 +121,7 @@ Cada widget de diferencia se puede personalizar en el Inspector de Columnas medi
   - **Posición por delante**: Intervalo respecto al competidor inmediatamente anterior en la clasificación (ej. P3 vs P2).
 - **Modo de cálculo**:
   - **Siempre tiempo**: Proyección matemática continua del ritmo en segundos (`+X.XXX`).
-  - **Vueltas y tiempo**: Estilo Fórmula 1 que muestra el tiempo en la misma vuelta o el déficit de vueltas (`+1 Vuelta`, `+N Vueltas`) al estar doblado.
+  - **Tiempo y vueltas perdidas**: Estilo Fórmula 1 que muestra el tiempo en la misma vuelta o el déficit de vueltas (`+1 Vuelta`, `+N Vueltas`) al estar doblado.
   - **Siempre vueltas**: Diferencia exacta de vueltas calculada al completar una vuelta, incorporando el progreso de vuelta parcial del piloto comparado.
 
 > [!NOTE]

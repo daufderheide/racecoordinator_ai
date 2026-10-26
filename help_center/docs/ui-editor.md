@@ -121,7 +121,7 @@ Each gap widget can be customized in the Column Inspector with two key configura
   - **Position Ahead**: Interval relative to the competitor running immediately ahead in the standings (e.g. P3 vs P2).
 - **Calculation Mode**:
   - **Always Time**: Continuous mathematical pace projection in seconds (`+X.XXX`).
-  - **Laps and Time**: Formula 1 style gap displaying time on the lead lap, or lap count (`+1 Lap`, `+N Laps`) when lapped.
+  - **Time and Laps Down**: Formula 1 style gap displaying time on the lead lap, or lap count (`+1 Lap`, `+N Laps`) when lapped.
   - **Always Laps**: Exact lap delta between competitors calculated on lap completion, incorporating partial lap progress of the compared driver.
 
 > [!NOTE]

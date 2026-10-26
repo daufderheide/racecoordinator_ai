@@ -49,7 +49,7 @@ Race Coordinator AI biedt **2 configureerbare verschil-widgets** (beschikbaar al
                    │     DOEL-KIEZER       │           │   BEREKENINGSMODUS    │
                    ├───────────────────────┤           ├───────────────────────┤
                    │ • Leider (P1)         │           │ • Altijd tijd         │
-                   │ • Voorgaande positie  │           │ • Ronden en tijd (F1) │
+                   │ • Voorgaande positie  │           │ • Tijd en ronden (F1) │
                    │                       │           │ • Altijd ronden       │
                    └───────────────────────┘           └───────────────────────┘
 ```
@@ -62,7 +62,7 @@ Race Coordinator AI biedt **2 configureerbare verschil-widgets** (beschikbaar al
 1. **Altijd tijd (`always_time`)**:
    - Continue pace-projectie van het tijdsverschil in seconden.
    - Opgemaakt als `+X.XXX` met instelbare tijddecimalen (1 tot 3 decimalen).
-2. **Ronden en tijd (`laps_and_time`)**:
+2. **Tijd en ronden achterstand (`laps_and_time`)**:
    - Formule 1-stijl weergave.
    - Toont seconden (`+X.XXX`) wanneer coureurs in dezelfde ronde rijden.
    - Toont rondenachterstand (`+1 Ronde`, `+N Ronden`) bij een dubbeling.
@@ -142,7 +142,7 @@ De coureur behoudt deze berekende waarde tot diens eigen volgende rondeovergang.
 
 ## Vergelijking van Berekeningsmodi
 
-| Eigenschap | Altijd tijd (`always_time`) | Ronden en tijd (`laps_and_time`) | Altijd ronden (`always_laps`) |
+| Eigenschap | Altijd tijd (`always_time`) | Tijd en ronden achterstand (`laps_and_time`) | Altijd ronden (`always_laps`) |
 | :--- | :--- | :--- | :--- |
 | **Aanpak** | Continue wiskundige pace-projectie | Exacte tijdstempels bij finishdoorkomst | Rondenverschil met partiële ronde |
 | **Gedubbelde Auto's** | Berekende seconden (bijv. `+14.820`) | Tekst met rondenachterstand (`+1 Ronde`) | Decimaal rondenverschil (bijv. `+2.45`) |
@@ -158,7 +158,7 @@ De coureur behoudt deze berekende waarde tot diens eigen volgende rondeovergang.
 ### 1. In Rasters en Ranglijsten
 Selecteer in de UI-Editor uw Raster-widget en open het tabblad **Kolommen**. Vink onder **Gaps & Intervallen** **Heat-verschil** (`gap`) of **Algemeen verschil** (`overallGap`) aan:
 - Selecteer de kolomkaart om de **Kolom-inspector** te openen.
-- Kies onder **Verschilconfiguratie** het **Doel** (*Leider* of *Voorgaande positie*) en de **Berekeningsmodus** (*Altijd tijd*, *Ronden en tijd* of *Altijd ronden*).
+- Kies onder **Verschilconfiguratie** het **Doel** (*Leider* of *Voorgaande positie*) en de **Berekeningsmodus** (*Altijd tijd*, *Tijd en ronden achterstand* of *Altijd ronden*).
 - Meerdere verschilkolommen met verschillende instellingen kunnen gelijktijdig aan hetzelfde raster worden toegevoegd.
 
 ### 2. Afzonderlijke Baanvak-kaarten

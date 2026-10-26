@@ -121,7 +121,7 @@ Ciascun widget distacco può essere configurato nell'Ispettore Colonne tramite d
   - **Posizione precedente**: Intervallo rispetto al concorrente immediatamente davanti in classifica (es. P3 vs P2).
 - **Modalità di calcolo**:
   - **Sempre tempo**: Proiezione matematica continua del passo in secondi (`+X.XXX`).
-  - **Giri e tempo**: Stile Formula 1 che mostra il tempo nello stesso giro o il distacco in giri (`+1 Giro`, `+N Giri`) in caso di doppiaggio.
+  - **Tempo e giri di ritardo**: Stile Formula 1 che mostra il tempo nello stesso giro o il distacco in giri (`+1 Giro`, `+N Giri`) in caso di doppiaggio.
   - **Sempre giri**: Distacco esatto in giri calcolato al completamento di ogni giro, incorporando l'avanzamento parziale del pilota confrontato.
 
 > [!NOTE]

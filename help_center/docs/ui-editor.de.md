@@ -121,7 +121,7 @@ Jedes Abstands-Widget kann im Spalten-Inspektor über zwei zentrale Optionen kon
   - **Vorausfahrender**: Abstand zum unmittelbar im Klassement vorausfahrenden Konkurrenten (z. B. P3 zu P2).
 - **Berechnungsmodus**:
   - **Immer Zeit**: Kontinuierliche rechnerische Pace-Projektion in Sekunden (`+X.XXX`).
-  - **Runden und Zeit**: Formel-1-Modus mit Zeitanzeige in derselben Runde oder Rundenrückstand (`+1 Runde`, `+N Runden`) bei Überrundung.
+  - **Zeit und Runden zurück**: Formel-1-Modus mit Zeitanzeige in derselben Runde oder Rundenrückstand (`+1 Runde`, `+N Runden`) bei Überrundung.
   - **Immer Runden**: Exakter Runden-Delta-Wert zwischen Konkurrenten bei Rundenüberquerung, unter Berücksichtigung der Teilrunde des Vergleichsfahrers.
 
 > [!NOTE]

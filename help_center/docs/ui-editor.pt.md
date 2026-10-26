@@ -121,7 +121,7 @@ Cada widget de diferença pode ser configurado no Inspetor de Colunas por meio d
   - **Posição à frente**: Intervalo em relação ao concorrente imediatamente à frente na classificação (ex.: P3 vs P2).
 - **Modo de cálculo**:
   - **Sempre tempo**: Projeção matemática contínua de ritmo em segundos (`+X.XXX`).
-  - **Voltas e tempo**: Estilo Fórmula 1 exibindo o tempo na mesma volta ou o déficit de voltas (`+1 Volta`, `+N Voltas`) em caso de volta perdida.
+  - **Tempo e voltas atrás**: Estilo Fórmula 1 exibindo o tempo na mesma volta ou o déficit de voltas (`+1 Volta`, `+N Voltas`) em caso de volta perdida.
   - **Sempre voltas**: Diferença exata de voltas calculada ao completar cada volta, incorporando o progresso de volta parcial do piloto comparado.
 
 > [!NOTE]

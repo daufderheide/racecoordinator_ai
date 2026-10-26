@@ -121,7 +121,7 @@ Chaque widget d'écart peut être personnalisé dans l'Inspecteur de Colonne via
   - **Position précédente** : Intervalle par rapport au concurrent immédiatement devant au classement (ex. P3 vs P2).
 - **Mode de calcul** :
   - **Toujours temps** : Projection continue du rythme chronométrique en secondes (`+X.XXX`).
-  - **Tours et temps** : Style Formule 1 affichant le temps dans le même tour ou le retard en tours (`+1 Tour`, `+N Tours`) en cas de dépassement.
+  - **Temps et tours de retard** : Style Formule 1 affichant le temps dans le même tour ou le retard en tours (`+1 Tour`, `+N Tours`) en cas de dépassement.
   - **Toujours tours** : Écart exact en tours calculé lors du franchissement de la ligne, intégrant la progression partielle du pilote comparé.
 
 > [!NOTE]

@@ -2283,7 +2283,7 @@
   "UE_GAP_TARGET_POSITION": "Vorausfahrender",
   "UE_INSPECTOR_GAP_MODE": "Berechnungsmodus",
   "UE_GAP_MODE_ALWAYS_TIME": "Immer Zeit",
-  "UE_GAP_MODE_LAPS_AND_TIME": "Runden und Zeit",
+  "UE_GAP_MODE_LAPS_AND_TIME": "Zeit und Runden zurück",
   "UE_GAP_MODE_ALWAYS_LAPS": "Immer Runden",
   "UE_INSPECTOR_LAST_LAPS_SECTION": "Konfiguration der letzten Runden",
   "UE_INSPECTOR_LAST_LAPS_COUNT": "Anzuzeigende letzte Runden",

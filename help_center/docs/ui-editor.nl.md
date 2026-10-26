@@ -121,7 +121,7 @@ Elke verschil-widget kan in de Kolom-inspector worden aangepast met twee kernopt
   - **Voorgaande positie**: Verschil ten opzichte van de directe voorligger in de stand (bijv. P3 t.o.v. P2).
 - **Berekeningsmodus**:
   - **Altijd tijd**: Continue pace-projectie van het tijdsverschil in seconden (`+X.XXX`).
-  - **Ronden en tijd**: Formule 1-weergave met tijdsverschil in dezelfde ronde of rondenachterstand (`+1 Ronde`, `+N Ronden`) bij een dubbeling.
+  - **Tijd en ronden achterstand**: Formule 1-weergave met tijdsverschil in dezelfde ronde of rondenachterstand (`+1 Ronde`, `+N Ronden`) bij een dubbeling.
   - **Altijd ronden**: Exact rondenverschil berekend bij finishdoorkomst, inclusief de partiële rondevoortgang van de vergeleken coureur.
 
 > [!NOTE]

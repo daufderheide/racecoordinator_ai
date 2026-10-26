@@ -2283,7 +2283,7 @@
   "UE_GAP_TARGET_POSITION": "Position Ahead",
   "UE_INSPECTOR_GAP_MODE": "Calculation Mode",
   "UE_GAP_MODE_ALWAYS_TIME": "Always Time",
-  "UE_GAP_MODE_LAPS_AND_TIME": "Laps and Time",
+  "UE_GAP_MODE_LAPS_AND_TIME": "Time and Laps Down",
   "UE_GAP_MODE_ALWAYS_LAPS": "Always Laps",
   "UE_INSPECTOR_LAST_LAPS_SECTION": "Last Laps Configuration",
   "UE_INSPECTOR_LAST_LAPS_COUNT": "Last Laps to Display",

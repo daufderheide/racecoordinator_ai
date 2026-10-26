@@ -534,4 +534,194 @@ test.describe("Raceday Lane View Visuals", () => {
 
     await expect(laneView).toHaveScreenshot("raceday-lane-view-gap-widget.png");
   });
+
+  test("should display gap column widget in laps and time mode with time, 1 lap down, and 2 laps down", async ({
+    page,
+  }) => {
+    await TestSetupHelper.setupSettings(page, {
+      racedayColumns: [
+        "laneNumber",
+        "driver.nickname",
+        "lapCount",
+        "gapLeaderF1",
+      ],
+      columnLayouts: {
+        laneNumber: { "center-center": "laneNumber" },
+        "driver.nickname": { "center-center": "driver.nickname" },
+        lapCount: { "center-center": "lapCount" },
+        gapLeaderF1: {
+          "center-center": "gapLeaderF1",
+          "bottom-right": "gapPositionF1",
+        },
+      },
+      columnAnchors: {
+        laneNumber: "center-center",
+        "driver.nickname": "center-center",
+        lapCount: "center-center",
+        gapLeaderF1: "center-center",
+      },
+      columnWidths: {
+        laneNumber: 80,
+        "driver.nickname": 250,
+        lapCount: 120,
+        gapLeaderF1: 220,
+      },
+    });
+
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/default-raceday"),
+    );
+
+    await page.locator(".dashboard-wrapper").waitFor();
+
+    const raceData = {
+      race: {
+        race: {
+          model: { entityId: "r1" },
+          name: "Gap Widget Laps Down Test",
+          track: {
+            model: { entityId: "t1" },
+            name: "Test Track",
+            lanes: [
+              {
+                objectId: "l1",
+                backgroundColor: "#ef4444",
+                foregroundColor: "#ffffff",
+                length: 10,
+              },
+              {
+                objectId: "l2",
+                backgroundColor: "#3b82f6",
+                foregroundColor: "#ffffff",
+                length: 10,
+              },
+              {
+                objectId: "l3",
+                backgroundColor: "#eab308",
+                foregroundColor: "#000000",
+                length: 10,
+              },
+              {
+                objectId: "l4",
+                backgroundColor: "#22c55e",
+                foregroundColor: "#ffffff",
+                length: 10,
+              },
+            ],
+          },
+        },
+        drivers: [
+          { objectId: "rp1", driver: { name: "Alice", nickname: "Leader" } },
+          { objectId: "rp2", driver: { name: "Bob", nickname: "SameLap" } },
+          {
+            objectId: "rp3",
+            driver: { name: "Charlie", nickname: "OneLapDown" },
+          },
+          {
+            objectId: "rp4",
+            driver: { name: "Dave", nickname: "TwoLapsDown" },
+          },
+        ],
+        currentHeat: {
+          objectId: "h1",
+          heatNumber: 1,
+          heatDrivers: [
+            {
+              objectId: "hd1",
+              laneIndex: 0,
+              lapCount: 15,
+              totalTime: 45.123,
+              bestLapTime: 3.012,
+              lastLapTime: 3.123,
+              gapLeader: 0,
+              gapPosition: 0,
+              gapLeaderF1: 0,
+              gapPositionF1: 0,
+              lapsDownLeader: 0,
+              lapsDownPosition: 0,
+              rank: 1,
+              driver: {
+                objectId: "rp1",
+                driver: { name: "Alice", nickname: "Leader" },
+              },
+            },
+            {
+              objectId: "hd2",
+              laneIndex: 1,
+              lapCount: 15,
+              totalTime: 46.357,
+              bestLapTime: 3.055,
+              lastLapTime: 3.18,
+              gapLeader: 1.234,
+              gapPosition: 1.234,
+              gapLeaderF1: 1.234,
+              gapPositionF1: 1.234,
+              lapsDownLeader: 0,
+              lapsDownPosition: 0,
+              rank: 2,
+              driver: {
+                objectId: "rp2",
+                driver: { name: "Bob", nickname: "SameLap" },
+              },
+            },
+            {
+              objectId: "hd3",
+              laneIndex: 2,
+              lapCount: 14,
+              totalTime: 45.123,
+              bestLapTime: 3.1,
+              lastLapTime: 3.25,
+              gapLeader: 3.5,
+              gapPosition: 2.266,
+              gapLeaderF1: 0,
+              gapPositionF1: 0,
+              lapsDownLeader: 1,
+              lapsDownPosition: 1,
+              rank: 3,
+              driver: {
+                objectId: "rp3",
+                driver: { name: "Charlie", nickname: "OneLapDown" },
+              },
+            },
+            {
+              objectId: "hd4",
+              laneIndex: 3,
+              lapCount: 13,
+              totalTime: 45.123,
+              bestLapTime: 3.2,
+              lastLapTime: 3.35,
+              gapLeader: 6.8,
+              gapPosition: 3.3,
+              gapLeaderF1: 0,
+              gapPositionF1: 0,
+              lapsDownLeader: 2,
+              lapsDownPosition: 1,
+              rank: 4,
+              driver: {
+                objectId: "rp4",
+                driver: { name: "Dave", nickname: "TwoLapsDown" },
+              },
+            },
+          ],
+        },
+      },
+    };
+
+    await TestSetupHelper.mockRaceData(page, raceData);
+    await page.locator(".table-row").first().waitFor({ state: "visible" });
+
+    const laneView = page.locator("app-raceday-lane-view");
+    await expect(laneView).toBeVisible();
+
+    await page.addStyleTag({
+      content:
+        "* { caret-color: transparent !important; } .blink { animation: none !important; }",
+    });
+
+    await expect(laneView).toHaveScreenshot(
+      "raceday-lane-view-gap-widget-laps-down.png",
+    );
+  });
 });
