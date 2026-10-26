@@ -9098,6 +9098,35 @@ describe("DefaultRacedayComponent", () => {
       expect(component.widgetSelected.emit).toHaveBeenCalledWith("gw-delegate");
     });
 
+    it("should redirect to master widget when bringToFront is called on a mirrored child widget", () => {
+      spyOn(component, "bringGridToFront");
+      const master: any = {
+        id: "w-master-gap",
+        widgetType: "lane-column",
+        zIndex: 5,
+        customSettings: { gridId: "g-delegate", gridLane: 0, mirrorRows: true },
+      };
+      const child: any = {
+        id: "w-child-gap",
+        widgetType: "lane-column",
+        zIndex: 5,
+        customSettings: {
+          gridId: "g-delegate",
+          gridMasterId: "w-master-gap",
+          gridLane: 1,
+          mirrorRows: true,
+        },
+      };
+      component.layout.widgets.push(master, child);
+
+      component.bringToFront("w-child-gap");
+
+      expect(component.bringGridToFront).toHaveBeenCalledWith("g-delegate");
+      expect(component.widgetSelected.emit).toHaveBeenCalledWith(
+        "w-master-gap",
+      );
+    });
+
     it("should handle onGridContainerPointerDown to elevate grid and select master widget", () => {
       spyOn(component, "bringGridToFront");
       (component.widgetSelected.emit as jasmine.Spy).calls.reset();
@@ -12898,6 +12927,62 @@ describe("DefaultRacedayComponent", () => {
       expect(atY300.customSettings["insets"]).toEqual({
         "bottom-right": "qrCode",
       });
+    });
+
+    it("should synchronize gapMode and gapTarget from child to master widget in onMasterWidgetModified", () => {
+      const session = {
+        gridId: "test-grid-gap-sync",
+        bounds: { x: 100, y: 100, width: 400, height: 400 },
+        totalLanes: 2,
+        direction: "vertical" as const,
+        sourceLaneIndex: 0,
+        bindingMode: "lane" as const,
+        mirrorRows: true,
+      };
+      fixture.componentRef.setInput("gridSession", session);
+      fixture.detectChanges();
+
+      const masterWidget: any = {
+        id: "w-master-gap-sync",
+        widgetType: "lane-column",
+        x: 100,
+        y: 100,
+        width: 400,
+        height: 200,
+        customSettings: {
+          gridId: "test-grid-gap-sync",
+          gridLane: 0,
+          columnKey: "gap",
+          gapMode: "always_time",
+          gapTarget: "leader",
+        },
+      };
+
+      const childWidget: any = {
+        id: "w-master-gap-sync_grid_lane_1",
+        widgetType: "lane-column",
+        x: 100,
+        y: 300,
+        width: 400,
+        height: 200,
+        customSettings: {
+          gridId: "test-grid-gap-sync",
+          gridMasterId: "w-master-gap-sync",
+          gridLane: 1,
+          columnKey: "gap",
+          gapMode: "laps_and_time",
+          gapTarget: "position",
+        },
+      };
+
+      (component as any).layout = {
+        widgets: [masterWidget, childWidget],
+      };
+
+      component.onMasterWidgetModified(childWidget);
+
+      expect(masterWidget.customSettings.gapMode).toBe("laps_and_time");
+      expect(masterWidget.customSettings.gapTarget).toBe("position");
     });
 
     it("should update child widget in place without replication when mirrorRows is false", () => {

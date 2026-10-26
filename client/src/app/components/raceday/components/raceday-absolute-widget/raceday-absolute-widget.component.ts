@@ -173,10 +173,17 @@ export class RacedayAbsoluteWidgetComponent
   get isGridMirrored(): boolean {
     const s = this.widget().customSettings;
     if (s?.["isHeaderWidget"]) return false;
-    if (s?.["mirrorRows"] === false) return false;
     const session = this.parentComponent()?.gridSession?.();
-    if (!session || session.mirrorRows === false) return false;
-    if (s?.["gridId"] !== session.gridId) return false;
+    const isHoriz =
+      session?.direction === "horizontal" ||
+      session?.layoutOrientation === "horizontal" ||
+      s?.["gridDirection"] === "horizontal" ||
+      s?.["layoutOrientation"] === "horizontal";
+    const isLanesMirrored = isHoriz
+      ? s?.["linkColumns"] !== false && session?.linkColumns !== false
+      : s?.["mirrorRows"] !== false && session?.mirrorRows !== false;
+    if (!isLanesMirrored) return false;
+    if (session && s?.["gridId"] !== session.gridId) return false;
 
     const masterId = s?.["gridMasterId"];
     if (masterId) {
@@ -187,9 +194,13 @@ export class RacedayAbsoluteWidgetComponent
       if (!masterExists) {
         return false;
       }
+      if (!session) {
+        return true;
+      }
     }
 
     return (
+      session != null &&
       Number(s?.["gridLane"] ?? s?.["targetIndex"]) !== session.sourceLaneIndex
     );
   }
@@ -624,9 +635,11 @@ export class RacedayAbsoluteWidgetComponent
   bringToFront() {
     if (this.parentComponent() && this.parentComponent().bringToFront) {
       const masterId = this.widget().customSettings?.["gridMasterId"];
-      const allWidgets = this.parentComponent()?.layout?.widgets || [];
+      const parent = this.parentComponent();
       const masterExists = masterId
-        ? allWidgets.some((w: any) => w.id === masterId)
+        ? parent?.hasWidgetId
+          ? parent.hasWidgetId(masterId)
+          : (parent?.layout?.widgets || []).some((w: any) => w.id === masterId)
         : false;
       if (this.isGridMirrored && masterId && masterExists) {
         this.parentComponent().bringToFront(masterId);

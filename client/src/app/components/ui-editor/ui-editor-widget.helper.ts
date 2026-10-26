@@ -263,6 +263,32 @@ export function updateLayoutOnModel(
   }
 }
 
+function resolveMirroredMasterId(
+  layout: any,
+  id: string | null,
+  activeGridSession: any,
+): string | null {
+  if (!id || !layout?.widgets) return id;
+  const target = layout.widgets.find((w: any) => w.id === id);
+  const masterId = target?.customSettings?.["gridMasterId"];
+  if (!masterId) return id;
+
+  const isHoriz =
+    activeGridSession?.direction === "horizontal" ||
+    activeGridSession?.layoutOrientation === "horizontal" ||
+    target?.customSettings?.["gridDirection"] === "horizontal" ||
+    target?.customSettings?.["layoutOrientation"] === "horizontal";
+  const isLanesMirrored = isHoriz
+    ? target?.customSettings?.["linkColumns"] !== false &&
+      activeGridSession?.linkColumns !== false
+    : target?.customSettings?.["mirrorRows"] !== false &&
+      activeGridSession?.mirrorRows !== false;
+  if (isLanesMirrored && layout.widgets.some((w: any) => w.id === masterId)) {
+    return masterId;
+  }
+  return id;
+}
+
 export function handleWidgetSelection(
   comp: any,
   id: string | null,
@@ -273,7 +299,12 @@ export function handleWidgetSelection(
     comp.selectedAnchor = null;
   }
   const layout = comp.getLayout(ui || comp.activeCustomUi);
-  comp.selectedWidgetId = id || findDefaultWidgetId(layout);
+  const resolvedId = resolveMirroredMasterId(
+    layout,
+    id,
+    comp.activeGridSession,
+  );
+  comp.selectedWidgetId = resolvedId || findDefaultWidgetId(layout);
   const selectedWidget =
     layout?.widgets?.find((w: any) => w.id === comp.selectedWidgetId) ||
     comp.selectedWidget;

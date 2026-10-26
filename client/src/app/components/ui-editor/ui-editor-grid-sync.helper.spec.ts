@@ -1,4 +1,5 @@
 import {
+  handleColumnGapSettingsSync,
   handleCustomLabelSync,
   handleGridBindingModeSync,
   handleGridColumnStructureChanges,
@@ -226,6 +227,68 @@ describe("ui-editor-grid-sync.helper", () => {
       handleGridSessionWidgetSync(mockComp, mockLayout, masterWidget);
       expect(mockLayout.widgets.length).toBeGreaterThanOrEqual(1);
     });
+
+    it("should sync mirrored child widget back to master and replicate to lanes", () => {
+      childWidget.customSettings.columnKey = "gap";
+      childWidget.customSettings.gapMode = "laps_and_time";
+      childWidget.customSettings.gapTarget = "position";
+      childWidget.textColor = "#ff00ff";
+
+      handleGridSessionWidgetSync(mockComp, mockLayout, childWidget);
+
+      expect(masterWidget.customSettings.columnKey).toBe("gap");
+      expect(masterWidget.customSettings.gapMode).toBe("laps_and_time");
+      expect(masterWidget.customSettings.gapTarget).toBe("position");
+      expect(masterWidget.textColor).toBe("#ff00ff");
+      expect(masterWidget.customSettings.gridMasterId).toBeUndefined();
+      expect(masterWidget.customSettings.gridLane).toBe(0);
+    });
+
+    it("should not sync child widget to master if lanes are not mirrored", () => {
+      masterWidget.customSettings.mirrorRows = false;
+      childWidget.customSettings.gapMode = "laps_and_time";
+
+      handleGridSessionWidgetSync(mockComp, mockLayout, childWidget);
+
+      expect(masterWidget.customSettings.gapMode).toBeUndefined();
+    });
+  });
+
+  describe("handleColumnGapSettingsSync", () => {
+    it("should do nothing if neither gapMode nor gapTarget is set", () => {
+      handleColumnGapSettingsSync(mockComp, mockLayout, masterWidget, "grid-1");
+      expect(childWidget.customSettings.gapMode).toBeUndefined();
+      expect(childWidget.customSettings.gapTarget).toBeUndefined();
+    });
+
+    it("should synchronize gapMode and gapTarget across column when target is master", () => {
+      masterWidget.customSettings.gapMode = "always_laps";
+      masterWidget.customSettings.gapTarget = "position";
+
+      handleColumnGapSettingsSync(mockComp, mockLayout, masterWidget, "grid-1");
+
+      expect(childWidget.customSettings.gapMode).toBe("always_laps");
+      expect(childWidget.customSettings.gapTarget).toBe("position");
+    });
+
+    it("should synchronize gapMode and gapTarget across column when target is child", () => {
+      childWidget.customSettings.gapMode = "laps_and_time";
+      childWidget.customSettings.gapTarget = "leader";
+
+      handleColumnGapSettingsSync(mockComp, mockLayout, childWidget, "grid-1");
+
+      expect(masterWidget.customSettings.gapMode).toBe("laps_and_time");
+      expect(masterWidget.customSettings.gapTarget).toBe("leader");
+    });
+
+    it("should not sync gap settings across column if unmirrored", () => {
+      masterWidget.customSettings.mirrorRows = false;
+      masterWidget.customSettings.gapMode = "always_laps";
+
+      handleColumnGapSettingsSync(mockComp, mockLayout, masterWidget, "grid-1");
+
+      expect(childWidget.customSettings.gapMode).toBeUndefined();
+    });
   });
 
   describe("handleGridBindingModeSync", () => {
@@ -278,6 +341,21 @@ describe("ui-editor-grid-sync.helper", () => {
       expect(masterWidget.customSettings.emptyRowsMode).toBe("empty");
       expect(childWidget.customSettings.emptyRowsMode).toBe("empty");
       expect(mockComp.activeGridSession.emptyRowsMode).toBe("empty");
+    });
+
+    it("should synchronize gap settings when modified via inspector", () => {
+      childWidget.customSettings.gapMode = "laps_and_time";
+      childWidget.customSettings.gapTarget = "position";
+
+      handleGridWidgetInspectorSync(
+        mockComp,
+        mockLayout,
+        childWidget,
+        "grid-1",
+      );
+
+      expect(masterWidget.customSettings.gapMode).toBe("laps_and_time");
+      expect(masterWidget.customSettings.gapTarget).toBe("position");
     });
   });
 });

@@ -627,6 +627,44 @@ describe("raceday-lane-column-interaction.helper", () => {
       });
       expect(masterNode.customSettings["columnKey"]).toBe("driver.name");
     });
+
+    it("should copy gapMode and gapTarget from childNode to masterNode", () => {
+      const masterNode: any = {
+        id: "w-master-gap",
+        customSettings: {
+          gridId: "grid-1",
+          gridLane: 0,
+          columnKey: "gap",
+          gapMode: "always_time",
+          gapTarget: "leader",
+        },
+      };
+      const childNode: any = {
+        id: "w-master-gap_grid_lane_1",
+        customSettings: {
+          gridId: "grid-1",
+          gridMasterId: "w-master-gap",
+          gridLane: 1,
+          columnKey: "gap",
+          gapMode: "always_laps",
+          gapTarget: "position",
+        },
+      };
+      const parent = {
+        gridSession: () => ({
+          gridId: "grid-1",
+          sourceLaneIndex: 0,
+          mirrorRows: true,
+        }),
+        onMasterWidgetModified: jasmine.createSpy(),
+        layout: { widgets: [masterNode, childNode] },
+      };
+
+      notifyLaneColumnParentChange(parent, childNode);
+      expect(parent.onMasterWidgetModified).toHaveBeenCalledWith(masterNode);
+      expect(masterNode.customSettings["gapMode"]).toBe("always_laps");
+      expect(masterNode.customSettings["gapTarget"]).toBe("position");
+    });
   });
 
   describe("resolveLaneColumnBackgroundColor and resolveLaneColumnForegroundColor", () => {

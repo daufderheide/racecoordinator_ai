@@ -405,6 +405,17 @@ export function notifyLaneColumnParentChange(
             master.customSettings["columnKey"] =
               widget.customSettings["columnKey"];
           }
+          if (widget.customSettings?.["gapMode"] !== undefined) {
+            master.customSettings["gapMode"] = widget.customSettings["gapMode"];
+          } else {
+            delete master.customSettings["gapMode"];
+          }
+          if (widget.customSettings?.["gapTarget"] !== undefined) {
+            master.customSettings["gapTarget"] =
+              widget.customSettings["gapTarget"];
+          } else {
+            delete master.customSettings["gapTarget"];
+          }
           targetWidget = master;
         }
       }

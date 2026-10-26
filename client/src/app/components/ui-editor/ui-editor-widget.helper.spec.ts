@@ -946,6 +946,64 @@ describe("ui-editor-widget.helper", () => {
     expect(comp.selectedWidgetId).toBe("w-1");
   });
 
+  it("should resolve mirrored child widget to masterId in handleWidgetSelection", () => {
+    const { handleWidgetSelection } = require("./ui-editor-widget.helper");
+    const masterWidget = {
+      id: "w-master-gap",
+      widgetType: "lane-column",
+      customSettings: { gridId: "grid-gaps", gridLane: 0, mirrorRows: true },
+    };
+    const childWidget = {
+      id: "w-child-gap-lane1",
+      widgetType: "lane-column",
+      customSettings: {
+        gridId: "grid-gaps",
+        gridMasterId: "w-master-gap",
+        gridLane: 1,
+        mirrorRows: true,
+      },
+    };
+    const layout = { widgets: [masterWidget, childWidget] };
+    const comp = {
+      selectedWidgetId: null as string | null,
+      activeGridSession: { gridId: "grid-gaps", mirrorRows: true },
+      getLayout: jasmine.createSpy("getLayout").and.returnValue(layout),
+      cdr: { markForCheck: jasmine.createSpy("markForCheck") },
+    };
+
+    handleWidgetSelection(comp, "w-child-gap-lane1");
+    expect(comp.selectedWidgetId).toBe("w-master-gap");
+  });
+
+  it("should preserve child widget ID in handleWidgetSelection when rows are not mirrored", () => {
+    const { handleWidgetSelection } = require("./ui-editor-widget.helper");
+    const masterWidget = {
+      id: "w-master-gap",
+      widgetType: "lane-column",
+      customSettings: { gridId: "grid-gaps", gridLane: 0, mirrorRows: false },
+    };
+    const childWidget = {
+      id: "w-child-gap-lane1",
+      widgetType: "lane-column",
+      customSettings: {
+        gridId: "grid-gaps",
+        gridMasterId: "w-master-gap",
+        gridLane: 1,
+        mirrorRows: false,
+      },
+    };
+    const layout = { widgets: [masterWidget, childWidget] };
+    const comp = {
+      selectedWidgetId: null as string | null,
+      activeGridSession: { gridId: "grid-gaps", mirrorRows: false },
+      getLayout: jasmine.createSpy("getLayout").and.returnValue(layout),
+      cdr: { markForCheck: jasmine.createSpy("markForCheck") },
+    };
+
+    handleWidgetSelection(comp, "w-child-gap-lane1");
+    expect(comp.selectedWidgetId).toBe("w-child-gap-lane1");
+  });
+
   it("should handle handleAnchorSelection by selecting widget and setting anchor", () => {
     const { handleAnchorSelection } = require("./ui-editor-widget.helper");
     const layout = { widgets: [{ id: "w-1", widgetType: "lane-column" }] };

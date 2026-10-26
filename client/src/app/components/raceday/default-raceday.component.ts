@@ -8977,14 +8977,19 @@ export class DefaultRacedayComponent
     const targetWidget = this.layout.widgets.find((w: any) => w.id === id);
     if (!targetWidget) return;
 
-    if (targetWidget.customSettings?.["gridId"]) {
-      this.bringGridToFront(targetWidget.customSettings["gridId"]);
-      this.widgetSelected.emit(id);
-      return;
-    }
+    const s = targetWidget.customSettings;
+    const isHoriz =
+      this.gridSession()?.direction === "horizontal" ||
+      this.gridSession()?.layoutOrientation === "horizontal" ||
+      s?.["gridDirection"] === "horizontal" ||
+      s?.["layoutOrientation"] === "horizontal";
+    const isLanesMirrored = isHoriz
+      ? s?.["linkColumns"] !== false &&
+        this.gridSession()?.linkColumns !== false
+      : s?.["mirrorRows"] !== false && this.gridSession()?.mirrorRows !== false;
 
-    if (this.gridSession() && targetWidget.customSettings?.["gridMasterId"]) {
-      const masterId = targetWidget.customSettings["gridMasterId"];
+    if (isLanesMirrored && s?.["gridMasterId"]) {
+      const masterId = s["gridMasterId"];
       const masterWidget = this.layout.widgets.find(
         (w: any) => w.id === masterId,
       );
@@ -8992,6 +8997,12 @@ export class DefaultRacedayComponent
         this.bringToFront(masterId);
         return;
       }
+    }
+
+    if (targetWidget.customSettings?.["gridId"]) {
+      this.bringGridToFront(targetWidget.customSettings["gridId"]);
+      this.widgetSelected.emit(id);
+      return;
     }
 
     if (targetWidget.widgetType === "countdown") {
@@ -9511,6 +9522,18 @@ export class DefaultRacedayComponent
           if (widget.customSettings?.["columnKey"]) {
             masterWidget.customSettings["columnKey"] =
               widget.customSettings["columnKey"];
+          }
+          if (widget.customSettings?.["gapMode"] !== undefined) {
+            masterWidget.customSettings["gapMode"] =
+              widget.customSettings["gapMode"];
+          } else {
+            delete masterWidget.customSettings["gapMode"];
+          }
+          if (widget.customSettings?.["gapTarget"] !== undefined) {
+            masterWidget.customSettings["gapTarget"] =
+              widget.customSettings["gapTarget"];
+          } else {
+            delete masterWidget.customSettings["gapTarget"];
           }
           this.onMasterWidgetModified(masterWidget);
         }
