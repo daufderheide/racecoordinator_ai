@@ -53,6 +53,7 @@ import { RaceParticipant } from "@app/models/race_participant";
 import { Role } from "@app/models/role";
 import {
   AbsoluteWidgetNode,
+  HighlightLapStyle,
   LayoutConfig,
   Settings,
   WidgetType,
@@ -75,6 +76,7 @@ import {
   RacePredictionRecord,
   RacePredictionService,
 } from "@app/services/race-prediction.service";
+import { isColorLight } from "@app/utils/color.utils";
 import { DriverMatchingUtils } from "@app/utils/driver-matching.utils";
 import { TeammateUtils } from "@app/utils/teammate.utils";
 import {
@@ -3016,17 +3018,28 @@ export class DefaultRacedayComponent
     const driverId = lap?.objectId || driverData?.objectId;
     if (!driverId) return;
 
-    const laneViewWidget = this.currentRacedayLayout?.widgets?.find(
-      (w: any) =>
-        w.widgetType === "lane-view" || w.widgetType === "lane-column",
-    );
+    const laneWidgets =
+      this.currentRacedayLayout?.widgets?.filter(
+        (w: any) =>
+          w.widgetType === "lane-view" || w.widgetType === "lane-column",
+      ) || [];
     const settings = this.settingsService.getSettings();
+    const fallbackEnabled = this.isPracticeLayout
+      ? settings?.highlightPracticeRowOnLap !== false
+      : settings?.highlightRowOnLap !== false;
+
     const shouldHighlight =
-      laneViewWidget?.customSettings?.["highlightRowOnLap"] !== undefined
-        ? laneViewWidget.customSettings["highlightRowOnLap"]
-        : this.isPracticeLayout
-          ? settings.highlightPracticeRowOnLap
-          : settings.highlightRowOnLap;
+      laneWidgets.length > 0
+        ? laneWidgets.some((w: any) => {
+            const style = w.customSettings?.["highlightLapStyle"];
+            if (style === "none") return false;
+            if (style) return true;
+            return w.customSettings?.["highlightRowOnLap"] !== undefined
+              ? Boolean(w.customSettings["highlightRowOnLap"])
+              : fallbackEnabled;
+          })
+        : fallbackEnabled;
+
     if (shouldHighlight) {
       const existingTimer = this.lapHighlightTimers.get(driverId);
       if (existingTimer) {
@@ -3046,6 +3059,36 @@ export class DefaultRacedayComponent
       }, 400);
       this.lapHighlightTimers.set(driverId, timer);
     }
+  }
+
+  get highlightLapStyle(): HighlightLapStyle {
+    const laneWidgets =
+      this.currentRacedayLayout?.widgets?.filter(
+        (w: any) =>
+          w.widgetType === "lane-view" || w.widgetType === "lane-column",
+      ) || [];
+    for (const w of laneWidgets) {
+      const customStyle = w.customSettings?.["highlightLapStyle"];
+      if (customStyle) {
+        return customStyle;
+      }
+      if (w.customSettings?.["highlightRowOnLap"] === false) {
+        return "none";
+      }
+      if (w.customSettings?.["highlightRowOnLap"] === true) {
+        return "classic";
+      }
+    }
+    const settings = this.settingsService?.getSettings();
+    if (this.isPracticeLayout && settings?.highlightPracticeLapStyle) {
+      return settings.highlightPracticeLapStyle;
+    }
+    return settings?.highlightLapStyle || "classic";
+  }
+
+  isLaneColorLight(hd: any): boolean {
+    const bg = this.getLaneColor(hd, "background_color");
+    return isColorLight(bg);
   }
 
   private getFuelCapacity(): number {

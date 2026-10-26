@@ -69,6 +69,10 @@ describe("RacedayLaneViewComponent", () => {
       onColumnHeaderRowDrop: jasmine.createSpy("onColumnHeaderRowDrop"),
       onColumnHeaderDrop: jasmine.createSpy("onColumnHeaderDrop"),
       highlightedDrivers: new Set(),
+      highlightLapStyle: "classic",
+      isLaneColorLight: jasmine
+        .createSpy("isLaneColorLight")
+        .and.returnValue(false),
       draggingLane: null,
       onDragOver: jasmine.createSpy("onDragOver"),
       getRowHeight: () => 48,
@@ -1488,6 +1492,52 @@ describe("RacedayLaneViewComponent", () => {
       expect(component.getSvgPreserveAspectRatio("center-center")).toBe(
         "xMidYMid meet",
       );
+    });
+
+    it("should resolve highlightLapStyle properly", () => {
+      expect(component.highlightLapStyle).toBe("classic");
+
+      mockParent.highlightLapStyle = "full-glow";
+      expect(component.highlightLapStyle).toBe("full-glow");
+
+      fixture.componentRef.setInput("widget", {
+        customSettings: { highlightLapStyle: "shimmer" },
+      } as any);
+      expect(component.highlightLapStyle).toBe("shimmer");
+
+      fixture.componentRef.setInput("widget", {
+        customSettings: { highlightLapStyle: "none" },
+      } as any);
+      expect(component.highlightLapStyle).toBe("none");
+
+      fixture.componentRef.setInput("widget", {
+        customSettings: { highlightRowOnLap: false },
+      } as any);
+      expect(component.highlightLapStyle).toBe("none");
+
+      fixture.componentRef.setInput("widget", {
+        customSettings: { highlightRowOnLap: true },
+      } as any);
+      expect(component.highlightLapStyle).toBe("classic");
+
+      fixture.componentRef.setInput("parent", undefined);
+      fixture.componentRef.setInput("widget", null);
+      expect(component.highlightLapStyle).toBe("classic");
+    });
+
+    it("should resolve isLaneColorLight properly", () => {
+      const dummyHd = { objectId: "hd1", laneIndex: 0 };
+      expect(component.isLaneColorLight(dummyHd)).toBeFalse();
+      expect(mockParent.isLaneColorLight).toHaveBeenCalledWith(dummyHd);
+
+      mockParent.isLaneColorLight = undefined;
+      mockParent.getLaneColor = jasmine
+        .createSpy("getLaneColor")
+        .and.returnValue("#ffffff");
+      expect(component.isLaneColorLight(dummyHd)).toBeTrue();
+
+      mockParent.getLaneColor.and.returnValue("#000000");
+      expect(component.isLaneColorLight(dummyHd)).toBeFalse();
     });
   });
 });

@@ -180,6 +180,42 @@ describe("LaneColumnGridHelper", () => {
       expect(LaneColumnGridHelper.getHighlightRowOnLap(settings)).toBeTrue();
       LaneColumnGridHelper.setHighlightRowOnLap(settings, false, onChange);
       expect(LaneColumnGridHelper.getHighlightRowOnLap(settings)).toBeFalse();
+      expect(LaneColumnGridHelper.getHighlightLapStyle(settings)).toBe("none");
+
+      LaneColumnGridHelper.setHighlightLapStyle(
+        settings,
+        "full-glow",
+        onChange,
+      );
+      expect(LaneColumnGridHelper.getHighlightLapStyle(settings)).toBe(
+        "full-glow",
+      );
+      expect(LaneColumnGridHelper.getHighlightRowOnLap(settings)).toBeTrue();
+
+      LaneColumnGridHelper.setHighlightLapStyle(settings, "none", onChange);
+      expect(LaneColumnGridHelper.getHighlightLapStyle(settings)).toBe("none");
+      expect(LaneColumnGridHelper.getHighlightRowOnLap(settings)).toBeFalse();
+
+      // When re-enabling from none, it should default to shimmer
+      LaneColumnGridHelper.setHighlightRowOnLap(settings, true, onChange);
+      expect(LaneColumnGridHelper.getHighlightRowOnLap(settings)).toBeTrue();
+      expect(LaneColumnGridHelper.getHighlightLapStyle(settings)).toBe(
+        "shimmer",
+      );
+
+      // Legacy settings without highlightLapStyle
+      const legacyTrue: any = { highlightRowOnLap: true };
+      expect(LaneColumnGridHelper.getHighlightLapStyle(legacyTrue)).toBe(
+        "classic",
+      );
+      const legacyUnset: any = {};
+      expect(LaneColumnGridHelper.getHighlightLapStyle(legacyUnset)).toBe(
+        "classic",
+      );
+      const legacyFalse: any = { highlightRowOnLap: false };
+      expect(LaneColumnGridHelper.getHighlightLapStyle(legacyFalse)).toBe(
+        "none",
+      );
 
       expect(LaneColumnGridHelper.getLinkColumns(settings)).toBeTrue();
       LaneColumnGridHelper.setLinkColumns(settings, false, onChange);

@@ -19,7 +19,7 @@ import {
   CustomSelectComponent,
 } from "@app/components/shared/custom-select/custom-select.component";
 import { CustomUI } from "@app/models/custom-ui";
-import { Settings } from "@app/models/settings";
+import { HighlightLapStyle, Settings } from "@app/models/settings";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { FontService } from "@app/services/font.service";
 import { TranslationService } from "@app/services/translation.service";
@@ -203,12 +203,36 @@ export class LaneViewInspectorComponent implements OnInit {
   }
 
   get highlightRowOnLap(): boolean {
+    if (this.settings()?.highlightLapStyle !== undefined) {
+      return this.settings().highlightLapStyle !== "none";
+    }
     return this.settings()?.highlightRowOnLap ?? true;
   }
 
   set highlightRowOnLap(value: boolean) {
     if (this.settings()) {
       this.settings().highlightRowOnLap = value;
+      this.settings().highlightLapStyle = value
+        ? this.settings().highlightLapStyle &&
+          this.settings().highlightLapStyle !== "none"
+          ? this.settings().highlightLapStyle
+          : "shimmer"
+        : "none";
+      this.onSettingsChange();
+    }
+  }
+
+  get highlightLapStyle(): HighlightLapStyle {
+    if (this.settings()?.highlightLapStyle !== undefined) {
+      return this.settings().highlightLapStyle;
+    }
+    return this.settings()?.highlightRowOnLap === false ? "none" : "classic";
+  }
+
+  set highlightLapStyle(value: HighlightLapStyle) {
+    if (this.settings()) {
+      this.settings().highlightLapStyle = value;
+      this.settings().highlightRowOnLap = value !== "none";
       this.onSettingsChange();
     }
   }

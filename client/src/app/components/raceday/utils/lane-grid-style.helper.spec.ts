@@ -730,6 +730,7 @@ describe("LaneGridStyleHelper", () => {
           borderWidth: 3,
           borderRadius: 12,
           highlightRowOnLap: true,
+          highlightLapStyle: "shimmer",
           headerFontFamily: "Inter",
           headerFontSize: 16,
           headerTextColor: "#888888",
@@ -773,6 +774,7 @@ describe("LaneGridStyleHelper", () => {
       expect(newTarget.customSettings?.["borderWidth"]).toBe(3);
       expect(newTarget.customSettings?.["borderRadius"]).toBe(12);
       expect(newTarget.customSettings?.["highlightRowOnLap"]).toBeTrue();
+      expect(newTarget.customSettings?.["highlightLapStyle"]).toBe("shimmer");
       expect(newTarget.customSettings?.["headerFontFamily"]).toBe("Inter");
       expect(newTarget.customSettings?.["headerFontSize"]).toBe(16);
       expect(newTarget.customSettings?.["headerTextColor"]).toBe("#888888");

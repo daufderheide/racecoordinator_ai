@@ -116,6 +116,7 @@ describe("LaneViewMigrationHelper", () => {
               isVertical: false,
               sortByStandings: true,
               highlightRowOnLap: true,
+              highlightLapStyle: "scale-pulse",
               timeDecimalPlaces: 3,
               lapDecimalPlaces: 2,
               columnFontSize: 20,
@@ -225,6 +226,9 @@ describe("LaneViewMigrationHelper", () => {
       expect(driverMaster?.customSettings?.["bindingMode"]).toBe("position");
       expect(driverMaster?.customSettings?.["headerFontSize"]).toBe(20);
       expect(driverMaster?.customSettings?.["valueFontSize"]).toBe(40);
+      expect(driverMaster?.customSettings?.["highlightLapStyle"]).toBe(
+        "scale-pulse",
+      );
       expect(driverMaster?.zIndex).toBe(150);
 
       const avgLapMaster = masters.find(
@@ -484,6 +488,10 @@ describe("LaneViewMigrationHelper", () => {
             width: 800,
             height: 400,
             zIndex: 100,
+            customSettings: {
+              highlightLapStyle: "classic",
+              highlightRowOnLap: true,
+            },
           },
         ],
       };
@@ -681,6 +689,7 @@ describe("LaneViewMigrationHelper", () => {
               columnKey: "gap",
               gapTarget: "position",
               gapMode: "always_laps",
+              highlightLapStyle: "classic",
             },
           },
         ],
@@ -691,6 +700,104 @@ describe("LaneViewMigrationHelper", () => {
       expect(w.columnKey).toBe("gap");
       expect(w.gapTarget).toBe("position");
       expect(w.gapMode).toBe("always_laps");
+    });
+
+    it("should migrate widgets without highlightLapStyle to classic when highlightRowOnLap is true or unset", () => {
+      const layout: LayoutConfig = {
+        widgets: [
+          {
+            id: "lane-col-1",
+            widgetType: "lane-column",
+            x: 0,
+            y: 0,
+            width: 100,
+            height: 50,
+            zIndex: 100,
+            customSettings: {
+              columnKey: "lastLapTime",
+              highlightRowOnLap: true,
+            },
+          },
+          {
+            id: "lane-view-1",
+            widgetType: "lane-view",
+            x: 0,
+            y: 0,
+            width: 100,
+            height: 50,
+            zIndex: 100,
+            customSettings: {},
+          },
+        ],
+      };
+      const migrated = LaneViewMigrationHelper.migrateGapWidgets(layout);
+      expect(migrated).toBeTrue();
+      expect(layout.widgets[0].customSettings?.["highlightLapStyle"]).toBe(
+        "classic",
+      );
+      expect(
+        layout.widgets[0].customSettings?.["highlightRowOnLap"],
+      ).toBeTrue();
+      expect(layout.widgets[1].customSettings?.["highlightLapStyle"]).toBe(
+        "classic",
+      );
+      expect(
+        layout.widgets[1].customSettings?.["highlightRowOnLap"],
+      ).toBeTrue();
+    });
+
+    it("should migrate widgets without highlightLapStyle to none when highlightRowOnLap is false", () => {
+      const layout: LayoutConfig = {
+        widgets: [
+          {
+            id: "lane-col-1",
+            widgetType: "lane-column",
+            x: 0,
+            y: 0,
+            width: 100,
+            height: 50,
+            zIndex: 100,
+            customSettings: {
+              columnKey: "lastLapTime",
+              highlightRowOnLap: false,
+            },
+          },
+        ],
+      };
+      const migrated = LaneViewMigrationHelper.migrateGapWidgets(layout);
+      expect(migrated).toBeTrue();
+      expect(layout.widgets[0].customSettings?.["highlightLapStyle"]).toBe(
+        "none",
+      );
+      expect(
+        layout.widgets[0].customSettings?.["highlightRowOnLap"],
+      ).toBeFalse();
+    });
+
+    it("should not modify widgets that already have highlightLapStyle", () => {
+      const layout: LayoutConfig = {
+        widgets: [
+          {
+            id: "lane-col-1",
+            widgetType: "lane-column",
+            x: 0,
+            y: 0,
+            width: 100,
+            height: 50,
+            zIndex: 100,
+            customSettings: {
+              columnKey: "lastLapTime",
+              highlightLapStyle: "shimmer",
+              highlightRowOnLap: true,
+            },
+          },
+        ],
+      };
+      const migrated = LaneViewMigrationHelper.migrateGapWidgets(layout);
+      expect(migrated).toBeFalse();
+      expect(layout.widgets[0].customSettings?.["highlightLapStyle"]).toBe(
+        "shimmer",
+      );
     });
   });
 

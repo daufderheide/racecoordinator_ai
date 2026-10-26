@@ -273,16 +273,21 @@ function resolveMirroredMasterId(
   const masterId = target?.customSettings?.["gridMasterId"];
   if (!masterId) return id;
 
+  const sessionMatchesTarget =
+    activeGridSession &&
+    target?.customSettings?.["gridId"] &&
+    activeGridSession.gridId === target.customSettings["gridId"];
   const isHoriz =
-    activeGridSession?.direction === "horizontal" ||
-    activeGridSession?.layoutOrientation === "horizontal" ||
+    (sessionMatchesTarget &&
+      (activeGridSession.direction === "horizontal" ||
+        activeGridSession.layoutOrientation === "horizontal")) ||
     target?.customSettings?.["gridDirection"] === "horizontal" ||
     target?.customSettings?.["layoutOrientation"] === "horizontal";
   const isLanesMirrored = isHoriz
     ? target?.customSettings?.["linkColumns"] !== false &&
-      activeGridSession?.linkColumns !== false
+      (!sessionMatchesTarget || activeGridSession.linkColumns !== false)
     : target?.customSettings?.["mirrorRows"] !== false &&
-      activeGridSession?.mirrorRows !== false;
+      (!sessionMatchesTarget || activeGridSession.mirrorRows !== false);
   if (isLanesMirrored && layout.widgets.some((w: any) => w.id === masterId)) {
     return masterId;
   }

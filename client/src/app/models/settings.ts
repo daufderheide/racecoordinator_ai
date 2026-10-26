@@ -60,6 +60,16 @@ export type WidgetType =
   | `custom:${string}`
   | (string & {});
 
+export type HighlightLapStyle =
+  | "none"
+  | "classic"
+  | "full-glow"
+  | "glow-border"
+  | "tint-wash"
+  | "shimmer"
+  | "scale-pulse"
+  | "adaptive-dip";
+
 export interface AbsoluteWidgetNode {
   id: string; // Unique ID so we can uniquely identify widgets on the page
   widgetType: WidgetType;
@@ -119,6 +129,7 @@ export interface LaneColumnWidgetSettings {
   linkColumns?: boolean;
   sortByBindingMode?: boolean;
   highlightRowOnLap?: boolean;
+  highlightLapStyle?: HighlightLapStyle;
   customLabel: string;
   headerFontFamily: string;
   headerFontSize: number;
@@ -264,6 +275,8 @@ export class Settings {
   sortByStandings: boolean = true;
   highlightRowOnLap: boolean = true;
   highlightPracticeRowOnLap: boolean = true;
+  highlightLapStyle: HighlightLapStyle = "shimmer";
+  highlightPracticeLapStyle: HighlightLapStyle = "shimmer";
   driverStateBackfilled: boolean = false;
   racedayColumns: string[] = Settings.DEFAULT_COLUMNS;
   columnAnchors: { [key: string]: AnchorPoint } = {};
@@ -470,6 +483,7 @@ export class Settings {
           isVertical: false,
           sortByStandings: true,
           highlightRowOnLap: true,
+          highlightLapStyle: "shimmer",
           timeDecimalPlaces: 3,
           lapDecimalPlaces: 2,
           columnFontFamily: "",
@@ -620,6 +634,7 @@ export class Settings {
           isVertical: true,
           sortByStandings: true,
           highlightRowOnLap: true,
+          highlightLapStyle: "shimmer",
           timeDecimalPlaces: 3,
           lapDecimalPlaces: 0,
           columnFontFamily: "",

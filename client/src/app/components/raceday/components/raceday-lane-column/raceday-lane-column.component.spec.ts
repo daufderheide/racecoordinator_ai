@@ -3148,6 +3148,66 @@ describe("RacedayLaneColumnComponent", () => {
       );
       fixture.detectChanges();
       expect(component.isHighlighted).toBeFalse();
+
+      // Should apply highlight-style class based on highlightLapStyle
+      fixture.componentRef.setInput(
+        "widget",
+        createWidget({
+          columnKey: "lastLapTime",
+          targetIndex: 0,
+          highlightRowOnLap: true,
+          highlightLapStyle: "glow-border",
+        }),
+      );
+      fixture.detectChanges();
+      expect(component.highlightLapStyle).toBe("glow-border");
+      const styledCard = fixture.nativeElement.querySelector(
+        ".raceday-lane-column-card",
+      );
+      expect(
+        styledCard.classList.contains("highlight-style-glow-border"),
+      ).toBeTrue();
+      expect(component.isLightBackground).toBeFalse(); // default dark bg
+
+      // Should not highlight if highlightLapStyle is 'none'
+      fixture.componentRef.setInput(
+        "widget",
+        createWidget({
+          columnKey: "lastLapTime",
+          targetIndex: 0,
+          highlightLapStyle: "none",
+        }),
+      );
+      fixture.detectChanges();
+      expect(component.isHighlighted).toBeFalse();
+      const noneCard = fixture.nativeElement.querySelector(
+        ".raceday-lane-column-card",
+      );
+      expect(noneCard.classList.contains("highlight")).toBeFalse();
+
+      // Should default to none if highlightRowOnLap is false without explicit highlightLapStyle
+      fixture.componentRef.setInput(
+        "widget",
+        createWidget({
+          columnKey: "lastLapTime",
+          targetIndex: 0,
+          highlightRowOnLap: false,
+        }),
+      );
+      fixture.detectChanges();
+      expect(component.highlightLapStyle).toBe("none");
+
+      // Should default to classic if highlightRowOnLap is true without explicit highlightLapStyle
+      fixture.componentRef.setInput(
+        "widget",
+        createWidget({
+          columnKey: "lastLapTime",
+          targetIndex: 0,
+          highlightRowOnLap: true,
+        }),
+      );
+      fixture.detectChanges();
+      expect(component.highlightLapStyle).toBe("classic");
     });
 
     it("should default effectiveHeaderTextColor to #ffffff for isHeaderWidget even if lane colors are enabled", () => {

@@ -40,6 +40,8 @@ describe("SettingsService", () => {
     expect(settings.serverIp).toBe("");
     expect(settings.highlightRowOnLap).toBeTrue();
     expect(settings.highlightPracticeRowOnLap).toBeTrue();
+    expect(settings.highlightLapStyle).toBe("shimmer");
+    expect(settings.highlightPracticeLapStyle).toBe("shimmer");
 
     // Verify new default for lapCount column
     expect(settings.columnLayouts["lapCount"]).toBeDefined();
@@ -64,6 +66,8 @@ describe("SettingsService", () => {
       language: "es",
       highlightRowOnLap: false,
       highlightPracticeRowOnLap: false,
+      highlightLapStyle: "shimmer",
+      highlightPracticeLapStyle: "glow-border",
     });
     service.saveSettings(settings);
 
@@ -73,6 +77,8 @@ describe("SettingsService", () => {
     expect(retrieved.serverIp).toBe("1.2.3.4");
     expect(retrieved.highlightRowOnLap).toBeFalse();
     expect(retrieved.highlightPracticeRowOnLap).toBeFalse();
+    expect(retrieved.highlightLapStyle).toBe("shimmer");
+    expect(retrieved.highlightPracticeLapStyle).toBe("glow-border");
   });
 
   it("should backfill driver state to lapCount column if missing in stored settings", () => {
@@ -94,6 +100,38 @@ describe("SettingsService", () => {
       "flag",
     );
     expect(retrieved.driverStateBackfilled).toBeTrue();
+  });
+
+  it("should migrate legacy stored settings to classic when highlightRowOnLap is true or unset", () => {
+    const legacySettings = {
+      language: "en",
+      highlightRowOnLap: true,
+      highlightPracticeRowOnLap: true,
+    };
+    localStorage.setItem(
+      "racecoordinator_settings",
+      JSON.stringify(legacySettings),
+    );
+
+    const retrieved = service.getSettings();
+    expect(retrieved.highlightLapStyle).toBe("classic");
+    expect(retrieved.highlightPracticeLapStyle).toBe("classic");
+  });
+
+  it("should migrate legacy stored settings to none when highlightRowOnLap is false", () => {
+    const legacySettings = {
+      language: "en",
+      highlightRowOnLap: false,
+      highlightPracticeRowOnLap: false,
+    };
+    localStorage.setItem(
+      "racecoordinator_settings",
+      JSON.stringify(legacySettings),
+    );
+
+    const retrieved = service.getSettings();
+    expect(retrieved.highlightLapStyle).toBe("none");
+    expect(retrieved.highlightPracticeLapStyle).toBe("none");
   });
 
   it("should NOT backfill driver state if bottom-left anchor is already set", () => {

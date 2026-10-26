@@ -80,7 +80,7 @@ export class LaneGridStyleHelper {
       case "border":
         return ["showBorder", "borderColor", "borderWidth", "borderRadius"];
       case "highlight":
-        return ["highlightRowOnLap"];
+        return ["highlightRowOnLap", "highlightLapStyle"];
       case "time":
         return [
           "timeDecimalPlaces",
@@ -454,6 +454,7 @@ export class LaneGridStyleHelper {
       "borderWidth",
       "borderRadius",
       "highlightRowOnLap",
+      "highlightLapStyle",
     ];
     for (const key of copyKeys) {
       if (refSettings[key] !== undefined) {

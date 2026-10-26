@@ -82,8 +82,88 @@
   transition: none !important;
 }
 
+/* Lap Flash Highlights */
 .bottom-section .table-row.highlight {
+  box-shadow: inset 0 0 0 2px #38bdf8, inset 0 0 14px rgba(56, 189, 248, 0.65);
+}
+
+.bottom-section .table-row.highlight.highlight-style-classic {
+  box-shadow: none;
   filter: brightness(1.2) drop-shadow(0 0 10px rgba(255, 255, 255, 0.3));
+}
+
+.bottom-section .table-row.highlight.highlight-style-glow-border {
+  box-shadow: inset 0 0 0 2px #38bdf8, inset 0 0 14px rgba(56, 189, 248, 0.65);
+}
+
+.bottom-section .table-row.highlight.highlight-style-tint-wash {
+  box-shadow: none;
+}
+
+.bottom-section .table-row.highlight.highlight-style-tint-wash::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  z-index: 10;
+  background: rgba(56, 189, 248, 0.35);
+}
+
+.bottom-section .table-row.highlight.highlight-style-full-glow {
+  box-shadow: inset 0 0 0 2px #38bdf8, inset 0 0 14px rgba(56, 189, 248, 0.65);
+}
+
+.bottom-section .table-row.highlight.highlight-style-full-glow::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  z-index: 10;
+  background: rgba(56, 189, 248, 0.25);
+}
+
+.bottom-section .table-row.highlight.highlight-style-shimmer {
+  box-shadow: inset 0 0 0 1px rgba(56, 189, 248, 0.5);
+  position: relative;
+  overflow: hidden;
+}
+
+.bottom-section .table-row.highlight.highlight-style-shimmer::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  border-radius: inherit;
+  z-index: 10;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(56, 189, 248, 0.25) 25%,
+    rgba(255, 255, 255, 0.8) 50%,
+    rgba(56, 189, 248, 0.25) 75%,
+    transparent 100%
+  );
+  animation: lap-shimmer 400ms ease-out forwards;
+}
+
+.bottom-section .table-row.highlight.highlight-style-scale-pulse {
+  z-index: 15 !important;
+  box-shadow: inset 0 0 0 2px #38bdf8, inset 0 0 12px rgba(56, 189, 248, 0.55);
+}
+
+.bottom-section .table-row.highlight.highlight-style-adaptive-dip.is-light-lane {
+  filter: brightness(0.65) contrast(1.15) !important;
+  box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.6);
+}
+
+.bottom-section .table-row.highlight.highlight-style-adaptive-dip:not(.is-light-lane) {
+  filter: brightness(1.35) !important;
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.6);
 }
 
 .bottom-section .body-cell {

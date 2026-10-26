@@ -65,8 +65,15 @@ describe("LaneViewInspectorComponent", () => {
   });
 
   it("should bind insetTimeDecimalPlaces and emit change on selection", () => {
+    const selects = Array.from(
+      fixture.nativeElement.querySelectorAll("app-custom-select"),
+    ) as HTMLElement[];
     const selectEl =
-      fixture.nativeElement.querySelectorAll("app-custom-select")[2];
+      selects.find((el) =>
+        el
+          .closest(".inspector-section")
+          ?.textContent?.includes("UE_INSPECTOR_LANE_VIEW_TIME_DECIMAL_PLACES"),
+      ) ?? selects[3];
     const trigger = selectEl.querySelector(
       ".custom-select-trigger",
     ) as HTMLElement;
@@ -82,8 +89,15 @@ describe("LaneViewInspectorComponent", () => {
   });
 
   it("should bind insetLapDecimalPlaces and emit change on selection", () => {
+    const selects = Array.from(
+      fixture.nativeElement.querySelectorAll("app-custom-select"),
+    ) as HTMLElement[];
     const selectEl =
-      fixture.nativeElement.querySelectorAll("app-custom-select")[3];
+      selects.find((el) =>
+        el
+          .closest(".inspector-section")
+          ?.textContent?.includes("UE_INSPECTOR_LANE_VIEW_LAP_DECIMAL_PLACES"),
+      ) ?? selects[4];
     const trigger = selectEl.querySelector(
       ".custom-select-trigger",
     ) as HTMLElement;
@@ -118,7 +132,15 @@ describe("LaneViewInspectorComponent", () => {
   });
 
   it("should trigger loadLocalFonts on font service when select element is focused", () => {
-    const selectEl = fixture.nativeElement.querySelector("app-custom-select");
+    const selects = Array.from(
+      fixture.nativeElement.querySelectorAll("app-custom-select"),
+    ) as HTMLElement[];
+    const selectEl =
+      selects.find((el) =>
+        el
+          .closest(".inspector-section")
+          ?.textContent?.includes("UE_INSPECTOR_FONT_FAMILY"),
+      ) ?? selects[1];
     selectEl.dispatchEvent(new Event("focus"));
     expect(fontServiceSpy.loadLocalFonts).toHaveBeenCalled();
   });
@@ -366,9 +388,29 @@ describe("LaneViewInspectorComponent", () => {
     expect(component.settings().highlightRowOnLap).toBeFalse();
     expect(component.highlightRowOnLap).toBeFalse();
     expect(changeSpy).toHaveBeenCalled();
+
+    expect(component.highlightLapStyle).toBe("none");
+    component.highlightLapStyle = "shimmer";
+    expect(component.settings().highlightLapStyle).toBe("shimmer");
+    expect(component.highlightLapStyle).toBe("shimmer");
+    expect(component.highlightRowOnLap).toBeTrue();
+    expect(changeSpy).toHaveBeenCalled();
+
+    // Re-enable via highlightRowOnLap = true defaults to shimmer
+    component.highlightRowOnLap = false;
+    expect(component.highlightLapStyle).toBe("none");
+    component.highlightRowOnLap = true;
+    expect(component.highlightLapStyle).toBe("shimmer");
+
+    // Legacy settings without highlightLapStyle
+    delete (component.settings() as any).highlightLapStyle;
+    component.settings().highlightRowOnLap = true;
+    expect(component.highlightLapStyle).toBe("classic");
+    component.settings().highlightRowOnLap = false;
+    expect(component.highlightLapStyle).toBe("none");
   });
 
-  it("should toggle sortByStandings and highlightRowOnLap in template", () => {
+  it("should toggle sortByStandings in template and update highlightLapStyle in template", () => {
     const sortCheckbox = fixture.nativeElement.querySelector(
       "#help-raceday-sort input[type='checkbox']",
     ) as HTMLInputElement;
@@ -377,11 +419,11 @@ describe("LaneViewInspectorComponent", () => {
     fixture.detectChanges();
     expect(component.sortByStandings).toBeFalse();
 
-    const highlightCheckbox = fixture.nativeElement.querySelector(
-      "#help-raceday-highlight input[type='checkbox']",
-    ) as HTMLInputElement;
-    expect(highlightCheckbox).toBeTruthy();
-    highlightCheckbox.click();
+    const highlightSelect = fixture.nativeElement.querySelector(
+      "#help-raceday-highlight app-custom-select",
+    );
+    expect(highlightSelect).toBeTruthy();
+    component.highlightLapStyle = "none";
     fixture.detectChanges();
     expect(component.highlightRowOnLap).toBeFalse();
   });

@@ -138,4 +138,39 @@ describe("ui-editor-state.utils", () => {
     expect(comp.editingState.themes).toEqual(comp.displayThemes);
     expect(comp.editingState.themes).not.toBe(comp.displayThemes);
   });
+
+  it("should clone and compare highlightLapStyle with legacy fallback", () => {
+    const s1 = new Settings();
+    s1.highlightLapStyle = "shimmer";
+    s1.highlightPracticeLapStyle = "glow-border";
+
+    const cloned = cloneSettings(s1);
+    expect(cloned.highlightLapStyle).toBe("shimmer");
+    expect(cloned.highlightPracticeLapStyle).toBe("glow-border");
+
+    // Legacy settings without highlightLapStyle
+    const legacyTrue: any = {
+      highlightRowOnLap: true,
+      highlightPracticeRowOnLap: true,
+    };
+    const clonedLegacyTrue = cloneSettings(legacyTrue);
+    expect(clonedLegacyTrue.highlightLapStyle).toBe("classic");
+    expect(clonedLegacyTrue.highlightPracticeLapStyle).toBe("classic");
+
+    const legacyFalse: any = {
+      highlightRowOnLap: false,
+      highlightPracticeRowOnLap: false,
+    };
+    const clonedLegacyFalse = cloneSettings(legacyFalse);
+    expect(clonedLegacyFalse.highlightLapStyle).toBe("none");
+    expect(clonedLegacyFalse.highlightPracticeLapStyle).toBe("none");
+
+    const s2 = new Settings();
+    s2.highlightLapStyle = "shimmer";
+    s2.highlightPracticeLapStyle = "glow-border";
+    expect(areSettingsEqual(s1, s2)).toBeTrue();
+
+    s2.highlightLapStyle = "full-glow";
+    expect(areSettingsEqual(s1, s2)).toBeFalse();
+  });
 });

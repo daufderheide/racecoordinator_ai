@@ -20,9 +20,10 @@ import {
   CustomOptionComponent,
   CustomSelectComponent,
 } from "@app/components/shared/custom-select/custom-select.component";
-import { AbsoluteWidgetNode } from "@app/models/settings";
+import { AbsoluteWidgetNode, HighlightLapStyle } from "@app/models/settings";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { GhostBenchmarkType } from "@app/services/ghost-pacing.service";
+import { isColorLight } from "@app/utils/color.utils";
 
 @Component({
   standalone: true,
@@ -45,6 +46,31 @@ import { GhostBenchmarkType } from "@app/services/ghost-pacing.service";
 export class RacedayLaneViewComponent implements AfterViewInit, OnDestroy {
   parent = input<any>(undefined);
   widget = input<AbsoluteWidgetNode | null>(null);
+
+  get highlightLapStyle(): HighlightLapStyle {
+    const customStyle = this.widget()?.customSettings?.[
+      "highlightLapStyle"
+    ] as HighlightLapStyle;
+    if (customStyle) {
+      return customStyle;
+    }
+    const highlightRow = this.widget()?.customSettings?.["highlightRowOnLap"];
+    if (highlightRow === false) {
+      return "none";
+    }
+    if (highlightRow === true) {
+      return "classic";
+    }
+    return this.parent()?.highlightLapStyle || "classic";
+  }
+
+  isLaneColorLight(hd: any): boolean {
+    if (this.parent()?.isLaneColorLight) {
+      return Boolean(this.parent().isLaneColorLight(hd));
+    }
+    const bg = this.parent()?.getLaneColor?.(hd, "background_color");
+    return isColorLight(bg);
+  }
 
   private laneViewContainer =
     viewChild<ElementRef<HTMLElement>>("laneViewContainer");

@@ -46,6 +46,16 @@ export class SettingsService {
             settings.customExportTemplatePath || "custom_export_template.xlsx";
         }
 
+        // Backfill: Migrate highlightLapStyle if not already set in stored settings
+        if (parsed.highlightLapStyle === undefined) {
+          settings.highlightLapStyle =
+            parsed.highlightRowOnLap === false ? "none" : "classic";
+        }
+        if (parsed.highlightPracticeLapStyle === undefined) {
+          settings.highlightPracticeLapStyle =
+            parsed.highlightPracticeRowOnLap === false ? "none" : "classic";
+        }
+
         return settings;
       } catch (e) {
         this.logger.error("Error parsing settings from localStorage", e);

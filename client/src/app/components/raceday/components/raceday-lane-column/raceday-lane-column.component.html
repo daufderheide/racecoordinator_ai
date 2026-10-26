@@ -11,6 +11,28 @@
   "
   [class.header-widget-card]="isHeaderWidget"
   [class.highlight]="isHighlighted"
+  [class.highlight-style-full-glow]="
+    isHighlighted && highlightLapStyle === 'full-glow'
+  "
+  [class.highlight-style-glow-border]="
+    isHighlighted && highlightLapStyle === 'glow-border'
+  "
+  [class.highlight-style-tint-wash]="
+    isHighlighted && highlightLapStyle === 'tint-wash'
+  "
+  [class.highlight-style-shimmer]="
+    isHighlighted && highlightLapStyle === 'shimmer'
+  "
+  [class.highlight-style-scale-pulse]="
+    isHighlighted && highlightLapStyle === 'scale-pulse'
+  "
+  [class.highlight-style-adaptive-dip]="
+    isHighlighted && highlightLapStyle === 'adaptive-dip'
+  "
+  [class.highlight-style-classic]="
+    isHighlighted && highlightLapStyle === 'classic'
+  "
+  [class.is-light-lane]="isLightBackground"
   [attr.title]="cardTooltip"
   (click)="onCardClick($event)"
   [style.background]="backgroundColor"

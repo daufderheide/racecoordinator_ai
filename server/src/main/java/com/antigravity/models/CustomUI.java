@@ -164,7 +164,7 @@ public class CustomUI extends Model {
             + "\"width\":1920,\"height\":751,\"zIndex\":111,\"scaleMode\":\"auto\","
             + "\"fontFamily\":\"\",\"textColor\":\"\",\"backgroundColor\":\"\","
             + "\"fontSize\":24,\"textScaleFactor\":1,\"customSettings\":{"
-            + "\"isVertical\":false,\"timeDecimalPlaces\":3,\"lapDecimalPlaces\":2,"
+            + "\"isVertical\":false,\"highlightLapStyle\":\"shimmer\",\"highlightRowOnLap\":true,\"timeDecimalPlaces\":3,\"lapDecimalPlaces\":2,"
             + "\"columnFontFamily\":\"\",\"columnFontSize\":24,\"columnTextColor\":\"\","
             + "\"dataFontFamily\":\"\",\"dataFontSize\":54,\"dataTextColor\":\"\","
             + "\"insetTimeDecimalPlaces\":3,\"insetLapDecimalPlaces\":2,"
@@ -209,7 +209,7 @@ public class CustomUI extends Model {
             + "{\"id\":\"widget-branding\",\"widgetType\":\"branding\",\"x\":0,\"y\":38,\"width\":469,\"height\":111,\"zIndex\":206,\"scaleMode\":\"auto\",\"fontFamily\":\"\",\"fontSize\":24,\"textColor\":\"\",\"textScaleFactor\":1,\"backgroundColor\":\"\"},"
             + "{\"backgroundColor\":\"\",\"fontFamily\":\"\",\"fontSize\":24,\"height\":111,\"id\":\"widget-qr\",\"scaleMode\":\"auto\",\"textColor\":\"\",\"textScaleFactor\":1,\"widgetType\":\"qr\",\"width\":132,\"x\":469,\"y\":38,\"zIndex\":217},"
             + "{\"id\":\"widget-1783269768449\",\"widgetType\":\"flag\",\"x\":601,\"y\":38,\"width\":178,\"height\":111,\"zIndex\":212,\"scaleMode\":\"auto\",\"fontFamily\":\"\",\"textColor\":\"\",\"backgroundColor\":\"\",\"fontSize\":24,\"textScaleFactor\":1},"
-            + "{\"id\":\"widget-1783269787601\",\"widgetType\":\"lane-view\",\"x\":0,\"y\":149,\"width\":1920,\"height\":931,\"zIndex\":180,\"scaleMode\":\"auto\",\"fontFamily\":\"\",\"textColor\":\"\",\"backgroundColor\":\"\",\"fontSize\":24,\"textScaleFactor\":1,\"customSettings\":{\"isVertical\":true,\"sortByStandings\":true,\"highlightRowOnLap\":true,\"timeDecimalPlaces\":3,\"lapDecimalPlaces\":0,\"columnFontFamily\":\"\",\"columnFontSize\":24,\"columnTextColor\":\"\",\"dataFontFamily\":\"\",\"dataFontSize\":54,\"dataTextColor\":\"\",\"insetTimeDecimalPlaces\":3,\"insetLapDecimalPlaces\":2,\"insetFontFamily\":\"\",\"insetFontSize\":24,\"insetTextColor\":\"\"}},"
+            + "{\"id\":\"widget-1783269787601\",\"widgetType\":\"lane-view\",\"x\":0,\"y\":149,\"width\":1920,\"height\":931,\"zIndex\":180,\"scaleMode\":\"auto\",\"fontFamily\":\"\",\"textColor\":\"\",\"backgroundColor\":\"\",\"fontSize\":24,\"textScaleFactor\":1,\"customSettings\":{\"isVertical\":true,\"sortByStandings\":true,\"highlightRowOnLap\":true,\"highlightLapStyle\":\"shimmer\",\"timeDecimalPlaces\":3,\"lapDecimalPlaces\":0,\"columnFontFamily\":\"\",\"columnFontSize\":24,\"columnTextColor\":\"\",\"dataFontFamily\":\"\",\"dataFontSize\":54,\"dataTextColor\":\"\",\"insetTimeDecimalPlaces\":3,\"insetLapDecimalPlaces\":2,\"insetFontFamily\":\"\",\"insetFontSize\":24,\"insetTextColor\":\"\"}},"
             + "{\"id\":\"widget-countdown\",\"widgetType\":\"countdown\",\"x\":404,\"y\":386,\"width\":1111,\"height\":298,\"zIndex\":2000,\"scaleMode\":\"auto\",\"customSettings\":{\"orientation\":\"horizontal\",\"lampScale\":1.0,\"blurArea\":\"fullscreen\",\"blurAmount\":50,\"lampSizingMode\":\"custom\",\"previewLampCount\":5,\"maxLamps\":5,\"fadeIn\":true,\"glowEffect\":true,\"glowOverlap\":30,\"glowRedOverlap\":30,\"glowGreenOverlap\":25}}],\"baseWidth\":1920,\"baseHeight\":1080,\"aspectRatio\":\"16:9\",\"scaleMode\":\"stretch\"}";
     String columnsJson =
         "[\"laneNumber\",\"lastLapTime\",\"bestLapTime\",\"lastLaps\",\"lapCount\"]";
@@ -258,7 +258,7 @@ public class CustomUI extends Model {
             + "\"width\":1920,\"height\":751,\"zIndex\":111,\"scaleMode\":\"auto\","
             + "\"fontFamily\":\"\",\"textColor\":\"\",\"backgroundColor\":\"\","
             + "\"fontSize\":24,\"textScaleFactor\":1,\"customSettings\":{"
-            + "\"isVertical\":false,\"timeDecimalPlaces\":3,\"lapDecimalPlaces\":2,"
+            + "\"isVertical\":false,\"highlightLapStyle\":\"shimmer\",\"highlightRowOnLap\":true,\"timeDecimalPlaces\":3,\"lapDecimalPlaces\":2,"
             + "\"columnFontFamily\":\"\",\"columnFontSize\":24,\"columnTextColor\":\"\","
             + "\"dataFontFamily\":\"\",\"dataFontSize\":54,\"dataTextColor\":\"\","
             + "\"insetTimeDecimalPlaces\":3,\"insetLapDecimalPlaces\":2,"

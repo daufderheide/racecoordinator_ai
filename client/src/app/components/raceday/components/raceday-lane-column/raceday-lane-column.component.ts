@@ -17,7 +17,6 @@ import { FormsModule } from "@angular/forms";
 import { Subscription } from "rxjs";
 import { ColumnDefinition } from "@app/components/raceday/column_definition";
 import { RacedayGhostPacingComponent } from "@app/components/raceday/components/raceday-ghost-pacing/raceday-ghost-pacing.component";
-import { RacedayFormatUtils } from "@app/components/raceday/utils/raceday-format.utils";
 import { RacedayLayoutUtils } from "@app/components/raceday/utils/raceday-layout.utils";
 import {
   CustomOptionComponent,
@@ -25,6 +24,7 @@ import {
 } from "@app/components/shared/custom-select/custom-select.component";
 import {
   AbsoluteWidgetNode,
+  HighlightLapStyle,
   LaneColumnWidgetSettings,
 } from "@app/models/settings";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
@@ -32,6 +32,7 @@ import { DriverHeatData } from "@app/race/driver_heat_data";
 import { CustomWidgetService } from "@app/services/custom-widget.service";
 import { GhostBenchmarkType } from "@app/services/ghost-pacing.service";
 import { TranslationService } from "@app/services/translation.service";
+import { isColorLight } from "@app/utils/color.utils";
 
 import {
   checkCustomWidgetReload,
@@ -51,9 +52,13 @@ import {
   resolveLaneColumnImageUrl,
   resolvePacingBenchmarkType,
   resolvePacingDecimalPlaces,
-  resolveTargetDriver,
 } from "./raceday-lane-column.utils";
-import { isOverallOrSeedDataSource } from "./raceday-lane-column-driver.helper";
+import {
+  isLaneColumnExtraGridRow,
+  isOverallOrSeedDataSource,
+  LaneColumnDriverCache,
+  resolveLaneColumnEmptyRowsMode,
+} from "./raceday-lane-column-driver.helper";
 import {
   applyLaneColumnLastLapsFit,
   deleteLaneColumnAnchor,
@@ -124,6 +129,7 @@ export class RacedayLaneColumnComponent
   private insetCustomInputs = new Map<string, any>();
   private mainCustomInputsRef: { current?: any } = {};
   readonly avatarHelper = new LaneColumnAvatarHelper();
+  readonly driverCache = new LaneColumnDriverCache();
 
   cardRef = viewChild<ElementRef<HTMLElement>>("cardElement");
   lastLapsRef = viewChild<ElementRef<HTMLElement>>("lastLapsContainer");
@@ -151,17 +157,6 @@ export class RacedayLaneColumnComponent
       );
     }
   }
-
-  private cachedTargetDriver?: DriverHeatData;
-  private lastTargetDriverSettings?: LaneColumnWidgetSettings;
-  private lastTargetDriverColumnKey?: string;
-  private lastTargetDriverParent?: any;
-  private lastTargetDriverParticipants?: any;
-  private lastTargetDriverDrivers?: any;
-  private lastTargetDriverRankings?: any;
-  private lastTargetDriverStandings?: any;
-  private lastTargetDriverRaceState?: any;
-  private lastTargetDriverHeatId?: any;
 
   ngAfterViewInit(): void {
     const cardEl = this.cardRef()?.nativeElement;
@@ -217,7 +212,10 @@ export class RacedayLaneColumnComponent
     if (this.isHeaderWidget) {
       return false;
     }
-    if (this.settings.highlightRowOnLap === false) {
+    if (
+      this.highlightLapStyle === "none" ||
+      this.settings.highlightRowOnLap === false
+    ) {
       return false;
     }
     const driverId = this.targetDriver?.objectId;
@@ -225,6 +223,23 @@ export class RacedayLaneColumnComponent
       return false;
     }
     return Boolean(this.parent()?.highlightedDrivers?.has(driverId));
+  }
+
+  get highlightLapStyle(): HighlightLapStyle {
+    if (this.settings?.highlightLapStyle) {
+      return this.settings.highlightLapStyle;
+    }
+    if (this.settings?.highlightRowOnLap === false) {
+      return "none";
+    }
+    if (this.settings?.highlightRowOnLap === true) {
+      return "classic";
+    }
+    return this.parent()?.highlightLapStyle || "classic";
+  }
+
+  get isLightBackground(): boolean {
+    return isColorLight(this.backgroundColor);
   }
 
   get columnKey(): string {
@@ -263,108 +278,32 @@ export class RacedayLaneColumnComponent
     return false;
   }
 
-  private syntheticHeatDrivers = new Map<string, DriverHeatData>();
-
-  private getOrCreateSyntheticDriver(participant: any): DriverHeatData {
-    let synth = this.syntheticHeatDrivers.get(participant.objectId);
-    if (!synth || synth.participant !== participant) {
-      synth = new DriverHeatData(
-        participant.objectId,
-        participant,
-        -1,
-        participant.driver,
-      );
-      this.syntheticHeatDrivers.set(participant.objectId, synth);
-    }
-    return synth;
-  }
-
   get targetDriver(): DriverHeatData | undefined {
-    const parent = this.parent();
-    const settings = this.settings;
-    const colKey = this.columnKey;
-    const drivers =
-      parent?.sortedHeatDrivers ||
-      parent?.heatDrivers ||
-      parent?.heat?.heatDrivers;
-    const participants = parent?.participants;
-    const rankings = parent?.driverRankings;
-    const standings = parent?.heat?.standings;
-    const raceState = parent?.raceState;
-    const heatId = parent?.heat?.objectId;
-
-    if (
-      this.cachedTargetDriver !== undefined &&
-      this.lastTargetDriverSettings === settings &&
-      this.lastTargetDriverColumnKey === colKey &&
-      this.lastTargetDriverParent === parent &&
-      this.lastTargetDriverParticipants === participants &&
-      this.lastTargetDriverDrivers === drivers &&
-      this.lastTargetDriverRankings === rankings &&
-      this.lastTargetDriverStandings === standings &&
-      this.lastTargetDriverRaceState === raceState &&
-      this.lastTargetDriverHeatId === heatId
-    ) {
-      return this.cachedTargetDriver;
-    }
-
-    this.lastTargetDriverSettings = settings;
-    this.lastTargetDriverColumnKey = colKey;
-    this.lastTargetDriverParent = parent;
-    this.lastTargetDriverParticipants = participants;
-    this.lastTargetDriverDrivers = drivers;
-    this.lastTargetDriverRankings = rankings;
-    this.lastTargetDriverStandings = standings;
-    this.lastTargetDriverRaceState = raceState;
-    this.lastTargetDriverHeatId = heatId;
-
-    this.cachedTargetDriver = resolveTargetDriver(
-      settings,
-      colKey,
-      parent,
-      (p) => this.getOrCreateSyntheticDriver(p),
+    return this.driverCache.resolve(
+      this.settings,
+      this.columnKey,
+      this.parent(),
     );
-    return this.cachedTargetDriver;
   }
 
   get emptyRowsMode(): "remove" | "empty" | "blank" {
-    if (this.settings?.emptyRowsMode) {
-      return this.settings.emptyRowsMode;
-    }
-    const isOverallOrSeed = isOverallOrSeedDataSource(
+    return resolveLaneColumnEmptyRowsMode(
       this.settings,
       this.parent(),
       this.bindingMode,
     );
-    return isOverallOrSeed ? "remove" : "empty";
   }
 
   get isExtraGridRow(): boolean {
-    const parent = this.parent();
-    const isEditor = Boolean(
-      (typeof parent?.isUIEditorMode === "function"
-        ? parent.isUIEditorMode()
-        : parent?.isUIEditorMode) || parent?.isLayoutCustomizing,
+    return isLaneColumnExtraGridRow(
+      this.parent(),
+      this.settings,
+      this.targetDriver,
     );
-    if (isEditor) {
-      return false;
-    }
-    const settings = this.settings;
-    if (!settings?.gridId) {
-      return false;
-    }
-    if (settings?.isHeaderWidget) {
-      return false;
-    }
-    const targetDriver = this.targetDriver;
-    return !targetDriver || RacedayFormatUtils.isEmptyDriver(targetDriver);
   }
 
   get isOverallNoDataRow(): boolean {
-    if (this.emptyRowsMode !== "remove") {
-      return false;
-    }
-    return this.isExtraGridRow;
+    return this.emptyRowsMode === "remove" && this.isExtraGridRow;
   }
 
   get backgroundColor(): string {

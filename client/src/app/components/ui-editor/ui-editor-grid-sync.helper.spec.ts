@@ -252,6 +252,21 @@ describe("ui-editor-grid-sync.helper", () => {
 
       expect(masterWidget.customSettings.gapMode).toBeUndefined();
     });
+
+    it("should do nothing if targetWidget belongs to a different gridId than activeGridSession", () => {
+      const otherGridWidget = {
+        id: "w-other-grid",
+        widgetType: "lane-column",
+        customSettings: {
+          gridId: "grid-2",
+          gridMasterId: "w-other-master",
+          columnKey: "lapCount",
+        },
+      };
+      const initialWidgetsLength = mockLayout.widgets.length;
+      handleGridSessionWidgetSync(mockComp, mockLayout, otherGridWidget);
+      expect(mockLayout.widgets.length).toBe(initialWidgetsLength);
+    });
   });
 
   describe("handleColumnGapSettingsSync", () => {

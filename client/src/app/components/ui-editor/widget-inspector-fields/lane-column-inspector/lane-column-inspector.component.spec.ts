@@ -1151,6 +1151,20 @@ describe("LaneColumnInspectorComponent", () => {
       component.highlightRowOnLap = false;
       expect(mockSettings.highlightRowOnLap).toBeFalse();
       expect(component.highlightRowOnLap).toBeFalse();
+      expect(component.highlightLapStyle).toBe("none");
+
+      component.highlightLapStyle = "glow-border";
+      expect(mockSettings.highlightLapStyle).toBe("glow-border");
+      expect(component.highlightLapStyle).toBe("glow-border");
+      expect(component.highlightRowOnLap).toBeTrue();
+
+      component.highlightLapStyle = "none";
+      expect(mockSettings.highlightLapStyle).toBe("none");
+      expect(component.highlightRowOnLap).toBeFalse();
+
+      component.highlightRowOnLap = true;
+      expect(component.highlightRowOnLap).toBeTrue();
+      expect(component.highlightLapStyle).toBe("shimmer");
     });
 
     it("should handle linkColumns getter and setter with _linkColumnsChanged flag", () => {
@@ -1233,6 +1247,16 @@ describe("LaneColumnInspectorComponent", () => {
       component.applyTimeFormatToAll();
       expect(mockSettings._syncAction).toBe("time");
       expect(mockSettings._forceAllColumns).toBeTrue();
+
+      component.applyHighlightStyleToAll();
+      expect(mockSettings._syncAction).toBe("highlight");
+      expect(mockSettings._forceAllColumns).toBeTrue();
+
+      component.gridHighlightLapStyle = "glow-border";
+      expect(mockSettings.highlightLapStyle).toBe("glow-border");
+      expect(mockSettings._syncAction).toBe("highlight");
+      expect(mockSettings._forceAllColumns).toBeTrue();
+      expect(component.gridHighlightLapStyle).toBe("glow-border");
 
       component.resetColor("textColor");
       expect(mockSettings._syncAction).toBe("value");
