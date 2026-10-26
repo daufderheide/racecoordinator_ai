@@ -5184,6 +5184,7 @@ export class DefaultRacedayComponent
     heatDriver: DriverHeatData,
     column: ColumnDefinition,
     anchor?: string,
+    countOverride?: number,
   ): LapDisplayInfo[] {
     const laps = heatDriver.lapTimes || [];
     const lapsDetails = heatDriver.lapsWithDetails || [];
@@ -5233,7 +5234,15 @@ export class DefaultRacedayComponent
           ? Number(ctx.laneViewWidgetSettings.timeDecimalPlaces)
           : 3;
 
-    for (let i = 1; i <= 5; i++) {
+    const lapsCount =
+      countOverride !== undefined && countOverride > 0
+        ? countOverride
+        : ctx.laneViewWidgetSettings?.lastLapsCount !== undefined &&
+            Number(ctx.laneViewWidgetSettings.lastLapsCount) > 0
+          ? Math.round(Number(ctx.laneViewWidgetSettings.lastLapsCount))
+          : 5;
+
+    for (let i = 1; i <= lapsCount; i++) {
       const index = n - 1 - i;
       const val = index >= 0 && laps[index] > 0 ? laps[index] : 0;
 

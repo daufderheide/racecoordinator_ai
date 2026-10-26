@@ -47,6 +47,19 @@ describe("LaneGridStyleHelper", () => {
     expect(updated[1].customSettings?.["headerTextColor"]).toBe("#ff0000");
   });
 
+  it("should sync time properties including lastLapsCount across columns", () => {
+    const updated = LaneGridStyleHelper.syncCrossColumnProperty(
+      gridId,
+      "time",
+      { timeDecimalPlaces: 3, lastLapsCount: 7 },
+      widgets,
+    );
+    expect(updated[0].customSettings?.["timeDecimalPlaces"]).toBe(3);
+    expect(updated[0].customSettings?.["lastLapsCount"]).toBe(7);
+    expect(updated[1].customSettings?.["timeDecimalPlaces"]).toBe(3);
+    expect(updated[1].customSettings?.["lastLapsCount"]).toBe(7);
+  });
+
   it("should sync scaleMode when sourceScaleMode is provided to syncCrossColumnProperty", () => {
     const updated = LaneGridStyleHelper.syncCrossColumnProperty(
       gridId,
@@ -742,6 +755,7 @@ describe("LaneGridStyleHelper", () => {
           timeSubsecondMode: "always",
           timeSubsecondThreshold: 5,
           timeSubsecondDecimals: 3,
+          lastLapsCount: 8,
           linkColumns: true,
         },
       };
@@ -788,6 +802,7 @@ describe("LaneGridStyleHelper", () => {
       expect(newTarget.customSettings?.["timeSubsecondMode"]).toBe("always");
       expect(newTarget.customSettings?.["timeSubsecondThreshold"]).toBe(5);
       expect(newTarget.customSettings?.["timeSubsecondDecimals"]).toBe(3);
+      expect(newTarget.customSettings?.["lastLapsCount"]).toBe(8);
       expect(newTarget.scaleMode).toBe("fixed");
     });
 

@@ -129,6 +129,14 @@ Each gap widget can be customized in the Column Inspector with two key configura
 
 For complete mathematical formulas, finish type adaptations, and timing specifications, see the [Gap Calculations Guide](gap-calculations.md).
 
+#### Last Laps Widget (`lastLaps`)
+
+The **Last Laps** (`lastLaps`) widget displays recent lap times completed by the driver in the active heat:
+
+- **Last Laps to Display**: Configures how many recent laps to render within the widget (slider range 1–20, input range 1–50). Defaults to `5`.
+- **Dynamic Sizing & Fit**: The card automatically scales font sizes and line heights to fit the configured number of laps cleanly within the allocated column geometry.
+- **Cross-Grid Synchronization**: In lane grids, configuring or applying time formats synchronizes the last laps display count across all competing lanes.
+
 ### Grid Sorting & Interaction Matrix
 
 The **Grid Sorting** dropdown on the Grid tab controls the row ordering. Its behavior depends directly on whether the grid's **Data Source** is set to **Heat Data** or **Overall Data**:

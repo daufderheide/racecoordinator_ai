@@ -2285,6 +2285,8 @@
   "UE_GAP_MODE_ALWAYS_TIME": "Always Time",
   "UE_GAP_MODE_LAPS_AND_TIME": "Laps and Time",
   "UE_GAP_MODE_ALWAYS_LAPS": "Always Laps",
+  "UE_INSPECTOR_LAST_LAPS_SECTION": "Last Laps Configuration",
+  "UE_INSPECTOR_LAST_LAPS_COUNT": "Last Laps to Display",
   "UE_INSPECTOR_ONLY_SHOW_SEGMENTS_WHEN_NOT_RACING": "Only show decimals when not racing",
   "UE_INSPECTOR_FONT_BOLD": "Bold",
   "UE_INSPECTOR_FONT_COURIER": "Courier (Monospace)",

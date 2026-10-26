@@ -451,6 +451,7 @@ describe("LaneColumnInsetHelper", () => {
         insetLapDecimalPlaces: -2,
         timeSubsecondThreshold: -5,
         timeSubsecondDecimals: 10,
+        lastLapsCount: 12,
       };
       LaneColumnInsetHelper.sanitizeSettings(s, true);
       expect(s.timeDecimalPlaces).toBe(3);
@@ -460,6 +461,13 @@ describe("LaneColumnInsetHelper", () => {
       expect(s.insetLapDecimalPlaces).toBe(0);
       expect(s.timeSubsecondThreshold).toBe(0);
       expect(s.timeSubsecondDecimals).toBe(3);
+      expect(s.lastLapsCount).toBe(12);
+
+      const invalidSettings = {
+        lastLapsCount: -5,
+      };
+      LaneColumnInsetHelper.sanitizeSettings(invalidSettings, true);
+      expect(invalidSettings.lastLapsCount).toBe(5);
     });
 
     it("should manage placed and effective selected anchors", () => {

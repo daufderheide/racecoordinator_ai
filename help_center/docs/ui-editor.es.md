@@ -129,6 +129,14 @@ Cada widget de diferencia se puede personalizar en el Inspector de Columnas medi
 
 Para conocer las fórmulas matemáticas completas y especificaciones de cronometraje, consulte la [Guía de Cálculos de Diferencias](gap-calculations.md).
 
+#### Widget de Últimas Vueltas (`lastLaps`)
+
+El widget **Últimas Vueltas** (`lastLaps`) muestra los tiempos de las vueltas recientes completadas por el piloto en la manga activa:
+
+- **Últimas vueltas a mostrar**: Configura cuántas vueltas recientes mostrar dentro del widget (control deslizante 1–20, campo numérico 1–50). El valor predeterminado es `5`.
+- **Ajuste y escala dinámicos**: La tarjeta escala automáticamente los tamaños de fuente y el espaciado para ajustar limpiamente la cantidad configurada de vueltas dentro de la geometría asignada.
+- **Sincronización en cuadrícula**: En cuadrículas de carriles, configurar o aplicar formatos de tiempo sincroniza la cantidad de vueltas mostradas en todos los carriles participantes.
+
 ### Ordenación de Cuadrícula y Matriz de Interacción
 
 El menú desplegable **Ordenación de Cuadrícula** en la pestaña Cuadrícula controla el orden de las filas. Su comportamiento depende directamente de si la **Fuente de datos** está establecida en **Datos de Ronda** o **Datos Generales**:

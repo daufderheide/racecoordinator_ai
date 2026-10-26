@@ -2285,6 +2285,8 @@
   "UE_GAP_MODE_ALWAYS_TIME": "Sempre tempo",
   "UE_GAP_MODE_LAPS_AND_TIME": "Voltas e tempo",
   "UE_GAP_MODE_ALWAYS_LAPS": "Sempre voltas",
+  "UE_INSPECTOR_LAST_LAPS_SECTION": "Configuração das últimas voltas",
+  "UE_INSPECTOR_LAST_LAPS_COUNT": "Últimas voltas a exibir",
   "UE_INSPECTOR_ONLY_SHOW_SEGMENTS_WHEN_NOT_RACING": "Mostrar decimais apenas quando não estiver correndo",
   "UE_INSPECTOR_FONT_BOLD": "Negrito",
   "UE_INSPECTOR_FONT_COURIER": "Courier (Monoespaçado)",

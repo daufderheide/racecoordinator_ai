@@ -129,6 +129,14 @@ Cada widget de diferença pode ser configurado no Inspetor de Colunas por meio d
 
 Para consultar as fórmulas matemáticas completas e as especificações de cronometragem, consulte o [Guia de Cálculos de Diferenças](gap-calculations.md).
 
+#### Widget de Últimas Voltas (`lastLaps`)
+
+O widget **Últimas Voltas** (`lastLaps`) exibe os tempos das voltas recentes completadas pelo piloto na bateria ativa:
+
+- **Últimas voltas a exibir**: Configura quantas voltas recentes renderizar no widget (controle deslizante 1–20, campo numérico 1–50). O padrão é `5`.
+- **Ajuste e dimensionamento dinâmicos**: O cartão ajusta automaticamente os tamanhos de fonte e espaçamento para encaixar perfeitamente a quantidade configurada de voltas na geometria da coluna.
+- **Sincronização na grade**: Em grades de pistas, configurar ou aplicar formatos de tempo sincroniza o total de últimas voltas em todas as pistas concorrentes.
+
 ### Ordenação da Grade e Matriz de Interação
 
 O menu suspenso **Classificação da Grade** na aba Grade controla a ordem das linhas. Seu comportamento depende diretamente da **Origem de dados** selecionada (**Dados da Bateria** ou **Dados Gerais**):

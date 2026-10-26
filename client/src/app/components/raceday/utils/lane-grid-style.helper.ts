@@ -88,6 +88,7 @@ export class LaneGridStyleHelper {
           "timeSubsecondMode",
           "timeSubsecondThreshold",
           "timeSubsecondDecimals",
+          "lastLapsCount",
         ];
     }
   }
@@ -480,6 +481,7 @@ export class LaneGridStyleHelper {
       "timeSubsecondMode",
       "timeSubsecondThreshold",
       "timeSubsecondDecimals",
+      "lastLapsCount",
     ];
     for (const key of copyKeys) {
       if (refSettings[key] !== undefined) {

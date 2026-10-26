@@ -2285,6 +2285,8 @@
   "UE_GAP_MODE_ALWAYS_TIME": "Immer Zeit",
   "UE_GAP_MODE_LAPS_AND_TIME": "Runden und Zeit",
   "UE_GAP_MODE_ALWAYS_LAPS": "Immer Runden",
+  "UE_INSPECTOR_LAST_LAPS_SECTION": "Konfiguration der letzten Runden",
+  "UE_INSPECTOR_LAST_LAPS_COUNT": "Anzuzeigende letzte Runden",
   "UE_INSPECTOR_ONLY_SHOW_SEGMENTS_WHEN_NOT_RACING": "Dezimalstellen nur anzeigen, wenn kein Rennen läuft",
   "UE_INSPECTOR_FONT_BOLD": "Fett",
   "UE_INSPECTOR_FONT_COURIER": "Courier (Monospace)",

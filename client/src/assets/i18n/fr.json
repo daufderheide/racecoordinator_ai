@@ -2285,6 +2285,8 @@
   "UE_GAP_MODE_ALWAYS_TIME": "Toujours temps",
   "UE_GAP_MODE_LAPS_AND_TIME": "Tours et temps",
   "UE_GAP_MODE_ALWAYS_LAPS": "Toujours tours",
+  "UE_INSPECTOR_LAST_LAPS_SECTION": "Configuration des derniers tours",
+  "UE_INSPECTOR_LAST_LAPS_COUNT": "Derniers tours à afficher",
   "UE_INSPECTOR_ONLY_SHOW_SEGMENTS_WHEN_NOT_RACING": "Afficher les décimales uniquement lorsqu'il n'y a pas de course",
   "UE_INSPECTOR_FONT_BOLD": "Gras",
   "UE_INSPECTOR_FONT_COURIER": "Courier (Monospace)",

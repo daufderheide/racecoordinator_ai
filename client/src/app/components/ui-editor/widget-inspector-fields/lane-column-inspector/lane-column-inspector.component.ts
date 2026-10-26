@@ -700,6 +700,26 @@ export class LaneColumnInspectorComponent extends LaneColumnInspectorGridBase {
     );
   }
 
+  get isLastLapsColumn(): boolean {
+    return (this.currentSettings["columnKey"] || "") === "lastLaps";
+  }
+
+  get lastLapsCount(): number {
+    const val = this.currentSettings["lastLapsCount"];
+    return val !== undefined &&
+      val !== null &&
+      !isNaN(Number(val)) &&
+      Number(val) > 0
+      ? Math.max(1, Math.round(Number(val)))
+      : 5;
+  }
+
+  set lastLapsCount(value: any) {
+    const num = Math.round(Number(value));
+    this.currentSettings["lastLapsCount"] = num > 0 ? num : 5;
+    this.onFieldChange();
+  }
+
   get isGapColumn(): boolean {
     const key = this.currentSettings["columnKey"] || "";
     return (

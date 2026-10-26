@@ -1752,5 +1752,39 @@ describe("raceday-lane-column-interaction.helper", () => {
         "24px",
       );
     });
+
+    it("should honor configured lastLapsCount in custom scaling mode", () => {
+      const el = document.createElement("div");
+      const onFit = jasmine.createSpy("onFit");
+      const widget: any = { scaleMode: "fixed", fontSize: 20 };
+      applyLaneColumnLastLapsFit(
+        el,
+        { valueFontSize: 20, lastLapsCount: 6 } as any,
+        widget,
+        0,
+        true,
+        onFit,
+      );
+      expect(onFit).toHaveBeenCalledWith(6);
+    });
+
+    it("should pass configured lastLapsCount to fitColumnLastLaps in fit scaling mode", () => {
+      const el = document.createElement("div");
+      Object.defineProperty(el, "clientWidth", { value: 300 });
+      Object.defineProperty(el, "clientHeight", { value: 400 });
+      const onFit = jasmine.createSpy("onFit");
+      const widget: any = { scaleMode: "auto" };
+      applyLaneColumnLastLapsFit(
+        el,
+        { lastLapsCount: 4 } as any,
+        widget,
+        10,
+        true,
+        onFit,
+      );
+      expect(onFit).toHaveBeenCalled();
+      const calledLaps = onFit.calls.mostRecent().args[0];
+      expect(calledLaps).toBeLessThanOrEqual(4);
+    });
   });
 });

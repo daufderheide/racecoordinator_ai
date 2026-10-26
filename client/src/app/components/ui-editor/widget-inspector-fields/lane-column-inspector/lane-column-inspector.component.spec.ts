@@ -584,6 +584,56 @@ describe("LaneColumnInspectorComponent", () => {
       expect(mockSettings.columnKey).toBe("gap");
     });
 
+    it("should correctly identify lastLaps column and manage lastLapsCount", () => {
+      mockSettings.columnKey = "driver";
+      expect(component.isLastLapsColumn).toBeFalse();
+
+      mockSettings.columnKey = "lastLaps";
+      expect(component.isLastLapsColumn).toBeTrue();
+      expect(component.lastLapsCount).toBe(5);
+
+      component.lastLapsCount = 10;
+      expect(mockSettings.lastLapsCount).toBe(10);
+      expect(component.lastLapsCount).toBe(10);
+
+      // Handle invalid or zero values gracefully with default 5
+      component.lastLapsCount = 0;
+      expect(component.lastLapsCount).toBe(5);
+
+      component.lastLapsCount = -3;
+      expect(component.lastLapsCount).toBe(5);
+
+      component.lastLapsCount = NaN as any;
+      expect(component.lastLapsCount).toBe(5);
+    });
+
+    it("should render last laps configuration section with slider and number input when isLastLapsColumn is true", async () => {
+      mockSettings.columnKey = "lastLaps";
+      mockSettings.lastLapsCount = 7;
+      fixture.detectChanges();
+      await fixture.whenStable();
+      fixture.detectChanges();
+
+      const titles = fixture.debugElement.queryAll(
+        By.css(".inspector-geometry-title"),
+      );
+      const lastLapsTitle = titles.find((t) =>
+        t.nativeElement.textContent.includes("UE_INSPECTOR_LAST_LAPS_SECTION"),
+      );
+      expect(lastLapsTitle).toBeTruthy();
+
+      const slider = fixture.debugElement.query(
+        By.css('input[type="range"][min="1"][max="20"]'),
+      );
+      const numberInput = fixture.debugElement.query(
+        By.css('input[type="number"][min="1"][max="50"]'),
+      );
+      expect(slider).toBeTruthy();
+      expect(numberInput).toBeTruthy();
+      expect(slider.nativeElement.value).toBe("7");
+      expect(numberInput.nativeElement.value).toBe("7");
+    });
+
     it("should handle inset gap column configuration including legacy keys", () => {
       mockSettings.insets = {};
       expect(component.isInsetGapColumn("top-right")).toBeFalse();

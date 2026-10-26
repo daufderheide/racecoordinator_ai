@@ -129,6 +129,14 @@ Chaque widget d'écart peut être personnalisé dans l'Inspecteur de Colonne via
 
 Pour consulter les formules mathématiques complètes et les spécifications de chronométrage, reportez-vous au [Guide des Calculs d'Écarts](gap-calculations.md).
 
+#### Widget Derniers Tours (`lastLaps`)
+
+Le widget **Derniers Tours** (`lastLaps`) affiche les temps des tours récents réalisés par le pilote dans la manche active :
+
+- **Derniers tours à afficher** : Configure le nombre de tours récents à afficher dans le widget (curseur 1–20, saisie numérique 1–50). La valeur par défaut est `5`.
+- **Ajustement et mise à l'échelle dynamiques** : La carte ajuste automatiquement la taille de police et les interlignes pour intégrer parfaitement le nombre de tours configuré dans la géométrie de la colonne.
+- **Synchronisation de grille** : Dans les grilles de voies, la configuration ou l'application des formats de temps synchronise le nombre de derniers tours affichés sur toutes les voies concurrentes.
+
 ### Tri de Grille & Matrice d'Interaction
 
 Le menu déroulant **Tri de la Grille** dans l'onglet Grille détermine l'ordre des lignes. Son comportement dépend directement du réglage de la **Source de données** (**Données de Série** ou **Données Générales**) :

@@ -947,6 +947,14 @@ export function applyLaneColumnLastLapsFit(
 ): void {
   if (!cardEl) return;
 
+  const configuredLaps =
+    settings.lastLapsCount !== undefined &&
+    settings.lastLapsCount !== null &&
+    !isNaN(Number(settings.lastLapsCount)) &&
+    Number(settings.lastLapsCount) > 0
+      ? Math.max(1, Math.round(Number(settings.lastLapsCount)))
+      : 5;
+
   const baseFontSize =
     widget?.scaleMode === "auto"
       ? 54
@@ -959,7 +967,7 @@ export function applyLaneColumnLastLapsFit(
   const scaleMode = widget?.scaleMode;
   const isCustomScaling = scaleMode !== undefined && scaleMode !== "auto";
   if (isCustomScaling) {
-    setMaxVisibleLaps(allLapsCount || 5);
+    setMaxVisibleLaps(allLapsCount || configuredLaps);
     cardEl.style.setProperty(
       "--lane-col-last-laps-font-size",
       `${baseFontSize}px`,
@@ -969,9 +977,10 @@ export function applyLaneColumnLastLapsFit(
       cardEl,
       isVerticalLapsFlow,
       baseFontSize,
-      allLapsCount,
+      allLapsCount || configuredLaps,
       explicitW,
       explicitH,
+      configuredLaps,
     );
     setMaxVisibleLaps(fit.maxLaps);
     cardEl.style.setProperty(

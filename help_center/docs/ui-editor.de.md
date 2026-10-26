@@ -129,6 +129,14 @@ Jedes Abstands-Widget kann im Spalten-Inspektor über zwei zentrale Optionen kon
 
 Für detaillierte mathematische Formeln und Zeitmessungsspezifikationen siehe den [Leitfaden zu Abstandsberechnungen](gap-calculations.md).
 
+#### Widget für letzte Runden (`lastLaps`)
+
+Das Widget **Letzte Runden** (`lastLaps`) zeigt die zuletzt absolvierten Rundenzeiten des Fahrers im aktuellen Lauf an:
+
+- **Anzuzeigende letzte Runden**: Konfiguriert, wie viele letzte Runden im Widget dargestellt werden sollen (Schieberegler 1–20, Zahleneingabe 1–50). Standardwert ist `5`.
+- **Dynamische Skalierung & Einpassung**: Die Karte passt Schriftgrößen und Zeilenabstände automatisch an, um die konfigurierte Anzahl an Runden sauber in die Spaltengeometrie einzupassen.
+- **Raster-Synchronisation**: In Bahnrastern synchronisiert das Zuweisen von Zeitformaten die Anzahl der angezeigten letzten Runden über alle Bahnen hinweg.
+
 ### Raster-Sortierung & Interaktionsmatrix
 
 Das Dropdown-Menü **Raster-Sortierung** im Reiter „Raster“ steuert die Zeilenreihenfolge. Das Verhalten hängt direkt davon ab, ob die **Datenquelle** des Rasters auf **Lauf-Daten** oder **Gesamtwertung** eingestellt ist:

@@ -192,6 +192,47 @@ describe("DefaultRacedayComponent", () => {
       const result = component.getLastLaps(heatDriver, column);
       expect(result.length).toBe(5);
     });
+
+    it("should honor countOverride when provided", () => {
+      const heatDriver = {
+        lapTimes: [1, 2, 3000, 4000, 5000, 6000, 7000],
+      } as any;
+      const column = {} as any;
+      const result3 = component.getLastLaps(
+        heatDriver,
+        column,
+        "center-center",
+        3,
+      );
+      expect(result3.length).toBe(3);
+
+      const result8 = component.getLastLaps(
+        heatDriver,
+        column,
+        "center-center",
+        8,
+      );
+      expect(result8.length).toBe(8);
+    });
+
+    it("should honor lastLapsCount from laneViewWidgetSettings when countOverride is not provided", () => {
+      const heatDriver = {
+        lapTimes: [1, 2, 3000, 4000, 5000],
+      } as any;
+      const column = {} as any;
+      (component as any).currentRacedayLayout = {
+        widgets: [
+          {
+            widgetType: "lane-column",
+            customSettings: {
+              lastLapsCount: 4,
+            },
+          },
+        ],
+      };
+      const result = component.getLastLaps(heatDriver, column);
+      expect(result.length).toBe(4);
+    });
   });
 
   describe("saveLayout practice vs normal", () => {

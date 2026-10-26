@@ -61,6 +61,7 @@ describe("WIDGET_REGISTRY", () => {
     const laneViewSettings = WIDGET_REGISTRY["lane-view"].defaultSettings!();
     expect(laneViewSettings["isVertical"]).toBe(false);
     expect(laneViewSettings["dataFontSize"]).toBe(54);
+    expect(laneViewSettings["lastLapsCount"]).toBe(5);
 
     const leaderboardSettings =
       WIDGET_REGISTRY["leaderboard"].defaultSettings!();
@@ -122,5 +123,6 @@ describe("WIDGET_REGISTRY", () => {
     expect(laneColumnSettings["insetLapDecimalPlaces"]).toBe(2);
     expect(laneColumnSettings["timeDisplayFormat"]).toBe("dynamic");
     expect(laneColumnSettings["timeSubsecondMode"]).toBe("never");
+    expect(laneColumnSettings["lastLapsCount"]).toBe(5);
   });
 });

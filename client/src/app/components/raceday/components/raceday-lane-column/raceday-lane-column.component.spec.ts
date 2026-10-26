@@ -918,6 +918,26 @@ describe("RacedayLaneColumnComponent", () => {
     expect(laps[4].lapTime).toBe("--.---");
   });
 
+  it("should generate custom number of lastLaps when lastLapsCount is configured", () => {
+    const driverWithLaps = {
+      ...mockDrivers[0],
+      bestLapTime: 7.481,
+      lapTimes: [7.481, 8.123, 7.95, 8.0, 7.8],
+      lapsWithDetails: [],
+    };
+    mockParent.heatDrivers = [driverWithLaps];
+    mockParent.heat.heatDrivers = [driverWithLaps];
+    fixture.componentRef.setInput("parent", mockParent);
+    fixture.componentRef.setInput(
+      "widget",
+      createWidget({ columnKey: "lastLaps", targetIndex: 0, lastLapsCount: 3 }),
+    );
+    fixture.detectChanges();
+
+    const laps = component.getLastLaps();
+    expect(laps.length).toBe(3);
+  });
+
   it("should slice visible last laps according to maxVisibleLaps", () => {
     component.maxVisibleLaps.set(2);
     spyOn(component, "getLastLaps").and.returnValue([

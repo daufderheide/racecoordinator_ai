@@ -2285,6 +2285,8 @@
   "UE_GAP_MODE_ALWAYS_TIME": "Altijd tijd",
   "UE_GAP_MODE_LAPS_AND_TIME": "Ronden en tijd",
   "UE_GAP_MODE_ALWAYS_LAPS": "Altijd ronden",
+  "UE_INSPECTOR_LAST_LAPS_SECTION": "Configuratie van laatste ronden",
+  "UE_INSPECTOR_LAST_LAPS_COUNT": "Weer te geven laatste ronden",
   "UE_INSPECTOR_ONLY_SHOW_SEGMENTS_WHEN_NOT_RACING": "Decimalen alleen weergeven wanneer er niet wordt geracet",
   "UE_INSPECTOR_FONT_BOLD": "Vet",
   "UE_INSPECTOR_FONT_COURIER": "Courier (Monospace)",

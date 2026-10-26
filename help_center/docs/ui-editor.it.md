@@ -129,6 +129,14 @@ Ciascun widget distacco può essere configurato nell'Ispettore Colonne tramite d
 
 Per consultare le formule matematiche complete e le specifiche di cronometraggio, consultare la [Guida ai Calcoli dei Distacchi](gap-calculations.md).
 
+#### Widget Ultimi Giri (`lastLaps`)
+
+Il widget **Ultimi Giri** (`lastLaps`) visualizza i tempi dei giri recenti completati dal pilota nella manche attiva:
+
+- **Ultimi giri da visualizzare**: Configura quanti giri recenti mostrare all'interno del widget (cursore 1–20, inserimento numerico 1–50). Il valore predefinito è `5`.
+- **Ridimensionamento e adattamento dinamico**: La scheda scala automaticamente le dimensioni dei caratteri e le spaziature per adattare ordinatamente il numero configurato di giri nella geometria della colonna.
+- **Sincronizzazione della griglia**: Nelle griglie di corsia, la configurazione o l'applicazione dei formati orari sincronizza il conteggio degli ultimi giri su tutte le corsie in gara.
+
 ### Ordinamento Griglia e Matrice di Interazione
 
 Il menu a discesa **Ordinamento Griglia** nella scheda Griglia controlla l'ordine delle righe. Il suo comportamento dipende direttamente dall'impostazione dell'**Origine dati** (**Dati Manche** o **Dati Generali**):

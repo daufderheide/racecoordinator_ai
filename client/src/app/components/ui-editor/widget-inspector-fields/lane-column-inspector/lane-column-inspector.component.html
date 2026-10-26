@@ -1195,6 +1195,48 @@
       </div>
     }
 
+    @if (isLastLapsColumn) {
+      <hr class="inspector-divider" />
+      <div class="inspector-geometry-title">
+        <span class="material-icons">history</span>
+        {{ "UE_INSPECTOR_LAST_LAPS_SECTION" | translate }}
+      </div>
+      <div class="inspector-section">
+        <div class="inspector-label-row">
+          <label class="inspector-label">{{
+            "UE_INSPECTOR_LAST_LAPS_COUNT" | translate
+          }}</label>
+        </div>
+        <div style="display: flex; gap: 8px; align-items: center">
+          <input
+            type="range"
+            min="1"
+            max="20"
+            step="1"
+            [ngModel]="lastLapsCount"
+            (ngModelChange)="lastLapsCount = $event"
+            class="inspector-slider"
+            style="flex: 1"
+          />
+          <input
+            type="number"
+            min="1"
+            max="50"
+            step="1"
+            autocomplete="off"
+            data-dashlane-ignore="true"
+            data-1p-ignore="true"
+            data-lpignore="true"
+            data-bwignore="true"
+            data-form-type="other"
+            [ngModel]="lastLapsCount"
+            (ngModelChange)="lastLapsCount = $event"
+            class="inspector-number-input"
+          />
+        </div>
+      </div>
+    }
+
     @if (isTotalTimeColumn || isTimeColumn || isLapColumn) {
       <hr class="inspector-divider" />
 

@@ -142,6 +142,7 @@ export interface LaneColumnWidgetSettings {
   valueAlignment: "start" | "center" | "end";
   timeDecimalPlaces: number;
   lapDecimalPlaces: number;
+  lastLapsCount?: number;
   columnDecimals?: Record<string, number>;
   timeDisplayFormat?: TimerDisplayFormat;
   timeSubsecondMode?: TimerSubsecondMode;
