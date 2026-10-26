@@ -76,6 +76,8 @@ public class Theme extends Model {
   private final Map<String, String> slots;
   private final Map<String, AudioConfig> audioSlots;
   private final String uiId;
+  private final String driverStationThemeId;
+  private final String driverViewThemeId;
   private final Map<String, RaceFlag> resolvedFlagCache = new ConcurrentHashMap<>();
 
   @JsonCreator
@@ -85,6 +87,10 @@ public class Theme extends Model {
       @JsonProperty("slots") Map<String, String> slots,
       @JsonProperty("audio_slots") Map<String, AudioConfig> audioSlots,
       @JsonProperty("uiId") @JsonAlias({"ui_id", "ui_layout_id", "custom_ui_id"}) String uiId,
+      @JsonProperty("driver_station_theme_id") @JsonAlias({"driverStationThemeId"})
+          String driverStationThemeId,
+      @JsonProperty("driver_view_theme_id") @JsonAlias({"driverViewThemeId"})
+          String driverViewThemeId,
       @JsonProperty("entity_id") String entityId,
       @JsonProperty("_id") String id) {
     super(id, entityId);
@@ -93,6 +99,34 @@ public class Theme extends Model {
     this.slots = slots != null ? slots : new HashMap<>();
     this.audioSlots = audioSlots != null ? audioSlots : new HashMap<>();
     this.uiId = uiId;
+    this.driverStationThemeId =
+        (driverStationThemeId != null && !driverStationThemeId.trim().isEmpty())
+            ? driverStationThemeId
+            : DRIVER_STATION_THEME_ID;
+    this.driverViewThemeId =
+        (driverViewThemeId != null && !driverViewThemeId.trim().isEmpty())
+            ? driverViewThemeId
+            : DRIVER_STATION_THEME_ID;
+  }
+
+  public Theme(
+      String name,
+      boolean isDefault,
+      Map<String, String> slots,
+      Map<String, AudioConfig> audioSlots,
+      String uiId,
+      String entityId,
+      String id) {
+    this(
+        name,
+        isDefault,
+        slots,
+        audioSlots,
+        uiId,
+        DRIVER_STATION_THEME_ID,
+        DRIVER_STATION_THEME_ID,
+        entityId,
+        id);
   }
 
   public Theme(
@@ -102,7 +136,16 @@ public class Theme extends Model {
       Map<String, AudioConfig> audioSlots,
       String entityId,
       String id) {
-    this(name, isDefault, slots, audioSlots, null, entityId, id);
+    this(
+        name,
+        isDefault,
+        slots,
+        audioSlots,
+        null,
+        DRIVER_STATION_THEME_ID,
+        DRIVER_STATION_THEME_ID,
+        entityId,
+        id);
   }
 
   public String getName() {
@@ -127,6 +170,103 @@ public class Theme extends Model {
   @JsonAlias({"ui_id", "ui_layout_id", "custom_ui_id"})
   public String getUiId() {
     return uiId;
+  }
+
+  @JsonProperty("driver_station_theme_id")
+  public String getDriverStationThemeId() {
+    return driverStationThemeId;
+  }
+
+  @JsonProperty("driver_view_theme_id")
+  public String getDriverViewThemeId() {
+    return driverViewThemeId;
+  }
+
+  public static class Builder {
+    private String id;
+    private String entityId;
+    private String name;
+    private boolean isDefault;
+    private Map<String, String> slots = new HashMap<>();
+    private Map<String, AudioConfig> audioSlots = new HashMap<>();
+    private String uiId;
+    private String driverStationThemeId = DRIVER_STATION_THEME_ID;
+    private String driverViewThemeId = DRIVER_STATION_THEME_ID;
+
+    public static Builder from(Theme other) {
+      Builder b = new Builder();
+      if (other != null) {
+        b.id = other.getId();
+        b.entityId = other.getEntityId();
+        b.name = other.getName();
+        b.isDefault = other.isDefault();
+        b.slots = other.getSlots() != null ? new HashMap<>(other.getSlots()) : new HashMap<>();
+        b.audioSlots =
+            other.getAudioSlots() != null ? new HashMap<>(other.getAudioSlots()) : new HashMap<>();
+        b.uiId = other.getUiId();
+        b.driverStationThemeId = other.getDriverStationThemeId();
+        b.driverViewThemeId = other.getDriverViewThemeId();
+      }
+      return b;
+    }
+
+    public Builder withId(String id) {
+      this.id = id;
+      return this;
+    }
+
+    public Builder withEntityId(String entityId) {
+      this.entityId = entityId;
+      return this;
+    }
+
+    public Builder withName(String name) {
+      this.name = name;
+      return this;
+    }
+
+    public Builder withDefault(boolean isDefault) {
+      this.isDefault = isDefault;
+      return this;
+    }
+
+    public Builder withSlots(Map<String, String> slots) {
+      this.slots = slots;
+      return this;
+    }
+
+    public Builder withAudioSlots(Map<String, AudioConfig> audioSlots) {
+      this.audioSlots = audioSlots;
+      return this;
+    }
+
+    public Builder withUiId(String uiId) {
+      this.uiId = uiId;
+      return this;
+    }
+
+    public Builder withDriverStationThemeId(String driverStationThemeId) {
+      this.driverStationThemeId = driverStationThemeId;
+      return this;
+    }
+
+    public Builder withDriverViewThemeId(String driverViewThemeId) {
+      this.driverViewThemeId = driverViewThemeId;
+      return this;
+    }
+
+    public Theme build() {
+      return new Theme(
+          name,
+          isDefault,
+          slots,
+          audioSlots,
+          uiId,
+          driverStationThemeId,
+          driverViewThemeId,
+          entityId,
+          id);
+    }
   }
 
   public RaceFlag resolveFlag(String slotKey, RaceFlag fallback) {

@@ -157,6 +157,10 @@ describe("ThemeService", () => {
 
     service.clearTransientActiveTheme();
     expect(service.getTransientThemeId()).toBeNull();
+    expect(service.getActiveTheme()?.entity_id).toBe("default_theme");
+
+    await service.activateForRace("race-1");
+    expect(service.getActiveTheme()?.entity_id).toBe("theme-1");
   });
 
   it("should preserve transient active theme across refresh", async () => {

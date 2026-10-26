@@ -9,7 +9,11 @@
 
 ## Themes
 
-*Content coming soon.*
+Each theme bundles visual assets (flags, countdown lights, fuel gauges), audio callouts, and layout assignments:
+
+- **Custom UI Layout:** The paired display layout loaded during the race.
+- **Driver Station Theme:** The theme used when opening or scanning into a single-lane driver station window or device.
+- **Driver View Theme:** The theme used when opening or scanning into the driver view schedule window or personal device display.
 
 ## Flag Images
 

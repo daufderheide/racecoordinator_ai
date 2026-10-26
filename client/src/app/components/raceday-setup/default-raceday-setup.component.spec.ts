@@ -639,6 +639,40 @@ describe("DefaultRacedaySetupComponent", () => {
     );
   }));
 
+  it("should clear transient active theme when race is selected and transient theme exists", fakeAsync(() => {
+    const themeService = TestBed.inject(ThemeService);
+    spyOn(themeService, "getTransientThemeId").and.returnValue(
+      "driver_station_theme_rc_ai",
+    );
+    spyOn(themeService, "clearTransientActiveTheme").and.callThrough();
+    spyOn(themeService, "activateForRace").and.callThrough();
+
+    const testRace = {
+      ...(component as any).races[0],
+      theme_id: "custom-theme-123",
+    };
+    component.selectRace(testRace);
+
+    expect(themeService.clearTransientActiveTheme).toHaveBeenCalled();
+    expect(themeService.activateForRace).toHaveBeenCalledWith(
+      testRace.entity_id,
+      "custom-theme-123",
+    );
+  }));
+
+  it("should clear transient active theme on ngOnInit if transient theme exists", fakeAsync(() => {
+    const themeService = TestBed.inject(ThemeService);
+    spyOn(themeService, "getTransientThemeId").and.returnValue(
+      "driver_station_theme_rc_ai",
+    );
+    spyOn(themeService, "clearTransientActiveTheme").and.callThrough();
+
+    component.ngOnInit();
+    flush();
+
+    expect(themeService.clearTransientActiveTheme).toHaveBeenCalled();
+  }));
+
   it("should add all drivers", fakeAsync(() => {
     expect(component.unselectedParticipants.length).toBe(6);
     expect(component.selectedParticipants.length).toBe(0);

@@ -106,12 +106,38 @@ public class ThemeTest {
     assertEquals(1, theme.getSlots().size());
     assertEquals(1, theme.getAudioSlots().size());
     assertEquals("entity-123", theme.getEntityId());
-    assertEquals("id-123", theme.getId());
+    assertEquals(Theme.DRIVER_STATION_THEME_ID, theme.getDriverStationThemeId());
+    assertEquals(Theme.DRIVER_STATION_THEME_ID, theme.getDriverViewThemeId());
+
+    Theme customTheme =
+        new Theme(
+            "Custom",
+            false,
+            slots,
+            audioSlots,
+            "custom-ui-1",
+            "ds-theme-99",
+            "dv-theme-88",
+            "entity-custom",
+            "id-custom");
+    assertEquals("ds-theme-99", customTheme.getDriverStationThemeId());
+    assertEquals("dv-theme-88", customTheme.getDriverViewThemeId());
+
+    Theme built =
+        Theme.Builder.from(customTheme)
+            .withDriverStationThemeId("ds-override")
+            .withDriverViewThemeId("dv-override")
+            .build();
+    assertEquals("ds-override", built.getDriverStationThemeId());
+    assertEquals("dv-override", built.getDriverViewThemeId());
+    assertEquals("Custom", built.getName());
 
     Theme themeNoId = new Theme("Other", false, null, null, null, null);
     assertFalse(themeNoId.isDefault());
     assertNotNull(themeNoId.getSlots());
     assertNotNull(themeNoId.getAudioSlots());
+    assertEquals(Theme.DRIVER_STATION_THEME_ID, themeNoId.getDriverStationThemeId());
+    assertEquals(Theme.DRIVER_STATION_THEME_ID, themeNoId.getDriverViewThemeId());
   }
 
   @Test

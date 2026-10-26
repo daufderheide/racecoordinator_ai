@@ -400,6 +400,12 @@ export function normalizeLoadedThemes(themes: Theme[]): void {
         t.uiId = "driver_station_ui_layout_rc_ai";
       }
     }
+    if (!t.driver_station_theme_id) {
+      t.driver_station_theme_id = "driver_station_theme_rc_ai";
+    }
+    if (!t.driver_view_theme_id) {
+      t.driver_view_theme_id = "driver_station_theme_rc_ai";
+    }
   }
 }
 

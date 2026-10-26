@@ -3063,6 +3063,8 @@ describe("UIEditorComponent", () => {
       expect(selectors).toContain("#help-themes-add");
       expect(selectors).toContain("#help-default-theme");
       expect(selectors).toContain("#help-theme-ui-selector");
+      expect(selectors).toContain("#help-theme-driver-station-theme");
+      expect(selectors).toContain("#help-theme-driver-view-theme");
       expect(selectors).toContain("#help-theme-flags");
       expect(selectors).toContain("#help-theme-countdown");
       expect(selectors).toContain("#help-theme-fuel");

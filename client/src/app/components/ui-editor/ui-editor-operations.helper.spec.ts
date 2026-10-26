@@ -176,11 +176,17 @@ describe("ui-editor-operations.helper", () => {
       "default_countdown",
     );
     expect(passedTheme.uiId).toBe("default_ui_layout_rc_ai");
+    expect(passedTheme.driver_station_theme_id).toBe(
+      "driver_station_theme_rc_ai",
+    );
+    expect(passedTheme.driver_view_theme_id).toBe("driver_station_theme_rc_ai");
   });
 
   it("should return factory defaults from getDefaultThemeFactoryData", () => {
     const factory = getDefaultThemeFactoryData();
     expect(factory.uiId).toBe("default_ui_layout_rc_ai");
+    expect(factory.driver_station_theme_id).toBe("driver_station_theme_rc_ai");
+    expect(factory.driver_view_theme_id).toBe("driver_station_theme_rc_ai");
     expect(factory.slots["flag.racing"]).toBe("default_flag_green");
     expect(factory.slots["gauge.fuel"]).toBe("default_fuel_gauge");
     expect(factory.audio_slots["audio.countdown"].type).toBe("audio_set");

@@ -3,6 +3,14 @@
 !!! note "Contenu en cours de rédaction"
     Cet article est en cours de développement. Le contenu complet sera disponible prochainement.
 
+## Thèmes
+
+Chaque thème regroupe des éléments visuels (drapeaux, feux de départ, jauges de carburant), des annonces audio et des affectations de mise en page :
+
+- **Disposition d'interface personnalisée :** La disposition d'écran associée chargée pendant la course.
+- **Thème du poste de pilote :** Le thème utilisé lors de l'ouverture ou du scan d'une fenêtre ou d'un appareil de poste de pilote à voie unique.
+- **Thème de la vue pilote :** Le thème utilisé lors de l'ouverture ou du scan de la fenêtre du calendrier de la vue pilote ou d'un affichage sur appareil personnel.
+
 ## Audio
 
 Les thèmes vous permettent de personnaliser les effets sonores et annonces vocales pour les événements de course :

@@ -4862,10 +4862,31 @@ describe("DefaultRacedayComponent", () => {
 
       expect(component.isWindowsMenuOpen).toBeFalse();
       expect(component.isDriversStationOpen).toBeFalse();
-      expect(mockRouter.navigate).toHaveBeenCalledWith(
-        ["/driver-station", 2],
-        jasmine.anything(),
-      );
+      expect(mockRouter.navigate).toHaveBeenCalledWith(["/driver-station", 2], {
+        queryParams: {
+          themeId: "driver_station_theme_rc_ai",
+          returnUrl: "/raceday",
+        },
+      });
+    });
+
+    it("should call onLaneMenuSelect with configured driver station theme from active theme", () => {
+      const mockRouter = TestBed.inject(Router) as any;
+      const themeService = TestBed.inject(ThemeService) as any;
+      themeService.getActiveTheme.and.returnValue({
+        entity_id: "custom_theme",
+        driver_station_theme_id: "my_custom_ds_theme",
+      });
+      mockRouter.url = "/raceday";
+
+      component.onLaneMenuSelect(0);
+
+      expect(mockRouter.navigate).toHaveBeenCalledWith(["/driver-station", 1], {
+        queryParams: {
+          themeId: "my_custom_ds_theme",
+          returnUrl: "/raceday",
+        },
+      });
     });
 
     it("should close all menus on document click outside", () => {
@@ -4893,7 +4914,36 @@ describe("DefaultRacedayComponent", () => {
       expect(component.isWindowsMenuOpen).toBeFalse();
       expect(mockRouter.navigate).toHaveBeenCalledWith(
         ["/driver-view", "test-driver-id"],
-        jasmine.anything(),
+        {
+          state: { bypassDeactivate: true },
+          queryParams: {
+            themeId: "driver_station_theme_rc_ai",
+            returnUrl: "/raceday",
+          },
+        },
+      );
+    });
+
+    it("should call onDriverViewMenuSelect with configured driver view theme from active theme", () => {
+      const mockRouter = TestBed.inject(Router) as any;
+      const themeService = TestBed.inject(ThemeService) as any;
+      themeService.getActiveTheme.and.returnValue({
+        entity_id: "custom_theme",
+        driver_view_theme_id: "my_custom_dv_theme",
+      });
+      mockRouter.url = "/raceday";
+
+      component.onDriverViewMenuSelect("test-driver-id");
+
+      expect(mockRouter.navigate).toHaveBeenCalledWith(
+        ["/driver-view", "test-driver-id"],
+        {
+          state: { bypassDeactivate: true },
+          queryParams: {
+            themeId: "my_custom_dv_theme",
+            returnUrl: "/raceday",
+          },
+        },
       );
     });
   });
@@ -11082,6 +11132,85 @@ describe("DefaultRacedayComponent", () => {
       await fixture.whenStable();
       await new Promise((resolve) => setTimeout(resolve, 0));
       expect(updateSpy).toHaveBeenCalled();
+    });
+
+    it("should clear transient active theme and reactivate race theme when queryParams do not include themeId but transient theme was set", () => {
+      const themeService = TestBed.inject(ThemeService);
+      (themeService.getTransientThemeId as jasmine.Spy).and.returnValue(
+        "driver_station_theme_rc_ai",
+      );
+      component.race = {
+        entity_id: "race-1",
+        theme_id: "race-theme-1",
+      } as any;
+
+      const queryParamsSubject = new BehaviorSubject<{ [key: string]: any }>(
+        {},
+      );
+      (component as any).route.queryParams = queryParamsSubject.asObservable();
+      (component as any).subscribeToUIEvents();
+
+      expect(themeService.clearTransientActiveTheme).toHaveBeenCalled();
+      expect(themeService.activateForRace).toHaveBeenCalledWith(
+        "race-1",
+        "race-theme-1",
+      );
+    });
+
+    it("should clear transient active theme on ngOnDestroy if transient theme is set", () => {
+      const themeService = TestBed.inject(ThemeService);
+      (themeService.getTransientThemeId as jasmine.Spy).and.returnValue(
+        "driver_station_theme_rc_ai",
+      );
+
+      component.ngOnDestroy();
+      expect(themeService.clearTransientActiveTheme).toHaveBeenCalled();
+    });
+
+    it("should clear transient active theme on ngOnInit if route does not specify themeId but transient theme was set", () => {
+      const themeService = TestBed.inject(ThemeService);
+      (themeService.getTransientThemeId as jasmine.Spy).and.returnValue(
+        "driver_station_theme_rc_ai",
+      );
+      (component as any).route.snapshot = { queryParams: {} };
+
+      component.ngOnInit();
+      expect(themeService.clearTransientActiveTheme).toHaveBeenCalled();
+    });
+
+    it("isDriverStationLayout should return false on default-raceday route even if activeTheme is driver station theme without active lane or queryParam", () => {
+      const themeService = TestBed.inject(ThemeService);
+      (themeService.getActiveTheme as jasmine.Spy).and.returnValue({
+        entity_id: "driver_station_theme_rc_ai",
+        uiId: "driver_station_ui_layout_rc_ai",
+      });
+      (component as any).route.snapshot = { queryParams: {} };
+      component.routeLaneIndex = undefined;
+
+      expect(component.isDriverStationLayout).toBeFalse();
+      expect(component.isDriverStation).toBeFalse();
+    });
+
+    it("isDriverStationLayout should return true when activeLaneIndex is set or themeId query param is present with driver station theme", () => {
+      const themeService = TestBed.inject(ThemeService);
+      (themeService.getActiveTheme as jasmine.Spy).and.returnValue({
+        entity_id: "driver_station_theme_rc_ai",
+        uiId: "driver_station_ui_layout_rc_ai",
+      });
+
+      // Case 1: activeLaneIndex is set via routeLaneIndex
+      (component as any).route.snapshot = { queryParams: {} };
+      component.routeLaneIndex = 0;
+      expect(component.isDriverStationLayout).toBeTrue();
+      expect(component.isDriverStation).toBeTrue();
+
+      // Case 2: queryParams themeId is present
+      component.routeLaneIndex = undefined;
+      (component as any).route.snapshot = {
+        queryParams: { themeId: "driver_station_theme_rc_ai" },
+      };
+      expect(component.isDriverStationLayout).toBeTrue();
+      expect(component.isDriverStation).toBeTrue();
     });
 
     it("should not render auto-injected app-browser-navigation in theme window or raceday", () => {

@@ -21,6 +21,8 @@ export function getDefaultThemeFactoryData(): {
   slots: { [key: string]: string };
   audio_slots: { [key: string]: any };
   uiId: string;
+  driver_station_theme_id: string;
+  driver_view_theme_id: string;
 } {
   return {
     slots: {
@@ -60,6 +62,8 @@ export function getDefaultThemeFactoryData(): {
       },
     },
     uiId: "default_ui_layout_rc_ai",
+    driver_station_theme_id: "driver_station_theme_rc_ai",
+    driver_view_theme_id: "driver_station_theme_rc_ai",
   };
 }
 
@@ -153,6 +157,10 @@ export async function createThemeEntity(
     slots: factoryData.slots || {},
     audio_slots: factoryData.audio_slots || {},
     uiId: factoryData.uiId || "default_ui_layout_rc_ai",
+    driver_station_theme_id:
+      factoryData.driver_station_theme_id || "driver_station_theme_rc_ai",
+    driver_view_theme_id:
+      factoryData.driver_view_theme_id || "driver_station_theme_rc_ai",
   };
 
   return themeService.createTheme(newTheme);

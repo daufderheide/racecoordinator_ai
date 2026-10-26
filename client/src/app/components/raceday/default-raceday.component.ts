@@ -1219,8 +1219,14 @@ export class DefaultRacedayComponent
         isLegacyDriverStationUiName(name)
       );
     }
+    const hasThemeQueryParam = Boolean(
+      this.route?.snapshot?.queryParams?.["themeId"],
+    );
     const activeTheme = this.themeService.getActiveTheme();
-    if (activeTheme) {
+    if (
+      activeTheme &&
+      (hasThemeQueryParam || this.activeLaneIndex !== undefined)
+    ) {
       if (
         activeTheme.entity_id === "driver_station_theme_rc_ai" ||
         activeTheme.uiId === "driver_station_ui_layout_rc_ai" ||
@@ -1381,18 +1387,17 @@ export class DefaultRacedayComponent
     }
     const settings = this.settingsService.getSettings();
     let customUI: CustomUI | undefined;
+    const activeTheme = this.themeService.getActiveTheme();
     if (this.isDriverStationLayout || this.isDriverStation) {
-      customUI = this.customUiService.getCustomUI(
-        "driver_station_ui_layout_rc_ai",
-      );
+      if (activeTheme?.uiId) {
+        customUI = this.customUiService.getCustomUI(activeTheme.uiId);
+      }
       if (!customUI) {
-        const activeTheme = this.themeService.getActiveTheme();
-        if (activeTheme?.uiId) {
-          customUI = this.customUiService.getCustomUI(activeTheme.uiId);
-        }
+        customUI = this.customUiService.getCustomUI(
+          "driver_station_ui_layout_rc_ai",
+        );
       }
     } else {
-      const activeTheme = this.themeService.getActiveTheme();
       customUI =
         activeTheme && activeTheme.uiId
           ? this.customUiService.getCustomUI(activeTheme.uiId)
@@ -1759,6 +1764,12 @@ export class DefaultRacedayComponent
   }
 
   ngOnInit() {
+    if (
+      !this.route?.snapshot?.queryParams?.["themeId"] &&
+      this.themeService?.getTransientThemeId?.()
+    ) {
+      this.themeService.clearTransientActiveTheme();
+    }
     this.setupInitialState();
     this.subscribeToAssets();
     this.detectShortcutKey();
@@ -1846,6 +1857,9 @@ export class DefaultRacedayComponent
 
     this.subscriptions.push(
       this.themeService.activeTheme$.subscribe(() => {
+        this.laneQrCodeCache.clear();
+        this.generatingLaneQrCodes.clear();
+        this.driverViewQrCodeCache.clear();
         this.updateRacedayLayout();
         this.refreshCountdownLampUrls();
         this.preloadCountdownAudio();
@@ -3390,6 +3404,18 @@ export class DefaultRacedayComponent
             this.updateRacedayLayout();
             this.updateTabTitle(themeId);
           });
+        } else if (this.themeService?.getTransientThemeId?.()) {
+          this.themeService.clearTransientActiveTheme();
+          const activeRace = this.race || this.raceService?.getRace();
+          if (activeRace?.entity_id) {
+            this.themeService.activateForRace(
+              activeRace.entity_id,
+              activeRace.theme_id,
+            );
+          } else {
+            this.updateRacedayLayout();
+            this.updateTabTitle();
+          }
         }
         if (params["modifyHeats"] === "true") {
           const returnUrl = this.router.url.split("?")[0];
@@ -3837,6 +3863,9 @@ export class DefaultRacedayComponent
     this.lapHighlightTimers.clear();
     this.highlightedDrivers.clear();
     this.audioService.reset();
+    if (this.themeService?.getTransientThemeId?.()) {
+      this.themeService.clearTransientActiveTheme();
+    }
     if (
       typeof window !== "undefined" &&
       window.visualViewport &&
@@ -5298,9 +5327,15 @@ export class DefaultRacedayComponent
       return "";
     }
     this.generatingLaneQrCodes.add(laneIndex);
-    QRCode.toDataURL(`${this.serverUrlBase}/driver-station/${laneIndex + 1}`, {
-      margin: 1,
-    })
+    const activeTheme = this.themeService?.getActiveTheme?.();
+    const targetThemeId =
+      activeTheme?.driver_station_theme_id || "driver_station_theme_rc_ai";
+    QRCode.toDataURL(
+      `${this.serverUrlBase}/driver-station/${laneIndex + 1}?themeId=${encodeURIComponent(targetThemeId)}`,
+      {
+        margin: 1,
+      },
+    )
       .then((dataUrl) => {
         this.laneQrCodeCache.set(laneIndex, dataUrl);
         this.generatingLaneQrCodes.delete(laneIndex);
@@ -5341,8 +5376,13 @@ export class DefaultRacedayComponent
     let dataUrl = this.driverViewQrCodeCache.get(entityId);
     if (!dataUrl) {
       this.driverViewQrCodeCache.set(entityId, "generating");
+      const activeTheme = this.themeService?.getActiveTheme?.();
+      const targetThemeId =
+        activeTheme?.driver_view_theme_id ||
+        activeTheme?.driver_station_theme_id ||
+        "driver_station_theme_rc_ai";
       QRCode.toDataURL(
-        `${this.serverUrlBase}/driver-view/${encodeURIComponent(entityId)}`,
+        `${this.serverUrlBase}/driver-view/${encodeURIComponent(entityId)}?themeId=${encodeURIComponent(targetThemeId)}`,
         {
           margin: 1,
         },
@@ -6595,8 +6635,11 @@ export class DefaultRacedayComponent
     this.isDriversStationOpen = false;
 
     const returnUrl = this.router.url.split("?")[0];
+    const activeTheme = this.themeService?.getActiveTheme?.();
+    const targetThemeId =
+      activeTheme?.driver_station_theme_id || "driver_station_theme_rc_ai";
     this.router.navigate(["/driver-station", laneIndex + 1], {
-      queryParams: { returnUrl },
+      queryParams: { themeId: targetThemeId, returnUrl },
     });
   }
 
@@ -6605,9 +6648,14 @@ export class DefaultRacedayComponent
     this.isWindowsMenuOpen = false; // Close menu
 
     const returnUrl = this.router.url.split("?")[0];
+    const activeTheme = this.themeService?.getActiveTheme?.();
+    const targetThemeId =
+      activeTheme?.driver_view_theme_id ||
+      activeTheme?.driver_station_theme_id ||
+      "driver_station_theme_rc_ai";
     this.router.navigate(["/driver-view", driverId], {
       state: { bypassDeactivate: true },
-      queryParams: { returnUrl },
+      queryParams: { themeId: targetThemeId, returnUrl },
     });
   }
 

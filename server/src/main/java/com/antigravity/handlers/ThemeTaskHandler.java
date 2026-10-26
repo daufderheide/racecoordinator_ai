@@ -202,7 +202,17 @@ public class ThemeTaskHandler {
     Map<String, AudioConfig> audioSlots = new HashMap<>();
     populateDefaultAudioSlots(audioSlots);
 
-    Theme theme = new Theme(name, true, slots, audioSlots, uiId, entityId, null);
+    Theme theme =
+        new Theme(
+            name,
+            true,
+            slots,
+            audioSlots,
+            uiId,
+            Theme.DRIVER_STATION_THEME_ID,
+            Theme.DRIVER_STATION_THEME_ID,
+            entityId,
+            null);
     themeRepository.save(theme);
     logger.info("Created factory theme with ID {}", entityId);
   }
@@ -403,7 +413,16 @@ public class ThemeTaskHandler {
     Map<String, String> slots = createDefaultSlots();
     Map<String, AudioConfig> audioSlots = new HashMap<>();
     populateDefaultAudioSlots(audioSlots);
-    return new Theme("New Theme", false, slots, audioSlots, CustomUI.DEFAULT_UI_ID, "new", null);
+    return new Theme(
+        "New Theme",
+        false,
+        slots,
+        audioSlots,
+        CustomUI.DEFAULT_UI_ID,
+        Theme.DRIVER_STATION_THEME_ID,
+        Theme.DRIVER_STATION_THEME_ID,
+        "new",
+        null);
   }
 
   void getFactoryTheme(Context ctx) {
@@ -455,6 +474,8 @@ public class ThemeTaskHandler {
                 theme.getSlots(),
                 theme.getAudioSlots(),
                 theme.getUiId(),
+                theme.getDriverStationThemeId(),
+                theme.getDriverViewThemeId(),
                 nextId,
                 null);
       }
@@ -519,6 +540,12 @@ public class ThemeTaskHandler {
               theme.getSlots(),
               theme.getAudioSlots(),
               theme.getUiId(),
+              theme.getDriverStationThemeId() != null
+                  ? theme.getDriverStationThemeId()
+                  : current.getDriverStationThemeId(),
+              theme.getDriverViewThemeId() != null
+                  ? theme.getDriverViewThemeId()
+                  : current.getDriverViewThemeId(),
               id,
               null);
 
@@ -643,6 +670,8 @@ public class ThemeTaskHandler {
               source.getSlots(),
               source.getAudioSlots(),
               source.getUiId(),
+              source.getDriverStationThemeId(),
+              source.getDriverViewThemeId(),
               nextId,
               null);
       themeRepository.save(copy);
