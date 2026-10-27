@@ -264,6 +264,31 @@ describe("RaceEditorComponent", () => {
     expect(nameEl.getAttribute("autocomplete")).toBe("off");
   }));
 
+  it("should not impose artificial max limits on lap count and time finish value inputs", fakeAsync(() => {
+    component.isEditMode = true;
+    component.editingRace.heat_scoring.finish_method = "Lap";
+    component.editingRace.heat_scoring.finish_value = 1000;
+    fixture.detectChanges();
+    tick();
+
+    let finishInput = fixture.nativeElement.querySelector(
+      "#finish-value-input",
+    );
+    expect(finishInput).toBeTruthy();
+    expect(finishInput.getAttribute("min")).toBe("1");
+    expect(finishInput.getAttribute("max")).toBeNull();
+
+    component.editingRace.heat_scoring.finish_method = "Timed";
+    component.editingRace.heat_scoring.finish_value = 7200;
+    fixture.detectChanges();
+    tick();
+
+    finishInput = fixture.nativeElement.querySelector("#finish-value-input");
+    expect(finishInput).toBeTruthy();
+    expect(finishInput.getAttribute("min")).toBe("0");
+    expect(finishInput.getAttribute("max")).toBeNull();
+  }));
+
   it("should load heats when race is loaded", fakeAsync(() => {
     const mockHeats = {
       heats: [{ heatNumber: 1, lanes: [{ laneNumber: 1, driverNumber: 1 }] }],
