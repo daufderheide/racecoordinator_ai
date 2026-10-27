@@ -4390,5 +4390,23 @@ describe("DefaultRacedaySetupComponent", () => {
       expect(dots.length).toBe(1);
       expect(dots[0].getAttribute("title")).toBe("Club");
     });
+
+    it("should render available and racing driver sections with expected IDs and classes", () => {
+      const availSection = fixture.nativeElement.querySelector(
+        "#available-drivers-section.driver-pool-section",
+      );
+      const racingSection = fixture.nativeElement.querySelector(
+        "#racing-drivers-section.driver-pool-section",
+      );
+      expect(availSection).toBeTruthy();
+      expect(racingSection).toBeTruthy();
+
+      const editorPanel = fixture.nativeElement.querySelector(
+        ".editor-panel.driver-panel",
+      );
+      expect(editorPanel).toBeTruthy();
+      expect(editorPanel.contains(availSection)).toBeTrue();
+      expect(editorPanel.contains(racingSection)).toBeTrue();
+    });
   });
 });

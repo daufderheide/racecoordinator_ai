@@ -275,7 +275,7 @@ test.describe("Raceday Setup Driver Labels Visuals", () => {
       {
         ...MOCK_DRIVERS[0],
         entity_id: "d1",
-        name: "Driver 6",
+        name: "Driver 6 With Long Name",
         nickname: "Driver 6",
         label_ids: ["lbl-comp"],
       },
@@ -283,7 +283,7 @@ test.describe("Raceday Setup Driver Labels Visuals", () => {
         ...MOCK_DRIVERS[1],
         entity_id: "d2",
         name: "Driver 8",
-        nickname: "Driver 8",
+        nickname: "Driver 8 With Long Nickname",
         label_ids: ["lbl-comp"],
       },
       {
@@ -371,7 +371,7 @@ test.describe("Raceday Setup Driver Labels Visuals", () => {
     const customTeams = [
       {
         entity_id: "t1",
-        name: "Team Apex",
+        name: "Team Apex Motorsport",
         avatarUrl: "",
         driverIds: ["d1", "d2"],
         labelIds: ["lbl-comp"],
