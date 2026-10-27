@@ -101,6 +101,23 @@
   filter: brightness(1.2) drop-shadow(0 0 10px rgba(255, 255, 255, 0.3));
 }
 
+:host-context(.driver-station-mode) .raceday-lane-column-card.highlight.highlight-style-classic,
+.driver-station-mode .raceday-lane-column-card.highlight.highlight-style-classic {
+  box-shadow: inset 0 0 0 2px #38bdf8, inset 0 0 14px rgba(56, 189, 248, 0.65);
+  filter: brightness(1.2) drop-shadow(0 0 10px rgba(255, 255, 255, 0.3));
+}
+
+:host-context(.driver-station-mode) .raceday-lane-column-card.highlight.highlight-style-classic::after,
+.driver-station-mode .raceday-lane-column-card.highlight.highlight-style-classic::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  z-index: 10;
+  background: rgba(56, 189, 248, 0.25);
+}
+
 .raceday-lane-column-card.highlight.highlight-style-glow-border {
   box-shadow: inset 0 0 0 2px #38bdf8, inset 0 0 14px rgba(56, 189, 248, 0.65);
 }

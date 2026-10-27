@@ -347,4 +347,141 @@ describe("RacedayProgressGaugeComponent", () => {
       expect(component.effectiveFontFamily).toBe("Orbitron");
     });
   });
+
+  describe("Highlighting on Lap", () => {
+    it("should return true for isHighlighted when targetDriver.objectId is in parent.highlightedDrivers", () => {
+      mockParent.highlightedDrivers = new Set(["d1"]);
+      fixture.componentRef.setInput("parent", mockParent);
+      fixture.detectChanges();
+
+      expect(component.isHighlighted).toBeTrue();
+    });
+
+    it("should return true for isHighlighted when participant.objectId is in parent.highlightedDrivers", () => {
+      mockParent.highlightedDrivers = new Set(["p1"]);
+      fixture.componentRef.setInput("parent", mockParent);
+      fixture.detectChanges();
+
+      expect(component.isHighlighted).toBeTrue();
+    });
+
+    it("should return true on driver station when hostDriver is in highlightedDrivers", () => {
+      mockParent.isDriverStation = true;
+      mockParent.activeLaneIndex = 0;
+      mockParent.highlightedDrivers = new Set(["d1"]);
+      fixture.componentRef.setInput("parent", mockParent);
+      fixture.detectChanges();
+
+      expect(component.isHighlighted).toBeTrue();
+    });
+
+    it("should return false for isHighlighted when driver is not in parent.highlightedDrivers", () => {
+      mockParent.highlightedDrivers = new Set(["other-driver"]);
+      fixture.componentRef.setInput("parent", mockParent);
+      fixture.detectChanges();
+
+      expect(component.isHighlighted).toBeFalse();
+    });
+
+    it("should return false for isHighlighted when highlightRowOnLap is false", () => {
+      mockParent.highlightedDrivers = new Set(["d1"]);
+      const widget = {
+        id: "w1",
+        widgetType: "progress-gauge",
+        customSettings: {
+          highlightRowOnLap: false,
+        },
+      } as any;
+      fixture.componentRef.setInput("parent", mockParent);
+      fixture.componentRef.setInput("widget", widget);
+      fixture.detectChanges();
+
+      expect(component.isHighlighted).toBeFalse();
+    });
+
+    it("should return false for isHighlighted when highlightLapStyle is none", () => {
+      mockParent.highlightedDrivers = new Set(["d1"]);
+      const widget = {
+        id: "w1",
+        widgetType: "progress-gauge",
+        customSettings: {
+          highlightLapStyle: "none",
+        },
+      } as any;
+      fixture.componentRef.setInput("parent", mockParent);
+      fixture.componentRef.setInput("widget", widget);
+      fixture.detectChanges();
+
+      expect(component.isHighlighted).toBeFalse();
+    });
+
+    it("should resolve highlightLapStyle from customSettings or fallback to parent or classic", () => {
+      const widgetWithStyle = {
+        id: "w1",
+        widgetType: "progress-gauge",
+        customSettings: {
+          highlightLapStyle: "glow-border",
+        },
+      } as any;
+      fixture.componentRef.setInput("widget", widgetWithStyle);
+      fixture.detectChanges();
+      expect(component.highlightLapStyle).toBe("glow-border");
+
+      mockParent.highlightLapStyle = "scale-pulse";
+      const widgetFallback = {
+        id: "w2",
+        widgetType: "progress-gauge",
+        customSettings: {},
+      } as any;
+      fixture.componentRef.setInput("parent", mockParent);
+      fixture.componentRef.setInput("widget", widgetFallback);
+      fixture.detectChanges();
+      expect(component.highlightLapStyle).toBe("scale-pulse");
+
+      mockParent.isDriverStation = true;
+      mockParent.highlightLapStyle = undefined;
+      fixture.componentRef.setInput("parent", mockParent);
+      fixture.detectChanges();
+      expect(component.highlightLapStyle).toBe("full-glow");
+    });
+
+    it("should apply highlight CSS classes to DOM container", () => {
+      mockParent.highlightedDrivers = new Set(["d1"]);
+      mockParent.highlightLapStyle = "shimmer";
+      fixture.componentRef.setInput("parent", mockParent);
+      fixture.detectChanges();
+
+      const containerEl = fixture.nativeElement.querySelector(
+        ".progress-gauge-container",
+      );
+      expect(containerEl.classList.contains("highlight")).toBeTrue();
+      expect(
+        containerEl.classList.contains("highlight-style-shimmer"),
+      ).toBeTrue();
+    });
+
+    it("should correctly determine isLightBackground", () => {
+      const widgetLight = {
+        id: "w1",
+        widgetType: "progress-gauge",
+        customSettings: {
+          fillColor: "#ffffff",
+        },
+      } as any;
+      fixture.componentRef.setInput("widget", widgetLight);
+      fixture.detectChanges();
+      expect(component.isLightBackground).toBeTrue();
+
+      const widgetDark = {
+        id: "w2",
+        widgetType: "progress-gauge",
+        customSettings: {
+          fillColor: "#000000",
+        },
+      } as any;
+      fixture.componentRef.setInput("widget", widgetDark);
+      fixture.detectChanges();
+      expect(component.isLightBackground).toBeFalse();
+    });
+  });
 });

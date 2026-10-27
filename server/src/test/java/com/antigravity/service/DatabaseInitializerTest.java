@@ -470,6 +470,8 @@ public class DatabaseInitializerTest {
     assertNotNull(driverStationUi);
     assertTrue(driverStationUi.getLayoutJson().contains("\"useLaneColors\":true"));
     assertFalse(driverStationUi.getLayoutJson().contains("\"useLaneColors\":false"));
+    assertTrue(driverStationUi.getLayoutJson().contains("\"highlightLapStyle\":\"full-glow\""));
+    assertTrue(driverStationUi.getLayoutJson().contains("\"highlightRowOnLap\":true"));
   }
 
   @Test

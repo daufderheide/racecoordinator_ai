@@ -99,4 +99,128 @@ describe("RacedayFlagComponent", () => {
     const indicatorClass = await harness.getRaceStateColorClass();
     expect(indicatorClass).toContain("race-state-checkered");
   });
+
+  describe("Highlighting on Lap", () => {
+    let mockDriver: any;
+    let mockParent: any;
+
+    beforeEach(() => {
+      mockDriver = {
+        objectId: "d1",
+        laneIndex: 0,
+        participant: { objectId: "p1" },
+      };
+      mockParent = {
+        heatDrivers: [mockDriver],
+        driverData: mockDriver,
+        laneIndex: 0,
+        activeLaneIndex: 0,
+        isDriverStation: true,
+        highlightedDrivers: new Set(["d1"]),
+        highlightLapStyle: "classic",
+      };
+    });
+
+    it("should return true for isHighlighted when targetDriver.objectId is in parent.highlightedDrivers", () => {
+      fixture.componentRef.setInput("parent", mockParent);
+      fixture.detectChanges();
+
+      expect(component.isHighlighted).toBeTrue();
+    });
+
+    it("should return true for isHighlighted when participant.objectId is in parent.highlightedDrivers", () => {
+      mockParent.highlightedDrivers = new Set(["p1"]);
+      fixture.componentRef.setInput("parent", mockParent);
+      fixture.detectChanges();
+
+      expect(component.isHighlighted).toBeTrue();
+    });
+
+    it("should return false for isHighlighted when driver is not in parent.highlightedDrivers", () => {
+      mockParent.highlightedDrivers = new Set(["other-driver"]);
+      fixture.componentRef.setInput("parent", mockParent);
+      fixture.detectChanges();
+
+      expect(component.isHighlighted).toBeFalse();
+    });
+
+    it("should return false for isHighlighted when highlightRowOnLap is false", () => {
+      const widget = {
+        id: "w1",
+        widgetType: "flag",
+        customSettings: {
+          highlightRowOnLap: false,
+        },
+      } as any;
+      fixture.componentRef.setInput("parent", mockParent);
+      fixture.componentRef.setInput("widget", widget);
+      fixture.detectChanges();
+
+      expect(component.isHighlighted).toBeFalse();
+    });
+
+    it("should return false for isHighlighted when highlightLapStyle is none", () => {
+      const widget = {
+        id: "w1",
+        widgetType: "flag",
+        customSettings: {
+          highlightLapStyle: "none",
+        },
+      } as any;
+      fixture.componentRef.setInput("parent", mockParent);
+      fixture.componentRef.setInput("widget", widget);
+      fixture.detectChanges();
+
+      expect(component.isHighlighted).toBeFalse();
+    });
+
+    it("should resolve highlightLapStyle from customSettings or fallback to parent or classic", () => {
+      const widgetWithStyle = {
+        id: "w1",
+        widgetType: "flag",
+        customSettings: {
+          highlightLapStyle: "glow-border",
+        },
+      } as any;
+      fixture.componentRef.setInput("widget", widgetWithStyle);
+      fixture.detectChanges();
+      expect(component.highlightLapStyle).toBe("glow-border");
+
+      mockParent.highlightLapStyle = "scale-pulse";
+      const widgetFallback = {
+        id: "w2",
+        widgetType: "flag",
+        customSettings: {},
+      } as any;
+      fixture.componentRef.setInput("parent", mockParent);
+      fixture.componentRef.setInput("widget", widgetFallback);
+      fixture.detectChanges();
+      expect(component.highlightLapStyle).toBe("scale-pulse");
+
+      mockParent.isDriverStation = true;
+      mockParent.highlightLapStyle = undefined;
+      fixture.componentRef.setInput("parent", mockParent);
+      fixture.detectChanges();
+      expect(component.highlightLapStyle).toBe("full-glow");
+    });
+
+    it("should apply highlight CSS classes to DOM element", () => {
+      fixture.componentRef.setInput("parent", mockParent);
+      fixture.detectChanges();
+
+      const flagEl = fixture.nativeElement.querySelector(".flag-panel");
+      expect(flagEl.classList.contains("highlight")).toBeTrue();
+      expect(flagEl.classList.contains("highlight-style-classic")).toBeTrue();
+    });
+
+    it("should correctly determine isLightBackground", () => {
+      fixture.componentRef.setInput("raceStateColor", "white");
+      fixture.detectChanges();
+      expect(component.isLightBackground).toBeTrue();
+
+      fixture.componentRef.setInput("raceStateColor", "black");
+      fixture.detectChanges();
+      expect(component.isLightBackground).toBeFalse();
+    });
+  });
 });

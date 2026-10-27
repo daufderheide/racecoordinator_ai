@@ -38,6 +38,8 @@ describe("ColorUtils", () => {
       expect(isColorLight("#ffffff")).toBeTrue();
       expect(isColorLight("#fff")).toBeTrue();
       expect(isColorLight("#ffff00")).toBeTrue(); // Yellow
+      expect(isColorLight("white")).toBeTrue();
+      expect(isColorLight("yellow")).toBeTrue();
       expect(isColorLight("rgb(255, 255, 255)")).toBeTrue();
       expect(isColorLight("rgba(255, 255, 255, 1)")).toBeTrue();
       expect(isColorLight("#facc15")).toBeTrue();
@@ -46,6 +48,8 @@ describe("ColorUtils", () => {
     it("should return false for dark colors, red, black, and transparent", () => {
       expect(isColorLight("#000000")).toBeFalse();
       expect(isColorLight("#000")).toBeFalse();
+      expect(isColorLight("black")).toBeFalse();
+      expect(isColorLight("red")).toBeFalse();
       expect(isColorLight("#ff0000")).toBeFalse(); // Pure red is < 0.55 luminance
       expect(isColorLight("#1e293b")).toBeFalse();
       expect(isColorLight("transparent")).toBeFalse();

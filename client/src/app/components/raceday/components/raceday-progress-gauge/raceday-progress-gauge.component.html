@@ -6,6 +6,29 @@
   [class.orientation-horizontal]="effectiveOrientation === 'horizontal'"
   [class.gauge-fuel]="effectiveGaugeType === 'fuel'"
   [class.gauge-heat-progress]="effectiveGaugeType === 'heat-progress'"
+  [class.highlight]="isHighlighted"
+  [class.highlight-style-full-glow]="
+    isHighlighted && highlightLapStyle === 'full-glow'
+  "
+  [class.highlight-style-glow-border]="
+    isHighlighted && highlightLapStyle === 'glow-border'
+  "
+  [class.highlight-style-tint-wash]="
+    isHighlighted && highlightLapStyle === 'tint-wash'
+  "
+  [class.highlight-style-shimmer]="
+    isHighlighted && highlightLapStyle === 'shimmer'
+  "
+  [class.highlight-style-scale-pulse]="
+    isHighlighted && highlightLapStyle === 'scale-pulse'
+  "
+  [class.highlight-style-adaptive-dip]="
+    isHighlighted && highlightLapStyle === 'adaptive-dip'
+  "
+  [class.highlight-style-classic]="
+    isHighlighted && highlightLapStyle === 'classic'
+  "
+  [class.is-light-lane]="isLightBackground"
 >
   <div
     class="thermometer-container"

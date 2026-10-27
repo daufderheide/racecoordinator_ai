@@ -49,7 +49,15 @@ export function isColorLight(color: string | undefined): boolean {
     }
   }
 
-  let hex = trimmed;
+  const namedColors: Record<string, string> = {
+    white: "#ffffff",
+    black: "#000000",
+    yellow: "#ffff00",
+    red: "#ef4444",
+    green: "#22c55e",
+  };
+
+  let hex = namedColors[trimmed] || trimmed;
   if (hex.startsWith("#")) {
     hex = hex.substring(1);
   }

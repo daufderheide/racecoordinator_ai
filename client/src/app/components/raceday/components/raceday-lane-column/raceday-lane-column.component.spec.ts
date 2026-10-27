@@ -3314,6 +3314,17 @@ describe("RacedayLaneColumnComponent", () => {
       );
       fixture.detectChanges();
       expect(component.highlightLapStyle).toBe("classic");
+
+      // Should default to full-glow on driver station without explicit highlightLapStyle
+      const driverStationParent = {
+        ...mockParent,
+        isDriverStation: true,
+        activeLaneIndex: 0,
+        highlightLapStyle: undefined,
+      };
+      fixture.componentRef.setInput("parent", driverStationParent);
+      fixture.detectChanges();
+      expect(component.highlightLapStyle).toBe("full-glow");
     });
 
     it("should default effectiveHeaderTextColor to #ffffff for isHeaderWidget even if lane colors are enabled", () => {

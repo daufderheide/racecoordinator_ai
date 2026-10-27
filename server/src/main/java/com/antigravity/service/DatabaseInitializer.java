@@ -761,10 +761,12 @@ public class DatabaseInitializer {
       if (CustomUI.PRACTICE_UI_ID.equals(entityId)) {
         updatedLayoutJson = CustomUI.ensurePracticeTopRowCoordinates(updatedLayoutJson);
       }
-      if (CustomUI.DRIVER_STATION_UI_ID.equals(entityId)
-          && updatedLayoutJson.contains("\"useLaneColors\":false")) {
-        updatedLayoutJson =
-            updatedLayoutJson.replace("\"useLaneColors\":false", "\"useLaneColors\":true");
+      if (CustomUI.DRIVER_STATION_UI_ID.equals(entityId)) {
+        if (updatedLayoutJson.contains("\"useLaneColors\":false")) {
+          updatedLayoutJson =
+              updatedLayoutJson.replace("\"useLaneColors\":false", "\"useLaneColors\":true");
+        }
+        updatedLayoutJson = CustomUI.ensureDriverStationLapHighlight(updatedLayoutJson);
       }
       if (!updatedLayoutJson.equals(layoutJson)) {
         layoutJson = updatedLayoutJson;

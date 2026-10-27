@@ -724,6 +724,8 @@ export class Settings {
           timeSubsecondThreshold: 10,
           timeSubsecondDecimals: 2,
           lapDecimalPlaces: 0,
+          highlightRowOnLap: true,
+          highlightLapStyle: "full-glow",
         },
       },
       {
@@ -745,6 +747,8 @@ export class Settings {
           borderColor: "rgba(0,0,0,0.1)",
           backgroundColor: "rgba(255,255,255,0.1)",
           useLaneColors: true,
+          highlightRowOnLap: true,
+          highlightLapStyle: "full-glow",
         },
       },
       {
@@ -766,6 +770,8 @@ export class Settings {
           borderColor: "rgba(0,0,0,0.1)",
           backgroundColor: "rgba(255,255,255,0.1)",
           useLaneColors: true,
+          highlightRowOnLap: true,
+          highlightLapStyle: "full-glow",
         },
       },
       {
@@ -787,6 +793,8 @@ export class Settings {
           borderColor: "rgba(0,0,0,0.1)",
           backgroundColor: "rgba(255,255,255,0.1)",
           useLaneColors: true,
+          highlightRowOnLap: true,
+          highlightLapStyle: "full-glow",
         },
       },
       {
@@ -808,6 +816,8 @@ export class Settings {
           borderColor: "rgba(0,0,0,0.1)",
           backgroundColor: "rgba(255,255,255,0.1)",
           useLaneColors: true,
+          highlightRowOnLap: true,
+          highlightLapStyle: "full-glow",
         },
       },
       {
@@ -831,6 +841,8 @@ export class Settings {
           useLaneColors: true,
           lapDecimalPlaces: 0,
           decimalPlaces: 0,
+          highlightRowOnLap: true,
+          highlightLapStyle: "full-glow",
         },
       },
       {
@@ -852,6 +864,8 @@ export class Settings {
           borderColor: "rgba(0,0,0,0.1)",
           backgroundColor: "rgba(255,255,255,0.1)",
           useLaneColors: true,
+          highlightRowOnLap: true,
+          highlightLapStyle: "full-glow",
         },
       },
       {
@@ -874,6 +888,8 @@ export class Settings {
           borderColor: "rgba(0,0,0,0.1)",
           backgroundColor: "rgba(255,255,255,0.1)",
           useLaneColors: true,
+          highlightRowOnLap: true,
+          highlightLapStyle: "full-glow",
         },
       },
       {
@@ -895,6 +911,8 @@ export class Settings {
           borderColor: "rgba(0,0,0,0.1)",
           backgroundColor: "rgba(255,255,255,0.1)",
           useLaneColors: true,
+          highlightRowOnLap: true,
+          highlightLapStyle: "full-glow",
         },
       },
       {
@@ -908,6 +926,8 @@ export class Settings {
         zIndex: 100,
         customSettings: {
           displayMode: "color-bar",
+          highlightRowOnLap: true,
+          highlightLapStyle: "full-glow",
         },
       },
       {
@@ -924,6 +944,8 @@ export class Settings {
           gaugeStyle: "thermometer",
           orientation: "vertical",
           bindingMode: "hostLane",
+          highlightRowOnLap: true,
+          highlightLapStyle: "full-glow",
         },
       },
     ],

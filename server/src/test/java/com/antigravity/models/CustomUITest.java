@@ -96,6 +96,8 @@ public class CustomUITest {
     assertTrue(driverStationUi.getLayoutJson().contains("\"aspectRatio\":\"9:16\""));
     assertTrue(driverStationUi.getLayoutJson().contains("\"scaleMode\":\"stretch\""));
     assertTrue(driverStationUi.getLayoutJson().contains("\"useLaneColors\":true"));
+    assertTrue(driverStationUi.getLayoutJson().contains("\"highlightLapStyle\":\"full-glow\""));
+    assertTrue(driverStationUi.getLayoutJson().contains("\"highlightRowOnLap\":true"));
 
     assertTrue(defaultUi.getLayoutJson().contains("widget-countdown"));
     assertTrue(defaultUi.getLayoutJson().contains("\"glowEffect\":true"));
@@ -285,5 +287,24 @@ public class CustomUITest {
     assertTrue(result.contains("\"height\":111"));
     assertFalse(result.contains("\"y\":49"));
     assertFalse(result.contains("\"y\":50"));
+  }
+
+  @Test
+  public void testEnsureDriverStationLapHighlight() {
+    assertNull(CustomUI.ensureDriverStationLapHighlight(null));
+    assertEquals("", CustomUI.ensureDriverStationLapHighlight(""));
+    assertEquals("not json", CustomUI.ensureDriverStationLapHighlight("not json"));
+
+    String input =
+        "{\"widgets\":["
+            + "{\"id\":\"widget-ds-lane-number\",\"widgetType\":\"lane-column\",\"customSettings\":{\"columnKey\":\"laneNumber\",\"highlightLapStyle\":\"classic\"}},"
+            + "{\"id\":\"widget-ds-nickname\",\"widgetType\":\"lane-column\",\"customSettings\":{\"columnKey\":\"driver.nickname\"}},"
+            + "{\"id\":\"widget-ds-flag\",\"widgetType\":\"flag\"}"
+            + "]}";
+
+    String result = CustomUI.ensureDriverStationLapHighlight(input);
+    assertTrue(result.contains("\"highlightLapStyle\":\"full-glow\""));
+    assertTrue(result.contains("\"highlightRowOnLap\":true"));
+    assertFalse(result.contains("\"highlightLapStyle\":\"classic\""));
   }
 }

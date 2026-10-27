@@ -3208,13 +3208,30 @@ export class DefaultRacedayComponent
   }
 
   private handleLapHighlight(lap: any, driverData?: DriverHeatData) {
-    const driverId = lap?.objectId || driverData?.objectId;
-    if (!driverId) return;
+    const idsToHighlight: string[] = [];
+    if (lap?.objectId) idsToHighlight.push(lap.objectId);
+    if (driverData?.objectId && !idsToHighlight.includes(driverData.objectId)) {
+      idsToHighlight.push(driverData.objectId);
+    }
+    if (
+      driverData?.participant?.objectId &&
+      !idsToHighlight.includes(driverData.participant.objectId)
+    ) {
+      idsToHighlight.push(driverData.participant.objectId);
+    }
+    if (lap?.driverId && !idsToHighlight.includes(lap.driverId)) {
+      idsToHighlight.push(lap.driverId);
+    }
+    if (idsToHighlight.length === 0) return;
 
     const laneWidgets =
       this.currentRacedayLayout?.widgets?.filter(
         (w: any) =>
-          w.widgetType === "lane-view" || w.widgetType === "lane-column",
+          w.widgetType === "lane-view" ||
+          w.widgetType === "lane-column" ||
+          w.widgetType === "progress-gauge" ||
+          w.widgetType === "flag" ||
+          Boolean(w.widgetType?.startsWith("custom:")),
       ) || [];
     const settings = this.settingsService.getSettings();
     const fallbackEnabled = this.isPracticeLayout
@@ -3234,23 +3251,29 @@ export class DefaultRacedayComponent
         : fallbackEnabled;
 
     if (shouldHighlight) {
-      const existingTimer = this.lapHighlightTimers.get(driverId);
-      if (existingTimer) {
-        clearTimeout(existingTimer);
-        this.lapHighlightTimers.delete(driverId);
+      for (const id of idsToHighlight) {
+        const existingTimer = this.lapHighlightTimers.get(id);
+        if (existingTimer) {
+          clearTimeout(existingTimer);
+          this.lapHighlightTimers.delete(id);
+        }
+        this.highlightedDrivers.add(id);
       }
-      this.highlightedDrivers.add(driverId);
       if (!this.isDestroyed) {
         this.cdr.markForCheck();
       }
       const timer = setTimeout(() => {
-        this.lapHighlightTimers.delete(driverId);
-        this.highlightedDrivers.delete(driverId);
+        for (const id of idsToHighlight) {
+          this.lapHighlightTimers.delete(id);
+          this.highlightedDrivers.delete(id);
+        }
         if (!this.isDestroyed) {
           this.cdr.markForCheck();
         }
       }, 400);
-      this.lapHighlightTimers.set(driverId, timer);
+      for (const id of idsToHighlight) {
+        this.lapHighlightTimers.set(id, timer);
+      }
     }
   }
 
@@ -3258,7 +3281,11 @@ export class DefaultRacedayComponent
     const laneWidgets =
       this.currentRacedayLayout?.widgets?.filter(
         (w: any) =>
-          w.widgetType === "lane-view" || w.widgetType === "lane-column",
+          w.widgetType === "lane-view" ||
+          w.widgetType === "lane-column" ||
+          w.widgetType === "progress-gauge" ||
+          w.widgetType === "flag" ||
+          Boolean(w.widgetType?.startsWith("custom:")),
       ) || [];
     for (const w of laneWidgets) {
       const customStyle = w.customSettings?.["highlightLapStyle"];

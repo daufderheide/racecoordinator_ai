@@ -2,8 +2,9 @@ import { CommonModule } from "@angular/common";
 import { Component, input, ViewEncapsulation } from "@angular/core";
 import { RacedayFormatUtils } from "@app/components/raceday/utils/raceday-format.utils";
 import { FinishMethod } from "@app/models/heat_scoring";
-import { AbsoluteWidgetNode } from "@app/models/settings";
+import { AbsoluteWidgetNode, HighlightLapStyle } from "@app/models/settings";
 import { DriverHeatData } from "@app/race/driver_heat_data";
+import { isColorLight } from "@app/utils/color.utils";
 import {
   formatTimerDisplay,
   TimerFormatOptions,
@@ -227,5 +228,70 @@ export class RacedayProgressGaugeComponent {
 
   get showLabel(): boolean {
     return this.effectiveSettings["showLabel"] !== false;
+  }
+
+  get isHighlighted(): boolean {
+    if (
+      this.highlightLapStyle === "none" ||
+      this.effectiveSettings["highlightRowOnLap"] === false
+    ) {
+      return false;
+    }
+    const driverId = this.targetDriver?.objectId;
+    const participantId = this.targetDriver?.participant?.objectId;
+    const entityDriverId =
+      this.targetDriver?.actualDriver?.entity_id ||
+      this.targetDriver?.driver?.entity_id;
+    const hd = this.parent()?.highlightedDrivers;
+    if (hd) {
+      if (driverId && hd.has(driverId)) return true;
+      if (participantId && hd.has(participantId)) return true;
+      if (entityDriverId && hd.has(entityDriverId)) return true;
+    }
+    if (
+      this.parent()?.isDriverStation &&
+      this.parent()?.activeLaneIndex !== undefined
+    ) {
+      const drivers: DriverHeatData[] =
+        this.parent()?.sortedHeatDrivers ||
+        this.parent()?.heatDrivers ||
+        this.parent()?.heat?.heatDrivers ||
+        [];
+      const hostDriver = drivers.find(
+        (d) => d.laneIndex === this.parent()?.activeLaneIndex,
+      );
+      if (hostDriver) {
+        if (hostDriver.objectId && hd?.has(hostDriver.objectId)) return true;
+        if (
+          hostDriver.participant?.objectId &&
+          hd?.has(hostDriver.participant.objectId)
+        ) {
+          return true;
+        }
+        const hostEntityDriverId =
+          hostDriver.actualDriver?.entity_id || hostDriver.driver?.entity_id;
+        if (hostEntityDriverId && hd?.has(hostEntityDriverId)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  get highlightLapStyle(): HighlightLapStyle {
+    if (this.effectiveSettings["highlightLapStyle"]) {
+      return this.effectiveSettings["highlightLapStyle"];
+    }
+    if (this.effectiveSettings["highlightRowOnLap"] === false) {
+      return "none";
+    }
+    if (this.parent()?.isDriverStation) {
+      return this.parent()?.highlightLapStyle || "full-glow";
+    }
+    return this.parent()?.highlightLapStyle || "classic";
+  }
+
+  get isLightBackground(): boolean {
+    return isColorLight(this.effectiveFillColor);
   }
 }

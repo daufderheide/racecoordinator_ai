@@ -6,6 +6,13 @@
   box-sizing: border-box;
   justify-content: center;
   align-items: center;
+  position: relative;
+  overflow: hidden;
+  border-radius: 8px;
+  transition:
+    filter 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
 }
 
 .flag-image {
@@ -67,4 +74,114 @@
   background-size: 20px 20px;
   background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
   box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+}
+
+@keyframes lap-shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.flag-panel.highlight {
+  box-shadow: inset 0 0 0 2px #38bdf8, inset 0 0 14px rgba(56, 189, 248, 0.65);
+}
+
+.flag-panel.highlight.highlight-style-classic {
+  box-shadow: none;
+  filter: brightness(1.25) drop-shadow(0 0 10px rgba(255, 255, 255, 0.35));
+}
+
+:host-context(.driver-station-mode) .flag-panel.highlight.highlight-style-classic,
+.driver-station-mode .flag-panel.highlight.highlight-style-classic {
+  box-shadow: inset 0 0 0 2px #38bdf8, inset 0 0 14px rgba(56, 189, 248, 0.65);
+  filter: brightness(1.25) drop-shadow(0 0 10px rgba(255, 255, 255, 0.35));
+}
+
+:host-context(.driver-station-mode) .flag-panel.highlight.highlight-style-classic::after,
+.driver-station-mode .flag-panel.highlight.highlight-style-classic::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  z-index: 10;
+  background: rgba(56, 189, 248, 0.25);
+}
+
+.flag-panel.highlight.highlight-style-glow-border {
+  box-shadow: inset 0 0 0 2px #38bdf8, inset 0 0 14px rgba(56, 189, 248, 0.65);
+}
+
+.flag-panel.highlight.highlight-style-tint-wash {
+  box-shadow: none;
+}
+
+.flag-panel.highlight.highlight-style-tint-wash::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  z-index: 10;
+  background: rgba(56, 189, 248, 0.35);
+}
+
+.flag-panel.highlight.highlight-style-full-glow {
+  box-shadow: inset 0 0 0 2px #38bdf8, inset 0 0 14px rgba(56, 189, 248, 0.65);
+}
+
+.flag-panel.highlight.highlight-style-full-glow::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  z-index: 10;
+  background: rgba(56, 189, 248, 0.25);
+}
+
+.flag-panel.highlight.highlight-style-shimmer {
+  box-shadow: inset 0 0 0 1px rgba(56, 189, 248, 0.5);
+  position: relative;
+  overflow: hidden;
+}
+
+.flag-panel.highlight.highlight-style-shimmer::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  border-radius: inherit;
+  z-index: 10;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(56, 189, 248, 0.25) 25%,
+    rgba(255, 255, 255, 0.8) 50%,
+    rgba(56, 189, 248, 0.25) 75%,
+    transparent 100%
+  );
+  animation: lap-shimmer 400ms ease-out forwards;
+}
+
+.flag-panel.highlight.highlight-style-scale-pulse {
+  transform: scale(1.025);
+  z-index: 15 !important;
+  box-shadow: inset 0 0 0 2px #38bdf8, inset 0 0 12px rgba(56, 189, 248, 0.55);
+}
+
+.flag-panel.highlight.highlight-style-adaptive-dip.is-light-lane {
+  filter: brightness(0.65) contrast(1.15) !important;
+  box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.6);
+}
+
+.flag-panel.highlight.highlight-style-adaptive-dip:not(.is-light-lane) {
+  filter: brightness(1.35) !important;
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.6);
 }

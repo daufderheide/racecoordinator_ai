@@ -207,10 +207,44 @@ export class RacedayLaneColumnComponent
       return false;
     }
     const driverId = this.targetDriver?.objectId;
-    if (!driverId) {
-      return false;
+    const participantId = this.targetDriver?.participant?.objectId;
+    const entityDriverId =
+      this.targetDriver?.actualDriver?.entity_id ||
+      this.targetDriver?.driver?.entity_id;
+    const hd = this.parent()?.highlightedDrivers;
+    if (hd) {
+      if (driverId && hd.has(driverId)) return true;
+      if (participantId && hd.has(participantId)) return true;
+      if (entityDriverId && hd.has(entityDriverId)) return true;
     }
-    return Boolean(this.parent()?.highlightedDrivers?.has(driverId));
+    if (
+      this.parent()?.isDriverStation &&
+      this.parent()?.activeLaneIndex !== undefined
+    ) {
+      const drivers: DriverHeatData[] =
+        this.parent()?.sortedHeatDrivers ||
+        this.parent()?.heatDrivers ||
+        this.parent()?.heat?.heatDrivers ||
+        [];
+      const hostDriver = drivers.find(
+        (d) => d.laneIndex === this.parent()?.activeLaneIndex,
+      );
+      if (hostDriver) {
+        if (hostDriver.objectId && hd?.has(hostDriver.objectId)) return true;
+        if (
+          hostDriver.participant?.objectId &&
+          hd?.has(hostDriver.participant.objectId)
+        ) {
+          return true;
+        }
+        const hostEntityDriverId =
+          hostDriver.actualDriver?.entity_id || hostDriver.driver?.entity_id;
+        if (hostEntityDriverId && hd?.has(hostEntityDriverId)) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   get highlightLapStyle(): HighlightLapStyle {
@@ -220,8 +254,8 @@ export class RacedayLaneColumnComponent
     if (this.settings?.highlightRowOnLap === false) {
       return "none";
     }
-    if (this.settings?.highlightRowOnLap === true) {
-      return "classic";
+    if (this.parent()?.isDriverStation) {
+      return this.parent()?.highlightLapStyle || "full-glow";
     }
     return this.parent()?.highlightLapStyle || "classic";
   }
