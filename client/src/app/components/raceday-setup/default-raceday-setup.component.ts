@@ -1,9 +1,7 @@
-/* eslint-disable max-lines */
 import {
   CdkDrag,
   CdkDragDrop,
   CdkDropList,
-  moveItemInArray,
   ɵɵCdkScrollable,
 } from "@angular/cdk/drag-drop";
 import { NgClass } from "@angular/common";
@@ -34,9 +32,6 @@ import { RaceHistoryDialogComponent } from "@app/components/shared/race-history-
 import { RacingRosterDialogComponent } from "@app/components/shared/racing-roster-dialog/racing-roster-dialog.component";
 import { SeasonSummaryComponent } from "@app/components/shared/season-summary/season-summary.component";
 import { UpdateSelectorComponent } from "@app/components/shared/update-selector/update-selector.component";
-import { getThemeDisplayNameKey } from "@app/components/ui-editor/ui-editor-crud.helper";
-import { DriverConverter } from "@app/converters/driver.converter";
-import { TeamConverter } from "@app/converters/team.converter";
 import { DataService } from "@app/data.service";
 import { DriverLabelsOverflowDirective } from "@app/directives/driver-labels-overflow.directive";
 import { Driver } from "@app/models/driver";
@@ -44,7 +39,6 @@ import { DriverLabel } from "@app/models/driver-label";
 import { Event as EventModel } from "@app/models/event";
 import { Race } from "@app/models/race";
 import { Season, SeasonStandingItem } from "@app/models/season";
-import { Settings } from "@app/models/settings";
 import { Team } from "@app/models/team";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { IDemoConfig } from "@app/proto/antigravity";
@@ -61,18 +55,56 @@ import { SettingsService } from "@app/services/settings.service";
 import { ThemeService } from "@app/services/theme.service";
 import { TranslationService } from "@app/services/translation.service";
 import { UpdateChannel } from "@app/services/update.service";
-import { getContrastColor } from "@app/utils/color.utils";
-import { saveFileAs } from "@app/utils/file-download.utils";
 import { calculateSeasonStandings } from "@app/utils/season.utils";
 import { naturalSortCompare } from "@app/utils/sorting.utils";
 
-interface ISavedRace {
-  filename: string;
-  isDemo: boolean;
-  corrupt?: boolean;
-}
-
-type Participant = Driver | Team;
+import {
+  formatEnumDisplay,
+  getContrastColor,
+  getEventDriverLimitWarning,
+  getFinishValueDisplay,
+  getHeatRankingDisplay,
+  getHeatRotationTypeDisplay,
+  getItemMaxDrivers,
+  getItemRaceId,
+  getOverallRankingDisplay,
+  getRaceCardBackgroundClass,
+  getRaceFinishMethod,
+  getRaceFinishValue,
+  getStartRaceTooltip,
+  getThemeDisplay,
+  getThemeDisplayNameKey,
+  hasWarmup,
+  isHandsFree,
+  isPracticeRace,
+} from "./raceday-setup-formatting.helper";
+import { getRacedaySetupHelpSteps } from "./raceday-setup-help.helper";
+import { RacedaySetupInitHelper } from "./raceday-setup-init.helper";
+import { RacedaySetupLaunchHelper } from "./raceday-setup-launch.helper";
+import { RacedaySetupMenuHelper } from "./raceday-setup-menu.helper";
+import { RacedaySetupNavigationHelper } from "./raceday-setup-navigation.helper";
+import {
+  computeUnselectedParticipants,
+  filterParticipants,
+  getDriver,
+  getLocalizedName,
+  getLocalizedNickname,
+  getLocalizedTeamMembers,
+  getParticipantAvatarUrl,
+  getParticipantLabels,
+  getParticipantUniqueId,
+  getTeam,
+  isDriver,
+  isTeam,
+  Participant,
+  participantHasLabel,
+} from "./raceday-setup-participant.helper";
+import {
+  ISavedRace,
+  RacedaySetupSavedRaceHelper,
+} from "./raceday-setup-saved-race.helper";
+import { RacedaySetupSelectionHelper } from "./raceday-setup-selection.helper";
+import { RacedaySetupUiHelper } from "./raceday-setup-ui.helper";
 
 @Component({
   standalone: true,
@@ -153,79 +185,25 @@ export class DefaultRacedaySetupComponent implements OnInit {
   racingActiveIndex: number = 0;
 
   get filteredAvailableParticipants(): Participant[] {
-    let pool = this.unselectedParticipants;
-    if (this.selectedAvailableLabelIds.length > 0) {
-      pool = pool.filter((p) => {
-        if (this.availableLabelMatchMode === "all") {
-          return this.selectedAvailableLabelIds.every((id) =>
-            this.participantHasLabel(p, id),
-          );
-        }
-        return this.selectedAvailableLabelIds.some((id) =>
-          this.participantHasLabel(p, id),
-        );
-      });
-    }
-    if (!this.availableSearchQuery) return pool;
-    const lowerQuery = this.availableSearchQuery.trim().toLowerCase();
-    if (!lowerQuery) return pool;
-    const matches = pool.filter((p) => {
-      const name = this.getLocalizedName(p).toLowerCase();
-      const nickname = this.getLocalizedNickname(p).toLowerCase();
-      return name.includes(lowerQuery) || nickname.includes(lowerQuery);
-    });
-    return this.sortFilteredParticipants(matches, lowerQuery);
+    return filterParticipants(
+      this.unselectedParticipants,
+      this.selectedAvailableLabelIds,
+      this.availableLabelMatchMode,
+      this.availableSearchQuery,
+      this.allDrivers,
+      this.translationService,
+    );
   }
 
   get filteredRacingParticipants(): Participant[] {
-    let pool = this.selectedParticipants;
-    if (this.selectedRacingLabelIds.length > 0) {
-      pool = pool.filter((p) => {
-        if (this.racingLabelMatchMode === "all") {
-          return this.selectedRacingLabelIds.every((id) =>
-            this.participantHasLabel(p, id),
-          );
-        }
-        return this.selectedRacingLabelIds.some((id) =>
-          this.participantHasLabel(p, id),
-        );
-      });
-    }
-    if (!this.racingSearchQuery) return pool;
-    const lowerQuery = this.racingSearchQuery.trim().toLowerCase();
-    if (!lowerQuery) return pool;
-    const matches = pool.filter((p) => {
-      const name = this.getLocalizedName(p).toLowerCase();
-      const nickname = this.getLocalizedNickname(p).toLowerCase();
-      return name.includes(lowerQuery) || nickname.includes(lowerQuery);
-    });
-    return this.sortFilteredParticipants(matches, lowerQuery);
-  }
-
-  private sortFilteredParticipants(
-    participants: Participant[],
-    lowerQuery: string,
-  ): Participant[] {
-    return [...participants].sort((a, b) => {
-      const aName = this.getLocalizedName(a).toLowerCase();
-      const aNick = this.getLocalizedNickname(a).toLowerCase();
-      const bName = this.getLocalizedName(b).toLowerCase();
-      const bNick = this.getLocalizedNickname(b).toLowerCase();
-
-      const aExact = aName === lowerQuery || aNick === lowerQuery;
-      const bExact = bName === lowerQuery || bNick === lowerQuery;
-      if (aExact && !bExact) return -1;
-      if (!aExact && bExact) return 1;
-
-      const aStarts =
-        aName.startsWith(lowerQuery) || aNick.startsWith(lowerQuery);
-      const bStarts =
-        bName.startsWith(lowerQuery) || bNick.startsWith(lowerQuery);
-      if (aStarts && !bStarts) return -1;
-      if (!aStarts && bStarts) return 1;
-
-      return 0;
-    });
+    return filterParticipants(
+      this.selectedParticipants,
+      this.selectedRacingLabelIds,
+      this.racingLabelMatchMode,
+      this.racingSearchQuery,
+      this.allDrivers,
+      this.translationService,
+    );
   }
 
   // Race / Event State
@@ -296,24 +274,7 @@ export class DefaultRacedaySetupComponent implements OnInit {
   serverLogLevels = ["TRACE", "DEBUG", "INFO", "WARN", "ERROR"];
   currentClientLogLevel: string = "INFO";
   currentServerLogLevel: string = "INFO";
-  menuItems = [
-    {
-      label: "RDS_MENU_FILE",
-      action: (event: MouseEvent) => this.toggleFileDropdown(event),
-    },
-    {
-      label: "RDS_MENU_CONFIG",
-      action: (event: MouseEvent) => this.toggleConfigDropdown(event),
-    },
-    {
-      label: "RDS_MENU_OPTIONS",
-      action: (event: MouseEvent) => this.toggleOptionsDropdown(event),
-    },
-    {
-      label: "RDS_MENU_HELP",
-      action: (event: MouseEvent) => this.toggleHelpDropdown(event),
-    },
-  ];
+  menuItems = RacedaySetupNavigationHelper.buildMenuItems(this);
 
   constructor(
     private dataService: DataService,
@@ -348,134 +309,15 @@ export class DefaultRacedaySetupComponent implements OnInit {
   }
 
   private initInitialData(result: any) {
-    const drivers = (result.drivers as any[]).map((d: any) => {
-      const driver = DriverConverter.fromJSON(d);
-      DriverConverter.register(driver);
-      return driver;
-    });
-    const teams = ((result.teams as any[]) || []).map((t: any) => {
-      const team = TeamConverter.fromJSON(t);
-      TeamConverter.register(team);
-      return team;
-    });
-    this.allDrivers = drivers;
-    this.allTeams = teams;
-    this.driverLabels = (result.driverLabels as any[]) || [];
-
-    (this as any).races = (result.races || []).sort((a: any, b: any) =>
-      (a.name || "").localeCompare(b.name || ""),
-    );
-
-    this.events = (result.events || []).sort((a: any, b: any) =>
-      (a.name || "").localeCompare(b.name || ""),
-    );
-
-    this.seasons = (result.seasons || []).sort((a: any, b: any) =>
-      (a.name || "").localeCompare(b.name || ""),
-    );
-
-    const localSettings = this.settingsService.getSettings();
-    this.updateQuickStartRaces(localSettings.recentRaceIds);
-
-    this.initSeasonSelection(localSettings);
-    this.initRaceAndEventSelection(localSettings);
-    this.initParticipantSelection(drivers, teams, localSettings);
-
-    this.cdr.detectChanges();
+    RacedaySetupInitHelper.initInitialData(this, result);
   }
 
   private initSeasonSelection(localSettings: any) {
-    if (localSettings && localSettings.selectedSeasonId) {
-      const matchedSeason = this.seasons.find(
-        (s) => s.entity_id === localSettings.selectedSeasonId,
-      );
-      if (matchedSeason) {
-        this.selectedSeason = matchedSeason;
-        this.calculateSeasonStandings();
-      }
-    }
+    RacedaySetupInitHelper.initSeasonSelection(this, localSettings);
   }
 
   private initRaceAndEventSelection(localSettings: any) {
-    if (localSettings && localSettings.selectedRaceId) {
-      if (localSettings.isEventMode) {
-        const matchedEvent = this.events.find(
-          (e) => e.entity_id === localSettings.selectedRaceId,
-        );
-        if (matchedEvent) {
-          this.selectedEvent = matchedEvent;
-          this.selectedRace = undefined;
-        }
-      } else {
-        const matchedRace = this.races.find(
-          (r) => r.entity_id === localSettings.selectedRaceId,
-        );
-        if (matchedRace) {
-          this.selectedRace = matchedRace;
-          this.selectedEvent = undefined;
-        }
-      }
-
-      if (!this.selectedRace && !this.selectedEvent) {
-        const matchedRace = this.races.find(
-          (r) => r.entity_id === localSettings.selectedRaceId,
-        );
-        if (matchedRace) {
-          this.selectedRace = matchedRace;
-          this.selectedEvent = undefined;
-        } else {
-          const matchedEvent = this.events.find(
-            (e) => e.entity_id === localSettings.selectedRaceId,
-          );
-          if (matchedEvent) {
-            this.selectedEvent = matchedEvent;
-            this.selectedRace = undefined;
-          }
-        }
-      }
-    }
-
-    if (!this.selectedRace && !this.selectedEvent) {
-      if (
-        localSettings &&
-        localSettings.recentRaceIds &&
-        localSettings.recentRaceIds.length > 0
-      ) {
-        const defaultId = localSettings.recentRaceIds[0];
-        const matchedRace = this.races.find((r) => r.entity_id === defaultId);
-        if (matchedRace) {
-          this.selectedRace = matchedRace;
-          this.selectedEvent = undefined;
-        } else {
-          const matchedEvent = this.events.find(
-            (e) => e.entity_id === defaultId,
-          );
-          if (matchedEvent) {
-            this.selectedEvent = matchedEvent;
-            this.selectedRace = undefined;
-          }
-        }
-      }
-      if (!this.selectedRace && !this.selectedEvent && this.races.length > 0) {
-        this.selectedRace = this.races[0];
-      } else if (
-        !this.selectedRace &&
-        !this.selectedEvent &&
-        this.events.length > 0
-      ) {
-        this.selectedEvent = this.events[0];
-      }
-    }
-
-    if (this.themeService?.getTransientThemeId?.()) {
-      this.themeService.clearTransientActiveTheme();
-    }
-    if (this.selectedRace?.entity_id) {
-      this.themeService.activateForRace(
-        this.selectedRace.entity_id,
-        this.selectedRace.theme_id,
-      );
-    }
+    RacedaySetupInitHelper.initRaceAndEventSelection(this, localSettings);
   }
 
   private initParticipantSelection(
@@ -483,108 +325,25 @@ export class DefaultRacedaySetupComponent implements OnInit {
     teams: Team[],
     localSettings: any,
   ) {
-    const allParticipants: Participant[] = [...drivers, ...teams];
-    const participantMap = new Map(
-      allParticipants.map((p) => [
-        this.isDriver(p) ? `d_${p.entity_id}` : `t_${p.entity_id}`,
-        p,
-      ]),
+    RacedaySetupInitHelper.initParticipantSelection(
+      this,
+      drivers,
+      teams,
+      localSettings,
     );
-
-    if (localSettings && localSettings.selectedDriverIds) {
-      const loadedParticipants: Participant[] = [];
-      for (const rawId of localSettings.selectedDriverIds) {
-        let prefixedId = rawId;
-        if (!rawId.startsWith("d_") && !rawId.startsWith("t_")) {
-          if (participantMap.has(`d_${rawId}`)) {
-            prefixedId = `d_${rawId}`;
-          } else if (participantMap.has(`t_${rawId}`)) {
-            prefixedId = `t_${rawId}`;
-          }
-        }
-
-        const p = participantMap.get(prefixedId);
-        if (p) {
-          loadedParticipants.push(p);
-        }
-      }
-      this.selectedParticipants = loadedParticipants;
-    }
-    this.updateUnselectedParticipants();
   }
 
   private initSystemSubscriptions() {
-    this.translationService.getTranslationsLoaded().subscribe((loaded) => {
-      this.translationsLoaded = loaded;
-      this.cdr.detectChanges();
-    });
-
-    this.currentClientLogLevel =
-      this.settingsService.getSettings().clientLogLevel || "INFO";
-    this.currentServerLogLevel =
-      this.settingsService.getSettings().serverLogLevel || "INFO";
-    this.demoConfig = this.settingsService.getSettings().demoConfig;
-
-    this.dataService.getSystemState().subscribe((state) => {
-      if (state) {
-        this.isRaceRunning = state.resourceLockState === "RACE_RUNNING";
-        if (this.isRaceRunning && (state as any).isReplayMode) {
-          this.router.navigate(["/raceday"]);
-        }
-        this.cdr.detectChanges();
-      }
-    });
-
-    this.detectShortcutKey();
+    RacedaySetupInitHelper.initSystemSubscriptions(this);
   }
 
   detectShortcutKey() {
-    if (typeof navigator !== "undefined") {
-      this.isMac =
-        navigator.platform?.toUpperCase().indexOf("MAC") >= 0 ||
-        navigator.userAgent?.toUpperCase().indexOf("MAC") >= 0;
-      this.quitShortcut = this.isMac ? "Cmd+Q" : "Alt+F4";
-    }
+    RacedaySetupUiHelper.detectShortcutKey(this);
   }
 
   @HostListener("window:keydown", ["$event"])
   onKeyDown(event: KeyboardEvent) {
-    const inInputField =
-      document.activeElement &&
-      (document.activeElement.tagName === "INPUT" ||
-        document.activeElement.tagName === "TEXTAREA");
-
-    if (inInputField) {
-      return;
-    }
-
-    if (this.isMac) {
-      if (event.metaKey && (event.key === "q" || event.key === "Q")) {
-        event.preventDefault();
-        this.quit();
-        return;
-      }
-    } else {
-      if (event.altKey && event.key === "F4") {
-        this.closeFileDropdown();
-        return;
-      }
-      if (event.ctrlKey && (event.key === "q" || event.key === "Q")) {
-        event.preventDefault();
-        this.quit();
-        return;
-      }
-    }
-
-    if (event.key === "Enter") {
-      const activeElem = document.activeElement as HTMLElement;
-      if (activeElem && activeElem.tagName === "BUTTON") {
-        return;
-      }
-      this.handleEnterKey(event);
-    } else if (event.key === "ArrowDown" || event.key === "ArrowUp") {
-      this.handleArrowKey(event);
-    }
+    RacedaySetupUiHelper.onKeyDown(this, event);
   }
 
   @HostListener("window:resize")
@@ -594,161 +353,70 @@ export class DefaultRacedaySetupComponent implements OnInit {
 
   @HostListener("document:click", ["$event"])
   onDocumentClick(event: MouseEvent) {
-    const target = event.target as HTMLElement;
-    if (!target.closest(".custom-dropdown-container")) {
-      this.closeDropdown();
-    }
-    if (!target.closest(".options-menu-container")) {
-      this.closeOptionsDropdown();
-    }
-    if (!target.closest(".file-menu-container")) {
-      this.closeFileDropdown();
-    }
-    if (!target.closest(".config-menu-container")) {
-      this.closeConfigDropdown();
-    }
-    if (!target.closest(".help-menu-container")) {
-      this.closeHelpDropdown();
-    }
+    RacedaySetupUiHelper.onDocumentClick(this, event);
   }
 
   private updateScale() {
-    const targetWidth = 1600;
-    const targetHeight = 900;
-    const windowWidth = window.innerWidth;
-    const windowHeight = window.innerHeight;
-
-    const scaleX = windowWidth / targetWidth;
-    const scaleY = windowHeight / targetHeight;
-    this.scale = Math.min(scaleX, scaleY);
+    this.scale = RacedaySetupUiHelper.calculateScale(
+      window.innerWidth,
+      window.innerHeight,
+    );
   }
 
   getParticipantAvatarUrl(participant: Participant): string {
-    if (!participant.avatarUrl) return "";
-    if (participant.avatarUrl.startsWith("/")) {
-      return `${this.dataService.serverUrl}${participant.avatarUrl}`;
-    }
-    return participant.avatarUrl;
+    return getParticipantAvatarUrl(participant, this.dataService.serverUrl);
   }
 
   getLocalizedName(participant: Participant): string {
-    if (
-      (participant.name === "Empty" || participant.name === "Unknown") &&
-      (!participant.entity_id ||
-        participant.entity_id === "" ||
-        participant.entity_id === "empty")
-    ) {
-      return this.translationService.translate("RD_EMPTY_LANE");
-    }
-    return participant.name || "";
+    return getLocalizedName(participant, this.translationService);
   }
 
   getLocalizedNickname(participant: Participant): string {
-    if (this.isDriver(participant)) {
-      if (
-        (participant.nickname === "Empty" ||
-          participant.name === "Empty" ||
-          participant.name === "Unknown") &&
-        (!participant.entity_id ||
-          participant.entity_id === "" ||
-          participant.entity_id === "empty")
-      ) {
-        return this.translationService.translate("RD_EMPTY_LANE");
-      }
-      return participant.nickname || participant.name || "";
-    }
-    return "";
+    return getLocalizedNickname(participant, this.translationService);
   }
 
   getLocalizedTeamMembers(participant: Participant): string {
-    if (this.isTeam(participant)) {
-      return `${participant.driverIds.length} ${this.translationService.translate("RDS_TEAM_DRIVERS")}`;
-    }
-    return "";
+    return getLocalizedTeamMembers(participant, this.translationService);
   }
 
   participantHasLabel(participant: Participant, labelId: string): boolean {
-    if (!labelId) return true;
-    if ((participant?.labelIds || []).includes(labelId)) {
-      return true;
-    }
-    if (this.isDriver(participant)) {
-      return false;
-    }
-    const team = participant as Team;
-    if (!team.driverIds || team.driverIds.length === 0) return false;
-    return team.driverIds.some((dId) => {
-      const d = this.allDrivers.find(
-        (driver) =>
-          driver.entity_id === dId ||
-          driver.entity_id === dId.replace(/^d_/, "") ||
-          driver.entity_id === `d_${dId}`,
-      );
-      return !!d && (d.labelIds || []).includes(labelId);
-    });
+    return participantHasLabel(participant, labelId, this.allDrivers);
   }
 
   getParticipantLabels(participant: Participant): DriverLabel[] {
-    const ids = new Set(participant?.labelIds || []);
-    if (!this.isDriver(participant)) {
-      const team = participant as Team;
-      (team.driverIds || []).forEach((dId) => {
-        const d = this.allDrivers.find(
-          (driver) =>
-            driver.entity_id === dId ||
-            driver.entity_id === dId.replace(/^d_/, "") ||
-            driver.entity_id === `d_${dId}`,
-        );
-        (d?.labelIds || []).forEach((lId) => ids.add(lId));
-      });
-    }
-    return this.driverLabels.filter((l) => ids.has(l.entity_id));
+    return getParticipantLabels(
+      participant,
+      this.allDrivers,
+      this.driverLabels,
+    );
   }
 
   onAvailableLabelFilterChange(
-    labelIds: string[] | string | null | undefined,
+    filter: string | string[] | { value: string | string[] },
   ): void {
-    if (Array.isArray(labelIds)) {
-      this.selectedAvailableLabelIds = labelIds.filter(Boolean);
-    } else if (labelIds) {
-      this.selectedAvailableLabelIds = [labelIds];
-    } else {
-      this.selectedAvailableLabelIds = [];
-    }
-    this.availableActiveIndex = 0;
+    RacedaySetupSelectionHelper.onAvailableLabelFilterChange(this, filter);
   }
 
   onRacingLabelFilterChange(
-    labelIds: string[] | string | null | undefined,
+    filter: string | string[] | { value: string | string[] },
   ): void {
-    if (Array.isArray(labelIds)) {
-      this.selectedRacingLabelIds = labelIds.filter(Boolean);
-    } else if (labelIds) {
-      this.selectedRacingLabelIds = [labelIds];
-    } else {
-      this.selectedRacingLabelIds = [];
-    }
-    this.racingActiveIndex = 0;
+    RacedaySetupSelectionHelper.onRacingLabelFilterChange(this, filter);
   }
 
   toggleAvailableLabelMatchMode(): void {
-    this.availableLabelMatchMode =
-      this.availableLabelMatchMode === "any" ? "all" : "any";
+    RacedaySetupSelectionHelper.toggleAvailableLabelMatchMode(this);
   }
 
   toggleRacingLabelMatchMode(): void {
-    this.racingLabelMatchMode =
-      this.racingLabelMatchMode === "any" ? "all" : "any";
+    RacedaySetupSelectionHelper.toggleRacingLabelMatchMode(this);
   }
 
   clearAvailableLabelFilter(): void {
-    this.selectedAvailableLabelIds = [];
-    this.availableActiveIndex = 0;
+    RacedaySetupSelectionHelper.clearAvailableLabelFilter(this);
   }
 
   clearRacingLabelFilter(): void {
-    this.selectedRacingLabelIds = [];
-    this.racingActiveIndex = 0;
+    RacedaySetupSelectionHelper.clearRacingLabelFilter(this);
   }
 
   getContrastColor(color: string | undefined): string {
@@ -756,211 +424,40 @@ export class DefaultRacedaySetupComponent implements OnInit {
   }
 
   onParticipantImageError(participant: Participant) {
-    this.imageErrors.add(
-      (this.isDriver(participant) ? "d_" : "t_") + participant.entity_id,
-    );
+    const id = this.getParticipantUniqueId(participant);
+    this.imageErrors.add(id);
+    this.cdr.detectChanges();
   }
 
-  // --- Participant Logic ---
-
   isParticipantInRacing(participant: Participant): boolean {
-    return this.selectedParticipants.some(
-      (p) =>
-        p.entity_id === participant.entity_id &&
-        this.isDriver(p) === this.isDriver(participant),
-    );
+    return RacedaySetupSelectionHelper.isParticipantInRacing(this, participant);
   }
 
   isParticipantInAvailable(participant: Participant): boolean {
-    if (this.isParticipantInRacing(participant)) {
-      return false;
-    }
-    return this.unselectedParticipants.some(
-      (p) =>
-        p.entity_id === participant.entity_id &&
-        this.isDriver(p) === this.isDriver(participant),
+    return RacedaySetupSelectionHelper.isParticipantInAvailable(
+      this,
+      participant,
     );
   }
 
   isAnyModalOrDropdownOpen(): boolean {
-    return (
-      this.isAnyMenuDropdownOpen() ||
-      this.isDropdownOpen ||
-      this.isEventDropdownOpen ||
-      this.isLogDropdownOpen ||
-      this.showErrorModal ||
-      this.showQuitBlockedModal ||
-      this.showDemoConfigModal ||
-      this.showAutoSavePrompt ||
-      this.showEndRacePrompt ||
-      this.showTrackEditorPrompt ||
-      this.showDeleteSavedRaceConfirm ||
-      this.showRacingRosterDialog ||
-      this.showRaceHistoryDialog ||
-      this.showLoadRaceModal ||
-      this.isAboutModalVisible
-    );
+    return RacedaySetupNavigationHelper.isAnyMenuDropdownOpen(this);
   }
 
   handleEnterKey(event?: KeyboardEvent, inputElem?: HTMLInputElement): boolean {
-    if (this.isAnyModalOrDropdownOpen()) {
-      return false;
-    }
-
-    if (!this.selectedParticipantItem) {
-      return false;
-    }
-
-    if (this.isParticipantInRacing(this.selectedParticipantItem)) {
-      if (event) {
-        event.preventDefault();
-      }
-      if (event && (event.shiftKey || event.ctrlKey)) {
-        this.removeAllFilteredRacingParticipants(inputElem);
-      } else {
-        this.removeActiveRacingParticipant(inputElem);
-      }
-      return true;
-    }
-
-    if (this.isParticipantInAvailable(this.selectedParticipantItem)) {
-      if (event) {
-        event.preventDefault();
-      }
-      if (event && (event.shiftKey || event.ctrlKey)) {
-        this.addAllFilteredAvailableParticipants(inputElem);
-      } else {
-        this.addActiveAvailableParticipant(inputElem);
-      }
-      return true;
-    }
-
-    return false;
+    return RacedaySetupSelectionHelper.handleEnterKey(this, event, inputElem);
   }
 
   handleArrowKey(event: KeyboardEvent): boolean {
-    if (this.isAnyModalOrDropdownOpen()) {
-      return false;
-    }
-
-    const participant =
-      this.selectedParticipantItem || this.clickedParticipantItem;
-    if (!participant) {
-      return false;
-    }
-
-    const isDown = event.key === "ArrowDown";
-    if (this.isParticipantInAvailable(participant)) {
-      event.preventDefault();
-      this.navigateAvailableParticipants(participant, isDown);
-      return true;
-    }
-
-    if (this.isParticipantInRacing(participant)) {
-      event.preventDefault();
-      this.navigateRacingParticipants(participant, isDown);
-      return true;
-    }
-
-    return false;
-  }
-
-  private navigateAvailableParticipants(
-    participant: Participant,
-    isDown: boolean,
-  ): void {
-    const list = this.filteredAvailableParticipants;
-    if (list.length === 0) return;
-
-    let currentIndex = list.findIndex(
-      (p) =>
-        this.getParticipantUniqueId(p) ===
-        this.getParticipantUniqueId(participant),
-    );
-    if (currentIndex === -1) {
-      currentIndex = Math.min(
-        Math.max(0, this.availableActiveIndex),
-        list.length - 1,
-      );
-    }
-
-    const nextIndex = isDown
-      ? Math.min(currentIndex + 1, list.length - 1)
-      : Math.max(currentIndex - 1, 0);
-
-    this.availableActiveIndex = nextIndex;
-    this.selectedParticipantItem = list[nextIndex] || null;
-    this.clickedParticipantItem = this.selectedParticipantItem;
-    this.cdr.detectChanges();
-    this.scrollActiveAvailableItemIntoView();
-  }
-
-  private navigateRacingParticipants(
-    participant: Participant,
-    isDown: boolean,
-  ): void {
-    const list = this.filteredRacingParticipants;
-    if (list.length === 0) return;
-
-    let currentIndex = list.findIndex(
-      (p) =>
-        this.getParticipantUniqueId(p) ===
-        this.getParticipantUniqueId(participant),
-    );
-    if (currentIndex === -1) {
-      currentIndex = Math.min(
-        Math.max(0, this.racingActiveIndex),
-        list.length - 1,
-      );
-    }
-
-    const nextIndex = isDown
-      ? Math.min(currentIndex + 1, list.length - 1)
-      : Math.max(currentIndex - 1, 0);
-
-    this.racingActiveIndex = nextIndex;
-    this.selectedParticipantItem = list[nextIndex] || null;
-    this.clickedParticipantItem = this.selectedParticipantItem;
-    this.cdr.detectChanges();
-    this.scrollActiveRacingItemIntoView();
+    return RacedaySetupSelectionHelper.handleArrowKey(this, event);
   }
 
   selectParticipant(participant: Participant, index?: number) {
-    this.selectedParticipantItem = participant;
-    this.clickedParticipantItem = participant;
-    if (index !== undefined) {
-      if (this.isParticipantInAvailable(participant)) {
-        this.availableActiveIndex = index;
-      } else if (this.isParticipantInRacing(participant)) {
-        this.racingActiveIndex = index;
-      }
-    } else {
-      const availIdx = this.filteredAvailableParticipants.findIndex(
-        (p) =>
-          p.entity_id === participant.entity_id &&
-          this.isDriver(p) === this.isDriver(participant),
-      );
-      if (availIdx !== -1) {
-        this.availableActiveIndex = availIdx;
-      } else {
-        const racingIdx = this.filteredRacingParticipants.findIndex(
-          (p) =>
-            p.entity_id === participant.entity_id &&
-            this.isDriver(p) === this.isDriver(participant),
-        );
-        if (racingIdx !== -1) {
-          this.racingActiveIndex = racingIdx;
-        }
-      }
-    }
+    RacedaySetupSelectionHelper.selectParticipant(this, participant, index);
   }
 
   isParticipantSelected(participant: Participant): boolean {
-    if (!this.selectedParticipantItem) return false;
-    return (
-      this.selectedParticipantItem.entity_id === participant.entity_id &&
-      this.isDriver(this.selectedParticipantItem) === this.isDriver(participant)
-    );
+    return RacedaySetupSelectionHelper.isParticipantSelected(this, participant);
   }
 
   toggleParticipantSelection(
@@ -968,202 +465,29 @@ export class DefaultRacedaySetupComponent implements OnInit {
     isSelected: boolean,
     forcedFocusElem?: HTMLInputElement,
   ) {
-    let added = false;
-    this.updateListWithRefresh(
-      () => {
-        if (isSelected) {
-          // Was selected, now unselecting
-          this.selectedParticipants = this.selectedParticipants.filter(
-            (p) =>
-              !(
-                p.entity_id === participant.entity_id &&
-                this.isDriver(p) === this.isDriver(participant)
-              ),
-          );
-        } else {
-          // Was unselected, now selecting
-          // Perform validation
-          const potentialParticipants = [
-            ...this.selectedParticipants,
-            participant,
-          ];
-          const validationResult = this.validationService.validate(
-            potentialParticipants,
-            this.allTeams,
-            this.allDrivers,
-          );
-
-          if (!validationResult.isValid) {
-            this.showParticipantValidationError(validationResult);
-            return;
-          }
-
-          this.selectedParticipants = [
-            ...this.selectedParticipants,
-            participant,
-          ];
-          added = true;
-        }
-        this.updateUnselectedParticipants();
-      },
+    RacedaySetupSelectionHelper.toggleParticipantSelection(
+      this,
+      participant,
+      isSelected,
       forcedFocusElem,
-      () => {
-        if (added) {
-          this.scrollRacingParticipantIntoView(participant);
-        }
-      },
     );
   }
 
   private showParticipantValidationError(
     validationResult: ValidationResult,
   ): void {
-    this.errorTitle = "RDS_ERR_VALIDATION_TITLE";
-    this.errorMessage = this.validationService.getErrorMessage(
+    RacedaySetupSelectionHelper.showParticipantValidationError(
+      this,
       validationResult,
-      this.translationService,
     );
-    this.errorMessageParams = {};
-    this.showErrorModal = true;
-    this.cdr.detectChanges();
   }
 
   private updateAvailableActiveItem(): void {
-    const remainingAvail = this.filteredAvailableParticipants.length;
-    if (this.availableActiveIndex >= remainingAvail) {
-      this.availableActiveIndex = Math.max(0, remainingAvail - 1);
-    }
-    this.selectedParticipantItem =
-      remainingAvail > 0
-        ? this.filteredAvailableParticipants[this.availableActiveIndex] || null
-        : null;
-    this.clickedParticipantItem = this.selectedParticipantItem;
-    this.cdr.detectChanges();
-  }
-
-  private extractEligibleTeamsForAddAll(
-    unselectedTeams: Participant[],
-    currentSelected: Participant[],
-    driversBeingAdded: Participant[],
-  ): Participant[] {
-    const selectedDriverIds = new Set<string>();
-    const selectedTeamIds = new Set<string>();
-
-    const recordDriverId = (id: string) => {
-      if (!id) return;
-      const raw = id.replace(/^d_/, "");
-      selectedDriverIds.add(id);
-      selectedDriverIds.add(raw);
-      selectedDriverIds.add(`d_${raw}`);
-    };
-
-    [...currentSelected, ...driversBeingAdded].forEach((p) => {
-      if (this.isDriver(p)) {
-        recordDriverId(p.entity_id);
-      } else if (this.isTeam(p)) {
-        selectedTeamIds.add(p.entity_id);
-        (p.driverIds || []).forEach((id) => recordDriverId(id));
-      }
-    });
-
-    const eligibleTeams: Participant[] = [];
-    for (const team of unselectedTeams) {
-      if (!this.isTeam(team) || selectedTeamIds.has(team.entity_id)) continue;
-      const hasConflict = (team.driverIds || []).some((dId) =>
-        selectedDriverIds.has(dId),
-      );
-      if (hasConflict) continue;
-
-      const potentialParticipants = [
-        ...currentSelected,
-        ...driversBeingAdded,
-        ...eligibleTeams,
-        team,
-      ];
-      const validationResult = this.validationService.validate(
-        potentialParticipants,
-        this.allTeams,
-        this.allDrivers,
-      );
-      if (validationResult.isValid) {
-        eligibleTeams.push(team);
-        selectedTeamIds.add(team.entity_id);
-        (team.driverIds || []).forEach((id) => recordDriverId(id));
-      }
-    }
-
-    return eligibleTeams;
+    RacedaySetupSelectionHelper.updateAvailableActiveItem(this);
   }
 
   addAllParticipants(inputElem?: HTMLInputElement) {
-    const unselectedDrivers = this.filteredAvailableParticipants.filter((p) =>
-      this.isDriver(p),
-    );
-    const unselectedTeams = this.filteredAvailableParticipants.filter((p) =>
-      this.isTeam(p),
-    );
-
-    if (unselectedDrivers.length === 0 && unselectedTeams.length === 0) {
-      return;
-    }
-
-    let participantsToAdd: Participant[] = [];
-
-    // 1. Prioritize individual drivers
-    if (unselectedDrivers.length > 0) {
-      const potentialParticipants = [
-        ...this.selectedParticipants,
-        ...unselectedDrivers,
-      ];
-      const validationResult = this.validationService.validate(
-        potentialParticipants,
-        this.allTeams,
-        this.allDrivers,
-      );
-
-      if (!validationResult.isValid) {
-        this.showParticipantValidationError(validationResult);
-        return;
-      }
-
-      participantsToAdd = [...unselectedDrivers];
-    }
-
-    // 2. Also add any matching teams that can be added without driver conflict
-    const eligibleTeams = this.extractEligibleTeamsForAddAll(
-      unselectedTeams,
-      this.selectedParticipants,
-      participantsToAdd,
-    );
-    participantsToAdd.push(...eligibleTeams);
-
-    if (participantsToAdd.length === 0) {
-      if (unselectedTeams.length > 0) {
-        const potentialParticipants = [
-          ...this.selectedParticipants,
-          unselectedTeams[0],
-        ];
-        const validationResult = this.validationService.validate(
-          potentialParticipants,
-          this.allTeams,
-          this.allDrivers,
-        );
-        if (!validationResult.isValid) {
-          this.showParticipantValidationError(validationResult);
-        }
-      }
-      return;
-    }
-
-    this.updateListWithRefresh(() => {
-      this.selectedParticipants = [
-        ...this.selectedParticipants,
-        ...participantsToAdd,
-      ];
-      this.updateUnselectedParticipants();
-    }, inputElem);
-
-    this.updateAvailableActiveItem();
+    RacedaySetupSelectionHelper.addAllParticipants(this, inputElem);
   }
 
   addAllFilteredAvailableParticipants(inputElem?: HTMLInputElement) {
@@ -1171,302 +495,78 @@ export class DefaultRacedaySetupComponent implements OnInit {
   }
 
   removeAllFilteredRacingParticipants(inputElem?: HTMLInputElement) {
-    if (!this.racingSearchQuery && this.selectedRacingLabelIds.length === 0) {
-      this.removeAllParticipants();
-      return;
-    }
-
-    const filteredSet = new Set(
-      this.filteredRacingParticipants.map(
-        (p) => p.entity_id + (this.isDriver(p) ? "_d" : "_t"),
-      ),
+    RacedaySetupSelectionHelper.removeAllFilteredRacingParticipants(
+      this,
+      inputElem,
     );
-
-    const remainingParticipants = this.selectedParticipants.filter((p) => {
-      const id = p.entity_id + (this.isDriver(p) ? "_d" : "_t");
-      return !filteredSet.has(id);
-    });
-
-    this.updateListWithRefresh(() => {
-      this.selectedParticipants = remainingParticipants;
-      this.updateUnselectedParticipants();
-    }, inputElem);
-
-    const remainingRacing = this.filteredRacingParticipants.length;
-    if (this.racingActiveIndex >= remainingRacing) {
-      this.racingActiveIndex = Math.max(0, remainingRacing - 1);
-    }
-    this.selectedParticipantItem =
-      remainingRacing > 0
-        ? this.filteredRacingParticipants[this.racingActiveIndex] || null
-        : null;
-    this.clickedParticipantItem = this.selectedParticipantItem;
-    this.cdr.detectChanges();
   }
 
   onAvailableSearchQueryChange() {
-    this.availableActiveIndex = 0;
-    if (this.availableSearchQuery?.trim()) {
-      const active = this.filteredAvailableParticipants[0];
-      this.selectedParticipantItem = active || null;
-      this.clickedParticipantItem = this.selectedParticipantItem;
-    } else {
-      this.clickedParticipantItem = null;
-      this.selectedParticipantItem = null;
-    }
+    RacedaySetupSelectionHelper.onAvailableSearchQueryChange(this);
   }
 
   onRacingSearchQueryChange() {
-    this.racingActiveIndex = 0;
-    if (this.racingSearchQuery?.trim()) {
-      const active = this.filteredRacingParticipants[0];
-      this.selectedParticipantItem = active || null;
-      this.clickedParticipantItem = this.selectedParticipantItem;
-    } else {
-      this.clickedParticipantItem = null;
-      this.selectedParticipantItem = null;
-    }
+    RacedaySetupSelectionHelper.onRacingSearchQueryChange(this);
   }
 
   onAvailableSearchKeydown(event: KeyboardEvent, inputElem?: HTMLInputElement) {
-    const list = this.filteredAvailableParticipants;
-    if (event.key === "ArrowDown") {
-      event.preventDefault();
-      if (list.length > 0) {
-        this.availableActiveIndex = Math.min(
-          this.availableActiveIndex + 1,
-          list.length - 1,
-        );
-        this.selectedParticipantItem = list[this.availableActiveIndex] || null;
-        this.clickedParticipantItem = this.selectedParticipantItem;
-        this.scrollActiveAvailableItemIntoView();
-      }
-    } else if (event.key === "ArrowUp") {
-      event.preventDefault();
-      if (list.length > 0) {
-        this.availableActiveIndex = Math.max(this.availableActiveIndex - 1, 0);
-        this.selectedParticipantItem = list[this.availableActiveIndex] || null;
-        this.clickedParticipantItem = this.selectedParticipantItem;
-        this.scrollActiveAvailableItemIntoView();
-      }
-    } else if (event.key === "Enter") {
-      event.preventDefault();
-      if (this.handleEnterKey(event, inputElem)) {
-        return;
-      }
-      if (event.shiftKey || event.ctrlKey) {
-        this.addAllFilteredAvailableParticipants(inputElem);
-      } else {
-        this.addActiveAvailableParticipant(inputElem);
-      }
-    } else if (event.key === "Escape") {
-      event.preventDefault();
-      this.availableSearchQuery = "";
-      this.availableActiveIndex = 0;
-      this.clickedParticipantItem = null;
-      this.selectedParticipantItem = null;
-    }
+    RacedaySetupSelectionHelper.onAvailableSearchKeydown(
+      this,
+      event,
+      inputElem,
+    );
   }
 
   onRacingSearchKeydown(event: KeyboardEvent, inputElem?: HTMLInputElement) {
-    const list = this.filteredRacingParticipants;
-    if (event.key === "ArrowDown") {
-      event.preventDefault();
-      if (list.length > 0) {
-        this.racingActiveIndex = Math.min(
-          this.racingActiveIndex + 1,
-          list.length - 1,
-        );
-        this.selectedParticipantItem = list[this.racingActiveIndex] || null;
-        this.clickedParticipantItem = this.selectedParticipantItem;
-        this.scrollActiveRacingItemIntoView();
-      }
-    } else if (event.key === "ArrowUp") {
-      event.preventDefault();
-      if (list.length > 0) {
-        this.racingActiveIndex = Math.max(this.racingActiveIndex - 1, 0);
-        this.selectedParticipantItem = list[this.racingActiveIndex] || null;
-        this.clickedParticipantItem = this.selectedParticipantItem;
-        this.scrollActiveRacingItemIntoView();
-      }
-    } else if (event.key === "Enter") {
-      event.preventDefault();
-      if (this.handleEnterKey(event, inputElem)) {
-        return;
-      }
-      if (event.shiftKey || event.ctrlKey) {
-        this.removeAllFilteredRacingParticipants(inputElem);
-      } else {
-        this.removeActiveRacingParticipant(inputElem);
-      }
-    } else if (event.key === "Escape") {
-      event.preventDefault();
-      this.racingSearchQuery = "";
-      this.racingActiveIndex = 0;
-      this.clickedParticipantItem = null;
-      this.selectedParticipantItem = null;
-    }
+    RacedaySetupSelectionHelper.onRacingSearchKeydown(this, event, inputElem);
   }
 
   addActiveAvailableParticipant(inputElem?: HTMLInputElement) {
-    const participants = this.filteredAvailableParticipants;
-    if (participants.length === 0) return;
-
-    let index = -1;
-    if (this.selectedParticipantItem) {
-      index = participants.findIndex(
-        (p) =>
-          p.entity_id === this.selectedParticipantItem!.entity_id &&
-          this.isDriver(p) === this.isDriver(this.selectedParticipantItem!),
-      );
-    }
-    if (index === -1) {
-      index = Math.min(
-        Math.max(0, this.availableActiveIndex),
-        participants.length - 1,
-      );
-    }
-    this.availableActiveIndex = index;
-    let participant: Participant | null = null;
-    if (index !== -1 && participants[index]) {
-      participant = participants[index];
-    } else if (
-      this.selectedParticipantItem &&
-      this.isParticipantInAvailable(this.selectedParticipantItem)
-    ) {
-      participant = this.selectedParticipantItem;
-    }
-    if (!participant) return;
-
-    this.toggleParticipantSelection(participant, false, inputElem);
-    this.updateAvailableActiveItem();
-    this.scrollActiveAvailableItemIntoView();
+    RacedaySetupSelectionHelper.addActiveAvailableParticipant(this, inputElem);
   }
 
   removeActiveRacingParticipant(inputElem?: HTMLInputElement) {
-    const participants = this.filteredRacingParticipants;
-    if (participants.length === 0) return;
-
-    let index = -1;
-    if (this.selectedParticipantItem) {
-      index = participants.findIndex(
-        (p) =>
-          p.entity_id === this.selectedParticipantItem!.entity_id &&
-          this.isDriver(p) === this.isDriver(this.selectedParticipantItem!),
-      );
-    }
-    if (index === -1) {
-      index = Math.min(
-        Math.max(0, this.racingActiveIndex),
-        participants.length - 1,
-      );
-    }
-    this.racingActiveIndex = index;
-    let participant: Participant | null = null;
-    if (index !== -1 && participants[index]) {
-      participant = participants[index];
-    } else if (
-      this.selectedParticipantItem &&
-      this.isParticipantInRacing(this.selectedParticipantItem)
-    ) {
-      participant = this.selectedParticipantItem;
-    }
-    if (!participant) return;
-
-    this.toggleParticipantSelection(participant, true, inputElem);
-
-    const remaining = this.filteredRacingParticipants.length;
-    if (this.racingActiveIndex >= remaining) {
-      this.racingActiveIndex = Math.max(0, remaining - 1);
-    }
-    this.selectedParticipantItem =
-      remaining > 0
-        ? this.filteredRacingParticipants[this.racingActiveIndex] || null
-        : null;
-    this.clickedParticipantItem = this.selectedParticipantItem;
-    this.cdr.detectChanges();
-    this.scrollActiveRacingItemIntoView();
+    RacedaySetupSelectionHelper.removeActiveRacingParticipant(this, inputElem);
   }
 
   private scrollActiveAvailableItemIntoView() {
-    setTimeout(() => {
-      const el = document.getElementById(
-        `avail-item-${this.availableActiveIndex}`,
-      );
-      el?.scrollIntoView({ block: "nearest", behavior: "smooth" });
-    }, 0);
+    RacedaySetupUiHelper.scrollActiveAvailableItemIntoView(this);
   }
 
   private scrollActiveRacingItemIntoView() {
-    setTimeout(() => {
-      const el = document.getElementById(
-        `racing-item-${this.racingActiveIndex}`,
-      );
-      el?.scrollIntoView({ block: "nearest", behavior: "smooth" });
-    }, 0);
+    RacedaySetupUiHelper.scrollActiveRacingItemIntoView(this);
   }
 
   scrollRacingParticipantIntoView(participant: Participant) {
-    setTimeout(() => {
-      const uniqueId = this.getParticipantUniqueId(participant);
-      const index = this.filteredRacingParticipants.findIndex(
-        (p) => this.getParticipantUniqueId(p) === uniqueId,
-      );
-      if (index === -1) return;
-      const container = this.racingScrollContainer?.nativeElement;
-      const el =
-        (typeof container?.querySelector === "function"
-          ? container.querySelector(`[data-participant-id="${uniqueId}"]`)
-          : null) || document.getElementById(`racing-item-${index}`);
-      el?.scrollIntoView?.({ block: "nearest", behavior: "smooth" });
-    }, 0);
+    RacedaySetupUiHelper.scrollRacingParticipantIntoView(this, participant);
   }
 
   removeAllParticipants() {
-    this.updateListWithRefresh(() => {
-      this.selectedParticipants = [];
-      this.updateUnselectedParticipants();
-      this.selectedParticipantItem = null;
-      this.clickedParticipantItem = null;
-    });
+    RacedaySetupSelectionHelper.removeAllParticipants(this);
   }
 
   randomizeParticipants() {
-    this.updateListWithRefresh(() => {
-      // Immutable shuffle
-      const shuffled = [...this.selectedParticipants];
-      for (let i = shuffled.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-      }
-      this.selectedParticipants = shuffled;
-    });
+    RacedaySetupSelectionHelper.randomizeParticipants(this);
   }
 
   isDriver(participant: Participant | undefined): participant is Driver {
-    return (
-      !!participant &&
-      (participant instanceof Driver || "nickname" in participant)
-    );
+    return isDriver(participant);
   }
 
   isTeam(participant: Participant | undefined): participant is Team {
-    return (
-      !!participant &&
-      (participant instanceof Team || "driverIds" in participant)
-    );
+    return isTeam(participant);
   }
 
   getDriver(participant: Participant | undefined): Driver | undefined {
-    return participant instanceof Driver ? participant : undefined;
+    return getDriver(participant);
   }
 
   getTeam(participant: Participant | undefined): Team | undefined {
-    return participant instanceof Team ? participant : undefined;
+    return getTeam(participant);
   }
 
   getParticipantUniqueId(participant: Participant): string {
-    return (this.isDriver(participant) ? "d_" : "t_") + participant.entity_id;
+    return getParticipantUniqueId(participant);
   }
 
   private updateListWithRefresh(
@@ -1474,87 +574,20 @@ export class DefaultRacedaySetupComponent implements OnInit {
     forcedFocusElem?: HTMLInputElement,
     onComplete?: () => void,
   ) {
-    // Capture scroll positions
-    const availScrollTop =
-      this.availScrollContainer?.nativeElement?.scrollTop || 0;
-    const racingScrollTop =
-      this.racingScrollContainer?.nativeElement?.scrollTop || 0;
-
-    // Capture active element before blur
-    const activeElem =
-      forcedFocusElem || (document.activeElement as HTMLElement);
-    const isSearchInput = activeElem?.classList?.contains("search-input");
-
-    // Skip the blur and DOM reset completely if we're triggered by a search input
-    if (forcedFocusElem || isSearchInput) {
-      action();
-      this.saveSettings();
-      this.cdr.detectChanges();
-
-      // Ensure focus remains intact
-      if (
-        document.activeElement !== activeElem &&
-        typeof activeElem.focus === "function"
-      ) {
-        activeElem.focus();
-      }
-      onComplete?.();
-      return;
-    }
-
-    this.clearSelectionAndBlur();
-
-    // TODO(aufderheide): Look into proper fix for this hack
-    // Trigger a complete DOM reset for the list to wipe any browser selection state
-    this.isRefreshingList = true;
-    this.cdr.detectChanges();
-
-    // Perform the data update
-    action();
-
-    this.saveSettings();
-
-    // Restore the list in the next tick
-    setTimeout(() => {
-      this.isRefreshingList = false;
-      this.clearSelectionAsync();
-      this.cdr.detectChanges();
-
-      // Restore scroll positions after DOM is re-rendered
-      if (this.availScrollContainer?.nativeElement) {
-        this.availScrollContainer.nativeElement.scrollTop = availScrollTop;
-      }
-      if (this.racingScrollContainer?.nativeElement) {
-        this.racingScrollContainer.nativeElement.scrollTop = racingScrollTop;
-      }
-      onComplete?.();
-    }, 0);
+    RacedaySetupUiHelper.updateListWithRefresh(
+      this,
+      action,
+      forcedFocusElem,
+      onComplete,
+    );
   }
 
   private clearSelectionAndBlur() {
-    // Blur whatever button might have focus
-    if (document.activeElement instanceof HTMLElement) {
-      if (!document.activeElement.classList.contains("search-input")) {
-        document.activeElement.blur();
-      }
-    }
-    // Clear selection immediately
-    const isSearchInput =
-      document.activeElement?.classList?.contains("search-input");
-    if (window.getSelection && !isSearchInput) {
-      window.getSelection()?.removeAllRanges();
-    }
+    RacedaySetupUiHelper.clearSelectionAndBlur();
   }
 
   private clearSelectionAsync() {
-    setTimeout(() => {
-      const activeElem = document.activeElement as HTMLElement;
-      if (activeElem?.classList?.contains("search-input")) return;
-
-      if (window.getSelection) {
-        window.getSelection()?.removeAllRanges();
-      }
-    }, 0);
+    RacedaySetupUiHelper.clearSelectionAsync();
   }
 
   trackByParticipant = (index: number, participant: Participant): string => {
@@ -1572,91 +605,7 @@ export class DefaultRacedaySetupComponent implements OnInit {
   }
 
   drop(event: CdkDragDrop<Participant[]>) {
-    if (event.previousContainer === event.container) {
-      // Reordering within the same container
-      if (
-        event.container.id === "selected-list" &&
-        event.isPointerOverContainer
-      ) {
-        if (this.racingSearchQuery) {
-          // Disable reordering while searching
-          return;
-        }
-        const updated = [...this.selectedParticipants];
-        moveItemInArray(updated, event.previousIndex, event.currentIndex);
-        this.selectedParticipants = updated;
-        this.saveSettings();
-      }
-    } else {
-      // Dragging between containers
-      if (event.container.id === "selected-list") {
-        // Dragging from available-list to selected-list
-        const participant = event.previousContainer.data[
-          event.previousIndex
-        ] as Participant;
-        if (!participant) return;
-
-        // Perform validation
-        const potentialParticipants = [...this.selectedParticipants];
-        const targetIndex = event.currentIndex;
-        if (targetIndex >= 0 && targetIndex <= potentialParticipants.length) {
-          potentialParticipants.splice(targetIndex, 0, participant);
-        } else {
-          potentialParticipants.push(participant);
-        }
-
-        const validationResult = this.validationService.validate(
-          potentialParticipants,
-          this.allTeams,
-          this.allDrivers,
-        );
-
-        if (!validationResult.isValid) {
-          this.errorTitle = "RDS_ERR_VALIDATION_TITLE";
-          this.errorMessage = this.validationService.getErrorMessage(
-            validationResult,
-            this.translationService,
-          );
-          this.errorMessageParams = {};
-          this.showErrorModal = true;
-          this.cdr.detectChanges();
-          return;
-        }
-
-        // Apply changes
-        this.updateListWithRefresh(
-          () => {
-            const updated = [...this.selectedParticipants];
-            if (targetIndex >= 0 && targetIndex <= updated.length) {
-              updated.splice(targetIndex, 0, participant);
-            } else {
-              updated.push(participant);
-            }
-            this.selectedParticipants = updated;
-            this.updateUnselectedParticipants();
-          },
-          undefined,
-          () => {
-            this.scrollRacingParticipantIntoView(participant);
-          },
-        );
-      } else if (event.container.id === "available-list") {
-        // Dragging from selected-list to available-list
-        const participant = this.selectedParticipants[event.previousIndex];
-        if (!participant) return;
-
-        this.updateListWithRefresh(() => {
-          this.selectedParticipants = this.selectedParticipants.filter(
-            (p) =>
-              !(
-                p.entity_id === participant.entity_id &&
-                this.isDriver(p) === this.isDriver(participant)
-              ),
-          );
-          this.updateUnselectedParticipants();
-        });
-      }
-    }
+    RacedaySetupSelectionHelper.drop(this, event);
   }
 
   toggleAvailableDrivers() {
@@ -1667,138 +616,39 @@ export class DefaultRacedaySetupComponent implements OnInit {
   // --- Race Logic ---
 
   toggleDropdown(event: Event) {
-    event.stopPropagation();
-    const newState = !this.isDropdownOpen;
-    if (newState) {
-      this.closeFileDropdown();
-      this.closeConfigDropdown();
-      this.closeOptionsDropdown();
-      this.closeHelpDropdown();
-    }
-    this.isDropdownOpen = newState;
-    this.cdr.detectChanges();
+    RacedaySetupLaunchHelper.toggleDropdown(this, event);
   }
 
   closeDropdown() {
-    this.isDropdownOpen = false;
-    this.isEventDropdownOpen = false;
+    RacedaySetupLaunchHelper.closeDropdown(this);
   }
 
   toggleEventDropdown(e: MouseEvent) {
-    e.stopPropagation();
-    const newState = !this.isEventDropdownOpen;
-    if (newState) {
-      this.closeFileDropdown();
-      this.closeConfigDropdown();
-      this.closeOptionsDropdown();
-      this.closeHelpDropdown();
-      this.closeDropdown();
-    }
-    this.isEventDropdownOpen = newState;
-    this.cdr.detectChanges();
+    RacedaySetupLaunchHelper.toggleEventDropdown(this, e);
   }
 
   selectEvent(event: EventModel) {
-    this.selectedEvent = event;
-    this.selectedRace = undefined;
-    this.saveSettings();
-    this.closeDropdown();
-    this.cdr.detectChanges();
+    RacedaySetupLaunchHelper.selectEvent(this, event);
   }
 
   selectRace(race: Race) {
-    this.selectedRace = race;
-    this.selectedEvent = undefined;
-    if (race?.entity_id) {
-      if (this.themeService?.getTransientThemeId?.()) {
-        this.themeService.clearTransientActiveTheme();
-      }
-      this.themeService.activateForRace(race.entity_id, race.theme_id);
-    }
-    this.saveSettings();
-    this.closeDropdown();
-    this.cdr.detectChanges();
+    RacedaySetupLaunchHelper.selectRace(this, race);
   }
 
   private saveSettings(updateRecent: boolean = false) {
-    const settings = this.settingsService.getSettings();
-
-    const selectedId = this.isEventMode
-      ? this.selectedEvent?.entity_id || ""
-      : this.selectedRace?.entity_id || "";
-
-    if (selectedId) {
-      settings.selectedRaceId = selectedId;
-      settings.isEventMode = this.isEventMode;
-
-      if (updateRecent) {
-        let recentRaceIds = settings.recentRaceIds || [];
-        recentRaceIds = [
-          selectedId,
-          ...recentRaceIds.filter((id) => id !== selectedId),
-        ];
-        // Keep only the last two
-        settings.recentRaceIds = recentRaceIds.slice(0, 2);
-      }
-    }
-
-    settings.selectedDriverIds = this.selectedParticipants.map((p) =>
-      this.getParticipantUniqueId(p),
-    );
-    settings.demoConfig = this.demoConfig;
-    settings.selectedSeasonId = this.selectedSeason?.entity_id || "";
-
-    this.settingsService.saveSettings(settings);
-
-    if (updateRecent) {
-      this.updateQuickStartRaces(settings.recentRaceIds);
-    }
+    RacedaySetupLaunchHelper.saveSettings(this, updateRecent);
   }
 
   startRace(isDemo: boolean) {
-    const hasSelection = this.isEventMode
-      ? this.selectedEvent && this.selectedParticipants.length > 0
-      : this.selectedRace && this.selectedParticipants.length > 0;
-
-    if (hasSelection) {
-      const raceId = this.isEventMode
-        ? this.selectedEvent?.entity_id || ""
-        : this.selectedRace!.entity_id;
-
-      this.dataService.getSavedRaces(isDemo).subscribe({
-        next: (races) => {
-          const autoSaveFile = races.find(
-            (f) => f.filename === `autosave_${raceId}.json`,
-          );
-          if (autoSaveFile) {
-            this.autoSaveFileToLoad = autoSaveFile.filename;
-            this.pendingIsDemo = isDemo;
-            this.showAutoSavePrompt = true;
-            this.cdr.detectChanges();
-            return;
-          }
-          this.proceedWithStart(isDemo);
-        },
-        error: (err) => {
-          this.logger.error("Failed to check for auto-save:", err);
-          this.proceedWithStart(isDemo);
-        },
-      });
-    }
+    RacedaySetupLaunchHelper.startRace(this, isDemo);
   }
 
   getItemRaceId(item: any): string {
-    if (!item) return "";
-    return item.raceId || item.race_id || "";
+    return getItemRaceId(item);
   }
 
   getItemMaxDrivers(item: any): number {
-    if (!item) return 0;
-    return item.maxDrivers !== undefined
-      ? item.maxDrivers
-      : item.max_drivers !== undefined
-        ? item.max_drivers
-        : 0;
+    return getItemMaxDrivers(item);
   }
 
   getRace(raceId: string): Race | undefined {
@@ -1813,48 +663,21 @@ export class DefaultRacedaySetupComponent implements OnInit {
   }
 
   getRaceFinishMethod(raceId: string): string {
-    const race: any = this.getRace(raceId);
-    if (!race) return "";
-    const fm =
-      race.heat_scoring?.finish_method || race.heat_scoring?.finishMethod;
-    return this.formatEnumDisplay(fm);
+    return getRaceFinishMethod(raceId, this.races);
   }
 
   getRaceFinishValue(raceId: string): string {
-    const race: any = this.getRace(raceId);
-    if (!race) return "";
-    const val =
-      race.heat_scoring?.finish_value !== undefined
-        ? race.heat_scoring?.finish_value
-        : race.heat_scoring?.finishValue;
-    if (val === 0 || val === "0") {
-      return this.translationService.translate("GEN_INFINITE");
-    }
-    return val !== undefined && val !== null ? String(val) : "";
+    return getRaceFinishValue(raceId, this.races, this.translationService);
   }
 
   getEventDriverLimitWarning(): string | null {
-    if (
-      this.isEventMode &&
-      this.selectedEvent &&
-      this.selectedEvent.races &&
-      this.selectedEvent.races.length > 0
-    ) {
-      const race0 = this.selectedEvent.races[0];
-      const maxDrivers = this.getItemMaxDrivers(race0);
-      const raceId = this.getItemRaceId(race0);
-      if (maxDrivers > 0 && this.selectedParticipants.length > maxDrivers) {
-        const raceName = this.getRaceName(raceId);
-        return (
-          this.translationService.translate("RDS_EVENT_WARNING_LIMIT", {
-            limit: maxDrivers,
-            raceName: raceName,
-          }) ||
-          `Warning: Only the top ${maxDrivers} drivers will participate in ${raceName}.`
-        );
-      }
-    }
-    return null;
+    if (!this.isEventMode || !this.selectedEvent) return null;
+    return getEventDriverLimitWarning(
+      this.selectedEvent,
+      this.selectedParticipants.length,
+      this.races,
+      this.translationService,
+    );
   }
 
   joinRace() {
@@ -1867,19 +690,7 @@ export class DefaultRacedaySetupComponent implements OnInit {
   }
 
   onConfirmEndRace() {
-    this.showEndRacePrompt = false;
-    this.dataService.endRace().subscribe({
-      next: (success) => {
-        if (success) {
-          this.logger.info("Race ended successfully");
-        } else {
-          this.logger.warn("Failed to end race");
-        }
-      },
-      error: (err) => {
-        this.logger.error("Error ending race", err);
-      },
-    });
+    RacedaySetupLaunchHelper.onConfirmEndRace(this);
   }
 
   onCancelEndRace() {
@@ -1887,264 +698,53 @@ export class DefaultRacedaySetupComponent implements OnInit {
   }
 
   onConfirmAutoSave() {
-    this.showAutoSavePrompt = false;
-    this.saveSettings(true);
-    if (this.autoSaveFileToLoad) {
-      this.dataService
-        .loadRace(this.autoSaveFileToLoad, this.pendingIsDemo)
-        .subscribe({
-          next: () => this.router.navigate(["/raceday"]),
-          error: (err) => this.logger.error("Failed to load auto-save:", err),
-        });
-    }
+    RacedaySetupLaunchHelper.onConfirmAutoSave(this);
   }
 
   onCancelAutoSave() {
-    this.showAutoSavePrompt = false;
-    if (this.autoSaveFileToLoad) {
-      this.dataService
-        .deleteSavedRace(this.autoSaveFileToLoad, this.pendingIsDemo)
-        .subscribe({
-          error: (err) => this.logger.error("Failed to delete auto-save:", err),
-        });
-    }
-    this.proceedWithStart(this.pendingIsDemo);
+    RacedaySetupLaunchHelper.onCancelAutoSave(this);
   }
 
   private proceedWithStart(isDemo: boolean) {
-    const validationResult = this.validationService.validate(
-      this.selectedParticipants,
-      this.allTeams,
-      this.allDrivers,
-    );
-
-    if (!validationResult.isValid) {
-      this.errorTitle = "RDS_ERR_VALIDATION_TITLE";
-      this.errorMessage = this.validationService.getErrorMessage(
-        validationResult,
-        this.translationService,
-      );
-      this.errorMessageParams = {};
-      this.showErrorModal = true;
-      this.cdr.detectChanges();
-      return;
-    }
-
-    this.saveSettings(true);
-    const settings = this.settingsService.getSettings();
-
-    const raceId = this.isEventMode ? "" : this.selectedRace?.entity_id || "";
-    const eventId = this.isEventMode
-      ? this.selectedEvent?.entity_id || ""
-      : undefined;
-    const seasonId = this.selectedSeason?.entity_id || undefined;
-    const demoConfig = isDemo
-      ? this.demoConfig || this.dataService.getDefaultDemoConfig()
-      : undefined;
-
-    const themeId =
-      (raceId ? settings.raceThemeOverrides?.[raceId] : undefined) ||
-      this.selectedRace?.theme_id ||
-      undefined;
-
-    const initializeObservable =
-      eventId || seasonId
-        ? this.dataService.initializeRace(
-            raceId,
-            settings.selectedDriverIds,
-            isDemo,
-            demoConfig,
-            eventId,
-            seasonId,
-            themeId,
-          )
-        : this.dataService.initializeRace(
-            raceId,
-            settings.selectedDriverIds,
-            isDemo,
-            demoConfig,
-            undefined,
-            undefined,
-            themeId,
-          );
-
-    initializeObservable.subscribe({
-      next: (response) => {
-        if (response.success) {
-          this.router.navigate(["/raceday"]);
-        } else {
-          this.handleInitializeRaceError(response);
-        }
-      },
-      error: (err) => this.logger.error("Failed to initialize race", err),
-    });
+    RacedaySetupLaunchHelper.proceedWithStart(this, isDemo);
   }
 
   private handleInitializeRaceError(response: any) {
-    this.errorTitle = "RDS_ERR_VALIDATION_TITLE";
-
-    if (response.errorCode === "DUPE_INDIVIDUAL_TEAM") {
-      this.errorMessage = "RDS_ERR_DRIVER_DUPE_IND_TEAM";
-      this.errorMessageParams = {
-        driver: response.driverName,
-        team: response.teamNames.join(", "),
-      };
-    } else if (response.errorCode === "DUPE_MULTIPLE_TEAMS") {
-      this.errorMessage = "RDS_ERR_DRIVER_DUPE_TEAMS";
-      this.errorMessageParams = {
-        driver: response.driverName,
-        teams: response.teamNames.join(", "),
-      };
-    } else if (response.errorCode === "TRACK_DELETED") {
-      this.errorMessage = "RDS_ERR_TRACK_DELETED";
-      this.errorMessageParams = {
-        race: this.selectedRace?.name || this.selectedEvent?.name || "",
-      };
-    } else if (response.errorCode === "THEME_DELETED") {
-      this.errorMessage = "RDS_ERR_THEME_DELETED";
-      this.errorMessageParams = {
-        race: this.selectedRace?.name || this.selectedEvent?.name || "",
-      };
-    } else if (response.errorCode === "NO_CUSTOM_ROTATIONS") {
-      this.errorMessage = "RDS_ERR_NO_CUSTOM_ROTATIONS";
-      this.errorMessageParams = {};
-    } else {
-      this.errorMessage = response.errorCode || "Unknown error";
-      this.errorMessageParams = {};
-    }
-
-    if (response.errorCode) {
-      const translatedMessage = this.translationService.translate(
-        this.errorMessage,
-        this.errorMessageParams,
-      );
-      const fixKey =
-        response.errorCode === "NO_CUSTOM_ROTATIONS"
-          ? "RDS_ERR_NO_CUSTOM_ROTATIONS_FIX"
-          : response.errorCode === "TRACK_DELETED"
-            ? "RDS_ERR_TRACK_DELETED_FIX"
-            : response.errorCode === "THEME_DELETED"
-              ? "RDS_ERR_THEME_DELETED_FIX"
-              : "RDS_ERR_START_RACE_FIX_DESCRIPTION";
-      const fixDescription = this.translationService.translate(fixKey);
-      this.errorMessage = translatedMessage + "\n\n" + fixDescription;
-      this.errorMessageParams = {};
-    }
-
+    const err = RacedaySetupLaunchHelper.parseInitializeRaceError(
+      response,
+      this.selectedRace?.name || "",
+      this.selectedEvent?.name || "",
+      this.translationService,
+    );
+    this.errorTitle = err.errorTitle;
+    this.errorMessage = err.errorMessage;
+    this.errorMessageParams = err.errorMessageParams;
     this.showErrorModal = true;
     this.cdr.detectChanges();
   }
 
   selectQuickStartItem(item: any) {
-    if (!item) return;
-    const isEventItem = item.races && Array.isArray(item.races);
-    if (isEventItem) {
-      const foundEvent = this.events.find(
-        (e) => e.entity_id === item.entity_id,
-      );
-      if (foundEvent) {
-        this.selectEvent(foundEvent);
-        return;
-      }
-    }
-    const foundRace = this.races.find((r) => r.entity_id === item.entity_id);
-    if (foundRace) {
-      this.selectRace(foundRace);
-    } else {
-      const foundEvent = this.events.find(
-        (e) => e.entity_id === item.entity_id,
-      );
-      if (foundEvent) {
-        this.selectEvent(foundEvent);
-      }
-    }
+    RacedaySetupLaunchHelper.selectQuickStartItem(this, item);
   }
 
   updateQuickStartRaces(recentRaceIds: string[] = []) {
-    this.quickStartRaces = [];
-    const localSettings = this.settingsService?.getSettings();
-
-    // 1. Try to populate from recent list
-    if (recentRaceIds && recentRaceIds.length > 0) {
-      for (const id of recentRaceIds) {
-        const isSelected = localSettings && localSettings.selectedRaceId === id;
-        const isEventPreferred = isSelected && localSettings.isEventMode;
-
-        if (isEventPreferred) {
-          const event = this.events.find((e) => e.entity_id === id);
-          if (event) {
-            this.quickStartRaces.push(event as any);
-            continue;
-          }
-        }
-
-        const race = this.races.find((r) => r.entity_id === id);
-        if (race) {
-          this.quickStartRaces.push(race);
-        } else {
-          const event = this.events.find((e) => e.entity_id === id);
-          if (event) {
-            this.quickStartRaces.push(event as any);
-          }
-        }
-      }
-    }
-
-    // 2. If we don't have enough, try to find "Grand Prix" or "Time Trial" as defaults if they aren't already in the list
-    if (this.quickStartRaces.length < 2) {
-      const defaults = [
-        this.races.find((r) => r.name.toLowerCase().includes("grand prix")),
-        this.races.find((r) => r.name.toLowerCase().includes("time trial")),
-      ].filter(
-        (r) =>
-          r !== undefined &&
-          !this.quickStartRaces.some((qsr) => qsr.entity_id === r.entity_id),
-      ) as Race[];
-
-      for (const d of defaults) {
-        if (this.quickStartRaces.length < 2) {
-          this.quickStartRaces.push(d);
-        }
-      }
-    }
-
-    // 3. Last fallback: pick first available races/events
-    if (this.quickStartRaces.length < 2) {
-      const remainingRaces = this.races.filter(
-        (r) =>
-          !this.quickStartRaces.some((qsr) => qsr.entity_id === r.entity_id),
-      );
-      for (const r of remainingRaces) {
-        if (this.quickStartRaces.length < 2) {
-          this.quickStartRaces.push(r);
-        }
-      }
-    }
-
-    if (this.quickStartRaces.length < 2) {
-      const remainingEvents = this.events.filter(
-        (e) =>
-          !this.quickStartRaces.some((qsr) => qsr.entity_id === e.entity_id),
-      );
-      for (const e of remainingEvents) {
-        if (this.quickStartRaces.length < 2) {
-          this.quickStartRaces.push(e as any);
-        }
-      }
-    }
+    this.quickStartRaces = RacedaySetupLaunchHelper.computeQuickStartRaces(
+      recentRaceIds,
+      this.settingsService?.getSettings(),
+      this.races,
+      this.events,
+    ) as Race[];
   }
 
   getStartRaceTooltip(): string {
-    if (this.selectedParticipants.length > 0) return "";
-    const translated = this.translationService.translate(
-      "RDS_START_RACE_TOOLTIP",
+    return getStartRaceTooltip(
+      this.selectedParticipants.length > 0,
+      this.translationService,
     );
-    return translated;
   }
 
   getRaceCardBackgroundClass(index: number): string {
-    const backgrounds = ["card-bg-gp", "card-bg-tt"];
-    return backgrounds[index % backgrounds.length];
+    return getRaceCardBackgroundClass(index);
   }
 
   get filteredRaces(): Race[] {
@@ -2160,29 +760,10 @@ export class DefaultRacedaySetupComponent implements OnInit {
   }
 
   public updateUnselectedParticipants() {
-    const selectedDriverIds = new Set<string>();
-    const selectedTeamIds = new Set<string>();
-
-    this.selectedParticipants.forEach((p) => {
-      if (this.isDriver(p)) {
-        selectedDriverIds.add(p.entity_id);
-      } else if (this.isTeam(p)) {
-        selectedTeamIds.add(p.entity_id);
-        p.driverIds.forEach((id) => selectedDriverIds.add(id));
-      }
-    });
-
-    const availableDrivers = this.allDrivers.filter((d) => {
-      return !selectedDriverIds.has(d.entity_id);
-    });
-
-    const availableTeams = this.allTeams.filter((t) => {
-      if (selectedTeamIds.has(t.entity_id)) return false;
-      return !t.driverIds.some((dId) => selectedDriverIds.has(dId));
-    });
-
-    this.unselectedParticipants = [...availableDrivers, ...availableTeams].sort(
-      (a, b) => this.naturalSortParticipants(a, b),
+    this.unselectedParticipants = computeUnselectedParticipants(
+      this.selectedParticipants,
+      this.allDrivers,
+      this.allTeams,
     );
   }
 
@@ -2193,41 +774,16 @@ export class DefaultRacedaySetupComponent implements OnInit {
   // --- Options Menu Logic ---
 
   toggleOptionsDropdown(event: Event) {
-    event.stopPropagation();
-    const newState = !this.isOptionsDropdownOpen;
-    if (newState) {
-      this.closeFileDropdown();
-      this.closeConfigDropdown();
-      this.closeHelpDropdown();
-      this.closeDropdown();
-    }
-    this.isOptionsDropdownOpen = newState;
-    if (!this.isOptionsDropdownOpen) {
-      // closed
-    }
-    this.cdr.detectChanges();
+    RacedaySetupNavigationHelper.toggleOptionsDropdown(this, event);
   }
 
   toggleLogDropdown(event: Event) {
-    event.stopPropagation();
-    this.isLogDropdownOpen = !this.isLogDropdownOpen;
-    if (!this.isLogDropdownOpen) {
-      this.isClientLogOpen = false;
-      this.isServerLogOpen = false;
-    }
-    this.cdr.detectChanges();
+    RacedaySetupNavigationHelper.toggleLogDropdown(this, event);
   }
 
   toggleClientLogDropdown(event: Event) {
-    event.stopPropagation();
-    this.isClientLogOpen = !this.isClientLogOpen;
-    if (this.isClientLogOpen) {
-      this.isServerLogOpen = false;
-    }
-    this.cdr.detectChanges();
+    RacedaySetupNavigationHelper.toggleClientLogDropdown(this, event);
   }
-
-  // --- Demo Config Logic ---
 
   configureDemo() {
     this.showDemoConfigModal = true;
@@ -2259,12 +815,7 @@ export class DefaultRacedaySetupComponent implements OnInit {
   }
 
   toggleServerLogDropdown(event: Event) {
-    event.stopPropagation();
-    this.isServerLogOpen = !this.isServerLogOpen;
-    if (this.isServerLogOpen) {
-      this.isClientLogOpen = false;
-    }
-    this.cdr.detectChanges();
+    RacedaySetupNavigationHelper.toggleServerLogDropdown(this, event);
   }
 
   closeOptionsDropdown() {
@@ -2274,25 +825,13 @@ export class DefaultRacedaySetupComponent implements OnInit {
   onLanguageSelected() {
     this.closeOptionsDropdown();
   }
+
   setClientLogLevel(level: string) {
-    const settings = this.settingsService.getSettings();
-    settings.clientLogLevel = level;
-    this.settingsService.saveSettings(settings);
-    this.currentClientLogLevel = level;
-    this.logger.setLevel(level as any);
-    this.closeHelpDropdown();
+    RacedaySetupNavigationHelper.setClientLogLevel(this, level);
   }
+
   setServerLogLevel(level: string) {
-    const settings = this.settingsService.getSettings();
-    settings.serverLogLevel = level;
-    this.settingsService.saveSettings(settings);
-    this.currentServerLogLevel = level;
-    // TODO: Send to server via API
-    this.dataService.setServerLogLevel(level).subscribe({
-      next: () => this.logger.info(`Server log level set to ${level}`),
-      error: (err) => this.logger.error("Failed to set server log level", err),
-    });
-    this.closeHelpDropdown();
+    RacedaySetupNavigationHelper.setServerLogLevel(this, level);
   }
 
   configureCustomUI() {
@@ -2309,16 +848,7 @@ export class DefaultRacedaySetupComponent implements OnInit {
   // --- File Menu Logic ---
 
   toggleFileDropdown(event: Event) {
-    event.stopPropagation();
-    const newState = !this.isFileDropdownOpen;
-    if (newState) {
-      this.closeConfigDropdown();
-      this.closeOptionsDropdown();
-      this.closeHelpDropdown();
-      this.closeDropdown();
-    }
-    this.isFileDropdownOpen = newState;
-    this.cdr.detectChanges();
+    RacedaySetupNavigationHelper.toggleFileDropdown(this, event);
   }
 
   closeFileDropdown() {
@@ -2326,46 +856,23 @@ export class DefaultRacedaySetupComponent implements OnInit {
   }
 
   quit() {
-    this.closeFileDropdown();
-    this.closeWindow();
+    RacedaySetupMenuHelper.quit(this);
   }
 
   closeWindow() {
-    if (document.fullscreenElement) {
-      try {
-        document.exitFullscreen();
-      } catch (e) {
-        // ignore
-      }
-    }
-
-    try {
-      window.close();
-    } catch (e) {
-      // ignore
-    }
-
-    setTimeout(() => {
-      this.handleQuitBlockedFallback();
-    }, 150);
+    RacedaySetupMenuHelper.closeWindow(this);
   }
 
   handleQuitBlockedFallback() {
-    this.showQuitBlockedModal = true;
-    this.cdr.detectChanges();
+    RacedaySetupMenuHelper.handleQuitBlockedFallback(this);
   }
 
   onAcknowledgeQuitModal() {
-    this.showQuitBlockedModal = false;
-    this.redirectToBlank();
+    RacedaySetupMenuHelper.onAcknowledgeQuitModal(this);
   }
 
   redirectToBlank() {
-    try {
-      this.getWindowLocation().replace("about:blank");
-    } catch (e) {
-      // ignore
-    }
+    RacedaySetupMenuHelper.redirectToBlank(this);
   }
 
   getWindowLocation(): Location {
@@ -2373,51 +880,15 @@ export class DefaultRacedaySetupComponent implements OnInit {
   }
 
   exportSettings(): Promise<boolean> {
-    this.closeFileDropdown();
-    const settings = this.settingsService.getSettings();
-    const dataStr = JSON.stringify(settings, null, 2);
-    return saveFileAs({
-      suggestedName: "racecoordinator_settings.json",
-      data: dataStr,
-      mimeType: "application/json",
-      description: "JSON Files",
-      extension: ".json",
-    });
+    return RacedaySetupMenuHelper.exportSettings(this);
   }
 
   triggerImportSettings() {
-    this.closeFileDropdown();
-    if (this.importSettingsInput) {
-      this.importSettingsInput.nativeElement.click();
-    }
+    RacedaySetupMenuHelper.triggerImportSettings(this);
   }
 
   importSettings(event: Event) {
-    const input = event.target as HTMLInputElement;
-    if (input.files && input.files.length > 0) {
-      const file = input.files[0];
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        try {
-          const contents = e.target?.result as string;
-          const parsed = JSON.parse(contents);
-
-          const settingsToSave = Object.assign(new Settings(), parsed);
-          this.settingsService.saveSettings(settingsToSave);
-
-          // Reload the window to apply all imported settings
-          this.reloadWindow();
-        } catch (err) {
-          this.logger.error("Failed to parse settings file", err);
-          this.showErrorModal = true;
-          this.errorTitle = "Import Failed";
-          this.errorMessage =
-            "Failed to parse settings file. Make sure it is a valid JSON exported from Race Coordinator.";
-        }
-        input.value = "";
-      };
-      reader.readAsText(file);
-    }
+    RacedaySetupMenuHelper.importSettings(this, event);
   }
 
   reloadWindow() {
@@ -2430,54 +901,19 @@ export class DefaultRacedaySetupComponent implements OnInit {
   }
 
   openDriverManager() {
-    this.closeConfigDropdown();
-    if (this.selectedParticipantItem) {
-      this.router.navigate(["/driver-editor"], {
-        queryParams: { id: this.selectedParticipantItem.entity_id },
-      });
-    } else {
-      this.router.navigate(["/driver-editor"]);
-    }
+    RacedaySetupNavigationHelper.openDriverManager(this);
   }
 
   openTeamManager() {
-    this.closeConfigDropdown();
-    if (this.selectedParticipantItem) {
-      this.router.navigate(["/team-editor"], {
-        queryParams: { id: this.selectedParticipantItem.entity_id },
-      });
-    } else {
-      this.router.navigate(["/team-editor"]);
-    }
+    RacedaySetupNavigationHelper.openTeamManager(this);
   }
 
   openTrackManager() {
-    this.closeConfigDropdown();
-    if (this.isRaceRunning) {
-      this.showTrackEditorPrompt = true;
-      this.cdr.detectChanges();
-    } else {
-      this.router.navigate(["/track-editor"]);
-    }
+    RacedaySetupNavigationHelper.openTrackManager(this);
   }
 
   onConfirmTrackEditor() {
-    this.showTrackEditorPrompt = false;
-    this.dataService.endRace().subscribe({
-      next: (success) => {
-        if (success) {
-          this.logger.info(
-            "Race ended successfully, navigating to track manager",
-          );
-          this.router.navigate(["/track-editor"]);
-        } else {
-          this.logger.warn("Failed to end race");
-        }
-      },
-      error: (err) => {
-        this.logger.error("Error ending race", err);
-      },
-    });
+    RacedaySetupNavigationHelper.onConfirmTrackEditor(this);
   }
 
   onCancelTrackEditor() {
@@ -2485,84 +921,27 @@ export class DefaultRacedaySetupComponent implements OnInit {
   }
 
   editSelectedRace() {
-    if (!this.selectedRace) return;
-    sessionStorage.setItem("skipIntro", "true");
-    const queryParams: any = {
-      id: this.selectedRace.entity_id,
-      from: "raceday-setup",
-      returnUrl: "/raceday-setup",
-    };
-    if (this.selectedParticipants?.length > 0) {
-      queryParams.driverCount = this.selectedParticipants.length;
-    }
-    this.router.navigate(["/race-editor"], { queryParams });
+    RacedaySetupNavigationHelper.editSelectedRace(this);
   }
 
   editSelectedSeason() {
-    if (!this.selectedSeason) return;
-    sessionStorage.setItem("skipIntro", "true");
-    const queryParams: any = {
-      id: this.selectedSeason.entity_id,
-      from: "raceday-setup",
-      returnUrl: "/raceday-setup",
-    };
-    this.router.navigate(["/season-editor"], { queryParams });
+    RacedaySetupNavigationHelper.editSelectedSeason(this);
   }
 
   openRaceManager() {
-    const queryParams: any = this.selectedRace
-      ? { id: this.selectedRace.entity_id }
-      : {};
-    if (this.selectedParticipants.length > 0) {
-      queryParams.driverCount = this.selectedParticipants.length;
-    }
-    this.closeConfigDropdown();
-    this.router.navigate(["/race-editor"], { queryParams });
+    RacedaySetupNavigationHelper.openRaceManager(this);
   }
 
   openEventManager() {
-    const queryParams: any = this.selectedEvent
-      ? { id: this.selectedEvent.entity_id }
-      : {};
-    this.closeConfigDropdown();
-    this.router.navigate(["/event-editor"], { queryParams });
+    RacedaySetupNavigationHelper.openEventManager(this);
   }
 
   onSeasonChange() {
-    this.calculateSeasonStandings();
-    if (this.selectedSeason?.entity_id) {
-      this.dataService
-        .getSeasonStandings(this.selectedSeason.entity_id)
-        .subscribe({
-          next: (standings) => {
-            this.seasonStandings = standings;
-            this.cdr.detectChanges();
-          },
-          error: (err) => {
-            this.logger.warn("Failed to fetch season standings", err);
-          },
-        });
-    }
-    this.saveSettings();
+    RacedaySetupNavigationHelper.onSeasonChange(this);
   }
 
   selectSeason(season?: Season) {
-    this.selectedSeason = season;
-    this.calculateSeasonStandings();
-    if (season?.entity_id) {
-      this.dataService.getSeasonStandings(season.entity_id).subscribe({
-        next: (standings) => {
-          if (this.selectedSeason?.entity_id === season.entity_id) {
-            this.seasonStandings = standings;
-            this.cdr.detectChanges();
-          }
-        },
-        error: (err) => {
-          this.logger.warn("Failed to fetch season standings", err);
-        },
-      });
-    }
-    this.saveSettings();
+    RacedaySetupNavigationHelper.selectSeason(this, season);
   }
 
   calculateSeasonStandings(): void {
@@ -2576,24 +955,11 @@ export class DefaultRacedaySetupComponent implements OnInit {
   }
 
   openSeasonManager() {
-    const queryParams: any = this.selectedSeason
-      ? { id: this.selectedSeason.entity_id }
-      : {};
-    this.closeConfigDropdown();
-    this.router.navigate(["/season-editor"], { queryParams });
+    RacedaySetupNavigationHelper.openSeasonManager(this);
   }
 
   toggleConfigDropdown(event: Event) {
-    event.stopPropagation();
-    const newState = !this.isConfigDropdownOpen;
-    if (newState) {
-      this.closeFileDropdown();
-      this.closeOptionsDropdown();
-      this.closeHelpDropdown();
-      this.closeDropdown();
-    }
-    this.isConfigDropdownOpen = newState;
-    this.cdr.detectChanges();
+    RacedaySetupNavigationHelper.toggleConfigDropdown(this, event);
   }
 
   closeConfigDropdown() {
@@ -2601,159 +967,63 @@ export class DefaultRacedaySetupComponent implements OnInit {
   }
 
   toggleHelpDropdown(event: Event) {
-    event.stopPropagation();
-    const newState = !this.isHelpDropdownOpen;
-    if (newState) {
-      this.closeFileDropdown();
-      this.closeConfigDropdown();
-      this.closeOptionsDropdown();
-      this.closeDropdown();
-      this.isHelpDropdownOpen = true;
-    } else {
-      this.closeHelpDropdown();
-    }
-    this.cdr.detectChanges();
+    RacedaySetupNavigationHelper.toggleHelpDropdown(this, event);
   }
 
   closeHelpDropdown() {
-    this.isHelpDropdownOpen = false;
-    this.isLogDropdownOpen = false;
-    this.isClientLogOpen = false;
-    this.isServerLogOpen = false;
+    RacedaySetupNavigationHelper.closeHelpDropdown(this);
   }
 
   isAnyMenuDropdownOpen(): boolean {
-    return (
-      this.isFileDropdownOpen ||
-      this.isConfigDropdownOpen ||
-      this.isOptionsDropdownOpen ||
-      this.isHelpDropdownOpen
-    );
+    return RacedaySetupNavigationHelper.isAnyMenuDropdownOpen(this);
   }
 
   onMenuItemHover(label: string) {
-    if (this.isAnyMenuDropdownOpen()) {
-      if (label === "RDS_MENU_FILE" && this.isFileDropdownOpen) return;
-      if (label === "RDS_MENU_CONFIG" && this.isConfigDropdownOpen) return;
-      if (label === "RDS_MENU_OPTIONS" && this.isOptionsDropdownOpen) return;
-      if (label === "RDS_MENU_HELP" && this.isHelpDropdownOpen) return;
-
-      this.closeFileDropdown();
-      this.closeConfigDropdown();
-      this.closeOptionsDropdown();
-      this.closeHelpDropdown();
-      this.closeDropdown();
-
-      if (label === "RDS_MENU_FILE") {
-        this.isFileDropdownOpen = true;
-      } else if (label === "RDS_MENU_CONFIG") {
-        this.isConfigDropdownOpen = true;
-      } else if (label === "RDS_MENU_OPTIONS") {
-        this.isOptionsDropdownOpen = true;
-      } else if (label === "RDS_MENU_HELP") {
-        this.isHelpDropdownOpen = true;
-      }
-      this.cdr.detectChanges();
-    }
+    RacedaySetupNavigationHelper.onMenuItemHover(this, label);
   }
 
   formatEnumDisplay(value: string | undefined): string {
-    if (!value) return "";
-    return value
-      .replace(/_/g, " ")
-      .toLowerCase()
-      .replace(/\b\w/g, (l) => l.toUpperCase());
+    return formatEnumDisplay(value);
   }
 
   getHeatRotationTypeDisplay(type: string | undefined): string {
-    if (!type) return "";
-    const key = `RE_ROTATION_${type
-      .replace(/([A-Z])/g, "_$1")
-      .toUpperCase()
-      .replace(/^_/, "")}`;
-    const translated = this.translationService.translate(key);
-    return translated && translated !== key
-      ? translated
-      : type.replace(/([A-Z])/g, " $1").trim();
+    return getHeatRotationTypeDisplay(type, this.translationService);
   }
 
   isPracticeRace(race: any): boolean {
-    return !!(race?.practice || race?.heat_rotation_type === "Practice");
+    return isPracticeRace(race);
   }
 
   getHeatRankingDisplay(race: any): string {
-    if (this.isPracticeRace(race)) {
-      return this.translationService.translate("GEN_UNRANKED");
-    }
-    return this.formatEnumDisplay(race?.heat_scoring?.heat_ranking);
+    return getHeatRankingDisplay(race, this.translationService);
   }
 
   getOverallRankingDisplay(race: any): string {
-    if (this.isPracticeRace(race)) {
-      return this.translationService.translate("GEN_UNRANKED");
-    }
-    return this.formatEnumDisplay(race?.overall_scoring?.ranking_method);
+    return getOverallRankingDisplay(race, this.translationService);
   }
 
   getFinishValueDisplay(race: any): string {
-    const val = race?.heat_scoring?.finish_value;
-    if (val === 0 || val === "0") {
-      return this.translationService.translate("GEN_INFINITE");
-    }
-    return val !== undefined && val !== null ? String(val) : "";
+    return getFinishValueDisplay(race, this.translationService);
   }
 
   getThemeDisplayNameKey(theme: any): string {
-    if (!theme) return "";
     return getThemeDisplayNameKey(theme, this.translationService);
   }
 
   getThemeDisplay(race: any): string {
-    const themes = this.themeService.getThemes() || [];
-    const defaultTheme = themes.find(
-      (t) => t.is_default || t.entity_id === "default_classic_rc_ai",
+    return getThemeDisplay(
+      race,
+      this.themeService.getThemes(),
+      this.translationService,
     );
-    const themeId =
-      race?.theme_id || defaultTheme?.entity_id || "default_classic_rc_ai";
-    const theme = themes.find(
-      (t) => (t.entity_id || (t as any).id || (t as any)._id) === themeId,
-    );
-    if (theme) {
-      const key = this.getThemeDisplayNameKey(theme);
-      return this.translationService.translate(key) || theme.name || themeId;
-    }
-    if (themeId === "default_classic_rc_ai") {
-      return (
-        this.translationService.translate("UE_LABEL_DEFAULT_THEME") || "Default"
-      );
-    }
-    if (themeId === "practice_theme_rc_ai") {
-      return (
-        this.translationService.translate("UE_LABEL_PRACTICE_THEME") ||
-        "Practice"
-      );
-    }
-    if (themeId === "default_fuel_theme_rc_ai") {
-      return this.translationService.translate("UE_LABEL_FUEL_THEME") || "Fuel";
-    }
-    return themeId;
   }
 
   isHandsFree(race?: any): boolean {
-    if (!race) {
-      return false;
-    }
-    return (race.auto_advance_time ?? 0) > 0 && (race.auto_start_time ?? 0) > 0;
+    return isHandsFree(race);
   }
 
   hasWarmup(race?: any): boolean {
-    if (!race) {
-      return false;
-    }
-    return (
-      (race.auto_advance_warmup_time ?? 0) > 0 ||
-      (race.auto_start_warmup_time ?? 0) > 0
-    );
+    return hasWarmup(race);
   }
 
   openHelpCenter() {
@@ -2762,48 +1032,28 @@ export class DefaultRacedaySetupComponent implements OnInit {
   }
 
   onBrandingClick() {
-    this.closeFileDropdown();
-    this.closeConfigDropdown();
-    this.closeOptionsDropdown();
-    this.closeHelpDropdown();
-    this.closeDropdown();
-    this.openHelpCenter();
+    RacedaySetupNavigationHelper.onBrandingClick(this);
   }
 
   onBrandingKeyDown(event: KeyboardEvent) {
-    if (event.key === "Enter" || event.key === " ") {
-      event.preventDefault();
-      this.onBrandingClick();
-    }
+    RacedaySetupNavigationHelper.onBrandingKeyDown(this, event);
   }
 
   isUpdateBannerVisible = input<boolean>(false);
 
   openAbout() {
     this.closeHelpDropdown();
-    // Communicate with parent RacedaySetupComponent
-    // We can use the parent reference or just emit an event.
-    // Looking at RacedaySetupComponent, it holds the state.
-    // DefaultRacedaySetupComponent is created via ViewContainerRef.
-    // Let's add an Output.
     this.requestAbout.emit();
   }
 
   requestAbout = output<void>();
 
   onCheckForUpdates() {
-    if (this.isUpdateBannerVisible()) return;
-    this.closeFileDropdown();
-    this.closeOptionsDropdown();
-    this.closeHelpDropdown();
-    this.requestCheckForUpdates.emit();
+    RacedaySetupNavigationHelper.onCheckForUpdates(this);
   }
 
-  onChannelSelected(_channel: UpdateChannel) {
-    this.closeFileDropdown();
-    this.closeOptionsDropdown();
-    this.closeHelpDropdown();
-    this.requestCheckForUpdates.emit();
+  onChannelSelected(channel: UpdateChannel) {
+    RacedaySetupNavigationHelper.onChannelSelected(this, channel);
   }
 
   requestCheckForUpdates = output<void>();
@@ -2821,145 +1071,7 @@ export class DefaultRacedaySetupComponent implements OnInit {
   }
 
   getHelpSteps(): GuideStep[] {
-    return [...this.getDriverHelpSteps(), ...this.getRaceHelpSteps()];
-  }
-
-  private getDriverHelpSteps(): GuideStep[] {
-    return [
-      {
-        title: this.translationService.translate("RDS_HELP_WELCOME_TITLE"),
-        content: this.translationService.translate("RDS_HELP_WELCOME_CONTENT"),
-      },
-      {
-        targetId: "available-drivers-section",
-        title: this.translationService.translate(
-          "RDS_HELP_DRIVER_AVAILABLE_TITLE",
-        ),
-        content: this.translationService.translate(
-          "RDS_HELP_DRIVER_AVAILABLE_CONTENT",
-        ),
-        position: "right",
-      },
-      {
-        selector: "#available-drivers-section .header-actions",
-        title: this.translationService.translate(
-          "RDS_HELP_DRIVER_TEAM_STATS_TITLE",
-        ),
-        content: this.translationService.translate(
-          "RDS_HELP_DRIVER_TEAM_STATS_CONTENT",
-        ),
-        position: "bottom",
-      },
-      {
-        selector: "#available-drivers-section .list-search",
-        title: this.translationService.translate(
-          "RDS_HELP_SEARCH_AVAILABLE_DRIVERS_TITLE",
-        ),
-        content: this.translationService.translate(
-          "RDS_HELP_SEARCH_AVAILABLE_DRIVERS_CONTENT",
-        ),
-        position: "bottom",
-      },
-      {
-        targetId: "racing-drivers-section",
-        title: this.translationService.translate(
-          "RDS_HELP_DRIVER_RACING_TITLE",
-        ),
-        content: this.translationService.translate(
-          "RDS_HELP_DRIVER_RACING_CONTENT",
-        ),
-        position: "right",
-      },
-      {
-        selector: "#racing-drivers-section .section-header",
-        title: this.translationService.translate(
-          "RDS_HELP_DRIVER_ACTIONS_TITLE",
-        ),
-        content: this.translationService.translate(
-          "RDS_HELP_DRIVER_ACTIONS_CONTENT",
-        ),
-        position: "bottom",
-      },
-      {
-        selector: "#racing-drivers-section .list-search",
-        title: this.translationService.translate(
-          "RDS_HELP_SEARCH_DRIVERS_TITLE",
-        ),
-        content: this.translationService.translate(
-          "RDS_HELP_SEARCH_DRIVERS_CONTENT",
-        ),
-        position: "bottom",
-      },
-    ];
-  }
-
-  private getRaceHelpSteps(): GuideStep[] {
-    return [
-      {
-        selector: ".custom-dropdown-container",
-        title: this.translationService.translate(
-          "RDS_HELP_RACE_SELECTION_TITLE",
-        ),
-        content: this.translationService.translate(
-          "RDS_HELP_RACE_SELECTION_CONTENT",
-        ),
-        position: "top",
-      },
-      {
-        selector: ".event-details-card",
-        title: this.translationService.translate(
-          "RDS_HELP_SELECTION_SUMMARY_TITLE",
-        ),
-        content: this.translationService.translate(
-          "RDS_HELP_SELECTION_SUMMARY_CONTENT",
-        ),
-        position: "top",
-      },
-      {
-        selector: ".preview-panel .search-wrapper",
-        title: this.translationService.translate("RDS_HELP_SEARCH_TITLE"),
-        content: this.translationService.translate("RDS_HELP_SEARCH_CONTENT"),
-        position: "top",
-      },
-      {
-        selector: ".season-selection-wrapper",
-        title: this.translationService.translate("RDS_HELP_SEASON_TITLE"),
-        content: this.translationService.translate("RDS_HELP_SEASON_CONTENT"),
-        position: "top",
-      },
-      {
-        targetId: "race-card-0",
-        title: this.translationService.translate("RDS_HELP_RECENT_RACE_TITLE"),
-        content: this.translationService.translate(
-          "RDS_HELP_RECENT_RACE_MOST_RECENT_CONTENT",
-        ),
-        position: "bottom",
-      },
-      {
-        targetId: "race-card-1",
-        title: this.translationService.translate("RDS_HELP_RECENT_RACE_TITLE"),
-        content: this.translationService.translate(
-          "RDS_HELP_RECENT_RACE_CONTENT",
-        ),
-        position: "bottom",
-      },
-      {
-        selector: ".btn-start",
-        title: this.translationService.translate("RDS_HELP_START_RACE_TITLE"),
-        content: this.translationService.translate(
-          "RDS_HELP_START_RACE_CONTENT",
-        ),
-        position: "top",
-      },
-      {
-        selector: ".btn-demo",
-        title: this.translationService.translate("RDS_HELP_START_DEMO_TITLE"),
-        content: this.translationService.translate(
-          "RDS_HELP_START_DEMO_CONTENT",
-        ),
-        position: "top",
-      },
-    ];
+    return getRacedaySetupHelpSteps(this.translationService);
   }
 
   openRaceHistory(): void {
@@ -2969,161 +1081,45 @@ export class DefaultRacedaySetupComponent implements OnInit {
   }
 
   loadSavedRaces() {
-    this.isFileDropdownOpen = false;
-    forkJoin({
-      normal: this.dataService.getSavedRaces(false),
-      demo: this.dataService.getSavedRaces(true),
-    }).subscribe({
-      next: (result) => {
-        const normalList = result.normal
-          .filter(
-            (f) =>
-              !f.filename.startsWith("autosave_") &&
-              !f.filename.toLowerCase().includes("autosave"),
-          )
-          .map((f) => ({
-            filename: f.filename,
-            isDemo: false,
-            corrupt: f.corrupt,
-          }));
-        const demoList = result.demo
-          .filter(
-            (f) =>
-              !f.filename.startsWith("autosave_") &&
-              !f.filename.toLowerCase().includes("autosave"),
-          )
-          .map((f) => ({
-            filename: f.filename,
-            isDemo: true,
-            corrupt: f.corrupt,
-          }));
-        this.savedRaces = [...normalList, ...demoList];
-        this.showLoadRaceModal = true;
-        this.selectedSavedRace = null;
-        this.cdr.detectChanges();
-      },
-      error: (err) => console.error("Failed to get saved races:", err),
-    });
+    RacedaySetupSavedRaceHelper.loadSavedRaces(this);
   }
 
   selectSavedRace(file: ISavedRace) {
-    if (file.corrupt) {
-      return;
-    }
-    this.selectedSavedRace = file;
+    RacedaySetupSavedRaceHelper.selectSavedRace(this, file);
   }
 
   startInlineRename(event: MouseEvent, file: ISavedRace) {
-    event.stopPropagation();
-    if (file.corrupt) return;
-    this.editingSaveFilename = file.filename;
-    let name = file.filename;
-    if (name.toLowerCase().endsWith(".json")) {
-      name = name.substring(0, name.length - 5);
-    }
-    this.editingSaveNewName = name;
-    this.cdr.detectChanges();
+    RacedaySetupSavedRaceHelper.startInlineRename(this, event, file);
   }
 
   saveInlineRename(file: ISavedRace) {
-    if (!this.editingSaveNewName || !this.editingSaveNewName.trim()) {
-      this.cancelInlineRename();
-      return;
-    }
-    let normalized = this.editingSaveNewName.trim();
-    if (!normalized.toLowerCase().endsWith(".json")) {
-      normalized += ".json";
-    }
-    if (normalized === file.filename) {
-      this.cancelInlineRename();
-      return;
-    }
-    const oldFilename = file.filename;
-    this.dataService
-      .renameSavedRace(oldFilename, normalized, file.isDemo)
-      .subscribe({
-        next: () => {
-          file.filename = normalized;
-          this.savedRaces = [...this.savedRaces];
-          if (this.selectedSavedRace?.filename === oldFilename) {
-            this.selectedSavedRace = file;
-          }
-          this.editingSaveFilename = null;
-          this.editingSaveNewName = "";
-          this.cdr.detectChanges();
-        },
-        error: (err) => {
-          console.error("Failed to rename saved race:", err);
-          this.errorTitle = "Error";
-          this.errorMessage =
-            typeof err?.error === "string" && err.error.trim()
-              ? err.error
-              : err?.message || "Failed to rename saved race";
-          this.showErrorModal = true;
-          this.editingSaveFilename = null;
-          this.editingSaveNewName = "";
-          this.cdr.detectChanges();
-        },
-      });
+    RacedaySetupSavedRaceHelper.saveInlineRename(this, file);
   }
 
   cancelInlineRename() {
-    this.editingSaveFilename = null;
-    this.editingSaveNewName = "";
-    this.cdr.detectChanges();
+    RacedaySetupSavedRaceHelper.cancelInlineRename(this);
   }
 
   closeLoadRaceModal() {
-    this.showLoadRaceModal = false;
-    this.showDeleteSavedRaceConfirm = false;
-    this.savedRaceToDelete = null;
+    RacedaySetupSavedRaceHelper.closeLoadRaceModal(this);
   }
 
   confirmLoadRace() {
-    if (!this.selectedSavedRace) return;
-
-    this.dataService
-      .loadRace(this.selectedSavedRace.filename, this.selectedSavedRace.isDemo)
-      .subscribe({
-        next: () => {
-          this.closeLoadRaceModal();
-          this.router.navigate(["/raceday"]);
-        },
-        error: (err) => console.error("Failed to load race:", err),
-      });
+    RacedaySetupSavedRaceHelper.confirmLoadRace(this);
   }
 
   showDeleteSavedRaceConfirm = false;
   savedRaceToDelete: ISavedRace | null = null;
 
   deleteSavedRace(event: MouseEvent, file: ISavedRace) {
-    event.stopPropagation(); // Prevent selection
-    this.savedRaceToDelete = file;
-    this.showDeleteSavedRaceConfirm = true;
+    RacedaySetupSavedRaceHelper.deleteSavedRace(this, event, file);
   }
 
   onCancelDeleteSavedRace() {
-    this.showDeleteSavedRaceConfirm = false;
-    this.savedRaceToDelete = null;
+    RacedaySetupSavedRaceHelper.onCancelDeleteSavedRace(this);
   }
 
   onConfirmDeleteSavedRace() {
-    this.showDeleteSavedRaceConfirm = false;
-    const file = this.savedRaceToDelete;
-    this.savedRaceToDelete = null;
-    if (!file) return;
-
-    this.dataService.deleteSavedRace(file.filename, file.isDemo).subscribe({
-      next: () => {
-        this.savedRaces = this.savedRaces.filter(
-          (r) => r.filename !== file.filename,
-        );
-        if (this.selectedSavedRace?.filename === file.filename) {
-          this.selectedSavedRace = null;
-        }
-        this.cdr.detectChanges();
-      },
-      error: (err) => console.error("Failed to delete race:", err),
-    });
+    RacedaySetupSavedRaceHelper.onConfirmDeleteSavedRace(this);
   }
 }

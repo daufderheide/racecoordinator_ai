@@ -1,16 +1,7 @@
-/* eslint-disable max-lines */
-import { HttpClient, HttpHeaders } from "@angular/common/http";
+import { HttpClient } from "@angular/common/http";
 import { Injectable, NgZone } from "@angular/core";
 import { Reader } from "protobufjs/minimal";
-import {
-  BehaviorSubject,
-  forkJoin,
-  Observable,
-  of,
-  ReplaySubject,
-  Subject,
-} from "rxjs";
-import { catchError, map } from "rxjs/operators";
+import { BehaviorSubject, Observable, ReplaySubject, Subject } from "rxjs";
 import {
   DriverImportCommitRequest,
   DriverImportPreview,
@@ -26,14 +17,6 @@ import {
   TrackmateConfig,
 } from "@app/models/track";
 import {
-  ArduinoConfig as ProtoArduinoConfig,
-  DeferHeatRequest,
-  DeferHeatResponse,
-  DeleteAssetRequest,
-  DeleteAssetResponse,
-  EndRaceRequest,
-  EndRaceResponse,
-  GetPhidgetDevicesResponse,
   IAssetMessage,
   ICarData,
   ICustomRotation,
@@ -42,9 +25,7 @@ import {
   IHeat,
   IInterfaceEvent,
   ILap,
-  InitializeInterfaceRequest,
   InitializeInterfaceResponse,
-  InitializeRaceRequest,
   InitializeRaceResponse,
   InterfaceEvent,
   IOverallStandingsUpdate,
@@ -60,61 +41,29 @@ import {
   IStandingsUpdate,
   IStartRaceResponse,
   ITeamModel,
-  LedString as ProtoLedString,
-  ListAssetsResponse,
-  ModifyHeatsRequest,
   ModifyHeatsResponse,
-  NextHeatRequest,
-  NextHeatResponse,
-  PauseRaceRequest,
-  PauseRaceResponse,
-  PhidgetConfig as ProtoPhidgetConfig,
   RaceData,
   RaceFlag,
   RaceState,
   RaceSubscriptionRequest,
-  RegenerateHeatsRequest,
   RegenerateHeatsResponse,
-  RenameAssetRequest,
-  RenameAssetResponse,
-  RestartHeatRequest,
-  RestartHeatResponse,
-  RgbLedState,
-  SaveAudioSetRequest,
-  SaveAudioSetResponse,
-  SaveCustomRotationRequest,
-  SaveCustomRotationResponse,
-  SaveImageSetRequest,
-  SaveImageSetResponse,
-  SetInterfacePinStateRequest,
   SetInterfacePinStateResponse,
-  SetInterfaceRgbLedStateRequest,
   SetInterfaceRgbLedStateResponse,
-  SkipHeatRequest,
-  SkipHeatResponse,
-  SkipRaceRequest,
-  SkipRaceResponse,
-  StartRaceRequest,
-  StartRaceResponse,
   SystemState,
-  TrackmateConfig as ProtoTrackmateConfig,
-  UpdateInterfaceConfigRequest,
   UpdateInterfaceConfigResponse,
-  UploadAssetRequest,
-  UploadAssetResponse,
-  VoltageConfig as ProtoVoltageConfig,
-  VoltageConfig,
 } from "@app/proto/antigravity";
+import { DataAssetHelper } from "@app/services/data/data-asset.helper";
+import { DataEntityCrudHelper } from "@app/services/data/data-entity-crud.helper";
+import { DataHistoryStatsHelper } from "@app/services/data/data-history-stats.helper";
+import { DataInterfaceHelper } from "@app/services/data/data-interface.helper";
+import { DataRaceControlHelper } from "@app/services/data/data-race-control.helper";
 import { LoggerService } from "@app/services/logger.service";
 import { SettingsService } from "@app/services/settings.service";
-
-import { BartConfigConverter } from "./converters/bart_config.converter";
 
 @Injectable({
   providedIn: "root",
 })
 export class DataService {
-  // Pointing to the Java server API
   private serverIp =
     typeof window !== "undefined" ? window.location.hostname : "localhost";
   private serverPort = 7070;
@@ -145,32 +94,17 @@ export class DataService {
     return this.baseUrl;
   }
 
-  private get driversUrl(): string {
-    return `${this.baseUrl}/api/drivers`;
-  }
-
-  private get driverLabelsUrl(): string {
-    return `${this.baseUrl}/api/driver-labels`;
-  }
-
-  private get tracksUrl(): string {
-    return `${this.baseUrl}/api/tracks`;
-  }
-
-  private get racesUrl(): string {
-    return `${this.baseUrl}/api/races`;
-  }
-
-  private get eventsUrl(): string {
-    return `${this.baseUrl}/api/events`;
-  }
-
-  private get seasonsUrl(): string {
-    return `${this.baseUrl}/api/seasons`;
-  }
   private connectionIntent = "";
   private lastRaceTimeReceivedAt = 0;
   private raceSubscriptionStartedAt = 0;
+
+  private assetHelper: DataAssetHelper;
+  private interfaceHelper: DataInterfaceHelper;
+  private raceControlHelper: DataRaceControlHelper;
+  private historyStatsHelper: DataHistoryStatsHelper;
+  private crudHelper: DataEntityCrudHelper;
+
+  public assets$: Observable<IAssetMessage[]>;
 
   constructor(
     private http: HttpClient,
@@ -199,6 +133,27 @@ export class DataService {
     this.logger.info(
       `DataService initialized with Base Server URL: ${this.baseUrl}`,
     );
+
+    this.assetHelper = new DataAssetHelper(
+      this.http,
+      () => this.baseUrl,
+      this.logger,
+    );
+    this.assets$ = this.assetHelper.assets$;
+
+    this.interfaceHelper = new DataInterfaceHelper(
+      this.http,
+      () => this.baseUrl,
+    );
+    this.raceControlHelper = new DataRaceControlHelper(
+      this.http,
+      () => this.baseUrl,
+    );
+    this.historyStatsHelper = new DataHistoryStatsHelper(
+      this.http,
+      () => this.baseUrl,
+    );
+    this.crudHelper = new DataEntityCrudHelper(this.http, () => this.baseUrl);
   }
 
   public setServerAddress(ip: string, port: number) {
@@ -207,9 +162,6 @@ export class DataService {
     }
     this.serverIp = ip;
     this.serverPort = port;
-    // Reconnect socket if it was open? Usually we just let the next attempt handle it,
-    // or we can force a reconnect. Since this is mainly for startup configuration,
-    // the next call to connectToRaceDataSocket() will pick it up.
     if (this.raceDataSocket) {
       this.raceDataSocket.close();
       this.raceDataSocket = undefined;
@@ -221,49 +173,32 @@ export class DataService {
   }
 
   getDrivers(): Observable<any[]> {
-    return this.http.get<any[]>(this.driversUrl);
+    return this.crudHelper.getDrivers();
   }
-
   getServerVersion(): Observable<string> {
-    return this.http.get(`${this.baseUrl}/api/version`, {
-      responseType: "text",
-    });
+    return this.crudHelper.getServerVersion();
   }
-
   getServerIp(): Observable<string> {
-    return this.http.get(`${this.baseUrl}/api/server-ip`, {
-      responseType: "text",
-    });
+    return this.crudHelper.getServerIp();
   }
-
   setServerLogLevel(level: string): Observable<any> {
-    return this.http.post(
-      `${this.baseUrl}/api/settings/log-level?level=${level}`,
-      {},
-      { responseType: "text" },
-    );
+    return this.crudHelper.setServerLogLevel(level);
   }
-
   createDriver(driver: any): Observable<any> {
-    return this.http.post<any>(this.driversUrl, driver);
+    return this.crudHelper.createDriver(driver);
   }
-
   updateDriver(id: string, driver: any): Observable<any> {
-    return this.http.put<any>(`${this.driversUrl}/${id}`, driver);
+    return this.crudHelper.updateDriver(id, driver);
   }
-
   deleteDriver(id: string): Observable<any> {
-    return this.http.delete<any>(`${this.driversUrl}/${id}`);
+    return this.crudHelper.deleteDriver(id);
   }
-
   getDriverLabels(): Observable<DriverLabel[]> {
-    return this.http.get<DriverLabel[]>(this.driverLabelsUrl);
+    return this.crudHelper.getDriverLabels();
   }
-
   createDriverLabel(label: Partial<DriverLabel>): Observable<DriverLabel> {
-    return this.http.post<DriverLabel>(this.driverLabelsUrl, label);
+    return this.crudHelper.createDriverLabel(label);
   }
-
   updateDriverLabel(label: Partial<DriverLabel>): Observable<DriverLabel>;
   updateDriverLabel(
     id: string,
@@ -273,228 +208,115 @@ export class DataService {
     idOrLabel: string | Partial<DriverLabel>,
     label?: Partial<DriverLabel>,
   ): Observable<DriverLabel> {
-    const id =
-      typeof idOrLabel === "string"
-        ? idOrLabel
-        : idOrLabel.entity_id || (idOrLabel as any).id || "";
-    const body = typeof idOrLabel === "object" ? idOrLabel : label || {};
-    return this.http.put<DriverLabel>(`${this.driverLabelsUrl}/${id}`, body);
+    return (this.crudHelper.updateDriverLabel as any)(idOrLabel, label);
   }
-
   deleteDriverLabel(id: string): Observable<any> {
-    return this.http.delete<any>(`${this.driverLabelsUrl}/${id}`);
+    return this.crudHelper.deleteDriverLabel(id);
   }
-
   validateDriverImport(formData: FormData): Observable<DriverImportPreview> {
-    return this.http.post<DriverImportPreview>(
-      `${this.driversUrl}/import/preview`,
-      formData,
-    );
+    return this.crudHelper.validateDriverImport(formData);
   }
-
   commitDriverImport(
     request: DriverImportCommitRequest,
   ): Observable<DriverImportResult> {
-    return this.http.post<DriverImportResult>(
-      `${this.driversUrl}/import/commit`,
-      request,
-    );
+    return this.crudHelper.commitDriverImport(request);
   }
-
   downloadDriverImportTemplate(format: string): Observable<Blob> {
-    return this.http.get(
-      `${this.driversUrl}/import/template?format=${format}`,
-      {
-        responseType: "blob",
-      },
-    );
+    return this.crudHelper.downloadDriverImportTemplate(format);
   }
-
   exportDrivers(format: string, driverIds?: string[]): Observable<Blob> {
-    let url = `${this.driversUrl}/export?format=${encodeURIComponent(format)}`;
-    if (driverIds && driverIds.length > 0) {
-      url += `&driverIds=${encodeURIComponent(driverIds.join(","))}`;
-    }
-    return this.http.get(url, {
-      responseType: "blob",
-    });
+    return this.crudHelper.exportDrivers(format, driverIds);
   }
-
   getRaces(): Observable<any[]> {
-    return this.http.get<any[]>(this.racesUrl);
+    return this.crudHelper.getRaces();
   }
-
   createRace(race: any): Observable<any> {
-    return this.http.post<any>(this.racesUrl, race);
+    return this.crudHelper.createRace(race);
   }
-
   updateRace(id: string, race: any): Observable<any> {
-    return this.http.put<any>(`${this.racesUrl}/${id}`, race);
+    return this.crudHelper.updateRace(id, race);
   }
-
   deleteRace(id: string): Observable<any> {
-    return this.http.delete<any>(`${this.racesUrl}/${id}`);
+    return this.crudHelper.deleteRace(id);
   }
-
   getEvents(): Observable<Event[]> {
-    return this.http.get<Event[]>(this.eventsUrl);
+    return this.crudHelper.getEvents();
   }
-
   getEvent(id: string): Observable<Event> {
-    return this.http.get<Event>(`${this.eventsUrl}/${id}`);
+    return this.crudHelper.getEvent(id);
   }
-
   createEvent(event: Event): Observable<Event> {
-    return this.http.post<Event>(this.eventsUrl, event);
+    return this.crudHelper.createEvent(event);
   }
-
   updateEvent(id: string, event: Event): Observable<Event> {
-    return this.http.put<Event>(`${this.eventsUrl}/${id}`, event);
+    return this.crudHelper.updateEvent(id, event);
   }
-
   deleteEvent(id: string): Observable<any> {
-    return this.http.delete<any>(`${this.eventsUrl}/${id}`);
+    return this.crudHelper.deleteEvent(id);
   }
-
   getSeasons(): Observable<Season[]> {
-    return this.http.get<Season[]>(this.seasonsUrl);
+    return this.crudHelper.getSeasons();
   }
-
   getSeason(id: string): Observable<Season> {
-    return this.http.get<Season>(`${this.seasonsUrl}/${id}`);
+    return this.crudHelper.getSeason(id);
   }
-
   createSeason(season: Season): Observable<Season> {
-    return this.http.post<Season>(this.seasonsUrl, season);
+    return this.crudHelper.createSeason(season);
   }
-
   updateSeason(id: string, season: Season): Observable<Season> {
-    return this.http.put<Season>(`${this.seasonsUrl}/${id}`, season);
+    return this.crudHelper.updateSeason(id, season);
   }
-
   deleteSeason(id: string): Observable<any> {
-    return this.http.delete<any>(`${this.seasonsUrl}/${id}`);
+    return this.crudHelper.deleteSeason(id);
   }
-
   getSeasonStandings(id: string): Observable<SeasonStandingItem[]> {
-    return this.http.get<SeasonStandingItem[]>(
-      `${this.seasonsUrl}/${id}/standings`,
-    );
+    return this.crudHelper.getSeasonStandings(id);
   }
-
   getRaceHistory(isDemo?: boolean): Observable<any[]> {
-    const url = isDemo
-      ? `${this.baseUrl}/api/history/races?demo=true`
-      : `${this.baseUrl}/api/history/races`;
-    return this.http.get<any[]>(url).pipe(
-      map((items) =>
-        (items || []).map((item) => ({
-          ...item,
-          is_demo:
-            isDemo !== undefined
-              ? isDemo
-              : Boolean(item.is_demo || item.isDemo || item.demo),
-        })),
-      ),
-    );
+    return this.crudHelper.getRaceHistory(isDemo);
   }
-
   getRaceHistoryById(id: string, isDemo?: boolean): Observable<any> {
-    const url = isDemo
-      ? `${this.baseUrl}/api/history/races/${id}?demo=true`
-      : `${this.baseUrl}/api/history/races/${id}`;
-    return this.http.get<any>(url);
+    return this.crudHelper.getRaceHistoryById(id, isDemo);
   }
-
   getAllFinishedRaceHistory(): Observable<any[]> {
-    return forkJoin([
-      this.getRaceHistory(false).pipe(catchError(() => of([]))),
-      this.getRaceHistory(true).pipe(catchError(() => of([]))),
-    ]).pipe(map(([prod, demo]) => [...(prod || []), ...(demo || [])]));
+    return this.crudHelper.getAllFinishedRaceHistory();
   }
 
   loadRaceHistory(id: string, isDemo?: boolean): Observable<any> {
-    const url = isDemo
-      ? `${this.baseUrl}/api/history/races/${id}/load?demo=true`
-      : `${this.baseUrl}/api/history/races/${id}/load`;
-    return this.http.post(url, {}, { responseType: "text" });
+    return this.historyStatsHelper.loadRaceHistory(id, isDemo);
   }
-
   exportRaceHistoryToCsv(id: string, isDemo?: boolean): Observable<string> {
-    const url = isDemo
-      ? `${this.baseUrl}/api/history/races/${id}/export?demo=true`
-      : `${this.baseUrl}/api/history/races/${id}/export`;
-    return this.http.get(url, {
-      responseType: "text",
-    });
+    return this.historyStatsHelper.exportRaceHistoryToCsv(id, isDemo);
   }
-
   updateHistoryLapSections(
     id: string,
     updates: any[],
     isDemo?: boolean,
   ): Observable<any> {
-    const url = isDemo
-      ? `${this.baseUrl}/api/history/races/${id}/lap-sections?demo=true`
-      : `${this.baseUrl}/api/history/races/${id}/lap-sections`;
-    return this.http.post(url, updates, { responseType: "text" });
+    return this.historyStatsHelper.updateHistoryLapSections(
+      id,
+      updates,
+      isDemo,
+    );
   }
-
   exportRaceToCsv(): Observable<string> {
-    return this.http.get(`${this.baseUrl}/api/races/current/export-csv`, {
-      responseType: "text",
-    });
+    return this.historyStatsHelper.exportRaceToCsv();
   }
-
   exportRaceToXls(base64Template?: string): Observable<Blob> {
-    const body = base64Template ? { templateBase64: base64Template } : {};
-    return this.http.post(
-      `${this.baseUrl}/api/races/current/export-xls`,
-      body,
-      {
-        responseType: "blob",
-      },
-    );
+    return this.historyStatsHelper.exportRaceToXls(base64Template);
   }
-
   downloadDefaultExportTemplate(): Observable<Blob> {
-    return this.http.get(`${this.baseUrl}/api/races/export-template/default`, {
-      responseType: "blob",
-    });
+    return this.historyStatsHelper.downloadDefaultExportTemplate();
   }
-
   testExportXls(base64Template?: string): Observable<Blob> {
-    const body = base64Template ? { templateBase64: base64Template } : {};
-    return this.http.post(`${this.baseUrl}/api/races/test-export-xls`, body, {
-      responseType: "blob",
-    });
+    return this.historyStatsHelper.testExportXls(base64Template);
   }
-
   public getDefaultDemoConfig(): IDemoConfig {
-    return {
-      minLapTimeMs: 3000,
-      maxLapTimeMs: 5000,
-      minRefuelTimeMs: 5000,
-      maxRefuelTimeMs: 10000,
-      numSegments: 2,
-      minLapsBetweenPits: 3,
-      maxLapsBetweenPits: 7,
-      minReactionTimeMs: 1,
-      maxReactionTimeMs: 500,
-      minPitEntryOffsetMs: 500,
-      maxPitEntryOffsetMs: 1000,
-    };
+    return this.raceControlHelper.getDefaultDemoConfig();
   }
-
   generateHeats(raceId: string, driverCount: number): Observable<any> {
-    return this.http.post<any>(
-      `http://${this.serverIp}:${this.serverPort}/api/races/${raceId}/generate-heats`,
-      {
-        driverCount,
-      },
-    );
+    return this.raceControlHelper.generateHeats(raceId, driverCount);
   }
-
   previewHeats(
     trackId: string,
     rotationType: string,
@@ -507,62 +329,43 @@ export class DataService {
     reverseHeats: boolean = false,
     groupOptions: any = null,
   ): Observable<any> {
-    return this.http.post<any>(
-      `http://${this.serverIp}:${this.serverPort}/api/heats/preview`,
-      {
-        trackId,
-        rotationType,
-        driverCount,
-        soloLaneIndex,
-        customRotationSequence,
-        customRotationAssetId,
-        customRotations,
-        heatTimesThrough,
-        reverseHeats,
-        groupOptions,
-      },
+    return this.raceControlHelper.previewHeats(
+      trackId,
+      rotationType,
+      driverCount,
+      soloLaneIndex,
+      customRotationSequence,
+      customRotationAssetId,
+      customRotations,
+      heatTimesThrough,
+      reverseHeats,
+      groupOptions,
     );
   }
 
   getTracks(): Observable<any[]> {
-    return this.http.get<any[]>(this.tracksUrl);
+    return this.crudHelper.getTracks();
   }
-
   getTrackFactorySettings(): Observable<any> {
-    return this.http.get<any>(`${this.baseUrl}/api/tracks/factory-settings`);
+    return this.crudHelper.getTrackFactorySettings();
   }
-
   createTrack(track: any): Observable<any> {
-    return this.http.post<any>(this.tracksUrl, track);
+    return this.crudHelper.createTrack(track);
   }
-
   updateTrack(id: string, track: any): Observable<any> {
-    return this.http.put<any>(`${this.tracksUrl}/${id}`, track);
+    return this.crudHelper.updateTrack(id, track);
   }
-
   deleteTrack(id: string): Observable<any> {
-    return this.http.delete<any>(`${this.tracksUrl}/${id}`);
+    return this.crudHelper.deleteTrack(id);
   }
-
   getSerialPorts(): Observable<string[]> {
-    return this.http.get<string[]>(`${this.baseUrl}/api/serial-ports`);
+    return this.interfaceHelper.getSerialPorts();
   }
-
   getBleDevices(): Observable<string[]> {
-    return this.http.get<string[]>(`${this.baseUrl}/api/ble-devices`);
+    return this.interfaceHelper.getBleDevices();
   }
-
   getPhidgetDevices(): Observable<IPhidgetDeviceInfo[]> {
-    return this.http
-      .get(`${this.baseUrl}/api/phidgets`, { responseType: "arraybuffer" })
-      .pipe(
-        map((buffer) => {
-          const response = GetPhidgetDevicesResponse.decode(
-            new Uint8Array(buffer),
-          );
-          return response.devices;
-        }),
-      );
+    return this.interfaceHelper.getPhidgetDevices();
   }
 
   initializeRace(
@@ -574,7 +377,7 @@ export class DataService {
     seasonId?: string,
     themeId?: string,
   ): Observable<InitializeRaceResponse> {
-    const request = InitializeRaceRequest.create({
+    return this.raceControlHelper.initializeRace(
       raceId,
       driverIds,
       isDemoMode,
@@ -582,26 +385,7 @@ export class DataService {
       eventId,
       seasonId,
       themeId,
-    });
-    const buffer = InitializeRaceRequest.encode(request).finish();
-
-    const headers = new HttpHeaders({
-      "Content-Type": "application/octet-stream",
-      Accept: "application/octet-stream",
-    });
-
-    return this.http
-      .post(`${this.baseUrl}/api/initialize-race`, new Blob([buffer as any]), {
-        headers,
-        responseType: "arraybuffer",
-      })
-      .pipe(
-        map((response) => {
-          return InitializeRaceResponse.decode(
-            Reader.create(new Uint8Array(response as any)),
-          );
-        }),
-      );
+    );
   }
 
   initializeInterface(
@@ -611,134 +395,13 @@ export class DataService {
     laneCountParam?: number,
     bartConfigs: BartConfig[] = [],
   ): Observable<InitializeInterfaceResponse> {
-    let phidgetConfigs: any[] = [];
-    let laneCount = 0;
-
-    if (typeof phidgetConfigsOrLaneCount === "number") {
-      laneCount = phidgetConfigsOrLaneCount;
-    } else {
-      phidgetConfigs = phidgetConfigsOrLaneCount;
-      laneCount = laneCountParam || 0;
-    }
-
-    const request = InitializeInterfaceRequest.create({
-      configs: this.mapArduinoConfigsToProto(configs),
-      trackmateConfigs: this.mapTrackmateConfigsToProto(trackmateConfigs),
-      phidgetConfigs: this.mapPhidgetConfigsToProto(phidgetConfigs),
-      bartConfigs: this.mapBartConfigsToProto(bartConfigs),
-      laneCount,
-    });
-    const buffer = InitializeInterfaceRequest.encode(request).finish();
-
-    const headers = new HttpHeaders({
-      "Content-Type": "application/octet-stream",
-      Accept: "application/octet-stream",
-    });
-
-    return this.http
-      .post(
-        `${this.baseUrl}/api/initialize-interface`,
-        new Blob([buffer as any]),
-        {
-          headers,
-          responseType: "arraybuffer",
-        },
-      )
-      .pipe(
-        map((response) => {
-          return InitializeInterfaceResponse.decode(
-            Reader.create(new Uint8Array(response as any)),
-          );
-        }),
-      );
-  }
-
-  private mapArduinoConfigsToProto(configs: ArduinoConfig[]) {
-    return configs.map((config) =>
-      ProtoArduinoConfig.create({
-        name: config.name,
-        commPort: config.commPort,
-        baudRate: config.baudRate,
-        debounceUs: config.debounceUs,
-        hardwareType: config.hardwareType,
-        normallyClosedLaneSensors: config.normallyClosedLaneSensors,
-        normallyClosedRelays: config.normallyClosedRelays,
-        activeLowAnalogLeds: config.activeLowAnalogLeds,
-        usePitsAsLaps: config.usePitsAsLaps,
-        useLapsForSegments: config.useLapsForSegments,
-        digitalIds: config.digitalIds,
-        analogIds: config.analogIds,
-        ledStrings:
-          config.ledStrings?.map((ls) =>
-            ProtoLedString.create({
-              pin: ls.pin,
-              leds: ls.leds,
-              numUsedLeds: ls.numUsedLeds,
-              addressableLeds: ls.addressableLeds,
-              brightness: ls.brightness,
-              colorOrder: ls.colorOrder,
-              flagFlashRate: ls.flagFlashRate,
-              ledLaneColorOverrides: ls.ledLaneColorOverrides,
-            }),
-          ) || [],
-        voltageConfigs: Object.entries(config.voltageConfigs || {}).map(
-          ([lane, maxVoltage]) =>
-            ProtoVoltageConfig.create({
-              lane: parseInt(lane, 10),
-              maxVoltage: maxVoltage as number,
-            }),
-        ),
-      }),
+    return this.interfaceHelper.initializeInterface(
+      configs,
+      trackmateConfigs,
+      phidgetConfigsOrLaneCount,
+      laneCountParam,
+      bartConfigs,
     );
-  }
-
-  private mapTrackmateConfigsToProto(trackmateConfigs: TrackmateConfig[]) {
-    return trackmateConfigs.map((config) =>
-      ProtoTrackmateConfig.create({
-        name: config.name,
-        commPort: config.commPort,
-        normallyClosedRelays: config.normallyClosedRelays,
-        useIr: config.useIR,
-        debounce: config.debounce,
-        numLanes: config.numLanes,
-        normallyClosedLaneSensors: config.normallyClosedLaneSensors,
-        hasPerLaneRelays: config.hasPerLaneRelays,
-        lapPinPitBehavior: config.lapPinPitBehavior,
-        lapPinBehaviors: config.lapPinBehaviors,
-      }),
-    );
-  }
-
-  private mapPhidgetConfigsToProto(phidgetConfigs: any[]) {
-    return (
-      phidgetConfigs?.map((config) =>
-        ProtoPhidgetConfig.create({
-          name: config.name,
-          serialNumber: config.serialNumber,
-          isHubPort: config.isHubPort,
-          hubPort: config.hubPort,
-          normallyClosedLaneSensors: config.normallyClosedLaneSensors,
-          normallyClosedRelays: config.normallyClosedRelays,
-          activeLowAnalogLeds: config.activeLowAnalogLeds,
-          useLapsForSegments: config.useLapsForSegments,
-          lapPinPitBehavior: config.lapPinPitBehavior,
-          digitalInIds: config.digitalInIds,
-          digitalOutIds: config.digitalOutIds,
-          analogIds: config.analogIds,
-          voltageConfigs: Object.entries(config.voltageConfigs || {}).map(
-            ([lane, maxVoltage]) =>
-              ProtoVoltageConfig.create({
-                lane: parseInt(lane, 10),
-                maxVoltage: maxVoltage as number,
-              }),
-          ),
-        }),
-      ) || []
-    );
-  }
-
-  private mapBartConfigsToProto(configs: BartConfig[]) {
-    return (configs || []).map((c) => BartConfigConverter.toProto(c));
   }
 
   updateInterfaceConfig(
@@ -746,92 +409,11 @@ export class DataService {
     interfaceIndex: number,
     phidgetConfig?: PhidgetConfig | null,
   ): Observable<UpdateInterfaceConfigResponse> {
-    const request = UpdateInterfaceConfigRequest.create({
-      config: config
-        ? ProtoArduinoConfig.create({
-            name: config.name,
-            commPort: config.commPort,
-            baudRate: config.baudRate,
-            debounceUs: config.debounceUs,
-            hardwareType: config.hardwareType,
-            normallyClosedLaneSensors: config.normallyClosedLaneSensors,
-            normallyClosedRelays: config.normallyClosedRelays,
-            activeLowAnalogLeds: config.activeLowAnalogLeds,
-            usePitsAsLaps: config.usePitsAsLaps,
-            useLapsForSegments: config.useLapsForSegments,
-            digitalIds: config.digitalIds,
-            analogIds: config.analogIds,
-            ledStrings:
-              config.ledStrings?.map((ls) =>
-                ProtoLedString.create({
-                  pin: ls.pin,
-                  leds: ls.leds,
-                  numUsedLeds: ls.numUsedLeds,
-                  addressableLeds: ls.addressableLeds,
-                  brightness: ls.brightness,
-                  colorOrder: ls.colorOrder,
-                  flagFlashRate: ls.flagFlashRate,
-                  ledLaneColorOverrides: ls.ledLaneColorOverrides,
-                }),
-              ) || [],
-            voltageConfigs: Object.entries(config.voltageConfigs || {}).map(
-              ([lane, maxVoltage]) =>
-                VoltageConfig.create({
-                  lane: parseInt(lane, 10),
-                  maxVoltage: maxVoltage as number,
-                }),
-            ),
-          })
-        : undefined,
-      phidgetConfig: phidgetConfig
-        ? ProtoPhidgetConfig.create({
-            name: phidgetConfig.name,
-            serialNumber: phidgetConfig.serialNumber,
-            isHubPort: phidgetConfig.isHubPort,
-            hubPort: phidgetConfig.hubPort,
-            normallyClosedLaneSensors: phidgetConfig.normallyClosedLaneSensors,
-            normallyClosedRelays: phidgetConfig.normallyClosedRelays,
-            activeLowAnalogLeds: phidgetConfig.activeLowAnalogLeds,
-            useLapsForSegments: phidgetConfig.useLapsForSegments,
-            lapPinPitBehavior: phidgetConfig.lapPinPitBehavior,
-            digitalInIds: phidgetConfig.digitalInIds,
-            digitalOutIds: phidgetConfig.digitalOutIds,
-            analogIds: phidgetConfig.analogIds,
-            voltageConfigs: Object.entries(
-              phidgetConfig.voltageConfigs || {},
-            ).map(([lane, maxVoltage]) =>
-              ProtoVoltageConfig.create({
-                lane: parseInt(lane, 10),
-                maxVoltage: maxVoltage as number,
-              }),
-            ),
-          })
-        : undefined,
+    return this.interfaceHelper.updateInterfaceConfig(
+      config,
       interfaceIndex,
-    });
-    const buffer = UpdateInterfaceConfigRequest.encode(request).finish();
-
-    const headers = new HttpHeaders({
-      "Content-Type": "application/octet-stream",
-      Accept: "application/octet-stream",
-    });
-
-    return this.http
-      .post(
-        `${this.baseUrl}/api/update-interface-config`,
-        new Blob([buffer as any]),
-        {
-          headers,
-          responseType: "arraybuffer",
-        },
-      )
-      .pipe(
-        map((response) => {
-          return UpdateInterfaceConfigResponse.decode(
-            Reader.create(new Uint8Array(response as any)),
-          );
-        }),
-      );
+      phidgetConfig,
+    );
   }
 
   setInterfacePinState(
@@ -840,35 +422,12 @@ export class DataService {
     isHigh: boolean,
     interfaceIndex: number,
   ): Observable<SetInterfacePinStateResponse> {
-    const request = SetInterfacePinStateRequest.create({
+    return this.interfaceHelper.setInterfacePinState(
       pin,
       isDigital,
       isHigh,
       interfaceIndex,
-    });
-    const buffer = SetInterfacePinStateRequest.encode(request).finish();
-
-    const headers = new HttpHeaders({
-      "Content-Type": "application/octet-stream",
-      Accept: "application/octet-stream",
-    });
-
-    return this.http
-      .post(
-        `${this.baseUrl}/api/set-interface-pin-state`,
-        new Blob([buffer as any]),
-        {
-          headers,
-          responseType: "arraybuffer",
-        },
-      )
-      .pipe(
-        map((response) => {
-          return SetInterfacePinStateResponse.decode(
-            Reader.create(new Uint8Array(response as any)),
-          );
-        }),
-      );
+    );
   }
 
   setInterfaceRgbLedState(
@@ -876,869 +435,227 @@ export class DataService {
     leds: IRgbLedState[],
     interfaceIndex: number,
   ): Observable<SetInterfaceRgbLedStateResponse> {
-    const request = SetInterfaceRgbLedStateRequest.create({
+    return this.interfaceHelper.setInterfaceRgbLedState(
       pin,
-      leds: leds.map((l) => RgbLedState.create(l)),
+      leds,
       interfaceIndex,
-    });
-    const buffer = SetInterfaceRgbLedStateRequest.encode(request).finish();
-
-    const headers = new HttpHeaders({
-      "Content-Type": "application/octet-stream",
-      Accept: "application/octet-stream",
-    });
-
-    return this.http
-      .post(
-        `${this.baseUrl}/api/set-interface-rgb-led-state`,
-        new Blob([buffer as any]),
-        {
-          headers,
-          responseType: "arraybuffer",
-        },
-      )
-      .pipe(
-        map((response) => {
-          return SetInterfaceRgbLedStateResponse.decode(
-            Reader.create(new Uint8Array(response as any)),
-          );
-        }),
-      );
+    );
   }
 
   closeInterface(): Observable<any> {
-    return this.http.post(`${this.baseUrl}/api/close-interface`, {});
+    return this.interfaceHelper.closeInterface();
   }
-
   startRace(): Observable<IStartRaceResponse> {
-    const request = StartRaceRequest.create({});
-    const buffer = StartRaceRequest.encode(request).finish();
-
-    const headers = new HttpHeaders({
-      "Content-Type": "application/octet-stream",
-      Accept: "application/octet-stream",
-    });
-
-    return this.http
-      .post(`${this.baseUrl}/api/start-race`, new Blob([buffer as any]), {
-        headers,
-        responseType: "arraybuffer",
-      })
-      .pipe(
-        map((response) => {
-          return StartRaceResponse.decode(
-            Reader.create(new Uint8Array(response as any)),
-          );
-        }),
-      );
+    return this.raceControlHelper.startRace();
   }
-
   endRace(): Observable<boolean> {
-    const request = EndRaceRequest.create({});
-    const buffer = EndRaceRequest.encode(request).finish();
-
-    const headers = new HttpHeaders({
-      "Content-Type": "application/octet-stream",
-      Accept: "application/octet-stream",
-    });
-
-    return this.http
-      .post(`${this.baseUrl}/api/end-race`, new Blob([buffer as any]), {
-        headers,
-        responseType: "arraybuffer",
-      })
-      .pipe(
-        map((response) => {
-          const endResponse = EndRaceResponse.decode(
-            Reader.create(new Uint8Array(response as any)),
-          );
-          return endResponse.success ?? false;
-        }),
-      );
+    return this.raceControlHelper.endRace();
   }
-
   pauseRace(): Observable<boolean> {
-    const request = PauseRaceRequest.create({});
-    const buffer = PauseRaceRequest.encode(request).finish();
-
-    const headers = new HttpHeaders({
-      "Content-Type": "application/octet-stream",
-      Accept: "application/octet-stream",
-    });
-
-    return this.http
-      .post(`${this.baseUrl}/api/pause-race`, new Blob([buffer as any]), {
-        headers,
-        responseType: "arraybuffer",
-      })
-      .pipe(
-        map((response) => {
-          const pauseResponse = PauseRaceResponse.decode(
-            Reader.create(new Uint8Array(response as any)),
-          );
-          return pauseResponse.success;
-        }),
-      );
+    return this.raceControlHelper.pauseRace();
   }
-
   abortTimers(): Observable<boolean> {
-    const request = PauseRaceRequest.create({});
-    const buffer = PauseRaceRequest.encode(request).finish();
-
-    const headers = new HttpHeaders({
-      "Content-Type": "application/octet-stream",
-      Accept: "application/octet-stream",
-    });
-
-    return this.http
-      .post(`${this.baseUrl}/api/abort-timers`, new Blob([buffer as any]), {
-        headers,
-        responseType: "arraybuffer",
-      })
-      .pipe(
-        map((response) => {
-          const abortResponse = PauseRaceResponse.decode(
-            Reader.create(new Uint8Array(response as any)),
-          );
-          return abortResponse.success ?? false;
-        }),
-      );
+    return this.raceControlHelper.abortTimers();
   }
-
   nextHeat(): Observable<boolean> {
-    const request = NextHeatRequest.create({});
-    const buffer = NextHeatRequest.encode(request).finish();
-
-    const headers = new HttpHeaders({
-      "Content-Type": "application/octet-stream",
-      Accept: "application/octet-stream",
-    });
-
-    return this.http
-      .post(`${this.baseUrl}/api/next-heat`, new Blob([buffer as any]), {
-        headers,
-        responseType: "arraybuffer",
-      })
-      .pipe(
-        map((response) => {
-          const nextResponse = NextHeatResponse.decode(
-            Reader.create(new Uint8Array(response as any)),
-          );
-          return nextResponse.success ?? false;
-        }),
-      );
+    return this.raceControlHelper.nextHeat();
   }
-
   setMainPower(on: boolean): Observable<any> {
-    return this.http.post(
-      `${this.baseUrl}/api/track/power/main?on=${on}`,
-      {},
-      { responseType: "text" },
-    );
+    return this.raceControlHelper.setMainPower(on);
   }
-
   setLanePower(lane: number, on: boolean): Observable<any> {
-    // Note: server lane parameter is 0-indexed.
-    return this.http.post(
-      `${this.baseUrl}/api/track/power/lane/${lane}?on=${on}`,
-      {},
-      { responseType: "text" },
-    );
+    return this.raceControlHelper.setLanePower(lane, on);
   }
-
   restartHeat(): Observable<boolean> {
-    const request = RestartHeatRequest.create({});
-    const buffer = RestartHeatRequest.encode(request).finish();
-
-    const headers = new HttpHeaders({
-      "Content-Type": "application/octet-stream",
-      Accept: "application/octet-stream",
-    });
-
-    return this.http
-      .post(`${this.baseUrl}/api/restart-heat`, new Blob([buffer as any]), {
-        headers,
-        responseType: "arraybuffer",
-      })
-      .pipe(
-        map((response) => {
-          const restartResponse = RestartHeatResponse.decode(
-            Reader.create(new Uint8Array(response as any)),
-          );
-          return restartResponse.success ?? false;
-        }),
-      );
+    return this.raceControlHelper.restartHeat();
   }
-
   skipHeat(): Observable<boolean> {
-    const request = SkipHeatRequest.create({});
-    const buffer = SkipHeatRequest.encode(request).finish();
-
-    const headers = new HttpHeaders({
-      "Content-Type": "application/octet-stream",
-      Accept: "application/octet-stream",
-    });
-
-    return this.http
-      .post(`${this.baseUrl}/api/skip-heat`, new Blob([buffer as any]), {
-        headers,
-        responseType: "arraybuffer",
-      })
-      .pipe(
-        map((response) => {
-          const skipResponse = SkipHeatResponse.decode(
-            Reader.create(new Uint8Array(response as any)),
-          );
-          return skipResponse.success ?? false;
-        }),
-      );
+    return this.raceControlHelper.skipHeat();
   }
-
   skipRace(): Observable<boolean> {
-    const request = SkipRaceRequest.create({});
-    const buffer = SkipRaceRequest.encode(request).finish();
-
-    const headers = new HttpHeaders({
-      "Content-Type": "application/octet-stream",
-      Accept: "application/octet-stream",
-    });
-
-    return this.http
-      .post(`${this.baseUrl}/api/skip-race`, new Blob([buffer as any]), {
-        headers,
-        responseType: "arraybuffer",
-      })
-      .pipe(
-        map((response) => {
-          const skipResponse = SkipRaceResponse.decode(
-            Reader.create(new Uint8Array(response as any)),
-          );
-          return skipResponse.success ?? false;
-        }),
-      );
+    return this.raceControlHelper.skipRace();
   }
-
   deferHeat(): Observable<boolean> {
-    const request = DeferHeatRequest.create({});
-    const buffer = DeferHeatRequest.encode(request).finish();
-
-    const headers = new HttpHeaders({
-      "Content-Type": "application/octet-stream",
-      Accept: "application/octet-stream",
-    });
-
-    return this.http
-      .post(`${this.baseUrl}/api/defer-heat`, new Blob([buffer as any]), {
-        headers,
-        responseType: "arraybuffer",
-      })
-      .pipe(
-        map((response) => {
-          const deferResponse = DeferHeatResponse.decode(
-            Reader.create(new Uint8Array(response as any)),
-          );
-          return deferResponse.success ?? false;
-        }),
-      );
+    return this.raceControlHelper.deferHeat();
   }
-
   modifyHeats(
     heats: IHeat[],
     participants: IRaceParticipant[],
   ): Observable<ModifyHeatsResponse> {
-    const request = ModifyHeatsRequest.create({
-      heats,
-      participants,
-    });
-    const buffer = ModifyHeatsRequest.encode(request).finish();
-
-    const headers = new HttpHeaders({
-      "Content-Type": "application/octet-stream",
-      Accept: "application/octet-stream",
-    });
-
-    return this.http
-      .post(`${this.baseUrl}/api/modify-heats`, new Blob([buffer as any]), {
-        headers,
-        responseType: "arraybuffer",
-      })
-      .pipe(
-        map((response) => {
-          return ModifyHeatsResponse.decode(
-            Reader.create(new Uint8Array(response as any)),
-          );
-        }),
-      );
+    return this.raceControlHelper.modifyHeats(heats, participants);
   }
-
   regenerateHeats(
     participants: IRaceParticipant[] = [],
   ): Observable<RegenerateHeatsResponse> {
-    const request = RegenerateHeatsRequest.create({
-      participants,
-    });
-    const buffer = RegenerateHeatsRequest.encode(request).finish();
-
-    const headers = new HttpHeaders({
-      "Content-Type": "application/octet-stream",
-      Accept: "application/octet-stream",
-    });
-
-    return this.http
-      .post(`${this.baseUrl}/api/regenerate-heats`, new Blob([buffer as any]), {
-        headers,
-        responseType: "arraybuffer",
-      })
-      .pipe(
-        map((response) => {
-          return RegenerateHeatsResponse.decode(
-            Reader.create(new Uint8Array(response as any)),
-          );
-        }),
-      );
+    return this.raceControlHelper.regenerateHeats(participants);
+  }
+  finalizeModifyHeats(): Observable<any> {
+    return this.raceControlHelper.finalizeModifyHeats();
   }
 
-  finalizeModifyHeats(): Observable<any> {
-    return this.http.post(
-      `${this.baseUrl}/api/finalize-modify-heats`,
-      {},
-      { responseType: "text" },
+  public changeActualDriver(
+    lane: number,
+    driverId: string,
+  ): Observable<boolean> {
+    return this.raceControlHelper.changeActualDriver(lane, driverId);
+  }
+
+  public changeActualDriverForHeat(
+    heatNumber: number,
+    lane: number,
+    driverId: string,
+  ): Observable<boolean> {
+    return this.raceControlHelper.changeActualDriverForHeat(
+      heatNumber,
+      lane,
+      driverId,
     );
   }
-
-  // --- Database Management ---
 
   getTeams(): Observable<ITeamModel[]> {
-    return this.http.get<ITeamModel[]>(`${this.baseUrl}/api/teams`);
+    return this.crudHelper.getTeams();
   }
-
   createTeam(team: any): Observable<any> {
-    return this.http.post<any>(`${this.baseUrl}/api/teams`, team);
+    return this.crudHelper.createTeam(team);
   }
-
   updateTeam(id: string, team: any): Observable<any> {
-    return this.http.put<any>(`${this.baseUrl}/api/teams/${id}`, team);
+    return this.crudHelper.updateTeam(id, team);
   }
-
   deleteTeam(id: string): Observable<any> {
-    return this.http.delete<any>(`${this.baseUrl}/api/teams/${id}`);
+    return this.crudHelper.deleteTeam(id);
   }
-
-  // --- Custom UI API ---
   getCustomUIs(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.baseUrl}/api/custom-ui`);
+    return this.crudHelper.getCustomUIs();
   }
-
   getCustomUI(id: string): Observable<any> {
-    return this.http.get<any>(`${this.baseUrl}/api/custom-ui/${id}`);
+    return this.crudHelper.getCustomUI(id);
   }
-
   createCustomUI(ui: any): Observable<any> {
-    return this.http.post<any>(`${this.baseUrl}/api/custom-ui`, ui);
+    return this.crudHelper.createCustomUI(ui);
   }
-
   updateCustomUI(id: string, ui: any): Observable<any> {
-    return this.http.put<any>(`${this.baseUrl}/api/custom-ui/${id}`, ui);
+    return this.crudHelper.updateCustomUI(id, ui);
   }
-
   deleteCustomUI(id: string): Observable<any> {
-    return this.http.delete<any>(`${this.baseUrl}/api/custom-ui/${id}`);
+    return this.crudHelper.deleteCustomUI(id);
   }
-
   duplicateCustomUI(id: string, name?: string): Observable<any> {
-    return this.http.post<any>(
-      `${this.baseUrl}/api/custom-ui/${id}/duplicate`,
-      {
-        name,
-      },
-    );
+    return this.crudHelper.duplicateCustomUI(id, name);
   }
-
-  // --- Theme API ---
-
   getThemes(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.baseUrl}/api/themes`);
+    return this.crudHelper.getThemes();
   }
-
   getDefaultTheme(): Observable<any> {
-    return this.http.get<any>(`${this.baseUrl}/api/themes/default`);
+    return this.crudHelper.getDefaultTheme();
   }
-
   getThemeFactorySettings(): Observable<any> {
-    return this.http.get<any>(`${this.baseUrl}/api/themes/factory-settings`);
+    return this.crudHelper.getThemeFactorySettings();
   }
-
   getTheme(id: string): Observable<any> {
-    return this.http.get<any>(`${this.baseUrl}/api/themes/${id}`);
+    return this.crudHelper.getTheme(id);
   }
-
   createTheme(theme: any): Observable<any> {
-    return this.http.post<any>(`${this.baseUrl}/api/themes`, theme);
+    return this.crudHelper.createTheme(theme);
   }
-
   updateTheme(id: string, theme: any): Observable<any> {
-    return this.http.put<any>(`${this.baseUrl}/api/themes/${id}`, theme);
+    return this.crudHelper.updateTheme(id, theme);
   }
-
   deleteTheme(id: string): Observable<any> {
-    return this.http.delete<any>(`${this.baseUrl}/api/themes/${id}`);
+    return this.crudHelper.deleteTheme(id);
   }
-
   duplicateTheme(id: string, name?: string): Observable<any> {
-    return this.http.post<any>(`${this.baseUrl}/api/themes/${id}/duplicate`, {
-      name,
-    });
+    return this.crudHelper.duplicateTheme(id, name);
   }
 
   getDatabases(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.baseUrl}/api/databases`);
+    return this.historyStatsHelper.getDatabases();
   }
-
   getCurrentDatabase(): Observable<any> {
-    return this.http.get<any>(
-      `${this.baseUrl}/api/databases/current?t=${new Date().getTime()}`,
-    );
+    return this.historyStatsHelper.getCurrentDatabase();
   }
-
   createDatabase(name: string): Observable<any> {
-    return this.http.post<any>(`${this.baseUrl}/api/databases/create`, {
-      name,
-    });
+    return this.historyStatsHelper.createDatabase(name);
   }
-
   switchDatabase(name: string): Observable<any> {
-    return this.http.post<any>(`${this.baseUrl}/api/databases/switch`, {
-      name,
-    });
+    return this.historyStatsHelper.switchDatabase(name);
   }
-
   copyDatabase(name: string, source?: string): Observable<any> {
-    return this.http.post<any>(`${this.baseUrl}/api/databases/copy`, {
-      name,
-      source,
-    });
+    return this.historyStatsHelper.copyDatabase(name, source);
   }
-
   resetDatabase(name?: string): Observable<any> {
-    return this.http.post<any>(`${this.baseUrl}/api/databases/reset`, { name });
+    return this.historyStatsHelper.resetDatabase(name);
   }
-
   deleteDatabase(name: string): Observable<any> {
-    return this.http.post<any>(`${this.baseUrl}/api/databases/delete`, {
-      name,
-    });
+    return this.historyStatsHelper.deleteDatabase(name);
   }
-
-  exportDatabase(name: string) {
-    window.location.href = `${this.baseUrl}/api/databases/${encodeURIComponent(name)}/export`;
+  exportDatabase(name: string): void {
+    this.historyStatsHelper.exportDatabase(name);
   }
-
   exportDatabaseBlob(name: string): Observable<Blob> {
-    return this.http.get(
-      `${this.baseUrl}/api/databases/${encodeURIComponent(name)}/export`,
-      { responseType: "blob" },
-    );
+    return this.historyStatsHelper.exportDatabaseBlob(name);
   }
-
   importDatabase(name: string, file: File): Observable<any> {
-    const formData = new FormData();
-    formData.append("name", name);
-    formData.append("file", file);
-    return this.http.post<any>(
-      `${this.baseUrl}/api/databases/import`,
-      formData,
-    );
+    return this.historyStatsHelper.importDatabase(name, file);
   }
-
-  // --- Asset Management ---
-  private assetsSubject = new BehaviorSubject<IAssetMessage[]>([]);
-  assets$ = this.assetsSubject.asObservable();
 
   get loadedAssets(): IAssetMessage[] {
-    return this.assetsSubject.getValue();
+    return this.assetHelper.loadedAssets;
   }
-
   setLoadedAssets(assets: IAssetMessage[]): void {
-    this.assetsSubject.next(assets || []);
+    this.assetHelper.setLoadedAssets(assets);
   }
-
   registerAsset(asset: IAssetMessage): void {
-    if (!asset) return;
-    const current = this.assetsSubject.getValue();
-    const assetId = asset.model?.entityId;
-    const index = current.findIndex(
-      (a) =>
-        (assetId && a.model?.entityId === assetId) ||
-        (asset.hash &&
-          a.hash &&
-          a.hash.toLowerCase() === asset.hash.toLowerCase() &&
-          a.type === asset.type),
-    );
-    if (index !== -1) {
-      const updated = [...current];
-      updated[index] = asset;
-      this.assetsSubject.next(updated);
-    } else {
-      this.assetsSubject.next([...current, asset]);
-    }
+    this.assetHelper.registerAsset(asset);
   }
-
   async computeFileHash(file: File): Promise<string> {
-    if (!file) return "";
-    const arrayBuffer = await file.arrayBuffer();
-    const hashBuffer = await crypto.subtle.digest("SHA-256", arrayBuffer);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+    return this.assetHelper.computeFileHash(file);
   }
-
   findAssetByHash(hash: string, type?: string): IAssetMessage | undefined {
-    if (!hash) return undefined;
-    const normalizedHash = hash.toLowerCase();
-    const current = this.assetsSubject.getValue();
-    return current.find((a) => {
-      if (!a.hash || a.hash.toLowerCase() !== normalizedHash) return false;
-      if (type && a.type && a.type.toLowerCase() !== type.toLowerCase())
-        return false;
-      return true;
-    });
+    return this.assetHelper.findAssetByHash(hash, type);
   }
-
   listAssets(): Observable<IAssetMessage[]> {
-    return this.http
-      .get(`${this.baseUrl}/api/assets/list`, {
-        responseType: "arraybuffer",
-      })
-      .pipe(
-        map((response) => {
-          try {
-            const listResponse = ListAssetsResponse.decode(
-              Reader.create(new Uint8Array(response as any)),
-            );
-            const assets = listResponse.assets || [];
-            this.assetsSubject.next(assets);
-            return assets;
-          } catch (error) {
-            this.logger.error("Error decoding asset list protobuf", error);
-            return [];
-          }
-        }),
-      );
+    return this.assetHelper.listAssets();
   }
-
   getAssetUrl(id: string): string {
-    return `${this.baseUrl}/api/assets/download/${id}`;
+    return this.assetHelper.getAssetUrl(id);
   }
-
   resolveAssetUrl(url?: string): string {
-    if (!url || !url.trim()) return "";
-    const clean = url.trim();
-    if (clean.startsWith("http://") || clean.startsWith("https://")) {
-      return clean;
-    }
-    if (clean.startsWith("/assets/")) {
-      return clean;
-    }
-    if (clean.startsWith("assets/images/")) {
-      return clean;
-    }
-    if (clean.startsWith("assets/default_")) {
-      return "/" + clean;
-    }
-
-    const lower = clean.toLowerCase();
-    const filename = lower.includes("/")
-      ? lower.substring(lower.lastIndexOf("/") + 1)
-      : lower;
-    const noExt = filename.includes(".")
-      ? filename.substring(0, filename.lastIndexOf("."))
-      : filename;
-
-    const assets = this.loadedAssets || [];
-    const directMatch = assets.find((a) => {
-      const id = a.model?.entityId?.toLowerCase();
-      const name = a.name?.toLowerCase();
-      const aUrl = a.url?.toLowerCase();
-      return (
-        id === lower ||
-        id === filename ||
-        id === noExt ||
-        name === lower ||
-        name === filename ||
-        name === noExt ||
-        aUrl === "/" + lower ||
-        (aUrl && aUrl.endsWith("/" + filename))
-      );
-    });
-    if (directMatch?.url) {
-      return directMatch.url;
-    }
-
-    if (
-      lower.includes("helmet") ||
-      lower.includes("defaults/helmets") ||
-      lower.endsWith(".png")
-    ) {
-      let targetId = "";
-      if (lower.includes("yellow")) targetId = "default_black-yellow";
-      else if (lower.includes("red")) targetId = "default_red-yellow";
-      else if (lower.includes("blue")) targetId = "default_blue-white";
-      else if (lower.includes("green")) targetId = "default_green-white";
-      else if (lower.includes("black")) targetId = "default_black";
-      else if (lower.includes("white")) targetId = "default_white-blue";
-      else if (lower.includes("orange")) targetId = "default_red-orange";
-      else if (lower.includes("silver")) targetId = "default_silver-green";
-
-      if (targetId) {
-        const helmetAsset = assets.find(
-          (a) => a.model?.entityId?.toLowerCase() === targetId,
-        );
-        if (helmetAsset?.url) {
-          return helmetAsset.url;
-        }
-        const fallbackMap: Record<string, string> = {
-          "default_black-yellow":
-            "/assets/default_black-yellow_Helmet_Black-Yellow",
-          "default_red-yellow": "/assets/default_red-yellow_Helmet_Red-Yellow",
-          "default_blue-white": "/assets/default_blue-white_Helmet_Blue-White",
-          "default_green-white":
-            "/assets/default_green-white_Helmet_Green-White",
-          default_black: "/assets/default_black_Helmet_Black",
-          "default_white-blue": "/assets/default_white-blue_Helmet_White-Blue",
-          "default_red-orange": "/assets/default_red-orange_Helmet_Red-Orange",
-          "default_silver-green":
-            "/assets/default_silver-green_Helmet_Silver-Green",
-        };
-        if (fallbackMap[targetId]) {
-          return fallbackMap[targetId];
-        }
-      }
-    }
-
-    return clean;
+    return this.assetHelper.resolveAssetUrl(url);
   }
-
   uploadAsset(
     name: string,
     type: string,
     data: Uint8Array,
   ): Observable<IAssetMessage> {
-    const request = UploadAssetRequest.create({
-      name,
-      type,
-      data,
-    });
-    const buffer = UploadAssetRequest.encode(request).finish();
-
-    const headers = new HttpHeaders({
-      "Content-Type": "application/octet-stream",
-      Accept: "application/octet-stream",
-    });
-
-    return this.http
-      .post(`${this.baseUrl}/api/assets/upload`, new Blob([buffer as any]), {
-        headers,
-        responseType: "arraybuffer",
-      })
-      .pipe(
-        map((response) => {
-          const uploadResponse = UploadAssetResponse.decode(
-            Reader.create(new Uint8Array(response as any)),
-          );
-          if (!uploadResponse.success) {
-            throw new Error(uploadResponse.message);
-          }
-          const asset = uploadResponse.asset!;
-          this.registerAsset(asset);
-          return asset;
-        }),
-      );
+    return this.assetHelper.uploadAsset(name, type, data);
   }
-
   saveImageSet(
     name: string,
     entries: ISaveImageSetEntry[],
     id?: string,
   ): Observable<IAssetMessage> {
-    const request = SaveImageSetRequest.create({
-      id,
-      name,
-      entries,
-    });
-    const buffer = SaveImageSetRequest.encode(request).finish();
-    const headers = new HttpHeaders().set(
-      "Content-Type",
-      "application/octet-stream",
-    );
-
-    return this.http
-      .post(
-        `${this.baseUrl}/api/assets/save-image-set`,
-        new Blob([buffer as any]),
-        {
-          headers,
-          responseType: "arraybuffer",
-        },
-      )
-      .pipe(
-        map((response) => {
-          const saveResponse = SaveImageSetResponse.decode(
-            Reader.create(new Uint8Array(response as any)),
-          );
-          if (!saveResponse.success) {
-            throw new Error(
-              saveResponse.message ?? "Unknown error saving image set",
-            );
-          }
-          return saveResponse.asset!;
-        }),
-      );
+    return this.assetHelper.saveImageSet(name, entries, id);
   }
-
   saveAudioSet(
     name: string,
     entries: ISaveAudioSetEntry[],
     id?: string,
   ): Observable<IAssetMessage> {
-    const request = SaveAudioSetRequest.create({
-      id,
-      name,
-      entries,
-    });
-    const buffer = SaveAudioSetRequest.encode(request).finish();
-    const headers = new HttpHeaders().set(
-      "Content-Type",
-      "application/octet-stream",
-    );
-
-    return this.http
-      .post(
-        `${this.baseUrl}/api/assets/save-audio-set`,
-        new Blob([buffer as any]),
-        {
-          headers,
-          responseType: "arraybuffer",
-        },
-      )
-      .pipe(
-        map((response) => {
-          const saveResponse = SaveAudioSetResponse.decode(
-            Reader.create(new Uint8Array(response as any)),
-          );
-          if (!saveResponse.success) {
-            throw new Error(
-              saveResponse.message ?? "Unknown error saving audio set",
-            );
-          }
-          return saveResponse.asset!;
-        }),
-      );
+    return this.assetHelper.saveAudioSet(name, entries, id);
   }
-
   saveCustomRotation(
     name: string,
     numLanes: number,
     rotations: ICustomRotation[],
     id?: string,
   ): Observable<IAssetMessage> {
-    const request = SaveCustomRotationRequest.create({
-      id,
-      name,
-      numLanes,
-      rotations,
-    });
-    const buffer = SaveCustomRotationRequest.encode(request).finish();
-    const headers = new HttpHeaders().set(
-      "Content-Type",
-      "application/octet-stream",
-    );
-
-    return this.http
-      .post(
-        `${this.baseUrl}/api/assets/save-custom-rotation`,
-        new Blob([buffer as any]),
-        {
-          headers,
-          responseType: "arraybuffer",
-        },
-      )
-      .pipe(
-        map((response) => {
-          const saveResponse = SaveCustomRotationResponse.decode(
-            Reader.create(new Uint8Array(response as any)),
-          );
-          if (!saveResponse.success) {
-            throw new Error(
-              saveResponse.message ?? "Unknown error saving custom rotation",
-            );
-          }
-          return saveResponse.asset!;
-        }),
-      );
+    return this.assetHelper.saveCustomRotation(name, numLanes, rotations, id);
   }
-
   deleteAsset(id: string): Observable<boolean> {
-    const request = DeleteAssetRequest.create({ id });
-    const buffer = DeleteAssetRequest.encode(request).finish();
-
-    const headers = new HttpHeaders({
-      "Content-Type": "application/octet-stream",
-      Accept: "application/octet-stream",
-    });
-
-    return this.http
-      .post(`${this.baseUrl}/api/assets/delete`, new Blob([buffer as any]), {
-        headers,
-        responseType: "arraybuffer",
-      })
-      .pipe(
-        map((response) => {
-          const deleteResponse = DeleteAssetResponse.decode(
-            Reader.create(new Uint8Array(response as any)),
-          );
-          if (!deleteResponse.success) {
-            throw new Error(deleteResponse.message);
-          }
-          const current = this.assetsSubject.getValue();
-          this.assetsSubject.next(
-            current.filter((a) => a.model?.entityId !== id),
-          );
-          return true;
-        }),
-      );
+    return this.assetHelper.deleteAsset(id);
   }
-
   renameAsset(id: string, newName: string): Observable<boolean> {
-    const request = RenameAssetRequest.create({ id, newName });
-    const buffer = RenameAssetRequest.encode(request).finish();
-
-    const headers = new HttpHeaders({
-      "Content-Type": "application/octet-stream",
-      Accept: "application/octet-stream",
-    });
-
-    return this.http
-      .post(`${this.baseUrl}/api/assets/rename`, new Blob([buffer as any]), {
-        headers,
-        responseType: "arraybuffer",
-      })
-      .pipe(
-        map((response) => {
-          const renameResponse = RenameAssetResponse.decode(
-            Reader.create(new Uint8Array(response as any)),
-          );
-          if (!renameResponse.success) {
-            throw new Error(renameResponse.message);
-          }
-          const current = this.assetsSubject.getValue();
-          const index = current.findIndex((a) => a.model?.entityId === id);
-          if (index !== -1) {
-            const updated = [...current];
-            updated[index] = { ...updated[index], name: newName };
-            this.assetsSubject.next(updated);
-          }
-          return true;
-        }),
-      );
+    return this.assetHelper.renameAsset(id, newName);
   }
 
   private raceDataSocket?: WebSocket;
@@ -1789,6 +706,12 @@ export class DataService {
     clearReplay(this.recordDataSubject);
   }
 
+  public resetSocketState(): void {
+    this.shouldSubscribeToRaceData = false;
+    this.isInterfaceSocketExplicitlyDisconnected = false;
+    this.isRaceDataSocketExplicitlyDisconnected = false;
+  }
+
   public updateRaceSubscription(subscribe: boolean) {
     this.shouldSubscribeToRaceData = subscribe;
     if (subscribe) {
@@ -1816,8 +739,9 @@ export class DataService {
     if (
       !this.raceDataSocket ||
       this.raceDataSocket.readyState !== WebSocket.OPEN
-    )
+    ) {
       return;
+    }
 
     const request = RaceSubscriptionRequest.create({
       subscribe,
@@ -1962,33 +886,25 @@ export class DataService {
       (this.raceDataSocket.readyState === WebSocket.OPEN ||
         this.raceDataSocket.readyState === WebSocket.CONNECTING)
     ) {
-      return; // Already connecting or connected
+      return;
     }
+
+    this.isRaceDataSocketExplicitlyDisconnected = false;
 
     if (this.raceDataSocket) {
       try {
         this.raceDataSocket.close();
-      } catch (e) {
-        // Ignore
-      }
+      } catch (e) {}
     }
 
-    const token = localStorage.getItem("director_token");
-    let wsUrl = `${this.wsProtocol}://${this.serverIp}:${this.serverPort}/api/race-data`;
-    const params = [];
-    if (token) params.push(`token=${token}`);
-    if (this.connectionIntent) params.push(`intent=${this.connectionIntent}`);
-    if (params.length > 0) wsUrl += "?" + params.join("&");
-
-    this.isRaceDataSocketExplicitlyDisconnected = false;
-    this.logger.debug(`Connecting to Race Data WebSocket: ${wsUrl}`);
+    const wsUrl = `${this.wsProtocol}://${this.serverIp}:${this.serverPort}/api/race-data`;
+    this.logger.debug(`Connecting to Race WebSocket: ${wsUrl}`);
     this.raceDataSocket = new WebSocket(wsUrl);
     this.raceDataSocket.binaryType = "arraybuffer";
 
     this.raceDataSocket.onopen = () => {
-      this.logger.info("Connected to Race Data WebSocket");
+      this.logger.info("Connected to Race WebSocket");
       this.socketConnectedSubject.next(true);
-      // If we had pending subscriptions or state, we might need to resend.
       if (this.shouldSubscribeToRaceData) {
         this.sendRaceSubscriptionRequest(true);
       }
@@ -1998,15 +914,14 @@ export class DataService {
       this.handleRaceDataMessage(event);
     };
 
+    this.raceDataSocket.onerror = (error) => {
+      this.logger.error("Race WebSocket error", error);
+    };
+
     this.raceDataSocket.onclose = () => {
-      this.logger.info(
-        "Race Data WebSocket closed." +
-          (this.isRaceDataSocketExplicitlyDisconnected
-            ? ""
-            : " Reconnecting in 2 seconds..."),
-      );
-      this.socketConnectedSubject.next(false);
+      this.logger.info("Race WebSocket closed");
       this.raceDataSocket = undefined;
+      this.socketConnectedSubject.next(false);
       if (!this.isRaceDataSocketExplicitlyDisconnected) {
         setTimeout(() => {
           if (!this.isRaceDataSocketExplicitlyDisconnected) {
@@ -2014,11 +929,6 @@ export class DataService {
           }
         }, 2000);
       }
-    };
-
-    this.raceDataSocket.onerror = (err) => {
-      this.logger.error("Race Data WebSocket error on " + wsUrl, err);
-      // onerror often followed by onclose, so we rely on onclose for retry
     };
   }
 
@@ -2057,9 +967,8 @@ export class DataService {
           if (data instanceof ArrayBuffer) {
             uint8Array = new Uint8Array(data);
           } else if (typeof data === "string") {
-            // Some environments/proxies might return Base64 strings
             try {
-              const trimmed = data.trim().replace(/^"|"$/g, ""); // Remove quotes if they exist
+              const trimmed = data.trim().replace(/^"|"$/g, "");
               const binaryString = atob(trimmed);
               uint8Array = new Uint8Array(binaryString.length);
               for (let i = 0; i < binaryString.length; i++) {
@@ -2089,8 +998,12 @@ export class DataService {
       });
     };
 
+    this.interfaceDataSocket.onerror = (error) => {
+      this.logger.error("Interface WebSocket error", error);
+    };
+
     this.interfaceDataSocket.onclose = () => {
-      this.logger.info("Interface Data WebSocket closed.");
+      this.logger.info("Interface WebSocket closed");
       this.interfaceDataSocket = undefined;
       if (!this.isInterfaceSocketExplicitlyDisconnected) {
         this.logger.info("Reconnecting Interface WebSocket in 2 seconds...");
@@ -2100,10 +1013,6 @@ export class DataService {
           }
         }, 2000);
       }
-    };
-
-    this.interfaceDataSocket.onerror = (err) => {
-      this.logger.error("Interface Data WebSocket error on " + wsUrl, err);
     };
   }
 
@@ -2118,232 +1027,127 @@ export class DataService {
   public disconnectFromRaceDataSocket() {
     this.isRaceDataSocketExplicitlyDisconnected = true;
     if (this.raceDataSocket) {
-      try {
-        this.raceDataSocket.close();
-      } catch (e) {
-        // Ignore
-      }
+      this.raceDataSocket.close();
       this.raceDataSocket = undefined;
+      this.socketConnectedSubject.next(false);
     }
   }
 
   public disconnectAllSockets() {
-    this.disconnectFromRaceDataSocket();
     this.disconnectFromInterfaceDataSocket();
+    this.disconnectFromRaceDataSocket();
   }
 
   public getRaceTime(): Observable<IRaceTime> {
     return this.raceTimeSubject.asObservable();
   }
-
   public getLaps(): Observable<ILap> {
     return this.lapSubject.asObservable();
   }
-
   public getStandingsUpdate(): Observable<IStandingsUpdate> {
     return this.standingsSubject.asObservable();
   }
-
   public getOverallStandingsUpdate(): Observable<IOverallStandingsUpdate> {
     return this.overallStandingsSubject.asObservable();
   }
-
   public getGroupStandingsUpdate(): Observable<IGroupStandingsUpdate> {
     return this.groupStandingsSubject.asObservable();
   }
-
   public getRaceUpdate(): Observable<IRace> {
     return this.raceUpdateSubject.asObservable();
   }
-
   public getInterfaceEvents(): Observable<IInterfaceEvent> {
     return this.interfaceEventSubject.asObservable();
   }
-
   public getRaceState(): Observable<RaceState> {
     return this.raceStateSubject.asObservable();
   }
-
   public getRaceFlag(): Observable<RaceFlag> {
     return this.flagSubject.asObservable();
   }
-
   public getCarData(): Observable<ICarData> {
     return this.carDataSubject.asObservable();
   }
-
   public getSegments(): Observable<ISegment> {
     return this.segmentSubject.asObservable();
   }
-
   public getRecordData(): Observable<IRecordData> {
     return this.recordDataSubject.asObservable();
   }
-
   public getHeats(): Observable<IHeat> {
     return this.heatSubject.asObservable();
   }
-
   public getSystemState(): Observable<SystemState | null> {
     return this.systemStateSubject.asObservable();
   }
-
   public getSystemStateValue(): SystemState | null {
-    return this.systemStateSubject.getValue();
-  }
-
-  public changeActualDriver(
-    lane: number,
-    driverId: string,
-  ): Observable<boolean> {
-    return this.http
-      .post(
-        `${this.baseUrl}/api/races/current-heat/drivers/${lane}/actual-driver`,
-        {
-          driverId,
-        },
-      )
-      .pipe(map(() => true));
-  }
-
-  public changeActualDriverForHeat(
-    heatNumber: number,
-    lane: number,
-    driverId: string,
-  ): Observable<boolean> {
-    return this.http
-      .post(
-        `${this.baseUrl}/api/races/heats/${heatNumber}/drivers/${lane}/actual-driver`,
-        {
-          driverId,
-        },
-      )
-      .pipe(map(() => true));
+    return this.systemStateSubject.value;
   }
 
   public resetLaneHeatData(lane: number | string): Observable<boolean> {
-    return this.http
-      .post(`${this.baseUrl}/api/races/current-heat/drivers/${lane}/reset`, {})
-      .pipe(map(() => true));
+    return this.raceControlHelper.resetLaneHeatData(lane);
   }
-
   changeLane(fromLane: number, toLane: number): Observable<boolean> {
-    return this.http
-      .post(
-        `${this.baseUrl}/api/races/current-heat/drivers/${fromLane}/change-lane/${toLane}`,
-        {},
-        { responseType: "text" },
-      )
-      .pipe(map(() => true));
+    return this.raceControlHelper.changeLane(fromLane, toLane);
   }
-
   saveRace(name?: string): Observable<string> {
-    const payload = name ? { name, saveName: name } : {};
-    return this.http.post(`${this.baseUrl}/api/save-race`, payload, {
-      responseType: "text",
-    });
+    return this.raceControlHelper.saveRace(name);
   }
-
   getSavedRaces(
     isDemo: boolean = false,
   ): Observable<{ filename: string; corrupt: boolean }[]> {
-    const url = isDemo
-      ? `${this.baseUrl}/api/saved-races?demo=true`
-      : `${this.baseUrl}/api/saved-races`;
-    return this.http.get<{ filename: string; corrupt: boolean }[]>(url);
+    return this.raceControlHelper.getSavedRaces(isDemo);
   }
-
   loadRace(filename: string, isDemo: boolean = false): Observable<string> {
-    const payload = {
-      filename,
-      isDemo,
-    };
-    return this.http.post(`${this.baseUrl}/api/load-race`, payload, {
-      responseType: "text",
-    });
+    return this.raceControlHelper.loadRace(filename, isDemo);
   }
-
   deleteSavedRace(
     filename: string,
     isDemo: boolean = false,
   ): Observable<string> {
-    const url = isDemo
-      ? `${this.baseUrl}/api/saved-races/${filename}?demo=true`
-      : `${this.baseUrl}/api/saved-races/${filename}`;
-    return this.http.delete(url, {
-      responseType: "text",
-    });
+    return this.raceControlHelper.deleteSavedRace(filename, isDemo);
   }
-
   renameSavedRace(
     oldFilename: string,
     newFilename: string,
     isDemo: boolean = false,
   ): Observable<string> {
-    const payload = {
+    return this.raceControlHelper.renameSavedRace(
       oldFilename,
       newFilename,
       isDemo,
-    };
-    return this.http.post(`${this.baseUrl}/api/rename-saved-race`, payload, {
-      responseType: "text",
-    });
-  }
-
-  toggleServerAnalytics(enabled: boolean): Observable<string> {
-    return this.http.post(
-      `${this.baseUrl}/api/analytics/toggle`,
-      { enabled },
-      { responseType: "text" },
     );
   }
 
+  toggleServerAnalytics(enabled: boolean): Observable<string> {
+    return this.historyStatsHelper.toggleServerAnalytics(enabled);
+  }
   getServerAnalyticsConfig(): Observable<{
     clientId: string;
     measurementId: string;
   }> {
-    return this.http.get<{ clientId: string; measurementId: string }>(
-      `${this.baseUrl}/api/analytics/config`,
-    );
+    return this.historyStatsHelper.getServerAnalyticsConfig();
   }
-
   updateUserLaps(
     lane: number,
     userLaps?: number,
     userTime?: number,
   ): Observable<any> {
-    const body: Record<string, number> = {};
-    if (userLaps !== undefined) {
-      body["userLaps"] = userLaps;
-    }
-    if (userTime !== undefined) {
-      body["userTime"] = userTime;
-    }
-    return this.http.post<any>(
-      `${this.baseUrl}/api/races/current-heat/drivers/${lane}/user-laps`,
-      body,
-    );
+    return this.raceControlHelper.updateUserLaps(lane, userLaps, userTime);
   }
-
   updateHeatUserLaps(
     heatNumber: number,
     lane: number,
     userLaps?: number,
     userTime?: number,
   ): Observable<any> {
-    const body: Record<string, number> = {};
-    if (userLaps !== undefined) {
-      body["userLaps"] = userLaps;
-    }
-    if (userTime !== undefined) {
-      body["userTime"] = userTime;
-    }
-    return this.http.post<any>(
-      `${this.baseUrl}/api/races/heats/${heatNumber}/drivers/${lane}/user-laps`,
-      body,
+    return this.raceControlHelper.updateHeatUserLaps(
+      heatNumber,
+      lane,
+      userLaps,
+      userTime,
     );
   }
-
   updateBatchUserLaps(
     updates: {
       heatNumber: number;
@@ -2352,51 +1156,40 @@ export class DataService {
       userTime?: number;
     }[],
   ): Observable<any> {
-    return this.http.post<any>(
-      `${this.baseUrl}/api/races/heats/user-laps/batch`,
-      updates,
-    );
+    return this.raceControlHelper.updateBatchUserLaps(updates);
   }
-
   updateUserTime(lane: number, userTime: number): Observable<any> {
-    return this.http.post<any>(
-      `${this.baseUrl}/api/races/current-heat/drivers/${lane}/user-time`,
-      { userTime },
-    );
+    return this.raceControlHelper.updateUserTime(lane, userTime);
   }
-
   updateHeatUserTime(
     heatNumber: number,
     lane: number,
     userTime: number,
   ): Observable<any> {
-    return this.http.post<any>(
-      `${this.baseUrl}/api/races/heats/${heatNumber}/drivers/${lane}/user-time`,
-      { userTime },
+    return this.raceControlHelper.updateHeatUserTime(
+      heatNumber,
+      lane,
+      userTime,
     );
   }
-
   updateBatchUserTime(
     updates: { heatNumber: number; laneIndex: number; userTime: number }[],
   ): Observable<any> {
-    return this.http.post<any>(
-      `${this.baseUrl}/api/races/heats/user-time/batch`,
-      updates,
-    );
+    return this.raceControlHelper.updateBatchUserTime(updates);
   }
-
   updateLiveLapRecordStatus(
     heatNumber: number,
     lane: number,
     lapIndex: number,
     countTowardsRecords: boolean,
   ): Observable<any> {
-    return this.http.post<any>(
-      `${this.baseUrl}/api/races/heats/${heatNumber}/drivers/${lane}/laps/${lapIndex}/record-status`,
-      { countTowardsRecords },
+    return this.raceControlHelper.updateLiveLapRecordStatus(
+      heatNumber,
+      lane,
+      lapIndex,
+      countTowardsRecords,
     );
   }
-
   updateHistoryLapRecordStatus(
     raceHistoryId: string,
     heatNumber: number,
@@ -2405,10 +1198,14 @@ export class DataService {
     countTowardsRecords: boolean,
     isDemo?: boolean,
   ): Observable<any> {
-    const url = isDemo
-      ? `${this.baseUrl}/api/history/races/${raceHistoryId}/heats/${heatNumber}/drivers/${lane}/laps/${lapIndex}/record-status?demo=true`
-      : `${this.baseUrl}/api/history/races/${raceHistoryId}/heats/${heatNumber}/drivers/${lane}/laps/${lapIndex}/record-status`;
-    return this.http.put<any>(url, { countTowardsRecords, isDemo: !!isDemo });
+    return this.historyStatsHelper.updateHistoryLapRecordStatus(
+      raceHistoryId,
+      heatNumber,
+      lane,
+      lapIndex,
+      countTowardsRecords,
+      isDemo,
+    );
   }
 
   getDriverStatistics(
@@ -2416,41 +1213,16 @@ export class DataService {
     raceId?: string,
     isDemo?: boolean,
   ): Observable<any> {
-    let url = `${this.baseUrl}/api/history/drivers/${driverId}/stats`;
-    const params = new URLSearchParams();
-    if (raceId) {
-      params.append("raceId", raceId);
-    }
-    if (isDemo !== undefined) {
-      params.append("isDemo", isDemo.toString());
-    }
-    const queryString = params.toString();
-    if (queryString) {
-      url += `?${queryString}`;
-    }
-    return this.http.get<any>(url);
-  }
-
-  getGlobalStatistics(raceId?: string, isDemo?: boolean): Observable<any> {
-    let url = `${this.baseUrl}/api/history/stats`;
-    const params = new URLSearchParams();
-    if (raceId) {
-      params.append("raceId", raceId);
-    }
-    if (isDemo !== undefined) {
-      params.append("isDemo", isDemo.toString());
-    }
-    const queryString = params.toString();
-    if (queryString) {
-      url += `?${queryString}`;
-    }
-    return this.http.get<any>(url);
-  }
-
-  resetRaceRecords(raceId: string): Observable<void> {
-    return this.http.post<void>(
-      `${this.baseUrl}/api/races/${raceId}/reset-records`,
-      {},
+    return this.historyStatsHelper.getDriverStatistics(
+      driverId,
+      raceId,
+      isDemo,
     );
+  }
+  getGlobalStatistics(raceId?: string, isDemo?: boolean): Observable<any> {
+    return this.historyStatsHelper.getGlobalStatistics(raceId, isDemo);
+  }
+  resetRaceRecords(raceId: string): Observable<void> {
+    return this.historyStatsHelper.resetRaceRecords(raceId);
   }
 }
