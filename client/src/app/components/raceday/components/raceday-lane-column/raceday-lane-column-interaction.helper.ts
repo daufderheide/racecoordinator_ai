@@ -11,14 +11,13 @@ import { TranslationService } from "@app/services/translation.service";
 import {
   buildSyntheticInsetWidgetInputs,
   buildSyntheticMainWidgetInputs,
-  DEFAULT_GRID_LANE_COLUMN_HEADER_FONT_SIZE,
-  DEFAULT_LANE_COLUMN_HEADER_FONT_SIZE,
   extractDroppedColumnKey,
   fitColumnLastLaps,
   formatAdjustedLapValue,
   getSharedCanvasContext,
   isOverallOrSeedDataSource,
   isParentRaceOver,
+  resolveEffectiveHeaderFontSize,
 } from "./raceday-lane-column.utils";
 
 export function isLaneColumnLapCountClickable(
@@ -230,12 +229,9 @@ export function fitLaneColumnHeaderText(
   const cardH =
     explicitHeight && explicitHeight > 0 ? explicitHeight : cardEl.clientHeight;
 
-  const isGrid = Boolean(settings.gridId || widget?.customSettings?.["gridId"]);
   const baseFontSize =
     widget?.scaleMode === "auto"
-      ? isGrid
-        ? DEFAULT_GRID_LANE_COLUMN_HEADER_FONT_SIZE
-        : DEFAULT_LANE_COLUMN_HEADER_FONT_SIZE
+      ? resolveEffectiveHeaderFontSize(settings, widget, cardEl, explicitHeight)
       : Number(
           settings.headerFontSize || (widget?.fontSize ? widget.fontSize : 24),
         );
@@ -245,17 +241,27 @@ export function fitLaneColumnHeaderText(
   const ctx = getSharedCanvasContext();
   if (!ctx) return;
 
-  const family =
+  const rawFamily =
     settings.headerFontFamily ||
     (!explicitWidth && typeof window !== "undefined" && window.getComputedStyle
       ? window.getComputedStyle(headerEl).fontFamily
       : "") ||
     "sans-serif";
+  const family =
+    rawFamily
+      .replace(/-apple-system|BlinkMacSystemFont/gi, "")
+      .replace(/,\s*,/g, ",")
+      .replace(/^[\s,]+|[\s,]+$/g, "")
+      .trim() || "sans-serif";
   ctx.font = `700 ${baseFontSize}px ${family}`;
   const textWidth = ctx.measureText(headerLabel || "").width || 1;
 
   if (widget?.scaleMode !== undefined && widget?.scaleMode !== "auto") {
     headerEl.style.fontSize = `${baseFontSize}px`;
+    cardEl.style.setProperty(
+      "--lane-col-header-font-size",
+      `${baseFontSize}px`,
+    );
     return;
   }
 
@@ -269,28 +275,10 @@ export function fitLaneColumnHeaderText(
 
   const fittedSize = Math.max(10, Math.floor(baseFontSize * scale));
   headerEl.style.fontSize = `${fittedSize}px`;
+  cardEl.style.setProperty("--lane-col-header-font-size", `${fittedSize}px`);
 }
 
-export function resolveEffectiveHeaderFontSize(
-  settings: LaneColumnWidgetSettings,
-  widget: AbsoluteWidgetNode | null,
-  cardEl?: HTMLElement | null,
-  cachedHeight?: number,
-): number {
-  const custom = settings.headerFontSize;
-  if (widget?.scaleMode === "auto") {
-    const cardH =
-      cachedHeight && cachedHeight > 0
-        ? cachedHeight
-        : cardEl?.clientHeight ||
-          (widget?.height && widget.height > 0 ? widget.height : 0);
-    if (cardH > 0) {
-      const autoSize = Math.round(cardH * 0.18);
-      return Math.max(10, Math.min(28, autoSize));
-    }
-  }
-  return custom && custom > 0 ? custom : 14;
-}
+export { resolveEffectiveHeaderFontSize };
 
 export function resolveEffectiveInsetFontSize(
   settings: LaneColumnWidgetSettings,
@@ -495,6 +483,13 @@ export function resolveLaneColumnBackgroundColor(
   targetIndex: number,
 ): string {
   if (settings.useLaneColors === false) {
+    if (
+      bindingMode === "hostLane" &&
+      parent?.isDriverStation &&
+      !parent?.isUIEditorMode?.()
+    ) {
+      return settings.backgroundColor || "transparent";
+    }
     return settings.backgroundColor || "#000000";
   }
   if (
@@ -515,13 +510,25 @@ export function resolveLaneColumnBackgroundColor(
   ) {
     return settings.backgroundColor || "transparent";
   }
+  if (
+    bindingMode === "hostLane" &&
+    parent?.isDriverStation &&
+    !parent?.isUIEditorMode?.()
+  ) {
+    return settings.backgroundColor || "transparent";
+  }
+  if (bindingMode === "hostLane" && parent?.activeLaneBackgroundColor) {
+    return parent.activeLaneBackgroundColor;
+  }
   if (hd && parent?.getLaneColor) {
     const bg = parent.getLaneColor(hd, "background_color");
     if (bg) return bg;
   }
   let laneIdx = hd?.laneIndex ?? -1;
   if (laneIdx < 0) {
-    if (bindingMode === "lane") {
+    if (bindingMode === "hostLane") {
+      laneIdx = parent?.activeLaneIndex ?? parent?.laneIndex ?? -1;
+    } else if (bindingMode === "lane") {
       laneIdx = targetIndex;
     } else if (
       !isOverallOrSeedDataSource(settings, parent, bindingMode) &&
@@ -543,7 +550,20 @@ export function resolveLaneColumnForegroundColor(
   targetIndex: number,
 ): string {
   if (settings.useLaneColors === false) {
-    return settings.textColor || "#ffffff";
+    if (
+      (bindingMode === "hostLane" || parent?.isDriverStation) &&
+      !settings.textColor &&
+      parent?.activeLaneForegroundColor
+    ) {
+      return parent.activeLaneForegroundColor;
+    }
+    return (
+      settings.textColor ||
+      (parent?.isDriverStation
+        ? parent?.activeLaneForegroundColor
+        : undefined) ||
+      "#ffffff"
+    );
   }
   if (
     isOverallOrSeedDataSource(settings, parent, bindingMode) &&
@@ -563,13 +583,18 @@ export function resolveLaneColumnForegroundColor(
   ) {
     return settings.textColor || "#ffffff";
   }
+  if (bindingMode === "hostLane" && parent?.activeLaneForegroundColor) {
+    return parent.activeLaneForegroundColor;
+  }
   if (hd && parent?.getLaneColor) {
     const fg = parent.getLaneColor(hd, "foreground_color");
     if (fg) return fg;
   }
   let laneIdx = hd?.laneIndex ?? -1;
   if (laneIdx < 0) {
-    if (bindingMode === "lane") {
+    if (bindingMode === "hostLane") {
+      laneIdx = parent?.activeLaneIndex ?? parent?.laneIndex ?? -1;
+    } else if (bindingMode === "lane") {
       laneIdx = targetIndex;
     } else if (
       !isOverallOrSeedDataSource(settings, parent, bindingMode) &&
@@ -580,7 +605,12 @@ export function resolveLaneColumnForegroundColor(
   }
   const trackLaneFg =
     laneIdx >= 0 ? track?.lanes?.[laneIdx]?.foreground_color : undefined;
-  return trackLaneFg || settings.textColor || "#ffffff";
+  return (
+    trackLaneFg ||
+    settings.textColor ||
+    (parent?.isDriverStation ? parent?.activeLaneForegroundColor : undefined) ||
+    "#ffffff"
+  );
 }
 
 export function resolveLaneColumnEffectiveHeaderTextColor(
@@ -895,6 +925,16 @@ export function resolveLaneColumnFormattedValue(
         parent?.translationService?.translate?.("RD_EMPTY_LANE") ||
         "RD_EMPTY_LANE"
       );
+    }
+    if (columnKey === "laneNumber") {
+      const effLane =
+        bindingMode === "hostLane"
+          ? (parent?.activeLaneIndex ??
+            parent?.laneIndex ??
+            settings?.targetIndex ??
+            0)
+          : (settings?.targetIndex ?? 0);
+      return String(effLane + 1);
     }
     return "--";
   }

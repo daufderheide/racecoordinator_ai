@@ -13,7 +13,15 @@ export class RacedayFlagHarnessE2e implements RacedayFlagHarnessBase {
     return this.locator.locator(this.base.selectors.flagImage);
   }
 
+  private get raceStateIndicator() {
+    return this.locator.locator(this.base.selectors.raceStateIndicator);
+  }
+
   async getFlagUrl(): Promise<string | null> {
     return await this.flagImage.getAttribute("src");
+  }
+
+  async getRaceStateColorClass(): Promise<string | null> {
+    return await this.raceStateIndicator.getAttribute("class");
   }
 }

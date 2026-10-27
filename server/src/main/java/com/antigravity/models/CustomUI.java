@@ -10,10 +10,12 @@ public class CustomUI extends Model {
   public static final String DEFAULT_UI_ID = "default_ui_layout_rc_ai";
   public static final String PRACTICE_UI_ID = "practice_ui_layout_rc_ai";
   public static final String FUEL_UI_ID = "default_fuel_ui_layout_rc_ai";
+  public static final String DRIVER_STATION_UI_ID = "driver_station_ui_layout_rc_ai";
 
   public static final String DEFAULT_UI_NAME = "RaceCoordinator AI";
   public static final String PRACTICE_UI_NAME = "RaceCoordinator AI (Practice)";
   public static final String FUEL_UI_NAME = "RaceCoordinator AI (Fuel)";
+  public static final String DRIVER_STATION_UI_NAME = "RaceCoordinator AI (Driver Station)";
 
   public static boolean isLegacyDefaultName(String name) {
     if (name == null || name.trim().isEmpty()) {
@@ -48,6 +50,19 @@ public class CustomUI extends Model {
         || "fuel ui".equals(n)
         || "fuel ui layout".equals(n)
         || "default fuel ui layout".equals(n);
+  }
+
+  public static boolean isLegacyDriverStationName(String name) {
+    if (name == null || name.trim().isEmpty()) {
+      return true;
+    }
+    String n = name.trim().toLowerCase();
+    return "driver station".equals(n)
+        || "driver station ui".equals(n)
+        || "driver station layout".equals(n)
+        || "driver station ui layout".equals(n)
+        || "default driver station ui layout".equals(n)
+        || "racecoordinator ai (driver station)".equals(n);
   }
 
   public static final String PRE_MIGRATION_BACKUP_SUFFIX = " (Pre-Migration Backup)";
@@ -300,6 +315,34 @@ public class CustomUI extends Model {
         null);
   }
 
+  public static CustomUI createDriverStation() {
+    String layoutJson =
+        "{\"widgets\":["
+            + "{\"id\":\"widget-ds-progress\",\"widgetType\":\"progress-gauge\",\"scaleMode\":\"auto\",\"x\":20,\"y\":20,\"width\":80,\"height\":1880,\"zIndex\":100,\"customSettings\":{\"gaugeType\":\"heat-progress\",\"gaugeStyle\":\"thermometer\",\"orientation\":\"vertical\",\"bindingMode\":\"hostLane\",\"timeDisplayFormat\":\"dynamic\",\"timeSubsecondMode\":\"threshold\",\"timeSubsecondThreshold\":10,\"timeSubsecondDecimals\":2,\"lapDecimalPlaces\":0,\"highlightRowOnLap\":true,\"highlightLapStyle\":\"full-glow\"}},"
+            + "{\"id\":\"widget-ds-nickname\",\"widgetType\":\"lane-column\",\"scaleMode\":\"auto\",\"x\":120,\"y\":20,\"width\":640,\"height\":290,\"zIndex\":100,\"customSettings\":{\"columnKey\":\"driver.nickname\",\"bindingMode\":\"hostLane\",\"showHeader\":true,\"showBorder\":true,\"borderWidth\":2,\"borderRadius\":10,\"borderColor\":\"rgba(0,0,0,0.1)\",\"backgroundColor\":\"rgba(255,255,255,0.1)\",\"useLaneColors\":true,\"highlightRowOnLap\":true,\"highlightLapStyle\":\"full-glow\"}},"
+            + "{\"id\":\"widget-ds-lane-number\",\"widgetType\":\"lane-column\",\"scaleMode\":\"auto\",\"x\":780,\"y\":20,\"width\":180,\"height\":290,\"zIndex\":100,\"customSettings\":{\"columnKey\":\"laneNumber\",\"bindingMode\":\"hostLane\",\"showHeader\":true,\"showBorder\":true,\"borderWidth\":2,\"borderRadius\":10,\"borderColor\":\"rgba(0,0,0,0.1)\",\"backgroundColor\":\"rgba(255,255,255,0.1)\",\"useLaneColors\":true,\"highlightRowOnLap\":true,\"highlightLapStyle\":\"full-glow\"}},"
+            + "{\"id\":\"widget-ds-rank-heat\",\"widgetType\":\"lane-column\",\"scaleMode\":\"auto\",\"x\":120,\"y\":330,\"width\":410,\"height\":290,\"zIndex\":100,\"customSettings\":{\"columnKey\":\"rankHeat\",\"bindingMode\":\"hostLane\",\"showHeader\":true,\"showBorder\":true,\"borderWidth\":2,\"borderRadius\":10,\"borderColor\":\"rgba(0,0,0,0.1)\",\"backgroundColor\":\"rgba(255,255,255,0.1)\",\"useLaneColors\":true,\"highlightRowOnLap\":true,\"highlightLapStyle\":\"full-glow\"}},"
+            + "{\"id\":\"widget-ds-rank-overall\",\"widgetType\":\"lane-column\",\"scaleMode\":\"auto\",\"x\":550,\"y\":330,\"width\":410,\"height\":290,\"zIndex\":100,\"customSettings\":{\"columnKey\":\"rankOverall\",\"bindingMode\":\"hostLane\",\"showHeader\":true,\"showBorder\":true,\"borderWidth\":2,\"borderRadius\":10,\"borderColor\":\"rgba(0,0,0,0.1)\",\"backgroundColor\":\"rgba(255,255,255,0.1)\",\"useLaneColors\":true,\"highlightRowOnLap\":true,\"highlightLapStyle\":\"full-glow\"}},"
+            + "{\"id\":\"widget-ds-lap-count\",\"widgetType\":\"lane-column\",\"scaleMode\":\"auto\",\"x\":120,\"y\":640,\"width\":410,\"height\":290,\"zIndex\":100,\"customSettings\":{\"columnKey\":\"lapCount\",\"bindingMode\":\"hostLane\",\"showHeader\":true,\"showBorder\":true,\"borderWidth\":2,\"borderRadius\":10,\"borderColor\":\"rgba(0,0,0,0.1)\",\"backgroundColor\":\"rgba(255,255,255,0.1)\",\"useLaneColors\":true,\"lapDecimalPlaces\":0,\"decimalPlaces\":0,\"highlightRowOnLap\":true,\"highlightLapStyle\":\"full-glow\"}},"
+            + "{\"id\":\"widget-ds-last-lap-time\",\"widgetType\":\"lane-column\",\"scaleMode\":\"auto\",\"x\":550,\"y\":640,\"width\":410,\"height\":290,\"zIndex\":100,\"customSettings\":{\"columnKey\":\"lastLapTime\",\"bindingMode\":\"hostLane\",\"showHeader\":true,\"showBorder\":true,\"borderWidth\":2,\"borderRadius\":10,\"borderColor\":\"rgba(0,0,0,0.1)\",\"backgroundColor\":\"rgba(255,255,255,0.1)\",\"useLaneColors\":true,\"highlightRowOnLap\":true,\"highlightLapStyle\":\"full-glow\"}},"
+            + "{\"id\":\"widget-ds-gap-leader\",\"widgetType\":\"lane-column\",\"scaleMode\":\"auto\",\"x\":120,\"y\":950,\"width\":840,\"height\":290,\"zIndex\":100,\"customSettings\":{\"columnKey\":\"gapLeader\",\"customLabel\":\"GAP LEADER\",\"bindingMode\":\"hostLane\",\"showHeader\":true,\"showBorder\":true,\"borderWidth\":2,\"borderRadius\":10,\"borderColor\":\"rgba(0,0,0,0.1)\",\"backgroundColor\":\"rgba(255,255,255,0.1)\",\"useLaneColors\":true,\"highlightRowOnLap\":true,\"highlightLapStyle\":\"full-glow\"}},"
+            + "{\"id\":\"widget-ds-best-lap-time\",\"widgetType\":\"lane-column\",\"scaleMode\":\"auto\",\"x\":120,\"y\":1260,\"width\":840,\"height\":290,\"zIndex\":100,\"customSettings\":{\"columnKey\":\"bestLapTime\",\"bindingMode\":\"hostLane\",\"showHeader\":true,\"showBorder\":true,\"borderWidth\":2,\"borderRadius\":10,\"borderColor\":\"rgba(0,0,0,0.1)\",\"backgroundColor\":\"rgba(255,255,255,0.1)\",\"useLaneColors\":true,\"highlightRowOnLap\":true,\"highlightLapStyle\":\"full-glow\"}},"
+            + "{\"id\":\"widget-ds-flag\",\"widgetType\":\"flag\",\"scaleMode\":\"auto\",\"x\":120,\"y\":1570,\"width\":840,\"height\":330,\"zIndex\":100,\"customSettings\":{\"displayMode\":\"color-bar\",\"highlightRowOnLap\":true,\"highlightLapStyle\":\"full-glow\"}},"
+            + "{\"id\":\"widget-ds-fuel\",\"widgetType\":\"progress-gauge\",\"scaleMode\":\"auto\",\"x\":980,\"y\":20,\"width\":80,\"height\":1880,\"zIndex\":100,\"customSettings\":{\"gaugeType\":\"fuel\",\"gaugeStyle\":\"thermometer\",\"orientation\":\"vertical\",\"bindingMode\":\"hostLane\",\"highlightRowOnLap\":true,\"highlightLapStyle\":\"full-glow\"}}"
+            + "],\"baseWidth\":1080,\"baseHeight\":1920,\"aspectRatio\":\"9:16\",\"scaleMode\":\"stretch\"}";
+    return new CustomUI(
+        DRIVER_STATION_UI_NAME,
+        true,
+        layoutJson,
+        "[]",
+        "{}",
+        "{}",
+        "{}",
+        "{}",
+        DRIVER_STATION_UI_ID,
+        null);
+  }
+
   public CustomUI withLayoutJson(String newLayoutJson) {
     return new CustomUI(
         this.name,
@@ -512,6 +555,56 @@ public class CustomUI extends Model {
             } else if ((y == 49 || y == 50) && (h == 112 || h == 111)) {
               wObj.put("y", 38);
               wObj.put("height", 111);
+              modified = true;
+            }
+          }
+        }
+        return modified ? mapper.writeValueAsString(rootObj) : layoutJson;
+      }
+    } catch (Exception e) {
+      // Return original on error
+    }
+    return layoutJson;
+  }
+
+  public static String ensureDriverStationLapHighlight(String layoutJson) {
+    if (layoutJson == null || layoutJson.trim().isEmpty()) {
+      return layoutJson;
+    }
+    try {
+      com.fasterxml.jackson.databind.ObjectMapper mapper =
+          new com.fasterxml.jackson.databind.ObjectMapper();
+      com.fasterxml.jackson.databind.JsonNode root = mapper.readTree(layoutJson);
+      if (!root.isObject()) {
+        return layoutJson;
+      }
+      com.fasterxml.jackson.databind.node.ObjectNode rootObj =
+          (com.fasterxml.jackson.databind.node.ObjectNode) root;
+      com.fasterxml.jackson.databind.JsonNode widgetsNode = rootObj.get("widgets");
+      if (widgetsNode != null && widgetsNode.isArray()) {
+        boolean modified = false;
+        com.fasterxml.jackson.databind.node.ArrayNode widgetsArray =
+            (com.fasterxml.jackson.databind.node.ArrayNode) widgetsNode;
+        for (com.fasterxml.jackson.databind.JsonNode widgetNode : widgetsArray) {
+          if (widgetNode.isObject()) {
+            com.fasterxml.jackson.databind.node.ObjectNode wObj =
+                (com.fasterxml.jackson.databind.node.ObjectNode) widgetNode;
+            com.fasterxml.jackson.databind.node.ObjectNode cs;
+            if (wObj.has("customSettings") && wObj.get("customSettings").isObject()) {
+              cs = (com.fasterxml.jackson.databind.node.ObjectNode) wObj.get("customSettings");
+            } else {
+              cs = mapper.createObjectNode();
+              wObj.set("customSettings", cs);
+              modified = true;
+            }
+            if (!cs.has("highlightRowOnLap") || !cs.get("highlightRowOnLap").asBoolean()) {
+              cs.put("highlightRowOnLap", true);
+              modified = true;
+            }
+            String currentStyle =
+                cs.has("highlightLapStyle") ? cs.get("highlightLapStyle").asText() : "";
+            if (currentStyle.isEmpty() || "classic".equalsIgnoreCase(currentStyle)) {
+              cs.put("highlightLapStyle", "full-glow");
               modified = true;
             }
           }

@@ -3,6 +3,14 @@
 !!! note "Inhalt in Entwicklung"
     Dieser Artikel befindet sich im Aufbau. Weitere Details folgen in Kürze.
 
+## Designs (Themes)
+
+Jedes Theme bündelt visuelle Assets (Flaggen, Ampeln, Tankanzeigen), Audio-Ansagen und Layout-Zuweisungen:
+
+- **Benutzerdefiniertes UI-Layout:** Das gekoppelte Display-Layout, das während des Rennens geladen wird.
+- **Fahrerstand-Theme:** Das Theme, das beim Öffnen oder Scannen eines Fahrerstand-Fensters bzw. -Geräts verwendet wird.
+- **Fahreransicht-Theme:** Das Theme, das beim Öffnen oder Scannen des Fahreransicht-Zeitplanfensters bzw. Mobilgeräts verwendet wird.
+
 ## Audio
 
 Designs ermöglichen die Anpassung systemweiter Soundeffekte und Sprachansagen für Rennleitungsereignisse:

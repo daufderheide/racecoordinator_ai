@@ -1,0 +1,474 @@
+@if (settings()) {
+  <!-- Gauge Configuration -->
+  <div class="inspector-geometry-title">
+    {{ "UE_INSPECTOR_GAUGE_SETTINGS" | translate }}
+  </div>
+
+  <!-- Gauge Type -->
+  <div class="inspector-section">
+    <label class="inspector-label">{{
+      "UE_INSPECTOR_GAUGE_TYPE" | translate
+    }}</label>
+    <div class="select-container select-sm">
+      <app-custom-select
+        [ngModel]="settings().gaugeType || 'heat-progress'"
+        (ngModelChange)="settings().gaugeType = $event; onSettingsChange()"
+      >
+        <app-custom-option value="heat-progress">
+          {{ "UE_INSPECTOR_GAUGE_TYPE_HEAT_PROGRESS" | translate }}
+        </app-custom-option>
+        <app-custom-option value="fuel">
+          {{ "UE_INSPECTOR_GAUGE_TYPE_FUEL" | translate }}
+        </app-custom-option>
+      </app-custom-select>
+    </div>
+  </div>
+
+  <!-- Gauge Style -->
+  <div class="inspector-section">
+    <label class="inspector-label">{{
+      "UE_INSPECTOR_GAUGE_STYLE" | translate
+    }}</label>
+    <div class="select-container select-sm">
+      <app-custom-select
+        [ngModel]="settings().gaugeStyle || 'thermometer'"
+        (ngModelChange)="settings().gaugeStyle = $event; onSettingsChange()"
+      >
+        <app-custom-option value="thermometer">
+          {{ "UE_INSPECTOR_GAUGE_STYLE_THERMOMETER" | translate }}
+        </app-custom-option>
+        <app-custom-option value="bar">
+          {{ "UE_INSPECTOR_GAUGE_STYLE_BAR" | translate }}
+        </app-custom-option>
+      </app-custom-select>
+    </div>
+  </div>
+
+  <!-- Orientation -->
+  <div class="inspector-section">
+    <label class="inspector-label">{{
+      "UE_INSPECTOR_GAUGE_ORIENTATION" | translate
+    }}</label>
+    <div class="select-container select-sm">
+      <app-custom-select
+        [ngModel]="settings().orientation || 'vertical'"
+        (ngModelChange)="settings().orientation = $event; onSettingsChange()"
+      >
+        <app-custom-option value="vertical">
+          {{ "UE_INSPECTOR_GAUGE_ORIENTATION_VERTICAL" | translate }}
+        </app-custom-option>
+        <app-custom-option value="horizontal">
+          {{ "UE_INSPECTOR_GAUGE_ORIENTATION_HORIZONTAL" | translate }}
+        </app-custom-option>
+      </app-custom-select>
+    </div>
+  </div>
+
+  <!-- Binding Mode -->
+  <div class="inspector-section">
+    <label class="inspector-label">{{
+      "UE_INSPECTOR_BINDING_MODE" | translate
+    }}</label>
+    <div class="select-container select-sm">
+      <app-custom-select
+        [ngModel]="settings().bindingMode || 'hostLane'"
+        (ngModelChange)="settings().bindingMode = $event; onSettingsChange()"
+      >
+        <app-custom-option value="hostLane">
+          {{ "UE_GRID_SORT_ORDER_HOST_LANE" | translate }}
+        </app-custom-option>
+        <app-custom-option value="hostDriver">
+          {{ "UE_GRID_SORT_ORDER_HOST_DRIVER" | translate }}
+        </app-custom-option>
+        <app-custom-option value="lane">
+          {{ "UE_GRID_SORT_ORDER_LANE" | translate }}
+        </app-custom-option>
+      </app-custom-select>
+    </div>
+  </div>
+
+  <!-- Target Lane / Dynamic Hint -->
+  <div class="inspector-section" style="margin-bottom: 8px">
+    <label class="inspector-label">
+      {{ "UE_INSPECTOR_TARGET_LANE" | translate }}
+    </label>
+    <div class="select-container select-sm">
+      @if (settings().bindingMode === "hostLane") {
+        <app-custom-select [disabled]="true" [value]="'dynamic'">
+          <app-custom-option value="dynamic">
+            {{ "UE_INSPECTOR_HOST_LANE_DYNAMIC" | translate }}
+          </app-custom-option>
+        </app-custom-select>
+      } @else if (settings().bindingMode === "hostDriver") {
+        <app-custom-select [disabled]="true" [value]="'dynamic'">
+          <app-custom-option value="dynamic">
+            {{ "UE_INSPECTOR_HOST_DRIVER_DYNAMIC" | translate }}
+          </app-custom-option>
+        </app-custom-select>
+      } @else {
+        <app-custom-select
+          [ngModel]="settings().targetIndex ?? 0"
+          (ngModelChange)="settings().targetIndex = $event; onSettingsChange()"
+        >
+          @for (idx of availableIndices; track idx) {
+            <app-custom-option [value]="idx">
+              {{ "UE_INSPECTOR_LANE_INDEX" | translate: { index: idx + 1 } }}
+            </app-custom-option>
+          }
+        </app-custom-select>
+      }
+    </div>
+    @if (settings().bindingMode === "hostLane") {
+      <div
+        class="inspector-field-hint"
+        style="
+          font-size: 11px;
+          opacity: 0.75;
+          margin-top: 4px;
+          display: flex;
+          align-items: center;
+          gap: 4px;
+        "
+      >
+        <span class="material-icons" style="font-size: 14px">info</span>
+        <span>{{ "UE_INSPECTOR_HOST_LANE_HINT" | translate }}</span>
+      </div>
+    } @else if (settings().bindingMode === "hostDriver") {
+      <div
+        class="inspector-field-hint"
+        style="
+          font-size: 11px;
+          opacity: 0.75;
+          margin-top: 4px;
+          display: flex;
+          align-items: center;
+          gap: 4px;
+        "
+      >
+        <span class="material-icons" style="font-size: 14px">info</span>
+        <span>{{ "UE_INSPECTOR_HOST_DRIVER_HINT" | translate }}</span>
+      </div>
+    }
+  </div>
+
+  <!-- Appearance Section -->
+  <div class="inspector-geometry-title">
+    {{ "UE_INSPECTOR_APPEARANCE" | translate }}
+  </div>
+
+  <!-- Show Label Checkbox -->
+  <div class="inspector-section checkbox-section">
+    <label class="inspector-checkbox-label">
+      <input
+        type="checkbox"
+        [ngModel]="settings().showLabel !== false"
+        (ngModelChange)="settings().showLabel = $event; onSettingsChange()"
+      />
+      {{ "UE_INSPECTOR_GAUGE_SHOW_LABEL" | translate }}
+    </label>
+  </div>
+
+  <!-- Fill Color -->
+  <div class="inspector-section">
+    <label class="inspector-label">{{
+      "UE_INSPECTOR_GAUGE_FILL_COLOR" | translate
+    }}</label>
+    <div class="color-picker-wrapper" [class.is-null]="!settings().fillColor">
+      <input
+        type="color"
+        [value]="settings().fillColor || '#32cd32'"
+        (change)="onColorChange('fillColor', $event)"
+        class="color-picker-input"
+      />
+      @if (!settings().fillColor) {
+        <span class="color-picker-placeholder">{{
+          "UE_INSPECTOR_COLOR_DEFAULT" | translate
+        }}</span>
+      }
+      @if (settings().fillColor) {
+        <button
+          class="color-reset-btn"
+          (click)="resetColor('fillColor')"
+          [title]="'UE_INSPECTOR_COLOR_RESET' | translate"
+        >
+          <span class="material-icons" style="font-size: 14px"
+            >restart_alt</span
+          >
+        </button>
+      }
+    </div>
+  </div>
+
+  <!-- Border Color -->
+  <div class="inspector-section">
+    <label class="inspector-label">{{
+      "UE_INSPECTOR_GAUGE_BORDER_COLOR" | translate
+    }}</label>
+    <div class="color-picker-wrapper" [class.is-null]="!settings().borderColor">
+      <input
+        type="color"
+        [value]="settings().borderColor || '#ffffff'"
+        (change)="onColorChange('borderColor', $event)"
+        class="color-picker-input"
+      />
+      @if (!settings().borderColor) {
+        <span class="color-picker-placeholder">{{
+          "UE_INSPECTOR_COLOR_DEFAULT" | translate
+        }}</span>
+      }
+      @if (settings().borderColor) {
+        <button
+          class="color-reset-btn"
+          (click)="resetColor('borderColor')"
+          [title]="'UE_INSPECTOR_COLOR_RESET' | translate"
+        >
+          <span class="material-icons" style="font-size: 14px"
+            >restart_alt</span
+          >
+        </button>
+      }
+    </div>
+  </div>
+
+  <!-- Text / Foreground Color -->
+  <div class="inspector-section">
+    <label class="inspector-label">{{
+      "UE_INSPECTOR_TEXT_COLOR" | translate
+    }}</label>
+    <div class="color-picker-wrapper" [class.is-null]="!settings().textColor">
+      <input
+        type="color"
+        [value]="settings().textColor || '#ffffff'"
+        (change)="onColorChange('textColor', $event)"
+        class="color-picker-input"
+      />
+      @if (!settings().textColor) {
+        <span class="color-picker-placeholder">{{
+          "UE_INSPECTOR_COLOR_DEFAULT" | translate
+        }}</span>
+      }
+      @if (settings().textColor) {
+        <button
+          class="color-reset-btn"
+          (click)="resetColor('textColor')"
+          [title]="'UE_INSPECTOR_COLOR_RESET' | translate"
+        >
+          <span class="material-icons" style="font-size: 14px"
+            >restart_alt</span
+          >
+        </button>
+      }
+    </div>
+  </div>
+
+  <!-- Font Family -->
+  <div class="inspector-section">
+    <label class="inspector-label">{{
+      "UE_INSPECTOR_FONT_FAMILY" | translate
+    }}</label>
+    <div class="select-container select-sm">
+      <app-custom-select
+        class="font-family-select"
+        [(ngModel)]="settings().fontFamily"
+        (change)="onSettingsChange()"
+        (focus)="fontService.loadLocalFonts()"
+        (click)="fontService.loadLocalFonts()"
+      >
+        <app-custom-option value="">
+          {{ "UE_INSPECTOR_FONT_THEME_DEFAULT" | translate }}
+        </app-custom-option>
+        @for (font of fontService.availableFonts(); track font) {
+          <app-custom-option [value]="font">{{ font }}</app-custom-option>
+        }
+      </app-custom-select>
+    </div>
+  </div>
+
+  <!-- Font Size -->
+  <div class="inspector-section">
+    <div class="inspector-label-row">
+      <label class="inspector-label">{{
+        "UE_INSPECTOR_FONT_SIZE" | translate
+      }}</label>
+      <span class="inspector-val-badge">{{ settings().fontSize || 18 }}px</span>
+    </div>
+    <input
+      type="range"
+      min="10"
+      max="100"
+      [(ngModel)]="settings().fontSize"
+      [disabled]="disableFontSizes()"
+      (change)="onSettingsChange()"
+      class="inspector-slider"
+    />
+  </div>
+
+  <!-- Time / Progress Format Settings (for heat-progress mode) -->
+  @if ((settings().gaugeType || "heat-progress") === "heat-progress") {
+    <div class="inspector-geometry-title">
+      {{ "UE_INSPECTOR_TIMER_TIME" | translate }}
+    </div>
+
+    <!-- Format Preset Dropdown -->
+    <div class="inspector-section">
+      <label class="inspector-label">{{
+        "UE_INSPECTOR_TIMER_DISPLAY_FORMAT" | translate
+      }}</label>
+      <div class="select-container select-sm">
+        <app-custom-select
+          [ngModel]="settings().timeDisplayFormat || 'dynamic'"
+          (ngModelChange)="
+            settings().timeDisplayFormat = $event; onSettingsChange()
+          "
+        >
+          <app-custom-option value="dynamic">
+            {{ "UE_INSPECTOR_TIMER_FORMAT_DYNAMIC" | translate }}
+          </app-custom-option>
+          <app-custom-option value="mm_ss">
+            {{ "UE_INSPECTOR_TIMER_FORMAT_MM_SS" | translate }}
+          </app-custom-option>
+          <app-custom-option value="m_ss">
+            {{ "UE_INSPECTOR_TIMER_FORMAT_M_SS" | translate }}
+          </app-custom-option>
+          <app-custom-option value="hh_mm_ss">
+            {{ "UE_INSPECTOR_TIMER_FORMAT_HH_MM_SS" | translate }}
+          </app-custom-option>
+          <app-custom-option value="seconds">
+            {{ "UE_INSPECTOR_TIMER_FORMAT_SECONDS" | translate }}
+          </app-custom-option>
+        </app-custom-select>
+      </div>
+    </div>
+
+    <!-- Subsecond Settings -->
+    <div class="inspector-section">
+      <label class="inspector-label">{{
+        "UE_INSPECTOR_TIMER_SUBSECOND_MODE" | translate
+      }}</label>
+      <div class="select-container select-sm">
+        <app-custom-select
+          [ngModel]="settings().timeSubsecondMode || 'threshold'"
+          (ngModelChange)="
+            settings().timeSubsecondMode = $event; onSettingsChange()
+          "
+        >
+          <app-custom-option value="threshold">
+            {{ "UE_INSPECTOR_TIMER_SUBSECOND_THRESHOLD_MODE" | translate }}
+          </app-custom-option>
+          <app-custom-option value="always">
+            {{ "UE_INSPECTOR_TIMER_SUBSECOND_ALWAYS" | translate }}
+          </app-custom-option>
+          <app-custom-option value="never">
+            {{ "UE_INSPECTOR_TIMER_SUBSECOND_NEVER" | translate }}
+          </app-custom-option>
+        </app-custom-select>
+      </div>
+    </div>
+
+    @if ((settings().timeSubsecondMode || "threshold") === "threshold") {
+      <div class="inspector-section">
+        <label class="inspector-label">{{
+          "UE_INSPECTOR_TIMER_SUBSECOND_THRESHOLD" | translate
+        }}</label>
+        <div style="display: flex; gap: 8px; align-items: center">
+          <input
+            type="number"
+            min="0"
+            step="1"
+            autocomplete="off"
+            data-dashlane-ignore="true"
+            data-1p-ignore="true"
+            data-lpignore="true"
+            data-bwignore="true"
+            data-form-type="other"
+            [ngModel]="settings().timeSubsecondThreshold ?? 10"
+            (ngModelChange)="
+              settings().timeSubsecondThreshold = $event; onSettingsChange()
+            "
+            style="
+              flex: 1;
+              padding: 4px;
+              background: var(--bg-level-3);
+              border: 1px solid var(--border-color);
+              color: var(--text-color);
+              border-radius: 4px;
+            "
+          />
+          <span class="inspector-label" style="margin-bottom: 0">sec</span>
+        </div>
+      </div>
+    }
+
+    @if ((settings().timeSubsecondMode || "threshold") !== "never") {
+      <div class="inspector-section">
+        <div class="inspector-label-row">
+          <label class="inspector-label">{{
+            "UE_INSPECTOR_TIMER_SUBSECOND_DECIMALS" | translate
+          }}</label>
+          <span class="inspector-val-badge">{{
+            settings().timeSubsecondDecimals ?? 2
+          }}</span>
+        </div>
+        <input
+          type="range"
+          min="0"
+          max="3"
+          step="1"
+          [ngModel]="settings().timeSubsecondDecimals ?? 2"
+          (ngModelChange)="
+            settings().timeSubsecondDecimals = $event; onSettingsChange()
+          "
+          class="inspector-slider"
+        />
+      </div>
+    }
+
+    <!-- Lap Decimal Places (for lap-based race heat progress) -->
+    <div class="inspector-section">
+      <div class="inspector-label-row">
+        <label class="inspector-label">{{
+          "UE_INSPECTOR_GAUGE_LAP_DECIMALS" | translate
+        }}</label>
+        <span class="inspector-val-badge">{{
+          settings().lapDecimalPlaces ?? 0
+        }}</span>
+      </div>
+      <input
+        type="range"
+        min="0"
+        max="3"
+        step="1"
+        [ngModel]="settings().lapDecimalPlaces ?? 0"
+        (ngModelChange)="
+          settings().lapDecimalPlaces = $event; onSettingsChange()
+        "
+        class="inspector-slider"
+      />
+    </div>
+
+    <!-- Live Preview Section -->
+    <div class="inspector-section">
+      <label class="inspector-label">{{
+        "UE_INSPECTOR_TIMER_PREVIEW" | translate
+      }}</label>
+      <div class="timer-preview-grid">
+        <div class="timer-preview-item">
+          <span class="timer-preview-label">> 1 hr</span>
+          <span class="timer-preview-val">{{ getPreview(3665) }}</span>
+        </div>
+        <div class="timer-preview-item">
+          <span class="timer-preview-label">> 1 min</span>
+          <span class="timer-preview-val">{{ getPreview(75) }}</span>
+        </div>
+        <div class="timer-preview-item">
+          <span class="timer-preview-label">< 1 min</span>
+          <span class="timer-preview-val">{{ getPreview(45) }}</span>
+        </div>
+        <div class="timer-preview-item">
+          <span class="timer-preview-label">< 10s</span>
+          <span class="timer-preview-val">{{ getPreview(8.45) }}</span>
+        </div>
+      </div>
+    </div>
+  }
+}

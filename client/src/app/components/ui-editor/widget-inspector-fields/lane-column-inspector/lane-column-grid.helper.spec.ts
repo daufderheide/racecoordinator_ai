@@ -302,6 +302,14 @@ describe("LaneColumnGridHelper", () => {
       expect(LaneColumnGridHelper.getCellBreadcrumbLabel(settings, false)).toBe(
         "Lane 1",
       );
+      settings.bindingMode = "hostLane";
+      expect(LaneColumnGridHelper.getCellBreadcrumbLabel(settings, false)).toBe(
+        "Station Lane",
+      );
+      settings.bindingMode = "hostDriver";
+      expect(LaneColumnGridHelper.getCellBreadcrumbLabel(settings, false)).toBe(
+        "Station Driver",
+      );
     });
 
     it("should return available indices based on bindingMode", () => {
@@ -315,6 +323,20 @@ describe("LaneColumnGridHelper", () => {
         4,
       );
       expect(overallIndices.length).toBe(16);
+
+      settings.bindingMode = "hostLane";
+      const hostLaneIndices = LaneColumnGridHelper.getAvailableIndices(
+        settings,
+        4,
+      );
+      expect(hostLaneIndices.length).toBe(0);
+
+      settings.bindingMode = "hostDriver";
+      const hostDriverIndices = LaneColumnGridHelper.getAvailableIndices(
+        settings,
+        4,
+      );
+      expect(hostDriverIndices.length).toBe(0);
     });
 
     it("should get and set gridType correctly", () => {

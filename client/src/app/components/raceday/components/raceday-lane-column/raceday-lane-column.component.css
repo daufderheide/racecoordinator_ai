@@ -34,7 +34,7 @@
   background: rgba(68, 68, 68, 0.7);
   color: #fff;
   font-weight: bold;
-  font-size: 14px;
+  font-size: var(--lane-col-header-font-size, 14px);
   line-height: 1.2;
   text-align: center;
   user-select: none;
@@ -99,6 +99,23 @@
 .raceday-lane-column-card.highlight.highlight-style-classic {
   box-shadow: none;
   filter: brightness(1.2) drop-shadow(0 0 10px rgba(255, 255, 255, 0.3));
+}
+
+:host-context(.driver-station-mode) .raceday-lane-column-card.highlight.highlight-style-classic,
+.driver-station-mode .raceday-lane-column-card.highlight.highlight-style-classic {
+  box-shadow: inset 0 0 0 2px #38bdf8, inset 0 0 14px rgba(56, 189, 248, 0.65);
+  filter: brightness(1.2) drop-shadow(0 0 10px rgba(255, 255, 255, 0.3));
+}
+
+:host-context(.driver-station-mode) .raceday-lane-column-card.highlight.highlight-style-classic::after,
+.driver-station-mode .raceday-lane-column-card.highlight.highlight-style-classic::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  z-index: 10;
+  background: rgba(56, 189, 248, 0.25);
 }
 
 .raceday-lane-column-card.highlight.highlight-style-glow-border {
@@ -564,6 +581,21 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   vertical-align: middle;
+  line-height: 1.1;
+}
+
+.lane-col-value:has(.team-name) {
+  flex-direction: column;
+  justify-content: center;
+}
+
+.lane-col-value .team-name {
+  font-size: min(1.5rem, 8cqw);
+  opacity: 0.8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: -2px;
   line-height: 1.1;
 }
 

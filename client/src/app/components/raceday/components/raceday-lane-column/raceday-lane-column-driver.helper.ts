@@ -457,9 +457,131 @@ export function resolveStandaloneDriver(
     return resolveHeatDriverByPosition(drivers, parent, targetIndex);
   }
 
+  if (bindingMode === "hostLane") {
+    const effectiveLane =
+      parent?.activeLaneIndex ?? parent?.laneIndex ?? targetIndex;
+    if (
+      parent?.driverData &&
+      (parent?.laneIndex === effectiveLane ||
+        parent?.activeLaneIndex === effectiveLane)
+    ) {
+      return parent.driverData;
+    }
+    const found =
+      drivers.find((d) => d.laneIndex === effectiveLane) ||
+      drivers[effectiveLane];
+    if (found) return found;
+    if (
+      isEditorMode(parent) &&
+      getOrCreateSyntheticDriver &&
+      parent?.participants?.length
+    ) {
+      const p = parent.participants[effectiveLane % parent.participants.length];
+      if (p) return getOrCreateSyntheticDriver(p);
+    }
+    return undefined;
+  }
+
+  if (bindingMode === "hostDriver") {
+    const targetDriverId = parent?.activeDriverId ?? parent?.driverId;
+    if (targetDriverId) {
+      const found = drivers.find(
+        (d) =>
+          d.objectId === targetDriverId ||
+          d.participant?.objectId === targetDriverId ||
+          d.driver?.entity_id === targetDriverId ||
+          (d.driver as any)?.objectId === targetDriverId,
+      );
+      if (found) return found;
+      const participants: any[] = parent?.participants || [];
+      const match = participants.find(
+        (p: any) =>
+          p.objectId === targetDriverId ||
+          p.driver?.entity_id === targetDriverId ||
+          p.driver?.objectId === targetDriverId,
+      );
+      if (match && getOrCreateSyntheticDriver) {
+        return getOrCreateSyntheticDriver(match);
+      }
+    }
+    return drivers[0];
+  }
+
   return (
     drivers.find((d) => d.laneIndex === targetIndex) || drivers[targetIndex]
   );
+}
+
+function resolveSyntheticEditorDriver(
+  parent: any,
+  index: number,
+  getOrCreateSyntheticDriver?: (p: any) => DriverHeatData,
+): DriverHeatData | undefined {
+  if (
+    isEditorMode(parent) &&
+    getOrCreateSyntheticDriver &&
+    parent?.participants?.length
+  ) {
+    const p = parent.participants[index % parent.participants.length];
+    if (p) return getOrCreateSyntheticDriver(p);
+  }
+  return undefined;
+}
+
+function resolveHostGridDriver(
+  drivers: DriverHeatData[],
+  parent: any,
+  bindingMode: string,
+  targetIndex: number,
+  getOrCreateSyntheticDriver?: (p: any) => DriverHeatData,
+): DriverHeatData | undefined {
+  if (bindingMode === "hostLane") {
+    const effectiveLane =
+      parent?.activeLaneIndex ?? parent?.laneIndex ?? targetIndex;
+    if (
+      parent?.driverData &&
+      (parent?.laneIndex === effectiveLane ||
+        parent?.activeLaneIndex === effectiveLane)
+    ) {
+      return parent.driverData;
+    }
+    const found =
+      drivers.find((d) => d.laneIndex === effectiveLane) ||
+      drivers[effectiveLane];
+    if (found) return found;
+    return resolveSyntheticEditorDriver(
+      parent,
+      effectiveLane,
+      getOrCreateSyntheticDriver,
+    );
+  }
+
+  if (bindingMode === "hostDriver") {
+    const targetDriverId = parent?.activeDriverId ?? parent?.driverId;
+    if (targetDriverId) {
+      const found = drivers.find(
+        (d) =>
+          d.objectId === targetDriverId ||
+          d.participant?.objectId === targetDriverId ||
+          d.driver?.entity_id === targetDriverId ||
+          (d.driver as any)?.objectId === targetDriverId,
+      );
+      if (found) return found;
+      if (
+        isEditorMode(parent) &&
+        getOrCreateSyntheticDriver &&
+        parent?.participants?.length
+      ) {
+        const p = parent.participants.find(
+          (cand: any) =>
+            cand.objectId === targetDriverId ||
+            cand.driver?.entity_id === targetDriverId,
+        );
+        if (p) return getOrCreateSyntheticDriver(p);
+      }
+    }
+  }
+  return undefined;
 }
 
 export function resolveHeatGridDriver(
@@ -469,76 +591,40 @@ export function resolveHeatGridDriver(
   targetIndex: number,
   getOrCreateSyntheticDriver?: (p: any) => DriverHeatData,
 ): DriverHeatData | undefined {
+  if (bindingMode === "hostLane" || bindingMode === "hostDriver") {
+    return resolveHostGridDriver(
+      drivers,
+      parent,
+      bindingMode,
+      targetIndex,
+      getOrCreateSyntheticDriver,
+    );
+  }
+
+  let found: DriverHeatData | undefined;
   if (bindingMode === "lane") {
-    const found =
+    found =
       drivers.find((d) => d.laneIndex === targetIndex) || drivers[targetIndex];
-    if (found) return found;
-    if (
-      isEditorMode(parent) &&
-      getOrCreateSyntheticDriver &&
-      parent?.participants?.length
-    ) {
-      const p = parent.participants[targetIndex % parent.participants.length];
-      if (p) return getOrCreateSyntheticDriver(p);
-    }
-    return undefined;
+  } else if (bindingMode === "position") {
+    found = resolveHeatDriverByPosition(drivers, parent, targetIndex);
+  } else if (bindingMode === "overallPosition") {
+    found = getCachedSortedHeatDriversByOverallRank(drivers, parent)[
+      targetIndex
+    ];
+  } else if (bindingMode === "seed") {
+    found = getCachedSortedHeatDriversBySeed(drivers, parent)[targetIndex];
+  } else {
+    found = drivers[targetIndex];
   }
 
-  if (bindingMode === "position") {
-    const found = resolveHeatDriverByPosition(drivers, parent, targetIndex);
-    if (found) return found;
-    if (
-      isEditorMode(parent) &&
-      getOrCreateSyntheticDriver &&
-      parent?.participants?.length
-    ) {
-      const p = parent.participants[targetIndex % parent.participants.length];
-      if (p) return getOrCreateSyntheticDriver(p);
-    }
-    return undefined;
-  }
-
-  if (bindingMode === "overallPosition") {
-    const sorted = getCachedSortedHeatDriversByOverallRank(drivers, parent);
-    const found = sorted[targetIndex];
-    if (found) return found;
-    if (
-      isEditorMode(parent) &&
-      getOrCreateSyntheticDriver &&
-      parent?.participants?.length
-    ) {
-      const p = parent.participants[targetIndex % parent.participants.length];
-      if (p) return getOrCreateSyntheticDriver(p);
-    }
-    return undefined;
-  }
-
-  if (bindingMode === "seed") {
-    const sorted = getCachedSortedHeatDriversBySeed(drivers, parent);
-    const found = sorted[targetIndex];
-    if (found) return found;
-    if (
-      isEditorMode(parent) &&
-      getOrCreateSyntheticDriver &&
-      parent?.participants?.length
-    ) {
-      const p = parent.participants[targetIndex % parent.participants.length];
-      if (p) return getOrCreateSyntheticDriver(p);
-    }
-    return undefined;
-  }
-
-  const found = drivers[targetIndex];
-  if (found) return found;
-  if (
-    isEditorMode(parent) &&
-    getOrCreateSyntheticDriver &&
-    parent?.participants?.length
-  ) {
-    const p = parent.participants[targetIndex % parent.participants.length];
-    if (p) return getOrCreateSyntheticDriver(p);
-  }
-  return undefined;
+  return (
+    found ??
+    resolveSyntheticEditorDriver(
+      parent,
+      targetIndex,
+      getOrCreateSyntheticDriver,
+    )
+  );
 }
 
 export function isParentRaceOver(parent: any): boolean {
@@ -583,7 +669,14 @@ export function isOverallDataSource(
   // Standalone widgets (not part of a grid)
   const mode = bindingMode || settings.bindingMode;
   if (mode === "overallPosition") return true;
-  if (mode === "lane" || mode === "position") return false;
+  if (
+    mode === "lane" ||
+    mode === "position" ||
+    mode === "hostLane" ||
+    mode === "hostDriver"
+  ) {
+    return false;
+  }
 
   return false;
 }
@@ -811,7 +904,7 @@ export class LaneColumnDriverCache {
 export function resolveLaneColumnEmptyRowsMode(
   settings: LaneColumnWidgetSettings,
   parent: any,
-  bindingMode: "lane" | "position" | "overallPosition" | "seed",
+  bindingMode: LaneColumnWidgetSettings["bindingMode"],
 ): "remove" | "empty" | "blank" {
   if (settings?.emptyRowsMode) {
     return settings.emptyRowsMode;

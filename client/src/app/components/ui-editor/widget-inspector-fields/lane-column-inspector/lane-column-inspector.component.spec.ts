@@ -255,6 +255,33 @@ describe("LaneColumnInspectorComponent", () => {
     expect(optionTexts).not.toContain("Position {index}");
   });
 
+  it("should support hostLane bindingMode with dynamic disabled target lane and hint", () => {
+    mockTranslationService.translate.and.callFake((key: string) => {
+      if (key === "UE_PREFIX_STATION_LANE") return "Station Lane";
+      return key;
+    });
+    mockSettings.bindingMode = "hostLane";
+    fixture.detectChanges();
+
+    const hostLaneOption = fixture.debugElement.query(
+      By.css('app-custom-option[value="hostLane"]'),
+    );
+    expect(hostLaneOption).toBeTruthy();
+
+    const dynamicOption = fixture.debugElement.query(
+      By.css('app-custom-option[value="dynamic"]'),
+    );
+    expect(dynamicOption).toBeTruthy();
+
+    const hint = fixture.debugElement.query(By.css(".inspector-field-hint"));
+    expect(hint).toBeTruthy();
+    expect(hint.nativeElement.textContent).toContain(
+      "UE_INSPECTOR_HOST_LANE_HINT",
+    );
+
+    expect(component.cellBreadcrumbLabel).toBe("Station Lane");
+  });
+
   it("should display grid indicator card when widget has gridId", () => {
     fixture.componentRef.setInput("settings", {
       ...mockSettings,

@@ -13,6 +13,7 @@ import { LaneColumnInspectorComponent } from "./lane-column-inspector/lane-colum
 import { LaneViewInspectorComponent } from "./lane-view-inspector/lane-view-inspector.component";
 import { LeaderboardInspectorComponent } from "./leaderboard-inspector/leaderboard-inspector.component";
 import { MenuInspectorComponent } from "./menu-inspector/menu-inspector.component";
+import { ProgressGaugeInspectorComponent } from "./progress-gauge-inspector/progress-gauge-inspector.component";
 import { RecordsInspectorComponent } from "./records-inspector/records-inspector.component";
 import { TextInfoInspectorComponent } from "./text-info-inspector/text-info-inspector.component";
 import { TimerInspectorComponent } from "./timer-inspector/timer-inspector.component";
@@ -29,6 +30,7 @@ import { UpcomingInspectorComponent } from "./upcoming-inspector/upcoming-inspec
     LaneColumnInspectorComponent,
     RecordsInspectorComponent,
     TimerInspectorComponent,
+    ProgressGaugeInspectorComponent,
     CountdownInspectorComponent,
     ImageInspectorComponent,
     LabelInspectorComponent,

@@ -606,18 +606,53 @@ export function getSharedCanvasContext(): CanvasRenderingContext2D | null {
   return sharedCtx;
 }
 
+export function resolveEffectiveHeaderFontSize(
+  settings: LaneColumnWidgetSettings,
+  widget: AbsoluteWidgetNode | null,
+  cardEl?: HTMLElement | null,
+  cachedHeight?: number,
+): number {
+  const custom = settings.headerFontSize;
+  if (widget?.scaleMode === "auto" || (!widget && settings)) {
+    const isGrid = Boolean(
+      settings.gridId || widget?.customSettings?.["gridId"],
+    );
+    const cardH =
+      cachedHeight && cachedHeight > 0
+        ? cachedHeight
+        : cardEl?.clientHeight ||
+          (widget?.height && widget.height > 0 ? widget.height : 0);
+    if (cardH > 0) {
+      if (isGrid) {
+        return Math.max(10, Math.min(24, Math.round(cardH * 0.18)));
+      }
+      return Math.max(12, Math.min(38, Math.round(cardH * 0.18)));
+    }
+  }
+  return custom && custom > 0 ? custom : 14;
+}
+
 function calculateBaseDimensions(
   cardEl: HTMLElement,
   settings: LaneColumnWidgetSettings,
   isHorizontal: boolean,
   explicitWidth?: number,
   explicitHeight?: number,
+  scaleMode?: string,
+  hasTeamName?: boolean,
 ): { availWidth: number; availHeight: number } {
   const cardW =
     explicitWidth && explicitWidth > 0 ? explicitWidth : cardEl.clientWidth;
   const cardH =
     explicitHeight && explicitHeight > 0 ? explicitHeight : cardEl.clientHeight;
-  let availWidth = Math.max(10, cardW - 8);
+
+  const borderWidth =
+    settings.showBorder !== false
+      ? settings.borderWidth != null
+        ? settings.borderWidth
+        : 1
+      : 0;
+  let availWidth = Math.max(10, cardW - borderWidth * 2 - 10);
   let availHeight = Math.max(10, cardH);
 
   if (settings.showHeader !== false) {
@@ -629,22 +664,34 @@ function calculateBaseDimensions(
       availWidth = Math.max(10, availWidth - headerW);
       availHeight = Math.max(10, availHeight - 4);
     } else {
-      const headerH = (settings.headerFontSize || 14) * 1.2;
+      const effHeaderFont =
+        scaleMode === "auto"
+          ? resolveEffectiveHeaderFontSize(
+              settings,
+              null,
+              cardEl,
+              explicitHeight,
+            )
+          : settings.headerFontSize || 14;
+      const headerH = effHeaderFont * 1.2 + 8;
       availHeight = Math.max(10, cardH - headerH - 4);
     }
   } else {
     availHeight = Math.max(10, cardH - 4);
   }
+
+  if (hasTeamName) {
+    availHeight = Math.max(10, Math.round(availHeight * 0.65));
+  }
+
   return { availWidth, availHeight };
 }
 
-function safeguardTextOverflow(
+export function safeguardTextOverflow(
   cardEl: HTMLElement,
   initialTargetSize: number,
   minSize: number,
-  skipDomCheck = false,
 ): void {
-  if (skipDomCheck) return;
   const textEl = cardEl.querySelector(".lane-col-text") as HTMLElement | null;
   const valueEl = cardEl.querySelector(".lane-col-value") as HTMLElement | null;
   if (!textEl || !valueEl || valueEl.clientWidth <= 0) return;
@@ -659,6 +706,76 @@ function safeguardTextOverflow(
   }
 }
 
+export function resolveCardFontFamily(
+  cardEl: HTMLElement,
+  settings: LaneColumnWidgetSettings,
+): string {
+  if (settings.valueFontFamily) {
+    return settings.valueFontFamily;
+  }
+  if (cardEl.style?.fontFamily) {
+    return cardEl.style.fontFamily;
+  }
+  if (
+    cardEl?.isConnected &&
+    typeof window !== "undefined" &&
+    window.getComputedStyle
+  ) {
+    try {
+      const computed = window.getComputedStyle(cardEl).fontFamily;
+      if (computed) {
+        const sanitized = computed
+          .replace(/-apple-system|BlinkMacSystemFont/gi, "")
+          .replace(/,\s*,/g, ",")
+          .replace(/^[\s,]+|[\s,]+$/g, "")
+          .trim();
+        if (sanitized) {
+          return sanitized;
+        }
+      }
+    } catch {
+      // Fallback if element is disconnected or inaccessible
+    }
+  }
+  return "Inter, sans-serif";
+}
+
+function resolveColumnBaseFontSize(
+  settings: LaneColumnWidgetSettings,
+  availHeight: number,
+  scaleMode: string | undefined,
+  isHorizontal: boolean,
+  textScaleFactor: number,
+): number {
+  const isGrid = Boolean(settings.gridId || (settings as any)["gridId"]);
+  const defaultBaseSize = isGrid
+    ? DEFAULT_GRID_LANE_COLUMN_VALUE_FONT_SIZE
+    : DEFAULT_LANE_COLUMN_VALUE_FONT_SIZE;
+
+  if (scaleMode !== "auto") {
+    return settings.valueFontSize || defaultBaseSize;
+  }
+
+  const factor = textScaleFactor && textScaleFactor > 0 ? textScaleFactor : 1;
+  if (isGrid) {
+    return Math.max(
+      12,
+      Math.min(
+        DEFAULT_GRID_LANE_COLUMN_VALUE_FONT_SIZE,
+        Math.round(availHeight * 0.85 * factor),
+      ),
+    );
+  }
+
+  const maxVal = settings.showHeader === false ? 120 : 84;
+  const heightRatio =
+    settings.showHeader === false ? 0.75 : isHorizontal ? 0.65 : 0.42;
+  return Math.max(
+    16,
+    Math.min(maxVal, Math.round(availHeight * heightRatio * factor)),
+  );
+}
+
 export function fitColumnTextValue(
   cardEl: HTMLElement,
   text: string,
@@ -671,6 +788,8 @@ export function fitColumnTextValue(
   effectiveInsetFontSize: number,
   explicitWidth?: number,
   explicitHeight?: number,
+  textScaleFactor: number = 1,
+  hasTeamName: boolean = false,
 ): void {
   if (!text) return;
 
@@ -696,6 +815,8 @@ export function fitColumnTextValue(
     isHorizontal,
     explicitWidth,
     explicitHeight,
+    scaleMode,
+    hasTeamName,
   );
   const dims = applyColumnInsetsAndPaddings(
     cardEl,
@@ -707,18 +828,13 @@ export function fitColumnTextValue(
     effectiveInsetFontSize,
   );
 
-  const defaultBaseSize = settings.gridId
-    ? DEFAULT_GRID_LANE_COLUMN_VALUE_FONT_SIZE
-    : DEFAULT_LANE_COLUMN_VALUE_FONT_SIZE;
-  let baseFontSize: number;
-  if (scaleMode === "auto") {
-    baseFontSize = Math.max(
-      12,
-      Math.min(defaultBaseSize, Math.round(dims.availHeight * 0.85)),
-    );
-  } else {
-    baseFontSize = settings.valueFontSize || defaultBaseSize;
-  }
+  const baseFontSize = resolveColumnBaseFontSize(
+    settings,
+    dims.availHeight,
+    scaleMode,
+    isHorizontal,
+    textScaleFactor,
+  );
 
   const isCustomScaling = scaleMode !== undefined && scaleMode !== "auto";
 
@@ -730,12 +846,7 @@ export function fitColumnTextValue(
   const ctx = getSharedCanvasContext();
   if (!ctx) return;
 
-  const computedFamily =
-    settings.valueFontFamily ||
-    (!explicitWidth && typeof window !== "undefined" && window.getComputedStyle
-      ? window.getComputedStyle(cardEl).fontFamily
-      : "") ||
-    "sans-serif";
+  const computedFamily = resolveCardFontFamily(cardEl, settings);
   ctx.font = `700 ${baseFontSize}px ${computedFamily}`;
   const textWidth = ctx.measureText(text).width || 1;
 
@@ -750,7 +861,7 @@ export function fitColumnTextValue(
   const minSize = 10;
   const targetSize = Math.max(minSize, Math.floor(baseFontSize * scale));
   cardEl.style.setProperty("--lane-col-value-font-size", `${targetSize}px`);
-  safeguardTextOverflow(cardEl, targetSize, minSize, Boolean(explicitWidth));
+  safeguardTextOverflow(cardEl, targetSize, minSize);
 }
 
 export function fitColumnLastLaps(

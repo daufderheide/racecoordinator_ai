@@ -71,11 +71,12 @@ public class CustomUITaskHandlerTest {
     @SuppressWarnings("unchecked")
     List<CustomUI> uis = (List<CustomUI>) captor.getValue();
     assertNotNull(uis);
-    assertTrue(uis.size() >= 3);
+    assertTrue(uis.size() >= 4);
 
     boolean foundDefault = false;
     boolean foundPractice = false;
     boolean foundFuel = false;
+    boolean foundDriverStation = false;
     for (CustomUI ui : uis) {
       if (CustomUI.DEFAULT_UI_ID.equals(ui.getEntityId())) {
         foundDefault = true;
@@ -89,10 +90,15 @@ public class CustomUITaskHandlerTest {
         foundFuel = true;
         assertTrue(ui.isDefault());
       }
+      if (CustomUI.DRIVER_STATION_UI_ID.equals(ui.getEntityId())) {
+        foundDriverStation = true;
+        assertTrue(ui.isDefault());
+      }
     }
     assertTrue(foundDefault);
     assertTrue(foundPractice);
     assertTrue(foundFuel);
+    assertTrue(foundDriverStation);
   }
 
   @Test
@@ -261,6 +267,7 @@ public class CustomUITaskHandlerTest {
         new SqliteRepository<>(databaseContext, "custom_uis", CustomUI.class);
     assertNotNull(repo.findByEntityId(CustomUI.PRACTICE_UI_ID));
     assertNotNull(repo.findByEntityId(CustomUI.FUEL_UI_ID));
+    assertNotNull(repo.findByEntityId(CustomUI.DRIVER_STATION_UI_ID));
 
     // Delete Practice and Fuel custom UIs
     when(handler.getPathParam(ctx, "id")).thenReturn(CustomUI.PRACTICE_UI_ID);
@@ -270,13 +277,19 @@ public class CustomUITaskHandlerTest {
     when(handler.getPathParam(ctx, "id")).thenReturn(CustomUI.FUEL_UI_ID);
     handler.deleteCustomUI(ctx);
 
+    when(handler.getPathParam(ctx, "id")).thenReturn(CustomUI.DRIVER_STATION_UI_ID);
+    handler.deleteCustomUI(ctx);
+
     assertTrue(databaseContext.isDefaultArtifactDeleted("custom_ui", CustomUI.PRACTICE_UI_ID));
     assertTrue(databaseContext.isDefaultArtifactDeleted("custom_ui", CustomUI.FUEL_UI_ID));
+    assertTrue(
+        databaseContext.isDefaultArtifactDeleted("custom_ui", CustomUI.DRIVER_STATION_UI_ID));
 
     // Calling ensureDefaultCustomUIs() should NOT recreate them
     handler.ensureDefaultCustomUIs();
     assertNull(repo.findByEntityId(CustomUI.PRACTICE_UI_ID));
     assertNull(repo.findByEntityId(CustomUI.FUEL_UI_ID));
+    assertNull(repo.findByEntityId(CustomUI.DRIVER_STATION_UI_ID));
 
     // Recreating custom UI with name restores/unmarks it
     CustomUI recreatedPractice =

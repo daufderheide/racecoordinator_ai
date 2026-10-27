@@ -17,12 +17,12 @@ import {
 } from "./ui-editor-data.helper";
 
 describe("ui-editor-data.helper", () => {
-  it("should ensure default custom UIs for raceday, practice, and fuel", () => {
+  it("should ensure default custom UIs for raceday, practice, fuel, and driver station", () => {
     const uis: CustomUI[] = [];
     const settings = new Settings();
 
     ensureDefaultCustomUis(uis, settings);
-    expect(uis.length).toBe(3);
+    expect(uis.length).toBe(4);
     expect(
       uis.some((u) => u.entity_id === "default_ui_layout_rc_ai"),
     ).toBeTrue();
@@ -31,6 +31,9 @@ describe("ui-editor-data.helper", () => {
     ).toBeTrue();
     expect(
       uis.some((u) => u.entity_id === "default_fuel_ui_layout_rc_ai"),
+    ).toBeTrue();
+    expect(
+      uis.some((u) => u.entity_id === "driver_station_ui_layout_rc_ai"),
     ).toBeTrue();
   });
 
@@ -91,6 +94,46 @@ describe("ui-editor-data.helper", () => {
     expect(uis.find((u) => u.entity_id === "custom_ui_1")?.name).toBe(
       "My Custom Layout",
     );
+  });
+
+  it("should migrate driver station custom UI useLaneColors:false to true in ensureDefaultCustomUis and normalizeLoadedCustomUis", () => {
+    const uis: CustomUI[] = [
+      {
+        entity_id: "driver_station_ui_layout_rc_ai",
+        name: "RaceCoordinator AI (Driver Station)",
+        is_default: true,
+        layoutJson: JSON.stringify({
+          widgets: [
+            {
+              id: "widget-ds-nickname",
+              widgetType: "lane-column",
+              customSettings: { useLaneColors: false },
+            },
+          ],
+        }),
+      },
+    ];
+
+    normalizeLoadedCustomUis(uis);
+    expect(uis[0].layoutJson).toContain('"useLaneColors":true');
+    expect(uis[0].layoutJson).not.toContain('"useLaneColors":false');
+
+    uis[0].layoutJson = JSON.stringify({
+      widgets: [
+        {
+          id: "widget-ds-nickname",
+          widgetType: "lane-column",
+          customSettings: { useLaneColors: false },
+        },
+      ],
+    });
+
+    ensureDefaultCustomUis(uis, new Settings());
+    const dsUi = uis.find(
+      (u) => u.entity_id === "driver_station_ui_layout_rc_ai",
+    );
+    expect(dsUi?.layoutJson).toContain('"useLaneColors":true');
+    expect(dsUi?.layoutJson).not.toContain('"useLaneColors":false');
   });
 
   it("should migrate legacy fuel custom UI with entity_id '2'", () => {
@@ -209,7 +252,7 @@ describe("ui-editor-data.helper", () => {
     expect(result.customDirectoryName).toBe("custom-folder");
     expect(result.customWidgetDirectoryName).toBe("custom-widgets");
     expect(result.track).toEqual({ id: "track1" });
-    expect(result.initialState.customUIs?.length).toBe(3);
+    expect(result.initialState.customUIs?.length).toBe(4);
 
     const loadedThemes = result.initialState.themes;
     expect(

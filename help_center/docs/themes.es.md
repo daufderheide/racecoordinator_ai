@@ -3,6 +3,14 @@
 !!! note "Contenido en desarrollo"
     Este artículo está en desarrollo. El contenido completo estará disponible próximamente.
 
+## Temas
+
+Cada tema agrupa recursos visuales (banderas, luces de semáforo, medidores de combustible), avisos de audio y asignaciones de diseño:
+
+- **Diseño de interfaz personalizado:** El diseño de pantalla vinculado que se carga durante la carrera.
+- **Tema de estación de piloto:** El tema utilizado al abrir o escanear una ventana o dispositivo de estación de piloto de un solo carril.
+- **Tema de vista de piloto:** El tema utilizado al abrir o escanear la ventana de programación o pantalla personal del piloto.
+
 ## Audio
 
 Los temas le permiten personalizar los efectos de sonido y avisos de voz globales para eventos de carrera:

@@ -72,6 +72,15 @@ export function computeWidgetDisplayName(
       if (mode === "position") prefix = `Pos ${idx}`;
       else if (mode === "overallPosition") prefix = `Overall Pos ${idx}`;
       else if (mode === "seed") prefix = `Seed ${idx}`;
+      else if (mode === "hostLane") {
+        prefix =
+          translationService?.translate?.("UE_PREFIX_STATION_LANE") ||
+          "Station Lane";
+      } else if (mode === "hostDriver") {
+        prefix =
+          translationService?.translate?.("UE_PREFIX_STATION_DRIVER") ||
+          "Station Driver";
+      }
 
       baseDisplayName = s.gridId
         ? `Grid · ${prefix} · ${colLabel}`
@@ -213,6 +222,12 @@ export function resolveActiveLayout(
         editingSettings.practiceRacedayLayout,
       );
       return editingSettings.practiceRacedayLayout;
+    }
+    if (
+      targetUi.entity_id === "driver_station_ui_layout_rc_ai" &&
+      (!targetUi.layoutJson || targetUi.layoutJson === "[]")
+    ) {
+      return JSON.parse(JSON.stringify(Settings.DEFAULT_DRIVER_STATION_LAYOUT));
     }
     if (targetUi.layoutJson && targetUi.layoutJson !== "[]") {
       if (parsedLayoutsCache && parsedLayoutsCache.has(targetUi.entity_id)) {

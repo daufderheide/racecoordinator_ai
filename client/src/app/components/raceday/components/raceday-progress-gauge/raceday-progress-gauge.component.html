@@ -1,0 +1,54 @@
+<div
+  class="progress-gauge-container"
+  [class.gauge-thermometer]="effectiveGaugeStyle === 'thermometer'"
+  [class.gauge-bar]="effectiveGaugeStyle === 'bar'"
+  [class.orientation-vertical]="effectiveOrientation === 'vertical'"
+  [class.orientation-horizontal]="effectiveOrientation === 'horizontal'"
+  [class.gauge-fuel]="effectiveGaugeType === 'fuel'"
+  [class.gauge-heat-progress]="effectiveGaugeType === 'heat-progress'"
+  [class.highlight]="isHighlighted"
+  [class.highlight-style-full-glow]="
+    isHighlighted && highlightLapStyle === 'full-glow'
+  "
+  [class.highlight-style-glow-border]="
+    isHighlighted && highlightLapStyle === 'glow-border'
+  "
+  [class.highlight-style-tint-wash]="
+    isHighlighted && highlightLapStyle === 'tint-wash'
+  "
+  [class.highlight-style-shimmer]="
+    isHighlighted && highlightLapStyle === 'shimmer'
+  "
+  [class.highlight-style-scale-pulse]="
+    isHighlighted && highlightLapStyle === 'scale-pulse'
+  "
+  [class.highlight-style-adaptive-dip]="
+    isHighlighted && highlightLapStyle === 'adaptive-dip'
+  "
+  [class.highlight-style-classic]="
+    isHighlighted && highlightLapStyle === 'classic'
+  "
+  [class.is-light-lane]="isLightBackground"
+>
+  <div
+    class="thermometer-container"
+    [style.border-color]="effectiveBorderColor"
+  >
+    <div
+      class="thermometer-fill"
+      [style.height.%]="effectiveOrientation === 'vertical' ? percentage : 100"
+      [style.width.%]="effectiveOrientation === 'horizontal' ? percentage : 100"
+      [style.background-color]="effectiveFillColor"
+    ></div>
+  </div>
+  @if (showLabel) {
+    <div
+      class="thermometer-label"
+      [style.color]="effectiveForegroundColor"
+      [style.font-size.px]="effectiveFontSize"
+      [style.font-family]="effectiveFontFamily"
+    >
+      <span>{{ labelText }}</span>
+    </div>
+  }
+</div>

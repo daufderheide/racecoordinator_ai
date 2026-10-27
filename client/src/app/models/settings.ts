@@ -57,6 +57,7 @@ export type WidgetType =
   | "action-back"
   | "action-forward"
   | "action-close"
+  | "progress-gauge"
   | `custom:${string}`
   | (string & {});
 
@@ -107,11 +108,31 @@ export interface InsetConfig {
   valueAlignment?: "left" | "center" | "right" | "start" | "end";
 }
 
+export interface ProgressGaugeWidgetSettings {
+  gaugeType?: "heat-progress" | "fuel";
+  gaugeStyle?: "thermometer" | "bar";
+  orientation?: "vertical" | "horizontal";
+  bindingMode?: "hostLane" | "lane" | "hostDriver";
+  targetIndex?: number;
+  showLabel?: boolean;
+  fillColor?: string;
+  backgroundColor?: string;
+  borderColor?: string;
+  borderWidth?: number;
+  borderRadius?: number;
+}
+
 export interface LaneColumnWidgetSettings {
   columnKey: string;
   gapTarget?: "leader" | "position";
   gapMode?: "always_time" | "laps_and_time" | "always_laps";
-  bindingMode: "lane" | "position" | "overallPosition" | "seed";
+  bindingMode:
+    | "lane"
+    | "position"
+    | "overallPosition"
+    | "seed"
+    | "hostLane"
+    | "hostDriver";
   targetIndex: number;
   layoutOrientation: "vertical" | "horizontal";
   showHeader: boolean;
@@ -679,6 +700,258 @@ export class Settings {
     baseWidth: 1920,
     baseHeight: 1080,
     aspectRatio: "16:9",
+    scaleMode: "stretch",
+  };
+
+  static readonly DEFAULT_DRIVER_STATION_LAYOUT: LayoutConfig = {
+    widgets: [
+      {
+        id: "widget-ds-progress",
+        widgetType: "progress-gauge",
+        scaleMode: "auto",
+        x: 20,
+        y: 20,
+        width: 80,
+        height: 1880,
+        zIndex: 100,
+        customSettings: {
+          gaugeType: "heat-progress",
+          gaugeStyle: "thermometer",
+          orientation: "vertical",
+          bindingMode: "hostLane",
+          timeDisplayFormat: "dynamic",
+          timeSubsecondMode: "threshold",
+          timeSubsecondThreshold: 10,
+          timeSubsecondDecimals: 2,
+          lapDecimalPlaces: 0,
+          highlightRowOnLap: true,
+          highlightLapStyle: "full-glow",
+        },
+      },
+      {
+        id: "widget-ds-nickname",
+        widgetType: "lane-column",
+        scaleMode: "auto",
+        x: 120,
+        y: 20,
+        width: 640,
+        height: 290,
+        zIndex: 100,
+        customSettings: {
+          columnKey: "driver.nickname",
+          bindingMode: "hostLane",
+          showHeader: true,
+          showBorder: true,
+          borderWidth: 2,
+          borderRadius: 10,
+          borderColor: "rgba(0,0,0,0.1)",
+          backgroundColor: "rgba(255,255,255,0.1)",
+          useLaneColors: true,
+          highlightRowOnLap: true,
+          highlightLapStyle: "full-glow",
+        },
+      },
+      {
+        id: "widget-ds-lane-number",
+        widgetType: "lane-column",
+        scaleMode: "auto",
+        x: 780,
+        y: 20,
+        width: 180,
+        height: 290,
+        zIndex: 100,
+        customSettings: {
+          columnKey: "laneNumber",
+          bindingMode: "hostLane",
+          showHeader: true,
+          showBorder: true,
+          borderWidth: 2,
+          borderRadius: 10,
+          borderColor: "rgba(0,0,0,0.1)",
+          backgroundColor: "rgba(255,255,255,0.1)",
+          useLaneColors: true,
+          highlightRowOnLap: true,
+          highlightLapStyle: "full-glow",
+        },
+      },
+      {
+        id: "widget-ds-rank-heat",
+        widgetType: "lane-column",
+        scaleMode: "auto",
+        x: 120,
+        y: 330,
+        width: 410,
+        height: 290,
+        zIndex: 100,
+        customSettings: {
+          columnKey: "rankHeat",
+          bindingMode: "hostLane",
+          showHeader: true,
+          showBorder: true,
+          borderWidth: 2,
+          borderRadius: 10,
+          borderColor: "rgba(0,0,0,0.1)",
+          backgroundColor: "rgba(255,255,255,0.1)",
+          useLaneColors: true,
+          highlightRowOnLap: true,
+          highlightLapStyle: "full-glow",
+        },
+      },
+      {
+        id: "widget-ds-rank-overall",
+        widgetType: "lane-column",
+        scaleMode: "auto",
+        x: 550,
+        y: 330,
+        width: 410,
+        height: 290,
+        zIndex: 100,
+        customSettings: {
+          columnKey: "rankOverall",
+          bindingMode: "hostLane",
+          showHeader: true,
+          showBorder: true,
+          borderWidth: 2,
+          borderRadius: 10,
+          borderColor: "rgba(0,0,0,0.1)",
+          backgroundColor: "rgba(255,255,255,0.1)",
+          useLaneColors: true,
+          highlightRowOnLap: true,
+          highlightLapStyle: "full-glow",
+        },
+      },
+      {
+        id: "widget-ds-lap-count",
+        widgetType: "lane-column",
+        scaleMode: "auto",
+        x: 120,
+        y: 640,
+        width: 410,
+        height: 290,
+        zIndex: 100,
+        customSettings: {
+          columnKey: "lapCount",
+          bindingMode: "hostLane",
+          showHeader: true,
+          showBorder: true,
+          borderWidth: 2,
+          borderRadius: 10,
+          borderColor: "rgba(0,0,0,0.1)",
+          backgroundColor: "rgba(255,255,255,0.1)",
+          useLaneColors: true,
+          lapDecimalPlaces: 0,
+          decimalPlaces: 0,
+          highlightRowOnLap: true,
+          highlightLapStyle: "full-glow",
+        },
+      },
+      {
+        id: "widget-ds-last-lap-time",
+        widgetType: "lane-column",
+        scaleMode: "auto",
+        x: 550,
+        y: 640,
+        width: 410,
+        height: 290,
+        zIndex: 100,
+        customSettings: {
+          columnKey: "lastLapTime",
+          bindingMode: "hostLane",
+          showHeader: true,
+          showBorder: true,
+          borderWidth: 2,
+          borderRadius: 10,
+          borderColor: "rgba(0,0,0,0.1)",
+          backgroundColor: "rgba(255,255,255,0.1)",
+          useLaneColors: true,
+          highlightRowOnLap: true,
+          highlightLapStyle: "full-glow",
+        },
+      },
+      {
+        id: "widget-ds-gap-leader",
+        widgetType: "lane-column",
+        scaleMode: "auto",
+        x: 120,
+        y: 950,
+        width: 840,
+        height: 290,
+        zIndex: 100,
+        customSettings: {
+          columnKey: "gapLeader",
+          customLabel: "GAP LEADER",
+          bindingMode: "hostLane",
+          showHeader: true,
+          showBorder: true,
+          borderWidth: 2,
+          borderRadius: 10,
+          borderColor: "rgba(0,0,0,0.1)",
+          backgroundColor: "rgba(255,255,255,0.1)",
+          useLaneColors: true,
+          highlightRowOnLap: true,
+          highlightLapStyle: "full-glow",
+        },
+      },
+      {
+        id: "widget-ds-best-lap-time",
+        widgetType: "lane-column",
+        scaleMode: "auto",
+        x: 120,
+        y: 1260,
+        width: 840,
+        height: 290,
+        zIndex: 100,
+        customSettings: {
+          columnKey: "bestLapTime",
+          bindingMode: "hostLane",
+          showHeader: true,
+          showBorder: true,
+          borderWidth: 2,
+          borderRadius: 10,
+          borderColor: "rgba(0,0,0,0.1)",
+          backgroundColor: "rgba(255,255,255,0.1)",
+          useLaneColors: true,
+          highlightRowOnLap: true,
+          highlightLapStyle: "full-glow",
+        },
+      },
+      {
+        id: "widget-ds-flag",
+        widgetType: "flag",
+        scaleMode: "auto",
+        x: 120,
+        y: 1570,
+        width: 840,
+        height: 330,
+        zIndex: 100,
+        customSettings: {
+          displayMode: "color-bar",
+          highlightRowOnLap: true,
+          highlightLapStyle: "full-glow",
+        },
+      },
+      {
+        id: "widget-ds-fuel",
+        widgetType: "progress-gauge",
+        scaleMode: "auto",
+        x: 980,
+        y: 20,
+        width: 80,
+        height: 1880,
+        zIndex: 100,
+        customSettings: {
+          gaugeType: "fuel",
+          gaugeStyle: "thermometer",
+          orientation: "vertical",
+          bindingMode: "hostLane",
+          highlightRowOnLap: true,
+          highlightLapStyle: "full-glow",
+        },
+      },
+    ],
+    baseWidth: 1080,
+    baseHeight: 1920,
+    aspectRatio: "9:16",
     scaleMode: "stretch",
   };
 }

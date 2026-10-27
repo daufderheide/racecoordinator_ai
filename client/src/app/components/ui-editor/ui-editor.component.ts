@@ -280,6 +280,9 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   get isCurrentLayoutPractice() {
     return this.activeCustomUiId === "practice_ui_layout_rc_ai";
   }
+  get isCurrentLayoutDriverStation() {
+    return this.activeCustomUiId === "driver_station_ui_layout_rc_ai";
+  }
   get currentSelectedWidget(): any | null {
     const layout = this.getLayout(this.activeCustomUi);
     return this.selectedWidgetId && layout?.widgets
@@ -287,6 +290,9 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       : null;
   }
   get activeLayoutTitleKey() {
+    if (this.isCurrentLayoutDriverStation) {
+      return "UE_LABEL_DEFAULT_DRIVER_STATION_UI";
+    }
     return this.isCurrentLayoutPractice
       ? "UE_LABEL_RACEDAY_LAYOUT_PRACTICE"
       : "UE_LABEL_RACEDAY_LAYOUT";
@@ -616,6 +622,14 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     return (
       ui.entity_id === "practice_ui_layout_rc_ai" ||
       (ui.name || "").toLowerCase().includes("practice")
+    );
+  }
+
+  isCustomUiDriverStation(ui?: CustomUI) {
+    if (!ui) return this.isCurrentLayoutDriverStation;
+    return (
+      ui.entity_id === "driver_station_ui_layout_rc_ai" ||
+      (ui.name || "").toLowerCase().includes("driver station")
     );
   }
 

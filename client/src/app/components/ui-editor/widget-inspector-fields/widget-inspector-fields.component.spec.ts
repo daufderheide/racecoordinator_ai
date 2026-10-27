@@ -101,6 +101,29 @@ describe("WidgetInspectorFieldsComponent", () => {
     expect(inspectorEl).toBeTruthy();
   });
 
+  it("should render progress-gauge inspector when widget is progress-gauge", () => {
+    const progressGaugeWidget: AbsoluteWidgetNode = {
+      id: "w-progress-gauge",
+      widgetType: "progress-gauge",
+      x: 0,
+      y: 0,
+      width: 40,
+      height: 200,
+      zIndex: 1,
+      customSettings: {
+        gaugeType: "heat-progress",
+        gaugeStyle: "thermometer",
+      },
+    };
+    fixture.componentRef.setInput("widget", progressGaugeWidget);
+    fixture.detectChanges();
+
+    const inspectorEl = fixture.nativeElement.querySelector(
+      "app-progress-gauge-inspector",
+    );
+    expect(inspectorEl).toBeTruthy();
+  });
+
   it("should render lane-column inspector when widget is lane-column", () => {
     const laneColWidget: AbsoluteWidgetNode = {
       id: "w-lane-col",

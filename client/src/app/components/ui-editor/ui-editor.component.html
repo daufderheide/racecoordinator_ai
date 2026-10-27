@@ -1196,6 +1196,46 @@
                       </app-custom-select>
                     </div>
 
+                    <!-- Driver Station Theme Selection -->
+                    <div
+                      class="editor-section theme-ui-selector"
+                      id="help-theme-driver-station-theme"
+                    >
+                      <label>{{
+                        "UE_LABEL_DRIVER_STATION_THEME_SELECT" | translate
+                      }}</label>
+                      <app-custom-select
+                        [(ngModel)]="theme.driver_station_theme_id"
+                        (ngModelChange)="captureState()"
+                      >
+                        @for (t of displayThemes; track t.entity_id) {
+                          <app-custom-option [value]="t.entity_id">
+                            {{ getThemeDisplayNameKey(t) | translate }}
+                          </app-custom-option>
+                        }
+                      </app-custom-select>
+                    </div>
+
+                    <!-- Driver View Theme Selection -->
+                    <div
+                      class="editor-section theme-ui-selector"
+                      id="help-theme-driver-view-theme"
+                    >
+                      <label>{{
+                        "UE_LABEL_DRIVER_VIEW_THEME_SELECT" | translate
+                      }}</label>
+                      <app-custom-select
+                        [(ngModel)]="theme.driver_view_theme_id"
+                        (ngModelChange)="captureState()"
+                      >
+                        @for (t of displayThemes; track t.entity_id) {
+                          <app-custom-option [value]="t.entity_id">
+                            {{ getThemeDisplayNameKey(t) | translate }}
+                          </app-custom-option>
+                        }
+                      </app-custom-select>
+                    </div>
+
                     <!-- Nested Flag Image Settings -->
                     <div class="config-section sub-section">
                       <div

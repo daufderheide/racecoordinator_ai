@@ -417,6 +417,63 @@ describe("raceday-lane-column-driver.helper", () => {
         resolveStandaloneDriver(mockDrivers, mockParent, "seed", 0, (p) => p)
           ?.objectId,
       ).toBe("d2");
+      expect(
+        resolveStandaloneDriver(
+          mockDrivers,
+          { ...mockParent, activeLaneIndex: 1 },
+          "hostLane",
+          0,
+          (p) => p,
+        )?.objectId,
+      ).toBe("d2");
+      expect(
+        resolveStandaloneDriver(
+          mockDrivers,
+          { ...mockParent, driverData: mockDrivers[2], laneIndex: 2 },
+          "hostLane",
+          2,
+          (p) => p,
+        )?.objectId,
+      ).toBe("d3");
+      expect(
+        resolveStandaloneDriver(
+          mockDrivers,
+          { ...mockParent, activeDriverId: "d3" },
+          "hostDriver",
+          0,
+          (p) => p,
+        )?.objectId,
+      ).toBe("d3");
+    });
+
+    it("should resolve heat grid driver for hostLane and hostDriver", () => {
+      expect(
+        resolveHeatGridDriver(
+          mockDrivers,
+          { ...mockParent, activeLaneIndex: 1 },
+          "hostLane",
+          0,
+          (p) => p,
+        )?.objectId,
+      ).toBe("d2");
+      expect(
+        resolveHeatGridDriver(
+          mockDrivers,
+          { ...mockParent, driverData: mockDrivers[0], activeLaneIndex: 0 },
+          "hostLane",
+          0,
+          (p) => p,
+        )?.objectId,
+      ).toBe("d1");
+      expect(
+        resolveHeatGridDriver(
+          mockDrivers,
+          { ...mockParent, activeDriverId: "d2" },
+          "hostDriver",
+          0,
+          (p) => p,
+        )?.objectId,
+      ).toBe("d2");
     });
   });
 
@@ -475,6 +532,12 @@ describe("raceday-lane-column-driver.helper", () => {
       ).toBeFalse();
       expect(
         isOverallDataSource({ columnKey: "rankOverall" } as any),
+      ).toBeFalse();
+      expect(
+        isOverallDataSource({ bindingMode: "hostLane" } as any),
+      ).toBeFalse();
+      expect(
+        isOverallDataSource({ bindingMode: "hostDriver" } as any),
       ).toBeFalse();
     });
 

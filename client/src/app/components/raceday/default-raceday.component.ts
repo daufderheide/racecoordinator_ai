@@ -88,6 +88,7 @@ export interface LapDisplayInfo {
   lapTime: string;
   segments: string[];
 }
+import { BrowserNavigationComponent } from "@app/components/shared/browser-navigation/browser-navigation.component";
 import { DisallowLapRecordsDialogComponent } from "@app/components/shared/disallow-lap-records-dialog/disallow-lap-records-dialog.component";
 import { InputDialogComponent } from "@app/components/shared/input-dialog/input-dialog.component";
 import {
@@ -95,7 +96,11 @@ import {
   PdfExportOptions,
 } from "@app/components/shared/pdf-export-dialog/pdf-export-dialog.component";
 import { RaceHistoryDialogComponent } from "@app/components/shared/race-history-dialog/race-history-dialog.component";
-import { getThemeDisplayNameKey } from "@app/components/ui-editor/ui-editor-crud.helper";
+import {
+  getThemeDisplayNameKey,
+  isLegacyDriverStationThemeName,
+  isLegacyDriverStationUiName,
+} from "@app/components/ui-editor/ui-editor-crud.helper";
 import { WIDGET_REGISTRY } from "@app/components/ui-editor/widget-registry";
 import { CustomUI } from "@app/models/custom-ui";
 import { AudioConfig } from "@app/models/driver";
@@ -132,6 +137,7 @@ import { ViewerRaceEndedHandler } from "@app/utils/viewer-race-ended-handler";
 import { AnchorPoint, ColumnDefinition } from "./column_definition";
 import { AddLapSectionsDialogComponent } from "./components/add-lap-sections-dialog/add-lap-sections-dialog.component";
 import { RacedayAbsoluteWidgetComponent } from "./components/raceday-absolute-widget/raceday-absolute-widget.component";
+import { RacedayHeatDriversComponent } from "./components/raceday-heat-drivers/raceday-heat-drivers.component";
 import { RacedayModalsComponent } from "./components/raceday-modals/raceday-modals.component";
 import { ToolboxGroup, ToolboxGroupHelper } from "./toolbox-group.helper";
 import { LaneGridAnimationHelper } from "./utils/lane-grid-animation.helper";
@@ -214,6 +220,7 @@ export interface RacedayGridDescriptor {
     FormsModule,
     LoginDialogComponent,
     RacedayAbsoluteWidgetComponent,
+    RacedayHeatDriversComponent,
     DragDropModule,
     TranslatePipe,
     AddLapSectionsDialogComponent,
@@ -222,6 +229,7 @@ export interface RacedayGridDescriptor {
     NgTemplateOutlet,
     DisallowLapRecordsDialogComponent,
     RaceHistoryDialogComponent,
+    BrowserNavigationComponent,
   ],
 })
 export class DefaultRacedayComponent
@@ -1025,6 +1033,23 @@ export class DefaultRacedayComponent
       this.hasLoadedToolboxStates = false;
       this.loadToolboxExpandedStatesFromLayout();
     });
+    effect(() => {
+      const inputLane = this.inputLaneIndex();
+      if (inputLane !== undefined) {
+        this.updateRacedayLayout();
+        this.updateAudioRelevance();
+        this.cdr.markForCheck();
+      }
+    });
+    effect(() => {
+      const inputDriver = this.inputDriverId();
+      if (inputDriver !== undefined) {
+        this.checkDriverStatus();
+        this.updateRacedayLayout();
+        this.updateAudioRelevance();
+        this.cdr.markForCheck();
+      }
+    });
   }
 
   public driverRankings = new Map<string, number>();
@@ -1064,6 +1089,31 @@ export class DefaultRacedayComponent
   // Layout customization state
   isUIEditorMode = input<boolean>(false);
   isPracticeLayoutEditor = input<boolean>(false);
+  inputLaneIndex = input<number | undefined>(undefined);
+  inputDriverId = input<string | undefined>(undefined);
+  routeLaneIndex?: number;
+  routeDriverId?: string;
+  isRacingInCurrentHeat = false;
+  driverViewLaneIndex?: number;
+
+  get activeDriverId(): string | undefined {
+    return this.inputDriverId() !== undefined
+      ? this.inputDriverId()
+      : this.routeDriverId;
+  }
+
+  get isDriverView(): boolean {
+    return this.activeDriverId !== undefined;
+  }
+
+  private _currentHeat?: Heat;
+  get currentHeat(): Heat | undefined {
+    return this._currentHeat || this.raceService.getCurrentHeat() || this.heat;
+  }
+  set currentHeat(value: Heat | undefined) {
+    this._currentHeat = value;
+  }
+
   uiScale = input<number>(1);
   editingSettings = input<Settings | undefined>(undefined);
   activeCustomUi = input<CustomUI | null>(null);
@@ -1103,6 +1153,24 @@ export class DefaultRacedayComponent
     return this.isUIEditorMode() ? "visible" : "hidden";
   }
 
+  @HostBinding("class.driver-station-host")
+  get isDriverStationHost(): boolean {
+    return this.isDriverStation && !this.isUIEditorMode();
+  }
+
+  @HostBinding("class.driver-view-host")
+  get isDriverViewHost(): boolean {
+    return this.isDriverView && !this.isUIEditorMode();
+  }
+
+  @HostBinding("style.background")
+  get hostBackgroundStyle(): string | null {
+    if (this.isDriverStation && !this.isUIEditorMode()) {
+      return this.activeLaneBackgroundColor;
+    }
+    return null;
+  }
+
   isLayoutEditorMinimized = false;
   layoutEditorPosition = { x: 0, y: 0 };
   layout!: LayoutConfig;
@@ -1126,6 +1194,76 @@ export class DefaultRacedayComponent
   toolboxGroupExpandedStates = new Map<string, boolean>();
   toolboxSubgroupExpandedStates = new Map<string, boolean>();
   private hasLoadedToolboxStates = false;
+
+  get activeLaneIndex(): number | undefined {
+    if (this.inputLaneIndex() !== undefined) {
+      return this.inputLaneIndex();
+    }
+    if (this.routeLaneIndex !== undefined) {
+      return this.routeLaneIndex;
+    }
+    if (this.isDriverView && this.isRacingInCurrentHeat) {
+      return this.driverViewLaneIndex;
+    }
+    return undefined;
+  }
+
+  get isDriverStation(): boolean {
+    return this.activeLaneIndex !== undefined || this.isDriverStationLayout;
+  }
+
+  get isDriverStationLayout(): boolean {
+    if (this.isUIEditorMode() && this.activeCustomUi()) {
+      const entityId = this.activeCustomUi()!.entity_id;
+      const name = this.activeCustomUi()!.name || "";
+      return (
+        entityId === "driver_station_ui_layout_rc_ai" ||
+        isLegacyDriverStationUiName(name)
+      );
+    }
+    const hasThemeQueryParam = Boolean(
+      this.route?.snapshot?.queryParams?.["themeId"],
+    );
+    const activeTheme = this.themeService.getActiveTheme();
+    if (
+      activeTheme &&
+      (hasThemeQueryParam || this.activeLaneIndex !== undefined)
+    ) {
+      if (
+        activeTheme.entity_id === "driver_station_theme_rc_ai" ||
+        activeTheme.uiId === "driver_station_ui_layout_rc_ai" ||
+        isLegacyDriverStationThemeName(activeTheme.name || "")
+      ) {
+        return true;
+      }
+    }
+    return this.activeLaneIndex !== undefined;
+  }
+
+  get activeLane(): any | undefined {
+    if (this.activeLaneIndex === undefined) return undefined;
+    const track =
+      this.track || this.race?.track || this.raceService.getRace()?.track;
+    return track?.lanes?.[this.activeLaneIndex];
+  }
+
+  get activeLaneBackgroundColor(): string {
+    if (this.isUIEditorMode()) {
+      return "#ffffff";
+    }
+    return this.activeLane?.background_color || "#ffffff";
+  }
+
+  get activeLaneForegroundColor(): string {
+    if (this.isUIEditorMode()) {
+      return "#000000";
+    }
+    return this.activeLane?.foreground_color || "#000000";
+  }
+
+  get isFuelRace(): boolean {
+    return this.fuelAudioTracker.isFuelRace(this.race, this.track);
+  }
 
   get isPracticeLayout(): boolean {
     const isDemo = this.race?.entity_id?.startsWith("demo_") || false;
@@ -1228,6 +1366,11 @@ export class DefaultRacedayComponent
       if (ui.layoutJson && ui.layoutJson !== "[]") {
         return this.getParsedCustomUiProperty(ui, "layoutJson", undefined);
       }
+      if (this.isDriverStationLayout) {
+        return JSON.parse(
+          JSON.stringify(Settings.DEFAULT_DRIVER_STATION_LAYOUT),
+        );
+      }
       return this.isPracticeLayout
         ? this.editingSettings()?.practiceRacedayLayout ||
             JSON.parse(JSON.stringify(Settings.DEFAULT_PRACTICE_LAYOUT))
@@ -1235,27 +1378,53 @@ export class DefaultRacedayComponent
             JSON.parse(JSON.stringify(Settings.DEFAULT_LAYOUT));
     }
     if (this.editingSettings()) {
+      if (this.isDriverStationLayout || this.isDriverStation) {
+        return JSON.parse(
+          JSON.stringify(Settings.DEFAULT_DRIVER_STATION_LAYOUT),
+        );
+      }
       return this.isPracticeLayout
         ? this.editingSettings()!.practiceRacedayLayout
         : this.editingSettings()!.racedayLayout;
     }
     const settings = this.settingsService.getSettings();
+    let customUI: CustomUI | undefined;
     const activeTheme = this.themeService.getActiveTheme();
-    const customUI =
-      activeTheme && activeTheme.uiId
-        ? this.customUiService.getCustomUI(activeTheme.uiId)
-        : undefined;
-    const resolvedLayout = this.isPracticeLayout
-      ? this.getParsedCustomUiProperty(
-          customUI,
-          "layoutJson",
-          settings.practiceRacedayLayout,
-        )
-      : this.getParsedCustomUiProperty(
-          customUI,
-          "layoutJson",
-          settings.racedayLayout,
+    if (this.isDriverStationLayout || this.isDriverStation) {
+      if (activeTheme?.uiId) {
+        customUI = this.customUiService.getCustomUI(activeTheme.uiId);
+      }
+      if (!customUI) {
+        customUI = this.customUiService.getCustomUI(
+          "driver_station_ui_layout_rc_ai",
         );
+      }
+    } else {
+      customUI =
+        activeTheme && activeTheme.uiId
+          ? this.customUiService.getCustomUI(activeTheme.uiId)
+          : undefined;
+    }
+    const fallbackLayout =
+      this.isDriverStationLayout || this.isDriverStation
+        ? JSON.parse(JSON.stringify(Settings.DEFAULT_DRIVER_STATION_LAYOUT))
+        : this.isPracticeLayout
+          ? settings.practiceRacedayLayout
+          : settings.racedayLayout;
+    const resolvedLayout =
+      this.isDriverStationLayout || this.isDriverStation
+        ? this.getParsedCustomUiProperty(customUI, "layoutJson", fallbackLayout)
+        : this.isPracticeLayout
+          ? this.getParsedCustomUiProperty(
+              customUI,
+              "layoutJson",
+              settings.practiceRacedayLayout,
+            )
+          : this.getParsedCustomUiProperty(
+              customUI,
+              "layoutJson",
+              settings.racedayLayout,
+            );
     if (
       !this.isUIEditorMode() &&
       LaneViewMigrationHelper.hasLegacyLaneView(resolvedLayout)
@@ -1597,6 +1766,12 @@ export class DefaultRacedayComponent
   }
 
   ngOnInit() {
+    if (
+      !this.route?.snapshot?.queryParams?.["themeId"] &&
+      this.themeService?.getTransientThemeId?.()
+    ) {
+      this.themeService.clearTransientActiveTheme();
+    }
     this.setupInitialState();
     this.subscribeToAssets();
     this.detectShortcutKey();
@@ -1684,6 +1859,9 @@ export class DefaultRacedayComponent
 
     this.subscriptions.push(
       this.themeService.activeTheme$.subscribe(() => {
+        this.laneQrCodeCache.clear();
+        this.generatingLaneQrCodes.clear();
+        this.driverViewQrCodeCache.clear();
         this.updateRacedayLayout();
         this.refreshCountdownLampUrls();
         this.preloadCountdownAudio();
@@ -1712,6 +1890,16 @@ export class DefaultRacedayComponent
   }
 
   private setupInitialState() {
+    if (this.route?.snapshot?.params?.["lane"]) {
+      const parsed = parseInt(this.route.snapshot.params["lane"], 10);
+      if (!isNaN(parsed) && parsed > 0) {
+        this.routeLaneIndex = parsed - 1;
+      }
+    }
+    if (this.route?.snapshot?.params?.["driverId"]) {
+      this.routeDriverId = this.route.snapshot.params["driverId"];
+      this.checkDriverStatus();
+    }
     this.viewerRaceEndedHandler = new ViewerRaceEndedHandler(
       this.dataService,
       this.authService,
@@ -1882,6 +2070,11 @@ export class DefaultRacedayComponent
           }
           this.sortHeatDrivers();
           this.syncHeatDriversWithParticipants();
+          if (this.isDriverView) {
+            this.checkDriverStatus();
+            this.updateRacedayLayout();
+            this.updateAudioRelevance();
+          }
           if (!this.isDestroyed) {
             this.cdr.markForCheck();
           }
@@ -3015,13 +3208,30 @@ export class DefaultRacedayComponent
   }
 
   private handleLapHighlight(lap: any, driverData?: DriverHeatData) {
-    const driverId = lap?.objectId || driverData?.objectId;
-    if (!driverId) return;
+    const idsToHighlight: string[] = [];
+    if (lap?.objectId) idsToHighlight.push(lap.objectId);
+    if (driverData?.objectId && !idsToHighlight.includes(driverData.objectId)) {
+      idsToHighlight.push(driverData.objectId);
+    }
+    if (
+      driverData?.participant?.objectId &&
+      !idsToHighlight.includes(driverData.participant.objectId)
+    ) {
+      idsToHighlight.push(driverData.participant.objectId);
+    }
+    if (lap?.driverId && !idsToHighlight.includes(lap.driverId)) {
+      idsToHighlight.push(lap.driverId);
+    }
+    if (idsToHighlight.length === 0) return;
 
     const laneWidgets =
       this.currentRacedayLayout?.widgets?.filter(
         (w: any) =>
-          w.widgetType === "lane-view" || w.widgetType === "lane-column",
+          w.widgetType === "lane-view" ||
+          w.widgetType === "lane-column" ||
+          w.widgetType === "progress-gauge" ||
+          w.widgetType === "flag" ||
+          Boolean(w.widgetType?.startsWith("custom:")),
       ) || [];
     const settings = this.settingsService.getSettings();
     const fallbackEnabled = this.isPracticeLayout
@@ -3041,23 +3251,29 @@ export class DefaultRacedayComponent
         : fallbackEnabled;
 
     if (shouldHighlight) {
-      const existingTimer = this.lapHighlightTimers.get(driverId);
-      if (existingTimer) {
-        clearTimeout(existingTimer);
-        this.lapHighlightTimers.delete(driverId);
+      for (const id of idsToHighlight) {
+        const existingTimer = this.lapHighlightTimers.get(id);
+        if (existingTimer) {
+          clearTimeout(existingTimer);
+          this.lapHighlightTimers.delete(id);
+        }
+        this.highlightedDrivers.add(id);
       }
-      this.highlightedDrivers.add(driverId);
       if (!this.isDestroyed) {
         this.cdr.markForCheck();
       }
       const timer = setTimeout(() => {
-        this.lapHighlightTimers.delete(driverId);
-        this.highlightedDrivers.delete(driverId);
+        for (const id of idsToHighlight) {
+          this.lapHighlightTimers.delete(id);
+          this.highlightedDrivers.delete(id);
+        }
         if (!this.isDestroyed) {
           this.cdr.markForCheck();
         }
       }, 400);
-      this.lapHighlightTimers.set(driverId, timer);
+      for (const id of idsToHighlight) {
+        this.lapHighlightTimers.set(id, timer);
+      }
     }
   }
 
@@ -3065,7 +3281,11 @@ export class DefaultRacedayComponent
     const laneWidgets =
       this.currentRacedayLayout?.widgets?.filter(
         (w: any) =>
-          w.widgetType === "lane-view" || w.widgetType === "lane-column",
+          w.widgetType === "lane-view" ||
+          w.widgetType === "lane-column" ||
+          w.widgetType === "progress-gauge" ||
+          w.widgetType === "flag" ||
+          Boolean(w.widgetType?.startsWith("custom:")),
       ) || [];
     for (const w of laneWidgets) {
       const customStyle = w.customSettings?.["highlightLapStyle"];
@@ -3220,6 +3440,29 @@ export class DefaultRacedayComponent
   }
 
   private subscribeToUIEvents() {
+    if (this.route?.params) {
+      this.subscriptions.push(
+        this.route.params.subscribe((params: any) => {
+          if (params && params["lane"]) {
+            const parsed = parseInt(params["lane"], 10);
+            if (!isNaN(parsed) && parsed > 0) {
+              this.routeLaneIndex = parsed - 1;
+              this.updateRacedayLayout();
+              this.updateAudioRelevance();
+              this.cdr.markForCheck();
+            }
+          }
+          if (params && params["driverId"]) {
+            this.routeDriverId = params["driverId"];
+            this.checkDriverStatus();
+            this.updateRacedayLayout();
+            this.updateAudioRelevance();
+            this.cdr.markForCheck();
+          }
+        }),
+      );
+    }
+
     this.subscriptions.push(
       this.route.queryParams.subscribe((params: any) => {
         if (params["themeId"]) {
@@ -3231,6 +3474,18 @@ export class DefaultRacedayComponent
             this.updateRacedayLayout();
             this.updateTabTitle(themeId);
           });
+        } else if (this.themeService?.getTransientThemeId?.()) {
+          this.themeService.clearTransientActiveTheme();
+          const activeRace = this.race || this.raceService?.getRace();
+          if (activeRace?.entity_id) {
+            this.themeService.activateForRace(
+              activeRace.entity_id,
+              activeRace.theme_id,
+            );
+          } else {
+            this.updateRacedayLayout();
+            this.updateTabTitle();
+          }
         }
         if (params["modifyHeats"] === "true") {
           const returnUrl = this.router.url.split("?")[0];
@@ -3678,6 +3933,9 @@ export class DefaultRacedayComponent
     this.lapHighlightTimers.clear();
     this.highlightedDrivers.clear();
     this.audioService.reset();
+    if (this.themeService?.getTransientThemeId?.()) {
+      this.themeService.clearTransientActiveTheme();
+    }
     if (
       typeof window !== "undefined" &&
       window.visualViewport &&
@@ -3760,7 +4018,14 @@ export class DefaultRacedayComponent
     this.cdr.detectChanges();
     if (this.raceHasEnded && isRaceEndedModal) {
       this.forceExit = true;
-      this.router.navigate(["/raceday-setup"]);
+      const returnUrl =
+        this.route?.snapshot?.queryParamMap?.get("returnUrl") ||
+        "/raceday-setup";
+      if (returnUrl === "/raceday-setup") {
+        this.router.navigate(["/raceday-setup"]);
+      } else {
+        this.router.navigateByUrl(returnUrl);
+      }
     }
   }
 
@@ -4281,9 +4546,66 @@ export class DefaultRacedayComponent
           }
         });
       }
+      if (this.isDriverView) {
+        this.checkDriverStatus();
+      }
       this.cdr.markForCheck();
     } else {
       // No heats available
+      if (this.isDriverView) {
+        this.checkDriverStatus();
+      }
+    }
+  }
+
+  checkDriverStatus(): void {
+    this.isRacingInCurrentHeat = false;
+    const currentHeat = this.currentHeat;
+    const driverId = this.activeDriverId;
+    if (currentHeat && driverId) {
+      const targetId = decodeURIComponent(driverId);
+      const heatDrivers = currentHeat.heatDrivers || [];
+      const driverDataIndex = heatDrivers.findIndex((hd: any) => {
+        const actualEntityId =
+          hd.actualDriver?.entity_id || hd.actualDriver?.model?.entityId;
+        const actualName = hd.actualDriver?.name;
+        const driverEntityId =
+          hd.driver?.entity_id ||
+          hd.driver?.model?.entityId ||
+          (hd.driver as any)?.driver?.model?.entityId ||
+          (hd.driver as any)?.driver?.entity_id;
+        const driverName = (hd.driver as any)?.driver?.name || hd.driver?.name;
+        const driverNickname =
+          (hd.driver as any)?.driver?.nickname || hd.driver?.nickname;
+        const teamEntityId =
+          hd.participant?.team?.entity_id ||
+          hd.participant?.team?.model?.entityId;
+        const teamName = hd.participant?.team?.name;
+        const participantId = hd.participant?.objectId;
+        const hdObjectId = hd.objectId;
+
+        return (
+          (actualEntityId && actualEntityId === targetId) ||
+          (actualName && actualName === targetId) ||
+          (driverEntityId && driverEntityId === targetId) ||
+          (driverName && driverName === targetId) ||
+          (driverNickname && driverNickname === targetId) ||
+          (teamEntityId && teamEntityId === targetId) ||
+          (teamName && teamName === targetId) ||
+          (participantId && participantId === targetId) ||
+          (hdObjectId && hdObjectId === targetId)
+        );
+      });
+
+      if (driverDataIndex >= 0) {
+        this.isRacingInCurrentHeat = true;
+        const matchingHd = heatDrivers[driverDataIndex];
+        this.driverViewLaneIndex = matchingHd?.laneIndex ?? driverDataIndex;
+      } else {
+        this.driverViewLaneIndex = undefined;
+      }
+    } else {
+      this.driverViewLaneIndex = undefined;
     }
   }
 
@@ -5075,9 +5397,15 @@ export class DefaultRacedayComponent
       return "";
     }
     this.generatingLaneQrCodes.add(laneIndex);
-    QRCode.toDataURL(`${this.serverUrlBase}/driver-station/${laneIndex + 1}`, {
-      margin: 1,
-    })
+    const activeTheme = this.themeService?.getActiveTheme?.();
+    const targetThemeId =
+      activeTheme?.driver_station_theme_id || "driver_station_theme_rc_ai";
+    QRCode.toDataURL(
+      `${this.serverUrlBase}/driver-station/${laneIndex + 1}?themeId=${encodeURIComponent(targetThemeId)}`,
+      {
+        margin: 1,
+      },
+    )
       .then((dataUrl) => {
         this.laneQrCodeCache.set(laneIndex, dataUrl);
         this.generatingLaneQrCodes.delete(laneIndex);
@@ -5118,8 +5446,13 @@ export class DefaultRacedayComponent
     let dataUrl = this.driverViewQrCodeCache.get(entityId);
     if (!dataUrl) {
       this.driverViewQrCodeCache.set(entityId, "generating");
+      const activeTheme = this.themeService?.getActiveTheme?.();
+      const targetThemeId =
+        activeTheme?.driver_view_theme_id ||
+        activeTheme?.driver_station_theme_id ||
+        "driver_station_theme_rc_ai";
       QRCode.toDataURL(
-        `${this.serverUrlBase}/driver-view/${encodeURIComponent(entityId)}`,
+        `${this.serverUrlBase}/driver-view/${encodeURIComponent(entityId)}?themeId=${encodeURIComponent(targetThemeId)}`,
         {
           margin: 1,
         },
@@ -5186,6 +5519,7 @@ export class DefaultRacedayComponent
     anchor?: string,
     countOverride?: number,
   ): LapDisplayInfo[] {
+    if (!heatDriver) return [];
     const laps = heatDriver.lapTimes || [];
     const lapsDetails = heatDriver.lapsWithDetails || [];
     const n = laps.length;
@@ -6380,8 +6714,11 @@ export class DefaultRacedayComponent
     this.isDriversStationOpen = false;
 
     const returnUrl = this.router.url.split("?")[0];
+    const activeTheme = this.themeService?.getActiveTheme?.();
+    const targetThemeId =
+      activeTheme?.driver_station_theme_id || "driver_station_theme_rc_ai";
     this.router.navigate(["/driver-station", laneIndex + 1], {
-      queryParams: { returnUrl },
+      queryParams: { themeId: targetThemeId, returnUrl },
     });
   }
 
@@ -6390,9 +6727,14 @@ export class DefaultRacedayComponent
     this.isWindowsMenuOpen = false; // Close menu
 
     const returnUrl = this.router.url.split("?")[0];
+    const activeTheme = this.themeService?.getActiveTheme?.();
+    const targetThemeId =
+      activeTheme?.driver_view_theme_id ||
+      activeTheme?.driver_station_theme_id ||
+      "driver_station_theme_rc_ai";
     this.router.navigate(["/driver-view", driverId], {
       state: { bypassDeactivate: true },
-      queryParams: { returnUrl },
+      queryParams: { themeId: targetThemeId, returnUrl },
     });
   }
 
@@ -8316,8 +8658,11 @@ export class DefaultRacedayComponent
     const hasTimer = widgets.some((w: any) => w.widgetType === "timer");
     const hasFlag = widgets.some((w: any) => w.widgetType === "flag");
 
+    const isStation =
+      this.isDriverStation && this.activeLaneIndex !== undefined;
     this.audioService.setRelevanceFilter({
-      driverAudioMode: hasLaneView ? "all" : "none",
+      driverAudioMode: hasLaneView ? (isStation ? "scoped" : "all") : "none",
+      allowedLanes: isStation ? new Set([this.activeLaneIndex!]) : undefined,
       allowCountdown: hasCountdown,
       allowTimer: hasTimer,
       allowRaceState: hasFlag,
@@ -9673,13 +10018,13 @@ export class DefaultRacedayComponent
   }
 
   private getDefaultLayout(): LayoutConfig {
-    const layout = JSON.parse(
-      JSON.stringify(
-        this.isPracticeLayout
+    const defaultTemplate =
+      this.isDriverStationLayout || this.isDriverStation
+        ? Settings.DEFAULT_DRIVER_STATION_LAYOUT
+        : this.isPracticeLayout
           ? Settings.DEFAULT_PRACTICE_LAYOUT
-          : Settings.DEFAULT_LAYOUT,
-      ),
-    ) as LayoutConfig;
+          : Settings.DEFAULT_LAYOUT;
+    const layout = JSON.parse(JSON.stringify(defaultTemplate)) as LayoutConfig;
 
     const targetW =
       typeof window !== "undefined" && window.innerWidth > 0

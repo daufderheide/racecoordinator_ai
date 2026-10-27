@@ -106,12 +106,38 @@ public class ThemeTest {
     assertEquals(1, theme.getSlots().size());
     assertEquals(1, theme.getAudioSlots().size());
     assertEquals("entity-123", theme.getEntityId());
-    assertEquals("id-123", theme.getId());
+    assertEquals(Theme.DRIVER_STATION_THEME_ID, theme.getDriverStationThemeId());
+    assertEquals(Theme.DRIVER_STATION_THEME_ID, theme.getDriverViewThemeId());
+
+    Theme customTheme =
+        new Theme(
+            "Custom",
+            false,
+            slots,
+            audioSlots,
+            "custom-ui-1",
+            "ds-theme-99",
+            "dv-theme-88",
+            "entity-custom",
+            "id-custom");
+    assertEquals("ds-theme-99", customTheme.getDriverStationThemeId());
+    assertEquals("dv-theme-88", customTheme.getDriverViewThemeId());
+
+    Theme built =
+        Theme.Builder.from(customTheme)
+            .withDriverStationThemeId("ds-override")
+            .withDriverViewThemeId("dv-override")
+            .build();
+    assertEquals("ds-override", built.getDriverStationThemeId());
+    assertEquals("dv-override", built.getDriverViewThemeId());
+    assertEquals("Custom", built.getName());
 
     Theme themeNoId = new Theme("Other", false, null, null, null, null);
     assertFalse(themeNoId.isDefault());
     assertNotNull(themeNoId.getSlots());
     assertNotNull(themeNoId.getAudioSlots());
+    assertEquals(Theme.DRIVER_STATION_THEME_ID, themeNoId.getDriverStationThemeId());
+    assertEquals(Theme.DRIVER_STATION_THEME_ID, themeNoId.getDriverViewThemeId());
   }
 
   @Test
@@ -172,6 +198,7 @@ public class ThemeTest {
     assertEquals("default_classic_rc_ai", Theme.DEFAULT_THEME_ID);
     assertEquals("practice_theme_rc_ai", Theme.PRACTICE_THEME_ID);
     assertEquals("default_fuel_theme_rc_ai", Theme.FUEL_THEME_ID);
+    assertEquals("driver_station_theme_rc_ai", Theme.DRIVER_STATION_THEME_ID);
   }
 
   @Test
@@ -199,6 +226,13 @@ public class ThemeTest {
     assertTrue(Theme.isLegacyFuelName("fuel theme"));
     assertFalse(Theme.isLegacyFuelName("RaceCoordinator AI (Fuel)"));
     assertFalse(Theme.isLegacyFuelName("Custom Leaderboard Theme"));
+
+    assertTrue(Theme.isLegacyDriverStationName(null));
+    assertTrue(Theme.isLegacyDriverStationName(""));
+    assertTrue(Theme.isLegacyDriverStationName("driver station"));
+    assertTrue(Theme.isLegacyDriverStationName("driver station theme"));
+    assertTrue(Theme.isLegacyDriverStationName("RaceCoordinator AI (Driver Station)"));
+    assertFalse(Theme.isLegacyDriverStationName("Custom Leaderboard Theme"));
   }
 
   @Test

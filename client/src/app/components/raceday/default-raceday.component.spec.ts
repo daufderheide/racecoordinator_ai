@@ -5020,10 +5020,31 @@ describe("DefaultRacedayComponent", () => {
 
       expect(component.isWindowsMenuOpen).toBeFalse();
       expect(component.isDriversStationOpen).toBeFalse();
-      expect(mockRouter.navigate).toHaveBeenCalledWith(
-        ["/driver-station", 2],
-        jasmine.anything(),
-      );
+      expect(mockRouter.navigate).toHaveBeenCalledWith(["/driver-station", 2], {
+        queryParams: {
+          themeId: "driver_station_theme_rc_ai",
+          returnUrl: "/raceday",
+        },
+      });
+    });
+
+    it("should call onLaneMenuSelect with configured driver station theme from active theme", () => {
+      const mockRouter = TestBed.inject(Router) as any;
+      const themeService = TestBed.inject(ThemeService) as any;
+      themeService.getActiveTheme.and.returnValue({
+        entity_id: "custom_theme",
+        driver_station_theme_id: "my_custom_ds_theme",
+      });
+      mockRouter.url = "/raceday";
+
+      component.onLaneMenuSelect(0);
+
+      expect(mockRouter.navigate).toHaveBeenCalledWith(["/driver-station", 1], {
+        queryParams: {
+          themeId: "my_custom_ds_theme",
+          returnUrl: "/raceday",
+        },
+      });
     });
 
     it("should close all menus on document click outside", () => {
@@ -5051,7 +5072,36 @@ describe("DefaultRacedayComponent", () => {
       expect(component.isWindowsMenuOpen).toBeFalse();
       expect(mockRouter.navigate).toHaveBeenCalledWith(
         ["/driver-view", "test-driver-id"],
-        jasmine.anything(),
+        {
+          state: { bypassDeactivate: true },
+          queryParams: {
+            themeId: "driver_station_theme_rc_ai",
+            returnUrl: "/raceday",
+          },
+        },
+      );
+    });
+
+    it("should call onDriverViewMenuSelect with configured driver view theme from active theme", () => {
+      const mockRouter = TestBed.inject(Router) as any;
+      const themeService = TestBed.inject(ThemeService) as any;
+      themeService.getActiveTheme.and.returnValue({
+        entity_id: "custom_theme",
+        driver_view_theme_id: "my_custom_dv_theme",
+      });
+      mockRouter.url = "/raceday";
+
+      component.onDriverViewMenuSelect("test-driver-id");
+
+      expect(mockRouter.navigate).toHaveBeenCalledWith(
+        ["/driver-view", "test-driver-id"],
+        {
+          state: { bypassDeactivate: true },
+          queryParams: {
+            themeId: "my_custom_dv_theme",
+            returnUrl: "/raceday",
+          },
+        },
       );
     });
   });
@@ -11271,6 +11321,85 @@ describe("DefaultRacedayComponent", () => {
       expect(updateSpy).toHaveBeenCalled();
     });
 
+    it("should clear transient active theme and reactivate race theme when queryParams do not include themeId but transient theme was set", () => {
+      const themeService = TestBed.inject(ThemeService);
+      (themeService.getTransientThemeId as jasmine.Spy).and.returnValue(
+        "driver_station_theme_rc_ai",
+      );
+      component.race = {
+        entity_id: "race-1",
+        theme_id: "race-theme-1",
+      } as any;
+
+      const queryParamsSubject = new BehaviorSubject<{ [key: string]: any }>(
+        {},
+      );
+      (component as any).route.queryParams = queryParamsSubject.asObservable();
+      (component as any).subscribeToUIEvents();
+
+      expect(themeService.clearTransientActiveTheme).toHaveBeenCalled();
+      expect(themeService.activateForRace).toHaveBeenCalledWith(
+        "race-1",
+        "race-theme-1",
+      );
+    });
+
+    it("should clear transient active theme on ngOnDestroy if transient theme is set", () => {
+      const themeService = TestBed.inject(ThemeService);
+      (themeService.getTransientThemeId as jasmine.Spy).and.returnValue(
+        "driver_station_theme_rc_ai",
+      );
+
+      component.ngOnDestroy();
+      expect(themeService.clearTransientActiveTheme).toHaveBeenCalled();
+    });
+
+    it("should clear transient active theme on ngOnInit if route does not specify themeId but transient theme was set", () => {
+      const themeService = TestBed.inject(ThemeService);
+      (themeService.getTransientThemeId as jasmine.Spy).and.returnValue(
+        "driver_station_theme_rc_ai",
+      );
+      (component as any).route.snapshot = { queryParams: {} };
+
+      component.ngOnInit();
+      expect(themeService.clearTransientActiveTheme).toHaveBeenCalled();
+    });
+
+    it("isDriverStationLayout should return false on default-raceday route even if activeTheme is driver station theme without active lane or queryParam", () => {
+      const themeService = TestBed.inject(ThemeService);
+      (themeService.getActiveTheme as jasmine.Spy).and.returnValue({
+        entity_id: "driver_station_theme_rc_ai",
+        uiId: "driver_station_ui_layout_rc_ai",
+      });
+      (component as any).route.snapshot = { queryParams: {} };
+      component.routeLaneIndex = undefined;
+
+      expect(component.isDriverStationLayout).toBeFalse();
+      expect(component.isDriverStation).toBeFalse();
+    });
+
+    it("isDriverStationLayout should return true when activeLaneIndex is set or themeId query param is present with driver station theme", () => {
+      const themeService = TestBed.inject(ThemeService);
+      (themeService.getActiveTheme as jasmine.Spy).and.returnValue({
+        entity_id: "driver_station_theme_rc_ai",
+        uiId: "driver_station_ui_layout_rc_ai",
+      });
+
+      // Case 1: activeLaneIndex is set via routeLaneIndex
+      (component as any).route.snapshot = { queryParams: {} };
+      component.routeLaneIndex = 0;
+      expect(component.isDriverStationLayout).toBeTrue();
+      expect(component.isDriverStation).toBeTrue();
+
+      // Case 2: queryParams themeId is present
+      component.routeLaneIndex = undefined;
+      (component as any).route.snapshot = {
+        queryParams: { themeId: "driver_station_theme_rc_ai" },
+      };
+      expect(component.isDriverStationLayout).toBeTrue();
+      expect(component.isDriverStation).toBeTrue();
+    });
+
     it("should not render auto-injected app-browser-navigation in theme window or raceday", () => {
       if (!(component as any).route.snapshot.queryParams) {
         (component as any).route.snapshot.queryParams = {};
@@ -14257,6 +14386,147 @@ describe("DefaultRacedayComponent", () => {
       );
       expect(val).toBe("Driver 1");
       expect(component.getDefaultLaneWidgetSettings).not.toHaveBeenCalled();
+    });
+
+    it("should resolve activeLane, activeLaneBackgroundColor, and activeLaneForegroundColor from track lanes", () => {
+      (component as any).track = {
+        lanes: [
+          { background_color: "#ff0000", foreground_color: "#ffffff" },
+          { background_color: "#ffffff", foreground_color: "#000000" },
+        ],
+      };
+      component.routeLaneIndex = 1;
+      expect(component.activeLaneIndex).toBe(1);
+      expect(component.activeLane).toEqual({
+        background_color: "#ffffff",
+        foreground_color: "#000000",
+      });
+      expect(component.activeLaneBackgroundColor).toBe("#ffffff");
+      expect(component.activeLaneForegroundColor).toBe("#000000");
+    });
+
+    it("should resolve activeLane from race.track if component.track is not set", () => {
+      (component as any).track = undefined;
+      (component as any).race = {
+        track: {
+          lanes: [
+            { background_color: "#ff0000", foreground_color: "#ffffff" },
+            { background_color: "#ffffff", foreground_color: "#000000" },
+          ],
+        },
+      };
+      component.routeLaneIndex = 1;
+      expect(component.activeLane).toEqual({
+        background_color: "#ffffff",
+        foreground_color: "#000000",
+      });
+      expect(component.activeLaneBackgroundColor).toBe("#ffffff");
+      expect(component.activeLaneForegroundColor).toBe("#000000");
+    });
+  });
+
+  describe("Driver View Mode", () => {
+    it("should set isDriverView to true when routeDriverId or inputDriverId is set", () => {
+      expect(component.isDriverView).toBeFalse();
+      component.routeDriverId = "driver123";
+      expect(component.isDriverView).toBeTrue();
+      expect(component.activeDriverId).toBe("driver123");
+      expect(component.isDriverViewHost).toBeTrue();
+    });
+
+    it("should set isRacingInCurrentHeat to true and resolve laneIndex when driver is in current heat", () => {
+      const mockHeat = {
+        heatDrivers: [
+          { driver: { entity_id: "otherDriver" }, laneIndex: 0 },
+          { driver: { entity_id: "driver123" }, laneIndex: 1 },
+        ],
+      } as any;
+      component.currentHeat = mockHeat;
+      component.routeDriverId = "driver123";
+      component.checkDriverStatus();
+
+      expect(component.isRacingInCurrentHeat).toBeTrue();
+      expect(component.driverViewLaneIndex).toBe(1);
+      expect(component.activeLaneIndex).toBe(1);
+      expect(component.isDriverStation).toBeTrue();
+    });
+
+    it("should set isRacingInCurrentHeat to false when driver is NOT in current heat", () => {
+      const mockHeat = {
+        heatDrivers: [
+          { driver: { entity_id: "other1" }, laneIndex: 0 },
+          { driver: { entity_id: "other2" }, laneIndex: 1 },
+        ],
+      } as any;
+      component.currentHeat = mockHeat;
+      component.routeDriverId = "driver123";
+      component.checkDriverStatus();
+
+      expect(component.isRacingInCurrentHeat).toBeFalse();
+      expect(component.driverViewLaneIndex).toBeUndefined();
+      expect(component.activeLaneIndex).toBeUndefined();
+      expect(component.isDriverStation).toBeFalse();
+    });
+
+    it("should match driver by name, encoded name, nickname, or team entity_id", () => {
+      const mockHeat = {
+        heatDrivers: [
+          {
+            driver: { entity_id: "", name: "Fast Racer", nickname: "Rocket" },
+            participant: {
+              team: { entity_id: "team_alpha", name: "Alpha Team" },
+            },
+            laneIndex: 2,
+          },
+        ],
+      } as any;
+      component.currentHeat = mockHeat;
+
+      // Match by encoded name
+      component.routeDriverId = "Fast%20Racer";
+      component.checkDriverStatus();
+      expect(component.isRacingInCurrentHeat).toBeTrue();
+      expect(component.activeLaneIndex).toBe(2);
+
+      // Match by nickname
+      component.routeDriverId = "Rocket";
+      component.checkDriverStatus();
+      expect(component.isRacingInCurrentHeat).toBeTrue();
+      expect(component.activeLaneIndex).toBe(2);
+
+      // Match by team
+      component.routeDriverId = "team_alpha";
+      component.checkDriverStatus();
+      expect(component.isRacingInCurrentHeat).toBeTrue();
+      expect(component.activeLaneIndex).toBe(2);
+    });
+
+    it("should render on-deck container when isDriverView is true but not racing in current heat", () => {
+      component.routeDriverId = "non_existent_driver";
+      component.isRacingInCurrentHeat = false;
+      fixture.detectChanges();
+
+      const onDeck = fixture.nativeElement.querySelector(
+        ".on-deck-mobile-container",
+      );
+      expect(onDeck).toBeTruthy();
+      const scalableContent =
+        fixture.nativeElement.querySelector(".scalable-content");
+      expect(scalableContent).toBeFalsy();
+    });
+
+    it("should render scalable-content layout when isDriverView is true and racing in current heat", () => {
+      component.routeDriverId = "d1";
+      component.isRacingInCurrentHeat = true;
+      fixture.detectChanges();
+
+      const onDeck = fixture.nativeElement.querySelector(
+        ".on-deck-mobile-container",
+      );
+      expect(onDeck).toBeFalsy();
+      const scalableContent =
+        fixture.nativeElement.querySelector(".scalable-content");
+      expect(scalableContent).toBeTruthy();
     });
   });
 });

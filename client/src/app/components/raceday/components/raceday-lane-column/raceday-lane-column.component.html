@@ -707,6 +707,11 @@
               "
             >
               <span class="lane-col-text">{{ formattedValue }}</span>
+              @if (hasTeamName) {
+                <span class="team-name">{{
+                  targetDriver?.participant?.team?.name
+                }}</span>
+              }
             </div>
 
             <!-- Teammate Driver Swap Overlay -->

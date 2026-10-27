@@ -3,6 +3,14 @@
 !!! note "Contenuto in fase di sviluppo"
     Questo articolo è in fase di stesura. Il testo completo sarà presto disponibile.
 
+## Temi
+
+Ciascun tema raggruppa risorse visive (bandiere, luci di partenza, indicatori di carburante), annunci audio e assegnazioni di layout:
+
+- **Layout interfaccia personalizzato:** Il layout di visualizzazione associato caricato durante la gara.
+- **Tema postazione pilota:** Il tema utilizzato quando si apre o si scansiona una finestra o un dispositivo di postazione pilota a corsia singola.
+- **Tema visualizzazione pilota:** Il tema utilizzato quando si apre o si scansiona la finestra del programma o la schermata del dispositivo personale del pilota.
+
 ## Audio
 
 I temi consentono di personalizzare gli effetti sonori e gli annunci vocali per gli eventi di gara:

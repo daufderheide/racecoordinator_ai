@@ -51,6 +51,14 @@
         (change)="onSettingsChange()"
       ></app-timer-inspector>
     }
+    @case ("progress-gauge") {
+      <app-progress-gauge-inspector
+        [settings]="widget().customSettings"
+        [widget]="widget()"
+        [disableFontSizes]="widget().scaleMode === 'auto'"
+        (change)="onSettingsChange()"
+      ></app-progress-gauge-inspector>
+    }
     @case ("countdown") {
       <app-countdown-inspector
         [settings]="widget().customSettings"

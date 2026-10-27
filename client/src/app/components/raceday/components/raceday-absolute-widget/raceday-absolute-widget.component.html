@@ -14,7 +14,11 @@
   [class.scale-auto]="widget().scaleMode === 'auto'"
   [class.scale-fixed]="widget().scaleMode !== 'auto'"
   [class.grid-cell-unselected]="isWidgetInGrid && !isGridSelected"
-  [style.display]="!isCountdownActive || isOverallNoDataRow ? 'none' : null"
+  [style.display]="
+    !isCountdownActive || isOverallNoDataRow || isFuelWidgetHidden
+      ? 'none'
+      : null
+  "
   [style.pointer-events]="
     isCountdownGhost || (!isCustomizing() && !isCountdownActive) ? 'none' : null
   "
@@ -161,6 +165,8 @@
         }
         @case ("flag") {
           <app-raceday-flag
+            [parent]="parentComponent()"
+            [widget]="widget()"
             [currentFlagUrl]="parentComponent().getCurrentFlagUrl()"
           ></app-raceday-flag>
         }
@@ -229,6 +235,12 @@
             [parent]="parentComponent()"
             [widget]="widget()"
           ></app-raceday-lane-column>
+        }
+        @case ("progress-gauge") {
+          <app-raceday-progress-gauge
+            [parent]="parentComponent()"
+            [widget]="widget()"
+          ></app-raceday-progress-gauge>
         }
         @case ("on-deck") {
           <app-raceday-on-deck

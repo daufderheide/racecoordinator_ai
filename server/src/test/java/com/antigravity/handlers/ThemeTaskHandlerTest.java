@@ -132,6 +132,15 @@ public class ThemeTaskHandlerTest {
     assertNotNull(fuelTheme);
     org.junit.Assert.assertEquals(CustomUI.FUEL_UI_ID, fuelTheme.getUiId());
     assertTrue(fuelTheme.isDefault());
+
+    Theme driverStationTheme =
+        themes.stream()
+            .filter(t -> Theme.DRIVER_STATION_THEME_ID.equals(t.getEntityId()))
+            .findFirst()
+            .orElse(null);
+    assertNotNull(driverStationTheme);
+    org.junit.Assert.assertEquals(CustomUI.DRIVER_STATION_UI_ID, driverStationTheme.getUiId());
+    assertTrue(driverStationTheme.isDefault());
   }
 
   @Test
@@ -229,6 +238,7 @@ public class ThemeTaskHandlerTest {
         new com.antigravity.repository.SqliteRepository<>(databaseContext, "themes", Theme.class);
     assertNotNull(repo.findByEntityId(Theme.PRACTICE_THEME_ID));
     assertNotNull(repo.findByEntityId(Theme.FUEL_THEME_ID));
+    assertNotNull(repo.findByEntityId(Theme.DRIVER_STATION_THEME_ID));
 
     // Delete Practice and Fuel themes
     org.mockito.Mockito.doReturn(Theme.PRACTICE_THEME_ID)
@@ -239,13 +249,20 @@ public class ThemeTaskHandlerTest {
     org.mockito.Mockito.doReturn(Theme.FUEL_THEME_ID).when(handler).getPathParam(any(), eq("id"));
     handler.deleteTheme(ctx);
 
+    org.mockito.Mockito.doReturn(Theme.DRIVER_STATION_THEME_ID)
+        .when(handler)
+        .getPathParam(any(), eq("id"));
+    handler.deleteTheme(ctx);
+
     assertTrue(databaseContext.isDefaultArtifactDeleted("theme", Theme.PRACTICE_THEME_ID));
     assertTrue(databaseContext.isDefaultArtifactDeleted("theme", Theme.FUEL_THEME_ID));
+    assertTrue(databaseContext.isDefaultArtifactDeleted("theme", Theme.DRIVER_STATION_THEME_ID));
 
     // Calling ensureDefaultTheme() should NOT recreate them
     handler.ensureDefaultTheme();
     assertNull(repo.findByEntityId(Theme.PRACTICE_THEME_ID));
     assertNull(repo.findByEntityId(Theme.FUEL_THEME_ID));
+    assertNull(repo.findByEntityId(Theme.DRIVER_STATION_THEME_ID));
 
     // Calling createTheme with name restores/unmarks it
     Theme recreatedPractice =
@@ -448,5 +465,69 @@ public class ThemeTaskHandlerTest {
     Theme customTheme = repo.findByEntityId("custom_1");
     assertNotNull(customTheme);
     assertEquals("My Custom Theme", customTheme.getName());
+  }
+
+  @Test
+  public void testCreateAndUpdateTheme_WithDriverThemes() {
+    Theme themeRequest =
+        new Theme(
+            "Driver Config Theme",
+            false,
+            new HashMap<>(),
+            new HashMap<>(),
+            "ui-main",
+            "custom-ds-theme",
+            "custom-dv-theme",
+            "new",
+            null);
+    org.mockito.Mockito.doReturn(themeRequest).when(handler).getBody(any(), eq(Theme.class));
+
+    org.mockito.ArgumentCaptor<Object> createCaptor =
+        org.mockito.ArgumentCaptor.forClass(Object.class);
+    handler.createTheme(ctx);
+    verify(handler).setStatus(any(), eq(201));
+    verify(handler, org.mockito.Mockito.atLeastOnce()).setJson(any(), createCaptor.capture());
+
+    Theme created = (Theme) createCaptor.getValue();
+    assertEquals("custom-ds-theme", created.getDriverStationThemeId());
+    assertEquals("custom-dv-theme", created.getDriverViewThemeId());
+
+    // Update with new values
+    Theme updateRequest =
+        new Theme(
+            "Driver Config Theme Renamed",
+            false,
+            new HashMap<>(),
+            new HashMap<>(),
+            "ui-main-2",
+            "updated-ds-theme",
+            "updated-dv-theme",
+            created.getEntityId(),
+            null);
+    org.mockito.Mockito.doReturn(created.getEntityId()).when(handler).getPathParam(any(), eq("id"));
+    org.mockito.Mockito.doReturn(updateRequest).when(handler).getBody(any(), eq(Theme.class));
+
+    org.mockito.ArgumentCaptor<Object> updateCaptor =
+        org.mockito.ArgumentCaptor.forClass(Object.class);
+    handler.updateTheme(ctx);
+    verify(handler, org.mockito.Mockito.atLeastOnce()).setJson(any(), updateCaptor.capture());
+
+    Theme updated = (Theme) updateCaptor.getValue();
+    assertEquals("updated-ds-theme", updated.getDriverStationThemeId());
+    assertEquals("updated-dv-theme", updated.getDriverViewThemeId());
+
+    // Duplicate theme
+    org.mockito.Mockito.doReturn(created.getEntityId()).when(handler).getPathParam(any(), eq("id"));
+    org.mockito.Mockito.doReturn(new HashMap<>())
+        .when(handler)
+        .getBody(any(), eq(java.util.Map.class));
+    org.mockito.ArgumentCaptor<Object> dupCaptor =
+        org.mockito.ArgumentCaptor.forClass(Object.class);
+    handler.duplicateTheme(ctx);
+    verify(handler, org.mockito.Mockito.atLeastOnce()).setJson(any(), dupCaptor.capture());
+
+    Theme duplicated = (Theme) dupCaptor.getValue();
+    assertEquals("updated-ds-theme", duplicated.getDriverStationThemeId());
+    assertEquals("updated-dv-theme", duplicated.getDriverViewThemeId());
   }
 }

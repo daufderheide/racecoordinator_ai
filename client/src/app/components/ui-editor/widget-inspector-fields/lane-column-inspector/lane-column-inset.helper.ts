@@ -638,6 +638,9 @@ export class LaneColumnInsetHelper {
     ) {
       current["textColor"] = "#ffffff";
     }
+    if (!current["bindingMode"]) {
+      current["bindingMode"] = "lane";
+    }
 
     const colKey = current["columnKey"];
     if (colKey && GAP_MIGRATION_MAP[colKey]) {

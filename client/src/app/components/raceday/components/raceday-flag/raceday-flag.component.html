@@ -1,8 +1,42 @@
-<div class="panel-card flag-panel">
-  <img
-    [src]="displayFlagUrl() || null"
-    [style.display]="displayFlagUrl() ? '' : 'none'"
-    class="flag-image"
-    alt="Race Flag"
-  />
+<div
+  class="panel-card flag-panel"
+  [class.color-bar-mode]="isColorBarMode && !isImageMode"
+  [class.highlight]="isHighlighted"
+  [class.highlight-style-full-glow]="
+    isHighlighted && highlightLapStyle === 'full-glow'
+  "
+  [class.highlight-style-glow-border]="
+    isHighlighted && highlightLapStyle === 'glow-border'
+  "
+  [class.highlight-style-tint-wash]="
+    isHighlighted && highlightLapStyle === 'tint-wash'
+  "
+  [class.highlight-style-shimmer]="
+    isHighlighted && highlightLapStyle === 'shimmer'
+  "
+  [class.highlight-style-scale-pulse]="
+    isHighlighted && highlightLapStyle === 'scale-pulse'
+  "
+  [class.highlight-style-adaptive-dip]="
+    isHighlighted && highlightLapStyle === 'adaptive-dip'
+  "
+  [class.highlight-style-classic]="
+    isHighlighted && highlightLapStyle === 'classic'
+  "
+  [class.is-light-lane]="isLightBackground"
+>
+  @if (isImageMode) {
+    <img
+      [src]="displayFlagUrl() || null"
+      [style.display]="displayFlagUrl() ? '' : 'none'"
+      class="flag-image"
+      alt="Race Flag"
+    />
+  }
+  @if (isColorBarMode) {
+    <div
+      class="race-state-indicator"
+      [class]="'race-state-indicator race-state-' + effectiveRaceStateColor"
+    ></div>
+  }
 </div>

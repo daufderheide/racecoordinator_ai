@@ -678,6 +678,7 @@ export class LaneColumnInspectorComponent extends LaneColumnInspectorGridBase {
     return LaneColumnGridHelper.getCellBreadcrumbLabel(
       this.currentSettings,
       this.isHeaderWidget,
+      this.translationService,
     );
   }
 

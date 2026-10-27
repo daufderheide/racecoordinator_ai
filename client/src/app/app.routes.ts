@@ -6,7 +6,6 @@ import { DatabaseManagerComponent } from "@app/components/database-manager/datab
 import { DisplayClient } from "@app/components/display-client/display-client";
 import { DriverEditorComponent } from "@app/components/driver-editor/driver-editor.component";
 import { DriverResultsComponent } from "@app/components/driver-results/driver-results.component";
-import { DriverStationComponent } from "@app/components/driver-station/driver-station.component";
 import { EventEditorComponent } from "@app/components/event-editor/event-editor.component";
 import { HeatResultsComponent } from "@app/components/heat-results/heat-results.component";
 import { PredictionResultsComponent } from "@app/components/prediction-results/prediction-results.component";
@@ -57,6 +56,12 @@ export const racedayTitleResolver: ResolveFn<string> = (
       return (
         translationService?.translate?.("UE_LABEL_FUEL_THEME") ||
         "RaceCoordinator AI (Fuel)"
+      );
+    }
+    if (themeId === "driver_station_theme_rc_ai") {
+      return (
+        translationService?.translate?.("UE_LABEL_DRIVER_STATION_THEME") ||
+        "RaceCoordinator AI (Driver Station)"
       );
     }
     if (themeId === "default_classic_rc_ai") {
@@ -215,16 +220,13 @@ export const routes: Routes = [
   },
   {
     path: "driver-station/:lane",
-    component: DriverStationComponent,
+    component: DefaultRacedayComponent,
     title: "Driver Station",
     data: { animation: "DriverStationPage" },
   },
   {
     path: "driver-view/:driverId",
-    loadComponent: () =>
-      import("@app/components/driver-view/driver-view.component").then(
-        (c) => c.DriverViewComponent,
-      ),
+    component: DefaultRacedayComponent,
     title: "Driver View",
     data: { animation: "DriverViewPage" },
   },

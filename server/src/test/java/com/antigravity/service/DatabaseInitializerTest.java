@@ -63,14 +63,18 @@ public class DatabaseInitializerTest {
     SqliteRepository<CustomUI> uiRepo =
         new SqliteRepository<>(context, "custom_uis", CustomUI.class);
     List<CustomUI> uis = uiRepo.findAll();
-    assertEquals(3, uis.size());
+    assertEquals(4, uis.size());
     for (CustomUI ui : uis) {
-      assertTrue(ui.getLayoutJson().contains("widget-countdown"));
+      if (!CustomUI.DRIVER_STATION_UI_ID.equals(ui.getEntityId())) {
+        assertTrue(ui.getLayoutJson().contains("widget-countdown"));
+      } else {
+        assertTrue(ui.getLayoutJson().contains("widget-ds-flag"));
+      }
     }
 
     SqliteRepository<Theme> themeRepo = new SqliteRepository<>(context, "themes", Theme.class);
     List<Theme> themes = themeRepo.findAll();
-    assertEquals(3, themes.size());
+    assertEquals(4, themes.size());
 
     AssetService assetService = new AssetService(context, context.getDataRoot() + "test_db/assets");
     assertNotNull(assetService.getAssetById("default_pit_in"));
@@ -148,15 +152,19 @@ public class DatabaseInitializerTest {
     SqliteRepository<CustomUI> uiRepo =
         new SqliteRepository<>(context, "custom_uis", CustomUI.class);
     List<CustomUI> uis = uiRepo.findAll();
-    assertEquals(3, uis.size());
+    assertEquals(4, uis.size());
     for (CustomUI ui : uis) {
-      assertTrue(ui.getLayoutJson().contains("widget-countdown"));
+      if (!CustomUI.DRIVER_STATION_UI_ID.equals(ui.getEntityId())) {
+        assertTrue(ui.getLayoutJson().contains("widget-countdown"));
+      } else {
+        assertTrue(ui.getLayoutJson().contains("widget-ds-flag"));
+      }
     }
 
     initializer.resetThemes(context);
     SqliteRepository<Theme> themeRepo = new SqliteRepository<>(context, "themes", Theme.class);
     List<Theme> themes = themeRepo.findAll();
-    assertEquals(3, themes.size());
+    assertEquals(4, themes.size());
   }
 
   @Test
@@ -430,10 +438,40 @@ public class DatabaseInitializerTest {
     initializer.backfillCustomUIs(context);
 
     List<CustomUI> uis = uiRepo.findAll();
-    assertEquals(3, uis.size());
+    assertEquals(4, uis.size());
     assertNotNull(uiRepo.findByEntityId(CustomUI.DEFAULT_UI_ID));
     assertNotNull(uiRepo.findByEntityId(CustomUI.PRACTICE_UI_ID));
     assertNotNull(uiRepo.findByEntityId(CustomUI.FUEL_UI_ID));
+    assertNotNull(uiRepo.findByEntityId(CustomUI.DRIVER_STATION_UI_ID));
+  }
+
+  @Test
+  public void testBackfillCustomUIs_MigratesDriverStationUseLaneColors() {
+    SqliteRepository<CustomUI> uiRepo =
+        new SqliteRepository<>(context, "custom_uis", CustomUI.class);
+    uiRepo.drop();
+
+    uiRepo.save(
+        new CustomUI(
+            CustomUI.DRIVER_STATION_UI_NAME,
+            true,
+            "{\"widgets\":[{\"customSettings\":{\"useLaneColors\":false}}]}",
+            "[]",
+            "{}",
+            "{}",
+            "{}",
+            "{}",
+            CustomUI.DRIVER_STATION_UI_ID,
+            null));
+
+    initializer.backfillCustomUIs(context);
+
+    CustomUI driverStationUi = uiRepo.findByEntityId(CustomUI.DRIVER_STATION_UI_ID);
+    assertNotNull(driverStationUi);
+    assertTrue(driverStationUi.getLayoutJson().contains("\"useLaneColors\":true"));
+    assertFalse(driverStationUi.getLayoutJson().contains("\"useLaneColors\":false"));
+    assertTrue(driverStationUi.getLayoutJson().contains("\"highlightLapStyle\":\"full-glow\""));
+    assertTrue(driverStationUi.getLayoutJson().contains("\"highlightRowOnLap\":true"));
   }
 
   @Test
@@ -585,12 +623,14 @@ public class DatabaseInitializerTest {
     initializer.resetCustomUIs(context);
     SqliteRepository<CustomUI> uiRepo =
         new SqliteRepository<>(context, "custom_uis", CustomUI.class);
-    assertEquals(3, uiRepo.findAll().size());
+    assertEquals(4, uiRepo.findAll().size());
 
     uiRepo.delete(CustomUI.PRACTICE_UI_ID);
     uiRepo.delete(CustomUI.FUEL_UI_ID);
+    uiRepo.delete(CustomUI.DRIVER_STATION_UI_ID);
     context.markDefaultArtifactDeleted("custom_ui", CustomUI.PRACTICE_UI_ID);
     context.markDefaultArtifactDeleted("custom_ui", CustomUI.FUEL_UI_ID);
+    context.markDefaultArtifactDeleted("custom_ui", CustomUI.DRIVER_STATION_UI_ID);
 
     initializer.backfillCustomUIs(context);
 
@@ -604,14 +644,18 @@ public class DatabaseInitializerTest {
     context.markDefaultArtifactDeleted("race", "Practice");
     context.markDefaultArtifactDeleted("race", "Fuel Race");
     context.markDefaultArtifactDeleted("custom_ui", CustomUI.PRACTICE_UI_ID);
+    context.markDefaultArtifactDeleted("custom_ui", CustomUI.DRIVER_STATION_UI_ID);
     context.markDefaultArtifactDeleted("theme", Theme.PRACTICE_THEME_ID);
+    context.markDefaultArtifactDeleted("theme", Theme.DRIVER_STATION_THEME_ID);
 
     initializer.resetToFactory(context);
 
     assertFalse(context.isDefaultArtifactDeleted("race", "Practice"));
     assertFalse(context.isDefaultArtifactDeleted("race", "Fuel Race"));
     assertFalse(context.isDefaultArtifactDeleted("custom_ui", CustomUI.PRACTICE_UI_ID));
+    assertFalse(context.isDefaultArtifactDeleted("custom_ui", CustomUI.DRIVER_STATION_UI_ID));
     assertFalse(context.isDefaultArtifactDeleted("theme", Theme.PRACTICE_THEME_ID));
+    assertFalse(context.isDefaultArtifactDeleted("theme", Theme.DRIVER_STATION_THEME_ID));
 
     SqliteRepository<Race> raceRepo = new SqliteRepository<>(context, "races", Race.class);
     assertEquals(4, raceRepo.findAll().size());

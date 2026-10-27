@@ -3,6 +3,14 @@
 !!! note "Inhoud in ontwikkeling"
     Dit artikel is in ontwikkeling. De volledige documentatie volgt binnenkort.
 
+## Thema's
+
+Elk thema bundelt visuele elementen (vlaggen, aftellampen, brandstofmeters), audiomeldingen en lay-outtoewijzingen:
+
+- **Aangepaste UI-lay-out:** De gekoppelde schermlay-out die tijdens de race wordt geladen.
+- **Bestuurdersstation-thema:** Het thema dat wordt gebruikt bij het openen of scannen van een enkelbaans bestuurdersstationvenster of -apparaat.
+- **Bestuurdersweergave-thema:** Het thema dat wordt gebruikt bij het openen of scannen van het schemavenster voor de coureur of weergave op een persoonlijk apparaat.
+
 ## Audio
 
 Thema's stellen u in staat om systeembrede geluidseffecten en spraakmeldingen voor raceleidingsgebeurtenissen aan te passen:

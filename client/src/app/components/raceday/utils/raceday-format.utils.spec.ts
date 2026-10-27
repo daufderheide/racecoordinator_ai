@@ -3360,5 +3360,52 @@ describe("RacedayFormatUtils", () => {
         ),
       ).toBe("");
     });
+
+    it("should return false for isEmptyDriver when participant is a team", () => {
+      const teamHd: any = {
+        participant: {
+          team: { entity_id: "team_1", name: "Red Bull Racing" },
+          driver: { entity_id: "", name: "" },
+        },
+      };
+      expect(RacedayFormatUtils.isEmptyDriver(teamHd)).toBeFalse();
+    });
+
+    it("should return false for isEmptyDriver when driver.team is present", () => {
+      const teamHd: any = {
+        driver: {
+          team: { entity_id: "team_2", name: "Ferrari" },
+          driver: { entity_id: "", name: "" },
+        },
+      };
+      expect(RacedayFormatUtils.isEmptyDriver(teamHd)).toBeFalse();
+    });
+
+    it("should fallback to team name for driver.nickname and driver.name when driver is unassigned", () => {
+      const teamHd: any = {
+        participant: {
+          team: { entity_id: "team_1", name: "Red Bull Racing" },
+          driver: { entity_id: "", name: "" },
+        },
+      };
+      expect(
+        RacedayFormatUtils.formatValue(
+          "driver.nickname",
+          undefined,
+          teamHd,
+          undefined,
+          ctx,
+        ),
+      ).toBe("Red Bull Racing");
+      expect(
+        RacedayFormatUtils.formatValue(
+          "driver.name",
+          undefined,
+          teamHd,
+          undefined,
+          ctx,
+        ),
+      ).toBe("Red Bull Racing");
+    });
   });
 });

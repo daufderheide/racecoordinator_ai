@@ -2729,6 +2729,47 @@ describe("RacedayLaneColumnComponent", () => {
       expect(component.formattedValue).toBe("Lord Perceval");
     });
 
+    it("should correctly determine hasTeamName for name/nickname properties when team name exists", () => {
+      const participantWithTeam = {
+        objectId: "p1",
+        team: { name: "Red Bull Racing" },
+        driver: { name: "Max", nickname: "Mad Max" },
+      };
+      const driverWithTeam = {
+        objectId: "p1",
+        participant: participantWithTeam,
+        driver: { name: "Max", nickname: "Mad Max" },
+      } as any;
+
+      const parentWithTeam = {
+        ...mockParent,
+        sortedHeatDrivers: [driverWithTeam],
+        heatDrivers: [driverWithTeam],
+      };
+      fixture.componentRef.setInput("parent", parentWithTeam);
+      fixture.componentRef.setInput(
+        "widget",
+        createWidget({
+          columnKey: "driver.nickname",
+          targetIndex: 0,
+        }),
+      );
+      fixture.detectChanges();
+
+      expect(component.hasTeamName).toBeTrue();
+
+      // Should be false for non-name properties
+      fixture.componentRef.setInput(
+        "widget",
+        createWidget({
+          columnKey: "lapCount",
+          targetIndex: 0,
+        }),
+      );
+      fixture.detectChanges();
+      expect(component.hasTeamName).toBeFalse();
+    });
+
     it("should recognize physicalLapCount column and insets as clickable for add lap sections", () => {
       fixture.componentRef.setInput("parent", mockParent);
       fixture.componentRef.setInput(
@@ -3273,6 +3314,17 @@ describe("RacedayLaneColumnComponent", () => {
       );
       fixture.detectChanges();
       expect(component.highlightLapStyle).toBe("classic");
+
+      // Should default to full-glow on driver station without explicit highlightLapStyle
+      const driverStationParent = {
+        ...mockParent,
+        isDriverStation: true,
+        activeLaneIndex: 0,
+        highlightLapStyle: undefined,
+      };
+      fixture.componentRef.setInput("parent", driverStationParent);
+      fixture.detectChanges();
+      expect(component.highlightLapStyle).toBe("full-glow");
     });
 
     it("should default effectiveHeaderTextColor to #ffffff for isHeaderWidget even if lane colors are enabled", () => {

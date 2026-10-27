@@ -158,7 +158,23 @@ export class ThemeService {
   }
 
   clearTransientActiveTheme(): void {
+    if (!this.transientThemeId) {
+      return;
+    }
+    const hadTransient = this.transientThemeId;
     this.transientThemeId = null;
+    const settings = this.settingsService.getSettings();
+    let themeToRestore: Theme | null = null;
+    if (settings.activeThemeId) {
+      themeToRestore =
+        this.themes.find((t) => t.entity_id === settings.activeThemeId) || null;
+    }
+    if (!themeToRestore) {
+      themeToRestore = this.themes.find((t) => t.is_default) || null;
+    }
+    if (themeToRestore && this.activeTheme?.entity_id === hadTransient) {
+      this.setActiveThemeInternal(themeToRestore);
+    }
   }
 
   /**

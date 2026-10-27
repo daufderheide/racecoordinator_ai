@@ -477,6 +477,7 @@ public class DatabaseInitializer {
     uiRepo.save(CustomUI.createDefault());
     uiRepo.save(CustomUI.createPractice());
     uiRepo.save(CustomUI.createFuel());
+    uiRepo.save(CustomUI.createDriverStation());
     logger.info("Custom UIs reset.");
   }
 
@@ -514,10 +515,20 @@ public class DatabaseInitializer {
             CustomUI.FUEL_UI_ID,
             Theme.FUEL_THEME_ID,
             null);
+    Theme driverStationTheme =
+        new Theme(
+            Theme.DRIVER_STATION_THEME_NAME,
+            true,
+            slots,
+            audioSlots,
+            CustomUI.DRIVER_STATION_UI_ID,
+            Theme.DRIVER_STATION_THEME_ID,
+            null);
 
     themeRepo.save(defaultTheme);
     themeRepo.save(practiceTheme);
     themeRepo.save(fuelTheme);
+    themeRepo.save(driverStationTheme);
     logger.info("Themes reset.");
   }
 
@@ -622,7 +633,7 @@ public class DatabaseInitializer {
     SqliteRepository<CustomUI> uiRepo =
         new SqliteRepository<>(context, "custom_uis", CustomUI.class);
     List<CustomUI> uis = uiRepo.findAll();
-    boolean[] foundFlags = new boolean[3]; // [default, practice, fuel]
+    boolean[] foundFlags = new boolean[4]; // [default, practice, fuel, driver_station]
     for (CustomUI ui : uis) {
       backfillSingleCustomUi(ui, uiRepo, foundFlags);
     }
@@ -637,6 +648,11 @@ public class DatabaseInitializer {
     if (!foundFlags[2] && !context.isDefaultArtifactDeleted("custom_ui", CustomUI.FUEL_UI_ID)) {
       uiRepo.save(CustomUI.createFuel());
       logger.info("Backfilled fuel custom UI with ID {}", CustomUI.FUEL_UI_ID);
+    }
+    if (!foundFlags[3]
+        && !context.isDefaultArtifactDeleted("custom_ui", CustomUI.DRIVER_STATION_UI_ID)) {
+      uiRepo.save(CustomUI.createDriverStation());
+      logger.info("Backfilled driver station custom UI with ID {}", CustomUI.DRIVER_STATION_UI_ID);
     }
     ensurePreMigrationBackups(context, uiRepo);
   }
@@ -658,7 +674,8 @@ public class DatabaseInitializer {
       if (ui.isDefault()
           || CustomUI.DEFAULT_UI_ID.equals(entityId)
           || CustomUI.PRACTICE_UI_ID.equals(entityId)
-          || CustomUI.FUEL_UI_ID.equals(entityId)) {
+          || CustomUI.FUEL_UI_ID.equals(entityId)
+          || CustomUI.DRIVER_STATION_UI_ID.equals(entityId)) {
         continue;
       }
 
@@ -728,6 +745,14 @@ public class DatabaseInitializer {
         updated = true;
       }
     }
+    if (CustomUI.DRIVER_STATION_UI_ID.equals(entityId)) {
+      foundFlags[3] = true;
+      if (CustomUI.isLegacyDriverStationName(name)
+          && !CustomUI.DRIVER_STATION_UI_NAME.equals(name)) {
+        name = CustomUI.DRIVER_STATION_UI_NAME;
+        updated = true;
+      }
+    }
 
     String layoutJson = ui.getLayoutJson();
     if (layoutJson != null) {
@@ -735,6 +760,13 @@ public class DatabaseInitializer {
       updatedLayoutJson = CustomUI.ensureAspectRatioAndDimensions(updatedLayoutJson);
       if (CustomUI.PRACTICE_UI_ID.equals(entityId)) {
         updatedLayoutJson = CustomUI.ensurePracticeTopRowCoordinates(updatedLayoutJson);
+      }
+      if (CustomUI.DRIVER_STATION_UI_ID.equals(entityId)) {
+        if (updatedLayoutJson.contains("\"useLaneColors\":false")) {
+          updatedLayoutJson =
+              updatedLayoutJson.replace("\"useLaneColors\":false", "\"useLaneColors\":true");
+        }
+        updatedLayoutJson = CustomUI.ensureDriverStationLapHighlight(updatedLayoutJson);
       }
       if (!updatedLayoutJson.equals(layoutJson)) {
         layoutJson = updatedLayoutJson;

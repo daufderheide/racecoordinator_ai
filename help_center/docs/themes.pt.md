@@ -3,6 +3,14 @@
 !!! note "Conteúdo em desenvolvimento"
     Este artigo está em desenvolvimento. A documentação completa estará disponível em breve.
 
+## Temas
+
+Cada tema reúne recursos visuais (bandeiras, luzes de partida, medidores de combustível), avisos sonoros e atribuições de layout:
+
+- **Layout de interface personalizado:** O layout de ecrã emparelhado carregado durante a corrida.
+- **Tema da estação do piloto:** O tema utilizado ao abrir ou ler uma janela ou dispositivo de posto de piloto de pista única.
+- **Tema de visualização do piloto:** O tema utilizado ao abrir ou ler a janela de calendário do piloto ou exibição em dispositivo pessoal.
+
 ## Áudio
 
 Os temas permitem personalizar efeitos sonoros globais e avisos de voz para eventos de controlo de corrida:

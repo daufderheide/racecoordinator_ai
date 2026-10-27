@@ -467,6 +467,9 @@ export class DefaultRacedaySetupComponent implements OnInit {
       }
     }
 
+    if (this.themeService?.getTransientThemeId?.()) {
+      this.themeService.clearTransientActiveTheme();
+    }
     if (this.selectedRace?.entity_id) {
       this.themeService.activateForRace(
         this.selectedRace.entity_id,
@@ -1707,6 +1710,9 @@ export class DefaultRacedaySetupComponent implements OnInit {
     this.selectedRace = race;
     this.selectedEvent = undefined;
     if (race?.entity_id) {
+      if (this.themeService?.getTransientThemeId?.()) {
+        this.themeService.clearTransientActiveTheme();
+      }
       this.themeService.activateForRace(race.entity_id, race.theme_id);
     }
     this.saveSettings();

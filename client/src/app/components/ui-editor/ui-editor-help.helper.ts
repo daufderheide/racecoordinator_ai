@@ -235,6 +235,22 @@ export function getThemesHelpSteps(ctx: UiEditorHelpContext): GuideStep[] {
       onEnter: () => expandThemeSection(ctx),
     },
     {
+      selector: "#help-theme-driver-station-theme",
+      title: translationService.translate(
+        "UE_LABEL_DRIVER_STATION_THEME_SELECT",
+      ),
+      content: translationService.translate("UE_HELP_THEME_DRIVER_STATION"),
+      position: "bottom",
+      onEnter: () => expandThemeSection(ctx),
+    },
+    {
+      selector: "#help-theme-driver-view-theme",
+      title: translationService.translate("UE_LABEL_DRIVER_VIEW_THEME_SELECT"),
+      content: translationService.translate("UE_HELP_THEME_DRIVER_VIEW"),
+      position: "bottom",
+      onEnter: () => expandThemeSection(ctx),
+    },
+    {
       selector: "#help-theme-flags",
       title: translationService.translate("UE_HEADER_FLAGS"),
       content: translationService.translate("UE_HELP_THEME_FLAGS"),
