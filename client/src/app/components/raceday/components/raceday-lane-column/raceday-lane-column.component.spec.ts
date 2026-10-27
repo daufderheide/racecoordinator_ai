@@ -1117,6 +1117,40 @@ describe("RacedayLaneColumnComponent", () => {
     ).toBe("--.---");
   });
 
+  it("should apply configured valueFontFamily to lastLaps container", () => {
+    fixture.componentRef.setInput("parent", mockParent);
+    const widget = createWidget({
+      columnKey: "lastLaps",
+      targetIndex: 0,
+      valueFontFamily: "Orbitron",
+    });
+    fixture.componentRef.setInput("widget", widget);
+    fixture.detectChanges();
+
+    const lastLapsEl = fixture.nativeElement.querySelector(
+      ".lane-col-last-laps",
+    ) as HTMLElement;
+    expect(lastLapsEl).toBeTruthy();
+    expect(lastLapsEl.style.fontFamily).toContain("Orbitron");
+  });
+
+  it("should not set inline font-family on lastLaps container when valueFontFamily is empty", () => {
+    fixture.componentRef.setInput("parent", mockParent);
+    const widget = createWidget({
+      columnKey: "lastLaps",
+      targetIndex: 0,
+      valueFontFamily: "",
+    });
+    fixture.componentRef.setInput("widget", widget);
+    fixture.detectChanges();
+
+    const lastLapsEl = fixture.nativeElement.querySelector(
+      ".lane-col-last-laps",
+    ) as HTMLElement;
+    expect(lastLapsEl).toBeTruthy();
+    expect(lastLapsEl.style.fontFamily).toBe("");
+  });
+
   it("should scale header text down for header widgets when width is constrained", () => {
     fixture.componentRef.setInput("parent", mockParent);
     const hw = createWidget({
@@ -3073,6 +3107,23 @@ describe("RacedayLaneColumnComponent", () => {
       ) as HTMLElement;
       expect(headerEl.style.fontFamily).toContain("Courier New");
       expect(headerEl.style.fontSize).toBe("20px");
+    });
+
+    it("should apply custom value font family to standard lane-col-value", () => {
+      fixture.componentRef.setInput("parent", mockParent);
+      fixture.componentRef.setInput(
+        "widget",
+        createWidget({
+          columnKey: "lastLapTime",
+          valueFontFamily: "Courier New",
+        }),
+      );
+      fixture.detectChanges();
+
+      const valueEl = fixture.nativeElement.querySelector(
+        ".lane-col-value",
+      ) as HTMLElement;
+      expect(valueEl.style.fontFamily).toContain("Courier New");
     });
 
     it("should apply custom header text color and background color", () => {

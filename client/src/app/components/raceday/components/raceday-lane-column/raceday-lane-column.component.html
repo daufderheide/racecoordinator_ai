@@ -607,6 +607,7 @@
               [class.vertical-laps]="isVerticalLapsFlow"
               [class.horizontal-laps]="!isVerticalLapsFlow"
               [style.color]="effectiveValueTextColor"
+              [style.font-family]="settings.valueFontFamily || null"
             >
               @if (getLastLaps().length === 0) {
                 <div class="lane-col-empty">--</div>
